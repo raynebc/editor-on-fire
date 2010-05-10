@@ -2,7 +2,15 @@
 #include <stdio.h>
 #include "foflc/Lyric_storage.h"
 #include "foflc/Midi_parse.h"
+#include "foflc/Script_parse.h"
+#include "foflc/VL_parse.h"
+#include "foflc/UStar_parse.h"
+#include "foflc/LRC_parse.h"
 #include "song.h"
+
+int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format, char *inputfilename, char *string2);
+int eof_import_lyrics_from_lc(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp);
+int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int format);
 
 int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format, char *inputfilename, char *string2)
 {
