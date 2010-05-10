@@ -18,6 +18,9 @@ Ctrl-c / Ctrl-v: copy/paste.
 
 #include <allegro.h>
 #include "song.h"
+#include "menu/edit.h"
+#include "menu/song.h"
+#include "menu/note.h"
 #include "beat.h"
 #include "main.h"
 #include "dialog.h"
@@ -35,7 +38,7 @@ int         eof_feedback_note[5] = {0};
 int eof_feedback_any_note(void)
 {
 	int i;
-	
+
 	for(i = 0; i < 5; i++)
 	{
 		if(eof_feedback_note[i])
@@ -58,13 +61,13 @@ void eof_editor_logic_feedback(void)
 	int npos;
 	double bpm = 120.0;
 	unsigned long cppqn = eof_song->beat[fbeat]->ppqn;
-	
+
 	fbeat = eof_get_beat(eof_music_pos - eof_av_delay);
 	if(fbeat >= 0)
 	{
 		bpm = (double)60000000.0 / (double)eof_song->beat[fbeat]->ppqn;
 	}
-	
+
 	if(key[KEY_SLASH])
 	{
 		if(eof_music_paused)
@@ -73,7 +76,7 @@ void eof_editor_logic_feedback(void)
 		}
 		key[KEY_SLASH] = 0;
 	}
-	
+
 	if(key[KEY_M])
 	{
 		eof_menu_edit_metronome();
@@ -94,7 +97,7 @@ void eof_editor_logic_feedback(void)
 		eof_menu_edit_paste();
 		key[KEY_V] = 0;
 	}
-	
+
 	/* play/pause music */
 	if(key[KEY_SPACE] && eof_song_loaded)
 	{
@@ -122,7 +125,7 @@ void eof_editor_logic_feedback(void)
 		}
 		key[KEY_SPACE] = 0;
 	}
-	
+
 	if(!eof_music_paused)
 	{
 		for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
@@ -142,7 +145,7 @@ void eof_editor_logic_feedback(void)
 		}
 		return;
 	}
-	
+
 	/* change quantization */
 	if(key[KEY_LEFT])
 	{
@@ -180,7 +183,7 @@ void eof_editor_logic_feedback(void)
 		}
 		key[KEY_RIGHT] = 0;
 	}
-	
+
 	/* change BPM */
 	if(key[KEY_MINUS])
 	{
@@ -200,7 +203,7 @@ void eof_editor_logic_feedback(void)
 			{
 				eof_song->beat[i]->ppqn = (double)60000000.0 / bpm;
 			}
-			
+
 			/* break when we reach the end of the portion to change */
 			else
 			{
@@ -230,7 +233,7 @@ void eof_editor_logic_feedback(void)
 			{
 				eof_song->beat[i]->ppqn = (double)60000000.0 / bpm;
 			}
-			
+
 			/* break when we reach the end of the portion to change */
 			else
 			{
@@ -242,7 +245,7 @@ void eof_editor_logic_feedback(void)
 		eof_menu_edit_cut_paste(fbeat + 1, 1, 0.0);
 		key[KEY_EQUALS] = 0;
 	}
-	
+
 	if(eof_snap_mode == 0)
 	{
 		eof_snap_mode = 1;
@@ -251,10 +254,10 @@ void eof_editor_logic_feedback(void)
 	{
 		eof_music_pos = eof_song->beat[0]->pos + eof_av_delay;
 	}
-	
+
 	/* measure the length of the beat */
 	eof_snap.length = eof_song->beat[fbeat + 1]->pos - eof_song->beat[fbeat]->pos;
-	
+
 	/* find snap positions */
 	for(i = 0; i < fsnap_divider[eof_snap_mode - 1]; i++)
 	{
@@ -267,7 +270,7 @@ void eof_editor_logic_feedback(void)
 			fppos[i] = eof_song->beat[fbeat - 1]->pos + ((float)eof_snap.length / (float)fsnap_divider[eof_snap_mode - 1]) * ((float)(i)) + eof_av_delay;
 		}
 	}
-	
+
 	eof_hover_note = -1;
 	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
 	{
@@ -440,7 +443,7 @@ void eof_editor_logic_feedback(void)
 				eof_selection.multi[eof_selection.current] = 1;
 			}
 			eof_feedback_note[1] = 1;
-		}		
+		}
 		else if(eof_feedback_note[1] == 0)
 		{
 			eof_feedback_new_note = eof_song->track[eof_selected_track]->note[eof_hover_note];
@@ -542,13 +545,13 @@ void eof_editor_logic_feedback(void)
 	{
 		eof_feedback_note[4] = 0;
 	}
-	
+
 	/* not placing notes */
 	if(!key[KEY_1] && !key[KEY_2] && !key[KEY_3] && !key[KEY_4] && !key[KEY_5])
 	{
 		eof_feedback_new_note = NULL;
 	}
-	
+
 	if(eof_hover_note >= 0 && !eof_song->track[eof_selected_track]->note[eof_hover_note]->note)
 	{
 		eof_track_delete_note(eof_song->track[eof_selected_track], eof_hover_note);
