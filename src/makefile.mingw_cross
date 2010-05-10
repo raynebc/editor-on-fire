@@ -1,27 +1,27 @@
 CC = i586-mingw32msvc-gcc
-CFLAGS = -Wall -O2 -fomit-frame-pointer -ffast-math -march=pentium -funroll-loops -mwindows -Ialogg/decoder/libogg/include -Ialogg/decoder/libvorbis/include -Ialogg/include
-LIBS = -lalleg
+CFLAGS = -Wall -O2 -fomit-frame-pointer -ffast-math -funroll-loops -mwindows -Ialogg/include
+LIBS = -lalleg44.dll -logg -lvorbisfile
 
 OFILES = modules/ocd3d.o modules/wfsel.o modules/gametime.o modules/g-idle.o main.o player.o config.o window.o dialog.o legacy.o midi.o ini.o song.o note.o icon.o beat.o event.o gui.o undo.o mix.o control.o editor.o feedback.o
-ALOGGOFILES = alogg/decoder/libvorbis/lib/analysis.o alogg/decoder/libvorbis/lib/bitrate.o alogg/decoder/libogg/src/bitwise.o alogg/decoder/libvorbis/lib/block.o alogg/decoder/libvorbis/lib/codebook.o alogg/decoder/libvorbis/lib/envelope.o alogg/decoder/libvorbis/lib/floor0.o alogg/decoder/libvorbis/lib/floor1.o alogg/decoder/libogg/src/framing.o alogg/decoder/libvorbis/lib/info.o alogg/decoder/libvorbis/lib/lpc.o alogg/decoder/libvorbis/lib/lsp.o alogg/decoder/libvorbis/lib/mapping0.o alogg/decoder/libvorbis/lib/mdct.o alogg/decoder/libvorbis/lib/psy.o alogg/decoder/libvorbis/lib/registry.o alogg/decoder/libvorbis/lib/res0.o alogg/decoder/libvorbis/lib/sharedbook.o alogg/decoder/libvorbis/lib/smallft.o alogg/decoder/libvorbis/lib/synthesis.o alogg/decoder/libvorbis/lib/vorbisfile.o alogg/decoder/libvorbis/lib/window.o alogg/src/alogg.o
+MENUOFILES = menu/file.o menu/edit.o menu/song.o menu/note.o menu/beat.o menu/help.o menu/main.o menu/context.o
+ALOGGOFILES = alogg/src/alogg.o
 AGUPOFILES = agup/aalg.o agup/aase.o agup/abeos.o  agup/abitmap.o  agup/agtk.o  agup/agup.o  agup/ans.o  agup/aphoton.o  agup/awin95.o
-LCOFILES = foflc/LRC_parse.o foflc/Lyric_storage.o foflc/Midi_parse.o foflc/Script_parse.o foflc/UStar_parse.o foflc/VL_parse.o lc_import.o
+LCOFILES = foflc/LRC_parse.o foflc/Lyric_storage.o foflc/Midi_parse.o foflc/Script_parse.o foflc/UStar_parse.o foflc/VL_parse.o
 EXENAME = eof.exe
 
 all : ../bin/$(EXENAME)
 
-../bin/$(EXENAME) : $(OFILES) $(AGUPOFILES) $(ALOGGOFILES) $(LCOFILES)
-	$(CC) $(OFILES) $(AGUPOFILES) $(ALOGGOFILES) $(LCOFILES) $(CFLAGS) $(LIBS) -o ../bin/$(EXENAME)
+../bin/$(EXENAME) : $(MENUOFILES) $(OFILES) $(AGUPOFILES) $(ALOGGOFILES) $(LCOFILES)
+	$(CC) $(MENUOFILES) $(OFILES) $(AGUPOFILES) $(ALOGGOFILES) $(LCOFILES) $(CFLAGS) $(LIBS) -o ../bin/$(EXENAME)
 
 icon.o : eof.rc
 	i586-mingw32msvc-windres -o icon.o eof.rc
 
 clean:
 	@rm *.o
+	@rm menu/*.o
 	@rm modules/*.o
 	@rm agup/*.o
 	@rm alogg/src/*.o
-	@rm alogg/decoder/libvorbis/lib/*.o
-	@rm alogg/decoder/libogg/src/*.o
 	@rm foflc/*.o
 	@echo Cleanup complete!
