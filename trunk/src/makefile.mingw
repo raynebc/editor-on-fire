@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -Wall -O2 -fomit-frame-pointer -ffast-math -funroll-loops -mwindows -Ialogg/include -DEOF_BUILD
 LIBS = -lalleg44.dll -logg -lvorbisfile
 
-OFILES = modules/ocd3d.o modules/wfsel.o modules/gametime.o modules/g-idle.o main.o player.o config.o window.o dialog.o legacy.o midi.o ini.o song.o note.o icon.o beat.o event.o gui.o undo.o mix.o control.o editor.o feedback.o
+OFILES = modules/ocd3d.o modules/wfsel.o modules/gametime.o modules/g-idle.o main.o player.o config.o window.o dialog.o legacy.o midi.o ini.o song.o note.o icon.o beat.o event.o gui.o undo.o mix.o control.o editor.o feedback.o utility.o
 MENUOFILES = menu/file.o menu/edit.o menu/song.o menu/note.o menu/beat.o menu/help.o menu/main.o menu/context.o
 ALOGGOFILES = alogg/src/alogg.o
 AGUPOFILES = agup/aalg.o agup/aase.o agup/abeos.o  agup/abitmap.o  agup/agtk.o  agup/agup.o  agup/ans.o  agup/aphoton.o  agup/awin95.o
