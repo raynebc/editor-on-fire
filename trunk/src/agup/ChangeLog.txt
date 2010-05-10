@@ -1,0 +1,337 @@
+2006-04-28  Elias Pschernig <elias users sourceforge>
+
+    * Release version 1.0.
+
+    * Added menu option to toggle "Focus follows mouse" behavior.
+
+    * KittyCat's patch to update code to 4.2.0. Allegro 4.0.x won't work
+      anymore.
+
+2004-12-07  Elias Pschernig <elias users sourceforge>
+
+    * Released as version 0.99.7.
+
+    * Fixed cursor in blue theme.
+
+    * Slightly improved Mud theme.
+
+    * Small doc update.
+
+2004-09-05  Elias Pschernig <elias users sourceforge>
+
+    * Released as version 0.99.6.
+
+    * Improvement of the file selector text box in the example.
+
+    * New example bitmap theme: Mud.
+
+    * Font selection in the example.
+
+    * Slight fix in bitmap themes color inheritance.
+
+    * Small makefile update.
+
+    * Some docs updates.
+
+    * Slight text color changes to the FDL theme
+
+2004-08-01  Elias Pschernig <elias users sourceforge>
+
+    * Released as version 0.99.5.
+
+    * Fixed problems with old mingw
+
+    * Fixed problems with 4.0.x
+
+2004-07-30  Elias Pschernig <elias users sourceforge>
+
+    * Released as version 0.99.4.
+
+    * Added agup_theme_by_name and named themes.
+
+    * agup_register_bitmap_theme was renamed to agup_load_bitmap_theme.
+      Sorry for anyone using it, and complain if this caused problems - I'm
+      currently not expecting anyone to use it - otherwise there'd be a
+      compatibility define.
+
+    * Fixed the colors in the d_agup_window_proc example dialog.
+
+    * Fixed the scrollbars in the NS theme.
+
+    * Slightly improved the build process.
+
+    * Added the missing mg color - previously some themes would use
+      gui_mg_color.
+
+    * Properly implemented d_[cr]text_proc for all themes.
+
+    * Properly implemented d_clear_proc for all themes.
+
+    * Added AGUP_THEME type
+
+    * Some small improvements to the example.
+
+    * Alvaro Alea Fernandez fixed the makefile for use under DOS.
+
+2004-06-08  Elias Pschernig <elias users sourceforge>
+
+    * Released as version 0.99.3
+
+    * tareco reported a critical bug in the bitmap theme, many thanks!
+      It's fixed with emergency release 0.99.3.
+
+2004-06-07  Elias Pschernig <elias users sourceforge>
+
+    * Released as version 0.99.2
+
+    * Fixed issues with mingw
+
+    * Fixed issues with Allegro 4.0.x
+
+    * Removed CVS dirs from distribution :P
+
+2004-05-21  Elias Pschernig <elias users sourceforge>
+
+    * Released as version 0.99.1.
+
+	* Added HTML readme.
+
+	* New bitmap theme.
+
+	* Improved example.
+
+	* Added missing d_agup_text, d_agup_ctext and d_agup_rtext procs.
+
+	* Added missing d_agup_clear_proc.
+
+	* Updated makefile to not warn with Allegro 4.1, and added preliminary "make
+	install" target.
+
+    * New maintainer. From now on, AGUP uses CVS, so you can find much more
+    detailed logs under http://cvs.sourceforge.net/viewcvs.py/agup/agup/.
+
+2003-06-24  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* Released as version 0.11.
+
+	* Fixed a couple of nits when compiling as C++.
+
+	* agtk.c (d_agtk_list_proc): Disabled the ugly yellow border
+	around the currently selected list item.
+
+	* Incorporated a NeXTStep theme by Joao Neves.
+
+2003-05-19  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* Released as version 0.10.
+
+	* Incorporated Elias Pschernig's BeOS theme, with some minor
+	changes for older gcc and Allegro.
+
+2003-01-13  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* Released as version 0.9.2.
+
+	* aphoton.c (photon_draw_menu_item): Bob fixed the background
+	colour of the menu items.
+
+2002-05-02  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* Released as version 0.9.1 (0.9 was a little early :-)
+
+	* examp.c (lister): Small const mistake.
+
+	* No longer #include aintern.h, but just copied the prototype for
+	_draw_textbox into agupitrn.h.
+
+2002-05-01  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* awin95.c (awin95_timer): Changed signature to be C++-friendly
+	with `install_int'.
+
+	* agtk.c: Changed instances of `inline' to `INLINE'.
+
+	* Released version 0.9.
+
+	* Made everything compilable without -Wno-unused parameter
+	(caught a few not so good things).
+
+	* Made everything compilable as C++ source (lots of damn
+	typecasts, grr).
+
+2002-03-30  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* Released version 0.8.
+
+	* examp.c: Added vertical slider to example.
+
+	* aphoton.c: Fixed vertical sliders.
+
+2002-01-28  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* Released version 0.7.
+
+2002-01-28  Eric Botcazou  <ebotcazou@multimania.com>
+
+	* examp.c: Try 15-bit if 16-bit fails.
+
+	* aphoton.c: Changed the look of the horizontal slider (to look
+	like a "volume slider").  [pw: this should be done for the other
+	themes as well]
+
+2002-01-20  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* Released version 0.6.
+
+2002-01-20  Eric Botcazou  <ebotcazou@multimania.com>
+
+	* aphoton.c, aphoton.h: Added QNX Photon MicroGUI emulation.
+
+2002-01-03  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* Released version 0.5.
+
+2001-11-22  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* LICENCE.txt: Added zlib licence.
+
+2001-11-18  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* examp.c: Formatting fix and use `void' for parmless functions.
+
+2001-11-04  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* agtk.c, awin95.c: Replaced SEND_MESSAGE with object_message.
+
+	* README: Wrote about d_agup_push_proc callback function.
+
+	* d_*_push_proc: Redraw itself (as unpressed) before calling user
+	callback, and pass the dialog entry that initiated the call.  Both
+	were the old behaviour before David's implementation.
+
+	* agtk.c, awin95.c: Gray text for disabled state in check and
+	radio procs.
+
+2001-10-27  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* README: Updated.
+
+2001-10-21  David A. Capello  <dacap@users.sourceforge.net>
+
+	* agtk.h, awin95.h: Added prototypes for window frame procs.
+	
+	* agtk.c (d_agtk_push_proc), awin95.c (d_awin95_push_proc):
+	Cleaner implementation, changed callback function signature, and
+	uses D_CLOSE internally instead of D_SELECTED.
+	
+	* aase.c, aase.h: Added a new widget set.
+
+2001-10-13  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* agtk.c (d_agtk_button_proc): Gray text for disabled state.
+
+	* examp.c: David Capello added examples of disabled and
+	disabled/selected buttons.
+
+	* awin95.c (d_awin95_shadow_box_proc): David Capello added this
+	function which he forgot in the previous patch.
+
+2001-10-07  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* Released version 0.4.
+
+	* awin95.c: Reindented (David had already done some of this so I
+	finished it off).
+
+	* awin95.c: Changes from David A. Capello to buttons, lists and
+	frames look more like Win95 widgets.
+
+2001-10-04  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* Released version 0.3.
+
+	* agtk.c (gtk_draw_scrollable_frame): David A. Capello fixed an
+	aesthetic problem in scrollbars in list procs.
+
+2001-09-16  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* The dp3 argument to d_agup_push_proc can now return messages.
+
+2001-08-24  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* agup_*_proc renamed to d_agup_*_proc.
+
+2001-08-08  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* To the user, themes are now constant opaque pointers.
+
+	* agupitrn.h: Moved struct agup_thme into here from agup.h.
+
+	* rules.mk: New file, containing AGUP rules.
+
+	* Makefile: Changed a bit, preparing for guibrella.
+
+2001-08-02  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* README: Updated for window procs.
+
+	* agtk.c (agtk_window_proc): Very simple window proc for GTK.
+
+	* examp.c (demo_windows): Added to show off agup_window_proc.
+
+2001-07-31  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* awin95.c (awin95_window_proc): Adapted from DIME.
+	* agup.c (agup_window_proc): Wrapper.
+
+	* agtk.c (agtk_edit_proc), awin95.c (awin95_edit_proc): Use font
+	height instead of DIALOG->h.
+
+	* examp.c: Override gui_edit_proc as well, for the file selector.
+
+2001-07-31  Sven Sandberg  <svsa1977@student.tdb.uu.se>
+
+	* awin95.c (awin95_edit_proc): Win95 edit box shouldn't have a
+	dotted rect around it.
+
+2001-07-30  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* examp.c: Demonstrate file_select_ex.
+
+	* examp.c: Use a select_theme function instead of select_<theme>.
+
+2001-07-18  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* Released version 0.2.
+
+	* README: Updated.
+
+	* examp.c: Use themes.
+
+	* agup.c: New module (theme manager).
+
+2001-07-18  Robert J. Ohannessian  <ohannessian@videotron.ca>
+
+	* awin95.c: New widget set.
+
+2001-07-13  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* Released version 0.1.
+
+2001-05-20  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* agtk.c: Added agtk_menu_proc and related.
+
+	* agtk.c (agtk_push_proc): dp3 function now takes an argument.
+
+	* agtk.c: Use gui_textout in the right places.
+
+	* README: Wrote it.
+
+	* agtk.c: Added agtk_slider_proc.
+
+	* Renamed widgets with agtk_ prefix, and decided to start AGUP.
+
+2000-11-06  Peter Wang  <tjaden@users.sourceforge.net>
+
+	* Started.  Wrote most of the widgets and the example.

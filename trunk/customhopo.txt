@@ -1,0 +1,184 @@
+Reported by chris.paiano, Nov 18, 2008 
+This is NOT trivial!
+
+First of all, I need more information.  I don't have access to RB2, so I
+need the rules of HOPO chords explained to me in detail.  Don't assume I
+know any aspect of this; explain every detail.
+
+Screenshots or links to videos telling me to view a specific time would
+also be helpful, but only if descriptions are given as to how these
+patterns are supposed to be played on the guitar controller!
+
+This will most likely require creation of a new HOPO system "RB2" -- just
+in case it interferes with proper operation of the solid GH2 systems.
+Comment 1 by chris.paiano, Nov 29, 2008 
+As posted here by holystoneH:
+http://www.fretsonfire.net/forums/viewtopic.php?f=11&t=25040&st=0&sk=t&sd=a&start=1635#p315400
+
+"
+ah i found again something great its not only on how hopo chords a determited but
+also on how custom hopos are determinated. ill make you a picture:
+
+http://img185.imageshack.us/img185/5668/fofkl8.jpg
+
+i think that the custom indicator is on line 6 of every difficultie. the first 5
+lines are for the 5 notes and line 6 is telling rockband if that note is a custom
+hopo if its only one note. if there are 2 notes its a custom hopo chord
+
+i think you can clearly see it on the picture
+
+F8 = custom hopo (expert)
+F7 = custom hopo (hard)
+F6 = custom hopo (medium)
+F5 = custom hopo (easy)
+"
+Comment 2 by chris.paiano, Nov 29, 2008 
+As posted here:
+http://www.fretsonfire.net/forums/viewtopic.php?f=11&t=25040&st=0&sk=t&sd=a&start=1650#p315666
+
+"
+i have for you a second picture with a comparison between the midi and real rockband
+ingame:
+
+http://img227.imageshack.us/img227/8232/fof2ec9.jpg
+
+and i think that on line 7 there is the information stored to tell rockband if a note
+should not be a hopo
+
+my theory is that on
+
+expert
+line 6 (F8) is to activate a note as custom hopo
+
+expert
+line 7 (F#8) is to force a hopo to be a normal note
+
+im sure about line 6 that it is for the custom hopo but i have to recheck about line
+7 but i think that on this position it makes sense
+"
+
+Comment 3 by chris.paiano, Nov 29, 2008 
+As posted here by p_025:
+http://www.fretsonfire.net/forums/viewtopic.php?f=11&t=25040&st=0&sk=t&sd=a&start=1650#p315926
+
+"
+Yeah, check out the crazy chords part of Steely Dan - Bodhisattva:
+http://www.geocities.com/p_025/crazychords.JPG
+
+This is what it's supposed to look like:
+http://www.youtube.com/watch?v=ngCqs5_S-fY
+Check out some of the comments on that video too;
+
+--i don't understand, how can you have a hammer-on/pull-off chord that is exactly the
+same as the previous chord and it still be a HO/PO chord?
+
+--how to explain this... say it's a blue orange chord twice in a row. you hit the BO
+(lol bo) chord, then you release it, then hit it again. without strumming.
+
+You have to TAP all that garbage. Holy bajeesus.
+"
+Comment 4 by chris.paiano, Jan 22, 2009 
+I understand this issue now.  I will be implementing a RB2 custom HOPO system with
+HOPO chords that behaves exactly like Rock Band 2 in a future version (probably the
+next major release after 3.100.
+
+No more info is needed (label removed)
+Type is no longer WishList.
+Priority bump from VeryLow to Medium.
+Labels: -Type-WishList -Priority-VeryLow -MoreInfo Type-Enhancement Priority-Medium
+Comment 5 by chris.paiano, Jan 31, 2009 
+ Issue 347  has been merged into this issue.
+Comment 6 by chris.paiano, Jan 31, 2009 
+This issue now will encompass the entire RB2 HOPO system as a new feature.  This will
+allow custom HOPOs and forced strum notes, as well as HOPO chords - with a fallback
+on automatic GH2-style HOPO markings for unspecified notes.
+
+Fretters will be able to specify notes and chords that should always be HOPOs, notes
+that should never be HOPOs, and any unspecified notes will use the automatic GH2
+marking system for HOPO note generation.
+
+Once this RB2 system is implemented, it should become the de-facto standard for
+FoFiX's HOPO system.  All other HOPO systems will become Handicaps as in  issue 509 
+(GH2 / GH2 Strict / RF-Mod / None), as they will allow playing the song in a
+different manner than the fretter intended.  
+Summary: Add new RB2 HOPO system with HOPO chords, custom HOPO, forced strums & fallback GH2 marking
+Comment 7 by chris.paiano, Jan 31, 2009 
+Once this issue is complete, a "Sloppy" version of the RB2 HOPO system should be
+created for use as a Handicap in  issue 509 .
+Comment 8 by p__...@hotmail.com, Feb 02, 2009 
+While this is being worked on, it would be nice to have a "HOPO After Chord" setting
+that works like RB/RB2 as well. Or it could have its own issue. I've brought this up
+before so I won't waste any more space here.
+Comment 9 by chris.paiano, Feb 03, 2009 
+(...what?)
+Comment 10 by chris.paiano, Feb 08, 2009 
+GH2 Sloppy and GH2 Strict will be phased out, in favor of more general "Sloppy" and
+"Strict" handicaps (negative and positive, respectively) that will be applicable to
+whatever HOPO system is in use (auto, RB2, GH2, RF-Mod).
+
+The "Sloppy" handicap will provide GH2 Sloppy functionality (reverse tapping, no
+strum required for tapping incorrectly) to any HOPO system.
+
+The "Strict" handicap will provide GH2 Strict functionality (tapping incorrectly
+results in a streak reset as well as requiring a re-strum) to any HOPO system.
+Comment 11 by modster, Feb 09, 2009 
+i don't know if this is relative to the conversation, but with the recent beta 4 all
+"normal" hopo functions have been rendered well "useless" i have GH2 for xb360 and
+have played the same song "thunder horse" and where there should be hopo notes there
+are none. i don't mean to be a pain in the arse but its makes playing much more painful.
+
+i miss the old way it was when hopo's worked.... please please bring it back
+i have played with all hopo variations and have no been able to reproduce the same
+hopo frequency for GH2 on the 360
+Comment 12 by chris.paiano, Feb 21, 2009 
+HOPOs are working fine, I've tested Thunderhorse.  One of my favorite songs.
+
+----------
+
+New RB2 HOPO system related handicap that would be fun:
+
+"Ignore Forced Strum Notes" or something to that effect - would only pay attention to
+the RB2's forced HOPO note markers and completely ignore the forced strum note markers.  
+
+This would essentially use the GH2 HOPO system to automatically mark all notes as
+usual, and then go through and also mark RB2 forced HOPO notes to be tappable.  I
+believe this would result in some very fun frettings of RB2 songs.
+
+However, it will make many of them much easier (Chop Suey, anyone?).  I suggest a
+handicap factor of 0.85x or 0.90x to be fair.
+Comment 13 by p__...@hotmail.com, Mar 01, 2009 
+Actually, if you look at the PART_GUITAR data for Chop Suey! in a MIDI editor you'll
+see it has no custom HO/PO markings anywhere. The reason you have to strum those
+notes in RB2 is because, as I've said countless times before, Rock Band handles
+HO/POs after chords differently. Simply put, if the note is in the chord it cannot be
+HO/POed.
+
+If you're talking about the PART_BASS data, sure, that would be much easier.
+Comment 14 by chris.paiano, Mar 02, 2009 
+Ah, really?  I hadn't looked; that's good info.  So RB doesn't allow chord pull-
+offs...?  Ever?
+
+Then we can have this HOPO system handle the differnt logic when a RB style MIDI is 
+detected.
+Comment 15 by p__...@hotmail.com, Mar 02, 2009 
+No, RB doesn't allow a HO/PO after a chord if the note after said chord is within the
+chord. (e.g. a red-yellow chord followed closely by a yellow note. Both the chord and
+the note must be strummed) However, if you have a red-yellow followed by a blue note,
+the note CAN be hammered on.
+
+The only exception to this (and I have seen these before) is when the note after the
+chord is a forced HO/PO note. Just look at a YouTube video for guitar on In Bloom -
+Nirvana, I can't provide a link right now because I'm at school and they block those
+kinds of sites for some reason…
+Comment 16 by p__...@hotmail.com, Mar 02, 2009 
+That sort of discussion should really be in its own issue. In the meantime, I would
+love to see this committed, I wanna play Bodhisattva with all its crazy custom HO/POs.
+Comment 17 by modster, Mar 03, 2009 
+Chris, i played thunderhorse on the alarian mod and the hopo's are there, but when i
+play it with your version its not there, i'm not meaning to be aggressive about this,
+but this is really one of those things that just put a chip on my shoulder, when i
+have to double strum to hit the other notes would would normally be hopo, i wish i
+could upload my version that i have so you could see what im talking about, i feel
+like im often being thought of as a guy that just likes to nit pick.but im dead serious.
+Comment 18 by evilynux, Apr 30, 2009 
+ Issue 710  has been merged into this issue.

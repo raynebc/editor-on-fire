@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<TITLE>EOF Manual - Editing Songs</TITLE>
+<STYLE TYPE="text/css">
+p {text-indent: 1cm}
+</STYLE>
+</head></STYLE>
+</HEAD>
+<BODY BGCOLOR="313131" TEXT="FFFFFF" LINK="FFFFFF" VLINK="FFFFFF" ALINK="FFFFFF" >
+
+<center><IMG SRC="logo.png" ALT="Logo" BORDER=0 HSPACE=0 VSPACE=3><bR><br></center>
+<center>A song editor for "Frets On Fire"</center><br>
+
+<a href="index.htm">Table of Contents</a>
+
+<h1><a name="Edit">Editing Songs</a></h1>
+
+Now let's get into the heart of EOF, editing songs. EOF has several edit modes and each one operates in a different fashion. In order to get the most out of EOF you will want to use an edit mode that you are comfortable with. Before we go there, you will need to have a song opened for editing.
+<br><br>
+<a href="edit.htm#create">Creating Songs</a><br>
+<a href="edit.htm#load">Loading Songs</a><br>
+<a href="edit.htm#save">Saving Songs</a><br>
+
+<h1><a name="create">Creating Songs</a></h1>
+To create a new song, select “File->New” from the menu. See "<a href="functions.htm#new">File->New</a>" for details.<br>
+
+<h1><a name="load">Loading Songs</a></h1>
+There are two ways to load a song in EOF. The first way applies to songs that were created using EOF. Select “File->Load” and navigate to the “notes.eof” file that is in the folder of the song you want to edit. The second way applies to songs that were created in other editors that you wish to work on in EOF. Select “File->MIDI Import” and navigate to the “notes.mid” file located in the folder of the song you want to edit. It is recommended that you not use MIDI Import if you have a corresponding “notes.eof” as each subsequent load and save will degrade the accuracy of the note positions in the song. Instead, if you are going to work on a project that was started in another editor, use MIDI Import the first time and Load it from “notes.eof” for subsequent edits.<br><br>
+EOF supports loading EOF projects and importing MIDI songs into EOF projects through the command line. You can configure your operating system to associate ".eof" with EOF so that double clicking them will automatically launch EOF and load the project. It is not recommended that you associate EOF with MIDI files as they are a standard music format and should be associated with a proper music player. If you install a new version of EOF in a different location you will need to reassociate ".eof" files if you want this feature to continue working.
+
+<h1><a name="save">Saving Songs</a></h1>
+To save your work, select “File->Save.” When you save your song, EOF saves three files: “notes.eof,” “notes.mid,” and “song.ini.” “Notes.eof” is the song data in EOF's native format. The “.eof” format holds the Artist, Title, Frettist, the precise positions of the notes and beat markers, and other project details. “Notes.mid” is the FOF compatible notes. “Song.ini” is the song information file used by FOF. Additionally, "guitar.ogg" will be created if one does not exist in the folder where the song files are being saved. If you are wondering why EOF doesn't just load and save directly from and to MIDI it is because I wanted to guarantee that the note positions would be exactly the same with each load/save. A lot of calculations are done to create a properly formatted MIDI file and inaccuracies in floating-point math could lead to slight changes in note positions over several editing sessions.<br>
+
+<h1><a name="edit">Edit Modes</a></h1>
+Before I describe the individual edit modes there are a few things that all edit modes have in common. Firstly, all editing takes place in the edit pane that is located across the top of the screen. There are four tabs corresponding to the four different difficulty settings in FOF. The tab that is pulled to the front is the one that is currently being edited. To pull another tab to the front just click on the tab you want. Difficulties which contain notes will have an asterisk (*).<br><br>
+In all edit modes notes are placed using the “pen.” In some modes the “pen” is positioned at the mouse's x position on the screen. In others it is located at the green song position marker. How the pen operates depends on which edit mode you are using.<br><br>
+
+<a href="edit.htm#eclassic">Classic Edit Mode</a><br>
+<a href="edit.htm#epiano">Piano Roll Edit Mode</a><br>
+<a href="edit.htm#ehold">Hold Edit Mode</a><br>
+<a href="edit.htm#erex">RexMundi Edit Mode</a><br>
+<a href="edit.htm#egtap">Guitar Tap Edit Mode</a><br>
+<a href="edit.htm#egstrum">Guitar Strum Edit Mode</a><br>
+
+<h1><a name="eclassic">Classic Edit Mode</a></h1>
+Classic edit mode is the original edit mode used by early versions of EOF. In this mode the “pen” has note toggles corresponding to the five note colors. To toggle them use the keys 1-5. Right-click to place a note at the position of the pen.
+
+<h1><a name="epiano">Piano Roll Edit Mode</a></h1>
+Piano Roll edit mode works similarly to MIDI sequencer programs. The note colors are selected by positioning the mouse where that note color would be on the fret board. To add a note, right-click the position you want to add a note. If there is already a note at the position you right-click the color you click will be toggled within the note that is already there.
+
+<h1><a name="ehold">Hold Edit Mode</a></h1>
+Hold edit mode is exactly the same as Classic mode except you don't toggle the note colors. Instead you hold the corresponding number (1-5) and right-click to add the note at the position of the pen.
+
+<h1><a name="erex">RexMundi Edit Mode</a></h1>
+RexMundi edit mode is exactly like Piano Roll mode except you use the keys 1-5 to toggle notes at the current pen position instead of right-clicking them.
+
+<h1><a name="egtap">Guitar Tap Edit Mode</a></h1>
+This mode is useful if you have a guitar controller hooked up to your computer and would like to tap out the notes on the fret buttons as the song plays. In this mode you cannot place cords.
+
+<h1><a name="egstrum">Guitar Strum Edit Mode</a></h1>
+This mode is similar to Guitar Tap except you must strum (assigned to Enter and Backslash keys) in order to place notes. This mode allows chords and will place notes as if you were actually playing the song in FOF.<br><br>
+
+<h1><a name="ekeys">Editor Keys</a></h1>
+In order to effectively use EOF you will need to familiarize yourself with the controls. Below is a list of all the controls you will need to know:<br><br>
+<b>Space Bar:</b><br>Play/Pause the music. Hold Control to play at half speed. Hold Shift to play the current catalog entry.<br><br>
+<b>Left/Right:</b><br>Use Left/Right to scroll through the song. To scroll faster, hold Shift. To scroll slower hold Control.<br><br>
+<b>Page Up/Page Down:</b><br>Seek to the previous/next beat marker.<br><br>
+<b>Right-Click/Insert (notes):</b><br>Add a new note to the song.<br><br>
+<b>Left-Click (notes):</b><br>Select the highlighted note for editing. Hold Control while clicking to select multiple notes. Hold Shift while clicking to select a range of notes.<br><br>
+<b>Left-Click+Drag (notes):</b><br>Move selected note(s).<br><br>
+<b>Mouse Wheel:</b><br>Scroll the mouse wheel up/down to change the length of the currently selected notes. Alternately, you can use the '[' and ']' keys to do the same.<br><br>
+<b>1-5:</b><br>Does different things with the note colors depending on the current edit mode.<br><br>
+<b>Left-Click (beats):</b><br>Select the highlighted beat.<br><br>
+<b>Left-Click+Drag (beats):</b><br>Move the beat marker. An anchor is automatically created when you move a beat marker. Surrounding BPMs will be adjusted automatically. An anchor will not move unless dragged (unless a <a href="functions.htm#bpmchange">manual BPM Change is added</a>), nonanchor beats will adjust to fit. Hold Shift when dragging a beat to prevent the notes within from being adjusted with the beat markers. Useful if you are beat syncing someone elses songs, for instance.<br><br>
+<b>Right-Click (beats):</b><br>Seek to the highlighted beat line.<br><br>
+For a full listing of available controls visit "Help->Keys" in the EOF menu.
+
+<h1><a name="notes">Notes</a></h1>
+In EOF songs are made up of Notes and Beat Markers. Each note can contain up to five colors allowing you to place chords as well as single notes. Note positions are stored in absolute time and are accurate to the millisecond. The length of the note is also stored as a duration in milliseconds.
+
+<h1><a name="beats">Beat Markers</a></h1>
+Beat markers appear on each beat throughout the entire song. You don't have to mind the beat markers in order to create a synchronized song but most people find it desirable to do so. EOF takes a different approach to beat markers compared to the other editors as it doesn't force your notes to line up with the beat markers. Instead, you are free to place your notes in sync with the audio and synchronize the beat markers later on. This allows you to quickly make a playable song and leaves it up to you whether or not you want to spend the extra time making the beat lines line up with the notes.
+
+<h1><a name="tracks">Tracks</a></h1>
+Originally Frets On Fire only allowed you to play one track per song. When Guitar Hero 2 came out FOF added support for playing Bass, Rhythm, and Lead Guitar tracks in addition to the standard Guitar track. EOF allows you to include all of these tracks if you so desire. By default, the Guitar track (PART GUITAR) is selected but you can choose another track by going to “Song->Track” and selecting the track you want to edit. PART DRUM is not currently supported by FOF but there are mods available from the community that allow you to play the drum track. You can add drums to your song without worrying as only FOF versions that support PART DRUM will recognize the track. If you want a mod with full support for PART DRUM, you will probably want to get FoFiX (the most actively developed version of FOF at the time of this writing).<br><br>
+Note that PART_GUITAR_COOP will be displayed as "Lead Guitar" in "Frets On Fire."
+
+<h1><a name="catalog">Catalog</a></h1>
+EOF provides you with a catalog where you can store your frets for the current song. If, for instance, you have a song that has a repeating guitar part, you simply select all the notes in that part and select "Song->Catalog->Add" from the menu to add them to the catalog. Once you have some notes in the catalog, you can open the catalog ("Song->Catalog->Show") and see the various catalog entries. Use the playback controls to show the various entries and play them back. You can paste notes from the catalog using the "Edit->Paste From->Catalog" menu item. "Paste From->Catalog" will paste the notes from the currently selected catalog entry into the song starting at the beat in which the position line is set.
+
+<h1><a name="events">Events</a></h1>
+Some Frets On Fire mods allow you to use additional events in your songs for things such as adding a solo section. EOF allows you to place events at any beat marker in the song  by first selecting a beat marker and then going to "Beat->Events" in the menu. From the "Events" dialog box use the "Add," "Edit," and "Delete" buttons to edit your events for the currently selected beat. You can view a list of all events for the entire song in "All Events" dialog ("Beat->All Events").<br><br>
+One neat thing you can do with events is add Practice mode sections to your song. To define a Practice mode section, simply add a text event to the beat where you want the section to start and name it "section whatever" where "whatever" is replaced with the name of the section as you want it displayed in the game.<br><br>
+Text events can also be used to define guitar solos but this method is deprecated (see "<a href="functions.htm#solos">Note->Solos</a>" for the correct way to define solo sections). Nonetheless, I will explain how to do so. To mark a solo section you simply add a text event at the start of the solo named "solo_on" and one at the end of the solo named "solo_off." Solos marked this way will appear in the Practice mode listing. Alternately, naming your event "section Guitar_Solo" or something containing the word "solo" will start a solo section. Solo sections defined this way will end when the next text event not containing the word "solo" is reached. You will need to define section markers where your solo sections are if you want them to show up in the Practice Mode listing.
+</BODY>
+</HTML>

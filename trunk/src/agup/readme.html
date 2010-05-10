@@ -1,0 +1,348 @@
+<html>
+<head>
+<title>The Allegro GUI Un-uglification Project</title>
+<style>
+body {margin-left: 10px; background-color: #fffefd; width: 750px;}
+p {margin-left: 20px; }
+pre {margin-left: 30px; background-color: #ffefdf}
+</style>
+</head>
+<body>
+<a name = "0"</a>
+<h1>The Allegro GUI Un-uglification Project</h1>
+<a name = "1"</a>
+<h2>Version 1.0</h2>
+<a name = "2"</a>
+<h1>Contents</h1>
+<ul>
+<li><a href="#0">
+The Allegro GUI Un-uglification Project</li></a>
+<ul>
+<li><a href="#1">
+Version 1.0</li></a>
+</ul>
+<li><a href="#2">
+Contents</li></a>
+<li><a href="#3">
+Introduction</li></a>
+<ul>
+<li><a href="#4">
+What it provides, so far</li></a>
+<li><a href="#5">
+The API</li></a>
+<li><a href="#6">
+About "the project"</li></a>
+<li><a href="#7">
+For C++ people</li></a>
+<li><a href="#8">
+Contacting</li></a>
+</ul>
+<li><a href="#9">
+The AGUP Bitmap Theme Engine</li></a>
+<ul>
+<li><a href="#10">
+Overview about the supported widgets</li></a>
+<ul>
+<li><a href="#11">
+Stock Allegro widgets</li></a>
+<ul>
+<li><a href="#12">
+keyboard, yield</li></a>
+<li><a href="#13">
+bitmap</li></a>
+<li><a href="#14">
+box, shadow_box, button, check, radio, icon</li></a>
+<li><a href="#15">
+clear</li></a>
+<li><a href="#16">
+text, ctext, rtext</li></a>
+<li><a href="#17">
+edit</li></a>
+<li><a href="#18">
+list, text_list, textbox</li></a>
+<li><a href="#19">
+slider</li></a>
+<li><a href="#20">
+menu</li></a>
+</ul>
+<li><a href="#21">
+Additional AGUP widgets</li></a>
+<ul>
+<li><a href="#22">
+push</li></a>
+<li><a href="#23">
+window</li></a>
+</ul>
+<li><a href="#24">
+Allegro Menus</li></a>
+<ul>
+<li><a href="#25">
+menu</li></a>
+<li><a href="#26">
+menu_item</li></a>
+<li><a href="#27">
+menubar</li></a>
+<li><a href="#28">
+menubar_item</li></a>
+</ul>
+</ul>
+<li><a href="#29">
+Which files do I need to provide for a bitmap theme?</li></a>
+<li><a href="#30">
+So, what goes into the agup.cfg file?</li></a>
+<li><a href="#31">
+Short descriptions what the bitmaps do</li></a>
+<ul>
+<li><a href="#32">
+clear, text</li></a>
+<li><a href="#33">
+box, shadowbox, window</li></a>
+<li><a href="#34">
+button icon buttonsel iconsel</li></a>
+<li><a href="#35">
+checkback radioback checkbacksel radiobacksel</li></a>
+<li><a href="#36">
+check radio checked radiosel</li></a>
+<li><a href="#37">
+textbox listbox edit</li></a>
+<li><a href="#38">
+cursor listsel</li></a>
+<li><a href="#39">
+scroll slideh slidev</li></a>
+<li><a href="#40">
+scroller sliderh sliderv</li></a>
+<li><a href="#41">
+menu menubar</li></a>
+<li><a href="#42">
+menuitem menubaritem</li></a>
+<li><a href="#43">
+menusep menucheck menusub</li></a>
+</ul>
+<li><a href="#44">
+How are bitmaps used?</li></a>
+<li><a href="#45">
+How can I set text colors?</li></a>
+<li><a href="#46">
+What else can I modify?</li></a>
+<li><a href="#47">
+What other advices are there?</li></a>
+</ul>
+</ul>
+<a name = "3"</a>
+<h1>Introduction</h1>
+<p>Let's be honest. When you see an Allegro dialog, don't you just want to stick your fingers down your throat, and make choking noises? Haven't you started your own GUI system before, simply because the GUI objects Allegro provides are *damned ugly*? Don't you wish Shawn had grown up with an Apple Macintosh, instead of an Atari ST?</p><p>The Allegro GUI Un-uglification Project is here to help. Its purpose is to make Allegro DIALOGs look *good*, so you don't have to choke yourself, reinvent lots of wheels, or wish a fate worse than death upon deity Shawn (lest you be struck down by the non-portability bug).</p><a name = "4"</a>
+<h2>What it provides, so far</h2>
+<p>Some sets of GUI objects which act almost exactly like Allegro's d_*_procs. *Almost*, because there are some very minor differences, which are described further below.</p><p>Here is the list of procs.</p><ul>
+<li>d_agup_box_proc</li>
+<li>d_agup_shadow_box_proc</li>
+<li>d_agup_button_proc</li>
+<li>d_agup_push_proc (1)</li>
+<li>d_agup_check_proc</li>
+<li>d_agup_radio_proc</li>
+<li>d_agup_icon_proc</li>
+<li>d_agup_edit_proc</li>
+<li>d_agup_list_proc</li>
+<li>d_agup_text_list_proc</li>
+<li>d_agup_textbox_proc</li>
+<li>d_agup_slider_proc</li>
+<li>d_agup_menu_proc</li>
+<li>d_agup_window_proc (2)</li>
+<li>d_agup_text_proc</li>
+<li>d_agup_ctext_proc</li>
+<li>d_agup_rtext_proc</li>
+<li>d_agup_clear_proc</li>
+</ul>
+<p>(1) d_agup_push_proc implements a "push" button, which I think is more useful than Allegro's "toggle" buttons. The dp3 field should point to a callback function, which will be called whenever the button is clicked (with the DIALOG entry as an argument), or NULL. The callback should have a function prototype of the form:</p><p>int foobar(DIALOG *d);</p><p>It will be passed the dialog entry that was pressed, and should return a value that will be passed back to the GUI control loop, e.g. D_O_K or D_CLOSE.</p><p>(2) d_agup_window_proc implements a window frame, which can be used in place of d_box_proc or d_shadow_box_proc. It expects the title of the window in the dp field, or NULL.</p><p>Additionally, each theme sets the following two Allegro menu callbacks to functions which render a themed menu:</p><ul>
+<li>gui_menu_draw_menu</li>
+<li>gui_menu_draw_menu_item</li>
+</ul>
+<a name = "5"</a>
+<h2>The API</h2>
+<p>AGUP can select from different widget sets ("themes") on the fly. You select the theme at initialisation, e.g.</p><pre> agup_init(agtk_theme);
+</pre>
+<p>Then to switch themes, shutdown the old one, and initialise the new:</p><pre> agup_shutdown ();
+ agup_init(awin95_theme);
+</pre>
+<p>Remember to shutdown again before the end of your program.</p><p>If you don't want to deal with global theme pointers, you can also get a theme by its name.</p><pre>AGUP_THEME *theme = agup_theme_by_name("Photon");
+</pre>
+<p>This will select the theme by its string name. The names for the non-bitmap themes are: "GTK", "Win95", "Photon", "BeOS", "NeXTStep", "ASE", "Allegro".</p><p>Bitmap themes will register with their theme-specific names as well. The two example bitmap themes use "Blue" and "Fleur de Lis".</p><p>There's one more function for bitmap themes. In order to not require bitmap themes to be compiled into the program, you need to load them before using. E.g.</p><pre> blue_theme = agup_load_bitmap_theme ("blue.cfg", NULL);
+</pre>
+<p>will load a new bitmap theme which is read from the file "blue.cfg". See the section about bitmap themes for information about how the actual bitmaps are found and loaded.</p><p>Also, if you only have need for one specific widget set, there's no need to use AGUPs theme functions: Just use the widget set you want directly (see the header files).</p><p>Furthermore, nothing stops you from using the stock Allegro dialogs at the same time as agup. In fact, things like e.g. d_text_proc can be quite useful to have colored text.</p><a name = "6"</a>
+<h2>About "the project"</h2>
+<p>So far, there are seven widget sets, so it's starting to become more of a project. Please consider contributing emulations of other widget sets. It does not have to look *exactly* the same as the original, just close enough to be recognised.</p><p>Here are some that I would like to see:</p><p>MacOS (Platinum?), Motif, SGI, or maybe your own (if it's not damned ugly ;)</p><p>Also send in bitmap themes which you would like to share with others, they will be hosted on the AGUP site, with your name displayed.</p><p>Thanks to Robert Ohannessian for stepping up and creating the first "3rd-party" widget set (awin95). As promised, there is now a wrapper layer.</p><p>Thanks to David A. Capello for creating the second 3rd-party widget set (aase).</p><p>[ Warning: The aase theme isn't 100% complete, and probably won't ever be completed. It will likely be removed in later versions of AGUP. ]</p><p>Thanks to Eric Botcazou for creating the fourth widget set (aphoton). Wow, that's really sweet!</p><p>Thanks to Elias Pschernig for creating the BeOS widget set. Very cool, and very yellow.</p><p>Thanks to Joao Neves for creating the NeXTStep widget set. My list of OS themes to emulate is diminishing :-)</p><p>Well, and thanks to Peter Wang for creating the first theme, and maintaining AGUP for so long. Hm, and who thanks me now again for creating the bitmap theme? Maybe the next maintainer should there ever be one.</p><a name = "7"</a>
+<h2>For C++ people</h2>
+<p>AGUP is basically a C library, but it can be compiled as C++ source too. You have two options:</p><p>(1) Compile AGUP as C, then include like so:</p><pre>  extern "C" {
+    #include "agup.h"
+  }
+</pre>
+<p>(2) Compile AGUP as C++.</p><a name = "8"</a>
+<h2>Contacting</h2>
+<p>See <a href="http://agup.sf.net">http://agup.sf.net</a>.</p><a name = "9"</a>
+<h1>The AGUP Bitmap Theme Engine</h1>
+<p>Everyone who tried creating his/her own Allegro GUI knows how hard it is to get it looking good. And the same applies for creating a new GUI theme inside AGUP - it requires to write a replacement for every single Allegro dialog as well as menus. This is why the bitmap engine might be useful. It only requires you to draw bitmaps, and specify which bitmap or part of a bitmap to use for Allegro's dialog elements. The amount of bitmaps is your choice, you can use a different bitmap for every single element and every state of it, or at the other extreme, draw the complete theme into one bitmap - or anything in between.</p><p>Of course, the drawback of a bitmapped theme is that it is possibly slower than the other themes - but not necessarily, especially if the provided bitmaps aren't too small, so there don't need to be multiple blits per widget. And other themes can be much slower than the bitmap engine, e.g. if they draw gradients line by line or even pixel by pixel. In this case, a bitmap is faster.</p><p>And then, the real proble, if you're not an artist, creating a bitmap theme will be much harder than writing replacement dialog procedures. But if you're not an artist, you need one anyway to make your program look good.</p><a name = "10"</a>
+<h2>Overview about the supported widgets</h2>
+<p>This contains a list of all the dialog elements, and a short description how the bitmap engine displays them - in order to aid in creating a new theme. The bitmap engine is accurate down to the pixel - so your themes will look perfect (of course, all the restriction of the Allegro GUI apply).</p><a name = "11"</a>
+<h3>Stock Allegro widgets</h3>
+<a name = "12"</a>
+<h4>keyboard, yield</h4>
+<p>These two are not provided by AGUP, since they are invisible.</p><a name = "13"</a>
+<h4>bitmap</h4>
+<p>This one is not provided by AGUP, since it is independent of the theme.</p><a name = "14"</a>
+<h4>box, shadow_box, button, check, radio, icon</h4>
+<p>They all can be customized with the bitmap engine..</p><a name = "15"</a>
+<h4>clear</h4>
+<p>This one is special, since it ignores its dimensions - so AGUP does the same. It can only be used as first element, and you should fill in the right dimensions anyway.</p><a name = "16"</a>
+<h4>text, ctext, rtext</h4>
+<p>Draw text. The specified bitmap is put just behind the text (not the entire DIALOG area).</p><a name = "17"</a>
+<h4>edit</h4>
+<p>Input text. In Allegro, this doesn't have any border, just like the text items. In AGUP, this is changed, and a 3 pixel border is added.</p><a name = "18"</a>
+<h4>list, text_list, textbox</h4>
+<p>Draw a list/text list/text box with a vertical scrollbar. The scrollbar of the stock Allegro GUI always is 12 pixels wide and right aligned - AGUP follows this of course.</p><a name = "19"</a>
+<h4>slider</h4>
+<p>Draws a horizontal or vertical slider.</p><a name = "20"</a>
+<h4>menu</h4>
+<p>Draws a menu bar. This is named "menubar" in the AGUP bitmap engine, and "menu" means an actual popup-menu.</p><a name = "21"</a>
+<h3>Additional AGUP widgets</h3>
+<a name = "22"</a>
+<h4>push</h4>
+<p>Like button, but with a callback instead of 2 states.</p><a name = "23"</a>
+<h4>window</h4>
+<p>Like box/shadow_box.</p><a name = "24"</a>
+<h3>Allegro Menus</h3>
+<a name = "25"</a>
+<h4>menu</h4>
+<p>This is the area of the complete menu. It has a border of one pixel at the top, and a border of 2 pixels at the bottom.</p><a name = "26"</a>
+<h4>menu_item</h4>
+<p>A single menu item.</p><a name = "27"</a>
+<h4>menubar</h4>
+<p>It has a border of 1 pixel to the left, and a border of 2 pixels to the right.</p><a name = "28"</a>
+<h4>menubar_item</h4>
+<p>A single menubar item.</p><a name = "29"</a>
+<h2>Which files do I need to provide for a bitmap theme?</h2>
+<p>All that is needed is a configuration file, and a set of bitmaps. There are various ways to pass them to AGUP, so for simplicity, lets consider some examples:</p><pre>agup_load_bitmap_theme (NULL, my_dat);
+</pre>
+<p>This will load a theme using the provided datafile "my_dat" to find all its data. The configuration file must be a binary object named "agup.cfg" inside the datafile. The bitmap names inside that agup.cfg will be found by passing them directly to find_datafile_object. For example, if the agup.cfg contains:</p><pre>box = box.bmp
+</pre>
+<p>Then my_dat should have a BITMAP element named "box.bmp" in it.</p><pre>agup_load_bitmap_theme ("my.dat", NULL);
+</pre>
+<p>Normally, themes are loaded externally, so just NULL is passed as datafile, and the file extension is used to determine what to do. In the above example, the loadeded theme will load "my.dat" when it is initialized later, and the datafile then is used in the same was as if it was passed directly (needs "agup.cfg" and bitmap objects inside it).</p><pre>agup_load_bitmap_theme ("my.cfg", NULL);
+</pre>
+<p>This will load the file "my.cfg" as configuration file, and pass bitmap names to load_bitmap. This means, you can use any bitmap names and formats that are understood by load_bitmap. This includes the special # separator, and handling of user registered formats like PNG or JPG with appropriate Allegro addons.</p><pre>agup_load_bitmap_theme ("my", NULL);
+</pre>
+<p>This will first try to find "my.dat", and if it is not found, try "my.cfg".</p><pre>agup_load_bitmap_theme (NULL, NULL);
+</pre>
+<p>If you pass NULL to both the path and the datafile, the current Allegro configuration is used to find the AGUP configuration. This requires a config section named "[agup.cfg]" to be present. If it is found, then its contents are used as agup.cfg. Bitmap names are directly passed to load_bitmap again. Note that you can use Allegro functions like set_config_file or override_config_file to specify where the configuration should be read from.</p><pre>agup_load_bitmap_theme ("my.dat", my_dat);
+</pre>
+<p>Rarely useful, but in this case, if "my.dat" fails to load, my_dat is used instead.</p><a name = "30"</a>
+<h2>So, what goes into the agup.cfg file?</h2>
+<p>At the top of the file, there must be this line:</p><pre>[agup.cfg]
+</pre>
+<p>Then there follow various options (read with Allegro's config file routines).</p><pre>name = &lt;string&gt;
+prefix = &lt;string&gt;
+suffix = &lt;string&gt;
+</pre>
+<p>That way, you can specify a name for theme, and a prefix/suffix to be prepended/appened to all the bitmap names. The name is currently unused.</p><p>For example:</p><pre>prefix = my/
+suffix = .png
+</pre>
+<p>will be useable to look for ".png" files in the directoy "my", i.e. instead of</p><pre>box = my/mybox.png
+</pre>
+<p>you can just use:</p><pre>box = mybox
+</pre>
+<p>Most important is of course the entries for all the different bitmaps. There's an entry for every bitmap, with 3 states each. (If not all entries are present, some bitmaps will inherit from others.) The "box" entry must be present, else the theme won't load.</p><p>Bitmaps marked with *M can contain transparency (color #ff00ff, or index 0 if a palette is used, like you know from Allegro).</p><ul>
+<li>box</li>
+<li>shadowbox</li>
+<li>button</li>
+<li>check *M</li>
+<li>radio *M</li>
+<li>icon</li>
+<li>scroller *M</li>
+<li>sliderh *M</li>
+<li>sliderv *M</li>
+<li>buttonsel</li>
+<li>iconsel</li>
+<li>scroll</li>
+<li>slidev</li>
+<li>slideh</li>
+<li>cursor *M</li>
+<li>menusep *M</li>
+<li>checked *M</li>
+<li>radiosel *M</li>
+<li>menucheck *M</li>
+<li>menusub *M</li>
+<li>edit</li>
+<li>list</li>
+<li>textbox</li>
+<li>menu</li>
+<li>menuitem</li>
+<li>menubar</li>
+<li>menubaritem</li>
+<li>window</li>
+<li>clear</li>
+<li>checkback</li>
+<li>checkbacksel</li>
+<li>radioback</li>
+<li>radiobacksel</li>
+<li>text</li>
+<li>listitem</li>
+</ul>
+<a name = "31"</a>
+<h2>Short descriptions what the bitmaps do</h2>
+<a name = "32"</a>
+<h3>clear, text</h3>
+<p>Background used for d_agup_clear_proc and d_agup_text_proc.</p><a name = "33"</a>
+<h3>box, shadowbox, window</h3>
+<p>Boxes, used by d_agup_box_proc, d_agup_shadow_box_proc, and d_agup_window_proc.</p><a name = "34"</a>
+<h3>button icon buttonsel iconsel</h3>
+<p>Buttons for d_agup_button_proc and d_agup_push_proc and d_agup_icon_proc. Plus each time a version for when D_SELECTED is set.</p><a name = "35"</a>
+<h3>checkback radioback checkbacksel radiobacksel</h3>
+<p>Background bitmaps for d_agup_check_proc and d_agup_radio_proc, with versions when D_SELECTED is set.</p><a name = "36"</a>
+<h3>check radio checked radiosel</h3>
+<p>Buttons for d_agup_check_proc and d_agup_radio_proc, plus versions when D_SELECTED is set. They can contain transparency, since they are drawn over the previous *back bitmaps.</p><a name = "37"</a>
+<h3>textbox listbox edit</h3>
+<p>Box for d_agup_textbox_proc, d_agup_list_proc/d_agup_text_list_proc and d_edit_proc.</p><a name = "38"</a>
+<h3>cursor listsel</h3>
+<p>Cursor for d_agup_edit_proc, and highlighted list line for the list procs. They can contain transparency, since they are drawn over their parent boxes.</p><a name = "39"</a>
+<h3>scroll slideh slidev</h3>
+<p>Frame for the scroller of textbox and list procs, and frames for horizontal and vertical sliders.</p><a name = "40"</a>
+<h3>scroller sliderh sliderv</h3>
+<p>Handles for the scroller and sliders. They can contain transparency, since they are drawn over the scroll/slideh/slidev bitmaps.</p><a name = "41"</a>
+<h3>menu menubar</h3>
+<p>Menu and menbar frames.</p><a name = "42"</a>
+<h3>menuitem menubaritem</h3>
+<p>Single menu items/menubar items. They can't be transparent because of the way Allegro menus work.</p><a name = "43"</a>
+<h3>menusep menucheck menusub</h3>
+<p>Menu separator, menu check mark, and submenu indicator. They can all be transparent and are drawn over the menuitem bitmap.</p><p>The 3 states for each element are normal, highlighted, and disabled. They are specified with &lt;name&gt; &lt;name_hl&gt; and &lt;name_dis&gt;. The _hl version is used when D_GOTFOCUS is set for an element, the _dis version with D_DISABLED. The hl and dis variants are inherited from the normal state if not specified. Again, it's best to leave them all in the config file, to avoid any confusion.</p><a name = "44"</a>
+<h2>How are bitmaps used?</h2>
+<p>A bitmap is used in the AGUP bitmap engine to fill a rectangular dialog area. You can provide many separate bitmaps, or use the "cut" option below to use areas inside bitmaps. In both cases, a bitmap will never get loaded twice - AGUP is clever enough and keeps track of what bitmaps it has already loaded since the last call to agup_init.</p><p>Each bitmap entry has the following format:</p><pre>&lt;bitmap&gt; = &lt;name&gt; [options]
+</pre>
+<p>Options are:</p><pre>[tile_h|sretch_h|center_h|align_h]
+[tile_v|sretch_v|center_v|align_v]
+[border &lt;l&gt; &lt;r&gt; &lt;t&gt; &lt;b&gt;]
+[cut &lt;x&gt; &lt;y&gt; &lt;w&gt; &lt;h&gt;]
+[color 0xrrggbb] (See next section)
+</pre>
+<p>&lt;bitmap&gt; may be any of the valid elements, &lt;name&gt; is the file/object name. A bitmap is either centered, stretched, or tiled across a dimension of the box it is used for. The tiling aligns in the center when no align option is set, else the top left corner is aligned with the top left screen corner.</p><p>The cut option can be used to use a sub-bitmap. That is, only the given pixel region out of the loaded bitmap is considered. So you can use this to create a skin bitmap, which contains everything on a certain position, and then just specify the positions with cut, always specifying the skin bitmap. The bitmap will be loaded only once, and subbitmaps used to draw the single widgets.</p><p>If a border is given, it is cut out off the given (sub-)bitmap. The 4 required numbers after 'border' are the pixels used as border to the left, right, top and bottom, respectively. A border results in splitting the source bitmap into 9 bitmaps like this:</p><pre> ______________
+/    |    |    \
+| lt | t  | rt |
+|____|____|____|
+|    |    |    |
+| l  | c  | r  |
+|____|____|____|
+|    |    |    |
+| lb | b  | rb |
+\____|____|____/
+</pre>
+<p>Only the center bitmap &lt;c&gt; is then used for filling the destination rectangle, the other 8 are used as a border.</p><p>The default is to tile the source bitmap across the destination rectangle, aligning at the center, and using no borders.</p><p>Examples:</p><pre>bitmap = test.bmp
+</pre>
+<p>Tiles &lt;test.bmp&gt; across the box, aligning its center with the box center.</p><pre>bitmap = test.bmp tileh stretchv border 8 8 4 4
+</pre>
+<p>Cuts a 8-8-4-4 border off &lt;test.bmp&gt;. It means, &lt;lt&gt;,&lt;rt&gt;,&lt;lb&gt; and &lt;rb&gt; are all sized 8 times 4 pixels, &lt;t&gt; and &lt;b&gt; are 4 pixels high and bitmap width minus 16 pixels wide, &lt;l&gt; and &lt;r&gt; are 8 pixels wide and bitmap height minus 8 pixels high. &lt;c&gt; is the rest. It then fills in the 4 edges &lt;lt&gt; &lt;rt&gt; &lt;lb&gt; &lt;rb&gt;. Tiles two 4 pixel high stripes at the top and bottom (&lt;t&gt; and &lt;b&gt;). Then scales &lt;l&gt; and &lt;r&gt; vertically and fills out the left and right border. Finally, scales &lt;c&gt; vertically, and tiles it horizontally, filling the remaing area in the middle.</p><pre>bitmap = test.bmp center
+</pre>
+<p>Centers &lt;test.bmp&gt; inside the box.</p><p>If the bitmap is too big to fit inside the target box, and no stretching is done, the following applies: If no border is used, it is centered in the box, and clipped at the sides. If a border is used, the &lt;c&gt; bitmap is reduced until it is completely gone. After that, the right and bottom borders overlap the left and top ones.</p><p>The above descriptions may sound complicated, but it should get clear when seeing it used. Just look at the example bitmap themes.</p><a name = "45"</a>
+<h2>How can I set text colors?</h2>
+<p>Some AGUP GUI elements require text to be displayed. In this case, the text is printed transparently on top of whatever bitmap the AGUP bitmap engine provides. But, just having a single color is often not enough, since the text is most important part of some widgets and therefore its color is very important.</p><p>The color being used for text can be specified with 'color'. It expects an RGB hex-triplet in the form '0xRRGGBB', for example '0xFF0000' is red. Colors are always inherited from their parent (and never from another state, unlike bitmaps). Therefore, if you want all your text to be in the same colors, it is sufficient to set the colors for the 'box' element.</p><a name = "46"</a>
+<h2>What else can I modify?</h2>
+<p>Currently, there are the following other settings: fg, bg, mg, px, py. They are the foreground, background and disabled colors, and the amount a clicked button is shifted.</p><a name = "47"</a>
+<h2>What other advices are there?</h2>
+<p>Don't make the bitmaps too small. There is no size optimizations applied, so if you tile a 1x1 sized bitmap across the screen, it will result into a blit for every pixel on the screen - which is much slower than say a few 32x32 blits. </p></body>
+</html>

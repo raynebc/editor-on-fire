@@ -1,0 +1,1261 @@
+EOF Version History
+-------------------
+
+1.63:
+
+Fixed bug which caused EOF to crash when importing a MIDI that doesn't have a
+tempo map.
+
+Fixed lefty mode PART_DRUM 3D preview.
+
+Increased maximum note length.
+
+Added PART_VOCALS note editing. Right-click/Insert adds a note, lyric, or
+changes the pitch of the clicked note. Scroll wheel changes note length.
+
+MIDI import now imports vocal notes for PART_VOCALS.
+
+Made 3D preview area into a full keyboard when viewing PART_VOCALS. Clicking on
+a key will play the note. Right-clicking a key will center the piano roll on
+that note.
+
+Added "Vocal Tones" option to the "Edit" menu. This allows you to hear the vocal
+notes as they are passed during playback. Also allows you to hear tones as you
+are editing. Thanks to raynebc for supplying the piano samples.
+
+Fixed PART_VOCALS phrase marking to adhere to the Rock Band standard. EOF will
+now place the beginning of the phrase slightly before the first selected note
+and the end of the phrase slightly after the end of the last selected note.
+
+Changed MIDI timing from 100 ticks per beat to 120. Should fix some issues with
+incorrect HOPOs in the exported MIDI file.
+
+Forced HOPO options now export correctly to the MIDI file. Before I was writing
+a "Note On" event where a "Note Off" event should have been.
+
+Added support for forced HOPOs to the MIDI import function.
+
+Added ability to play a selection. Holding 'S' while starting playback will play
+only the time from the beginning of the first selected note to the end of the
+last selected note.
+
+Added ability to play a vocal tone by hovering over the piano roll and pressing
+the 'P' key.
+
+Fixed MIDI import capable of reporting a percentage of completion greater than
+100%.
+
+Added vocal tones indicator to the information panel.
+
+Fixed bug which caused EOF to incorrectly report whether or not a difficulty
+setting has notes when using the keyboard shortcuts to cycle past PART_VOCALS.
+
+PART_VOCALS no longer displays difficulty tabs as they do not apply.
+
+Disabled "Note->Hopo" menu when viewing PART_VOCALS.
+
+Made a few minor changes to "keys.txt."
+
+Added "Split Lyric" function to "Note" menu. Insert spaces where you want the
+lyric to be split. Supports multiple splits per lyric.
+
+Made other PART_VOCALS related changes.
+
+Made catalog work with PART_VOCALS.
+
+"Edit->Paste From->Catalog" is now disabled when pasting would cause some notes
+to be overwritten.
+
+Slightly improved MIDI import track detection. Some MIDIs have unspecified
+tracks which could be imported incorrectly as PART_GUITAR.
+
+Right-click context menu (available in RexMundi input mode only) now only
+available when right-clicking in the editor pane.
+
+Added tenth-second markers to freatboard display.
+
+Fixed crash bug in Guitar Strum input method.
+
+Fixed "Note->Resnap" deselecting the last selected note.
+
+Fixed importing INI files with unicode text causing data to be truncated.
+
+Added support for mono and non-44100hz OGG playback to mixer. Now everything
+should stay synchronized no matter what kind of OGG is loaded (still should be
+44100hz stereo to work properly in FoF).
+
+Fixed bug which could cause EOF to crash if you cancelled loading an OGG when
+you loaded a chart from a directory that contained no "guitar.ogg" when another
+chart was already loaded.
+
+
+1.62:
+
+Fixed bug which caused the beat lines to be placed incorrectly while dragging a
+beat after changing the position of the first beat marker or changing the MIDI
+offset.
+
+Fixed issue with "Beat->Anchor."
+
+Fixed Star Power notes not being unmarked after removing Star Power phrases.
+
+Fixed issue with file permissions in Linux which could make it impossible to
+create new songs from scratch using the "Create New Folder" setting.
+
+Fixed bug which caused beat markers to be messed up when moving anchors.
+
+
+1.61:
+
+All text is now handled as UTF-8 internally.
+
+Many changes to internal code to allow proper handling of filenames with
+unicode characters.
+
+Updated fonts to include characters from 128-255. There should be fewer issues
+with song tags when importing MIDI files.
+
+Fixed issue with INI settings containing '=' when importing MIDI files.
+
+The 'T' key no longer activates the "Note->Toggle Crazy" menu item unless there
+are notes selected.
+
+MIDI import now properly tags "crazy" notes.
+
+Made OGG, claps, and metronome all mix into the same stream. It should now be
+impossible for the claps and metronome to become desynchronized with the music.
+
+BPM adjustments now affect solo and star power sections.
+
+Added new force HOPO options under the "Note" menu. These are currently not
+supported by FoFiX (as of 3.120 Final). These are exported using the Rock Band
+2 force HOPO notation.
+
+Lyric copy/paste now uses separate clipboard. This prevents some glitches and
+makes more sense given that PART_VOCALS is a different kind of track.
+
+Fixed issue with MIDI delta times being calculated incorrectly during MIDI
+export. The exported "notes.mid" should be completely accurate now. This should
+also improve the viability of EOF as a secondary fretting tool for those who
+prefer other tools but need some of EOF's features.
+
+Added new shortcut key ('G') to toggle grid snap. This replaces the old method
+of holding Control to disable grid snap.
+
+Fixed glitch with Ctrl+Tab shortcut which could cause multiple tracks to be
+marked as selected in the menu.
+
+
+1.6:
+
+Updated vorbis decoder to latest version.
+
+Unknown INI settings are now imported as custom INI settings when importing a
+MIDI.
+
+Implemented new CPU idling system (thanks Kris Asick) which does a better job
+giving time back to the OS. EOF should now use only what it needs to run. This
+feature is experimental and may be enabled by passing the command line argument
+"-newidle" when opening EOF.
+
+Fixed bug in "Song->Catalog->Delete" function which could cause catalog entries
+to be corrupted.
+
+Fixed potential yet highly unlikely crash bug when adding new notes.
+
+Modified build system to support 64-bit under Linux (thanks Lystestic).
+
+Improved solo marking.
+
+Added PART_VOCALS editing. Now you can add lyrics to your songs.
+
+Added new drum capabilities. Now, when you are editing PART_DRUM you can fret
+by playing the drums while the song is playing. Drum notes will appear at the
+grid snap position closest to the current playback position.
+
+Fixed issue which made the AV Delay setting work incorrectly. You should now be
+able to sync up the video and audio perfectly again.
+
+Fixed text event issue which could cause EOF to write corrupted MIDI files
+under certain circumstances.
+
+Fixed issue which caused "File->Save" to fail after having used "File->Save As"
+to save the song.
+
+The "Note->Toggle Crazy" command is now undoable.
+
+Increased maximum custom grid snap interval from 15 to 31.
+
+Fixed potential buffer overrun issues with dialog edit boxes.
+
+A few source fixes for Mac OS X.
+
+Other miscellaneous fixes.
+
+
+1.59:
+
+In the New Project wizard, the folder name under "Create New Folder" is now
+properly filled out with "ARTIST - TITLE" when converting from MP3.
+
+Fixed bug in the New Project wizard which caused the user to have to find and
+open "guitar.ogg" manually after the MP3 was converted.
+
+In the New Project wizard, renamed "Use OGG Folder" to "Use Source Audio's
+Folder" to avoid confusion.
+
+Fixed bug in "Song->Test In FOF" feature which made it impossible to test
+PART_DRUM tracks.
+
+Fixed OGG profile bug which caused the chart elements realign themselves to the
+"guitar.ogg" profile even when another profile is currently loaded.
+
+EOF now only deselects all notes when clicking in a blank area if the user is
+not holding Shift or Ctrl.
+
+Keyboard buffer is now cleared before showing a dialog.
+
+Backup file is now named after the loaded project. For example, loading
+"test.eof" will create a backup of "test.backup.eof" when the time comes to
+create a backup file.
+
+Fixed bugs which made it impossible to extend an existing solo or star power
+phrase.
+
+Fixed issue with deleting a beat that sits directly between two anchors. Now
+the beat is erased and the anchors stay put like they are supposed to.
+
+Added sanity checking to chart loading code to handle charts with corrupted
+data from earlier versions, specifically regarding solo and star power
+sections.
+
+trinidude4 added support for built-in MP3->OGG conversion on Mac when LAME and
+Vorbis tools are installed.
+
+Fixed issue with "Save As" which caused the "File "guitar.ogg" exists.
+Replace?" dialog to be confirmed if you pressed Enter in the "Save As" file
+dialog, not giving you a chance to select "No."
+
+Fixed issue with undo not marking the chart as modified if the undo was
+performed immediately after saving.
+
+Creating a new chart from a file called "guitar.ogg" with the "Use Source
+Audio's Folder" option no longer triggers an overwrite prompt for "guitar.ogg."
+"notes.eof," "notes.mid," and "song.ini" will still trigger the prompt if they
+exist in the folder with "guitar.ogg."
+
+When importing from a MIDI, EOF now imports star power from GH songs as star
+power instead of solos.
+
+Improved Solo/Star Power marking logic.
+
+Fixed bug in note auto-adjust code which could cause some notes to be merged in
+songs with more than one track.
+
+Added some safeguards against seeking past the end of the audio when using
+certain seek commands.
+
+EOF no longer prompts to overwrite "guitar.ogg" when using "Save As" to save a
+new ".eof" file in the folder of the currently loaded project.
+
+Fixed bug in New Project wizard which made EOF fail to recreate "guitar.ogg"
+when creating a new project from an existing OGG file.
+
+EOF now falls back to loading "guitar.ogg" profile if it fails to load the last
+selected profile when loading a new chart.
+
+EOF now resets the OGG profiles when importing a MIDI.
+
+Changed shortcut for "Edit->Selection->Select All" to Ctrl+E.
+
+Added Ctrl+S shortcut for "File->Save."
+
+MIDI export now uses the current OGG profile data when creating the "notes.mid"
+file.
+
+Added missing history for v1.58 to "history.txt."
+
+
+1.58:
+
+Fixed bug in the new project wizard which made it impossible to create a new
+song from scratch.
+
+Fixed bug in "song.ini" exporter which made "eighthnote_hopo" option not work.
+
+Fixed bugs in OGG profile handling. The last-used profile is now loaded
+automatically.
+
+Fixed crash bug in MIDI import when too many overdrive paths or solos are
+marked.
+
+Fixed bugs in "Beat->Delete" function.
+
+
+1.57:
+
+Fixed issue with GHWT "crazy" notes becoming unmarked after various note
+operations.
+
+Added shortcut key ('T') to toggle crazy notes.
+
+Fixed an omission from the version history under 1.56.
+
+
+1.56:
+
+EOF no longer creates an initial window before setting up the real window.
+
+Fixed changing window size in the Display dialog not working.
+
+Added initial support for BRE sections. Click the new "BRE" tab to place BRE
+notes. Typically a Big Rock Ending is defined by a five-note chord which runs
+then length of the BRE section.
+
+Added new Custom Grid Snap setting. Select "Custom" from the Grid Snap menu and
+enter the number of snap positions you want per beat. This function is similar
+to Feedback's Quantization Interval.
+
+Speed, HOPO view, and Grid Snap settings are now stored in the config file.
+
+Widened the Controller dialog.
+
+
+1.55:
+
+Added "Use Software Cursor" and "Force 8-Bit Color" options to the display
+dialog.
+
+Made EOF use the desktop color depth by default.
+
+The New Project wizard now reads the ARTIST and TITLE tags from the OGG file
+and fills in the information automatically. If the information is not available
+it is left blank.
+
+Made "Location for New Song" in the New Project wizard default to "Create New
+Folder" with the folder filled out as "ARTIST - TITLE" automatically.
+
+Fixed a bug with OGG profiles.
+
+Slightly improved Controllers dialog. Should help users who had issues with not
+being able to set up certain fret buttons.
+
+Added GHWT crazy notes support. Notes set as "crazy" ("Note->Toggle Crazy")
+will have a black dot in the middle. These notes will not be altered by the
+note cleanup code allowing you to make them overlap in odd ways. Note: FOF
+doesn't officially support these kinds of notes. Songs may not play as expected
+when using "crazy notes."
+
+
+1.51:
+
+Added command line option "-softmouse" to force EOF to draw it's own mouse
+cursor instead of trying to use the system mouse cursor. Use this if you have
+issues with the mouse flickering or disappearing.
+
+Fixed issues with OGG profiles which caused the chart to become corrupted under
+certain circumstances.
+
+Fixed "history.txt" under version 1.5 regarding the note lengths being slightly
+off when using grid snap. This issue was completely resolved and I forgot to
+update the history to reflect that.
+
+
+1.5:
+
+All new internal data structures allow more dynamic handling of memory and
+increase the speed of many operations.
+
+EOF will now clean up temporary files it creates during use.
+
+Made editing the catalog undoable.
+
+Input buffer now cleared after all alert dialogs.
+
+Fixed BPM in AVDelay song. Now the beat lines are in sync with the notes.
+
+Fixed note length being too short when grid snap is enabled. Notes will now
+stretch all the way to the next snap position like they are supposed.
+
+Fixed Click+Drag on fretboard area when no notes selected causing EOF to mark
+the chart as modified.
+
+Made new note graphics for the 3D preview.
+
+Added more information to the "Help->Keys" dialog.
+
+Added support for time signatures. Select a beat marker at the start of a
+measure and go to "Beat->Time Signature" on the menu to set the time signature.
+This has no effect on the MIDI output and is only there as an aid to editing.
+
+Fixed issue with notes being deleted during a note auto-adjusted when an anchor
+was moved.
+
+Invalid menu items are now greyed out when they are not valid to prevent the
+user from clicking them and to prevent confusion about what some functions are
+for.
+
+Fixed bookmark placement. Bookmarks are no longer affected by the AV Delay
+setting.
+
+Added asterisks to indicate which tracks and difficulties contain notes.
+
+Fixed issues with song being marker as modified when no modification occurred.
+
+EOF now imports text events from MIDI files.
+
+EOF now uses the OS mouse cursor when possible.
+
+Added option to load alternate OGG files while working on a project. Useful it
+you are working on a song with separated audio.
+
+EOF now uses far fewer system() calls.
+
+Added option to resnap selected notes using the current grid snap setting.
+
+Improved "Save" and "Save As" function now saves "guitar.ogg" if it doesn't
+exist in the save location.
+
+Added "New Song" wizard. Now it is much easier to create a new project.
+
+Made many improvements to the project creation code.
+
+You can now add Star Power and Solo sections to your songs.
+
+Context menus (in RexMundi input mode) now display options relevant to the area
+being right-clicked.
+
+Made both Shift and Ctrl keys work for shortcuts instead of just the left ones.
+
+Made new "Song Properties" dialog with more advanced features based on vectris'
+"Song.ini Generator 2.0."
+
+Fixed bug in edit boxes where text would display incorrectly sometimes if it was
+longer than the edit box.
+
+All new tutorial.
+
+Updated user's manual.
+
+New Linux source package is better organized thanks to suggestions made by Ryan
+King.
+
+Build instructions are now included in the source package.
+
+Added command line option "-desktop" to make EOF use the same color depth as
+the desktop. This could improve performance for some users.
+
+Many other fixes and improvements.
+
+
+1.42:
+
+Fixed bug in save routine which caused the catalog to become corrupted.
+
+Fixed deleting the only catalog entry and adding another one causing entry
+"0 of 1" to be selected. This could cause EOF to crash.
+
+Editing bookmarks is now undoable.
+
+Fixed doing "Beat->Add" causing the last beat in the song to be incorrectly
+positioned at 0 milliseconds.
+
+
+1.41:
+
+Fixed note auto-combine feature erasing notes when it shouldn't.
+
+
+1.4:
+
+Added shortcuts to "Paste From" menu.
+
+Fixed "Paste From->Catalog" giving some notes incorrect length.
+
+Made transposing notes undoable.
+
+Fixed deleted note not being deselected like it should.
+
+Fixed several issues with the fret catalog.
+
+Fixed keys "leaking" through the menus and causing some shortcuts to be
+inadvertantly activated.
+
+EOF will now quit checking for MP3 support after it has been found. The program
+should now open much quicker for those who have libvorbis and lame installed.
+
+EOF now automatically backs up your charts after every 10 changes.
+
+Improved MIDI import. Now songs import perfectly.
+
+Enlarged Events dialogs to make longer event names readable.
+
+Added "Beat->All Events" dialog which lists all events in the song and their
+timestamps and allows you to seek directly to a specific event.
+
+Undo system now caches undo states to disk to conserve memory.
+
+Clipboard now caches notes to disk to conserve memory.
+
+EOF now only uses memory for MIDI import while that feature is in use. This
+cuts memory usage significantly.
+
+Made some minor changes to the undo system.
+
+Added "Save As" option to save your project in a new location with whatever
+filename you want.
+
+Added options to seek to previous/next screen. Can be accessed through the menu
+or by the shortcuts Ctrl+PGUP and Ctrl+PGDN respectively.
+
+Fixed problem where adding a BPM change with "Adjust Notes" selected would
+cause notes to be added that shouldn't have been.
+
+Fixed issue where claps wouldn't sound when switching switching difficulties or
+tracks during playback.
+
+"Adjust notes to new offset?" dialog now accepts the Y and N keys as shortcuts.
+
+Added "Beat->Add Beat" to add a beat after the selected beat marker and
+readjust the bpm of the previous anchor to make all the beat markers fit
+evenly.
+
+Added options in the "Beat" menu to push the MIDI offset back/up by one beat.
+
+Fixed issue where events would be attached to the wrong beats after doing an
+operation which adds or deletes beats.
+
+Updated 3D engine for preview. Now looks much better in higher resolutions and
+renders a little faster.
+
+Updated "keys.txt" to bring some new shortcuts to light.
+
+Adjusting the MIDI offset from "Song->Properties" no longer asks you if you
+want to adjust notes if there are none.
+
+Added "Note Auto Adjust" option to "Preferences." When it is checked, EOF will
+adjust notes when moving anchors and holding Shift while doing so will disable
+the note adjustment. Otherwise, holding Shift will enable the note adjustment.
+This applies when adjusting the MIDI offset when moving the first beat markaer
+as well.
+
+Made changing note lengths and toggling anchors undoable.
+
+Added "Song->INI Settings" menu option. This option allows you to define
+additional INI settings for your song.
+
+Catalog now remembers which track the frets are from so they will display
+properly when working with multiple tracks.
+
+EOF now remembers the last "frettist" so you don't have to reenter it for every
+song you make. You can still change it from "Song->Properties" if you need to.
+
+Notes at the same position are now combined automatically.
+
+Bookmarks and catalog entries now properly adjust when the MIDI offset is
+changed and the notes are moved.
+
+Updated user manual.
+
+
+1.36:
+
+Fixed asterisk (*) staying in window title after save operation.
+
+Fixed deleting note with Delete key not undoable.
+
+Added shortcut to access "Edit->Clap Notes" menu.
+
+Fixed Alt+Tab task switching causing Tab key to get "stuck" and cycling the
+difficulties indefinitely.
+
+Added Y/N shortcut keys to Yes/No dialogs.
+
+Added "Adjust Notes" check box to the BPM Change dialog. Notes will only be
+adjusted if the check box is selected.
+
+Fixed Page Up/Page Down not working properly after seeking to a bookmark.
+
+Updated the way some information displays in the information panel.
+
+Fixed bug where songs path was overwritten after it was loaded from the config
+file.
+
+EOF now asks you if you would like to save if you have unsaved changes when
+trying to exit the program or load another song.
+
+Adjusting the MIDI offset by dragging the first beat marker no longer triggers
+the "Adjust notes..." dialog when there are no notes on the board.
+
+Fixed MP3 support check for Linux and Mac. If you have vorbis-tools (oggenc)
+and LAME installed, EOF will show MP3 files in the file selector when you are
+creating a new song.
+
+
+1.35:
+
+Removed debug message from MP3 converter.
+
+EOF now detects availability of oggenc and LAME. If both are not available an
+error message is displayed and MP3 files won't be shown when creating a new
+song.
+
+Made Shift+Tab cycle difficulties backwards.
+
+Made Shift+Ctrl+Tab cycle tracks backwards.
+
+Changed Song Properties can now be undone.
+
+Fixed bug which made audio stutter when switching out of EOF while the song is
+playing and the metronome or clap sounds are enabled.
+
+EOF now displays an asterisk (*) in the title bar when there are unsaved
+changes.
+
+Window title is now properly updated after undo/redo operations.
+
+Window title now displays the track name when loading a song through a shell
+operation (e.g. launching from FOF Song Manager).
+
+Fixed issue with first note being selected when deselecting notes.
+
+Fixed issue with "Old Paste" putting notes in the wrong difficulty.
+
+Default zoom level now depends on selected screen mode.
+
+Added slight delay for Click+Drag to prevent accidental dragging of notes and
+beats.
+
+Fixed clapping issue that triggered a clap when starting playback past the last
+note in the song.
+
+Fixed issue in various dialogs where the edit box would only be selected when
+the mouse was over the topmost part.
+
+Deleting the last anchor no longer messes up the BPM at the previous anchor.
+
+Added selective claps. Now you can opt to have the claps occur only on specific
+note colors.
+
+Fixed issues with overlapping notes being created when placing notes at the
+very beginning of the song when mouse was positioned before the first beat
+marker.
+
+Fixed range select not working properly after dragging a note.
+
+Made bookmark color slightly brighter.
+
+Added "Song->Seek->Rewind" option to rewind to the last place you started
+playback.
+
+Starting/stopping song playback is now much smoother.
+
+Made "Paste From" operations undoable.
+
+Added "Fret Catalog" functionality. Use it to mark off repeating sections of a
+song, paste the notes at the current position, and check for note variations.
+
+EOF will now ask if you want to adjust the note positions when changing the
+MIDI offset.
+
+Notes positions and lengths will now automatically be adjusted when adding BPM
+changes and moving anchors. Hold Shift while dragging an anchor to prevent the
+adjustment.
+
+Added new "Feedback" input method. Some EOF features may be missing from this
+mode. Also, not all Feedback features are emulated.
+
+
+1.32:
+
+Fixed problems with audio stuttering when switching out of EOF.
+
+Fixed seeking issues.
+
+Added error message when no folder name specified when creating a new song.
+
+Added multiple bookmarks. Press Ctrl+0-9 on the number pad to add a bookmark.
+Press 0-9 on the number pad to seek to that bookmark.
+
+Added ability to seek to the first and last note of the song. Press Ctrl+Home
+and Ctrl+End respectively.
+
+Automatic MP3-to-OGG conversion now automatically converts the output to
+44100hz. This should alleviate all of the speed issues people have been having.
+
+Fixed issue with incorrect claps when switching difficulties during music
+playback.
+
+Fixed overlapping notes issue when changing the length of notes.
+
+Fixed glitch which caused a note to be displayed in the wrong position while it
+was being dragged.
+
+
+1.31:
+
+Added ability to zoom in and out with the number pad +/- keys.
+
+Added playback speed shortcuts. Use ':' to slow down and '"' to speed up. These
+shortcuts cannot be used while the song is playing.
+
+Fixed issue with incorrect claps when switching tracks during music playback.
+
+Fixed menu not closing completely when using certain combinations of keyboard
+and mouse.
+
+Removed Alt+Space and Alt+Control+Space playback shortcuts.
+
+
+1.3:
+
+Fixed problems with audio stuttering when switching out of EOF.
+
+Fixed some minor rendering issues.
+
+Warning is now displayed if imported OGG is not 44100hz stereo.
+
+Made negative MIDI offset invalid. If you enter a negative value it will be set
+to 0.
+
+Enhanced copy/paste function to scale pasted notes to fit the beat markers at
+the paste position. The old paste functionality is still available under
+"Edit->Old Paste" if you need it.
+
+Fixed keyboard buffer not being cleared when using shortcut keys to get to some
+dialog boxes.
+
+New and Load functions now remember the last place a file was selected. Now you
+don't have to browse back and forth between your EOF song folder and your music
+library.
+
+Fixed bug in Windows file selector which made it not work under certain
+conditions.
+
+Fixed bug in Linux which made automatic conversion of MP3 to OGG not work.
+
+Fixed bug that made drum tracks display the notes incorrectly in the editor
+window when using the RexMundi input method.
+
+Added bookmarks. Press F7 to bookmark your position. Press F8 to seek to the
+bookmark position.
+
+Paste operation is now undoable.
+
+Fixed menu closing when user clicks it after opening it with one of the menu
+shortcuts.
+
+Split up user preferences and settings. Preferences are now located in the
+"File->Preferences" dialog.
+
+Added a "CPU Saver" option. Adjust the slider to change the amount of CPU EOF
+will use. EOF will still use full CPU when song is playing for now.
+
+Fixed bug which caused selected notes to become deselected in certain circum-
+stances.
+
+Added alternate display modes in case the default fails.
+
+Fixed issue with keyboard buffer not being cleared after a dialog is closed.
+
+Made Enter key only place a new note if input mode is Classic or Hold.
+
+Fixed bug which made grid snap malfunction with small snap settings in certain
+circumstances.
+
+Added support for text events. Go to "Beat->Events" to edit the events for a
+particular beat marker. Event text will have to be entered manually for now.
+
+Added support for larger window sizes. Use "File->Display" to change the size
+of the program window. If you set a window size that's equal to or greater than
+the current desktop resolution, the program will run in full screen. Note: EOF
+is not designed to be run in full screen and may exhibit strange and unwanted
+behavior when in that mode.
+
+Added more info to "Help->Keys."
+
+Drum tracks with name "PART DRUMS" now import correctly when using MIDI import.
+
+Added more playback speed shortcuts. Now press Alt+Space for 75% speed and Alt+
+Ctrl+Space for 25% speed.
+
+Added more zooming options.
+
+Updated icon graphic.
+
+
+1.21:
+
+Fixed bug that made the MIDI offset impossible to move in certain situations.
+
+Fixed issue with music playing as static on PowerPC based Macintosh systems.
+
+Fixed issue with menu going crazy when you activate it.
+
+Fixed crashing bug when pasting notes past the end of the song.
+
+Changed beat rewind/forward shortcut from Alt+Left/Right to Page Up/Page Down.
+
+Made menu keyboard shortcuts activate the menu like they are supposed to.
+
+Changed Alt+Right-Click to Shift+Right-Click to create 0-length notes.
+
+Paste operation now properly selects the newly pasted notes.
+
+
+1.2:
+
+Fixed FOF link not saving properly.
+
+Fixed anchor bug when moving an anchor that is next to another anchor.
+
+Added "Beat->Delete" to the "Beat" menu. Use if you have too many beats between
+anchors and you need to delete some without having to redo your anchors. A new
+BPM will be calculated for the previous anchor automatically.
+
+Right-clicking a note in Piano Roll edit mode will now select that note as it
+should.
+
+Added trinidude4's "makefile.macosx" to the source package.
+
+Made Alt+# create 0-length notes in RexMundi input mode.
+
+Added "Edit->Playback Rate" menu option to set the speed of the audio playback.
+You can play back at 100%, 75%, 50%, or 25% of actual speed. Ctrl+Space will
+still play back at 50% speed regardless of the setting.
+
+Made Insert key work as a right-click for people without a second mouse button.
+
+Reduced memory usage significantly.
+
+Grid snap positions are now calculated more accurately.
+
+Updated "keys.txt" with some new information.
+
+Fixed seek to start messing up the timing of the claps and metronome ticks when
+used while song is playing.
+
+Added ability to configure where EOF saves your created songs. Go to "File->
+Song Folder" on the menu to configure.
+
+Added controller configuration for Guitar and Drums for use with "Guitar Strum"
+and "Guitar Tap" input methods.
+
+Reduced CPU usage in some areas of the program.
+
+Made some slight cosmetic changes to the UI.
+
+
+1.1:
+
+Added ability to move first beat marker to change the MIDI offset for the song.
+
+Made menu only activate when clicked to prevent song from cutting off when you
+accidentally move the mouse too high.
+
+Added ability to create non-tailed notes by holding Alt+Right-Click.
+
+Anchored beats are now truly anchored. Now your anchors won't disappear unless
+you manually delete them.
+
+Added encoder settings when converting from MP3 to OGG.
+
+Code restructured to enable porting to other platforms.
+
+Added Linux-specific system calls for song creation.
+
+Fixed a bug in "gametime.c" which prevented compiling on Linux.
+
+Lowered minimum buffer size for the OGG player to 1024.
+
+Fixed other minor glitches.
+
+Disabled "Link To FOF" feature in Linux version until I can figure out how to
+make it work.
+
+Added installation instructions to "readme.txt."
+
+Added "Disable VSync" option to settings.
+
+
+1.03:
+
+Rewrote range select algorithm. Should fix all bugs related to range select and
+copy/paste.
+
+Fixed HOPO notes not being recalculated after a paste operation.
+
+
+1.02:
+
+Added ability to seek to previous/next beat. Hold Alt while pressing Left or
+Right to seek to the previous or next beat respectively.
+
+Added ability to seek to a specific beat by right clicking the top of the beat
+marker.
+
+Fixed bug where note length couldn't be changed when certain grid snap settings
+were selected.
+
+Fixed some minor rendering issues where the AV delay setting wasn't being
+accounted for.
+
+
+1.01:
+
+Fixed bug that was causing note range select to malfunction sometimes.
+
+
+1.0:
+
+Added scroll bar to editor pane. Now you can quickly navigate through a song.
+
+Added new control types (Guitar Tap and Guitar Strum).
+
+Improved information pane.
+
+Added keys to change length of notes (for people without mouse wheel). Use the
+'[' and ']' keys to shorten and lengthen notes respectively.
+
+Added ability to make smaller changes to note length by holding Control while
+changing the length. Does not have an effect in snap modes.
+
+Window title is now properly updated when importing a MIDI.
+
+Added user manual and tutorial to the package and linked to them from the Help
+menu.
+
+Updated quick keys dialog ("Help->Keys").
+
+Fixed memory leaks when loading and/or creating more than one song in a single
+EOF session.
+
+Fixed MIDI export note velocity bug.
+
+Fixed note length snap for 1/12, 1/24, and 1/48 notes.
+
+Fixed snap menu not updating when using snap mode shortcut keys.
+
+Fixed information pane not showing correct snap mode.
+
+Fixed bug when linking to FOF when Windows UI features are disabled.
+
+Fixed bug when cancelling New or Load operations which messed up the window
+title.
+
+Fixed bug with pen note length where the length was not being displayed
+correctly.
+
+Fixed bug with new notes not always being selected as they should be.
+
+
+0.996:
+
+Added claps and metronome shortcut keys ('K' and 'M' respectively) and
+corresponding info to the information panel.
+
+Fixed metronome/claps bugs for rewind/forward and slow-motion playback.
+
+Fixed metronome/claps bug which caused audio stuttering when moving mouse over
+the menu.
+
+
+0.995:
+
+Added Claps and Metronome sounds!
+
+
+0.99:
+
+Added snapping option for 1/12 notes.
+
+Added snap info to the information pane.
+
+Added shortcut keys to change the snap mode ("," to previous mode, "." to next
+mode).
+
+Changed slow-mo key from Shift to Control.
+
+Fixed overlapping notes bug.
+
+
+0.98:
+
+Added workaround for anchor being deleted while moving. Now unnecessary anchors
+won't be deleted until the mouse is released.
+
+Added an option to disable Windows native UI features for file selections and
+use the built-in selectors from the previous versions. Go to "File->Settings"
+and select "Disable Windows UI."
+
+
+0.97:
+
+Added HOPO views. Go to "Edit->HOPO" and select your view. Default is RF.
+
+Added new grid snapping options for 24th and 48th notes.
+
+Added an option to delete anchors. Go to "Beat->Delete Anchor" and the anchor
+will be deleted and the beat lines readjusted to match the remaining anchors.
+
+Fixed glitch in piano roll editor making placed notes appear slightly moved
+when you hover over them.
+
+Improved MIDI import algorithm, BPM changes should be more accurate.
+
+
+0.96:
+
+Added undo support. You can undo up to 8 times. Just select "Edit->Undo" or
+press Ctrl+Z.
+
+Fixed note range select bug where notes in all difficulties would be selected
+instead of just the ones in the current difficulty.
+
+
+0.95:
+
+Now uses Windows file select and folder select dialogs when in windowed mode.
+
+Updated UI to look more modern.
+
+Made menu to always show. Now you don't have to press tilde of alt to bring it
+up.
+
+Added full screen support. Press Alt+Enter to switch. EOF will remember the
+last selected mode and will launch in that mode. Implementation is incomplete
+at the moment, program will minimize when certain tasks are performed and you
+will have to manually switch back.
+
+Changed default edit mode to Piano Roll as I believe it is the most user
+friendly of all the modes.
+
+
+0.94:
+
+Added initial support for importing MP3s. If you import an MP3 it will
+automatically be converted to OGG (no settings yet).
+
+Added option to set a beat anchor by time (Beat->Anchor Beat).
+
+Added "Anchor All Beats" setting. If selected, all beats will be moveable. If
+disabled, only beats at BPM changes will be moveable.
+
+Added safeguard against moving a beat marker past previous/next beat marker.
+
+Fixed piano roll inserting additional colors in a note when using inverted
+notes.
+
+
+0.93:
+
+Added anchored beat support. Now you can move beats with the mouse and a new
+BPM will be calculated for the previous BPM change and, if there is another BPM
+change later in the song, the current BPM. The new BPMs are calculated as you
+move the anchored beat.
+
+Fixed bug that made the note length not be set for the new notes as advertised
+in the previous release. EOF was still setting the length to 100 despite what
+length was shown on the "pen."
+
+
+0.92:
+
+New input method: RexMundi  Hover the mouse where you want a note and press 1-5
+to place a new note. Alternately, if you are hovering over an existing note,
+1-5 will toggle the colors in that note.
+
+Added right-click menu (only available in RexMundi input mode for now).
+
+Made default note lengths to be dependant on which grid snap mode you are
+using. If snap is off it is still 100, but if snap is on the note will be the
+length of the snap (e.g. 1/8 snap makes the default length a 1/8 note).
+
+Added Speed and Zoom to the Edit menu. Speed is the speed of the 3D preview
+scrolling. Zoom is the zoom level of the edit panel.
+
+Empty notes are erased properly in piano roll mode.
+
+
+0.91:
+
+Fixed bug in Piano Roll mode where notes would disappear when they should be
+highlighted during music playback.
+
+
+0.9:
+
+Added new edit modes. Now you can choose from Classic, Hold (hold 1-5 and
+right-click to place notes), and Piano Roll. Go to "File->Settings" and choose
+your preferred method.
+
+Added command line support for MIDI import.
+
+MIDI import now load song information from the "song.ini" file.
+
+Fixed grid snap moving notes when trying to deselect.
+
+Fixed MIDI import. Now supports VPBM MIDIs.
+
+Fixed bug in MIDI import where meta events could overwrite the MIDI running
+status and cause some tracks to not import properly. Now loading of GH2 and 80s
+tracks works.
+
+
+0.89:
+
+Initial support for MIDI import. Only works for non-VBPM songs at the moment.
+Also, does not import settings from the song.ini file yet. You should not load
+and save to the MIDI directly. If you are going to open a MIDI and work on it
+during several sessions, you should load the EOF file for subsequent edits to
+ensure the note positions stay as accurate as possible.
+
+Pressing Enter to place notes now allows longer notes by holding the Enter key
+when the song is playing. If the song is paused, the default note length will
+still be applied.
+
+
+0.88:
+
+Playback controls and time displayed in upper right corner.
+
+The window title now shows the current part in addition to the song title.
+
+Snap to grid options. Set to off by default, select 1/4, 1/8, 1/16, or 1/32 to
+snap to that size note (1/4 is a whole beat). Affects new note placement as
+well as note moving.
+
+Now you can press Enter to place a note at the current position. Works while
+song is paused and while it is playing. Grid snap does not affect this feature.
+
+Fixed "Test In FOF" feature selecting wrong part and going out of range
+sometimes.
+
+
+0.87:
+
+Fixed saving problem with tempo track. Songs using default BPM will now save
+properly.
+
+
+0.86:
+
+Disabled some debugging stuff I had left enabled by accident.
+
+
+0.85:
+
+Support for PART DRUM added.
+
+Added command line launch support.
+
+
+0.8:
+
+VBPM support! Select the beat you want to edit the BPM of and go to "Beat->BPM
+Change" menu to set. Alternately, select the beat and some notes that occur on
+the beat and use "Beat->Calculate BPM" to do it automatically.
+
+
+0.7:
+
+Beat lines now appear in the Editor and 3D Preview panes.
+
+MIDI offset now taken into account when exporting MIDI and when drawing the
+beat lines.
+
+Position line in 3D Preview now drawn at the correct location for all AV delay
+settings.
+
+Notes Z position in 3D Preview slightly changed to be more accurate.
+
+
+0.69:
+
+Supports BPM other than the default 120. Go to "Song->Properties" to set.
+
+Added BPM calculator. Just select some consecutive notes that occur on the beat
+and go to the "Beat->Calculate BPM" menu item.
+
+Added support for additional song information. Now saves BPM, Frets By, and
+MIDI offset, the latter two also written to the INI file.
+
+Now updates INI file properly upon save.
+
+
+0.65:
+
+Lefty mode for 3D preview.
+
+Smooth playback mode (experimental). If playback isn't smooth for you, try this
+option.
+
+Added additional settings to the Settings screen (F10 or File->Settings) to set
+Inverted Notes, Lefty Mode, and Smooth Playback mode.
+
+3D preview borders drawn correctly.
+
+
+0.6:
+
+UI overhaul now uses more visually pleasing fonts, tabbed interface for
+difficulty selection, and a new 3D preview window!
+
+
+0.5:
+
+Transpose selected notes up or down by pressing Up or Down respectively.
+
+More options available in the menus. Shortcuts properly implemented for most menu
+items.
+
+Seek to start or end by pressing Home or End respectively.
+
+Press Tab to switch between difficulties.
+
+Press Ctrl+Tab to switch between parts.
+
+Notes with no tails will now light up properly during song playback.
+
+Properly deletes temporary files created by the MIDI exporter.
+
+Window title now updated properly when Song properties updated.
+
+Can't draw notes past end of song now.
+
+
+0.4:
+
+Added editing of "PART BASS", "PART COOP GUITAR", and "PART RHYTHM" parts.
+
+Internal fixes to MIDI exporter to support additional parts.
+
+
+0.3:
+
+Multinote Select by holding Ctrl and clicking.
+
+Note Range Select by holding Shift and clicking. All notes from last clicked to
+current note will be selected.
+
+Paste From (Edit Menu) allows you to easily copy notes between difficulties so
+you don't have to start from scratch for each difficulty.
+
+Select Like (Edit Menu) allows you to select notes that are like the current
+selected note. Useful for the next feature.
+
+Press Ctrl+(1-2-3-4-5) to toggle parts of the selected notes. E.g. If you have
+selected all notes that are Red+Blue+Purple, you can press Ctrl+5 to toggle the
+purple note on all selected notes (useful with Paste From and Select Like).
+
+Press Ctrl+I to toggle inverted notes. Choose the view that you prefer
+(preference is saved to eof.cfg).
+
+Fixed error in save routines which caused problems with 0-length notes.
+
+Fixed songs with multiple difficulties not saving correctly.
+
+
+Alpha:
+
+This is the first version.

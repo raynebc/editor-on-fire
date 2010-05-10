@@ -1,0 +1,1118 @@
+#include <allegro.h>
+#include "song.h"
+#include "event.h"
+
+EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
+{
+	EOF_SONG * sp;
+	EOF_NOTE * new_note = NULL;
+	int i, j;
+	char a;
+	int b, c, t, tl;
+	unsigned long lastppqn = 500000;
+	char buffer[1024];
+	
+	sp = eof_create_song();
+	if(!sp)
+	{
+		return NULL;
+	}
+	switch(version)
+	{
+		case 'G':
+		{
+			pack_fread(sp->tags->artist, 256, fp);
+			pack_fread(sp->tags->title, 256, fp);
+			sp->beat[0]->ppqn = 500000;
+			sp->beats = 1;
+			for(i = 0; i < 4; i++)
+			{
+				a = pack_getc(fp);
+				if(a)
+				{
+					pack_fread(buffer, 256, fp);
+					for(j = 0; j < EOF_OLD_MAX_NOTES; j++)
+					{
+						a = pack_getc(fp);
+						if(a)
+						{
+							new_note = eof_track_add_note(sp->track[i]);
+							new_note->type = pack_getc(fp);
+							new_note->note = pack_getc(fp);
+							new_note->pos = pack_igetl(fp);
+							new_note->length = pack_igetw(fp);
+							new_note->flags = pack_getc(fp);
+						}
+					}
+				}
+			}
+			return sp;
+		}
+		case '1':
+		{
+			pack_fread(sp->tags->artist, 256, fp);
+			pack_fread(sp->tags->title, 256, fp);
+			pack_fread(sp->tags->frettist, 256, fp);
+			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
+			eof_song_add_beat(sp);
+			sp->beat[0]->ppqn = pack_igetl(fp);
+			sp->beats = 1;
+			for(i = 0; i < 4; i++)
+			{
+				a = pack_getc(fp);
+				if(a)
+				{
+					pack_fread(buffer, 256, fp);
+					for(j = 0; j < EOF_OLD_MAX_NOTES; j++)
+					{
+						a = pack_getc(fp);
+						if(a)
+						{
+							new_note = eof_track_add_note(sp->track[i]);
+							new_note->type = pack_getc(fp);
+							new_note->note = pack_getc(fp);
+							new_note->pos = pack_igetl(fp);
+							new_note->length = pack_igetw(fp);
+							new_note->flags = pack_getc(fp);
+						}
+					}
+				}
+			}
+			return sp;
+		}
+		case '2':
+		{
+			pack_fread(sp->tags->artist, 256, fp);
+			pack_fread(sp->tags->title, 256, fp);
+			pack_fread(sp->tags->frettist, 256, fp);
+			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
+		
+			/* read beat info */
+			b = pack_igetl(fp);
+			eof_song_resize_beats(sp, b);
+			for(i = 0; i < b; i++)
+			{
+				sp->beat[i]->ppqn = pack_igetl(fp);
+				if(sp->beat[i]->ppqn != lastppqn)
+				{
+					sp->beat[i]->flags = EOF_BEAT_FLAG_ANCHOR;
+				}
+				else
+				{
+					sp->beat[i]->flags = 0;
+				}
+				lastppqn = sp->beat[i]->ppqn;
+				sp->beat[i]->pos = pack_igetl(fp);
+			}
+		
+			/* read tracks */
+			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			{
+				a = pack_getc(fp);
+				if(a)
+				{
+					pack_fread(buffer, 256, fp);
+					for(j = 0; j < EOF_OLD_MAX_NOTES; j++)
+					{
+						a = pack_getc(fp);
+						if(j < EOF_MAX_NOTES)
+						{
+							if(a)
+							{
+								new_note = eof_track_add_note(sp->track[i]);
+								new_note->type = pack_getc(fp);
+								new_note->note = pack_getc(fp);
+								new_note->pos = pack_igetl(fp);
+								new_note->length = pack_igetw(fp);
+								new_note->flags = pack_getc(fp);
+							}
+						}
+						else
+						{
+							if(a)
+							{
+								pack_getc(fp);
+								pack_getc(fp);
+								pack_igetl(fp);
+								pack_igetw(fp);
+								pack_getc(fp);
+							}
+						}
+					}
+				}
+			}
+			return sp;
+		}
+		case '3':
+		{
+			pack_fread(sp->tags->artist, 256, fp);
+			pack_fread(sp->tags->title, 256, fp);
+			pack_fread(sp->tags->frettist, 256, fp);
+			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
+		
+			/* read beat info */
+			b = pack_igetl(fp);
+			eof_song_resize_beats(sp, b);
+			for(i = 0; i < b; i++)
+			{
+				sp->beat[i]->ppqn = pack_igetl(fp);
+				sp->beat[i]->pos = pack_igetl(fp);
+				sp->beat[i]->flags = pack_igetl(fp);
+			}
+		
+			/* read tracks */
+			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			{
+				a = pack_getc(fp);
+				if(a)
+				{
+					pack_fread(buffer, 256, fp);
+					for(j = 0; j < EOF_OLD_MAX_NOTES; j++)
+					{
+						a = pack_getc(fp);
+						if(a)
+						{
+							new_note = eof_track_add_note(sp->track[i]);
+							new_note->type = pack_getc(fp);
+							new_note->note = pack_getc(fp);
+							new_note->pos = pack_igetl(fp);
+							new_note->length = pack_igetw(fp);
+							new_note->flags = pack_getc(fp);
+						}
+					}
+				}
+			}
+			return sp;
+		}
+		case '4':
+		{
+			pack_fread(sp->tags->artist, 256, fp);
+			pack_fread(sp->tags->title, 256, fp);
+			pack_fread(sp->tags->frettist, 256, fp);
+			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
+		
+			/* read beat info */
+			b = pack_igetl(fp);
+			eof_song_resize_beats(sp, b);
+			for(i = 0; i < b; i++)
+			{
+				sp->beat[i]->ppqn = pack_igetl(fp);
+				sp->beat[i]->pos = pack_igetl(fp);
+				sp->beat[i]->flags = pack_igetl(fp);
+			}
+		
+			/* read tracks */
+			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			{
+				a = pack_getc(fp);
+				if(a)
+				{
+					pack_fread(buffer, 256, fp);
+					for(j = 0; j < EOF_MAX_NOTES; j++)
+					{
+						a = pack_getc(fp);
+						if(a)
+						{
+							new_note = eof_track_add_note(sp->track[i]);
+							new_note->type = pack_getc(fp);
+							new_note->note = pack_getc(fp);
+							new_note->pos = pack_igetl(fp);
+							new_note->length = pack_igetw(fp);
+							new_note->flags = pack_getc(fp);
+						}
+					}
+				}
+			}
+			return sp;
+		}
+		case '5':
+		{
+			pack_fread(sp->tags->artist, 256, fp);
+			pack_fread(sp->tags->title, 256, fp);
+			pack_fread(sp->tags->frettist, 256, fp);
+			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
+		
+			/* read beat info */
+			b = pack_igetl(fp);
+			eof_song_resize_beats(sp, b);
+			for(i = 0; i < b; i++)
+			{
+				sp->beat[i]->ppqn = pack_igetl(fp);
+				sp->beat[i]->pos = pack_igetl(fp);
+				sp->beat[i]->flags = pack_igetl(fp);
+			}
+		
+			/* read events info */
+			t = pack_igetl(fp);
+			for(i = 0; i < t; i++)
+			{
+				pack_fread(buffer, 256, fp);
+				b = pack_igetl(fp);
+				eof_add_text_event(sp, b, buffer);
+			}
+		
+			/* read tracks */
+			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			{
+				a = pack_getc(fp);
+				if(a)
+				{
+					pack_fread(buffer, 256, fp);
+					for(j = 0; j < EOF_MAX_NOTES; j++)
+					{
+						a = pack_getc(fp);
+						if(a)
+						{
+							new_note = eof_track_add_note(sp->track[i]);
+							new_note->type = pack_getc(fp);
+							new_note->note = pack_getc(fp);
+							new_note->pos = pack_igetl(fp);
+							new_note->length = pack_igetw(fp);
+							new_note->flags = pack_getc(fp);
+						}
+					}
+				}
+			}
+			return sp;
+		}
+		case '6':
+		{
+			pack_fread(sp->tags->artist, 256, fp);
+			pack_fread(sp->tags->title, 256, fp);
+			pack_fread(sp->tags->frettist, 256, fp);
+			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
+		
+			/* read beat info */
+			b = pack_igetl(fp);
+			eof_song_resize_beats(sp, b);
+			for(i = 0; i < b; i++)
+			{
+				sp->beat[i]->ppqn = pack_igetl(fp);
+				sp->beat[i]->pos = pack_igetl(fp);
+				sp->beat[i]->flags = pack_igetl(fp);
+//				allegro_message("beat[%d]\nppqn = %d\npos = %d", i, sp->beat[i]->ppqn, sp->beat[i]->pos);
+			}
+		
+			/* read events info */
+			t = pack_igetl(fp);
+			for(i = 0; i < t; i++)
+			{
+				pack_fread(buffer, 256, fp);
+				b = pack_igetl(fp);
+				eof_add_text_event(sp, b, buffer);
+			}
+		
+			/* read tracks */
+			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			{
+				a = pack_getc(fp);
+				if(a)
+				{
+					pack_fread(buffer, 256, fp);
+					for(j = 0; j < EOF_MAX_NOTES; j++)
+					{
+						a = pack_getc(fp);
+						if(a)
+						{
+							new_note = eof_track_add_note(sp->track[i]);
+							new_note->type = pack_getc(fp);
+							new_note->note = pack_getc(fp);
+							new_note->pos = pack_igetl(fp);
+							new_note->length = pack_igetw(fp);
+							new_note->flags = pack_getc(fp);
+						}
+					}
+				}
+			}
+		
+			/* read bookmarks */
+			for(i = 0; i < 10; i++)
+			{
+				sp->bookmark_pos[i] = pack_igetl(fp);
+			}
+		
+			/* read fret catalog */
+			sp->catalog->entries = pack_igetl(fp);
+			for(i = 0; i < sp->catalog->entries; i++)
+			{
+				sp->catalog->entry[i].track = 0;
+				sp->catalog->entry[i].start_pos = pack_igetl(fp);
+				sp->catalog->entry[i].end_pos = pack_igetl(fp);
+				sp->catalog->entry[i].type = EOF_NOTE_AMAZING;
+			}
+			return sp;
+		}
+		case '7':
+		{
+			pack_fread(sp->tags->artist, 256, fp);
+			pack_fread(sp->tags->title, 256, fp);
+			pack_fread(sp->tags->frettist, 256, fp);
+			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
+			sp->tags->ini_settings = pack_igetw(fp);
+			for(i = 0; i < sp->tags->ini_settings; i++)
+			{
+				pack_fread(sp->tags->ini_setting[i], 512, fp);
+			}
+		
+			/* read beat info */
+			b = pack_igetl(fp);
+			eof_song_resize_beats(sp, b);
+			for(i = 0; i < b; i++)
+			{
+				sp->beat[i]->ppqn = pack_igetl(fp);
+				sp->beat[i]->pos = pack_igetl(fp);
+				sp->beat[i]->flags = pack_igetl(fp);
+			}
+		
+			/* read events info */
+			t = pack_igetl(fp);
+			for(i = 0; i < t; i++)
+			{
+				pack_fread(buffer, 256, fp);
+				b = pack_igetl(fp);
+				eof_add_text_event(sp, b, buffer);
+			}
+		
+			/* read tracks */
+			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			{
+				a = pack_getc(fp);
+				if(a)
+				{
+					pack_fread(buffer, 256, fp);
+					for(j = 0; j < EOF_MAX_NOTES; j++)
+					{
+						a = pack_getc(fp);
+						if(a)
+						{
+							new_note = eof_track_add_note(sp->track[i]);
+							new_note->type = pack_getc(fp);
+							new_note->note = pack_getc(fp);
+							new_note->pos = pack_igetl(fp);
+							new_note->length = pack_igetw(fp);
+							new_note->flags = pack_getc(fp);
+						}
+					}
+				}
+			}
+		
+			/* read bookmarks */
+			for(i = 0; i < 10; i++)
+			{
+				sp->bookmark_pos[i] = pack_igetl(fp);
+			}
+		
+			/* read fret catalog */
+			sp->catalog->entries = pack_igetl(fp);
+			for(i = 0; i < sp->catalog->entries; i++)
+			{
+				sp->catalog->entry[i].track = 0;
+				sp->catalog->entry[i].start_pos = pack_igetl(fp);
+				sp->catalog->entry[i].end_pos = pack_igetl(fp);
+				sp->catalog->entry[i].type = EOF_NOTE_AMAZING;
+			}
+			return sp;
+		}
+		case '8':
+		{
+			pack_fread(sp->tags->artist, 256, fp);
+			pack_fread(sp->tags->title, 256, fp);
+			pack_fread(sp->tags->frettist, 256, fp);
+			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
+			sp->tags->ini_settings = pack_igetw(fp);
+			for(i = 0; i < sp->tags->ini_settings; i++)
+			{
+				pack_fread(sp->tags->ini_setting[i], 512, fp);
+			}
+		
+			/* read beat info */
+			b = pack_igetl(fp);
+			eof_song_resize_beats(sp, b);
+			for(i = 0; i < b; i++)
+			{
+				sp->beat[i]->ppqn = pack_igetl(fp);
+				sp->beat[i]->pos = pack_igetl(fp);
+				sp->beat[i]->flags = pack_igetl(fp);
+			}
+		
+			/* read events info */
+			t = pack_igetl(fp);
+			for(i = 0; i < t; i++)
+			{
+				pack_fread(buffer, 256, fp);
+				b = pack_igetl(fp);
+				eof_add_text_event(sp, b, buffer);
+			}
+		
+			/* read tracks */
+			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			{
+				a = pack_getc(fp);
+				if(a)
+				{
+					pack_fread(buffer, 256, fp);
+					for(j = 0; j < EOF_MAX_NOTES; j++)
+					{
+						a = pack_getc(fp);
+						if(a)
+						{
+							new_note = eof_track_add_note(sp->track[i]);
+							new_note->type = pack_getc(fp);
+							new_note->note = pack_getc(fp);
+							new_note->pos = pack_igetl(fp);
+							new_note->length = pack_igetw(fp);
+							new_note->flags = pack_getc(fp);
+						}
+					}
+				}
+			}
+		
+			/* read bookmarks */
+			for(i = 0; i < 10; i++)
+			{
+				sp->bookmark_pos[i] = pack_igetl(fp);
+			}
+		
+			/* read fret catalog */
+			sp->catalog->entries = pack_igetl(fp);
+			for(i = 0; i < sp->catalog->entries; i++)
+			{
+				sp->catalog->entry[i].track = pack_igetl(fp);
+				sp->catalog->entry[i].start_pos = pack_igetl(fp);
+				sp->catalog->entry[i].end_pos = pack_igetl(fp);
+				sp->catalog->entry[i].type = EOF_NOTE_AMAZING;
+			}
+			return sp;
+		}
+		case '9':
+		{
+			pack_fread(sp->tags->artist, 256, fp);
+			pack_fread(sp->tags->title, 256, fp);
+			pack_fread(sp->tags->frettist, 256, fp);
+			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
+			sp->tags->ini_settings = pack_igetw(fp);
+			for(i = 0; i < sp->tags->ini_settings; i++)
+			{
+				pack_fread(sp->tags->ini_setting[i], 512, fp);
+			}
+		
+			/* read beat info */
+			b = pack_igetl(fp);
+			if(!eof_song_resize_beats(sp, b))
+			{
+				return 0;
+			}
+			for(i = 0; i < b; i++)
+			{
+				sp->beat[i]->ppqn = pack_igetl(fp);
+				sp->beat[i]->pos = pack_igetl(fp);
+				sp->beat[i]->flags = pack_igetl(fp);
+			}
+		
+			/* read events info */
+			b = pack_igetl(fp);
+			eof_song_resize_text_events(sp, b);
+			for(i = 0; i < b; i++)
+			{
+				pack_fread(sp->text_event[i]->text, 256, fp);
+				sp->text_event[i]->beat = pack_igetl(fp);
+			}
+		
+			/* read tracks */
+			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			{
+				b = pack_igetl(fp);
+				eof_track_resize(sp->track[i], b);
+				for(j = 0; j < b; j++)
+				{
+					sp->track[i]->note[j]->type = pack_getc(fp);
+					sp->track[i]->note[j]->note = pack_getc(fp);
+					sp->track[i]->note[j]->pos = pack_igetl(fp);
+					sp->track[i]->note[j]->length = pack_igetw(fp);
+					sp->track[i]->note[j]->flags = pack_getc(fp);
+				}
+			}
+		
+			/* read bookmarks */
+			for(i = 0; i < 10; i++)
+			{
+				sp->bookmark_pos[i] = pack_igetl(fp);
+			}
+		
+			/* read fret catalog */
+			sp->catalog->entries = pack_igetl(fp);
+			for(i = 0; i < sp->catalog->entries; i++)
+			{
+				sp->catalog->entry[i].track = pack_igetl(fp);
+				sp->catalog->entry[i].start_pos = pack_igetl(fp);
+				sp->catalog->entry[i].end_pos = pack_igetl(fp);
+				sp->catalog->entry[i].type = EOF_NOTE_AMAZING;
+			}
+			return sp;
+		}
+		case 'A':
+		{
+			pack_fread(sp->tags->artist, 256, fp);
+			pack_fread(sp->tags->title, 256, fp);
+			pack_fread(sp->tags->frettist, 256, fp);
+			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
+			sp->tags->ini_settings = pack_igetw(fp);
+			for(i = 0; i < sp->tags->ini_settings; i++)
+			{
+				pack_fread(sp->tags->ini_setting[i], 512, fp);
+			}
+		
+			/* read beat info */
+			b = pack_igetl(fp);
+			if(!eof_song_resize_beats(sp, b))
+			{
+				return 0;
+			}
+			for(i = 0; i < b; i++)
+			{
+				sp->beat[i]->ppqn = pack_igetl(fp);
+				sp->beat[i]->pos = pack_igetl(fp);
+				sp->beat[i]->flags = pack_igetl(fp);
+			}
+		
+			/* read events info */
+			b = pack_igetl(fp);
+			eof_song_resize_text_events(sp, b);
+			for(i = 0; i < b; i++)
+			{
+				pack_fread(sp->text_event[i]->text, 256, fp);
+				sp->text_event[i]->beat = pack_igetl(fp);
+			}
+		
+			/* read tracks */
+			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			{
+				b = pack_igetl(fp);
+				eof_track_resize(sp->track[i], b);
+				for(j = 0; j < b; j++)
+				{
+					sp->track[i]->note[j]->type = pack_getc(fp);
+					sp->track[i]->note[j]->note = pack_getc(fp);
+					sp->track[i]->note[j]->pos = pack_igetl(fp);
+					sp->track[i]->note[j]->length = pack_igetw(fp);
+					sp->track[i]->note[j]->flags = pack_getc(fp);
+				}
+			}
+		
+			/* read bookmarks */
+			for(i = 0; i < 10; i++)
+			{
+				sp->bookmark_pos[i] = pack_igetl(fp);
+			}
+		
+			/* read fret catalog */
+			sp->catalog->entries = pack_igetl(fp);
+			for(i = 0; i < sp->catalog->entries; i++)
+			{
+				sp->catalog->entry[i].track = pack_getc(fp);
+				sp->catalog->entry[i].type = pack_getc(fp);
+				sp->catalog->entry[i].start_pos = pack_igetl(fp);
+				sp->catalog->entry[i].end_pos = pack_igetl(fp);
+			}
+			return sp;
+		}
+		case 'B':
+		{
+			
+			/* read song info */
+			pack_fread(sp->tags->artist, 256, fp);
+			pack_fread(sp->tags->title, 256, fp);
+			pack_fread(sp->tags->frettist, 256, fp);
+	
+			/* read OGG data */
+			sp->tags->oggs = pack_igetw(fp);
+			for(i = 0; i < sp->tags->oggs; i++)
+			{
+				pack_fread(sp->tags->ogg[i].filename, 256, fp);
+				sp->tags->ogg[i].midi_offset = pack_igetl(fp);
+			}
+	
+			/* read file revision number */
+			sp->tags->revision = pack_igetl(fp);
+		
+			/* read INI settings */
+			sp->tags->ini_settings = pack_igetw(fp);
+			for(i = 0; i < sp->tags->ini_settings; i++)
+			{
+				pack_fread(sp->tags->ini_setting[i], 512, fp);
+			}
+		
+			/* read beat info */
+			b = pack_igetl(fp);
+			if(!eof_song_resize_beats(sp, b))
+			{
+				return 0;
+			}
+			for(i = 0; i < b; i++)
+			{
+				sp->beat[i]->ppqn = pack_igetl(fp);
+				sp->beat[i]->pos = pack_igetl(fp);
+				sp->beat[i]->flags = pack_igetl(fp);
+			}
+		
+			/* read events info */
+			b = pack_igetl(fp);
+			eof_song_resize_text_events(sp, b);
+			for(i = 0; i < b; i++)
+			{
+				pack_fread(sp->text_event[i]->text, 256, fp);
+				sp->text_event[i]->beat = pack_igetl(fp);
+			}
+		
+			/* read tracks */
+			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			{
+		
+				/* read solo sections */
+				sp->track[i]->solos = pack_igetw(fp);
+				for(j = 0; j < sp->track[i]->solos; j++)
+				{
+					sp->track[i]->solo[j].start_pos = pack_igetl(fp);
+					sp->track[i]->solo[j].end_pos = pack_igetl(fp);
+				}
+		
+				/* read star power sections */
+				sp->track[i]->star_power_paths = pack_igetw(fp);
+				for(j = 0; j < sp->track[i]->star_power_paths; j++)
+				{
+					sp->track[i]->star_power_path[j].start_pos = pack_igetl(fp);
+					sp->track[i]->star_power_path[j].end_pos = pack_igetl(fp);
+				}
+		
+				/* read notes */
+				b = pack_igetl(fp);
+				eof_track_resize(sp->track[i], b);
+				for(j = 0; j < b; j++)
+				{
+					sp->track[i]->note[j]->type = pack_getc(fp);
+					sp->track[i]->note[j]->note = pack_getc(fp);
+					sp->track[i]->note[j]->pos = pack_igetl(fp);
+					sp->track[i]->note[j]->length = pack_igetw(fp);
+					sp->track[i]->note[j]->flags = pack_getc(fp);
+				}
+			}
+		
+			/* read bookmarks */
+			for(i = 0; i < 10; i++)
+			{
+				sp->bookmark_pos[i] = pack_igetl(fp);
+			}
+			
+			/* read fret catalog */
+			sp->catalog->entries = pack_igetl(fp);
+			for(i = 0; i < sp->catalog->entries; i++)
+			{
+				sp->catalog->entry[i].track = pack_getc(fp);
+				sp->catalog->entry[i].type = pack_getc(fp);
+				sp->catalog->entry[i].start_pos = pack_igetl(fp);
+				sp->catalog->entry[i].end_pos = pack_igetl(fp);
+			}
+			return sp;
+		}
+		case 'C':
+		{
+			/* read file revision number */
+			sp->tags->revision = pack_igetl(fp);
+			
+			/* read song info */
+			tl = pack_igetw(fp);
+			pack_fread(sp->tags->artist, tl, fp);
+			sp->tags->artist[tl] = 0;
+			tl = pack_igetw(fp);
+			pack_fread(sp->tags->title, tl, fp);
+			sp->tags->title[tl] = 0;
+			tl = pack_igetw(fp);
+			pack_fread(sp->tags->frettist, tl, fp);
+			sp->tags->frettist[tl] = 0;
+			tl = pack_igetw(fp);
+			pack_fread(sp->tags->year, tl, fp);
+			sp->tags->year[tl] = 0;
+			tl = pack_igetw(fp);
+			pack_fread(sp->tags->loading_text, tl, fp);
+			sp->tags->loading_text[tl] = 0;
+			sp->tags->lyrics = pack_getc(fp);
+			sp->tags->eighth_note_hopo = pack_getc(fp);
+			
+			/* read OGG data */
+			sp->tags->oggs = pack_igetw(fp);
+			for(i = 0; i < sp->tags->oggs; i++)
+			{
+				pack_fread(sp->tags->ogg[i].filename, 256, fp);
+				sp->tags->ogg[i].midi_offset = pack_igetl(fp);
+			}
+			
+			/* read INI settings */
+			sp->tags->ini_settings = pack_igetw(fp);
+			for(i = 0; i < sp->tags->ini_settings; i++)
+			{
+				pack_fread(sp->tags->ini_setting[i], 512, fp);
+			}
+				
+			/* read beat info */
+			b = pack_igetl(fp);
+			if(!eof_song_resize_beats(sp, b))
+			{
+				return 0;
+			}
+			for(i = 0; i < b; i++)
+			{
+				sp->beat[i]->ppqn = pack_igetl(fp);
+				sp->beat[i]->pos = pack_igetl(fp);
+				sp->beat[i]->flags = pack_igetl(fp);
+			}
+				
+			/* read events info */
+			b = pack_igetl(fp);
+			eof_song_resize_text_events(sp, b);
+			for(i = 0; i < b; i++)
+			{
+				pack_fread(sp->text_event[i]->text, 256, fp);
+				sp->text_event[i]->beat = pack_igetl(fp);
+			}
+				
+			/* read tracks */
+			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			{
+				
+				/* read solo sections */
+				sp->track[i]->solos = pack_igetw(fp);
+				for(j = 0; j < sp->track[i]->solos; j++)
+				{
+					sp->track[i]->solo[j].start_pos = pack_igetl(fp);
+					sp->track[i]->solo[j].end_pos = pack_igetl(fp);
+				}
+				if(sp->track[i]->solos < 0)
+				{
+					sp->track[i]->solos = 0;
+				}
+				
+				/* read star power sections */
+				sp->track[i]->star_power_paths = pack_igetw(fp);
+				for(j = 0; j < sp->track[i]->star_power_paths; j++)
+				{
+					sp->track[i]->star_power_path[j].start_pos = pack_igetl(fp);
+					sp->track[i]->star_power_path[j].end_pos = pack_igetl(fp);
+				}
+				if(sp->track[i]->star_power_paths < 0)
+				{
+					sp->track[i]->star_power_paths = 0;
+				}
+				
+				/* read notes */
+				b = pack_igetl(fp);
+				eof_track_resize(sp->track[i], b);
+				for(j = 0; j < b; j++)
+				{
+					sp->track[i]->note[j]->type = pack_getc(fp);
+					sp->track[i]->note[j]->note = pack_getc(fp);
+					sp->track[i]->note[j]->pos = pack_igetl(fp);
+					sp->track[i]->note[j]->length = pack_igetw(fp);
+					sp->track[i]->note[j]->flags = pack_getc(fp);
+				}
+			}
+				
+			/* read bookmarks */
+			for(i = 0; i < 10; i++)
+			{
+				sp->bookmark_pos[i] = pack_igetl(fp);
+			}
+				
+			/* read fret catalog */
+			sp->catalog->entries = pack_igetl(fp);
+			for(i = 0; i < sp->catalog->entries; i++)
+			{
+				sp->catalog->entry[i].track = pack_getc(fp);
+				sp->catalog->entry[i].type = pack_getc(fp);
+				sp->catalog->entry[i].start_pos = pack_igetl(fp);
+				sp->catalog->entry[i].end_pos = pack_igetl(fp);
+			}
+			return sp;
+		}
+		case 'D':
+		{
+			/* read file revision number */
+			sp->tags->revision = pack_igetl(fp);
+			
+			/* read song info */
+			tl = pack_igetw(fp);
+			pack_fread(sp->tags->artist, tl, fp);
+			sp->tags->artist[tl] = 0;
+			tl = pack_igetw(fp);
+			pack_fread(sp->tags->title, tl, fp);
+			sp->tags->title[tl] = 0;
+			tl = pack_igetw(fp);
+			pack_fread(sp->tags->frettist, tl, fp);
+			sp->tags->frettist[tl] = 0;
+			tl = pack_igetw(fp);
+			pack_fread(sp->tags->year, tl, fp);
+			sp->tags->year[tl] = 0;
+			tl = pack_igetw(fp);
+			pack_fread(sp->tags->loading_text, tl, fp);
+			sp->tags->loading_text[tl] = 0;
+			sp->tags->lyrics = pack_getc(fp);
+			sp->tags->eighth_note_hopo = pack_getc(fp);
+			
+			/* read OGG data */
+			sp->tags->oggs = pack_igetw(fp);
+			for(i = 0; i < sp->tags->oggs; i++)
+			{
+				pack_fread(sp->tags->ogg[i].filename, 256, fp);
+				sp->tags->ogg[i].midi_offset = pack_igetl(fp);
+			}
+			
+			/* read INI settings */
+			sp->tags->ini_settings = pack_igetw(fp);
+			for(i = 0; i < sp->tags->ini_settings; i++)
+			{
+				pack_fread(sp->tags->ini_setting[i], 512, fp);
+			}
+				
+			/* read beat info */
+			b = pack_igetl(fp);
+			if(!eof_song_resize_beats(sp, b))
+			{
+				return 0;
+			}
+			for(i = 0; i < b; i++)
+			{
+				sp->beat[i]->ppqn = pack_igetl(fp);
+				sp->beat[i]->pos = pack_igetl(fp);
+				sp->beat[i]->flags = pack_igetl(fp);
+			}
+				
+			/* read events info */
+			b = pack_igetl(fp);
+			eof_song_resize_text_events(sp, b);
+			for(i = 0; i < b; i++)
+			{
+				pack_fread(sp->text_event[i]->text, 256, fp);
+				sp->text_event[i]->beat = pack_igetl(fp);
+			}
+				
+			/* read tracks */
+			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			{
+				
+				/* read solo sections */
+				sp->track[i]->solos = pack_igetw(fp);
+				for(j = 0; j < sp->track[i]->solos; j++)
+				{
+					sp->track[i]->solo[j].start_pos = pack_igetl(fp);
+					sp->track[i]->solo[j].end_pos = pack_igetl(fp);
+				}
+				if(sp->track[i]->solos < 0)
+				{
+					sp->track[i]->solos = 0;
+				}
+				
+				/* read star power sections */
+				sp->track[i]->star_power_paths = pack_igetw(fp);
+				for(j = 0; j < sp->track[i]->star_power_paths; j++)
+				{
+					sp->track[i]->star_power_path[j].start_pos = pack_igetl(fp);
+					sp->track[i]->star_power_path[j].end_pos = pack_igetl(fp);
+				}
+				if(sp->track[i]->star_power_paths < 0)
+				{
+					sp->track[i]->star_power_paths = 0;
+				}
+				
+				/* read notes */
+				b = pack_igetl(fp);
+				eof_track_resize(sp->track[i], b);
+				for(j = 0; j < b; j++)
+				{
+					sp->track[i]->note[j]->type = pack_getc(fp);
+					sp->track[i]->note[j]->note = pack_getc(fp);
+					sp->track[i]->note[j]->pos = pack_igetl(fp);
+					sp->track[i]->note[j]->length = pack_igetw(fp);
+					sp->track[i]->note[j]->flags = pack_getc(fp);
+				}
+			}
+				
+			/* read lyric track */
+			b = pack_igetl(fp);
+			eof_vocal_track_resize(sp->vocal_track, b);
+			for(j = 0; j < b; j++)
+			{
+				sp->vocal_track->lyric[j]->pos = pack_igetl(fp);
+				c = pack_igetw(fp);
+				pack_fread(sp->vocal_track->lyric[j]->text, c, fp);
+				sp->vocal_track->lyric[j]->text[c] = '\0';
+			}
+			sp->vocal_track->lines = pack_igetl(fp);
+			for(j = 0; j < sp->vocal_track->lines; j++)
+			{
+				sp->vocal_track->line[j].start_pos = pack_igetl(fp);
+				sp->vocal_track->line[j].end_pos = pack_igetl(fp);
+				sp->vocal_track->line[j].flags = 0;
+			}
+			
+			/* read bookmarks */
+			for(i = 0; i < 10; i++)
+			{
+				sp->bookmark_pos[i] = pack_igetl(fp);
+			}
+				
+			/* read fret catalog */
+			sp->catalog->entries = pack_igetl(fp);
+			for(i = 0; i < sp->catalog->entries; i++)
+			{
+				sp->catalog->entry[i].track = pack_getc(fp);
+				sp->catalog->entry[i].type = pack_getc(fp);
+				sp->catalog->entry[i].start_pos = pack_igetl(fp);
+				sp->catalog->entry[i].end_pos = pack_igetl(fp);
+			}
+			return sp;
+		}
+		case 'E':
+		{
+			/* read file revision number */
+			sp->tags->revision = pack_igetl(fp);
+			
+			/* read song info */
+			tl = pack_igetw(fp);
+			pack_fread(sp->tags->artist, tl, fp);
+			sp->tags->artist[tl] = 0;
+			tl = pack_igetw(fp);
+			pack_fread(sp->tags->title, tl, fp);
+			sp->tags->title[tl] = 0;
+			tl = pack_igetw(fp);
+			pack_fread(sp->tags->frettist, tl, fp);
+			sp->tags->frettist[tl] = 0;
+			tl = pack_igetw(fp);
+			pack_fread(sp->tags->year, tl, fp);
+			sp->tags->year[tl] = 0;
+			tl = pack_igetw(fp);
+			pack_fread(sp->tags->loading_text, tl, fp);
+			sp->tags->loading_text[tl] = 0;
+			sp->tags->lyrics = pack_getc(fp);
+			sp->tags->eighth_note_hopo = pack_getc(fp);
+			
+			/* read OGG data */
+			sp->tags->oggs = pack_igetw(fp);
+			for(i = 0; i < sp->tags->oggs; i++)
+			{
+				pack_fread(sp->tags->ogg[i].filename, 256, fp);
+				sp->tags->ogg[i].midi_offset = pack_igetl(fp);
+			}
+			
+			/* read INI settings */
+			sp->tags->ini_settings = pack_igetw(fp);
+			for(i = 0; i < sp->tags->ini_settings; i++)
+			{
+				pack_fread(sp->tags->ini_setting[i], 512, fp);
+			}
+				
+			/* read beat info */
+			b = pack_igetl(fp);
+			if(!eof_song_resize_beats(sp, b))
+			{
+				return 0;
+			}
+			for(i = 0; i < b; i++)
+			{
+				sp->beat[i]->ppqn = pack_igetl(fp);
+				sp->beat[i]->pos = pack_igetl(fp);
+				sp->beat[i]->flags = pack_igetl(fp);
+			}
+				
+			/* read events info */
+			b = pack_igetl(fp);
+			eof_song_resize_text_events(sp, b);
+			for(i = 0; i < b; i++)
+			{
+				pack_fread(sp->text_event[i]->text, 256, fp);
+				sp->text_event[i]->beat = pack_igetl(fp);
+			}
+				
+			/* read tracks */
+			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			{
+				
+				/* read solo sections */
+				sp->track[i]->solos = pack_igetw(fp);
+				for(j = 0; j < sp->track[i]->solos; j++)
+				{
+					sp->track[i]->solo[j].start_pos = pack_igetl(fp);
+					sp->track[i]->solo[j].end_pos = pack_igetl(fp);
+				}
+				if(sp->track[i]->solos < 0)
+				{
+					sp->track[i]->solos = 0;
+				}
+				
+				/* read star power sections */
+				sp->track[i]->star_power_paths = pack_igetw(fp);
+				for(j = 0; j < sp->track[i]->star_power_paths; j++)
+				{
+					sp->track[i]->star_power_path[j].start_pos = pack_igetl(fp);
+					sp->track[i]->star_power_path[j].end_pos = pack_igetl(fp);
+				}
+				if(sp->track[i]->star_power_paths < 0)
+				{
+					sp->track[i]->star_power_paths = 0;
+				}
+				
+				/* read notes */
+				b = pack_igetl(fp);
+				eof_track_resize(sp->track[i], b);
+				for(j = 0; j < b; j++)
+				{
+					sp->track[i]->note[j]->type = pack_getc(fp);
+					sp->track[i]->note[j]->note = pack_getc(fp);
+					sp->track[i]->note[j]->pos = pack_igetl(fp);
+					sp->track[i]->note[j]->length = pack_igetl(fp);
+					sp->track[i]->note[j]->flags = pack_getc(fp);
+				}
+			}
+				
+			/* read lyric track */
+			b = pack_igetl(fp);
+			eof_vocal_track_resize(sp->vocal_track, b);
+			for(j = 0; j < b; j++)
+			{
+				sp->vocal_track->lyric[j]->note = pack_getc(fp);
+				sp->vocal_track->lyric[j]->pos = pack_igetl(fp);
+				sp->vocal_track->lyric[j]->length = pack_igetl(fp);
+				c = pack_igetw(fp);
+				pack_fread(sp->vocal_track->lyric[j]->text, c, fp);
+				sp->vocal_track->lyric[j]->text[c] = '\0';
+			}
+			sp->vocal_track->lines = pack_igetl(fp);
+			for(j = 0; j < sp->vocal_track->lines; j++)
+			{
+				sp->vocal_track->line[j].start_pos = pack_igetl(fp);
+				sp->vocal_track->line[j].end_pos = pack_igetl(fp);
+				sp->vocal_track->line[j].flags = 0;
+			}
+			
+			/* read bookmarks */
+			for(i = 0; i < 10; i++)
+			{
+				sp->bookmark_pos[i] = pack_igetl(fp);
+			}
+				
+			/* read fret catalog */
+			sp->catalog->entries = pack_igetl(fp);
+			for(i = 0; i < sp->catalog->entries; i++)
+			{
+				sp->catalog->entry[i].track = pack_getc(fp);
+				sp->catalog->entry[i].type = pack_getc(fp);
+				sp->catalog->entry[i].start_pos = pack_igetl(fp);
+				sp->catalog->entry[i].end_pos = pack_igetl(fp);
+			}
+			return sp;
+		}
+	}
+	if(sp)
+	{
+		eof_destroy_song(sp);
+	}
+	return NULL;
+}

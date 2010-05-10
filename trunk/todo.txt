@@ -1,0 +1,168 @@
+Unversioned To-Do List
+----------------------
+[ ]INI import should see if file is unicode before processing.
+   [ ]Don't think there is a way to do this. Instead we should attempt to import as
+      usual and if the artist and title fields are empty, attempt to use unicode.
+[ ]Adjust timing of audio cues so that they peak at the time they are supposed
+   to be heard.
+[ ]Import/export vocal percussion data.
+[ ]Change 'l' character glyph as it is identical to the '1' glyph.
+[ ]Lyric edit dialog should have a place to put note and octave.
+[ ]Add extra vocal tracks that can be used as scratch space for vocal editing.
+
+
+EOF 1.7 To-Do List
+------------------
+
+[ ]Refactor code.
+   [ ]Make MIDI import/export into separate modules.
+   [ ]Make editor into separate modules.
+      [ ]Common module for things that are common to every edit mode.
+      [ ]Mode-specific modules for each input mode.
+   [ ]Make window logic/rendering modules.
+[ ]Add real MIDI time signature support.
+
+
+EOF 1.63 To-Do List
+-------------------
+
+[X]Change note->length from short to long.
+[X]MIDI import crashes if MIDI doesn't have BPM events in track 0.
+   [X]Causes NULL pointer access in eof_import_midi_to_eof_optimized().
+      [X]Need to default to 120 BMP.
+[X]Left flip causes bass drum note to be rendered all the way to the right.
+[X]Fix vocal phrase import.
+[X]Marking a vocal phrase should put the start slightly before the first selected
+   note and the end slightly after the end of the last note.
+[X]Finish PART_VOCALS support.
+  [X]Update structures to support all vocals features.
+  [X]Add pitch editing to interface.
+[X]Keyboard displays should highlight the currently playing note during song
+   playback.
+[X]Add piano audio cue system.
+   [X]Record piano samples for notes 36-84.
+   [X]Add piano cue channel to mixer.
+   [X]Play back lyric note.
+   [X]Fix piano samples.
+[X]Add mini keyboard to left side of vocals display.
+   [X]Clicking a key should play the note.
+   [X]Don't allow clicking outside of keyboard image to trigger samples.
+[X]Add option for vocal note playback.
+[X]Fix vocal copy/paste (needs to save the new information).
+[X]Change 3D preview for vocals.
+   [X]Add 49 key keyboard display with functioning keys.
+[X]Change timing of exported MIDIs to 120 ticks per beat (divisible by 12 so we
+   can get exact 12th notes to fix HOPO errors).
+[X]Import forced HOPO.
+[X]Add option to play selection, similar to how catalog works.
+[X]Should be able to hold the mouse button while sweeping the big piano to find
+   notes more easily.
+[X]Disable tabs when viewing PART_VOCALS.
+   [X]Maybe make vocals-specific tabs.
+[X]Add option to shift a vocal note by once octave in either direction.
+   [X]Ctrl+Up/Down maybe?
+[X]The instrument difficulty populated identifying asterisk on the difficulty
+   tab doesn't update correctly when using the keyboard shortcuts to seek past
+   the PART VOCALS track in either direction.
+[X]Right-click to place a vocal note should play the tone as well so you can
+   hear what note you are placing.
+[X]Disable HOPO menu when viewing PART_VOCALS as it is not relevant.
+[X]Display more vocal information in the Information panel.
+   [X]Replace note info with lyric info.
+[X]Add support for overdrive to PART_VOCALS.
+   [X]Import and export properly.
+   [X]Add option to toggle overdrive to "Note->Lyric Lines" menu.
+   [X]Add flags to lyric line structure, needed for overdrive markers.
+[X]Should enable catalog for PART_VOCALS now that it can be useful.
+   [X]Paste from catalog should be disabled when viewing a track incompatible
+      with the current catalog entry.
+   [X]Disable catalog paste when seeked inside a catalog entry.
+[X]Mini piano clicks should take precedence over editor clicks.
+[X]Update documentation.
+   [X]Fix "keys.txt."
+      [X]'apostrophe' misspelled.
+      [X]Add missing shortcuts keys.
+      [X]Instrument tracks should be changed to tracks in some places.
+[X]Look into making a function to split a lyric into two pieces.
+[X]Change color of overdrive vocal phrases.
+[X]Highlight the tone of the currently selected vocal note on the piano.
+[X]Ctrl+Click on the piano should move the currently selected vocal note to the
+   clicked tone.
+[X]Fix right-clicking piano in RexMundi mode.
+[X]Add tenth-second lines to the time display below the fretboard.
+[X]Disable vocal track shortcuts when not viewing PART_VOCALS.
+[X]Shift+Ctrl+Up/Down should shift the vocal piano roll view by one octave.
+[X]Fix issue with moving vocal notes to the right when grid snap is enabled.
+[X]See about writing the lyric event before the note event in the exported MIDI.
+[X]Ensure overlapping vocal phrases cannot be made.
+   [X]Should already be remarking if a selected note is in an existing phrase.
+      Investigate.
+[X]Fix RexMundi deleting lyric when it should place the lyric note.
+[X]Ctrl+Right-Click piano should set the offset to the lowest note in the
+   octave.
+[X]Ensure all keys that are not tied to menu items are mentioned in the
+   "keys.txt" file.
+[X]Show lyrics preview above the piano if there are lines defined.
+[X]Move dialog functions to their respective menu source files.
+[ ]Fix menu prepare functions.
+   [ ]Check that each menu item is updated properly.
+[ ]Work on PM issues.
+
+
+EOF 1.61 To-Do List
+-------------------
+
+[X]Replace all string functions with their unicode equivelant.
+[X]Fix INI import not allowing '=' in tag.
+[X]Disable Feedback input method for this version. Need further updates to make
+   this work properly.
+[X]Fix filename filters in Windows "wfsel.c" module.
+[X]Update the fonts to include common unicode ranges.
+[X]Fix BPM change not adjusting overdrive and solo sections.
+[X]Get rid of dedicated clap/metronome mixing stream.
+[X]Check into getting unicode command line arguments.
+   [X]Should be able to write a function which breaks down Windows' unicode
+      command line arguments and passes them to eof_initialize() which will
+      already be capable of interpreting them as U_UTF8.
+      [X]The function should convert the Windows U_UNICODE arguments to U_UTF8
+         for processing by Allegro functions.
+      [X]#ifdef ALLEGRO_WINDOWS eof_initialize_windows() #else eof_initialize()
+         [X]eof_initialize_windows() will call eof_initialize with the newly
+            converted arguments.
+   [X]Will need extra global variables to store the Windows arguments.
+   [X]Look into why it is crashing when trying to load projects through command
+      line.
+   [X]Need to use _wchdir() in place of chdir() in Windows.
+[X]See about allowing import and proper tagging of crazy notes.
+   [X]Possibly introduce a new function to scan the notes and instead of
+      truncating, mark notes as crazy if they overlap.
+[X]Fix "Save" not working when song folder has unicode characters.
+[X]Fix "music files" filter.
+   [X]Possibly problem with building the filter in the Windows code.
+[X]Fix issues with unicode folders in new project wizard.
+   [X]Command line tools can't handle unicode path names.
+[X]"Create New Folder" shouldn't be allowed to be left empty.
+[X]Fix import of crazy notes.
+[X]Check pasting lyrics into instrument tracks.
+
+
+EOF 1.6 To-Do List
+------------------
+
+[X]Replace OGG decoder with newest version.
+[X]Import unknown INI values as custom INI values.
+[X]Add vocal track support for lyrics.
+   [X]Implement copy/paste for vocal track.
+   [X]Add lyric edit to function to note menu.
+      [X]Implement lyric edit dialog.
+   [X]Add lyric line menu option.
+[X]Fix solo/star power implementation. Mark just past the head of the last note.
+[X]Add drum edit mode.
+[X]Take "-march=pentium" away, at least under Linux. The compiler should know best.
+[X]Save as causes song not to save with the regular Save command.
+[X]Adjusting beat marker should always cut/paste all tracks, including vocals.
+[X]Finish new idle system implementation.
+   [X]Add non-Windows fallback module using Allegro functions.
+   [X]Make this feature optional and off by default.
+[X]Fix graphics for vocal editing.
+   [X]Reenable the difficulty tabs.
