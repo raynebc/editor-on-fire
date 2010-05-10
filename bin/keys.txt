@@ -1,0 +1,190 @@
+After a song is opened or created you will need to know how to add, edit, move, and delete notes. The following keys will help you do that:
+
+
+Playback and Seek controls:
+
+    Space Bar:
+
+        Play/Pause the currently loaded song
+    
+        Hold Ctrl when pressing Space to play at 50% speed
+    
+        Hold Shift when pressing Space to play the current fret catalog entry (see manual for
+        information about the fret catalog).
+        
+        Hold S when pressing Space to play only the currently selected notes.
+    
+
+    Left/Right Arrow:
+
+        Rewind or Fast Forward song
+    
+        Hold Ctrl while pressing to move slowly
+    
+        Hold Shift while pressing to move quickly
+    
+
+    Page Up/Page Down:
+
+        Move to the previous/next beat marker
+    
+        Hold Ctrl while pressing to seek to previous/next screen
+    
+        Hold Shift while pressing to seek to previous/next note
+        
+        
+    Numpad 0-9:
+    
+        Seek to the desired bookmark
+        
+        Hold Ctrl while pressing to place the desired bookmark at the current position
+    
+
+    M:
+
+        Toggle metronome.
+    
+
+    K:
+
+        Toggle claps.
+    
+    
+    V:
+    
+        Toggle vocal tones.
+    
+
+    ;/' (Semicolon/Apostrophe):
+
+        Adjust audio playback rate.
+
+
+Note and Beat Editing:
+
+    Right-Click/Insert (notes):
+
+        Add a new note to the song
+    
+
+    Left-Click (notes):
+
+        Select the highlighted note for editing
+    
+        Hold Ctrl while clicking to select multiple notes
+    
+        Hold Shift while clicking to select a range of notes
+    
+
+    Left-Click+Drag (notes):
+
+        Move selected note(s)
+    
+
+    Mouse Wheel:
+
+        Move up and down to lengthen or shorten the selected note
+    
+        You can also press the '[]' keys to do the same
+    
+
+    Up/Down:
+
+        Transpose selected notes up/down.
+    
+
+    Left-Click (beats):
+
+        Select the highlighted beat
+    
+
+    Left-Click+Drag (beats):
+
+        Move the beat marker. An anchor is automatically created when you move a beat
+        marker. Surrounding BPMs will be adjusted automatically. An anchor will not move
+        unless dragged, nonanchor beats will adjust to fit.
+    
+        Hold Shift when dragging a beat to prevent the notes within from being adjusted with
+        the beat markers. Useful if you are beat syncing someone elses songs, for instance. Shift
+        has opposite effect when the "Note Auto-Adjust" preference is turned off.
+    
+
+    Right-Click (beats):
+
+        Seek to the highlighted beat line.
+    
+    
+    A:
+
+        Toggle anchor for current beat.
+        
+    
+    Tab:
+
+        Cycle through difficulties.
+    
+        Hold Ctrl to cycle through the tracks.
+    
+        Hold shift in addition to Tab or Ctrl+Tab to cycle through difficulties or tracks in
+        reverse.
+    
+
+    Comma/Period:
+
+        Cycle through grid snap settings.
+
+
+Editing a PART_VOCALS track works the same as any other track but there are a few extra keys that only pertain to this kind of track. The preview pane displays a large piano which can be used to aid in the editing process. Here are the keys:
+
+
+Vocal Track Editing:
+
+	P:
+	
+        Play the tone at the current mouse position when hovering over the piano roll.
+	    
+    Right-Click/Insert (Piano):
+    
+        Center the piano roll on the clicked note. Hold Ctrl to snap the view to the octave of
+        the clicked note.
+		
+    Left-Click (Piano):
+
+        Play the clicked note.
+        
+    Left-Click (Mini-Piano):
+    
+        Play the clicked note.
+    
+    Shift+Up/Down:
+    
+        Shift the piano roll view up or down. Hold Ctrl to shift by a whole octave.
+        
+    Shift+1-5 (Not Number Pad)
+    
+        Shift the piano roll directly to a specific octave.
+    
+
+Miscellaneous Controls:
+
+    +/-:
+
+        Increase/decrease the AV delay
+    
+
+    +/- (Numpad):
+
+        Zoom in/out.
+    
+
+    Ctrl+I:
+
+        Invert the fretboard display.
+
+
+    Ctrl+N:
+
+        Toggle "lefty" mode for 3D display.
+
+
+EOF provides many useful functions which can be accessed through various menus and dialogs. Shortcuts keys are provided to access some of the more frequently used functions. This screen is not an exhaustive list of keyboard shortcuts. All menu functions with shortcuts will display that shortcut next to the name of the function in the menu.

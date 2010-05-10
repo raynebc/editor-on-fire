@@ -1,0 +1,191 @@
+<HTML>
+<HEAD>
+<TITLE>EOF Manual - Menu Functions</TITLE>
+<STYLE TYPE="text/css">
+p {text-indent: 1cm}
+</STYLE>
+</head></STYLE>
+</HEAD>
+<BODY BGCOLOR="313131" TEXT="FFFFFF" LINK="FFFFFF" VLINK="FFFFFF" ALINK="FFFFFF" >
+
+<center><IMG SRC="logo.png" ALT="Logo" BORDER=0 HSPACE=0 VSPACE=3><bR><br></center>
+<center>A song editor for "Frets On Fire"</center><br>
+
+<a href="index.htm">Table of Contents</a>
+
+<h1><a name="Edit">Menu Functions</a></h1>
+
+EOF contains many useful functions which can be accessed through various menus. Many functions also have a keyboard shortcut to expedite the song editing process. Let's get to it.
+<br><br>
+
+[ <a href="functions.htm#file">File</a> ] [ <a href="functions.htm#edit">Edit</a> ] [ <a href="functions.htm#song">Song</a> ] [ <a href="functions.htm#note">Note</a> ] [ <a href="functions.htm#beat">Beat</a> ] [ <a href="functions.htm#help">Help</a> ]
+<h1><a name="file">File</a></h1>
+
+<blockquote>
+[ <a href="functions.htm#new">New</a> ] [ <a href="functions.htm#load">Load</a> ] [ <a href="functions.htm#save">Save</a> ] [ <a href="functions.htm#saveas">Save As</a> ] [ <a href="functions.htm#loadogg">Load OGG</a> ] [ <a href="functions.htm#midiimport">MIDI Import</a> ] [ <a href="functions.htm#settings">Settings</a> ] [ <a href="functions.htm#preferences">Preferences</a> ] [ <a href="functions.htm#display">Display</a> ] [ <a href="functions.htm#controllers">Controllers</a> ] [ <a href="functions.htm#songfolder">Song Folder</a> ] [ <a href="functions.htm#linktofof">Link To FOF</a> ] [ <a href="functions.htm#exit">Exit</a> ]
+<h1><a name="new">New</a></h1>
+Create a new EOF project. You will select an OGG or MP3, choose a destination for the new project, and enter some information about the song. When choosing a destination for your project you have three options. "Use Existing Folder" requires you to point to an existing folder where EOF will create your project files. "Use OGG Folder" will place the project files in the folder with the OGG or MP3 file you selected. "Create New Folder" will create the folder you specify in EOF's own song folder (see "File->Song Folder" below for details).<br><br>
+Wherever you choose to store the project, the OGG file you chose will be copied to "guitar.ogg" (required by "Frets On Fire"). If you choose an MP3 file, EOF will convert it to "guitar.ogg" using the average bitrate you specify in the "OGG Settings" dialog, automatically resampling the audio to 44khz if necessary. If you do not have LAME and Vorbis Tools installed (included in Windows version) you will not be able to use the built-in MP3 conversion.<br>
+<h1><a name="load">Load</a></h1>
+Load an existing EOF project. EOF will look for a "guitar.ogg" file in the same folder as the EOF project file you loaded. If it cannot find one you will be asked to locate an OGG file for EOF to load.<br>
+<h1><a name="save">Save</a></h1>
+Save the current EOF project. When saving a project EOF automatically generates all the files needed for the song to work in "Frets On Fire."<br>
+<h1><a name="saveas">Save As</a></h1>
+Save the current EOF project to a new location. Subsequent "Save" requests will write the song files to the new location. If no "guitar.ogg" exists in the destination folder, EOF will create one using the currently loaded OGG file.<br>
+<h1><a name="loadogg">Load OGG</a></h1>
+Load a new OGG file into the current project. If your song has separate audio for the guitar or other instrument you are fretting you can use this function to switch out the audio.<br><br>
+EOF keeps separate "Delay" settings for each differently named OGG file you load. This allows you to use tracks of differing length without having to adjust the delay and notes each time you swap OGG files. This is useful if you have two different versions of the same song, perhaps a karaoke version without vocals and a normal version. Setting up the "Delay" for each file will automatically move the beats and notes to the correct place each time you use "Load OGG" to swap them out.<br>
+<h1><a name="midiimport">MIDI Import</a></h1>
+Create a new EOF project from an existing song. This function is useful if you want to edit a song which was not created in EOF. Tracks are imported from the MIDI file and song properties are loaded from "song.ini" if it exists.<br>
+<h1><a name="settings">Settings</a></h1>
+Change the program settings. See <a href="configure.htm">Configuring EOF</a> for details<br><br>
+<h1><a name="preferences">Preferences</a></h1>
+Change the user preferences. See <a href="configure.htm#preferences">Configuring EOF</a> for details<br><br>
+<h1><a name="display">Display</a></h1>
+Change the size of the EOF window.<br>
+<h1><a name="controllers">Controllers</a></h1>
+Configure guitar and drum controllers. These can be used in tandem with the "Guitar Tap" and "Guitar Strum" edit modes.<br>
+<h1><a name="songfolder">Song Folder</a></h1>
+Tell EOF the base folder where to save new projects. New projects created with the "Create New Folder" option will be created in a folder inside of the base folder. For example, if you select "C:\games\fof\wipsongs" for the base folder and create a new project with "Create New Folder" and "my new song" as the new folder name, the project will be stored in "c:\games\fof\wipsongs\my new song\"<br>
+<h1><a name="linktofof">Link to FOF</a></h1>
+Allows you to link EOF to "Frets On Fire" if you are using a mod which allows starting a song from the command line (RF or FoFiX for example). You will first locate "FretsOnFire.exe" and then select the location of the song library (the base song folder). If done correctly you will be able to launch FOF with the current song for testing (see "Song->Test In FOF").<br>
+<h1><a name="exit">Exit</a></h1>
+Close EOF. If you have unsaved changes you will be prompted to save.<br>
+</blockquote>
+
+<h1><a name="edit">Edit</a></h1>
+[ <a href="functions.htm#undo">Undo</a> ] [ <a href="functions.htm#redo">Redo</a> ] [ <a href="functions.htm#copy">Copy</a> ] [ <a href="functions.htm#paste">Paste</a> ] [ <a href="functions.htm#oldpaste">Old Paste</a> ] [ <a href="functions.htm#gridsnap">Grid Snap</a> ] [ <a href="functions.htm#zoom">Zoom</a> ] [ <a href="functions.htm#speed">Speed</a> ] [ <a href="functions.htm#playbackrate">Playback Rate</a> ] [ <a href="functions.htm#hopo">HOPO</a> ] [ <a href="functions.htm#metronome">Metronome</a> ] [ <a href="functions.htm#claps">Claps</a> ] [ <a href="functions.htm#clapnotes">Clap Notes</a> ] [ <a href="functions.htm#bookmark">Bookmark</a> ] [ <a href="functions.htm#selection">Selection</a> ]
+<blockquote>
+<h1><a name="undo">Undo</a></h1>
+Undo the previous operation. You can undo up to 8 operations.<br>
+<h1><a name="redo">Redo</a></h1>
+Redo the previously undone operation.<br>
+<h1><a name="copy">Copy</a></h1>
+Copy the currently selected notes to the clipboard (see <a href="edit.htm">Editing Songs</a>). The clipboard is shared between all instances of EOF. If you copy notes in one instance, you can paste them into another instance. If you copy notes in both instances, only the most recently copied notes will be in the clipboard.<br>
+<h1><a name="paste">Paste</a></h1>
+Paste notes from the clipboard. Note positions and lengths are pasted relative to the beat markers meaning pasted notes will stretch and shrink depending on the BPM of the beats being pasted into. Pasted notes will begin at the beat in which the position line lies and continue on through subsequent beats.<br>
+<h1><a name="oldpaste">Old Paste</a></h1>
+The same as "Paste" except the note positions and lengths are not scaled to fit into the beats. The notes will remain exactly as they were copied and the first note will be pasted exactly on the position line.<br>
+<h1><a name="pastefrom">Paste From</a></h1>
+Paste notes from other locations. "Paste From->Supaeasy/Easy/Medium/Amazing" copies all notes from the desired difficulty to the currently selected difficulty (useful for downgrading songs to lower difficulties). "Paste From->Catalog" pastes notes from the currently selected catalog entry.<br>
+<h1><a name="gridsnap">Grid Snap</a></h1>
+Change the current grid snap setting. Grid snap forces note placement to the specified setting. If you have created a tempo map for your song, turning grid snap to an appropriate setting will save you lots of time when placing notes.<br><br>
+A grid snap setting of 1/4 means that each grid snap position occurs at 1/4 of a measure intervals. With this setting you can fit up to four separate notes into one measure. A grid snap setting of 1/8 means that each grid snap position occurs at 1/8 of a measure intervals and so on and so forth.<br>
+<h1><a name="zoom">Zoom</a></h1>
+Change the zoom level of the fretboard editing area. For faster songs, zooming in can help with note placement.<br>
+<h1><a name="speed">Speed</a></h1>
+Change the speed of the fretboard in the 3D Preview.<br>
+<h1><a name="playbackrate">Playback Rate</a></h1>
+Change the speed of the audio playback. For fast solo sections it can be useful to play the song back at a slower speed to make it easier to hear the notes in the song. You can play the song back at 50% speed without changing the setting by holding the Ctrl key while pressing the play button.<br>
+<h1><a name="hopo">HOPO</a></h1>
+Select the algorithm used to determine HO/PO notes. RF is equivelant to "Guitar Hero 2." If you are using RF-Mod or FoFiX you should use this setting. FOF is for standard "Frets On Fire." An important note: HO/PO notes are determined by an algorithm in all current versions of FOF and all current mods. In order for a note to be a HO/PO notes it normally has to be a 1/12th or smaller note. Turning on the "Eighth Note HO/PO" setting in "Song Properties" will make the longest HO/PO note 1/8th instead. Not all mods support the "Eighth Note HO/PO" setting.<br>
+<h1><a name="metronome">Metronome</a></h1>
+Toggle the metronome. When the metronome is on, a tick will sound at every beat marker during audio playback. This feature is useful when you are creating a tempo map for your song. See <a href="../tutorial/index.htm#tempomap">Creating a Tempo Map</a> for a demonstration of how to use this feature.<br>
+<h1><a name="claps">Claps</a></h1>
+Toggle note claps. When note claps are on, a clap will sound at every note during audio playback. This feature is useful to ensure your notes are synchronized with the audio in the song. If your notes are placed correctly, the clap should sound at the same time each note is audible.<br>
+<h1><a name="clapnotes">Clap Notes</a></h1>
+Select a specific note color you want to trigger claps.<br>
+<h1><a name="bookmark">Bookmark</a></h1>
+Place a bookmark at the current location of the position line. You can seek directly to your bookmarks (see <a href="functions.htm#seek">Song->Seek->Bookmark</a>) at any time. If you are going to be seeking to a specific part of a song multiple times, having a bookmark there can save lots of time.<br>
+<h1><a name="selection">Selection</a></h1>
+Perform various select operations. "Select All" selects all the notes in the current difficulty. "Select Like" selects notes which match any of the currently selected notes. "Select Rest" selects all notes from the currently selected note to the end of the song. "Deselect All" deselects all notes.<br>
+</blockquote>
+
+<h1><a name="song">Song</a></h1>
+[ <a href="functions.htm#seek">Seek</a> ] [ <a href="functions.htm#track">Track</a> ] [ <a href="functions.htm#catalog">Catalog</a> ] [ <a href="functions.htm#fileinfo">File Info</a> ] [ <a href="functions.htm#inisettings">INI Settings</a> ] [ <a href="functions.htm#properties">Properties</a> ] [ <a href="functions.htm#testinfof">Test In FOF</a> ]
+<blockquote>
+<h1><a name="seek">Seek</a></h1>
+Perform various seek operations. Seeking moves the position line to the desired location.<br>
+<h1><a name="track">Track</a></h1>
+Select a track for editing. PART GUITAR is the default track. Tracks containing notes will have an asterisk (*) displayed next to them. All tracks are edited the same way. PART DRUM will have a slightly different display in the 3D Preview.<br>
+<h1><a name="catalog">Catalog</a></h1>
+Perform various catalog related operations. The catalog contains portions of your song which you can play back or paste into other parts of the song (see "<a href=functions.htm#pastefrom">Edit->Paste From</a>"). "Show" toggles the catalog display. "Add" adds the currently selected notes to the catalog. "Delete" deletes the current catalog entry. "Previous" selects the previous catalog entry. "Next" selects the next catalog entry. See <a href=edit.htm#catalog>the Catalog section of Editing Songs</a> for more details.<br>
+<h1><a name="fileinfo">File Info</a></h1>
+Display various information about the current project.<br>
+<h1><a name="inisettings">INI Settings</a></h1>
+Define additional INI settings which are not available in <a href="functions.htm#properties">Song Properties</a>.<br>
+<h1><a name="properties">Properties</a></h1>
+Change the song properties for the current project.<br><br>
+"Song Title" is the name of the song.<br><br>
+"Artist" is the artist the song is attributed to.<br><br>
+"Frettist" refers to the person who created the "Frets On Fire" note charts.<br><br>
+"Delay" is the delay or MIDI offset value which tells "Frets On Fire" how much time to delay the notes. Changing the "Delay" setting alters the position of all the beat lines in the current project and optionally adjusts the note positions as well.<br><br>
+"Year" refers to the year the song was released.<br><br>
+"Loading Text" is the text that appears on the loading screen while your song is loading in "Frets On Fire" (currently only supported in FoFiX).<br><br>
+EOF stores all these settings in the ".eof" project file and exports them to "song.ini" when saving for compatibility with "Frets On Fire."<br>
+<h1><a name="testinfof">Test In FOF</a></h1>
+Launch FOF with the current song, track, and difficulty for testing. This feature only works if you are using an RF-based mod and have correctly linked (see "<a href="functions.htm#linktofof">File->Link to FOF</a>") EOF to it.<br>
+</blockquote>
+
+<h1><a name="note">Note</a></h1>
+[ <a href="functions.htm#toggle">Toggle</a> ] [ <a href="functions.htm#transposeup">Transpose Up</a> ] [ <a href="functions.htm#transposedown">Transpose Down</a> ] [ <a href="functions.htm#resnap">Resnap</a> ] [ <a href="functions.htm#solos">Solos</a> ] [ <a href="functions.htm#starpower">Star Power</a> ] [ <a href="functions.htm#delete">Delete</a> ]
+<blockquote>
+<h1><a name="toggle">Toggle</a></h1>
+Toggle the desired color in all selected notes.<br>
+<h1><a name="transposeup">Transpose Up</a></h1>
+Transpose (move) all selected notes up one color. If any of the selected notes are are purple the transpose will be prevented.<br>
+<h1><a name="transposedown">Transpose Down</a></h1>
+Transpose (move) all selected notes down one color. If any of the selected notes are are green the transpose will be prevented.<br>
+<h1><a name="resnap">Resnap</a></h1>
+Resnap all selected notes to the closest grid snap positions according to the current grid snap setting (see "<a href="functions.htm#gridsnap">Edit->Grid Snap</a>"). If two notes snap to the same position you will be notified so that you can undo if you want. It is best to use either 1/32 or 1/48 grid snap when resnapping.<br><br>
+Let's say you imported a song and some of the notes appear to be slightly off of the beat markers. Setting the grid snap to 1/32, selecting all the notes, and doing a "Resnap" can set the notes in their proper place without you having to manually move each note.<br>
+<h1><a name="solos">Solos</a></h1>
+Perform various operations related to solo sections. "Mark" marks the currently selected notes as a solo section. "Remove" removes all solos in which selected notes lie. To delete one solo section simply select at least one note within that solo and select "Note->Solos->Remove." "Erase All" erases all solo sections from the song. "Re-Mark" will modify an existing solo section. If you mark a solo and later need to modify it, simply select the notes that belong in the solo and select "Note->Solos->Re-Mark." "Re-Mark" is only available when at least on of the selected notes lies within the solo section.<br><br>
+Solo sections are not supported by all mods. For FoFiX (the only mod with solo support as of this writing) solo sections will only work correctly if you define at least two Star Power sections (see "<a href="functions.htm#starpower">Note->Star Power</a>") as well. This is due to the way FoFiX detects solo sections. Guitar Hero and Rock Band use different conventions to define Star Power (Overdrive in RB) and Guitar Hero's SP markers happen to use the same MIDI note as Rock Band's solos. If you don't define Star Power, FoFiX will detect your solos as Star Power except under certain circumstances.<br><br>
+If you want your solo sections to be compatible with older mods (such as MFH) you can use the older Text Events method of marking solos documented <a href="edit.htm#events">here</a>.<br><br>
+It's important to note that solos are not automatically treated as sections by FoFiX so you will need to add Text Events (see <a href="edit.htm#events">the Events section of Editing Songs</a>) in the appropriate places if you want to have your solos listed in Practice mode.<br>
+<h1><a name="starpower">Star Power</a></h1>
+Perform various operations related to Star Power sections. "Mark" marks the currently selected notes as a Star Power section. "Remove" removes all Star Power sections in which selected notes lie. To delete one Star Power section simply select at least one note within that section and select "Note->Star Power->Remove." "Erase All" erases all Star Power sections from the song. "Re-Mark" will modify an existing Star Power section. If you mark a Star Power section and later need to modify it, simply select the notes that belong in the section and select "Note->Star Power->Re-Mark." "Re-Mark" is only available when at least on of the selected notes lies within the Star Power section.<br><br>
+Star Power sections are not supported by all mods. Currently (at the time of this writing) the only mod that allows user-defined Star Power sections is the FoFiX betas.<br>
+<h1><a name="delete">Delete</a></h1>
+Delete all selected notes.<br>
+</blockquote>
+
+<h1><a name="beat">Beat</a></h1>
+[ <a href="functions.htm#bpmchange">BPM Change</a> ] [ <a href="functions.htm#timesignature">Time Signature</a> ] [ <a href="functions.htm#add">Add</a> ] [ <a href="functions.htm#beatdelete">Delete</a> ] [ <a href="functions.htm#pushoffsetback">Push Offset Back</a> ] [ <a href="functions.htm#pushoffsetup">Push Offset Up</a> ] [ <a href="functions.htm#anchorbeat">Anchor Beat</a> ] [ <a href="functions.htm#toggleanchor">Toggle Anchor</a> ] [ <a href="functions.htm#deleteanchor">Delete Anchor</a> ] [ <a href="functions.htm#resetbpm">Reset BPM</a> ] [ <a href="functions.htm#calculatebpm">Calculate BPM</a> ] [ <a href="functions.htm#allevents">All Events</a> ] [ <a href="functions.htm#events">Events</a> ] [ <a href="functions.htm#clearevents">Clear Events</a> ]
+<blockquote>
+<h1><a name="bpmchange">BPM Change</a></h1>
+Change the BPM of the currently selected beat. If "This Beat Only" is selected, only the current beat will be set to the new BPM. Further beats will remain at the old BPM setting. "Adjust Notes" causes any notes within beats affected by the BPM change to be scaled to fit (the same as the "<a href="functions.htm#preferences">"Note Auto-Adjust"</a> option when moving beat markers with the mouse).<br>
+<h1><a name="timesignature">Time Signature</a></h1>
+Set the time signature starting from the currently selected beat. This setting does not affect the outputted MIDI file and is simply a visual aid to editing. Setting up a time signature can make it easier to see where you are in the song as each measure begins with a brighter beat line.<br>
+<h1><a name="add">Add</a></h1>
+Add a beat to the song and adjust the BPM of the previous anchor to make all the beats fit evenly between the previous anchor and the next. Useful if you have two anchors and you need to add some extra beats in between so there are enough beats to match the music. This function is only available when there is at least one anchor after the selected beat.<br>
+<h1><a name="beatdelete">Delete</a></h1>
+Delete a beat and adjust the BPM of the previous anchor to make all beats fit evenly between the previous anchor and the next. Useful if you have two anchors and more beats in between them than are actually in the music. Just delete the extra beats and EOF will automatically calculate the correct BPM to make the beat markers fit between the anchors.<br>
+<h1><a name="pushoffsetback">Push Offset Back</a></h1>
+Move the first beat marker back one beat length based on the BPM of the first beat marker. Useful if the first audible beat occurs after the first note of the song. You can create the tempo map starting where the first beat is audible and after the tempo map is done "Push Offset Back" until the first beat marker occurs before the first note.<br>
+<h1><a name="pushoffsetup">Push Offset Up</a></h1>
+Delete the first beat marker and make the second beat marker the first (and so forth). Useful if you want to get rid of the first beats of a song (for instance if there is a lot of silence) after you have already synced it.<br>
+<h1><a name="anchorbeat">Anchor Beat</a></h1>
+Anchor the currently selected beat to a specific location. Functions the same as dragging the beat marker to that location.<br>
+<h1><a name="toggleanchor">Toggle Anchor</a></h1>
+Toggle the currently selected beat between being an anchor and not being an anchor. It can be useful to set anchors every measure or two while creating a tempo map even if the beat marker is in the right location as adjusting a beat marker later in the song will adjust all beats between that beat marker and the previous anchor.<br>
+<h1><a name="deleteanchor">Delete Anchor</a></h1>
+Delete the currently selected anchor and adjust all beats from the previous anchor to the next so that they fit evenly. If there is no next anchor, the BPM from the previous anchor will be applied to the rest of the song.<br>
+<h1><a name="resetbpm">Reset BPM</a></h1>
+Delete all anchors and tempo changes, keeping the BPM from the first beat marker throughout the entire song.<br>
+<h1><a name="calculatebpm">Calculate BPM</a></h1>
+Calculates the BPM based on the selected notes, assuming that the selected notes occur on sequential beats, and applies it to the selected beat marker.<br>
+<h1><a name="allevents">All Events</a></h1>
+Display all events for the entire song. Selecting "Find" in the "All Events" dialog will seek to the beat marker on which the selected event is defined and select that beat. See <a href="edit.htm#events">the Events section of Editing Songs</a> for event details.<br>
+<h1><a name="events">Events</a></h1>
+Display events associated with the selected beat marker for viewing or modification.<br>
+<h1><a name="clearevents">Clear Events</a></h1>
+Erase all events from the current project.<br>
+</blockquote>
+
+<h1><a name="help">Help</a></h1>
+[ <a href="functions.htm#manual">Manual</a> ] [ <a href="functions.htm#tutorial">Tutorial</a> ] [ <a href="functions.htm#keys">Keys</a> ] [ <a href="functions.htm#about">About</a> ]
+<blockquote>
+<h1><a name="manual">Manual</a></h1>
+Display the documents you are currently reading.<br>
+<h1><a name="tutorial">Tutorial</a></h1>
+Display the tutorial. If you are new to EOF, look here for a guide to making songs.<br>
+<h1><a name="keys">Keys</a></h1>
+Display the keyboard and mouse controls used for editing songs. Almost all EOF functions can be activated using the GUI interface but using the keys can speed up the editing process considerably.<br>
+<h1><a name="about">About</a></h1>
+Display the current EOF version information.<br>
+</blockquote>
+
+</BODY>
+</HTML>

@@ -1,0 +1,1 @@
+This package requires Allegro 4.0.0 (or above).

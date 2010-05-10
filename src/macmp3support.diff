@@ -1,0 +1,80 @@
+Common subdirectories: eof158linux/src/agup and eof158mac/src/agup
+Common subdirectories: eof158linux/src/alogg and eof158mac/src/alogg
+diff -u eof158linux/src/dialog.c eof158mac/src/dialog.c
+--- eof158linux/src/dialog.c	2009-03-11 13:31:30.000000000 -0400
++++ eof158mac/src/dialog.c	2009-04-03 07:50:36.000000000 -0400
+@@ -2029,7 +2029,11 @@
+ //				sprintf(syscommand, "lame --quiet --decode \"%s\" - | oggenc2 --quiet -q %s --resample 44100 -S 0 - -o \"%sguitar.ogg\"", oggfilename, eof_ogg_quality[(int)eof_ogg_setting], eof_etext3);
+ 				sprintf(syscommand, "mp3toogg \"%s\" %s \"%sguitar.ogg\"", oggfilename, eof_ogg_quality[(int)eof_ogg_setting], eof_etext3);
+ 			#else
+-				sprintf(syscommand, "lame --decode \"%s\" - | oggenc --quiet -q %s --resample 44100 -S 0 - -o \"%sguitar.ogg\"", oggfilename, eof_ogg_quality[(int)eof_ogg_setting], eof_etext3);
++				#ifdef ALLEGRO_MACOSX
++					sprintf(syscommand, "./lame --decode \"%s\" - | ./oggenc --quiet -q %s --resample 44100 -s 0 - -o \"%sguitar.ogg\"", oggfilename, eof_ogg_quality[(int)eof_ogg_setting], eof_etext3);
++				#else
++					sprintf(syscommand, "lame --decode \"%s\" - | oggenc --quiet -q %s --resample 44100 -S 0 - -o \"%sguitar.ogg\"", oggfilename, eof_ogg_quality[(int)eof_ogg_setting], eof_etext3);
++				#endif
+ 			#endif
+ 			system(syscommand);
+ 		}
+diff -u eof158linux/src/main.c eof158mac/src/main.c
+--- eof158linux/src/main.c	2009-03-11 13:10:36.000000000 -0400
++++ eof158mac/src/main.c	2009-04-03 07:40:29.000000000 -0400
+@@ -1823,18 +1823,33 @@
+ 			allegro_message("MP3 support disabled.\n\nPlease install LAME and Vorbis Tools if you want MP3 support.");
+ 		}
+ 	#else
+-		if(system("lame -S check.wav >foo") == 0 && system("oggenc -h >foo") == 0)
+-		{
+-			eof_supports_mp3 = 1;
+-			delete_file("check.wav.mp3");
+-			delete_file("foo");
+-		}
+-		else
+-		{
+-			eof_supports_mp3 = 0;
+-			delete_file("foo");
+-			allegro_message("MP3 support disabled.\n\nPlease install LAME and Vorbis Tools if you want MP3 support.");
+-		}
++		#ifdef ALLEGRO_MACOSX
++			if(system("./lame -S check.wav >foo") == 0 && system("./oggenc -h >foo") == 0)
++			{
++				eof_supports_mp3 = 1;
++				delete_file("check.wav.mp3");
++				delete_file("foo");
++			}
++			else
++			{
++				eof_supports_mp3 = 0;
++				delete_file("foo");
++				allegro_message("MP3 support disabled.\n\nPlease install LAME and Vorbis Tools if you want MP3 support.");
++			}
++		#else
++                	if(system("lame -S check.wav >foo") == 0 && system("oggenc -h >foo") == 0)
++                	{
++                        	eof_supports_mp3 = 1;
++                        	delete_file("check.wav.mp3");
++                        	delete_file("foo");
++                	}
++                	else
++                	{
++                        	eof_supports_mp3 = 0;
++                        	delete_file("foo");
++                        	allegro_message("MP3 support disabled.\n\nPlease install LAME and Vorbis Tools if you want MP3 support.");
++                	}
++		#endif
+ 	#endif
+ 	}
+ 	
+diff -u eof158linux/src/makefile.macosx eof158mac/src/makefile.macosx
+--- eof158linux/src/makefile.macosx	2009-02-20 17:31:20.000000000 -0500
++++ eof158mac/src/makefile.macosx	2009-03-11 17:11:51.000000000 -0400
+@@ -8,7 +8,7 @@
+ EXENAME = eof
+ 
+ ../bin/$(EXENAME) : $(OFILES) $(AGUPOFILES) $(ALOGGOFILES)
+-	gcc $(OFILES) $(AGUPOFILES) $(ALOGGOFILES) $(CFLAGS) $(LIBS) -o bin/$(EXENAME)
++	gcc $(OFILES) $(AGUPOFILES) $(ALOGGOFILES) $(CFLAGS) $(LIBS) -o ../bin/$(EXENAME)
+ 
+ clean:
+ 	@rm *.o
+Common subdirectories: eof158linux/src/modules and eof158mac/src/modules

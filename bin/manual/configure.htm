@@ -1,0 +1,63 @@
+<HTML>
+<HEAD>
+<TITLE>EOF Tutorial</TITLE>
+<STYLE TYPE="text/css">
+p {text-indent: 1cm}
+</STYLE>
+</head></STYLE>
+</HEAD>
+<BODY BGCOLOR="313131" TEXT="FFFFFF" LINK="FFFFFF" VLINK="FFFFFF" ALINK="FFFFFF" >
+
+<center><IMG SRC="logo.png" ALT="Logo" BORDER=0 HSPACE=0 VSPACE=3><bR><br></center>
+<center>A song editor for "Frets On Fire"</center><br>
+
+<a href="index.htm">Table of Contents</a>
+
+<h1><a name="tutorial">Tutorial - Configuring EOF</a></h1>
+[ <a href="configure.htm#buffer">Buffer Size</a> ] [ <a href="configure.htm#avdelay">AV Delay</a> ] [ <a href="configure.htm#songfolder">Song Folder</a> ] [ <a href="configure.htm#link">Linking to FOF</a> ] [ <a href="configure.htm#other">Other Settings</a> ] [ <a href="configure.htm#preferences">Preferences</a> ]<br><br>
+
+<h1><a name="buffer">Finding the Right Buffer Size</a></h1>
+It is important to set the Buffer Size to a good setting for your computer. Differences in hardware configurations mean that not all computers will operate properly with the default buffer size (4096). To see if you have the correct value, load the example song (included) and press the play button. If the audio stutters or crackles this means the buffer size is too small. Open up the Settings dialog and try seting the buffer size to 8192 and hit play again:<br><br>
+<center><IMG SRC="cfgimage1.png" ALT="screen" BORDER=0 HSPACE=0 VSPACE=3><bR><br></center>
+If it still stutters, try 16384. If it still stutters your computer may not be sufficiently powerful to run EOF. Please note that the buffer size can be any size as long as it's at least 1024, the values I suggested are not the only possible settings. Also note that the buffer size affects the AV delay so you may need to update that setting (see <a href="configure.htm#avdelay">Setting Up Your AV Delay</a>) as well.
+
+<h1><a name="avdelay">Setting Up Your AV Delay</a></h1>
+First you will want to set up your AV delay. EOF comes with a song called AV Delay which you will need load. Do so as shown here:<br><br>
+<center><IMG SRC="cimage1.png" ALT="screen" BORDER=0 HSPACE=0 VSPACE=3><bR><br></center>
+<center><IMG SRC="cimage2.png" ALT="screen" BORDER=0 HSPACE=0 VSPACE=3><bR><br></center>
+<center><IMG SRC="cimage3.png" ALT="screen" BORDER=0 HSPACE=0 VSPACE=3><bR><br></center>
+Here is what the screen looks like when the AV Delay song is loaded:<br><br>
+<center><IMG SRC="cimage4.png" ALT="screen" BORDER=0 HSPACE=0 VSPACE=3><bR><br></center>
+Press the space bar and watch the screen. You will see a green line move across the editor pane as shown here:<br><br>
+<center><IMG SRC="cimage5.png" ALT="screen" BORDER=0 HSPACE=0 VSPACE=3><bR><br></center>
+If the AV Delay setting is correct you should see the green line pass over the center of the notes at exactly the same time as the sound of the notes comes out of the speakers. When the green line hits the note the note will also be highlighted. Chances are, the default value is going to be too small. What you will need to do is, while the song is playing, hold the '+' key for a little bit and see if you can get the notes to light up at exactly the same time as the note plays from the speakers. If you set the delay too high just use the '-' key to adjust it back down in the same way.<br><br>
+You may also use the Settings dialog to adjust your AV delay setting.<br>
+
+<h1><a name="songfolder">Setting Up Your Song Folder</a></h1>
+The EOF Song Folder is the directory in which new projects are created. By default, new projects will be created in the folder in which EOF resides. You may wish to place them elsewhere for whatever reason. To change the Song Folder just select "File->Song Folder" from the menu. A folder browser will be displayed:<br><br>
+<center><IMG SRC="cfgimage2.png" ALT="screen" BORDER=0 HSPACE=0 VSPACE=3><bR><br></center>
+From here just browse to the folder you wish EOF to place new projects in. Each new project will be placed in a subfolder of the folder you selected here assuming you selected "Create New Folder" in the New Project wizard (see "<a href="functions.htm#new">File->New</a>").<br>
+
+<h1><a name="link">Linking to FOF</a></h1>
+You may find it useful to link up EOF with your copy of "Frets On Fire" so you can test your songs without having to copy files. To do so, select "Link To FOF" from the "File" menu:<br><br>
+<center><IMG SRC="cimage6.png" ALT="screen" BORDER=0 HSPACE=0 VSPACE=3><bR><br></center>
+First you will have to browse to your "FretsOnFire.exe:"<br><br>
+<center><IMG SRC="cimage7.png" ALT="screen" BORDER=0 HSPACE=0 VSPACE=3><bR><br></center>
+Next you will have to browse to your "Frets On Fire" song library base folder:<br><br>
+<center><IMG SRC="cimage8.png" ALT="screen" BORDER=0 HSPACE=0 VSPACE=3><bR><br></center>
+Once you have done that, any time you wish to open "Frets On Fire" with your current project just select "Test In FOF" from the "Song" menu  (see "<a href="functions.htm#testinfof">Song->Test In FOF</a>").
+
+<h1><a name="other">Other Settings</a></h1>
+"CPU Saver" allows you to change the amount of time the CPU rests. Moving the bar to the right will lower EOF's idle processor usage.<br><br>
+"Smooth Playback" makes EOF use it's own timer to keep track of the position of the music. Turn this off if the audio and video lose synchronization during playback.<br><br>
+"Disable Windows UI" allows you to use the built-in file selection dialogs instead of the native Windows dialogs. Linux and Mac users will always get the built-in file selector so this option is disabled on these platforms.<br><br>
+"Disable VSync" tells EOF not to wait until in between monitor refreshes before updating the screen. This saves CPU and often provides better performance overall.<br>
+Please see "<a href="functions.htm#settings">File->Settings</a>" and "<a href="functions.htm#preferences">File->Preferences</a>" for details.
+
+<h1><a name="preferences">Preferences</a></h1>
+"Inverted Notes" flips the notes so they are displayed with purple on top in the fretboard editing area.<br><br>
+"Lefty Flip" flips the notes so they are displayed with purple on left in the 3D Preview.<br><br>
+"Note Auto-Adjust" allows the notes in your project to stay positioned correctly relative to the beat markers when the beat markers are moved.<br><br>
+"Input Method" alters the way the editor works. See <a href="edit.htm#edit">Editing Songs</a> for details<br>
+</BODY>
+</HTML>
