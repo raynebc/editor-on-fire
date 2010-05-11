@@ -30,7 +30,7 @@ int eof_song_qsort_events(const void * e1, const void * e2)
 {
 	EOF_TEXT_EVENT ** thing1 = (EOF_TEXT_EVENT **)e1;
 	EOF_TEXT_EVENT ** thing2 = (EOF_TEXT_EVENT **)e2;
-	
+
 	if((*thing1)->beat < (*thing2)->beat)
 	{
 		return -1;
@@ -68,7 +68,7 @@ EOF_SONG * eof_create_song(void)
 {
 	EOF_SONG * sp;
 	int i;
-	
+
 	sp = malloc(sizeof(EOF_SONG));
 	if(!sp)
 	{
@@ -134,18 +134,18 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	PACKFILE * fp;
 	int i, j, tl;
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'F', 0};
-	
+
 	fp = pack_fopen(fn, "w");
 	if(!fp)
 	{
 		return 0;
 	}
-	
+
 	pack_fwrite(header, 16, fp);
-	
+
 	/* write revision number */
 	pack_iputl(sp->tags->revision, fp);
-	
+
 	/* write song info */
 	tl = ustrlen(sp->tags->artist);
 	pack_iputw(tl, fp);
@@ -164,7 +164,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	pack_fwrite(sp->tags->loading_text, tl, fp);
 	pack_putc(sp->tags->lyrics, fp);
 	pack_putc(sp->tags->eighth_note_hopo, fp);
-	
+
 	/* write OGG data */
 	pack_iputw(sp->tags->oggs, fp);
 	for(i = 0; i < sp->tags->oggs; i++)
@@ -172,14 +172,14 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		pack_fwrite(sp->tags->ogg[i].filename, 256, fp);
 		pack_iputl(sp->tags->ogg[i].midi_offset, fp);
 	}
-	
+
 	/* write INI settings */
 	pack_iputw(sp->tags->ini_settings, fp);
 	for(i = 0; i < sp->tags->ini_settings; i++)
 	{
 		pack_fwrite(sp->tags->ini_setting[i], 512, fp);
 	}
-	
+
 	/* write beat info */
 	pack_iputl(sp->beats, fp);
 	for(i = 0; i < sp->beats; i++)
@@ -188,7 +188,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		pack_iputl(sp->beat[i]->pos, fp);
 		pack_iputl(sp->beat[i]->flags, fp);
 	}
-		
+
 	/* write events info */
 	pack_iputl(sp->text_events, fp);
 	for(i = 0; i < sp->text_events; i++)
@@ -196,11 +196,11 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		pack_fwrite(sp->text_event[i]->text, 256, fp);
 		pack_iputl(sp->text_event[i]->beat, fp);
 	}
-		
+
 	/* write tracks */
 	for(i = 0; i < EOF_MAX_TRACKS; i++)
 	{
-		
+
 		/* write solo sections */
 		pack_iputw(sp->track[i]->solos, fp);
 		for(j = 0; j < sp->track[i]->solos; j++)
@@ -208,7 +208,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			pack_iputl(sp->track[i]->solo[j].start_pos, fp);
 			pack_iputl(sp->track[i]->solo[j].end_pos, fp);
 		}
-		
+
 		/* write star power sections */
 		pack_iputw(sp->track[i]->star_power_paths, fp);
 		for(j = 0; j < sp->track[i]->star_power_paths; j++)
@@ -216,7 +216,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			pack_iputl(sp->track[i]->star_power_path[j].start_pos, fp);
 			pack_iputl(sp->track[i]->star_power_path[j].end_pos, fp);
 		}
-		
+
 		/* write notes */
 		pack_iputl(sp->track[i]->notes, fp);
 		for(j = 0; j < sp->track[i]->notes; j++)
@@ -228,7 +228,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			pack_putc(sp->track[i]->note[j]->flags, fp);
 		}
 	}
-	
+
 	/* write lyric track */
 	pack_iputl(sp->vocal_track->lyrics, fp);
 	for(j = 0; j < sp->vocal_track->lyrics; j++)
@@ -246,13 +246,13 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		pack_iputl(sp->vocal_track->line[j].end_pos, fp);
 		pack_iputl(sp->vocal_track->line[j].flags, fp);
 	}
-	
+
 	/* write bookmarks */
 	for(i = 0; i < 10; i++)
 	{
 		pack_iputl(sp->bookmark_pos[i], fp);
 	}
-		
+
 	/* write fret catalog */
 	pack_iputl(sp->catalog->entries, fp);
 	for(i = 0; i < sp->catalog->entries; i++)
@@ -269,10 +269,10 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 {
 	int i, j, b, c, tl;
-	
+
 	/* read file revision number */
 	sp->tags->revision = pack_igetl(fp);
-	
+
 	/* read song info */
 	tl = pack_igetw(fp);
 	pack_fread(sp->tags->artist, tl, fp);
@@ -291,7 +291,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	sp->tags->loading_text[tl] = 0;
 	sp->tags->lyrics = pack_getc(fp);
 	sp->tags->eighth_note_hopo = pack_getc(fp);
-	
+
 	/* read OGG data */
 	sp->tags->oggs = pack_igetw(fp);
 	for(i = 0; i < sp->tags->oggs; i++)
@@ -299,14 +299,14 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		pack_fread(sp->tags->ogg[i].filename, 256, fp);
 		sp->tags->ogg[i].midi_offset = pack_igetl(fp);
 	}
-	
+
 	/* read INI settings */
 	sp->tags->ini_settings = pack_igetw(fp);
 	for(i = 0; i < sp->tags->ini_settings; i++)
 	{
 		pack_fread(sp->tags->ini_setting[i], 512, fp);
 	}
-		
+
 	/* read beat info */
 	b = pack_igetl(fp);
 	if(!eof_song_resize_beats(sp, b))
@@ -319,7 +319,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		sp->beat[i]->pos = pack_igetl(fp);
 		sp->beat[i]->flags = pack_igetl(fp);
 	}
-		
+
 	/* read events info */
 	b = pack_igetl(fp);
 	eof_song_resize_text_events(sp, b);
@@ -328,11 +328,11 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		pack_fread(sp->text_event[i]->text, 256, fp);
 		sp->text_event[i]->beat = pack_igetl(fp);
 	}
-		
+
 	/* read tracks */
 	for(i = 0; i < EOF_MAX_TRACKS; i++)
 	{
-		
+
 		/* read solo sections */
 		sp->track[i]->solos = pack_igetw(fp);
 		for(j = 0; j < sp->track[i]->solos; j++)
@@ -344,7 +344,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		{
 			sp->track[i]->solos = 0;
 		}
-		
+
 		/* read star power sections */
 		sp->track[i]->star_power_paths = pack_igetw(fp);
 		for(j = 0; j < sp->track[i]->star_power_paths; j++)
@@ -356,7 +356,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		{
 			sp->track[i]->star_power_paths = 0;
 		}
-		
+
 		/* read notes */
 		b = pack_igetl(fp);
 		eof_track_resize(sp->track[i], b);
@@ -369,7 +369,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 			sp->track[i]->note[j]->flags = pack_getc(fp);
 		}
 	}
-		
+
 	/* read lyric track */
 	b = pack_igetl(fp);
 	eof_vocal_track_resize(sp->vocal_track, b);
@@ -389,13 +389,13 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		sp->vocal_track->line[j].end_pos = pack_igetl(fp);
 		sp->vocal_track->line[j].flags = pack_igetl(fp);
 	}
-	
+
 	/* read bookmarks */
 	for(i = 0; i < 10; i++)
 	{
 		sp->bookmark_pos[i] = pack_igetl(fp);
 	}
-		
+
 	/* read fret catalog */
 	sp->catalog->entries = pack_igetl(fp);
 	for(i = 0; i < sp->catalog->entries; i++)
@@ -405,7 +405,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		sp->catalog->entry[i].start_pos = pack_igetl(fp);
 		sp->catalog->entry[i].end_pos = pack_igetl(fp);
 	}
-	
+
 	return 1;
 }
 
@@ -416,7 +416,7 @@ EOF_SONG * eof_load_song(const char * fn)
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'F', 0};
 	char rheader[16];
 	int i;
-	
+
 	fp = pack_fopen(fn, "r");
 	if(!fp)
 	{
@@ -440,7 +440,7 @@ EOF_SONG * eof_load_song(const char * fn)
 		sp = eof_load_notes_legacy(fp, rheader[6]);
 	}
 	pack_fclose(fp);
-	
+
 	/* select correct OGG */
 	if(sp)
 	{
@@ -453,7 +453,7 @@ EOF_SONG * eof_load_song(const char * fn)
 			}
 		}
 	}
-	
+
 	return sp;
 }
 
@@ -471,7 +471,7 @@ EOF_NOTE * eof_track_add_note(EOF_TRACK * tp)
 void eof_track_delete_note(EOF_TRACK * tp, int note)
 {
 	int i;
-	
+
 	free(tp->note[note]);
 	for(i = note; i < tp->notes - 1; i++)
 	{
@@ -488,7 +488,7 @@ void eof_track_sort_notes(EOF_TRACK * tp)
 int eof_fixup_next_note(EOF_TRACK * tp, int note)
 {
 	int i;
-	
+
 	for(i = note + 1; i < tp->notes; i++)
 	{
 		if(tp->note[i]->type == tp->note[note]->type)
@@ -504,7 +504,7 @@ void eof_track_find_crazy_notes(EOF_TRACK * tp)
 {
 	int i;
 	int next;
-	
+
 	for(i = 0; i < tp->notes; i++)
 	{
 		next = eof_fixup_next_note(tp, i);
@@ -522,7 +522,7 @@ void eof_track_fixup_notes(EOF_TRACK * tp, int sel)
 {
 	int i;
 	int next;
-	
+
 	if(!sel)
 	{
 		if(eof_selection.current < tp->notes)
@@ -533,7 +533,7 @@ void eof_track_fixup_notes(EOF_TRACK * tp, int sel)
 	}
 	for(i = tp->notes - 1; i >= 0; i--)
 	{
-		
+
 		/* fix selections */
 		if(tp->note[i]->type == eof_note_type && tp->note[i]->pos == eof_selection.current_pos)
 		{
@@ -543,13 +543,13 @@ void eof_track_fixup_notes(EOF_TRACK * tp, int sel)
 		{
 			eof_selection.last = i;
 		}
-		
+
 		/* delete certain notes */
 		if(tp->note[i]->note == 0 || (tp->note[i]->type < 0 || tp->note[i]->type > 4) || tp->note[i]->pos < eof_song->tags->ogg[eof_selected_ogg].midi_offset || tp->note[i]->pos >= eof_music_length)
 		{
 			eof_track_delete_note(tp, i);
 		}
-					
+
 		else
 		{
 			/* make sure there are no 0-length notes */
@@ -557,13 +557,13 @@ void eof_track_fixup_notes(EOF_TRACK * tp, int sel)
 			{
 				tp->note[i]->length = 1;
 			}
-			
+
 			/* make sure note doesn't extend past end of song */
 			if(tp->note[i]->pos + tp->note[i]->length >= eof_music_length)
 			{
 				tp->note[i]->length = eof_music_length - tp->note[i]->pos;
 			}
-			
+
 			/* compare this note to the next one of the same type
 			   to make sure they don't overlap */
 			next = eof_fixup_next_note(tp, i);
@@ -621,7 +621,7 @@ void eof_track_add_star_power(EOF_TRACK * tp, unsigned long start_pos, unsigned 
 void eof_track_delete_star_power(EOF_TRACK * tp, int index)
 {
 	int i;
-	
+
 	for(i = index; i < tp->star_power_paths - 1; i++)
 	{
 		memcpy(&tp->star_power_path[i], &tp->star_power_path[i + 1], sizeof(EOF_STAR_POWER_ENTRY));
@@ -639,7 +639,7 @@ void eof_track_add_solo(EOF_TRACK * tp, unsigned long start_pos, unsigned long e
 void eof_track_delete_solo(EOF_TRACK * tp, int index)
 {
 	int i;
-	
+
 	for(i = index; i < tp->solos - 1; i++)
 	{
 		memcpy(&tp->solo[i], &tp->solo[i + 1], sizeof(EOF_SOLO_ENTRY));
@@ -661,7 +661,7 @@ EOF_LYRIC * eof_vocal_track_add_lyric(EOF_VOCAL_TRACK * tp)
 void eof_vocal_track_delete_lyric(EOF_VOCAL_TRACK * tp, int lyric)
 {
 	int i;
-	
+
 	free(tp->lyric[lyric]);
 	for(i = lyric; i < tp->lyrics - 1; i++)
 	{
@@ -678,7 +678,7 @@ void eof_vocal_track_sort_lyrics(EOF_VOCAL_TRACK * tp)
 int eof_fixup_next_lyric(EOF_VOCAL_TRACK * tp, int lyric)
 {
 	int i;
-	
+
 	for(i = lyric + 1; i < tp->lyrics; i++)
 	{
 		return i;
@@ -691,7 +691,7 @@ void eof_vocal_track_fixup_lyrics(EOF_VOCAL_TRACK * tp, int sel)
 	int i, j;
 	int lc;
 	int next;
-	
+
 	if(!sel)
 	{
 		if(eof_selection.current < tp->lyrics)
@@ -702,7 +702,7 @@ void eof_vocal_track_fixup_lyrics(EOF_VOCAL_TRACK * tp, int sel)
 	}
 	for(i = tp->lyrics - 1; i >= 0; i--)
 	{
-		
+
 		/* fix selections */
 		if(tp->lyric[i]->pos == eof_selection.current_pos)
 		{
@@ -712,28 +712,28 @@ void eof_vocal_track_fixup_lyrics(EOF_VOCAL_TRACK * tp, int sel)
 		{
 			eof_selection.last = i;
 		}
-		
+
 		/* delete certain notes */
 		if(tp->lyric[i]->pos < eof_song->tags->ogg[eof_selected_ogg].midi_offset || tp->lyric[i]->pos >= eof_music_length)
 		{
 			eof_vocal_track_delete_lyric(tp, i);
 		}
-					
+
 		else
 		{
-			
+
 			/* make sure there are no 0-length notes */
 			if(tp->lyric[i]->length <= 0)
 			{
 				tp->lyric[i]->length = 1;
 			}
-			
+
 			/* make sure note doesn't extend past end of song */
 			if(tp->lyric[i]->pos + tp->lyric[i]->length >= eof_music_length)
 			{
 				tp->lyric[i]->length = eof_music_length - tp->lyric[i]->pos;
 			}
-			
+
 			/* compare this note to the next one of the same type
 			   to make sure they don't overlap */
 			next = eof_fixup_next_lyric(tp, i);
@@ -800,13 +800,14 @@ void eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, uns
 {
 	tp->line[tp->lines].start_pos = start_pos;
 	tp->line[tp->lines].end_pos = end_pos;
+	tp->line[tp->lines].flags = 0;	//Ensure that a blank flag status is initialized
 	tp->lines++;
 }
 
 void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, int index)
 {
 	int i;
-	
+
 	for(i = index; i < tp->lines - 1; i++)
 	{
 		memcpy(&tp->line[i], &tp->line[i + 1], sizeof(EOF_LYRIC_LINE));
@@ -830,7 +831,7 @@ EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp)
 void eof_song_delete_beat(EOF_SONG * sp, int beat)
 {
 	int i;
-	
+
 	free(sp->beat[beat]);
 	for(i = beat; i < sp->beats - 1; i++)
 	{
@@ -889,7 +890,7 @@ void eof_song_delete_text_event(EOF_SONG * sp, int event)
 void eof_song_move_text_events(EOF_SONG * sp, int beat, int offset)
 {
 	int i;
-	
+
 	for(i = 0; i < sp->text_events; i++)
 	{
 		if(sp->text_event[i]->beat >= beat)
@@ -931,13 +932,13 @@ void eof_sort_events(void)
 void eof_fixup_notes(void)
 {
 	int i, j;
-	
+
 	if(eof_selection.current < eof_song->track[eof_selected_track]->notes)
 	{
 		eof_selection.multi[eof_selection.current] = 0;
 	}
 	eof_selection.current = EOF_MAX_NOTES - 1;
-	
+
 	/* fix beats */
 	if(eof_song->beat[0]->pos != eof_song->tags->ogg[eof_selected_ogg].midi_offset)
 	{
@@ -946,7 +947,7 @@ void eof_fixup_notes(void)
 			eof_song->beat[i]->pos += eof_song->tags->ogg[eof_selected_ogg].midi_offset - eof_song->beat[0]->pos;
 		}
 	}
-	
+
 	for(j = 0; j < EOF_MAX_TRACKS; j++)
 	{
 		eof_track_fixup_notes(eof_song->track[j], j == eof_selected_track);
@@ -956,7 +957,7 @@ void eof_fixup_notes(void)
 void eof_sort_notes(void)
 {
 	int j;
-	
+
 	for(j = 0; j < EOF_MAX_TRACKS; j++)
 	{
 		eof_track_sort_notes(eof_song->track[j]);
@@ -966,7 +967,7 @@ void eof_sort_notes(void)
 void eof_detect_difficulties(EOF_SONG * sp)
 {
 	int i;
-	
+
 	memset(eof_note_difficulties, 0, sizeof(int) * 4);
 	eof_note_type_name[0][0] = ' ';
 	eof_note_type_name[1][0] = ' ';

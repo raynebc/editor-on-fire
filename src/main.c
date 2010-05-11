@@ -229,7 +229,7 @@ float eof_get_porpos(unsigned long pos)
 	int beat = 0;
 	int blength;
 	unsigned long rpos;
-	
+
 	beat = eof_get_beat(pos);
 	if(beat < eof_song->beats - 1)
 	{
@@ -297,7 +297,7 @@ void eof_find_lyric_preview_lines(void)
 	int next_line = -1;
 	unsigned long dist = -1;
 	int beyond = 1;
-	
+
 	for(i = 0; i < eof_song->vocal_track->lines; i++)
 	{
 		if(eof_music_pos >= eof_song->vocal_track->line[i].start_pos && eof_music_pos <= eof_song->vocal_track->line[i].end_pos)
@@ -430,7 +430,7 @@ void eof_fix_catalog_selection(void)
 
 int eof_set_display_mode(int mode)
 {
-	
+
 	/* destroy windows first */
 	if(eof_window_editor)
 	{
@@ -457,7 +457,7 @@ int eof_set_display_mode(int mode)
 		destroy_bitmap(eof_screen_3d);
 		eof_screen_3d = NULL;
 	}
-	
+
 	switch(mode)
 	{
 		case EOF_DISPLAY_640:
@@ -722,7 +722,7 @@ void eof_fix_window_title(void)
 void eof_clear_input(void)
 {
 	int i;
-	
+
 	clear_keybuf();
 	for(i = 0; i < KEY_MAX; i++)
 	{
@@ -758,7 +758,7 @@ void eof_prepare_undo(int type)
 int eof_get_previous_note(int cnote)
 {
 	int i;
-	
+
 	for(i = cnote - 1; i >= 0; i--)
 	{
 		if(eof_song->track[eof_selected_track]->note[i]->type == eof_song->track[eof_selected_track]->note[cnote]->type)
@@ -778,7 +778,7 @@ int eof_note_is_hopo(int cnote)
 	int beat = -1;
 	double bpm;
 	double scale;
-	
+
 	if(eof_song->track[eof_selected_track]->note[cnote]->flags & EOF_NOTE_FLAG_NO_HOPO)
 	{
 		return 0;
@@ -834,10 +834,10 @@ void eof_determine_hopos(void)
 	int i, j;
 	char sp[EOF_MAX_STAR_POWER] = {0};
 	char so[EOF_MAX_STAR_POWER] = {0};
-	
+
 	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
 	{
-		
+
 		/* clear the flags */
 		if(eof_song->track[eof_selected_track]->note[i]->flags & EOF_NOTE_FLAG_HOPO)
 		{
@@ -848,7 +848,7 @@ void eof_determine_hopos(void)
 			eof_song->track[eof_selected_track]->note[i]->flags ^= EOF_NOTE_FLAG_SP;
 		}
 //		eof_song->track[eof_selected_track]->note[i]->flags = (eof_song->track[eof_selected_track]->note[i]->flags & EOF_NOTE_FLAG_CRAZY);
-		
+
 		/* mark HOPO notes */
 		switch(eof_hopo_view)
 		{
@@ -869,7 +869,7 @@ void eof_determine_hopos(void)
 				break;
 			}
 		}
-		
+
 		/* mark star power notes */
 		for(j = 0; j < eof_song->track[eof_selected_track]->star_power_paths; j++)
 		{
@@ -879,7 +879,7 @@ void eof_determine_hopos(void)
 				sp[j] = 1;
 			}
 		}
-		
+
 		/* check solos */
 		for(j = 0; j < eof_song->track[eof_selected_track]->solos; j++)
 		{
@@ -889,7 +889,7 @@ void eof_determine_hopos(void)
 			}
 		}
 	}
-	
+
 	/* delete star power phrases with no notes */
 	for(j = eof_song->track[eof_selected_track]->star_power_paths - 1; j >= 0; j--)
 	{
@@ -898,7 +898,7 @@ void eof_determine_hopos(void)
 			eof_track_delete_star_power(eof_song->track[eof_selected_track], j);
 		}
 	}
-	
+
 	/* delete solos with no notes */
 	for(j = eof_song->track[eof_selected_track]->solos - 1; j >= 0; j--)
 	{
@@ -915,12 +915,12 @@ int eof_figure_difficulty(void)
 	int nt[5] = {0};
 	int dt[5] = {-1, -1, -1, -1};
 	int count = 0;
-	
+
 	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
 	{
 		nt[(int)eof_song->track[eof_selected_track]->note[i]->type] = 1;
 	}
-	
+
 	/* no notes in this difficulty so don't allow test */
 	if(!nt[eof_note_type])
 	{
@@ -946,7 +946,7 @@ int eof_count_selected_notes_vocal(int * total, char v)
 {
 	int i;
 	int count = 0;
-	
+
 	for(i = 0; i < eof_song->vocal_track->lyrics; i++)
 	{
 		if(eof_selection.track == EOF_TRACK_VOCALS)
@@ -972,7 +972,7 @@ int eof_count_selected_notes(int * total, char v)
 	}
 	int i;
 	int count = 0;
-	
+
 	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
 	{
 		if(eof_song->track[eof_selected_track]->note[i]->type == eof_note_type)
@@ -1002,7 +1002,7 @@ int eof_figure_part(void)
 	int nt[5] = {0};
 	int dt[5] = {-1, -1, -1, -1, -1};
 	int count = 0;
-	
+
 	for(i = 0; i < 5; i++)
 	{
 		if(eof_song->track[i]->notes > 0)
@@ -1010,7 +1010,7 @@ int eof_figure_part(void)
 			nt[i] = 1;
 		}
 	}
-	
+
 	/* no notes in this track so don't allow test */
 	if(!nt[eof_selected_track])
 	{
@@ -1030,7 +1030,7 @@ int eof_figure_part(void)
 int eof_load_ogg_quick(char * filename)
 {
 	int loaded = 0;
-	
+
 	eof_destroy_ogg();
 	eof_music_data = (void *)eof_buffer_file(filename);
 	eof_music_data_size = file_size_ex(filename);
@@ -1068,7 +1068,7 @@ int eof_load_ogg(char * filename)
 {
 	char * returnedfn = NULL;
 	int loaded = 0;
-	
+
 	eof_destroy_ogg();
 	eof_music_data = (void *)eof_buffer_file(filename);
 	eof_music_data_size = file_size_ex(filename);
@@ -1123,7 +1123,7 @@ int eof_load_ogg(char * filename)
 			else
 			{
 				allegro_message("Unable to load OGG file!\n%s", returnedfn);
-			}			
+			}
 		}
 	}
 	if(loaded)
@@ -1159,14 +1159,14 @@ int eof_load_ogg(char * filename)
 	{
 		eof_music_actual_length = alogg_get_length_msecs_ogg(eof_music_track);
 	} */
-	
+
 	return loaded;
 }
 
 int eof_destroy_ogg(void)
 {
 	int failed = 1;
-	
+
 	if(eof_music_track)
 	{
 		alogg_destroy_ogg(eof_music_track);
@@ -1199,7 +1199,7 @@ int eof_notes_selected(void)
 {
 	int count = 0;
 	int i;
-	
+
 	for(i = 0; i < EOF_MAX_NOTES; i++)
 	{
 		if(eof_selection.multi[i])
@@ -1213,7 +1213,7 @@ int eof_notes_selected(void)
 int eof_first_selected_note(void)
 {
 	int i;
-	
+
 	for(i = 0; i < EOF_MAX_NOTES; i++)
 	{
 		if(eof_selection.multi[i] && eof_song->track[eof_selected_track]->note[i]->type == eof_note_type)
@@ -1227,19 +1227,19 @@ int eof_first_selected_note(void)
 /* read keys that are universally usable */
 void eof_read_global_keys(void)
 {
-	
+
 	/* exit program */
 	if(key[KEY_ESC])
 	{
 		eof_menu_file_exit();
 		key[KEY_ESC] = 0;
 	}
-	
+
 	if(!eof_music_paused)
 	{
 		return;
 	}
-	
+
 	/* activate the menu when ALT is pressed */
 	if(KEY_EITHER_ALT)
 	{
@@ -1252,7 +1252,7 @@ void eof_read_global_keys(void)
 		eof_pen_visible = 1;
 		eof_show_mouse(NULL);
 	}
-	
+
 	/* switch between window and full screen mode */
 	if(KEY_EITHER_ALT && key[KEY_ENTER])
 	{
@@ -1279,7 +1279,7 @@ void eof_read_global_keys(void)
 			ncdfs_use_allegro = 0;
 		}
 	}
-	
+
 	/* show help */
 	if(key[KEY_F1])
 	{
@@ -1287,39 +1287,39 @@ void eof_read_global_keys(void)
 		eof_menu_help_keys();
 		key[KEY_ESC] = 0;
 	}
-	
+
 	/* stuff you can only do when a chart is loaded */
 	if(eof_song_loaded && eof_song)
 	{
-		
+
 		/* undo */
 		if(KEY_EITHER_CTRL && key[KEY_Z] && eof_undo_count > 0)
 		{
 			eof_menu_edit_undo();
 			key[KEY_Z] = 0;
 		}
-	
+
 		/* redo */
 		if(KEY_EITHER_CTRL && key[KEY_Y] && eof_redo_toggle)
 		{
 			eof_menu_edit_redo();
 			key[KEY_Y] = 0;
 		}
-	
+
 		/* switch between inverted and normal editor view */
 		if(KEY_EITHER_CTRL && key[KEY_I])
 		{
 			eof_inverted_notes = 1 - eof_inverted_notes;
 			key[KEY_I] = 0;
 		}
-	
+
 		/* switch between normal and lefty 3D view */
 		if(KEY_EITHER_CTRL && key[KEY_N])
 		{
 			eof_lefty_mode = 1 - eof_lefty_mode;
 			key[KEY_N] = 0;
 		}
-		
+
 		if(key[KEY_MINUS])
 		{
 			if(eof_av_delay > 0)
@@ -1334,7 +1334,7 @@ void eof_read_global_keys(void)
 			key[KEY_EQUALS] = 0;
 		}
 	}
-	
+
 	if(key[KEY_F4])
 	{
 		clear_keybuf();
@@ -1373,7 +1373,7 @@ void eof_lyric_logic(void)
 	int bnote[7] = {1, 3, 0, 6, 8, 10, 0};
 	int i, k;
 	eof_hover_key = -1;
-	
+
 	if(eof_music_paused)
 	{
 		if(mouse_x >= eof_window_3d->x && mouse_x < eof_window_3d->x + eof_window_3d->w && mouse_y >= eof_window_3d->y + eof_window_3d->h - eof_screen_layout.lyric_view_key_height)
@@ -1394,7 +1394,7 @@ void eof_lyric_logic(void)
 					}
 				}
 			}
-			
+
 			/* otherwise, white key */
 			if(eof_hover_key < 0)
 			{
@@ -1520,7 +1520,7 @@ void eof_note_logic(void)
 void eof_logic(void)
 {
 	eof_read_global_keys();
-	
+
 	/* see if we need to activate the menu */
 	if(mouse_y < eof_image[EOF_IMAGE_MENU]->h && mouse_b & 1)
 	{
@@ -1533,9 +1533,9 @@ void eof_logic(void)
 		eof_pen_visible = 1;
 		eof_show_mouse(NULL);
 	}
-	
+
 	eof_last_note = EOF_MAX_NOTES;
-		
+
 	get_mouse_mickeys(&eof_mickeys_x, &eof_mickeys_y);
 	if(eof_song_loaded && eof_input_mode != EOF_INPUT_FEEDBACK)
 	{
@@ -1624,11 +1624,11 @@ void eof_logic(void)
 	{
 		if(eof_vocals_selected)
 		{
-			eof_vocal_editor_logic();	
+			eof_vocal_editor_logic();
 		}
 		else
 		{
-			eof_editor_logic();	
+			eof_editor_logic();
 		}
 	}
 	eof_note_logic();
@@ -1656,15 +1656,15 @@ void eof_render_note_window(void)
 	int i;
 	int pos;
 	int lpos, npos;
-	
+
 	clear_to_color(eof_window_note->screen, makecol(64, 64, 64));
-	
+
 	if(eof_catalog_menu[0].flags & D_SELECTED)
 	{
 		textprintf_ex(eof_window_note->screen, font, 2, 0, eof_info_color, -1, "Fret Catalog");
 		textprintf_ex(eof_window_note->screen, font, 2, 12, makecol(255, 255, 255), -1, "-------------------");
 		textprintf_ex(eof_window_note->screen, font, 2, 24,  makecol(255, 255, 255), -1, "Entry: %d of %d", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
-		
+
 		if(eof_cselected_control < 0)
 		{
 			draw_sprite(eof_window_note->screen, eof_image[EOF_IMAGE_CCONTROLS_BASE], 0, 40);
@@ -1673,7 +1673,7 @@ void eof_render_note_window(void)
 		{
 			draw_sprite(eof_window_note->screen, eof_image[EOF_IMAGE_CCONTROLS_0 + eof_cselected_control], 0, 40);
 		}
-		
+
 		/* render catalog entry */
 		if(eof_song->catalog->entries > 0)
 		{
@@ -1689,19 +1689,19 @@ void eof_render_note_window(void)
 				{
 					lpos = 20 - (pos - 140);
 				}
-				
+
 				/* fill in window background color */
 //				rectfill(eof_window_note->screen, 0, 25 + 8, eof_window_editor->w - 1, eof_window_editor->h - 1, eof_color_gray);
-				
+
 				/* draw fretboard area */
 				rectfill(eof_window_note->screen, 0, EOF_EDITOR_RENDER_OFFSET + 25, eof_window_editor->w - 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_black);
-				
+
 				for(i = 0; i < 5; i += 4)
 				{
 					hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
 				}
 				vline(eof_window_note->screen, lpos + (eof_music_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
-				
+
 				/* draw beat lines */
 				if(pos < 140)
 				{
@@ -1715,11 +1715,11 @@ void eof_render_note_window(void)
 				{
 					vline(eof_window_note->screen, npos + eof_song->beat[i]->pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
 				}
-			
+
 				/* clear lyric text area */
 				rectfill(eof_window_note->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, eof_window_editor->w - 1, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, eof_color_black);
 				hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, lpos + (eof_music_length) / eof_zoom, eof_color_white);
-				
+
 				for(i = 0; i < eof_song->vocal_track->lyrics; i++)
 				{
 					if(eof_song->vocal_track->lyric[i]->pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos && eof_song->vocal_track->lyric[i]->pos <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos)
@@ -1727,7 +1727,7 @@ void eof_render_note_window(void)
 						eof_lyric_draw_catalog(eof_song->vocal_track->lyric[i], i == eof_hover_note_2 ? 2 : 0);
 					}
 				}
-				
+
 				/* draw the current position */
 				if(pos > eof_av_delay / eof_zoom)
 				{
@@ -1753,14 +1753,14 @@ void eof_render_note_window(void)
 				{
 					lpos = 20 - (pos - 140);
 				}
-			
+
 				rectfill(eof_window_note->screen, 0, EOF_EDITOR_RENDER_OFFSET + 25, eof_window_note->w - 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_black);
 				for(i = 0; i < 5; i++)
 				{
 					hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
 				}
 				vline(eof_window_note->screen, lpos + (eof_music_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
-				
+
 				/* draw beat lines */
 				if(pos < 140)
 				{
@@ -1774,7 +1774,7 @@ void eof_render_note_window(void)
 				{
 					vline(eof_window_note->screen, npos + eof_song->beat[i]->pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
 				}
-			
+
 				for(i = 0; i < eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->notes; i++)
 				{
 					if(eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->type && eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos && eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->pos <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos)
@@ -1782,7 +1782,7 @@ void eof_render_note_window(void)
 						eof_note_draw_catalog(eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i], i == eof_hover_note_2 ? 2 : 0);
 					}
 				}
-				
+
 				/* draw the current position */
 				if(pos > eof_av_delay / eof_zoom)
 				{
@@ -1866,7 +1866,7 @@ void eof_render_note_window(void)
 		textprintf_ex(eof_window_note->screen, font, 2, 180,  makecol(255, 255, 255), -1, "Catalog: %d of %d", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
 		textprintf_ex(eof_window_note->screen, font, 2, 192,  makecol(255, 255, 255), -1, "OGG File: \"%s\"", eof_song->tags->ogg[eof_selected_ogg].filename);
 	}
-	
+
 	rect(eof_window_note->screen, 0, 0, eof_window_note->w - 1, eof_window_note->h - 1, makecol(160, 160, 160));
 	rect(eof_window_note->screen, 1, 1, eof_window_note->w - 2, eof_window_note->h - 2, eof_color_black);
 	hline(eof_window_note->screen, 1, eof_window_note->h - 2, eof_window_note->w - 2, makecol(255, 255, 255));
@@ -1875,27 +1875,53 @@ void eof_render_note_window(void)
 
 void eof_render_lyric_preview(BITMAP * bp)
 {
-	char lline[2][256] = {{0}};
-	int i;
+	#define MAX_LYRIC_PREVIEW_LENGTH 255
+	unsigned long currentlength;	//Used to track the length of the preview line being built
+	unsigned long lyriclength;		//The length of the lyric being added
+
+	char lline[2][MAX_LYRIC_PREVIEW_LENGTH+1] = {{0}};
+	int i,x;
 	int offset = -1;
-	
-	for(i = eof_preview_line_lyric[0]; i < eof_preview_line_end_lyric[0]; i++)
-	{
-		if(!eof_music_paused)
+
+//Build both lyric preview lines
+	for(x = 0; x < 2; x++)
+	{	//For each of the two lyric preview lines to build
+		currentlength=0;	//Reset preview line length counter
+		for(i = eof_preview_line_lyric[x]; i < eof_preview_line_end_lyric[x]; i++)
 		{
-			if(i == eof_hover_lyric)
+			if(!x && !eof_music_paused)	//Only perform this logic for the first lyric preview line
 			{
-				offset = text_length(font, lline[0]);
+				if(i == eof_hover_lyric)
+				{
+					offset = text_length(font, lline[x]);
+				}
+			}
+		//Perform bounds checking before appending string
+			lyriclength=strlen(eof_song->vocal_track->lyric[i]->text);	//This value will be used multiple times
+			if(currentlength+lyriclength > MAX_LYRIC_PREVIEW_LENGTH)	//If appending this lyric would cause an overflow
+				break;													//Stop building this line's preview
+
+		//Append string
+			strcat(lline[x], eof_song->vocal_track->lyric[i]->text);
+			currentlength+=lyriclength;									//Track the length of this preview line
+
+		//Append spacing after lyric if applicable
+			if((i+1 < eof_preview_line_end_lyric[x]) && (eof_song->vocal_track->lyric[i+1]->text[0] != '+'))
+			{	//If there's another lyric for this preview line, and it's not defined as a pitch shift
+				if((lline[x][currentlength-1] != '-') && (lline[x][currentlength-1] != '='))
+				{	//If this lyric doesn't define the next lyric to be a part of the same word, and there's another lyric for this preview line
+					if(currentlength+1 <= MAX_LYRIC_PREVIEW_LENGTH)
+					{	//If appending a space would NOT cause an overflow
+						strcat(lline[x], " ");
+						currentlength++;	//Track the length of this preview line
+					}
+					else
+						break;				//Stop building this line's preview
+				}
 			}
 		}
-		strcat(lline[0], eof_song->vocal_track->lyric[i]->text);
-		strcat(lline[0], " ");
 	}
-	for(i = eof_preview_line_lyric[1]; i < eof_preview_line_end_lyric[1]; i++)
-	{
-		strcat(lline[1], eof_song->vocal_track->lyric[i]->text);
-		strcat(lline[1], " ");
-	}
+
 	textout_centre_ex(bp, font, lline[0], bp->w / 2, 20, makecol(255, 255, 255), -1);
 	textout_centre_ex(bp, font, lline[1], bp->w / 2, 36, makecol(255, 255, 255), -1);
 	if(offset >= 0 && eof_hover_lyric >= 0)
@@ -1915,9 +1941,9 @@ void eof_render_lyric_window(void)
 	int kcol2;
 	int note[7] = {0, 2, 4, 5, 7, 9, 11};
 	int bnote[7] = {1, 3, 0, 6, 8, 10, 0};
-	
+
 	clear_to_color(eof_window_3d->screen, makecol(64, 64, 64));
-	
+
 	/* render the 29 white keys */
 	for(i = 0; i < 29; i++)
 	{
@@ -1952,7 +1978,7 @@ void eof_render_lyric_window(void)
 		rectfill(eof_window_3d->screen, i * eof_screen_layout.lyric_view_key_width, eof_window_3d->screen->h - eof_screen_layout.lyric_view_key_height, i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width - 1, eof_window_3d->screen->h, kcol);
 		vline(eof_window_3d->screen, i * eof_screen_layout.lyric_view_key_width, eof_window_3d->screen->h - eof_screen_layout.lyric_view_key_height, eof_window_3d->screen->h, kcol2);
 	}
-	
+
 	/* render black keys over white keys */
 	for(i = 0; i < 28; i++)
 	{
@@ -1992,7 +2018,7 @@ void eof_render_lyric_window(void)
 		}
 	}
 	eof_render_lyric_preview(eof_window_3d->screen);
-	
+
 	rect(eof_window_3d->screen, 0, 0, eof_window_3d->w - 1, eof_window_3d->h - 1, makecol(160, 160, 160));
 	rect(eof_window_3d->screen, 1, 1, eof_window_3d->w - 2, eof_window_3d->h - 2, eof_color_black);
 	hline(eof_window_3d->screen, 1, eof_window_3d->h - 2, eof_window_3d->w - 2, makecol(255, 255, 255));
@@ -2003,9 +2029,9 @@ void eof_render_3d_window(void)
 {
 	int point[8];
 	int i;
-	
+
 	clear_to_color(eof_window_3d->screen, makecol(64, 64, 64));
-	
+
 	point[0] = ocd3d_project_x(20, 600);
 	point[1] = ocd3d_project_y(200, 600);
 	point[2] = ocd3d_project_x(300, 600);
@@ -2015,7 +2041,7 @@ void eof_render_3d_window(void)
 	point[6] = ocd3d_project_x(20, -100);
 	point[7] = ocd3d_project_y(200, -100);
 	polygon(eof_window_3d->screen, 4, point, eof_color_black);
-	
+
 	/* render solo sections */
 	int sz, sez;
 	int spz, spez;
@@ -2038,15 +2064,15 @@ void eof_render_3d_window(void)
 			polygon(eof_window_3d->screen, 4, point, makecol(0, 0, 64));
 		}
 	}
-	
+
 	/* draw the 'strings' */
 	int obx, oby, oex, oey;
 	int px, py, pw;
-	
+
 	px = eof_window_3d->w / 2;
 	py = 0;
 	pw = 320;
-	
+
 	/* draw the beat markers */
 	int bz;
 	int beat_counter = 0;
@@ -2084,20 +2110,20 @@ void eof_render_3d_window(void)
 			beat_counter = 0;
 		}
 	}
-	
+
 	for(i = 0; i < 5; i++)
 	{
 		obx = ocd3d_project_x(20 + i * 56 + 28, -100);
 		oex = ocd3d_project_x(20 + i * 56 + 28, 600);
 		oby = ocd3d_project_y(200, -100);
 		oey = ocd3d_project_y(200, 600);
-	
+
 		line(eof_window_3d->screen, obx, oby, oex, oey, eof_color_white);
 	}
-	
+
 	/* draw the position marker */
 	line(eof_window_3d->screen, ocd3d_project_x(48, 0), ocd3d_project_y(200, 0), ocd3d_project_x(48 + 4 * 56, 0), ocd3d_project_y(200, 0), eof_color_green);
-	
+
 	int first_note = -1;
 	int last_note = 0;
 	int tr;
@@ -2125,7 +2151,7 @@ void eof_render_3d_window(void)
 		}
 	}
 //	allegro_message("first = %d\nlast = %d", first_note, last_note);
-	
+
 	/* draw the notes */
 	for(i = first_note; i >= last_note; i--)
 	{
@@ -2135,7 +2161,7 @@ void eof_render_3d_window(void)
 		}
 	}
 	eof_render_lyric_preview(eof_window_3d->screen);
-	
+
 	rect(eof_window_3d->screen, 0, 0, eof_window_3d->w - 1, eof_window_3d->h - 1, makecol(160, 160, 160));
 	rect(eof_window_3d->screen, 1, 1, eof_window_3d->w - 2, eof_window_3d->h - 2, eof_color_black);
 	hline(eof_window_3d->screen, 1, eof_window_3d->h - 2, eof_window_3d->w - 2, makecol(255, 255, 255));
@@ -2177,12 +2203,12 @@ void eof_render(void)
 		clear_to_color(eof_screen, eof_color_gray);
 		blit(eof_image[EOF_IMAGE_MENU], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
 	}
-	
+
 	if(eof_cursor_visible && eof_soft_cursor)
 	{
 		draw_sprite(eof_screen, mouse_sprite, mouse_x - 1, mouse_y - 1);
 	}
-	
+
 	if(!eof_disable_vsync)
 	{
 		IdleUntilVSync();
@@ -2225,7 +2251,7 @@ int d_hackish_edit_proc (int msg, DIALOG *d, int c)
 int eof_check_arg_desktop(int argc, char * argv[])
 {
 	int i;
-	
+
 	for(i = 0; i < argc; i++)
 	{
 		if(!ustricmp(argv[i], "-desktop"))
@@ -2239,7 +2265,7 @@ int eof_check_arg_desktop(int argc, char * argv[])
 int eof_check_arg_softmouse(int argc, char * argv[])
 {
 	int i;
-	
+
 	for(i = 0; i < argc; i++)
 	{
 		if(!ustricmp(argv[i], "-softmouse"))
@@ -2253,7 +2279,7 @@ int eof_check_arg_softmouse(int argc, char * argv[])
 int eof_load_data(void)
 {
 	int i;
-	
+
 	eof_image[EOF_IMAGE_TAB0] = load_pcx("eof.dat#tab0.pcx", eof_palette);
 	eof_image[EOF_IMAGE_TAB1] = load_pcx("eof.dat#tab1.pcx", NULL);
 	eof_image[EOF_IMAGE_TAB2] = load_pcx("eof.dat#tab2.pcx", NULL);
@@ -2323,7 +2349,7 @@ int eof_load_data(void)
 	font = eof_font;
 	set_palette(eof_palette);
 	set_mouse_sprite(NULL);
-	
+
 	eof_color_black = makecol(0, 0, 0);
 	eof_color_white = makecol(255, 255, 255);
 	eof_color_gray = makecol(64, 64, 64);
@@ -2332,19 +2358,19 @@ int eof_load_data(void)
 	eof_color_blue = makecol(0, 0, 255);
 	eof_color_yellow = makecol(255, 255, 0);
 	eof_color_purple = makecol(255, 0, 255);
-	
+
     gui_fg_color = agup_fg_color;
     gui_bg_color = agup_bg_color;
     gui_mg_color = agup_mg_color;
 	agup_init(awin95_theme);
-    
+
 	return 1;
 }
 
 void eof_destroy_data(void)
 {
 	int i;
-	
+
 	agup_shutdown();
 	for(i = 0; i < EOF_MAX_IMAGES; i++)
 	{
@@ -2361,7 +2387,7 @@ int eof_initialize(int argc, char * argv[])
 {
 	int i;
 	char temp_filename[1024] = {0};
-	
+
 	allegro_init();
 	set_window_title("EOF - No Song");
 	if(install_sound(DIGI_AUTODETECT, MIDI_NONE, NULL))
@@ -2381,12 +2407,12 @@ int eof_initialize(int argc, char * argv[])
 	}
 	install_joystick(JOY_TYPE_AUTODETECT);
 	alogg_detect_endianess(); // make sure OGG player works for PPC
-	
+
 	InitIdleSystem();
-	
+
 	show_mouse(NULL);
 	eof_reset_song();
-	
+
 	/* make sure we are in the proper directory before loading external data */
 	if(argc > 1)
 	{
@@ -2401,11 +2427,11 @@ int eof_initialize(int argc, char * argv[])
 			}
 		}
 	}
-	
+
 	/* reset songs path */
 	get_executable_name(eof_songs_path, 1024);
 	replace_filename(eof_songs_path, eof_songs_path, "", 1024);
-	
+
 	eof_load_config("eof.cfg");
 	if(eof_desktop)
 	{
@@ -2416,7 +2442,7 @@ int eof_initialize(int argc, char * argv[])
 		allegro_message("Unable to set display mode!");
 		return 0;
 	}
-	
+
 	if(!eof_load_data())
 	{
 		return 0;
@@ -2426,7 +2452,7 @@ int eof_initialize(int argc, char * argv[])
     gui_ctext_proc = d_agup_ctext_proc;
     gui_text_list_proc = d_agup_text_list_proc;
 	gui_edit_proc = d_hackish_edit_proc;
-	
+
 	/* create file filters */
 	eof_filter_eof_files = ncdfs_filter_list_create();
 	if(!eof_filter_eof_files)
@@ -2435,7 +2461,7 @@ int eof_initialize(int argc, char * argv[])
 		return 0;
 	}
 	ncdfs_filter_list_add(eof_filter_eof_files, "eof", "EOF Files (*.eof)", 1);
-	
+
 	eof_filter_midi_files = ncdfs_filter_list_create();
 	if(!eof_filter_midi_files)
 	{
@@ -2443,7 +2469,7 @@ int eof_initialize(int argc, char * argv[])
 		return 0;
 	}
 	ncdfs_filter_list_add(eof_filter_midi_files, "mid", "MIDI Files (*.mid)", 1);
-	
+
 	/* check availability of MP3 conversion tools */
 	if(!eof_supports_mp3)
 	{
@@ -2488,7 +2514,7 @@ int eof_initialize(int argc, char * argv[])
 		}
 	#endif
 	}
-	
+
 	/* make music filter */
 	eof_filter_music_files = ncdfs_filter_list_create();
 	if(!eof_filter_music_files)
@@ -2511,7 +2537,7 @@ int eof_initialize(int argc, char * argv[])
 		return 0;
 	}
 	ncdfs_filter_list_add(eof_filter_ogg_files, "ogg", "Music Files (*.ogg)", 1);
-	
+
 	eof_filter_lyrics_files = ncdfs_filter_list_create();
 	if(!eof_filter_lyrics_files)
 	{
@@ -2519,7 +2545,7 @@ int eof_initialize(int argc, char * argv[])
 		return 0;
 	}
 	ncdfs_filter_list_add(eof_filter_lyrics_files, "txt;mid;lrc;vl;kar", "Lyrics Files (*.txt, *.mid, *.lrc, *.vl, *.kar)", 1);
-	
+
 	eof_filter_exe_files = ncdfs_filter_list_create();
 	#ifdef ALLEGRO_WINDOWS
 		if(!eof_filter_exe_files)
@@ -2536,11 +2562,11 @@ int eof_initialize(int argc, char * argv[])
 		}
 		ncdfs_filter_list_add(eof_filter_exe_files, "*", "Executable Files (*.*)", 1);
 	#endif
-	
+
 	eof_undo_reset(); // restart undo system
 	memset(&eof_selection, 0, sizeof(EOF_SELECTION_DATA));
 	eof_selection.current = EOF_MAX_NOTES - 1;
-	
+
 	/* see if we are opening a file on launch */
 	for(i = 1; i < argc; i++)
 	{
@@ -2640,7 +2666,7 @@ int eof_initialize(int argc, char * argv[])
 	{
 		int i;
 		wchar_t * cl = GetCommandLineW();
-		
+
 		eof_windows_internal_argv = CommandLineToArgvW(cl, &eof_windows_argc);
 		eof_windows_argv = malloc(eof_windows_argc * sizeof(char *));
 		for(i = 0; i < eof_windows_argc; i++)
@@ -2656,7 +2682,7 @@ int eof_initialize(int argc, char * argv[])
 void eof_exit(void)
 {
 	int i;
-	
+
 	StopIdleSystem();
 	eof_mix_exit();
 	eof_save_config("eof.cfg");
@@ -2689,7 +2715,7 @@ void eof_exit(void)
 int main(int argc, char * argv[])
 {
 	int updated = 0;
-	
+
 	#ifdef ALLEGRO_WINDOWS
 		if(!eof_initialize_windows())
 		{
@@ -2710,14 +2736,14 @@ int main(int argc, char * argv[])
 			updated = 0;
 			++gametime_tick;
 		}
-		
+
 		/* update and draw the screen */
 		if(!updated)
 		{
 			eof_render();
 			updated = 1;
 		}
-		
+
 		/* update the music */
 		if(!eof_music_paused)
 		{
@@ -2751,7 +2777,7 @@ int main(int argc, char * argv[])
 //				}
 			}
 		}
-		
+
 		/* update the music for playing a portion from catalog */
 		else if(eof_music_catalog_playback)
 		{
@@ -2777,7 +2803,7 @@ int main(int argc, char * argv[])
 		}
 		else
 		{
-			
+
 			if(eof_new_idle_system)
 			{
 				/* rest to save CPU */
@@ -2794,7 +2820,7 @@ int main(int argc, char * argv[])
 						#endif
 					}
 				}
-				
+
 				/* make program "sleep" until it is back in focus */
 				else
 				{
@@ -2809,7 +2835,7 @@ int main(int argc, char * argv[])
 				{
 					rest(eof_cpu_saver);
 				}
-				
+
 				/* make program "sleep" until it is back in focus */
 				else
 				{
