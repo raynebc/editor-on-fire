@@ -946,6 +946,7 @@ int eof_count_selected_notes_vocal(int * total, char v)
 {
 	int i;
 	int count = 0;
+	int last = -1;
 
 	for(i = 0; i < eof_song->vocal_track->lyrics; i++)
 	{
@@ -953,6 +954,7 @@ int eof_count_selected_notes_vocal(int * total, char v)
 		{
 			if(eof_selection.multi[i])
 			{
+				last = i;
 				count++;
 			}
 		}
@@ -961,9 +963,14 @@ int eof_count_selected_notes_vocal(int * total, char v)
 			(*total)++;
 		}
 	}
+	if(count == 1)
+	{
+		eof_selection.current = last;
+	}
 	return count;
 }
 
+/* total is used to determine the total number of notes including unselected notes */
 int eof_count_selected_notes(int * total, char v)
 {
 	if(eof_vocals_selected)
@@ -972,6 +979,7 @@ int eof_count_selected_notes(int * total, char v)
 	}
 	int i;
 	int count = 0;
+	int last = -1;
 
 	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
 	{
@@ -983,6 +991,7 @@ int eof_count_selected_notes(int * total, char v)
 				{
 					if((!v) || (v && eof_song->track[eof_selected_track]->note[i]->note))
 					{
+						last = i;
 						count++;
 					}
 				}
@@ -992,6 +1001,10 @@ int eof_count_selected_notes(int * total, char v)
 				(*total)++;
 			}
 		}
+	}
+	if(count == 1)
+	{
+		eof_selection.current = last;
 	}
 	return count;
 }
