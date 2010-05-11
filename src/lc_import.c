@@ -7,6 +7,7 @@
 #include "foflc/UStar_parse.h"
 #include "foflc/LRC_parse.h"
 #include "song.h"
+#include "main.h"
 
 int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format, char *inputfilename, char *string2);
 	//A reference to a destination EOF_VOCAL_TRACK structure and a destination Lyric_Format pointer must be given
@@ -22,10 +23,12 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 	//If -1 is returned EOF would need to prompt the user to select the appropriate Vrhythm MIDI file (if pitched lyrics are detected)
 	//or select the MIDI track to import from (if separate MIDI tracks have separate lyrics).  (*lp) will refer to a list of possibilities
 	//the user should be prompted with, otherwise EOF can make the decision internally.
-	//string2 is expected to be either the filename for a pitched lyric file (Vrhythm import) or a track name (any other MIDI based import)
+	//string2 is expected to be either the track name to import (any MIDI based import besides Vrhythm)
 	//	string2 may be NULL for SKAR import, as the track to import is pre-determined
 	//	string2 may be NULL for MIDI import, as "PART VOCALS" will be assumed by default
-	//  string2 is required for KAR/Vrhythm import, used if supplied for SKAR/MIDI import as mentioned above, otherwise it is ignored
+	//  string2 is ignored for Pitched Lyric import.  The user will be prompted to browse to a Vocal Rhythm MIDI
+	//  string2 is required for KAR import, used if supplied for SKAR/MIDI import as mentioned above, otherwise it is ignored
+	//If the format is not zero (no auto detection), lp is not used and may be NULL
 
 int eof_import_lyrics_from_lc(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp);
 	//Load the contents of the Lyrics structure into an EOF lyric structure
@@ -41,15 +44,16 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 
 int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format, char *inputfilename, char *string2)
 {
+	char * returnedfn = NULL;	//Return string from dialog window
 	FILE *inf;	  //Used to open the input file
 	struct Lyric_Format *detectionlist;
 
 //Validate parameters
-	if((tp == NULL) || (lp == NULL) || (inputfilename == NULL))
+	if((tp == NULL) || (inputfilename == NULL))
 		return 0;	//Return failure
 
-//Initialize variables
-	tp->lyrics=tp->lines=0;	//Empty the given lyric list
+	if((format == 0) && (lp == NULL))
+		return 0;	//Return failure
 
 	InitLyrics();	//Initialize all variables in the Lyrics structure
 	InitMIDI();		//Initialize all variables in the MIDI structure
@@ -81,16 +85,26 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 	}
 	else			//Import specific format
 	{
-		if((Lyrics.in_format==VRHYTHM_FORMAT) || (Lyrics.in_format==KAR_FORMAT))
+		if(Lyrics.in_format == KAR_FORMAT)
 		{	//If this is a format for which string2 (pitched file or track name) must be specified
 			if(string2 == NULL)	//If the track name to import is not given
 				return 0;	//Return failure
 
 			Lyrics.inputtrack=DuplicateString(string2);	//Make a duplicate, so its de-allocation won't affect calling function
 		}
+		else if(Lyrics.in_format == PITCHED_LYRIC_FORMAT)
+		{	//If importing Pitched Lyrics, user must provide the Vocal Rhythm MIDI
+			returnedfn = ncd_file_select(0, eof_filename, "Select Vocal Rhythm MIDI", eof_filter_midi_files);
+			eof_clear_input();
+			if(!returnedfn)
+				return 0;	//Return error or user canceled
+
+			ustrcpy(eof_filename, returnedfn);	//Save the last user-selected dialog path
+		}
 
 		Lyrics.in_format=format;
 	}
+
 	Lyrics.infilename=inputfilename;
 
 //Import lyrics
@@ -129,8 +143,8 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 
 		case VRHYTHM_FORMAT:	//Load vocal rhythm (MIDI) and pitched lyrics
 			Lyrics.inputtrack=string2;
-			inf=fopen_err(Lyrics.infilename,"rb");	//Vrhythm is a binary format
-			VRhythm_Load(Lyrics.srclyrname,Lyrics.srcrhythmname,inf);
+			inf=fopen_err(returnedfn,"rb");	//Vrhythm is a binary format
+			VRhythm_Load(inputfilename,returnedfn,inf);
 		break;
 
 		case KAR_FORMAT:	//Load KAR MIDI file
@@ -160,12 +174,6 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 
 	RemapPitches();		//Ensure pitches are within the correct range (except for pitchless lyrics)
 
-//Import the Lyrics structure into EOF's lyric structure
-	if(tp == NULL)
-	{
-		ReleaseMemory(1);	//Release memory allocated during lyric import
-		return 0;		//Return error (out of memory)
-	}
 	tp->lyrics=tp->lines=0;	//Initialize the structure to be empty
 
 	if(eof_import_lyrics_from_lc(tp,&Lyrics) != 0)	//Pass the Lyrics global variable by reference
@@ -177,7 +185,7 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 	fclose_err(inf);	//Ensure this file gets closed
 	inf=NULL;
 	ReleaseMemory(1);	//Release memory allocated during lyric import
-	return 1;	 	//Return finished EOF lyric structure
+	return 1;	 		//Return finished EOF lyric structure
 }
 
 
