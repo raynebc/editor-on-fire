@@ -4213,7 +4213,7 @@ void eof_vocal_editor_logic(void)
 				if(eof_count_selected_notes(NULL, 0) <= 0)
 				{
 					eof_selection.current = eof_hover_note;
-					eof_selection.current_pos = eof_song->track[eof_selected_track]->note[eof_selection.current]->pos;
+					eof_selection.current_pos = eof_song->vocal_track->lyric[eof_selection.current]->pos;
 					if(eof_selection.track != EOF_TRACK_VOCALS)
 					{
 						eof_selection.track = EOF_TRACK_VOCALS;
@@ -4227,7 +4227,7 @@ void eof_vocal_editor_logic(void)
 					if(!eof_selection.multi[eof_hover_note])
 					{
 						eof_selection.current = eof_hover_note;
-						eof_selection.current_pos = eof_song->track[eof_selected_track]->note[eof_selection.current]->pos;
+						eof_selection.current_pos = eof_song->vocal_track->lyric[eof_selection.current]->pos;
 						memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
 						eof_selection.multi[eof_selection.current] = 1;
 						eof_render();
