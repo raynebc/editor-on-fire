@@ -963,7 +963,16 @@ int eof_count_selected_notes_vocal(int * total, char v)
 			(*total)++;
 		}
 	}
-	if(count == 1)
+	
+	/* if no notes remain selected, current note should be unset */
+	if(count == 0)
+	{
+		eof_selection.current = EOF_MAX_NOTES - 1;
+		eof_selection.current_pos = 0;
+	}
+	
+	/* if only one note is selected, make sure current note is set to that note */
+	else if(count == 1)
 	{
 		eof_selection.current = last;
 	}
@@ -1002,7 +1011,16 @@ int eof_count_selected_notes(int * total, char v)
 			}
 		}
 	}
-	if(count == 1)
+	
+	/* if no notes remain selected, current note should be unset */
+	if(count == 0)
+	{
+		eof_selection.current = EOF_MAX_NOTES - 1;
+		eof_selection.current_pos = 0;
+	}
+	
+	/* if only one note is selected, make sure current note is set to that note */
+	else if(count == 1)
 	{
 		eof_selection.current = last;
 	}
