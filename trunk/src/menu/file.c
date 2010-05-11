@@ -22,6 +22,7 @@ MENU eof_file_menu[] =
     {"Load &OGG", eof_menu_file_load_ogg, NULL, D_DISABLED, NULL},
     {"", NULL, NULL, 0, NULL},
     {"MIDI Import", eof_menu_file_midi_import, NULL, 0, NULL},
+    {"Import Lyrics", eof_menu_file_lyrics_import, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"Settings\tF10", eof_menu_file_settings, NULL, 0, NULL},
     {"Preferences\tF11", eof_menu_file_preferences, NULL, 0, NULL},
@@ -141,12 +142,14 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[2].flags = 0; // Save
 		eof_file_menu[3].flags = 0; // Save As
 		eof_file_menu[5].flags = 0; // Load OGG
+		eof_file_menu[8].flags = 0; // Import Lyrics
 	}
 	else
 	{
 		eof_file_menu[2].flags = D_DISABLED; // Save
 		eof_file_menu[3].flags = D_DISABLED; // Save As
 		eof_file_menu[5].flags = D_DISABLED; // Load OGG
+		eof_file_menu[8].flags = D_DISABLED; // Import Lyrics
 	}
 }
 
