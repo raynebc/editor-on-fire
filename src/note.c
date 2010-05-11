@@ -6,7 +6,7 @@
 int eof_note_count_colors(EOF_NOTE * np)
 {
 	int count = 0;
-	
+
 	if(np->note & 1)
 	{
 		count++;
@@ -60,7 +60,7 @@ void eof_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, int 
 int eof_adjust_notes(int offset)
 {
 	int i, j;
-	
+
 	for(i = 0; i < EOF_MAX_TRACKS; i++)
 	{
 		for(j = 0; j < eof_song->track[i]->notes; j++)
@@ -110,13 +110,13 @@ void eof_note_draw(EOF_NOTE * np, int p)
 	int pcol = p == 1 ? makecol(255, 255, 255) : p == 2 ? makecol(224, 255, 224) : 0;
 	int dcol = (np->flags & EOF_NOTE_FLAG_CRAZY) ? makecol(0, 0, 0) : makecol(255, 255, 255);
 	int ncol = 0;
-	
+
 	if(p == 3)
 	{
 		pcol = eof_color_white;
 		dcol = eof_color_white;
 	}
-	
+
 	if(eof_inverted_notes)
 	{
 		ychart[0] = eof_screen_layout.note_y[4];
@@ -133,7 +133,7 @@ void eof_note_draw(EOF_NOTE * np, int p)
 		ychart[3] = eof_screen_layout.note_y[3];
 		ychart[4] = eof_screen_layout.note_y[4];
 	}
-	
+
 	if(pos < 300)
 	{
 		npos = 20 + (np->pos) / eof_zoom;
@@ -142,7 +142,7 @@ void eof_note_draw(EOF_NOTE * np, int p)
 	{
 		npos = 20 - ((pos - 300)) + np->pos / eof_zoom;
 	}
-	
+
 	if(np->flags & EOF_NOTE_FLAG_SP)
 	{
 		ncol = makecol(192, 192, 192);
@@ -343,19 +343,19 @@ void eof_lyric_draw(EOF_LYRIC * np, int p)
 	int pcol = p == 1 ? makecol(255, 255, 255) : p == 2 ? makecol(224, 255, 224) : 0;
 	int dcol = makecol(255, 255, 255);
 	int ncol = 0;
-	
+
 	if(p == 3)
 	{
 		pcol = eof_color_white;
 		dcol = eof_color_white;
 	}
-	
+
 	ychart[0] = eof_screen_layout.note_y[0];
 	ychart[1] = eof_screen_layout.note_y[1];
 	ychart[2] = eof_screen_layout.note_y[2];
 	ychart[3] = eof_screen_layout.note_y[3];
 	ychart[4] = eof_screen_layout.note_y[4];
- 	
+
 	if(pos < 300)
 	{
 		npos = 20 + (np->pos) / eof_zoom;
@@ -389,46 +389,25 @@ void eof_lyric_draw(EOF_LYRIC * np, int p)
 	{
 		note_y = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - (nplace % eof_screen_layout.vocal_view_size + 1) * eof_screen_layout.vocal_tail_size;
 	}
+
+//Rewritten logic to remove duplicated code and render pitchless lyrics at the bottom of the piano roll in gray
+	vline(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 + eof_screen_layout.note_marker_size, makecol(128, 128, 128));
+	if(np->note != 0)
+	{
+		ncol = native ? eof_color_red : eof_color_green;
+		rectfill(eof_window_editor->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, ncol);
+		if(p)
+		{
+			rect(eof_window_editor->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, pcol);
+		}
+	}
+	else	//If the lyric is pitchless, render with gray
+		rectfill(eof_window_editor->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, makecol(128, 128, 128));
+
 	if(p == 3)
-	{
-		vline(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 + eof_screen_layout.note_marker_size, makecol(128, 128, 128));
-		if(np->note != 0)
-		{
-			ncol = native ? eof_color_red : eof_color_green;
-			rectfill(eof_window_editor->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, ncol);
-			if(p)
-			{
-				rect(eof_window_editor->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, pcol);
-			}
-		}
 		textprintf_ex(eof_window_editor->screen, font, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y, eof_color_white, -1, "%s", np->text);
-	}
 	else
-	{
-		vline(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 + eof_screen_layout.note_marker_size, makecol(128, 128, 128));
-		if(np->note != 0)
-		{
-			ncol = native ? eof_color_red : eof_color_green;
-			if(native < 0)
-			{
-				note_y = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y;
-			}
-			else if(native > 0)
-			{
-				note_y = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - (eof_screen_layout.vocal_view_size + 1) * eof_screen_layout.vocal_tail_size;
-			}
-			else
-			{
-				note_y = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - (nplace % eof_screen_layout.vocal_view_size + 1) * eof_screen_layout.vocal_tail_size;
-			}
-			rectfill(eof_window_editor->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, ncol);
-			if(p)
-			{
-				rect(eof_window_editor->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, pcol);
-			}
-		}
 		textprintf_ex(eof_window_editor->screen, font, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y, p ? eof_color_green : eof_color_white, -1, "%s", np->text);
-	}
 }
 
 void eof_note_draw_3d(EOF_NOTE * np, int p)
@@ -439,7 +418,7 @@ void eof_note_draw_3d(EOF_NOTE * np, int p)
 	int bx = 48;
 	int point[8];
 	int rz, ez;
-	
+
 	npos = -pos - 6 + np->pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
 	if(npos + np->length / eof_zoom_3d < -100 || npos > 600)
 	{
@@ -631,7 +610,7 @@ int eof_note_tail_draw_3d(EOF_NOTE * np, int p)
 	int xchart[5] = {48, 48 + 56, 48 + 56 * 2, 48 + 56 * 3, 48 + 56 * 4};
 	int point[8];
 	int rz, ez;
-	
+
 	if(eof_lefty_mode)
 	{
 		xchart[0] = 48 + 56 * 4;
@@ -640,7 +619,7 @@ int eof_note_tail_draw_3d(EOF_NOTE * np, int p)
 		xchart[3] = 48 + 56;
 		xchart[4] = 48;
 	}
-	
+
 	npos = -pos - 6 + np->pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
 	if(npos + np->length / eof_zoom_3d < -100)
 	{
@@ -747,12 +726,12 @@ void eof_note_draw_catalog(EOF_NOTE * np, int p)
 	int npos;
 	int ychart[5] = {20, 40, 60, 80, 100};
 	int pcol = p == 1 ? makecol(255, 255, 255) : p == 2 ? makecol(224, 255, 224) : 0;
-	
+
 	if(p == 3)
 	{
 		pcol = eof_color_white;
 	}
-	
+
 	if(eof_inverted_notes)
 	{
 		ychart[0] = eof_screen_layout.note_y[4];
@@ -769,7 +748,7 @@ void eof_note_draw_catalog(EOF_NOTE * np, int p)
 		ychart[3] = eof_screen_layout.note_y[3];
 		ychart[4] = eof_screen_layout.note_y[4];
 	}
-	
+
 	if(pos < 140)
 	{
 		npos = 20 + (np->pos) / eof_zoom;
@@ -778,7 +757,7 @@ void eof_note_draw_catalog(EOF_NOTE * np, int p)
 	{
 		npos = 20 - ((pos - 140)) + np->pos / eof_zoom;
 	}
-	
+
 	if(eof_selected_track == EOF_TRACK_DRUM && eof_input_mode != EOF_INPUT_PIANO_ROLL && eof_input_mode != EOF_INPUT_REX)
 	{
 		vline(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.note_marker_size, makecol(128, 128, 128));
@@ -829,7 +808,7 @@ void eof_note_draw_catalog(EOF_NOTE * np, int p)
 	}
 	else
 	{
-	
+
 		if(p == 3)
 		{
 			vline(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.note_marker_size, makecol(128, 128, 128));
@@ -987,19 +966,19 @@ void eof_lyric_draw_catalog(EOF_LYRIC * np, int p)
 	int pcol = p == 1 ? makecol(255, 255, 255) : p == 2 ? makecol(224, 255, 224) : 0;
 	int dcol = makecol(255, 255, 255);
 	int ncol = 0;
-	
+
 	if(p == 3)
 	{
 		pcol = eof_color_white;
 		dcol = eof_color_white;
 	}
-	
+
 	ychart[0] = eof_screen_layout.note_y[0];
 	ychart[1] = eof_screen_layout.note_y[1];
 	ychart[2] = eof_screen_layout.note_y[2];
 	ychart[3] = eof_screen_layout.note_y[3];
 	ychart[4] = eof_screen_layout.note_y[4];
- 	
+
 	if(pos < 140)
 	{
 		npos = 20 + (np->pos) / eof_zoom;
