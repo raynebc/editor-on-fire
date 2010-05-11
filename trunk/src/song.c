@@ -459,25 +459,32 @@ EOF_SONG * eof_load_song(const char * fn)
 
 EOF_NOTE * eof_track_add_note(EOF_TRACK * tp)
 {
-	tp->note[tp->notes] = malloc(sizeof(EOF_NOTE));
-	if(tp->note[tp->notes])
+	if(tp->notes < EOF_MAX_NOTES)
 	{
-		memset(tp->note[tp->notes], 0, sizeof(EOF_NOTE));
-		tp->notes++;
+		tp->note[tp->notes] = malloc(sizeof(EOF_NOTE));
+		if(tp->note[tp->notes])
+		{
+			memset(tp->note[tp->notes], 0, sizeof(EOF_NOTE));
+			tp->notes++;
+		}
+		return tp->note[tp->notes - 1];
 	}
-	return tp->note[tp->notes - 1];
+	return NULL;
 }
 
 void eof_track_delete_note(EOF_TRACK * tp, int note)
 {
 	int i;
 
-	free(tp->note[note]);
-	for(i = note; i < tp->notes - 1; i++)
+	if(note < tp->notes)
 	{
-		tp->note[i] = tp->note[i + 1];
+		free(tp->note[note]);
+		for(i = note; i < tp->notes - 1; i++)
+		{
+			tp->note[i] = tp->note[i + 1];
+		}
+		tp->notes--;
 	}
-	tp->notes--;
 }
 
 void eof_track_sort_notes(EOF_TRACK * tp)
@@ -649,25 +656,32 @@ void eof_track_delete_solo(EOF_TRACK * tp, int index)
 
 EOF_LYRIC * eof_vocal_track_add_lyric(EOF_VOCAL_TRACK * tp)
 {
-	tp->lyric[tp->lyrics] = malloc(sizeof(EOF_LYRIC));
-	if(tp->lyric[tp->lyrics])
+	if(tp->lyrics < EOF_MAX_LYRICS)
 	{
-		memset(tp->lyric[tp->lyrics], 0, sizeof(EOF_LYRIC));
-		tp->lyrics++;
+		tp->lyric[tp->lyrics] = malloc(sizeof(EOF_LYRIC));
+		if(tp->lyric[tp->lyrics])
+		{
+			memset(tp->lyric[tp->lyrics], 0, sizeof(EOF_LYRIC));
+			tp->lyrics++;
+		}
+		return tp->lyric[tp->lyrics - 1];
 	}
-	return tp->lyric[tp->lyrics - 1];
+	return NULL;
 }
 
 void eof_vocal_track_delete_lyric(EOF_VOCAL_TRACK * tp, int lyric)
 {
 	int i;
 
-	free(tp->lyric[lyric]);
-	for(i = lyric; i < tp->lyrics - 1; i++)
+	if(lyric < tp->lyrics)
 	{
-		tp->lyric[i] = tp->lyric[i + 1];
+		free(tp->lyric[lyric]);
+		for(i = lyric; i < tp->lyrics - 1; i++)
+		{
+			tp->lyric[i] = tp->lyric[i + 1];
+		}
+		tp->lyrics--;
 	}
-	tp->lyrics--;
 }
 
 void eof_vocal_track_sort_lyrics(EOF_VOCAL_TRACK * tp)
