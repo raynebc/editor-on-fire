@@ -1,18 +1,15 @@
 CC = i586-mingw32msvc-gcc
-CFLAGS = -Wall -O2 -fomit-frame-pointer -ffast-math -funroll-loops -mwindows -Ialogg/include
+CFLAGS = -Wall -O2 -fomit-frame-pointer -ffast-math -funroll-loops -mwindows -Ialogg/include -DEOF_BUILD
 LIBS = -lalleg44.dll -logg -lvorbisfile
 
-OFILES = modules/ocd3d.o modules/wfsel.o modules/gametime.o modules/g-idle.o main.o player.o config.o window.o dialog.o legacy.o midi.o ini.o song.o note.o icon.o beat.o event.o gui.o undo.o mix.o control.o editor.o feedback.o
-MENUOFILES = menu/file.o menu/edit.o menu/song.o menu/note.o menu/beat.o menu/help.o menu/main.o menu/context.o
-ALOGGOFILES = alogg/src/alogg.o
-AGUPOFILES = agup/aalg.o agup/aase.o agup/abeos.o  agup/abitmap.o  agup/agtk.o  agup/agup.o  agup/ans.o  agup/aphoton.o  agup/awin95.o
-LCOFILES = foflc/LRC_parse.o foflc/Lyric_storage.o foflc/Midi_parse.o foflc/Script_parse.o foflc/UStar_parse.o foflc/VL_parse.o
+include makefile.common
+
 EXENAME = eof.exe
 
 all : ../bin/$(EXENAME)
 
-../bin/$(EXENAME) : $(MENUOFILES) $(OFILES) $(AGUPOFILES) $(ALOGGOFILES) $(LCOFILES)
-	$(CC) $(MENUOFILES) $(OFILES) $(AGUPOFILES) $(ALOGGOFILES) $(LCOFILES) $(CFLAGS) $(LIBS) -o ../bin/$(EXENAME)
+../bin/$(EXENAME) : $(MENUOFILES) $(OFILES) $(AGUPOFILES) $(ALOGGOFILES) $(LCOFILES) icon.o
+	$(CC) $(MENUOFILES) $(OFILES) $(AGUPOFILES) $(ALOGGOFILES) $(LCOFILES) icon.o $(CFLAGS) $(LIBS) -o ../bin/$(EXENAME)
 
 icon.o : eof.rc
 	i586-mingw32msvc-windres -o icon.o eof.rc
@@ -24,4 +21,5 @@ clean:
 	@rm agup/*.o
 	@rm alogg/src/*.o
 	@rm foflc/*.o
+	@rm ../bin/$(EXENAME)
 	@echo Cleanup complete!
