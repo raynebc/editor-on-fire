@@ -929,7 +929,7 @@ static void eof_split_lyric(int lyric)
 
 int eof_menu_split_lyric(void)
 {
-	if(eof_count_selected_notes(NULL, 0) <= 0)
+	if(eof_count_selected_notes(NULL, 0) != 1)
 	{
 		return 1;
 	}
@@ -1374,7 +1374,7 @@ int eof_new_lyric_dialog(void)
 
 int eof_edit_lyric_dialog(void)
 {
-	if(eof_count_selected_notes(NULL, 0) <= 0)
+	if(eof_count_selected_notes(NULL, 0) == 1)
 	{
 		return 1;
 	}
