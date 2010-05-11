@@ -9,7 +9,7 @@
 #include "../ini.h"
 #include "song.h"
 
-char eof_track_selected_menu_text[6][32] = {" PART &GUITAR", " PART &BASS", " PART GUITAR &COOP", " PART &RHYTHM", " PART &DRUM", " PART &VOCALS"};
+char eof_track_selected_menu_text[6][32] = {" PART &GUITAR", " PART &BASS", " PART GUITAR &COOP", " PART &RHYTHM", " PART &DRUMS", " PART &VOCALS"};
 
 MENU eof_song_seek_bookmark_menu[] =
 {
