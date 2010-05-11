@@ -564,6 +564,8 @@ int eof_menu_file_load(void)
 			{
 				eof_destroy_song(eof_song);
 				eof_song_loaded = 0;
+				eof_changes = 0;
+				eof_change_count = 0;
 				eof_show_mouse(NULL);
 				eof_cursor_visible = 1;
 				eof_pen_visible = 1;
