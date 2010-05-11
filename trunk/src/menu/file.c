@@ -1058,6 +1058,11 @@ int eof_menu_file_settings(void)
 			eof_av_delay = 0;
 		}
 		eof_buffer_size = atol(eof_etext2);
+		if(eof_buffer_size < 1024)
+		{
+			allegro_message("Buffer size must be at least 1024. It has been set to 1024.");
+			eof_buffer_size = 1024;
+		}
 		eof_cpu_saver = eof_settings_dialog[6].d2;
 		eof_smooth_pos = (eof_settings_dialog[7].flags == D_SELECTED ? 1 : 0);
 		eof_disable_windows = (eof_settings_dialog[8].flags == D_SELECTED ? 1 : 0);
