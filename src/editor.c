@@ -605,6 +605,7 @@ void eof_read_editor_keys(void)
 				eof_mix_find_claps();
 				eof_mix_start_helper();
 			}
+			eof_detect_difficulties(eof_song);
 		}
 		key[KEY_TAB] = 0;
 	}
@@ -3244,6 +3245,7 @@ void eof_editor_logic(void)
 				eof_note_type = eof_hover_type;
 				eof_mix_find_claps();
 				eof_mix_start_helper();
+				eof_detect_difficulties(eof_song);
 			}
 		}
 	}
