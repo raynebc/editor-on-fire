@@ -1,5 +1,5 @@
 //To test the conditional compiling, uncomment the below precompiler definition to compile the wrapper functions to use setjmp() to return to EOF
-#define EOF_BUILD
+//#define EOF_BUILD
 
 
 /*		LYRIC STRUCTURE OVERVIEW:
