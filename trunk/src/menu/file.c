@@ -49,7 +49,7 @@ DIALOG eof_settings_dialog[] =
    { d_agup_check_proc, 16,  160, 160,  16, 2,   23,  0,    0, 1,   0,   "Smooth Playback",               NULL, NULL },
    { d_agup_check_proc, 16,  180, 160,  16, 2,   23,  0,    0, 1,   0,   "Disable Windows UI",               NULL, NULL },
    { d_agup_check_proc, 16,  200, 160,  16, 2,   23,  0,    0, 1,   0,   "Disable VSync",               NULL, NULL },
-   
+
    { d_agup_button_proc, 16,  156 + 64 + 8, 68,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "OK",               NULL, NULL },
    { d_agup_button_proc, 116, 156 + 64 + 8, 68,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
@@ -62,7 +62,7 @@ DIALOG eof_preferences_dialog[] =
    { d_agup_check_proc, 16,  80, 128,  16, 2,   23,  0,    0, 1,   0,   "Inverted Notes",               NULL, NULL },
    { d_agup_check_proc, 16,  100, 128,  16, 2,   23,  0,    0, 1,   0,   "Lefty Mode",               NULL, NULL },
    { d_agup_check_proc, 16,  120, 128,  16, 2,   23,  0,    0, 1,   0,   "Note Auto-Adjust",               NULL, NULL },
-   
+
    { d_agup_text_proc,   56, 104 + 40,  48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",            NULL, NULL },
    { d_agup_list_proc,   43, 104 + 16 + 40,  110,  94,  2,   23,  0,    0,      0,   0,   eof_input_list, NULL, NULL },
    { d_agup_button_proc, 16,  58 + 16 + 64 + 22 + 16 + 24 + 24 + 40, 68,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "OK",               NULL, NULL },
@@ -74,7 +74,7 @@ DIALOG eof_display_dialog[] =
 {
    /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
    { d_agup_window_proc,    0,  48,  200, 196, 2,   23,  0,    0,      0,   0,   "Display Settings",               NULL, NULL },
-   
+
    { d_agup_check_proc, 16,  80, 128,  16, 2,   23,  0,    0, 1,   0,   "Use Software Cursor",               NULL, NULL },
    { d_agup_check_proc, 16,  100, 128,  16, 2,   23,  0,    0, 1,   0,   "Force 8-Bit Color",               NULL, NULL },
    { d_agup_text_proc,   56, 124,  48,  8,   2,   23,  0,    0,      0,   0,   "Window Size",            NULL, NULL },
@@ -87,7 +87,7 @@ DIALOG eof_controller_settings_dialog[] =
 {
    /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
    { d_agup_window_proc,    4,  236 + 24 - 32 - 20 - 8,  192 + 32 + 96 + 16, 190 + 90 + 32 + 8, 2,   23,  0,    0,      0,   0,   "Controller Settings",               NULL, NULL },
-   
+
    /* guitar */
    { d_agup_list_proc,   13, 252 + 24 - 32 - 8,  170 + 32 + 85 + 28,  96 + 90,  2,   23,  0,    0,      0,   0,   eof_guitar_list, NULL, NULL },
    { d_agup_push_proc, 13,  176 + 64 + 22 + 16 + 24 + 24 + 24 + 90, 170 + 32 + 85 + 28,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Redefine",               NULL, eof_controller_redefine },
@@ -157,9 +157,9 @@ int eof_menu_file_new_supplement(int option)
 {
 	char syscommand[1024] = {0};
 	int err;
-	
+
 	ustrcpy(syscommand, eof_etext3);
-	
+
 	/* remove slash from folder name so we can check if it exists */
 	if(syscommand[uoffset(syscommand, ustrlen(syscommand) - 1)] == '\\' || syscommand[uoffset(syscommand, ustrlen(syscommand) - 1)] == '/')
 	{
@@ -252,7 +252,7 @@ int eof_menu_file_new_wizard(void)
 	ALOGG_OGG * temp_ogg = NULL;
 	char * temp_buffer = NULL;
 	int temp_buffer_size = 0;
-	
+
 	if(eof_changes)
 	{
 		ret = alert3(NULL, "You have unsaved changes.", NULL, "Save", "Discard", "Cancel", 0, 0, 0);
@@ -266,7 +266,7 @@ int eof_menu_file_new_wizard(void)
 	{
 		return 1;
 	}
-	
+
 	/* stop the music and get ready */
 	eof_cursor_visible = 0;
 	if(eof_song_loaded)
@@ -277,7 +277,7 @@ int eof_menu_file_new_wizard(void)
 		}
 	}
 	eof_render();
-	
+
 	/* select a music file */
 	returnedfn = ncd_file_select(0, eof_last_ogg_path, "Select Music File", eof_filter_music_files);
 	eof_clear_input();
@@ -290,7 +290,7 @@ int eof_menu_file_new_wizard(void)
 	}
 	ustrcpy(oggfilename, returnedfn);
 	ustrcpy(eof_last_ogg_path, returnedfn);
-	
+
 	eof_color_dialog(eof_file_new_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_file_new_dialog);
 	ustrcpy(eof_etext, "");
@@ -311,7 +311,7 @@ int eof_menu_file_new_wizard(void)
 			}
 		}
 	}
-		
+
 	/* user fills in song information */
 	if(eof_popup_dialog(eof_file_new_dialog, 3) != 6)
 	{
@@ -319,13 +319,13 @@ int eof_menu_file_new_wizard(void)
 		eof_pen_visible = 1;
 		eof_show_mouse(NULL);
 		return 1;
-	}	
-	
+	}
+
 	if(ustrlen(eof_etext) > 0 && ustrlen(eof_etext2) > 0)
 	{
 		sprintf(eof_etext4, "%s - %s", eof_etext, eof_etext2);
 	}
-	
+
 	/* user selects location for new song */
 	eof_color_dialog(eof_file_new_windows_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_file_new_windows_dialog);
@@ -368,7 +368,7 @@ int eof_menu_file_new_wizard(void)
 		eof_show_mouse(NULL);
 		return 1;
 	}
-	
+
 	/* if music file is MP3, convert it */
 	if(!ustricmp(get_extension(oggfilename), "mp3"))
 	{
@@ -401,7 +401,7 @@ int eof_menu_file_new_wizard(void)
 			return 2;
 		}
 	}
-	
+
 	/* otherwise copy it */
 	else
 	{
@@ -428,7 +428,7 @@ int eof_menu_file_new_wizard(void)
 		eof_destroy_song(eof_song);
 	}
 	eof_destroy_ogg();
-	
+
 	/* create new song */
 	eof_song = eof_create_song();
 	if(!eof_song)
@@ -439,20 +439,20 @@ int eof_menu_file_new_wizard(void)
 		eof_show_mouse(NULL);
 		return 1;
 	}
-	
+
 	/* fill in information */
 	ustrcpy(eof_song->tags->artist, eof_etext);
 	ustrcpy(eof_song->tags->title, eof_etext2);
 	ustrcpy(eof_song->tags->frettist, eof_last_frettist);
 	ustrcpy(oggfilename, returnedfn);
 	replace_filename(eof_last_ogg_path, oggfilename, "", 1024);
-	
-		
+
+
 //	ustrcpy(outputfilename, eof_etext3);
 //	put_backslash(outputfilename);
 //	ustrcat(outputfilename, "song.ini");
 //	eof_save_ini(eof_song, outputfilename);
-	
+
 	/* load OGG */
 	ustrcpy(eof_song_path, eof_etext3);
 	put_backslash(eof_song_path);
@@ -479,9 +479,9 @@ int eof_menu_file_new_wizard(void)
 	eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
 	eof_music_actual_length = eof_music_length;
 	ustrcpy(eof_loaded_song_name, "notes.eof");
-	
+
 	eof_song_loaded = 1;
-	
+
 	/* get ready to edit */
 	eof_changes = 0;
 	eof_music_pos = eof_av_delay;
@@ -499,7 +499,7 @@ int eof_menu_file_new_wizard(void)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(NULL);
-	
+
 	return 1;
 }
 
@@ -508,7 +508,7 @@ int eof_menu_file_load(void)
 	int ret = 0;
 	char temp_filename[1024] = {0};
 	char * returnedfn = NULL;
-	
+
 	if(eof_song_loaded)
 	{
 		if(!eof_music_paused)
@@ -539,7 +539,7 @@ int eof_menu_file_load(void)
 		ustrcpy(eof_filename, returnedfn);
 		replace_filename(eof_last_eof_path, eof_filename, "", 1024);
 		ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
-		
+
 		/* free the old song */
 		if(eof_song)
 		{
@@ -555,12 +555,12 @@ int eof_menu_file_load(void)
 			return 1;
 		}
 		replace_filename(eof_song_path, eof_filename, "", 1024);
-		
+
 		/* attempt to load the OGG profile OGG */
 		append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);
 		if(!eof_load_ogg_quick(temp_filename))
 		{
-			
+
 			/* upon fail, fall back to "guitar.ogg" */
 			append_filename(temp_filename, eof_song_path, "guitar.ogg", 1024);
 			if(!eof_load_ogg(temp_filename))
@@ -622,7 +622,7 @@ int eof_menu_file_save_as(void)
 	short         temp_oggs;
 	int i;
 	int swap = 0;
-	
+
 	if(eof_song_loaded)
 	{
 		if(!eof_music_paused)
@@ -642,7 +642,7 @@ int eof_menu_file_save_as(void)
 	eof_clear_input();
 	if(returnedfn)
 	{
-		
+
 		ustrcpy(old_filename, eof_song_path);
 		replace_filename(eof_song_path, returnedfn, "", 1024);
 		replace_filename(eof_last_eof_path, returnedfn, "", 1024);
@@ -665,7 +665,7 @@ int eof_menu_file_save_as(void)
 				eof_song->tags->oggs = 1;
 				eof_selected_ogg = 0;
 			}
-			
+
 			/* "guitar.ogg" exists so confirm overwrite when writing into a different folder */
 			if(swap && exists(eof_temp_filename))
 			{
@@ -679,7 +679,7 @@ int eof_menu_file_save_as(void)
 				eof_save_ogg(eof_temp_filename);
 			}
 		}
-		
+
 		/* save the chart */
 		replace_extension(eof_temp_filename, returnedfn, "eof", 1024);
 		eof_song->tags->revision++;
@@ -692,14 +692,14 @@ int eof_menu_file_save_as(void)
 			return 2;
 		}
 		ustrcpy(eof_loaded_song_name, get_filename(eof_temp_filename));
-		
+
 		/* save the MIDI */
 		append_filename(eof_temp_filename, eof_song_path, "notes.mid", 1024);
 		eof_export_midi(eof_song, eof_temp_filename);
 		ustrcpy(eof_temp_filename, eof_song_path);
 		ustrcat(eof_temp_filename, "song.ini");
 		eof_save_ini(eof_song, eof_temp_filename);
-		
+
 		/* finish up */
 		eof_changes = 0;
 		eof_undo_last_type = 0;
@@ -718,12 +718,12 @@ int eof_menu_file_load_ogg(void)
 	unsigned long new_length;
 	char * fn = NULL;
 	int i, j;
-	
+
 	returnedfn = ncd_file_select(0, eof_last_ogg_path, "Select OGG File", eof_filter_ogg_files);
 	eof_clear_input();
 	if(returnedfn)
 	{
-		
+
 		/* failed to load new OGG so reload old one */
 		if(!eof_load_ogg(returnedfn))
 		{
@@ -749,7 +749,7 @@ int eof_menu_file_load_ogg(void)
 				return 1;
 			}
 		}
-		
+
 		/* see if this OGG is already associated with the current project */
 		fn = get_filename(returnedfn);
 		for(i = 0; i < eof_song->tags->oggs; i++)
@@ -789,7 +789,7 @@ int eof_menu_file_load_ogg(void)
 				eof_selected_ogg = eof_song->tags->oggs - 1;
 			}
 		}
-		
+
 		new_length = alogg_get_length_msecs_ogg(eof_music_track);
 		if(new_length > eof_music_length)
 		{
@@ -803,7 +803,7 @@ int eof_menu_file_load_ogg(void)
 		eof_music_seek(eof_music_pos - eof_av_delay);
 		replace_filename(eof_last_ogg_path, returnedfn, "", 1024);
 	}
-	
+
 	return 1;
 }
 
@@ -811,7 +811,7 @@ int eof_menu_file_save(void)
 {
 	char temp_filename[1024] = {0};
 	int err;
-	
+
 	if(eof_song_loaded)
 	{
 		if(!eof_music_paused)
@@ -821,7 +821,7 @@ int eof_menu_file_save(void)
 	}
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
-	
+
 	/* no changes so ask for save */
 	if(eof_changes <= 0)
 	{
@@ -834,7 +834,7 @@ int eof_menu_file_save(void)
 			return 1;
 		}
 	}
-	
+
 	/* check to see if song folder still exists */
 	ustrcpy(eof_temp_filename, eof_song_path);
 	if(eof_temp_filename[uoffset(eof_temp_filename, ustrlen(eof_temp_filename) - 1)] == '\\' || eof_temp_filename[uoffset(eof_temp_filename, ustrlen(eof_temp_filename) - 1)] == '/')
@@ -861,19 +861,19 @@ int eof_menu_file_save(void)
 			return 1;
 		}
 	}
-	
-	
+
+
 //	eof_render();
 	append_filename(temp_filename, eof_song_path, eof_loaded_song_name, 1024);
 
 	/* sort notes so they are in order of position */
 	eof_sort_notes();
 	eof_fixup_notes();
-	
+
 	/* sort lyrics */
 	eof_vocal_track_sort_lyrics(eof_song->vocal_track);
 	eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 0);
-	
+
 	replace_extension(temp_filename, temp_filename, "eof", 1024);
 	eof_song->tags->revision++;
 	if(!eof_save_song(eof_song, temp_filename))
@@ -906,7 +906,7 @@ int eof_menu_file_save(void)
 int eof_menu_file_quick_save(void)
 {
 	char temp_filename[1024] = {0};
-	
+
 	append_filename(temp_filename, eof_song_path, eof_loaded_song_name, 1024);
 
 	eof_song->tags->revision++;
@@ -932,7 +932,11 @@ int eof_menu_file_lyrics_import(void)
 {
 	char * returnedfn = NULL;
 	int jumpcode = 0;
-	
+	struct Lyric_Format *detectionlist;	//This is the list populated by EOF_IMPORT_VIA_LC() in the event of multiple possible imports
+
+	if(eof_song == NULL)	//Do not import lyrics if no chart is open
+		return 0;
+
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
@@ -952,7 +956,25 @@ int eof_menu_file_lyrics_import(void)
 		}
 		else
 		{
-//			EOF_IMPORT_VIA_LC(eof_song->vocal_track, returnedfn, NULL);
+		//Detect if the selected file has lyrics
+			detectionlist=DetectLyricFormat(returnedfn);	//Auto detect the lyric format of the chosen file
+			if(detectionlist == NULL)
+			{
+				alert("Error", NULL, "No lyrics detected", "OK", NULL, 0, KEY_ENTER);
+				return 0;	//return error
+			}
+
+		//Import lyrics
+			if(detectionlist->next == NULL)	//If this file had only one detected lyric format
+			{
+				eof_prepare_undo(0);	//Make a generic undo state
+				EOF_IMPORT_VIA_LC(eof_song->vocal_track, NULL, detectionlist->format, returnedfn, detectionlist->track);
+					//Import the format
+			}
+			else
+			{
+				//Logic needs to be designed to prompt the user with a list of all detected formats
+			}
 		}
 	}
 	eof_show_mouse(NULL);
@@ -965,7 +987,7 @@ int eof_menu_file_midi_import(void)
 {
 	int ret = 0;
 	char * returnedfn = NULL;
-	
+
 	if(eof_song_loaded)
 	{
 		eof_music_paused = 1;
@@ -1205,7 +1227,7 @@ int eof_menu_file_controllers(void)
 int eof_menu_file_song_folder(void)
 {
 	char * returnfolder = NULL;
-	
+
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
@@ -1224,7 +1246,7 @@ int eof_menu_file_link(void)
 {
 	char * returnfolder = NULL;
 	char * returnedfn = NULL;
-	
+
 	if(eof_song_loaded)
 	{
 		if(!eof_music_paused)
@@ -1257,7 +1279,7 @@ int eof_menu_file_exit(void)
 {
 	int ret = 0;
 	int ret2 = 1;
-	
+
 	if(eof_song_loaded)
 	{
 		if(!eof_music_paused)
