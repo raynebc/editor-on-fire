@@ -216,15 +216,31 @@ void eof_prepare_edit_menu(void)
 		}
 		
 		/* select all, selection */
-		if(eof_note_type_name[eof_note_type][0] == '*')
+		if(eof_vocals_selected)
 		{
-			eof_edit_selection_menu[0].flags = 0;
-			eof_edit_menu[20].flags = 0;
+			if(eof_song->vocal_track->lyrics > 0)
+			{
+				eof_edit_selection_menu[0].flags = 0;
+				eof_edit_menu[21].flags = 0;
+			}
+			else
+			{
+				eof_edit_selection_menu[0].flags = D_DISABLED;
+				eof_edit_menu[21].flags = D_DISABLED;
+			}
 		}
 		else
 		{
-			eof_edit_selection_menu[0].flags = D_DISABLED;
-			eof_edit_menu[20].flags = D_DISABLED;
+			if(eof_note_type_name[eof_note_type][0] == '*')
+			{
+				eof_edit_selection_menu[0].flags = 0;
+				eof_edit_menu[21].flags = 0;
+			}
+			else
+			{
+				eof_edit_selection_menu[0].flags = D_DISABLED;
+				eof_edit_menu[21].flags = D_DISABLED;
+			}
 		}
 		if(vselected)
 		{
