@@ -1114,30 +1114,33 @@ void eof_read_editor_keys(void)
 		eof_menu_edit_vocal_tones();
 		key[KEY_V] = 0;
 	}
-	if(key[KEY_1] && KEY_EITHER_CTRL && eof_music_paused && !eof_music_catalog_playback)
+	if(!eof_vocals_selected)
 	{
-		eof_menu_note_toggle_green();
-		key[KEY_1] = 0;
-	}
-	else if(key[KEY_2] && KEY_EITHER_CTRL && eof_music_paused && !eof_music_catalog_playback)
-	{
-		eof_menu_note_toggle_red();
-		key[KEY_2] = 0;
-	}
-	else if(key[KEY_3] && KEY_EITHER_CTRL && eof_music_paused && !eof_music_catalog_playback)
-	{
-		eof_menu_note_toggle_yellow();
-		key[KEY_3] = 0;
-	}
-	else if(key[KEY_4] && KEY_EITHER_CTRL && eof_music_paused && !eof_music_catalog_playback)
-	{
-		eof_menu_note_toggle_blue();
-		key[KEY_4] = 0;
-	}
-	else if(key[KEY_5] && KEY_EITHER_CTRL && eof_music_paused && !eof_music_catalog_playback)
-	{
-		eof_menu_note_toggle_purple();
-		key[KEY_5] = 0;
+		if(key[KEY_1] && KEY_EITHER_CTRL && eof_music_paused && !eof_music_catalog_playback)
+		{
+			eof_menu_note_toggle_green();
+			key[KEY_1] = 0;
+		}
+		else if(key[KEY_2] && KEY_EITHER_CTRL && eof_music_paused && !eof_music_catalog_playback)
+		{
+			eof_menu_note_toggle_red();
+			key[KEY_2] = 0;
+		}
+		else if(key[KEY_3] && KEY_EITHER_CTRL && eof_music_paused && !eof_music_catalog_playback)
+		{
+			eof_menu_note_toggle_yellow();
+			key[KEY_3] = 0;
+		}
+		else if(key[KEY_4] && KEY_EITHER_CTRL && eof_music_paused && !eof_music_catalog_playback)
+		{
+			eof_menu_note_toggle_blue();
+			key[KEY_4] = 0;
+		}
+		else if(key[KEY_5] && KEY_EITHER_CTRL && eof_music_paused && !eof_music_catalog_playback)
+		{
+			eof_menu_note_toggle_purple();
+			key[KEY_5] = 0;
+		}
 	}
 	else if(key[KEY_1] && KEY_EITHER_SHIFT)
 	{
