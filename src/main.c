@@ -17,6 +17,7 @@
 #include "menu/edit.h"
 #include "menu/song.h"
 #include "menu/help.h"
+#include "menu/note.h"	//For pitch macros
 #include "main.h"
 #include "utility.h"
 #include "player.h"
@@ -123,7 +124,7 @@ int         eof_note_types = 0;
 int         eof_selected_track = EOF_TRACK_GUITAR;
 int         eof_vocals_selected = 0;
 int         eof_vocals_tab = 0;
-int         eof_vocals_offset = 36;
+int         eof_vocals_offset = MINPITCH;	//Start at the lowest available octave
 int         eof_song_loaded = 0;
 //int         eof_first_note = 0;
 int         eof_last_note = 0;
@@ -1421,7 +1422,7 @@ void eof_lyric_logic(void)
 					{
 						if(mouse_x - eof_window_3d->x >= i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 + eof_screen_layout.lyric_view_bkey_width && mouse_x - eof_window_3d->x <= (i + 1) * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 - eof_screen_layout.lyric_view_bkey_width + 1)
 						{
-							eof_hover_key = 36 + (i / 7) * 12 + bnote[k];
+							eof_hover_key = MINPITCH + (i / 7) * 12 + bnote[k];
 							break;
 						}
 					}
@@ -1436,7 +1437,7 @@ void eof_lyric_logic(void)
 					k = i % 7;
 					if(mouse_x - eof_window_3d->x >= i * eof_screen_layout.lyric_view_key_width && mouse_x - eof_window_3d->x < i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width - 1)
 					{
-						eof_hover_key = 36 + (i / 7) * 12 + note[k];
+						eof_hover_key = MINPITCH + (i / 7) * 12 + note[k];
 						break;
 					}
 				}
@@ -1467,13 +1468,13 @@ void eof_lyric_logic(void)
 					{
 						eof_vocals_offset = (eof_hover_key / 12) * 12;
 					}
-					if(eof_vocals_offset < 36)
+					if(eof_vocals_offset < MINPITCH)
 					{
-						eof_vocals_offset = 36;
+						eof_vocals_offset = MINPITCH;
 					}
-					else if(eof_vocals_offset > 84 - eof_screen_layout.vocal_view_size + 1)
+					else if(eof_vocals_offset > MAXPITCH - eof_screen_layout.vocal_view_size + 1)
 					{
-						eof_vocals_offset = 84 - eof_screen_layout.vocal_view_size + 1;
+						eof_vocals_offset = MAXPITCH - eof_screen_layout.vocal_view_size + 1;
 					}
 				}
 			}
@@ -1980,7 +1981,7 @@ void eof_render_lyric_window(void)
 	/* render the 29 white keys */
 	for(i = 0; i < 29; i++)
 	{
-		n = (i / 7) * 12 + note[i % 7] + 36;
+		n = (i / 7) * 12 + note[i % 7] + MINPITCH;
 		if(n == eof_hover_key)
 		{
 			if(n >= eof_vocals_offset && n < eof_vocals_offset + eof_screen_layout.vocal_view_size)
@@ -2015,7 +2016,7 @@ void eof_render_lyric_window(void)
 	/* render black keys over white keys */
 	for(i = 0; i < 28; i++)
 	{
-		n = (i / 7) * 12 + bnote[i % 7] + 36;
+		n = (i / 7) * 12 + bnote[i % 7] + MINPITCH;
 		k = n % 12;
 		if(k == 1 || k == 3 || k == 6 || k == 8 || k == 10)
 		{

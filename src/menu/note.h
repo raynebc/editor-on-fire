@@ -3,6 +3,9 @@
 
 #include <allegro.h>
 
+#define MINPITCH 36		//Harmonix's defined minimum pitch
+#define MAXPITCH 84		//Harmonix's defined maximum pitch
+
 extern MENU eof_note_menu[];
 
 extern DIALOG eof_lyric_dialog[];
@@ -31,9 +34,11 @@ int eof_menu_hopo_auto(void);
 int eof_menu_hopo_force_on(void);
 int eof_menu_hopo_force_off(void);
 
-int eof_transpose_possible(int dir);
+int eof_transpose_possible(int dir);			//Tests ability of instrument/vocal pitches to transpose by the given amount
 int eof_menu_note_transpose_up(void);
 int eof_menu_note_transpose_down(void);
+int eof_menu_note_transpose_down_octave(void);	//Moves selected lyrics down one octave if possible
+int eof_menu_note_transpose_up_octave(void);	//Moves selected lyrics up one octave if possible
 int eof_menu_note_resnap(void);
 int eof_menu_note_create_bre(void);
 int eof_menu_note_toggle_crazy(void);

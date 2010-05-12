@@ -716,14 +716,14 @@ void eof_read_editor_keys(void)
 	}
 	if(KEY_EITHER_SHIFT && key[KEY_UP])
 	{
-		if(eof_vocals_selected && eof_vocals_offset < 84 - eof_screen_layout.vocal_view_size + 1)
+		if(eof_vocals_selected && eof_vocals_offset < MAXPITCH - eof_screen_layout.vocal_view_size + 1)
 		{
 			if(KEY_EITHER_CTRL)
 			{
 				eof_vocals_offset += 12;
-				if(eof_vocals_offset > 84)
+				if(eof_vocals_offset > MAXPITCH)
 				{
-					eof_vocals_offset = 84;
+					eof_vocals_offset = MAXPITCH;
 				}
 			}
 			else
@@ -737,10 +737,7 @@ void eof_read_editor_keys(void)
 	{
 		if(eof_vocals_selected && KEY_EITHER_CTRL)
 		{
-			for(i = 0; i < 12; i++)
-			{
-				eof_menu_note_transpose_up();
-			}
+			eof_menu_note_transpose_up_octave();	//Move up 12 pitches at once, performing a single undo beforehand
 		}
 		else
 		{
@@ -754,14 +751,14 @@ void eof_read_editor_keys(void)
 	}
 	if(KEY_EITHER_SHIFT && key[KEY_DOWN])
 	{
-		if(eof_vocals_selected && eof_vocals_offset > 36)
+		if(eof_vocals_selected && eof_vocals_offset > MINPITCH)
 		{
 			if(KEY_EITHER_CTRL)
 			{
 				eof_vocals_offset -= 12;
-				if(eof_vocals_offset < 36)
+				if(eof_vocals_offset < MINPITCH)
 				{
-					eof_vocals_offset = 36;
+					eof_vocals_offset = MINPITCH;
 				}
 			}
 			else
@@ -775,10 +772,7 @@ void eof_read_editor_keys(void)
 	{
 		if(eof_vocals_selected && KEY_EITHER_CTRL)
 		{
-			for(i = 0; i < 12; i++)
-			{
-				eof_menu_note_transpose_down();
-			}
+			eof_menu_note_transpose_down_octave();	//Move down 12 pitches at once, performing a single undo beforehand
 		}
 		else
 		{
@@ -1130,22 +1124,22 @@ void eof_read_editor_keys(void)
 	}
 	else if(key[KEY_1] && KEY_EITHER_SHIFT)
 	{
-		eof_vocals_offset = 36;
+		eof_vocals_offset = MINPITCH;
 		key[KEY_1] = 0;
 	}
 	else if(key[KEY_2] && KEY_EITHER_SHIFT)
 	{
-		eof_vocals_offset = 48;
+		eof_vocals_offset = MINPITCH+12;
 		key[KEY_2] = 0;
 	}
 	else if(key[KEY_3] && KEY_EITHER_SHIFT)
 	{
-		eof_vocals_offset = 60;
+		eof_vocals_offset = MINPITCH+24;
 		key[KEY_3] = 0;
 	}
 	else if(key[KEY_4] && KEY_EITHER_SHIFT)
 	{
-		eof_vocals_offset = 72;
+		eof_vocals_offset = MINPITCH+36;
 		key[KEY_4] = 0;
 	}
 	else if(!KEY_EITHER_CTRL)
