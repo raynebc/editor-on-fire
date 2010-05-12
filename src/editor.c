@@ -1270,6 +1270,7 @@ void eof_read_editor_keys(void)
 		}
 		else if(eof_input_mode == EOF_INPUT_REX && eof_music_paused && !eof_music_catalog_playback)
 		{
+			eof_hover_piece = -1;
 			if(mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET && mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET)
 			{
 				if(KEY_EITHER_SHIFT)
