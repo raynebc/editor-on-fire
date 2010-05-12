@@ -72,6 +72,7 @@ MENU eof_note_menu[] =
     {"&HOPO", NULL, eof_hopo_menu, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"D&elete\tDel", eof_menu_note_delete, NULL, 0, NULL},
+    {"Display semitones as &Flat", eof_display_flats_menu, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
