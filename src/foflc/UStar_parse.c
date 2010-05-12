@@ -1039,5 +1039,9 @@ int CheckPitches(unsigned char *pitchmin,unsigned char *pitchmax)
 	if((pitchmin_local >= MINPITCH) && (pitchmax_local <= MAXPITCH))
 		return 0;	//return success
 
+//Special case:  All lyrics were pitchless (ie. VL/Script/LRC import)
+	if((pitchmin_local == PITCHLESS) && (pitchmax_local == PITCHLESS))
+		return 0;	//return success
+
 	return 1;		//otherwise return error
 }
