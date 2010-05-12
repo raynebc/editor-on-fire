@@ -19,6 +19,7 @@ char eof_mix_vocal_tones_enabled = 0;
 int           eof_mix_speed = 1000;
 char          eof_mix_speed_ticker;
 double        eof_mix_sample_count = 0.0;
+double        eof_mix_sample_increment = 1.0;
 unsigned long eof_mix_next_clap;
 unsigned long eof_mix_next_metronome;
 unsigned long eof_mix_next_note;
@@ -81,7 +82,7 @@ void eof_mix_callback(void * buf, int length)
 					}
 					buffer[i + 1] = final > 65535 ? 65535 : final;
 				}
-				eof_voice[j].pos += 1000.0 / (float)eof_mix_speed;
+				eof_voice[j].pos += eof_mix_sample_increment;
 				if(eof_voice[j].pos >= eof_voice[j].sp->len)
 				{
 					eof_voice[j].playing = 0;
@@ -284,6 +285,7 @@ void eof_mix_start(unsigned long start, int speed)
 	eof_mix_speed = speed;
 	eof_mix_speed_ticker = 0;
 	eof_mix_sample_count = start;
+	eof_mix_sample_increment = (1000.0 / (float)eof_mix_speed) * (44100.0 / (float)alogg_get_wave_freq_ogg(eof_music_track));
 	eof_mix_start_helper();
 }
 
