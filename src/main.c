@@ -1913,6 +1913,7 @@ void eof_render_lyric_preview(BITMAP * bp)
 	#define MAX_LYRIC_PREVIEW_LENGTH 255
 	unsigned long currentlength;	//Used to track the length of the preview line being built
 	unsigned long lyriclength;		//The length of the lyric being added
+	char *tempstring;				//The code to render in green needs special handling to suppress the / character
 
 	char lline[2][MAX_LYRIC_PREVIEW_LENGTH+1] = {{0}};
 	int i,x;
@@ -1940,6 +1941,10 @@ void eof_render_lyric_preview(BITMAP * bp)
 			strcat(lline[x], eof_song->vocal_track->lyric[i]->text);
 			currentlength+=lyriclength;									//Track the length of this preview line
 
+		//Truncate a '/' character off the end of the lyric line if it exists (TB:RB notation for a forced line break)
+			if(lline[x][strlen(lline[x])-1] == '/')
+				lline[x][strlen(lline[x])-1]='\0';
+
 		//Append spacing after lyric if applicable
 			if((i+1 < eof_preview_line_end_lyric[x]) && (eof_song->vocal_track->lyric[i+1]->text[0] != '+'))
 			{	//If there's another lyric for this preview line, and it's not defined as a pitch shift
@@ -1961,7 +1966,18 @@ void eof_render_lyric_preview(BITMAP * bp)
 	textout_centre_ex(bp, font, lline[1], bp->w / 2, 36, makecol(255, 255, 255), -1);
 	if(offset >= 0 && eof_hover_lyric >= 0)
 	{
-		textout_ex(bp, font, eof_song->vocal_track->lyric[eof_hover_lyric]->text, bp->w / 2 - text_length(font, lline[0]) / 2 + offset, 20, makecol(0, 255, 0), -1);
+		if(eof_song->vocal_track->lyric[eof_hover_lyric]->text[strlen(eof_song->vocal_track->lyric[eof_hover_lyric]->text)-1] == '/')
+		{	//If the at-playback position lyric ends in a forward slash, make a copy with the slash removed and display it instead
+			tempstring=malloc(ustrlen(eof_song->vocal_track->lyric[eof_hover_lyric]->text)+1);
+			if(tempstring==NULL)	//If there wasn't enough memory to copy this string...
+				return;
+			ustrcpy(tempstring,eof_song->vocal_track->lyric[eof_hover_lyric]->text);
+			tempstring[strlen(tempstring)-1]='\0';
+			textout_ex(bp, font, tempstring, bp->w / 2 - text_length(font, lline[0]) / 2 + offset, 20, makecol(0, 255, 0), -1);
+			free(tempstring);
+		}
+		else	//Otherwise, display the regular string instead
+			textout_ex(bp, font, eof_song->vocal_track->lyric[eof_hover_lyric]->text, bp->w / 2 - text_length(font, lline[0]) / 2 + offset, 20, makecol(0, 255, 0), -1);
 	}
 }
 
