@@ -11,6 +11,9 @@ extern DIALOG eof_controller_settings_dialog[];
 extern DIALOG eof_file_new_dialog[];
 extern DIALOG eof_file_new_windows_dialog[];
 
+extern DIALOG eof_lyric_detections_dialog[];	//The dialog used to prompt the user to select a MIDI track to import from
+extern struct Lyric_Format *lyricdetectionlist;	//Dialog windows cannot be passed local variables, requiring the use of this global variable
+
 void eof_prepare_file_menu(void);
 
 int eof_menu_file_new_wizard(void);
@@ -28,5 +31,17 @@ int eof_menu_file_controllers(void);
 int eof_menu_file_song_folder(void);
 int eof_menu_file_link(void);
 int eof_menu_file_exit(void);
+
+char *eof_lyric_detections_list_all(int index, int * size);
+	//The dialog procedure that returns the strings to display in the list box
+
+void eof_lyric_import_prompt(int *selectedformat, char **selectedtrack);
+	//Requires storage for the selected format, track name to be passed back
+	//The detection list created by DetectLyricFormat() is expected to be stored in the global lyricdetectionlist variable
+	//This function displays the dialog for selecting one of of multiple lyric imports for a file
+	//*selectedformat is set to 0 if a selection is not made
+
+struct Lyric_Format *GetDetectionNumber(struct Lyric_Format *detectionlist, unsigned long number);
+	//Returns detection #number from the detection linked list
 
 #endif
