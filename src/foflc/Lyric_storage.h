@@ -1,4 +1,4 @@
-//To test the conditional compiling, uncomment the below precompiler definition to compile the wrapper functions to use setjmp() to return to EOF
+//To test the conditional compiling, pass the following preprocessor definition to the compiler to cause the exit and assert wrapper functions to use setjmp() to return to EOF
 //#define EOF_BUILD
 
 
@@ -192,6 +192,9 @@ struct _LYRICSSTRUCT_{
 	char notenames;				//Boolean:	For Vrhythm output, write the names of notes instead of the pitch numbers
 	char relative;				//Boolean:  For UltraStar output, write the timestamps as relative instead of absolute
 	char nopitch;				//Boolean:  For MIDI output, omit writing the vocal notes for pitchless lyrics (freestyle are still written normally)
+	char reinit;				//Boolean:	Lyric handlers that use static variables should check for this.  If nonzero, re-init the static variables
+								//			This is because when used in EOF, the program may require more than one import, and otherwise the static
+								//			variables would never re-initialize
 
 //Various
 	unsigned long piececount;	//The number of lyric pieces in all lines.  Incremented upon adding a lyric piece
@@ -200,6 +203,7 @@ struct _LYRICSSTRUCT_{
 	unsigned char in_format;	//Specifies the declared input format
 	unsigned char out_format;	//Specifies the declared output format
 	double explicittempo;		//Set to nonzero if a tempo was passed as an argument
+	unsigned char last_pitch;	//Used by various import functions to track pitch changes.  Reset to 0 by InitMIDI() and InitLyrics()
 
 //Filenames
 	char *outfilename;		//Stores the name of the output file
@@ -390,6 +394,18 @@ char *fgets_err(char *str,int num,FILE *stream);
 	//A wrapper function that gets the string, automatically checking for and throwing any error given
 void fputs_err(const char *str,FILE *stream);
 	//A wrapper function that writes the string, automatically checking for and throwing any error given
+//v2.0	Rewrote this to return a list of detected formats
+//int DetectLyricFormat(char *file);
+	//Determines and returns the lyric type of the input file, as defined in the macros earlier in this header file
+	//If the file being detected is a valid MIDI, and both a track named "PART VOCALS" (RB style MIDI) and one named "Words" (Soft Karaoke),
+	//whichever is read first is the deciding factor in the detected lyric format.  If neither are found, but an instrument track
+	//(such as "PART GUITAR") is found, Vocal Rhythm is assumed, otherwise KAR is assumed.
+	//-1 is returned if the file type was determined, but validation failed (import would fail)
+	//0 is returned if the file type could not be determined
+	//	If Vocal Rhythm is detected, the correlating pitched lyric file needs to be provided for import
+	//	If KAR is detected, the correct MIDI track to import lyrics from needs to be provided for import
+	//	If Soft Karaoke is detected, it's possible that pitches and durations are available in another MIDI track, possibly prompt for which track to import
+	//	If Pitched Lyric format is detected, the correlating vocal rhythm MIDI needs to be provided for import
 struct Lyric_Format *DetectLyricFormat(char *file);
 	//Determines and returns information (as a linked list) about lyrics detected in the input file
 	//If the file matches multiple lyric types (one of the MIDI based formats), multiple links in the list will exist.

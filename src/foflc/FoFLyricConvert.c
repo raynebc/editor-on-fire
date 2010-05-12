@@ -12,7 +12,7 @@
 //		Added the -relative parameter, allowing export of UltraStar lyrics in relative timing instead of absolute timing
 //		Fixed a bug that would cause the program to crash if exporting to a MIDI format, using a source MIDI, when the import file was not a MIDI based format
 //		Fixed a minor memory leak that could occur if importing a non MIDI based file and exporting to Vrhythm
-//		Removed "PART VOCALS" as a usable vocal rhythm track
+//		Removed "PART VOCALS" as a usable vocal rhythm track to ensure accuracy of lyric detection
 //		Added lyric format detection logic whose findings are given with verbose or debugging output.  If a lyric import is failing, you can use either of the logging features to see if you are specifying the correct import format for the given file.
 //		Corrected logic that handles the conversion between MIDI pitch numbering (Pitch 24 is note C1) and UltraStar pitch numbering (Pitch 0 is note C1)
 //		Rewrote pitch range validation to run only when the output format is MIDI, as only Rock Band MIDIs have a defined requirement of a vocal pitch range of [36,84].  Any vocal pitches outside of this range have their octave changed to correct the issue.
@@ -31,9 +31,9 @@
 //		Fixed a bug in the KAR/MIDI import logic that could cause lyrics to lose their overdrive status
 //		Used Splint, Yasca and RATS security analysis tools to add some minor hardening to the source code
 //		Added more error checking
-//		Added the -detect parameter, which will detect the lyric format of the specified file instead of performing a lyric import or export
+//		Added the -detect parameter, which will detect and list the lyric format(s) of the specified file instead of performing a lyric import or export
 //		Added logic to perform correction for malformed RB MIDIs that have empty lyric phrases (ie. Queen - "We Will Rock You")
-//		Fixed a logic error that could cause the program to abort due to invalid running status events, even if they were valid
+//		Fixed a logic error that could cause the program to abort due to supposed invalid running status events, even if they were valid
 */
 /*	Changelog: 1.95 to 1.96
 //		Corrected a bug that could produce unpredictable results when importing a relative timed UltraStar file that has a line break before the first lyric
@@ -297,12 +297,23 @@
 //
 //	TO DOCUMENT:
 //
-//	FOR FUTURE OPTIMIZATION:
+//	FOR FUTURE OPTIMIZATION (take an updated code profile of a MIDI->script conversion before testing these optimizations):
+//		If TrackEventProcessor() is called without debug output, then some ftell() calls can be omitted, as the file positions will not be
+//			logged.  It looks like vars.startindex should still be determined (for error output purposes), but vars.endindex is not used for
+//			logging, only for passing to handlers.  This will remove one call to ftell() per MIDI event if no handler is given.
+//	!	During the check for running status event, some fseek() calls can be omitted by reading two bytes instead of one to test for event status,
+//			then masking the most significant byte to test for running status.  If it is running status, both of the bytes will have been
+//			read already.  If it was NOT running status, the first event parameter byte can be added to the second byte which will be read.
+//			This will reduce one call each to fread() and fseek() for each running status event.
+//	->	This would break the callbefore interrupt handling in that the handler won't be called with the current file position at the beginning
+//			of the MIDI event.  Since I don't use the callbefore functionality, I'll just remove it.  Even if it was used, it would make the
+//			calling logic require more complexity to interpret and parse for the data instead of having TrackEventProcessor() parse it.  It will
+//			also reduce the amount of variables to pass.
+//
 //		See if AddLyricPiece()'s leading/trailing whitespace detection can be used in import functions that perform similar detection (ie. LRC)
 //				->Potentially change this so that the groupswithnext parameter of AddLyricPiece() is changed to "grouplogic", one
 //				of which is to base grouping on the presence of whitespace between lyrics instead of hyphens, etc.  This would
 //				remove the need for special spacing logic for UltraStar and LRC import
-//		Rewrite VL_PreLoad() to use regular exit_wrapper instead of conditionally returning.  The calling function can intercept it the same way failed MIDI validation is intercepted
 //
 //	TO TEST:
 //		One of the KAR files I have (White Wedding) has a normal "Words" track and a "Melody" track with pitches but no lyrics
@@ -327,20 +338,30 @@
 //
 //	DONE:
 //***
-//	TO DO:
-//	!	Consider a documented/undocumented switch to suppress lyric detection, for faster program execution for huge batches or horridly slow PCs
-//	!	Consider writing wrapper functions for the functions I write to stdout with for errors/logging, so I can define a global variable for
+//	TO DO: (After release of 2.0)
+//
+//	!	Remove commented code
+//	!	Get the latest GCC release, make sure to put GDB back
+//	!	In Export_UStar() remove the reference to 36 and replace it with MINPITCH
+//	!	Strengthen RB MIDI detection by counting the number of lyrics that had space characters.  If none are found, assume RB MIDI instead of KAR
+//	1.	Fix memory leaks
+//	2.	Consider writing wrapper functions for the functions I write to stdout with for errors/logging, so I can define a global variable for
 //		which FILE stream to output to (ie. for passing debugging text back to EOF via text file)
-//	!	Look for floating point comparison operators and consider multiplying by a number and casting to int before comparison
-//	1.	Allow -in to be used without specifying the lyric format, but if the detection can't narrow down to just one
+//	3.	Allow -in to be used without specifying the lyric format, but if the detection can't narrow down to just one
 //		possible import, exit with error saying that the import would need to specify the import information
-//	2.	Think about how to strengthen ELRC detection.  This won't be possible without having it read several/all lines in the input file to see
+//	4.	Think about how to strengthen ELRC detection.  This won't be possible without having it read several/all lines in the input file to see
 //		if any of them have more than one timestamp
-//	3.	?Use the import lyric format detection to check if there is a conflict between the specified input format and the detected lyric format,
+//	5.	?Use the import lyric format detection to check if there is a conflict between the specified input format and the detected lyric format,
 //		or whether the input lyrics cannot be detected
-//	4.	Design a dialog window for EOF lyric import to control the command line parameters
-//	5.	Design logic to handle Set Tempo events outside of track 0
+//	6.	Design a dialog window for EOF lyric import to control the command line parameters
+//	7.	Design logic to handle Set Tempo events outside of track 0
 //		->	Would have to find the correction location in the existing tempo list and get inserted
+//	8.  Update to the latest MinGW installation (the automated installer won't get the latest releases)
+//	9.	Test FoFLyricConvert in AppVerifier:
+//			http://www.microsoft.com/downloads/details.aspx?FamilyID=C4A25AB9-649D-4A1B-B4A7-C9D8B095DF18&displaylang=en
+//			http://technet.microsoft.com/en-us/library/bb457063.aspx
+//	10.	Consider a documented/undocumented switch to suppress lyric detection, for faster program execution for huge batches or horridly slow PCs
+//	11.	Look for floating point comparison operators and consider multiplying by a number and casting to int before comparison
 //
 //		Consider having the Lyrics structure store double floating point timestamps.  The export functions will handle the rounding
 //		accordingly.
