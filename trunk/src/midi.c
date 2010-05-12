@@ -5,6 +5,7 @@
 #include "beat.h"
 #include "midi.h"
 #include "utility.h"
+#include "menu/note.h"	//For pitch macros
 
 #define EOF_MIDI_TIMER_FREQUENCY  40
 
@@ -12,21 +13,21 @@
 
 typedef struct
 {
-	
+
 	unsigned long pos;
 	unsigned char type;
 	int d1, d2, d3, d4;
 	char text[256];
-	
+
 } EOF_IMPORT_MIDI_EVENT;
 
 typedef struct
 {
-	
+
 	EOF_IMPORT_MIDI_EVENT * event[EOF_IMPORT_MAX_EVENTS];
 	int events;
 	int type;
-	
+
 } EOF_IMPORT_MIDI_EVENT_LIST;
 
 EOF_IMPORT_MIDI_EVENT_LIST * eof_import_events[16];
@@ -53,7 +54,7 @@ static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_create_events_list(void)
 void eof_import_destroy_events_list(EOF_IMPORT_MIDI_EVENT_LIST * lp)
 {
 	int i;
-	
+
 	for(i = 0; i < lp->events; i++)
 	{
 		free(lp->event[i]);
@@ -143,8 +144,8 @@ unsigned long ReadVarLen(PACKFILE * fp)
 
 /* parse_var_len:
  *  The MIDI file format is a strange thing. Time offsets are only 32 bits,
- *  yet they are compressed in a weird variable length format. This routine 
- *  reads a variable length integer from a MIDI data stream. It returns the 
+ *  yet they are compressed in a weird variable length format. This routine
+ *  reads a variable length integer from a MIDI data stream. It returns the
  *  number read, and alters the data pointer according to the number of
  *  bytes it used.
  */
@@ -169,7 +170,7 @@ static unsigned long eof_parse_var_len(unsigned char * data, unsigned long pos, 
 int eof_import_figure_beat(unsigned long pos)
 {
 	int i;
-	
+
 	for(i = 0; i < eof_import_bpm_events->events; i++)
 	{
 		if(eof_import_bpm_events->event[i]->pos <= pos && eof_import_bpm_events->event[i + 1]->pos > pos)
@@ -191,7 +192,7 @@ void eof_midi_import_add_event(EOF_IMPORT_MIDI_EVENT_LIST * events, unsigned lon
 			events->event[events->events]->type = event;
 			events->event[events->events]->d1 = d1;
 			events->event[events->events]->d2 = d2;
-			
+
 			events->events++;
 		}
 	}
@@ -212,7 +213,7 @@ void eof_midi_import_add_text_event(EOF_IMPORT_MIDI_EVENT_LIST * events, unsigne
 			events->event[events->events]->type = event;
 			memcpy(events->event[events->events]->text, text, size);
 			events->event[events->events]->text[size] = '\0';
-			
+
 			events->events++;
 		}
 	}
@@ -226,7 +227,7 @@ double eof_import_get_bpm(unsigned long pos)
 {
 	unsigned long ppqn = eof_import_bpm_events->events > 0 ? eof_import_bpm_events->event[0]->d1 : 500000;
 	int i;
-	
+
 	for(i = 0; i < eof_import_bpm_events->events; i++)
 	{
 		if(eof_import_bpm_events->event[i]->pos <= pos)
@@ -243,10 +244,10 @@ double eof_import_get_bpm(unsigned long pos)
 
 typedef struct
 {
-	
+
 	char type[256];
 	char value[1024];
-	
+
 } EOF_IMPORT_INI_SETTING;
 
 EOF_IMPORT_INI_SETTING eof_import_ini_setting[32];
@@ -263,7 +264,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 	int i;
 	int j;
 	int size;
-	
+
 	size = file_size_ex(fn);
 	fp = pack_fopen(fn, "r");
 	if(!fp)
@@ -271,7 +272,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 		return 0;
 	}
 	eof_import_ini_settings = 0;
-	
+
 	pack_fread(textbuffer, size, fp);
 	textlength = ustrlen(textbuffer);
 	ustrtok(textbuffer, "\r\n");
@@ -296,7 +297,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 						break;
 					}
 				}
-				
+
 				/* if this line has an '=', process line as a setting */
 				if(equals)
 				{
@@ -402,7 +403,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 				sp->tags->ogg[0].midi_offset = 0;
 			}
 		}
-		
+
 		/* for custom settings */
 		else
 		{
@@ -420,7 +421,7 @@ unsigned long eof_import_midi_to_eof(int offset, unsigned long pos)
 	double current_pos = offset;
 	double delta;
 	double bpm = eof_import_get_bpm(pos);
-	
+
 	if(eof_import_bpm_events->events == 1)
 	{
 		delta = pos - eof_import_bpm_events->event[0]->pos;
@@ -437,12 +438,12 @@ unsigned long eof_import_midi_to_eof(int offset, unsigned long pos)
 			break;
 		}
 	}
-	
+
 	if(i == eof_import_bpm_events->events)
 	{
 		beat = eof_import_bpm_events->events - 1;
 	}
-	
+
 	/* sum up the total of the time up to the BPM area the position lies in */
 	for(i = 0; i < beat; i++)
 	{
@@ -471,9 +472,9 @@ unsigned long eof_import_midi_to_eof_optimized(unsigned long pos)
 	double current_pos;
 	double delta;
 	double bpm;
-	
+
 //	return eof_import_midi_to_eof(sp->tags->ogg[0].midi_offset, pos);
-	
+
 	/* find the BPM area this position lies in */
 	for(i = 0; i < eof_import_bpm_events->events; i++)
 	{
@@ -505,7 +506,7 @@ unsigned long eof_import_midi_to_eof_optimized(unsigned long pos)
 static int eof_import_distance(int pos1, int pos2)
 {
 	int distance;
-	
+
 	if(pos1 > pos2)
 	{
 		distance = pos1 - pos2;
@@ -521,7 +522,7 @@ static int eof_import_closest_beat(EOF_SONG * sp, unsigned long pos)
 {
 	int i;
 	int bb = -1, ab = -1;
-	
+
 	for(i = 0; i < sp->beats; i++)
 	{
 		if(sp->beat[i]->pos <= pos)
@@ -574,16 +575,16 @@ EOF_SONG * eof_import_midi(const char * fn)
 	char backup_filename[1024] = {0};
 	char ttit[256] = {0};
 	unsigned long ppqn = 500000; // default of 120 BPM
-	
+
 	unsigned long curpos = 0;
-	
+
 	/* load MIDI */
 	eof_work_midi = load_midi(fn);
 	if(!eof_work_midi)
 	{
 		return 0;
 	}
-	
+
 	/* backup "notes.mid" if it exists in the folder with the imported MIDI
 	   as it will be overwritten upon save */
 	replace_filename(eof_temp_filename, fn, "notes.mid", 1024);
@@ -597,7 +598,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 			eof_copy_file(eof_temp_filename, backup_filename);
 		}
 	}
-	
+
 	sp = eof_create_song();
 	if(!sp)
 	{
@@ -605,9 +606,9 @@ EOF_SONG * eof_import_midi(const char * fn)
 	}
 	replace_filename(backup_filename, fn, "song.ini", 1024);
 	eof_import_ini(sp, backup_filename);
-	
+
 	/* read INI file */
-	
+
 	/* parse MIDI data */
 	for(i = 0; i < 16; i++)
 	{
@@ -617,7 +618,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 			tracks++;
 		}
 	}
-	
+
 	/* first pass, build events list for each track */
 	eof_import_bpm_events = eof_import_create_events_list();
 	if(!eof_import_bpm_events)
@@ -640,13 +641,13 @@ EOF_SONG * eof_import_midi(const char * fn)
 		absolute_pos = sp->tags->ogg[0].midi_offset;
 		while(track_pos < eof_work_midi->track[track[i]].len)
 		{
-			
+
 			/* read delta */
 			bytes_used = 0;
 			delta = eof_parse_var_len(eof_work_midi->track[track[i]].data, track_pos, &bytes_used);
 			absolute_pos += delta;
 			track_pos += bytes_used;
-			
+
 			/* read event type */
 			if(current_event_hi >= 0x80 && current_event_hi < 0xF0)
 			{
@@ -656,7 +657,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 			current_event_hi = current_event & 0xF0;
 			switch(current_event_hi)
 			{
-				
+
 				/* note off */
 				case 0x80:
 				{
@@ -740,13 +741,13 @@ EOF_SONG * eof_import_midi(const char * fn)
 					track_pos++;
 					break;
 				}
-				
+
 				/* running event */
 				default:
 				{
 					switch(last_event)
 					{
-						
+
 						/* note off */
 						case 0x80:
 						{
@@ -823,11 +824,11 @@ EOF_SONG * eof_import_midi(const char * fn)
 							track_pos++;
 							break;
 						}
-				
+
 					}
 					break;
 				}
-				
+
 				/* meta event */
 				case 0xF0:
 				{
@@ -849,14 +850,14 @@ EOF_SONG * eof_import_midi(const char * fn)
 						}
 						switch(current_meta_event)
 						{
-							
+
 							/* set sequence number */
 							case 0x00:
 							{
 								track_pos += 3;
 								break;
 							}
-							
+
 							/* text event */
 							case 0x01:
 							{
@@ -866,14 +867,14 @@ EOF_SONG * eof_import_midi(const char * fn)
 //								eof_midi_import_add_text_event(eof_import_bpm_events, absolute_pos, 0x51, d4, 0);
 								break;
 							}
-							
+
 							/* copyright */
 							case 0x02:
 							{
 								track_pos += eof_work_midi->track[track[i]].data[track_pos] + 1;
 								break;
 							}
-							
+
 							/* track name */
 							case 0x03:
 							{
@@ -885,7 +886,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 								}
 								text[j] = '\0';
 								track_pos++;
-								
+
 								/* detect what kind of track this is */
 								if(!ustricmp(text, "PART GUITAR"))
 								{
@@ -917,14 +918,14 @@ EOF_SONG * eof_import_midi(const char * fn)
 								}
 								break;
 							}
-							
+
 							/* instrument name */
 							case 0x04:
 							{
 								track_pos += eof_work_midi->track[track[i]].data[track_pos] + 1;
 								break;
 							}
-							
+
 							/* lyric */
 							case 0x05:
 							{
@@ -933,14 +934,14 @@ EOF_SONG * eof_import_midi(const char * fn)
 								track_pos += eof_work_midi->track[track[i]].data[track_pos] + 1;
 								break;
 							}
-							
+
 							/* marker */
 							case 0x06:
 							{
 								track_pos += eof_work_midi->track[track[i]].data[track_pos] + 1;
 								break;
 							}
-							
+
 							/* cue point */
 							case 0x07:
 							{
@@ -948,14 +949,14 @@ EOF_SONG * eof_import_midi(const char * fn)
 								track_pos += eof_work_midi->track[track[i]].data[track_pos] + 1;
 								break;
 							}
-							
+
 							/* MIDI channel prefix */
 							case 0x20:
 							{
 								track_pos += 2;
 								break;
 							}
-							
+
 							/* end of track */
 							case 0x2F:
 							{
@@ -965,7 +966,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 //								}
 								break;
 							}
-							
+
 							/* set tempo */
 							case 0x51:
 							{
@@ -980,28 +981,28 @@ EOF_SONG * eof_import_midi(const char * fn)
 								track_pos++;
 								break;
 							}
-							
+
 							/* time signature */
 							case 0x58:
 							{
 								track_pos += 5;
 								break;
 							}
-							
+
 							/* key signature */
 							case 0x59:
 							{
 								track_pos += 3;
 								break;
 							}
-							
+
 							/* sequencer info */
 							case 0x7F:
 							{
 								track_pos += eof_work_midi->track[track[i]].data[track_pos] + 1;
 								break;
 							}
-							
+
 							default:
 							{
 								track_pos++;
@@ -1014,7 +1015,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 			}
 		}
 	}
-	
+
 	/* optimize position calculator */
 	eof_import_bpm_count = 0;
 	if(eof_import_bpm_events->events <= 0)
@@ -1026,13 +1027,13 @@ EOF_SONG * eof_import_midi(const char * fn)
 		eof_import_bpm_pos[eof_import_bpm_count] = eof_import_midi_to_eof(sp->tags->ogg[0].midi_offset, eof_import_bpm_events->event[i]->pos);
 		eof_import_bpm_count++;
 	}
-	
+
 	/* second pass, create EOF notes */
 	int picked_track;
-	
+
 	/* for Rock Band songs, we need to ignore certain tracks */
 	char used_track[16] = {0};
-	
+
 	unsigned char diff = 0;
 	unsigned char diff_chart[5] = {1, 2, 4, 8, 16};
 	int note_count[16] = {0};
@@ -1042,7 +1043,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	int hopodiff;
 	for(i = 0; i < tracks; i++)
 	{
-		
+
 		picked_track = eof_import_events[i]->type >= 0 ? eof_import_events[i]->type : rbg == 0 ? EOF_TRACK_GUITAR : -1;
 		first_note = note_count[picked_track];
 		if(picked_track >= 0 && !used_track[picked_track])
@@ -1074,7 +1075,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 						sprintf(ttit, "MIDI Import (%d%%)", percent <= 100 ? percent : 100);
 						set_window_title(ttit);
 					}
-				
+
 					eof_vocal_track_resize(sp->vocal_track, note_count[picked_track] + 1);
 					/* note on */
 					if(eof_import_events[i]->event[j]->type == 0x90)
@@ -1101,7 +1102,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 						else if(eof_import_events[i]->event[j]->d1 == 96 || eof_import_events[i]->event[j]->d1 == 97)
 						{
 						}
-						else if(eof_import_events[i]->event[j]->d1 >= 36 && eof_import_events[i]->event[j]->d1 <= 84)
+						else if(eof_import_events[i]->event[j]->d1 >= MINPITCH && eof_import_events[i]->event[j]->d1 <= MAXPITCH)
 						{
 							for(k = 0; k < note_count[picked_track]; k++)
 							{
@@ -1124,7 +1125,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 							}
 						}
 					}
-				
+
 					/* note off so get length of note */
 					else if(eof_import_events[i]->event[j]->type == 0x80)
 					{
@@ -1155,7 +1156,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 						else if(eof_import_events[i]->event[j]->d1 == 96 || eof_import_events[i]->event[j]->d1 == 97)
 						{
 						}
-						else if(eof_import_events[i]->event[j]->d1 >= 36 && eof_import_events[i]->event[j]->d1 <= 84)
+						else if(eof_import_events[i]->event[j]->d1 >= MINPITCH && eof_import_events[i]->event[j]->d1 <= MAXPITCH)
 						{
 							if(note_count[picked_track] > 0)
 							{
@@ -1163,7 +1164,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 							}
 						}
 					}
-					
+
 					/* lyric */
 					else if((eof_import_events[i]->event[j]->type == 0x05 || eof_import_events[i]->event[j]->type == 0x01) && eof_import_events[i]->event[j]->text[0] != '[')
 					{
@@ -1174,7 +1175,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 								break;
 							}
 						}
-						
+
 						/* no note associated with this lyric so create a new note */
 						if(k == note_count[picked_track])
 						{
@@ -1220,7 +1221,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 						sprintf(ttit, "MIDI Import (%d%%)", (pticker * 100) / ptotal_events);
 						set_window_title(ttit);
 					}
-				
+
 					eof_track_resize(sp->track[picked_track], note_count[picked_track] + 1);
 					/* note on */
 					if(eof_import_events[i]->event[j]->type == 0x90)
@@ -1254,7 +1255,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 						{
 							sp->track[picked_track]->note[note_count[picked_track]]->type = -1;
 						}
-						
+
 						/* store forced HOPO marker, when the note off for this marker occurs, search for note with same
 						   position and apply it to that note */
 						if(eof_import_events[i]->event[j]->d1 == 0x3C + 5)
@@ -1297,7 +1298,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 							hopopos[3] = eof_import_midi_to_eof_optimized(eof_import_events[i]->event[j]->pos);
 							hopotype[3] = 1;
 						}
-						
+
 						/* star power and solos */
 						if(eof_import_events[i]->event[j]->d1 == 116 && sp->track[picked_track]->star_power_paths < EOF_MAX_STAR_POWER)
 						{
@@ -1307,7 +1308,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 						{
 							sp->track[picked_track]->solo[sp->track[picked_track]->solos].start_pos = eof_import_midi_to_eof_optimized(eof_import_events[i]->event[j]->pos);
 						}
-						
+
 						if(sp->track[picked_track]->note[note_count[picked_track]]->type != -1)
 						{
 							for(k = first_note; k < note_count[picked_track]; k++)
@@ -1331,7 +1332,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 							}
 						}
 					}
-				
+
 					/* note off so get length of note */
 					else if(eof_import_events[i]->event[j]->type == 0x80)
 					{
@@ -1364,7 +1365,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 						{
 							sp->track[picked_track]->note[note_count[picked_track]]->type = -1;
 						}
-						
+
 						/* detect forced HOPO */
 						hopodiff = -1;
 						if(eof_import_events[i]->event[j]->d1 == 0x3C + 5)
@@ -1417,7 +1418,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 								}
 							}
 						}
-						
+
 						if(eof_import_events[i]->event[j]->d1 == 116 && sp->track[picked_track]->star_power_paths < EOF_MAX_STAR_POWER)
 						{
 							sp->track[picked_track]->star_power_path[sp->track[picked_track]->star_power_paths].end_pos = eof_import_midi_to_eof_optimized(eof_import_events[i]->event[j]->pos) - 1;
@@ -1475,7 +1476,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 			eof_vocal_track_delete_line(sp->vocal_track, i);
 		}
 	}
-	
+
 	replace_filename(eof_song_path, fn, "", 1024);
 	append_filename(nfn, eof_song_path, "guitar.ogg", 1024);
 	if(!eof_load_ogg(nfn))
@@ -1492,7 +1493,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	}
 	eof_song_loaded = 1;
 	eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
-	
+
 	/* third pass, create tempo map */
 	ppqn = eof_import_bpm_events->events > 0 ? eof_import_bpm_events->event[0]->d1 : 500000; // default of 120 BPM
 	double bl = (double)1000.0 / (((double)60000000.0 / (double)ppqn) / (double)60.0);
@@ -1549,7 +1550,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 			}
 		}
 	}
-	
+
 	/* create text events */
 	int b = -1;
 	unsigned long tp;
@@ -1567,7 +1568,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 			}
 		}
 	}
-	
+
 	/* convert solos to star power for GH charts using FoFiX's method */
 	for(i = 0; i < EOF_MAX_TRACKS; i++)
 	{
@@ -1582,23 +1583,23 @@ EOF_SONG * eof_import_midi(const char * fn)
 			sp->track[i]->solos = 0;
 		}
 	}
-	
+
 	eof_import_destroy_events_list(eof_import_bpm_events);
 	eof_import_destroy_events_list(eof_import_text_events);
 	for(i = 0; i < tracks; i++)
 	{
 		eof_import_destroy_events_list(eof_import_events[i]);
 	}
-	
+
 	/* free MIDI */
 	destroy_midi(eof_work_midi);
-	
+
 	eof_changes = 0;
 //	eof_setup_menus();
 	eof_music_pos = 0;
 	eof_selected_track = 0;
 	eof_selected_ogg = 0;
-	
+
 	return sp;
 }
 
@@ -1616,7 +1617,7 @@ int qsort_helper3(const void * e1, const void * e2)
     {
         return 1;
     }
-    
+
     /* put lyrics first */
     if((*thing1)->type == 0x05 && (*thing2)->type == 0x90)
     {
@@ -1636,7 +1637,7 @@ int qsort_helper3(const void * e1, const void * e2)
     {
 	    return 1;
     }
-    
+
     // they are equal...
     return 0;
 }
@@ -1655,7 +1656,7 @@ int qsort_helper4(const void * e1, const void * e2)
     {
         return 1;
     }
-    
+
     // they are equal...
     return 0;
 }
@@ -1663,7 +1664,7 @@ int qsort_helper4(const void * e1, const void * e2)
 int eof_figure_beat(double pos)
 {
 	int i;
-	
+
 	for(i = 0; i < eof_song->beats - 1; i++)
 	{
 		if(eof_song->beat[i]->pos <= pos && eof_song->beat[i + 1]->pos > pos)
@@ -1690,19 +1691,19 @@ int eof_check_bpm_change(unsigned long start, unsigned long end)
 	int endbeat = eof_figure_beat(end);
 //	unsigned long startbpm = sp->beat[startbeat].ppqn;
 	int i;
-	
+
 	/* same beat, no brainer */
 	if(startbeat == endbeat)
 	{
 		return 0;
 	}
-	
+
 	/* different starting and ending bpm, uh huh */
 	else if(eof_song->beat[startbeat]->ppqn != eof_song->beat[endbeat]->ppqn)
 	{
 		return 1;
 	}
-	
+
 	else
 	{
 		for(i = startbeat; i < endbeat && i < eof_song->beats; i++)
@@ -1727,7 +1728,7 @@ double eof_calculate_delta(double start, double end)
 	int endbeat = eof_figure_beat(end);
 	double total_delta = 0.0;
 	double portion;
-	
+
 	/* if no BPM change, calculate delta the easy way :) */
 	if(!eof_check_bpm_change(start, end))
 	{
@@ -1735,12 +1736,12 @@ double eof_calculate_delta(double start, double end)
 		return ((((end - start) / 1000.0) * 120.0) * bpm) / tpm;
 //		return ((double)(end / 10.0 - start / 10.0) * bpm) / tpm;
 	}
-	
+
 	/* get first_portion */
 	bpm = eof_calculate_bpm_absolute(start);
 	portion = ((eof_song->beat[startbeat + 1]->fpos - start) / 1000.0) * 120.0;
 	total_delta += (portion * bpm) / tpm;
-	
+
 	/* get rest of the portions */
 	for(i = startbeat + 1; i < endbeat; i++)
 	{
@@ -1748,12 +1749,12 @@ double eof_calculate_delta(double start, double end)
 		portion = ((eof_song->beat[i + 1]->fpos - eof_song->beat[i]->fpos) / 1000.0) * 120.0;
 		total_delta += (portion * bpm) / tpm;
 	}
-	
+
 	/* get last portion */
 	bpm = eof_calculate_bpm_absolute(end);
 	portion = ((end - eof_song->beat[endbeat]->fpos) / 1000.0) * 120.0;
 	total_delta += (portion * bpm) / tpm;
-	
+
 	return total_delta;
 }
 
@@ -1761,7 +1762,7 @@ int eof_count_tracks(void)
 {
 	int i;
 	int count = 0;
-	
+
 	for(i = 0; i < EOF_MAX_TRACKS; i++)
 	{
 		if(eof_song->track[i]->notes > 0)
@@ -1769,7 +1770,7 @@ int eof_count_tracks(void)
 			count++;
 		}
 	}
-	
+
 	return count;
 }
 
@@ -1792,23 +1793,23 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	int midi_note_offset = 0;
 	int offset_used = 0;
 	unsigned long ppqn;
-	
+
 	double accumulator = 0.0;
 	double ddelta;
 	double vbpm = (double)60000000.0 / (double)sp->beat[0]->ppqn;
 	double tpm = 60.0;
 	int vel;
-	
+
 	for(j = 0; j < EOF_MAX_TRACKS; j++)
 	{
-		
+
 		/* fill in notes */
 		if(sp->track[j]->notes > 0)
 		{
-			
+
 			/* clear MIDI events list */
 			eof_clear_midi_events();
-			
+
 			/* write the MTrk MIDI data to a temp file
 	   		use size of the file as the MTrk header length */
 			for(i = 0; i < sp->track[j]->notes; i++)
@@ -1841,125 +1842,125 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 						break;
 					}
 				}
-			
+
 				/* write green note */
 				if(sp->track[j]->note[i]->note & 1)
 				{
 					eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 0);
 				}
-			
+
 				/* write yellow note */
 				if(sp->track[j]->note[i]->note & 2)
 				{
 					eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 1);
 				}
-			
+
 				/* write red note */
 				if(sp->track[j]->note[i]->note & 4)
 				{
 					eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 2);
 				}
-			
+
 				/* write blue note */
 				if(sp->track[j]->note[i]->note & 8)
 				{
 					eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 3);
 				}
-			
+
 				/* write purple note */
 				if(sp->track[j]->note[i]->note & 16)
 				{
 					eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 4);
 				}
-				
+
 				/* write forced HOPO */
 				if(sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO)
 				{
 					eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 5);
 				}
-				
+
 				/* write forced non-HOPO */
 				else if(sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_NO_HOPO)
 				{
 					eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 6);
 				}
-			
+
 				/* write green note off */
 				if(sp->track[j]->note[i]->note & 1)
 				{
 					eof_add_midi_event(sp->track[j]->note[i]->pos + sp->track[j]->note[i]->length, 0x80, midi_note_offset + 0);
 				}
-			
+
 				/* write yellow note off */
 				if(sp->track[j]->note[i]->note & 2)
 				{
 					eof_add_midi_event(sp->track[j]->note[i]->pos + sp->track[j]->note[i]->length, 0x80, midi_note_offset + 1);
 				}
-			
+
 				/* write red note off */
 				if(sp->track[j]->note[i]->note & 4)
 				{
 					eof_add_midi_event(sp->track[j]->note[i]->pos + sp->track[j]->note[i]->length, 0x80, midi_note_offset + 2);
 				}
-			
+
 				/* write blue note off */
 				if(sp->track[j]->note[i]->note & 8)
 				{
 					eof_add_midi_event(sp->track[j]->note[i]->pos + sp->track[j]->note[i]->length, 0x80, midi_note_offset + 3);
 				}
-			
+
 				/* write purple note off */
 				if(sp->track[j]->note[i]->note & 16)
 				{
 					eof_add_midi_event(sp->track[j]->note[i]->pos + sp->track[j]->note[i]->length, 0x80, midi_note_offset + 4);
 				}
-				
+
 				/* write forced HOPO note off */
 				if(sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO)
 				{
 					eof_add_midi_event(sp->track[j]->note[i]->pos + sp->track[j]->note[i]->length, 0x80, midi_note_offset + 5);
 				}
-				
+
 				/* write forced non-HOPO note off */
 				else if(sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_NO_HOPO)
 				{
 					eof_add_midi_event(sp->track[j]->note[i]->pos + sp->track[j]->note[i]->length, 0x80, midi_note_offset + 6);
 				}
-			
+
 			}
-		
+
 			/* fill in star power */
 			for(i = 0; i < sp->track[j]->star_power_paths; i++)
 			{
 				eof_add_midi_event(sp->track[j]->star_power_path[i].start_pos, 0x90, 116);
 				eof_add_midi_event(sp->track[j]->star_power_path[i].end_pos, 0x80, 116);
 			}
-		
+
 			/* fill in solos */
 			for(i = 0; i < sp->track[j]->solos; i++)
 			{
 				eof_add_midi_event(sp->track[j]->solo[i].start_pos, 0x90, 103);
 				eof_add_midi_event(sp->track[j]->solo[i].end_pos, 0x80, 103);
 			}
-		
+
 			last_pos = sp->tags->ogg[eof_selected_ogg].midi_offset;
     		qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
 //			allegro_message("break1");
-    
+
 			/* open the file */
 			fp = pack_fopen(tempname[j], "w");
 			if(!fp)
 			{
 				return 0;
 			}
-	
+
 			/* write the track name */
 			WriteVarLen(0, fp);
 			pack_putc(0xff, fp);
 			pack_putc(0x03, fp);
 			WriteVarLen(ustrlen(eof_track_name[j]), fp);
 			pack_fwrite(eof_track_name[j], ustrlen(eof_track_name[j]), fp);
-	
+
 	    	/* add MIDI events */
 			for(i = 0; i < eof_midi_events; i++)
 			{
@@ -1971,7 +1972,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					delta += 1;
 					accumulator -= 1.0;
 				}
-				
+
 				last_pos = eof_midi_event[i]->pos;
 //				vel = eof_midi_event[i]->type == 0x80 ? 0x40 : 0x64;
 				vel = 0x64;
@@ -1980,24 +1981,24 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				pack_putc(eof_midi_event[i]->note, fp);
 				pack_putc(vel, fp);
 			}
-	
+
 			/* end of track */
 			WriteVarLen(0, fp);
 			pack_putc(0xFF, fp);
 			pack_putc(0x2F, fp);
 			pack_putc(0x00, fp);
-	
+
 			pack_fclose(fp);
 		}
 	}
-	
+
 	/* make vocals track */
 	if(sp->vocal_track->lyrics > 0)
 	{
-		
+
 		/* clear MIDI events list */
 		eof_clear_midi_events();
-		
+
 		/* write the MTrk MIDI data to a temp file
 		use size of the file as the MTrk header length */
 		for(i = 0; i < sp->vocal_track->lyrics; i++)
@@ -2020,10 +2021,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				eof_add_midi_event(sp->vocal_track->line[i].end_pos, 0x80, 116);
 			}
 		}
-		
+
 		last_pos = sp->tags->ogg[eof_selected_ogg].midi_offset;
 		qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
-		
+
 		/* open the file */
 		fp = pack_fopen(tempname[7], "w");
 		if(!fp)
@@ -2049,7 +2050,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				delta += 1;
 				accumulator -= 1.0;
 			}
-			
+
 			last_pos = eof_midi_event[i]->pos;
 			vel = 0x64;
 			WriteVarLen(delta, fp);
@@ -2076,7 +2077,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 		pack_fclose(fp);
 	}
-	
+
 	/* write tempo track */
 	fp = pack_fopen(tempname[5], "w");
 	if(!fp)
@@ -2090,7 +2091,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	ppqn = 1;
 	for(i = 0; i < sp->beats; i++)
 	{
-		
+
 		/* if BPM change occurs, write a tempo change */
 		if(sp->beat[i]->ppqn != ppqn)
 		{
@@ -2103,10 +2104,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				delta += 1;
 				accumulator -= 1.0;
 			}
-				
+
 			last_fpos = sp->beat[i]->fpos;
 			ppqn = sp->beat[i]->ppqn;
-		
+
 			WriteVarLen(delta, fp);
 			pack_putc(0xff, fp);
 			pack_putc(0x51, fp);
@@ -2121,33 +2122,33 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	pack_putc(0x2F, fp);
 	pack_putc(0x00, fp);
 	pack_fclose(fp);
-	
+
 	/* track name is "EVENTS"
 	   event = 0xFF, meta = 0x01
 	   length = string length */
 	/* use delta calculator from the note tracks */
-	
+
 	if(sp->text_events)
 	{
-		
+
 		eof_sort_events();
-		
+
 		/* open the file */
 		fp = pack_fopen(tempname[6], "w");
 		if(!fp)
 		{
 			return 0;
 		}
-		
+
 		/* write the track name */
 		WriteVarLen(0, fp);
 		pack_putc(0xff, fp);
 		pack_putc(0x03, fp);
 		WriteVarLen(ustrlen("EVENTS"), fp);
 		pack_fwrite("EVENTS", ustrlen("EVENTS"), fp);
-		
+
 		last_pos = sp->tags->ogg[0].midi_offset;
-		
+
     	/* add MIDI events */
 		for(i = 0; i < sp->text_events; i++)
 		{
@@ -2159,7 +2160,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				delta += 1;
 				accumulator -= 1.0;
 			}
-				
+
 			last_pos = sp->beat[sp->text_event[i]->beat]->pos;
 			WriteVarLen(delta, fp);
 			pack_putc(0xFF, fp);
@@ -2167,16 +2168,16 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			pack_putc(ustrlen(sp->text_event[i]->text), fp);
 			pack_fwrite(sp->text_event[i]->text, ustrlen(sp->text_event[i]->text), fp);
 		}
-		
+
 		/* end of track */
 		WriteVarLen(0, fp);
 		pack_putc(0xFF, fp);
 		pack_putc(0x2F, fp);
 		pack_putc(0x00, fp);
-	
+
 		pack_fclose(fp);
 	}
-	
+
 	fp = pack_fopen(fn, "w");
 	if(!fp)
 	{
@@ -2186,7 +2187,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	/* write header data */
 	header[11] = eof_count_tracks() + 1 + (sp->text_events > 0 ? 1 : 0) + (sp->vocal_track->lyrics > 0 ? 1 : 0);
 	pack_fwrite(header, 14, fp);
-	
+
 	/* write tempo track */
 	track_length = file_size_ex(tempname[5]);
 	fp2 = pack_fopen(tempname[5], "r");
@@ -2202,7 +2203,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		pack_putc(pack_getc(fp2), fp);
 	}
 	pack_fclose(fp2);
-	
+
 	/* write text event track if there are any events */
 	if(sp->text_events)
 	{
@@ -2221,7 +2222,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		}
 		pack_fclose(fp2);
 	}
-	
+
 	/* write note tracks */
 	for(j = 0; j < EOF_MAX_TRACKS; j++)
 	{
@@ -2236,7 +2237,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			}
 			pack_fwrite(trackheader, 4, fp);
 			pack_mputl(track_length, fp);
-	
+
 			for(i = 0; i < track_length; i++)
 			{
 				pack_putc(pack_getc(fp2), fp);
@@ -2244,7 +2245,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			pack_fclose(fp2);
 		}
 	}
-	
+
 	/* write lyric track if there are any lyrics */
 	if(sp->vocal_track->lyrics)
 	{
@@ -2263,10 +2264,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		}
 		pack_fclose(fp2);
 	}
-	
+
 	pack_fclose(fp);
 	eof_clear_midi_events();
-	
+
 	/* delete temporary files */
 	delete_file("eof.tmp");
 	delete_file("eof2.tmp");
@@ -2276,6 +2277,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	delete_file("eof6.tmp");
 	delete_file("eof7.tmp");
 	delete_file("eof8.tmp");
-			
+
 	return 1;
 }
