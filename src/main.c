@@ -963,14 +963,14 @@ int eof_count_selected_notes_vocal(int * total, char v)
 			(*total)++;
 		}
 	}
-	
+
 	/* if no notes remain selected, current note should be unset */
 	if(count == 0)
 	{
 		eof_selection.current = EOF_MAX_NOTES - 1;
 		eof_selection.current_pos = 0;
 	}
-	
+
 	/* if only one note is selected, make sure current note is set to that note */
 	else if(count == 1)
 	{
@@ -1011,14 +1011,14 @@ int eof_count_selected_notes(int * total, char v)
 			}
 		}
 	}
-	
+
 	/* if no notes remain selected, current note should be unset */
 	if(count == 0)
 	{
 		eof_selection.current = EOF_MAX_NOTES - 1;
 		eof_selection.current_pos = 0;
 	}
-	
+
 	/* if only one note is selected, make sure current note is set to that note */
 	else if(count == 1)
 	{
@@ -1328,6 +1328,7 @@ void eof_read_global_keys(void)
 		{
 			eof_menu_edit_undo();
 			key[KEY_Z] = 0;
+			eof_reset_lyric_preview_lines();	//Rebuild the preview lines
 		}
 
 		/* redo */
@@ -1335,6 +1336,7 @@ void eof_read_global_keys(void)
 		{
 			eof_menu_edit_redo();
 			key[KEY_Y] = 0;
+			eof_reset_lyric_preview_lines();	//Rebuild the preview lines
 		}
 
 		/* switch between inverted and normal editor view */

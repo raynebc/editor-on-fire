@@ -948,11 +948,6 @@ int eof_menu_file_lyrics_import(void)
 	char *selectedtrack;
 //	struct Lyric_Format *detectionlist;	//This is the list populated by EOF_IMPORT_VIA_LC() in the event of multiple possible imports
 
-
-struct Lyric_Format *test;
-char *test2;
-
-
 	if(eof_song == NULL)	//Do not import lyrics if no chart is open
 		return 0;
 
@@ -983,11 +978,6 @@ char *test2;
 				alert("Error", NULL, "No lyrics detected", "OK", NULL, 0, KEY_ENTER);
 				return 0;	//return error
 			}
-
-
-for(test=lyricdetectionlist;test!=NULL;test=test->next)
-	test2=test->track;
-
 
 		//Import lyrics
 			if(lyricdetectionlist->next == NULL)	//If this file had only one detected lyric format
