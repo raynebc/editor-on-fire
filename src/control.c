@@ -250,7 +250,7 @@ void eof_controller_read_button_names(EOF_CONTROLLER * cp)
 			}
 			case EOF_CONTROLLER_BUTTON_TYPE_JOYBUTTON:
 			{
-				sprintf(cp->button[i].name, "Joy %d Button %s", cp->button[i].joy, joy[cp->button[i].joy].button[cp->button[i].key].name);
+				sprintf(cp->button[i].name, "Joy %d %s", cp->button[i].joy, joy[cp->button[i].joy].button[cp->button[i].key].name);
 				break;
 			}
 			case EOF_CONTROLLER_BUTTON_TYPE_JOYAXIS:
