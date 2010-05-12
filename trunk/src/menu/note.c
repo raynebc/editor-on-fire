@@ -2,6 +2,7 @@
 #include "../agup/agup.h"
 #include "../undo.h"
 #include "../dialog.h"
+#include "../utility.h"
 #include "note.h"
 
 char eof_solo_menu_mark_text[32] = "&Mark";
@@ -1429,7 +1430,14 @@ int eof_edit_lyric_dialog(void)
 		if(ustricmp(eof_song->vocal_track->lyric[eof_selection.current]->text, eof_etext))
 		{
 			eof_prepare_undo(0);
-			ustrcpy(eof_song->vocal_track->lyric[eof_selection.current]->text, eof_etext);
+			if(!eof_check_string(eof_etext))
+			{
+				eof_vocal_track_delete_lyric(eof_song->vocal_track, eof_selection.current);
+			}
+			else
+			{
+				ustrcpy(eof_song->vocal_track->lyric[eof_selection.current]->text, eof_etext);
+			}
 		}
 	}
 	eof_cursor_visible = 1;
