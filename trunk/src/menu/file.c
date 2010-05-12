@@ -135,6 +135,18 @@ DIALOG eof_ogg_settings_dialog[] =
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
+DIALOG eof_lyric_detections_dialog[]=
+{
+	/*(proc)				(x)			(y)			(w)			(h)			(fg)	(bg)	(key)	(flags)	(d1)(d2)	(dp)							(dp2)(dp3)*/
+	{d_agup_window_proc,	0,			48,			216+110+20,	160+72+2,	2,		23,		0,		0,		0,	0,		"Select track to import",		NULL,NULL},
+	{d_agup_list_proc,		12,			84,			110*2+20+80,69*2+2,		2,		23,		0,		0,		0,	0,		eof_lyric_detections_list_all,	NULL,NULL},
+	{d_agup_button_proc,	12,			166+69+2,	160-6,		28,			2,		23,		0,		D_EXIT,	0,	0,		"Import",						NULL,NULL},
+	{d_agup_button_proc,	12+160+6,	166+69+2,	160-6,		28,			2,		23,		0,		D_EXIT,	0,	0,		"Cancel",						NULL,NULL},
+	{NULL,					0,			0,			0,			0,			0,		0,		0,		0,		0,	0,		NULL,							NULL,NULL}
+};
+
+struct Lyric_Format *lyricdetectionlist;	//Dialog windows cannot be passed local variables, requiring the use of this global variable for the lyric track prompt dialog
+
 void eof_prepare_file_menu(void)
 {
 	if(eof_song && eof_song_loaded)
@@ -932,7 +944,14 @@ int eof_menu_file_lyrics_import(void)
 {
 	char * returnedfn = NULL;
 	int jumpcode = 0;
-	struct Lyric_Format *detectionlist;	//This is the list populated by EOF_IMPORT_VIA_LC() in the event of multiple possible imports
+	int selectedformat=0;
+	char *selectedtrack;
+//	struct Lyric_Format *detectionlist;	//This is the list populated by EOF_IMPORT_VIA_LC() in the event of multiple possible imports
+
+
+struct Lyric_Format *test;
+char *test2;
+
 
 	if(eof_song == NULL)	//Do not import lyrics if no chart is open
 		return 0;
@@ -957,23 +976,34 @@ int eof_menu_file_lyrics_import(void)
 		else
 		{
 		//Detect if the selected file has lyrics
-			detectionlist=DetectLyricFormat(returnedfn);	//Auto detect the lyric format of the chosen file
-			if(detectionlist == NULL)
+			lyricdetectionlist=DetectLyricFormat(returnedfn);	//Auto detect the lyric format of the chosen file
+			ReleaseMemory(1);	//Release memory allocated during lyric import
+			if(lyricdetectionlist == NULL)
 			{
 				alert("Error", NULL, "No lyrics detected", "OK", NULL, 0, KEY_ENTER);
 				return 0;	//return error
 			}
 
+
+for(test=lyricdetectionlist;test!=NULL;test=test->next)
+	test2=test->track;
+
+
 		//Import lyrics
-			if(detectionlist->next == NULL)	//If this file had only one detected lyric format
+			if(lyricdetectionlist->next == NULL)	//If this file had only one detected lyric format
 			{
 				eof_prepare_undo(0);	//Make a generic undo state
-				EOF_IMPORT_VIA_LC(eof_song->vocal_track, NULL, detectionlist->format, returnedfn, detectionlist->track);
+				EOF_IMPORT_VIA_LC(eof_song->vocal_track, NULL, lyricdetectionlist->format, returnedfn, lyricdetectionlist->track);
 					//Import the format
 			}
 			else
-			{
-				//Logic needs to be designed to prompt the user with a list of all detected formats
+			{	//Prompt user to select from the multiple possible imports
+				eof_lyric_import_prompt(&selectedformat,&selectedtrack);
+				if(selectedformat)	//If a selection was made
+				{
+					eof_prepare_undo(0);	//Make a generic undo state
+					EOF_IMPORT_VIA_LC(eof_song->vocal_track, NULL, selectedformat, returnedfn, selectedtrack);
+				}
 			}
 		}
 	}
@@ -1548,3 +1578,66 @@ int eof_controller_redefine(DIALOG * d)
 	return 0;
 }
 
+char *eof_lyric_detections_list_all(int index, int * size)
+{
+	unsigned long ctr;
+	struct Lyric_Format *ptr;
+
+	if(index >= 0)
+	{	//Return a display string for item #index
+		ptr=GetDetectionNumber(lyricdetectionlist,index);
+		if(ptr == NULL)
+			return NULL;
+
+		return ptr->track;
+	}
+
+	//Otherwise return NULL and set *size to the number of items to display in the list
+	for(ctr=1,ptr=lyricdetectionlist;ptr->next != NULL;ptr=ptr->next,ctr++);	//Count the number of lyric formats detected
+	*size=ctr;
+	return NULL;
+}
+
+struct Lyric_Format *GetDetectionNumber(struct Lyric_Format *detectionlist, unsigned long number)
+{
+	unsigned long ctr;
+	struct Lyric_Format *ptr;	//Linked list conductor
+
+	ptr=detectionlist;	//Point at front of list
+	for(ctr=0;ctr<number;ctr++)
+	{
+		if(ptr->next == NULL)
+			return NULL;
+
+		ptr=ptr->next;
+	}
+
+	return ptr;
+}
+
+void eof_lyric_import_prompt(int *selectedformat, char **selectedtrack)
+{
+	struct Lyric_Format *ptr;
+
+	if(!selectedformat || !selectedtrack || !lyricdetectionlist)	//If any of these are NULL
+		return;
+
+	eof_cursor_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_lyric_detections_dialog, gui_fg_color, gui_bg_color);	//Display the lyric detections dialog
+	centre_dialog(eof_lyric_detections_dialog);				//Center it
+	eof_lyric_detections_dialog[1].d1 = 0;				//Init the list procedure's selection variable to 0
+
+	if(eof_popup_dialog(eof_lyric_detections_dialog, 0) == 2)	//If a user selection was made?
+	{	//Seek to the selected link
+		ptr=GetDetectionNumber(lyricdetectionlist,eof_lyric_detections_dialog[1].d1);
+		*selectedformat=ptr->format;
+		*selectedtrack=ptr->track;
+	}
+	else
+		*selectedformat=0;	//Failure
+
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(NULL);
+}

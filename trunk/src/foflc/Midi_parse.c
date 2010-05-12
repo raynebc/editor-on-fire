@@ -866,22 +866,6 @@ void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppr
 		EndLyricLine();		//End the lyric line gracefully
 	}
 
-/*v2.0	Moved this logic to ForceEndLyricLine()
-	if(Lyrics.line_on)	//KAR files do not demarcate the end of the last line of lyrics
-	{
-		assert_wrapper(Lyrics.curline != NULL);
-		if(Lyrics.curline->piececount == 0)	//If this unclosed line is empty
-		{	//Manually remove it from the Lyrics structure
-			(Lyrics.curline->prev)->next=NULL;	//Previous line points forward to nothing
-			templine=Lyrics.curline->prev;		//Save pointer to previous line
-			free(Lyrics.curline);				//Release empty line
-			Lyrics.curline=templine;			//Point conductor to previous line
-			Lyrics.line_on=0;					//Mark lyric line status as closed
-		}
-		else
-			EndLyricLine();	//Close it normally
-	}
-*/
 	ForceEndLyricLine();
 	if(Lyrics.verbose)	printf("MIDI import complete.  %lu lyrics loaded\n\n",Lyrics.piececount);
 }

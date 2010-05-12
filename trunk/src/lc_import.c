@@ -9,6 +9,7 @@
 #include "song.h"
 #include "main.h"
 
+
 int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format, char *inputfilename, char *string2);
 	//A reference to a destination EOF_VOCAL_TRACK structure and a destination Lyric_Format pointer must be given
 	//The lyric format will be detected if format is 0.  If there is only one format detected in the lyrics, it will be
@@ -41,6 +42,7 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 	//	string2 may be NULL for SKAR import, as the track to import is pre-determined
 	//	string2 may be NULL for MIDI import, as "PART VOCALS" will be assumed by default
 	//Returns 1 on success, -1 on error and 0 if no lyrics were found in the structure
+
 
 int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format, char *inputfilename, char *string2)
 {
@@ -85,6 +87,8 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 	}
 	else			//Import specific format
 	{
+		Lyrics.in_format=format;
+
 		if(Lyrics.in_format == KAR_FORMAT)
 		{	//If this is a format for which string2 (pitched file or track name) must be specified
 			if(string2 == NULL)	//If the track name to import is not given
@@ -101,11 +105,9 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 
 			ustrcpy(eof_filename, returnedfn);	//Save the last user-selected dialog path
 		}
-
-		Lyrics.in_format=format;
 	}
 
-	Lyrics.infilename=inputfilename;
+	Lyrics.infilename=DuplicateString(inputfilename);	//Make a duplicate, so it's de-allocation won't affect calling function
 
 //Import lyrics
 	switch(Lyrics.in_format)
@@ -385,3 +387,4 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 	ReleaseMemory(1);
 	return 1;	//Return success
 }
+
