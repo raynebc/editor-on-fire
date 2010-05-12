@@ -480,17 +480,15 @@ int eof_menu_beat_anchor(void)
 		ttext[1] = eof_etext2[7];
 		hs = atoi(ttext);
 		
-		eof_prepare_undo(0);
-		
 		/* time wasn't modified so get out without changing anything */
 		if(mm == oldmm && ss == oldss && hs == oldhs)
 		{
-			eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;
 			eof_cursor_visible = 1;
 			eof_pen_visible = 1;
 			eof_show_mouse(NULL);
 			return 1;
 		}
+		eof_prepare_undo(0);
 		eof_song->beat[eof_selected_beat]->fpos = (double)mm * 60.0 * 1000.0 + (double)ss * 1000.0 + (double)hs * 10.0;
 		eof_song->beat[eof_selected_beat]->pos = eof_song->beat[eof_selected_beat]->fpos;
 //		allegro_message("%d:%d:%d", mm, ss, ms);
