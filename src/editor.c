@@ -3485,6 +3485,10 @@ void eof_vocal_editor_logic(void)
 			{
 				eof_pen_lyric.note = 0;
 			}
+			if(!(mouse_b & 1))
+			{
+				eof_last_tone = 0;
+			}
 			if(mouse_b & 1)
 			{
 				int n = eof_vocals_offset + (EOF_EDITOR_RENDER_OFFSET + 35 + eof_screen_layout.vocal_y - mouse_y) / eof_screen_layout.vocal_tail_size;
