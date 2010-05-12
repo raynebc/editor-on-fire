@@ -1462,7 +1462,7 @@ void eof_lyric_logic(void)
 				{
 					eof_last_tone = -1;
 				}
-				if(mouse_b & 2 || key[KEY_INSERT])
+				if((mouse_b & 2) || key[KEY_INSERT])
 				{
 					eof_vocals_offset = eof_hover_key - eof_screen_layout.vocal_view_size / 2;
 					if(KEY_EITHER_CTRL)

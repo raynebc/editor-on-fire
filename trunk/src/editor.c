@@ -3386,6 +3386,7 @@ void eof_editor_logic(void)
 			int lpos = pos < 300 ? (eof_song->beat[eof_selected_beat]->pos / eof_zoom + 20) : 300;
 			eof_prepare_menus();
 			do_menu(eof_beat_menu, lpos, mouse_y);
+			eof_clear_input();
 		}
 		else if(mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET && mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET)
 		{
@@ -3424,13 +3425,14 @@ void eof_editor_logic(void)
 			{
 				do_menu(eof_right_click_menu_normal, mouse_x, mouse_y);
 			}
+			eof_clear_input();
 		}
 		else if(mouse_y < eof_window_3d->y)
 		{
 			eof_prepare_menus();
 			do_menu(eof_right_click_menu_normal, mouse_x, mouse_y);
+			eof_clear_input();
 		}
-		eof_clear_input();
 		eof_show_mouse(NULL);
 	}
 }
@@ -4283,6 +4285,7 @@ void eof_vocal_editor_logic(void)
 			int lpos = pos < 300 ? (eof_song->beat[eof_selected_beat]->pos / eof_zoom + 20) : 300;
 			eof_prepare_menus();
 			do_menu(eof_beat_menu, lpos, mouse_y);
+			eof_clear_input();
 		}
 		else if(mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET && mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET)
 		{
@@ -4316,18 +4319,20 @@ void eof_vocal_editor_logic(void)
 			if(eof_count_selected_notes(NULL, 0) > 0)
 			{
 				do_menu(eof_right_click_menu_note, mouse_x, mouse_y);
+				eof_clear_input();
 			}
 			else
 			{
 				do_menu(eof_right_click_menu_normal, mouse_x, mouse_y);
+				eof_clear_input();
 			}
 		}
 		else if(mouse_y < eof_window_3d->y)
 		{
 			eof_prepare_menus();
 			do_menu(eof_right_click_menu_normal, mouse_x, mouse_y);
+			eof_clear_input();
 		}
-		eof_clear_input();
 		eof_show_mouse(NULL);
 	}
 }
