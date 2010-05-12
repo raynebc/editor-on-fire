@@ -454,6 +454,7 @@ int eof_menu_beat_anchor(void)
 	int mm, ss, hs;
 	int oldmm, oldss, oldhs;
 	int oldpos = eof_song->beat[eof_selected_beat]->pos;
+	int newpos = 0;
 	char ttext[3] = {0};
 	
 	if(eof_selected_beat == 0)
@@ -489,17 +490,32 @@ int eof_menu_beat_anchor(void)
 			return 1;
 		}
 		eof_prepare_undo(0);
-		eof_song->beat[eof_selected_beat]->fpos = (double)mm * 60.0 * 1000.0 + (double)ss * 1000.0 + (double)hs * 10.0;
-		eof_song->beat[eof_selected_beat]->pos = eof_song->beat[eof_selected_beat]->fpos;
-//		allegro_message("%d:%d:%d", mm, ss, ms);
-		if(eof_song->beat[eof_selected_beat]->pos <= eof_song->beat[eof_selected_beat - 1]->pos + 100 || eof_song->beat[eof_selected_beat]->pos >= eof_song->beat[eof_selected_beat + 1]->pos - 10)
+		newpos = (double)mm * 60.0 * 1000.0 + (double)ss * 1000.0 + (double)hs * 10.0;
+		if(newpos > oldpos)
 		{
-			eof_song->beat[eof_selected_beat]->pos = oldpos;
+			while(eof_song->beat[eof_selected_beat]->pos < newpos)
+			{
+				eof_song->beat[eof_selected_beat]->pos++;
+				eof_mickeys_x = 1;
+				eof_recalculate_beats(eof_selected_beat);
+				if(eof_song->beat[eof_selected_beat]->pos > eof_song->beat[eof_selected_beat + 1]->pos - 100)
+				{
+					break;
+				}
+			}
 		}
-		else
+		else if(newpos < oldpos)
 		{
-			eof_mickeys_x = (eof_song->beat[eof_selected_beat]->pos - oldpos) / eof_zoom;
-			eof_recalculate_beats(eof_selected_beat);
+			while(eof_song->beat[eof_selected_beat]->pos > newpos)
+			{
+				eof_song->beat[eof_selected_beat]->pos--;
+				eof_mickeys_x = 1;
+				eof_recalculate_beats(eof_selected_beat);
+				if(eof_song->beat[eof_selected_beat]->pos < eof_song->beat[eof_selected_beat - 1]->pos + 100)
+				{
+					break;
+				}
+			}
 		}
 		eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;
 	}
