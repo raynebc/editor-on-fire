@@ -2,4 +2,4 @@ OFILES = modules/ocd3d.o modules/wfsel.o modules/gametime.o modules/g-idle.o mai
 MENUOFILES = menu/file.o menu/edit.o menu/song.o menu/note.o menu/beat.o menu/help.o menu/main.o menu/context.o
 ALOGGOFILES = alogg/src/alogg.o
 AGUPOFILES = agup/aalg.o agup/aase.o agup/abeos.o  agup/abitmap.o  agup/agtk.o  agup/agup.o  agup/ans.o  agup/aphoton.o  agup/awin95.o
-LCOFILES = foflc/LRC_parse.o foflc/Lyric_storage.o foflc/Midi_parse.o foflc/Script_parse.o foflc/UStar_parse.o foflc/VL_parse.o
+LCOFILES = foflc/LRC_parse.o foflc/Lyric_storage.o foflc/Midi_parse.o foflc/Script_parse.o foflc/UStar_parse.o foflc/VL_parse.o lc_import.o
