@@ -2237,8 +2237,16 @@ void eof_editor_logic(void)
 			eof_undo_toggle = 0;
 			if(eof_notes_moved)
 			{
-				eof_track_sort_notes(eof_song->track[eof_selected_track]);
-				eof_track_fixup_notes(eof_song->track[eof_selected_track], 1);
+				if(eof_vocals_selected)
+				{
+					eof_vocal_track_sort_lyrics(eof_song->vocal_track);
+					eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 1);
+				}
+				else
+				{
+					eof_track_sort_notes(eof_song->track[eof_selected_track]);
+					eof_track_fixup_notes(eof_song->track[eof_selected_track], 1);
+				}
 				eof_determine_hopos();
 				eof_notes_moved = 0;
 			}
