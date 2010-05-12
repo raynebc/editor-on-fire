@@ -10,6 +10,7 @@
 #define EOF_UNDO_TYPE_NONE         0
 #define EOF_UNDO_TYPE_NOTE_LENGTH  1
 #define EOF_UNDO_TYPE_NOTE_SEL     2
+#define EOF_UNDO_TYPE_LYRIC_NOTE   3
 
 /*typedef struct
 {

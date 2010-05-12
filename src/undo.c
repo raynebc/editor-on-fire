@@ -49,6 +49,10 @@ int eof_undo_add(int type)
 	{
 		return 0;
 	}
+	if(type == EOF_UNDO_TYPE_LYRIC_NOTE && eof_undo_last_type == EOF_UNDO_TYPE_LYRIC_NOTE)
+	{
+		return 0;
+	}
 	eof_undo_last_type = type;
 	eof_save_song(eof_song, eof_undo_filename[eof_undo_current_index]);
 	eof_undo_type[eof_undo_current_index] = type;
