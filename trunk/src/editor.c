@@ -2681,6 +2681,8 @@ void eof_editor_logic(void)
 				}
 			}
 			unsigned long move_offset = 0;
+			int revert = 0;
+			int revert_amount = 0;
 			if(mouse_b & 1 && !eof_lclick_released)
 			{
 				if(eof_mouse_drug && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
@@ -2726,14 +2728,6 @@ void eof_editor_logic(void)
 									eof_selection.current_pos += eof_mickeys_x * eof_zoom;
 								}
 								eof_song->track[eof_selected_track]->note[i]->pos += eof_mickeys_x * eof_zoom;
-								if(eof_song->track[eof_selected_track]->note[i]->pos >= eof_music_length)
-								{
-									eof_song->track[eof_selected_track]->note[i]->pos = eof_music_length - 1;
-								}
-								else if(eof_song->track[eof_selected_track]->note[i]->pos + eof_song->track[eof_selected_track]->note[i]->length >= eof_music_length)
-								{
-									eof_song->track[eof_selected_track]->note[i]->length = eof_music_length - eof_song->track[eof_selected_track]->note[i]->pos - 1;
-								}
 							}
 							else
 							{
@@ -2742,14 +2736,21 @@ void eof_editor_logic(void)
 									eof_selection.current_pos += move_offset;
 								}
 								eof_song->track[eof_selected_track]->note[i]->pos += move_offset;
-								if(eof_song->track[eof_selected_track]->note[i]->pos >= eof_music_length)
-								{
-									eof_song->track[eof_selected_track]->note[i]->pos = eof_music_length - 1;
-								}
-								else if(eof_song->track[eof_selected_track]->note[i]->pos + eof_song->track[eof_selected_track]->note[i]->length >= eof_music_length)
-								{
-									eof_song->track[eof_selected_track]->note[i]->length = eof_music_length - eof_song->track[eof_selected_track]->note[i]->pos - 1;
-								}
+							}
+							if(eof_song->track[eof_selected_track]->note[i]->pos + eof_song->track[eof_selected_track]->note[i]->length >= eof_music_length)
+							{
+								revert = 1;
+								revert_amount = eof_song->track[eof_selected_track]->note[i]->pos + eof_song->track[eof_selected_track]->note[i]->length - eof_music_length;
+							}
+						}
+					}
+					if(revert)
+					{
+						for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
+						{
+							if(eof_selection.multi[i])
+							{
+								eof_song->track[eof_selected_track]->note[i]->pos -= revert_amount;
 							}
 						}
 					}
@@ -3765,6 +3766,8 @@ void eof_vocal_editor_logic(void)
 				}
 			}
 			unsigned long move_offset = 0;
+			int revert = 0;
+			int revert_amount = 0;
 			if(mouse_b & 1 && !eof_lclick_released)
 			{
 				if(eof_mouse_drug)
@@ -3810,10 +3813,6 @@ void eof_vocal_editor_logic(void)
 									eof_selection.current_pos += eof_mickeys_x * eof_zoom;
 								}
 								eof_song->vocal_track->lyric[i]->pos += eof_mickeys_x * eof_zoom;
-								if(eof_song->vocal_track->lyric[i]->pos >= eof_music_length)
-								{
-									eof_song->vocal_track->lyric[i]->pos = eof_music_length - 1;
-								}
 							}
 							else
 							{
@@ -3822,10 +3821,21 @@ void eof_vocal_editor_logic(void)
 									eof_selection.current_pos += move_offset;
 								}
 								eof_song->vocal_track->lyric[i]->pos += move_offset;
-								if(eof_song->vocal_track->lyric[i]->pos >= eof_music_length)
-								{
-									eof_song->vocal_track->lyric[i]->pos = eof_music_length - 1;
-								}
+							}
+							if(eof_song->vocal_track->lyric[i]->pos + eof_song->vocal_track->lyric[i]->length >= eof_music_length)
+							{
+								revert = 1;
+								revert_amount = eof_song->vocal_track->lyric[i]->pos + eof_song->vocal_track->lyric[i]->length - eof_music_length;
+							}
+						}
+					}
+					if(revert)
+					{
+						for(i = 0; i < eof_song->vocal_track->lyrics; i++)
+						{
+							if(eof_selection.multi[i])
+							{
+								eof_song->vocal_track->lyric[i]->pos -= revert_amount;
 							}
 						}
 					}
