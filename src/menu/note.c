@@ -1168,6 +1168,7 @@ int eof_menu_lyric_line_mark(void)
 			}
 		}
 	}
+	eof_prepare_undo(0);	//Create the undo state before removing/adding phrase(s)
 	for(j = eof_song->vocal_track->lines; j >= 0; j--)
 	{
 		if(sel_end >= eof_song->vocal_track->line[j].start_pos && sel_start <= eof_song->vocal_track->line[j].end_pos)
@@ -1176,7 +1177,6 @@ int eof_menu_lyric_line_mark(void)
 			insp = j;
 		}
 	}
-	eof_prepare_undo(0);
 	eof_vocal_track_add_line(eof_song->vocal_track, sel_start, sel_end);
 
 	/* check for overlapping lines */
@@ -1190,6 +1190,7 @@ int eof_menu_lyric_line_mark(void)
 			}
 		}
 	}
+	eof_reset_lyric_preview_lines();
 	return 1;
 }
 
@@ -1212,6 +1213,7 @@ int eof_menu_lyric_line_unmark(void)
 			}
 		}
 	}
+	eof_reset_lyric_preview_lines();
 	return 1;
 }
 
@@ -1221,6 +1223,7 @@ int eof_menu_lyric_line_erase_all(void)
 	{
 		eof_prepare_undo(0);
 		eof_song->vocal_track->lines = 0;
+		eof_reset_lyric_preview_lines();
 	}
 	return 1;
 }
