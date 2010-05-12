@@ -298,10 +298,11 @@ void eof_find_lyric_preview_lines(void)
 	int next_line = -1;
 	unsigned long dist = -1;
 	int beyond = 1;
+	int adj_eof_music_pos=eof_music_pos - eof_av_delay;	//The current seek position of the chart, adjusted for AV delay
 
 	for(i = 0; i < eof_song->vocal_track->lines; i++)
 	{
-		if(eof_music_pos >= eof_song->vocal_track->line[i].start_pos && eof_music_pos <= eof_song->vocal_track->line[i].end_pos)
+		if((adj_eof_music_pos >= eof_song->vocal_track->line[i].start_pos) && (adj_eof_music_pos <= eof_song->vocal_track->line[i].end_pos))
 		{
 			current_line = i;
 			break;
@@ -309,7 +310,7 @@ void eof_find_lyric_preview_lines(void)
 	}
 	for(i = 0; i < eof_song->vocal_track->lines; i++)
 	{
-		if(eof_music_pos <= eof_song->vocal_track->line[i].end_pos)
+		if(adj_eof_music_pos <= eof_song->vocal_track->line[i].end_pos)
 		{
 			beyond = 0;
 			break;
