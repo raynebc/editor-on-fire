@@ -1730,7 +1730,7 @@ void eof_read_editor_keys(void)
 				}
 			}
 		}
-		else if(eof_input_mode == EOF_INPUT_GUITAR_STRUM && !eof_music_paused)
+		else if(eof_input_mode == EOF_INPUT_GUITAR_STRUM && !eof_music_paused && eof_selected_track != EOF_TRACK_DRUM)
 		{
 			if(eof_vocals_selected)
 			{
