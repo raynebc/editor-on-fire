@@ -397,18 +397,15 @@ int eof_menu_beat_add(void)
 {
 	int i;
 	
-	if(eof_selected_beat > 0)
+	eof_prepare_undo(0);
+	eof_song_add_beat(eof_song);
+	for(i = eof_song->beats - 1; i > eof_selected_beat; i--)
 	{
-		eof_prepare_undo(0);
-		eof_song_add_beat(eof_song);
-		for(i = eof_song->beats - 1; i > eof_selected_beat; i--)
-		{
-			memcpy(eof_song->beat[i], eof_song->beat[i - 1], sizeof(EOF_BEAT_MARKER));
-		}
-		eof_song->beat[eof_selected_beat + 1]->flags = 0;
-		eof_realign_beats(eof_selected_beat + 1);
-		eof_move_text_events(eof_song, eof_selected_beat + 1, 1);
+		memcpy(eof_song->beat[i], eof_song->beat[i - 1], sizeof(EOF_BEAT_MARKER));
 	}
+	eof_song->beat[eof_selected_beat + 1]->flags = 0;
+	eof_realign_beats(eof_selected_beat + 1);
+	eof_move_text_events(eof_song, eof_selected_beat + 1, 1);
 	return 1;
 }
 
