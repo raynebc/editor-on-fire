@@ -584,7 +584,8 @@ void UStar_Load(FILE *inf)
 							//timing instead of absolute timing.  Relative timing causes the timestamp to reset to 0 at
 							//the beginning of each line of lyrics in the UltraStar file (reset at each linebreak)
 
-	static unsigned char last_pitch=0;
+//Moved to Lyrics structure
+//	static unsigned char last_pitch=0;
 		//This will keep track of whether there is are multiple vocal pitches in the source lyrics.  If
 		//a change from non-zero pitch is encountered, Lyrics.pitch_tracking is set to True
 
@@ -761,9 +762,9 @@ void UStar_Load(FILE *inf)
 		pitch=(unsigned char)rawpitch & 0xFF;	//Store the remapped pitch
 
 //Track for pitch changes, enabling Lyrics.pitch_tracking if applicable
-		if((last_pitch != 0) && (last_pitch != pitch))	//There's a pitch change
+		if((Lyrics.last_pitch != 0) && (Lyrics.last_pitch != pitch))	//There's a pitch change
 			Lyrics.pitch_tracking=1;
-		last_pitch=pitch;	//Consider this the last defined pitch
+		Lyrics.last_pitch=pitch;	//Consider this the last defined pitch
 
 //At least one whitespace character is expected between pitch and lyric
 		if(!isspace((unsigned char)buffer[index]))

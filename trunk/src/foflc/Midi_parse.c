@@ -33,6 +33,7 @@ void InitMIDI(void)
 	MIDIstruct.trackswritten=0;
 	MIDIstruct.diff_lo=MIDIstruct.diff_hi=0;
 	MIDIstruct.mixedtrack=0;
+	Lyrics.last_pitch=0;
 }
 
 void ReadMIDIHeader(FILE *inf,char suppress_errors)
@@ -726,6 +727,13 @@ int Lyricless_handler(struct TEPstruct *data)
 	static unsigned char lyric_note_num=0;
 		//For the sake of handling problematic input files, this will be used to handle overlapping notes
 
+	if(Lyrics.reinit)
+	{	//Re-initialize static variables
+		Lyrics.reinit=0;
+		lastlyrictime=0;
+		lyric_note_num=0;
+	}
+
 	assert_wrapper(data != NULL);	//This must not be NULL
 
 	eventtype=data->eventtype;//This value may be interpreted differently for Note On w/ velocity=0
@@ -866,6 +874,22 @@ void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppr
 		EndLyricLine();		//End the lyric line gracefully
 	}
 
+/*v2.0	Moved this logic to ForceEndLyricLine()
+	if(Lyrics.line_on)	//KAR files do not demarcate the end of the last line of lyrics
+	{
+		assert_wrapper(Lyrics.curline != NULL);
+		if(Lyrics.curline->piececount == 0)	//If this unclosed line is empty
+		{	//Manually remove it from the Lyrics structure
+			(Lyrics.curline->prev)->next=NULL;	//Previous line points forward to nothing
+			templine=Lyrics.curline->prev;		//Save pointer to previous line
+			free(Lyrics.curline);				//Release empty line
+			Lyrics.curline=templine;			//Point conductor to previous line
+			Lyrics.line_on=0;					//Mark lyric line status as closed
+		}
+		else
+			EndLyricLine();	//Close it normally
+	}
+*/
 	ForceEndLyricLine();
 	if(Lyrics.verbose)	printf("MIDI import complete.  %lu lyrics loaded\n\n",Lyrics.piececount);
 }
@@ -1929,7 +1953,8 @@ void PitchedLyric_Load(FILE *inf)
 	char negativeoctave;
 	char invalidnote;
 
-	static unsigned char last_pitch=0;
+//Moved to Lyrics structure
+//	static unsigned char last_pitch=0;
 		//This will keep track of whether there is are multiple vocal pitches in the source lyrics.  If
 		//a change from non-zero pitch is encountered, Lyrics.pitch_tracking is set to True
 
@@ -2001,9 +2026,9 @@ void PitchedLyric_Load(FILE *inf)
 				pitch=(unsigned char)(ParseLongInt(buffer,&index,processedctr,NULL) & 0xFF);	//Force pitch as an 8-bit value
 
 				//Track for pitch changes, enabling Lyrics.pitch_tracking if applicable
-				if((last_pitch != 0) && (last_pitch != pitch))	//There's a pitch change
+				if((Lyrics.last_pitch != 0) && (Lyrics.last_pitch != pitch))	//There's a pitch change
 					Lyrics.pitch_tracking=1;
-				last_pitch=pitch;	//Consider this the last defined pitch
+				Lyrics.last_pitch=pitch;	//Consider this the last defined pitch
 			}
 			else if(buffer[index] == '#')
 			{	//Treat as pitchless
@@ -2112,9 +2137,9 @@ void PitchedLyric_Load(FILE *inf)
 					pitch--;					//Subtract value of note being flat
 
 				//Track for pitch changes, enabling Lyrics.pitch_tracking if applicable
-				if((last_pitch != 0) && (last_pitch != pitch))	//There's a pitch change
+				if((Lyrics.last_pitch != 0) && (Lyrics.last_pitch != pitch))	//There's a pitch change
 					Lyrics.pitch_tracking=1;
-				last_pitch=pitch;	//Consider this the last defined pitch
+				Lyrics.last_pitch=pitch;	//Consider this the last defined pitch
 			}//end pitch parsing
 
 			if(((pitch < 0) || (pitch > 127)) && (pitch != PITCHLESS))
@@ -2223,6 +2248,13 @@ int MIDI_Build_handler(struct TEPstruct *data)
 	char *buffer;	//Used to store event
 	unsigned long eventlength;		//The number of bytes to read into the buffer
 
+	if(Lyrics.reinit)
+	{	//Re-initialize static variables
+		Lyrics.reinit=0;
+		counter=0;
+		skippedpreviousevent=0;
+	}
+
 	assert_wrapper(data != NULL);		//This must not be NULL
 	assert_wrapper(data->outf != NULL);	//This must not be NULL
 	assert_wrapper(data->endindex > data->eventindex);	//The event being copied cannot be <= 0 bytes long
@@ -2283,6 +2315,13 @@ int SKAR_handler(struct TEPstruct *data)
 	static unsigned char titlecount=0;		//Counts how many @T (Title information) tags have been encountered
 											//The first is treated as the song title
 											//The second is treated as the song artist
+
+	if(Lyrics.reinit)
+	{	//Re-initialize static variables
+		Lyrics.reinit=0;
+		lastlyrictime=0;
+		titlecount=0;
+	}
 
 	assert_wrapper(data != NULL);	//This must not be NULL
 
@@ -2414,6 +2453,18 @@ int Lyric_handler(struct TEPstruct *data)
 		//Formerly in the TEPstruct, this is being used locally to store the text of a parsed lyric that hasn't been added to the Notes list yet
 	static char overdrive_on=0;
 		//Used to track whether overdrive is enabled (For RB MIDI import), based on Note On/Off #116
+
+	if(Lyrics.reinit)
+	{	//Re-initialize static variables
+		Lyrics.reinit=0;
+		groupswithnext=0;
+		lyric_note_num=0xFF;
+		end_line_after_piece=0;
+		lastlyrictime=0;
+		lastnotetime=0;
+		lastlyric=NULL;
+		overdrive_on=0;
+	}
 
 	assert_wrapper(data != NULL);	//This must not be NULL
 	assert_wrapper(Lyrics.inputtrack != NULL);
@@ -2811,7 +2862,8 @@ struct MIDI_Lyric_Piece *EndMIDILyric(unsigned char pitch,unsigned long end)
 int GetLyricPiece(void)
 {
 	struct MIDI_Lyric_Piece *temp=MIDI_Lyrics.head;
-	static unsigned char last_pitch=0;
+//Moved to Lyrics structure
+//	static unsigned char last_pitch=0;
 		//This will keep track of whether there is are multiple vocal pitches in the source lyrics.  If
 		//a change from non-zero pitch is encountered, Lyrics.pitch_tracking is set to True
 
@@ -2858,9 +2910,9 @@ int GetLyricPiece(void)
 		AddLyricPiece(temp->lyric,temp->start,temp->end,temp->pitch,temp->groupswithnext);
 
 //Track for pitch changes, enabling Lyrics.pitch_tracking if applicable
-		if((last_pitch != 0) && (last_pitch != temp->pitch))	//There's a pitch change
+		if((Lyrics.last_pitch != 0) && (Lyrics.last_pitch != temp->pitch))	//There's a pitch change
 			Lyrics.pitch_tracking=1;
-		last_pitch=temp->pitch;	//Consider this the last defined pitch
+		Lyrics.last_pitch=temp->pitch;	//Consider this the last defined pitch
 
 //Reset variables
 		free(temp->lyric);

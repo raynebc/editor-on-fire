@@ -57,10 +57,9 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 	if((format == 0) && (lp == NULL))
 		return 0;	//Return failure
 
+//Perform detection logic
 	InitLyrics();	//Initialize all variables in the Lyrics structure
 	InitMIDI();		//Initialize all variables in the MIDI structure
-
-//Perform detection logic
 	if(format == 0)		//Auto-detect lyric format
 	{
 		detectionlist=DetectLyricFormat(inputfilename);
