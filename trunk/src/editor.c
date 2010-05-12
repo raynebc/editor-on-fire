@@ -1539,7 +1539,7 @@ void eof_read_editor_keys(void)
 				}
 			}
 		}
-		else if(eof_input_mode == EOF_INPUT_GUITAR_TAP && !eof_music_paused)
+		else if(eof_input_mode == EOF_INPUT_GUITAR_TAP && !eof_music_paused && eof_selected_track != EOF_TRACK_DRUM)
 		{
 			if(eof_guitar.button[2].held)
 			{
