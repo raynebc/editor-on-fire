@@ -1682,7 +1682,13 @@ static char eof_tone_name_buffer[16] = {0};
 char * eof_get_tone_name(int tone)
 {
 	char * note_name[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-	sprintf(eof_tone_name_buffer, "%s%d", note_name[tone % 12], tone / 12 - 1);
+	char * note_name_flats[12] = {"C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"};
+	char ** array_to_use=note_name;	//Default to using the regular note name array
+
+	if(eof_display_flats)				//If user enabled the feature to display flat notes
+		array_to_use=note_name_flats;	//Use the other array
+
+	sprintf(eof_tone_name_buffer, "%s%d", array_to_use[tone % 12], tone / 12 - 1);
 	return eof_tone_name_buffer;
 }
 

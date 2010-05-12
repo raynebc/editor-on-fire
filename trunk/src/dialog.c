@@ -50,6 +50,7 @@ char eof_help_text[4096] = {0};
 char eof_ctext[13][1024] = {{0}};
 
 static int eof_keyboard_shortcut = 0;
+char eof_display_flats = 0;		//Used to allow eof_get_tone_name() to return note names containing flats.  By default, display as sharps instead
 
 void eof_prepare_menus(void)
 {
@@ -187,7 +188,7 @@ void eof_prepare_menus(void)
 void eof_color_dialog(DIALOG * dp, int fg, int bg)
 {
 	int i;
-	
+
 	for(i = 0; dp[i].proc != NULL; i++)
 	{
 		dp[i].fg = fg;
@@ -213,7 +214,7 @@ int eof_popup_dialog(DIALOG * dp, int n)
 		/* special handling of the main menu */
 		if(dp[0].proc == d_agup_menu_proc)
 		{
-			
+
 			/* if user wants the menu, force dialog to stay open */
 			if(key[KEY_ALTGR] && !eof_keyboard_shortcut)
 			{
@@ -259,7 +260,7 @@ int eof_popup_dialog(DIALOG * dp, int n)
 				eof_keyboard_shortcut = 1;
 				player->mouse_obj = 0;
 			}
-			
+
 			if(mouse_b & 1)
 			{
 				eof_keyboard_shortcut = 2;
@@ -268,7 +269,7 @@ int eof_popup_dialog(DIALOG * dp, int n)
 			{
 				eof_keyboard_shortcut = 0;
 			}
-			
+
 			/* if mouse isn't hovering over the menu, try and deactivate it */
 			if(player->mouse_obj < 0)
 			{
@@ -279,7 +280,7 @@ int eof_popup_dialog(DIALOG * dp, int n)
 				}
 			}
 		}
-		
+
 		/* special handling of the song properties box */
 		if(dp == eof_song_properties_dialog)
 		{
@@ -289,7 +290,7 @@ int eof_popup_dialog(DIALOG * dp, int n)
 				oldlen = ustrlen(dp[14].dp);
 			}
 		}
-		
+
 		/* special handling of new project dialog */
 		if(dp == eof_file_new_windows_dialog)
 		{
@@ -309,16 +310,31 @@ int eof_popup_dialog(DIALOG * dp, int n)
 				}
 			}
 		}
-		
+
 		Idle(10);
 	}
 	ret = shutdown_dialog(player);
-	
+
 //   	ret = popup_dialog(dp, n);
 	eof_clear_input();
    	gametime_reset();
    	eof_show_mouse(NULL);
 	eof_keyboard_shortcut = 0;
-   	
+
    	return ret;
+}
+
+int eof_display_flats_menu(void)
+{
+   if(eof_display_flats)
+   {
+      eof_display_flats = 0;
+      eof_note_menu[18].flags = 0;
+   }
+   else
+   {
+      eof_display_flats = 1;
+      eof_note_menu[18].flags = D_SELECTED;
+   }
+   return 1;
 }
