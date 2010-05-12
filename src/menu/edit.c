@@ -804,7 +804,9 @@ int eof_menu_edit_old_paste_vocal(void)
 			new_lyric = eof_vocal_track_add_lyric(eof_song->vocal_track);
 			if(new_lyric)
 			{
+				new_lyric->note = temp_lyric.note;
 				new_lyric->pos = eof_music_pos + temp_lyric.pos - eof_av_delay;
+				new_lyric->length = temp_lyric.length;
 				ustrcpy(new_lyric->text, temp_lyric.text);
 				paste_pos[paste_count] = new_lyric->pos;
 				paste_count++;
