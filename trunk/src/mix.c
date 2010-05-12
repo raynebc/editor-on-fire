@@ -250,6 +250,8 @@ void eof_mix_start_helper(void)
 			break;
 		}
 	}
+	eof_mix_current_metronome = -1;
+	eof_mix_next_metronome = -1;
 	for(i = 0; i < eof_mix_metronomes; i++)
 	{
 		if(eof_mix_metronome_pos[i] >= eof_mix_sample_count)
@@ -259,6 +261,8 @@ void eof_mix_start_helper(void)
 			break;
 		}
 	}
+	eof_mix_current_note = -1;
+	eof_mix_next_note = -1;
 	for(i = 0; i < eof_mix_notes; i++)
 	{
 		if(eof_mix_note_pos[i] >= eof_mix_sample_count)
