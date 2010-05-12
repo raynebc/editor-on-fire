@@ -110,6 +110,7 @@ void InitLyrics(void)
 	Lyrics.notenames=0;
 	Lyrics.relative=0;
 	Lyrics.nopitch=0;
+	Lyrics.prevlineslast=NULL;
 }
 
 void CreateLyricLine(void)
@@ -168,7 +169,8 @@ void EndLyricLine(void)
 //	unsigned long count;		//Counter for finding lyric piece count
 
 //These variables will be used to process error handling between the last piece in a line and the first in the next
-	static struct Lyric_Piece *last=NULL;	//The last lyric piece in the last line of lyrics
+//Moved this variable to the Lyrics structure and renamed it prevlineslast
+//	static struct Lyric_Piece *last=NULL;	//The last lyric piece in the last line of lyrics
 	struct Lyric_Piece *next;	//A conditional next piece pointer needs to be used
 
 	if(Lyrics.line_on == 0)	//If there is no open line of lyrics
@@ -187,14 +189,14 @@ void EndLyricLine(void)
 	Lyrics.line_on=0;	//line_on=FALSE : No line of lyrics is currently open
 
 //Perform error handling for oddities (ie. overlapping pieces)
-	if(last != NULL)	//If there was a previous line of lyrics
-		temp=last;		//begin checking with the last piece in that line
+	if(Lyrics.prevlineslast != NULL)	//If there was a previous line of lyrics
+		temp=Lyrics.prevlineslast;		//begin checking with the last piece in that line
 	else
 		temp=Lyrics.curline->pieces;	//Point the conductor to first piece of lyric in the line
 
 	while(temp != NULL)		//For each piece in the line
 	{
-		if(temp == last)	//If we're looking at the last piece in the previous line
+		if(temp == Lyrics.prevlineslast)	//If we're looking at the last piece in the previous line
 			next=Lyrics.curline->pieces;	//Point forward to the first piece in this line
 		else
 			next=temp->next;	//Point forward to next piece in this line
@@ -211,7 +213,7 @@ void EndLyricLine(void)
 			}
 
 //Special handling for noplus
-			if((temp != last) && Lyrics.noplus && (!strcmp(next->lyric,"+") || !strcmp(next->lyric,"+-")))
+			if((temp != Lyrics.prevlineslast) && Lyrics.noplus && (!strcmp(next->lyric,"+") || !strcmp(next->lyric,"+-")))
 			{	//If next is in the same line as temp, is a plus sign and the user specified noplus,
 				//Remove the plus lyric, adjust the duration and grouping of the previous lyric
 				printf("\tNoplus- Merging plus lyric with \"%s\"\n",temp->lyric);
@@ -276,8 +278,8 @@ void EndLyricLine(void)
 			}
 		}
 
-		if(next == NULL)	//If this is the last piece in this line
-			last=temp;		//Remember this piece as the last piece
+		if(next == NULL)					//If this is the last piece in this line
+			Lyrics.prevlineslast=temp;		//Remember this piece as the last piece in the line (for the next call to EndLyricLine())
 
 		temp=next;	//Point the conductor to the next lyric piece (if the last piece in the previous line was being
 					//checked, next was already properly set to point to the first piece in this line

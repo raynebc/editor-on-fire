@@ -125,6 +125,8 @@ struct _LYRICSSTRUCT_{
 	struct Lyric_Piece *lastpiece;
 		//Used to keep track of the last lyric piece added (ie. Ustar hyphen appending)
 		//This is to be used sparingly and the prev Lyric piece pointer is to be used where feasible
+	struct Lyric_Piece *prevlineslast;
+		//The last lyric piece in the previous line of lyrics (used in EndLyricLine logic, moved outside the function because it couldn't be reinitialized very easily outside EndLyricLine())
 	unsigned long linecount;	//Number of lines of lyrics.  Incremented upon parsing the ending of a line of lyrics
 	char line_on;			//Boolean:  Specifies whether a line of lyrics is currently being parsed
 							//	Set to true upon creating a new line of lyrics
