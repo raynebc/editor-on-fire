@@ -864,7 +864,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 								strncpy(text, (char *)&eof_work_midi->track[track[i]].data[track_pos + 1], eof_work_midi->track[track[i]].data[track_pos]);
 								eof_midi_import_add_text_event(eof_import_text_events, absolute_pos, 0x01, text, eof_work_midi->track[track[i]].data[track_pos]);
 								track_pos += eof_work_midi->track[track[i]].data[track_pos] + 1;
-//								eof_midi_import_add_text_event(eof_import_bpm_events, absolute_pos, 0x51, d4, 0);
+								ptotal_events++;
 								break;
 							}
 
@@ -932,6 +932,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 								strncpy(text, (char *)&eof_work_midi->track[track[i]].data[track_pos + 1], eof_work_midi->track[track[i]].data[track_pos]);
 								eof_midi_import_add_text_event(eof_import_events[i], absolute_pos, 0x05, text, eof_work_midi->track[track[i]].data[track_pos]);
 								track_pos += eof_work_midi->track[track[i]].data[track_pos] + 1;
+								ptotal_events++;
 								break;
 							}
 
