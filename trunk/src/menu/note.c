@@ -1406,7 +1406,7 @@ int eof_new_lyric_dialog(void)
 		eof_selection.range_pos_2 = eof_selection.current_pos;
 		memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
 		eof_vocal_track_sort_lyrics(eof_song->vocal_track);
-		eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 1);
+		eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 0);
 	}
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
