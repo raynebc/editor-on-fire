@@ -28,6 +28,10 @@ void eof_music_play(void)
 			eof_music_seek(eof_music_rewind_pos);
 			eof_music_pos = eof_music_rewind_pos;
 		}
+		else if(!eof_smooth_pos)
+		{
+			eof_music_pos = eof_music_actual_pos;
+		}
 	}
 	else
 	{
@@ -75,19 +79,19 @@ void eof_music_play(void)
 		eof_mix_find_claps();
 		if(alogg_play_ex_ogg(eof_music_track, eof_buffer_size, 255, 128, speed, 0) == ALOGG_OK)
 		{
+			eof_mix_start(eof_mix_msec_to_sample(alogg_get_pos_msecs_ogg(eof_music_track), alogg_get_wave_freq_ogg(eof_music_track)), speed);
+			eof_entering_note_note = NULL;
+			eof_entering_note_lyric = NULL;
+			eof_entering_note = 0;
+			eof_snote = 0;
+			alogg_poll_ogg(eof_music_track);
 			eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 		}
 		else
 		{
 			allegro_message("Can't play song!");
 			eof_music_paused = 1;
-			return;
 		}
-		eof_mix_start(eof_mix_msec_to_sample(alogg_get_pos_msecs_ogg(eof_music_track), alogg_get_wave_freq_ogg(eof_music_track)), speed);
-		eof_entering_note_note = NULL;
-		eof_entering_note_lyric = NULL;
-		eof_entering_note = 0;
-		eof_snote = 0;
 	}
 }
 
