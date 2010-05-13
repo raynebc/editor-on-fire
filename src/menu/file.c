@@ -621,6 +621,7 @@ int eof_menu_file_load(void)
 		eof_undo_reset();
 		eof_fix_window_title();
 	}
+	eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 0);
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
@@ -998,10 +999,11 @@ int eof_menu_file_lyrics_import(void)
 			}
 		}
 	}
+	eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 0);
+	eof_reset_lyric_preview_lines();
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
-	eof_reset_lyric_preview_lines();
 	return 1;
 }
 
@@ -1072,6 +1074,7 @@ int eof_menu_file_midi_import(void)
 		eof_undo_last_type = 0;
 		eof_change_count = 0;
 	}
+	eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 0);
 	eof_reset_lyric_preview_lines();
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
