@@ -678,6 +678,24 @@ int eof_menu_edit_copy_vocal(void)
 	return 1;
 }
 
+/* delete lyrics which overlap the specified range */
+static void eof_menu_edit_paste_clear_range_vocal(unsigned long start, unsigned long end)
+{
+	int i;
+	
+	for(i = eof_song->vocal_track->lyrics - 1; i >= 0; i--)
+	{
+		if(eof_song->vocal_track->lyric[i]->pos >= start && eof_song->vocal_track->lyric[i]->pos <= end)
+		{
+			eof_vocal_track_delete_lyric(eof_song->vocal_track, i);
+		}
+		else if(eof_song->vocal_track->lyric[i]->pos + eof_song->vocal_track->lyric[i]->length >= start && eof_song->vocal_track->lyric[i]->pos + eof_song->vocal_track->lyric[i]->length <= end)
+		{
+			eof_vocal_track_delete_lyric(eof_song->vocal_track, i);
+		}
+	}
+}
+
 int eof_menu_edit_paste_vocal(void)
 {
 	int i, j, t;
@@ -686,6 +704,9 @@ int eof_menu_edit_paste_vocal(void)
 	int first_beat = 0;
 	int this_beat = eof_get_beat(eof_music_pos - eof_av_delay);
 	int copy_notes;
+	int new_pos = -1;
+	int new_end_pos = -1;
+	int last_pos = -1;
 	EOF_EXTENDED_LYRIC temp_lyric;
 	EOF_LYRIC * new_lyric = NULL;
 	PACKFILE * fp;
@@ -730,12 +751,23 @@ int eof_menu_edit_paste_vocal(void)
 		
 		if(eof_music_pos + temp_lyric.pos - eof_av_delay < eof_music_length)
 		{
+			if(last_pos >= 0)
+			{
+				last_pos = new_end_pos + 1;
+			}
+			new_pos = eof_put_porpos(temp_lyric.beat - first_beat + this_beat, temp_lyric.porpos, 0.0);
+			new_end_pos = eof_put_porpos(temp_lyric.endbeat - first_beat + this_beat, temp_lyric.porendpos, 0.0);
+			if(last_pos < 0)
+			{
+				last_pos = new_pos;
+			}
+			eof_menu_edit_paste_clear_range_vocal(last_pos, new_end_pos);
 			new_lyric = eof_vocal_track_add_lyric(eof_song->vocal_track);
 			if(new_lyric)
 			{
 				new_lyric->note = temp_lyric.note;
-				new_lyric->pos = eof_put_porpos(temp_lyric.beat - first_beat + this_beat, temp_lyric.porpos, 0.0);
-				new_lyric->length = eof_put_porpos(temp_lyric.endbeat - first_beat + this_beat, temp_lyric.porendpos, 0.0) - new_lyric->pos;
+				new_lyric->pos = new_pos;
+				new_lyric->length = new_end_pos - new_lyric->pos;
 				ustrcpy(new_lyric->text, temp_lyric.text);
 				paste_pos[paste_count] = new_lyric->pos;
 				paste_count++;
@@ -772,6 +804,9 @@ int eof_menu_edit_old_paste_vocal(void)
 	int copy_notes;
 	int first_beat;
 	PACKFILE * fp;
+	int new_pos = -1;
+	int new_end_pos = -1;
+	int last_pos = -1;
 	EOF_EXTENDED_LYRIC temp_lyric;
 	EOF_LYRIC * new_lyric = NULL;
 	
@@ -801,11 +836,22 @@ int eof_menu_edit_old_paste_vocal(void)
 		
 		if(eof_music_pos + temp_lyric.pos - eof_av_delay < eof_music_length)
 		{
+			if(last_pos >= 0)
+			{
+				last_pos = new_end_pos + 1;
+			}
+			new_pos = eof_music_pos + temp_lyric.pos - eof_av_delay;
+			new_end_pos = new_pos + temp_lyric.length;
+			if(last_pos < 0)
+			{
+				last_pos = new_pos;
+			}
+			eof_menu_edit_paste_clear_range_vocal(last_pos, new_end_pos);
 			new_lyric = eof_vocal_track_add_lyric(eof_song->vocal_track);
 			if(new_lyric)
 			{
 				new_lyric->note = temp_lyric.note;
-				new_lyric->pos = eof_music_pos + temp_lyric.pos - eof_av_delay;
+				new_lyric->pos = new_pos;
 				new_lyric->length = temp_lyric.length;
 				ustrcpy(new_lyric->text, temp_lyric.text);
 				paste_pos[paste_count] = new_lyric->pos;
