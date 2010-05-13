@@ -86,6 +86,8 @@ Note and Beat Editing:
         Move up and down to lengthen or shorten the selected note
     
         You can also press the '[]' keys to do the same
+
+	Turn off Grid Snap and hold Ctrl while lengthening/shortening for small adjustments.
     
 
     Up/Down:
