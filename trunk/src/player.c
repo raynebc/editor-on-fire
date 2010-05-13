@@ -80,6 +80,8 @@ void eof_music_play(void)
 		else
 		{
 			allegro_message("Can't play song!");
+			eof_music_paused = 1;
+			return;
 		}
 		eof_mix_start(eof_mix_msec_to_sample(alogg_get_pos_msecs_ogg(eof_music_track), alogg_get_wave_freq_ogg(eof_music_track)), speed);
 		eof_entering_note_note = NULL;
