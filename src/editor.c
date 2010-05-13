@@ -45,7 +45,7 @@ void eof_select_beat(int beat)
 	eof_selected_measure = 0;
 	eof_beat_in_measure = 0;
 	eof_beats_in_measure = 1;
-	
+
 	for(i = 0; i <= beat; i++)
 	{
 		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_4_4)
@@ -100,10 +100,10 @@ void eof_set_vocal_tail_pos(int note, unsigned long pos)
 void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 {
 	int i;
-	
+
 	/* place pen at "real" location and adjust from there */
 	sp->pos = p;
-	
+
 	/* ensure pen is within the song boundaries */
 	if(sp->pos < eof_song->tags->ogg[eof_selected_ogg].midi_offset)
 	{
@@ -113,10 +113,10 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 	{
 		sp->pos = eof_music_length - 1;
 	}
-			
+
 	if(eof_snap_mode != EOF_SNAP_OFF)
 	{
-		
+
 		/* find the snap beat */
 		sp->beat = -1;
 		if(sp->pos < eof_song->beat[eof_song->beats - 1]->pos)
@@ -130,7 +130,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 				}
 			}
 		}
-		
+
 		/* make sure we found a suitable snap beat before proceeding */
 		if(sp->beat >= 0)
 		{
@@ -328,7 +328,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 						sp->grid_pos[i] = eof_song->beat[sp->beat]->pos + (((float)sp->beat_length / (float)eof_snap_interval) * (float)i);
 					}
 					sp->grid_pos[eof_snap_interval] = eof_song->beat[sp->beat + 1]->pos;
-					
+
 					/* see which one we snap to */
 					for(i = 0; i < eof_snap_interval + 1; i++)
 					{
@@ -355,7 +355,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 
 void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 {
-			
+
 	if(eof_snap_mode != EOF_SNAP_OFF)
 	{
 		/* if snapped to the next beat, make sure length is calculated from that beat */
@@ -371,7 +371,7 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 				sp->beat_length = eof_song->beat[sp->beat + 1]->pos - eof_song->beat[sp->beat]->pos;
 			}
 		}
-			
+
 		/* calculate the length of the snap position */
 		switch(eof_snap_mode)
 		{
@@ -423,10 +423,10 @@ void eof_read_editor_keys(void)
 	int i = 0;
 	EOF_NOTE * new_note = NULL;
 	EOF_LYRIC * new_lyric = NULL;
-	
+
 	eof_read_controller(&eof_guitar);
 	eof_read_controller(&eof_drums);
-	
+
 	/* seek to beginning */
 	if(key[KEY_HOME])
 	{
@@ -440,7 +440,7 @@ void eof_read_editor_keys(void)
 		}
 		key[KEY_HOME] = 0;
 	}
-	
+
 	/* seek to end */
 	if(key[KEY_END])
 	{
@@ -458,13 +458,13 @@ void eof_read_editor_keys(void)
 		}
 		key[KEY_END] = 0;
 	}
-	
+
 	if(key[KEY_R])
 	{
 		eof_menu_song_seek_rewind();
 		key[KEY_R] = 0;
 	}
-	
+
 	if(key[KEY_PLUS_PAD])
 	{
 		eof_menu_edit_zoom_helper_in();
@@ -490,7 +490,7 @@ void eof_read_editor_keys(void)
 		eof_menu_catalog_next();
 		key[KEY_E] = 0;
 	}
-	
+
 	if(key[KEY_G])
 	{
 		if(eof_snap_mode == EOF_SNAP_OFF)
@@ -504,7 +504,7 @@ void eof_read_editor_keys(void)
 		}
 		key[KEY_G] = 0;
 	}
-	
+
 	if(eof_music_paused)
 	{
 		if(key[KEY_SEMICOLON])
@@ -518,10 +518,10 @@ void eof_read_editor_keys(void)
 			key[KEY_QUOTE] = 0;
 		}
 	}
-	
+
 	if(key[KEY_TAB])
 	{
-		
+
 		/* change track */
 		if(KEY_EITHER_CTRL)
 		{
@@ -582,7 +582,7 @@ void eof_read_editor_keys(void)
 				}
 			}
 		}
-		
+
 		/* or change difficulty */
 		else
 		{
@@ -610,7 +610,7 @@ void eof_read_editor_keys(void)
 		}
 		key[KEY_TAB] = 0;
 	}
-	
+
 	/* play/pause music */
 	if(key[KEY_SPACE] && eof_song_loaded)
 	{
@@ -649,7 +649,7 @@ void eof_read_editor_keys(void)
 		}
 		key[KEY_SPACE] = 0;
 	}
-	
+
 	if(key[KEY_LEFT])
 	{
 		eof_music_rewind();
@@ -673,7 +673,7 @@ void eof_read_editor_keys(void)
 			else
 			{
 				int b = eof_get_beat(eof_music_pos - eof_av_delay);
-				
+
 				if(b > 0)
 				{
 					if(eof_song->beat[b]->pos == eof_music_pos - eof_av_delay)
@@ -718,7 +718,7 @@ void eof_read_editor_keys(void)
 				{
 					b = -1;
 				}
-				
+
 				if(b < eof_song->beats - 1 && eof_song->beat[b + 1]->pos < eof_music_actual_length)
 				{
 					alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->beat[b + 1]->pos + eof_av_delay);
@@ -732,14 +732,14 @@ void eof_read_editor_keys(void)
 	}
 	if(KEY_EITHER_SHIFT && key[KEY_UP])
 	{
-		if(eof_vocals_selected && eof_vocals_offset < 84 - eof_screen_layout.vocal_view_size + 1)
+		if(eof_vocals_selected && eof_vocals_offset < MAXPITCH - eof_screen_layout.vocal_view_size + 1)
 		{
 			if(KEY_EITHER_CTRL)
 			{
 				eof_vocals_offset += 12;
-				if(eof_vocals_offset > 84)
+				if(eof_vocals_offset > MAXPITCH)
 				{
-					eof_vocals_offset = 84;
+					eof_vocals_offset = MAXPITCH;
 				}
 			}
 			else
@@ -753,10 +753,7 @@ void eof_read_editor_keys(void)
 	{
 		if(eof_vocals_selected && KEY_EITHER_CTRL)
 		{
-			for(i = 0; i < 12; i++)
-			{
-				eof_menu_note_transpose_up();
-			}
+				eof_menu_note_transpose_up_octave();	//Move up 12 pitches at once, performing a single undo beforehand
 		}
 		else
 		{
@@ -770,14 +767,14 @@ void eof_read_editor_keys(void)
 	}
 	if(KEY_EITHER_SHIFT && key[KEY_DOWN])
 	{
-		if(eof_vocals_selected && eof_vocals_offset > 36)
+		if(eof_vocals_selected && eof_vocals_offset > MINPITCH)
 		{
 			if(KEY_EITHER_CTRL)
 			{
 				eof_vocals_offset -= 12;
-				if(eof_vocals_offset < 36)
+				if(eof_vocals_offset < MINPITCH)
 				{
-					eof_vocals_offset = 36;
+					eof_vocals_offset = MINPITCH;
 				}
 			}
 			else
@@ -791,10 +788,7 @@ void eof_read_editor_keys(void)
 	{
 		if(eof_vocals_selected && KEY_EITHER_CTRL)
 		{
-			for(i = 0; i < 12; i++)
-			{
-				eof_menu_note_transpose_down();
-			}
+				eof_menu_note_transpose_down_octave();	//Move down 12 pitches at once, performing a single undo beforehand
 		}
 		else
 		{
@@ -1062,20 +1056,20 @@ void eof_read_editor_keys(void)
 		}
 		key[KEY_CLOSEBRACE] = 0;
 	}
-	
+
 	if(key[KEY_T])
 	{
 		eof_menu_note_toggle_crazy();
 		key[KEY_T] = 0;
 	}
-	
+
 	/* select all */
 	if(KEY_EITHER_CTRL && key[KEY_E] && eof_music_paused && !eof_music_catalog_playback)
 	{
 		eof_menu_edit_select_all();
 		key[KEY_E] = 0;
 	}
-	
+
 	/* select like */
 	if(key[KEY_L])
 	{
@@ -1096,14 +1090,14 @@ void eof_read_editor_keys(void)
 		}
 		key[KEY_L] = 0;
 	}
-	
+
 	/* select all */
 	if(KEY_EITHER_CTRL && key[KEY_D] && eof_music_paused && !eof_music_catalog_playback)
 	{
 		eof_menu_edit_deselect_all();
 		key[KEY_D] = 0;
 	}
-	
+
 	if(key[KEY_M])
 	{
 		eof_menu_edit_metronome();
@@ -1146,22 +1140,22 @@ void eof_read_editor_keys(void)
 	}
 	else if(key[KEY_1] && KEY_EITHER_SHIFT)
 	{
-		eof_vocals_offset = 36;
+		eof_vocals_offset = MINPITCH;
 		key[KEY_1] = 0;
 	}
 	else if(key[KEY_2] && KEY_EITHER_SHIFT)
 	{
-		eof_vocals_offset = 48;
+		eof_vocals_offset = MINPITCH+12;
 		key[KEY_2] = 0;
 	}
 	else if(key[KEY_3] && KEY_EITHER_SHIFT)
 	{
-		eof_vocals_offset = 60;
+		eof_vocals_offset = MINPITCH+24;
 		key[KEY_3] = 0;
 	}
 	else if(key[KEY_4] && KEY_EITHER_SHIFT)
 	{
-		eof_vocals_offset = 72;
+		eof_vocals_offset = MINPITCH+36;
 		key[KEY_4] = 0;
 	}
 	else if(!KEY_EITHER_CTRL)
@@ -1789,7 +1783,7 @@ void eof_read_editor_keys(void)
 			{
 				eof_last_snote = eof_snote;
 				eof_snote = 0;
-				
+
 				if(eof_guitar.button[2].held || eof_guitar.button[3].held || eof_guitar.button[4].held || eof_guitar.button[5].held || eof_guitar.button[6].held)
 				{
 					eof_snote = 1;
@@ -1835,7 +1829,7 @@ void eof_read_editor_keys(void)
 			{
 				eof_last_snote = eof_snote;
 				eof_snote = 0;
-				
+
 				if(eof_guitar.button[2].held)
 				{
 					eof_snote |= 1;
@@ -1900,7 +1894,7 @@ void eof_read_editor_keys(void)
 	{
 		if(key[KEY_ENTER] && eof_song_loaded)
 		{
-		
+
 			/* place note with default length if song is paused */
 			if(eof_music_paused)
 			{
@@ -1913,7 +1907,7 @@ void eof_read_editor_keys(void)
 				}
 				key[KEY_ENTER] = 0;
 			}
-		
+
 			/* otherwise allow length to be determined by key holding */
 			else
 			{
@@ -1946,7 +1940,7 @@ void eof_read_editor_keys(void)
 			eof_entering_note_note = NULL;
 		}
 	}
-	
+
 	if(eof_music_paused && !eof_music_catalog_playback)
 	{
 		if(eof_song_loaded)
@@ -2121,7 +2115,7 @@ void eof_read_editor_keys(void)
 void eof_editor_drum_logic(void)
 {
 	EOF_NOTE * new_note = NULL;
-	
+
 	if(eof_drums.button[0].held)
 	{
 		eof_held_1++;
@@ -2284,19 +2278,19 @@ void eof_editor_logic(void)
 	int use_this_x = mouse_x;
 	int next_note_pos = 0;
 	EOF_NOTE * new_note = NULL;
-	
+
 	eof_hover_note = -1;
 	eof_hover_note_2 = -1;
 	eof_hover_lyric = -1;
-	
+
 	eof_mickey_z = eof_mouse_z - mouse_z;
 	eof_mouse_z = mouse_z;
-		
+
 	if(eof_music_paused && eof_song_loaded)
 	{
 		int pos = eof_music_pos / eof_zoom;
 		int npos;
-		
+
 		if(!(mouse_b & 1) && !(mouse_b & 2) && !key[KEY_INSERT])
 		{
 			eof_undo_toggle = 0;
@@ -2308,7 +2302,7 @@ void eof_editor_logic(void)
 				eof_notes_moved = 0;
 			}
 		}
-		
+
 		/* mouse is in the fretboard area */
 		if(mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET && mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET)
 		{
@@ -2518,7 +2512,7 @@ void eof_editor_logic(void)
 					}
 				}
 			}
-			
+
 			/* handle initial click */
 			if(mouse_b & 1 && eof_lclick_released)
 			{
@@ -2569,11 +2563,11 @@ void eof_editor_logic(void)
 					eof_peg_x = eof_song->track[eof_selected_track]->note[eof_pegged_note]->pos;
 					if(!KEY_EITHER_CTRL)
 					{
-						
+
 						/* Shift+Click selects range */
 						if(KEY_EITHER_SHIFT && !ignore_range)
 						{
-							
+
 							if(eof_selection.range_pos_1 < eof_selection.range_pos_2)
 							{
 								for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
@@ -2636,7 +2630,7 @@ void eof_editor_logic(void)
 							}
 						}
 					}
-					
+
 					/* Ctrl+Click adds to selected notes */
 					else
 					{
@@ -2662,7 +2656,7 @@ void eof_editor_logic(void)
 						}
 					}
 				}
-				
+
 				/* clicking on no note deselects all notes */
 				else
 				{
@@ -2682,7 +2676,7 @@ void eof_editor_logic(void)
 				{
 					eof_lclick_released++;
 				}
-				
+
 				/* mouse button just released, check to see what needs doing */
 				else if(eof_lclick_released == 1)
 				{
@@ -2729,7 +2723,7 @@ void eof_editor_logic(void)
 					}
 					eof_lclick_released++;
 				}
-				else 
+				else
 				{
 					if(eof_mouse_drug)
 					{
@@ -3028,7 +3022,7 @@ void eof_editor_logic(void)
 			{
 				eof_rclick_released = 1;
 			}
-		
+
 //			eof_mickey_z = eof_mouse_z - mouse_z;
 //			eof_mouse_z = mouse_z;
 			if(eof_mickey_z != 0 && eof_count_selected_notes(NULL, 0))
@@ -3120,7 +3114,7 @@ void eof_editor_logic(void)
 			eof_pen_visible = 0;
 //			eof_hover_note = -1;
 		}
-		
+
 		/* mouse is in beat marker area */
 		pos = eof_music_pos / eof_zoom;
 		if(mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4 && mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18)
@@ -3155,7 +3149,7 @@ void eof_editor_logic(void)
 				{
 					eof_mouse_drug++;
 				}
-				
+
 				if(eof_blclick_released)
 				{
 					if(eof_hover_beat >= 0)
@@ -3167,7 +3161,7 @@ void eof_editor_logic(void)
 					eof_click_x = mouse_x;
 					eof_mouse_drug = 0;
 				}
-				
+
 				if(eof_mouse_drug > 10 && !eof_blclick_released && eof_selected_beat == 0 && eof_mickeys_x != 0 && eof_hover_beat == eof_selected_beat && !(eof_mickeys_x * eof_zoom < 0 && eof_song->beat[0]->pos == 0))
 				{
 					if(!eof_undo_toggle)
@@ -3271,7 +3265,7 @@ void eof_editor_logic(void)
 			eof_hover_beat = -1;
 			eof_adjusted_anchor = 0;
 		}
-		
+
 		/* handle scrollbar click */
 		if(mouse_y >= eof_window_editor->y + eof_window_editor->h - 17 && mouse_y < eof_window_editor->y + eof_window_editor->h)
 		{
@@ -3349,7 +3343,7 @@ void eof_editor_logic(void)
 			eof_editor_drum_logic();
 		}
 	}
-	
+
 	if(eof_music_catalog_playback)
 	{
 		int npos;
@@ -3370,7 +3364,7 @@ void eof_editor_logic(void)
 			}
 		}
 	}
-	
+
 	/* select difficulty */
 	if(mouse_y >= eof_window_editor->y + 7 && mouse_y < eof_window_editor->y + 20 + 8 && mouse_x > 12 && mouse_x < 12 + 5 * 80 + 12 - 1 && eof_song_loaded)
 	{
@@ -3398,7 +3392,7 @@ void eof_editor_logic(void)
 	{
 		eof_hover_type = -1;
 	}
-	
+
 	/* handle playback controls */
 	if(mouse_x >= eof_screen_layout.controls_x && mouse_x < eof_screen_layout.controls_x + 139 && mouse_y >= 22 + 8 && mouse_y < 22 + 17 + 8 && eof_song_loaded)
 	{
@@ -3440,7 +3434,7 @@ void eof_editor_logic(void)
 	{
 		eof_selected_control = -1;
 	}
-		
+
 	if(((mouse_b & 2) || key[KEY_INSERT]) && eof_input_mode == EOF_INPUT_REX && eof_song_loaded)
 	{
 		eof_emergency_stop_music();
@@ -3509,19 +3503,19 @@ void eof_vocal_editor_logic(void)
 	int i;
 	int use_this_x = mouse_x;
 	int next_note_pos = 0;
-	
+
 	eof_hover_note = -1;
 	eof_hover_note_2 = -1;
 	eof_hover_lyric = -1;
-	
+
 	eof_mickey_z = eof_mouse_z - mouse_z;
 	eof_mouse_z = mouse_z;
-		
+
 	if(eof_music_paused && eof_song_loaded)
 	{
 		int pos = eof_music_pos / eof_zoom;
 		int npos;
-		
+
 		if(!(mouse_b & 1) && !(mouse_b & 2) && !key[KEY_INSERT])
 		{
 			eof_undo_toggle = 0;
@@ -3532,7 +3526,7 @@ void eof_vocal_editor_logic(void)
 				eof_notes_moved = 0;
 			}
 		}
-		
+
 		/* mouse is in the mini keyboard area */
 		if(mouse_x < 20 && mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET && mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET)
 		{
@@ -3557,7 +3551,7 @@ void eof_vocal_editor_logic(void)
 				}
 			}
 		}
-		
+
 		/* mouse is in the fretboard area */
 		else if(mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET && mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET)
 		{
@@ -3605,7 +3599,7 @@ void eof_vocal_editor_logic(void)
 					}
 				}
 			}
-			
+
 			/* handle initial click */
 			if(mouse_b & 1 && eof_lclick_released)
 			{
@@ -3660,11 +3654,11 @@ void eof_vocal_editor_logic(void)
 					eof_peg_x = eof_song->vocal_track->lyric[eof_pegged_note]->pos;
 					if(!KEY_EITHER_CTRL)
 					{
-						
+
 						/* Shift+Click selects range */
 						if(KEY_EITHER_SHIFT && !ignore_range)
 						{
-							
+
 							if(eof_selection.range_pos_1 < eof_selection.range_pos_2)
 							{
 								for(i = 0; i < eof_song->vocal_track->lyrics; i++)
@@ -3726,7 +3720,7 @@ void eof_vocal_editor_logic(void)
 							}
 						}
 					}
-					
+
 					/* Ctrl+Click adds to selected notes */
 					else
 					{
@@ -3752,7 +3746,7 @@ void eof_vocal_editor_logic(void)
 						}
 					}
 				}
-				
+
 				/* clicking on no note deselects all notes */
 				else
 				{
@@ -3772,7 +3766,7 @@ void eof_vocal_editor_logic(void)
 				{
 					eof_lclick_released++;
 				}
-				
+
 				/* mouse button just released, check to see what needs doing */
 				else if(eof_lclick_released == 1)
 				{
@@ -3819,7 +3813,7 @@ void eof_vocal_editor_logic(void)
 					}
 					eof_lclick_released++;
 				}
-				else 
+				else
 				{
 					if(eof_mouse_drug)
 					{
@@ -3914,7 +3908,7 @@ void eof_vocal_editor_logic(void)
 					{
 						eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 					}
-					
+
 					/* delete whole lyric if clicking word */
 					if(mouse_y >= EOF_EDITOR_RENDER_OFFSET + 35 + eof_screen_layout.lyric_y && mouse_y < EOF_EDITOR_RENDER_OFFSET + 35 + eof_screen_layout.lyric_y + 16)
 					{
@@ -3922,7 +3916,7 @@ void eof_vocal_editor_logic(void)
 						eof_selection.current = EOF_MAX_NOTES - 1;
 						eof_vocal_track_sort_lyrics(eof_song->vocal_track);
 					}
-					
+
 					/* delete only the note */
 					else if(eof_pen_lyric.note == eof_song->vocal_track->lyric[eof_hover_note]->note)
 					{
@@ -3935,7 +3929,7 @@ void eof_vocal_editor_logic(void)
 						eof_selection.range_pos_1 = eof_selection.current_pos;
 						eof_selection.range_pos_2 = eof_selection.current_pos;
 					}
-					
+
 					/* move note */
 					else
 					{
@@ -3953,7 +3947,7 @@ void eof_vocal_editor_logic(void)
 						}
 					}
 				}
-				
+
 				/* create new note */
 				else
 				{
@@ -4077,7 +4071,7 @@ void eof_vocal_editor_logic(void)
 		{
 			eof_pen_visible = 0;
 		}
-		
+
 		/* mouse is in beat marker area */
 		pos = eof_music_pos / eof_zoom;
 		if(mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4 && mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18)
@@ -4112,7 +4106,7 @@ void eof_vocal_editor_logic(void)
 				{
 					eof_mouse_drug++;
 				}
-				
+
 				if(eof_blclick_released)
 				{
 					if(eof_hover_beat >= 0)
@@ -4124,7 +4118,7 @@ void eof_vocal_editor_logic(void)
 					eof_click_x = mouse_x;
 					eof_mouse_drug = 0;
 				}
-				
+
 				if(eof_mouse_drug > 10 && !eof_blclick_released && eof_selected_beat == 0 && eof_mickeys_x != 0 && eof_hover_beat == eof_selected_beat && !(eof_mickeys_x * eof_zoom < 0 && eof_song->beat[0]->pos == 0))
 				{
 					if(!eof_undo_toggle)
@@ -4225,7 +4219,7 @@ void eof_vocal_editor_logic(void)
 			eof_hover_beat = -1;
 			eof_adjusted_anchor = 0;
 		}
-		
+
 		/* handle scrollbar click */
 		if(mouse_y >= eof_window_editor->y + eof_window_editor->h - 17 && mouse_y < eof_window_editor->y + eof_window_editor->h)
 		{
@@ -4284,7 +4278,7 @@ void eof_vocal_editor_logic(void)
 			}
 		}
 	}
-	
+
 	/* select tab */
 /*	if(mouse_y >= eof_window_editor->y + 7 && mouse_y < eof_window_editor->y + 20 + 8 && mouse_x > 12 && mouse_x < 12 + 5 * 80 + 12 - 1 && eof_song_loaded)
 	{
@@ -4311,7 +4305,7 @@ void eof_vocal_editor_logic(void)
 	{
 		eof_hover_type = -1;
 	} */
-	
+
 	/* handle playback controls */
 	if(mouse_x >= eof_screen_layout.controls_x && mouse_x < eof_screen_layout.controls_x + 139 && mouse_y >= 22 + 8 && mouse_y < 22 + 17 + 8 && eof_song_loaded)
 	{
@@ -4353,7 +4347,7 @@ void eof_vocal_editor_logic(void)
 	{
 		eof_selected_control = -1;
 	}
-		
+
 	if(((mouse_b & 2) || key[KEY_INSERT]) && eof_input_mode == EOF_INPUT_REX && eof_song_loaded)
 	{
 		eof_emergency_stop_music();
@@ -4457,7 +4451,7 @@ void eof_render_editor_window(void)
 	int npos;
 	int pmin = 0;
 	int psec = 0;
-	
+
 	/* draw the starting position */
 	if(pos < 300)
 	{
@@ -4467,21 +4461,21 @@ void eof_render_editor_window(void)
 	{
 		lpos = 20 - (pos - 300);
 	}
-	
+
 	for(i = 0; i < 10; i++)
 	{
 		bpos[i] = eof_song->bookmark_pos[i] / eof_zoom;
 	}
-	
+
 	if(eof_song_loaded)
 	{
 
 		/* fill in window background color */
 		rectfill(eof_window_editor->screen, 0, 25 + 8, eof_window_editor->w - 1, eof_window_editor->h - 1, eof_color_gray);
-		
+
 		/* draw the difficulty tabs */
 		draw_sprite(eof_window_editor->screen, eof_image[EOF_IMAGE_TAB0 + eof_note_type], 0, 8);
-		
+
 		/* draw the playback controls */
 		if(eof_selected_control < 0)
 		{
@@ -4492,10 +4486,10 @@ void eof_render_editor_window(void)
 			draw_sprite(eof_screen, eof_image[EOF_IMAGE_CONTROLS_0 + eof_selected_control], eof_screen_layout.controls_x, 22 + 8);
 		}
 		textprintf_ex(eof_screen, eof_mono_font, eof_screen_layout.controls_x + 153, 23 + 8, eof_color_white, -1, "%02d:%02d", ((eof_music_pos - eof_av_delay) / 1000) / 60, ((eof_music_pos - eof_av_delay) / 1000) % 60);
-		
+
 		/* draw fretboard area */
 		rectfill(eof_window_editor->screen, 0, EOF_EDITOR_RENDER_OFFSET + 25, eof_window_editor->w - 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_black);
-		
+
 		/* draw solo sections */
 		for(i = 0; i < eof_song->track[eof_selected_track]->solos; i++)
 		{
@@ -4508,13 +4502,13 @@ void eof_render_editor_window(void)
 				rectfill(eof_window_editor->screen, 20 - (pos - 300) + eof_song->track[eof_selected_track]->solo[i].start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, 20 - (pos - 300) + eof_song->track[eof_selected_track]->solo[i].end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, makecol(0, 0, 64));
 			}
 		}
-		
+
 		for(i = 0; i < 5; i++)
 		{
 			hline(eof_window_editor->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
 		}
 		vline(eof_window_editor->screen, lpos + (eof_music_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
-		
+
 		/* draw second markers */
 		if(pos < 300)
 		{
@@ -4547,7 +4541,7 @@ void eof_render_editor_window(void)
 		}
 		vline(eof_window_editor->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
 		rectfill(eof_window_editor->screen, lpos + 1, EOF_EDITOR_RENDER_OFFSET + 35 + 1, lpos + eof_song->tags->ogg[eof_selected_ogg].midi_offset / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 12, eof_color_black);
-		
+
 		/* draw beat lines */
 		unsigned long current_ppqn = eof_song->beat[0]->ppqn;
 		int current_ppqn_used = 0;
@@ -4631,7 +4625,7 @@ void eof_render_editor_window(void)
 				beat_counter = 0;
 			}
 		}
-		
+
 		/* draw the bookmark position */
 		for(i = 0; i < 10; i++)
 		{
@@ -4647,7 +4641,7 @@ void eof_render_editor_window(void)
 				}
 			}
 		}
-		
+
 		for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
 		{
 			if(eof_note_type == eof_song->track[eof_selected_track]->note[i]->type)
@@ -4683,7 +4677,7 @@ void eof_render_editor_window(void)
 				}
 			}
 		}
-	
+
 		/* draw the current position */
 		if(pos > eof_av_delay / eof_zoom)
 		{
@@ -4696,7 +4690,7 @@ void eof_render_editor_window(void)
 				vline(eof_window_editor->screen, 320 - eof_av_delay / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
 			}
 		}
-		
+
 		/* draw the end of song position if necessary*/
 		if(eof_music_length != eof_music_actual_length)
 		{
@@ -4709,7 +4703,7 @@ void eof_render_editor_window(void)
 				vline(eof_window_editor->screen, 20 - ((pos - 300)) + (eof_music_actual_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 20, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 4, makecol(255, 0, 0));
 			}
 		}
-		
+
 		for(i = 0; i < 5; i++)
 		{
 			if(i == eof_note_type)
@@ -4722,12 +4716,12 @@ void eof_render_editor_window(void)
 			}
 		}
 	}
-	
+
 	/* render the scroll bar */
 	int scroll_pos = ((float)(eof_screen->w - 8) / (float)eof_music_length) * (float)eof_music_pos;
 	draw_sprite(eof_window_editor->screen, eof_image[EOF_IMAGE_SCROLL_BAR], 0, eof_screen_layout.scrollbar_y);
 	draw_sprite(eof_window_editor->screen, eof_image[EOF_IMAGE_SCROLL_HANDLE], scroll_pos + 2, eof_screen_layout.scrollbar_y);
-	
+
 	vline(eof_window_editor->screen, 0, 24 + 8, eof_window_editor->h + 4, makecol(160, 160, 160));
 	vline(eof_window_editor->screen, 1, 25 + 8, eof_window_editor->h + 4, eof_color_black);
 	hline(eof_window_editor->screen, 1, eof_window_editor->h - 2, eof_window_editor->w - 1, makecol(224, 224, 224));
@@ -4743,7 +4737,7 @@ void eof_render_vocal_editor_window(void)
 	int npos;
 	int pmin = 0;
 	int psec = 0;
-	
+
 	/* draw the starting position */
 	if(pos < 300)
 	{
@@ -4753,21 +4747,21 @@ void eof_render_vocal_editor_window(void)
 	{
 		lpos = 20 - (pos - 300);
 	}
-	
+
 	for(i = 0; i < 10; i++)
 	{
 		bpos[i] = eof_song->bookmark_pos[i] / eof_zoom;
 	}
-	
+
 	if(eof_song_loaded)
 	{
 
 		/* fill in window background color */
 		rectfill(eof_window_editor->screen, 0, 25 + 8, eof_window_editor->w - 1, eof_window_editor->h - 1, eof_color_gray);
-		
+
 		/* draw the difficulty tabs */
 		draw_sprite(eof_window_editor->screen, eof_image[EOF_IMAGE_VTAB0 + eof_vocals_tab], 0, 8);
-		
+
 		/* draw the playback controls */
 		if(eof_selected_control < 0)
 		{
@@ -4778,16 +4772,16 @@ void eof_render_vocal_editor_window(void)
 			draw_sprite(eof_screen, eof_image[EOF_IMAGE_CONTROLS_0 + eof_selected_control], eof_screen_layout.controls_x, 22 + 8);
 		}
 		textprintf_ex(eof_screen, eof_mono_font, eof_screen_layout.controls_x + 153, 23 + 8, eof_color_white, -1, "%02d:%02d", ((eof_music_pos - eof_av_delay) / 1000) / 60, ((eof_music_pos - eof_av_delay) / 1000) % 60);
-		
+
 		/* draw fretboard area */
 		rectfill(eof_window_editor->screen, 0, EOF_EDITOR_RENDER_OFFSET + 25, eof_window_editor->w - 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_black);
-		
+
 		for(i = 0; i < 5; i += 4)
 		{
 			hline(eof_window_editor->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
 		}
 		vline(eof_window_editor->screen, lpos + (eof_music_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
-		
+
 		/* draw second markers */
 		if(pos < 300)
 		{
@@ -4820,7 +4814,7 @@ void eof_render_vocal_editor_window(void)
 		}
 		vline(eof_window_editor->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
 		rectfill(eof_window_editor->screen, lpos + 1, EOF_EDITOR_RENDER_OFFSET + 35 + 1, lpos + eof_song->tags->ogg[eof_selected_ogg].midi_offset / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 12, eof_color_black);
-		
+
 		/* draw beat lines */
 		unsigned long current_ppqn = eof_song->beat[0]->ppqn;
 		int current_ppqn_used = 0;
@@ -4904,7 +4898,7 @@ void eof_render_vocal_editor_window(void)
 				beat_counter = 0;
 			}
 		}
-		
+
 		/* draw the bookmark position */
 		for(i = 0; i < 10; i++)
 		{
@@ -4920,11 +4914,11 @@ void eof_render_vocal_editor_window(void)
 				}
 			}
 		}
-		
+
 		/* clear lyric text area */
 		rectfill(eof_window_editor->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, eof_window_editor->w - 1, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, eof_color_black);
 		hline(eof_window_editor->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, lpos + (eof_music_length) / eof_zoom, eof_color_white);
-		
+
 		/* draw lyric lines */
 		for(i = 0; i < eof_song->vocal_track->lines; i++)
 		{
@@ -4937,7 +4931,7 @@ void eof_render_vocal_editor_window(void)
 				rectfill(eof_window_editor->screen, 20 - (pos - 300) + eof_song->vocal_track->line[i].start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0] - 2 + 8, 20 - (pos - 300) + eof_song->vocal_track->line[i].end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0] + 2 + 8, (eof_song->vocal_track->line[i].flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE) ? makecol(64, 128, 64) : makecol(0, 0, 127));
 			}
 		}
-		
+
 		for(i = 0; i < eof_song->vocal_track->lyrics; i++)
 		{
 			if((eof_input_mode == EOF_INPUT_PIANO_ROLL || eof_input_mode == EOF_INPUT_REX) && eof_music_paused)
@@ -4970,7 +4964,7 @@ void eof_render_vocal_editor_window(void)
 				}
 			}
 		}
-	
+
 		/* draw mini keyboard */
 		int kcol, kcol2;
 		int n;
@@ -5010,7 +5004,7 @@ void eof_render_vocal_editor_window(void)
 			rectfill(eof_window_editor->screen, 0, ny, 19, ny + eof_screen_layout.vocal_tail_size - 1, kcol);
 			hline(eof_window_editor->screen, 0, ny + eof_screen_layout.vocal_tail_size - 1, 19, kcol2);
 		}
-		
+
 		/* draw the current position */
 		if(pos > eof_av_delay / eof_zoom)
 		{
@@ -5023,7 +5017,7 @@ void eof_render_vocal_editor_window(void)
 				vline(eof_window_editor->screen, 320 - eof_av_delay / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
 			}
 		}
-		
+
 		/* draw the end of song position if necessary */
 		if(eof_music_length != eof_music_actual_length)
 		{
@@ -5036,7 +5030,7 @@ void eof_render_vocal_editor_window(void)
 				vline(eof_window_editor->screen, 20 - ((pos - 300)) + (eof_music_actual_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 20, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 4, makecol(255, 0, 0));
 			}
 		}
-		
+
 		for(i = 0; i < 5; i++)
 		{
 			if(i == eof_vocals_tab)
@@ -5049,12 +5043,12 @@ void eof_render_vocal_editor_window(void)
 			}
 		}
 	}
-	
+
 	/* render the scroll bar */
 	int scroll_pos = ((float)(eof_screen->w - 8) / (float)eof_music_length) * (float)eof_music_pos;
 	draw_sprite(eof_window_editor->screen, eof_image[EOF_IMAGE_SCROLL_BAR], 0, eof_screen_layout.scrollbar_y);
 	draw_sprite(eof_window_editor->screen, eof_image[EOF_IMAGE_SCROLL_HANDLE], scroll_pos + 2, eof_screen_layout.scrollbar_y);
-	
+
 	vline(eof_window_editor->screen, 0, 24 + 8, eof_window_editor->h + 4, makecol(160, 160, 160));
 	vline(eof_window_editor->screen, 1, 25 + 8, eof_window_editor->h + 4, eof_color_black);
 	hline(eof_window_editor->screen, 1, eof_window_editor->h - 2, eof_window_editor->w - 1, makecol(224, 224, 224));
