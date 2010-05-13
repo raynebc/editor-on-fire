@@ -1860,9 +1860,9 @@ void eof_render_note_window(void)
 		{
 			if(eof_selection.current < eof_song->vocal_track->lyrics)
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, makecol(255, 255, 255), -1, "Lyric = %d : Pos = %lu : Tone = %d (%s)", eof_selection.current, eof_song->vocal_track->lyric[eof_selection.current]->pos, eof_song->vocal_track->lyric[eof_selection.current]->note, eof_get_tone_name(eof_song->vocal_track->lyric[eof_selection.current]->note));
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, makecol(255, 255, 255), -1, "Lyric = %d : Pos = %lu : Length = %lu", eof_selection.current, eof_song->vocal_track->lyric[eof_selection.current]->pos, eof_song->vocal_track->lyric[eof_selection.current]->length);
 				ypos += 12;
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, makecol(255, 255, 255), -1, "Lyric Text = \"%s\"", eof_song->vocal_track->lyric[eof_selection.current]->text);
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, makecol(255, 255, 255), -1, "Lyric Text = \"%s\" : Tone = %d (%s)", eof_song->vocal_track->lyric[eof_selection.current]->text, eof_song->vocal_track->lyric[eof_selection.current]->note, eof_get_tone_name(eof_song->vocal_track->lyric[eof_selection.current]->note));
 			}
 			else
 			{
