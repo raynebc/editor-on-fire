@@ -1071,6 +1071,7 @@ int eof_menu_file_midi_import(void)
 		eof_undo_last_type = 0;
 		eof_change_count = 0;
 	}
+	eof_reset_lyric_preview_lines();
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
