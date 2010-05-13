@@ -146,6 +146,7 @@ DIALOG eof_lyric_detections_dialog[]=
 };
 
 struct Lyric_Format *lyricdetectionlist;	//Dialog windows cannot be passed local variables, requiring the use of this global variable for the lyric track prompt dialog
+char lyricdetectionstring[1024];			//The display name given to the detection when displayed in the list box
 
 void eof_prepare_file_menu(void)
 {
@@ -1581,7 +1582,11 @@ char *eof_lyric_detections_list_all(int index, int * size)
 		if(ptr == NULL)
 			return NULL;
 
-		return ptr->track;
+		if(printf("%s\t->\t%lu Lyrics",ptr->track,ptr->count) + 1 > 1024)	//If for some abnormal reason, the lyric info is too long to display in 1024 characters,
+			return ptr->track;												//return just the track name instead of allowing an overflow
+
+		sprintf(lyricdetectionstring,"%s -> %lu Lyrics",ptr->track,ptr->count);	//Write a bounds-checked formatted string to the global lyricdetectionstring array
+		return lyricdetectionstring;	//and return it to be displayed in the list box
 	}
 
 	//Otherwise return NULL and set *size to the number of items to display in the list
