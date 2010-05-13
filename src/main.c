@@ -1697,7 +1697,7 @@ void eof_render_note_window(void)
 {
 	int i;
 	int pos;
-	int lpos, npos;
+	int lpos, npos, ypos;
 
 	clear_to_color(eof_window_note->screen, makecol(64, 64, 64));
 
@@ -1844,32 +1844,38 @@ void eof_render_note_window(void)
 	{
 		textprintf_ex(eof_window_note->screen, font, 2, 0, eof_info_color, -1, "Information Panel");
 		textprintf_ex(eof_window_note->screen, font, 2, 12, makecol(255, 255, 255), -1, "----------------------------");
+		ypos = 24;
 		if(eof_hover_beat >= 0)
 		{
-			textprintf_ex(eof_window_note->screen, font, 2, 24, makecol(255, 255, 255), -1, "Beat = %d : BPM = %f : Hover = %d", eof_selected_beat, (double)60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn, eof_hover_beat);
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, makecol(255, 255, 255), -1, "Beat = %d : BPM = %f : Hover = %d", eof_selected_beat, (double)60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn, eof_hover_beat);
 		}
 		else
 		{
-			textprintf_ex(eof_window_note->screen, font, 2, 24, makecol(255, 255, 255), -1, "Beat = %d : BPM = %f", eof_selected_beat, (double)60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn);
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, makecol(255, 255, 255), -1, "Beat = %d : BPM = %f", eof_selected_beat, (double)60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn);
 		}
-		textprintf_ex(eof_window_note->screen, font, 2, 36, makecol(255, 255, 255), -1, "Measure = %d (Beat %d/%d)", eof_selected_measure, eof_beat_in_measure + 1, eof_beats_in_measure);
+		ypos += 12;
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, makecol(255, 255, 255), -1, "Measure = %d (Beat %d/%d)", eof_selected_measure, eof_beat_in_measure + 1, eof_beats_in_measure);
+		ypos += 12;
 		if(eof_vocals_selected)
 		{
 			if(eof_selection.current < eof_song->vocal_track->lyrics)
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, 48, makecol(255, 255, 255), -1, "Lyric = %d : Pos = %lu : Tone = %d (%s) : Text = \"%s\"", eof_selection.current, eof_song->vocal_track->lyric[eof_selection.current]->pos, eof_song->vocal_track->lyric[eof_selection.current]->note, eof_get_tone_name(eof_song->vocal_track->lyric[eof_selection.current]->note), eof_song->vocal_track->lyric[eof_selection.current]->text);
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, makecol(255, 255, 255), -1, "Lyric = %d : Pos = %lu : Tone = %d (%s)", eof_selection.current, eof_song->vocal_track->lyric[eof_selection.current]->pos, eof_song->vocal_track->lyric[eof_selection.current]->note, eof_get_tone_name(eof_song->vocal_track->lyric[eof_selection.current]->note));
+				ypos += 12;
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, makecol(255, 255, 255), -1, "Lyric Text = \"%s\"", eof_song->vocal_track->lyric[eof_selection.current]->text);
 			}
 			else
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, 48, makecol(255, 255, 255), -1, "Lyric = None");
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, makecol(255, 255, 255), -1, "Lyric = None");
 			}
+			ypos += 12;
 			if(eof_hover_note >= 0)
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, 60, makecol(255, 255, 255), -1, "Hover Lyric = %d", eof_hover_note);
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, makecol(255, 255, 255), -1, "Hover Lyric = %d", eof_hover_note);
 			}
 			else
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, 60, makecol(255, 255, 255), -1, "Hover Lyric = None");
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, makecol(255, 255, 255), -1, "Hover Lyric = None");
 			}
 		}
 		else
@@ -1882,6 +1888,7 @@ void eof_render_note_window(void)
 			{
 				textprintf_ex(eof_window_note->screen, font, 2, 48, makecol(255, 255, 255), -1, "Note = None");
 			}
+			ypos += 12;
 			if(eof_hover_note >= 0)
 			{
 				textprintf_ex(eof_window_note->screen, font, 2, 60, makecol(255, 255, 255), -1, "Hover Note = %d", eof_hover_note);
@@ -1896,17 +1903,27 @@ void eof_render_note_window(void)
 		int isms = (((eof_music_pos - eof_av_delay) / 10) % 100);
 		int itn = 0;
 		int isn = eof_count_selected_notes(&itn, 0);
-		textprintf_ex(eof_window_note->screen, font, 2, 72, eof_color_white, -1, "Seek Position = %02d:%02d:%02d", ism, iss, isms >= 0 ? isms : 0);
-		textprintf_ex(eof_window_note->screen, font, 2, 84, eof_color_white, -1, "%s Selected = %d/%d", eof_vocals_selected ? "Lyrics" : "Notes", isn, itn);
+		ypos += 12;
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Seek Position = %02d:%02d:%02d", ism, iss, isms >= 0 ? isms : 0);
+		ypos += 12;
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s Selected = %d/%d", eof_vocals_selected ? "Lyrics" : "Notes", isn, itn);
 
-		textprintf_ex(eof_window_note->screen, font, 2, 108,  makecol(255, 255, 255), -1, "Input Mode: %s", eof_input_name[eof_input_mode]);
-		textprintf_ex(eof_window_note->screen, font, 2, 120,  makecol(255, 255, 255), -1, "Grid Snap: %s", eof_snap_name[(int)eof_snap_mode]);
-		textprintf_ex(eof_window_note->screen, font, 2, 132,  makecol(255, 255, 255), -1, "Metronome: %s", eof_mix_metronome_enabled ? "On" : "Off");
-		textprintf_ex(eof_window_note->screen, font, 2, 144,  makecol(255, 255, 255), -1, "Claps: %s", eof_mix_claps_enabled ? "On" : "Off");
-		textprintf_ex(eof_window_note->screen, font, 2, 156,  makecol(255, 255, 255), -1, "Vocal Tones: %s", eof_mix_vocal_tones_enabled ? "On" : "Off");
-		textprintf_ex(eof_window_note->screen, font, 2, 168,  makecol(255, 255, 255), -1, "Playback Speed: %d%%", eof_playback_speed / 10);
-		textprintf_ex(eof_window_note->screen, font, 2, 180,  makecol(255, 255, 255), -1, "Catalog: %d of %d", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
-		textprintf_ex(eof_window_note->screen, font, 2, 192,  makecol(255, 255, 255), -1, "OGG File: \"%s\"", eof_song->tags->ogg[eof_selected_ogg].filename);
+		ypos += 24;
+		textprintf_ex(eof_window_note->screen, font, 2, ypos,  makecol(255, 255, 255), -1, "Input Mode: %s", eof_input_name[eof_input_mode]);
+		ypos += 12;
+		textprintf_ex(eof_window_note->screen, font, 2, ypos,  makecol(255, 255, 255), -1, "Grid Snap: %s", eof_snap_name[(int)eof_snap_mode]);
+		ypos += 12;
+		textprintf_ex(eof_window_note->screen, font, 2, ypos,  makecol(255, 255, 255), -1, "Metronome: %s", eof_mix_metronome_enabled ? "On" : "Off");
+		ypos += 12;
+		textprintf_ex(eof_window_note->screen, font, 2, ypos,  makecol(255, 255, 255), -1, "Claps: %s", eof_mix_claps_enabled ? "On" : "Off");
+		ypos += 12;
+		textprintf_ex(eof_window_note->screen, font, 2, ypos,  makecol(255, 255, 255), -1, "Vocal Tones: %s", eof_mix_vocal_tones_enabled ? "On" : "Off");
+		ypos += 12;
+		textprintf_ex(eof_window_note->screen, font, 2, ypos,  makecol(255, 255, 255), -1, "Playback Speed: %d%%", eof_playback_speed / 10);
+		ypos += 12;
+		textprintf_ex(eof_window_note->screen, font, 2, ypos,  makecol(255, 255, 255), -1, "Catalog: %d of %d", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
+		ypos += 12;
+		textprintf_ex(eof_window_note->screen, font, 2, ypos,  makecol(255, 255, 255), -1, "OGG File: \"%s\"", eof_song->tags->ogg[eof_selected_ogg].filename);
 	}
 
 	rect(eof_window_note->screen, 0, 0, eof_window_note->w - 1, eof_window_note->h - 1, makecol(160, 160, 160));
