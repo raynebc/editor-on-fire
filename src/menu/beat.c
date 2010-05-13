@@ -369,6 +369,7 @@ int eof_menu_beat_ts_off(void)
 
 int eof_menu_beat_delete(void)
 {
+	int flags = eof_song->beat[eof_selected_beat]->flags;
 	if(eof_selected_beat > 0 && eof_find_next_anchor(eof_selected_beat) >= 0)
 	{
 		eof_prepare_undo(0);
@@ -389,6 +390,7 @@ int eof_menu_beat_delete(void)
 			eof_realign_beats(eof_selected_beat - 1);
 		}
 		eof_move_text_events(eof_song, eof_selected_beat, -1);
+		eof_song->beat[eof_selected_beat - 1]->flags |= flags;
 	}
 	return 1;
 }
