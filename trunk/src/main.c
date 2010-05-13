@@ -1032,33 +1032,24 @@ int eof_count_selected_notes(int * total, char v)
 
 int eof_figure_part(void)
 {
-	int i;
-	int nt[5] = {0};
-	int dt[5] = {-1, -1, -1, -1, -1};
-	int count = 0;
-
-	for(i = 0; i < 5; i++)
-	{
-		if(eof_song->track[i]->notes > 0)
-		{
-			nt[i] = 1;
-		}
-	}
-
-	/* no notes in this track so don't allow test */
-	if(!nt[eof_selected_track])
+	int part[6] = {0};
+	
+	if(eof_vocals_selected && eof_song->vocal_track->lyrics <= 0)
 	{
 		return -1;
 	}
-	for(i = 0; i < 5; i++)
+	else if(eof_song->track[eof_selected_track]->notes <= 0)
 	{
-		if(nt[i])
-		{
-			dt[i] = count;
-			count++;
-		}
+		return -1;
 	}
-	return dt[eof_selected_track];
+
+	part[EOF_TRACK_GUITAR] = 0;
+	part[EOF_TRACK_RHYTHM] = 1;
+	part[EOF_TRACK_BASS] = 2;
+	part[EOF_TRACK_GUITAR_COOP] = 3;
+	part[EOF_TRACK_DRUM] = 4;
+	part[EOF_TRACK_VOCALS] = 5;
+	return part[eof_selected_track];
 }
 
 int eof_load_ogg_quick(char * filename)
