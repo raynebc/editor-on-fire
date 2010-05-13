@@ -3598,7 +3598,7 @@ void eof_vocal_editor_logic(void)
 						eof_selection.range_pos_2 = eof_selection.current_pos;
 					}
 					eof_pegged_note = eof_selection.current;
-					eof_peg_x = eof_song->vocal_track->lyric[eof_pegged_note]->pos;
+					eof_peg_x = eof_song->vocal_track->lyric[eof_pegged_note]->pos - eof_pen_lyric.pos;
 					if(!KEY_EITHER_CTRL)
 					{
 
@@ -3798,7 +3798,7 @@ void eof_vocal_editor_logic(void)
 				{
 					if(eof_snap_mode != EOF_SNAP_OFF && !KEY_EITHER_CTRL)
 					{
-						move_offset = eof_pen_lyric.pos - eof_song->vocal_track->lyric[eof_selection.current]->pos;
+						move_offset = eof_pen_lyric.pos - eof_song->vocal_track->lyric[eof_selection.current]->pos + eof_peg_x;
 					}
 					if(!eof_undo_toggle && (move_offset != 0 || eof_snap_mode == EOF_SNAP_OFF || KEY_EITHER_CTRL))
 					{
