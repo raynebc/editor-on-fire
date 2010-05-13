@@ -125,13 +125,13 @@ void eof_prepare_note_menu(void)
 			{
 				if(eof_selection.track == EOF_TRACK_VOCALS && eof_selection.multi[i])
 				{
-					if(eof_song->vocal_track->lyric[i]->pos - 20 < sel_start)
+					if(eof_song->vocal_track->lyric[i]->pos < sel_start)
 					{
-						sel_start = eof_song->vocal_track->lyric[i]->pos - 20;
+						sel_start = eof_song->vocal_track->lyric[i]->pos;
 					}
-					if(eof_song->vocal_track->lyric[i]->pos + 20 > sel_end)
+					if(eof_song->vocal_track->lyric[i]->pos > sel_end)
 					{
-						sel_end = eof_song->vocal_track->lyric[i]->pos + eof_song->vocal_track->lyric[i]->length + 20;
+						sel_end = eof_song->vocal_track->lyric[i]->pos + eof_song->vocal_track->lyric[i]->length;
 					}
 				}
 				if(eof_selection.track == EOF_TRACK_VOCALS && eof_selection.multi[i])
@@ -1156,17 +1156,17 @@ int eof_menu_lyric_line_mark(void)
 	{
 		if(eof_selection.track == EOF_TRACK_VOCALS && eof_selection.multi[i])
 		{
-			if(eof_song->vocal_track->lyric[i]->pos - 20 < sel_start)
+			if(eof_song->vocal_track->lyric[i]->pos < sel_start)
 			{
-				sel_start = eof_song->vocal_track->lyric[i]->pos - 20;
+				sel_start = eof_song->vocal_track->lyric[i]->pos;
 				if(sel_start < eof_song->tags->ogg[eof_selected_ogg].midi_offset)
 				{
 					sel_start = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
 				}
 			}
-			if(eof_song->vocal_track->lyric[i]->pos + 20 > sel_end)
+			if(eof_song->vocal_track->lyric[i]->pos > sel_end)
 			{
-				sel_end = eof_song->vocal_track->lyric[i]->pos + eof_song->vocal_track->lyric[i]->length + 20;
+				sel_end = eof_song->vocal_track->lyric[i]->pos + eof_song->vocal_track->lyric[i]->length;
 				if(sel_end >= eof_music_length)
 				{
 					sel_end = eof_music_length - 1;
