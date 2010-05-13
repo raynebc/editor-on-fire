@@ -115,7 +115,7 @@ void eof_prepare_note_menu(void)
 	int llp = 0;
 	int i, j;
 	int sel_start = eof_music_length, sel_end = 0;
-	int firstnote, lastnote;
+	int firstnote = 0, lastnote;
 
 	if(eof_song && eof_song_loaded)
 	{
