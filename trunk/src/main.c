@@ -1450,8 +1450,11 @@ void eof_lyric_logic(void)
 				{
 					if(KEY_EITHER_CTRL && eof_selection.current < eof_song->vocal_track->lyrics)
 					{
-						eof_prepare_undo(EOF_UNDO_TYPE_LYRIC_NOTE);
-						eof_song->vocal_track->lyric[eof_selection.current]->note = eof_hover_key;
+						if(eof_count_selected_notes(NULL, 0) == 1)
+						{
+							eof_prepare_undo(EOF_UNDO_TYPE_LYRIC_NOTE);
+							eof_song->vocal_track->lyric[eof_selection.current]->note = eof_hover_key;
+						}
 					}
 					if(eof_hover_key != eof_last_tone)
 					{
