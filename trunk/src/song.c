@@ -765,6 +765,20 @@ void eof_vocal_track_fixup_lyrics(EOF_VOCAL_TRACK * tp, int sel)
 		}
 	}
 	
+	/* make sure no lines overlap */
+	for(i = 0; i < tp->lines; i++)
+	{
+		for(j = 0; j < tp->lines; j++)
+		{
+			if(j != i)
+			{
+				if(tp->line[i].end_pos >= tp->line[j].start_pos && tp->line[i].start_pos <= tp->line[j].end_pos)
+				{
+					tp->line[i].end_pos = tp->line[j].start_pos - 1;
+				}
+			}
+		}
+	}
 	/* delete empty lines */
 	for(i = tp->lines - 1; i >= 0; i--)
 	{
