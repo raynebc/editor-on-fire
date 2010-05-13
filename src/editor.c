@@ -3508,7 +3508,7 @@ void eof_vocal_editor_logic(void)
 			eof_snap_logic(&eof_snap, lpos);
 			eof_snap_length_logic(&eof_snap);
 			eof_pen_lyric.pos = eof_snap.pos;
-			eof_pen_lyric.length = 100;
+			eof_pen_lyric.length = eof_snap.length;
 			eof_pen_lyric.note = eof_vocals_offset + (EOF_EDITOR_RENDER_OFFSET + 35 + eof_screen_layout.vocal_y - mouse_y) / eof_screen_layout.vocal_tail_size;
 			if(eof_pen_lyric.note < eof_vocals_offset || eof_pen_lyric.note >= eof_vocals_offset + eof_screen_layout.vocal_view_size)
 			{
