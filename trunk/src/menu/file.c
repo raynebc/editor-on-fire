@@ -1566,6 +1566,7 @@ int eof_controller_redefine(DIALOG * d)
 		dialog_message(eof_controller_settings_dialog, MSG_DRAW, 0, &i);
 		eof_controller_set_button(&eof_drums.button[eof_controller_settings_dialog[1].d1 - 7]);
 	}
+	eof_clear_input();
 	ustrcpy(eof_ctext[12], "");
 	dialog_message(eof_controller_settings_dialog, MSG_DRAW, 0, &i);
 	return 0;
