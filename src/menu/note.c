@@ -425,9 +425,9 @@ int eof_menu_note_transpose_up(void)
 	{
 		return 1;
 	}
-	eof_prepare_undo(0);
 	if(eof_vocals_selected)
 	{
+		eof_prepare_undo(EOF_UNDO_TYPE_LYRIC_NOTE);	//Perform a cumulative undo for lyric pitch transpose operations
 		for(i = 0; i < eof_song->vocal_track->lyrics; i++)
 		{
 			if(eof_selection.track == EOF_TRACK_VOCALS && eof_selection.multi[i])
@@ -438,6 +438,7 @@ int eof_menu_note_transpose_up(void)
 	}
 	else
 	{
+		eof_prepare_undo(0);
 		for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
 		{
 			if(eof_selection.track == eof_selected_track && eof_selection.multi[i] && eof_song->track[eof_selected_track]->note[i]->type == eof_note_type)
@@ -457,9 +458,9 @@ int eof_menu_note_transpose_down(void)
 	{
 		return 1;
 	}
-	eof_prepare_undo(0);
 	if(eof_vocals_selected)
 	{
+		eof_prepare_undo(EOF_UNDO_TYPE_LYRIC_NOTE);	//Perform a cumulative undo for lyric pitch transpose operations
 		for(i = 0; i < eof_song->vocal_track->lyrics; i++)
 		{
 			if(eof_selection.track == EOF_TRACK_VOCALS && eof_selection.multi[i])
@@ -470,6 +471,7 @@ int eof_menu_note_transpose_down(void)
 	}
 	else
 	{
+		eof_prepare_undo(0);
 		for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
 		{
 			if(eof_selection.track == eof_selected_track && eof_selection.multi[i] && eof_song->track[eof_selected_track]->note[i]->type == eof_note_type)
@@ -487,10 +489,10 @@ int eof_menu_note_transpose_up_octave(void)
 
 	if(!eof_transpose_possible(-12))	//If lyric cannot move up one octave
 		return 1;
-	if(!eof_vocals_selected)		//If PART VOCALS is not active
+	if(!eof_vocals_selected)			//If PART VOCALS is not active
 		return 1;
 
-	eof_prepare_undo(0);
+	eof_prepare_undo(EOF_UNDO_TYPE_LYRIC_NOTE);	//Perform a cumulative undo for lyric pitch transpose operations
 
 	for(i = 0; i < eof_song->vocal_track->lyrics; i++)
 		if(eof_selection.track == EOF_TRACK_VOCALS && eof_selection.multi[i])
@@ -509,7 +511,7 @@ int eof_menu_note_transpose_down_octave(void)
 		return 1;
 
 
-	eof_prepare_undo(0);
+	eof_prepare_undo(EOF_UNDO_TYPE_LYRIC_NOTE);	//Perform a cumulative undo for lyric pitch transpose operations
 
 	for(i = 0; i < eof_song->vocal_track->lyrics; i++)
 		if(eof_selection.track == EOF_TRACK_VOCALS && eof_selection.multi[i])
