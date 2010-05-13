@@ -31,7 +31,7 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 	//  string2 is required for KAR import, used if supplied for SKAR/MIDI import as mentioned above, otherwise it is ignored
 	//If the format is not zero (no auto detection), lp is not used and may be NULL
 
-int eof_import_lyrics_from_lc(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp);
+int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp);
 	//Load the contents of the Lyrics structure into an EOF lyric structure
 	//This is called from EOF_IMPORT_VIA_LC() after the lyrics have been imported
 
@@ -177,7 +177,7 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 
 	tp->lyrics=tp->lines=0;	//Initialize the structure to be empty
 
-	if(eof_import_lyrics_from_lc(tp,&Lyrics) != 0)	//Pass the Lyrics global variable by reference
+	if(EOF_TRANSFER_FROM_LC(tp,&Lyrics) != 0)	//Pass the Lyrics global variable by reference
 	{
 		ReleaseMemory(1);	//Release memory allocated during lyric import
 		return 0;		//Return error (failed to import into EOF lyric structure)
@@ -189,8 +189,7 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 	return 1;	 		//Return finished EOF lyric structure
 }
 
-
-int eof_import_lyrics_from_lc(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
+int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 {
 	struct Lyric_Line *curline;	//Conductor of the lyric line linked list
 	struct Lyric_Piece *curpiece;	//Conductor of the lyric piece linked list
@@ -386,4 +385,3 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 	ReleaseMemory(1);
 	return 1;	//Return success
 }
-
