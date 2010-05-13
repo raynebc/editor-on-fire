@@ -449,6 +449,7 @@ int eof_menu_song_seek_start(void)
 		eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 		eof_music_pos = eof_av_delay;
 		eof_mix_seek(eof_music_pos);
+		eof_reset_lyric_preview_lines();
 	}
 	return 1;
 }
@@ -461,6 +462,7 @@ int eof_menu_song_seek_end(void)
 		eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 		eof_music_pos = eof_music_actual_length - 1;
 		eof_mix_seek(eof_music_pos);
+		eof_reset_lyric_preview_lines();
 	}
 	return 1;
 }
@@ -473,6 +475,7 @@ int eof_menu_song_seek_rewind(void)
 		eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 		eof_music_pos = eof_music_rewind_pos;
 		eof_mix_seek(eof_music_pos);
+		eof_reset_lyric_preview_lines();
 	}
 	return 1;
 }
@@ -495,6 +498,7 @@ int eof_menu_song_seek_first_note_vocals(void)
 		eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 		eof_music_pos = first_pos + eof_av_delay;
 		eof_mix_seek(eof_music_pos);
+		eof_reset_lyric_preview_lines();
 	}
 	return 1;
 }
@@ -523,6 +527,7 @@ int eof_menu_song_seek_first_note(void)
 			eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 			eof_music_pos = first_pos + eof_av_delay;
 			eof_mix_seek(eof_music_pos);
+			eof_reset_lyric_preview_lines();
 		}
 	}
 	return 1;
@@ -546,6 +551,7 @@ int eof_menu_song_seek_last_note_vocals(void)
 		eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 		eof_music_pos = last_pos + eof_av_delay;
 		eof_mix_seek(eof_music_pos);
+		eof_reset_lyric_preview_lines();
 	}
 	return 1;
 }
@@ -574,6 +580,7 @@ int eof_menu_song_seek_last_note(void)
 			eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 			eof_music_pos = last_pos + eof_av_delay;
 			eof_mix_seek(eof_music_pos);
+			eof_reset_lyric_preview_lines();
 		}
 	}
 	return 1;
@@ -591,6 +598,7 @@ int eof_menu_song_seek_previous_note_vocals(void)
 			eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 			eof_music_pos = eof_song->vocal_track->lyric[i]->pos + eof_av_delay;
 			eof_mix_seek(eof_music_pos);
+			eof_reset_lyric_preview_lines();
 			break;
 		}
 	}
@@ -615,6 +623,7 @@ int eof_menu_song_seek_previous_note(void)
 				eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 				eof_music_pos = eof_song->track[eof_selected_track]->note[i]->pos + eof_av_delay;
 				eof_mix_seek(eof_music_pos);
+				eof_reset_lyric_preview_lines();
 				break;
 			}
 		}
@@ -634,6 +643,7 @@ int eof_menu_song_seek_next_note_vocals(void)
 			eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 			eof_music_pos = eof_song->vocal_track->lyric[i]->pos + eof_av_delay;
 			eof_mix_seek(eof_music_pos);
+			eof_reset_lyric_preview_lines();
 			break;
 		}
 	}
@@ -658,6 +668,7 @@ int eof_menu_song_seek_next_note(void)
 				eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 				eof_music_pos = eof_song->track[eof_selected_track]->note[i]->pos + eof_av_delay;
 				eof_mix_seek(eof_music_pos);
+				eof_reset_lyric_preview_lines();
 				break;
 			}
 		}
@@ -679,6 +690,7 @@ int eof_menu_song_seek_previous_screen(void)
 			eof_music_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 			eof_music_actual_pos = eof_music_pos;
 			eof_mix_seek(eof_music_pos);
+			eof_reset_lyric_preview_lines();
 		}
 	}
 	return 1;
@@ -698,6 +710,7 @@ int eof_menu_song_seek_next_screen(void)
 			eof_music_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 			eof_music_actual_pos = eof_music_pos;
 			eof_mix_seek(eof_music_pos);
+			eof_reset_lyric_preview_lines();
 		}
 	}
 	return 1;
@@ -711,6 +724,7 @@ int eof_menu_song_seek_bookmark_help(int b)
 		eof_music_pos = eof_song->bookmark_pos[b] + eof_av_delay;
 		eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 		eof_mix_seek(eof_music_pos);
+		eof_reset_lyric_preview_lines();
 		return 1;
 	}
 	return 0;

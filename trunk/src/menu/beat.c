@@ -670,6 +670,7 @@ int eof_menu_beat_all_events(void)
 			eof_music_actual_pos = eof_music_pos;
 			eof_mix_seek(eof_music_pos);
 			eof_selected_beat = eof_song->text_event[eof_all_events_dialog[1].d1]->beat;
+			eof_reset_lyric_preview_lines();
 		}
 	}
 	eof_cursor_visible = 1;

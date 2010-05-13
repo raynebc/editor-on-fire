@@ -3200,6 +3200,7 @@ void eof_editor_logic(void)
 				alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->beat[eof_hover_beat]->pos + eof_av_delay);
 				eof_music_actual_pos = eof_song->beat[eof_hover_beat]->pos + eof_av_delay;
 				eof_music_pos = eof_music_actual_pos;
+				eof_reset_lyric_preview_lines();
 				eof_rclick_released = 0;
 			}
 			if(!(mouse_b & 2) && !key[KEY_INSERT])
@@ -4154,6 +4155,7 @@ void eof_vocal_editor_logic(void)
 				alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->beat[eof_hover_beat]->pos + eof_av_delay);
 				eof_music_actual_pos = eof_song->beat[eof_hover_beat]->pos + eof_av_delay;
 				eof_music_pos = eof_music_actual_pos;
+				eof_reset_lyric_preview_lines();
 				eof_rclick_released = 0;
 			}
 			if(!(mouse_b & 2) && !key[KEY_INSERT])
