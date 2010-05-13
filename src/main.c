@@ -2425,6 +2425,7 @@ int eof_load_data(void)
 		allegro_message("Could not load mono font!");
 		return 0;
 	}
+	eof_image[EOF_IMAGE_LYRIC_SCRATCH] = create_bitmap(320, text_height(eof_font) - 1);
 	font = eof_font;
 	set_palette(eof_palette);
 	set_mouse_sprite(NULL);

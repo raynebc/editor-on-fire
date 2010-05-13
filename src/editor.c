@@ -4899,6 +4899,10 @@ void eof_render_vocal_editor_window(void)
 				eof_lyric_draw(eof_song->vocal_track->lyric[i], (eof_selection.track == EOF_TRACK_VOCALS && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0);
 			}
 		}
+		if(eof_hover_note >= 0)
+		{
+			eof_lyric_draw(eof_song->vocal_track->lyric[eof_hover_note], 2);
+		}
 		if(eof_music_paused && eof_pen_visible && eof_pen_note.pos < eof_music_length)
 		{
 			if(!eof_mouse_drug)

@@ -87,6 +87,7 @@
 #define EOF_IMAGE_NOTE_HWHITE_HIT  44
 #define EOF_IMAGE_MENU_NO_NOTE     45
 #define EOF_IMAGE_VTAB0            46
+#define EOF_IMAGE_LYRIC_SCRATCH    47
 
 #define EOF_DISPLAY_640             0
 #define EOF_DISPLAY_800             1

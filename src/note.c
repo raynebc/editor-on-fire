@@ -405,9 +405,17 @@ void eof_lyric_draw(EOF_LYRIC * np, int p)
 		rectfill(eof_window_editor->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, makecol(128, 128, 128));
 
 	if(p == 3)
-		textprintf_ex(eof_window_editor->screen, font, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y, eof_color_white, -1, "%s", np->text);
+	{
+		set_clip_rect(eof_window_editor->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, eof_window_editor->screen->w, eof_window_editor->screen->h);
+		textprintf_ex(eof_window_editor->screen, font, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y, eof_color_white, eof_color_black, "%s", np->text);
+		set_clip_rect(eof_window_editor->screen, 0, 0, eof_window_editor->screen->w, eof_window_editor->screen->h);
+	}
 	else
-		textprintf_ex(eof_window_editor->screen, font, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y, p ? eof_color_green : eof_color_white, -1, "%s", np->text);
+	{
+		set_clip_rect(eof_window_editor->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, eof_window_editor->screen->w, eof_window_editor->screen->h);
+		textprintf_ex(eof_window_editor->screen, font, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y, p ? eof_color_green : eof_color_white, eof_color_black, "%s", np->text);
+		set_clip_rect(eof_window_editor->screen, 0, 0, eof_window_editor->screen->w, eof_window_editor->screen->h);
+	}
 }
 
 void eof_note_draw_3d(EOF_NOTE * np, int p)
@@ -1024,7 +1032,9 @@ void eof_lyric_draw_catalog(EOF_LYRIC * np, int p)
 				rect(eof_window_note->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, pcol);
 			}
 		}
-		textprintf_ex(eof_window_note->screen, font, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y, eof_color_white, -1, "%s", np->text);
+		set_clip_rect(eof_window_note->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, eof_window_note->screen->w, eof_window_note->screen->h);
+		textprintf_ex(eof_window_note->screen, font, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y, eof_color_white, eof_color_black, "%s", np->text);
+		set_clip_rect(eof_window_note->screen, 0, 0, eof_window_note->screen->w, eof_window_note->screen->h);
 	}
 	else
 	{
@@ -1050,6 +1060,8 @@ void eof_lyric_draw_catalog(EOF_LYRIC * np, int p)
 				rect(eof_window_note->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, pcol);
 			}
 		}
-		textprintf_ex(eof_window_note->screen, font, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y, p ? eof_color_green : eof_color_white, -1, "%s", np->text);
+		set_clip_rect(eof_window_note->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, eof_window_note->screen->w, eof_window_note->screen->h);
+		textprintf_ex(eof_window_note->screen, font, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y, p ? eof_color_green : eof_color_white, eof_color_black, "%s", np->text);
+		set_clip_rect(eof_window_note->screen, 0, 0, eof_window_note->screen->w, eof_window_note->screen->h);
 	}
 }
