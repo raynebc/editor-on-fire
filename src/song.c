@@ -764,6 +764,7 @@ void eof_vocal_track_fixup_lyrics(EOF_VOCAL_TRACK * tp, int sel)
 			}
 		}
 	}
+	
 	/* delete empty lines */
 	for(i = tp->lines - 1; i >= 0; i--)
 	{

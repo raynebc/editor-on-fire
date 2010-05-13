@@ -350,10 +350,10 @@ void eof_prepare_note_menu(void)
 			{
 				eof_note_menu[13].flags = 0;
 			}
-			else
-			{
-				eof_note_menu[13].flags = D_DISABLED;
-			}
+//			else
+//			{
+//				eof_note_menu[13].flags = D_DISABLED;
+//			}
 			eof_note_menu[15].flags = D_DISABLED; // HOPO
 		}
 		else
