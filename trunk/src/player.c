@@ -71,7 +71,7 @@ void eof_music_play(void)
 			eof_play_selection = 0;
 		}
 		eof_music_rewind_pos = eof_music_pos;
-		alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_pos - eof_av_delay);
+		alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_pos);
 		eof_mix_find_claps();
 		if(alogg_play_ex_ogg(eof_music_track, eof_buffer_size, 255, 128, speed, 0) == ALOGG_OK)
 		{
