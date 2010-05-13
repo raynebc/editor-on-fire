@@ -733,6 +733,7 @@ void eof_clear_input(void)
 			key[i] = 0;
 		}
 	}
+	eof_mouse_z = mouse_z;
 }
 
 void eof_prepare_undo(int type)
