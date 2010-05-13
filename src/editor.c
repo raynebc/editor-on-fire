@@ -20,7 +20,6 @@ int         eof_held_3 = 0;
 int         eof_held_4 = 0;
 int         eof_held_5 = 0;
 int         eof_entering_note = 0;
-int         eof_entered_note = 0; // if a note has been entered since audio playback started
 EOF_NOTE *  eof_entering_note_note = NULL;
 EOF_LYRIC *  eof_entering_note_lyric = NULL;
 int         eof_snote = 0;
@@ -640,10 +639,6 @@ void eof_read_editor_keys(void)
 					{
 						eof_track_fixup_notes(eof_song->track[eof_selected_track], 1);
 					}
-				}
-				else
-				{
-					eof_entered_note = 0;
 				}
 			}
 		}
@@ -1583,13 +1578,9 @@ void eof_read_editor_keys(void)
 			}
 			if(eof_held_1 == 1)
 			{
+				eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
 				if(eof_vocals_selected)
 				{
-					if(!eof_entered_note)
-					{
-						eof_prepare_undo(0);
-						eof_entered_note = 1;
-					}
 					new_lyric = eof_vocal_track_add_lyric(eof_song->vocal_track);
 					if(new_lyric)
 					{
@@ -1603,11 +1594,6 @@ void eof_read_editor_keys(void)
 				}
 				else
 				{
-					if(!eof_entered_note)
-					{
-						eof_prepare_undo(0);
-						eof_entered_note = 1;
-					}
 					new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
 					if(new_note)
 					{
@@ -1622,13 +1608,9 @@ void eof_read_editor_keys(void)
 			}
 			else if(eof_held_2 == 1)
 			{
+				eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
 				if(eof_vocals_selected)
 				{
-					if(!eof_entered_note)
-					{
-						eof_prepare_undo(0);
-						eof_entered_note = 1;
-					}
 					new_lyric = eof_vocal_track_add_lyric(eof_song->vocal_track);
 					if(new_lyric)
 					{
@@ -1642,11 +1624,6 @@ void eof_read_editor_keys(void)
 				}
 				else
 				{
-					if(!eof_entered_note)
-					{
-						eof_prepare_undo(0);
-						eof_entered_note = 1;
-					}
 					new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
 					if(new_note)
 					{
@@ -1661,13 +1638,9 @@ void eof_read_editor_keys(void)
 			}
 			else if(eof_held_3 == 1)
 			{
+				eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
 				if(eof_vocals_selected)
 				{
-					if(!eof_entered_note)
-					{
-						eof_prepare_undo(0);
-						eof_entered_note = 1;
-					}
 					new_lyric = eof_vocal_track_add_lyric(eof_song->vocal_track);
 					if(new_lyric)
 					{
@@ -1681,11 +1654,6 @@ void eof_read_editor_keys(void)
 				}
 				else
 				{
-					if(!eof_entered_note)
-					{
-						eof_prepare_undo(0);
-						eof_entered_note = 1;
-					}
 					new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
 					if(new_note)
 					{
@@ -1700,13 +1668,9 @@ void eof_read_editor_keys(void)
 			}
 			else if(eof_held_4 == 1)
 			{
+				eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
 				if(eof_vocals_selected)
 				{
-					if(!eof_entered_note)
-					{
-						eof_prepare_undo(0);
-						eof_entered_note = 1;
-					}
 					new_lyric = eof_vocal_track_add_lyric(eof_song->vocal_track);
 					if(new_lyric)
 					{
@@ -1720,11 +1684,6 @@ void eof_read_editor_keys(void)
 				}
 				else
 				{
-					if(!eof_entered_note)
-					{
-						eof_prepare_undo(0);
-						eof_entered_note = 1;
-					}
 					new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
 					if(new_note)
 					{
@@ -1739,13 +1698,9 @@ void eof_read_editor_keys(void)
 			}
 			else if(eof_held_5 == 1)
 			{
+				eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
 				if(eof_vocals_selected)
 				{
-					if(!eof_entered_note)
-					{
-						eof_prepare_undo(0);
-						eof_entered_note = 1;
-					}
 					new_lyric = eof_vocal_track_add_lyric(eof_song->vocal_track);
 					if(new_lyric)
 					{
@@ -1759,11 +1714,6 @@ void eof_read_editor_keys(void)
 				}
 				else
 				{
-					if(!eof_entered_note)
-					{
-						eof_prepare_undo(0);
-						eof_entered_note = 1;
-					}
 					new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
 					if(new_note)
 					{
@@ -1794,11 +1744,7 @@ void eof_read_editor_keys(void)
 					{
 						eof_entering_note_lyric->length = (eof_music_pos - eof_av_delay) - eof_entering_note_lyric->pos - 10;
 					}
-					if(!eof_entered_note)
-					{
-						eof_prepare_undo(0);
-						eof_entered_note = 1;
-					}
+					eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
 					new_lyric = eof_vocal_track_add_lyric(eof_song->vocal_track);
 					if(new_lyric)
 					{
@@ -1856,11 +1802,7 @@ void eof_read_editor_keys(void)
 					{
 						eof_entering_note_note->length = (eof_music_pos - eof_av_delay) - eof_entering_note_note->pos - 10;
 					}
-					if(!eof_entered_note)
-					{
-						eof_prepare_undo(0);
-						eof_entered_note = 1;
-					}
+					eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
 					new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
 					if(new_note)
 					{
@@ -2162,6 +2104,7 @@ void eof_editor_drum_logic(void)
 	}
 	if(eof_held_1 == 1)
 	{
+		eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
 		if(eof_entering_note_note && eof_music_pos - eof_av_delay < eof_entering_note_note->pos + 50)
 		{
 			eof_entering_note_note->note |= 1;
@@ -2184,6 +2127,7 @@ void eof_editor_drum_logic(void)
 	}
 	if(eof_held_2 == 1)
 	{
+		eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
 		if(eof_entering_note_note && eof_music_pos - eof_av_delay < eof_entering_note_note->pos + 50)
 		{
 			eof_entering_note_note->note |= 2;
@@ -2206,6 +2150,7 @@ void eof_editor_drum_logic(void)
 	}
 	if(eof_held_3 == 1)
 	{
+		eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
 		if(eof_entering_note_note && eof_music_pos - eof_av_delay < eof_entering_note_note->pos + 50)
 		{
 			eof_entering_note_note->note |= 4;
@@ -2228,6 +2173,7 @@ void eof_editor_drum_logic(void)
 	}
 	if(eof_held_4 == 1)
 	{
+		eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
 		if(eof_entering_note_note && eof_music_pos - eof_av_delay < eof_entering_note_note->pos + 50)
 		{
 			eof_entering_note_note->note |= 8;
@@ -2250,6 +2196,7 @@ void eof_editor_drum_logic(void)
 	}
 	if(eof_held_5 == 1)
 	{
+		eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
 		if(eof_entering_note_note && eof_music_pos - eof_av_delay < eof_entering_note_note->pos + 50)
 		{
 			eof_entering_note_note->note |= 16;
