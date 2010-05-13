@@ -614,6 +614,8 @@ int eof_menu_note_delete_vocal(void)
 		}
 		eof_selection.current = EOF_MAX_NOTES - 1;
 		eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 0);
+		eof_detect_difficulties(eof_song);
+		eof_reset_lyric_preview_lines();
 	}
 	return 1;
 }
