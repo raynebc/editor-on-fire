@@ -24,6 +24,7 @@ typedef struct
 {
 	
 	EOF_CONTROLLER_BUTTON button[EOF_CONTROLLER_MAX_BUTTONS];
+	int delay;
 	
 } EOF_CONTROLLER;
 

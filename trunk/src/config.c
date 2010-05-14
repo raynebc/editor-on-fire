@@ -20,6 +20,7 @@ void set_default_config(void)
 	eof_guitar.button[6].type = EOF_CONTROLLER_BUTTON_TYPE_KEY;
 	eof_guitar.button[6].key = KEY_F5;
 	eof_controller_read_button_names(&eof_guitar);
+	eof_guitar.delay = 0;
 	
 	eof_drums.button[0].type = EOF_CONTROLLER_BUTTON_TYPE_KEY;
 	eof_drums.button[0].key = KEY_1;
@@ -32,6 +33,7 @@ void set_default_config(void)
 	eof_drums.button[4].type = EOF_CONTROLLER_BUTTON_TYPE_KEY;
 	eof_drums.button[4].key = KEY_5;
 	eof_controller_read_button_names(&eof_drums);
+	eof_drums.delay = 0;
 }
 
 void eof_load_config(char * fn)
@@ -135,7 +137,8 @@ void eof_load_config(char * fn)
 		{
 			eof_hopo_view = EOF_HOPO_RF;
 		}
-		
+		eof_guitar.delay = pack_igetl(fp);
+		eof_drums.delay = pack_igetl(fp);
 		pack_fclose(fp);
 	}
 }
@@ -178,6 +181,9 @@ void eof_save_config(char * fn)
 		pack_iputl(eof_snap_interval, fp);
 		pack_iputl(eof_zoom_3d, fp);
 		pack_iputl(eof_hopo_view, fp);
+		
+		pack_iputl(eof_guitar.delay, fp);
+		pack_iputl(eof_drums.delay, fp);
 		
 		pack_fclose(fp);
 	}

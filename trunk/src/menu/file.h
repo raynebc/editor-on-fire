@@ -32,6 +32,16 @@ int eof_menu_file_song_folder(void);
 int eof_menu_file_link(void);
 int eof_menu_file_exit(void);
 
+char * eof_ogg_list(int index, int * size);
+char * eof_guitar_list(int index, int * size);
+char * eof_drum_list(int index, int * size);
+char * eof_display_list(int index, int * size);
+
+int eof_controller_settings_guitar(DIALOG * d);
+int eof_controller_settings_drums(DIALOG * d);
+int eof_guitar_controller_redefine(DIALOG * d);
+int eof_drum_controller_redefine(DIALOG * d);
+
 char *eof_lyric_detections_list_all(int index, int * size);
 	//The dialog procedure that returns the strings to display in the list box
 

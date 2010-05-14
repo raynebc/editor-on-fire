@@ -83,16 +83,40 @@ DIALOG eof_display_dialog[] =
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
+DIALOG eof_guitar_settings_dialog[] =
+{
+   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
+   { d_agup_window_proc,    4,  236 + 24 - 32 - 20 - 8,  192 + 32 + 96 + 16, 190 + 78, 2,   23,  0,    0,      0,   0,   "Guitar Settings",               NULL, NULL },
+
+   { d_agup_text_proc,    16, 240,  64,  8,  2,   23,  0,    0,      0,   0,   "Delay (ms):",         NULL, NULL },
+   { d_agup_edit_proc,   104, 236,  64,  20,  2,   23,  0,    0,      5,   0,   eof_etext,           NULL, NULL },
+   { d_agup_list_proc,   13, 266,  170 + 32 + 85 + 28,  96 + 13,  2,   23,  0,    0,      0,   0,   eof_guitar_list, NULL, NULL },
+   { d_agup_push_proc, 13,  176 + 64 + 22 + 16 + 24 + 24 + 24 + 36, 170 + 32 + 85 + 28,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Redefine",               NULL, eof_guitar_controller_redefine },
+   { d_agup_button_proc, 13, 176 + 64 + 22 + 16 + 24 + 24 + 24 + 36 + 32 + 8, 170 + 32 + 85 + 28,  28, 2,   23,  0,    D_EXIT, 0,   0,   "OK",               NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+DIALOG eof_drum_settings_dialog[] =
+{
+   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
+   { d_agup_window_proc,    4,  236 + 24 - 32 - 20 - 8,  192 + 32 + 96 + 16, 190 + 78 - 30, 2,   23,  0,    0,      0,   0,   "Drum Settings",               NULL, NULL },
+
+   { d_agup_text_proc,    16, 240,  64,  8,  2,   23,  0,    0,      0,   0,   "Delay (ms):",         NULL, NULL },
+   { d_agup_edit_proc,   104, 236,  64,  20,  2,   23,  0,    0,      5,   0,   eof_etext,           NULL, NULL },
+   { d_agup_list_proc,   13, 266,  170 + 32 + 85 + 28,  79,  2,   23,  0,    0,      0,   0,   eof_drum_list, NULL, NULL },
+   { d_agup_push_proc, 13,  176 + 64 + 22 + 16 + 24 + 24 + 24 + 36 - 30, 170 + 32 + 85 + 28,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Redefine",               NULL, eof_drum_controller_redefine },
+   { d_agup_button_proc, 13, 176 + 64 + 22 + 16 + 24 + 24 + 24 + 36 + 32 + 8 - 30, 170 + 32 + 85 + 28,  28, 2,   23,  0,    D_EXIT, 0,   0,   "OK",               NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
 DIALOG eof_controller_settings_dialog[] =
 {
    /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc,    4,  236 + 24 - 32 - 20 - 8,  192 + 32 + 96 + 16, 190 + 90 + 32 + 8, 2,   23,  0,    0,      0,   0,   "Controller Settings",               NULL, NULL },
+   { d_agup_window_proc,    4,  236 + 24 - 32 - 20 - 8, 190 + 32, 144, 2,   23,  0,    0,      0,   0,   "Controller Settings",               NULL, NULL },
 
-   /* guitar */
-   { d_agup_list_proc,   13, 252 + 24 - 32 - 8,  170 + 32 + 85 + 28,  96 + 90,  2,   23,  0,    0,      0,   0,   eof_guitar_list, NULL, NULL },
-   { d_agup_push_proc, 13,  176 + 64 + 22 + 16 + 24 + 24 + 24 + 90, 170 + 32 + 85 + 28,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Redefine",               NULL, eof_controller_redefine },
-   { d_agup_text_proc,   13,  176 + 64 + 22 + 16 + 24 + 24 + 24 + 90 - 16,  128, 8,  2,   23,  0,    0,      0,   0,   eof_ctext[12], NULL, NULL },
-   { d_agup_button_proc, 13, 176 + 64 + 22 + 16 + 24 + 24 + 24 + 90 + 32 + 8, 170 + 32 + 85 + 28,  28, 2,   23,  0,    D_EXIT, 0,   0,   "OK",               NULL, NULL },
+   { d_agup_push_proc, 13,  176 + 6 + 24 + 24 + 36 - 30, 170 + 32,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Guitar",               NULL, eof_controller_settings_guitar },
+   { d_agup_push_proc, 13,  176 + 6 + 24 + 24 + 36, 170 + 32,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Drums",               NULL, eof_controller_settings_drums },
+   { d_agup_button_proc, 13, 176 + 88 + 32 + 8, 170 + 32,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Done",               NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -147,6 +171,7 @@ DIALOG eof_lyric_detections_dialog[]=
 
 struct Lyric_Format *lyricdetectionlist;	//Dialog windows cannot be passed local variables, requiring the use of this global variable for the lyric track prompt dialog
 char lyricdetectionstring[1024];			//The display name given to the detection when displayed in the list box
+static int redefine_index = -1;
 
 void eof_prepare_file_menu(void)
 {
@@ -1236,8 +1261,7 @@ int eof_menu_file_controllers(void)
 	eof_render();
 	eof_color_dialog(eof_controller_settings_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_controller_settings_dialog);
-	eof_controller_settings_dialog[1].d1 = 0;
-	if(eof_popup_dialog(eof_controller_settings_dialog, 0) == 4)
+	if(eof_popup_dialog(eof_controller_settings_dialog, 0) == 3)
 	{
 	}
 	else
@@ -1444,23 +1468,18 @@ char * eof_ogg_list(int index, int * size)
 
 char * eof_guitar_list(int index, int * size)
 {
-	sprintf(eof_ctext[0], "Strum 1 (%s)", eof_guitar.button[0].name);
-	sprintf(eof_ctext[1], "Strum 2 (%s)", eof_guitar.button[1].name);
-	sprintf(eof_ctext[2], "Green Fret (%s)", eof_guitar.button[2].name);
-	sprintf(eof_ctext[3], "Red Fret (%s)", eof_guitar.button[3].name);
-	sprintf(eof_ctext[4], "Yellow Fret (%s)", eof_guitar.button[4].name);
-	sprintf(eof_ctext[5], "Blue Fret (%s)", eof_guitar.button[5].name);
-	sprintf(eof_ctext[6], "Purple Fret (%s)", eof_guitar.button[6].name);
-	sprintf(eof_ctext[7], "Kick Pedal (%s)", eof_drums.button[0].name);
-	sprintf(eof_ctext[8], "Red Drum (%s)", eof_drums.button[1].name);
-	sprintf(eof_ctext[9], "Yellow Drum (%s)", eof_drums.button[2].name);
-	sprintf(eof_ctext[10], "Blue Drum (%s)", eof_drums.button[3].name);
-	sprintf(eof_ctext[11], "Green Drum (%s)", eof_drums.button[4].name);
+	sprintf(eof_ctext[0], "Strum 1 (%s)", redefine_index == 0 ? "Press new key" : eof_guitar.button[0].name);
+	sprintf(eof_ctext[1], "Strum 2 (%s)", redefine_index == 1 ? "Press new key" : eof_guitar.button[1].name);
+	sprintf(eof_ctext[2], "Green Fret (%s)", redefine_index == 2 ? "Press new key" : eof_guitar.button[2].name);
+	sprintf(eof_ctext[3], "Red Fret (%s)", redefine_index == 3 ? "Press new key" : eof_guitar.button[3].name);
+	sprintf(eof_ctext[4], "Yellow Fret (%s)", redefine_index == 4 ? "Press new key" : eof_guitar.button[4].name);
+	sprintf(eof_ctext[5], "Blue Fret (%s)", redefine_index == 5 ? "Press new key" : eof_guitar.button[5].name);
+	sprintf(eof_ctext[6], "Purple Fret (%s)", redefine_index == 6 ? "Press new key" : eof_guitar.button[6].name);
 	switch(index)
 	{
 		case -1:
 		{
-			*size = 12;
+			*size = 7;
 			break;
 		}
 		case 0:
@@ -1498,29 +1517,47 @@ char * eof_guitar_list(int index, int * size)
 			return eof_ctext[6];
 			break;
 		}
-		case 7:
+	}
+	return NULL;
+}
+
+char * eof_drum_list(int index, int * size)
+{
+	sprintf(eof_ctext[0], "Kick Pedal (%s)", redefine_index == 0 ? "Press new key" : eof_drums.button[0].name);
+	sprintf(eof_ctext[1], "Red Drum (%s)", redefine_index == 1 ? "Press new key" : eof_drums.button[1].name);
+	sprintf(eof_ctext[2], "Yellow Drum (%s)", redefine_index == 2 ? "Press new key" : eof_drums.button[2].name);
+	sprintf(eof_ctext[3], "Blue Drum (%s)", redefine_index == 3 ? "Press new key" : eof_drums.button[3].name);
+	sprintf(eof_ctext[4], "Green Drum (%s)", redefine_index == 4 ? "Press new key" : eof_drums.button[4].name);
+	switch(index)
+	{
+		case -1:
 		{
-			return eof_ctext[7];
+			*size = 5;
 			break;
 		}
-		case 8:
+		case 0:
 		{
-			return eof_ctext[8];
+			return eof_ctext[0];
 			break;
 		}
-		case 9:
+		case 1:
 		{
-			return eof_ctext[9];
+			return eof_ctext[1];
 			break;
 		}
-		case 10:
+		case 2:
 		{
-			return eof_ctext[10];
+			return eof_ctext[2];
 			break;
 		}
-		case 11:
+		case 3:
 		{
-			return eof_ctext[11];
+			return eof_ctext[3];
+			break;
+		}
+		case 4:
+		{
+			return eof_ctext[4];
 			break;
 		}
 	}
@@ -1555,23 +1592,57 @@ char * eof_display_list(int index, int * size)
 	return NULL;
 }
 
-int eof_controller_redefine(DIALOG * d)
+int eof_controller_settings_guitar(DIALOG * d)
+{
+	eof_color_dialog(eof_guitar_settings_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_guitar_settings_dialog);
+	eof_guitar_settings_dialog[1].d1 = 0;
+	sprintf(eof_etext, "%d", eof_guitar.delay);
+	if(eof_popup_dialog(eof_guitar_settings_dialog, 0) == 5)
+	{
+		eof_guitar.delay = atoi(eof_etext);
+	}
+	eof_render();
+	dialog_message(eof_controller_settings_dialog, MSG_DRAW, 0, NULL);
+	return 0;
+}
+
+int eof_controller_settings_drums(DIALOG * d)
+{
+	eof_color_dialog(eof_drum_settings_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_drum_settings_dialog);
+	eof_drum_settings_dialog[1].d1 = 0;
+	sprintf(eof_etext, "%d", eof_drums.delay);
+	if(eof_popup_dialog(eof_drum_settings_dialog, 0) == 5)
+	{
+		eof_drums.delay = atoi(eof_etext);
+	}
+	eof_render();
+	dialog_message(eof_controller_settings_dialog, MSG_DRAW, 0, NULL);
+	return 0;
+}
+
+int eof_guitar_controller_redefine(DIALOG * d)
 {
 	int i;
-	sprintf(eof_ctext[12], "Press new key...");
-	if(eof_controller_settings_dialog[1].d1 >= 0 && eof_controller_settings_dialog[1].d1 < 7)
-	{
-		dialog_message(eof_controller_settings_dialog, MSG_DRAW, 0, &i);
-		eof_controller_set_button(&eof_guitar.button[eof_controller_settings_dialog[1].d1]);
-	}
-	else if(eof_controller_settings_dialog[1].d1 >= 7 && eof_controller_settings_dialog[1].d1 < 12)
-	{
-		dialog_message(eof_controller_settings_dialog, MSG_DRAW, 0, &i);
-		eof_controller_set_button(&eof_drums.button[eof_controller_settings_dialog[1].d1 - 7]);
-	}
+	redefine_index = eof_guitar_settings_dialog[3].d1;
+	dialog_message(eof_guitar_settings_dialog, MSG_DRAW, 0, &i);
+	eof_controller_set_button(&eof_guitar.button[eof_guitar_settings_dialog[3].d1]);
 	eof_clear_input();
-	ustrcpy(eof_ctext[12], "");
-	dialog_message(eof_controller_settings_dialog, MSG_DRAW, 0, &i);
+	redefine_index = -1;
+	dialog_message(eof_guitar_settings_dialog, MSG_DRAW, 0, &i);
+	return 0;
+}
+
+int eof_drum_controller_redefine(DIALOG * d)
+{
+	int i;
+	redefine_index = eof_drum_settings_dialog[3].d1;
+	dialog_message(eof_drum_settings_dialog, MSG_DRAW, 0, &i);
+	eof_controller_set_button(&eof_guitar.button[eof_drum_settings_dialog[3].d1]);
+	eof_clear_input();
+	redefine_index = -1;
+	dialog_message(eof_drum_settings_dialog, MSG_DRAW, 0, &i);
 	return 0;
 }
 
