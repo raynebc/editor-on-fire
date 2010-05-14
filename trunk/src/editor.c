@@ -639,6 +639,10 @@ void eof_read_editor_keys(void)
 					{
 						eof_track_fixup_notes(eof_song->track[eof_selected_track], 1);
 					}
+					if(eof_undo_last_type == EOF_UNDO_TYPE_RECORD)
+					{
+						eof_undo_last_type = 0;
+					}
 				}
 			}
 		}
