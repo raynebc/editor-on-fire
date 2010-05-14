@@ -39,7 +39,7 @@ void InitMIDI(void)
 void ReadMIDIHeader(FILE *inf,char suppress_errors)
 {
 	unsigned short ctr;
-	unsigned char header[5]={0,0,0,0,0};	//Used to read header
+	char header[5]={0,0,0,0,0};	//Used to read header
 
 	assert_wrapper(inf != NULL);	//This must not be NULL
 
@@ -211,13 +211,13 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 	//otherwise it is called after the event is parsed and read into the TEPstruct.  If the function pointer is
 	//NULL, no handler is called.
 	struct TEPstruct vars;		//Storage unit for all event processor variables
-	MIDIstruct.deltacounter=0;	//Should reset to 0 at beginning of each track
 	unsigned long ctr;			//Used for parsing lyric/text events
 
 	assert_wrapper((inf != NULL) && (tchunk != NULL));	//These must not be NULL (event handler is allowed to be NULL)
 	//outf will only be checked for NULL within MIDI_Build_handler, where it is used
 
 //Declare and initialize internal variables
+	MIDIstruct.deltacounter=0;	//Should reset to 0 at beginning of each track
 	vars.lasteventtype=0;
 	vars.processed=0;
 	vars.delta=0;
@@ -1748,11 +1748,11 @@ void Parse_Song_Ini(char *midipath,char loadoffset,char loadothertags)
 
 void VRhythm_Load(char *srclyrname,char *srcmidiname,FILE *inf)
 {
-	FILE *inputlyrics;
+	FILE *inputlyrics=NULL;
 	char buffer[11];	//Load max of 10 characters from input lyrics file
-	char *temp,*temp2;
-	char trackID;
-	char diffID;
+	char *temp=NULL,*temp2=NULL;
+	char trackID=0;
+	char diffID=0;
 	unsigned ctr;
 	unsigned long ctr2;
 	unsigned char note1,note2,splitlogic;	//Used to add line breaks during lyricless vrhythm import
@@ -2432,7 +2432,7 @@ int Lyric_handler(struct TEPstruct *data)
 	static char groupswithnext=0;			//Grouping status for KAR import logic, configured when a Lyric/Text event is read
 	double time;
 	unsigned char eventtype;
-	struct MIDI_Lyric_Piece *Lyric_Piece;	//Used to retrieve from the Notes list
+	struct MIDI_Lyric_Piece *Lyric_Piece=NULL;	//Used to retrieve from the Notes list
 
 //	static unsigned char last_pitch=0;
 		//This will keep track of whether there is are multiple vocal pitches in the source lyrics.  If
