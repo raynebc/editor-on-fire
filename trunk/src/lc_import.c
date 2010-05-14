@@ -236,11 +236,11 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 
 int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int format)
 {
-	unsigned long linectr,lyrctr,lastlyrtime,linestart,lineend;
-	unsigned char pitch;
+	unsigned long linectr=0,lyrctr=0,lastlyrtime=0,linestart=0,lineend=0;
+	unsigned char pitch=0;
 	FILE *outf=NULL;			//Used to open output file
 	FILE *pitchedlyrics=NULL;	//Used to open output pitched lyric fle
-	char *vrhythmid;
+	char *vrhythmid=NULL;
 
 	if((tp == NULL) || (outputfilename == NULL))
 		return -1;	//Return failure
