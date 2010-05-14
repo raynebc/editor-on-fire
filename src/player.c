@@ -75,7 +75,13 @@ void eof_music_play(void)
 			eof_play_selection = 0;
 		}
 		eof_music_rewind_pos = eof_music_pos;
-		alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_pos);
+		/* in Windows, subtracting the buffer size (buffer_size * 2 according to the Allegro manual)
+		 * seems to get rid if the stuttering. */
+		#ifdef ALLEGRO_WINDOWS
+			alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_pos - ((eof_buffer_size * (eof_smooth_pos ? 2 : 1)) * 1000 / alogg_get_wave_freq_ogg(eof_music_track)));
+		#else
+			alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_pos);
+		#endif
 		eof_mix_find_claps();
 		if(alogg_play_ex_ogg(eof_music_track, eof_buffer_size, 255, 128, speed, 0) == ALOGG_OK)
 		{
