@@ -317,6 +317,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	{
 		sp->beat[i]->ppqn = pack_igetl(fp);
 		sp->beat[i]->pos = pack_igetl(fp);
+		sp->beat[i]->fpos = sp->beat[i]->pos;
 		sp->beat[i]->flags = pack_igetl(fp);
 	}
 
