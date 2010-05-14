@@ -514,7 +514,7 @@ int eof_lyric_draw_truncate(int notenum, int p)
 
 
 //Rewritten logic checks the next lyric to set an appropriate clipping rectangle for truncation purposes
-	set_clip_rect(eof_window_editor->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, X2, eof_window_editor->screen->h);
+	set_clip_rect(eof_window_editor->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, X2-2, eof_window_editor->screen->h);	//Alteration: Provide at least two pixels of clearance for the edge of the clip rectangle
 
 	if(p == 3)
 		textprintf_ex(eof_window_editor->screen, font, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y, eof_color_white, eof_color_black, "%s", np->text);
