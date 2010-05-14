@@ -500,7 +500,6 @@ int eof_lyric_draw_truncate(int notenum, int p)
 
 //Rewritten logic to remove duplicated code and render pitchless lyrics at the bottom of the piano roll in gray
 	vline(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 + eof_screen_layout.note_marker_size, makecol(128, 128, 128));
-	printf("vline\n");
 	if(np->note != 0)
 	{
 		ncol = native ? eof_color_red : eof_color_green;
