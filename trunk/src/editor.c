@@ -4910,6 +4910,10 @@ void eof_render_vocal_editor_window(void)
 		{
 			eof_lyric_draw_truncate(eof_hover_note, 2);
 		}
+		else
+		{
+			eof_lyric_draw(&eof_pen_lyric, 0);
+		}
 		if(eof_music_paused && eof_pen_visible && eof_pen_note.pos < eof_music_length)
 		{
 			if(!eof_mouse_drug)
