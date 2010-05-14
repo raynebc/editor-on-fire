@@ -24,9 +24,6 @@ char * eof_input_list(int index, int * size);
 char * eof_ini_list(int index, int * size);
 char * eof_events_list(int index, int * size);
 char * eof_events_list_all(int index, int * size);
-char * eof_ogg_list(int index, int * size);
-char * eof_guitar_list(int index, int * size);
-char * eof_display_list(int index, int * size);
 
 void eof_prepare_menus(void);
 int eof_popup_dialog(DIALOG * dp, int n);
@@ -34,8 +31,6 @@ void eof_setup_menus(void);
 void eof_color_dialog(DIALOG * dp, int fg, int bg);
 int eof_display_flats_menu(void);	//Display the menu item to allow the user to toggle between displaying flat notes and sharp notes
 //void eof_fix_menu_undo(void);
-
-int eof_controller_redefine(DIALOG * d);
 
 int eof_menu_cancel(void);
 

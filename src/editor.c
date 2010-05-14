@@ -1585,7 +1585,7 @@ void eof_read_editor_keys(void)
 					if(new_lyric)
 					{
 						new_lyric->note = eof_vocals_offset;
-						new_lyric->pos = eof_music_pos - eof_av_delay;
+						new_lyric->pos = eof_music_pos - eof_av_delay - eof_guitar.delay;
 						new_lyric->length = 1;
 						strcpy(new_lyric->text, "");
 						eof_detect_difficulties(eof_song);
@@ -1597,7 +1597,7 @@ void eof_read_editor_keys(void)
 					new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
 					if(new_note)
 					{
-						eof_note_create(new_note, 1, 0, 0, 0, 0, eof_music_pos - eof_av_delay, 1);
+						eof_note_create(new_note, 1, 0, 0, 0, 0, eof_music_pos - eof_av_delay - eof_guitar.delay, 1);
 						new_note->type = eof_note_type;
 						eof_entering_note_note = new_note;
 						eof_entering_note = 1;
@@ -1615,7 +1615,7 @@ void eof_read_editor_keys(void)
 					if(new_lyric)
 					{
 						new_lyric->note = eof_vocals_offset;
-						new_lyric->pos = eof_music_pos - eof_av_delay;
+						new_lyric->pos = eof_music_pos - eof_av_delay - eof_guitar.delay;
 						new_lyric->length = 1;
 						strcpy(new_lyric->text, "");
 						eof_detect_difficulties(eof_song);
@@ -1627,7 +1627,7 @@ void eof_read_editor_keys(void)
 					new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
 					if(new_note)
 					{
-						eof_note_create(new_note, 0, 1, 0, 0, 0, eof_music_pos - eof_av_delay, 1);
+						eof_note_create(new_note, 0, 1, 0, 0, 0, eof_music_pos - eof_av_delay - eof_guitar.delay, 1);
 						new_note->type = eof_note_type;
 						eof_entering_note_note = new_note;
 						eof_entering_note = 1;
@@ -1645,7 +1645,7 @@ void eof_read_editor_keys(void)
 					if(new_lyric)
 					{
 						new_lyric->note = eof_vocals_offset;
-						new_lyric->pos = eof_music_pos - eof_av_delay;
+						new_lyric->pos = eof_music_pos - eof_av_delay - eof_guitar.delay;
 						new_lyric->length = 1;
 						strcpy(new_lyric->text, "");
 						eof_detect_difficulties(eof_song);
@@ -1657,7 +1657,7 @@ void eof_read_editor_keys(void)
 					new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
 					if(new_note)
 					{
-						eof_note_create(new_note, 0, 0, 1, 0, 0, eof_music_pos - eof_av_delay, 1);
+						eof_note_create(new_note, 0, 0, 1, 0, 0, eof_music_pos - eof_av_delay - eof_guitar.delay, 1);
 						new_note->type = eof_note_type;
 						eof_entering_note_note = new_note;
 						eof_entering_note = 1;
@@ -1675,7 +1675,7 @@ void eof_read_editor_keys(void)
 					if(new_lyric)
 					{
 						new_lyric->note = eof_vocals_offset;
-						new_lyric->pos = eof_music_pos - eof_av_delay;
+						new_lyric->pos = eof_music_pos - eof_av_delay - eof_guitar.delay;
 						new_lyric->length = 1;
 						strcpy(new_lyric->text, "");
 						eof_detect_difficulties(eof_song);
@@ -1687,7 +1687,7 @@ void eof_read_editor_keys(void)
 					new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
 					if(new_note)
 					{
-						eof_note_create(new_note, 0, 0, 0, 1, 0, eof_music_pos - eof_av_delay, 1);
+						eof_note_create(new_note, 0, 0, 0, 1, 0, eof_music_pos - eof_av_delay - eof_guitar.delay, 1);
 						new_note->type = eof_note_type;
 						eof_entering_note_note = new_note;
 						eof_entering_note = 1;
@@ -1705,7 +1705,7 @@ void eof_read_editor_keys(void)
 					if(new_lyric)
 					{
 						new_lyric->note = eof_vocals_offset;
-						new_lyric->pos = eof_music_pos - eof_av_delay;
+						new_lyric->pos = eof_music_pos - eof_av_delay - eof_guitar.delay;
 						new_lyric->length = 1;
 						strcpy(new_lyric->text, "");
 						eof_detect_difficulties(eof_song);
@@ -1717,7 +1717,7 @@ void eof_read_editor_keys(void)
 					new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
 					if(new_note)
 					{
-						eof_note_create(new_note, 0, 0, 0, 0, 1, eof_music_pos - eof_av_delay, 1);
+						eof_note_create(new_note, 0, 0, 0, 0, 1, eof_music_pos - eof_av_delay - eof_guitar.delay, 1);
 						new_note->type = eof_note_type;
 						eof_entering_note_note = new_note;
 						eof_entering_note = 1;
@@ -1742,13 +1742,13 @@ void eof_read_editor_keys(void)
 				{
 					if(eof_entering_note && eof_entering_note_lyric)
 					{
-						eof_entering_note_lyric->length = (eof_music_pos - eof_av_delay) - eof_entering_note_lyric->pos - 10;
+						eof_entering_note_lyric->length = (eof_music_pos - eof_av_delay - eof_guitar.delay) - eof_entering_note_lyric->pos - 10;
 					}
 					eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
 					new_lyric = eof_vocal_track_add_lyric(eof_song->vocal_track);
 					if(new_lyric)
 					{
-						new_lyric->pos = eof_music_pos - eof_av_delay;
+						new_lyric->pos = eof_music_pos - eof_av_delay - eof_guitar.delay;
 						new_lyric->note = eof_vocals_offset;
 						eof_entering_note_lyric = new_lyric;
 						eof_entering_note = 1;
@@ -1761,12 +1761,12 @@ void eof_read_editor_keys(void)
 					if(eof_snote != eof_last_snote)
 					{
 						eof_entering_note = 0;
-						eof_entering_note_lyric->length = (eof_music_pos - eof_av_delay) - eof_entering_note_lyric->pos - 10;
+						eof_entering_note_lyric->length = (eof_music_pos - eof_av_delay - eof_guitar.delay) - eof_entering_note_lyric->pos - 10;
 						eof_track_fixup_notes(eof_song->track[eof_selected_track], 1);
 					}
 					else
 					{
-						eof_entering_note_lyric->length = (eof_music_pos - eof_av_delay) - eof_entering_note_lyric->pos - 10;
+						eof_entering_note_lyric->length = (eof_music_pos - eof_av_delay - eof_guitar.delay) - eof_entering_note_lyric->pos - 10;
 						eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 1);
 					}
 				}
@@ -1800,13 +1800,13 @@ void eof_read_editor_keys(void)
 				{
 					if(eof_entering_note && eof_entering_note_note)
 					{
-						eof_entering_note_note->length = (eof_music_pos - eof_av_delay) - eof_entering_note_note->pos - 10;
+						eof_entering_note_note->length = (eof_music_pos - eof_av_delay - eof_guitar.delay) - eof_entering_note_note->pos - 10;
 					}
 					eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
 					new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
 					if(new_note)
 					{
-						eof_note_create(new_note, 1, 0, 0, 0, 0, eof_music_pos - eof_av_delay, 1);
+						eof_note_create(new_note, 1, 0, 0, 0, 0, eof_music_pos - eof_av_delay - eof_guitar.delay, 1);
 						new_note->note = eof_snote;
 						new_note->type = eof_note_type;
 						eof_entering_note_note = new_note;
@@ -1820,12 +1820,12 @@ void eof_read_editor_keys(void)
 					if(eof_snote != eof_last_snote)
 					{
 						eof_entering_note = 0;
-						eof_entering_note_note->length = (eof_music_pos - eof_av_delay) - eof_entering_note_note->pos - 10;
+						eof_entering_note_note->length = (eof_music_pos - eof_av_delay - eof_guitar.delay) - eof_entering_note_note->pos - 10;
 						eof_track_fixup_notes(eof_song->track[eof_selected_track], 1);
 					}
 					else
 					{
-						eof_entering_note_note->length = (eof_music_pos - eof_av_delay) - eof_entering_note_note->pos - 10;
+						eof_entering_note_note->length = (eof_music_pos - eof_av_delay - eof_guitar.delay) - eof_entering_note_note->pos - 10;
 						eof_track_fixup_notes(eof_song->track[eof_selected_track], 1);
 					}
 				}
@@ -2098,14 +2098,14 @@ void eof_editor_drum_logic(void)
 	{
 		eof_held_5 = 0;
 	}
-	if(eof_entering_note_note && eof_music_pos - eof_av_delay >= eof_entering_note_note->pos + 50)
+	if(eof_entering_note_note && eof_music_pos - eof_av_delay - eof_drums.delay >= eof_entering_note_note->pos + 50)
 	{
 		eof_entering_note_note = NULL;
 	}
 	if(eof_held_1 == 1)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
-		if(eof_entering_note_note && eof_music_pos - eof_av_delay < eof_entering_note_note->pos + 50)
+		if(eof_entering_note_note && eof_music_pos - eof_av_delay - eof_drums.delay < eof_entering_note_note->pos + 50)
 		{
 			eof_entering_note_note->note |= 1;
 		}
@@ -2114,7 +2114,7 @@ void eof_editor_drum_logic(void)
 			new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
 			if(new_note)
 			{
-				eof_note_create(new_note, 1, 0, 0, 0, 0, eof_music_pos - eof_av_delay, 1);
+				eof_note_create(new_note, 1, 0, 0, 0, 0, eof_music_pos - eof_av_delay - eof_drums.delay, 1);
 				eof_snap_logic(&eof_snap, new_note->pos);
 				new_note->pos = eof_snap.pos;
 				new_note->type = eof_note_type;
@@ -2128,7 +2128,7 @@ void eof_editor_drum_logic(void)
 	if(eof_held_2 == 1)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
-		if(eof_entering_note_note && eof_music_pos - eof_av_delay < eof_entering_note_note->pos + 50)
+		if(eof_entering_note_note && eof_music_pos - eof_av_delay - eof_drums.delay < eof_entering_note_note->pos + 50)
 		{
 			eof_entering_note_note->note |= 2;
 		}
@@ -2137,7 +2137,7 @@ void eof_editor_drum_logic(void)
 			new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
 			if(new_note)
 			{
-				eof_note_create(new_note, 0, 1, 0, 0, 0, eof_music_pos - eof_av_delay, 1);
+				eof_note_create(new_note, 0, 1, 0, 0, 0, eof_music_pos - eof_av_delay - eof_drums.delay, 1);
 				eof_snap_logic(&eof_snap, new_note->pos);
 				new_note->pos = eof_snap.pos;
 				new_note->type = eof_note_type;
@@ -2151,7 +2151,7 @@ void eof_editor_drum_logic(void)
 	if(eof_held_3 == 1)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
-		if(eof_entering_note_note && eof_music_pos - eof_av_delay < eof_entering_note_note->pos + 50)
+		if(eof_entering_note_note && eof_music_pos - eof_av_delay - eof_drums.delay < eof_entering_note_note->pos + 50)
 		{
 			eof_entering_note_note->note |= 4;
 		}
@@ -2160,7 +2160,7 @@ void eof_editor_drum_logic(void)
 			new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
 			if(new_note)
 			{
-				eof_note_create(new_note, 0, 0, 1, 0, 0, eof_music_pos - eof_av_delay, 1);
+				eof_note_create(new_note, 0, 0, 1, 0, 0, eof_music_pos - eof_av_delay - eof_drums.delay, 1);
 				eof_snap_logic(&eof_snap, new_note->pos);
 				new_note->pos = eof_snap.pos;
 				new_note->type = eof_note_type;
@@ -2174,7 +2174,7 @@ void eof_editor_drum_logic(void)
 	if(eof_held_4 == 1)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
-		if(eof_entering_note_note && eof_music_pos - eof_av_delay < eof_entering_note_note->pos + 50)
+		if(eof_entering_note_note && eof_music_pos - eof_av_delay - eof_drums.delay < eof_entering_note_note->pos + 50)
 		{
 			eof_entering_note_note->note |= 8;
 		}
@@ -2183,7 +2183,7 @@ void eof_editor_drum_logic(void)
 			new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
 			if(new_note)
 			{
-				eof_note_create(new_note, 0, 0, 0, 1, 0, eof_music_pos - eof_av_delay, 1);
+				eof_note_create(new_note, 0, 0, 0, 1, 0, eof_music_pos - eof_av_delay - eof_drums.delay, 1);
 				eof_snap_logic(&eof_snap, new_note->pos);
 				new_note->pos = eof_snap.pos;
 				new_note->type = eof_note_type;
@@ -2197,7 +2197,7 @@ void eof_editor_drum_logic(void)
 	if(eof_held_5 == 1)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
-		if(eof_entering_note_note && eof_music_pos - eof_av_delay < eof_entering_note_note->pos + 50)
+		if(eof_entering_note_note && eof_music_pos - eof_av_delay - eof_drums.delay < eof_entering_note_note->pos + 50)
 		{
 			eof_entering_note_note->note |= 16;
 		}
@@ -2206,7 +2206,7 @@ void eof_editor_drum_logic(void)
 			new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
 			if(new_note)
 			{
-				eof_note_create(new_note, 0, 0, 0, 0, 1, eof_music_pos - eof_av_delay, 1);
+				eof_note_create(new_note, 0, 0, 0, 0, 1, eof_music_pos - eof_av_delay - eof_drums.delay, 1);
 				eof_snap_logic(&eof_snap, new_note->pos);
 				new_note->pos = eof_snap.pos;
 				new_note->type = eof_note_type;
