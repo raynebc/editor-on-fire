@@ -4887,33 +4887,41 @@ void eof_render_vocal_editor_window(void)
 			{
 				if(eof_hover_note == i)
 				{
-					eof_lyric_draw(eof_song->vocal_track->lyric[i], (eof_selection.track == EOF_TRACK_VOCALS && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 3);
+					if(eof_lyric_draw_truncate(i, (eof_selection.track == EOF_TRACK_VOCALS && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 3))
+						break;	//Break if the function indicated that the lyric was rendered beyond the clip window
 				}
 				else
 				{
-					eof_lyric_draw(eof_song->vocal_track->lyric[i], (eof_selection.track == EOF_TRACK_VOCALS && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0);
+					if(eof_lyric_draw_truncate(i, (eof_selection.track == EOF_TRACK_VOCALS && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0))
+						break;	//Break if the function indicated that the lyric was rendered beyond the clip window
 				}
 			}
 			else
 			{
-				eof_lyric_draw(eof_song->vocal_track->lyric[i], (eof_selection.track == EOF_TRACK_VOCALS && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0);
+				if(eof_lyric_draw_truncate(i, (eof_selection.track == EOF_TRACK_VOCALS && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0))
+					break;	//Break if the function indicated that the lyric was rendered beyond the clip window
 			}
 		}
 		if(eof_hover_note >= 0)
 		{
-			eof_lyric_draw(eof_song->vocal_track->lyric[eof_hover_note], 2);
+			eof_lyric_draw_truncate(eof_hover_note, 2);
 		}
 		if(eof_music_paused && eof_pen_visible && eof_pen_note.pos < eof_music_length)
 		{
 			if(!eof_mouse_drug)
 			{
+				for(i = 0; i < eof_song->vocal_track->lyrics; i++)	//Find which note number eof_pen_lyric is
+				{
+					if(eof_song->vocal_track->lyric[i] == &eof_pen_lyric)
+						break;
+				}
 				if(eof_input_mode == EOF_INPUT_PIANO_ROLL || eof_input_mode == EOF_INPUT_REX)
 				{
-					eof_lyric_draw(&eof_pen_lyric, 3);
+					eof_lyric_draw_truncate(i, 3);
 				}
 				else
 				{
-					eof_lyric_draw(&eof_pen_lyric, 0);
+					eof_lyric_draw_truncate(i, 0);
 				}
 			}
 		}
