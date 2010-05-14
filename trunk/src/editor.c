@@ -4910,26 +4910,17 @@ void eof_render_vocal_editor_window(void)
 		{
 			eof_lyric_draw_truncate(eof_hover_note, 2);
 		}
-		else
-		{
-			eof_lyric_draw(&eof_pen_lyric, 0);
-		}
 		if(eof_music_paused && eof_pen_visible && eof_pen_note.pos < eof_music_length)
 		{
 			if(!eof_mouse_drug)
 			{
-				for(i = 0; i < eof_song->vocal_track->lyrics; i++)	//Find which note number eof_pen_lyric is
-				{
-					if(eof_song->vocal_track->lyric[i] == &eof_pen_lyric)
-						break;
-				}
 				if(eof_input_mode == EOF_INPUT_PIANO_ROLL || eof_input_mode == EOF_INPUT_REX)
 				{
-					eof_lyric_draw_truncate(i, 3);
+					eof_lyric_draw(&eof_pen_lyric, 3);
 				}
 				else
 				{
-					eof_lyric_draw_truncate(i, 0);
+					eof_lyric_draw(&eof_pen_lyric, 0);
 				}
 			}
 		}
