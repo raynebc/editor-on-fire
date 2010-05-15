@@ -604,6 +604,7 @@ int eof_menu_file_load(void)
 			if(!eof_load_ogg(temp_filename))
 			{
 				eof_destroy_song(eof_song);
+				eof_song=NULL;
 				eof_song_loaded = 0;
 				eof_changes = 0;
 				eof_change_count = 0;

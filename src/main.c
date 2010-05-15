@@ -1033,7 +1033,7 @@ int eof_count_selected_notes(int * total, char v)
 int eof_figure_part(void)
 {
 	int part[6] = {0};
-	
+
 	if(eof_vocals_selected && eof_song->vocal_track->lyrics <= 0)
 	{
 		return -1;
@@ -1160,6 +1160,13 @@ int eof_load_ogg(char * filename)
 		if(eof_music_data)
 		{
 			free(eof_music_data);
+		}
+
+		if(eof_song)
+		{
+			eof_destroy_song(eof_song);
+			eof_song = NULL;
+			eof_song_loaded = 0;
 		}
 	}
 /*	if(eof_song && !loaded)
@@ -1400,6 +1407,9 @@ void eof_lyric_logic(void)
 	int bnote[7] = {1, 3, 0, 6, 8, 10, 0};
 	int i, k;
 	eof_hover_key = -1;
+
+	if(eof_song == NULL)	//Do not allow lyric processing to occur if no song is loaded
+		return;
 
 	if(eof_music_paused)
 	{
