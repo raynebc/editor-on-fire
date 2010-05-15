@@ -13,6 +13,7 @@
 #include "dialog.h"
 #include "beat.h"
 #include "editor.h"
+#include "utility.h"	//For eof_check_string()
 
 int         eof_held_1 = 0;
 int         eof_held_2 = 0;
@@ -3872,14 +3873,23 @@ void eof_vocal_editor_logic(void)
 					/* delete only the note */
 					else if(eof_pen_lyric.note == eof_song->vocal_track->lyric[eof_hover_note]->note)
 					{
-						eof_song->vocal_track->lyric[eof_hover_note]->note = 0;
-						eof_selection.current = eof_hover_note;
-						eof_selection.track = eof_selected_track;
-						memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
-						eof_selection.multi[eof_selection.current] = 1;
-						eof_selection.current_pos = eof_song->vocal_track->lyric[eof_selection.current]->pos;
-						eof_selection.range_pos_1 = eof_selection.current_pos;
-						eof_selection.range_pos_2 = eof_selection.current_pos;
+						if(!eof_check_string(eof_song->vocal_track->lyric[eof_hover_note]->text))	//If removing the pitch from a note that is already textless
+						{	//Perform the cleanup code as if the lyric was deleted by inputting on top of the lyric text as above
+							eof_vocal_track_delete_lyric(eof_song->vocal_track, eof_hover_note);
+							eof_selection.current = EOF_MAX_NOTES - 1;
+							eof_vocal_track_sort_lyrics(eof_song->vocal_track);
+						}
+						else	//Just remove the pitch
+						{
+							eof_song->vocal_track->lyric[eof_hover_note]->note = 0;
+							eof_selection.current = eof_hover_note;
+							eof_selection.track = eof_selected_track;
+							memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+							eof_selection.multi[eof_selection.current] = 1;
+							eof_selection.current_pos = eof_song->vocal_track->lyric[eof_selection.current]->pos;
+							eof_selection.range_pos_1 = eof_selection.current_pos;
+							eof_selection.range_pos_2 = eof_selection.current_pos;
+						}
 					}
 
 					/* move note */

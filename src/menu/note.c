@@ -1398,6 +1398,9 @@ int eof_new_lyric_dialog(void)
 	ustrcpy(eof_etext, "");
 	if(eof_popup_dialog(eof_lyric_dialog, 2) == 3)
 	{
+		if(!eof_check_string(eof_etext) && !eof_pen_lyric.note)	//If the placed lyric is both pitchless AND textless
+			return D_O_K;	//Return without adding
+
 		eof_prepare_undo(0);
 		new_lyric = eof_vocal_track_add_lyric(eof_song->vocal_track);
 		new_lyric->pos = eof_pen_lyric.pos;
@@ -1431,13 +1434,13 @@ int eof_edit_lyric_dialog(void)
 	eof_color_dialog(eof_lyric_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_lyric_dialog);
 	ustrcpy(eof_etext, eof_song->vocal_track->lyric[eof_selection.current]->text);
-	if(eof_popup_dialog(eof_lyric_dialog, 2) == 3)
+	if(eof_popup_dialog(eof_lyric_dialog, 2) == 3)	//User hit OK on "Edit Lyric" dialog instead of canceling
 	{
-		if(ustricmp(eof_song->vocal_track->lyric[eof_selection.current]->text, eof_etext))
+		if(ustricmp(eof_song->vocal_track->lyric[eof_selection.current]->text, eof_etext))	//If the updated string (eof_etext) is different
 		{
 			eof_prepare_undo(0);
 			if(!eof_check_string(eof_etext))
-			{
+			{	//If the updated string is empty or just whitespace
 				eof_vocal_track_delete_lyric(eof_song->vocal_track, eof_selection.current);
 			}
 			else
