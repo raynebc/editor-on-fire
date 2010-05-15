@@ -4877,12 +4877,12 @@ void eof_render_vocal_editor_window(void)
 		{
 			if(pos < 300)
 			{
-				rectfill(eof_window_editor->screen, 20 + eof_song->vocal_track->line[i].start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + (15-3) + eof_screen_layout.note_y[0] - 2 + 8, 20 + eof_song->vocal_track->line[i].end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0] + 2 + 8 +4, (eof_song->vocal_track->line[i].flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE) ? makecol(64, 128, 64) : makecol(0, 0, 127));
-			}	//The -3 is a vertical offset to allow the phrase marker rectangle render as high as the lyric text itself.  The +4 is an offset to allow the rectangle to render as low as the lyric text
+				rectfill(eof_window_editor->screen, 20 + eof_song->vocal_track->line[i].start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + (15-5) + eof_screen_layout.note_y[0] - 2 + 8, 20 + eof_song->vocal_track->line[i].end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0] + 2 + 8 +4, (eof_song->vocal_track->line[i].flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE) ? makecol(64, 128, 64) : makecol(0, 0, 127));
+			}	//The -5 is a vertical offset to allow the phrase marker rectangle render as high as the lyric text itself.  The +4 is an offset to allow the rectangle to render as low as the lyric text
 			else
 			{
-				rectfill(eof_window_editor->screen, 20 - (pos - 300) + eof_song->vocal_track->line[i].start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + (15-3) + eof_screen_layout.note_y[0] - 2 + 8, 20 - (pos - 300) + eof_song->vocal_track->line[i].end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0] + 2 + 8 +4, (eof_song->vocal_track->line[i].flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE) ? makecol(64, 128, 64) : makecol(0, 0, 127));
-			}	//The -3 is a vertical offset to allow the phrase marker rectangle render as high as the lyric text itself.  The +4 is an offset to allow the rectangle to render as low as the lyric text
+				rectfill(eof_window_editor->screen, 20 - (pos - 300) + eof_song->vocal_track->line[i].start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + (15-5) + eof_screen_layout.note_y[0] - 2 + 8, 20 - (pos - 300) + eof_song->vocal_track->line[i].end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0] + 2 + 8 +4, (eof_song->vocal_track->line[i].flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE) ? makecol(64, 128, 64) : makecol(0, 0, 127));
+			}	//The -5 is a vertical offset to allow the phrase marker rectangle render as high as the lyric text itself.  The +4 is an offset to allow the rectangle to render as low as the lyric text
 		}
 
 		for(i = 0; i < eof_song->vocal_track->lyrics; i++)
