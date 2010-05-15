@@ -1085,12 +1085,14 @@ EOF_SONG * eof_import_midi(const char * fn)
 						if(eof_import_events[i]->event[j]->d1 == 105)
 						{
 							sp->vocal_track->line[sp->vocal_track->lines].start_pos = eof_import_midi_to_eof_optimized(eof_import_events[i]->event[j]->pos);
+							sp->vocal_track->line[sp->vocal_track->lines].flags=0;	//Init flags for this line as 0
 							last_105 = sp->vocal_track->lines;
 //							sp->vocal_track->lines++;
 						}
 						else if(eof_import_events[i]->event[j]->d1 == 106)
 						{
 							sp->vocal_track->line[sp->vocal_track->lines].start_pos = eof_import_midi_to_eof_optimized(eof_import_events[i]->event[j]->pos);
+							sp->vocal_track->line[sp->vocal_track->lines].flags=0;	//Init flags for this line as 0
 							last_106 = sp->vocal_track->lines;
 //							sp->vocal_track->lines++;
 						}
