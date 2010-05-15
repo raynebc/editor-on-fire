@@ -1640,7 +1640,7 @@ int eof_drum_controller_redefine(DIALOG * d)
 	int i;
 	redefine_index = eof_drum_settings_dialog[3].d1;
 	dialog_message(eof_drum_settings_dialog, MSG_DRAW, 0, &i);
-	eof_controller_set_button(&eof_guitar.button[eof_drum_settings_dialog[3].d1]);
+	eof_controller_set_button(&eof_drums.button[eof_drum_settings_dialog[3].d1]);
 	eof_clear_input();
 	redefine_index = -1;
 	dialog_message(eof_drum_settings_dialog, MSG_DRAW, 0, &i);
