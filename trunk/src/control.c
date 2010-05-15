@@ -5,7 +5,7 @@
 void eof_read_controller(EOF_CONTROLLER * cp)
 {
 	int i;
-	
+
 	poll_joystick();
 	for(i = 0; i < EOF_CONTROLLER_MAX_BUTTONS; i++)
 	{
@@ -143,7 +143,7 @@ int eof_controller_set_button(EOF_CONTROLLER_BUTTON * bp)
 	int count = 0;
 	char ignore[4][8][2] = {{{0}}};
 	char ignoreb[4][32] = {{0}};
-	
+
 	while(!key[KEY_ESC])
 	{
 		/* scan keyboard keys first */
@@ -157,12 +157,12 @@ int eof_controller_set_button(EOF_CONTROLLER_BUTTON * bp)
 				return 1;
 			}
 		}
-		
+
 		/* scan joysticks */
 		poll_joystick();
 		for(i = 0; i < num_joysticks; i++)
 		{
-			
+
 			/* scan buttons */
 			for(j = 0; j < joy[i].num_buttons; j++)
 			{
@@ -177,7 +177,7 @@ int eof_controller_set_button(EOF_CONTROLLER_BUTTON * bp)
 						bp->type = EOF_CONTROLLER_BUTTON_TYPE_JOYBUTTON;
 						bp->joy = i;
 						bp->key = j;
-						sprintf(bp->name, "Joy %d Button %s", i, joy[i].button[j].name);
+						sprintf(bp->name, "Joy %d %s", i, joy[i].button[j].name);
 						return 1;
 					}
 				}
@@ -186,7 +186,7 @@ int eof_controller_set_button(EOF_CONTROLLER_BUTTON * bp)
 					ignoreb[i][j] = 0;
 				}
 			}
-			
+
 			/* scan sticks */
 			for(j = 0; j < joy[i].num_sticks; j++)
 			{
@@ -238,7 +238,7 @@ int eof_controller_set_button(EOF_CONTROLLER_BUTTON * bp)
 void eof_controller_read_button_names(EOF_CONTROLLER * cp)
 {
 	int i;
-	
+
 	for(i = 0; i < EOF_CONTROLLER_MAX_BUTTONS; i++)
 	{
 		switch(cp->button[i].type)
@@ -265,7 +265,7 @@ void eof_controller_read_button_names(EOF_CONTROLLER * cp)
 void eof_controller_save_config(EOF_CONTROLLER * cp, PACKFILE * fp)
 {
 	int i;
-	
+
 	for(i = 0; i < EOF_CONTROLLER_MAX_BUTTONS; i++)
 	{
 		pack_putc(cp->button[i].type, fp);
@@ -297,7 +297,7 @@ void eof_controller_save_config(EOF_CONTROLLER * cp, PACKFILE * fp)
 void eof_controller_load_config(EOF_CONTROLLER * cp, PACKFILE * fp)
 {
 	int i;
-	
+
 	for(i = 0; i < EOF_CONTROLLER_MAX_BUTTONS; i++)
 	{
 		cp->button[i].type = pack_getc(fp);
