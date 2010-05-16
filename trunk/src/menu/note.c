@@ -1152,6 +1152,7 @@ int eof_menu_lyric_line_mark(void)
 	int insp = -1;
 	long sel_start = -1;
 	long sel_end = 0;
+	int originalflags=0;	//Used to apply the line's original flags after the line is recreated
 
 	for(i = 0; i < eof_song->vocal_track->lyrics; i++)
 	{
@@ -1180,11 +1181,15 @@ int eof_menu_lyric_line_mark(void)
 	{
 		if(sel_end >= eof_song->vocal_track->line[j].start_pos && sel_start <= eof_song->vocal_track->line[j].end_pos)
 		{
+			originalflags=eof_song->vocal_track->line[j].flags;	//Save this line's flags before deleting it
 			eof_vocal_track_delete_line(eof_song->vocal_track, j);
 			insp = j;
 		}
 	}
 	eof_vocal_track_add_line(eof_song->vocal_track, sel_start, sel_end);
+
+	if(eof_song->vocal_track->lines >0)
+		eof_song->vocal_track->line[eof_song->vocal_track->lines-1].flags = originalflags;	//Restore the line's flags
 
 	/* check for overlapping lines */
 	for(i = 0; i < eof_song->vocal_track->lines; i++)
