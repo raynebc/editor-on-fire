@@ -1649,7 +1649,7 @@ int eof_drum_controller_redefine(DIALOG * d)
 	redefine_index = -1;
 	dialog_message(eof_drum_settings_dialog, MSG_DRAW, 0, &i);
 
-	if(eof_test_controller_conflict(&eof_guitar,0,4))
+	if(eof_test_controller_conflict(&eof_drums,0,4))
 		alert("Warning", NULL, "There is a key conflict for this controller", "OK", NULL, 0, KEY_ENTER);
 
 	return 0;
