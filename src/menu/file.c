@@ -1632,6 +1632,10 @@ int eof_guitar_controller_redefine(DIALOG * d)
 	eof_clear_input();
 	redefine_index = -1;
 	dialog_message(eof_guitar_settings_dialog, MSG_DRAW, 0, &i);
+
+	if(eof_test_controller_conflict(&eof_guitar,0,6))
+		alert("Warning", NULL, "There is a key conflict for this controller", "OK", NULL, 0, KEY_ENTER);
+
 	return 0;
 }
 
@@ -1644,6 +1648,10 @@ int eof_drum_controller_redefine(DIALOG * d)
 	eof_clear_input();
 	redefine_index = -1;
 	dialog_message(eof_drum_settings_dialog, MSG_DRAW, 0, &i);
+
+	if(eof_test_controller_conflict(&eof_guitar,0,4))
+		alert("Warning", NULL, "There is a key conflict for this controller", "OK", NULL, 0, KEY_ENTER);
+
 	return 0;
 }
 
@@ -1713,4 +1721,52 @@ void eof_lyric_import_prompt(int *selectedformat, char **selectedtrack)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(NULL);
+}
+
+int eof_test_controller_conflict(EOF_CONTROLLER *controller,int start,int stop)
+{
+	int ctr1;	//The counter for the key being tested
+	int ctr2;	//The counter for the keys being tested against
+
+	for(ctr1=start;ctr1<=stop;ctr1++)	//For each key to test
+	{
+		if(controller->button[ctr1].type == EOF_CONTROLLER_BUTTON_TYPE_KEY)	//Keyboard button
+		{
+			for(ctr2=start;ctr2<=stop;ctr2++)	//For each key to test against
+			{
+				if(ctr2 == ctr1)
+					continue;	//Don't test the key against itself
+
+				if(controller->button[ctr1].key == controller->button[ctr2].key)
+					return 1;	//Return conflict
+			}
+		}
+		else if(controller->button[ctr1].type == EOF_CONTROLLER_BUTTON_TYPE_JOYBUTTON)	//Controller button
+		{
+			for(ctr2=start;ctr2<=stop;ctr2++)	//For each key to test against
+			{
+				if(ctr2 == ctr1)
+					continue;	//Don't test the key against itself
+
+				if(	(controller->button[ctr1].key == controller->button[ctr2].key) &&
+					(controller->button[ctr1].joy == controller->button[ctr2].joy))
+					return 1;	//Return conflict
+			}
+		}
+		else if(controller->button[ctr1].type == EOF_CONTROLLER_BUTTON_TYPE_JOYAXIS)		//Controller joystick
+		{
+			for(ctr2=start;ctr2<=stop;ctr2++)	//For each key to test against
+			{
+				if(ctr2 == ctr1)
+					continue;	//Don't test the key against itself
+
+				if(	(controller->button[ctr1].joy == controller->button[ctr2].joy) &&
+					(controller->button[ctr1].index == controller->button[ctr2].index) &&
+					(controller->button[ctr1].key == controller->button[ctr2].key))
+					return 1;	//Return conflict
+			}
+		}
+	}
+
+	return 0;	//No conflict found
 }
