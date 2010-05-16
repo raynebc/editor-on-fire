@@ -325,6 +325,16 @@ void eof_prepare_note_menu(void)
 			eof_lyric_line_menu[2].flags = D_DISABLED;
 		}
 
+		/* resnap */
+		if(eof_snap_mode == EOF_SNAP_OFF)
+		{
+			eof_note_menu[4].flags = D_DISABLED;
+		}
+		else
+		{
+			eof_note_menu[4].flags = 0;
+		}
+
 		if(eof_vocals_selected)
 		{
 			eof_note_menu[0].flags = D_DISABLED; // toggle
@@ -380,15 +390,6 @@ void eof_prepare_note_menu(void)
 				eof_note_menu[2].flags = D_DISABLED;
 			}
 
-			/* resnap */
-			if(eof_snap_mode == EOF_SNAP_OFF)
-			{
-				eof_note_menu[4].flags = D_DISABLED;
-			}
-			else
-			{
-				eof_note_menu[4].flags = 0;
-			}
 			eof_note_menu[6].flags = D_DISABLED; // edit lyric
 			eof_note_menu[7].flags = D_DISABLED; // edit lyric
 
