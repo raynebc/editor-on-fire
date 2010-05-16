@@ -1631,6 +1631,13 @@ int eof_guitar_controller_redefine(DIALOG * d)
 	eof_controller_set_button(&eof_guitar.button[eof_guitar_settings_dialog[3].d1]);
 	eof_clear_input();
 	redefine_index = -1;
+
+	//Wait for user to release button 0 or 1 on the first controller to prevent Allegro from hijacking the controller input
+	while((joy[0].button[0].b) || (joy[0].button[1].b))
+	{
+		poll_joystick();
+	}
+
 	dialog_message(eof_guitar_settings_dialog, MSG_DRAW, 0, &i);
 
 	if(eof_test_controller_conflict(&eof_guitar,0,6))
@@ -1647,6 +1654,13 @@ int eof_drum_controller_redefine(DIALOG * d)
 	eof_controller_set_button(&eof_drums.button[eof_drum_settings_dialog[3].d1]);
 	eof_clear_input();
 	redefine_index = -1;
+
+	//Wait for user to release button 0 or 1 on the first controller to prevent Allegro from hijacking the controller input
+	while((joy[0].button[0].b) || (joy[0].button[1].b))
+	{
+		poll_joystick();
+	}
+
 	dialog_message(eof_drum_settings_dialog, MSG_DRAW, 0, &i);
 
 	if(eof_test_controller_conflict(&eof_drums,0,4))
