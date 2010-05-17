@@ -765,7 +765,7 @@ void eof_vocal_track_fixup_lyrics(EOF_VOCAL_TRACK * tp, int sel)
 			}
 		}
 	}
-	
+
 	/* make sure no lines overlap */
 	for(i = 0; i < tp->lines; i++)
 	{
@@ -837,6 +837,9 @@ void eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, uns
 void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, int index)
 {
 	int i;
+
+	if(tp->lines == 0)	//If there are no lyric line phrases to delete
+		return;			//Cancel this to avoid problems
 
 	for(i = index; i < tp->lines - 1; i++)
 	{
