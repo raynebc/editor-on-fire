@@ -1149,7 +1149,7 @@ int eof_menu_star_power_erase_all(void)
 int eof_menu_lyric_line_mark(void)
 {
 	int i, j;
-	int insp = -1;
+//	int insp = -1;			//Unused?
 	long sel_start = -1;
 	long sel_end = 0;
 	int originalflags=0;	//Used to apply the line's original flags after the line is recreated
@@ -1177,13 +1177,13 @@ int eof_menu_lyric_line_mark(void)
 		}
 	}
 	eof_prepare_undo(0);	//Create the undo state before removing/adding phrase(s)
-	for(j = eof_song->vocal_track->lines; j >= 0; j--)
+	for(j = eof_song->vocal_track->lines; j > 0; j--)
 	{
-		if(sel_end >= eof_song->vocal_track->line[j].start_pos && sel_start <= eof_song->vocal_track->line[j].end_pos)
+		if(sel_end >= eof_song->vocal_track->line[j-1].start_pos && sel_start <= eof_song->vocal_track->line[j-1].end_pos)
 		{
-			originalflags=eof_song->vocal_track->line[j].flags;	//Save this line's flags before deleting it
-			eof_vocal_track_delete_line(eof_song->vocal_track, j);
-			insp = j;
+			originalflags=eof_song->vocal_track->line[j-1].flags;	//Save this line's flags before deleting it
+			eof_vocal_track_delete_line(eof_song->vocal_track, j-1);
+//			insp = j-1;	//I can't determine that the "in Star Power" status should be marked here, doesn't seem to be used for anything
 		}
 	}
 	eof_vocal_track_add_line(eof_song->vocal_track, sel_start, sel_end);
