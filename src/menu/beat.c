@@ -6,6 +6,7 @@
 #include "../mix.h"
 #include "../event.h"
 #include "../utility.h"
+#include "../undo.h"
 #include "beat.h"
 
 char eof_ts_menu_off_text[32] = {0};
@@ -457,6 +458,7 @@ int eof_menu_beat_anchor(void)
 	int oldmm, oldss, oldhs;
 	int oldpos = eof_song->beat[eof_selected_beat]->pos;
 	int newpos = 0;
+	int revert = 0;
 	char ttext[3] = {0};
 	
 	if(eof_selected_beat == 0)
@@ -498,10 +500,13 @@ int eof_menu_beat_anchor(void)
 			while(eof_song->beat[eof_selected_beat]->pos < newpos)
 			{
 				eof_song->beat[eof_selected_beat]->pos++;
+				eof_song->beat[eof_selected_beat]->fpos = eof_song->beat[eof_selected_beat]->pos;
 				eof_mickeys_x = 1;
 				eof_recalculate_beats(eof_selected_beat);
 				if(eof_song->beat[eof_selected_beat]->pos > eof_song->beat[eof_selected_beat + 1]->pos - 100)
 				{
+					eof_undo_apply();
+					revert = 1;
 					break;
 				}
 			}
@@ -515,11 +520,17 @@ int eof_menu_beat_anchor(void)
 				eof_recalculate_beats(eof_selected_beat);
 				if(eof_song->beat[eof_selected_beat]->pos < eof_song->beat[eof_selected_beat - 1]->pos + 100)
 				{
+					eof_undo_apply();
+					revert = 1;
 					break;
 				}
 			}
 		}
-		eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;
+		if(!revert)
+		{
+			eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;
+			eof_calculate_beats();
+		}
 	}
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
