@@ -17,6 +17,8 @@ Ctrl-c / Ctrl-v: copy/paste.
 */
 
 #include <allegro.h>
+#include <stdio.h>
+#include <ctype.h>
 #include "song.h"
 #include "menu/edit.h"
 #include "menu/song.h"
@@ -27,6 +29,7 @@ Ctrl-c / Ctrl-v: copy/paste.
 #include "player.h"
 #include "editor.h"
 #include "feedback.h"
+#include "foflc/Lyric_storage.h"
 
 int         eof_feedback_step = 0;
 int         eof_feedback_selecting = 0;
@@ -561,4 +564,673 @@ void eof_editor_logic_feedback(void)
 		eof_selection.current = EOF_MAX_NOTES - 1;
 		eof_selection.multi[eof_hover_note] = 0;
 	}
+}
+
+struct FeedbackChart *ImportFeedback(char *filename)
+{
+	FILE *inf;
+	char songparsed=0,syncparsed=0,eventsparsed=0;
+		//Flags to indicate whether each of the mentioned sections had already been parsed
+	char currentsection=0;		//Will be set to 1 for [Song], 2 for [SyncTrack], 3 for [Events] or 4 for an instrument section
+	unsigned long maxlinelength=0;	//I will count the length of the longest line (including NULL char/newline) in the
+	char *buffer,*buffer2;		//Will be an array large enough to hold the largest line of text from input file
+	unsigned long index,index2;	//Indexes for buffer and buffer2, respectively
+	char *substring,*substring2;	//Used with strstr() to find tag strings in the input file
+	unsigned long A,B,C;		//The first, second and third integer values read from the current line of the file
+	int errorstatus=0;		//Passed to ParseLongInt()
+	char anchortype;		//The achor type being read in [SyncTrack]
+	char *instrument;		//Stores the value returned by Validate_dB_instrument()
+	char *string1,*string2;		//Used to hold strings parsed with Read_dB_string()
+
+//Feedback chart structure variables
+	struct FeedbackChart *chart=NULL;
+	struct dBAnchor *curanchor=NULL;	//Conductor for the anchor linked list
+	struct dbText *curevent=NULL;		//Conductor for the text event linked list
+	struct dbNotelist *curnote=NULL;	//Conductor for the current instrument track's note linked list
+	struct dbTrack *curtrack=NULL;		//Conductor for the instrument track linked list, which contains a linked list of notes
+	void *temp;				//Temporary pointer used for storing newly-allocated memory
+
+//Initialize chart structure
+	chart=(struct FeedbackChart *)calloc_err(1,sizeof(struct FeedbackChart));	//Allocate and init memory to NULL data
+	chart->resolution=192;	//Default this to 192
+	chart->linesprocessed=chart->tracksloaded=0;
+
+//Open file in text mode
+	inf=fopen(filename,"rt");
+	if(inf == NULL)
+	{
+		DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+		return NULL;
+	}
+
+//Allocate memory buffers large enough to hold any line in this file
+	maxlinelength=FindLongestLineLength(inf,1);
+	buffer=(char *)malloc_err(maxlinelength);
+	buffer2=(char *)malloc_err(maxlinelength);
+
+//Parse the contents of the file
+	while(!feof(inf))		//Until end of file is reached
+	{
+		chart->linesprocessed++;	//Track which line number is being parsed
+
+//Skip leading whitespace
+		index=0;	//Reset index counter to beginning
+		while(buffer[index] != '\0')
+			if((buffer[index] != '\n') && (isspace((unsigned char)buffer[index])))
+				index++;	//If this character is whitespace, skip to next character
+
+		if((buffer[index] == '\n') || (buffer[index] == '\r') || (buffer[index] == '\0') || (buffer[index] == '{'))
+		{	//If this line was empty, or contained characters we're ignoring
+			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			continue;				//Skip ahead to the next line
+		}
+
+//Process section header
+		if(buffer[index]=='[')	//If the line begins an open bracket, it identifies the start of a section
+		{
+			substring2=strchr(buffer,']');			//Find first closing bracket
+			if(substring2 == NULL)
+			{
+				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				return NULL;				//Malformed section header, return error
+			}
+
+			if(currentsection != 0)	//If a section is already being parsed
+			{
+				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				return NULL;	//Malformed file, return error
+			}
+
+			substring=strcasestr_spec(buffer,"Song");	//Case insensitive search, returning pointer to after the match
+			if(substring <= substring2)	//If this line contained "Song" followed by "]"
+			{
+				if(songparsed != 0)	//If a section with this name was already parsed
+				{
+					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+					return NULL;	//return error
+				}
+				songparsed=1;
+				currentsection=1;	//Track that we're parsing [Song]
+			}
+			else
+			{
+				substring=strcasestr_spec(buffer,"SyncTrack");
+				if(substring <= substring2)	//If this line contained "SyncTrack" followed by "]"
+				{
+					if(syncparsed != 0)	//If a section with this name was already parsed
+					{
+						DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+						return NULL;	//return error
+					}
+					syncparsed=1;
+					currentsection=2;	//Track that we're parsing [SyncTrack]
+				}
+				else
+				{
+					substring=strcasestr_spec(buffer,"Events");
+					if(substring <= substring2)	//If this line contained "Events" followed by "]"
+					{
+						if(eventsparsed != 0)	//If a section with this name was already parsed
+						{
+							DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+							return NULL;	//return error
+						}
+						eventsparsed=1;
+						currentsection=3;	//Track that we're parsing [Events]
+					}
+					else
+					{	//This is an instrument section
+						instrument=Validate_dB_instrument(buffer);
+						if(substring == NULL)	//Not a valid Feedback instrument section name
+						{
+							DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+							return NULL;	//return error
+						}
+						currentsection=4;
+						chart->tracksloaded++;	//Keep track of how many instrument tracks are loaded
+
+					//Create and insert instrument link in the instrument list
+						temp=calloc_err(1,sizeof(struct dbTrack));	//Allocate and init memory to NULL data
+						if(chart->tracks == NULL)	//If the list is empty
+						{
+							chart->tracks=(struct dbTrack *)temp;	//Point head of list to this link
+							curtrack=chart->tracks;			//Point conductor to this link
+						}
+						else
+						{
+							curtrack->next=(struct dbTrack *)temp;	//Conductor points forward to this link
+							curtrack=curtrack->next;		//Point conductor to this link
+						}
+
+					//Initialize instrument link
+						curtrack->trackname=instrument;	//Store the track name returned by Validate_dB_instrument()
+						curnote=NULL;			//Reset the conductor for the track's note list
+					}
+				}
+			}
+
+			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			continue;				//Skip ahead to the next line
+		}//If the line begins an open bracket...
+
+//Process end of section
+		if(buffer[index]=='}')	//If the line begins with a closing curly brace, it is the end of the current section
+		{
+			if(currentsection == 0)	//If no section is being parsed
+			{
+				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				return NULL;	//Malformed file, return error
+			}
+			instrument=NULL;	//Any section ending ends the current instrument track
+			currentsection=0;
+			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			continue;				//Skip ahead to the next line
+		}
+
+//Process normal line input
+		substring=strchr(buffer,'=');	//Any line within the a section is expected to contain an equal sign
+		if(substring == NULL)
+		{
+			DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+			return NULL;		//If it has none, return error
+		}
+
+	//Process [Song]
+		if(currentsection == 1)
+		{
+			if(Read_dB_string(buffer,&string1,&string2))
+			{	//If a valid definition of (string) = (string) or (string) = "(string)" was found
+				if(strcasecmp(string1,"Name") == 0)
+					chart->name=string2;	//Save the song name tag
+				if(strcasecmp(string1,"Artist") == 0)
+					chart->artist=string2;	//Save the song artist tag
+				if(strcasecmp(string1,"Charter") == 0)
+					chart->charter=string2;	//Save the chart editor tag
+				if(strcasecmp(string1,"Offset") == 0)
+				{
+					index2=0;	//Use this as an index for string2
+					chart->offset=(unsigned long)ParseLongInt(string2,&index2,chart->linesprocessed,&errorstatus);	//Parse string2 as a number
+					if(errorstatus)		//If ParseLongInt() failed
+					{
+						DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+						return NULL;	//return error
+					}
+				}
+				if(strcasecmp(string1,"Resolution") == 0)
+				{
+					index2=0;	//Use this as an index for string2
+					chart->resolution=(unsigned long)ParseLongInt(string2,&index2,chart->linesprocessed,&errorstatus);	//Parse string2 as a number
+					if(errorstatus)		//If ParseLongInt() failed
+					{
+						DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+						return NULL;	//return error
+					}
+				}
+			}
+		}
+
+	//Process [SyncTrack]
+		else if(currentsection == 2)
+		{	//# = ID # is expected
+		//Load first number
+			A=(unsigned long)ParseLongInt(buffer,&index,chart->linesprocessed,&errorstatus);
+			if(errorstatus)		//If ParseLongInt() failed
+			{
+				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				return NULL;	//return error
+			}
+
+		//Skip whitespace and parse to event ID
+			index=0;	//Reset index, to parse an int from after the equal sign
+			if((substring[index] != '\n') && (isspace((unsigned char)buffer[index])))
+				index++;	//If this character is whitespace, skip to next character
+
+			anchortype=toupper(substring[index]);	//Store as uppercase
+			if((anchortype == 'A') || (anchortype == 'B'))
+				index++;	//Advance to next whitespace character
+			else if(anchortype == 'T')
+			{
+				if(substring[index+1] != 'S')	//If the next character doesn't complete the anchor type
+				{
+					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+					return NULL;
+				}
+				index+=2;	//This anchor type is two characters instead of one
+			}
+			else
+			{
+				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				return NULL;	//Invalid anchor type
+			}
+
+		//Load second number
+			B=(unsigned long)ParseLongInt(substring,&index,chart->linesprocessed,&errorstatus);
+			if(errorstatus)		//If ParseLongInt() failed
+			{
+				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				return NULL;	//return error
+			}
+
+		//Create and insert anchor link into the anchor list
+			temp=calloc_err(1,sizeof(struct dBAnchor));	//Allocate and init memory to NULL data
+			if(chart->anchors == NULL)	//If the list is empty
+			{
+				chart->anchors=(struct dBAnchor *)temp;	//Point head of list to this link
+				curanchor=chart->anchors;		//Point conductor to this link
+			}
+			else
+			{
+				curanchor->next=(struct dBAnchor *)temp;	//Conductor points forward to this link
+				curanchor=curanchor->next;			//Point conductor to this link
+			}
+
+		//Initialize anchor link
+			curanchor->chartpos=A;	//The first number read is the chart position
+			curanchor->type=anchortype;
+			if(anchortype == 'B')		//If this was a tempo event
+				curanchor->BPM=B;	//The second number represents 1000 times the tempo
+			else if(anchortype == 'T')	//If this was a time signature event
+				curanchor->TS=B;	//Store the numerator of the time signature
+			else if(anchortype == 'A')	//If this was an anchor event
+				curanchor->usec=B;	//Store the anchor's timestamp in microseconds
+			else
+			{
+				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				return NULL;		//invalid anchor type
+			}
+		}
+
+	//Process [Events]
+		else if(currentsection == 3)
+		{	//# = E "(STRING)" is expected
+		//Load first number
+			A=ParseLongInt(buffer,&index,chart->linesprocessed,&errorstatus);
+			if(errorstatus)		//If ParseLongInt() failed
+			{
+				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				return NULL;	//return error
+			}
+
+		//Skip whitespace and parse to event ID
+			index=0;	//Reset index, to parse an int from after the equal sign
+			if((substring[index] != '\n') && (isspace((unsigned char)buffer[index])))
+				index++;	//If this character is whitespace, skip to next character
+
+			if(substring[index++] != 'E')	//Check if this isn't a "text event" indicator (and increment index)
+			{
+				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				return NULL;		//return error
+			}
+
+		//Seek to opening quotation mark
+			while((substring[index] != '\0') && (substring[index] != '"'))
+				index++;
+
+			if(substring[index++] != '"')	//Check if this was a null character instead of quotation mark (and increment index)
+			{
+				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				return NULL;		//return error
+			}
+
+		//Load string by copying all characters to the second buffer (up to the next quotation mark)
+			buffer2[0]='\0';	//Truncate string
+			index2=0;		//Reset buffer2's index
+			while(substring[index] != '"')		//For all characters up to the next quotation mark
+			{
+				if(substring[index] == '\0')	//If a null character is reached unexpectedly
+				{
+					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+					return NULL;
+				}
+				buffer2[index2++]=substring[index++];	//Copy the character to the second buffer, incrementing both indexes
+			}
+			buffer2[index2]='\0';	//Truncate the second buffer to form a complete string
+
+		//Create and insert event link into event list
+			temp=calloc_err(1,sizeof(struct dbText));	//Allocate and init memory to NULL data
+			if(chart->events == NULL)	//If the list is empty
+			{
+				chart->events=(struct dbText *)temp;	//Point head of list to this link
+				curevent=chart->events;			//Point conductor to this link
+			}
+			else
+			{
+				curevent->next=(struct dbText *)temp;	//Conductor points forward to this link
+				curevent=curevent->next;		//Point conductor to this link
+			}
+
+		//Initialize event link- Duplicate buffer2 into a newly created dbText link, adding it to the list
+			curevent->chartpos=A;				//The first number read is the chart position
+			curevent->text=DuplicateString(buffer2);	//Copy buffer2 to new string and store in list
+		}
+
+	//Process instrument tracks
+		else if(currentsection == 4)
+		{	//# = N # # is expected
+		//Load first number
+			A=ParseLongInt(buffer,&index,chart->linesprocessed,&errorstatus);
+			if(errorstatus)		//If ParseLongInt() failed
+			{
+				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				return NULL;	//return error
+			}
+
+		//Skip whitespace and parse to event ID
+			index=0;	//Reset index, to parse an int from after the equal sign
+			if((substring[index] != '\n') && (isspace((unsigned char)buffer[index])))
+				index++;	//If this character is whitespace, skip to next character
+
+			if(substring[index++] != 'N')	//Check if this isn't a "note" indicator (and increment index)
+			{
+				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				return NULL;		//return error
+			}
+
+		//Load second number
+			B=ParseLongInt(substring,&index,chart->linesprocessed,&errorstatus);
+			if(errorstatus)		//If ParseLongInt() failed
+			{
+				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				return NULL;	//return error
+			}
+
+		//Load third number
+			C=ParseLongInt(substring,&index,chart->linesprocessed,&errorstatus);
+			if(errorstatus)		//If ParseLongInt() failed
+			{
+				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				return NULL;	//return error
+			}
+
+		//Create a note link and add it to the current Note list
+			if(curtrack == NULL)	//If the instrument track linked list is not initialized
+			{
+				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				return NULL;
+			}
+
+			temp=calloc_err(1,sizeof(struct dbNotelist));	//Allocate and init memory to NULL data
+			if(curtrack->notes == NULL)	//If the list is empty
+			{
+				curtrack->notes=(struct dbNotelist *)temp;	//Point head of list to this link
+				curnote=curtrack->notes;			//Point conductor to this link
+			}
+			else
+			{
+				curnote->next=(struct dbNotelist *)temp;	//Conductor points forward to this link
+				curnote=curnote->next;				//Point conductor to this link
+			}
+
+		//Initialize note link
+			curnote->chartpos=A;	//The first number read is the chart position
+			curnote->gemcolor=B;	//The second number read is the gem color
+			curnote->duration=C;	//The third number read is the note duration
+		}
+
+	//Error: Content in file outside of a defined section
+		else
+		{
+			DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+			return NULL;
+		}
+
+		fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+	}//Until end of file is reached
+
+	return chart;
+}
+
+int Read_dB_string(char *source,char **str1, char **str2)
+{
+	//Scans the source string for a valid dB tag: text = text	or	text = "text"
+	//The text to the left of the equal sign is returned through str1 as a new string, with whitespace truncated
+	//The text to the right of the equal sign is returned through str2 as a new string, with whitespace truncated
+	//If the first non whitespace character encountered after the equal sign is a quotation mark, all characters after
+	//that quotation mark up to the next are returned through str2
+	//Nonzero is returned upon success, or zero is returned if source did not contain two sets of non whitespace characters
+	//separated by an equal sign character, or if the closing quotation mark is missing.
+
+	unsigned long srcindex;	//Index into source string
+	unsigned long index;	//Index into destination strings
+	char *string1,*string2;	//Working strings
+	char findquote=0;	//Boolean:	The element to the right of the equal sign began with a quotation mark
+				//		str2 will stop filling with characters when the next quotation mark is read
+
+//Allocate memory for strings
+	string1=malloc_err(strlen(source)+1);
+	string2=malloc_err(strlen(source)+2);
+
+//Parse the string to the left of the expected equal sign into string1
+	index=0;
+	for(srcindex=0;source[srcindex] != '=';srcindex++)	//Parse characters until equal sign is found
+	{
+		if(source[srcindex] == '\0')	//If the string ended unexpectedly
+		{
+			free(string1);
+			free(string2);
+			return 0;		//return error
+		}
+
+		string1[index++]=source[srcindex];	//Append character to string1 and increment index into string
+	}
+	string1[index]='\0';	//Truncate string1
+	srcindex++;		//Seek past the equal sign
+	string1=TruncateString(string1,1);	//Re-allocate string to remove leading and trailing whitespace
+
+//Skip leading whitespace
+	while(source[srcindex] != '\0')
+	{
+		if(!isspace(source[srcindex]))	//Character is not whitespace and not NULL character
+		{
+			if(source[srcindex] == '"')	//If the first character after the = is found to be a quotation mark
+				findquote=1;		//Expect another quotation mark to end the string
+
+			break;	//Exit while loop
+		}
+		srcindex++;	//Increment to look at next character
+	}
+
+//Parse the string to the right of the equal sign into string2
+	index=0;
+	while(source[srcindex] != '\0')	//There was nothing but whitespace after the equal sign
+	{
+		if(findquote && (source[srcindex] == '"'))	//If we should stop at this quotation mark
+			break;
+		string1[index++]=source[srcindex++];	//Append character to string1 and increment both indexes
+	}
+
+	string2[index]='\0';	//Truncate string2
+
+	if(index)	//If there were characters copied to string2
+		string2=TruncateString(string2,1);	//Re-allocate string to remove the trailing whitespace
+
+	*str1=string1;		//Return string1 through pointer
+	*str2=string2;		//Return string2 through pointer
+	return 1;		//Return success
+}
+
+char *Validate_dB_instrument(char *buffer)
+{
+	//Validates that buffer contains a valid dB instrument track name enclosed in brackets []
+	//buffer is expected to point to the opening bracket
+	//If it is valid, a copy of the track name is returned, otherwise NULL is returned
+	//buffer[] is modified to remove any whitespace after the closing bracket
+	unsigned long index;	//Used to index into buffer
+	char *endbracket;	//The pointer to the end bracket
+	char *diffstring;	//Used to find the difficulty substring
+	char *inststring;	//Used to find the instrument substring
+	char *retstring;	//Used to create the string that is returned
+
+	if(buffer == NULL)
+		return NULL;	//Return error
+
+//Validate the opening bracket, to which buffer is expected to point
+	if(buffer[0] != '[')	//If the opening bracket is missing
+		return NULL;	//Return error
+
+//Validate the presence of the closing bracket
+	endbracket=strchr(buffer,']');
+	if(endbracket == NULL)
+		return NULL;	//Return error
+
+//Verify that no non whitespace characters exist after the closing bracket
+	index=0;	//Reset index
+	while(endbracket[index] != '\0')
+		if(!isspace(endbracket[index++]))	//Check if this character isn't whitespace (and increment index)
+			return NULL;			//If it isn't whitespace, return error
+
+//Truncate whitespace after closing bracket
+	endbracket[1]='\0';	//Write a NULL character after the closing bracket
+
+//Verify that a valid diffulty is specified, seeking past the opening bracket pointed to by buffer[0]
+	//Test for Easy
+	diffstring=strcasestr_spec(&buffer[1],"Easy");
+	if(diffstring == NULL)
+	{
+	//Test for Medium
+		diffstring=strcasestr_spec(&buffer[1],"Medium");
+		if(diffstring == NULL)
+		{
+	//Test for Hard
+			diffstring=strcasestr_spec(&buffer[1],"Hard");
+			if(diffstring == NULL)
+			{
+	//Test for Expert
+				diffstring=strcasestr_spec(&buffer[1],"Expert");
+				if(diffstring == NULL)	//If none of the four valid difficulty strings were found
+					return NULL;	//Return error
+			}
+		}
+	}
+
+//At this point, diffstring points to the character AFTER the matching difficulty string.  Verify that a valid instrument is specified
+	//Test for Single (Guitar)
+		inststring=strcasestr_spec(diffstring,"Single");
+		if(inststring == NULL)
+		{
+	//Test for DoubleGuitar (Lead Guitar)
+			inststring=strcasestr_spec(diffstring,"DoubleGuitar");
+			if(inststring == NULL)
+			{
+	//Test for DoubleBass (Bass)
+				inststring=strcasestr_spec(diffstring,"DoubleBass");
+				if(inststring == NULL)
+				{
+	//Test for EnhancedGuitar
+					inststring=strcasestr_spec(diffstring,"EnhancedGuitar");
+					if(inststring == NULL)
+					{
+	//Test for CoopLead
+						inststring=strcasestr_spec(diffstring,"CoopLead");
+						if(inststring == NULL)
+						{
+	//Test for CoopBass
+							inststring=strcasestr_spec(diffstring,"CoopBass");
+							if(inststring == NULL)
+							{
+	//Test for 10KeyGuitar
+								inststring=strcasestr_spec(diffstring,"10KeyGuitar");
+								if(inststring == NULL)
+								{
+	//Test for Drums
+									inststring=strcasestr_spec(diffstring,"Drums");
+									if(inststring == NULL)
+									{
+	//Test for DoubleDrums (Expert+ drums)
+										inststring=strcasestr_spec(diffstring,"DoubleDrums");
+										if(inststring == NULL)
+										{
+	//Test for Vocals (Vocal Rhythm)
+											inststring=strcasestr_spec(diffstring,"Vocals");
+											if(inststring == NULL)
+											{
+	//Test for Keyboard
+												inststring=strcasestr_spec(diffstring,"Keyboard");
+												if(inststring == NULL)	//If none of the valid instrument names were found
+													return NULL;	//Return error
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}//If the instrument isn't defined as "Single"
+
+//Validate that the character immediately after the instrument substring is the closing bracket
+	if(inststring[0] != ']')
+		return NULL;
+
+//Create a new string containing the instrument name, minus the brackets
+	retstring=DuplicateString(&buffer[1]);
+	retstring[strlen(retstring)-1]='\0';	//Truncate the trailing bracket
+	return retstring;
+}
+
+void DestroyFeedbackChart(struct FeedbackChart *ptr, char freestruct)
+{
+	struct dBAnchor *anchorptr;	//Conductor for the anchors linked list
+	struct dbText *eventptr;	//Conductor for the events linked list
+	struct dbTrack *trackptr;	//Conductor for the tracks linked list
+	struct dbNotelist *noteptr;	//Conductor for the notes linked lists
+
+//Free and re-init tags
+	if(ptr->name)
+	{
+		free(ptr->name);
+		ptr->name=NULL;
+	}
+	if(ptr->artist)
+	{
+		free(ptr->artist);
+		ptr->artist=NULL;
+	}
+	if(ptr->charter)
+	{
+		free(ptr->charter);
+		ptr->charter=NULL;
+	}
+
+//Re-init variables
+	ptr->offset=ptr->resolution=ptr->linesprocessed=ptr->tracksloaded=0;
+
+//Empty anchors list
+	while(ptr->anchors != NULL)
+	{
+		anchorptr=ptr->anchors->next;	//Store link to next anchor
+		free(ptr->anchors);		//Free current anchor
+		ptr->anchors=anchorptr;	//Point to next anchor
+	}
+
+//Empty events list
+	while(ptr->events != NULL)
+	{
+		eventptr=ptr->events->next;	//Store link to next event
+		free(ptr->events->text);	//Free event text
+		free(ptr->events);		//Free current event
+		ptr->events=eventptr;		//Point to next event
+	}
+
+//Empty tracks list
+	while(ptr->tracks != NULL)
+	{
+		trackptr=ptr->tracks->next;	//Store link to next instrument track
+
+		while(ptr->tracks->notes != NULL)
+		{
+			noteptr=ptr->tracks->notes->next;	//Store link to next note
+			free(ptr->tracks->notes);		//Free current note
+			ptr->tracks->notes=noteptr;		//Point to next note
+		}
+
+		free(ptr->tracks->trackname);	//Free track name
+		free(ptr->tracks);		//Free current track
+		ptr->tracks=trackptr;		//Point to next track
+	}
+
+//Optionally free the passed Feedback chart structure itself
+	if(freestruct)
+		free(ptr);
 }
