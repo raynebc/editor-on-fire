@@ -9,6 +9,7 @@
 #include "../utility.h"
 #include "../midi.h"
 #include "../ini.h"
+#include "../feedback.h"
 #include "file.h"
 #include "song.h"
 
@@ -1783,4 +1784,51 @@ int eof_test_controller_conflict(EOF_CONTROLLER *controller,int start,int stop)
 	}
 
 	return 0;	//No conflict found
+}
+
+int eof_menu_file_feedback_import(void)
+{
+	char * returnedfn = NULL;
+	int jumpcode = 0;
+	struct FeedbackChart *chart;
+
+	if(eof_song == NULL)	//Do not import chart if no chart is open, until this logic can also load audio
+		return 0;
+
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	returnedfn = ncd_file_select(0, eof_filename, "Import Feedback Chart", eof_filter_dB_files);
+	eof_clear_input();
+	if(returnedfn)
+	{
+		ustrcpy(eof_filename, returnedfn);
+		jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
+		if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
+		{	//Import failed
+			puts("Assert() handled sucessfully!");
+			allegro_message("dB Chart import failed");
+			eof_show_mouse(NULL);
+			eof_cursor_visible = 1;
+			eof_pen_visible = 1;
+			return 1;
+		}
+		else
+		{
+		//Detect if the selected chart file was valid, and display information
+			chart=ImportFeedback(returnedfn);	//Load the chart into a newly-allocated structure
+
+			if(chart == NULL)
+				allegro_message("dB Chart import failed");
+			else
+			{
+				allegro_message("dB Chart import succeeded");
+				DestroyFeedbackChart(chart,1);	//De-allocate chart contents and chart structure
+			}
+		}
+	}
+	eof_show_mouse(NULL);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	return 1;
 }
