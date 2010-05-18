@@ -1,6 +1,7 @@
 #ifndef EOF_FEEDBACK_H
 #define EOF_FEEDBACK_H
 
+int eof_feedback_any_note(void);
 void eof_editor_logic_feedback(void);
 
 //A linked list storing anchors, each of which is a Set Tempo, Anchor or Time Signature event
@@ -75,5 +76,12 @@ char *Validate_dB_instrument(char *buffer);
 void DestroyFeedbackChart(struct FeedbackChart *ptr, char freestruct);
 	//Releases all memory used by the passed FeedbackChart, including that of the contained linked lists
 	//If freestruct is nonzero, the passed FeedbackChart structure's memory is also freed
+
+struct FeedbackChart *ImportFeedback(char *filename);
+	//Imports the specified file and returns a populated FeedbackChart structure if the import succeeds
+	//NULL is returned if import fails
+	//In the event of memory allocation, file I/O or file syntax error, assert_wrapper or exit_wrapper may be
+	//invoked, so use jumpcode=setjmp(jumpbuffer); and the setjmp logic to catch that in the function that
+	//calls this function
 
 #endif

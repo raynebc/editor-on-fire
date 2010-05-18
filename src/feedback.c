@@ -608,6 +608,9 @@ struct FeedbackChart *ImportFeedback(char *filename)
 	buffer=(char *)malloc_err(maxlinelength);
 	buffer2=(char *)malloc_err(maxlinelength);
 
+//Read first line of text, capping it to prevent buffer overflow
+	fgets_err(buffer,maxlinelength,inf);
+
 //Parse the contents of the file
 	while(!feof(inf))		//Until end of file is reached
 	{
@@ -616,8 +619,12 @@ struct FeedbackChart *ImportFeedback(char *filename)
 //Skip leading whitespace
 		index=0;	//Reset index counter to beginning
 		while(buffer[index] != '\0')
+		{
 			if((buffer[index] != '\n') && (isspace((unsigned char)buffer[index])))
 				index++;	//If this character is whitespace, skip to next character
+			else
+				break;
+		}
 
 		if((buffer[index] == '\n') || (buffer[index] == '\r') || (buffer[index] == '\0') || (buffer[index] == '{'))
 		{	//If this line was empty, or contained characters we're ignoring
@@ -782,8 +789,13 @@ struct FeedbackChart *ImportFeedback(char *filename)
 
 		//Skip whitespace and parse to event ID
 			index=0;	//Reset index, to parse an int from after the equal sign
-			if((substring[index] != '\n') && (isspace((unsigned char)buffer[index])))
-				index++;	//If this character is whitespace, skip to next character
+			while(substring[index] != '\0')
+			{
+				if((substring[index] != '\n') && (isspace((unsigned char)substring[index])))
+					index++;	//If this character is whitespace, skip to next character
+				else
+					break;
+			}
 
 			anchortype=toupper(substring[index]);	//Store as uppercase
 			if((anchortype == 'A') || (anchortype == 'B'))
@@ -853,8 +865,13 @@ struct FeedbackChart *ImportFeedback(char *filename)
 
 		//Skip whitespace and parse to event ID
 			index=0;	//Reset index, to parse an int from after the equal sign
-			if((substring[index] != '\n') && (isspace((unsigned char)buffer[index])))
-				index++;	//If this character is whitespace, skip to next character
+			while(substring[index] != '\0')
+			{
+				if((substring[index] != '\n') && (isspace((unsigned char)substring[index])))
+					index++;	//If this character is whitespace, skip to next character
+				else
+					break;
+			}
 
 			if(substring[index++] != 'E')	//Check if this isn't a "text event" indicator (and increment index)
 			{
@@ -917,8 +934,13 @@ struct FeedbackChart *ImportFeedback(char *filename)
 
 		//Skip whitespace and parse to event ID
 			index=0;	//Reset index, to parse an int from after the equal sign
-			if((substring[index] != '\n') && (isspace((unsigned char)buffer[index])))
-				index++;	//If this character is whitespace, skip to next character
+			while(substring[index] != '\0')
+			{
+				if((substring[index] != '\n') && (isspace((unsigned char)substring[index])))
+					index++;	//If this character is whitespace, skip to next character
+				else
+					break;
+			}
 
 			if(substring[index++] != 'N')	//Check if this isn't a "note" indicator (and increment index)
 			{

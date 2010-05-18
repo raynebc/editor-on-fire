@@ -45,6 +45,7 @@ NCDFS_FILTER_LIST * eof_filter_midi_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_eof_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_exe_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_lyrics_files = NULL;
+NCDFS_FILTER_LIST * eof_filter_dB_files = NULL;
 
 PALETTE     eof_palette;
 BITMAP *    eof_image[EOF_MAX_IMAGES] = {NULL};
@@ -1396,6 +1397,11 @@ void eof_read_global_keys(void)
 		clear_keybuf();
 		eof_menu_file_lyrics_import();
 	}
+	if(key[KEY_F7])
+	{	//Launch Feedback chart import
+		clear_keybuf();
+		eof_menu_file_feedback_import();
+	}
 }
 
 void eof_lyric_logic(void)
@@ -2550,6 +2556,14 @@ int eof_initialize(int argc, char * argv[])
 		return 0;
 	}
 	ncdfs_filter_list_add(eof_filter_midi_files, "mid", "MIDI Files (*.mid)", 1);
+
+	eof_filter_dB_files = ncdfs_filter_list_create();
+	if(!eof_filter_dB_files)
+	{
+		allegro_message("Could not create file list filter (*.chart)!");
+		return 0;
+	}
+	ncdfs_filter_list_add(eof_filter_dB_files, "chart", "dB Chart Files (*.chart)", 1);
 
 	/* check availability of MP3 conversion tools */
 	if(!eof_supports_mp3)

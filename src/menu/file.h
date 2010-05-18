@@ -23,6 +23,7 @@ int eof_menu_file_load(void);
 int eof_menu_file_save(void);
 int eof_menu_file_quick_save(void);
 int eof_menu_file_lyrics_import(void);
+int eof_menu_file_feedback_import(void);	//Prompt for a .chart file and test importing it
 int eof_menu_file_save_as(void);
 int eof_menu_file_load_ogg(void);
 int eof_menu_file_midi_import(void);
@@ -61,6 +62,5 @@ int eof_test_controller_conflict(EOF_CONTROLLER *ct,int start,int stop);
 	//eof_guitar.button[0] and button[1] are used for guitar strum, button[2] through button[6] are used for the fret buttons
 	//eof_drums.button[0] is used for bass pedal, button[1] through button[4] are used for pads 1 through 4
 	//If there is a button conflict, nonzero is returned
-
 
 #endif

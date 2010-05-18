@@ -95,9 +95,9 @@
 
 typedef struct
 {
-	
+
 	int mode;
-	
+
 	/* rendering offsets */
 	int scrollbar_y;
 	int string_space;
@@ -118,10 +118,10 @@ typedef struct
 	int fretboard_h;
 	int buffered_preview;
 	int controls_x;
-	
+
 	/* editor mouse click areas */
 
-	
+
 } EOF_SCREEN_LAYOUT;
 
 #define EOF_EDITOR_RENDER_OFFSET  56
@@ -132,6 +132,7 @@ extern NCDFS_FILTER_LIST * eof_filter_midi_files;
 extern NCDFS_FILTER_LIST * eof_filter_eof_files;
 extern NCDFS_FILTER_LIST * eof_filter_exe_files;
 extern NCDFS_FILTER_LIST * eof_filter_lyrics_files;
+extern NCDFS_FILTER_LIST * eof_filter_dB_files;
 
 extern PALETTE     eof_palette;
 extern BITMAP *    eof_image[EOF_MAX_IMAGES];
