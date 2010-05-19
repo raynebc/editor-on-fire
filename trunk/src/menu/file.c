@@ -2,6 +2,7 @@
 #include "../agup/agup.h"
 #include "../foflc/Lyric_storage.h"
 #include "../lc_import.h"
+#include "../chart_import.h"
 #include "../main.h"
 #include "../player.h"
 #include "../dialog.h"
@@ -1790,11 +1791,6 @@ int eof_menu_file_feedback_import(void)
 {
 	char * returnedfn = NULL;
 	int jumpcode = 0;
-	struct FeedbackChart *chart;
-	int error;	//Passed to ImportFeedback() to get a return error
-
-	if(eof_song == NULL)	//Do not import chart if no chart is open, until this logic can also load audio
-		return 0;
 
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
@@ -1816,16 +1812,19 @@ int eof_menu_file_feedback_import(void)
 		}
 		else
 		{
-		//Detect if the selected chart file was valid, and display information
-			chart=ImportFeedback(returnedfn,&error);	//Load the chart into a newly-allocated structure
-
-			if(chart == NULL)
-				allegro_message("dB Chart import failed (%d)",error);
-			else
+			/* destroy loaded song */
+			if(eof_song)
 			{
-				EnumeratedBChartInfo(chart);
-				DestroyFeedbackChart(chart,1);	//De-allocate chart contents and chart structure
+				eof_destroy_song(eof_song);
 			}
+			
+			/* import chart */
+			eof_song = eof_import_chart(returnedfn);
+			if(!eof_song)
+			{
+				eof_song_loaded = 0;
+			}
+			eof_changes = 0;
 		}
 	}
 	eof_show_mouse(NULL);

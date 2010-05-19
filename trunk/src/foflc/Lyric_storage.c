@@ -899,6 +899,7 @@ char *TruncateString(char *str,char dealloc)
 {
 	unsigned long ctr;
 	char *newstr;
+	char *originalstr = str;
 
 	assert_wrapper(str != NULL);	//This must not be NULL
 
@@ -919,7 +920,7 @@ char *TruncateString(char *str,char dealloc)
 			break;	//Stop parsing
 
 	newstr=DuplicateString(str);
-	if(dealloc)	free(str);
+	if(dealloc)	free(originalstr);
 	return newstr;	//Return new string
 }
 

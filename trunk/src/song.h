@@ -1,6 +1,8 @@
 #ifndef EOF_SONG_H
 #define EOF_SONG_H
 
+#include <allegro.h>
+
 #define EOF_OLD_MAX_NOTES     65536
 #define EOF_MAX_NOTES         32768
 #define EOF_MAX_LYRICS        32768
