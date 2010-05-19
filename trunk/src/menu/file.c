@@ -23,7 +23,7 @@ MENU eof_file_menu[] =
     {"Load &OGG", eof_menu_file_load_ogg, NULL, D_DISABLED, NULL},
     {"", NULL, NULL, 0, NULL},
     {"MIDI Import", eof_menu_file_midi_import, NULL, 0, NULL},
-    {"Import Lyrics", eof_menu_file_lyrics_import, NULL, 0, NULL},
+    {"Import Lyrics\tF8", eof_menu_file_lyrics_import, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"Settings\tF10", eof_menu_file_settings, NULL, 0, NULL},
     {"Preferences\tF11", eof_menu_file_preferences, NULL, 0, NULL},
@@ -1823,7 +1823,7 @@ int eof_menu_file_feedback_import(void)
 				allegro_message("dB Chart import failed (%d)",error);
 			else
 			{
-				allegro_message("dB Chart import succeeded");
+				EnumeratedBChartInfo(chart);
 				DestroyFeedbackChart(chart,1);	//De-allocate chart contents and chart structure
 			}
 		}
@@ -1832,4 +1832,62 @@ int eof_menu_file_feedback_import(void)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	return 1;
+}
+
+void EnumeratedBChartInfo(struct FeedbackChart *chart)
+{
+	int printflen;	//Used to store the length of a printed format string
+	char *tempstr;	//Used to store a formatted print string
+	char *chartinfo=NULL;
+
+	if(chart == NULL)
+		return;
+
+	chartinfo=DuplicateString("dB Chart info:");
+	if(chart->name)
+	{
+		chartinfo=ResizedAppend(chartinfo,"\nName: ",1);
+		chartinfo=ResizedAppend(chartinfo,chart->name,1);
+	}
+	if(chart->artist)
+	{
+		chartinfo=ResizedAppend(chartinfo,"\nArtist: ",1);
+		chartinfo=ResizedAppend(chartinfo,chart->artist,1);
+	}
+	if(chart->charter)
+	{
+		chartinfo=ResizedAppend(chartinfo,"\nCharter: ",1);
+		chartinfo=ResizedAppend(chartinfo,chart->charter,1);
+	}
+	if(chart->audiofile)
+	{
+		chartinfo=ResizedAppend(chartinfo,"\nMusicStream: ",1);
+		chartinfo=ResizedAppend(chartinfo,chart->audiofile,1);
+	}
+	printflen=printf("\nOffset: %lu",chart->offset)+1;	//Find the number of characters needed to sprintf this string
+	if(printflen > 0)
+	{
+		tempstr=malloc_err(printflen);
+		sprintf(tempstr,"\nOffset: %lu",chart->offset);
+		chartinfo=ResizedAppend(chartinfo,tempstr,1);
+		free(tempstr);
+	}
+	printflen=printf("\nResolution: %lu",chart->resolution)+1;	//Find the number of characters needed to sprintf this string
+	if(printflen > 0)
+	{
+		tempstr=malloc_err(printflen);
+		sprintf(tempstr,"\nResolution: %lu",chart->resolution);
+		chartinfo=ResizedAppend(chartinfo,tempstr,1);
+		free(tempstr);
+	}
+	printflen=printf("\n%lu Instrument tracks loaded",chart->tracksloaded)+1;	//Find the number of characters needed to sprintf this string
+	if(printflen > 0)
+	{
+		tempstr=malloc_err(printflen);
+		sprintf(tempstr,"\n%lu Instrument tracks loaded",chart->tracksloaded);
+		chartinfo=ResizedAppend(chartinfo,tempstr,1);
+		free(tempstr);
+	}
+
+	allegro_message("%s",chartinfo);
 }

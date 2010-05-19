@@ -767,11 +767,11 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 			{	//If a valid definition of (string) = (string) or (string) = "(string)" was found
 				if(strcasecmp(string1,"Name") == 0)
 					chart->name=string2;	//Save the song name tag
-				if(strcasecmp(string1,"Artist") == 0)
+				else if(strcasecmp(string1,"Artist") == 0)
 					chart->artist=string2;	//Save the song artist tag
-				if(strcasecmp(string1,"Charter") == 0)
+				else if(strcasecmp(string1,"Charter") == 0)
 					chart->charter=string2;	//Save the chart editor tag
-				if(strcasecmp(string1,"Offset") == 0)
+				else if(strcasecmp(string1,"Offset") == 0)
 				{
 					index2=0;	//Use this as an index for string2
 					chart->offset=(unsigned long)ParseLongInt(string2,&index2,chart->linesprocessed,&errorstatus);	//Parse string2 as a number
@@ -783,7 +783,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 						return NULL;	//return error
 					}
 				}
-				if(strcasecmp(string1,"Resolution") == 0)
+				else if(strcasecmp(string1,"Resolution") == 0)
 				{
 					index2=0;	//Use this as an index for string2
 					chart->resolution=(unsigned long)ParseLongInt(string2,&index2,chart->linesprocessed,&errorstatus);	//Parse string2 as a number
@@ -795,6 +795,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 						return NULL;	//return error
 					}
 				}
+				else if(strcasecmp(string1,"MusicStream") == 0)
+					chart->audiofile=string2;	//Save the name of the audio file for the chart
 			}
 		}
 
@@ -1035,7 +1037,13 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 					break;
 			}
 
-			if(substring[index++] != 'N')	//Check if this isn't a "note" indicator (and increment index)
+			if(substring[index] == 'S')	//Check if this is a "player section", currently not supported
+			{
+				fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+				continue;							//Skip this line
+			}
+
+			if(substring[index++] != 'N')	//Check if this isn't a "note" indicator, and increment index
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
