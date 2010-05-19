@@ -77,11 +77,12 @@ void DestroyFeedbackChart(struct FeedbackChart *ptr, char freestruct);
 	//Releases all memory used by the passed FeedbackChart, including that of the contained linked lists
 	//If freestruct is nonzero, the passed FeedbackChart structure's memory is also freed
 
-struct FeedbackChart *ImportFeedback(char *filename);
+struct FeedbackChart *ImportFeedback(char *filename, int *error);
 	//Imports the specified file and returns a populated FeedbackChart structure if the import succeeds
 	//NULL is returned if import fails
 	//In the event of memory allocation, file I/O or file syntax error, assert_wrapper or exit_wrapper may be
 	//invoked, so use jumpcode=setjmp(jumpbuffer); and the setjmp logic to catch that in the function that
 	//calls this function
+	//If import fails and error is NOT NULL, a return error is passed through it
 
 #endif

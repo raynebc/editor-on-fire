@@ -566,7 +566,7 @@ void eof_editor_logic_feedback(void)
 	}
 }
 
-struct FeedbackChart *ImportFeedback(char *filename)
+struct FeedbackChart *ImportFeedback(char *filename, int *error)
 {
 	FILE *inf;
 	char songparsed=0,syncparsed=0,eventsparsed=0;
@@ -600,6 +600,8 @@ struct FeedbackChart *ImportFeedback(char *filename)
 	if(inf == NULL)
 	{
 		DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+		if(error)
+			*error=1;
 		return NULL;
 	}
 
@@ -639,21 +641,27 @@ struct FeedbackChart *ImportFeedback(char *filename)
 			if(substring2 == NULL)
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				if(error)
+					*error=2;
 				return NULL;				//Malformed section header, return error
 			}
 
 			if(currentsection != 0)	//If a section is already being parsed
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				if(error)
+					*error=3;
 				return NULL;	//Malformed file, return error
 			}
 
 			substring=strcasestr_spec(buffer,"Song");	//Case insensitive search, returning pointer to after the match
-			if(substring <= substring2)	//If this line contained "Song" followed by "]"
+			if(substring && (substring <= substring2))	//If this line contained "Song" followed by "]"
 			{
 				if(songparsed != 0)	//If a section with this name was already parsed
 				{
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+					if(error)
+						*error=4;
 					return NULL;	//return error
 				}
 				songparsed=1;
@@ -662,11 +670,13 @@ struct FeedbackChart *ImportFeedback(char *filename)
 			else
 			{
 				substring=strcasestr_spec(buffer,"SyncTrack");
-				if(substring <= substring2)	//If this line contained "SyncTrack" followed by "]"
+				if(substring && (substring <= substring2))	//If this line contained "SyncTrack" followed by "]"
 				{
 					if(syncparsed != 0)	//If a section with this name was already parsed
 					{
 						DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+						if(error)
+							*error=5;
 						return NULL;	//return error
 					}
 					syncparsed=1;
@@ -675,11 +685,13 @@ struct FeedbackChart *ImportFeedback(char *filename)
 				else
 				{
 					substring=strcasestr_spec(buffer,"Events");
-					if(substring <= substring2)	//If this line contained "Events" followed by "]"
+					if(substring && (substring <= substring2))	//If this line contained "Events" followed by "]"
 					{
 						if(eventsparsed != 0)	//If a section with this name was already parsed
 						{
 							DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+							if(error)
+								*error=6;
 							return NULL;	//return error
 						}
 						eventsparsed=1;
@@ -688,9 +700,11 @@ struct FeedbackChart *ImportFeedback(char *filename)
 					else
 					{	//This is an instrument section
 						instrument=Validate_dB_instrument(buffer);
-						if(substring == NULL)	//Not a valid Feedback instrument section name
+						if(instrument == NULL)	//Not a valid Feedback instrument section name
 						{
 							DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+							if(error)
+								*error=7;
 							return NULL;	//return error
 						}
 						currentsection=4;
@@ -726,6 +740,8 @@ struct FeedbackChart *ImportFeedback(char *filename)
 			if(currentsection == 0)	//If no section is being parsed
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				if(error)
+					*error=8;
 				return NULL;	//Malformed file, return error
 			}
 			instrument=NULL;	//Any section ending ends the current instrument track
@@ -739,6 +755,8 @@ struct FeedbackChart *ImportFeedback(char *filename)
 		if(substring == NULL)
 		{
 			DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+			if(error)
+				*error=9;
 			return NULL;		//If it has none, return error
 		}
 
@@ -760,6 +778,8 @@ struct FeedbackChart *ImportFeedback(char *filename)
 					if(errorstatus)		//If ParseLongInt() failed
 					{
 						DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+						if(error)
+							*error=10;
 						return NULL;	//return error
 					}
 				}
@@ -770,6 +790,8 @@ struct FeedbackChart *ImportFeedback(char *filename)
 					if(errorstatus)		//If ParseLongInt() failed
 					{
 						DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+						if(error)
+							*error=11;
 						return NULL;	//return error
 					}
 				}
@@ -784,11 +806,30 @@ struct FeedbackChart *ImportFeedback(char *filename)
 			if(errorstatus)		//If ParseLongInt() failed
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				if(error)
+					*error=12;
 				return NULL;	//return error
 			}
 
-		//Skip whitespace and parse to event ID
+		//Skip whitespace and parse to equal sign
 			index=0;	//Reset index, to parse an int from after the equal sign
+			while(substring[index] != '\0')
+			{
+				if((substring[index] != '\n') && (isspace((unsigned char)substring[index])))
+					index++;	//If this character is whitespace, skip to next character
+				else
+					break;
+			}
+
+		//Skip equal sign
+			if(substring[index++] != '=')	//Check the character and increment index
+			{
+				if(error)
+					*error=13;
+				return NULL;
+			}
+
+		//Skip whitespace and parse to event ID
 			while(substring[index] != '\0')
 			{
 				if((substring[index] != '\n') && (isspace((unsigned char)substring[index])))
@@ -805,6 +846,8 @@ struct FeedbackChart *ImportFeedback(char *filename)
 				if(substring[index+1] != 'S')	//If the next character doesn't complete the anchor type
 				{
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+					if(error)
+						*error=14;
 					return NULL;
 				}
 				index+=2;	//This anchor type is two characters instead of one
@@ -812,6 +855,8 @@ struct FeedbackChart *ImportFeedback(char *filename)
 			else
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				if(error)
+					*error=15;
 				return NULL;	//Invalid anchor type
 			}
 
@@ -820,6 +865,8 @@ struct FeedbackChart *ImportFeedback(char *filename)
 			if(errorstatus)		//If ParseLongInt() failed
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				if(error)
+					*error=16;
 				return NULL;	//return error
 			}
 
@@ -848,6 +895,8 @@ struct FeedbackChart *ImportFeedback(char *filename)
 			else
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				if(error)
+					*error=17;
 				return NULL;		//invalid anchor type
 			}
 		}
@@ -860,11 +909,30 @@ struct FeedbackChart *ImportFeedback(char *filename)
 			if(errorstatus)		//If ParseLongInt() failed
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				if(error)
+					*error=18;
 				return NULL;	//return error
 			}
 
-		//Skip whitespace and parse to event ID
+		//Skip whitespace and parse to equal sign
 			index=0;	//Reset index, to parse an int from after the equal sign
+			while(substring[index] != '\0')
+			{
+				if((substring[index] != '\n') && (isspace((unsigned char)substring[index])))
+					index++;	//If this character is whitespace, skip to next character
+				else
+					break;
+			}
+
+		//Skip equal sign
+			if(substring[index++] != '=')	//Check the character and increment index
+			{
+				if(error)
+					*error=19;
+				return NULL;
+			}
+
+		//Skip whitespace and parse to event ID
 			while(substring[index] != '\0')
 			{
 				if((substring[index] != '\n') && (isspace((unsigned char)substring[index])))
@@ -876,6 +944,8 @@ struct FeedbackChart *ImportFeedback(char *filename)
 			if(substring[index++] != 'E')	//Check if this isn't a "text event" indicator (and increment index)
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				if(error)
+					*error=20;
 				return NULL;		//return error
 			}
 
@@ -886,6 +956,8 @@ struct FeedbackChart *ImportFeedback(char *filename)
 			if(substring[index++] != '"')	//Check if this was a null character instead of quotation mark (and increment index)
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				if(error)
+					*error=21;
 				return NULL;		//return error
 			}
 
@@ -897,6 +969,8 @@ struct FeedbackChart *ImportFeedback(char *filename)
 				if(substring[index] == '\0')	//If a null character is reached unexpectedly
 				{
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+					if(error)
+						*error=22;
 					return NULL;
 				}
 				buffer2[index2++]=substring[index++];	//Copy the character to the second buffer, incrementing both indexes
@@ -929,11 +1003,30 @@ struct FeedbackChart *ImportFeedback(char *filename)
 			if(errorstatus)		//If ParseLongInt() failed
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				if(error)
+					*error=23;
 				return NULL;	//return error
 			}
 
-		//Skip whitespace and parse to event ID
+		//Skip whitespace and parse to equal sign
 			index=0;	//Reset index, to parse an int from after the equal sign
+			while(substring[index] != '\0')
+			{
+				if((substring[index] != '\n') && (isspace((unsigned char)substring[index])))
+					index++;	//If this character is whitespace, skip to next character
+				else
+					break;
+			}
+
+		//Skip equal sign
+			if(substring[index++] != '=')	//Check the character and increment index
+			{
+				if(error)
+					*error=24;
+				return NULL;
+			}
+
+		//Skip whitespace and parse to event ID
 			while(substring[index] != '\0')
 			{
 				if((substring[index] != '\n') && (isspace((unsigned char)substring[index])))
@@ -945,6 +1038,8 @@ struct FeedbackChart *ImportFeedback(char *filename)
 			if(substring[index++] != 'N')	//Check if this isn't a "note" indicator (and increment index)
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				if(error)
+					*error=25;
 				return NULL;		//return error
 			}
 
@@ -953,6 +1048,8 @@ struct FeedbackChart *ImportFeedback(char *filename)
 			if(errorstatus)		//If ParseLongInt() failed
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				if(error)
+					*error=26;
 				return NULL;	//return error
 			}
 
@@ -961,6 +1058,8 @@ struct FeedbackChart *ImportFeedback(char *filename)
 			if(errorstatus)		//If ParseLongInt() failed
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				if(error)
+					*error=27;
 				return NULL;	//return error
 			}
 
@@ -968,6 +1067,8 @@ struct FeedbackChart *ImportFeedback(char *filename)
 			if(curtrack == NULL)	//If the instrument track linked list is not initialized
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+				if(error)
+					*error=28;
 				return NULL;
 			}
 
@@ -993,11 +1094,16 @@ struct FeedbackChart *ImportFeedback(char *filename)
 		else
 		{
 			DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+			if(error)
+				*error=29;
 			return NULL;
 		}
 
 		fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 	}//Until end of file is reached
+
+	if(error)
+		*error=0;
 
 	return chart;
 }
@@ -1045,7 +1151,10 @@ int Read_dB_string(char *source,char **str1, char **str2)
 		if(!isspace(source[srcindex]))	//Character is not whitespace and not NULL character
 		{
 			if(source[srcindex] == '"')	//If the first character after the = is found to be a quotation mark
+			{
+				srcindex++;			//Seek past the quotation mark
 				findquote=1;		//Expect another quotation mark to end the string
+			}
 
 			break;	//Exit while loop
 		}
@@ -1058,7 +1167,7 @@ int Read_dB_string(char *source,char **str1, char **str2)
 	{
 		if(findquote && (source[srcindex] == '"'))	//If we should stop at this quotation mark
 			break;
-		string1[index++]=source[srcindex++];	//Append character to string1 and increment both indexes
+		string2[index++]=source[srcindex++];	//Append character to string1 and increment both indexes
 	}
 
 	string2[index]='\0';	//Truncate string2
@@ -1096,7 +1205,7 @@ char *Validate_dB_instrument(char *buffer)
 		return NULL;	//Return error
 
 //Verify that no non whitespace characters exist after the closing bracket
-	index=0;	//Reset index
+	index=1;	//Reset index to point to the character after the closing bracket
 	while(endbracket[index] != '\0')
 		if(!isspace(endbracket[index++]))	//Check if this character isn't whitespace (and increment index)
 			return NULL;			//If it isn't whitespace, return error

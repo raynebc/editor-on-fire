@@ -814,13 +814,16 @@ long int ParseLongInt(char *buffer,unsigned long *startindex,unsigned long linen
 	}
 
 	while(isspace((unsigned char)buffer[index]) == 0)
-	{	//Until whitespace is found
+	{	//Until whitespace or NULL character is found
 		if(isdigit((unsigned char)buffer[index]))	//If this is a numerical character
 			buffer2[index2++]=buffer[index];	//Store it, move index2 forward
 		else if(buffer[index] == '-')			//if this is a negative sign
 			buffer2[index2++]=buffer[index];	//Store it, move index2 forward
 		else
 		{	//is not a numerical character
+			if(buffer[index]=='\0')	//If the end of the string in buffer is reached
+				break;
+
 			if(errorstatus != NULL)
 			{	//Suppress error and return it through the pointer
 				*errorstatus=3;
