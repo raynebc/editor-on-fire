@@ -699,8 +699,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 					}
 					else
 					{	//This is an instrument section
-						instrument=Validate_dB_instrument(buffer);
-						if(instrument == NULL)	//Not a valid Feedback instrument section name
+						temp=(void *)Validate_dB_instrument(buffer);
+						if(temp == NULL)	//Not a valid Feedback instrument section name
 						{
 							DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 							if(error)
@@ -711,7 +711,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 						chart->tracksloaded++;	//Keep track of how many instrument tracks are loaded
 
 					//Create and insert instrument link in the instrument list
-						temp=calloc_err(1,sizeof(struct dbTrack));	//Allocate and init memory to NULL data
+//						temp=calloc_err(1,sizeof(struct dbTrack));	//Allocate and init memory to NULL data
 						if(chart->tracks == NULL)	//If the list is empty
 						{
 							chart->tracks=(struct dbTrack *)temp;	//Point head of list to this link
@@ -1188,17 +1188,22 @@ int Read_dB_string(char *source,char **str1, char **str2)
 	return 1;		//Return success
 }
 
-char *Validate_dB_instrument(char *buffer)
+struct dbTrack *Validate_dB_instrument(char *buffer)
 {
 	//Validates that buffer contains a valid dB instrument track name enclosed in brackets []
 	//buffer is expected to point to the opening bracket
-	//If it is valid, a copy of the track name is returned, otherwise NULL is returned
-	//buffer[] is modified to remove any whitespace after the closing bracket
+	//If it is valid, a dbTrack structure is allocated and initialized:
+	//(track name is allocated, tracktype and difftype are set and the linked lists are set to NULL)
+	//The track strcture is returned, otherwise NULL is returned if the string did not contain a valid
+	//track name.  buffer[] is modified to remove any whitespace after the closing bracket
 	unsigned long index;	//Used to index into buffer
 	char *endbracket;	//The pointer to the end bracket
 	char *diffstring;	//Used to find the difficulty substring
 	char *inststring;	//Used to find the instrument substring
-	char *retstring;	//Used to create the string that is returned
+	char *retstring;	//Used to create the instrument track string
+	struct dbTrack *chart;			//Used to create the structure that is returned
+	char tracktype=0,difftype=0;	//Used to track the instrument type and difficulty of the track, based on the name
+	char isguitar=0,isdrums=0;		//Used to track secondary/tertiary guitar/drum tracks
 
 	if(buffer == NULL)
 		return NULL;	//Return error
@@ -1238,9 +1243,17 @@ char *Validate_dB_instrument(char *buffer)
 				diffstring=strcasestr_spec(&buffer[1],"Expert");
 				if(diffstring == NULL)	//If none of the four valid difficulty strings were found
 					return NULL;	//Return error
+				else
+					difftype=4;	//Track that this is an Expert difficulty
 			}
+			else
+				difftype=3;	//Track that this is a Hard difficulty
 		}
+		else
+			difftype=2;	//Track that this is a Medium difficulty
 	}
+	else
+		difftype=1;	//Track that this is is an Easy difficulty
 
 //At this point, diffstring points to the character AFTER the matching difficulty string.  Verify that a valid instrument is specified
 	//Test for Single (Guitar)
@@ -1288,15 +1301,47 @@ char *Validate_dB_instrument(char *buffer)
 												if(inststring == NULL)	//If none of the valid instrument names were found
 													return NULL;	//Return error
 											}
+											else
+												tracktype=5;	//Track that this is a "Vocals" track
 										}
+										else
+											isdrums=1;	//DoubleDrums is a drums track
+									}
+									else
+									{
+										tracktype=4;	//Track that this is a "Drums" track
+										isdrums=1;
 									}
 								}
+								else
+									isguitar=1;	//10KeyGuitar is a guitar track
 							}
+							else
+								isguitar=1;	//CoopBass is a guitar track
 						}
+						else
+							isguitar=1;	//CoopLead is a guitar track
 					}
+					else
+						isguitar=1;		//EnhancedGuitar is a guitar track
+				}
+				else
+				{
+					tracktype=3;	//Track that this is a "Bass" track
+					isguitar=1;
 				}
 			}
-		}//If the instrument isn't defined as "Single"
+			else
+			{
+				tracktype=2;	//Track that this is a "Lead Guitar" track
+				isguitar=1;
+			}
+		}
+		else
+		{
+			tracktype=1;	//Track that this is a "Guitar" track
+			isguitar=1;
+		}
 
 //Validate that the character immediately after the instrument substring is the closing bracket
 	if(inststring[0] != ']')
@@ -1305,7 +1350,14 @@ char *Validate_dB_instrument(char *buffer)
 //Create a new string containing the instrument name, minus the brackets
 	retstring=DuplicateString(&buffer[1]);
 	retstring[strlen(retstring)-1]='\0';	//Truncate the trailing bracket
-	return retstring;
+//	return retstring;
+
+//Create and initialize the instrument structure
+	chart=calloc_err(1,sizeof(struct dbTrack));	//Allocate and init memory to NULL data
+	chart->trackname=retstring;	//Store the instrument track name
+	chart->tracktype=tracktype;
+	chart->difftype=difftype;
+	return chart;
 }
 
 void DestroyFeedbackChart(struct FeedbackChart *ptr, char freestruct)
