@@ -1791,6 +1791,7 @@ int eof_menu_file_feedback_import(void)
 	char * returnedfn = NULL;
 	int jumpcode = 0;
 	struct FeedbackChart *chart;
+	int error;	//Passed to ImportFeedback() to get a return error
 
 	if(eof_song == NULL)	//Do not import chart if no chart is open, until this logic can also load audio
 		return 0;
@@ -1816,10 +1817,10 @@ int eof_menu_file_feedback_import(void)
 		else
 		{
 		//Detect if the selected chart file was valid, and display information
-			chart=ImportFeedback(returnedfn);	//Load the chart into a newly-allocated structure
+			chart=ImportFeedback(returnedfn,&error);	//Load the chart into a newly-allocated structure
 
 			if(chart == NULL)
-				allegro_message("dB Chart import failed");
+				allegro_message("dB Chart import failed (%d)",error);
 			else
 			{
 				allegro_message("dB Chart import succeeded");
