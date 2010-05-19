@@ -2,6 +2,7 @@
 #define EOF_MENU_FILE_H
 
 #include "../control.h"
+#include "../feedback.h"
 
 extern MENU eof_file_menu[];
 
@@ -62,5 +63,8 @@ int eof_test_controller_conflict(EOF_CONTROLLER *ct,int start,int stop);
 	//eof_guitar.button[0] and button[1] are used for guitar strum, button[2] through button[6] are used for the fret buttons
 	//eof_drums.button[0] is used for bass pedal, button[1] through button[4] are used for pads 1 through 4
 	//If there is a button conflict, nonzero is returned
+
+void EnumeratedBChartInfo(struct FeedbackChart *chart);
+	//Call an allegro_message with summary information about the passed chart
 
 #endif
