@@ -36,6 +36,10 @@ struct dbNotelist
 struct dbTrack
 {
 	char *trackname;
+	char tracktype;	//1 for guitar, 2 for lead guitar, 3 for for bass, 4 for drums, 5 for vocal rhythm, 0 for other
+	char difftype;	//1 for easy, 2 for medium, 3 for hard, 4 for expert
+	char isguitar;	//Nonzero if it is a guitar track, regardless of which one it is
+	char isdrums;	//Nonzero if it is a drums track, regardless of which one it is
 	struct dbNotelist *notes;
 	struct dbTrack *next;
 };
@@ -68,11 +72,13 @@ int Read_dB_string(char *source,char **str1, char **str2);
 	//Nonzero is returned upon success, or zero is returned if source did not contain two sets of non whitespace characters
 	//separated by an equal sign character, or if the closing quotation mark is missing.
 
-char *Validate_dB_instrument(char *buffer);
+struct dbTrack *Validate_dB_instrument(char *buffer);
 	//Validates that buffer contains a valid dB instrument track name enclosed in brackets []
 	//buffer is expected to point to the opening bracket
-	//If it is valid, a copy of the track name is returned, otherwise NULL is returned
-	//buffer[] is modified to remove any whitespace after the closing bracket
+	//If it is valid, a dbTrack structure is allocated and initialized:
+	//(track name is allocated, tracktype and difftype are set and the linked lists are set to NULL)
+	//The track strcture is returned, otherwise NULL is returned if the string did not contain a valid
+	//track name.  buffer[] is modified to remove any whitespace after the closing bracket
 
 void DestroyFeedbackChart(struct FeedbackChart *ptr, char freestruct);
 	//Releases all memory used by the passed FeedbackChart, including that of the contained linked lists
