@@ -579,7 +579,6 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 	unsigned long A,B,C;		//The first, second and third integer values read from the current line of the file
 	int errorstatus=0;		//Passed to ParseLongInt()
 	char anchortype;		//The achor type being read in [SyncTrack]
-	char *instrument;		//Stores the value returned by Validate_dB_instrument()
 	char *string1,*string2;		//Used to hold strings parsed with Read_dB_string()
 
 //Feedback chart structure variables
@@ -724,7 +723,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 						}
 
 					//Initialize instrument link
-						curtrack->trackname=instrument;	//Store the track name returned by Validate_dB_instrument()
+//						curtrack->trackname=instrument;	//Store the track name returned by Validate_dB_instrument()
 						curnote=NULL;			//Reset the conductor for the track's note list
 					}
 				}
@@ -744,7 +743,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 					*error=8;
 				return NULL;	//Malformed file, return error
 			}
-			instrument=NULL;	//Any section ending ends the current instrument track
+//			instrument=NULL;	//Any section ending ends the current instrument track
 			currentsection=0;
 			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 			continue;				//Skip ahead to the next line
@@ -872,34 +871,54 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				return NULL;	//return error
 			}
 
-		//Create and insert anchor link into the anchor list
-			temp=calloc_err(1,sizeof(struct dBAnchor));	//Allocate and init memory to NULL data
-			if(chart->anchors == NULL)	//If the list is empty
+		//If this anchor event has the same chart time as the last, just write this event's information with the last's
+			if(curanchor && (curanchor->chartpos == A))
 			{
-				chart->anchors=(struct dBAnchor *)temp;	//Point head of list to this link
-				curanchor=chart->anchors;		//Point conductor to this link
+				if(anchortype == 'A')	//If this is an Anchor event
+					curanchor->usec=B;	//Store the anchor realtime position
+				else if(anchortype == 'B')	//If this is a Tempo event
+					curanchor->BPM=B;	//Store the tempo
+				else if(anchortype == 'T')	//If this is a Time Signature event
+					curanchor->TS=B;	//Store the Time Signature
+				else	//Invalid anchor type
+				{
+					DestroyFeedbackChart(chart,1);
+					if(error)
+						*error=17;
+					return NULL;
+				}
 			}
 			else
 			{
-				curanchor->next=(struct dBAnchor *)temp;	//Conductor points forward to this link
-				curanchor=curanchor->next;			//Point conductor to this link
-			}
+		//Create and insert anchor link into the anchor list
+				temp=calloc_err(1,sizeof(struct dBAnchor));	//Allocate and init memory to NULL data
+				if(chart->anchors == NULL)	//If the list is empty
+				{
+					chart->anchors=(struct dBAnchor *)temp;	//Point head of list to this link
+					curanchor=chart->anchors;		//Point conductor to this link
+				}
+				else
+				{
+					curanchor->next=(struct dBAnchor *)temp;	//Conductor points forward to this link
+					curanchor=curanchor->next;			//Point conductor to this link
+				}
 
 		//Initialize anchor link
-			curanchor->chartpos=A;	//The first number read is the chart position
-			curanchor->type=anchortype;
-			if(anchortype == 'B')		//If this was a tempo event
-				curanchor->BPM=B;	//The second number represents 1000 times the tempo
-			else if(anchortype == 'T')	//If this was a time signature event
-				curanchor->TS=B;	//Store the numerator of the time signature
-			else if(anchortype == 'A')	//If this was an anchor event
-				curanchor->usec=B;	//Store the anchor's timestamp in microseconds
-			else
-			{
-				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
-				if(error)
-					*error=17;
-				return NULL;		//invalid anchor type
+				curanchor->chartpos=A;	//The first number read is the chart position
+				curanchor->type=anchortype;
+				if(anchortype == 'B')		//If this was a tempo event
+					curanchor->BPM=B;	//The second number represents 1000 times the tempo
+				else if(anchortype == 'T')	//If this was a time signature event
+					curanchor->TS=B;	//Store the numerator of the time signature
+				else if(anchortype == 'A')	//If this was an anchor event
+					curanchor->usec=B;	//Store the anchor's timestamp in microseconds
+				else
+				{
+					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+					if(error)
+						*error=17;
+					return NULL;		//invalid anchor type
+				}
 			}
 		}
 
