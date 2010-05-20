@@ -7,10 +7,11 @@
 /* convert Feedback chart time to milliseconds for use with EOF */
 static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chartpos)
 {
-	unsigned long ppqn = 500000;
 	double curpos = chart->offset;
 	unsigned long lastchartpos = 0;
-	double beat_length = (double)60000 / ((double)60000000.0 / (double)ppqn);
+	double beat_length = 500.0;
+	int beat_count;
+	double d;
 	double convert = beat_length / (double)chart->resolution; // current conversion rate of chartpos to milliseconds
 	struct dBAnchor * current_anchor = chart->anchors;
 	while(current_anchor)
@@ -18,8 +19,14 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 		/* find current BPM */
 		if(current_anchor->BPM > 0)
 		{
-			ppqn = (double)60000000.0 / ((double)current_anchor->BPM / 1000.0);
-			beat_length = (double)60000 / ((double)60000000.0 / (double)ppqn);
+			beat_length = (double)60000000.0 / ((double)current_anchor->BPM;
+			
+			/* adjust BPM if next beat marker is an anchor */
+			if(current_anchor->next && current_anchor->next->usec > 0)
+			{
+				beat_count = (current_anchor->next->chartpos - current_anchor->chartpos) / chart->resolution;
+				beat_length = (((double)current_anchor->next->usec / 1000.0) - curpos) / (double)beat_count;
+			}
 			convert = beat_length / (double)chart->resolution;
 		}
 		if(chartpos > current_anchor->chartpos)
@@ -95,33 +102,44 @@ EOF_SONG * eof_import_chart(const char * fn)
 		struct dBAnchor * current_anchor = chart->anchors;
 		unsigned long ppqn = 500000;
 		double curpos = sp->tags->ogg[0].midi_offset;
-		double nextpos;
 		double beat_length;
+		double bpm = 120.0;
+		int beat_count;
+		int i;
+		double d;
 		unsigned long lastbpm = 120000;
 		int new_anchor = 0;
 		EOF_BEAT_MARKER * new_beat = NULL;
-		printf("begin anchors\n");
 		/* usec member can be 0, meaning anchor is really just a BPM change
 		 * need to use chartpos to find beat marker position */
 		while(current_anchor)
 		{
-//			if(current_anchor->usec > 0 || current_anchor->chartpos == 0)
+			new_anchor = 1;
+			ppqn = (double)60000000.0 / ((double)current_anchor->BPM / 1000.0);
+			beat_length = (double)60000 / ((double)60000000.0 / (double)ppqn);
+			if(current_anchor->BPM > 0)
 			{
-				nextpos = chartpos_to_msec(chart, current_anchor->chartpos);
-//				printf("usec = %lu\n", current_anchor->usec);
-				new_anchor = 1;
-				if(current_anchor->BPM > 0)
+				/* adjust BPM if next beat marker is an anchor */
+				if(current_anchor->next && current_anchor->next->usec > 0)
 				{
-					ppqn = (double)60000000.0 / ((double)current_anchor->BPM / 1000.0);
+					beat_count = (current_anchor->next->chartpos - current_anchor->chartpos) / chart->resolution;
+					beat_length = (((double)current_anchor->next->usec / 1000.0) - curpos) / (double)beat_count;
+					bpm = (double)60000.0 / beat_length;
+					ppqn = (double)60000000.0 / bpm;
 				}
-				beat_length = (double)60000 / ((double)60000000.0 / (double)ppqn);
-				while(curpos < nextpos - 100)
+			}
+			
+			/* if there is another anchor, fill in beats up to that anchor */
+			if(current_anchor->next)
+			{
+				for(i = 0; i < (current_anchor->next->chartpos - current_anchor->chartpos) / chart->resolution; i++)
 				{
 					new_beat = eof_song_add_beat(sp);
 					if(new_beat)
 					{
 						new_beat->ppqn = ppqn;
-						new_beat->pos = curpos;
+						new_beat->fpos = curpos;
+						new_beat->pos = new_beat->fpos;
 						if(new_anchor && lastbpm != current_anchor->BPM)
 						{
 							new_beat->flags |= EOF_BEAT_FLAG_ANCHOR;
@@ -131,10 +149,10 @@ EOF_SONG * eof_import_chart(const char * fn)
 					curpos += beat_length;
 				}
 			}
+			
 			lastbpm = current_anchor->BPM;
 			current_anchor = current_anchor->next;
 		}
-		printf("end anchors\n");
 		
 		/* fill in notes */
 		struct dbTrack * current_track = chart->tracks;
@@ -208,6 +226,10 @@ EOF_SONG * eof_import_chart(const char * fn)
 						{
 							new_note->note |= (1 << current_note->gemcolor);
 						}
+					}
+					if(track ==  EOF_TRACK_DRUM && lastpos == 0)
+					{
+						printf("%f\n", chartpos_to_msec(chart, current_note->chartpos));
 					}
 					lastpos = current_note->chartpos;
 					current_note = current_note->next;
