@@ -1820,18 +1820,18 @@ int eof_menu_file_feedback_import(void)
 
 			/* import chart */
 			eof_song = eof_import_chart(returnedfn);
-			if(!eof_song)
+			if(eof_song)
 			{
-				eof_song_loaded = 0;
+				eof_calculate_beats();
+				eof_changes = 0;
+				eof_song_loaded = 1;
+				eof_fix_window_title();
 			}
 			else
-				eof_song_loaded = 1;
-
-			eof_calculate_beats();
-			eof_changes = 0;
-			eof_fix_window_title();
-			eof_detect_difficulties(eof_song);	//Check if this difficulty is populated, and draw asterisk on the tab if needed
-			printf("finished\n");
+			{
+				eof_song_loaded = 0;
+				eof_changes = 0;
+			}
 		}
 	}
 	eof_show_mouse(NULL);
