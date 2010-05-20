@@ -1824,7 +1824,11 @@ int eof_menu_file_feedback_import(void)
 			{
 				eof_song_loaded = 0;
 			}
+			eof_calculate_beats();
 			eof_changes = 0;
+			eof_song_loaded = 1;
+			eof_fix_window_title();
+			printf("finished\n");
 		}
 	}
 	eof_show_mouse(NULL);
