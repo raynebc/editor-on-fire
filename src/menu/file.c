@@ -1826,6 +1826,7 @@ int eof_menu_file_feedback_import(void)
 				eof_changes = 0;
 				eof_song_loaded = 1;
 				eof_fix_window_title();
+				eof_detect_difficulties(eof_song);
 			}
 			else
 			{
