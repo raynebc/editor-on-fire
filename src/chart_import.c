@@ -5,7 +5,7 @@
 #include "feedback.h"
 
 /* convert Feedback chart time to milliseconds for use with EOF */
-static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chartpos)
+/*static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chartpos)
 {
 	unsigned long ppqn = 500000;
 	double curpos = chart->offset;
@@ -15,7 +15,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 	struct dBAnchor * current_anchor = chart->anchors;
 	while(current_anchor)
 	{
-		/* find current BPM */
+		// find current BPM
 		if(current_anchor->BPM > 0)
 		{
 			ppqn = (double)60000000.0 / ((double)current_anchor->BPM / 1000.0);
@@ -36,6 +36,37 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 	}
 	return curpos;
 }
+*/
+
+static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chartpos)
+{
+	struct dBAnchor *targetanchor,*conductor;
+	double anchortime=0.0;
+	double tickduration=0.0;
+
+	if((chart == NULL) || (chart->anchors == NULL))
+		return 0.0;	//Return error
+
+//Check to make sure that the chart begins with a tempo event at chart position 0, otherwise it's not a valid chart?
+	if(chart->anchors->chartpos != 0)
+		return 0.0;	//Return error
+
+//Find the anchor that is closest to the chart position immediately before chartpos
+	targetanchor=chart->anchors;
+	for(conductor=chart->anchors;conductor != NULL;conductor=conductor->next)	//For each anchor
+	{
+		if(conductor->next != NULL)						//If there's another anchor that follows
+			if(conductor->next->chartpos <= chartpos)	//If the next anchor starts no later than the target chart position
+			targetanchor=conductor->next;	//Note it
+	}
+	anchortime=targetanchor->usec / 1000.0;	//Store the time of this anchor
+
+//Find the duration of one tick
+	tickduration=(60000.0 / (targetanchor->BPM / 1000.0) / chart->resolution);
+
+//Return the timestamp of the anchor plus the cumulative duration of the remaining ticks
+	return (anchortime + (tickduration * (chartpos - targetanchor->chartpos)));
+}
 
 EOF_SONG * eof_import_chart(const char * fn)
 {
@@ -43,7 +74,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	struct FeedbackChart * chart = NULL;
 	EOF_SONG * sp = NULL;
 	int err;
-	
+
 	chart = ImportFeedback((char *)fn, &err);
 	if(chart)
 	{
@@ -55,7 +86,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 		eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
 		eof_music_actual_length = eof_music_length;
-		
+
 		/* create empty song */
 		sp = eof_create_song();
 		if(!sp)
@@ -63,7 +94,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			DestroyFeedbackChart(chart, 1);
 			return NULL;
 		}
-		
+
 		/* copy tags */
 		if(chart->name)
 		{
@@ -80,7 +111,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			strcpy(sp->tags->frettist, chart->charter);
 			printf("%s\n", sp->tags->frettist);
 		}
-		
+
 		/* set up beat markers */
 		sp->tags->ogg[0].midi_offset = chart->offset;
 		struct dBAnchor * current_anchor = chart->anchors;
@@ -127,46 +158,46 @@ EOF_SONG * eof_import_chart(const char * fn)
 			current_anchor = current_anchor->next;
 		}
 		printf("end anchors\n");
-		
+
 		/* fill in notes */
 		struct dbTrack * current_track = chart->tracks;
 		int track;
 		int difficulty;
 		while(current_track)
 		{
-			
+
 			/* convert track number to EOF numbering scheme */
 			switch(current_track->tracktype)
 			{
-				
+
 				/* PART GUITAR */
 				case 1:
 				{
 					track = EOF_TRACK_GUITAR;
 					break;
 				}
-				
+
 				/* PART GUITAR COOP */
 				case 2:
 				{
 					track = EOF_TRACK_GUITAR_COOP;
 					break;
 				}
-				
+
 				/* PART BASS */
 				case 3:
 				{
 					track = EOF_TRACK_BASS;
 					break;
 				}
-				
+
 				/* PART DRUMS */
 				case 4:
 				{
 					track = EOF_TRACK_DRUM;
 					break;
 				}
-				
+
 				default:
 				{
 					track = -1;
@@ -174,7 +205,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 				}
 			}
 			difficulty = current_track->difftype - 1;
-			
+
 			/* if it is a valid track */
 			if(track >= 0)
 			{
@@ -209,6 +240,6 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 	}
 	printf("done\n");
-	
+
 	return sp;
 }
