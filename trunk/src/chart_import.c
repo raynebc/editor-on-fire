@@ -5,7 +5,7 @@
 #include "feedback.h"
 
 /* convert Feedback chart time to milliseconds for use with EOF */
-/*static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chartpos)
+static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chartpos)
 {
 	unsigned long ppqn = 500000;
 	double curpos = chart->offset;
@@ -15,7 +15,7 @@
 	struct dBAnchor * current_anchor = chart->anchors;
 	while(current_anchor)
 	{
-		// find current BPM
+		/* find current BPM */
 		if(current_anchor->BPM > 0)
 		{
 			ppqn = (double)60000000.0 / ((double)current_anchor->BPM / 1000.0);
@@ -36,37 +36,6 @@
 	}
 	return curpos;
 }
-*/
-
-static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chartpos)
-{
-	struct dBAnchor *targetanchor,*conductor;
-	double anchortime=0.0;
-	double tickduration=0.0;
-
-	if((chart == NULL) || (chart->anchors == NULL))
-		return 0.0;	//Return error
-
-//Check to make sure that the chart begins with a tempo event at chart position 0, otherwise it's not a valid chart?
-	if(chart->anchors->chartpos != 0)
-		return 0.0;	//Return error
-
-//Find the anchor that is closest to the chart position immediately before chartpos
-	targetanchor=chart->anchors;
-	for(conductor=chart->anchors;conductor != NULL;conductor=conductor->next)	//For each anchor
-	{
-		if(conductor->next != NULL)						//If there's another anchor that follows
-			if(conductor->next->chartpos <= chartpos)	//If the next anchor starts no later than the target chart position
-			targetanchor=conductor->next;	//Note it
-	}
-	anchortime=targetanchor->usec / 1000.0;	//Store the time of this anchor
-
-//Find the duration of one tick
-	tickduration=(60000.0 / (targetanchor->BPM / 1000.0) / chart->resolution);
-
-//Return the timestamp of the anchor plus the cumulative duration of the remaining ticks
-	return (anchortime + (tickduration * (chartpos - targetanchor->chartpos)));
-}
 
 EOF_SONG * eof_import_chart(const char * fn)
 {
@@ -74,19 +43,28 @@ EOF_SONG * eof_import_chart(const char * fn)
 	struct FeedbackChart * chart = NULL;
 	EOF_SONG * sp = NULL;
 	int err;
-
+	char oggfn[1024] = {0};
+	
 	chart = ImportFeedback((char *)fn, &err);
 	if(chart)
 	{
 		/* load audio */
-		if(!eof_load_ogg(chart->audiofile))
+		if(strlen(chart->audiofile) > 0)
+		{
+			replace_filename(oggfn, fn, chart->audiofile, 1024);
+		}
+		else
+		{
+			strcpy(oggfn, "");
+		}
+		if(!eof_load_ogg(oggfn))
 		{
 			DestroyFeedbackChart(chart, 1);
 			return NULL;
 		}
 		eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
 		eof_music_actual_length = eof_music_length;
-
+		
 		/* create empty song */
 		sp = eof_create_song();
 		if(!sp)
@@ -94,7 +72,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			DestroyFeedbackChart(chart, 1);
 			return NULL;
 		}
-
+		
 		/* copy tags */
 		if(chart->name)
 		{
@@ -111,13 +89,15 @@ EOF_SONG * eof_import_chart(const char * fn)
 			strcpy(sp->tags->frettist, chart->charter);
 			printf("%s\n", sp->tags->frettist);
 		}
-
+		
 		/* set up beat markers */
 		sp->tags->ogg[0].midi_offset = chart->offset;
 		struct dBAnchor * current_anchor = chart->anchors;
 		unsigned long ppqn = 500000;
 		double curpos = sp->tags->ogg[0].midi_offset;
+		double nextpos;
 		double beat_length;
+		unsigned long lastbpm = 120000;
 		int new_anchor = 0;
 		EOF_BEAT_MARKER * new_beat = NULL;
 		printf("begin anchors\n");
@@ -127,7 +107,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		{
 //			if(current_anchor->usec > 0 || current_anchor->chartpos == 0)
 			{
-				curpos = chartpos_to_msec(chart, current_anchor->chartpos);
+				nextpos = chartpos_to_msec(chart, current_anchor->chartpos);
 //				printf("usec = %lu\n", current_anchor->usec);
 				new_anchor = 1;
 				if(current_anchor->BPM > 0)
@@ -135,69 +115,66 @@ EOF_SONG * eof_import_chart(const char * fn)
 					ppqn = (double)60000000.0 / ((double)current_anchor->BPM / 1000.0);
 				}
 				beat_length = (double)60000 / ((double)60000000.0 / (double)ppqn);
-				while(curpos < current_anchor->usec / 1000 - 100)
+				while(curpos < nextpos - 100)
 				{
 					new_beat = eof_song_add_beat(sp);
 					if(new_beat)
 					{
 						new_beat->ppqn = ppqn;
 						new_beat->pos = curpos;
-						if(new_anchor)
+						if(new_anchor && lastbpm != current_anchor->BPM)
 						{
 							new_beat->flags |= EOF_BEAT_FLAG_ANCHOR;
 							new_anchor = 0;
 						}
 					}
-					if(current_anchor->usec == 0)
-					{
-						break;
-					}
 					curpos += beat_length;
 				}
 			}
+			lastbpm = current_anchor->BPM;
 			current_anchor = current_anchor->next;
 		}
 		printf("end anchors\n");
-
+		
 		/* fill in notes */
 		struct dbTrack * current_track = chart->tracks;
 		int track;
 		int difficulty;
 		while(current_track)
 		{
-
+			
 			/* convert track number to EOF numbering scheme */
 			switch(current_track->tracktype)
 			{
-
+				
 				/* PART GUITAR */
 				case 1:
 				{
 					track = EOF_TRACK_GUITAR;
 					break;
 				}
-
+				
 				/* PART GUITAR COOP */
 				case 2:
 				{
 					track = EOF_TRACK_GUITAR_COOP;
 					break;
 				}
-
+				
 				/* PART BASS */
 				case 3:
 				{
 					track = EOF_TRACK_BASS;
 					break;
 				}
-
+				
 				/* PART DRUMS */
 				case 4:
 				{
 					track = EOF_TRACK_DRUM;
 					break;
 				}
-
+				
 				default:
 				{
 					track = -1;
@@ -205,7 +182,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 				}
 			}
 			difficulty = current_track->difftype - 1;
-
+			
 			/* if it is a valid track */
 			if(track >= 0)
 			{
@@ -240,6 +217,6 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 	}
 	printf("done\n");
-
+	
 	return sp;
 }
