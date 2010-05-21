@@ -40,154 +40,117 @@ void set_default_config(void)
 
 void eof_load_config(char * fn)
 {
-	PACKFILE * fp;
-
 	set_default_config();
 
-	fp = pack_fopen(fn, "r");
-	if(fp)
+	set_config_file(fn);
+	
+	/* read configuration */
+	eof_av_delay = get_config_int("config", "av_delay", 250);
+	eof_buffer_size = get_config_int("config", "buffer_size", 4096);
+	eof_smooth_pos = get_config_int("config", "smooth_playback", 1);
+	eof_disable_windows = get_config_int("config", "disable_windows_fs", 0);
+	ncdfs_use_allegro = eof_disable_windows;
+	eof_disable_vsync = get_config_int("config", "disable_vsync", 0);
+	eof_cpu_saver = get_config_int("config", "cpu_saver", 0);;
+	if(eof_cpu_saver < 0 || eof_cpu_saver > 10)
 	{
-		eof_av_delay = pack_igetl(fp);
-		eof_buffer_size = pack_igetl(fp);
-		pack_fread(eof_fof_executable_path, 1024, fp);
-		ustrcpy(eof_fof_executable_name, get_filename(eof_fof_executable_path));
-		pack_fread(eof_fof_songs_path, 1024, fp);
-		eof_inverted_notes = pack_igetl(fp);
-		if(eof_inverted_notes != 0 && eof_inverted_notes != 1)
-		{
-			eof_inverted_notes = 0;
-		}
-		eof_smooth_pos = pack_igetl(fp);
-		if(eof_smooth_pos != 0 && eof_smooth_pos != 1)
-		{
-			eof_smooth_pos = 1;
-		}
-		eof_lefty_mode = pack_igetl(fp);
-		if(eof_lefty_mode != 0 && eof_lefty_mode != 1)
-		{
-			eof_lefty_mode = 0;
-		}
-		eof_input_mode = pack_igetl(fp);
-		if(eof_input_mode < 0 || eof_input_mode > 6)
-		{
-			eof_input_mode = EOF_INPUT_PIANO_ROLL;
-		}
-		eof_anchor_all_beats = pack_igetl(fp);
-		eof_anchor_all_beats = 1;
-		eof_windowed = pack_igetl(fp);
-		if(eof_windowed != 0 && eof_windowed != 1)
-		{
-			eof_windowed = 1;
-		}
-		eof_disable_windows = pack_igetl(fp);
-		if(eof_disable_windows != 0 && eof_disable_windows != 1)
-		{
-			eof_disable_windows = 0;
-		}
-		ncdfs_use_allegro = eof_disable_windows;
-		eof_ogg_setting = pack_igetl(fp);
-		if(eof_ogg_setting < 0 || eof_ogg_setting >= 6)
-		{
-			eof_ogg_setting = 1;
-		}
-		eof_disable_vsync = pack_igetl(fp);
-		if(eof_disable_vsync != 0 && eof_disable_vsync != 1)
-		{
-			eof_disable_vsync = 0;
-		}
-		pack_fread(eof_songs_path, 1024, fp);
-		eof_controller_load_config(&eof_guitar, fp);
-		eof_controller_read_button_names(&eof_guitar);
-		eof_controller_load_config(&eof_drums, fp);
-		eof_controller_read_button_names(&eof_drums);
-		pack_fread(eof_last_eof_path, 1024, fp);
-		pack_fread(eof_last_ogg_path, 1024, fp);
-		eof_cpu_saver = pack_getc(fp);
-		if(eof_cpu_saver < 0 || eof_cpu_saver > 10)
-		{
-			eof_cpu_saver = 0;
-		}
-		eof_screen_layout.mode = pack_getc(fp);
-		if(eof_screen_layout.mode < 0 || eof_screen_layout.mode > 2)
-		{
-			eof_screen_layout.mode = 0;
-		}
-		eof_supports_mp3 = pack_getc(fp);
-		eof_note_auto_adjust = pack_igetl(fp);
-		pack_fread(eof_last_frettist, 256, fp);
-		eof_soft_cursor = pack_getc(fp);
-		eof_desktop = pack_getc(fp);
-
-		/* edit settings */
-		eof_snap_mode = pack_igetl(fp);
-		if(eof_snap_mode < 0 || eof_snap_mode > EOF_SNAP_CUSTOM)
-		{
-			eof_snap_mode = 0;
-		}
-		eof_snap_interval = pack_igetl(fp);
-		if(eof_snap_interval < 0 || eof_snap_interval > 15)
-		{
-			eof_snap_interval = 1;
-		}
-		eof_zoom_3d = pack_igetl(fp);
-		if(eof_zoom_3d < 2 || eof_zoom_3d > 5)
-		{
-			eof_zoom_3d = 5;
-		}
-		eof_hopo_view = pack_igetl(fp);
-		if(eof_hopo_view < 0 || eof_hopo_view > 2)
-		{
-			eof_hopo_view = EOF_HOPO_RF;
-		}
-		eof_guitar.delay = pack_igetl(fp);
-		eof_drums.delay = pack_igetl(fp);
-		pack_fclose(fp);
+		eof_cpu_saver = 0;
 	}
+	eof_supports_mp3 = get_config_int("config", "mp3_support", 0);
+	
+	/* read preferences */
+	eof_inverted_notes = get_config_int("preferences", "invert_notes", 0);
+	eof_lefty_mode = get_config_int("preferences", "lefty", 0);
+	eof_input_mode = get_config_int("preferences", "input_mode", EOF_INPUT_PIANO_ROLL);
+	eof_ogg_setting = get_config_int("preferences", "ogg_quality", 1);
+	
+	/* read display settings */
+	eof_screen_layout.mode = get_config_int("display", "display_mode", 0);
+	if(eof_screen_layout.mode < 0 || eof_screen_layout.mode > 2)
+	{
+		eof_screen_layout.mode = 0;
+	}
+	eof_note_auto_adjust = get_config_int("display", "note_auto_adjust", 1);
+	eof_soft_cursor = get_config_int("display", "software_mouse", 0);
+	eof_desktop = get_config_int("display", "true_color", 0);
+	
+	/* read paths */
+	ustrcpy(eof_fof_executable_path, get_config_string("paths", "fof_path", ""));
+	ustrcpy(eof_fof_executable_name, get_filename(eof_fof_executable_path));
+	ustrcpy(eof_fof_songs_path, get_config_string("paths", "fof_songs_path", ""));
+	ustrcpy(eof_songs_path, get_config_string("paths", "songs_path", ""));
+	ustrcpy(eof_last_eof_path, get_config_string("paths", "eof_path", ""));
+	ustrcpy(eof_last_ogg_path, get_config_string("paths", "ogg_path", ""));
+	
+	/* read editor settings */
+	ustrcpy(eof_last_frettist, get_config_string("editor", "frettist", ""));
+	eof_snap_mode = get_config_int("editor", "snap_mode", 0);
+	if(eof_snap_mode < 0 || eof_snap_mode > EOF_SNAP_CUSTOM)
+	{
+		eof_snap_mode = 0;
+	}
+	eof_snap_interval = get_config_int("editor", "snap_interval", 1);
+	if(eof_snap_interval < 1 || eof_snap_interval > 15)
+	{
+		eof_snap_interval = 1;
+	}
+	eof_zoom_3d = get_config_int("editor", "preview_speed", 5);
+	if(eof_zoom_3d < 2 || eof_zoom_3d > 5)
+	{
+		eof_zoom_3d = 5;
+	}
+	eof_hopo_view = get_config_int("editor", "hopo_view", EOF_HOPO_RF);
+	if(eof_hopo_view < 0 || eof_hopo_view > 2)
+	{
+		eof_hopo_view = EOF_HOPO_RF;
+	}
+	
+	eof_controller_load_config(&eof_guitar, "guitar");
+	eof_controller_read_button_names(&eof_guitar);
+	eof_controller_load_config(&eof_drums, "drums");
+	eof_controller_read_button_names(&eof_drums);
 }
 
 void eof_save_config(char * fn)
 {
-	PACKFILE * fp;
-
-	fp = pack_fopen(fn, "w");
-	if(fp)
-	{
-		pack_iputl(eof_av_delay, fp);
-		pack_iputl(eof_buffer_size, fp);
-		pack_fwrite(eof_fof_executable_path, 1024, fp);
-		pack_fwrite(eof_fof_songs_path, 1024, fp);
-		pack_iputl(eof_inverted_notes, fp);
-		pack_iputl(eof_smooth_pos, fp);
-		pack_iputl(eof_lefty_mode, fp);
-		pack_iputl(eof_input_mode, fp);
-		pack_iputl(eof_anchor_all_beats, fp);
-		pack_iputl(eof_windowed, fp);
-		pack_iputl(eof_disable_windows, fp);
-		pack_iputl(eof_ogg_setting, fp);
-		pack_iputl(eof_disable_vsync, fp);
-		pack_fwrite(eof_songs_path, 1024, fp);
-		eof_controller_save_config(&eof_guitar, fp);
-		eof_controller_save_config(&eof_drums, fp);
-		pack_fwrite(eof_last_eof_path, 1024, fp);
-		pack_fwrite(eof_last_ogg_path, 1024, fp);
-		pack_putc(eof_cpu_saver, fp);
-		pack_putc(eof_screen_layout.mode, fp);
-		pack_putc(eof_supports_mp3, fp);
-		pack_iputl(eof_note_auto_adjust, fp);
-		pack_fwrite(eof_last_frettist, 256, fp);
-		pack_putc(eof_soft_cursor, fp);
-		pack_putc(eof_desktop, fp);
-
-		/* edit settings */
-		pack_iputl(eof_snap_mode, fp);
-		pack_iputl(eof_snap_interval, fp);
-		pack_iputl(eof_zoom_3d, fp);
-		pack_iputl(eof_hopo_view, fp);
-
-		pack_iputl(eof_guitar.delay, fp);
-		pack_iputl(eof_drums.delay, fp);
-
-		pack_fclose(fp);
-	}
+	set_config_file(fn);
+	
+	/* write configuration */
+	set_config_int("config", "av_delay", eof_av_delay);
+	set_config_int("config", "buffer_size", eof_buffer_size);
+	set_config_int("config", "smooth_playback", eof_smooth_pos);
+	set_config_int("config", "disable_windows_fs", eof_disable_windows);
+	set_config_int("config", "disable_vsync", eof_disable_vsync);
+	set_config_int("config", "cpu_saver", eof_cpu_saver);;
+	set_config_int("config", "mp3_support", eof_supports_mp3);
+	
+	/* write preferences */
+	set_config_int("preferences", "invert_notes", eof_inverted_notes);
+	set_config_int("preferences", "lefty", eof_lefty_mode);
+	set_config_int("preferences", "input_mode", eof_input_mode);
+	set_config_int("preferences", "ogg_quality", eof_ogg_setting);
+	
+	/* write display settings */
+	set_config_int("display", "display_mode", eof_screen_layout.mode);
+	set_config_int("display", "note_auto_adjust", eof_note_auto_adjust);
+	set_config_int("display", "software_mouse", eof_soft_cursor);
+	set_config_int("display", "true_color", eof_desktop);
+	
+	/* write paths */
+	set_config_string("paths", "fof_path", eof_fof_executable_path);
+	set_config_string("paths", "fof_songs_path", eof_fof_songs_path);
+	set_config_string("paths", "songs_path", eof_songs_path);
+	set_config_string("paths", "eof_path", eof_last_eof_path);
+	set_config_string("paths", "ogg_path", eof_last_ogg_path);
+	
+	/* read editor settings */
+	set_config_string("editor", "frettist", eof_last_frettist);
+	set_config_int("editor", "snap_mode", eof_snap_mode);
+	set_config_int("editor", "snap_interval", eof_snap_interval);
+	set_config_int("editor", "preview_speed", eof_zoom_3d);
+	set_config_int("editor", "hopo_view", eof_hopo_view);
+	
+	eof_controller_save_config(&eof_guitar, "guitar");
+	eof_controller_save_config(&eof_drums, "drums");
 }
 
