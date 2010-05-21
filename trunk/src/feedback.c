@@ -905,7 +905,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 
 		//Initialize anchor link
 				curanchor->chartpos=A;	//The first number read is the chart position
-				curanchor->type=anchortype;
+//				curanchor->type=anchortype;
 				if(anchortype == 'B')		//If this was a tempo event
 					curanchor->BPM=B;	//The second number represents 1000 times the tempo
 				else if(anchortype == 'T')	//If this was a time signature event
