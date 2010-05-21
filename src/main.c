@@ -23,6 +23,7 @@
 #include "player.h"
 #include "config.h"
 #include "midi.h"
+#include "midi_import.h"
 #include "window.h"
 #include "note.h"
 #include "beat.h"
