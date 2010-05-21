@@ -57,6 +57,7 @@ void eof_load_config(char * fn)
 		eof_cpu_saver = 0;
 	}
 	eof_supports_mp3 = get_config_int("config", "mp3_support", 0);
+	eof_audio_fine_tune = get_config_int("config", "fine_tune", 0);
 	
 	/* read preferences */
 	eof_inverted_notes = get_config_int("preferences", "invert_notes", 0);
@@ -123,6 +124,7 @@ void eof_save_config(char * fn)
 	set_config_int("config", "disable_vsync", eof_disable_vsync);
 	set_config_int("config", "cpu_saver", eof_cpu_saver);;
 	set_config_int("config", "mp3_support", eof_supports_mp3);
+	set_config_int("config", "fine_tune", eof_audio_fine_tune);
 	
 	/* write preferences */
 	set_config_int("preferences", "invert_notes", eof_inverted_notes);

@@ -66,6 +66,7 @@ char        eof_soft_cursor = 0;
 char        eof_desktop = 1;
 int         eof_av_delay = 200;
 int         eof_buffer_size = 4096;
+int         eof_audio_fine_tune = 0;
 int         eof_inverted_notes = 0;
 int         eof_lefty_mode = 0;
 int         eof_note_auto_adjust = 1;
