@@ -1384,7 +1384,7 @@ char * eof_input_list(int index, int * size)
 	{
 		case -1:
 		{
-			*size = EOF_INPUT_NAME_NUM;
+			*size = EOF_INPUT_NAME_NUM-1;
 			break;
 		}
 		case 0:
