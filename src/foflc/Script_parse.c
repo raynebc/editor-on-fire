@@ -44,9 +44,6 @@ void Script_Load(FILE *inf)
 	Lyrics.EditorStringID=DuplicateString("[by");
 	Lyrics.OffsetStringID=DuplicateString("[offset");
 
-//Load each line and parse it
-//v2.0	FindLongestLineLength() now rewinds the file
-//	rewind(inf);	//rewind file
 	fgets_err(buffer,maxlinelength,inf);	//Read first line of text, capping it to prevent buffer overflow
 
 	if(Lyrics.verbose)	printf("\nImporting script lyrics from file \"%s\"\n\n",Lyrics.infilename);
@@ -96,24 +93,6 @@ void Script_Load(FILE *inf)
 		duration=ParseLongInt(buffer,&index,processedctr,NULL);
 
 //Parse the string "text"
-/*v2.0	Rewrote this to use strcasestr_spec()
-		substring=strstr(&(buffer[index]),"text");
-		if(substring == NULL)
-		{
-			printf("Error in line %lu: The \"text\" parameter is missing in the input file\nAborting\n",processedctr);
-			exit_wrapper(1);
-		}
-
-//Find first whitespace character after "text"
-		index=0;
-		while(substring[index] != '\0')
-		{
-			if(isspace((unsigned char)substring[index]))
-				break;
-
-			index++;
-		}
-*/
 		substring=strcasestr_spec(&(buffer[index]),"text");	//Find the character after a match for "text", if it exists
 		if(substring == NULL)
 		{
@@ -150,9 +129,6 @@ void Script_Load(FILE *inf)
 
 	free(buffer);	//No longer needed, release the memory before exiting function
 
-//v2.0	Added ForceEndLyricLine() function
-//	if(Lyrics.line_on != 0)	//If for any reason the line of lyrics is not ended yet
-//		EndLyricLine();		//End line of lyrics
 	ForceEndLyricLine();
 
 	if(!endlines && (Lyrics.out_format!=SCRIPT_FORMAT))
@@ -227,13 +203,8 @@ void Export_Script(FILE *outf)
 		curline=curline->next;	//Advance to next line of lyrics
 
 		if(Lyrics.marklines && curline)	//Only write "#newlines" tag if there's another line of lyrics
-		{
 			if(Lyrics.grouping != 2)	//Only print #newline tags if line grouping isn't being used
 				fputs_err("#newline\n",outf);
-//v2.0	The else condition will not be reached because main() will disabled marklines when line grouping is specified
-//			else
-//				if(Lyrics.verbose)	puts("\n!Waiving gratuitous #newline tag when line grouping is already being used");
-		}
 
 		if(Lyrics.verbose)	putchar('\n');
 	}

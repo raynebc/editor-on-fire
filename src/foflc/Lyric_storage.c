@@ -128,35 +128,21 @@ void CreateLyricLine(void)
 	}
 
 //Allocate and initialize new Lyric Line structure for linked list
-//	temp=(struct Lyric_Line *)malloc_err(sizeof(struct Lyric_Line));
 	temp=(struct Lyric_Line *)calloc_err(1,sizeof(struct Lyric_Line));
 
 //Append new link to the linked list
 	if(Lyrics.lines == NULL)	//Special case:  List is empty
 	{
 		Lyrics.lines=temp;		//Initialize linked list
-//v2.0	This line was moved outside the if/else statement
-//		Lyrics.curline=temp;	//Point conductor to first link
 		temp->prev=NULL;		//First link points back to nothing
 	}
 	else	//Attach new link to the list
 	{
 		temp->prev=Lyrics.curline;	//New link points back to previous link
 		Lyrics.curline->next=temp;	//Attach new link
-//v2.0	This line was moved outside the if/else statement
-//		Lyrics.curline=temp;		//Point conductor to new link
 	}
 
 	Lyrics.curline=temp;	//Point line conductor to new line
-
-//v2.0	Using calloc() over malloc() means the memory is already init'd to 0
-//Initialize new link
-//	Lyrics.curline->pieces=NULL;
-//	Lyrics.curline->curpiece=NULL;
-//	Lyrics.curline->next=NULL;
-//	Lyrics.curline->piececount=0;
-//	Lyrics.curline->start=0;
-//	Lyrics.curline->duration=0;
 
 //	On rare occasion, some charts (Such as Nirvana- "In Bloom") will start a lyric piece before a line starts.
 //	To handle this, the lyric stats must not be reset at the beginning of a line, but once the lyric is added.
@@ -167,12 +153,6 @@ void EndLyricLine(void)
 {
 	struct Lyric_Piece *temp;	//A conductor to use for lyric overlap checking
 	struct Lyric_Piece *temp2;	//A temporary pointer to use for lyric combination
-//	unsigned long start;		//Used to store the timestamp of the first lyric in the line
-//	unsigned long count;		//Counter for finding lyric piece count
-
-//These variables will be used to process error handling between the last piece in a line and the first in the next
-//Moved this variable to the Lyrics structure and renamed it prevlineslast
-//	static struct Lyric_Piece *last=NULL;	//The last lyric piece in the last line of lyrics
 	struct Lyric_Piece *next;	//A conditional next piece pointer needs to be used
 
 	if(Lyrics.line_on == 0)	//If there is no open line of lyrics
@@ -287,26 +267,6 @@ void EndLyricLine(void)
 					//checked, next was already properly set to point to the first piece in this line
 	}
 
-	//Rebuild line duration and piece count
-/*v2.0 Altered RecountLineVars()
-	count=0;
-	temp=Lyrics.curline->pieces;
-	start=temp->start;	//Store the timestamp of the first lyric in the line
-	while(temp!=NULL)
-	{
-//v2.0	Corrected line duration logic
-//		duration+=temp->duration;
-		count++;
-		if(temp->next == NULL)	//If this is the last lyric in the line
-		{
-			assert_wrapper(temp->start + temp->duration >= start);	//The last lyric must not end before the first lyric starts..
-			Lyrics.curline->duration=temp->start+temp->duration-start;	//Record the line's duration
-		}
-		temp=temp->next;
-	}
-//	Lyrics.curline->duration=duration;
-	Lyrics.curline->piececount=count;
-*/
 	RecountLineVars(Lyrics.curline);
 	if(Lyrics.verbose>=2)	putchar('\n');
 }
@@ -434,30 +394,11 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 //Check Lyrics.curline->piececount to verify that this is only done if the + is not the first lyric piece in the line
 	if((!strcmp(str,"+") || !strcmp(str,"+-")) && (Lyrics.curline->piececount != 0))
 	{
-/*	v2.0	Moved the noplus logic to EndLyricLine()
-		if(Lyrics.noplus != 0)		//If user specified noplus, add the +'s duration to the previous lyric piece
-		{
-			temp->prev->duration+=end-start;		//Add the +'s duration to the previous lyric piece
-			Lyrics.lyric_defined=0;					//Expecting a new lyric event
-			Lyrics.lyric_on=0;						//Expecting a new Note On event as well
-			temp->prev->next=NULL;					//Remove link from list
-			Lyrics.curline->curpiece=temp->prev;	//Point conductor to new end of list
-			free(str);								//de-allocate newly-created string
-			free(temp);								//de-allocate removed link
-			putchar('\n');
-			return;			//return.  Consecutive +'s will still increase the last non + piece's duration
-		}
-		else				//Otherwise, group it with the previous lyric piece
-		{
-*/
-			assert_wrapper(temp->prev != NULL);
-			temp->prev->groupswithnext=1;
+		assert_wrapper(temp->prev != NULL);
+		temp->prev->groupswithnext=1;
 
-			//Force the duration of the previous piece to join up with this lyric piece, as that + implies that the previous
-			//lyric was still being sung
-			temp->prev->duration=start-Lyrics.realoffset-temp->prev->start;
-				//Remember to offset start by realoffset, otherwise Lyrics.lastpiece->start could be the larger operand, causing an overflow
-//		}
+		//Force the duration of the previous piece to join up with this lyric piece, as that + implies that the previous lyric was still being sung
+		temp->prev->duration=start-Lyrics.realoffset-temp->prev->start;	//Remember to offset start by realoffset, otherwise Lyrics.lastpiece->start could be the larger operand, causing an overflow
 	}
 
 //Remember this as the last lyric piece in order for the noplus, hyphen insertion, etc. features to work
@@ -499,8 +440,6 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 
 	Lyrics.curline->piececount++;			//This line of lyrics is holding another lyric piece
 	Lyrics.piececount++;					//The Lyric structure is holding another lyric piece
-//v2.0	Line duration logic corrected
-//	Lyrics.curline->duration+=end-start;	//Add duration of this lyric piece
 	Lyrics.lyric_defined=0;					//Expecting a new lyric event
 	Lyrics.lyric_on=0;						//Expecting a new Note On event as well
 
@@ -564,7 +503,6 @@ char *ResizedAppend(char *src1,const char *src2,char dealloc)
 	assert_wrapper((src1 != NULL) && (src2 != NULL));
 	size1=strlen(src1);
 	size2=strlen(src2);
-//	temp=malloc_err(strlen(src1)+strlen(src2)+1);
 	temp=malloc_err(size1+size2+1); //Allocate enough room to store both strings and a NULL terminator
 	strcpy(temp,src1);
 
@@ -583,7 +521,6 @@ char *Append(const char *src1,const char *src2)
 
 	size1=strlen(src1);
 	size2=strlen(src2);
-//	temp=malloc_err(strlen(src1)+strlen(src2)+1);
 	temp=malloc_err(size1+size2+1); //Allocate enough room to store both strings and a NULL terminator
 	strcpy(temp,src1);
 
@@ -813,6 +750,7 @@ long int ParseLongInt(char *buffer,unsigned long *startindex,unsigned long linen
 		}
 	}
 
+//v2.1, allow for a null character immediately after the parsed number
 	while(isspace((unsigned char)buffer[index]) == 0)
 	{	//Until whitespace or NULL character is found
 		if(isdigit((unsigned char)buffer[index]))	//If this is a numerical character
@@ -889,7 +827,6 @@ char *DuplicateString(const char *str)
 	assert_wrapper(str != NULL);
 
 	size=strlen(str);
-//	ptr=malloc_err(strlen(str)+1);
 	ptr=malloc_err(size+1);
 	strcpy(ptr,str);
 	return ptr;
@@ -899,7 +836,7 @@ char *TruncateString(char *str,char dealloc)
 {
 	unsigned long ctr;
 	char *newstr;
-	char *originalstr = str;
+	char *originalstr=str;
 
 	assert_wrapper(str != NULL);	//This must not be NULL
 
@@ -932,7 +869,6 @@ void PostProcessLyrics(void)
 	unsigned long ctr;			//Used to validate the piece count in each line
 	unsigned long totalpiecectr;//Used to validate the piece count among all lines of lyrics
 	unsigned long totallinectr;	//Used to validate the line count
-//	unsigned long duration;		//Used to validate the duration sum in each line
 	char hyphenadded;			//Used to track whether a hyphen was inserted, so it isn't immediatly removed by the hyphen truncation logic
 	unsigned long start=0,stop=0;	//The recorded beginning and ending timestamps of lyric lines (for duration validation)
 
@@ -946,7 +882,6 @@ void PostProcessLyrics(void)
 	for(lineptr=Lyrics.lines;lineptr!=NULL;lineptr=lineptr->next,totallinectr++)
 	{	//For each line of lyrics
 		ctr=0;
-//		duration=0;
 
 		if(lineptr->next != NULL)					//If there's another line of lyrics
 			if((lineptr->next)->prev != lineptr)	//If next line doesn't properly point backward to this line
@@ -1009,7 +944,6 @@ void PostProcessLyrics(void)
 			}
 
 			ctr++;	//Another lyric piece counted
-//			duration+=pieceptr->duration;	//Add this piece's duration to the ongoing sum
 		}//For each lyric in the line
 
 		if(ctr != lineptr->piececount)
@@ -1117,8 +1051,6 @@ void SetTag(char *string,char tagID,char negatizeoffset)
 				printf("Warning: Extra Title tag: \"%s\".  Ignoring\n",string2);
 			else
 			{
-//v2.0	Call to TruncateString() has already made a copy of the string
-//				Lyrics.Title=DuplicateString(string);
 				Lyrics.Title=string2;
 				if(Lyrics.verbose)	printf("Loaded tag: \"name = %s\"\n",string2);
 			}
@@ -1129,7 +1061,6 @@ void SetTag(char *string,char tagID,char negatizeoffset)
 				printf("Warning: Extra Artist tag: \"%s\".  Ignoring\n",string2);
 			else
 			{
-//				Lyrics.Artist=DuplicateString(string);
 				Lyrics.Artist=string2;
 				if(Lyrics.verbose)	printf("Loaded tag: \"artist = %s\"\n",string2);
 			}
@@ -1140,7 +1071,6 @@ void SetTag(char *string,char tagID,char negatizeoffset)
 				printf("Warning: Extra Album tag: \"%s\".  Ignoring\n",string2);
 			else
 			{
-//				Lyrics.Album=DuplicateString(string);
 				Lyrics.Album=string2;
 				if(Lyrics.verbose)	printf("Loaded tag: \"album = %s\"\n",string2);
 			}
@@ -1151,7 +1081,6 @@ void SetTag(char *string,char tagID,char negatizeoffset)
 				printf("Warning: Extra Editor tag: \"%s\".  Ignoring\n",string2);
 			else
 			{
-//				Lyrics.Editor=DuplicateString(string);
 				Lyrics.Editor=string2;
 				if(Lyrics.verbose)	printf("Loaded tag: \"frets = %s\"\n",string2);
 			}
@@ -1167,10 +1096,6 @@ void SetTag(char *string,char tagID,char negatizeoffset)
 			}
 			else
 			{
-//v2.0	Logic to use TruncateString() has already removed leading whitespace
-//				while((string2[0] != '\0') && isspace(string[0]))
-//					string2++;	//Skip all leading whitespace, as atol cannot be counted on to
-
 				assert_wrapper(string2 != NULL);	//atol() may crash the program if it is passed NULL
 					//Convert delay string to a real number
 				if(strcmp(string2,"0") != 0)
@@ -1613,47 +1538,34 @@ struct Lyric_Line *InsertLyricLineBreak(struct Lyric_Line *lineptr,struct Lyric_
 void RecountLineVars(struct Lyric_Line *start)
 {	//Rebuild piececount and duration for each line of lyrics, starting with the given line
 	unsigned long piecectr;
-//v2.0	Altered the duration tracking logic, and rewrote this function to not require start and stop
-//	unsigned long duration;
-//	unsigned long start,stop;		//Used for line duration calculation
 	struct Lyric_Line *curline;		//Conductor of the lyric line linked list
 	struct Lyric_Piece *curpiece;	//Condudctor of the lyric linked list
 
-//	curline=Lyrics.lines;	//Point line conductor to first line
 	curline=start;			//Point line conductor to given line
 	while(curline != NULL)
 	{	//For each line of lyrics
-//		duration=0;
 		piecectr=0;
 
 		curpiece=curline->pieces;	//Reset lyric piece linked list conductor
 		while(curpiece != NULL)
 		{	//For each lyric in this line
-//			if(curpiece == curline->pieces)	//If it's the first lyric in the line
-//				start=curpiece->start;		//Record the timestamp
 			if(curpiece->next == NULL)		//If it's the last lyric in the line
 			{
-//				stop=curpiece->start+curpiece->duration;	//Record the timestamp of where it ends
 				assert_wrapper(curpiece->start + curpiece->duration > curline->pieces->start);
 				curline->duration=curpiece->start + curpiece->duration - curline->pieces->start;
 			}
 
-//			duration+=curpiece->duration;	//Add this lyric's duration to our sum
 			piecectr++;						//Increment lyric piece counter
 			curpiece=curpiece->next;		//Point to next lyric in the line
 		}
 
 		curline->piececount=piecectr;
-
-//		curline->duration=duration;
-//		assert_wrapper(stop >= start);			//Line cannot end before it begins
-//		curline->duration=stop-start;	//Find the duration of the line
 		curline=curline->next;	//Point to next line of lyrics
 	}//For each line of lyrics
 }
 
 char *ConvertNoteNum(unsigned char notenum)
-{//Map a note number to a note name
+{	//Map a note number to a note name
 	signed int octave;		//The positive or negative octave number
 	char *string;			//The converted note name
 	char buffer[3]={0,0,0};	//A temporary buffer to build a string
@@ -1661,57 +1573,6 @@ char *ConvertNoteNum(unsigned char notenum)
 	assert_wrapper(notenum<128);	//Valid note numbers are 0->127
 
 //Obtain note letter
-/*v2.0	Optimized switch
-	switch(notenum % 12)
-	{
-		case 0:	//Note C
-			buffer[0]='C';
-			break;
-		case 1:	//Note C#
-			buffer[0]='C';
-			buffer[1]='#';
-			break;
-		case 2:	//Note D
-			buffer[0]='D';
-			break;
-		case 3:	//Note D#
-			buffer[0]='D';
-			buffer[1]='#';
-			break;
-		case 4:	//Note E
-			buffer[0]='E';
-			break;
-		case 5:	//Note F
-			buffer[0]='F';
-			break;
-		case 6:	//Note F#
-			buffer[0]='F';
-			buffer[1]='#';
-			break;
-		case 7:	//Note G
-			buffer[0]='G';
-			break;
-		case 8:	//Note G#
-			buffer[0]='G';
-			buffer[1]='#';
-			break;
-		case 9:	//Note A
-			buffer[0]='A';
-			break;
-		case 10:	//Note A#
-			buffer[0]='A';
-			buffer[1]='#';
-			break;
-		case 11:	//Note B
-			buffer[0]='B';
-			break;
-		default:
-			puts("Logic error: x%12 cannot equal 12\nAborting\n");
-			exit_wrapper(1);
-			break;
-	}
-*/
-
 	switch(notenum % 12)
 	{
 		case 1:	//Note C# (run both this case and the next)
@@ -1778,9 +1639,7 @@ void ReleaseMemory(char release_all)
 
 	if(Lyrics.verbose>=2)	puts("\tReleasing memory");
 
-//v2.0	Removed the conditionality of this function call, as Write_Default_Track_Zero() would populate the tempomap but not the tracks list
-//	if(MIDIstruct.hchunk.numtracks != 0)	//If the MIDI structure is populated
-		ReleaseMIDI();				//Release its memory
+	ReleaseMIDI();				//Release its memory
 
 	if(Lyrics.verbose>=2)	puts("\t\tLyric storage structures");
 
@@ -1910,558 +1769,6 @@ int FindNextNumber(char *buffer,unsigned long *startindex)
 	return 0;	//Return search miss
 }
 
-/*v2.0	Improved detection for MIDI formats
-int DetectLyricFormat(char *file)
-{
-	unsigned long maxlinelength=0,index,convertednum2,ctr;
-	char *temp,*temp2,temp3;
-	char *buffer;			//Used for text file testing
-	int errorcode,jumpcode;
-	long int convertednum;
-	unsigned long processedctr=0;	//The current line number being processed in the text file
-	char timestampchar[]="[<";		//Accept any of these characters as valid characters to begin an LRC timestamp
-	char RBinstrumenttrack=0;		//Boolean: A Rock Band/FoF instrument track name was found
-	char quicktemp;					//Used to store the original user setting of the quick processing flag (Lyrics.quick)
-	FILE *inf;
-
-	if(Lyrics.verbose>=2)	printf("Detecting lyric type of file \"%s\"\n",file);
-
-//Detect text based lyric based lyric types
-	inf=fopen_err(file,"rt");		//Open file in text mode
-
-	//Find the length of the longest line
-	maxlinelength=FindLongestLineLength(inf,0);
-	if(!maxlinelength)
-	{	//File is empty
-		fclose_err(inf);
-		return -1;	//Return invalid file
-	}
-	buffer=(char *)malloc_err(maxlinelength);
-
-//Read first line, test for presence of "midi" followed by an equal sign (pitched lyric file)
-//v2.0	FindLongestLineLength() now rewinds the file
-//	rewind(inf);
-	if(fgets(buffer,maxlinelength,inf) == NULL)	//Read next line of text, capping it to prevent buffer overflow, don't exit on EOF
-	{
-		free(buffer);
-		fclose_err(inf);
-		return -1;	//If NULL is returned, EOF was reached and no bytes were read from file.  Return invalid file
-	}
-
-	temp=strstr(buffer,"midi");	//Search for the string "midi"
-	temp2=strchr(buffer,'=');	//Search for equal sign
-	if(temp && temp2 && (temp2>temp))		//If first line contains "midi" followed by an equal sign
-	{
-		free(buffer);
-		fclose_err(inf);
-		return PITCHED_LYRIC_FORMAT;
-	}
-
-//Continue reading lines until one begins with something other than #, then test for the text based formats (Script, UltraStar, LRC/ELRC)
-	while(!feof(inf))		//Until end of file is reached
-	{
-		processedctr++;
-
-		for(index=0;buffer[index]!='\0';index++)	//Skip leading whitespace
-			if(!isspace(buffer[index]))	//If this character is the first non whitespace character in the line
-				break;					//Break from this loop
-
-		if(buffer[index] == '\0')		//If this line was just whitespace
-		{
-			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
-			continue;							//Process next line
-		}
-
-		if(buffer[index]=='#')	//If this line is a Script or UltraStar tag
-		{
-			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
-			continue;			//Skip this line
-		}
-		temp3=buffer[index];	//Store this character
-		errorcode=0;
-
-//Test for UltraStar
-		if((temp3=='*') || (temp3==':') || (temp3=='-') || (toupper(temp3)=='F'))
-		{	//A character that implies UltraStar format, validate
-			index++;	//Seek past line style
-			convertednum=ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected timestamp, return error in errorcode upon failure
-			if(!errorcode && (temp3=='-'))	//If this is a line break followed by a timestamp (valid UltraStar syntax)
-			{
-				free(buffer);
-				fclose_err(inf);
-				return USTAR_FORMAT;
-			}
-
-			//Otherwise, for all other UltraStar line styles, 2 more valid numbers are expected
-			if(!errorcode)
-				convertednum=ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected duration, return error in errorcode upon failure
-			if(!errorcode)
-				convertednum=ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected pitch, return error in errorcode upon failure
-
-			if(errorcode)	//If the timestamp, duration or the pitch failed to parse
-			{
-				fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
-				continue;
-			}
-			else			//Otherwise, this was a standard lyric definition (valid UltraStar syntax)
-			{
-				free(buffer);
-				fclose_err(inf);
-				return USTAR_FORMAT;
-			}
-		}
-
-//Test for Script
-		if(isdigit(temp3))
-		{	//A numerical character implies Script format, validate
-			convertednum=ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected timestamp, return error in errorcode upon failure
-			if(!errorcode)
-				convertednum=ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected duration, return error in errorcode upon failure
-
-			if(!errorcode && (strstr(&(buffer[index]),"text") != NULL))	//If the timestamp and duration parsed, and the string "text" was found after the two numbers (valid Script format)
-			{
-				free(buffer);
-				fclose_err(inf);
-				return SCRIPT_FORMAT;
-			}
-			else
-			{
-				fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
-				continue;
-			}
-		}
-
-//Test for LRC
-		if(strchr(timestampchar,temp3))
-		{	//This character is one of defined characters used to start an LRC timestamp, validate
-			temp=SeekNextLRCTimestamp(&(buffer[index]));	//Find first timestamp if one exists on this line
-			if(temp != NULL)	//If a timestamp is found
-			{
-				convertednum2=ConvertLRCTimestamp(&temp,&errorcode);
-				if(!errorcode)	//If the timestamp parsed correctly (valid LRC format)
-				{
-					temp2=SeekNextLRCTimestamp(temp);	//Look for a second timestamp on the same line (Extended LRC)
-					if(temp2 != NULL)	//If a second timestamp is found
-					{
-						convertednum2=ConvertLRCTimestamp(&temp2,&errorcode);
-						if(!errorcode)	//If the timestamp parsed correctly (valid ELRC format)
-						{
-							free(buffer);
-							fclose_err(inf);
-							return ELRC_FORMAT;
-						}
-					}
-
-					free(buffer);
-					fclose_err(inf);
-					return LRC_FORMAT;
-				}
-			}
-
-			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
-			continue;
-		}
-
-	//At this point, the line wasn't identified to be any particular format, process next line
-		fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
-	}//while(!feof(inf))
-
-
-//Detect binary based lyric types
-	fclose_err(inf);
-	inf=fopen_err(file,"rb");		//Open file in binary mode
-	free(buffer);	//This doesn't need to be used anymore
-	buffer=NULL;
-
-//Test for VL file
-	errorcode=VL_PreLoad(inf,1);	//Load and validate VL file (without exiting upon failure)
-	ReleaseVL();
-	ReleaseMemory(0);
-
-	if(errorcode == 0)
-	{
-		fclose_err(inf);
-		return VL_FORMAT;		//Success (valid VL file)
-	}
-
-	if(errorcode > 1)	//If VL file header was present, but the VL file was invalid
-	{
-		fclose_err(inf);
-		return -1;		//Return invalid file
-	}
-
-	rewind(inf);
-//Test for MIDI file
-	InitMIDI();
-	quicktemp=Lyrics.quick;	//Store this value
-	Lyrics.quick=1;			//Force quick processing
-	useFLjumpbuffer=1;	//Allow FLC's logic to intercept in exit_wrapper
-	jumpcode=setjmp(FLjumpbuffer);
-	if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
-	{
-		ReleaseMemory(0);
-		fclose_err(inf);
-		useFLjumpbuffer=0;		//Restore normal functionality of exit_wrapper
-		Lyrics.quick=quicktemp;	//Restore original quick processing setting
-		return 0;	//This statement is reached if ReadMIDIHeader() below calles exit_wrapper(), indicating an invalid MIDI header (it is not a MIDI or any of the above defined lyric types, return unknown file)
-	}
-
-	ReadMIDIHeader(inf);
-
-	//If this point is reached, ReadMIDIHeader() completed without error, indicating the file begins with a valid MIDI header
-	rewind(inf);
-	ReleaseMIDI();	//Deallocate MIDI structures populated by ReadMIDIHeader()
-	jumpcode=setjmp(FLjumpbuffer);
-	if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
-	{
-		ReleaseMemory(0);
-		fclose_err(inf);
-		useFLjumpbuffer=0;	//Restore normal functionality of exit_wrapper
-		Lyrics.quick=quicktemp;	//Restore original quick processing setting
-		return -1;	//This statement is reached if MIDI_Load() below calles exit_wrapper(), indicating an invalid MIDI file
-	}
-	MIDI_Load(inf,NULL);	//Call MIDI_Load with no handler (just load MIDI info) Lyric structure is NOT re-init'd- it's already populated
-
-	Lyrics.quick=quicktemp;	//Restore original quick processing setting
-
-	//If this point is reached, MIDI_Load() completed without error, indicating that the file is a valid MIDI file
-	for(ctr=0;ctr<MIDIstruct.hchunk.numtracks;ctr++)	//For each MIDI track
-	{
-		if((MIDIstruct.hchunk.tracks[ctr]).trackname == NULL)	//If this track name doesn't exist (ie. Track 0)
-			continue;	//Skip to next track
-
-		if(!strcasecmp((MIDIstruct.hchunk.tracks[ctr]).trackname,"PART VOCALS"))	//If the MIDI has a track named "PART VOCALS"
-		{
-			ReleaseMemory(0);
-			fclose_err(inf);
-			useFLjumpbuffer=0;	//Restore normal functionality of exit_wrapper
-			return MIDI_FORMAT;	//Assume it's a RB format MIDI
-		}
-
-		if(	!strcasecmp((MIDIstruct.hchunk.tracks[ctr]).trackname,"PART GUITAR") ||
-			!strcasecmp((MIDIstruct.hchunk.tracks[ctr]).trackname,"PART BASS") ||
-			!strcasecmp((MIDIstruct.hchunk.tracks[ctr]).trackname,"PART GUITAR COOP") ||
-			!strcasecmp((MIDIstruct.hchunk.tracks[ctr]).trackname,"PART RHYTHM") ||
-			!strcasecmp((MIDIstruct.hchunk.tracks[ctr]).trackname,"PART DRUM") ||
-			!strcasecmp((MIDIstruct.hchunk.tracks[ctr]).trackname,"PART DRUMS"))
-		{	//If the MIDI has any RB/FoF instrument track names
-//			ReleaseMemory();
-//			fclose_err(inf);
-//			useFLjumpbuffer=0;	//Restore normal functionality of exit_wrapper
-//			return VRHYTHM_FORMAT;	//Assume it's a Vocal Rhythm MIDI
-			if((MIDIstruct.hchunk.tracks[ctr]).notecount)	//If this track has at least one Note On event
-				RBinstrumenttrack=1;
-		}
-
-		if(!strcasecmp((MIDIstruct.hchunk.tracks[ctr]).trackname,"Words"))	//If the MIDI has a track named "Words"
-		{
-			ReleaseMemory(0);
-			fclose_err(inf);
-			useFLjumpbuffer=0;	//Restore normal functionality of exit_wrapper
-			return SKAR_FORMAT;	//Assume it's Soft Karaoke file
-		}
-	}
-
-	//None of the predefined MIDI track names were found, assume KAR variant
-	ReleaseMemory(0);
-	fclose_err(inf);
-	useFLjumpbuffer=0;	//Restore normal functionality of exit_wrapper
-
-	if(RBinstrumenttrack)	//If an instrument track name was found
-		return VRHYTHM_FORMAT;	//Assume it's a Vocal Rhythm MIDI
-
-	return KAR_FORMAT;	//Assume it's KAR file
-}*/
-
-/*v2.0	Rewrote this to return a list of detected formats
-int DetectLyricFormat(char *file)
-{
-	unsigned long maxlinelength=0,index,convertednum2,ctr;
-	char *temp,*temp2,temp3;
-	char *buffer;			//Used for text file testing
-	int errorcode,jumpcode;
-	long int convertednum;
-	unsigned long processedctr=0;	//The current line number being processed in the text file
-	char timestampchar[]="[<";		//Accept any of these characters as valid characters to begin an LRC timestamp
-	unsigned long vrhythmdetected=0;	//Is nonzero if one or more instrument tracks with Note On events are found
-	unsigned long rbmididetected=0;		//Is nonzero if a "PART VOCALS" track with lyrics and Note On events is found
-	unsigned long skardetected=0;		//Is nonzero if a "Words" track with lyrics and NO Note On events is found
-	unsigned long kardetected=0;		//Is nonzero if a track BESIDES "Words" with lyrics is found
-	char quicktemp;					//Used to store the original user setting of the quick processing flag (Lyrics.quick)
-	FILE *inf;
-
-	assert_wrapper(file != NULL);
-	if(Lyrics.verbose>=2)	printf("Detecting lyric type of file \"%s\"\n",file);
-
-//Detect text based lyric based lyric types
-	inf=fopen_err(file,"rt");		//Open file in text mode
-
-	//Find the length of the longest line
-	maxlinelength=FindLongestLineLength(inf,0);
-	if(!maxlinelength)
-	{	//File is empty
-		fclose_err(inf);
-		return -1;	//Return invalid file
-	}
-	buffer=(char *)malloc_err(maxlinelength);
-
-//Read first line, test for presence of "midi" followed by an equal sign (pitched lyric file)
-//v2.0	FindLongestLineLength() now rewinds the file
-//	rewind(inf);
-	if(fgets(buffer,maxlinelength,inf) == NULL)	//Read next line of text, capping it to prevent buffer overflow, don't exit on EOF
-	{
-		free(buffer);
-		fclose_err(inf);
-		return -1;	//If NULL is returned, EOF was reached and no bytes were read from file.  Return invalid file
-	}
-
-	temp=strstr(buffer,"midi");	//Search for the string "midi"
-	temp2=strchr(buffer,'=');	//Search for equal sign
-	if(temp && temp2 && (temp2>temp))		//If first line contains "midi" followed by an equal sign
-	{
-		free(buffer);
-		fclose_err(inf);
-		return PITCHED_LYRIC_FORMAT;
-	}
-
-//Continue reading lines until one begins with something other than #, then test for the text based formats (Script, UltraStar, LRC/ELRC)
-	while(!feof(inf))		//Until end of file is reached
-	{
-		processedctr++;
-
-		for(index=0;buffer[index]!='\0';index++)	//Skip leading whitespace
-			if(!isspace(buffer[index]))				//If this character is the first non whitespace character in the line
-				break;								//Break from this loop
-
-		if(buffer[index] == '\0')		//If this line was just whitespace
-		{
-			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
-			continue;							//Process next line
-		}
-
-		if(buffer[index]=='#')	//If this line is a Script or UltraStar tag
-		{
-			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
-			continue;			//Skip this line
-		}
-		temp3=buffer[index];	//Store this character
-		errorcode=0;
-
-//Test for UltraStar
-		if((temp3=='*') || (temp3==':') || (temp3=='-') || (toupper(temp3)=='F'))
-		{	//A character that implies UltraStar format, validate
-			index++;	//Seek past line style
-			convertednum=ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected timestamp, return error in errorcode upon failure
-			if(!errorcode && (temp3=='-'))	//If this is a line break followed by a timestamp (valid UltraStar syntax)
-			{
-				free(buffer);
-				fclose_err(inf);
-				return USTAR_FORMAT;
-			}
-
-			//Otherwise, for all other UltraStar line styles, 2 more valid numbers are expected
-			if(!errorcode)
-				convertednum=ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected duration, return error in errorcode upon failure
-			if(!errorcode)
-				convertednum=ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected pitch, return error in errorcode upon failure
-
-			if(errorcode)	//If the timestamp, duration or the pitch failed to parse
-			{
-				fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
-				continue;
-			}
-			else			//Otherwise, this was a standard lyric definition (valid UltraStar syntax)
-			{
-				free(buffer);
-				fclose_err(inf);
-				return USTAR_FORMAT;
-			}
-		}
-
-//Test for Script
-		if(isdigit(temp3))
-		{	//A numerical character implies Script format, validate
-			convertednum=ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected timestamp, return error in errorcode upon failure
-			if(!errorcode)
-				convertednum=ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected duration, return error in errorcode upon failure
-
-			if(!errorcode && (strstr(&(buffer[index]),"text") != NULL))	//If the timestamp and duration parsed, and the string "text" was found after the two numbers (valid Script format)
-			{
-				free(buffer);
-				fclose_err(inf);
-				return SCRIPT_FORMAT;
-			}
-			else
-			{
-				fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
-				continue;
-			}
-		}
-
-//Test for LRC
-		if(strchr(timestampchar,temp3))
-		{	//This character is one of defined characters used to start an LRC timestamp, validate
-			temp=SeekNextLRCTimestamp(&(buffer[index]));	//Find first timestamp if one exists on this line
-			if(temp != NULL)	//If a timestamp is found
-			{
-				convertednum2=ConvertLRCTimestamp(&temp,&errorcode);
-				if(!errorcode)	//If the timestamp parsed correctly (valid LRC format)
-				{
-					temp2=SeekNextLRCTimestamp(temp);	//Look for a second timestamp on the same line (Extended LRC)
-					if(temp2 != NULL)	//If a second timestamp is found
-					{
-						convertednum2=ConvertLRCTimestamp(&temp2,&errorcode);
-						if(!errorcode)	//If the timestamp parsed correctly (valid ELRC format)
-						{
-							free(buffer);
-							fclose_err(inf);
-							return ELRC_FORMAT;
-						}
-					}
-
-					free(buffer);
-					fclose_err(inf);
-					return LRC_FORMAT;
-				}
-			}
-
-			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
-			continue;
-		}
-
-	//At this point, the line wasn't identified to be any particular format, process next line
-		fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
-	}//while(!feof(inf))
-
-
-//Detect binary based lyric types
-	fclose_err(inf);
-	inf=fopen_err(file,"rb");		//Open file in binary mode
-	free(buffer);	//This doesn't need to be used anymore
-	buffer=NULL;
-
-//Test for VL file
-	errorcode=VL_PreLoad(inf,1);	//Load and validate VL file (without exiting upon failure)
-	ReleaseVL();
-	ReleaseMemory(0);
-
-	if(errorcode == 0)
-	{
-		fclose_err(inf);
-		return VL_FORMAT;		//Success (valid VL file)
-	}
-
-	if(errorcode > 1)	//If VL file header was present, but the VL file was invalid
-	{
-		fclose_err(inf);
-		return -1;		//Return invalid file
-	}
-
-	rewind(inf);
-//Test for MIDI file
-	InitMIDI();
-	quicktemp=Lyrics.quick;	//Store this value
-	Lyrics.quick=1;			//Force quick processing
-	useFLjumpbuffer=1;	//Allow FLC's logic to intercept in exit_wrapper
-	jumpcode=setjmp(FLjumpbuffer);
-	if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
-	{
-		ReleaseMemory(0);
-		fclose_err(inf);
-		useFLjumpbuffer=0;		//Restore normal functionality of exit_wrapper
-		Lyrics.quick=quicktemp;	//Restore original quick processing setting
-		return 0;	//This statement is reached if ReadMIDIHeader() below calles exit_wrapper(), indicating an invalid MIDI header (it is not a MIDI or any of the above defined lyric types, return unknown file)
-	}
-
-	ReadMIDIHeader(inf);
-
-	//If this point is reached, ReadMIDIHeader() completed without error, indicating the file begins with a valid MIDI header
-	rewind(inf);
-	ReleaseMIDI();	//Deallocate MIDI structures populated by ReadMIDIHeader()
-	jumpcode=setjmp(FLjumpbuffer);
-	if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
-	{
-		ReleaseMemory(0);
-		fclose_err(inf);
-		useFLjumpbuffer=0;	//Restore normal functionality of exit_wrapper
-		Lyrics.quick=quicktemp;	//Restore original quick processing setting
-		return -1;	//This statement is reached if MIDI_Load() below calles exit_wrapper(), indicating an invalid MIDI file
-	}
-	MIDI_Load(inf,NULL);	//Call MIDI_Load with no handler (just load MIDI info) Lyric structure is NOT re-init'd- it's already populated
-
-	Lyrics.quick=quicktemp;	//Restore original quick processing setting
-
-	//If this point is reached, MIDI_Load() completed without error, indicating that the file is a valid MIDI file
-	for(ctr=0;ctr<MIDIstruct.hchunk.numtracks;ctr++)	//For each MIDI track
-	{
-		if((MIDIstruct.hchunk.tracks[ctr]).trackname == NULL)	//If this track name doesn't exist (ie. Track 0)
-			continue;	//Skip to next track
-
-//RB MIDI detection logic
-		if(!strcasecmp((MIDIstruct.hchunk.tracks[ctr]).trackname,"PART VOCALS"))	//If the track name is "PART VOCALS"
-		{
-			if((MIDIstruct.hchunk.tracks[ctr]).notecount && ((MIDIstruct.hchunk.tracks[ctr]).textcount || (MIDIstruct.hchunk.tracks[ctr]).lyrcount))
-			{	//If the track contains both note events and lyric/text events
-				rbmididetected=(MIDIstruct.hchunk.tracks[ctr]).textcount;	//Store the number of lyrics
-				continue;	//Examine next track
-			}
-		}
-
-//Vrhythm detection logic
-		if(	!strcasecmp((MIDIstruct.hchunk.tracks[ctr]).trackname,"PART GUITAR") ||
-			!strcasecmp((MIDIstruct.hchunk.tracks[ctr]).trackname,"PART BASS") ||
-			!strcasecmp((MIDIstruct.hchunk.tracks[ctr]).trackname,"PART GUITAR COOP") ||
-			!strcasecmp((MIDIstruct.hchunk.tracks[ctr]).trackname,"PART RHYTHM") ||
-			!strcasecmp((MIDIstruct.hchunk.tracks[ctr]).trackname,"PART DRUM") ||
-			!strcasecmp((MIDIstruct.hchunk.tracks[ctr]).trackname,"PART DRUMS"))
-		{	//If the track is any of RB/FoF instrument tracks
-			if((MIDIstruct.hchunk.tracks[ctr]).notecount > vrhythmdetected)	//If this track has more Note On events than a previous instrument track
-				if(!(MIDIstruct.hchunk.tracks[ctr]).textcount && !(MIDIstruct.hchunk.tracks[ctr]).lyrcount)	//And it contains no lyric or text events
-				{
-					vrhythmdetected=(MIDIstruct.hchunk.tracks[ctr]).notecount;	//Store the number of would-be lyrics
-					continue;	//Examine next track
-				}
-		}
-
-//SKAR detection logic
-		if(!strcasecmp((MIDIstruct.hchunk.tracks[ctr]).trackname,"Words"))	//If the track name is "Words"
-		{
-			if(!(MIDIstruct.hchunk.tracks[ctr]).notecount && (MIDIstruct.hchunk.tracks[ctr]).textcount)	//If the track contains text events and NO note events
-			{
-				skardetected=(MIDIstruct.hchunk.tracks[ctr]).textcount;	//Store the number of lyrics
-				continue;	//Examine next track
-			}
-		}
-//KAR detection logic
-		else	//The track name is not "Words"
-		{
-			if((MIDIstruct.hchunk.tracks[ctr]).textcount || (MIDIstruct.hchunk.tracks[ctr]).lyrcount)	//If the track contains lyric or text events
-			{
-				kardetected=(MIDIstruct.hchunk.tracks[ctr]).textcount;	//Store the number of lyrics
-				continue;	//Examine next track
-			}
-		}
-	}
-
-	ReleaseMemory(0);
-	fclose_err(inf);
-	useFLjumpbuffer=0;	//Restore normal functionality of exit_wrapper
-
-//Return the detected lyric type
-//In the event the file is multiple types of MIDI lyric, the order of precedence is RB MIDI, SKAR, KAR, Vrhythm
-	if(rbmididetected)
-		return MIDI_FORMAT;
-	if(skardetected)
-		return SKAR_FORMAT;
-	if(kardetected)
-		return KAR_FORMAT;
-	if(vrhythmdetected)
-		return VRHYTHM_FORMAT;
-
-	return 0;	//return unknown lyric type
-}
-*/
-
 struct Lyric_Format *DetectLyricFormat(char *file)
 {
 	unsigned long maxlinelength=0,index,convertednum2,ctr;
@@ -2475,11 +1782,10 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 	FILE *inf;
 	struct Lyric_Format *detectionlist;	//The linked list of all detected lyric formats in the specified file
 	struct Lyric_Format *curdetection=NULL;	//The conductor for the above linked list (used in the MIDI detection logic)
-//	unsigned long vrhythmdetected=0;	//Is nonzero if one or more instrument tracks with Note On events and NO lyric events are found
 
 	assert_wrapper(file != NULL);
 	InitLyrics();	//Initialize all variables in the Lyrics structure
-	InitMIDI();		//Initialize all variables in the MIDI structure
+//	InitMIDI();		//Initialize all variables in the MIDI structure
 
 	if(Lyrics.verbose>=2)	printf("Detecting lyric type of file \"%s\"\n",file);
 
@@ -2494,7 +1800,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 	maxlinelength=FindLongestLineLength(inf,0);
 	if(!maxlinelength)
 	{	//File is empty
-		free(detectionlist);
+		DestroyLyricFormatList(detectionlist);
 		fclose_err(inf);
 		return NULL;	//Return invalid file
 	}
@@ -2504,7 +1810,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 	if(fgets(buffer,maxlinelength,inf) == NULL)	//Read next line of text, capping it to prevent buffer overflow, don't exit on EOF
 	{
 		free(buffer);
-		free(detectionlist);
+		DestroyLyricFormatList(detectionlist);
 		fclose_err(inf);
 		return NULL;	//If NULL is returned from fgets, EOF was reached and no bytes were read from file.  Return invalid file
 	}
@@ -2660,7 +1966,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 
 	rewind(inf);
 //Test for MIDI file
-	InitMIDI();
+	InitMIDI();				//Initialize all variables in the MIDI structure
 	quicktemp=Lyrics.quick;	//Store this value
 	Lyrics.quick=0;			//Force quick processing OFF (so MIDI_Load will not skip parsing entire tracks)
 	useFLjumpbuffer=1;	//Allow FLC's logic to intercept in exit_wrapper
@@ -2720,13 +2026,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 			!strcasecmp((MIDIstruct.hchunk.tracks[ctr]).trackname,"PART DRUM") ||
 			!strcasecmp((MIDIstruct.hchunk.tracks[ctr]).trackname,"PART DRUMS"))
 		{	//If the track is any of RB/FoF instrument tracks
-//Altered detection logic to exclude instrument tracks from formats other than Vrhythm
-//			if(!(MIDIstruct.hchunk.tracks[ctr]).textcount && !(MIDIstruct.hchunk.tracks[ctr]).lyrcount)	//And it contains no lyric or text events
-//			{
-//				if((MIDIstruct.hchunk.tracks[ctr]).notecount > vrhythmdetected)	//If this track has more notes than a previous one
-//					vrhythmdetected=(MIDIstruct.hchunk.tracks[ctr]).notecount;	//Store the number of notes
 				continue;	//Examine next track
-//			}
 		}
 
 //RB MIDI detection logic
@@ -2769,13 +2069,8 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 //If the detection list is empty, return NULL
 	if(detectionlist->format == 0)
 	{
-//		if(vrhythmdetected != 0)	//If no format besides Vocal Rhythm was detected
-//		{
-//			detectionlist->format=VRHYTHM_FORMAT;
-//			return detectionlist;
-//		}
-
-		free(detectionlist);
+		ReleaseMemory(0);
+		DestroyLyricFormatList(detectionlist);
 		return NULL;	//No valid lyric format detected
 	}
 

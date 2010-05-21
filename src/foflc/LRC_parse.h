@@ -5,7 +5,6 @@ void LRC_Load(FILE *inf);
 char *SeekNextLRCTimestamp(char *ptr);
 	//find next occurence of a timestamp in [xx:yy:zz] format, return pointer to beginning of timestamp, or NULL if no timestamp is found
 	//If ptr is passed as NULL, NULL is returned
-//v1.97	ConvertLRCTimestamp() was modified to be able to return on error instead of just exit
 unsigned long ConvertLRCTimestamp(char **ptr,int *errorstatus);
 	//Accepts pointer to a timestamp in [xx:yy:zz] format, returns conversion in milliseconds
 	//ptr is advanced to first character after end of timestamp
