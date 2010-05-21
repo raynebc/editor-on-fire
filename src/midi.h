@@ -19,7 +19,6 @@ int eof_figure_beat(double pos);
 double eof_calculate_bpm_absolute(double pos);
 double eof_calculate_delta(double start, double end);
 
-EOF_SONG * eof_import_midi(const char * fn);
 int eof_export_midi(EOF_SONG * sp, char * fn);
 
 #endif

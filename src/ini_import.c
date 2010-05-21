@@ -1,0 +1,178 @@
+#include <allegro.h>
+#include <stdio.h>
+#include "song.h"
+
+typedef struct
+{
+
+	char type[256];
+	char value[1024];
+
+} EOF_IMPORT_INI_SETTING;
+
+EOF_IMPORT_INI_SETTING eof_import_ini_setting[32];
+int eof_import_ini_settings = 0;
+
+/* it would probably be easier to use Allegro's configuration routines to read
+ * the ini files since it looks like they are formatted correctly */
+int eof_import_ini(EOF_SONG * sp, char * fn)
+{
+	PACKFILE * fp;
+	char textbuffer[4096] = {0};
+	char * line_token = NULL;
+	int textlength = 0;
+	char * token;
+	char * equals = NULL;
+	int i;
+	int j;
+	int size;
+
+	size = file_size_ex(fn);
+	fp = pack_fopen(fn, "r");
+	if(!fp)
+	{
+		return 0;
+	}
+	eof_import_ini_settings = 0;
+
+	pack_fread(textbuffer, size, fp);
+	textlength = ustrlen(textbuffer);
+	ustrtok(textbuffer, "\r\n");
+//	pack_fgets(textline, 1024, fp);
+	while(1)
+	{
+		line_token = ustrtok(NULL, "\r\n[]");
+		if(!line_token)
+		{
+			break;
+		}
+		else
+		{
+			if(ustrlen(line_token) > 6)
+			{
+				/* find the first '=' */
+				for(i = 0; i < ustrlen(line_token); i++)
+				{
+					if(ugetc(&line_token[uoffset(line_token, i)]) == '=')
+					{
+						equals = &line_token[uoffset(line_token, i)];
+						break;
+					}
+				}
+
+				/* if this line has an '=', process line as a setting */
+				if(equals)
+				{
+					equals[0] = '\0';
+					token = equals + 1;
+					ustrcpy(eof_import_ini_setting[eof_import_ini_settings].type, line_token);
+					ustrcpy(eof_import_ini_setting[eof_import_ini_settings].value, token);
+					eof_import_ini_settings++;
+				}
+			}
+		}
+	}
+	for(i = 0; i < eof_import_ini_settings; i++)
+	{
+		if(!ustricmp(eof_import_ini_setting[i].type, "artist ") || !ustricmp(eof_import_ini_setting[i].type, "artist"))
+		{
+			for(j = 0; j < ustrlen(eof_import_ini_setting[i].value); j++)
+			{
+				if(eof_import_ini_setting[i].value[j] != ' ')
+				{
+					ustrcpy(sp->tags->artist, &(eof_import_ini_setting[i].value[j]));
+					break;
+				}
+			}
+		}
+		else if(!ustricmp(eof_import_ini_setting[i].type, "name ") || !ustricmp(eof_import_ini_setting[i].type, "name"))
+		{
+			for(j = 0; j < ustrlen(eof_import_ini_setting[i].value); j++)
+			{
+				if(eof_import_ini_setting[i].value[j] != ' ')
+				{
+					ustrcpy(sp->tags->title, &(eof_import_ini_setting[i].value[j]));
+					break;
+				}
+			}
+		}
+		else if(!ustricmp(eof_import_ini_setting[i].type, "frets ") || !ustricmp(eof_import_ini_setting[i].type, "frets"))
+		{
+			for(j = 0; j < ustrlen(eof_import_ini_setting[i].value); j++)
+			{
+				if(eof_import_ini_setting[i].value[j] != ' ')
+				{
+					ustrcpy(sp->tags->frettist, &(eof_import_ini_setting[i].value[j]));
+					break;
+				}
+			}
+		}
+		else if(!ustricmp(eof_import_ini_setting[i].type, "year ") || !ustricmp(eof_import_ini_setting[i].type, "year"))
+		{
+			for(j = 0; j < ustrlen(eof_import_ini_setting[i].value); j++)
+			{
+				if(eof_import_ini_setting[i].value[j] != ' ')
+				{
+					ustrcpy(sp->tags->year, &(eof_import_ini_setting[i].value[j]));
+					break;
+				}
+			}
+		}
+		else if(!ustricmp(eof_import_ini_setting[i].type, "loading_phrase ") || !ustricmp(eof_import_ini_setting[i].type, "loading_phrase"))
+		{
+			for(j = 0; j < ustrlen(eof_import_ini_setting[i].value); j++)
+			{
+				if(eof_import_ini_setting[i].value[j] != ' ')
+				{
+					ustrcpy(sp->tags->loading_text, &(eof_import_ini_setting[i].value[j]));
+					break;
+				}
+			}
+		}
+		else if(!ustricmp(eof_import_ini_setting[i].type, "lyrics ") || !ustricmp(eof_import_ini_setting[i].type, "lyrics"))
+		{
+			for(j = 0; j < ustrlen(eof_import_ini_setting[i].value); j++)
+			{
+				if(eof_import_ini_setting[i].value[j] != ' ')
+				{
+					if(!ustricmp(&(eof_import_ini_setting[i].value[j]), "True"))
+					{
+						sp->tags->lyrics = 1;
+					}
+					break;
+				}
+			}
+		}
+		else if(!ustricmp(eof_import_ini_setting[i].type, "eighthnote_hopo ") || !ustricmp(eof_import_ini_setting[i].type, "eighthnote_hopo"))
+		{
+			for(j = 0; j < ustrlen(eof_import_ini_setting[i].value); j++)
+			{
+				if(eof_import_ini_setting[i].value[j] != ' ')
+				{
+					if(!ustricmp(&(eof_import_ini_setting[i].value[j]), "1"))
+					{
+						sp->tags->eighth_note_hopo = 1;
+					}
+					break;
+				}
+			}
+		}
+		else if(!ustricmp(eof_import_ini_setting[i].type, "delay ") || !ustricmp(eof_import_ini_setting[i].type, "delay"))
+		{
+			sp->tags->ogg[0].midi_offset = atoi(eof_import_ini_setting[i].value);
+			if(sp->tags->ogg[0].midi_offset < 0)
+			{
+				sp->tags->ogg[0].midi_offset = 0;
+			}
+		}
+
+		/* for custom settings */
+		else
+		{
+			sprintf(sp->tags->ini_setting[sp->tags->ini_settings], "%s = %s", eof_import_ini_setting[i].type, eof_import_ini_setting[i].value);
+			sp->tags->ini_settings++;
+		}
+	}
+	pack_fclose(fp);
+	return 1;
+}
