@@ -3,6 +3,8 @@
 #include "config.h"
 #include "mix.h"
 
+static void set_default_config(void);	//Applies the default settings, and overwrites settings from a loaded configuration where applicable
+
 void set_default_config(void)
 {
 	eof_guitar.button[0].type = EOF_CONTROLLER_BUTTON_TYPE_KEY;
@@ -21,7 +23,7 @@ void set_default_config(void)
 	eof_guitar.button[6].key = KEY_F5;
 	eof_controller_read_button_names(&eof_guitar);
 	eof_guitar.delay = 0;
-	
+
 	eof_drums.button[0].type = EOF_CONTROLLER_BUTTON_TYPE_KEY;
 	eof_drums.button[0].key = KEY_1;
 	eof_drums.button[1].type = EOF_CONTROLLER_BUTTON_TYPE_KEY;
@@ -39,9 +41,9 @@ void set_default_config(void)
 void eof_load_config(char * fn)
 {
 	PACKFILE * fp;
-	
+
 	set_default_config();
-	
+
 	fp = pack_fopen(fn, "r");
 	if(fp)
 	{
@@ -115,7 +117,7 @@ void eof_load_config(char * fn)
 		pack_fread(eof_last_frettist, 256, fp);
 		eof_soft_cursor = pack_getc(fp);
 		eof_desktop = pack_getc(fp);
-		
+
 		/* edit settings */
 		eof_snap_mode = pack_igetl(fp);
 		if(eof_snap_mode < 0 || eof_snap_mode > EOF_SNAP_CUSTOM)
@@ -146,7 +148,7 @@ void eof_load_config(char * fn)
 void eof_save_config(char * fn)
 {
 	PACKFILE * fp;
-	
+
 	fp = pack_fopen(fn, "w");
 	if(fp)
 	{
@@ -175,16 +177,16 @@ void eof_save_config(char * fn)
 		pack_fwrite(eof_last_frettist, 256, fp);
 		pack_putc(eof_soft_cursor, fp);
 		pack_putc(eof_desktop, fp);
-		
+
 		/* edit settings */
 		pack_iputl(eof_snap_mode, fp);
 		pack_iputl(eof_snap_interval, fp);
 		pack_iputl(eof_zoom_3d, fp);
 		pack_iputl(eof_hopo_view, fp);
-		
+
 		pack_iputl(eof_guitar.delay, fp);
 		pack_iputl(eof_drums.delay, fp);
-		
+
 		pack_fclose(fp);
 	}
 }

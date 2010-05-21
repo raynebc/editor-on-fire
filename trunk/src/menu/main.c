@@ -35,7 +35,7 @@ void eof_prepare_main_menu(void)
 		eof_main_menu[2].flags = 0; // Song
 		eof_main_menu[3].flags = 0; // Note
 		eof_main_menu[4].flags = 0; // Beat
-		
+
 		/* disable Note menu when no notes are selected */
 		if(eof_count_selected_notes(NULL, 1))
 		{
@@ -55,7 +55,9 @@ void eof_prepare_main_menu(void)
 	}
 }
 
+/*
 int eof_menu_cancel(void)
 {
 	return 1;
 }
+*/

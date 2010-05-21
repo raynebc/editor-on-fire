@@ -37,7 +37,7 @@ char      * eof_track_name[EOF_MAX_TRACKS + 1] = {"PART GUITAR", "PART BASS", "P
 char        eof_note_type_name[5][32] = {" Supaeasy", " Easy", " Medium", " Amazing", " BRE"};
 char        eof_vocal_tab_name[5][32] = {" Lyrics", " ", " ", " ", " "};
 char      * eof_snap_name[9] = {"Off", "1/4", "1/8", "1/12", "1/16", "1/24", "1/32", "1/48", "Custom"};
-char      * eof_input_name[7] = {"Classic", "Piano Roll", "Hold", "RexMundi", "Guitar Tap", "Guitar Strum", "Feedback"};
+char      * eof_input_name[EOF_INPUT_NAME_NUM] = {"Classic", "Piano Roll", "Hold", "RexMundi", "Guitar Tap", "Guitar Strum", "Feedback"};
 
 NCDFS_FILTER_LIST * eof_filter_music_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_ogg_files = NULL;
