@@ -262,66 +262,86 @@ void eof_controller_read_button_names(EOF_CONTROLLER * cp)
 	}
 }
 
-void eof_controller_save_config(EOF_CONTROLLER * cp, PACKFILE * fp)
+void eof_controller_save_config(EOF_CONTROLLER * cp, char * name)
 {
 	int i;
+	char string[256] = {0};
 
 	for(i = 0; i < EOF_CONTROLLER_MAX_BUTTONS; i++)
 	{
-		pack_putc(cp->button[i].type, fp);
+		sprintf(string, "button_%d_type", i);
+		set_config_int(name, string, cp->button[i].type);
 		switch(cp->button[i].type)
 		{
 			case EOF_CONTROLLER_BUTTON_TYPE_KEY:
 			{
-				pack_iputl(cp->button[i].key, fp);
+				sprintf(string, "button_%d_key", i);
+				set_config_int(name, string, cp->button[i].key);
 				break;
 			}
 			case EOF_CONTROLLER_BUTTON_TYPE_JOYBUTTON:
 			{
-				pack_iputl(cp->button[i].joy, fp);
-				pack_iputl(cp->button[i].key, fp);
+				sprintf(string, "button_%d_controller", i);
+				set_config_int(name, string, cp->button[i].joy);
+				sprintf(string, "button_%d_key", i);
+				set_config_int(name, string, cp->button[i].key);
 				break;
 			}
 			case EOF_CONTROLLER_BUTTON_TYPE_JOYAXIS:
 			{
-				pack_iputl(cp->button[i].joy, fp);
-				pack_iputl(cp->button[i].index, fp);
-				pack_iputl(cp->button[i].d, fp);
-				pack_iputl(cp->button[i].key, fp);
+				sprintf(string, "button_%d_controller", i);
+				set_config_int(name, string, cp->button[i].joy);
+				sprintf(string, "button_%d_axis", i);
+				set_config_int(name, string, cp->button[i].index);
+				sprintf(string, "button_%d_direction", i);
+				set_config_int(name, string, cp->button[i].d);
+				sprintf(string, "button_%d_key", i);
+				set_config_int(name, string, cp->button[i].key);
 				break;
 			}
 		}
 	}
+	set_config_int(name, "delay", cp->delay);
 }
 
-void eof_controller_load_config(EOF_CONTROLLER * cp, PACKFILE * fp)
+void eof_controller_load_config(EOF_CONTROLLER * cp, char * name)
 {
 	int i;
+	char string[256] = {0};
 
 	for(i = 0; i < EOF_CONTROLLER_MAX_BUTTONS; i++)
 	{
-		cp->button[i].type = pack_getc(fp);
+		sprintf(string, "button_%d_type", i);
+		cp->button[i].type = get_config_int(name, string, 0);
 		switch(cp->button[i].type)
 		{
 			case EOF_CONTROLLER_BUTTON_TYPE_KEY:
 			{
-				cp->button[i].key = pack_igetl(fp);
+				sprintf(string, "button_%d_key", i);
+				cp->button[i].key = get_config_int(name, string, 0);
 				break;
 			}
 			case EOF_CONTROLLER_BUTTON_TYPE_JOYBUTTON:
 			{
-				cp->button[i].joy = pack_igetl(fp);
-				cp->button[i].key = pack_igetl(fp);
+				sprintf(string, "button_%d_controller", i);
+				cp->button[i].joy = get_config_int(name, string, 0);
+				sprintf(string, "button_%d_key", i);
+				cp->button[i].key = get_config_int(name, string, 0);
 				break;
 			}
 			case EOF_CONTROLLER_BUTTON_TYPE_JOYAXIS:
 			{
-				cp->button[i].joy = pack_igetl(fp);
-				cp->button[i].index = pack_igetl(fp);
-				cp->button[i].d = pack_igetl(fp);
-				cp->button[i].key = pack_igetl(fp);
+				sprintf(string, "button_%d_controller", i);
+				cp->button[i].joy = get_config_int(name, string, 0);
+				sprintf(string, "button_%d_axis", i);
+				cp->button[i].index = get_config_int(name, string, 0);
+				sprintf(string, "button_%d_direction", i);
+				cp->button[i].d = get_config_int(name, string, 0);
+				sprintf(string, "button_%d_key", i);
+				cp->button[i].key = get_config_int(name, string, 0);
 				break;
 			}
 		}
 	}
+	cp->delay = get_config_int(name, "delay", 0);
 }
