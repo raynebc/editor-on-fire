@@ -93,6 +93,9 @@
 #define EOF_DISPLAY_800             1
 #define EOF_DISPLAY_1024            2
 
+#define EOF_INPUT_NAME_NUM			7
+	//The number of defined input methods
+
 typedef struct
 {
 

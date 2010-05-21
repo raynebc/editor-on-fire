@@ -189,6 +189,9 @@ void eof_color_dialog(DIALOG * dp, int fg, int bg)
 {
 	int i;
 
+	if(dp == NULL)
+		return;	//Invalid DIALOG pointer
+
 	for(i = 0; dp[i].proc != NULL; i++)
 	{
 		dp[i].fg = fg;
@@ -214,7 +217,7 @@ int eof_popup_dialog(DIALOG * dp, int n)
 		/* special handling of the main menu */
 		if(dp[0].proc == d_agup_menu_proc)
 		{
-
+			//A keypress (X) shifted left by 8 bits counts it as ALT+(X)
 			/* if user wants the menu, force dialog to stay open */
 			if(key[KEY_ALTGR] && !eof_keyboard_shortcut)
 			{
