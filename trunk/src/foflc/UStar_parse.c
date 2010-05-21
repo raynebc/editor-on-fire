@@ -14,20 +14,13 @@ double Weighted_Mean_Tempo(void)
 {
 	long double counter=0;		//The sum that will equal the weighted mean
 	long double weightedvalue;	//The weighted value divided by the number of tempo changes for the current tempo
-//v2.0	Removed the use of numchanges
-//	unsigned long numchanges;	//A counter for the number of tempo changes in the MIDI
 	struct Tempo_change *ptr;	//Conductor for the tempomap linked list
 	double test;
 
 //Count the number of tempo changes
-//v2.0	Removed this for loop, which is pointless for testing for 0 or 1 tempo changes
-//	for(numchanges=0,ptr=MIDIstruct.hchunk.tempomap;ptr!=NULL;numchanges++,ptr=ptr->next);
-
-//	if(numchanges == 0)	//no tempo defined
 	if(MIDIstruct.hchunk.tempomap == NULL)
 		return 120.0;	//return default tempo
 
-//	if(numchanges == 1)						//only one tempo defined
 	if(MIDIstruct.hchunk.tempomap->next == NULL)
 	{
 		test=(MIDIstruct.hchunk.tempomap->BPM);	//return that tempo
@@ -54,7 +47,6 @@ double Weighted_Mean_Tempo(void)
 
 double Mean_Timediff_Tempo(void)
 {
-//	unsigned long x;
 	long double counter=0;
 	struct Lyric_Piece *current,*next;
 	struct Lyric_Line *templine;
@@ -62,21 +54,6 @@ double Mean_Timediff_Tempo(void)
 	if(Lyrics.piececount < 2)	//If there is only one lyric piece
 		return 120.0;			//return the default tempo
 
-/*v2.0	Rewrite this logic to not use FindLyricNumber()
-	for(x=1;x<Lyrics.piececount;x++)	//For each lyric entry
-	{
-		current=FindLyricNumber(x);
-		next=FindLyricNumber(x+1);
-
-		if((current == NULL) || (next == NULL))
-		{
-			puts("Error: Unexpected end of lyrics during tempo estimation\nAborting.");
-			exit_wrapper(1);
-		}
-
-		counter+=next->start - current->start;	//Add the difference between this timestamp and the next
-	}
-*/
 	templine=Lyrics.lines;
 	assert_wrapper(templine != NULL);	//Should not be possible if piececount > 0
 	current=Lyrics.lines->pieces;		//Start with the first lyric
@@ -128,7 +105,7 @@ void Export_UStar(FILE *outf)
 						//			exported file
 	int errornumber=0;
 	unsigned char pitch_char='F';	//By default, freestyle will be assumed.  If Lyrics.pitch_tracking is nonzero, then appropriate styles will be set
-	char pitch_num=36;		//By default, generic pitch value 36 (C1) is assumed
+	char pitch_num=MINPITCH;		//By default, generic pitch value 36 (C1) is assumed
 	char newline=1;		//Boolean:  If this is true, the prefixed space is skipped (for preventing a leading space
 						//	for the first lyric in a new line of lyrics.  This should be set each time an end of
 						//	line is written, as well as before writing the first lyric piece.  This is reset after
@@ -378,7 +355,7 @@ void Export_UStar(FILE *outf)
 //!This was resolved by dividing the stepping variable by 4, which improves the resolution of the exported lyrics
 //!over this workaround
 		//write lyric timing and pitch to file, prefixing with : or F as appropriate based on pitch presence
-		if(Lyrics.pitch_tracking)	//Write default pitch 36 unless Lyrics.pitch_tracking is enabled
+		if(Lyrics.pitch_tracking)	//Write default pitch MINPITCH unless Lyrics.pitch_tracking is enabled
 			pitch_num=current->pitch;
 
 //v2.0	Put proper pitch remapping logic to convert from MIDI->UltraStar pitch numbering
@@ -394,19 +371,6 @@ void Export_UStar(FILE *outf)
 		}
 
 		newline=0;	//Reset this condition
-
-		//Handle hyphens
-/*v2.0	Nohyphens logic is handled by PostProcessLyrics()
-		if((next != NULL) && (current->lyric)[strlen(current->lyric)-1] == '-')	//If the last character of the lyric is a hyphen
-		{	//If this is the last lyric piece in the line, skip the following even if it ends in a hyphen
-			if(current->groupswithnext && ((Lyrics.nohyphens &1) != 0))
-			{	//If this piece groups with the next and auto-inserted lyrics are not being removed
-			}	//Do nothing
-			else if((strlen(current->lyric) > 1) && (Lyrics.nohyphens & 2) != 0)
-				//Remove hyphens from output lyrics, but only if the lyric is more than just "-"
-				(current->lyric)[strlen(current->lyric)-1] = '\0';	//Truncate hyphen from the end of the string
-		}
-*/
 
 		if(fprintf(outf,"%s\n",current->lyric) < 0)
 			errornumber=1;
@@ -473,11 +437,6 @@ double ConvertStringToTempo(char *tempo)
 	assert_wrapper(tempo != NULL);
 
 //Parse the string to convert comma to decimal point
-/*v2.0	Rewrote this loop to reduce number of calls to strlen()
-	for(ctr=0;ctr<strlen(tempo);ctr++)
-		if(tempo[ctr] == ',')
-			tempo[ctr] = '.';
-*/
 	for(ctr=(unsigned long)strlen(tempo);ctr>0;ctr--)
 		if(tempo[ctr-1] == ',')
 		{
@@ -568,7 +527,6 @@ void UStar_Load(FILE *inf)
 	char *substring;		//Used with strstr() to find tag strings in the input file
 	unsigned long index;	//Used to index within a line of text
 	long int starttime;		//Converted unsigned long value of numerical string representing a lyric's timestamp in quarterbeats
-//	long int starttime2=0;	//A copy of starttime used for relative timing
 	long int duration;		//Converted unsigned long value of numerical string representing a lyric's duration
 	long int linetime=0;	//Converted unsigned long value of numerical string representing the timestamp of a line of lyric's first lyric (for relative timing)
 	int rawpitch;			//The (potentially) negative pitch is read into this variable, so it can be properly bounds checked
@@ -584,12 +542,6 @@ void UStar_Load(FILE *inf)
 							//timing instead of absolute timing.  Relative timing causes the timestamp to reset to 0 at
 							//the beginning of each line of lyrics in the UltraStar file (reset at each linebreak)
 
-//Moved to Lyrics structure
-//	static unsigned char last_pitch=0;
-		//This will keep track of whether there is are multiple vocal pitches in the source lyrics.  If
-		//a change from non-zero pitch is encountered, Lyrics.pitch_tracking is set to True
-
-
 	assert_wrapper(inf != NULL);	//This must not be NULL
 
 //Find the length of the longest line
@@ -599,9 +551,6 @@ void UStar_Load(FILE *inf)
 	buffer=(char *)malloc_err(maxlinelength);
 
 //Load each line and parse it
-//v2.0	FindLongestLineLength() now rewinds the file
-//	fseek_err(inf,0,SEEK_SET);		//rewind file
-
 	fgets_err(buffer,maxlinelength,inf);	//Read first line of text, capping it to prevent buffer overflow
 
 	if(Lyrics.verbose)	printf("\nImporting UltraStar lyrics from file \"%s\"\n\n",Lyrics.infilename);
@@ -640,8 +589,6 @@ void UStar_Load(FILE *inf)
 			if(ParseTag(':','\0',buffer,1) <= 0)	//Look for tags, content starts after ':' char and extends to end of line.  Negatize the offset
 			{	//If the title, artist and offset tags are not found in the line
 	//Look for BPM tag	(#BPM:)
-//v2.0	Rewrote this logic to use strcasestr_spec()
-//				substring=strstr(buffer,"#BPM:");
 				substring=strcasestr_spec(buffer,"#BPM:");
 				if(substring != NULL)
 				{
@@ -649,7 +596,6 @@ void UStar_Load(FILE *inf)
 						printf("Warning in line #%lu: Extra BPM tag in Ultrastar file.  Ignoring\n",processedctr);
 					else
 					{
-//						tempstr=ReadUStarTag(substring+strlen("#BPM:"));
 						tempstr=ReadUStarTag(substring);
 						BPM=ConvertStringToTempo(tempstr);
 						if(!(BPM > 1.0))	//Write condition to avoid testing for equality, which GCC will warn about for floating point comparisons
@@ -719,7 +665,6 @@ void UStar_Load(FILE *inf)
 
 				fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 			continue;
-//			break;	//This line cannot be reached anyway
 
 			default:
 				printf("Error: Invalid line type '%c' in line #%lu\nAborting\n",buffer[index],processedctr);
@@ -734,14 +679,10 @@ void UStar_Load(FILE *inf)
 
 //Parse starting offset (which is in quarter beats)
 		starttime=ParseLongInt(buffer,&index,processedctr,NULL);
-//		starttime2=starttime;	//Save for use with relative timing
 
 //Perform relative timing conversion if applicable
 		if(relative_timing)
-		{
-//			assert_wrapper(starttime >= linetime);
 			starttime+=linetime;	//Adjust the timing accordingly (timestamp absolute time + lyric relative time = lyric absolute time)
-		}
 
 		starttime=(long int)(((double)starttime * stepping)+0.5);	//Convert from quarterbeats to milliseconds (round up)
 
@@ -750,8 +691,6 @@ void UStar_Load(FILE *inf)
 		duration=(long int)(((double)duration * stepping)+0.5);		//Convert from quarterbeats to milliseconds (round up)
 
 //Parse pitch
-//v2.0	Read the pitch into a signed integer instead, so it can be raised two octaves and then have the sign checked
-//		pitch=(unsigned char)(ParseLongInt(buffer,&index,processedctr,NULL) & 0xFF);	//Force pitch as an 8-bit value
 		rawpitch=ParseLongInt(buffer,&index,processedctr,NULL);
 		rawpitch+=24;	//UltraStar pitches map note C1 as 0 instead of 24, remap to match the MIDI note standard
 		if((rawpitch<0) || (rawpitch>127))
@@ -827,8 +766,6 @@ void UStar_Load(FILE *inf)
 	if(feof(inf))	//If end of file was reached before a line beginning with E
 		puts("Warning: UltraStar file did not properly end with a line beginning with 'E'");
 
-//v2.0	Added ForceEndLyricLine() function
-//	EndLyricLine();	//Ends line	of lyric if one is in progress
 	ForceEndLyricLine();
 
 	free(buffer);	//No longer needed, release the memory before exiting function
@@ -862,62 +799,8 @@ char *ReadUStarTag(char *str)
 	}
 }
 
-/*v2.0	Rewrote this bizarre function in orer to allow the pitches' notes within the octave to be retained,
-only changing the octave that the note falls into
 void RemapPitches(void)
 {
-	unsigned long ctr;
-	unsigned char pitchmin,pitchmax,minoctave;
-	int diff;
-	double scale,temp2;
-	unsigned char newpitch;
-	struct Lyric_Piece *temp;
-
-	if(!CheckPitches(&pitchmin,&pitchmax))
-		return;	//Return without performing remapping if all pitches are in the correct range
-
-	minoctave=pitchmin/12;	//Based on pitchmin, find the lowest octave used in the input lyrics
-
-//If the pitches can remap without scaling, do so
-	if(pitchmax-minoctave <= MAXPITCH-MINPITCH)	//If the range of pitches is no greater than the range of [36,84]
-	{
-		if(Lyrics.verbose)	printf("! Remapping pitches to [%d,%d]\n",MINPITCH,MAXPITCH);
-
-		diff=MINPITCH-pitchmin;	//diff is the additive value to remap pitches with
-
-		for(ctr=0;ctr<Lyrics.piececount;ctr++)	//For each lyric piece
-		{
-			temp=FindLyricNumber(ctr+1);	//Find the lyric piece
-			assert_wrapper(temp != NULL);
-
-			temp->pitch+=diff;		//Remap the lyric's pitch
-		}
-
-		return;
-	}
-
-//For each line, the pitches will have to scale to the nearest octave
-	if(Lyrics.verbose)	printf("! Rescaling pitches to [%d,%d]\n",MINPITCH,MAXPITCH);
-
-	scale=((double)pitchmax-pitchmin+1)/((double)MAXPITCH-MINPITCH+1);	//Find the scale with which to multiply with input pitches
-	for(ctr=0;ctr<Lyrics.piececount;ctr++)	//For each lyric piece
-	{
-		temp=FindLyricNumber(ctr+1);			//Find the lyric piece
-		assert_wrapper(temp != NULL);
-
-		temp2=(double)temp->pitch * scale + 0.5;//Find the scaled pitch, plus .5 so it rounds up
-		newpitch=(unsigned char)temp2;			//Convert back to integer value
-		newpitch/=12;							//Find the correct octave for the scaled pitch
-		newpitch+=(temp->pitch)%12;				//Find the correct note within the octave based on the original pitch
-
-		temp->pitch=newpitch;				//Save the scaled pitch
-	}
-}
-*/
-
-void RemapPitches(void)
-{
-//	unsigned long ctr;
 	unsigned char pitchmin=0,pitchmax=0;
 	int diff;
 	struct Lyric_Piece *temp;
@@ -941,15 +824,11 @@ void RemapPitches(void)
 	if((diff <= -12) || (diff >= 12))	//Only if the minimum pitch is at least one octave higher or lower than the lowest usable octave can all pitches transpose down or up by one or more octaves
 	{
 		if(Lyrics.verbose)	printf("Transposing imported pitches by %d octaves to be no less than the minimum pitch of %d\n",diff/12,MINPITCH);
-//v2.0	Changed this to use conductors instead of FindLyricNumber()
-//		for(ctr=0;ctr<Lyrics.piececount;ctr++)	//For each lyric piece
+
 		for(templine=Lyrics.lines;templine!=NULL;templine=templine->next)	//For each line of lyrics
 		{
 			for(temp=templine->pieces;temp!=NULL;temp=temp->next)	//For each lyric in the line
 			{
-//				temp=FindLyricNumber(ctr+1);	//Find the lyric piece
-//				assert_wrapper(temp != NULL);
-
 				if(temp->pitch == PITCHLESS)	//If this lyric piece has no defined pitch
 					continue;					//Disregard it
 
@@ -965,16 +844,12 @@ void RemapPitches(void)
 
 	assert_wrapper(pitchmin >= MINPITCH);	//The transposing above (if applied) was expected to leave this condition true
 	if(Lyrics.verbose)	printf("Constricting pitch octaves to leave them no greater than %d\n",MAXPITCH);
+
 //If the pitches still exceed the defined maximum (MAXPITCH)
-//v2.0	Changed this to use conductors instead of FindLyricNumber()
-//	for(ctr=0;ctr<Lyrics.piececount;ctr++)	//For each lyric piece
 	for(templine=Lyrics.lines;templine!=NULL;templine=templine->next)	//For each line of lyrics
 	{
 		for(temp=templine->pieces;temp!=NULL;temp=temp->next)	//For each lyric in the line
 		{
-//			temp=FindLyricNumber(ctr+1);	//Find the lyric piece
-//			assert_wrapper(temp != NULL);
-
 			if(temp->pitch == PITCHLESS)	//If this lyric piece has no defined pitch
 				continue;					//Disregard it
 
@@ -996,7 +871,6 @@ void RemapPitches(void)
 
 int CheckPitches(unsigned char *pitchmin,unsigned char *pitchmax)
 {
-//	unsigned long ctr;
 	unsigned char pitchmin_local,pitchmax_local;
 	struct Lyric_Piece *temp;
 	struct Lyric_Line *templine;
@@ -1007,15 +881,10 @@ int CheckPitches(unsigned char *pitchmin,unsigned char *pitchmax)
 //Init these values with the pitches of the first lyric piece
 	pitchmin_local=pitchmax_local=Lyrics.lines->pieces->pitch;
 
-//v2.0	Changed this to use conductors instead of FindLyricNumber()
-//	for(ctr=1;ctr<=Lyrics.piececount;ctr++)	//For each lyric piece after the first
 	for(templine=Lyrics.lines;templine!=NULL;templine=templine->next)	//For each line of lyrics
 	{
 		for(temp=templine->pieces;temp!=NULL;temp=temp->next)			//For each lyric in the line
 		{
-//			temp=FindLyricNumber(ctr);	//Find the lyric piece
-//			assert_wrapper(temp != NULL);
-
 			if(temp->pitch == PITCHLESS)	//If this lyric piece has no defined pitch
 				continue;					//Disregard it
 

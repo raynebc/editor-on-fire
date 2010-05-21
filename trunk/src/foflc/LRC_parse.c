@@ -56,9 +56,6 @@ void LRC_Load(FILE *inf)
 	buffer2=malloc_err(maxlinelength+1);	//Allow one extra character for inserting a hyphen
 
 //Process each line of input file
-//v2.0	FindLongestLineLength() now rewinds the file
-//	rewind(inf);	//rewind file
-
 	if(Lyrics.verbose)
 		printf("\nImporting LRC lyrics from file \"%s\"\n\n",Lyrics.infilename);
 
@@ -186,17 +183,9 @@ void LRC_Load(FILE *inf)
 		mean=0;
 		if(Lyrics.verbose)	puts("Warning: There is no ending timestamp for the last lyric.  One will be created.");
 
-//v2.0	Changed this to use conductors instead of FindLyricNumber()
-//		for(ctr=0;ctr<Lyrics.piececount;ctr++)	//For each lyric piece
 		for(templine=Lyrics.lines;templine!=NULL;templine=templine->next)	//For each line of lyrics
 		{
 			for(temp3=templine->pieces;temp3!=NULL;temp3=temp3->next)		//For each lyric in the line
-//			temp3=FindLyricNumber(ctr+1);			//Locate the lyric
-//			if(temp3 == NULL)
-//			{
-//				puts("Error: Lyric structure broken during LRC import\nAborting");
-//				exit_wrapper(2);
-//			}
 				mean+=((double)temp3->duration)/Lyrics.piececount;	//Divide by the number of Lyric pieces altogether before adding to sum to prevent integer overflows
 		}
 		mean+=0.5;	//Add 0.5 so it will round to nearest integer when added to startstamp below
@@ -204,9 +193,6 @@ void LRC_Load(FILE *inf)
 		if(Lyrics.verbose)	putchar('\n');
 	}
 
-//v2.0	Added ForceEndLyricLine() function
-//	if(Lyrics.line_on)	//LRC format may not demarcate end of last line
-//		EndLyricLine();
 	ForceEndLyricLine();
 
 //Release memory buffers and return
@@ -507,7 +493,6 @@ char *RemoveLeadingZeroes(char *str)	//Allocate and return a string representing
 		}
 
 	size=strlen(&(str[ctr]));
-//	temp=malloc_err(strlen(&(str[ctr]))+1);	//Allocate enough room to store truncated string
 	temp=malloc_err(size+1);		//Allocate enough room to store truncated string AND a NULL terminator
 	strcpy(temp,&(str[ctr]));	//Copy input string, starting from past the leading zeroes
 	return temp;	//Return new string

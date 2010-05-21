@@ -167,9 +167,6 @@ int ReadVarLength(FILE *inf, unsigned long *ptr);
 	//Read variable length value into *ptr performing bit shifting accordingly.  Returns zero on success
 char *ReadMetaEventString(FILE *inf,long int length);
 	//Allocates an array of length+1 and reads the ASCII string of the specified length The pointer to the array is returned
-//v2.0	Removed this function because it wasn't used anywhere
-//unsigned long ParseMIDI(FILE *inf);
-	//Reads through all tracks of a MIDI file.  If verbose is nonzero, all parsed events are sent to stdout.  Returns the number of MIDI tracks parsed
 
 
 //
@@ -179,8 +176,6 @@ void WriteVarLength(FILE *outf, unsigned long value);
 	//Write variable length value to output file.  Returns zero on success, or 1 if value is too large to be written in a 4 byte VLV
 void CopyTrack(FILE *inf,unsigned short tracknum,FILE *outf);
 	//Copies the specified MIDI track to the output file stream.  Expects the MIDI structure to have been populated by parsing the input MIDI.
-//v1.97	Modified this function to write different types of strings
-//void WriteSeqSpecificString(FILE *outf,const char *str);
 void WriteMIDIString(FILE *outf,unsigned long delta,int stringtype, const char *str);
 	//Writes the specified delta value (if writedelta is nonzero),
 	//followed by the specified string type (Text, Trackname, Lyric, Seq. Specific) to the output MIDI file
@@ -188,9 +183,6 @@ void Write_MIDI_Note(unsigned int notenum,unsigned int channelnum,unsigned int n
 	//Writes the given note number with status MIDI_NOTE_ON or MIDI_NOTE_OFF to the file stream given
 long int Write_MIDI_Track_Header(FILE *outf);
 	//Writes a MIDI track header with null data for the chunk size.  The file position of the chunk size is returned for calculating and writing the chunk size afterward
-//v1.97	Replaced with WriteMIDIString()
-//void Write_MIDI_Track_Name(const char *trackname,FILE *outf);
-	//Writes a MIDI track name event to the output file with a delta of 0
 void Write_Default_Track_Zero(FILE *outmidi);
 	//Writes a MIDI file header specifying 1 track, writes a track for track 0 and sets MIDIstruct.hchunk.division and MIDIstruct.hchunk.tempomap
 	//After calling this, the MIDI variables are configured and ready to write the export track
@@ -252,9 +244,6 @@ void AddMIDILyric(char *str,unsigned long start,unsigned char pitch,char isoverd
 struct MIDI_Lyric_Piece *EndMIDILyric(unsigned char pitch,unsigned long end);
 	//Searches for the first incomplete (missing end timestamp) MIDI Lyric list entry with a matching pitch and writes the ending timestamp
 	//This allows an indefinite number of Lyrics to be appended and when they are ended, they can be processed in the proper order (First In, First Out)
-//v1.97	Changed GetLyricPiece()
-//struct MIDI_Lyric_Piece *GetLyricPiece(void);
-	//Removes the first link in the Notes list and returns it by reference if it is completed.  Otherwise, NULL is returned
 int GetLyricPiece(void);
 	//If the first link in the MIDI lyrics list is completed, it is removed from the list, added to the Lyrics list
 	//1 is returned if a lyric piece is extracted

@@ -74,18 +74,10 @@ void ReadMIDIHeader(FILE *inf,char suppress_errors)
 			puts("Error: Ticks per frame time division is not supported\nAborting.");
 		exit_wrapper(4);
 	}
-//	MIDIstruct.hchunk.tracks=(struct Track_chunk *)malloc_err(sizeof(struct Track_chunk)*MIDIstruct.hchunk.numtracks);	//Allocate for array of track headers
 	MIDIstruct.hchunk.tracks=(struct Track_chunk *)calloc_err(1,sizeof(struct Track_chunk)*MIDIstruct.hchunk.numtracks);	//Allocate an array of track headers and init to 0
 
-	for(ctr=0;ctr<MIDIstruct.hchunk.numtracks;ctr++)
-	{	//Initialize tracks array
+	for(ctr=0;ctr<MIDIstruct.hchunk.numtracks;ctr++)	//Initialize tracks array
 		(MIDIstruct.hchunk.tracks[ctr]).tracknum=ctr;
-//v2.0	The use of calloc() over malloc() above has already init'd these to 0
-//		(MIDIstruct.hchunk.tracks[ctr]).trackname=NULL;
-//		(MIDIstruct.hchunk.tracks[ctr]).textcount=0;
-//		(MIDIstruct.hchunk.tracks[ctr]).lyrcount=0;
-//		(MIDIstruct.hchunk.tracks[ctr]).notecount=0;
-	}
 
 	if(Lyrics.verbose>=2)	printf("Start of MIDI\nMIDI format=%u\tNumber of tracks=%u\nTime division=%u\n\n",MIDIstruct.hchunk.formattype,MIDIstruct.hchunk.numtracks,MIDIstruct.hchunk.division);
 }
@@ -238,8 +230,6 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 		vars.startindex=ftell_err(inf);	//Store file index of this event's delta value
 		vars.endindex=0;		//0 until we have read the index of the next delta value
 
-//v2.0	Already stored file position to vars.startindex
-//		if(Lyrics.verbose>=2)	printf("Delta file pos=0x%lX\t",ftell_err(inf));
 		if(Lyrics.verbose>=2)	printf("Delta file pos=0x%lX\t",vars.startindex);
 
 //Expected input is the variable length delta value
@@ -375,8 +365,6 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 
 						case 0x1:	//Text event
 							vars.buffer=ReadMetaEventString(inf,vars.length);
-//							if(vars.buffer)
-//								if(Lyrics.verbose && vars.buffer)	printf("Meta Event: Text Event=\"%s\"\tLength=%d\n",vars.buffer,strlen(vars.buffer));
 
 							if(vars.buffer != NULL)	//If there was a string read from MIDI
 							{	//Count the number of text/lyric events that don't begin with an open bracket ([)
@@ -401,8 +389,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 
 						case 0x2:	//Copyright notice
 							vars.buffer=ReadMetaEventString(inf,vars.length);
-//							if(vars.buffer)
-								if(Lyrics.verbose && vars.buffer)	printf("Meta Event: Copyright Notice=\"%s\"\tLength=%d\n",vars.buffer,strlen(vars.buffer));
+							if(Lyrics.verbose && vars.buffer)	printf("Meta Event: Copyright Notice=\"%s\"\tLength=%d\n",vars.buffer,strlen(vars.buffer));
 						break;
 
 						case 0x3:	//Sequence/Track name
@@ -416,13 +403,9 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 								if(Lyrics.verbose)	printf("Meta Event: Track Name=\"%s\"\tLength=%d\n",vars.trackname,strlen(vars.trackname));
 
 							//Special processing for quick processing
-//v2.0	Corrected this logic to only apply if Lyrics.quick is nonzero
-//								if((vars.tracknum!=0) && (event_handler == NULL))	//If we're only processing for tempo changes and track names (track 0 must be processed completely)
-								if((vars.tracknum!=0) && Lyrics.quick)				//If we're only processing for tempo changes and track names (track 0 must be processed completely)
+								if((vars.tracknum!=0) && (event_handler == NULL) && Lyrics.quick)	//If we're only processing for tempo changes and track names (track 0 must be processed completely)
 									return vars.processed;
 
-//v2.0	Removed this assert, which was interfering with DetectLyricFormat(), replacing it with an if statement
-//								assert_wrapper((vars.trackname != NULL) && (Lyrics.inputtrack != NULL));
 								if((vars.trackname != NULL) && (Lyrics.inputtrack != NULL))	//Only allow the rest of the track to be skipped if both the track name and the input track are defined
 								{															//and they match.  Track 0 is forced to process
 									if((vars.tracknum!=0) && Lyrics.quick && (strcasecmp(vars.trackname,Lyrics.inputtrack) != 0))
@@ -436,14 +419,11 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 
 						case 0x4:	//Instrument Name
 							vars.buffer=ReadMetaEventString(inf,vars.length);
-//							if(vars.buffer)
-								if((Lyrics.verbose>=2) && vars.buffer)	printf("Meta Event: Instrument Name=\"%s\"\tLength=%d\n",vars.buffer,strlen(vars.buffer));
+							if((Lyrics.verbose>=2) && vars.buffer)	printf("Meta Event: Instrument Name=\"%s\"\tLength=%d\n",vars.buffer,strlen(vars.buffer));
 						break;
 
 						case 0x5:	//Lyrics
 							vars.buffer=ReadMetaEventString(inf,vars.length);
-//							if(vars.buffer)
-//								if(Lyrics.verbose && vars.buffer)	printf("Meta Event: Lyric=\"%s\"\tLength=%d\n",vars.buffer,strlen(vars.buffer));
 
 							if(vars.buffer != NULL)	//If there was a string read from MIDI
 							{	//Count the number of text/lyric events that don't begin with an open bracket ([)
@@ -463,14 +443,12 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 
 						case 0x6:	//Marker
 							vars.buffer=ReadMetaEventString(inf,vars.length);
-//							if(vars.buffer)
-								if((Lyrics.verbose>=2) && vars.buffer)	printf("Meta Event: Marker=\"%s\"\tLength=%d\n",vars.buffer,strlen(vars.buffer));
+							if((Lyrics.verbose>=2) && vars.buffer)	printf("Meta Event: Marker=\"%s\"\tLength=%d\n",vars.buffer,strlen(vars.buffer));
 						break;
 
 						case 0x7:	//Cue Point
 							vars.buffer=ReadMetaEventString(inf,vars.length);
-//							if(vars.buffer)
-								if((Lyrics.verbose>=2)&& vars.buffer)	printf("Meta Event: Cue Point=\"%s\"\tLength=%d\n",vars.buffer,strlen(vars.buffer));
+							if((Lyrics.verbose>=2)&& vars.buffer)	printf("Meta Event: Cue Point=\"%s\"\tLength=%d\n",vars.buffer,strlen(vars.buffer));
 						break;
 
 						case 0x20:	//MIDI channel prefix
@@ -565,15 +543,11 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 							{	//Special condition:  Empty list (this is the first Tempo Change)
 								MIDIstruct.hchunk.tempomap=(struct Tempo_change *)malloc_err(sizeof(struct Tempo_change));
 								MIDIstruct.hchunk.curtempo=MIDIstruct.hchunk.tempomap;	//Conductor points at start of list
-//v2.0	Moved this line out of the if/else statement
-//								MIDIstruct.hchunk.curtempo->next=NULL;		//No further BPM changes found yet
 							}
 							else	//A link exists already
 							{
 								MIDIstruct.hchunk.curtempo->next=(struct Tempo_change *)malloc_err(sizeof(struct Tempo_change));
 								MIDIstruct.hchunk.curtempo=MIDIstruct.hchunk.curtempo->next;	//Conductor points at new link
-//v2.0	Moved this line out of the if/else statement
-//								MIDIstruct.hchunk.curtempo->next=NULL;		//No further BPM changes found yet
 							}
 
 							MIDIstruct.hchunk.curtempo->next=NULL;		//No further BPM changes found yet
@@ -672,8 +646,6 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 //! I have noticed a trend in some Rock Band MIDIs that will nest Meta events inside a running status, expecting
 //	the running status to be valid after the Meta event is parsed.  Technically, this violates the MIDI standard.
 //	This conditional statement will attempt to continue a running status in this scenario
-//v2.0	Defective logic regarding running status
-//		if((vars.eventtype & 0xF) != 0xF)		//If this event wasn't a Meta/Sysex event
 		if((vars.eventtype >> 4) != 0xF)		//If this event wasn't a Meta/Sysex event
 			vars.lasteventtype=vars.eventtype;	//Remember this in case Running Status is encountered
 
@@ -690,31 +662,6 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 		}
 	}//End while(1)
 }
-
-/*v2.0	Removed this function because it wasn't used anywhere
-unsigned long ParseMIDI(FILE *inf)
-{	//Reads through all tracks of a MIDI file.  If verbose is nonzero, all parsed events
-	//are sent to stdout.  Returns the number of MIDI tracks parsed
-	unsigned long ctr=0;
-
-	assert_wrapper(inf != NULL);	//This must not be NULL
-
-	MIDIstruct.MPQN_defined=0;	//Default MPQN is assumed until one is defined
-
-	ReadMIDIHeader(inf);	//Load and validate the MIDI header
-
-//We are expecting the track header
-	while(ReadTrackHeader(inf,&(MIDIstruct.hchunk.tracks[ctr])) == 0)
-	{	//For each track
-		TrackEventProcessor(inf,NULL,(unsigned char)0x1,(char)0,NULL,(char)0,&(MIDIstruct.hchunk.tracks[ctr]));	//Do not provide a handler for this test
-		ctr++;
-	}
-
-	if(Lyrics.verbose)	printf("End of file.  %lu tracks processed\n",ctr);
-
-	return ctr;
-}
-*/
 
 int Lyricless_handler(struct TEPstruct *data)
 {	//This handler will expect proper MIDI notes with no overlapping/nesting
@@ -806,7 +753,6 @@ void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppr
 	struct Track_chunk temp;	//Used to count the track headers
 	unsigned short ctr=0;		//The currently parsed MIDI track number
 	size_t temp2;
-//	struct Lyric_Line *templine;	//Used for removal of an empty, unclosed line
 
 	assert_wrapper(inf != NULL);	//A filename must have been passed to this function
 
@@ -854,8 +800,6 @@ void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppr
 		TrackEventProcessor(inf,NULL,0x1,0,event_handler,0,&(MIDIstruct.hchunk.tracks[ctr]),suppress_errors);
 		ctr++;
 
-//v2.0	Corrected this skipping logic, which should now only apply if Lyrics.quick is nonzero
-//		if(((event_handler == NULL) || Lyrics.quick) && (ctr<MIDIstruct.hchunk.numtracks))	//If track processing is allowed to stop early
 		if(Lyrics.quick && (ctr<MIDIstruct.hchunk.numtracks))	//If track processing is allowed to stop early
 		{	//Only skip to next track if there is another one
 			if(Lyrics.verbose>=2)	printf("Skipping to track at byte 0x%lX\n",(MIDIstruct.hchunk.tracks[ctr]).fileposition);
@@ -874,22 +818,6 @@ void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppr
 		EndLyricLine();		//End the lyric line gracefully
 	}
 
-/*v2.0	Moved this logic to ForceEndLyricLine()
-	if(Lyrics.line_on)	//KAR files do not demarcate the end of the last line of lyrics
-	{
-		assert_wrapper(Lyrics.curline != NULL);
-		if(Lyrics.curline->piececount == 0)	//If this unclosed line is empty
-		{	//Manually remove it from the Lyrics structure
-			(Lyrics.curline->prev)->next=NULL;	//Previous line points forward to nothing
-			templine=Lyrics.curline->prev;		//Save pointer to previous line
-			free(Lyrics.curline);				//Release empty line
-			Lyrics.curline=templine;			//Point conductor to previous line
-			Lyrics.line_on=0;					//Mark lyric line status as closed
-		}
-		else
-			EndLyricLine();	//Close it normally
-	}
-*/
 	ForceEndLyricLine();
 	if(Lyrics.verbose)	printf("MIDI import complete.  %lu lyrics loaded\n\n",Lyrics.piececount);
 }
@@ -1148,212 +1076,6 @@ void Copy_Source_MIDI(FILE *inf,FILE *outf)
 	}//for(ctr=0;ctr<MIDIstruct.hchunk.numtracks;ctr++)
 }
 
-/*v2.0	Added KAR export logic
-void Export_MIDI(FILE *outf)
-{	//"PART VOCALS" is written with lyric and note events based on the contents of the Lyrics structure
-	unsigned long reldelta;		//The relative delta compared to this delta time and the last delta time
-								//Stores a relative delta for a start of a lyric piece
-	unsigned long thisdelta;	//The absolute delta time of the current lyric/line start
-	unsigned long lastdelta=0;	//We have to store the last absolute delta of the end of a lyric so we can keep
-								//track of relative delta times between events
-	unsigned long lyrdelta;		//The relative delta value to use for a lyric piece.  If a new line is started, this is 0
-	unsigned long extradelta=0;	//To account for the delta time that would otherwise be missed when not writing Note Off for PITCHLESS lyrics
-	struct Lyric_Line *curline;	//A conductor for the lyric lines list
-	struct Lyric_Piece *temp;	//A conductor for the lyric pieces list
-	struct Lyric_Piece *temp2;	//A temporary pointer used to handle overdrive
-	char line_marked;			//Boolean:  The current line of lyrics has been marked with a Note 105 on event
-	char overdrive;				//Boolean:	Overdrive is enabled (a Note On has been created)
-	unsigned int channelnum=((MIDIstruct.hchunk.numtracks-1) & 0xF); //This is the channel number to write events to (0-15)
-	long chunkfileposition;		//store this so we can write the track chunk size at the end
-	long chunkfilesize;
-	unsigned char pitch=LYRIC_NOTE_ON;	//This will be set to LYRIC_NOTE_ON if Lyrics.pitch_detection
-										//is false, otherwise the input lyric pitches will be used
-	char *tempstr;
-
-	assert_wrapper(outf != NULL);	//This must not be NULL (inf is allowed to in order to control how the output file is written)
-	assert_wrapper(Lyrics.outputtrack != NULL);	//This must be set during or before the source MIDI logic
-
-	if(Lyrics.verbose)	printf("\nExporting MIDI lyrics to file \"%s\"\n",Lyrics.outfilename);
-
-	if(!Lyrics.pitch_tracking)
-		puts("\a! NOTE: No pitch variation found in input lyrics.  Exporting as Freestyle");
-
-	if(Lyrics.verbose)	printf("\tTrack %u: Building (%s)...\n",MIDIstruct.trackswritten,Lyrics.outputtrack);
-
-//Write PART VOCALS
- //Write the track header
-	chunkfileposition=Write_MIDI_Track_Header(outf);
-
- //Write track name (meta event 3) with a delta of 0
-//	Write_MIDI_Track_Name(Lyrics.outputtrack,outf);
-	WriteMIDIString(outf,0,TRACK_NAME_MIDI_STRING,Lyrics.outputtrack);
-
- //Write the lyrics
- 	overdrive=0;
-	curline=Lyrics.lines;	//Point conductor to first line of lyrics
-	while(curline != NULL)
-	{	//For each line of lyrics
-		line_marked=0;		//The first lyric in the line will mark the start of the line as well
-		temp=curline->pieces;	//Starting with the first piece of lyric in this line
-		while(temp != NULL)
-		{	//For each piece of lyric in the line
- //Before writing the abosolute first lyric event, embed various pieces of information
-			if(temp==(Lyrics.lines)->pieces)
-			{	//Write sequencer specific event with the program abbreviation and version number, delta=0
-//				WriteSeqSpecificString(outf,PROGVERSION);	//Embed program version
-				WriteMIDIString(outf,0,SEQSPEC_MIDI_STRING,PROGVERSION);
-
-				if(Lyrics.Title != NULL)
-				{
-					tempstr=Append("Title=",Lyrics.Title);		//Write Title tag as a single string
-//					WriteSeqSpecificString(outf,tempstr);
-					WriteMIDIString(outf,0,SEQSPEC_MIDI_STRING,tempstr);
-					free(tempstr);
-				}
-				if(Lyrics.Artist != NULL)
-				{
-					tempstr=Append("Artist=",Lyrics.Artist);	//Write Artist tag as a single string
-//					WriteSeqSpecificString(outf,tempstr);
-					WriteMIDIString(outf,0,SEQSPEC_MIDI_STRING,tempstr);
-					free(tempstr);
-				}
-				if(Lyrics.Album != NULL)
-				{
-					tempstr=Append("Album=",Lyrics.Album);		//Write Album tag as a single string
-//					WriteSeqSpecificString(outf,tempstr);
-					WriteMIDIString(outf,0,SEQSPEC_MIDI_STRING,tempstr);
-					free(tempstr);
-				}
-				if(Lyrics.Editor != NULL)
-				{
-					tempstr=Append("Editor=",Lyrics.Editor);	//Write Editor tag as a single string
-//					WriteSeqSpecificString(outf,tempstr);
-					WriteMIDIString(outf,0,SEQSPEC_MIDI_STRING,tempstr);
-					free(tempstr);
-				}
-			}
-
-			thisdelta=ConvertToDeltaTime(temp->start);//Delta is the start absolute delta time of this lyric
-			assert_wrapper(thisdelta>=lastdelta);	//There's been some serious malfunction if this is false
-			reldelta=thisdelta-lastdelta;	//Find the delta value relative to the last lyric event
-			lyrdelta=reldelta;	//Unless we find a new line is starting this is the lyric's delta value
-
-			if(line_marked == 0)	//If we need to mark the start of the line of lyrics
-			{
-				lyrdelta=0;	//The lyric's delta will be 0, following the line start event
-
-	//Write Note 105 On event (line start)
-			//Write delta value of this start of line (equal to the delta of the first lyric in a line)
-				WriteVarLength(outf,reldelta+extradelta);
-				extradelta=0;	//Ensure this is reset since the appropriate delta time was written
-				Write_MIDI_Note(105,channelnum,MIDI_NOTE_ON,outf);
-				line_marked=1;	//This will remain 1 until the start of the next line
-			}
-
-	//Handle Note 116 On event (Overdrive start)
-			if((temp->style == '*') && !overdrive)
-			{	//If this lyric is overdrive, and an overdrive marker isn't in progress
-				WriteVarLength(outf,lyrdelta+extradelta);
-				extradelta=0;	//Ensure this is reset since the appropriate delta time was written
-				Write_MIDI_Note(116,channelnum,MIDI_NOTE_ON,outf);
-				overdrive=1;
-				lyrdelta=0;	//The lyric's delta will be 0, following the overdrive start event
-			}
-
-	//Write lyric
-			//If the lyric is freestyle, append a pound symbol (#), as per Rock Band convention
-			if((temp->style == 'F') || !Lyrics.pitch_tracking)	//If freestyle is explicitly or implicitly defined
-				if(temp->lyric[strlen(temp->lyric)-1] != '#')	//And the lyric doesn't already end in a # char
-					temp->lyric=ResizedAppend(temp->lyric,"#",1);	//Re-allocate string to have a # char appended
-
-//v2.0	Employed the new WriteMIDIString() function
-//			//Write the lyric's delta time of (0 if it is the start of a new line)
-//			WriteVarLength(outf,lyrdelta+extradelta);
-//
-//			//Write meta event 5
-//			fputc_err(0xFF,outf);
-//			fputc_err(0x5,outf);
-//		//Write variable length value equal to length of string
-//			WriteVarLength(outf,strlen(temp->lyric));
-//
-//		//Write string
-//			fwrite_err(temp->lyric,strlen(temp->lyric),1,outf);
-//
-			WriteMIDIString(outf,lyrdelta+extradelta,LYRIC_MIDI_STRING,temp->lyric);
-			extradelta=0;	//Ensure this is reset since the appropriate delta time was written
-
-			lastdelta=ConvertToDeltaTime(temp->start+temp->duration);	//lastdelta=abs delta of end of lyric, this must be calculated even if Note On/Off is not being written for the lyric
-		//Write Note On and Off events unless -nopitch was specified and there was no defined pitch for the lyric
-			if(!(Lyrics.nopitch && (temp->pitch == PITCHLESS)))
-			{	//If the condition to skip writing the Note events (nopitch specified and pitchless lyric) is NOT true, write Note On and Off
-			//Write note on 0 deltas away from the lyric event
-				if(Lyrics.pitch_tracking)
-					pitch=temp->pitch;
-
-				if(temp->pitch == PITCHLESS)	//If a pitchless lyric is to be written
-					pitch=LYRIC_NOTE_ON;		//Change it to the generic pitch specified in lyric_storage.h
-
-				WriteVarLength(outf,0+extradelta);
-				extradelta=0;	//Ensure this is reset since the appropriate delta time was written
-				Write_MIDI_Note(pitch,channelnum,MIDI_NOTE_ON,outf);
-
-			//Write note off (note #LYRIC_NOTE_ON off) the correct number of deltas away from the note on event
-//v2.0	Moved this line outside of the PITCHLESS logic, as pitchless lyric export was being broken
-//				lastdelta=ConvertToDeltaTime(temp->start+temp->duration);	//lastdelta=abs delta of end of lyric
-				if(lastdelta < thisdelta)
-				{
-					printf("Unexpected error: temp->start=%lu\ttemp->duration=%lu\tduration delta=%lu\nAborting\n",temp->start,temp->duration,lastdelta);
-					exit_wrapper(1);
-				}
-				WriteVarLength(outf,lastdelta-thisdelta);
-
-				Write_MIDI_Note(pitch,channelnum,MIDI_NOTE_OFF,outf);
-			}
-			else	//If the Note On and Off events were not written, the delta time for where the Note Off would have gone needs to be accounted for
-				extradelta=lastdelta-thisdelta;	//Track this difference to add to the next delta time that is written
-
-	//Handle Note 116 Off event (Overdrive end)
-			if(overdrive)
-			{	//If an overdrive phrase is in progress
-				temp2=temp->next;								//temp2 points to the next lyric of this line
-				if((temp2 == NULL) && (curline->next != NULL))	//If there's no next piece in this line, but there's another line
-					temp2=curline->next->pieces;				//temp2 points to the first lyric of the next line, otherwise it would be NULL
-
-				if(!temp2 || (temp2->style != '*'))
-				{	//If there are no more lyrics, or the next one doesn't use overdrive, turn overdrive off
-					WriteVarLength(outf,0+extradelta);	//Write delta value of 0, as this should end at the same time as the Note off for the last lyric in this phrase that used overdrive
-					extradelta=0;	//Ensure this is reset since the appropriate delta time was written
-					Write_MIDI_Note(116,channelnum,MIDI_NOTE_OFF,outf);
-					overdrive=0;
-				}
-			}
-
-			temp=temp->next;	//Advance to next lyric piece in this line
-		}//while(temp != NULL)
-
-	//Write Note 105 Off event (line end)
-	//Write delta value 0 (line ends 0 deltas away from the Note Off event for the last lyric)
-		WriteVarLength(outf,0+extradelta);
-		extradelta=0;	//Ensure this is reset since the appropriate delta time was written
-		Write_MIDI_Note(105,channelnum,MIDI_NOTE_OFF,outf);
-
-		curline=curline->next;	//Advance to next line of lyrics
-	}//while(Lyrics.curline != NULL)
-
-//Write end of track event with a delta of 0 and a null padding byte
-	WriteDWORDBE(outf,0x00FF2F00UL);	//Write 4 bytes: 0, 0xFF, 0x2F and 0
-
-	chunkfilesize=ftell_err(outf)-chunkfileposition-4;	//# of bytes from start to end of the track chunk (- chunk size variable)
-
-//Rewind to the track chunk size location and write the correct value
-	fseek_err(outf,chunkfileposition,SEEK_SET);			//Rewind to where the chunk size is supposed to be written
-
-	WriteDWORDBE(outf,chunkfilesize);	//Write chunk size in BE format
-
-	MIDIstruct.trackswritten++;	//One additional track has been written to the output file
-	if(Lyrics.verbose)	printf("\nMIDI export complete.  %lu lyrics written\n",Lyrics.piececount);
-}*/
-
 void Export_MIDI(FILE *outf)
 {	//A MIDI track is written with lyric and note events based on the contents of the Lyrics structure
 	unsigned long reldelta;		//The relative delta compared to this delta time and the last delta time
@@ -1391,7 +1113,6 @@ void Export_MIDI(FILE *outf)
 	chunkfileposition=Write_MIDI_Track_Header(outf);
 
  //Write track name (meta event 3) with a delta of 0
-//	Write_MIDI_Track_Name(Lyrics.outputtrack,outf);
 	WriteMIDIString(outf,0,TRACK_NAME_MIDI_STRING,Lyrics.outputtrack);
 
  //Before writing the abosolute first lyric event, embed various pieces of information
@@ -1431,44 +1152,6 @@ void Export_MIDI(FILE *outf)
 		temp=curline->pieces;	//Starting with the first piece of lyric in this line
 		while(temp != NULL)
 		{	//For each piece of lyric in the line
- //Before writing the abosolute first lyric event, embed various pieces of information
-/*v2.0	Moved this logic outside the while loops
-			if(temp==(Lyrics.lines)->pieces)
-			{	//Write sequencer specific event with the program abbreviation and version number, delta=0
-//				WriteSeqSpecificString(outf,PROGVERSION);	//Embed program version
-				WriteMIDIString(outf,0,SEQSPEC_MIDI_STRING,PROGVERSION);
-
-				if(Lyrics.Title != NULL)
-				{
-					tempstr=Append("Title=",Lyrics.Title);		//Write Title tag as a single string
-//					WriteSeqSpecificString(outf,tempstr);
-					WriteMIDIString(outf,0,SEQSPEC_MIDI_STRING,tempstr);
-					free(tempstr);
-				}
-				if(Lyrics.Artist != NULL)
-				{
-					tempstr=Append("Artist=",Lyrics.Artist);	//Write Artist tag as a single string
-//					WriteSeqSpecificString(outf,tempstr);
-					WriteMIDIString(outf,0,SEQSPEC_MIDI_STRING,tempstr);
-					free(tempstr);
-				}
-				if(Lyrics.Album != NULL)
-				{
-					tempstr=Append("Album=",Lyrics.Album);		//Write Album tag as a single string
-//					WriteSeqSpecificString(outf,tempstr);
-					WriteMIDIString(outf,0,SEQSPEC_MIDI_STRING,tempstr);
-					free(tempstr);
-				}
-				if(Lyrics.Editor != NULL)
-				{
-					tempstr=Append("Editor=",Lyrics.Editor);	//Write Editor tag as a single string
-//					WriteSeqSpecificString(outf,tempstr);
-					WriteMIDIString(outf,0,SEQSPEC_MIDI_STRING,tempstr);
-					free(tempstr);
-				}
-			}
-*/
-
 			thisdelta=ConvertToDeltaTime(temp->start);//Delta is the start absolute delta time of this lyric
 			assert_wrapper(thisdelta>=lastdelta);	//There's been some serious malfunction if this is false
 			reldelta=thisdelta-lastdelta;	//Find the delta value relative to the last lyric event
@@ -1507,19 +1190,6 @@ void Export_MIDI(FILE *outf)
 					if(temp->lyric[strlen(temp->lyric)-1] != '#')	//And the lyric doesn't already end in a # char
 						temp->lyric=ResizedAppend(temp->lyric,"#",1);	//Re-allocate string to have a # char appended
 
-/*v2.0	Employed the new WriteMIDIString() function
-			//Write the lyric's delta time of (0 if it is the start of a new line)
-			WriteVarLength(outf,lyrdelta+extradelta);
-
-			//Write meta event 5
-			fputc_err(0xFF,outf);
-			fputc_err(0x5,outf);
-		//Write variable length value equal to length of string
-			WriteVarLength(outf,strlen(temp->lyric));
-
-		//Write string
-			fwrite_err(temp->lyric,strlen(temp->lyric),1,outf);
-*/
 		//Perform unofficial KAR grouping logic (append whitespace to lyric if it does not group with the next lyric)
 			if((Lyrics.out_format == KAR_FORMAT) && !temp->groupswithnext && (temp->next != NULL))
 				temp->lyric=ResizedAppend(temp->lyric," ",1);	//Resize string to include a space at the end
@@ -1548,8 +1218,6 @@ void Export_MIDI(FILE *outf)
 				Write_MIDI_Note(pitch,channelnum,MIDI_NOTE_ON,outf);
 
 			//Write note off (note #LYRIC_NOTE_ON off) the correct number of deltas away from the note on event
-//v2.0	Moved this line outside of the PITCHLESS logic, as pitchless lyric export was being broken
-//				lastdelta=ConvertToDeltaTime(temp->start+temp->duration);	//lastdelta=abs delta of end of lyric
 				if(lastdelta < thisdelta)
 				{
 					printf("Unexpected error: temp->start=%lu\ttemp->duration=%lu\tduration delta=%lu\nAborting\n",temp->start,temp->duration,lastdelta);
@@ -1612,8 +1280,6 @@ void Export_MIDI(FILE *outf)
 	if(Lyrics.verbose)	printf("\nMIDI export complete.  %lu lyrics written\n",Lyrics.piececount);
 }
 
-//v2.0	Modified this function to write different types of strings
-//void WriteSeqSpecificString(FILE *outf,const char *str)
 void WriteMIDIString(FILE *outf,unsigned long delta,int stringtype, const char *str)
 {
 	assert_wrapper((stringtype == 0x1) || (stringtype == 0x3) || (stringtype == 0x5) || (stringtype == 0x7F));
@@ -1735,10 +1401,6 @@ void Parse_Song_Ini(char *midipath,char loadoffset,char loadothertags)
 	if(loadoffset)	//Load the offset tag
 		Lyrics.OffsetStringID=DuplicateString("delay");
 
-//Load each line and parse it
-//v2.0	FindLongestLineLength() now rewinds the file
-//	rewind(inf);	//rewind file
-
 	while(fgets(buffer,maxlinelength,inf) != NULL)		//Read lines until end of file is reached, don't exit on EOF
 		ParseTag('=','\0',buffer,1);	//Look for tags, content starts after '=' char and extends to end of line.  Negatize the offset
 
@@ -1770,28 +1432,6 @@ void VRhythm_Load(char *srclyrname,char *srcmidiname,FILE *inf)
 	{	//Open input pitched lyric file to read vrhythm ID
 		inputlyrics=fopen_err(srclyrname,"rt");
 
-	//Read first line, which should indicate the target track and difficulty in a format such as "midi = D4" (Drums>Expert)
-/*v2.0	Rewrote this logic to use a strcasestr_spec()
-		for(ctr=0;ctr<10;ctr++)
-		{
-			buffer[ctr]=tolower(fgetc_err(inputlyrics));	//Character converted to lowercase if applicable
-			if(buffer[ctr] == '\n')
-				break;	//Stop parsing track difficulty identifier if a newline is reached
-		}
-		buffer[ctr]='\0';	//Terminate buffer with a null character, overwriting newline if it was read above
-
-	//Validate and process first line
-		temp=strstr(buffer,"midi");	//Search for the string "midi"
-		temp2=strchr(buffer,'=');	//Search for equal sign
-		if(!temp || !temp2 || !(temp2>temp))		//If first line does not contain "midi" followed by an equal sign
-		{
-			printf("Error: Invalid vocal rhythm track identifier \"%s\" in input lyric file \"%s\"\nAborting\n",buffer,srclyrname);
-			exit_wrapper(2);
-		}
-		temp2++;	//Seek past equal sign
-		while(isspace(temp2[0]))
-			temp2++;	//Seek to first non whitespace character (should be the instrument track identifier)
-*/
 	//Read first line, which should indicate the target track and difficulty in a format such as "midi = D4" (Drums>Expert)
 		fgets_err(buffer,11,inputlyrics);	//Read first line (or first 10 bytes) of file into buffer
 		buffer[10]='\0';					//Ensure the string is terminated
@@ -1953,11 +1593,6 @@ void PitchedLyric_Load(FILE *inf)
 	char negativeoctave;
 	char invalidnote;
 
-//Moved to Lyrics structure
-//	static unsigned char last_pitch=0;
-		//This will keep track of whether there is are multiple vocal pitches in the source lyrics.  If
-		//a change from non-zero pitch is encountered, Lyrics.pitch_tracking is set to True
-
 	assert_wrapper(inf != NULL);	//This must not be NULL
 
 	Lyrics.curline=Lyrics.lines;	//Reset the internal line linked list conductor to first line
@@ -1975,8 +1610,6 @@ void PitchedLyric_Load(FILE *inf)
 	buffer=(char *)malloc_err(maxlinelength);
 
 //Load each line and parse it
-//v2.0	FindLongestLineLength() now rewinds the file
-//	fseek_err(inf,0,SEEK_SET);				//rewind file
 	fgets_err(buffer,maxlinelength,inf);	//Read and ignore first line of text, as it is the vrhythm track identifier
 
 	assert_wrapper(Lyrics.srclyrname != NULL);
@@ -2181,13 +1814,7 @@ void PitchedLyric_Load(FILE *inf)
 			lyrptr->lyric=TruncateString(&(buffer[index]),0);		//Copy lyric text, removing leading and trailing whitespace from lyric, deallocate old string and save new string
 
 			if(lyrptr->lyric[strlen(lyrptr->lyric)-1] == '-')		//If the lyric ends in a hyphen
-			{
-//v2.0	nohyphen logic is performed in PostProcessLyrics()
-//				if(Lyrics.nohyphens)								//If the user specified to do so
-//					lyrptr->lyric[strlen(lyrptr->lyric)-1] == '\0';	//Truncate the hyphen
-
 				lyrptr->groupswithnext=1;	//This lyric will group with the next lyric
-			}
 
 			lyrptr->pitch=pitch;			//Write lyric pitch
 			if(Lyrics.overdrive_on)			//Write vocal style if applicable
@@ -2386,8 +2013,6 @@ int SKAR_handler(struct TEPstruct *data)
 			buffer=DuplicateString(data->buffer);
 		}
 
-//v2.0	Removed this assertion, as it cannot be false (DuplicateString()) will stop the program instead of returning a NULL pointer
-//		assert_wrapper(buffer != NULL);
 		assert_wrapper(Lyrics.curline != NULL);
 		lastlyrictime=(unsigned long)ConvertToRealTime(MIDIstruct.deltacounter,MIDIstruct.realtime);	//Get realtime for start of this lyric
 
@@ -2434,9 +2059,6 @@ int Lyric_handler(struct TEPstruct *data)
 	unsigned char eventtype;
 	struct MIDI_Lyric_Piece *Lyric_Piece=NULL;	//Used to retrieve from the Notes list
 
-//	static unsigned char last_pitch=0;
-		//This will keep track of whether there is are multiple vocal pitches in the source lyrics.  If
-		//a change from non-zero pitch is encountered, Lyrics.pitch_tracking is set to True
 	static unsigned char lyric_note_num=0xFF;
 		//Some incorrectly-prepared RB ripped MIDIs nest note events within the Note On and Note Off event that
 		//pertain to a lyric's starting and ending.  This static variable will be used to keep track, between
@@ -2468,9 +2090,6 @@ int Lyric_handler(struct TEPstruct *data)
 
 	assert_wrapper(data != NULL);	//This must not be NULL
 	assert_wrapper(Lyrics.inputtrack != NULL);
-
-//v2.0	Retain the value of the last parsed lyric between calls to the handler
-//	groupswithnext=0;		//By default, the lyric will not group
 
 	eventtype=data->eventtype;//This value may be interpreted differently for Note On w/ velocity=0
 
@@ -2532,9 +2151,6 @@ int Lyric_handler(struct TEPstruct *data)
 		if(lastlyric != NULL)
 		{	//A new lyric event was encountered without the last lyric piece having been ended with Note Off
 			//Special case is that a preceeding Note On was just accepted for this lyric event above, allow it
-//v2.0	Changed this logic to allow a "pitchless" lyric to be imported
-//			printf("Error: KAR Lyric overlap encountered (delta for event is at file position %lX): \"%s\" overlaps with \"%s\"\nAborting\n",data->startindex,data->buffer,lastlyric);
-//			exit_wrapper(1);
 			AddMIDILyric(lastlyric,lastlyrictime,PITCHLESS,overdrive_on,groupswithnext);	//Add lyric of style "pitchless" to the MIDI lyric list
 			EndMIDILyric(PITCHLESS,lastlyrictime+1);										//End the pitchless lyric with a duration of 1ms
 			while(GetLyricPiece());	//Remove and store all completed MIDI lyrics from the front of the list
@@ -2624,8 +2240,9 @@ int Lyric_handler(struct TEPstruct *data)
 		{	//If a Lyric was parsed and a corresponding Note # was expected, perform following logic and add Lyric to Notes list at end of this function
 			if(data->delta != 0)
 			{
-				printf("Error: Note on for a lyric piece has a delta != 0 (Delta time for the event is at file position %lX)\nAborting\n",data->startindex);
-				exit_wrapper(2);
+//v2.1	Kasabian - Shoot The Runner MIDI violates RB/KAR spec and has a lyric pitch at a different delta time than its lyric text, allow this with warning
+				printf("\a Warning: Note on for a lyric piece has a delta != 0 (Delta time for the event is at file position %lX)\n",data->startindex);
+//				exit_wrapper(2);
 			}
 		}
 		else	//If no lyric was parsed yet, return depending on whether lyricless logic is in effect
@@ -2687,48 +2304,6 @@ int Lyric_handler(struct TEPstruct *data)
 
 		assert_wrapper((Lyric_Piece->pitch == PITCHLESS) || (Lyric_Piece->pitch < 128));	//Valid MIDI notes are 0-127, or PITCHLESS
 
-/*v2.0	Changed GetLyricPiece()
-		while((Lyric_Piece=GetLyricPiece()) != NULL)
-		{
-		//Ensure a line of lyrics is open
-			if(Lyrics.line_on == 0)		//Only create a new line if one isn't already open
-				CreateLyricLine();
-
-		//Configure overdrive based on the retrieved Lyric's overdrive status
-			if(Lyric_Piece->overdrive_on)
-				Lyrics.overdrive_on=1;
-			else
-				Lyrics.overdrive_on=0;
-
-			AddLyricPiece(Lyric_Piece->lyric,Lyric_Piece->start,Lyric_Piece->end,Lyric_Piece->pitch,Lyric_Piece->groupswithnext);
-
-	//Track for pitch changes, enabling Lyrics.pitch_tracking if applicable
-			if((last_pitch != 0) && (last_pitch != Lyric_Piece->pitch))	//There's a pitch change
-				Lyrics.pitch_tracking=1;
-			last_pitch=Lyric_Piece->pitch;	//Consider this the last defined pitch
-
-	//Reset variables
-			free(Lyric_Piece->lyric);
-			Lyric_Piece->lyric=NULL;	//This is expected to be NULL on the next Lyric event
-			free(Lyric_Piece);			//Deallocate memory used by the MIDI_Lyric piece
-
-	//Special case: The first entry of Notes list is now a line break
-			if((MIDI_Lyrics.head != NULL) && (MIDI_Lyrics.head->lyric == NULL))
-			{
-				EndLyricLine();		//End the line gracefully
-
-			//Remove from the notes list
-				Lyric_Piece=MIDI_Lyrics.head;	//Store this pointer
-				MIDI_Lyrics.head=Lyric_Piece->next;
-				if(Lyric_Piece->next == NULL)	//Remove tail of list
-					MIDI_Lyrics.tail=NULL;
-				else
-					(Lyric_Piece->next)->prev=NULL;
-
-				free(Lyric_Piece);	//Deallocate memory used by the MIDI_Lyric piece
-			}
-		}
-*/
 		while(GetLyricPiece());	//Remove and store all completed MIDI lyrics from the front of the list
 
   		return 1;
@@ -2770,8 +2345,13 @@ int Lyric_handler(struct TEPstruct *data)
 
 void AddMIDILyric(char *str,unsigned long start,unsigned char pitch,char isoverdrive,char groupswithnext)
 {	//Adds the Lyric and Note On information to the linked list
-	struct MIDI_Lyric_Piece *temp=(struct MIDI_Lyric_Piece *)malloc_err(sizeof (struct MIDI_Lyric_Piece));
+	struct MIDI_Lyric_Piece *temp;
 
+//v2.1	Prevent two consecutive line breaks from being added to this list
+	if((MIDI_Lyrics.head != NULL) && (MIDI_Lyrics.tail != NULL) && (MIDI_Lyrics.tail->lyric == NULL))
+		return;		//If the last item appended was a line break, return instead of appending another consecutive line break
+
+	temp=(struct MIDI_Lyric_Piece *)malloc_err(sizeof (struct MIDI_Lyric_Piece));
 	temp->lyric=str;	//If str is NULL, it will be handled like a line break
 	temp->start=start;
 	temp->end=0;		//Set to 0 until the appropriate Note Off is found
@@ -2862,10 +2442,6 @@ struct MIDI_Lyric_Piece *EndMIDILyric(unsigned char pitch,unsigned long end)
 int GetLyricPiece(void)
 {
 	struct MIDI_Lyric_Piece *temp=MIDI_Lyrics.head;
-//Moved to Lyrics structure
-//	static unsigned char last_pitch=0;
-		//This will keep track of whether there is are multiple vocal pitches in the source lyrics.  If
-		//a change from non-zero pitch is encountered, Lyrics.pitch_tracking is set to True
 
 	if((temp != NULL) && (temp->end != 0))
 	{	//If first link exists and is completed
@@ -2878,7 +2454,6 @@ int GetLyricPiece(void)
 			(temp->next)->prev=NULL;
 
 		temp->prev=temp->next=NULL;
-//		return temp;	//Return former head link
 
 //Ensure a line of lyrics is open
 		if(Lyrics.line_on == 0)		//Only create a new line if one isn't already open
@@ -2922,7 +2497,6 @@ int GetLyricPiece(void)
 	else
 		return 0;	//No MIDI lyric stored
 
-//	return NULL;
 	return 1;	//Return MIDI lyric stored
 }
 
@@ -2932,9 +2506,6 @@ char *AnalyzeVrhythmID(const char *buffer)
 
 	if(buffer == NULL)
 		return NULL;
-//v2.0 Removed this check, as the calling function shouldn't have to remove formatting chars like '\n'
-//	if(buffer[2] != '\0')
-//		return NULL;
 
 	switch(tolower(buffer[0]))
 	{	//Identify the specified track name
@@ -2958,11 +2529,6 @@ char *AnalyzeVrhythmID(const char *buffer)
 			trackname=DuplicateString("PART DRUMS");
 		break;
 
-/*v2.0	Removed PART VOCALS from being usable in Vocal Rhythm
-		case 'v':	//PART VOCALS
-			trackname=DuplicateString("PART VOCALS");
-		break;
-*/
 		default:
 			return NULL;
 		break;
@@ -3017,19 +2583,6 @@ long int Write_MIDI_Track_Header(FILE *outf)
 
 	return fp;
 }
-
-/*v2.0	Replaced with WriteMIDIString()
-void Write_MIDI_Track_Name(const char *trackname,FILE *outf)
-{
-	assert_wrapper((trackname != NULL) && (outf != NULL));
-
-	fputc_err(0,outf);
-	fputc_err(0xFF,outf);
-	fputc_err(0x3,outf);
-	WriteVarLength(outf,strlen(trackname));
-	fwrite_err(trackname,strlen(trackname),1,outf);
-}
-*/
 
 void Export_Vrhythm(FILE *outmidi,FILE *outlyric,char *vrhythmid)
 {
@@ -3086,13 +2639,6 @@ void Export_Vrhythm(FILE *outmidi,FILE *outlyric,char *vrhythmid)
 		while(temp != NULL)
 		{	//For each piece of lyric
 //Perform MIDI logic
-	 //Before writing the abosolute first lyric event, embed various pieces of information
-/*v2.0	Moved this outside the while loops
-			if(temp==(Lyrics.lines)->pieces)	//Write sequencer specific event with the program abbreviation and version number, delta=0
-//				WriteSeqSpecificString(outmidi,PROGVERSION);	//Embed program version
-				WriteMIDIString(outmidi,0,SEQSPEC_MIDI_STRING,PROGVERSION);
-*/
-
 			thisdelta=ConvertToDeltaTime(temp->start);//Delta is the start absolute delta time of this lyric
 			reldelta=thisdelta-lastdelta;	//Find the delta value relative to the last lyric event
 			lyrdelta=reldelta;	//Unless we find a new line is starting this is the lyric's delta value
@@ -3186,9 +2732,6 @@ void Export_Vrhythm(FILE *outmidi,FILE *outlyric,char *vrhythmid)
 	WriteDWORDBE(outmidi,chunkfilesize);	//Write track chunk size
 	fseek_err(outmidi,fp,SEEK_SET);			//Return to original file position
 
-//v2.0	Remove this statement, since ReleaseMIDI() checks for this already, and it could cause a memory leak when Write_Default_Track_Zero() is used, as it populates the tempo map
-//	MIDIstruct.hchunk.tempomap=NULL;	//Forget the default tempo to avoid de-allocating memory for the defaulttempo global variable
-
 	MIDIstruct.trackswritten++;			//Increment the counter to reflect the vocal rhythm rack having been written
 	if(Lyrics.verbose)	printf("\nVrhythm export complete.  %lu lyrics written\n",Lyrics.piececount);
 }
@@ -3227,12 +2770,7 @@ void Write_Default_Track_Zero(FILE *outmidi)
 	}
 	else
 	{	//Create and intialize a tempo change structure
-//		tempo=(struct Tempo_change *)malloc_err(sizeof(struct Tempo_change));
 		tempo=(struct Tempo_change *)calloc_err(1,sizeof(struct Tempo_change));	//Allocate and init to 0
-//v2.0	The use of calloc() over malloc() above already init's these to 0
-//		tempo->delta=0;
-//		tempo->realtime=0;
-//		tempo->next=NULL;
 		tempo->BPM=Lyrics.explicittempo;
 		//Write tempo change to MIDI and store in tempo map
 		Write_Tempo_Change(Lyrics.explicittempo,outmidi);
@@ -3280,7 +2818,6 @@ void Export_SKAR(FILE *outf)
 					//track of relative delta times between events
 	struct Lyric_Line *curline;	//A conductor for the lyric lines list
 	struct Lyric_Piece *temp;	//A conductor for the lyric pieces list
-//	unsigned int channelnum=((MIDIstruct.hchunk.numtracks-1) & 0xF); //This is the channel number to write events to (0-15)
 	long chunkfileposition;		//store this so we can write the track chunk size at the end
 	long tempfileposition;		//store this so we can return to the end of the first track that is written
 

@@ -77,8 +77,6 @@ int VL_PreLoad(FILE *inf,char validate)
 		}
 	}
 
-//v2.0	Use string comparison to make souce more readable
-//	if((buffer[0]!='T') || (buffer[1]!='E') || (buffer[2]!='X') || (buffer[3]!='T'))
 	if(strncmp(buffer,"TEXT",5) != 0)
 	{
 		puts("Error: Invalid text header string");
@@ -97,8 +95,6 @@ int VL_PreLoad(FILE *inf,char validate)
 	buffer[4]='\0';					//Add a NULL character to make buffer into a proper string
 	ReadDWORDLE(inf,&(VL.syncsize));	//Read doubleword from file in little endian format
 
-//v2.0	Use string comparison to make souce more readable
-//	if((buffer[0]!='S') || (buffer[1]!='Y') || (buffer[2]!='N') || (buffer[3]!='C'))
 	if(strncmp(buffer,"SYNC",5) != 0)
 	{
 		puts("Error: Invalid sync header string");
@@ -671,11 +667,7 @@ struct _VLSTRUCT_ *VL_PreWrite(void)
 	if(Lyrics.verbose)	puts("Building VL structure");
 
 //Allocate the ExportVL structure
-//	OutVL=malloc_err(sizeof(struct _VLSTRUCT_));
 	OutVL=calloc_err(1,sizeof(struct _VLSTRUCT_));	//Allocate and init to 0
-//v2.0	The use of calloc() over malloc() above already init'd these to 0
-//	OutVL->Syncs=NULL;	//list starts out empty
-//	OutVL->Lyrics=NULL;	//list starts out empty
 	cursync=NULL;
 	curtext=NULL;
 

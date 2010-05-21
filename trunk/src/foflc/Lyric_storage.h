@@ -48,7 +48,7 @@ Export functions are expected to:
 //
 //Global Macros- All relevant source/header files will include this header file to obtain these declarations
 //
-#define PROGVERSION "FoFLyricConverter2.0"
+#define PROGVERSION "FoFLyricConverter2.01"
 #define LYRIC_NOTE_ON 50	//If note #s 60-100 are used for Note On events for lyrics, FoF interprets it as a playable difficulty
 							//Write Note On events using this note number instead.  This is a generic pitch to use
 							//whenever actual pitch for lyrics is not available.
@@ -288,8 +288,6 @@ void SetTag(char *string,char tagID,char negatizeoffset);
 struct Lyric_Line *InsertLyricLineBreak(struct Lyric_Line *lineptr,struct Lyric_Piece *lyrptr);
 	//Split the linked list into two different lines, inserting the break in front of the lyric referenced by lyrptr, in the lyric line referenced by lineptr
 	//returns the newly-created line structure that now contains the lyric linked list that now begins with lyrptr, or returns lineptr if no split occurred
-//v2.0	Redesigned this function
-//void RecountLineVars(void);
 void RecountLineVars(struct Lyric_Line *start);
 	//Rebuild the piececount and duration for each line of lyrics, starting with the line given
 void ReleaseMemory(char release_all);
@@ -353,8 +351,6 @@ void WriteUnicodeString(FILE *outf,char *str);
 char *ReadUnicodeString(FILE *inf);
 	//Counts the length of the Unicode string (UTF-8) at the current file position, allocates an array, reads the string into
 	//the array and returns it by reference
-//v1.97	ParseLongInt() was modified to be able to return on error instead of just exit
-//long int ParseLongInt(char *buffer,unsigned long *startindex,unsigned long linenum);
 long int ParseLongInt(char *buffer,unsigned long *startindex,unsigned long linenum,int *errorstatus);
 	//Takes a string and starting index and parses the string (ignoring leading whitespace) to find first numerical
 	//character.  When a numerical character is found, leading zeroes are discarded and a numerical string is read
@@ -394,18 +390,6 @@ char *fgets_err(char *str,int num,FILE *stream);
 	//A wrapper function that gets the string, automatically checking for and throwing any error given
 void fputs_err(const char *str,FILE *stream);
 	//A wrapper function that writes the string, automatically checking for and throwing any error given
-//v2.0	Rewrote this to return a list of detected formats
-//int DetectLyricFormat(char *file);
-	//Determines and returns the lyric type of the input file, as defined in the macros earlier in this header file
-	//If the file being detected is a valid MIDI, and both a track named "PART VOCALS" (RB style MIDI) and one named "Words" (Soft Karaoke),
-	//whichever is read first is the deciding factor in the detected lyric format.  If neither are found, but an instrument track
-	//(such as "PART GUITAR") is found, Vocal Rhythm is assumed, otherwise KAR is assumed.
-	//-1 is returned if the file type was determined, but validation failed (import would fail)
-	//0 is returned if the file type could not be determined
-	//	If Vocal Rhythm is detected, the correlating pitched lyric file needs to be provided for import
-	//	If KAR is detected, the correct MIDI track to import lyrics from needs to be provided for import
-	//	If Soft Karaoke is detected, it's possible that pitches and durations are available in another MIDI track, possibly prompt for which track to import
-	//	If Pitched Lyric format is detected, the correlating vocal rhythm MIDI needs to be provided for import
 struct Lyric_Format *DetectLyricFormat(char *file);
 	//Determines and returns information (as a linked list) about lyrics detected in the input file
 	//If the file matches multiple lyric types (one of the MIDI based formats), multiple links in the list will exist.
