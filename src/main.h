@@ -184,6 +184,7 @@ extern EOF_SCREEN_LAYOUT eof_screen_layout;
 extern BITMAP *    eof_screen;
 extern int         eof_av_delay;
 extern int         eof_buffer_size;
+extern int         eof_audio_fine_tune;
 extern int         eof_inverted_notes;
 extern int         eof_lefty_mode;
 extern int         eof_note_auto_adjust;
