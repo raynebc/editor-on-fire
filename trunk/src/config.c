@@ -73,7 +73,7 @@ void eof_load_config(char * fn)
 	}
 	eof_note_auto_adjust = get_config_int("display", "note_auto_adjust", 1);
 	eof_soft_cursor = get_config_int("display", "software_mouse", 0);
-	eof_desktop = get_config_int("display", "true_color", 0);
+	eof_desktop = get_config_int("display", "true_color", 1);
 	
 	/* read paths */
 	ustrcpy(eof_fof_executable_path, get_config_string("paths", "fof_path", ""));
