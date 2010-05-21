@@ -11,7 +11,6 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 	unsigned long lastchartpos = 0;
 	double beat_length = 500.0;
 	int beat_count;
-	double d;
 	double convert = beat_length / (double)chart->resolution; // current conversion rate of chartpos to milliseconds
 	struct dBAnchor * current_anchor = chart->anchors;
 	while(current_anchor)
@@ -19,7 +18,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 		/* find current BPM */
 		if(current_anchor->BPM > 0)
 		{
-			beat_length = (double)60000000.0 / ((double)current_anchor->BPM;
+			beat_length = (double)60000000.0 / (double)current_anchor->BPM;
 			
 			/* adjust BPM if next beat marker is an anchor */
 			if(current_anchor->next && current_anchor->next->usec > 0)
@@ -27,13 +26,19 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 				beat_count = (current_anchor->next->chartpos - current_anchor->chartpos) / chart->resolution;
 				beat_length = (((double)current_anchor->next->usec / 1000.0) - curpos) / (double)beat_count;
 			}
+			
 			convert = beat_length / (double)chart->resolution;
 		}
-		if(chartpos > current_anchor->chartpos)
+		
+		/* if the specified chartpos is past the next anchor, add the total time between
+		 * the anchors */
+		if(current_anchor->next && chartpos >= current_anchor->next->chartpos)
 		{
-			curpos += (double)(current_anchor->chartpos - lastchartpos) * convert;
-			lastchartpos = current_anchor->chartpos;
+			curpos += (double)(current_anchor->next->chartpos - current_anchor->chartpos) * convert;
+			lastchartpos = current_anchor->next->chartpos;
 		}
+		
+		/* otherwise add the time from the current anchor to the specified chartpos */
 		else
 		{
 			curpos += (double)(chartpos - lastchartpos) * convert;
@@ -84,17 +89,14 @@ EOF_SONG * eof_import_chart(const char * fn)
 		if(chart->name)
 		{
 			strcpy(sp->tags->title, chart->name);
-			printf("%s\n", sp->tags->title);
 		}
 		if(chart->artist)
 		{
 			strcpy(sp->tags->artist, chart->artist);
-			printf("%s\n", sp->tags->artist);
 		}
 		if(chart->charter)
 		{
 			strcpy(sp->tags->frettist, chart->charter);
-			printf("%s\n", sp->tags->frettist);
 		}
 		
 		/* set up beat markers */
@@ -102,11 +104,10 @@ EOF_SONG * eof_import_chart(const char * fn)
 		struct dBAnchor * current_anchor = chart->anchors;
 		unsigned long ppqn = 500000;
 		double curpos = sp->tags->ogg[0].midi_offset;
-		double beat_length;
+		double beat_length = 500.0;
 		double bpm = 120.0;
 		int beat_count;
 		int i;
-		double d;
 		unsigned long lastbpm = 120000;
 		int new_anchor = 0;
 		EOF_BEAT_MARKER * new_beat = NULL;
@@ -115,10 +116,10 @@ EOF_SONG * eof_import_chart(const char * fn)
 		while(current_anchor)
 		{
 			new_anchor = 1;
-			ppqn = (double)60000000.0 / ((double)current_anchor->BPM / 1000.0);
-			beat_length = (double)60000 / ((double)60000000.0 / (double)ppqn);
 			if(current_anchor->BPM > 0)
 			{
+				ppqn = (double)60000000.0 / ((double)current_anchor->BPM / 1000.0);
+				beat_length = (double)60000 / ((double)60000000.0 / (double)ppqn);
 				/* adjust BPM if next beat marker is an anchor */
 				if(current_anchor->next && current_anchor->next->usec > 0)
 				{
@@ -227,10 +228,6 @@ EOF_SONG * eof_import_chart(const char * fn)
 							new_note->note |= (1 << current_note->gemcolor);
 						}
 					}
-					if(track ==  EOF_TRACK_DRUM && lastpos == 0)
-					{
-						printf("%f\n", chartpos_to_msec(chart, current_note->chartpos));
-					}
 					lastpos = current_note->chartpos;
 					current_note = current_note->next;
 				}
@@ -238,7 +235,5 @@ EOF_SONG * eof_import_chart(const char * fn)
 			current_track = current_track->next;
 		}
 	}
-	printf("done\n");
-	
 	return sp;
 }
