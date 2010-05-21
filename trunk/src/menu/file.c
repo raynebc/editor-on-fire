@@ -2,6 +2,7 @@
 #include "../agup/agup.h"
 #include "../foflc/Lyric_storage.h"
 #include "../lc_import.h"
+#include "../midi_import.h"
 #include "../chart_import.h"
 #include "../main.h"
 #include "../player.h"
