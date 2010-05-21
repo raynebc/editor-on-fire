@@ -1087,7 +1087,6 @@ int eof_menu_file_midi_import(void)
 			eof_detect_difficulties(eof_song);
 			eof_prepare_menus();
 			eof_undo_reset();
-			eof_catalog_menu[0].flags = 0;
 			eof_select_beat(0);
 			eof_fix_window_title();
 			eof_song_loaded = 1;
@@ -1823,10 +1822,14 @@ int eof_menu_file_feedback_import(void)
 			if(eof_song)
 			{
 				eof_calculate_beats();
+				eof_determine_hopos();
+				eof_detect_difficulties(eof_song);
+				eof_prepare_menus();
 				eof_changes = 0;
+				eof_undo_reset();
+				eof_select_beat(0);
 				eof_song_loaded = 1;
 				eof_fix_window_title();
-				eof_detect_difficulties(eof_song);
 			}
 			else
 			{
