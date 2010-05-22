@@ -1913,7 +1913,7 @@ void eof_render_note_window(void)
 		}
 		int ism = ((eof_music_pos - eof_av_delay) / 1000) / 60;
 		int iss = ((eof_music_pos - eof_av_delay) / 1000) % 60;
-		int isms = (((eof_music_pos - eof_av_delay) / 10) % 1000);
+		int isms = ((eof_music_pos - eof_av_delay) % 1000);
 		int itn = 0;
 		int isn = eof_count_selected_notes(&itn, 0);
 		ypos += 12;
