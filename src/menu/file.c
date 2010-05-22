@@ -24,8 +24,9 @@ MENU eof_file_menu[] =
     {"", NULL, NULL, 0, NULL},
     {"Load &OGG", eof_menu_file_load_ogg, NULL, D_DISABLED, NULL},
     {"", NULL, NULL, 0, NULL},
-    {"MIDI Import", eof_menu_file_midi_import, NULL, 0, NULL},
-    {"Import Lyrics\tF8", eof_menu_file_lyrics_import, NULL, 0, NULL},
+    {"MIDI Import\tF6", eof_menu_file_midi_import, NULL, 0, NULL},
+    {"Feedback Import\tF7", eof_menu_file_feedback_import, NULL, 0, NULL},
+    {"Lyric Import\tF8", eof_menu_file_lyrics_import, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"Settings\tF10", eof_menu_file_settings, NULL, 0, NULL},
     {"Preferences\tF11", eof_menu_file_preferences, NULL, 0, NULL},
@@ -183,14 +184,14 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[2].flags = 0; // Save
 		eof_file_menu[3].flags = 0; // Save As
 		eof_file_menu[5].flags = 0; // Load OGG
-		eof_file_menu[8].flags = 0; // Import Lyrics
+		eof_file_menu[9].flags = 0; // Lyric Import
 	}
 	else
 	{
 		eof_file_menu[2].flags = D_DISABLED; // Save
 		eof_file_menu[3].flags = D_DISABLED; // Save As
 		eof_file_menu[5].flags = D_DISABLED; // Load OGG
-		eof_file_menu[8].flags = D_DISABLED; // Import Lyrics
+		eof_file_menu[9].flags = D_DISABLED; // Lyric Import
 	}
 }
 
@@ -1093,6 +1094,7 @@ int eof_menu_file_midi_import(void)
 			eof_select_beat(0);
 			eof_fix_window_title();
 			eof_song_loaded = 1;
+			eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 0);
 		}
 		else
 		{
@@ -1104,7 +1106,6 @@ int eof_menu_file_midi_import(void)
 		eof_undo_last_type = 0;
 		eof_change_count = 0;
 	}
-	eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 0);
 	eof_reset_lyric_preview_lines();
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
