@@ -48,7 +48,7 @@ Export functions are expected to:
 //
 //Global Macros- All relevant source/header files will include this header file to obtain these declarations
 //
-#define PROGVERSION "FoFLyricConverter2.01"
+#define PROGVERSION "FoFLyricConverter2.1"
 #define LYRIC_NOTE_ON 50	//If note #s 60-100 are used for Note On events for lyrics, FoF interprets it as a playable difficulty
 							//Write Note On events using this note number instead.  This is a generic pitch to use
 							//whenever actual pitch for lyrics is not available.
