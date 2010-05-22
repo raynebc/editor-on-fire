@@ -1913,11 +1913,11 @@ void eof_render_note_window(void)
 		}
 		int ism = ((eof_music_pos - eof_av_delay) / 1000) / 60;
 		int iss = ((eof_music_pos - eof_av_delay) / 1000) % 60;
-		int isms = (((eof_music_pos - eof_av_delay) / 10) % 100);
+		int isms = (((eof_music_pos - eof_av_delay) / 10) % 1000);
 		int itn = 0;
 		int isn = eof_count_selected_notes(&itn, 0);
 		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Seek Position = %02d:%02d:%02d", ism, iss, isms >= 0 ? isms : 0);
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Seek Position = %02d:%02d:%03d", ism, iss, isms >= 0 ? isms : 0);
 		ypos += 12;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s Selected = %d/%d", eof_vocals_selected ? "Lyrics" : "Notes", isn, itn);
 
