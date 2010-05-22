@@ -168,6 +168,7 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 	if((Lyrics.piececount == 0) || (MIDI_Lyrics.head != NULL))	//If the imported MIDI track had no valid lyrics or otherwise was incorrectly formatted
 	{
 		ReleaseMemory(1);	//Release memory allocated during lyric import
+		fclose_err(inf);
 		return 0;	  //Return no EOF lyric structure
 	}
 
