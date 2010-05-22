@@ -54,14 +54,14 @@ void eof_calculate_beats(void)
 			eof_song_add_beat(eof_song);
 			eof_song->beat[eof_song->beats - 1]->ppqn = 500000;
 			eof_song->beat[eof_song->beats - 1]->fpos = (double)eof_song->tags->ogg[eof_selected_ogg].midi_offset + curpos;
-			eof_song->beat[eof_song->beats - 1]->pos = eof_song->beat[eof_song->beats - 1]->fpos;
+			eof_song->beat[eof_song->beats - 1]->pos = eof_song->beat[eof_song->beats - 1]->fpos +0.5;	//Round up
 			curpos += beat_length;
 		}
 		return;
 	}
 
 	eof_song->beat[0]->fpos = (double)eof_song->tags->ogg[eof_selected_ogg].midi_offset;
-	eof_song->beat[0]->pos = eof_song->beat[0]->fpos;
+	eof_song->beat[0]->pos = eof_song->beat[0]->fpos +0.5;	//Round up
 
 	/* calculate the beat length */
 	beat_length = (double)60000 / ((double)60000000.0 / (double)eof_song->beat[0]->ppqn);
@@ -69,7 +69,7 @@ void eof_calculate_beats(void)
 	{
 		curpos += beat_length;
 		eof_song->beat[i]->fpos = (double)eof_song->tags->ogg[eof_selected_ogg].midi_offset + curpos;
-		eof_song->beat[i]->pos = eof_song->beat[i]->fpos;
+		eof_song->beat[i]->pos = eof_song->beat[i]->fpos +0.5;	//Round up
 
 		/* bpm changed */
 		if(eof_song->beat[i]->ppqn != eof_song->beat[i - 1]->ppqn)
@@ -86,7 +86,7 @@ void eof_calculate_beats(void)
 		eof_song_add_beat(eof_song);
 		eof_song->beat[eof_song->beats - 1]->ppqn = eof_song->beat[cbeat]->ppqn;
 		eof_song->beat[eof_song->beats - 1]->fpos = (double)eof_song->tags->ogg[eof_selected_ogg].midi_offset + curpos;
-		eof_song->beat[eof_song->beats - 1]->pos = eof_song->beat[eof_song->beats - 1]->fpos;
+		eof_song->beat[eof_song->beats - 1]->pos = eof_song->beat[eof_song->beats - 1]->fpos +0.5;	//Round up
 		curpos += beat_length;
 	}
 	for(i = eof_song->beats - 1; i >= 0; i--)
@@ -260,7 +260,7 @@ void eof_recalculate_beats(int cbeat)
 	for(i = last_anchor; i < cbeat - 1; i++)
 	{
 		eof_song->beat[i + 1]->fpos = eof_song->beat[last_anchor]->fpos + (beats_length / (double)beats) * (double)count;
-		eof_song->beat[i + 1]->pos = eof_song->beat[i + 1]->fpos;
+		eof_song->beat[i + 1]->pos = eof_song->beat[i + 1]->fpos +0.5;	//Round up
 		eof_song->beat[i + 1]->ppqn = eof_song->beat[last_anchor]->ppqn;
 		count++;
 	}
@@ -289,7 +289,7 @@ void eof_recalculate_beats(int cbeat)
 		for(i = cbeat; i < next_anchor - 1; i++)
 		{
 			eof_song->beat[i + 1]->fpos = eof_song->beat[cbeat]->pos + (beats_length / (double)beats) * (double)count;
-			eof_song->beat[i + 1]->pos = eof_song->beat[i + 1]->fpos;
+			eof_song->beat[i + 1]->pos = eof_song->beat[i + 1]->fpos +0.5;	//Round up
 			eof_song->beat[i + 1]->ppqn = eof_song->beat[cbeat]->ppqn;
 			count++;
 		}

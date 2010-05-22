@@ -139,8 +139,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 					if(new_beat)
 					{
 						new_beat->ppqn = ppqn;
-						new_beat->fpos = ((int)curpos+0.5);	//Force the floating point value to round up/down and convert back to double
-						new_beat->pos = (curpos+0.5);		//Allow conversion to integer to round up to counter rounding errors in floating point math
+						new_beat->fpos = curpos;
+						new_beat->pos = (curpos+0.5);	//Round up
 						if(new_anchor && lastbpm != current_anchor->BPM)
 						{
 							new_beat->flags |= EOF_BEAT_FLAG_ANCHOR;

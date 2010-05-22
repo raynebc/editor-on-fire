@@ -3134,7 +3134,7 @@ void eof_editor_logic(void)
 							for(i = 0; i < eof_song->beats; i++)
 							{
 								eof_song->beat[i]->fpos += (double)rdiff;
-								eof_song->beat[i]->pos = eof_song->beat[i]->fpos;
+								eof_song->beat[i]->pos = eof_song->beat[i]->fpos +0.5;	//Round up
 							}
 						}
 						else
