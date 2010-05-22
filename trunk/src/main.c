@@ -1404,6 +1404,11 @@ void eof_read_global_keys(void)
 		clear_keybuf();
 		eof_menu_file_feedback_import();
 	}
+	if(key[KEY_F6])
+	{	//Launch Feedback chart import
+		clear_keybuf();
+		eof_menu_file_midi_import();
+	}
 }
 
 void eof_lyric_logic(void)
