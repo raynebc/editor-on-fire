@@ -137,12 +137,14 @@ MENU eof_edit_menu[] =
 
 DIALOG eof_custom_snap_dialog[] =
 {
-   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_shadow_box_proc,    32,  68,  170, 72 + 8, 2,   23,  0,    0,      0,   0,   NULL,               NULL, NULL },
-   { d_agup_text_proc,   56,  84,  64,  8,  2,   23,  0,    0,      0,   0,   "Interval:",         NULL, NULL },
-   { d_agup_edit_proc,   112, 80,  66,  20,  2,   23,  0,    0,      8,   0,   eof_etext2,           NULL, NULL },
-   { d_agup_button_proc, 42,  108, 68,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "OK",               NULL, NULL },
-   { d_agup_button_proc, 120, 108, 68,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+   /* (proc)				(x)		(y)		(w)		(h)  		(fg)	(bg) (key) (flags)	(d1) (d2) (dp)			(dp2) (dp3) */
+   { d_agup_shadow_box_proc,32,		68,		170, 	72 + 8 +15,	2,		23,  0,    0,		0,   0,   NULL,			NULL, NULL },
+   { d_agup_text_proc,		56,		84,		64,		8,			2,		23,  0,    0,		0,   0,   "Intervals:",	NULL, NULL },
+   { d_agup_edit_proc,		112,	80,		66,		20,			2,		23,  0,    0,		8,   0,   eof_etext2,	NULL, NULL },
+   { d_agup_radio_proc,		42,		105,	68,		15,			2,		23,  0,    0,		0,   0,   "beat",		NULL, NULL },
+   { d_agup_radio_proc,		120,	105,	68,		15,			2,		23,  0,    0,		0,   0,   "measure",	NULL, NULL },
+   { d_agup_button_proc,	42,		125,	68,		28,			2,		23,  '\r', D_EXIT,	0,   0,   "OK",			NULL, NULL },
+   { d_agup_button_proc,	120,	125,	68,		28,			2,		23,  0,    D_EXIT,	0,   0,   "Cancel",		NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -153,7 +155,7 @@ void eof_prepare_edit_menu(void)
 	int vselected = 0;
 	int noted[4] = {0};
 	int cnotes = 0;
-	
+
 	if(eof_song && eof_song_loaded)
 	{
 		/* undo */
@@ -165,7 +167,7 @@ void eof_prepare_edit_menu(void)
 		{
 			eof_edit_menu[0].flags = D_DISABLED;
 		}
-		
+
 		/* redo */
 		if(eof_redo_count)
 		{
@@ -175,7 +177,7 @@ void eof_prepare_edit_menu(void)
 		{
 			eof_edit_menu[1].flags = D_DISABLED;
 		}
-		
+
 		/* copy */
 		vselected = eof_count_selected_notes(NULL, 1);
 		if(vselected)
@@ -186,7 +188,7 @@ void eof_prepare_edit_menu(void)
 		{
 			eof_edit_menu[3].flags = D_DISABLED;
 		}
-		
+
 		/* paste, paste old */
 		if(eof_vocals_selected)
 		{
@@ -214,7 +216,7 @@ void eof_prepare_edit_menu(void)
 				eof_edit_menu[5].flags = D_DISABLED;
 			}
 		}
-		
+
 		/* select all, selection */
 		if(eof_vocals_selected)
 		{
@@ -245,7 +247,7 @@ void eof_prepare_edit_menu(void)
 		if(vselected)
 		{
 			eof_edit_selection_menu[1].flags = 0; // select like
-			
+
 			/* select rest */
 			if(eof_selection.current != (eof_vocals_selected ? eof_song->vocal_track->lyrics : eof_song->track[eof_selected_track]->notes))
 			{
@@ -255,7 +257,7 @@ void eof_prepare_edit_menu(void)
 			{
 				eof_edit_selection_menu[2].flags = D_DISABLED;
 			}
-			
+
 			/* deselect all */
 			eof_edit_selection_menu[3].flags = 0;
 		}
@@ -265,21 +267,21 @@ void eof_prepare_edit_menu(void)
 			eof_edit_selection_menu[2].flags = D_DISABLED; // select rest
 			eof_edit_selection_menu[3].flags = D_DISABLED; // deselect all
 		}
-		
+
 		/* zoom */
 		for(i = 0; i < 9; i++)
 		{
 			eof_edit_zoom_menu[i].flags = 0;
 		}
 		eof_edit_zoom_menu[10 - eof_zoom].flags = D_SELECTED;
-		
+
 		/* hopo */
 		for(i = 0; i < 3; i++)
 		{
 			eof_edit_hopo_menu[i].flags = 0;
 		}
 		eof_edit_hopo_menu[(int)eof_hopo_view].flags = D_SELECTED;
-		
+
 		/* speed */
 		for(i = 0; i < 3; i++)
 		{
@@ -303,7 +305,7 @@ void eof_prepare_edit_menu(void)
 				break;
 			}
 		}
-		
+
 		/* paste from difficulty */
 		for(i = 0; i < 4; i++)
 		{
@@ -316,7 +318,7 @@ void eof_prepare_edit_menu(void)
 				eof_edit_paste_from_menu[i].flags = D_DISABLED;
 			}
 		}
-		
+
 		/* paste from catalog */
 		if(eof_selected_catalog_entry < eof_song->catalog->entries)
 		{
@@ -345,7 +347,7 @@ void eof_prepare_edit_menu(void)
 		{
 			eof_edit_paste_from_menu[5].flags = D_DISABLED;
 		}
-		
+
 		/* paste from */
 		eof_edit_menu[6].flags = D_DISABLED;
 		for(i = 0; i < 6; i++)
@@ -355,7 +357,7 @@ void eof_prepare_edit_menu(void)
 				eof_edit_menu[6].flags = 0;
 			}
 		}
-		
+
 		/* selection */
 		if(selected)
 		{
@@ -452,7 +454,7 @@ int eof_menu_edit_cut_vocal(int anchor, int option)
 	int copy_notes = 0;
 	float tfloat;
 	PACKFILE * fp;
-	
+
 	/* set boundary */
 	eof_anchor_diff[EOF_TRACK_VOCALS] = 0;
 	last_anchor = eof_find_previous_anchor(anchor);
@@ -470,7 +472,7 @@ int eof_menu_edit_cut_vocal(int anchor, int option)
 	{
 		end_pos = eof_song->beat[eof_song->beats - 1]->pos - 1;
 	}
-	
+
 	for(i = 0; i < eof_song->vocal_track->lyrics; i++)
 	{
 		if(eof_song->vocal_track->lyric[i]->pos >= start_pos && eof_song->vocal_track->lyric[i]->pos < end_pos)
@@ -487,7 +489,7 @@ int eof_menu_edit_cut_vocal(int anchor, int option)
 			}
 		}
 	}
-	
+
 	/* get ready to write clipboard to disk */
 	fp = pack_fopen("eof.autoadjust.vocals", "w");
 	if(!fp)
@@ -495,7 +497,7 @@ int eof_menu_edit_cut_vocal(int anchor, int option)
 		allegro_message("Clipboard error!");
 		return 1;
 	}
-	
+
 	pack_iputl(copy_notes, fp);
 	pack_iputl(first_beat, fp);
 	for(i = 0; i < eof_song->vocal_track->lyrics; i++)
@@ -529,9 +531,9 @@ int eof_menu_edit_cut_paste_vocal(int anchor, int option)
 	int copy_notes = 0;
 	EOF_EXTENDED_LYRIC temp_lyric;
 	EOF_LYRIC * new_lyric = NULL;
-	
+
 	this_beat = eof_find_previous_anchor(anchor) + eof_anchor_diff[EOF_TRACK_VOCALS];
-	
+
 	/* set boundary */
 	last_anchor = eof_find_previous_anchor(anchor);
 	next_anchor = eof_find_next_anchor(anchor);
@@ -548,7 +550,7 @@ int eof_menu_edit_cut_paste_vocal(int anchor, int option)
 	{
 		end_pos = eof_song->beat[eof_song->beats - 1]->pos - 1;
 	}
-	
+
 	fp = pack_fopen("eof.autoadjust.vocals", "r");
 	if(!fp)
 	{
@@ -562,14 +564,14 @@ int eof_menu_edit_cut_paste_vocal(int anchor, int option)
 			eof_vocal_track_delete_lyric(eof_song->vocal_track, i);
 		}
 	}
-	
+
 	memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
 	copy_notes = pack_igetl(fp);
 	first_beat = pack_igetl(fp);
 
 	for(i = 0; i < copy_notes; i++)
 	{
-		
+
 		/* read the note */
 		temp_lyric.note = pack_getc(fp);
 		temp_lyric.pos = pack_igetl(fp);
@@ -580,7 +582,7 @@ int eof_menu_edit_cut_paste_vocal(int anchor, int option)
 		t = pack_igetw(fp);
 		pack_fread(temp_lyric.text, t, fp);
 		temp_lyric.text[t] = '\0';
-		
+
 		if(temp_lyric.pos < eof_music_length)
 		{
 			new_lyric = eof_vocal_track_add_lyric(eof_song->vocal_track);
@@ -609,7 +611,7 @@ int eof_menu_edit_copy_vocal(void)
 	int copy_notes = 0;
 	float tfloat;
 	PACKFILE * fp;
-	
+
 	/* first, scan for selected notes */
 	for(i = 0; i < eof_song->vocal_track->lyrics; i++)
 	{
@@ -630,7 +632,7 @@ int eof_menu_edit_copy_vocal(void)
 	{
 		return 1;
 	}
-	
+
 	/* get ready to write clipboard to disk */
 	fp = pack_fopen("eof.vocals.clipboard", "w");
 	if(!fp)
@@ -640,12 +642,12 @@ int eof_menu_edit_copy_vocal(void)
 	}
 	pack_iputl(copy_notes, fp);
 	pack_iputl(first_beat, fp);
-	
+
 	for(i = 0; i < eof_song->vocal_track->lyrics; i++)
 	{
 		if(eof_selection.track == EOF_TRACK_VOCALS && eof_selection.multi[i])
 		{
-			
+
 			/* check for accidentally moved note */
 			if(!note_check)
 			{
@@ -659,7 +661,7 @@ int eof_menu_edit_copy_vocal(void)
 				}
 				note_check = 1;
 			}
-			
+
 			/* write note data to disk */
 			pack_putc(eof_song->vocal_track->lyric[i]->note, fp);
 			pack_iputl(eof_song->vocal_track->lyric[i]->pos - first_pos, fp);
@@ -682,7 +684,7 @@ int eof_menu_edit_copy_vocal(void)
 static void eof_menu_edit_paste_clear_range_vocal(unsigned long start, unsigned long end)
 {
 	int i;
-	
+
 	for(i = eof_song->vocal_track->lyrics - 1; i >= 0; i--)
 	{
 		if(eof_song->vocal_track->lyric[i]->pos >= start && eof_song->vocal_track->lyric[i]->pos <= end)
@@ -710,8 +712,8 @@ int eof_menu_edit_paste_vocal(void)
 	EOF_EXTENDED_LYRIC temp_lyric;
 	EOF_LYRIC * new_lyric = NULL;
 	PACKFILE * fp;
-	
-	
+
+
 	/* open the file */
 	fp = pack_fopen("eof.vocals.clipboard", "r");
 	if(!fp)
@@ -726,13 +728,13 @@ int eof_menu_edit_paste_vocal(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 	copy_notes = pack_igetl(fp);
 	first_beat = pack_igetl(fp);
-	
+
 	memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
 	eof_selection.current = EOF_MAX_NOTES - 1;
 	eof_selection.current_pos = 0;
 	for(i = 0; i < copy_notes; i++)
 	{
-		
+
 		/* read the note */
 		temp_lyric.note = pack_getc(fp);
 		temp_lyric.pos = pack_igetl(fp);
@@ -748,7 +750,7 @@ int eof_menu_edit_paste_vocal(void)
 		t = pack_igetw(fp);
 		pack_fread(temp_lyric.text, t, fp);
 		temp_lyric.text[t] = '\0';
-		
+
 		if(eof_music_pos + temp_lyric.pos - eof_av_delay < eof_music_length)
 		{
 			if(last_pos >= 0)
@@ -809,7 +811,7 @@ int eof_menu_edit_old_paste_vocal(void)
 	int last_pos = -1;
 	EOF_EXTENDED_LYRIC temp_lyric;
 	EOF_LYRIC * new_lyric = NULL;
-	
+
 	fp = pack_fopen("eof.vocals.clipboard", "r");
 	if(!fp)
 	{
@@ -833,7 +835,7 @@ int eof_menu_edit_old_paste_vocal(void)
 		t = pack_igetw(fp);
 		pack_fread(temp_lyric.text, t, fp);
 		temp_lyric.text[t] = '\0';
-		
+
 		if(eof_music_pos + temp_lyric.pos - eof_av_delay < eof_music_length)
 		{
 			if(last_pos >= 0)
@@ -890,7 +892,7 @@ int eof_menu_edit_cut(int anchor, int option, float offset)
 	int copy_notes[EOF_MAX_TRACKS] = {0};
 	float tfloat;
 	PACKFILE * fp;
-	
+
 	/* set boundary */
 	for(i = 0; i < EOF_MAX_TRACKS; i++)
 	{
@@ -911,7 +913,7 @@ int eof_menu_edit_cut(int anchor, int option, float offset)
 	{
 		end_pos = eof_song->beat[eof_song->beats - 1]->pos - 1;
 	}
-	
+
 	for(j = 0; j < EOF_MAX_TRACKS; j++)
 	{
 		for(i = 0; i < eof_song->track[j]->notes; i++)
@@ -931,7 +933,7 @@ int eof_menu_edit_cut(int anchor, int option, float offset)
 			}
 		}
 	}
-	
+
 	/* get ready to write clipboard to disk */
 	fp = pack_fopen("eof.autoadjust", "w");
 	if(!fp)
@@ -939,7 +941,7 @@ int eof_menu_edit_cut(int anchor, int option, float offset)
 		allegro_message("Clipboard error!");
 		return 1;
 	}
-	
+
 	/* copy all tracks */
 	for(j = 0; j < EOF_MAX_TRACKS; j++)
 	{
@@ -973,7 +975,7 @@ int eof_menu_edit_cut(int anchor, int option, float offset)
 			tfloat = eof_get_porpos(eof_song->track[j]->star_power_path[i].end_pos);
 			pack_fwrite(&tfloat, sizeof(float), fp);
 		}
-		
+
 		/* solos */
 		for(i = 0; i < eof_song->track[j]->solos; i++)
 		{
@@ -1004,12 +1006,12 @@ int eof_menu_edit_cut_paste(int anchor, int option, float offset)
 	EOF_EXTENDED_NOTE temp_note;
 	EOF_NOTE * new_note = NULL;
 	float tfloat;
-	
+
 	for(i = 0; i < EOF_MAX_TRACKS; i++)
 	{
 		this_beat[i] = eof_find_previous_anchor(anchor) + eof_anchor_diff[i];
 	}
-	
+
 	/* set boundary */
 	last_anchor = eof_find_previous_anchor(anchor);
 	next_anchor = eof_find_next_anchor(anchor);
@@ -1026,7 +1028,7 @@ int eof_menu_edit_cut_paste(int anchor, int option, float offset)
 	{
 		end_pos = eof_song->beat[eof_song->beats - 1]->pos - 1;
 	}
-	
+
 	fp = pack_fopen("eof.autoadjust", "r");
 	if(!fp)
 	{
@@ -1043,16 +1045,16 @@ int eof_menu_edit_cut_paste(int anchor, int option, float offset)
 			}
 		}
 	}
-	
+
 	memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
 	for(j = 0; j < EOF_MAX_TRACKS; j++)
 	{
 		copy_notes[j] = pack_igetl(fp);
 		first_beat[j] = pack_igetl(fp);
-	
+
 		for(i = 0; i < copy_notes[j]; i++)
 		{
-			
+
 			/* read the note */
 			temp_note.type = pack_igetl(fp);
 			temp_note.note = pack_igetl(fp);
@@ -1062,7 +1064,7 @@ int eof_menu_edit_cut_paste(int anchor, int option, float offset)
 			temp_note.beat = pack_igetl(fp);
 			temp_note.endbeat = pack_igetl(fp);
 			temp_note.length = pack_igetl(fp);
-		
+
 			if(temp_note.pos + temp_note.length < eof_music_length)
 			{
 				new_note = eof_track_add_note(eof_song->track[j]);
@@ -1076,7 +1078,7 @@ int eof_menu_edit_cut_paste(int anchor, int option, float offset)
 			}
 		}
 		eof_track_sort_notes(eof_song->track[j]);
-		
+
 		/* star power */
 		for(i = 0; i < eof_song->track[j]->star_power_paths; i++)
 		{
@@ -1088,7 +1090,7 @@ int eof_menu_edit_cut_paste(int anchor, int option, float offset)
 			pack_fread(&tfloat, sizeof(float), fp);
 			eof_song->track[j]->star_power_path[i].end_pos = eof_put_porpos(b, tfloat, 0.0);
 		}
-		
+
 		/* solos */
 		for(i = 0; i < eof_song->track[j]->solos; i++)
 		{
@@ -1120,7 +1122,7 @@ int eof_menu_edit_copy(void)
 	int copy_notes = 0;
 	float tfloat;
 	PACKFILE * fp;
-	
+
 	/* first, scan for selected notes */
 	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
 	{
@@ -1141,7 +1143,7 @@ int eof_menu_edit_copy(void)
 	{
 		return 1;
 	}
-	
+
 	/* get ready to write clipboard to disk */
 	fp = pack_fopen("eof.clipboard", "w");
 	if(!fp)
@@ -1151,12 +1153,12 @@ int eof_menu_edit_copy(void)
 	}
 	pack_iputl(copy_notes, fp);
 	pack_iputl(first_beat, fp);
-	
+
 	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
 	{
 		if(eof_song->track[eof_selected_track]->note[i]->type == eof_note_type && eof_selection.track == eof_selected_track && eof_selection.multi[i])
 		{
-			
+
 			/* check for accidentally moved note */
 			if(!note_check)
 			{
@@ -1170,7 +1172,7 @@ int eof_menu_edit_copy(void)
 				}
 				note_check = 1;
 			}
-			
+
 			/* write note data to disk */
 			pack_iputl(eof_song->track[eof_selected_track]->note[i]->note, fp);
 			pack_iputl(eof_song->track[eof_selected_track]->note[i]->pos - first_pos, fp);
@@ -1181,7 +1183,7 @@ int eof_menu_edit_copy(void)
 			pack_iputl(eof_get_beat(eof_song->track[eof_selected_track]->note[i]->pos), fp);
 			pack_iputl(eof_get_beat(eof_song->track[eof_selected_track]->note[i]->pos + eof_song->track[eof_selected_track]->note[i]->length), fp);
 			pack_iputl(eof_song->track[eof_selected_track]->note[i]->length, fp);
-			
+
 		}
 	}
 	pack_fclose(fp);
@@ -1203,8 +1205,8 @@ int eof_menu_edit_paste(void)
 	EOF_EXTENDED_NOTE temp_note;
 	EOF_NOTE * new_note = NULL;
 	PACKFILE * fp;
-	
-	
+
+
 	/* open the file */
 	fp = pack_fopen("eof.clipboard", "r");
 	if(!fp)
@@ -1219,13 +1221,13 @@ int eof_menu_edit_paste(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 	copy_notes = pack_igetl(fp);
 	first_beat = pack_igetl(fp);
-	
+
 	memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
 	eof_selection.current = EOF_MAX_NOTES - 1;
 	eof_selection.current_pos = 0;
 	for(i = 0; i < copy_notes; i++)
 	{
-		
+
 		/* read the note */
 		temp_note.note = pack_igetl(fp);
 		temp_note.pos = pack_igetl(fp);
@@ -1238,7 +1240,7 @@ int eof_menu_edit_paste(void)
 			break;
 		}
 		temp_note.length = pack_igetl(fp);
-		
+
 		if(eof_music_pos + temp_note.pos + temp_note.length - eof_av_delay < eof_music_length)
 		{
 			new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
@@ -1291,7 +1293,7 @@ int eof_menu_edit_old_paste(void)
 	PACKFILE * fp;
 	EOF_EXTENDED_NOTE temp_note;
 	EOF_NOTE * new_note = NULL;
-	
+
 	fp = pack_fopen("eof.clipboard", "r");
 	if(!fp)
 	{
@@ -1312,7 +1314,7 @@ int eof_menu_edit_old_paste(void)
 		temp_note.beat = pack_igetl(fp);
 		temp_note.endbeat = pack_igetl(fp);
 		temp_note.length = pack_igetl(fp);
-		
+
 		if(eof_music_pos + temp_note.pos + temp_note.length - eof_av_delay < eof_music_length)
 		{
 			new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
@@ -1400,9 +1402,15 @@ int eof_menu_edit_snap_custom(void)
 	eof_color_dialog(eof_custom_snap_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_custom_snap_dialog);
 	sprintf(eof_etext2, "%d", eof_snap_interval);
-	if(eof_popup_dialog(eof_custom_snap_dialog, 2) == 3)
+	eof_custom_snap_dialog[3].flags = D_SELECTED;	//Activate "per beat" radio button by default
+	eof_custom_snap_dialog[4].flags = 0;
+	if(eof_popup_dialog(eof_custom_snap_dialog, 2) == 5)
 	{
 		eof_snap_interval = atoi(eof_etext2);
+
+		if(eof_custom_snap_dialog[4].flags & D_SELECTED)	//If user selected per measure instead of per beat
+			eof_snap_interval/=eof_beats_in_measure;		//Use the defined time signature to determine the # of beats per measure
+
 		if(eof_snap_interval > 31)
 		{
 			eof_render();
@@ -1423,7 +1431,7 @@ int eof_menu_edit_snap_custom(void)
 int eof_menu_edit_zoom_helper_in(void)
 {
 	int i;
-	
+
 	for(i = 0; i < 9; i++)
 	{
 		eof_edit_zoom_menu[i].flags = 0;
@@ -1440,7 +1448,7 @@ int eof_menu_edit_zoom_helper_in(void)
 int eof_menu_edit_zoom_helper_out(void)
 {
 	int i;
-	
+
 	for(i = 0; i < 9; i++)
 	{
 		eof_edit_zoom_menu[i].flags = 0;
@@ -1565,7 +1573,7 @@ int eof_menu_edit_zoom_2(void)
 int eof_menu_edit_playback_speed_helper_faster(void)
 {
 	int i;
-	
+
 	for(i = 0; i < 4; i++)
 	{
 		eof_edit_playback_menu[i].flags = 0;
@@ -1589,7 +1597,7 @@ int eof_menu_edit_playback_speed_helper_faster(void)
 int eof_menu_edit_playback_speed_helper_slower(void)
 {
 	int i;
-	
+
 	for(i = 0; i < 4; i++)
 	{
 		eof_edit_playback_menu[i].flags = 0;
@@ -1606,7 +1614,7 @@ int eof_menu_edit_playback_speed_helper_slower(void)
 int eof_menu_edit_playback_100(void)
 {
 	int i;
-	
+
 	for(i = 0; i < 4; i++)
 	{
 		eof_edit_playback_menu[i].flags = 0;
@@ -1619,7 +1627,7 @@ int eof_menu_edit_playback_100(void)
 int eof_menu_edit_playback_75(void)
 {
 	int i;
-	
+
 	for(i = 0; i < 4; i++)
 	{
 		eof_edit_playback_menu[i].flags = 0;
@@ -1632,7 +1640,7 @@ int eof_menu_edit_playback_75(void)
 int eof_menu_edit_playback_50(void)
 {
 	int i;
-	
+
 	for(i = 0; i < 4; i++)
 	{
 		eof_edit_playback_menu[i].flags = 0;
@@ -1645,7 +1653,7 @@ int eof_menu_edit_playback_50(void)
 int eof_menu_edit_playback_25(void)
 {
 	int i;
-	
+
 	for(i = 0; i < 4; i++)
 	{
 		eof_edit_playback_menu[i].flags = 0;
@@ -1930,7 +1938,7 @@ int eof_menu_edit_bookmark_9(void)
 int eof_menu_edit_select_all_vocal(void)
 {
 	int i;
-	
+
 	for(i = 0; i < eof_song->vocal_track->lyrics; i++)
 	{
 		eof_selection.track = EOF_TRACK_VOCALS;
@@ -1946,7 +1954,7 @@ int eof_menu_edit_select_all(void)
 		return eof_menu_edit_select_all_vocal();
 	}
 	int i;
-	
+
 	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
 	{
 		if(eof_song->track[eof_selected_track]->note[i]->type == eof_note_type)
@@ -1967,7 +1975,7 @@ int eof_menu_edit_select_like_vocal(void)
 	char ntype[256];
 	int ntypes = 0;
 	int i, j;
-	
+
 	if(eof_selection.track != EOF_TRACK_VOCALS)
 	{
 		return 1;
@@ -2014,7 +2022,7 @@ int eof_menu_edit_select_like(void)
 	int i, j;
 	char ntype[32];
 	int ntypes = 0;
-	
+
 	if(eof_vocals_selected)
 	{
 		return eof_menu_edit_select_like_vocal();
@@ -2071,7 +2079,7 @@ int eof_menu_edit_deselect_all(void)
 int eof_menu_edit_select_rest_vocal(void)
 {
 	int i;
-	
+
 	if(eof_count_selected_notes(NULL, 0) <= 0)
 	{
 		return 1;
@@ -2116,7 +2124,7 @@ int eof_menu_edit_select_rest(void)
 			eof_selection.multi[i] = 1;
 		}
 	}
-	
+
 	return 1;
 }
 
@@ -2124,7 +2132,7 @@ int eof_menu_edit_paste_from_supaeasy(void)
 {
 	int i;
 	EOF_NOTE * new_note = NULL;
-	
+
 	if(eof_note_type != 0)
 	{
 		if(eof_note_type_name[eof_note_type][0] == '*')
@@ -2167,7 +2175,7 @@ int eof_menu_edit_paste_from_easy(void)
 {
 	int i;
 	EOF_NOTE * new_note = NULL;
-	
+
 	if(eof_note_type != 1)
 	{
 		if(eof_note_type_name[eof_note_type][0] == '*')
@@ -2210,7 +2218,7 @@ int eof_menu_edit_paste_from_medium(void)
 {
 	int i;
 	EOF_NOTE * new_note = NULL;
-	
+
 	if(eof_note_type != 2)
 	{
 		if(eof_note_type_name[eof_note_type][0] == '*')
@@ -2253,7 +2261,7 @@ int eof_menu_edit_paste_from_amazing(void)
 {
 	int i;
 	EOF_NOTE * new_note = NULL;
-	
+
 	if(eof_note_type != 3)
 	{
 		if(eof_note_type_name[eof_note_type][0] == '*')
@@ -2296,7 +2304,7 @@ static int notes_in_beat(int beat)
 {
 	int count = 0;
 	int i;
-	
+
 	if(beat > eof_song->beats - 2)
 	{
 		for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
@@ -2324,7 +2332,7 @@ static int lyrics_in_beat(int beat)
 {
 	int count = 0;
 	int i;
-	
+
 	if(beat > eof_song->beats - 2)
 	{
 		for(i = 0; i < eof_song->vocal_track->lyrics; i++)
@@ -2364,7 +2372,7 @@ int eof_menu_edit_paste_from_catalog(void)
 	float nporpos, nporendpos;
 	EOF_NOTE * new_note = NULL;
 	EOF_LYRIC * new_lyric = NULL;
-	
+
 	if(eof_song->catalog->entries > 0)
 	{
 		/* make sure we can paste */
@@ -2372,7 +2380,7 @@ int eof_menu_edit_paste_from_catalog(void)
 		{
 			return 1;
 		}
-		
+
 		/* make sure we can't paste inside of the catalog entry */
 		if(eof_song->catalog->entry[eof_selected_catalog_entry].track == eof_selected_track && eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_note_type && eof_music_pos - eof_av_delay >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos && eof_music_pos - eof_av_delay <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos)
 		{
@@ -2417,7 +2425,7 @@ int eof_menu_edit_paste_from_catalog(void)
 					{
 						break;
 					}
-					
+
 					/* if we run into notes, abort */
 					if(lyrics_in_beat(current_beat) && last_current_beat != current_beat)
 					{
@@ -2430,7 +2438,7 @@ int eof_menu_edit_paste_from_catalog(void)
 					{
 						break;
 					}
-					
+
 					/* paste the note */
 					if(end_beat - first_beat + start_beat < eof_song->beats)
 					{
@@ -2504,7 +2512,7 @@ int eof_menu_edit_paste_from_catalog(void)
 					{
 						break;
 					}
-					
+
 					/* if we run into notes, abort */
 					if(notes_in_beat(current_beat) && last_current_beat != current_beat)
 					{
@@ -2517,7 +2525,7 @@ int eof_menu_edit_paste_from_catalog(void)
 					{
 						break;
 					}
-					
+
 					/* paste the note */
 					if(end_beat - first_beat + start_beat < eof_song->beats)
 					{
