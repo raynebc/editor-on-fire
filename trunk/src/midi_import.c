@@ -1242,8 +1242,11 @@ EOF_SONG * eof_import_midi(const char * fn)
 		for(i = 0; i < beat_count; i++)
 		{
 			eof_song_add_beat(sp);
-			sp->beat[sp->beats - 1]->pos = (double)sp->tags->ogg[0].midi_offset + bl * (i + 1);
-			sp->beat[sp->beats - 1]->fpos = sp->beat[sp->beats - 1]->pos;
+//			Store floating point math into fpos so the precision isn't lost
+//			sp->beat[sp->beats - 1]->pos = (double)sp->tags->ogg[0].midi_offset + bl * (i + 1);
+			sp->beat[sp->beats - 1]->fpos = (double)sp->tags->ogg[0].midi_offset + bl * (i + 1);
+//			sp->beat[sp->beats - 1]->fpos = sp->beat[sp->beats - 1]->pos;
+			sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos +0.5;	//Round up
 			sp->beat[sp->beats - 1]->ppqn = ppqn;
 		}
 	}
