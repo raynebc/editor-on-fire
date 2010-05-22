@@ -426,13 +426,15 @@ int eof_menu_file_new_wizard(void)
 			#ifdef ALLEGRO_WINDOWS
 				eof_copy_file(oggfilename, "eoftemp.mp3");
 				usprintf(syscommand, "mp3toogg \"eoftemp.mp3\" %s \"%sguitar.ogg\" \"%s\"", eof_ogg_quality[(int)eof_ogg_setting], eof_etext3, oggfilename);
-				delete_file("eoftemp.mp3");
 			#elif defined(ALLEGRO_MACOSX)
 				usprintf(syscommand, "./lame --decode \"%s\" - | ./oggenc --quiet -q %s --resample 44100 -s 0 - -o \"%sguitar.ogg\"", oggfilename, eof_ogg_quality[(int)eof_ogg_setting], eof_etext3);
 			#else
 				usprintf(syscommand, "lame --decode \"%s\" - | oggenc --quiet -q %s --resample 44100 -s 0 - -o \"%sguitar.ogg\"", oggfilename, eof_ogg_quality[(int)eof_ogg_setting], eof_etext3);
 			#endif
 			eof_system(syscommand);
+			#ifdef ALLEGRO_WINDOWS
+			delete_file("eoftemp.mp3");
+			#endif
 		}
 		else
 		{
