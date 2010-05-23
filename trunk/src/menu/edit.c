@@ -3,6 +3,7 @@
 #include "../undo.h"
 #include "../dialog.h"
 #include "../mix.h"
+#include "../main.h"	//Inclusion for eof_custom_snap_measure
 #include "edit.h"
 #include "song.h"
 
@@ -1402,14 +1403,27 @@ int eof_menu_edit_snap_custom(void)
 	eof_color_dialog(eof_custom_snap_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_custom_snap_dialog);
 	sprintf(eof_etext2, "%d", eof_snap_interval);
-	eof_custom_snap_dialog[3].flags = D_SELECTED;	//Activate "per beat" radio button by default
-	eof_custom_snap_dialog[4].flags = 0;
+	if(eof_custom_snap_measure == 0)
+	{	//If the custom grid snap is per beats
+		eof_custom_snap_dialog[3].flags = D_SELECTED;	//Activate "per beat" radio button by default
+		eof_custom_snap_dialog[4].flags = 0;
+	}
+	else
+	{
+		eof_custom_snap_dialog[3].flags = 0;
+		eof_custom_snap_dialog[4].flags = D_SELECTED;	//Activate "per measure" radio button by default
+	}
 	if(eof_popup_dialog(eof_custom_snap_dialog, 2) == 5)
 	{
 		eof_snap_interval = atoi(eof_etext2);
 
 		if(eof_custom_snap_dialog[4].flags & D_SELECTED)	//If user selected per measure instead of per beat
+		{
 			eof_snap_interval/=eof_beats_in_measure;		//Use the defined time signature to determine the # of beats per measure
+			eof_custom_snap_measure = 1;
+		}
+		else
+			eof_custom_snap_measure = 0;
 
 		if(eof_snap_interval > 31)
 		{
