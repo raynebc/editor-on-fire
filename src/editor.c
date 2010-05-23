@@ -410,6 +410,11 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 				sp->length = sp->beat_length / 12;
 				break;
 			}
+			case EOF_SNAP_CUSTOM:
+			{
+				sp->length = ((double)sp->beat_length / (double)eof_snap_interval +0.5);	//Round up
+				break;
+			}
 		}
 	}
 	else

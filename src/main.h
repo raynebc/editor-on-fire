@@ -265,6 +265,7 @@ extern int         eof_menu_key_waiting;
 extern char          eof_snap_mode;
 extern char          eof_last_snap_mode;
 extern int           eof_snap_interval;
+extern char			eof_custom_snap_measure;
 //extern int           eof_snap_beat;
 //extern float         eof_snap_pos[32];
 //extern float         eof_snap_distance[32];

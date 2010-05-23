@@ -174,6 +174,7 @@ int         eof_menu_key_waiting = 0;
 char          eof_snap_mode = EOF_SNAP_OFF;
 char          eof_last_snap_mode = EOF_SNAP_OFF;
 int           eof_snap_interval = 1;
+char eof_custom_snap_measure = 0;	//Boolean: The user set a custom grid snap interval defined in measures instead of beats
 
 char          eof_hopo_view = EOF_HOPO_RF;
 
@@ -1929,7 +1930,17 @@ void eof_render_note_window(void)
 		ypos += 24;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos,  makecol(255, 255, 255), -1, "Input Mode: %s", eof_input_name[eof_input_mode]);
 		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos,  makecol(255, 255, 255), -1, "Grid Snap: %s", eof_snap_name[(int)eof_snap_mode]);
+
+		if(eof_snap_mode != EOF_SNAP_CUSTOM)
+			textprintf_ex(eof_window_note->screen, font, 2, ypos,  makecol(255, 255, 255), -1, "Grid Snap: %s", eof_snap_name[(int)eof_snap_mode]);
+		else
+		{
+			if(eof_custom_snap_measure == 0)
+				textprintf_ex(eof_window_note->screen, font, 2, ypos,  makecol(255, 255, 255), -1, "Grid Snap: %s (1/%d beat)", eof_snap_name[(int)eof_snap_mode],eof_snap_interval);
+			else
+				textprintf_ex(eof_window_note->screen, font, 2, ypos,  makecol(255, 255, 255), -1, "Grid Snap: %s (1/%d measure)", eof_snap_name[(int)eof_snap_mode],eof_snap_interval);
+		}
+
 		ypos += 12;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos,  makecol(255, 255, 255), -1, "Metronome: %s", eof_mix_metronome_enabled ? "On" : "Off");
 		ypos += 12;
