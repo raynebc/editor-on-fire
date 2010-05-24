@@ -772,15 +772,17 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 					chart->charter=string2;	//Save the chart editor tag
 				else if(strcasecmp(string1,"Offset") == 0)
 				{
-					index2=0;	//Use this as an index for string2
-					chart->offset=(unsigned long)ParseLongInt(string2,&index2,chart->linesprocessed,&errorstatus);	//Parse string2 as a number
-					if(errorstatus)		//If ParseLongInt() failed
+//					index2=0;	//Use this as an index for string2
+//					chart->offset=(unsigned long)ParseLongInt(string2,&index2,chart->linesprocessed,&errorstatus);	//Parse string2 as a number
+					chart->offset=atof(string2);
+/*					if(errorstatus)		//If ParseLongInt() failed
 					{
 						DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 						if(error)
 							*error=10;
 						return NULL;	//return error
 					}
+*/
 				}
 				else if(strcasecmp(string1,"Resolution") == 0)
 				{

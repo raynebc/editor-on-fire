@@ -7,7 +7,7 @@
 /* convert Feedback chart time to milliseconds for use with EOF */
 static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chartpos)
 {
-	double curpos = chart->offset;
+	double curpos = (chart->offset * 1000.0) + 0.5;	//The Feedback chart offset is defined in seconds, not milliseconds.  Round to nearest millisecond
 	unsigned long lastchartpos = 0;
 	double beat_length = 500.0;
 	int beat_count;
@@ -100,7 +100,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 
 		/* set up beat markers */
-		sp->tags->ogg[0].midi_offset = chart->offset;
+		sp->tags->ogg[0].midi_offset = (chart->offset * 1000.0) + 0.5;	//Feedback chart offset is stored in seconds, not milliseconds.  Round to nearest millisecond
 		struct dBAnchor * current_anchor = chart->anchors;
 		unsigned long ppqn = 500000;
 		double curpos = sp->tags->ogg[0].midi_offset;

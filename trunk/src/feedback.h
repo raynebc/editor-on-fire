@@ -52,7 +52,7 @@ struct FeedbackChart
 	char *name;
 	char *artist;
 	char *charter;
-	unsigned long offset;
+	double offset;		//The chart's offset in SECONDS
 	unsigned long resolution;	//Is expected to be 192.  If it's missing in the .char file, 192 could probably be assumed
 	char *audiofile;
 	unsigned long linesprocessed;	//The number of lines in the file that were processed
