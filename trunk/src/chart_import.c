@@ -7,7 +7,8 @@
 /* convert Feedback chart time to milliseconds for use with EOF */
 static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chartpos)
 {
-	double curpos = chart->offset;
+	double offset = chart->offset * 1000.0;
+	double curpos = offset;
 	unsigned long lastchartpos = 0;
 	double beat_length = 500.0;
 	int beat_count;
@@ -24,7 +25,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 			if(current_anchor->next && current_anchor->next->usec > 0)
 			{
 				beat_count = (current_anchor->next->chartpos - current_anchor->chartpos) / chart->resolution;
-				beat_length = (((double)current_anchor->next->usec / 1000.0) - curpos) / (double)beat_count;
+				beat_length = (((double)current_anchor->next->usec / 1000.0 + offset) - curpos) / (double)beat_count;
 			}
 			
 			convert = beat_length / (double)chart->resolution;
@@ -117,10 +118,10 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 		
 		/* set up beat markers */
-		sp->tags->ogg[0].midi_offset = chart->offset;
+		sp->tags->ogg[0].midi_offset = chart->offset * 1000.0;
 		struct dBAnchor * current_anchor = chart->anchors;
 		unsigned long ppqn = 500000;
-		double curpos = sp->tags->ogg[0].midi_offset;
+		double curpos = chart->offset * 1000.0;
 		double beat_length = 500.0;
 		double bpm = 120.0;
 		int beat_count;
@@ -141,7 +142,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 				if(current_anchor->next && current_anchor->next->usec > 0)
 				{
 					beat_count = (current_anchor->next->chartpos - current_anchor->chartpos) / chart->resolution;
-					beat_length = (((double)current_anchor->next->usec / 1000.0) - curpos) / (double)beat_count;
+					beat_length = (((double)current_anchor->next->usec / 1000.0 + chart->offset * 1000.0) - curpos) / (double)beat_count;
 					bpm = (double)60000.0 / beat_length;
 					ppqn = (double)60000000.0 / bpm;
 				}
@@ -238,7 +239,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			if(track >= 0)
 			{
 				struct dbNotelist * current_note = current_track->notes;
-				unsigned long lastpos = 0;
+				unsigned long lastpos = -1;
 				EOF_NOTE * new_note = NULL;
 				while(current_note)
 				{

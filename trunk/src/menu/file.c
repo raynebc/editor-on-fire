@@ -1798,7 +1798,7 @@ int eof_menu_file_feedback_import(void)
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
-	returnedfn = ncd_file_select(0, eof_filename, "Import Feedback Chart", eof_filter_dB_files);
+	returnedfn = ncd_file_select(0, eof_last_eof_path, "Import Feedback Chart", eof_filter_dB_files);
 	eof_clear_input();
 	if(returnedfn)
 	{
@@ -1821,7 +1821,6 @@ int eof_menu_file_feedback_import(void)
 				eof_destroy_song(eof_song);
 			}
 			eof_destroy_ogg();
-			ustrcpy(eof_filename, returnedfn);
 			ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 			replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 			replace_filename(eof_last_eof_path, eof_filename, "", 1024);
