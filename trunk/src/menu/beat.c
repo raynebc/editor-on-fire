@@ -13,10 +13,10 @@ char eof_ts_menu_off_text[32] = {0};
 
 MENU eof_beat_time_signature_menu[] =
 {
-    {"4/4", eof_menu_beat_ts_4_4, NULL, 0, NULL},
-    {"3/4", eof_menu_beat_ts_3_4, NULL, 0, NULL},
-    {"5/4", eof_menu_beat_ts_5_4, NULL, 0, NULL},
-    {"6/4", eof_menu_beat_ts_6_4, NULL, 0, NULL},
+    {"&4/4", eof_menu_beat_ts_4_4, NULL, 0, NULL},
+    {"&3/4", eof_menu_beat_ts_3_4, NULL, 0, NULL},
+    {"&5/4", eof_menu_beat_ts_5_4, NULL, 0, NULL},
+    {"&6/4", eof_menu_beat_ts_6_4, NULL, 0, NULL},
     {eof_ts_menu_off_text, eof_menu_beat_ts_off, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
@@ -106,7 +106,7 @@ void eof_prepare_beat_menu(void)
 {
 	int i;
 	int selected = 0;
-	
+
 	if(eof_song && eof_song_loaded)
 	{
 		if(eof_find_next_anchor(eof_selected_beat) < 0)
@@ -123,7 +123,7 @@ void eof_prepare_beat_menu(void)
 		{
 			eof_beat_menu[4].flags = D_DISABLED;
 		}
-		
+
 		if((int)eof_song->beat[0]->pos - (int)(eof_song->beat[1]->pos - eof_song->beat[0]->pos) >= 0)
 		{
 			eof_beat_menu[6].flags = 0;
@@ -187,7 +187,7 @@ void eof_prepare_beat_menu(void)
 		{
 			eof_beat_menu[14].flags = D_DISABLED;
 		}
-		
+
 		if(eof_song->text_events > 0)
 		{
 			eof_beat_menu[16].flags = 0;
@@ -242,7 +242,7 @@ int eof_menu_beat_bpm_change(void)
 	int i;
 	unsigned long cppqn = eof_song->beat[eof_selected_beat]->ppqn;
 	int old_flags = eof_song->beat[eof_selected_beat]->flags;
-	
+
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_bpm_change_dialog, gui_fg_color, gui_bg_color);
@@ -294,7 +294,7 @@ int eof_menu_beat_bpm_change(void)
 				{
 					eof_song->beat[i]->ppqn = (double)60000000.0 / bpm;
 				}
-				
+
 				/* break when we reach the end of the portion to change */
 				else
 				{
@@ -399,7 +399,7 @@ int eof_menu_beat_delete(void)
 int eof_menu_beat_add(void)
 {
 	int i;
-	
+
 	eof_prepare_undo(0);
 	eof_song_add_beat(eof_song);
 	for(i = eof_song->beats - 1; i > eof_selected_beat; i--)
@@ -416,7 +416,7 @@ int eof_menu_beat_push_offset_back(void)
 {
 	int i;
 	int backamount = eof_song->beat[1]->pos - eof_song->beat[0]->pos;
-	
+
 	if(eof_song->beat[0]->pos - backamount >= 0)
 	{
 		eof_prepare_undo(0);
@@ -438,7 +438,7 @@ int eof_menu_beat_push_offset_back(void)
 int eof_menu_beat_push_offset_up(void)
 {
 	int i;
-	
+
 	eof_prepare_undo(0);
 	for(i = 0; i < eof_song->beats - 1; i++)
 	{
@@ -460,7 +460,7 @@ int eof_menu_beat_anchor(void)
 	int newpos = 0;
 	int revert = 0;
 	char ttext[3] = {0};
-	
+
 	if(eof_selected_beat == 0)
 	{
 		return 1;
@@ -484,7 +484,7 @@ int eof_menu_beat_anchor(void)
 		ttext[0] = eof_etext2[6];
 		ttext[1] = eof_etext2[7];
 		hs = atoi(ttext);
-		
+
 		/* time wasn't modified so get out without changing anything */
 		if(mm == oldmm && ss == oldss && hs == oldhs)
 		{
@@ -555,7 +555,7 @@ int eof_menu_beat_delete_anchor(void)
 //	double blength = 0;
 //	double bpos = 0;
 //	int bbeat = 0;
-	
+
 	if(eof_selected_beat > 0 && eof_beat_is_anchor(eof_selected_beat))
 	{
 		eof_prepare_undo(0);
@@ -588,7 +588,7 @@ int eof_menu_beat_reset_bpm(void)
 {
 	int i;
 	int reset = 0;
-	
+
 	for(i = 1; i < eof_song->beats; i++)
 	{
 		if(eof_song->beat[i]->ppqn != eof_song->beat[0]->ppqn)
@@ -626,7 +626,7 @@ int eof_menu_beat_calculate_bpm(void)
 	unsigned long cppqn = eof_song->beat[eof_selected_beat]->ppqn;
 	double bpm = 0.0;
 	int bpm_count = 0;
-	
+
 	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
 	{
 		if(eof_selection.multi[i])
@@ -734,7 +734,7 @@ char * eof_events_list(int index, int * size)
 	int i;
 	int ecount = 0;
 	char * etextpointer[32] = {NULL};
-	
+
 	for(i = 0; i < eof_song->text_events; i++)
 	{
 		if(eof_song->text_event[i]->beat == eof_selected_beat)
@@ -792,7 +792,7 @@ char * eof_events_list_all(int index, int * size)
 int eof_events_dialog_add(DIALOG * d)
 {
 	int i;
-	
+
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_events_add_dialog, gui_fg_color, gui_bg_color);
@@ -820,25 +820,25 @@ int eof_events_dialog_edit(DIALOG * d)
 	int i;
 	short ecount = 0;
 	short event = -1;
-	
+
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_events_add_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_events_add_dialog);
-	
+
 	/* find the event */
 	for(i = 0; i < eof_song->text_events; i++)
 	{
 		if(eof_song->text_event[i]->beat == eof_selected_beat)
 		{
-			
+
 			/* if we've reached the item that is selected, delete it */
 			if(eof_events_dialog[1].d1 == ecount)
 			{
 				event = i;
 				break;
 			}
-			
+
 			/* go to next event */
 			else
 			{
@@ -846,8 +846,8 @@ int eof_events_dialog_edit(DIALOG * d)
 			}
 		}
 	}
-	
-	
+
+
 	ustrcpy(eof_etext, eof_song->text_event[event]->text);
 	if(eof_popup_dialog(eof_events_add_dialog, 2) == 3)
 	{
@@ -868,7 +868,7 @@ int eof_events_dialog_delete_events_count(void)
 {
 	int i;
 	int count = 0;
-	
+
 	for(i = 0; i < eof_song->text_events; i++)
 	{
 		if(eof_song->text_event[i]->beat == eof_selected_beat)
@@ -883,7 +883,7 @@ int eof_events_dialog_delete(DIALOG * d)
 {
 	int i, c;
 	int ecount = 0;
-	
+
 	if(eof_song->text_events <= 0)
 	{
 		return D_O_K;
@@ -893,15 +893,15 @@ int eof_events_dialog_delete(DIALOG * d)
 	{
 		if(eof_song->text_event[i]->beat == eof_selected_beat)
 		{
-			
+
 			/* if we've reached the item that is selected, delete it */
 			if(eof_events_dialog[1].d1 == ecount)
 			{
-				
+
 				/* remove the text event and exit */
 				eof_song_delete_text_event(eof_song, i);
 				eof_sort_events();
-				
+
 				/* remove flag if no more events tied to this beat */
 				c = eof_events_dialog_delete_events_count();
 				if(c <= 0 && (eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_EVENTS))
@@ -915,7 +915,7 @@ int eof_events_dialog_delete(DIALOG * d)
 				dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
 				return D_O_K;
 			}
-			
+
 			/* go to next event */
 			else
 			{
