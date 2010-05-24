@@ -1878,11 +1878,11 @@ void EnumeratedBChartInfo(struct FeedbackChart *chart)
 		chartinfo=ResizedAppend(chartinfo,"\nMusicStream: ",1);
 		chartinfo=ResizedAppend(chartinfo,chart->audiofile,1);
 	}
-	printflen=printf("\nOffset: %lu",chart->offset)+1;	//Find the number of characters needed to sprintf this string
+	printflen=printf("\nOffset: %.3f",chart->offset)+1;	//Find the number of characters needed to sprintf this string
 	if(printflen > 0)
 	{
 		tempstr=malloc_err(printflen);
-		sprintf(tempstr,"\nOffset: %lu",chart->offset);
+		sprintf(tempstr,"\nOffset: %.3f",chart->offset);
 		chartinfo=ResizedAppend(chartinfo,tempstr,1);
 		free(tempstr);
 	}
