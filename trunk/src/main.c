@@ -923,6 +923,28 @@ int eof_figure_difficulty(void)
 	int dt[5] = {-1, -1, -1, -1};
 	int count = 0;
 
+	/* check for lyrics if PART VOCALS is selected */
+	if(eof_vocals_selected)
+	{
+		
+		/* see if there are any pitched lyrics */
+		for(i = 0; i < eof_song->vocal_track->lyrics; i++)
+		{
+			if(eof_song->vocal_track->lyric[i]->note != 0)
+			{
+				break;
+			}
+		}
+		
+		/* if we have pitched lyrics and line definitions, allow test */
+		if(i < eof_song->vocal_track->lyrics && eof_song->vocal_track->lines > 0)
+		{
+			return 0;
+		}
+		return -1;
+	}
+	
+	/* see which difficulties are populated with notes */
 	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
 	{
 		nt[(int)eof_song->track[eof_selected_track]->note[i]->type] = 1;
