@@ -1064,7 +1064,10 @@ void eof_read_editor_keys(void)
 
 	if(key[KEY_T])
 	{
-		eof_menu_note_toggle_crazy();
+		if(!eof_vocals_selected && eof_selected_track != EOF_TRACK_DRUM)
+		{
+			eof_menu_note_toggle_crazy();
+		}
 		key[KEY_T] = 0;
 	}
 
