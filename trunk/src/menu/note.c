@@ -413,7 +413,16 @@ void eof_prepare_note_menu(void)
 				eof_note_menu[12].flags = D_DISABLED;
 			}
 			eof_note_menu[13].flags = D_DISABLED; // lyric lines
-			eof_note_menu[15].flags = 0; // HOPO
+			
+			/* HOPO */
+			if(eof_selected_track != EOF_TRACK_DRUM)
+			{
+				eof_note_menu[15].flags = 0;
+			}
+			else
+			{
+				eof_note_menu[15].flags = D_DISABLED;
+			}
 		}
 	}
 }
