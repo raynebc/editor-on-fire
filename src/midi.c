@@ -153,6 +153,11 @@ int eof_figure_beat(double pos)
 
 	for(i = 0; i < eof_song->beats - 1; i++)
 	{
+		if(i + 1 >= eof_song->beats)
+		{				//If i references the last defined beat
+			return i;	//return i instead of referencing an undefined beat
+		}
+
 		if(eof_song->beat[i]->pos <= pos && eof_song->beat[i + 1]->pos > pos)
 		{
 			return i;

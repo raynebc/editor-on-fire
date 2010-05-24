@@ -203,15 +203,16 @@ static unsigned long eof_import_midi_to_eof(int offset, unsigned long pos)
 
 static unsigned long eof_import_midi_to_eof_optimized(unsigned long pos)
 {
-	int i, beat = 0;
+	int i;
 	double current_pos;
 	double delta;
 	double bpm;
+	int beat=eof_import_bpm_events->events - 1;	//Assume the last defined tempo unless a more appropriate one is found below
 
 //	return eof_import_midi_to_eof(sp->tags->ogg[0].midi_offset, pos);
 
 	/* find the BPM area this position lies in */
-	for(i = 0; i < eof_import_bpm_events->events; i++)
+	for(i = 0; i < eof_import_bpm_events->events - 1; i++)	//Since the last tempo is assumed to be the target, it doesn't have to be checked
 	{
 		if(eof_import_bpm_events->event[i]->pos > pos)
 		{
@@ -219,21 +220,26 @@ static unsigned long eof_import_midi_to_eof_optimized(unsigned long pos)
 			break;
 		}
 	}
+/*	beat is not used until the next time this is checked, so this can be skipped
 	if(beat < 0)
 	{
 		beat = 0;
 	}
+*/
+/*	This beat is assumed by default, so we needn't check for this
 	if(i == eof_import_bpm_events->events)
-	{
+	{	//If all tempos were placed earlier than the specified timestamp, assume the last tempo event is to be used
 		beat = eof_import_bpm_events->events - 1;
 	}
+*/
 	if(beat < 0)
 	{
 		beat = 0;
 	}
 	current_pos = eof_import_bpm_pos[beat];
 	delta = pos - eof_import_bpm_events->event[beat]->pos;
-	bpm = eof_import_get_bpm(pos);
+//	bpm = eof_import_get_bpm(pos);
+	bpm = (double)60000000.0 / (double)eof_import_bpm_events->event[beat]->d1;
 	current_pos += ((double)delta / (double)eof_work_midi->divisions) * ((double)60000.0 / bpm);
 	return current_pos;
 }
@@ -331,6 +337,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	sp = eof_create_song();
 	if(!sp)
 	{
+		destroy_midi(eof_work_midi);
 		return NULL;
 	}
 	replace_filename(backup_filename, fn, "song.ini", 1024);
@@ -352,11 +359,13 @@ EOF_SONG * eof_import_midi(const char * fn)
 	eof_import_bpm_events = eof_import_create_events_list();
 	if(!eof_import_bpm_events)
 	{
+		destroy_midi(eof_work_midi);
 		return 0;
 	}
 	eof_import_text_events = eof_import_create_events_list();
 	if(!eof_import_text_events)
 	{
+		destroy_midi(eof_work_midi);
 		return 0;
 	}
 	for(i = 0; i < tracks; i++)
@@ -364,6 +373,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 		eof_import_events[i] = eof_import_create_events_list();
 		if(!eof_import_events[i])
 		{
+			destroy_midi(eof_work_midi);
 			return 0;
 		}
 		track_pos = 0;
@@ -797,6 +807,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 						destroy_midi(eof_work_midi);
 						eof_destroy_song(sp);
 						set_window_title("EOF - No Song");
+						destroy_midi(eof_work_midi);
 						return NULL;
 					}
 					if(pticker % 200 == 0)
@@ -946,6 +957,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 						destroy_midi(eof_work_midi);
 						eof_destroy_song(sp);
 						set_window_title("EOF - No Song");
+						destroy_midi(eof_work_midi);
 						return NULL;
 					}
 					if(pticker % 20 == 0)
