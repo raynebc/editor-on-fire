@@ -1820,11 +1820,19 @@ int eof_menu_file_feedback_import(void)
 			{
 				eof_destroy_song(eof_song);
 			}
+			eof_destroy_ogg();
+			ustrcpy(eof_filename, returnedfn);
+			ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+			replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
+			replace_filename(eof_last_eof_path, eof_filename, "", 1024);
 
 			/* import chart */
 			eof_song = eof_import_chart(returnedfn);
 			if(eof_song)
 			{
+				eof_selected_track = 0;
+				eof_music_pos = eof_av_delay;
+				eof_selected_catalog_entry = 0;
 				eof_calculate_beats();
 				eof_determine_hopos();
 				eof_detect_difficulties(eof_song);

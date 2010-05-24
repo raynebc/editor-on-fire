@@ -56,22 +56,39 @@ EOF_SONG * eof_import_chart(const char * fn)
 	EOF_SONG * sp = NULL;
 	int err;
 	char oggfn[1024] = {0};
+	char searchpath[1024] = {0};
+	char oldoggpath[1024] = {0};
+	struct al_ffblk info; // for file search
 	
 	chart = ImportFeedback((char *)fn, &err);
 	if(chart)
 	{
 		/* load audio */
-		if(strlen(chart->audiofile) > 0)
+		replace_filename(oggfn, fn, "guitar.ogg", 1024);
+		
+		/* if "guitar.ogg" doesn't exist, look for any OGG file in the chart directory */
+		if(!exists(oggfn))
 		{
-			replace_filename(oggfn, fn, chart->audiofile, 1024);
-		}
-		else
-		{
-			strcpy(oggfn, "");
+			
+			/* no OGG file found, start file selector at chart directory */
+			replace_filename(searchpath, fn, "*.ogg", 1024);
+			if(al_findfirst(searchpath, &info, FA_ALL))
+			{
+				ustrcpy(oldoggpath, eof_last_ogg_path);
+				replace_filename(eof_last_ogg_path, fn, "", 1024);
+			}
+			
+			/* if there is only one OGG file, load it */
+			else if(al_findnext(&info))
+			{
+				replace_filename(oggfn, fn, info.name, 1024);
+			}
+			al_findclose(&info);
 		}
 		if(!eof_load_ogg(oggfn))
 		{
 			DestroyFeedbackChart(chart, 1);
+			ustrcpy(eof_last_ogg_path, oldoggpath); // remember previous OGG directory if we fail
 			return NULL;
 		}
 		eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
