@@ -161,6 +161,7 @@ int         eof_click_x;
 int         eof_click_y;
 int         eof_peg_x;
 int         eof_peg_y;
+int         eof_last_pen_pos = 0;
 int         eof_cursor_visible = 1;
 int         eof_pen_visible = 1;
 int         eof_hover_type = -1;

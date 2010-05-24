@@ -256,6 +256,7 @@ extern int         eof_click_x;
 extern int         eof_click_y;
 extern int         eof_peg_x;
 extern int         eof_peg_y;
+extern int         eof_last_pen_pos;
 extern int         eof_cursor_visible;
 extern int         eof_pen_visible;
 extern int         eof_hover_type;
