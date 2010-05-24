@@ -31,7 +31,7 @@ MENU eof_edit_snap_menu[] =
     {"", NULL, NULL, 0, NULL},
     {"Custom", eof_menu_edit_snap_custom, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
-    {"Off", eof_menu_edit_snap_off, NULL, D_SELECTED, NULL},
+    {"Off\tG", eof_menu_edit_snap_off, NULL, D_SELECTED, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -48,23 +48,23 @@ MENU eof_edit_claps_menu[] =
 
 MENU eof_edit_hopo_menu[] =
 {
-    {"RF", eof_menu_edit_hopo_rf, NULL, D_SELECTED, NULL},
-    {"FOF", eof_menu_edit_hopo_fof, NULL, 0, NULL},
-    {"Off", eof_menu_edit_hopo_off, NULL, 0, NULL},
+    {"&RF", eof_menu_edit_hopo_rf, NULL, D_SELECTED, NULL},
+    {"&FOF", eof_menu_edit_hopo_fof, NULL, 0, NULL},
+    {"&Off", eof_menu_edit_hopo_off, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_edit_zoom_menu[] =
 {
-    {"1/10", eof_menu_edit_zoom_10, NULL, D_SELECTED, NULL},
-    {"1/9", eof_menu_edit_zoom_9, NULL, 0, NULL},
-    {"1/8", eof_menu_edit_zoom_8, NULL, 0, NULL},
-    {"1/7", eof_menu_edit_zoom_7, NULL, 0, NULL},
-    {"1/6", eof_menu_edit_zoom_6, NULL, 0, NULL},
-    {"1/5", eof_menu_edit_zoom_5, NULL, 0, NULL},
-    {"1/4", eof_menu_edit_zoom_4, NULL, 0, NULL},
-    {"1/3", eof_menu_edit_zoom_3, NULL, 0, NULL},
-    {"1/2", eof_menu_edit_zoom_2, NULL, 0, NULL},
+    {"1/1&0", eof_menu_edit_zoom_10, NULL, D_SELECTED, NULL},
+    {"1/&9", eof_menu_edit_zoom_9, NULL, 0, NULL},
+    {"1/&8", eof_menu_edit_zoom_8, NULL, 0, NULL},
+    {"1/&7", eof_menu_edit_zoom_7, NULL, 0, NULL},
+    {"1/&6", eof_menu_edit_zoom_6, NULL, 0, NULL},
+    {"1/&5", eof_menu_edit_zoom_5, NULL, 0, NULL},
+    {"1/&4", eof_menu_edit_zoom_4, NULL, 0, NULL},
+    {"1/&3", eof_menu_edit_zoom_3, NULL, 0, NULL},
+    {"1/&2", eof_menu_edit_zoom_2, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -87,16 +87,16 @@ MENU eof_edit_speed_menu[] =
 
 MENU eof_edit_bookmark_menu[] =
 {
-    {"0\tCtrl+Num 0", eof_menu_edit_bookmark_0, NULL, 0, NULL},
-    {"1\tCtrl+Num 1", eof_menu_edit_bookmark_1, NULL, 0, NULL},
-    {"2\tCtrl+Num 2", eof_menu_edit_bookmark_2, NULL, 0, NULL},
-    {"3\tCtrl+Num 3", eof_menu_edit_bookmark_3, NULL, 0, NULL},
-    {"4\tCtrl+Num 4", eof_menu_edit_bookmark_4, NULL, 0, NULL},
-    {"5\tCtrl+Num 5", eof_menu_edit_bookmark_5, NULL, 0, NULL},
-    {"6\tCtrl+Num 6", eof_menu_edit_bookmark_6, NULL, 0, NULL},
-    {"7\tCtrl+Num 7", eof_menu_edit_bookmark_7, NULL, 0, NULL},
-    {"8\tCtrl+Num 8", eof_menu_edit_bookmark_8, NULL, 0, NULL},
-    {"9\tCtrl+Num 9", eof_menu_edit_bookmark_9, NULL, 0, NULL},
+    {"&0\tCtrl+Num 0", eof_menu_edit_bookmark_0, NULL, 0, NULL},
+    {"&1\tCtrl+Num 1", eof_menu_edit_bookmark_1, NULL, 0, NULL},
+    {"&2\tCtrl+Num 2", eof_menu_edit_bookmark_2, NULL, 0, NULL},
+    {"&3\tCtrl+Num 3", eof_menu_edit_bookmark_3, NULL, 0, NULL},
+    {"&4\tCtrl+Num 4", eof_menu_edit_bookmark_4, NULL, 0, NULL},
+    {"&5\tCtrl+Num 5", eof_menu_edit_bookmark_5, NULL, 0, NULL},
+    {"&6\tCtrl+Num 6", eof_menu_edit_bookmark_6, NULL, 0, NULL},
+    {"&7\tCtrl+Num 7", eof_menu_edit_bookmark_7, NULL, 0, NULL},
+    {"&8\tCtrl+Num 8", eof_menu_edit_bookmark_8, NULL, 0, NULL},
+    {"&9\tCtrl+Num 9", eof_menu_edit_bookmark_9, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -121,11 +121,11 @@ MENU eof_edit_menu[] =
     {"", NULL, NULL, 0, NULL},
     {"&Grid Snap", NULL, eof_edit_snap_menu, 0, NULL},
     {"&Zoom", NULL, eof_edit_zoom_menu, 0, NULL},
-    {"Sp&eed", NULL, eof_edit_speed_menu, 0, NULL},
+    {"Preview Sp&eed", NULL, eof_edit_speed_menu, 0, NULL},
     {"Playback Rate", NULL, eof_edit_playback_menu, 0, NULL},
-    {"&HOPO", NULL, eof_edit_hopo_menu, 0, NULL},
+    {"Preview &HOPO", NULL, eof_edit_hopo_menu, 0, NULL},
     {"", NULL, NULL, 0, NULL},
-    {"Metronome\tM", eof_menu_edit_metronome, NULL, 0, NULL},
+    {"&Metronome\tM", eof_menu_edit_metronome, NULL, 0, NULL},
     {"Claps\tK", eof_menu_edit_claps, NULL, 0, NULL},
     {"Clap &Notes", NULL, eof_edit_claps_menu, 0, NULL},
     {"&Vocal Tones\tV", eof_menu_edit_vocal_tones, NULL, 0, NULL},

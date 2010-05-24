@@ -13,16 +13,16 @@ char eof_track_selected_menu_text[6][32] = {" PART &GUITAR", " PART &BASS", " PA
 
 MENU eof_song_seek_bookmark_menu[] =
 {
-    {"0\tNum 0", eof_menu_song_seek_bookmark_0, NULL, 0, NULL},
-    {"1\tNum 1", eof_menu_song_seek_bookmark_1, NULL, 0, NULL},
-    {"2\tNum 2", eof_menu_song_seek_bookmark_2, NULL, 0, NULL},
-    {"3\tNum 3", eof_menu_song_seek_bookmark_3, NULL, 0, NULL},
-    {"4\tNum 4", eof_menu_song_seek_bookmark_4, NULL, 0, NULL},
-    {"5\tNum 5", eof_menu_song_seek_bookmark_5, NULL, 0, NULL},
-    {"6\tNum 6", eof_menu_song_seek_bookmark_6, NULL, 0, NULL},
-    {"7\tNum 7", eof_menu_song_seek_bookmark_7, NULL, 0, NULL},
-    {"8\tNum 8", eof_menu_song_seek_bookmark_8, NULL, 0, NULL},
-    {"9\tNum 9", eof_menu_song_seek_bookmark_9, NULL, 0, NULL},
+    {"&0\tNum 0", eof_menu_song_seek_bookmark_0, NULL, 0, NULL},
+    {"&1\tNum 1", eof_menu_song_seek_bookmark_1, NULL, 0, NULL},
+    {"&2\tNum 2", eof_menu_song_seek_bookmark_2, NULL, 0, NULL},
+    {"&3\tNum 3", eof_menu_song_seek_bookmark_3, NULL, 0, NULL},
+    {"&4\tNum 4", eof_menu_song_seek_bookmark_4, NULL, 0, NULL},
+    {"&5\tNum 5", eof_menu_song_seek_bookmark_5, NULL, 0, NULL},
+    {"&6\tNum 6", eof_menu_song_seek_bookmark_6, NULL, 0, NULL},
+    {"&7\tNum 7", eof_menu_song_seek_bookmark_7, NULL, 0, NULL},
+    {"&8\tNum 8", eof_menu_song_seek_bookmark_8, NULL, 0, NULL},
+    {"&9\tNum 9", eof_menu_song_seek_bookmark_9, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 

@@ -162,7 +162,7 @@ Vocal Track Editing:
     
         Shift the piano roll view up or down. Hold Ctrl to shift by a whole octave.
         
-    Shift+1-5 (Not Number Pad)
+    Shift+1-4 (Not Number Pad)
     
         Shift the piano roll directly to a specific octave.
     
