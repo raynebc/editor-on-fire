@@ -2948,6 +2948,7 @@ void eof_editor_logic(void)
 							eof_selection.current_pos = new_note->pos;
 							eof_selection.range_pos_1 = eof_selection.current_pos;
 							eof_selection.range_pos_2 = eof_selection.current_pos;
+							eof_selection.track = eof_selected_track;
 							memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
 							eof_track_sort_notes(eof_song->track[eof_selected_track]);
 							eof_track_fixup_notes(eof_song->track[eof_selected_track], 0);
@@ -2970,6 +2971,7 @@ void eof_editor_logic(void)
 						eof_selection.current_pos = new_note->pos;
 						eof_selection.range_pos_1 = eof_selection.current_pos;
 						eof_selection.range_pos_2 = eof_selection.current_pos;
+						eof_selection.track = eof_selected_track;
 						memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
 						eof_track_sort_notes(eof_song->track[eof_selected_track]);
 						eof_track_fixup_notes(eof_song->track[eof_selected_track], 0);
