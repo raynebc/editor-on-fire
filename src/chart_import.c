@@ -122,6 +122,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		/* set up beat markers */
 		sp->tags->ogg[0].midi_offset = chart->offset * 1000.0;
 		struct dBAnchor * current_anchor = chart->anchors;
+		struct dbText * current_event = chart->events;
 		unsigned long max_chartpos = 0;
 		
 		/* find the highest chartpos for beat markers */
@@ -132,6 +133,14 @@ EOF_SONG * eof_import_chart(const char * fn)
 				max_chartpos = current_anchor->chartpos;
 			}
 			current_anchor = current_anchor->next;
+		}
+		while(current_event)
+		{
+			if(current_event->chartpos > max_chartpos)
+			{
+				max_chartpos = current_event->chartpos;
+			}
+			current_event = current_event->next;
 		}
 		
 		/* create beat markers */
@@ -243,6 +252,21 @@ EOF_SONG * eof_import_chart(const char * fn)
 				}
 			}
 			current_track = current_track->next;
+		}
+		
+		/* load text events */
+		int b;
+		current_event = chart->events;
+		while(current_event)
+		{
+			b = current_event->chartpos / chart->resolution;
+			if(b >= sp->beats)
+			{
+				b = sp->beats - 1;
+			}
+			eof_song_add_text_event(sp, b, current_event->text);
+			sp->beat[b]->flags |= EOF_BEAT_FLAG_EVENTS;
+			current_event = current_event->next;
 		}
 	}
 	return sp;
