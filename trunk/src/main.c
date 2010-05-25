@@ -12,6 +12,7 @@
 #include "modules/ocd3d.h"
 #include "modules/gametime.h"
 #include "modules/g-idle.h"
+#include "dialog/main.h"
 #include "menu/main.h"
 #include "menu/file.h"
 #include "menu/edit.h"

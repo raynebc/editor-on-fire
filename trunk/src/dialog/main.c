@@ -1,4 +1,5 @@
 #include <allegro.h>
+#include "../agup/agup.h"
 #include "../menu/main.h"
 
 DIALOG eof_main_dialog[] =
