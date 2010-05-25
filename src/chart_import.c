@@ -57,6 +57,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	struct FeedbackChart * chart = NULL;
 	EOF_SONG * sp = NULL;
 	int err;
+	int i;
 	char oggfn[1024] = {0};
 	char searchpath[1024] = {0};
 	char oldoggpath[1024] = {0};
@@ -121,143 +122,46 @@ EOF_SONG * eof_import_chart(const char * fn)
 		/* set up beat markers */
 		sp->tags->ogg[0].midi_offset = chart->offset * 1000.0;
 		struct dBAnchor * current_anchor = chart->anchors;
-		unsigned long ppqn = 500000;
-		double curpos = chart->offset * 1000.0;
-		double beat_length = 500.0;
-		double bpm = 120.0;
-		int beat_count;
-		int i, r, ra = 0;
-		unsigned long lastbpm = 120000;
-		int new_anchor = 0;
-		EOF_BEAT_MARKER * new_beat = NULL;
-		/* usec member can be 0, meaning anchor is really just a BPM change
-		 * need to use chartpos to find beat marker position */
+		unsigned long max_chartpos = 0;
+		
+		/* find the highest chartpos for beat markers */
 		while(current_anchor)
 		{
-			new_anchor = 1;
-			if(current_anchor->BPM > 0)
+			if(current_anchor->chartpos > max_chartpos)
 			{
-				ppqn = (double)60000000.0 / ((double)current_anchor->BPM / 1000.0);
-				beat_length = (double)60000 / ((double)60000000.0 / (double)ppqn);
-				/* adjust BPM if next beat marker is an anchor */
-				if(current_anchor->next && current_anchor->next->usec > 0)
-				{
-					beat_count = (current_anchor->next->chartpos - current_anchor->chartpos) / chart->resolution;
-					beat_length = (((double)current_anchor->next->usec / 1000.0 + chart->offset * 1000.0) - curpos) / (double)beat_count;
-					bpm = (double)60000.0 / beat_length;
-					ppqn = (double)60000000.0 / bpm;
-				}
+				max_chartpos = current_anchor->chartpos;
 			}
-			
-			/* if there is another anchor, fill in beats up to that anchor */
-			if(current_anchor->next)
-			{
-				for(i = 0; i < (current_anchor->next->chartpos - current_anchor->chartpos) / chart->resolution; i++)
-				{
-					new_beat = eof_song_add_beat(sp);
-					if(new_beat)
-					{
-						new_beat->ppqn = ppqn;
-						new_beat->fpos = curpos;
-						new_beat->pos = new_beat->fpos;
-						if(new_anchor && lastbpm != current_anchor->BPM)
-						{
-							new_beat->flags |= EOF_BEAT_FLAG_ANCHOR;
-							new_anchor = 0;
-						}
-					}
-					curpos += beat_length;
-				}
-				
-				r = (current_anchor->next->chartpos - current_anchor->chartpos) % chart->resolution;
-				if(r != 0)
-				{
-					ra += r;
-					
-					/* add a beat if we have accumulated more than a beat's worth of chartposes */
-					if(ra >= chart->resolution)
-					{
-						new_beat = eof_song_add_beat(sp);
-						if(new_beat)
-						{
-							new_beat->ppqn = ppqn;
-							new_beat->fpos = curpos;
-							new_beat->pos = new_beat->fpos;
-							if(new_anchor && lastbpm != current_anchor->BPM)
-							{
-								new_beat->flags |= EOF_BEAT_FLAG_CORRUPTED;
-								new_anchor = 0;
-							}
-						}
-						ra -= chart->resolution;
-					}
-				}
-				else
-				{
-					ra = 0;
-				}
-				
-				/* add remainder to chartpos so we will be at the correct location
-				 * regardless of whether we added beats (we will add missing beats later) */
-				curpos += beat_length * ((double)r / (double)chart->resolution);
-			}
-			else
-			{
-				new_beat = eof_song_add_beat(sp);
-				if(new_beat)
-				{
-					new_beat->ppqn = ppqn;
-					new_beat->fpos = curpos;
-					new_beat->pos = new_beat->fpos;
-					if(new_anchor && lastbpm != current_anchor->BPM)
-					{
-						new_beat->flags |= EOF_BEAT_FLAG_ANCHOR;
-						new_anchor = 0;
-					}
-				}
-			}
-			
-			lastbpm = current_anchor->BPM;
 			current_anchor = current_anchor->next;
 		}
 		
-		/* fix beat markers */
-		int a;
-		for(i = 0; i < sp->beats; i++)
+		/* create beat markers */
+		EOF_BEAT_MARKER * new_beat = NULL;
+		for(i = 0; i < max_chartpos / chart->resolution; i++)
 		{
-			if(sp->beat[i]->flags & EOF_BEAT_FLAG_CORRUPTED)
+			new_beat = eof_song_add_beat(sp);
+			if(new_beat)
 			{
-				a = eof_find_next_anchor(sp, i);
-				if(a >= 0)
-				{
-					eof_mickeys_x = 1;
-					eof_recalculate_beats(sp, a);
-					eof_mickeys_x = -1;
-					eof_recalculate_beats(sp, a);
-				}
-				else
-				{
-					a = eof_find_previous_anchor(sp, i);
-					if(a <= 0)
-					{
-						eof_mickeys_x = 1;
-						eof_recalculate_beats(sp, a);
-						eof_mickeys_x = -1;
-						eof_recalculate_beats(sp, a);
-					}
-					else
-					{
-						eof_song_delete_beat(eof_song, i);
-						eof_realign_beats(eof_song, i);
-					}
-				}
+				new_beat->fpos = chartpos_to_msec(chart, chart->resolution * i);
+				new_beat->pos = new_beat->fpos;
+				new_beat->flags |= EOF_BEAT_FLAG_ANCHOR;
 			}
-			else if(sp->beat[i]->flags & EOF_BEAT_FLAG_ANCHOR)
+		}
+		
+		/* nudge beat markers so we get the correct BPM calculations */
+		for(i = 1; i < sp->beats; i++)
+		{
+			eof_mickeys_x = 1;
+			eof_recalculate_beats(sp, i);
+			eof_mickeys_x = -1;
+			eof_recalculate_beats(sp, i);
+		}
+		
+		/* unanchor non-anchor beat markers */
+		for(i = 1; i < sp->beats; i++)
+		{
+			if(sp->beat[i]->ppqn == sp->beat[i - 1]->ppqn)
 			{
-				eof_mickeys_x = 1;
-				eof_recalculate_beats(sp, i);
-				eof_mickeys_x = -1;
-				eof_recalculate_beats(sp, i);
+				sp->beat[i]->flags ^= EOF_BEAT_FLAG_ANCHOR;
 			}
 		}
 		
