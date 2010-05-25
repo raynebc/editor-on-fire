@@ -65,7 +65,7 @@ void eof_editor_logic_feedback(void)
 	double bpm = 120.0;
 	unsigned long cppqn = eof_song->beat[fbeat]->ppqn;
 
-	fbeat = eof_get_beat(eof_music_pos - eof_av_delay);
+	fbeat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 	if(fbeat >= 0)
 	{
 		bpm = (double)60000000.0 / (double)eof_song->beat[fbeat]->ppqn;
@@ -214,7 +214,7 @@ void eof_editor_logic_feedback(void)
 			}
 		}
 		eof_song->beat[fbeat]->flags = EOF_BEAT_FLAG_ANCHOR;
-		eof_calculate_beats();
+		eof_calculate_beats(eof_song);
 		eof_menu_edit_cut_paste(fbeat + 1, 1, 0.0);
 		key[KEY_MINUS] = 0;
 	}
@@ -244,7 +244,7 @@ void eof_editor_logic_feedback(void)
 			}
 		}
 		eof_song->beat[fbeat]->flags = EOF_BEAT_FLAG_ANCHOR;
-		eof_calculate_beats();
+		eof_calculate_beats(eof_song);
 		eof_menu_edit_cut_paste(fbeat + 1, 1, 0.0);
 		key[KEY_EQUALS] = 0;
 	}

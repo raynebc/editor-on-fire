@@ -830,7 +830,7 @@ int eof_menu_note_push_back(void)
 		{
 			if(eof_selection.multi[i])
 			{
-				beat = eof_get_beat(eof_song->track[eof_selected_track]->note[i]->pos);
+				beat = eof_get_beat(eof_song, eof_song->track[eof_selected_track]->note[i]->pos);
 				porpos = eof_get_porpos(eof_song->track[eof_selected_track]->note[i]->pos);
 				eof_song->track[eof_selected_track]->note[i]->pos = eof_put_porpos(beat, porpos, eof_menu_note_push_get_offset());
 			}
@@ -842,7 +842,7 @@ int eof_menu_note_push_back(void)
 		{
 			if(eof_song->track[eof_selected_track]->note[i]->pos >= eof_music_pos - eof_av_delay)
 			{
-				beat = eof_get_beat(eof_song->track[eof_selected_track]->note[i]->pos);
+				beat = eof_get_beat(eof_song, eof_song->track[eof_selected_track]->note[i]->pos);
 				porpos = eof_get_porpos(eof_song->track[eof_selected_track]->note[i]->pos);
 				eof_song->track[eof_selected_track]->note[i]->pos = eof_put_porpos(beat, porpos, eof_menu_note_push_get_offset());
 			}
@@ -863,7 +863,7 @@ int eof_menu_note_push_up(void)
 		{
 			if(eof_selection.multi[i])
 			{
-				beat = eof_get_beat(eof_song->track[eof_selected_track]->note[i]->pos);
+				beat = eof_get_beat(eof_song, eof_song->track[eof_selected_track]->note[i]->pos);
 				porpos = eof_get_porpos(eof_song->track[eof_selected_track]->note[i]->pos);
 				eof_song->track[eof_selected_track]->note[i]->pos = eof_put_porpos(beat, porpos, -eof_menu_note_push_get_offset());
 			}
@@ -875,7 +875,7 @@ int eof_menu_note_push_up(void)
 		{
 			if(eof_song->track[eof_selected_track]->note[i]->pos >= eof_music_pos - eof_av_delay)
 			{
-				beat = eof_get_beat(eof_song->track[eof_selected_track]->note[i]->pos);
+				beat = eof_get_beat(eof_song, eof_song->track[eof_selected_track]->note[i]->pos);
 				porpos = eof_get_porpos(eof_song->track[eof_selected_track]->note[i]->pos);
 				eof_song->track[eof_selected_track]->note[i]->pos = eof_put_porpos(beat, porpos, -eof_menu_note_push_get_offset());
 			}

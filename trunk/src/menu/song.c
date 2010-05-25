@@ -910,7 +910,7 @@ int eof_menu_song_properties(void)
 			eof_clear_input();
 		}
 		eof_fixup_notes();
-		eof_calculate_beats();
+		eof_calculate_beats(eof_song);
 		eof_fix_window_title();
 	}
 	eof_cursor_visible = 1;

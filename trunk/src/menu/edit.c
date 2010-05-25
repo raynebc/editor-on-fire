@@ -459,8 +459,8 @@ int eof_menu_edit_cut_vocal(int anchor, int option)
 
 	/* set boundary */
 	eof_anchor_diff[EOF_TRACK_VOCALS] = 0;
-	last_anchor = eof_find_previous_anchor(anchor);
-	next_anchor = eof_find_next_anchor(anchor);
+	last_anchor = eof_find_previous_anchor(eof_song, anchor);
+	next_anchor = eof_find_next_anchor(eof_song, anchor);
 	start_pos = eof_song->beat[last_anchor]->pos;
 	if(next_anchor < 0)
 	{
@@ -483,11 +483,11 @@ int eof_menu_edit_cut_vocal(int anchor, int option)
 			if(eof_song->vocal_track->lyric[i]->pos < first_pos)
 			{
 				first_pos = eof_song->vocal_track->lyric[i]->pos;
-				eof_anchor_diff[EOF_TRACK_VOCALS] = eof_get_beat(eof_song->vocal_track->lyric[i]->pos) - last_anchor;
+				eof_anchor_diff[EOF_TRACK_VOCALS] = eof_get_beat(eof_song, eof_song->vocal_track->lyric[i]->pos) - last_anchor;
 			}
 			if(first_beat == -1)
 			{
-				first_beat = eof_get_beat(eof_song->vocal_track->lyric[i]->pos);
+				first_beat = eof_get_beat(eof_song, eof_song->vocal_track->lyric[i]->pos);
 			}
 		}
 	}
@@ -508,8 +508,8 @@ int eof_menu_edit_cut_vocal(int anchor, int option)
 		{
 			pack_putc(eof_song->vocal_track->lyric[i]->note, fp);
 			pack_iputl(eof_song->vocal_track->lyric[i]->pos - first_pos, fp);
-			pack_iputl(eof_get_beat(eof_song->vocal_track->lyric[i]->pos), fp);
-			pack_iputl(eof_get_beat(eof_song->vocal_track->lyric[i]->pos + eof_song->vocal_track->lyric[i]->length), fp);
+			pack_iputl(eof_get_beat(eof_song, eof_song->vocal_track->lyric[i]->pos), fp);
+			pack_iputl(eof_get_beat(eof_song, eof_song->vocal_track->lyric[i]->pos + eof_song->vocal_track->lyric[i]->length), fp);
 			tfloat = eof_get_porpos(eof_song->vocal_track->lyric[i]->pos);
 			pack_fwrite(&tfloat, sizeof(float), fp);
 			tfloat = eof_get_porpos(eof_song->vocal_track->lyric[i]->pos + eof_song->vocal_track->lyric[i]->length);
@@ -534,11 +534,11 @@ int eof_menu_edit_cut_paste_vocal(int anchor, int option)
 	EOF_EXTENDED_LYRIC temp_lyric;
 	EOF_LYRIC * new_lyric = NULL;
 
-	this_beat = eof_find_previous_anchor(anchor) + eof_anchor_diff[EOF_TRACK_VOCALS];
+	this_beat = eof_find_previous_anchor(eof_song, anchor) + eof_anchor_diff[EOF_TRACK_VOCALS];
 
 	/* set boundary */
-	last_anchor = eof_find_previous_anchor(anchor);
-	next_anchor = eof_find_next_anchor(anchor);
+	last_anchor = eof_find_previous_anchor(eof_song, anchor);
+	next_anchor = eof_find_next_anchor(eof_song, anchor);
 	start_pos = eof_song->beat[last_anchor]->pos;
 	if(next_anchor < 0)
 	{
@@ -626,7 +626,7 @@ int eof_menu_edit_copy_vocal(void)
 			}
 			if(first_beat == -1)
 			{
-				first_beat = eof_get_beat(eof_song->vocal_track->lyric[i]->pos);
+				first_beat = eof_get_beat(eof_song, eof_song->vocal_track->lyric[i]->pos);
 			}
 		}
 	}
@@ -653,11 +653,11 @@ int eof_menu_edit_copy_vocal(void)
 			/* check for accidentally moved note */
 			if(!note_check)
 			{
-				if(eof_song->beat[eof_get_beat(eof_song->vocal_track->lyric[i]->pos) + 1]->pos - eof_song->vocal_track->lyric[i]->pos <= 10)
+				if(eof_song->beat[eof_get_beat(eof_song, eof_song->vocal_track->lyric[i]->pos) + 1]->pos - eof_song->vocal_track->lyric[i]->pos <= 10)
 				{
 					if(alert(NULL, "First note appears to be off.", "Adjust?", "&Yes", "&No", 'y', 'n') == 1)
 					{
-						eof_song->vocal_track->lyric[i]->pos = eof_song->beat[eof_get_beat(eof_song->vocal_track->lyric[i]->pos) + 1]->pos;
+						eof_song->vocal_track->lyric[i]->pos = eof_song->beat[eof_get_beat(eof_song, eof_song->vocal_track->lyric[i]->pos) + 1]->pos;
 					}
 					eof_clear_input();
 				}
@@ -667,8 +667,8 @@ int eof_menu_edit_copy_vocal(void)
 			/* write note data to disk */
 			pack_putc(eof_song->vocal_track->lyric[i]->note, fp);
 			pack_iputl(eof_song->vocal_track->lyric[i]->pos - first_pos, fp);
-			pack_iputl(eof_get_beat(eof_song->vocal_track->lyric[i]->pos), fp);
-			pack_iputl(eof_get_beat(eof_song->vocal_track->lyric[i]->pos + eof_song->vocal_track->lyric[i]->length), fp);
+			pack_iputl(eof_get_beat(eof_song, eof_song->vocal_track->lyric[i]->pos), fp);
+			pack_iputl(eof_get_beat(eof_song, eof_song->vocal_track->lyric[i]->pos + eof_song->vocal_track->lyric[i]->length), fp);
 			pack_iputl(eof_song->vocal_track->lyric[i]->length, fp);
 			tfloat = eof_get_porpos(eof_song->vocal_track->lyric[i]->pos);
 			pack_fwrite(&tfloat, sizeof(float), fp);
@@ -706,7 +706,7 @@ int eof_menu_edit_paste_vocal(void)
 	unsigned long paste_pos[EOF_MAX_NOTES] = {0};
 	int paste_count = 0;
 	int first_beat = 0;
-	int this_beat = eof_get_beat(eof_music_pos - eof_av_delay);
+	int this_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 	int copy_notes;
 	int new_pos = -1;
 	int new_end_pos = -1;
@@ -900,8 +900,8 @@ int eof_menu_edit_cut(int anchor, int option, float offset)
 	{
 		eof_anchor_diff[i] = 0;
 	}
-	last_anchor = eof_find_previous_anchor(anchor);
-	next_anchor = eof_find_next_anchor(anchor);
+	last_anchor = eof_find_previous_anchor(eof_song, anchor);
+	next_anchor = eof_find_next_anchor(eof_song, anchor);
 	start_pos = eof_song->beat[last_anchor]->pos;
 	if(next_anchor < 0)
 	{
@@ -926,11 +926,11 @@ int eof_menu_edit_cut(int anchor, int option, float offset)
 				if(eof_song->track[j]->note[i]->pos < first_pos[j])
 				{
 					first_pos[j] = eof_song->track[j]->note[i]->pos;
-					eof_anchor_diff[j] = eof_get_beat(eof_song->track[j]->note[i]->pos) - last_anchor;
+					eof_anchor_diff[j] = eof_get_beat(eof_song, eof_song->track[j]->note[i]->pos) - last_anchor;
 				}
 				if(first_beat[j] == -1)
 				{
-					first_beat[j] = eof_get_beat(eof_song->track[j]->note[i]->pos);
+					first_beat[j] = eof_get_beat(eof_song, eof_song->track[j]->note[i]->pos);
 				}
 			}
 		}
@@ -961,8 +961,8 @@ int eof_menu_edit_cut(int anchor, int option, float offset)
 				pack_fwrite(&tfloat, sizeof(float), fp);
 				tfloat = eof_get_porpos(eof_song->track[j]->note[i]->pos + eof_song->track[j]->note[i]->length);
 				pack_fwrite(&tfloat, sizeof(float), fp);
-				pack_iputl(eof_get_beat(eof_song->track[j]->note[i]->pos), fp);
-				pack_iputl(eof_get_beat(eof_song->track[j]->note[i]->pos + eof_song->track[j]->note[i]->length), fp);
+				pack_iputl(eof_get_beat(eof_song, eof_song->track[j]->note[i]->pos), fp);
+				pack_iputl(eof_get_beat(eof_song, eof_song->track[j]->note[i]->pos + eof_song->track[j]->note[i]->length), fp);
 				pack_iputl(eof_song->track[j]->note[i]->length, fp);
 			}
 		}
@@ -970,10 +970,10 @@ int eof_menu_edit_cut(int anchor, int option, float offset)
 		for(i = 0; i < eof_song->track[j]->star_power_paths; i++)
 		{
 			/* which beat */
-			pack_iputl(eof_get_beat(eof_song->track[j]->star_power_path[i].start_pos), fp);
+			pack_iputl(eof_get_beat(eof_song, eof_song->track[j]->star_power_path[i].start_pos), fp);
 			tfloat = eof_get_porpos(eof_song->track[j]->star_power_path[i].start_pos);
 			pack_fwrite(&tfloat, sizeof(float), fp);
-			pack_iputl(eof_get_beat(eof_song->track[j]->star_power_path[i].end_pos), fp);
+			pack_iputl(eof_get_beat(eof_song, eof_song->track[j]->star_power_path[i].end_pos), fp);
 			tfloat = eof_get_porpos(eof_song->track[j]->star_power_path[i].end_pos);
 			pack_fwrite(&tfloat, sizeof(float), fp);
 		}
@@ -982,10 +982,10 @@ int eof_menu_edit_cut(int anchor, int option, float offset)
 		for(i = 0; i < eof_song->track[j]->solos; i++)
 		{
 			/* which beat */
-			pack_iputl(eof_get_beat(eof_song->track[j]->solo[i].start_pos), fp);
+			pack_iputl(eof_get_beat(eof_song, eof_song->track[j]->solo[i].start_pos), fp);
 			tfloat = eof_get_porpos(eof_song->track[j]->solo[i].start_pos);
 			pack_fwrite(&tfloat, sizeof(float), fp);
-			pack_iputl(eof_get_beat(eof_song->track[j]->solo[i].end_pos), fp);
+			pack_iputl(eof_get_beat(eof_song, eof_song->track[j]->solo[i].end_pos), fp);
 			tfloat = eof_get_porpos(eof_song->track[j]->solo[i].end_pos);
 			pack_fwrite(&tfloat, sizeof(float), fp);
 		}
@@ -1011,12 +1011,12 @@ int eof_menu_edit_cut_paste(int anchor, int option, float offset)
 
 	for(i = 0; i < EOF_MAX_TRACKS; i++)
 	{
-		this_beat[i] = eof_find_previous_anchor(anchor) + eof_anchor_diff[i];
+		this_beat[i] = eof_find_previous_anchor(eof_song, anchor) + eof_anchor_diff[i];
 	}
 
 	/* set boundary */
-	last_anchor = eof_find_previous_anchor(anchor);
-	next_anchor = eof_find_next_anchor(anchor);
+	last_anchor = eof_find_previous_anchor(eof_song, anchor);
+	next_anchor = eof_find_next_anchor(eof_song, anchor);
 	start_pos = eof_song->beat[last_anchor]->pos;
 	if(next_anchor < 0)
 	{
@@ -1137,7 +1137,7 @@ int eof_menu_edit_copy(void)
 			}
 			if(first_beat == -1)
 			{
-				first_beat = eof_get_beat(eof_song->track[eof_selected_track]->note[i]->pos);
+				first_beat = eof_get_beat(eof_song, eof_song->track[eof_selected_track]->note[i]->pos);
 			}
 		}
 	}
@@ -1164,11 +1164,11 @@ int eof_menu_edit_copy(void)
 			/* check for accidentally moved note */
 			if(!note_check)
 			{
-				if(eof_song->beat[eof_get_beat(eof_song->track[eof_selected_track]->note[i]->pos) + 1]->pos - eof_song->track[eof_selected_track]->note[i]->pos <= 10)
+				if(eof_song->beat[eof_get_beat(eof_song, eof_song->track[eof_selected_track]->note[i]->pos) + 1]->pos - eof_song->track[eof_selected_track]->note[i]->pos <= 10)
 				{
 					if(alert(NULL, "First note appears to be off.", "Adjust?", "&Yes", "&No", 'y', 'n') == 1)
 					{
-						eof_song->track[eof_selected_track]->note[i]->pos = eof_song->beat[eof_get_beat(eof_song->track[eof_selected_track]->note[i]->pos) + 1]->pos;
+						eof_song->track[eof_selected_track]->note[i]->pos = eof_song->beat[eof_get_beat(eof_song, eof_song->track[eof_selected_track]->note[i]->pos) + 1]->pos;
 					}
 					eof_clear_input();
 				}
@@ -1182,8 +1182,8 @@ int eof_menu_edit_copy(void)
 			pack_fwrite(&tfloat, sizeof(float), fp);
 			tfloat = eof_get_porpos(eof_song->track[eof_selected_track]->note[i]->pos + eof_song->track[eof_selected_track]->note[i]->length);
 			pack_fwrite(&tfloat, sizeof(float), fp);
-			pack_iputl(eof_get_beat(eof_song->track[eof_selected_track]->note[i]->pos), fp);
-			pack_iputl(eof_get_beat(eof_song->track[eof_selected_track]->note[i]->pos + eof_song->track[eof_selected_track]->note[i]->length), fp);
+			pack_iputl(eof_get_beat(eof_song, eof_song->track[eof_selected_track]->note[i]->pos), fp);
+			pack_iputl(eof_get_beat(eof_song, eof_song->track[eof_selected_track]->note[i]->pos + eof_song->track[eof_selected_track]->note[i]->length), fp);
 			pack_iputl(eof_song->track[eof_selected_track]->note[i]->length, fp);
 
 		}
@@ -1202,7 +1202,7 @@ int eof_menu_edit_paste(void)
 	unsigned long paste_pos[EOF_MAX_NOTES] = {0};
 	int paste_count = 0;
 	int first_beat = 0;
-	int this_beat = eof_get_beat(eof_music_pos - eof_av_delay);
+	int this_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 	int copy_notes;
 	EOF_EXTENDED_NOTE temp_note;
 	EOF_NOTE * new_note = NULL;
@@ -2381,9 +2381,9 @@ int eof_menu_edit_paste_from_catalog(void)
 	int note_count = 0;
 	int first = -1;
 	int first_beat = -1;
-	int start_beat = eof_get_beat(eof_music_pos - eof_av_delay);
+	int start_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 	int this_beat = -1;
-	int current_beat = eof_get_beat(eof_music_pos - eof_av_delay);
+	int current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 	int last_current_beat = current_beat;
 	int end_beat = -1;
 	float nporpos, nporendpos;
@@ -2428,16 +2428,16 @@ int eof_menu_edit_paste_from_catalog(void)
 				{
 					if(first == -1)
 					{
-						first_beat = eof_get_beat(eof_song->vocal_track->lyric[i]->pos);
+						first_beat = eof_get_beat(eof_song, eof_song->vocal_track->lyric[i]->pos);
 						first = 1;
 					}
-					this_beat = eof_get_beat(eof_song->vocal_track->lyric[i]->pos);
+					this_beat = eof_get_beat(eof_song, eof_song->vocal_track->lyric[i]->pos);
 					if(this_beat < 0)
 					{
 						break;
 					}
 					last_current_beat = current_beat;
-					current_beat = eof_get_beat(eof_music_pos - eof_av_delay) + (this_beat - first_beat);
+					current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay) + (this_beat - first_beat);
 					if(current_beat >= eof_song->beats - 1)
 					{
 						break;
@@ -2450,7 +2450,7 @@ int eof_menu_edit_paste_from_catalog(void)
 					}
 					nporpos = eof_get_porpos(eof_song->vocal_track->lyric[i]->pos);
 					nporendpos = eof_get_porpos(eof_song->vocal_track->lyric[i]->pos + eof_song->vocal_track->lyric[i]->length);
-					end_beat = eof_get_beat(eof_song->vocal_track->lyric[i]->pos + eof_song->vocal_track->lyric[i]->length);
+					end_beat = eof_get_beat(eof_song, eof_song->vocal_track->lyric[i]->pos + eof_song->vocal_track->lyric[i]->length);
 					if(end_beat < 0)
 					{
 						break;
@@ -2515,16 +2515,16 @@ int eof_menu_edit_paste_from_catalog(void)
 				{
 					if(first == -1)
 					{
-						first_beat = eof_get_beat(eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->pos);
+						first_beat = eof_get_beat(eof_song, eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->pos);
 						first = 1;
 					}
-					this_beat = eof_get_beat(eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->pos);
+					this_beat = eof_get_beat(eof_song, eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->pos);
 					if(this_beat < 0)
 					{
 						break;
 					}
 					last_current_beat = current_beat;
-					current_beat = eof_get_beat(eof_music_pos - eof_av_delay) + (this_beat - first_beat);
+					current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay) + (this_beat - first_beat);
 					if(current_beat >= eof_song->beats - 1)
 					{
 						break;
@@ -2537,7 +2537,7 @@ int eof_menu_edit_paste_from_catalog(void)
 					}
 					nporpos = eof_get_porpos(eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->pos);
 					nporendpos = eof_get_porpos(eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->pos + eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->length);
-					end_beat = eof_get_beat(eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->pos + eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->length);
+					end_beat = eof_get_beat(eof_song, eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->pos + eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->length);
 					if(end_beat < 0)
 					{
 						break;
