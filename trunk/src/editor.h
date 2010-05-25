@@ -29,6 +29,8 @@ typedef struct
 	
 	int beat;
 	int beat_length;
+	int measure_beat;
+	int measure_length;
 	int length;
 	float grid_pos[32];
 	float grid_distance[32];
