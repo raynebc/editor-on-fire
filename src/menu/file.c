@@ -12,6 +12,7 @@
 #include "../midi.h"
 #include "../ini.h"
 #include "../feedback.h"
+#include "../dialog/proc.h"
 #include "file.h"
 #include "song.h"
 
@@ -45,9 +46,9 @@ DIALOG eof_settings_dialog[] =
    /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
    { d_agup_window_proc,    0,  48,  200, 140 + 64 + 16, 2,   23,  0,    0,      0,   0,   "Settings",               NULL, NULL },
    { d_agup_text_proc,   16,  84,  64,  8,  2,   23,  0,    0,      0,   0,   "AV Delay (ms):",         NULL, NULL },
-   { d_agup_edit_proc,   128, 80,  64,  20,  2,   23,  0,    0,      5,   0,   eof_etext,           NULL, NULL },
+   { eof_verified_edit_proc,   128, 80,  64,  20,  2,   23,  0,    0,      5,   0,   eof_etext,           "0123456789", NULL },
    { d_agup_text_proc,   16,  108,  64,  8,  2,   23,  0,    0,      0,   0,   "Buffer Size:",         NULL, NULL },
-   { d_agup_edit_proc,   128, 104,  64,  20,  2,   23,  0,    0,      5,   0,   eof_etext2,           NULL, NULL },
+   { eof_verified_edit_proc,   128, 104,  64,  20,  2,   23,  0,    0,      5,   0,   eof_etext2,           "0123456789", NULL },
    { d_agup_text_proc,   16,  132,  64,  8,  2,   23,  0,    0,      0,   0,   "CPU Saver",         NULL, NULL },
    { d_agup_slider_proc, 96, 132,  96,  16,  2,   23,  0,    0,      10,   0,   NULL,           NULL, NULL },
    { d_agup_check_proc, 16,  160, 160,  16, 2,   23,  0,    0, 1,   0,   "Smooth Playback",               NULL, NULL },
@@ -93,7 +94,7 @@ DIALOG eof_guitar_settings_dialog[] =
    { d_agup_window_proc,    4,  236 + 24 - 32 - 20 - 8,  192 + 32 + 96 + 16, 190 + 78, 2,   23,  0,    0,      0,   0,   "Guitar Settings",               NULL, NULL },
 
    { d_agup_text_proc,    16, 240,  64,  8,  2,   23,  0,    0,      0,   0,   "Delay (ms):",         NULL, NULL },
-   { d_agup_edit_proc,   104, 236,  64,  20,  2,   23,  0,    0,      5,   0,   eof_etext,           NULL, NULL },
+   { eof_verified_edit_proc,   104, 236,  64,  20,  2,   23,  0,    0,      5,   0,   eof_etext,           "0123456789", NULL },
    { d_agup_list_proc,   13, 266,  170 + 32 + 85 + 28,  96 + 13,  2,   23,  0,    0,      0,   0,   eof_guitar_list, NULL, NULL },
    { d_agup_push_proc, 13,  176 + 64 + 22 + 16 + 24 + 24 + 24 + 36, 170 + 32 + 85 + 28,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Redefine",               NULL, eof_guitar_controller_redefine },
    { d_agup_button_proc, 13, 176 + 64 + 22 + 16 + 24 + 24 + 24 + 36 + 32 + 8, 170 + 32 + 85 + 28,  28, 2,   23,  0,    D_EXIT, 0,   0,   "OK",               NULL, NULL },
@@ -106,7 +107,7 @@ DIALOG eof_drum_settings_dialog[] =
    { d_agup_window_proc,    4,  236 + 24 - 32 - 20 - 8,  192 + 32 + 96 + 16, 190 + 78 - 30, 2,   23,  0,    0,      0,   0,   "Drum Settings",               NULL, NULL },
 
    { d_agup_text_proc,    16, 240,  64,  8,  2,   23,  0,    0,      0,   0,   "Delay (ms):",         NULL, NULL },
-   { d_agup_edit_proc,   104, 236,  64,  20,  2,   23,  0,    0,      5,   0,   eof_etext,           NULL, NULL },
+   { eof_verified_edit_proc,   104, 236,  64,  20,  2,   23,  0,    0,      5,   0,   eof_etext,           "0123456789", NULL },
    { d_agup_list_proc,   13, 266,  170 + 32 + 85 + 28,  79,  2,   23,  0,    0,      0,   0,   eof_drum_list, NULL, NULL },
    { d_agup_push_proc, 13,  176 + 64 + 22 + 16 + 24 + 24 + 24 + 36 - 30, 170 + 32 + 85 + 28,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Redefine",               NULL, eof_drum_controller_redefine },
    { d_agup_button_proc, 13, 176 + 64 + 22 + 16 + 24 + 24 + 24 + 36 + 32 + 8 - 30, 170 + 32 + 85 + 28,  28, 2,   23,  0,    D_EXIT, 0,   0,   "OK",               NULL, NULL },
