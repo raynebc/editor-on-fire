@@ -3,6 +3,6 @@
 
 #include <allegro.h>
 
-int eof_verified_edit_box(int msg, DIALOG *d, int c);
+int eof_verified_edit_proc(int msg, DIALOG *d, int c);
 
 #endif

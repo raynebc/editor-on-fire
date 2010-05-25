@@ -7,6 +7,7 @@
 #include "../utility.h"
 #include "../midi.h"
 #include "../ini.h"
+#include "../dialog/proc.h"
 #include "song.h"
 
 char eof_track_selected_menu_text[6][32] = {" PART &GUITAR", " PART &BASS", " PART GUITAR &COOP", " PART &RHYTHM", " PART &DRUMS", " PART &VOCALS"};
@@ -124,9 +125,9 @@ DIALOG eof_song_properties_dialog[] =
    { d_agup_text_proc,    12,  136, 108, 12,  0,   0,   0,    0,      0,   0,   "Frettist",             NULL, NULL },
    { d_agup_edit_proc,    12,  152, 184, 20,  0,   0,   0,    0,      255, 0,   eof_etext3,             NULL, NULL },
    { d_agup_text_proc,    12,  184, 60,  12,  0,   0,   0,    0,      0,   0,   "Delay",                NULL, NULL },
-   { d_agup_edit_proc,    12,  204, 60,  20,  0,   0,   0,    0,      6,   0,   eof_etext4,             NULL, NULL },
+   { eof_verified_edit_proc,    12,  204, 60,  20,  0,   0,   0,    0,      6,   0, eof_etext4, "0123456789", NULL },
    { d_agup_text_proc,    84,  184, 48,  12,  0,   0,   0,    0,      0,   0,   "Year",                 NULL, NULL },
-   { d_agup_edit_proc,    84,  204, 48,  20,  0,   0,   0,    0,      4,   0,   eof_etext5,             NULL, NULL },
+   { eof_verified_edit_proc,    84,  204, 48,  20,  0,   0,   0,    0,      4,   0, eof_etext5, "0123456789", NULL },
    { d_agup_text_proc,    208, 40,  96,  12,  0,   0,   0,    0,      0,   0,   "Loading Text",         NULL, NULL },
    { d_agup_edit_proc,    208, 56,  216, 20,  0,   0,   0,    0,      255, 0,   eof_etext6,             NULL, NULL },
    { d_agup_text_proc,    208, 88,  96,  12,  0,   0,   0,    0,      0,   0,   "Loading Text Preview", NULL, NULL },
