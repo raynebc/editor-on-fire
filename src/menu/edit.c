@@ -4,6 +4,7 @@
 #include "../dialog.h"
 #include "../mix.h"
 #include "../main.h"	//Inclusion for eof_custom_snap_measure
+#include "../dialog/proc.h"
 #include "edit.h"
 #include "song.h"
 
@@ -141,7 +142,7 @@ DIALOG eof_custom_snap_dialog[] =
    /* (proc)				(x)		(y)		(w)		(h)  		(fg)	(bg) (key) (flags)	(d1) (d2) (dp)			(dp2) (dp3) */
    { d_agup_shadow_box_proc,32,		68,		170, 	72 + 8 +15,	2,		23,  0,    0,		0,   0,   NULL,			NULL, NULL },
    { d_agup_text_proc,		56,		84,		64,		8,			2,		23,  0,    0,		0,   0,   "Intervals:",	NULL, NULL },
-   { d_agup_edit_proc,		112,	80,		66,		20,			2,		23,  0,    0,		8,   0,   eof_etext2,	NULL, NULL },
+   { eof_verified_edit_proc,		112,	80,		66,		20,			2,		23,  0,    0,		8,   0,   eof_etext2,	"0123456789", NULL },
    { d_agup_radio_proc,		42,		105,	68,		15,			2,		23,  0,    0,		0,   0,   "beat",		NULL, NULL },
    { d_agup_radio_proc,		120,	105,	68,		15,			2,		23,  0,    0,		0,   0,   "measure",	NULL, NULL },
    { d_agup_button_proc,	42,		125,	68,		28,			2,		23,  '\r', D_EXIT,	0,   0,   "OK",			NULL, NULL },
@@ -1419,11 +1420,12 @@ int eof_menu_edit_snap_custom(void)
 
 		if(eof_custom_snap_dialog[4].flags & D_SELECTED)	//If user selected per measure instead of per beat
 		{
-			eof_snap_interval/=eof_beats_in_measure;		//Use the defined time signature to determine the # of beats per measure
 			eof_custom_snap_measure = 1;
 		}
 		else
+		{
 			eof_custom_snap_measure = 0;
+		}
 
 		if(eof_snap_interval > 31)
 		{
@@ -1436,6 +1438,7 @@ int eof_menu_edit_snap_custom(void)
 			eof_snap_mode = EOF_SNAP_CUSTOM;
 		}
 	}
+	printf("%d\n", eof_snap_interval);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(NULL);

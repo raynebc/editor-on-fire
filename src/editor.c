@@ -130,7 +130,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 				}
 			}
 		}
-
+		
 		/* make sure we found a suitable snap beat before proceeding */
 		if(sp->beat >= 0)
 		{
@@ -322,29 +322,103 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 				}
 				case EOF_SNAP_CUSTOM:
 				{
-					/* find the snap positions */
-					for(i = 0; i < eof_snap_interval; i++)
+					if(eof_custom_snap_measure)
 					{
-						sp->grid_pos[i] = eof_song->beat[sp->beat]->pos + (((float)sp->beat_length / (float)eof_snap_interval) * (float)i);
-					}
-					sp->grid_pos[eof_snap_interval] = eof_song->beat[sp->beat + 1]->pos;
-
-					/* see which one we snap to */
-					for(i = 0; i < eof_snap_interval + 1; i++)
-					{
-						sp->grid_distance[i] = eof_pos_distance(sp->grid_pos[i], sp->pos);
-					}
-					for(i = 0; i < eof_snap_interval + 1; i++)
-					{
-						if(sp->grid_distance[i] < least_amount)
+						int ts = 1;
+						
+						/* find the measure length */
+						sp->measure_length = sp->beat_length * 4;
+						sp->measure_beat = 0;
+						for(i = sp->beat; i >= 0; i--)
 						{
-							least = i;
-							least_amount = sp->grid_distance[i];
+							if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_3_4)
+							{
+								ts = 3;
+								sp->measure_beat = i;
+								break;
+							}
+							else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_4_4)
+							{
+								ts = 4;
+								sp->measure_beat = i;
+								break;
+							}
+							else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_5_4)
+							{
+								ts = 5;
+								sp->measure_beat = i;
+								break;
+							}
+							else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_6_4)
+							{
+								ts = 6;
+								sp->measure_beat = i;
+								break;
+							}
+						}
+						for(i = sp->beat; i >= sp->measure_beat; i--)
+						{
+							
+							/* start of measure */
+							if((i - sp->measure_beat) % ts == 0)
+							{
+								sp->measure_beat = i;
+								break;
+							}
+						}
+						sp->measure_length = sp->beat_length * ts;
+						
+						/* find the snap positions */
+						for(i = 0; i < eof_snap_interval; i++)
+						{
+							sp->grid_pos[i] = eof_song->beat[sp->measure_beat]->pos + (((float)sp->measure_length / (float)eof_snap_interval) * (float)i);
+						}
+						sp->grid_pos[eof_snap_interval] = eof_song->beat[sp->measure_beat]->pos + sp->measure_length;
+
+						/* see which one we snap to */
+						for(i = 0; i < eof_snap_interval + 1; i++)
+						{
+							sp->grid_distance[i] = eof_pos_distance(sp->grid_pos[i], sp->pos);
+						}
+						for(i = 0; i < eof_snap_interval + 1; i++)
+						{
+							if(sp->grid_distance[i] < least_amount)
+							{
+								least = i;
+								least_amount = sp->grid_distance[i];
+							}
+						}
+						if(least >= 0)
+						{
+							sp->pos = sp->grid_pos[least];
 						}
 					}
-					if(least >= 0)
+					else
 					{
-						sp->pos = sp->grid_pos[least];
+						/* find the snap positions */
+						for(i = 0; i < eof_snap_interval; i++)
+						{
+							sp->grid_pos[i] = eof_song->beat[sp->beat]->pos + (((float)sp->beat_length / (float)eof_snap_interval) * (float)i);
+						}
+						sp->grid_pos[eof_snap_interval] = eof_song->beat[sp->beat + 1]->pos;
+
+						/* see which one we snap to */
+						for(i = 0; i < eof_snap_interval + 1; i++)
+						{
+							sp->grid_distance[i] = eof_pos_distance(sp->grid_pos[i], sp->pos);
+						}
+						for(i = 0; i < eof_snap_interval + 1; i++)
+						{
+							if(sp->grid_distance[i] < least_amount)
+							{
+								least = i;
+								least_amount = sp->grid_distance[i];
+							}
+						}
+						if(least >= 0)
+						{
+							sp->pos = sp->grid_pos[least];
+						}
 					}
 					break;
 				}
@@ -412,7 +486,14 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 			}
 			case EOF_SNAP_CUSTOM:
 			{
-				sp->length = ((double)sp->beat_length / (double)eof_snap_interval +0.5);	//Round up
+				if(eof_custom_snap_measure)
+				{
+					sp->length = ((double)sp->measure_length / (double)eof_snap_interval +0.5);	//Round up
+				}
+				else
+				{
+					sp->length = ((double)sp->beat_length / (double)eof_snap_interval +0.5);	//Round up
+				}
 				break;
 			}
 		}
