@@ -1,10 +1,10 @@
 #include "main.h"
 #include "beat.h"
 
-//EOF_BEAT_MARKER eof_song->beat[EOF_MAX_BEATS];
-//int eof_song->beats = 0;
+//EOF_BEAT_MARKER sp->beat[EOF_MAX_BEATS];
+//int sp->beats = 0;
 
-int eof_get_beat(unsigned long pos)
+int eof_get_beat(EOF_SONG * sp, unsigned long pos)
 {
 	int i;
 
@@ -12,33 +12,33 @@ int eof_get_beat(unsigned long pos)
 	{
 		return -1;
 	}
-	for(i = 0; i < eof_song->beats; i++)
+	for(i = 0; i < sp->beats; i++)
 	{
-		if(eof_song->beat[i]->pos > pos)
+		if(sp->beat[i]->pos > pos)
 		{
 			return i - 1;
 		}
 	}
-	if(pos >= eof_song->beat[eof_song->beats - 1]->pos)
+	if(pos >= sp->beat[sp->beats - 1]->pos)
 	{
-		return eof_song->beats - 1;
+		return sp->beats - 1;
 	}
 	return 0;
 }
 
-int eof_get_beat_length(int beat)
+int eof_get_beat_length(EOF_SONG * sp, int beat)
 {
-	if(beat < eof_song->beats - 1)
+	if(beat < sp->beats - 1)
 	{
-		return eof_song->beat[beat + 1]->pos - eof_song->beat[beat]->pos;
+		return sp->beat[beat + 1]->pos - sp->beat[beat]->pos;
 	}
 	else
 	{
-		return eof_song->beat[eof_song->beats - 1]->pos - eof_song->beat[eof_song->beats - 2]->pos;
+		return sp->beat[sp->beats - 1]->pos - sp->beat[sp->beats - 2]->pos;
 	}
 }
 
-void eof_calculate_beats(void)
+void eof_calculate_beats(EOF_SONG * sp)
 {
 	int i;
 	double curpos = 0.0;
@@ -46,52 +46,52 @@ void eof_calculate_beats(void)
 	int cbeat = 0;
 
 	/* correct BPM if it hasn't been set at all */
-	if(eof_song->beats <= 0)
+	if(sp->beats <= 0)
 	{
 		beat_length = (double)60000 / ((double)60000000.0 / (double)500000.0);	//Default beat length is 500ms, which reflects a tempo of 120BPM
 		while(curpos < eof_music_length)
 		{
 			eof_song_add_beat(eof_song);
-			eof_song->beat[eof_song->beats - 1]->ppqn = 500000;
-			eof_song->beat[eof_song->beats - 1]->fpos = (double)eof_song->tags->ogg[eof_selected_ogg].midi_offset + curpos;
-			eof_song->beat[eof_song->beats - 1]->pos = eof_song->beat[eof_song->beats - 1]->fpos +0.5;	//Round up
+			sp->beat[sp->beats - 1]->ppqn = 500000;
+			sp->beat[sp->beats - 1]->fpos = (double)sp->tags->ogg[eof_selected_ogg].midi_offset + curpos;
+			sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos +0.5;	//Round up
 			curpos += beat_length;
 		}
 		return;
 	}
 
-	eof_song->beat[0]->fpos = (double)eof_song->tags->ogg[eof_selected_ogg].midi_offset;
-	eof_song->beat[0]->pos = eof_song->beat[0]->fpos +0.5;	//Round up
+	sp->beat[0]->fpos = (double)sp->tags->ogg[eof_selected_ogg].midi_offset;
+	sp->beat[0]->pos = sp->beat[0]->fpos +0.5;	//Round up
 
 	/* calculate the beat length */
-	beat_length = (double)60000 / ((double)60000000.0 / (double)eof_song->beat[0]->ppqn);
-	for(i = 1; i < eof_song->beats; i++)
+	beat_length = (double)60000 / ((double)60000000.0 / (double)sp->beat[0]->ppqn);
+	for(i = 1; i < sp->beats; i++)
 	{
 		curpos += beat_length;
-		eof_song->beat[i]->fpos = (double)eof_song->tags->ogg[eof_selected_ogg].midi_offset + curpos;
-		eof_song->beat[i]->pos = eof_song->beat[i]->fpos +0.5;	//Round up
+		sp->beat[i]->fpos = (double)sp->tags->ogg[eof_selected_ogg].midi_offset + curpos;
+		sp->beat[i]->pos = sp->beat[i]->fpos +0.5;	//Round up
 
 		/* bpm changed */
-		if(eof_song->beat[i]->ppqn != eof_song->beat[i - 1]->ppqn)
+		if(sp->beat[i]->ppqn != sp->beat[i - 1]->ppqn)
 		{
-			beat_length = (double)60000 / ((double)60000000.0 / (double)eof_song->beat[i]->ppqn);
+			beat_length = (double)60000 / ((double)60000000.0 / (double)sp->beat[i]->ppqn);
 		}
 //		curpos += beat_length;
-//		cbeat = i;	//If this for loop is reached, eof_song->beats is at least 1, allowing this to be set once outside the loop
+//		cbeat = i;	//If this for loop is reached, sp->beats is at least 1, allowing this to be set once outside the loop
 	}
-	cbeat = eof_song->beats - 1;	//The index of the last beat in the beat[] array
+	cbeat = sp->beats - 1;	//The index of the last beat in the beat[] array
 	curpos += beat_length;
-	while(eof_song->tags->ogg[eof_selected_ogg].midi_offset + curpos < eof_music_length)
+	while(sp->tags->ogg[eof_selected_ogg].midi_offset + curpos < eof_music_length)
 	{
 		eof_song_add_beat(eof_song);
-		eof_song->beat[eof_song->beats - 1]->ppqn = eof_song->beat[cbeat]->ppqn;
-		eof_song->beat[eof_song->beats - 1]->fpos = (double)eof_song->tags->ogg[eof_selected_ogg].midi_offset + curpos;
-		eof_song->beat[eof_song->beats - 1]->pos = eof_song->beat[eof_song->beats - 1]->fpos +0.5;	//Round up
+		sp->beat[sp->beats - 1]->ppqn = sp->beat[cbeat]->ppqn;
+		sp->beat[sp->beats - 1]->fpos = (double)sp->tags->ogg[eof_selected_ogg].midi_offset + curpos;
+		sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos +0.5;	//Round up
 		curpos += beat_length;
 	}
-	for(i = eof_song->beats - 1; i >= 0; i--)
+	for(i = sp->beats - 1; i >= 0; i--)
 	{
-		if(eof_song->beat[i]->pos <= (double)eof_music_length)
+		if(sp->beat[i]->pos <= (double)eof_music_length)
 		{
 			break;
 		}
@@ -106,7 +106,7 @@ void eof_calculate_beats(void)
 void eof_change_bpm(int cbeat, unsigned long ppqn)
 {
 	int next_anchor = eof_find_next_anchor(cbeat);
-	double old_beat_length = (double)60000 / ((double)60000000.0 / (double)eof_song->beat[cbeat]->ppqn);
+	double old_beat_length = (double)60000 / ((double)60000000.0 / (double)sp->beat[cbeat]->ppqn);
 	double beat_length = (double)60000 / ((double)60000000.0 / (double)ppqn);
 	double beats;
 	double offset;
@@ -118,18 +118,18 @@ void eof_change_bpm(int cbeat, unsigned long ppqn)
 	}
 	beats = next_anchor - cbeat;
 	offset = (old_beat_length * beats) - (beat_length * beats);
-	for(i = next_anchor; i < eof_song->beats; i++)
+	for(i = next_anchor; i < sp->beats; i++)
 	{
-		eof_song->beat[i]->pos += offset;
+		sp->beat[i]->pos += offset;
 	}
 	for(i = cbeat + 1; i < cbeat + beats; i++)
 	{
-		eof_song->beat[i]->pos = eof_song->beat[cbeat]->pos + (double)(i - cbeat) * beat_length;
+		sp->beat[i]->pos = sp->beat[cbeat]->pos + (double)(i - cbeat) * beat_length;
 	}
 }
 */
 
-int eof_beat_is_anchor(int cbeat)
+int eof_beat_is_anchor(EOF_SONG * sp, int cbeat)
 {
 	if(cbeat >= EOF_MAX_BEATS)	//Bounds check
 		return 0;
@@ -138,18 +138,18 @@ int eof_beat_is_anchor(int cbeat)
 	{
 		return 1;
 	}
-	else if(eof_song->beat[cbeat]->flags & EOF_BEAT_FLAG_ANCHOR)
+	else if(sp->beat[cbeat]->flags & EOF_BEAT_FLAG_ANCHOR)
 	{
 		return 1;
 	}
-	else if(eof_song->beat[cbeat]->ppqn != eof_song->beat[cbeat - 1]->ppqn)
+	else if(sp->beat[cbeat]->ppqn != sp->beat[cbeat - 1]->ppqn)
 	{
 		return 1;
 	}
 	return 0;
 }
 
-int eof_find_previous_anchor(int cbeat)
+int eof_find_previous_anchor(EOF_SONG * sp, int cbeat)
 {
 	int beat = cbeat;
 
@@ -159,7 +159,7 @@ int eof_find_previous_anchor(int cbeat)
 	while(beat >= 0)
 	{
 		beat--;
-		if(eof_song->beat[beat]->flags & EOF_BEAT_FLAG_ANCHOR)
+		if(sp->beat[beat]->flags & EOF_BEAT_FLAG_ANCHOR)
 		{
 			return beat;
 		}
@@ -167,17 +167,17 @@ int eof_find_previous_anchor(int cbeat)
 	return 0;
 }
 
-int eof_find_next_anchor(int cbeat)
+int eof_find_next_anchor(EOF_SONG * sp, int cbeat)
 {
 	int beat = cbeat;
 
 	if(cbeat >= EOF_MAX_BEATS)	//Bounds check
 		return 0;
 
-	while(beat < eof_song->beats - 1)
+	while(beat < sp->beats - 1)
 	{
 		beat++;
-		if(eof_song->beat[beat]->flags & EOF_BEAT_FLAG_ANCHOR)
+		if(sp->beat[beat]->flags & EOF_BEAT_FLAG_ANCHOR)
 		{
 			return beat;
 		}
@@ -185,11 +185,11 @@ int eof_find_next_anchor(int cbeat)
 	return -1;
 }
 
-void eof_realign_beats(int cbeat)
+void eof_realign_beats(EOF_SONG * sp, int cbeat)
 {
 	int i;
-	int last_anchor = eof_find_previous_anchor(cbeat);
-	int next_anchor = eof_find_next_anchor(cbeat);
+	int last_anchor = eof_find_previous_anchor(sp, cbeat);
+	int next_anchor = eof_find_next_anchor(sp, cbeat);
 	int beats = 0;
 	int count = 1;
 	double beats_length;
@@ -198,7 +198,7 @@ void eof_realign_beats(int cbeat)
 
 	if(next_anchor < 0)
 	{
-		next_anchor = eof_song->beats;
+		next_anchor = sp->beats;
 	}
 
 	/* count beats */
@@ -211,26 +211,26 @@ void eof_realign_beats(int cbeat)
 		beats=next_anchor - last_anchor;	//The number of beats between the previous and next anchor
 
 	/* figure out what the new BPM should be */
-	beats_length = eof_song->beat[next_anchor]->pos - eof_song->beat[last_anchor]->pos;
+	beats_length = sp->beat[next_anchor]->pos - sp->beat[last_anchor]->pos;
 	newbpm = (double)60000 / (beats_length / (double)beats);
 	newppqn = (double)60000000 / newbpm;
 
-	eof_song->beat[last_anchor]->ppqn = newppqn;
+	sp->beat[last_anchor]->ppqn = newppqn;
 
 	/* replace beat markers */
 	for(i = last_anchor; i < next_anchor - 1; i++)
 	{
-		eof_song->beat[i + 1]->pos = eof_song->beat[last_anchor]->pos + (beats_length / (double)beats) * (double)count;
-		eof_song->beat[i + 1]->ppqn = eof_song->beat[last_anchor]->ppqn;
+		sp->beat[i + 1]->pos = sp->beat[last_anchor]->pos + (beats_length / (double)beats) * (double)count;
+		sp->beat[i + 1]->ppqn = sp->beat[last_anchor]->ppqn;
 		count++;
 	}
 }
 
-void eof_recalculate_beats(int cbeat)
+void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 {
 	int i;
-	int last_anchor = eof_find_previous_anchor(cbeat);
-	int next_anchor = eof_find_next_anchor(cbeat);
+	int last_anchor = eof_find_previous_anchor(sp, cbeat);
+	int next_anchor = eof_find_next_anchor(sp, cbeat);
 	int beats = 0;
 	int count = 1;
 	double beats_length;
@@ -250,18 +250,18 @@ void eof_recalculate_beats(int cbeat)
 		beats=cbeat - last_anchor;	//The number of beats between the previous anchor and the specified beat
 
 	/* figure out what the new BPM should be */
-	beats_length = eof_song->beat[cbeat]->pos - eof_song->beat[last_anchor]->pos;
+	beats_length = sp->beat[cbeat]->pos - sp->beat[last_anchor]->pos;
 	newbpm = (double)60000.0 / (beats_length / (double)beats);
 	newppqn = (double)60000000.0 / newbpm;
 
-	eof_song->beat[last_anchor]->ppqn = newppqn;
+	sp->beat[last_anchor]->ppqn = newppqn;
 
 	/* replace beat markers */
 	for(i = last_anchor; i < cbeat - 1; i++)
 	{
-		eof_song->beat[i + 1]->fpos = eof_song->beat[last_anchor]->fpos + (beats_length / (double)beats) * (double)count;
-		eof_song->beat[i + 1]->pos = eof_song->beat[i + 1]->fpos +0.5;	//Round up
-		eof_song->beat[i + 1]->ppqn = eof_song->beat[last_anchor]->ppqn;
+		sp->beat[i + 1]->fpos = sp->beat[last_anchor]->fpos + (beats_length / (double)beats) * (double)count;
+		sp->beat[i + 1]->pos = sp->beat[i + 1]->fpos +0.5;	//Round up
+		sp->beat[i + 1]->ppqn = sp->beat[last_anchor]->ppqn;
 		count++;
 	}
 
@@ -278,28 +278,28 @@ void eof_recalculate_beats(int cbeat)
 		if(cbeat < next_anchor)
 			beats=next_anchor - cbeat;	//The number of beats between the specified beat and the next anchor
 
-		beats_length = eof_song->beat[next_anchor]->pos - eof_song->beat[cbeat]->pos;
+		beats_length = sp->beat[next_anchor]->pos - sp->beat[cbeat]->pos;
 		newbpm = (double)60000 / (beats_length / (double)beats);
 		newppqn = (double)60000000 / newbpm;
 
-		eof_song->beat[cbeat]->ppqn = newppqn;
+		sp->beat[cbeat]->ppqn = newppqn;
 
 		count = 1;
 		/* replace beat markers */
 		for(i = cbeat; i < next_anchor - 1; i++)
 		{
-			eof_song->beat[i + 1]->fpos = eof_song->beat[cbeat]->pos + (beats_length / (double)beats) * (double)count;
-			eof_song->beat[i + 1]->pos = eof_song->beat[i + 1]->fpos +0.5;	//Round up
-			eof_song->beat[i + 1]->ppqn = eof_song->beat[cbeat]->ppqn;
+			sp->beat[i + 1]->fpos = sp->beat[cbeat]->pos + (beats_length / (double)beats) * (double)count;
+			sp->beat[i + 1]->pos = sp->beat[i + 1]->fpos +0.5;	//Round up
+			sp->beat[i + 1]->ppqn = sp->beat[cbeat]->ppqn;
 			count++;
 		}
 	}
 	else
 	{
-		for(i = cbeat + 1; i < eof_song->beats; i++)
+		for(i = cbeat + 1; i < sp->beats; i++)
 		{
-			eof_song->beat[i]->pos += eof_mickeys_x * eof_zoom;
-			eof_song->beat[i]->fpos = eof_song->beat[i]->pos;
+			sp->beat[i]->pos += eof_mickeys_x * eof_zoom;
+			sp->beat[i]->fpos = sp->beat[i]->pos;
 		}
 	}
 }

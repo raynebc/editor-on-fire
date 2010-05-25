@@ -534,7 +534,7 @@ int eof_menu_file_new_wizard(void)
 	eof_change_count = 0;
 	eof_selected_catalog_entry = 0;
 //	eof_setup_menus();
-	eof_calculate_beats();
+	eof_calculate_beats(eof_song);
 	eof_menu_file_quick_save();
 	eof_detect_difficulties(eof_song);
 	eof_reset_lyric_preview_lines();
@@ -646,7 +646,7 @@ int eof_menu_file_load(void)
 		eof_music_pos = eof_av_delay;
 		eof_selected_track = 0;
 		eof_selected_catalog_entry = 0;
-		eof_calculate_beats();
+		eof_calculate_beats(eof_song);
 		eof_determine_hopos();
 		eof_detect_difficulties(eof_song);
 		eof_reset_lyric_preview_lines();
@@ -841,7 +841,7 @@ int eof_menu_file_load_ogg(void)
 		if(new_length > eof_music_length)
 		{
 			eof_music_length = new_length;
-			eof_calculate_beats();
+			eof_calculate_beats(eof_song);
 		}
 		if(eof_music_pos > eof_music_actual_length)
 		{
@@ -1087,7 +1087,7 @@ int eof_menu_file_midi_import(void)
 			eof_selected_catalog_entry = 0;
 			eof_sort_notes();
 			eof_fixup_notes();
-			eof_calculate_beats();
+			eof_calculate_beats(eof_song);
 			eof_determine_hopos();
 			eof_detect_difficulties(eof_song);
 			eof_prepare_menus();
@@ -1833,7 +1833,7 @@ int eof_menu_file_feedback_import(void)
 				eof_selected_track = 0;
 				eof_music_pos = eof_av_delay;
 				eof_selected_catalog_entry = 0;
-				eof_calculate_beats();
+				eof_calculate_beats(eof_song);
 				eof_determine_hopos();
 				eof_detect_difficulties(eof_song);
 				eof_prepare_menus();

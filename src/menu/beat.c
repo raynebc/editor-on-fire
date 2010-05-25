@@ -110,7 +110,7 @@ void eof_prepare_beat_menu(void)
 
 	if(eof_song && eof_song_loaded)
 	{
-		if(eof_find_next_anchor(eof_selected_beat) < 0)
+		if(eof_find_next_anchor(eof_song, eof_selected_beat) < 0)
 		{
 			eof_beat_menu[3].flags = D_DISABLED;
 			eof_beat_menu[4].flags = D_DISABLED;
@@ -307,7 +307,7 @@ int eof_menu_beat_bpm_change(void)
 		{
 			eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;
 		}
-		eof_calculate_beats();
+		eof_calculate_beats(eof_song);
 		if(eof_bpm_change_dialog[4].flags == D_SELECTED)
 		{
 			eof_menu_edit_cut_paste(eof_selected_beat + 1, 1, 0.0);
@@ -372,7 +372,7 @@ int eof_menu_beat_ts_off(void)
 int eof_menu_beat_delete(void)
 {
 	int flags = eof_song->beat[eof_selected_beat]->flags;
-	if(eof_selected_beat > 0 && eof_find_next_anchor(eof_selected_beat) >= 0)
+	if(eof_selected_beat > 0 && eof_find_next_anchor(eof_song, eof_selected_beat) >= 0)
 	{
 		eof_prepare_undo(0);
 		eof_song_delete_beat(eof_song, eof_selected_beat);
@@ -385,11 +385,11 @@ int eof_menu_beat_delete(void)
 		}
 		else if(eof_song->beat[eof_selected_beat - 1]->flags & EOF_BEAT_FLAG_ANCHOR)
 		{
-			eof_realign_beats(eof_selected_beat);
+			eof_realign_beats(eof_song, eof_selected_beat);
 		}
 		else
 		{
-			eof_realign_beats(eof_selected_beat - 1);
+			eof_realign_beats(eof_song, eof_selected_beat - 1);
 		}
 		eof_move_text_events(eof_song, eof_selected_beat, -1);
 		eof_song->beat[eof_selected_beat - 1]->flags |= flags;
@@ -408,7 +408,7 @@ int eof_menu_beat_add(void)
 		memcpy(eof_song->beat[i], eof_song->beat[i - 1], sizeof(EOF_BEAT_MARKER));
 	}
 	eof_song->beat[eof_selected_beat + 1]->flags = 0;
-	eof_realign_beats(eof_selected_beat + 1);
+	eof_realign_beats(eof_song, eof_selected_beat + 1);
 	eof_move_text_events(eof_song, eof_selected_beat + 1, 1);
 	return 1;
 }
@@ -503,7 +503,7 @@ int eof_menu_beat_anchor(void)
 				eof_song->beat[eof_selected_beat]->pos++;
 				eof_song->beat[eof_selected_beat]->fpos = eof_song->beat[eof_selected_beat]->pos;
 				eof_mickeys_x = 1;
-				eof_recalculate_beats(eof_selected_beat);
+				eof_recalculate_beats(eof_song, eof_selected_beat);
 				if(eof_song->beat[eof_selected_beat]->pos > eof_song->beat[eof_selected_beat + 1]->pos - 100)
 				{
 					eof_undo_apply();
@@ -518,7 +518,7 @@ int eof_menu_beat_anchor(void)
 			{
 				eof_song->beat[eof_selected_beat]->pos--;
 				eof_mickeys_x = 1;
-				eof_recalculate_beats(eof_selected_beat);
+				eof_recalculate_beats(eof_song, eof_selected_beat);
 				if(eof_song->beat[eof_selected_beat]->pos < eof_song->beat[eof_selected_beat - 1]->pos + 100)
 				{
 					eof_undo_apply();
@@ -530,7 +530,7 @@ int eof_menu_beat_anchor(void)
 		if(!revert)
 		{
 			eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;
-			eof_calculate_beats();
+			eof_calculate_beats(eof_song);
 		}
 	}
 	eof_cursor_visible = 1;
@@ -557,7 +557,7 @@ int eof_menu_beat_delete_anchor(void)
 //	double bpos = 0;
 //	int bbeat = 0;
 
-	if(eof_selected_beat > 0 && eof_beat_is_anchor(eof_selected_beat))
+	if(eof_selected_beat > 0 && eof_beat_is_anchor(eof_song, eof_selected_beat))
 	{
 		eof_prepare_undo(0);
 		for(i = eof_selected_beat; i < eof_song->beats; i++)
@@ -572,14 +572,14 @@ int eof_menu_beat_delete_anchor(void)
 			}
 		}
 		eof_song->beat[eof_selected_beat]->flags = 0;
-		if(eof_find_next_anchor(eof_selected_beat) < 0)
+		if(eof_find_next_anchor(eof_song, eof_selected_beat) < 0)
 		{
 			eof_song_resize_beats(eof_song, eof_selected_beat);
-			eof_calculate_beats();
+			eof_calculate_beats(eof_song);
 		}
 		else
 		{
-			eof_realign_beats(eof_selected_beat);
+			eof_realign_beats(eof_song, eof_selected_beat);
 		}
 	}
 	return 1;
@@ -607,7 +607,7 @@ int eof_menu_beat_reset_bpm(void)
 				eof_song->beat[i]->ppqn = eof_song->beat[0]->ppqn;
 				eof_song->beat[i]->flags = eof_song->beat[i]->flags & EOF_BEAT_FLAG_EVENTS;
 			}
-			eof_calculate_beats();
+			eof_calculate_beats(eof_song);
 		}
 	}
 	else
@@ -662,7 +662,7 @@ int eof_menu_beat_calculate_bpm(void)
 			}
 		}
 	}
-	eof_calculate_beats();
+	eof_calculate_beats(eof_song);
 	return 1;
 }
 

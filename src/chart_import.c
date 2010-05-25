@@ -3,6 +3,7 @@
 #include "beat.h"
 #include "chart_import.h"
 #include "feedback.h"
+#include "menu/beat.h"
 
 /* convert Feedback chart time to milliseconds for use with EOF */
 static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chartpos)
@@ -125,7 +126,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		double beat_length = 500.0;
 		double bpm = 120.0;
 		int beat_count;
-		int i;
+		int i, r, ra = 0;
 		unsigned long lastbpm = 120000;
 		int new_anchor = 0;
 		EOF_BEAT_MARKER * new_beat = NULL;
@@ -167,6 +168,38 @@ EOF_SONG * eof_import_chart(const char * fn)
 					}
 					curpos += beat_length;
 				}
+				
+				r = (current_anchor->next->chartpos - current_anchor->chartpos) % chart->resolution;
+				if(r != 0)
+				{
+					ra += r;
+					
+					/* add a beat if we have accumulated more than a beat's worth of chartposes */
+					if(ra >= chart->resolution)
+					{
+						new_beat = eof_song_add_beat(sp);
+						if(new_beat)
+						{
+							new_beat->ppqn = ppqn;
+							new_beat->fpos = curpos;
+							new_beat->pos = new_beat->fpos;
+							if(new_anchor && lastbpm != current_anchor->BPM)
+							{
+								new_beat->flags |= EOF_BEAT_FLAG_CORRUPTED;
+								new_anchor = 0;
+							}
+						}
+						ra -= chart->resolution;
+					}
+				}
+				else
+				{
+					ra = 0;
+				}
+				
+				/* add remainder to chartpos so we will be at the correct location
+				 * regardless of whether we added beats (we will add missing beats later) */
+				curpos += beat_length * ((double)r / (double)chart->resolution);
 			}
 			else
 			{
@@ -186,6 +219,46 @@ EOF_SONG * eof_import_chart(const char * fn)
 			
 			lastbpm = current_anchor->BPM;
 			current_anchor = current_anchor->next;
+		}
+		
+		/* fix beat markers */
+		int a;
+		for(i = 0; i < sp->beats; i++)
+		{
+			if(sp->beat[i]->flags & EOF_BEAT_FLAG_CORRUPTED)
+			{
+				a = eof_find_next_anchor(sp, i);
+				if(a >= 0)
+				{
+					eof_mickeys_x = 1;
+					eof_recalculate_beats(sp, a);
+					eof_mickeys_x = -1;
+					eof_recalculate_beats(sp, a);
+				}
+				else
+				{
+					a = eof_find_previous_anchor(sp, i);
+					if(a <= 0)
+					{
+						eof_mickeys_x = 1;
+						eof_recalculate_beats(sp, a);
+						eof_mickeys_x = -1;
+						eof_recalculate_beats(sp, a);
+					}
+					else
+					{
+						eof_song_delete_beat(eof_song, i);
+						eof_realign_beats(eof_song, i);
+					}
+				}
+			}
+			else if(sp->beat[i]->flags & EOF_BEAT_FLAG_ANCHOR)
+			{
+				eof_mickeys_x = 1;
+				eof_recalculate_beats(sp, i);
+				eof_mickeys_x = -1;
+				eof_recalculate_beats(sp, i);
+			}
 		}
 		
 		/* fill in notes */

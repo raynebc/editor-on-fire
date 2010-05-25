@@ -237,7 +237,7 @@ float eof_get_porpos(unsigned long pos)
 	int blength;
 	unsigned long rpos;
 
-	beat = eof_get_beat(pos);
+	beat = eof_get_beat(eof_song, pos);
 	if(beat < eof_song->beats - 1)
 	{
 		blength = eof_song->beat[beat + 1]->pos - eof_song->beat[beat]->pos;
@@ -265,7 +265,7 @@ unsigned long eof_put_porpos(int beat, float porpos, float offset)
 		}
 		if(cbeat >= 0)
 		{
-			return eof_song->beat[cbeat]->pos + ((float)eof_get_beat_length(cbeat) * fporpos) / 100.0;
+			return eof_song->beat[cbeat]->pos + ((float)eof_get_beat_length(eof_song, cbeat) * fporpos) / 100.0;
 		}
 		return -1;
 	}
@@ -279,12 +279,12 @@ unsigned long eof_put_porpos(int beat, float porpos, float offset)
 		}
 		if(cbeat < eof_song->beats)
 		{
-			return eof_song->beat[cbeat]->pos + ((float)eof_get_beat_length(cbeat) * fporpos) / 100.0;
+			return eof_song->beat[cbeat]->pos + ((float)eof_get_beat_length(eof_song, cbeat) * fporpos) / 100.0;
 		}
 		return -1;
 	}
 //	allegro_message("c - %f", fporpos);
-	return eof_song->beat[cbeat]->pos + ((float)eof_get_beat_length(cbeat) * fporpos) / 100.0;
+	return eof_song->beat[cbeat]->pos + ((float)eof_get_beat_length(eof_song, cbeat) * fporpos) / 100.0;
 }
 
 void eof_reset_lyric_preview_lines(void)
@@ -2741,7 +2741,7 @@ int eof_initialize(int argc, char * argv[])
 			eof_music_pos = eof_av_delay;
 			eof_music_paused = 1;
 			eof_selected_track = 0;
-			eof_calculate_beats();
+			eof_calculate_beats(eof_song);
 			eof_detect_difficulties(eof_song);
 			show_mouse(NULL);
 			eof_cursor_visible = 1;
@@ -2772,7 +2772,7 @@ int eof_initialize(int argc, char * argv[])
 			eof_selected_track = 0;
 			eof_sort_notes();
 			eof_fixup_notes();
-			eof_calculate_beats();
+			eof_calculate_beats(eof_song);
 			eof_determine_hopos();
 			eof_detect_difficulties(eof_song);
 			eof_detect_difficulties(eof_song);
