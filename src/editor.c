@@ -3600,9 +3600,11 @@ void eof_vocal_editor_logic(void)
 		{
 			int pos = eof_music_pos / eof_zoom;
 			int lpos = pos < 300 ? (mouse_x - 20) * eof_zoom : ((pos - 300) + mouse_x - 20) * eof_zoom;
+			int rpos = 0; // place to store pen_lyric.pos in case we are hovering over a note and need the original position before it was changed to the note location
 			eof_snap_logic(&eof_snap, lpos);
 			eof_snap_length_logic(&eof_snap);
 			eof_pen_lyric.pos = eof_snap.pos;
+			rpos = eof_pen_lyric.pos;
 			eof_pen_lyric.length = eof_snap.length;
 			eof_pen_lyric.note = eof_vocals_offset + (EOF_EDITOR_RENDER_OFFSET + 35 + eof_screen_layout.vocal_y - mouse_y) / eof_screen_layout.vocal_tail_size;
 			if(eof_pen_lyric.note < eof_vocals_offset || eof_pen_lyric.note >= eof_vocals_offset + eof_screen_layout.vocal_view_size)
@@ -3695,7 +3697,7 @@ void eof_vocal_editor_logic(void)
 					}
 					eof_pegged_note = eof_selection.current;
 					eof_peg_x = eof_song->vocal_track->lyric[eof_pegged_note]->pos - eof_pen_lyric.pos;
-					eof_last_pen_pos = eof_pen_lyric.pos;
+					eof_last_pen_pos = rpos;
 					if(!KEY_EITHER_CTRL)
 					{
 
@@ -3896,7 +3898,7 @@ void eof_vocal_editor_logic(void)
 					if(eof_snap_mode != EOF_SNAP_OFF && !KEY_EITHER_CTRL)
 					{
 						move_offset = eof_pen_lyric.pos - eof_last_pen_pos;
-						eof_last_pen_pos = eof_pen_lyric.pos;
+						eof_last_pen_pos = rpos;
 					}
 					if(!eof_undo_toggle && (move_offset != 0 || eof_snap_mode == EOF_SNAP_OFF || KEY_EITHER_CTRL))
 					{
