@@ -229,22 +229,39 @@ EOF_SONG * eof_import_chart(const char * fn)
 				EOF_NOTE * new_note = NULL;
 				while(current_note)
 				{
-					if(current_note->chartpos != lastpos)
+					/* import star power */
+					if(current_note->gemcolor == '2')
 					{
-						new_note = eof_track_add_note(sp->track[track]);
-						if(new_note)
-						{
-							new_note->pos = chartpos_to_msec(chart, current_note->chartpos);
-							new_note->length = chartpos_to_msec(chart, current_note->chartpos + current_note->duration) - new_note->pos;
-							new_note->note = 1 << current_note->gemcolor;
-							new_note->type = difficulty;
-						}
+						eof_track_add_star_power(sp->track[track], chartpos_to_msec(chart, current_note->chartpos), chartpos_to_msec(chart, current_note->chartpos + current_note->duration));
+						printf("star power\n");
 					}
+					
+					/* skip face-off sections for now */
+					else if(current_note->gemcolor == '0' || current_note->gemcolor == '1')
+					{
+						printf("player section\n");
+					}
+					
+					/* import regular note */
 					else
 					{
-						if(new_note)
+						if(current_note->chartpos != lastpos)
 						{
-							new_note->note |= (1 << current_note->gemcolor);
+							new_note = eof_track_add_note(sp->track[track]);
+							if(new_note)
+							{
+								new_note->pos = chartpos_to_msec(chart, current_note->chartpos);
+								new_note->length = chartpos_to_msec(chart, current_note->chartpos + current_note->duration) - new_note->pos;
+								new_note->note = 1 << current_note->gemcolor;
+								new_note->type = difficulty;
+							}
+						}
+						else
+						{
+							if(new_note)
+							{
+								new_note->note |= (1 << current_note->gemcolor);
+							}
 						}
 					}
 					lastpos = current_note->chartpos;
