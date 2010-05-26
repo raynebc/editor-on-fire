@@ -17,6 +17,7 @@ icon.o : eof.rc
 clean:
 	@del *.o
 	@del menu\*.o
+	@del dialog\*.o
 	@del modules\*.o
 	@del agup\*.o
 	@del alogg\src\*.o
