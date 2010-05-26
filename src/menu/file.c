@@ -435,7 +435,7 @@ int eof_menu_file_new_wizard(void)
 			#endif
 			eof_system(syscommand);
 			#ifdef ALLEGRO_WINDOWS
-			delete_file("eoftemp.mp3");
+				delete_file("eoftemp.mp3");
 			#endif
 		}
 		else

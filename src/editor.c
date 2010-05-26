@@ -326,8 +326,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 					{
 						int ts = 1;
 
-						/* find the measure length */
-						sp->measure_length = sp->beat_length * 4;
+						/* find the measure we are currently in */
 						sp->measure_beat = 0;
 						for(i = sp->beat; i >= 0; i--)
 						{
@@ -359,14 +358,33 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 						for(i = sp->beat; i >= sp->measure_beat; i--)
 						{
 
-							/* start of measure */
+							/* start of measure we are currently in */
 							if((i - sp->measure_beat) % ts == 0)
 							{
 								sp->measure_beat = i;
 								break;
 							}
 						}
-						sp->measure_length = sp->beat_length * ts;
+						
+						/* add up beat times to find measure length */
+						int bl; // current beat length
+						if(sp->measure_beat + ts < eof_song->beats)
+						{
+							bl = eof_song->beat[sp->measure_beat + 1]->pos - eof_song->beat[sp->measure_beat]->pos;
+							sp->measure_length = 0;
+							for(i = sp->measure_beat; i < sp->measure_beat + ts; i++)
+							{
+								if(i < eof_song->beats - 1)
+								{
+									bl = eof_song->beat[i + 1]->pos - eof_song->beat[i]->pos;
+								}
+								sp->measure_length += bl;
+							}
+						}
+						else
+						{
+							bl = sp->beat_length * ts;
+						}
 
 						/* find the snap positions */
 						for(i = 0; i < eof_snap_interval; i++)

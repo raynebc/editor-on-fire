@@ -9,8 +9,8 @@
 #include "control.h"
 #include "editor.h"
 
-#define EOF_VERSION_STRING "EOF v1.63"
-#define EOF_COPYRIGHT_STRING "(c)2008-2009 T^3 Software."
+#define EOF_VERSION_STRING "EOF v1.64"
+#define EOF_COPYRIGHT_STRING "(c)2008-2010 T^3 Software."
 
 #define KEY_EITHER_ALT (key[KEY_ALT] || key[KEY_ALTGR])
 #define KEY_EITHER_CTRL (key[KEY_LCONTROL] || key[KEY_RCONTROL])
