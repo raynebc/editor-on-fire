@@ -14,6 +14,7 @@ all : ../bin/$(EXENAME)
 clean:
 	@rm *.o
 	@rm menu/*.o
+	@rm dialog/*.o
 	@rm modules/*.o
 	@rm agup/*.o
 	@rm alogg/src/*.o
