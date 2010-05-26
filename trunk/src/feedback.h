@@ -24,12 +24,12 @@ struct dbText
 };
 
 //A linked list storing notes for an instrument track
-struct dbNotelist
+struct dbNote
 {
 	unsigned long chartpos;
-	unsigned char gemcolor;
+	unsigned char gemcolor;	//This is 0-4 for a note definition, '0' for a Player 1 section, '1' for a Player 2 section or '2' for a Star Power section
 	unsigned long duration;
-	struct dbNotelist *next;
+	struct dbNote *next;
 };
 
 //A linked list of instrument tracks, each of which stores a linked list of notes
@@ -40,7 +40,7 @@ struct dbTrack
 	char difftype;	//1 for easy, 2 for medium, 3 for hard, 4 for expert
 	char isguitar;	//Nonzero if it is a guitar track, regardless of which one it is
 	char isdrums;	//Nonzero if it is a drums track, regardless of which one it is
-	struct dbNotelist *notes;
+	struct dbNote *notes;
 	struct dbTrack *next;
 };
 
