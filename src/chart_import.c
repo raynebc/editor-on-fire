@@ -233,13 +233,11 @@ EOF_SONG * eof_import_chart(const char * fn)
 					if(current_note->gemcolor == '2')
 					{
 						eof_track_add_star_power(sp->track[track], chartpos_to_msec(chart, current_note->chartpos), chartpos_to_msec(chart, current_note->chartpos + current_note->duration));
-						printf("star power\n");
 					}
 					
 					/* skip face-off sections for now */
 					else if(current_note->gemcolor == '0' || current_note->gemcolor == '1')
 					{
-						printf("player section\n");
 					}
 					
 					/* import regular note */
