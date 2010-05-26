@@ -1,6 +1,31 @@
 EOF Version History
 -------------------
 
+1.64:
+
+Fixed MP3->OGG conversion on Windows.
+
+Added Feedback chart import.
+
+Improved speed of MIDI import.
+
+Changed configuration file to text-based system.
+
+Added audio fine-tune option (only available by hand-editing the config file for
+now). This is useful for Linux users who have the slowed audio playback issue
+which plagues all Allegro 4 programs under certain conditions.
+
+Added option to allow custom grid snap to be applied per measure instead of per
+beat.
+
+Fixed bug which made newly placed notes not automatically be selected if you
+weren't editing PART GUITAR.
+
+Fixed bug which made moving lyric notes behave strangely.
+
+Made some changes to the UI.
+
+
 1.63:
 
 Fixed bug which caused EOF to crash when importing a MIDI that doesn't have a
