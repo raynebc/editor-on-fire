@@ -95,6 +95,7 @@ void eof_load_config(char * fn)
 	{
 		eof_snap_interval = 1;
 	}
+	eof_custom_snap_measure = get_config_int("editor", "snap_measure", 0);
 	eof_zoom_3d = get_config_int("editor", "preview_speed", 5);
 	if(eof_zoom_3d < 2 || eof_zoom_3d > 5)
 	{
@@ -149,6 +150,7 @@ void eof_save_config(char * fn)
 	set_config_string("editor", "frettist", eof_last_frettist);
 	set_config_int("editor", "snap_mode", eof_snap_mode);
 	set_config_int("editor", "snap_interval", eof_snap_interval);
+	set_config_int("editor", "snap_measure", eof_custom_snap_measure);
 	set_config_int("editor", "preview_speed", eof_zoom_3d);
 	set_config_int("editor", "hopo_view", eof_hopo_view);
 	
