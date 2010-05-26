@@ -124,6 +124,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		struct dBAnchor * current_anchor = chart->anchors;
 		struct dbText * current_event = chart->events;
 		unsigned long max_chartpos = 0;
+		unsigned long final_bpm = 120000;
 
 		/* find the highest chartpos for beat markers */
 		while(current_anchor)
@@ -132,6 +133,13 @@ EOF_SONG * eof_import_chart(const char * fn)
 			{
 				max_chartpos = current_anchor->chartpos;
 			}
+			
+			/* remember final BPM */
+			if(!current_anchor->next)
+			{
+				final_bpm = current_anchor->BPM;
+			}
+			
 			current_anchor = current_anchor->next;
 		}
 		while(current_event)
@@ -173,6 +181,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 				sp->beat[i]->flags ^= EOF_BEAT_FLAG_ANCHOR;
 			}
 		}
+		sp->beat[sp->beats - 1]->ppqn = (double)60000000.0 / ((double)final_bpm / (double)1000.0);
 
 		/* fill in notes */
 		struct dbTrack * current_track = chart->tracks;
