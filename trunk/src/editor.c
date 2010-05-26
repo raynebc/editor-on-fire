@@ -130,7 +130,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 				}
 			}
 		}
-		
+
 		/* make sure we found a suitable snap beat before proceeding */
 		if(sp->beat >= 0)
 		{
@@ -325,7 +325,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 					if(eof_custom_snap_measure)
 					{
 						int ts = 1;
-						
+
 						/* find the measure length */
 						sp->measure_length = sp->beat_length * 4;
 						sp->measure_beat = 0;
@@ -358,7 +358,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 						}
 						for(i = sp->beat; i >= sp->measure_beat; i--)
 						{
-							
+
 							/* start of measure */
 							if((i - sp->measure_beat) % ts == 0)
 							{
@@ -367,7 +367,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 							}
 						}
 						sp->measure_length = sp->beat_length * ts;
-						
+
 						/* find the snap positions */
 						for(i = 0; i < eof_snap_interval; i++)
 						{
@@ -545,7 +545,7 @@ void eof_read_editor_keys(void)
 		key[KEY_END] = 0;
 	}
 
-	if(key[KEY_R])
+	if(key[KEY_R] && !KEY_EITHER_CTRL)
 	{
 		eof_menu_song_seek_rewind();
 		key[KEY_R] = 0;
@@ -886,14 +886,14 @@ void eof_read_editor_keys(void)
 		}
 		key[KEY_DOWN] = 0;
 	}
-	if(key[KEY_A] && eof_music_paused)
+	if(key[KEY_A] && eof_music_paused && !KEY_EITHER_CTRL)
 	{
-		if(KEY_EITHER_CTRL)
-		{
+		if(KEY_EITHER_SHIFT)
+		{	//Beat>Anchor Beat
 			eof_menu_beat_anchor();
 		}
 		else
-		{
+		{	//Beat>Toggle Anchor
 			eof_menu_beat_toggle_anchor();
 		}
 		key[KEY_A] = 0;
@@ -1153,27 +1153,26 @@ void eof_read_editor_keys(void)
 	}
 
 	/* select all */
-	if(KEY_EITHER_CTRL && key[KEY_E] && eof_music_paused && !eof_music_catalog_playback)
+	if(KEY_EITHER_CTRL && key[KEY_A] && eof_music_paused && !eof_music_catalog_playback)
 	{
 		eof_menu_edit_select_all();
 		key[KEY_E] = 0;
 	}
 
-	/* select like */
 	if(key[KEY_L])
 	{
 		if(KEY_EITHER_CTRL && eof_music_paused && !eof_music_catalog_playback)
-		{
+		{	/* select like */
 			eof_menu_edit_select_like();
 		}
 		else if(eof_vocals_selected && eof_selection.track == EOF_TRACK_VOCALS && eof_selection.current < eof_song->vocal_track->lyrics)
 		{
 			if(KEY_EITHER_SHIFT)
-			{
+			{	//Split lyric
 				eof_menu_split_lyric();
 			}
 			else
-			{
+			{	//Edit lyric
 				eof_edit_lyric_dialog();
 			}
 		}
@@ -1192,10 +1191,10 @@ void eof_read_editor_keys(void)
 		eof_menu_edit_metronome();
 		key[KEY_M] = 0;
 	}
-	if(key[KEY_K])
+	if(key[KEY_C])
 	{
 		eof_menu_edit_claps();
-		key[KEY_K] = 0;
+		key[KEY_C] = 0;
 	}
 	if(key[KEY_V] && !KEY_EITHER_CTRL)
 	{
