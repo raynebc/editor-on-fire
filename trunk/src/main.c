@@ -1062,9 +1062,12 @@ int eof_figure_part(void)
 {
 	int part[6] = {0};
 
-	if(eof_vocals_selected && eof_song->vocal_track->lyrics <= 0)
+	if(eof_vocals_selected)
 	{
-		return -1;
+		if(eof_song->vocal_track->lyrics <= 0)
+		{
+			return -1;
+		}
 	}
 	else if(eof_song->track[eof_selected_track]->notes <= 0)
 	{
