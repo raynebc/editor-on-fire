@@ -579,13 +579,14 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 	unsigned long A,B,C;		//The first, second and third integer values read from the current line of the file
 	int errorstatus=0;		//Passed to ParseLongInt()
 	char anchortype;		//The achor type being read in [SyncTrack]
+	char notetype;			//The note type being read in the instrument track
 	char *string1,*string2;		//Used to hold strings parsed with Read_dB_string()
 
 //Feedback chart structure variables
 	struct FeedbackChart *chart=NULL;
 	struct dBAnchor *curanchor=NULL;	//Conductor for the anchor linked list
 	struct dbText *curevent=NULL;		//Conductor for the text event linked list
-	struct dbNotelist *curnote=NULL;	//Conductor for the current instrument track's note linked list
+	struct dbNote *curnote=NULL;	//Conductor for the current instrument track's note linked list
 	struct dbTrack *curtrack=NULL;		//Conductor for the instrument track linked list, which contains a linked list of notes
 	void *temp;				//Temporary pointer used for storing newly-allocated memory
 
@@ -1020,7 +1021,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 
 	//Process instrument tracks
 		else if(currentsection == 4)
-		{	//# = N # # is expected
+		{	//"# = N # #" or "# = S # #" is expected
 		//Load first number
 			A=ParseLongInt(buffer,&index,chart->linesprocessed,&errorstatus);
 			if(errorstatus)		//If ParseLongInt() failed
@@ -1058,19 +1059,21 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 					break;
 			}
 
-			if(substring[index] == 'S')	//Check if this is a "player section", currently not supported
+			notetype=0;	//By default, assume this is going to be a note definition
+			if(substring[index] == 'S')	//Check if this is a player/overdrive section
 			{
 				fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+				notetype=1;							//This is a section marker
 				continue;							//Skip this line
 			}
-
-			if(substring[index++] != 'N')	//Check if this isn't a "note" indicator, and increment index
+			else if(substring[index] != 'N')	//Check if this isn't a "note" indicator, and increment index
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=25;
 				return NULL;		//return error
 			}
+			index++;	//Increment index past N or S identifier
 
 		//Load second number
 			B=ParseLongInt(substring,&index,chart->linesprocessed,&errorstatus);
@@ -1101,21 +1104,34 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				return NULL;
 			}
 
-			temp=calloc_err(1,sizeof(struct dbNotelist));	//Allocate and init memory to NULL data
+			temp=calloc_err(1,sizeof(struct dbNote));	//Allocate and init memory to NULL data
 			if(curtrack->notes == NULL)	//If the list is empty
 			{
-				curtrack->notes=(struct dbNotelist *)temp;	//Point head of list to this link
+				curtrack->notes=(struct dbNote *)temp;	//Point head of list to this link
 				curnote=curtrack->notes;			//Point conductor to this link
 			}
 			else
 			{
-				curnote->next=(struct dbNotelist *)temp;	//Conductor points forward to this link
+				curnote->next=(struct dbNote *)temp;	//Conductor points forward to this link
 				curnote=curnote->next;				//Point conductor to this link
 			}
 
 		//Initialize note link
 			curnote->chartpos=A;	//The first number read is the chart position
-			curnote->gemcolor=B;	//The second number read is the gem color
+
+			if(!notetype)	//This was a note definition
+				curnote->gemcolor=B;	//The second number read is the gem color
+			else			//This was a section marker
+			{
+				if(B > 2)	//Only values of 0, 1 or 2 are valid for section markers
+				{
+					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+					if(error)
+						*error=29;
+					return NULL;
+				}
+				curnote->gemcolor='0'+B;	//Store 0 as '0', 1 as '1' or 2 as '2'
+			}
 			curnote->duration=C;	//The third number read is the note duration
 		}
 
@@ -1386,7 +1402,7 @@ void DestroyFeedbackChart(struct FeedbackChart *ptr, char freestruct)
 	struct dBAnchor *anchorptr;	//Conductor for the anchors linked list
 	struct dbText *eventptr;	//Conductor for the events linked list
 	struct dbTrack *trackptr;	//Conductor for the tracks linked list
-	struct dbNotelist *noteptr;	//Conductor for the notes linked lists
+	struct dbNote *noteptr;	//Conductor for the notes linked lists
 
 //Free and re-init tags
 	if(ptr->name)

@@ -21,17 +21,17 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 		if(current_anchor->BPM > 0)
 		{
 			beat_length = (double)60000000.0 / (double)current_anchor->BPM;
-			
+
 			/* adjust BPM if next beat marker is an anchor */
 			if(current_anchor->next && current_anchor->next->usec > 0)
 			{
 				beat_count = (double)(current_anchor->next->chartpos - current_anchor->chartpos) / (double)chart->resolution;
 				beat_length = (((double)current_anchor->next->usec / 1000.0 + offset) - curpos) / beat_count;
 			}
-			
+
 			convert = beat_length / (double)chart->resolution;
 		}
-		
+
 		/* if the specified chartpos is past the next anchor, add the total time between
 		 * the anchors */
 		if(current_anchor->next && chartpos >= current_anchor->next->chartpos)
@@ -39,7 +39,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 			curpos += (double)(current_anchor->next->chartpos - current_anchor->chartpos) * convert;
 			lastchartpos = current_anchor->next->chartpos;
 		}
-		
+
 		/* otherwise add the time from the current anchor to the specified chartpos */
 		else
 		{
@@ -62,17 +62,17 @@ EOF_SONG * eof_import_chart(const char * fn)
 	char searchpath[1024] = {0};
 	char oldoggpath[1024] = {0};
 	struct al_ffblk info; // for file search
-	
+
 	chart = ImportFeedback((char *)fn, &err);
 	if(chart)
 	{
 		/* load audio */
 		replace_filename(oggfn, fn, "guitar.ogg", 1024);
-		
+
 		/* if "guitar.ogg" doesn't exist, look for any OGG file in the chart directory */
 		if(!exists(oggfn))
 		{
-			
+
 			/* no OGG file found, start file selector at chart directory */
 			replace_filename(searchpath, fn, "*.ogg", 1024);
 			if(al_findfirst(searchpath, &info, FA_ALL))
@@ -80,7 +80,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 				ustrcpy(oldoggpath, eof_last_ogg_path);
 				replace_filename(eof_last_ogg_path, fn, "", 1024);
 			}
-			
+
 			/* if there is only one OGG file, load it */
 			else if(al_findnext(&info))
 			{
@@ -96,7 +96,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 		eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
 		eof_music_actual_length = eof_music_length;
-		
+
 		/* create empty song */
 		sp = eof_create_song();
 		if(!sp)
@@ -104,7 +104,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			DestroyFeedbackChart(chart, 1);
 			return NULL;
 		}
-		
+
 		/* copy tags */
 		if(chart->name)
 		{
@@ -118,13 +118,13 @@ EOF_SONG * eof_import_chart(const char * fn)
 		{
 			strcpy(sp->tags->frettist, chart->charter);
 		}
-		
+
 		/* set up beat markers */
 		sp->tags->ogg[0].midi_offset = chart->offset * 1000.0;
 		struct dBAnchor * current_anchor = chart->anchors;
 		struct dbText * current_event = chart->events;
 		unsigned long max_chartpos = 0;
-		
+
 		/* find the highest chartpos for beat markers */
 		while(current_anchor)
 		{
@@ -142,7 +142,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			}
 			current_event = current_event->next;
 		}
-		
+
 		/* create beat markers */
 		EOF_BEAT_MARKER * new_beat = NULL;
 		for(i = 0; i < max_chartpos / chart->resolution; i++)
@@ -155,7 +155,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 				new_beat->flags |= EOF_BEAT_FLAG_ANCHOR;
 			}
 		}
-		
+
 		/* nudge beat markers so we get the correct BPM calculations */
 		for(i = 1; i < sp->beats; i++)
 		{
@@ -164,7 +164,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			eof_mickeys_x = -1;
 			eof_recalculate_beats(sp, i);
 		}
-		
+
 		/* unanchor non-anchor beat markers */
 		for(i = 1; i < sp->beats; i++)
 		{
@@ -173,46 +173,46 @@ EOF_SONG * eof_import_chart(const char * fn)
 				sp->beat[i]->flags ^= EOF_BEAT_FLAG_ANCHOR;
 			}
 		}
-		
+
 		/* fill in notes */
 		struct dbTrack * current_track = chart->tracks;
 		int track;
 		int difficulty;
 		while(current_track)
 		{
-			
+
 			/* convert track number to EOF numbering scheme */
 			switch(current_track->tracktype)
 			{
-				
+
 				/* PART GUITAR */
 				case 1:
 				{
 					track = EOF_TRACK_GUITAR;
 					break;
 				}
-				
+
 				/* PART GUITAR COOP */
 				case 2:
 				{
 					track = EOF_TRACK_GUITAR_COOP;
 					break;
 				}
-				
+
 				/* PART BASS */
 				case 3:
 				{
 					track = EOF_TRACK_BASS;
 					break;
 				}
-				
+
 				/* PART DRUMS */
 				case 4:
 				{
 					track = EOF_TRACK_DRUM;
 					break;
 				}
-				
+
 				default:
 				{
 					track = -1;
@@ -220,11 +220,11 @@ EOF_SONG * eof_import_chart(const char * fn)
 				}
 			}
 			difficulty = current_track->difftype - 1;
-			
+
 			/* if it is a valid track */
 			if(track >= 0)
 			{
-				struct dbNotelist * current_note = current_track->notes;
+				struct dbNote * current_note = current_track->notes;
 				unsigned long lastpos = -1;
 				EOF_NOTE * new_note = NULL;
 				while(current_note)
@@ -253,7 +253,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			}
 			current_track = current_track->next;
 		}
-		
+
 		/* load text events */
 		int b;
 		current_event = chart->events;
