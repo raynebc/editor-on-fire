@@ -1061,11 +1061,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 
 			notetype=0;	//By default, assume this is going to be a note definition
 			if(substring[index] == 'S')	//Check if this is a player/overdrive section
-			{
-				fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 				notetype=1;							//This is a section marker
-				continue;							//Skip this line
-			}
 			else if(substring[index] != 'N')	//Check if this isn't a "note" indicator, and increment index
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
