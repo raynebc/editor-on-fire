@@ -18,8 +18,8 @@
 
 MENU eof_file_menu[] =
 {
-    {"&New\tF4", eof_menu_file_new_wizard, NULL, 0, NULL},
-    {"&Load\tF3", eof_menu_file_load, NULL, 0, NULL},
+    {"&New\tCTRL+N / F4", eof_menu_file_new_wizard, NULL, 0, NULL},
+    {"&Load\tCTRL+O / F3", eof_menu_file_load, NULL, 0, NULL},
     {"&Save\tCTRL+S / F2", eof_menu_file_save, NULL, D_DISABLED, NULL},
     {"Save &As", eof_menu_file_save_as, NULL, D_DISABLED, NULL},
     {"", NULL, NULL, 0, NULL},

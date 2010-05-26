@@ -103,7 +103,7 @@ MENU eof_edit_bookmark_menu[] =
 
 MENU eof_edit_selection_menu[] =
 {
-    {"&Select All\tCtrl+E", eof_menu_edit_select_all, NULL, 0, NULL},
+    {"&Select All\tCtrl+A", eof_menu_edit_select_all, NULL, 0, NULL},
     {"Select &Like\tCtrl+L", eof_menu_edit_select_like, NULL, 0, NULL},
     {"Select &Rest\tShift+End", eof_menu_edit_select_rest, NULL, 0, NULL},
     {"&Deselect All\tCtrl+D", eof_menu_edit_deselect_all, NULL, 0, NULL},
@@ -127,7 +127,7 @@ MENU eof_edit_menu[] =
     {"Preview &HOPO", NULL, eof_edit_hopo_menu, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"&Metronome\tM", eof_menu_edit_metronome, NULL, 0, NULL},
-    {"Claps\tK", eof_menu_edit_claps, NULL, 0, NULL},
+    {"Claps\tC", eof_menu_edit_claps, NULL, 0, NULL},
     {"Clap &Notes", NULL, eof_edit_claps_menu, 0, NULL},
     {"&Vocal Tones\tV", eof_menu_edit_vocal_tones, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},

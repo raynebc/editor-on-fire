@@ -33,7 +33,7 @@ MENU eof_beat_menu[] =
     {"Push Offset Back", eof_menu_beat_push_offset_back, NULL, 0, NULL},
     {"Push Offset Up", eof_menu_beat_push_offset_up, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
-    {"&Anchor Beat\tCtrl+A", eof_menu_beat_anchor, NULL, 0, NULL},
+    {"&Anchor Beat\tShift+A", eof_menu_beat_anchor, NULL, 0, NULL},
     {"&Toggle Anchor\tA", eof_menu_beat_toggle_anchor, NULL, 0, NULL},
     {"&Delete Anchor", eof_menu_beat_delete_anchor, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},

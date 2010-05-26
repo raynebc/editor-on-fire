@@ -928,7 +928,7 @@ int eof_figure_difficulty(void)
 	/* check for lyrics if PART VOCALS is selected */
 	if(eof_vocals_selected)
 	{
-		
+
 		/* see if there are any pitched lyrics */
 		for(i = 0; i < eof_song->vocal_track->lyrics; i++)
 		{
@@ -937,7 +937,7 @@ int eof_figure_difficulty(void)
 				break;
 			}
 		}
-		
+
 		/* if we have pitched lyrics and line definitions, allow test */
 		if(i < eof_song->vocal_track->lyrics && eof_song->vocal_track->lines > 0)
 		{
@@ -945,7 +945,7 @@ int eof_figure_difficulty(void)
 		}
 		return -1;
 	}
-	
+
 	/* see which difficulties are populated with notes */
 	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
 	{
@@ -1376,10 +1376,10 @@ void eof_read_global_keys(void)
 		}
 
 		/* switch between normal and lefty 3D view */
-		if(KEY_EITHER_CTRL && key[KEY_N])
+		if(KEY_EITHER_CTRL && key[KEY_R])
 		{
 			eof_lefty_mode = 1 - eof_lefty_mode;
-			key[KEY_N] = 0;
+			key[KEY_R] = 0;
 		}
 
 		if(key[KEY_MINUS])
@@ -1397,42 +1397,48 @@ void eof_read_global_keys(void)
 		}
 	}
 
-	if(key[KEY_F4])
+	if(key[KEY_F4] || (KEY_EITHER_CTRL && key[KEY_N]))
 	{
 		clear_keybuf();
 		eof_menu_file_new_wizard();
 		key[KEY_F4] = 0;
 	}
-	if(key[KEY_F3])
-	{
+	if(key[KEY_F3] || (KEY_EITHER_CTRL && key[KEY_O]))
+	{	//File>Load
 		clear_keybuf();
 		eof_menu_file_load();
 		key[KEY_F3] = 0;
+		key[KEY_O] = 0;
 	}
 	if(key[KEY_F10])
 	{
 		clear_keybuf();
 		eof_menu_file_settings();
+		key[KEY_F10] = 0;
 	}
 	if(key[KEY_F11])
 	{
 		clear_keybuf();
 		eof_menu_file_preferences();
+		key[KEY_F11] = 0;
 	}
 	if(key[KEY_F8])
 	{
 		clear_keybuf();
 		eof_menu_file_lyrics_import();
+		key[KEY_F8] = 0;
 	}
 	if(key[KEY_F7])
 	{	//Launch Feedback chart import
 		clear_keybuf();
 		eof_menu_file_feedback_import();
+		key[KEY_F7] = 0;
 	}
 	if(key[KEY_F6])
 	{	//Launch Feedback chart import
 		clear_keybuf();
 		eof_menu_file_midi_import();
+		key[KEY_F6] = 0;
 	}
 }
 
