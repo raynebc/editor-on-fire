@@ -85,7 +85,7 @@ void eof_editor_logic_feedback(void)
 		eof_menu_edit_metronome();
 		key[KEY_M] = 0;
 	}
-	if(key[KEY_C])
+	if(key[KEY_C] && !KEY_EITHER_CTRL)
 	{
 		eof_menu_edit_claps();
 		key[KEY_C] = 0;

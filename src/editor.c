@@ -365,7 +365,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 								break;
 							}
 						}
-						
+
 						/* add up beat times to find measure length */
 						int bl; // current beat length
 						if(sp->measure_beat + ts < eof_song->beats)
@@ -1209,7 +1209,7 @@ void eof_read_editor_keys(void)
 		eof_menu_edit_metronome();
 		key[KEY_M] = 0;
 	}
-	if(key[KEY_C])
+	if(key[KEY_C] && !KEY_EITHER_CTRL)
 	{
 		eof_menu_edit_claps();
 		key[KEY_C] = 0;
