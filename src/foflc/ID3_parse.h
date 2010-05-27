@@ -17,7 +17,7 @@ char *ReadTextInfoFrame(FILE *inf);
 	//Upon successful parse, the file position is one byte past the end of the frame that was read
 	//Upon error, inf is returned to its original file position
 
-int ReadTags(FILE *inf);
-	//A function to test the ID3 tag reading logic
+int DEBUGReadTags(FILE *inf);
+	//A function to test the ID3 tag reading logic by printing the found tags to STDOUT
 
 #endif //#ifndef _id3_parse_h_
