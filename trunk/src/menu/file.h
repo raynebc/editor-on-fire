@@ -69,9 +69,4 @@ int eof_test_controller_conflict(EOF_CONTROLLER *ct,int start,int stop);
 void EnumeratedBChartInfo(struct FeedbackChart *chart);
 	//Call an allegro_message with summary information about the passed chart
 
-int ReadID3Tags(FILE *inf,char *artist,char *title,char *year);
-	//Rewinds the input file and searches it for the TIT2, TYER and TPE1 frames in an existing ID3v2 tag
-	//Tag strings are read into the pointers that are passed via reference
-	//Returns the number of tags read, or 0 if none are read (ie. error)
-
 #endif
