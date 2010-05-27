@@ -298,7 +298,6 @@ int eof_menu_file_new_wizard(void)
 	ALOGG_OGG * temp_ogg = NULL;
 	char * temp_buffer = NULL;
 	int temp_buffer_size = 0;
-	FILE *fp;	//Used to load MP3 ID3 tag info
 
 	if(eof_changes)
 	{
@@ -361,12 +360,7 @@ int eof_menu_file_new_wizard(void)
 	}
 	else if(!ustricmp("mp3", get_extension(oggfilename)))
 	{
-		fp=fopen(oggfilename,"rb");
-		if(fp != NULL)
-		{
-			ReadID3Tags(fp,eof_etext, eof_etext2, year);	//Load tags into temporary strings
-			fclose(fp);
-		}
+		ReadID3Tags(oggfilename,eof_etext, eof_etext2, year);	//Load tags into temporary strings
 	}
 
 	/* user fills in song information */
@@ -1927,73 +1921,4 @@ void EnumeratedBChartInfo(struct FeedbackChart *chart)
 	}
 
 	allegro_message("%s",chartinfo);
-}
-
-int ReadID3Tags(FILE *inf,char *artist,char *title,char *year)
-{
-	const char *tags[]={"TPE1","TIT2","TYER"};	//The three tags to try to find in the file
-	char *temp;
-	int ctr;
-	unsigned long ctr2,length;	//Used to validate year tag
-	unsigned char yearvalid=1;	//Used to validate year tag
-	unsigned char tagcount=0;
-
-	if(!inf || !artist || !title || !year)
-		return 0;
-
-	for(ctr=0;ctr<3;ctr++)
-	{	//For each tag we're looking for
-		rewind(inf);		//Rewind to beginning of file
-		if(ferror(inf))		//If there was a file I/O error
-			return 0;
-
-		if(SearchValues(inf,NULL,tags[ctr],4,1) == 1)
-		{	//If there is a match for this tag, seek to it
-			temp=ReadTextInfoFrame(inf);	//Attempt to read it
-
-			if(temp != NULL)
-			{
-				switch(ctr)
-				{
-					case 0: //Store Performer tag, truncated to fit
-						if(strlen(temp) > 255)	//If this string won't fit without overflowing
-							temp[255] = '\0';	//Make it fit
-						strcpy(artist,temp);
-
-						free(temp);
-					break;
-
-					case 1:	//Store Title tag, truncated to fit
-						if(strlen(temp) > 255)	//If this string won't fit without overflowing
-							temp[255] = '\0';	//Make it fit
-						strcpy(title,temp);
-						free(temp);
-					break;
-
-					case 2:	//Store Year tag, after it's validated
-						length=strlen(temp);
-						if(length < 5)
-						{	//If the string is no more than 4 characters
-							for(ctr2=0;ctr2<length;ctr2++)	//Check all digits to ensure they're numerical
-								if(!isdigit(temp[ctr2]))
-									yearvalid=0;
-
-							if(yearvalid)
-								strcpy(year,temp);
-
-							free(temp);
-						}
-					break;
-
-					default:	//This shouldn't be reachable
-						free(temp);
-					return tagcount;
-				}
-
-				tagcount++;	//One more tag was read
-			}//if(temp != NULL)
-		}//If there is a match for this tag
-	}//For each tag we're looking for
-
-	return tagcount;
 }
