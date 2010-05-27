@@ -131,8 +131,7 @@ char *ReadTextInfoFrame(FILE *inf)
 	return string;
 }
 
-//int ReadTags(FILE *inf,EOF_SONG *sp)
-int ReadTags(FILE *inf)
+int DEBUGReadTags(FILE *inf)
 {
 	const char *tags[]={"TIT2","TYER","TPE1"};	//The three tags to try to find in the file
 	char *temp;
@@ -141,7 +140,6 @@ int ReadTags(FILE *inf)
 	unsigned char yearvalid=1;	//Used to validate year tag
 	unsigned char tagcount=0;
 
-//	if(!inf || !sp)
 	if(!inf)
 		return 0;
 
@@ -162,7 +160,6 @@ int ReadTags(FILE *inf)
 					case 0:	//Store Title tag, truncated to fit
 						if(strlen(temp) > 255)	//If this string won't fit without overflowing
 							temp[255] = '\0';	//Make it fit
-//						strcpy(sp->title,temp);
 						printf("Tag: %s = \"%s\"\n",tags[ctr],temp);
 						free(temp);
 					break;
@@ -176,7 +173,6 @@ int ReadTags(FILE *inf)
 									yearvalid=0;
 
 							if(yearvalid)
-//								strcpy(sp->year,temp);
 								printf("Tag: %s = \"%s\"\n",tags[ctr],temp);
 
 							free(temp);
@@ -186,7 +182,6 @@ int ReadTags(FILE *inf)
 					case 2: //Store Performer tag, truncated to fit
 						if(strlen(temp) > 255)	//If this string won't fit without overflowing
 							temp[255] = '\0';	//Make it fit
-//						strcpy(sp->artist,temp);
 						printf("Tag: %s = \"%s\"\n",tags[ctr],temp);
 
 						free(temp);
