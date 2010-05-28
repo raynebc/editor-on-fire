@@ -334,6 +334,6 @@ void eof_mix_play_note(int note)
 {
 	if(eof_sound_note[note])
 	{
-		play_sample(eof_sound_note[note], 255, 127, 1000, 0);
+		play_sample(eof_sound_note[note], 255, 127, 1000 + eof_audio_fine_tune, 0);
 	}
 }
