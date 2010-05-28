@@ -121,7 +121,7 @@ void eof_catalog_play(void)
 			alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->catalog->entry[eof_selected_catalog_entry].start_pos);
 			eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 			eof_music_catalog_playback = 1;
-			if(alogg_play_ex_ogg(eof_music_track, eof_buffer_size, 255, 128, 1000, 0) == ALOGG_OK)
+			if(alogg_play_ex_ogg(eof_music_track, eof_buffer_size, 255, 128, 1000 + eof_audio_fine_tune, 0) == ALOGG_OK)
 			{
 				eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 				eof_mix_find_claps();
