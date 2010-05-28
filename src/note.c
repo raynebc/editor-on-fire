@@ -343,6 +343,9 @@ void eof_lyric_draw(EOF_LYRIC * np, int p)
 	int pcol = p == 1 ? makecol(255, 255, 255) : p == 2 ? makecol(224, 255, 224) : 0;
 	int dcol = makecol(255, 255, 255);
 	int ncol = 0;
+	
+	EOF_LYRIC_LINE *lyricline;	//The line that this lyric is found to be in (if any) so the correct background color can be determined
+	int bgcol = eof_color_black;	//Unless the text is found to be in a lyric phrase, it will render with a black background
 
 	if(p == 3)
 	{
@@ -350,6 +353,15 @@ void eof_lyric_draw(EOF_LYRIC * np, int p)
 		dcol = eof_color_white;
 	}
 
+	lyricline=FindLyricLine_p(np);	//Find which line this lyric is in
+	if(lyricline != NULL)
+	{
+		if((lyricline->flags) & EOF_LYRIC_LINE_FLAG_OVERDRIVE)	//If the overdrive flag is set
+			bgcol=makecol(64, 128, 64);	//Make dark green the text's background color
+		else
+			bgcol=makecol(0, 0, 127);	//Make dark blue the text's background colo
+	}
+	
 	ychart[0] = eof_screen_layout.note_y[0];
 	ychart[1] = eof_screen_layout.note_y[1];
 	ychart[2] = eof_screen_layout.note_y[2];
@@ -407,13 +419,13 @@ void eof_lyric_draw(EOF_LYRIC * np, int p)
 	if(p == 3)
 	{
 		set_clip_rect(eof_window_editor->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, eof_window_editor->screen->w, eof_window_editor->screen->h);
-		textprintf_ex(eof_window_editor->screen, font, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y, eof_color_white, eof_color_black, "%s", np->text);
+		textprintf_ex(eof_window_editor->screen, font, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y, eof_color_white, bgcol, "%s", np->text);
 		set_clip_rect(eof_window_editor->screen, 0, 0, eof_window_editor->screen->w, eof_window_editor->screen->h);
 	}
 	else
 	{
 		set_clip_rect(eof_window_editor->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, eof_window_editor->screen->w, eof_window_editor->screen->h);
-		textprintf_ex(eof_window_editor->screen, font, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y, p ? eof_color_green : eof_color_white, eof_color_black, "%s", np->text);
+		textprintf_ex(eof_window_editor->screen, font, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y, p ? eof_color_green : eof_color_white, bgcol, "%s", np->text);
 		set_clip_rect(eof_window_editor->screen, 0, 0, eof_window_editor->screen->w, eof_window_editor->screen->h);
 	}
 }
@@ -1188,6 +1200,24 @@ void eof_lyric_draw_catalog(EOF_LYRIC * np, int p)
 		textprintf_ex(eof_window_note->screen, font, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y, p ? eof_color_green : eof_color_white, eof_color_black, "%s", np->text);
 		set_clip_rect(eof_window_note->screen, 0, 0, eof_window_note->screen->w, eof_window_note->screen->h);
 	}
+}
+
+EOF_LYRIC_LINE *FindLyricLine_p(EOF_LYRIC * lp)
+{
+	int linectr;
+	unsigned long lyricpos;
+
+	if(eof_song == NULL)
+		return NULL;
+	lyricpos=lp->pos;
+
+	for(linectr=0;linectr<eof_song->vocal_track->lines;linectr++)
+	{
+		if((eof_song->vocal_track->line[linectr].start_pos <= lyricpos) && (eof_song->vocal_track->line[linectr].end_pos >= lyricpos))
+			return &(eof_song->vocal_track->line[linectr]);	//Line found, return it
+	}
+
+	return NULL;	//No such line found
 }
 
 EOF_LYRIC_LINE *FindLyricLine(int lyricnum)
