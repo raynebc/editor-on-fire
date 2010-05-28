@@ -5032,7 +5032,7 @@ void eof_render_vocal_editor_window(void)
 		}
 		if(eof_hover_note >= 0)
 		{
-			eof_lyric_draw_truncate(eof_hover_note, 2);
+			eof_lyric_draw(eof_song->vocal_track->lyric[eof_hover_note], 2);
 		}
 		if(eof_music_paused && eof_pen_visible && eof_pen_note.pos < eof_music_length)
 		{
