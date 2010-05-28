@@ -1,6 +1,18 @@
 EOF Version History
 -------------------
 
+1.65:
+
+raynebc added support for reading ID3 tags from MP3 files to fill in song
+information automatically.
+
+Fixed Ctrl+C keyboard shortcut issue.
+
+Fixed '.' character not being accepted in "Change BPM" dialog box.
+
+Fixed grid snap issue in PART VOCALS editor.
+
+
 1.64:
 
 Fixed MP3->OGG conversion on Windows.
