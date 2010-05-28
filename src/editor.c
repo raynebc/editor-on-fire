@@ -3564,6 +3564,7 @@ void eof_vocal_editor_logic(void)
 	int i;
 	int use_this_x = mouse_x;
 	int next_note_pos = 0;
+	EOF_SNAP_DATA drag_snap; // help with dragging across snap locations
 
 	eof_hover_note = -1;
 	eof_hover_note_2 = -1;
@@ -3714,7 +3715,7 @@ void eof_vocal_editor_logic(void)
 						eof_selection.range_pos_2 = eof_selection.current_pos;
 					}
 					eof_pegged_note = eof_selection.current;
-					eof_peg_x = eof_song->vocal_track->lyric[eof_pegged_note]->pos - eof_pen_lyric.pos;
+					eof_peg_x = lpos - eof_song->vocal_track->lyric[eof_pegged_note]->pos;
 					eof_last_pen_pos = rpos;
 					if(!KEY_EITHER_CTRL)
 					{
@@ -3885,7 +3886,7 @@ void eof_vocal_editor_logic(void)
 					}
 				}
 			}
-			unsigned long move_offset = 0;
+			int move_offset = 0;
 			int revert = 0;
 			int revert_amount = 0;
 			if(mouse_b & 1 && !eof_lclick_released)
@@ -3915,7 +3916,8 @@ void eof_vocal_editor_logic(void)
 				{
 					if(eof_snap_mode != EOF_SNAP_OFF && !KEY_EITHER_CTRL)
 					{
-						move_offset = eof_pen_lyric.pos - eof_last_pen_pos;
+						eof_snap_logic(&drag_snap, lpos - eof_peg_x);
+						move_offset = (int)drag_snap.pos - (int)eof_song->vocal_track->lyric[eof_pegged_note]->pos;
 						eof_last_pen_pos = rpos;
 					}
 					if(!eof_undo_toggle && (move_offset != 0 || eof_snap_mode == EOF_SNAP_OFF || KEY_EITHER_CTRL))
