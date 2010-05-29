@@ -12,6 +12,8 @@ Fixed '.' character not being accepted in "Change BPM" dialog box.
 
 Fixed grid snap issue in PART VOCALS editor.
 
+Fixed some issues with audio fine-tuning.
+
 
 1.64:
 
