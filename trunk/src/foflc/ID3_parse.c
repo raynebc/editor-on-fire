@@ -8,7 +8,7 @@
 int SearchValues(FILE *inf,unsigned long breakpos,unsigned long *pos,const unsigned char *phrase,unsigned long phraselen,unsigned char autoseek)
 {
 	unsigned long originalpos;
-	unsigned long matchpos;
+	unsigned long matchpos=0;
 	unsigned char c;
 	unsigned long ctr=0;		//Used to index into the phrase[] array, beginning with the first character
 	unsigned char success=0;
