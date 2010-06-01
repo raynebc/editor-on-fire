@@ -70,8 +70,9 @@ Export functions are expected to:
 #define KAR_FORMAT 8
 #define PITCHED_LYRIC_FORMAT 9
 #define SKAR_FORMAT 10
+#define ID3_FORMAT 11
 
-#define NUMBEROFLYRICFORMATS 10
+#define NUMBEROFLYRICFORMATS 11
 	//This defined number should be equal to the number of defined lyric macros above, for use with the LYRICFORMATNAMES[] array
 
 //#define NDEBUG		//This will disable the assert macros in the source file if defined
@@ -295,6 +296,11 @@ void ReleaseMemory(char release_all);
 	//If release_all is nonzero, strings that are set by command line are also released, otherwise they are kept
 	//Such strings should only be released when the program is finished, otherwise command line parameters may be lost
 	//release_all should be 0 if being called by the lyric detection logic
+void EnumerateFormatDetectionList(struct Lyric_Format *detectionlist);
+	//Used to display information about the detected lyric formats detailed in the list
+	//If the passed parameter is NULL, the information displayed is that it is not a valid lyric file
+void DestroyLyricFormatList(struct Lyric_Format *ptr);
+	//Used to deallocate the linked list returned by DetectLyricFormat()
 
 
 //
@@ -396,11 +402,10 @@ struct Lyric_Format *DetectLyricFormat(char *file);
 	//Vocal Rhythm MIDI will NOT be detected
 	//If NULL is returned, the file is not valid for import (invalid lyrics or unknown type)
 	//NOTE:  Only MIDI tracks that have a name are included in the detection for MIDI type formats
-void EnumerateFormatDetectionList(struct Lyric_Format *detectionlist);
-	//Used to display information about the detected lyric formats detailed in the list
-	//If the passed parameter is NULL, the information displayed is that it is not a valid lyric file
-void DestroyLyricFormatList(struct Lyric_Format *ptr);
-	//Used to deallocate the linked list returned by DetectLyricFormat()
+char *ParseString(FILE *inf);
+	//Parses a null terminated string at the current file position, allocates memory for it and returns it
+	//NULL is returned upon error
+	//Upon success, the file position is left after the null terminator of the string that was read
 
 
 #ifndef USEMEMWATCH

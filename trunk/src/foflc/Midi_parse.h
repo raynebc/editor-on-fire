@@ -95,6 +95,8 @@ struct _MIDISTRUCT_{
 		//This is the overdrive status that corresponds to unfinalizedlyric
 	char unfinalizedgroupswithnext;
 		//This is the grouping status that corresponds to unfinalizedlyric
+	char isrmid;
+		//Boolean: The input file is a RIFF-MIDI (a SMF format file enclosed in an RIFF header)
 };
 
 struct TEPstruct	//This is structure containing all variables utilized within the track event processor
@@ -161,7 +163,8 @@ void ReadMIDIHeader(FILE *inf,char suppress_errors);
 	//Loads and validates the MIDI header.  If verbose is nonzero, outputs values
 	//If suppress_errors is nonzero, error messages are not displayed to stdout
 int ReadTrackHeader(FILE *inf,struct Track_chunk *tchunk);
-	//Loads and validates a track header, returns nonzero if EOF is encountered reading the next byte in the file, meaning the file cleanly ended.
+	//Loads and validates a track header, returns 1 if EOF is encountered reading the next byte in the file, meaning the file cleanly ended.
+	//returns -1 if the track header is invalid or 0 if the track header was successfully parsed
 	//tchunk is a pointer to a track header structure stored within hchunk.tracks
 int ReadVarLength(FILE *inf, unsigned long *ptr);
 	//Read variable length value into *ptr performing bit shifting accordingly.  Returns zero on success

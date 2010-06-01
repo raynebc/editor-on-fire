@@ -33,12 +33,14 @@ void InitMIDI(void)
 	MIDIstruct.trackswritten=0;
 	MIDIstruct.diff_lo=MIDIstruct.diff_hi=0;
 	MIDIstruct.mixedtrack=0;
+	MIDIstruct.isrmid=0;
 	Lyrics.last_pitch=0;
 }
 
 void ReadMIDIHeader(FILE *inf,char suppress_errors)
 {
 	unsigned short ctr;
+	unsigned char failure=0;
 	char header[5]={0,0,0,0,0};	//Used to read header
 
 	assert_wrapper(inf != NULL);	//This must not be NULL
@@ -48,10 +50,26 @@ void ReadMIDIHeader(FILE *inf,char suppress_errors)
 
 	if(strcmp(header,"MThd") != 0)
 	{
+		if(strcmp(header,"RIFF") == 0)	//If this is a RIFF-MIDI (RMIDI) header
+		{
+			if(Lyrics.verbose)	puts("Parsing RIFF-MIDI header");
+			MIDIstruct.isrmid=1;		//Track that this MIDI file is within a RIFF header
+			fseek_err(inf,20,SEEK_SET);	//Seek to byte 20, which is the beginning of the MIDI header in an RMIDI file
+			fread_err(header,4,1,inf);	//Read 4 bytes, which are expected to be the MIDI header
+			if(strcmp(header,"MThd") != 0)
+				failure=1;
+		}
+		else
+			failure=1;
+	}
+
+	if(failure)
+	{
 		if(!suppress_errors)
 			puts("Error: Incorrect MIDI header\nAborting");
 		exit_wrapper(1);
 	}
+
 	ReadDWORDBE(inf,&MIDIstruct.hchunk.chunksize);
 	if((unsigned long)MIDIstruct.hchunk.chunksize != (unsigned long)6)
 	{
@@ -106,8 +124,8 @@ int ReadTrackHeader(FILE *inf,struct Track_chunk *tchunk)
 	header[4]='\0';	//Terminate string, which is now expected to be "MTrk"
 	if(strcmp(header,"MTrk") != 0)
 	{
-		printf("Error: Incorrect track header at byte 0x%lX\nAborting\n",ftell_err(inf)-4);
-		exit_wrapper(1);
+//		printf("Error: Incorrect track header at byte 0x%lX\n",ftell_err(inf)-4);
+		return -1;	//Return invalid track header
 	}
 	ReadDWORDBE(inf,&(tchunk->chunksize));
 
@@ -753,6 +771,7 @@ void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppr
 	struct Track_chunk temp;	//Used to count the track headers
 	unsigned short ctr=0;		//The currently parsed MIDI track number
 	size_t temp2;
+	int error=0;				//error returned from ReadTrackHeader
 
 	assert_wrapper(inf != NULL);	//A filename must have been passed to this function
 
@@ -771,8 +790,14 @@ void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppr
 	temp2=ftell_err(inf);
 
 //Do a manual count of the tracks headers in the file and store each track's location
-	while(ReadTrackHeader(inf,&temp) == 0)	//for each track that is read
+//v2.1	Changed ReadTrackHeader() to return error codes instead of abort program
+//	while(ReadTrackHeader(inf,&temp) == 0)	//for each track that is read
+	while(1)
 	{
+		error=ReadTrackHeader(inf,&temp);	//Read the next track
+		if(error)	//If end of file or invalid track header is read
+			break;	//exit loop
+
 		if(Lyrics.verbose>=2)	printf("MIDI track %u begins at byte 0x%lX\n",ctr,(unsigned long)temp2);
 		(MIDIstruct.hchunk.tracks[ctr]).fileposition=temp2;	//Store file position for this track
 		ctr++;		//Increment track counter
@@ -786,8 +811,18 @@ void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppr
 		exit_wrapper(1);
 	}
 
-	if(MIDIstruct.hchunk.numtracks != ctr)
-		puts("\aWarning: Input MIDI file is damaged (incorrect number of tracks specified)");
+	if(ctr < MIDIstruct.hchunk.numtracks)
+	{	//If too few tracks were defined
+		if(error == -1)	//If it was due to an error in the MIDI
+		{
+			printf("Error: Incorrect track header at byte 0x%lX\nAborting\n",ftell_err(inf)-4);
+			exit_wrapper(1);	//Abort
+		}
+		else
+			puts("\aWarning: Input MIDI file is damaged (too few tracks are defined)");
+	}
+	else if(ctr > MIDIstruct.hchunk.numtracks)
+		puts("\aWarning: Input MIDI file is damaged (too many tracks are defined)");
 
 //Override the number of tracks specified in the MIDI file because we validated it ourselves
 	MIDIstruct.hchunk.numtracks=ctr;
@@ -1832,7 +1867,6 @@ void PitchedLyric_Load(FILE *inf)
 			else
 				Lyrics.overdrive_on=0;		//Otherwise disable overdrive
 
-			//v1.89 Added error checking for new lyric line indicator when there are no more vocal rhythm notes
 			//Verify that there are enough lyric entries created during vocal rhythm import to load this lyric
 			if(lyrptr == NULL)
 			{
@@ -2239,11 +2273,7 @@ int Lyric_handler(struct TEPstruct *data)
 		if(lastlyric != NULL)
 		{	//If a Lyric was parsed and a corresponding Note # was expected, perform following logic and add Lyric to Notes list at end of this function
 			if(data->delta != 0)
-			{
-//v2.1	Kasabian - Shoot The Runner MIDI violates RB/KAR spec and has a lyric pitch at a different delta time than its lyric text, allow this with warning
 				printf("\a Warning: Note on for a lyric piece has a delta != 0 (Delta time for the event is at file position %lX)\n",data->startindex);
-//				exit_wrapper(2);
-			}
 		}
 		else	//If no lyric was parsed yet, return depending on whether lyricless logic is in effect
 		{
@@ -2347,7 +2377,6 @@ void AddMIDILyric(char *str,unsigned long start,unsigned char pitch,char isoverd
 {	//Adds the Lyric and Note On information to the linked list
 	struct MIDI_Lyric_Piece *temp;
 
-//v2.1	Prevent two consecutive line breaks from being added to this list
 	if((MIDI_Lyrics.head != NULL) && (MIDI_Lyrics.tail != NULL) && (MIDI_Lyrics.tail->lyric == NULL))
 		return;		//If the last item appended was a line break, return instead of appending another consecutive line break
 
@@ -2437,8 +2466,6 @@ struct MIDI_Lyric_Piece *EndMIDILyric(unsigned char pitch,unsigned long end)
 	return temp;
 }
 
-//v2.0	Changed this function to remove from the MIDI Lyrics list and store directly in the Lyrics list
-//struct MIDI_Lyric_Piece *GetLyricPiece(void)
 int GetLyricPiece(void)
 {
 	struct MIDI_Lyric_Piece *temp=MIDI_Lyrics.head;

@@ -6,6 +6,11 @@ struct ID3Tag
 	FILE *fp;					//The file pointer to the file being parsed
 	unsigned long framestart;	//This is the file position of the first byte past the ID3 Tag header, which is the first frame header
 	unsigned long tagend;		//This is the file position of the first byte past the ID3 Tag
+
+	//These three variables are set by GetMP3FrameDuration(), if this is an MP3 file
+	unsigned long samplerate;	//The detected sample rate
+	unsigned long samplesperframe;	//This is 384 for Layer 1 or 1152 for Layer 2 or Layer 3
+	double frameduration;		//The realtime duration, in millis, of one MPEG frame (samplesperframe * 1000 / samplerate)
 };
 
 int SearchValues(FILE *inf,unsigned long breakpos,unsigned long *pos,const unsigned char *phrase,unsigned long phraselen,unsigned char autoseek);
@@ -47,5 +52,23 @@ int FindID3Tag(struct ID3Tag *ptr);
 	//of through the entire file.  The file pointer in the passed structure is expected to be opened to the file to parse
 	//The start of the tag and the file position of the first byte outside the tag are populated in ptr.
 	//Nonzero is returned upon success or zero is returned upon failure
+
+unsigned long GetMP3FrameDuration(struct ID3Tag *ptr);
+	//Expects that the file position is at the first MP3 frame, and not the ID3 tag
+	//Returns the sample rate, or 0 on error.  Valid sample rates are: 8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100 and 48000
+	//The MPEG version and layer description are examined to determine the sample rate and the number of samples per frame
+	//These two values are used to determine the realtime duration of one MPEG frame in milliseconds (stored as double floating point)
+
+void ID3_Load(FILE *inf);
+	//Parses the file looking for an ID3 tag.  If found, the first MP3 frame is examined to obtain information to
+	//determine the realtime duration of one MPEG frame.  Then an SYLT frame is searched for within the ID3 tag.
+	//If found, synchronized lyrics are imported
+
+void SYLT_Parse(struct ID3Tag *tag);
+	//Called by ID3_Load()
+	//Expects the structure's file pointer to be at the beginning of an SYLT frame
+	//The ID3 tag must have been processed so that the start and end of the tag is known
+	//The sample rate is also expected to be nonzero if MPEG frame format timestamps are defined
+	//Parses the lyrics from the SYLT frame and loads them into the Lyrics structure
 
 #endif //#ifndef _id3_parse_h_
