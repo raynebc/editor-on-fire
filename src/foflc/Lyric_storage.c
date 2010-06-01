@@ -8,6 +8,7 @@
 #include "VL_parse.h"
 #include "Midi_parse.h"
 #include "LRC_parse.h"
+#include "ID3_parse.h"
 
 #ifdef USEMEMWATCH
 #include <memwatch.h>
@@ -21,7 +22,7 @@ jmp_buf jumpbuffer;			//Used in the conditional compiling code to allow this pro
 							//in the event of an exception that would normally terminate the program
 jmp_buf FLjumpbuffer;		//This is used by FLC's internal logic to provide for exception handling (ie. in validating MIDI files with DetectLyricFormat())
 char useFLjumpbuffer=0;		//Boolean:  If nonzero, FLC's logic intercepts in exit_wrapper() regardless of whether EOF_BUILD is defined
-const char *LYRICFORMATNAMES[NUMBEROFLYRICFORMATS+1]={"UNKNOWN LYRIC TYPE","SCRIPT","VL","RB MIDI","UltraStar","LRC","Vocal Rhythm","ELRC","KAR","Pitched Lyrics","Soft Karaoke"};
+const char *LYRICFORMATNAMES[NUMBEROFLYRICFORMATS+1]={"UNKNOWN LYRIC TYPE","SCRIPT","VL","RB MIDI","UltraStar","LRC","Vocal Rhythm","ELRC","KAR","Pitched Lyrics","Soft Karaoke","ID3 Lyrics"};
 
 
 
@@ -750,7 +751,6 @@ long int ParseLongInt(char *buffer,unsigned long *startindex,unsigned long linen
 		}
 	}
 
-//v2.1, allow for a null character immediately after the parsed number
 	while(isspace((unsigned char)buffer[index]) == 0)
 	{	//Until whitespace or NULL character is found
 		if(isdigit((unsigned char)buffer[index]))	//If this is a numerical character
@@ -935,8 +935,9 @@ void PostProcessLyrics(void)
 					pieceptr->lyric[strlen(pieceptr->lyric)-1]='\0';	//truncate the hyphen
 
 		//Handle equal sign character handling
-			if(((Lyrics.nohyphens & 2 ) == 0) && pieceptr->hasequal)
-			{	//If hyphens from input lyrics are NOT to be suppressed and the input file had an equal sign
+//			if(((Lyrics.nohyphens & 2 ) == 0) && pieceptr->hasequal)
+			if(pieceptr->hasequal)
+			{	//If the input lyric had an equal sign, append it without regard to the nohyphens setting
 				if(Lyrics.out_format == MIDI_FORMAT)		//If outputting to MIDI, this must be written back as '='
 					pieceptr->lyric=ResizedAppend(pieceptr->lyric,"=",1);//Resize the string to include an appended = char
 				else if(pieceptr->lyric[strlen(pieceptr->lyric)-1] != '-')	//If lyric doesn't already end in a hyphen
@@ -1782,6 +1783,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 	FILE *inf;
 	struct Lyric_Format *detectionlist;	//The linked list of all detected lyric formats in the specified file
 	struct Lyric_Format *curdetection=NULL;	//The conductor for the above linked list (used in the MIDI detection logic)
+	struct ID3Tag tag={NULL,0,0,0,0,0.0};	//Used for ID3 detection
 
 	assert_wrapper(file != NULL);
 	InitLyrics();	//Initialize all variables in the Lyrics structure
@@ -1964,8 +1966,26 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 		return NULL;		//Return invalid file
 	}
 
+//Test for MP3 file with ID3 tag
 	rewind(inf);
+	tag.fp=inf;
+	if(FindID3Tag(&tag) != 0)	//Find start and end of ID3 tag
+	{	//If the ID3 tag was found
+		fseek_err(tag.fp,tag.tagend,SEEK_SET);	//Seek to the first MP3 frame (immediately after the ID3 tag)
+		if(GetMP3FrameDuration(&tag) != 0)	//Find the sample rate defined in the MP3 frame
+		{	//If the MP3 head was able to be parsed
+			fseek_err(tag.fp,tag.framestart,SEEK_SET);	//Seek to first ID3 frame
+			if(SearchValues(tag.fp,tag.tagend,NULL,"SYLT",4,1) == 1)	//Seek to SYLT ID3 frame
+			{	//If an SYLT frame header was found
+				fclose_err(inf);
+				detectionlist->format=ID3_FORMAT;
+				return detectionlist;	//Success (valid MP3 file with ID3 lyrics)
+			}
+		}
+	}
+
 //Test for MIDI file
+	rewind(inf);
 	InitMIDI();				//Initialize all variables in the MIDI structure
 	quicktemp=Lyrics.quick;	//Store this value
 	Lyrics.quick=0;			//Force quick processing OFF (so MIDI_Load will not skip parsing entire tracks)
@@ -1977,7 +1997,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 		fclose_err(inf);
 		useFLjumpbuffer=0;		//Restore normal functionality of exit_wrapper
 		Lyrics.quick=quicktemp;	//Restore original quick processing setting
-		return NULL;	//This statement is reached if ReadMIDIHeader() below calles exit_wrapper(), indicating an invalid MIDI header (it is not a MIDI or any of the above defined lyric types, return unknown file)
+		return NULL;			//This statement is reached if ReadMIDIHeader() below calles exit_wrapper(), indicating an invalid MIDI header (it is not a MIDI or any of the above defined lyric types, return unknown file)
 	}
 
 	ReadMIDIHeader(inf,1);	//Suppress errors regarding invalid MIDI header
@@ -2151,6 +2171,7 @@ void EnumerateFormatDetectionList(struct Lyric_Format *detectionlist)
 			case LRC_FORMAT:
 			case ELRC_FORMAT:
 			case PITCHED_LYRIC_FORMAT:
+			case ID3_FORMAT:
 				if(lasttype == 1)
 				{
 					puts("Logic error:  A file cannot be both a MIDI format and a non MIDI format");
@@ -2190,7 +2211,9 @@ void ForceEndLyricLine(void)
 		assert_wrapper(Lyrics.curline != NULL);
 		if(Lyrics.curline->piececount == 0)	//If this unclosed line is empty
 		{	//Manually remove it from the Lyrics structure
-			(Lyrics.curline->prev)->next=NULL;	//Previous line points forward to nothing
+			if(Lyrics.curline->prev != NULL)
+				(Lyrics.curline->prev)->next=NULL;	//Previous line points forward to nothing
+
 			templine=Lyrics.curline->prev;		//Save pointer to previous line
 			free(Lyrics.curline);				//Release empty line
 			Lyrics.curline=templine;			//Point conductor to previous line
@@ -2202,4 +2225,55 @@ void ForceEndLyricLine(void)
 			assert_wrapper(Lyrics.line_on == 0);	//The above call to EndLyricLine() is required to succeed
 		}
 	}
+}
+
+char *ParseString(FILE *inf)
+{
+	//Parses a null terminated string at the current file position, allocates memory for it and returns it
+	//NULL is returned upon error
+	//Upon success, the file position is left after the null terminator of the string that was read
+	unsigned long length=0,index=0;
+	unsigned long position=0;
+	char *string=NULL;
+	int c=0;
+
+	if(inf == NULL)
+		return NULL;
+
+//First pass, parse the string to find its length
+	errno=0;
+	position=ftell_err(inf);	//Save the current file position
+	c=fgetc(inf);
+	while(c != EOF)
+	{
+		length++;	//One more byte was read successfully
+		if(c=='\0')	//If it was the NULL terminator
+			break;	//Exit loop
+		c=fgetc(inf);	//Read next character
+	}
+
+	if(length == 0)		//If no characters could be read
+	{
+		fseek_err(inf,position,SEEK_SET);	//Return to the original file position
+		return NULL;
+	}
+
+//Allocate string and prepare for second pass
+	string=malloc_err(length);		//Length already takes the null terminator into account
+	fseek_err(inf,position,SEEK_SET);	//Return to the original file position
+
+//Second pass, read the string into the allocated memory, performings bounds checking
+	c=fgetc(inf);	//Read first character
+	while(c != EOF)
+	{
+		if(index + 1 >= length)	//If index points to the last usable index of the allocated string
+			break;		//Exit loop to guarantee that the string is truncated to fit and is terminated
+		if(c=='\0')		//If it was the NULL terminator
+			break;		//Exit loop, and write the NULL terminator below
+		string[index++]=c;	//Append character to string
+		c=fgetc(inf);	//Read next character
+	}
+	string[index]='\0';	//Terminate string
+
+	return string;
 }

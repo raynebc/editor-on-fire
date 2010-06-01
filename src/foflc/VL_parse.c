@@ -494,7 +494,6 @@ void VL_Load(FILE *inf)
 		cursync=cursync->next;
 	}//end while(cursync != NULL)
 
-//v2.0	Added ForceEndLyricLine() function
 	ForceEndLyricLine();
 
 	if(Lyrics.verbose)	printf("VL import complete.  %lu lyrics loaded\n\n",Lyrics.piececount);

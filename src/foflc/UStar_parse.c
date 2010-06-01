@@ -358,7 +358,6 @@ void Export_UStar(FILE *outf)
 		if(Lyrics.pitch_tracking)	//Write default pitch MINPITCH unless Lyrics.pitch_tracking is enabled
 			pitch_num=current->pitch;
 
-//v2.0	Put proper pitch remapping logic to convert from MIDI->UltraStar pitch numbering
 		rawpitch=pitch_num;	//Store the pitch into a signed int variable
 		rawpitch-=24;		//Remap to UltraStar numbering
 		if(fprintf(outf,"%c %lu %lu %d ",pitch_char,start-linetime,dur,rawpitch) < 0)
