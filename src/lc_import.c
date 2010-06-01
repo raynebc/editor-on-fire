@@ -6,6 +6,7 @@
 #include "foflc/VL_parse.h"
 #include "foflc/UStar_parse.h"
 #include "foflc/LRC_parse.h"
+#include "foflc/ID3_parse.h"
 #include "song.h"
 #include "main.h"
 
@@ -158,6 +159,11 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 			Lyrics.inputtrack=DuplicateString("Words");
 			MIDI_Load(inf,SKAR_handler,0);	//Call MIDI_Load, specifying the Simple Karaoke Event handler
 			EndLyricLine();	//KAR files do not mark the end of the last line of lyrics
+		break;
+
+		case ID3_FORMAT:	//Load MP3 ID3 tag
+			inf=fopen_err(Lyrics.infilename,"rb");	//MP3 is a binary format
+			ID3_Load(inf);
 		break;
 
 		default:
