@@ -393,6 +393,16 @@ void eof_prepare_note_menu(void)
 			eof_note_menu[6].flags = D_DISABLED; // edit lyric
 			eof_note_menu[7].flags = D_DISABLED; // edit lyric
 
+			/* toggle crazy */
+			if(eof_selected_track != EOF_TRACK_DRUM)
+			{
+				eof_note_menu[9].flags = 0;
+			}
+			else
+			{
+				eof_note_menu[9].flags = D_DISABLED; //Disable toggle crazy when PART DRUMS is active
+			}
+
 			/* solos */
 			if(selected)
 			{
@@ -413,7 +423,7 @@ void eof_prepare_note_menu(void)
 				eof_note_menu[12].flags = D_DISABLED;
 			}
 			eof_note_menu[13].flags = D_DISABLED; // lyric lines
-			
+
 			/* HOPO */
 			if(eof_selected_track != EOF_TRACK_DRUM)
 			{
@@ -762,6 +772,9 @@ int eof_menu_note_toggle_crazy(void)
 {
 	int i;
 	int u = 0;
+
+	if((eof_selected_track == EOF_TRACK_DRUM) || (eof_selected_track == eof_vocals_selected))
+		return 1;	//Do not allow this function to run when PART DRUMS or PART VOCALS is active
 
 	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
 	{
