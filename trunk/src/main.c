@@ -1914,7 +1914,7 @@ void eof_render_note_window(void)
 			{
 				textprintf_ex(eof_window_note->screen, font, 2, ypos, makecol(255, 255, 255), -1, "Lyric = %d : Pos = %lu : Length = %lu", eof_selection.current, eof_song->vocal_track->lyric[eof_selection.current]->pos, eof_song->vocal_track->lyric[eof_selection.current]->length);
 				ypos += 12;
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, makecol(255, 255, 255), -1, "Lyric Text = \"%s\" : Tone = %d (%s)", eof_song->vocal_track->lyric[eof_selection.current]->text, eof_song->vocal_track->lyric[eof_selection.current]->note, eof_get_tone_name(eof_song->vocal_track->lyric[eof_selection.current]->note));
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, makecol(255, 255, 255), -1, "Lyric Text = \"%s\" : Tone = %d (%s)", eof_song->vocal_track->lyric[eof_selection.current]->text, eof_song->vocal_track->lyric[eof_selection.current]->note, (eof_song->vocal_track->lyric[eof_selection.current]->note != 0) ? eof_get_tone_name(eof_song->vocal_track->lyric[eof_selection.current]->note) : "none");
 			}
 			else
 			{
@@ -1997,9 +1997,11 @@ void eof_render_note_window(void)
 void eof_render_lyric_preview(BITMAP * bp)
 {
 	#define MAX_LYRIC_PREVIEW_LENGTH 255
-	unsigned long currentlength;	//Used to track the length of the preview line being built
-	unsigned long lyriclength;		//The length of the lyric being added
-	char *tempstring;				//The code to render in green needs special handling to suppress the / character
+	unsigned long currentlength=0;	//Used to track the length of the preview line being built
+	unsigned long lyriclength=0;	//The length of the lyric being added
+	char *tempstring=NULL;			//The code to render in green needs special handling to suppress the / character
+	EOF_LYRIC_LINE *linenum=NULL;	//Used to find the background color to render the lyric lines in (green for overdrive, otherwise transparent)
+	int bgcol1=-1,bgcol2=-1;
 
 	char lline[2][MAX_LYRIC_PREVIEW_LENGTH+1] = {{0}};
 	int i,x;
@@ -2009,6 +2011,16 @@ void eof_render_lyric_preview(BITMAP * bp)
 	for(x = 0; x < 2; x++)
 	{	//For each of the two lyric preview lines to build
 		currentlength=0;	//Reset preview line length counter
+
+		linenum=FindLyricLine(eof_preview_line_lyric[x]);	//Find the line structure representing this lyric preview
+		if(linenum && (linenum->flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE))	//If this line is overdrive
+		{
+			if(x == 0)	//This is the first preview line
+				bgcol1=makecol(64, 128, 64);	//Render the line's text with an overdrive green background
+			else		//This is the second preview line
+				bgcol2=makecol(64, 128, 64);	//Render the line's text with an overdrive green background
+		}
+
 		for(i = eof_preview_line_lyric[x]; i < eof_preview_line_end_lyric[x]; i++)
 		{
 			if(!x && !eof_music_paused)	//Only perform this logic for the first lyric preview line
@@ -2048,8 +2060,8 @@ void eof_render_lyric_preview(BITMAP * bp)
 		}
 	}
 
-	textout_centre_ex(bp, font, lline[0], bp->w / 2, 20, makecol(255, 255, 255), -1);
-	textout_centre_ex(bp, font, lline[1], bp->w / 2, 36, makecol(255, 255, 255), -1);
+	textout_centre_ex(bp, font, lline[0], bp->w / 2, 20, makecol(255, 255, 255), bgcol1);
+	textout_centre_ex(bp, font, lline[1], bp->w / 2, 36, makecol(255, 255, 255), bgcol2);
 	if(offset >= 0 && eof_hover_lyric >= 0)
 	{
 		if(eof_song->vocal_track->lyric[eof_hover_lyric]->text[strlen(eof_song->vocal_track->lyric[eof_hover_lyric]->text)-1] == '/')
