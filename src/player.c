@@ -9,7 +9,7 @@ void eof_music_play(void)
 {
 	int speed = eof_playback_speed;
 	int i;
-	
+
 	if(eof_music_catalog_playback)
 	{
 		return;
@@ -18,6 +18,11 @@ void eof_music_play(void)
 	if(KEY_EITHER_CTRL)
 	{
 		speed = 500;
+	}
+	else if(key[KEY_F])	//Force full playback speed
+	{
+		speed = 1000;
+		key[KEY_F]=0;
 	}
 	if(eof_music_paused)
 	{
