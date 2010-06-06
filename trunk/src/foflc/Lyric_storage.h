@@ -48,7 +48,7 @@ Export functions are expected to:
 //
 //Global Macros- All relevant source/header files will include this header file to obtain these declarations
 //
-#define PROGVERSION "FoFLyricConverter2.1"
+#define PROGVERSION "FoFLyricConverter2.2"
 #define LYRIC_NOTE_ON 50	//If note #s 60-100 are used for Note On events for lyrics, FoF interprets it as a playable difficulty
 							//Write Note On events using this note number instead.  This is a generic pitch to use
 							//whenever actual pitch for lyrics is not available.
@@ -212,7 +212,7 @@ struct _LYRICSSTRUCT_{
 	char *srclyrname;		//Stores the name of the input pitched lyrics file (for vocal rhythm import)
 	char *srcrhythmname;	//Stores the name of the input vocal rhythm file (for vocal rhythm import)
 	char *dstlyrname;		//Stores the name of the output pitched lyrics file (for vocal rhythm export)
-	char *srcmidiname;		//Stores the name of the source midi file used to load MIDI timings and copy tracks from (when exporting to MIDI based formats like MIDI, KAR, Vrhythm)
+	char *srcfile;			//Stores the name of the source midi file used to load MIDI timings and copy tracks from (when exporting to MIDI based formats like MIDI, KAR, Vrhythm)
 
 //Track names
 	char *inputtrack;		//Specifies the track from which vocals will be loaded during a MIDI based import
@@ -332,21 +332,21 @@ void ReadWORDLE(FILE *inf,unsigned short *data);
 	//Takes a pointer to a 2 byte unsigned short, reads 2 bytes from input file and uses bit shifts to arrange them properly into memory
 	//Little endian encoding is assumed, where the first byte read is expected to be the least significant
 	//VL files are written in Little Endian format
-void WriteWORDLE(FILE *inf,unsigned short data);
+void WriteWORDLE(FILE *outf,unsigned short data);
 	//Writes a two byte value to file in Little Endian format (least significant byte written first)
 void ReadDWORDLE(FILE *inf,unsigned long *data);
 	//Takes a pointer to a 4 byte unsigned long, reads 4 bytes from input file and uses bit shifts to arrange them properly into memory
 	//Little endian encoding is assumed, where the first byte read is expected to be the least significant
 	//VL files are written in Little Endian format
-void WriteDWORDLE(FILE *inf,unsigned long data);
+void WriteDWORDLE(FILE *outf,unsigned long data);
 	//Writes a four byte value to file in Little ndian format (least significant byte written first)
 void ReadWORDBE(FILE *inf, unsigned short *ptr);
 	//Read 2 bytes in Big Endian format from file into *ptr, performing bit shifting accordingly
-void WriteWORDBE(FILE *inf,unsigned short data);
+void WriteWORDBE(FILE *outf,unsigned short data);
 	//Writes a two byte value to file in Big Endian format (most significant byte written first)
 void ReadDWORDBE(FILE *inf, unsigned long *ptr);
 	//Read 4 bytes in Big Endian format from file into *ptr, performing bit shifting accordingly
-void WriteDWORDBE(FILE *inf,unsigned long data);
+void WriteDWORDBE(FILE *outf,unsigned long data);
 	//Writes a four byte value to file in Big ndian format (most significant byte written first)
 unsigned long ParseUnicodeString(FILE *inf);
 	//Reads from input file, returning the length of the Unicode string (not including NULL terminator) at the current file position,
@@ -406,6 +406,12 @@ char *ParseString(FILE *inf);
 	//Parses a null terminated string at the current file position, allocates memory for it and returns it
 	//NULL is returned upon error
 	//Upon success, the file position is left after the null terminator of the string that was read
+unsigned long GetFileEndPos(FILE *fp);
+	//Accepts a binary mode stream pointer, seeks to the last byte, obtains the file position,
+	//seeks to the original file position and returns the file position of the last byte
+int BlockCopy(FILE *inf,FILE *outf,unsigned long num);
+	//Accepts an input file and output file, copying the specified number of bytes from the former to the latter
+	//Returns 0 on success, -1 on memory allocation error, -2 on file I/O error or -3 on other error
 
 
 #ifndef USEMEMWATCH

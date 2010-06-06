@@ -1,16 +1,28 @@
 #ifndef _id3_parse_h_
 #define _id3_parse_h_
 
+struct ID3Frame
+{
+	char *FrameID;			//A null terminated respresentation of the frame ID, ie "SYLT"
+	unsigned long pos;		//The file position of the frame header
+	unsigned long length;	//The length of the frame (minus header)
+	struct ID3Frame *prev;	//Previous link in the list
+	struct ID3Frame *next;	//Next link in the list
+};
+
 struct ID3Tag
 {
 	FILE *fp;					//The file pointer to the file being parsed
-	unsigned long framestart;	//This is the file position of the first byte past the ID3 Tag header, which is the first frame header
+	unsigned long tagstart;		//This is the file position of the first byte in the ID3 Tag header
+	unsigned long framestart;	//This is the file position of the first byte past the ID3 Tag header(s), which is the first frame header
 	unsigned long tagend;		//This is the file position of the first byte past the ID3 Tag
 
 	//These three variables are set by GetMP3FrameDuration(), if this is an MP3 file
 	unsigned long samplerate;	//The detected sample rate
 	unsigned long samplesperframe;	//This is 384 for Layer 1 or 1152 for Layer 2 or Layer 3
 	double frameduration;		//The realtime duration, in millis, of one MPEG frame (samplesperframe * 1000 / samplerate)
+
+	struct ID3Frame *frames;	//A linked list of ID3Frames that is populated by ID3FrameProcessor()
 };
 
 int SearchValues(FILE *inf,unsigned long breakpos,unsigned long *pos,const unsigned char *phrase,unsigned long phraselen,unsigned char autoseek);
@@ -31,7 +43,7 @@ char *ReadTextInfoFrame(FILE *inf);
 	//Upon error, inf is returned to its original file position
 
 int FindID3Tag(struct ID3Tag *ptr);
-	//Called by ReadID3Tags() to find the ID3 tag header so that all parsing can take place within the confines of the tag instead
+	//Find the ID3 tag header so that all parsing can take place within the confines of the tag instead
 	//of through the entire file.  The file pointer in the passed structure is expected to be opened to the file to parse
 	//The start of the tag and the file position of the first byte outside the tag are populated in ptr.
 	//Nonzero is returned upon success or zero is returned upon failure
@@ -70,5 +82,28 @@ void SYLT_Parse(struct ID3Tag *tag);
 	//The ID3 tag must have been processed so that the start and end of the tag is known
 	//The sample rate is also expected to be nonzero if MPEG frame format timestamps are defined
 	//Parses the lyrics from the SYLT frame and loads them into the Lyrics structure
+
+unsigned long ID3FrameProcessor(struct ID3Tag *ptr);
+	//Parses the file given in the structure, building a list of all ID3 frames encountered.  The extended header is looked for and
+	//skipped.  Any non-valid frame header is skipped
+	//Returns the number of frames parsed and stored into the ID3Frame list (0 would be considered a failure)
+
+int ValidateID3FrameHeader(struct ID3Tag *ptr);
+	//Reads the presumed 10 byte header at the current file position
+	//Returns nonzero (success) if the first four bytes are all capital alphabetical and/or numerical, the file position is at or after the
+	//position of the defined start of the tag, and the end file position is at or before the defined end of the tag
+	//The file position is returned unchanged from its original position
+
+void DestroyID3FrameList(struct ID3Tag *ptr);
+	//Deallocates all memory used in the ID3Frame linked list
+
+unsigned long BuildID3Tag(struct ID3Tag *ptr,FILE *outf);
+	//Writes the modified ID3 tag from the input file (including the imported lyrics) to the output file
+	//All non ID3 data is written as-is
+	//Returns the number of frames written to output file
+
+void Export_ID3(FILE *inf, FILE *outf);
+	//Takes an input MP3 file and writes the contents of the Lyrics structure to the output file,
+	//preserving the other ID3 and audio data from the input file
 
 #endif //#ifndef _id3_parse_h_
