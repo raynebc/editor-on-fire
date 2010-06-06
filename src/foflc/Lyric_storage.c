@@ -99,7 +99,7 @@ void InitLyrics(void)
 	Lyrics.srclyrname=NULL;
 	Lyrics.srcrhythmname=NULL;
 	Lyrics.dstlyrname=NULL;
-	Lyrics.srcmidiname=NULL;
+	Lyrics.srcfile=NULL;
 	Lyrics.TitleStringID=NULL;
 	Lyrics.ArtistStringID=NULL;
 	Lyrics.AlbumStringID=NULL;
@@ -155,6 +155,7 @@ void EndLyricLine(void)
 	struct Lyric_Piece *temp;	//A conductor to use for lyric overlap checking
 	struct Lyric_Piece *temp2;	//A temporary pointer to use for lyric combination
 	struct Lyric_Piece *next;	//A conditional next piece pointer needs to be used
+//	struct Lyric_Line *temp3;	//Used for logic to move lyrics
 
 	if(Lyrics.line_on == 0)	//If there is no open line of lyrics
 		return;
@@ -210,15 +211,16 @@ void EndLyricLine(void)
 				free(next);
 				Lyrics.piececount--;					//decrement the lyric piece counter
 				Lyrics.curline->piececount--;			//decrement the line lyric counter
-				continue;	//Don't skip to next piece.  Restart overlap checking with focus on this piece
+				if(next != NULL)	//As long as this isn't now the last piece in the line
+					continue;	//Don't skip to next piece.  Restart overlap checking with focus on this piece
 			}
 
 //Special handling for overlapping
 			if(temp->start + temp->duration > next->start)
 			{	//If this piece extends past the timestamp of the next piece
-				if(temp->start + temp->duration > next->start + 1)
-					//Suppress warning if the overlapping isn't larger than 1ms (which is often caused by the rounding code)
-					printf("Warning: Lyric \"%s\" at %lums will overlap with \"%s\" at %lums.  Shortening to %lums\n\n",temp->lyric,temp->start,next->lyric,next->start,next->start-temp->start);
+				if((temp->start + temp->duration > next->start + 1) || (next->start - temp->start == 0))
+					//Suppress warning if the overlapping isn't larger than 1ms (which is often caused by the rounding code), and if the lyric won't be shortened to 0ms
+					printf("Warning: Lyric \"%s\" at %lums will overlap with \"%s\" at %lums.  Shortening to %lums\n",temp->lyric,temp->start,next->lyric,next->start,next->start-temp->start);
 
 				if(next == Lyrics.curline->pieces)
 				//If the previous line's duration is going to be shortened, update the line's duration
@@ -243,6 +245,8 @@ void EndLyricLine(void)
 					temp->pitch=next->pitch;
 					temp->style=next->style;
 					temp->groupswithnext=next->groupswithnext;
+
+					assert_wrapper(next != NULL);
 					temp2=next->next;			//Remember address of the next lyric piece after the next piece
 				//Delete next lyric piece
 					free(next->lyric);			//release this string
@@ -250,7 +254,38 @@ void EndLyricLine(void)
 					Lyrics.piececount--;		//decrement the lyric piece counter
 					Lyrics.curline->piececount--;//decrement the line lyric counter
 				//Reconnect linked list
-					next=temp2;			//point next link to the link that followed the now-deleted link
+					if(temp == Lyrics.prevlineslast)
+					{	//If the link that was freed was the head of this line
+						Lyrics.curline->pieces=temp2;	//Correct the head of the linked list
+						if(temp2 != NULL)		//If there are lyrics left in this line
+							temp2->prev=NULL;	//New head of list points back to nothing
+						else
+						{	//Remove this empty line and break from loop
+							assert(Lyrics.curline->prev != NULL);	//Cannot group the first line's lyrics to a previous line
+							Lyrics.curline=Lyrics.curline->prev;	//Point back to previous line
+							free(Lyrics.curline->next);				//Free empty line
+							Lyrics.curline->next=NULL;				//What was the previous line points forward to nothing
+							Lyrics.linecount--;
+
+							break;
+/*This shouldn't be necessary, as there cannot be lyrics that follow the current line
+							if(Lyrics.curline->next != NULL)						//If there's a next line
+							{
+								Lyrics.curline->next->prev=Lyrics.curline->prev;	//Next line points back to previous line
+								temp3=Lyrics.curline->next;	//Store address of next line
+								free(Lyrics.curline);		//Release empty line
+								Lyrics.curline=temp3;		//Point to next line
+							}
+*/
+						}
+					}
+					else
+					{
+//						next=temp2;			//point next link to the link that followed the now-deleted link
+						temp->next=temp2;	//Point current link to next link
+						if(temp->next != NULL)			//If there was a next link
+							(temp->next)->prev=temp;	//Point next link back to current link
+					}
 				}
 				else	//increase the duration of this lyric to 1 because it won't overlap with next piece
 				{
@@ -266,7 +301,7 @@ void EndLyricLine(void)
 
 		temp=next;	//Point the conductor to the next lyric piece (if the last piece in the previous line was being
 					//checked, next was already properly set to point to the first piece in this line
-	}
+	}//For each piece in the line
 
 	RecountLineVars(Lyrics.curline);
 	if(Lyrics.verbose>=2)	putchar('\n');
@@ -295,12 +330,10 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 		leadspace=1;
 
 	if(isspace(str[strlen(str)-1]))	//If the string ends with whitespace
-	{
-		if(Lyrics.verbose>=2)	printf("\t\tLyric \"%s\" detected as having trailing whitespace, this will defeat grouping with the next lyric if applicable\n",str);
 		trailspace=1;
-	}
 
 	str=TruncateString(str,0);	//Remove all leading and trailing whitespace, do NOT deallocate original string
+
 	if(str[0] == '\0')			//If the string is empty
 	{
 		if(Lyrics.verbose>=2)	puts("Empty lyric ignored");
@@ -448,6 +481,7 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 	{
 		printf("start=%lu\tAdj. start=%lu",start,start-Lyrics.realoffset);
 		if(groupswithnext)	printf("\tGroupswithnext=TRUE");
+		if(trailspace)	printf("\n\t\tLyric \"%s\" detected as having trailing whitespace, this will defeat grouping with the next lyric if applicable",str);
 		putchar('\n');
 	}
 
@@ -543,12 +577,12 @@ void ReadWORDLE(FILE *inf,unsigned short *data)
 	*data=((unsigned short)buffer[0] | ((unsigned short)buffer[1]<<8));	//Convert to 2 byte integer
 }
 
-void WriteWORDLE(FILE *inf,unsigned short data)
+void WriteWORDLE(FILE *outf,unsigned short data)
 {
-	assert_wrapper(inf != NULL);
+	assert_wrapper(outf != NULL);
 
-	fputc_err(data & 0xFF,inf);	//Write the least significant byte first
-	fputc_err(data >> 8,inf);	//Write the most significant byte last
+	fputc_err(data & 0xFF,outf);	//Write the least significant byte first
+	fputc_err(data >> 8,outf);		//Write the most significant byte last
 }
 
 void ReadDWORDLE(FILE *inf,unsigned long *data)
@@ -567,17 +601,17 @@ void ReadDWORDLE(FILE *inf,unsigned long *data)
 		//Convert to 4 byte integer
 }
 
-void WriteDWORDLE(FILE *inf,unsigned long data)
+void WriteDWORDLE(FILE *outf,unsigned long data)
 {
-	assert_wrapper(inf != NULL);
+	assert_wrapper(outf != NULL);
 
-	fputc_err(data & 0xFF,inf);	//Write the least significant byte first
-	data=data>>8;				//Drop the least significant byte
-	fputc_err(data & 0xFF,inf);	//Write the next least significant byte
-	data=data>>8;				//Drop the least significant byte
-	fputc_err(data & 0xFF,inf);	//Write the next least significant byte
-	data=data>>8;				//Drop the least significant byte
-	fputc_err(data & 0xFF,inf);	//Write the most significant byte last
+	fputc_err(data & 0xFF,outf);	//Write the least significant byte first
+	data=data>>8;					//Drop the least significant byte
+	fputc_err(data & 0xFF,outf);	//Write the next least significant byte
+	data=data>>8;					//Drop the least significant byte
+	fputc_err(data & 0xFF,outf);	//Write the next least significant byte
+	data=data>>8;					//Drop the least significant byte
+	fputc_err(data & 0xFF,outf);	//Write the most significant byte last
 }
 
 void ReadWORDBE(FILE *inf, unsigned short *ptr)
@@ -591,12 +625,12 @@ void ReadWORDBE(FILE *inf, unsigned short *ptr)
 	*ptr=(unsigned short)((buffer[0]<<8) | buffer[1]);	//Convert to 2 byte integer
 }
 
-void WriteWORDBE(FILE *inf,unsigned short data)
+void WriteWORDBE(FILE *outf,unsigned short data)
 {
-	assert_wrapper(inf != NULL);
+	assert_wrapper(outf != NULL);
 
-	fputc_err(data >> 8,inf);	//Write the most significant byte first
-	fputc_err(data & 0xFF,inf);	//Write the least significant byte last
+	fputc_err(data >> 8,outf);		//Write the most significant byte first
+	fputc_err(data & 0xFF,outf);	//Write the least significant byte last
 }
 
 void ReadDWORDBE(FILE *inf, unsigned long *ptr)
@@ -610,14 +644,14 @@ void ReadDWORDBE(FILE *inf, unsigned long *ptr)
 	*ptr=((unsigned long)buffer[0]<<24) | ((unsigned long)buffer[1]<<16) | ((unsigned long)buffer[2]<<8) | ((unsigned long)buffer[3]);	//Convert to 4 byte integer
 }
 
-void WriteDWORDBE(FILE *inf,unsigned long data)
+void WriteDWORDBE(FILE *outf,unsigned long data)
 {
-	assert_wrapper(inf != NULL);
+	assert_wrapper(outf != NULL);
 
-	fputc_err((data >> 24) & 0xFF,inf);	//Write the most significant byte first
-	fputc_err((data >> 16) & 0xFF,inf);	//Write the next most significant byte
-	fputc_err((data >> 8) & 0xFF,inf);	//Write the next most significant byte
-	fputc_err(data & 0xFF,inf);			//Write the least significant byte last
+	fputc_err((data >> 24) & 0xFF,outf);	//Write the most significant byte first
+	fputc_err((data >> 16) & 0xFF,outf);	//Write the next most significant byte
+	fputc_err((data >> 8) & 0xFF,outf);		//Write the next most significant byte
+	fputc_err(data & 0xFF,outf);			//Write the least significant byte last
 }
 
 unsigned long ParseUnicodeString(FILE *inf)
@@ -872,7 +906,7 @@ void PostProcessLyrics(void)
 	char hyphenadded;			//Used to track whether a hyphen was inserted, so it isn't immediatly removed by the hyphen truncation logic
 	unsigned long start=0,stop=0;	//The recorded beginning and ending timestamps of lyric lines (for duration validation)
 
-	if(Lyrics.verbose)	puts("Performing import post-processing");
+	if(Lyrics.verbose)	puts("Performing import post-processing\n");
 
 	assert_wrapper(Lyrics.line_on == 0);	//It's expected that there are no unclosed lyric lines
 	assert_wrapper(Lyrics.piececount != 0);	//It's expected that there are lyrics
@@ -1783,7 +1817,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 	FILE *inf;
 	struct Lyric_Format *detectionlist;	//The linked list of all detected lyric formats in the specified file
 	struct Lyric_Format *curdetection=NULL;	//The conductor for the above linked list (used in the MIDI detection logic)
-	struct ID3Tag tag={NULL,0,0,0,0,0.0};	//Used for ID3 detection
+	struct ID3Tag tag={NULL,0,0,0,0,0,0.0,NULL};	//Used for ID3 detection
 
 	assert_wrapper(file != NULL);
 	InitLyrics();	//Initialize all variables in the Lyrics structure
@@ -2276,4 +2310,42 @@ char *ParseString(FILE *inf)
 	string[index]='\0';	//Terminate string
 
 	return string;
+}
+
+unsigned long GetFileEndPos(FILE *fp)
+{
+	unsigned long originalpos=0,endpos=0;
+
+	assert_wrapper(fp != NULL);
+	originalpos=ftell_err(fp);		//Record original file position
+	fseek(fp,0,SEEK_END);			//Seek to end of file
+	endpos=ftell_err(fp);			//Record end file position
+	fseek_err(fp,originalpos,SEEK_SET);	//Seek to original file position
+
+	return endpos;				//Return end of file position
+}
+
+int BlockCopy(FILE *inf,FILE *outf,unsigned long num)
+{
+	unsigned char *buffer;
+	int status=0;
+
+	if(Lyrics.verbose >= 2)	printf("Block copying %lu bytes (File position 0x%lX to 0x%lX)\n",num,ftell(inf),ftell(inf)+num-1);
+
+	assert_wrapper((inf != NULL) && (outf != NULL));
+
+	if(num == 0)
+		return -3;
+
+	buffer=(unsigned char *)malloc(num);
+	if(buffer == NULL)
+		return -1;
+
+	if(fread(buffer,num,1,inf) != 1)	//If reading failed
+		status=-2;
+	else if(fwrite(buffer,num,1,outf) != 1)	//If writing failed
+		status=-2;
+
+	free(buffer);
+	return status;	//Return success/failure status
 }

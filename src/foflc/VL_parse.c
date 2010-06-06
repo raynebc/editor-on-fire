@@ -364,7 +364,7 @@ void VL_Load(FILE *inf)
 
 	Lyrics.freestyle_on=1;		//VL is a pitch-less format, so import it as freestyle
 
-	if(Lyrics.verbose)	printf("\nImporting VL lyrics from file \"%s\"\n\n",Lyrics.infilename);
+	if(Lyrics.verbose)	printf("Importing VL lyrics from file \"%s\"\n\n",Lyrics.infilename);
 
 //Build the VL storage structure
 	VL_PreLoad(inf,0);
@@ -486,7 +486,7 @@ void VL_Load(FILE *inf)
 				exit_wrapper(8);
 			}
 
-			if(Lyrics.verbose>=2)	puts("End line of lyrics\n");
+			if(Lyrics.verbose>=2)	puts("End line of lyrics");
 
 			EndLyricLine();		//End the line
 		}
@@ -496,7 +496,7 @@ void VL_Load(FILE *inf)
 
 	ForceEndLyricLine();
 
-	if(Lyrics.verbose)	printf("VL import complete.  %lu lyrics loaded\n\n",Lyrics.piececount);
+	if(Lyrics.verbose)	printf("VL import complete.  %lu lyrics loaded\n",Lyrics.piececount);
 
 	ReleaseVL();	//Release memory used to build the VL structure
 }
