@@ -538,6 +538,10 @@ void eof_read_editor_keys(void)
 		{
 			eof_menu_song_seek_first_note();
 		}
+		else if(KEY_EITHER_SHIFT)
+		{
+			eof_menu_edit_select_previous();
+		}
 		else
 		{
 			eof_menu_song_seek_start();

@@ -107,6 +107,7 @@ MENU eof_edit_selection_menu[] =
     {"Select &Like\tCtrl+L", eof_menu_edit_select_like, NULL, 0, NULL},
     {"Select &Rest\tShift+End", eof_menu_edit_select_rest, NULL, 0, NULL},
     {"&Deselect All\tCtrl+D", eof_menu_edit_deselect_all, NULL, 0, NULL},
+    {"Select &Previous\tShift+Home", eof_menu_edit_select_previous, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -251,7 +252,7 @@ void eof_prepare_edit_menu(void)
 			eof_edit_selection_menu[1].flags = 0; // select like
 
 			/* select rest */
-			if(eof_selection.current != (eof_vocals_selected ? eof_song->vocal_track->lyrics : eof_song->track[eof_selected_track]->notes))
+			if(eof_selection.current != (eof_vocals_selected ? eof_song->vocal_track->lyrics -1 : eof_song->track[eof_selected_track]->notes -1))
 			{
 				eof_edit_selection_menu[2].flags = 0;
 			}
@@ -262,12 +263,22 @@ void eof_prepare_edit_menu(void)
 
 			/* deselect all */
 			eof_edit_selection_menu[3].flags = 0;
+
+			if(eof_selection.current != 0)
+			{
+				eof_edit_selection_menu[4].flags = 0;
+			}
+			else
+			{
+				eof_edit_selection_menu[4].flags = D_DISABLED;	//Select previous cannot be used when the first note/lyric was just selected
+			}
 		}
 		else
 		{
 			eof_edit_selection_menu[1].flags = D_DISABLED; // select like
 			eof_edit_selection_menu[2].flags = D_DISABLED; // select rest
 			eof_edit_selection_menu[3].flags = D_DISABLED; // deselect all
+			eof_edit_selection_menu[4].flags = D_DISABLED; // select previous
 		}
 
 		/* zoom */
@@ -2101,6 +2112,7 @@ int eof_menu_edit_select_rest_vocal(void)
 	{
 		return 1;
 	}
+/*Instead of finding the first selected note, start with the last note that was selected
 	for(i = 0; i < eof_song->vocal_track->lyrics; i++)
 	{
 		if(eof_selection.multi[i])
@@ -2108,7 +2120,11 @@ int eof_menu_edit_select_rest_vocal(void)
 			break;
 		}
 	}
-	for(i = i; i < eof_song->vocal_track->lyrics; i++)
+*/
+	if(eof_selection.current == EOF_MAX_NOTES - 1)	//No Notes selected?
+		return 1;	//Don't perform this operation
+
+	for(i = eof_selection.current; i < eof_song->vocal_track->lyrics; i++)
 	{
 		eof_selection.multi[i] = 1;
 	}
@@ -2127,6 +2143,7 @@ int eof_menu_edit_select_rest(void)
 	{
 		return 1;
 	}
+/*Instead of finding the first selected note, start with the last note that was selected
 	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
 	{
 		if(eof_selection.multi[i] && eof_song->track[eof_selected_track]->note[i]->type == eof_note_type)
@@ -2134,7 +2151,11 @@ int eof_menu_edit_select_rest(void)
 			break;
 		}
 	}
-	for(i = i; i < eof_song->track[eof_selected_track]->notes; i++)
+*/
+	if(eof_selection.current == EOF_MAX_NOTES - 1)	//No notes selected?
+		return 1;	//Don't perform this operation
+
+	for(i = eof_selection.current; i < eof_song->track[eof_selected_track]->notes; i++)
 	{
 		if(eof_song->track[eof_selected_track]->note[i]->type == eof_note_type)
 		{
@@ -2579,5 +2600,49 @@ int eof_menu_edit_paste_from_catalog(void)
 			}
 		}
 	}
+	return 1;
+}
+
+int eof_menu_edit_select_previous_vocal(void)
+{
+	int i;
+
+	if(eof_count_selected_notes(NULL, 0) <= 0)	//If no notes are selected
+	{
+		return 1;
+	}
+	if(eof_selection.current == EOF_MAX_NOTES - 1)	//No Notes selected?
+		return 1;	//Don't perform this operation
+
+	for(i = 0; (i < eof_selection.current) && (i < eof_song->vocal_track->lyrics); i++)
+	{
+		eof_selection.multi[i] = 1;
+	}
+	return 1;
+}
+
+int eof_menu_edit_select_previous(void)
+{
+	int i;
+
+	if(eof_vocals_selected)
+	{
+		return eof_menu_edit_select_previous_vocal();
+	}
+	if(eof_count_selected_notes(NULL, 0) <= 0)	//If no notes are selected
+	{
+		return 1;
+	}
+	if(eof_selection.current == EOF_MAX_NOTES - 1)	//No notes selected?
+		return 1;	//Don't perform this operation
+
+	for(i = 0; (i < eof_selection.current) && (i < eof_song->track[eof_selected_track]->notes); i++)
+	{
+		if(eof_song->track[eof_selected_track]->note[i]->type == eof_note_type)
+		{
+			eof_selection.multi[i] = 1;
+		}
+	}
+
 	return 1;
 }

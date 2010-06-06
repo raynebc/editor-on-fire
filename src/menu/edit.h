@@ -41,6 +41,9 @@ int eof_menu_edit_select_all(void);
 int eof_menu_edit_select_like(void);
 int eof_menu_edit_deselect_all(void);
 int eof_menu_edit_select_rest(void);
+int eof_menu_edit_select_rest_vocal(void);
+int eof_menu_edit_select_previous(void);		//Selects all notes before the last selected note
+int eof_menu_edit_select_previous_vocal(void);	//Selects all lyrics before the last selected lyric
 
 int eof_menu_edit_snap_quarter(void);
 int eof_menu_edit_snap_eighth(void);
