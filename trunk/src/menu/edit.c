@@ -71,10 +71,11 @@ MENU eof_edit_zoom_menu[] =
 
 MENU eof_edit_playback_menu[] =
 {
-    {"100%", eof_menu_edit_playback_100, NULL, D_SELECTED, NULL},
-    {"75%", eof_menu_edit_playback_75, NULL, 0, NULL},
-    {"50%", eof_menu_edit_playback_50, NULL, 0, NULL},
-    {"25%", eof_menu_edit_playback_25, NULL, 0, NULL},
+    {"&100%", eof_menu_edit_playback_100, NULL, D_SELECTED, NULL},
+    {"&75%", eof_menu_edit_playback_75, NULL, 0, NULL},
+    {"&50%", eof_menu_edit_playback_50, NULL, 0, NULL},
+    {"&25%", eof_menu_edit_playback_25, NULL, 0, NULL},
+    {"&Custom", eof_menu_edit_playback_custom, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -124,7 +125,7 @@ MENU eof_edit_menu[] =
     {"&Grid Snap", NULL, eof_edit_snap_menu, 0, NULL},
     {"&Zoom", NULL, eof_edit_zoom_menu, 0, NULL},
     {"Preview Sp&eed", NULL, eof_edit_speed_menu, 0, NULL},
-    {"Playback Rate", NULL, eof_edit_playback_menu, 0, NULL},
+    {"Playback R&ate", NULL, eof_edit_playback_menu, 0, NULL},
     {"Preview &HOPO", NULL, eof_edit_hopo_menu, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"&Metronome\tM", eof_menu_edit_metronome, NULL, 0, NULL},
@@ -148,6 +149,17 @@ DIALOG eof_custom_snap_dialog[] =
    { d_agup_radio_proc,		120,	105,	68,		15,			2,		23,  0,    0,		0,   0,   "measure",	NULL, NULL },
    { d_agup_button_proc,	42,		125,	68,		28,			2,		23,  '\r', D_EXIT,	0,   0,   "OK",			NULL, NULL },
    { d_agup_button_proc,	120,	125,	68,		28,			2,		23,  0,    D_EXIT,	0,   0,   "Cancel",		NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+DIALOG eof_custom_speed_dialog[] =
+{
+   /* (proc)			(x)	(y)	(w)		(h)  	(fg)	(bg) (key) (flags)	(d1) (d2) (dp)		(dp2) 		(dp3) */
+   { d_agup_shadow_box_proc,	32,	68,	170, 	72 + 8 +15,	2,	23,  0,    0,		0,   0,   NULL,		NULL, 		NULL },
+   { d_agup_text_proc,		56,	84,	64,		8,	2,	23,  0,    0,		0,   0,   "Percent:",	NULL, 		NULL },
+   { eof_verified_edit_proc,	112,	80,	66,		20,	2,	23,  0,    0,		8,   0,   eof_etext2,	"0123456789",	NULL },
+   { d_agup_button_proc,	42,	125,	68,		28,	2,	23,  '\r', D_EXIT,	0,   0,   "OK",		NULL, 		NULL },
+   { d_agup_button_proc,	120,	125,	68,		28,	2,	23,  0,    D_EXIT,	0,   0,   "Cancel",	NULL, 		NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1602,10 +1614,11 @@ int eof_menu_edit_playback_speed_helper_faster(void)
 {
 	int i;
 
-	for(i = 0; i < 4; i++)
+	for(i = 0; i < 5; i++)
 	{
 		eof_edit_playback_menu[i].flags = 0;
 	}
+	eof_playback_speed = (eof_playback_speed /250)*250;	//Account for custom playback rate (force to round down to a multiple of 250)
 	eof_playback_speed += 250;
 	if(eof_playback_speed > 1000)
 	{
@@ -1626,10 +1639,11 @@ int eof_menu_edit_playback_speed_helper_slower(void)
 {
 	int i;
 
-	for(i = 0; i < 4; i++)
+	for(i = 0; i < 5; i++)
 	{
 		eof_edit_playback_menu[i].flags = 0;
 	}
+	eof_playback_speed = (eof_playback_speed /250)*250;	//Account for custom playback rate (force to round down to a multiple of 250)
 	eof_playback_speed -= 250;
 	if(eof_playback_speed < 250)
 	{
@@ -1643,7 +1657,7 @@ int eof_menu_edit_playback_100(void)
 {
 	int i;
 
-	for(i = 0; i < 4; i++)
+	for(i = 0; i < 5; i++)
 	{
 		eof_edit_playback_menu[i].flags = 0;
 	}
@@ -1656,7 +1670,7 @@ int eof_menu_edit_playback_75(void)
 {
 	int i;
 
-	for(i = 0; i < 4; i++)
+	for(i = 0; i < 5; i++)
 	{
 		eof_edit_playback_menu[i].flags = 0;
 	}
@@ -1669,7 +1683,7 @@ int eof_menu_edit_playback_50(void)
 {
 	int i;
 
-	for(i = 0; i < 4; i++)
+	for(i = 0; i < 5; i++)
 	{
 		eof_edit_playback_menu[i].flags = 0;
 	}
@@ -1682,12 +1696,42 @@ int eof_menu_edit_playback_25(void)
 {
 	int i;
 
-	for(i = 0; i < 4; i++)
+	for(i = 0; i < 5; i++)
 	{
 		eof_edit_playback_menu[i].flags = 0;
 	}
 	eof_edit_playback_menu[3].flags = D_SELECTED;
 	eof_playback_speed = 250;
+	return 1;
+}
+
+int eof_menu_edit_playback_custom(void)
+{
+	int i;
+	int userinput=0;
+
+	for(i = 0; i < 5; i++)
+	{
+		eof_edit_playback_menu[i].flags = 0;
+	}
+	eof_cursor_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_custom_snap_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_custom_speed_dialog);
+	sprintf(eof_etext2, "%d", eof_playback_speed/10);		//Load the current playback speed into a string
+	if(eof_popup_dialog(eof_custom_speed_dialog, 2) == 3)		//If user activated "OK" from the custom speed dialog
+	{
+		userinput = atoi(eof_etext2);
+		if((userinput < 1) || (userinput > 99))			//User cannot specify to play at any speed not between 1% and 99%
+			return 1;
+
+		eof_playback_speed = userinput * 10;
+	}
+	printf("%d\n", eof_playback_speed);
+	eof_edit_playback_menu[4].flags = D_SELECTED;
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(NULL);
 	return 1;
 }
 
