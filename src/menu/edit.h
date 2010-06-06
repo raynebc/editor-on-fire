@@ -77,6 +77,7 @@ int eof_menu_edit_playback_100(void);
 int eof_menu_edit_playback_75(void);
 int eof_menu_edit_playback_50(void);
 int eof_menu_edit_playback_25(void);
+int eof_menu_edit_playback_custom(void);	//Allow user to specify custom playback rate between 1 and 99 percent speed
 
 int eof_menu_edit_speed_slow(void);
 int eof_menu_edit_speed_medium(void);
