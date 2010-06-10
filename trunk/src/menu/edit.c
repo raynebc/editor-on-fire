@@ -168,7 +168,7 @@ void eof_prepare_edit_menu(void)
 	int i;
 	int selected = 0;
 	int vselected = 0;
-	int noted[4] = {0};
+//	int noted[4] = {0};	//This was never utilized
 	int cnotes = 0;
 
 	if(eof_song && eof_song_loaded)
@@ -332,15 +332,16 @@ void eof_prepare_edit_menu(void)
 		}
 
 		/* paste from difficulty */
-		for(i = 0; i < 4; i++)
+		for(i = 0; i < 4; i++)	//For each of the four difficulties
 		{
-			if(noted[i] && eof_note_type != i)
+//			if(noted[i] && eof_note_type != i)	//This line doesn't work because noted[] isn't manipulated beyond initialization
+			if((eof_note_type_name[i][0] == '*') && (i != eof_note_type) && !eof_vocals_selected)	//If the difficulty is populated, isn't the active difficulty and PART VOCALS isn't active
 			{
-				eof_edit_paste_from_menu[i].flags = 0;
+				eof_edit_paste_from_menu[i].flags = 0;		//Enable paste from the difficulty
 			}
 			else
 			{
-				eof_edit_paste_from_menu[i].flags = D_DISABLED;
+				eof_edit_paste_from_menu[i].flags = D_DISABLED;	//(Paste from difficulty isn't supposed to be usable in PART VOCALS)
 			}
 		}
 
