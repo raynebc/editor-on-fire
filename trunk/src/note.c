@@ -1227,6 +1227,10 @@ EOF_LYRIC_LINE *FindLyricLine(int lyricnum)
 
 	if(eof_song == NULL)
 		return NULL;
+	if(lyricnum >= eof_song->vocal_track->lyrics)
+	{
+		return NULL;
+	}
 	lyricpos=eof_song->vocal_track->lyric[lyricnum]->pos;
 
 	for(linectr=0;linectr<eof_song->vocal_track->lines;linectr++)
