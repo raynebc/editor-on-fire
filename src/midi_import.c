@@ -5,6 +5,7 @@
 #include "midi_import.h"
 #include "ini_import.h"
 #include "menu/note.h"
+#include "foflc/Lyric_storage.h"
 
 #define EOF_IMPORT_MAX_EVENTS 100000
 

@@ -7,6 +7,7 @@
 #include "menu/beat.h"
 #include "menu/help.h"
 #include "menu/context.h"
+#include "foflc/Lyric_storage.h"
 #include "player.h"
 #include "mix.h"
 #include "undo.h"
