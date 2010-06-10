@@ -3,6 +3,7 @@
 #include "../undo.h"
 #include "../dialog.h"
 #include "../utility.h"
+#include "../foflc/Lyric_storage.h"
 #include "note.h"
 
 char eof_solo_menu_mark_text[32] = "&Mark";

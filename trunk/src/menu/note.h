@@ -3,9 +3,6 @@
 
 #include <allegro.h>
 
-#define MINPITCH 36		//Harmonix's defined minimum pitch
-#define MAXPITCH 84		//Harmonix's defined maximum pitch
-
 extern MENU eof_note_menu[];
 
 extern DIALOG eof_lyric_dialog[];
