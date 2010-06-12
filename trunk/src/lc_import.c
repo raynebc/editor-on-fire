@@ -42,6 +42,7 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 	//during Vrhythm export, or the name to call the exported track (for MIDI based lyric exports)
 	//	string2 may be NULL for SKAR import, as the track to import is pre-determined
 	//	string2 may be NULL for MIDI import, as "PART VOCALS" will be assumed by default
+	//For export formats besides Vrhythm or other MIDI formats, string2 may be NULL
 	//Returns 1 on success, -1 on error and 0 if no lyrics were found in the structure
 
 
@@ -256,6 +257,15 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 	InitLyrics();	//Initialize all variables in the Lyrics structure
 	InitMIDI();		//Initialize all variables in the MIDI structure
 
+//Set export-specific settigns
+	if(format == SCRIPT_FORMAT)
+	{
+		Lyrics.grouping=2;	//Enable line grouping for script.txt export
+		Lyrics.nohyphens=3;	//Disable hyphen output
+		Lyrics.noplus=1;	//Disable plus output
+		Lyrics.filter=DuplicateString("^=%#/");	//Use default filter list
+	}
+
 //Import lyrics from EOF structure
 	lyrctr=0;		//Begin indexing into lyrics from the very first
 	lastlyrtime=0;	//First lyric is expected to be greater than or equal to this timestamp
@@ -293,6 +303,10 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 			AddLyricPiece((tp->lyric[lyrctr])->text,(tp->lyric[lyrctr])->pos,(tp->lyric[lyrctr])->pos+(tp->lyric[lyrctr])->length,pitch,0);
 				//Add the lyric to the Lyrics structure
 
+			assert_wrapper(Lyrics.lastpiece != NULL);
+			if(Lyrics.lastpiece->lyric[strlen(Lyrics.lastpiece->lyric)-1] == '-')	//If the piece that was just added ended in a hyphen
+				Lyrics.lastpiece->groupswithnext=1;	//Set its grouping status
+
 			lyrctr++;	//Advance to next lyric
 		}
 
@@ -304,6 +318,14 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 		ReleaseMemory(1);
 		return 0;		//Return no lyrics found
 	}
+
+//Load chart tags
+	if(eof_song->tags->artist[0] != '\0')
+		Lyrics.Artist=DuplicateString(eof_song->tags->artist);
+	if(eof_song->tags->title[0] != '\0')
+		Lyrics.Title=DuplicateString(eof_song->tags->title);
+	if(eof_song->tags->frettist[0] != '\0')
+		Lyrics.Editor=DuplicateString(eof_song->tags->frettist);
 
 	PostProcessLyrics();	//Perform hyphen and grouping validation/handling
 
@@ -391,7 +413,7 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 
 //Cleanup
 	fclose_err(outf);
-	fflush_err(stdout);
+//	fflush_err(stdout);	//For Allegro programs, fflush(stdout) seems to fail, so this function calls exit()
 
 	ReleaseMemory(1);
 	return 1;	//Return success

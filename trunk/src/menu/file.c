@@ -755,6 +755,11 @@ int eof_menu_file_save_as(void)
 		ustrcpy(eof_temp_filename, eof_song_path);
 		ustrcat(eof_temp_filename, "song.ini");
 		eof_save_ini(eof_song, eof_temp_filename);
+		if(eof_song->tags->lyrics && eof_song->vocal_track->lyrics)							//If user enabled the Lyrics checkbox in song properties and there are lyrics defined
+		{
+			append_filename(eof_temp_filename, eof_song_path, "script.txt", 1024);
+			EOF_EXPORT_TO_LC(eof_song->vocal_track,eof_temp_filename,NULL,SCRIPT_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
+		}
 
 		/* finish up */
 		eof_changes = 0;
@@ -948,6 +953,11 @@ int eof_menu_file_save(void)
 	if(!exists(temp_filename))
 	{
 		eof_save_ogg(temp_filename);
+	}
+	if(eof_song->tags->lyrics && eof_song->vocal_track->lyrics)						//If user enabled the Lyrics checkbox in song properties and there are lyrics defined
+	{
+		append_filename(temp_filename, eof_song_path, "script.txt", 1024);
+		EOF_EXPORT_TO_LC(eof_song->vocal_track,temp_filename,NULL,SCRIPT_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
 	}
 	eof_changes = 0;
 	eof_undo_last_type = 0;
