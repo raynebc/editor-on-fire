@@ -111,6 +111,8 @@ Change the song properties for the current project.<br><br>
 "Frettist" refers to the person who created the "Frets On Fire" note charts.<br><br>
 "Delay" is the delay or MIDI offset value which tells "Frets On Fire" how much time to delay the notes. Changing the "Delay" setting alters the position of all the beat lines in the current project and optionally adjusts the note positions as well.<br><br>
 "Year" refers to the year the song was released.<br><br>
+"Lyrics" refers to the optional song.ini parameter that indicates to FoFiX that it should display Script style lyrics during chart playback using the file script.txt.  If this checkbox is checked, and your chart has lyrics defined, EOF will create the script.txt lyric file automatically during a save operation and enable it in the chart's song.ini file.  This will provide subtitle style lyrics for various versions of Frets on Fire, even those that did not support scrolling lyrics.<br><br>
+"8th Note HO/PO" refers to the optional song.ini parameter that overrides FoF's default Hammer On/Pull Off settings, specifying that a single note (probably not chords, but this may vary between versions of FoF) in any guitar track that is 1/8 of one measure apart or closer to the previous note will be a HOPO note and not require a strum.  This song.ini parameter should work in RF-Mod based versions of FoF, such as RF-Mod, Alarian and FoFiX.<br><br>
 "Loading Text" is the text that appears on the loading screen while your song is loading in "Frets On Fire" (currently only supported in FoFiX).<br><br>
 EOF stores all these settings in the ".eof" project file and exports them to "song.ini" when saving for compatibility with "Frets On Fire."<br>
 <h1><a name="testinfof">Test In FOF</a></h1>
