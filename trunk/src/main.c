@@ -1687,6 +1687,18 @@ void eof_logic(void)
 						}
 						break;
 					}
+					default:	//For custom playback rate
+					{
+						if(eof_frame % 2 == 0)	//If eof_frame is even
+						{
+							eof_music_pos += (eof_playback_speed / 100.0 + 0.5);	//Round up
+						}
+						else
+						{
+							eof_music_pos += eof_playback_speed / 100;	//Round down
+						}
+						break;
+					}
 				}
 			}
 		}
