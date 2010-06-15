@@ -49,6 +49,9 @@ void * eof_buffer_file(char * fn)
 		return NULL;
 	}
 	data = (char *)malloc(file_size_ex(fn));
+	if(data == NULL)
+		return NULL;
+
 	pack_fread(data, file_size_ex(fn), fp);
 	pack_fclose(fp);
 	return data;
@@ -58,9 +61,10 @@ int eof_copy_file(char * src, char * dest)
 {
 	PACKFILE * src_fp;
 	PACKFILE * dest_fp;
+	void *ptr;	//Used to buffer memory
 	unsigned long src_size = 0;
 	int i;
-	
+
 	src_size = file_size_ex(src);
 	src_fp = pack_fopen(src, "r");
 	if(!src_fp)
@@ -73,9 +77,23 @@ int eof_copy_file(char * src, char * dest)
 		pack_fclose(src_fp);
 		return 0;
 	}
-	for(i = 0; i < src_size; i++)
-	{
-		pack_putc(pack_getc(src_fp), dest_fp);
+//Attempt to buffer the input file into memory for faster read and write
+	ptr=malloc(src_size);
+	if(ptr != NULL)
+	{	//If a buffer large enough to store the input file was created
+		if((pack_fread(ptr, src_size, src_fp) != src_size) || (pack_fwrite(ptr, src_size, dest_fp) != src_size))
+		{	//If there was an error reading from file or writing from memory
+			free(ptr);	//Release buffer
+			return 0;	//Return error
+		}
+		free(ptr);	//Release buffer
+	}
+	else
+	{	//Otherwise copy the byte the slow way (one byte at a time)
+		for(i = 0; i < src_size; i++)
+		{
+			pack_putc(pack_getc(src_fp), dest_fp);
+		}
 	}
 	pack_fclose(src_fp);
 	pack_fclose(dest_fp);
@@ -85,9 +103,13 @@ int eof_copy_file(char * src, char * dest)
 int eof_check_string(char * tp)
 {
 	int i;
-	
-	for(i = 0; i < ustrlen(tp); i++)
-	{
+
+	if(tp == NULL)
+		return 0;
+
+//	for(i = 0; i < ustrlen(tp); i++)
+	for(i = 0; tp[i] != '\0'; i++)
+	{	//For each character in the string until the NULL terminator is reached
 		if(tp[i] != ' ')
 		{
 			return 1;

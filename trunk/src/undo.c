@@ -18,13 +18,14 @@ int eof_undo_load_state(const char * fn)
 {
 	PACKFILE * fp;
 	char rheader[16];
-	
+
 	fp = pack_fopen(fn, "r");
 	if(!fp)
 	{
 		return 0;
 	}
-	pack_fread(rheader, 16, fp);
+	if(pack_fread(rheader, 16, fp) != 16)
+		return 0;	//Return error if 16 bytes cannot be read
 	eof_load_song_pf(eof_song, fp);
 	pack_fclose(fp);
 	return 1;
@@ -33,7 +34,7 @@ int eof_undo_load_state(const char * fn)
 void eof_undo_reset(void)
 {
 	int i;
-	
+
 	for(i = 0; i < EOF_MAX_UNDO; i++)
 	{
 		eof_undo_index[i] = 0;
@@ -45,15 +46,15 @@ void eof_undo_reset(void)
 
 int eof_undo_add(int type)
 {
-	if(type == EOF_UNDO_TYPE_NOTE_LENGTH && eof_undo_last_type == EOF_UNDO_TYPE_NOTE_LENGTH)
+	if((type == EOF_UNDO_TYPE_NOTE_LENGTH) && (eof_undo_last_type == EOF_UNDO_TYPE_NOTE_LENGTH))
 	{
 		return 0;
 	}
-	if(type == EOF_UNDO_TYPE_LYRIC_NOTE && eof_undo_last_type == EOF_UNDO_TYPE_LYRIC_NOTE)
+	if((type == EOF_UNDO_TYPE_LYRIC_NOTE) && (eof_undo_last_type == EOF_UNDO_TYPE_LYRIC_NOTE))
 	{
 		return 0;
 	}
-	if(type == EOF_UNDO_TYPE_RECORD && eof_undo_last_type == EOF_UNDO_TYPE_RECORD)
+	if((type == EOF_UNDO_TYPE_RECORD) && (eof_undo_last_type == EOF_UNDO_TYPE_RECORD))
 	{
 		return 0;
 	}
@@ -61,14 +62,14 @@ int eof_undo_add(int type)
 	eof_save_song(eof_song, eof_undo_filename[eof_undo_current_index]);
 	eof_undo_type[eof_undo_current_index] = type;
 	eof_undo_current_index++;
-	if(eof_undo_current_index >= 8)
+	if(eof_undo_current_index >= EOF_MAX_UNDO)
 	{
 		eof_undo_current_index = 0;
 	}
 	eof_undo_count++;
-	if(eof_undo_count >= 8)
+	if(eof_undo_count >= EOF_MAX_UNDO)
 	{
-		eof_undo_count = 8;
+		eof_undo_count = EOF_MAX_UNDO;
 	}
 	return 1;
 }
@@ -81,7 +82,7 @@ int eof_undo_apply(void)
 		eof_undo_current_index--;
 		if(eof_undo_current_index < 0)
 		{
-			eof_undo_current_index = 7;
+			eof_undo_current_index = EOF_MAX_UNDO - 1;
 		}
 		eof_undo_load_state(eof_undo_filename[eof_undo_current_index]);
 		if(eof_undo_type[eof_undo_current_index] == EOF_UNDO_TYPE_NOTE_SEL)
@@ -100,7 +101,7 @@ int eof_undo_apply(void)
 			eof_changes = 1;
 		}
 		eof_undo_last_type = 0;
-		
+
 		eof_detect_difficulties(eof_song);
 		eof_select_beat(eof_selected_beat);
 		eof_fix_catalog_selection();
@@ -116,15 +117,15 @@ void eof_redo_apply(void)
 	{
 		eof_save_song(eof_song, eof_undo_filename[eof_undo_current_index]);
 		eof_undo_current_index++;
-		if(eof_undo_current_index >= 8)
+		if(eof_undo_current_index >= EOF_MAX_UNDO)
 		{
 			eof_undo_current_index = 0;
 		}
 		eof_undo_load_state("eof.redo");
 		eof_undo_count++;
-		if(eof_undo_count >= 8)
+		if(eof_undo_count >= EOF_MAX_UNDO)
 		{
-			eof_undo_count = 8;
+			eof_undo_count = EOF_MAX_UNDO;
 		}
 		eof_redo_count = 0;
 		eof_change_count++;
