@@ -298,18 +298,21 @@ extern char        eof_just_played;
 
 extern EOF_SELECTION_DATA eof_selection;
 
-void eof_show_mouse(BITMAP * bp);
-float eof_get_porpos(unsigned long pos);
+void eof_show_mouse(BITMAP * bp);	//Shows the software mouse if it is being used
+float eof_get_porpos(unsigned long pos);	//Returns the timestamps position within a beat (percentage)?
 unsigned long eof_put_porpos(int beat, float porpos, float offset);
-void eof_reset_lyric_preview_lines(void);
-void eof_emergency_stop_music(void);
-void eof_fix_catalog_selection(void);
+void eof_reset_lyric_preview_lines(void);	//Resets the preview line variables to 0
+void eof_find_lyric_preview_lines(void);	//Sets the first and second preview line variables
+void eof_emergency_stop_music(void);	//Stops audio playback
+void eof_fix_catalog_selection(void);	//Ensures that a valid catalog entry is active, if any
 int eof_count_selected_notes(int * total, char v);
+	//Returns the number of notes selected in the active difficulty
+	//If total is not NULL, its value is incremeneted once for each note in the active difficulty
 void eof_clear_input(void);
 void eof_prepare_undo(int type);
 int eof_count_notes(void);
 int eof_figure_difficulty(void);
-int eof_figure_part(void);
+int eof_figure_part(void);	//Returns the active track number, or -1 if the active track has no notes/lyrics
 int d_hackish_edit_proc (int msg, DIALOG *d, int c);
 int eof_set_display_mode(int mode);
 void eof_debug_message(char * text);
@@ -322,8 +325,8 @@ int eof_destroy_ogg(void);
 int eof_save_ogg(char * fn);
 void eof_render(void);
 void eof_reset_song(void);
-int eof_load_data(void);
-void eof_destroy_data(void);
-char * eof_get_tone_name(int tone);
+int eof_load_data(void);	//Loads graphics and fonts from eof.dat
+void eof_destroy_data(void);	//Frees graphics and fonts from memory
+char * eof_get_tone_name(int tone);	//Returns the name of the given note number (ie. C# or Db) based on the value of eof_display_flats
 
 #endif
