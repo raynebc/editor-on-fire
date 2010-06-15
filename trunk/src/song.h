@@ -5,7 +5,7 @@
 
 #define EOF_OLD_MAX_NOTES     65536
 #define EOF_MAX_NOTES         32768
-#define EOF_MAX_LYRICS        32768
+#define EOF_MAX_LYRICS EOF_MAX_NOTES
 #define EOF_MAX_LYRIC_LINES    4096
 #define EOF_MAX_TRACKS            5
 #define EOF_MAX_CATALOG_ENTRIES 256

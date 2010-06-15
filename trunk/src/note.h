@@ -3,16 +3,19 @@
 
 #include "song.h"
 
-int eof_note_count_colors(EOF_NOTE * np);
+int eof_note_count_colors(EOF_NOTE * np);	//Performs bit masking to determine the number of gems the note defines being present
 void eof_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, int pos, int length);
-void eof_detect_notes(void);
-int eof_adjust_notes(int offset);
-void eof_note_draw(EOF_NOTE * np, int p);
-void eof_lyric_draw(EOF_LYRIC * np, int p);
-void eof_note_draw_3d(EOF_NOTE * np, int p);
-int eof_note_tail_draw_3d(EOF_NOTE * np, int p);
-void eof_note_draw_catalog(EOF_NOTE * np, int p);
-void eof_lyric_draw_catalog(EOF_LYRIC * np, int p);
+	//Creates a note by by storing the specified on/off status of the green, yellow, red, blue and purple gem colors
+	//as well as the position and length into the given EOF_NOTE structure, whose contents are overwritten
+	//The note type and flags are not altered
+//void eof_detect_notes(void);	//Undefined function
+int eof_adjust_notes(int offset);	//Applies the given additive offset to all notes, lyrics, bookmarks, catalog entries and solo/star power/lyric phrases
+void eof_note_draw(EOF_NOTE * np, int p);	//Renders the note to the piano roll area
+void eof_lyric_draw(EOF_LYRIC * np, int p);	//Renders the lyric to the piano roll area
+void eof_note_draw_3d(EOF_NOTE * np, int p);	//Renders the note to the 3D preview area
+int eof_note_tail_draw_3d(EOF_NOTE * np, int p);	//Renders the note's tail to the 3D preview area
+void eof_note_draw_catalog(EOF_NOTE * np, int p);	//Renders the note to the fret catalog area
+void eof_lyric_draw_catalog(EOF_LYRIC * np, int p);	//Renders the lyric to the fret catalog area
 
 int eof_lyric_draw_truncate(int notenum, int p);
 	//If notenum < eof_song->vocal_track->lyrics, renders the text to the lyric lane
