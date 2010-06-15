@@ -477,7 +477,7 @@ int eof_set_display_mode(int mode)
 				{
 					if(set_gfx_mode(GFX_SAFE, 640, 480, 0, 0))
 					{
-						allegro_message("Can't set up screen!");
+						allegro_message("Can't set up screen!  Error: %s",allegro_error);
 						return 0;
 					}
 					else
@@ -550,7 +550,7 @@ int eof_set_display_mode(int mode)
 				{
 					if(set_gfx_mode(GFX_SAFE, 800, 600, 0, 0))
 					{
-						allegro_message("Can't set up screen!");
+						allegro_message("Can't set up screen!  Error: %s",allegro_error);
 						return 0;
 					}
 					else
@@ -624,7 +624,7 @@ int eof_set_display_mode(int mode)
 				{
 					if(set_gfx_mode(GFX_SAFE, 1024, 768, 0, 0))
 					{
-						allegro_message("Can't set up screen!");
+						allegro_message("Can't set up screen!  Error: %s",allegro_error);
 						return 0;
 					}
 					else
@@ -1325,7 +1325,7 @@ void eof_read_global_keys(void)
 			eof_windowed = 0;
 			if(set_gfx_mode(GFX_AUTODETECT, 640, 480, 0, 0))
 			{
-				allegro_message("Can't set up screen!");
+				allegro_message("Can't set up screen!  Error: %s",allegro_error);
 				exit(1);
 			}
 			set_palette(eof_palette);
@@ -1336,7 +1336,7 @@ void eof_read_global_keys(void)
 			eof_windowed = 1;
 			if(set_gfx_mode(GFX_AUTODETECT_WINDOWED, 640, 480, 0, 0))
 			{
-				allegro_message("Can't set up screen!");
+				allegro_message("Can't set up screen!  Error: %s",allegro_error);
 				exit(1);
 			}
 			set_palette(eof_palette);
@@ -2555,17 +2555,17 @@ int eof_initialize(int argc, char * argv[])
 	set_window_title("EOF - No Song");
 	if(install_sound(DIGI_AUTODETECT, MIDI_NONE, NULL))
 	{
-		allegro_message("Can't set up sound!");
+		allegro_message("Can't set up sound!  Error: %s",allegro_error);
 		return 0;
 	}
 	if(install_keyboard())
 	{
-		allegro_message("Can't set up keyboard!");
+		allegro_message("Can't set up keyboard!  Error: %s",allegro_error);
 		return 0;
 	}
 	if(install_mouse() < 0)
 	{
-		allegro_message("Can't set up mouse!");
+		allegro_message("Can't set up mouse!  Error: %s",allegro_error);
 		return 0;
 	}
 	install_joystick(JOY_TYPE_AUTODETECT);
