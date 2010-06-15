@@ -7,7 +7,7 @@
 //AUDIOSTREAM * eof_mix_stream = NULL;
 SAMPLE *    eof_sound_clap = NULL;
 SAMPLE *    eof_sound_metronome = NULL;
-SAMPLE *    eof_sound_note[256] = {NULL};
+SAMPLE *    eof_sound_note[EOF_MAX_VOCAL_TONES] = {NULL};
 EOF_MIX_VOICE eof_voice[EOF_MIX_MAX_CHANNELS];
 //int eof_mix_freq = 44100;
 //int eof_mix_buffer_size = 4096;
@@ -47,11 +47,11 @@ void eof_mix_callback(void * buf, int length)
 	int i, j;
 //	bytes_left = eof_mix_buffer_size / 4;
 	int increment = alogg_get_wave_is_stereo_ogg(eof_music_track) ? 2 : 1;
-	
+
 	/* add audio data to the buffer */
 	for(i = 0; i < bytes_left; i += increment)
 	{
-		
+
 		/* mix voices */
 		for(j = 0; j < EOF_MIX_MAX_CHANNELS; j++)
 		{
@@ -89,7 +89,7 @@ void eof_mix_callback(void * buf, int length)
 				}
 			}
 		}
-		
+
 		/* increment the sample and check sound triggers */
 		eof_mix_sample_count += 1.0;
 		if(eof_mix_next_clap >= 0 && eof_mix_sample_count >= eof_mix_next_clap && eof_mix_current_clap < eof_mix_claps)
@@ -133,24 +133,27 @@ unsigned long eof_mix_msec_to_sample(unsigned long msec, int freq)
 {
 	unsigned long sample;
 	double second = (double)msec / (double)1000.0;
-	
+
 	sample = (unsigned long)(second * (double)freq);
 	return sample;
 }
 
+/*Unused function, it may have malfunctioned anyway, because it divided seconds by 1000 and casted
+ to integer from floating point, which would not have returned the correct millisecond time value?
 unsigned long eof_mix_sample_to_msec(unsigned long sample, int freq)
 {
 	unsigned long msec;
 	double second = (double)sample / (double)freq;
-	
+
 	msec = (unsigned long)(second / (double)1000.0);
 	return msec;
 }
+*/
 
 void eof_mix_find_claps(void)
 {
 	int i;
-	
+
 	eof_mix_claps = 0;
 	eof_mix_current_clap = 0;
 	if(eof_vocals_selected)
@@ -172,7 +175,7 @@ void eof_mix_find_claps(void)
 			}
 		}
 	}
-	
+
 	eof_mix_metronomes = 0;
 	eof_mix_current_metronome = 0;
 	for(i = 0; i < eof_song->beats; i++)
@@ -180,7 +183,7 @@ void eof_mix_find_claps(void)
 		eof_mix_metronome_pos[eof_mix_metronomes] = eof_mix_msec_to_sample(eof_song->beat[i]->pos, alogg_get_wave_freq_ogg(eof_music_track));
 		eof_mix_metronomes++;
 	}
-	
+
 	eof_mix_notes = 0;
 	eof_mix_current_note = 0;
 	for(i = 0; i < eof_song->vocal_track->lyrics; i++)
@@ -197,7 +200,7 @@ void eof_mix_init(void)
 	char fbuffer[1024] = {0};
 	ALOGG_OGG * temp_ogg = NULL;
 	char * buffer = NULL;
-	
+
 	eof_sound_clap = load_wav("eof.dat#clap.wav");
 	if(!eof_sound_clap)
 	{
@@ -208,7 +211,7 @@ void eof_mix_init(void)
 	{
 		allegro_message("Couldn't load metronome sound!");
 	}
-	for(i = 0; i < 256; i++)
+	for(i = 0; i < EOF_MAX_VOCAL_TONES; i++)
 	{
 		sprintf(fbuffer, "eof.dat#piano.esp/NOTE_%02d_OGG", i);
 		buffer = eof_buffer_file(fbuffer);
@@ -231,14 +234,27 @@ void eof_mix_init(void)
 
 void eof_mix_exit(void)
 {
+	int i;
+
 	destroy_sample(eof_sound_clap);
+	eof_sound_clap=NULL;
 	destroy_sample(eof_sound_metronome);
+	eof_sound_metronome=NULL;
+
+	for(i = 0; i < EOF_MAX_VOCAL_TONES; i++)
+	{
+		if(eof_sound_note[i] != NULL)
+		{
+			destroy_sample(eof_sound_note[i])
+			eof_sound_note[i]=NULL;
+		}
+	}
 }
 
 void eof_mix_start_helper(void)
 {
 	int i;
-	
+
 	eof_mix_current_clap = -1;
 	eof_mix_next_clap = -1;
 	for(i = 0; i < eof_mix_claps; i++)
@@ -277,7 +293,7 @@ void eof_mix_start_helper(void)
 void eof_mix_start(unsigned long start, int speed)
 {
 	int i;
-	
+
 	eof_mix_next_clap = -1;
 	eof_mix_next_metronome = -1;
 	for(i = 0; i < EOF_MIX_MAX_CHANNELS; i++)
@@ -296,10 +312,10 @@ void eof_mix_start(unsigned long start, int speed)
 void eof_mix_seek(int pos)
 {
 	int i;
-	
+
 	eof_mix_next_clap = -1;
 	eof_mix_next_metronome = -1;
-	
+
 	eof_mix_sample_count = eof_mix_msec_to_sample(pos, alogg_get_wave_freq_ogg(eof_music_track));
 	for(i = 0; i < eof_mix_claps; i++)
 	{
@@ -332,7 +348,7 @@ void eof_mix_seek(int pos)
 
 void eof_mix_play_note(int note)
 {
-	if(eof_sound_note[note])
+	if((note < EOF_MAX_VOCAL_TONES) && eof_sound_note[note])
 	{
 		play_sample(eof_sound_note[note], 255, 127, 1000 + eof_audio_fine_tune, 0);
 	}
