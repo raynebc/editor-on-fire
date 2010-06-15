@@ -15,23 +15,25 @@
 
 /*typedef struct
 {
-	
+
 	EOF_SONG_TAGS tags;
 	EOF_TRACK     track;
 	EOF_BEAT_MARKER beat[EOF_MAX_BEATS];
 	EOF_TEXT_EVENT event[EOF_MAX_TEXT_EVENTS];
 	int events;
 	char utrack;
-	
+
 } EOF_UNDO_STATE; */
 
 extern int eof_undo_count;
 extern int eof_redo_count;
 extern int eof_undo_last_type;
 
-void eof_undo_reset(void);
-int eof_undo_add(int type);
-int eof_undo_apply(void);
-void eof_redo_apply(void);
+void eof_undo_reset(void);	//Clears all undo states
+int eof_undo_add(int type);	//Adds another undo state, except some cases where the requested undo type is the same as the previous undo (ie. a note addition/deletion)
+int eof_undo_apply(void);	//Saves the redo state and applies the next available undo state
+void eof_redo_apply(void);	//Applies the redo state
+
+int eof_undo_load_state(const char * fn);	//Applies the specified undo/redo state, or returns 0 upon error (called by eof_undo_apply() and eof_redo_apply())
 
 #endif
