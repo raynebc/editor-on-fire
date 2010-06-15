@@ -92,7 +92,7 @@ int eof_adjust_notes(int offset)
 		eof_song->catalog->entry[i].start_pos += offset;
 		eof_song->catalog->entry[i].end_pos += offset;
 	}
-	for(i = 0; i < 10; i++)
+	for(i = 0; i < EOF_MAX_BOOKMARK_ENTRIES; i++)
 	{
 		if(eof_song->bookmark_pos[i] != 0)
 		{
@@ -343,7 +343,7 @@ void eof_lyric_draw(EOF_LYRIC * np, int p)
 	int pcol = p == 1 ? makecol(255, 255, 255) : p == 2 ? makecol(224, 255, 224) : 0;
 	int dcol = makecol(255, 255, 255);
 	int ncol = 0;
-	
+
 	EOF_LYRIC_LINE *lyricline;	//The line that this lyric is found to be in (if any) so the correct background color can be determined
 	int bgcol = eof_color_black;	//Unless the text is found to be in a lyric phrase, it will render with a black background
 
@@ -361,7 +361,7 @@ void eof_lyric_draw(EOF_LYRIC * np, int p)
 		else
 			bgcol=makecol(0, 0, 127);	//Make dark blue the text's background colo
 	}
-	
+
 	ychart[0] = eof_screen_layout.note_y[0];
 	ychart[1] = eof_screen_layout.note_y[1];
 	ychart[2] = eof_screen_layout.note_y[2];

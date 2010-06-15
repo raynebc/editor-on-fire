@@ -117,7 +117,7 @@ EOF_SONG * eof_create_song(void)
 		return NULL;
 	}
 	sp->catalog->entries = 0;
-	for(i = 0; i < 10; i++)
+	for(i = 0; i < EOF_MAX_BOOKMARK_ENTRIES; i++)
 	{
 		sp->bookmark_pos[i] = 0;
 	}
@@ -248,7 +248,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	}
 
 	/* write bookmarks */
-	for(i = 0; i < 10; i++)
+	for(i = 0; i < EOF_MAX_BOOKMARK_ENTRIES; i++)
 	{
 		pack_iputl(sp->bookmark_pos[i], fp);
 	}
@@ -392,7 +392,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	}
 
 	/* read bookmarks */
-	for(i = 0; i < 10; i++)
+	for(i = 0; i < EOF_MAX_BOOKMARK_ENTRIES; i++)
 	{
 		sp->bookmark_pos[i] = pack_igetl(fp);
 	}
@@ -467,8 +467,8 @@ EOF_NOTE * eof_track_add_note(EOF_TRACK * tp)
 		{
 			memset(tp->note[tp->notes], 0, sizeof(EOF_NOTE));
 			tp->notes++;
+			return tp->note[tp->notes - 1];
 		}
-		return tp->note[tp->notes - 1];
 	}
 	return NULL;
 }
@@ -621,9 +621,12 @@ void eof_track_resize(EOF_TRACK * tp, int notes)
 
 void eof_track_add_star_power(EOF_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
 {
-	tp->star_power_path[tp->star_power_paths].start_pos = start_pos;
-	tp->star_power_path[tp->star_power_paths].end_pos = end_pos;
-	tp->star_power_paths++;
+	if(tp->star_power_paths < EOF_MAX_STAR_POWER)
+	{	//If the maximum number of star power phrases for this track hasn't already been defined
+		tp->star_power_path[tp->star_power_paths].start_pos = start_pos;
+		tp->star_power_path[tp->star_power_paths].end_pos = end_pos;
+		tp->star_power_paths++;
+	}
 }
 
 void eof_track_delete_star_power(EOF_TRACK * tp, int index)
@@ -639,9 +642,12 @@ void eof_track_delete_star_power(EOF_TRACK * tp, int index)
 
 void eof_track_add_solo(EOF_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
 {
-	tp->solo[tp->solos].start_pos = start_pos;
-	tp->solo[tp->solos].end_pos = end_pos;
-	tp->solos++;
+	if(tp->solos < EOF_MAX_SOLOS)
+	{	//If the maximum number of solo phrases for this track hasn't already been defined
+		tp->solo[tp->solos].start_pos = start_pos;
+		tp->solo[tp->solos].end_pos = end_pos;
+		tp->solos++;
+	}
 }
 
 void eof_track_delete_solo(EOF_TRACK * tp, int index)
@@ -664,8 +670,8 @@ EOF_LYRIC * eof_vocal_track_add_lyric(EOF_VOCAL_TRACK * tp)
 		{
 			memset(tp->lyric[tp->lyrics], 0, sizeof(EOF_LYRIC));
 			tp->lyrics++;
+			return tp->lyric[tp->lyrics - 1];
 		}
-		return tp->lyric[tp->lyrics - 1];
 	}
 	return NULL;
 }
@@ -828,10 +834,13 @@ void eof_vocal_track_resize(EOF_VOCAL_TRACK * tp, int lyrics)
 
 void eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
 {
-	tp->line[tp->lines].start_pos = start_pos;
-	tp->line[tp->lines].end_pos = end_pos;
-	tp->line[tp->lines].flags = 0;	//Ensure that a blank flag status is initialized
-	tp->lines++;
+	if(tp->lines < EOF_MAX_LYRIC_LINES)
+	{	//If the maximum number of lyric phrases hasn't already been defined
+		tp->line[tp->lines].start_pos = start_pos;
+		tp->line[tp->lines].end_pos = end_pos;
+		tp->line[tp->lines].flags = 0;	//Ensure that a blank flag status is initialized
+		tp->lines++;
+	}
 }
 
 void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, int index)
@@ -850,15 +859,18 @@ void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, int index)
 
 EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp)
 {
-	sp->beat[sp->beats] = malloc(sizeof(EOF_BEAT_MARKER));
-	if(sp)
-	{
-		sp->beat[sp->beats]->pos = 0;
-		sp->beat[sp->beats]->ppqn = 500000;
-		sp->beat[sp->beats]->flags = 0;
-		sp->beats++;
+	if(sp->beats < EOF_MAX_BEATS)
+	{	//If the maximum number of beats hasn't already been defined
+		sp->beat[sp->beats] = malloc(sizeof(EOF_BEAT_MARKER));
+		if(sp)
+		{
+			sp->beat[sp->beats]->pos = 0;
+			sp->beat[sp->beats]->ppqn = 500000;
+			sp->beat[sp->beats]->flags = 0;
+			sp->beats++;
+		}
+		return sp->beat[sp->beats - 1];
 	}
-	return sp->beat[sp->beats - 1];
 }
 
 void eof_song_delete_beat(EOF_SONG * sp, int beat)
@@ -900,12 +912,15 @@ int eof_song_resize_beats(EOF_SONG * sp, int beats)
 
 void eof_song_add_text_event(EOF_SONG * sp, int beat, char * text)
 {
-	sp->text_event[sp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
-	if(sp->text_event[sp->text_events])
-	{
-		ustrcpy(sp->text_event[sp->text_events]->text, text);
-		sp->text_event[sp->text_events]->beat = beat;
-		sp->text_events++;
+	if(sp->text_events < EOF_MAX_TEXT_EVENTS)
+	{	//If the maximum number of text events hasn't already been defined
+		sp->text_event[sp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
+		if(sp->text_event[sp->text_events])
+		{
+			ustrcpy(sp->text_event[sp->text_events]->text, text);
+			sp->text_event[sp->text_events]->beat = beat;
+			sp->text_events++;
+		}
 	}
 }
 

@@ -344,7 +344,7 @@ void eof_prepare_song_menu(void)
 
 		/* seek bookmark # */
 		char bmcount = 0;
-		for(i = 0; i < 10; i++)
+		for(i = 0; i < EOF_MAX_BOOKMARK_ENTRIES; i++)
 		{
 			if(eof_song->bookmark_pos[i] != 0)
 			{

@@ -4710,7 +4710,7 @@ void eof_render_editor_window(void)
 		}
 
 		/* draw the bookmark position */
-		for(i = 0; i < 10; i++)
+		for(i = 0; i < EOF_MAX_BOOKMARK_ENTRIES; i++)
 		{
 			if(eof_song->bookmark_pos[i] != 0)
 			{
@@ -4983,7 +4983,7 @@ void eof_render_vocal_editor_window(void)
 		}
 
 		/* draw the bookmark position */
-		for(i = 0; i < 10; i++)
+		for(i = 0; i < EOF_MAX_BOOKMARK_ENTRIES; i++)
 		{
 			if(eof_song->bookmark_pos[i] != 0)
 			{
