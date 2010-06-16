@@ -9,20 +9,23 @@ char eof_event_list_text[EOF_MAX_TEXT_EVENTS][256] = {{0}};
 
 void eof_add_text_event(EOF_SONG * sp, int beat, char * text)
 {
-	sp->text_event[sp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
-	if(!sp->text_event[sp->text_events])
-	{
-		return;
+	if(sp->text_events < EOF_MAX_TEXT_EVENTS)
+	{	//If the maximum number of text events hasn't been defined already
+		sp->text_event[sp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
+		if(!sp->text_event[sp->text_events])
+		{
+			return;
+		}
+		ustrcpy(sp->text_event[sp->text_events]->text, text);
+		sp->text_event[sp->text_events]->beat = beat;
+		sp->text_events++;
 	}
-	ustrcpy(sp->text_event[sp->text_events]->text, text);
-	sp->text_event[sp->text_events]->beat = beat;
-	sp->text_events++;
 }
 
 void eof_move_text_events(EOF_SONG * sp, int beat, int offset)
 {
 	int i;
-	
+
 	for(i = 0; i < sp->text_events; i++)
 	{
 		if(sp->text_event[i]->beat >= beat)
