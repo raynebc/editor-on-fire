@@ -1119,11 +1119,16 @@ char * eof_ini_list(int index, int * size)
 {
 	int i;
 	int ecount = 0;
-	char * etextpointer[32] = {NULL};
+	char * etextpointer[EOF_MAX_INI_SETTINGS] = {NULL};
+
+	if(eof_song->tags->ini_settings >= EOF_MAX_INI_SETTINGS)	//If the maximum number of settings has been met or exceeded
+		eof_ini_dialog[2].flags = D_DISABLED;	//Disable the "Add" Song INI dialog button
+	else
+		eof_ini_dialog[2].flags = 0;	//Enable the "Add" Song INI dialog button
 
 	for(i = 0; i < eof_song->tags->ini_settings; i++)
 	{
-		if(ecount < 32)
+		if(ecount < EOF_MAX_INI_SETTINGS)
 		{
 			etextpointer[ecount] = eof_song->tags->ini_setting[i];
 			ecount++;
@@ -1140,9 +1145,8 @@ char * eof_ini_list(int index, int * size)
 			}
 			else
 			{
-				eof_ini_dialog[3].flags = D_DISABLED;
+				eof_ini_dialog[3].flags = D_DISABLED;	//Disable the "Delete" Song INI dialog button if there are no settings
 			}
-			break;
 		}
 		default:
 		{
@@ -1333,11 +1337,15 @@ int eof_ini_dialog_add(DIALOG * d)
 {
 	int i;
 
+	if(eof_song->tags->ini_settings >= EOF_MAX_INI_SETTINGS)	//If the maximum number of INI settings is already defined
+		return D_O_K;	//Return without adding anything
+
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_ini_add_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_ini_add_dialog);
 	ustrcpy(eof_etext, "");
+
 	if(eof_popup_dialog(eof_ini_add_dialog, 2) == 3)
 	{
 		if(ustrlen(eof_etext) > 0 && eof_check_string(eof_etext))
@@ -1347,6 +1355,7 @@ int eof_ini_dialog_add(DIALOG * d)
 			eof_song->tags->ini_settings++;
 		}
 	}
+
 	dialog_message(eof_ini_dialog, MSG_DRAW, 0, &i);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;

@@ -10,7 +10,7 @@ typedef struct
 
 } EOF_IMPORT_INI_SETTING;
 
-EOF_IMPORT_INI_SETTING eof_import_ini_setting[32];
+EOF_IMPORT_INI_SETTING eof_import_ini_setting[EOF_MAX_INI_SETTINGS];
 int eof_import_ini_settings = 0;
 
 /* it would probably be easier to use Allegro's configuration routines to read
@@ -63,6 +63,9 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 				/* if this line has an '=', process line as a setting */
 				if(equals)
 				{
+					if(eof_import_ini_settings == EOF_MAX_INI_SETTINGS)
+						break;	//Break from while loop if the eof_import_ini_setting[] array is full
+
 					equals[0] = '\0';
 					token = equals + 1;
 					ustrcpy(eof_import_ini_setting[eof_import_ini_settings].type, line_token);
