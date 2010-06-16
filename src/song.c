@@ -871,6 +871,8 @@ EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp)
 		}
 		return sp->beat[sp->beats - 1];
 	}
+
+	return NULL;
 }
 
 void eof_song_delete_beat(EOF_SONG * sp, int beat)

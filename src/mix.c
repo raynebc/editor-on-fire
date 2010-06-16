@@ -245,7 +245,7 @@ void eof_mix_exit(void)
 	{
 		if(eof_sound_note[i] != NULL)
 		{
-			destroy_sample(eof_sound_note[i])
+			destroy_sample(eof_sound_note[i]);
 			eof_sound_note[i]=NULL;
 		}
 	}
