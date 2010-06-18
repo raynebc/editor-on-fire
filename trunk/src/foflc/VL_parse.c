@@ -216,9 +216,11 @@ int VL_PreLoad(FILE *inf,char validate)
 	//Read lyric string
 		temp=ReadUnicodeString(inf);
 
+		ftell_result=ftell_err(inf);	//If this string is empty
 		if(temp[0] == '\0')
 		{
-			ftell_result=ftell_err(inf);
+//v2.3	Moved this call to ftell outside of the if statement
+//			ftell_result=ftell_err(inf);
 			if(VL.textsize+16 - ftell_result <= 3)	//This 0 word value ends within 3 bytes of the sync header (is padding)
 			{
 				free(temp);	//Release string as it won't be used
@@ -226,7 +228,7 @@ int VL_PreLoad(FILE *inf,char validate)
 			}
 			else
 			{
-				printf("Error: Empty lyric string detected before file position 0x%lX\n",ftell_err(inf));
+				printf("Error: Empty lyric string detected before file position 0x%lX\n",ftell_result);
 				if(validate)
 					return 10;
 				else
@@ -236,7 +238,9 @@ int VL_PreLoad(FILE *inf,char validate)
 				}
 			}
 		}
-		if(ftell_err(inf) > VL.textsize + 16)	//If reading this string caused the file position to cross into Sync chunk
+//v2.3	Moved this call to ftell further up
+//		if(ftell_err(inf) > VL.textsize + 16)	//If reading this string caused the file position to cross into Sync chunk
+		if(ftell_result > VL.textsize + 16)	//If reading this string caused the file position to cross into Sync chunk
 		{
 			puts("Error: Lyric string overlapped into Sync chunk");
 			if(validate)
@@ -748,7 +752,6 @@ struct _VLSTRUCT_ *VL_PreWrite(void)
 				cursync=newsync;			//This becomes the new last link in the list
 
 			//Append lyric piece to string and append a space if necessary
-			// **Find a way to replace these strcat() calls to strncat() to lower possibility of overflow, even though I created an adequate buffer
 				strcat(lyrline,curpiece->lyric);
 				if((curpiece->next != NULL) && (curpiece->groupswithnext == 0))
 				{	//There is another lyric piece in this line and this piece does not group with it

@@ -86,18 +86,18 @@ double Mean_Timediff_Tempo(void)
 
 void Export_UStar(FILE *outf)
 {
-	double tempo;	//Will hold a value based on the weighted mean of the loaded tempo if a MIDI was
-					//loaded, otherwise will use an estimate based on the starting timestamps
-	double stepping;	//The number of milliseconds in one quarter beat
-	double x,y,z;
-	long int start=0,dur;
-	unsigned long int ctr,ctr2;
-	struct Lyric_Piece *current,*next,*nextnext;
-	char replace;		//boolean: Current lyric piece has + that needs to be replaced with ~
-	char *temp;			//Used for string combination and tag output
+	double tempo=0.0;	//Will hold a value based on the weighted mean of the loaded tempo if a MIDI was
+						//loaded, otherwise will use an estimate based on the starting timestamps
+	double stepping=0.0;	//The number of milliseconds in one quarter beat
+	double x=0.0,y=0.0,z=0.0;
+	long int start=0,dur=0;
+	unsigned long int ctr=0,ctr2=0;
+	struct Lyric_Piece *current=NULL,*next=NULL,*nextnext=NULL;
+	char replace=0;		//boolean: Current lyric piece has + that needs to be replaced with ~
+	char *temp=NULL;	//Used for string combination and tag output
 	char unknownstr[]="Unknown";	//String written if a tag is empty
-	char *tempostring;	//Used to store parsed tempo string (with a comma replacing the decimal point)
-	unsigned long gap;	//This is the #GAP tag in the UltraStar file, functionally the same as
+	char *tempostring=NULL;	//Used to store parsed tempo string (with a comma replacing the decimal point)
+	unsigned long gap=0;//This is the #GAP tag in the UltraStar file, functionally the same as
 						//the delay parameter in a FoF chart.  Since the UltraStar file will be
 						//using this delay, references to lyric timestamps will be negatively
 						//offset by this value.
@@ -111,7 +111,8 @@ void Export_UStar(FILE *outf)
 						//	line is written, as well as before writing the first lyric piece.  This is reset after
 						//	the writing of each lyric entry.
 	long int linetime=0;	//Converted unsigned long value of numerical string representing the timestamp of a line of lyric's first lyric (for relative timing)
-	int rawpitch;		//Due to differences in UltraStar and MIDI pitch numbering, a number must be subtracted before export, which could make the pitch negative
+	int rawpitch=0;			//Due to differences in UltraStar and MIDI pitch numbering, a number must be subtracted before export, which could make the pitch negative
+	unsigned long length=0;
 
 
 	assert_wrapper(outf != NULL);	//This must not be NULL
@@ -237,18 +238,23 @@ void Export_UStar(FILE *outf)
 	//Set the appropriate pitch character
 		if(Lyrics.pitch_tracking)
 		{
-			if((current->style=='F') || (current->pitch == PITCHLESS))	//Export pitchless lyrics as freestyle
+//v2.3	Allow separate tracking for overdrive and freestyle
+//			if((current->style=='F') || (current->pitch == PITCHLESS))	//Export pitchless lyrics as freestyle
+			if(current->freestyle || (current->pitch == PITCHLESS))	//Export pitchless lyrics as freestyle
 				pitch_char='F';		//This lyric piece had a # character
-			else if(current->style=='*')
+//			else if(current->style=='*')
+			else if(current->overdrive)
 				pitch_char='*';		//This lyric was stored in the Lyrics structure denoted as Overdrive
 			else
 				pitch_char=':';		//If input lyrics have normal pitch, use this character for exported lyric lines
 		}
 
 	//If the current lyric piece is nothing but a + and whitespace, replace the + with ~
-	// **Optimize this loop by only checking the length of the string once
+		length=strlen(current->lyric);	//Save this value, which will be used several times
 		assert_wrapper(current->lyric != NULL);
-		for(ctr2=0,replace=1;ctr2<(unsigned long)strlen(current->lyric);ctr2++)
+//v2.3	Optimize this loop by saving the string's length
+//		for(ctr2=0,replace=1;ctr2<(unsigned long)strlen(current->lyric);ctr2++)
+		for(ctr2=0,replace=1;ctr2<length;ctr2++)
 			if((current->lyric[ctr2] != '+') && !isspace((unsigned char)current->lyric[ctr2]))
 				replace=0;
 
@@ -258,8 +264,9 @@ void Export_UStar(FILE *outf)
 
 		if(replace)
 		{
-	// **Optimize this loop by only checking the length of the string once (above) and storing it in a variable
-			for(ctr2=0;ctr2<(unsigned long)strlen(current->lyric);ctr2++)
+//v2.3	Optimize this loop by saving the string's length
+//			for(ctr2=0;ctr2<(unsigned long)strlen(current->lyric);ctr2++)
+			for(ctr2=0;ctr2<length;ctr2++)
 				if(current->lyric[ctr2] == '+')
 					current->lyric[ctr2]='~';
 				else
@@ -351,9 +358,6 @@ void Export_UStar(FILE *outf)
 
 		if(Lyrics.verbose>=2)	printf("\trounded start=%lu\trounded duration=%lu\n",start,dur);
 
-//The UltraStar documentation doesn't say this, but it seems their timestamps and durations reflect QUARTER BEATS
-//!This was resolved by dividing the stepping variable by 4, which improves the resolution of the exported lyrics
-//!over this workaround
 		//write lyric timing and pitch to file, prefixing with : or F as appropriate based on pitch presence
 		if(Lyrics.pitch_tracking)	//Write default pitch MINPITCH unless Lyrics.pitch_tracking is enabled
 			pitch_num=current->pitch;
@@ -519,27 +523,28 @@ double CalculateTimeDiff(double tempo)
 
 void UStar_Load(FILE *inf)
 {
-	unsigned long ctr;		//Equal to length of string (+1 for null terminator)
+	unsigned long ctr=0;		//Equal to length of string (+1 for null terminator)
 	unsigned long maxlinelength=0;	//I will count the length of the longest line (including NULL char/newline) in the
 							//input file so I can create a buffer large enough to read any line into
-	char *buffer;			//Will be an array large enough to hold the largest line of text from input file
-	char *substring;		//Used with strstr() to find tag strings in the input file
-	unsigned long index;	//Used to index within a line of text
-	long int starttime;		//Converted unsigned long value of numerical string representing a lyric's timestamp in quarterbeats
-	long int duration;		//Converted unsigned long value of numerical string representing a lyric's duration
+	char *buffer=NULL;		//Will be an array large enough to hold the largest line of text from input file
+	char *substring=NULL;	//Used with strstr() to find tag strings in the input file
+	unsigned long index=0;	//Used to index within a line of text
+	long int starttime=0;		//Converted unsigned long value of numerical string representing a lyric's timestamp in quarterbeats
+	long int duration=0;		//Converted unsigned long value of numerical string representing a lyric's duration
 	long int linetime=0;	//Converted unsigned long value of numerical string representing the timestamp of a line of lyric's first lyric (for relative timing)
-	int rawpitch;			//The (potentially) negative pitch is read into this variable, so it can be properly bounds checked
-	unsigned char pitch;	//Converted unsigned char value of numerical string representing a lyric's pitch
-	unsigned long processedctr;	//The current line number being processed in the text file
+	int rawpitch=0;			//The (potentially) negative pitch is read into this variable, so it can be properly bounds checked
+	unsigned char pitch=0;	//Converted unsigned char value of numerical string representing a lyric's pitch
+	unsigned long processedctr=0;	//The current line number being processed in the text file
 	char tagsprocessed=0;		//If nonzero, a line not beginning in '#' was read, at which point all requisite
 								//tags were expected to have been read.  If > 1, tags have been processed.
 	double BPM=0.0;			//The tempo defined in the file
 	char *tempstr=NULL;		//Used for temporary strings
 	double stepping=0.0;	//The number of milliseconds in one quarter beat
-	char replace;			//Used for ~ to + character conversion
+	char replace=0;			//Used for ~ to + character conversion
 	char relative_timing=0;	//Boolean: If nonzero, there was a #RELATIVE tag in the input file specifying to use relative
 							//timing instead of absolute timing.  Relative timing causes the timestamp to reset to 0 at
 							//the beginning of each line of lyrics in the UltraStar file (reset at each linebreak)
+	unsigned long length=0;
 
 	assert_wrapper(inf != NULL);	//This must not be NULL
 
@@ -744,13 +749,18 @@ void UStar_Load(FILE *inf)
 
 //Replace UltraStar's pitch shift indicator (~) with that of Rock Band (+)
 	//If the current lyric piece is nothing but a ~ and whitespace, replace the ~ with +
-		for(ctr=0,replace=1;ctr<(unsigned long)strlen(&buffer[index]);ctr++)
+//v2.3	Optimize this loop by saving the string's length
+//		for(ctr=0,replace=1;ctr<(unsigned long)strlen(&buffer[index]);ctr++)
+		length=strlen(&buffer[index]);
+		for(ctr=0,replace=1;ctr<length;ctr++)
 			if((buffer[index+ctr] != '~') && !isspace((unsigned char)buffer[index+ctr]))
 				replace=0;
 
 		if(replace)
 		{
-			for(ctr=0;ctr<(unsigned long)strlen(&buffer[index]);ctr++)
+//v2.3	Optimize this loop by saving the string's length
+//			for(ctr=0;ctr<(unsigned long)strlen(&buffer[index]);ctr++)
+			for(ctr=0;ctr<length;ctr++)
 				if(buffer[index+ctr] == '~')
 					buffer[index+ctr]='+';
 		}
@@ -775,7 +785,7 @@ void UStar_Load(FILE *inf)
 char *ReadUStarTag(char *str)
 {
 	char *temp;
-	size_t length;	//strlen(temp) is used several times
+	unsigned long length;	//strlen(temp) is used several times
 
 	assert_wrapper(str != NULL);	//This must not be NULL
 

@@ -114,6 +114,7 @@ void InitLyrics(void)
 	Lyrics.prevlineslast=NULL;
 	Lyrics.reinit=1;	//Handler functions need to re-init static variables
 	Lyrics.last_pitch=0;
+	Lyrics.nosrctag=NULL;
 }
 
 void CreateLyricLine(void)
@@ -155,7 +156,6 @@ void EndLyricLine(void)
 	struct Lyric_Piece *temp;	//A conductor to use for lyric overlap checking
 	struct Lyric_Piece *temp2;	//A temporary pointer to use for lyric combination
 	struct Lyric_Piece *next;	//A conditional next piece pointer needs to be used
-//	struct Lyric_Line *temp3;	//Used for logic to move lyrics
 
 	if(Lyrics.line_on == 0)	//If there is no open line of lyrics
 		return;
@@ -200,19 +200,21 @@ void EndLyricLine(void)
 			if((temp != Lyrics.prevlineslast) && Lyrics.noplus && (!strcmp(next->lyric,"+") || !strcmp(next->lyric,"+-")))
 			{	//If next is in the same line as temp, is a plus sign and the user specified noplus,
 				//Remove the plus lyric, adjust the duration and grouping of the previous lyric
-				printf("\tNoplus- Merging plus lyric with \"%s\"\n",temp->lyric);
+				if(Lyrics.verbose >= 2)	printf("\tNoplus- Merging plus lyric with \"%s\"\n",temp->lyric);
 				temp->duration+=next->duration;			//Add the +'s duration to this lyric piece
 				temp->groupswithnext=next->groupswithnext;	//Replace this lyric's grouping status with that of the plus lyric
 
 				temp->next=next->next;					//Remove the + lyric from the list
 				if(temp->next != NULL)					//If next was not the last lyric in the line
-					temp->next->prev=temp;				//have the lyric that followed piont back to this lyric
+					temp->next->prev=temp;				//have the lyric that followed point back to this lyric
 				free(next->lyric);						//Free the + lyric's structure
 				free(next);
 				Lyrics.piececount--;					//decrement the lyric piece counter
 				Lyrics.curline->piececount--;			//decrement the line lyric counter
-				if(next != NULL)	//As long as this isn't now the last piece in the line
-					continue;	//Don't skip to next piece.  Restart overlap checking with focus on this piece
+//v2.3  The noplus logic is broken
+//				if(temp->next != NULL)	//As long as this isn't now the last piece in the line
+//					continue;	//Don't skip to next piece.  Restart overlap checking with focus on this piece
+				continue;	//Don't continue processing, start checking now that the piece has combined
 			}
 
 //Special handling for overlapping
@@ -243,7 +245,10 @@ void EndLyricLine(void)
 					temp->lyric=ResizedAppend(temp->lyric,next->lyric,1);	//Recreate temp->lyric to have next lyric piece appended
 					temp->duration=next->duration;
 					temp->pitch=next->pitch;
-					temp->style=next->style;
+//v2.3	Allow separate tracking for overdrive and freestyle
+//					temp->style=next->style;
+					temp->overdrive=next->overdrive;
+					temp->freestyle=next->freestyle;
 					temp->groupswithnext=next->groupswithnext;
 
 					assert_wrapper(next != NULL);
@@ -261,27 +266,17 @@ void EndLyricLine(void)
 							temp2->prev=NULL;	//New head of list points back to nothing
 						else
 						{	//Remove this empty line and break from loop
-							assert(Lyrics.curline->prev != NULL);	//Cannot group the first line's lyrics to a previous line
+							assert_wrapper(Lyrics.curline->prev != NULL);	//Cannot group the first line's lyrics to a previous line
 							Lyrics.curline=Lyrics.curline->prev;	//Point back to previous line
 							free(Lyrics.curline->next);				//Free empty line
 							Lyrics.curline->next=NULL;				//What was the previous line points forward to nothing
 							Lyrics.linecount--;
 
 							break;
-/*This shouldn't be necessary, as there cannot be lyrics that follow the current line
-							if(Lyrics.curline->next != NULL)						//If there's a next line
-							{
-								Lyrics.curline->next->prev=Lyrics.curline->prev;	//Next line points back to previous line
-								temp3=Lyrics.curline->next;	//Store address of next line
-								free(Lyrics.curline);		//Release empty line
-								Lyrics.curline=temp3;		//Point to next line
-							}
-*/
 						}
 					}
 					else
 					{
-//						next=temp2;			//point next link to the link that followed the now-deleted link
 						temp->next=temp2;	//Point current link to next link
 						if(temp->next != NULL)			//If there was a next link
 							(temp->next)->prev=temp;	//Point next link back to current link
@@ -310,8 +305,10 @@ void EndLyricLine(void)
 void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char pitch,char groupswithnext)
 {
 	struct Lyric_Piece *temp;		//Temporary pointer
-	char style=0;					//Will be set to 'F' if a # is found in the lyric piece
+//v2.3	Allow separate tracking for overdrive and freestyle
+//	char style=0;					//Will be set to 'F' if a # is found in the lyric piece
 									//Will be set to '*' if Lyrics.overdrive_on is True, not to override freestyle
+	char overdrive=0,freestyle=0;	//Track the overdrive and freestyle statuses that are in effect
 	char hasequal=0;				//Used to track whether this lyric piece had an equal sign (hyphen) at the end
 	char linebreak=0;				//Enforce a linebreak if the lyric ends in a '/' (ie. Rock Band Beatles lyrics)
 	char leadspace=0,trailspace=0;	//Used for leading/trailing whitespace detection
@@ -357,35 +354,40 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 
 //Parse the string looking for the freestyle vocal modifiers # and ^
 	if((strchr(str,'#') != NULL) || (strchr(str,'^') != NULL))	//If the string contains '#' or '^'
-		style='F';
+//		style='F';
+		freestyle=1;
 
 	if(Lyrics.freestyle_on)	//If Freestyle is manually enabled
-		style='F';
+//		style='F';
+		freestyle=1;
 
-	if((style != 'F') && Lyrics.overdrive_on)	//If Freestyle is not in effect, check if Overdrive is in effect
-		style='*';
+//v2.3	Allow separate tracking for overdrive and freestyle
+//	if((style != 'F') && Lyrics.overdrive_on)	//If Freestyle is not in effect, check if Overdrive is in effect
+//		style='*';
+	if(Lyrics.overdrive_on)
+		overdrive=1;
 
 	if(str[strlen(str)-1] == '/')	//If this lyric ends in a forward slash
 		linebreak=1;				//Insert a linebreak after adding the lyric
 
+	if((str[0] != '\0') && (str[strlen(str)-1] == '='))	//If the last character in the string is an equal sign
+	{
+		str[strlen(str)-1]='\0';	//Truncate it
+		hasequal=1;					//This lyric should be written to end in a hyphen and group
+		groupswithnext=1;
+	}
+
 //FILTER HANDLING CODE
 	if(Lyrics.filter != NULL)
 	{
-		while(str[0] != '\0')	//Chop off filter characters until there are none or the string is empty
+		while(str[0] != '\0')				//While the string is not empty
 		{
-			if(str[strlen(str)-1] == '=')
-			{
-				str[strlen(str)-1]='\0';	//Truncate the last character
-				hasequal=1;					//This lyric should be written to end in a hyphen and group
-				groupswithnext=1;
-			}
-
 			if(strchr(Lyrics.filter,str[strlen(str)-1]) != NULL)
 			{	//If the last character in the lyric piece is in the filter list, truncate it from the string
 				if(Lyrics.verbose)	printf("Filtered character '%c' removed\n",str[strlen(str)-1]);
 				str[strlen(str)-1]='\0';	//Truncate the last character
 			}
-			else	//There is not a filtered character at the end of this piece of lyric
+			else	//There is not a filtered character at the end of this piece of lyric, or no filtering was specified
 				break;
 		}
 	}
@@ -467,7 +469,9 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 	temp->duration=end-start;				//Duration of the piece of lyric in milliseconds
 	temp->lyric=str;						//The string associated with this piece of lyric
 	temp->pitch=pitch;						//Assign the specified pitch
-	temp->style=style;						//Assign the vocal modifier as found
+//	temp->style=style;						//Assign the vocal modifier as found
+	temp->freestyle=freestyle;				//Assign the freestyle status found
+	temp->overdrive=overdrive;				//Assign the overdrive status found
 	temp->groupswithnext=groupswithnext;	//Assign the grouping status based on the determined status
 	temp->hasequal=hasequal;				//Assign the hyphen status
 	temp->trailspace=trailspace;			//Assign the trailspace status
@@ -862,6 +866,7 @@ char *DuplicateString(const char *str)
 
 	size=strlen(str);
 	ptr=malloc_err(size+1);
+
 	strcpy(ptr,str);
 	return ptr;
 }
@@ -883,7 +888,7 @@ char *TruncateString(char *str,char dealloc)
 
 //Parse the string backwards to truncate trailing whitespace
 //Note, isspace() seems to detect certain characters (ie. accented chars) incorrectly
-//unless the input character is casted to unsigned char
+//unless the input character is casted to unsigned char?
 	for(ctr=(unsigned long)strlen(str);ctr>0;ctr--)
 		if(isspace((unsigned char)str[ctr-1]))	//If this character is whitespace
 			str[ctr-1]='\0';		//truncate string to drop the whitespace
@@ -969,7 +974,6 @@ void PostProcessLyrics(void)
 					pieceptr->lyric[strlen(pieceptr->lyric)-1]='\0';	//truncate the hyphen
 
 		//Handle equal sign character handling
-//			if(((Lyrics.nohyphens & 2 ) == 0) && pieceptr->hasequal)
 			if(pieceptr->hasequal)
 			{	//If the input lyric had an equal sign, append it without regard to the nohyphens setting
 				if(Lyrics.out_format == MIDI_FORMAT)		//If outputting to MIDI, this must be written back as '='
@@ -1083,7 +1087,10 @@ void SetTag(char *string,char tagID,char negatizeoffset)
 	{
 		case 'n':	//Store Title tag
 			if(Lyrics.Title != NULL)
+			{
 				printf("Warning: Extra Title tag: \"%s\".  Ignoring\n",string2);
+				free(string2);
+			}
 			else
 			{
 				Lyrics.Title=string2;
@@ -1093,7 +1100,10 @@ void SetTag(char *string,char tagID,char negatizeoffset)
 
 		case 's':	//Store Artist tag
 			if(Lyrics.Artist != NULL)
+			{
 				printf("Warning: Extra Artist tag: \"%s\".  Ignoring\n",string2);
+				free(string2);
+			}
 			else
 			{
 				Lyrics.Artist=string2;
@@ -1103,7 +1113,10 @@ void SetTag(char *string,char tagID,char negatizeoffset)
 
 		case 'a':	//Store Album tag
 			if(Lyrics.Album != NULL)
+			{
 				printf("Warning: Extra Album tag: \"%s\".  Ignoring\n",string2);
+				free(string2);
+			}
 			else
 			{
 				Lyrics.Album=string2;
@@ -1113,7 +1126,10 @@ void SetTag(char *string,char tagID,char negatizeoffset)
 
 		case 'e':	//Store Editor tag
 			if(Lyrics.Editor != NULL)
+			{
 				printf("Warning: Extra Editor tag: \"%s\".  Ignoring\n",string2);
+				free(string2);
+			}
 			else
 			{
 				Lyrics.Editor=string2;
@@ -1128,6 +1144,8 @@ void SetTag(char *string,char tagID,char negatizeoffset)
 					puts("Offset controlled via command line.  Ignoring Offset tag");
 				else
 					printf("Warning: Extra Offset tag: \"%s\".  Ignoring\n",string2);
+
+				free(string2);
 			}
 			else
 			{
@@ -1528,7 +1546,9 @@ void WriteUnicodeString(FILE *outf,char *str)	//Takes an 8 bit encoded ANSI stri
 	assert_wrapper(outf != NULL);	//This must not be NULL
 
 	if(str != NULL)
-		for(ctr=0;ctr<(unsigned long)strlen(str);ctr++)
+//v2.3	Optimize this loop by not performing extra parsing to find string length
+//		for(ctr=0;ctr<(unsigned long)strlen(str);ctr++)
+		for(ctr=0;str[ctr] != '\0';ctr++)	//For each character in the string that precedes the NULL terminator
 		{	//Write ANSI character and a 0 value
 			fputc_err(str[ctr],outf);
 			fputc_err(0,outf);
@@ -1821,7 +1841,6 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 
 	assert_wrapper(file != NULL);
 	InitLyrics();	//Initialize all variables in the Lyrics structure
-//	InitMIDI();		//Initialize all variables in the MIDI structure
 
 	if(Lyrics.verbose>=2)	printf("Detecting lyric type of file \"%s\"\n",file);
 
@@ -2009,7 +2028,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 		if(GetMP3FrameDuration(&tag) != 0)	//Find the sample rate defined in the MP3 frame
 		{	//If the MP3 head was able to be parsed
 			fseek_err(tag.fp,tag.framestart,SEEK_SET);	//Seek to first ID3 frame
-			if(SearchValues(tag.fp,tag.tagend,NULL,"SYLT",4,1) == 1)	//Seek to SYLT ID3 frame
+			if(SearchPhrase(tag.fp,tag.tagend,NULL,"SYLT",4,1) == 1)	//Seek to SYLT ID3 frame
 			{	//If an SYLT frame header was found
 				fclose_err(inf);
 				detectionlist->format=ID3_FORMAT;
@@ -2261,7 +2280,7 @@ void ForceEndLyricLine(void)
 	}
 }
 
-char *ParseString(FILE *inf)
+char *ReadString(FILE *inf,unsigned long *bytesread)
 {
 	//Parses a null terminated string at the current file position, allocates memory for it and returns it
 	//NULL is returned upon error
@@ -2288,7 +2307,8 @@ char *ParseString(FILE *inf)
 
 	if(length == 0)		//If no characters could be read
 	{
-		fseek_err(inf,position,SEEK_SET);	//Return to the original file position
+//v2.3	Since the main program exits when NULL is returned from this function, restoring the original file position is useless overhead
+//		fseek_err(inf,position,SEEK_SET);	//Return to the original file position
 		return NULL;
 	}
 
@@ -2308,6 +2328,9 @@ char *ParseString(FILE *inf)
 		c=fgetc(inf);	//Read next character
 	}
 	string[index]='\0';	//Terminate string
+
+	if(bytesread != NULL)	//If a pointer was given to store the number of bytes read from file
+		*bytesread=length;	//Store the number
 
 	return string;
 }

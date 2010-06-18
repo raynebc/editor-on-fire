@@ -3,7 +3,7 @@
 
 struct ID3Frame
 {
-	char *FrameID;			//A null terminated respresentation of the frame ID, ie "SYLT"
+	char *frameid;			//A null terminated respresentation of the frame ID, ie "SYLT"
 	unsigned long pos;		//The file position of the frame header
 	unsigned long length;	//The length of the frame (minus header)
 	struct ID3Frame *prev;	//Previous link in the list
@@ -25,7 +25,13 @@ struct ID3Tag
 	struct ID3Frame *frames;	//A linked list of ID3Frames that is populated by ID3FrameProcessor()
 };
 
-int SearchValues(FILE *inf,unsigned long breakpos,unsigned long *pos,const unsigned char *phrase,unsigned long phraselen,unsigned char autoseek);
+struct OmitID3frame
+{
+	char *frameid;	//The ID of the frame to omit, ie. "TPE1"
+	struct OmitID3frame *next;	//The next link in the list
+};
+
+int SearchPhrase(FILE *inf,unsigned long breakpos,unsigned long *pos,const unsigned char *phrase,unsigned long phraselen,unsigned char autoseek);
 	//Searches from the current file position of inf for the first match of the specified array of characters
 	//If file position breakpos is reached or exceeded, and breakpos is nonzero, the function will end the search even if no match was found
 	//phrase is an array of characters to find, and phraselen is the number of characters defined in the array
@@ -48,22 +54,8 @@ int FindID3Tag(struct ID3Tag *ptr);
 	//The start of the tag and the file position of the first byte outside the tag are populated in ptr.
 	//Nonzero is returned upon success or zero is returned upon failure
 
-#ifdef EOF_BUILD
-int ReadID3Tags(char *filename,char *artist,char *title,char *year);
-	//Rewinds the input file and searches it for the TIT2, TYER and TPE1 frames in an existing ID3v2 tag
-	//Tag strings are read into the pointers that are passed via reference
-	//Returns the number of tags read, or 0 if none are read (ie. error)
-#else
-int ReadID3Tags(char *filename);
+int DisplayID3Tag(char *filename);
 	//A function to test the ID3 tag reading logic by printing the found tags to STDOUT
-#endif
-
-
-int FindID3Tag(struct ID3Tag *ptr);
-	//Called by ReadID3Tags() to find the ID3 tag header so that all parsing can take place within the confines of the tag instead
-	//of through the entire file.  The file pointer in the passed structure is expected to be opened to the file to parse
-	//The start of the tag and the file position of the first byte outside the tag are populated in ptr.
-	//Nonzero is returned upon success or zero is returned upon failure
 
 unsigned long GetMP3FrameDuration(struct ID3Tag *ptr);
 	//Expects that the file position is at the first MP3 frame, and not the ID3 tag
@@ -105,5 +97,34 @@ unsigned long BuildID3Tag(struct ID3Tag *ptr,FILE *outf);
 void Export_ID3(FILE *inf, FILE *outf);
 	//Takes an input MP3 file and writes the contents of the Lyrics structure to the output file,
 	//preserving the other ID3 and audio data from the input file
+
+struct ID3Frame *FindID3Frame(struct ID3Tag *tag,const char *frameid);
+	//Accepts an ID3Tag structure that has been initialized by FindID3Tag() and ID3FrameProcessor()
+	//Searches the frame list for the first instance of a frame matching the given ID string and returns it, or NULL if no match is found
+
+char *GrabID3TextFrame(struct ID3Tag *tag,const char *frameid,char *buffer,unsigned long buffersize);
+	//Accepts an ID3Tag structure that has been initialized by FindID3Tag() and ID3FrameProcessor()
+	//Searches the frame list for the first instance of a frame matching the given ID string
+	//The frame is treated as a text info frame and parsed as such.
+	//If buffer is not NULL, the frame content is copied to the buffer and buffer's pointer is returned
+	//If necessary, the string content will be truncated to fit based on the given size of the buffer
+	//If buffer is NULL, the allocated string is returned
+	//NULL is returned in the event of an error or if the text is in Unicode
+
+struct OmitID3frame *AddOmitID3framelist(struct OmitID3frame *ptr,const char *frameid);
+	//Creates a link for the given frame ID and adds it to the list, returning the address of the HEAD link
+	//frameid is copied to a new array and is not altered
+	//If ptr is not NULL, the new link is appended to the end of the list
+
+int SearchOmitID3framelist(struct OmitID3frame *ptr,char *frameid);
+	//Returns 1 if a given frame ID is in the omit list, 2 if the omit list has a frame ID entry beginning with '*' (wildcard)
+	//otherwise 0 is returned
+
+void DestroyOmitID3framelist(struct OmitID3frame *ptr);
+	//Deallocates all memory used in the omit list
+
+void WriteTextInfoFrame(FILE *outf,const char *frameid,const char *string);
+	//Writes an ID3 text information frame to the file
+
 
 #endif //#ifndef _id3_parse_h_

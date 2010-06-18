@@ -180,7 +180,7 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 		curpiece=curline->pieces;	//Point lyric conductor to first lyric in this line
 		while(curpiece != NULL)
 		{	//For each lyric in this line
-			if(curpiece->style == '*')			//If this lyric is overdrive
+			if(curpiece->overdrive)				//If this lyric is overdrive
 				if(tp->lines-1 >= 0)			//only if tp->lines is greater than 0
 					tp->line[tp->lines-1].flags |= 1;	//Set the overdrive flag in the EOF line structure
 
