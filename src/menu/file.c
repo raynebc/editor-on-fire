@@ -298,6 +298,8 @@ int eof_menu_file_new_wizard(void)
 	ALOGG_OGG * temp_ogg = NULL;
 	char * temp_buffer = NULL;
 	int temp_buffer_size = 0;
+	struct ID3Tag tag={NULL,0,0,0,0,0,0.0,NULL};
+	int ctr=0;
 
 	if(eof_changes)
 	{
@@ -360,7 +362,28 @@ int eof_menu_file_new_wizard(void)
 	}
 	else if(!ustricmp("mp3", get_extension(oggfilename)))
 	{
-		ReadID3Tags(oggfilename,eof_etext, eof_etext2, year);	//Load tags into temporary strings
+		tag.fp=fopen(oggfilename,"rb");	//Open user-specified file for reading
+		if(tag.fp != NULL)
+		{	//If the file was able to be opened
+			if(FindID3Tag(&tag))
+			{	//If the ID3 tag was found
+				ID3FrameProcessor(&tag);	//Build a list of the ID3 frames
+				GrabID3TextFrame(&tag,"TPE1",eof_etext,sizeof(eof_etext)/sizeof(char));		//Store the Artist info in eof_etext[]
+				GrabID3TextFrame(&tag,"TIT2",eof_etext2,sizeof(eof_etext2)/sizeof(char));	//Store the Title info in eof_etext2[]
+
+				GrabID3TextFrame(&tag,"TYER",year,sizeof(year)/sizeof(char));			//Store the Year info in year[]
+				if(strlen(year) != 4)		//If the year string isn't exactly 4 digits
+					year[0]='\0';			//Nullify it
+				else
+					for(ctr=0;ctr<4;ctr++)		//Otherwise check all digits to ensure they're numerical
+						if(!isdigit(year[ctr]))	//If it contains a non numerical character
+							year[0]='\0';		//Empty the year array
+
+				DestroyID3FrameList(&tag);	//Release the list of ID3 frames
+			}
+			fclose(tag.fp);	//Close file
+			tag.fp=NULL;
+		}
 	}
 
 	/* user fills in song information */

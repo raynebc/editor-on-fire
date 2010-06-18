@@ -43,15 +43,16 @@ Export functions are expected to:
 #include <stdio.h>			//For the FILE declaration
 #include <setjmp.h>			//For the jmp_buf declaration
 #include <errno.h>			//For the errno declaration used in the source files
+#include "ID3_parse.h"		//For the OmitID3Frame structure declaration
 
 
 //
 //Global Macros- All relevant source/header files will include this header file to obtain these declarations
 //
-#define PROGVERSION "FoFLyricConverter2.2"
-#define LYRIC_NOTE_ON 50	//If note #s 60-100 are used for Note On events for lyrics, FoF interprets it as a playable difficulty
-							//Write Note On events using this note number instead.  This is a generic pitch to use
-							//whenever actual pitch for lyrics is not available.
+#define PROGVERSION "FoFLyricConverter2.3"
+#define LYRIC_NOTE_ON 50	//Previously, if note #s 60-100 were used for Note On events for lyrics, FoF interpreted
+							//those notes to indicate playable instrument difficulties.  This was fixed, but I will
+							//continue to use this pitch to denote a pitchless lyric during MIDI export
 #define LRCTIMESTAMPMAXFIELDLENGTH 2
 	//Used to define the max length of the minutes, seconds and hundredths fields in LRC timestamps
 
@@ -98,7 +99,10 @@ struct Lyric_Piece
 	unsigned long start;		//The start offset of the piece of lyric in real time (milliseconds)
 	unsigned long duration;		//Duration of the piece of lyric in milliseconds
 	unsigned char pitch;		//The pitch of the sung lyric, using Rock Band's mapping.  Valid range is 36-95, pitch 36 being mid C
-	char style;					//If set to '*', denotes starpower/golden note, if set to 'F', denotes freestyle, if set to '!', denotes pitchless (ie. during MIDI import)
+//v2.3	Allow separate tracking for overdrive and freestyle
+//	char style;					//If set to '*', denotes starpower/golden note, if set to 'F', denotes freestyle, if set to '!', denotes pitchless (ie. during MIDI import)
+	char overdrive;				//Boolean:  If nonzero, this piece is overdrive
+	char freestyle;				//Boolean:  If nonzero, this piece is freestyle
 	char groupswithnext;		//Boolean:  If nonzero, this piece should group with the next piece (preserving grouping information if nohyphens is used)
 	char hasequal;				//Boolean:  If nonzero, this piece had an equal sign during import, which is used by Rock Band to display as a hyphen WITHOUT grouping
 	char *lyric;				//The string associated with this piece of lyric
@@ -171,7 +175,7 @@ struct _LYRICSSTRUCT_{
 								//	piece and will be discarded instead of being added to the Lyric structure
 	char grouping;				//Specified grouping method for exported lyrics 0=none, 1=per word, 2=per line
 	char defaultfilter;			//Boolean:  User did not define a custom filter list, one was allocated and will need to be deallocated
-	char verbose;				//Boolean:  Verbose logging
+	char verbose;				//Specifies level of logging (1 is verbose, 2 is debug)
 	char quick;					//If nonzero, skips all possible MIDI processing (only processing for PART VOCALS)
 	char pitch_tracking;		//Boolean:  Specifies whether the input lyrics were a format that includes
 								//			pitch detection (MIDI, UltraStar).  If false, generic pitch
@@ -205,6 +209,7 @@ struct _LYRICSSTRUCT_{
 	unsigned char out_format;	//Specifies the declared output format
 	double explicittempo;		//Set to nonzero if a tempo was passed as an argument
 	unsigned char last_pitch;	//Used by various import functions to track pitch changes.  Reset to 0 by InitMIDI() and InitLyrics()
+	struct OmitID3frame *nosrctag;	//The linked list of ID3 frames to omit during ID3 export
 
 //Filenames
 	char *outfilename;		//Stores the name of the output file
@@ -402,8 +407,10 @@ struct Lyric_Format *DetectLyricFormat(char *file);
 	//Vocal Rhythm MIDI will NOT be detected
 	//If NULL is returned, the file is not valid for import (invalid lyrics or unknown type)
 	//NOTE:  Only MIDI tracks that have a name are included in the detection for MIDI type formats
-char *ParseString(FILE *inf);
-	//Parses a null terminated string at the current file position, allocates memory for it and returns it
+//v2.3	Updated ParseString() to give the number of bytes read, so the calling function can omit calls to fseek
+//char *ParseString(FILE *inf);
+char *ReadString(FILE *inf,unsigned long *bytesread);
+	//Parses a null terminated ASCII string at the current file position, allocates memory for it and returns it
 	//NULL is returned upon error
 	//Upon success, the file position is left after the null terminator of the string that was read
 unsigned long GetFileEndPos(FILE *fp);

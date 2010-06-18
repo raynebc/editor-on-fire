@@ -103,6 +103,7 @@ struct TEPstruct	//This is structure containing all variables utilized within th
 {					//A pointer to this will be passed to an event handling function
 	unsigned char eventtype;		//Stores the MIDI event type in the upper half (and MIDI channel in the lower half)
 	unsigned char lasteventtype;	//Stores the last event, for use with Running Status bytes
+	unsigned char lastwritteneventtype;	//Stores the last event that was written, for use with Running Status bytes
 	unsigned char runningstatus;	//Boolean:  Running status is in effect
 	unsigned char m_eventtype;		//Stores the meta event type if the current event is a meta event
 	char *trackname;				//Stores the name of the current track, if provided
@@ -167,7 +168,8 @@ int ReadTrackHeader(FILE *inf,struct Track_chunk *tchunk);
 	//returns -1 if the track header is invalid or 0 if the track header was successfully parsed
 	//tchunk is a pointer to a track header structure stored within hchunk.tracks
 int ReadVarLength(FILE *inf, unsigned long *ptr);
-	//Read variable length value into *ptr performing bit shifting accordingly.  Returns zero on success
+	//Read variable length value into *ptr performing bit shifting accordingly
+	//Returns the number of bytes read from the input file, or zero upon error (invalid VLV)
 char *ReadMetaEventString(FILE *inf,long int length);
 	//Allocates an array of length+1 and reads the ASCII string of the specified length The pointer to the array is returned
 
@@ -182,8 +184,11 @@ void CopyTrack(FILE *inf,unsigned short tracknum,FILE *outf);
 void WriteMIDIString(FILE *outf,unsigned long delta,int stringtype, const char *str);
 	//Writes the specified delta value (if writedelta is nonzero),
 	//followed by the specified string type (Text, Trackname, Lyric, Seq. Specific) to the output MIDI file
-void Write_MIDI_Note(unsigned int notenum,unsigned int channelnum,unsigned int notestatus,FILE *outf);
+void Write_MIDI_Note(unsigned int notenum,unsigned int channelnum,unsigned int notestatus,FILE *outf,char skipstatusbyte);
 	//Writes the given note number with status MIDI_NOTE_ON or MIDI_NOTE_OFF to the file stream given
+//v2.3:  Implement Running Status in exported tracks that are built/rebuilt
+	//Note Off events will be written as Note On events with a velocity of 0 (to save space with running status)
+	//If skipstatusbyte is nonzero, then the status byte (MIDI_NOTE_ON) will not be written (used in running status logic)
 long int Write_MIDI_Track_Header(FILE *outf);
 	//Writes a MIDI track header with null data for the chunk size.  The file position of the chunk size is returned for calculating and writing the chunk size afterward
 void Write_Default_Track_Zero(FILE *outmidi);
