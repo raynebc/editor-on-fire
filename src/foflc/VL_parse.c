@@ -219,8 +219,6 @@ int VL_PreLoad(FILE *inf,char validate)
 		ftell_result=ftell_err(inf);	//If this string is empty
 		if(temp[0] == '\0')
 		{
-//v2.3	Moved this call to ftell outside of the if statement
-//			ftell_result=ftell_err(inf);
 			if(VL.textsize+16 - ftell_result <= 3)	//This 0 word value ends within 3 bytes of the sync header (is padding)
 			{
 				free(temp);	//Release string as it won't be used
@@ -238,8 +236,6 @@ int VL_PreLoad(FILE *inf,char validate)
 				}
 			}
 		}
-//v2.3	Moved this call to ftell further up
-//		if(ftell_err(inf) > VL.textsize + 16)	//If reading this string caused the file position to cross into Sync chunk
 		if(ftell_result > VL.textsize + 16)	//If reading this string caused the file position to cross into Sync chunk
 		{
 			puts("Error: Lyric string overlapped into Sync chunk");
@@ -797,7 +793,7 @@ void ReleaseVL(void)
 	struct VL_Sync_entry *synctemp;
 	struct VL_Sync_entry *syncnext;
 
-	if(Lyrics.verbose)	puts("Cleaning up VL structure");
+	if(Lyrics.verbose >= 2)	puts("Cleaning up VL structure");
 
 //Release VL structure's memory
 	texttemp=VL.Lyrics;		//Point conductor at first text chunk entry

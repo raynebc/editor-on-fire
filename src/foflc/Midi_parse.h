@@ -32,6 +32,7 @@ struct Track_chunk{
 	unsigned long chunksize;	//The size of this track's chunk	(4 bytes)
 	unsigned long textcount;	//The number of text events in this track (that don't begin with '[')
 	unsigned long lyrcount;		//The number of lyric events in this track (that don't begin with '[')
+	unsigned long spacecount;	//The number of lyric events that had whitespace
 	unsigned long notecount;	//The number of Note On events in this track
 };
 
@@ -186,7 +187,6 @@ void WriteMIDIString(FILE *outf,unsigned long delta,int stringtype, const char *
 	//followed by the specified string type (Text, Trackname, Lyric, Seq. Specific) to the output MIDI file
 void Write_MIDI_Note(unsigned int notenum,unsigned int channelnum,unsigned int notestatus,FILE *outf,char skipstatusbyte);
 	//Writes the given note number with status MIDI_NOTE_ON or MIDI_NOTE_OFF to the file stream given
-//v2.3:  Implement Running Status in exported tracks that are built/rebuilt
 	//Note Off events will be written as Note On events with a velocity of 0 (to save space with running status)
 	//If skipstatusbyte is nonzero, then the status byte (MIDI_NOTE_ON) will not be written (used in running status logic)
 long int Write_MIDI_Track_Header(FILE *outf);
@@ -227,6 +227,8 @@ int SKAR_handler(struct TEPstruct *data);
 	//This handler loads a standard "Soft Karaoke" KAR file, which stores lyrics as text events in a track called "Words"
 int Lyric_handler(struct TEPstruct *data);
 	//This is the new KAR_pitch_handler logic that is designed to handle both RB and KAR MIDIs
+int MIDI_Stats(struct TEPstruct *data);
+	//Tracks the following statistical information for the track: notecount, textcount, lyrcount and spacecount
 
 
 //

@@ -99,7 +99,7 @@ void InitLyrics(void)
 	Lyrics.srclyrname=NULL;
 	Lyrics.srcrhythmname=NULL;
 	Lyrics.dstlyrname=NULL;
-	Lyrics.srcfile=NULL;
+	Lyrics.srcfilename=NULL;
 	Lyrics.TitleStringID=NULL;
 	Lyrics.ArtistStringID=NULL;
 	Lyrics.AlbumStringID=NULL;
@@ -115,6 +115,7 @@ void InitLyrics(void)
 	Lyrics.reinit=1;	//Handler functions need to re-init static variables
 	Lyrics.last_pitch=0;
 	Lyrics.nosrctag=NULL;
+	Lyrics.nofstyle=0;
 }
 
 void CreateLyricLine(void)
@@ -211,9 +212,6 @@ void EndLyricLine(void)
 				free(next);
 				Lyrics.piececount--;					//decrement the lyric piece counter
 				Lyrics.curline->piececount--;			//decrement the line lyric counter
-//v2.3  The noplus logic is broken
-//				if(temp->next != NULL)	//As long as this isn't now the last piece in the line
-//					continue;	//Don't skip to next piece.  Restart overlap checking with focus on this piece
 				continue;	//Don't continue processing, start checking now that the piece has combined
 			}
 
@@ -245,8 +243,6 @@ void EndLyricLine(void)
 					temp->lyric=ResizedAppend(temp->lyric,next->lyric,1);	//Recreate temp->lyric to have next lyric piece appended
 					temp->duration=next->duration;
 					temp->pitch=next->pitch;
-//v2.3	Allow separate tracking for overdrive and freestyle
-//					temp->style=next->style;
 					temp->overdrive=next->overdrive;
 					temp->freestyle=next->freestyle;
 					temp->groupswithnext=next->groupswithnext;
@@ -305,9 +301,6 @@ void EndLyricLine(void)
 void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char pitch,char groupswithnext)
 {
 	struct Lyric_Piece *temp;		//Temporary pointer
-//v2.3	Allow separate tracking for overdrive and freestyle
-//	char style=0;					//Will be set to 'F' if a # is found in the lyric piece
-									//Will be set to '*' if Lyrics.overdrive_on is True, not to override freestyle
 	char overdrive=0,freestyle=0;	//Track the overdrive and freestyle statuses that are in effect
 	char hasequal=0;				//Used to track whether this lyric piece had an equal sign (hyphen) at the end
 	char linebreak=0;				//Enforce a linebreak if the lyric ends in a '/' (ie. Rock Band Beatles lyrics)
@@ -354,16 +347,11 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 
 //Parse the string looking for the freestyle vocal modifiers # and ^
 	if((strchr(str,'#') != NULL) || (strchr(str,'^') != NULL))	//If the string contains '#' or '^'
-//		style='F';
 		freestyle=1;
 
 	if(Lyrics.freestyle_on)	//If Freestyle is manually enabled
-//		style='F';
 		freestyle=1;
 
-//v2.3	Allow separate tracking for overdrive and freestyle
-//	if((style != 'F') && Lyrics.overdrive_on)	//If Freestyle is not in effect, check if Overdrive is in effect
-//		style='*';
 	if(Lyrics.overdrive_on)
 		overdrive=1;
 
@@ -873,8 +861,8 @@ char *DuplicateString(const char *str)
 
 char *TruncateString(char *str,char dealloc)
 {
-	unsigned long ctr;
-	char *newstr;
+	unsigned long ctr=0;
+	char *newstr=NULL;
 	char *originalstr=str;
 
 	assert_wrapper(str != NULL);	//This must not be NULL
@@ -896,7 +884,8 @@ char *TruncateString(char *str,char dealloc)
 			break;	//Stop parsing
 
 	newstr=DuplicateString(str);
-	if(dealloc)	free(originalstr);
+	if(dealloc)
+		free(originalstr);
 	return newstr;	//Return new string
 }
 
@@ -1170,17 +1159,20 @@ void SetTag(char *string,char tagID,char negatizeoffset)
 						Lyrics.realoffset=-Lyrics.realoffset;
 						Lyrics.Offset=DuplicateString("-");	//Begin string with negative sign
 						Lyrics.Offset=ResizedAppend(Lyrics.Offset,string2,1);	//Append the Offset string
-						free(string2);
+//						free(string2);
 					}
 					else
 						Lyrics.Offset=string2;
 
-					if(Lyrics.verbose>=2)	printf("\tConverted delay is %ldms\n",Lyrics.realoffset);
 					if(Lyrics.verbose)
 					{
-						printf("Loaded tag: \"delay = %s\"\n",Lyrics.Offset);
+						printf("Loaded tag: \"delay = %s\"\n",string2);
+						if(Lyrics.verbose>=2)	printf("\tConverted delay is %ldms\n",Lyrics.realoffset);
 						if(negatizeoffset)	puts("The offset was made negative because it will be used subtractively");
 					}
+
+					if(negatizeoffset)
+						free(string2);
 				}
 				else	//if song.ini's delay is defined as 0, store the string "0" in the Offset
 				{		//as, this is required in order for UltraStar texts with an explicit gap
@@ -1209,7 +1201,7 @@ unsigned long FindLongestLineLength(FILE *inf,char exit_on_empty)
 //Find the length of the longest line
 	if(Lyrics.verbose>=2)	puts("Parsing file to find the length of the longest line");
 
-	rewind(inf);		//rewind file
+	rewind_err(inf);		//rewind file
 	do{
 		ctr=0;			//Reset line length counter
 		do{
@@ -1225,7 +1217,7 @@ unsigned long FindLongestLineLength(FILE *inf,char exit_on_empty)
 	{
 		if(!exit_on_empty)
 		{
-			rewind(inf);
+			rewind_err(inf);
 			return 0;
 		}
 		else
@@ -1239,7 +1231,7 @@ unsigned long FindLongestLineLength(FILE *inf,char exit_on_empty)
 	if(Lyrics.verbose>=2)
 		printf("Longest line detected is %lu characters\n",maxlinelength);
 
-	rewind(inf);		//rewind file
+	rewind_err(inf);		//rewind file
 	return maxlinelength;
 }
 
@@ -1256,6 +1248,16 @@ long ftell_err(FILE *fp)
 	}
 
 	return result;
+}
+
+void rewind_err(FILE *fp)
+{
+	assert_wrapper(fp != NULL);
+	if(fseek(fp,0,SEEK_SET) != 0)
+	{
+		printf("Error rewinding file: %s\nAborting\n",strerror(errno));
+		exit_wrapper(1);
+	}
 }
 
 void fseek_err(FILE *stream,long int offset,int origin)
@@ -1546,8 +1548,6 @@ void WriteUnicodeString(FILE *outf,char *str)	//Takes an 8 bit encoded ANSI stri
 	assert_wrapper(outf != NULL);	//This must not be NULL
 
 	if(str != NULL)
-//v2.3	Optimize this loop by not performing extra parsing to find string length
-//		for(ctr=0;ctr<(unsigned long)strlen(str);ctr++)
 		for(ctr=0;str[ctr] != '\0';ctr++)	//For each character in the string that precedes the NULL terminator
 		{	//Write ANSI character and a 0 value
 			fputc_err(str[ctr],outf);
@@ -2020,7 +2020,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 	}
 
 //Test for MP3 file with ID3 tag
-	rewind(inf);
+	rewind_err(inf);
 	tag.fp=inf;
 	if(FindID3Tag(&tag) != 0)	//Find start and end of ID3 tag
 	{	//If the ID3 tag was found
@@ -2038,7 +2038,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 	}
 
 //Test for MIDI file
-	rewind(inf);
+	rewind_err(inf);
 	InitMIDI();				//Initialize all variables in the MIDI structure
 	quicktemp=Lyrics.quick;	//Store this value
 	Lyrics.quick=0;			//Force quick processing OFF (so MIDI_Load will not skip parsing entire tracks)
@@ -2056,7 +2056,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 	ReadMIDIHeader(inf,1);	//Suppress errors regarding invalid MIDI header
 
 	//If this point is reached, ReadMIDIHeader() completed without error, indicating the file begins with a valid MIDI header
-	rewind(inf);
+	rewind_err(inf);
 	ReleaseMIDI();	//Deallocate MIDI structures populated by ReadMIDIHeader()
 	jumpcode=setjmp(FLjumpbuffer);
 	if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
@@ -2067,7 +2067,9 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 		Lyrics.quick=quicktemp;	//Restore original quick processing setting
 		return NULL;	//This statement is reached if MIDI_Load() below calles exit_wrapper(), indicating an invalid MIDI file
 	}
-	MIDI_Load(inf,NULL,1);	//Call MIDI_Load with no handler (just load MIDI info) Lyric structure is NOT re-init'd- it's already populated.  SUPPRESS error messages during detection
+//v2.4	Implemented a statistics tracking MIDI event handler
+//	MIDI_Load(inf,NULL,1);	//Call MIDI_Load with no handler (just load MIDI info) Lyric structure is NOT re-init'd- it's already populated.  SUPPRESS error messages during detection
+	MIDI_Load(inf,MIDI_Stats,1);	//Call MIDI_Load with the statistics tracking handler.  Lyric structure is NOT re-init'd- it's already populated.  SUPPRESS error messages during detection
 
 	Lyrics.quick=quicktemp;	//Restore original quick processing setting
 
@@ -2103,8 +2105,10 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 		}
 
 //RB MIDI detection logic
-		if(	!strcasecmp((MIDIstruct.hchunk.tracks[ctr]).trackname,"PART VOCALS") ||		//If the track name is "PART VOCALS"
-			strcasestr_spec((MIDIstruct.hchunk.tracks[ctr]).trackname,"PART HARM"))		//or is named to be a harmony track
+//		if(	!strcasecmp((MIDIstruct.hchunk.tracks[ctr]).trackname,"PART VOCALS") ||		//If the track name is "PART VOCALS"
+//			strcasestr_spec((MIDIstruct.hchunk.tracks[ctr]).trackname,"PART HARM") ||	//or is named to be a harmony track
+//			((MIDIstruct.hchunk.tracks[ctr]).spacecount == 0))							//or had no whitespace in any existing lyric/text events (if any were present)
+		if((MIDIstruct.hchunk.tracks[ctr]).spacecount == 0)	//if the track has no whitespace in any existing lyric/text events (if any were present)
 		{
 			if((MIDIstruct.hchunk.tracks[ctr]).notecount && ((MIDIstruct.hchunk.tracks[ctr]).textcount || (MIDIstruct.hchunk.tracks[ctr]).lyrcount))
 			{	//If the track contains both note events and lyric/text events
@@ -2306,11 +2310,7 @@ char *ReadString(FILE *inf,unsigned long *bytesread)
 	}
 
 	if(length == 0)		//If no characters could be read
-	{
-//v2.3	Since the main program exits when NULL is returned from this function, restoring the original file position is useless overhead
-//		fseek_err(inf,position,SEEK_SET);	//Return to the original file position
 		return NULL;
-	}
 
 //Allocate string and prepare for second pass
 	string=malloc_err(length);		//Length already takes the null terminator into account
@@ -2353,7 +2353,7 @@ int BlockCopy(FILE *inf,FILE *outf,unsigned long num)
 	unsigned char *buffer;
 	int status=0;
 
-	if(Lyrics.verbose >= 2)	printf("Block copying %lu bytes (File position 0x%lX to 0x%lX)\n",num,ftell(inf),ftell(inf)+num-1);
+	if(Lyrics.verbose >= 2)	printf("\t\tBlock copying %lu bytes (File position 0x%lX to 0x%lX)\n",num,ftell(inf),ftell(inf)+num-1);
 
 	assert_wrapper((inf != NULL) && (outf != NULL));
 

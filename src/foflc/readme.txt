@@ -1,4 +1,4 @@
-FoFLyricConverter 2.3 Notes:
+FoFLyricConverter 2.31 Notes:
 
 PURPOSE:
 --------
@@ -10,8 +10,9 @@ USAGE:
 FoFLyricConvert	[-offset #] [-nohyphens [1|2|3]] [-noplus] [-marklines] [-nolyrics]
 		[-grouping {word | line}] [-verbose | debug] [-filter [...]] [-quick] [-startstamp #]
 		[-bpm #] [-brute] [-help] [-srcoffset #] [-intrack TRACKNAME] [-outtrack TRACKNAME]
-		[-notenames] [-relative] [-nopitch] [-nosrctag [...]]
-		{{-detect infname} | {-in FORMAT infname (lyrics | vrhythmID)} {-out FORMAT (srcfile) outfname (lyrics)(vrhythmID)}
+		[-notenames] [-relative] [-nopitch] [-nosrctag [...]] [-nofstyle]
+		{ {-detect infname} | {-id3tag infname} |
+		 {{-in FORMAT infname (lyrics | vrhythmID)} {-out FORMAT (srcfile) outfname (lyrics)(vrhythmID)}} }
 
 -The use of detect will halt a conversion specified by the other parameters.
 -There must be white space (simply a space) between each parameter.  Parameters inside curly braces {} are required.  Parameters in parentheses are required depending on the in/output FORMAT.  Parameters inside brackets [] are optional.  Parameters inside parantheses () are conditional based on the input or output format.  The lyrics parameter for example, means that it should only be provided when importing/exporting vocal rhythm format.  When typing parameters, do not type the curly braces {}, parantheses () or brackets [] themselves.
@@ -203,6 +204,10 @@ NOSRCTAG -
 	Optionally, the nosrctag parameter prevents existing ID3 content from the source file's ID3 tag from being copied to the exported file.  If used without specifying specific frames, all ID3 information from the source MP3 is left out of the output MP3.  This could be used to ensure that the output file has nothing in the ID3 tag besides the synchronized lyrics.  Otherwise, this parameter can be called with multiple frame IDs, such as:
 	-nosrctag apic TIME tcon
 Case shouldn't matter, but note that you cannot call nosrctag multiple times, mixing it with specific IDs and with no IDs (using it as a wildcard).  For a list of ID3 frame IDs, you can consult the ID3 3.2 informal standard website (http://www.id3.org/id3v2.3.0).  If artist, title or album tag information is obtained from the input file, those ID3 frames are written during ID3 export and those frames are automatically omitted from the source MP3, so they needn't be manually specified to be excluded.  This is by design because writing multiple artist frames would violate the ID3 standard.  During ID3 export, any existing SYLT frame in the source MP3 is always excluded, and the imported lyrics are used to write the SYLT (synchronized lyrics) frame.
+========
+NOFSTYLE -
+========
+	Optionally, the nofstyle parameter prevents the automatic addition of the pound character (#) freestyle indicator when exporting freestyle or pitchless lyrics to MIDI format.  Converting VL format to Rock Band MIDI format with this parameter, for example, will result in a MIDI with all lyrics containing an identical generic pitch and no freestyle indicator.  This should work around an issue where some versions of FoF may improperly display vocal modifier characters like the pound character instead of hiding them when displaying the lyrics in-game.  The drawback of using this work-around is that the vocal track itself won't be suitable for playing because they won't score as freestyle lyrics.  If the lyrics that are converted with this parameter are freestyle/pitchless, you can import the resulting MIDI and export back to MIDI without nofstyle in order to restore the freestyle characters.  This is because the program automatically treats the imported lyrics as freestyle if all of the pitches are the same.
 
 
 OTHER NOTES:

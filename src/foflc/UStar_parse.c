@@ -238,11 +238,8 @@ void Export_UStar(FILE *outf)
 	//Set the appropriate pitch character
 		if(Lyrics.pitch_tracking)
 		{
-//v2.3	Allow separate tracking for overdrive and freestyle
-//			if((current->style=='F') || (current->pitch == PITCHLESS))	//Export pitchless lyrics as freestyle
 			if(current->freestyle || (current->pitch == PITCHLESS))	//Export pitchless lyrics as freestyle
 				pitch_char='F';		//This lyric piece had a # character
-//			else if(current->style=='*')
 			else if(current->overdrive)
 				pitch_char='*';		//This lyric was stored in the Lyrics structure denoted as Overdrive
 			else
@@ -252,8 +249,6 @@ void Export_UStar(FILE *outf)
 	//If the current lyric piece is nothing but a + and whitespace, replace the + with ~
 		length=strlen(current->lyric);	//Save this value, which will be used several times
 		assert_wrapper(current->lyric != NULL);
-//v2.3	Optimize this loop by saving the string's length
-//		for(ctr2=0,replace=1;ctr2<(unsigned long)strlen(current->lyric);ctr2++)
 		for(ctr2=0,replace=1;ctr2<length;ctr2++)
 			if((current->lyric[ctr2] != '+') && !isspace((unsigned char)current->lyric[ctr2]))
 				replace=0;
@@ -264,8 +259,6 @@ void Export_UStar(FILE *outf)
 
 		if(replace)
 		{
-//v2.3	Optimize this loop by saving the string's length
-//			for(ctr2=0;ctr2<(unsigned long)strlen(current->lyric);ctr2++)
 			for(ctr2=0;ctr2<length;ctr2++)
 				if(current->lyric[ctr2] == '+')
 					current->lyric[ctr2]='~';
@@ -749,8 +742,6 @@ void UStar_Load(FILE *inf)
 
 //Replace UltraStar's pitch shift indicator (~) with that of Rock Band (+)
 	//If the current lyric piece is nothing but a ~ and whitespace, replace the ~ with +
-//v2.3	Optimize this loop by saving the string's length
-//		for(ctr=0,replace=1;ctr<(unsigned long)strlen(&buffer[index]);ctr++)
 		length=strlen(&buffer[index]);
 		for(ctr=0,replace=1;ctr<length;ctr++)
 			if((buffer[index+ctr] != '~') && !isspace((unsigned char)buffer[index+ctr]))
@@ -758,8 +749,6 @@ void UStar_Load(FILE *inf)
 
 		if(replace)
 		{
-//v2.3	Optimize this loop by saving the string's length
-//			for(ctr=0;ctr<(unsigned long)strlen(&buffer[index]);ctr++)
 			for(ctr=0;ctr<length;ctr++)
 				if(buffer[index+ctr] == '~')
 					buffer[index+ctr]='+';
