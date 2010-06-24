@@ -49,7 +49,7 @@ Export functions are expected to:
 //
 //Global Macros- All relevant source/header files will include this header file to obtain these declarations
 //
-#define PROGVERSION "FoFLyricConverter2.3"
+#define PROGVERSION "FoFLyricConverter2.31"
 #define LYRIC_NOTE_ON 50	//Previously, if note #s 60-100 were used for Note On events for lyrics, FoF interpreted
 							//those notes to indicate playable instrument difficulties.  This was fixed, but I will
 							//continue to use this pitch to denote a pitchless lyric during MIDI export
@@ -99,8 +99,6 @@ struct Lyric_Piece
 	unsigned long start;		//The start offset of the piece of lyric in real time (milliseconds)
 	unsigned long duration;		//Duration of the piece of lyric in milliseconds
 	unsigned char pitch;		//The pitch of the sung lyric, using Rock Band's mapping.  Valid range is 36-95, pitch 36 being mid C
-//v2.3	Allow separate tracking for overdrive and freestyle
-//	char style;					//If set to '*', denotes starpower/golden note, if set to 'F', denotes freestyle, if set to '!', denotes pitchless (ie. during MIDI import)
 	char overdrive;				//Boolean:  If nonzero, this piece is overdrive
 	char freestyle;				//Boolean:  If nonzero, this piece is freestyle
 	char groupswithnext;		//Boolean:  If nonzero, this piece should group with the next piece (preserving grouping information if nohyphens is used)
@@ -200,6 +198,7 @@ struct _LYRICSSTRUCT_{
 	char reinit;				//Boolean:	Lyric handlers that use static variables should check for this.  If nonzero, re-init the static variables
 								//			This is because when used in EOF, the program may require more than one import, and otherwise the static
 								//			variables would never re-initialize
+	char nofstyle;				//Boolean:	The freestyle indicator (#) is not added to pitchless/freestyle lyrics during MIDI export
 
 //Various
 	unsigned long piececount;	//The number of lyric pieces in all lines.  Incremented upon adding a lyric piece
@@ -217,7 +216,7 @@ struct _LYRICSSTRUCT_{
 	char *srclyrname;		//Stores the name of the input pitched lyrics file (for vocal rhythm import)
 	char *srcrhythmname;	//Stores the name of the input vocal rhythm file (for vocal rhythm import)
 	char *dstlyrname;		//Stores the name of the output pitched lyrics file (for vocal rhythm export)
-	char *srcfile;			//Stores the name of the source midi file used to load MIDI timings and copy tracks from (when exporting to MIDI based formats like MIDI, KAR, Vrhythm)
+	char *srcfilename;		//Stores the name of the source midi file used to load MIDI timings and copy tracks from (when exporting to MIDI based formats like MIDI, KAR, Vrhythm)
 
 //Track names
 	char *inputtrack;		//Specifies the track from which vocals will be loaded during a MIDI based import
@@ -381,6 +380,8 @@ int FindNextNumber(char *buffer,unsigned long *startindex);
 	//If there is a numerical character at or after buffer[startindex], nonzero is returned and startindex will contain the index of the character
 long ftell_err(FILE *fp);
 	//A wrapper function that returns the result of ftell(), automatically checking for and throwing any error given
+void rewind_err(FILE *fp);
+	//A wrapper function that performs ftell(fp,0,SEEK_SET), automatically checkign for and throwing any error given
 void fseek_err(FILE *stream,long int offset,int origin);
 	//A wrapper function that performs the seek operation, automatically checking for and throwing any error given
 void fread_err(void *ptr,size_t size,size_t count,FILE *stream);
@@ -407,8 +408,6 @@ struct Lyric_Format *DetectLyricFormat(char *file);
 	//Vocal Rhythm MIDI will NOT be detected
 	//If NULL is returned, the file is not valid for import (invalid lyrics or unknown type)
 	//NOTE:  Only MIDI tracks that have a name are included in the detection for MIDI type formats
-//v2.3	Updated ParseString() to give the number of bytes read, so the calling function can omit calls to fseek
-//char *ParseString(FILE *inf);
 char *ReadString(FILE *inf,unsigned long *bytesread);
 	//Parses a null terminated ASCII string at the current file position, allocates memory for it and returns it
 	//NULL is returned upon error

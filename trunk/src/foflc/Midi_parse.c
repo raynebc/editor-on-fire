@@ -102,7 +102,7 @@ void ReadMIDIHeader(FILE *inf,char suppress_errors)
 
 int ReadTrackHeader(FILE *inf,struct Track_chunk *tchunk)
 {
-	unsigned char c;	//Used for testing end of MIDI
+	int c;	//Used for testing end of MIDI
 	char header[5]={0,0,0,0,0};
 
 	assert_wrapper((inf != NULL) && (tchunk != NULL));	//These must not be NULL
@@ -116,13 +116,12 @@ int ReadTrackHeader(FILE *inf,struct Track_chunk *tchunk)
 		//NULL, so when the first Set Tempo is encountered, the default tempo will be scrapped
 
 //Attempt to read one more byte, if EOF was triggered, we reached the end of the MIDI
-	if((fread(&c,1,1,inf) != 1) && feof(inf))	//On failure to read, this function returns error instead of exiting
+//v2.4	Optimize this into one call to fgetc()
+//	if((fread(&c,1,1,inf) != 1) && feof(inf))	//On failure to read, this function returns error instead of exiting
+	c=fgetc(inf);
+	if(c==EOF)	//On failure to read, this function returns error instead of exiting
 		return 1;
 
-/*v2.3	Optimize to remove this seek
-	fseek_err(inf,-1,SEEK_CUR);		//If we're here, there's a track header.  Rewind the one byte and read it
-	fread_err(header,4,1,inf);
-*/
 	header[0]=c;	//If we're here, there's a track header, and the first byte of it has been read
 	fread_err(&(header[1]),3,1,inf);	//Read the other 3 bytes of the header
 	header[4]='\0';	//Terminate string, which is now expected to be "MTrk"
@@ -145,7 +144,9 @@ int ReadVarLength(FILE *inf, unsigned long *ptr)
 
 	for(ctr=1;ctr<5;ctr++)
 	{
-		fread_err(&c,1,1,inf);
+//v2.4	Optimize this into fgetc()
+//		fread_err(&c,1,1,inf);
+		c=fgetc_err(inf);
 		readcount++;
 
 		sum<<=7;			//Shift the ongoing sum
@@ -225,7 +226,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 	//otherwise it is called after the event is parsed and read into the TEPstruct.  If the function pointer is
 	//NULL, no handler is called.
 	struct TEPstruct vars;		//Storage unit for all event processor variables
-	unsigned long ctr;			//Used for parsing lyric/text events
+//	unsigned long ctr;			//Used for parsing lyric/text events
 	long int deltalength;
 	static unsigned char buffered=0;	//Stores the condition that one extra byte was read from file (ie. Running status)
 										//So that instead of performing a costly fseek to rewind one byte, this status
@@ -264,8 +265,6 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 		if(Lyrics.verbose>=2)	printf("Delta file pos=0x%lX\t",vars.startindex);
 
 //Expected input is the variable length delta value
-//v2.3	Alter ReadVarLength() to allow one ftell() to be removed per MIDI event
-//		if(ReadVarLength(inf,&(vars.delta)) == 0)
 		deltalength=ReadVarLength(inf,&(vars.delta));
 		if(deltalength == 0)
 		{
@@ -275,14 +274,14 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 		}
 
 		MIDIstruct.deltacounter+=vars.delta;	//Add this to our ongoing counter
-//v2.3	Alter ReadVarLength() to allow one ftell() to be removed per MIDI event
-//		vars.eventindex=ftell_err(inf);			//Store file index of this event
 		vars.eventindex=vars.startindex+deltalength;	//Add the number of bytes read for the delta to find the file position
 
 		if(Lyrics.verbose>=2)	printf("Delta time=%lu\tReal time=%fms \tEvent's file pos=0x%lX\t",vars.delta,(MIDIstruct.realtime+ (double)MIDIstruct.deltacounter / (double)MIDIstruct.hchunk.division * ((double)60000.0 / MIDIstruct.BPM)),vars.eventindex);
 
 //Expected input is an event type (4 bits) and midi channel (4 bits)
-		fread_err(&vars.eventtype,1,1,inf);
+//v2.4	Optimize this into a call to fgetc()
+//		fread_err(&vars.eventtype,1,1,inf);
+		vars.eventtype=fgetc_err(inf);
 
 //Check whether it is a running status byte, if so, we have to rewind one byte so the parameters are readable
 		if(vars.eventtype < 0x80)	//All events have to have bit 7 set, if not, it's running status
@@ -304,8 +303,6 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 			{
 				if(Lyrics.verbose>=2)	printf(" (Running status): ");
 
-//v2.3	Used caching to remove one seek operation for every running status event
-//				fseek_err(inf,-1,SEEK_CUR);		//Rewind one byte so the code below can load both parameters
 				buffered=1;
 				buffer=vars.eventtype;	//Store this byte and prevent the need to seek backward one byte
 
@@ -325,12 +322,13 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 //Read in the MIDI event parameters
 		if(vars.eventtype < 0xF0)
 		{	//If it's not a meta or SysEx event, read two bytes to find the parameters
-//v2.3	Used caching to remove one seek operation for every running status event
 			if(buffered == 0)	//If a byte wasn't "un read" from further above, ie in the Running Status detection
 				fread_err(vars.parameters,2,1,inf);	//Read two bytes normally
 			else				//Otherwise use buffer as the first byte, and read the second byte
 			{
-				fread_err(&buffer2,1,1,inf);	//Read one byte
+//v2.4	Optimize this into a call to fgetc()
+//				fread_err(&buffer2,1,1,inf);	//Read one byte
+				buffer2=fgetc_err(inf);			//Read one byte
 				vars.parameters[1]=buffer2;		//Store it into parameters array
 				vars.parameters[0]=buffer;		//Store pre-buffered byte into parameters array
 				buffered=buffer=0;				//Clear the buffered status
@@ -353,7 +351,8 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 					else
 						putchar('\n');
 				}
-				tchunk->notecount++;		//One more Note On was read
+//v2.4	Moved this stat tracking into the MIDI_Stats() event handler
+//				tchunk->notecount++;		//One more Note On was read
 			break;
 
 			case 0xA:	//Note Aftertouch
@@ -386,7 +385,9 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 				if((vars.eventtype & 0xF) == 0xF)	//If it's a meta event
 				{
 //Read the meta event type and create a separate switch for the meta event type
-					fread_err(&vars.m_eventtype,1,1,inf);
+//v2.4	Optimize this into a call to fgetc()
+//					fread_err(&vars.m_eventtype,1,1,inf);
+					vars.m_eventtype=fgetc_err(inf);
 
 //If this is the meta event we intend to return from function upon reading, do so now
 					if((vars.m_eventtype == break_on) && (ismeta == 1))
@@ -420,6 +421,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 							if(vars.buffer != NULL)	//If there was a string read from MIDI
 							{	//Count the number of text/lyric events that don't begin with an open bracket ([)
 								if(Lyrics.verbose)	printf("Meta Event: Text Event=\"%s\"\tLength=%d\n",vars.buffer,strlen(vars.buffer));
+/*v2.4	Moved this stat tracking into the MIDI_Stats() event handler
 								for(ctr=0;vars.buffer[ctr]!='\0';ctr++)
 								{
 									if(vars.buffer[ctr]=='[')		//If the first non whitespace character in the string is an open bracket
@@ -435,6 +437,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 									if(vars.buffer[ctr]=='\0')
 										break;
 								}
+*/
 							}
 						break;
 
@@ -479,6 +482,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 							if(vars.buffer != NULL)	//If there was a string read from MIDI
 							{	//Count the number of text/lyric events that don't begin with an open bracket ([)
 								if(Lyrics.verbose)	printf("Meta Event: Lyric=\"%s\"\tLength=%d\n",vars.buffer,strlen(vars.buffer));
+/*v2.4	Moved this stat tracking into the MIDI_Stats() event handler
 								for(ctr=0;vars.buffer[ctr]!='\0';ctr++)
 								{
 									if(vars.buffer[ctr]=='[')		//If the first non whitespace character in the string is an open bracket
@@ -489,6 +493,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 										break;
 									}
 								}
+*/
 							}
 						break;
 
@@ -509,7 +514,9 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 									printf("Error: Invalid MIDI channel prefix meta event length (Delta time is at file position 0x%lX)\nAborting\n",vars.startindex);
 								exit_wrapper(6);
 							}
-							fread_err(vars.parameters,1,1,inf);
+//v2.4	Optimize this into a call to fgetc()
+//							fread_err(vars.parameters,1,1,inf);
+							vars.parameters[0]=fgetc_err(inf);
 
 							if(Lyrics.verbose>=2)	printf("Meta Event: MIDI channel prefix: %d\n",vars.parameters[0]);
 						break;
@@ -521,7 +528,9 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 									printf("Error: Invalid MIDI port prefix meta event length (Delta time is at file position 0x%lX\nAborting\n",vars.startindex);
 								exit_wrapper(7);
 							}
-							fread_err(vars.parameters,1,1,inf);
+//v2.4	Optimize this into a call to fgetc()
+//							fread_err(vars.parameters,1,1,inf);
+							vars.parameters[0]=fgetc_err(inf);
 
 							if(Lyrics.verbose>=2)	printf("Meta Event: MIDI port prefix: %d\n",vars.parameters[0]);
 						break;
@@ -802,9 +811,11 @@ int Lyricless_handler(struct TEPstruct *data)
 void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppress_errors)
 {
 	struct Track_chunk temp;	//Used to count the track headers
-	unsigned short ctr=0;		//The currently parsed MIDI track number
+	unsigned long ctr=0;		//The currently parsed MIDI track number
 	size_t temp2=0;
 	int error=0;				//error returned from ReadTrackHeader
+	struct Track_chunk *newtrack=NULL;	//Used to reallocate tracks[] array in the event of a damaged MIDI
+	unsigned long ctr2=0;				//Used to rebuild tracks[] array in the event of a damaged MIDI
 
 	assert_wrapper(inf != NULL);	//A filename must have been passed to this function
 
@@ -816,7 +827,7 @@ void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppr
 			printf("\nImporting MIDI timing from file\n\n");
 	}
 
-	rewind(inf);			//Rewind to beginning of file
+	rewind_err(inf);			//Rewind to beginning of file
 	ReadMIDIHeader(inf,0);	//Load and validate the MIDI header
 
 	if(Lyrics.verbose>=2)	printf("MIDI header indicates %u tracks\n",MIDIstruct.hchunk.numtracks);
@@ -830,7 +841,22 @@ void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppr
 		if(error)	//If end of file or invalid track header is read
 			break;	//exit loop
 
-		if(Lyrics.verbose>=2)	printf("MIDI track %u begins at byte 0x%lX\n",ctr,(unsigned long)temp2);
+		if(ctr+1 > MIDIstruct.hchunk.numtracks)
+		{	//If this is one more track than was defined in the MIDI header
+			puts("\aWarning: Input MIDI file is damaged (too many tracks are defined).  Correcting...");
+
+			//Reallocate tracks array
+			newtrack=(struct Track_chunk *)calloc_err(1,sizeof(struct Track_chunk)*(ctr+1));	//Re-allocate an array of track headers one larger than the current array and init to 0
+			for(ctr2=0;ctr2<ctr+1;ctr2++)	//Initialize track numbers
+				(newtrack[ctr2]).tracknum=ctr2;
+			memcpy(newtrack,MIDIstruct.hchunk.tracks,sizeof(struct Track_chunk)*MIDIstruct.hchunk.numtracks);	//Copy existing tracks array content into new array
+			free(MIDIstruct.hchunk.tracks);	//release old array
+			MIDIstruct.hchunk.tracks=newtrack;	//store new array
+			newtrack=NULL;
+			MIDIstruct.hchunk.numtracks++;	//Increment track count
+		}
+
+		if(Lyrics.verbose>=2)	printf("MIDI track %lu begins at byte 0x%lX\n",ctr,(unsigned long)temp2);
 		(MIDIstruct.hchunk.tracks[ctr]).fileposition=temp2;	//Store file position for this track
 		ctr++;		//Increment track counter
 		fseek_err(inf,temp.chunksize,SEEK_CUR);		//Fast forward to next track header
@@ -854,7 +880,10 @@ void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppr
 			puts("\aWarning: Input MIDI file is damaged (too few tracks are defined)");
 	}
 	else if(ctr > MIDIstruct.hchunk.numtracks)
-		puts("\aWarning: Input MIDI file is damaged (too many tracks are defined)");
+	{	//This shouldn't happen, as the logic above would resize the tracks array and increment MIDIstruct.hchunk.numtracks
+		puts("Logic error: Corrected track count failed.\nAborting");
+		exit_wrapper(2);
+	}
 
 //Override the number of tracks specified in the MIDI file because we validated it ourselves
 	MIDIstruct.hchunk.numtracks=ctr;
@@ -886,7 +915,13 @@ void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppr
 	}
 
 	ForceEndLyricLine();
-	if(Lyrics.verbose)	printf("MIDI import complete.  %lu lyrics loaded\n\n",Lyrics.piececount);
+	if(Lyrics.verbose)
+	{
+		if(event_handler != NULL)
+			printf("MIDI import complete.  %lu lyrics loaded\n\n",Lyrics.piececount);
+		else
+			puts("MIDI parse complete\n");
+	}
 }
 
 void ReleaseMIDI(void)
@@ -895,7 +930,7 @@ void ReleaseMIDI(void)
 	unsigned long ctr;				//Used for deallocation at end of import
 	struct Tempo_change *tempotemp,*tempotemp2;	//Used for deallocation at end of import
 
-	if(Lyrics.verbose)	puts("Cleaning up MIDI structure");
+	if(Lyrics.verbose >= 2)	puts("Cleaning up MIDI structure");
 
 //Release memory outside of Lyrics structure that was used for import
 	//De-allocate MIDI track array and track name strings
@@ -978,7 +1013,7 @@ void CopyTrack(FILE *inf,unsigned short tracknum,FILE *outf)	//Copies the specif
 {								//structure to have been populated by parsing the input MIDI.
 	char header[5];				//Array used to read in the track header string for validation
 	unsigned long chunksize;	//Used to read in the track size for validation
-	char *buffer;				//Array used to read an entire track into memory and then copy the track to file
+//	char *buffer;				//Array used to read an entire track into memory and then copy the track to file
 
 	assert_wrapper((inf != NULL) && (outf != NULL));	//These must not be NULL
 
@@ -1012,25 +1047,25 @@ void CopyTrack(FILE *inf,unsigned short tracknum,FILE *outf)	//Copies the specif
 	}
 
 //At this point, the input FILE stream has been shown to begin on a track header and be the expected length, so copy it to memory
-//	buffer=(char *)malloc_err(chunksize+8);	//Allocate memory with which to store the entire MIDI track (including the header string and chunksize)
-	buffer=(char *)malloc_err(chunksize);	//Allocate memory with which to store the entire MIDI track (including the header string and chunksize)
-/*v2.3	Optimize to remove this seek
-	fseek_err(inf,-8,SEEK_CUR);		//Rewind 8 bytes (to the beginning of the track header)
-	fread_err(buffer,chunksize+8,1,inf);
-*/
 	//The MIDI header has been read, so write it back to the output file
 	fputs_err(header,outf);			//Write "MTrk"
 	WriteDWORDBE(outf,chunksize);	//Write the track chunk size
 
+/*v2.4	Replaced this logic with BlockCopy(), which performs this function
+	buffer=(char *)malloc_err(chunksize);	//Allocate memory with which to store the entire MIDI track (including the header string and chunksize)
 	//Read the remainder of the MIDI track into the buffer
 	fread_err(buffer,chunksize,1,inf);
-
 //Write the buffer to the ouput file
-//	fwrite_err(buffer,chunksize+8,1,outf);
 	fwrite_err(buffer,chunksize,1,outf);
-
 //De-allocate memory buffer
 	free(buffer);
+*/
+
+	if(BlockCopy(inf,outf,chunksize) != 0)
+	{
+		puts("Error: Unable to copy MIDI track\nAborting");
+		exit_wrapper(4);
+	}
 }
 
 unsigned long ConvertToDeltaTime(unsigned long starttime)
@@ -1076,7 +1111,7 @@ void Copy_Source_MIDI(FILE *inf,FILE *outf)
 	if(Lyrics.verbose)	puts("Copying tracks from source MIDI");
 
 //Read+write the file header
-	rewind(inf);					//Rewind to beginning of file
+	rewind_err(inf);					//Rewind to beginning of file
 	fread_err(buffer,14,1,inf);		//Read MIDI header
 	fwrite_err(buffer,14,1,outf);	//Write MIDI header
 
@@ -1141,8 +1176,6 @@ void Copy_Source_MIDI(FILE *inf,FILE *outf)
 				endchunkfileposition=ftell_err(outf);	//Save this to allow us to rewind to finish writing the track
 
 			//Rewind to the track chunk size location and write the correct value
-//v2.3	This call to ftell can be removed since it was just obtained above
-//				chunkfilesize=ftell_err(outf)-chunkfileposition-4;	//# of bytes from start to end of the track chunk (- chunk size variable).  The null padding will be omitted
 				chunkfilesize=endchunkfileposition-chunkfileposition-4;	//# of bytes from start to end of the track chunk (- chunk size variable).  The null padding will be omitted
 				fseek_err(outf,chunkfileposition,SEEK_SET);			//Rewind to where the chunk size is supposed to be written
 
@@ -1175,7 +1208,6 @@ void Export_MIDI(FILE *outf)
 	unsigned char pitch=LYRIC_NOTE_ON;	//This will be set to LYRIC_NOTE_ON if Lyrics.pitch_detection
 										//is false, otherwise the input lyric pitches will be used
 	char *tempstr;
-//v2.3: 	Implemented Running Status
 	char runningstatus=0;	//Used for running status:  Since all non Meta/SysEx events written in this function are
 							//Note On events, this boolean can be passed to Write_MIDI_Note() and set after the first call,
 							//implementing running status
@@ -1189,7 +1221,7 @@ void Export_MIDI(FILE *outf)
 	if(!Lyrics.pitch_tracking)
 		puts("\a! NOTE: No pitch variation found in input lyrics.  Exporting as Freestyle");
 
-	if(Lyrics.verbose)	printf("\tTrack %u: Building (%s)...\n",MIDIstruct.trackswritten,Lyrics.outputtrack);
+	if(Lyrics.verbose)	printf("\tTrack %u (\"%s\"): Building...\n",MIDIstruct.trackswritten,Lyrics.outputtrack);
 
 //Write the output lyric track
  //Write the track header
@@ -1258,8 +1290,6 @@ void Export_MIDI(FILE *outf)
 				}
 
 		//Handle Note 116 On event (Overdrive start)
-//v2.3	Allow separate tracking for overdrive and freestyle
-//				if((temp->style == '*') && !overdrive)
 				if(temp->overdrive && !overdrive)
 				{	//If this lyric is overdrive, and an overdrive marker isn't in progress
 					WriteVarLength(outf,lyrdelta+extradelta);
@@ -1272,10 +1302,8 @@ void Export_MIDI(FILE *outf)
 			}
 
 	//Write lyric
-			//If the lyric is freestyle, append a pound symbol (#), as per Rock Band convention
-			if(Lyrics.out_format == MIDI_FORMAT)					//If the export format is RB MIDI
-//v2.3	Allow separate tracking for overdrive and freestyle
-//				if((temp->style == 'F') || !Lyrics.pitch_tracking)	//If freestyle is explicitly or implicitly defined
+			//If the lyric is freestyle, append a pound symbol (#), as per Rock Band convention, unless the user is prohibiting this behavior
+			if((Lyrics.out_format == MIDI_FORMAT) && !Lyrics.nofstyle)	//If the export format is RB MIDI
 				if(temp->freestyle || !Lyrics.pitch_tracking)		//If freestyle is explicitly or implicitly defined
 					if(temp->lyric[strlen(temp->lyric)-1] != '#')	//And the lyric doesn't already end in a # char
 						temp->lyric=ResizedAppend(temp->lyric,"#",1);	//Re-allocate string to have a # char appended
@@ -1332,8 +1360,6 @@ void Export_MIDI(FILE *outf)
 					if((temp2 == NULL) && (curline->next != NULL))	//If there's no next piece in this line, but there's another line
 						temp2=curline->next->pieces;				//temp2 points to the first lyric of the next line, otherwise it would be NULL
 
-//v2.3	Allow separate tracking for overdrive and freestyle
-//					if(!temp2 || (temp2->style != '*'))
 					if(!temp2 || !temp2->overdrive)
 					{	//If there are no more lyrics, or the next one doesn't use overdrive, turn overdrive off
 						WriteVarLength(outf,0+extradelta);	//Write delta value of 0, as this should end at the same time as the Note off for the last lyric in this phrase that used overdrive
@@ -1914,12 +1940,9 @@ void PitchedLyric_Load(FILE *inf)
 
 			lyrptr->pitch=pitch;			//Write lyric pitch
 			if(Lyrics.overdrive_on)			//Write vocal style if applicable
-//v2.3	Allow separate tracking for overdrive and freestyle
-//				lyrptr->style='*';
 				lyrptr->overdrive=1;
 
 			if(Lyrics.freestyle_on)
-//				lyrptr->style='F';
 				lyrptr->freestyle=1;
 
 			lyrptr=lyrptr->next;	//Advance to next lyric piece
@@ -2004,7 +2027,6 @@ int MIDI_Build_handler(struct TEPstruct *data)
 	if( (((data->eventtype>>4)==MIDI_NOTE_ON)||((data->eventtype>>4)==MIDI_NOTE_OFF)) && data->runningstatus && skippedpreviousevent)
 	{	//If this is a Note on or off event using running status that depended on the previous event that was ommitted
 		if(Lyrics.verbose)	puts("Rebuilding Note On/Off event");
-//v2.3	Implemented Running Status
 		if(data->lastwritteneventtype != MIDI_NOTE_ON)	//If the last written MIDI event wasn't a Note On
 			Write_MIDI_Note(data->parameters[0],data->eventtype&0xF,data->eventtype>>4,data->outf,0);	//Write the note normally as a Note On event
 		else
@@ -2018,7 +2040,6 @@ int MIDI_Build_handler(struct TEPstruct *data)
 		buffer=ReadMetaEventString(data->inf,eventlength);	//Read event into an allocated buffer
 
 		//Write the memory buffer to the ouput file
-//v2.3	Implemented Running Status
 		if((data->eventtype < 0xF0) && ((data->eventtype>>4) == data->lastwritteneventtype) && !data->runningstatus)
 		{	//If this event is not a Meta/SysEx event as is the same as the last such event that was written
 			//and this event isn't already running status, convert to running status by omitting event status byte
@@ -2755,8 +2776,6 @@ void Export_Vrhythm(FILE *outmidi,FILE *outlyric,char *vrhythmid)
 	curline=Lyrics.lines;	//Point conductor to first line of lyrics
 
 	//Special case:  The first lyric has overdrive, insert a line break so that an overdrive phrase can be defined
-//v2.3	Allow separate tracking for overdrive and freestyle
-//	if(curline->pieces->style == '*')			//If the lyric is in overdrive
 	if(curline->pieces->overdrive)	//If the lyric is in overdrive
 		fputs_err("-*\n",outlyric);	//Write a line break, denoting overdrive
 
@@ -2845,8 +2864,6 @@ void Export_Vrhythm(FILE *outmidi,FILE *outlyric,char *vrhythmid)
 		if(curline->next != NULL)	//If there's another line of lyrics
 		{
 			assert_wrapper(curline->next->pieces != NULL);
-//v2.3	Allow separate tracking for overdrive and freestyle
-//			if(curline->next->pieces->style == '*')	//If the first lyric of the next line is overdrive
 			if(curline->next->pieces->overdrive)	//If the first lyric of the next line is overdrive
 				fputs_err("-*\n",outlyric);	//Write line break with overdrive indicator
 			else
@@ -2861,8 +2878,6 @@ void Export_Vrhythm(FILE *outmidi,FILE *outlyric,char *vrhythmid)
 
 	//Write the correct track chunk size in track 1's header
 	fp=ftell_err(outmidi);									//Save the current file position
-//v2.3	This call to ftell can be eliminated since it is used above
-//	chunkfilesize=ftell_err(outmidi)-chunkfileposition-4;
 	chunkfilesize=fp-chunkfileposition-4;
 	fseek_err(outmidi,chunkfileposition,SEEK_SET);			//Rewind to where the chunk size is supposed to be written
 
@@ -2919,8 +2934,6 @@ void Write_Default_Track_Zero(FILE *outmidi)
 
 	//Write track chunk size for track 0
 	fp=ftell_err(outmidi);									//Save the current file position
-//v2.3	This call to ftell can be eliminated since it is made above
-//	chunkfilesize=ftell_err(outmidi)-chunkfileposition-4;
 	chunkfilesize=fp-chunkfileposition-4;
 	fseek_err(outmidi,chunkfileposition,SEEK_SET);			//Rewind to where the chunk size is supposed to be written
 
@@ -2968,7 +2981,7 @@ void Export_SKAR(FILE *outf)
 	if(Lyrics.verbose)
 	{
 		printf("\nExporting SKAR lyrics to file \"%s\"\n",Lyrics.outfilename);
-		printf("\tTrack %u: Building (\"Soft Karaoke\")...\n",MIDIstruct.trackswritten);
+		printf("\tTrack %u (\"Soft Karaoke\"): Building...\n",MIDIstruct.trackswritten);
 	}
 
 //Write Track 1 (Soft Karaoke)
@@ -3004,7 +3017,7 @@ void Export_SKAR(FILE *outf)
 	fseek_err(outf,tempfileposition,SEEK_SET);	//Return to end of the "Soft Karaoke" track
 	MIDIstruct.trackswritten++;			//One additional track has been written to the output file
 
-	if(Lyrics.verbose)	printf("\tTrack %u: Building (\"Words\")...\n",MIDIstruct.trackswritten);
+	if(Lyrics.verbose)	printf("\tTrack %u (\"Words\"): Building...\n",MIDIstruct.trackswritten);
 
 //Write Track 2 (Words)
  //Write the track header
@@ -3073,4 +3086,52 @@ void Export_SKAR(FILE *outf)
 
 	MIDIstruct.trackswritten++;	//One additional track has been written to the output file
 	if(Lyrics.verbose)	printf("\nSoft Karaoke export complete.  %lu lyrics written\n",Lyrics.piececount);
+}
+
+int MIDI_Stats(struct TEPstruct *data)
+{
+	unsigned char eventtype=0;
+	unsigned long ctr=0;
+	char whitespace=0;
+
+	assert_wrapper(data != NULL);	//This must not be NULL
+
+//Special case:  A Note On event with a velocity of 0 must be treated as a Note Off event
+	eventtype=data->eventtype;//This value may be interpreted differently for Note On w/ velocity=0
+	if(((data->eventtype>>4) == 0x9) && (data->parameters[1] == 0))
+		eventtype=0x80;	//Treat data->eventtype into Note Off, leave it as Note On in the original TEPstruct
+
+	if(eventtype>>4 == 0x9)	//Track Note On
+	{
+		(MIDIstruct.hchunk.tracks[data->tracknum]).notecount++;	//One more Note On was read
+		return 1;
+	}
+
+	if(data->buffer == NULL)
+		return -1;	//Text/lyric events can't be statistically tracked if not passed to this handler
+
+	if((eventtype == 0xFF) && ((data->m_eventtype == 0x1) || (data->m_eventtype == 0x5)))	//Track text/lyric events
+	{
+		for(ctr=0;data->buffer[ctr]!='\0';ctr++)
+		{
+			if(data->buffer[ctr]=='[')		//If the first non whitespace character in the string is an open bracket
+				break;						//Stop parsing string, don't count this in our statistics
+			if((data->buffer[ctr]=='@') && (data->m_eventtype == 0x1))	//If this is a text event, and the first non whitespace character in the string is an @ symbol (ie. Soft Karaoke tag)
+				break;						//Stop parsing string, don't count this in our statistics
+
+			if(!isspace(data->buffer[ctr]))	//Otherwise, if it isn't a whitespace character
+			{
+				if(data->m_eventtype == 0x1)	//If this is a text event
+					(MIDIstruct.hchunk.tracks[data->tracknum]).textcount++;	//One more text event was read
+				else
+					(MIDIstruct.hchunk.tracks[data->tracknum]).lyrcount++;		//One more lyric event was read
+				break;
+			}
+			else
+				whitespace=1;	//Whitespace was found
+		}
+		if(whitespace)	//If this text/lyric event had any leading/trailing whitespace
+			(MIDIstruct.hchunk.tracks[data->tracknum]).spacecount++;	//Track this
+	}
+	return 1;
 }
