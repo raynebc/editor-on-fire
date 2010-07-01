@@ -348,8 +348,12 @@ void eof_mix_seek(int pos)
 
 void eof_mix_play_note(int note)
 {
+	unsigned char NOTE_ON_DATA[3]={0x91,0x0,120};		//Data sequence for a Note On, channel 1, Note 0, Velocity 255
+
 	if((note < EOF_MAX_VOCAL_TONES) && eof_sound_note[note])
 	{
 		play_sample(eof_sound_note[note], 255, 127, 1000 + eof_audio_fine_tune, 0);
+		NOTE_ON_DATA[1]=note;	//Alter the data sequence to be the appropriate note number
+		midi_out(NOTE_ON_DATA,1);	//Toggle On/off this note
 	}
 }
