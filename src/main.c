@@ -2553,11 +2553,18 @@ int eof_initialize(int argc, char * argv[])
 
 	allegro_init();
 	set_window_title("EOF - No Song");
-	if(install_sound(DIGI_AUTODETECT, MIDI_NONE, NULL))
-	{
-		allegro_message("Can't set up sound!  Error: %s",allegro_error);
-		return 0;
+	if(install_sound(DIGI_AUTODETECT, MIDI_AUTODETECT, NULL))
+	{	//If Allegro failed to initialize the sound AND midi
+		allegro_message("Can't set up MIDI!  Error: %s\nAttempting to init audio only",allegro_error);
+		if(install_sound(DIGI_AUTODETECT, MIDI_NONE, NULL))
+		{
+			allegro_message("Can't set up sound!  Error: %s",allegro_error);
+			return 0;
+		}
 	}
+	else
+		install_timer();	//Needed to use midi_out()
+
 	if(install_keyboard())
 	{
 		allegro_message("Can't set up keyboard!  Error: %s",allegro_error);
