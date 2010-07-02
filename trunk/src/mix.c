@@ -121,6 +121,7 @@ void eof_mix_callback(void * buf, int length)
 				eof_voice[2].sp = eof_sound_note[eof_mix_note_note[eof_mix_current_note]];
 				eof_voice[2].pos = 0.0;
 				eof_voice[2].playing = 1;
+				eof_midi_play_note(eof_mix_note_note[eof_mix_current_note]);	//Play the MIDI note
 			}
 			eof_mix_current_note++;
 			eof_mix_next_note = eof_mix_note_pos[eof_mix_current_note];
@@ -348,12 +349,30 @@ void eof_mix_seek(int pos)
 
 void eof_mix_play_note(int note)
 {
-	unsigned char NOTE_ON_DATA[3]={0x91,0x0,120};		//Data sequence for a Note On, channel 1, Note 0, Velocity 255
-
 	if((note < EOF_MAX_VOCAL_TONES) && eof_sound_note[note])
 	{
 		play_sample(eof_sound_note[note], 255, 127, 1000 + eof_audio_fine_tune, 0);
+		eof_midi_play_note(note);
+	}
+}
+
+void eof_midi_play_note(int note)
+{
+	unsigned char NOTE_ON_DATA[3]={0x91,0x0,127};		//Data sequence for a Note On, channel 1, Note 0
+	unsigned char NOTE_OFF_DATA[3]={0x81,0x0,127};		//Data sequence for a Note Off, channel 1, Note 0
+	static unsigned char lastnote=0;					//Remembers the last note that was played, so it can be turned off
+	static unsigned char lastnotedefined=0;
+
+	if(note < EOF_MAX_VOCAL_TONES)
+	{
 		NOTE_ON_DATA[1]=note;	//Alter the data sequence to be the appropriate note number
-		midi_out(NOTE_ON_DATA,1);	//Toggle On/off this note
+		if(lastnotedefined)
+		{
+			NOTE_OFF_DATA[1]=lastnote;
+			midi_out(NOTE_OFF_DATA,3);	//Turn off the last note that was played
+		}
+		midi_out(NOTE_ON_DATA,3);	//Turn on this note
+		lastnote=note;
+		lastnotedefined=1;
 	}
 }

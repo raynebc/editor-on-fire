@@ -34,5 +34,6 @@ void eof_mix_seek(int pos);	//Performs a seek and updates the position of the ne
 void eof_mix_find_claps(void);	//Populates clap, metronome, note_pos and note_note arrays based on the chart's contents
 //void eof_mix_find_vocal_claps(void);	//Undefined function
 void eof_mix_play_note(int note);	//Plays the vocal tone for the specified note, if available
+void eof_midi_play_note(int note);	//Sends a Note On MIDI command
 
 #endif
