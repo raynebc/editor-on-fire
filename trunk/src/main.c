@@ -214,6 +214,10 @@ wchar_t ** eof_windows_internal_argv;
 char ** eof_windows_argv;
 #endif
 
+struct MIDIentry *MIDIqueue=NULL;		//Linked list of queued MIDI notes
+struct MIDIentry *MIDIqueuetail=NULL;	//Points to the tail of the list
+
+
 void eof_debug_message(char * text)
 {
 	if(eof_debug_mode)
@@ -2836,6 +2840,9 @@ int eof_initialize(int argc, char * argv[])
 		}
 	}
 	gametime_init(100); // 100hz timer
+
+	MIDIqueue=MIDIqueuetail=NULL;	//Initialize the MIDI queue as empty
+
 	return 1;
 }
 
@@ -3026,4 +3033,102 @@ int main(int argc, char * argv[])
 	eof_exit();
 	return 0;
 }
+
+void eof_process_midi_queue(int currentpos)
+{	//Process the MIDI queue based on the current chart timestamp (eof_music_pos)
+	unsigned char NOTE_ON_DATA[3]={0x91,0x0,127};	//Data sequence for a Note On, channel 1, Note 0
+	unsigned char NOTE_OFF_DATA[3]={0x81,0x0,127};	//Data sequence for a Note Off, channel 1, Note 0
+
+	struct MIDIentry *ptr=MIDIqueue;	//Points to the head of the list
+	struct MIDIentry *temp;
+
+	for(ptr=MIDIqueue;ptr != NULL;)
+	{	//Process all queue entries
+		if(ptr->status == 0)	//If this queued note has not been played yet
+		{
+			if(eof_music_pos >= ptr->startpos)	//If the current chart position is at or past this note's start position
+			{
+				NOTE_ON_DATA[1]=ptr->note;	//Alter the data sequence to be the appropriate note number
+				midi_out(NOTE_ON_DATA,3);	//Turn on this MIDI note
+				ptr->status=1;			//Track that it is playing
+			}
+		}
+		else			//This queued note has already been played
+		{
+			if(eof_music_pos >= ptr->endpos)	//If the current chart position is at or past this note's stop position
+			{
+				NOTE_OFF_DATA[1]=ptr->note;	//Alter the data sequence to be the appropriate note number
+				midi_out(NOTE_OFF_DATA,3);	//Turn off this MIDI note
+
+			//Remove this link from the list
+				if(ptr->prev)	//If there's a link that precedes this link
+					ptr->prev->next=ptr->next;	//It now points forward to the next link (if there is one)
+				else
+					MIDIqueue=ptr->next;		//Update head of list
+
+				if(ptr->next)	//If there's a link that follows this link
+					ptr->next->prev=ptr->prev;	//It now points back to the previous link (if there is one)
+				else
+					MIDIqueuetail=ptr->prev;	//Update tail of list
+
+				temp=ptr->next;	//Save the address of the next link (if there is one)
+				free(ptr);
+				ptr=temp;	//Iterate to the link that followed the deleted link
+				continue;	//Restart at top of loop without iterating to the next link
+			}
+		}
+		ptr=ptr->next;	//Point to the next link
+	}
+}
+
+int eof_midi_queue_add(unsigned char note,int startpos,int endpos)
+{
+	struct MIDIentry *ptr=NULL;	//Stores the newly allocated link
+
+//Validate input
+	if(note > 127)
+		return -1;	//return error:  Invalid MIDI note
+	if(startpos >= endpos)
+		return -1;	//return error:  Duration must be > 0
+
+//Allocate and initialize MIDI queue entry
+	ptr=malloc(sizeof(struct MIDIentry));
+	if(ptr == NULL)
+		return -1;	//return error:  Unable to allocate memory
+	ptr->status=0;
+	ptr->note=note;
+	ptr->startpos=startpos;
+	ptr->endpos=endpos;
+	ptr->next=NULL;		//When appended to the end of the list, it will never point forward to anything
+
+//Append to list
+	if(MIDIqueuetail)	//If the list isn't empty
+	{
+		MIDIqueuetail->next=ptr;	//Tail points forward to new link
+		ptr->prev=MIDIqueuetail;	//New link points backward to tail
+		MIDIqueuetail=ptr;		//Update tail
+	}
+	else
+	{
+		MIDIqueue=MIDIqueuetail=ptr;	//This new link is both the head and the tail of the list
+		ptr->prev=NULL;			//New link points backward to nothing
+	}
+
+	return 0;	//return success
+}
+
+void eof_midi_queue_destroy(void)
+{
+	struct MIDIentry *ptr=MIDIqueue,*temp=NULL;
+
+	while(ptr != NULL)	//For all links in the list
+	{
+		temp=ptr->next;	//Save address of next link
+		free(ptr);	//Destroy this link
+		ptr=temp;	//Point to next link
+	}
+
+	MIDIqueue=MIDIqueuetail=NULL;
+}
+
 END_OF_MAIN()
