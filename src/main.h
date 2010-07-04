@@ -129,6 +129,18 @@ typedef struct
 
 #define EOF_EDITOR_RENDER_OFFSET  56
 
+struct MIDIentry
+{
+	unsigned char status;	//The current entry status (0=note not playing, 1=note playing)
+	unsigned char note;		//The MIDI note to be played
+	int startpos;			//The time at which the MIDI tone is to be started
+	int endpos;				//The time at which the MIDI tone is to be stopped
+	struct MIDIentry *prev;	//The previous link in the list
+	struct MIDIentry *next;	//The next link in the list
+};
+extern struct MIDIentry *MIDIqueue;		//Linked list of queued MIDI notes
+extern struct MIDIentry *MIDIqueuetail;	//Points to the tail of the list
+
 extern NCDFS_FILTER_LIST * eof_filter_music_files;
 extern NCDFS_FILTER_LIST * eof_filter_ogg_files;
 extern NCDFS_FILTER_LIST * eof_filter_midi_files;
@@ -328,5 +340,8 @@ void eof_reset_song(void);
 int eof_load_data(void);	//Loads graphics and fonts from eof.dat
 void eof_destroy_data(void);	//Frees graphics and fonts from memory
 char * eof_get_tone_name(int tone);	//Returns the name of the given note number (ie. C# or Db) based on the value of eof_display_flats
+void eof_process_midi_queue(int currentpos);	//Process the MIDI queue based on the current chart timestamp (eof_music_pos)
+int eof_midi_queue_add(unsigned char note,int startpos,int endpos);	//Appends the Note On/Off data to the MIDI queue
+void eof_midi_queue_destroy(void);	//Destroys the MIDI queue
 
 #endif
