@@ -15,6 +15,7 @@ char eof_mix_claps_enabled = 0;
 char eof_mix_metronome_enabled = 0;
 char eof_mix_claps_note = 31; /* enable all by default */
 char eof_mix_vocal_tones_enabled = 0;
+char eof_mix_midi_tones_enabled = 0;
 
 int           eof_mix_speed = 1000;
 char          eof_mix_speed_ticker;
@@ -116,12 +117,15 @@ void eof_mix_callback(void * buf, int length)
 		}
 		if(eof_mix_next_note >= 0 && eof_mix_sample_count >= eof_mix_next_note && eof_mix_current_note < eof_mix_notes)
 		{
-			if(eof_mix_vocal_tones_enabled && eof_sound_note[eof_mix_note_note[eof_mix_current_note]])
+			if(eof_mix_midi_tones_enabled)
+			{
+				eof_midi_play_note(eof_mix_note_note[eof_mix_current_note]);	//Play the MIDI note
+			}
+			else if(eof_mix_vocal_tones_enabled && eof_sound_note[eof_mix_note_note[eof_mix_current_note]])
 			{
 				eof_voice[2].sp = eof_sound_note[eof_mix_note_note[eof_mix_current_note]];
 				eof_voice[2].pos = 0.0;
 				eof_voice[2].playing = 1;
-				eof_midi_play_note(eof_mix_note_note[eof_mix_current_note]);	//Play the MIDI note
 			}
 			eof_mix_current_note++;
 			eof_mix_next_note = eof_mix_note_pos[eof_mix_current_note];
@@ -351,8 +355,10 @@ void eof_mix_play_note(int note)
 {
 	if((note < EOF_MAX_VOCAL_TONES) && eof_sound_note[note])
 	{
-		play_sample(eof_sound_note[note], 255, 127, 1000 + eof_audio_fine_tune, 0);
-		eof_midi_play_note(note);
+		if(eof_mix_midi_tones_enabled)
+			eof_midi_play_note(note);
+		else
+			play_sample(eof_sound_note[note], 255, 127, 1000 + eof_audio_fine_tune, 0);
 	}
 }
 

@@ -27,6 +27,7 @@ int eof_menu_edit_claps_blue(void);
 int eof_menu_edit_claps_purple(void);
 int eof_menu_edit_claps(void);
 int eof_menu_edit_vocal_tones(void);
+int eof_menu_edit_midi_tones(void);		//Toggle MIDI tones on/off
 int eof_menu_edit_bookmark_0(void);
 int eof_menu_edit_bookmark_1(void);
 int eof_menu_edit_bookmark_2(void);

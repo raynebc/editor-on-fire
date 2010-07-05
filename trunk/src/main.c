@@ -216,7 +216,7 @@ char ** eof_windows_argv;
 
 struct MIDIentry *MIDIqueue=NULL;		//Linked list of queued MIDI notes
 struct MIDIentry *MIDIqueuetail=NULL;	//Points to the tail of the list
-
+char eof_midi_initialized=0;			//Specifies whether Allegro was able to set up a MIDI device
 
 void eof_debug_message(char * text)
 {
@@ -2565,9 +2565,13 @@ int eof_initialize(int argc, char * argv[])
 			allegro_message("Can't set up sound!  Error: %s",allegro_error);
 			return 0;
 		}
+		eof_midi_initialized=0;	//Couldn't set up MIDI
 	}
 	else
+	{
 		install_timer();	//Needed to use midi_out()
+		eof_midi_initialized=1;
+	}
 
 	if(install_keyboard())
 	{
