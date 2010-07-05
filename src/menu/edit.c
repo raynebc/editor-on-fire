@@ -132,6 +132,7 @@ MENU eof_edit_menu[] =
     {"Claps\tC", eof_menu_edit_claps, NULL, 0, NULL},
     {"Clap &Notes", NULL, eof_edit_claps_menu, 0, NULL},
     {"&Vocal Tones\tV", eof_menu_edit_vocal_tones, NULL, 0, NULL},
+    {"MIDI &Tones", eof_menu_edit_midi_tones, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"&Bookmark", NULL, eof_edit_bookmark_menu, 0, NULL},
     {"", NULL, NULL, 0, NULL},
@@ -166,7 +167,7 @@ DIALOG eof_custom_speed_dialog[] =
 void eof_prepare_edit_menu(void)
 {
 	int i;
-	int selected = 0;
+//	int selected = 0;	//No longer used
 	int vselected = 0;
 //	int noted[4] = {0};	//This was never utilized
 	int cnotes = 0;
@@ -238,12 +239,12 @@ void eof_prepare_edit_menu(void)
 			if(eof_song->vocal_track->lyrics > 0)
 			{
 				eof_edit_selection_menu[0].flags = 0;
-				eof_edit_menu[21].flags = 0;
+				eof_edit_menu[22].flags = 0;
 			}
 			else
 			{
 				eof_edit_selection_menu[0].flags = D_DISABLED;
-				eof_edit_menu[21].flags = D_DISABLED;
+				eof_edit_menu[22].flags = D_DISABLED;
 			}
 		}
 		else
@@ -251,12 +252,12 @@ void eof_prepare_edit_menu(void)
 			if(eof_note_type_name[eof_note_type][0] == '*')
 			{
 				eof_edit_selection_menu[0].flags = 0;
-				eof_edit_menu[21].flags = 0;
+				eof_edit_menu[22].flags = 0;
 			}
 			else
 			{
 				eof_edit_selection_menu[0].flags = D_DISABLED;
-				eof_edit_menu[21].flags = D_DISABLED;
+				eof_edit_menu[22].flags = D_DISABLED;
 			}
 		}
 		if(vselected)
@@ -385,6 +386,7 @@ void eof_prepare_edit_menu(void)
 		}
 
 		/* selection */
+/*	eof_edit_menu[22] was a NULL menu entry ([21] was "&Selection"), so this wasn't doing anything
 		if(selected)
 		{
 			eof_edit_menu[22].flags = 0;
@@ -393,6 +395,7 @@ void eof_prepare_edit_menu(void)
 		{
 			eof_edit_menu[22].flags = D_DISABLED;
 		}
+*/
 		for(i = 0; i < 12; i++)
 		{
 			eof_edit_snap_menu[i].flags = 0;
@@ -445,6 +448,10 @@ void eof_prepare_edit_menu(void)
 				break;
 			}
 		}
+
+		/* MIDI tones */
+		if(!eof_midi_initialized)
+			eof_edit_menu[18].flags = D_DISABLED;
 	}
 }
 
@@ -1930,6 +1937,21 @@ int eof_menu_edit_vocal_tones(void)
 	{
 		eof_mix_vocal_tones_enabled = 1;
 		eof_edit_menu[17].flags = D_SELECTED;
+	}
+	return 1;
+}
+
+int eof_menu_edit_midi_tones(void)
+{
+	if(eof_mix_midi_tones_enabled)
+	{
+		eof_mix_midi_tones_enabled = 0;
+		eof_edit_menu[18].flags = 0;
+	}
+	else
+	{
+		eof_mix_midi_tones_enabled = 1;
+		eof_edit_menu[18].flags = D_SELECTED;
 	}
 	return 1;
 }

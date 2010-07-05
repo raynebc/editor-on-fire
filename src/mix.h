@@ -19,6 +19,7 @@ extern char eof_mix_claps_enabled;
 extern char eof_mix_metronome_enabled;
 extern char eof_mix_claps_note;
 extern char eof_mix_vocal_tones_enabled;
+extern char eof_mix_midi_tones_enabled;	//Tracks whether MIDI tones are enabled
 
 void eof_mix_callback(void * buf, int length);	//Buffer callback function for alogg
 unsigned long eof_mix_msec_to_sample(unsigned long msec, int freq);
