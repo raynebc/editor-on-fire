@@ -120,7 +120,7 @@ void InitLyrics(void)
 
 void CreateLyricLine(void)
 {
-	struct Lyric_Line *temp;	//Stores newly-allocated lyric line structure
+	struct Lyric_Line *temp=NULL;	//Stores newly-allocated lyric line structure
 
 	if(Lyrics.verbose>=2)	puts("Initializing storage for new line of lyrics");
 
@@ -154,9 +154,9 @@ void CreateLyricLine(void)
 
 void EndLyricLine(void)
 {
-	struct Lyric_Piece *temp;	//A conductor to use for lyric overlap checking
-	struct Lyric_Piece *temp2;	//A temporary pointer to use for lyric combination
-	struct Lyric_Piece *next;	//A conditional next piece pointer needs to be used
+	struct Lyric_Piece *temp=NULL;	//A conductor to use for lyric overlap checking
+	struct Lyric_Piece *temp2=NULL;	//A temporary pointer to use for lyric combination
+	struct Lyric_Piece *next=NULL;	//A conditional next piece pointer needs to be used
 
 	if(Lyrics.line_on == 0)	//If there is no open line of lyrics
 		return;
@@ -300,18 +300,20 @@ void EndLyricLine(void)
 
 void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char pitch,char groupswithnext)
 {
-	struct Lyric_Piece *temp;		//Temporary pointer
+	struct Lyric_Piece *temp=NULL;	//Temporary pointer
 	char overdrive=0,freestyle=0;	//Track the overdrive and freestyle statuses that are in effect
 	char hasequal=0;				//Used to track whether this lyric piece had an equal sign (hyphen) at the end
 	char linebreak=0;				//Enforce a linebreak if the lyric ends in a '/' (ie. Rock Band Beatles lyrics)
 	char leadspace=0,trailspace=0;	//Used for leading/trailing whitespace detection
 
 	if((pitch != PITCHLESS) && ((Lyrics.in_format==MIDI_FORMAT) || (Lyrics.in_format==KAR_FORMAT)))
-		if(pitch > 127)	//Pitches higher than 127 are not allowed, however allow the pitch to be set to the defined PITCHLESS value
+	{
+		if(pitch > 127)	//Pitches higher than 127 are not allowed, however do allow the pitch to be set to the defined PITCHLESS value
 		{
 			puts("MIDI Violation: Valid pitch range is from 0 to 127\nAborting");
 			exit_wrapper(1);
 		}
+	}
 
 	if(str == NULL)		//If the string isn't even initialized
 		return;			//return without adding it
@@ -457,7 +459,6 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 	temp->duration=end-start;				//Duration of the piece of lyric in milliseconds
 	temp->lyric=str;						//The string associated with this piece of lyric
 	temp->pitch=pitch;						//Assign the specified pitch
-//	temp->style=style;						//Assign the vocal modifier as found
 	temp->freestyle=freestyle;				//Assign the freestyle status found
 	temp->overdrive=overdrive;				//Assign the overdrive status found
 	temp->groupswithnext=groupswithnext;	//Assign the grouping status based on the determined status
@@ -487,12 +488,12 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 
 struct Lyric_Piece *FindLyricNumber(unsigned long number)
 {
-	struct Lyric_Line *curline;
-	struct Lyric_Piece *curpiece;
-	unsigned long ctr;
+	struct Lyric_Line *curline=NULL;
+	struct Lyric_Piece *curpiece=NULL;
+	unsigned long ctr=0;
 
-	if(number > Lyrics.piececount)
-		return NULL;
+	if((number > Lyrics.piececount) || (number == 0))
+		return NULL;	//Specified lyric does not exist
 
 	curline=Lyrics.lines;			//Point line conductor to first line of lyrics
 	assert_wrapper(curline != NULL);
@@ -524,8 +525,8 @@ struct Lyric_Piece *FindLyricNumber(unsigned long number)
 
 char *ResizedAppend(char *src1,const char *src2,char dealloc)
 {	//Allocates enough memory to concatenate both strings and returns the concatenated string
-	char *temp;
-	size_t size1,size2;
+	char *temp=NULL;
+	size_t size1=0,size2=0;
 
 	assert_wrapper((src1 != NULL) && (src2 != NULL));
 	size1=strlen(src1);
@@ -541,8 +542,8 @@ char *ResizedAppend(char *src1,const char *src2,char dealloc)
 
 char *Append(const char *src1,const char *src2)
 {	//Allocates enough memory to concatenate both strings and returns the concatenated string
-	char *temp;
-	size_t size1,size2;
+	char *temp=NULL;
+	size_t size1=0,size2=0;
 
 	assert_wrapper((src1 != NULL) && (src2 != NULL));
 
@@ -556,7 +557,7 @@ char *Append(const char *src1,const char *src2)
 
 void ReadWORDLE(FILE *inf,unsigned short *data)
 {
-	unsigned char buffer[2];
+	unsigned char buffer[2]={0};
 
 	assert_wrapper((inf != NULL) && (data != NULL));	//These must not be NULL
 
@@ -579,7 +580,7 @@ void WriteWORDLE(FILE *outf,unsigned short data)
 
 void ReadDWORDLE(FILE *inf,unsigned long *data)
 {
-	unsigned char buffer[4];
+	unsigned char buffer[4]={0};
 
 	assert_wrapper((inf != NULL) && (data != NULL));	//These must not be NULL
 
@@ -608,7 +609,7 @@ void WriteDWORDLE(FILE *outf,unsigned long data)
 
 void ReadWORDBE(FILE *inf, unsigned short *ptr)
 {	//Read 2 bytes in Big Endian format from file into *ptr, performing bit shifting accordingly
-	unsigned char buffer[2]={0,0};
+	unsigned char buffer[2]={0};
 
 	assert_wrapper((inf != NULL) && (ptr != NULL));	//These must not be NULL
 
@@ -627,7 +628,7 @@ void WriteWORDBE(FILE *outf,unsigned short data)
 
 void ReadDWORDBE(FILE *inf, unsigned long *ptr)
 {	//Read 4 bytes in Big Endian format from file into *ptr and performs bit shifting accordingly
-	unsigned char buffer[4]={0,0,0,0};
+	unsigned char buffer[4]={0};
 
 	assert_wrapper((inf != NULL) && (ptr != NULL));	//These must not be NULL
 
@@ -648,8 +649,8 @@ void WriteDWORDBE(FILE *outf,unsigned long data)
 
 unsigned long ParseUnicodeString(FILE *inf)
 {
-	unsigned long ctr=0;		//The length of the currently-parsed string
-	unsigned char input[2];		//used to read in two bytes at a time from input file
+	unsigned long ctr=0;			//The length of the currently-parsed string
+	unsigned char input[2]={0};		//used to read in two bytes at a time from input file
 
 	assert_wrapper(inf != NULL);	//This must not be NULL
 
@@ -676,11 +677,11 @@ unsigned long ParseUnicodeString(FILE *inf)
 
 char *ReadUnicodeString(FILE *inf)
 {
-	long position;
-	unsigned long length;
-	char *string;
-	unsigned long ctr;
-	unsigned char input[2];
+	long position=0;
+	unsigned long length=0;
+	char *string=NULL;
+	unsigned long ctr=0;
+	unsigned char input[2]={0};
 
 	assert_wrapper(inf != NULL);	//This must not be NULL
 
@@ -723,10 +724,10 @@ char *ReadUnicodeString(FILE *inf)
 
 long int ParseLongInt(char *buffer,unsigned long *startindex,unsigned long linenum,int *errorstatus)
 {
-	unsigned long index;
-	char buffer2[11];			//An array large enough to hold a 10 digit numerical string
+	unsigned long index=0;
+	char buffer2[11]={0};		//An array large enough to hold a 10 digit numerical string
 	unsigned long index2=0;		//index within buffer2
-	long value;					//The converted long int value of the numerical string
+	long value=0;				//The converted long int value of the numerical string
 
 	assert_wrapper((buffer != NULL) && (startindex != NULL));	//These must not be NULL
 	index=*startindex;	//Dereference starting index for ease of use
@@ -847,10 +848,13 @@ long int ParseLongInt(char *buffer,unsigned long *startindex,unsigned long linen
 
 char *DuplicateString(const char *str)
 {
-	char *ptr;
-	size_t size;
+	char *ptr=NULL;
+	size_t size=0;
 
-	assert_wrapper(str != NULL);
+//v2.32	Use this to prevent the need for the calling function to check
+//	assert_wrapper(str != NULL);
+	if(str == NULL)
+		return NULL;
 
 	size=strlen(str);
 	ptr=malloc_err(size+1);
@@ -894,10 +898,10 @@ void PostProcessLyrics(void)
 	struct Lyric_Line *lineptr=NULL;
 	struct Lyric_Piece *pieceptr=NULL;
 	struct Lyric_Piece *temp=NULL;	//The lyric piece being appended
-	unsigned long ctr;			//Used to validate the piece count in each line
-	unsigned long totalpiecectr;//Used to validate the piece count among all lines of lyrics
-	unsigned long totallinectr;	//Used to validate the line count
-	char hyphenadded;			//Used to track whether a hyphen was inserted, so it isn't immediatly removed by the hyphen truncation logic
+	unsigned long ctr=0;			//Used to validate the piece count in each line
+	unsigned long totalpiecectr=0;	//Used to validate the piece count among all lines of lyrics
+	unsigned long totallinectr=0;	//Used to validate the line count
+	char hyphenadded=0;				//Used to track whether a hyphen was inserted, so it isn't immediatly removed by the hyphen truncation logic
 	unsigned long start=0,stop=0;	//The recorded beginning and ending timestamps of lyric lines (for duration validation)
 
 	if(Lyrics.verbose)	puts("Performing import post-processing\n");
@@ -1067,7 +1071,7 @@ void PostProcessLyrics(void)
 
 void SetTag(char *string,char tagID,char negatizeoffset)
 {
-	char *string2;	//This will be created as a copy of the input string, having any leading/trailing whitespace removed
+	char *string2=NULL;	//This will be created as a copy of the input string, having any leading/trailing whitespace removed
 
 	assert_wrapper(string != NULL);	//This must not be NULL
 
@@ -1159,7 +1163,6 @@ void SetTag(char *string,char tagID,char negatizeoffset)
 						Lyrics.realoffset=-Lyrics.realoffset;
 						Lyrics.Offset=DuplicateString("-");	//Begin string with negative sign
 						Lyrics.Offset=ResizedAppend(Lyrics.Offset,string2,1);	//Append the Offset string
-//						free(string2);
 					}
 					else
 						Lyrics.Offset=string2;
@@ -1194,7 +1197,7 @@ unsigned long FindLongestLineLength(FILE *inf,char exit_on_empty)
 {
 	unsigned long maxlinelength=0;
 	unsigned long ctr=0;
-	int inputchar;
+	int inputchar=0;
 
 	assert_wrapper(inf != NULL);	//This must not be NULL
 
@@ -1237,7 +1240,7 @@ unsigned long FindLongestLineLength(FILE *inf,char exit_on_empty)
 
 long ftell_err(FILE *fp)
 {
-	long result;
+	long result=0;
 
 	assert_wrapper(fp != NULL);
 	result=ftell(fp);
@@ -1292,7 +1295,7 @@ void fwrite_err(const void *ptr,size_t size,size_t count,FILE *stream)
 
 FILE *fopen_err(const char *filename,const char *mode)
 {
-	FILE *fp;
+	FILE *fp=NULL;
 
 	assert_wrapper((filename != NULL) && (mode != NULL));
 	fp=fopen(filename,mode);
@@ -1317,10 +1320,18 @@ void fflush_err(FILE *stream)
 
 void fclose_err(FILE *stream)
 {
+int test;
+
 	assert_wrapper(stream != NULL);
-	if(fclose(stream) != 0)
+
+//**DEBUG
+test=fclose(stream);
+
+//	if(fclose(stream) != 0)
+if(test == EOF)
 	{
 		printf("Error closing file: %s\nAborting\n",strerror(errno));
+		printf("%d",errno);
 		exit_wrapper(1);
 	}
 }
@@ -1337,7 +1348,7 @@ void fputc_err(int character,FILE *stream)
 
 int fgetc_err(FILE *stream)
 {
-	int result;
+	int result=0;
 
 	assert_wrapper(stream != NULL);
 	result=fgetc(stream);
@@ -1352,7 +1363,7 @@ int fgetc_err(FILE *stream)
 
 char *fgets_err(char *str,int num,FILE *stream)
 {
-	char *result;
+	char *result=NULL;
 
 	assert_wrapper((str != NULL) && (stream != NULL));
 	result=fgets(str,num,stream);
@@ -1411,8 +1422,8 @@ void *calloc_err(size_t num,size_t size)
 
 char *strcasestr_spec(char *str1,const char *str2)
 {	//Performs a case INSENSITIVE search of str2 in str1, returning the character AFTER the match in str1 if it exists, else NULL
-	char *temp1;	//Used for string matching
-	const char *temp2;
+	char *temp1=NULL;	//Used for string matching
+	const char *temp2=NULL;
 
 	assert_wrapper((str1 != NULL) && (str2 != NULL));
 
@@ -1436,10 +1447,10 @@ char *strcasestr_spec(char *str1,const char *str2)
 
 int ParseTag(char startchar,char endchar,char *inputstring,char negatizeoffset)
 {
-	char *str;	//A copy of the input string, modified, to be passed to SetTag
-	char *temp,*temp2,*temp3;
-	size_t length;
-	char tagID;	//The tag identified in the input string
+	char *str=NULL;	//A copy of the input string, modified, to be passed to SetTag
+	char *temp=NULL,*temp2=NULL,*temp3=NULL;
+	size_t length=0;
+	char tagID=0;	//The tag identified in the input string
 
 	assert_wrapper(inputstring != NULL);
 	str=DuplicateString(inputstring);
@@ -1543,16 +1554,18 @@ int ParseTag(char startchar,char endchar,char *inputstring,char negatizeoffset)
 
 void WriteUnicodeString(FILE *outf,char *str)	//Takes an 8 bit encoded ANSI string and writes it in the two byte encoded character format used by VL
 {						//If str is NULL, an empty Unicode string is written (two 0's)
-	unsigned long ctr;
+	unsigned long ctr=0;
 
 	assert_wrapper(outf != NULL);	//This must not be NULL
 
 	if(str != NULL)
+	{
 		for(ctr=0;str[ctr] != '\0';ctr++)	//For each character in the string that precedes the NULL terminator
 		{	//Write ANSI character and a 0 value
 			fputc_err(str[ctr],outf);
 			fputc_err(0,outf);
 		}
+	}
 
 	//Write Unicode NULL
 	fputc_err(0,outf);
@@ -1562,7 +1575,7 @@ void WriteUnicodeString(FILE *outf,char *str)	//Takes an 8 bit encoded ANSI stri
 struct Lyric_Line *InsertLyricLineBreak(struct Lyric_Line *lineptr,struct Lyric_Piece *lyrptr)
 {	//Split the linked list into two different lines, inserting the break in front of the lyric referenced by lyrptr, in the lyric line referenced by lineptr
 	//returns the newly-created line structure that now contains the lyric linked list that now begins with lyrptr, or returns lineptr if no split occurred
-	struct Lyric_Line *templine;
+	struct Lyric_Line *templine=NULL;
 
 	assert_wrapper((lineptr != NULL) && (lyrptr != NULL));	//These must not be NULL
 
@@ -1592,9 +1605,9 @@ struct Lyric_Line *InsertLyricLineBreak(struct Lyric_Line *lineptr,struct Lyric_
 
 void RecountLineVars(struct Lyric_Line *start)
 {	//Rebuild piececount and duration for each line of lyrics, starting with the given line
-	unsigned long piecectr;
-	struct Lyric_Line *curline;		//Conductor of the lyric line linked list
-	struct Lyric_Piece *curpiece;	//Condudctor of the lyric linked list
+	unsigned long piecectr=0;
+	struct Lyric_Line *curline=NULL;	//Conductor of the lyric line linked list
+	struct Lyric_Piece *curpiece=NULL;	//Condudctor of the lyric linked list
 
 	curline=start;			//Point line conductor to given line
 	while(curline != NULL)
@@ -1621,41 +1634,41 @@ void RecountLineVars(struct Lyric_Line *start)
 
 char *ConvertNoteNum(unsigned char notenum)
 {	//Map a note number to a note name
-	signed int octave;		//The positive or negative octave number
-	char *string;			//The converted note name
-	char buffer[3]={0,0,0};	//A temporary buffer to build a string
+	signed int octave=0;	//The positive or negative octave number
+	char *string=NULL;		//The converted note name
+	char buffer[3]={0};		//A temporary buffer to build a string
 
 	assert_wrapper(notenum<128);	//Valid note numbers are 0->127
 
 //Obtain note letter
 	switch(notenum % 12)
 	{
-		case 1:	//Note C# (run both this case and the next)
+		case 1:		//Note C# (run both this case and the next)
 			buffer[1]='#';
-		case 0:	//Note C
+		case 0:		//Note C
 			buffer[0]='C';
 			break;
-		case 3:	//Note D# (run both this case and the next)
+		case 3:		//Note D# (run both this case and the next)
 			buffer[1]='#';
-		case 2:	//Note D
+		case 2:		//Note D
 			buffer[0]='D';
 			break;
-		case 4:	//Note E
+		case 4:		//Note E
 			buffer[0]='E';
 			break;
-		case 6:	//Note F# (run both this case and the next)
+		case 6:		//Note F# (run both this case and the next)
 			buffer[1]='#';
-		case 5:	//Note F
+		case 5:		//Note F
 			buffer[0]='F';
 			break;
-		case 8:	//Note G# (run both this case and the next)
+		case 8:		//Note G# (run both this case and the next)
 			buffer[1]='#';
-		case 7:	//Note G
+		case 7:		//Note G
 			buffer[0]='G';
 			break;
 		case 10:	//Note A# (run both this case and the next)
 			buffer[1]='#';
-		case 9:	//Note A
+		case 9:		//Note A
 			buffer[0]='A';
 			break;
 		case 11:	//Note B
@@ -1673,13 +1686,16 @@ char *ConvertNoteNum(unsigned char notenum)
 	octave = notenum/12 -1;
 	if(octave < 0)
 		string=ResizedAppend(string,"-1",1);	//Reallocate the string to append a minus sign for the negative octave
-
+	else
+	{
 //Obtain octave number
-	octave=abs(octave);			//Now that the sign of the octave is stored, drop the sign from the stored number
-	assert_wrapper((octave>=0) && (octave<=9));	//The absolute value of the octave is expected to be from 0 through 9
-	buffer[0]='0'+octave;			//Convert the octave to a character representation of '0' through '9'
-	buffer[1]=0;				//Append a null character to create a valid string
-	string=ResizedAppend(string,buffer,1);	//Reallocate the string to append the octave
+//	octave=abs(octave);			//Now that the sign of the octave is stored, drop the sign from the stored number
+//	assert_wrapper((octave>=0) && (octave<=9));	//The absolute value of the octave is expected to be from 0 through 9
+		assert_wrapper(octave <= 9);	//The octave must be less than 10
+		buffer[0]='0'+octave;			//Convert the octave to a character representation of '0' through '9'
+		buffer[1]=0;				//Append a null character to create a valid string
+		string=ResizedAppend(string,buffer,1);	//Reallocate the string to append the octave
+	}
 
 //The created string should now be composed as: [Note letter][Sharp sign][Octave sign][Octave]
 	return string;
@@ -1687,10 +1703,10 @@ char *ConvertNoteNum(unsigned char notenum)
 
 void ReleaseMemory(char release_all)
 {
-	struct Lyric_Piece *piecestemp;
-	struct Lyric_Piece *piecesnext;
-	struct Lyric_Line *linestemp;
-	struct Lyric_Line *linesnext;
+	struct Lyric_Piece *piecestemp=NULL;
+	struct Lyric_Piece *piecesnext=NULL;
+	struct Lyric_Line *linestemp=NULL;
+	struct Lyric_Line *linesnext=NULL;
 
 	if(Lyrics.verbose>=2)	puts("\tReleasing memory");
 
@@ -1801,7 +1817,7 @@ void ReleaseMemory(char release_all)
 
 int FindNextNumber(char *buffer,unsigned long *startindex)
 {	//If there is a numerical character at or after buffer[startindex], nonzero is returned and startindex will contain the index of the character
-	unsigned long index;
+	unsigned long index=0;
 
 	assert_wrapper((buffer != NULL) && (startindex != NULL));
 	index=*startindex;	//Dereference starting index for ease of use
@@ -1826,18 +1842,18 @@ int FindNextNumber(char *buffer,unsigned long *startindex)
 
 struct Lyric_Format *DetectLyricFormat(char *file)
 {
-	unsigned long maxlinelength=0,index,convertednum2,ctr;
-	char *temp,*temp2,temp3;
-	char *buffer;			//Used for text file testing
-	int errorcode,jumpcode;
-	long int convertednum;
+	unsigned long maxlinelength=0,index=0,convertednum2=0,ctr=0;
+	char *temp=NULL,*temp2=NULL,temp3=0;
+	char *buffer=NULL;			//Used for text file testing
+	int errorcode=0,jumpcode=0;
+	long int convertednum=0;
 	unsigned long processedctr=0;	//The current line number being processed in the text file
 	char timestampchar[]="[<";		//Accept any of these characters as valid characters to begin an LRC timestamp
-	char quicktemp;					//Used to store the original user setting of the quick processing flag (Lyrics.quick)
-	FILE *inf;
-	struct Lyric_Format *detectionlist;	//The linked list of all detected lyric formats in the specified file
-	struct Lyric_Format *curdetection=NULL;	//The conductor for the above linked list (used in the MIDI detection logic)
-	struct ID3Tag tag={NULL,0,0,0,0,0,0.0,NULL};	//Used for ID3 detection
+	char quicktemp=0;				//Used to store the original user setting of the quick processing flag (Lyrics.quick)
+	FILE *inf=NULL;
+	struct Lyric_Format *detectionlist=NULL;	//The linked list of all detected lyric formats in the specified file
+	struct Lyric_Format *curdetection=NULL;		//The conductor for the above linked list (used in the MIDI detection logic)
+	struct ID3Tag tag={NULL,0,0,0,0,0,0.0,NULL,0,NULL,NULL,NULL,NULL};	//Used for ID3 detection
 
 	assert_wrapper(file != NULL);
 	InitLyrics();	//Initialize all variables in the Lyrics structure
@@ -1979,10 +1995,11 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 						}
 					}
 
-					free(buffer);
-					fclose_err(inf);
+//v2.32	If this line in an LRC file has only one timestamp, parse other lines to see if they have more than one (ELRC)
+//					free(buffer);
+//					fclose_err(inf);
 					detectionlist->format=LRC_FORMAT;
-					return detectionlist;
+//					return detectionlist;
 				}
 			}
 
@@ -1994,6 +2011,12 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 		fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 	}//while(!feof(inf))
 
+	if(detectionlist->format == LRC_FORMAT)
+	{
+		free(buffer);
+		fclose_err(inf);
+		return detectionlist;
+	}
 
 //Detect binary based lyric types
 	fclose_err(inf);
@@ -2028,7 +2051,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 		if(GetMP3FrameDuration(&tag) != 0)	//Find the sample rate defined in the MP3 frame
 		{	//If the MP3 head was able to be parsed
 			fseek_err(tag.fp,tag.framestart,SEEK_SET);	//Seek to first ID3 frame
-			if(SearchPhrase(tag.fp,tag.tagend,NULL,"SYLT",4,1) == 1)	//Seek to SYLT ID3 frame
+			if(SearchPhrase(tag.fp,tag.tagend,NULL,"SYLT",4,1) == 1)	//Search for and seek to SYLT ID3 frame
 			{	//If an SYLT frame header was found
 				fclose_err(inf);
 				detectionlist->format=ID3_FORMAT;
@@ -2067,8 +2090,6 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 		Lyrics.quick=quicktemp;	//Restore original quick processing setting
 		return NULL;	//This statement is reached if MIDI_Load() below calles exit_wrapper(), indicating an invalid MIDI file
 	}
-//v2.4	Implemented a statistics tracking MIDI event handler
-//	MIDI_Load(inf,NULL,1);	//Call MIDI_Load with no handler (just load MIDI info) Lyric structure is NOT re-init'd- it's already populated.  SUPPRESS error messages during detection
 	MIDI_Load(inf,MIDI_Stats,1);	//Call MIDI_Load with the statistics tracking handler.  Lyric structure is NOT re-init'd- it's already populated.  SUPPRESS error messages during detection
 
 	Lyrics.quick=quicktemp;	//Restore original quick processing setting
@@ -2170,7 +2191,8 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 
 void DEBUG_QUERY_LAST_PIECE(void)
 {	//Debugging to query the info for the last lyric piece
-	struct Lyric_Piece *debugpiece;
+	struct Lyric_Piece *debugpiece=NULL;
+
 	debugpiece=FindLyricNumber(Lyrics.piececount);
 	assert_wrapper(debugpiece != NULL);
 	printf("**Last lyric info: Lyric=\"%s\"\tStart=%lums\tTotal line count=%lu\n\n",debugpiece->lyric,debugpiece->start,Lyrics.linecount);
@@ -2178,9 +2200,9 @@ void DEBUG_QUERY_LAST_PIECE(void)
 
 void DEBUG_DUMP_LYRICS(void)
 {	//Debugging to display all lyrics
-	struct Lyric_Line *curline;
-	struct Lyric_Piece *curpiece;
-	unsigned long linectr;
+	struct Lyric_Line *curline=NULL;
+	struct Lyric_Piece *curpiece=NULL;
+	unsigned long linectr=0;
 
 	for(curline=Lyrics.lines,linectr=1;curline!=NULL;curline=curline->next,linectr++)
 	{	//For each line of lyrics
@@ -2196,8 +2218,8 @@ void DEBUG_DUMP_LYRICS(void)
 
 void EnumerateFormatDetectionList(struct Lyric_Format *detectionlist)
 {
-	struct Lyric_Format *ptr;	//Conductor for the linked list
-	int lasttype=0;				//Used to test for the abnormal condition of a file being detected with both MIDI and non-MIDI based formats
+	struct Lyric_Format *ptr=NULL;	//Conductor for the linked list
+	int lasttype=0;					//Used to test for the abnormal condition of a file being detected with both MIDI and non-MIDI based formats
 
 	if(detectionlist == NULL)
 	{
@@ -2247,7 +2269,7 @@ void EnumerateFormatDetectionList(struct Lyric_Format *detectionlist)
 
 void DestroyLyricFormatList(struct Lyric_Format *ptr)
 {
-	struct Lyric_Format *ptr2,*ptr3;
+	struct Lyric_Format *ptr2=NULL,*ptr3=NULL;
 
 	for(ptr2=ptr;ptr2!=NULL;)		//For each link in the list
 	{
@@ -2261,7 +2283,7 @@ void DestroyLyricFormatList(struct Lyric_Format *ptr)
 
 void ForceEndLyricLine(void)
 {
-	struct Lyric_Line *templine;	//Used for removal of an empty, unclosed line
+	struct Lyric_Line *templine=NULL;	//Used for removal of an empty, unclosed line
 
 	if(Lyrics.line_on)
 	{
@@ -2284,11 +2306,8 @@ void ForceEndLyricLine(void)
 	}
 }
 
-char *ReadString(FILE *inf,unsigned long *bytesread)
+char *ReadString(FILE *inf,unsigned long *bytesread,unsigned long maxread)
 {
-	//Parses a null terminated string at the current file position, allocates memory for it and returns it
-	//NULL is returned upon error
-	//Upon success, the file position is left after the null terminator of the string that was read
 	unsigned long length=0,index=0;
 	unsigned long position=0;
 	char *string=NULL;
@@ -2311,6 +2330,8 @@ char *ReadString(FILE *inf,unsigned long *bytesread)
 
 	if(length == 0)		//If no characters could be read
 		return NULL;
+	if(maxread && (length > maxread))
+		length=maxread;	//Limit the number of characters to read to the number specified by the calling function
 
 //Allocate string and prepare for second pass
 	string=malloc_err(length);		//Length already takes the null terminator into account
@@ -2350,7 +2371,7 @@ unsigned long GetFileEndPos(FILE *fp)
 
 int BlockCopy(FILE *inf,FILE *outf,unsigned long num)
 {
-	unsigned char *buffer;
+	unsigned char *buffer=NULL;
 	int status=0;
 
 	if(Lyrics.verbose >= 2)	printf("\t\tBlock copying %lu bytes (File position 0x%lX to 0x%lX)\n",num,ftell(inf),ftell(inf)+num-1);
@@ -2371,4 +2392,116 @@ int BlockCopy(FILE *inf,FILE *outf,unsigned long num)
 
 	free(buffer);
 	return status;	//Return success/failure status
+}
+
+int SearchPhrase(FILE *inf,unsigned long breakpos,unsigned long *pos,const char *phrase,unsigned long phraselen,unsigned char autoseek)
+{
+	unsigned long originalpos=0;
+	unsigned long matchpos=0;
+	unsigned char c=0;
+	unsigned long ctr=0;		//Used to index into the phrase[] array, beginning with the first character
+	unsigned char success=0;
+	unsigned long currentpos=0;	//Store the current file position
+
+//Validate input
+	if(!inf || !phrase)	//These input parameters are not allowed to be NULL
+		return -1;
+
+	if(!phraselen)
+		return 0;	//There will be no matches to an empty search array
+
+//Initialize for search
+	errno=0;
+	originalpos=ftell(inf);	//Store the original file position
+	currentpos=originalpos;
+	if(errno)		//If there was an I/O error
+		return -1;
+
+	c=fgetc(inf);		//Read the first character of the file
+	currentpos++;		//Track that one more byte has been read
+	if(ferror(inf))		//If there was an I/O error
+	{
+		fseek(inf,originalpos,SEEK_SET);
+		return -1;
+	}
+
+//Perform search
+	while(!feof(inf))	//While end of file hasn't been reached
+	{
+		if(breakpos != 0)
+		{
+			if(currentpos >= breakpos)	//If the exit position was reached
+			{
+				fseek(inf,originalpos,SEEK_SET);
+				return 0;				//Return no match
+			}
+		}
+
+	//Check if the next character in the search phrase has been matched
+		if(c == phrase[ctr])
+		{	//The next character was matched
+			if(ctr == 0)	//The match was with the first character in the search array
+			{
+				matchpos=currentpos-1;	//Store the position of this potential match (rewound one byte)
+			}
+			ctr++;	//Advance to the next character in search array
+			if(ctr == phraselen)
+			{	//If all characters have been matched
+				success=1;
+				break;
+			}
+		}
+		else	//Character did not match
+			ctr=0;			//Ensure that the first character in the search array is looked for
+
+		c=fgetc(inf);	//Read the next character of the file
+		currentpos++;	//Track that one more byte has been read
+	}
+
+//Seek to the appropriate file position
+	if(success && autoseek)		//If we should seek to the successful match
+		fseek(inf,matchpos,SEEK_SET);
+	else				//If we should return to the original file position
+		fseek(inf,originalpos,SEEK_SET);
+
+	if(ferror(inf))		//If there was an I/O error
+		return -1;
+
+//Return match/non match
+	if(success)
+	{
+		if(pos != NULL)
+			*pos=matchpos;
+		return 1;	//Return match
+	}
+
+	return 0;	//Return no match
+}
+
+void WritePaddedString(FILE *outf,char *str,unsigned long num,unsigned char padding)
+{
+	unsigned long ctr=0;
+
+//Validate parameters
+	assert_wrapper(outf != NULL);
+
+	if(num == 0)	//Writing 0 bytes to file has the effect of doing nothing
+		return;	//so return without doing anything
+
+//Write characters from str if a string was provided
+	if(str != NULL)
+		while(ctr < num)
+		{
+			if(str[ctr] == '\0')	//If this is the end of the string
+				break;		//Exit loop
+
+			fputc_err(str[ctr++],outf);	//Write the character to the output file, increment counter
+		}
+
+//Write any necessary padding
+	while(ctr < num)				//For each remaining character up to the limit
+	{
+		fputc_err(padding,outf);	//Write padding
+		ctr++;						//increment counter
+	}
 }

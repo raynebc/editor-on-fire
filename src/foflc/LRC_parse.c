@@ -23,8 +23,8 @@ void LRC_Load(FILE *inf)
 {
 	char *buffer=NULL,*buffer2=NULL;	//Buffers used to read from input file
 	char *temp=NULL,*temp2=NULL;		//Used for string processing
-	unsigned long ctr;
-	unsigned long processedctr;		//The current line number being processed in the text file
+	unsigned long ctr=0;
+	unsigned long processedctr=0;	//The current line number being processed in the text file
 	unsigned long maxlinelength=0;	//I will count the length of the longest line (including NULL char/newline) in the
 									//input file so I can create a buffer large enough to read any line into
 	unsigned long startstamp=0,endstamp=0,timestamp=0;
@@ -203,10 +203,10 @@ void LRC_Load(FILE *inf)
 
 char *SeekNextLRCTimestamp(char *ptr)	//find next occurence of a timestamp in [xx:yy:zz] format, return pointer to beginning of timestamp, or NULL if no timestamp is found
 {
-	char *temp;			//Parsing will set this to the first character of a potential timestamp (ie. '[')
-	unsigned int ctr;	//Used for indexing past temp
-	unsigned int ctr2;	//Used for counting the number of characters in each field
-	char retry;			//Boolean: Parsing indicated the the loop determined that ptr didn't point at a timestamp, begin again at the main while loop
+	char *temp=NULL;		//Parsing will set this to the first character of a potential timestamp (ie. '[')
+	unsigned int ctr=0;		//Used for indexing past temp
+	unsigned int ctr2=0;	//Used for counting the number of characters in each field
+	char retry=0;			//Boolean: Parsing indicated the the loop determined that ptr didn't point at a timestamp, begin again at the main while loop
 
 	if(ptr == NULL)
 		return NULL;
@@ -298,12 +298,12 @@ unsigned long ConvertLRCTimestamp(char **ptr,int *errorstatus)
 	char *temp=NULL;
 	unsigned int ctr=1;
 	char failed=0;	//Boolean: Parsing indicated that ptr didn't point at a valid timestamp, abort
-	char minutes[LRCTIMESTAMPMAXFIELDLENGTH+1];		//Allow for pre-defined # of minute chars (and NULL terminator)
-	char seconds[LRCTIMESTAMPMAXFIELDLENGTH+1];		//Allow for pre-defined # of seconds chars (and NULL terminator)
-	char hundredths[LRCTIMESTAMPMAXFIELDLENGTH+1];	//Allow for pre-defined # of hundredths chars (and NULL terminator)
-	unsigned int index;	//index variable into the 3 timestamp strings
+	char minutes[LRCTIMESTAMPMAXFIELDLENGTH+1]={0};		//Allow for pre-defined # of minute chars (and NULL terminator)
+	char seconds[LRCTIMESTAMPMAXFIELDLENGTH+1]={0};		//Allow for pre-defined # of seconds chars (and NULL terminator)
+	char hundredths[LRCTIMESTAMPMAXFIELDLENGTH+1]={0};	//Allow for pre-defined # of hundredths chars (and NULL terminator)
+	unsigned int index=0;	//index variable into the 3 timestamp strings
 	unsigned long sum=0;
-	long conversion;	//Will store the integer conversions of each of the 3 timestamp strings
+	long conversion=0;	//Will store the integer conversions of each of the 3 timestamp strings
 
 	if(ptr == NULL)
 		failed=1;
@@ -478,8 +478,8 @@ unsigned long ConvertLRCTimestamp(char **ptr,int *errorstatus)
 char *RemoveLeadingZeroes(char *str)	//Allocate and return a string representing str without leading 0's
 {
 	unsigned int ctr=0;
-	char *temp;
-	size_t size;
+	char *temp=NULL;
+	size_t size=0;
 
 	assert_wrapper(str != NULL);	//This must not be NULL
 
@@ -501,7 +501,7 @@ char *RemoveLeadingZeroes(char *str)	//Allocate and return a string representing
 void WriteLRCTimestamp(FILE *outf,char openchar,char closechar,unsigned long time)
 {	//Accepts the time given in milliseconds and writes a timestamp to specified FILE stream, using the specified characters at
 	//the beginning and end of the timestamp: ie. <##:##.##> or [##:##.##]
-	unsigned long minutes,seconds,millis;	//Values to store the converted timestamp
+	unsigned long minutes=0,seconds=0,millis=0;	//Values to store the converted timestamp
 
 	assert_wrapper(outf != NULL);			//This must not be NULL
 	assert_wrapper(!isdigit(openchar));		//This must not be a number
@@ -530,11 +530,12 @@ void WriteLRCTimestamp(FILE *outf,char openchar,char closechar,unsigned long tim
 
 void Export_LRC(FILE *outf)
 {
-	struct Lyric_Line *curline;	//Conductor of the lyric line linked list
-	struct Lyric_Piece *temp;	//A conductor for the lyric pieces list
+	struct Lyric_Line *curline=NULL;	//Conductor of the lyric line linked list
+	struct Lyric_Piece *temp=NULL;		//A conductor for the lyric pieces list
 	int errornumber=0;
 
-	assert_wrapper(outf != NULL);	//This must not be NULL
+	assert_wrapper(outf != NULL);			//This must not be NULL
+	assert_wrapper(Lyrics.piececount != 0);	//This function is not to be called with an empty Lyrics structure
 
 	if(Lyrics.verbose)	printf("\nExporting LRC lyrics to file \"%s\"\n\nWriting tags\n",Lyrics.outfilename);
 

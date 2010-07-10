@@ -12,10 +12,10 @@
 
 double Weighted_Mean_Tempo(void)
 {
-	long double counter=0;		//The sum that will equal the weighted mean
-	long double weightedvalue;	//The weighted value divided by the number of tempo changes for the current tempo
-	struct Tempo_change *ptr;	//Conductor for the tempomap linked list
-	double test;
+	long double counter=0;			//The sum that will equal the weighted mean
+	long double weightedvalue=0;	//The weighted value divided by the number of tempo changes for the current tempo
+	struct Tempo_change *ptr=NULL;	//Conductor for the tempomap linked list
+	double test=0.0;
 
 //Count the number of tempo changes
 	if(MIDIstruct.hchunk.tempomap == NULL)
@@ -48,8 +48,8 @@ double Weighted_Mean_Tempo(void)
 double Mean_Timediff_Tempo(void)
 {
 	long double counter=0;
-	struct Lyric_Piece *current,*next;
-	struct Lyric_Line *templine;
+	struct Lyric_Piece *current=NULL,*next=NULL;
+	struct Lyric_Line *templine=NULL;
 
 	if(Lyrics.piececount < 2)	//If there is only one lyric piece
 		return 120.0;			//return the default tempo
@@ -115,7 +115,8 @@ void Export_UStar(FILE *outf)
 	unsigned long length=0;
 
 
-	assert_wrapper(outf != NULL);	//This must not be NULL
+	assert_wrapper(outf != NULL);			//This must not be NULL
+	assert_wrapper(Lyrics.piececount != 0);	//This function is not to be called with an empty Lyrics structure
 
 	if(Lyrics.lines == NULL)
 	{
@@ -401,12 +402,14 @@ void Export_UStar(FILE *outf)
 char *ConvertTempoToString(double tempo)
 {	//Takes an input double, parses it and returns a string representation in %.2f representation, with the
 	//decimal replaced by a comma.  The value is truncated, the thousanths value is not rounded up.
-	char string[15];	//Max precision will be 3 digits integer part, a decimal, and 6 digits decimal part
-	char *temp;			//The final string will be duplicated into an allocated array which will be returned
-	unsigned ctr;
+	char string[15]={0};	//Max precision will be 3 digits integer part, a decimal, and 6 digits decimal part
+	char *temp=NULL;		//The final string will be duplicated into an allocated array which will be returned
+	unsigned ctr=0;
 
 //validate tempo (must be >= 1.0 and < 1000)
-	if(((int)tempo == 0) || (tempo >= 1000.0))
+//v2.32	Rewrote this statement
+//	if(((int)tempo == 0) || (tempo >= 1000.0))
+	if(!(tempo > 0.0) || !(tempo < 1000.0))
 		return NULL;	//return error
 
 	if(snprintf(string,15,"%.6f",tempo) < 0)	//Use snprintf so that rounding errors don't occur, and to prevent a buffer overflow
@@ -427,18 +430,20 @@ char *ConvertTempoToString(double tempo)
 
 double ConvertStringToTempo(char *tempo)
 {
-	unsigned long ctr;
-	double x;
+	unsigned long ctr=0;
+	double x=0.0;
 
 	assert_wrapper(tempo != NULL);
 
 //Parse the string to convert comma to decimal point
 	for(ctr=(unsigned long)strlen(tempo);ctr>0;ctr--)
+	{
 		if(tempo[ctr-1] == ',')
 		{
 			tempo[ctr-1] = '.';
 			break;
 		}
+	}
 
 	x=atof(tempo);
 
@@ -453,10 +458,11 @@ double ConvertStringToTempo(char *tempo)
 
 double BruteForceTempo(double start,double end)
 {
-	double ctr,temp;
-	double candidate=0.0;				//The current best tempo
+	double ctr=0.0,temp=0.0;
+	double candidate=0.0;			//The current best tempo
 	double candidate_accuracy=0.0;	//The mean time difference for lyric timestamps in ms
 
+	assert_wrapper((start > 0) && (end > 0));	//Tempos that are 0 or negative are not valid
 	assert_wrapper(start<=end);
 
 	for(ctr=start;ctr<=end;ctr+=0.01)	//Check all increments from start to end
@@ -475,15 +481,16 @@ double BruteForceTempo(double start,double end)
 
 double CalculateTimeDiff(double tempo)
 {
-	struct Lyric_Piece *lyrptr;	//Conductor for lyric piece list
-	struct Lyric_Line *lineptr;	//Conductor for lyric line list
-	unsigned long ctr=0,num;
-	long double sum=0;			//Stores the sum of the time differences
-	double stepping;			//The precision of the tempo
+	struct Lyric_Piece *lyrptr=NULL;	//Conductor for lyric piece list
+	struct Lyric_Line *lineptr=NULL;	//Conductor for lyric line list
+	unsigned long ctr=0,num=0;
+	long double sum=0;					//Stores the sum of the time differences
+	double stepping=0.0;				//The precision of the tempo
 
 //error checking: Linked lists must be populated
 	assert_wrapper(Lyrics.lines != NULL);
 	assert_wrapper(Lyrics.lines->pieces != NULL);
+	assert_wrapper(tempo > 0);	//Tempos that are 0 or negative are not valid
 
 //init conductors
 	lineptr=Lyrics.lines;	//point to the first line of lyrics
@@ -773,8 +780,8 @@ void UStar_Load(FILE *inf)
 
 char *ReadUStarTag(char *str)
 {
-	char *temp;
-	unsigned long length;	//strlen(temp) is used several times
+	char *temp=NULL;
+	unsigned long length=0;	//strlen(temp) is used several times
 
 	assert_wrapper(str != NULL);	//This must not be NULL
 
@@ -800,10 +807,10 @@ char *ReadUStarTag(char *str)
 void RemapPitches(void)
 {
 	unsigned char pitchmin=0,pitchmax=0;
-	int diff;
-	struct Lyric_Piece *temp;
-	struct Lyric_Line *templine;
-	unsigned int minoctave,maxoctave;
+	int diff=0;
+	struct Lyric_Piece *temp=NULL;
+	struct Lyric_Line *templine=NULL;
+	unsigned int minoctave=0,maxoctave=0;
 
 	if(!CheckPitches(&pitchmin,&pitchmax))
 		return;	//Return without performing remapping if all pitches are in the correct range
@@ -869,9 +876,9 @@ void RemapPitches(void)
 
 int CheckPitches(unsigned char *pitchmin,unsigned char *pitchmax)
 {
-	unsigned char pitchmin_local,pitchmax_local;
-	struct Lyric_Piece *temp;
-	struct Lyric_Line *templine;
+	unsigned char pitchmin_local=0,pitchmax_local=0;
+	struct Lyric_Piece *temp=NULL;
+	struct Lyric_Line *templine=NULL;
 
 //Find the minimum and maximum pitch in the input lyrics
 	assert_wrapper((Lyrics.lines != NULL) && (Lyrics.lines->pieces != NULL));

@@ -19,15 +19,15 @@ struct _VLSTRUCT_ VL;
 
 int VL_PreLoad(FILE *inf,char validate)
 {
-	long ftell_result;				//Used to store return value from ftell()
-	char buffer[5]={0,0,0,0,0};		//Used to read word/doubleword integers from file
-	unsigned long ctr;				//Generic counter
-	char *temp;						//Temporary pointer for allocated strings
+	long ftell_result=0;				//Used to store return value from ftell()
+	char buffer[5]={0};					//Used to read word/doubleword integers from file
+	unsigned long ctr=0;				//Generic counter
+	char *temp=NULL;					//Temporary pointer for allocated strings
 	struct VL_Sync_entry se={0,0,0,0,0,NULL};		//Used to store sync entries from file during parsing
-	struct VL_Text_entry *ptr1;		//Used for allocating links for the text chunk list
-	struct VL_Sync_entry *ptr2;		//Used for allocation links for the sync chunk list
-	struct VL_Text_entry *curtext;	//Conductor for text chunk linked list
-	struct VL_Sync_entry *cursync;	//Conductor for sync chunk linked list
+	struct VL_Text_entry *ptr1=NULL;	//Used for allocating links for the text chunk list
+	struct VL_Sync_entry *ptr2=NULL;	//Used for allocation links for the sync chunk list
+	struct VL_Text_entry *curtext=NULL;	//Conductor for text chunk linked list
+	struct VL_Sync_entry *cursync=NULL;	//Conductor for sync chunk linked list
 
 	assert_wrapper(inf != NULL);
 
@@ -46,7 +46,7 @@ int VL_PreLoad(FILE *inf,char validate)
 	if(Lyrics.verbose)	puts("Reading VL file header");
 
 //Read file header
-	fread_err(buffer,4,1,inf);		//Read 4 bytes, which should be 'V','L','2',0
+	fread_err(buffer,4,1,inf);			//Read 4 bytes, which should be 'V','L','2',0
 	ReadDWORDLE(inf,&(VL.filesize));	//Read doubleword from file in little endian format
 
 	if(strncmp(buffer,"VL2",4) != 0)
@@ -91,8 +91,8 @@ int VL_PreLoad(FILE *inf,char validate)
 
 //Read sync header, which should be th.textsize+16 bytes into the file
 	fseek_err(inf,VL.textsize+16,SEEK_SET);
-	fread_err(buffer,4,1,inf);		//Read 4 bytes, which should be 'S','Y','N','C'
-	buffer[4]='\0';					//Add a NULL character to make buffer into a proper string
+	fread_err(buffer,4,1,inf);			//Read 4 bytes, which should be 'S','Y','N','C'
+	buffer[4]='\0';						//Add a NULL character to make buffer into a proper string
 	ReadDWORDLE(inf,&(VL.syncsize));	//Read doubleword from file in little endian format
 
 	if(strncmp(buffer,"SYNC",5) != 0)
@@ -121,7 +121,7 @@ int VL_PreLoad(FILE *inf,char validate)
 			exit_wrapper(5);
 		}
 	}
-	if(ftell_result != VL.filesize+8)			//Validate filesize
+	if((unsigned long)ftell_result != VL.filesize+8)	//Validate filesize
 	{
 		puts("Error: Filesize does not match size given in file header");
 		if(validate)
@@ -210,7 +210,7 @@ int VL_PreLoad(FILE *inf,char validate)
 	while(1)	//Read lyric lines
 	{
 	//Check to see if the Sync Chunk has been reached
-		if(ftell_err(inf) >= VL.textsize + 16)	//The Text chunk size + the file and text header sizes is the position of the Sync chunk
+		if((unsigned long)ftell_err(inf) >= VL.textsize + 16)	//The Text chunk size + the file and text header sizes is the position of the Sync chunk
 			break;
 
 	//Read lyric string
@@ -222,7 +222,7 @@ int VL_PreLoad(FILE *inf,char validate)
 			if(VL.textsize+16 - ftell_result <= 3)	//This 0 word value ends within 3 bytes of the sync header (is padding)
 			{
 				free(temp);	//Release string as it won't be used
-				break;	//text chunk has been read
+				break;		//text chunk has been read
 			}
 			else
 			{
@@ -236,7 +236,7 @@ int VL_PreLoad(FILE *inf,char validate)
 				}
 			}
 		}
-		if(ftell_result > VL.textsize + 16)	//If reading this string caused the file position to cross into Sync chunk
+		if((unsigned long)ftell_result > VL.textsize + 16)	//If reading this string caused the file position to cross into Sync chunk
 		{
 			puts("Error: Lyric string overlapped into Sync chunk");
 			if(validate)
@@ -318,7 +318,7 @@ int VL_PreLoad(FILE *inf,char validate)
 int ReadSyncEntry(struct VL_Sync_entry *ptr,FILE *inf)
 {	//Portable function to read 16 bytes from the file. Returns nonzero upon error
 	unsigned long buffer=0;
-	long ftell_result;
+	unsigned long ftell_result=0;
 
 	assert_wrapper((ptr != NULL) && (inf != NULL));	//These must not be NULL
 
@@ -349,16 +349,16 @@ int ReadSyncEntry(struct VL_Sync_entry *ptr,FILE *inf)
 
 void VL_Load(FILE *inf)
 {
-	unsigned long ctr;			//Generic counter
-	unsigned long start_off;	//Starting offset of a lyric piece in milliseconds
-	unsigned long end_off;		//Ending offset of a lyric piece in milliseconds
-	char *temp;					//Array for string manipulation
-	struct VL_Text_entry *curtext;	//Conductor for text chunk linked list
-	struct VL_Sync_entry *cursync;	//Conductor for sync chunk linked list
-	unsigned short cur_line_len;	//The length of the currently line of lyrics
-	unsigned short start_char;	//The starting character offset for the current sync entry
-	unsigned short end_char;	//The ending character offset for the current sync entry
-	char groupswithnext;		//Tracks grouping, passed to AddLyricPiece()
+	unsigned long ctr=0;				//Generic counter
+	unsigned long start_off=0;			//Starting offset of a lyric piece in milliseconds
+	unsigned long end_off=0;			//Ending offset of a lyric piece in milliseconds
+	char *temp=NULL;					//Pointer for string manipulation
+	struct VL_Text_entry *curtext=NULL;	//Conductor for text chunk linked list
+	struct VL_Sync_entry *cursync=NULL;	//Conductor for sync chunk linked list
+	unsigned short cur_line_len=0;		//The length of the currently line of lyrics
+	unsigned short start_char=0;		//The starting character offset for the current sync entry
+	unsigned short end_char=0;			//The ending character offset for the current sync entry
+	char groupswithnext=0;				//Tracks grouping, passed to AddLyricPiece()
 
 	assert_wrapper(inf != NULL);	//This must not be NULL
 
@@ -501,17 +501,18 @@ void VL_Load(FILE *inf)
 	ReleaseVL();	//Release memory used to build the VL structure
 }
 
-void ExportVL(FILE *outf)
+void Export_VL(FILE *outf)
 {
-	struct _VLSTRUCT_ *OutVL;	//The prepared VL structure to write to file
-	struct VL_Text_entry *curtext;	//Conductor for the text chunk list
-	struct VL_Text_entry *textnext;	//Used for OutVL deallocation
-	struct VL_Sync_entry *cursync;	//Conductor for the sync chunk list
-	struct VL_Sync_entry *syncnext;	//Used for OutVL deallocation
-	unsigned long ctr;
-	long filepos;
+	struct _VLSTRUCT_ *OutVL=NULL;			//The prepared VL structure to write to file
+	struct VL_Text_entry *curtext=NULL;		//Conductor for the text chunk list
+	struct VL_Text_entry *textnext=NULL;	//Used for OutVL deallocation
+	struct VL_Sync_entry *cursync=NULL;		//Conductor for the sync chunk list
+	struct VL_Sync_entry *syncnext=NULL;	//Used for OutVL deallocation
+	unsigned long ctr=0;
+	long filepos=0;
 
-	assert_wrapper(outf != NULL);	//This must not be NULL
+	assert_wrapper(outf != NULL);			//This must not be NULL
+	assert_wrapper(Lyrics.piececount != 0);	//This function is not to be called with an empty Lyrics structure
 
 	if(Lyrics.verbose)	printf("\nExporting VL lyrics to file \"%s\"\n\n",Lyrics.outfilename);
 
@@ -648,29 +649,29 @@ void ExportVL(FILE *outf)
 
 struct _VLSTRUCT_ *VL_PreWrite(void)
 {
-	struct _VLSTRUCT_ *OutVL;			//Create a VL structure to build the exported VL format
-	char *lyrline=NULL;						//A pointer to an array large enough to store the largest line of lyrics
+	struct _VLSTRUCT_ *OutVL=NULL;		//Create a VL structure to build the exported VL format
+	char *lyrline=NULL;					//A pointer to an array large enough to store the largest line of lyrics
 	char *temp=NULL;
-	unsigned long maxlength;			//The calculated length of the longest lyric line (excluding null terminator)
-	unsigned long charcount;			//The running sum of the length of all lyric pieces in a line
-	unsigned long index;				//The current index into the lyric line, stored with each sync entry
-	unsigned long linenum;				//The number of the currently-processed lyric line
+	unsigned long maxlength=0;			//The calculated length of the longest lyric line (excluding null terminator)
+	unsigned long charcount=0;			//The running sum of the length of all lyric pieces in a line
+	unsigned long index=0;				//The current index into the lyric line, stored with each sync entry
+	unsigned long linenum=0;			//The number of the currently-processed lyric line
 	struct Lyric_Piece *curpiece=NULL;	//Conductor for lyric piece linked list
 	struct Lyric_Line *curline=NULL;	//Conductor for lyric line linked list
 	struct VL_Text_entry *curtext=NULL;	//Text entry for current lyric piece
 	struct VL_Sync_entry *cursync=NULL;	//Sync entry for current lyric piece
 	struct VL_Sync_entry *newsync=NULL;	//Used to build new sync entries to insert into list
 	struct VL_Text_entry *newtext=NULL;	//Used to build new text entries to insert into list
-	unsigned long lastendtime;			//The end time for the last lyric piece.  The next lyric's timestamp must be at least 1 more than this
+	unsigned long lastendtime=0;		//The end time for the last lyric piece.  The next lyric's timestamp must be at least 1 more than this
 
 	if(Lyrics.verbose)	puts("Building VL structure");
 
-//Allocate the ExportVL structure
+//Allocate the Export_VL structure
 	OutVL=calloc_err(1,sizeof(struct _VLSTRUCT_));	//Allocate and init to 0
 	cursync=NULL;
 	curtext=NULL;
 
-//Initialize the ExportVL structure
+//Initialize the Export_VL structure
 	OutVL->numlines=Lyrics.linecount;
 	OutVL->numsyncs=Lyrics.piececount;
 
@@ -788,10 +789,10 @@ struct _VLSTRUCT_ *VL_PreWrite(void)
 
 void ReleaseVL(void)
 {
-	struct VL_Text_entry *texttemp;
-	struct VL_Text_entry *textnext;
-	struct VL_Sync_entry *synctemp;
-	struct VL_Sync_entry *syncnext;
+	struct VL_Text_entry *texttemp=NULL;
+	struct VL_Text_entry *textnext=NULL;
+	struct VL_Sync_entry *synctemp=NULL;
+	struct VL_Sync_entry *syncnext=NULL;
 
 	if(Lyrics.verbose >= 2)	puts("Cleaning up VL structure");
 

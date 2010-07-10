@@ -314,7 +314,7 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 
 		case VL_FORMAT:	//Export as VL format file
 			outf=fopen_err(Lyrics.outfilename,"wb");	//VL is a binary format
-			ExportVL(outf);
+			Export_VL(outf);
 		break;
 
 		case MIDI_FORMAT:	//Export as MIDI format file.  Default export track is "PART VOCALS"

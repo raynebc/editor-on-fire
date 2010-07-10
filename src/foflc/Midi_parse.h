@@ -72,6 +72,7 @@ struct _MIDISTRUCT_{
 	struct Header_chunk hchunk;	//Store the MIDI header information in this structure
 	char MPQN_defined;			//Boolean:  Defines whether a Set Tempo event has been reached
 	unsigned long deltacounter;	//This will count the delta clocks in between tempo changes
+	unsigned long absdelta;		//This will count the delta clocks in between track changes
 	unsigned long endtime;		//The timestamp of the end of the MIDI file in milliseconds
 	volatile double realtime;	//At each tempo change, the deltacounter will be used to determine the current time
 	unsigned short trackswritten;	//The current number of MIDI tracks that have been written (for MIDI export formats such as MIDI, Vrhythm, KAR)
@@ -96,8 +97,9 @@ struct _MIDISTRUCT_{
 		//This is the overdrive status that corresponds to unfinalizedlyric
 	char unfinalizedgroupswithnext;
 		//This is the grouping status that corresponds to unfinalizedlyric
-	char isrmid;
-		//Boolean: The input file is a RIFF-MIDI (a SMF format file enclosed in an RIFF header)
+	char miditype;
+		//If 1, the input file is a RIFF-MIDI (a SMF format file enclosed in an RIFF header)
+		//If 2, the input file is a Rock Band Audition file (SMF embedded within a binary file)
 };
 
 struct TEPstruct	//This is structure containing all variables utilized within the track event processor
@@ -239,6 +241,7 @@ double ConvertToRealTime(unsigned long absolutedelta,double starttime);
 	//absolutedelta is a delta counter that will be converted to realtime starting at the tempo
 	//change defined in starttime.  If starttime is 0, all tempo changes are checked starting with
 	//the first, otherwise tempo changes are checked starting with the one specified
+	//starttime should be provided as 0 if absolutedelta is absolute within the entire track
 unsigned long ConvertToDeltaTime(unsigned long starttime);
 	//Uses the Tempo Changes list to calculate the absolute delta time of the specified realtime.
 
