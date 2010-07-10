@@ -49,10 +49,10 @@ Export functions are expected to:
 //
 //Global Macros- All relevant source/header files will include this header file to obtain these declarations
 //
-#define PROGVERSION "FoFLyricConverter2.31"
+#define PROGVERSION "FoFLyricConverter2.32"
 #define LYRIC_NOTE_ON 50	//Previously, if note #s 60-100 were used for Note On events for lyrics, FoF interpreted
 							//those notes to indicate playable instrument difficulties.  This was fixed, but I will
-							//continue to use this pitch to denote a pitchless lyric during MIDI export
+							//continue to use this pitch to denote a pitchless lyric during MIDI export by default
 #define LRCTIMESTAMPMAXFIELDLENGTH 2
 	//Used to define the max length of the minutes, seconds and hundredths fields in LRC timestamps
 
@@ -313,7 +313,7 @@ void DestroyLyricFormatList(struct Lyric_Format *ptr);
 char *DuplicateString(const char *str);
 	//Allocates enough memory to copy the input string, copies it and returns the newly allocated string by reference
 	//This function is provided to duplicate strings when the source string is a constant char array, eliminating
-	//any applicable compiler warnings
+	//any applicable compiler warnings.  If str is NULL, NULL is returned
 char *TruncateString(char *str,char dealloc);
 	//Creates and returns a duplicate of str without leading and trailing whitespace.
 	//if dealloc is nonzero, str is de-allocated, so the calling function can overwrite the str pointer with the return value
@@ -408,8 +408,11 @@ struct Lyric_Format *DetectLyricFormat(char *file);
 	//Vocal Rhythm MIDI will NOT be detected
 	//If NULL is returned, the file is not valid for import (invalid lyrics or unknown type)
 	//NOTE:  Only MIDI tracks that have a name are included in the detection for MIDI type formats
-char *ReadString(FILE *inf,unsigned long *bytesread);
+	//NOTE:  Currently, the Lyrics structure is overwritten by this function and should be backed up to memory first
+char *ReadString(FILE *inf,unsigned long *bytesread,unsigned long maxread);
 	//Parses a null terminated ASCII string at the current file position, allocates memory for it and returns it
+	//If maxread is nonzero, it specifies the maximum number of characters to read into the new string (ie. 30 for
+	//an ID3v1 Title, Artist or Album string).
 	//NULL is returned upon error
 	//Upon success, the file position is left after the null terminator of the string that was read
 unsigned long GetFileEndPos(FILE *fp);
@@ -418,6 +421,20 @@ unsigned long GetFileEndPos(FILE *fp);
 int BlockCopy(FILE *inf,FILE *outf,unsigned long num);
 	//Accepts an input file and output file, copying the specified number of bytes from the former to the latter
 	//Returns 0 on success, -1 on memory allocation error, -2 on file I/O error or -3 on other error
+int SearchPhrase(FILE *inf,unsigned long breakpos,unsigned long *pos,const char *phrase,unsigned long phraselen,unsigned char autoseek);
+	//Searches from the current file position of inf for the first match of the specified array of characters
+	//If file position breakpos is reached or exceeded, and breakpos is nonzero, the function will end the search even if no match was found
+	//phrase is an array of characters to find, and phraselen is the number of characters defined in the array
+	//If a match is found, the file position is returned through pos (if it isn't NULL) and 1 is returned
+	//If inf or phrase are NULL or if an I/O error occurs, -1 is returned
+	//If the file is parsed but no match is found, 0 is returned and pos is not modified
+	//If autoseek is nonzero, inf is left positioned at the first match, otherwise it is returned at its original file position
+void WritePaddedString(FILE *outf,char *str,unsigned long num,unsigned char padding);
+	//Writes num # of characters to the output file, using the content from str
+	//If the length of str is less than num, the specified padding character is
+	//written until num # of characters were written.  The NULL terminator is not written
+	//If the length of str is greater than num, it is truncated
+	//If str is NULL, only padding is written to file
 
 
 #ifndef USEMEMWATCH

@@ -379,7 +379,7 @@ int eof_menu_file_new_wizard(void)
 						if(!isdigit(year[ctr]))	//If it contains a non numerical character
 							year[0]='\0';		//Empty the year array
 
-				DestroyID3FrameList(&tag);	//Release the list of ID3 frames
+				DestroyID3(&tag);	//Release the list of ID3 frames
 			}
 			fclose(tag.fp);	//Close file
 			tag.fp=NULL;

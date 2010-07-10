@@ -23,9 +23,9 @@ struct _VLSTRUCT_{
 	unsigned long numsyncs;	//The number of sync entries
 	struct VL_Text_entry *Lyrics;	//Pointer to the linked list containing the text chunk entries
 	struct VL_Sync_entry *Syncs;	//Pointer to the linked list containing the sync chunk entries
-	long filesize;	//This should be the filesize - file header size (8 bytes)
-	long textsize;	//Text chunk size.  Should be the distance between the text and sync headers - text header size (8 bytes)
-	long syncsize;	//Sync chunk size.  Should be the distance between the sync header and EOF - sync header size (8 bytes)
+	unsigned long filesize;	//This should be the filesize - file header size (8 bytes)
+	unsigned long textsize;	//Text chunk size.  Should be the distance between the text and sync headers - text header size (8 bytes)
+	unsigned long syncsize;	//Sync chunk size.  Should be the distance between the sync header and EOF - sync header size (8 bytes)
 };
 
 
@@ -34,7 +34,7 @@ int VL_PreLoad(FILE *inf,char validate);
 	//If validate is nonzero, function returns nonzero upon error instead of exiting the program
 void VL_Load(FILE *inf);
 	//Uses the VL structure to build the lyric structure
-void ExportVL(FILE *outf);
+void Export_VL(FILE *outf);
 	//Exports the loaded lyric structure to output file in VL format
 struct _VLSTRUCT_ *VL_PreWrite(void);
 	//Uses lyric structure to create a VL structure for VL export.  A VL structure is allocated, populated and returned by reference

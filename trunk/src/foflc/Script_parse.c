@@ -14,18 +14,18 @@
 void Script_Load(FILE *inf)
 {
 	unsigned long maxlinelength=0;	//I will count the length of the longest line (including NULL char/newline) in the
-							//input file so I can create a buffer large enough to read any line into
-	char *buffer;			//Will be an array large enough to hold the largest line of text from input file
-	char *substring;		//Used with strstr() to find tag strings in the input file
-	unsigned long index;	//Used to index within a line of text
-	unsigned long starttime;	//Converted long int value of numerical string representing a lyric's start time
-	unsigned long duration;		//Converted long int value of numerical string representing a lyric's duration
-	unsigned long processedctr;	//The current line number being processed in the text file
-	char endlines=0;		//Boolean:  The marklines tag was read in the input file.
-							//	If true, line demarcation is altered to recognize lines that
-							//	begin with "#newline" as the end of a line of lyrics.  This,
-							//	along with using trailing hyphens, allows for grouping logic
-							//	on word or syllable synced script files
+									//input file so I can create a buffer large enough to read any line into
+	char *buffer=NULL;				//Will be an array large enough to hold the largest line of text from input file
+	char *substring=NULL;			//Used with strstr() to find tag strings in the input file
+	unsigned long index=0;			//Used to index within a line of text
+	unsigned long starttime=0;		//Converted long int value of numerical string representing a lyric's start time
+	unsigned long duration=0;		//Converted long int value of numerical string representing a lyric's duration
+	unsigned long processedctr=0;	//The current line number being processed in the text file
+	char endlines=0;				//Boolean:  The marklines tag was read in the input file.
+									//	If true, line demarcation is altered to recognize lines that
+									//	begin with "#newline" as the end of a line of lyrics.  This,
+									//	along with using trailing hyphens, allows for grouping logic
+									//	on word or syllable synced script files
 
 	assert_wrapper(inf != NULL);	//This must not be NULL
 
@@ -140,11 +140,12 @@ void Script_Load(FILE *inf)
 
 void Export_Script(FILE *outf)
 {
-	struct Lyric_Line *curline;	//Conductor of the lyric line linked list
-	struct Lyric_Piece *temp;	//A conductor for the lyric pieces list
+	struct Lyric_Line *curline=NULL;	//Conductor of the lyric line linked list
+	struct Lyric_Piece *temp=NULL;		//A conductor for the lyric pieces list
 	int errornumber=0;
 
 	assert_wrapper(outf != NULL);	//This must not be NULL
+	assert_wrapper(Lyrics.piececount != 0);	//This function is not to be called with an empty Lyrics structure
 
 	if(Lyrics.verbose)	printf("\nExporting script lyrics to file \"%s\"\n\nWriting tags\n",Lyrics.outfilename);
 

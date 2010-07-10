@@ -2,6 +2,7 @@
 #define _lrc_parse_h_
 
 void LRC_Load(FILE *inf);
+	//Loads the LRC or ELRC formatted file into the Lyrics structure
 char *SeekNextLRCTimestamp(char *ptr);
 	//find next occurence of a timestamp in [xx:yy:zz] format, return pointer to beginning of timestamp, or NULL if no timestamp is found
 	//If ptr is passed as NULL, NULL is returned
