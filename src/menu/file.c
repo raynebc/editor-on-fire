@@ -298,7 +298,7 @@ int eof_menu_file_new_wizard(void)
 	ALOGG_OGG * temp_ogg = NULL;
 	char * temp_buffer = NULL;
 	int temp_buffer_size = 0;
-	struct ID3Tag tag={NULL,0,0,0,0,0,0.0,NULL};
+	struct ID3Tag tag={NULL,0,0,0,0,0,0.0,NULL,0,NULL,NULL,NULL,NULL};
 	int ctr=0;
 
 	if(eof_changes)
@@ -365,22 +365,37 @@ int eof_menu_file_new_wizard(void)
 		tag.fp=fopen(oggfilename,"rb");	//Open user-specified file for reading
 		if(tag.fp != NULL)
 		{	//If the file was able to be opened
-			if(FindID3Tag(&tag))
-			{	//If the ID3 tag was found
-				ID3FrameProcessor(&tag);	//Build a list of the ID3 frames
+			year[0]='\0';	//Empty the year string
+
+			if(ID3FrameProcessor(&tag))		//If ID3v2 frames are found
+			{
 				GrabID3TextFrame(&tag,"TPE1",eof_etext,sizeof(eof_etext)/sizeof(char));		//Store the Artist info in eof_etext[]
 				GrabID3TextFrame(&tag,"TIT2",eof_etext2,sizeof(eof_etext2)/sizeof(char));	//Store the Title info in eof_etext2[]
-
 				GrabID3TextFrame(&tag,"TYER",year,sizeof(year)/sizeof(char));			//Store the Year info in year[]
-				if(strlen(year) != 4)		//If the year string isn't exactly 4 digits
-					year[0]='\0';			//Nullify it
-				else
-					for(ctr=0;ctr<4;ctr++)		//Otherwise check all digits to ensure they're numerical
-						if(!isdigit(year[ctr]))	//If it contains a non numerical character
-							year[0]='\0';		//Empty the year array
-
-				DestroyID3(&tag);	//Release the list of ID3 frames
 			}
+
+			//If any of the information was not found in the ID3v2 tag, check for it from an ID3v1 tag
+			//ID3v1 fields are 30 characters long maximum (31 bytes as a string), while the year field is 4 characters long (5 bytes as a string)
+			if(tag.id3v1present > 1)	//If there were fields defined in an ID3v1 tag
+			{
+				if((eof_etext[0]=='\0') && (tag.id3v1artist != NULL))
+					strcpy(eof_etext,tag.id3v1artist);
+				if((eof_etext2[0]=='\0') && (tag.id3v1title != NULL))
+					strcpy(eof_etext2,tag.id3v1title);
+				if((year[0]=='\0') && (tag.id3v1year != NULL))
+					strcpy(year,tag.id3v1year);
+			}
+
+			//Validate year string
+			if(strlen(year) != 4)		//If the year string isn't exactly 4 digits
+				year[0]='\0';			//Nullify it
+			else
+				for(ctr=0;ctr<4;ctr++)		//Otherwise check all digits to ensure they're numerical
+					if(!isdigit(year[ctr]))	//If it contains a non numerical character
+						year[0]='\0';		//Empty the year array
+
+			DestroyID3(&tag);	//Release the list of ID3 frames
+
 			fclose(tag.fp);	//Close file
 			tag.fp=NULL;
 		}
