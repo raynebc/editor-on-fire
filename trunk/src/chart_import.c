@@ -56,15 +56,21 @@ EOF_SONG * eof_import_chart(const char * fn)
 
 	struct FeedbackChart * chart = NULL;
 	EOF_SONG * sp = NULL;
-	int err;
-	int i;
+	int err=0;
+	int i=0;
 	char oggfn[1024] = {0};
 	char searchpath[1024] = {0};
 	char oldoggpath[1024] = {0};
+	char errorcode[100] = "Error #";
 	struct al_ffblk info; // for file search
 
 	chart = ImportFeedback((char *)fn, &err);
-	if(chart)
+	if(chart == NULL)
+	{
+		itoa(err,&errorcode[7],10);	//Convert error number to string and place in the errorcode array
+		alert("Import failed", NULL, errorcode, "OK", NULL, 0, KEY_ENTER);
+	}
+	else
 	{
 		/* load audio */
 		replace_filename(oggfn, fn, "guitar.ogg", 1024);
@@ -133,13 +139,13 @@ EOF_SONG * eof_import_chart(const char * fn)
 			{
 				max_chartpos = current_anchor->chartpos;
 			}
-			
+
 			/* remember final BPM */
 			if(!current_anchor->next)
 			{
 				final_bpm = current_anchor->BPM;
 			}
-			
+
 			current_anchor = current_anchor->next;
 		}
 		while(current_event)
@@ -243,12 +249,12 @@ EOF_SONG * eof_import_chart(const char * fn)
 					{
 						eof_track_add_star_power(sp->track[track], chartpos_to_msec(chart, current_note->chartpos), chartpos_to_msec(chart, current_note->chartpos + current_note->duration));
 					}
-					
+
 					/* skip face-off sections for now */
 					else if(current_note->gemcolor == '0' || current_note->gemcolor == '1')
 					{
 					}
-					
+
 					/* import regular note */
 					else
 					{

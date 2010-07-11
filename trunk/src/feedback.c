@@ -618,6 +618,11 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 	{
 		chart->linesprocessed++;	//Track which line number is being parsed
 
+
+if(chart->linesprocessed == 5058)
+puts("DEBUG");
+
+
 //Skip leading whitespace
 		index=0;	//Reset index counter to beginning
 		while(buffer[index] != '\0')
@@ -909,18 +914,25 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 		//Initialize anchor link
 				curanchor->chartpos=A;	//The first number read is the chart position
 //				curanchor->type=anchortype;
-				if(anchortype == 'B')		//If this was a tempo event
-					curanchor->BPM=B;	//The second number represents 1000 times the tempo
-				else if(anchortype == 'T')	//If this was a time signature event
-					curanchor->TS=B;	//Store the numerator of the time signature
-				else if(anchortype == 'A')	//If this was an anchor event
-					curanchor->usec=B;	//Store the anchor's timestamp in microseconds
-				else
+				switch(anchortype)
 				{
-					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
-					if(error)
-						*error=17;
-					return NULL;		//invalid anchor type
+					case 'B':	//If this was a tempo event
+						curanchor->BPM=B;	//The second number represents 1000 times the tempo
+					break;
+
+					case 'T':	//If this was a time signature event
+						curanchor->TS=B;	//Store the numerator of the time signature
+					break;
+
+					case 'A':	//If this was an anchor event
+						curanchor->usec=B;	//Store the anchor's timestamp in microseconds
+					break;
+
+					default:
+						DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+						if(error)
+							*error=17;
+					return NULL;
 				}
 			}
 		}
@@ -1060,16 +1072,28 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 			}
 
 			notetype=0;	//By default, assume this is going to be a note definition
-			if(substring[index] == 'S')	//Check if this is a player/overdrive section
-				notetype=1;							//This is a section marker
-			else if(substring[index] != 'N')	//Check if this isn't a "note" indicator, and increment index
+			switch(substring[index])
 			{
-				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
-				if(error)
-					*error=25;
+				case 'S':		//Player/overdrive section
+					notetype=1;	//This is a section marker
+					index++; 	//Increment index past N or S identifier
+				break;
+
+				case 'E':		//Text event, skip it
+					fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+					continue;
+				break;
+
+				case 'N':		//Note indicator, and increment index
+					index++; 	//Increment index past N or S identifier
+				break;
+
+				default:		//Invalid instrument section entry
+					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+					if(error)
+						*error=25;
 				return NULL;		//return error
 			}
-			index++;	//Increment index past N or S identifier
 
 		//Load second number
 			B=ParseLongInt(substring,&index,chart->linesprocessed,&errorstatus);
