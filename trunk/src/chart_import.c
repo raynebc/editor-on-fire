@@ -61,14 +61,15 @@ EOF_SONG * eof_import_chart(const char * fn)
 	char oggfn[1024] = {0};
 	char searchpath[1024] = {0};
 	char oldoggpath[1024] = {0};
-	char errorcode[100] = "Error #";
+	char errorcode[100] = "Import failed.  Error #";
 	struct al_ffblk info; // for file search
 
 	chart = ImportFeedback((char *)fn, &err);
 	if(chart == NULL)
 	{
-		itoa(err,&errorcode[7],10);	//Convert error number to string and place in the errorcode array
-		alert("Import failed", NULL, errorcode, "OK", NULL, 0, KEY_ENTER);
+	//	itoa(err,&errorcode[7],10);	//Convert error number to string and place in the errorcode array
+		snprintf(&errorcode[23],50,"%d",err);	//Perform a bounds checked conversion of Allegro's error code to string format
+		alert(errorcode, NULL, errorcode, "OK", NULL, 0, KEY_ENTER);
 	}
 	else
 	{
