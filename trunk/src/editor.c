@@ -630,66 +630,36 @@ void eof_read_editor_keys(void)
 
 	if(key[KEY_TAB])
 	{
-
 		/* change track */
 		if(KEY_EITHER_CTRL)
 		{
-			if(KEY_EITHER_SHIFT)
+			eof_track_selected_menu[eof_selected_track].flags = 0;	//Clear the active track checkmark in the menu
+
+			if(KEY_EITHER_SHIFT)	//Shift instrument back 1 number
 			{
-				if(eof_vocals_selected)
-				{
-					eof_selected_track = EOF_TRACK_DRUM;
-					eof_vocals_selected = 0;
-					eof_detect_difficulties(eof_song);
-					eof_fix_window_title();
-					eof_mix_find_claps();
-					eof_mix_start_helper();
-				}
-				else
-				{
-					eof_track_selected_menu[eof_selected_track].flags = 0;
+				if(eof_selected_track > 0)
 					eof_selected_track--;
-					if(eof_selected_track < 0)
-					{
-						eof_vocals_selected = 1;
-						eof_selected_track = 0;
-//						eof_selected_track = 4;
-					}
-					eof_track_selected_menu[eof_selected_track].flags = D_SELECTED;
-					eof_detect_difficulties(eof_song);
-					eof_fix_window_title();
-					eof_mix_find_claps();
-					eof_mix_start_helper();
-				}
-			}
-			else
-			{
-				if(eof_vocals_selected)
-				{
-					eof_selected_track = EOF_TRACK_GUITAR;
-					eof_vocals_selected = 0;
-					eof_detect_difficulties(eof_song);
-					eof_fix_window_title();
-					eof_mix_find_claps();
-					eof_mix_start_helper();
-				}
 				else
-				{
-					eof_track_selected_menu[eof_selected_track].flags = 0;
-					eof_selected_track++;
-					if(eof_selected_track > 4)
-					{
-						eof_vocals_selected = 1;
-						eof_selected_track = 4;
-//						eof_selected_track = 0;
-					}
-					eof_track_selected_menu[eof_selected_track].flags = D_SELECTED;
-					eof_detect_difficulties(eof_song);
-					eof_fix_window_title();
-					eof_mix_find_claps();
-					eof_mix_start_helper();
-				}
+					eof_selected_track = EOF_TRACK_MAX;	//Wrap around
 			}
+			else					//Shift instrument forward 1 number
+			{
+				if(eof_selected_track < EOF_TRACK_MAX)
+					eof_selected_track++;
+				else
+					eof_selected_track = 0;	//Wrap around
+			}
+
+			if(eof_selected_track == EOF_TRACK_VOCALS)
+				eof_vocals_selected = 1;
+			else
+				eof_vocals_selected = 0;
+
+			eof_track_selected_menu[eof_selected_track].flags = D_SELECTED;	//Set the active track checkmark in the menu
+			eof_detect_difficulties(eof_song);
+			eof_fix_window_title();
+			eof_mix_find_claps();
+			eof_mix_start_helper();
 		}
 
 		/* or change difficulty */

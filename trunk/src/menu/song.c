@@ -1110,7 +1110,9 @@ int eof_menu_track_selected_vocals(void)
 		eof_track_selected_menu[i].flags = 0;
 	}
 	eof_track_selected_menu[EOF_TRACK_VOCALS].flags = D_SELECTED;
+	eof_selected_track = EOF_TRACK_VOCALS;
 	eof_vocals_selected = 1;
+	eof_detect_difficulties(eof_song);
 	eof_fix_window_title();
 	return 1;
 }
