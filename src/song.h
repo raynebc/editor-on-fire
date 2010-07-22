@@ -24,6 +24,7 @@
 #define EOF_TRACK_RHYTHM      3
 #define EOF_TRACK_DRUM        4
 #define EOF_TRACK_VOCALS      5
+#define EOF_TRACK_MAX         5
 
 #define EOF_NOTE_FLAG_HOPO     1
 #define EOF_NOTE_FLAG_SP       2
