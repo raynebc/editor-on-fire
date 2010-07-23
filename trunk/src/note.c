@@ -902,7 +902,7 @@ void eof_note_draw_catalog(EOF_NOTE * np, int p)
 		npos = 20 - ((pos - 140)) + np->pos / eof_zoom;
 	}
 
-	if(eof_selected_track == EOF_TRACK_DRUM && eof_input_mode != EOF_INPUT_PIANO_ROLL && eof_input_mode != EOF_INPUT_REX)
+	if((eof_selected_track == EOF_TRACK_DRUM) && (eof_input_mode != EOF_INPUT_PIANO_ROLL) && (eof_input_mode != EOF_INPUT_REX))
 	{
 		vline(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.note_marker_size, makecol(128, 128, 128));
 		if(np->note & 1)

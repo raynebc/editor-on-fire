@@ -23,7 +23,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 			beat_length = (double)60000000.0 / (double)current_anchor->BPM;
 
 			/* adjust BPM if next beat marker is an anchor */
-			if(current_anchor->next && current_anchor->next->usec > 0)
+			if(current_anchor->next && (current_anchor->next->usec > 0))
 			{
 				beat_count = (double)(current_anchor->next->chartpos - current_anchor->chartpos) / (double)chart->resolution;
 				beat_length = (((double)current_anchor->next->usec / 1000.0 + offset) - curpos) / beat_count;
@@ -34,7 +34,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 
 		/* if the specified chartpos is past the next anchor, add the total time between
 		 * the anchors */
-		if(current_anchor->next && chartpos >= current_anchor->next->chartpos)
+		if(current_anchor->next && (chartpos >= current_anchor->next->chartpos))
 		{
 			curpos += (double)(current_anchor->next->chartpos - current_anchor->chartpos) * convert;
 			lastchartpos = current_anchor->next->chartpos;

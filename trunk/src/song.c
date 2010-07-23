@@ -543,11 +543,11 @@ void eof_track_fixup_notes(EOF_TRACK * tp, int sel)
 	{
 
 		/* fix selections */
-		if(tp->note[i]->type == eof_note_type && tp->note[i]->pos == eof_selection.current_pos)
+		if((tp->note[i]->type == eof_note_type) && (tp->note[i]->pos == eof_selection.current_pos))
 		{
 			eof_selection.current = i;
 		}
-		if(tp->note[i]->type == eof_note_type && tp->note[i]->pos == eof_selection.last_pos)
+		if((tp->note[i]->type == eof_note_type) && (tp->note[i]->pos == eof_selection.last_pos))
 		{
 			eof_selection.last = i;
 		}
@@ -582,7 +582,7 @@ void eof_track_fixup_notes(EOF_TRACK * tp, int sel)
 					tp->note[i]->note |= tp->note[next]->note;
 					eof_track_delete_note(tp, next);
 				}
-				else if(!(tp->note[i]->flags & EOF_NOTE_FLAG_CRAZY) && tp->note[i]->pos + tp->note[i]->length > tp->note[next]->pos - 1)
+				else if(!(tp->note[i]->flags & EOF_NOTE_FLAG_CRAZY) && (tp->note[i]->pos + tp->note[i]->length > tp->note[next]->pos - 1))
 				{
 					tp->note[i]->length = tp->note[next]->pos - tp->note[i]->pos - 1;
 				}
@@ -779,7 +779,7 @@ void eof_vocal_track_fixup_lyrics(EOF_VOCAL_TRACK * tp, int sel)
 		{
 			if(j != i)
 			{
-				if(tp->line[i].end_pos >= tp->line[j].start_pos && tp->line[i].start_pos <= tp->line[j].end_pos)
+				if((tp->line[i].end_pos >= tp->line[j].start_pos) && (tp->line[i].start_pos <= tp->line[j].end_pos))
 				{
 					tp->line[i].end_pos = tp->line[j].start_pos - 1;
 				}
@@ -792,7 +792,7 @@ void eof_vocal_track_fixup_lyrics(EOF_VOCAL_TRACK * tp, int sel)
 		lc = 0;
 		for(j = 0; j < tp->lyrics; j++)
 		{
-			if(tp->lyric[j]->pos >= tp->line[i].start_pos && tp->lyric[j]->pos <= tp->line[i].end_pos)
+			if((tp->lyric[j]->pos >= tp->line[i].start_pos) && (tp->lyric[j]->pos <= tp->line[i].end_pos))
 			{
 				lc++;
 			}
@@ -1030,7 +1030,7 @@ void eof_detect_difficulties(EOF_SONG * sp)
 	eof_vocal_tab_name[0][0] = ' ';
 	for(i = 0; i < sp->track[eof_selected_track]->notes; i++)
 	{
-		if(sp->track[eof_selected_track]->note[i]->type >= 0 && sp->track[eof_selected_track]->note[i]->type < 5)
+		if((sp->track[eof_selected_track]->note[i]->type >= 0) && (sp->track[eof_selected_track]->note[i]->type < 5))
 		{
 			eof_note_difficulties[(int)sp->track[eof_selected_track]->note[i]->type] = 1;
 			eof_note_type_name[(int)sp->track[eof_selected_track]->note[i]->type][0] = '*';

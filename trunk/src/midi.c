@@ -105,11 +105,11 @@ int qsort_helper3(const void * e1, const void * e2)
     }
 
     /* put lyrics first */
-    if((*thing1)->type == 0x05 && (*thing2)->type == 0x90)
+    if(((*thing1)->type == 0x05) && ((*thing2)->type == 0x90))
     {
 	    return -1;
     }
-    if((*thing1)->type == 0x90 && (*thing2)->type == 0x05)
+    if(((*thing1)->type == 0x90) && ((*thing2)->type == 0x05))
     {
 	    return 1;
     }
@@ -158,7 +158,7 @@ int eof_figure_beat(double pos)
 			return i;	//return i instead of referencing an undefined beat
 		}
 
-		if(eof_song->beat[i]->pos <= pos && eof_song->beat[i + 1]->pos > pos)
+		if((eof_song->beat[i]->pos <= pos) && (eof_song->beat[i + 1]->pos > pos))
 		{
 			return i;
 		}
@@ -197,7 +197,7 @@ int eof_check_bpm_change(unsigned long start, unsigned long end)
 
 	else
 	{
-		for(i = startbeat; i < endbeat && i < eof_song->beats; i++)
+		for(i = startbeat; (i < endbeat) && (i < eof_song->beats); i++)
 		{
 			if(eof_song->beat[i]->ppqn != eof_song->beat[startbeat]->ppqn)
 			{
