@@ -818,7 +818,7 @@ int eof_is_number(char * buffer)
 
 	for(i = 0; i < ustrlen(buffer); i++)
 	{
-		if(buffer[i] < '0' || buffer[i] > '9')
+		if((buffer[i] < '0') || (buffer[i] > '9'))
 		{
 			return 0;
 		}
@@ -864,7 +864,7 @@ int eof_menu_song_properties(void)
 		{
 			eof_prepare_undo(0);
 		}
-		if(ustrlen(eof_etext) > 255 || ustrlen(eof_etext2) > 255 || ustrlen(eof_etext3) > 255 || ustrlen(eof_etext5) > 31 || ustrlen(eof_etext6) > 511)
+		if((ustrlen(eof_etext) > 255) || (ustrlen(eof_etext2) > 255) || (ustrlen(eof_etext3) > 255) || (ustrlen(eof_etext5) > 31) || (ustrlen(eof_etext6) > 511))
 		{
 			allegro_message("Text too large for allocated buffer!");
 			return 1;

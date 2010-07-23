@@ -843,7 +843,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 							overdrive_pos = eof_import_midi_to_eof_optimized(eof_import_events[i]->event[j]->pos);
 						}
 						/* percussion */
-						else if(eof_import_events[i]->event[j]->d1 == 96 || eof_import_events[i]->event[j]->d1 == 97)
+						else if((eof_import_events[i]->event[j]->d1 == 96) || (eof_import_events[i]->event[j]->d1 == 97))
 						{
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= MINPITCH) && (eof_import_events[i]->event[j]->d1 <= MAXPITCH))
@@ -897,7 +897,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 						{
 						}
 						/* percussion */
-						else if(eof_import_events[i]->event[j]->d1 == 96 || eof_import_events[i]->event[j]->d1 == 97)
+						else if((eof_import_events[i]->event[j]->d1 == 96) || (eof_import_events[i]->event[j]->d1 == 97))
 						{
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= MINPITCH) && (eof_import_events[i]->event[j]->d1 <= MAXPITCH))

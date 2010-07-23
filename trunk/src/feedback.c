@@ -618,11 +618,6 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 	{
 		chart->linesprocessed++;	//Track which line number is being parsed
 
-
-if(chart->linesprocessed == 5058)
-puts("DEBUG");
-
-
 //Skip leading whitespace
 		index=0;	//Reset index counter to beginning
 		while(buffer[index] != '\0')

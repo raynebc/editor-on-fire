@@ -206,7 +206,7 @@ int eof_menu_file_new_supplement(int option)
 	ustrcpy(syscommand, eof_etext3);
 
 	/* remove slash from folder name so we can check if it exists */
-	if(syscommand[uoffset(syscommand, ustrlen(syscommand) - 1)] == '\\' || syscommand[uoffset(syscommand, ustrlen(syscommand) - 1)] == '/')
+	if((syscommand[uoffset(syscommand, ustrlen(syscommand) - 1)] == '\\') || (syscommand[uoffset(syscommand, ustrlen(syscommand) - 1)] == '/'))
 	{
 		syscommand[uoffset(syscommand, ustrlen(syscommand) - 1)] = '\0';
 	}
@@ -936,7 +936,7 @@ int eof_menu_file_save(void)
 
 	/* check to see if song folder still exists */
 	ustrcpy(eof_temp_filename, eof_song_path);
-	if(eof_temp_filename[uoffset(eof_temp_filename, ustrlen(eof_temp_filename) - 1)] == '\\' || eof_temp_filename[uoffset(eof_temp_filename, ustrlen(eof_temp_filename) - 1)] == '/')
+	if((eof_temp_filename[uoffset(eof_temp_filename, ustrlen(eof_temp_filename) - 1)] == '\\') || (eof_temp_filename[uoffset(eof_temp_filename, ustrlen(eof_temp_filename) - 1)] == '/'))
 	{
 		eof_temp_filename[uoffset(eof_temp_filename, ustrlen(eof_temp_filename) - 1)] = '\0';
 	}
