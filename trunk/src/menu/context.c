@@ -30,14 +30,14 @@ MENU eof_right_click_menu_note[] =
 
 void eof_prepare_context_menu(void)
 {
-	int selected = 0;
+//	int selected = 0;	//This was never effectively used
 	int vselected = 0;
-	
+
 	if(eof_song && eof_song_loaded)
 	{
 		vselected = eof_count_selected_notes(NULL, 1);
 		if(vselected)
-		{
+		{	//If at least one note is selected, enable the Copy function
 			eof_right_click_menu_normal[0].flags = 0;
 			eof_right_click_menu_note[2].flags = 0;
 		}
@@ -49,7 +49,7 @@ void eof_prepare_context_menu(void)
 		if(eof_vocals_selected)
 		{
 			if(exists("eof.vocals.clipboard"))
-			{
+			{	//If there is a vocal clipboard file, enable the Paste function
 				eof_right_click_menu_normal[1].flags = 0;
 				eof_right_click_menu_note[3].flags = 0;
 			}
@@ -62,7 +62,7 @@ void eof_prepare_context_menu(void)
 		else
 		{
 			if(exists("eof.clipboard"))
-			{
+			{	//If there is a note clipboard file, enable the Paste function
 				eof_right_click_menu_normal[1].flags = 0;
 				eof_right_click_menu_note[3].flags = 0;
 			}
@@ -73,7 +73,7 @@ void eof_prepare_context_menu(void)
 			}
 		}
 		if(eof_note_type_name[eof_note_type][0] == '*')
-		{
+		{	//If the active instrument difficulty is populated, enable the Selection submenu
 			eof_right_click_menu_normal[5].flags = 0;
 			eof_right_click_menu_note[7].flags = 0;
 		}
@@ -82,7 +82,9 @@ void eof_prepare_context_menu(void)
 			eof_right_click_menu_normal[5].flags = D_DISABLED;
 			eof_right_click_menu_note[7].flags = D_DISABLED;
 		}
-		if(selected)
+
+//The menu items in question below are NULL rows, so they should never be available to be activated
+/*		if(selected)
 		{
 			eof_right_click_menu_normal[6].flags = 0;
 			eof_right_click_menu_note[8].flags = 0;
@@ -92,5 +94,8 @@ void eof_prepare_context_menu(void)
 			eof_right_click_menu_normal[6].flags = D_DISABLED;
 			eof_right_click_menu_note[8].flags = D_DISABLED;
 		}
+*/
+		eof_right_click_menu_normal[6].flags = D_DISABLED;
+		eof_right_click_menu_note[8].flags = D_DISABLED;
 	}
 }

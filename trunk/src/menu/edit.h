@@ -11,7 +11,7 @@ extern MENU eof_edit_menu[];
 
 extern DIALOG eof_custom_snap_dialog[];
 
-void eof_prepare_edit_menu(void);
+void eof_prepare_edit_menu(void);		//Enable/disable Edit menu items prior to drawing the menu
 
 int eof_menu_edit_undo(void);
 int eof_menu_edit_redo(void);
