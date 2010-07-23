@@ -167,10 +167,8 @@ DIALOG eof_custom_speed_dialog[] =
 void eof_prepare_edit_menu(void)
 {
 	int i;
-//	int selected = 0;	//No longer used
 	int vselected = 0;
-//	int noted[4] = {0};	//This was never utilized
-	int cnotes = 0;
+//	int cnotes = 0;	//This was never effectively used
 
 	if(eof_song && eof_song_loaded)
 	{
@@ -198,11 +196,38 @@ void eof_prepare_edit_menu(void)
 		vselected = eof_count_selected_notes(NULL, 1);
 		if(vselected)
 		{
-			eof_edit_menu[3].flags = 0;
+			eof_edit_menu[3].flags = 0;		//copy
+			eof_edit_selection_menu[1].flags = 0;	//select like
+
+			/* select rest */
+			if(eof_selection.current != (eof_vocals_selected ? eof_song->vocal_track->lyrics -1 : eof_song->track[eof_selected_track]->notes -1))
+			{
+				eof_edit_selection_menu[2].flags = 0;
+			}
+			else
+			{
+				eof_edit_selection_menu[2].flags = D_DISABLED;
+			}
+
+			/* deselect all */
+			eof_edit_selection_menu[3].flags = 0;
+
+			if(eof_selection.current != 0)
+			{
+				eof_edit_selection_menu[4].flags = 0;	//select previous
+			}
+			else
+			{
+				eof_edit_selection_menu[4].flags = D_DISABLED;	//Select previous cannot be used when the first note/lyric was just selected
+			}
 		}
 		else
 		{
-			eof_edit_menu[3].flags = D_DISABLED;
+			eof_edit_menu[3].flags = D_DISABLED;		//copy
+			eof_edit_selection_menu[1].flags = D_DISABLED;	//select like
+			eof_edit_selection_menu[2].flags = D_DISABLED;	//select rest
+			eof_edit_selection_menu[3].flags = D_DISABLED;	//deselect all
+			eof_edit_selection_menu[4].flags = D_DISABLED;	//select previous
 		}
 
 		/* paste, paste old */
@@ -260,39 +285,6 @@ void eof_prepare_edit_menu(void)
 				eof_edit_menu[22].flags = D_DISABLED;
 			}
 		}
-		if(vselected)
-		{
-			eof_edit_selection_menu[1].flags = 0; // select like
-
-			/* select rest */
-			if(eof_selection.current != (eof_vocals_selected ? eof_song->vocal_track->lyrics -1 : eof_song->track[eof_selected_track]->notes -1))
-			{
-				eof_edit_selection_menu[2].flags = 0;
-			}
-			else
-			{
-				eof_edit_selection_menu[2].flags = D_DISABLED;
-			}
-
-			/* deselect all */
-			eof_edit_selection_menu[3].flags = 0;
-
-			if(eof_selection.current != 0)
-			{
-				eof_edit_selection_menu[4].flags = 0;
-			}
-			else
-			{
-				eof_edit_selection_menu[4].flags = D_DISABLED;	//Select previous cannot be used when the first note/lyric was just selected
-			}
-		}
-		else
-		{
-			eof_edit_selection_menu[1].flags = D_DISABLED; // select like
-			eof_edit_selection_menu[2].flags = D_DISABLED; // select rest
-			eof_edit_selection_menu[3].flags = D_DISABLED; // deselect all
-			eof_edit_selection_menu[4].flags = D_DISABLED; // select previous
-		}
 
 		/* zoom */
 		for(i = 0; i < 9; i++)
@@ -335,7 +327,6 @@ void eof_prepare_edit_menu(void)
 		/* paste from difficulty */
 		for(i = 0; i < 4; i++)	//For each of the four difficulties
 		{
-//			if(noted[i] && eof_note_type != i)	//This line doesn't work because noted[] isn't manipulated beyond initialization
 			if((eof_note_type_name[i][0] == '*') && (i != eof_note_type) && !eof_vocals_selected)	//If the difficulty is populated, isn't the active difficulty and PART VOCALS isn't active
 			{
 				eof_edit_paste_from_menu[i].flags = 0;		//Enable paste from the difficulty
@@ -361,10 +352,12 @@ void eof_prepare_edit_menu(void)
 			{
 				eof_edit_paste_from_menu[5].flags = D_DISABLED;
 			}
+/*cnotes was never set to anything besides 0, so this can be removed
 			else if(cnotes > 0)
 			{
 				eof_edit_paste_from_menu[5].flags = D_DISABLED;
 			}
+*/
 			else
 			{
 				eof_edit_paste_from_menu[5].flags = 0;
@@ -386,16 +379,6 @@ void eof_prepare_edit_menu(void)
 		}
 
 		/* selection */
-/*	eof_edit_menu[22] was a NULL menu entry ([21] was "&Selection"), so this wasn't doing anything
-		if(selected)
-		{
-			eof_edit_menu[22].flags = 0;
-		}
-		else
-		{
-			eof_edit_menu[22].flags = D_DISABLED;
-		}
-*/
 		for(i = 0; i < 12; i++)
 		{
 			eof_edit_snap_menu[i].flags = 0;
