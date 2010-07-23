@@ -12,7 +12,7 @@ extern DIALOG eof_events_add_dialog[];
 extern DIALOG eof_bpm_change_dialog[];
 extern DIALOG eof_anchor_dialog[];
 
-void eof_prepare_beat_menu(void);
+void eof_prepare_beat_menu(void);			//Enable/disable Beat menu items prior to drawing the menu
 
 int eof_menu_beat_bpm_change(void);
 int eof_menu_beat_ts_4_4(void);
@@ -23,7 +23,7 @@ int eof_menu_beat_ts_off(void);
 int eof_menu_beat_add(void);
 int eof_menu_beat_delete(void);
 int eof_menu_beat_anchor(void);
-int eof_menu_beat_push_offset_back(void);
+int eof_menu_beat_push_offset_back(void);	//Appends a new beat structure and moves all beats one forward, with their timestamps adjusted to compensate for the duration of the first beat.  Returns nonzero on success.
 int eof_menu_beat_push_offset_up(void);
 int eof_menu_beat_toggle_anchor(void);
 int eof_menu_beat_delete_anchor(void);

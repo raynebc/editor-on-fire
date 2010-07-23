@@ -859,17 +859,20 @@ void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, int index)
 
 EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp)
 {
+	if((sp == NULL) || (sp->beat == NULL))
+		return NULL;
+
 	if(sp->beats < EOF_MAX_BEATS)
 	{	//If the maximum number of beats hasn't already been defined
 		sp->beat[sp->beats] = malloc(sizeof(EOF_BEAT_MARKER));
-		if(sp)
+		if(sp->beat[sp->beats] != NULL)
 		{
 			sp->beat[sp->beats]->pos = 0;
 			sp->beat[sp->beats]->ppqn = 500000;
 			sp->beat[sp->beats]->flags = 0;
 			sp->beats++;
+			return sp->beat[sp->beats - 1];
 		}
-		return sp->beat[sp->beats - 1];
 	}
 
 	return NULL;
