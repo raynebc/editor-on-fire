@@ -40,7 +40,7 @@ void eof_music_play(void)
 	}
 	else
 	{
-		if(key[KEY_S] && eof_count_selected_notes(NULL, 0) > 0)
+		if(key[KEY_S] && (eof_count_selected_notes(NULL, 0) > 0))
 		{
 			eof_music_end_pos = 0;
 			eof_music_rewind_pos = eof_music_length;
@@ -48,11 +48,11 @@ void eof_music_play(void)
 			{
 				for(i = 0; i < eof_song->vocal_track->lyrics; i++)
 				{
-					if(eof_selection.multi[i] && eof_song->vocal_track->lyric[i]->pos + eof_song->vocal_track->lyric[i]->length > eof_music_end_pos)
+					if(eof_selection.multi[i] && (eof_song->vocal_track->lyric[i]->pos + eof_song->vocal_track->lyric[i]->length > eof_music_end_pos))
 					{
 						eof_music_end_pos = eof_song->vocal_track->lyric[i]->pos + eof_song->vocal_track->lyric[i]->length;
 					}
-					if(eof_selection.multi[i] && eof_song->vocal_track->lyric[i]->pos < eof_music_rewind_pos)
+					if(eof_selection.multi[i] && (eof_song->vocal_track->lyric[i]->pos < eof_music_rewind_pos))
 					{
 						eof_music_rewind_pos = eof_song->vocal_track->lyric[i]->pos;
 					}
@@ -62,11 +62,11 @@ void eof_music_play(void)
 			{
 				for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
 				{
-					if(eof_selection.multi[i] && eof_song->track[eof_selected_track]->note[i]->pos + eof_song->track[eof_selected_track]->note[i]->length > eof_music_end_pos)
+					if(eof_selection.multi[i] && (eof_song->track[eof_selected_track]->note[i]->pos + eof_song->track[eof_selected_track]->note[i]->length > eof_music_end_pos))
 					{
 						eof_music_end_pos = eof_song->track[eof_selected_track]->note[i]->pos + eof_song->track[eof_selected_track]->note[i]->length;
 					}
-					if(eof_selection.multi[i] && eof_song->track[eof_selected_track]->note[i]->pos < eof_music_rewind_pos)
+					if(eof_selection.multi[i] && (eof_song->track[eof_selected_track]->note[i]->pos < eof_music_rewind_pos))
 					{
 						eof_music_rewind_pos = eof_song->track[eof_selected_track]->note[i]->pos;
 					}

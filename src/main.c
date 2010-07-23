@@ -339,7 +339,7 @@ void eof_find_lyric_preview_lines(void)
 		eof_preview_line[0] = current_line;
 		for(i = 0; i < eof_song->vocal_track->lyrics; i++)
 		{
-			if(eof_song->vocal_track->lyric[i]->pos >= eof_song->vocal_track->line[eof_preview_line[0]].start_pos && eof_song->vocal_track->lyric[i]->pos <= eof_song->vocal_track->line[eof_preview_line[0]].end_pos)
+			if((eof_song->vocal_track->lyric[i]->pos >= eof_song->vocal_track->line[eof_preview_line[0]].start_pos) && (eof_song->vocal_track->lyric[i]->pos <= eof_song->vocal_track->line[eof_preview_line[0]].end_pos))
 			{
 				eof_preview_line_lyric[0] = i;
 				for(j = i; j < eof_song->vocal_track->lyrics; j++)
@@ -355,7 +355,7 @@ void eof_find_lyric_preview_lines(void)
 		}
 		for(i = 0; i < eof_song->vocal_track->lines; i++)
 		{
-			if(eof_song->vocal_track->line[current_line].start_pos < eof_song->vocal_track->line[i].start_pos && eof_song->vocal_track->line[i].start_pos - eof_song->vocal_track->line[current_line].start_pos < dist)
+			if((eof_song->vocal_track->line[current_line].start_pos < eof_song->vocal_track->line[i].start_pos) && (eof_song->vocal_track->line[i].start_pos - eof_song->vocal_track->line[current_line].start_pos < dist))
 			{
 				next_line = i;
 				dist = eof_song->vocal_track->line[i].start_pos - eof_song->vocal_track->line[current_line].start_pos;
@@ -366,7 +366,7 @@ void eof_find_lyric_preview_lines(void)
 			eof_preview_line[1] = next_line;
 			for(i = 0; i < eof_song->vocal_track->lyrics; i++)
 			{
-				if(eof_song->vocal_track->lyric[i]->pos >= eof_song->vocal_track->line[eof_preview_line[1]].start_pos && eof_song->vocal_track->lyric[i]->pos <= eof_song->vocal_track->line[eof_preview_line[1]].end_pos)
+				if((eof_song->vocal_track->lyric[i]->pos >= eof_song->vocal_track->line[eof_preview_line[1]].start_pos) && (eof_song->vocal_track->lyric[i]->pos <= eof_song->vocal_track->line[eof_preview_line[1]].end_pos))
 				{
 					eof_preview_line_lyric[1] = i;
 					for(j = i; j < eof_song->vocal_track->lyrics; j++)
@@ -739,7 +739,7 @@ void eof_clear_input(void)
 	clear_keybuf();
 	for(i = 0; i < KEY_MAX; i++)
 	{
-		if(i != KEY_ALTGR && i != KEY_ALT && i != KEY_LCONTROL && i != KEY_RCONTROL && i != KEY_LSHIFT && i != KEY_RSHIFT)
+		if((i != KEY_ALTGR) && (i != KEY_ALT) && (i != KEY_LCONTROL) && (i != KEY_RCONTROL) && (i != KEY_LSHIFT) && (i != KEY_RSHIFT))
 		{
 			key[i] = 0;
 		}
@@ -803,7 +803,7 @@ int eof_note_is_hopo(int cnote)
 	}
 	for(i = 0; i < eof_song->beats - 1; i++)
 	{
-		if(eof_song->beat[i]->pos <= eof_song->track[eof_selected_track]->note[cnote]->pos && eof_song->beat[i + 1]->pos > eof_song->track[eof_selected_track]->note[cnote]->pos)
+		if((eof_song->beat[i]->pos <= eof_song->track[eof_selected_track]->note[cnote]->pos) && eof_song->beat[i + 1]->pos > eof_song->track[eof_selected_track]->note[cnote]->pos)
 		{
 			beat = i;
 			break;
@@ -825,7 +825,7 @@ int eof_note_is_hopo(int cnote)
 		if(eof_hopo_view == EOF_HOPO_RF)
 		{
 			delta = eof_song->track[eof_selected_track]->note[cnote]->pos - eof_song->track[eof_selected_track]->note[pnote]->pos;
-			if(delta <= (hopo_delta * scale) && eof_note_count_colors(eof_song->track[eof_selected_track]->note[pnote]) == 1 && eof_note_count_colors(eof_song->track[eof_selected_track]->note[cnote]) == 1 && eof_song->track[eof_selected_track]->note[pnote]->note != eof_song->track[eof_selected_track]->note[cnote]->note)
+			if((delta <= (hopo_delta * scale)) && (eof_note_count_colors(eof_song->track[eof_selected_track]->note[pnote]) == 1) && (eof_note_count_colors(eof_song->track[eof_selected_track]->note[cnote]) == 1) && (eof_song->track[eof_selected_track]->note[pnote]->note != eof_song->track[eof_selected_track]->note[cnote]->note))
 			{
 				return 1;
 			}
@@ -833,7 +833,7 @@ int eof_note_is_hopo(int cnote)
 		else if(eof_hopo_view == EOF_HOPO_FOF)
 		{
 			delta = eof_song->track[eof_selected_track]->note[cnote]->pos - (eof_song->track[eof_selected_track]->note[pnote]->pos + eof_song->track[eof_selected_track]->note[pnote]->length);
-			if(delta <= hopo_delta * scale && !(eof_song->track[eof_selected_track]->note[pnote]->note & eof_song->track[eof_selected_track]->note[cnote]->note))
+			if((delta <= hopo_delta * scale) && !(eof_song->track[eof_selected_track]->note[pnote]->note & eof_song->track[eof_selected_track]->note[cnote]->note))
 			{
 				return 1;
 			}
@@ -887,7 +887,7 @@ void eof_determine_hopos(void)
 		/* mark star power notes */
 		for(j = 0; j < eof_song->track[eof_selected_track]->star_power_paths; j++)
 		{
-			if(eof_song->track[eof_selected_track]->note[i]->pos >= eof_song->track[eof_selected_track]->star_power_path[j].start_pos && eof_song->track[eof_selected_track]->note[i]->pos <= eof_song->track[eof_selected_track]->star_power_path[j].end_pos)
+			if((eof_song->track[eof_selected_track]->note[i]->pos >= eof_song->track[eof_selected_track]->star_power_path[j].start_pos) && (eof_song->track[eof_selected_track]->note[i]->pos <= eof_song->track[eof_selected_track]->star_power_path[j].end_pos))
 			{
 				eof_song->track[eof_selected_track]->note[i]->flags |= EOF_NOTE_FLAG_SP;
 				sp[j] = 1;
@@ -897,7 +897,7 @@ void eof_determine_hopos(void)
 		/* check solos */
 		for(j = 0; j < eof_song->track[eof_selected_track]->solos; j++)
 		{
-			if(eof_song->track[eof_selected_track]->note[i]->pos >= eof_song->track[eof_selected_track]->solo[j].start_pos && eof_song->track[eof_selected_track]->note[i]->pos <= eof_song->track[eof_selected_track]->solo[j].end_pos)
+			if((eof_song->track[eof_selected_track]->note[i]->pos >= eof_song->track[eof_selected_track]->solo[j].start_pos) && (eof_song->track[eof_selected_track]->note[i]->pos <= eof_song->track[eof_selected_track]->solo[j].end_pos))
 			{
 				so[j] = 1;
 			}
@@ -944,7 +944,7 @@ int eof_figure_difficulty(void)
 		}
 
 		/* if we have pitched lyrics and line definitions, allow test */
-		if(i < eof_song->vocal_track->lyrics && eof_song->vocal_track->lines > 0)
+		if((i < eof_song->vocal_track->lyrics) && (eof_song->vocal_track->lines > 0))
 		{
 			return 0;
 		}
@@ -1284,7 +1284,7 @@ int eof_first_selected_note(void)
 
 	for(i = 0; i < EOF_MAX_NOTES; i++)
 	{
-		if(eof_selection.multi[i] && eof_song->track[eof_selected_track]->note[i]->type == eof_note_type)
+		if(eof_selection.multi[i] && (eof_song->track[eof_selected_track]->note[i]->type == eof_note_type))
 		{
 			return i;
 		}
@@ -1361,7 +1361,7 @@ void eof_read_global_keys(void)
 	{
 
 		/* undo */
-		if(KEY_EITHER_CTRL && key[KEY_Z] && eof_undo_count > 0)
+		if(KEY_EITHER_CTRL && key[KEY_Z] && (eof_undo_count > 0))
 		{
 			eof_menu_edit_undo();
 			key[KEY_Z] = 0;
@@ -1465,7 +1465,7 @@ void eof_lyric_logic(void)
 
 	if(eof_music_paused)
 	{
-		if(mouse_x >= eof_window_3d->x && mouse_x < eof_window_3d->x + eof_window_3d->w && mouse_y >= eof_window_3d->y + eof_window_3d->h - eof_screen_layout.lyric_view_key_height)
+		if((mouse_x >= eof_window_3d->x) && (mouse_x < eof_window_3d->x + eof_window_3d->w) && (mouse_y >= eof_window_3d->y + eof_window_3d->h - eof_screen_layout.lyric_view_key_height))
 		{
 			/* check for black key */
 			if(mouse_y < eof_window_3d->y + eof_window_3d->h - eof_screen_layout.lyric_view_key_height + eof_screen_layout.lyric_view_bkey_height)
@@ -1475,7 +1475,7 @@ void eof_lyric_logic(void)
 					k = i % 7;
 					if(k == 0 || k == 1 || k == 3 || k == 4 || k == 5)
 					{
-						if(mouse_x - eof_window_3d->x >= i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 + eof_screen_layout.lyric_view_bkey_width && mouse_x - eof_window_3d->x <= (i + 1) * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 - eof_screen_layout.lyric_view_bkey_width + 1)
+						if((mouse_x - eof_window_3d->x >= i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 + eof_screen_layout.lyric_view_bkey_width) && (mouse_x - eof_window_3d->x <= (i + 1) * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 - eof_screen_layout.lyric_view_bkey_width + 1))
 						{
 							eof_hover_key = MINPITCH + (i / 7) * 12 + bnote[k];
 							break;
@@ -1490,7 +1490,7 @@ void eof_lyric_logic(void)
 				for(i = 0; i < 29; i++)
 				{
 					k = i % 7;
-					if(mouse_x - eof_window_3d->x >= i * eof_screen_layout.lyric_view_key_width && mouse_x - eof_window_3d->x < i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width - 1)
+					if((mouse_x - eof_window_3d->x >= i * eof_screen_layout.lyric_view_key_width) && (mouse_x - eof_window_3d->x < i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width - 1))
 					{
 						eof_hover_key = MINPITCH + (i / 7) * 12 + note[k];
 						break;
@@ -1502,7 +1502,7 @@ void eof_lyric_logic(void)
 			{
 				if(mouse_b & 1)
 				{
-					if(KEY_EITHER_CTRL && eof_selection.current < eof_song->vocal_track->lyrics)
+					if(KEY_EITHER_CTRL && (eof_selection.current < eof_song->vocal_track->lyrics))
 					{
 						if(eof_count_selected_notes(NULL, 0) == 1)
 						{
@@ -1557,7 +1557,7 @@ void eof_lyric_logic(void)
 
 void eof_note_logic(void)
 {
-	if((eof_catalog_menu[0].flags & D_SELECTED) && mouse_x >= 0 && mouse_x < 90 && mouse_y > 40 + eof_window_note->y && mouse_y < 40 + 18 + eof_window_note->y)
+	if((eof_catalog_menu[0].flags & D_SELECTED) && (mouse_x >= 0) && (mouse_x < 90) && (mouse_y > 40 + eof_window_note->y) && (mouse_y < 40 + 18 + eof_window_note->y))
 	{
 		eof_cselected_control = mouse_x / 30;
 		if(mouse_b & 1)
@@ -1588,7 +1588,7 @@ void eof_note_logic(void)
 	{
 		eof_cselected_control = -1;
 	}
-	if(mouse_y >= eof_window_note->y && mouse_y < eof_window_note->y + 12 && mouse_x >= 0 && mouse_x < ((eof_catalog_menu[0].flags & D_SELECTED) ? text_length(font, "Fret Catalog") : text_length(font, "Information Panel")))
+	if((mouse_y >= eof_window_note->y) && (mouse_y < eof_window_note->y + 12) && (mouse_x >= 0) && (mouse_x < ((eof_catalog_menu[0].flags & D_SELECTED) ? text_length(font, "Fret Catalog") : text_length(font, "Information Panel"))))
 	{
 		if(mouse_b & 1)
 		{
@@ -1615,7 +1615,7 @@ void eof_logic(void)
 	eof_read_global_keys();
 
 	/* see if we need to activate the menu */
-	if(mouse_y < eof_image[EOF_IMAGE_MENU]->h && mouse_b & 1)
+	if((mouse_y < eof_image[EOF_IMAGE_MENU]->h) && (mouse_b & 1))
 	{
 		eof_cursor_visible = 0;
 		eof_emergency_stop_music();
@@ -1630,7 +1630,7 @@ void eof_logic(void)
 	eof_last_note = EOF_MAX_NOTES;
 
 	get_mouse_mickeys(&eof_mickeys_x, &eof_mickeys_y);
-	if(eof_song_loaded && eof_input_mode != EOF_INPUT_FEEDBACK)
+	if(eof_song_loaded && (eof_input_mode != EOF_INPUT_FEEDBACK))
 	{
 		eof_read_editor_keys();
 	}
@@ -1710,7 +1710,7 @@ void eof_logic(void)
 		{
 			eof_music_pos = eof_music_actual_pos;
 		}
-		if(eof_play_selection && eof_music_pos - eof_av_delay > eof_music_end_pos)
+		if(eof_play_selection && (eof_music_pos - eof_av_delay > eof_music_end_pos))
 		{
 			eof_music_paused = 1;
 			eof_music_pos = eof_music_rewind_pos;
@@ -1833,7 +1833,7 @@ void eof_render_note_window(void)
 
 				for(i = 0; i < eof_song->vocal_track->lyrics; i++)
 				{
-					if(eof_song->vocal_track->lyric[i]->pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos && eof_song->vocal_track->lyric[i]->pos <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos)
+					if((eof_song->vocal_track->lyric[i]->pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_song->vocal_track->lyric[i]->pos <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos))
 					{
 						eof_lyric_draw_catalog(eof_song->vocal_track->lyric[i], i == eof_hover_note_2 ? 2 : 0);
 					}
@@ -1888,7 +1888,7 @@ void eof_render_note_window(void)
 
 				for(i = 0; i < eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->notes; i++)
 				{
-					if(eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->type && eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos && eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->pos <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos)
+					if((eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->type) && (eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->pos <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos))
 					{
 						eof_note_draw_catalog(eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i], i == eof_hover_note_2 ? 2 : 0);
 					}
@@ -2079,7 +2079,7 @@ void eof_render_lyric_preview(BITMAP * bp)
 
 	textout_centre_ex(bp, font, lline[0], bp->w / 2, 20, makecol(255, 255, 255), bgcol1);
 	textout_centre_ex(bp, font, lline[1], bp->w / 2, 36, makecol(255, 255, 255), bgcol2);
-	if(offset >= 0 && eof_hover_lyric >= 0)
+	if((offset >= 0) && (eof_hover_lyric >= 0))
 	{
 		if(eof_song->vocal_track->lyric[eof_hover_lyric]->text[strlen(eof_song->vocal_track->lyric[eof_hover_lyric]->text)-1] == '/')
 		{	//If the at-playback position lyric ends in a forward slash, make a copy with the slash removed and display it instead
@@ -2116,7 +2116,7 @@ void eof_render_lyric_window(void)
 		n = (i / 7) * 12 + note[i % 7] + MINPITCH;
 		if(n == eof_hover_key)
 		{
-			if(n >= eof_vocals_offset && n < eof_vocals_offset + eof_screen_layout.vocal_view_size)
+			if((n >= eof_vocals_offset) && (n < eof_vocals_offset + eof_screen_layout.vocal_view_size))
 			{
 				kcol = makecol(0, 255, 0);
 				kcol2 = makecol(0, 192, 0);
@@ -2130,7 +2130,7 @@ void eof_render_lyric_window(void)
 		}
 		else
 		{
-			if(n >= eof_vocals_offset && n < eof_vocals_offset + eof_screen_layout.vocal_view_size)
+			if((n >= eof_vocals_offset) && (n < eof_vocals_offset + eof_screen_layout.vocal_view_size))
 			{
 				kcol = makecol(255, 255, 255);
 				kcol2 = makecol(192, 192, 192);
@@ -2154,7 +2154,7 @@ void eof_render_lyric_window(void)
 		{
 			if(n == eof_hover_key)
 			{
-				if(n >= eof_vocals_offset && n < eof_vocals_offset + eof_screen_layout.vocal_view_size)
+				if((n >= eof_vocals_offset) && (n < eof_vocals_offset + eof_screen_layout.vocal_view_size))
 				{
 					kcol = makecol(0, 255, 0);
 					kcol2 = makecol(0, 192, 0);
@@ -2168,7 +2168,7 @@ void eof_render_lyric_window(void)
 			}
 			else
 			{
-				if(n >= eof_vocals_offset && n < eof_vocals_offset + eof_screen_layout.vocal_view_size)
+				if((n >= eof_vocals_offset) && (n < eof_vocals_offset + eof_screen_layout.vocal_view_size))
 				{
 					kcol = makecol(48, 48, 48);
 					kcol2 = makecol(24, 24, 24);
@@ -2215,7 +2215,7 @@ void eof_render_3d_window(void)
 	{
 		sz = -eof_music_pos / eof_zoom_3d + eof_song->track[eof_selected_track]->solo[i].start_pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
 		sez = -eof_music_pos / eof_zoom_3d + eof_song->track[eof_selected_track]->solo[i].end_pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
-		if(-100 <= sez && 600 >= sz)
+		if((-100 <= sez) && (600 >= sz))
 		{
 			spz = sz < -100 ? -100 : sz;
 			spez = sez > 600 ? 600 : sez;
@@ -2266,7 +2266,7 @@ void eof_render_3d_window(void)
 			beat_counter = 0;
 		}
 		bz = -eof_music_pos / eof_zoom_3d + eof_song->beat[i]->pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
-		if(bz >= -100 && bz <= 600)
+		if((bz >= -100) && (bz <= 600))
 		{
 			line(eof_window_3d->screen, ocd3d_project_x(48, bz), ocd3d_project_y(200, bz), ocd3d_project_x(48 + 4 * 56, bz), ocd3d_project_y(200, bz), beat_counter == 0 ? eof_color_white : makecol(160, 160, 160));
 		}
@@ -2395,7 +2395,7 @@ static int work_around_fsel_bug = 0;
  */
 int d_hackish_edit_proc (int msg, DIALOG *d, int c)
 {
-    if (msg == MSG_START && !work_around_fsel_bug)
+    if ((msg == MSG_START) && !work_around_fsel_bug)
     {
         /* Adjust position/dimension so it is the same as AGUP's. */
         d->y -= 3;
@@ -2405,7 +2405,7 @@ int d_hackish_edit_proc (int msg, DIALOG *d, int c)
          */
         work_around_fsel_bug = 1;
     }
-    if (msg == MSG_END && work_around_fsel_bug)
+    if ((msg == MSG_END) && work_around_fsel_bug)
     {
         d->y += 3;
         d->h -= 6;
@@ -2660,7 +2660,7 @@ int eof_initialize(int argc, char * argv[])
 	if(!eof_supports_mp3)
 	{
 	#ifdef ALLEGRO_WINDOWS
-		if(eof_system("lame -S check.wav >foo") == 0 && eof_system("oggenc2 -h >foo") == 0)
+		if((eof_system("lame -S check.wav >foo") == 0) && (eof_system("oggenc2 -h >foo") == 0))
 		{
 			eof_supports_mp3 = 1;
 			delete_file("check.wav.mp3");
@@ -2673,7 +2673,7 @@ int eof_initialize(int argc, char * argv[])
 			allegro_message("MP3 support disabled.\n\nPlease install LAME and Vorbis Tools if you want MP3 support.");
 		}
 	#elif defined(ALLEGRO_MACOSX)
-		if(eof_system("./lame -S check.wav >foo") == 0 && eof_system("./oggenc -h >foo") == 0)
+		if((eof_system("./lame -S check.wav >foo") == 0) && (eof_system("./oggenc -h >foo") == 0))
 		{
 			eof_supports_mp3 = 1;
 			delete_file("check.wav.mp3");
@@ -2686,7 +2686,7 @@ int eof_initialize(int argc, char * argv[])
 			allegro_message("MP3 support disabled.\n\nPlease install LAME and Vorbis Tools if you want MP3 support.");
 		}
 	#else
-		if(eof_system("lame -S check.wav >foo") == 0 && eof_system("oggenc -h >foo") == 0)
+		if((eof_system("lame -S check.wav >foo") == 0) && (eof_system("oggenc -h >foo") == 0))
 		{
 			eof_supports_mp3 = 1;
 			delete_file("check.wav.mp3");

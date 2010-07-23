@@ -146,7 +146,7 @@ int eof_popup_dialog(DIALOG * dp, int n)
 			{
 				eof_keyboard_shortcut = 2;
 			}
-			if(eof_keyboard_shortcut == 2 && !(mouse_b & 1))
+			if((eof_keyboard_shortcut == 2) && !(mouse_b & 1))
 			{
 				eof_keyboard_shortcut = 0;
 			}
@@ -175,7 +175,7 @@ int eof_popup_dialog(DIALOG * dp, int n)
 		/* special handling of new project dialog */
 		if(dp == eof_file_new_windows_dialog)
 		{
-			if((dp[3].flags & D_SELECTED) && ustrlen(eof_etext4) <= 0)
+			if((dp[3].flags & D_SELECTED) && (ustrlen(eof_etext4) <= 0))
 			{
 				dp[5].flags = D_DISABLED;
 				object_message(&dp[5], MSG_DRAW, 0);

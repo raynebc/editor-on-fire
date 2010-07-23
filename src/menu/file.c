@@ -410,7 +410,7 @@ int eof_menu_file_new_wizard(void)
 		return 1;
 	}
 
-	if(ustrlen(eof_etext) > 0 && ustrlen(eof_etext2) > 0)
+	if((ustrlen(eof_etext) > 0) && (ustrlen(eof_etext2) > 0))
 	{
 		sprintf(eof_etext4, "%s - %s", eof_etext, eof_etext2);
 	}

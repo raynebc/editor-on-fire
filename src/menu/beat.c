@@ -154,7 +154,7 @@ void eof_prepare_beat_menu(void)
 			eof_beat_menu[10].flags = D_DISABLED;
 		}
 //Beat>Delete Anchor validation
-		if((eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR) && eof_selected_beat != 0)
+		if((eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR) && (eof_selected_beat != 0))
 		{	//If the selected beat is an anchor, and the first beat marker is not selected, enable Beat>Delete Anchor
 			eof_beat_menu[11].flags = 0;
 		}
@@ -504,7 +504,7 @@ int eof_menu_beat_anchor(void)
 		hs = atoi(ttext);
 
 		/* time wasn't modified so get out without changing anything */
-		if(mm == oldmm && ss == oldss && hs == oldhs)
+		if((mm == oldmm) && (ss == oldss) && (hs == oldhs))
 		{
 			eof_cursor_visible = 1;
 			eof_pen_visible = 1;
@@ -574,7 +574,7 @@ int eof_menu_beat_delete_anchor(void)
 //	double bpos = 0;
 //	int bbeat = 0;
 
-	if(eof_selected_beat > 0 && eof_beat_is_anchor(eof_song, eof_selected_beat))
+	if((eof_selected_beat > 0) && eof_beat_is_anchor(eof_song, eof_selected_beat))
 	{
 		eof_prepare_undo(0);
 		for(i = eof_selected_beat; i < eof_song->beats; i++)
@@ -818,7 +818,7 @@ int eof_events_dialog_add(DIALOG * d)
 	ustrcpy(eof_etext, "");
 	if(eof_popup_dialog(eof_events_add_dialog, 2) == 3)
 	{
-		if(ustrlen(eof_etext) > 0 && eof_check_string(eof_etext))
+		if((ustrlen(eof_etext) > 0) && eof_check_string(eof_etext))
 		{
 			eof_prepare_undo(0);
 			eof_add_text_event(eof_song, eof_selected_beat, eof_etext);
@@ -869,7 +869,7 @@ int eof_events_dialog_edit(DIALOG * d)
 	ustrcpy(eof_etext, eof_song->text_event[event]->text);
 	if(eof_popup_dialog(eof_events_add_dialog, 2) == 3)
 	{
-		if(ustrlen(eof_etext) > 0 && eof_check_string(eof_etext))
+		if((ustrlen(eof_etext) > 0) && eof_check_string(eof_etext))
 		{
 			eof_prepare_undo(0);
 			ustrcpy(eof_song->text_event[event]->text, eof_etext);
@@ -922,11 +922,11 @@ int eof_events_dialog_delete(DIALOG * d)
 
 				/* remove flag if no more events tied to this beat */
 				c = eof_events_dialog_delete_events_count();
-				if(c <= 0 && (eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_EVENTS))
+				if((c <= 0) && (eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_EVENTS))
 				{
 					eof_song->beat[eof_selected_beat]->flags ^= 2;
 				}
-				if(eof_events_dialog[1].d1 >= c && c > 0)
+				if((eof_events_dialog[1].d1 >= c) && (c > 0))
 				{
 					eof_events_dialog[1].d1--;
 				}

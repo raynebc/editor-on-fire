@@ -149,7 +149,7 @@ int eof_controller_set_button(EOF_CONTROLLER_BUTTON * bp)
 		/* scan keyboard keys first */
 		for(i = 0; i < KEY_MAX; i++)
 		{
-			if(i != KEY_SPACE && key[i])
+			if((i != KEY_SPACE) && key[i])
 			{
 				bp->type = EOF_CONTROLLER_BUTTON_TYPE_KEY;
 				bp->key = i;

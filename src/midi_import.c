@@ -118,7 +118,7 @@ static int eof_import_closest_beat(EOF_SONG * sp, unsigned long pos)
 			ab = i;
 		}
 	}
-	if(bb >= 0 && ab >= 0)
+	if((bb >= 0) && (ab >= 0))
 	{
 		if(eof_import_distance(sp->beat[bb]->pos, pos) < eof_import_distance(sp->beat[ab]->pos, pos))
 		{
@@ -389,7 +389,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 			track_pos += bytes_used;
 
 			/* read event type */
-			if(current_event_hi >= 0x80 && current_event_hi < 0xF0)
+			if((current_event_hi >= 0x80) && (current_event_hi < 0xF0))
 			{
 				last_event = current_event_hi;
 			}
@@ -787,7 +787,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 
 		picked_track = eof_import_events[i]->type >= 0 ? eof_import_events[i]->type : rbg == 0 ? EOF_TRACK_GUITAR : -1;
 		first_note = note_count[picked_track];
-		if(picked_track >= 0 && !used_track[picked_track])
+		if((picked_track >= 0) && !used_track[picked_track])
 		{
 			if(picked_track == EOF_TRACK_VOCALS)
 			{
@@ -846,7 +846,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 						else if(eof_import_events[i]->event[j]->d1 == 96 || eof_import_events[i]->event[j]->d1 == 97)
 						{
 						}
-						else if(eof_import_events[i]->event[j]->d1 >= MINPITCH && eof_import_events[i]->event[j]->d1 <= MAXPITCH)
+						else if((eof_import_events[i]->event[j]->d1 >= MINPITCH) && (eof_import_events[i]->event[j]->d1 <= MAXPITCH))
 						{
 							for(k = 0; k < note_count[picked_track]; k++)
 							{
@@ -900,7 +900,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 						else if(eof_import_events[i]->event[j]->d1 == 96 || eof_import_events[i]->event[j]->d1 == 97)
 						{
 						}
-						else if(eof_import_events[i]->event[j]->d1 >= MINPITCH && eof_import_events[i]->event[j]->d1 <= MAXPITCH)
+						else if((eof_import_events[i]->event[j]->d1 >= MINPITCH) && (eof_import_events[i]->event[j]->d1 <= MAXPITCH))
 						{
 							if(note_count[picked_track] > 0)
 							{
@@ -910,7 +910,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 					}
 
 					/* lyric */
-					else if((eof_import_events[i]->event[j]->type == 0x05 || eof_import_events[i]->event[j]->type == 0x01) && eof_import_events[i]->event[j]->text[0] != '[')
+					else if(((eof_import_events[i]->event[j]->type == 0x05) || (eof_import_events[i]->event[j]->type == 0x01)) && (eof_import_events[i]->event[j]->text[0] != '['))
 					{
 						for(k = 0; k < note_count[picked_track]; k++)
 						{
@@ -971,27 +971,27 @@ EOF_SONG * eof_import_midi(const char * fn)
 					/* note on */
 					if(eof_import_events[i]->event[j]->type == 0x90)
 					{
-						if(eof_import_events[i]->event[j]->d1 >= 0x3C && eof_import_events[i]->event[j]->d1 < 0x3C + 6)
+						if((eof_import_events[i]->event[j]->d1 >= 0x3C) && (eof_import_events[i]->event[j]->d1 < 0x3C + 6))
 						{
 							sp->track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_SUPAEASY;
 							diff = eof_import_events[i]->event[j]->d1 - 0x3C;
 						}
-						else if(eof_import_events[i]->event[j]->d1 >= 0x48 && eof_import_events[i]->event[j]->d1 < 0x48 + 6)
+						else if((eof_import_events[i]->event[j]->d1 >= 0x48) && (eof_import_events[i]->event[j]->d1 < 0x48 + 6))
 						{
 							sp->track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_EASY;
 							diff = eof_import_events[i]->event[j]->d1 - 0x48;
 						}
-						else if(eof_import_events[i]->event[j]->d1 >= 0x54 && eof_import_events[i]->event[j]->d1 < 0x54 + 6)
+						else if((eof_import_events[i]->event[j]->d1 >= 0x54) && (eof_import_events[i]->event[j]->d1 < 0x54 + 6))
 						{
 							sp->track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_MEDIUM;
 							diff = eof_import_events[i]->event[j]->d1 - 0x54;
 						}
-						else if(eof_import_events[i]->event[j]->d1 >= 0x60 && eof_import_events[i]->event[j]->d1 < 0x60 + 6)
+						else if((eof_import_events[i]->event[j]->d1 >= 0x60) && (eof_import_events[i]->event[j]->d1 < 0x60 + 6))
 						{
 							sp->track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_AMAZING;
 							diff = eof_import_events[i]->event[j]->d1 - 0x60;
 						}
-						else if(eof_import_events[i]->event[j]->d1 >= 120 && eof_import_events[i]->event[j]->d1 <= 124)
+						else if((eof_import_events[i]->event[j]->d1 >= 120) && (eof_import_events[i]->event[j]->d1 <= 124))
 						{
 							sp->track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_SPECIAL;
 							diff = eof_import_events[i]->event[j]->d1 - 120;
@@ -1045,11 +1045,11 @@ EOF_SONG * eof_import_midi(const char * fn)
 						}
 
 						/* star power and solos */
-						if(eof_import_events[i]->event[j]->d1 == 116 && sp->track[picked_track]->star_power_paths < EOF_MAX_STAR_POWER)
+						if((eof_import_events[i]->event[j]->d1 == 116) && (sp->track[picked_track]->star_power_paths < EOF_MAX_STAR_POWER))
 						{
 							sp->track[picked_track]->star_power_path[sp->track[picked_track]->star_power_paths].start_pos = eof_import_midi_to_eof_optimized(eof_import_events[i]->event[j]->pos);
 						}
-						else if(eof_import_events[i]->event[j]->d1 == 103 && sp->track[picked_track]->solos < EOF_MAX_SOLOS)
+						else if((eof_import_events[i]->event[j]->d1 == 103) && (sp->track[picked_track]->solos < EOF_MAX_SOLOS))
 						{
 							sp->track[picked_track]->solo[sp->track[picked_track]->solos].start_pos = eof_import_midi_to_eof_optimized(eof_import_events[i]->event[j]->pos);
 						}
@@ -1058,7 +1058,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 						{
 							for(k = first_note; k < note_count[picked_track]; k++)
 							{
-								if(sp->track[picked_track]->note[k]->pos == eof_import_midi_to_eof_optimized(eof_import_events[i]->event[j]->pos) && sp->track[picked_track]->note[k]->type == sp->track[picked_track]->note[note_count[picked_track]]->type)
+								if((sp->track[picked_track]->note[k]->pos == eof_import_midi_to_eof_optimized(eof_import_events[i]->event[j]->pos)) && (sp->track[picked_track]->note[k]->type == sp->track[picked_track]->note[note_count[picked_track]]->type))
 								{
 									break;
 								}
@@ -1081,27 +1081,27 @@ EOF_SONG * eof_import_midi(const char * fn)
 					/* note off so get length of note */
 					else if(eof_import_events[i]->event[j]->type == 0x80)
 					{
-						if(eof_import_events[i]->event[j]->d1 >= 0x3C && eof_import_events[i]->event[j]->d1 < 0x3C + 6)
+						if((eof_import_events[i]->event[j]->d1 >= 0x3C) && (eof_import_events[i]->event[j]->d1 < 0x3C + 6))
 						{
 							sp->track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_SUPAEASY;
 							diff = eof_import_events[i]->event[j]->d1 - 0x3C;
 						}
-						else if(eof_import_events[i]->event[j]->d1 >= 0x48 && eof_import_events[i]->event[j]->d1 < 0x48 + 6)
+						else if((eof_import_events[i]->event[j]->d1 >= 0x48) && (eof_import_events[i]->event[j]->d1 < 0x48 + 6))
 						{
 							sp->track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_EASY;
 							diff = eof_import_events[i]->event[j]->d1 - 0x48;
 						}
-						else if(eof_import_events[i]->event[j]->d1 >= 0x54 && eof_import_events[i]->event[j]->d1 < 0x54 + 6)
+						else if((eof_import_events[i]->event[j]->d1 >= 0x54) && (eof_import_events[i]->event[j]->d1 < 0x54 + 6))
 						{
 							sp->track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_MEDIUM;
 							diff = eof_import_events[i]->event[j]->d1 - 0x54;
 						}
-						else if(eof_import_events[i]->event[j]->d1 >= 0x60 && eof_import_events[i]->event[j]->d1 < 0x60 + 6)
+						else if((eof_import_events[i]->event[j]->d1 >= 0x60) && (eof_import_events[i]->event[j]->d1 < 0x60 + 6))
 						{
 							sp->track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_AMAZING;
 							diff = eof_import_events[i]->event[j]->d1 - 0x60;
 						}
-						else if(eof_import_events[i]->event[j]->d1 >= 120 && eof_import_events[i]->event[j]->d1 <= 124)
+						else if((eof_import_events[i]->event[j]->d1 >= 120) && (eof_import_events[i]->event[j]->d1 <= 124))
 						{
 							sp->track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_SPECIAL;
 							diff = eof_import_events[i]->event[j]->d1 - 120;
@@ -1149,7 +1149,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 						{
 							for(k = note_count[picked_track] - 1; k >= first_note; k--)
 							{
-								if(sp->track[picked_track]->note[k]->type == hopodiff && hopopos[hopodiff] == eof_import_midi_to_eof_optimized(eof_import_events[i]->event[j]->pos))
+								if((sp->track[picked_track]->note[k]->type == hopodiff) && (hopopos[hopodiff] == eof_import_midi_to_eof_optimized(eof_import_events[i]->event[j]->pos)))
 								{
 									if(hopotype[hopodiff] == 0)
 									{
@@ -1164,23 +1164,23 @@ EOF_SONG * eof_import_midi(const char * fn)
 							}
 						}
 
-						if(eof_import_events[i]->event[j]->d1 == 116 && sp->track[picked_track]->star_power_paths < EOF_MAX_STAR_POWER)
+						if((eof_import_events[i]->event[j]->d1 == 116) && (sp->track[picked_track]->star_power_paths < EOF_MAX_STAR_POWER))
 						{
 							sp->track[picked_track]->star_power_path[sp->track[picked_track]->star_power_paths].end_pos = eof_import_midi_to_eof_optimized(eof_import_events[i]->event[j]->pos) - 1;
 							sp->track[picked_track]->star_power_paths++;
 						}
-						else if(eof_import_events[i]->event[j]->d1 == 103 && sp->track[picked_track]->solos < EOF_MAX_SOLOS)
+						else if((eof_import_events[i]->event[j]->d1 == 103) && (sp->track[picked_track]->solos < EOF_MAX_SOLOS))
 						{
 							sp->track[picked_track]->solo[sp->track[picked_track]->solos].end_pos = eof_import_midi_to_eof_optimized(eof_import_events[i]->event[j]->pos) - 1;
 							sp->track[picked_track]->solos++;
 						}
-						if(note_count[picked_track] > 0 && sp->track[picked_track]->note[note_count[picked_track] - 1]->type != -1)
+						if((note_count[picked_track] > 0) && (sp->track[picked_track]->note[note_count[picked_track] - 1]->type != -1))
 	//					if(sp->track[picked_track]->note[note_count[picked_track] - 1]->type != -1)
 						{
 							for(k = note_count[picked_track] - 1; k >= first_note; k--)
 							{
 	//							if(sp->track[picked_track]->note[k]->type == sp->track[picked_track]->note[note_count[picked_track] - 1]->type && (sp->track[picked_track]->note[k]->note & diff_chart[diff]))
-								if(sp->track[picked_track]->note[k]->type == sp->track[picked_track]->note[note_count[picked_track]]->type && (sp->track[picked_track]->note[k]->note & diff_chart[diff]))
+								if((sp->track[picked_track]->note[k]->type == sp->track[picked_track]->note[note_count[picked_track]]->type) && (sp->track[picked_track]->note[k]->note & diff_chart[diff]))
 								{
 	//								allegro_message("break %d, %d, %d", k, sp->track[picked_track]->note[k]->note, sp->track[picked_track]->note[note_count[picked_track]]->note);
 									sp->track[picked_track]->note[k]->length = eof_import_midi_to_eof_optimized(eof_import_events[i]->event[j]->pos) - sp->track[picked_track]->note[k]->pos;
@@ -1211,7 +1211,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 		lc = 0;
 		for(j = 0; j < sp->vocal_track->lyrics; j++)
 		{
-			if(sp->vocal_track->lyric[j]->pos >= sp->vocal_track->line[i].start_pos && sp->vocal_track->lyric[j]->pos <= sp->vocal_track->line[i].end_pos)
+			if((sp->vocal_track->lyric[j]->pos >= sp->vocal_track->line[i].start_pos) && (sp->vocal_track->lyric[j]->pos <= sp->vocal_track->line[i].end_pos))
 			{
 				lc++;
 			}

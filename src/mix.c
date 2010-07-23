@@ -60,7 +60,7 @@ void eof_mix_callback(void * buf, int length)
 			{
 				sum = buffer[i] + ((unsigned short *)(eof_voice[j].sp->data))[(unsigned long)eof_voice[j].pos];
 				prod = (buffer[i]) * (((unsigned short *)(eof_voice[j].sp->data))[(unsigned long)eof_voice[j].pos]);
-				if(buffer[i] < 32768 && ((unsigned short *)(eof_voice[j].sp->data))[(unsigned long)eof_voice[j].pos] < 32768)
+				if((buffer[i] < 32768) && (((unsigned short *)(eof_voice[j].sp->data))[(unsigned long)eof_voice[j].pos] < 32768))
 				{
 					final = prod >> 15;
 				}
@@ -73,7 +73,7 @@ void eof_mix_callback(void * buf, int length)
 				{
 					sum = buffer[i + 1] + ((unsigned short *)(eof_voice[j].sp->data))[(unsigned long)eof_voice[j].pos];
 					prod = (buffer[i + 1]) * (((unsigned short *)(eof_voice[j].sp->data))[(unsigned long)eof_voice[j].pos]);
-					if(buffer[i + 1] < 32768 && ((unsigned short *)(eof_voice[j].sp->data))[(unsigned long)eof_voice[j].pos] < 32768)
+					if((buffer[i + 1] < 32768) && (((unsigned short *)(eof_voice[j].sp->data))[(unsigned long)eof_voice[j].pos] < 32768))
 					{
 						final = prod >> 15;
 					}
@@ -93,7 +93,7 @@ void eof_mix_callback(void * buf, int length)
 
 		/* increment the sample and check sound triggers */
 		eof_mix_sample_count += 1.0;
-		if(eof_mix_next_clap >= 0 && eof_mix_sample_count >= eof_mix_next_clap && eof_mix_current_clap < eof_mix_claps)
+		if((eof_mix_next_clap >= 0) && (eof_mix_sample_count >= eof_mix_next_clap) && (eof_mix_current_clap < eof_mix_claps))
 		{
 			if(eof_mix_claps_enabled)
 			{
@@ -104,7 +104,7 @@ void eof_mix_callback(void * buf, int length)
 			eof_mix_current_clap++;
 			eof_mix_next_clap = eof_mix_clap_pos[eof_mix_current_clap];
 		}
-		if(eof_mix_next_metronome >= 0 && eof_mix_sample_count >= eof_mix_next_metronome && eof_mix_current_metronome < eof_mix_metronomes)
+		if((eof_mix_next_metronome >= 0) && (eof_mix_sample_count >= eof_mix_next_metronome) && (eof_mix_current_metronome < eof_mix_metronomes))
 		{
 			if(eof_mix_metronome_enabled)
 			{
@@ -115,7 +115,7 @@ void eof_mix_callback(void * buf, int length)
 			eof_mix_current_metronome++;
 			eof_mix_next_metronome = eof_mix_metronome_pos[eof_mix_current_metronome];
 		}
-		if(eof_mix_next_note >= 0 && eof_mix_sample_count >= eof_mix_next_note && eof_mix_current_note < eof_mix_notes)
+		if((eof_mix_next_note >= 0) && (eof_mix_sample_count >= eof_mix_next_note) && (eof_mix_current_note < eof_mix_notes))
 		{
 			if(eof_mix_midi_tones_enabled)
 			{
@@ -173,7 +173,7 @@ void eof_mix_find_claps(void)
 	{
 		for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
 		{
-			if(eof_song->track[eof_selected_track]->note[i]->type == eof_note_type && (eof_song->track[eof_selected_track]->note[i]->note & eof_mix_claps_note))
+			if((eof_song->track[eof_selected_track]->note[i]->type == eof_note_type) && (eof_song->track[eof_selected_track]->note[i]->note & eof_mix_claps_note))
 			{
 				eof_mix_clap_pos[eof_mix_claps] = eof_mix_msec_to_sample(eof_song->track[eof_selected_track]->note[i]->pos, alogg_get_wave_freq_ogg(eof_music_track));
 				eof_mix_claps++;
