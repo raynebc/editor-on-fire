@@ -1473,7 +1473,7 @@ void eof_lyric_logic(void)
 				for(i = 0; i < 28; i++)
 				{
 					k = i % 7;
-					if(k == 0 || k == 1 || k == 3 || k == 4 || k == 5)
+					if((k == 0) || (k == 1) || (k == 3) || (k == 4) || (k == 5))
 					{
 						if((mouse_x - eof_window_3d->x >= i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 + eof_screen_layout.lyric_view_bkey_width) && (mouse_x - eof_window_3d->x <= (i + 1) * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 - eof_screen_layout.lyric_view_bkey_width + 1))
 						{
@@ -2150,7 +2150,7 @@ void eof_render_lyric_window(void)
 	{
 		n = (i / 7) * 12 + bnote[i % 7] + MINPITCH;
 		k = n % 12;
-		if(k == 1 || k == 3 || k == 6 || k == 8 || k == 10)
+		if((k == 1) || (k == 3) || (k == 6) || (k == 8) || (k == 10))
 		{
 			if(n == eof_hover_key)
 			{
@@ -2943,7 +2943,7 @@ int main(int argc, char * argv[])
 				eof_music_pos = eof_music_actual_pos + eof_av_delay;
 				eof_music_paused = 1;
 			}
-			else if(ret == ALOGG_POLL_NOTPLAYING || ret == ALOGG_POLL_FRAMECORRUPT || ret == ALOGG_POLL_INTERNALERROR)
+			else if((ret == ALOGG_POLL_NOTPLAYING) || (ret == ALOGG_POLL_FRAMECORRUPT) || (ret == ALOGG_POLL_INTERNALERROR))
 			{
 				eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 				eof_music_pos = eof_music_actual_pos + eof_av_delay;
@@ -2954,7 +2954,7 @@ int main(int argc, char * argv[])
 				eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 				if(eof_smooth_pos)
 				{
-					if(eof_music_actual_pos > eof_music_pos || eof_music_paused)
+					if((eof_music_actual_pos > eof_music_pos) || eof_music_paused)
 					{
 						eof_music_pos = eof_music_actual_pos;
 					}
@@ -2976,7 +2976,7 @@ int main(int argc, char * argv[])
 				eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 				eof_music_catalog_playback = 0;
 			}
-			else if(ret == ALOGG_POLL_NOTPLAYING || ret == ALOGG_POLL_FRAMECORRUPT || ret == ALOGG_POLL_INTERNALERROR)
+			else if((ret == ALOGG_POLL_NOTPLAYING) || (ret == ALOGG_POLL_FRAMECORRUPT) || (ret == ALOGG_POLL_INTERNALERROR))
 			{
 				eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 				eof_music_catalog_playback = 0;
@@ -2984,7 +2984,7 @@ int main(int argc, char * argv[])
 			else
 			{
 				int ap = alogg_get_pos_msecs_ogg(eof_music_track);
-				if(ap > eof_music_catalog_pos || !eof_music_catalog_playback)
+				if((ap > eof_music_catalog_pos) || !eof_music_catalog_playback)
 				{
 					eof_music_catalog_pos = ap;
 				}

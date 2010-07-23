@@ -252,7 +252,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 					}
 
 					/* skip face-off sections for now */
-					else if(current_note->gemcolor == '0' || current_note->gemcolor == '1')
+					else if((current_note->gemcolor == '0') || (current_note->gemcolor == '1'))
 					{
 					}
 

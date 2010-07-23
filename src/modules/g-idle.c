@@ -105,7 +105,7 @@ void PrepVSyncIdle (void)
 
 		for (z = 0; z < 32; z++)
 		{
-			vsync(); 
+			vsync();
 			vsync_ticks += tickcount;
 			tickcount = 0;
 		}
@@ -120,7 +120,7 @@ void Idle (int msec)
 {
 	#ifdef ALLEGRO_WINDOWS
 		// NOTE: msec is multiplied by 2 and processed at twice the speed for greater accuracy.
-		if (msec <= 0 || !sys_active) { Sleep(0); return; }
+		if ((msec <= 0) || !sys_active) { Sleep(0); return; }
 		msec <<= 1;
 		while (msec > 0) {
 			WaitForSingleObject(hSema,1000);

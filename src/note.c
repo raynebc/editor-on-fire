@@ -564,7 +564,7 @@ void eof_note_draw_3d(EOF_NOTE * np, int p)
 	int rz, ez;
 
 	npos = -pos - 6 + np->pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
-	if(npos + np->length / eof_zoom_3d < -100 || npos > 600)
+	if((npos + np->length / eof_zoom_3d < -100) || (npos > 600))
 	{
 		return;
 	}

@@ -553,7 +553,7 @@ void eof_track_fixup_notes(EOF_TRACK * tp, int sel)
 		}
 
 		/* delete certain notes */
-		if(tp->note[i]->note == 0 || (tp->note[i]->type < 0 || tp->note[i]->type > 4) || tp->note[i]->pos < eof_song->tags->ogg[eof_selected_ogg].midi_offset || tp->note[i]->pos >= eof_music_length)
+		if((tp->note[i]->note == 0) || ((tp->note[i]->type < 0) || (tp->note[i]->type > 4)) || (tp->note[i]->pos < eof_song->tags->ogg[eof_selected_ogg].midi_offset) || (tp->note[i]->pos >= eof_music_length))
 		{
 			eof_track_delete_note(tp, i);
 		}
@@ -735,7 +735,7 @@ void eof_vocal_track_fixup_lyrics(EOF_VOCAL_TRACK * tp, int sel)
 		}
 
 		/* delete certain notes */
-		if(tp->lyric[i]->pos < eof_song->tags->ogg[eof_selected_ogg].midi_offset || tp->lyric[i]->pos >= eof_music_length)
+		if((tp->lyric[i]->pos < eof_song->tags->ogg[eof_selected_ogg].midi_offset) || (tp->lyric[i]->pos >= eof_music_length))
 		{
 			eof_vocal_track_delete_lyric(tp, i);
 		}

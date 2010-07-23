@@ -2366,7 +2366,7 @@ void eof_editor_logic(void)
 					}
 				}
 			}
-			if(eof_input_mode == EOF_INPUT_PIANO_ROLL || eof_input_mode == EOF_INPUT_REX)
+			if((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX))
 			{
 				if(eof_hover_note >= 0)
 				{
@@ -2797,7 +2797,7 @@ void eof_editor_logic(void)
 					{
 						move_offset = eof_pen_note.pos - eof_song->track[eof_selected_track]->note[eof_selection.current]->pos;
 					}
-					if(!eof_undo_toggle && (move_offset != 0 || eof_snap_mode == EOF_SNAP_OFF || KEY_EITHER_CTRL))
+					if(!eof_undo_toggle && ((move_offset != 0) || (eof_snap_mode == EOF_SNAP_OFF) || KEY_EITHER_CTRL))
 					{
 						eof_prepare_undo(0);
 					}
@@ -2806,7 +2806,7 @@ void eof_editor_logic(void)
 					{
 						if(eof_selection.multi[i])
 						{
-							if(eof_snap_mode == EOF_SNAP_OFF || KEY_EITHER_CTRL)
+							if((eof_snap_mode == EOF_SNAP_OFF) || KEY_EITHER_CTRL)
 							{
 								if(eof_song->track[eof_selected_track]->note[i]->pos == eof_selection.current_pos)
 								{
@@ -2842,7 +2842,7 @@ void eof_editor_logic(void)
 				}
 //				eof_song->track[eof_selected_track]->note[eof_pegged_note].pos = eof_peg_x + (mouse_x - eof_click_x) * eof_zoom;
 			}
-			if((mouse_b & 2 || key[KEY_INSERT]) && eof_rclick_released && eof_pen_note.note && (eof_pen_note.pos < eof_music_length))
+			if(((mouse_b & 2) || key[KEY_INSERT]) && eof_rclick_released && eof_pen_note.note && (eof_pen_note.pos < eof_music_length))
 			{
 				eof_selection.range_pos_1 = 0;
 				eof_selection.range_pos_2 = 0;
@@ -3571,7 +3571,7 @@ void eof_vocal_editor_logic(void)
 			eof_pen_lyric.pos = -1;
 			eof_pen_lyric.length = 1;
 			eof_pen_lyric.note = eof_vocals_offset + (EOF_EDITOR_RENDER_OFFSET + 35 + eof_screen_layout.vocal_y - mouse_y) / eof_screen_layout.vocal_tail_size;
-			if(eof_pen_lyric.note < eof_vocals_offset || eof_pen_lyric.note >= eof_vocals_offset + eof_screen_layout.vocal_view_size)
+			if((eof_pen_lyric.note < eof_vocals_offset) || (eof_pen_lyric.note >= eof_vocals_offset + eof_screen_layout.vocal_view_size))
 			{
 				eof_pen_lyric.note = 0;
 			}
@@ -3602,7 +3602,7 @@ void eof_vocal_editor_logic(void)
 			rpos = eof_pen_lyric.pos;
 			eof_pen_lyric.length = eof_snap.length;
 			eof_pen_lyric.note = eof_vocals_offset + (EOF_EDITOR_RENDER_OFFSET + 35 + eof_screen_layout.vocal_y - mouse_y) / eof_screen_layout.vocal_tail_size;
-			if(eof_pen_lyric.note < eof_vocals_offset || eof_pen_lyric.note >= eof_vocals_offset + eof_screen_layout.vocal_view_size)
+			if((eof_pen_lyric.note < eof_vocals_offset) || (eof_pen_lyric.note >= eof_vocals_offset + eof_screen_layout.vocal_view_size))
 			{
 				eof_pen_lyric.note = 0;
 			}
@@ -3629,7 +3629,7 @@ void eof_vocal_editor_logic(void)
 				eof_pen_lyric.pos = eof_song->vocal_track->lyric[eof_hover_note]->pos;
 				eof_pen_lyric.length = eof_song->vocal_track->lyric[eof_hover_note]->length;
 			}
-			if(eof_input_mode == EOF_INPUT_PIANO_ROLL || eof_input_mode == EOF_INPUT_REX)
+			if((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX))
 			{
 				if(eof_hover_note >= 0)
 				{
@@ -3905,7 +3905,7 @@ void eof_vocal_editor_logic(void)
 					{
 						if(eof_selection.multi[i])
 						{
-							if(eof_snap_mode == EOF_SNAP_OFF || KEY_EITHER_CTRL)
+							if((eof_snap_mode == EOF_SNAP_OFF) || KEY_EITHER_CTRL)
 							{
 								if(eof_song->vocal_track->lyric[i]->pos == eof_selection.current_pos)
 								{
@@ -4720,7 +4720,7 @@ void eof_render_editor_window(void)
 		{
 			if(!eof_mouse_drug)
 			{
-				if(eof_input_mode == EOF_INPUT_PIANO_ROLL || eof_input_mode == EOF_INPUT_REX)
+				if((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX))
 				{
 					eof_note_draw(&eof_pen_note, 3);
 				}
@@ -5014,7 +5014,7 @@ void eof_render_vocal_editor_window(void)
 		{
 			if(!eof_mouse_drug)
 			{
-				if(eof_input_mode == EOF_INPUT_PIANO_ROLL || eof_input_mode == EOF_INPUT_REX)
+				if((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX))
 				{
 					eof_lyric_draw(&eof_pen_lyric, 3);
 				}
@@ -5045,7 +5045,7 @@ void eof_render_vocal_editor_window(void)
 				}
 				textprintf_ex(eof_window_editor->screen, font, 21, ny + eof_screen_layout.vocal_tail_size / 2 - text_height(font) / 2, eof_color_white, eof_color_black, "%s", eof_get_tone_name(eof_pen_lyric.note));
 			}
-			else if(n == 1 || n == 3 || n == 6 || n == 8 || n == 10)
+			else if((n == 1) || (n == 3) || (n == 6) || (n == 8) || (n == 10))
 			{
 				kcol = makecol(16, 16, 16);
 				kcol2 = makecol(0, 0, 0);
