@@ -106,12 +106,13 @@ DIALOG eof_anchor_dialog[] =
 void eof_prepare_beat_menu(void)
 {
 	int i;
-	int selected = 0;
+//	int selected = 0;	//This variable is not being used for anything meaningful
 
 	if(eof_song && eof_song_loaded)
 	{
+//Beat>Add and Delete validation
 		if(eof_find_next_anchor(eof_song, eof_selected_beat) < 0)
-		{
+		{	//If there are no anchors after the selected beat, disable Beat>Add and Delete, as they'd have no effect
 			eof_beat_menu[3].flags = D_DISABLED;
 			eof_beat_menu[4].flags = D_DISABLED;
 		}
@@ -121,12 +122,12 @@ void eof_prepare_beat_menu(void)
 			eof_beat_menu[4].flags = 0;
 		}
 		if(eof_selected_beat == 0)
-		{
+		{	//If the first beat marker is selected, disable Beat>Delete, as this beat is not allowed to be deleted
 			eof_beat_menu[4].flags = D_DISABLED;
 		}
-
-		if((int)eof_song->beat[0]->pos - (int)(eof_song->beat[1]->pos - eof_song->beat[0]->pos) >= 0)
-		{
+//Beat>Push Offset Up and Push Offset Back validation
+		if(eof_song->beat[0]->pos >= eof_song->beat[1]->pos - eof_song->beat[0]->pos)
+		{	//If the current MIDI delay is at least as long as the first beat's length, enable Beat>Push Offset Back
 			eof_beat_menu[6].flags = 0;
 		}
 		else
@@ -134,37 +135,34 @@ void eof_prepare_beat_menu(void)
 			eof_beat_menu[6].flags = D_DISABLED;
 		}
 		if(eof_song->beats > 1)
-		{
+		{	//If the chart has at least two beat markers, enable Beat>Push Offset Up
 			eof_beat_menu[7].flags = 0;
 		}
 		else
 		{
 			eof_beat_menu[7].flags = D_DISABLED;
 		}
+//Beat>Anchor Beat and Toggle Anchor validation
 		if(eof_selected_beat != 0)
-		{
+		{	//If the first beat marker is not selected, enable Beat>Anchor Beat and Toggle Anchor
 			eof_beat_menu[9].flags = 0;
+			eof_beat_menu[10].flags = 0;
 		}
 		else
 		{
 			eof_beat_menu[9].flags = D_DISABLED;
-		}
-		if(eof_selected_beat == 0)
-		{
 			eof_beat_menu[10].flags = D_DISABLED;
 		}
-		else
-		{
-			eof_beat_menu[10].flags = 0;
-		}
-		if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR && eof_selected_beat != 0)
-		{
+//Beat>Delete Anchor validation
+		if((eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR) && eof_selected_beat != 0)
+		{	//If the selected beat is an anchor, and the first beat marker is not selected, enable Beat>Delete Anchor
 			eof_beat_menu[11].flags = 0;
 		}
 		else
 		{
 			eof_beat_menu[11].flags = D_DISABLED;
 		}
+//Beat>Reset BPM validation
 		for(i = 1; i < eof_song->beats; i++)
 		{
 			if(eof_song->beat[i]->ppqn != eof_song->beat[0]->ppqn)
@@ -173,13 +171,16 @@ void eof_prepare_beat_menu(void)
 			}
 		}
 		if(i == eof_song->beats)
-		{
+		{	//If there are no tempo changes throughout the entire chart, disable Beat>Reset BPM, as it would have no effect
 			eof_beat_menu[13].flags = D_DISABLED;
 		}
 		else
 		{
 			eof_beat_menu[13].flags = 0;
 		}
+//The condition (selected > 1) was always false, since it was initialized to 0 and never modified afterward
+/*
+//Beat>Calculate BPM validation
 		if(selected > 1)
 		{
 			eof_beat_menu[14].flags = 0;
@@ -188,9 +189,10 @@ void eof_prepare_beat_menu(void)
 		{
 			eof_beat_menu[14].flags = D_DISABLED;
 		}
-
+*/
+//Beat>All Events and Clear Events validation
 		if(eof_song->text_events > 0)
-		{
+		{	//If there is at least one defined text event, enable Beat>Events and Clear Events
 			eof_beat_menu[16].flags = 0;
 			eof_beat_menu[18].flags = 0;
 		}
@@ -199,6 +201,7 @@ void eof_prepare_beat_menu(void)
 			eof_beat_menu[16].flags = D_DISABLED;
 			eof_beat_menu[18].flags = D_DISABLED;
 		}
+//Re-flag the active Time Signature for the selected beat
 		for(i = 0; i < 5; i++)
 		{
 			eof_beat_time_signature_menu[i].flags = 0;
@@ -223,6 +226,7 @@ void eof_prepare_beat_menu(void)
 		{
 			eof_beat_time_signature_menu[4].flags = D_SELECTED;
 		}
+//If any beat before the selected beat has a defined Time Signature, change the menu's "Off" option to "No Change"
 		for(i = 0; i < eof_selected_beat; i++)
 		{
 			if((eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_4_4) || (eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_3_4) || (eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_5_4) || (eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_6_4))
@@ -253,7 +257,7 @@ int eof_menu_beat_bpm_change(void)
 	eof_bpm_change_dialog[3].flags = 0;
 	eof_bpm_change_dialog[4].flags = 0;
 	if(eof_popup_dialog(eof_bpm_change_dialog, 2) == 5)
-	{
+	{	//If the user activated the "OK" button
 		double bpm = atof(eof_etext);
 		sprintf(eof_etext2, "%3.2f", (double)60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn);
 		if(!ustricmp(eof_etext, eof_etext2))
@@ -321,6 +325,7 @@ int eof_menu_beat_bpm_change(void)
 
 int eof_menu_beat_ts_4_4(void)
 {
+//Clear the beat's status except for its anchor and event flags
 	int flags = eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR;
 	flags |= eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_EVENTS;
 	eof_prepare_undo(0);
@@ -331,6 +336,7 @@ int eof_menu_beat_ts_4_4(void)
 
 int eof_menu_beat_ts_3_4(void)
 {
+//Clear the beat's status except for its anchor and event flags
 	int flags = eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR;
 	flags |= eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_EVENTS;
 	eof_prepare_undo(0);
@@ -341,6 +347,7 @@ int eof_menu_beat_ts_3_4(void)
 
 int eof_menu_beat_ts_5_4(void)
 {
+//Clear the beat's status except for its anchor and event flags
 	int flags = eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR;
 	flags |= eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_EVENTS;
 	eof_prepare_undo(0);
@@ -351,6 +358,7 @@ int eof_menu_beat_ts_5_4(void)
 
 int eof_menu_beat_ts_6_4(void)
 {
+//Clear the beat's status except for its anchor and event flags
 	int flags = eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR;
 	flags |= eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_EVENTS;
 	eof_prepare_undo(0);
@@ -361,6 +369,7 @@ int eof_menu_beat_ts_6_4(void)
 
 int eof_menu_beat_ts_off(void)
 {
+//Clear the beat's status except for its anchor and event flags
 	int flags = eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR;
 	flags |= eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_EVENTS;
 	eof_prepare_undo(0);
@@ -372,11 +381,11 @@ int eof_menu_beat_ts_off(void)
 int eof_menu_beat_delete(void)
 {
 	int flags = eof_song->beat[eof_selected_beat]->flags;
-	if(eof_selected_beat > 0 && eof_find_next_anchor(eof_song, eof_selected_beat) >= 0)
-	{
+	if((eof_selected_beat > 0) && (eof_find_next_anchor(eof_song, eof_selected_beat) >= 0))
+	{	//Only process this function if a beat other than beat 0 is selected, and there is at least one anchor after the selected beat
 		eof_prepare_undo(0);
 		eof_song_delete_beat(eof_song, eof_selected_beat);
-		if(eof_song->beat[eof_selected_beat - 1]->flags & EOF_BEAT_FLAG_ANCHOR && eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR)
+		if((eof_song->beat[eof_selected_beat - 1]->flags & EOF_BEAT_FLAG_ANCHOR) && (eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR))
 		{
 			double beats_length = eof_song->beat[eof_selected_beat]->pos - eof_song->beat[eof_selected_beat - 1]->pos;
 			double newbpm = (double)60000 / (beats_length / (double)1);
@@ -402,15 +411,19 @@ int eof_menu_beat_add(void)
 	int i;
 
 	eof_prepare_undo(0);
-	eof_song_add_beat(eof_song);
-	for(i = eof_song->beats - 1; i > eof_selected_beat; i--)
-	{
-		memcpy(eof_song->beat[i], eof_song->beat[i - 1], sizeof(EOF_BEAT_MARKER));
+	if(eof_song_add_beat(eof_song) != NULL)
+	{	//Only if the new beat structure was successfully created
+		for(i = eof_song->beats - 1; i > eof_selected_beat; i--)
+		{
+			memcpy(eof_song->beat[i], eof_song->beat[i - 1], sizeof(EOF_BEAT_MARKER));
+		}
+		eof_song->beat[eof_selected_beat + 1]->flags = 0;
+		eof_realign_beats(eof_song, eof_selected_beat + 1);
+		eof_move_text_events(eof_song, eof_selected_beat + 1, 1);
+		return 1;
 	}
-	eof_song->beat[eof_selected_beat + 1]->flags = 0;
-	eof_realign_beats(eof_song, eof_selected_beat + 1);
-	eof_move_text_events(eof_song, eof_selected_beat + 1, 1);
-	return 1;
+	else
+		return -1;	//Otherwise return error
 }
 
 int eof_menu_beat_push_offset_back(void)
@@ -421,19 +434,23 @@ int eof_menu_beat_push_offset_back(void)
 	if(eof_song->beat[0]->pos - backamount >= 0)
 	{
 		eof_prepare_undo(0);
-		eof_song_resize_beats(eof_song, eof_song->beats + 1);
-		for(i = eof_song->beats - 1; i > 0; i--)
-		{
-			memcpy(eof_song->beat[i], eof_song->beat[i - 1], sizeof(EOF_BEAT_MARKER));
+		if(eof_song_resize_beats(eof_song, eof_song->beats + 1))
+		{	//If the beats array was successfully resized
+			for(i = eof_song->beats - 1; i > 0; i--)
+			{
+				memcpy(eof_song->beat[i], eof_song->beat[i - 1], sizeof(EOF_BEAT_MARKER));
+			}
+//			eof_song->beats++;
+			eof_song->beat[0]->pos = eof_song->beat[1]->pos - backamount;
+			eof_song->beat[0]->fpos = eof_song->beat[0]->pos;
+			eof_song->beat[1]->flags = 0;
+			eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
+			eof_move_text_events(eof_song, 0, 1);
 		}
-//		eof_song->beats++;
-		eof_song->beat[0]->pos = eof_song->beat[1]->pos - backamount;
-		eof_song->beat[0]->fpos = eof_song->beat[0]->pos;
-		eof_song->beat[1]->flags = 0;
-		eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
-		eof_move_text_events(eof_song, 0, 1);
+		else
+			return 0;	//Return failure
 	}
-	return 1;
+	return 1;	//Return success
 }
 
 int eof_menu_beat_push_offset_up(void)
