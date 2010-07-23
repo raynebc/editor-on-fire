@@ -1919,7 +1919,7 @@ void eof_read_editor_keys(void)
 			}
 		}
 	}
-	if((eof_input_mode == EOF_INPUT_CLASSIC) && (eof_input_mode == EOF_INPUT_HOLD))
+	if((eof_input_mode == EOF_INPUT_CLASSIC) || (eof_input_mode == EOF_INPUT_HOLD))
 	{
 		if(key[KEY_ENTER] && eof_song_loaded)
 		{
