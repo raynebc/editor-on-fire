@@ -4,6 +4,8 @@
 
 int eof_chdir(const char * dir)
 {
+	if(dir == NULL)
+		return -1;
 	#ifdef ALLEGRO_WINDOWS
 		wchar_t wdir[1024] = {0};
 		uconvert(dir, U_UTF8, (char *)(&wdir[0]), U_UNICODE, 2048);
@@ -16,6 +18,8 @@ int eof_chdir(const char * dir)
 
 int eof_mkdir(const char * dir)
 {
+	if(dir == NULL)
+		return -1;
 	#ifdef ALLEGRO_WINDOWS
 		wchar_t wdir[1024] = {0};
 		uconvert(dir, U_UTF8, (char *)(&wdir[0]), U_UNICODE, 2048);
@@ -28,6 +32,8 @@ int eof_mkdir(const char * dir)
 
 int eof_system(const char * command)
 {
+	if(command == NULL)
+		return -1;
 	#ifdef ALLEGRO_WINDOWS
 		wchar_t wcommand[1024] = {0};
 		uconvert(command, U_UTF8, (char *)(&wcommand[0]), U_UNICODE, 2048);
@@ -43,6 +49,8 @@ void * eof_buffer_file(char * fn)
 	void * data;
 	PACKFILE * fp;
 
+	if(fn == NULL)
+		return NULL;
 	fp = pack_fopen(fn, "r");
 	if(fp == NULL)
 	{
@@ -65,6 +73,8 @@ int eof_copy_file(char * src, char * dest)
 	unsigned long src_size = 0;
 	int i;
 
+	if((src == NULL) || (dest == NULL))
+		return 0;
 	src_size = file_size_ex(src);
 	src_fp = pack_fopen(src, "r");
 	if(!src_fp)
@@ -89,7 +99,7 @@ int eof_copy_file(char * src, char * dest)
 		free(ptr);	//Release buffer
 	}
 	else
-	{	//Otherwise copy the byte the slow way (one byte at a time)
+	{	//Otherwise copy the slow way (one byte at a time)
 		for(i = 0; i < src_size; i++)
 		{
 			pack_putc(pack_getc(src_fp), dest_fp);
