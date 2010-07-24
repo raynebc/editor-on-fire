@@ -568,27 +568,27 @@ void eof_editor_logic_feedback(void)
 
 struct FeedbackChart *ImportFeedback(char *filename, int *error)
 {
-	FILE *inf;
+	FILE *inf=NULL;
 	char songparsed=0,syncparsed=0,eventsparsed=0;
 		//Flags to indicate whether each of the mentioned sections had already been parsed
-	char currentsection=0;		//Will be set to 1 for [Song], 2 for [SyncTrack], 3 for [Events] or 4 for an instrument section
-	unsigned long maxlinelength=0;	//I will count the length of the longest line (including NULL char/newline) in the
-	char *buffer,*buffer2;		//Will be an array large enough to hold the largest line of text from input file
-	unsigned long index,index2;	//Indexes for buffer and buffer2, respectively
-	char *substring,*substring2;	//Used with strstr() to find tag strings in the input file
-	unsigned long A,B,C;		//The first, second and third integer values read from the current line of the file
-	int errorstatus=0;		//Passed to ParseLongInt()
-	char anchortype;		//The achor type being read in [SyncTrack]
-	char notetype;			//The note type being read in the instrument track
-	char *string1,*string2;		//Used to hold strings parsed with Read_dB_string()
+	char currentsection=0;					//Will be set to 1 for [Song], 2 for [SyncTrack], 3 for [Events] or 4 for an instrument section
+	unsigned long maxlinelength=0;			//I will count the length of the longest line (including NULL char/newline) in the
+	char *buffer=NULL,*buffer2=NULL;		//Will be an array large enough to hold the largest line of text from input file
+	unsigned long index=0,index2=0;			//Indexes for buffer and buffer2, respectively
+	char *substring=NULL,*substring2=NULL;	//Used with strstr() to find tag strings in the input file
+	unsigned long A=0,B=0,C=0;				//The first, second and third integer values read from the current line of the file
+	int errorstatus=0;						//Passed to ParseLongInt()
+	char anchortype=0;						//The achor type being read in [SyncTrack]
+	char notetype=0;						//The note type being read in the instrument track
+	char *string1=NULL,*string2=NULL;		//Used to hold strings parsed with Read_dB_string()
 
 //Feedback chart structure variables
 	struct FeedbackChart *chart=NULL;
 	struct dBAnchor *curanchor=NULL;	//Conductor for the anchor linked list
 	struct dbText *curevent=NULL;		//Conductor for the text event linked list
-	struct dbNote *curnote=NULL;	//Conductor for the current instrument track's note linked list
+	struct dbNote *curnote=NULL;		//Conductor for the current instrument track's note linked list
 	struct dbTrack *curtrack=NULL;		//Conductor for the instrument track linked list, which contains a linked list of notes
-	void *temp;				//Temporary pointer used for storing newly-allocated memory
+	void *temp=NULL;					//Temporary pointer used for storing newly-allocated memory
 
 //Initialize chart structure
 	chart=(struct FeedbackChart *)calloc_err(1,sizeof(struct FeedbackChart));	//Allocate and init memory to NULL data
@@ -631,38 +631,38 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 		if((buffer[index] == '\n') || (buffer[index] == '\r') || (buffer[index] == '\0') || (buffer[index] == '{'))
 		{	//If this line was empty, or contained characters we're ignoring
 			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
-			continue;				//Skip ahead to the next line
+			continue;							//Skip ahead to the next line
 		}
 
 //Process section header
 		if(buffer[index]=='[')	//If the line begins an open bracket, it identifies the start of a section
 		{
-			substring2=strchr(buffer,']');			//Find first closing bracket
+			substring2=strchr(buffer,']');		//Find first closing bracket
 			if(substring2 == NULL)
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=2;
-				return NULL;				//Malformed section header, return error
+				return NULL;					//Malformed section header, return error
 			}
 
-			if(currentsection != 0)	//If a section is already being parsed
+			if(currentsection != 0)				//If a section is already being parsed
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=3;
-				return NULL;	//Malformed file, return error
+				return NULL;					//Malformed file, return error
 			}
 
 			substring=strcasestr_spec(buffer,"Song");	//Case insensitive search, returning pointer to after the match
 			if(substring && (substring <= substring2))	//If this line contained "Song" followed by "]"
 			{
-				if(songparsed != 0)	//If a section with this name was already parsed
+				if(songparsed != 0)					//If a section with this name was already parsed
 				{
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 					if(error)
 						*error=4;
-					return NULL;	//return error
+					return NULL;					//Multiple [song] sections, return error
 				}
 				songparsed=1;
 				currentsection=1;	//Track that we're parsing [Song]
@@ -672,12 +672,12 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				substring=strcasestr_spec(buffer,"SyncTrack");
 				if(substring && (substring <= substring2))	//If this line contained "SyncTrack" followed by "]"
 				{
-					if(syncparsed != 0)	//If a section with this name was already parsed
+					if(syncparsed != 0)					//If a section with this name was already parsed
 					{
 						DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 						if(error)
 							*error=5;
-						return NULL;	//return error
+						return NULL;					//Multiple [SyncTrack] sections, return error
 					}
 					syncparsed=1;
 					currentsection=2;	//Track that we're parsing [SyncTrack]
@@ -687,12 +687,12 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 					substring=strcasestr_spec(buffer,"Events");
 					if(substring && (substring <= substring2))	//If this line contained "Events" followed by "]"
 					{
-						if(eventsparsed != 0)	//If a section with this name was already parsed
+						if(eventsparsed != 0)				//If a section with this name was already parsed
 						{
 							DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 							if(error)
 								*error=6;
-							return NULL;	//return error
+							return NULL;					//Multiple [Events] sections, return error
 						}
 						eventsparsed=1;
 						currentsection=3;	//Track that we're parsing [Events]
@@ -700,27 +700,27 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 					else
 					{	//This is an instrument section
 						temp=(void *)Validate_dB_instrument(buffer);
-						if(temp == NULL)	//Not a valid Feedback instrument section name
+						if(temp == NULL)					//Not a valid Feedback instrument section name
 						{
 							DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 							if(error)
 								*error=7;
-							return NULL;	//return error
+							return NULL;					//Invalid instrument section, return error
 						}
 						currentsection=4;
 						chart->tracksloaded++;	//Keep track of how many instrument tracks are loaded
 
 					//Create and insert instrument link in the instrument list
 //						temp=calloc_err(1,sizeof(struct dbTrack));	//Allocate and init memory to NULL data
-						if(chart->tracks == NULL)	//If the list is empty
+						if(chart->tracks == NULL)					//If the list is empty
 						{
 							chart->tracks=(struct dbTrack *)temp;	//Point head of list to this link
-							curtrack=chart->tracks;			//Point conductor to this link
+							curtrack=chart->tracks;					//Point conductor to this link
 						}
 						else
 						{
 							curtrack->next=(struct dbTrack *)temp;	//Conductor points forward to this link
-							curtrack=curtrack->next;		//Point conductor to this link
+							curtrack=curtrack->next;				//Point conductor to this link
 						}
 
 					//Initialize instrument link
@@ -737,27 +737,27 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 //Process end of section
 		if(buffer[index]=='}')	//If the line begins with a closing curly brace, it is the end of the current section
 		{
-			if(currentsection == 0)	//If no section is being parsed
+			if(currentsection == 0)				//If no section is being parsed
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=8;
-				return NULL;	//Malformed file, return error
+				return NULL;					//Malformed file, return error
 			}
 //			instrument=NULL;	//Any section ending ends the current instrument track
 			currentsection=0;
 			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
-			continue;				//Skip ahead to the next line
+			continue;							//Skip ahead to the next line
 		}
 
 //Process normal line input
-		substring=strchr(buffer,'=');	//Any line within the a section is expected to contain an equal sign
+		substring=strchr(buffer,'=');		//Any line within the a section is expected to contain an equal sign
 		if(substring == NULL)
 		{
 			DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 			if(error)
 				*error=9;
-			return NULL;		//If it has none, return error
+			return NULL;					//Invalid section entry, return error
 		}
 
 	//Process [Song]
@@ -789,12 +789,12 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				{
 					index2=0;	//Use this as an index for string2
 					chart->resolution=(unsigned long)ParseLongInt(string2,&index2,chart->linesprocessed,&errorstatus);	//Parse string2 as a number
-					if(errorstatus)		//If ParseLongInt() failed
+					if(errorstatus)						//If ParseLongInt() failed
 					{
 						DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 						if(error)
 							*error=11;
-						return NULL;	//return error
+						return NULL;					//Invalid number, return error
 					}
 				}
 				else if(strcasecmp(string1,"MusicStream") == 0)
@@ -807,12 +807,12 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 		{	//# = ID # is expected
 		//Load first number
 			A=(unsigned long)ParseLongInt(buffer,&index,chart->linesprocessed,&errorstatus);
-			if(errorstatus)		//If ParseLongInt() failed
+			if(errorstatus)						//If ParseLongInt() failed
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=12;
-				return NULL;	//return error
+				return NULL;					//Invalid number, return error
 			}
 
 		//Skip whitespace and parse to equal sign
@@ -830,7 +830,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 			{
 				if(error)
 					*error=13;
-				return NULL;
+				return NULL;				//Invalid SyncTrack entry, return error
 			}
 
 		//Skip whitespace and parse to event ID
@@ -847,12 +847,12 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				index++;	//Advance to next whitespace character
 			else if(anchortype == 'T')
 			{
-				if(substring[index+1] != 'S')	//If the next character doesn't complete the anchor type
+				if(substring[index+1] != 'S')		//If the next character doesn't complete the anchor type
 				{
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 					if(error)
 						*error=14;
-					return NULL;
+					return NULL;					//Invalid anchor type, return error
 				}
 				index+=2;	//This anchor type is two characters instead of one
 			}
@@ -861,49 +861,49 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=15;
-				return NULL;	//Invalid anchor type
+				return NULL;					//Invalid anchor type, return error
 			}
 
 		//Load second number
 			B=(unsigned long)ParseLongInt(substring,&index,chart->linesprocessed,&errorstatus);
-			if(errorstatus)		//If ParseLongInt() failed
+			if(errorstatus)						//If ParseLongInt() failed
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=16;
-				return NULL;	//return error
+				return NULL;					//Invalid number, return error
 			}
 
 		//If this anchor event has the same chart time as the last, just write this event's information with the last's
 			if(curanchor && (curanchor->chartpos == A))
 			{
-				if(anchortype == 'A')	//If this is an Anchor event
-					curanchor->usec=B;	//Store the anchor realtime position
+				if(anchortype == 'A')		//If this is an Anchor event
+					curanchor->usec=B;		//Store the anchor realtime position
 				else if(anchortype == 'B')	//If this is a Tempo event
-					curanchor->BPM=B;	//Store the tempo
+					curanchor->BPM=B;		//Store the tempo
 				else if(anchortype == 'T')	//If this is a Time Signature event
-					curanchor->TS=B;	//Store the Time Signature
-				else	//Invalid anchor type
+					curanchor->TS=B;		//Store the Time Signature
+				else
 				{
 					DestroyFeedbackChart(chart,1);
 					if(error)
 						*error=17;
-					return NULL;
+					return NULL;			//Invalid anchor type, return error
 				}
 			}
 			else
 			{
 		//Create and insert anchor link into the anchor list
 				temp=calloc_err(1,sizeof(struct dBAnchor));	//Allocate and init memory to NULL data
-				if(chart->anchors == NULL)	//If the list is empty
+				if(chart->anchors == NULL)					//If the list is empty
 				{
 					chart->anchors=(struct dBAnchor *)temp;	//Point head of list to this link
-					curanchor=chart->anchors;		//Point conductor to this link
+					curanchor=chart->anchors;				//Point conductor to this link
 				}
 				else
 				{
 					curanchor->next=(struct dBAnchor *)temp;	//Conductor points forward to this link
-					curanchor=curanchor->next;			//Point conductor to this link
+					curanchor=curanchor->next;					//Point conductor to this link
 				}
 
 		//Initialize anchor link
@@ -911,15 +911,15 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 //				curanchor->type=anchortype;
 				switch(anchortype)
 				{
-					case 'B':	//If this was a tempo event
+					case 'B':				//If this was a tempo event
 						curanchor->BPM=B;	//The second number represents 1000 times the tempo
 					break;
 
-					case 'T':	//If this was a time signature event
+					case 'T':				//If this was a time signature event
 						curanchor->TS=B;	//Store the numerator of the time signature
 					break;
 
-					case 'A':	//If this was an anchor event
+					case 'A':				//If this was an anchor event
 						curanchor->usec=B;	//Store the anchor's timestamp in microseconds
 					break;
 
@@ -927,7 +927,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 						DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 						if(error)
 							*error=17;
-					return NULL;
+					return NULL;			//Invalid anchor type, return error
 				}
 			}
 		}
@@ -937,12 +937,12 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 		{	//# = E "(STRING)" is expected
 		//Load first number
 			A=ParseLongInt(buffer,&index,chart->linesprocessed,&errorstatus);
-			if(errorstatus)		//If ParseLongInt() failed
+			if(errorstatus)						//If ParseLongInt() failed
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=18;
-				return NULL;	//return error
+				return NULL;					//Invalid number, return error
 			}
 
 		//Skip whitespace and parse to equal sign
@@ -960,7 +960,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 			{
 				if(error)
 					*error=19;
-				return NULL;
+				return NULL;				//Invalid Event entry, return error
 			}
 
 		//Skip whitespace and parse to event ID
@@ -972,37 +972,37 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 					break;
 			}
 
-			if(substring[index++] != 'E')	//Check if this isn't a "text event" indicator (and increment index)
+			if(substring[index++] != 'E')		//Check if this isn't a "text event" indicator (and increment index)
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=20;
-				return NULL;		//return error
+				return NULL;					//Invalid Event entry, return error
 			}
 
 		//Seek to opening quotation mark
 			while((substring[index] != '\0') && (substring[index] != '"'))
 				index++;
 
-			if(substring[index++] != '"')	//Check if this was a null character instead of quotation mark (and increment index)
+			if(substring[index++] != '"')		//Check if this was a null character instead of quotation mark (and increment index)
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=21;
-				return NULL;		//return error
+				return NULL;					//Invalid Event entry, return error
 			}
 
 		//Load string by copying all characters to the second buffer (up to the next quotation mark)
 			buffer2[0]='\0';	//Truncate string
-			index2=0;		//Reset buffer2's index
-			while(substring[index] != '"')		//For all characters up to the next quotation mark
+			index2=0;			//Reset buffer2's index
+			while(substring[index] != '"')			//For all characters up to the next quotation mark
 			{
-				if(substring[index] == '\0')	//If a null character is reached unexpectedly
+				if(substring[index] == '\0')		//If a null character is reached unexpectedly
 				{
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 					if(error)
 						*error=22;
-					return NULL;
+					return NULL;					//Invalid Event entry, return error
 				}
 				buffer2[index2++]=substring[index++];	//Copy the character to the second buffer, incrementing both indexes
 			}
@@ -1010,19 +1010,19 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 
 		//Create and insert event link into event list
 			temp=calloc_err(1,sizeof(struct dbText));	//Allocate and init memory to NULL data
-			if(chart->events == NULL)	//If the list is empty
+			if(chart->events == NULL)					//If the list is empty
 			{
 				chart->events=(struct dbText *)temp;	//Point head of list to this link
-				curevent=chart->events;			//Point conductor to this link
+				curevent=chart->events;					//Point conductor to this link
 			}
 			else
 			{
 				curevent->next=(struct dbText *)temp;	//Conductor points forward to this link
-				curevent=curevent->next;		//Point conductor to this link
+				curevent=curevent->next;				//Point conductor to this link
 			}
 
 		//Initialize event link- Duplicate buffer2 into a newly created dbText link, adding it to the list
-			curevent->chartpos=A;				//The first number read is the chart position
+			curevent->chartpos=A;						//The first number read is the chart position
 			curevent->text=DuplicateString(buffer2);	//Copy buffer2 to new string and store in list
 		}
 
@@ -1031,12 +1031,12 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 		{	//"# = N # #" or "# = S # #" is expected
 		//Load first number
 			A=ParseLongInt(buffer,&index,chart->linesprocessed,&errorstatus);
-			if(errorstatus)		//If ParseLongInt() failed
+			if(errorstatus)						//If ParseLongInt() failed
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=23;
-				return NULL;	//return error
+				return NULL;					//Invalid number, return error
 			}
 
 		//Skip whitespace and parse to equal sign
@@ -1054,7 +1054,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 			{
 				if(error)
 					*error=24;
-				return NULL;
+				return NULL;				//Invalid instrument entry, return error
 			}
 
 		//Skip whitespace and parse to event ID
@@ -1083,71 +1083,71 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 					index++; 	//Increment index past N or S identifier
 				break;
 
-				default:		//Invalid instrument section entry
+				default:
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 					if(error)
 						*error=25;
-				return NULL;		//return error
+				return NULL;		//Invalid instrument entry, return error
 			}
 
 		//Load second number
 			B=ParseLongInt(substring,&index,chart->linesprocessed,&errorstatus);
-			if(errorstatus)		//If ParseLongInt() failed
+			if(errorstatus)						//If ParseLongInt() failed
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=26;
-				return NULL;	//return error
+				return NULL;					//Invalid number, return error
 			}
 
 		//Load third number
 			C=ParseLongInt(substring,&index,chart->linesprocessed,&errorstatus);
-			if(errorstatus)		//If ParseLongInt() failed
+			if(errorstatus)						//If ParseLongInt() failed
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=27;
-				return NULL;	//return error
+				return NULL;					//Invalid number, return error
 			}
 
 		//Create a note link and add it to the current Note list
-			if(curtrack == NULL)	//If the instrument track linked list is not initialized
+			if(curtrack == NULL)				//If the instrument track linked list is not initialized
 			{
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=28;
-				return NULL;
+				return NULL;					//Malformed file, return error
 			}
 
 			temp=calloc_err(1,sizeof(struct dbNote));	//Allocate and init memory to NULL data
-			if(curtrack->notes == NULL)	//If the list is empty
+			if(curtrack->notes == NULL)					//If the list is empty
 			{
 				curtrack->notes=(struct dbNote *)temp;	//Point head of list to this link
-				curnote=curtrack->notes;			//Point conductor to this link
+				curnote=curtrack->notes;				//Point conductor to this link
 			}
 			else
 			{
 				curnote->next=(struct dbNote *)temp;	//Conductor points forward to this link
-				curnote=curnote->next;				//Point conductor to this link
+				curnote=curnote->next;					//Point conductor to this link
 			}
 
 		//Initialize note link
 			curnote->chartpos=A;	//The first number read is the chart position
 
-			if(!notetype)	//This was a note definition
+			if(!notetype)				//This was a note definition
 				curnote->gemcolor=B;	//The second number read is the gem color
-			else			//This was a section marker
+			else						//This was a player section marker
 			{
-				if(B > 2)	//Only values of 0, 1 or 2 are valid for section markers
+				if(B > 2)							//Only values of 0, 1 or 2 are valid for player section markers
 				{
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 					if(error)
 						*error=29;
-					return NULL;
+					return NULL;					//Invalid player section marker, return error
 				}
 				curnote->gemcolor='0'+B;	//Store 0 as '0', 1 as '1' or 2 as '2'
 			}
-			curnote->duration=C;	//The third number read is the note duration
+			curnote->duration=C;			//The third number read is the note duration
 		}
 
 	//Error: Content in file outside of a defined section
@@ -1156,7 +1156,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 			DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 			if(error)
 				*error=29;
-			return NULL;
+			return NULL;					//Malformed file, return error
 		}
 
 		fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
