@@ -1943,7 +1943,7 @@ void EnumeratedBChartInfo(struct FeedbackChart *chart)
 		chartinfo=ResizedAppend(chartinfo,"\nMusicStream: ",1);
 		chartinfo=ResizedAppend(chartinfo,chart->audiofile,1);
 	}
-	printflen=printf("\nOffset: %.3f",chart->offset)+1;	//Find the number of characters needed to sprintf this string
+	printflen=snprintf(NULL,0,"\nOffset: %.3f",chart->offset)+1;	//Find the number of characters needed to sprintf this string
 	if(printflen > 0)
 	{
 		tempstr=malloc_err(printflen);
@@ -1951,7 +1951,7 @@ void EnumeratedBChartInfo(struct FeedbackChart *chart)
 		chartinfo=ResizedAppend(chartinfo,tempstr,1);
 		free(tempstr);
 	}
-	printflen=printf("\nResolution: %lu",chart->resolution)+1;	//Find the number of characters needed to sprintf this string
+	printflen=snprintf(NULL,0,"\nResolution: %lu",chart->resolution)+1;	//Find the number of characters needed to sprintf this string
 	if(printflen > 0)
 	{
 		tempstr=malloc_err(printflen);
@@ -1959,7 +1959,7 @@ void EnumeratedBChartInfo(struct FeedbackChart *chart)
 		chartinfo=ResizedAppend(chartinfo,tempstr,1);
 		free(tempstr);
 	}
-	printflen=printf("\n%lu Instrument tracks loaded",chart->tracksloaded)+1;	//Find the number of characters needed to sprintf this string
+	printflen=snprintf(NULL,0,"\n%lu Instrument tracks loaded",chart->tracksloaded)+1;	//Find the number of characters needed to sprintf this string
 	if(printflen > 0)
 	{
 		tempstr=malloc_err(printflen);
