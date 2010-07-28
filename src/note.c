@@ -109,13 +109,10 @@ void eof_note_draw(EOF_NOTE * np, int p)
 	int ychart[5] = {20, 40, 60, 80, 100};
 	int pcol = p == 1 ? makecol(255, 255, 255) : p == 2 ? makecol(224, 255, 224) : 0;
 	int dcol = (np->flags & EOF_NOTE_FLAG_CRAZY) ? makecol(0, 0, 0) : makecol(255, 255, 255);
-	int ncol = 0;
-
-	if(p == 3)
-	{
-		pcol = eof_color_white;
-		dcol = eof_color_white;
-	}
+	int colors[EOF_MAX_FRETS] = {eof_color_green,eof_color_red,eof_color_yellow,eof_color_blue,eof_color_purple};	//Each of the fret colors
+	int ncol = makecol(192, 192, 192);	//Note color defaults to silver unless the note is not star power
+	int ctr;
+	unsigned int mask;	//Used to mask out colors in the for loop
 
 	if(eof_inverted_notes)
 	{
@@ -143,190 +140,53 @@ void eof_note_draw(EOF_NOTE * np, int p)
 		npos = 20 - ((pos - 300)) + np->pos / eof_zoom;
 	}
 
-	if(np->flags & EOF_NOTE_FLAG_SP)
-	{
-		ncol = makecol(192, 192, 192);
-	}
+	vline(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.note_marker_size, makecol(128, 128, 128));
 	if(p == 3)
 	{
-		vline(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.note_marker_size, makecol(128, 128, 128));
-		if(np->note & 1)
-		{
-			if(!(np->flags & EOF_NOTE_FLAG_SP))
+		pcol = eof_color_white;
+		dcol = eof_color_white;
+		for(ctr=0,mask=1;ctr<EOF_MAX_FRETS;ctr++,mask=mask<<1)
+		{	//Render for each of the available fret colors
+			if(np->note & mask)
 			{
-				ncol = eof_color_green;
+				if(!(np->flags & EOF_NOTE_FLAG_SP))
+				{	//If the note is not star power
+					ncol = colors[ctr];	//Assign the appropriate fret color
+				}
+				rectfill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, ncol);
+				rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, pcol);
+				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_size, ncol);
+				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_dot_size, dcol);
+				circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_size, pcol);
 			}
-			rectfill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0] + eof_screen_layout.note_tail_size, ncol);
-			rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0] + eof_screen_layout.note_tail_size, pcol);
-			circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0], eof_screen_layout.note_size, ncol);
-			circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0], eof_screen_layout.note_dot_size, dcol);
-			circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0], eof_screen_layout.note_size, pcol);
-		}
-		else if(eof_hover_note >= 0)
-		{
-			rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0] + eof_screen_layout.note_tail_size, eof_color_gray);
-			circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0], eof_screen_layout.note_size, eof_color_gray);
-		}
-		if(np->note & 2)
-		{
-			if(!(np->flags & EOF_NOTE_FLAG_SP))
+			else if(eof_hover_note >= 0)
 			{
-				ncol = eof_color_red;
+				rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, eof_color_gray);
+				circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_size, eof_color_gray);
 			}
-			rectfill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1] + eof_screen_layout.note_tail_size, ncol);
-			rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1] + eof_screen_layout.note_tail_size, pcol);
-			circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1], eof_screen_layout.note_size, ncol);
-			circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1], eof_screen_layout.note_dot_size, dcol);
-			circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1], eof_screen_layout.note_size, pcol);
-		}
-		else if(eof_hover_note >= 0)
-		{
-			rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1] + eof_screen_layout.note_tail_size, eof_color_gray);
-			circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1], eof_screen_layout.note_size, eof_color_gray);
-		}
-		if(np->note & 4)
-		{
-			if(!(np->flags & EOF_NOTE_FLAG_SP))
-			{
-				ncol = eof_color_yellow;
-			}
-			rectfill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2] + eof_screen_layout.note_tail_size, ncol);
-			rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2] + eof_screen_layout.note_tail_size, pcol);
-			circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2], eof_screen_layout.note_size, ncol);
-			circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2], eof_screen_layout.note_dot_size, dcol);
-			circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2], eof_screen_layout.note_size, pcol);
-		}
-		else if(eof_hover_note >= 0)
-		{
-			rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2] + eof_screen_layout.note_tail_size, eof_color_gray);
-			circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2], eof_screen_layout.note_size, eof_color_gray);
-		}
-		if(np->note & 8)
-		{
-			if(!(np->flags & EOF_NOTE_FLAG_SP))
-			{
-				ncol = eof_color_blue;
-			}
-			rectfill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3] + eof_screen_layout.note_tail_size, ncol);
-			rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3] + eof_screen_layout.note_tail_size, pcol);
-			circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3], eof_screen_layout.note_size, ncol);
-			circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3], eof_screen_layout.note_dot_size, dcol);
-			circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3], eof_screen_layout.note_size, pcol);
-		}
-		else if(eof_hover_note >= 0)
-		{
-			rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3] + eof_screen_layout.note_tail_size, eof_color_gray);
-			circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3], eof_screen_layout.note_size, eof_color_gray);
-		}
-		if(np->note & 16)
-		{
-			if(!(np->flags & EOF_NOTE_FLAG_SP))
-			{
-				ncol = eof_color_purple;
-			}
-			rectfill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4] + eof_screen_layout.note_tail_size, ncol);
-			rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4] + eof_screen_layout.note_tail_size, pcol);
-			circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4], eof_screen_layout.note_size, ncol);
-			circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4], eof_screen_layout.note_dot_size, dcol);
-			circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4], eof_screen_layout.note_size, pcol);
-		}
-		else if(eof_hover_note >= 0)
-		{
-			rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4] + eof_screen_layout.note_tail_size, eof_color_gray);
-			circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4], eof_screen_layout.note_size, eof_color_gray);
 		}
 	}
 	else
 	{
-		vline(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.note_marker_size, makecol(128, 128, 128));
-		if(np->note & 1)
-		{
-			if(!(np->flags & EOF_NOTE_FLAG_SP))
+		for(ctr=0,mask=1;ctr<EOF_MAX_FRETS;ctr++,mask=mask<<1)
+		{	//Render for each of the available fret colors
+			if(np->note & mask)
 			{
-				ncol = eof_color_green;
-			}
-			rectfill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0] + eof_screen_layout.note_tail_size, ncol);
-			if(p)
-			{
-				rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0] + eof_screen_layout.note_tail_size, pcol);
-			}
-			circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0], eof_screen_layout.note_size, ncol);
-			circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0], eof_screen_layout.note_dot_size, dcol);
-			if(p)
-			{
-				circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0], eof_screen_layout.note_size, pcol);
-			}
-		}
-		if(np->note & 2)
-		{
-			if(!(np->flags & EOF_NOTE_FLAG_SP))
-			{
-				ncol = eof_color_red;
-			}
-			rectfill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1] + eof_screen_layout.note_tail_size, ncol);
-			if(p)
-			{
-				rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1] + eof_screen_layout.note_tail_size, pcol);
-			}
-			circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1], eof_screen_layout.note_size, ncol);
-			circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1], eof_screen_layout.note_dot_size, dcol);
-			if(p)
-			{
-				circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1], eof_screen_layout.note_size, pcol);
-			}
-		}
-		if(np->note & 4)
-		{
-			if(!(np->flags & EOF_NOTE_FLAG_SP))
-			{
-				ncol = eof_color_yellow;
-			}
-			rectfill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2] + eof_screen_layout.note_tail_size, ncol);
-			if(p)
-			{
-				rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2] + eof_screen_layout.note_tail_size, pcol);
-			}
-			circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2], eof_screen_layout.note_size, ncol);
-			circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2], eof_screen_layout.note_dot_size, dcol);
-			if(p)
-			{
-				circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2], eof_screen_layout.note_size, pcol);
-			}
-		}
-		if(np->note & 8)
-		{
-			if(!(np->flags & EOF_NOTE_FLAG_SP))
-			{
-				ncol = eof_color_blue;
-			}
-			rectfill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3] + eof_screen_layout.note_tail_size, ncol);
-			if(p)
-			{
-				rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3] + eof_screen_layout.note_tail_size, pcol);
-			}
-			circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3], eof_screen_layout.note_size, ncol);
-			circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3], eof_screen_layout.note_dot_size, dcol);
-			if(p)
-			{
-				circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3], eof_screen_layout.note_size, pcol);
-			}
-		}
-		if(np->note & 16)
-		{
-			if(!(np->flags & EOF_NOTE_FLAG_SP))
-			{
-				ncol = eof_color_purple;
-			}
-			rectfill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4] + eof_screen_layout.note_tail_size, ncol);
-			if(p)
-			{
-				rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4] + eof_screen_layout.note_tail_size, pcol);
-			}
-			circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4], eof_screen_layout.note_size, ncol);
-			circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4], eof_screen_layout.note_dot_size, dcol);
-			if(p)
-			{
-				circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4], eof_screen_layout.note_size, pcol);
+				if(!(np->flags & EOF_NOTE_FLAG_SP))
+				{	//If the note is not star power
+					ncol = colors[ctr];	//Assign the appropriate fret color
+				}
+				rectfill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, ncol);
+				if(p)
+				{
+					rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, pcol);
+				}
+				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_size, ncol);
+				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_dot_size, dcol);
+				if(p)
+				{
+					circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_size, pcol);
+				}
 			}
 		}
 	}
