@@ -14,9 +14,22 @@ void eof_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, int 
 //void eof_detect_notes(void);	//Undefined function
 int eof_adjust_notes(int offset);	//Applies the given additive offset to all notes, lyrics, bookmarks, catalog entries and solo/star power/lyric phrases
 void eof_note_draw(EOF_NOTE * np, int p);	//Renders the note to the piano roll area
+int eof_note_draw_quick(EOF_NOTE * np, int p);
+	//Renders the note to the piano roll area, unless it would be outside the viewable area
+	//If the note is 100% clipped, nonzero is returned
+	//-1 Clipped completely to the left of the viewing window
+	//1 Clipped completely to the right of the viewing window
 void eof_lyric_draw(EOF_LYRIC * np, int p);	//Renders the lyric to the piano roll area
-void eof_note_draw_3d(EOF_NOTE * np, int p);	//Renders the note to the 3D preview area
-int eof_note_tail_draw_3d(EOF_NOTE * np, int p);	//Renders the note's tail to the 3D preview area
+int eof_note_draw_3d(EOF_NOTE * np, int p);
+	//Renders the note to the 3D preview area
+	//If the note is 100% clipped, nonzero is returned
+	//-1 Clipped completely before the viewing window
+	//1 Clipped completely after the viewing window
+int eof_note_tail_draw_3d(EOF_NOTE * np, int p);
+	//Renders the note's tail to the 3D preview area
+	//If the note is 100% clipped, nonzero is returned
+	//-1 Clipped completely before the viewing window
+	//1 Clipped completely after of the viewing window
 void eof_note_draw_catalog(EOF_NOTE * np, int p);	//Renders the note to the fret catalog area
 void eof_lyric_draw_catalog(EOF_LYRIC * np, int p);	//Renders the lyric to the fret catalog area
 
