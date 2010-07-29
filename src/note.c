@@ -192,6 +192,105 @@ void eof_note_draw(EOF_NOTE * np, int p)
 	}
 }
 
+int eof_note_draw_quick(EOF_NOTE * np, int p)
+{
+	int pos = eof_music_pos / eof_zoom;
+	int npos;
+	int ychart[5] = {20, 40, 60, 80, 100};
+	int pcol = p == 1 ? makecol(255, 255, 255) : p == 2 ? makecol(224, 255, 224) : 0;
+	int dcol = (np->flags & EOF_NOTE_FLAG_CRAZY) ? makecol(0, 0, 0) : makecol(255, 255, 255);
+	int colors[EOF_MAX_FRETS] = {eof_color_green,eof_color_red,eof_color_yellow,eof_color_blue,eof_color_purple};	//Each of the fret colors
+	int ncol = makecol(192, 192, 192);	//Note color defaults to silver unless the note is not star power
+	int ctr;
+	unsigned int mask;	//Used to mask out colors in the for loop
+
+	if(eof_inverted_notes)
+	{
+		ychart[0] = eof_screen_layout.note_y[4];
+		ychart[1] = eof_screen_layout.note_y[3];
+		ychart[2] = eof_screen_layout.note_y[2];
+		ychart[3] = eof_screen_layout.note_y[1];
+		ychart[4] = eof_screen_layout.note_y[0];
+	}
+	else
+	{
+		ychart[0] = eof_screen_layout.note_y[0];
+		ychart[1] = eof_screen_layout.note_y[1];
+		ychart[2] = eof_screen_layout.note_y[2];
+		ychart[3] = eof_screen_layout.note_y[3];
+		ychart[4] = eof_screen_layout.note_y[4];
+	}
+
+	if(pos < 300)
+	{
+		npos = 20 + (np->pos) / eof_zoom;
+	}
+	else
+	{
+		npos = 20 - ((pos - 300)) + np->pos / eof_zoom;
+	}
+
+//Determine if the entire note would clip.  If so, return without attempting to render
+	if(npos - eof_screen_layout.note_size > eof_window_editor->screen->w)	//If the note would render entirely to the right of the visible area
+		return 1;	//Return status:  Clipping to the right of the viewing window
+
+	if((npos < 0) && (npos + np->length / eof_zoom < 0))	//If the note and its tail would render entirely to the left of the visible area
+		return -1;	//Return status:  Clipping to the left of the viewing window
+
+	vline(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.note_marker_size, makecol(128, 128, 128));
+	if(p == 3)
+	{
+		pcol = eof_color_white;
+		dcol = eof_color_white;
+		for(ctr=0,mask=1;ctr<EOF_MAX_FRETS;ctr++,mask=mask<<1)
+		{	//Render for each of the available fret colors
+			if(np->note & mask)
+			{
+				if(!(np->flags & EOF_NOTE_FLAG_SP))
+				{	//If the note is not star power
+					ncol = colors[ctr];	//Assign the appropriate fret color
+				}
+				rectfill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, ncol);
+				rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, pcol);
+				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_size, ncol);
+				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_dot_size, dcol);
+				circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_size, pcol);
+			}
+			else if(eof_hover_note >= 0)
+			{
+				rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, eof_color_gray);
+				circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_size, eof_color_gray);
+			}
+		}
+	}
+	else
+	{
+		for(ctr=0,mask=1;ctr<EOF_MAX_FRETS;ctr++,mask=mask<<1)
+		{	//Render for each of the available fret colors
+			if(np->note & mask)
+			{
+				if(!(np->flags & EOF_NOTE_FLAG_SP))
+				{	//If the note is not star power
+					ncol = colors[ctr];	//Assign the appropriate fret color
+				}
+				rectfill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, ncol);
+				if(p)
+				{
+					rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, pcol);
+				}
+				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_size, ncol);
+				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_dot_size, dcol);
+				if(p)
+				{
+					circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_size, pcol);
+				}
+			}
+		}
+	}
+
+	return 0;	//Return status:  Note was not clipped in its entirety
+}
+
 void eof_lyric_draw(EOF_LYRIC * np, int p)
 {
 	int pos = eof_music_pos / eof_zoom;
@@ -414,7 +513,7 @@ int eof_lyric_draw_truncate(int notenum, int p)
 		return 0;
 }
 
-void eof_note_draw_3d(EOF_NOTE * np, int p)
+int eof_note_draw_3d(EOF_NOTE * np, int p)
 {
 	int pos = eof_music_pos / eof_zoom_3d;
 	int npos;
@@ -430,9 +529,13 @@ void eof_note_draw_3d(EOF_NOTE * np, int p)
 	unsigned int hopo_notes_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_HGREEN_HIT, EOF_IMAGE_NOTE_HRED_HIT, EOF_IMAGE_NOTE_HYELLOW_HIT, EOF_IMAGE_NOTE_HBLUE_HIT, EOF_IMAGE_NOTE_HPURPLE_HIT};
 
 	npos = -pos - 6 + np->pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
-	if((npos + np->length / eof_zoom_3d < -100) || (npos > 600))
-	{
-		return;
+	if(npos + np->length / eof_zoom_3d < -100)
+	{				//If the note would render entirely before the visible area
+		return -1;	//Return status:  Clipping before the viewing window
+	}
+	else if(npos > 600)
+	{				//If the note would render entirely after the visible area
+		return 1;	//Return status:  Clipping after the viewing window
 	}
 	if(eof_selected_track == EOF_TRACK_DRUM)
 	{
@@ -505,6 +608,8 @@ void eof_note_draw_3d(EOF_NOTE * np, int p)
 			}
 		}
 	}
+
+	return 0;	//Return status:  Note was not clipped in its entirety
 }
 
 int eof_note_tail_draw_3d(EOF_NOTE * np, int p)
@@ -515,15 +620,6 @@ int eof_note_tail_draw_3d(EOF_NOTE * np, int p)
 	int point[8];
 	int rz, ez;
 
-	if(eof_lefty_mode)
-	{
-		xchart[0] = 48 + 56 * 4;
-		xchart[1] = 48 + 56 * 3;
-		xchart[2] = 48 + 56 * 2;
-		xchart[3] = 48 + 56;
-		xchart[4] = 48;
-	}
-
 	npos = -pos - 6 + np->pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
 	if(npos + np->length / eof_zoom_3d < -100)
 	{
@@ -533,6 +629,16 @@ int eof_note_tail_draw_3d(EOF_NOTE * np, int p)
 	{
 		return 1;
 	}
+
+	if(eof_lefty_mode)
+	{
+		xchart[0] = 48 + 56 * 4;
+		xchart[1] = 48 + 56 * 3;
+		xchart[2] = 48 + 56 * 2;
+		xchart[3] = 48 + 56;
+		xchart[4] = 48;
+	}
+
 	if(eof_selected_track != EOF_TRACK_DRUM)
 	{
 		if(np->note & 1)

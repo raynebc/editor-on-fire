@@ -2290,15 +2290,20 @@ void eof_render_3d_window(void)
 	/* draw the position marker */
 	line(eof_window_3d->screen, ocd3d_project_x(48, 0), ocd3d_project_y(200, 0), ocd3d_project_x(48 + 4 * 56, 0), ocd3d_project_y(200, 0), eof_color_green);
 
-	int first_note = -1;
-	int last_note = 0;
+//	int first_note = -1;	//Used for debugging
+//	int last_note = 0;
 	int tr;
-	/* draw the note tails */
+	/* draw the note tails and notes */
 	for(i = eof_song->track[eof_selected_track]->notes - 1; i >= 0; i--)
-	{
+	{	//Render 3D notes from last to first so that the earlier notes are in front
 		if(eof_note_type == eof_song->track[eof_selected_track]->note[i]->type)
 		{
 			tr = eof_note_tail_draw_3d(eof_song->track[eof_selected_track]->note[i], (eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0);
+			eof_note_draw_3d(eof_song->track[eof_selected_track]->note[i], (eof_selection.track == eof_selected_track && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0);
+
+			if(tr < 0)	//if eof_note_tail_draw_3d skipped rendering the tail because it renders before the visible area
+				break;	//Stop rendering 3d notes
+/*	Used for debugging
 			if(tr == 0)
 			{
 				if(first_note < 0)
@@ -2314,18 +2319,11 @@ void eof_render_3d_window(void)
 					break;
 				}
 			}
+*/
 		}
 	}
 //	allegro_message("first = %d\nlast = %d", first_note, last_note);
 
-	/* draw the notes */
-	for(i = first_note; i >= last_note; i--)
-	{
-		if(eof_note_type == eof_song->track[eof_selected_track]->note[i]->type)
-		{
-			eof_note_draw_3d(eof_song->track[eof_selected_track]->note[i], (eof_selection.track == eof_selected_track && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0);
-		}
-	}
 	eof_render_lyric_preview(eof_window_3d->screen);
 
 	rect(eof_window_3d->screen, 0, 0, eof_window_3d->w - 1, eof_window_3d->h - 1, makecol(160, 160, 160));

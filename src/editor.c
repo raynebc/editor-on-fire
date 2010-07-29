@@ -4696,7 +4696,7 @@ void eof_render_editor_window(void)
 		}
 
 		for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
-		{
+		{	//Render all notes in the list
 			if(eof_note_type == eof_song->track[eof_selected_track]->note[i]->type)
 			{
 				if(((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX)) && eof_music_paused)
@@ -4707,12 +4707,14 @@ void eof_render_editor_window(void)
 					}
 					else
 					{
-						eof_note_draw(eof_song->track[eof_selected_track]->note[i], ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0);
+						if(eof_note_draw_quick(eof_song->track[eof_selected_track]->note[i], ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0) == 1)
+							break;	//If this note was rendered right of the viewable area, all following notes will too, so stop rendering
 					}
 				}
 				else
 				{
-					eof_note_draw(eof_song->track[eof_selected_track]->note[i], ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0);
+					if(eof_note_draw_quick(eof_song->track[eof_selected_track]->note[i], ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0) == 1)
+							break;	//If this note was rendered right of the viewable area, all following notes will too, so stop rendering
 				}
 			}
 		}
