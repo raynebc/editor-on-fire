@@ -1,0 +1,70 @@
+#summary Instructions for building EOF from source in a Unix/Linux environment.
+
+= Introduction =
+
+The Unix/Linux instructions should be similar to the building for Windows instructions, so I'm just removing some of the parts I know are not necessary.  If anybody finds any discrepancies between this information and what they actually end up doing to build in Unix/Linux, please let us know.  EOF binaries are not distributed for Unix/Linux, so you have to build it from source
+
+Note:  Certain new Linux distributions use Pulse Audio, which messes up the ability of Allegro to use the ALSA sound driver.  If this is preventing sound from working once you build the program, the only workarounds we currently know of are for you to remove the Pulse Audio packages or try another Unix/Linux distro.  Unfortunately, how Operating Systems handle their drivers and how Allegro developers work around such problems are out of our control.
+
+
+= Details =
+
+==Building Allegro:==
+First, you need to build Allegro itself, along with some other dependencies that EOF needs.  This procedure should work with version 4.4.1.1 of Allegro.  To build EOF from source, you will need:
+  # The standard GCC compiler, should be readily available in any Unix/Linux OS
+  # Allegro source (download from http://alleg.sourceforge.net/wip.html)
+  # zlib and libpng (download from http://tjaden.strangesoft.net/loadpng/mingw.html)
+  # libogg and libvorbis Vorbis packages (download from http://xiph.org/downloads)
+  # CMake (download from http://www.cmake.org/, unless your OS has it already)
+
+Get the zlib and libpng packages (http://tjaden.strangesoft.net/loadpng/mingw.html).  Make sure they install to your MinGW installation directory and NOT to a subfolder, otherwise the source files won't get stored in the right folders and Allegro's CMake will not find them.
+
+Get the libogg and libvorbis Vorbis libraries (http://xiph.org/downloads).  Extract each someplace WITHOUT spaces in the folder path and then build each.  Libogg has to be built first.  If you extracted libogg to /libogg, launch MSYS, change to the right directory with:
+	cd /libogg
+Run the configure script.  In the building for Windows instructions, you had to specify the path to the MinGW installation.  I don't know if that's necessary for Unix/Linux.  In case that it's not necessary, just do:
+	./configure
+Then run this command in the same directory:
+	make
+And this command in the same directory:
+	make install
+If you used the prefix correctly in the call to the configure script above, libogg will be properly built and the library files will be correctly copied to your compiler's appropriate directory.  Change directory to the extracted libvorbis files, for example:
+	cd /libvorbis
+And run the same three commands in the same order:
+	./configure
+	make
+	make install
+
+Get CMake (http://www.cmake.org) and install it if your OS doesn't have it already.
+
+Get Allegro's source (http://alleg.sourceforge.net/wip.html) and extract it someplace easy to get to (such as the root of a filesystem, such as /allegro).  Open a command shell, change to the Allegro/build directory, ie:
+	cd /allegro/build
+Run CMake to create the appropriate makefiles and ensure dependencies are accounted for:
+	cmake ..
+Do include the two periods at the end, which refer cmake to the "CMakeLists.txt" file in the parent folder (/allegro).  This should create the files necessary in the build folder to build Allegro itself with make after this step is completed.  If you had tried to cmake Allegro before putting all of these dependencies in place, delete your "CMakeCache.txt" file and try cmake again.  If this CMakeCache.txt file is in the allegro folder, make sure it's deleted, or else CMake won't put the files in the /build folder.  If you installed zlib and libpng to the correct directory, and built the vorbis files correctly, you should see that it says it found ZLIB, PNG and VORBIS among the other libraries that come with Allegro.
+
+Now Allegro can be built.  While still in Allegro's /build directory, run these commands:
+	make
+	install
+
+*Note:*
+Some earlier versions of Allegro (ie. version 4.22) had some strange problems that would make Allegro fail to CMake and/or make.  Try the latest stable release, which fixes this problem.  Otherwise you may have to update part of the Allegro package (apparently binutils was the culprit).
+
+In case you find the above steps don't correctly allow Allegro to be built, please refer to Allegro's documentation for building in a Unix/Linux environment:
+http://alleg.sourceforge.net/stabledocs/en/build/linux.html
+http://alleg.sourceforge.net/stabledocs/en/build/unix.html
+http://alleg.sourceforge.net/stabledocs/en/build/cmake.html
+
+
+==Building EOF:==
+To build EOF, build Allegro and dependencies into the compiler's libraries.  If you are using Allegro 4.4, I've found that it may have a different name for the main dll file (alleg.dll).  If so, you may need to modify EOF's makefile so that the line that says "LIBS = -lalleg" is changed to reflect the correct name of the library (ie. "LIBS = -lalleg44.dll").  Before continuing, ensure that the folder containing the /src folder also contains a folder called "bin", or the make will fail.  To build EOF, change directory to EOF's /src folder and run "make -f makefile.linux"
+
+Copy all other resources (graphics, audio files, etc) from the source distrubution to the /bin folder, where the newly-built eof.exe should be.  The program should be ready to use.
+
+To build in an IDE instead, create a project and manually add the source files and settings from the makefile:
+Code::Blocks instructions, in Windows (other OSs will require some different steps):
+  # Create a new project, select console application, click Go.  Specify it as a C program.  Remove any default source files (main.c) that are added to the project automatically.
+  # Examine the makefile and for each reference to some file file.o, it means that you have to add the appropriate source file to the project (file.c), so it will compile to file.o.  Make sure to pay attention to the paths indicated for each of the object files given.  CodeBlocks will allow you to add all C files within a folder and its subfolders, but some of the example source files in some of the third party modules EOF uses have main() functions declared, so you'd need to remove them from the project or you will have problems during the build process.
+  # Include the file eof.rc to the project.  Code::Blocks should add this to a "Resources" folder in the project so that EOF's program icon can be properly set up.
+  # Open the project's build options, and for the top item listed in the Project build options (should apply to any build targets you created for the project),
+  # Open Linker Settings.  Under "Other Linker Options", add "-lalleg44.dll -logg -lvorbisfile" without quotation marks.  Under "Search Directories", add the ".../alogg/include" (within /src directory in the EOF sources package)
+  # Go to Project Properties>Build Targets tab>Output Filename and ensure that you specify where the executable file is placed, otherwise it could end up in some unknown location.
