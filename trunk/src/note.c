@@ -422,6 +422,12 @@ void eof_note_draw_3d(EOF_NOTE * np, int p)
 	int bx = 48;
 	int point[8];
 	int rz, ez;
+	int ctr;
+	unsigned int mask;	//Used to mask out colors in the for loop
+	unsigned int notes[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN, EOF_IMAGE_NOTE_RED, EOF_IMAGE_NOTE_YELLOW, EOF_IMAGE_NOTE_BLUE, EOF_IMAGE_NOTE_PURPLE};
+	unsigned int notes_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN_HIT, EOF_IMAGE_NOTE_RED_HIT, EOF_IMAGE_NOTE_YELLOW_HIT, EOF_IMAGE_NOTE_BLUE_HIT, EOF_IMAGE_NOTE_PURPLE_HIT};
+	unsigned int hopo_notes[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_HGREEN, EOF_IMAGE_NOTE_HRED, EOF_IMAGE_NOTE_HYELLOW, EOF_IMAGE_NOTE_HBLUE, EOF_IMAGE_NOTE_HPURPLE};
+	unsigned int hopo_notes_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_HGREEN_HIT, EOF_IMAGE_NOTE_HRED_HIT, EOF_IMAGE_NOTE_HYELLOW_HIT, EOF_IMAGE_NOTE_HBLUE_HIT, EOF_IMAGE_NOTE_HPURPLE_HIT};
 
 	npos = -pos - 6 + np->pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
 	if((npos + np->length / eof_zoom_3d < -100) || (npos > 600))
@@ -452,21 +458,12 @@ void eof_note_draw_3d(EOF_NOTE * np, int p)
 			point[7] = ocd3d_project_y(200, rz);
 			polygon(eof_window_3d->screen, 4, point, p ? makecol(192, 255, 192) : eof_color_green);
 		}
-		if(np->note & 2)
-		{
-			ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_RED_HIT] : eof_image[EOF_IMAGE_NOTE_RED], xchart[0] - 24 + 28, 200 - 48, npos);
-		}
-		if(np->note & 4)
-		{
-			ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_YELLOW_HIT] : eof_image[EOF_IMAGE_NOTE_YELLOW], xchart[1] - 24 + 28, 200 - 48, npos);
-		}
-		if(np->note & 8)
-		{
-			ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_BLUE_HIT] : eof_image[EOF_IMAGE_NOTE_BLUE], xchart[2] - 24 + 28, 200 - 48, npos);
-		}
-		if(np->note & 16)
-		{
-			ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_PURPLE_HIT] : eof_image[EOF_IMAGE_NOTE_PURPLE], xchart[3] - 24 + 28, 200 - 48, npos);
+		for(ctr=1,mask=2;ctr<EOF_MAX_FRETS;ctr++,mask=mask<<1)
+		{	//Render for each of the available fret colors after 1 (bass drum)
+			if(np->note & mask)
+			{
+				ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[notes[ctr]] : eof_image[notes_hit[ctr]], xchart[ctr-1] - 24 + 28, 200 - 48, npos);
+			}
 		}
 	}
 	else
@@ -479,128 +476,31 @@ void eof_note_draw_3d(EOF_NOTE * np, int p)
 			xchart[3] = 48 + 56;
 			xchart[4] = 48;
 		}
-		if(np->note & 1)
-		{
-			if(np->flags & EOF_NOTE_FLAG_HOPO)
+		for(ctr=0,mask=1;ctr<EOF_MAX_FRETS;ctr++,mask=mask<<1)
+		{	//Render for each of the available fret colors
+			if(np->note & mask)
 			{
-				if(np->flags & EOF_NOTE_FLAG_SP)
-				{
-					ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_HWHITE_HIT] : eof_image[EOF_IMAGE_NOTE_HWHITE], xchart[0] - 24, 200 - 48, npos);
+				if(np->flags & EOF_NOTE_FLAG_HOPO)
+				{	//If this is a HOPO note
+					if(np->flags & EOF_NOTE_FLAG_SP)
+					{	//If this is also a SP note
+						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_HWHITE_HIT] : eof_image[EOF_IMAGE_NOTE_HWHITE], xchart[ctr] - 24, 200 - 48, npos);
+					}
+					else
+					{
+						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[hopo_notes_hit[ctr]] : eof_image[hopo_notes[ctr]], xchart[ctr] - 24, 200 - 48, npos);
+					}
 				}
 				else
 				{
-					ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_HGREEN_HIT] : eof_image[EOF_IMAGE_NOTE_HGREEN], xchart[0] - 24, 200 - 48, npos);
-				}
-			}
-			else
-			{
-				if(np->flags & EOF_NOTE_FLAG_SP)
-				{
-					ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_WHITE_HIT] : eof_image[EOF_IMAGE_NOTE_WHITE], xchart[0] - 24, 200 - 48, npos);
-				}
-				else
-				{
-					ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_GREEN_HIT] : eof_image[EOF_IMAGE_NOTE_GREEN], xchart[0] - 24, 200 - 48, npos);
-				}
-			}
-		}
-		if(np->note & 2)
-		{
-			if(np->flags & EOF_NOTE_FLAG_HOPO)
-			{
-				if(np->flags & EOF_NOTE_FLAG_SP)
-				{
-					ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_HWHITE_HIT] : eof_image[EOF_IMAGE_NOTE_HWHITE], xchart[1] - 24, 200 - 48, npos);
-				}
-				else
-				{
-					ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_HRED_HIT] : eof_image[EOF_IMAGE_NOTE_HRED], xchart[1] - 24, 200 - 48, npos);
-				}
-			}
-			else
-			{
-				if(np->flags & EOF_NOTE_FLAG_SP)
-				{
-					ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_WHITE_HIT] : eof_image[EOF_IMAGE_NOTE_WHITE], xchart[1] - 24, 200 - 48, npos);
-				}
-				else
-				{
-					ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_RED_HIT] : eof_image[EOF_IMAGE_NOTE_RED], xchart[1] - 24, 200 - 48, npos);
-				}
-			}
-		}
-		if(np->note & 4)
-		{
-			if(np->flags & EOF_NOTE_FLAG_HOPO)
-			{
-				if(np->flags & EOF_NOTE_FLAG_SP)
-				{
-					ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_HWHITE_HIT] : eof_image[EOF_IMAGE_NOTE_HWHITE], xchart[2] - 24, 200 - 48, npos);
-				}
-				else
-				{
-					ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_HYELLOW_HIT] : eof_image[EOF_IMAGE_NOTE_HYELLOW], xchart[2] - 24, 200 - 48, npos);
-				}
-			}
-			else
-			{
-				if(np->flags & EOF_NOTE_FLAG_SP)
-				{
-					ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_WHITE_HIT] : eof_image[EOF_IMAGE_NOTE_WHITE], xchart[2] - 24, 200 - 48, npos);
-				}
-				else
-				{
-					ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_YELLOW_HIT] : eof_image[EOF_IMAGE_NOTE_YELLOW], xchart[2] - 24, 200 - 48, npos);
-				}
-			}
-		}
-		if(np->note & 8)
-		{
-			if(np->flags & EOF_NOTE_FLAG_HOPO)
-			{
-				if(np->flags & EOF_NOTE_FLAG_SP)
-				{
-					ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_HWHITE_HIT] : eof_image[EOF_IMAGE_NOTE_HWHITE], xchart[3] - 24, 200 - 48, npos);
-				}
-				else
-				{
-					ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_HBLUE_HIT] : eof_image[EOF_IMAGE_NOTE_HBLUE], xchart[3] - 24, 200 - 48, npos);
-				}
-			}
-			else
-			{
-				if(np->flags & EOF_NOTE_FLAG_SP)
-				{
-					ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_WHITE_HIT] : eof_image[EOF_IMAGE_NOTE_WHITE], xchart[3] - 24, 200 - 48, npos);
-				}
-				else
-				{
-					ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_BLUE_HIT] : eof_image[EOF_IMAGE_NOTE_BLUE], xchart[3] - 24, 200 - 48, npos);
-				}
-			}
-		}
-		if(np->note & 16)
-		{
-			if(np->flags & EOF_NOTE_FLAG_HOPO)
-			{
-				if(np->flags & EOF_NOTE_FLAG_SP)
-				{
-					ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_HWHITE_HIT] : eof_image[EOF_IMAGE_NOTE_HWHITE], xchart[4] - 24, 200 - 48, npos);
-				}
-				else
-				{
-					ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_HPURPLE_HIT] : eof_image[EOF_IMAGE_NOTE_HPURPLE], xchart[4] - 24, 200 - 48, npos);
-				}
-			}
-			else
-			{
-				if(np->flags & EOF_NOTE_FLAG_SP)
-				{
-					ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_WHITE_HIT] : eof_image[EOF_IMAGE_NOTE_WHITE], xchart[4] - 24, 200 - 48, npos);
-				}
-				else
-				{
-					ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_PURPLE_HIT] : eof_image[EOF_IMAGE_NOTE_PURPLE], xchart[4] - 24, 200 - 48, npos);
+					if(np->flags & EOF_NOTE_FLAG_SP)
+					{	//If this is an SP note
+						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_WHITE_HIT] : eof_image[EOF_IMAGE_NOTE_WHITE], xchart[ctr] - 24, 200 - 48, npos);
+					}
+					else
+					{
+						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[notes_hit[ctr]] : eof_image[notes[ctr]], xchart[ctr] - 24, 200 - 48, npos);
+					}
 				}
 			}
 		}
