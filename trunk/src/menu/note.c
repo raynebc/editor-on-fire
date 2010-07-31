@@ -774,7 +774,7 @@ int eof_menu_note_toggle_crazy(void)
 	int i;
 	int u = 0;
 
-	if((eof_selected_track == EOF_TRACK_DRUM) || (eof_selected_track == eof_vocals_selected))
+	if((eof_selected_track == EOF_TRACK_DRUM) || eof_vocals_selected)
 		return 1;	//Do not allow this function to run when PART DRUMS or PART VOCALS is active
 
 	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
