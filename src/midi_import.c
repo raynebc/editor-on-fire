@@ -1269,6 +1269,10 @@ EOF_SONG * eof_import_midi(const char * fn)
 		{
 			if(eof_import_bpm_events->event[i]->type == 0x51)
 			{
+				//Before processing this Set Tempo event, ensure that the next tempo event is not at the same delta time
+				if((i + 1 < eof_import_bpm_events->events) && (eof_import_bpm_events->event[i]->pos == eof_import_bpm_events->event[i+1]->pos))
+					continue;	//If there is another tempo change after this, and it is at the same delta time, skip this tempo change
+
 				eof_song_add_beat(sp);
 				sp->beat[sp->beats - 1]->pos = eof_import_midi_to_eof(sp->tags->ogg[0].midi_offset, eof_import_bpm_events->event[i]->pos);
 				sp->beat[sp->beats - 1]->fpos = sp->beat[sp->beats - 1]->pos;
