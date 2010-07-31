@@ -330,7 +330,7 @@ int eof_figure_part(void);	//Returns the active track number, or -1 if the activ
 int d_hackish_edit_proc (int msg, DIALOG *d, int c);
 int eof_set_display_mode(int mode);
 void eof_debug_message(char * text);
-void eof_determine_hopos(void);
+void eof_determine_hopos(void);	//Re-applies the HOPO and SP status of each note in the selected track, as well as deleting empty SP and Solo phrases
 void eof_fix_window_title(void);
 int eof_load_ogg_quick(char * filename);
 int eof_load_ogg(char * filename);
@@ -345,5 +345,6 @@ char * eof_get_tone_name(int tone);	//Returns the name of the given note number 
 void eof_process_midi_queue(int currentpos);	//Process the MIDI queue based on the current chart timestamp (eof_music_pos)
 int eof_midi_queue_add(unsigned char note,int startpos,int endpos);	//Appends the Note On/Off data to the MIDI queue
 void eof_midi_queue_destroy(void);	//Destroys the MIDI queue
+void eof_exit(void);
 
 #endif
