@@ -285,7 +285,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	int offset_used = 0;
 	unsigned long ppqn;
 
-	double accumulator = 0.0;
 	double ddelta;
 	double vbpm = (double)60000000.0 / (double)sp->beat[0]->ppqn;
 	double tpm = 60.0;
@@ -307,27 +306,27 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			{
 				switch(sp->track[j]->note[i]->type)
 				{
-					case EOF_NOTE_AMAZING:
+					case EOF_NOTE_AMAZING:	//notes 96-100
 					{
 						midi_note_offset = 0x60;
 						break;
 					}
-					case EOF_NOTE_MEDIUM:
+					case EOF_NOTE_MEDIUM:	//notes 84-88
 					{
 						midi_note_offset = 0x54;
 						break;
 					}
-					case EOF_NOTE_EASY:
+					case EOF_NOTE_EASY:		//notes 72-76
 					{
 						midi_note_offset = 0x48;
 						break;
 					}
-					case EOF_NOTE_SUPAEASY:
+					case EOF_NOTE_SUPAEASY:	//notes 60-64
 					{
 						midi_note_offset = 0x3C;
 						break;
 					}
-					case EOF_NOTE_SPECIAL:
+					case EOF_NOTE_SPECIAL:	//BRE/drum fill: notes 120-124
 					{
 						midi_note_offset = 120;
 						break;
@@ -456,13 +455,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			for(i = 0; i < eof_midi_events; i++)
 			{
 				ddelta = eof_calculate_delta(last_pos, eof_midi_event[i]->pos);
-				delta = ddelta;
-				accumulator += (ddelta - (double)delta);
-				if(accumulator > 1.0)
-				{
-					delta += 1;
-					accumulator -= 1.0;
-				}
+				delta = ddelta + 0.5;	//Round up to nearest delta
 
 				last_pos = eof_midi_event[i]->pos;
 //				vel = eof_midi_event[i]->type == 0x80 ? 0x40 : 0x64;
@@ -534,13 +527,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		for(i = 0; i < eof_midi_events; i++)
 		{
 			ddelta = eof_calculate_delta(last_pos, eof_midi_event[i]->pos);
-			delta = ddelta;
-			accumulator += (ddelta - (double)delta);
-			if(accumulator > 1.0)
-			{
-				delta += 1;
-				accumulator -= 1.0;
-			}
+			delta = ddelta + 0.5;	//Round up to nearest delta
 
 			last_pos = eof_midi_event[i]->pos;
 			vel = 0x64;
@@ -578,7 +565,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	last_pos = sp->tags->ogg[eof_selected_ogg].midi_offset;
 	last_fpos = last_pos;
 	offset_used = 0;
-	accumulator = 0.0;
 	ppqn = 1;
 	for(i = 0; i < sp->beats; i++)
 	{
@@ -588,13 +574,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		{
 			vbpm = (double)60000000.0 / (double)ppqn;
 			ddelta = ((((sp->beat[i]->fpos - last_fpos) / 1000.0) * 120.0) * vbpm) / tpm;
-			delta = ddelta;
-			accumulator += (ddelta - (double)delta);
-			if(accumulator > 1.0)
-			{
-				delta += 1;
-				accumulator -= 1.0;
-			}
+			delta = ddelta + 0.5;	//Round up to nearest delta
 
 			last_fpos = sp->beat[i]->fpos;
 			ppqn = sp->beat[i]->ppqn;
@@ -644,13 +624,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		for(i = 0; i < sp->text_events; i++)
 		{
 			ddelta = eof_calculate_delta(last_pos, sp->beat[sp->text_event[i]->beat]->fpos);
-			delta = ddelta;
-			accumulator += (ddelta - (double)delta);
-			if(accumulator > 1.0)
-			{
-				delta += 1;
-				accumulator -= 1.0;
-			}
+			delta = ddelta + 0.5;	//Round up to nearest delta
 
 			last_pos = sp->beat[sp->text_event[i]->beat]->pos;
 			WriteVarLen(delta, fp);
