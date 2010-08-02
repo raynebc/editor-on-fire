@@ -208,12 +208,12 @@ static unsigned long eof_import_midi_to_eof_optimized(unsigned long pos)
 	double current_pos;
 	double delta;
 	double bpm;
-	int beat=eof_import_bpm_events->events - 1;	//Assume the last defined tempo unless a more appropriate one is found below
+	int beat=0;	//Assume the first defined tempo unless a more appropriate one is found below
 
 //	return eof_import_midi_to_eof(sp->tags->ogg[0].midi_offset, pos);
 
 	/* find the BPM area this position lies in */
-	for(i = 0; i < eof_import_bpm_events->events - 1; i++)	//Since the last tempo is assumed to be the target, it doesn't have to be checked
+	for(i = 1; i < eof_import_bpm_events->events; i++)	//Since the first tempo is assumed to be the target, it doesn't have to be checked
 	{
 		if(eof_import_bpm_events->event[i]->pos > pos)
 		{
@@ -233,10 +233,12 @@ static unsigned long eof_import_midi_to_eof_optimized(unsigned long pos)
 		beat = eof_import_bpm_events->events - 1;
 	}
 */
+/*	This condition is no longer possible, so it doesn't need to be checked
 	if(beat < 0)
 	{
 		beat = 0;
 	}
+*/
 	current_pos = eof_import_bpm_pos[beat];
 	delta = pos - eof_import_bpm_events->event[beat]->pos;
 //	bpm = eof_import_get_bpm(pos);
