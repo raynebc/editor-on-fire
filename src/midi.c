@@ -210,41 +210,38 @@ int eof_check_bpm_change(unsigned long start, unsigned long end)
 
 /* takes a segment of time and calculates it's actual delta,
    taking into account the BPM changes */
+//The conversion of realtime to deltas is deltas=realtime * timedivision * BPM / (millis per minute)
+//The term "BPM / (millis per minute)" can be mathematically simplified to "1000 / ppqn"
+//The simplified formula is deltas=realtime * timedivision * 1000 / ppqn
 double eof_calculate_delta(double start, double end)
 {
 	int i;
-	double bpm;
-	double tpm = 60.0;
 	int startbeat = eof_figure_beat(start);
 	int endbeat = eof_figure_beat(end);
-	double total_delta = 0.0;
-	double portion;
+	double total_delta = 0.0;	//Delta counter
+	double total_time = 0.0;	//Count the segments of time that were converted, for debugging
 
 	/* if no BPM change, calculate delta the easy way :) */
 	if(!eof_check_bpm_change(start, end))
 	{
-		bpm = eof_calculate_bpm_absolute(start);
-		return ((((end - start) / 1000.0) * EOF_TIME_DIVISION) * bpm) / tpm;
-//		return ((double)(end / 10.0 - start / 10.0) * bpm) / tpm;
+		total_time = end - start;
+		return (end - start) * EOF_TIME_DIVISION * 1000 / eof_song->beat[0]->ppqn;
 	}
 
 	/* get first_portion */
-	bpm = eof_calculate_bpm_absolute(start);
-	portion = ((eof_song->beat[startbeat + 1]->fpos - start) / 1000.0) * EOF_TIME_DIVISION;
-	total_delta += (portion * bpm) / tpm;
+	total_delta += (eof_song->beat[startbeat + 1]->fpos - start) * EOF_TIME_DIVISION * 1000 / eof_song->beat[startbeat]->ppqn;
+	total_time += eof_song->beat[startbeat + 1]->fpos - start;
 
 	/* get rest of the portions */
 	for(i = startbeat + 1; i < endbeat; i++)
 	{
-		bpm = eof_calculate_bpm_absolute(eof_song->beat[i]->fpos);
-		portion = ((eof_song->beat[i + 1]->fpos - eof_song->beat[i]->fpos) / 1000.0) * EOF_TIME_DIVISION;
-		total_delta += (portion * bpm) / tpm;
+		total_delta += (eof_song->beat[i + 1]->fpos - eof_song->beat[i]->fpos) * EOF_TIME_DIVISION * 1000 / eof_song->beat[i]->ppqn;
+		total_time += eof_song->beat[i + 1]->fpos - eof_song->beat[i]->fpos;
 	}
 
 	/* get last portion */
-	bpm = eof_calculate_bpm_absolute(end);
-	portion = ((end - eof_song->beat[endbeat]->fpos) / 1000.0) * EOF_TIME_DIVISION;
-	total_delta += (portion * bpm) / tpm;
+	total_delta += (end - eof_song->beat[endbeat]->fpos) * EOF_TIME_DIVISION * 1000 / eof_song->beat[endbeat]->ppqn;
+	total_time += end - eof_song->beat[endbeat]->fpos;
 
 	return total_delta;
 }
