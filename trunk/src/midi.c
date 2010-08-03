@@ -224,26 +224,26 @@ double eof_calculate_delta(double start, double end)
 	if(!eof_check_bpm_change(start, end))
 	{
 		bpm = eof_calculate_bpm_absolute(start);
-		return ((((end - start) / 1000.0) * 120.0) * bpm) / tpm;
+		return ((((end - start) / 1000.0) * EOF_TIME_DIVISION) * bpm) / tpm;
 //		return ((double)(end / 10.0 - start / 10.0) * bpm) / tpm;
 	}
 
 	/* get first_portion */
 	bpm = eof_calculate_bpm_absolute(start);
-	portion = ((eof_song->beat[startbeat + 1]->fpos - start) / 1000.0) * 120.0;
+	portion = ((eof_song->beat[startbeat + 1]->fpos - start) / 1000.0) * EOF_TIME_DIVISION;
 	total_delta += (portion * bpm) / tpm;
 
 	/* get rest of the portions */
 	for(i = startbeat + 1; i < endbeat; i++)
 	{
 		bpm = eof_calculate_bpm_absolute(eof_song->beat[i]->fpos);
-		portion = ((eof_song->beat[i + 1]->fpos - eof_song->beat[i]->fpos) / 1000.0) * 120.0;
+		portion = ((eof_song->beat[i + 1]->fpos - eof_song->beat[i]->fpos) / 1000.0) * EOF_TIME_DIVISION;
 		total_delta += (portion * bpm) / tpm;
 	}
 
 	/* get last portion */
 	bpm = eof_calculate_bpm_absolute(end);
-	portion = ((end - eof_song->beat[endbeat]->fpos) / 1000.0) * 120.0;
+	portion = ((end - eof_song->beat[endbeat]->fpos) / 1000.0) * EOF_TIME_DIVISION;
 	total_delta += (portion * bpm) / tpm;
 
 	return total_delta;
@@ -573,7 +573,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		if(sp->beat[i]->ppqn != ppqn)
 		{
 			vbpm = (double)60000000.0 / (double)ppqn;
-			ddelta = ((((sp->beat[i]->fpos - last_fpos) / 1000.0) * 120.0) * vbpm) / tpm;
+			ddelta = ((((sp->beat[i]->fpos - last_fpos) / 1000.0) * EOF_TIME_DIVISION) * vbpm) / tpm;
 			delta = ddelta + 0.5;	//Round up to nearest delta
 
 			last_fpos = sp->beat[i]->fpos;
