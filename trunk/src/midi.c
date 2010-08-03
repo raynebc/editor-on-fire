@@ -12,7 +12,7 @@
 static EOF_MIDI_EVENT * eof_midi_event[EOF_MAX_MIDI_EVENTS];
 static int eof_midi_events = 0;
 
-void eof_add_midi_event(int pos, int type, int note)
+void eof_add_midi_event(unsigned long pos, int type, int note)
 {
 	eof_midi_event[eof_midi_events] = malloc(sizeof(EOF_MIDI_EVENT));
 	if(eof_midi_event[eof_midi_events])
@@ -281,6 +281,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	int midi_note_offset = 0;
 	int offset_used = 0;
 	unsigned long ppqn;
+	double accumulator = 0.0;
 
 	double ddelta;
 	double vbpm = (double)60000000.0 / (double)sp->beat[0]->ppqn;
@@ -289,7 +290,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 	for(j = 0; j < EOF_MAX_TRACKS; j++)
 	{
-
+		accumulator=0.0;	//New track, reset this
 		/* fill in notes */
 		if(sp->track[j]->notes > 0)
 		{
@@ -452,7 +453,15 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			for(i = 0; i < eof_midi_events; i++)
 			{
 				ddelta = eof_calculate_delta(last_pos, eof_midi_event[i]->pos);
-				delta = ddelta + 0.5;	//Round up to nearest delta
+//				delta = ddelta + 0.5;	//Round up to nearest delta
+				delta = ddelta;
+				if(delta)	//If delta was >= 1
+					accumulator += (ddelta - (double)delta);
+				if((accumulator >= 0.5) && ((int)(ddelta + 0.5) > (int)ddelta))
+				{	//If there has been enough accumulation to round up, and a round up would occur
+					delta++;	//increment delta time
+					accumulator = 0.0;	//Reset accumulator
+				}
 
 				last_pos = eof_midi_event[i]->pos;
 //				vel = eof_midi_event[i]->type == 0x80 ? 0x40 : 0x64;
@@ -476,7 +485,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	/* make vocals track */
 	if(sp->vocal_track->lyrics > 0)
 	{
-
+		accumulator=0.0;	//New track, reset this
 		/* clear MIDI events list */
 		eof_clear_midi_events();
 
@@ -524,7 +533,15 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		for(i = 0; i < eof_midi_events; i++)
 		{
 			ddelta = eof_calculate_delta(last_pos, eof_midi_event[i]->pos);
-			delta = ddelta + 0.5;	//Round up to nearest delta
+//			delta = ddelta + 0.5;	//Round up to nearest delta
+			delta = ddelta;
+			if(delta)	//If delta was >= 1
+				accumulator += (ddelta - (double)delta);
+			if((accumulator >= 0.5) && ((int)(ddelta + 0.5) > (int)ddelta))
+			{	//If there has been enough accumulation to round up, and a round up would occur
+				delta++;	//increment delta time
+				accumulator = 0.0;	//Reset accumulator
+			}
 
 			last_pos = eof_midi_event[i]->pos;
 			vel = 0x64;
@@ -563,6 +580,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	last_fpos = last_pos;
 	offset_used = 0;
 	ppqn = 1;
+	accumulator=0.0;	//New track, reset this
 	for(i = 0; i < sp->beats; i++)
 	{
 
@@ -571,7 +589,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		{
 			vbpm = (double)60000000.0 / (double)ppqn;
 			ddelta = ((((sp->beat[i]->fpos - last_fpos) / 1000.0) * EOF_TIME_DIVISION) * vbpm) / tpm;
-			delta = ddelta + 0.5;	//Round up to nearest delta
+			delta = ddelta;
+			if(delta)	//If delta was >= 1
+				accumulator += (ddelta - (double)delta);
+			if((accumulator >= 0.5) && ((int)(ddelta + 0.5) > (int)ddelta))
+			{	//If there has been enough accumulation to round up, and a round up would occur
+				delta++;	//increment delta time
+				accumulator = 0.0;	//Reset accumulator
+			}
 
 			last_fpos = sp->beat[i]->fpos;
 			ppqn = sp->beat[i]->ppqn;
@@ -598,7 +623,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 	if(sp->text_events)
 	{
-
+		accumulator=0.0;	//New track, reset this
 		eof_sort_events();
 
 		/* open the file */
@@ -621,7 +646,15 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		for(i = 0; i < sp->text_events; i++)
 		{
 			ddelta = eof_calculate_delta(last_pos, sp->beat[sp->text_event[i]->beat]->fpos);
-			delta = ddelta + 0.5;	//Round up to nearest delta
+//			delta = ddelta + 0.5;	//Round up to nearest delta
+			delta = ddelta;
+			if(delta)	//If delta was >= 1
+				accumulator += (ddelta - (double)delta);
+			if((accumulator >= 0.5) && ((int)(ddelta + 0.5) > (int)ddelta))
+			{	//If there has been enough accumulation to round up, and a round up would occur
+				delta++;	//increment delta time
+				accumulator = 0.0;	//Reset accumulator
+			}
 
 			last_pos = sp->beat[sp->text_event[i]->beat]->pos;
 			WriteVarLen(delta, fp);
