@@ -269,7 +269,7 @@ int eof_count_tracks(void)
    voila, correctly formatted MIDI file */
 int eof_export_midi(EOF_SONG * sp, char * fn)
 {
-	char header[14] = {'M', 'T', 'h', 'd', 0, 0, 0, 6, 0, 1, 0, 1, 0x0, 0x78}; // 120 ticks per beat
+	char header[14] = {'M', 'T', 'h', 'd', 0, 0, 0, 6, 0, 1, 0, 1, (EOF_TIME_DIVISION >> 8), (EOF_TIME_DIVISION & 0xFF)}; //The last two bytes are the time division
 	char trackheader[8] = {'M', 'T', 'r', 'k', 0, 0, 0, 0};
 	char * tempname[8] = {"eof.tmp", "eof2.tmp", "eof3.tmp", "eof4.tmp", "eof5.tmp", "eof6.tmp", "eof7.tmp", "eof8.tmp"};
 	PACKFILE * fp;
