@@ -6,6 +6,7 @@
 #include "midi.h"
 #include "utility.h"
 #include "menu/note.h"	//For pitch macros
+#include "foflc/Midi_parse.h"	//For ConvertToDeltaTime() declaration
 
 #define EOF_MIDI_TIMER_FREQUENCY  40
 
@@ -275,18 +276,22 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	PACKFILE * fp2;
 	int i, j;
 	unsigned long last_pos = 0;
-	double last_fpos = 0.0;
+//	double last_fpos = 0.0;
 	unsigned long delta = 0;
 	unsigned long track_length;
 	int midi_note_offset = 0;
-	int offset_used = 0;
-	unsigned long ppqn;
+//	int offset_used = 0;
 	double accumulator = 0.0;
 
 	double ddelta;
-	double vbpm = (double)60000000.0 / (double)sp->beat[0]->ppqn;
-	double tpm = 60.0;
+//	double vbpm = (double)60000000.0 / (double)sp->beat[0]->ppqn;
+//	double tpm = 60.0;
 	int vel;
+
+	unsigned long ppqn=0;					//Used to store conversion of BPM to ppqn
+	struct Tempo_change *anchorlist=NULL;	//Linked list containing tempo changes
+	struct Tempo_change *ptr=NULL;			//Conductor for the anchor linked list
+	unsigned long lastdelta=0;				//Keeps track of the last anchor's absolute delta time
 
 	for(j = 0; j < EOF_MAX_TRACKS; j++)
 	{
@@ -571,50 +576,37 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	}
 
 	/* write tempo track */
+	anchorlist=eof_build_tempo_list();	//Create a linked list of all tempo changes in eof_song->beat[]
+	if(anchorlist == NULL)	//If the anchor list could not be created
+		return 0;	//Return failure
+
+	/* write tempo track */
 	fp = pack_fopen(tempname[5], "w");
 	if(!fp)
 	{
 		return 0;
 	}
-	last_pos = sp->tags->ogg[eof_selected_ogg].midi_offset;
-	last_fpos = last_pos;
-	offset_used = 0;
-	ppqn = 1;
-	accumulator=0.0;	//New track, reset this
-	for(i = 0; i < sp->beats; i++)
+
+	for(ptr=anchorlist;ptr != NULL;ptr=ptr->next)	//For each tempo change
 	{
+		WriteVarLen(ptr->delta - lastdelta, fp);	//Write this anchor's relative delta time
+		lastdelta=ptr->delta;						//Store this anchor's absolute delta time
 
-		/* if BPM change occurs, write a tempo change */
-		if(sp->beat[i]->ppqn != ppqn)
-		{
-			vbpm = (double)60000000.0 / (double)ppqn;
-			ddelta = ((((sp->beat[i]->fpos - last_fpos) / 1000.0) * EOF_TIME_DIVISION) * vbpm) / tpm;
-			delta = ddelta;
-			if(delta)	//If delta was >= 1
-				accumulator += (ddelta - (double)delta);
-			if((accumulator >= 0.5) && ((int)(ddelta + 0.5) > (int)ddelta))
-			{	//If there has been enough accumulation to round up, and a round up would occur
-				delta++;	//increment delta time
-				accumulator = 0.0;	//Reset accumulator
-			}
-
-			last_fpos = sp->beat[i]->fpos;
-			ppqn = sp->beat[i]->ppqn;
-
-			WriteVarLen(delta, fp);
-			pack_putc(0xff, fp);
-			pack_putc(0x51, fp);
-			pack_putc(0x03, fp);
-			pack_putc((sp->beat[i]->ppqn & 0xFF0000) >> 16, fp);
-			pack_putc((sp->beat[i]->ppqn & 0xFF00) >> 8, fp);
-			pack_putc((sp->beat[i]->ppqn & 0xFF), fp);
-		}
+		ppqn = ((double) 60000000.0 / ptr->BPM) + 0.5;	//Convert BPM to ppqn, rounding up
+		pack_putc(0xff, fp);					//Write Meta Event 0x51 (Set Tempo)
+		pack_putc(0x51, fp);
+		pack_putc(0x03, fp);					//Write event length of 3
+		pack_putc((ppqn & 0xFF0000) >> 16, fp);	//Write high order byte of ppqn
+		pack_putc((ppqn & 0xFF00) >> 8, fp);	//Write middle byte of ppqn
+		pack_putc((ppqn & 0xFF), fp);			//Write low order byte of ppqn
 	}
-	WriteVarLen(0, fp);
-	pack_putc(0xFF, fp);
+	WriteVarLen(0, fp);		//Write delta time
+	pack_putc(0xFF, fp);	//Write Meta Event 0x2F (End Track)
 	pack_putc(0x2F, fp);
-	pack_putc(0x00, fp);
+	pack_putc(0x00, fp);	//Write padding
 	pack_fclose(fp);
+
+	eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 
 	/* track name is "EVENTS"
 	   event = 0xFF, meta = 0x01
@@ -774,4 +766,76 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	delete_file("eof8.tmp");
 
 	return 1;
+}
+
+struct Tempo_change *eof_build_tempo_list(void)
+{
+	unsigned long ctr;
+	struct Tempo_change *list=NULL;	//The linked list
+	struct Tempo_change *temp=NULL;
+	unsigned long lastppqn=0;	//Tracks the last anchor's PPQN value
+	unsigned long deltactr=0;	//Counts the number of deltas between anchors
+
+	if((eof_song == NULL) || (eof_song->beats < 1))
+		return NULL;
+
+	for(ctr=0;ctr < eof_song->beats;ctr++)
+	{	//For each beat
+		if(eof_song->beat[ctr]->ppqn != lastppqn)
+		{	//If this beat has a different tempo than the last, add it to the list
+			if((list == NULL) && (eof_song->beat[ctr]->fpos != 0.0))	//If the first anchor isn't at position 0
+				temp=eof_add_to_tempo_list(0,0.0,(double)120.0,list);	//Add a default 120BPM anchor
+
+			lastppqn=eof_song->beat[ctr]->ppqn;	//Remember this ppqn
+			temp=eof_add_to_tempo_list(deltactr,eof_song->beat[ctr]->fpos,(double)60000000.0/lastppqn,list);
+
+			if(temp == NULL)
+			{
+				eof_destroy_tempo_list(list);	//Destroy list
+				return NULL;			//Return error
+			}
+			list=temp;	//Update list pointer
+		}
+
+
+		deltactr+=EOF_TIME_DIVISION;	//Add the number of deltas of one beat to the counter
+	}
+
+	return list;
+}
+
+struct Tempo_change *eof_add_to_tempo_list(unsigned long delta,double realtime,double BPM,struct Tempo_change *ptr)
+{
+	struct Tempo_change *temp=NULL;
+	struct Tempo_change *cond=NULL;	//A conductor for the linked list
+
+//Allocate and initialize new link
+	temp=(struct Tempo_change *)malloc(sizeof(struct Tempo_change));
+	if(temp == NULL)
+		return NULL;
+	temp->delta=delta;
+	temp->realtime=realtime;
+	temp->BPM=BPM;
+	temp->next=NULL;
+
+//Append to linked list
+	if(ptr == NULL)		//If the passed list was empty
+		return temp;	//Return the new head link
+
+	for(cond=ptr;cond->next != NULL;cond=cond->next);	//Seek to last link in the list
+
+	cond->next=temp;	//Last link points forward to new link
+	return ptr;		//Return original head link
+}
+
+void eof_destroy_tempo_list(struct Tempo_change *ptr)
+{
+	struct Tempo_change *temp=NULL;
+
+	while(ptr != NULL)
+	{
+		temp=ptr->next;	//Store this pointer
+		free(ptr);	//Free this link
+		ptr=temp;	//Point to next link
+	}
 }
