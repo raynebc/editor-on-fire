@@ -25,7 +25,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn);	//Writes the specified chart's co
 
 struct Tempo_change *eof_build_tempo_list(void);
 	//Parses eof_song->beat[], returning a linked list of anchors (tempo changes), or NULL on error
-	//Each link in the list gives the absolute delta and realtimes of the anchor
+	//Each link in the list gives the absolute deltatime and absolute realtime of the anchor
 
 struct Tempo_change *eof_add_to_tempo_list(unsigned long delta,double realtime,double BPM,struct Tempo_change *ptr);
 	//Creates and adds a new link EOF's tempo linked list referred to by ptr, and ptr is returned
@@ -34,5 +34,9 @@ struct Tempo_change *eof_add_to_tempo_list(unsigned long delta,double realtime,d
 
 void eof_destroy_tempo_list(struct Tempo_change *ptr);
 	//If ptr is not NULL, de-allocates all memory consumed by the tempo linked list
+
+unsigned long eof_ConvertToDeltaTime(double realtime,struct Tempo_change *anchorlist,unsigned long timedivision);
+	//An adaptation of the ConvertToDeltaTime() function from the FoFLC source
+	//Parses a linked list of anchors and returns the delta time of the specified realtime
 
 #endif

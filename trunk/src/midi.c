@@ -275,31 +275,26 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	PACKFILE * fp;
 	PACKFILE * fp2;
 	int i, j;
-	unsigned long last_pos = 0;
-//	double last_fpos = 0.0;
 	unsigned long delta = 0;
 	unsigned long track_length;
 	int midi_note_offset = 0;
-//	int offset_used = 0;
-	double accumulator = 0.0;
-
-	double ddelta;
-//	double vbpm = (double)60000000.0 / (double)sp->beat[0]->ppqn;
-//	double tpm = 60.0;
-	int vel;
+	int vel=0x64;	//Velocity
 
 	unsigned long ppqn=0;					//Used to store conversion of BPM to ppqn
 	struct Tempo_change *anchorlist=NULL;	//Linked list containing tempo changes
 	struct Tempo_change *ptr=NULL;			//Conductor for the anchor linked list
 	unsigned long lastdelta=0;				//Keeps track of the last anchor's absolute delta time
 
+
+	anchorlist=eof_build_tempo_list();	//Create a linked list of all tempo changes in eof_song->beat[]
+	if(anchorlist == NULL)	//If the anchor list could not be created
+		return 0;	//Return failure
+
 	for(j = 0; j < EOF_MAX_TRACKS; j++)
 	{
-		accumulator=0.0;	//New track, reset this
 		/* fill in notes */
 		if(sp->track[j]->notes > 0)
 		{
-
 			/* clear MIDI events list */
 			eof_clear_midi_events();
 
@@ -436,7 +431,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				eof_add_midi_event(sp->track[j]->solo[i].end_pos, 0x80, 103);
 			}
 
-			last_pos = sp->tags->ogg[eof_selected_ogg].midi_offset;
     		qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
 //			allegro_message("break1");
 
@@ -444,6 +438,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			fp = pack_fopen(tempname[j], "w");
 			if(!fp)
 			{
+				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 				return 0;
 			}
 
@@ -455,23 +450,13 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			pack_fwrite(eof_track_name[j], ustrlen(eof_track_name[j]), fp);
 
 	    	/* add MIDI events */
+	    	lastdelta = 0;
 			for(i = 0; i < eof_midi_events; i++)
 			{
-				ddelta = eof_calculate_delta(last_pos, eof_midi_event[i]->pos);
-//				delta = ddelta + 0.5;	//Round up to nearest delta
-				delta = ddelta;
-				if(delta)	//If delta was >= 1
-					accumulator += (ddelta - (double)delta);
-				if((accumulator >= 0.5) && ((int)(ddelta + 0.5) > (int)ddelta))
-				{	//If there has been enough accumulation to round up, and a round up would occur
-					delta++;	//increment delta time
-					accumulator = 0.0;	//Reset accumulator
-				}
+				delta = eof_ConvertToDeltaTime(eof_midi_event[i]->pos,anchorlist,EOF_TIME_DIVISION);
 
-				last_pos = eof_midi_event[i]->pos;
-//				vel = eof_midi_event[i]->type == 0x80 ? 0x40 : 0x64;
-				vel = 0x64;
-				WriteVarLen(delta, fp);
+				WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
+				lastdelta = delta;					//Store this event's absolute delta time
 				pack_putc(eof_midi_event[i]->type, fp);
 				pack_putc(eof_midi_event[i]->note, fp);
 				pack_putc(vel, fp);
@@ -487,10 +472,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		}
 	}
 
-	/* make vocals track */
+
+/* make vocals track */
 	if(sp->vocal_track->lyrics > 0)
 	{
-		accumulator=0.0;	//New track, reset this
 		/* clear MIDI events list */
 		eof_clear_midi_events();
 
@@ -517,13 +502,13 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			}
 		}
 
-		last_pos = sp->tags->ogg[eof_selected_ogg].midi_offset;
 		qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
 
 		/* open the file */
 		fp = pack_fopen(tempname[7], "w");
 		if(!fp)
 		{
+			eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 			return 0;
 		}
 
@@ -535,22 +520,13 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		pack_fwrite(eof_track_name[EOF_TRACK_VOCALS], ustrlen(eof_track_name[EOF_TRACK_VOCALS]), fp);
 
 		/* add MIDI events */
+		lastdelta=0;
 		for(i = 0; i < eof_midi_events; i++)
 		{
-			ddelta = eof_calculate_delta(last_pos, eof_midi_event[i]->pos);
-//			delta = ddelta + 0.5;	//Round up to nearest delta
-			delta = ddelta;
-			if(delta)	//If delta was >= 1
-				accumulator += (ddelta - (double)delta);
-			if((accumulator >= 0.5) && ((int)(ddelta + 0.5) > (int)ddelta))
-			{	//If there has been enough accumulation to round up, and a round up would occur
-				delta++;	//increment delta time
-				accumulator = 0.0;	//Reset accumulator
-			}
+			delta = eof_ConvertToDeltaTime(eof_midi_event[i]->pos,anchorlist,EOF_TIME_DIVISION);
 
-			last_pos = eof_midi_event[i]->pos;
-			vel = 0x64;
-			WriteVarLen(delta, fp);
+			WriteVarLen(delta - lastdelta, fp);	//Write this lyric's relative delta time
+			lastdelta=delta;					//Store this lyric's absolute delta time
 			if(eof_midi_event[i]->type == 0x05)
 			{
 				pack_putc(0xFF, fp);
@@ -575,18 +551,16 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		pack_fclose(fp);
 	}
 
-	/* write tempo track */
-	anchorlist=eof_build_tempo_list();	//Create a linked list of all tempo changes in eof_song->beat[]
-	if(anchorlist == NULL)	//If the anchor list could not be created
-		return 0;	//Return failure
 
-	/* write tempo track */
+/* make tempo track */
 	fp = pack_fopen(tempname[5], "w");
 	if(!fp)
 	{
+		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 		return 0;
 	}
 
+	lastdelta=0;
 	for(ptr=anchorlist;ptr != NULL;ptr=ptr->next)	//For each tempo change
 	{
 		WriteVarLen(ptr->delta - lastdelta, fp);	//Write this anchor's relative delta time
@@ -606,22 +580,17 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	pack_putc(0x00, fp);	//Write padding
 	pack_fclose(fp);
 
-	eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 
-	/* track name is "EVENTS"
-	   event = 0xFF, meta = 0x01
-	   length = string length */
-	/* use delta calculator from the note tracks */
-
+/* make events track */
 	if(sp->text_events)
 	{
-		accumulator=0.0;	//New track, reset this
 		eof_sort_events();
 
 		/* open the file */
 		fp = pack_fopen(tempname[6], "w");
 		if(!fp)
 		{
+			eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 			return 0;
 		}
 
@@ -632,24 +601,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		WriteVarLen(ustrlen("EVENTS"), fp);
 		pack_fwrite("EVENTS", ustrlen("EVENTS"), fp);
 
-		last_pos = sp->tags->ogg[0].midi_offset;
-
-    	/* add MIDI events */
+    		/* add MIDI events */
+		lastdelta = 0;
 		for(i = 0; i < sp->text_events; i++)
 		{
-			ddelta = eof_calculate_delta(last_pos, sp->beat[sp->text_event[i]->beat]->fpos);
-//			delta = ddelta + 0.5;	//Round up to nearest delta
-			delta = ddelta;
-			if(delta)	//If delta was >= 1
-				accumulator += (ddelta - (double)delta);
-			if((accumulator >= 0.5) && ((int)(ddelta + 0.5) > (int)ddelta))
-			{	//If there has been enough accumulation to round up, and a round up would occur
-				delta++;	//increment delta time
-				accumulator = 0.0;	//Reset accumulator
-			}
+			delta = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos,anchorlist,EOF_TIME_DIVISION);
 
-			last_pos = sp->beat[sp->text_event[i]->beat]->pos;
-			WriteVarLen(delta, fp);
+			WriteVarLen(delta - lastdelta, fp);	//Write this note's relative delta time
+			lastdelta = delta;					//Store this note's absolute delta time
 			pack_putc(0xFF, fp);
 			pack_putc(0x01, fp);
 			pack_putc(ustrlen(sp->text_event[i]->text), fp);
@@ -668,6 +627,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	fp = pack_fopen(fn, "w");
 	if(!fp)
 	{
+		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 		return 0;
 	}
 
@@ -675,12 +635,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	header[11] = eof_count_tracks() + 1 + (sp->text_events > 0 ? 1 : 0) + (sp->vocal_track->lyrics > 0 ? 1 : 0);
 	pack_fwrite(header, 14, fp);
 
-	/* write tempo track */
+
+/* write tempo track */
 	track_length = file_size_ex(tempname[5]);
 	fp2 = pack_fopen(tempname[5], "r");
 	if(!fp2)
 	{
 		pack_fclose(fp);
+		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 		return 0;
 	}
 	pack_fwrite(trackheader, 4, fp);
@@ -691,7 +653,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	}
 	pack_fclose(fp2);
 
-	/* write text event track if there are any events */
+
+/* write text event track if there are any events */
 	if(sp->text_events)
 	{
 		track_length = file_size_ex(tempname[6]);
@@ -699,6 +662,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		if(!fp2)
 		{
 			pack_fclose(fp);
+			eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 			return 0;
 		}
 		pack_fwrite(trackheader, 4, fp);
@@ -710,7 +674,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		pack_fclose(fp2);
 	}
 
-	/* write note tracks */
+
+/* write note tracks */
 	for(j = 0; j < EOF_MAX_TRACKS; j++)
 	{
 		if(eof_song->track[j]->notes)
@@ -720,6 +685,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			if(!fp2)
 			{
 				pack_fclose(fp);
+				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 				return 0;
 			}
 			pack_fwrite(trackheader, 4, fp);
@@ -733,7 +699,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		}
 	}
 
-	/* write lyric track if there are any lyrics */
+
+/* write lyric track if there are any lyrics */
 	if(sp->vocal_track->lyrics)
 	{
 		track_length = file_size_ex(tempname[7]);
@@ -741,6 +708,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		if(!fp2)
 		{
 			pack_fclose(fp);
+			eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 			return 0;
 		}
 		pack_fwrite(trackheader, 4, fp);
@@ -755,7 +723,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	pack_fclose(fp);
 	eof_clear_midi_events();
 
-	/* delete temporary files */
+
+/* delete temporary files */
 	delete_file("eof.tmp");
 	delete_file("eof2.tmp");
 	delete_file("eof3.tmp");
@@ -764,6 +733,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	delete_file("eof6.tmp");
 	delete_file("eof7.tmp");
 	delete_file("eof8.tmp");
+	eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 
 	return 1;
 }
@@ -788,6 +758,8 @@ struct Tempo_change *eof_build_tempo_list(void)
 
 			lastppqn=eof_song->beat[ctr]->ppqn;	//Remember this ppqn
 			temp=eof_add_to_tempo_list(deltactr,eof_song->beat[ctr]->fpos,(double)60000000.0/lastppqn,list);
+//I'm leaving the deltas in this linked list as absolute, as it will make for quicker lookups
+//			deltactr=0;	//Clear delta counter
 
 			if(temp == NULL)
 			{
@@ -838,4 +810,33 @@ void eof_destroy_tempo_list(struct Tempo_change *ptr)
 		free(ptr);	//Free this link
 		ptr=temp;	//Point to next link
 	}
+}
+
+unsigned long eof_ConvertToDeltaTime(double realtime,struct Tempo_change *anchorlist,unsigned long timedivision)
+{	//Uses the Tempo Changes list to calculate the absolute delta time of the specified realtime
+	struct Tempo_change *temp=anchorlist;	//Begin with first tempo change
+	unsigned long delta=0;
+	double temptime=0.0;
+
+	assert_wrapper(temp != NULL);	//Ensure the tempomap is populated
+
+//	deltacounter=temp->delta;		//Begin with delta of first tempo change
+
+//Seek to the latest tempo change at or before the specified real time value, adding delta time values
+	while((temp->next != NULL) && (realtime >= (temp->next)->realtime))	//For each timestamp after the first
+	{	//If the starttime timestamp is equal to or greater than this timestamp,
+		temp=temp->next;	//Advance to that time stamp
+		delta=temp->delta;	//Store the absolute delta time for the anchor
+	}
+
+//Deltacounter is now the delta time of the latest tempo change the specified timestamp can reach
+	temptime=realtime - temp->realtime;	//Find the relative timestamp from this tempo change
+
+//temptime is the amount of time we need to find a delta for, and add to deltacounter
+//By using NewCreature's formula:	realtime = (delta / divisions) * (60000.0 / bpm)
+//The formula for delta is:		delta = realtime * divisions * bpm / 60000
+	delta+=(unsigned long)((temptime * (double)timedivision * temp->BPM / (double)60000.0 + (double)0.5));
+		//Add .5 so that the delta counter is rounded to the nearest 1
+
+	return delta;
 }
