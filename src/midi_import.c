@@ -358,6 +358,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	}
 	for(i = 0; i < tracks; i++)
 	{
+		last_event = 0;	//Running status resets at beginning of each track
 		eof_import_events[i] = eof_import_create_events_list();
 		if(!eof_import_events[i])
 		{
@@ -368,7 +369,6 @@ EOF_SONG * eof_import_midi(const char * fn)
 		absolute_pos = sp->tags->ogg[0].midi_offset;
 		while(track_pos < eof_work_midi->track[track[i]].len)
 		{
-
 			/* read delta */
 			bytes_used = 0;
 			delta = eof_parse_var_len(eof_work_midi->track[track[i]].data, track_pos, &bytes_used);
@@ -377,11 +377,18 @@ EOF_SONG * eof_import_midi(const char * fn)
 
 			/* read event type */
 			if((current_event_hi >= 0x80) && (current_event_hi < 0xF0))
-			{
-				last_event = current_event_hi;
+			{	//If the last loop iteration's event was normal
+				last_event = current_event_hi;	//Store it
 			}
 			current_event = eof_work_midi->track[track[i]].data[track_pos];
 			current_event_hi = current_event & 0xF0;
+
+			if(current_event_hi < 0x80)	//If this event is a running status event
+			{
+				current_event_hi = last_event;	//Recall the previous normal event
+				track_pos--;					//Rewind position one byte, since the status byte is not present during running status
+			}
+
 			switch(current_event_hi)
 			{
 
@@ -466,93 +473,6 @@ EOF_SONG * eof_import_midi(const char * fn)
 					track_pos++;
 					d2 = eof_work_midi->track[track[i]].data[track_pos];
 					track_pos++;
-					break;
-				}
-
-				/* running event */
-				default:
-				{
-					switch(last_event)
-					{
-
-						/* note off */
-						case 0x80:
-						{
-							d1 = eof_work_midi->track[track[i]].data[track_pos];
-							track_pos++;
-							d2 = eof_work_midi->track[track[i]].data[track_pos];
-							track_pos++;
-							eof_midi_import_add_event(eof_import_events[i], absolute_pos, 0x80, d1, d2);
-							ptotal_events++;
-							break;
-						}
-
-						/* note on */
-						case 0x90:
-						{
-							d1 = eof_work_midi->track[track[i]].data[track_pos];
-							track_pos++;
-							d2 = eof_work_midi->track[track[i]].data[track_pos];
-							track_pos++;
-							if(d2 <= 0)
-							{
-								eof_midi_import_add_event(eof_import_events[i], absolute_pos, 0x80, d1, d2);
-							}
-							else
-							{
-								eof_midi_import_add_event(eof_import_events[i], absolute_pos, 0x90, d1, d2);
-							}
-							ptotal_events++;
-							break;
-						}
-
-						/* key aftertouch */
-						case 0xA0:
-						{
-							d1 = eof_work_midi->track[track[i]].data[track_pos];
-							track_pos++;
-							d2 = eof_work_midi->track[track[i]].data[track_pos];
-							track_pos++;
-							break;
-						}
-
-						/* controller change */
-						case 0xB0:
-						{
-							d1 = eof_work_midi->track[track[i]].data[track_pos];
-							track_pos++;
-							d2 = eof_work_midi->track[track[i]].data[track_pos];
-							track_pos++;
-							break;
-						}
-
-						/* program change */
-						case 0xC0:
-						{
-							d1 = eof_work_midi->track[track[i]].data[track_pos];
-							track_pos++;
-							break;
-						}
-
-						/* channel aftertouch */
-						case 0xD0:
-						{
-							d1 = eof_work_midi->track[track[i]].data[track_pos];
-							track_pos++;
-							break;
-						}
-
-						/* pitch wheel change */
-						case 0xE0:
-						{
-							d1 = eof_work_midi->track[track[i]].data[track_pos];
-							track_pos++;
-							d2 = eof_work_midi->track[track[i]].data[track_pos];
-							track_pos++;
-							break;
-						}
-
-					}
 					break;
 				}
 
