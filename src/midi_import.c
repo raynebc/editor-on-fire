@@ -210,8 +210,6 @@ static unsigned long eof_import_midi_to_eof_optimized(unsigned long pos)
 	double bpm;
 	int beat=0;	//Assume the first defined tempo unless a more appropriate one is found below
 
-//	return eof_import_midi_to_eof(sp->tags->ogg[0].midi_offset, pos);
-
 	/* find the BPM area this position lies in */
 	for(i = 1; i < eof_import_bpm_events->events; i++)	//Since the first tempo is assumed to be the target, it doesn't have to be checked
 	{
@@ -221,29 +219,16 @@ static unsigned long eof_import_midi_to_eof_optimized(unsigned long pos)
 			break;
 		}
 	}
-/*	beat is not used until the next time this is checked, so this can be skipped
-	if(beat < 0)
-	{
-		beat = 0;
-	}
-*/
-/*	This beat is assumed by default, so we needn't check for this
+
 	if(i == eof_import_bpm_events->events)
-	{	//If all tempos were placed earlier than the specified timestamp, assume the last tempo event is to be used
+	{	//If no tempos were placed AFTER the target delta, then the last defined tempo is to be used
 		beat = eof_import_bpm_events->events - 1;
 	}
-*/
-/*	This condition is no longer possible, so it doesn't need to be checked
-	if(beat < 0)
-	{
-		beat = 0;
-	}
-*/
+
 	current_pos = eof_import_bpm_pos[beat];
 	delta = pos - eof_import_bpm_events->event[beat]->pos;
-//	bpm = eof_import_get_bpm(pos);
 	bpm = (double)60000000.0 / (double)eof_import_bpm_events->event[beat]->d1;
-	current_pos += ((double)delta / (double)eof_work_midi->divisions) * ((double)60000.0 / bpm);
+	current_pos += ((double)delta / (double)eof_work_midi->divisions) * ((double)60000.0 / bpm) + 0.5;	//Round up to nearest millisecond
 	return current_pos;
 }
 
@@ -574,8 +559,8 @@ EOF_SONG * eof_import_midi(const char * fn)
 				/* meta event */
 				case 0xF0:
 				{
-					if(current_event == 0xF0)
-					{
+					if((current_event == 0xF0) || (current_event == 0xF7))
+					{	//If it's a Sysex event
 						track_pos++;
 						bytes_used = 0;
 						d3 = eof_parse_var_len(eof_work_midi->track[track[i]].data, track_pos, &bytes_used);
@@ -720,6 +705,11 @@ EOF_SONG * eof_import_midi(const char * fn)
 								track_pos++;
 								d3 = (eof_work_midi->track[track[i]].data[track_pos]);
 								d4 = (d1 << 16) | (d2 << 8) | (d3);
+
+								if((eof_import_bpm_events->events <= 0) && (absolute_pos > sp->tags->ogg[0].midi_offset))
+								{	//If the first explicit Set Tempo event is not at the beginning of the track
+									eof_midi_import_add_event(eof_import_bpm_events, sp->tags->ogg[0].midi_offset, 0x51, 500000, 0);	//Insert the default tempo of 120BPM at the beginning of the tempo list
+								}
 								eof_midi_import_add_event(eof_import_bpm_events, absolute_pos, 0x51, d4, 0);
 								track_pos++;
 								break;
@@ -1356,4 +1346,3 @@ EOF_SONG * eof_import_midi(const char * fn)
 
 	return sp;
 }
-
