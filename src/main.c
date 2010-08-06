@@ -2806,7 +2806,7 @@ int eof_initialize(int argc, char * argv[])
 			replace_filename(eof_last_eof_path, eof_filename, "", 1024);
 			ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 			replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
-			eof_song = eof_import_midi(eof_filename);
+			eof_song = eof_import_midi2(eof_filename);
 			if(!eof_song)
 			{
 				allegro_message("Could not import song!");

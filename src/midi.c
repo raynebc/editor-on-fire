@@ -6,7 +6,6 @@
 #include "midi.h"
 #include "utility.h"
 #include "menu/note.h"	//For pitch macros
-#include "foflc/Midi_parse.h"	//For ConvertToDeltaTime() declaration
 
 #define EOF_MIDI_TIMER_FREQUENCY  40
 
