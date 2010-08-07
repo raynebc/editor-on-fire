@@ -1781,11 +1781,13 @@ double realtime=0.0;			//Used to calculate realtime of anchors
 				bl = (double)1000.0 / (((double)60000000.0 / (double)eof_import_bpm_events->event[i]->d1) / (double)60.0);
 				if(i < eof_import_bpm_events->events - 1)
 				{
-					beat_count = (eof_import_midi_to_eof(sp->tags->ogg[0].midi_offset, eof_import_bpm_events->event[i + 1]->pos) - eof_import_midi_to_eof(sp->tags->ogg[0].midi_offset, eof_import_bpm_events->event[i]->pos)) / bl + 0.1 - 1.0;
+//					beat_count = (eof_import_midi_to_eof(sp->tags->ogg[0].midi_offset, eof_import_bpm_events->event[i + 1]->pos) - eof_import_midi_to_eof(sp->tags->ogg[0].midi_offset, eof_import_bpm_events->event[i]->pos)) / bl + 0.1 - 1.0;
+					beat_count = (eof_ConvertToRealTime(eof_import_bpm_events->event[i + 1]->pos,0,anchorlist,eof_work_midi->divisions) - eof_ConvertToRealTime(eof_import_bpm_events->event[i]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset) / bl + 0.1 - 1.0;
 				}
 				else
 				{
-					beat_count = ((double)eof_music_length - eof_import_midi_to_eof(sp->tags->ogg[0].midi_offset, eof_import_bpm_events->event[i]->pos)) / bl + 0.1 - 1.0;
+//					beat_count = ((double)eof_music_length - eof_import_midi_to_eof(sp->tags->ogg[0].midi_offset, eof_import_bpm_events->event[i]->pos)) / bl + 0.1 - 1.0;
+					beat_count = ((double)eof_music_length - (eof_ConvertToRealTime(eof_import_bpm_events->event[i]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5)) / bl + 0.1 - 1.0;
 				}
 				for(j = 0; j < beat_count - 1; j++)
 				{
