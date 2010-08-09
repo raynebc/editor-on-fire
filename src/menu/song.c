@@ -1377,6 +1377,10 @@ int eof_ini_dialog_delete(DIALOG * d)
 			memcpy(eof_song->tags->ini_setting[i], eof_song->tags->ini_setting[i + 1], 512);
 		}
 		eof_song->tags->ini_settings--;
+		if(eof_ini_dialog[1].d1 >= eof_song->tags->ini_settings)
+		{
+			eof_ini_dialog[1].d1--;
+		}
 	}
 	dialog_message(eof_ini_dialog, MSG_DRAW, 0, &i);
 	return D_O_K;
