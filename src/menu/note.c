@@ -1035,9 +1035,9 @@ int eof_menu_solo_mark(void)
 			{
 				sel_start = eof_song->track[eof_selected_track]->note[i]->pos;
 			}
-			if(eof_song->track[eof_selected_track]->note[i]->pos > sel_end)
+			if(eof_song->track[eof_selected_track]->note[i]->pos + eof_song->track[eof_selected_track]->note[i]->length > sel_end)
 			{
-				sel_end = eof_song->track[eof_selected_track]->note[i]->pos + 20;
+				sel_end = eof_song->track[eof_selected_track]->note[i]->pos + eof_song->track[eof_selected_track]->note[i]->length;
 			}
 		}
 	}
@@ -1072,7 +1072,7 @@ int eof_menu_solo_unmark(void)
 		{
 			for(j = 0; j < eof_song->track[eof_selected_track]->solos; j++)
 			{
-				if((eof_song->track[eof_selected_track]->note[i]->pos >= eof_song->track[eof_selected_track]->solo[j].start_pos) && (eof_song->track[eof_selected_track]->note[i]->pos <= eof_song->track[eof_selected_track]->solo[j].end_pos))
+				if((eof_song->track[eof_selected_track]->note[i]->pos >= eof_song->track[eof_selected_track]->solo[j].start_pos) && (eof_song->track[eof_selected_track]->note[i]->pos + eof_song->track[eof_selected_track]->note[i]->length <= eof_song->track[eof_selected_track]->solo[j].end_pos))
 				{
 					eof_track_delete_solo(eof_song->track[eof_selected_track], j);
 					break;
