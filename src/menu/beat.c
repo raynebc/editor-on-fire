@@ -401,6 +401,10 @@ int eof_menu_beat_delete(void)
 			eof_realign_beats(eof_song, eof_selected_beat - 1);
 		}
 		eof_move_text_events(eof_song, eof_selected_beat, -1);
+		if(flags & EOF_BEAT_FLAG_ANCHOR)
+		{
+			flags ^= EOF_BEAT_FLAG_ANCHOR;
+		}
 		eof_song->beat[eof_selected_beat - 1]->flags |= flags;
 	}
 	return 1;
