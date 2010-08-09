@@ -1,4 +1,5 @@
 #include <allegro.h>
+#include <math.h>
 #include "main.h"
 #include "editor.h"
 #include "beat.h"
@@ -1040,4 +1041,184 @@ void eof_detect_difficulties(EOF_SONG * sp)
 	{
 		eof_vocal_tab_name[0][0] = '*';
 	}
+}
+
+struct wavestruct *eofCreateWaveform(char *oggfilename,unsigned long slicelength)
+{
+	ALOGG_OGG *oggstruct=NULL;
+	SAMPLE *audio=NULL;
+	FILE *fp=NULL;
+	struct wavestruct *waveform=NULL;
+	char done=0;	//-1 on unsuccessful completion, 1 on successful completion
+	unsigned long slicenum=0;
+
+	if((oggfilename == NULL) || !slicelength)
+		return NULL;
+
+//Load OGG file into memory
+	fp=fopen(oggfilename,"rb");
+	if(fp == NULL)
+		return NULL;
+	oggstruct=alogg_create_ogg_from_file(fp);
+	if(oggstruct == NULL)
+	{
+		fclose(fp);
+		return NULL;
+	}
+
+//Decode OGG into memory
+	audio=alogg_create_sample_from_ogg(oggstruct);
+	if(audio == NULL)
+		done=-1;
+	else
+	{
+//Initialize waveform structure
+		waveform=(struct wavestruct *)malloc(sizeof(struct wavestruct));
+		if(waveform == NULL)
+			done=-1;
+		else
+		{
+			if(alogg_get_wave_is_stereo_ogg(oggstruct))	//If this audio file has two audio channels
+				waveform->is_stereo=1;
+			else
+				waveform->is_stereo=0;
+
+			waveform->oggfilename=(char *)malloc(strlen(oggfilename)+1);
+			if(waveform->oggfilename == NULL)
+				done=-1;
+			else
+			{
+				waveform->slicesize=audio->freq * slicelength / 1000;	//Find the number of samples in each slice
+				if((audio->freq * slicelength) % 1000)					//If there was any remainder
+					waveform->slicesize++;								//Increment the size of the slice
+
+				waveform->numslices=audio->len / waveform->slicesize;	//Find the number of slices to process
+				if(audio->len % waveform->slicesize)					//If there's any remainder
+					waveform->numslices++;								//Increment the number of slices
+
+				strcpy(waveform->oggfilename,oggfilename);
+				waveform->maxamp=waveform->maxamp2=0;
+				waveform->slices=(struct waveformslice *)malloc(sizeof(struct waveformslice) * waveform->numslices);
+				waveform->slices2=NULL;
+				if(waveform->slices == NULL)
+					done=-1;
+				else if(waveform->is_stereo)	//If this OGG is stereo
+				{				//Allocate memory for the right channel waveform data
+					waveform->slices2=(struct waveformslice *)malloc(sizeof(struct waveformslice) * waveform->numslices);
+					if(waveform->slices2 == NULL)
+						done=-1;
+				}
+			}
+		}
+	}
+
+	while(!done)
+	{
+		done=eofProcessNextWaveformSlice(waveform,audio,slicenum++);
+	}
+
+//Cleanup and return
+	fclose(fp);
+	if(oggstruct != NULL)
+		alogg_destroy_ogg(oggstruct);
+	if(audio != NULL)
+		destroy_sample(audio);
+	if(done == -1)	//Unsuccessful completion
+	{
+		if(waveform)
+		{
+			if(waveform->oggfilename)
+				free(waveform->oggfilename);
+			free(waveform);
+		}
+		return NULL;	//Return error
+	}
+
+	return waveform;	//Return waveform data
+}
+
+int eofProcessNextWaveformSlice(struct wavestruct *waveform,SAMPLE *audio,unsigned long slicenum)
+{
+	unsigned long sampleindex=0;	//The byte index into audio->data
+	unsigned long startsample=0;	//The sample number of the first sample being processed
+	unsigned long samplesize=0;	//Number of bytes for each sample: 1 for 8 bit audio, 2 for 16 bit audio.  Doubled for stereo
+	unsigned long ctr=0;
+	double sum=0;			//Stores the sums of each sample's square (for finding the root mean square)
+	double rms=0;			//Stores the root square mean
+	unsigned min=0;			//Stores the lowest amplitude for the slice
+	unsigned peak=0;		//Stores the highest amplitude for the slice
+	unsigned long sample=0;
+	char firstread=0;		//Set to nonzero after the first sample is read into the min/max variables
+	char channel=0;
+	struct waveformslice *dest;	//The structure to write this slice's data to
+	char outofsamples=0;		//Will be set to 1 if all samples in the audio structure have been processed
+
+//Validate parameters
+	if((waveform == NULL) || (waveform->slices == NULL) || (audio == NULL))
+		return -1;	//Return error
+
+	if((slicenum > waveform->numslices))	//If this is more than the number of slices that were supposed to be read
+		return 1;	//Return out of samples
+
+	for(channel=0;channel<=waveform->is_stereo;channel++)	//Process loop once for mono track, twice for stereo track
+	{
+//Initialize processing for this audio channel
+		samplesize=audio->bits / 8;
+		sampleindex=startsample=slicenum * waveform->slicesize;	//This is the starting sample number
+		if(waveform->is_stereo)		//Stereo data is interleaved as left channel, right channel, ...
+		{
+			sampleindex+=sampleindex;	//Double the sample byte index
+			samplesize+=samplesize;		//Double the sample size
+		}
+		sampleindex+=channel;		//Begin one byte further ahead if processing the right channel audio samples
+
+//Process audio samples for this channel
+		for(ctr=0;ctr < waveform->slicelength;ctr++)
+		{
+			if(startsample + ctr >= audio->len)	//If there are no more samples to read
+			{
+				outofsamples=1;
+				break;
+			}
+
+			sample=((char *)audio->data)[sampleindex];	//Store first sample byte
+			if(waveform->is_stereo)
+				sample+=((char *)audio->data)[sampleindex+1]<<8;	//Assume little endian byte order, read the next (high byte) of data
+
+			if(!firstread)			//If this is the first sample
+				min=peak=sample;	//Assume it is the highest and lowest amplitude until found otherwise
+			else					//Track the highest and lowest amplitude
+			{
+				if(sample > peak)
+					peak=sample;
+				if(sample < min)
+					min=sample;
+				firstread=1;
+			}
+
+			sum+=((double)sample*sample)/waveform->slicelength;	//Add the square of this sample divided by the number of samples to read
+			sampleindex+=samplesize;		//Adjust index to point to next sample for this channel
+		}
+		rms=sqrt(sum);
+
+//Store results to the appropriate channel's waveform data array
+		if(channel == 0)
+		{
+			dest=&(waveform->slices[slicenum]);	//Store results to mono/left channel array
+			if(peak > waveform->maxamp)
+				waveform->maxamp=peak;	//Track absolute maximum amplitude of mono/left channel
+		}
+		else
+		{
+			dest=&(waveform->slices2[slicenum]);	//Store results to right channel array
+			if(peak > waveform->maxamp2)
+				waveform->maxamp2=peak;	//Track absolute maximum amplitude of right channel
+		}
+
+		dest->min=min;
+		dest->peak=peak;
+		dest->rms=rms;
+	}
+
+	return outofsamples;	//Return success/completed status
 }
