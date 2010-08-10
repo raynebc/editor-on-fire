@@ -300,10 +300,10 @@ double eof_ConvertToRealTime(unsigned long absolutedelta,double starttime,struct
 				//or until there are no further tempo changes
 			if(tempdelta >= (temp->next)->delta)	//If the delta time is enough to reach next tempo change
 			{
-				temp=temp->next;			//Advance to next tempo change
-				temptimer=temp->realtime;	//Set timer
-				tempdelta-=temp->delta;		//Subtract the tempo change's delta time
-				tempBPM=temp->BPM;			//Set BPM
+				temp=temp->next;						//Advance to next tempo change
+				temptimer=temp->realtime;				//Set timer
+				tempdelta=absolutedelta-temp->delta;	//Subtract the tempo change's delta time
+				tempBPM=temp->BPM;						//Set BPM
 			}
 			else
 				break;	//break from loop
