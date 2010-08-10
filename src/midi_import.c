@@ -1383,6 +1383,7 @@ EOF_SONG * eof_import_midi2(const char * fn)
 	eof_import_text_events = eof_import_create_events_list();
 	if(!eof_import_text_events)
 	{
+		eof_import_destroy_events_list(eof_import_bpm_events);
 		destroy_midi(eof_work_midi);
 		return 0;
 	}
@@ -1392,6 +1393,8 @@ EOF_SONG * eof_import_midi2(const char * fn)
 		eof_import_events[i] = eof_import_create_events_list();
 		if(!eof_import_events[i])
 		{
+			eof_import_destroy_events_list(eof_import_bpm_events);
+			eof_import_destroy_events_list(eof_import_text_events);
 			destroy_midi(eof_work_midi);
 			return 0;
 		}
@@ -1738,6 +1741,9 @@ double realtime=0.0;			//Used to calculate realtime of anchors
 
 				if(eof_song_add_beat(sp) == NULL)	//Add a new beat
 				{
+					eof_import_destroy_events_list(eof_import_bpm_events);
+					eof_import_destroy_events_list(eof_import_text_events);
+					destroy_midi(eof_work_midi);
 					eof_destroy_tempo_list(anchorlist);
 					return 0;			//Or return failure if that doesn't succeed
 				}
@@ -1755,6 +1761,9 @@ double realtime=0.0;			//Used to calculate realtime of anchors
 					BPM = cond->BPM;
 					if(eof_import_bpm_events->event[i]->pos < cond->delta)
 					{
+						eof_import_destroy_events_list(eof_import_bpm_events);
+						eof_import_destroy_events_list(eof_import_text_events);
+						destroy_midi(eof_work_midi);
 						eof_destroy_tempo_list(anchorlist);
 						return 0;	//Return failure if this delta time is smaller than that of the previous anchor
 					}
@@ -1793,6 +1802,9 @@ double realtime=0.0;			//Used to calculate realtime of anchors
 				{
 					if(eof_song_add_beat(sp) == NULL)	//Add a new beat
 					{
+						eof_import_destroy_events_list(eof_import_bpm_events);
+						eof_import_destroy_events_list(eof_import_text_events);
+						destroy_midi(eof_work_midi);
 						eof_destroy_tempo_list(anchorlist);
 						return 0;			//Or return failure if that doesn't succeed
 					}
@@ -1845,6 +1857,8 @@ double realtime=0.0;			//Used to calculate realtime of anchors
 						destroy_midi(eof_work_midi);
 						eof_destroy_song(sp);
 						set_window_title("EOF - No Song");
+						eof_import_destroy_events_list(eof_import_bpm_events);
+						eof_import_destroy_events_list(eof_import_text_events);
 						destroy_midi(eof_work_midi);
 						return NULL;
 					}
@@ -1997,6 +2011,8 @@ double realtime=0.0;			//Used to calculate realtime of anchors
 						eof_destroy_song(sp);
 						set_window_title("EOF - No Song");
 						destroy_midi(eof_work_midi);
+						eof_import_destroy_events_list(eof_import_bpm_events);
+						eof_import_destroy_events_list(eof_import_text_events);
 						return NULL;
 					}
 					if(pticker % 20 == 0)
