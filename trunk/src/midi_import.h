@@ -9,7 +9,10 @@
 
 EOF_SONG * eof_import_midi(const char * fn);
 EOF_SONG * eof_import_midi2(const char * fn);
-double eof_ConvertToRealTime(unsigned long absolutedelta,double starttime,struct Tempo_change *anchorlist,unsigned long timedivision);
+double eof_ConvertToRealTime(unsigned long absolutedelta,double starttime,struct Tempo_change *anchorlist,unsigned long timedivision,unsigned long offset);
 	//Converts and returns the converted realtime of the specified delta time based on the list of anchors and MIDI's time division
+	//The specified offset should represent a chart delay, and is added to the returned realtime
+inline unsigned long eof_ConvertToRealTimeInt(unsigned long absolutedelta,double starttime,struct Tempo_change *anchorlist,unsigned long timedivision,unsigned long offset);
+	//Returns the value as if eof_ConvertToRealTime() was called, and the result was rounded up to the nearest unsigned long
 
 #endif

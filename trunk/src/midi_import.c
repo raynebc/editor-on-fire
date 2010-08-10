@@ -274,7 +274,7 @@ static void eof_midi_import_add_text_event(EOF_IMPORT_MIDI_EVENT_LIST * events, 
 	}
 }
 
-double eof_ConvertToRealTime(unsigned long absolutedelta,double starttime,struct Tempo_change *anchorlist,unsigned long timedivision)
+double eof_ConvertToRealTime(unsigned long absolutedelta,double starttime,struct Tempo_change *anchorlist,unsigned long timedivision,unsigned long offset)
 {
 	struct Tempo_change *temp=anchorlist;	//Point to first link in list
 	double temptimer=starttime;	//Will be used to seek to appropriate beginning tempo change
@@ -314,7 +314,12 @@ double eof_ConvertToRealTime(unsigned long absolutedelta,double starttime,struct
 //tempdelta is now relative to this tempo change, find the realtime of tempdelta
 	temptimer+=(double)tempdelta / (double)timedivision * ((double)60000.0 / tempBPM);
 
-	return temptimer;
+	return temptimer+offset;
+}
+
+inline unsigned long eof_ConvertToRealTimeInt(unsigned long absolutedelta,double starttime,struct Tempo_change *anchorlist,unsigned long timedivision,unsigned long offset)
+{
+	return eof_ConvertToRealTime(absolutedelta,starttime,anchorlist,timedivision,offset) + 0.5;
 }
 
 EOF_SONG * eof_import_midi(const char * fn)
@@ -1792,12 +1797,12 @@ double realtime=0.0;			//Used to calculate realtime of anchors
 				if(i < eof_import_bpm_events->events - 1)
 				{
 //					beat_count = (eof_import_midi_to_eof(sp->tags->ogg[0].midi_offset, eof_import_bpm_events->event[i + 1]->pos) - eof_import_midi_to_eof(sp->tags->ogg[0].midi_offset, eof_import_bpm_events->event[i]->pos)) / bl + 0.1 - 1.0;
-					beat_count = (eof_ConvertToRealTime(eof_import_bpm_events->event[i + 1]->pos,0,anchorlist,eof_work_midi->divisions) - eof_ConvertToRealTime(eof_import_bpm_events->event[i]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset) / bl + 0.1 - 1.0;
+					beat_count = (eof_ConvertToRealTimeInt(eof_import_bpm_events->event[i + 1]->pos,0,anchorlist,eof_work_midi->divisions,0) - eof_ConvertToRealTimeInt(eof_import_bpm_events->event[i]->pos,0,anchorlist,eof_work_midi->divisions,0)) / bl + 0.1 - 1.0;
 				}
 				else
 				{
 //					beat_count = ((double)eof_music_length - eof_import_midi_to_eof(sp->tags->ogg[0].midi_offset, eof_import_bpm_events->event[i]->pos)) / bl + 0.1 - 1.0;
-					beat_count = ((double)eof_music_length - (eof_ConvertToRealTime(eof_import_bpm_events->event[i]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5)) / bl + 0.1 - 1.0;
+					beat_count = ((double)eof_music_length - eof_ConvertToRealTimeInt(eof_import_bpm_events->event[i]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset)) / bl + 0.1 - 1.0;
 				}
 				for(j = 0; j < beat_count - 1; j++)
 				{
@@ -1874,14 +1879,14 @@ double realtime=0.0;			//Used to calculate realtime of anchors
 						/* lyric line indicator */
 						if(eof_import_events[i]->event[j]->d1 == 105)
 						{
-							sp->vocal_track->line[sp->vocal_track->lines].start_pos = eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5;
+							sp->vocal_track->line[sp->vocal_track->lines].start_pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 							sp->vocal_track->line[sp->vocal_track->lines].flags=0;	//Init flags for this line as 0
 							last_105 = sp->vocal_track->lines;
 //							sp->vocal_track->lines++;
 						}
 						else if(eof_import_events[i]->event[j]->d1 == 106)
 						{
-							sp->vocal_track->line[sp->vocal_track->lines].start_pos = eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5;
+							sp->vocal_track->line[sp->vocal_track->lines].start_pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 							sp->vocal_track->line[sp->vocal_track->lines].flags=0;	//Init flags for this line as 0
 							last_106 = sp->vocal_track->lines;
 //							sp->vocal_track->lines++;
@@ -1889,7 +1894,7 @@ double realtime=0.0;			//Used to calculate realtime of anchors
 						/* overdrive */
 						else if(eof_import_events[i]->event[j]->d1 == 116)
 						{
-							overdrive_pos = eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5;
+							overdrive_pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 						}
 						/* percussion */
 						else if((eof_import_events[i]->event[j]->d1 == 96) || (eof_import_events[i]->event[j]->d1 == 97))
@@ -1899,7 +1904,7 @@ double realtime=0.0;			//Used to calculate realtime of anchors
 						{
 							for(k = 0; k < note_count[picked_track]; k++)
 							{
-								if(sp->vocal_track->lyric[k]->pos == eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5)
+								if(sp->vocal_track->lyric[k]->pos == eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset))
 								{
 									break;
 								}
@@ -1908,7 +1913,7 @@ double realtime=0.0;			//Used to calculate realtime of anchors
 							if(k == note_count[picked_track])
 							{
 								sp->vocal_track->lyric[note_count[picked_track]]->note = eof_import_events[i]->event[j]->d1;
-								sp->vocal_track->lyric[note_count[picked_track]]->pos = eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5;
+								sp->vocal_track->lyric[note_count[picked_track]]->pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 								sp->vocal_track->lyric[note_count[picked_track]]->length = 100;
 								note_count[picked_track]++;
 							}
@@ -1925,7 +1930,7 @@ double realtime=0.0;			//Used to calculate realtime of anchors
 						/* lyric line indicator */
 						if(eof_import_events[i]->event[j]->d1 == 105)
 						{
-							sp->vocal_track->line[last_105].end_pos = eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5;
+							sp->vocal_track->line[last_105].end_pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 							sp->vocal_track->lines++;
 							if(overdrive_pos == sp->vocal_track->line[last_105].start_pos)
 							{
@@ -1934,7 +1939,7 @@ double realtime=0.0;			//Used to calculate realtime of anchors
 						}
 						else if(eof_import_events[i]->event[j]->d1 == 106)
 						{
-							sp->vocal_track->line[last_106].end_pos = eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5;
+							sp->vocal_track->line[last_106].end_pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 							sp->vocal_track->lines++;
 							if(overdrive_pos == sp->vocal_track->line[last_106].start_pos)
 							{
@@ -1953,7 +1958,7 @@ double realtime=0.0;			//Used to calculate realtime of anchors
 						{
 							if(note_count[picked_track] > 0)
 							{
-								sp->vocal_track->lyric[note_count[picked_track] - 1]->length = eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) - sp->vocal_track->lyric[note_count[picked_track] - 1]->pos + sp->tags->ogg[0].midi_offset + 0.5;
+								sp->vocal_track->lyric[note_count[picked_track] - 1]->length = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset) - sp->vocal_track->lyric[note_count[picked_track] - 1]->pos;
 							}
 						}
 					}
@@ -1963,7 +1968,7 @@ double realtime=0.0;			//Used to calculate realtime of anchors
 					{
 						for(k = 0; k < note_count[picked_track]; k++)
 						{
-							if(sp->vocal_track->lyric[k]->pos == eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5)
+							if(sp->vocal_track->lyric[k]->pos == eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset))
 							{
 								break;
 							}
@@ -1974,7 +1979,7 @@ double realtime=0.0;			//Used to calculate realtime of anchors
 						{
 							strcpy(sp->vocal_track->lyric[note_count[picked_track]]->text, eof_import_events[i]->event[j]->text);
 							sp->vocal_track->lyric[note_count[picked_track]]->note = 0;
-							sp->vocal_track->lyric[note_count[picked_track]]->pos = eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5;
+							sp->vocal_track->lyric[note_count[picked_track]]->pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 							sp->vocal_track->lyric[note_count[picked_track]]->length = 100;
 							note_count[picked_track]++;
 						}
@@ -2057,60 +2062,60 @@ double realtime=0.0;			//Used to calculate realtime of anchors
 						   position and apply it to that note */
 						if(eof_import_events[i]->event[j]->d1 == 0x3C + 5)
 						{
-							hopopos[0] = eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5;
+							hopopos[0] = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 							hopotype[0] = 0;
 						}
 						else if(eof_import_events[i]->event[j]->d1 == 0x48 + 5)
 						{
-							hopopos[1] = eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5;
+							hopopos[1] = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 							hopotype[1] = 0;
 						}
 						else if(eof_import_events[i]->event[j]->d1 == 0x54 + 5)
 						{
-							hopopos[2] = eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5;
+							hopopos[2] = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 							hopotype[2] = 0;
 						}
 						else if(eof_import_events[i]->event[j]->d1 == 0x60 + 5)
 						{
-							hopopos[3] = eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5;
+							hopopos[3] = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 							hopotype[3] = 0;
 						}
 						else if(eof_import_events[i]->event[j]->d1 == 0x3C + 6)
 						{
-							hopopos[0] = eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5;
+							hopopos[0] = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 							hopotype[0] = 1;
 						}
 						else if(eof_import_events[i]->event[j]->d1 == 0x48 + 6)
 						{
-							hopopos[1] = eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5;
+							hopopos[1] = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 							hopotype[1] = 1;
 						}
 						else if(eof_import_events[i]->event[j]->d1 == 0x54 + 6)
 						{
-							hopopos[2] = eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5;
+							hopopos[2] = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 							hopotype[2] = 1;
 						}
 						else if(eof_import_events[i]->event[j]->d1 == 0x60 + 6)
 						{
-							hopopos[3] = eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5;
+							hopopos[3] = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 							hopotype[3] = 1;
 						}
 
 						/* star power and solos */
 						if((eof_import_events[i]->event[j]->d1 == 116) && (sp->track[picked_track]->star_power_paths < EOF_MAX_STAR_POWER))
 						{
-							sp->track[picked_track]->star_power_path[sp->track[picked_track]->star_power_paths].start_pos = eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5;
+							sp->track[picked_track]->star_power_path[sp->track[picked_track]->star_power_paths].start_pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 						}
 						else if((eof_import_events[i]->event[j]->d1 == 103) && (sp->track[picked_track]->solos < EOF_MAX_SOLOS))
 						{
-							sp->track[picked_track]->solo[sp->track[picked_track]->solos].start_pos = eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5;
+							sp->track[picked_track]->solo[sp->track[picked_track]->solos].start_pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 						}
 
 						if(sp->track[picked_track]->note[note_count[picked_track]]->type != -1)
 						{
 							for(k = first_note; k < note_count[picked_track]; k++)
 							{
-								if((sp->track[picked_track]->note[k]->pos == eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5) && (sp->track[picked_track]->note[k]->type == sp->track[picked_track]->note[note_count[picked_track]]->type))
+								if((sp->track[picked_track]->note[k]->pos == eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset)) && (sp->track[picked_track]->note[k]->type == sp->track[picked_track]->note[note_count[picked_track]]->type))
 								{
 									break;
 								}
@@ -2118,7 +2123,7 @@ double realtime=0.0;			//Used to calculate realtime of anchors
 							if(k == note_count[picked_track])
 							{
 								sp->track[picked_track]->note[note_count[picked_track]]->note = diff_chart[diff];
-								sp->track[picked_track]->note[note_count[picked_track]]->pos = eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5;
+								sp->track[picked_track]->note[note_count[picked_track]]->pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 								sp->track[picked_track]->note[note_count[picked_track]]->length = 100;
 								sp->track[picked_track]->note[note_count[picked_track]]->flags = 0;
 								note_count[picked_track]++;
@@ -2201,7 +2206,7 @@ double realtime=0.0;			//Used to calculate realtime of anchors
 						{
 							for(k = note_count[picked_track] - 1; k >= first_note; k--)
 							{
-								if((sp->track[picked_track]->note[k]->type == hopodiff) && (hopopos[hopodiff] == eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5))
+								if((sp->track[picked_track]->note[k]->type == hopodiff) && (hopopos[hopodiff] == eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset)))
 								{
 									if(hopotype[hopodiff] == 0)
 									{
@@ -2218,12 +2223,12 @@ double realtime=0.0;			//Used to calculate realtime of anchors
 
 						if((eof_import_events[i]->event[j]->d1 == 116) && (sp->track[picked_track]->star_power_paths < EOF_MAX_STAR_POWER))
 						{
-							sp->track[picked_track]->star_power_path[sp->track[picked_track]->star_power_paths].end_pos = eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5 - 1;
+							sp->track[picked_track]->star_power_path[sp->track[picked_track]->star_power_paths].end_pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset) - 1;
 							sp->track[picked_track]->star_power_paths++;
 						}
 						else if((eof_import_events[i]->event[j]->d1 == 103) && (sp->track[picked_track]->solos < EOF_MAX_SOLOS))
 						{
-							sp->track[picked_track]->solo[sp->track[picked_track]->solos].end_pos = eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5 - 1;
+							sp->track[picked_track]->solo[sp->track[picked_track]->solos].end_pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset) - 1;
 							sp->track[picked_track]->solos++;
 						}
 						if((note_count[picked_track] > 0) && (sp->track[picked_track]->note[note_count[picked_track] - 1]->type != -1))
@@ -2233,7 +2238,7 @@ double realtime=0.0;			//Used to calculate realtime of anchors
 								if((sp->track[picked_track]->note[k]->type == sp->track[picked_track]->note[note_count[picked_track]]->type) && (sp->track[picked_track]->note[k]->note & diff_chart[diff]))
 								{
 	//								allegro_message("break %d, %d, %d", k, sp->track[picked_track]->note[k]->note, sp->track[picked_track]->note[note_count[picked_track]]->note);
-									sp->track[picked_track]->note[k]->length = eof_ConvertToRealTime(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions) - sp->track[picked_track]->note[k]->pos + sp->tags->ogg[0].midi_offset + 0.5;
+									sp->track[picked_track]->note[k]->length = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset) - sp->track[picked_track]->note[k]->pos;
 									if(sp->track[picked_track]->note[k]->length <= 0)
 									{
 										sp->track[picked_track]->note[k]->length = 1;
@@ -2297,7 +2302,7 @@ double realtime=0.0;			//Used to calculate realtime of anchors
 	{
 		if(eof_import_text_events->event[i]->type == 0x01)
 		{
-			tp = eof_ConvertToRealTime(eof_import_text_events->event[i]->pos,0,anchorlist,eof_work_midi->divisions) + sp->tags->ogg[0].midi_offset + 0.5;
+			tp = eof_ConvertToRealTimeInt(eof_import_text_events->event[i]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 			b = eof_import_closest_beat(sp, tp);
 			if(b >= 0)
 			{
