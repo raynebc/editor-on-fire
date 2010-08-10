@@ -1313,7 +1313,7 @@ EOF_SONG * eof_import_midi2(const char * fn)
 	int i, j, k;
 	int rbg = 0;
 	int tracks = 0;
-	int track[16] = {0};
+	int track[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};
 	int track_pos;
 	unsigned long delta;
 	unsigned long absolute_pos;
@@ -1358,14 +1358,15 @@ EOF_SONG * eof_import_midi2(const char * fn)
 		destroy_midi(eof_work_midi);
 		return NULL;
 	}
+
+	/* read INI file */
 	replace_filename(backup_filename, fn, "song.ini", 1024);
 	eof_import_ini(sp, backup_filename);
 
-	/* read INI file */
 
 	/* parse MIDI data */
-	for(i = 0; i < 16; i++)
-	{
+	for(i = 0; i < EOF_MAX_IMPORT_MIDI_TRACKS; i++)
+	{	//Note each of the first EOF_MAX_IMPORT_MIDI_TRACKS number of tracks that have MIDI events
 		if(eof_work_midi->track[i].data)
 		{
 			track[tracks] = i;
@@ -1821,11 +1822,11 @@ double realtime=0.0;			//Used to calculate realtime of anchors
 	int picked_track;
 
 	/* for Rock Band songs, we need to ignore certain tracks */
-	char used_track[16] = {0};
+	char used_track[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};
 
 	unsigned char diff = 0;
 	unsigned char diff_chart[5] = {1, 2, 4, 8, 16};
-	int note_count[16] = {0};
+	int note_count[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};
 	int first_note;
 	unsigned long hopopos[4];
 	char hopotype[4];
