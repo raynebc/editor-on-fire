@@ -1858,9 +1858,6 @@ double realtime=0.0;			//Used to calculate realtime of anchors
 						destroy_midi(eof_work_midi);
 						eof_destroy_song(sp);
 						set_window_title("EOF - No Song");
-						eof_import_destroy_events_list(eof_import_bpm_events);
-						eof_import_destroy_events_list(eof_import_text_events);
-						destroy_midi(eof_work_midi);
 						return NULL;
 					}
 					if(pticker % 200 == 0)
