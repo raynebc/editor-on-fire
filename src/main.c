@@ -1651,7 +1651,12 @@ void eof_logic(void)
 		{
 			if(eof_playback_speed != eof_mix_speed)
 			{
-				eof_music_pos += 5;
+				if(eof_mix_speed == 1000)		//Force full speed playback
+					eof_music_pos += 10;
+				else if(eof_mix_speed == 500)	//Force half speed playback
+					eof_music_pos += 5;
+				else							//Something unexpected is going on
+					eof_playback_speed = eof_mix_speed;
 			}
 			else
 			{
