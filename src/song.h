@@ -7,6 +7,7 @@
 #define EOF_MAX_NOTES         32768
 #define EOF_MAX_LYRICS EOF_MAX_NOTES
 #define EOF_MAX_LYRIC_LINES    4096
+#define EOF_MAX_LYRIC_LENGTH    255
 #define EOF_MAX_TRACKS            5
 #define EOF_MAX_CATALOG_ENTRIES 256
 #define EOF_MAX_INI_SETTINGS     32
@@ -80,7 +81,7 @@ typedef struct
 {
 
 	char          note;
-	char          text[256];
+	char          text[EOF_MAX_LYRIC_LENGTH+1];
 	unsigned long pos;
 	long          length;
 
@@ -90,7 +91,7 @@ typedef struct
 {
 
 	char          note;
-	char          text[256];
+	char          text[EOF_MAX_LYRIC_LENGTH+1];
 	unsigned long pos;
 	long          length;
 
@@ -316,5 +317,20 @@ int eofProcessNextWaveformSlice(struct wavestruct *waveform,SAMPLE *audio,unsign
 	//Processes waveform->slicesize number of audio samples, or if there are not enough, the remainder of the samples, storing the peak amplitude and RMS into waveform->slices[slicenum]
 	//If the audio is stereo, the data for the right channel is likewise processed and stored into waveform->slices2[slicenum]
 	//Returns 0 on success, 1 when all samples are exhausted or -1 on error
+
+int eofLyric_is_freestyle(EOF_SONG * sp, unsigned long lyricnumber);
+	//Returns 1 if the specified lyric contains a freestyle character (# or ^)
+	//Returns 0 if the specified lyric contains no freestyle character
+	//Returns -1 on error, such as if the specified lyric does not exist
+
+void eofFix_lyric(EOF_SONG * sp, unsigned long lyricnumber);
+	//Ensures that the string is properly terminated and any existing freestyle character is placed properly at the end of the string
+	//Should be called for each lyric before the MIDI is written
+
+void eofSet_freestyle(EOF_SONG * sp, unsigned long lyricnumber, char status);
+	//Rewrites the lyric string, which will end with a # if status is nonzero
+
+void eofToggle_freestyle(EOF_SONG * sp, unsigned long lyricnumber);
+	//Makes a lyric freestyle if it isn't already and vice versa
 
 #endif
