@@ -771,6 +771,9 @@ void eof_vocal_track_fixup_lyrics(EOF_VOCAL_TRACK * tp, int sel)
 				}
 			}
 		}
+
+		/* validate lyric text, ie. freestyle marker */
+		eof_fix_lyric(tp,i);
 	}
 
 	/* make sure no lines overlap */
@@ -1043,7 +1046,7 @@ void eof_detect_difficulties(EOF_SONG * sp)
 	}
 }
 
-struct wavestruct *eofCreateWaveform(char *oggfilename,unsigned long slicelength)
+struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long slicelength)
 {
 	ALOGG_OGG *oggstruct=NULL;
 	SAMPLE *audio=NULL;
@@ -1114,7 +1117,7 @@ struct wavestruct *eofCreateWaveform(char *oggfilename,unsigned long slicelength
 
 	while(!done)
 	{
-		done=eofProcessNextWaveformSlice(waveform,audio,slicenum++);
+		done=eof_process_next_waveform_slice(waveform,audio,slicenum++);
 	}
 
 //Cleanup and return
@@ -1137,7 +1140,7 @@ struct wavestruct *eofCreateWaveform(char *oggfilename,unsigned long slicelength
 	return waveform;	//Return waveform data
 }
 
-int eofProcessNextWaveformSlice(struct wavestruct *waveform,SAMPLE *audio,unsigned long slicenum)
+int eof_process_next_waveform_slice(struct wavestruct *waveform,SAMPLE *audio,unsigned long slicenum)
 {
 	unsigned long sampleindex=0;	//The byte index into audio->data
 	unsigned long startsample=0;	//The sample number of the first sample being processed
@@ -1223,17 +1226,25 @@ int eofProcessNextWaveformSlice(struct wavestruct *waveform,SAMPLE *audio,unsign
 	return outofsamples;	//Return success/completed status
 }
 
-int eofLyric_is_freestyle(EOF_SONG * sp, unsigned long lyricnumber)
+int eof_lyric_is_freestyle(EOF_VOCAL_TRACK * tp, unsigned long lyricnumber)
+{
+	if((tp == NULL) || (lyricnumber >= tp->lyrics))
+		return -1;	//Return error
+
+	return eof_is_freestyle(tp->lyric[lyricnumber]->text);
+}
+
+int eof_is_freestyle(char *ptr)
 {
 	unsigned long ctr=0;
 	char c=0;
 
-	if((sp == NULL) || (lyricnumber >= sp->vocal_track->lyrics))
+	if(ptr == NULL)
 		return -1;	//Return error
 
 	for(ctr=0;ctr<EOF_MAX_LYRIC_LENGTH;ctr++)
 	{
-		c=sp->vocal_track->lyric[lyricnumber]->text[ctr];
+		c=ptr[ctr];
 
 		if(c == '\0')	//End of string
 			break;
@@ -1245,30 +1256,30 @@ int eofLyric_is_freestyle(EOF_SONG * sp, unsigned long lyricnumber)
 	return 0;	//Return not freestyle
 }
 
-void eofSet_freestyle(EOF_SONG * sp, unsigned long lyricnumber, char status)
+void eof_set_freestyle(char *ptr, char status)
 {
 	unsigned long ctr=0,ctr2=0;
 	char c=0;
 
-	if((sp == NULL) || (lyricnumber >= sp->vocal_track->lyrics))
+	if(ptr == NULL)
 		return;	//Return if input is invalid
 
 	for(ctr=0;ctr<EOF_MAX_LYRIC_LENGTH;ctr++)
 	{
-		c=sp->vocal_track->lyric[ctr]->text[ctr];
+		c=ptr[ctr];
 
-		if((c != '#') && (c != '^'))					//If this is not a freestyle character
+		if((c != '#') && (c != '^'))	//If this is not a freestyle character
 		{
-			sp->vocal_track->lyric[lyricnumber]->text[ctr2]=c;	//keep it, otherwise it will be overwritten by the rest of the lyric text
-			if(c == '\0')						//If the end of the string was just parsed
-				break;						//Exit from loop
-			ctr2++;							//Increment destination index into lyric string
+			ptr[ctr2]=c;				//keep it, otherwise it will be overwritten by the rest of the lyric text
+			if(c == '\0')				//If the end of the string was just parsed
+				break;					//Exit from loop
+			ctr2++;						//Increment destination index into lyric string
 		}
 	}
 
 	if(ctr == EOF_MAX_LYRIC_LENGTH)
 	{	//If the lyric is not properly NULL terminated
-		sp->vocal_track->lyric[lyricnumber]->text[EOF_MAX_LYRIC_LENGTH]='\0';	//Truncate the string at its max length
+		ptr[EOF_MAX_LYRIC_LENGTH]='\0';	//Truncate the string at its max length
 		ctr2=EOF_MAX_LYRIC_LENGTH;
 	}
 
@@ -1277,37 +1288,37 @@ void eofSet_freestyle(EOF_SONG * sp, unsigned long lyricnumber, char status)
 	{
 		if(ctr2 < EOF_MAX_LYRIC_LENGTH)	//If there is room to append the pound character
 		{
-			sp->vocal_track->lyric[lyricnumber]->text[ctr2]='#';
-			sp->vocal_track->lyric[lyricnumber]->text[ctr2+1]='\0';
+			ptr[ctr2]='#';
+			ptr[ctr2+1]='\0';
 		}
 		else if(ctr2 > 0)		//If one byte of the string can be truncated to write the pound character
 		{
-			sp->vocal_track->lyric[lyricnumber]->text[ctr2-1]='#';
+			ptr[ctr2-1]='#';
 		}
-		else				//special case: EOF_MAX_LYRIC_LENGTH is 0 for some reason
-			return;			//Don't do anything
+		else					//special case: EOF_MAX_LYRIC_LENGTH is 0 for some reason
+			return;				//Don't do anything
 	}
 }
 
-void eofFix_lyric(EOF_SONG * sp, unsigned long lyricnumber)
+void eof_fix_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyricnumber)
 {
 	int result=0;
 
-	if((sp == NULL) || (lyricnumber >= sp->vocal_track->lyrics))
+	if((tp == NULL) || (lyricnumber >= tp->lyrics))
 		return;	//Return if input is invalid
 
-	result=eofLyric_is_freestyle(sp,lyricnumber);
-	if(result >= 0)						//As long as there wasn't an error with the lyric
-		eofSet_freestyle(sp,lyricnumber,result);	//Rewrite lyric (if the NULL was missing, the string will be corrected)
+	result=eof_lyric_is_freestyle(tp,lyricnumber);
+	if(result >= 0)												//As long as there wasn't an error with the lyric
+		eof_set_freestyle(tp->lyric[lyricnumber]->text,result);	//Rewrite lyric (if the NULL was missing, the string will be corrected)
 }
 
-void eofToggle_freestyle(EOF_SONG * sp, unsigned long lyricnumber)
+void eof_toggle_freestyle(EOF_VOCAL_TRACK * tp, unsigned long lyricnumber)
 {
-	if((sp == NULL) || (lyricnumber >= sp->vocal_track->lyrics))
+	if((tp == NULL) || (lyricnumber >= tp->lyrics))
 		return;	//Return if input is invalid
 
-	if(eofLyric_is_freestyle(sp,lyricnumber))	//If the lyric is freestyle
-		eofSet_freestyle(sp,lyricnumber,0);	//Remove its freestyle character(s)
-	else						//Otherwise
-		eofSet_freestyle(sp,lyricnumber,1);	//Rewrite as freestyle
+	if(eof_lyric_is_freestyle(tp,lyricnumber))				//If the lyric is freestyle
+		eof_set_freestyle(tp->lyric[lyricnumber]->text,0);	//Remove its freestyle character(s)
+	else													//Otherwise
+		eof_set_freestyle(tp->lyric[lyricnumber]->text,1);	//Rewrite as freestyle
 }

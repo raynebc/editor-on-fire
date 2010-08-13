@@ -307,30 +307,35 @@ void eof_sort_notes(void);	//Sorts the notes in all tracks
 void eof_fixup_notes(void);	//Performs cleanup of the note selection, beats and all tracks
 void eof_detect_difficulties(EOF_SONG * sp);	//Sets the populated status by prefixing each populated tracks' difficulty name (stored in eof_note_type_name[] and eof_vocal_tab_name[]) with an asterisk
 
-struct wavestruct *eofCreateWaveform(char *oggfilename,unsigned long slicelength);
+struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long slicelength);
 	//Decompresses the specified OGG file into memory and creates waveform data
 	//slicelength is the length of one waveform graph slice in milliseconds
 	//The correct number of samples are used to represent each column (slice) of the graph
 	//The waveform data is returned, otherwise NULL is returned upon error
 
-int eofProcessNextWaveformSlice(struct wavestruct *waveform,SAMPLE *audio,unsigned long slicenum);
+int eof_process_next_waveform_slice(struct wavestruct *waveform,SAMPLE *audio,unsigned long slicenum);
 	//Processes waveform->slicesize number of audio samples, or if there are not enough, the remainder of the samples, storing the peak amplitude and RMS into waveform->slices[slicenum]
 	//If the audio is stereo, the data for the right channel is likewise processed and stored into waveform->slices2[slicenum]
 	//Returns 0 on success, 1 when all samples are exhausted or -1 on error
 
-int eofLyric_is_freestyle(EOF_SONG * sp, unsigned long lyricnumber);
+int eof_is_freestyle(char *ptr);
+	//Returns 1 if the specified lyric contains a freestyle character (# or ^)
+	//Returns 0 if the specified lyric contains no freestyle character
+	//Returns -1 on error, such as if the pointer is NULL
+
+int eof_lyric_is_freestyle(EOF_VOCAL_TRACK * tp, unsigned long lyricnumber);
 	//Returns 1 if the specified lyric contains a freestyle character (# or ^)
 	//Returns 0 if the specified lyric contains no freestyle character
 	//Returns -1 on error, such as if the specified lyric does not exist
 
-void eofFix_lyric(EOF_SONG * sp, unsigned long lyricnumber);
+void eof_fix_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyricnumber);
 	//Ensures that the string is properly terminated and any existing freestyle character is placed properly at the end of the string
 	//Should be called for each lyric before the MIDI is written
 
-void eofSet_freestyle(EOF_SONG * sp, unsigned long lyricnumber, char status);
+void eof_set_freestyle(char *ptr, char status);
 	//Rewrites the lyric string, which will end with a # if status is nonzero
 
-void eofToggle_freestyle(EOF_SONG * sp, unsigned long lyricnumber);
+void eof_toggle_freestyle(EOF_VOCAL_TRACK * tp, unsigned long lyricnumber);
 	//Makes a lyric freestyle if it isn't already and vice versa
 
 #endif
