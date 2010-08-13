@@ -1464,6 +1464,9 @@ int eof_edit_lyric_dialog(void)
 	ustrcpy(eof_etext, eof_song->vocal_track->lyric[eof_selection.current]->text);
 	if(eof_popup_dialog(eof_lyric_dialog, 2) == 3)	//User hit OK on "Edit Lyric" dialog instead of canceling
 	{
+		if(eof_is_freestyle(eof_etext))		//If the text entered had one or more freestyle characters
+			eof_set_freestyle(eof_etext,1);	//Perform any necessary corrections
+
 		if(ustricmp(eof_song->vocal_track->lyric[eof_selection.current]->text, eof_etext))	//If the updated string (eof_etext) is different
 		{
 			eof_prepare_undo(0);
@@ -1474,6 +1477,7 @@ int eof_edit_lyric_dialog(void)
 			else
 			{
 				ustrcpy(eof_song->vocal_track->lyric[eof_selection.current]->text, eof_etext);
+				eof_fix_lyric(eof_song->vocal_track,eof_selection.current);	//Correct the freestyle character if necessary
 			}
 		}
 	}
