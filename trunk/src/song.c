@@ -1259,7 +1259,7 @@ int eof_is_freestyle(char *ptr)
 void eof_set_freestyle(char *ptr, char status)
 {
 	unsigned long ctr=0,ctr2=0;
-	char c=0;
+	char c=0,style=0;
 
 	if(ptr == NULL)
 		return;	//Return if input is invalid
@@ -1275,6 +1275,11 @@ void eof_set_freestyle(char *ptr, char status)
 				break;					//Exit from loop
 			ctr2++;						//Increment destination index into lyric string
 		}
+		else
+		{
+			if(!style)
+				style=c;				//Remember this lyric's first freestyle character
+		}
 	}
 
 	if(ctr == EOF_MAX_LYRIC_LENGTH)
@@ -1286,14 +1291,17 @@ void eof_set_freestyle(char *ptr, char status)
 //At this point, ctr2 is the NULL terminator's index into the string
 	if(status)
 	{
+		if(!style)			//If the original string didn't have a particular freestyle marker
+			style='#';		//Default to using '#'
+
 		if(ctr2 < EOF_MAX_LYRIC_LENGTH)	//If there is room to append the pound character
 		{
-			ptr[ctr2]='#';
+			ptr[ctr2]=style;
 			ptr[ctr2+1]='\0';
 		}
 		else if(ctr2 > 0)		//If one byte of the string can be truncated to write the pound character
 		{
-			ptr[ctr2-1]='#';
+			ptr[ctr2-1]=style;
 		}
 		else					//special case: EOF_MAX_LYRIC_LENGTH is 0 for some reason
 			return;				//Don't do anything
