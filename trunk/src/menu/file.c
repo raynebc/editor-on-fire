@@ -1074,7 +1074,7 @@ int eof_menu_file_lyrics_import(void)
 		//Import lyrics
 			if(lyricdetectionlist->next == NULL)	//If this file had only one detected lyric format
 			{
-				eof_prepare_undo(0);	//Make a generic undo state
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make a generic undo state
 				EOF_IMPORT_VIA_LC(eof_song->vocal_track, NULL, lyricdetectionlist->format, returnedfn, lyricdetectionlist->track);
 					//Import the format
 			}
@@ -1083,7 +1083,7 @@ int eof_menu_file_lyrics_import(void)
 				eof_lyric_import_prompt(&selectedformat,&selectedtrack);
 				if(selectedformat)	//If a selection was made
 				{
-					eof_prepare_undo(0);	//Make a generic undo state
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make a generic undo state
 					EOF_IMPORT_VIA_LC(eof_song->vocal_track, NULL, selectedformat, returnedfn, selectedtrack);
 				}
 			}

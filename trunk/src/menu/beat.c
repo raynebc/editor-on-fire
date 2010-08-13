@@ -276,7 +276,7 @@ int eof_menu_beat_bpm_change(void)
 			eof_show_mouse(NULL);
 			return 1;
 		}
-		eof_prepare_undo(0);
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		if(eof_bpm_change_dialog[4].flags == D_SELECTED)
 		{
 			if(eof_selected_beat > 0)
@@ -328,7 +328,7 @@ int eof_menu_beat_ts_4_4(void)
 //Clear the beat's status except for its anchor and event flags
 	int flags = eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR;
 	flags |= eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_EVENTS;
-	eof_prepare_undo(0);
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	eof_song->beat[eof_selected_beat]->flags = flags | EOF_BEAT_FLAG_START_4_4;
 	eof_select_beat(eof_selected_beat);
 	return 1;
@@ -339,7 +339,7 @@ int eof_menu_beat_ts_3_4(void)
 //Clear the beat's status except for its anchor and event flags
 	int flags = eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR;
 	flags |= eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_EVENTS;
-	eof_prepare_undo(0);
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	eof_song->beat[eof_selected_beat]->flags = flags | EOF_BEAT_FLAG_START_3_4;
 	eof_select_beat(eof_selected_beat);
 	return 1;
@@ -350,7 +350,7 @@ int eof_menu_beat_ts_5_4(void)
 //Clear the beat's status except for its anchor and event flags
 	int flags = eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR;
 	flags |= eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_EVENTS;
-	eof_prepare_undo(0);
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	eof_song->beat[eof_selected_beat]->flags = flags | EOF_BEAT_FLAG_START_5_4;
 	eof_select_beat(eof_selected_beat);
 	return 1;
@@ -361,7 +361,7 @@ int eof_menu_beat_ts_6_4(void)
 //Clear the beat's status except for its anchor and event flags
 	int flags = eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR;
 	flags |= eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_EVENTS;
-	eof_prepare_undo(0);
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	eof_song->beat[eof_selected_beat]->flags = flags | EOF_BEAT_FLAG_START_6_4;
 	eof_select_beat(eof_selected_beat);
 	return 1;
@@ -372,7 +372,7 @@ int eof_menu_beat_ts_off(void)
 //Clear the beat's status except for its anchor and event flags
 	int flags = eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR;
 	flags |= eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_EVENTS;
-	eof_prepare_undo(0);
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	eof_song->beat[eof_selected_beat]->flags = flags;
 	eof_select_beat(eof_selected_beat);
 	return 1;
@@ -383,7 +383,7 @@ int eof_menu_beat_delete(void)
 	int flags = eof_song->beat[eof_selected_beat]->flags;
 	if((eof_selected_beat > 0) && (eof_find_next_anchor(eof_song, eof_selected_beat) >= 0))
 	{	//Only process this function if a beat other than beat 0 is selected, and there is at least one anchor after the selected beat
-		eof_prepare_undo(0);
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		eof_song_delete_beat(eof_song, eof_selected_beat);
 		if((eof_song->beat[eof_selected_beat - 1]->flags & EOF_BEAT_FLAG_ANCHOR) && (eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR))
 		{
@@ -414,7 +414,7 @@ int eof_menu_beat_add(void)
 {
 	int i;
 
-	eof_prepare_undo(0);
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(eof_song_add_beat(eof_song) != NULL)
 	{	//Only if the new beat structure was successfully created
 		for(i = eof_song->beats - 1; i > eof_selected_beat; i--)
@@ -437,7 +437,7 @@ int eof_menu_beat_push_offset_back(void)
 
 	if(eof_song->beat[0]->pos - backamount >= 0)
 	{
-		eof_prepare_undo(0);
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		if(eof_song_resize_beats(eof_song, eof_song->beats + 1))
 		{	//If the beats array was successfully resized
 			for(i = eof_song->beats - 1; i > 0; i--)
@@ -461,7 +461,7 @@ int eof_menu_beat_push_offset_up(void)
 {
 	int i;
 
-	eof_prepare_undo(0);
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = 0; i < eof_song->beats - 1; i++)
 	{
 		memcpy(eof_song->beat[i], eof_song->beat[i + 1], sizeof(EOF_BEAT_MARKER));
@@ -515,7 +515,7 @@ int eof_menu_beat_anchor(void)
 			eof_show_mouse(NULL);
 			return 1;
 		}
-		eof_prepare_undo(0);
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		newpos = (double)mm * 60.0 * 1000.0 + (double)ss * 1000.0 + (double)hs * 10.0;
 		if(newpos > oldpos)
 		{
@@ -564,7 +564,7 @@ int eof_menu_beat_toggle_anchor(void)
 {
 	if(eof_selected_beat > 0)
 	{
-		eof_prepare_undo(0);
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		eof_song->beat[eof_selected_beat]->flags ^= EOF_BEAT_FLAG_ANCHOR;
 	}
 	return 1;
@@ -580,7 +580,7 @@ int eof_menu_beat_delete_anchor(void)
 
 	if((eof_selected_beat > 0) && eof_beat_is_anchor(eof_song, eof_selected_beat))
 	{
-		eof_prepare_undo(0);
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		for(i = eof_selected_beat; i < eof_song->beats; i++)
 		{
 			if(eof_song->beat[i]->ppqn == cppqn)
@@ -622,7 +622,7 @@ int eof_menu_beat_reset_bpm(void)
 	{
 		if(alert(NULL, "Erase all BPM changes?", NULL, "OK", "Cancel", 0, 0) == 1)
 		{
-			eof_prepare_undo(0);
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			for(i = 1; i < eof_song->beats; i++)
 			{
 				eof_song->beat[i]->ppqn = eof_song->beat[0]->ppqn;
@@ -669,7 +669,7 @@ int eof_menu_beat_calculate_bpm(void)
 	}
 	if(bpm_count >= 1)
 	{
-		eof_prepare_undo(0);
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		bpm = bpm / (double)bpm_count;
 		for(i = eof_selected_beat; i < eof_song->beats; i++)
 		{
@@ -737,7 +737,7 @@ int eof_menu_beat_clear_events(void)
 	}
 	if(alert(NULL, "Erase all events?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{
-		eof_prepare_undo(0);
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		eof_song_resize_text_events(eof_song, 0);
 		for(i = 0; i < eof_song->beats; i++)
 		{
@@ -824,7 +824,7 @@ int eof_events_dialog_add(DIALOG * d)
 	{
 		if((ustrlen(eof_etext) > 0) && eof_check_string(eof_etext))
 		{
-			eof_prepare_undo(0);
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			eof_add_text_event(eof_song, eof_selected_beat, eof_etext);
 			eof_sort_events();
 			eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_EVENTS;
@@ -875,7 +875,7 @@ int eof_events_dialog_edit(DIALOG * d)
 	{
 		if((ustrlen(eof_etext) > 0) && eof_check_string(eof_etext))
 		{
-			eof_prepare_undo(0);
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			ustrcpy(eof_song->text_event[event]->text, eof_etext);
 		}
 	}
@@ -910,7 +910,7 @@ int eof_events_dialog_delete(DIALOG * d)
 	{
 		return D_O_K;
 	}
-	eof_prepare_undo(0);
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = 0; i < eof_song->text_events; i++)
 	{
 		if(eof_song->text_event[i]->beat == eof_selected_beat)

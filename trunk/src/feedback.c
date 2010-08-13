@@ -29,6 +29,7 @@ Ctrl-c / Ctrl-v: copy/paste.
 #include "player.h"
 #include "editor.h"
 #include "feedback.h"
+#include "undo.h"
 #include "foflc/Lyric_storage.h"
 
 int         eof_feedback_step = 0;
@@ -190,7 +191,7 @@ void eof_editor_logic_feedback(void)
 	/* change BPM */
 	if(key[KEY_MINUS])
 	{
-		eof_prepare_undo(0);
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		eof_menu_edit_cut(fbeat + 1, 1, 0.0);
 		if(KEY_EITHER_SHIFT)
 		{
@@ -220,7 +221,7 @@ void eof_editor_logic_feedback(void)
 	}
 	if(key[KEY_EQUALS])
 	{
-		eof_prepare_undo(0);
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		eof_menu_edit_cut(fbeat + 1, 1, 0.0);
 		if(KEY_EITHER_SHIFT)
 		{

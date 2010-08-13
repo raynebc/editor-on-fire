@@ -1173,6 +1173,15 @@ void eof_read_editor_keys(void)
 		key[KEY_L] = 0;
 	}
 
+	if(key[KEY_F])
+	{
+		if(eof_vocals_selected)
+		{	//Toggle freestyle
+			eof_menu_toggle_freestyle();
+		}
+		key[KEY_F] = 0;
+	}
+
 	/* select all */
 	if(KEY_EITHER_CTRL && key[KEY_D] && eof_music_paused && !eof_music_catalog_playback)
 	{
@@ -2799,7 +2808,7 @@ void eof_editor_logic(void)
 					}
 					if(!eof_undo_toggle && ((move_offset != 0) || (eof_snap_mode == EOF_SNAP_OFF) || KEY_EITHER_CTRL))
 					{
-						eof_prepare_undo(0);
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					}
 					eof_notes_moved = 1;
 					for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
@@ -3202,7 +3211,7 @@ void eof_editor_logic(void)
 				{
 					if(!eof_undo_toggle)
 					{
-						eof_prepare_undo(0);
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 						eof_moving_anchor = 1;
 						eof_last_midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
 					}
@@ -3233,7 +3242,7 @@ void eof_editor_logic(void)
 				{
 					if(!eof_undo_toggle)
 					{
-						eof_prepare_undo(0);
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 						eof_moving_anchor = 1;
 						eof_last_midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
 						eof_adjusted_anchor = 1;
@@ -3898,7 +3907,7 @@ void eof_vocal_editor_logic(void)
 					}
 					if(!eof_undo_toggle && ((move_offset != 0) || (eof_snap_mode == EOF_SNAP_OFF) || KEY_EITHER_CTRL))
 					{
-						eof_prepare_undo(0);
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					}
 					eof_notes_moved = 1;
 					for(i = 0; i < eof_song->vocal_track->lyrics; i++)
@@ -4175,7 +4184,7 @@ void eof_vocal_editor_logic(void)
 				{
 					if(!eof_undo_toggle)
 					{
-						eof_prepare_undo(0);
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 						eof_moving_anchor = 1;
 						eof_last_midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
 					}
@@ -4204,7 +4213,7 @@ void eof_vocal_editor_logic(void)
 				{
 					if(!eof_undo_toggle)
 					{
-						eof_prepare_undo(0);
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 						eof_moving_anchor = 1;
 						eof_last_midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
 						eof_adjusted_anchor = 1;
