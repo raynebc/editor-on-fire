@@ -1941,7 +1941,7 @@ int eof_menu_edit_midi_tones(void)
 
 int eof_menu_edit_bookmark_helper(int b)
 {
-	eof_prepare_undo(0);
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(eof_song->bookmark_pos[b] != eof_music_pos - eof_av_delay)
 	{
 		eof_song->bookmark_pos[b] = eof_music_pos - eof_av_delay;

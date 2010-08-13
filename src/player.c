@@ -19,7 +19,7 @@ void eof_music_play(void)
 	{
 		speed = 500;
 	}
-	else if(key[KEY_F])	//Force full playback speed
+	else if(key[KEY_D])	//Force full playback speed
 	{
 		speed = 1000;
 		key[KEY_F]=0;

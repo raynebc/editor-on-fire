@@ -8,6 +8,7 @@
 #include "../midi.h"
 #include "../ini.h"
 #include "../dialog/proc.h"
+#include "../undo.h"
 #include "song.h"
 
 char eof_track_selected_menu_text[6][32] = {" PART &GUITAR", " PART &BASS", " PART GUITAR &COOP", " PART &RHYTHM", " PART &DRUMS", " PART &VOCALS"};
@@ -854,15 +855,15 @@ int eof_menu_song_properties(void)
 	{
 		if(ustricmp(eof_song->tags->title, eof_etext) || ustricmp(eof_song->tags->artist, eof_etext2) || ustricmp(eof_song->tags->frettist, eof_etext3) || ustricmp(eof_song->tags->year, eof_etext5) || ustricmp(eof_song->tags->loading_text, eof_etext6))
 		{
-			eof_prepare_undo(0);
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		}
 		else if(eof_is_number(eof_etext4) && (eof_song->tags->ogg[eof_selected_ogg].midi_offset != atol(eof_etext4)))
 		{
-			eof_prepare_undo(0);
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		}
 		else if((eof_song->tags->lyrics && !(eof_song_properties_dialog[15].flags & D_SELECTED)) || (!eof_song->tags->lyrics && (eof_song_properties_dialog[15].flags & D_SELECTED)) || (eof_song->tags->eighth_note_hopo && !(eof_song_properties_dialog[16].flags & D_SELECTED)) || (!eof_song->tags->eighth_note_hopo && (eof_song_properties_dialog[16].flags & D_SELECTED)))
 		{
-			eof_prepare_undo(0);
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		}
 		if((ustrlen(eof_etext) > 255) || (ustrlen(eof_etext2) > 255) || (ustrlen(eof_etext3) > 255) || (ustrlen(eof_etext5) > 31) || (ustrlen(eof_etext6) > 511))
 		{
@@ -1221,7 +1222,7 @@ int eof_menu_catalog_add_vocals(void)
 	eof_song->catalog->entry[eof_song->catalog->entries].end_pos = last_pos;
 	if((eof_song->catalog->entry[eof_song->catalog->entries].start_pos != -1) && (eof_song->catalog->entry[eof_song->catalog->entries].end_pos != -1))
 	{
-		eof_prepare_undo(0);
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		eof_song->catalog->entries++;
 		eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 	}
@@ -1272,7 +1273,7 @@ int eof_menu_catalog_add(void)
 	eof_song->catalog->entry[eof_song->catalog->entries].end_pos = last_pos;
 	if((eof_song->catalog->entry[eof_song->catalog->entries].start_pos != -1) && (eof_song->catalog->entry[eof_song->catalog->entries].end_pos != -1))
 	{
-		eof_prepare_undo(0);
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		eof_song->catalog->entries++;
 		eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 	}
@@ -1286,7 +1287,7 @@ int eof_menu_catalog_delete(void)
 
 	if(eof_song->catalog->entries > 0)
 	{
-		eof_prepare_undo(0);
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		for(i = eof_selected_catalog_entry; i < eof_song->catalog->entries - 1; i++)
 		{
 			memcpy(&eof_song->catalog->entry[i], &eof_song->catalog->entry[i + 1], sizeof(EOF_CATALOG_ENTRY));
@@ -1352,7 +1353,7 @@ int eof_ini_dialog_add(DIALOG * d)
 	{
 		if((ustrlen(eof_etext) > 0) && eof_check_string(eof_etext))
 		{
-			eof_prepare_undo(0);
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			ustrcpy(eof_song->tags->ini_setting[eof_song->tags->ini_settings], eof_etext);
 			eof_song->tags->ini_settings++;
 		}
@@ -1371,7 +1372,7 @@ int eof_ini_dialog_delete(DIALOG * d)
 
 	if(eof_song->tags->ini_settings > 0)
 	{
-		eof_prepare_undo(0);
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		for(i = eof_ini_dialog[1].d1; i < eof_song->tags->ini_settings - 1; i++)
 		{
 			memcpy(eof_song->tags->ini_setting[i], eof_song->tags->ini_setting[i + 1], 512);
