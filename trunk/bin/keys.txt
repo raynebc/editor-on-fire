@@ -121,8 +121,13 @@ Note and Beat Editing:
     A:
 
         Toggle anchor for current beat.
-        
-    
+
+
+    H:
+
+        Cycle the HOPO status for the selected notes.
+
+
     Tab:
 
         Cycle through difficulties.

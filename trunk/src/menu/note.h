@@ -28,6 +28,7 @@ int eof_menu_lyric_line_erase_all(void);
 int eof_menu_lyric_line_toggle_overdrive(void);
 
 int eof_menu_hopo_auto(void);
+int eof_menu_hopo_cycle(void);					//Cycles the selected note(s) between auto, on and off HOPO modes
 int eof_menu_hopo_force_on(void);
 int eof_menu_hopo_force_off(void);
 

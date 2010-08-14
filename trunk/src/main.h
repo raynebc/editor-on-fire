@@ -114,7 +114,11 @@ typedef struct
 	int lyric_view_bkey_width;
 	int lyric_view_bkey_height;
 	int note_size;
+	int hopo_note_size;			//The size of a note that has HOPO forced on
+	int anti_hopo_note_size;	//The size of a note that has HOPO forced off
 	int note_dot_size;
+	int hopo_note_dot_size;
+	int anti_hopo_note_dot_size;
 	int note_marker_size;
 	int note_tail_size;
 	int note_kick_size;

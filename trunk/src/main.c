@@ -534,7 +534,11 @@ int eof_set_display_mode(int mode)
 			eof_screen_layout.lyric_view_bkey_width = 3;
 			eof_screen_layout.lyric_view_bkey_height = eof_screen_layout.lyric_view_key_width * 3;
 			eof_screen_layout.note_size = 6;
+			eof_screen_layout.hopo_note_size = 4;
+			eof_screen_layout.anti_hopo_note_size = 8;
 			eof_screen_layout.note_dot_size = 2;
+			eof_screen_layout.hopo_note_dot_size = 1;
+			eof_screen_layout.anti_hopo_note_dot_size = 4;
 			eof_screen_layout.note_marker_size = 10;
 			eof_screen_layout.note_tail_size = 3;
 			eof_screen_layout.note_kick_size = 2;
@@ -608,7 +612,11 @@ int eof_set_display_mode(int mode)
 			eof_screen_layout.lyric_view_bkey_width = 4;
 			eof_screen_layout.lyric_view_bkey_height = eof_screen_layout.lyric_view_key_width * 3;
 			eof_screen_layout.note_size = 8;
+			eof_screen_layout.hopo_note_size = 5;
+			eof_screen_layout.anti_hopo_note_size = 11;
 			eof_screen_layout.note_dot_size = 3;
+			eof_screen_layout.hopo_note_dot_size = 2;
+			eof_screen_layout.anti_hopo_note_dot_size = 5;
 			eof_screen_layout.note_marker_size = 12;
 			eof_screen_layout.note_tail_size = 4;
 			eof_screen_layout.note_kick_size = 3;
@@ -681,7 +689,11 @@ int eof_set_display_mode(int mode)
 			eof_screen_layout.lyric_view_bkey_width = 5;
 			eof_screen_layout.lyric_view_bkey_height = eof_screen_layout.lyric_view_key_width * 3;
 			eof_screen_layout.note_size = 10;
+			eof_screen_layout.hopo_note_size = 7;
+			eof_screen_layout.anti_hopo_note_size = 14;
 			eof_screen_layout.note_dot_size = 4;
+			eof_screen_layout.hopo_note_dot_size = 3;
+			eof_screen_layout.anti_hopo_note_dot_size = 7;
 			eof_screen_layout.note_marker_size = 15;
 			eof_screen_layout.note_tail_size = 5;
 			eof_screen_layout.note_kick_size = 4;
