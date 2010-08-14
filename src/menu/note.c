@@ -41,7 +41,7 @@ MENU eof_hopo_menu[] =
 {
     {"&Auto", eof_menu_hopo_auto, NULL, 0, NULL},
     {"&Force On", eof_menu_hopo_force_on, NULL, 0, NULL},
-    {"Fo&rce Off", eof_menu_hopo_force_off, NULL, 0, NULL},
+    {"Force &Off", eof_menu_hopo_force_off, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -1321,6 +1321,38 @@ int eof_menu_hopo_auto(void)
 		}
 	}
 	eof_determine_hopos();
+	return 1;
+}
+
+int eof_menu_hopo_cycle(void)
+{
+	int i;
+
+	if((eof_count_selected_notes(NULL, 0) > 0) && !eof_vocals_selected)
+	{
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
+		{
+			if(eof_selection.multi[i])
+			{
+				if(eof_song->track[eof_selected_track]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO)
+				{	//If the note was a forced on HOPO, make it a forced off HOPO
+					eof_song->track[eof_selected_track]->note[i]->flags &= !EOF_NOTE_FLAG_F_HOPO;	//Turn off forced on hopo
+					eof_song->track[eof_selected_track]->note[i]->flags |= EOF_NOTE_FLAG_NO_HOPO;	//Turn on forced off hopo
+				}
+				else if(eof_song->track[eof_selected_track]->note[i]->flags & EOF_NOTE_FLAG_NO_HOPO)
+				{	//If the note was a forced off HOPO, make it an auto HOPO
+					eof_song->track[eof_selected_track]->note[i]->flags &= !EOF_NOTE_FLAG_F_HOPO;
+					eof_song->track[eof_selected_track]->note[i]->flags &= !EOF_NOTE_FLAG_NO_HOPO;	//Turn off forced off hopo
+				}
+				else
+				{	//If the note was an auto HOPO, make it a forced on HOPO
+					eof_song->track[eof_selected_track]->note[i]->flags |= EOF_NOTE_FLAG_F_HOPO;	//Turn on forced on hopo
+				}
+			}
+		}
+		eof_determine_hopos();
+	}
 	return 1;
 }
 

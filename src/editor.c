@@ -1182,11 +1182,18 @@ void eof_read_editor_keys(void)
 		key[KEY_F] = 0;
 	}
 
-	/* select all */
+	/* deselect all */
 	if(KEY_EITHER_CTRL && key[KEY_D] && eof_music_paused && !eof_music_catalog_playback)
 	{
 		eof_menu_edit_deselect_all();
 		key[KEY_D] = 0;
+	}
+
+	/* cycle HOPO status */
+	if(key[KEY_H])
+	{
+		eof_menu_hopo_cycle();
+		key[KEY_H]=0;
 	}
 
 	if(key[KEY_M])
@@ -4712,7 +4719,7 @@ void eof_render_editor_window(void)
 				{
 					if(eof_hover_note == i)
 					{
-						eof_note_draw(eof_song->track[eof_selected_track]->note[i], ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 3);
+						eof_note_draw_quick(eof_song->track[eof_selected_track]->note[i], ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 3);
 					}
 					else
 					{
@@ -4733,11 +4740,11 @@ void eof_render_editor_window(void)
 			{
 				if((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX))
 				{
-					eof_note_draw(&eof_pen_note, 3);
+					eof_note_draw_quick(&eof_pen_note, 3);
 				}
 				else
 				{
-					eof_note_draw(&eof_pen_note, 0);
+					eof_note_draw_quick(&eof_pen_note, 0);
 				}
 			}
 		}

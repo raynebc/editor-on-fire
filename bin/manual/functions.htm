@@ -54,7 +54,7 @@ Close EOF. If you have unsaved changes you will be prompted to save.<br>
 </blockquote>
 
 <h1><a name="edit">Edit</a></h1>
-[ <a href="functions.htm#undo">Undo</a> ] [ <a href="functions.htm#redo">Redo</a> ] [ <a href="functions.htm#copy">Copy</a> ] [ <a href="functions.htm#paste">Paste</a> ] [ <a href="functions.htm#oldpaste">Old Paste</a> ] [ <a href="functions.htm#gridsnap">Grid Snap</a> ] [ <a href="functions.htm#zoom">Zoom</a> ] [ <a href="functions.htm#speed">Preview Speed</a> ] [ <a href="functions.htm#playbackrate">Playback Rate</a> ] [ <a href="functions.htm#hopo">Preview HOPO</a> ] [ <a href="functions.htm#metronome">Metronome</a> ] [ <a href="functions.htm#claps">Claps</a> ] [ <a href="functions.htm#clapnotes">Clap Notes</a> ] [ <a href="functions.htm#bookmark">Bookmark</a> ] [ <a href="functions.htm#selection">Selection</a> ]
+[ <a href="functions.htm#undo">Undo</a> ] [ <a href="functions.htm#redo">Redo</a> ] [ <a href="functions.htm#copy">Copy</a> ] [ <a href="functions.htm#paste">Paste</a> ] [ <a href="functions.htm#oldpaste">Old Paste</a> ] [ <a href="functions.htm#gridsnap">Grid Snap</a> ] [ <a href="functions.htm#zoom">Zoom</a> ] [ <a href="functions.htm#speed">Preview Speed</a> ] [ <a href="functions.htm#playbackrate">Playback Rate</a> ] [ <a href="functions.htm#phopo">Preview HOPO</a> ] [ <a href="functions.htm#metronome">Metronome</a> ] [ <a href="functions.htm#claps">Claps</a> ] [ <a href="functions.htm#clapnotes">Clap Notes</a> ] [ <a href="functions.htm#bookmark">Bookmark</a> ] [ <a href="functions.htm#selection">Selection</a> ]
 <blockquote>
 <h1><a name="undo">Undo</a></h1>
 Undo the previous operation. You can undo up to 8 operations.<br>
@@ -77,7 +77,7 @@ Change the zoom level of the fretboard editing area. For faster songs, zooming i
 Change the speed of the fretboard in the 3D Preview.<br>
 <h1><a name="playbackrate">Playback Rate</a></h1>
 Change the speed of the audio playback. For fast solo sections it can be useful to play the song back at a slower speed to make it easier to hear the notes in the song. You can play the song back at 50% speed without changing the setting by holding the Ctrl key while pressing the play button. You can play the song back at 100% speed without changing the setting by holding the F key while pressing the play button. You can also specify a custom playback rate as a percentage of the original speed by specifying a number from 1 to 99.<br>
-<h1><a name="hopo">Preview HOPO</a></h1>
+<h1><a name="phopo">Preview HOPO</a></h1>
 Select the algorithm used to determine HO/PO notes. RF is equivalent to "Guitar Hero 2." If you are using RF-Mod or FoFiX you should use this setting. FOF is for standard "Frets On Fire." An important note: HO/PO notes are determined by an algorithm in all current versions of FOF and all current mods. In order for a note to be a HO/PO notes it normally has to be a 1/12th or smaller note. Turning on the "Eighth Note HO/PO" setting in "Song Properties" will make the longest HO/PO note 1/8th instead. Not all mods support the "Eighth Note HO/PO" setting.<br>
 <h1><a name="metronome">Metronome</a></h1>
 Toggle the metronome. When the metronome is on, a tick will sound at every beat marker during audio playback. This feature is useful when you are creating a tempo map for your song. See <a href="../tutorial/index.htm#tempomap">Creating a Tempo Map</a> for a demonstration of how to use this feature.<br>
@@ -120,7 +120,7 @@ Launch FOF with the current song, track, and difficulty for testing. This featur
 </blockquote>
 
 <h1><a name="note">Note</a></h1>
-[ <a href="functions.htm#toggle">Toggle</a> ] [ <a href="functions.htm#transposeup">Transpose Up</a> ] [ <a href="functions.htm#transposedown">Transpose Down</a> ] [ <a href="functions.htm#resnap">Resnap</a> ] [ <a href="functions.htm#solos">Solos</a> ] [ <a href="functions.htm#starpower">Star Power</a> ] [ <a href="functions.htm#delete">Delete</a> ]
+[ <a href="functions.htm#toggle">Toggle</a> ] [ <a href="functions.htm#transposeup">Transpose Up</a> ] [ <a href="functions.htm#transposedown">Transpose Down</a> ] [ <a href="functions.htm#resnap">Resnap</a> ] [ <a href="functions.htm#crazy">Toggle Crazy</a> ] [ <a href="functions.htm#solos">Solos</a> ] [ <a href="functions.htm#starpower">Star Power</a> ] [ <a href="functions.htm#hopo">HOPO</a> ] [ <a href="functions.htm#delete">Delete</a> ]
 <blockquote>
 <h1><a name="toggle">Toggle</a></h1>
 Toggle the desired color in all selected notes.<br>
@@ -131,6 +131,8 @@ Transpose (move) all selected notes down one color. If any of the selected notes
 <h1><a name="resnap">Resnap</a></h1>
 Resnap all selected notes to the closest grid snap positions according to the current grid snap setting (see "<a href="functions.htm#gridsnap">Edit->Grid Snap</a>"). If two notes snap to the same position you will be notified so that you can undo if you want. It is best to use either 1/32 or 1/48 grid snap when resnapping.<br><br>
 Let's say you imported a song and some of the notes appear to be slightly off of the beat markers. Setting the grid snap to 1/32, selecting all the notes, and doing a "Resnap" can set the notes in their proper place without you having to manually move each note.<br>
+<h1><a name="crazy">Toggle Crazy</a></h1>
+Allow the selected notes to overlap other notes, overriding EOF's default behavior of truncating note tails to prevent this.  Use this feature to create "extended sustain" notes, where the notes in a sustained chord are played separately but are all held for the duration of the chord.<br>
 <h1><a name="solos">Solos</a></h1>
 Perform various operations related to solo sections. "Mark" marks the currently selected notes as a solo section. "Remove" removes all solos in which selected notes lie. To delete one solo section simply select at least one note within that solo and select "Note->Solos->Remove." "Erase All" erases all solo sections from the song. "Re-Mark" will modify an existing solo section. If you mark a solo and later need to modify it, simply select the notes that belong in the solo and select "Note->Solos->Re-Mark." "Re-Mark" is only available when at least on of the selected notes lies within the solo section.<br><br>
 Solo sections are not supported by all mods. For FoFiX (the only mod with solo support as of this writing) solo sections will only work correctly if you define at least two Star Power sections (see "<a href="functions.htm#starpower">Note->Star Power</a>") as well. This is due to the way FoFiX detects solo sections. Guitar Hero and Rock Band use different conventions to define Star Power (Overdrive in RB) and Guitar Hero's SP markers happen to use the same MIDI note as Rock Band's solos. If you don't define Star Power, FoFiX will detect your solos as Star Power except under certain circumstances.<br><br>
@@ -139,6 +141,9 @@ It's important to note that solos are not automatically treated as sections by F
 <h1><a name="starpower">Star Power</a></h1>
 Perform various operations related to Star Power sections. "Mark" marks the currently selected notes as a Star Power section. "Remove" removes all Star Power sections in which selected notes lie. To delete one Star Power section simply select at least one note within that section and select "Note->Star Power->Remove." "Erase All" erases all Star Power sections from the song. "Re-Mark" will modify an existing Star Power section. If you mark a Star Power section and later need to modify it, simply select the notes that belong in the section and select "Note->Star Power->Re-Mark." "Re-Mark" is only available when at least on of the selected notes lies within the Star Power section.<br><br>
 Star Power sections are not supported by all mods. Currently (at the time of this writing) the only mod that allows user-defined Star Power sections is the FoFiX betas.<br>
+<h1><a name="hopo">HOPO</a></h1>
+Set the HOPO status of selected notes.  Currently, FoFiX only makes a note a HOPO (Hammer On/Pull Off, meaning that a note does not have to be strummed) if it is close enough to the previous note.  What amounts to "close enough" depends on the tempo and the presence of the eighthnote_hopo song.ini option.  Eventually, FoFiX may be updated to support notation where a note is manually defined as having HOPO forced on or off, as Rock Band charts have this feature.  You can force HOPO status to prepare your chart to have this functionality for future versions of FoFiX, or for other rhythm games that may support this already.  A note that has HOPO forced on will be drawn smaller than normal in the piano roll area, and a note with HOPO forced off will be drawn larger than normal.<br><br>
+<u>Note:</u>  It has been said that Guitar Hero's open strum (for bass guitar track) is charted as a forced HOPO On for a fret 1 note.  While FoFiX may not currently support open strums, other games such as "Phase Shift" may already support it.<br>
 <h1><a name="delete">Delete</a></h1>
 Delete all selected notes.<br>
 </blockquote>

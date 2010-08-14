@@ -102,6 +102,7 @@ int eof_adjust_notes(int offset)
 	return 1;
 }
 
+/* No longer used
 void eof_note_draw(EOF_NOTE * np, int p)
 {
 	int pos = eof_music_pos / eof_zoom;
@@ -191,6 +192,7 @@ void eof_note_draw(EOF_NOTE * np, int p)
 		}
 	}
 }
+*/
 
 int eof_note_draw_quick(EOF_NOTE * np, int p)
 {
@@ -203,6 +205,7 @@ int eof_note_draw_quick(EOF_NOTE * np, int p)
 	int ncol = makecol(192, 192, 192);	//Note color defaults to silver unless the note is not star power
 	int ctr;
 	unsigned int mask;	//Used to mask out colors in the for loop
+	int radius,dotsize;
 
 	if(eof_inverted_notes)
 	{
@@ -237,6 +240,22 @@ int eof_note_draw_quick(EOF_NOTE * np, int p)
 	if((npos < 0) && (npos + np->length / eof_zoom < 0))	//If the note and its tail would render entirely to the left of the visible area
 		return -1;	//Return status:  Clipping to the left of the viewing window
 
+	if(np->flags & EOF_NOTE_FLAG_F_HOPO)				//If this note is forced as HOPO on
+	{
+		radius=eof_screen_layout.hopo_note_size;		//Draw the note in the defined HOPO on size
+		dotsize=eof_screen_layout.hopo_note_dot_size;
+	}
+	else if(np->flags & EOF_NOTE_FLAG_NO_HOPO)			//Or if this note is forced as HOPO off
+	{
+		radius=eof_screen_layout.anti_hopo_note_size;	//Draw the note in the defined HOPO off size
+		dotsize=eof_screen_layout.anti_hopo_note_dot_size;
+	}
+	else
+	{
+		radius=eof_screen_layout.note_size;				//Otherwise, draw the note at its standard size
+		dotsize=eof_screen_layout.note_dot_size;
+	}
+
 	vline(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.note_marker_size, makecol(128, 128, 128));
 	if(p == 3)
 	{
@@ -250,16 +269,17 @@ int eof_note_draw_quick(EOF_NOTE * np, int p)
 				{	//If the note is not star power
 					ncol = colors[ctr];	//Assign the appropriate fret color
 				}
+
 				rectfill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, ncol);
 				rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, pcol);
-				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_size, ncol);
-				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_dot_size, dcol);
-				circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_size, pcol);
+				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], radius, ncol);
+				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], dotsize, dcol);
+				circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], radius, pcol);
 			}
 			else if(eof_hover_note >= 0)
 			{
 				rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, eof_color_gray);
-				circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_size, eof_color_gray);
+				circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], radius, eof_color_gray);
 			}
 		}
 	}
@@ -278,11 +298,11 @@ int eof_note_draw_quick(EOF_NOTE * np, int p)
 				{
 					rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, pcol);
 				}
-				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_size, ncol);
-				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_dot_size, dcol);
+				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], radius, ncol);
+				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], dotsize, dcol);
 				if(p)
 				{
-					circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_size, pcol);
+					circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], radius, pcol);
 				}
 			}
 		}
