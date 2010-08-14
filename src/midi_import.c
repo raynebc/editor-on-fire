@@ -302,7 +302,8 @@ double eof_ConvertToRealTime(unsigned long absolutedelta,double starttime,struct
 			{
 				temp=temp->next;						//Advance to next tempo change
 				temptimer=temp->realtime;				//Set timer
-				tempdelta=absolutedelta-temp->delta;	//Subtract the tempo change's delta time
+//This subtraction is not necessary, the anchor list stores absolute delta times
+//				tempdelta=absolutedelta-temp->delta;	//Subtract the tempo change's delta time
 				tempBPM=temp->BPM;						//Set BPM
 			}
 			else
@@ -312,6 +313,7 @@ double eof_ConvertToRealTime(unsigned long absolutedelta,double starttime,struct
 
 //At this point, we have reached the tempo change that absolutedelta resides within
 //tempdelta is now relative to this tempo change, find the realtime of tempdelta
+	tempdelta=absolutedelta-temp->delta;
 	temptimer+=(double)tempdelta / (double)timedivision * ((double)60000.0 / tempBPM);
 
 	return temptimer+offset;
