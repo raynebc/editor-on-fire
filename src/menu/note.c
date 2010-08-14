@@ -1305,6 +1305,9 @@ int eof_menu_hopo_auto(void)
 {
 	int i;
 
+	if((eof_selected_track == EOF_TRACK_DRUM) || eof_vocals_selected)
+		return 1;	//Do not allow this function to run when PART DRUMS or PART VOCALS is active
+
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
 	{
@@ -1328,7 +1331,10 @@ int eof_menu_hopo_cycle(void)
 {
 	int i;
 
-	if((eof_count_selected_notes(NULL, 0) > 0) && !eof_vocals_selected)
+	if((eof_selected_track == EOF_TRACK_DRUM) || eof_vocals_selected)
+		return 1;	//Do not allow this function to run when PART DRUMS or PART VOCALS is active
+
+	if((eof_count_selected_notes(NULL, 0) > 0))
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
@@ -1360,6 +1366,9 @@ int eof_menu_hopo_force_on(void)
 {
 	int i;
 
+	if((eof_selected_track == EOF_TRACK_DRUM) || eof_vocals_selected)
+		return 1;	//Do not allow this function to run when PART DRUMS or PART VOCALS is active
+
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
 	{
@@ -1379,6 +1388,9 @@ int eof_menu_hopo_force_on(void)
 int eof_menu_hopo_force_off(void)
 {
 	int i;
+
+	if((eof_selected_track == EOF_TRACK_DRUM) || eof_vocals_selected)
+		return 1;	//Do not allow this function to run when PART DRUMS or PART VOCALS is active
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
