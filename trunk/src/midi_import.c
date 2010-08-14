@@ -2207,9 +2207,10 @@ double realtime=0.0;			//Used to calculate realtime of anchors
 						if(hopodiff >= 0)
 						{
 							for(k = note_count[picked_track] - 1; k >= first_note; k--)
-							{
-								if((sp->track[picked_track]->note[k]->type == hopodiff) && (hopopos[hopodiff] == eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset)))
-								{
+							{	//Check for each note that has been imported
+//								if((sp->track[picked_track]->note[k]->type == hopodiff) && (hopopos[hopodiff] == eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset)))
+								if((sp->track[picked_track]->note[k]->type == hopodiff) && (sp->track[picked_track]->note[k]->pos >= hopopos[hopodiff]) && (sp->track[picked_track]->note[k]->pos <= eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset)))
+								{	//If the note is in the same difficulty as the HOPO phrase, and its timestamp falls between the HOPO On and HOPO Off marker
 									if(hopotype[hopodiff] == 0)
 									{
 										sp->track[picked_track]->note[k]->flags |= EOF_NOTE_FLAG_F_HOPO;
