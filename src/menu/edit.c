@@ -1713,8 +1713,8 @@ int eof_menu_edit_playback_custom(void)
 	if(eof_popup_dialog(eof_custom_speed_dialog, 2) == 3)		//If user activated "OK" from the custom speed dialog
 	{
 		userinput = atoi(eof_etext2);
-		if((userinput < 1) || (userinput > 99))			//User cannot specify to play at any speed not between 1% and 99%
-			return 1;
+//		if((userinput < 1) || (userinput > 99))			//User cannot specify to play at any speed not between 1% and 99%
+//			return 1;
 
 		eof_playback_speed = userinput * 10;
 	}
