@@ -4675,8 +4675,9 @@ void eof_render_editor_window(void)
 
 			if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_EVENTS)
 			{	//Draw event marker
-				line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
-				line(eof_window_editor->screen, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
+//				line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
+//				line(eof_window_editor->screen, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
+				line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
 			}
 			if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_ANCHOR)
 			{	//Draw anchor marker
@@ -4795,7 +4796,7 @@ void eof_render_editor_window(void)
 		}
 
 		for(i = 0; i < 5; i++)
-		{
+		{	//Draw tab difficulty names
 			if(i == eof_note_type)
 			{
 				textprintf_ex(eof_window_editor->screen, font, 20 + i * 80, 2 + 8, eof_color_black, -1, "%s", eof_note_type_name[i]);
@@ -4969,8 +4970,9 @@ void eof_render_vocal_editor_window(void)
 
 			if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_EVENTS)
 			{	//Draw event marker
-				line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
-				line(eof_window_editor->screen, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
+//				line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
+//				line(eof_window_editor->screen, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
+				line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
 			}
 			if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_ANCHOR)
 			{	//Draw anchor marker
