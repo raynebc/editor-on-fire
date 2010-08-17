@@ -1,6 +1,37 @@
 EOF Version History
 -------------------
 
+1.666:
+
+Changed how the tempo map is exported to the MIDI file. The old method could
+cause the position of BPM changes to be slightly incorrect leading to inaccurate
+placement of notes in the exported MIDI.
+
+Fixed "Toggle Crazy" function.
+
+Improved MIDI import.
+
+Fixed issue with MIDI import missing forced-HOPO notes when there is more than
+one note to a forced-HOPO phrase.
+
+Added "Freestyle" submenu to "Note" menu. This menu has functions to change the
+freestyle status of selected lyrics. This can be used to quickly set a section
+of lyrics to freestyle.
+
+Made a few rendering optimizations.
+
+Updated to newest version of FoF Lyric Converter.
+
+Made improvements to the ID3 tag reader including better line-synched lyrics
+support and support for reading song information from version 1 ID3 tags.
+
+Made many UI improvements and fixes.
+
+Updated vocal charting tutorial.
+
+Updated manual and in-program help.
+
+
 1.65:
 
 raynebc added support for reading ID3 tags from MP3 files to fill in song
