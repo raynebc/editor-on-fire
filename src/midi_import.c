@@ -1330,7 +1330,7 @@ EOF_SONG * eof_import_midi2(const char * fn)
 	unsigned char last_event = 0;
 	unsigned char current_meta_event;
 	unsigned long d1, d2, d3, d4;
-	char text[256];
+	char text[EOF_MAX_MIDI_TEXT_SIZE+1];
 	char nfn[1024] = {0};
 	char backup_filename[1024] = {0};
 	char ttit[256] = {0};
@@ -1544,7 +1544,15 @@ EOF_SONG * eof_import_midi2(const char * fn)
 							/* text event */
 							case 0x01:
 							{
-								strncpy(text, (char *)&eof_work_midi->track[track[i]].data[track_pos + 1], eof_work_midi->track[track[i]].data[track_pos]);
+								for(j = 0; j < eof_work_midi->track[track[i]].data[track_pos]; j++)
+								{
+									if(j < EOF_MAX_MIDI_TEXT_SIZE)			//If this wouldn't overflow the buffer
+										text[j] = eof_work_midi->track[track[i]].data[track_pos + 1 + j];
+									else
+										break;
+								}
+								if(j >= EOF_MAX_MIDI_TEXT_SIZE)	//If the string needs to be truncated
+									text[EOF_MAX_MIDI_TEXT_SIZE] = '\0';
 								eof_midi_import_add_text_event(eof_import_text_events, absolute_pos, 0x01, text, eof_work_midi->track[track[i]].data[track_pos]);
 								track_pos += eof_work_midi->track[track[i]].data[track_pos] + 1;
 								ptotal_events++;
@@ -1565,9 +1573,13 @@ EOF_SONG * eof_import_midi2(const char * fn)
 								for(j = 0; j < d3; j++)
 								{
 									track_pos++;
-									text[j] = eof_work_midi->track[track[i]].data[track_pos];
+									if(j < EOF_MAX_MIDI_TEXT_SIZE)			//If this wouldn't overflow the buffer
+										text[j] = eof_work_midi->track[track[i]].data[track_pos];
 								}
-								text[j] = '\0';
+								if(j <= EOF_MAX_MIDI_TEXT_SIZE)				//If the string fit in the buffer
+									text[j] = '\0';							//Terminate the string normally
+								else
+									text[EOF_MAX_MIDI_TEXT_SIZE] = '\0';	//Otherwise truncate it
 								track_pos++;
 
 								/* detect what kind of track this is */
@@ -1612,7 +1624,15 @@ EOF_SONG * eof_import_midi2(const char * fn)
 							/* lyric */
 							case 0x05:
 							{
-								strncpy(text, (char *)&eof_work_midi->track[track[i]].data[track_pos + 1], eof_work_midi->track[track[i]].data[track_pos]);
+								for(j = 0; j < eof_work_midi->track[track[i]].data[track_pos]; j++)
+								{
+									if(j < EOF_MAX_MIDI_TEXT_SIZE)			//If this wouldn't overflow the buffer
+										text[j] = eof_work_midi->track[track[i]].data[track_pos + 1 + j];
+									else
+										break;
+								}
+								if(j >= EOF_MAX_MIDI_TEXT_SIZE)	//If the string needs to be truncated
+									text[EOF_MAX_MIDI_TEXT_SIZE] = '\0';
 								eof_midi_import_add_text_event(eof_import_events[i], absolute_pos, 0x05, text, eof_work_midi->track[track[i]].data[track_pos]);
 								track_pos += eof_work_midi->track[track[i]].data[track_pos] + 1;
 								ptotal_events++;
