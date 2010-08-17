@@ -1,5 +1,5 @@
-EOF v1.65 (c)2008-2010 T³ Software
-----------------------------------
+EOF v1.666 (c)2008-2010 T³ Software
+-----------------------------------
 
 EOF is freeware and may be distributed freely (without charge). Please review
 the license agreement contained in the file "license.txt" before proceeding to
