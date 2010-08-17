@@ -6,6 +6,7 @@
 #include "foflc/Midi_parse.h"
 
 #define EOF_MAX_IMPORT_MIDI_TRACKS 16
+#define EOF_MAX_MIDI_TEXT_SIZE 255
 
 EOF_SONG * eof_import_midi(const char * fn);
 EOF_SONG * eof_import_midi2(const char * fn);
