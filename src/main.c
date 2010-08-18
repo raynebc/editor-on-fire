@@ -2574,7 +2574,7 @@ int eof_initialize(int argc, char * argv[])
 	set_window_title("EOF - No Song");
 	if(install_sound(DIGI_AUTODETECT, MIDI_AUTODETECT, NULL))
 	{	//If Allegro failed to initialize the sound AND midi
-		allegro_message("Can't set up MIDI!  Error: %s\nAttempting to init audio only",allegro_error);
+//		allegro_message("Can't set up MIDI!  Error: %s\nAttempting to init audio only",allegro_error);
 		if(install_sound(DIGI_AUTODETECT, MIDI_NONE, NULL))
 		{
 			allegro_message("Can't set up sound!  Error: %s",allegro_error);
