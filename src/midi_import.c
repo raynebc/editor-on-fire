@@ -1434,83 +1434,65 @@ EOF_SONG * eof_import_midi2(const char * fn)
 				track_pos++;	//Increment buffer pointer past the status byte
 			}
 
+			ptotal_events++;	//Any event that is parsed should increment this counter
+			if(current_event_hi < 0xF0)
+			{	//If it's not a Meta event, assume that two parameters are to be read for the event (this will be undone for Program Change and Channel Aftertouch, which don't have a second parameter)
+				d1 = eof_work_midi->track[track[i]].data[track_pos++];
+				d2 = eof_work_midi->track[track[i]].data[track_pos++];
+			}
 			switch(current_event_hi)
 			{
 
 				/* note off */
 				case 0x80:
 				{
-					d1 = eof_work_midi->track[track[i]].data[track_pos];
-					track_pos++;
-					d2 = eof_work_midi->track[track[i]].data[track_pos];
-					track_pos++;
 					eof_midi_import_add_event(eof_import_events[i], absolute_pos, 0x80, d1, d2);
-					ptotal_events++;
 					break;
 				}
 
 				/* note on */
 				case 0x90:
 				{
-					d1 = eof_work_midi->track[track[i]].data[track_pos];
-					track_pos++;
-					d2 = eof_work_midi->track[track[i]].data[track_pos];
-					track_pos++;
 					if(d2 <= 0)
-					{
+					{	//Any Note On event with a velocity of 0 is to be treated as a Note Off event
 						eof_midi_import_add_event(eof_import_events[i], absolute_pos, 0x80, d1, d2);
 					}
 					else
 					{
 						eof_midi_import_add_event(eof_import_events[i], absolute_pos, 0x90, d1, d2);
 					}
-					ptotal_events++;
 					break;
 				}
 
 				/* key aftertouch */
 				case 0xA0:
 				{
-					d1 = eof_work_midi->track[track[i]].data[track_pos];
-					track_pos++;
-					d2 = eof_work_midi->track[track[i]].data[track_pos];
-					track_pos++;
 					break;
 				}
 
 				/* controller change */
 				case 0xB0:
 				{
-					d1 = eof_work_midi->track[track[i]].data[track_pos];
-					track_pos++;
-					d2 = eof_work_midi->track[track[i]].data[track_pos];
-					track_pos++;
 					break;
 				}
 
 				/* program change */
 				case 0xC0:
 				{
-					d1 = eof_work_midi->track[track[i]].data[track_pos];
-					track_pos++;
+					track_pos--;	//Rewind one byte, there is no second parameter
 					break;
 				}
 
 				/* channel aftertouch */
 				case 0xD0:
 				{
-					d1 = eof_work_midi->track[track[i]].data[track_pos];
-					track_pos++;
+					track_pos--;	//Rewind one byte, there is no second parameter
 					break;
 				}
 
 				/* pitch wheel change */
 				case 0xE0:
 				{
-					d1 = eof_work_midi->track[track[i]].data[track_pos];
-					track_pos++;
-					d2 = eof_work_midi->track[track[i]].data[track_pos];
-					track_pos++;
 					break;
 				}
 
@@ -1555,7 +1537,6 @@ EOF_SONG * eof_import_midi2(const char * fn)
 									text[EOF_MAX_MIDI_TEXT_SIZE] = '\0';
 								eof_midi_import_add_text_event(eof_import_text_events, absolute_pos, 0x01, text, eof_work_midi->track[track[i]].data[track_pos]);
 								track_pos += eof_work_midi->track[track[i]].data[track_pos] + 1;
-								ptotal_events++;
 								break;
 							}
 
@@ -1635,7 +1616,6 @@ EOF_SONG * eof_import_midi2(const char * fn)
 									text[EOF_MAX_MIDI_TEXT_SIZE] = '\0';
 								eof_midi_import_add_text_event(eof_import_events[i], absolute_pos, 0x05, text, eof_work_midi->track[track[i]].data[track_pos]);
 								track_pos += eof_work_midi->track[track[i]].data[track_pos] + 1;
-								ptotal_events++;
 								break;
 							}
 
@@ -1665,9 +1645,6 @@ EOF_SONG * eof_import_midi2(const char * fn)
 							case 0x2F:
 							{
 								track_pos += 1;
-//								if(track_pos >= eof_work_midi->track[track[i]].len)
-//								{
-//								}
 								break;
 							}
 
@@ -1715,11 +1692,19 @@ EOF_SONG * eof_import_midi2(const char * fn)
 
 							default:
 							{
+								ptotal_events--;	//This was not a valid MIDI Meta event, undo the event counter increment
 								track_pos++;
 								break;
 							}
 						}
 					}
+					break;
+				}
+
+				default:
+				{
+					ptotal_events--;	//This was not a valid MIDI event, undo the event counter increment
+					track_pos--;		//Rewind one of the two bytes that were seeked
 					break;
 				}
 			}
