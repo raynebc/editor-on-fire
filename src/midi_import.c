@@ -7,8 +7,6 @@
 #include "menu/note.h"
 #include "foflc/Lyric_storage.h"
 
-#define EOF_IMPORT_MAX_EVENTS 100000
-
 typedef struct
 {
 
@@ -27,6 +25,20 @@ typedef struct
 	int type;
 
 } EOF_IMPORT_MIDI_EVENT_LIST;
+
+typedef struct
+{
+	unsigned long pos;	//Absolute delta time of this TS change
+	double realtime;	//Realtime of this TS change
+	unsigned int num;	//The numerator of the TS change (number of beats per measure)
+	unsigned int den;	//The denominator of the TS change (note value representing one beat)
+} EOF_IMPORT_MIDI_TS_CHANGE;
+
+typedef struct
+{
+	EOF_IMPORT_MIDI_TS_CHANGE * change[EOF_IMPORT_MAX_TS];	//The list of time signatures changes in the MIDI track
+	unsigned long changes;					//The number of time signatures changes found in this MIDI track
+} EOF_IMPORT_MIDI_TS_LIST;
 
 static MIDI * eof_work_midi = NULL;
 static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_events[16];
@@ -322,6 +334,34 @@ double eof_ConvertToRealTime(unsigned long absolutedelta,double starttime,struct
 inline unsigned long eof_ConvertToRealTimeInt(unsigned long absolutedelta,double starttime,struct Tempo_change *anchorlist,unsigned long timedivision,unsigned long offset)
 {
 	return eof_ConvertToRealTime(absolutedelta,starttime,anchorlist,timedivision,offset) + 0.5;
+}
+
+static EOF_IMPORT_MIDI_TS_LIST * eof_import_create_ts_list(void)
+{
+	EOF_IMPORT_MIDI_TS_LIST * lp;
+	lp = malloc(sizeof(EOF_IMPORT_MIDI_TS_LIST));
+	if(!lp)
+	{
+		return NULL;
+	}
+	lp->changes = 0;
+	return lp;
+}
+
+static void eof_midi_import_add_ts(EOF_IMPORT_MIDI_TS_LIST * changes, unsigned long pos, unsigned long num, unsigned long den)
+{
+	if(changes->changes < EOF_IMPORT_MAX_TS)
+	{
+		changes->change[changes->changes] = malloc(sizeof(EOF_IMPORT_MIDI_TS_CHANGE));
+		if(changes->change[changes->changes])
+		{
+			changes->change[changes->changes]->pos = pos;	//Store the TS change's delta time
+			changes->change[changes->changes]->num = num;	//Store the TS numerator
+			changes->change[changes->changes]->den = den;	//Store the TS denominator
+
+			changes->changes++;				//Increment counter
+		}
+	}
 }
 
 EOF_SONG * eof_import_midi(const char * fn)
@@ -1672,7 +1712,12 @@ EOF_SONG * eof_import_midi2(const char * fn)
 							/* time signature */
 							case 0x58:
 							{
-								track_pos += 5;
+//								track_pos += 5;
+								track_pos++;
+								d1 = (eof_work_midi->track[track[i]].data[track_pos++]);	//Numerator
+								d2 = (eof_work_midi->track[track[i]].data[track_pos++]);	//Denominator
+								d3 = (eof_work_midi->track[track[i]].data[track_pos++]);	//Metronome
+								d4 = (eof_work_midi->track[track[i]].data[track_pos++]);	//32nds
 								break;
 							}
 
