@@ -7,6 +7,8 @@
 
 #define EOF_MAX_IMPORT_MIDI_TRACKS 16
 #define EOF_MAX_MIDI_TEXT_SIZE 255
+#define EOF_IMPORT_MAX_EVENTS 100000
+#define EOF_IMPORT_MAX_TS 100
 
 EOF_SONG * eof_import_midi(const char * fn);
 EOF_SONG * eof_import_midi2(const char * fn);
