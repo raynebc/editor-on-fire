@@ -99,10 +99,9 @@ char *GrabID3TextFrame(struct ID3Tag *tag,const char *frameid,char *buffer,unsig
 	//If buffer is NULL, the allocated string is returned
 	//NULL is returned in the event of an error or if the text is in Unicode
 struct OmitID3frame *AddOmitID3framelist(struct OmitID3frame *ptr,const char *frameid);
-	//Creates a link for the given frame ID and adds it to the list, returning the address of the HEAD link
+	//Creates a link for the given frame ID and inserts it to the front of the list, returning the address of the updated HEAD link
 	//frameid is copied to a new array and is not altered
-	//If ptr is not NULL, the new link is appended to the end of the list
-int SearchOmitID3framelist(struct OmitID3frame *ptr,char *frameid);
+int SearchOmitID3framelist(struct OmitID3frame *ptr,const char *frameid);
 	//Returns 1 if a given frame ID is in the omit list, 2 if the omit list has a frame ID entry beginning with '*' (wildcard)
 	//otherwise 0 is returned
 void DestroyOmitID3framelist(struct OmitID3frame *ptr);

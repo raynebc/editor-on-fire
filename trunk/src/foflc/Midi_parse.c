@@ -29,6 +29,7 @@ void InitMIDI(void)
 	MIDIstruct.BPM=(double)120.0;								//Default BPM is assumed until MPQN is defined
 	MIDIstruct.MPQN_defined=0;									//Default MPQN is assumed until one is defined
 	MIDIstruct.hchunk.tempomap=MIDIstruct.hchunk.curtempo=NULL;	//Empty linked list of tempo information
+	MIDIstruct.hchunk.tracks=NULL;
 	MIDI_Lyrics.head=MIDI_Lyrics.tail=NULL;						//Empty MIDI Lyric linked list
 	MIDIstruct.trackswritten=0;
 	MIDIstruct.diff_lo=MIDIstruct.diff_hi=0;
@@ -42,7 +43,7 @@ void ReadMIDIHeader(FILE *inf,char suppress_errors)
 	unsigned short ctr=0;
 	unsigned char failure=0;
 	char header[5]={0};	//Used to read header
-
+	static const struct Track_chunk emptyTrack_chunk;	//Auto-initialize all struct elements to zero
 
 	assert_wrapper(inf != NULL);	//This must not be NULL
 
@@ -104,7 +105,9 @@ void ReadMIDIHeader(FILE *inf,char suppress_errors)
 			puts("Error: frames per second time division is not supported\nAborting.");
 		exit_wrapper(4);
 	}
-	MIDIstruct.hchunk.tracks=(struct Track_chunk *)calloc_err(1,sizeof(struct Track_chunk)*MIDIstruct.hchunk.numtracks);	//Allocate an array of track headers and init to 0
+	MIDIstruct.hchunk.tracks=(struct Track_chunk *)malloc_err(sizeof(struct Track_chunk)*MIDIstruct.hchunk.numtracks);
+	for(ctr=0;ctr<MIDIstruct.hchunk.numtracks;ctr++)	//Initialize track data to all zero values
+		MIDIstruct.hchunk.tracks[ctr]=emptyTrack_chunk;
 
 	for(ctr=0;ctr<MIDIstruct.hchunk.numtracks;ctr++)	//Initialize tracks array
 		(MIDIstruct.hchunk.tracks[ctr]).tracknum=ctr;
@@ -234,7 +237,6 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 	//otherwise it is called after the event is parsed and read into the TEPstruct.  If the function pointer is
 	//NULL, no handler is called.
 	struct TEPstruct vars={0,0,0,0,0,NULL,NULL,0,0,0,0,0,0,{0},NULL,NULL,0,0,0};		//Storage unit for all event processor variables
-//	unsigned long ctr;			//Used for parsing lyric/text events
 	long int deltalength=0;
 	static unsigned char buffered=0;	//Stores the condition that one extra byte was read from file (ie. Running status)
 										//So that instead of performing a costly fseek to rewind one byte, this status
@@ -286,8 +288,6 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 		MIDIstruct.absdelta+=vars.delta;
 		vars.eventindex=vars.startindex+deltalength;	//Add the number of bytes read for the delta to find the file position
 
-//v2.32	Fixed a bug in the logging that calculated the realtime incorrectly (using the wrong tempo)
-//		if(Lyrics.verbose>=2)	printf("Delta time=%lu\tReal time=%fms \tEvent's file pos=0x%lX\t",vars.delta,(MIDIstruct.realtime+ (double)MIDIstruct.deltacounter / (double)MIDIstruct.hchunk.division * ((double)60000.0 / MIDIstruct.BPM)),vars.eventindex);
 		if(Lyrics.verbose>=2)
 				printf("Delta time=%lu\tReal time=%fms \tEvent's file pos=0x%lX\t",vars.delta,ConvertToRealTime(MIDIstruct.absdelta,0.0),vars.eventindex);	//Use the absolute delta counter
 
@@ -788,6 +788,7 @@ void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppr
 	int error=0;				//error returned from ReadTrackHeader
 	struct Track_chunk *newtrack=NULL;	//Used to reallocate tracks[] array in the event of a damaged MIDI
 	unsigned long ctr2=0;				//Used to rebuild tracks[] array in the event of a damaged MIDI
+	static const struct Track_chunk emptyTrack_chunk;	//Auto-initialize all members to 0/NULL
 
 	assert_wrapper(inf != NULL);	//A filename must have been passed to this function
 
@@ -818,7 +819,9 @@ void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppr
 			puts("\aWarning: Input MIDI file is damaged (too many tracks are defined).  Correcting...");
 
 			//Reallocate tracks array
-			newtrack=(struct Track_chunk *)calloc_err(1,sizeof(struct Track_chunk)*(ctr+1));	//Re-allocate an array of track headers one larger than the current array and init to 0
+			newtrack=(struct Track_chunk *)malloc_err(sizeof(struct Track_chunk)*(ctr+1));
+			*newtrack=emptyTrack_chunk;		//Reliably initialize all values to 0/NULL
+
 			for(ctr2=0;ctr2<ctr+1;ctr2++)	//Initialize track numbers
 				(newtrack[ctr2]).tracknum=ctr2;
 
@@ -862,8 +865,6 @@ void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppr
 	MIDIstruct.hchunk.numtracks=ctr;
 	ctr=0;			//reset counter
 
-//v2.32	Updated this logic, as the first track header won't be at byte 14 if the MIDI is embedded within a RIFF or RBA file
-//	fseek_err(inf,14,SEEK_SET);		//Rewind to the first track header (always at byte 14)
 	fseek_err(inf,(MIDIstruct.hchunk.tracks[0]).fileposition,SEEK_SET);	//Rewind to first track header
 
 //We are expecting the track header
@@ -949,12 +950,7 @@ double ConvertToRealTime(unsigned long absolutedelta,double starttime)
 	double tempBPM=0.0;			//Stores BPM of current tempo change
 
 	if(temp == NULL)
-	{
-//v2.32	Alter behavior of this function to be aware of the default tempo of 120BPM
-//		puts("Error: Invalid linked list when converting to real time\nAborting");
-//		exit_wrapper(1);
 		tempBPM=120.0;
-	}
 	else
 	{
 		while((temp->next != NULL) && (temptimer >= (temp->next)->realtime))	//Seek to tempo change indicated by starttime
@@ -993,7 +989,6 @@ void CopyTrack(FILE *inf,unsigned short tracknum,FILE *outf)	//Copies the specif
 {								//structure to have been populated by parsing the input MIDI.
 	char header[5]={0};			//Array used to read in the track header string for validation
 	unsigned long chunksize=0;	//Used to read in the track size for validation
-//	char *buffer;				//Array used to read an entire track into memory and then copy the track to file
 
 	assert_wrapper((inf != NULL) && (outf != NULL));	//These must not be NULL
 
@@ -1030,12 +1025,7 @@ void CopyTrack(FILE *inf,unsigned short tracknum,FILE *outf)	//Copies the specif
 	//The MIDI header has been read, so write it back to the output file
 	fputs_err(header,outf);			//Write "MTrk"
 	WriteDWORDBE(outf,chunksize);	//Write the track chunk size
-
-	if(BlockCopy(inf,outf,chunksize) != 0)
-	{
-		puts("Error: Unable to copy MIDI track\nAborting");
-		exit_wrapper(4);
-	}
+	BlockCopy(inf,outf,chunksize);
 }
 
 unsigned long ConvertToDeltaTime(unsigned long starttime)
@@ -1225,6 +1215,12 @@ void Export_MIDI(FILE *outf)
 	if(Lyrics.Editor != NULL)
 	{
 		tempstr=Append("Editor=",Lyrics.Editor);	//Write Editor tag as a single string
+		WriteMIDIString(outf,0,SEQSPEC_MIDI_STRING,tempstr);
+		free(tempstr);
+	}
+	if(Lyrics.Year != NULL)
+	{
+		tempstr=Append("Year=",Lyrics.Year);		//Write Year tag as a single string
 		WriteMIDIString(outf,0,SEQSPEC_MIDI_STRING,tempstr);
 		free(tempstr);
 	}
@@ -1474,12 +1470,15 @@ void Parse_Song_Ini(char *midipath,char loadoffset,char loadothertags)
 		free(Lyrics.EditorStringID);
 	if(Lyrics.OffsetStringID != NULL)
 		free(Lyrics.OffsetStringID);
+	if(Lyrics.YearStringID != NULL)
+		free(Lyrics.YearStringID);
 
 	Lyrics.TitleStringID=NULL;
 	Lyrics.ArtistStringID=NULL;
 	Lyrics.AlbumStringID=NULL;
 	Lyrics.EditorStringID=NULL;
 	Lyrics.OffsetStringID=NULL;
+	Lyrics.YearStringID=NULL;
 
 	if(Lyrics.verbose)	puts("Beginning song.ini parse");
 
@@ -1489,6 +1488,7 @@ void Parse_Song_Ini(char *midipath,char loadoffset,char loadothertags)
 		Lyrics.ArtistStringID=DuplicateString("artist");
 		Lyrics.AlbumStringID=DuplicateString("album");
 		Lyrics.EditorStringID=DuplicateString("frets");
+		Lyrics.YearStringID=DuplicateString("year");
 	}
 
 	if(loadoffset)	//Load the offset tag
@@ -1808,9 +1808,6 @@ void PitchedLyric_Load(FILE *inf)
 					invalidnote=1;
 				else if(negativeoctave)
 				{
-//v2.32	This logic broke the ability to import valid notes A-1 through B-1
-//					if(notename < 'C')	//The lowest valid note on octave -1 is C
-//						invalidnote=1;
 					if(octavenum != 1)	//The only valid negative octave is -1
 						invalidnote=1;
 				}
@@ -1968,8 +1965,6 @@ int MIDI_Build_handler(struct TEPstruct *data)
 		//does not use running status, but the following event does.
 	char *buffer=NULL;	//Used to store event
 	unsigned long eventlength=0;			//The number of bytes to read into the buffer
-//	static unsigned char lasteventtype=0;	//Used for running status
-//	unsigned char velocity;					//Used for converting Note Off events to Note On
 
 	if(Lyrics.reinit)
 	{	//Re-initialize static variables
@@ -2646,6 +2641,10 @@ char *AnalyzeVrhythmID(const char *buffer)
 			trackname=DuplicateString("PART DRUMS");
 		break;
 
+		case 'v':	//PART VOCALS
+			trackname=DuplicateString("PART VOCALS");
+		break;
+
 		default:
 			return NULL;
 		break;
@@ -2863,6 +2862,7 @@ void Write_Default_Track_Zero(FILE *outmidi)
 {	//Writes a MIDI file header specifying 1 track, writes a track for track 0 and sets MIDIstruct.hchunk.division and MIDIstruct.hchunk.tempomap
 	long int chunkfileposition=0,chunkfilesize=0,fp=0;
 	struct Tempo_change *tempo=NULL;	//Used to write a custom tempo if one was provided
+	static const struct Tempo_change emptyTempo_change;	//Auto-initialize all members to 0/NULL
 
 	assert_wrapper(outmidi != NULL);
 
@@ -2893,7 +2893,8 @@ void Write_Default_Track_Zero(FILE *outmidi)
 	}
 	else
 	{	//Create and intialize a tempo change structure
-		tempo=(struct Tempo_change *)calloc_err(1,sizeof(struct Tempo_change));	//Allocate and init to 0
+		tempo=(struct Tempo_change *)malloc_err(sizeof(struct Tempo_change));
+		*tempo=emptyTempo_change;	//Reliably initialize all values to 0/NULL
 		tempo->BPM=Lyrics.explicittempo;
 		//Write tempo change to MIDI and store in tempo map
 		Write_Tempo_Change(Lyrics.explicittempo,outmidi);
@@ -2979,8 +2980,6 @@ void Export_SKAR(FILE *outf)
  //Write end of track event with a delta of 0 and a null padding byte
 	WriteDWORDBE(outf,0x00FF2F00UL);	//Write 4 bytes: 0, 0xFF, 0x2F and 0
 	tempfileposition=ftell_err(outf);		//Save the current file position
-//This call to ftell can be eliminated since it is made above
-//	chunkfilesize=ftell_err(outf)-chunkfileposition-4;	//# of bytes from start to end of the track chunk (- chunk size variable)
 	chunkfilesize=tempfileposition-chunkfileposition-4;	//# of bytes from start to end of the track chunk (- chunk size variable)
 
  //Rewind to the track chunk size location and write the correct value
