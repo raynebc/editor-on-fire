@@ -406,9 +406,6 @@ char *ConvertTempoToString(double tempo)
 	char *temp=NULL;		//The final string will be duplicated into an allocated array which will be returned
 	unsigned ctr=0;
 
-//validate tempo (must be >= 1.0 and < 1000)
-//v2.32	Rewrote this statement
-//	if(((int)tempo == 0) || (tempo >= 1000.0))
 	if(!(tempo > 0.0) || !(tempo < 1000.0))
 		return NULL;	//return error
 

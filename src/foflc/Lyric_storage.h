@@ -49,10 +49,11 @@ Export functions are expected to:
 //
 //Global Macros- All relevant source/header files will include this header file to obtain these declarations
 //
-#define PROGVERSION "FoFLyricConverter2.32"
-#define LYRIC_NOTE_ON 50	//Previously, if note #s 60-100 were used for Note On events for lyrics, FoF interpreted
-							//those notes to indicate playable instrument difficulties.  This was fixed, but I will
-							//continue to use this pitch to denote a pitchless lyric during MIDI export by default
+#define PROGVERSION "FoFLyricConverter2.33"
+#define LYRIC_NOTE_ON 50
+	//Previously, if note #s 60-100 were used for Note On events for lyrics, FoF interpreted
+	//those notes to indicate playable instrument difficulties.  This was fixed, but I will
+	//continue to use this pitch to denote a pitchless lyric during MIDI export by default
 #define LRCTIMESTAMPMAXFIELDLENGTH 2
 	//Used to define the max length of the minutes, seconds and hundredths fields in LRC timestamps
 
@@ -145,6 +146,7 @@ struct _LYRICSSTRUCT_{
 	char *AlbumStringID;
 	char *EditorStringID;
 	char *OffsetStringID;
+	char *YearStringID;
 
 //Tags
 	char *Title;			//The title tag
@@ -153,6 +155,7 @@ struct _LYRICSSTRUCT_{
 	char *Editor;			//The editor tag
 	char *Offset;			//The offset tag (additive offset to start time stamps)
 							//	VL stores this in increments of 10ms, I will convert it to ms during import
+	char *Year;				//The year tag
 
 //Offsets
 	long realoffset;			//The offset in real time (milliseconds), which is subtracted from each lyric's timestamp
@@ -418,9 +421,8 @@ char *ReadString(FILE *inf,unsigned long *bytesread,unsigned long maxread);
 unsigned long GetFileEndPos(FILE *fp);
 	//Accepts a binary mode stream pointer, seeks to the last byte, obtains the file position,
 	//seeks to the original file position and returns the file position of the last byte
-int BlockCopy(FILE *inf,FILE *outf,unsigned long num);
+void BlockCopy(FILE *inf,FILE *outf,unsigned long num);
 	//Accepts an input file and output file, copying the specified number of bytes from the former to the latter
-	//Returns 0 on success, -1 on memory allocation error, -2 on file I/O error or -3 on other error
 int SearchPhrase(FILE *inf,unsigned long breakpos,unsigned long *pos,const char *phrase,unsigned long phraselen,unsigned char autoseek);
 	//Searches from the current file position of inf for the first match of the specified array of characters
 	//If file position breakpos is reached or exceeded, and breakpos is nonzero, the function will end the search even if no match was found

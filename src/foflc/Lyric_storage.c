@@ -71,6 +71,7 @@ void InitLyrics(void)
 	Lyrics.Album=NULL;
 	Lyrics.Editor=NULL;
 	Lyrics.Offset=NULL;
+	Lyrics.Year=NULL;
 	Lyrics.offsetoverride=0;
 	Lyrics.realoffset=0;
 	Lyrics.nohyphens=0;
@@ -105,6 +106,7 @@ void InitLyrics(void)
 	Lyrics.AlbumStringID=NULL;
 	Lyrics.EditorStringID=NULL;
 	Lyrics.OffsetStringID=NULL;
+	Lyrics.YearStringID=NULL;
 	Lyrics.srcoffsetoverride=0;
 	Lyrics.srcrealoffset=0;
 	Lyrics.nolyrics=0;
@@ -120,7 +122,8 @@ void InitLyrics(void)
 
 void CreateLyricLine(void)
 {
-	struct Lyric_Line *temp=NULL;	//Stores newly-allocated lyric line structure
+	struct Lyric_Line *temp=NULL;				//Stores newly-allocated lyric line structure
+	static struct Lyric_Line emptyLyric_Line;	//Auto-initialize all members to 0/NULL
 
 	if(Lyrics.verbose>=2)	puts("Initializing storage for new line of lyrics");
 
@@ -131,7 +134,8 @@ void CreateLyricLine(void)
 	}
 
 //Allocate and initialize new Lyric Line structure for linked list
-	temp=(struct Lyric_Line *)calloc_err(1,sizeof(struct Lyric_Line));
+	temp=(struct Lyric_Line *)malloc_err(sizeof(struct Lyric_Line));
+	*temp=emptyLyric_Line;	//Reliably initialize all values to 0/NULL
 
 //Append new link to the linked list
 	if(Lyrics.lines == NULL)	//Special case:  List is empty
@@ -851,8 +855,6 @@ char *DuplicateString(const char *str)
 	char *ptr=NULL;
 	size_t size=0;
 
-//v2.32	Use this to prevent the need for the calling function to check
-//	assert_wrapper(str != NULL);
 	if(str == NULL)
 		return NULL;
 
@@ -1186,6 +1188,19 @@ void SetTag(char *string,char tagID,char negatizeoffset)
 			}
 		break;
 
+		case 'y':	//Store Year tag
+			if(Lyrics.Year != NULL)
+			{
+				printf("Warning: Extra Year tag: \"%s\".  Ignoring\n",string2);
+				free(string2);
+			}
+			else
+			{
+				Lyrics.Year=string2;
+				if(Lyrics.verbose)	printf("Loaded tag: \"year = %s\"\n",string2);
+			}
+		break;
+
 		default:
 			puts("Unexpected error during tag handling\nAborting");
 			exit_wrapper(3);
@@ -1320,15 +1335,9 @@ void fflush_err(FILE *stream)
 
 void fclose_err(FILE *stream)
 {
-int test;
-
 	assert_wrapper(stream != NULL);
 
-//**DEBUG
-test=fclose(stream);
-
-//	if(fclose(stream) != 0)
-if(test == EOF)
+	if(fclose(stream) == EOF)
 	{
 		printf("Error closing file: %s\nAborting\n",strerror(errno));
 		printf("%d",errno);
@@ -1510,12 +1519,20 @@ int ParseTag(char startchar,char endchar,char *inputstring,char negatizeoffset)
 						tagID='o';
 					else
 					{
-						if(strchr(str,startchar) && strchr(str,endchar))	//If the string contains the tag's opening and closing characters
-							if(Lyrics.verbose)
-								printf("Unrecognized or ignored tag in line \"%s\"\n",str);
+						if(Lyrics.YearStringID != NULL)
+							temp=strcasestr_spec(str,Lyrics.YearStringID);
 
-						free(str);		//release working copy of string
-						return 0;	//Return no tag
+						if((temp != NULL) && (temp <= temp2))	//If the string contained the Year tag that preceded a start of tag indicator
+							tagID='y';
+						else
+						{
+							if(strchr(str,startchar) && strchr(str,endchar))	//If the string contains the tag's opening and closing characters
+								if(Lyrics.verbose)
+									printf("Unrecognized or ignored tag in line \"%s\"\n",str);
+
+							free(str);		//release working copy of string
+							return 0;	//Return no tag
+						}
 					}
 				}
 			}
@@ -1689,8 +1706,6 @@ char *ConvertNoteNum(unsigned char notenum)
 	else
 	{
 //Obtain octave number
-//	octave=abs(octave);			//Now that the sign of the octave is stored, drop the sign from the stored number
-//	assert_wrapper((octave>=0) && (octave<=9));	//The absolute value of the octave is expected to be from 0 through 9
 		assert_wrapper(octave <= 9);	//The octave must be less than 10
 		buffer[0]='0'+octave;			//Convert the octave to a character representation of '0' through '9'
 		buffer[1]=0;				//Append a null character to create a valid string
@@ -1788,6 +1803,11 @@ void ReleaseMemory(char release_all)
 		free(Lyrics.Offset);
 		Lyrics.Offset=NULL;
 	}
+	if(Lyrics.Year != NULL)
+	{
+		free(Lyrics.Year);
+		Lyrics.Year=NULL;
+	}
 
 //Release command line controlled strings, unless ReleaseMemory() was called during format detection instead of during program exit
 	if(release_all)
@@ -1854,6 +1874,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 	struct Lyric_Format *detectionlist=NULL;	//The linked list of all detected lyric formats in the specified file
 	struct Lyric_Format *curdetection=NULL;		//The conductor for the above linked list (used in the MIDI detection logic)
 	struct ID3Tag tag={NULL,0,0,0,0,0,0.0,NULL,0,NULL,NULL,NULL,NULL};	//Used for ID3 detection
+	static const struct Lyric_Format emptyLyric_Format;	//Auto-initialize all members to 0/NULL
 
 	assert_wrapper(file != NULL);
 	InitLyrics();	//Initialize all variables in the Lyrics structure
@@ -1861,7 +1882,8 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 	if(Lyrics.verbose>=2)	printf("Detecting lyric type of file \"%s\"\n",file);
 
 //Allocate and initialize the linked list of detections to null data
-	detectionlist=calloc_err(1,sizeof(struct Lyric_Format));
+	detectionlist=malloc_err(sizeof(struct Lyric_Format));
+	*detectionlist=emptyLyric_Format;	//Reliably initialize all values to 0/NULL
 	curdetection=detectionlist;
 
 //Detect text based lyric based lyric types
@@ -1995,11 +2017,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 						}
 					}
 
-//v2.32	If this line in an LRC file has only one timestamp, parse other lines to see if they have more than one (ELRC)
-//					free(buffer);
-//					fclose_err(inf);
 					detectionlist->format=LRC_FORMAT;
-//					return detectionlist;
 				}
 			}
 
@@ -2109,7 +2127,8 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 //If the tail of the detection list is populated, create and init a new link in the list and update the conductor
 		if(curdetection->format != 0)
 		{
-			curdetection->next=calloc_err(1,sizeof(struct Lyric_Format));
+			curdetection->next=malloc_err(sizeof(struct Lyric_Format));
+			*curdetection->next=emptyLyric_Format;	//Reliably initialize all values to 0/NULL
 			curdetection=curdetection->next;
 		}
 //curdetection now points to an initialized link that can be written to
@@ -2126,9 +2145,6 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 		}
 
 //RB MIDI detection logic
-//		if(	!strcasecmp((MIDIstruct.hchunk.tracks[ctr]).trackname,"PART VOCALS") ||		//If the track name is "PART VOCALS"
-//			strcasestr_spec((MIDIstruct.hchunk.tracks[ctr]).trackname,"PART HARM") ||	//or is named to be a harmony track
-//			((MIDIstruct.hchunk.tracks[ctr]).spacecount == 0))							//or had no whitespace in any existing lyric/text events (if any were present)
 		if((MIDIstruct.hchunk.tracks[ctr]).spacecount == 0)	//if the track has no whitespace in any existing lyric/text events (if any were present)
 		{
 			if((MIDIstruct.hchunk.tracks[ctr]).notecount && ((MIDIstruct.hchunk.tracks[ctr]).textcount || (MIDIstruct.hchunk.tracks[ctr]).lyrcount))
@@ -2168,6 +2184,9 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 	if(detectionlist->format == 0)
 	{
 		ReleaseMemory(0);
+		fclose_err(inf);
+		useFLjumpbuffer=0;	//Restore normal functionality of exit_wrapper
+		Lyrics.quick=quicktemp;	//Restore original quick processing setting
 		DestroyLyricFormatList(detectionlist);
 		return NULL;	//No valid lyric format detected
 	}
@@ -2184,6 +2203,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 	ReleaseMemory(0);
 	fclose_err(inf);
 	useFLjumpbuffer=0;	//Restore normal functionality of exit_wrapper
+	Lyrics.quick=quicktemp;	//Restore original quick processing setting
 
 //Return the detection list
 	return detectionlist;
@@ -2369,29 +2389,36 @@ unsigned long GetFileEndPos(FILE *fp)
 	return endpos;				//Return end of file position
 }
 
-int BlockCopy(FILE *inf,FILE *outf,unsigned long num)
+void BlockCopy(FILE *inf,FILE *outf,unsigned long num)
 {
 	unsigned char *buffer=NULL;
-	int status=0;
+//	int status=0;
+	int c=0;
+	unsigned long ctr=0;
 
 	if(Lyrics.verbose >= 2)	printf("\t\tBlock copying %lu bytes (File position 0x%lX to 0x%lX)\n",num,ftell(inf),ftell(inf)+num-1);
 
 	assert_wrapper((inf != NULL) && (outf != NULL));
 
-	if(num == 0)
-		return -3;
+	if(num == 0)	//If not copying any data
+		return;		//return without doing anything
 
 	buffer=(unsigned char *)malloc(num);
-	if(buffer == NULL)
-		return -1;
-
-	if(fread(buffer,num,1,inf) != 1)	//If reading failed
-		status=-2;
-	else if(fwrite(buffer,num,1,outf) != 1)	//If writing failed
-		status=-2;
-
-	free(buffer);
-	return status;	//Return success/failure status
+	if(buffer != NULL)
+	{	//Perform block read and copy
+		fread_err(buffer,num,1,inf);	//If reading failed
+		fwrite_err(buffer,num,1,outf);	//If writing failed
+		free(buffer);
+	}
+	else
+	{	//Perform slow copy
+		puts("Block copy failed, performing slow copy");
+		for(ctr=0;ctr<num;ctr++)
+		{
+			c=fgetc_err(inf);	//Read one byte from input file
+			fputc_err(c,outf);		//Write it to the output file
+		}
+	}
 }
 
 int SearchPhrase(FILE *inf,unsigned long breakpos,unsigned long *pos,const char *phrase,unsigned long phraselen,unsigned char autoseek)

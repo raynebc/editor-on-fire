@@ -1,0 +1,375 @@
+Changelog: 2.32 to 2.33
+	Fixed a bug with the detection logic that could cause a crash during program completion if lyric detection was used and the input file had no lyrics
+	Fixed a bug with ID3v1 tag creation that could write the wrong information into the tag fields
+	Optimized ID3 output by using buffered copying for the MP3
+	Added another song tag that will be used for import and export:  Year.  Currently, only the MIDI (song.ini) and ID3 formats routinely define this
+	Optimized ID3 frame exclusion logic (excluding frames whose info. is defined in input file, or frames specified with nosrctag)
+	Added additional logic so that the use of nosrctag as a wildcard will omit the ID3v1 tag contents from the source MP3
+	Restored the ability to use the track "PART VOCALS" for vocal rhythm, since the detection logic now bases detection on more than the track name
+	Lessened the use of calloc() to initialize allocated memory, as this could possibly cause a malfunction with some (currently unidentified) compilers or platforms that don't use all bits clear to represent 0 for some data types
+
+Changelog: 2.31 to 2.32
+	Updated to GCC 4.5.0 and made minor changes to resolve compiler warnings
+	Fixed a bug with ID3 parsing that wouldn't accept a frame that extended all the way to the end of the tag (ie. if it had no padding)
+	Fixed a bug with the debug MIDI logging that displayed the realtime stamps of MIDI events incorrectly
+	Fixed a bug with MIDI parsing that would likely have prevented a RIFF MIDI import from succeeding
+	Fixed a bug with pitched lyric import that wouldn't allow note names A-1, A#-1 or B-1 to be imported
+	Fixed a bug with the notenames handling that would cause pitch names for notes in octave -1 (pitches 0 through 11) to be written incorrectly (vrhythm export)
+	Fixed a bug with the previous command line optimizations that would cause the program to try to load vocal rhythm from the pitched lyrics file instead of the MIDI file
+	Fixed a file I/O error during ID3 import where the input file would be closed more than once if lyrics weren't found, resulting in the program detecting an error and aborting
+	The syntax help output now displays the program version
+	Added parameter checking to make sure nofstyle is only usable for MIDI export
+	When the requested import fails, the detected format(s) of the input file are displayed
+	Added the ability to automatically detect the import format if it is not specified
+	File detection is now skipped unless detection is requested, if automatically detecting the input format or if the requested import fails
+	Improved ELRC detection.  Even if the first lyric line in an LRC file has only one timestamp, other lines will be checked for the presence of multiple timestamps (ELRC)
+	Added some more variable checking and ensured that all variables are now properly initialized, which should help prevent undiscovered bugs
+	Consolidated debug output for MPEG frame parsing
+	Added more error checking for each export format
+	Added ability to import lyrics from a Rock Band Audition (RBA) file.  This container format includes a Rock Band style MIDI, and can be imported as "midi" format
+	Improved validation of text information ID3v2 frames
+	Added ability to read and write ID3v1 tag information
+
+Changelog: 2.3 to 2.31
+	Improved Rock Band MIDI detection, which now recognizes that whitespace in lyrics indicates KAR lyrics, because Rock Band lyrics don't use whitespace
+	Sped up MIDI parsing by separating the statistics tracking used for lyric detection from the regular MIDI import code
+	Corrected handling for a corrupted MIDI header that specifies fewer tracks than are defined in the file
+	Removed some duplicated logic in the command line parsing code
+	Added error checking for "rewind" file I/O operations
+	Added the -nofstyle parameter to prevent the addition of freestyle characters during MIDI export
+
+Changelog: 2.2 to 2.3
+	Fixed memory leaks in UltraStar and ID3 imports
+	Corrected program behavior to not create an empty output file during ID3 export if the source MP3 doesn't exist
+	Added logic to track a lyric's overdrive and freestyle status separately.  Lyrics that import as both freestyle AND overdrive will export as such whenever possible (pitched lyrics or MIDI).
+	Added string parsing optimizations
+	Extreme file I/O optimizations for MIDI/ID3 import/export
+	Implemented running status logic for MIDI/Vrhythm export that reduces filesize of the output MIDI track (and any track rewritten to remove vrhythm notes) by about 2 bytes per lyric and 2 more bytes per lyric/overdrive phrase (typical size reduction is around 10-20%)
+	Added the id3tag parameter, allowing the contents of a file's ID3 tag to be displayed
+	Added the nosrctag parameter, allowing all ID3 content or event just specific frames IDs to be omitted from the source file when the output file is created
+	Removed = from the default filter list and disallowed it from being filtered, as this is intended to be a forced hyphen
+	Added ability to load song tag information (artist, title, album) during ID3 import
+	Fixed logic errors in the noplus parameter handling
+	Fixed logic errors in duplicate tag import handling
+	Added logic to export song tag information from the input file during ID3 export
+	Added logic to allow the input MP3 to be assumed as the source MP3 during ID3 export if the source MP3 is not given
+
+Changelog: 2.1 to 2.2
+	Added additional logic to parse an extended ID3 header if present in the input MP3 file during ID3 import
+	Corrected the import of ID3 lyrics that use MPEG timing
+	Added support for exporting ID3 lyrics to an MPEG audio file (ie. MP3)
+	Improved debug output
+	Corrected some logic that could cause a crash when importing bizarre lyrics, such as if multiple lines' worth of lyrics shared the same timestamp
+	Improved command line parameter validation
+	Added logic to add durations to lyrics that have other lyrics group onto them during ID3 import
+
+Changelog: 2.01 to 2.1
+	Changed logic so that equal signs in lyrics are exported regardless of the use of nohyphens, as they are intended to be visible hyphens
+	Improved error logging of damaged MIDI files
+	Added ability to parse "RIFF MIDI" (AKA RMIDI, RMI) files, which are regular MIDI files with an additional header
+	Added ability to detect and import synchronized lyrics from the ID3 tag of an MP3 file
+
+Changelog: 2.0 to 2.01
+	Fixed the behavior of the -quick parameter
+	Corrected the logging to show the results of the lyric detection if verbose/debugging logging is enabled
+	Added logic to correct problems with an imported MIDI that has overlapping line phrases, a formatting error that plagued just under 5% of all RB MIDIs.
+	Allowed an imported MIDI/KAR file to violate the KAR standard by having a note's pitch at a different MIDI timing than its lyric.  So far, the only MIDI that seems to violate this is "Kasabian - Shoot The Runner"
+	Fixed a few memory leaks introduced by the new lyric detection logic
+	Fixed a potential wild free that could occur in one of the string manipulation functions
+	Fixed the logic for the updated -nohyphens usage where it wouldn't be accepted without a number unless nohyphens was the last parameter
+
+Changelog: 1.96 to 2.0
+	Improved parameter conflict detection
+	Improved readme file
+	Added the -notenames parameter, allowing the exported pitched lyric file to be written in note names instead of numbers (ie. A#7 instead of 106)
+	Reorganized program for inclusion in EOF
+	Corrected grouping logic for KAR import
+	Removed the extra "#newline" markup that was at the end of script export if -marklines was specified
+	Pitchless formats (Script, VL, LRC and Soft Karaoke) are now stored internally as having no defined pitch instead of a generic pitch
+	Fixed relative UltraStar import logic
+	Fixed a bug with the UltraStar trailing whitespace logic that could cause grouping status to be lost
+	Added logic to better allow pitch shift lyrics to be converted to "~" when hyphens weren't suppressed during UltraStar export
+	Added the -relative parameter, allowing export of UltraStar lyrics in relative timing instead of absolute timing
+	Fixed a bug that would cause the program to crash if exporting to a MIDI format, using a source MIDI, when the import file was not a MIDI based format
+	Fixed a minor memory leak that could occur if importing a non MIDI based file and exporting to Vrhythm
+	Removed "PART VOCALS" as a usable vocal rhythm track to ensure accuracy of lyric detection
+	Added lyric format detection logic whose findings are given with verbose or debugging output.  If a lyric import is failing, you can use either of the logging features to see if you are specifying the correct import format for the given file.
+	Corrected logic that handles the conversion between MIDI pitch numbering (Pitch 24 is note C1) and UltraStar pitch numbering (Pitch 0 is note C1)
+	Rewrote pitch range validation to run only when the output format is MIDI, as only Rock Band MIDIs have a defined requirement of a vocal pitch range of [36,84].  Any vocal pitches outside of this range have their octave changed to correct the issue.
+	Added logic to allow pitchless, durationless MIDI vocals (Lyric events with no Note On and Off) to be imported, also allowing them to be exported to MIDI (without vocal pitch notes, if the nopitch parameter is defined), UltraStar (as freestyle) and Vrhythm (as freestyle)
+	Added the -nopitch parameter, which will cause imported pitchless lyrics (ie. VL, Script, LRC, Soft Karaoke, freestyle Pitched Lyric entries) to export to MIDI with no fake vocal notes, which also means that the affected lyrics will have no lyric durations
+	Improved the MIDI lyric error recovery logic's handling of corrected endings of lyric phrases
+	Corrected the program's logic regarding calculation of lyric line durations
+	Fixed logic errors with the combined use of nohyphens and noplus
+	Added support for exporting to Soft Karaoke format
+	Added more error handling and statistic tracking (lyric count) in MIDI parsing code
+	Added support for exporting to (unofficial) KAR format, which Rock Band's MIDI format was derived from
+	Removed some unused MIDI logic
+	Fixed a bug with the nohyphens logic, which would automatically remove hyphens that were inserted if "-nohyphens 2" was used to suppress the pre-existing hyphens in the imported lyrics
+	The -nohyphens parameter has been altered to allow it to be used without specifying a number after it, in which case "-nohyphens 3" is assumed, removing existing trailing hyphens and suppressing the automatic insertion of hyphens
+	Made various code optimizations
+	Fixed a bug in the KAR/MIDI import logic that could cause lyrics to lose their overdrive status
+	Used Splint, Yasca and RATS security analysis tools to add some minor hardening to the source code
+	Added more error checking
+	Added the -detect parameter, which will detect and list the lyric format(s) of the specified file instead of performing a lyric import or export
+	Added logic to perform correction for malformed RB MIDIs that have empty lyric phrases (ie. Queen - "We Will Rock You")
+	Fixed a logic error that could cause the program to abort due to supposed invalid running status events, even if they were valid
+
+Changelog: 1.95 to 1.96
+	Corrected a bug that could produce unpredictable results when importing a relative timed UltraStar file that has a line break before the first lyric
+	Added the -nolyrics parameter, allowing vocal pitches to be imported from a MIDI or KAR track that has no lyrics.  Exported lyrics use asterisks where lyrics would be but retain note pitches and timings.
+	Added the ability to supply just the vrhythm track identifier instead of a pitched lyric file, allowing you to import a vrhythm file without lyrics and export back to vrhythm to create a pitched lyric file with the correct number of entries.
+	Fixed a missing pointer assignment in the pitched lyric line break logic, which may have eventually allowed a crash to occur
+	Increased error checking that occurs after lyric import
+	Added new logic to exclude the imported vocal track from export to avoid duplicate vocal tracks when converting to and from MIDI based formats (vrhythm import is excluded from this logic)
+	Added logic to correctly import MIDIs having the vocal track end in vocal phrases that have no lyrics defined (ie. tambourine sections)
+	Due to errors in several Rock Band Network MIDIs, logic was altered to disregard lyric events that begin with an open bracket ( [ )
+
+Changelog: 1.94 to 1.95
+	Corrected a bug in the new source MIDI import logic that would import tracks from the input file instead of the source file
+	Corrected a bug in the new source MIDI import logic that would cause the program to abort instead of process the file
+	Corrected a false alarm that would claim that imported pitched lyrics had the wrong number of entries if the file ends in a blank line, even though all entries were properly loaded
+	Corrected a bug that would cause duplicate track names if the source MIDI contained a track named the same as the one created to export vocal rhythm to
+	Improved verbose output
+	If exporting to a MIDI based format without merging with tracks from an existing source file, the created MIDI explicitly defines a tempo of 120BPM instead of using it implicitly
+	Fixed the handling of the MIDI delay for MIDI based export format
+	Fixed a minor memory leak that would occur if an input MIDI track name was specified
+	Added the -outtrack parameter, allowing the destination track name for MIDI based exports to be specified
+	Added logic to allow the -bpm parameter to specify the tempo used during MIDI based export if no source MIDI is given
+	Based on Harmonix's documentation, I have altered program logic to recognize the expected range of pitches to be 36 to 84 (inclusive)
+
+Changelog: 1.93 to 1.94
+	Finished removing previous KAR import logic
+	Improved efficiency of MIDI and Vrhythm export code
+	Added logic to disable appending a hyphen to a lyric if the following lyric is just a pitch shift (+ character), regardless of nohyphens setting
+	Added additional error checking to ensure all lyrics processed during MIDI/KAR import are handled completely
+	Fixed a logic error that could cause the program to abort itself at the end if the input or source MIDI file did not explicitly set a tempo
+	Made the source MIDI file optional for MIDI and Vrhythm export.  If not used, the exported file uses a default tempo of 120BPM
+	Added a source file offset for the optional source file given during MIDI based file export (ie. MIDI, Vrhythm)
+	Added whitespace logic allowing either leading OR trailing whitespace to separate whole words during UltraStar import
+
+Changelog: 1.92 to 1.93
+	Added support for exporting to Vocal Rhythm format
+	Added support for writing flat note notation for Vrhythm import
+	Added handling for lyrics that end in a forward slash (ie. in Rock Band Beatles MIDIs) to cause a line break to occur
+	Corrected the grouping behavior of lyrics ending in "=", which are supposed to group with the next lyric in addition to representing a visible hyphen in the lyric
+	Added strong handling for incorrectly nested notes in KAR files
+	Improved error handling for remaining file I/O (file open/read/write/close/flush)
+	Combined new KAR import logic with RB MIDI import logic for simplification
+	Corrected byte ordering when writing files, should maintain ability to work on little endian platforms like Mac
+	Fixed grouping logic for pitched lyric import
+	Cleaned up some unused code
+	Consolidated memory allocation error checking
+	Fixed a bug that could prevent a successful MIDI export if not importing vocal rhythm
+	Improved memory management of import functions and corrected most/all memory leaks
+	Fixed various format->format specific logic errors
+
+Changelog: 1.91 to 1.92
+	Added support for importing KAR files
+	Added support for unofficial MIDI meta event 0x21 (Set MIDI port), as some non completely MIDI-compliant files may use this
+	Added logic to account for running status MIDI events when vocal rhythm notes are ommitted during MIDI export
+	Corrected a MIDI parsing flaw that would cause Sysex events to be misread
+	Corrected a logic flaw that would export to VL format incorrectly if a lyric duration was less than 10ms
+
+Changelog: 1.9 to 1.91
+	Consolidated error checking for MIDI writing code
+	Added logic to prevent creation of an empty MIDI track during a vocal rhythm to MIDI export if the track exported had vocal rhythm notes removed
+	Added more error checking for file I/O
+	Fixed a minor logic error that could cause the incorrect syntax handling to abort the program before displaying more appropriate information
+	Added logic to properly use zeros to pad timestamps to mm:ss.xx format during LRC export
+	Added support for simple LRC export
+	Significantly consolidated and improved tag loading code
+	Significantly consolidated file I/O error checking
+	Added logic to accept note names (ie. C-1 or G#8) in addition to pitch numbers in pitched lyric files (vocal rhythm import)
+
+Changelog: 1.89 to 1.9
+	Added support for exporting to extended LRC format
+	During a vocal rhythm to MIDI conversion, the vocal rhythm notes are now removed from the exported MIDI.  All other notes retain their original timing
+	Added handling for empty line phrases during pitched lyric import, allowing the first line of lyrics to contain overdrive
+	Fixed a minor logic flaw caused by importing empty lyric lines in LRC format
+	Added error checking for almost all file I/O operations
+	Improved specificity and consistency for error messages, such as failed memory allocation, file I/O and MIDI file errors
+	Added leniency for UltraStar import, which now allows import for text files that are missing one or more important tags
+	Fixed a crash bug that could happen when using vocal rhythm import on MIDIs that had one or more track names missing
+
+Changelog: 1.88 to 1.89
+	Fixed a bug that would cause the program to crash if importing a pitched lyric file that ends in a phrase marker (hyphen).  This is now allowed, but a warning is given
+	Moved some verbose output to the debug output option, and improved verbose output
+	Added logic to warn if the given output filename doesn't have the appropriate extension
+	Removed the requirement to use an undocumented parameter to export MIDI with correct pitches, as FoFiX 3.120 has fixed bugs that would have prevented custom vocal charts from working correctly
+	Fixed a previous over-zealous commenting-out that broke the ability to load the artist tag during UltraStar import
+	Added additional error output.  If a text input file (script, UltraStar, pitched lyric) has invalid number fields, the line containing the first error will be given
+	Fixed a logic flaw causing the source MIDI to be processed twice if converting from Vocal Rhythm to MIDI
+	Fixed overdrive and freestyle logic for pitched vocal import
+	Added logic to remove trailing whitespace from lyrics during pitched lyric import
+	As per Harmonix's documentation, I have added logic to interpret '^' as a freestyle indicator and '=' as a hyphen character during MIDI import.
+	Updated readme file
+
+Changelog: 1.87 to 1.88
+	Significantly consolidated tag storing code
+	Fixed a conditional crash bug that could occur if a MIDI track had no defined name
+	Consolidated text file pre-parsing code
+	Added logic to exit with error if imported LRC file is empty
+	Added more error checking
+	Added a debug logging parameter, and offloaded some of the verbose output to it
+	Added logic to correct line durations if imported lyrics have timing overlap errors (ie. LRC)
+
+Changelog: 1.86 to 1.87
+	Redesigned grouping and hyphen handling code, grouping should now work for all formats
+	Changed how lyric line durations are tracked to prevent incorrect values
+	MIDI export now supports writing overdrive phrases
+	Corrected program behavior when no lyrics were imported from a MIDI
+	Added ability to load lyrics from any specified MIDI track name
+	Fixed a bug with noplus that could cause the Lyrics to be corrupted and the program to abort
+
+Changelog: 1.85 to 1.86
+	Improved verbose output
+	Added additional command line parameter validation
+	Added pitch range validation for MIDI import
+	Added logic to prevent double hyphens for partial words during UltraStar import
+	Added logic to append pound characters to freestyle/pitchless lyrics during MIDI export
+	Fixed memory leaks in Vocal Rhythm and MIDI import code
+	Fixed potential crash-inducing code in pitched lyric import code
+	Fixed grouping logic for Vocal Rhythm import
+
+Changelog: 1.84 to 1.85
+	Added a new hybrid input method:  Vocal Rhythm
+	Corrected logic that caused some import files to open as binary instead of text, even though it didn't seem to be causing problems
+	Added additional logic to perform better handling of improperly-formatted MIDIs that would cause false detection overlapping lyrics ("Take it on the run")
+	Now allows an imported UltraStar file to contain an explicit GAP of 0, as some editors may set it so
+	Corrected a bug that would prematurely de-allocate a VL text entry, causing the program to abort when importing a VL file
+
+Changelog: 1.83 to 1.84
+	Fixed a logic error in automatic duration extending for + lyrics that could cause an integer overflow
+	Fixed minor memory leaks in LRC, VL and MIDI import code
+	Improved verbose output for MIDI import
+	Fixed a logic error causing the input MIDI to be parsed twice if the input and output formats were both MIDI
+	Enabled quick MIDI import if exporting MIDI lyrics and not importing MIDI lyrics, as the instrument tracks wouldn't need to be parsed
+	Fixed a bug with UltraStar export that could cause a crash if the last lyric in a line ends with a hyphen
+	Corrected grouping logic for UltraStar import to prevent incorrect grouping detection of the first lyric in a line
+	Corrected grouping logic for UltraStar export to prevent the corruption of timestamps for grouped lyrics
+	Improved grouping logic for UltraStar export to use rounding to prevent unnecessary lyric grouping
+	Added logic to LRC import preventing hyphen appending to a line's last lyric piece if it doesn't end in whitespace
+	Cleaned up source code
+
+Changelog: 1.82 to 1.83
+	Added capability to import LRC and extended LRC format
+	Corrected a very minor conditional memory leak caused if a tag was not recognized during UltraStar import
+	Added duplicate tag checking for all import formats and improved verbose output for tag loading
+	Added more error-checking and verbose output to the lyric handling code
+	Improved the verbose output of lyric handling functions
+	Added logic to UltraStar import so that partial words correctly have hyphens inserted unless suppressed by nohyphens
+	Added logic so that a lyric of "-" is not completely truncated by the nohyphens feature
+	Added pitch scaling logic when converting from UltraStar to MIDI that keeps relative pitch values wherever possible
+	Added logic so that the duration of a lyric is extended to reach a pitch shift (+ lyric) if one follows it
+	Added logic so that an imported UltraStar file's tempo is assumed if a tempo isn't manually supplied by command line
+
+Changelog: 1.81 to 1.82
+	Fixed a bug during VL import that could improperly detect an end of lyric line
+	Fixed a bug where lyric pieces included one character more than they should during VL import
+	Improved the verbose output of VL and MIDI import
+	Improved UltraStar import to handle lines that are blank or begin with multiple whitespace characters
+	Improved error handling to correct lyric overlapping or durations of 0 between lines of lyrics
+	Fixed a bug where exported UltraStar pitches were modified if the import format was also UltraStar (lol)
+
+Changelog: 1.8 to 1.81
+	Fixed a bug where the last line of an imported UltraStar file would not have all available error handling performed.
+	Added failover handling to automatically correct overlapping lyrics pieces (within a line) for lyric import
+	Added handling to automatically correct lyrics pieces (within a line) with a duration of 0 for any lyric import
+	Fixed a bug where UltraStar lyrics were exported as freestyle if the import format was also UltraStar (lol)
+	Added rounding logic to UltraStar import and export, for added accuracy
+	Added marklines parameter to enable exporting to script format with end of line information preserved
+	Added script import logic to recognize end of line information when available
+	Separated regular syntax output and help output from each other, offering a help parameter to see the latter
+	Fixed a bug that prevented the offset and startstamp parameters from working correctly for VL import
+	Added logic to convert ~ lyrics back to + for Ultrastar import
+
+Changelog: 1.7 to 1.8
+	Added capability to import UltraStar format
+	Rewrote all lyric import/export functions to simplify program logic
+	Improved verbose output readability
+	Cleaned up source code and eliminated compiler warnings
+	Corrected all memory leaks, as verified by MemWatch
+	Rewrote nohyphens logic so that it works correctly.  Nohypens 2 will now allow automatically-inserted hyphens from the input file (currently, VL is the only format to utilize this functionality) to be kept.
+	Corrected handling of the offset during MIDI import (when automatically loaded from song.ini)
+	Fixed a logic error in that during VL export, the written offset should be 0 because all timestamps are absolute and not relative
+	Fixed a logic error that could cause a crash if the incorrect amount of parameters were supplied to the program
+	Fixed a logic error that could cause durations in VL export to be 10 ms shorter than they should be if there was no delay between two lyric pieces
+	Corrected the handling of the offset value during VL import
+
+Changelog: 1.63 to 1.7
+	Added capability to export to VL format
+	Fixed a bug that caused incorrect note timing when the brute parameter is used
+
+Changelog: 1.62 to 1.63
+	Added ability to load tag information from song.ini if it exists in the same directory as the input MIDI file (-offset will override any delay found in song.ini)
+	Replaced all single precision floating point variables with double precision floating point
+	Added a brute parameter that checks all tempos from 200-400bpm in increments of .01 to find the most accurate tempo for ustar export.
+	Fixed a bug with UltraStar export that would cause the program to abort when exporting all-freestyle songs
+	UltraStar export code now uses double precision floating point variables for additional accuracy
+
+Changelog: 1.61 to 1.62
+	Fixed a type-casting omission that would cause accented characters to induce a logic error that detects overlapping lyrics (ie. "Finley - Tutto E' Possibile")
+	Added handling for Meta events embedded within a running status (ie. "The Hand That Feeds")
+	All abnormal program termination messages now use the term "aborting" to help search output when run in batch
+	Fixed a bug where a custom tempo is not written to UltraStar format correctly if it contained 0's
+
+Changelog: 1.6 to 1.61
+	Added a startstamp parameter to allow the timestamp of the first lyric to be defined manually, keeping the relative timing for all other lyrics the same
+	For UltraStar export, the first word after a line change no longer has a leading space
+	Added support for recognizing overdrive lyrics in RB MIDIs and saving them as Golden Notes during UltraStar export
+	Added UltraStar export logic to write the tempo in the expected #,# format instead of #.#
+	Added UltraStar logic to prevent lyrics from having a duration of 0 quarter beats
+	Added UltraStar logic to export + lyric pieces as ~ and corrected lyric spacing
+	Added improved handling of trailing whitespace and multiple filtered characters on lyric pieces
+	Improved freestyle detection:  Pitched lyrics are detected as freestyle if the lyric has a # character or if there are no pitch changes throughout the entire set of lyrics.
+	Rock Band's lowest pitch value for note C (#36) is mapped to a neutral note C value for UltraStar (#0)
+
+Changelog: 1.55 to 1.6
+	Added a quick parameter to skip processing for tracks besides PART VOCALS
+	Added capability to export to UltraStar format (with or without pitch)
+	Added a bpm parameter to allow the estimated tempo to be overridden used when exporting to UltraStar
+	Cleaned up the code a little
+
+Changelog: 1.54 to 1.55
+	Added handling for emtpy Meta Event strings (ie. "Papa Roach- Time Is Running Out")
+	Added a definable filter feature to allow removal of pitch characters like #, ^, % and =
+	Cleaned up the code a little
+	Documented the verbose parameter, and increased its use throughout the program.
+
+Changelog: 1.53 to 1.54
+	Cleaned up code to eliminate compiler warnings
+	Corrected a buffer overflow that didn't crash, but could cause unexpected behavior
+	Added value checking to prevent some implementations of atol() from crashing, such as the GCC implementation
+	Added code to release all allocated memory upon completion.  0 memory leaks as validated by MemWatch.
+
+Changelog: 1.52 to 1.53
+	Added logic to handle incorrectly started lines of lyrics, such as in "Maps"
+	Added logic to handle incorrectly started pieces of lyrics, such as in "In Bloom"
+	Added support for interpreting text events as lyrics as long as the events don't begin with an open bracket
+
+Changelog: 1.51 to 1.52
+	Corrected a bug that could cause track 0 to not be exported to MIDI
+
+Changelog: 1.5 to 1.51
+	Compiled the program in Visual C++ 2008 to produce a Win32 executable program for added performance
+	Cleaned up code to prevent data type conversion warnings during compile
+	Fixed an incorrect pointer dereference that could potentially cause the program to be terminated by the OS
+
+Changelog: 1.4 to 1.5
+	Added support for importing script.txt files
+	Added logic to treat Note On events with a velocity of 0 as Note Off events
+	Added logic to ignore incorrectly nested Note events in PART VOCALS, such as in "Welcome Home"
+	Added logic to handle incorrectly terminated lines of lyrics, such as in "Welcome Home"
+	Added logic to handle incorrectly defined Note events that precede Lyric events, such as in "Welcome Home"
+	Song tag information such as Artist, Song Title, Offset, etc. is now embedded in exported MIDI files
+
+Changelog: 1.3 to 1.4
+	Added support for exporting to MIDI
+	Added offset, nohyphens, noplus and grouping command line parameters
+	Fixed logic error regarding the handling of + lyric events
+	Fixed various bugs
+	Rebuilt the command line parameter parsing to be flexible and specific regarding incorrect syntax
+	Added more specific command line parameter errors and more verbose syntax output
+	Added additional validation of lyric timestamps to prevent overlapping and enforce ascending chronological order
+	Added checking so that if no lyrics are found in the input file, the program indicates as such and does not open any files for writing

@@ -663,13 +663,15 @@ struct _VLSTRUCT_ *VL_PreWrite(void)
 	struct VL_Sync_entry *newsync=NULL;	//Used to build new sync entries to insert into list
 	struct VL_Text_entry *newtext=NULL;	//Used to build new text entries to insert into list
 	unsigned long lastendtime=0;		//The end time for the last lyric piece.  The next lyric's timestamp must be at least 1 more than this
+	static const struct _VLSTRUCT_ empty_VLSTRUCT_;	//Auto-initialize all members to 0/NULL
 
 	if(Lyrics.verbose)	puts("Building VL structure");
 
 //Allocate the Export_VL structure
-	OutVL=calloc_err(1,sizeof(struct _VLSTRUCT_));	//Allocate and init to 0
-	cursync=NULL;
-	curtext=NULL;
+	OutVL=malloc_err(sizeof(struct _VLSTRUCT_));
+	*OutVL=empty_VLSTRUCT_;	//Reliably initialize all values to 0/NULL
+//	cursync=NULL;
+//	curtext=NULL;
 
 //Initialize the Export_VL structure
 	OutVL->numlines=Lyrics.linecount;
