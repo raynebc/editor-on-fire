@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 				noarg2=noarg3;
 		}
 
-//Handle -in parameter, which must be immediately followed by script, vl or midi and then by the input filename
+//Handle -in parameter, which is optionally followed by the input format and then mandatorily followed by the input filename
 //	For vocal rhythm import, the syntax is -in vrhythm srcrhythm input_lyrics
 		if(strcasecmp(argv[ctr],"-in") == 0)
 		{
@@ -159,8 +159,8 @@ int main(int argc, char *argv[])
 			}
 		}
 
-//Handle -out parameter, which must be immediately followed by script,vl or midi, followed by the source midi (if midi is
-//the ouput file type and the input type is not MIDI), followed by the output file name
+//Handle -out parameter, which must be immediately followed by the output format, followed by the optional source midi (if midi is
+//the ouput file type and the input type is not MIDI), followed by the mandatory output file name
 		else if(strcasecmp(argv[ctr],"-out") == 0)
 		{
 			if(noarg2 != 0)		//If there are not at least two more parameters, or the second one begins with hyphen
@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
 				correct_extension=DuplicateString(".vl");	//.vl is the correct extension for this file format
 			}
 			else if(strcasecmp(argv[ctr+1],"midi") == 0)	//-out midi [sourcemidi] outputfile
-			{	//if output format is midi, the next parameter must be a source midi file, then output file
+			{	//if output format is midi, the next parameter may be a source midi file, then the output file
 				//Ensure that the parameter after "midi" is read as a filename (not beginning with hyphen)
 				//Check if there is are one or two filenames given with the -out midi parameter
 				if(noarg3 == 0)	//If there is a third parameter to -out that doesn't begin with a hyphen
