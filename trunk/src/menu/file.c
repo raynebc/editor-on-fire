@@ -1591,7 +1591,7 @@ char * eof_drum_list(int index, int * size)
 	sprintf(eof_ctext[1], "Red Drum (%s)", redefine_index == 1 ? "Press new key" : eof_drums.button[1].name);
 	sprintf(eof_ctext[2], "Yellow Drum (%s)", redefine_index == 2 ? "Press new key" : eof_drums.button[2].name);
 	sprintf(eof_ctext[3], "Blue Drum (%s)", redefine_index == 3 ? "Press new key" : eof_drums.button[3].name);
-	sprintf(eof_ctext[4], "Green Drum (%s)", redefine_index == 4 ? "Press new key" : eof_drums.button[4].name);
+	sprintf(eof_ctext[4], "Purple Drum (%s)", redefine_index == 4 ? "Press new key" : eof_drums.button[4].name);
 	switch(index)
 	{
 		case -1:
