@@ -1,0 +1,17 @@
+CC = gcc
+CFLAGS = -O2 -fomit-frame-pointer -ffast-math -arch i386 -arch ppc -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -funroll-loops -DEOF_BUILD
+LIBS = -L/opt/local/lib
+
+include makefile.common
+
+EXENAME = FoFLyricConvert
+
+all : $(EXENAME)
+
+$(EXENAME) : $(OFILES)
+	gcc $(OFILES) $(CFLAGS) $(LIBS) -o $(EXENAME)
+
+clean:
+	@rm *.o
+	@rm $(EXENAME)
+	@echo Cleanup complete!
