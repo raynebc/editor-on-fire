@@ -425,13 +425,13 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 
 							if(vars.buffer != NULL)	//If there was a string read from MIDI
 							{	//Count the number of text/lyric events that don't begin with an open bracket ([)
-								if(Lyrics.verbose)	printf("Meta Event: Text Event=\"%s\"\tLength=%d\n",vars.buffer,strlen(vars.buffer));
+								if(Lyrics.verbose)	printf("Meta Event: Text Event=\"%s\"\tLength=%lu\n",vars.buffer,(unsigned long)strlen(vars.buffer));
 							}
 						break;
 
 						case 0x2:	//Copyright notice
 							vars.buffer=ReadMetaEventString(inf,vars.length);
-							if(Lyrics.verbose && vars.buffer)	printf("Meta Event: Copyright Notice=\"%s\"\tLength=%d\n",vars.buffer,strlen(vars.buffer));
+							if(Lyrics.verbose && vars.buffer)	printf("Meta Event: Copyright Notice=\"%s\"\tLength=%lu\n",vars.buffer,(unsigned long)strlen(vars.buffer));
 						break;
 
 						case 0x3:	//Sequence/Track name
@@ -442,7 +442,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 									free(tchunk->trackname);	//release it before overwriting
 
 								tchunk->trackname=vars.trackname;	//Store this string in the track header struct
-								if(Lyrics.verbose)	printf("Meta Event: Track Name=\"%s\"\tLength=%d\n",vars.trackname,strlen(vars.trackname));
+								if(Lyrics.verbose)	printf("Meta Event: Track Name=\"%s\"\tLength=%lu\n",vars.trackname,(unsigned long)strlen(vars.trackname));
 
 							//Special processing for quick processing
 								if((vars.tracknum!=0) && (event_handler == NULL) && Lyrics.quick)	//If we're only processing for tempo changes and track names (track 0 must be processed completely)
@@ -461,7 +461,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 
 						case 0x4:	//Instrument Name
 							vars.buffer=ReadMetaEventString(inf,vars.length);
-							if((Lyrics.verbose>=2) && vars.buffer)	printf("Meta Event: Instrument Name=\"%s\"\tLength=%d\n",vars.buffer,strlen(vars.buffer));
+							if((Lyrics.verbose>=2) && vars.buffer)	printf("Meta Event: Instrument Name=\"%s\"\tLength=%lu\n",vars.buffer,(unsigned long)strlen(vars.buffer));
 						break;
 
 						case 0x5:	//Lyrics
@@ -469,18 +469,18 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 
 							if(vars.buffer != NULL)	//If there was a string read from MIDI
 							{	//Count the number of text/lyric events that don't begin with an open bracket ([)
-								if(Lyrics.verbose)	printf("Meta Event: Lyric=\"%s\"\tLength=%d\n",vars.buffer,strlen(vars.buffer));
+								if(Lyrics.verbose)	printf("Meta Event: Lyric=\"%s\"\tLength=%lu\n",vars.buffer,(unsigned long)strlen(vars.buffer));
 							}
 						break;
 
 						case 0x6:	//Marker
 							vars.buffer=ReadMetaEventString(inf,vars.length);
-							if((Lyrics.verbose>=2) && vars.buffer)	printf("Meta Event: Marker=\"%s\"\tLength=%d\n",vars.buffer,strlen(vars.buffer));
+							if((Lyrics.verbose>=2) && vars.buffer)	printf("Meta Event: Marker=\"%s\"\tLength=%lu\n",vars.buffer,(unsigned long)strlen(vars.buffer));
 						break;
 
 						case 0x7:	//Cue Point
 							vars.buffer=ReadMetaEventString(inf,vars.length);
-							if((Lyrics.verbose>=2)&& vars.buffer)	printf("Meta Event: Cue Point=\"%s\"\tLength=%d\n",vars.buffer,strlen(vars.buffer));
+							if((Lyrics.verbose>=2)&& vars.buffer)	printf("Meta Event: Cue Point=\"%s\"\tLength=%lu\n",vars.buffer,(unsigned long)strlen(vars.buffer));
 						break;
 
 						case 0x20:	//MIDI channel prefix
