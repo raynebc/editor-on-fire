@@ -7,6 +7,7 @@ Changelog: 2.32 to 2.33
 	Added additional logic so that the use of nosrctag as a wildcard will omit the ID3v1 tag contents from the source MP3
 	Restored the ability to use the track "PART VOCALS" for vocal rhythm, since the detection logic now bases detection on more than the track name
 	Lessened the use of calloc() to initialize allocated memory, as this could possibly cause a malfunction with some (currently unidentified) compilers or platforms that don't use all bits clear to represent 0 for some data types
+	Made adjustments and a makefile for building in Windows, Mac and Linux
 
 Changelog: 2.31 to 2.32
 	Updated to GCC 4.5.0 and made minor changes to resolve compiler warnings
