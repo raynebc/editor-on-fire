@@ -1,0 +1,16 @@
+CC = gcc
+CFLAGS = -Wall -O2 -fomit-frame-pointer -ffast-math -funroll-loops
+
+include makefile.common
+
+EXENAME = FoFLyricConvert
+
+all : $(EXENAME)
+
+$(EXENAME) : $(OFILES)
+	gcc $(OFILES) $(CFLAGS) $(LIBS) -o $(EXENAME)
+
+clean:
+	@del *.o
+	@del $(EXENAME)
+	@echo Cleanup complete!
