@@ -478,6 +478,15 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		/* clear MIDI events list */
 		eof_clear_midi_events();
 
+		/* ensure that all lyrics that have no defined pitch are altered as proper freestyle lyrics */
+		for(i = 0; i < sp->vocal_track->lyrics; i++)
+		{
+			if(sp->vocal_track->lyric[i]->note == 0)	//If the lyric has no defined pitch
+			{
+				sp->vocal_track->lyric[i]->note = 50;	//Assign a safe, generic pitch value
+				eof_set_freestyle(sp->vocal_track->lyric[i]->text,1);	//Ensure the lyric properly ends with a freestyle character
+			}
+		}
 		/* write the MTrk MIDI data to a temp file
 		use size of the file as the MTrk header length */
 		for(i = 0; i < sp->vocal_track->lyrics; i++)
