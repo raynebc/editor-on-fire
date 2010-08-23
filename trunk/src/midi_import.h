@@ -12,10 +12,11 @@
 
 typedef struct
 {
-	unsigned long pos;	//Absolute delta time of this TS change
-	double realtime;	//Realtime of this TS change
-	unsigned int num;	//The numerator of the TS change (number of beats per measure)
-	unsigned int den;	//The denominator of the TS change (note value representing one beat)
+	unsigned long pos;		//Absolute delta time of this TS change
+	double realtime;		//Realtime of this TS change
+	unsigned int num;		//The numerator of the TS change (number of beats per measure)
+	unsigned int den;		//The denominator of the TS change (note value representing one beat)
+	unsigned long track;	//The track number containing this change
 } EOF_IMPORT_MIDI_TS_CHANGE;
 
 typedef struct
@@ -25,7 +26,6 @@ typedef struct
 } EOF_IMPORT_MIDI_TS_LIST;
 
 EOF_SONG * eof_import_midi(const char * fn);
-EOF_SONG * eof_import_midi2(const char * fn);
 double eof_ConvertToRealTime(unsigned long absolutedelta,struct Tempo_change *anchorlist,EOF_IMPORT_MIDI_TS_LIST *tslist,unsigned long timedivision,unsigned long offset);
 	//Converts and returns the converted realtime of the specified delta time based on the anchors, time signatures and the MIDI's time division
 	//The specified offset should represent a chart delay, and is added to the returned realtime
