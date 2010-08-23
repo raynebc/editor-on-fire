@@ -84,7 +84,7 @@ typedef struct
 typedef struct
 {
 
-	char          note;
+	char          note;		// if zero, the lyric has no defined pitch
 	char          text[EOF_MAX_LYRIC_LENGTH+1];
 	unsigned long midi_pos;
 	long          midi_length;
@@ -246,7 +246,7 @@ typedef struct
 	 * when importing we should store the value from the source file here to
 	 * simplify import and to minimize changes made to the file upon export */
 	int resolution;
-	
+
 	/* track data */
 	EOF_TRACK       * track[EOF_MAX_TRACKS];
 	EOF_VOCAL_TRACK * vocal_track;
