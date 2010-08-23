@@ -56,6 +56,8 @@ typedef struct
 
 	char          type;
 	char          note;
+	unsigned long midi_pos;
+	long          midi_length;
 	unsigned long pos;
 	long          length;
 	char          flags;
@@ -71,6 +73,8 @@ typedef struct
 	short         beat;       // which beat this note was copied from
 	unsigned long pos;
 	long          length;
+	unsigned long midi_pos;
+	long          midi_length;
 	float         porpos;     // position of note within the beat (100.0 = full beat)
 	float         porendpos;
 	char          active;
@@ -82,6 +86,8 @@ typedef struct
 
 	char          note;
 	char          text[EOF_MAX_LYRIC_LENGTH+1];
+	unsigned long midi_pos;
+	long          midi_length;
 	unsigned long pos;
 	long          length;
 
@@ -92,6 +98,8 @@ typedef struct
 
 	char          note;
 	char          text[EOF_MAX_LYRIC_LENGTH+1];
+	unsigned long midi_pos;
+	long          midi_length;
 	unsigned long pos;
 	long          length;
 
@@ -105,6 +113,8 @@ typedef struct
 typedef struct
 {
 
+	int midi_start_pos;
+	int midi_end_pos;
 	int start_pos;
 	int end_pos;
 	int flags;
@@ -114,6 +124,8 @@ typedef struct
 typedef struct
 {
 
+	int midi_start_pos;
+	int midi_end_pos;
 	int start_pos;
 	int end_pos;
 
@@ -122,6 +134,8 @@ typedef struct
 typedef struct
 {
 
+	int midi_start_pos;
+	int midi_end_pos;
 	int start_pos;
 	int end_pos;
 
@@ -159,6 +173,7 @@ typedef struct
 {
 
 	unsigned long ppqn;
+	unsigned long midi_pos;
 	unsigned long pos;
 	unsigned long flags;
 
@@ -227,6 +242,11 @@ typedef struct
 	/* song info */
 	EOF_SONG_TAGS * tags;
 
+	/* MIDI "resolution" used to determine how MIDI is exported,
+	 * when importing we should store the value from the source file here to
+	 * simplify import and to minimize changes made to the file upon export */
+	int resolution;
+	
 	/* track data */
 	EOF_TRACK       * track[EOF_MAX_TRACKS];
 	EOF_VOCAL_TRACK * vocal_track;
