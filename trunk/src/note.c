@@ -383,7 +383,7 @@ void eof_lyric_draw(EOF_LYRIC * np, int p)
 
 //Rewritten logic to remove duplicated code and render pitchless lyrics at the bottom of the piano roll in gray
 	vline(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 + eof_screen_layout.note_marker_size, makecol(128, 128, 128));
-	if(np->note != 0)
+	if((np->note != 0) && !eof_is_freestyle(np->text))
 	{
 		ncol = native ? eof_color_red : eof_color_green;
 		rectfill(eof_window_editor->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, ncol);
@@ -392,7 +392,7 @@ void eof_lyric_draw(EOF_LYRIC * np, int p)
 			rect(eof_window_editor->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, pcol);
 		}
 	}
-	else	//If the lyric is pitchless, render with gray
+	else	//If the lyric is pitchless or freestyle, render with gray
 		rectfill(eof_window_editor->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, makecol(128, 128, 128));
 
 	if(p == 3)
@@ -503,7 +503,7 @@ int eof_lyric_draw_truncate(int notenum, int p)
 
 //Rewritten logic to remove duplicated code and render pitchless lyrics at the bottom of the piano roll in gray
 	vline(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 + eof_screen_layout.note_marker_size, makecol(128, 128, 128));
-	if(np->note != 0)
+	if((np->note != 0) && !eof_is_freestyle(np->text))
 	{
 		ncol = native ? eof_color_red : eof_color_green;
 		rectfill(eof_window_editor->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, ncol);
@@ -512,7 +512,7 @@ int eof_lyric_draw_truncate(int notenum, int p)
 			rect(eof_window_editor->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, pcol);
 		}
 	}
-	else	//If the lyric is pitchless, render with gray
+	else	//If the lyric is pitchless or freestyle, render with gray
 		rectfill(eof_window_editor->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, makecol(128, 128, 128));
 
 
