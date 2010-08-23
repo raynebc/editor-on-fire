@@ -688,12 +688,31 @@ EOF_SONG * eof_import_midi(const char * fn)
 		}
 	}
 
+int trackswithchanges=0;
+
+	/* If the only track with TS changes is track 0, copy the changes to all other tracks */
+	for(i = 0; i < tracks; i++)
+	{
+		if(eof_import_ts_changes[i]->changes)	//If this MIDI track had one or more TS changes
+			trackswithchanges++;		//Increment counter
+	}
+
+	if((trackswithchanges == 1) && eof_import_ts_changes[0]->changes)
+	{	//If only one track had TS changes, and it was track 0
+		for(i = 1; i < tracks; i++)
+		{	//For each track after track 0
+			for(j = 0; j < eof_import_ts_changes[0]->changes; j++)
+			{	//Duplicate each TS change from track 0
+				eof_midi_import_add_ts(eof_import_ts_changes[i],eof_import_ts_changes[0]->change[j]->pos,eof_import_ts_changes[0]->change[j]->num,eof_import_ts_changes[0]->change[j]->den,i);
+			}
+		}
+	}
 
 struct Tempo_change *anchorlist=NULL;	//Anchor linked list
-struct Tempo_change *cond=NULL;		//Conductor for the anchor list
-double BPM=0.0;				//Used to calculate realtime of anchors
-unsigned long reldelta=0;		//Used to calculate realtime of anchors
-double realtime=0.0;			//Used to calculate realtime of anchors
+struct Tempo_change *cond=NULL;			//Conductor for the anchor list
+double BPM=0.0;							//Used to calculate realtime of anchors
+unsigned long reldelta=0;				//Used to calculate realtime of anchors
+double realtime=0.0;					//Used to calculate realtime of anchors
 
 	/* second pass, create tempo map */
 	ppqn = eof_import_bpm_events->events > 0 ? eof_import_bpm_events->event[0]->d1 : 500000; // default of 120 BPM
