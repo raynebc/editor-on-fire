@@ -4,7 +4,7 @@ LIBS = -L/opt/local/lib
 
 include makefile.common
 
-EXENAME = FoFLyricConvert
+EXENAME = foflc
 
 all : $(EXENAME)
 

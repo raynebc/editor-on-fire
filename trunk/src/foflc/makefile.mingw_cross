@@ -3,7 +3,7 @@ CFLAGS = -Wall -O2 -fomit-frame-pointer -ffast-math -funroll-loops
 
 include makefile.common
 
-EXENAME = FoFLyricConvert.exe
+EXENAME = foflc.exe
 
 all : $(EXENAME)
 
