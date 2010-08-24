@@ -2040,11 +2040,13 @@ void eof_render_lyric_preview(BITMAP * bp)
 	char lline[2][MAX_LYRIC_PREVIEW_LENGTH+1] = {{0}};
 	int i,x;
 	int offset = -1;
+	int space;	//Track the spacing for lyric preview, taking pitch shift and grouping logic into account
 
 //Build both lyric preview lines
 	for(x = 0; x < 2; x++)
 	{	//For each of the two lyric preview lines to build
-		currentlength=0;	//Reset preview line length counter
+		space = 0;			//The first lyric will have no space inserted in front of it
+		currentlength = 0;	//Reset preview line length counter
 
 		linenum=FindLyricLine(eof_preview_line_lyric[x]);	//Find the line structure representing this lyric preview
 		if(linenum && (linenum->flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE))	//If this line is overdrive
@@ -2056,7 +2058,7 @@ void eof_render_lyric_preview(BITMAP * bp)
 		}
 
 		for(i = eof_preview_line_lyric[x]; i < eof_preview_line_end_lyric[x]; i++)
-		{
+		{	//For each lyric in the preview line
 			if(!x && !eof_music_paused)	//Only perform this logic for the first lyric preview line
 			{
 				if(i == eof_hover_lyric)
@@ -2064,8 +2066,34 @@ void eof_render_lyric_preview(BITMAP * bp)
 					offset = text_length(font, lline[x]);
 				}
 			}
-		//Perform bounds checking before appending string
+
 			lyriclength=strlen(eof_song->vocal_track->lyric[i]->text);	//This value will be used multiple times
+
+		//Perform grouping logic
+			if((eof_song->vocal_track->lyric[i]->text[0] != '+'))
+			{	//If the lyric is not a pitch shift
+				if(space)
+				{	//If space is nonzero, append a space if possible
+					if(currentlength+1 <= MAX_LYRIC_PREVIEW_LENGTH)
+					{	//If appending a space would NOT cause an overflow
+						strcat(lline[x], " ");
+						currentlength++;	//Track the length of this preview line
+					}
+					else
+						break;				//Stop building this line's preview
+				}
+
+				if(eof_song->vocal_track->lyric[i]->text[lyriclength-1] == '-')
+				{	//If the lyric ends in a hyphen
+					space = 0;	//The next syllable will group with this one
+				}
+				else
+				{
+					space = 1;	//The next syllable will not group with this one, and will be separated by space
+				}
+			}
+
+		//Perform bounds checking before appending string
 			if(currentlength+lyriclength > MAX_LYRIC_PREVIEW_LENGTH)	//If appending this lyric would cause an overflow
 				break;													//Stop building this line's preview
 
@@ -2076,21 +2104,6 @@ void eof_render_lyric_preview(BITMAP * bp)
 		//Truncate a '/' character off the end of the lyric line if it exists (TB:RB notation for a forced line break)
 			if(lline[x][strlen(lline[x])-1] == '/')
 				lline[x][strlen(lline[x])-1]='\0';
-
-		//Append spacing after lyric if applicable
-			if((i+1 < eof_preview_line_end_lyric[x]) && (eof_song->vocal_track->lyric[i+1]->text[0] != '+'))
-			{	//If there's another lyric for this preview line, and it's not defined as a pitch shift
-				if((lline[x][currentlength-1] != '-') && (lline[x][currentlength-1] != '='))
-				{	//If this lyric doesn't define the next lyric to be a part of the same word, and there's another lyric for this preview line
-					if(currentlength+1 <= MAX_LYRIC_PREVIEW_LENGTH)
-					{	//If appending a space would NOT cause an overflow
-						strcat(lline[x], " ");
-						currentlength++;	//Track the length of this preview line
-					}
-					else
-						break;				//Stop building this line's preview
-				}
-			}
 		}
 	}
 
