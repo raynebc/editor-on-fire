@@ -2059,14 +2059,6 @@ void eof_render_lyric_preview(BITMAP * bp)
 
 		for(i = eof_preview_line_lyric[x]; i < eof_preview_line_end_lyric[x]; i++)
 		{	//For each lyric in the preview line
-			if(!x && !eof_music_paused)	//Only perform this logic for the first lyric preview line
-			{
-				if(i == eof_hover_lyric)
-				{
-					offset = text_length(font, lline[x]);
-				}
-			}
-
 			lyriclength=strlen(eof_song->vocal_track->lyric[i]->text);	//This value will be used multiple times
 
 		//Perform grouping logic
@@ -2090,6 +2082,14 @@ void eof_render_lyric_preview(BITMAP * bp)
 				else
 				{
 					space = 1;	//The next syllable will not group with this one, and will be separated by space
+				}
+			}
+
+			if(!x && !eof_music_paused)	//Only perform this logic for the first lyric preview line
+			{
+				if(i == eof_hover_lyric)
+				{
+					offset = text_length(font, lline[x]);
 				}
 			}
 
