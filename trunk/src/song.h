@@ -51,6 +51,8 @@
 
 #define EOF_MAX_TEXT_EVENTS 4096
 
+#define EOF_DEFAULT_TIME_DIVISION 480 // default time division used to convert midi_pos to msec_pos
+
 typedef struct
 {
 
@@ -357,5 +359,8 @@ void eof_set_freestyle(char *ptr, char status);
 
 void eof_toggle_freestyle(EOF_VOCAL_TRACK * tp, unsigned long lyricnumber);
 	//Makes a lyric freestyle if it isn't already and vice versa
+
+int eof_song_tick_to_msec(EOF_SONG * sp, int track, unsigned long tick); // convert tick value to real time
+int eof_song_msec_to_tick(EOF_SONG * sp, int track, unsigned long msec); // convert real time value to tick
 
 #endif
