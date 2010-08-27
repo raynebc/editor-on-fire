@@ -1330,3 +1330,53 @@ void eof_toggle_freestyle(EOF_VOCAL_TRACK * tp, unsigned long lyricnumber)
 	else													//Otherwise
 		eof_set_freestyle(tp->lyric[lyricnumber]->text,1);	//Rewrite as freestyle
 }
+
+/* function to convert a MIDI-style tick to msec time */
+int eof_song_tick_to_msec(EOF_SONG * sp, int track, unsigned long tick)
+{
+	int beat; // which beat 'tick' lies in
+	double curpos = sp->tags->ogg[eof_selected_ogg].midi_offset;
+	double portion;
+	int i;
+	
+	beat = tick / sp->resolution;
+	portion = (double)((tick % sp->resolution)) / (double)(sp->resolution);
+	
+	/* calculate position up to the beat 'tick' lies in */
+	for(i = 0; i < beat; i++)
+	{
+		curpos += (double)60000.0 / ((double)60000000.0 / (double)sp->beat[i]->ppqn);
+	}
+	
+	/* add the time from the beat marker to 'tick' */
+	curpos += ((double)60000.0 / ((double)60000000.0 / (double)sp->beat[beat]->ppqn)) * portion;
+	
+	return curpos + 0.5;
+}
+
+/* function to convert msec time to a MIDI-style tick */
+int eof_song_msec_to_tick(EOF_SONG * sp, int track, unsigned long msec)
+{
+	int beat; // which beat 'msec' lies in
+	int beat_tick;
+	int portion;
+	double beat_start, beat_end, beat_length;
+	
+	/* figure out which beat we are in */
+	beat = eof_get_beat(sp, msec);
+	if(beat < 0)
+	{
+		return -1;
+	}
+	
+	/* get the tick for the beat we are in */
+	beat_tick = beat * sp->resolution;
+	
+	/* find which tick of the beat is closest to 'msec' */
+	beat_start = sp->beat[beat]->fpos;
+	beat_end = beat_start + (double)60000.0 / ((double)60000000.0 / (double)sp->beat[beat]->ppqn);
+	beat_length = beat_end - beat_start;
+	portion = (((double)msec - beat_start) / beat_length) * ((double)sp->resolution) + 0.5;
+	
+	return beat_tick + portion;
+}
