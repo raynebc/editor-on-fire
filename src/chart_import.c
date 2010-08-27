@@ -4,6 +4,7 @@
 #include "chart_import.h"
 #include "feedback.h"
 #include "menu/beat.h"
+#include "menu/file.h"
 
 /* convert Feedback chart time to milliseconds for use with EOF */
 static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chartpos)
@@ -63,6 +64,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	char oldoggpath[1024] = {0};
 	char errorcode[100] = "Import failed.  Error #";
 	struct al_ffblk info; // for file search
+	int ret=0;
 
 	chart = ImportFeedback((char *)fn, &err);
 	if(chart == NULL)
@@ -74,9 +76,16 @@ EOF_SONG * eof_import_chart(const char * fn)
 	else
 	{
 		/* load audio */
-		replace_filename(oggfn, fn, "guitar.ogg", 1024);
+		if(chart->audiofile != NULL)
+		{	//If the imported chart defines which audio file to use
+			replace_filename(oggfn, fn, chart->audiofile, 1024);
+			if(!exists(oggfn))	//If the file doesn't exist in the chart's parent directory
+				replace_filename(oggfn, fn, "guitar.ogg", 1024);	//Look for guitar.ogg instead
+		}
+		else
+			replace_filename(oggfn, fn, "guitar.ogg", 1024);	//Look for guitar.ogg by default
 
-		/* if "guitar.ogg" doesn't exist, look for any OGG file in the chart directory */
+		/* if the audio file doesn't exist, look for any OGG file in the chart directory */
 		if(!exists(oggfn))
 		{
 
@@ -95,6 +104,13 @@ EOF_SONG * eof_import_chart(const char * fn)
 			}
 			al_findclose(&info);
 		}
+
+		replace_filename(searchpath, oggfn, "", 1024);		//Store the path of the file's parent folder
+		ret = eof_mp3_to_ogg(oggfn,searchpath);				//Create guitar.ogg in the folder
+		if(ret != 0)										//If guitar.ogg was not created successfully
+			return NULL;
+		replace_filename(oggfn, oggfn, "guitar.ogg", 1024);	//guitar.ogg is the expected file
+
 		if(!eof_load_ogg(oggfn))
 		{
 			DestroyFeedbackChart(chart, 1);
