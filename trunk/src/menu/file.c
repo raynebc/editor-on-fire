@@ -198,7 +198,7 @@ void eof_prepare_file_menu(void)
 	}
 }
 
-int eof_menu_file_new_supplement(int option)
+int eof_menu_file_new_supplement(void)
 {
 	char syscommand[1024] = {0};
 	int err;
@@ -223,8 +223,8 @@ int eof_menu_file_new_supplement(int option)
 	else
 	{
 		eof_render();
-		if(!option)
-		{
+//		if(!option)
+//		{
 			err = 0;
 			put_backslash(eof_etext3);
 			replace_filename(eof_temp_filename, eof_etext3, "notes.eof", 1024);
@@ -254,7 +254,7 @@ int eof_menu_file_new_supplement(int option)
 					return 0;
 				}
 			}
-		}
+/*		}
 		else
 		{
 			err = 0;
@@ -282,18 +282,19 @@ int eof_menu_file_new_supplement(int option)
 				}
 			}
 		}
+*/
 	}
 	return 1;
 }
 
 int eof_menu_file_new_wizard(void)
 {
-	char syscommand[1024] = {0};
+//	char syscommand[1024] = {0};
 	char oggfilename[1024] = {0};
 	char year[256] = {0};
 	char * returnedfn = NULL;
 	char * returnedfolder = NULL;
-	int newtype = 0;
+//	int newtype = 0;
 	int ret = 0;
 	ALOGG_OGG * temp_ogg = NULL;
 	char * temp_buffer = NULL;
@@ -435,19 +436,19 @@ int eof_menu_file_new_wizard(void)
 				return 1;
 			}
 			ustrcpy(eof_etext3, returnedfolder);
-			newtype = 0;
+//			newtype = 0;
 		}
 		else if(eof_file_new_windows_dialog[2].flags & D_SELECTED)
 		{
 			eof_render();
 			replace_filename(eof_etext3, returnedfn, "", 1024);
-			newtype = 1;
+//			newtype = 1;
 		}
 		else
 		{
 			ustrcpy(eof_etext3, eof_songs_path);
 			ustrcat(eof_etext3, eof_etext4);
-			newtype = 0;
+//			newtype = 0;
 		}
 	}
 	else
@@ -459,7 +460,7 @@ int eof_menu_file_new_wizard(void)
 	}
 
 	/* if music file is MP3, convert it */
-	if(!ustricmp(get_extension(oggfilename), "mp3"))
+/*	if(!ustricmp(get_extension(oggfilename), "mp3"))
 	{
 		if(eof_ogg_settings())
 		{
@@ -493,7 +494,7 @@ int eof_menu_file_new_wizard(void)
 		}
 	}
 
-	/* otherwise copy it */
+	// otherwise copy it //
 	else
 	{
 		if(!eof_menu_file_new_supplement(newtype))
@@ -512,6 +513,10 @@ int eof_menu_file_new_wizard(void)
 			eof_copy_file(oggfilename, syscommand);
 		}
 	}
+*/
+	ret = eof_mp3_to_ogg(oggfilename,eof_etext3);
+	if(ret != 0)	//If guitar.ogg was not created successfully
+		return ret;
 
 	/* destroy old song */
 	if(eof_song)
@@ -1969,4 +1974,75 @@ void EnumeratedBChartInfo(struct FeedbackChart *chart)
 	}
 
 	allegro_message("%s",chartinfo);
+}
+
+int eof_mp3_to_ogg(char *file,char *directory)
+{
+	char syscommand[1024] = {0};
+
+	if((file == NULL) || (directory == NULL))
+		return 3;	//Return invalid filename
+
+	if(!ustricmp(get_filename(file),"guitar.ogg"))
+	{	//If the input file's name is guitar.ogg
+		replace_filename(syscommand, file, "", 1024);	//Obtain the parent directory of the input file
+		if(!ustricmp(syscommand,directory))				//Special case:  The input and output file are the same
+			return 0;									//Return success without altering the existing guitar.ogg
+	}
+
+	if(!ustricmp(get_extension(file), "mp3"))
+	{
+		if(eof_ogg_settings())
+		{
+			if(!eof_menu_file_new_supplement())
+			{
+				eof_cursor_visible = 1;
+				eof_pen_visible = 1;
+				eof_show_mouse(NULL);
+				return 1;	//Return user declined to overwrite existing files
+			}
+			put_backslash(directory);
+			#ifdef ALLEGRO_WINDOWS
+				eof_copy_file(file, "eoftemp.mp3");
+				usprintf(syscommand, "mp3toogg \"eoftemp.mp3\" %s \"%sguitar.ogg\" \"%s\"", eof_ogg_quality[(int)eof_ogg_setting], directory, file);
+			#elif defined(ALLEGRO_MACOSX)
+				usprintf(syscommand, "./lame --decode \"%s\" - | ./oggenc --quiet -q %s --resample 44100 -s 0 - -o \"%sguitar.ogg\"", file, eof_ogg_quality[(int)eof_ogg_setting], directory);
+			#else
+				usprintf(syscommand, "lame --decode \"%s\" - | oggenc --quiet -q %s --resample 44100 -s 0 - -o \"%sguitar.ogg\"", file, eof_ogg_quality[(int)eof_ogg_setting], directory);
+			#endif
+			eof_system(syscommand);
+			#ifdef ALLEGRO_WINDOWS
+				delete_file("eoftemp.mp3");
+			#endif
+		}
+		else
+		{
+			eof_cursor_visible = 1;
+			eof_pen_visible = 1;
+			eof_show_mouse(NULL);
+			return 2;	//Return user canceled conversion
+		}
+	}
+
+	/* otherwise copy it */
+	else
+	{
+		if(!eof_menu_file_new_supplement())
+		{
+			eof_cursor_visible = 1;
+			eof_pen_visible = 1;
+			eof_changes = 0;
+			eof_show_mouse(NULL);
+			return 1;
+		}
+		ustrcpy(syscommand, directory);
+		put_backslash(syscommand);
+		ustrcat(syscommand, "guitar.ogg");
+		if(ustricmp(file, syscommand))
+		{
+			eof_copy_file(file, syscommand);
+		}
+	}
+
+	return 0;	//Return success
 }
