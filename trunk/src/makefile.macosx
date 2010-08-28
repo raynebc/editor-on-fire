@@ -12,12 +12,12 @@ all : ../bin/$(EXENAME)
 	gcc $(MENUOFILES) $(OFILES) $(AGUPOFILES) $(ALOGGOFILES) $(LCOFILES) $(CFLAGS) $(LIBS) -o ../bin/$(EXENAME)
 
 clean:
-	@rm *.o
-	@rm menu/*.o
-	@rm dialog/*.o
-	@rm modules/*.o
-	@rm agup/*.o
-	@rm alogg/src/*.o
-	@rm foflc/*.o
-	@rm ../bin/$(EXENAME)
+	@rm -f *.o
+	@rm -f menu/*.o
+	@rm -f dialog/*.o
+	@rm -f modules/*.o
+	@rm -f agup/*.o
+	@rm -f alogg/src/*.o
+	@rm -f foflc/*.o
+	@rm -f ../bin/$(EXENAME)
 	@echo Cleanup complete!
