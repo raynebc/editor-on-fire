@@ -176,13 +176,16 @@ EOF_SONG * eof_import_chart(const char * fn)
 
 		/* create beat markers */
 		EOF_BEAT_MARKER * new_beat = NULL;
-		for(i = 0; i < max_chartpos / chart->resolution; i++)
+		unsigned long maxbeat = max_chartpos / chart->resolution;	//Determine how many beats must be created to encompass all tempo changes/text events
+		if(max_chartpos % chart->resolution)
+			maxbeat++;
+		for(i = 0; i <= maxbeat; i++)
 		{
 			new_beat = eof_song_add_beat(sp);
 			if(new_beat)
 			{
 				new_beat->fpos = chartpos_to_msec(chart, chart->resolution * i);
-				new_beat->pos = new_beat->fpos;
+				new_beat->pos = new_beat->fpos + 0.5;
 				new_beat->flags |= EOF_BEAT_FLAG_ANCHOR;
 			}
 		}

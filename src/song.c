@@ -874,6 +874,8 @@ EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp)
 			sp->beat[sp->beats]->pos = 0;
 			sp->beat[sp->beats]->ppqn = 500000;
 			sp->beat[sp->beats]->flags = 0;
+			sp->beat[sp->beats]->midi_pos = 0;
+			sp->beat[sp->beats]->fpos = 0.0;
 			sp->beats++;
 			return sp->beat[sp->beats - 1];
 		}
@@ -1338,19 +1340,19 @@ int eof_song_tick_to_msec(EOF_SONG * sp, int track, unsigned long tick)
 	double curpos = sp->tags->ogg[eof_selected_ogg].midi_offset;
 	double portion;
 	int i;
-	
+
 	beat = tick / sp->resolution;
 	portion = (double)((tick % sp->resolution)) / (double)(sp->resolution);
-	
+
 	/* calculate position up to the beat 'tick' lies in */
 	for(i = 0; i < beat; i++)
 	{
 		curpos += (double)60000.0 / ((double)60000000.0 / (double)sp->beat[i]->ppqn);
 	}
-	
+
 	/* add the time from the beat marker to 'tick' */
 	curpos += ((double)60000.0 / ((double)60000000.0 / (double)sp->beat[beat]->ppqn)) * portion;
-	
+
 	return curpos + 0.5;
 }
 
@@ -1361,22 +1363,22 @@ int eof_song_msec_to_tick(EOF_SONG * sp, int track, unsigned long msec)
 	int beat_tick;
 	int portion;
 	double beat_start, beat_end, beat_length;
-	
+
 	/* figure out which beat we are in */
 	beat = eof_get_beat(sp, msec);
 	if(beat < 0)
 	{
 		return -1;
 	}
-	
+
 	/* get the tick for the beat we are in */
 	beat_tick = beat * sp->resolution;
-	
+
 	/* find which tick of the beat is closest to 'msec' */
 	beat_start = sp->beat[beat]->fpos;
 	beat_end = beat_start + (double)60000.0 / ((double)60000000.0 / (double)sp->beat[beat]->ppqn);
 	beat_length = beat_end - beat_start;
 	portion = (((double)msec - beat_start) / beat_length) * ((double)sp->resolution) + 0.5;
-	
+
 	return beat_tick + portion;
 }
