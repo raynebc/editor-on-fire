@@ -1306,7 +1306,7 @@ double realtime=0.0;					//Used to calculate realtime of anchors
 	{
 		if(eof_import_text_events->event[i]->type == 0x01)
 		{
-			tp = eof_ConvertToRealTimeInt(eof_import_text_events->event[i]->pos,anchorlist,eof_import_ts_changes[i],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
+			tp = eof_ConvertToRealTimeInt(eof_import_text_events->event[i]->pos,anchorlist,eof_import_ts_changes[eof_import_text_events->event[i]->track],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 			b = eof_import_closest_beat(sp, tp);
 			if(b >= 0)
 			{
