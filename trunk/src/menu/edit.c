@@ -1941,6 +1941,9 @@ int eof_menu_edit_midi_tones(void)
 
 int eof_menu_edit_bookmark_helper(int b)
 {
+	if(eof_music_pos <= eof_av_delay)
+		return 1;	//Do not place a bookmark at a negative or zero chart position
+
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(eof_song->bookmark_pos[b] != eof_music_pos - eof_av_delay)
 	{
