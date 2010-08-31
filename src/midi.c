@@ -11,6 +11,7 @@
 
 static EOF_MIDI_EVENT * eof_midi_event[EOF_MAX_MIDI_EVENTS];
 static int eof_midi_events = 0;
+static char eof_midi_note_status[128] = {0};	//Tracks the on/off status of notes 0 through 127, maintained by eof_add_midi_event()
 
 void eof_add_midi_event(unsigned long pos, int type, int note)
 {
@@ -21,6 +22,14 @@ void eof_add_midi_event(unsigned long pos, int type, int note)
 		eof_midi_event[eof_midi_events]->type = type;
 		eof_midi_event[eof_midi_events]->note = note;
 		eof_midi_events++;
+
+		if((note >= 0) && (note <= 127))
+		{	//If the note is in bounds of a legal MIDI note, track its on/off status
+			if(type == 0x80)	//Note Off
+				eof_midi_note_status[note] = 0;
+			else if(type == 0x90)	//Note On
+				eof_midi_note_status[note] = 1;
+		}
 	}
 }
 
@@ -289,6 +298,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	if(anchorlist == NULL)	//If the anchor list could not be created
 		return 0;	//Return failure
 
+	eof_sort_notes();	//Writing efficient on-the-fly HOPO phrasing relies on all notes being sorted
+
 	for(j = 0; j < EOF_MAX_TRACKS; j++)
 	{
 		/* fill in notes */
@@ -296,6 +307,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		{
 			/* clear MIDI events list */
 			eof_clear_midi_events();
+			memset(eof_midi_note_status,0,sizeof(eof_midi_note_status));	//Clear note status array
 
 			/* write the MTrk MIDI data to a temp file
 	   		use size of the file as the MTrk header length */
@@ -363,13 +375,19 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				/* write forced HOPO */
 				if(sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO)
 				{
-					eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 5);
+					if(eof_midi_note_status[midi_note_offset + 5] == 0)
+					{	//Only write a phrase marker if one isn't already in effect
+						eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 5);
+					}
 				}
 
 				/* write forced non-HOPO */
 				else if(sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_NO_HOPO)
 				{
-					eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 6);
+					if(eof_midi_note_status[midi_note_offset + 6] == 0)
+					{	//Only write a phrase marker if one isn't already in effect
+						eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 6);
+					}
 				}
 
 				/* write green note off */
@@ -403,15 +421,21 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				}
 
 				/* write forced HOPO note off */
-				if(sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO)
-				{
-					eof_add_midi_event(sp->track[j]->note[i]->pos + sp->track[j]->note[i]->length, 0x80, midi_note_offset + 5);
+				if((i + 1 >= sp->track[j]->notes) || !(sp->track[j]->note[i+1]->flags & EOF_NOTE_FLAG_F_HOPO))
+				{	//If this is the last note in the track or if the next note is not a forced HOPO on note
+					if(eof_midi_note_status[midi_note_offset + 5])
+					{	//Only end a phrase marker if one is already in effect
+						eof_add_midi_event(sp->track[j]->note[i]->pos + sp->track[j]->note[i]->length, 0x80, midi_note_offset + 5);
+					}
 				}
 
 				/* write forced non-HOPO note off */
-				else if(sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_NO_HOPO)
-				{
-					eof_add_midi_event(sp->track[j]->note[i]->pos + sp->track[j]->note[i]->length, 0x80, midi_note_offset + 6);
+				else if((i + 1 >= sp->track[j]->notes) || !(sp->track[j]->note[i+1]->flags & EOF_NOTE_FLAG_NO_HOPO))
+				{	//If this is the lst note in the track or if the next note is not a forced HOPO off note
+					if(eof_midi_note_status[midi_note_offset + 6])
+					{	//Only end a phrase marker if one is already in effect
+						eof_add_midi_event(sp->track[j]->note[i]->pos + sp->track[j]->note[i]->length, 0x80, midi_note_offset + 6);
+					}
 				}
 
 			}
@@ -468,6 +492,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			pack_putc(0x00, fp);
 
 			pack_fclose(fp);
+
+			for(i=0;i < 128;i++)
+			{	//Ensure that any notes that are still on are terminated
+				if(eof_midi_note_status[i] != 0)	//If this note was left on, write a note off at the end of the last charted note
+					eof_add_midi_event(sp->track[j]->note[sp->track[j]->notes-1]->pos + sp->track[j]->note[sp->track[j]->notes-1]->length,0x80,i);
+			}
 		}
 	}
 
