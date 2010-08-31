@@ -1220,7 +1220,7 @@ double realtime=0.0;					//Used to calculate realtime of anchors
 									{
 										sp->track[picked_track]->note[k]->flags |= EOF_NOTE_FLAG_NO_HOPO;
 									}
-									break;
+//									break;
 								}
 							}
 						}
