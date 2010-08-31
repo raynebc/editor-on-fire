@@ -884,6 +884,7 @@ void eof_determine_hopos(void)
 			}
 			case EOF_HOPO_RF:
 			case EOF_HOPO_FOF:
+			case EOF_HOPO_MANUAL:
 			{
 				if(eof_song->track[eof_selected_track]->note[i]->type == eof_note_type)
 				{

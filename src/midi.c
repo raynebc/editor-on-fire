@@ -234,22 +234,22 @@ double eof_calculate_delta(double start, double end)
 	if(!eof_check_bpm_change(start, end))
 	{
 		total_time = end - start;
-		return (end - start) * EOF_TIME_DIVISION * 1000 / eof_song->beat[0]->ppqn;
+		return (end - start) * EOF_DEFAULT_TIME_DIVISION * 1000 / eof_song->beat[0]->ppqn;
 	}
 
 	/* get first_portion */
-	total_delta += (eof_song->beat[startbeat + 1]->fpos - start) * EOF_TIME_DIVISION * 1000 / eof_song->beat[startbeat]->ppqn;
+	total_delta += (eof_song->beat[startbeat + 1]->fpos - start) * EOF_DEFAULT_TIME_DIVISION * 1000 / eof_song->beat[startbeat]->ppqn;
 	total_time += eof_song->beat[startbeat + 1]->fpos - start;
 
 	/* get rest of the portions */
 	for(i = startbeat + 1; i < endbeat; i++)
 	{
-		total_delta += (eof_song->beat[i + 1]->fpos - eof_song->beat[i]->fpos) * EOF_TIME_DIVISION * 1000 / eof_song->beat[i]->ppqn;
+		total_delta += (eof_song->beat[i + 1]->fpos - eof_song->beat[i]->fpos) * EOF_DEFAULT_TIME_DIVISION * 1000 / eof_song->beat[i]->ppqn;
 		total_time += eof_song->beat[i + 1]->fpos - eof_song->beat[i]->fpos;
 	}
 
 	/* get last portion */
-	total_delta += (end - eof_song->beat[endbeat]->fpos) * EOF_TIME_DIVISION * 1000 / eof_song->beat[endbeat]->ppqn;
+	total_delta += (end - eof_song->beat[endbeat]->fpos) * EOF_DEFAULT_TIME_DIVISION * 1000 / eof_song->beat[endbeat]->ppqn;
 	total_time += end - eof_song->beat[endbeat]->fpos;
 
 	return total_delta;
@@ -277,7 +277,7 @@ int eof_count_tracks(void)
    voila, correctly formatted MIDI file */
 int eof_export_midi(EOF_SONG * sp, char * fn)
 {
-	char header[14] = {'M', 'T', 'h', 'd', 0, 0, 0, 6, 0, 1, 0, 1, (EOF_TIME_DIVISION >> 8), (EOF_TIME_DIVISION & 0xFF)}; //The last two bytes are the time division
+	char header[14] = {'M', 'T', 'h', 'd', 0, 0, 0, 6, 0, 1, 0, 1, (EOF_DEFAULT_TIME_DIVISION >> 8), (EOF_DEFAULT_TIME_DIVISION & 0xFF)}; //The last two bytes are the time division
 	char trackheader[8] = {'M', 'T', 'r', 'k', 0, 0, 0, 0};
 	char * tempname[8] = {"eof.tmp", "eof2.tmp", "eof3.tmp", "eof4.tmp", "eof5.tmp", "eof6.tmp", "eof7.tmp", "eof8.tmp"};
 	PACKFILE * fp;
@@ -476,7 +476,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	    	lastdelta = 0;
 			for(i = 0; i < eof_midi_events; i++)
 			{
-				delta = eof_ConvertToDeltaTime(eof_midi_event[i]->pos,anchorlist,EOF_TIME_DIVISION);
+				delta = eof_ConvertToDeltaTime(eof_midi_event[i]->pos,anchorlist,EOF_DEFAULT_TIME_DIVISION);
 
 				WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
 				lastdelta = delta;					//Store this event's absolute delta time
@@ -561,7 +561,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		lastdelta=0;
 		for(i = 0; i < eof_midi_events; i++)
 		{
-			delta = eof_ConvertToDeltaTime(eof_midi_event[i]->pos,anchorlist,EOF_TIME_DIVISION);
+			delta = eof_ConvertToDeltaTime(eof_midi_event[i]->pos,anchorlist,EOF_DEFAULT_TIME_DIVISION);
 
 			WriteVarLen(delta - lastdelta, fp);	//Write this lyric's relative delta time
 			lastdelta=delta;					//Store this lyric's absolute delta time
@@ -643,7 +643,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		lastdelta = 0;
 		for(i = 0; i < sp->text_events; i++)
 		{
-			delta = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos,anchorlist,EOF_TIME_DIVISION);
+			delta = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos,anchorlist,EOF_DEFAULT_TIME_DIVISION);
 
 			WriteVarLen(delta - lastdelta, fp);	//Write this note's relative delta time
 			lastdelta = delta;					//Store this note's absolute delta time
@@ -808,7 +808,7 @@ struct Tempo_change *eof_build_tempo_list(void)
 		}
 
 
-		deltactr+=EOF_TIME_DIVISION;	//Add the number of deltas of one beat to the counter
+		deltactr+=EOF_DEFAULT_TIME_DIVISION;	//Add the number of deltas of one beat to the counter
 	}
 
 	return list;

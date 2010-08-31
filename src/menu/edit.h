@@ -59,6 +59,7 @@ int eof_menu_edit_snap_custom(void);
 int eof_menu_edit_hopo_rf(void);
 int eof_menu_edit_hopo_fof(void);
 int eof_menu_edit_hopo_off(void);
+int eof_menu_edit_hopo_manual(void);	//A HOPO preview mode that only displays forced HOPO notes as HOPOs
 
 int eof_menu_edit_zoom_helper_in(void);
 int eof_menu_edit_zoom_helper_out(void);
