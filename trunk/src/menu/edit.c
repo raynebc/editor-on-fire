@@ -52,6 +52,7 @@ MENU eof_edit_hopo_menu[] =
     {"&RF", eof_menu_edit_hopo_rf, NULL, D_SELECTED, NULL},
     {"&FOF", eof_menu_edit_hopo_fof, NULL, 0, NULL},
     {"&Off", eof_menu_edit_hopo_off, NULL, 0, NULL},
+    {"&Manual", eof_menu_edit_hopo_manual, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -1771,7 +1772,7 @@ int eof_menu_edit_snap_off(void)
 int eof_menu_edit_hopo_rf(void)
 {
 	int i;
-	for(i = 0; i < 3; i++)
+	for(i = 0; i < EOF_NUM_HOPO_MODES; i++)
 	{
 		eof_edit_hopo_menu[i].flags = 0;
 	}
@@ -1784,7 +1785,7 @@ int eof_menu_edit_hopo_rf(void)
 int eof_menu_edit_hopo_fof(void)
 {
 	int i;
-	for(i = 0; i < 3; i++)
+	for(i = 0; i < EOF_NUM_HOPO_MODES; i++)
 	{
 		eof_edit_hopo_menu[i].flags = 0;
 	}
@@ -1797,12 +1798,25 @@ int eof_menu_edit_hopo_fof(void)
 int eof_menu_edit_hopo_off(void)
 {
 	int i;
-	for(i = 0; i < 3; i++)
+	for(i = 0; i < EOF_NUM_HOPO_MODES; i++)
 	{
 		eof_edit_hopo_menu[i].flags = 0;
 	}
 	eof_edit_hopo_menu[EOF_HOPO_OFF].flags = D_SELECTED;
 	eof_hopo_view = EOF_HOPO_OFF;
+	eof_determine_hopos();
+	return 1;
+}
+
+int eof_menu_edit_hopo_manual(void)
+{
+	int i;
+	for(i = 0; i < EOF_NUM_HOPO_MODES; i++)
+	{
+		eof_edit_hopo_menu[i].flags = 0;
+	}
+	eof_edit_hopo_menu[EOF_HOPO_MANUAL].flags = D_SELECTED;
+	eof_hopo_view = EOF_HOPO_MANUAL;
 	eof_determine_hopos();
 	return 1;
 }
