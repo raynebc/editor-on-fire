@@ -1141,6 +1141,7 @@ int eof_load_ogg_quick(char * filename)
 int eof_load_ogg(char * filename)
 {
 	char * returnedfn = NULL;
+	char directory[1024] = {0};
 	int loaded = 0;
 
 	eof_destroy_ogg();
@@ -1168,35 +1169,40 @@ int eof_load_ogg(char * filename)
 	}
 	else
 	{
-		returnedfn = ncd_file_select(0, eof_last_ogg_path, "Select Music File", eof_filter_ogg_files);
+		returnedfn = ncd_file_select(0, eof_last_ogg_path, "Select Music File", eof_filter_music_files);
 		eof_clear_input();
 		if(returnedfn)
-		{
-			eof_music_data = (void *)eof_buffer_file(returnedfn);
-			eof_music_data_size = file_size_ex(returnedfn);
-			if(eof_music_data)
-			{
-				eof_music_track = alogg_create_ogg_from_buffer(eof_music_data, eof_music_data_size);
-				if(eof_music_track)
+		{	//User selected an OGG or MP3 file, write guitar.ogg into the chart's destination folder accordingly
+			replace_filename(directory, filename, "", 1024);	//Store the path of the file's parent folder
+			if(!eof_mp3_to_ogg(returnedfn,directory))				//Create guitar.ogg in the folder
+			{	//If the copy or conversion to create guitar.ogg succeeded
+				replace_filename(returnedfn, filename, "guitar.ogg", 1024);	//guitar.ogg is the expected file
+				eof_music_data = (void *)eof_buffer_file(returnedfn);
+				eof_music_data_size = file_size_ex(returnedfn);
+				if(eof_music_data)
 				{
-					loaded = 1;
-					if(alogg_get_wave_freq_ogg(eof_music_track) != 44100)
+					eof_music_track = alogg_create_ogg_from_buffer(eof_music_data, eof_music_data_size);
+					if(eof_music_track)
 					{
-						allegro_message("OGG sampling rate is not 44.1khz.\nSong may not play back at the\ncorrect speed in FOF.");
+						loaded = 1;
+						if(alogg_get_wave_freq_ogg(eof_music_track) != 44100)
+						{
+							allegro_message("OGG sampling rate is not 44.1khz.\nSong may not play back at the\ncorrect speed in FOF.");
+						}
+						if(!alogg_get_wave_is_stereo_ogg(eof_music_track))
+						{
+							allegro_message("OGG is not stereo.\nSong may not play back\ncorrectly in FOF.");
+						}
 					}
-					if(!alogg_get_wave_is_stereo_ogg(eof_music_track))
+					else
 					{
-						allegro_message("OGG is not stereo.\nSong may not play back\ncorrectly in FOF.");
+						allegro_message("Unable to load OGG file.\n%s\nMake sure your file is a valid OGG file.", returnedfn);
 					}
 				}
 				else
 				{
-					allegro_message("Unable to load OGG file.\n%s\nMake sure your file is a valid OGG file.", returnedfn);
+					allegro_message("Unable to load OGG file!\n%s", returnedfn);
 				}
-			}
-			else
-			{
-				allegro_message("Unable to load OGG file!\n%s", returnedfn);
 			}
 		}
 	}

@@ -198,12 +198,12 @@ void eof_prepare_file_menu(void)
 	}
 }
 
-int eof_menu_file_new_supplement(void)
+int eof_menu_file_new_supplement(char *directory)
 {
 	char syscommand[1024] = {0};
 	int err;
 
-	ustrcpy(syscommand, eof_etext3);
+	ustrcpy(syscommand, directory);
 
 	/* remove slash from folder name so we can check if it exists */
 	if((syscommand[uoffset(syscommand, ustrlen(syscommand) - 1)] == '\\') || (syscommand[uoffset(syscommand, ustrlen(syscommand) - 1)] == '/'))
@@ -226,23 +226,23 @@ int eof_menu_file_new_supplement(void)
 //		if(!option)
 //		{
 			err = 0;
-			put_backslash(eof_etext3);
-			replace_filename(eof_temp_filename, eof_etext3, "notes.eof", 1024);
+			put_backslash(directory);
+			replace_filename(eof_temp_filename, directory, "notes.eof", 1024);
 			if(exists(eof_temp_filename))
 			{
 				err = 1;
 			}
-			replace_filename(eof_temp_filename, eof_etext3, "guitar.ogg", 1024);
+			replace_filename(eof_temp_filename, directory, "guitar.ogg", 1024);
 			if(exists(eof_temp_filename))
 			{
 				err = 1;
 			}
-			replace_filename(eof_temp_filename, eof_etext3, "song.ini", 1024);
+			replace_filename(eof_temp_filename, directory, "song.ini", 1024);
 			if(exists(eof_temp_filename))
 			{
 				err = 1;
 			}
-			replace_filename(eof_temp_filename, eof_etext3, "notes.mid", 1024);
+			replace_filename(eof_temp_filename, directory, "notes.mid", 1024);
 			if(exists(eof_temp_filename))
 			{
 				err = 1;
@@ -1994,7 +1994,7 @@ int eof_mp3_to_ogg(char *file,char *directory)
 	{
 		if(eof_ogg_settings())
 		{
-			if(!eof_menu_file_new_supplement())
+			if(!eof_menu_file_new_supplement(directory))
 			{
 				eof_cursor_visible = 1;
 				eof_pen_visible = 1;
@@ -2027,7 +2027,7 @@ int eof_mp3_to_ogg(char *file,char *directory)
 	/* otherwise copy it */
 	else
 	{
-		if(!eof_menu_file_new_supplement())
+		if(!eof_menu_file_new_supplement(directory))
 		{
 			eof_cursor_visible = 1;
 			eof_pen_visible = 1;
