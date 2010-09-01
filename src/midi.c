@@ -113,17 +113,36 @@ int qsort_helper3(const void * e1, const void * e2)
         return 1;
     }
 
-    /* put lyrics first */
+	/* Logical order of lyric markings:  Overdrive on, lyric on, lyric, lyric pitch, ..., lyric off, overdrive off */
+	if(((*thing1)->type == 0x90) && ((*thing2)->type == 0x90))
+	{	//If both things are Note On events
+		if((*thing1)->note == 116)
+			return -1;	//Overdrive on written first
+		if((*thing2)->note == 116)
+			return 1;	//Overdrive on written first
+		if((*thing1)->note == 105)
+			return -1;	//Lyric phrase on written second
+		if((*thing2)->note == 105)
+			return 1;	//Lyric phrase on written second
+	}
+
+    /* put lyric events first, except for a lyric phrase on marker */
     if(((*thing1)->type == 0x05) && ((*thing2)->type == 0x90))
     {
-	    return -1;
+    	if(((*thing2)->note == 105) || ((*thing2)->note == 116))
+			return 1;	//lyric phrases should be written before the lyric event
+		else
+			return -1;
     }
     if(((*thing1)->type == 0x90) && ((*thing2)->type == 0x05))
     {
-	    return 1;
+    	if(((*thing1)->note == 105) || ((*thing1)->note == 116))
+			return -1;	//lyric phrase should be written before the lyric event
+		else
+			return 1;
     }
 
-    /* put notes first and then markers */
+    /* put notes first and then markers, will numerically sort in this order:  lyric pitch, lyric off, overdrive off */
     if((*thing1)->note < (*thing2)->note)
     {
 	    return -1;
@@ -501,7 +520,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		}
 	}
 
-
 /* make vocals track */
 	if(sp->vocal_track->lyrics > 0)
 	{
@@ -521,26 +539,49 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		use size of the file as the MTrk header length */
 		for(i = 0; i < sp->vocal_track->lyrics; i++)
 		{
-			eof_add_midi_lyric_event(sp->vocal_track->lyric[i]->pos, sp->vocal_track->lyric[i]->text);
+
+			eof_add_midi_lyric_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos,anchorlist,EOF_DEFAULT_TIME_DIVISION), sp->vocal_track->lyric[i]->text);
 			if(sp->vocal_track->lyric[i]->note > 0)
-			{
-				eof_add_midi_event(sp->vocal_track->lyric[i]->pos, 0x90, sp->vocal_track->lyric[i]->note);
-				eof_add_midi_event(sp->vocal_track->lyric[i]->pos + sp->vocal_track->lyric[i]->length, 0x80, sp->vocal_track->lyric[i]->note);
+			{	//For the vocal track, store the converted delta times, to allow for artificial padding for lyric phrase markers
+				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos,anchorlist,EOF_DEFAULT_TIME_DIVISION), 0x90, sp->vocal_track->lyric[i]->note);
+				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos + sp->vocal_track->lyric[i]->length,anchorlist,EOF_DEFAULT_TIME_DIVISION), 0x80, sp->vocal_track->lyric[i]->note);
 			}
 		}
 		/* fill in lyric lines */
 		for(i = 0; i < sp->vocal_track->lines; i++)
 		{
-			eof_add_midi_event(sp->vocal_track->line[i].start_pos, 0x90, 105);
-			eof_add_midi_event(sp->vocal_track->line[i].end_pos, 0x80, 105);
+			eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->line[i].start_pos,anchorlist,EOF_DEFAULT_TIME_DIVISION), 0x90, 105);
+			eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->line[i].end_pos,anchorlist,EOF_DEFAULT_TIME_DIVISION), 0x80, 105);
 			if(sp->vocal_track->line[i].flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE)
-			{
-				eof_add_midi_event(sp->vocal_track->line[i].start_pos, 0x90, 116);
-				eof_add_midi_event(sp->vocal_track->line[i].end_pos, 0x80, 116);
+			{	//For the vocal track, store the converted delta times, to allow for artificial padding for lyric phrase markers
+				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->line[i].start_pos,anchorlist,EOF_DEFAULT_TIME_DIVISION), 0x90, 116);
+				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->line[i].end_pos,anchorlist,EOF_DEFAULT_TIME_DIVISION), 0x80, 116);
 			}
 		}
 
 		qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
+
+		/* insert padding as necessary between a lyric phrase on marker and the following lyric */
+		#define EOF_LYRIC_PHRASE_PADDING 5
+		unsigned long last_phrase = 0;	//Stores the absolute delta time of the last Note 105 On
+		for(i = 0; i < eof_midi_events; i++)
+		{
+			if((eof_midi_event[i]->type == 0x90) && (eof_midi_event[i]->note == 105))
+			{	//If this is a lyric on phrase marker
+				last_phrase = eof_midi_event[i]->pos;		//Store its position
+			}
+			else if((i + 2 < eof_midi_events) && (eof_midi_event[i]->type == 0x05) && (eof_midi_event[i+1]->type == 0x90) && (eof_midi_event[i+1]->note < 105) && (eof_midi_event[i+2]->type == 0x80) && (eof_midi_event[i+2]->note < 105))
+			{	//If this is a lyric event followed by a lyric pitch on and off
+				if((eof_midi_event[i]->pos == eof_midi_event[i+1]->pos) && (eof_midi_event[i]->pos < last_phrase + EOF_LYRIC_PHRASE_PADDING))
+				{	//If the lyric event and pitch are not at least EOF_LYRIC_PHRASE_PADDING deltas away from the lyric phrase on marker
+					if(last_phrase + EOF_LYRIC_PHRASE_PADDING < eof_midi_event[i+2]->pos)
+					{	//If the lyric event and pitch can be padded without overlapping the pitch off note, do it
+						eof_midi_event[i+1]->pos = last_phrase + EOF_LYRIC_PHRASE_PADDING;
+						eof_midi_event[i+2]->pos = last_phrase + EOF_LYRIC_PHRASE_PADDING;
+					}
+				}
+			}
+		}
 
 		/* open the file */
 		fp = pack_fopen(tempname[7], "w");
@@ -561,7 +602,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		lastdelta=0;
 		for(i = 0; i < eof_midi_events; i++)
 		{
-			delta = eof_ConvertToDeltaTime(eof_midi_event[i]->pos,anchorlist,EOF_DEFAULT_TIME_DIVISION);
+			delta = eof_midi_event[i]->pos;
 
 			WriteVarLen(delta - lastdelta, fp);	//Write this lyric's relative delta time
 			lastdelta=delta;					//Store this lyric's absolute delta time
