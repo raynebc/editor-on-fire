@@ -8,7 +8,6 @@ void eof_editor_logic_feedback(void);
 struct dBAnchor
 {
 	unsigned long chartpos;	//The defined chart position of the anchor
-//	unsigned char type;	//The original event type in the imported file ('A' for anchor, 'B' for BPM change, 'T' for Time signature
 	unsigned long BPM;	//The tempo of this beat times 1000 (0 for no change from previous anchor)
 	unsigned char TS;	//The numerator of this beat's time signature (#/4) (0 for no change from previous anchor)
 	unsigned long usec;	//The real time position of this anchor in microseconds (millionths of a second) (0 if not an anchor)

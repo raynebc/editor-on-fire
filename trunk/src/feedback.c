@@ -585,16 +585,21 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 
 //Feedback chart structure variables
 	struct FeedbackChart *chart=NULL;
-	struct dBAnchor *curanchor=NULL;	//Conductor for the anchor linked list
-	struct dbText *curevent=NULL;		//Conductor for the text event linked list
-	struct dbNote *curnote=NULL;		//Conductor for the current instrument track's note linked list
-	struct dbTrack *curtrack=NULL;		//Conductor for the instrument track linked list, which contains a linked list of notes
-	void *temp=NULL;					//Temporary pointer used for storing newly-allocated memory
+	struct dBAnchor *curanchor=NULL;		//Conductor for the anchor linked list
+	struct dbText *curevent=NULL;			//Conductor for the text event linked list
+	struct dbNote *curnote=NULL;			//Conductor for the current instrument track's note linked list
+	struct dbTrack *curtrack=NULL;			//Conductor for the instrument track linked list, which contains a linked list of notes
+	void *temp=NULL;						//Temporary pointer used for storing newly-allocated memory
+	static struct FeedbackChart emptychart;	//A static struct has all members auto-initialized to 0/NULL
+	static struct dBAnchor emptyanchor;
+	static struct dbText emptytext;
+	static struct dbNote emptynote;
 
 //Initialize chart structure
-	chart=(struct FeedbackChart *)calloc_err(1,sizeof(struct FeedbackChart));	//Allocate and init memory to NULL data
+	chart=(struct FeedbackChart *)malloc_err(sizeof(struct FeedbackChart));	//Allocate memory
+	*chart=emptychart;		//Reliably set all member variables to 0/NULL
 	chart->resolution=192;	//Default this to 192
-	chart->linesprocessed=chart->tracksloaded=0;
+//	chart->linesprocessed=chart->tracksloaded=0;
 
 //Open file in text mode
 	inf=fopen(filename,"rt");
@@ -712,7 +717,6 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 						chart->tracksloaded++;	//Keep track of how many instrument tracks are loaded
 
 					//Create and insert instrument link in the instrument list
-//						temp=calloc_err(1,sizeof(struct dbTrack));	//Allocate and init memory to NULL data
 						if(chart->tracks == NULL)					//If the list is empty
 						{
 							chart->tracks=(struct dbTrack *)temp;	//Point head of list to this link
@@ -725,7 +729,6 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 						}
 
 					//Initialize instrument link
-//						curtrack->trackname=instrument;	//Store the track name returned by Validate_dB_instrument()
 						curnote=NULL;			//Reset the conductor for the track's note list
 					}
 				}
@@ -745,7 +748,6 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 					*error=8;
 				return NULL;					//Malformed file, return error
 			}
-//			instrument=NULL;	//Any section ending ends the current instrument track
 			currentsection=0;
 			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 			continue;							//Skip ahead to the next line
@@ -774,17 +776,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 					chart->charter=string2;	//Save the chart editor tag
 				else if(strcasecmp(string1,"Offset") == 0)
 				{
-//					index2=0;	//Use this as an index for string2
-//					chart->offset=(unsigned long)ParseLongInt(string2,&index2,chart->linesprocessed,&errorstatus);	//Parse string2 as a number
 					chart->offset=atof(string2);
-/*					if(errorstatus)		//If ParseLongInt() failed
-					{
-						DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
-						if(error)
-							*error=10;
-						return NULL;	//return error
-					}
-*/
 				}
 				else if(strcasecmp(string1,"Resolution") == 0)
 				{
@@ -895,7 +887,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 			else
 			{
 		//Create and insert anchor link into the anchor list
-				temp=calloc_err(1,sizeof(struct dBAnchor));	//Allocate and init memory to NULL data
+				temp=malloc_err(sizeof(struct dBAnchor));	//Allocate memory
+				*((struct dBAnchor *)temp)=emptyanchor;		//Reliably set all member variables to 0/NULL
 				if(chart->anchors == NULL)					//If the list is empty
 				{
 					chart->anchors=(struct dBAnchor *)temp;	//Point head of list to this link
@@ -909,7 +902,6 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 
 		//Initialize anchor link
 				curanchor->chartpos=A;	//The first number read is the chart position
-//				curanchor->type=anchortype;
 				switch(anchortype)
 				{
 					case 'B':				//If this was a tempo event
@@ -1010,7 +1002,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 			buffer2[index2]='\0';	//Truncate the second buffer to form a complete string
 
 		//Create and insert event link into event list
-			temp=calloc_err(1,sizeof(struct dbText));	//Allocate and init memory to NULL data
+			temp=malloc_err(sizeof(struct dbText));		//Allocate memory
+			*((struct dbText *)temp)=emptytext;			//Reliably set all member variables to 0/NULL
 			if(chart->events == NULL)					//If the list is empty
 			{
 				chart->events=(struct dbText *)temp;	//Point head of list to this link
@@ -1120,7 +1113,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				return NULL;					//Malformed file, return error
 			}
 
-			temp=calloc_err(1,sizeof(struct dbNote));	//Allocate and init memory to NULL data
+			temp=malloc_err(sizeof(struct dbNote));		//Allocate memory
+			*((struct dbNote *)temp)=emptynote;			//Reliably set all member variables to 0/NULL
 			if(curtrack->notes == NULL)					//If the list is empty
 			{
 				curtrack->notes=(struct dbNote *)temp;	//Point head of list to this link
@@ -1249,12 +1243,13 @@ struct dbTrack *Validate_dB_instrument(char *buffer)
 	//(track name is allocated, tracktype and difftype are set and the linked lists are set to NULL)
 	//The track strcture is returned, otherwise NULL is returned if the string did not contain a valid
 	//track name.  buffer[] is modified to remove any whitespace after the closing bracket
-	unsigned long index;	//Used to index into buffer
-	char *endbracket;	//The pointer to the end bracket
-	char *diffstring;	//Used to find the difficulty substring
-	char *inststring;	//Used to find the instrument substring
-	char *retstring;	//Used to create the instrument track string
-	struct dbTrack *chart;			//Used to create the structure that is returned
+	unsigned long index=0;	//Used to index into buffer
+	char *endbracket=NULL;	//The pointer to the end bracket
+	char *diffstring=NULL;	//Used to find the difficulty substring
+	char *inststring=NULL;	//Used to find the instrument substring
+	char *retstring=NULL;	//Used to create the instrument track string
+	struct dbTrack *chart=NULL;		//Used to create the structure that is returned
+	static struct dbTrack emptychart;	//Static structures have all members auto initialize to 0/NULL
 	char tracktype=0,difftype=0;	//Used to track the instrument type and difficulty of the track, based on the name
 	char isguitar=0,isdrums=0;		//Used to track secondary/tertiary guitar/drum tracks
 
@@ -1406,8 +1401,9 @@ struct dbTrack *Validate_dB_instrument(char *buffer)
 //	return retstring;
 
 //Create and initialize the instrument structure
-	chart=calloc_err(1,sizeof(struct dbTrack));	//Allocate and init memory to NULL data
-	chart->trackname=retstring;	//Store the instrument track name
+	chart=malloc_err(sizeof(struct dbTrack));	//Allocate memory
+	*chart=emptychart;							//Reliably set all member variables to 0/NULL
+	chart->trackname=retstring;					//Store the instrument track name
 	chart->tracktype=tracktype;
 	chart->difftype=difftype;
 	return chart;
