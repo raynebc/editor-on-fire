@@ -311,6 +311,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	struct Tempo_change *anchorlist=NULL;	//Linked list containing tempo changes
 	struct Tempo_change *ptr=NULL;			//Conductor for the anchor linked list
 	unsigned long lastdelta=0;				//Keeps track of the last anchor's absolute delta time
+	char * tempstring = NULL;				//Used to store a copy of the lyric string into eof_midi_event[], so the string can be modified from the original
+	char correctlyrics = 1;					//If nonzero, logic will be performed to correct the pitchless lyrics to have a pound character and have a generic pitch note
 
 
 	anchorlist=eof_build_tempo_list();	//Create a linked list of all tempo changes in eof_song->beat[]
@@ -526,26 +528,31 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		/* clear MIDI events list */
 		eof_clear_midi_events();
 
-		/* ensure that all lyrics that have no defined pitch are altered as proper freestyle lyrics */
-		for(i = 0; i < sp->vocal_track->lyrics; i++)
-		{
-			if(sp->vocal_track->lyric[i]->note == 0)	//If the lyric has no defined pitch
-			{
-				sp->vocal_track->lyric[i]->note = 50;	//Assign a safe, generic pitch value
-				eof_set_freestyle(sp->vocal_track->lyric[i]->text,1);	//Ensure the lyric properly ends with a freestyle character
-			}
-		}
 		/* write the MTrk MIDI data to a temp file
 		use size of the file as the MTrk header length */
 		for(i = 0; i < sp->vocal_track->lyrics; i++)
 		{
+			//Copy each lyric string into a new array, perform correction on it if necessary
+			tempstring = malloc(sizeof(sp->vocal_track->lyric[i]->text));
+			if(tempstring == NULL)	//If allocation failed
+				return 0;			//Return failure
+			sp->vocal_track->lyric[i]->text[EOF_MAX_LYRIC_LENGTH] = '\0';	//Guarantee that the lyric string is terminated
+			memcpy(tempstring,sp->vocal_track->lyric[i]->text,sizeof(sp->vocal_track->lyric[i]->text));	//Copy to new array
 
-			eof_add_midi_lyric_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos,anchorlist,EOF_DEFAULT_TIME_DIVISION), sp->vocal_track->lyric[i]->text);
 			if(sp->vocal_track->lyric[i]->note > 0)
 			{	//For the vocal track, store the converted delta times, to allow for artificial padding for lyric phrase markers
 				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos,anchorlist,EOF_DEFAULT_TIME_DIVISION), 0x90, sp->vocal_track->lyric[i]->note);
 				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos + sp->vocal_track->lyric[i]->length,anchorlist,EOF_DEFAULT_TIME_DIVISION), 0x80, sp->vocal_track->lyric[i]->note);
 			}
+			else if(correctlyrics)
+			{	//If performing pitchless lyric correction, write pitch 50 instead to guarantee it is usable as a freestyle lyric
+				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos,anchorlist,EOF_DEFAULT_TIME_DIVISION), 0x90, 50);
+				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos + sp->vocal_track->lyric[i]->length,anchorlist,EOF_DEFAULT_TIME_DIVISION), 0x80, 50);
+				eof_set_freestyle(tempstring,1);		//Ensure the lyric properly ends with a freestyle character
+			}
+
+			//Write the string, which was only corrected if correctlyrics was nonzero and the pitch was not defined
+			eof_add_midi_lyric_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos,anchorlist,EOF_DEFAULT_TIME_DIVISION), tempstring);
 		}
 		/* fill in lyric lines */
 		for(i = 0; i < sp->vocal_track->lines; i++)
@@ -612,6 +619,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				pack_putc(0x05, fp);
 				pack_putc(ustrlen(eof_midi_event[i]->dp), fp);
 				pack_fwrite(eof_midi_event[i]->dp, ustrlen(eof_midi_event[i]->dp), fp);
+				free(eof_midi_event[i]->dp);	//Free the copied string from memory
 			}
 			else
 			{
