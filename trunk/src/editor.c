@@ -1884,6 +1884,7 @@ void eof_read_editor_keys(void)
 
 void eof_editor_drum_logic(void)
 {
+	int bitmask;	//Used for simplifying note placement logic
 	EOF_NOTE * new_note = NULL;
 
 	if(eof_drums.button[0].held)
@@ -1930,111 +1931,41 @@ void eof_editor_drum_logic(void)
 	{
 		eof_entering_note_note = NULL;
 	}
+	bitmask = 0;
 	if(eof_held_1 == 1)
 	{
-		eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
-		if(eof_entering_note_note && (eof_music_pos - eof_av_delay - eof_drums.delay < eof_entering_note_note->pos + 50))
-		{
-			eof_entering_note_note->note |= 1;
-		}
-		else
-		{
-			new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
-			if(new_note)
-			{
-				eof_note_create(new_note, 1, 0, 0, 0, 0, eof_music_pos - eof_av_delay - eof_drums.delay, 1);
-				eof_snap_logic(&eof_snap, new_note->pos);
-				new_note->pos = eof_snap.pos;
-				new_note->type = eof_note_type;
-				eof_entering_note_note = new_note;
-				eof_entering_note = 1;
-				eof_detect_difficulties(eof_song);
-				eof_track_sort_notes(eof_song->track[eof_selected_track]);
-			}
-		}
+		bitmask |= 1;
 	}
 	if(eof_held_2 == 1)
 	{
-		eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
-		if(eof_entering_note_note && (eof_music_pos - eof_av_delay - eof_drums.delay < eof_entering_note_note->pos + 50))
-		{
-			eof_entering_note_note->note |= 2;
-		}
-		else
-		{
-			new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
-			if(new_note)
-			{
-				eof_note_create(new_note, 0, 1, 0, 0, 0, eof_music_pos - eof_av_delay - eof_drums.delay, 1);
-				eof_snap_logic(&eof_snap, new_note->pos);
-				new_note->pos = eof_snap.pos;
-				new_note->type = eof_note_type;
-				eof_entering_note_note = new_note;
-				eof_entering_note = 1;
-				eof_detect_difficulties(eof_song);
-				eof_track_sort_notes(eof_song->track[eof_selected_track]);
-			}
-		}
+		bitmask |= 2;
 	}
 	if(eof_held_3 == 1)
 	{
-		eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
-		if(eof_entering_note_note && (eof_music_pos - eof_av_delay - eof_drums.delay < eof_entering_note_note->pos + 50))
-		{
-			eof_entering_note_note->note |= 4;
-		}
-		else
-		{
-			new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
-			if(new_note)
-			{
-				eof_note_create(new_note, 0, 0, 1, 0, 0, eof_music_pos - eof_av_delay - eof_drums.delay, 1);
-				eof_snap_logic(&eof_snap, new_note->pos);
-				new_note->pos = eof_snap.pos;
-				new_note->type = eof_note_type;
-				eof_entering_note_note = new_note;
-				eof_entering_note = 1;
-				eof_detect_difficulties(eof_song);
-				eof_track_sort_notes(eof_song->track[eof_selected_track]);
-			}
-		}
+		bitmask |= 4;
 	}
 	if(eof_held_4 == 1)
 	{
-		eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
-		if(eof_entering_note_note && (eof_music_pos - eof_av_delay - eof_drums.delay < eof_entering_note_note->pos + 50))
-		{
-			eof_entering_note_note->note |= 8;
-		}
-		else
-		{
-			new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
-			if(new_note)
-			{
-				eof_note_create(new_note, 0, 0, 0, 1, 0, eof_music_pos - eof_av_delay - eof_drums.delay, 1);
-				eof_snap_logic(&eof_snap, new_note->pos);
-				new_note->pos = eof_snap.pos;
-				new_note->type = eof_note_type;
-				eof_entering_note_note = new_note;
-				eof_entering_note = 1;
-				eof_detect_difficulties(eof_song);
-				eof_track_sort_notes(eof_song->track[eof_selected_track]);
-			}
-		}
+		bitmask |= 8;
 	}
 	if(eof_held_5 == 1)
+	{
+		bitmask |= 16;
+	}
+
+	if(bitmask)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
 		if(eof_entering_note_note && (eof_music_pos - eof_av_delay - eof_drums.delay < eof_entering_note_note->pos + 50))
 		{
-			eof_entering_note_note->note |= 16;
+			eof_entering_note_note->note |= bitmask;
 		}
 		else
 		{
 			new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
 			if(new_note)
 			{
-				eof_note_create(new_note, 0, 0, 0, 0, 1, eof_music_pos - eof_av_delay - eof_drums.delay, 1);
+				eof_note_create2(new_note, bitmask, eof_music_pos - eof_av_delay - eof_drums.delay, 1);
 				eof_snap_logic(&eof_snap, new_note->pos);
 				new_note->pos = eof_snap.pos;
 				new_note->type = eof_note_type;
