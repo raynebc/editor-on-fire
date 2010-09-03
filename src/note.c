@@ -57,6 +57,13 @@ void eof_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, int 
 	np->length = length;
 }
 
+void eof_note_create2(EOF_NOTE * np, char note, unsigned long pos, long length)
+{
+	np->note = note;
+	np->pos = pos;
+	np->length = length;
+}
+
 int eof_adjust_notes(int offset)
 {
 	int i, j;
