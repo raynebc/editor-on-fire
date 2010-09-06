@@ -393,7 +393,7 @@ void eof_lyric_draw(EOF_LYRIC * np, int p)
 	if((np->note != 0) && !eof_is_freestyle(np->text))
 	{
 		ncol = native ? eof_color_red : eof_color_green;
-		if(np->note != 96)
+		if(np->note != EOF_LYRIC_PERCUSSION)
 			rectfill(eof_window_editor->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, ncol);
 		else
 		{	//Render a vocal percussion note as a fret note in the middle lane
@@ -403,7 +403,7 @@ void eof_lyric_draw(EOF_LYRIC * np, int p)
 
 		if(p)
 		{
-			if(np->note == 96)
+			if(np->note == EOF_LYRIC_PERCUSSION)
 			{	//Render a vocal percussion note as a fret note in the middle lane
 				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2], eof_screen_layout.note_size, eof_color_white);
 				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2], eof_screen_layout.note_size-2, eof_color_black);
@@ -528,7 +528,7 @@ int eof_lyric_draw_truncate(int notenum, int p)
 	if((np->note != 0) && !eof_is_freestyle(np->text))
 	{
 		ncol = native ? eof_color_red : eof_color_green;
-		if(np->note != 96)
+		if(np->note != EOF_LYRIC_PERCUSSION)
 			rectfill(eof_window_editor->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, ncol);
 		else
 		{	//Render a vocal percussion note as a fret note in the middle lane
@@ -538,7 +538,7 @@ int eof_lyric_draw_truncate(int notenum, int p)
 
 		if(p)
 		{
-			if(np->note == 96)
+			if(np->note == EOF_LYRIC_PERCUSSION)
 			{	//Render a vocal percussion note as a fret note in the middle lane
 				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2], eof_screen_layout.note_size, eof_color_white);
 				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2], eof_screen_layout.note_size-2, eof_color_black);

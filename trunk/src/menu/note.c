@@ -1478,17 +1478,23 @@ int eof_transpose_possible(int dir)
 int eof_new_lyric_dialog(void)
 {
 	EOF_LYRIC * new_lyric = NULL;
+	int ret=0;
 
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_lyric_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_lyric_dialog);
 	ustrcpy(eof_etext, "");
-	if(eof_popup_dialog(eof_lyric_dialog, 2) == 3)
+
+	if(eof_pen_lyric.note != EOF_LYRIC_PERCUSSION)		//If not entering a percussion note
 	{
+		ret = eof_popup_dialog(eof_lyric_dialog, 2);	//prompt for lyric text
 		if(!eof_check_string(eof_etext) && !eof_pen_lyric.note)	//If the placed lyric is both pitchless AND textless
 			return D_O_K;	//Return without adding
+	}
 
+	if((ret == 3) || (eof_pen_lyric.note == EOF_LYRIC_PERCUSSION))
+	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		new_lyric = eof_vocal_track_add_lyric(eof_song->vocal_track);
 		new_lyric->pos = eof_pen_lyric.pos;
