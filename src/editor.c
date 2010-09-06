@@ -15,6 +15,7 @@
 #include "beat.h"
 #include "editor.h"
 #include "utility.h"	//For eof_check_string()
+#include "note.h"		//For EOF_LYRIC_PERCUSSION definition
 
 int         eof_held_1 = 0;
 int         eof_held_2 = 0;
@@ -1237,22 +1238,22 @@ void eof_read_editor_keys(void)
 		eof_menu_note_toggle_purple();
 		key[KEY_5] = 0;
 	}
-	else if(key[KEY_1] && KEY_EITHER_SHIFT)
+	else if(key[KEY_1] && KEY_EITHER_SHIFT)	//Change mini piano focus to first usable octave
 	{
 		eof_vocals_offset = MINPITCH;
 		key[KEY_1] = 0;
 	}
-	else if(key[KEY_2] && KEY_EITHER_SHIFT)
+	else if(key[KEY_2] && KEY_EITHER_SHIFT)	//Change mini piano focus to second usable octave
 	{
 		eof_vocals_offset = MINPITCH+12;
 		key[KEY_2] = 0;
 	}
-	else if(key[KEY_3] && KEY_EITHER_SHIFT)
+	else if(key[KEY_3] && KEY_EITHER_SHIFT)	//Change mini piano focus to third usable octave
 	{
 		eof_vocals_offset = MINPITCH+24;
 		key[KEY_3] = 0;
 	}
-	else if(key[KEY_4] && KEY_EITHER_SHIFT)
+	else if(key[KEY_4] && KEY_EITHER_SHIFT)	//Change mini piano focus to fourth usable octave
 	{
 		eof_vocals_offset = MINPITCH+36;
 		key[KEY_4] = 0;
@@ -3191,7 +3192,14 @@ void eof_vocal_editor_logic(void)
 			eof_pen_lyric.pos = eof_snap.pos;
 			rpos = eof_pen_lyric.pos;
 			eof_pen_lyric.length = eof_snap.length;
-			eof_pen_lyric.note = eof_vocals_offset + (EOF_EDITOR_RENDER_OFFSET + 35 + eof_screen_layout.vocal_y - mouse_y) / eof_screen_layout.vocal_tail_size;
+			if(key[KEY_BACKSPACE])
+			{	//If entering a vocal percussion note
+				eof_pen_lyric.note = EOF_LYRIC_PERCUSSION;
+			}
+			else
+			{
+				eof_pen_lyric.note = eof_vocals_offset + (EOF_EDITOR_RENDER_OFFSET + 35 + eof_screen_layout.vocal_y - mouse_y) / eof_screen_layout.vocal_tail_size;
+			}
 			if((eof_pen_lyric.note < eof_vocals_offset) || (eof_pen_lyric.note >= eof_vocals_offset + eof_screen_layout.vocal_view_size))
 			{
 				eof_pen_lyric.note = 0;
@@ -3530,7 +3538,7 @@ void eof_vocal_editor_logic(void)
 					}
 				}
 			}
-			if((((eof_input_mode != EOF_INPUT_REX) && ((mouse_b & 2) || key[KEY_INSERT])) || ((eof_input_mode == EOF_INPUT_REX) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL && (key[KEY_1] || key[KEY_2] || key[KEY_3] || key[KEY_4] || key[KEY_5]))) && eof_rclick_released && (eof_pen_lyric.pos < eof_music_length))
+			if((((eof_input_mode != EOF_INPUT_REX) && ((mouse_b & 2) || key[KEY_INSERT])) || (((eof_input_mode == EOF_INPUT_REX) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL && (key[KEY_1] || key[KEY_2] || key[KEY_3] || key[KEY_4] || key[KEY_5])) && eof_rclick_released && (eof_pen_lyric.pos < eof_music_length))) || key[KEY_BACKSPACE])
 			{
 				eof_selection.range_pos_1 = 0;
 				eof_selection.range_pos_2 = 0;
@@ -3593,9 +3601,20 @@ void eof_vocal_editor_logic(void)
 				/* create new note */
 				else
 				{
+					if(key[KEY_BACKSPACE])
+					{	//Map the percussion note here
+						eof_pen_lyric.note = EOF_LYRIC_PERCUSSION;
+						key[KEY_BACKSPACE] = 0;
+					}
 					if(eof_mix_vocal_tones_enabled)
 					{
-						eof_mix_play_note(eof_pen_lyric.note);
+						if(eof_pen_lyric.note == EOF_LYRIC_PERCUSSION)
+						{	//This would be the place to play the percussion sample
+						}
+						else
+						{
+							eof_mix_play_note(eof_pen_lyric.note);
+						}
 					}
 					eof_new_lyric_dialog();
 				}

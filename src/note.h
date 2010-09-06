@@ -5,6 +5,8 @@
 
 #define EOF_MAX_FRETS 5
 	//Currently, EOF supports only 5 frets
+#define EOF_LYRIC_PERCUSSION 96
+
 
 int eof_note_count_colors(EOF_NOTE * np);	//Performs bit masking to determine the number of gems the note defines being present
 void eof_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, int pos, int length);
