@@ -643,13 +643,21 @@ EOF_SONG * eof_import_midi(const char * fn)
 							/* time signature */
 							case 0x58:
 							{
+								unsigned long ctr,realden;
+
 //								track_pos += 5;
 								track_pos++;
 								d1 = (eof_work_midi->track[track[i]].data[track_pos++]);	//Numerator
 								d2 = (eof_work_midi->track[track[i]].data[track_pos++]);	//Denominator
 								d3 = (eof_work_midi->track[track[i]].data[track_pos++]);	//Metronome
 								d4 = (eof_work_midi->track[track[i]].data[track_pos++]);	//32nds
-								eof_midi_import_add_ts(eof_import_ts_changes[i],absolute_pos,d1,d2,i);
+
+								for(ctr=0,realden=1;ctr<d2;ctr++)
+								{	//Find 2^(d2)
+									realden = realden << 1;
+								}
+
+								eof_midi_import_add_ts(eof_import_ts_changes[i],absolute_pos,d1,realden,i);
 								break;
 							}
 
