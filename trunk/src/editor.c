@@ -1075,7 +1075,7 @@ void eof_read_editor_keys(void)
 							eof_snap_length_logic(&eof_tail_snap);
 							eof_song->vocal_track->lyric[i]->length += eof_tail_snap.length;
 							eof_snap_logic(&eof_tail_snap, eof_song->vocal_track->lyric[i]->pos + eof_song->vocal_track->lyric[i]->length);
-							eof_set_tail_pos(i, eof_tail_snap.pos);
+							eof_set_vocal_tail_pos(i, eof_tail_snap.pos);
 						}
 					}
 				}
