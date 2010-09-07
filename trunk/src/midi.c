@@ -312,7 +312,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	struct Tempo_change *ptr=NULL;			//Conductor for the anchor linked list
 	unsigned long lastdelta=0;				//Keeps track of the last anchor's absolute delta time
 	char * tempstring = NULL;				//Used to store a copy of the lyric string into eof_midi_event[], so the string can be modified from the original
-	char correctlyrics = 1;					//If nonzero, logic will be performed to correct the pitchless lyrics to have a pound character and have a generic pitch note
+	char correctlyrics = 0;					//If nonzero, logic will be performed to correct the pitchless lyrics to have a pound character and have a generic pitch note
 
 
 	anchorlist=eof_build_tempo_list();	//Create a linked list of all tempo changes in eof_song->beat[]
@@ -527,6 +527,26 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	{
 		/* clear MIDI events list */
 		eof_clear_midi_events();
+
+		/* pre-parse the lyrics to determine if any pitchless lyrics are present */
+		for(i = 0; i < sp->vocal_track->lyrics; i++)
+		{
+			correctlyrics = 0;	//By default, pitchless lyrics will not be changed to freestyle during export
+			if(sp->vocal_track->lyric[i]->note == 0)
+			{	//If any of the lyrics are missing the pitch, prompt for whether they should be corrected
+				eof_cursor_visible = 0;
+				eof_pen_visible = 0;
+				eof_show_mouse(screen);
+				if(alert(NULL, "Write pitchless lyrics as playable freestyle?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+				{	//If user opts to have the lyrics corrected, update the correctlyrics variable
+					correctlyrics = 1;
+				}
+				eof_show_mouse(NULL);
+				eof_cursor_visible = 1;
+				eof_pen_visible = 1;
+				break;
+			}
+		}
 
 		/* write the MTrk MIDI data to a temp file
 		use size of the file as the MTrk header length */
