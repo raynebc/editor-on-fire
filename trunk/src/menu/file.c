@@ -1887,6 +1887,7 @@ int eof_menu_file_feedback_import(void)
 			ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 			replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 			replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+			ustrcpy(eof_song_path, eof_last_eof_path);
 
 			/* import chart */
 			eof_song = eof_import_chart(returnedfn);
