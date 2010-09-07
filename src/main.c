@@ -2799,75 +2799,67 @@ int eof_initialize(int argc, char * argv[])
 		{
 			eof_new_idle_system = 1;
 		}
-		else if(!ustricmp(get_extension(argv[i]), "eof"))
+		else if(!eof_song_loaded)
 		{
-			ustrcpy(eof_song_path, argv[i]);
-			ustrcpy(eof_filename, argv[i]);
-			replace_filename(eof_last_eof_path, eof_filename, "", 1024);
-			ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
-			eof_song = eof_load_song(eof_filename);
-			if(!eof_song)
+			if(!ustricmp(get_extension(argv[i]), "eof"))
 			{
-				allegro_message("Unable to load project. File could be corrupt!");
-				return 0;
+				ustrcpy(eof_song_path, argv[i]);
+				ustrcpy(eof_filename, argv[i]);
+				replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+				ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+				eof_song = eof_load_song(eof_filename);
+				if(!eof_song)
+				{
+					allegro_message("Unable to load project. File could be corrupt!");
+					return 0;
+				}
+				replace_filename(eof_song_path, eof_filename, "", 1024);
+				append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);
+				if(!eof_load_ogg(temp_filename))
+				{
+					allegro_message("Failed to load OGG!");
+					return 0;
+				}
+				eof_song_loaded = 1;
+				eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
+//				break;
 			}
-			replace_filename(eof_song_path, eof_filename, "", 1024);
-			append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);
-			if(!eof_load_ogg(temp_filename))
+			else if(!ustricmp(get_extension(argv[i]), "mid"))
 			{
-				allegro_message("Failed to load OGG!");
-				return 0;
+				ustrcpy(eof_song_path, argv[i]);
+				ustrcpy(eof_filename, argv[i]);
+				replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+				ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+				replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
+				eof_song = eof_import_midi(eof_filename);
+				if(!eof_song)
+				{
+					allegro_message("Could not import song!");
+					return 0;
+				}
+//				break;
 			}
-			eof_song_loaded = 1;
-			eof_changes = 0;
-//			eof_setup_menus();
-			eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
-			eof_music_pos = eof_av_delay;
-			eof_music_paused = 1;
-			eof_selected_track = 0;
-			eof_calculate_beats(eof_song);
-			eof_detect_difficulties(eof_song);
-			show_mouse(NULL);
-			eof_cursor_visible = 1;
-			eof_pen_visible = 1;
-			ustrcpy(eof_window_title, "EOF - ");
-			ustrcat(eof_window_title, eof_song->tags->title);
-			ustrcat(eof_window_title, " (PART GUITAR)");
-			set_window_title(eof_window_title);
-			break;
-		}
-		else if(!ustricmp(get_extension(argv[i]), "mid"))
-		{
-			ustrcpy(eof_song_path, argv[i]);
-			ustrcpy(eof_filename, argv[i]);
-			replace_filename(eof_last_eof_path, eof_filename, "", 1024);
-			ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
-			replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
-			eof_song = eof_import_midi(eof_filename);
-			if(!eof_song)
-			{
-				allegro_message("Could not import song!");
-				return 0;
+
+			if(eof_song_loaded)
+			{	//The command line load succeeded, perform some common initialization
+				eof_changes = 0;
+				eof_music_pos = eof_av_delay;
+				eof_music_paused = 1;
+				eof_selected_track = 0;
+				eof_selected_catalog_entry = 0;
+				eof_calculate_beats(eof_song);
+				eof_detect_difficulties(eof_song);
+				eof_determine_hopos();
+				eof_prepare_menus();
+				eof_undo_reset();
+				eof_select_beat(0);
+				eof_sort_notes();
+				eof_fixup_notes();
+				eof_fix_window_title();
+				show_mouse(NULL);
+				eof_cursor_visible = 1;
+				eof_pen_visible = 1;
 			}
-			eof_changes = 0;
-//			eof_setup_menus();
-			eof_music_pos = eof_av_delay;
-			eof_music_paused = 1;
-			eof_selected_track = 0;
-			eof_sort_notes();
-			eof_fixup_notes();
-			eof_calculate_beats(eof_song);
-			eof_determine_hopos();
-			eof_detect_difficulties(eof_song);
-			eof_detect_difficulties(eof_song);
-			show_mouse(NULL);
-			eof_cursor_visible = 1;
-			eof_pen_visible = 1;
-			ustrcpy(eof_window_title, "EOF - ");
-			ustrcat(eof_window_title, eof_song->tags->title);
-			ustrcat(eof_window_title, " (PART GUITAR)");
-			set_window_title(eof_window_title);
-			break;
 		}
 	}
 	eof_mix_init();
