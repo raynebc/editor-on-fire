@@ -2067,7 +2067,7 @@ void eof_render_lyric_preview(BITMAP * bp)
 
 		for(i = eof_preview_line_lyric[x]; i < eof_preview_line_end_lyric[x]; i++)
 		{	//For each lyric in the preview line
-			lyriclength=strlen(eof_song->vocal_track->lyric[i]->text);	//This value will be used multiple times
+			lyriclength=ustrlen(eof_song->vocal_track->lyric[i]->text);	//This value will be used multiple times
 
 		//Perform grouping logic
 			if((eof_song->vocal_track->lyric[i]->text[0] != '+'))
@@ -2076,15 +2076,15 @@ void eof_render_lyric_preview(BITMAP * bp)
 				{	//If space is nonzero, append a space if possible
 					if(currentlength+1 <= MAX_LYRIC_PREVIEW_LENGTH)
 					{	//If appending a space would NOT cause an overflow
-						strcat(lline[x], " ");
+						ustrcat(lline[x], " ");
 						currentlength++;	//Track the length of this preview line
 					}
 					else
 						break;				//Stop building this line's preview
 				}
 
-				if(eof_song->vocal_track->lyric[i]->text[lyriclength-1] == '-')
-				{	//If the lyric ends in a hyphen
+				if(ustrchr(eof_song->vocal_track->lyric[i]->text,'-'))
+				{	//If the lyric contains a hyphen
 					space = 0;	//The next syllable will group with this one
 				}
 				else
@@ -2106,12 +2106,12 @@ void eof_render_lyric_preview(BITMAP * bp)
 				break;													//Stop building this line's preview
 
 		//Append string
-			strcat(lline[x], eof_song->vocal_track->lyric[i]->text);
+			ustrcat(lline[x], eof_song->vocal_track->lyric[i]->text);
 			currentlength+=lyriclength;									//Track the length of this preview line
 
 		//Truncate a '/' character off the end of the lyric line if it exists (TB:RB notation for a forced line break)
-			if(lline[x][strlen(lline[x])-1] == '/')
-				lline[x][strlen(lline[x])-1]='\0';
+			if(lline[x][ustrlen(lline[x])-1] == '/')
+				lline[x][ustrlen(lline[x])-1]='\0';
 		}
 	}
 
@@ -2125,7 +2125,7 @@ void eof_render_lyric_preview(BITMAP * bp)
 			if(tempstring==NULL)	//If there wasn't enough memory to copy this string...
 				return;
 			ustrcpy(tempstring,eof_song->vocal_track->lyric[eof_hover_lyric]->text);
-			tempstring[strlen(tempstring)-1]='\0';
+			tempstring[ustrlen(tempstring)-1]='\0';
 			textout_ex(bp, font, tempstring, bp->w / 2 - text_length(font, lline[0]) / 2 + offset, 20, makecol(0, 255, 0), -1);
 			free(tempstring);
 		}
