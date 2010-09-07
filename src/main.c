@@ -26,6 +26,7 @@
 #include "config.h"
 #include "midi.h"
 #include "midi_import.h"
+#include "chart_import.h"
 #include "window.h"
 #include "note.h"
 #include "beat.h"
@@ -2838,6 +2839,21 @@ int eof_initialize(int argc, char * argv[])
 					return 0;
 				}
 //				break;
+			}
+			else if(!ustricmp(get_extension(argv[i]), "chart"))
+			{	//Import a Feedback chart via command line
+				ustrcpy(eof_song_path, argv[i]);
+				ustrcpy(eof_filename, argv[i]);
+				replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+				ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+				replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
+				eof_song = eof_import_chart(eof_filename);
+				if(!eof_song)
+				{
+					allegro_message("Could not import song!");
+					return 0;
+				}
+				eof_song_loaded = 1;
 			}
 
 			if(eof_song_loaded)
