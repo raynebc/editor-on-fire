@@ -223,84 +223,43 @@ int eof_menu_file_new_supplement(char *directory)
 	else
 	{
 		eof_render();
-//		if(!option)
-//		{
-			err = 0;
-			put_backslash(directory);
-			replace_filename(eof_temp_filename, directory, "notes.eof", 1024);
-			if(exists(eof_temp_filename))
-			{
-				err = 1;
-			}
-			replace_filename(eof_temp_filename, directory, "guitar.ogg", 1024);
-			if(exists(eof_temp_filename))
-			{
-				err = 1;
-			}
-			replace_filename(eof_temp_filename, directory, "song.ini", 1024);
-			if(exists(eof_temp_filename))
-			{
-				err = 1;
-			}
-			replace_filename(eof_temp_filename, directory, "notes.mid", 1024);
-			if(exists(eof_temp_filename))
-			{
-				err = 1;
-			}
-			if(err)
-			{
-				if(alert(NULL, "Some files may be overwritten. Proceed?", NULL, "&Yes", "&No", 'y', 'n') == 2)
-				{
-					return 0;
-				}
-			}
-/*		}
-		else
+		err = 0;
+		put_backslash(directory);
+		replace_filename(eof_temp_filename, directory, "notes.eof", 1024);
+		if(exists(eof_temp_filename))
 		{
-			err = 0;
-			put_backslash(eof_etext3);
-			replace_filename(eof_temp_filename, eof_etext3, "notes.eof", 1024);
-			if(exists(eof_temp_filename))
+			err = 1;
+		}
+		replace_filename(eof_temp_filename, directory, "guitar.ogg", 1024);
+		if(exists(eof_temp_filename))
+		{
+			err = 1;
+		}
+		replace_filename(eof_temp_filename, directory, "song.ini", 1024);
+		if(exists(eof_temp_filename))
+		{
+			err = 1;
+		}
+		replace_filename(eof_temp_filename, directory, "notes.mid", 1024);
+		if(exists(eof_temp_filename))
+		{
+			err = 1;
+		}
+		if(err)
+		{
+			if(alert(NULL, "Some files may be overwritten. Proceed?", NULL, "&Yes", "&No", 'y', 'n') == 2)
 			{
-				err = 1;
-			}
-			replace_filename(eof_temp_filename, eof_etext3, "song.ini", 1024);
-			if(exists(eof_temp_filename))
-			{
-				err = 1;
-			}
-			replace_filename(eof_temp_filename, eof_etext3, "notes.mid", 1024);
-			if(exists(eof_temp_filename))
-			{
-				err = 1;
-			}
-			if(err)
-			{
-				if(alert(NULL, "Some files may be overwritten. Proceed?", NULL, "&Yes", "&No", 'y', 'n') == 2)
-				{
-					return 0;
-				}
+				return 0;
 			}
 		}
-*/
 	}
 	return 1;
 }
 
 int eof_menu_file_new_wizard(void)
 {
-//	char syscommand[1024] = {0};
-	char oggfilename[1024] = {0};
-	char year[256] = {0};
 	char * returnedfn = NULL;
-	char * returnedfolder = NULL;
-//	int newtype = 0;
 	int ret = 0;
-	ALOGG_OGG * temp_ogg = NULL;
-	char * temp_buffer = NULL;
-	int temp_buffer_size = 0;
-	struct ID3Tag tag={NULL,0,0,0,0,0,0.0,NULL,0,NULL,NULL,NULL,NULL};
-	int ctr=0;
 
 	if(eof_changes)
 	{
@@ -337,267 +296,8 @@ int eof_menu_file_new_wizard(void)
 		eof_show_mouse(NULL);
 		return 1;
 	}
-	ustrcpy(oggfilename, returnedfn);
-	ustrcpy(eof_last_ogg_path, returnedfn);
 
-	eof_color_dialog(eof_file_new_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_file_new_dialog);
-	ustrcpy(eof_etext, "");		//Used to store the Artist tag
-	ustrcpy(eof_etext2, "");	//Used to store the Title tag
-	ustrcpy(eof_etext3, "");
-	ustrcpy(eof_etext4, "");	//Used to store the filename created with %Artist% - %Title%
-	eof_render();
-	if(!ustricmp("ogg", get_extension(oggfilename)))
-	{
-		temp_buffer = eof_buffer_file(oggfilename);
-		temp_buffer_size = file_size_ex(oggfilename);
-		if(temp_buffer)
-		{
-			temp_ogg = alogg_create_ogg_from_buffer(temp_buffer, temp_buffer_size);
-			if(temp_ogg)
-			{
-				alogg_get_ogg_comment(temp_ogg, "ARTIST", eof_etext);
-				alogg_get_ogg_comment(temp_ogg, "TITLE", eof_etext2);
-			}
-		}
-	}
-	else if(!ustricmp("mp3", get_extension(oggfilename)))
-	{
-		tag.fp=fopen(oggfilename,"rb");	//Open user-specified file for reading
-		if(tag.fp != NULL)
-		{	//If the file was able to be opened
-			year[0]='\0';	//Empty the year string
-
-			if(ID3FrameProcessor(&tag))		//If ID3v2 frames are found
-			{
-				GrabID3TextFrame(&tag,"TPE1",eof_etext,sizeof(eof_etext)/sizeof(char));		//Store the Artist info in eof_etext[]
-				GrabID3TextFrame(&tag,"TIT2",eof_etext2,sizeof(eof_etext2)/sizeof(char));	//Store the Title info in eof_etext2[]
-				GrabID3TextFrame(&tag,"TYER",year,sizeof(year)/sizeof(char));			//Store the Year info in year[]
-			}
-
-			//If any of the information was not found in the ID3v2 tag, check for it from an ID3v1 tag
-			//ID3v1 fields are 30 characters long maximum (31 bytes as a string), while the year field is 4 characters long (5 bytes as a string)
-			if(tag.id3v1present > 1)	//If there were fields defined in an ID3v1 tag
-			{
-				if((eof_etext[0]=='\0') && (tag.id3v1artist != NULL))
-					strcpy(eof_etext,tag.id3v1artist);
-				if((eof_etext2[0]=='\0') && (tag.id3v1title != NULL))
-					strcpy(eof_etext2,tag.id3v1title);
-				if((year[0]=='\0') && (tag.id3v1year != NULL))
-					strcpy(year,tag.id3v1year);
-			}
-
-			//Validate year string
-			if(strlen(year) != 4)		//If the year string isn't exactly 4 digits
-				year[0]='\0';			//Nullify it
-			else
-				for(ctr=0;ctr<4;ctr++)		//Otherwise check all digits to ensure they're numerical
-					if(!isdigit(year[ctr]))	//If it contains a non numerical character
-						year[0]='\0';		//Empty the year array
-
-			DestroyID3(&tag);	//Release the list of ID3 frames
-
-			fclose(tag.fp);	//Close file
-			tag.fp=NULL;
-		}
-	}
-
-	/* user fills in song information */
-	if(eof_popup_dialog(eof_file_new_dialog, 3) != 6)
-	{
-		eof_cursor_visible = 1;
-		eof_pen_visible = 1;
-		eof_show_mouse(NULL);
-		return 1;
-	}
-
-	if((ustrlen(eof_etext) > 0) && (ustrlen(eof_etext2) > 0))
-	{
-		sprintf(eof_etext4, "%s - %s", eof_etext, eof_etext2);
-	}
-
-	/* user selects location for new song */
-	eof_color_dialog(eof_file_new_windows_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_file_new_windows_dialog);
-	eof_file_new_windows_dialog[1].flags = 0;
-	eof_file_new_windows_dialog[2].flags = 0;
-	eof_file_new_windows_dialog[3].flags = D_SELECTED;
-	if(eof_popup_dialog(eof_file_new_windows_dialog, 4) == 5)
-	{
-		if(eof_file_new_windows_dialog[1].flags & D_SELECTED)
-		{
-			eof_render();
-			returnedfolder = ncd_folder_select("Select Folder for Song");
-			if(!returnedfolder)
-			{
-				eof_cursor_visible = 1;
-				eof_pen_visible = 1;
-				eof_show_mouse(NULL);
-				return 1;
-			}
-			ustrcpy(eof_etext3, returnedfolder);
-//			newtype = 0;
-		}
-		else if(eof_file_new_windows_dialog[2].flags & D_SELECTED)
-		{
-			eof_render();
-			replace_filename(eof_etext3, returnedfn, "", 1024);
-//			newtype = 1;
-		}
-		else
-		{
-			ustrcpy(eof_etext3, eof_songs_path);
-			ustrcat(eof_etext3, eof_etext4);
-//			newtype = 0;
-		}
-	}
-	else
-	{
-		eof_cursor_visible = 1;
-		eof_pen_visible = 1;
-		eof_show_mouse(NULL);
-		return 1;
-	}
-
-	/* if music file is MP3, convert it */
-/*	if(!ustricmp(get_extension(oggfilename), "mp3"))
-	{
-		if(eof_ogg_settings())
-		{
-			if(!eof_menu_file_new_supplement(newtype))
-			{
-				eof_cursor_visible = 1;
-				eof_pen_visible = 1;
-				eof_show_mouse(NULL);
-				return 1;
-			}
-			put_backslash(eof_etext3);
-			#ifdef ALLEGRO_WINDOWS
-				eof_copy_file(oggfilename, "eoftemp.mp3");
-				usprintf(syscommand, "mp3toogg \"eoftemp.mp3\" %s \"%sguitar.ogg\" \"%s\"", eof_ogg_quality[(int)eof_ogg_setting], eof_etext3, oggfilename);
-			#elif defined(ALLEGRO_MACOSX)
-				usprintf(syscommand, "./lame --decode \"%s\" - | ./oggenc --quiet -q %s --resample 44100 -s 0 - -o \"%sguitar.ogg\"", oggfilename, eof_ogg_quality[(int)eof_ogg_setting], eof_etext3);
-			#else
-				usprintf(syscommand, "lame --decode \"%s\" - | oggenc --quiet -q %s --resample 44100 -s 0 - -o \"%sguitar.ogg\"", oggfilename, eof_ogg_quality[(int)eof_ogg_setting], eof_etext3);
-			#endif
-			eof_system(syscommand);
-			#ifdef ALLEGRO_WINDOWS
-				delete_file("eoftemp.mp3");
-			#endif
-		}
-		else
-		{
-			eof_cursor_visible = 1;
-			eof_pen_visible = 1;
-			eof_show_mouse(NULL);
-			return 2;
-		}
-	}
-
-	// otherwise copy it //
-	else
-	{
-		if(!eof_menu_file_new_supplement(newtype))
-		{
-			eof_cursor_visible = 1;
-			eof_pen_visible = 1;
-			eof_changes = 0;
-			eof_show_mouse(NULL);
-			return 1;
-		}
-		ustrcpy(syscommand, eof_etext3);
-		put_backslash(syscommand);
-		ustrcat(syscommand, "guitar.ogg");
-		if(ustricmp(oggfilename, syscommand))
-		{
-			eof_copy_file(oggfilename, syscommand);
-		}
-	}
-*/
-	ret = eof_mp3_to_ogg(oggfilename,eof_etext3);
-	if(ret != 0)	//If guitar.ogg was not created successfully
-		return ret;
-
-	/* destroy old song */
-	if(eof_song)
-	{
-		eof_destroy_song(eof_song);
-	}
-	eof_destroy_ogg();
-
-	/* create new song */
-	eof_song = eof_create_song();
-	if(!eof_song)
-	{
-		allegro_message("Error creating new song!");
-		eof_cursor_visible = 1;
-		eof_pen_visible = 1;
-		eof_show_mouse(NULL);
-		return 1;
-	}
-
-	/* fill in information */
-	ustrcpy(eof_song->tags->artist, eof_etext);
-	ustrcpy(eof_song->tags->title, eof_etext2);
-	ustrcpy(eof_song->tags->frettist, eof_last_frettist);
-	ustrcpy(eof_song->tags->year, year);	//The year tag that was read from an MP3 (if applicable)
-	ustrcpy(oggfilename, returnedfn);
-	replace_filename(eof_last_ogg_path, oggfilename, "", 1024);
-
-
-//	ustrcpy(outputfilename, eof_etext3);
-//	put_backslash(outputfilename);
-//	ustrcat(outputfilename, "song.ini");
-//	eof_save_ini(eof_song, outputfilename);
-
-	/* load OGG */
-	ustrcpy(eof_song_path, eof_etext3);
-	put_backslash(eof_song_path);
-	ustrcpy(eof_last_eof_path, eof_song_path);
-	if(temp_ogg)
-	{
-		eof_music_track = temp_ogg;
-		eof_music_data = temp_buffer;
-		eof_music_data_size = temp_buffer_size;
-	}
-	else
-	{
-		ustrcpy(oggfilename, eof_etext3);
-		put_backslash(oggfilename);
-		ustrcat(oggfilename, "guitar.ogg");
-		if(!eof_load_ogg(oggfilename))
-		{
-			eof_cursor_visible = 1;
-			eof_pen_visible = 1;
-			eof_show_mouse(NULL);
-			return 0;
-		}
-	}
-	eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
-	eof_music_actual_length = eof_music_length;
-	ustrcpy(eof_loaded_song_name, "notes.eof");
-
-	eof_song_loaded = 1;
-
-	/* get ready to edit */
-	eof_changes = 0;
-	eof_music_pos = eof_av_delay;
-	eof_undo_last_type = 0;
-	eof_change_count = 0;
-	eof_selected_catalog_entry = 0;
-//	eof_setup_menus();
-	eof_calculate_beats(eof_song);
-	eof_menu_file_quick_save();
-	eof_detect_difficulties(eof_song);
-	eof_reset_lyric_preview_lines();
-	eof_prepare_menus();
-	eof_undo_reset();
-	eof_fix_window_title();
-	eof_cursor_visible = 1;
-	eof_pen_visible = 1;
-	eof_show_mouse(NULL);
-
-	return 1;
+	return eof_new_chart(returnedfn);
 }
 
 int eof_menu_file_load(void)
@@ -2044,6 +1744,211 @@ int eof_mp3_to_ogg(char *file,char *directory)
 			eof_copy_file(file, syscommand);
 		}
 	}
+
+	return 0;	//Return success
+}
+
+int eof_new_chart(char * filename)
+{
+	char year[256] = {0};
+	char oggfilename[1024] = {0};
+	char * returnedfolder = NULL;
+	int ret = 0;
+	ALOGG_OGG * temp_ogg = NULL;
+	char * temp_buffer = NULL;
+	int temp_buffer_size = 0;
+	struct ID3Tag tag={NULL,0,0,0,0,0,0.0,NULL,0,NULL,NULL,NULL,NULL};
+	int ctr=0;
+
+	if(filename == NULL)
+		return 1;	//Return failure
+
+	ustrcpy(oggfilename, filename);
+	ustrcpy(eof_last_ogg_path, filename);
+
+	eof_color_dialog(eof_file_new_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_file_new_dialog);
+	ustrcpy(eof_etext, "");		//Used to store the Artist tag
+	ustrcpy(eof_etext2, "");	//Used to store the Title tag
+	ustrcpy(eof_etext3, "");
+	ustrcpy(eof_etext4, "");	//Used to store the filename created with %Artist% - %Title%
+	eof_render();
+	if(!ustricmp("ogg", get_extension(oggfilename)))
+	{
+		temp_buffer = eof_buffer_file(oggfilename);
+		temp_buffer_size = file_size_ex(oggfilename);
+		if(temp_buffer)
+		{
+			temp_ogg = alogg_create_ogg_from_buffer(temp_buffer, temp_buffer_size);
+			if(temp_ogg)
+			{
+				alogg_get_ogg_comment(temp_ogg, "ARTIST", eof_etext);
+				alogg_get_ogg_comment(temp_ogg, "TITLE", eof_etext2);
+			}
+		}
+	}
+	else if(!ustricmp("mp3", get_extension(oggfilename)))
+	{
+		tag.fp=fopen(oggfilename,"rb");	//Open user-specified file for reading
+		if(tag.fp != NULL)
+		{	//If the file was able to be opened
+			year[0]='\0';	//Empty the year string
+
+			if(ID3FrameProcessor(&tag))		//If ID3v2 frames are found
+			{
+				GrabID3TextFrame(&tag,"TPE1",eof_etext,sizeof(eof_etext)/sizeof(char));		//Store the Artist info in eof_etext[]
+				GrabID3TextFrame(&tag,"TIT2",eof_etext2,sizeof(eof_etext2)/sizeof(char));	//Store the Title info in eof_etext2[]
+				GrabID3TextFrame(&tag,"TYER",year,sizeof(year)/sizeof(char));			//Store the Year info in year[]
+			}
+
+			//If any of the information was not found in the ID3v2 tag, check for it from an ID3v1 tag
+			//ID3v1 fields are 30 characters long maximum (31 bytes as a string), while the year field is 4 characters long (5 bytes as a string)
+			if(tag.id3v1present > 1)	//If there were fields defined in an ID3v1 tag
+			{
+				if((eof_etext[0]=='\0') && (tag.id3v1artist != NULL))
+					strcpy(eof_etext,tag.id3v1artist);
+				if((eof_etext2[0]=='\0') && (tag.id3v1title != NULL))
+					strcpy(eof_etext2,tag.id3v1title);
+				if((year[0]=='\0') && (tag.id3v1year != NULL))
+					strcpy(year,tag.id3v1year);
+			}
+
+			//Validate year string
+			if(strlen(year) != 4)		//If the year string isn't exactly 4 digits
+				year[0]='\0';			//Nullify it
+			else
+				for(ctr=0;ctr<4;ctr++)		//Otherwise check all digits to ensure they're numerical
+					if(!isdigit(year[ctr]))	//If it contains a non numerical character
+						year[0]='\0';		//Empty the year array
+
+			DestroyID3(&tag);	//Release the list of ID3 frames
+
+			fclose(tag.fp);	//Close file
+			tag.fp=NULL;
+		}
+	}
+
+	/* user fills in song information */
+	if(eof_popup_dialog(eof_file_new_dialog, 3) != 6)
+	{
+		eof_cursor_visible = 1;
+		eof_pen_visible = 1;
+		eof_show_mouse(NULL);
+		return 1;	//Return failure
+	}
+
+	if((ustrlen(eof_etext) > 0) && (ustrlen(eof_etext2) > 0))
+	{
+		sprintf(eof_etext4, "%s - %s", eof_etext, eof_etext2);
+	}
+
+	/* user selects location for new song */
+	eof_color_dialog(eof_file_new_windows_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_file_new_windows_dialog);
+	eof_file_new_windows_dialog[1].flags = 0;
+	eof_file_new_windows_dialog[2].flags = 0;
+	eof_file_new_windows_dialog[3].flags = D_SELECTED;
+	if(eof_popup_dialog(eof_file_new_windows_dialog, 4) == 5)
+	{
+		if(eof_file_new_windows_dialog[1].flags & D_SELECTED)
+		{
+			eof_render();
+			returnedfolder = ncd_folder_select("Select Folder for Song");
+			if(!returnedfolder)
+			{
+				eof_cursor_visible = 1;
+				eof_pen_visible = 1;
+				eof_show_mouse(NULL);
+				return 1;	//Return failure
+			}
+			ustrcpy(eof_etext3, returnedfolder);
+		}
+		else if(eof_file_new_windows_dialog[2].flags & D_SELECTED)
+		{
+			eof_render();
+			replace_filename(eof_etext3, filename, "", 1024);
+		}
+		else
+		{
+			ustrcpy(eof_etext3, eof_songs_path);
+			ustrcat(eof_etext3, eof_etext4);
+		}
+	}
+	else
+	{
+		eof_cursor_visible = 1;
+		eof_pen_visible = 1;
+		eof_show_mouse(NULL);
+		return 1;	//Return failure
+	}
+
+	/* if music file is MP3, convert it */
+	ret = eof_mp3_to_ogg(oggfilename,eof_etext3);
+	if(ret != 0)	//If guitar.ogg was not created successfully
+		return ret;	//Return failure
+
+	/* destroy old song */
+	if(eof_song)
+	{
+		eof_destroy_song(eof_song);
+	}
+	eof_destroy_ogg();
+
+	/* create new song */
+	eof_song = eof_create_song();
+	if(!eof_song)
+	{
+		allegro_message("Error creating new song!");
+		eof_cursor_visible = 1;
+		eof_pen_visible = 1;
+		eof_show_mouse(NULL);
+		return 1;	//Return failure
+	}
+
+	/* fill in information */
+	ustrcpy(eof_song->tags->artist, eof_etext);
+	ustrcpy(eof_song->tags->title, eof_etext2);
+	ustrcpy(eof_song->tags->frettist, eof_last_frettist);
+	ustrcpy(eof_song->tags->year, year);	//The year tag that was read from an MP3 (if applicable)
+	ustrcpy(oggfilename, filename);
+	replace_filename(eof_last_ogg_path, oggfilename, "", 1024);
+
+	/* load OGG */
+	ustrcpy(eof_song_path, eof_etext3);
+	put_backslash(eof_song_path);
+	ustrcpy(eof_last_eof_path, eof_song_path);
+	if(temp_ogg)
+	{
+		eof_music_track = temp_ogg;
+		eof_music_data = temp_buffer;
+		eof_music_data_size = temp_buffer_size;
+	}
+	else
+	{
+		ustrcpy(oggfilename, eof_etext3);
+		put_backslash(oggfilename);
+		ustrcat(oggfilename, "guitar.ogg");
+		if(!eof_load_ogg(oggfilename))
+		{
+			eof_cursor_visible = 1;
+			eof_pen_visible = 1;
+			eof_show_mouse(NULL);
+			return 1;	//Return failure
+		}
+	}
+	eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
+	eof_music_actual_length = eof_music_length;
+	ustrcpy(eof_loaded_song_name, "notes.eof");
+
+	eof_song_loaded = 1;
+
+	/* get ready to edit */
+	eof_init_after_load();	//Initialize variables
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(NULL);
+
+	eof_menu_file_quick_save();
 
 	return 0;	//Return success
 }

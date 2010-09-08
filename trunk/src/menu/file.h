@@ -22,6 +22,11 @@ extern struct Lyric_Format *lyricdetectionlist;	//Dialog windows cannot be passe
 void eof_prepare_file_menu(void);
 
 int eof_menu_file_new_wizard(void);
+	//Prompts for path to an audio file and then uses eof_new_chart() to continue the rest of the process of initializing a new chart
+int eof_new_chart(char * filename);
+	//Accepts an input audio file, prompts user for chart name/details/destination, encoding settings if applicable and initializes EOF variables
+	//Returns nonzero on failure/cancellation
+
 int eof_menu_file_load(void);
 int eof_menu_file_save(void);
 int eof_menu_file_quick_save(void);

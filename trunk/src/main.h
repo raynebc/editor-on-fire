@@ -354,4 +354,6 @@ int eof_midi_queue_add(unsigned char note,int startpos,int endpos);	//Appends th
 void eof_midi_queue_destroy(void);	//Destroys the MIDI queue
 void eof_exit(void);
 
+void eof_init_after_load(void);	//Initializes variables and cleans up notes, should be used after loading or creating a chart
+
 #endif
