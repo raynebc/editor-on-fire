@@ -2855,26 +2855,17 @@ int eof_initialize(int argc, char * argv[])
 				}
 				eof_song_loaded = 1;
 			}
+			else if(!ustricmp(get_extension(argv[i]), "ogg") || !ustricmp(get_extension(argv[i]), "mp3"))
+			{	//Launch new chart wizard via command line
+				eof_new_chart(argv[i]);
+			}
 
 			if(eof_song_loaded)
 			{	//The command line load succeeded, perform some common initialization
-				eof_changes = 0;
-				eof_music_pos = eof_av_delay;
-				eof_music_paused = 1;
-				eof_selected_track = 0;
-				eof_selected_catalog_entry = 0;
-				eof_calculate_beats(eof_song);
-				eof_detect_difficulties(eof_song);
-				eof_determine_hopos();
-				eof_prepare_menus();
-				eof_undo_reset();
-				eof_select_beat(0);
-				eof_sort_notes();
-				eof_fixup_notes();
-				eof_fix_window_title();
-				show_mouse(NULL);
+				eof_init_after_load();	//Initialize variables
 				eof_cursor_visible = 1;
 				eof_pen_visible = 1;
+				show_mouse(NULL);
 			}
 		}
 	}
@@ -3176,6 +3167,27 @@ void eof_midi_queue_destroy(void)
 	}
 
 	MIDIqueue=MIDIqueuetail=NULL;
+}
+
+void eof_init_after_load(void)
+{
+	eof_changes = 0;
+	eof_music_pos = eof_av_delay;
+	eof_music_paused = 1;
+	eof_selected_track = 0;
+	eof_undo_last_type = 0;
+	eof_change_count = 0;
+	eof_selected_catalog_entry = 0;
+	eof_calculate_beats(eof_song);
+	eof_determine_hopos();
+	eof_detect_difficulties(eof_song);
+	eof_reset_lyric_preview_lines();
+	eof_select_beat(0);
+	eof_prepare_menus();
+	eof_undo_reset();
+	eof_sort_notes();
+	eof_fixup_notes();
+	eof_fix_window_title();
 }
 
 END_OF_MAIN()
