@@ -388,23 +388,9 @@ int eof_menu_file_load(void)
 			}
 			eof_selected_ogg = 0;
 		}
+		eof_init_after_load();
 		eof_song_loaded = 1;
-		eof_changes = 0;
-		eof_select_beat(0);
-		eof_undo_last_type = 0;
-		eof_change_count = 0;
-//		eof_setup_menus();
 		eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
-		eof_music_pos = eof_av_delay;
-		eof_selected_track = 0;
-		eof_selected_catalog_entry = 0;
-		eof_calculate_beats(eof_song);
-		eof_determine_hopos();
-		eof_detect_difficulties(eof_song);
-		eof_reset_lyric_preview_lines();
-		eof_prepare_menus();
-		eof_undo_reset();
-		eof_fix_window_title();
 		eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 0);
 	}
 	eof_show_mouse(NULL);
@@ -844,18 +830,7 @@ int eof_menu_file_midi_import(void)
 		eof_song = eof_import_midi(eof_filename);
 		if(eof_song)
 		{
-			eof_selected_track = 0;
-			eof_music_pos = eof_av_delay;
-			eof_selected_catalog_entry = 0;
-			eof_sort_notes();
-			eof_fixup_notes();
-			eof_calculate_beats(eof_song);
-			eof_determine_hopos();
-			eof_detect_difficulties(eof_song);
-			eof_prepare_menus();
-			eof_undo_reset();
-			eof_select_beat(0);
-			eof_fix_window_title();
+			eof_init_after_load();
 			eof_song_loaded = 1;
 			eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 0);
 		}
@@ -1593,18 +1568,8 @@ int eof_menu_file_feedback_import(void)
 			eof_song = eof_import_chart(returnedfn);
 			if(eof_song)
 			{
-				eof_selected_track = 0;
-				eof_music_pos = eof_av_delay;
-				eof_selected_catalog_entry = 0;
-				eof_calculate_beats(eof_song);
-				eof_determine_hopos();
-				eof_detect_difficulties(eof_song);
-				eof_prepare_menus();
-				eof_changes = 0;
-				eof_undo_reset();
-				eof_select_beat(0);
+				eof_init_after_load();
 				eof_song_loaded = 1;
-				eof_fix_window_title();
 			}
 			else
 			{
