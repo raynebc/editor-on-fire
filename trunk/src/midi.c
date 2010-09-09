@@ -6,6 +6,8 @@
 #include "midi.h"
 #include "utility.h"
 #include "menu/note.h"	//For pitch macros
+#include "foflc/Lyric_storage.h"	//For RBA extraction
+#include "foflc/Midi_parse.h"
 
 #define EOF_MIDI_TIMER_FREQUENCY  40
 
@@ -946,4 +948,77 @@ unsigned long eof_ConvertToDeltaTime(double realtime,struct Tempo_change *anchor
 		//Add .5 so that the delta counter is rounded to the nearest 1
 
 	return delta;
+}
+
+int eof_extract_rba_midi(const char * source, const char * dest)
+{
+	FILE *fp=NULL;
+	FILE *tempfile=NULL;
+	unsigned long ctr=0;
+	int jumpcode = 0;
+	char buffer[15]={0};
+
+//Open specified file
+	if((source == NULL) || (dest == NULL))
+		return 1;	//Return failure
+	fp=fopen(source,"rb");
+	if(fp == NULL)
+		return 1;	//Return failure
+
+//Set up for catching an exception thrown by FoFLC's logic in the event of an error (such as an invalid MIDI file)
+	jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
+	if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
+	{
+		puts("Assert() handled sucessfully!");
+		eof_show_mouse(NULL);
+		eof_cursor_visible = 1;
+		eof_pen_visible = 1;
+		fclose(fp);
+		if(tempfile)
+			fclose(tempfile);
+		ReleaseMIDI();
+		ReleaseMemory(1);
+		return 1;	//Return failure
+	}
+
+//Load MIDI information (parsing the RBA header if present)
+	ReleaseMIDI();		//Ensure FoFLC variables are reset
+	ReleaseMemory(1);
+	InitMIDI();
+	InitLyrics();
+	Lyrics.quick=1;		//Should be fine to skip everything except loading basic track info
+	MIDI_Load(fp,NULL,0);
+	if(MIDIstruct.hchunk.numtracks)
+	{	//If at least one valid MIDI track was parsed
+//Copy MIDI contents into file
+		tempfile=fopen(dest,"wb");
+		if(tempfile != NULL)
+		{	//Seek to MIDI header and begin copying content
+			rewind(fp);
+			if(SearchPhrase(fp,0,NULL,"MThd",4,1) != 1)	//Search for and seek to MIDI header
+			{
+				fclose(tempfile);
+				fclose(fp);
+				ReleaseMIDI();
+				ReleaseMemory(1);
+				return 1;	//Return error
+			}
+
+			//Copy the file header
+			fread_err(buffer,14,1,fp);			//Read MIDI header
+			fwrite_err(buffer,14,1,tempfile);	//Write MIDI header
+
+			//Copy tracks
+			for(ctr=0;ctr<MIDIstruct.hchunk.numtracks;ctr++)	//For each track
+			{
+				CopyTrack(fp,ctr,tempfile);
+			}
+			fclose(tempfile);
+		}
+		ReleaseMIDI();
+		ReleaseMemory(1);
+	}
+
+	fclose(fp);
+	return 0;	//Return success
 }

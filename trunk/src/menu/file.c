@@ -792,6 +792,7 @@ int eof_menu_file_midi_import(void)
 {
 	int ret = 0;
 	char * returnedfn = NULL;
+	char tempfilename[1024] = {0};
 
 	if(eof_song_loaded)
 	{
@@ -827,7 +828,19 @@ int eof_menu_file_midi_import(void)
 		ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 		replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 		replace_filename(eof_last_eof_path, eof_filename, "", 1024);
-		eof_song = eof_import_midi(eof_filename);
+		if(!ustricmp(get_extension(eof_filename), "rba"))
+		{
+			replace_filename(tempfilename, eof_filename, "eof_rba_import.tmp", 1024);
+			if(eof_extract_rba_midi(eof_filename,tempfilename) == 0)
+			{	//If this was an RBA file and the MIDI was extracted successfully
+				eof_song = eof_import_midi(tempfilename);
+				delete_file(tempfilename);	//Delete temporary file
+			}
+		}
+		else
+		{	//Perform regular MIDI import
+			eof_song = eof_import_midi(eof_filename);
+		}
 		if(eof_song)
 		{
 			eof_init_after_load();
