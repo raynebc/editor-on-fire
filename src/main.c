@@ -2682,7 +2682,7 @@ int eof_initialize(int argc, char * argv[])
 		allegro_message("Could not create file list filter (*.mid)!");
 		return 0;
 	}
-	ncdfs_filter_list_add(eof_filter_midi_files, "mid", "MIDI Files (*.mid)", 1);
+	ncdfs_filter_list_add(eof_filter_midi_files, "mid;rba", "MIDI Files (*.mid, *.rba))", 1);
 
 	eof_filter_dB_files = ncdfs_filter_list_create();
 	if(!eof_filter_dB_files)
@@ -2838,7 +2838,35 @@ int eof_initialize(int argc, char * argv[])
 					allegro_message("Could not import song!");
 					return 0;
 				}
+				else
+				{
+					eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 0);
+				}
 //				break;
+			}
+			else if(!ustricmp(get_extension(argv[i]), "rba"))
+			{
+				ustrcpy(eof_song_path, argv[i]);
+				ustrcpy(eof_filename, argv[i]);
+				replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+				ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+				replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
+				replace_filename(temp_filename, eof_filename, "eof_rba_import.tmp", 1024);
+
+				if(eof_extract_rba_midi(eof_filename,temp_filename) == 0)
+				{	//If this was an RBA file and the MIDI was extracted successfully
+					eof_song = eof_import_midi(temp_filename);
+					delete_file(temp_filename);	//Delete temporary file
+				}
+				if(!eof_song)
+				{
+					allegro_message("Could not import song!");
+					return 0;
+				}
+				else
+				{
+					eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 0);
+				}
 			}
 			else if(!ustricmp(get_extension(argv[i]), "chart"))
 			{	//Import a Feedback chart via command line
