@@ -12,6 +12,12 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 	unsigned long lastppqn = 500000;
 	char buffer[1024];
 
+	unsigned long eof_old_max_notes=0;
+	unsigned long eof_max_notes=0;
+	unsigned eof_beat_flag_anchor=0;
+	unsigned eof_max_tracks=0;
+	unsigned eof_note_amazing=0;
+
 	sp = eof_create_song();
 	if(!sp)
 	{
@@ -21,6 +27,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 	{
 		case 'G':
 		{
+			eof_old_max_notes = 65536;	//This was the value of EOF_OLD_MAX_NOTES
 			pack_fread(sp->tags->artist, 256, fp);
 			pack_fread(sp->tags->title, 256, fp);
 			sp->beat[0]->ppqn = 500000;
@@ -31,7 +38,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				if(a)
 				{
 					pack_fread(buffer, 256, fp);
-					for(j = 0; j < EOF_OLD_MAX_NOTES; j++)
+					for(j = 0; j < eof_old_max_notes; j++)
 					{
 						a = pack_getc(fp);
 						if(a)
@@ -50,6 +57,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 		}
 		case '1':
 		{
+			eof_old_max_notes = 65536;	//This was the value of EOF_OLD_MAX_NOTES
 			pack_fread(sp->tags->artist, 256, fp);
 			pack_fread(sp->tags->title, 256, fp);
 			pack_fread(sp->tags->frettist, 256, fp);
@@ -63,7 +71,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				if(a)
 				{
 					pack_fread(buffer, 256, fp);
-					for(j = 0; j < EOF_OLD_MAX_NOTES; j++)
+					for(j = 0; j < eof_old_max_notes; j++)
 					{
 						a = pack_getc(fp);
 						if(a)
@@ -82,6 +90,10 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 		}
 		case '2':
 		{
+			eof_old_max_notes = 65536;	//This was the value of EOF_OLD_MAX_NOTES
+			eof_beat_flag_anchor = 1;	//This was the value of EOF_BEAT_FLAG_ANCHOR
+			eof_max_tracks = 5;			//This was the value of EOF_MAX_TRACKS
+			eof_max_notes = 32768;		//This was the value of EOF_MAX_NOTES
 			pack_fread(sp->tags->artist, 256, fp);
 			pack_fread(sp->tags->title, 256, fp);
 			pack_fread(sp->tags->frettist, 256, fp);
@@ -95,7 +107,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				sp->beat[i]->ppqn = pack_igetl(fp);
 				if(sp->beat[i]->ppqn != lastppqn)
 				{
-					sp->beat[i]->flags = EOF_BEAT_FLAG_ANCHOR;
+					sp->beat[i]->flags = eof_beat_flag_anchor;
 				}
 				else
 				{
@@ -106,16 +118,16 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			}
 
 			/* read tracks */
-			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			for(i = 0; i < eof_max_tracks; i++)
 			{
 				a = pack_getc(fp);
 				if(a)
 				{
 					pack_fread(buffer, 256, fp);
-					for(j = 0; j < EOF_OLD_MAX_NOTES; j++)
+					for(j = 0; j < eof_old_max_notes; j++)
 					{
 						a = pack_getc(fp);
-						if(j < EOF_MAX_NOTES)
+						if(j < eof_max_notes)
 						{
 							if(a)
 							{
@@ -145,6 +157,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 		}
 		case '3':
 		{
+			eof_max_tracks = 5;			//This was the value of EOF_MAX_TRACKS
+			eof_old_max_notes = 65536;	//This was the value of EOF_OLD_MAX_NOTES
 			pack_fread(sp->tags->artist, 256, fp);
 			pack_fread(sp->tags->title, 256, fp);
 			pack_fread(sp->tags->frettist, 256, fp);
@@ -161,13 +175,13 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			}
 
 			/* read tracks */
-			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			for(i = 0; i < eof_max_tracks; i++)
 			{
 				a = pack_getc(fp);
 				if(a)
 				{
 					pack_fread(buffer, 256, fp);
-					for(j = 0; j < EOF_OLD_MAX_NOTES; j++)
+					for(j = 0; j < eof_old_max_notes; j++)
 					{
 						a = pack_getc(fp);
 						if(a)
@@ -186,6 +200,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 		}
 		case '4':
 		{
+			eof_max_tracks = 5;			//This was the value of EOF_MAX_TRACKS
+			eof_max_notes = 32768;		//This was the value of EOF_MAX_NOTES
 			pack_fread(sp->tags->artist, 256, fp);
 			pack_fread(sp->tags->title, 256, fp);
 			pack_fread(sp->tags->frettist, 256, fp);
@@ -202,13 +218,13 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			}
 
 			/* read tracks */
-			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			for(i = 0; i < eof_max_tracks; i++)
 			{
 				a = pack_getc(fp);
 				if(a)
 				{
 					pack_fread(buffer, 256, fp);
-					for(j = 0; j < EOF_MAX_NOTES; j++)
+					for(j = 0; j < eof_max_notes; j++)
 					{
 						a = pack_getc(fp);
 						if(a)
@@ -227,6 +243,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 		}
 		case '5':
 		{
+			eof_max_tracks = 5;			//This was the value of EOF_MAX_TRACKS
+			eof_max_notes = 32768;		//This was the value of EOF_MAX_NOTES
 			pack_fread(sp->tags->artist, 256, fp);
 			pack_fread(sp->tags->title, 256, fp);
 			pack_fread(sp->tags->frettist, 256, fp);
@@ -252,13 +270,13 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			}
 
 			/* read tracks */
-			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			for(i = 0; i < eof_max_tracks; i++)
 			{
 				a = pack_getc(fp);
 				if(a)
 				{
 					pack_fread(buffer, 256, fp);
-					for(j = 0; j < EOF_MAX_NOTES; j++)
+					for(j = 0; j < eof_max_notes; j++)
 					{
 						a = pack_getc(fp);
 						if(a)
@@ -277,6 +295,9 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 		}
 		case '6':
 		{
+			eof_max_tracks = 5;			//This was the value of EOF_MAX_TRACKS
+			eof_max_notes = 32768;		//This was the value of EOF_MAX_NOTES
+			eof_note_amazing = 3;		//This was the value of EOF_NOTE_AMAZING
 			pack_fread(sp->tags->artist, 256, fp);
 			pack_fread(sp->tags->title, 256, fp);
 			pack_fread(sp->tags->frettist, 256, fp);
@@ -303,13 +324,13 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			}
 
 			/* read tracks */
-			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			for(i = 0; i < eof_max_tracks; i++)
 			{
 				a = pack_getc(fp);
 				if(a)
 				{
 					pack_fread(buffer, 256, fp);
-					for(j = 0; j < EOF_MAX_NOTES; j++)
+					for(j = 0; j < eof_max_notes; j++)
 					{
 						a = pack_getc(fp);
 						if(a)
@@ -338,12 +359,15 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				sp->catalog->entry[i].track = 0;
 				sp->catalog->entry[i].start_pos = pack_igetl(fp);
 				sp->catalog->entry[i].end_pos = pack_igetl(fp);
-				sp->catalog->entry[i].type = EOF_NOTE_AMAZING;
+				sp->catalog->entry[i].type = eof_note_amazing;
 			}
 			return sp;
 		}
 		case '7':
 		{
+			eof_max_tracks = 5;			//This was the value of EOF_MAX_TRACKS
+			eof_max_notes = 32768;		//This was the value of EOF_MAX_NOTES
+			eof_note_amazing = 3;		//This was the value of EOF_NOTE_AMAZING
 			pack_fread(sp->tags->artist, 256, fp);
 			pack_fread(sp->tags->title, 256, fp);
 			pack_fread(sp->tags->frettist, 256, fp);
@@ -374,13 +398,13 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			}
 
 			/* read tracks */
-			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			for(i = 0; i < eof_max_tracks; i++)
 			{
 				a = pack_getc(fp);
 				if(a)
 				{
 					pack_fread(buffer, 256, fp);
-					for(j = 0; j < EOF_MAX_NOTES; j++)
+					for(j = 0; j < eof_max_notes; j++)
 					{
 						a = pack_getc(fp);
 						if(a)
@@ -409,12 +433,15 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				sp->catalog->entry[i].track = 0;
 				sp->catalog->entry[i].start_pos = pack_igetl(fp);
 				sp->catalog->entry[i].end_pos = pack_igetl(fp);
-				sp->catalog->entry[i].type = EOF_NOTE_AMAZING;
+				sp->catalog->entry[i].type = eof_note_amazing;
 			}
 			return sp;
 		}
 		case '8':
 		{
+			eof_max_tracks = 5;			//This was the value of EOF_MAX_TRACKS
+			eof_max_notes = 32768;		//This was the value of EOF_MAX_NOTES
+			eof_note_amazing = 3;		//This was the value of EOF_NOTE_AMAZING
 			pack_fread(sp->tags->artist, 256, fp);
 			pack_fread(sp->tags->title, 256, fp);
 			pack_fread(sp->tags->frettist, 256, fp);
@@ -445,13 +472,13 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			}
 
 			/* read tracks */
-			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			for(i = 0; i < eof_max_tracks; i++)
 			{
 				a = pack_getc(fp);
 				if(a)
 				{
 					pack_fread(buffer, 256, fp);
-					for(j = 0; j < EOF_MAX_NOTES; j++)
+					for(j = 0; j < eof_max_notes; j++)
 					{
 						a = pack_getc(fp);
 						if(a)
@@ -480,12 +507,14 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				sp->catalog->entry[i].track = pack_igetl(fp);
 				sp->catalog->entry[i].start_pos = pack_igetl(fp);
 				sp->catalog->entry[i].end_pos = pack_igetl(fp);
-				sp->catalog->entry[i].type = EOF_NOTE_AMAZING;
+				sp->catalog->entry[i].type = eof_note_amazing;
 			}
 			return sp;
 		}
 		case '9':
 		{
+			eof_max_tracks = 5;			//This was the value of EOF_MAX_TRACKS
+			eof_note_amazing = 3;		//This was the value of EOF_NOTE_AMAZING
 			pack_fread(sp->tags->artist, 256, fp);
 			pack_fread(sp->tags->title, 256, fp);
 			pack_fread(sp->tags->frettist, 256, fp);
@@ -519,7 +548,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			}
 
 			/* read tracks */
-			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			for(i = 0; i < eof_max_tracks; i++)
 			{
 				b = pack_igetl(fp);
 				eof_track_resize(sp->track[i], b);
@@ -546,12 +575,13 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				sp->catalog->entry[i].track = pack_igetl(fp);
 				sp->catalog->entry[i].start_pos = pack_igetl(fp);
 				sp->catalog->entry[i].end_pos = pack_igetl(fp);
-				sp->catalog->entry[i].type = EOF_NOTE_AMAZING;
+				sp->catalog->entry[i].type = eof_note_amazing;
 			}
 			return sp;
 		}
 		case 'A':
 		{
+			eof_max_tracks = 5;			//This was the value of EOF_MAX_TRACKS
 			pack_fread(sp->tags->artist, 256, fp);
 			pack_fread(sp->tags->title, 256, fp);
 			pack_fread(sp->tags->frettist, 256, fp);
@@ -585,7 +615,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			}
 
 			/* read tracks */
-			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			for(i = 0; i < eof_max_tracks; i++)
 			{
 				b = pack_igetl(fp);
 				eof_track_resize(sp->track[i], b);
@@ -618,6 +648,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 		}
 		case 'B':
 		{
+			eof_max_tracks = 5;			//This was the value of EOF_MAX_TRACKS
 
 			/* read song info */
 			pack_fread(sp->tags->artist, 256, fp);
@@ -665,7 +696,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			}
 
 			/* read tracks */
-			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			for(i = 0; i < eof_max_tracks; i++)
 			{
 
 				/* read solo sections */
@@ -716,6 +747,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 		}
 		case 'C':
 		{
+			eof_max_tracks = 5;			//This was the value of EOF_MAX_TRACKS
+
 			/* read file revision number */
 			sp->tags->revision = pack_igetl(fp);
 
@@ -776,7 +809,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			}
 
 			/* read tracks */
-			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			for(i = 0; i < eof_max_tracks; i++)
 			{
 
 				/* read solo sections */
@@ -835,6 +868,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 		}
 		case 'D':
 		{
+			eof_max_tracks = 5;			//This was the value of EOF_MAX_TRACKS
+
 			/* read file revision number */
 			sp->tags->revision = pack_igetl(fp);
 
@@ -895,7 +930,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			}
 
 			/* read tracks */
-			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			for(i = 0; i < eof_max_tracks; i++)
 			{
 
 				/* read solo sections */
@@ -972,6 +1007,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 		}
 		case 'E':
 		{
+			eof_max_tracks = 5;			//This was the value of EOF_MAX_TRACKS
+
 			/* read file revision number */
 			sp->tags->revision = pack_igetl(fp);
 
@@ -1032,7 +1069,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			}
 
 			/* read tracks */
-			for(i = 0; i < EOF_MAX_TRACKS; i++)
+			for(i = 0; i < eof_max_tracks; i++)
 			{
 
 				/* read solo sections */
