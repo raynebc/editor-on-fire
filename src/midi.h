@@ -38,4 +38,8 @@ unsigned long eof_ConvertToDeltaTime(double realtime,struct Tempo_change *anchor
 	//An adaptation of the ConvertToDeltaTime() function from the FoFLC source
 	//Parses a linked list of anchors and returns the delta time of the specified realtime
 
+int eof_extract_rba_midi(const char * source, const char * dest);
+	//Extracts the MIDI file embedded in the source RBA file and writes it to a regular MIDI file called dest
+	//Returns nonzero on error
+
 #endif
