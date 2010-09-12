@@ -388,9 +388,9 @@ int eof_menu_file_load(void)
 			}
 			eof_selected_ogg = 0;
 		}
-		eof_init_after_load();
 		eof_song_loaded = 1;
 		eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
+		eof_init_after_load();
 		eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 0);
 	}
 	eof_show_mouse(NULL);
