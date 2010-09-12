@@ -315,6 +315,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	unsigned long lastdelta=0;				//Keeps track of the last anchor's absolute delta time
 	char * tempstring = NULL;				//Used to store a copy of the lyric string into eof_midi_event[], so the string can be modified from the original
 	char correctlyrics = 0;					//If nonzero, logic will be performed to correct the pitchless lyrics to have a pound character and have a generic pitch note
+	unsigned long length;					//Used to cap drum notes
 
 
 	anchorlist=eof_build_tempo_list();	//Create a linked list of all tempo changes in eof_song->beat[]
@@ -413,34 +414,43 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					}
 				}
 
+				if(j == EOF_TRACK_DRUM)
+				{	//Ensure that drum notes are not written with sustain
+					length = 1;
+				}
+				else
+				{
+					length = sp->track[j]->note[i]->length;
+				}
+
 				/* write green note off */
 				if(sp->track[j]->note[i]->note & 1)
 				{
-					eof_add_midi_event(sp->track[j]->note[i]->pos + sp->track[j]->note[i]->length, 0x80, midi_note_offset + 0);
+					eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, midi_note_offset + 0);
 				}
 
 				/* write yellow note off */
 				if(sp->track[j]->note[i]->note & 2)
 				{
-					eof_add_midi_event(sp->track[j]->note[i]->pos + sp->track[j]->note[i]->length, 0x80, midi_note_offset + 1);
+					eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, midi_note_offset + 1);
 				}
 
 				/* write red note off */
 				if(sp->track[j]->note[i]->note & 4)
 				{
-					eof_add_midi_event(sp->track[j]->note[i]->pos + sp->track[j]->note[i]->length, 0x80, midi_note_offset + 2);
+					eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, midi_note_offset + 2);
 				}
 
 				/* write blue note off */
 				if(sp->track[j]->note[i]->note & 8)
 				{
-					eof_add_midi_event(sp->track[j]->note[i]->pos + sp->track[j]->note[i]->length, 0x80, midi_note_offset + 3);
+					eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, midi_note_offset + 3);
 				}
 
 				/* write purple note off */
 				if(sp->track[j]->note[i]->note & 16)
 				{
-					eof_add_midi_event(sp->track[j]->note[i]->pos + sp->track[j]->note[i]->length, 0x80, midi_note_offset + 4);
+					eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, midi_note_offset + 4);
 				}
 
 				/* write forced HOPO note off */
