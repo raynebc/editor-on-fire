@@ -2450,6 +2450,7 @@ int d_hackish_edit_proc (int msg, DIALOG *d, int c)
     return d_agup_edit_proc (msg, d, c);
 }
 
+/*
 int eof_check_arg_desktop(int argc, char * argv[])
 {
 	int i;
@@ -2464,6 +2465,7 @@ int eof_check_arg_desktop(int argc, char * argv[])
 	return 1;
 }
 
+
 int eof_check_arg_softmouse(int argc, char * argv[])
 {
 	int i;
@@ -2477,6 +2479,7 @@ int eof_check_arg_softmouse(int argc, char * argv[])
 	}
 	return 1;
 }
+*/
 
 int eof_load_data(void)
 {

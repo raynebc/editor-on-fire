@@ -1671,6 +1671,14 @@ int eof_mp3_to_ogg(char *file,char *directory)
 
 	if(!ustricmp(get_extension(file), "mp3"))
 	{
+		if(!eof_soft_cursor)
+		{
+			if(show_os_cursor(2) < 0)
+			{
+				eof_soft_cursor = 1;
+			}
+		}
+
 		if(eof_ogg_settings())
 		{
 			if(!eof_menu_file_new_supplement(directory))
@@ -1740,6 +1748,14 @@ int eof_new_chart(char * filename)
 
 	if(filename == NULL)
 		return 1;	//Return failure
+
+	if(!eof_soft_cursor)
+	{
+		if(show_os_cursor(2) < 0)
+		{
+			eof_soft_cursor = 1;
+		}
+	}
 
 	ustrcpy(oggfilename, filename);
 	ustrcpy(eof_last_ogg_path, filename);
