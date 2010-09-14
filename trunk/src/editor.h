@@ -1,6 +1,8 @@
 #ifndef EOF_EDITOR_H
 #define EOF_EDITOR_H
 
+#include "song.h"
+
 typedef struct
 {
 
@@ -52,5 +54,17 @@ void eof_editor_drum_logic(void);	//The drum record mode logic
 void eof_vocal_editor_logic(void);
 void eof_render_editor_window(void);
 void eof_render_vocal_editor_window(void);
+
+unsigned long eof_determine_piano_roll_left_edge(void);
+	//calculates the timestamp (X) where npos + X/eof_zoom = 0, effectively being the timestamp of the left edge of the piano roll
+void eof_free_waveform(struct wavestruct *ptr);
+	//frees memory used by the specified waveform structure
+int eof_waveform_slice_mean(struct waveformslice *left,struct waveformslice *right,struct wavestruct *waveform,unsigned long slicestart, unsigned long num);
+	//performs a mathematical mean on the specified waveform slice data, returning the results via left and right if they aren't NULL, which will hold the values for the left and right channels, respectively.
+	//slice numbering begins with 0
+	//returns nonzero on error
+int eof_render_waveform(struct wavestruct *waveform);
+	//Renders the waveform into the editor window, taking the zoom level into account
+	//Returns nonzero on failure
 
 #endif

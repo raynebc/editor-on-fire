@@ -315,6 +315,8 @@ extern char        eof_supports_mp3;
 extern char        eof_just_played;
 
 extern char eof_midi_initialized;	//Specifies whether Allegro was able to set up a MIDI device
+extern char eof_display_waveform;	//Specifies whether the waveform display is enabled
+extern struct wavestruct *eof_waveform;	//Stores the waveform data
 
 extern EOF_SELECTION_DATA eof_selection;
 

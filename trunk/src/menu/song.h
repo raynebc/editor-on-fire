@@ -55,4 +55,7 @@ int eof_menu_track_selected_rhythm(void);
 int eof_menu_track_selected_drum(void);
 int eof_menu_track_selected_vocals(void);
 
+void eof_menu_song_waveform(void);
+	//Toggle the display of the waveform on/off, generating the waveform data if necessary
+
 #endif
