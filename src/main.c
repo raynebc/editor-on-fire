@@ -94,7 +94,7 @@ char        eof_just_played = 0;
 int         eof_undo_toggle = 0;
 int         eof_redo_toggle = 0;
 int         eof_change_count = 0;
-int         eof_zoom = 10;
+int         eof_zoom = 10;			//The width of one pixel in the editor window in ms (smaller = higher zoom)
 int         eof_zoom_3d = 5;
 char        eof_changes = 0;
 ALOGG_OGG * eof_music_track = NULL;
@@ -116,7 +116,7 @@ int         eof_selected_ogg = 0;
 EOF_SONG    * eof_song = NULL;
 EOF_NOTE    eof_pen_note;
 EOF_LYRIC   eof_pen_lyric;
-char        eof_filename[1024] = {0};
+char        eof_filename[1024] = {0};	//The full path of the audio file that is loaded
 char        eof_song_path[1024] = {0};
 char        eof_songs_path[1024] = {0};
 char        eof_last_ogg_path[1024] = {0};
@@ -131,7 +131,7 @@ int         eof_selected_track = EOF_TRACK_GUITAR;
 int         eof_vocals_selected = 0;
 int         eof_vocals_tab = 0;
 int         eof_vocals_offset = 60; // Start at "middle C"
-int         eof_song_loaded = 0;
+int         eof_song_loaded = 0;	//The boolean condition that a chart and its audio are successfully loaded
 //int         eof_first_note = 0;
 int         eof_last_note = 0;
 int         eof_last_midi_offset = 0;
@@ -218,6 +218,8 @@ char ** eof_windows_argv;
 struct MIDIentry *MIDIqueue=NULL;		//Linked list of queued MIDI notes
 struct MIDIentry *MIDIqueuetail=NULL;	//Points to the tail of the list
 char eof_midi_initialized=0;			//Specifies whether Allegro was able to set up a MIDI device
+char eof_display_waveform=0;			//Specifies whether the waveform display is enabled
+struct wavestruct *eof_waveform=NULL;	//Stores the waveform data
 
 void eof_debug_message(char * text)
 {
@@ -1467,6 +1469,12 @@ void eof_read_global_keys(void)
 		clear_keybuf();
 		eof_menu_file_midi_import();
 		key[KEY_F6] = 0;
+	}
+	if(key[KEY_F5])
+	{
+		clear_keybuf();
+		eof_menu_song_waveform();
+		key[KEY_F5] = 0;
 	}
 }
 

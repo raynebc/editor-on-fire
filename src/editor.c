@@ -16,6 +16,7 @@
 #include "editor.h"
 #include "utility.h"	//For eof_check_string()
 #include "note.h"		//For EOF_LYRIC_PERCUSSION definition
+#include "song.h"		//For waveform functions
 
 int         eof_held_1 = 0;
 int         eof_held_2 = 0;
@@ -4156,6 +4157,9 @@ void eof_render_editor_window(void)
 		/* draw fretboard area */
 		rectfill(eof_window_editor->screen, 0, EOF_EDITOR_RENDER_OFFSET + 25, eof_window_editor->w - 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_black);
 
+		if(eof_display_waveform)
+			eof_render_waveform(eof_waveform);
+
 		/* draw solo sections */
 		for(i = 0; i < eof_song->track[eof_selected_track]->solos; i++)
 		{
@@ -4764,4 +4768,126 @@ void eof_render_vocal_editor_window(void)
 	vline(eof_window_editor->screen, 1, 25 + 8, eof_window_editor->h + 4, eof_color_black);
 	hline(eof_window_editor->screen, 1, eof_window_editor->h - 2, eof_window_editor->w - 1, makecol(224, 224, 224));
 	hline(eof_window_editor->screen, 0, eof_window_editor->h - 1, eof_window_editor->w - 1, eof_color_white);
+}
+
+unsigned long eof_determine_piano_roll_left_edge(void)
+{
+	unsigned long pos = eof_music_pos / eof_zoom;
+
+	if(pos <= 320)
+	{
+		return 0;
+	}
+	else
+	{	//Return the lowest timestamp that would be displayable given the current seek position and zoom level,
+		return ((pos - 320) * eof_zoom);
+	}
+}
+
+int eof_waveform_slice_mean(struct waveformslice *left,struct waveformslice *right,struct wavestruct *waveform,unsigned long slicestart, unsigned long num)
+{
+	unsigned long ctr,ctr2;
+	struct waveformslice results;
+	struct waveformslice *channel=NULL;
+
+//Validate parameters
+	if(waveform == NULL)
+		return 1;
+
+	if((left == NULL) && (right == NULL))
+		return 0;	//Return without doing anything
+
+//Calculate mean data
+	for(ctr=0;ctr < 2;ctr++)
+	{	//For each possible channel
+		if((ctr == 0) && (left == NULL))	//If not processing for the left channel
+			continue;	//Skip it
+		if((ctr == 1) && ((right == NULL) || (waveform->is_stereo == 0)))	//If not processing for the right channel, or the right channel doesn't exist
+			continue;	//Skip it
+		results.min=results.peak=results.rms=0;
+
+		if(ctr == 0)
+			channel = waveform->slices;	//Point to left channel data
+		else
+			channel = waveform->slices2;	//Point to right channel data
+
+		for(ctr2=0;ctr2 < num;ctr2++)
+		{	//For each requested waveform slice, add the data
+			if(slicestart + ctr2 + 1 > waveform->numslices)	//If the next slice to process doesn't exist
+				break;					//exit this loop
+
+			results.min += channel[slicestart + ctr2].min;
+			results.peak += channel[slicestart + ctr2].peak;
+			results.rms += channel[slicestart + ctr2].rms;
+		}
+
+		if(ctr2 > 1)
+		{	//If at least two slices' data was added, calculate the mean, round up
+			results.min = ((float)results.min / ctr2 + 0.5);
+			results.peak = ((float)results.peak / ctr2 + 0.5);
+			results.rms = ((float)results.rms / ctr2 );
+		}
+
+		if((ctr == 0) && (left != NULL))
+			*left  =results;
+		else if((ctr == 1) && (right != NULL))
+			*right = results;
+	}
+
+	return 0;	//Return success
+}
+
+void eof_free_waveform(struct wavestruct *ptr)
+{
+	if(ptr)
+	{
+		if(ptr->oggfilename)
+			free(ptr->oggfilename);
+		if(ptr->slices)
+			free(ptr->slices);
+		if(ptr->slices2)
+			free(ptr->slices2);
+	}
+}
+
+int eof_render_waveform(struct wavestruct *waveform)
+{
+	unsigned long x,startslice,startpixel,ctr;
+	struct waveformslice left,right;
+	unsigned long ycoord;	//Stores the Y coordinate of the middle of the fretboard area
+	unsigned long pos = eof_music_pos / eof_zoom;
+
+	if(!eof_song_loaded || !waveform)
+		return 1;	//Return error
+
+//determine timestamp of the left visible edge of the piano roll, which will be in ms, the same as the length of each waveform slice
+	startslice = eof_determine_piano_roll_left_edge();
+
+//determine which pixel is the left visible edge of the piano roll
+	if(pos < 300)
+	{
+		startpixel = 20;
+	}
+	else if(pos < 320)
+	{
+		startpixel = 320 - pos;
+	}
+	else
+	{
+		startpixel = 0;
+	}
+
+	ycoord = EOF_EDITOR_RENDER_OFFSET + 35 + 3 * eof_screen_layout.string_space;
+
+//render graph from left to right, one pixel at a time (each pixel represents eof_zoom number of milliseconds of audio)
+	for(x=startpixel,ctr=0;x < eof_window_editor->w;x++)
+	{	//for each pixel in the piano roll's visible width
+		if(eof_waveform_slice_mean(&left,&right,waveform,startslice+(ctr*eof_zoom),eof_zoom) == 0)
+		{	//processing was successful
+			if(left.peak != 0)	//If there was a left peak value, scale it to the channel's maximum amplitude and scale again to half the fretboard's height and render it in green
+				vline(eof_window_editor->screen, x, ycoord, ycoord - (left.peak / waveform->maxamp / eof_screen_layout.fretboard_h / 2), makecol(0, 190, 0));
+		}
+	}
+
+	return 0;
 }
