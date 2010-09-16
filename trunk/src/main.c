@@ -2693,7 +2693,7 @@ int eof_initialize(int argc, char * argv[])
 		allegro_message("Could not create file list filter (*.mid)!");
 		return 0;
 	}
-	ncdfs_filter_list_add(eof_filter_midi_files, "mid;rba", "MIDI Files (*.mid, *.rba))", 1);
+	ncdfs_filter_list_add(eof_filter_midi_files, "mid;rba", "MIDI Files (*.mid, *.rba)", 1);
 
 	eof_filter_dB_files = ncdfs_filter_list_create();
 	if(!eof_filter_dB_files)

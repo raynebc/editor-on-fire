@@ -22,12 +22,12 @@ EOF contains many useful functions which can be accessed through various menus. 
 <h1><a name="file">File</a></h1>
 
 <blockquote>
-[ <a href="functions.htm#new">New</a> ] [ <a href="functions.htm#load">Load</a> ] [ <a href="functions.htm#save">Save</a> ] [ <a href="functions.htm#saveas">Save As</a> ] [ <a href="functions.htm#loadogg">Load OGG</a> ] [ <a href="functions.htm#midiimport">MIDI Import</a> ] [ <a href="functions.htm#settings">Settings</a> ] [ <a href="functions.htm#preferences">Preferences</a> ] [ <a href="functions.htm#display">Display</a> ] [ <a href="functions.htm#controllers">Controllers</a> ] [ <a href="functions.htm#songfolder">Song Folder</a> ] [ <a href="functions.htm#linktofof">Link To FOF</a> ] [ <a href="functions.htm#exit">Exit</a> ]
+[ <a href="functions.htm#new">New</a> ] [ <a href="functions.htm#load">Load</a> ] [ <a href="functions.htm#save">Save</a> ] [ <a href="functions.htm#saveas">Save As</a> ] [ <a href="functions.htm#loadogg">Load OGG</a> ] [ <a href="functions.htm#midiimport">MIDI Import</a> ] [ <a href="functions.htm#dbimport">Feedback Import</a> ] [ <a href="functions.htm#lyricimport">Lyric Import</a> ] [ <a href="functions.htm#settings">Settings</a> ] [ <a href="functions.htm#preferences">Preferences</a> ] [ <a href="functions.htm#display">Display</a> ] [ <a href="functions.htm#controllers">Controllers</a> ] [ <a href="functions.htm#songfolder">Song Folder</a> ] [ <a href="functions.htm#linktofof">Link To FOF</a> ] [ <a href="functions.htm#exit">Exit</a> ]
 <h1><a name="new">New</a></h1>
 Create a new EOF project. You will select an OGG or MP3, choose a destination for the new project, and enter some information about the song. If the selected audio file is an MP3, the song artist, title and year will be automatically obtained from the file's ID3v1 and ID3v2 tag if available. When choosing a destination for your project you have three options. "Use Existing Folder" requires you to point to an existing folder where EOF will create your project files. "Use OGG Folder" will place the project files in the folder with the OGG or MP3 file you selected. "Create New Folder" will create the folder you specify in EOF's own song folder (see "File->Song Folder" below for details).<br><br>
 Wherever you choose to store the project, the OGG file you chose will be copied to "guitar.ogg" (required by "Frets On Fire"). If you choose an MP3 file, EOF will convert it to "guitar.ogg" using the average bitrate you specify in the "OGG Settings" dialog, automatically re-sampling the audio to 44khz if necessary. If you do not have LAME and Vorbis Tools installed (included in Windows version) you will not be able to use the built-in MP3 conversion.<br>
 <h1><a name="load">Load</a></h1>
-Load an existing EOF project. EOF will look for a "guitar.ogg" file in the same folder as the EOF project file you loaded. If it cannot find one you will be asked to locate an OGG file for EOF to load.<br>
+Load an existing EOF project. EOF will look for a "guitar.ogg" file in the same folder as the EOF project file you loaded. If it cannot find one you will be asked to locate an OGG (or MP3, which will be converted to OGG format) file for EOF to load.<br>
 <h1><a name="save">Save</a></h1>
 Save the current EOF project. When saving a project EOF automatically generates all the files needed for the song to work in "Frets On Fire."<br>
 <h1><a name="saveas">Save As</a></h1>
@@ -36,11 +36,15 @@ Save the current EOF project to a new location. Subsequent "Save" requests will 
 Load a new OGG file into the current project. If your song has separate audio for the guitar or other instrument you are fretting you can use this function to switch out the audio.<br><br>
 EOF keeps separate "Delay" settings for each differently named OGG file you load. This allows you to use tracks of differing length without having to adjust the delay and notes each time you swap OGG files. This is useful if you have two different versions of the same song, perhaps a karaoke version without vocals and a normal version. Setting up the "Delay" for each file will automatically move the beats and notes to the correct place each time you use "Load OGG" to swap them out.<br>
 <h1><a name="midiimport">MIDI Import</a></h1>
-Create a new EOF project from an existing song. This function is useful if you want to edit a song which was not created in EOF. Tracks are imported from the MIDI file and song properties are loaded from "song.ini" if it exists.<br>
+Create a new EOF project from an existing MIDI file.  This function is useful if you want to edit a song which was not created in EOF or if you want to alter a chart where the EOF file is not available. Tracks are imported from the MIDI file and song properties are loaded from "song.ini" if it exists.  A Rock Band Audition (RBA) file contains is a chart that was authored for Rock Band Network (RBN).  EOF provides the ability to open the MIDI data from this type of file the same way as a normal Rock Band MIDI.  EOF will look for a "guitar.ogg" file in the same folder as the MIDI file you loaded. If it cannot find one you will be asked to locate an OGG (or MP3, which will be converted to OGG format) file for EOF to load.<br>
+<h1><a name="dbimport">Feedback Import</a></h1>
+Create a new EOF project from an existing Feedback chart file.  This type of file (typically has a ".chart" file extension) is a chart format generally created using the Feedback chart editor and was originally intended for creating custom charts for Guitar Hero.  Various conversion utilities have been created previously allowing people to convert these charts into a MIDI file usable in Frets on Fire.  EOF allows Feedback charts to be imported.  It will look in the chart's folder to try to load whichever audio file is specified by the chart (MP3 and OGG are supported).  If that file is not present, it will try to open guitar.ogg.  If that file is not present, if the chart's folder only has one OGG file in it, it will try to open that file.  If there is no OGG file in the folder, or if there are multiple OGG files to choose from, EOF will have you browse for the audio file to use.<br>
+<h1><a name="lyricimport">Lyric Import</a></h1>
+Imports lyrics from an existing file into the current EOF project.  See the <a href="../vocaltutorial/index.htm#import">Lyric import</a> section of the vocal tutorial for details.<br>
 <h1><a name="settings">Settings</a></h1>
-Change the program settings. See <a href="configure.htm">Configuring EOF</a> for details<br><br>
+Change the program settings. See <a href="configure.htm">Configuring EOF</a> for details<br>
 <h1><a name="preferences">Preferences</a></h1>
-Change the user preferences. See <a href="configure.htm#preferences">Configuring EOF</a> for details<br><br>
+Change the user preferences. See <a href="configure.htm#preferences">Configuring EOF</a> for details<br>
 <h1><a name="display">Display</a></h1>
 Change the size of the EOF window.<br>
 <h1><a name="controllers">Controllers</a></h1>
@@ -54,7 +58,7 @@ Close EOF. If you have unsaved changes you will be prompted to save.<br>
 </blockquote>
 
 <h1><a name="edit">Edit</a></h1>
-[ <a href="functions.htm#undo">Undo</a> ] [ <a href="functions.htm#redo">Redo</a> ] [ <a href="functions.htm#copy">Copy</a> ] [ <a href="functions.htm#paste">Paste</a> ] [ <a href="functions.htm#oldpaste">Old Paste</a> ] [ <a href="functions.htm#gridsnap">Grid Snap</a> ] [ <a href="functions.htm#zoom">Zoom</a> ] [ <a href="functions.htm#speed">Preview Speed</a> ] [ <a href="functions.htm#playbackrate">Playback Rate</a> ] [ <a href="functions.htm#phopo">Preview HOPO</a> ] [ <a href="functions.htm#metronome">Metronome</a> ] [ <a href="functions.htm#claps">Claps</a> ] [ <a href="functions.htm#clapnotes">Clap Notes</a> ] [ <a href="functions.htm#bookmark">Bookmark</a> ] [ <a href="functions.htm#selection">Selection</a> ]
+[ <a href="functions.htm#undo">Undo</a> ] [ <a href="functions.htm#redo">Redo</a> ] [ <a href="functions.htm#copy">Copy</a> ] [ <a href="functions.htm#paste">Paste</a> ] [ <a href="functions.htm#oldpaste">Old Paste</a> ] [ <a href="functions.htm#gridsnap">Grid Snap</a> ] [ <a href="functions.htm#zoom">Zoom</a> ] [ <a href="functions.htm#speed">Preview Speed</a> ] [ <a href="functions.htm#playbackrate">Playback Rate</a> ] [ <a href="functions.htm#phopo">Preview HOPO</a> ] [ <a href="functions.htm#metronome">Metronome</a> ] [ <a href="functions.htm#claps">Claps</a> ] [ <a href="functions.htm#clapnotes">Clap Notes</a> ] [ <a href="functions.htm#tones">Vocal Tones</a> ] [ <a href="functions.htm#bookmark">Bookmark</a> ] [ <a href="functions.htm#selection">Selection</a> ]
 <blockquote>
 <h1><a name="undo">Undo</a></h1>
 Undo the previous operation. You can undo up to 8 operations.<br>
@@ -85,6 +89,8 @@ Toggle the metronome. When the metronome is on, a tick will sound at every beat 
 Toggle note claps. When note claps are on, a clap will sound at every note during audio playback. This feature is useful to ensure your notes are synchronized with the audio in the song. If your notes are placed correctly, the clap should sound at the same time each note is audible.<br>
 <h1><a name="clapnotes">Clap Notes</a></h1>
 Select a specific note color you want to trigger claps.<br>
+<h1><a name="tones">Vocal Tones</a></h1>
+Enables or disables the sounding of piano tones in PART VOCALS.  See the <a href="../vocaltutorial/index.htm#testing1">Testing and editing lyric pitches</a> section of the vocal tutorial for details.<br>
 <h1><a name="bookmark">Bookmark</a></h1>
 Place a bookmark at the current location of the position line. You can seek directly to your bookmarks (see <a href="functions.htm#seek">Song->Seek->Bookmark</a>) at any time. If you are going to be seeking to a specific part of a song multiple times, having a bookmark there can save lots of time.<br>
 <h1><a name="selection">Selection</a></h1>
@@ -120,7 +126,7 @@ Launch FOF with the current song, track, and difficulty for testing. This featur
 </blockquote>
 
 <h1><a name="note">Note</a></h1>
-[ <a href="functions.htm#toggle">Toggle</a> ] [ <a href="functions.htm#transposeup">Transpose Up</a> ] [ <a href="functions.htm#transposedown">Transpose Down</a> ] [ <a href="functions.htm#resnap">Resnap</a> ] [ <a href="functions.htm#crazy">Toggle Crazy</a> ] [ <a href="functions.htm#solos">Solos</a> ] [ <a href="functions.htm#starpower">Star Power</a> ] [ <a href="functions.htm#hopo">HOPO</a> ] [ <a href="functions.htm#delete">Delete</a> ]
+[ <a href="functions.htm#toggle">Toggle</a> ] [ <a href="functions.htm#transposeup">Transpose Up</a> ] [ <a href="functions.htm#transposedown">Transpose Down</a> ] [ <a href="functions.htm#resnap">Resnap</a> ] [ <a href="functions.htm#editlyric">Edit Lyric</a> ] [ <a href="functions.htm#splitlyric">Split Lyric</a> ] [ <a href="functions.htm#crazy">Toggle Crazy</a> ] [ <a href="functions.htm#solos">Solos</a> ] [ <a href="functions.htm#starpower">Star Power</a> ] [ <a href="functions.htm#lyricline">Lyric Lines</a> ] [ <a href="functions.htm#hopo">HOPO</a> ] [ <a href="functions.htm#delete">Delete</a> ] [ <a href="functions.htm#semitones">Display semitones as flat</a> ] [ <a href="functions.htm#freestyle">Freestyle</a> ]
 <blockquote>
 <h1><a name="toggle">Toggle</a></h1>
 Toggle the desired color in all selected notes.<br>
@@ -131,6 +137,10 @@ Transpose (move) all selected notes down one color. If any of the selected notes
 <h1><a name="resnap">Resnap</a></h1>
 Resnap all selected notes to the closest grid snap positions according to the current grid snap setting (see "<a href="functions.htm#gridsnap">Edit->Grid Snap</a>"). If two notes snap to the same position you will be notified so that you can undo if you want. It is best to use either 1/32 or 1/48 grid snap when resnapping.<br><br>
 Let's say you imported a song and some of the notes appear to be slightly off of the beat markers. Setting the grid snap to 1/32, selecting all the notes, and doing a "Resnap" can set the notes in their proper place without you having to manually move each note.<br>
+<h1><a name="editlyric">Edit Lyric</a></h1>
+Allows you to edit the text of the currently selected lyric.  See the <a href="../vocaltutorial/index.htm#addinglyrics">Manipulating lyrics</a> section of the vocal tutorial for details.<br>
+<h1><a name="splitlyric">Split Lyric</a></h1>
+Allows you to split one lyric into multiple lyrics by inserting spaces in the lyric text.  See the <a href="../vocaltutorial/index.htm#intermediate">Intermediate vocal charting topics</a> section of the vocal tutorial for details.<br>
 <h1><a name="crazy">Toggle Crazy</a></h1>
 Allow the selected notes to overlap other notes, overriding EOF's default behavior of truncating note tails to prevent this.  Use this feature to create "extended sustain" notes, where the notes in a sustained chord are played separately but are all held for the duration of the chord.<br>
 <h1><a name="solos">Solos</a></h1>
@@ -141,11 +151,17 @@ It's important to note that solos are not automatically treated as sections by F
 <h1><a name="starpower">Star Power</a></h1>
 Perform various operations related to Star Power sections. "Mark" marks the currently selected notes as a Star Power section. "Remove" removes all Star Power sections in which selected notes lie. To delete one Star Power section simply select at least one note within that section and select "Note->Star Power->Remove." "Erase All" erases all Star Power sections from the song. "Re-Mark" will modify an existing Star Power section. If you mark a Star Power section and later need to modify it, simply select the notes that belong in the section and select "Note->Star Power->Re-Mark." "Re-Mark" is only available when at least on of the selected notes lies within the Star Power section.<br><br>
 Star Power sections are not supported by all mods. Currently (at the time of this writing) the only mod that allows user-defined Star Power sections is the FoFiX betas.<br>
+<h1><a name="lyricline">Lyric Lines</a></h1>
+Allows you to mark/unmark/remark the selected lyrics as being in a lyric phrase.  See the <a href="../vocaltutorial/index.htm#intermediate">Intermediate vocal charting topics</a> section of the vocal tutorial for details.<br>
 <h1><a name="hopo">HOPO</a></h1>
 Set the HOPO status of selected notes.  Currently, FoFiX only makes a note a HOPO (Hammer On/Pull Off, meaning that a note does not have to be strummed) if it is close enough to the previous note.  What amounts to "close enough" depends on the tempo, the presence of the eighthnote_hopo option in the chart's song.ini file and the user's in-game HOPO settings.  Eventually, FoFiX may be updated to support notation where a note is manually defined as having HOPO forced on or off, as Rock Band charts have this feature.  You can force HOPO status to prepare your chart to have this functionality for future versions of FoFiX, or for other rhythm games that may support this already.  A note that has HOPO forced on will be drawn smaller than normal in the piano roll area, and a note with HOPO forced off will be drawn larger than normal.<br><br>
 <u>Note:</u>  It has been said that Guitar Hero's open strum (for bass guitar track) is charted as a forced HOPO On for a fret 1 note.  While FoFiX may not currently support open strums, other games such as "Phase Shift" may already support it.<br>
 <h1><a name="delete">Delete</a></h1>
 Delete all selected notes.<br>
+<h1><a name="semitones">Display semitones as flat</a></h1>
+Displays note names with flat notation instead of sharp notation.  See the <a href="../vocaltutorial/index.htm#advanced">Advanced topics</a> section of the vocal tutorial for details.<br>
+<h1><a name="freestyle">Freestyle</a></h1>
+Enables/disables/toggles the freestyle status of selected lyrics.  See the <a href="../vocaltutorial/index.htm#intermediate">Intermediate vocal charting topics</a> section of the vocal tutorial for details.<br>
 </blockquote>
 
 <h1><a name="beat">Beat</a></h1>
@@ -182,12 +198,14 @@ Erase all events from the current project.<br>
 </blockquote>
 
 <h1><a name="help">Help</a></h1>
-[ <a href="functions.htm#manual">Manual</a> ] [ <a href="functions.htm#tutorial">Tutorial</a> ] [ <a href="functions.htm#keys">Keys</a> ] [ <a href="functions.htm#about">About</a> ]
+[ <a href="functions.htm#manual">Manual</a> ] [ <a href="functions.htm#tutorial">Tutorial</a> ] [ <a href="functions.htm#voxtutorial">Vocals Tutorial</a> ] [ <a href="functions.htm#keys">Keys</a> ] [ <a href="functions.htm#about">About</a> ]
 <blockquote>
 <h1><a name="manual">Manual</a></h1>
 Display the documents you are currently reading.<br>
-<h1><a name="tutorial">Tutorial</a></h1>
-Display the tutorial. If you are new to EOF, look here for a guide to making songs.<br>
+<h1><a name="voxtutorial">Tutorial</a></h1>
+Display the <a href="../tutorial/index.htm">Tutorial</a>.  If you are new to EOF, look here for a guide to making songs.<br>
+<h1><a name="tutorial">Vocals Tutorial</a></h1>
+Display the <a href="../vocaltutorial/index.htm">Vocals Tutorial</a>.  Look here for a primer for creating vocal charts to use with FoFiX or even just scrolling or subtitle lyrics that are compatible with older versions of FoF.<br>
 <h1><a name="keys">Keys</a></h1>
 Display the keyboard and mouse controls used for editing songs. Almost all EOF functions can be activated using the GUI interface but using the keys can speed up the editing process considerably.<br>
 <h1><a name="about">About</a></h1>
