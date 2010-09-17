@@ -401,7 +401,7 @@ int eof_menu_file_load(void)
 
 int eof_menu_file_save_as(void)
 {
-	char old_filename[1024] = {0};
+	char new_foldername[1024] = {0};
 	char * returnedfn = NULL;
 	EOF_OGG_INFO  temp_ogg[8];
 	short         temp_oggs;
@@ -419,20 +419,17 @@ int eof_menu_file_save_as(void)
 	eof_pen_visible = 0;
 	eof_render();
 
-	/* sort notes so they are in order of position */
-	eof_sort_notes();
-	eof_fixup_notes();
-
 	returnedfn = ncd_file_select(1, eof_last_eof_path, "Save Song As", eof_filter_eof_files);
 	eof_clear_input();
 	if(returnedfn)
 	{
+		replace_filename(new_foldername, returnedfn, "", 1024);	//Obtain the chosen destination folder path
+		if(eof_menu_file_new_supplement(new_foldername) == 0)	//If the folder doesn't exist, or the user has decline to overwrite existing files
+			return 1;	//Return failure
 
-		ustrcpy(old_filename, eof_song_path);
-		replace_filename(eof_song_path, returnedfn, "", 1024);
-		replace_filename(eof_last_eof_path, returnedfn, "", 1024);
-		append_filename(eof_temp_filename, eof_song_path, "guitar.ogg", 1024);
-		swap = ustricmp(old_filename, eof_song_path);
+		append_filename(eof_temp_filename, new_foldername, "guitar.ogg", 1024);
+		swap = ustricmp(new_foldername, eof_song_path);
+
 		if(!exists(eof_temp_filename) || swap)
 		{
 			/* if we are writing to a different folder and writing
@@ -450,56 +447,21 @@ int eof_menu_file_save_as(void)
 				eof_song->tags->oggs = 1;
 				eof_selected_ogg = 0;
 			}
-
-			/* "guitar.ogg" exists so confirm overwrite when writing into a different folder */
-			if(swap && exists(eof_temp_filename))
-			{
-				if(alert(NULL, "File \"guitar.ogg\" exists. Replace?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-				{
-					eof_save_ogg(eof_temp_filename);
-				}
-			}
-			else
-			{
-				eof_save_ogg(eof_temp_filename);
-			}
 		}
 
-		/* save the chart */
-		replace_extension(eof_temp_filename, returnedfn, "eof", 1024);
-		eof_song->tags->revision++;
-		if(!eof_save_song(eof_song, eof_temp_filename))
-		{
-			allegro_message("Could not save song!");
-			eof_show_mouse(NULL);
-			eof_cursor_visible = 1;
-			eof_pen_visible = 1;
-			return 2;
+		i=eof_save_helper(returnedfn);	//Perform "Save As" operation to the selected path
+		if(i == 0)
+		{	//If the "Save as" operation succeeded, update folder path strings
+			ustrcpy(eof_song_path,new_foldername);
+			ustrcpy(eof_last_eof_path,new_foldername);
 		}
-		ustrcpy(eof_loaded_song_name, get_filename(eof_temp_filename));
-
-		/* save the MIDI */
-		append_filename(eof_temp_filename, eof_song_path, "notes.mid", 1024);
-		eof_export_midi(eof_song, eof_temp_filename);
-		ustrcpy(eof_temp_filename, eof_song_path);
-		ustrcat(eof_temp_filename, "song.ini");
-		eof_save_ini(eof_song, eof_temp_filename);
-		if(eof_song->tags->lyrics && eof_song->vocal_track->lyrics)							//If user enabled the Lyrics checkbox in song properties and there are lyrics defined
-		{
-			append_filename(eof_temp_filename, eof_song_path, "script.txt", 1024);
-			EOF_EXPORT_TO_LC(eof_song->vocal_track,eof_temp_filename,NULL,SCRIPT_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
-		}
-
-		/* finish up */
-		eof_changes = 0;
-		eof_undo_last_type = 0;
-		eof_change_count = 0;
-		eof_fix_window_title();
+		return i;
 	}
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
-	return 1;
+
+	return 1;	//Return canceled
 }
 
 int eof_menu_file_load_ogg(void)
@@ -599,7 +561,6 @@ int eof_menu_file_load_ogg(void)
 
 int eof_menu_file_save(void)
 {
-	char temp_filename[1024] = {0};
 	int err;
 
 	if(eof_song_loaded)
@@ -652,50 +613,7 @@ int eof_menu_file_save(void)
 		}
 	}
 
-
-//	eof_render();
-	append_filename(temp_filename, eof_song_path, eof_loaded_song_name, 1024);
-
-	/* sort notes so they are in order of position */
-	eof_sort_notes();
-	eof_fixup_notes();
-
-	/* sort lyrics */
-	eof_vocal_track_sort_lyrics(eof_song->vocal_track);
-	eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 0);
-
-	replace_extension(temp_filename, temp_filename, "eof", 1024);
-	eof_song->tags->revision++;
-	if(!eof_save_song(eof_song, temp_filename))
-	{
-		allegro_message("Could not save song!\n%s", temp_filename);
-		eof_show_mouse(NULL);
-		eof_cursor_visible = 1;
-		eof_pen_visible = 1;
-		return 2;
-	}
-	append_filename(temp_filename, eof_song_path, "notes.mid", 1024);
-	eof_export_midi(eof_song, temp_filename);
-	append_filename(temp_filename, eof_song_path, "song.ini", 1024);
-	eof_save_ini(eof_song, temp_filename);
-	append_filename(temp_filename, eof_song_path, "guitar.ogg", 1024);
-	if(!exists(temp_filename))
-	{
-		eof_save_ogg(temp_filename);
-	}
-	if(eof_song->tags->lyrics && eof_song->vocal_track->lyrics)						//If user enabled the Lyrics checkbox in song properties and there are lyrics defined
-	{
-		append_filename(temp_filename, eof_song_path, "script.txt", 1024);
-		EOF_EXPORT_TO_LC(eof_song->vocal_track,temp_filename,NULL,SCRIPT_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
-	}
-	eof_changes = 0;
-	eof_undo_last_type = 0;
-	eof_change_count = 0;
-	eof_fix_window_title();
-	eof_show_mouse(NULL);
-	eof_cursor_visible = 1;
-	eof_pen_visible = 1;
-	return 1;
+	return eof_save_helper(NULL);	//Perform "Save" operation to the chart's current path
 }
 
 int eof_menu_file_quick_save(void)
@@ -1944,5 +1862,111 @@ int eof_new_chart(char * filename)
 
 	eof_menu_file_quick_save();
 
+	return 0;	//Return success
+}
+
+int eof_save_helper(char *destfilename)
+{
+	unsigned long ctr;
+	char newfolderpath[1024] = {0};
+	char function;		//Will be set to 1 for "Save" or 2 for "Save as"
+
+	if(!eof_song_loaded)
+		return 1;	//Return failure
+
+	if(destfilename == NULL)	//Perform save instead of save as
+	{
+		function = 1;
+		if((eof_song_path == NULL) || (eof_loaded_song_name == NULL))
+			return 1;	//Return failure
+		append_filename(eof_temp_filename, eof_song_path, eof_loaded_song_name, 1024);
+		replace_filename(newfolderpath, eof_song_path, "", 1024);	//Obtain the destination path
+	}
+	else
+	{
+		function = 2;
+		replace_extension(destfilename, destfilename, "eof", 1024);	//Ensure the chart is saved with a .eof extension
+		ustrncpy(eof_temp_filename, destfilename, 1024);
+		if(eof_temp_filename[1023] != '\0')	//If the source filename was too long to store in the array
+			return 1;			//Return failure
+		replace_filename(newfolderpath, destfilename, "", 1024);	//Obtain the destination path
+	}
+
+	/* sort notes so they are in order of position */
+	eof_sort_notes();
+	eof_fixup_notes();
+
+	/* prepare lyrics if applicable */
+	if(eof_song->vocal_track->lyrics > 0)
+	{
+		/* sort and validate lyrics */
+		eof_vocal_track_sort_lyrics(eof_song->vocal_track);
+		eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 0);
+
+		/* pre-parse the lyrics to determine if any of them are not contained within a lyric phrase */
+		for(ctr = 0; ctr < eof_song->vocal_track->lyrics; ctr++)
+		{
+			if(FindLyricLine(ctr) == NULL)
+			{	//If any of the lyrics are not within a line
+				eof_cursor_visible = 0;
+				eof_pen_visible = 0;
+				eof_show_mouse(screen);
+				if(alert(NULL, "Warning: One or more lyrics aren't within lyric phrases.  Continue?", NULL, "&Yes", "&No", 'y', 'n') == 2)
+				{	//If user opts cancel the save
+					eof_show_mouse(NULL);
+					eof_cursor_visible = 1;
+					eof_pen_visible = 1;
+					return 2;	//Return cancellation
+				}
+				break;
+			}
+		}
+	}
+
+	/* save the chart */
+	replace_extension(eof_temp_filename, eof_temp_filename, "eof", 1024);	//Ensure the chart is saved with a .eof extension
+	eof_song->tags->revision++;
+	if(!eof_save_song(eof_song, eof_temp_filename))
+	{
+		allegro_message("Could not save song!");
+		eof_show_mouse(NULL);
+		eof_cursor_visible = 1;
+		eof_pen_visible = 1;
+		return 1;	//Return failure
+	}
+	ustrcpy(eof_loaded_song_name, get_filename(eof_temp_filename));
+
+	/* save the MIDI and INI files*/
+	append_filename(eof_temp_filename, newfolderpath, "notes.mid", 1024);
+	eof_export_midi(eof_song, eof_temp_filename);
+	append_filename(eof_temp_filename, newfolderpath, "song.ini", 1024);
+	eof_save_ini(eof_song, eof_temp_filename);
+
+	/* save script lyrics if applicable) */
+	if(eof_song->tags->lyrics && eof_song->vocal_track->lyrics)							//If user enabled the Lyrics checkbox in song properties and there are lyrics defined
+	{
+		append_filename(eof_temp_filename, newfolderpath, "script.txt", 1024);
+		EOF_EXPORT_TO_LC(eof_song->vocal_track,eof_temp_filename,NULL,SCRIPT_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
+	}
+
+	/* save OGG file if necessary*/
+	append_filename(eof_temp_filename, newfolderpath, "guitar.ogg", 1024);
+	if(function == 1)
+	{	//If performing "Save" function, only write guitar.ogg if it is missing
+		if(!exists(eof_temp_filename))
+			eof_save_ogg(eof_temp_filename);
+	}
+	else	//"Save as" requires the guitar.ogg to be overwritten to ensure it's the correct audio
+		eof_save_ogg(eof_temp_filename);
+
+	/* finish up */
+	eof_changes = 0;
+	eof_undo_last_type = 0;
+	eof_change_count = 0;
+	eof_fix_window_title();
+
+	eof_show_mouse(NULL);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
 	return 0;	//Return success
 }

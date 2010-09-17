@@ -1143,7 +1143,7 @@ EOF_LYRIC_LINE *FindLyricLine_p(EOF_LYRIC * lp)
 	return NULL;	//No such line found
 }
 
-EOF_LYRIC_LINE *FindLyricLine(int lyricnum)
+EOF_LYRIC_LINE *FindLyricLine(unsigned long lyricnum)
 {
 	int linectr;
 	unsigned long lyricpos;

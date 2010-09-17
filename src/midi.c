@@ -304,6 +304,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	PACKFILE * fp;
 	PACKFILE * fp2;
 	int i, j;
+	unsigned long ctr;
 	unsigned long delta = 0;
 	unsigned long track_length;
 	int midi_note_offset = 0;
@@ -541,10 +542,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		eof_clear_midi_events();
 
 		/* pre-parse the lyrics to determine if any pitchless lyrics are present */
-		for(i = 0; i < sp->vocal_track->lyrics; i++)
+		for(ctr = 0; ctr < sp->vocal_track->lyrics; ctr++)
 		{
 			correctlyrics = 0;	//By default, pitchless lyrics will not be changed to freestyle during export
-			if(sp->vocal_track->lyric[i]->note == 0)
+			if(sp->vocal_track->lyric[ctr]->note == 0)
 			{	//If any of the lyrics are missing the pitch, prompt for whether they should be corrected
 				eof_cursor_visible = 0;
 				eof_pen_visible = 0;
