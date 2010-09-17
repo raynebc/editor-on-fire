@@ -44,7 +44,7 @@ int eof_lyric_draw_truncate(int notenum, int p);
 	//Returns nonzero if the x position that the text was written to was outside of the clip region for the lyric lane,
 	//so the calling function is able to stop rendering lyrics that won't be seen
 EOF_LYRIC_LINE *FindLyricLine_p(EOF_LYRIC * lp);
-EOF_LYRIC_LINE *FindLyricLine(int lyricnum);
+EOF_LYRIC_LINE *FindLyricLine(unsigned long lyricnum);
 	//Returns a pointer to whichever line the specified lyric exists in, or NULL if it is not in a line
 
 #endif
