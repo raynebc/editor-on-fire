@@ -4837,7 +4837,7 @@ int eof_waveform_slice_mean(struct waveformslice *left,struct waveformslice *rig
 	return 0;	//Return success
 }
 
-void eof_free_waveform(struct wavestruct *ptr)
+void eof_destroy_waveform(struct wavestruct *ptr)
 {
 	if(ptr)
 	{
@@ -4847,6 +4847,7 @@ void eof_free_waveform(struct wavestruct *ptr)
 			free(ptr->slices);
 		if(ptr->slices2)
 			free(ptr->slices2);
+		free(ptr);
 	}
 }
 
@@ -4855,6 +4856,7 @@ int eof_render_waveform(struct wavestruct *waveform)
 	unsigned long x,startslice,startpixel,ctr;
 	struct waveformslice left,right;
 	unsigned long ycoord;	//Stores the Y coordinate of the middle of the fretboard area
+	unsigned long y;		//Stores the amplitude value that is scaled for the maximum amplitude and the graph height
 	unsigned long pos = eof_music_pos / eof_zoom;
 
 	if(!eof_song_loaded || !waveform)
@@ -4877,15 +4879,26 @@ int eof_render_waveform(struct wavestruct *waveform)
 		startpixel = 0;
 	}
 
-	ycoord = EOF_EDITOR_RENDER_OFFSET + 35 + 3 * eof_screen_layout.string_space;
+	ycoord = EOF_EDITOR_RENDER_OFFSET + 35 + 2 * eof_screen_layout.string_space;
 
 //render graph from left to right, one pixel at a time (each pixel represents eof_zoom number of milliseconds of audio)
-	for(x=startpixel,ctr=0;x < eof_window_editor->w;x++)
+	for(x=startpixel,ctr=0;x < eof_window_editor->w;x++,ctr++)
 	{	//for each pixel in the piano roll's visible width
 		if(eof_waveform_slice_mean(&left,&right,waveform,startslice+(ctr*eof_zoom),eof_zoom) == 0)
 		{	//processing was successful
-			if(left.peak != 0)	//If there was a left peak value, scale it to the channel's maximum amplitude and scale again to half the fretboard's height and render it in green
-				vline(eof_window_editor->screen, x, ycoord, ycoord - (left.peak / waveform->maxamp / eof_screen_layout.fretboard_h / 2), makecol(0, 190, 0));
+			if(left.peak != waveform->zeroamp)	//If there was a nonzero left peak amplitude, scale it to the channel's maximum amplitude and scale again to half the fretboard's height and render it in green
+			{	//Convert the amplitude to signed and scale it to fit the graph
+				if(left.peak > waveform->zeroamp)	//Render positive amplitude
+				{	//Transform y to fit between 0 and zeroamp, then scale to fit the graph
+					y=(left.peak - waveform->zeroamp) * (eof_screen_layout.fretboard_h / 2) / waveform->zeroamp;
+					vline(eof_window_editor->screen, x, ycoord, ycoord - y, makecol(0, 190, 0));
+				}
+				else
+				{	//Correct the negative amplitude, then scale it to fit the graph
+					y=(waveform->zeroamp - left.peak) * (eof_screen_layout.fretboard_h / 2) / waveform->zeroamp;
+					vline(eof_window_editor->screen, x, ycoord, ycoord + y, makecol(0, 190, 0));
+				}
+			}
 		}
 	}
 
