@@ -1054,6 +1054,7 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 	SAMPLE *audio=NULL;
 	FILE *fp=NULL;
 	struct wavestruct *waveform=NULL;
+	static struct wavestruct emptywaveform;	//all variables in this auto initialize to value 0
 	char done=0;	//-1 on unsuccessful completion, 1 on successful completion
 	unsigned long slicenum=0;
 
@@ -1075,6 +1076,8 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 	audio=alogg_create_sample_from_ogg(oggstruct);
 	if(audio == NULL)
 		done=-1;
+	else if((audio->bits != 8) && (audio->bits != 16))	//This logic currently only supports 8 and 16 bit audio
+		done=-1;
 	else
 	{
 //Initialize waveform structure
@@ -1083,10 +1086,17 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 			done=-1;
 		else
 		{
+			*waveform=emptywaveform;					//Set all variables to value zero
+			waveform->slicelength = slicelength;
 			if(alogg_get_wave_is_stereo_ogg(oggstruct))	//If this audio file has two audio channels
 				waveform->is_stereo=1;
 			else
 				waveform->is_stereo=0;
+
+			if(audio->bits == 8)
+				waveform->zeroamp=128;	//128 represents amplitude 0 for unsigned 8 bit audio samples
+			else
+				waveform->zeroamp=32768;	//32768 represents amplitude 0 for unsigned 16 bit audio samples
 
 			waveform->oggfilename=(char *)malloc(strlen(oggfilename)+1);
 			if(waveform->oggfilename == NULL)
@@ -1102,9 +1112,7 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 					waveform->numslices++;								//Increment the number of slices
 
 				strcpy(waveform->oggfilename,oggfilename);
-				waveform->maxamp=waveform->maxamp2=0;
 				waveform->slices=(struct waveformslice *)malloc(sizeof(struct waveformslice) * waveform->numslices);
-				waveform->slices2=NULL;
 				if(waveform->slices == NULL)
 					done=-1;
 				else if(waveform->is_stereo)	//If this OGG is stereo
@@ -1170,6 +1178,7 @@ int eof_process_next_waveform_slice(struct wavestruct *waveform,SAMPLE *audio,un
 //Initialize processing for this audio channel
 		samplesize=audio->bits / 8;
 		sampleindex=startsample=slicenum * waveform->slicesize;	//This is the starting sample number
+
 		if(waveform->is_stereo)		//Stereo data is interleaved as left channel, right channel, ...
 		{
 			sampleindex+=sampleindex;	//Double the sample byte index
@@ -1178,7 +1187,7 @@ int eof_process_next_waveform_slice(struct wavestruct *waveform,SAMPLE *audio,un
 		sampleindex+=channel;		//Begin one byte further ahead if processing the right channel audio samples
 
 //Process audio samples for this channel
-		for(ctr=0;ctr < waveform->slicelength;ctr++)
+		for(ctr=0;ctr < waveform->slicesize;ctr++)
 		{
 			if(startsample + ctr >= audio->len)	//If there are no more samples to read
 			{
@@ -1186,9 +1195,9 @@ int eof_process_next_waveform_slice(struct wavestruct *waveform,SAMPLE *audio,un
 				break;
 			}
 
-			sample=((char *)audio->data)[sampleindex];	//Store first sample byte
+			sample=((unsigned char *)audio->data)[sampleindex];	//Store first sample byte (Allegro documentation states the sample data is stored in unsigned format)
 			if(waveform->is_stereo)
-				sample+=((char *)audio->data)[sampleindex+1]<<8;	//Assume little endian byte order, read the next (high byte) of data
+				sample+=((unsigned char *)audio->data)[sampleindex+1]<<8;	//Assume little endian byte order, read the next (high byte) of data
 
 			if(!firstread)			//If this is the first sample
 				min=peak=sample;	//Assume it is the highest and lowest amplitude until found otherwise
@@ -1201,7 +1210,7 @@ int eof_process_next_waveform_slice(struct wavestruct *waveform,SAMPLE *audio,un
 				firstread=1;
 			}
 
-			sum+=((double)sample*sample)/waveform->slicelength;	//Add the square of this sample divided by the number of samples to read
+			sum+=((double)sample*sample)/waveform->slicesize;	//Add the square of this sample divided by the number of samples to read
 			sampleindex+=samplesize;		//Adjust index to point to next sample for this channel
 		}
 		rms=sqrt(sum);

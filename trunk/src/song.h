@@ -283,6 +283,7 @@ struct wavestruct
 	unsigned int maxamp;			//The highest amplitude of all mono/left channel samples in the audio file
 	struct waveformslice *slices2;	//The waveform data for the right channel (stereo only), will be NULL unless the OGG was in stereo
 	unsigned int maxamp2;			//The highest amplitude of all right channel samples in the audio file
+	unsigned int zeroamp;			//The amplitude representing a 0 amplitude for this waveform (32768 for 16 bit audio samples, 128 for 8 bit audio samples)
 };
 
 EOF_SONG * eof_create_song(void);	//Allocates, initializes and returns an EOF_SONG structure
