@@ -1024,97 +1024,55 @@ int eof_menu_song_test(void)
 
 int eof_menu_track_selected_guitar(void)
 {
-	int i;
-
-	for(i = 0; i < EOF_MAX_TRACKS + 1; i++)
-	{
-		eof_track_selected_menu[i].flags = 0;
-	}
-	eof_track_selected_menu[EOF_TRACK_GUITAR].flags = D_SELECTED;
-	eof_selected_track = EOF_TRACK_GUITAR;
-	eof_vocals_selected = 0;
-	eof_detect_difficulties(eof_song);
-	eof_fix_window_title();
-	return 1;
+	return eof_menu_track_selected_track_number(EOF_TRACK_GUITAR);
 }
 
 int eof_menu_track_selected_bass(void)
 {
-	int i;
-
-	for(i = 0; i < EOF_MAX_TRACKS + 1; i++)
-	{
-		eof_track_selected_menu[i].flags = 0;
-	}
-	eof_track_selected_menu[EOF_TRACK_BASS].flags = D_SELECTED;
-	eof_selected_track = EOF_TRACK_BASS;
-	eof_vocals_selected = 0;
-	eof_detect_difficulties(eof_song);
-	eof_fix_window_title();
-	return 1;
+	return eof_menu_track_selected_track_number(EOF_TRACK_BASS);
 }
 
 int eof_menu_track_selected_guitar_coop(void)
 {
-	int i;
-
-	for(i = 0; i < EOF_MAX_TRACKS + 1; i++)
-	{
-		eof_track_selected_menu[i].flags = 0;
-	}
-	eof_track_selected_menu[EOF_TRACK_GUITAR_COOP].flags = D_SELECTED;
-	eof_selected_track = EOF_TRACK_GUITAR_COOP;
-	eof_vocals_selected = 0;
-	eof_detect_difficulties(eof_song);
-	eof_fix_window_title();
-	return 1;
+	return eof_menu_track_selected_track_number(EOF_TRACK_GUITAR_COOP);
 }
 
 int eof_menu_track_selected_rhythm(void)
 {
-	int i;
-
-	for(i = 0; i < EOF_MAX_TRACKS + 1; i++)
-	{
-		eof_track_selected_menu[i].flags = 0;
-	}
-	eof_track_selected_menu[EOF_TRACK_RHYTHM].flags = D_SELECTED;
-	eof_selected_track = EOF_TRACK_RHYTHM;
-	eof_vocals_selected = 0;
-	eof_detect_difficulties(eof_song);
-	eof_fix_window_title();
-	return 1;
+	return eof_menu_track_selected_track_number(EOF_TRACK_RHYTHM);
 }
 
 int eof_menu_track_selected_drum(void)
 {
-	int i;
-
-	for(i = 0; i < EOF_MAX_TRACKS + 1; i++)
-	{
-		eof_track_selected_menu[i].flags = 0;
-	}
-	eof_track_selected_menu[EOF_TRACK_DRUM].flags = D_SELECTED;
-	eof_selected_track = EOF_TRACK_DRUM;
-	eof_vocals_selected = 0;
-	eof_detect_difficulties(eof_song);
-	eof_fix_window_title();
-	return 1;
+	return eof_menu_track_selected_track_number(EOF_TRACK_DRUM);
 }
 
 int eof_menu_track_selected_vocals(void)
 {
+	return eof_menu_track_selected_track_number(EOF_TRACK_VOCALS);
+}
+
+int eof_menu_track_selected_track_number(int tracknum)
+{
 	int i;
 
-	for(i = 0; i < EOF_MAX_TRACKS + 1; i++)
+	if((tracknum >= 0) && (tracknum <= EOF_MAX_TRACKS))
 	{
-		eof_track_selected_menu[i].flags = 0;
+		for(i = 0; i <= EOF_MAX_TRACKS + 1; i++)
+		{
+			eof_track_selected_menu[i].flags = 0;
+		}
+
+		if(tracknum == EOF_TRACK_VOCALS)
+			eof_vocals_selected = 1;
+		else
+			eof_vocals_selected = 0;
+
+		eof_track_selected_menu[tracknum].flags = D_SELECTED;
+		eof_selected_track = tracknum;
+		eof_detect_difficulties(eof_song);
+		eof_fix_window_title();
 	}
-	eof_track_selected_menu[EOF_TRACK_VOCALS].flags = D_SELECTED;
-	eof_selected_track = EOF_TRACK_VOCALS;
-	eof_vocals_selected = 1;
-	eof_detect_difficulties(eof_song);
-	eof_fix_window_title();
 	return 1;
 }
 
