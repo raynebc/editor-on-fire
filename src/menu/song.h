@@ -54,6 +54,7 @@ int eof_menu_track_selected_guitar_coop(void);
 int eof_menu_track_selected_rhythm(void);
 int eof_menu_track_selected_drum(void);
 int eof_menu_track_selected_vocals(void);
+int eof_menu_track_selected_track_number(int tracknum);	//Changes to the specified track number
 
 void eof_menu_song_waveform(void);
 	//Toggle the display of the waveform on/off, generating the waveform data if necessary
