@@ -4890,9 +4890,18 @@ int eof_render_waveform(struct wavestruct *waveform)
 		{	//processing was successful
 			if(left.peak != waveform->zeroamp)	//If there was a nonzero left peak amplitude, scale it to the channel's maximum amplitude and scale again to half the fretboard's height and render it in green
 			{
-				eof_render_waveform_line(left.peak,waveform,x,ycoord,makecol(0, 190, 0));	//Render the peak amplitude in green
-				eof_render_waveform_line(left.rms,waveform,x,ycoord,makecol(190, 0, 0));	//Render the root mean square amplitude in red
-				eof_render_waveform_line(left.min,waveform,x,ycoord,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
+				if(left.peak < waveform->zeroamp)	//If the peak is a negative amplitude
+				{	//Render it after the minimum amplitude to ensure it is visible
+					eof_render_waveform_line(left.min,waveform,x,ycoord,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
+					eof_render_waveform_line(left.rms,waveform,x,ycoord,makecol(190, 0, 0));	//Render the root mean square amplitude in red
+					eof_render_waveform_line(left.peak,waveform,x,ycoord,makecol(0, 190, 0));	//Render the peak amplitude in green
+				}
+				else
+				{	//Otherwise render it first
+					eof_render_waveform_line(left.peak,waveform,x,ycoord,makecol(0, 190, 0));	//Render the peak amplitude in green
+					eof_render_waveform_line(left.rms,waveform,x,ycoord,makecol(190, 0, 0));	//Render the root mean square amplitude in red
+					eof_render_waveform_line(left.min,waveform,x,ycoord,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
+				}
 			}
 		}
 	}
