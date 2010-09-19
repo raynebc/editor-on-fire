@@ -66,5 +66,8 @@ int eof_waveform_slice_mean(struct waveformslice *left,struct waveformslice *rig
 int eof_render_waveform(struct wavestruct *waveform);
 	//Renders the waveform into the editor window, taking the zoom level into account
 	//Returns nonzero on failure
+void eof_render_waveform_line(unsigned amp,struct wavestruct *waveform,unsigned long x,unsigned long y,int color);
+	//Given the amplitude and waveform to process, draws the vertical line for the waveform that centers on coordinate (x,y)
+	//y should be the screen coordinate of the y axis for the graph, such as the center of the fretboard area
 
 #endif

@@ -1360,7 +1360,7 @@ void eof_menu_song_waveform(void)
 		{
 			eof_waveform = eof_create_waveform(temp_filename,1);	//Generate 1ms waveform data from the current audio file
 		}
-		else if(!ustricmp(eof_waveform->oggfilename,temp_filename))
+		else if(ustricmp(eof_waveform->oggfilename,temp_filename) != 0)
 		{	//If the user opened a different OGG file since the waveform data was generated
 			eof_destroy_waveform(eof_waveform);
 			eof_waveform = eof_create_waveform(temp_filename,1);	//Generate 1ms waveform data from the current audio file
@@ -1375,4 +1375,6 @@ void eof_menu_song_waveform(void)
 	{
 		eof_display_waveform = 0;
 	}
+
+	eof_render();
 }
