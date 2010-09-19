@@ -61,6 +61,7 @@ int eof_menu_edit_hopo_fof(void);
 int eof_menu_edit_hopo_off(void);
 int eof_menu_edit_hopo_manual(void);	//A HOPO preview mode that only displays forced HOPO notes as HOPOs
 
+#define EOF_NUM_ZOOM_LEVELS 10
 int eof_menu_edit_zoom_helper_in(void);
 int eof_menu_edit_zoom_helper_out(void);
 int eof_menu_edit_zoom_10(void);
@@ -72,6 +73,8 @@ int eof_menu_edit_zoom_5(void);
 int eof_menu_edit_zoom_4(void);
 int eof_menu_edit_zoom_3(void);
 int eof_menu_edit_zoom_2(void);
+int eof_menu_edit_zoom_1(void);
+int eof_menu_edit_zoom_level(int zoom);	//Sets the zoom to the specified level
 
 int eof_menu_edit_playback_speed_helper_faster(void);
 int eof_menu_edit_playback_speed_helper_slower(void);

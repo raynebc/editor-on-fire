@@ -67,6 +67,7 @@ MENU eof_edit_zoom_menu[] =
     {"1/&4", eof_menu_edit_zoom_4, NULL, 0, NULL},
     {"1/&3", eof_menu_edit_zoom_3, NULL, 0, NULL},
     {"1/&2", eof_menu_edit_zoom_2, NULL, 0, NULL},
+    {"1/&1", eof_menu_edit_zoom_1, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -1462,143 +1463,77 @@ int eof_menu_edit_snap_custom(void)
 
 int eof_menu_edit_zoom_helper_in(void)
 {
-	int i;
-
-	for(i = 0; i < 9; i++)
-	{
-		eof_edit_zoom_menu[i].flags = 0;
-	}
-	eof_zoom--;
-	if(eof_zoom < 2)
-	{
-		eof_zoom = 2;
-	}
-	eof_edit_zoom_menu[10 - eof_zoom].flags = D_SELECTED;
-	return 1;
+	return eof_menu_edit_zoom_level(eof_zoom - 1);
 }
 
 int eof_menu_edit_zoom_helper_out(void)
 {
-	int i;
-
-	for(i = 0; i < 9; i++)
-	{
-		eof_edit_zoom_menu[i].flags = 0;
-	}
-	eof_zoom++;
-	if(eof_zoom > 10)
-	{
-		eof_zoom = 10;
-	}
-	eof_edit_zoom_menu[10 - eof_zoom].flags = D_SELECTED;
-	return 1;
+	return eof_menu_edit_zoom_level(eof_zoom + 1);
 }
 
 int eof_menu_edit_zoom_10(void)
 {
-	int i;
-	eof_zoom = 10;
-	for(i = 0; i < 9; i++)
-	{
-		eof_edit_zoom_menu[i].flags = 0;
-	}
-	eof_edit_zoom_menu[0].flags = D_SELECTED;
-	return 1;
+	return eof_menu_edit_zoom_level(10);
 }
 
 int eof_menu_edit_zoom_9(void)
 {
-	int i;
-	eof_zoom = 9;
-	for(i = 0; i < 9; i++)
-	{
-		eof_edit_zoom_menu[i].flags = 0;
-	}
-	eof_edit_zoom_menu[1].flags = D_SELECTED;
-	return 1;
+	return eof_menu_edit_zoom_level(9);
 }
 
 int eof_menu_edit_zoom_8(void)
 {
-	int i;
-	eof_zoom = 8;
-	for(i = 0; i < 9; i++)
-	{
-		eof_edit_zoom_menu[i].flags = 0;
-	}
-	eof_edit_zoom_menu[2].flags = D_SELECTED;
-	return 1;
+	return eof_menu_edit_zoom_level(8);
 }
 
 int eof_menu_edit_zoom_7(void)
 {
-	int i;
-	eof_zoom = 7;
-	for(i = 0; i < 9; i++)
-	{
-		eof_edit_zoom_menu[i].flags = 0;
-	}
-	eof_edit_zoom_menu[3].flags = D_SELECTED;
-	return 1;
+	return eof_menu_edit_zoom_level(7);
 }
 
 int eof_menu_edit_zoom_6(void)
 {
-	int i;
-	eof_zoom = 6;
-	for(i = 0; i < 9; i++)
-	{
-		eof_edit_zoom_menu[i].flags = 0;
-	}
-	eof_edit_zoom_menu[4].flags = D_SELECTED;
-	return 1;
+	return eof_menu_edit_zoom_level(6);
 }
 
 int eof_menu_edit_zoom_5(void)
 {
-	int i;
-	eof_zoom = 5;
-	for(i = 0; i < 9; i++)
-	{
-		eof_edit_zoom_menu[i].flags = 0;
-	}
-	eof_edit_zoom_menu[5].flags = D_SELECTED;
-	return 1;
+	return eof_menu_edit_zoom_level(5);
 }
 
 int eof_menu_edit_zoom_4(void)
 {
-	int i;
-	eof_zoom = 4;
-	for(i = 0; i < 9; i++)
-	{
-		eof_edit_zoom_menu[i].flags = 0;
-	}
-	eof_edit_zoom_menu[6].flags = D_SELECTED;
-	return 1;
+	return eof_menu_edit_zoom_level(4);
 }
 
 int eof_menu_edit_zoom_3(void)
 {
-	int i;
-	eof_zoom = 3;
-	for(i = 0; i < 9; i++)
-	{
-		eof_edit_zoom_menu[i].flags = 0;
-	}
-	eof_edit_zoom_menu[7].flags = D_SELECTED;
-	return 1;
+	return eof_menu_edit_zoom_level(3);
 }
 
 int eof_menu_edit_zoom_2(void)
 {
+	return eof_menu_edit_zoom_level(2);
+}
+
+int eof_menu_edit_zoom_1(void)
+{
+	return eof_menu_edit_zoom_level(1);
+}
+
+int eof_menu_edit_zoom_level(int zoom)
+{
 	int i;
-	eof_zoom = 2;
-	for(i = 0; i < 9; i++)
+	if((zoom > 0) && zoom <= EOF_NUM_ZOOM_LEVELS)
 	{
-		eof_edit_zoom_menu[i].flags = 0;
+		eof_zoom = zoom;
+		for(i = 0; i < EOF_NUM_ZOOM_LEVELS; i++)
+		{
+			eof_edit_zoom_menu[i].flags = 0;
+		}
+		eof_edit_zoom_menu[EOF_NUM_ZOOM_LEVELS - zoom].flags = D_SELECTED;
 	}
-	eof_edit_zoom_menu[8].flags = D_SELECTED;
+
 	return 1;
 }
 
