@@ -4468,6 +4468,9 @@ void eof_render_vocal_editor_window(void)
 		/* draw fretboard area */
 		rectfill(eof_window_editor->screen, 0, EOF_EDITOR_RENDER_OFFSET + 25, eof_window_editor->w - 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_black);
 
+		if(eof_display_waveform)
+			eof_render_waveform(eof_waveform);
+
 		for(i = 0; i < EOF_MAX_FRETS; i += 4)
 		{
 			hline(eof_window_editor->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
@@ -4856,7 +4859,6 @@ int eof_render_waveform(struct wavestruct *waveform)
 	unsigned long x,startslice,startpixel,ctr;
 	struct waveformslice left,right;
 	unsigned long ycoord;	//Stores the Y coordinate of the middle of the fretboard area
-	unsigned long y;		//Stores the amplitude value that is scaled for the maximum amplitude and the graph height
 	unsigned long pos = eof_music_pos / eof_zoom;
 
 	if(!eof_song_loaded || !waveform)
@@ -4887,20 +4889,32 @@ int eof_render_waveform(struct wavestruct *waveform)
 		if(eof_waveform_slice_mean(&left,&right,waveform,startslice+(ctr*eof_zoom),eof_zoom) == 0)
 		{	//processing was successful
 			if(left.peak != waveform->zeroamp)	//If there was a nonzero left peak amplitude, scale it to the channel's maximum amplitude and scale again to half the fretboard's height and render it in green
-			{	//Convert the amplitude to signed and scale it to fit the graph
-				if(left.peak > waveform->zeroamp)	//Render positive amplitude
-				{	//Transform y to fit between 0 and zeroamp, then scale to fit the graph
-					y=(left.peak - waveform->zeroamp) * (eof_screen_layout.fretboard_h / 2) / waveform->zeroamp;
-					vline(eof_window_editor->screen, x, ycoord, ycoord - y, makecol(0, 190, 0));
-				}
-				else
-				{	//Correct the negative amplitude, then scale it to fit the graph
-					y=(waveform->zeroamp - left.peak) * (eof_screen_layout.fretboard_h / 2) / waveform->zeroamp;
-					vline(eof_window_editor->screen, x, ycoord, ycoord + y, makecol(0, 190, 0));
-				}
+			{
+				eof_render_waveform_line(left.peak,waveform,x,ycoord,makecol(0, 190, 0));	//Render the peak amplitude in green
+				eof_render_waveform_line(left.rms,waveform,x,ycoord,makecol(190, 0, 0));	//Render the root mean square amplitude in red
+				eof_render_waveform_line(left.min,waveform,x,ycoord,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
 			}
 		}
 	}
 
 	return 0;
+}
+
+void eof_render_waveform_line(unsigned amp,struct wavestruct *waveform,unsigned long x,unsigned long y,int color)
+{
+	unsigned long yoffset;	//The offset from the y axis coordinate to render the line to
+
+	if(waveform != NULL)
+	{
+		if(amp > waveform->zeroamp)	//Render positive amplitude
+		{	//Transform y to fit between 0 and zeroamp, then scale to fit the graph
+			yoffset=(amp - waveform->zeroamp) * (eof_screen_layout.fretboard_h / 2) / waveform->zeroamp;
+			vline(eof_window_editor->screen, x, y, y - yoffset, color);
+		}
+		else
+		{	//Correct the negative amplitude, then scale it to fit the graph
+			yoffset=(waveform->zeroamp - amp) * (eof_screen_layout.fretboard_h / 2) / waveform->zeroamp;
+			vline(eof_window_editor->screen, x, y, y + yoffset, color);
+		}
+	}
 }

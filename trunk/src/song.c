@@ -1200,14 +1200,16 @@ int eof_process_next_waveform_slice(struct wavestruct *waveform,SAMPLE *audio,un
 				sample+=((unsigned char *)audio->data)[sampleindex+1]<<8;	//Assume little endian byte order, read the next (high byte) of data
 
 			if(!firstread)			//If this is the first sample
+			{
 				min=peak=sample;	//Assume it is the highest and lowest amplitude until found otherwise
+				firstread=1;
+			}
 			else					//Track the highest and lowest amplitude
 			{
 				if(sample > peak)
 					peak=sample;
 				if(sample < min)
 					min=sample;
-				firstread=1;
 			}
 
 			sum+=((double)sample*sample)/waveform->slicesize;	//Add the square of this sample divided by the number of samples to read
