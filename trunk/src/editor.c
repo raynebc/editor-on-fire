@@ -4949,14 +4949,15 @@ int eof_render_waveform2(struct wavestruct *waveform)
 		startpixel = 0;
 	}
 
-//	ycoord = EOF_EDITOR_RENDER_OFFSET + 35 + 2 * eof_screen_layout.string_space;
-	height = ((eof_window_editor->h - 1) - (25 + 8)) / 2;
+//	height = ((eof_window_editor->h - 1) - (25 + 8)) / 2;
+	height = (eof_screen_layout.scrollbar_y - (25 + 8)) / 2;
 
 //Configure waveform parameters
 	waveform->left.height = height;
 	waveform->right.height = height;
-	waveform->left.yaxis = 25 + 8 + (height / 2);
-	waveform->right.yaxis = waveform->left.yaxis + height;
+	waveform->left.yaxis = 25 + 8 + (height / 2);	//Position left channel graph relative to the playback controls at the top of the editor window
+//	waveform->right.yaxis = waveform->left.yaxis + height;
+	waveform->right.yaxis = eof_screen_layout.scrollbar_y - (height / 2);	//Position right channel graph relative to the scroll bar at the bottom of the editor window
 
 //render graph from left to right, one pixel at a time (each pixel represents eof_zoom number of milliseconds of audio)
 	for(x=startpixel,ctr=0;x < eof_window_editor->w;x++,ctr++)
@@ -5002,18 +5003,24 @@ int eof_render_waveform2(struct wavestruct *waveform)
 
 void eof_render_waveform_line(struct wavestruct *waveform,struct waveformchanneldata *channel,unsigned amp,unsigned long x,int color)
 {
+	unsigned long maxampoffset;	//The difference between the zero amplitude and the channel's maximum amplitude
 	unsigned long yoffset;	//The offset from the y axis coordinate to render the line to
 
 	if(waveform != NULL)
 	{
+		if(channel->maxamp > waveform->zeroamp)
+			maxampoffset = channel->maxamp - waveform->zeroamp;
+		else
+			maxampoffset = waveform->zeroamp - channel->maxamp;
+
 		if(amp > waveform->zeroamp)	//Render positive amplitude
 		{	//Transform y to fit between 0 and zeroamp, then scale to fit the graph
-			yoffset=(amp - waveform->zeroamp) * (channel->height / 2) / (channel->maxamp - waveform->zeroamp);
+			yoffset=(amp - waveform->zeroamp) * (channel->height / 2) / maxampoffset;
 			vline(eof_window_editor->screen, x, channel->yaxis, channel->yaxis - yoffset, color);
 		}
 		else
 		{	//Correct the negative amplitude, then scale it to fit the graph
-			yoffset=(waveform->zeroamp - amp) * (channel->height / 2) / (channel->maxamp - waveform->zeroamp);
+			yoffset=(waveform->zeroamp - amp) * (channel->height / 2) / maxampoffset;
 			vline(eof_window_editor->screen, x, channel->yaxis, channel->yaxis + yoffset, color);
 		}
 	}

@@ -1156,12 +1156,12 @@ int eof_process_next_waveform_slice(struct wavestruct *waveform,SAMPLE *audio,un
 	unsigned long startsample=0;	//The sample number of the first sample being processed
 	unsigned long samplesize=0;	//Number of bytes for each sample: 1 for 8 bit audio, 2 for 16 bit audio.  Doubled for stereo
 	unsigned long ctr=0;
-	double sum=0;			//Stores the sums of each sample's square (for finding the root mean square)
-	double rms=0;			//Stores the root square mean
-	unsigned min=0;			//Stores the lowest amplitude for the slice
-	unsigned peak=0;		//Stores the highest amplitude for the slice
+	double sum;			//Stores the sums of each sample's square (for finding the root mean square)
+	double rms;			//Stores the root square mean
+	unsigned min;		//Stores the lowest amplitude for the slice
+	unsigned peak;		//Stores the highest amplitude for the slice
 	unsigned long sample=0;
-	char firstread=0;		//Set to nonzero after the first sample is read into the min/max variables
+	char firstread;		//Set to nonzero after the first sample is read into the min/max variables
 	char channel=0;
 	struct waveformslice *dest;	//The structure to write this slice's data to
 	char outofsamples=0;		//Will be set to 1 if all samples in the audio structure have been processed
@@ -1179,6 +1179,7 @@ int eof_process_next_waveform_slice(struct wavestruct *waveform,SAMPLE *audio,un
 	for(channel=0;channel<=waveform->is_stereo;channel++)	//Process loop once for mono track, twice for stereo track
 	{
 //Initialize processing for this audio channel
+		sum=rms=min=peak=firstread=0;
 		samplesize=audio->bits / 8;
 		sampleindex=startsample=slicenum * waveform->slicesize;	//This is the starting sample number
 

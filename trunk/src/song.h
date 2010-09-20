@@ -275,7 +275,7 @@ struct waveformslice
 struct waveformchanneldata
 {
 	struct waveformslice *slices;	//The waveform data for this channel
-	unsigned int maxamp;			//The highest amplitude of samples in this channel
+	unsigned maxamp;			//The highest amplitude of samples in this channel
 	unsigned long yaxis;			//The y coordinate representing the y axis the channel's graph will render to
 	unsigned long height;			//The height of this channel's graph
 };
