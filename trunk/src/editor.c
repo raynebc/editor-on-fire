@@ -4810,9 +4810,9 @@ int eof_waveform_slice_mean(struct waveformslice *left,struct waveformslice *rig
 		results.min=results.peak=results.rms=0;
 
 		if(ctr == 0)
-			channel = waveform->slices;	//Point to left channel data
+			channel = waveform->left.slices;	//Point to left channel data
 		else
-			channel = waveform->slices2;	//Point to right channel data
+			channel = waveform->right.slices;	//Point to right channel data
 
 		for(ctr2=0;ctr2 < num;ctr2++)
 		{	//For each requested waveform slice, add the data
@@ -4851,10 +4851,10 @@ void eof_destroy_waveform(struct wavestruct *ptr)
 	{
 		if(ptr->oggfilename)
 			free(ptr->oggfilename);
-		if(ptr->slices)
-			free(ptr->slices);
-		if(ptr->slices2)
-			free(ptr->slices2);
+		if(ptr->left.slices)
+			free(ptr->left.slices);
+		if(ptr->right.slices)
+			free(ptr->right.slices);
 		free(ptr);
 	}
 }
@@ -4892,8 +4892,8 @@ int eof_render_waveform(struct wavestruct *waveform)
 	ycoord = (EOF_EDITOR_RENDER_OFFSET + 25) + (height / 2);
 
 //Configure waveform parameters
-	waveform->height = height;	//Set left channel graph height
-	waveform->yaxis = ycoord;	//Set left channel graph y position
+	waveform->left.height = height;	//Set left channel graph height
+	waveform->left.yaxis = ycoord;	//Set left channel graph y position
 
 //render graph from left to right, one pixel at a time (each pixel represents eof_zoom number of milliseconds of audio)
 	for(x=startpixel,ctr=0;x < eof_window_editor->w;x++,ctr++)
@@ -4904,15 +4904,15 @@ int eof_render_waveform(struct wavestruct *waveform)
 			{
 				if(left.peak < waveform->zeroamp)	//If the peak is a negative amplitude
 				{	//Render it after the minimum amplitude to ensure it is visible
-					eof_render_waveform_line(left.min,waveform->maxamp,waveform,x,ycoord,waveform->height,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
-					eof_render_waveform_line(left.rms,waveform->maxamp,waveform,x,ycoord,waveform->height,makecol(190, 0, 0));	//Render the root mean square amplitude in red
-					eof_render_waveform_line(left.peak,waveform->maxamp,waveform,x,ycoord,waveform->height,makecol(0, 190, 0));	//Render the peak amplitude in green
+					eof_render_waveform_line(waveform,&waveform->left,left.min,x,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
+					eof_render_waveform_line(waveform,&waveform->left,left.rms,x,makecol(190, 0, 0));	//Render the root mean square amplitude in red
+					eof_render_waveform_line(waveform,&waveform->left,left.peak,x,makecol(0, 190, 0));	//Render the peak amplitude in green
 				}
 				else
 				{	//Otherwise render it first
-					eof_render_waveform_line(left.peak,waveform->maxamp,waveform,x,ycoord,waveform->height,makecol(0, 190, 0));	//Render the peak amplitude in green
-					eof_render_waveform_line(left.rms,waveform->maxamp,waveform,x,ycoord,waveform->height,makecol(190, 0, 0));	//Render the root mean square amplitude in red
-					eof_render_waveform_line(left.min,waveform->maxamp,waveform,x,ycoord,waveform->height,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
+					eof_render_waveform_line(waveform,&waveform->left,left.peak,x,makecol(0, 190, 0));	//Render the peak amplitude in green
+					eof_render_waveform_line(waveform,&waveform->left,left.rms,x,makecol(190, 0, 0));	//Render the root mean square amplitude in red
+					eof_render_waveform_line(waveform,&waveform->left,left.min,x,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
 				}
 			}
 		}
@@ -4953,10 +4953,10 @@ int eof_render_waveform2(struct wavestruct *waveform)
 	height = ((eof_window_editor->h - 1) - (25 + 8)) / 2;
 
 //Configure waveform parameters
-	waveform->height = height;
-	waveform->height2 = height;
-	waveform->yaxis = 25 + 8 + (height / 2);
-	waveform->yaxis2 = waveform->yaxis + height;
+	waveform->left.height = height;
+	waveform->right.height = height;
+	waveform->left.yaxis = 25 + 8 + (height / 2);
+	waveform->right.yaxis = waveform->left.yaxis + height;
 
 //render graph from left to right, one pixel at a time (each pixel represents eof_zoom number of milliseconds of audio)
 	for(x=startpixel,ctr=0;x < eof_window_editor->w;x++,ctr++)
@@ -4967,15 +4967,15 @@ int eof_render_waveform2(struct wavestruct *waveform)
 			{
 				if(left.peak < waveform->zeroamp)	//If the peak is a negative amplitude
 				{	//Render it after the minimum amplitude to ensure it is visible
-					eof_render_waveform_line(left.min,waveform->maxamp,waveform,x,waveform->yaxis,waveform->height,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
-					eof_render_waveform_line(left.rms,waveform->maxamp,waveform,x,waveform->yaxis,waveform->height,makecol(190, 0, 0));	//Render the root mean square amplitude in red
-					eof_render_waveform_line(left.peak,waveform->maxamp,waveform,x,waveform->yaxis,waveform->height,makecol(0, 190, 0));	//Render the peak amplitude in green
+					eof_render_waveform_line(waveform,&waveform->left,left.min,x,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
+					eof_render_waveform_line(waveform,&waveform->left,left.rms,x,makecol(190, 0, 0));	//Render the root mean square amplitude in red
+					eof_render_waveform_line(waveform,&waveform->left,left.peak,x,makecol(0, 190, 0));	//Render the peak amplitude in green
 				}
 				else
 				{	//Otherwise render it first
-					eof_render_waveform_line(left.peak,waveform->maxamp,waveform,x,waveform->yaxis,waveform->height,makecol(0, 190, 0));	//Render the peak amplitude in green
-					eof_render_waveform_line(left.rms,waveform->maxamp,waveform,x,waveform->yaxis,waveform->height,makecol(190, 0, 0));	//Render the root mean square amplitude in red
-					eof_render_waveform_line(left.min,waveform->maxamp,waveform,x,waveform->yaxis,waveform->height,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
+					eof_render_waveform_line(waveform,&waveform->left,left.peak,x,makecol(0, 190, 0));	//Render the peak amplitude in green
+					eof_render_waveform_line(waveform,&waveform->left,left.rms,x,makecol(190, 0, 0));	//Render the root mean square amplitude in red
+					eof_render_waveform_line(waveform,&waveform->left,left.min,x,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
 				}
 			}
 
@@ -4983,15 +4983,15 @@ int eof_render_waveform2(struct wavestruct *waveform)
 			{
 				if(right.peak < waveform->zeroamp)	//If the peak is a negative amplitude
 				{	//Render it after the minimum amplitude to ensure it is visible
-					eof_render_waveform_line(right.min,waveform->maxamp2,waveform,x,waveform->yaxis2,waveform->height2,makecol(0, 124, 0));		//Render the minimum amplitude in dark green
-					eof_render_waveform_line(right.rms,waveform->maxamp2,waveform,x,waveform->yaxis2,waveform->height2,makecol(190, 0, 0));		//Render the root mean square amplitude in red
-					eof_render_waveform_line(right.peak,waveform->maxamp2,waveform,x,waveform->yaxis2,waveform->height2,makecol(0, 190, 0));	//Render the peak amplitude in green
+					eof_render_waveform_line(waveform,&waveform->right,right.min,x,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
+					eof_render_waveform_line(waveform,&waveform->right,right.rms,x,makecol(190, 0, 0));	//Render the root mean square amplitude in red
+					eof_render_waveform_line(waveform,&waveform->right,right.peak,x,makecol(0, 190, 0));	//Render the peak amplitude in green
 				}
 				else
 				{	//Otherwise render it first
-					eof_render_waveform_line(right.peak,waveform->maxamp2,waveform,x,waveform->yaxis2,waveform->height2,makecol(0, 190, 0));	//Render the peak amplitude in green
-					eof_render_waveform_line(right.rms,waveform->maxamp2,waveform,x,waveform->yaxis2,waveform->height2,makecol(190, 0, 0));		//Render the root mean square amplitude in red
-					eof_render_waveform_line(right.min,waveform->maxamp2,waveform,x,waveform->yaxis2,waveform->height2,makecol(0, 124, 0));		//Render the minimum amplitude in dark green
+					eof_render_waveform_line(waveform,&waveform->right,right.peak,x,makecol(0, 190, 0));	//Render the peak amplitude in green
+					eof_render_waveform_line(waveform,&waveform->right,right.rms,x,makecol(190, 0, 0));	//Render the root mean square amplitude in red
+					eof_render_waveform_line(waveform,&waveform->right,right.min,x,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
 				}
 			}
 		}
@@ -5000,24 +5000,21 @@ int eof_render_waveform2(struct wavestruct *waveform)
 	return 0;
 }
 
-void eof_render_waveform_line(unsigned amp,unsigned maxamp,struct wavestruct *waveform,unsigned long x,unsigned long y,unsigned long height,int color)
+void eof_render_waveform_line(struct wavestruct *waveform,struct waveformchanneldata *channel,unsigned amp,unsigned long x,int color)
 {
-//	unsigned long height;
 	unsigned long yoffset;	//The offset from the y axis coordinate to render the line to
 
 	if(waveform != NULL)
 	{
-//		height = (EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1) - (EOF_EDITOR_RENDER_OFFSET + 25);
-
 		if(amp > waveform->zeroamp)	//Render positive amplitude
 		{	//Transform y to fit between 0 and zeroamp, then scale to fit the graph
-			yoffset=(amp - waveform->zeroamp) * (height / 2) / (maxamp - waveform->zeroamp);
-			vline(eof_window_editor->screen, x, y, y - yoffset, color);
+			yoffset=(amp - waveform->zeroamp) * (channel->height / 2) / (channel->maxamp - waveform->zeroamp);
+			vline(eof_window_editor->screen, x, channel->yaxis, channel->yaxis - yoffset, color);
 		}
 		else
 		{	//Correct the negative amplitude, then scale it to fit the graph
-			yoffset=(waveform->zeroamp - amp) * (height / 2) / (maxamp - waveform->zeroamp);
-			vline(eof_window_editor->screen, x, y, y + yoffset, color);
+			yoffset=(waveform->zeroamp - amp) * (channel->height / 2) / (channel->maxamp - waveform->zeroamp);
+			vline(eof_window_editor->screen, x, channel->yaxis, channel->yaxis + yoffset, color);
 		}
 	}
 }

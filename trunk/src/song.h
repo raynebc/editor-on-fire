@@ -272,22 +272,34 @@ struct waveformslice
 	double rms;	//The root mean square for the samples
 };
 
+struct waveformchanneldata
+{
+	struct waveformslice *slices;	//The waveform data for this channel
+	unsigned int maxamp;			//The highest amplitude of samples in this channel
+	unsigned long yaxis;			//The y coordinate representing the y axis the channel's graph will render to
+	unsigned long height;			//The height of this channel's graph
+};
+
 struct wavestruct
 {
 	char *oggfilename;
 	unsigned long slicelength;		//The length of one slice of the graph in milliseconds
 	unsigned long slicesize;		//The number of samples in one slice of the graph
 	unsigned long numslices;		//The number of waveform structures in the arrays below
-	char is_stereo;					//This OGG has two audio channels
-	struct waveformslice *slices;	//The waveform data for the only channel (mono) or left channel (stereo)
-	unsigned int maxamp;			//The highest amplitude of all mono/left channel samples in the audio file
-	unsigned long yaxis;			//The y coordinate representing the y axis the mono/left channel graph will render to
-	unsigned long height;			//The height of the mono/left channel graph
-	struct waveformslice *slices2;	//The waveform data for the right channel (stereo only), will be NULL unless the OGG was in stereo
-	unsigned int maxamp2;			//The highest amplitude of all right channel samples in the audio file
-	unsigned long yaxis2;			//The y coordinate representing the y axis the right channel graph will render to
-	unsigned long height2;			//The height of the right channel graph
 	unsigned int zeroamp;			//The amplitude representing a 0 amplitude for this waveform (32768 for 16 bit audio samples, 128 for 8 bit audio samples)
+	char is_stereo;					//This OGG has two audio channels
+
+//	struct waveformslice *slices;	//The waveform data for the only channel (mono) or left channel (stereo)
+//	unsigned int maxamp;			//The highest amplitude of all mono/left channel samples in the audio file
+//	unsigned long yaxis;			//The y coordinate representing the y axis the mono/left channel graph will render to
+//	unsigned long height;			//The height of the mono/left channel graph
+	struct waveformchanneldata left;	//The amplitude and graph data for the audio's left channel
+
+//	struct waveformslice *slices2;	//The waveform data for the right channel (stereo only), will be NULL unless the OGG was in stereo
+//	unsigned int maxamp2;			//The highest amplitude of all right channel samples in the audio file
+//	unsigned long yaxis2;			//The y coordinate representing the y axis the right channel graph will render to
+//	unsigned long height2;			//The height of the right channel graph
+	struct waveformchanneldata right;	//The amplitude and graph data for the audio's right channel (if applicable)
 };
 
 EOF_SONG * eof_create_song(void);	//Allocates, initializes and returns an EOF_SONG structure
