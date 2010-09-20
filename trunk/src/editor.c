@@ -4817,7 +4817,12 @@ int eof_waveform_slice_mean(struct waveformslice *left,struct waveformslice *rig
 		for(ctr2=0;ctr2 < num;ctr2++)
 		{	//For each requested waveform slice, add the data
 			if(slicestart + ctr2 + 1 > waveform->numslices)	//If the next slice to process doesn't exist
+			{
+				if(ctr2 == 0)	//If the first amplitude is unavailable,
+					results.min=results.peak=results.rms=waveform->zeroamp;	//Set it to a 0dB amplitude
+
 				break;					//exit this loop
+			}
 
 			results.min += channel[slicestart + ctr2].min;
 			results.peak += channel[slicestart + ctr2].peak;
