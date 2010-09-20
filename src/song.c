@@ -1112,13 +1112,13 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 					waveform->numslices++;								//Increment the number of slices
 
 				strcpy(waveform->oggfilename,oggfilename);
-				waveform->slices=(struct waveformslice *)malloc(sizeof(struct waveformslice) * waveform->numslices);
-				if(waveform->slices == NULL)
+				waveform->left.slices=(struct waveformslice *)malloc(sizeof(struct waveformslice) * waveform->numslices);
+				if(waveform->left.slices == NULL)
 					done=-1;
 				else if(waveform->is_stereo)	//If this OGG is stereo
 				{				//Allocate memory for the right channel waveform data
-					waveform->slices2=(struct waveformslice *)malloc(sizeof(struct waveformslice) * waveform->numslices);
-					if(waveform->slices2 == NULL)
+					waveform->right.slices=(struct waveformslice *)malloc(sizeof(struct waveformslice) * waveform->numslices);
+					if(waveform->right.slices == NULL)
 						done=-1;
 				}
 			}
@@ -1167,7 +1167,10 @@ int eof_process_next_waveform_slice(struct wavestruct *waveform,SAMPLE *audio,un
 	char outofsamples=0;		//Will be set to 1 if all samples in the audio structure have been processed
 
 //Validate parameters
-	if((waveform == NULL) || (waveform->slices == NULL) || (audio == NULL))
+	if((waveform == NULL) || (waveform->left.slices == NULL) || (audio == NULL))
+		return -1;	//Return error
+
+	if(waveform->is_stereo && (waveform->right.slices == NULL))
 		return -1;	//Return error
 
 	if((slicenum > waveform->numslices))	//If this is more than the number of slices that were supposed to be read
@@ -1220,15 +1223,15 @@ int eof_process_next_waveform_slice(struct wavestruct *waveform,SAMPLE *audio,un
 //Store results to the appropriate channel's waveform data array
 		if(channel == 0)
 		{
-			dest=&(waveform->slices[slicenum]);	//Store results to mono/left channel array
-			if(peak > waveform->maxamp)
-				waveform->maxamp=peak;	//Track absolute maximum amplitude of mono/left channel
+			dest=&(waveform->left.slices[slicenum]);	//Store results to mono/left channel array
+			if(peak > waveform->left.maxamp)
+				waveform->left.maxamp=peak;	//Track absolute maximum amplitude of mono/left channel
 		}
 		else
 		{
-			dest=&(waveform->slices2[slicenum]);	//Store results to right channel array
-			if(peak > waveform->maxamp2)
-				waveform->maxamp2=peak;	//Track absolute maximum amplitude of right channel
+			dest=&(waveform->right.slices[slicenum]);	//Store results to right channel array
+			if(peak > waveform->right.maxamp)
+				waveform->right.maxamp=peak;	//Track absolute maximum amplitude of right channel
 		}
 
 		dest->min=min;

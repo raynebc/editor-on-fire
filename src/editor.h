@@ -68,9 +68,7 @@ int eof_render_waveform(struct wavestruct *waveform);
 	//Returns nonzero on failure
 int eof_render_waveform2(struct wavestruct *waveform);
 	//Similar to eof_render_waveform, but renders the waveform for both channels in the editor window
-void eof_render_waveform_line(unsigned amp,unsigned maxamp,struct wavestruct *waveform,unsigned long x,unsigned long y,unsigned long height,int color);
-	//Given the amplitude and waveform to process, draws the vertical line for the waveform that centers on coordinate (x,y)
-	//y should be the screen coordinate of the y axis for the graph, such as the center of the fretboard area
-	//height is the total height of the graph
+void eof_render_waveform_line(struct wavestruct *waveform,struct waveformchanneldata *channel,unsigned amp,unsigned long x,int color);
+	//Given the amplitude and the channel and waveform to process, draws the vertical line for the channel's waveform originating from point x and the channel's defined y axis coordinate
 
 #endif
