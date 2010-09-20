@@ -281,8 +281,12 @@ struct wavestruct
 	char is_stereo;					//This OGG has two audio channels
 	struct waveformslice *slices;	//The waveform data for the only channel (mono) or left channel (stereo)
 	unsigned int maxamp;			//The highest amplitude of all mono/left channel samples in the audio file
+	unsigned long yaxis;			//The y coordinate representing the y axis the mono/left channel graph will render to
+	unsigned long height;			//The height of the mono/left channel graph
 	struct waveformslice *slices2;	//The waveform data for the right channel (stereo only), will be NULL unless the OGG was in stereo
 	unsigned int maxamp2;			//The highest amplitude of all right channel samples in the audio file
+	unsigned long yaxis2;			//The y coordinate representing the y axis the right channel graph will render to
+	unsigned long height2;			//The height of the right channel graph
 	unsigned int zeroamp;			//The amplitude representing a 0 amplitude for this waveform (32768 for 16 bit audio samples, 128 for 8 bit audio samples)
 };
 

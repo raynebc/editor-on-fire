@@ -1184,7 +1184,7 @@ int eof_process_next_waveform_slice(struct wavestruct *waveform,SAMPLE *audio,un
 			sampleindex+=sampleindex;	//Double the sample byte index
 			samplesize+=samplesize;		//Double the sample size
 		}
-		sampleindex+=channel;		//Begin one byte further ahead if processing the right channel audio samples
+		sampleindex+=(channel * samplesize);	//Begin one sample size # bytes further ahead if processing the right channel audio samples
 
 //Process audio samples for this channel
 		for(ctr=0;ctr < waveform->slicesize;ctr++)
