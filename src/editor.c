@@ -4996,6 +4996,10 @@ int eof_render_waveform2(struct wavestruct *waveform)
 				}
 			}
 		}
+else
+{
+puts("debug");
+}
 	}
 
 	return 0;

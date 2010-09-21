@@ -1107,9 +1107,9 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 				if((audio->freq * slicelength) % 1000)					//If there was any remainder
 					waveform->slicesize++;								//Increment the size of the slice
 
-				waveform->numslices=audio->len / waveform->slicesize;	//Find the number of slices to process
-				if(audio->len % waveform->slicesize)					//If there's any remainder
-					waveform->numslices++;								//Increment the number of slices
+				waveform->numslices=(float)audio->len / ((float)audio->freq * (float)slicelength / 1000.0);	//Find the number of slices to process
+				if(audio->len % waveform->numslices)		//If there's any remainder
+					waveform->numslices++;					//Increment the number of slices
 
 				strcpy(waveform->oggfilename,oggfilename);
 				waveform->left.slices=(struct waveformslice *)malloc(sizeof(struct waveformslice) * waveform->numslices);
@@ -1184,7 +1184,7 @@ int eof_process_next_waveform_slice(struct wavestruct *waveform,SAMPLE *audio,un
 	{
 //Initialize processing for this audio channel
 		sum=rms=min=peak=firstread=0;
-		startsample=slicenum * waveform->slicesize;	//This is the sample index for this slices starting sample
+		startsample=(float)slicenum * (float)audio->freq * (float)waveform->slicelength / 1000.0;	//This is the sample index for this slices starting sample
 		sampleindex=startsample * samplesize;		//This is the byte index for this slice's starting sample number
 
 		if(channel)							//If processing the sample for the right channel
