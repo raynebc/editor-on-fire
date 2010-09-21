@@ -4833,11 +4833,11 @@ int eof_waveform_slice_mean(struct waveformslice *left,struct waveformslice *rig
 		{	//If at least two slices' data was added, calculate the mean, round up
 			results.min = ((float)results.min / ctr2 + 0.5);
 			results.peak = ((float)results.peak / ctr2 + 0.5);
-			results.rms = ((float)results.rms / ctr2 );
+			results.rms = ((double)results.rms / ctr2 );
 		}
 
 		if((ctr == 0) && (left != NULL))
-			*left  =results;
+			*left = results;
 		else if((ctr == 1) && (right != NULL))
 			*right = results;
 	}
@@ -4896,9 +4896,9 @@ int eof_render_waveform(struct wavestruct *waveform)
 	waveform->left.yaxis = ycoord;	//Set left channel graph y position
 
 //render graph from left to right, one pixel at a time (each pixel represents eof_zoom number of milliseconds of audio)
-	for(x=startpixel,ctr=0;x < eof_window_editor->w;x++,ctr++)
+	for(x=startpixel,ctr=0;x < eof_window_editor->w;x++,ctr+=eof_zoom)
 	{	//for each pixel in the piano roll's visible width
-		if(eof_waveform_slice_mean(&left,&right,waveform,startslice+(ctr*eof_zoom),eof_zoom) == 0)
+		if(eof_waveform_slice_mean(&left,&right,waveform,startslice+ctr,eof_zoom) == 0)
 		{	//processing was successful
 			if(left.peak != waveform->zeroamp)	//If there was a nonzero left peak amplitude, scale it to the channel's maximum amplitude and scale again to half the fretboard's height and render it in green
 			{
@@ -4960,9 +4960,9 @@ int eof_render_waveform2(struct wavestruct *waveform)
 	waveform->right.yaxis = eof_screen_layout.scrollbar_y - (height / 2);	//Position right channel graph relative to the scroll bar at the bottom of the editor window
 
 //render graph from left to right, one pixel at a time (each pixel represents eof_zoom number of milliseconds of audio)
-	for(x=startpixel,ctr=0;x < eof_window_editor->w;x++,ctr++)
+	for(x=startpixel,ctr=0;x < eof_window_editor->w;x++,ctr+=eof_zoom)
 	{	//for each pixel in the piano roll's visible width
-		if(eof_waveform_slice_mean(&left,&right,waveform,startslice+(ctr*eof_zoom),eof_zoom) == 0)
+		if(eof_waveform_slice_mean(&left,&right,waveform,startslice+ctr,eof_zoom) == 0)
 		{	//processing was successful
 			if(left.peak != waveform->zeroamp)	//If there was a nonzero left peak amplitude, scale it to the channel's maximum amplitude and scale again to half the fretboard's height and render it in green
 			{

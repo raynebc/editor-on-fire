@@ -1176,19 +1176,19 @@ int eof_process_next_waveform_slice(struct wavestruct *waveform,SAMPLE *audio,un
 	if((slicenum > waveform->numslices))	//If this is more than the number of slices that were supposed to be read
 		return 1;	//Return out of samples
 
+	samplesize=audio->bits / 8;
+	if(waveform->is_stereo)		//Stereo data is interleaved as left channel, right channel, ...
+		samplesize+=samplesize;	//Double the sample size
+
 	for(channel=0;channel<=waveform->is_stereo;channel++)	//Process loop once for mono track, twice for stereo track
 	{
 //Initialize processing for this audio channel
 		sum=rms=min=peak=firstread=0;
-		samplesize=audio->bits / 8;
-		sampleindex=startsample=slicenum * waveform->slicesize;	//This is the starting sample number
+		startsample=slicenum * waveform->slicesize;	//This is the sample index for this slices starting sample
+		sampleindex=startsample * samplesize;		//This is the byte index for this slice's starting sample number
 
-		if(waveform->is_stereo)		//Stereo data is interleaved as left channel, right channel, ...
-		{
-			sampleindex+=sampleindex;	//Double the sample byte index
-			samplesize+=samplesize;		//Double the sample size
-		}
-		sampleindex+=(channel * samplesize);	//Begin one sample size # bytes further ahead if processing the right channel audio samples
+		if(channel)							//If processing the sample for the right channel
+			sampleindex+=(audio->bits / 8);	//Seek past the left channel sample
 
 //Process audio samples for this channel
 		for(ctr=0;ctr < waveform->slicesize;ctr++)
@@ -1200,7 +1200,7 @@ int eof_process_next_waveform_slice(struct wavestruct *waveform,SAMPLE *audio,un
 			}
 
 			sample=((unsigned char *)audio->data)[sampleindex];	//Store first sample byte (Allegro documentation states the sample data is stored in unsigned format)
-			if(waveform->is_stereo)
+			if(audio->bits > 8)	//If this sample is more than one byte long (16 bit)
 				sample+=((unsigned char *)audio->data)[sampleindex+1]<<8;	//Assume little endian byte order, read the next (high byte) of data
 
 			if(!firstread)			//If this is the first sample
