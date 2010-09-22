@@ -4157,9 +4157,6 @@ void eof_render_editor_window(void)
 		/* draw fretboard area */
 		rectfill(eof_window_editor->screen, 0, EOF_EDITOR_RENDER_OFFSET + 25, eof_window_editor->w - 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_black);
 
-		if(eof_display_waveform)
-			eof_render_waveform(eof_waveform);
-
 		/* draw solo sections */
 		for(i = 0; i < eof_song->track[eof_selected_track]->solos; i++)
 		{
@@ -4173,9 +4170,15 @@ void eof_render_editor_window(void)
 			}
 		}
 
+		if(eof_display_waveform)
+			eof_render_waveform(eof_waveform);
+
 		for(i = 0; i < EOF_MAX_FRETS; i++)
 		{
-			hline(eof_window_editor->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
+			if(!i || (i + 1 >= EOF_MAX_FRETS))	//Ensure the top and bottom lines extend to the left of the piano roll
+				hline(eof_window_editor->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
+			else	//Draw the fret lines from the first beat marker to the end of the chart
+				hline(eof_window_editor->screen, lpos + eof_song->tags->ogg[eof_selected_ogg].midi_offset / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
 		}
 		vline(eof_window_editor->screen, lpos + (eof_music_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
 
@@ -4216,7 +4219,6 @@ void eof_render_editor_window(void)
 			}
 		}
 		vline(eof_window_editor->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
-		rectfill(eof_window_editor->screen, lpos + 1, EOF_EDITOR_RENDER_OFFSET + 35 + 1, lpos + eof_song->tags->ogg[eof_selected_ogg].midi_offset / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 12, eof_color_black);
 
 		/* draw beat lines */
 		unsigned long current_ppqn = eof_song->beat[0]->ppqn;
@@ -4471,8 +4473,8 @@ void eof_render_vocal_editor_window(void)
 		if(eof_display_waveform)
 			eof_render_waveform2(eof_waveform);
 
-		for(i = 0; i < EOF_MAX_FRETS; i += 4)
-		{
+		for(i = 0; i < EOF_MAX_FRETS; i += (EOF_MAX_FRETS - 1))
+		{	//Draw top and bottom fret lines only
 			hline(eof_window_editor->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
 		}
 		vline(eof_window_editor->screen, lpos + (eof_music_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
@@ -4514,7 +4516,7 @@ void eof_render_vocal_editor_window(void)
 			}
 		}
 		vline(eof_window_editor->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
-		rectfill(eof_window_editor->screen, lpos + 1, EOF_EDITOR_RENDER_OFFSET + 35 + 1, lpos + eof_song->tags->ogg[eof_selected_ogg].midi_offset / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 12, eof_color_black);
+//		rectfill(eof_window_editor->screen, lpos + 1, EOF_EDITOR_RENDER_OFFSET + 35 + 1, lpos + eof_song->tags->ogg[eof_selected_ogg].midi_offset / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 12, eof_color_black);
 
 		/* draw beat lines */
 		unsigned long current_ppqn = eof_song->beat[0]->ppqn;
@@ -4996,10 +4998,6 @@ int eof_render_waveform2(struct wavestruct *waveform)
 				}
 			}
 		}
-else
-{
-puts("debug");
-}
 	}
 
 	return 0;
