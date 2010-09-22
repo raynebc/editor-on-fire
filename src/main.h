@@ -197,6 +197,7 @@ extern char        eof_window_title[4096];
 extern char        eof_last_ogg_path[1024];
 extern char        eof_last_eof_path[1024];
 extern char        eof_loaded_song_name[1024];
+extern char        eof_loaded_ogg_name[1024];
 extern int         eof_quit;
 extern EOF_SCREEN_LAYOUT eof_screen_layout;
 extern BITMAP *    eof_screen;
