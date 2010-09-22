@@ -1347,23 +1347,23 @@ int eof_ini_dialog_delete(DIALOG * d)
 
 void eof_menu_song_waveform(void)
 {
-	char temp_filename[1024] = {0};
+//	char temp_filename[1024] = {0};
 
 	if(!eof_song_loaded)
 		return;
 
 	if(eof_display_waveform == 0)
 	{
-		append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);
+//		append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);
 
 		if(eof_waveform == NULL)
 		{
-			eof_waveform = eof_create_waveform(temp_filename,1);	//Generate 1ms waveform data from the current audio file
+			eof_waveform = eof_create_waveform(eof_loaded_ogg_name,1);	//Generate 1ms waveform data from the current audio file
 		}
-		else if(ustricmp(eof_waveform->oggfilename,temp_filename) != 0)
+		else if(ustricmp(eof_waveform->oggfilename,eof_loaded_ogg_name) != 0)
 		{	//If the user opened a different OGG file since the waveform data was generated
 			eof_destroy_waveform(eof_waveform);
-			eof_waveform = eof_create_waveform(temp_filename,1);	//Generate 1ms waveform data from the current audio file
+			eof_waveform = eof_create_waveform(eof_loaded_ogg_name,1);	//Generate 1ms waveform data from the current audio file
 		}
 
 		if(eof_waveform != NULL)

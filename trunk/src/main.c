@@ -122,6 +122,7 @@ char        eof_songs_path[1024] = {0};
 char        eof_last_ogg_path[1024] = {0};
 char        eof_last_eof_path[1024] = {0};
 char        eof_loaded_song_name[1024] = {0};
+char        eof_loaded_ogg_name[1024] = {0};
 char        eof_window_title[4096] = {0};
 int         eof_quit = 0;
 int         eof_note_type = EOF_NOTE_AMAZING;
@@ -1138,6 +1139,8 @@ int eof_load_ogg_quick(char * filename)
 			free(eof_music_data);
 		}
 	}
+	ustrncpy(eof_loaded_ogg_name,filename,1024);	//Store the loaded OGG filename
+	eof_loaded_ogg_name[1023] = '\0';
 	return loaded;
 }
 
@@ -1250,6 +1253,8 @@ int eof_load_ogg(char * filename)
 		eof_music_actual_length = alogg_get_length_msecs_ogg(eof_music_track);
 	} */
 
+	ustrncpy(eof_loaded_ogg_name,filename,1024);	//Store the loaded OGG filename
+	eof_loaded_ogg_name[1023] = '\0';
 	return loaded;
 }
 
