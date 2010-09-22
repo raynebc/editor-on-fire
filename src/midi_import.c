@@ -299,7 +299,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	unsigned char current_event_hi = 0;
 	unsigned char last_event = 0;
 	unsigned char current_meta_event;
-	unsigned long d1, d2, d3, d4;
+	unsigned long d1=0, d2=0, d3, d4;
 	char text[EOF_MAX_MIDI_TEXT_SIZE+1];
 	char nfn[1024] = {0};
 	char backup_filename[1024] = {0};

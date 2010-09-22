@@ -245,6 +245,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 										//in this function, the status of buffered should be checked to see whether one
 										//less byte should be read
 	unsigned char buffer2=0;			//Used to read the byte after a buffered byte above
+	unsigned short temp=0;				//Used to work around GCC's optimization warning about type casting vars.parameters[] and then dereferencing it
 
 	assert_wrapper((inf != NULL) && (tchunk != NULL));	//These must not be NULL (event handler is allowed to be NULL)
 	//outf will only be checked for NULL within MIDI_Build_handler, where it is used
@@ -417,7 +418,11 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 							}
 							fread_err(vars.parameters,2,1,inf);
 
-							if(Lyrics.verbose)	printf("Meta Event: Sequence Number=%u\n",*((unsigned short *)vars.parameters));
+							if(Lyrics.verbose)
+							{
+								temp=(vars.parameters[0] << 8) + vars.parameters[1];	//Convert big endian value in vars.parameters[] to an unsigned short
+								printf("Meta Event: Sequence Number=%u\n",temp);
+							}
 						break;
 
 						case 0x1:	//Text event
