@@ -4657,9 +4657,11 @@ void eof_render_editor_window_common(void)
 	int current_ppqn_used = 0;
 	double current_bpm = (double)60000000.0 / (double)eof_song->beat[0]->ppqn;
 	int bcol, bscol, bhcol;
-	int beat_counter = 0;
+	unsigned long beat_counter = 0;
 	int beats_per_measure = 0;
 	char buffer[16] = {0};
+	unsigned long measure_counter=0;
+	unsigned long beat_in_measure=0;
 
 	bcol = makecol(128, 128, 128);
 	bscol = makecol(255, 255, 255);
@@ -4687,6 +4689,11 @@ void eof_render_editor_window_common(void)
 			beats_per_measure = 6;
 			beat_counter = 0;
 		}
+		beat_in_measure = beat_counter;
+		if(beat_in_measure == 0)
+		{
+			measure_counter++;
+		}
 		xcoord = npos + eof_song->beat[i]->pos / eof_zoom;
 
 		if((xcoord >= 0) && (xcoord < eof_window_editor->screen->w))
@@ -4706,6 +4713,10 @@ void eof_render_editor_window_common(void)
 		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_EVENTS)
 		{	//Draw event marker
 			line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
+		}
+		if(beat_counter == 0)
+		{	//If this is a measure marker, draw the measure number to the right of the beat line
+			textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord + 2, EOF_EDITOR_RENDER_OFFSET + 22, eof_color_yellow, -1, "%lu", measure_counter);
 		}
 		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_ANCHOR)
 		{	//Draw anchor marker
