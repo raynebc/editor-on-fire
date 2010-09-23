@@ -71,4 +71,10 @@ int eof_render_waveform2(struct wavestruct *waveform);
 void eof_render_waveform_line(struct wavestruct *waveform,struct waveformchanneldata *channel,unsigned amp,unsigned long x,int color);
 	//Given the amplitude and the channel and waveform to process, draws the vertical line for the channel's waveform originating from point x and the channel's defined y axis coordinate
 
+void eof_render_editor_window_common(void);
+	//Performs rendering common to both the normal and vocal editor windows, before the notes are rendered
+void eof_render_editor_window_common2(void);
+	//Performs rendering common to both the nromal and vocal editor windows, after the notes are rendered
+
+
 #endif
