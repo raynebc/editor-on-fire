@@ -529,7 +529,67 @@ int eof_lyric_draw_truncate(int notenum, int p)
 	{
 		ncol = native ? eof_color_red : eof_color_green;
 		if(np->note != EOF_LYRIC_PERCUSSION)
+		{
 			rectfill(eof_window_editor->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, ncol);
+
+			int sliderect[8] = {0};	//An array of 4 vertices, used to draw a diagonal rectangle
+			EOF_LYRIC *np2=NULL;	//Stores a pointer to the next lyric
+			int nplace2 = 0;
+			int native2 = 0;
+			int note_y2 = 0;	//Used to store the y coordinate of the next lyric
+			int npos2 = 0;		//Stores the X coordinate of the next lyric
+
+			if((notenum + 1 < eof_song->vocal_track->lyrics) && (eof_song->vocal_track->lyric[notenum + 1]->text[0] == '+'))
+			{	//If there's another lyric, and it begins with a plus sign, it's a pitch shift, draw a vocal slide polygon
+				np2=eof_song->vocal_track->lyric[notenum+1];
+				sliderect[0]=npos + np->length / eof_zoom;	//X1 (X coordinate of the end of this lyric's rectangle)
+				sliderect[1]=note_y;				//Y1 (Y coordinate of the bottom of this lyric's rectangle)
+
+				if(pos < 300)
+				{
+					npos2 = 20 + (np2->pos) / eof_zoom;
+				}
+				else
+				{
+					npos2 = 20 - ((pos - 300)) + np2->pos / eof_zoom;
+				}
+				sliderect[2]=npos2;	//X2 (X coordinate of next lyric's rectangle)
+
+				nplace2 = np2->note - eof_vocals_offset;
+				if(nplace2 < 0)
+				{
+					native2 = -1;
+				}
+				else if(nplace2 >= eof_screen_layout.vocal_view_size)
+				{
+					native2 = 1;
+				}
+				while(nplace2 < 0)
+				{
+					nplace2 += eof_screen_layout.vocal_view_size;
+				}
+				if(native2 < 0)
+				{
+					note_y2 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y;
+				}
+				else if(native2 > 0)
+				{
+					note_y2 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - (eof_screen_layout.vocal_view_size + 1) * eof_screen_layout.vocal_tail_size;
+				}
+				else
+				{
+					note_y2 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - (nplace2 % eof_screen_layout.vocal_view_size + 1) * eof_screen_layout.vocal_tail_size;
+				}
+				sliderect[3]=note_y2;	//Y2 (Y coordinate of next lyric's rectangle)
+
+				sliderect[4]=sliderect[0];	//X3 (X coordinate of the end of this lyric's rectangle)
+				sliderect[5]=sliderect[1] + eof_screen_layout.vocal_tail_size - 1;	//Y3 (Y coordinate of the bottom of this lyric's rectangle)
+				sliderect[6]=sliderect[2];	//X4 (X coordinate of the next lyric's rectangle)
+				sliderect[7]=sliderect[3] + eof_screen_layout.vocal_tail_size - 1;	//Y4 (Y coordinate of the bottom of next lyric's rectangle)
+
+				polygon(eof_window_editor->screen, 4, sliderect, makecol(128, 0, 128));	//Render the 4 point polygon in purple
+			}
+		}
 		else
 		{	//Render a vocal percussion note as a fret note in the middle lane
 			circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2], eof_screen_layout.note_size, eof_color_white);
