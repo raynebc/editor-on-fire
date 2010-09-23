@@ -8,6 +8,7 @@
 SAMPLE *    eof_sound_clap = NULL;
 SAMPLE *    eof_sound_metronome = NULL;
 SAMPLE *    eof_sound_note[EOF_MAX_VOCAL_TONES] = {NULL};
+SAMPLE *    eof_sound_cowbell = NULL;
 EOF_MIX_VOICE eof_voice[EOF_MIX_MAX_CHANNELS];
 //int eof_mix_freq = 44100;
 //int eof_mix_buffer_size = 4096;
@@ -98,6 +99,7 @@ void eof_mix_callback(void * buf, int length)
 			if(eof_mix_claps_enabled)
 			{
 				eof_voice[0].sp = eof_sound_clap;
+//				eof_voice[0].sp = eof_sound_cowbell;
 				eof_voice[0].pos = 0.0;
 				eof_voice[0].playing = 1;
 			}
@@ -217,7 +219,7 @@ void eof_mix_init(void)
 		allegro_message("Couldn't load metronome sound!");
 	}
 	for(i = 0; i < EOF_MAX_VOCAL_TONES; i++)
-	{
+	{	//Load piano tones
 		sprintf(fbuffer, "eof.dat#piano.esp/NOTE_%02d_OGG", i);
 		buffer = eof_buffer_file(fbuffer);
 		if(buffer)
@@ -234,6 +236,11 @@ void eof_mix_init(void)
 			}
 		}
 	}
+	eof_sound_cowbell = load_wav("percussion.dat#cowbell.wav");
+	if(!eof_sound_cowbell)
+	{
+		allegro_message("Couldn't load cowbell sound!");
+	}
 	alogg_set_buffer_callback(eof_mix_callback);
 }
 
@@ -245,6 +252,8 @@ void eof_mix_exit(void)
 	eof_sound_clap=NULL;
 	destroy_sample(eof_sound_metronome);
 	eof_sound_metronome=NULL;
+	destroy_sample(eof_sound_cowbell);
+	eof_sound_cowbell=NULL;
 
 	for(i = 0; i < EOF_MAX_VOCAL_TONES; i++)
 	{
