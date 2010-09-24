@@ -582,10 +582,10 @@ int eof_lyric_draw_truncate(int notenum, int p)
 				}
 				sliderect[3]=note_y2;	//Y2 (Y coordinate of next lyric's rectangle)
 
-				sliderect[4]=sliderect[0];	//X3 (X coordinate of the end of this lyric's rectangle)
-				sliderect[5]=sliderect[1] + eof_screen_layout.vocal_tail_size - 1;	//Y3 (Y coordinate of the bottom of this lyric's rectangle)
-				sliderect[6]=sliderect[2];	//X4 (X coordinate of the next lyric's rectangle)
-				sliderect[7]=sliderect[3] + eof_screen_layout.vocal_tail_size - 1;	//Y4 (Y coordinate of the bottom of next lyric's rectangle)
+				sliderect[6]=sliderect[0];	//X3 (X coordinate of the end of this lyric's rectangle)
+				sliderect[7]=sliderect[1] + eof_screen_layout.vocal_tail_size - 1;	//Y3 (Y coordinate of the bottom of this lyric's rectangle)
+				sliderect[4]=sliderect[2];	//X4 (X coordinate of the next lyric's rectangle)
+				sliderect[5]=sliderect[3] + eof_screen_layout.vocal_tail_size - 1;	//Y4 (Y coordinate of the bottom of next lyric's rectangle)
 
 				polygon(eof_window_editor->screen, 4, sliderect, makecol(128, 0, 128));	//Render the 4 point polygon in purple
 			}
