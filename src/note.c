@@ -543,7 +543,7 @@ int eof_lyric_draw_truncate(int notenum, int p)
 			{	//If there's another lyric, and it begins with a plus sign, it's a pitch shift, draw a vocal slide polygon
 				np2=eof_song->vocal_track->lyric[notenum+1];
 				sliderect[0]=npos + np->length / eof_zoom;	//X1 (X coordinate of the end of this lyric's rectangle)
-				sliderect[1]=note_y;				//Y1 (Y coordinate of the bottom of this lyric's rectangle)
+				sliderect[1]=note_y;						//Y1 (Y coordinate of the bottom of this lyric's rectangle)
 
 				if(pos < 300)
 				{
@@ -587,7 +587,10 @@ int eof_lyric_draw_truncate(int notenum, int p)
 				sliderect[4]=sliderect[2];	//X4 (X coordinate of the next lyric's rectangle)
 				sliderect[5]=sliderect[3] + eof_screen_layout.vocal_tail_size - 1;	//Y4 (Y coordinate of the bottom of next lyric's rectangle)
 
-				polygon(eof_window_editor->screen, 4, sliderect, makecol(128, 0, 128));	//Render the 4 point polygon in purple
+				if((sliderect[0] < eof_window_editor->w) && (sliderect[2] >= 0))
+				{	//If the left end of the polygon doesn't render off the right edge of the editor window and the right end of the polygon doesn't render off the left edge
+					polygon(eof_window_editor->screen, 4, sliderect, makecol(128, 0, 128));	//Render the 4 point polygon in purple
+				}
 			}
 		}
 		else
