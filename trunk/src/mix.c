@@ -1,4 +1,5 @@
 #include <allegro.h>
+#include <math.h>	//For sqrt()
 #include "main.h"
 #include "utility.h"
 #include "beat.h"
@@ -43,11 +44,9 @@ void eof_mix_callback(void * buf, int length)
 {
 	unsigned long bytes_left = length / 2;
 	unsigned short * buffer = (unsigned short *)buf;
-	unsigned long sum;
-	unsigned long prod;
-	unsigned long final;
+	long sum;			//Use a signed long integer to allow the clipping logic to be more efficient
+	long cuesample;	//Used to apply a volume to cues, where the appropriate amplitude multiplier for changing the cue's loudness to X% is to multiply its amplitudes by sqrt(X/100)
 	int i, j;
-//	bytes_left = eof_mix_buffer_size / 4;
 	int increment = alogg_get_wave_is_stereo_ogg(eof_music_track) ? 2 : 1;
 
 	/* add audio data to the buffer */
@@ -59,30 +58,25 @@ void eof_mix_callback(void * buf, int length)
 		{
 			if(eof_voice[j].playing)
 			{
-				sum = buffer[i] + ((unsigned short *)(eof_voice[j].sp->data))[(unsigned long)eof_voice[j].pos];
-				prod = (buffer[i]) * (((unsigned short *)(eof_voice[j].sp->data))[(unsigned long)eof_voice[j].pos]);
-				if((buffer[i] < 32768) && (((unsigned short *)(eof_voice[j].sp->data))[(unsigned long)eof_voice[j].pos] < 32768))
-				{
-					final = prod >> 15;
-				}
-				else
-				{
-					final = 2 * sum - (prod >> 15) - 65536;
-				}
-				buffer[i] = final > 65535 ? 65535 : final;
+				cuesample = ((unsigned short *)(eof_voice[j].sp->data))[(unsigned long)eof_voice[j].pos] - 32768;
+				cuesample *= sqrt(200.0/100.0);	//Change the cue to be the specified loudness
+				sum = buffer[i] + cuesample;
+				if(sum < 0)
+					sum = 0;
+				else if(sum > 65535)
+					sum = 65535;
+
+				buffer[i] = sum;
 				if(increment > 1)
 				{
-					sum = buffer[i + 1] + ((unsigned short *)(eof_voice[j].sp->data))[(unsigned long)eof_voice[j].pos];
-					prod = (buffer[i + 1]) * (((unsigned short *)(eof_voice[j].sp->data))[(unsigned long)eof_voice[j].pos]);
-					if((buffer[i + 1] < 32768) && (((unsigned short *)(eof_voice[j].sp->data))[(unsigned long)eof_voice[j].pos] < 32768))
-					{
-						final = prod >> 15;
-					}
-					else
-					{
-						final = 2 * sum - (prod >> 15) - 65536;
-					}
-					buffer[i + 1] = final > 65535 ? 65535 : final;
+					sum = buffer[i + 1] + cuesample;
+
+					if(sum < 0)
+						sum = 0;
+					else if(sum > 65535)
+						sum = 65535;
+
+					buffer[i + 1] = sum;
 				}
 				eof_voice[j].pos += eof_mix_sample_increment;
 				if(eof_voice[j].pos >= eof_voice[j].sp->len)
