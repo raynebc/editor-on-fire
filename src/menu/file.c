@@ -1906,8 +1906,8 @@ int eof_save_helper(char *destfilename)
 		/* pre-parse the lyrics to determine if any of them are not contained within a lyric phrase */
 		for(ctr = 0; ctr < eof_song->vocal_track->lyrics; ctr++)
 		{
-			if(FindLyricLine(ctr) == NULL)
-			{	//If any of the lyrics are not within a line
+			if((eof_song->vocal_track->lyric[ctr]->note != EOF_LYRIC_PERCUSSION) && (FindLyricLine(ctr) == NULL))
+			{	//If any of the non vocal percussion lyrics are not within a line
 				eof_cursor_visible = 0;
 				eof_pen_visible = 0;
 				eof_show_mouse(screen);
