@@ -31,6 +31,24 @@ extern int eof_selected_percussion_cue;		//The user selected percussion sound (c
 extern SAMPLE *eof_sound_chosen_percussion;	//The user-selected percussion sound
 extern SAMPLE *eof_sound_cowbell;
 extern SAMPLE *eof_sound_tambourine1;
+extern SAMPLE *eof_sound_tambourine2;
+extern SAMPLE *eof_sound_tambourine3;
+extern SAMPLE *eof_sound_triangle1;
+extern SAMPLE *eof_sound_triangle2;
+extern SAMPLE *eof_sound_woodblock1;
+extern SAMPLE *eof_sound_woodblock2;
+extern SAMPLE *eof_sound_woodblock3;
+extern SAMPLE *eof_sound_woodblock4;
+extern SAMPLE *eof_sound_woodblock5;
+extern SAMPLE *eof_sound_woodblock6;
+extern SAMPLE *eof_sound_woodblock7;
+extern SAMPLE *eof_sound_woodblock8;
+extern SAMPLE *eof_sound_woodblock9;
+extern SAMPLE *eof_sound_woodblock10;
+extern SAMPLE *eof_sound_clap1;
+extern SAMPLE *eof_sound_clap2;
+extern SAMPLE *eof_sound_clap3;
+extern SAMPLE *eof_sound_clap4;
 
 void eof_mix_callback(void * buf, int length);	//Buffer callback function for alogg
 unsigned long eof_mix_msec_to_sample(unsigned long msec, int freq);
@@ -40,6 +58,7 @@ void eof_mix_exit(void);	//Releases memory used by audio cues
 void eof_mix_start_helper(void);	//Finds the next clap, tick and vocal tone timestamps?
 void eof_mix_start(unsigned long start, int speed);	//Prepares variables for chart playback
 void eof_mix_seek(int pos);	//Performs a seek and updates the position of the next of each audio cue
+SAMPLE *eof_mix_load_ogg_sample(char *fn);	//Loads the specified OGG sample from a dat file, returning it in SAMPLE format
 //void eof_mix_poll(void);
 //void eof_mix_stop(void);
 

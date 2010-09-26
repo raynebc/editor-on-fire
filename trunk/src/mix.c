@@ -12,6 +12,24 @@ SAMPLE *    eof_sound_note[EOF_MAX_VOCAL_TONES] = {NULL};
 SAMPLE *    eof_sound_chosen_percussion = NULL;	//The user-selected percussion sound
 SAMPLE *    eof_sound_cowbell = NULL;
 SAMPLE *    eof_sound_tambourine1 = NULL;
+SAMPLE *    eof_sound_tambourine2 = NULL;
+SAMPLE *    eof_sound_tambourine3 = NULL;
+SAMPLE *    eof_sound_triangle1 = NULL;
+SAMPLE *    eof_sound_triangle2 = NULL;
+SAMPLE *    eof_sound_woodblock1 = NULL;
+SAMPLE *    eof_sound_woodblock2 = NULL;
+SAMPLE *    eof_sound_woodblock3 = NULL;
+SAMPLE *    eof_sound_woodblock4 = NULL;
+SAMPLE *    eof_sound_woodblock5 = NULL;
+SAMPLE *    eof_sound_woodblock6 = NULL;
+SAMPLE *    eof_sound_woodblock7 = NULL;
+SAMPLE *    eof_sound_woodblock8 = NULL;
+SAMPLE *    eof_sound_woodblock9 = NULL;
+SAMPLE *    eof_sound_woodblock10 = NULL;
+SAMPLE *    eof_sound_clap1 = NULL;
+SAMPLE *    eof_sound_clap2 = NULL;
+SAMPLE *    eof_sound_clap3 = NULL;
+SAMPLE *    eof_sound_clap4 = NULL;
 EOF_MIX_VOICE eof_voice[EOF_MIX_MAX_CHANNELS];	//eof_voice[0] is "clap", eof_voice[1] is "metronome", eof_voice[2] is "vocal tone", eof_voice[3] is "vocal percussion"
 //int eof_mix_freq = 44100;
 //int eof_mix_buffer_size = 4096;
@@ -235,8 +253,6 @@ void eof_mix_init(void)
 {
 	int i;
 	char fbuffer[1024] = {0};
-	ALOGG_OGG * temp_ogg = NULL;
-	char * buffer = NULL;
 
 	eof_sound_clap = load_wav("eof.dat#clap.wav");
 	if(!eof_sound_clap)
@@ -251,34 +267,58 @@ void eof_mix_init(void)
 	for(i = 0; i < EOF_MAX_VOCAL_TONES; i++)
 	{	//Load piano tones
 		sprintf(fbuffer, "eof.dat#piano.esp/NOTE_%02d_OGG", i);
-		buffer = eof_buffer_file(fbuffer);
-		if(buffer)
-		{
-			temp_ogg = alogg_create_ogg_from_buffer(buffer, file_size_ex(fbuffer));
-			if(temp_ogg)
-			{
-				eof_sound_note[i] = alogg_create_sample_from_ogg(temp_ogg);
-				alogg_destroy_ogg(temp_ogg);
-			}
-			else
-			{
-				printf("sound load error\n");
-			}
-		}
+		eof_sound_note[i] = eof_mix_load_ogg_sample(fbuffer);
 	}
-	eof_sound_cowbell = load_wav("percussion.dat#cowbell.wav");
-	if(!eof_sound_cowbell)
-	{
-		allegro_message("Couldn't load cowbell sound!");
-	}
+	eof_sound_cowbell = eof_mix_load_ogg_sample("percussion.dat#cowbell.ogg");
 	eof_sound_chosen_percussion = eof_sound_cowbell;	//Until the user specifies otherwise, make cowbell the default percussion
 	eof_selected_percussion_cue = 10;
-	eof_sound_tambourine1 = load_wav("percussion.dat#tambourine1.wav");
-	if(!eof_sound_tambourine1)
-	{
-		allegro_message("Couldn't load tambourine 1 sound!");
-	}
+	eof_sound_tambourine1 = eof_mix_load_ogg_sample("percussion.dat#tambourine1.ogg");
+	eof_sound_tambourine2 = eof_mix_load_ogg_sample("percussion.dat#tambourine2.ogg");
+	eof_sound_tambourine3 = eof_mix_load_ogg_sample("percussion.dat#tambourine3.ogg");
+	eof_sound_triangle1 = eof_mix_load_ogg_sample("percussion.dat#triangle1.ogg");
+	eof_sound_triangle2 = eof_mix_load_ogg_sample("percussion.dat#triangle2.ogg");
+	eof_sound_woodblock1 = eof_mix_load_ogg_sample("percussion.dat#woodblock1.ogg");
+	eof_sound_woodblock2 = eof_mix_load_ogg_sample("percussion.dat#woodblock2.ogg");
+	eof_sound_woodblock3 = eof_mix_load_ogg_sample("percussion.dat#woodblock3.ogg");
+	eof_sound_woodblock4 = eof_mix_load_ogg_sample("percussion.dat#woodblock4.ogg");
+	eof_sound_woodblock5 = eof_mix_load_ogg_sample("percussion.dat#woodblock5.ogg");
+	eof_sound_woodblock6 = eof_mix_load_ogg_sample("percussion.dat#woodblock6.ogg");
+	eof_sound_woodblock7 = eof_mix_load_ogg_sample("percussion.dat#woodblock7.ogg");
+	eof_sound_woodblock8 = eof_mix_load_ogg_sample("percussion.dat#woodblock8.ogg");
+	eof_sound_woodblock9 = eof_mix_load_ogg_sample("percussion.dat#woodblock9.ogg");
+	eof_sound_woodblock10 = eof_mix_load_ogg_sample("percussion.dat#woodblock10.ogg");
+	eof_sound_clap1 = eof_mix_load_ogg_sample("percussion.dat#clap1.ogg");
+	eof_sound_clap2 = eof_mix_load_ogg_sample("percussion.dat#clap2.ogg");
+	eof_sound_clap3 = eof_mix_load_ogg_sample("percussion.dat#clap3.ogg");
+	eof_sound_clap4 = eof_mix_load_ogg_sample("percussion.dat#clap4.ogg");
+
 	alogg_set_buffer_callback(eof_mix_callback);
+}
+
+SAMPLE *eof_mix_load_ogg_sample(char *fn)
+{
+	ALOGG_OGG * temp_ogg = NULL;
+	char * buffer = NULL;
+	SAMPLE *loadedsample = NULL;
+
+	if(fn == NULL)
+		return NULL;
+
+	buffer = eof_buffer_file(fn);
+	if(buffer)
+	{
+		temp_ogg = alogg_create_ogg_from_buffer(buffer, file_size_ex(fn));
+		if(temp_ogg)
+		{
+			loadedsample = alogg_create_sample_from_ogg(temp_ogg);
+			alogg_destroy_ogg(temp_ogg);
+		}
+		if(loadedsample == NULL)
+			allegro_message("Couldn't load sample %s!",fn);
+		free(buffer);
+	}
+
+	return loadedsample;
 }
 
 void eof_mix_exit(void)
@@ -293,6 +333,42 @@ void eof_mix_exit(void)
 	eof_sound_cowbell=NULL;
 	destroy_sample(eof_sound_tambourine1);
 	eof_sound_tambourine1=NULL;
+	destroy_sample(eof_sound_tambourine2);
+	eof_sound_tambourine2=NULL;
+	destroy_sample(eof_sound_tambourine3);
+	eof_sound_tambourine3=NULL;
+	destroy_sample(eof_sound_triangle1);
+	eof_sound_triangle1=NULL;
+	destroy_sample(eof_sound_triangle2);
+	eof_sound_triangle2=NULL;
+	destroy_sample(eof_sound_woodblock1);
+	eof_sound_woodblock1=NULL;
+	destroy_sample(eof_sound_woodblock2);
+	eof_sound_woodblock2=NULL;
+	destroy_sample(eof_sound_woodblock3);
+	eof_sound_woodblock3=NULL;
+	destroy_sample(eof_sound_woodblock4);
+	eof_sound_woodblock4=NULL;
+	destroy_sample(eof_sound_woodblock5);
+	eof_sound_woodblock5=NULL;
+	destroy_sample(eof_sound_woodblock6);
+	eof_sound_woodblock6=NULL;
+	destroy_sample(eof_sound_woodblock7);
+	eof_sound_woodblock7=NULL;
+	destroy_sample(eof_sound_woodblock8);
+	eof_sound_woodblock8=NULL;
+	destroy_sample(eof_sound_woodblock9);
+	eof_sound_woodblock9=NULL;
+	destroy_sample(eof_sound_woodblock10);
+	eof_sound_woodblock10=NULL;
+	destroy_sample(eof_sound_clap1);
+	eof_sound_clap1=NULL;
+	destroy_sample(eof_sound_clap2);
+	eof_sound_clap2=NULL;
+	destroy_sample(eof_sound_clap3);
+	eof_sound_clap3=NULL;
+	destroy_sample(eof_sound_clap4);
+	eof_sound_clap4=NULL;
 
 	for(i = 0; i < EOF_MAX_VOCAL_TONES; i++)
 	{

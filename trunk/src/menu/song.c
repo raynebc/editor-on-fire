@@ -1383,7 +1383,7 @@ void eof_menu_song_waveform(void)
 DIALOG eof_audio_cues_dialog[] =
 {
 /*	(proc)					(x)	(y)				(w)	(h)		(fg)	(bg)	(key)	(flags)	(d1)	(d2)	(dp)						(dp2)	(dp3) */
-	{ d_agup_window_proc,	0,	48,				288,224,	2,		23,		0,		0,		0,		0,		"Audio cues",				NULL,	NULL },
+	{ d_agup_window_proc,	0,	48,				288,290,	2,		23,		0,		0,		0,		0,		"Audio cues",				NULL,	NULL },
 	{ d_agup_text_proc,		16,	88,				64,	8,		2,		23,		0,		0,		0,		0,		"Clap volume",				NULL,	NULL },
 	{ d_agup_slider_proc,	176,88,				96,	16,		2,		23,		0,		0,		100,	0,		NULL,						NULL,	NULL },
 	{ d_agup_text_proc,		16, 108,			64,	8,		2,		23,		0,		0,		0,		0,		"Metronome volume",			NULL,	NULL },
@@ -1394,9 +1394,27 @@ DIALOG eof_audio_cues_dialog[] =
 	{ d_agup_slider_proc,	176,148,			96,	16,		2,		23,		0,		0,		100,	0,		NULL,						NULL,	NULL },
 	{ d_agup_text_proc,		16, 168,			64,	8,		2,		23,		0,		0,		0,		0,		"Vocal Percussion sound:",	NULL,	NULL },
 	{ d_agup_radio_proc,	16,188,				68,	15,		2,		23,		0,		0,		0,		0,		"Cowbell",					NULL,	NULL },
-	{ d_agup_radio_proc,	16,208,				68,	15,		2,		23,		0,		0,		0,		0,		"Tambourine 1",				NULL,	NULL },
-	{ d_agup_button_proc,	16,	156 + 64 + 8,	68,	28,		2,		23,		'\r',	D_EXIT,	0,		0,		"OK",						NULL,	NULL },
-	{ d_agup_button_proc,	116,156 + 64 + 8,	68,	28,		2,		23,		0,		D_EXIT,	0,		0,		"Cancel",					NULL,	NULL },
+	{ d_agup_radio_proc,	124,188,			84,	15,		2,		23,		0,		0,		0,		0,		"Triangle 1",				NULL,	NULL },
+	{ d_agup_radio_proc,	210,188,			30,	15,		2,		23,		0,		0,		0,		0,		"2",						NULL,	NULL },
+	{ d_agup_radio_proc,	16,208,				102,15,		2,		23,		0,		0,		0,		0,		"Tambourine 1",				NULL,	NULL },
+	{ d_agup_radio_proc,	124,208,			30,	15,		2,		23,		0,		0,		0,		0,		"2",						NULL,	NULL },
+	{ d_agup_radio_proc,	160,208,			30,	15,		2,		23,		0,		0,		0,		0,		"3",						NULL,	NULL },
+	{ d_agup_radio_proc,	16,228,				110,15,		2,		23,		0,		0,		0,		0,		"Wood Block 1",				NULL,	NULL },
+	{ d_agup_radio_proc,	124,228,			30,	15,		2,		23,		0,		0,		0,		0,		"2",						NULL,	NULL },
+	{ d_agup_radio_proc,	160,228,			30,	15,		2,		23,		0,		0,		0,		0,		"3",						NULL,	NULL },
+	{ d_agup_radio_proc,	196,228,			30,	15,		2,		23,		0,		0,		0,		0,		"4",						NULL,	NULL },
+	{ d_agup_radio_proc,	16,248,				30,	15,		2,		23,		0,		0,		0,		0,		"5",						NULL,	NULL },
+	{ d_agup_radio_proc,	52,248,				30,	15,		2,		23,		0,		0,		0,		0,		"6",						NULL,	NULL },
+	{ d_agup_radio_proc,	88,248,				30,	15,		2,		23,		0,		0,		0,		0,		"7",						NULL,	NULL },
+	{ d_agup_radio_proc,	124,248,			30,	15,		2,		23,		0,		0,		0,		0,		"8",						NULL,	NULL },
+	{ d_agup_radio_proc,	160,248,			30,	15,		2,		23,		0,		0,		0,		0,		"9",						NULL,	NULL },
+	{ d_agup_radio_proc,	196,248,			40,	15,		2,		23,		0,		0,		0,		0,		"10",						NULL,	NULL },
+	{ d_agup_radio_proc,	16,268,				68,15,		2,		23,		0,		0,		0,		0,		"Clap 1",					NULL,	NULL },
+	{ d_agup_radio_proc,	88,268,				30,15,		2,		23,		0,		0,		0,		0,		"2",						NULL,	NULL },
+	{ d_agup_radio_proc,	124,268,			30,15,		2,		23,		0,		0,		0,		0,		"3",						NULL,	NULL },
+	{ d_agup_radio_proc,	160,268,			30,15,		2,		23,		0,		0,		0,		0,		"4",						NULL,	NULL },
+	{ d_agup_button_proc,	44,294,				68,	28,		2,		23,		'\r',	D_EXIT,	0,		0,		"OK",						NULL,	NULL },
+	{ d_agup_button_proc,	172,294,			68,	28,		2,		23,		0,		D_EXIT,	0,		0,		"Cancel",					NULL,	NULL },
 	{ NULL,					0,	0,				0,	0,		0,		0,		0,		0,		0,		0,		NULL,						NULL,	NULL }
 };
 
@@ -1411,6 +1429,8 @@ int eof_set_cue_volume(void *dp3, int d2)
 
 int eof_menu_audio_cues(void)
 {
+	int x;
+
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
@@ -1421,10 +1441,13 @@ int eof_menu_audio_cues(void)
 	eof_audio_cues_dialog[6].d2 = eof_tone_volume;
 	eof_audio_cues_dialog[8].d2 = eof_percussion_volume;
 
-	eof_audio_cues_dialog[10].flags = eof_audio_cues_dialog[11].flags = 0;	//Deselect all vocal percussion radio buttons
+	for(x=10;x<=29;x++)
+	{	//Deselect all vocal percussion radio buttons
+		eof_audio_cues_dialog[x].flags = 0;
+	}
 	eof_audio_cues_dialog[eof_selected_percussion_cue].flags = D_SELECTED;	//Activate the radio button for the current vocal percussion cue
 
-	if(eof_popup_dialog(eof_audio_cues_dialog, 0) == 12)	//User clicked OK
+	if(eof_popup_dialog(eof_audio_cues_dialog, 0) == 30)		//User clicked OK
 	{
 		eof_clap_volume = eof_audio_cues_dialog[2].d2;			//Store the volume set by the clap cue volume slider
 		eof_tick_volume = eof_audio_cues_dialog[4].d2;			//Store the volume set by the tick cue volume slider
@@ -1436,10 +1459,100 @@ int eof_menu_audio_cues(void)
 			eof_sound_chosen_percussion = eof_sound_cowbell;
 			eof_selected_percussion_cue = 10;
 		}
-		else if(eof_audio_cues_dialog[11].flags == D_SELECTED)	//User selected tambourine 1
+		else if(eof_audio_cues_dialog[11].flags == D_SELECTED)	//User selected triangle 1
+		{
+			eof_sound_chosen_percussion = eof_sound_triangle1;
+			eof_selected_percussion_cue = 11;
+		}
+		else if(eof_audio_cues_dialog[12].flags == D_SELECTED)	//User selected triangle 2
+		{
+			eof_sound_chosen_percussion = eof_sound_triangle2;
+			eof_selected_percussion_cue = 12;
+		}
+		else if(eof_audio_cues_dialog[13].flags == D_SELECTED)	//User selected tambourine 1
 		{
 			eof_sound_chosen_percussion = eof_sound_tambourine1;
-			eof_selected_percussion_cue = 11;
+			eof_selected_percussion_cue = 13;
+		}
+		else if(eof_audio_cues_dialog[14].flags == D_SELECTED)	//User selected tambourine 2
+		{
+			eof_sound_chosen_percussion = eof_sound_tambourine2;
+			eof_selected_percussion_cue = 14;
+		}
+		else if(eof_audio_cues_dialog[15].flags == D_SELECTED)	//User selected tambourine 3
+		{
+			eof_sound_chosen_percussion = eof_sound_tambourine3;
+			eof_selected_percussion_cue = 15;
+		}
+		else if(eof_audio_cues_dialog[16].flags == D_SELECTED)	//User selected wood block 1
+		{
+			eof_sound_chosen_percussion = eof_sound_woodblock1;
+			eof_selected_percussion_cue = 16;
+		}
+		else if(eof_audio_cues_dialog[17].flags == D_SELECTED)	//User selected wood block 2
+		{
+			eof_sound_chosen_percussion = eof_sound_woodblock2;
+			eof_selected_percussion_cue = 17;
+		}
+		else if(eof_audio_cues_dialog[18].flags == D_SELECTED)	//User selected wood block 3
+		{
+			eof_sound_chosen_percussion = eof_sound_woodblock3;
+			eof_selected_percussion_cue = 18;
+		}
+		else if(eof_audio_cues_dialog[19].flags == D_SELECTED)	//User selected wood block 4
+		{
+			eof_sound_chosen_percussion = eof_sound_woodblock4;
+			eof_selected_percussion_cue = 19;
+		}
+		else if(eof_audio_cues_dialog[20].flags == D_SELECTED)	//User selected wood block 5
+		{
+			eof_sound_chosen_percussion = eof_sound_woodblock5;
+			eof_selected_percussion_cue = 20;
+		}
+		else if(eof_audio_cues_dialog[21].flags == D_SELECTED)	//User selected wood block 6
+		{
+			eof_sound_chosen_percussion = eof_sound_woodblock6;
+			eof_selected_percussion_cue = 21;
+		}
+		else if(eof_audio_cues_dialog[22].flags == D_SELECTED)	//User selected wood block 7
+		{
+			eof_sound_chosen_percussion = eof_sound_woodblock7;
+			eof_selected_percussion_cue = 22;
+		}
+		else if(eof_audio_cues_dialog[23].flags == D_SELECTED)	//User selected wood block 8
+		{
+			eof_sound_chosen_percussion = eof_sound_woodblock8;
+			eof_selected_percussion_cue = 23;
+		}
+		else if(eof_audio_cues_dialog[24].flags == D_SELECTED)	//User selected wood block 9
+		{
+			eof_sound_chosen_percussion = eof_sound_woodblock9;
+			eof_selected_percussion_cue = 24;
+		}
+		else if(eof_audio_cues_dialog[25].flags == D_SELECTED)	//User selected wood block 10
+		{
+			eof_sound_chosen_percussion = eof_sound_woodblock10;
+			eof_selected_percussion_cue = 25;
+		}
+		else if(eof_audio_cues_dialog[26].flags == D_SELECTED)	//User selected clap 1
+		{
+			eof_sound_chosen_percussion = eof_sound_clap1;
+			eof_selected_percussion_cue = 26;
+		}
+		else if(eof_audio_cues_dialog[27].flags == D_SELECTED)	//User selected clap 2
+		{
+			eof_sound_chosen_percussion = eof_sound_clap2;
+			eof_selected_percussion_cue = 27;
+		}
+		else if(eof_audio_cues_dialog[28].flags == D_SELECTED)	//User selected clap 3
+		{
+			eof_sound_chosen_percussion = eof_sound_clap3;
+			eof_selected_percussion_cue = 28;
+		}
+		else if(eof_audio_cues_dialog[29].flags == D_SELECTED)	//User selected clap 4
+		{
+			eof_sound_chosen_percussion = eof_sound_clap4;
+			eof_selected_percussion_cue = 29;
 		}
 	}
 	eof_show_mouse(NULL);
