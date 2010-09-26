@@ -11,6 +11,7 @@ SAMPLE *    eof_sound_metronome = NULL;
 SAMPLE *    eof_sound_note[EOF_MAX_VOCAL_TONES] = {NULL};
 SAMPLE *    eof_sound_chosen_percussion = NULL;	//The user-selected percussion sound
 SAMPLE *    eof_sound_cowbell = NULL;
+SAMPLE *    eof_sound_tambourine1 = NULL;
 EOF_MIX_VOICE eof_voice[EOF_MIX_MAX_CHANNELS];	//eof_voice[0] is "clap", eof_voice[1] is "metronome", eof_voice[2] is "vocal tone", eof_voice[3] is "vocal percussion"
 //int eof_mix_freq = 44100;
 //int eof_mix_buffer_size = 4096;
@@ -20,6 +21,7 @@ char eof_mix_claps_note = 31; /* enable all by default */
 char eof_mix_vocal_tones_enabled = 0;
 char eof_mix_midi_tones_enabled = 0;
 char eof_mix_percussion_enabled = 0;
+int eof_selected_percussion_cue = 10;	//The user selected percussion sound (cowbell by default), corresponds to the radio button in the eof_audio_cues_dialog[] array
 
 int eof_clap_volume = 100;	//Stores the volume level for the clap cue, specified as a percentage
 int eof_tick_volume = 100;	//Stores the volume level for the tick cue, specified as a percentage
@@ -269,8 +271,14 @@ void eof_mix_init(void)
 	{
 		allegro_message("Couldn't load cowbell sound!");
 	}
-	alogg_set_buffer_callback(eof_mix_callback);
 	eof_sound_chosen_percussion = eof_sound_cowbell;	//Until the user specifies otherwise, make cowbell the default percussion
+	eof_selected_percussion_cue = 10;
+	eof_sound_tambourine1 = load_wav("percussion.dat#tambourine1.wav");
+	if(!eof_sound_tambourine1)
+	{
+		allegro_message("Couldn't load tambourine 1 sound!");
+	}
+	alogg_set_buffer_callback(eof_mix_callback);
 }
 
 void eof_mix_exit(void)
@@ -283,6 +291,8 @@ void eof_mix_exit(void)
 	eof_sound_metronome=NULL;
 	destroy_sample(eof_sound_cowbell);
 	eof_sound_cowbell=NULL;
+	destroy_sample(eof_sound_tambourine1);
+	eof_sound_tambourine1=NULL;
 
 	for(i = 0; i < EOF_MAX_VOCAL_TONES; i++)
 	{
