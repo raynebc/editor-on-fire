@@ -19,6 +19,10 @@ char eof_mix_claps_note = 31; /* enable all by default */
 char eof_mix_vocal_tones_enabled = 0;
 char eof_mix_midi_tones_enabled = 0;
 
+int eof_clap_volume = 100;	//Stores the volume level for the clap cue, specified as a percentage
+int eof_tick_volume = 100;	//Stores the volume level for the tick cue, specified as a percentage
+int eof_tone_volume = 100;	//Stores the volume level for the tone cue, specified as a percentage
+
 int           eof_mix_speed = 1000;
 char          eof_mix_speed_ticker;
 double        eof_mix_sample_count = 0.0;
@@ -59,7 +63,9 @@ void eof_mix_callback(void * buf, int length)
 			if(eof_voice[j].playing)
 			{
 				cuesample = ((unsigned short *)(eof_voice[j].sp->data))[(unsigned long)eof_voice[j].pos] - 32768;
-				cuesample *= sqrt(200.0/100.0);	//Change the cue to be the specified loudness
+				if(eof_voice[j].volume != 100)
+					cuesample *= sqrt(eof_voice[j].volume/100.0);	//Change the cue to be the specified loudness
+
 				sum = buffer[i] + cuesample;
 				if(sum < 0)
 					sum = 0;
@@ -309,7 +315,11 @@ void eof_mix_start(unsigned long start, int speed)
 		eof_voice[i].sp = NULL;
 		eof_voice[i].pos = 0.0;
 		eof_voice[i].playing = 0;
+		eof_voice[i].volume = 100;	//Default to 100% volume
 	}
+	eof_voice[0].volume = eof_clap_volume;	//Put the clap volume into effect
+	eof_voice[1].volume = eof_tick_volume;	//Put the tick volume into effect
+	eof_voice[2].volume = eof_tone_volume;	//Put the tone volume into effect
 	eof_mix_speed = speed;
 	eof_mix_speed_ticker = 0;
 	eof_mix_sample_count = start;
@@ -361,7 +371,7 @@ void eof_mix_play_note(int note)
 		if(eof_mix_midi_tones_enabled)
 			eof_midi_play_note(note);
 		else
-			play_sample(eof_sound_note[note], 255, 127, 1000 + eof_audio_fine_tune, 0);
+			play_sample(eof_sound_note[note], 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play the tone at the user specified cue volume
 	}
 }
 
