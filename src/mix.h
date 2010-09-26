@@ -27,6 +27,10 @@ extern int eof_clap_volume;			//Stores the volume level for the clap, specified 
 extern int eof_tick_volume;			//Stores the volume level for the tick cue, specified as a percentage
 extern int eof_tone_volume;			//Stores the volume level for the tone cue, specified as a percentage
 extern int eof_percussion_volume;	//Stores the volume level for the vocal percussion cue, specified as a percentage
+extern int eof_selected_percussion_cue;		//The user selected percussion sound (cowbell by default), corresponds to the radio button in the eof_audio_cues_dialog[] array
+extern SAMPLE *eof_sound_chosen_percussion;	//The user-selected percussion sound
+extern SAMPLE *eof_sound_cowbell;
+extern SAMPLE *eof_sound_tambourine1;
 
 void eof_mix_callback(void * buf, int length);	//Buffer callback function for alogg
 unsigned long eof_mix_msec_to_sample(unsigned long msec, int freq);

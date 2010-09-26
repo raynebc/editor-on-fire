@@ -1392,9 +1392,12 @@ DIALOG eof_audio_cues_dialog[] =
 	{ d_agup_slider_proc,	176,128,			96,	16,		2,		23,		0,		0,		100,	0,		NULL,						NULL,	NULL },
 	{ d_agup_text_proc,		16, 148,			64,	8,		2,		23,		0,		0,		0,		0,		"Vocal Percussion volume",	NULL,	NULL },
 	{ d_agup_slider_proc,	176,148,			96,	16,		2,		23,		0,		0,		100,	0,		NULL,						NULL,	NULL },
+	{ d_agup_text_proc,		16, 168,			64,	8,		2,		23,		0,		0,		0,		0,		"Vocal Percussion sound:",	NULL,	NULL },
+	{ d_agup_radio_proc,	16,188,				68,	15,		2,		23,		0,		0,		0,		0,		"Cowbell",					NULL,	NULL },
+	{ d_agup_radio_proc,	16,208,				68,	15,		2,		23,		0,		0,		0,		0,		"Tambourine 1",				NULL,	NULL },
 	{ d_agup_button_proc,	16,	156 + 64 + 8,	68,	28,		2,		23,		'\r',	D_EXIT,	0,		0,		"OK",						NULL,	NULL },
 	{ d_agup_button_proc,	116,156 + 64 + 8,	68,	28,		2,		23,		0,		D_EXIT,	0,		0,		"Cancel",					NULL,	NULL },
-	{ NULL,					0,	0,				0,	0,		0,		0,		0,		0,		0,		0,		NULL,			NULL,	NULL }
+	{ NULL,					0,	0,				0,	0,		0,		0,		0,		0,		0,		0,		NULL,						NULL,	NULL }
 };
 
 int eof_set_cue_volume(void *dp3, int d2)
@@ -1417,12 +1420,27 @@ int eof_menu_audio_cues(void)
 	eof_audio_cues_dialog[4].d2 = eof_tick_volume;
 	eof_audio_cues_dialog[6].d2 = eof_tone_volume;
 	eof_audio_cues_dialog[8].d2 = eof_percussion_volume;
-	if(eof_popup_dialog(eof_audio_cues_dialog, 0) == 9)	//User clicked OK
+
+	eof_audio_cues_dialog[10].flags = eof_audio_cues_dialog[11].flags = 0;	//Deselect all vocal percussion radio buttons
+	eof_audio_cues_dialog[eof_selected_percussion_cue].flags = D_SELECTED;	//Activate the radio button for the current vocal percussion cue
+
+	if(eof_popup_dialog(eof_audio_cues_dialog, 0) == 12)	//User clicked OK
 	{
 		eof_clap_volume = eof_audio_cues_dialog[2].d2;			//Store the volume set by the clap cue volume slider
 		eof_tick_volume = eof_audio_cues_dialog[4].d2;			//Store the volume set by the tick cue volume slider
 		eof_tone_volume = eof_audio_cues_dialog[6].d2;			//Store the volume set by the tone cue volume slider
 		eof_percussion_volume = eof_audio_cues_dialog[8].d2;	//Store the volume set by the vocal percussion cue volume slider
+
+		if(eof_audio_cues_dialog[10].flags == D_SELECTED)		//User selected cowbell
+		{
+			eof_sound_chosen_percussion = eof_sound_cowbell;
+			eof_selected_percussion_cue = 10;
+		}
+		else if(eof_audio_cues_dialog[11].flags == D_SELECTED)	//User selected tambourine 1
+		{
+			eof_sound_chosen_percussion = eof_sound_tambourine1;
+			eof_selected_percussion_cue = 11;
+		}
 	}
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
