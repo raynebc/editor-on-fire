@@ -9,8 +9,9 @@
 SAMPLE *    eof_sound_clap = NULL;
 SAMPLE *    eof_sound_metronome = NULL;
 SAMPLE *    eof_sound_note[EOF_MAX_VOCAL_TONES] = {NULL};
+SAMPLE *    eof_sound_chosen_percussion = NULL;	//The user-selected percussion sound
 SAMPLE *    eof_sound_cowbell = NULL;
-EOF_MIX_VOICE eof_voice[EOF_MIX_MAX_CHANNELS];
+EOF_MIX_VOICE eof_voice[EOF_MIX_MAX_CHANNELS];	//eof_voice[0] is "clap", eof_voice[1] is "metronome", eof_voice[2] is "vocal tone", eof_voice[3] is "vocal percussion"
 //int eof_mix_freq = 44100;
 //int eof_mix_buffer_size = 4096;
 char eof_mix_claps_enabled = 0;
@@ -18,6 +19,7 @@ char eof_mix_metronome_enabled = 0;
 char eof_mix_claps_note = 31; /* enable all by default */
 char eof_mix_vocal_tones_enabled = 0;
 char eof_mix_midi_tones_enabled = 0;
+char eof_mix_percussion_enabled = 0;
 
 int eof_clap_volume = 100;	//Stores the volume level for the clap cue, specified as a percentage
 int eof_tick_volume = 100;	//Stores the volume level for the tick cue, specified as a percentage
@@ -30,6 +32,7 @@ double        eof_mix_sample_increment = 1.0;
 unsigned long eof_mix_next_clap;
 unsigned long eof_mix_next_metronome;
 unsigned long eof_mix_next_note;
+unsigned long eof_mix_next_percussion;
 
 unsigned long eof_mix_clap_pos[EOF_MAX_NOTES] = {0};
 int eof_mix_claps = 0;
@@ -43,6 +46,10 @@ int eof_mix_current_note = 0;
 unsigned long eof_mix_metronome_pos[EOF_MAX_BEATS] = {0};
 int eof_mix_metronomes = 0;
 int eof_mix_current_metronome = 0;
+
+unsigned long eof_mix_percussion_pos[EOF_MAX_NOTES] = {0};
+int eof_mix_percussions = 0;
+int eof_mix_current_percussion = 0;
 
 void eof_mix_callback(void * buf, int length)
 {
@@ -94,7 +101,7 @@ void eof_mix_callback(void * buf, int length)
 
 		/* increment the sample and check sound triggers */
 		eof_mix_sample_count += 1.0;
-		if((eof_mix_next_clap >= 0) && (eof_mix_sample_count >= eof_mix_next_clap) && (eof_mix_current_clap < eof_mix_claps))
+		if((eof_mix_sample_count >= eof_mix_next_clap) && (eof_mix_current_clap < eof_mix_claps))
 		{
 			if(eof_mix_claps_enabled)
 			{
@@ -106,7 +113,7 @@ void eof_mix_callback(void * buf, int length)
 			eof_mix_current_clap++;
 			eof_mix_next_clap = eof_mix_clap_pos[eof_mix_current_clap];
 		}
-		if((eof_mix_next_metronome >= 0) && (eof_mix_sample_count >= eof_mix_next_metronome) && (eof_mix_current_metronome < eof_mix_metronomes))
+		if((eof_mix_sample_count >= eof_mix_next_metronome) && (eof_mix_current_metronome < eof_mix_metronomes))
 		{
 			if(eof_mix_metronome_enabled)
 			{
@@ -117,7 +124,7 @@ void eof_mix_callback(void * buf, int length)
 			eof_mix_current_metronome++;
 			eof_mix_next_metronome = eof_mix_metronome_pos[eof_mix_current_metronome];
 		}
-		if((eof_mix_next_note >= 0) && (eof_mix_sample_count >= eof_mix_next_note) && (eof_mix_current_note < eof_mix_notes))
+		if((eof_mix_sample_count >= eof_mix_next_note) && (eof_mix_current_note < eof_mix_notes))
 		{
 			if(eof_mix_midi_tones_enabled)
 			{
@@ -131,6 +138,17 @@ void eof_mix_callback(void * buf, int length)
 			}
 			eof_mix_current_note++;
 			eof_mix_next_note = eof_mix_note_pos[eof_mix_current_note];
+		}
+		if((eof_mix_sample_count >= eof_mix_next_percussion) && (eof_mix_current_percussion < eof_mix_notes))
+		{
+			if(eof_mix_percussion_enabled)
+			{
+				eof_voice[3].sp = eof_sound_chosen_percussion;
+				eof_voice[3].pos = 0.0;
+				eof_voice[3].playing = 1;
+			}
+			eof_mix_current_percussion++;
+			eof_mix_next_percussion = eof_mix_percussion_pos[eof_mix_current_percussion];
 		}
 	}
 	eof_just_played = 1;
@@ -193,11 +211,20 @@ void eof_mix_find_claps(void)
 
 	eof_mix_notes = 0;
 	eof_mix_current_note = 0;
+	eof_mix_percussions = 0;
 	for(i = 0; i < eof_song->vocal_track->lyrics; i++)
 	{
-		eof_mix_note_pos[eof_mix_notes] = eof_mix_msec_to_sample(eof_song->vocal_track->lyric[i]->pos, alogg_get_wave_freq_ogg(eof_music_track));
-		eof_mix_note_note[eof_mix_notes] = eof_song->vocal_track->lyric[i]->note;
-		eof_mix_notes++;
+		if((eof_song->vocal_track->lyric[i]->note >= 36) && (eof_song->vocal_track->lyric[i]->note <= 84))
+		{	//This is a vocal pitch
+			eof_mix_note_pos[eof_mix_notes] = eof_mix_msec_to_sample(eof_song->vocal_track->lyric[i]->pos, alogg_get_wave_freq_ogg(eof_music_track));
+			eof_mix_note_note[eof_mix_notes] = eof_song->vocal_track->lyric[i]->note;
+			eof_mix_notes++;
+		}
+		else if(eof_song->vocal_track->lyric[i]->note == EOF_LYRIC_PERCUSSION)
+		{	//This is vocal percussion
+			eof_mix_percussion_pos[eof_mix_percussions] = eof_mix_msec_to_sample(eof_song->vocal_track->lyric[i]->pos, alogg_get_wave_freq_ogg(eof_music_track));
+			eof_mix_percussions++;
+		}
 	}
 }
 
@@ -242,6 +269,7 @@ void eof_mix_init(void)
 		allegro_message("Couldn't load cowbell sound!");
 	}
 	alogg_set_buffer_callback(eof_mix_callback);
+	eof_sound_chosen_percussion = eof_sound_cowbell;	//Until the user specifies otherwise, make cowbell the default percussion
 }
 
 void eof_mix_exit(void)
@@ -302,6 +330,17 @@ void eof_mix_start_helper(void)
 			break;
 		}
 	}
+	eof_mix_current_percussion = -1;
+	eof_mix_next_percussion = -1;
+	for(i = 0; i < eof_mix_percussions; i++)
+	{
+		if(eof_mix_percussion_pos[i] >= eof_mix_sample_count)
+		{
+			eof_mix_current_percussion = i;
+			eof_mix_next_percussion = eof_mix_percussion_pos[i];
+			break;
+		}
+	}
 }
 
 void eof_mix_start(unsigned long start, int speed)
@@ -359,6 +398,15 @@ void eof_mix_seek(int pos)
 		{
 			eof_mix_current_note = i;
 			eof_mix_next_note = eof_mix_note_pos[i];
+			break;
+		}
+	}
+	for(i = 0; i < eof_mix_percussions; i++)
+	{
+		if(eof_mix_percussion_pos[i] >= eof_mix_sample_count)
+		{
+			eof_mix_current_percussion = i;
+			eof_mix_next_percussion = eof_mix_percussion_pos[i];
 			break;
 		}
 	}

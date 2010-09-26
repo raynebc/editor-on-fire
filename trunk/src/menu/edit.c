@@ -1863,11 +1863,13 @@ int eof_menu_edit_vocal_tones(void)
 	if(eof_mix_vocal_tones_enabled)
 	{
 		eof_mix_vocal_tones_enabled = 0;
+		eof_mix_percussion_enabled = 0;
 		eof_edit_menu[17].flags = 0;
 	}
 	else
 	{
 		eof_mix_vocal_tones_enabled = 1;
+		eof_mix_percussion_enabled = 1;
 		eof_edit_menu[17].flags = D_SELECTED;
 	}
 	return 1;
