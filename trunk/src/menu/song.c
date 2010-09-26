@@ -1382,16 +1382,18 @@ void eof_menu_song_waveform(void)
 
 DIALOG eof_audio_cues_dialog[] =
 {
-/*	(proc)					(x)	(y)				(w)	(h)		(fg)	(bg)	(key)	(flags)	(d1)	(d2)	(dp)			(dp2)	(dp3) */
-	{ d_agup_window_proc,	0,	48,				210,224,	2,		23,		0,		0,		0,		0,		"Audio cues",	NULL,	NULL },
-	{ d_agup_text_proc,		16,	88,				64,	8,		2,		23,		0,		0,		0,		0,		"Clap volume",	NULL,	NULL },
-	{ d_agup_slider_proc,	96,	88,				96,	16,		2,		23,		0,		0,		100,	0,		NULL,			NULL,	NULL },
-	{ d_agup_text_proc,		16, 108,			64,	8,		2,		23,		0,		0,		0,		0,		"Tick volume",	NULL,	NULL },
-	{ d_agup_slider_proc,	96,	108,			96,	16,		2,		23,		0,		0,		100,	0,		NULL,			NULL,	NULL },
-	{ d_agup_text_proc,		16, 128,			64,	8,		2,		23,		0,		0,		0,		0,		"Tone volume",	NULL,	NULL },
-	{ d_agup_slider_proc,	96,	128,			96,	16,		2,		23,		0,		0,		100,	0,		NULL,			NULL,	NULL },
-	{ d_agup_button_proc,	16,	156 + 64 + 8,	68,	28,		2,		23,		'\r',	D_EXIT,	0,		0,		"OK",			NULL,	NULL },
-	{ d_agup_button_proc,	116,156 + 64 + 8,	68,	28,		2,		23,		0,		D_EXIT,	0,		0,		"Cancel",		NULL,	NULL },
+/*	(proc)					(x)	(y)				(w)	(h)		(fg)	(bg)	(key)	(flags)	(d1)	(d2)	(dp)						(dp2)	(dp3) */
+	{ d_agup_window_proc,	0,	48,				288,224,	2,		23,		0,		0,		0,		0,		"Audio cues",				NULL,	NULL },
+	{ d_agup_text_proc,		16,	88,				64,	8,		2,		23,		0,		0,		0,		0,		"Clap volume",				NULL,	NULL },
+	{ d_agup_slider_proc,	176,88,				96,	16,		2,		23,		0,		0,		100,	0,		NULL,						NULL,	NULL },
+	{ d_agup_text_proc,		16, 108,			64,	8,		2,		23,		0,		0,		0,		0,		"Metronome volume",			NULL,	NULL },
+	{ d_agup_slider_proc,	176,108,			96,	16,		2,		23,		0,		0,		100,	0,		NULL,						NULL,	NULL },
+	{ d_agup_text_proc,		16, 128,			64,	8,		2,		23,		0,		0,		0,		0,		"Tone volume",				NULL,	NULL },
+	{ d_agup_slider_proc,	176,128,			96,	16,		2,		23,		0,		0,		100,	0,		NULL,						NULL,	NULL },
+	{ d_agup_text_proc,		16, 148,			64,	8,		2,		23,		0,		0,		0,		0,		"Vocal Percussion volume",	NULL,	NULL },
+	{ d_agup_slider_proc,	176,148,			96,	16,		2,		23,		0,		0,		100,	0,		NULL,						NULL,	NULL },
+	{ d_agup_button_proc,	16,	156 + 64 + 8,	68,	28,		2,		23,		'\r',	D_EXIT,	0,		0,		"OK",						NULL,	NULL },
+	{ d_agup_button_proc,	116,156 + 64 + 8,	68,	28,		2,		23,		0,		D_EXIT,	0,		0,		"Cancel",					NULL,	NULL },
 	{ NULL,					0,	0,				0,	0,		0,		0,		0,		0,		0,		0,		NULL,			NULL,	NULL }
 };
 
@@ -1414,11 +1416,13 @@ int eof_menu_audio_cues(void)
 	eof_audio_cues_dialog[2].d2 = eof_clap_volume;
 	eof_audio_cues_dialog[4].d2 = eof_tick_volume;
 	eof_audio_cues_dialog[6].d2 = eof_tone_volume;
-	if(eof_popup_dialog(eof_audio_cues_dialog, 0) == 7)	//User clicked OK
+	eof_audio_cues_dialog[8].d2 = eof_percussion_volume;
+	if(eof_popup_dialog(eof_audio_cues_dialog, 0) == 9)	//User clicked OK
 	{
-		eof_clap_volume = eof_audio_cues_dialog[2].d2;	//Store the volume set by the clap cue volume slider
-		eof_tick_volume = eof_audio_cues_dialog[4].d2;	//Store the volume set by the tick cue volume slider
-		eof_tone_volume = eof_audio_cues_dialog[6].d2;	//Store the volume set by the tone cue volume slider
+		eof_clap_volume = eof_audio_cues_dialog[2].d2;			//Store the volume set by the clap cue volume slider
+		eof_tick_volume = eof_audio_cues_dialog[4].d2;			//Store the volume set by the tick cue volume slider
+		eof_tone_volume = eof_audio_cues_dialog[6].d2;			//Store the volume set by the tone cue volume slider
+		eof_percussion_volume = eof_audio_cues_dialog[8].d2;	//Store the volume set by the vocal percussion cue volume slider
 	}
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;

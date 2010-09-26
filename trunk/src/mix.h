@@ -23,9 +23,10 @@ extern char eof_mix_vocal_tones_enabled;
 extern char eof_mix_midi_tones_enabled;	//Tracks whether MIDI tones are enabled
 extern char eof_mix_percussion_enabled;	//Tracks whether vocal percussion cues are enabled
 extern EOF_MIX_VOICE eof_voice[EOF_MIX_MAX_CHANNELS];
-extern int eof_clap_volume;	//Stores the volume level for the clap, specified as a percentage
-extern int eof_tick_volume;	//Stores the volume level for the tick cue, specified as a percentage
-extern int eof_tone_volume;	//Stores the volume level for the tone cue, specified as a percentage
+extern int eof_clap_volume;			//Stores the volume level for the clap, specified as a percentage
+extern int eof_tick_volume;			//Stores the volume level for the tick cue, specified as a percentage
+extern int eof_tone_volume;			//Stores the volume level for the tone cue, specified as a percentage
+extern int eof_percussion_volume;	//Stores the volume level for the vocal percussion cue, specified as a percentage
 
 void eof_mix_callback(void * buf, int length);	//Buffer callback function for alogg
 unsigned long eof_mix_msec_to_sample(unsigned long msec, int freq);
