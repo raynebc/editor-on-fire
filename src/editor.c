@@ -841,7 +841,7 @@ void eof_read_editor_keys(void)
 		{
 			eof_menu_note_transpose_up();
 		}
-		if(eof_vocals_selected && eof_mix_vocal_tones_enabled && (eof_selection.current < eof_song->vocal_track->lyrics))
+		if(eof_vocals_selected && eof_mix_vocal_tones_enabled && (eof_selection.current < eof_song->vocal_track->lyrics) && (eof_song->vocal_track->lyric[eof_selection.current]->note != EOF_LYRIC_PERCUSSION))
 		{
 			eof_mix_play_note(eof_song->vocal_track->lyric[eof_selection.current]->note);
 		}
@@ -876,7 +876,7 @@ void eof_read_editor_keys(void)
 		{
 			eof_menu_note_transpose_down();
 		}
-		if(eof_vocals_selected && eof_mix_vocal_tones_enabled && (eof_selection.current < eof_song->vocal_track->lyrics))
+		if(eof_vocals_selected && eof_mix_vocal_tones_enabled && (eof_selection.current < eof_song->vocal_track->lyrics) && (eof_song->vocal_track->lyric[eof_selection.current]->note != EOF_LYRIC_PERCUSSION))
 		{
 			eof_mix_play_note(eof_song->vocal_track->lyric[eof_selection.current]->note);
 		}
@@ -3261,7 +3261,10 @@ void eof_vocal_editor_logic(void)
 					eof_selection.current = eof_hover_note;
 					if(eof_mix_vocal_tones_enabled)
 					{
-						eof_mix_play_note(eof_song->vocal_track->lyric[eof_selection.current]->note);
+						if(eof_song->vocal_track->lyric[eof_selection.current]->note != EOF_LYRIC_PERCUSSION)
+							eof_mix_play_note(eof_song->vocal_track->lyric[eof_selection.current]->note);
+						else
+							play_sample(eof_sound_chosen_percussion, 255.0 * (eof_percussion_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);
 					}
 					eof_selection.current_pos = eof_song->vocal_track->lyric[eof_selection.current]->pos;
 					if(KEY_EITHER_SHIFT)
@@ -3610,7 +3613,8 @@ void eof_vocal_editor_logic(void)
 					if(eof_mix_vocal_tones_enabled)
 					{
 						if(eof_pen_lyric.note == EOF_LYRIC_PERCUSSION)
-						{	//This would be the place to play the percussion sample
+						{	//Play the percussion at the user-specified cue volume
+							play_sample(eof_sound_chosen_percussion, 255.0 * (eof_percussion_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);
 						}
 						else
 						{

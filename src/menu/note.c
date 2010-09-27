@@ -467,7 +467,7 @@ int eof_menu_note_transpose_up(void)
 		eof_prepare_undo(EOF_UNDO_TYPE_LYRIC_NOTE);	//Perform a cumulative undo for lyric pitch transpose operations
 		for(i = 0; i < eof_song->vocal_track->lyrics; i++)
 		{
-			if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
+			if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && (eof_song->vocal_track->lyric[i]->note != EOF_LYRIC_PERCUSSION))
 			{
 				eof_song->vocal_track->lyric[i]->note++;
 			}
@@ -500,7 +500,7 @@ int eof_menu_note_transpose_down(void)
 		eof_prepare_undo(EOF_UNDO_TYPE_LYRIC_NOTE);	//Perform a cumulative undo for lyric pitch transpose operations
 		for(i = 0; i < eof_song->vocal_track->lyrics; i++)
 		{
-			if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
+			if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && (eof_song->vocal_track->lyric[i]->note != EOF_LYRIC_PERCUSSION))
 			{
 				eof_song->vocal_track->lyric[i]->note--;
 			}
@@ -532,7 +532,7 @@ int eof_menu_note_transpose_up_octave(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_LYRIC_NOTE);	//Perform a cumulative undo for lyric pitch transpose operations
 
 	for(i = 0; i < eof_song->vocal_track->lyrics; i++)
-		if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
+		if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && (eof_song->vocal_track->lyric[i]->note != EOF_LYRIC_PERCUSSION))
 			eof_song->vocal_track->lyric[i]->note+=12;
 
 	return 1;
@@ -551,7 +551,7 @@ int eof_menu_note_transpose_down_octave(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_LYRIC_NOTE);	//Perform a cumulative undo for lyric pitch transpose operations
 
 	for(i = 0; i < eof_song->vocal_track->lyrics; i++)
-		if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
+		if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && (eof_song->vocal_track->lyric[i]->note != EOF_LYRIC_PERCUSSION))
 			eof_song->vocal_track->lyric[i]->note-=12;
 
 	return 1;
@@ -1429,8 +1429,8 @@ int eof_transpose_possible(int dir)
 		{	//Test if the lyric can transpose the given amount in the given direction
 			if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
 			{
-				if(eof_song->vocal_track->lyric[i]->note == 0)
-				{
+				if((eof_song->vocal_track->lyric[i]->note == 0) || (eof_song->vocal_track->lyric[i]->note == EOF_LYRIC_PERCUSSION))
+				{	//Cannot transpose a pitchless lyric or a vocal percussion note
 					return 0;
 				}
 				if(eof_song->vocal_track->lyric[i]->note - dir < MINPITCH)
