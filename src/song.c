@@ -1130,7 +1130,7 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 		done=eof_process_next_waveform_slice(waveform,audio,slicenum++);
 	}
 
-//Cleanup and return
+//Cleanup
 	fclose(fp);
 	if(oggstruct != NULL)
 		alogg_destroy_ogg(oggstruct);
@@ -1146,6 +1146,11 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 		}
 		return NULL;	//Return error
 	}
+
+//Configure graph parameters
+	waveform->renderlocation = 0;		//By default, render into the fretboard area
+	waveform->renderleftchannel = 1;	//Render the left channel's graph
+	waveform->renderrightchannel = 0;	//Do not render the right channel's graph by default
 
 	return waveform;	//Return waveform data
 }
