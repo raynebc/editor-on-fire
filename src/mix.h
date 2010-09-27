@@ -11,6 +11,7 @@ typedef struct
 	double pos;
 	char playing;
 	int volume;	//A percent value from 0 to 100
+	double multiplier;	//This is the value sqrt(volume/100.0), which must be multiplied to the voice's amplitude to adjust for the specified volume
 
 } EOF_MIX_VOICE;
 
