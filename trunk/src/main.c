@@ -3218,7 +3218,8 @@ void eof_init_after_load(void)
 	eof_changes = 0;
 	eof_music_pos = eof_av_delay;
 	eof_music_paused = 1;
-	eof_selected_track = 0;
+	eof_selected_track = EOF_TRACK_GUITAR;
+	eof_vocals_selected = 0;
 	eof_undo_last_type = 0;
 	eof_change_count = 0;
 	eof_selected_catalog_entry = 0;
