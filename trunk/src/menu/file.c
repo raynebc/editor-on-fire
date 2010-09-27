@@ -1420,6 +1420,9 @@ int eof_test_controller_conflict(EOF_CONTROLLER *controller,int start,int stop)
 	{
 		if(controller->button[ctr1].type == EOF_CONTROLLER_BUTTON_TYPE_KEY)	//Keyboard button
 		{
+			if(controller->button[ctr1].key == 0)
+				continue;	//Don't test the button if its value is undefined
+
 			for(ctr2=start;ctr2<=stop;ctr2++)	//For each key to test against
 			{
 				if(ctr2 == ctr1)

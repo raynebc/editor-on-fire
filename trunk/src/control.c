@@ -232,6 +232,11 @@ int eof_controller_set_button(EOF_CONTROLLER_BUTTON * bp)
 		count++;
 		rest(10);
 	}
+	if(key[KEY_ESC])
+	{	//If user pressed Escape, undefine this controller button
+		ustrcpy(bp->name, "(none)");
+		bp->type=bp->joy=bp->index=bp->d=bp->key=bp->held=bp->pressed=bp->released = 0;
+	}
 	return 0;
 }
 
