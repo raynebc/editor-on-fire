@@ -4368,12 +4368,19 @@ int eof_render_waveform(struct wavestruct *waveform)
 {
 	unsigned long x,startslice,startpixel,ctr;
 	struct waveformslice left,right;
-	unsigned long ycoord;	//Stores the Y coordinate of the middle of the fretboard area
-	unsigned long height;	//Stores the heigth of the fretboard area
+	unsigned long ycoord1,ycoord2;	//Stores the Y coordinates of graph 1's and 2's Y axis
+	unsigned long height;		//Stores the heigth of the fretboard area
+	unsigned long top,bottom;	//Stores the top and bottom coordinates for the area the graph will render to
+	char numgraphs;		//Stores the number of channels to render
 	unsigned long pos = eof_music_pos / eof_zoom;
 
+//validate input
 	if(!eof_song_loaded || !waveform)
 		return 1;	//Return error
+	if(!waveform->left.slices)
+		return 1;	//Return error if the waveform graph has no left/mono channel data
+	if(waveform->is_stereo && !waveform->right.slices)
+		return 1;	//Return error if the stereo waveform graph has no right channel data
 
 //determine timestamp of the left visible edge of the piano roll, which will be in ms, the same as the length of each waveform slice
 	startslice = eof_determine_piano_roll_left_edge();
@@ -4392,77 +4399,65 @@ int eof_render_waveform(struct wavestruct *waveform)
 		startpixel = 0;
 	}
 
-//	ycoord = EOF_EDITOR_RENDER_OFFSET + 35 + 2 * eof_screen_layout.string_space;
-	height = (EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1) - (EOF_EDITOR_RENDER_OFFSET + 25);
-	ycoord = (EOF_EDITOR_RENDER_OFFSET + 25) + (height / 2);
+//determine the top and bottom boundary for the graphing area
+	if(waveform->renderlocation == 0)
+	{	//Render one or both channels' graphs into the fretboard area
+		if(eof_selected_track == EOF_TRACK_VOCALS)
+		{	//Set the top boundary 1 pixel below the lyric lane (at the top of the fretboard area in the vocal editor)
+			top = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16 + 1;
+		}
+		else
+		{	//Set the top boundary to the top of the fretboard area
+			top = EOF_EDITOR_RENDER_OFFSET + 25;
+		}
 
-//Configure waveform parameters
-	waveform->left.height = height;	//Set left channel graph height
-	waveform->left.yaxis = ycoord;	//Set left channel graph y position
+		bottom = EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1;	//Set the bottom boundary to the bottom of the fretboard area
+	}
+	else
+	{	//Render one or both channels' graphs into the editor window
+		top = 22 + 8 + eof_image[EOF_IMAGE_CONTROLS_BASE]->h;	//Set the top boundary to just below the playback controls
+		bottom = eof_screen_layout.scrollbar_y - 1;				//Set the bottom boundary to just above the scroll bar
+	}
 
-//render graph from left to right, one pixel at a time (each pixel represents eof_zoom number of milliseconds of audio)
-	for(x=startpixel,ctr=0;x < eof_window_editor->w;x++,ctr+=eof_zoom)
-	{	//for each pixel in the piano roll's visible width
-		if(eof_waveform_slice_mean(&left,&right,waveform,startslice+ctr,eof_zoom) == 0)
-		{	//processing was successful
-			if(left.peak != waveform->zeroamp)	//If there was a nonzero left peak amplitude, scale it to the channel's maximum amplitude and scale again to half the fretboard's height and render it in green
-			{
-				if(left.peak < waveform->zeroamp)	//If the peak is a negative amplitude
-				{	//Render it after the minimum amplitude to ensure it is visible
-					eof_render_waveform_line(waveform,&waveform->left,left.min,x,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
-					eof_render_waveform_line(waveform,&waveform->left,left.rms,x,makecol(190, 0, 0));	//Render the root mean square amplitude in red
-					eof_render_waveform_line(waveform,&waveform->left,left.peak,x,makecol(0, 190, 0));	//Render the peak amplitude in green
-				}
-				else
-				{	//Otherwise render it first
-					eof_render_waveform_line(waveform,&waveform->left,left.peak,x,makecol(0, 190, 0));	//Render the peak amplitude in green
-					eof_render_waveform_line(waveform,&waveform->left,left.rms,x,makecol(190, 0, 0));	//Render the root mean square amplitude in red
-					eof_render_waveform_line(waveform,&waveform->left,left.min,x,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
-				}
-			}
+//determine the y axis location and graph height of each channel's graph
+	if(waveform->is_stereo)
+	{	//Take both channels into account
+		numgraphs = waveform->renderleftchannel + waveform->renderrightchannel;
+	}
+	else
+	{	//Take only the first channel into account
+		numgraphs = waveform->renderleftchannel;
+		waveform->renderrightchannel = 0;	//Ensure this is set to not render
+	}
+	height = (bottom - top) / numgraphs;
+	ycoord1 = top + (height / 2);	//The first graph will render with respect to the top of the graphing area
+	if(numgraphs == 1)
+	{
+		if(waveform->renderleftchannel)
+		{	//If only rendering the left channel
+			waveform->left.height = height;
+			waveform->left.yaxis = ycoord1;
+		}
+		else
+		{	//If only rendering the right channel
+			waveform->right.height = height;
+			waveform->right.yaxis = ycoord1;
 		}
 	}
-
-	return 0;
-}
-
-int eof_render_waveform2(struct wavestruct *waveform)
-{
-	unsigned long x,startslice,startpixel,ctr;
-	struct waveformslice left,right;
-//	unsigned long ycoord;	//Stores the Y coordinate of the middle of the fretboard area
-	unsigned long height;	//Stores the heigth of the fretboard area
-	unsigned long pos = eof_music_pos / eof_zoom;
-
-	if(!eof_song_loaded || !waveform)
-		return 1;	//Return error
-
-//determine timestamp of the left visible edge of the piano roll, which will be in ms, the same as the length of each waveform slice
-	startslice = eof_determine_piano_roll_left_edge();
-
-//determine which pixel is the left visible edge of the piano roll
-	if(pos < 300)
+	else if(numgraphs == 2)
 	{
-		startpixel = 20;
-	}
-	else if(pos < 320)
-	{
-		startpixel = 320 - pos;
+		ycoord2 = bottom - (height / 2);	//This graph will take 1/2 the entire graphing area, oriented at the bottom
+
+		waveform->left.height = height;
+		waveform->left.yaxis = ycoord1;
+		waveform->right.height = height;
+		waveform->right.yaxis = ycoord2;
 	}
 	else
-	{
-		startpixel = 0;
+	{	//Do not render anything unless it's the graph for 1 or 2 channels
+		return 1;
 	}
 
-//	height = ((eof_window_editor->h - 1) - (25 + 8)) / 2;
-	height = (eof_screen_layout.scrollbar_y - (25 + 8)) / 2;
-
-//Configure waveform parameters
-	waveform->left.height = height;
-	waveform->right.height = height;
-	waveform->left.yaxis = 25 + 8 + (height / 2);	//Position left channel graph relative to the playback controls at the top of the editor window
-//	waveform->right.yaxis = waveform->left.yaxis + height;
-	waveform->right.yaxis = eof_screen_layout.scrollbar_y - (height / 2);	//Position right channel graph relative to the scroll bar at the bottom of the editor window
 
 //render graph from left to right, one pixel at a time (each pixel represents eof_zoom number of milliseconds of audio)
 	for(x=startpixel,ctr=0;x < eof_window_editor->w;x++,ctr+=eof_zoom)
