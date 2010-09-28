@@ -156,7 +156,6 @@ void eof_prepare_song_menu(void)
 	int noted[4] = {0};
 	int seekp = 0;
 	int seekn = 0;
-//	int selected = 0;
 
 	if(eof_song && eof_song_loaded)
 	{
@@ -448,16 +447,6 @@ void eof_prepare_song_menu(void)
 		else
 		{
 			eof_track_selected_menu[EOF_TRACK_VOCALS].text[0] = ' ';
-		}
-
-		/* waveform graph */
-		if(eof_waveform == NULL)
-		{	//If the waveform isn't created yet, disable the Waveform Graph>Configure menu item
-			eof_waveform_menu[1].flags = D_DISABLED;
-		}
-		else
-		{
-			eof_waveform_menu[1].flags = 0;
 		}
 	}
 }
@@ -1600,9 +1589,6 @@ DIALOG eof_waveform_settings_dialog[] =
 
 int eof_menu_song_waveform_settings(void)
 {
-	if(eof_waveform == NULL)
-		return 1;
-
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
@@ -1610,7 +1596,7 @@ int eof_menu_song_waveform_settings(void)
 	centre_dialog(eof_waveform_settings_dialog);
 
 	eof_waveform_settings_dialog[2].flags = eof_waveform_settings_dialog[3].flags = 0;
-	if(eof_waveform->renderlocation == 0)
+	if(eof_waveform_renderlocation == 0)
 	{	//If fit into fretboard is active
 		eof_waveform_settings_dialog[2].flags = D_SELECTED;
 	}
@@ -1620,11 +1606,11 @@ int eof_menu_song_waveform_settings(void)
 	}
 
 	eof_waveform_settings_dialog[5].flags = eof_waveform_settings_dialog[6].flags = 0;
-	if(eof_waveform->renderleftchannel)
+	if(eof_waveform_renderleftchannel)
 	{	//If the left channel is selected to be rendered
 		eof_waveform_settings_dialog[5].flags = D_SELECTED;
 	}
-	if(eof_waveform->renderrightchannel)
+	if(eof_waveform_renderrightchannel)
 	{	//If the left channel is selected to be rendered
 		eof_waveform_settings_dialog[6].flags = D_SELECTED;
 	}
@@ -1633,27 +1619,27 @@ int eof_menu_song_waveform_settings(void)
 	{
 		if(eof_waveform_settings_dialog[2].flags == D_SELECTED)
 		{	//User selected to render into fretboard area
-			eof_waveform->renderlocation = 0;
+			eof_waveform_renderlocation = 0;
 		}
 		else
 		{	//User selected to render into editor window
-			eof_waveform->renderlocation = 1;
+			eof_waveform_renderlocation = 1;
 		}
 		if(eof_waveform_settings_dialog[5].flags == D_SELECTED)
 		{	//User selected to render the left channel
-			eof_waveform->renderleftchannel = 1;
+			eof_waveform_renderleftchannel = 1;
 		}
 		else
 		{
-			eof_waveform->renderleftchannel = 0;
+			eof_waveform_renderleftchannel = 0;
 		}
 		if(eof_waveform_settings_dialog[6].flags == D_SELECTED)
 		{	//User selected to render the right channel
-			eof_waveform->renderrightchannel = 1;
+			eof_waveform_renderrightchannel = 1;
 		}
 		else
 		{
-			eof_waveform->renderrightchannel = 0;
+			eof_waveform_renderrightchannel = 0;
 		}
 	}
 	eof_show_mouse(NULL);
