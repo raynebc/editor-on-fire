@@ -1214,6 +1214,11 @@ void eof_read_editor_keys(void)
 		eof_menu_edit_vocal_tones();
 		key[KEY_V] = 0;
 	}
+	if(key[KEY_F5])
+	{
+		eof_menu_song_waveform();
+		key[KEY_F5] = 0;
+	}
 	if(key[KEY_1] && KEY_EITHER_CTRL && eof_music_paused && !eof_music_catalog_playback && !eof_vocals_selected)
 	{
 		eof_menu_note_toggle_green();
@@ -4415,7 +4420,7 @@ int eof_render_waveform(struct wavestruct *waveform)
 	}
 	else
 	{	//Render one or both channels' graphs into the editor window
-		top = 22 + 8 + eof_image[EOF_IMAGE_CONTROLS_BASE]->h;	//Set the top boundary to just below the playback controls
+		top = 32;												//Set the top of the editor window
 		bottom = eof_screen_layout.scrollbar_y - 1;				//Set the bottom boundary to just above the scroll bar
 	}
 
@@ -4464,35 +4469,41 @@ int eof_render_waveform(struct wavestruct *waveform)
 	{	//for each pixel in the piano roll's visible width
 		if(eof_waveform_slice_mean(&left,&right,waveform,startslice+ctr,eof_zoom) == 0)
 		{	//processing was successful
-			if(left.peak != waveform->zeroamp)	//If there was a nonzero left peak amplitude, scale it to the channel's maximum amplitude and scale again to half the fretboard's height and render it in green
-			{
-				if(left.peak < waveform->zeroamp)	//If the peak is a negative amplitude
-				{	//Render it after the minimum amplitude to ensure it is visible
-					eof_render_waveform_line(waveform,&waveform->left,left.min,x,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
-					eof_render_waveform_line(waveform,&waveform->left,left.rms,x,makecol(190, 0, 0));	//Render the root mean square amplitude in red
-					eof_render_waveform_line(waveform,&waveform->left,left.peak,x,makecol(0, 190, 0));	//Render the peak amplitude in green
-				}
-				else
-				{	//Otherwise render it first
-					eof_render_waveform_line(waveform,&waveform->left,left.peak,x,makecol(0, 190, 0));	//Render the peak amplitude in green
-					eof_render_waveform_line(waveform,&waveform->left,left.rms,x,makecol(190, 0, 0));	//Render the root mean square amplitude in red
-					eof_render_waveform_line(waveform,&waveform->left,left.min,x,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
+			if(waveform->renderleftchannel)
+			{	//If the left channel rendering is enabled
+				if(left.peak != waveform->zeroamp)	//If there was a nonzero left peak amplitude, scale it to the channel's maximum amplitude and scale again to half the fretboard's height and render it in green
+				{
+					if(left.peak < waveform->zeroamp)	//If the peak is a negative amplitude
+					{	//Render it after the minimum amplitude to ensure it is visible
+						eof_render_waveform_line(waveform,&waveform->left,left.min,x,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
+						eof_render_waveform_line(waveform,&waveform->left,left.rms,x,makecol(190, 0, 0));	//Render the root mean square amplitude in red
+						eof_render_waveform_line(waveform,&waveform->left,left.peak,x,makecol(0, 190, 0));	//Render the peak amplitude in green
+					}
+					else
+					{	//Otherwise render it first
+						eof_render_waveform_line(waveform,&waveform->left,left.peak,x,makecol(0, 190, 0));	//Render the peak amplitude in green
+						eof_render_waveform_line(waveform,&waveform->left,left.rms,x,makecol(190, 0, 0));	//Render the root mean square amplitude in red
+						eof_render_waveform_line(waveform,&waveform->left,left.min,x,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
+					}
 				}
 			}
 
-			if(waveform->is_stereo && (right.peak != waveform->zeroamp))	//If there was a nonzero right peak amplitude, scale it to the channel's maximum amplitude and scale again to half the fretboard's height and render it in green
-			{
-				if(right.peak < waveform->zeroamp)	//If the peak is a negative amplitude
-				{	//Render it after the minimum amplitude to ensure it is visible
-					eof_render_waveform_line(waveform,&waveform->right,right.min,x,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
-					eof_render_waveform_line(waveform,&waveform->right,right.rms,x,makecol(190, 0, 0));	//Render the root mean square amplitude in red
-					eof_render_waveform_line(waveform,&waveform->right,right.peak,x,makecol(0, 190, 0));	//Render the peak amplitude in green
-				}
-				else
-				{	//Otherwise render it first
-					eof_render_waveform_line(waveform,&waveform->right,right.peak,x,makecol(0, 190, 0));	//Render the peak amplitude in green
-					eof_render_waveform_line(waveform,&waveform->right,right.rms,x,makecol(190, 0, 0));	//Render the root mean square amplitude in red
-					eof_render_waveform_line(waveform,&waveform->right,right.min,x,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
+			if(waveform->renderrightchannel)
+			{	//If the right channel rendering is enabled
+				if(waveform->is_stereo && (right.peak != waveform->zeroamp))	//If there was a nonzero right peak amplitude, scale it to the channel's maximum amplitude and scale again to half the fretboard's height and render it in green
+				{
+					if(right.peak < waveform->zeroamp)	//If the peak is a negative amplitude
+					{	//Render it after the minimum amplitude to ensure it is visible
+						eof_render_waveform_line(waveform,&waveform->right,right.min,x,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
+						eof_render_waveform_line(waveform,&waveform->right,right.rms,x,makecol(190, 0, 0));	//Render the root mean square amplitude in red
+						eof_render_waveform_line(waveform,&waveform->right,right.peak,x,makecol(0, 190, 0));	//Render the peak amplitude in green
+					}
+					else
+					{	//Otherwise render it first
+						eof_render_waveform_line(waveform,&waveform->right,right.peak,x,makecol(0, 190, 0));	//Render the peak amplitude in green
+						eof_render_waveform_line(waveform,&waveform->right,right.rms,x,makecol(190, 0, 0));	//Render the root mean square amplitude in red
+						eof_render_waveform_line(waveform,&waveform->right,right.min,x,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
+					}
 				}
 			}
 		}

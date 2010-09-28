@@ -1475,12 +1475,6 @@ void eof_read_global_keys(void)
 		eof_menu_file_midi_import();
 		key[KEY_F6] = 0;
 	}
-	if(key[KEY_F5])
-	{
-		clear_keybuf();
-		eof_menu_song_waveform();
-		key[KEY_F5] = 0;
-	}
 }
 
 void eof_lyric_logic(void)
@@ -3233,6 +3227,9 @@ void eof_init_after_load(void)
 	eof_sort_notes();
 	eof_fixup_notes();
 	eof_fix_window_title();
+	eof_destroy_waveform(eof_waveform);	//If a waveform had already been created, destroy it
+	eof_waveform = NULL;
+	eof_display_waveform = 0;
 }
 
 END_OF_MAIN()
