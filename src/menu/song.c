@@ -77,6 +77,13 @@ MENU eof_catalog_menu[] =
     {NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_waveform_menu[] =
+{
+	{"&Show\tF5", eof_menu_song_waveform, NULL, 0, NULL},
+	{"&Configure", eof_menu_song_waveform_settings, NULL, 0, NULL},
+	{NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_song_menu[] =
 {
     {"&Seek", NULL, eof_song_seek_menu, 0, NULL},
@@ -91,6 +98,7 @@ MENU eof_song_menu[] =
     {"", NULL, NULL, 0, NULL},
     {"T&est In FOF\tF12", eof_menu_song_test, NULL, EOF_LINUX_DISABLE, NULL},
 	{"&Audio cues", eof_menu_audio_cues, NULL, 0, NULL},
+	{"&Waveform graph", NULL, eof_waveform_menu, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -440,6 +448,16 @@ void eof_prepare_song_menu(void)
 		else
 		{
 			eof_track_selected_menu[EOF_TRACK_VOCALS].text[0] = ' ';
+		}
+
+		/* waveform graph */
+		if(eof_waveform == NULL)
+		{	//If the waveform isn't created yet, disable the Waveform Graph>Configure menu item
+			eof_waveform_menu[1].flags = D_DISABLED;
+		}
+		else
+		{
+			eof_waveform_menu[1].flags = 0;
 		}
 	}
 }
@@ -1346,38 +1364,42 @@ int eof_ini_dialog_delete(DIALOG * d)
 	return D_O_K;
 }
 
-void eof_menu_song_waveform(void)
+int eof_menu_song_waveform(void)
 {
-//	char temp_filename[1024] = {0};
-
 	if(!eof_song_loaded)
-		return;
+		return 1;	//Return error
 
 	if(eof_display_waveform == 0)
 	{
-//		append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);
-
-		if(eof_waveform == NULL)
-		{
-			eof_waveform = eof_create_waveform(eof_loaded_ogg_name,1);	//Generate 1ms waveform data from the current audio file
-		}
-		else if(ustricmp(eof_waveform->oggfilename,eof_loaded_ogg_name) != 0)
-		{	//If the user opened a different OGG file since the waveform data was generated
-			eof_destroy_waveform(eof_waveform);
-			eof_waveform = eof_create_waveform(eof_loaded_ogg_name,1);	//Generate 1ms waveform data from the current audio file
+		if(eof_music_paused)
+		{	//Don't try to generate the waveform data if the chart is playing
+			if(eof_waveform == NULL)
+			{
+				eof_waveform = eof_create_waveform(eof_loaded_ogg_name,1);	//Generate 1ms waveform data from the current audio file
+			}
+			else if(ustricmp(eof_waveform->oggfilename,eof_loaded_ogg_name) != 0)
+			{	//If the user opened a different OGG file since the waveform data was generated
+				eof_destroy_waveform(eof_waveform);
+				eof_waveform = eof_create_waveform(eof_loaded_ogg_name,1);	//Generate 1ms waveform data from the current audio file
+			}
 		}
 
 		if(eof_waveform != NULL)
 		{
 			eof_display_waveform = 1;
+			eof_waveform_menu[0].flags = D_SELECTED;	//Check the Show item in the Song>Waveform graph menu
 		}
 	}
 	else
 	{
 		eof_display_waveform = 0;
+		eof_waveform_menu[0].flags = 0;	//Clear the Show item in the Song>Waveform graph menu
 	}
 
-	eof_render();
+	if(eof_music_paused)
+		eof_render();
+
+	return 0;	//Return success
 }
 
 DIALOG eof_audio_cues_dialog[] =
@@ -1553,6 +1575,85 @@ int eof_menu_audio_cues(void)
 		{
 			eof_sound_chosen_percussion = eof_sound_clap4;
 			eof_selected_percussion_cue = 29;
+		}
+	}
+	eof_show_mouse(NULL);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	return 1;
+}
+
+DIALOG eof_waveform_settings_dialog[] =
+{
+   /* (proc) 		        (x)	(y)	(w)	(h)	(fg) (bg) (key) (flags)	(d1)(d2)(dp)						(dp2) (dp3) */
+   { d_agup_window_proc,  	0,	48,	200,200,2,   23,  0,    0,      0,	0,	"Configure Waveform Graph",	NULL, NULL },
+   { d_agup_text_proc,		16,	80,	64,	8,	2,   23,  0,    0,      0,	0,	"Fit into:",				NULL, NULL },
+   { d_agup_radio_proc,		16,	100,110,15,	2,   23,  0,    0,      0,	0,	"Fretboard area",			NULL, NULL },
+   { d_agup_radio_proc,		16,	120,110,15,	2,   23,  0,    0,      0,	0,	"Editor window",			NULL, NULL },
+   { d_agup_text_proc,		16,	140,80,16,	2,   23,  0,    0,		1,	0,	"Display channels:",		NULL, NULL },
+   { d_agup_check_proc,		16,	160,45,16,	2,   23,  0,    0,		1,	0,	"Left",						NULL, NULL },
+   { d_agup_check_proc,		16,	180,55,16,	2,   23,  0,    0,		1,	0,	"Right",					NULL, NULL },
+   { d_agup_button_proc,	16,	208,68,	28,	2,   23,  '\r',	D_EXIT, 0,	0,	"OK",             			NULL, NULL },
+   { d_agup_button_proc,	116,208,68,	28,	2,   23,  0,	D_EXIT, 0,	0,	"Cancel",         			NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_menu_song_waveform_settings(void)
+{
+	if(eof_waveform == NULL)
+		return 1;
+
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_waveform_settings_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_waveform_settings_dialog);
+
+	eof_waveform_settings_dialog[2].flags = eof_waveform_settings_dialog[3].flags = 0;
+	if(eof_waveform->renderlocation == 0)
+	{	//If fit into fretboard is active
+		eof_waveform_settings_dialog[2].flags = D_SELECTED;
+	}
+	else
+	{	//If fit into editor window is active
+		eof_waveform_settings_dialog[3].flags = D_SELECTED;
+	}
+
+	eof_waveform_settings_dialog[5].flags = eof_waveform_settings_dialog[6].flags = 0;
+	if(eof_waveform->renderleftchannel)
+	{	//If the left channel is selected to be rendered
+		eof_waveform_settings_dialog[5].flags = D_SELECTED;
+	}
+	if(eof_waveform->renderrightchannel)
+	{	//If the left channel is selected to be rendered
+		eof_waveform_settings_dialog[6].flags = D_SELECTED;
+	}
+
+	if(eof_popup_dialog(eof_waveform_settings_dialog, 0) == 7)		//User clicked OK
+	{
+		if(eof_waveform_settings_dialog[2].flags == D_SELECTED)
+		{	//User selected to render into fretboard area
+			eof_waveform->renderlocation = 0;
+		}
+		else
+		{	//User selected to render into editor window
+			eof_waveform->renderlocation = 1;
+		}
+		if(eof_waveform_settings_dialog[5].flags == D_SELECTED)
+		{	//User selected to render the left channel
+			eof_waveform->renderleftchannel = 1;
+		}
+		else
+		{
+			eof_waveform->renderleftchannel = 0;
+		}
+		if(eof_waveform_settings_dialog[6].flags == D_SELECTED)
+		{	//User selected to render the right channel
+			eof_waveform->renderrightchannel = 1;
+		}
+		else
+		{
+			eof_waveform->renderrightchannel = 0;
 		}
 	}
 	eof_show_mouse(NULL);
