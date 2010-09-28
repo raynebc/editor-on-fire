@@ -4434,6 +4434,9 @@ int eof_render_waveform(struct wavestruct *waveform)
 		numgraphs = waveform->renderleftchannel;
 		waveform->renderrightchannel = 0;	//Ensure this is set to not render
 	}
+	if(numgraphs == 0)	//If user specified not to render either channel
+		return 0;
+
 	height = (bottom - top) / numgraphs;
 	ycoord1 = top + (height / 2);	//The first graph will render with respect to the top of the graphing area
 	if(numgraphs == 1)
