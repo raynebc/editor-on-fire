@@ -4387,6 +4387,18 @@ int eof_render_waveform(struct wavestruct *waveform)
 	if(waveform->is_stereo && !waveform->right.slices)
 		return 1;	//Return error if the stereo waveform graph has no right channel data
 
+//determine how many channels will be graphed
+	if(waveform->is_stereo)
+	{	//Take both channels into account
+		numgraphs = eof_waveform_renderleftchannel + eof_waveform_renderrightchannel;
+	}
+	else
+	{	//Take only the first channel into account
+		numgraphs = eof_waveform_renderrightchannel;
+	}
+	if(numgraphs == 0)	//If user specified not to render either channel, or to render the right channel on a mono audio file
+		return 0;
+
 //determine timestamp of the left visible edge of the piano roll, which will be in ms, the same as the length of each waveform slice
 	startslice = eof_determine_piano_roll_left_edge();
 
@@ -4405,7 +4417,7 @@ int eof_render_waveform(struct wavestruct *waveform)
 	}
 
 //determine the top and bottom boundary for the graphing area
-	if(waveform->renderlocation == 0)
+	if(eof_waveform_renderlocation == 0)
 	{	//Render one or both channels' graphs into the fretboard area
 		if(eof_selected_track == EOF_TRACK_VOCALS)
 		{	//Set the top boundary 1 pixel below the lyric lane (at the top of the fretboard area in the vocal editor)
@@ -4425,23 +4437,11 @@ int eof_render_waveform(struct wavestruct *waveform)
 	}
 
 //determine the y axis location and graph height of each channel's graph
-	if(waveform->is_stereo)
-	{	//Take both channels into account
-		numgraphs = waveform->renderleftchannel + waveform->renderrightchannel;
-	}
-	else
-	{	//Take only the first channel into account
-		numgraphs = waveform->renderleftchannel;
-		waveform->renderrightchannel = 0;	//Ensure this is set to not render
-	}
-	if(numgraphs == 0)	//If user specified not to render either channel
-		return 0;
-
 	height = (bottom - top) / numgraphs;
 	ycoord1 = top + (height / 2);	//The first graph will render with respect to the top of the graphing area
 	if(numgraphs == 1)
 	{
-		if(waveform->renderleftchannel)
+		if(eof_waveform_renderleftchannel)
 		{	//If only rendering the left channel
 			waveform->left.height = height;
 			waveform->left.yaxis = ycoord1;
@@ -4466,13 +4466,12 @@ int eof_render_waveform(struct wavestruct *waveform)
 		return 1;
 	}
 
-
 //render graph from left to right, one pixel at a time (each pixel represents eof_zoom number of milliseconds of audio)
 	for(x=startpixel,ctr=0;x < eof_window_editor->w;x++,ctr+=eof_zoom)
 	{	//for each pixel in the piano roll's visible width
 		if(eof_waveform_slice_mean(&left,&right,waveform,startslice+ctr,eof_zoom) == 0)
 		{	//processing was successful
-			if(waveform->renderleftchannel)
+			if(eof_waveform_renderleftchannel)
 			{	//If the left channel rendering is enabled
 				if(left.peak != waveform->zeroamp)	//If there was a nonzero left peak amplitude, scale it to the channel's maximum amplitude and scale again to half the fretboard's height and render it in green
 				{
@@ -4491,7 +4490,7 @@ int eof_render_waveform(struct wavestruct *waveform)
 				}
 			}
 
-			if(waveform->renderrightchannel)
+			if(eof_waveform_renderrightchannel)
 			{	//If the right channel rendering is enabled
 				if(waveform->is_stereo && (right.peak != waveform->zeroamp))	//If there was a nonzero right peak amplitude, scale it to the channel's maximum amplitude and scale again to half the fretboard's height and render it in green
 				{

@@ -289,11 +289,8 @@ struct wavestruct
 	unsigned int zeroamp;			//The amplitude representing a 0 amplitude for this waveform (32768 for 16 bit audio samples, 128 for 8 bit audio samples)
 	char is_stereo;					//This OGG has two audio channels
 
-	char renderlocation;				//Specifies where and how high the graph will render (0 = fretboard area, 1 = editor window)
 	struct waveformchanneldata left;	//The amplitude and graph data for the audio's left channel
-	char renderleftchannel;				//Specifies whether the left channel's graph should render
 	struct waveformchanneldata right;	//The amplitude and graph data for the audio's right channel (if applicable)
-	char renderrightchannel;			//Specifies whether the right channel's graph should render
 };
 
 EOF_SONG * eof_create_song(void);	//Allocates, initializes and returns an EOF_SONG structure
