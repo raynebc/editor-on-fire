@@ -616,8 +616,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				{	//If the lyric event and pitch are not at least EOF_LYRIC_PHRASE_PADDING deltas away from the lyric phrase on marker
 					if(last_phrase + EOF_LYRIC_PHRASE_PADDING < eof_midi_event[i+2]->pos)
 					{	//If the lyric event and pitch can be padded without overlapping the pitch off note, do it
-						eof_midi_event[i+1]->pos = last_phrase + EOF_LYRIC_PHRASE_PADDING;
-						eof_midi_event[i+2]->pos = last_phrase + EOF_LYRIC_PHRASE_PADDING;
+						eof_midi_event[i]->pos = last_phrase + EOF_LYRIC_PHRASE_PADDING;	//Change the delta time of the lyric event
+						eof_midi_event[i+1]->pos = last_phrase + EOF_LYRIC_PHRASE_PADDING;	//Change the delta time of the note on event
 					}
 				}
 			}
