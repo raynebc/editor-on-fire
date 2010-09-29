@@ -4635,15 +4635,20 @@ void eof_render_editor_window_common(void)
 	{
 		npos = 20 - (pos - 300);
 	}
-	for(i = (-npos / (1000 / eof_zoom)); i < (-npos / (1000 / eof_zoom)) + 12; i++)
-	{
-		pmin = i / 60;
-		psec = i % 60;
-		if(i * 1000 < eof_music_length)
+
+	unsigned long start = eof_determine_piano_roll_left_edge();	//Find the timestamp of the left visible edge of the piano roll
+	unsigned long msec;
+	start /= 1000;
+	start *= 1000;	//Start is rounded down to nearest second
+	for(msec = start; msec < start + 12000; msec += 1000)
+	{	//Draw up to 12 seconds of markers
+		pmin = msec / 60000;		//Find minute count of this second marker
+		psec = (msec % 60000)/1000;	//Find second count of this second marker
+		if(msec < eof_music_length)
 		{
 			for(j = 0; j < 10; j++)
 			{
-				xcoord = npos + (1000 * i) / eof_zoom + (j * 100) / eof_zoom;
+				xcoord = npos + (msec + (j * 100)) / eof_zoom;
 				if(xcoord > eof_window_editor->screen->w)	//If this and all remaining second markers would render out of view
 					break;
 				if(xcoord >= 0)	//If this second marker would be visible
@@ -4659,7 +4664,7 @@ void eof_render_editor_window_common(void)
 					}
 				}
 			}
-			textprintf_ex(eof_window_editor->screen, eof_mono_font, npos + (1000 * i) / eof_zoom - 16, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 6, eof_color_white, -1, "%02d:%02d", pmin, psec);
+			textprintf_ex(eof_window_editor->screen, eof_mono_font, npos + (msec / eof_zoom) - 16, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 6, eof_color_white, -1, "%02d:%02d", pmin, psec);
 		}
 	}
 	vline(eof_window_editor->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
