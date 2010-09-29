@@ -2182,6 +2182,7 @@ int Lyric_handler(struct TEPstruct *data)
 	double time=0.0;
 	unsigned char eventtype=0;
 	struct MIDI_Lyric_Piece *Lyric_Piece=NULL;	//Used to retrieve from the Notes list
+	char *tempstr;	//Temporary string created to track vocal percussion (when building with EOF)
 
 	static unsigned char lyric_note_num=0xFF;
 		//Some incorrectly-prepared RB ripped MIDIs nest note events within the Note On and Note Off event that
@@ -2442,6 +2443,16 @@ int Lyric_handler(struct TEPstruct *data)
 		return 1;
 	}
 
+//Vocal percusion logic (for EOF)
+	#ifdef EOF_BUILD
+		if(lyric_note_num == 96)
+		{
+			tempstr=DuplicateString("*");
+			AddMIDILyric(tempstr,lastnotetime,lyric_note_num,overdrive_on,0);
+			lyric_note_num=0xFF;	//Reset this status
+		}
+	#endif
+
 //Normal lyric logic
 	if((lastlyric != NULL) && (lyric_note_num != 0xFF))
 	{	//If a Lyric and Note On with the same timing have been parsed
@@ -2563,35 +2574,17 @@ int GetLyricPiece(void)
 	if((temp != NULL) && (temp->end != 0))
 	{	//If first link exists and is completed
 		assert_wrapper(temp->prev == NULL);	//If the head link doesn't point back to nothing, abort program
-		MIDI_Lyrics.head=temp->next;
 
-		if(temp->next == NULL)	//Removing only link in list
+		MIDI_Lyrics.head=temp->next;		//Head points to next link, if any
+		if(MIDI_Lyrics.head == NULL)		//If the list's only link was removed
 			MIDI_Lyrics.tail=NULL;
 		else
-			(temp->next)->prev=NULL;
-
-		temp->prev=temp->next=NULL;
+			MIDI_Lyrics.head->prev=NULL;	//New head link points back to nothing
+		temp->prev=temp->next=NULL;	//Former head link is severed from the list
 
 //Ensure a line of lyrics is open
 		if(Lyrics.line_on == 0)		//Only create a new line if one isn't already open
 			CreateLyricLine();
-
-//Special case: The first entry of Notes list is now a line break
-		if((MIDI_Lyrics.head != NULL) && (MIDI_Lyrics.head->lyric == NULL))
-		{
-			EndLyricLine();		//End the line gracefully
-
-		//Remove from the notes list
-			temp=MIDI_Lyrics.head;	//Store this pointer
-			MIDI_Lyrics.head=temp->next;
-			if(temp->next == NULL)	//Remove tail of list
-				MIDI_Lyrics.tail=NULL;
-			else
-				(temp->next)->prev=NULL;
-
-			free(temp);	//Deallocate memory used by the MIDI_Lyric piece
-			return 2;	//Return line break stored
-		}
 
 //Configure overdrive based on the retrieved Lyric's overdrive status
 		if(temp->overdrive_on)
@@ -2610,6 +2603,23 @@ int GetLyricPiece(void)
 		free(temp->lyric);
 		temp->lyric=NULL;	//This is expected to be NULL on the next Lyric event
 		free(temp);			//Deallocate memory used by the MIDI_Lyric piece
+
+//Special case: The first entry of Notes list is now a line break
+		if((MIDI_Lyrics.head != NULL) && (MIDI_Lyrics.head->lyric == NULL))
+		{
+			EndLyricLine();		//End the line gracefully
+
+		//Remove the line break from the notes list
+			temp=MIDI_Lyrics.head;	//Store this pointer
+			MIDI_Lyrics.head=temp->next;
+			if(temp->next == NULL)	//Remove tail of list
+				MIDI_Lyrics.tail=NULL;
+			else
+				(temp->next)->prev=NULL;
+
+			free(temp);	//Deallocate memory used by the MIDI_Lyric piece
+			return 2;	//Return line break stored
+		}
 	}
 	else
 		return 0;	//No MIDI lyric stored
@@ -2973,7 +2983,7 @@ void Export_SKAR(FILE *outf)
 	WriteMIDIString(outf,0,TEXT_MIDI_STRING,"@KMIDI KARAOKE FILE");
 	WriteMIDIString(outf,0,TEXT_MIDI_STRING,"@V0100");
 	tempstr=Append("@I ",PROGVERSION);
-	WriteMIDIString(outf,0,TEXT_MIDI_STRING,tempstr);		//Write FoFLyricConvert version as informational tag
+	WriteMIDIString(outf,0,TEXT_MIDI_STRING,tempstr);		//Write foflc version as informational tag
 	free(tempstr);
 	if(Lyrics.Editor != NULL)
 	{

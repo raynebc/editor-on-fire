@@ -37,7 +37,7 @@ const char *LYRICFORMATNAMES[NUMBEROFLYRICFORMATS+1]={"UNKNOWN LYRIC TYPE","SCRI
 	void exit_wrapper(int status)
 	{
 		if(useFLjumpbuffer)					//If the longjmp() internal exception handling logic should be used
-			longjmp(FLjumpbuffer,status);	//Return program control to appropriate FoFLyricConverter logic
+			longjmp(FLjumpbuffer,status);	//Return program control to appropriate foflc logic
 		else
 			longjmp(jumpbuffer,status);	//Return program control to the instruction line where setjmp() is called in EOF's main code
 	}
@@ -51,7 +51,7 @@ const char *LYRICFORMATNAMES[NUMBEROFLYRICFORMATS+1]={"UNKNOWN LYRIC TYPE","SCRI
 	void exit_wrapper(int status)
 	{
 		if(useFLjumpbuffer)					//If the longjmp() internal exception handling logic should be used
-			longjmp(FLjumpbuffer,status);	//Return program control to appropriate FoFLyricConverter logic
+			longjmp(FLjumpbuffer,status);	//Return program control to appropriate foflc logic
 		else
 			exit(status);					//Exit program, this only runs if EOF_BUILD is not defined during compile
 	}
@@ -422,13 +422,19 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 
 //If this lyric piece is just a + (or a plus with a grouping hyphen), ensure it is marked in the Lyric structure to append to the previous lyric
 //Check Lyrics.curline->piececount to verify that this is only done if the + is not the first lyric piece in the line
-	if((!strcmp(str,"+") || !strcmp(str,"+-")) && (Lyrics.curline->piececount != 0))
+//v2.34	Corrected pitch shift grouping logic
+//	if((!strcmp(str,"+") || !strcmp(str,"+-")) && (Lyrics.curline->piececount != 0))
+	if(!strcmp(str,"+") && (Lyrics.curline->piececount != 0))
 	{
 		assert_wrapper(temp->prev != NULL);
-		temp->prev->groupswithnext=1;
+		groupswithnext=temp->prev->groupswithnext;			//The pitch shift will inherit the grouping status of the lyric it groups with
+		temp->prev->groupswithnext=1;						//The previous lyric is forced to group to the pitch shift
 
+		#ifndef EOF_BUILD
 		//Force the duration of the previous piece to join up with this lyric piece, as that + implies that the previous lyric was still being sung
-		temp->prev->duration=start-Lyrics.realoffset-temp->prev->start;	//Remember to offset start by realoffset, otherwise Lyrics.lastpiece->start could be the larger operand, causing an overflow
+		//Only perform this manipulation if NOT being used in EOF, as it is intended to give EOF the original timings
+			temp->prev->duration=start-Lyrics.realoffset-temp->prev->start;	//Remember to offset start by realoffset, otherwise Lyrics.lastpiece->start could be the larger operand, causing an overflow
+		#endif
 	}
 
 //Remember this as the last lyric piece in order for the noplus, hyphen insertion, etc. features to work
@@ -955,8 +961,10 @@ void PostProcessLyrics(void)
 				{
 					assert_wrapper(pieceptr->next != NULL);	//If there is no next piece, but this piece was marked for grouping, abort program
 					assert_wrapper(pieceptr->next->lyric != NULL);	//The next lyric needs to have a string defined
-					if((pieceptr->next->lyric)[0] != '+')	//Only append a hyphen if the next lyric isn't the + pitch shift character
-					{
+//v2.34	Corrected pitch shift grouping logic
+//					if((pieceptr->next->lyric)[0] != '+')	//Only append a hyphen if the next lyric isn't the + pitch shift character
+					if(((pieceptr->lyric)[0] != '+') && ((pieceptr->next->lyric)[0] != '+'))
+					{	//Only append an inserted hyphen if this lyric and the next lyric aren'pitch shifts
 						pieceptr->lyric=ResizedAppend(pieceptr->lyric,"-",1);//Resize the string to include an appended hyphen
 						hyphenadded=1;
 					}
@@ -1412,21 +1420,6 @@ void *malloc_err(size_t size)
 	return ptr;
 }
 
-void *calloc_err(size_t num,size_t size)
-{
-	void *ptr=calloc(num,size);
-
-	if(ptr == NULL)
-	{
-		printf("Error allocating memory: %s\nAborting\n",strerror(errno));
-		exit_wrapper(1);
-	}
-
-//Keep this line available for debugging
-//if(Lyrics.verbose)	printf("Malloc'd pointer=%p\n",ptr);
-
-	return ptr;
-}
 #endif
 
 char *strcasestr_spec(char *str1,const char *str2)
