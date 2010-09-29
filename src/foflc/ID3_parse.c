@@ -615,8 +615,9 @@ unsigned long ID3FrameProcessor(struct ID3Tag *ptr)
 	//Initialize an ID3Frame structure
 		temp=malloc_err(sizeof(struct ID3Frame));	//Allocate memory
 		*temp=emptyID3Frame;						//Reliably initialize all values to 0/NULL
-		temp->frameid=calloc_err(1,5);				//Allocate and init 5 bytes to 0 for the ID3 frame ID
+		temp->frameid=malloc_err(5);				//Allocate 5 bytes for the ID3 frame ID
 		memcpy(temp->frameid,header,4);				//Copy the 4 byte ID3 frame ID into the pre-terminated string
+		temp->frameid[4]='\0';						//Terminate the string
 		temp->pos=filepos;	//Record the file position of the ID3 frame
 		temp->length=((unsigned long)header[4]<<24) | ((unsigned long)header[5]<<16) | ((unsigned long)header[6]<<8) | ((unsigned long)header[7]);
 			//Record the frame length (defined in header as 4 byte Big Endian integer)

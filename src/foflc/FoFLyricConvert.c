@@ -29,7 +29,7 @@ static void DisplayHelp(void);		//Lists verbose program help
 
 int main(int argc, char *argv[])
 {
-//Command line syntax:	FoFLyricConvert [-offset #] [-nohyphens [1|2|3]] [-noplus] [-marklines] [-nolyrics]
+//Command line syntax:	foflc [-offset #] [-nohyphens [1|2|3]] [-noplus] [-marklines] [-nolyrics]
 //						[-grouping {word | line}] [-verbose | debug] [-filter [...]] [-quick] [-startstamp #]
 //						[-bpm #] [-brute] [-help] [-srcoffset #] [-intrack "TRACKNAME"] [-outtrack "TRACKNAME"]
 //						[-notenames] [-relative] [-nopitch] [-nosrctag [...]] [-nofstyle]
@@ -1100,7 +1100,7 @@ int main(int argc, char *argv[])
 
 void DisplaySyntax(void)
 {
-	printf("\n%s syntax:\nFoFLyricConvert [-offset #][-nohyphens [1|2|3]][-noplus][-marklines][-nolyrics]\n",PROGVERSION);
+	printf("\n%s syntax:\nfoflc [-offset #][-nohyphens [1|2|3]][-noplus][-marklines][-nolyrics]\n",PROGVERSION);
 	puts(" [-grouping {word|line}][-verbose|debug][-filter [...]][-quick][-startstamp #]");
 	puts(" [-bpm #][-brute][-help][-srcoffset #][-intrack TRACKNAME][-outtrack TRACKNAME]");
 	puts(" [-notenames][-relative][-nopitch][-nosrctag [...]][-nofstyle]");
@@ -1174,7 +1174,7 @@ void Input_failed(int errnum,char *argument)
 	}
 
 	DisplaySyntax();
-	puts("\nUse FoFLyricConvert -help for detailed help");
+	puts("\nUse foflc -help for detailed help");
 
 	exit_wrapper(1);
 }
@@ -1190,13 +1190,13 @@ void DisplayHelp(void)
 	puts("-If the input format is vrhythm, a source rhythm MIDI file (infile)");
 	puts(" containing the vocal timings must be specified, followed by the input pitched");
 	puts(" lyrics file or vrhythm track ID.  Both files are unique to this format, ie:");
-	puts("\tFoFLyricConvert -in vrhythm timing.mid lyrics.txt -out ustar vox.txt");
+	puts("\tfoflc -in vrhythm timing.mid lyrics.txt -out ustar vox.txt");
 	puts("-(srcfile) may be used for MIDI based export formats for merging the lryics");
 	puts(" with an existing file, keeping its timing intact.  For example:");
-	puts("\tFoFLyricConvert -in vl myfile.vl -out midi notes.mid withlyrics.mid");
+	puts("\tfoflc -in vl myfile.vl -out midi notes.mid withlyrics.mid");
 	puts("-If the output format is vrhythm, an output vocal rhythm file, pitched lyric");
 	puts(" file and instrument/difficulty identifier must be specified, for example:");
-	puts("\tFoFLyricConvert -in vl song.vl -out vrhythm rhythm.mid pitches.txt G4");
+	puts("\tfoflc -in vl song.vl -out vrhythm rhythm.mid pitches.txt G4");
 	printf("\nPress Enter for next screen");
 	fflush_err(stdin);
 	fgetc_err(stdin);	//wait for keypress

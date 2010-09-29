@@ -49,7 +49,7 @@ Export functions are expected to:
 //
 //Global Macros- All relevant source/header files will include this header file to obtain these declarations
 //
-#define PROGVERSION "FoFLyricConverter2.33"
+#define PROGVERSION "foflc2.34"
 #define LYRIC_NOTE_ON 50
 	//Previously, if note #s 60-100 were used for Note On events for lyrics, FoF interpreted
 	//those notes to indicate playable instrument difficulties.  This was fixed, but I will
@@ -80,10 +80,9 @@ Export functions are expected to:
 //#define NDEBUG		//This will disable the assert macros in the source file if defined
 //#define USEMEMWATCH	//Defining this will include the memwatch header in all source files
 
-//Replace use of malloc_err with malloc and calloc_err with calloc when using Memwatch, to make allocations trackable
+//Replace use of malloc_err with malloc when using Memwatch, to make allocations trackable
 #ifdef USEMEMWATCH
 #define malloc_err malloc
-#define calloc_err calloc
 #endif
 
 #ifndef EOF_BUILD
@@ -442,8 +441,6 @@ void WritePaddedString(FILE *outf,char *str,unsigned long num,unsigned char padd
 #ifndef USEMEMWATCH
 void *malloc_err(size_t size);
 	//A wrapper function that allocates memory and returns a pointer to it, automatically checking for and throwing any error given
-void *calloc_err(size_t num,size_t size);
-	//A wrapper function that allocates memory, inits it to 0s and returns a pointer to it, automatically checking for and throwing any error given
 #endif
 
 

@@ -1,3 +1,13 @@
+Changelog: 2.33 to 2.34
+	Changed the program executable's name to "foflc"
+	Fixed a bug with the MIDI import's lyric overlap correction that would cause a lyric that overlapped into a new line phrase to be discarded
+	Corrected the grouping behavior of pitch shifts, which now inherit the grouping of the lyric before them
+	Altered the linker options for the program, as it seems that some GCC library wasn't being linked into the executable, resulting in a dll dependency
+	Eliminated remaining use of calloc() in favor of guaranteed methods to initialize data to a value of 0
+	Fixed a minor optimization warning given by GCC regarding some debug logging code
+	Changed the import logic to not lengthen lyrics that precede a pitch shift unless the converter is being used outside of EOF
+	Added logic so that vocal percussion notes can be loaded and passed to EOF
+
 Changelog: 2.32 to 2.33
 	Fixed a bug with the detection logic that could cause a crash during program completion if lyric detection was used and the input file had no lyrics
 	Fixed a bug with ID3v1 tag creation that could write the wrong information into the tag fields
