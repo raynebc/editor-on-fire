@@ -41,6 +41,8 @@ char eof_mix_midi_tones_enabled = 0;
 char eof_mix_percussion_enabled = 0;
 int eof_selected_percussion_cue = 10;	//The user selected percussion sound (cowbell by default), corresponds to the radio button in the eof_audio_cues_dialog[] array
 
+int eof_chart_volume = 100;	//Stores the volume level for the chart audio, specified as a percentage
+double eof_chart_volume_multiplier = 1.0;	//This is the value sqrt(volume/100.0), which must be multiplied to the voice's amplitude to adjust for the specified volume
 int eof_clap_volume = 100;	//Stores the volume level for the clap cue, specified as a percentage
 int eof_tick_volume = 100;	//Stores the volume level for the tick cue, specified as a percentage
 int eof_tone_volume = 100;	//Stores the volume level for the tone cue, specified as a percentage
@@ -84,6 +86,19 @@ void eof_mix_callback(void * buf, int length)
 	/* add audio data to the buffer */
 	for(i = 0; i < bytes_left; i += increment)
 	{
+		if(eof_chart_volume != 100)		//If the chart volume is to be less than 100%
+		{
+			sum = buffer[i] - 32768;	//Convert to signed sample
+			sum *= eof_chart_volume_multiplier;
+			buffer[i] = sum + 32768;	//Convert back to unsigned sample
+
+			if(increment > 1)
+			{	//If this is a stereo audio file, apply the volume to the other channel as well
+				sum = buffer[i] - 32768;		//Convert to signed sample
+				sum *= eof_chart_volume_multiplier;
+				buffer[i + 1] = sum + 32768;	//Convert back to unsigned sample
+			}
+		}
 
 		/* mix voices */
 		for(j = 0; j < EOF_MIX_MAX_CHANNELS; j++)
