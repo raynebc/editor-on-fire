@@ -39,7 +39,7 @@ char eof_mix_claps_note = 31; /* enable all by default */
 char eof_mix_vocal_tones_enabled = 0;
 char eof_mix_midi_tones_enabled = 0;
 char eof_mix_percussion_enabled = 0;
-int eof_selected_percussion_cue = 10;	//The user selected percussion sound (cowbell by default), corresponds to the radio button in the eof_audio_cues_dialog[] array
+int eof_selected_percussion_cue = 17;	//The user selected percussion sound (cowbell by default), corresponds to the radio button in the eof_audio_cues_dialog[] array
 
 int eof_chart_volume = 100;	//Stores the volume level for the chart audio, specified as a percentage
 double eof_chart_volume_multiplier = 1.0;	//This is the value sqrt(volume/100.0), which must be multiplied to the voice's amplitude to adjust for the specified volume
@@ -285,7 +285,7 @@ void eof_mix_init(void)
 	}
 	eof_sound_cowbell = eof_mix_load_ogg_sample("percussion.dat#cowbell.ogg");
 	eof_sound_chosen_percussion = eof_sound_cowbell;	//Until the user specifies otherwise, make cowbell the default percussion
-	eof_selected_percussion_cue = 10;
+	eof_selected_percussion_cue = 17;
 	eof_sound_tambourine1 = eof_mix_load_ogg_sample("percussion.dat#tambourine1.ogg");
 	eof_sound_tambourine2 = eof_mix_load_ogg_sample("percussion.dat#tambourine2.ogg");
 	eof_sound_tambourine3 = eof_mix_load_ogg_sample("percussion.dat#tambourine3.ogg");
