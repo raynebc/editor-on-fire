@@ -59,6 +59,7 @@ Export functions are expected to:
 
 #define MINPITCH 36		//Harmonix's defined minimum pitch
 #define MAXPITCH 84		//Harmonix's defined maximum pitch
+#define VOCALPERCUSSION 96	//Harmonix's defined pitch for vocal percussion
 #define PITCHLESS 254	//This is an invalid pitch number that will be used to represent the lyric having no defined pitch
 
 //Input and output formats (stored to Lyrics.in_format and Lyrics.out_format, respectively)

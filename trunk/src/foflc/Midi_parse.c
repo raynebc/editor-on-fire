@@ -2182,7 +2182,10 @@ int Lyric_handler(struct TEPstruct *data)
 	double time=0.0;
 	unsigned char eventtype=0;
 	struct MIDI_Lyric_Piece *Lyric_Piece=NULL;	//Used to retrieve from the Notes list
+
+	#ifdef EOF_BUILD
 	char *tempstr;	//Temporary string created to track vocal percussion (when building with EOF)
+	#endif
 
 	static unsigned char lyric_note_num=0xFF;
 		//Some incorrectly-prepared RB ripped MIDIs nest note events within the Note On and Note Off event that
@@ -2368,8 +2371,11 @@ int Lyric_handler(struct TEPstruct *data)
 		}
 		else	//If no lyric was parsed yet, return depending on whether lyricless logic is in effect
 		{
-			if(Lyrics.nolyrics == 0)	//If the nolyrics parameter wasn't specified
-				return 1;				//return, as the lyric is expected to be parsed
+			#ifdef EOF_BUILD
+			if(lyric_note_num != VOCALPERCUSSION)	//If this is vocal percussion, no lyric string is expected
+			#endif
+				if(Lyrics.nolyrics == 0)	//If the nolyrics parameter wasn't specified
+					return 1;				//return, as the lyric is expected to be parsed
 		}
 	}//Note On event
 
@@ -2445,7 +2451,7 @@ int Lyric_handler(struct TEPstruct *data)
 
 //Vocal percusion logic (for EOF)
 	#ifdef EOF_BUILD
-		if(lyric_note_num == 96)
+		if(lyric_note_num == VOCALPERCUSSION)
 		{
 			tempstr=DuplicateString("*");
 			AddMIDILyric(tempstr,lastnotetime,lyric_note_num,overdrive_on,0);
