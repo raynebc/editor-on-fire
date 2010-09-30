@@ -22,7 +22,7 @@ void eof_music_play(void)
 	else if(key[KEY_D])	//Force full playback speed
 	{
 		speed = 1000;
-		key[KEY_F]=0;
+		key[KEY_D]=0;
 	}
 	if(eof_music_paused)
 	{
@@ -88,6 +88,23 @@ void eof_music_play(void)
 			alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_pos);
 		#endif
 		eof_mix_find_claps();
+
+		int x;
+		char notspace;
+		do{
+			notspace = 0;
+			for(x = 0; x < KEY_MAX; x++)
+			{
+				if((x != KEY_SPACE) && (x != KEY_ESC) && key[x])
+					notspace = 1;		//If any key besides space or escape is being held down, continue looping
+			}
+		}while(notspace);
+		if(key[KEY_ESC])
+		{	//If use broke out of the loop above with the escape key
+			eof_music_paused = 1;	//cancel the playback operation
+			return;
+		}
+
 		if(alogg_play_ex_ogg(eof_music_track, eof_buffer_size, 255, 128, speed + eof_audio_fine_tune, 0) == ALOGG_OK)
 		{
 			eof_mix_start(eof_mix_msec_to_sample(alogg_get_pos_msecs_ogg(eof_music_track), alogg_get_wave_freq_ogg(eof_music_track)), speed);
