@@ -907,12 +907,8 @@ double realtime=0.0;					//Used to calculate realtime of anchors
 						{
 							overdrive_pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[i],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 						}
-						/* percussion */
-						else if((eof_import_events[i]->event[j]->d1 == 96) || (eof_import_events[i]->event[j]->d1 == 97))
-						{
-						}
-						else if((eof_import_events[i]->event[j]->d1 >= MINPITCH) && (eof_import_events[i]->event[j]->d1 <= MAXPITCH))
-						{
+						else if((eof_import_events[i]->event[j]->d1 == 96) || (eof_import_events[i]->event[j]->d1 == 97) || ((eof_import_events[i]->event[j]->d1 >= MINPITCH) && (eof_import_events[i]->event[j]->d1 <= MAXPITCH)))
+						{	//If this is a vocal percussion note (96 or 97) or if it is a valid vocal pitch
 							for(k = 0; k < note_count[picked_track]; k++)
 							{
 								if(sp->vocal_track->lyric[k]->pos == eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[i],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset))

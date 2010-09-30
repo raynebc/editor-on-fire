@@ -585,7 +585,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			}
 
 			//Write the string, which was only corrected if correctlyrics was nonzero and the pitch was not defined
-			eof_add_midi_lyric_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos,anchorlist,EOF_DEFAULT_TIME_DIVISION), tempstring);
+			if(sp->vocal_track->lyric[i]->note != VOCALPERCUSSION)	//Do not write a lyric string for vocal percussion notes
+				eof_add_midi_lyric_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos,anchorlist,EOF_DEFAULT_TIME_DIVISION), tempstring);
 		}
 		/* fill in lyric lines */
 		for(i = 0; i < sp->vocal_track->lines; i++)
