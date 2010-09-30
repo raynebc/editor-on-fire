@@ -168,6 +168,8 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 	struct Lyric_Line *curline;	//Conductor of the lyric line linked list
 	struct Lyric_Piece *curpiece;	//Conductor of the lyric piece linked list
 	EOF_LYRIC *temp;		//Pointer returned by eof_vocal_track_add_lyric()
+	unsigned long start=0;	//Used to track the start position of each line
+	char startfound=0;		//Used to help skip adding vocal percussion notes to lyric lines
 
 	if((tp == NULL) || (lp == NULL))
 		return -1;	//Return error (invalid structure pointers)
@@ -175,11 +177,17 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 	curline=lp->lines;	//Point line conductor to first lineof lyrics in the Lyrics structure
 	while(curline != NULL)
 	{	//For each line of lyrics
-		eof_vocal_track_add_line(tp,curline->start,curline->start+curline->duration);	//Add the lyric line definition to the EOF structure
+		startfound =  0;
 
 		curpiece=curline->pieces;	//Point lyric conductor to first lyric in this line
 		while(curpiece != NULL)
 		{	//For each lyric in this line
+			if((startfound == 0) && (curpiece->pitch != VOCALPERCUSSION))
+			{
+				startfound = 1;
+				start=curpiece->start;	//Store the timestamp of the first non vocal percussion note in this line
+			}
+
 			if(curpiece->overdrive)				//If this lyric is overdrive
 				if(tp->lines-1 >= 0)			//only if tp->lines is greater than 0
 					tp->line[tp->lines-1].flags |= 1;	//Set the overdrive flag in the EOF line structure
@@ -201,6 +209,11 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 				ustrcpy(temp->text, "");	//Copy an empty string for a vocal percussion note
 			else
 				ustrcpy(temp->text,curpiece->lyric);
+
+			if((curpiece->next == NULL) && startfound)
+			{	//If this was the last lyric for this line, and at least one non vocal percussion note was found
+				eof_vocal_track_add_line(tp,start,curpiece->start + curpiece->duration);	//Add the lyric line definition to the EOF structure
+			}
 
 			curpiece=curpiece->next;	//Point to next lyric in the line
 		}
