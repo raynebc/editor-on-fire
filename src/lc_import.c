@@ -195,9 +195,12 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 
 			temp->pos=curpiece->start;
 			temp->length=(long)curpiece->duration;	//curpiece->duration is an unsigned long value, hopefully this won't cause problems
-			if(strlen(curpiece->lyric)>255)
+			if(ustrlen(curpiece->lyric) > 255)
 				return -1;	//Return error (lyric too large to store in EOF's array)
-			ustrcpy(temp->text,curpiece->lyric);
+			if(curpiece->pitch == VOCALPERCUSSION)
+				ustrcpy(temp->text, "");	//Copy an empty string for a vocal percussion note
+			else
+				ustrcpy(temp->text,curpiece->lyric);
 
 			curpiece=curpiece->next;	//Point to next lyric in the line
 		}

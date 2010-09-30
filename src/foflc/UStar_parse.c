@@ -890,6 +890,11 @@ int CheckPitches(unsigned char *pitchmin,unsigned char *pitchmax)
 			if(temp->pitch == PITCHLESS)	//If this lyric piece has no defined pitch
 				continue;					//Disregard it
 
+			#ifdef EOF_BUILD
+			if(temp->pitch == VOCALPERCUSSION)	//If this lyric piece is vocal percussion
+				continue;						//Disregard it
+			#endif
+
 			if(temp->pitch < pitchmin_local)	//Track the lowest pitch
 				pitchmin_local=temp->pitch;
 
