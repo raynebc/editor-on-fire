@@ -109,105 +109,13 @@ int eof_adjust_notes(int offset)
 	return 1;
 }
 
-/* No longer used
-void eof_note_draw(EOF_NOTE * np, int p)
+int eof_note_draw(EOF_NOTE * np, int p)
 {
 	int pos = eof_music_pos / eof_zoom;
 	int npos;
 	int ychart[5] = {20, 40, 60, 80, 100};
-	int pcol = p == 1 ? makecol(255, 255, 255) : p == 2 ? makecol(224, 255, 224) : 0;
-	int dcol = (np->flags & EOF_NOTE_FLAG_CRAZY) ? makecol(0, 0, 0) : makecol(255, 255, 255);
-	int colors[EOF_MAX_FRETS] = {eof_color_green,eof_color_red,eof_color_yellow,eof_color_blue,eof_color_purple};	//Each of the fret colors
-	int ncol = makecol(192, 192, 192);	//Note color defaults to silver unless the note is not star power
-	int ctr;
-	unsigned int mask;	//Used to mask out colors in the for loop
-
-	if(eof_inverted_notes)
-	{
-		ychart[0] = eof_screen_layout.note_y[4];
-		ychart[1] = eof_screen_layout.note_y[3];
-		ychart[2] = eof_screen_layout.note_y[2];
-		ychart[3] = eof_screen_layout.note_y[1];
-		ychart[4] = eof_screen_layout.note_y[0];
-	}
-	else
-	{
-		ychart[0] = eof_screen_layout.note_y[0];
-		ychart[1] = eof_screen_layout.note_y[1];
-		ychart[2] = eof_screen_layout.note_y[2];
-		ychart[3] = eof_screen_layout.note_y[3];
-		ychart[4] = eof_screen_layout.note_y[4];
-	}
-
-	if(pos < 300)
-	{
-		npos = 20 + (np->pos) / eof_zoom;
-	}
-	else
-	{
-		npos = 20 - ((pos - 300)) + np->pos / eof_zoom;
-	}
-
-	vline(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.note_marker_size, makecol(128, 128, 128));
-	if(p == 3)
-	{
-		pcol = eof_color_white;
-		dcol = eof_color_white;
-		for(ctr=0,mask=1;ctr<EOF_MAX_FRETS;ctr++,mask=mask<<1)
-		{	//Render for each of the available fret colors
-			if(np->note & mask)
-			{
-				if(!(np->flags & EOF_NOTE_FLAG_SP))
-				{	//If the note is not star power
-					ncol = colors[ctr];	//Assign the appropriate fret color
-				}
-				rectfill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, ncol);
-				rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, pcol);
-				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_size, ncol);
-				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_dot_size, dcol);
-				circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_size, pcol);
-			}
-			else if(eof_hover_note >= 0)
-			{
-				rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, eof_color_gray);
-				circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_size, eof_color_gray);
-			}
-		}
-	}
-	else
-	{
-		for(ctr=0,mask=1;ctr<EOF_MAX_FRETS;ctr++,mask=mask<<1)
-		{	//Render for each of the available fret colors
-			if(np->note & mask)
-			{
-				if(!(np->flags & EOF_NOTE_FLAG_SP))
-				{	//If the note is not star power
-					ncol = colors[ctr];	//Assign the appropriate fret color
-				}
-				rectfill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, ncol);
-				if(p)
-				{
-					rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, pcol);
-				}
-				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_size, ncol);
-				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_dot_size, dcol);
-				if(p)
-				{
-					circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], eof_screen_layout.note_size, pcol);
-				}
-			}
-		}
-	}
-}
-*/
-
-int eof_note_draw_quick(EOF_NOTE * np, int p)
-{
-	int pos = eof_music_pos / eof_zoom;
-	int npos;
-	int ychart[5] = {20, 40, 60, 80, 100};
-	int pcol = p == 1 ? makecol(255, 255, 255) : p == 2 ? makecol(224, 255, 224) : 0;
-	int dcol = (np->flags & EOF_NOTE_FLAG_CRAZY) ? makecol(0, 0, 0) : makecol(255, 255, 255);
+	int pcol = p == 1 ? eof_color_white : p == 2 ? makecol(224, 255, 224) : 0;
+	int dcol = (np->flags & EOF_NOTE_FLAG_CRAZY) ? eof_color_black : eof_color_white;
 	int colors[EOF_MAX_FRETS] = {eof_color_green,eof_color_red,eof_color_yellow,eof_color_blue,eof_color_purple};	//Each of the fret colors
 	int ncol = makecol(192, 192, 192);	//Note color defaults to silver unless the note is not star power
 	int ctr;
@@ -326,8 +234,8 @@ void eof_lyric_draw(EOF_LYRIC * np, int p)
 	int note_y;
 	int native = 0;
 	int ychart[5] = {20, 40, 60, 80, 100};
-	int pcol = p == 1 ? makecol(255, 255, 255) : p == 2 ? makecol(224, 255, 224) : 0;
-	int dcol = makecol(255, 255, 255);
+	int pcol = p == 1 ? eof_color_white : p == 2 ? makecol(224, 255, 224) : 0;
+	int dcol = eof_color_white;
 	int ncol = 0;
 
 	EOF_LYRIC_LINE *lyricline;	//The line that this lyric is found to be in (if any) so the correct background color can be determined
@@ -443,8 +351,8 @@ int eof_lyric_draw_truncate(int notenum, int p)
 	int note_y;
 	int native = 0;
 	int ychart[5] = {20, 40, 60, 80, 100};
-	int pcol = p == 1 ? makecol(255, 255, 255) : p == 2 ? makecol(224, 255, 224) : 0;
-	int dcol = makecol(255, 255, 255);
+	int pcol = p == 1 ? eof_color_white : p == 2 ? makecol(224, 255, 224) : 0;
+	int dcol = eof_color_white;
 	int ncol = 0;
 
 	EOF_LYRIC_LINE *lyricline;	//The line that this lyric is found to be in (if any) so the correct background color can be determined
@@ -855,7 +763,7 @@ void eof_note_draw_catalog(EOF_NOTE * np, int p)
 	int pos = eof_music_catalog_pos / eof_zoom;
 	int npos;
 	int ychart[5] = {20, 40, 60, 80, 100};
-	int pcol = p == 1 ? makecol(255, 255, 255) : p == 2 ? makecol(224, 255, 224) : 0;
+	int pcol = p == 1 ? eof_color_white : p == 2 ? makecol(224, 255, 224) : 0;
 
 	if(p == 3)
 	{
@@ -902,7 +810,7 @@ void eof_note_draw_catalog(EOF_NOTE * np, int p)
 		if(np->note & 2)
 		{
 			circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0] + 10, eof_screen_layout.note_size, eof_color_red);
-			circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0] + 10, 2, makecol(255, 255, 255));
+			circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0] + 10, 2, eof_color_white);
 			if(p)
 			{
 				circle(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0] + 10, eof_screen_layout.note_size, pcol);
@@ -911,7 +819,7 @@ void eof_note_draw_catalog(EOF_NOTE * np, int p)
 		if(np->note & 4)
 		{
 			circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1] + 10, eof_screen_layout.note_size, eof_color_yellow);
-			circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1] + 10, 2, makecol(255, 255, 255));
+			circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1] + 10, 2, eof_color_white);
 			if(p)
 			{
 				circle(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1] + 10, eof_screen_layout.note_size, pcol);
@@ -920,7 +828,7 @@ void eof_note_draw_catalog(EOF_NOTE * np, int p)
 		if(np->note & 8)
 		{
 			circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2] + 10, eof_screen_layout.note_size, eof_color_blue);
-			circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2] + 10, 2, makecol(255, 255, 255));
+			circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2] + 10, 2, eof_color_white);
 			if(p)
 			{
 				circle(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2] + 10, eof_screen_layout.note_size, pcol);
@@ -929,7 +837,7 @@ void eof_note_draw_catalog(EOF_NOTE * np, int p)
 		if(np->note & 16)
 		{
 			circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3] + 10, eof_screen_layout.note_size, eof_color_purple);
-			circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3] + 10, 2, makecol(255, 255, 255));
+			circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3] + 10, 2, eof_color_white);
 			if(p)
 			{
 				circle(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3] + 10, eof_screen_layout.note_size, pcol);
@@ -947,7 +855,7 @@ void eof_note_draw_catalog(EOF_NOTE * np, int p)
 				rectfill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0] + eof_screen_layout.note_tail_size, eof_color_green);
 				rect(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0] + eof_screen_layout.note_tail_size, pcol);
 				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0], eof_screen_layout.note_size, eof_color_green);
-				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0], eof_screen_layout.note_dot_size, makecol(255, 255, 255));
+				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0], eof_screen_layout.note_dot_size, eof_color_white);
 				circle(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0], eof_screen_layout.note_size, pcol);
 			}
 			else if(eof_hover_note >= 0)
@@ -960,7 +868,7 @@ void eof_note_draw_catalog(EOF_NOTE * np, int p)
 				rectfill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1] + eof_screen_layout.note_tail_size, eof_color_red);
 				rect(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1] + eof_screen_layout.note_tail_size, pcol);
 				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1], eof_screen_layout.note_size, eof_color_red);
-				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1], eof_screen_layout.note_dot_size, makecol(255, 255, 255));
+				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1], eof_screen_layout.note_dot_size, eof_color_white);
 				circle(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1], eof_screen_layout.note_size, pcol);
 			}
 			else if(eof_hover_note >= 0)
@@ -973,7 +881,7 @@ void eof_note_draw_catalog(EOF_NOTE * np, int p)
 				rectfill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2] + eof_screen_layout.note_tail_size, eof_color_yellow);
 				rect(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2] + eof_screen_layout.note_tail_size, pcol);
 				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2], eof_screen_layout.note_size, eof_color_yellow);
-				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2], eof_screen_layout.note_dot_size, makecol(255, 255, 255));
+				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2], eof_screen_layout.note_dot_size, eof_color_white);
 				circle(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2], eof_screen_layout.note_size, pcol);
 			}
 			else if(eof_hover_note >= 0)
@@ -986,7 +894,7 @@ void eof_note_draw_catalog(EOF_NOTE * np, int p)
 				rectfill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3] + eof_screen_layout.note_tail_size, eof_color_blue);
 				rect(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3] + eof_screen_layout.note_tail_size, pcol);
 				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3], eof_screen_layout.note_size, eof_color_blue);
-				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3], eof_screen_layout.note_dot_size, makecol(255, 255, 255));
+				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3], eof_screen_layout.note_dot_size, eof_color_white);
 				circle(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3], eof_screen_layout.note_size, pcol);
 			}
 			else if(eof_hover_note >= 0)
@@ -999,7 +907,7 @@ void eof_note_draw_catalog(EOF_NOTE * np, int p)
 				rectfill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4] + eof_screen_layout.note_tail_size, eof_color_purple);
 				rect(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4] + eof_screen_layout.note_tail_size, pcol);
 				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4], eof_screen_layout.note_size, eof_color_purple);
-				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4], eof_screen_layout.note_dot_size, makecol(255, 255, 255));
+				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4], eof_screen_layout.note_dot_size, eof_color_white);
 				circle(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4], eof_screen_layout.note_size, pcol);
 			}
 			else if(eof_hover_note >= 0)
@@ -1019,7 +927,7 @@ void eof_note_draw_catalog(EOF_NOTE * np, int p)
 					rect(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0] + eof_screen_layout.note_tail_size, pcol);
 				}
 				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0], eof_screen_layout.note_size, eof_color_green);
-				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0], eof_screen_layout.note_dot_size, makecol(255, 255, 255));
+				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0], eof_screen_layout.note_dot_size, eof_color_white);
 				if(p)
 				{
 					circle(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[0], eof_screen_layout.note_size, pcol);
@@ -1033,7 +941,7 @@ void eof_note_draw_catalog(EOF_NOTE * np, int p)
 					rect(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1] + eof_screen_layout.note_tail_size, pcol);
 				}
 				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1], eof_screen_layout.note_size, eof_color_red);
-				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1], eof_screen_layout.note_dot_size, makecol(255, 255, 255));
+				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1], eof_screen_layout.note_dot_size, eof_color_white);
 				if(p)
 				{
 					circle(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[1], eof_screen_layout.note_size, pcol);
@@ -1047,7 +955,7 @@ void eof_note_draw_catalog(EOF_NOTE * np, int p)
 					rect(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2] + eof_screen_layout.note_tail_size, pcol);
 				}
 				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2], eof_screen_layout.note_size, eof_color_yellow);
-				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2], eof_screen_layout.note_dot_size, makecol(255, 255, 255));
+				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2], eof_screen_layout.note_dot_size, eof_color_white);
 				if(p)
 				{
 					circle(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[2], eof_screen_layout.note_size, pcol);
@@ -1061,7 +969,7 @@ void eof_note_draw_catalog(EOF_NOTE * np, int p)
 					rect(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3] + eof_screen_layout.note_tail_size, pcol);
 				}
 				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3], eof_screen_layout.note_size, eof_color_blue);
-				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3], eof_screen_layout.note_dot_size, makecol(255, 255, 255));
+				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3], eof_screen_layout.note_dot_size, eof_color_white);
 				if(p)
 				{
 					circle(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[3], eof_screen_layout.note_size, pcol);
@@ -1075,7 +983,7 @@ void eof_note_draw_catalog(EOF_NOTE * np, int p)
 					rect(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4] + eof_screen_layout.note_tail_size, pcol);
 				}
 				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4], eof_screen_layout.note_size, eof_color_purple);
-				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4], eof_screen_layout.note_dot_size, makecol(255, 255, 255));
+				circlefill(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4], eof_screen_layout.note_dot_size, eof_color_white);
 				if(p)
 				{
 					circle(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[4], eof_screen_layout.note_size, pcol);
@@ -1093,8 +1001,8 @@ void eof_lyric_draw_catalog(EOF_LYRIC * np, int p)
 	int note_y;
 	int native = 0;
 	int ychart[5] = {20, 40, 60, 80, 100};
-	int pcol = p == 1 ? makecol(255, 255, 255) : p == 2 ? makecol(224, 255, 224) : 0;
-	int dcol = makecol(255, 255, 255);
+	int pcol = p == 1 ? eof_color_white : p == 2 ? makecol(224, 255, 224) : 0;
+	int dcol = eof_color_white;
 	int ncol = 0;
 
 	if(p == 3)

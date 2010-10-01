@@ -1803,13 +1803,13 @@ void eof_render_note_window(void)
 	int pos;
 	int lpos, npos, ypos;
 
-	clear_to_color(eof_window_note->screen, makecol(64, 64, 64));
+	clear_to_color(eof_window_note->screen, eof_color_gray);
 
 	if(eof_catalog_menu[0].flags & D_SELECTED)
 	{
 		textprintf_ex(eof_window_note->screen, font, 2, 0, eof_info_color, -1, "Fret Catalog");
-		textprintf_ex(eof_window_note->screen, font, 2, 12, makecol(255, 255, 255), -1, "-------------------");
-		textprintf_ex(eof_window_note->screen, font, 2, 24,  makecol(255, 255, 255), -1, "Entry: %d of %d", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
+		textprintf_ex(eof_window_note->screen, font, 2, 12, eof_color_white, -1, "-------------------");
+		textprintf_ex(eof_window_note->screen, font, 2, 24,  eof_color_white, -1, "Entry: %d of %d", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
 
 		if(eof_cselected_control < 0)
 		{
@@ -1947,59 +1947,59 @@ void eof_render_note_window(void)
 	else
 	{
 		textprintf_ex(eof_window_note->screen, font, 2, 0, eof_info_color, -1, "Information Panel");
-		textprintf_ex(eof_window_note->screen, font, 2, 12, makecol(255, 255, 255), -1, "----------------------------");
+		textprintf_ex(eof_window_note->screen, font, 2, 12, eof_color_white, -1, "----------------------------");
 		ypos = 24;
 		if(eof_hover_beat >= 0)
 		{
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, makecol(255, 255, 255), -1, "Beat = %d : BPM = %f : Hover = %d", eof_selected_beat, (double)60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn, eof_hover_beat);
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Beat = %d : BPM = %f : Hover = %d", eof_selected_beat, (double)60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn, eof_hover_beat);
 		}
 		else
 		{
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, makecol(255, 255, 255), -1, "Beat = %d : BPM = %f", eof_selected_beat, (double)60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn);
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Beat = %d : BPM = %f", eof_selected_beat, (double)60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn);
 		}
 		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, makecol(255, 255, 255), -1, "Measure = %d (Beat %d/%d)", eof_selected_measure, eof_beat_in_measure + 1, eof_beats_in_measure);
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Measure = %d (Beat %d/%d)", eof_selected_measure, eof_beat_in_measure + 1, eof_beats_in_measure);
 		ypos += 12;
 		if(eof_vocals_selected)
 		{
 			if(eof_selection.current < eof_song->vocal_track->lyrics)
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, makecol(255, 255, 255), -1, "Lyric = %d : Pos = %lu : Length = %lu", eof_selection.current, eof_song->vocal_track->lyric[eof_selection.current]->pos, eof_song->vocal_track->lyric[eof_selection.current]->length);
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Lyric = %d : Pos = %lu : Length = %lu", eof_selection.current, eof_song->vocal_track->lyric[eof_selection.current]->pos, eof_song->vocal_track->lyric[eof_selection.current]->length);
 				ypos += 12;
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, makecol(255, 255, 255), -1, "Lyric Text = \"%s\" : Tone = %d (%s)", eof_song->vocal_track->lyric[eof_selection.current]->text, eof_song->vocal_track->lyric[eof_selection.current]->note, (eof_song->vocal_track->lyric[eof_selection.current]->note != 0) ? eof_get_tone_name(eof_song->vocal_track->lyric[eof_selection.current]->note) : "none");
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Lyric Text = \"%s\" : Tone = %d (%s)", eof_song->vocal_track->lyric[eof_selection.current]->text, eof_song->vocal_track->lyric[eof_selection.current]->note, (eof_song->vocal_track->lyric[eof_selection.current]->note != 0) ? eof_get_tone_name(eof_song->vocal_track->lyric[eof_selection.current]->note) : "none");
 			}
 			else
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, makecol(255, 255, 255), -1, "Lyric = None");
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Lyric = None");
 			}
 			ypos += 12;
 			if(eof_hover_note >= 0)
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, makecol(255, 255, 255), -1, "Hover Lyric = %d", eof_hover_note);
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Lyric = %d", eof_hover_note);
 			}
 			else
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, makecol(255, 255, 255), -1, "Hover Lyric = None");
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Lyric = None");
 			}
 		}
 		else
 		{
 			if(eof_selection.current < eof_song->track[eof_selected_track]->notes)
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, 48, makecol(255, 255, 255), -1, "Note = %d : Pos = %lu : Length = %lu", eof_selection.current, eof_song->track[eof_selected_track]->note[eof_selection.current]->pos, eof_song->track[eof_selected_track]->note[eof_selection.current]->length);
+				textprintf_ex(eof_window_note->screen, font, 2, 48, eof_color_white, -1, "Note = %d : Pos = %lu : Length = %lu", eof_selection.current, eof_song->track[eof_selected_track]->note[eof_selection.current]->pos, eof_song->track[eof_selected_track]->note[eof_selection.current]->length);
 			}
 			else
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, 48, makecol(255, 255, 255), -1, "Note = None");
+				textprintf_ex(eof_window_note->screen, font, 2, 48, eof_color_white, -1, "Note = None");
 			}
 			ypos += 12;
 			if(eof_hover_note >= 0)
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, 60, makecol(255, 255, 255), -1, "Hover Note = %d", eof_hover_note);
+				textprintf_ex(eof_window_note->screen, font, 2, 60, eof_color_white, -1, "Hover Note = %d", eof_hover_note);
 			}
 			else
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, 60, makecol(255, 255, 255), -1, "Hover Note = None");
+				textprintf_ex(eof_window_note->screen, font, 2, 60, eof_color_white, -1, "Hover Note = None");
 			}
 		}
 		int ism = ((eof_music_pos - eof_av_delay) / 1000) / 60;
@@ -2013,37 +2013,37 @@ void eof_render_note_window(void)
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s Selected = %d/%d", eof_vocals_selected ? "Lyrics" : "Notes", isn, itn);
 
 		ypos += 24;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos,  makecol(255, 255, 255), -1, "Input Mode: %s", eof_input_name[eof_input_mode]);
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Input Mode: %s", eof_input_name[eof_input_mode]);
 		ypos += 12;
 
 		if(eof_snap_mode != EOF_SNAP_CUSTOM)
-			textprintf_ex(eof_window_note->screen, font, 2, ypos,  makecol(255, 255, 255), -1, "Grid Snap: %s", eof_snap_name[(int)eof_snap_mode]);
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Grid Snap: %s", eof_snap_name[(int)eof_snap_mode]);
 		else
 		{
 			if(eof_custom_snap_measure == 0)
-				textprintf_ex(eof_window_note->screen, font, 2, ypos,  makecol(255, 255, 255), -1, "Grid Snap: %s (1/%d beat)", eof_snap_name[(int)eof_snap_mode],eof_snap_interval);
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Grid Snap: %s (1/%d beat)", eof_snap_name[(int)eof_snap_mode],eof_snap_interval);
 			else
-				textprintf_ex(eof_window_note->screen, font, 2, ypos,  makecol(255, 255, 255), -1, "Grid Snap: %s (1/%d measure)", eof_snap_name[(int)eof_snap_mode],eof_snap_interval);
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Grid Snap: %s (1/%d measure)", eof_snap_name[(int)eof_snap_mode],eof_snap_interval);
 		}
 
 		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos,  makecol(255, 255, 255), -1, "Metronome: %s", eof_mix_metronome_enabled ? "On" : "Off");
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Metronome: %s", eof_mix_metronome_enabled ? "On" : "Off");
 		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos,  makecol(255, 255, 255), -1, "Claps: %s", eof_mix_claps_enabled ? "On" : "Off");
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Claps: %s", eof_mix_claps_enabled ? "On" : "Off");
 		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos,  makecol(255, 255, 255), -1, "Vocal Tones: %s", eof_mix_vocal_tones_enabled ? "On" : "Off");
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Vocal Tones: %s", eof_mix_vocal_tones_enabled ? "On" : "Off");
 		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos,  makecol(255, 255, 255), -1, "Playback Speed: %d%%", eof_playback_speed / 10);
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Playback Speed: %d%%", eof_playback_speed / 10);
 		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos,  makecol(255, 255, 255), -1, "Catalog: %d of %d", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Catalog: %d of %d", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
 		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos,  makecol(255, 255, 255), -1, "OGG File: \"%s\"", eof_song->tags->ogg[eof_selected_ogg].filename);
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "OGG File: \"%s\"", eof_song->tags->ogg[eof_selected_ogg].filename);
 	}
 
 	rect(eof_window_note->screen, 0, 0, eof_window_note->w - 1, eof_window_note->h - 1, makecol(160, 160, 160));
 	rect(eof_window_note->screen, 1, 1, eof_window_note->w - 2, eof_window_note->h - 2, eof_color_black);
-	hline(eof_window_note->screen, 1, eof_window_note->h - 2, eof_window_note->w - 2, makecol(255, 255, 255));
-	vline(eof_window_note->screen, eof_window_note->w - 2, 1, eof_window_note->h - 2, makecol(255, 255, 255));
+	hline(eof_window_note->screen, 1, eof_window_note->h - 2, eof_window_note->w - 2, eof_color_white);
+	vline(eof_window_note->screen, eof_window_note->w - 2, 1, eof_window_note->h - 2, eof_color_white);
 }
 
 void eof_render_lyric_preview(BITMAP * bp)
@@ -2125,8 +2125,8 @@ void eof_render_lyric_preview(BITMAP * bp)
 		}
 	}
 
-	textout_centre_ex(bp, font, lline[0], bp->w / 2, 20, makecol(255, 255, 255), bgcol1);
-	textout_centre_ex(bp, font, lline[1], bp->w / 2, 36, makecol(255, 255, 255), bgcol2);
+	textout_centre_ex(bp, font, lline[0], bp->w / 2, 20, eof_color_white, bgcol1);
+	textout_centre_ex(bp, font, lline[1], bp->w / 2, 36, eof_color_white, bgcol2);
 	if((offset >= 0) && (eof_hover_lyric >= 0))
 	{
 		if(eof_song->vocal_track->lyric[eof_hover_lyric]->text[strlen(eof_song->vocal_track->lyric[eof_hover_lyric]->text)-1] == '/')
@@ -2136,27 +2136,24 @@ void eof_render_lyric_preview(BITMAP * bp)
 				return;
 			ustrcpy(tempstring,eof_song->vocal_track->lyric[eof_hover_lyric]->text);
 			tempstring[ustrlen(tempstring)-1]='\0';
-			textout_ex(bp, font, tempstring, bp->w / 2 - text_length(font, lline[0]) / 2 + offset, 20, makecol(0, 255, 0), -1);
+			textout_ex(bp, font, tempstring, bp->w / 2 - text_length(font, lline[0]) / 2 + offset, 20, eof_color_green, -1);
 			free(tempstring);
 		}
 		else	//Otherwise, display the regular string instead
-			textout_ex(bp, font, eof_song->vocal_track->lyric[eof_hover_lyric]->text, bp->w / 2 - text_length(font, lline[0]) / 2 + offset, 20, makecol(0, 255, 0), -1);
+			textout_ex(bp, font, eof_song->vocal_track->lyric[eof_hover_lyric]->text, bp->w / 2 - text_length(font, lline[0]) / 2 + offset, 20, eof_color_green, -1);
 	}
 }
 
 void eof_render_lyric_window(void)
 {
 	int i;
-//	int kw = (eof_window_3d->screen->w - eof_window_3d->screen->w % 29) / 29;
-//	int kh = kw * 4;
-//	int bkh = kw * 3;
 	int k, n;
 	int kcol;
 	int kcol2;
 	int note[7] = {0, 2, 4, 5, 7, 9, 11};
 	int bnote[7] = {1, 3, 0, 6, 8, 10, 0};
 
-	clear_to_color(eof_window_3d->screen, makecol(64, 64, 64));
+	clear_to_color(eof_window_3d->screen, eof_color_gray);
 
 	/* render the 29 white keys */
 	for(i = 0; i < 29; i++)
@@ -2166,7 +2163,7 @@ void eof_render_lyric_window(void)
 		{
 			if((n >= eof_vocals_offset) && (n < eof_vocals_offset + eof_screen_layout.vocal_view_size))
 			{
-				kcol = makecol(0, 255, 0);
+				kcol = eof_color_green;
 				kcol2 = makecol(0, 192, 0);
 			}
 			else
@@ -2180,7 +2177,7 @@ void eof_render_lyric_window(void)
 		{
 			if((n >= eof_vocals_offset) && (n < eof_vocals_offset + eof_screen_layout.vocal_view_size))
 			{
-				kcol = makecol(255, 255, 255);
+				kcol = eof_color_white;
 				kcol2 = makecol(192, 192, 192);
 			}
 			else
@@ -2204,7 +2201,7 @@ void eof_render_lyric_window(void)
 			{
 				if((n >= eof_vocals_offset) && (n < eof_vocals_offset + eof_screen_layout.vocal_view_size))
 				{
-					kcol = makecol(0, 255, 0);
+					kcol = eof_color_green;
 					kcol2 = makecol(0, 192, 0);
 				}
 				else
@@ -2224,7 +2221,7 @@ void eof_render_lyric_window(void)
 				else
 				{
 					kcol = makecol(16, 16, 16);
-					kcol2 = makecol(0, 0, 0);
+					kcol2 = eof_color_black;
 				}
 			}
 			rectfill(eof_window_3d->screen, i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 + eof_screen_layout.lyric_view_bkey_width, eof_window_3d->screen->h - eof_screen_layout.lyric_view_key_height, (i + 1) * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 - eof_screen_layout.lyric_view_bkey_width + 1, eof_window_3d->screen->h - eof_screen_layout.lyric_view_key_height + eof_screen_layout.lyric_view_bkey_height, kcol);
@@ -2235,8 +2232,8 @@ void eof_render_lyric_window(void)
 
 	rect(eof_window_3d->screen, 0, 0, eof_window_3d->w - 1, eof_window_3d->h - 1, makecol(160, 160, 160));
 	rect(eof_window_3d->screen, 1, 1, eof_window_3d->w - 2, eof_window_3d->h - 2, eof_color_black);
-	hline(eof_window_3d->screen, 1, eof_window_3d->h - 2, eof_window_3d->w - 2, makecol(255, 255, 255));
-	vline(eof_window_3d->screen, eof_window_3d->w - 2, 1, eof_window_3d->h - 2, makecol(255, 255, 255));
+	hline(eof_window_3d->screen, 1, eof_window_3d->h - 2, eof_window_3d->w - 2, eof_color_white);
+	vline(eof_window_3d->screen, eof_window_3d->w - 2, 1, eof_window_3d->h - 2, eof_color_white);
 }
 
 void eof_render_3d_window(void)
@@ -2244,7 +2241,7 @@ void eof_render_3d_window(void)
 	int point[8];
 	int i;
 
-	clear_to_color(eof_window_3d->screen, makecol(64, 64, 64));
+	clear_to_color(eof_window_3d->screen, eof_color_gray);
 
 	point[0] = ocd3d_project_x(20, 600);
 	point[1] = ocd3d_project_y(200, 600);
@@ -2376,8 +2373,8 @@ void eof_render_3d_window(void)
 
 	rect(eof_window_3d->screen, 0, 0, eof_window_3d->w - 1, eof_window_3d->h - 1, makecol(160, 160, 160));
 	rect(eof_window_3d->screen, 1, 1, eof_window_3d->w - 2, eof_window_3d->h - 2, eof_color_black);
-	hline(eof_window_3d->screen, 1, eof_window_3d->h - 2, eof_window_3d->w - 2, makecol(255, 255, 255));
-	vline(eof_window_3d->screen, eof_window_3d->w - 2, 1, eof_window_3d->h - 2, makecol(255, 255, 255));
+	hline(eof_window_3d->screen, 1, eof_window_3d->h - 2, eof_window_3d->w - 2, eof_color_white);
+	vline(eof_window_3d->screen, eof_window_3d->w - 2, 1, eof_window_3d->h - 2, eof_color_white);
 }
 
 void eof_render(void)

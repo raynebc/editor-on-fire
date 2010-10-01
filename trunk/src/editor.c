@@ -4116,6 +4116,7 @@ int eof_get_ts_text(int beat, char * buffer)
 
 void eof_render_editor_window(void)
 {
+	unsigned long start;	//Will store the timestamp of the left visible edge of the piano roll
 	int i;
 
 	if(!eof_song_loaded)
@@ -4123,25 +4124,26 @@ void eof_render_editor_window(void)
 
 	eof_render_editor_window_common();	//Perform rendering that is common to the note and the vocal editor displays
 
+	start = eof_determine_piano_roll_left_edge();
 	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
 	{	//Render all visible notes in the list
-		if(eof_note_type == eof_song->track[eof_selected_track]->note[i]->type)
-		{
+		if((eof_note_type == eof_song->track[eof_selected_track]->note[i]->type) && (eof_song->track[eof_selected_track]->note[i]->pos + eof_song->track[eof_selected_track]->note[i]->length >= start))
+		{	//If this note is in the selected instrument difficulty and would render at or after the left edge of the piano roll
 			if(((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX)) && eof_music_paused)
 			{
 				if(eof_hover_note == i)
 				{
-					eof_note_draw_quick(eof_song->track[eof_selected_track]->note[i], ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 3);
+					eof_note_draw(eof_song->track[eof_selected_track]->note[i], ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 3);
 				}
 				else
 				{
-					if(eof_note_draw_quick(eof_song->track[eof_selected_track]->note[i], ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0) == 1)
+					if(eof_note_draw(eof_song->track[eof_selected_track]->note[i], ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0) == 1)
 						break;	//If this note was rendered right of the viewable area, all following notes will too, so stop rendering
 				}
 			}
 			else
 			{
-				if(eof_note_draw_quick(eof_song->track[eof_selected_track]->note[i], ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0) == 1)
+				if(eof_note_draw(eof_song->track[eof_selected_track]->note[i], ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0) == 1)
 						break;	//If this note was rendered right of the viewable area, all following notes will too, so stop rendering
 			}
 		}
@@ -4152,11 +4154,11 @@ void eof_render_editor_window(void)
 		{
 			if((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX))
 			{
-				eof_note_draw_quick(&eof_pen_note, 3);
+				eof_note_draw(&eof_pen_note, 3);
 			}
 			else
 			{
-				eof_note_draw_quick(&eof_pen_note, 0);
+				eof_note_draw(&eof_pen_note, 0);
 			}
 		}
 	}
@@ -4169,6 +4171,7 @@ void eof_render_vocal_editor_window(void)
 	int i;
 	int pos = eof_music_pos / eof_zoom;	//Current seek position
 	int lpos;							//The position of the first beat marker
+	unsigned long start;	//Will store the timestamp of the left visible edge of the piano roll
 
 	if(!eof_song_loaded)
 		return;
@@ -4190,36 +4193,33 @@ void eof_render_vocal_editor_window(void)
 
 	/* draw lyric lines */
 	for(i = 0; i < eof_song->vocal_track->lines; i++)
-	{
-		if(pos < 300)
-		{
-			rectfill(eof_window_editor->screen, 20 + eof_song->vocal_track->line[i].start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + (15-5) + eof_screen_layout.note_y[0] - 2 + 8, 20 + eof_song->vocal_track->line[i].end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0] + 2 + 8 +4, (eof_song->vocal_track->line[i].flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE) ? makecol(64, 128, 64) : makecol(0, 0, 127));
-		}	//The -5 is a vertical offset to allow the phrase marker rectangle render as high as the lyric text itself.  The +4 is an offset to allow the rectangle to render as low as the lyric text
-		else
-		{
-			rectfill(eof_window_editor->screen, 20 - (pos - 300) + eof_song->vocal_track->line[i].start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + (15-5) + eof_screen_layout.note_y[0] - 2 + 8, 20 - (pos - 300) + eof_song->vocal_track->line[i].end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0] + 2 + 8 +4, (eof_song->vocal_track->line[i].flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE) ? makecol(64, 128, 64) : makecol(0, 0, 127));
-		}	//The -5 is a vertical offset to allow the phrase marker rectangle render as high as the lyric text itself.  The +4 is an offset to allow the rectangle to render as low as the lyric text
+	{ 	//The -5 is a vertical offset to allow the phrase marker rectangle render as high as the lyric text itself.  The +4 is an offset to allow the rectangle to render as low as the lyric text
+		rectfill(eof_window_editor->screen, lpos + eof_song->vocal_track->line[i].start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + (15-5) + eof_screen_layout.note_y[0] - 2 + 8, lpos + eof_song->vocal_track->line[i].end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0] + 2 + 8 +4, (eof_song->vocal_track->line[i].flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE) ? makecol(64, 128, 64) : makecol(0, 0, 127));
 	}
 
+	start = eof_determine_piano_roll_left_edge();
 	for(i = 0; i < eof_song->vocal_track->lyrics; i++)
 	{
-		if(((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX)) && eof_music_paused)
-		{
-			if(eof_hover_note == i)
+		if(eof_song->vocal_track->lyric[i]->pos + eof_song->vocal_track->lyric[i]->length >= start)
+		{	//If the lyric would render at or after the left edge of the piano roll
+			if(((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX)) && eof_music_paused)
 			{
-				if(eof_lyric_draw_truncate(i, ((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 3))
-					break;	//Break if the function indicated that the lyric was rendered beyond the clip window
+				if(eof_hover_note == i)
+				{
+					if(eof_lyric_draw_truncate(i, ((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 3))
+						break;	//Break if the function indicated that the lyric was rendered beyond the clip window
+				}
+				else
+				{
+					if(eof_lyric_draw_truncate(i, ((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0))
+						break;	//Break if the function indicated that the lyric was rendered beyond the clip window
+				}
 			}
 			else
 			{
 				if(eof_lyric_draw_truncate(i, ((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0))
 					break;	//Break if the function indicated that the lyric was rendered beyond the clip window
 			}
-		}
-		else
-		{
-			if(eof_lyric_draw_truncate(i, ((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0))
-				break;	//Break if the function indicated that the lyric was rendered beyond the clip window
 		}
 	}
 	if(eof_hover_note >= 0)
@@ -4252,7 +4252,7 @@ void eof_render_vocal_editor_window(void)
 		ny = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - (i % eof_screen_layout.vocal_view_size + 1) * eof_screen_layout.vocal_tail_size;
 		if(eof_vocals_offset + i == eof_pen_lyric.note)
 		{
-			kcol = makecol(0, 255, 0);
+			kcol = eof_color_green;
 			kcol2 = makecol(0, 192, 0);
 			if((n == 0) && !red)
 			{
@@ -4263,7 +4263,7 @@ void eof_render_vocal_editor_window(void)
 		else if((n == 1) || (n == 3) || (n == 6) || (n == 8) || (n == 10))
 		{
 			kcol = makecol(16, 16, 16);
-			kcol2 = makecol(0, 0, 0);
+			kcol2 = eof_color_black;
 		}
 		else if(n == 0)
 		{
@@ -4273,7 +4273,7 @@ void eof_render_vocal_editor_window(void)
 		}
 		else
 		{
-			kcol = makecol(255, 255, 255);
+			kcol = eof_color_white;
 			kcol2 = makecol(192, 192, 192);
 		}
 		rectfill(eof_window_editor->screen, 0, ny, 19, ny + eof_screen_layout.vocal_tail_size - 1, kcol);
@@ -4294,6 +4294,20 @@ unsigned long eof_determine_piano_roll_left_edge(void)
 	else
 	{	//Return the lowest timestamp that would be displayable given the current seek position and zoom level,
 		return ((pos - 320) * eof_zoom);
+	}
+}
+
+unsigned long eof_determine_piano_roll_right_edge(void)
+{
+	unsigned long pos = eof_music_pos / eof_zoom;
+
+	if(pos < 300)
+	{
+		return ((eof_window_editor->screen->w - 1) - 20) * eof_zoom;
+	}
+	else
+	{
+		return ((eof_window_editor->screen->w - 1) - 320 + pos) * eof_zoom;
 	}
 }
 
@@ -4543,12 +4557,12 @@ void eof_render_editor_window_common(void)
 {
 	int i, j;
 	int pos = eof_music_pos / eof_zoom;	//Current seek position
-	int bpos[EOF_MAX_BOOKMARK_ENTRIES];	//Will store the positions of the bookmarks, adjusted for zoom level
 	int lpos;							//The position of the first beatmarker
-	int npos;
 	int pmin = 0;
 	int psec = 0;
 	int xcoord;							//Used to cache x coordinate to reduce recalculations
+	int col,col2;						//Temporary color variables
+	unsigned long start;				//Will store the timestamp of the left visible edge of the piano roll
 
 	if(!eof_song_loaded)
 		return;
@@ -4563,13 +4577,7 @@ void eof_render_editor_window_common(void)
 		lpos = 20 - (pos - 300);
 	}
 
-	for(i = 0; i < EOF_MAX_BOOKMARK_ENTRIES; i++)
-	{
-		if(eof_song->bookmark_pos[i] > 0)
-			bpos[i] = eof_song->bookmark_pos[i] / eof_zoom;
-		else
-			bpos[i] = -1;
-	}
+	start = eof_determine_piano_roll_left_edge();	//Find the timestamp of the left visible edge of the piano roll
 
 	/* fill in window background color */
 	rectfill(eof_window_editor->screen, 0, 25 + 8, eof_window_editor->w - 1, eof_window_editor->h - 1, eof_color_gray);
@@ -4596,17 +4604,12 @@ void eof_render_editor_window_common(void)
 
 	if(eof_selected_track != EOF_TRACK_VOCALS)
 	{
+		col = makecol(0, 0, 64);	//Store dark blue color
 		/* draw solo sections */
 		for(i = 0; i < eof_song->track[eof_selected_track]->solos; i++)
 		{
-			if(pos < 300)
-			{
-				rectfill(eof_window_editor->screen, 20 + eof_song->track[eof_selected_track]->solo[i].start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, 20 + eof_song->track[eof_selected_track]->solo[i].end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, makecol(0, 0, 64));
-			}
-			else
-			{
-				rectfill(eof_window_editor->screen, 20 - (pos - 300) + eof_song->track[eof_selected_track]->solo[i].start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, 20 - (pos - 300) + eof_song->track[eof_selected_track]->solo[i].end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, makecol(0, 0, 64));
-			}
+			if(eof_song->track[eof_selected_track]->solo[i].end_pos >= start)	//If the solo section would render at or after the left edge of the piano roll
+				rectfill(eof_window_editor->screen, lpos + eof_song->track[eof_selected_track]->solo[i].start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, lpos + eof_song->track[eof_selected_track]->solo[i].end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, col);
 		}
 	}
 
@@ -4627,20 +4630,10 @@ void eof_render_editor_window_common(void)
 	vline(eof_window_editor->screen, lpos + (eof_music_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
 
 	/* draw second markers */
-	if(pos < 300)
-	{
-		npos = 20;
-	}
-	else
-	{
-		npos = 20 - (pos - 300);
-	}
-
-	unsigned long start = eof_determine_piano_roll_left_edge();	//Find the timestamp of the left visible edge of the piano roll
-	unsigned long msec;
-	start /= 1000;
-	start *= 1000;	//Start is rounded down to nearest second
-	for(msec = start; msec < start + 12000; msec += 1000)
+	unsigned long msec,roundedstart;
+	roundedstart = start / 1000;
+	roundedstart *= 1000;		//Roundedstart is start is rounded down to nearest second
+	for(msec = roundedstart; msec < start + 12000; msec += 1000)
 	{	//Draw up to 12 seconds of markers
 		pmin = msec / 60000;		//Find minute count of this second marker
 		psec = (msec % 60000)/1000;	//Find second count of this second marker
@@ -4648,12 +4641,12 @@ void eof_render_editor_window_common(void)
 		{
 			for(j = 0; j < 10; j++)
 			{
-				xcoord = npos + (msec + (j * 100)) / eof_zoom;
+				xcoord = lpos + (msec + (j * 100)) / eof_zoom;
 				if(xcoord > eof_window_editor->screen->w)	//If this and all remaining second markers would render out of view
 					break;
 				if(xcoord >= 0)	//If this second marker would be visible
 				{
-					vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 9, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, makecol(64, 64, 64));
+					vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 9, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_gray);
 					if(j == 0)
 					{
 						vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 5, eof_color_white);
@@ -4664,7 +4657,7 @@ void eof_render_editor_window_common(void)
 					}
 				}
 			}
-			textprintf_ex(eof_window_editor->screen, eof_mono_font, npos + (msec / eof_zoom) - 16, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 6, eof_color_white, -1, "%02d:%02d", pmin, psec);
+			textprintf_ex(eof_window_editor->screen, eof_mono_font, lpos + (msec / eof_zoom) - 16, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 6, eof_color_white, -1, "%02d:%02d", pmin, psec);
 		}
 	}
 	vline(eof_window_editor->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
@@ -4681,8 +4674,10 @@ void eof_render_editor_window_common(void)
 	unsigned long beat_in_measure=0;
 
 	bcol = makecol(128, 128, 128);
-	bscol = makecol(255, 255, 255);
-	bhcol = makecol(0, 255, 0);
+	bscol = eof_color_white;
+	bhcol = eof_color_green;
+	col = makecol(112, 112, 112);	//Cache this color
+	col2 = makecol(160, 160, 160);	//Cache this color
 
 	for(i = 0; i < eof_song->beats; i++)
 	{
@@ -4711,11 +4706,11 @@ void eof_render_editor_window_common(void)
 		{
 			measure_counter++;
 		}
-		xcoord = npos + eof_song->beat[i]->pos / eof_zoom;
+		xcoord = lpos + eof_song->beat[i]->pos / eof_zoom;
 
 		if((xcoord >= 0) && (xcoord < eof_window_editor->screen->w))
 		{	//Only render vertical lines if they would be visible
-			vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35 + 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10 - 1, beat_counter == 0 ? eof_color_white : makecol(112, 112, 112));
+			vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35 + 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10 - 1, beat_counter == 0 ? eof_color_white : col);
 			vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + 34, eof_color_gray);
 			if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_ANCHOR)
 			{
@@ -4723,7 +4718,7 @@ void eof_render_editor_window_common(void)
 			}
 			else
 			{
-				vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + (i % 2 == 0 ? 19 : 9), EOF_EDITOR_RENDER_OFFSET + 24, beat_counter == 0 ? eof_color_white : makecol(160, 160, 160));
+				vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + (i % 2 == 0 ? 19 : 9), EOF_EDITOR_RENDER_OFFSET + 24, beat_counter == 0 ? eof_color_white : col2);
 			}
 		}
 
@@ -4774,16 +4769,9 @@ void eof_render_editor_window_common(void)
 	/* draw the bookmark position */
 	for(i = 0; i < EOF_MAX_BOOKMARK_ENTRIES; i++)
 	{
-		if(bpos[i] > 0)	//If this bookmark exists
+		if(eof_song->bookmark_pos[i] > 0)	//If this bookmark exists
 		{
-			if(pos < 300)
-			{
-				vline(eof_window_editor->screen, 20 + bpos[i], EOF_EDITOR_RENDER_OFFSET + 20, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 4, makecol(96, 96, 255));
-			}
-			else
-			{
-				vline(eof_window_editor->screen, 20 - ((pos - 300)) + bpos[i], EOF_EDITOR_RENDER_OFFSET + 20, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 4, makecol(96, 96, 255));
-			}
+			vline(eof_window_editor->screen, lpos + eof_song->bookmark_pos[i] / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 20, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 4, makecol(96, 96, 255));
 		}
 	}
 }
@@ -4814,11 +4802,11 @@ void eof_render_editor_window_common2(void)
 	{
 		if(pos < 300)
 		{
-			vline(eof_window_editor->screen, 20 + (eof_music_actual_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 20, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 4, makecol(255, 0, 0));
+			vline(eof_window_editor->screen, 20 + (eof_music_actual_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 20, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 4, eof_color_red);
 		}
 		else
 		{
-			vline(eof_window_editor->screen, 20 - ((pos - 300)) + (eof_music_actual_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 20, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 4, makecol(255, 0, 0));
+			vline(eof_window_editor->screen, 20 - ((pos - 300)) + (eof_music_actual_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 20, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 4, eof_color_red);
 		}
 	}
 
