@@ -70,8 +70,6 @@ Some earlier versions of Allegro (ie. version 4.22) had some strange problems th
 
 
 ==Building EOF:==
-The current SVN version of EOF expects that you have correctly built the Vorbis libraries into your MinGW installation using steps such as the ones above.
-
 To build EOF, ensure that you have built Allegro and the other dependencies into your MinGW installation with the instructions given above.  If you are using Allegro 4.4 in Windows, I've found that it may have a different name for the main dll file (alleg.dll).  If so, you need to modify makefile.mingw so that the line that says "LIBS = -lalleg" is changed to "LIBS = -lalleg44.dll".  Before continuing, ensure that the folder containing the \src folder also contains a folder called "bin", or the make will fail.  To build EOF, change directory to EOF's \src folder and run "mingw32-make -f makefile.mingw"
 
 Copy all other resources (graphics, audio files, etc) from the source distrubution to the \bin folder, where the newly-built eof.exe should be.  The program should be ready to use.
