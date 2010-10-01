@@ -56,7 +56,9 @@ void eof_render_editor_window(void);
 void eof_render_vocal_editor_window(void);
 
 unsigned long eof_determine_piano_roll_left_edge(void);
-	//calculates the timestamp (X) where npos + X/eof_zoom = 0, effectively being the timestamp of the left edge of the piano roll
+	//calculates the timestamp of the left visible edge of the piano roll
+unsigned long eof_determine_piano_roll_right_edge(void);
+	//calculates the timestamp of the right visible edge of the piano roll
 void eof_destroy_waveform(struct wavestruct *ptr);
 	//frees memory used by the specified waveform structure
 int eof_waveform_slice_mean(struct waveformslice *left,struct waveformslice *right,struct wavestruct *waveform,unsigned long slicestart, unsigned long num);
