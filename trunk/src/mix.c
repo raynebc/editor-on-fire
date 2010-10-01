@@ -50,7 +50,8 @@ int eof_percussion_volume = 100;	//Stores the volume level for the vocal percuss
 
 int           eof_mix_speed = 1000;
 char          eof_mix_speed_ticker;
-double        eof_mix_sample_count = 0.0;
+//double        eof_mix_sample_count = 0.0;		//This was only being used with integer math, so I'm making it an integer type to improve speed
+unsigned long eof_mix_sample_count = 0;
 double        eof_mix_sample_increment = 1.0;
 unsigned long eof_mix_next_clap;
 unsigned long eof_mix_next_metronome;
@@ -136,7 +137,7 @@ void eof_mix_callback(void * buf, int length)
 		}
 
 		/* increment the sample and check sound triggers */
-		eof_mix_sample_count += 1.0;
+		eof_mix_sample_count++;
 		if((eof_mix_sample_count >= eof_mix_next_clap) && (eof_mix_current_clap < eof_mix_claps))
 		{
 			if(eof_mix_claps_enabled)
@@ -473,7 +474,7 @@ void eof_mix_start(unsigned long start, int speed)
 	eof_mix_speed = speed;
 	eof_mix_speed_ticker = 0;
 	eof_mix_sample_count = start;
-	eof_mix_sample_increment = (1000.0 / (float)eof_mix_speed) * (44100.0 / (float)alogg_get_wave_freq_ogg(eof_music_track));
+	eof_mix_sample_increment = (1000.0 / (double)eof_mix_speed) * (44100.0 / (double)alogg_get_wave_freq_ogg(eof_music_track));
 	eof_mix_start_helper();
 }
 
