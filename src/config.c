@@ -107,10 +107,13 @@ void eof_load_config(char * fn)
 		eof_hopo_view = EOF_HOPO_RF;
 	}
 
-	eof_controller_load_config(&eof_guitar, "guitar");
-	eof_controller_read_button_names(&eof_guitar);
-	eof_controller_load_config(&eof_drums, "drums");
-	eof_controller_read_button_names(&eof_drums);
+	if(exists(fn))
+	{	//Only try to load the controller buttons if the config file exists, otherwise the defaults will be erased
+		eof_controller_load_config(&eof_guitar, "guitar");
+		eof_controller_read_button_names(&eof_guitar);
+		eof_controller_load_config(&eof_drums, "drums");
+		eof_controller_read_button_names(&eof_drums);
+	}
 }
 
 void eof_save_config(char * fn)
