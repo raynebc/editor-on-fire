@@ -10,6 +10,7 @@
 #include "../ini.h"
 #include "../dialog/proc.h"
 #include "../undo.h"
+#include "../player.h"
 #include "song.h"
 
 char eof_track_selected_menu_text[6][32] = {" PART &GUITAR", " PART &BASS", " PART GUITAR &COOP", " PART &RHYTHM", " PART &DRUMS", " PART &VOCALS"};
@@ -454,13 +455,23 @@ void eof_prepare_song_menu(void)
 
 int eof_menu_song_seek_start(void)
 {
+	char wasplaying = 0;
 	if(!eof_music_catalog_playback)
 	{
+		if(!eof_music_paused)	//If the chart is already playing
+		{
+			eof_music_play();	//stop it
+			wasplaying = 1;
+		}
 		alogg_seek_abs_msecs_ogg(eof_music_track, 0);
 		eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 		eof_music_pos = eof_av_delay;
 		eof_mix_seek(eof_music_pos);
 		eof_reset_lyric_preview_lines();
+		if(wasplaying)
+		{	//If the playback was stopped to rewind the seek position
+			eof_music_play();	//Resume playing
+		}
 	}
 	return 1;
 }
