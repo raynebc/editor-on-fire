@@ -1,5 +1,5 @@
 CC = i586-mingw32msvc-gcc
-CFLAGS = -Wall -O2 -fomit-frame-pointer -ffast-math -funroll-loops
+CFLAGS = -Wall -O2 -fomit-frame-pointer -ffast-math -funroll-loops -static-libgcc
 
 include makefile.common
 
