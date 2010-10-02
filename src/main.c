@@ -3009,15 +3009,9 @@ int main(int argc, char * argv[])
 		if(!eof_music_paused)
 		{
 			int ret = alogg_poll_ogg(eof_music_track);
-			if(ret == ALOGG_POLL_PLAYJUSTFINISHED)
-			{
-				eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
-				eof_music_pos = eof_music_actual_pos + eof_av_delay;
-				eof_music_paused = 1;
-			}
-			else if((ret == ALOGG_POLL_NOTPLAYING) || (ret == ALOGG_POLL_FRAMECORRUPT) || (ret == ALOGG_POLL_INTERNALERROR))
-			{
-				eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
+			eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
+			if((ret == ALOGG_POLL_PLAYJUSTFINISHED) || (ret == ALOGG_POLL_NOTPLAYING) || (ret == ALOGG_POLL_FRAMECORRUPT) || (ret == ALOGG_POLL_INTERNALERROR) || (eof_music_actual_pos > alogg_get_length_msecs_ogg(eof_music_track)))
+			{	//If ALOGG reported a completed/error condition or if the reported position is greater than the length of the audio
 				eof_music_pos = eof_music_actual_pos + eof_av_delay;
 				eof_music_paused = 1;
 			}
