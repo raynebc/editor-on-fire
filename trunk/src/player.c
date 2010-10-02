@@ -89,21 +89,19 @@ void eof_music_play(void)
 		#endif
 		eof_mix_find_claps();
 
+	//Prevent playback as long as the user is holding down guitar/drum buttons
 		int x;
-		char notspace;
+		int held;	//Tracks whether the user is holding down one of the defined controller buttons
 		do{
-			notspace = 0;
-			for(x = 0; x < KEY_MAX; x++)
+			held = 0;	//Reset this status
+			eof_read_controller(&eof_drums);
+			eof_read_controller(&eof_guitar);
+			for(x = 0; x < 5; x++)
 			{
-				if((x != KEY_SPACE) && (x != KEY_ESC) && key[x])
-					notspace = 1;		//If any key besides space or escape is being held down, continue looping
+				if((eof_drums.button[x].held) || (eof_guitar.button[x+2].held))
+					held = 1;	//User is holding down one of the drum or guitar controller buttons
 			}
-		}while(notspace);
-		if(key[KEY_ESC])
-		{	//If use broke out of the loop above with the escape key
-			eof_music_paused = 1;	//cancel the playback operation
-			return;
-		}
+		}while(held);
 
 		if(alogg_play_ex_ogg(eof_music_track, eof_buffer_size, 255, 128, speed + eof_audio_fine_tune, 0) == ALOGG_OK)
 		{
