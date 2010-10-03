@@ -1,6 +1,7 @@
 #include <allegro.h>
 #include <stdio.h>
 #include "song.h"
+#include "utility.h"	//For eof_buffer_file()
 
 typedef struct
 {
@@ -17,28 +18,22 @@ int eof_import_ini_settings = 0;
  * the ini files since it looks like they are formatted correctly */
 int eof_import_ini(EOF_SONG * sp, char * fn)
 {
-	PACKFILE * fp;
-	char textbuffer[4096] = {0};
+	char * textbuffer = NULL;
 	char * line_token = NULL;
 	int textlength = 0;
 	char * token;
 	char * equals = NULL;
 	int i;
 	int j;
-	int size;
 
-	size = file_size_ex(fn);
-	fp = pack_fopen(fn, "r");
-	if(!fp)
+	eof_import_ini_settings = 0;
+	textbuffer = (char *)eof_buffer_file(fn);	//Buffer the INI file into memory
+	if(!textbuffer)
 	{
 		return 0;
 	}
-	eof_import_ini_settings = 0;
-
-	pack_fread(textbuffer, size, fp);
 	textlength = ustrlen(textbuffer);
 	ustrtok(textbuffer, "\r\n");
-//	pack_fgets(textline, 1024, fp);
 	while(1)
 	{
 		line_token = ustrtok(NULL, "\r\n[]");
@@ -176,6 +171,6 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 			sp->tags->ini_settings++;
 		}
 	}
-	pack_fclose(fp);
+	free(textbuffer);	//Free buffered INI file from memory
 	return 1;
 }
