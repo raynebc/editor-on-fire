@@ -44,7 +44,9 @@ Fixes an issue where a key+Spacebar combination could leak input into PART DRUMS
 
 Fixes an issue where playback would lose sync if the left arrow or Home keys were used to seek to the beginning of the chart during playback
 
-Fixed an issue where ] wouldn't work properly for lengthening lyrics
+Fixes an issue where ] wouldn't work properly for lengthening lyrics
+
+Fixes an issue where using the guitar strum input mode in PART VOCALS would destroy existing lyrics
 
 
 1.666:
