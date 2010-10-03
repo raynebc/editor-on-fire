@@ -36,6 +36,8 @@ Corrected the controller button defaults and conflict detection
 
 Fixes a crash that could occur when canceling MIDI import
 
+Fixes a crash that could occur parsing song.ini during MIDI import
+
 Fixes an issue where some second markers might not be rendered in certain zoom levels in certain conditions
 
 Fixes an issue where a key+Spacebar combination could leak input into PART DRUMS to add notes when playback is started
