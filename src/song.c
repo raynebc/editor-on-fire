@@ -765,9 +765,11 @@ void eof_vocal_track_fixup_lyrics(EOF_VOCAL_TRACK * tp, int sel)
 				{
 					eof_vocal_track_delete_lyric(tp, next);
 				}
-				else if(tp->lyric[i]->pos + tp->lyric[i]->length > tp->lyric[next]->pos - 1)
-				{
-					tp->lyric[i]->length = tp->lyric[next]->pos - tp->lyric[i]->pos - 1;
+				else if(tp->lyric[i]->pos + tp->lyric[i]->length >= tp->lyric[next]->pos - 1)
+				{	//If this lyric does not end at least 1ms before the next lyric starts
+					tp->lyric[i]->length = tp->lyric[next]->pos - tp->lyric[i]->pos - 1 - 1;	//Subtract one more to ensure padding
+					if(tp->lyric[i]->length <= 0)
+						tp->lyric[i]->length = 1;	//Ensure that this doesn't cause the length to be invalid
 				}
 			}
 		}
