@@ -1,6 +1,50 @@
 EOF Version History
 -------------------
 
+1.???:
+
+Improved the MIDI import to be more efficient and to prepare for more comprehensive time signature support
+
+Updated to latest version of FoFLC
+
+Improvements to documentation and makefiles
+
+Improvements to MIDI export:  offers to correct pitchless lyrics, warns if lyrics are outside phrase markers, corrects MIDI event order, adds padding for 
+lyric phrases (to work around bugs in FoFiX) and enforces a length of 1ms for drum notes (to work around bugs in FoFiX)
+
+Corrected preview of pitch shifts and added the display of vocal slides in the editor window
+
+Improved Feedback import by allowing it to load the defined audio file (even an MP3), fixing a desync issue and fixing an issue where the chart's song folder wasn't updated after an import
+
+Adds support for charting vocal percussion notes by using the Backspace key.  New audio samples can be assigned to sound for vocal percussion from the Song>Audio cues menu item
+
+Various optimizations to graphics, audio, save and input logic
+
+Added support for Rock Band Audition chart import (MIDI data only)
+
+Added support for .chart files (Feedback import), rba files (RBA import) and OGG/MP3 files (New chart) via command line
+
+Adds the ability to render a waveform graph of the currently loaded OGG
+
+Adds a new zoom level (1/1)
+
+Adds the labeling of measure numbers next to the beat markers
+
+Adds volume slider controls for the chart volume and each audio cue
+
+Corrected the controller button defaults and conflict detection
+
+Fixes a crash that could occur when canceling MIDI import
+
+Fixes an issue where some second markers might not be rendered in certain zoom levels in certain conditions
+
+Fixes an issue where a key+Spacebar combination could leak input into PART DRUMS to add notes when playback is started
+
+Fixes an issue where playback would lose sync if the left arrow or Home keys were used to seek to the beginning of the chart during playback
+
+Fixed an issue where ] wouldn't work properly for lengthening lyrics
+
+
 1.666:
 
 Changed how the tempo map is exported to the MIDI file. The old method could
