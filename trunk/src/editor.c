@@ -1214,11 +1214,6 @@ void eof_read_editor_keys(void)
 		eof_menu_edit_vocal_tones();
 		key[KEY_V] = 0;
 	}
-	if(key[KEY_F5])
-	{
-		eof_menu_song_waveform();
-		key[KEY_F5] = 0;
-	}
 	if(key[KEY_1] && KEY_EITHER_CTRL && eof_music_paused && !eof_music_catalog_playback && !eof_vocals_selected)
 	{
 		eof_menu_note_toggle_green();
@@ -1597,7 +1592,7 @@ void eof_read_editor_keys(void)
 					{
 						eof_entering_note = 0;
 						eof_entering_note_lyric->length = (eof_music_pos - eof_av_delay - eof_guitar.delay) - eof_entering_note_lyric->pos - 10;
-						eof_track_fixup_notes(eof_song->track[eof_selected_track], 1);
+						eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 1);
 					}
 					else
 					{
@@ -1884,6 +1879,11 @@ void eof_read_editor_keys(void)
 			{
 				eof_menu_edit_old_paste();
 				key[KEY_B] = 0;
+			}
+			if(key[KEY_F5])
+			{
+				eof_menu_song_waveform();
+				key[KEY_F5] = 0;
 			}
 		}
 	}
