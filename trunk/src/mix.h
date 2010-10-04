@@ -70,4 +70,8 @@ void eof_mix_find_claps(void);	//Populates clap, metronome, note_pos and note_no
 void eof_mix_play_note(int note);	//Plays the vocal tone for the specified note, if available
 void eof_midi_play_note(int note);	//Sends a Note On MIDI command
 
+int eof_read_next_pcm_sample(ALOGG_OGG *ogg,void *data,unsigned samplesize);
+	//Reads the next audio sample from the ogg file (samplesize number of bytes) into the given data buffer
+	//Returns -1 on error, 0 on success and 1 upon EOF (no more samples)
+
 #endif
