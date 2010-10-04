@@ -1,4 +1,7 @@
 #include <allegro.h>
+//#include <alogg.h>
+#include "vorbis/vorbisfile.h"
+#include "vorbis/codec.h"
 #include <math.h>	//For sqrt()
 #include "main.h"
 #include "utility.h"
@@ -554,4 +557,51 @@ void eof_midi_play_note(int note)
 		lastnote=note;
 		lastnotedefined=1;
 	}
+}
+
+struct ALOGG_OGG {
+  /* data info */
+  void *data;                      /* ogg data */
+  char *data_cursor;               /* pointer to data being read */
+  int data_len;                    /* size of the data */
+  /* decoder info */
+  OggVorbis_File vf;
+  int current_section;
+  /* playing info */
+  AUDIOSTREAM *audiostream;        /* the audiostream we are using to play */
+                                   /* also used to know when it's playing */
+  int audiostream_buffer_len;      /* len of the audiostream buffer */
+  int stereo, freq, loop;          /* audio general info */
+  int auto_polling;                /* set if the ogg is auto polling */
+  int auto_poll_speed;             /* auto poll speed in msecs */
+  int wait_for_audio_stop;         /* set if we are just waiting for the
+                                      audiobuffer to stop plaing the last
+                                      frame */
+};
+
+int eof_read_next_pcm_sample(ALOGG_OGG *ogg,void *data,unsigned samplesize)
+{
+	int section;//Value returned by reference by ov_read()
+	long ret=0;	//Return value of ov_read()
+	OggVorbis_File *temp;
+
+	if((ogg == NULL) || (data == NULL) || (samplesize == 0))
+		return -1;
+
+	while(1)
+	{
+		temp = &(ogg->vf);
+		ret = ov_read(temp, data, samplesize, 0, alogg_get_wave_bits_ogg(ogg)/8, 0, &section);	//Read one sample
+
+		if(ret == 0)
+			return 1;	//EOF
+
+		if((ret == OV_EINVAL) || (ret == OV_EBADLINK))
+			return -1;	//Error
+
+		if(ret != OV_HOLE)	//If the data was read
+			break;			//Break from loop
+	}
+
+	return 0;	//Success
 }
