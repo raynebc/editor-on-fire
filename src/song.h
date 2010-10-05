@@ -32,6 +32,7 @@
 #define EOF_NOTE_FLAG_CRAZY    4
 #define EOF_NOTE_FLAG_F_HOPO   8
 #define EOF_NOTE_FLAG_NO_HOPO 16
+#define EOF_NOTE_FLAG_DBASS   32
 
 #define EOF_MAX_BEATS 32768
 
@@ -56,13 +57,13 @@
 typedef struct
 {
 
-	char          type;
-	char          note;
+	char          type;			//Stores the note's difficulty
+	char          note;			//Stores the note's fret values
 	unsigned long midi_pos;
 	long          midi_length;
 	unsigned long pos;
 	long          length;
-	char          flags;
+	char          flags;		//Stores various note statuses
 
 } EOF_NOTE;
 
