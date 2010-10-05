@@ -24,7 +24,7 @@ Get the zlib and libpng packages (http://tjaden.strangesoft.net/loadpng/mingw.ht
 
 Get MSYS (http://www.mingw.org/wiki/msys).  MSYS 1.0.11 is an older version, but it works just fine and includes all parts in one installer, making it very easy to install.  Install it and give it the correct path to your MinGW installation directory.  Remember to use the forward slash / instead of backward slash \ between each directory.  Allow it to run the post install process.
 
-Get the libogg and libvorbis Vorbis libraries (http://xiph.org/downloads).  Extract each someplace WITHOUT spaces in the folder path and then use MSYS to build each.  Libogg has to be built first.  If you extracted libogg to c:\libogg, launch MSYS, change to the right directory with:
+Get the libogg and libvorbis Vorbis libraries (http://xiph.org/downloads).  Extract each someplace WITHOUT spaces in the folder path.  They will each be built using MSYS using the details below.  Libogg has to be built first.  If you extracted libogg to c:\libogg, launch MSYS, change to the right directory with:
 {{{
 cd /c/libogg
 }}}
@@ -48,16 +48,21 @@ Once all the above steps have been completed, the zlib, libpng, libogg and libvo
 
 Get CMake (http://www.cmake.org).  Install it and ensure that CMake's "bin" folder is in your PATH environment variable, so you can call cmake from any current working directory.
 
-Get Allegro's source (http://alleg.sourceforge.net/wip.html) and extract it someplace easy to get to (such as the root of a filesystem, such as c:\allegro).  Open a command shell, change to the Allegro/build directory, ie:
+Get Allegro's source (http://alleg.sourceforge.net/wip.html) and extract it someplace easy to get to (such as the root of a filesystem, such as c:\allegro).  Open a command shell, change to the Allegro directory, ie:
 {{{
 cd c:
-cd c:\allegro\build
+c:\allegro
+}}}
+Usually, there won't be a build directory, so make one and change to it:
+{{{
+md build
+cd build
 }}}
 Run CMake to create the appropriate makefiles and ensure dependencies are accounted for:
 {{{
 cmake -G "MinGW Makefiles" ..
 }}}
-Do include the two periods at the end, which refer cmake to the "CMakeLists.txt" file in the parent folder (c:\allegro).  This should create the files necessary in the build folder to build Allegro itself with make after this step is completed.  If you had tried to cmake Allegro before putting all of these dependencies in place, delete your "CMakeCache.txt" file and try cmake again.  If this CMakeCache.txt file is in the allegro folder, make sure it's deleted, or else CMake won't put the files in the \build folder.  If you installed zlib and libpng to the correct directory, and built the vorbis files correctly, you should see that it says it found ZLIB, PNG and VORBIS among the other libraries that come with Allegro.
+Do include the two periods at the end, which refer cmake to the "CMakeLists.txt" file in the parent folder (c:\allegro).  This should create the files necessary in the build folder to build Allegro itself with make after this step is completed.  If you had tried to cmake Allegro before putting all of these dependencies in place, delete your "CMakeCache.txt" file and try cmake again.  If this CMakeCache.txt file is in the allegro folder or the allegro\build folder, make sure it's deleted, or else CMake won't put the files in the \build folder.  If you installed zlib and libpng to the correct directory, and built the vorbis files correctly, you should see that it says it found ZLIB, PNG and VORBIS among the other libraries that come with Allegro.
 
 Now Allegro can be built.  This process will install files into your MinGW installation, allowing you to compile applications designed to use Allegro (such as EOF).  You will need to make sure that you have defined the MINGDIR environment variable to be set to the path of your MinGW installation, and MinGW's \bin\ folder should be in your PATH environment variable, or this next part might fail to work.  While still in Allegro's \build directory, run these commands:
 {{{
