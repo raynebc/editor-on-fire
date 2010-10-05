@@ -130,7 +130,7 @@ Provides the ability to show, hide and configure a waveform graph for the curren
 </blockquote>
 
 <h1><a name="note">Note</a></h1>
-[ <a href="functions.htm#toggle">Toggle</a> ] [ <a href="functions.htm#transposeup">Transpose Up</a> ] [ <a href="functions.htm#transposedown">Transpose Down</a> ] [ <a href="functions.htm#resnap">Resnap</a> ] [ <a href="functions.htm#editlyric">Edit Lyric</a> ] [ <a href="functions.htm#splitlyric">Split Lyric</a> ] [ <a href="functions.htm#crazy">Toggle Crazy</a> ] [ <a href="functions.htm#solos">Solos</a> ] [ <a href="functions.htm#starpower">Star Power</a> ] [ <a href="functions.htm#lyricline">Lyric Lines</a> ] [ <a href="functions.htm#hopo">HOPO</a> ] [ <a href="functions.htm#delete">Delete</a> ] [ <a href="functions.htm#semitones">Display semitones as flat</a> ] [ <a href="functions.htm#freestyle">Freestyle</a> ]
+[ <a href="functions.htm#toggle">Toggle</a> ] [ <a href="functions.htm#transposeup">Transpose Up</a> ] [ <a href="functions.htm#transposedown">Transpose Down</a> ] [ <a href="functions.htm#resnap">Resnap</a> ] [ <a href="functions.htm#editlyric">Edit Lyric</a> ] [ <a href="functions.htm#splitlyric">Split Lyric</a> ] [ <a href="functions.htm#crazy">Toggle Crazy</a> ] [ <a href="functions.htm#solos">Solos</a> ] [ <a href="functions.htm#starpower">Star Power</a> ] [ <a href="functions.htm#lyricline">Lyric Lines</a> ] [ <a href="functions.htm#hopo">HOPO</a> ] [ <a href="functions.htm#delete">Delete</a> ] [ <a href="functions.htm#semitones">Display semitones as flat</a> ] [ <a href="functions.htm#freestyle">Freestyle</a> ] [ <a href="functions.htm#doublebass">Toggle Expert+ bass drum</a> ]
 <blockquote>
 <h1><a name="toggle">Toggle</a></h1>
 Toggle the desired color in all selected notes.<br>
@@ -166,6 +166,8 @@ Delete all selected notes.<br>
 Displays note names with flat notation instead of sharp notation.  See the <a href="../vocaltutorial/index.htm#advanced">Advanced topics</a> section of the vocal tutorial for details.<br>
 <h1><a name="freestyle">Freestyle</a></h1>
 Enables/disables/toggles the freestyle status of selected lyrics.  See the <a href="../vocaltutorial/index.htm#intermediate">Intermediate vocal charting topics</a> section of the vocal tutorial for details.<br>
+<h1><a name="doublebass">Toggle Expert+ bass drum</a></h1>
+Enables or disables the note from being associated with the Expert+ drum difficulty.  This difficulty is similar in theory to Expert, but it includes faster use of the bass drum pedal in what people usually refer to as "double bass".  If a bass drum note is marked as an Expert+ bass drum note, it will render the note with a red center in the piano roll and when the MIDI is created during save, the note will be written to exist in the Expert+ difficulty instead of Expert.  Besides the specially marked "double bass" notes, all other notes in the Expert+ difficulty will be the same as those in the Expert difficulty.  As of the implementation of this feature in EOF, Phase Shift is planning on implementing this style of "Expert+" as a playable difficulty.  There are no immediate plans for FoFiX to support this feature, and FoF charts will need to continue to use a separate MIDI file to contain an Expert+ drum track.
 </blockquote>
 
 <h1><a name="beat">Beat</a></h1>

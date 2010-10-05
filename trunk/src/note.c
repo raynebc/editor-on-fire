@@ -116,6 +116,7 @@ int eof_note_draw(EOF_NOTE * np, int p)
 	int ychart[5] = {20, 40, 60, 80, 100};
 	int pcol = p == 1 ? eof_color_white : p == 2 ? makecol(224, 255, 224) : 0;
 	int dcol = (np->flags & EOF_NOTE_FLAG_CRAZY) ? eof_color_black : eof_color_white;
+	int dcol2;
 	int colors[EOF_MAX_FRETS] = {eof_color_green,eof_color_red,eof_color_yellow,eof_color_blue,eof_color_purple};	//Each of the fret colors
 	int ncol = makecol(192, 192, 192);	//Note color defaults to silver unless the note is not star power
 	int ctr;
@@ -185,10 +186,15 @@ int eof_note_draw(EOF_NOTE * np, int p)
 					ncol = colors[ctr];	//Assign the appropriate fret color
 				}
 
+				if((np->type == EOF_NOTE_AMAZING) && (np->flags & EOF_NOTE_FLAG_DBASS) && (mask == 1))
+					dcol2 = eof_color_red;	//If this is an Expert+ bass drum note, render it with a red dot
+				else
+					dcol2 = dcol;			//Otherwise render with the expected dot color
+
 				rectfill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, ncol);
 				rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, pcol);
 				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], radius, ncol);
-				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], dotsize, dcol);
+				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], dotsize, dcol2);
 				circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], radius, pcol);
 			}
 			else if(eof_hover_note >= 0)
@@ -208,13 +214,18 @@ int eof_note_draw(EOF_NOTE * np, int p)
 				{	//If the note is not star power
 					ncol = colors[ctr];	//Assign the appropriate fret color
 				}
+				if((np->type == EOF_NOTE_AMAZING) && (np->flags & EOF_NOTE_FLAG_DBASS) && (mask == 1))
+					dcol2 = eof_color_red;	//If this is an Expert+ bass drum note, render it with a red dot
+				else
+					dcol2 = dcol;			//Otherwise render with the expected dot color
+
 				rectfill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, ncol);
 				if(p)
 				{
 					rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, pcol);
 				}
 				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], radius, ncol);
-				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], dotsize, dcol);
+				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], dotsize, dcol2);
 				if(p)
 				{
 					circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], radius, pcol);

@@ -370,7 +370,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				/* write green note */
 				if(sp->track[j]->note[i]->note & 1)
 				{
-					eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 0);
+					if(sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_DBASS)	//If this is an Expert+ double bass note
+						eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, 95);
+					else	//Otherwise write a normal green gem
+						eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 0);
 				}
 
 				/* write yellow note */
@@ -427,7 +430,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				/* write green note off */
 				if(sp->track[j]->note[i]->note & 1)
 				{
-					eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, midi_note_offset + 0);
+					if(sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_DBASS)	//If this is an Expert+ double bass note
+						eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, 95);
+					else	//Otherwise end a normal green gem
+						eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, midi_note_offset + 0);
 				}
 
 				/* write yellow note off */

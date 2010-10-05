@@ -3,6 +3,8 @@ EOF Version History
 
 1.???:
 
+Adds support for marking Expert bass drum notes as Expert+ notes, which will appear in Phase Shift as Expert+ bass notes instead of Expert bass notes
+
 Improved the MIDI import to be more efficient and to prepare for more comprehensive time signature support
 
 Updated to latest version of FoFLC

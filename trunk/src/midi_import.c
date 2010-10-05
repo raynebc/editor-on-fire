@@ -1032,6 +1032,7 @@ double realtime=0.0;					//Used to calculate realtime of anchors
 					/* note on */
 					if(eof_import_events[i]->event[j]->type == 0x90)
 					{
+						sp->track[picked_track]->note[note_count[picked_track]]->flags = 0;	//Clear the flag here so that the flag can be set if it's an Expert+ double bass note
 						if((eof_import_events[i]->event[j]->d1 >= 0x3C) && (eof_import_events[i]->event[j]->d1 < 0x3C + 6))
 						{
 							sp->track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_SUPAEASY;
@@ -1056,6 +1057,12 @@ double realtime=0.0;					//Used to calculate realtime of anchors
 						{
 							sp->track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_SPECIAL;
 							diff = eof_import_events[i]->event[j]->d1 - 120;
+						}
+						else if((picked_track == EOF_TRACK_DRUM) && (eof_import_events[i]->event[j]->d1 == 95))
+						{
+							sp->track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_AMAZING;
+							sp->track[picked_track]->note[note_count[picked_track]]->flags ^= EOF_NOTE_FLAG_DBASS;	//Apply this status flag
+							diff = eof_import_events[i]->event[j]->d1 - 0x60 + 1;	//Treat as gem 1 (bass drum)
 						}
 						else
 						{
@@ -1129,7 +1136,6 @@ double realtime=0.0;					//Used to calculate realtime of anchors
 								sp->track[picked_track]->note[note_count[picked_track]]->note = diff_chart[diff];
 								sp->track[picked_track]->note[note_count[picked_track]]->pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[i],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 								sp->track[picked_track]->note[note_count[picked_track]]->length = 100;
-								sp->track[picked_track]->note[note_count[picked_track]]->flags = 0;
 								note_count[picked_track]++;
 							}
 							else
@@ -1166,6 +1172,11 @@ double realtime=0.0;					//Used to calculate realtime of anchors
 						{
 							sp->track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_SPECIAL;
 							diff = eof_import_events[i]->event[j]->d1 - 120;
+						}
+						else if((picked_track == EOF_TRACK_DRUM) && (eof_import_events[i]->event[j]->d1 == 95))
+						{
+							sp->track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_AMAZING;
+							diff = eof_import_events[i]->event[j]->d1 - 0x60 + 1;	//Treat as gem 1 (bass drum)
 						}
 						else
 						{

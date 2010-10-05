@@ -82,9 +82,10 @@ MENU eof_note_menu[] =
     {"", NULL, NULL, 0, NULL},
     {"&HOPO", NULL, eof_hopo_menu, 0, NULL},
     {"", NULL, NULL, 0, NULL},
-    {"D&elete\tDel", eof_menu_note_delete, NULL, 0, NULL},
+    {"Delete\tDel", eof_menu_note_delete, NULL, 0, NULL},
     {"Display semitones as flat", eof_display_flats_menu, NULL, 0, NULL},
     {"&Freestyle", NULL, eof_note_freestyle_menu, 0, NULL},
+    {"Toggle &Expert+ bass drum", eof_menu_note_toggle_double_bass, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -379,6 +380,8 @@ void eof_prepare_note_menu(void)
 			{
 				eof_note_menu[19].flags = 0; // freestyle submenu
 			}
+
+			eof_note_menu[20].flags = D_DISABLED;	//Disable toggle Expert+ bass drum
 		}
 		else
 		{	//PART VOCALS NOT SELECTED
@@ -407,15 +410,20 @@ void eof_prepare_note_menu(void)
 			eof_note_menu[6].flags = D_DISABLED; // edit lyric
 			eof_note_menu[7].flags = D_DISABLED; // split lyric
 
-			/* toggle crazy */
+			/* toggle crazy , toggle Expert+ bass drum*/
 			if(eof_selected_track != EOF_TRACK_DRUM)
 			{
-				eof_note_menu[9].flags = 0;
+				eof_note_menu[9].flags = 0;				//Enable toggle crazy when PART DRUMS is not active
 			}
 			else
 			{
-				eof_note_menu[9].flags = D_DISABLED; //Disable toggle crazy when PART DRUMS is active
+				eof_note_menu[9].flags = D_DISABLED;	//Disable toggle crazy when PART DRUMS is active
 			}
+
+			if((eof_selected_track == EOF_TRACK_DRUM) && (eof_note_type == EOF_NOTE_AMAZING))
+				eof_note_menu[20].flags = 0;			//Enable toggle Expert+ bass drum only on Expert Drums
+			else
+				eof_note_menu[20].flags = D_DISABLED;	//Otherwise disable the menu item
 
 			/* solos */
 			if(selected)
@@ -803,6 +811,29 @@ int eof_menu_note_toggle_crazy(void)
 				u = 1;
 			}
 			eof_song->track[eof_selected_track]->note[i]->flags ^= EOF_NOTE_FLAG_CRAZY;
+		}
+	}
+	return 1;
+}
+
+int eof_menu_note_toggle_double_bass(void)
+{
+	int i;
+	int u = 0;
+
+	if(eof_selected_track != EOF_TRACK_DRUM)
+		return 1;	//Do not allow this function to run when PART DRUMS is not active
+
+	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
+	{
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->track[eof_selected_track]->note[i]->type == EOF_NOTE_AMAZING) && (eof_song->track[eof_selected_track]->note[i]->note & 1))
+		{	//If this note is in the currently active track, is selected, is in the Expert difficulty and has a green gem
+			if(!u)
+			{
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				u = 1;
+			}
+			eof_song->track[eof_selected_track]->note[i]->flags ^= EOF_NOTE_FLAG_DBASS;
 		}
 	}
 	return 1;

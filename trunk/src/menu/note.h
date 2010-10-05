@@ -40,6 +40,7 @@ int eof_menu_note_transpose_up_octave(void);	//Moves selected lyrics up one octa
 int eof_menu_note_resnap(void);
 int eof_menu_note_create_bre(void);
 int eof_menu_note_toggle_crazy(void);
+int eof_menu_note_toggle_double_bass(void);
 int eof_menu_note_push_back(void);
 int eof_menu_note_push_up(void);
 int eof_menu_note_delete(void);
