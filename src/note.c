@@ -598,7 +598,11 @@ int eof_note_draw_3d(EOF_NOTE * np, int p)
 			point[5] = ocd3d_project_y(200, ez);
 			point[6] = ocd3d_project_x(bx + 232, rz);
 			point[7] = ocd3d_project_y(200, rz);
-			polygon(eof_window_3d->screen, 4, point, p ? makecol(192, 255, 192) : eof_color_green);
+
+			if(np->flags & EOF_NOTE_FLAG_DBASS)
+				polygon(eof_window_3d->screen, 4, point, p ? makecol(255, 192, 192) : eof_color_red);
+			else
+				polygon(eof_window_3d->screen, 4, point, p ? makecol(192, 255, 192) : eof_color_green);
 		}
 		for(ctr=1,mask=2;ctr<EOF_MAX_FRETS;ctr++,mask=mask<<1)
 		{	//Render for each of the available fret colors after 1 (bass drum)
