@@ -301,8 +301,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	char header[14] = {'M', 'T', 'h', 'd', 0, 0, 0, 6, 0, 1, 0, 1, (EOF_DEFAULT_TIME_DIVISION >> 8), (EOF_DEFAULT_TIME_DIVISION & 0xFF)}; //The last two bytes are the time division
 	char trackheader[8] = {'M', 'T', 'r', 'k', 0, 0, 0, 0};
 	char * tempname[8] = {"eof.tmp", "eof2.tmp", "eof3.tmp", "eof4.tmp", "eof5.tmp", "eof6.tmp", "eof7.tmp", "eof8.tmp"};
+	char expertplustempname[] = {"eof9.tmp"};	//Stores the temporary filename for the Expert+ track data
+	char expertplusfilename[1024] = {0};
 	PACKFILE * fp;
 	PACKFILE * fp2;
+	PACKFILE * fp3 = NULL;					//File pointer for the Expert+ file
 	int i, j;
 	unsigned long ctr;
 	unsigned long delta = 0;
@@ -317,6 +320,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	char * tempstring = NULL;				//Used to store a copy of the lyric string into eof_midi_event[], so the string can be modified from the original
 	char correctlyrics = 0;					//If nonzero, logic will be performed to correct the pitchless lyrics to have a pound character and have a generic pitch note
 	unsigned long length;					//Used to cap drum notes
+	char expertplus = 0;					//Tracks whether an expert+.mid track should be created to hold the Expert+ drum track
+	char expertpluswritten = 0;				//Tracks whether an expert+.mid track has been written
+	char trackctr;							//Used in the temp data creation to handle Expert+
 
 
 	anchorlist=eof_build_tempo_list();	//Create a linked list of all tempo changes in eof_song->beat[]
@@ -371,7 +377,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				if(sp->track[j]->note[i]->note & 1)
 				{
 					if(sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_DBASS)	//If this is an Expert+ double bass note
+					{
 						eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, 95);
+						expertplus = 1;
+					}
 					else	//Otherwise write a normal green gem
 						eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 0);
 				}
@@ -494,49 +503,71 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				eof_add_midi_event(sp->track[j]->solo[i].end_pos, 0x80, 103);
 			}
 
-    		qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
-//			allegro_message("break1");
-
-			/* open the file */
-			fp = pack_fopen(tempname[j], "w");
-			if(!fp)
-			{
-				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
-				return 0;
-			}
-
-			/* write the track name */
-			WriteVarLen(0, fp);
-			pack_putc(0xff, fp);
-			pack_putc(0x03, fp);
-			WriteVarLen(ustrlen(eof_track_name[j]), fp);
-			pack_fwrite(eof_track_name[j], ustrlen(eof_track_name[j]), fp);
-
-	    	/* add MIDI events */
-	    	lastdelta = 0;
-			for(i = 0; i < eof_midi_events; i++)
-			{
-				delta = eof_ConvertToDeltaTime(eof_midi_event[i]->pos,anchorlist,EOF_DEFAULT_TIME_DIVISION);
-
-				WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
-				lastdelta = delta;					//Store this event's absolute delta time
-				pack_putc(eof_midi_event[i]->type, fp);
-				pack_putc(eof_midi_event[i]->note, fp);
-				pack_putc(vel, fp);
-			}
-
-			/* end of track */
-			WriteVarLen(0, fp);
-			pack_putc(0xFF, fp);
-			pack_putc(0x2F, fp);
-			pack_putc(0x00, fp);
-
-			pack_fclose(fp);
-
 			for(i=0;i < 128;i++)
 			{	//Ensure that any notes that are still on are terminated
 				if(eof_midi_note_status[i] != 0)	//If this note was left on, write a note off at the end of the last charted note
 					eof_add_midi_event(sp->track[j]->note[sp->track[j]->notes-1]->pos + sp->track[j]->note[sp->track[j]->notes-1]->length,0x80,i);
+			}
+    		qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
+//			allegro_message("break1");
+
+			for(trackctr=0;trackctr<=expertplus;trackctr++)
+			{
+				/* open the file */
+				if(trackctr == 0)	//Writing the normal temp file
+					fp = pack_fopen(tempname[j], "w");
+				else
+				{			//Write the Expert+ temp file
+					fp = pack_fopen(expertplustempname, "w");
+					for(i = 0; i < eof_midi_events; i++)
+					{	//Change all the double bass note events (note 95) to regular bass for the Expert+ track
+						if(eof_midi_event[i]->note == 95)
+							eof_midi_event[i]->note = 96;
+					}
+				}
+
+				if(!fp)
+				{
+					eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+					return 0;
+				}
+
+				/* write the track name */
+				WriteVarLen(0, fp);
+				pack_putc(0xff, fp);
+				pack_putc(0x03, fp);
+				WriteVarLen(ustrlen(eof_track_name[j]), fp);
+				pack_fwrite(eof_track_name[j], ustrlen(eof_track_name[j]), fp);
+
+				/* add MIDI events */
+				lastdelta = 0;
+				for(i = 0; i < eof_midi_events; i++)
+				{
+					if((trackctr == 1) && (eof_midi_event[i]->note < 96))
+						continue;	//Filter out all non Expert drum notes for the Expert+ track
+
+					delta = eof_ConvertToDeltaTime(eof_midi_event[i]->pos,anchorlist,EOF_DEFAULT_TIME_DIVISION);
+
+					WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
+					lastdelta = delta;					//Store this event's absolute delta time
+					pack_putc(eof_midi_event[i]->type, fp);
+					pack_putc(eof_midi_event[i]->note, fp);
+					pack_putc(vel, fp);
+				}
+
+				/* end of track */
+				WriteVarLen(0, fp);
+				pack_putc(0xFF, fp);
+				pack_putc(0x2F, fp);
+				pack_putc(0x00, fp);
+
+				pack_fclose(fp);
+
+				if(trackctr == 1)
+				{	//If the Expert+ track data was written
+					expertplus = 0;	//Reset this status
+					expertpluswritten = 1;
+				}
 			}
 		}
 	}
@@ -606,8 +637,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			}
 		}
 
-		qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
-
 		/* insert padding as necessary between a lyric phrase on marker and the following lyric */
 		#define EOF_LYRIC_PHRASE_PADDING 5
 		unsigned long last_phrase = 0;	//Stores the absolute delta time of the last Note 105 On
@@ -629,6 +658,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				}
 			}
 		}
+
+		qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
 
 		/* open the file */
 		fp = pack_fopen(tempname[7], "w");
@@ -762,6 +793,17 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	header[11] = eof_count_tracks() + 1 + (sp->text_events > 0 ? 1 : 0) + (sp->vocal_track->lyrics > 0 ? 1 : 0);
 	pack_fwrite(header, 14, fp);
 
+	if(expertpluswritten)
+	{
+		header[11] = 1 + 1 + (sp->text_events > 0 ? 1 : 0);
+		replace_filename(expertplusfilename, fn, "expert+.mid", 1024);
+		fp3 = pack_fopen(expertplusfilename, "w");
+		if(!fp3)
+			expertpluswritten = 0;	//Cancel trying to write Expert+ and save the normal MIDI instead
+		else
+			pack_fwrite(header, 14, fp3);	//Write the Expert+ file's MIDI header
+	}
+
 
 /* write tempo track */
 	track_length = file_size_ex(tempname[5]);
@@ -777,6 +819,18 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	for(i = 0; i < track_length; i++)
 	{
 		pack_putc(pack_getc(fp2), fp);
+	}
+
+	if(expertpluswritten)
+	{	//Write the tempo track to the Expert+ MIDI file as well
+		pack_fclose(fp2);	//Since Allegro's pack_fseek() function doesn't support backward seeks,
+		fp2 = pack_fopen(tempname[5], "r");	//Close and re-open the file
+		pack_fwrite(trackheader, 4, fp3);
+		pack_mputl(track_length, fp3);
+		for(i = 0; i < track_length; i++)
+		{
+			pack_putc(pack_getc(fp2), fp3);
+		}
 	}
 	pack_fclose(fp2);
 
@@ -797,6 +851,18 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		for(i = 0; i < track_length; i++)
 		{
 			pack_putc(pack_getc(fp2), fp);
+		}
+
+		if(expertpluswritten)
+		{	//Write the events track to the Expert+ MIDI file as well
+			pack_fclose(fp2);	//Since Allegro's pack_fseek() function doesn't support backward seeks,
+			fp2 = pack_fopen(tempname[6], "r");	//Close and re-open the file
+			pack_fwrite(trackheader, 4, fp3);
+			pack_mputl(track_length, fp3);
+			for(i = 0; i < track_length; i++)
+			{
+				pack_putc(pack_getc(fp2), fp3);
+			}
 		}
 		pack_fclose(fp2);
 	}
@@ -823,6 +889,24 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				pack_putc(pack_getc(fp2), fp);
 			}
 			pack_fclose(fp2);
+		}
+	}
+
+	if(expertpluswritten)
+	{	//Write the PART DRUMS track to the Expert+ MIDI file as well
+		track_length = file_size_ex(expertplustempname);
+		fp2 = pack_fopen(expertplustempname, "r");
+		if(fp2)
+		{
+			pack_fwrite(trackheader, 4, fp3);
+			pack_mputl(track_length, fp3);
+
+			for(i = 0; i < track_length; i++)
+			{
+				pack_putc(pack_getc(fp2), fp3);
+			}
+			pack_fclose(fp2);
+			pack_fclose(fp3);	//Close Expert+ MIDI file
 		}
 	}
 
@@ -860,6 +944,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	delete_file("eof6.tmp");
 	delete_file("eof7.tmp");
 	delete_file("eof8.tmp");
+	delete_file("eof9.tmp");	//Delete Expert+ temp file
 	eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 
 	return 1;
