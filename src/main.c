@@ -408,12 +408,14 @@ void eof_emergency_stop_music(void)
 		if(!eof_music_paused)
 		{
 			eof_music_paused = 1;
+			eof_stop_midi();
 			alogg_stop_ogg(eof_music_track);
 		}
 		else if(eof_music_catalog_playback)
 		{
 			eof_music_catalog_playback = 0;
 			eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
+			eof_stop_midi();
 			alogg_stop_ogg(eof_music_track);
 		}
 	}
@@ -1671,6 +1673,7 @@ void eof_logic(void)
 		{
 			eof_music_catalog_playback = 0;
 			eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
+			eof_stop_midi();
 			alogg_stop_ogg(eof_music_track);
 			alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_pos);
 		}
@@ -1749,6 +1752,7 @@ void eof_logic(void)
 		{
 			eof_music_paused = 1;
 			eof_music_pos = eof_music_rewind_pos;
+			eof_stop_midi();
 			alogg_stop_ogg(eof_music_track);
 			alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_pos);
 		}
@@ -3008,6 +3012,9 @@ int main(int argc, char * argv[])
 		/* update the music */
 		if(!eof_music_paused)
 		{
+			if(eof_mix_midi_tones_enabled)
+				eof_process_midi_queue();	//Process the start/stop times of the MIDI tones
+
 			int ret = alogg_poll_ogg(eof_music_track);
 			eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 			if((ret == ALOGG_POLL_PLAYJUSTFINISHED) || (ret == ALOGG_POLL_NOTPLAYING) || (ret == ALOGG_POLL_FRAMECORRUPT) || (ret == ALOGG_POLL_INTERNALERROR) || (eof_music_actual_pos > alogg_get_length_msecs_ogg(eof_music_track)))
@@ -3104,15 +3111,15 @@ int main(int argc, char * argv[])
 	return 0;
 }
 
-void eof_process_midi_queue(int currentpos)
+void eof_process_midi_queue(void)
 {	//Process the MIDI queue based on the current chart timestamp (eof_music_pos)
 	unsigned char NOTE_ON_DATA[3]={0x91,0x0,127};	//Data sequence for a Note On, channel 1, Note 0
 	unsigned char NOTE_OFF_DATA[3]={0x81,0x0,127};	//Data sequence for a Note Off, channel 1, Note 0
 
 	struct MIDIentry *ptr=MIDIqueue;	//Points to the head of the list
-	struct MIDIentry *temp;
+	struct MIDIentry *temp=NULL;
 
-	for(ptr=MIDIqueue;ptr != NULL;)
+	while(ptr != NULL)
 	{	//Process all queue entries
 		if(ptr->status == 0)	//If this queued note has not been played yet
 		{
@@ -3199,6 +3206,22 @@ void eof_midi_queue_destroy(void)
 	}
 
 	MIDIqueue=MIDIqueuetail=NULL;
+}
+
+void eof_all_midi_notes_off(void)
+{
+	unsigned char ALL_NOTES_OFF[3]={0xB1,123,0};	//Data sequence for a Control Change, controller 123, value 0 (All notes off)
+
+	midi_out(ALL_NOTES_OFF,3);			//Send the all notes off channel mode message
+}
+
+void eof_stop_midi(void)
+{
+	if(eof_midi_initialized)
+	{
+		eof_all_midi_notes_off();
+		eof_midi_queue_destroy();
+	}
 }
 
 void eof_init_after_load(void)

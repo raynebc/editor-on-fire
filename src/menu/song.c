@@ -857,6 +857,7 @@ int eof_menu_song_properties(void)
 	if(eof_song_loaded)
 	{
 		eof_music_paused = 1;
+		eof_stop_midi();
 		alogg_stop_ogg(eof_music_track);
 	}
 	eof_render();
