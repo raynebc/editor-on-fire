@@ -715,6 +715,7 @@ int eof_menu_file_midi_import(void)
 	if(eof_song_loaded)
 	{
 		eof_music_paused = 1;
+		eof_stop_midi();
 		alogg_stop_ogg(eof_music_track);
 	}
 	if(eof_changes)
@@ -1015,6 +1016,7 @@ int eof_menu_file_exit(void)
 		{
 			eof_music_catalog_playback = 0;
 			eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
+			eof_stop_midi();
 			alogg_stop_ogg(eof_music_track);
 			alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_pos);
 		}

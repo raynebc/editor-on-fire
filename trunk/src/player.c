@@ -26,6 +26,7 @@ void eof_music_play(void)
 	}
 	if(eof_music_paused)
 	{
+		eof_stop_midi();
 		alogg_stop_ogg(eof_music_track);
 		eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 		if(eof_play_selection)
@@ -133,6 +134,7 @@ void eof_catalog_play(void)
 		{
 			eof_music_catalog_playback = 0;
 			eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
+			eof_stop_midi();
 			alogg_stop_ogg(eof_music_track);
 			alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_pos);
 		}
@@ -166,6 +168,7 @@ void eof_music_seek(unsigned long pos)
 void eof_music_rewind(void)
 {
 	int amount = 0;
+	eof_stop_midi();
 	if(!eof_music_catalog_playback)
 	{
 		if(KEY_EITHER_SHIFT)
@@ -196,6 +199,7 @@ void eof_music_rewind(void)
 
 void eof_music_forward(void)
 {
+	eof_stop_midi();
 	if(!eof_music_catalog_playback)
 	{
 		if(KEY_EITHER_SHIFT)

@@ -67,6 +67,8 @@ int eof_mix_current_clap = 0;
 
 unsigned long eof_mix_note_pos[EOF_MAX_NOTES] = {0};
 unsigned long eof_mix_note_note[EOF_MAX_NOTES] = {0};
+unsigned long eof_mix_note_ms_pos[EOF_MAX_NOTES] = {0};	//Used to store the start positions of notes (for MIDI playback)
+unsigned long eof_mix_note_ms_end[EOF_MAX_NOTES] = {0};	//Used to store the end positions of notes (for MIDI playback)
 int eof_mix_notes = 0;
 int eof_mix_current_note = 0;
 
@@ -166,8 +168,9 @@ void eof_mix_callback(void * buf, int length)
 		if((eof_mix_sample_count >= eof_mix_next_note) && (eof_mix_current_note < eof_mix_notes))
 		{
 			if(eof_mix_midi_tones_enabled)
-			{
-				eof_midi_play_note(eof_mix_note_note[eof_mix_current_note]);	//Play the MIDI note
+			{	//Queue the start and end time (in milliseconds) of this MIDI note
+//				eof_midi_play_note(eof_mix_note_note[eof_mix_current_note]);	//Play the MIDI note
+				eof_midi_queue_add(eof_mix_note_note[eof_mix_current_note],eof_mix_note_ms_pos[eof_mix_current_note],eof_mix_note_ms_end[eof_mix_current_note]);
 			}
 			else if(eof_mix_vocal_tones_enabled && eof_sound_note[eof_mix_note_note[eof_mix_current_note]])
 			{
@@ -257,6 +260,8 @@ void eof_mix_find_claps(void)
 		{	//This is a vocal pitch
 			eof_mix_note_pos[eof_mix_notes] = eof_mix_msec_to_sample(eof_song->vocal_track->lyric[i]->pos, alogg_get_wave_freq_ogg(eof_music_track));
 			eof_mix_note_note[eof_mix_notes] = eof_song->vocal_track->lyric[i]->note;
+			eof_mix_note_ms_pos[eof_mix_notes] = eof_song->vocal_track->lyric[i]->pos;
+			eof_mix_note_ms_end[eof_mix_notes] = eof_song->vocal_track->lyric[i]->pos + eof_song->vocal_track->lyric[i]->length;
 			eof_mix_notes++;
 		}
 		else if(eof_song->vocal_track->lyric[i]->note == EOF_LYRIC_PERCUSSION)
@@ -487,6 +492,8 @@ void eof_mix_seek(int pos)
 
 	eof_mix_next_clap = -1;
 	eof_mix_next_metronome = -1;
+	eof_mix_next_note = -1;
+	eof_mix_next_percussion = -1;
 
 	eof_mix_sample_count = eof_mix_msec_to_sample(pos, alogg_get_wave_freq_ogg(eof_music_track));
 	for(i = 0; i < eof_mix_claps; i++)
