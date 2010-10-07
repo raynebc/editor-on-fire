@@ -3119,6 +3119,9 @@ void eof_process_midi_queue(void)
 	struct MIDIentry *ptr=MIDIqueue;	//Points to the head of the list
 	struct MIDIentry *temp=NULL;
 
+	if(midi_driver == NULL)
+		return;
+
 	while(ptr != NULL)
 	{	//Process all queue entries
 		if(ptr->status == 0)	//If this queued note has not been played yet
@@ -3126,7 +3129,9 @@ void eof_process_midi_queue(void)
 			if(eof_music_pos >= ptr->startpos)	//If the current chart position is at or past this note's start position
 			{
 				NOTE_ON_DATA[1]=ptr->note;	//Alter the data sequence to be the appropriate note number
-				midi_out(NOTE_ON_DATA,3);	//Turn on this MIDI note
+				midi_driver->raw_midi(NOTE_ON_DATA[0]);
+				midi_driver->raw_midi(NOTE_ON_DATA[1]);
+				midi_driver->raw_midi(NOTE_ON_DATA[2]);
 				ptr->status=1;			//Track that it is playing
 			}
 		}
@@ -3135,7 +3140,9 @@ void eof_process_midi_queue(void)
 			if(eof_music_pos >= ptr->endpos)	//If the current chart position is at or past this note's stop position
 			{
 				NOTE_OFF_DATA[1]=ptr->note;	//Alter the data sequence to be the appropriate note number
-				midi_out(NOTE_OFF_DATA,3);	//Turn off this MIDI note
+				midi_driver->raw_midi(NOTE_OFF_DATA[0]);
+				midi_driver->raw_midi(NOTE_OFF_DATA[1]);
+				midi_driver->raw_midi(NOTE_OFF_DATA[2]);
 
 			//Remove this link from the list
 				if(ptr->prev)	//If there's a link that precedes this link
@@ -3212,7 +3219,12 @@ void eof_all_midi_notes_off(void)
 {
 	unsigned char ALL_NOTES_OFF[3]={0xB1,123,0};	//Data sequence for a Control Change, controller 123, value 0 (All notes off)
 
-	midi_out(ALL_NOTES_OFF,3);			//Send the all notes off channel mode message
+	if(midi_driver)
+	{
+		midi_driver->raw_midi(ALL_NOTES_OFF[0]);
+		midi_driver->raw_midi(ALL_NOTES_OFF[1]);
+		midi_driver->raw_midi(ALL_NOTES_OFF[2]);
+	}
 }
 
 void eof_stop_midi(void)
