@@ -3012,11 +3012,10 @@ int main(int argc, char * argv[])
 		/* update the music */
 		if(!eof_music_paused)
 		{
-			if(eof_mix_midi_tones_enabled)
-				eof_process_midi_queue();	//Process the start/stop times of the MIDI tones
-
 			int ret = alogg_poll_ogg(eof_music_track);
 			eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
+			if(eof_mix_midi_tones_enabled)
+				eof_process_midi_queue(eof_music_actual_pos);	//Process the start/stop times of the MIDI tones
 			if((ret == ALOGG_POLL_PLAYJUSTFINISHED) || (ret == ALOGG_POLL_NOTPLAYING) || (ret == ALOGG_POLL_FRAMECORRUPT) || (ret == ALOGG_POLL_INTERNALERROR) || (eof_music_actual_pos > alogg_get_length_msecs_ogg(eof_music_track)))
 			{	//If ALOGG reported a completed/error condition or if the reported position is greater than the length of the audio
 				eof_music_pos = eof_music_actual_pos + eof_av_delay;
@@ -3111,7 +3110,7 @@ int main(int argc, char * argv[])
 	return 0;
 }
 
-void eof_process_midi_queue(void)
+void eof_process_midi_queue(int pos)
 {	//Process the MIDI queue based on the current chart timestamp (eof_music_pos)
 	unsigned char NOTE_ON_DATA[3]={0x91,0x0,127};	//Data sequence for a Note On, channel 1, Note 0
 	unsigned char NOTE_OFF_DATA[3]={0x81,0x0,127};	//Data sequence for a Note Off, channel 1, Note 0
@@ -3126,7 +3125,7 @@ void eof_process_midi_queue(void)
 	{	//Process all queue entries
 		if(ptr->status == 0)	//If this queued note has not been played yet
 		{
-			if(eof_music_pos >= ptr->startpos)	//If the current chart position is at or past this note's start position
+			if(pos >= ptr->startpos)	//If the current chart position is at or past this note's start position
 			{
 				NOTE_ON_DATA[1]=ptr->note;	//Alter the data sequence to be the appropriate note number
 				midi_driver->raw_midi(NOTE_ON_DATA[0]);
@@ -3137,7 +3136,7 @@ void eof_process_midi_queue(void)
 		}
 		else			//This queued note has already been played
 		{
-			if(eof_music_pos >= ptr->endpos)	//If the current chart position is at or past this note's stop position
+			if(pos >= ptr->endpos)	//If the current chart position is at or past this note's stop position
 			{
 				NOTE_OFF_DATA[1]=ptr->note;	//Alter the data sequence to be the appropriate note number
 				midi_driver->raw_midi(NOTE_OFF_DATA[0]);
