@@ -91,7 +91,7 @@ void eof_load_config(char * fn)
 		eof_snap_mode = 0;
 	}
 	eof_snap_interval = get_config_int("editor", "snap_interval", 1);
-	if((eof_snap_interval < 1) || (eof_snap_interval > 15))
+	if((eof_snap_interval < 1) || (eof_snap_interval > 64))
 	{
 		eof_snap_interval = 1;
 	}
