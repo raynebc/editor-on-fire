@@ -34,8 +34,8 @@ typedef struct
 	int measure_beat;
 	int measure_length;
 	int length;
-	float grid_pos[32];
-	float grid_distance[32];
+	float grid_pos[EOF_MAX_GRID_SNAP_INTERVALS];
+	float grid_distance[EOF_MAX_GRID_SNAP_INTERVALS];
 	unsigned long pos;
 
 } EOF_SNAP_DATA;

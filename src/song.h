@@ -55,6 +55,8 @@
 
 #define EOF_DEFAULT_TIME_DIVISION 480 // default time division used to convert midi_pos to msec_pos
 
+#define EOF_MAX_GRID_SNAP_INTERVALS 64
+
 typedef struct
 {
 
