@@ -236,13 +236,14 @@ double eof_ConvertToRealTime(unsigned long absolutedelta,struct Tempo_change *an
 				break;	//break from loop
 		}
 	}
+	tempdelta=absolutedelta-temp->delta;
 
 //At this point, we have reached the tempo change that absolutedelta resides within, find the realtime
 //The updated theoretical conversion formula that takes the time signature into account is: deltas / (time division) * (15000.0 / BPM) * (TS denominator)
-	tempdelta=absolutedelta-temp->delta;
-//	temptimer+=(double)tempdelta / (double)timedivision * ((double)60000.0 / tempBPM);
-	temptimer+=(double)tempdelta / (double)timedivision * ((double)15000.0 / tempBPM) * den;
+//Until we can get confirmation for this, we'll use the original conversion formula instead
+//	temptimer+=(double)tempdelta / (double)timedivision * ((double)15000.0 / tempBPM) * den;
 
+	temptimer+=(double)tempdelta / (double)timedivision * ((double)60000.0 / tempBPM);
 	return temptimer+offset;
 }
 

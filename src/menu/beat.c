@@ -18,6 +18,7 @@ MENU eof_beat_time_signature_menu[] =
     {"&3/4", eof_menu_beat_ts_3_4, NULL, 0, NULL},
     {"&5/4", eof_menu_beat_ts_5_4, NULL, 0, NULL},
     {"&6/4", eof_menu_beat_ts_6_4, NULL, 0, NULL},
+    {"&Custom", eof_menu_beat_ts_custom, NULL, 0, NULL},
     {eof_ts_menu_off_text, eof_menu_beat_ts_off, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
@@ -202,7 +203,7 @@ void eof_prepare_beat_menu(void)
 			eof_beat_menu[18].flags = D_DISABLED;
 		}
 //Re-flag the active Time Signature for the selected beat
-		for(i = 0; i < 5; i++)
+		for(i = 0; i < 6; i++)
 		{
 			eof_beat_time_signature_menu[i].flags = 0;
 		}
@@ -222,14 +223,18 @@ void eof_prepare_beat_menu(void)
 		{
 			eof_beat_time_signature_menu[3].flags = D_SELECTED;
 		}
-		else
+		else if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_CUSTOM_TS)
 		{
 			eof_beat_time_signature_menu[4].flags = D_SELECTED;
+		}
+		else
+		{
+			eof_beat_time_signature_menu[5].flags = D_SELECTED;
 		}
 //If any beat before the selected beat has a defined Time Signature, change the menu's "Off" option to "No Change"
 		for(i = 0; i < eof_selected_beat; i++)
 		{
-			if((eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_4_4) || (eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_3_4) || (eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_5_4) || (eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_6_4))
+			if((eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_4_4) || (eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_3_4) || (eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_5_4) || (eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_6_4) || (eof_song->beat[i]->flags & EOF_BEAT_FLAG_CUSTOM_TS))
 			{
 				ustrcpy(eof_ts_menu_off_text, "No Change");
 				break;
@@ -364,6 +369,71 @@ int eof_menu_beat_ts_6_4(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	eof_song->beat[eof_selected_beat]->flags = flags | EOF_BEAT_FLAG_START_6_4;
 	eof_select_beat(eof_selected_beat);
+	return 1;
+}
+
+DIALOG eof_custom_ts_dialog[] =
+{
+   /* (proc)				(x)		(y)		(w)		(h)  		(fg)	(bg) (key) (flags)	(d1) (d2) (dp)			(dp2) (dp3) */
+   { d_agup_shadow_box_proc,32,		68,		175, 	72 + 8 +15,	2,		23,  0,    0,		0,   0,   NULL,			NULL, NULL },
+   { d_agup_text_proc,		42,		84,		35,		8,			2,		23,  0,    0,		0,   0,   "Beats per measure:",	NULL, NULL },
+   { eof_verified_edit_proc,160,	80,		35,		20,			2,		23,  0,    0,		8,   0,   eof_etext,	"0123456789", NULL },
+   { d_agup_text_proc,		42,		105,	35,		8,			2,		23,  0,    0,		0,   0,   "Beat unit:",	NULL, NULL },
+   { eof_verified_edit_proc,160,	101,	35,		20,			2,		23,  0,    0,		8,   0,   eof_etext2,	"0123456789", NULL },
+   { d_agup_button_proc,	42,		125,	68,		28,			2,		23,  '\r', D_EXIT,	0,   0,   "OK",			NULL, NULL },
+   { d_agup_button_proc,	125,	125,	68,		28,			2,		23,  0,    D_EXIT,	0,   0,   "Cancel",		NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_menu_beat_ts_custom(void)
+{
+	unsigned num=0,den=0;
+	int flags=0;
+
+//Prompt the user for the custom time signature
+	eof_cursor_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_custom_ts_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_custom_ts_dialog);
+	sprintf(eof_etext, "%lu", ((eof_song->beat[eof_selected_beat]->flags & 0xFF000000)>>24) + 1);
+	sprintf(eof_etext2, "%lu", ((eof_song->beat[eof_selected_beat]->flags & 0x00FF0000)>>16) + 1);
+	if(eof_popup_dialog(eof_custom_ts_dialog, 2) == 5)
+	{	//User clicked OK
+		num = atoi(eof_etext);
+		den = atoi(eof_etext2);
+
+		if((num > 256) || (num < 1) || (den > 256) || (den < 1))
+		{	//These values must fit within an 8 bit number (where all bits zero represents 1 and all bits set represents 256)
+			eof_render();
+			allegro_message("Time signature numerator and denominator must be between 1 and 256");
+		}
+		else
+		{
+			if((den != 1) && (den != 2) && (den != 4) && (den != 8) && (den != 16) && (den != 32) && (den != 64) && (den != 128) && (den != 256))
+			{
+				eof_render();
+				allegro_message("Time signature denominator must be a power of two");
+			}
+			else
+			{	//User provided a valid time signature
+				num--;	//Convert these numbers to a system where all bits zero represents 1 and all bits set represents 256
+				den--;
+
+				//Clear the beat's status except for its anchor and event flags
+				flags = eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR;
+				flags |= eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_EVENTS;
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				eof_song->beat[eof_selected_beat]->flags = flags | EOF_BEAT_FLAG_CUSTOM_TS;
+				eof_song->beat[eof_selected_beat]->flags |= (num << 24);
+				eof_song->beat[eof_selected_beat]->flags |= (den << 16);
+				eof_select_beat(eof_selected_beat);
+			}
+		}
+	}
+
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(NULL);
 	return 1;
 }
 

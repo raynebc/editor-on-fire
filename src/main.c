@@ -2314,6 +2314,11 @@ void eof_render_3d_window(void)
 			beats_per_measure = 6;
 			beat_counter = 0;
 		}
+		else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_CUSTOM_TS)
+		{
+			beats_per_measure = ((eof_song->beat[i]->flags & 0xFF000000)>>24) + 1;
+			beat_counter = 0;
+		}
 		bz = -eof_music_pos / eof_zoom_3d + eof_song->beat[i]->pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
 		if((bz >= -100) && (bz <= 600))
 		{
