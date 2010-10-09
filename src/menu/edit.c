@@ -1443,11 +1443,11 @@ int eof_menu_edit_snap_custom(void)
 			eof_custom_snap_measure = 0;
 		}
 
-		if((eof_snap_interval > 31) || (eof_snap_interval < 1))
+		if((eof_snap_interval > 64) || (eof_snap_interval < 1))
 		{
 			eof_render();
 			eof_snap_interval = last_interval;
-			allegro_message("Invalid snap setting, must be between 1 and 31");
+			allegro_message("Invalid snap setting, must be between 1 and 64");
 		}
 		else
 		{
