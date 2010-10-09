@@ -46,7 +46,8 @@
 #define EOF_BEAT_FLAG_START_3_4   8
 #define EOF_BEAT_FLAG_START_5_4  16
 #define EOF_BEAT_FLAG_START_6_4  32
-#define EOF_BEAT_FLAG_CORRUPTED  64
+#define EOF_BEAT_FLAG_CUSTOM_TS  64
+#define EOF_BEAT_FLAG_CORRUPTED 128
 
 #define EOF_LYRIC_LINE_FLAG_OVERDRIVE 1
 
@@ -178,7 +179,7 @@ typedef struct
 	unsigned long ppqn;
 	unsigned long midi_pos;
 	unsigned long pos;
-	unsigned long flags;
+	unsigned long flags;	//If the EOF_BEAT_FLAG_CUSTOM_TS flag is set, this variable's MSB is the TS's numerator (value 1 is stored as all bits 0), the 2nd MSB is the TS's denominator (value 1 is stored as all bits 0)
 
 	double fpos;
 

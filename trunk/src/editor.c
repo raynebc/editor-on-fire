@@ -71,6 +71,11 @@ void eof_select_beat(int beat)
 			eof_beats_in_measure = 6;
 			beat_counter = 0;
 		}
+		else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_CUSTOM_TS)
+		{
+			eof_beats_in_measure = ((eof_song->beat[i]->flags & 0xFF000000)>>24) + 1;
+			beat_counter = 0;
+		}
 		eof_beat_in_measure = beat_counter;
 		if(eof_beat_in_measure == 0)
 		{
@@ -354,6 +359,12 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 							else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_6_4)
 							{
 								ts = 6;
+								sp->measure_beat = i;
+								break;
+							}
+							else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_CUSTOM_TS)
+							{
+								ts = ((eof_song->beat[i]->flags & 0xFF000000)>>24) + 1;
 								sp->measure_beat = i;
 								break;
 							}
@@ -4108,6 +4119,11 @@ int eof_get_ts_text(int beat, char * buffer)
 		ustrcpy(buffer, "6/4");
 		ret = 1;
 	}
+	else if(eof_song->beat[beat]->flags & EOF_BEAT_FLAG_CUSTOM_TS)
+	{
+		uszprintf(buffer, 16, "%lu/%lu", ((eof_song->beat[beat]->flags & 0xFF000000)>>24)+1, ((eof_song->beat[beat]->flags & 0x00FF0000)>>16)+1);
+		ret = 1;
+	}
 	else
 	{
 		ustrcpy(buffer, "");
@@ -4702,6 +4718,11 @@ void eof_render_editor_window_common(void)
 			beats_per_measure = 6;
 			beat_counter = 0;
 		}
+		else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_CUSTOM_TS)
+		{
+			beats_per_measure = ((eof_song->beat[i]->flags & 0xFF000000)>>24) + 1;
+			beat_counter = 0;
+		}
 		beat_in_measure = beat_counter;
 		if(beat_in_measure == 0)
 		{
@@ -4758,7 +4779,7 @@ void eof_render_editor_window_common(void)
 		}
 		if(eof_get_ts_text(i, buffer))
 		{	//Draw time signature
-			textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord - 20 + 3, EOF_EDITOR_RENDER_OFFSET + 4 - (i % 2 == 0 ? 0 : 10) - 12, i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "(%s)", buffer);
+			textprintf_centre_ex(eof_window_editor->screen, eof_mono_font, xcoord - 20 + 3 + 16, EOF_EDITOR_RENDER_OFFSET + 4 - (i % 2 == 0 ? 0 : 10) - 12, i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "(%s)", buffer);
 		}
 		beat_counter++;
 		if(beat_counter >= beats_per_measure)

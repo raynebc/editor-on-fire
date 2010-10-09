@@ -3,6 +3,8 @@ EOF Version History
 
 1.???:
 
+Adds custom time signature support for charting.  Time signatures are still not written to the MIDI during save operations
+
 Adds support for marking Expert bass drum notes as Expert+ notes, which will appear in Phase Shift as Expert+ bass notes instead of Expert bass notes.  An expert+.mid file will also be written during save if any Expert+ notes exist, for use in FoF
 
 Improved the MIDI import to be more efficient and to prepare for more comprehensive time signature support
