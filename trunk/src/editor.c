@@ -526,6 +526,8 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 				{
 					sp->length = ((double)sp->beat_length / (double)eof_snap_interval +0.5);	//Round up
 				}
+				if(sp->length <= 0)
+					sp->length = 1;	//Enforce a minimum grid snap length of 1ms
 				break;
 			}
 		}
