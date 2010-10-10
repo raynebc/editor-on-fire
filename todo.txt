@@ -5,7 +5,7 @@ Unversioned To-Do List
       usual and if the artist and title fields are empty, attempt to use unicode.
 [ ]Adjust timing of audio cues so that they peak at the time they are supposed
    to be heard.
-[ ]Import/export vocal percussion data.
+[X]Import/export vocal percussion data.
 [ ]Change 'l' character glyph as it is identical to the '1' glyph.
 [ ]Lyric edit dialog should have a place to put note and octave.
 [ ]Add extra vocal tracks that can be used as scratch space for vocal editing.
@@ -15,7 +15,7 @@ EOF 1.7 To-Do List
 ------------------
 
 [ ]Refactor code.
-   [ ]Make MIDI import/export into separate modules.
+   [X]Make MIDI import/export into separate modules.
    [ ]Make editor into separate modules.
       [ ]Common module for things that are common to every edit mode.
       [ ]Mode-specific modules for each input mode.

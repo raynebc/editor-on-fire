@@ -3,6 +3,8 @@ EOF Version History
 
 1.???:
 
+The Album tag information is automatically added as an INI setting if it exists in the MP3 or OGG file chosen when creating a new chart
+
 Raised the maximum grid snap interval to 64
 
 Adds custom time signature support for charting.  Time signatures are still not written to the MIDI during save operations
@@ -28,7 +30,7 @@ Various optimizations to graphics, audio, save and input logic
 
 Added support for Rock Band Audition chart import (MIDI data only)
 
-Added support for .chart files (Feedback import), rba files (RBA import) and OGG/MP3 files (New chart) via command line
+Added support for opening .chart files (Feedback import), rba files (RBA import) and OGG/MP3 files (New chart) via command line
 
 Adds the ability to render a waveform graph of the currently loaded OGG
 
