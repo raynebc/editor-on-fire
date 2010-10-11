@@ -68,8 +68,6 @@ int eof_waveform_slice_mean(struct waveformslice *left,struct waveformslice *rig
 int eof_render_waveform(struct wavestruct *waveform);
 	//Renders the left channel waveform into the editor window, taking the zoom level into account
 	//Returns nonzero on failure
-int eof_render_waveform2(struct wavestruct *waveform);
-	//Similar to eof_render_waveform, but renders the waveform for both channels in the editor window
 void eof_render_waveform_line(struct wavestruct *waveform,struct waveformchanneldata *channel,unsigned amp,unsigned long x,int color);
 	//Given the amplitude and the channel and waveform to process, draws the vertical line for the channel's waveform originating from point x and the channel's defined y axis coordinate
 
