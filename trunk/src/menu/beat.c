@@ -7,6 +7,7 @@
 #include "../event.h"
 #include "../utility.h"
 #include "../undo.h"
+#include "../midi.h"
 #include "../dialog/proc.h"
 #include "beat.h"
 
@@ -330,44 +331,28 @@ int eof_menu_beat_bpm_change(void)
 
 int eof_menu_beat_ts_4_4(void)
 {
-//Clear the beat's status except for its anchor and event flags
-	int flags = eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR;
-	flags |= eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_EVENTS;
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	eof_song->beat[eof_selected_beat]->flags = flags | EOF_BEAT_FLAG_START_4_4;
+	eof_apply_ts(4,4,eof_selected_beat,eof_song,1);
 	eof_select_beat(eof_selected_beat);
 	return 1;
 }
 
 int eof_menu_beat_ts_3_4(void)
 {
-//Clear the beat's status except for its anchor and event flags
-	int flags = eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR;
-	flags |= eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_EVENTS;
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	eof_song->beat[eof_selected_beat]->flags = flags | EOF_BEAT_FLAG_START_3_4;
+	eof_apply_ts(3,4,eof_selected_beat,eof_song,1);
 	eof_select_beat(eof_selected_beat);
 	return 1;
 }
 
 int eof_menu_beat_ts_5_4(void)
 {
-//Clear the beat's status except for its anchor and event flags
-	int flags = eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR;
-	flags |= eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_EVENTS;
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	eof_song->beat[eof_selected_beat]->flags = flags | EOF_BEAT_FLAG_START_5_4;
+	eof_apply_ts(5,4,eof_selected_beat,eof_song,1);
 	eof_select_beat(eof_selected_beat);
 	return 1;
 }
 
 int eof_menu_beat_ts_6_4(void)
 {
-//Clear the beat's status except for its anchor and event flags
-	int flags = eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR;
-	flags |= eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_EVENTS;
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	eof_song->beat[eof_selected_beat]->flags = flags | EOF_BEAT_FLAG_START_6_4;
+	eof_apply_ts(6,4,eof_selected_beat,eof_song,1);
 	eof_select_beat(eof_selected_beat);
 	return 1;
 }
@@ -388,7 +373,6 @@ DIALOG eof_custom_ts_dialog[] =
 int eof_menu_beat_ts_custom(void)
 {
 	unsigned num=0,den=0;
-	int flags=0;
 
 //Prompt the user for the custom time signature
 	eof_cursor_visible = 0;
@@ -416,16 +400,7 @@ int eof_menu_beat_ts_custom(void)
 			}
 			else
 			{	//User provided a valid time signature
-				num--;	//Convert these numbers to a system where all bits zero represents 1 and all bits set represents 256
-				den--;
-
-				//Clear the beat's status except for its anchor and event flags
-				flags = eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR;
-				flags |= eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_EVENTS;
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				eof_song->beat[eof_selected_beat]->flags = flags | EOF_BEAT_FLAG_CUSTOM_TS;
-				eof_song->beat[eof_selected_beat]->flags |= (num << 24);
-				eof_song->beat[eof_selected_beat]->flags |= (den << 16);
+				eof_apply_ts(num,den,eof_selected_beat,eof_song,1);
 				eof_select_beat(eof_selected_beat);
 			}
 		}

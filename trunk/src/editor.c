@@ -17,6 +17,7 @@
 #include "utility.h"	//For eof_check_string()
 #include "note.h"		//For EOF_LYRIC_PERCUSSION definition
 #include "song.h"		//For waveform functions
+#include "midi.h"
 
 int         eof_held_1 = 0;
 int         eof_held_2 = 0;
@@ -4687,7 +4688,7 @@ void eof_render_editor_window_common(void)
 	double current_bpm = (double)60000000.0 / (double)eof_song->beat[0]->ppqn;
 	int bcol, bscol, bhcol;
 	unsigned long beat_counter = 0;
-	int beats_per_measure = 0;
+	unsigned beats_per_measure = 0;
 	char buffer[16] = {0};
 	unsigned long measure_counter=0;
 	unsigned long beat_in_measure=0;
@@ -4700,29 +4701,8 @@ void eof_render_editor_window_common(void)
 
 	for(i = 0; i < eof_song->beats; i++)
 	{
-		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_4_4)
-		{
-			beats_per_measure = 4;
-			beat_counter = 0;
-		}
-		else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_3_4)
-		{
-			beats_per_measure = 3;
-			beat_counter = 0;
-		}
-		else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_5_4)
-		{
-			beats_per_measure = 5;
-			beat_counter = 0;
-		}
-		else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_6_4)
-		{
-			beats_per_measure = 6;
-			beat_counter = 0;
-		}
-		else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_CUSTOM_TS)
-		{
-			beats_per_measure = ((eof_song->beat[i]->flags & 0xFF000000)>>24) + 1;
+		if(eof_get_ts(&beats_per_measure,NULL,i) == 1)
+		{	//If this beat is a time signature
 			beat_counter = 0;
 		}
 		beat_in_measure = beat_counter;

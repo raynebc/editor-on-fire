@@ -4,6 +4,7 @@
 #include "note.h"
 #include "beat.h"
 #include "midi.h"
+#include "undo.h"
 #include "utility.h"
 #include "menu/note.h"	//For pitch macros
 #include "foflc/Lyric_storage.h"	//For RBA extraction
@@ -323,11 +324,18 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	char expertplus = 0;					//Tracks whether an expert+.mid track should be created to hold the Expert+ drum track
 	char expertpluswritten = 0;				//Tracks whether an expert+.mid track has been written
 	char trackctr;							//Used in the temp data creation to handle Expert+
-
+	EOF_MIDI_TS_LIST *tslist=NULL;			//List containing TS changes
 
 	anchorlist=eof_build_tempo_list();	//Create a linked list of all tempo changes in eof_song->beat[]
 	if(anchorlist == NULL)	//If the anchor list could not be created
 		return 0;	//Return failure
+
+	tslist=eof_build_ts_list(anchorlist);	//Create a list of all TS changes in eof_song->beat[]
+	if(tslist == NULL)
+	{
+		eof_destroy_tempo_list(anchorlist);
+		return 0;	//Return failure
+	}
 
 	eof_sort_notes();	//Writing efficient on-the-fly HOPO phrasing relies on all notes being sorted
 
@@ -529,6 +537,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				if(!fp)
 				{
 					eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+					eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 					return 0;
 				}
 
@@ -546,7 +555,13 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					if((trackctr == 1) && (eof_midi_event[i]->note < 96))
 						continue;	//Filter out all non Expert drum notes for the Expert+ track
 
-					delta = eof_ConvertToDeltaTime(eof_midi_event[i]->pos,anchorlist,EOF_DEFAULT_TIME_DIVISION);
+if(lastdelta == 2884)
+puts("blarg");
+
+					delta = eof_ConvertToDeltaTime(eof_midi_event[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
+
+if(lastdelta > delta)
+puts("blarg");
 
 					WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
 					lastdelta = delta;					//Store this event's absolute delta time
@@ -605,35 +620,39 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			//Copy each lyric string into a new array, perform correction on it if necessary
 			tempstring = malloc(sizeof(sp->vocal_track->lyric[i]->text));
 			if(tempstring == NULL)	//If allocation failed
+			{
+				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+				eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 				return 0;			//Return failure
+			}
 			sp->vocal_track->lyric[i]->text[EOF_MAX_LYRIC_LENGTH] = '\0';	//Guarantee that the lyric string is terminated
 			memcpy(tempstring,sp->vocal_track->lyric[i]->text,sizeof(sp->vocal_track->lyric[i]->text));	//Copy to new array
 
 			if(sp->vocal_track->lyric[i]->note > 0)
 			{	//For the vocal track, store the converted delta times, to allow for artificial padding for lyric phrase markers
-				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos,anchorlist,EOF_DEFAULT_TIME_DIVISION), 0x90, sp->vocal_track->lyric[i]->note);
-				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos + sp->vocal_track->lyric[i]->length,anchorlist,EOF_DEFAULT_TIME_DIVISION), 0x80, sp->vocal_track->lyric[i]->note);
+				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, sp->vocal_track->lyric[i]->note);
+				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos + sp->vocal_track->lyric[i]->length,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, sp->vocal_track->lyric[i]->note);
 			}
 			else if(correctlyrics)
 			{	//If performing pitchless lyric correction, write pitch 50 instead to guarantee it is usable as a freestyle lyric
-				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos,anchorlist,EOF_DEFAULT_TIME_DIVISION), 0x90, 50);
-				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos + sp->vocal_track->lyric[i]->length,anchorlist,EOF_DEFAULT_TIME_DIVISION), 0x80, 50);
+				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, 50);
+				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos + sp->vocal_track->lyric[i]->length,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, 50);
 				eof_set_freestyle(tempstring,1);		//Ensure the lyric properly ends with a freestyle character
 			}
 
 			//Write the string, which was only corrected if correctlyrics was nonzero and the pitch was not defined
 			if(sp->vocal_track->lyric[i]->note != VOCALPERCUSSION)	//Do not write a lyric string for vocal percussion notes
-				eof_add_midi_lyric_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos,anchorlist,EOF_DEFAULT_TIME_DIVISION), tempstring);
+				eof_add_midi_lyric_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), tempstring);
 		}
 		/* fill in lyric lines */
 		for(i = 0; i < sp->vocal_track->lines; i++)
 		{
-			eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->line[i].start_pos,anchorlist,EOF_DEFAULT_TIME_DIVISION), 0x90, 105);
-			eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->line[i].end_pos,anchorlist,EOF_DEFAULT_TIME_DIVISION), 0x80, 105);
+			eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->line[i].start_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, 105);
+			eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->line[i].end_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, 105);
 			if(sp->vocal_track->line[i].flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE)
 			{	//For the vocal track, store the converted delta times, to allow for artificial padding for lyric phrase markers
-				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->line[i].start_pos,anchorlist,EOF_DEFAULT_TIME_DIVISION), 0x90, 116);
-				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->line[i].end_pos,anchorlist,EOF_DEFAULT_TIME_DIVISION), 0x80, 116);
+				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->line[i].start_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, 116);
+				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->line[i].end_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, 116);
 			}
 		}
 
@@ -666,6 +685,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		if(!fp)
 		{
 			eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+			eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 			return 0;
 		}
 
@@ -715,22 +735,65 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	if(!fp)
 	{
 		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+		eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 		return 0;
 	}
 
 	lastdelta=0;
-	for(ptr=anchorlist;ptr != NULL;ptr=ptr->next)	//For each tempo change
-	{
-		WriteVarLen(ptr->delta - lastdelta, fp);	//Write this anchor's relative delta time
-		lastdelta=ptr->delta;						//Store this anchor's absolute delta time
+	unsigned long current_ts=0;
+	unsigned long nextanchorpos=0,next_tspos=0;
+	char whattowrite;	//Bitflag: bit 0=write tempo change, bit 1=write TS change
+	ptr = anchorlist;
+	while((ptr != NULL) || (current_ts < tslist->changes))
+	{	//While there are tempo changes or TS changes to write
+		whattowrite = 0;
+		if(ptr != NULL)
+		{
+			nextanchorpos=ptr->delta;
+			whattowrite |= 1;
+		}
+		if(current_ts < tslist->changes)
+		{
+			next_tspos=tslist->change[current_ts]->pos;
+			whattowrite |= 2;
+		}
 
-		ppqn = ((double) 60000000.0 / ptr->BPM) + 0.5;	//Convert BPM to ppqn, rounding up
-		pack_putc(0xff, fp);					//Write Meta Event 0x51 (Set Tempo)
-		pack_putc(0x51, fp);
-		pack_putc(0x03, fp);					//Write event length of 3
-		pack_putc((ppqn & 0xFF0000) >> 16, fp);	//Write high order byte of ppqn
-		pack_putc((ppqn & 0xFF00) >> 8, fp);	//Write middle byte of ppqn
-		pack_putc((ppqn & 0xFF), fp);			//Write low order byte of ppqn
+		if(whattowrite > 2)
+		{	//If both a TS change and a tempo change remain to be written
+			if(nextanchorpos < next_tspos)	//If the tempo change is earlier
+				whattowrite = 1;			//write it first
+			else
+				whattowrite = 2;			//otherwise write the TS change first
+		}
+
+		if(whattowrite == 1)
+		{	//If writing a tempo change
+			WriteVarLen(ptr->delta - lastdelta, fp);	//Write this anchor's relative delta time
+			lastdelta=ptr->delta;						//Store this anchor's absolute delta time
+
+			ppqn = ((double) 60000000.0 / ptr->BPM) + 0.5;	//Convert BPM to ppqn, rounding up
+			pack_putc(0xff, fp);					//Write Meta Event 0x51 (Set Tempo)
+			pack_putc(0x51, fp);
+			pack_putc(0x03, fp);					//Write event length of 3
+			pack_putc((ppqn & 0xFF0000) >> 16, fp);	//Write high order byte of ppqn
+			pack_putc((ppqn & 0xFF00) >> 8, fp);	//Write middle byte of ppqn
+			pack_putc((ppqn & 0xFF), fp);			//Write low order byte of ppqn
+			ptr=ptr->next;							//Iterate to next anchor
+		}
+		else
+		{	//If writing a TS change
+			WriteVarLen(tslist->change[current_ts]->pos - lastdelta, fp);	//Write this time signature's relative delta time
+			lastdelta=tslist->change[current_ts]->pos;						//Store this time signature's absolute delta time
+
+			pack_putc(0xff, fp);							//Write Meta Event 0x58 (Time Signature)
+			pack_putc(0x58, fp);
+			pack_putc(0x04, fp);							//Write event length of 4
+			pack_putc(tslist->change[current_ts]->num, fp);	//Write the numerator
+			pack_putc(tslist->change[current_ts]->den, fp);	//Write the denominator
+			pack_putc(24, fp);								//Write the metronome interval (not used by EOF)
+			pack_putc(8, fp);								//Write the number of 32nd notes per 24 ticks (not used by EOF)
+			current_ts++;									//Iterate to next TS change
+		}
 	}
 	WriteVarLen(0, fp);		//Write delta time
 	pack_putc(0xFF, fp);	//Write Meta Event 0x2F (End Track)
@@ -749,6 +812,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		if(!fp)
 		{
 			eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+			eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 			return 0;
 		}
 
@@ -763,7 +827,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		lastdelta = 0;
 		for(i = 0; i < sp->text_events; i++)
 		{
-			delta = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos,anchorlist,EOF_DEFAULT_TIME_DIVISION);
+			delta = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
 
 			WriteVarLen(delta - lastdelta, fp);	//Write this note's relative delta time
 			lastdelta = delta;					//Store this note's absolute delta time
@@ -786,6 +850,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	if(!fp)
 	{
 		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+		eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 		return 0;
 	}
 
@@ -812,6 +877,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	{
 		pack_fclose(fp);
 		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+		eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 		return 0;
 	}
 	pack_fwrite(trackheader, 4, fp);
@@ -844,6 +910,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		{
 			pack_fclose(fp);
 			eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+			eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 			return 0;
 		}
 		pack_fwrite(trackheader, 4, fp);
@@ -879,6 +946,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			{
 				pack_fclose(fp);
 				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+				eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 				return 0;
 			}
 			pack_fwrite(trackheader, 4, fp);
@@ -920,6 +988,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		{
 			pack_fclose(fp);
 			eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+			eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 			return 0;
 		}
 		pack_fwrite(trackheader, 4, fp);
@@ -946,6 +1015,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	delete_file("eof8.tmp");
 	delete_file("eof9.tmp");	//Delete Expert+ temp file
 	eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+	eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 
 	return 1;
 }
@@ -957,12 +1027,14 @@ struct Tempo_change *eof_build_tempo_list(void)
 	struct Tempo_change *temp=NULL;
 	unsigned long lastppqn=0;	//Tracks the last anchor's PPQN value
 	unsigned long deltactr=0;	//Counts the number of deltas between anchors
+	unsigned den=4;				//Stores the most recent TS change's denominator (default to 4)
 
 	if((eof_song == NULL) || (eof_song->beats < 1))
 		return NULL;
 
 	for(ctr=0;ctr < eof_song->beats;ctr++)
 	{	//For each beat
+		eof_get_ts(NULL,&den,ctr);	//Update the TS denominator if applicable
 		if(eof_song->beat[ctr]->ppqn != lastppqn)
 		{	//If this beat has a different tempo than the last, add it to the list
 			if((list == NULL) && (eof_song->beat[ctr]->fpos != 0.0))	//If the first anchor isn't at position 0
@@ -982,7 +1054,7 @@ struct Tempo_change *eof_build_tempo_list(void)
 		}
 
 
-		deltactr+=EOF_DEFAULT_TIME_DIVISION;	//Add the number of deltas of one beat to the counter
+		deltactr+=((double)EOF_DEFAULT_TIME_DIVISION * den / 4.0) + 0.5;	//Add the number of deltas of one beat (scale to convert from deltas per quarternote) to the counter
 	}
 
 	return list;
@@ -1024,17 +1096,29 @@ void eof_destroy_tempo_list(struct Tempo_change *ptr)
 	}
 }
 
-unsigned long eof_ConvertToDeltaTime(double realtime,struct Tempo_change *anchorlist,unsigned long timedivision)
+unsigned long eof_ConvertToDeltaTime(double realtime,struct Tempo_change *anchorlist,EOF_MIDI_TS_LIST *tslist,unsigned long timedivision)
 {	//Uses the Tempo Changes list to calculate the absolute delta time of the specified realtime
 	struct Tempo_change *temp=anchorlist;	//Begin with first tempo change
+	unsigned int den=0;						//Stores the denominator of the current time signature
 	unsigned long delta=0;
 	double temptime=0.0;
+	unsigned long ctr=0;
 
 	assert_wrapper(temp != NULL);	//Ensure the tempomap is populated
 
-//	deltacounter=temp->delta;		//Begin with delta of first tempo change
+//Find the last time signature change before the specified real time value
+	if((tslist == NULL) || (tslist->changes == 0))
+		den=4;				//As per MIDI specification, default to a time signature of 4/4 if no TS changes are present
+	else
+	{
+		for(ctr=0;ctr < tslist->changes;ctr++)
+		{
+			if(realtime > tslist->change[ctr]->realtime)	//If the delta time is beyond the next tempo change, it's denominator will take effect in the timing conversion
+				den = tslist->change[ctr]->den;				//Store this time signature's denominator for use in the conversion
+		}
+	}
 
-//Seek to the latest tempo change at or before the specified real time value, adding delta time values
+//Seek to the latest tempo change at or before the specified real time value
 	while((temp->next != NULL) && (realtime >= (temp->next)->realtime))	//For each timestamp after the first
 	{	//If the starttime timestamp is equal to or greater than this timestamp,
 		temp=temp->next;	//Advance to that time stamp
@@ -1045,10 +1129,14 @@ unsigned long eof_ConvertToDeltaTime(double realtime,struct Tempo_change *anchor
 	temptime=realtime - temp->realtime;	//Find the relative timestamp from this tempo change
 
 //temptime is the amount of time we need to find a delta for, and add to deltacounter
+//By using the updated formula respecting time signature:	realtime = (delta / divisions) * (60000.0 / BPM) * TS_den/4;
+//The formula for delta is:		delta = realtime * divisions * BPM / 60000 * TS_den / 4
+	delta+=(unsigned long)((temptime * (double)timedivision * temp->BPM / 240000.0 * (double)den) + 0.5);
+
+//The old conversion formula that doesn't take time signature into account
 //By using NewCreature's formula:	realtime = (delta / divisions) * (60000.0 / bpm)
 //The formula for delta is:		delta = realtime * divisions * bpm / 60000
-	delta+=(unsigned long)((temptime * (double)timedivision * temp->BPM / (double)60000.0 + (double)0.5));
-		//Add .5 so that the delta counter is rounded to the nearest 1
+//	delta+=(unsigned long)((temptime * (double)timedivision * temp->BPM / (double)60000.0 + (double)0.5));			//Add .5 so that the delta counter is rounded to the nearest 1
 
 	return delta;
 }
@@ -1124,4 +1212,186 @@ int eof_extract_rba_midi(const char * source, const char * dest)
 
 	fclose(fp);
 	return 0;	//Return success
+}
+
+EOF_MIDI_TS_LIST * eof_create_ts_list(void)
+{
+	EOF_MIDI_TS_LIST * lp;
+	lp = malloc(sizeof(EOF_MIDI_TS_LIST));
+	if(!lp)
+	{
+		return NULL;
+	}
+	lp->changes = 0;
+	return lp;
+}
+
+void eof_midi_add_ts_deltas(EOF_MIDI_TS_LIST * changes, unsigned long pos, unsigned long num, unsigned long den, unsigned long track)
+{
+	if((changes->changes < EOF_MAX_TS) && (track == 0))
+	{	//For now, only store time signatures in track 0
+		changes->change[changes->changes] = malloc(sizeof(EOF_MIDI_TS_CHANGE));
+		if(changes->change[changes->changes])
+		{
+			changes->change[changes->changes]->pos = pos;		//Store the TS change's delta time
+			changes->change[changes->changes]->num = num;		//Store the TS numerator
+			changes->change[changes->changes]->den = den;		//Store the TS denominator
+			changes->change[changes->changes]->realtime = 0;	//Will be set later, once all tempo changes are parsed
+			changes->change[changes->changes]->track = track;	//Store the event's track number
+
+			changes->changes++;				//Increment counter
+		}
+	}
+}
+
+void eof_midi_add_ts_realtime(EOF_MIDI_TS_LIST * changes, double pos, unsigned long num, unsigned long den, unsigned long track)
+{
+	if((changes->changes < EOF_MAX_TS) && (track == 0))
+	{	//For now, only store time signatures in track 0
+		changes->change[changes->changes] = malloc(sizeof(EOF_MIDI_TS_CHANGE));
+		if(changes->change[changes->changes])
+		{
+			changes->change[changes->changes]->pos = 0;			//Will be set later
+			changes->change[changes->changes]->num = num;		//Store the TS numerator
+			changes->change[changes->changes]->den = den;		//Store the TS denominator
+			changes->change[changes->changes]->realtime = pos;	//Store the realtime stamp
+			changes->change[changes->changes]->track = track;	//Store the event's track number
+
+			changes->changes++;				//Increment counter
+		}
+	}
+}
+
+void eof_destroy_ts_list(EOF_MIDI_TS_LIST *ptr)
+{
+	unsigned long i;
+
+	if(ptr != NULL)
+	{
+		for(i = 0; i < ptr->changes; i++)
+		{
+			free(ptr->change[i]);
+		}
+		free(ptr);
+	}
+}
+
+EOF_MIDI_TS_LIST *eof_build_ts_list(struct Tempo_change *anchorlist)
+{
+	unsigned long ctr;
+	unsigned num=4,den=4;
+	EOF_MIDI_TS_LIST * tslist=NULL;
+
+	if((eof_song == NULL) || (eof_song->beats <= 0))
+		return NULL;
+	tslist = eof_create_ts_list();
+	if(tslist == NULL)
+		return NULL;
+
+	eof_get_ts(&num,&den,0);	//Get the first beat marker's time signature (if defined)
+	eof_midi_add_ts_realtime(tslist, eof_song->beat[0]->fpos, num, den, 0);	//Store the first beat marker's time signature
+
+	for(ctr=1;ctr < eof_song->beats;ctr++)
+	{	//For each beat (starting with the second, since the first beat's TS was already written above, or 4/4 if the first beat had no TS)
+		if(eof_get_ts(&num,&den,ctr) == 1)
+		{	//If a time signature exists on this beat
+			eof_midi_add_ts_realtime(tslist, eof_song->beat[ctr]->fpos, num, den, 0);	//Store the beat marker's time signature
+		}
+	}
+
+//Using each beat marker's real time, calculate the delta times
+	for(ctr = 0; ctr < tslist->changes ; ctr++)
+	{	//For each beat marker
+		tslist->change[ctr]->pos = eof_ConvertToDeltaTime(tslist->change[ctr]->realtime,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
+	}
+
+	return tslist;
+}
+
+int eof_get_ts(unsigned *num,unsigned *den,int beatnum)
+{
+	unsigned numerator=0,denominator=0;
+
+	if(beatnum >= eof_song->beats)
+		return -1;	//Return error
+
+	if(eof_song->beat[beatnum]->flags & EOF_BEAT_FLAG_START_4_4)
+	{
+		numerator = 4;
+		denominator = 4;
+	}
+	else if(eof_song->beat[beatnum]->flags & EOF_BEAT_FLAG_START_3_4)
+	{
+		numerator = 3;
+		denominator = 4;
+	}
+	else if(eof_song->beat[beatnum]->flags & EOF_BEAT_FLAG_START_5_4)
+	{
+		numerator = 5;
+		denominator = 4;
+	}
+	else if(eof_song->beat[beatnum]->flags & EOF_BEAT_FLAG_START_6_4)
+	{
+		numerator = 6;
+		denominator = 4;
+	}
+	else if(eof_song->beat[beatnum]->flags & EOF_BEAT_FLAG_CUSTOM_TS)
+	{
+		numerator = ((eof_song->beat[beatnum]->flags & 0xFF000000)>>24) + 1;
+		denominator = ((eof_song->beat[beatnum]->flags & 0x00FF0000)>>16) + 1;
+	}
+	else
+		return 0;	//Return no TS change
+
+	if(num)
+		*num = numerator;
+	if(den)
+		*den = denominator;
+
+	return 1;	//Return success
+}
+
+int eof_apply_ts(unsigned num,unsigned den,int beatnum,EOF_SONG *sp,char undo)
+{
+	int flags = 0;
+
+	if((sp == NULL) || (beatnum >= sp->beats))
+		return 0;	//Return error
+
+	if((num > 0) && (num <= 256) && ((den != 1) || (den == 2) || (den == 4) || (den == 8) || (den == 16) || (den == 32) || (den == 64) || (den == 128) || (den == 256)))
+	{	//If this is a valid time signature
+		//Clear the beat's status except for its anchor and event flags
+		flags = sp->beat[beatnum]->flags & EOF_BEAT_FLAG_ANCHOR;
+		flags |= sp->beat[beatnum]->flags & EOF_BEAT_FLAG_EVENTS;
+
+		if(undo)	//If calling function specified to make an undo state
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
+
+		if((num == 3) && (den == 4))
+		{
+			sp->beat[beatnum]->flags = flags | EOF_BEAT_FLAG_START_3_4;
+		}
+		if((num == 4) && (den == 4))
+		{
+			sp->beat[beatnum]->flags = flags | EOF_BEAT_FLAG_START_4_4;
+		}
+		if((num == 5) && (den == 4))
+		{
+			sp->beat[beatnum]->flags = flags | EOF_BEAT_FLAG_START_5_4;
+		}
+		if((num == 6) && (den == 4))
+		{
+			sp->beat[beatnum]->flags = flags | EOF_BEAT_FLAG_START_6_4;
+		}
+		else
+		{
+			num--;	//Convert these numbers to a system where all bits zero represents 1 and all bits set represents 256
+			den--;
+			sp->beat[beatnum]->flags = flags | EOF_BEAT_FLAG_CUSTOM_TS;
+			sp->beat[beatnum]->flags |= (num << 24);
+			sp->beat[beatnum]->flags |= (den << 16);
+		}
+	}
+
+	return 1;
 }

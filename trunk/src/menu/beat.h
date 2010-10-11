@@ -20,6 +20,7 @@ int eof_menu_beat_ts_3_4(void);
 int eof_menu_beat_ts_5_4(void);
 int eof_menu_beat_ts_6_4(void);
 int eof_menu_beat_ts_custom(void);
+
 int eof_menu_beat_ts_off(void);
 int eof_menu_beat_add(void);
 int eof_menu_beat_delete(void);
