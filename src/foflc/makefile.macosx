@@ -12,6 +12,6 @@ $(EXENAME) : $(OFILES)
 	gcc $(OFILES) $(CFLAGS) $(LIBS) -o $(EXENAME)
 
 clean:
-	@rm *.o
-	@rm $(EXENAME)
+	@rm -f *.o
+	@rm -f $(EXENAME)
 	@echo Cleanup complete!
