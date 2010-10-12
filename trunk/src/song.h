@@ -84,6 +84,7 @@ typedef struct
 	float         porpos;     // position of note within the beat (100.0 = full beat)
 	float         porendpos;
 	char          active;
+	char          flags;
 
 } EOF_EXTENDED_NOTE;
 
