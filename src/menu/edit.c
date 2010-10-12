@@ -1346,6 +1346,7 @@ int eof_menu_edit_old_paste(void)
 				new_note->note = temp_note.note;
 				new_note->pos = eof_music_pos + temp_note.pos - eof_av_delay;
 				new_note->length = temp_note.length;
+				new_note->flags = temp_note.flags;
 				new_note->type = eof_note_type;
 				paste_pos[paste_count] = new_note->pos;
 				paste_count++;
