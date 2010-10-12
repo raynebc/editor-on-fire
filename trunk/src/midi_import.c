@@ -202,7 +202,10 @@ double eof_ConvertToRealTime(unsigned long absolutedelta,struct Tempo_change *an
 
 //Find the last tempo change before the target delta time
 	if(temp == NULL)
+	{
+		tempdelta=absolutedelta;
 		tempBPM=120.0;			//Default to a tempo of 120BPM if no tempo changes are present
+	}
 	else
 	{
 		temptimer=temp->realtime;	//Start with the timestamp of the starting tempo change
@@ -221,8 +224,8 @@ double eof_ConvertToRealTime(unsigned long absolutedelta,struct Tempo_change *an
 			else
 				break;	//break from loop
 		}
+		tempdelta=absolutedelta-temp->delta;
 	}
-	tempdelta=absolutedelta-temp->delta;
 
 //At this point, we have reached the tempo change that absolutedelta resides within, find the realtime
 //The updated theoretical conversion formula that takes the time signature into account is: deltas / (time division) * (15000.0 / BPM) * (TS denominator)
@@ -251,6 +254,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	int track_pos;
 	unsigned long delta;
 	unsigned long absolute_pos;
+	unsigned long last_delta_time=0;	//Will store the absolute delta time of the last parsed MIDI event
 	unsigned long bytes_used;
 	unsigned char current_event;
 	unsigned char current_event_hi = 0;
@@ -261,9 +265,6 @@ EOF_SONG * eof_import_midi(const char * fn)
 	char nfn[1024] = {0};
 	char backup_filename[1024] = {0};
 	char ttit[256] = {0};
-	unsigned long ppqn = 500000; // default of 120 BPM
-
-	unsigned long curpos = 0;
 
 	/* load MIDI */
 	eof_work_midi = load_midi(fn);
@@ -343,6 +344,8 @@ EOF_SONG * eof_import_midi(const char * fn)
 			bytes_used = 0;
 			delta = eof_parse_var_len(eof_work_midi->track[track[i]].data, track_pos, &bytes_used);
 			absolute_pos += delta;
+			if(absolute_pos > last_delta_time)
+				last_delta_time = absolute_pos;	//Remember the delta position of the latest event in the MIDI (among all tracks)
 			track_pos += bytes_used;
 
 			/* read event type */
@@ -654,204 +657,73 @@ EOF_SONG * eof_import_midi(const char * fn)
 	}
 
 struct Tempo_change *anchorlist=NULL;	//Anchor linked list
-struct Tempo_change *cond=NULL;			//Conductor for the anchor list
-double BPM=0.0;							//Used to calculate realtime of anchors
-unsigned long reldelta=0;				//Used to calculate realtime of anchors
-double realtime=0.0;					//Used to calculate realtime of anchors
 
 	/* second pass, create tempo map */
-	ppqn = eof_import_bpm_events->events > 0 ? eof_import_bpm_events->event[0]->d1 : 500000; // default of 120 BPM
-	double bl = (double)1000.0 / (((double)60000000.0 / (double)ppqn) / (double)60.0);
-	double beat_count;
-	curpos = 0;
-	if(eof_import_bpm_events->events <= 1)
-	{	//If there is 1 anchor, use its tempo.  If there are no anchors, use 120BPM
-//		anchorlist=eof_add_to_tempo_list(sp->tags->ogg[0].midi_offset,0,(double)60000000.0/(double)ppqn,anchorlist);
-		anchorlist=eof_add_to_tempo_list(0,0,(double)60000000.0/(double)ppqn,anchorlist);
-		eof_song_add_beat(sp);
-		sp->beat[0]->pos = sp->tags->ogg[0].midi_offset;
-		sp->beat[0]->fpos = sp->beat[0]->pos;
-		sp->beat[0]->ppqn = ppqn;
-		bl = (double)1000.0 / (((double)60000000.0 / (double)ppqn) / (double)60.0);
-		beat_count = ((double)eof_music_length) / bl + 0.1 - 1.0;
-		for(i = 0; i < beat_count; i++)
-		{
-			eof_song_add_beat(sp);
-//			Store floating point math into fpos so the precision isn't lost
-//			sp->beat[sp->beats - 1]->fpos = (double)sp->tags->ogg[0].midi_offset + bl * (i + 1);
-//			sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos +0.5;	//Round up
-			sp->beat[sp->beats - 1]->ppqn = ppqn;
+	unsigned long deltapos = 0;		//Stores the ongoing delta time
+	double deltafpos = 0.0;			//Stores the ongoing delta time (with double floating precision)
+//	double realtimepos = sp->tags->ogg[0].midi_offset;	//Stores the ongoing real time (the first beat marker will be at the MIDI delay position)
+	double realtimepos = 0.0;		//Stores the ongoing real time (start at 0s, displace by the MIDI delay where appropriate)
+	unsigned lastnum=0,lastden=0;		//Stores the last applied time signature details
+	unsigned curnum=4,curden=4;		//Stores the current time signature details (default is 4/4)
+	unsigned long lastppqn=0;		//Stores the last applied tempo information
+	unsigned long curppqn=500000;		//Stores the current tempo in PPQN (default is 120BPM)
+
+	unsigned long ctr;
+	double beatlength;
+
+	while(deltapos <= last_delta_time)
+	{//Add new beats until enough have been added to encompass the last MIDI event
+		if(eof_song_add_beat(sp) == NULL)	//Add a new beat
+		{					//Or return failure if that doesn't succeed
+			eof_import_destroy_events_list(eof_import_bpm_events);
+			eof_import_destroy_events_list(eof_import_text_events);
+			destroy_midi(eof_work_midi);
+			eof_destroy_tempo_list(anchorlist);
+			return 0;
 		}
-	}
-	else
-	{
-		for(i = 0; i < eof_import_bpm_events->events; i++)
-		{	//For each Set Tempo event that was read from the MIDI
-			if(eof_import_bpm_events->event[i]->type == 0x51)
-			{
-				//Before processing this Set Tempo event, ensure that the next tempo event is not at the same delta time
-				if((i + 1 < eof_import_bpm_events->events) && (eof_import_bpm_events->event[i]->pos == eof_import_bpm_events->event[i+1]->pos))
-					continue;	//If there is another tempo change after this, and it is at the same delta time, skip this tempo change
 
-				if(eof_song_add_beat(sp) == NULL)	//Add a new beat
-				{
-					eof_import_destroy_events_list(eof_import_bpm_events);
-					eof_import_destroy_events_list(eof_import_text_events);
-					destroy_midi(eof_work_midi);
-					eof_destroy_tempo_list(anchorlist);
-					return 0;			//Or return failure if that doesn't succeed
-				}
-
-				//Determine the realtime of this absolute delta
-				for(cond=anchorlist;(cond != NULL) && (cond->next != NULL);cond=cond->next);	//Find last anchor
-				if(cond == NULL)
-				{	//If there are no anchors yet
-					BPM = 120.0;	//120BPM is assumed
-					reldelta = 0;	//at the beginning of the track
-					realtime = 0.0;
-				}
-				else
-				{	//Otherwise use the timestamp, tempo of last anchor and delta relative to the last anchor
-					BPM = cond->BPM;
-					if(eof_import_bpm_events->event[i]->pos < cond->delta)
-					{
-						eof_import_destroy_events_list(eof_import_bpm_events);
-						eof_import_destroy_events_list(eof_import_text_events);
-						destroy_midi(eof_work_midi);
-						eof_destroy_tempo_list(anchorlist);
-						return 0;	//Return failure if this delta time is smaller than that of the previous anchor
-					}
-					reldelta = eof_import_bpm_events->event[i]->pos - cond->delta;
-					realtime = cond->realtime;
-				}
-				realtime += (double)reldelta / (double)eof_work_midi->divisions * ((double)60000.0 / BPM);
-
-				//Determine the BPM of this Set Tempo event
-				BPM = (double)60000000.0 / ((double)eof_import_bpm_events->event[i]->d1);
-
-				//Add the anchor information to the linked list and initialize the structure for this beat
-				anchorlist=eof_add_to_tempo_list(eof_import_bpm_events->event[i]->pos,realtime,BPM,anchorlist);
-				sp->beat[sp->beats - 1]->fpos = realtime + sp->tags->ogg[0].midi_offset;
-				sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos + 0.5;	//Round the realtime up to the nearest millisecond
-				sp->beat[sp->beats - 1]->ppqn = eof_import_bpm_events->event[i]->d1;
-				if(ppqn != eof_import_bpm_events->event[i]->d1)
-				{	//If the tempo of this beat is different from the previous beat
-					sp->beat[sp->beats - 1]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Mark this beat as an anchor
-				}
-
-				//Initialize the structures for all beats leading up to the next anchor, taking time signatures into account
-				ppqn = eof_import_bpm_events->event[i]->d1;
-				bl = (double)1000.0 / (((double)60000000.0 / (double)eof_import_bpm_events->event[i]->d1) / (double)60.0);
-				if(i < eof_import_bpm_events->events - 1)
-				{
-//					beat_count = (eof_import_midi_to_eof(sp->tags->ogg[0].midi_offset, eof_import_bpm_events->event[i + 1]->pos) - eof_import_midi_to_eof(sp->tags->ogg[0].midi_offset, eof_import_bpm_events->event[i]->pos)) / bl + 0.1 - 1.0;
-					beat_count = (eof_ConvertToRealTime(eof_import_bpm_events->event[i + 1]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,0) - eof_ConvertToRealTime(eof_import_bpm_events->event[i]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,0)) / bl + 0.1 - 1.0;
-				}
-				else
-				{
-//					beat_count = ((double)eof_music_length - eof_import_midi_to_eof(sp->tags->ogg[0].midi_offset, eof_import_bpm_events->event[i]->pos)) / bl + 0.1 - 1.0;
-					beat_count = ((double)eof_music_length - eof_ConvertToRealTime(eof_import_bpm_events->event[i]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset)) / bl + 0.1 - 1.0;
-				}
-				for(j = 0; j < beat_count - 1; j++)
-				{
-					if(eof_song_add_beat(sp) == NULL)	//Add a new beat
-					{
-						eof_import_destroy_events_list(eof_import_bpm_events);
-						eof_import_destroy_events_list(eof_import_text_events);
-						destroy_midi(eof_work_midi);
-						eof_destroy_tempo_list(anchorlist);
-						return 0;			//Or return failure if that doesn't succeed
-					}
-
-//					sp->beat[sp->beats - 1]->fpos = realtime + sp->tags->ogg[0].midi_offset + (bl * (double)(j + 1));	//This beat's timestamp is (j+1) beat lengths away from the previously-defined anchor
-//					sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos + 0.5;	//Round to nearest millisecond
-					sp->beat[sp->beats - 1]->ppqn = eof_import_bpm_events->event[i]->d1;
-				}
-			}
-		}//For each Set Tempo event that was read from the MIDI
-	}
-
-//Using the list of time signatures, determine the delta time of each beat marker
-	unsigned long deltactr = 0;		//Will keep track of the current absolute delta time
-	unsigned long den = 4;			//Default to a TS denominator of 4
-	unsigned long beatlength = 0;	//Will store each time signature change's beat length in deltas
-	unsigned long tsctr = 0;		//Stores which TS change being processed
-	double part1=0,part2=0;			//Used for mid beat TS change logic
-	unsigned long beatlength2=0;	//Used for mid beat TS change logic
-
-	if(eof_import_ts_changes[0]->changes > 0)			//If there is a time signature
-		den = eof_import_ts_changes[0]->change[0]->den;	//Store the first denominator
-
-	for(i = 0; i < sp->beats ; i++)
-	{	//For each beat marker
-		sp->beat[i]->midi_pos = deltactr;
-		beatlength = (eof_work_midi->divisions * den / 4) + 0.5;	//Store the beat length for the current time signature
-		if(tsctr + 1 < eof_import_ts_changes[0]->changes)
-		{	//If there is another TS change
-			if(deltactr + beatlength <= eof_import_ts_changes[0]->change[tsctr+1]->pos)
-			{	//If an entire beat's worth of deltas can be processed before the next TS change
-				deltactr += beatlength;
-			}
-			else
-			{	//The TS change occurs mid beat, store the percentage of the beat that falls within the current TS change
-				beatlength2 = (eof_work_midi->divisions * eof_import_ts_changes[0]->change[tsctr+1]->den / 4) + 0.5;	//Store the beat length for the next TS
-				part1 = ((double)eof_import_ts_changes[0]->change[tsctr+1]->pos - deltactr) / (double)beatlength;		//Store the ratio of the beat that falls within the current TS
-				part2 = 1.0 - part1;	//Store the ratio of the beat that does not fall within the current TS
-				if(tsctr + 2 < eof_import_ts_changes[0]->changes)
-				{	//If there is another TS change after the next TS change
-					if((unsigned long)(deltactr + (part1 * beatlength) + (part2 * beatlength2) + 0.5) > eof_import_ts_changes[0]->change[tsctr+2]->pos)
-					{	//If the next TS change also occurs before the next beat marker, exit on error
-						allegro_message("Error: Multiple TS changes between two consecutive beat markers is not supported");
-						eof_import_destroy_events_list(eof_import_bpm_events);
-						eof_import_destroy_events_list(eof_import_text_events);
-						destroy_midi(eof_work_midi);
-						eof_destroy_tempo_list(anchorlist);
-						return NULL;	//Return error
-					}
-				}
-				deltactr += (part1 * beatlength) + (part2 * beatlength2) + 0.5;	//Add the part of the beat that was in the current TS with the part that was in the next TS
-			}
-			if(deltactr >= eof_import_ts_changes[0]->change[tsctr+1]->pos)
-			{	//If the next beat marker is at or beyond the next TS change
-				tsctr++;
-				den = eof_import_ts_changes[0]->change[tsctr]->den;	//Store the next TS's denominator
+	//Find the relevant tempo and time signature for the beat
+		for(ctr = 0; ctr < eof_import_bpm_events->events; ctr++)
+		{	//For each imported tempo change
+			if(eof_import_bpm_events->event[ctr]->pos <= deltapos)
+			{	//If the tempo change is at or before the current delta time
+				curppqn = eof_import_bpm_events->event[ctr]->d1;	//Store the PPQN value
 			}
 		}
-		else
-		{	//There are no further TS changes
-			deltactr += beatlength;
-		}
-	}
-//Parse the list of TS changes, importing them into the EOF project
-	unsigned lastnum=4,lastden=4;	//Stores the last applied time signature details
-	unsigned curnum=4,curden=4;		//Stores the current time signature details
-	eof_apply_ts(4,4,0,sp,0);		//Apply a 4/4 time signature on the first beat (this will be overridden if there is a TS defined at delta time 0
-	if(eof_import_ts_changes[0]->changes > 0)
-	{	//If there are any TS changes
-		for(i = 0; i < sp->beats ; i++)
-		{	//For each beat marker
-			for(j = 0; j < eof_import_ts_changes[0]->changes ; j++)
-			{	//For each TS change, find the one that applies to this beat marker
-				if(eof_import_ts_changes[0]->change[j]->pos <= sp->beat[i]->midi_pos)
-				{	//If this TS change is at or before this beat marker
-					curnum = eof_import_ts_changes[0]->change[j]->num;
-					curden = eof_import_ts_changes[0]->change[j]->den;
-				}
-			}
-			if((curnum != lastnum) || (curden != lastden))
-			{	//If the relevant TS is not the same as the last one that was applied
-				eof_apply_ts(curnum,curden,i,sp,0);	//Apply the TS to this beat marker
-				lastnum = curnum;
-				lastden = curden;
+		for(ctr = 0; ctr < eof_import_ts_changes[0]->changes; ctr++)
+		{	//For each imported TS change
+			if(eof_import_ts_changes[0]->change[ctr]->pos <= deltapos)
+			{	//If the TS change is at or before the current delta time
+				curnum = eof_import_ts_changes[0]->change[ctr]->num;	//Store the numerator and denominator
+				curden = eof_import_ts_changes[0]->change[ctr]->den;
 			}
 		}
-	}
 
-//Using each beat marker's delta time, calculate the real time positions
-	for(i = 0; i < sp->beats ; i++)
-	{	//For each beat marker
-		sp->beat[i]->fpos = eof_ConvertToRealTime(sp->beat[i]->midi_pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
-		sp->beat[i]->pos = sp->beat[i]->fpos + 0.5;	//Round to nearest millisecond
+	//Store timing information in the beat structure
+		sp->beat[sp->beats - 1]->fpos = realtimepos + sp->tags->ogg[0].midi_offset;
+		sp->beat[sp->beats - 1]->pos = realtimepos + sp->tags->ogg[0].midi_offset + 0.5;	//Round up to nearest millisecond
+		sp->beat[sp->beats - 1]->midi_pos = deltapos;
+		sp->beat[sp->beats - 1]->ppqn = curppqn;
+		if((lastnum != curnum) || (lastden != curden))
+		{	//If this time signature is different than  the last beat's time signature
+			eof_apply_ts(curnum,curden,sp->beats - 1,sp,0);	//Set the TS flags for this beat
+			lastnum = curnum;
+			lastden = curden;
+		}
+
+	//Update anchor linked list
+		if(lastppqn != curppqn)
+		{	//If this tempo is different than the last beat's tempo
+			anchorlist=eof_add_to_tempo_list(deltapos,realtimepos,60000000.0 / curppqn,anchorlist);
+			sp->beat[sp->beats - 1]->flags |= EOF_BEAT_FLAG_ANCHOR;
+			lastppqn = curppqn;
+		}
+
+	//Update delta and realtime counters
+		beatlength = ((double)eof_work_midi->divisions * curden / 4.0);		//Determine the length of this beat in delta ticks
+		realtimepos += beatlength / eof_work_midi->divisions * (15000.0 / (60000000.0 / curppqn)) * curden;	//Add the realtime length of this beat to the time counter
+		deltafpos += beatlength;	//Add the delta length of this beat to the delta counter
+		deltapos = deltafpos + 0.5;	//Round up to nearest delta tick
 	}
 
 	/* third pass, create EOF notes */

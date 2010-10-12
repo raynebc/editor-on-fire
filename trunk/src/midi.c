@@ -555,13 +555,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					if((trackctr == 1) && (eof_midi_event[i]->note < 96))
 						continue;	//Filter out all non Expert drum notes for the Expert+ track
 
-if(lastdelta == 2884)
-puts("blarg");
-
 					delta = eof_ConvertToDeltaTime(eof_midi_event[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
-
-if(lastdelta > delta)
-puts("blarg");
 
 					WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
 					lastdelta = delta;					//Store this event's absolute delta time
@@ -785,11 +779,21 @@ puts("blarg");
 			WriteVarLen(tslist->change[current_ts]->pos - lastdelta, fp);	//Write this time signature's relative delta time
 			lastdelta=tslist->change[current_ts]->pos;						//Store this time signature's absolute delta time
 
+			for(i=0;i<=8;i++)
+			{	//Convert the denominator into the power of two required to write into the MIDI event
+				if(tslist->change[current_ts]->den >> i == 1)	//if 2 to the power of i is the denominator
+					break;
+			}
+			if(tslist->change[current_ts]->den >> i != 1)
+			{	//If the loop ended before the appropriate value was found
+				i = 2;	//An unsupported time signature was somehow set, change the denominator to 4
+			}
+
 			pack_putc(0xff, fp);							//Write Meta Event 0x58 (Time Signature)
 			pack_putc(0x58, fp);
 			pack_putc(0x04, fp);							//Write event length of 4
 			pack_putc(tslist->change[current_ts]->num, fp);	//Write the numerator
-			pack_putc(tslist->change[current_ts]->den, fp);	//Write the denominator
+			pack_putc(i, fp);								//Write the denominator
 			pack_putc(24, fp);								//Write the metronome interval (not used by EOF)
 			pack_putc(8, fp);								//Write the number of 32nd notes per 24 ticks (not used by EOF)
 			current_ts++;									//Iterate to next TS change

@@ -20,7 +20,7 @@ EOF 1.7 To-Do List
       [ ]Common module for things that are common to every edit mode.
       [ ]Mode-specific modules for each input mode.
    [ ]Make window logic/rendering modules.
-[ ]Add real MIDI time signature support.
+[X]Add real MIDI time signature support.
 
 
 EOF 1.63 To-Do List
