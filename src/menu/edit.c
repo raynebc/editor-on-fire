@@ -1192,16 +1192,16 @@ int eof_menu_edit_copy(void)
 			}
 
 			/* write note data to disk */
-			pack_iputl(eof_song->track[eof_selected_track]->note[i]->note, fp);
-			pack_iputl(eof_song->track[eof_selected_track]->note[i]->pos - first_pos, fp);
+			pack_iputl(eof_song->track[eof_selected_track]->note[i]->note, fp);				//Write the note fret values
+			pack_iputl(eof_song->track[eof_selected_track]->note[i]->pos - first_pos, fp);	//Write the note's position relative to within the selection
 			tfloat = eof_get_porpos(eof_song->track[eof_selected_track]->note[i]->pos);
-			pack_fwrite(&tfloat, sizeof(float), fp);
+			pack_fwrite(&tfloat, sizeof(float), fp);	//Write the percent representing the note's start position within a beat
 			tfloat = eof_get_porpos(eof_song->track[eof_selected_track]->note[i]->pos + eof_song->track[eof_selected_track]->note[i]->length);
-			pack_fwrite(&tfloat, sizeof(float), fp);
-			pack_iputl(eof_get_beat(eof_song, eof_song->track[eof_selected_track]->note[i]->pos), fp);
-			pack_iputl(eof_get_beat(eof_song, eof_song->track[eof_selected_track]->note[i]->pos + eof_song->track[eof_selected_track]->note[i]->length), fp);
-			pack_iputl(eof_song->track[eof_selected_track]->note[i]->length, fp);
-
+			pack_fwrite(&tfloat, sizeof(float), fp);	//Write the percent representing the note's end position within a beat
+			pack_iputl(eof_get_beat(eof_song, eof_song->track[eof_selected_track]->note[i]->pos), fp);	//Write the beat the note starts in
+			pack_iputl(eof_get_beat(eof_song, eof_song->track[eof_selected_track]->note[i]->pos + eof_song->track[eof_selected_track]->note[i]->length), fp);	//Write the beat the note ends in
+			pack_iputl(eof_song->track[eof_selected_track]->note[i]->length, fp);	//Write the note's length
+			pack_iputl(eof_song->track[eof_selected_track]->note[i]->flags, fp);	//Write the note's flags
 		}
 	}
 	pack_fclose(fp);
@@ -1247,17 +1247,19 @@ int eof_menu_edit_paste(void)
 	{
 
 		/* read the note */
-		temp_note.note = pack_igetl(fp);
-		temp_note.pos = pack_igetl(fp);
-		pack_fread(&temp_note.porpos, sizeof(float), fp);
-		pack_fread(&temp_note.porendpos, sizeof(float), fp);
-		temp_note.beat = pack_igetl(fp);
-		temp_note.endbeat = pack_igetl(fp);
+		temp_note.note = pack_igetl(fp);	//Read the note fret values
+		temp_note.pos = pack_igetl(fp);		//Read the note's position relative to within the selection
+		pack_fread(&temp_note.porpos, sizeof(float), fp);	//Read the percent representing the note's start position within a beat
+		pack_fread(&temp_note.porendpos, sizeof(float), fp);	//Read the percent representing the note's end position within a beat
+		temp_note.beat = pack_igetl(fp);	//Read the beat the note starts in
+		temp_note.endbeat = pack_igetl(fp);	//Read the beat the note ends in
 		if((temp_note.beat - first_beat + this_beat >= eof_song->beats - 1) || (temp_note.endbeat - first_beat + this_beat >= eof_song->beats - 1))
 		{
 			break;
 		}
-		temp_note.length = pack_igetl(fp);
+		temp_note.length = pack_igetl(fp);	//Read the note's length
+		temp_note.flags = pack_igetl(fp);	//Read the note's flags
+		eof_sanitize_note_flags(&temp_note.flags,eof_selected_track);	//Ensure the note flags are validated for the track being pasted into
 
 		if(eof_music_pos + temp_note.pos + temp_note.length - eof_av_delay < eof_music_length)
 		{
@@ -1268,6 +1270,7 @@ int eof_menu_edit_paste(void)
 				new_note->note = temp_note.note;
 				new_note->pos = eof_put_porpos(temp_note.beat - first_beat + this_beat, temp_note.porpos, 0.0);
 				new_note->length = eof_put_porpos(temp_note.endbeat - first_beat + this_beat, temp_note.porendpos, 0.0) - new_note->pos;
+				new_note->flags = temp_note.flags;
 				paste_pos[paste_count] = new_note->pos;
 				paste_count++;
 			}
@@ -1325,13 +1328,15 @@ int eof_menu_edit_old_paste(void)
 	for(i = 0; i < copy_notes; i++)
 	{
 		/* read the note */
-		temp_note.note = pack_igetl(fp);
-		temp_note.pos = pack_igetl(fp);
-		pack_fread(&temp_note.porpos, sizeof(float), fp);
-		pack_fread(&temp_note.porendpos, sizeof(float), fp);
-		temp_note.beat = pack_igetl(fp);
-		temp_note.endbeat = pack_igetl(fp);
-		temp_note.length = pack_igetl(fp);
+		temp_note.note = pack_igetl(fp);	//Read the note fret values
+		temp_note.pos = pack_igetl(fp);		//Read the note's position relative to within the selection
+		pack_fread(&temp_note.porpos, sizeof(float), fp);	//Read the percent representing the note's start position within a beat
+		pack_fread(&temp_note.porendpos, sizeof(float), fp);	//Read the percent representing the note's end position within a beat
+		temp_note.beat = pack_igetl(fp);	//Read the beat the note starts in
+		temp_note.endbeat = pack_igetl(fp);	//Read the beat the note ends in
+		temp_note.length = pack_igetl(fp);	//Read the note's length
+		temp_note.flags = pack_igetl(fp);	//Read the note's flags
+		eof_sanitize_note_flags(&temp_note.flags,eof_selected_track);	//Ensure the note flags are validated for the track being pasted into
 
 		if(eof_music_pos + temp_note.pos + temp_note.length - eof_av_delay < eof_music_length)
 		{
@@ -2649,4 +2654,31 @@ int eof_menu_edit_select_previous(void)
 	}
 
 	return 1;
+}
+
+void eof_sanitize_note_flags(char *flags,int tracknum)
+{
+	if(flags == NULL)
+		return;
+
+	switch(tracknum)
+	{
+		case EOF_TRACK_GUITAR:		//All guitar based tracks must not have the double bass flag set
+		case EOF_TRACK_BASS:
+		case EOF_TRACK_GUITAR_COOP:
+		case EOF_TRACK_RHYTHM:
+			*flags &= (~EOF_NOTE_FLAG_DBASS);	//Erase the double bass flag
+			break;
+
+		case EOF_TRACK_DRUM:	//The drum track must not have any HOPO or extended sustain flags set
+			*flags &= (~EOF_NOTE_FLAG_HOPO);	//Erase the temporary HOPO flag
+			*flags &= (~EOF_NOTE_FLAG_CRAZY);	//Erase the "crazy" note flag
+			*flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Erase the forced HOPO ON flag
+			*flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Erase the forced HOPO OFF flag
+			break;
+
+		default:	//Other tracks aren't accounted for yet
+			*flags = 0;	//Clear all flags just to be safe
+			break;
+	}
 }

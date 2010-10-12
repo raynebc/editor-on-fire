@@ -94,4 +94,6 @@ int eof_menu_edit_paste_from_medium(void);
 int eof_menu_edit_paste_from_amazing(void);
 int eof_menu_edit_paste_from_catalog(void);
 
+void eof_sanitize_note_flags(char *flags,int tracknum);	//Clears all flag bits that are invalid for the specified track number
+
 #endif
