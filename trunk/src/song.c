@@ -1133,7 +1133,6 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 	}
 
 //Cleanup
-	fclose(fp);
 	if(oggstruct != NULL)
 		alogg_destroy_ogg(oggstruct);
 	if(audio != NULL)
