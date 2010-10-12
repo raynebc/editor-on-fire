@@ -1362,7 +1362,7 @@ int eof_apply_ts(unsigned num,unsigned den,int beatnum,EOF_SONG *sp,char undo)
 	if((sp == NULL) || (beatnum >= sp->beats))
 		return 0;	//Return error
 
-	if((num > 0) && (num <= 256) && ((den != 1) || (den == 2) || (den == 4) || (den == 8) || (den == 16) || (den == 32) || (den == 64) || (den == 128) || (den == 256)))
+	if((num > 0) && (num <= 256) && ((den == 1) || (den == 2) || (den == 4) || (den == 8) || (den == 16) || (den == 32) || (den == 64) || (den == 128) || (den == 256)))
 	{	//If this is a valid time signature
 		//Clear the beat's status except for its anchor and event flags
 		flags = sp->beat[beatnum]->flags & EOF_BEAT_FLAG_ANCHOR;

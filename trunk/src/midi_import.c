@@ -228,8 +228,8 @@ double eof_ConvertToRealTime(unsigned long absolutedelta,struct Tempo_change *an
 	}
 
 //At this point, we have reached the tempo change that absolutedelta resides within, find the realtime
-//The updated theoretical conversion formula that takes the time signature into account is: deltas / (time division) * (15000.0 / BPM) * (TS denominator)
-	temptimer+=(double)tempdelta / (double)timedivision * ((double)15000.0 / tempBPM) * den;
+//The updated theoretical conversion formula that takes the time signature into account is: deltas / (time division) * (60000.0 / (BPM * (TS denominator) / 4))
+	temptimer+=(double)tempdelta / (double)timedivision * ((double)60000.0 / (tempBPM * den / 4.0));
 
 //The old conversion formula that doesn't take time signature into account
 //	temptimer+=(double)tempdelta / (double)timedivision * ((double)60000.0 / tempBPM);
