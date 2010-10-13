@@ -1375,15 +1375,15 @@ int eof_apply_ts(unsigned num,unsigned den,int beatnum,EOF_SONG *sp,char undo)
 		{
 			sp->beat[beatnum]->flags = flags | EOF_BEAT_FLAG_START_3_4;
 		}
-		if((num == 4) && (den == 4))
+		else if((num == 4) && (den == 4))
 		{
 			sp->beat[beatnum]->flags = flags | EOF_BEAT_FLAG_START_4_4;
 		}
-		if((num == 5) && (den == 4))
+		else if((num == 5) && (den == 4))
 		{
 			sp->beat[beatnum]->flags = flags | EOF_BEAT_FLAG_START_5_4;
 		}
-		if((num == 6) && (den == 4))
+		else if((num == 6) && (den == 4))
 		{
 			sp->beat[beatnum]->flags = flags | EOF_BEAT_FLAG_START_6_4;
 		}
