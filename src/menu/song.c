@@ -11,6 +11,7 @@
 #include "../dialog/proc.h"
 #include "../undo.h"
 #include "../player.h"
+#include "../waveform.h"
 #include "song.h"
 
 char eof_track_selected_menu_text[6][32] = {" PART &GUITAR", " PART &BASS", " PART GUITAR &COOP", " PART &RHYTHM", " PART &DRUMS", " PART &VOCALS"};

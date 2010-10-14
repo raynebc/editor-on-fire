@@ -270,34 +270,6 @@ typedef struct
 
 } EOF_SONG;
 
-struct waveformslice
-{
-	unsigned min;	//The lowest amplitude for the samples
-	unsigned peak;	//The peak amplitude for the samples
-	double rms;	//The root mean square for the samples
-};
-
-struct waveformchanneldata
-{
-	struct waveformslice *slices;	//The waveform data for this channel
-	unsigned maxamp;			//The highest amplitude of samples in this channel
-	unsigned long yaxis;			//The y coordinate representing the y axis the channel's graph will render to
-	unsigned long height;			//The height of this channel's graph
-};
-
-struct wavestruct
-{
-	char *oggfilename;
-	unsigned long slicelength;		//The length of one slice of the graph in milliseconds
-	unsigned long slicesize;		//The number of samples in one slice of the graph
-	unsigned long numslices;		//The number of waveform structures in the arrays below
-	unsigned int zeroamp;			//The amplitude representing a 0 amplitude for this waveform (32768 for 16 bit audio samples, 128 for 8 bit audio samples)
-	char is_stereo;					//This OGG has two audio channels
-
-	struct waveformchanneldata left;	//The amplitude and graph data for the audio's left channel
-	struct waveformchanneldata right;	//The amplitude and graph data for the audio's right channel (if applicable)
-};
-
 EOF_SONG * eof_create_song(void);	//Allocates, initializes and returns an EOF_SONG structure
 void eof_destroy_song(EOF_SONG * sp);	//De-allocates the memory used by the EOF_SONG structure
 int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp);	//Loads data from the specified PACKFILE pointer into the given EOF_SONG structure (called by eof_load_song())
@@ -341,17 +313,6 @@ int eof_song_qsort_events(const void * e1, const void * e2);	//The comparitor fu
 void eof_sort_notes(void);	//Sorts the notes in all tracks
 void eof_fixup_notes(void);	//Performs cleanup of the note selection, beats and all tracks
 void eof_detect_difficulties(EOF_SONG * sp);	//Sets the populated status by prefixing each populated tracks' difficulty name (stored in eof_note_type_name[] and eof_vocal_tab_name[]) with an asterisk
-
-struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long slicelength);
-	//Decompresses the specified OGG file into memory and creates waveform data
-	//slicelength is the length of one waveform graph slice in milliseconds
-	//The correct number of samples are used to represent each column (slice) of the graph
-	//The waveform data is returned, otherwise NULL is returned upon error
-
-int eof_process_next_waveform_slice(struct wavestruct *waveform,SAMPLE *audio,unsigned long slicenum);
-	//Processes waveform->slicesize number of audio samples, or if there are not enough, the remainder of the samples, storing the peak amplitude and RMS into waveform->slices[slicenum]
-	//If the audio is stereo, the data for the right channel is likewise processed and stored into waveform->slices2[slicenum]
-	//Returns 0 on success, 1 when all samples are exhausted or -1 on error
 
 int eof_is_freestyle(char *ptr);
 	//Returns 1 if the specified lyric contains a freestyle character (# or ^)

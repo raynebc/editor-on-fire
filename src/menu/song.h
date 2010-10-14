@@ -52,7 +52,6 @@ int eof_set_cue_volume(void *dp3, int d2);
 	//Callback function used by the volume slider GUI control in eof_audio_cues_dialog[].  dp3 is a pointer to the appropriate cue's volume variable
 	//d2 is the value that was set by the slider
 	//returns nonzero on error
-int eof_menu_song_waveform_settings(void);
 
 int eof_menu_track_selected_guitar(void);
 int eof_menu_track_selected_bass(void);
@@ -62,6 +61,7 @@ int eof_menu_track_selected_drum(void);
 int eof_menu_track_selected_vocals(void);
 int eof_menu_track_selected_track_number(int tracknum);	//Changes to the specified track number
 
+int eof_menu_song_waveform_settings(void);
 int eof_menu_song_waveform(void);
 	//Toggle the display of the waveform on/off, generating the waveform data if necessary
 

@@ -36,6 +36,7 @@
 #include "undo.h"
 #include "mix.h"
 #include "control.h"
+#include "waveform.h"
 
 char      * eof_track_name[EOF_MAX_TRACKS + 1] = {"PART GUITAR", "PART BASS", "PART GUITAR COOP", "PART RHYTHM", "PART DRUMS", "PART VOCALS"};
 char        eof_note_type_name[5][32] = {" Supaeasy", " Easy", " Medium", " Amazing", " BRE"};
@@ -219,11 +220,6 @@ char ** eof_windows_argv;
 struct MIDIentry *MIDIqueue=NULL;		//Linked list of queued MIDI notes
 struct MIDIentry *MIDIqueuetail=NULL;	//Points to the tail of the list
 char eof_midi_initialized=0;			//Specifies whether Allegro was able to set up a MIDI device
-struct wavestruct *eof_waveform=NULL;	//Stores the waveform data
-char eof_display_waveform=0;			//Specifies whether the waveform display is enabled
-char eof_waveform_renderlocation=0;		//Specifies where and how high the graph will render (0 = fretboard area, 1 = editor window)
-char eof_waveform_renderleftchannel=1;	//Specifies whether the left channel's graph should render
-char eof_waveform_renderrightchannel=0;	//Specifies whether the right channel's graph should render
 
 void eof_debug_message(char * text)
 {
