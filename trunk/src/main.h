@@ -316,12 +316,6 @@ extern char        eof_supports_mp3;
 extern char        eof_just_played;
 
 extern char eof_midi_initialized;			//Specifies whether Allegro was able to set up a MIDI device
-extern struct wavestruct *eof_waveform;		//Stores the waveform data
-extern char eof_display_waveform;			//Specifies whether the waveform display is enabled
-extern char eof_waveform_renderlocation;	//Specifies where and how high the graph will render (0 = fretboard area, 1 = editor window)
-extern char eof_waveform_renderleftchannel;	//Specifies whether the left channel's graph should render
-extern char eof_waveform_renderrightchannel;//Specifies whether the right channel's graph should render
-
 extern EOF_SELECTION_DATA eof_selection;
 
 void eof_show_mouse(BITMAP * bp);	//Shows the software mouse if it is being used
