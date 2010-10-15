@@ -1405,6 +1405,11 @@ int eof_menu_song_waveform(void)
 	return 0;	//Return success
 }
 
+int eof_menu_song_add_silence(void)
+{
+	return 0;
+}
+
 char eof_chart_volume_string[10] = "100%";
 char eof_clap_volume_string[10] = "100%";
 char eof_metronome_volume_string[10] = "100%";
