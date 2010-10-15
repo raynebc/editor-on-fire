@@ -12,6 +12,7 @@
 #include "../undo.h"
 #include "../player.h"
 #include "../waveform.h"
+#include "../silence.h"
 #include "song.h"
 
 char eof_track_selected_menu_text[6][32] = {" PART &GUITAR", " PART &BASS", " PART GUITAR &COOP", " PART &RHYTHM", " PART &DRUMS", " PART &VOCALS"};
@@ -98,10 +99,12 @@ MENU eof_song_menu[] =
     {"&File Info", eof_menu_song_file_info, NULL, 0, NULL},
     {"&INI Settings", eof_menu_song_ini_settings, NULL, 0, NULL},
     {"&Properties\tF9", eof_menu_song_properties, NULL, 0, NULL},
+	{"&Leading Silence", eof_menu_song_add_silence, NULL, 0, NULL},
+    {"", NULL, NULL, 0, NULL},
+	{"&Audio cues", eof_menu_audio_cues, NULL, 0, NULL},
+	{"&Waveform Graph", NULL, eof_waveform_menu, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"T&est In FOF\tF12", eof_menu_song_test, NULL, EOF_LINUX_DISABLE, NULL},
-	{"&Audio cues", eof_menu_audio_cues, NULL, 0, NULL},
-	{"&Waveform graph", NULL, eof_waveform_menu, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -1376,6 +1379,7 @@ int eof_menu_song_waveform(void)
 	{
 		if(eof_music_paused)
 		{	//Don't try to generate the waveform data if the chart is playing
+			set_window_title("Generating Waveform Graph...");
 			if(eof_waveform == NULL)
 			{
 				eof_waveform = eof_create_waveform(eof_loaded_ogg_name,1);	//Generate 1ms waveform data from the current audio file
@@ -1401,13 +1405,85 @@ int eof_menu_song_waveform(void)
 
 	if(eof_music_paused)
 		eof_render();
+	eof_fix_window_title();
 
 	return 0;	//Return success
 }
 
+DIALOG eof_leading_silence_dialog[] =
+{
+   /* (proc) 		        (x)	(y)	(w)	(h)	(fg) (bg) (key) (flags)	(d1)(d2)(dp)						(dp2) (dp3) */
+   { d_agup_window_proc,  	  0,	 48,200,188,2,   23,  0,    0,      0,	0,	"Leading Silence",          NULL, NULL },
+   { d_agup_radio_proc,		 16,	 80,110,15,	2,   23,  0,    0,      0,	0,	"Milliseconds",             NULL, NULL },
+   { d_agup_radio_proc,		 16,	100,110,15,	2,   23,  0,    0,      0,	0,	"Beats",                    NULL, NULL },
+   { d_agup_radio_proc,		 16,	120,110,15,	2,   23,  0,    0,      0,	0,	"Pad",			            NULL, NULL },
+   { eof_verified_edit_proc, 16,    140,110,20, 2,   23,  0,    0,    255,  0,   eof_etext,         "1234567890", NULL },
+   { d_agup_check_proc,		  16,	166, 45,16,	2,   23,  0,    D_SELECTED,		1,	0,	"Adjust Notes/Beats",		NULL, NULL },
+   { d_agup_button_proc,	  16,	192, 68,28,	2,   23,  '\r',	D_EXIT, 0,	0,	"OK",             			NULL, NULL },
+   { d_agup_button_proc,	 116,192,68, 28,	2,   23,  0,	D_EXIT, 0,	0,	"Cancel",         			NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
 int eof_menu_song_add_silence(void)
 {
-	return 0;
+	double beat_length;
+	unsigned long silence_length = 0;
+	int i, x;
+
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_leading_silence_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_leading_silence_dialog);
+
+	for(x=1;x<=4;x++)
+	{
+		eof_leading_silence_dialog[x].flags = 0;
+	}
+	eof_leading_silence_dialog[1].flags = D_SELECTED;
+	sprintf(eof_etext, "0");
+
+	if(eof_popup_dialog(eof_leading_silence_dialog, 0) == 6 && atoi(eof_etext) > 0)			//User clicked OK
+	{
+		if(eof_leading_silence_dialog[1].flags & D_SELECTED)
+		{
+			silence_length = atoi(eof_etext);
+		}
+		else if(eof_leading_silence_dialog[2].flags & D_SELECTED)
+		{
+			beat_length = (double)60000 / ((double)60000000.0 / (double)eof_song->beat[0]->ppqn);
+			silence_length = beat_length * (double)atoi(eof_etext);
+		}
+		else if(eof_leading_silence_dialog[3].flags & D_SELECTED)
+		{
+			silence_length = atoi(eof_etext);
+			if(silence_length > eof_song->beat[0]->pos)
+			{
+				silence_length -= eof_song->beat[0]->pos;
+			}
+		}
+		eof_add_silence(eof_loaded_ogg_name, silence_length);
+		if(eof_leading_silence_dialog[5].flags & D_SELECTED)
+		{
+			eof_song->tags->ogg[eof_selected_ogg].midi_offset += silence_length;
+			if(eof_song->beat[0]->pos != eof_song->tags->ogg[eof_selected_ogg].midi_offset)
+			{
+				for(i = 0; i < eof_song->beats; i++)
+				{
+					eof_song->beat[i]->fpos += (double)silence_length;
+					eof_song->beat[i]->pos = eof_song->beat[i]->fpos;
+				}
+			}
+			eof_adjust_notes(silence_length);
+		}
+		eof_fixup_notes();
+		eof_calculate_beats(eof_song);
+		eof_fix_window_title();
+	}
+	eof_show_mouse(NULL);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	return 1;
 }
 
 char eof_chart_volume_string[10] = "100%";
