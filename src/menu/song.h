@@ -9,6 +9,7 @@ extern MENU eof_solo_menu[];
 extern MENU eof_lyric_line_menu[];
 extern MENU eof_song_seek_menu[];
 extern MENU eof_song_seek_bookmark_menu[];
+extern MENU eof_waveform_menu[];
 extern MENU eof_song_menu[];
 
 extern DIALOG eof_ini_dialog[];
@@ -63,6 +64,7 @@ int eof_menu_track_selected_track_number(int tracknum);	//Changes to the specifi
 
 int eof_menu_song_waveform_settings(void);
 int eof_menu_song_waveform(void);
+int eof_menu_song_add_silence(void);
 	//Toggle the display of the waveform on/off, generating the waveform data if necessary
 
 #endif

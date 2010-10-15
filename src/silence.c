@@ -1,5 +1,7 @@
 #include <allegro.h>
+#include "menu/song.h"
 #include "main.h"
+#include "waveform.h"
 #include "utility.h"
 
 static unsigned long msec_to_samples(unsigned long msec)
@@ -140,22 +142,64 @@ static int save_wav(const char * fn, SAMPLE * sp)
     return 1;
 }
 
+static void fix_waveform_graph(void)
+{
+	if(eof_display_waveform)
+	{
+		if(eof_music_paused)
+		{
+			if(eof_waveform)
+			{
+				eof_destroy_waveform(eof_waveform);
+			}
+			set_window_title("Generating Waveform Graph...");
+			eof_waveform = eof_create_waveform(eof_loaded_ogg_name,1);	//Generate 1ms waveform data from the current audio file
+			if(eof_waveform)
+			{
+				eof_display_waveform = 1;
+				eof_waveform_menu[0].flags = D_SELECTED;	//Check the Show item in the Song>Waveform graph menu
+			}
+			else
+			{
+				eof_display_waveform = 0;
+				eof_waveform_menu[0].flags = 0;	//Clear the Show item in the Song>Waveform graph menu
+			}
+		}
+	}
+	else
+	{
+		eof_display_waveform = 0;
+		eof_waveform_menu[0].flags = 0;	//Clear the Show item in the Song>Waveform graph menu
+	}
+}
+
 int eof_add_silence(const char * oggfn, unsigned long ms)
 {
 	char sys_command[1024] = {0};
 	char backupfn[1024] = {0};
 	char wavfn[1024] = {0};
 	char soggfn[1024] = {0};
+	#ifdef ALLEGRO_WINDOWS
+		const char * oggenc_name = "oggenc2";
+	#else
+		const char * oggenc_name = "oggenc";
+	#endif
+	if(ms == 0)
+	{
+		return 0;
+	}
 	SAMPLE * sp = create_silence_sample(ms);
 	
 	if(sp)
 	{
+		set_window_title("Adjusting Silence...");
 		replace_filename(wavfn, eof_song_path, "silence.wav", 1024);
 		
 		if(!save_wav(wavfn, sp))
 		{
 			printf("Error saving wav!\n");
 			destroy_sample(sp);
+			eof_fix_window_title();
 			return 0;
 		}
 		destroy_sample(sp);
@@ -169,9 +213,10 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 		
 		/* encode the silence */
 		replace_filename(soggfn, eof_song_path, "silence.ogg", 1024);
-		sprintf(sys_command, "oggenc -o \"%s\" -q %s \"%s\"", soggfn, eof_ogg_quality[(int)eof_ogg_setting], wavfn);
+		sprintf(sys_command, "%s -o \"%s\" -q %s \"%s\"", oggenc_name, soggfn, eof_ogg_quality[(int)eof_ogg_setting], wavfn);
 		if(system(sys_command) != 0)
 		{
+			eof_fix_window_title();
 			return 0;
 		}
 		
@@ -179,6 +224,7 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 		sprintf(sys_command, "oggCat \"%s\" \"%s\" \"%s\"", oggfn, soggfn, backupfn);
 		if(system(sys_command))
 		{
+			eof_fix_window_title();
 			return 0;
 		}
 		
@@ -187,8 +233,11 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 		delete_file(wavfn);
 		if(eof_load_ogg((char *)oggfn))
 		{
+			fix_waveform_graph();
+			eof_fix_window_title();
 			return 1;
 		}
 	}
+	eof_fix_window_title();
 	return 0;
 }
