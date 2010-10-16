@@ -6,7 +6,7 @@ Unversioned To-Do List
 [ ]Adjust timing of audio cues so that they peak at the time they are supposed
    to be heard.
 [X]Import/export vocal percussion data.
-[ ]Change 'l' character glyph as it is identical to the '1' glyph.
+[X]Change 'l' character glyph as it is identical to the '1' glyph.
 [ ]Lyric edit dialog should have a place to put note and octave.
 [ ]Add extra vocal tracks that can be used as scratch space for vocal editing.
 
