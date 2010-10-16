@@ -1424,11 +1424,29 @@ DIALOG eof_leading_silence_dialog[] =
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
+static long get_ogg_length(const char * fn)
+{
+	ALOGG_OGG * ogg;
+	unsigned long length = 0;
+	FILE * fp = fopen(fn, "rb");
+	if(fp)
+	{
+		ogg = alogg_create_ogg_from_file(fp);
+		length = alogg_get_length_msecs_ogg(ogg);
+		alogg_destroy_ogg(ogg);
+	}
+	return length;
+}
+
 int eof_menu_song_add_silence(void)
 {
 	double beat_length;
 	unsigned long silence_length = 0;
+	long current_length = 0;
+	long after_silence_length = 0;
+	long adjust = 0;
 	int i, x;
+	char fn[1024] = {0};
 
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
@@ -1443,39 +1461,66 @@ int eof_menu_song_add_silence(void)
 	eof_leading_silence_dialog[1].flags = D_SELECTED;
 	sprintf(eof_etext, "0");
 
-	if(eof_popup_dialog(eof_leading_silence_dialog, 0) == 6 && atoi(eof_etext) > 0)			//User clicked OK
+	if(eof_popup_dialog(eof_leading_silence_dialog, 0) == 6)			//User clicked OK
 	{
-		if(eof_leading_silence_dialog[1].flags & D_SELECTED)
+		sprintf(fn, "%s.backup", eof_loaded_ogg_name);
+		current_length = get_ogg_length(eof_loaded_ogg_name);
+		/* revert to original file */
+		if(atoi(eof_etext) <= 0)
 		{
-			silence_length = atoi(eof_etext);
-		}
-		else if(eof_leading_silence_dialog[2].flags & D_SELECTED)
-		{
-			beat_length = (double)60000 / ((double)60000000.0 / (double)eof_song->beat[0]->ppqn);
-			silence_length = beat_length * (double)atoi(eof_etext);
-		}
-		else if(eof_leading_silence_dialog[3].flags & D_SELECTED)
-		{
-			silence_length = atoi(eof_etext);
-			if(silence_length > eof_song->beat[0]->pos)
+			eof_copy_file(fn, eof_loaded_ogg_name);
+			if(eof_load_ogg(eof_loaded_ogg_name))
 			{
-				silence_length -= eof_song->beat[0]->pos;
+				eof_fix_waveform_graph();
+				eof_fix_window_title();
 			}
 		}
-		eof_add_silence(eof_loaded_ogg_name, silence_length);
+		else
+		{
+			if(eof_leading_silence_dialog[1].flags & D_SELECTED)
+			{
+				silence_length = atoi(eof_etext);
+			}
+			else if(eof_leading_silence_dialog[2].flags & D_SELECTED)
+			{
+				beat_length = (double)60000 / ((double)60000000.0 / (double)eof_song->beat[0]->ppqn);
+				silence_length = beat_length * (double)atoi(eof_etext);
+			}
+			else if(eof_leading_silence_dialog[3].flags & D_SELECTED)
+			{
+				silence_length = atoi(eof_etext);
+				if(silence_length > eof_song->beat[0]->pos)
+				{
+					silence_length -= eof_song->beat[0]->pos;
+				}
+			}
+			eof_add_silence(eof_loaded_ogg_name, silence_length);
+			after_silence_length = get_ogg_length(eof_loaded_ogg_name);
+		}
+		
+		/* adjust notes/beats */
 		if(eof_leading_silence_dialog[5].flags & D_SELECTED)
 		{
-			eof_song->tags->ogg[eof_selected_ogg].midi_offset += silence_length;
+			if(after_silence_length != 0)
+			{
+				adjust = after_silence_length - current_length;
+			}
+			else
+			{
+				adjust = get_ogg_length(fn) - current_length;
+			}
+			eof_song->tags->ogg[eof_selected_ogg].midi_offset += adjust;
 			if(eof_song->beat[0]->pos != eof_song->tags->ogg[eof_selected_ogg].midi_offset)
 			{
 				for(i = 0; i < eof_song->beats; i++)
 				{
-					eof_song->beat[i]->fpos += (double)silence_length;
+					eof_song->beat[i]->fpos += (double)adjust;
 					eof_song->beat[i]->pos = eof_song->beat[i]->fpos;
 				}
 			}
-			eof_adjust_notes(silence_length);
+			eof_adjust_notes(adjust);
 		}
+		eof_changes = 1;
 		eof_fixup_notes();
 		eof_calculate_beats(eof_song);
 		eof_fix_window_title();
