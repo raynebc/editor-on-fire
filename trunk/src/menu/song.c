@@ -454,6 +454,14 @@ void eof_prepare_song_menu(void)
 		{
 			eof_track_selected_menu[EOF_TRACK_VOCALS].text[0] = ' ';
 		}
+		if(eof_supports_silence)
+		{
+			eof_song_menu[9].flags = 0;
+		}
+		else
+		{
+			eof_song_menu[9].flags = D_DISABLED;
+		}
 	}
 }
 
