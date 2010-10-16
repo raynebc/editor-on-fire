@@ -89,6 +89,7 @@ int         eof_debug_mode = 0;
 char        eof_cpu_saver = 0;
 char        eof_has_focus = 1;
 char        eof_supports_mp3 = 0;
+char        eof_supports_silence = 0;
 int         eof_new_idle_system = 0;
 char        eof_just_played = 0;
 
@@ -2781,6 +2782,22 @@ int eof_initialize(int argc, char * argv[])
 			allegro_message("MP3 support disabled.\n\nPlease install LAME and Vorbis Tools if you want MP3 support.");
 		}
 	#endif
+	}
+	
+	/* check availability of silence generating tools */
+	if(!eof_supports_silence)
+	{
+		if(system("oggSilence -d 64000 -l 1000 -o test_silence.ogg") == 0)
+		{
+			system("oggSilence -d 64000 -l 1000 -o test_silence2.ogg");
+			if(system("oggCat test_silence3.ogg test_silence.ogg test_silence2.ogg") == 0)
+			{
+				eof_supports_silence = 1;
+			}
+		}
+		delete_file("test_silence.ogg");
+		delete_file("test_silence2.ogg");
+		delete_file("test_silence3.ogg");
 	}
 
 	/* make music filter */
