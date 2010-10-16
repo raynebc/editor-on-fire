@@ -1855,6 +1855,9 @@ int eof_new_chart(char * filename)
 		eof_music_track = temp_ogg;
 		eof_music_data = temp_buffer;
 		eof_music_data_size = temp_buffer_size;
+		ustrcpy(eof_loaded_ogg_name, eof_etext3);
+		put_backslash(eof_loaded_ogg_name);
+		ustrcat(eof_loaded_ogg_name, "guitar.ogg");
 	}
 	else
 	{
