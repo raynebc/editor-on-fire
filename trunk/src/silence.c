@@ -24,12 +24,14 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	{
 		eof_copy_file((char *)oggfn, backupfn);
 	}
+	delete_file(oggfn);
 	
 	/* encode the silence */
 	replace_filename(soggfn, eof_song_path, "silence.ogg", 1024);
 	sprintf(sys_command, "oggSilence -d %d -l%lu -o \"%s\"", alogg_get_bitrate_ogg(eof_music_track), ms, soggfn);
 	if(system(sys_command))
 	{
+		eof_copy_file(backupfn, (char *)oggfn);
 		eof_fix_window_title();
 		return 0;
 	}
@@ -38,6 +40,7 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	sprintf(sys_command, "oggCat \"%s\" \"%s\" \"%s\"", oggfn, soggfn, backupfn);
 	if(system(sys_command))
 	{
+		eof_copy_file(backupfn, (char *)oggfn);
 		eof_fix_window_title();
 		return 0;
 	}
