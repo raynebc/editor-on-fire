@@ -29,6 +29,7 @@ struct ALOGG_OGG {
                                    /* also used to know when it's playing */
   int audiostream_buffer_len;      /* len of the audiostream buffer */
   int stereo, freq, loop;          /* audio general info */
+  int bitrate;                     /* bitrate info */
   int auto_polling;                /* set if the ogg is auto polling */
   int auto_poll_speed;             /* auto poll speed in msecs */
   int wait_for_audio_stop;         /* set if we are just waiting for the
@@ -216,6 +217,7 @@ ALOGG_OGG *alogg_create_ogg_from_buffer(void *data, int data_len) {
   else
     ogg->stereo = FALSE;
   ogg->freq = vi->rate;
+  ogg->bitrate = vi->bitrate_nominal;
  
   return ogg;
 }
@@ -527,7 +529,7 @@ int alogg_get_length_bytes_ogg(ALOGG_OGG *ogg) {
 
 
 int alogg_get_bitrate_ogg(ALOGG_OGG *ogg) {
-  return ov_bitrate(&(ogg->vf), -1);
+  return ogg->bitrate;
 }
 
 
