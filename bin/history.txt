@@ -1,64 +1,86 @@
 EOF Version History
 -------------------
 
-1.???:
+1.7:
 
-Added time signature support.  Time signatures will be written to the MIDI during save operations and loaded during MIDI import
+Added time signature support. Time signatures will be written to the MIDI during
+save operations and loaded during MIDI import.
 
-Note statuses (HOPO/Crazy/Double Bass) are now kept during copy and paste operations
+Note statuses (HOPO/Crazy/Double Bass) are now kept during copy and paste
+operations.
 
-Fixed the "clean" target operation in FoFLC's makefiles
+Fixed the "clean" target operation in FoFLC's makefiles.
 
-The Album tag information is automatically added as an INI setting if it exists in the MP3 or OGG file chosen when creating a new chart
+The Album tag information is automatically added as an INI setting if it exists
+in the MP3 or OGG file chosen when creating a new chart.
 
-Raised the maximum grid snap interval to 64
+Raised the maximum grid snap interval to 64.
 
-Added support for marking Expert bass drum notes as Expert+ notes, which will appear in Phase Shift as Expert+ bass notes instead of Expert bass notes.  An expert+.mid file will also be written during save if any Expert+ notes exist, for use in FoF
+Added support for marking Expert bass drum notes as Expert+ notes, which will
+appear in Phase Shift as Expert+ bass notes instead of Expert bass notes.  An
+expert+.mid file will also be written during save if any Expert+ notes exist,
+for use in FoF.
 
-Improved the MIDI import to be more efficient and to prepare for more comprehensive time signature support
+Improved the MIDI import to be more efficient and to prepare for more
+comprehensive time signature support.
 
-Updated to latest version of FoFLC
+Updated to latest version of FoFLC.
 
-Made improvements to documentation and makefiles
+Made improvements to documentation and makefiles.
 
-Made improvements to MIDI export:  offers to correct pitchless lyrics, warns if lyrics are outside phrase markers, corrects MIDI event order, adds padding for 
-lyric phrases (to work around bugs in FoFiX) and enforces a length of 1ms for drum notes (to work around bugs in FoFiX)
+Made improvements to MIDI export: offers to correct pitchless lyrics, warns if
+lyrics are outside phrase markers, corrects MIDI event order, adds padding for 
+lyric phrases (to work around bugs in FoFiX) and enforces a length of 1ms for
+drum notes (to work around bugs in FoFiX).
 
-Corrected preview of pitch shifts and added the display of vocal slides in the editor window
+Corrected preview of pitch shifts and added the display of vocal slides in the
+editor window.
 
-Improved Feedback import by allowing it to load the defined audio file (even an MP3), fixing a desync issue and fixing an issue where the chart's song folder wasn't updated after an import
+Improved Feedback import by allowing it to load the defined audio file (even an
+MP3), fixing a desync issue and fixing an issue where the chart's song folder
+wasn't updated after an import.
 
-Added support for charting vocal percussion notes by using the Backspace key.  New audio samples can be assigned to sound for vocal percussion from the Song>Audio cues menu item
+Added support for charting vocal percussion notes by using the Backspace key.
+New audio samples can be assigned to sound for vocal percussion from the
+Song>Audio cues menu item.
 
-Made various optimizations to graphics, audio, save and input logic
+Made various optimizations to graphics, audio, save and input logic.
 
-Added support for Rock Band Audition chart import (MIDI data only)
+Added support for Rock Band Audition chart import (MIDI data only).
 
-Added support for opening .chart files (Feedback import), rba files (RBA import) and OGG/MP3 files (New chart) via command line
+Added support for opening .chart files (Feedback import), rba files (RBA import)
+and OGG/MP3 files (New chart) via command line.
 
-Added the ability to render a waveform graph of the currently loaded OGG
+Added the ability to render a waveform graph of the currently loaded OGG.
 
-Added a new zoom level (1/1)
+Added a new zoom level (1/1).
 
-Added the labeling of measure numbers next to the beat markers
+Added the labeling of measure numbers next to the beat markers.
 
-Added volume slider controls for the chart volume and each audio cue
+Added volume slider controls for the chart volume and each audio cue.
 
-Corrected the controller button defaults and conflict detection
+Corrected the controller button defaults and conflict detection.
 
-Fixed a crash that could occur when canceling MIDI import
+Fixed a crash that could occur when canceling MIDI import.
 
-Fixed a crash that could occur parsing song.ini during MIDI import
+Fixed a crash that could occur parsing song.ini during MIDI import.
 
-Fixed an issue where some second markers might not be rendered in certain zoom levels in certain conditions
+Fixed an issue where some second markers might not be rendered in certain zoom
+levels in certain conditions.
 
-Fixed an issue where a key+Spacebar combination could leak input into PART DRUMS to add notes when playback is started
+Fixed an issue where a key+Spacebar combination could leak input into PART DRUMS
+to add notes when playback is started.
 
-Fixed an issue where playback would lose sync if the left arrow or Home keys were used to seek to the beginning of the chart during playback
+Fixed an issue where playback would lose sync if the left arrow or Home keys
+were used to seek to the beginning of the chart during playback.
 
-Fixed an issue where ] wouldn't work properly for lengthening lyrics
+Fixed an issue where ] wouldn't work properly for lengthening lyrics.
 
-Fixed an issue where using the guitar strum input mode in PART VOCALS would destroy existing lyrics
+Fixed an issue where using the guitar strum input mode in PART VOCALS would
+destroy existing lyrics.
+
+Added Leading Silence option to Song menu. This can be used to add silence to
+the beginning of the loaded OGG.
 
 
 1.666:
