@@ -1421,14 +1421,17 @@ int eof_menu_song_waveform(void)
 DIALOG eof_leading_silence_dialog[] =
 {
    /* (proc) 		        (x)	(y)	(w)	(h)	(fg) (bg) (key) (flags)	(d1)(d2)(dp)						(dp2) (dp3) */
-   { d_agup_window_proc,  	  0,	 48,200,188,2,   23,  0,    0,      0,	0,	"Leading Silence",          NULL, NULL },
-   { d_agup_radio_proc,		 16,	 80,110,15,	2,   23,  0,    0,      0,	0,	"Milliseconds",             NULL, NULL },
-   { d_agup_radio_proc,		 16,	100,110,15,	2,   23,  0,    0,      0,	0,	"Beats",                    NULL, NULL },
-   { d_agup_radio_proc,		 16,	120,110,15,	2,   23,  0,    0,      0,	0,	"Pad",			            NULL, NULL },
-   { eof_verified_edit_proc, 16,    140,110,20, 2,   23,  0,    0,    255,  0,   eof_etext,         "1234567890", NULL },
-   { d_agup_check_proc,		  16,	166, 45,16,	2,   23,  0,    D_SELECTED,		1,	0,	"Adjust Notes/Beats",		NULL, NULL },
-   { d_agup_button_proc,	  16,	192, 68,28,	2,   23,  '\r',	D_EXIT, 0,	0,	"OK",             			NULL, NULL },
-   { d_agup_button_proc,	 116,192,68, 28,	2,   23,  0,	D_EXIT, 0,	0,	"Cancel",         			NULL, NULL },
+   { d_agup_window_proc,  	  0,	 48,200,248,2,   23,  0,    0,      0,	0,	"Leading Silence",          NULL, NULL },
+   { d_agup_text_proc      , 16,     80,110,20, 2,   23,  0,    0,      0,  0,  "Add:",                      NULL, NULL },
+   { d_agup_radio_proc,		 16,	100,110,15,	2,   23,  0,    0,      0,	0,	"Milliseconds",             NULL, NULL },
+   { d_agup_radio_proc,		 16,	120,110,15,	2,   23,  0,    0,      0,	0,	"Beats",                    NULL, NULL },
+   { d_agup_text_proc      , 16,    140,110,20, 2,   23,  0,    0,      0,  0,  "Pad:",                      NULL, NULL },
+   { d_agup_radio_proc,		 16,	160,110,15,	2,   23,  0,    0,      0,	0,	"Milliseconds",	            NULL, NULL },
+   { d_agup_radio_proc,		 16,	180,110,15,	2,   23,  0,    0,      0,	0,	"Beats",                    NULL, NULL },
+   { eof_verified_edit_proc, 16,    200,110,20, 2,   23,  0,    0,    255,  0,   eof_etext,         "1234567890", NULL },
+   { d_agup_check_proc,		  16,	226, 180,16,	2,   23,  0,    D_SELECTED,		1,	0,	"Adjust Notes/Beats",		NULL, NULL },
+   { d_agup_button_proc,	  16,	252, 68,28,	2,   23,  '\r',	D_EXIT, 0,	0,	"OK",             			NULL, NULL },
+   { d_agup_button_proc,	 116,252,68, 28,	2,   23,  0,	D_EXIT, 0,	0,	"Cancel",         			NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1466,10 +1469,13 @@ int eof_menu_song_add_silence(void)
 	{
 		eof_leading_silence_dialog[x].flags = 0;
 	}
-	eof_leading_silence_dialog[1].flags = D_SELECTED;
+	eof_leading_silence_dialog[2].flags = D_SELECTED;
+	eof_leading_silence_dialog[3].flags = 0;
+	eof_leading_silence_dialog[5].flags = 0;
+	eof_leading_silence_dialog[6].flags = 0;
 	sprintf(eof_etext, "0");
 
-	if(eof_popup_dialog(eof_leading_silence_dialog, 0) == 6)			//User clicked OK
+	if(eof_popup_dialog(eof_leading_silence_dialog, 0) == 9)			//User clicked OK
 	{
 		sprintf(fn, "%s.backup", eof_loaded_ogg_name);
 		current_length = get_ogg_length(eof_loaded_ogg_name);
@@ -1486,18 +1492,28 @@ int eof_menu_song_add_silence(void)
 		}
 		else
 		{
-			if(eof_leading_silence_dialog[1].flags & D_SELECTED)
+			if(eof_leading_silence_dialog[2].flags & D_SELECTED)
 			{
 				silence_length = atoi(eof_etext);
 			}
-			else if(eof_leading_silence_dialog[2].flags & D_SELECTED)
+			else if(eof_leading_silence_dialog[3].flags & D_SELECTED)
 			{
 				beat_length = (double)60000 / ((double)60000000.0 / (double)eof_song->beat[0]->ppqn);
 				silence_length = beat_length * (double)atoi(eof_etext);
 			}
-			else if(eof_leading_silence_dialog[3].flags & D_SELECTED)
+			else if(eof_leading_silence_dialog[5].flags & D_SELECTED)
 			{
 				silence_length = atoi(eof_etext);
+				if(silence_length > eof_song->beat[0]->pos)
+				{
+					silence_length -= eof_song->beat[0]->pos;
+				}
+			}
+			else if(eof_leading_silence_dialog[6].flags & D_SELECTED)
+			{
+				beat_length = (double)60000 / ((double)60000000.0 / (double)eof_song->beat[0]->ppqn);
+				silence_length = beat_length * (double)atoi(eof_etext);
+				printf("%lu\n", silence_length);
 				if(silence_length > eof_song->beat[0]->pos)
 				{
 					silence_length -= eof_song->beat[0]->pos;
@@ -1508,7 +1524,7 @@ int eof_menu_song_add_silence(void)
 		}
 		
 		/* adjust notes/beats */
-		if(eof_leading_silence_dialog[5].flags & D_SELECTED)
+		if(eof_leading_silence_dialog[8].flags & D_SELECTED)
 		{
 			if(after_silence_length != 0)
 			{
