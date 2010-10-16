@@ -1466,6 +1466,7 @@ int eof_menu_song_add_silence(void)
 		sprintf(fn, "%s.backup", eof_loaded_ogg_name);
 		current_length = get_ogg_length(eof_loaded_ogg_name);
 		/* revert to original file */
+		eof_prepare_undo(EOF_UNDO_TYPE_SILENCE);
 		if(atoi(eof_etext) <= 0)
 		{
 			eof_copy_file(fn, eof_loaded_ogg_name);
@@ -1520,7 +1521,6 @@ int eof_menu_song_add_silence(void)
 			}
 			eof_adjust_notes(adjust);
 		}
-		eof_changes = 1;
 		eof_fixup_notes();
 		eof_calculate_beats(eof_song);
 		eof_fix_window_title();

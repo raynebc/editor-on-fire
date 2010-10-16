@@ -3,6 +3,7 @@
 #include "dialog.h"
 #include "undo.h"
 #include "editor.h"
+#include "utility.h"
 
 //EOF_UNDO_STATE eof_undo[EOF_MAX_UNDO];
 //EOF_UNDO_STATE eof_redo;
@@ -46,6 +47,8 @@ void eof_undo_reset(void)
 
 int eof_undo_add(int type)
 {
+	char fn[1024] = {0};
+	
 	if((type == EOF_UNDO_TYPE_NOTE_LENGTH) && (eof_undo_last_type == EOF_UNDO_TYPE_NOTE_LENGTH))
 	{
 		return 0;
@@ -57,6 +60,11 @@ int eof_undo_add(int type)
 	if((type == EOF_UNDO_TYPE_RECORD) && (eof_undo_last_type == EOF_UNDO_TYPE_RECORD))
 	{
 		return 0;
+	}
+	if(type == EOF_UNDO_TYPE_SILENCE)
+	{
+		sprintf(fn, "%s.ogg", eof_undo_filename[eof_undo_current_index]);
+		eof_copy_file(eof_loaded_ogg_name, fn);
 	}
 	eof_undo_last_type = type;
 	eof_save_song(eof_song, eof_undo_filename[eof_undo_current_index]);
@@ -76,6 +84,8 @@ int eof_undo_add(int type)
 
 int eof_undo_apply(void)
 {
+	char fn[1024] = {0};
+	
 	if(eof_undo_count > 0)
 	{
 		eof_save_song(eof_song, "eof.redo");
@@ -88,6 +98,13 @@ int eof_undo_apply(void)
 		if(eof_undo_type[eof_undo_current_index] == EOF_UNDO_TYPE_NOTE_SEL)
 		{
 			eof_menu_edit_deselect_all();
+		}
+		if(eof_undo_type[eof_undo_current_index] == EOF_UNDO_TYPE_SILENCE)
+		{
+			sprintf(fn, "%s.ogg", eof_undo_filename[eof_undo_current_index]);
+			eof_copy_file(fn, eof_loaded_ogg_name);
+			eof_load_ogg(eof_loaded_ogg_name);
+			eof_fix_waveform_graph();
 		}
 		eof_undo_count--;
 		eof_redo_count = 1;
