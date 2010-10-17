@@ -1323,32 +1323,21 @@ int eof_first_selected_note(void)
 
 void eof_fix_waveform_graph(void)
 {
-	if(eof_display_waveform)
+	if(eof_music_paused && eof_waveform)
 	{
-		if(eof_music_paused)
+		eof_destroy_waveform(eof_waveform);
+		set_window_title("Generating Waveform Graph...");
+		eof_waveform = eof_create_waveform(eof_loaded_ogg_name,1);	//Generate 1ms waveform data from the current audio file
+		if(eof_waveform)
 		{
-			if(eof_waveform)
-			{
-				eof_destroy_waveform(eof_waveform);
-			}
-			set_window_title("Generating Waveform Graph...");
-			eof_waveform = eof_create_waveform(eof_loaded_ogg_name,1);	//Generate 1ms waveform data from the current audio file
-			if(eof_waveform)
-			{
-				eof_display_waveform = 1;
-				eof_waveform_menu[0].flags = D_SELECTED;	//Check the Show item in the Song>Waveform graph menu
-			}
-			else
-			{
-				eof_display_waveform = 0;
-				eof_waveform_menu[0].flags = 0;	//Clear the Show item in the Song>Waveform graph menu
-			}
+			eof_display_waveform = 1;
+			eof_waveform_menu[0].flags = D_SELECTED;	//Check the Show item in the Song>Waveform graph menu
 		}
-	}
-	else
-	{
-		eof_display_waveform = 0;
-		eof_waveform_menu[0].flags = 0;	//Clear the Show item in the Song>Waveform graph menu
+		else
+		{
+			eof_display_waveform = 0;
+			eof_waveform_menu[0].flags = 0;	//Clear the Show item in the Song>Waveform graph menu
+		}
 	}
 }
 
@@ -2783,7 +2772,7 @@ int eof_initialize(int argc, char * argv[])
 		}
 	#endif
 	}
-	
+
 	/* check availability of silence generating tools */
 	if(!eof_supports_silence)
 	{
