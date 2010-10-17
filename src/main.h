@@ -330,7 +330,7 @@ int eof_count_selected_notes(int * total, char v);
 	//Returns the number of notes selected in the active difficulty
 	//If total is not NULL, its value is incremeneted once for each note in the active difficulty
 int eof_count_selected_notes_vocal(int * total, char v);	//Counts the number of selected lyrics
-void eof_fix_waveform_graph(void);
+void eof_fix_waveform_graph(void);	//Rebuild the waveform graph data if it exists
 void eof_clear_input(void);
 void eof_prepare_undo(int type);
 int eof_count_notes(void);
