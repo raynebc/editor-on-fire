@@ -1534,6 +1534,10 @@ int eof_menu_song_add_silence(void)
 			{
 				adjust = get_ogg_length(fn) - current_length;
 			}
+			if(eof_song->tags->ogg[eof_selected_ogg].midi_offset + adjust < 0)
+			{
+				adjust = 0;
+			}
 			eof_song->tags->ogg[eof_selected_ogg].midi_offset += adjust;
 			if(eof_song->beat[0]->pos != eof_song->tags->ogg[eof_selected_ogg].midi_offset)
 			{
