@@ -85,8 +85,6 @@ int eof_undo_add(int type)
 
 int eof_undo_apply(void)
 {
-	char fn[1024] = {0};
-	
 	if(eof_undo_count > 0)
 	{
 		eof_save_song(eof_song, "eof.redo");
@@ -103,8 +101,7 @@ int eof_undo_apply(void)
 		}
 		if(eof_undo_type[eof_undo_current_index] == EOF_UNDO_TYPE_SILENCE)
 		{
-			sprintf(fn, "%s.ogg", eof_undo_filename[eof_undo_current_index]);
-			eof_copy_file(fn, eof_loaded_ogg_name);
+			eof_copy_file("eof.redo.ogg", eof_loaded_ogg_name);
 			eof_load_ogg(eof_loaded_ogg_name);
 			eof_fix_waveform_graph();
 			eof_redo_type = EOF_UNDO_TYPE_SILENCE;
@@ -133,8 +130,6 @@ int eof_undo_apply(void)
 
 void eof_redo_apply(void)
 {
-	char fn[1024] = {0};
-	
 	if(eof_redo_count > 0)
 	{
 		eof_save_song(eof_song, eof_undo_filename[eof_undo_current_index]);
@@ -146,8 +141,7 @@ void eof_redo_apply(void)
 		eof_undo_load_state("eof.redo");
 		if(eof_redo_type == EOF_UNDO_TYPE_SILENCE)
 		{
-			sprintf(fn, "%s.ogg", eof_undo_filename[eof_undo_current_index]);
-			eof_copy_file(fn, eof_loaded_ogg_name);
+			eof_copy_file("eof.redo.ogg", eof_loaded_ogg_name);
 			eof_load_ogg(eof_loaded_ogg_name);
 			eof_fix_waveform_graph();
 		}

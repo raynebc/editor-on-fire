@@ -2998,6 +2998,15 @@ void eof_exit(void)
 	delete_file("eof.undo5");
 	delete_file("eof.undo6");
 	delete_file("eof.undo7");
+	delete_file("eof.redo.ogg");
+	delete_file("eof.undo0.ogg");
+	delete_file("eof.undo1.ogg");
+	delete_file("eof.undo2.ogg");
+	delete_file("eof.undo3.ogg");
+	delete_file("eof.undo4.ogg");
+	delete_file("eof.undo5.ogg");
+	delete_file("eof.undo6.ogg");
+	delete_file("eof.undo7.ogg");
 	delete_file("eof.autoadjust");
 	agup_shutdown();
 	eof_destroy_ogg();
