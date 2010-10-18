@@ -1330,7 +1330,6 @@ void eof_fix_waveform_graph(void)
 		eof_waveform = eof_create_waveform(eof_loaded_ogg_name,1);	//Generate 1ms waveform data from the current audio file
 		if(eof_waveform)
 		{
-			eof_display_waveform = 1;
 			eof_waveform_menu[0].flags = D_SELECTED;	//Check the Show item in the Song>Waveform graph menu
 		}
 		else
