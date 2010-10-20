@@ -13,12 +13,13 @@ EOF proposed file format (revision 'H'):
 [varies]:	Loading Text string
 1 byte:		Lyrics present (from Song Properties)
 1 byte:		Eighth note HOPO (from Song Properties)
+*1 byte:	Timing format (0=Milliseconds,1=Deltas)
 
 2 bytes:	Number of OGG profiles
 [varies:]	OGG PROFILE CHUNK, for each OGG profile:
 *	2 bytes:	OGG file name string length
 	[varies:]	OGG file name string
-	4 bytes:	MIDI delay for this profile
+	4 bytes:	MIDI delay for this profile (milliseconds)
 
 2 bytes:	Number of INI settings
 [varies:]	INI SETTING CHUNK, for each INI setting:
@@ -29,8 +30,7 @@ EOF proposed file format (revision 'H'):
 4 bytes:	Number of beats in the chart
 [varies:]	BEAT CHUNK, for each beat:
 	4 bytes:	PPQN
-	4 bytes:	Position in milliseconds
-*	4 bytes:	Position in delta ticks
+	4 bytes:	Position (in milliseconds or delta ticks)
 	4 bytes:	Beat flags
 
 4 bytes:	Number of text events
@@ -41,25 +41,21 @@ EOF proposed file format (revision 'H'):
 
 *4 bytes:	Number of tracks
 [varies:]	TRACK CHUNK, for each track:
+*	2 bytes:	Track name string length
+*	[varies:]	Track name string
 *	4 byte:		Track number (Matching macros such as EOF_TRACK_GUITAR)
 *	1 byte:		Track type (1=Guitar,2=Drum,3=Vocal,4=Pro Guitar,5=Pro Drum,6=Keys, ...)
-	2 bytes:	Track name string length
-	[varies:]	Track name string
 
 	[GUITAR/DRUM TRACK FORMAT]
 *		4 bytes:	Number of solo sections
 		[varies:]	SOLO SECTION CHUNK, for each solo section
-			4 bytes:	Start position of solo section in milliseconds
-			4 bytes:	End position of solo section in milliseconds
-*			4 bytes:	Start position of solo section in delta ticks
-*			4 bytes:	End position of solo section in delta ticks
+			4 bytes:	Start position of solo section (in milliseconds or delta ticks)
+			4 bytes:	End position of solo section (in milliseconds or delta ticks)
 
 *		4 bytes:	Number of star power sections
 		[varies:]	STAR POWER CHUNK, for each star power section
-			4 bytes:	Start position of star power section in milliseconds
-			4 bytes:	End position of star power section in milliseconds
-*			4 bytes:	Start position of star power section in delta ticks
-*			4 bytes:	End position of star power section in delta ticks
+			4 bytes:	Start position of star power section (in milliseconds or delta ticks)
+			4 bytes:	End position of star power section (in milliseconds or delta ticks)
 
 		4 bytes:	Number of notes
 		[varies:]	NOTE CHUNK, for each note
@@ -67,45 +63,35 @@ EOF proposed file format (revision 'H'):
 *			[varies:]	Note name string
 			1 byte:		Note type (difficulty)
 			1 byte:		Note bitflag (fret on/off statuses)
-			4 bytes:	Note position in milliseconds
-			4 bytes:	Note length in milliseconds
-*			4 bytes:	Note position in delta ticks
-*			4 bytes:	Note length in delta ticks
+			4 bytes:	Note position (in milliseconds or delta ticks)
+			4 bytes:	Note length (in milliseconds or delta ticks)
 			1 byte:		Note flags
 
 	[VOCAL TRACK FORMAT]
 		4 bytes:	Number of lyrics
 		[varies:]	LYRIC CHUNK, for each lyric:
+*			2 bytes:	Lyric text string length
+*			[varies:]	Lyric text string
 			1 byte:		Note pitch
-			4 bytes:	Lyric position in milliseconds
-			4 bytes:	Lyric position in milliseconds
-*			4 bytes:	Lyric position in delta ticks
-*			4 bytes:	Lyric position in delta ticks
-			2 bytes:	Lyric text string length
-			[varies:]	Lyric text string
+			4 bytes:	Lyric position (in milliseconds or delta ticks)
+			4 bytes:	Lyric position (in milliseconds or delta ticks)
 
 		4 bytes:	Number of lyric phrases
 		[varies:]	LYRIC PHRASE CHUNK, for each lyric phrase
-			4 bytes:	Start position of lyric phrase in milliseconds
-			4 bytes:	End position of lyric phrase in milliseconds
-*			4 bytes:	Start position of lyric phrase in delta ticks
-*			4 bytes:	End position of lyric phrase in delta ticks
+			4 bytes:	Start position of lyric phrase (in milliseconds or delta ticks)
+			4 bytes:	End position of lyric phrase (in milliseconds or delta ticks)
 			4 bytes:	Lyric phrase flags
 
 	[PRO GUITAR TRACK FORMAT]
 *		4 bytes:	Number of solo sections
 *		[varies:]	SOLO SECTION CHUNK, for each solo section
-*			4 bytes:	Start position of solo section in milliseconds
-*			4 bytes:	End position of solo section in milliseconds
-*			4 bytes:	Start position of solo section in delta ticks
-*			4 bytes:	End position of solo section in delta ticks
+*			4 bytes:	Start position of solo section (in milliseconds or delta ticks)
+*			4 bytes:	End position of solo section (in milliseconds or delta ticks)
 
 *		4 bytes:	Number of star power sections
-		[varies:]	STAR POWER CHUNK, for each star power section
-			4 bytes:	Start position of star power section in milliseconds
-			4 bytes:	End position of star power section in milliseconds
-*			4 bytes:	Start position of star power section in delta ticks
-*			4 bytes:	End position of star power section in delta ticks
+*		[varies:]	STAR POWER CHUNK, for each star power section
+*			4 bytes:	Start position of star power section (in milliseconds or delta ticks)
+*			4 bytes:	End position of star power section (in milliseconds or delta ticks)
 
 *		4 bytes:	Number of notes
 *		[varies:]	PRO GUITAR NOTE CHUNK, for each note
@@ -119,26 +105,20 @@ EOF proposed file format (revision 'H'):
 *			1 byte:		Fret 4 tab (signed char: -1=Not played, 0=Open strum, #=Fret #)
 *			1 byte:		Fret 5 tab (signed char: -1=Not played, 0=Open strum, #=Fret #)
 *			1 byte:		Fret 6 tab (signed char: -1=Not played, 0=Open strum, #=Fret #)
-*			4 bytes:	Note position in milliseconds
-*			4 bytes:	Note length in milliseconds
-*			4 bytes:	Note position in delta ticks
-*			4 bytes:	Note length in delta ticks
+*			4 bytes:	Note position (in milliseconds or delta ticks)
+*			4 bytes:	Note length (in milliseconds or delta ticks)
 *			1 byte:		Note flags
 
 	[KEYS TRACK FORMAT]
 *		4 bytes:	Number of solo sections
 *		[varies:]	Solo section chunk, for each solo section
-*			4 bytes:	Start position of solo section in milliseconds
-*			4 bytes:	End position of solo section in milliseconds
-*			4 bytes:	Start position of solo section in delta ticks
-*			4 bytes:	End position of solo section in delta ticks
+*			4 bytes:	Start position of solo section (in milliseconds or delta ticks)
+*			4 bytes:	End position of solo section (in milliseconds or delta ticks)
 
 *		4 bytes:	Number of star power sections
-		[varies:]	Star power chunk, for each star power section
-			4 bytes:	Start position of star power section in milliseconds
-			4 bytes:	End position of star power section in milliseconds
-*			4 bytes:	Start position of star power section in delta ticks
-*			4 bytes:	End position of star power section in delta ticks
+*		[varies:]	Star power chunk, for each star power section
+*			4 bytes:	Start position of star power section (in milliseconds or delta ticks)
+*			4 bytes:	End position of star power section (in milliseconds or delta ticks)
 
 *		4 bytes:	Number of notes
 *		[varies:]	KEY NOTE CHUNK, for each note
@@ -150,24 +130,19 @@ EOF proposed file format (revision 'H'):
 *				1 byte:		Note number
 *				1 byte:		Note velocity
 
-*			4 bytes:	Note position in milliseconds
-*			4 bytes:	Note length in milliseconds
-*			4 bytes:	Note position in delta ticks
-*			4 bytes:	Note length in delta ticks
+*			4 bytes:	Note position (in milliseconds or delta ticks)
+*			4 bytes:	Note length (in milliseconds or delta ticks)
 *			1 byte:		Note flags
 
 *1 bytes:	Number of bookmarks
 [varies:]	BOOKMARK CHUNK, for each of the bookmarks:
-	4 bytes:	Bookmark position in milliseconds
-*	4 bytes:	Bookmark position in delta ticks
+	4 bytes:	Bookmark position (in milliseconds or delta ticks)
 
 4 bytes:	Number of catalog entries
 [varies:]	FRET CATALOG CHUNK, for each catalog entry:
+*	2 bytes:	Entry name string length
+*	[varies:]	Entry name string
 *	4 byte:		Track number (matching the track number in the track chunk)
 	1 byte:		Entry type (difficulty)
-	4 byte:		Start position of entry in milliseconds
-	4 byte:		End position of entry in milliseconds
-*	4 byte:		Start position of entry in delta ticks
-*	4 byte:		End position of entry in delta ticks
-*	4 bytes:	Entry name string length
-*	[varies:]	Entry name string
+	4 byte:		Start position of entry (in milliseconds or delta ticks)
+	4 byte:		End position of entry (in milliseconds or delta ticks)
