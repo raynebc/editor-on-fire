@@ -27,8 +27,8 @@ char * eof_ini_list(int index, int * size);			//Dialog logic to display the char
 char * eof_events_list(int index, int * size);		//Dialog logic to display the chart's text events in the "Events" list box
 char * eof_events_list_all(int index, int * size);	//Dialog logic to display the chart's text events in the "All Events" list box
 int eof_ogg_settings(void);		//Launches the MP3->OGG conversion dialog window
-int eof_menu_edit_cut(int anchor, int option, float offset);		//Performs non "Auto adjust" logic for when anchors are manipulated?
-int eof_menu_edit_cut_paste(int anchor, int option, float offset);	//Performs "Auto adjust" logic for when anchors are manipulated?
+int eof_menu_edit_cut(int anchor, int option, float offset);		//Stores "Auto adjust" data to "eof.autoadjust"
+int eof_menu_edit_cut_paste(int anchor, int option, float offset);	//Performs "Auto adjust" logic (ie. when anchors are manipulated)
 int eof_ini_dialog_add(DIALOG * d);		//Performs the INI setting add action presented in the INI settings dialog
 int eof_ini_dialog_delete(DIALOG * d);	//Performs the INI setting delete action presented in the INI settings dialog
 int eof_events_dialog_add(DIALOG * d);	//Performs the Text event add action presented in the Events dialog

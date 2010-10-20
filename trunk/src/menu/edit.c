@@ -980,6 +980,7 @@ int eof_menu_edit_cut(int anchor, int option, float offset)
 				pack_iputl(eof_get_beat(eof_song, eof_song->track[j]->note[i]->pos), fp);
 				pack_iputl(eof_get_beat(eof_song, eof_song->track[j]->note[i]->pos + eof_song->track[j]->note[i]->length), fp);
 				pack_iputl(eof_song->track[j]->note[i]->length, fp);
+				pack_iputl(eof_song->track[j]->note[i]->flags, fp);	//Write the note flags
 			}
 		}
 		/* star power */
@@ -1082,6 +1083,7 @@ int eof_menu_edit_cut_paste(int anchor, int option, float offset)
 			temp_note.beat = pack_igetl(fp);
 			temp_note.endbeat = pack_igetl(fp);
 			temp_note.length = pack_igetl(fp);
+			temp_note.flags = pack_igetl(fp);	//Store the note flags
 
 			if(temp_note.pos + temp_note.length < eof_music_length)
 			{
@@ -1092,6 +1094,7 @@ int eof_menu_edit_cut_paste(int anchor, int option, float offset)
 					new_note->note = temp_note.note;
 					new_note->pos = eof_put_porpos(temp_note.beat - first_beat[j] + this_beat[j], temp_note.porpos, 0.0);
 					new_note->length = eof_put_porpos(temp_note.endbeat - first_beat[j] + this_beat[j], temp_note.porendpos, 0.0) - new_note->pos;
+					new_note->flags = temp_note.flags;
 				}
 			}
 		}

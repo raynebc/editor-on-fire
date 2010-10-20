@@ -1,5 +1,10 @@
 EOF proposed file format (revision 'H'):
 
+16 bytes:	File header:
+	8 bytes:	'E','O','F','S','O','N','H','\0'
+	8 bytes:	(padding)
+
+	SONG PROPERTIES:
 4 bytes:	File (chart) revision number
 2 bytes:	Artist string length
 [varies]:	Artist string
@@ -13,6 +18,7 @@ EOF proposed file format (revision 'H'):
 [varies]:	Loading Text string
 1 byte:		Lyrics present (from Song Properties)
 1 byte:		Eighth note HOPO (from Song Properties)
+
 *1 byte:	Timing format (0=Milliseconds,1=Deltas)
 
 2 bytes:	Number of OGG profiles
