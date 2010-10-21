@@ -617,7 +617,10 @@ EOF_SONG * eof_import_midi(const char * fn)
 									realden = realden << 1;
 								}
 
-								eof_midi_add_ts_deltas(eof_import_ts_changes[i],absolute_pos,d1,realden,i);
+								if(eof_use_midi_ts)
+								{	//Only process the time signature if the user opted to do so
+									eof_midi_add_ts_deltas(eof_import_ts_changes[i],absolute_pos,d1,realden,i);
+								}
 								break;
 							}
 
