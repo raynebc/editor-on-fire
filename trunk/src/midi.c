@@ -320,6 +320,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	unsigned long lastdelta=0;				//Keeps track of the last anchor's absolute delta time
 	char * tempstring = NULL;				//Used to store a copy of the lyric string into eof_midi_event[], so the string can be modified from the original
 	char correctlyrics = 0;					//If nonzero, logic will be performed to correct the pitchless lyrics to have a pound character and have a generic pitch note
+	char correctphrases = 0;				//If nonzero, logic will be performed to add missing lyric phrases to ensure all lyrics (except vocal percussion notes) are encompassed within a lyric phrase
 	unsigned long length;					//Used to cap drum notes
 	char expertplus = 0;					//Tracks whether an expert+.mid track should be created to hold the Expert+ drum track
 	char expertpluswritten = 0;				//Tracks whether an expert+.mid track has been written
@@ -330,11 +331,19 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	if(anchorlist == NULL)	//If the anchor list could not be created
 		return 0;	//Return failure
 
-	tslist=eof_build_ts_list(anchorlist);	//Create a list of all TS changes in eof_song->beat[]
-	if(tslist == NULL)
-	{
-		eof_destroy_tempo_list(anchorlist);
-		return 0;	//Return failure
+	if(eof_use_midi_ts)
+	{	//If the user opted to use the time signatures during export
+		tslist=eof_build_ts_list(anchorlist);	//Create a list of all TS changes in eof_song->beat[]
+		if(tslist == NULL)
+		{
+			eof_destroy_tempo_list(anchorlist);
+			return 0;	//Return failure
+		}
+	}
+	else
+	{	//Otherwise build a TS list containing just the default 4/4 time signature
+		tslist = eof_create_ts_list();
+		eof_midi_add_ts_realtime(tslist, eof_song->beat[0]->fpos, 4, 4, 0);	//use an implied TS of 4/4 on the first beat marker
 	}
 
 	eof_sort_notes();	//Writing efficient on-the-fly HOPO phrasing relies on all notes being sorted
@@ -393,13 +402,13 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 						eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 0);
 				}
 
-				/* write yellow note */
+				/* write red note */
 				if(sp->track[j]->note[i]->note & 2)
 				{
 					eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 1);
 				}
 
-				/* write red note */
+				/* write yellow note */
 				if(sp->track[j]->note[i]->note & 4)
 				{
 					eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 2);
@@ -588,9 +597,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		eof_clear_midi_events();
 
 		/* pre-parse the lyrics to determine if any pitchless lyrics are present */
+		correctlyrics = 0;	//By default, pitchless lyrics will not be changed to freestyle during export
 		for(ctr = 0; ctr < sp->vocal_track->lyrics; ctr++)
 		{
-			correctlyrics = 0;	//By default, pitchless lyrics will not be changed to freestyle during export
 			if(sp->vocal_track->lyric[ctr]->note == 0)
 			{	//If any of the lyrics are missing the pitch, prompt for whether they should be corrected
 				eof_cursor_visible = 0;
@@ -604,6 +613,40 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				eof_cursor_visible = 1;
 				eof_pen_visible = 1;
 				break;
+			}
+		}
+
+		/* pre-parse the lyrics to see if any exist outside of lyric phrases */
+		correctphrases = 0;	//By default, missing lyric phrases won't be inserted
+		for(ctr = 0; ctr < sp->vocal_track->lyrics; ctr++)
+		{
+			if((FindLyricLine(ctr) == NULL) && (sp->vocal_track->lyric[ctr]->note != VOCALPERCUSSION))
+			{	//If this lyric is not in a line and is not a vocal percussion note
+				eof_cursor_visible = 0;
+				eof_pen_visible = 0;
+				eof_show_mouse(screen);
+				if(alert(NULL, "Add phrases for lyrics not in lyric phrases?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+				{	//If user opts to have missing lyric phrases inserted
+					correctphrases = 1;
+				}
+				eof_show_mouse(NULL);
+				eof_cursor_visible = 1;
+				eof_pen_visible = 1;
+				break;
+			}
+		}
+
+		/* insert the missing lyric phrases if the user opted to do so */
+		if(correctphrases)
+		{
+			for(ctr = 0; ctr < sp->vocal_track->lyrics; ctr++)
+			{
+				if((FindLyricLine(ctr) == NULL) && (sp->vocal_track->lyric[ctr]->note != VOCALPERCUSSION))
+				{	//If this lyric is not in a line and is not a vocal percussion note, write the MIDI events for a line phrase to envelop it
+					eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[ctr]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, 105);
+					eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[ctr]->pos + sp->vocal_track->lyric[ctr]->length,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, 105);
+
+				}
 			}
 		}
 
@@ -1038,7 +1081,10 @@ struct Tempo_change *eof_build_tempo_list(void)
 
 	for(ctr=0;ctr < eof_song->beats;ctr++)
 	{	//For each beat
-		eof_get_ts(NULL,&den,ctr);	//Update the TS denominator if applicable
+		if(eof_use_midi_ts)
+		{	//If the user opted to use time signatures during MIDI export
+			eof_get_ts(NULL,&den,ctr);	//Update the TS denominator if applicable
+		}
 		if(eof_song->beat[ctr]->ppqn != lastppqn)
 		{	//If this beat has a different tempo than the last, add it to the list
 			if((list == NULL) && (eof_song->beat[ctr]->fpos != 0.0))	//If the first anchor isn't at position 0

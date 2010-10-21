@@ -617,10 +617,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 									realden = realden << 1;
 								}
 
-								if(eof_use_midi_ts)
-								{	//Only process the time signature if the user opted to do so
-									eof_midi_add_ts_deltas(eof_import_ts_changes[i],absolute_pos,d1,realden,i);
-								}
+								eof_midi_add_ts_deltas(eof_import_ts_changes[i],absolute_pos,d1,realden,i);
 								break;
 							}
 
@@ -707,8 +704,8 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 		sp->beat[sp->beats - 1]->pos = realtimepos + sp->tags->ogg[0].midi_offset + 0.5;	//Round up to nearest millisecond
 		sp->beat[sp->beats - 1]->midi_pos = deltapos;
 		sp->beat[sp->beats - 1]->ppqn = curppqn;
-		if((lastnum != curnum) || (lastden != curden))
-		{	//If this time signature is different than  the last beat's time signature
+		if(eof_use_midi_ts && ((lastnum != curnum) || (lastden != curden)))
+		{	//If the user opted to import TS changes, and this time signature is different than the last beat's time signature
 			eof_apply_ts(curnum,curden,sp->beats - 1,sp,0);	//Set the TS flags for this beat
 			lastnum = curnum;
 			lastden = curden;
