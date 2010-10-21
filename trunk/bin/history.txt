@@ -3,6 +3,8 @@ EOF Version History
 
 1.7:
 
+Fixed an issue where notes' statuses were not kept when they were auto-adjusted
+
 Added time signature support. Time signatures will be written to the MIDI during
 save operations and loaded during MIDI import.
 

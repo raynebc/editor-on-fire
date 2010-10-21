@@ -22,49 +22,63 @@ EOF proposed file format (revision 'H'):
 *1 byte:	Timing format (0=Milliseconds,1=Deltas)
 
 2 bytes:	Number of OGG profiles
-[varies:]	OGG PROFILE CHUNK, for each OGG profile:
+OGG PROFILE CHUNK, for each OGG profile:
+{
 *	2 bytes:	OGG file name string length
 	[varies:]	OGG file name string
 	4 bytes:	MIDI delay for this profile (milliseconds)
+}
 
 2 bytes:	Number of INI settings
-[varies:]	INI SETTING CHUNK, for each INI setting:
+INI SETTING CHUNK, for each INI setting:
+{
 *	2 bytes:	INI setting string length
 *	[varies:]	INI setting string
+}
 
 *4 bytes:	Time division (ticks per quarter note)
 4 bytes:	Number of beats in the chart
-[varies:]	BEAT CHUNK, for each beat:
+BEAT CHUNK, for each beat:
+{
 	4 bytes:	PPQN
 	4 bytes:	Position (in milliseconds or delta ticks)
 	4 bytes:	Beat flags
+}
 
 4 bytes:	Number of text events
-[varies:]	TEXT EVENT CHUNK, for each text event:
+TEXT EVENT CHUNK, for each text event:
+{
 *	2 bytes:	Text event string length
 *	[varies:]	Text event string
 	4 bytes:	Associated beat number
+}
 
 *4 bytes:	Number of tracks
-[varies:]	TRACK CHUNK, for each track:
+TRACK CHUNK, for each track:
+{
 *	2 bytes:	Track name string length
 *	[varies:]	Track name string
 *	4 byte:		Track number (Matching macros such as EOF_TRACK_GUITAR)
-*	1 byte:		Track type (1=Guitar,2=Drum,3=Vocal,4=Pro Guitar,5=Pro Drum,6=Keys, ...)
+*	1 byte:		Track type (1=Guitar/Drum,3=Vocal,4=Pro Guitar,5=Pro Drum,6=Keys, ...)
 
-	[GUITAR/DRUM TRACK FORMAT]
+	[GUITAR/DRUM AND PRO DRUM TRACK FORMAT]
 *		4 bytes:	Number of solo sections
-		[varies:]	SOLO SECTION CHUNK, for each solo section
+		SOLO SECTION CHUNK, for each solo section
+		{
 			4 bytes:	Start position of solo section (in milliseconds or delta ticks)
 			4 bytes:	End position of solo section (in milliseconds or delta ticks)
+		}
 
 *		4 bytes:	Number of star power sections
-		[varies:]	STAR POWER CHUNK, for each star power section
+		STAR POWER CHUNK, for each star power section
+		{
 			4 bytes:	Start position of star power section (in milliseconds or delta ticks)
 			4 bytes:	End position of star power section (in milliseconds or delta ticks)
+		}
 
 		4 bytes:	Number of notes
-		[varies:]	NOTE CHUNK, for each note
+		NOTE CHUNK, for each note
+		{
 *			2 bytes:	Note name string length
 *			[varies:]	Note name string
 			1 byte:		Note type (difficulty)
@@ -72,83 +86,115 @@ EOF proposed file format (revision 'H'):
 			4 bytes:	Note position (in milliseconds or delta ticks)
 			4 bytes:	Note length (in milliseconds or delta ticks)
 			1 byte:		Note flags
+		}
 
 	[VOCAL TRACK FORMAT]
 		4 bytes:	Number of lyrics
-		[varies:]	LYRIC CHUNK, for each lyric:
+		LYRIC CHUNK, for each lyric:
+		{
 *			2 bytes:	Lyric text string length
 *			[varies:]	Lyric text string
 			1 byte:		Note pitch
 			4 bytes:	Lyric position (in milliseconds or delta ticks)
 			4 bytes:	Lyric position (in milliseconds or delta ticks)
+		}
 
 		4 bytes:	Number of lyric phrases
-		[varies:]	LYRIC PHRASE CHUNK, for each lyric phrase
+		LYRIC PHRASE CHUNK, for each lyric phrase
+		{
 			4 bytes:	Start position of lyric phrase (in milliseconds or delta ticks)
 			4 bytes:	End position of lyric phrase (in milliseconds or delta ticks)
-			4 bytes:	Lyric phrase flags
+*			1 bytes:	Lyric phrase flags (8 flags should be enough, there aren't many phrase types)
+		}
 
 	[PRO GUITAR TRACK FORMAT]
 *		4 bytes:	Number of solo sections
-*		[varies:]	SOLO SECTION CHUNK, for each solo section
+*		SOLO SECTION CHUNK, for each solo section
+*		{
 *			4 bytes:	Start position of solo section (in milliseconds or delta ticks)
 *			4 bytes:	End position of solo section (in milliseconds or delta ticks)
+*		}
 
 *		4 bytes:	Number of star power sections
-*		[varies:]	STAR POWER CHUNK, for each star power section
+*		STAR POWER CHUNK, for each star power section
+*		{
 *			4 bytes:	Start position of star power section (in milliseconds or delta ticks)
 *			4 bytes:	End position of star power section (in milliseconds or delta ticks)
+*		}
+
+*		4 bytes:	Number of arpeggio sections
+*		ARPEGGIO CHUNK, for each arpeggio section
+*		{
+*			4 bytes:	Start position of the arpeggio section (in milliseconds or delta ticks)
+*			4 bytes:	End position of the arpeggio section (in milliseconds or delta ticks)
+*		}
 
 *		4 bytes:	Number of notes
-*		[varies:]	PRO GUITAR NOTE CHUNK, for each note
+*		PRO GUITAR NOTE CHUNK, for each note
+*		{
 *			2 bytes:	Note name string length
 *			[varies:]	Note name string
 *			1 byte:		Note type (difficulty)
-*			1 byte:		Note bitflag (fret on/off statuses)
-*			1 byte:		Fret 1 tab (signed char: -1=Not played, 0=Open strum, #=Fret #)
-*			1 byte:		Fret 2 tab (signed char: -1=Not played, 0=Open strum, #=Fret #)
-*			1 byte:		Fret 3 tab (signed char: -1=Not played, 0=Open strum, #=Fret #)
-*			1 byte:		Fret 4 tab (signed char: -1=Not played, 0=Open strum, #=Fret #)
-*			1 byte:		Fret 5 tab (signed char: -1=Not played, 0=Open strum, #=Fret #)
-*			1 byte:		Fret 6 tab (signed char: -1=Not played, 0=Open strum, #=Fret #)
+*			1 byte:		Note bitflag (string use statuses: set=played, reset=not played)
+*				*Bit 0 refers to string 1 (high E), bit 5 refers to string 6 (low E), consistent with guitar terminology
+*			1 byte:		Fret 1 tab (0=Open strum, #=Fret # pressed)
+*			1 byte:		Fret 2 tab (0=Open strum, #=Fret # pressed)
+*			1 byte:		Fret 3 tab (0=Open strum, #=Fret # pressed)
+*			1 byte:		Fret 4 tab (0=Open strum, #=Fret # pressed)
+*			1 byte:		Fret 5 tab (0=Open strum, #=Fret # pressed)
+*			1 byte:		Fret 6 tab (0=Open strum, #=Fret # pressed)
 *			4 bytes:	Note position (in milliseconds or delta ticks)
 *			4 bytes:	Note length (in milliseconds or delta ticks)
-*			1 byte:		Note flags
+*			4 byte:		Note flags (allow 32 flags for an unforsee-able number of techniques such as tapping, bending, etc)
+*		}
 
 	[KEYS TRACK FORMAT]
 *		4 bytes:	Number of solo sections
-*		[varies:]	Solo section chunk, for each solo section
+*		SOLO SECTION CHUNK, for each solo section
+*		{
 *			4 bytes:	Start position of solo section (in milliseconds or delta ticks)
 *			4 bytes:	End position of solo section (in milliseconds or delta ticks)
+*		}
 
 *		4 bytes:	Number of star power sections
-*		[varies:]	Star power chunk, for each star power section
+*		STAR POWER CHUNK, for each star power section
+*		{
 *			4 bytes:	Start position of star power section (in milliseconds or delta ticks)
 *			4 bytes:	End position of star power section (in milliseconds or delta ticks)
+*		}
 
 *		4 bytes:	Number of notes
-*		[varies:]	KEY NOTE CHUNK, for each note
+*		KEY NOTE CHUNK, for each note
+*		{
 *			2 bytes:	Chord name string length
 *			[varies:]	Chord name string
 *			1 byte:		Note type (difficulty)
 *			1 byte:		Number of keys played in this note/chord
-*			[varies:]	KEY CHORD CHUNK, for each key in the chord
+*			KEY CHORD CHUNK, for each key in the chord
+*			{
 *				1 byte:		Note number
 *				1 byte:		Note velocity
+*			}
 
 *			4 bytes:	Note position (in milliseconds or delta ticks)
 *			4 bytes:	Note length (in milliseconds or delta ticks)
 *			1 byte:		Note flags
+*		}
+}
 
 *1 bytes:	Number of bookmarks
-[varies:]	BOOKMARK CHUNK, for each of the bookmarks:
+BOOKMARK CHUNK, for each of the bookmarks:
+{
 	4 bytes:	Bookmark position (in milliseconds or delta ticks)
+}
 
 4 bytes:	Number of catalog entries
-[varies:]	FRET CATALOG CHUNK, for each catalog entry:
+FRET CATALOG CHUNK, for each catalog entry:
+{
 *	2 bytes:	Entry name string length
 *	[varies:]	Entry name string
 *	4 byte:		Track number (matching the track number in the track chunk)
 	1 byte:		Entry type (difficulty)
 	4 byte:		Start position of entry (in milliseconds or delta ticks)
 	4 byte:		End position of entry (in milliseconds or delta ticks)
+}
