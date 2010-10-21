@@ -65,15 +65,16 @@ DIALOG eof_settings_dialog[] =
 DIALOG eof_preferences_dialog[] =
 {
    /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc,    0,  48,  200, 140 + 64 + 32 + 20, 2,   23,  0,    0,      0,   0,   "Preferences",               NULL, NULL },
+   { d_agup_window_proc,    0,  48,  200, 140 + 64 + 32 + 40, 2,   23,  0,    0,      0,   0,   "Preferences",               NULL, NULL },
    { d_agup_check_proc, 16,  80, 128,  16, 2,   23,  0,    0, 1,   0,   "Inverted Notes",               NULL, NULL },
    { d_agup_check_proc, 16,  100, 128,  16, 2,   23,  0,    0, 1,   0,   "Lefty Mode",               NULL, NULL },
    { d_agup_check_proc, 16,  120, 128,  16, 2,   23,  0,    0, 1,   0,   "Note Auto-Adjust",               NULL, NULL },
+   { d_agup_check_proc, 16,  140, 160,  16, 2,   23,  0,    0, 1,   0,   "Import/Export MIDI TS",               NULL, NULL },
 
-   { d_agup_text_proc,   56, 104 + 40,  48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",            NULL, NULL },
-   { d_agup_list_proc,   43, 104 + 16 + 40,  110,  94,  2,   23,  0,    0,      0,   0,   eof_input_list, NULL, NULL },
-   { d_agup_button_proc, 16,  58 + 16 + 64 + 22 + 16 + 24 + 24 + 40, 68,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "OK",               NULL, NULL },
-   { d_agup_button_proc, 116, 58 + 16 + 64 + 22 + 16 + 24 + 24 + 40, 68,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+   { d_agup_text_proc,   56, 124 + 40,  48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",            NULL, NULL },
+   { d_agup_list_proc,   43, 124 + 16 + 40,  110,  94,  2,   23,  0,    0,      0,   0,   eof_input_list, NULL, NULL },
+   { d_agup_button_proc, 16,  58 + 16 + 64 + 22 + 16 + 24 + 24 + 60, 68,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "OK",               NULL, NULL },
+   { d_agup_button_proc, 116, 58 + 16 + 64 + 22 + 16 + 24 + 24 + 60, 68,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -846,13 +847,15 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[1].flags = eof_inverted_notes ? D_SELECTED : 0;
 	eof_preferences_dialog[2].flags = eof_lefty_mode ? D_SELECTED : 0;
 	eof_preferences_dialog[3].flags = eof_note_auto_adjust ? D_SELECTED : 0;
-	eof_preferences_dialog[5].d1 = eof_input_mode;
-	if(eof_popup_dialog(eof_preferences_dialog, 0) == 6)
-	{
+	eof_preferences_dialog[4].flags = eof_use_midi_ts ? D_SELECTED : 0;
+	eof_preferences_dialog[6].d1 = eof_input_mode;
+	if(eof_popup_dialog(eof_preferences_dialog, 0) == 7)
+	{	//If the user clicked OK
 		eof_inverted_notes = (eof_preferences_dialog[1].flags == D_SELECTED ? 1 : 0);
 		eof_lefty_mode = (eof_preferences_dialog[2].flags == D_SELECTED ? 1 : 0);
 		eof_note_auto_adjust = (eof_preferences_dialog[3].flags == D_SELECTED ? 1 : 0);
-		eof_input_mode = eof_preferences_dialog[5].d1;
+		eof_use_midi_ts = (eof_preferences_dialog[4].flags == D_SELECTED ? 1 : 0);
+		eof_input_mode = eof_preferences_dialog[6].d1;
 	}
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
