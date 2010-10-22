@@ -20,6 +20,7 @@ EOF proposed file format (revision 'H'):
 1 byte:		Eighth note HOPO (from Song Properties)
 
 *1 byte:	Timing format (0=Milliseconds,1=Deltas)
+*4 bytes:	Time division (only to be used if the timing format is "deltas", will probably be informational unless EOF changes the time division used)
 
 2 bytes:	Number of OGG profiles
 OGG PROFILE CHUNK, for each OGG profile:
@@ -27,6 +28,7 @@ OGG PROFILE CHUNK, for each OGG profile:
 *	2 bytes:	OGG file name string length
 	[varies:]	OGG file name string
 	4 bytes:	MIDI delay for this profile (milliseconds)
+*	1 byte:		OGG profile flags (such as whether the file was originally provided as an OGG or if it was re-encoded)
 }
 
 2 bytes:	Number of INI settings
@@ -53,6 +55,10 @@ TEXT EVENT CHUNK, for each text event:
 	4 bytes:	Associated beat number
 }
 
+*4 bytes:	Start position of preview audio (in milliseconds or delta ticks)
+*4 bytes:	End position of preview audio (in milliseconds or delta ticks)
+	*If the user has not defined the preview.ogg start and end points, these two values should be 0
+
 *4 bytes:	Number of tracks
 TRACK CHUNK, for each track:
 {
@@ -60,6 +66,7 @@ TRACK CHUNK, for each track:
 *	[varies:]	Track name string
 *	4 byte:		Track number (Matching macros such as EOF_TRACK_GUITAR)
 *	1 byte:		Track type (1=Guitar/Drum,3=Vocal,4=Pro Guitar,5=Pro Drum,6=Keys, ...)
+*	4 byte:		Track flags (ie. which difficulties are locked for editing)
 
 	[GUITAR/DRUM AND PRO DRUM TRACK FORMAT]
 *		4 bytes:	Number of solo sections
@@ -89,6 +96,8 @@ TRACK CHUNK, for each track:
 		}
 
 	[VOCAL TRACK FORMAT]
+*		1 byte:		Rock Band compliance flag (1=compliant, not using pitches outside the allowed range of [36,84])
+*		1 byte:		Tone set number (ie. 0=Grand Piano, 1=MIDI device, ...)
 		4 bytes:	Number of lyrics
 		LYRIC CHUNK, for each lyric:
 		{
@@ -108,6 +117,7 @@ TRACK CHUNK, for each track:
 		}
 
 	[PRO GUITAR TRACK FORMAT]
+*		1 byte:		Rock Band compliance flag (1=compliant, presumably that the chart doesn't use any fret higher than 17)
 *		4 bytes:	Number of solo sections
 *		SOLO SECTION CHUNK, for each solo section
 *		{
@@ -149,6 +159,8 @@ TRACK CHUNK, for each track:
 *		}
 
 	[KEYS TRACK FORMAT]
+*		1 byte:		Rock Band compliance flag (1=compliant, the chart doesn't use notes outside the currently unknown accepted range)
+*		1 byte:		Tone set number (ie. 0=Grand Piano, 1=MIDI device, ...)
 *		4 bytes:	Number of solo sections
 *		SOLO SECTION CHUNK, for each solo section
 *		{
@@ -169,6 +181,8 @@ TRACK CHUNK, for each track:
 *			2 bytes:	Chord name string length
 *			[varies:]	Chord name string
 *			1 byte:		Note type (difficulty)
+*			1 byte:		Chord hand (1=right hand- ie. melody, 2=left hand- ie. chords)
+				*Rock Band 3 won't support two hand keys tracks, so this would be a feature for other games such as Synthesia/Doremi Mania)
 *			1 byte:		Number of keys played in this note/chord
 *			KEY CHORD CHUNK, for each key in the chord
 *			{
