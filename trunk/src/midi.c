@@ -874,6 +874,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		lastdelta = 0;
 		for(i = 0; i < sp->text_events; i++)
 		{
+			if(sp->text_event[i]->beat >= sp->beats)
+			{	//If the text events are corrupted
+				break;	//Don't dereference the beat[] array in a way that could crash
+			}
 			delta = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
 
 			WriteVarLen(delta - lastdelta, fp);	//Write this note's relative delta time
