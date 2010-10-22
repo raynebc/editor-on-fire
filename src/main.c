@@ -275,7 +275,7 @@ unsigned long eof_put_porpos(int beat, float porpos, float offset)
 		}
 		if(cbeat >= 0)
 		{
-			return eof_song->beat[cbeat]->pos + ((float)eof_get_beat_length(eof_song, cbeat) * fporpos) / 100.0;
+			return ((eof_song->beat[cbeat]->fpos + ((float)eof_get_beat_length(eof_song, cbeat) * fporpos) / 100.0) + 0.5);	//Round up to nearest millisecond
 		}
 		return -1;
 	}
@@ -289,12 +289,12 @@ unsigned long eof_put_porpos(int beat, float porpos, float offset)
 		}
 		if(cbeat < eof_song->beats)
 		{
-			return eof_song->beat[cbeat]->pos + ((float)eof_get_beat_length(eof_song, cbeat) * fporpos) / 100.0;
+			return ((eof_song->beat[cbeat]->fpos + ((float)eof_get_beat_length(eof_song, cbeat) * fporpos) / 100.0) + 0.5);	//Round up to nearest millisecond
 		}
 		return -1;
 	}
 //	allegro_message("c - %f", fporpos);
-	return eof_song->beat[cbeat]->pos + ((float)eof_get_beat_length(eof_song, cbeat) * fporpos) / 100.0;
+	return ((eof_song->beat[cbeat]->fpos + ((float)eof_get_beat_length(eof_song, cbeat) * fporpos) / 100.0) + 0.5);	//Round up to nearest millisecond
 }
 
 void eof_reset_lyric_preview_lines(void)
