@@ -127,7 +127,7 @@ void DisplayID3Tag(char *filename)
 int FindID3Tag(struct ID3Tag *ptr)
 {
 	unsigned long tagpos=0;
-	char tagid[4]={'I','D','3',3};	//An ID3 tag will have this in the header
+	char tagid[3]={'I','D','3'};	//An ID3 tag will have this in the header
 	unsigned char header[10]={0};	//Used to store the ID3 tag header
 	unsigned char exheader[10]={0};	//The extended header is 6 bytes (plus 4 more if CRC is present)
 	unsigned long tagsize=0;
@@ -135,8 +135,8 @@ int FindID3Tag(struct ID3Tag *ptr)
 	if((ptr == NULL) || (ptr->fp == NULL))
 		return 0;	//Return failure
 
-	if(SearchPhrase(ptr->fp,ptr->tagend,&tagpos,tagid,4,1) == 1)	//Search for and seek to ID3 tag header
-	{
+	if((SearchPhrase(ptr->fp,ptr->tagend,&tagpos,tagid,3,1) == 1) && (tagpos == 0))
+	{	//Search for an ID3 tag header at the beginnning of the file and seek to it
 		if(ferror(ptr->fp))
 			return 0;	//Return failure upon file I/O error
 

@@ -475,29 +475,6 @@ unsigned long ConvertLRCTimestamp(char **ptr,int *errorstatus)
 	return sum;
 }
 
-char *RemoveLeadingZeroes(char *str)	//Allocate and return a string representing str without leading 0's
-{
-	unsigned int ctr=0;
-	char *temp=NULL;
-	size_t size=0;
-
-	assert_wrapper(str != NULL);	//This must not be NULL
-
-	if(str[0] != '\0')	//If passed string is at least one character long
-		while(1)
-		{
-			if((str[ctr] == '0') && (str[ctr+1] != '\0'))	//If this char is '0' and the next character isn't NULL terminator
-				ctr++;	//increment index
-			else
-				break;	//if the next character was the NULL terminator, it would break from loop
-		}
-
-	size=strlen(&(str[ctr]));
-	temp=malloc_err(size+1);		//Allocate enough room to store truncated string AND a NULL terminator
-	strcpy(temp,&(str[ctr]));	//Copy input string, starting from past the leading zeroes
-	return temp;	//Return new string
-}
-
 void WriteLRCTimestamp(FILE *outf,char openchar,char closechar,unsigned long time)
 {	//Accepts the time given in milliseconds and writes a timestamp to specified FILE stream, using the specified characters at
 	//the beginning and end of the timestamp: ie. <##:##.##> or [##:##.##]

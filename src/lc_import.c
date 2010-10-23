@@ -7,6 +7,7 @@
 #include "foflc/UStar_parse.h"
 #include "foflc/LRC_parse.h"
 #include "foflc/ID3_parse.h"
+#include "foflc/SRT_parse.h"
 #include "song.h"
 #include "main.h"
 #include "lc_import.h"
@@ -131,6 +132,11 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 		case ID3_FORMAT:	//Load MP3 ID3 tag
 			inf=fopen_err(Lyrics.infilename,"rb");	//MP3 is a binary format
 			ID3_Load(inf);
+		break;
+
+		case SRT_FORMAT:	//Load SRT file
+			inf=fopen_err(Lyrics.infilename,"rt");	//SRT is a text format
+			SRT_Load(inf);
 		break;
 
 		default:
