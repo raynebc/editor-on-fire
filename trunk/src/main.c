@@ -2815,10 +2815,10 @@ int eof_initialize(int argc, char * argv[])
 	eof_filter_lyrics_files = ncdfs_filter_list_create();
 	if(!eof_filter_lyrics_files)
 	{
-		allegro_message("Could not create file list filter (*.txt, *.mid, *.rmi, *.rba, *.lrc, *.vl, *.kar, *.mp3)!");
+		allegro_message("Could not create file list filter (*.txt, *.mid, *.rmi, *.rba, *.lrc, *.vl, *.kar, *.mp3, *.srt)!");
 		return 0;
 	}
-	ncdfs_filter_list_add(eof_filter_lyrics_files, "txt;mid;rmi;rba;lrc;vl;kar;mp3", "Lyrics (*.txt,*.mid,*.rmi,*.rba,*.lrc,*.vl,*.kar,*.mp3)", 1);
+	ncdfs_filter_list_add(eof_filter_lyrics_files, "txt;mid;rmi;rba;lrc;vl;kar;mp3;srt", "Lyrics (.txt,.mid,.rmi,.rba,.lrc,.vl,.kar,.mp3,.srt)", 1);
 
 	eof_filter_exe_files = ncdfs_filter_list_create();
 	#ifdef ALLEGRO_WINDOWS

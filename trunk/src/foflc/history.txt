@@ -1,3 +1,8 @@
+Changelog: 2.34 to 2.35
+	Added support for importing/exporting SRT subtitle format
+	Corrected grouping logic regarding the tracking of lyric durations
+	Altered ID3 import logic to support all revisions of ID3v2 tags
+
 Changelog: 2.33 to 2.34
 	Changed the program executable's name to "foflc"
 	Fixed a bug with the MIDI import's lyric overlap correction that would cause a lyric that overlapped into a new line phrase to be discarded

@@ -11,6 +11,7 @@
 #include "UStar_parse.h"
 #include "LRC_parse.h"
 #include "ID3_parse.h"
+#include "SRT_parse.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -147,6 +148,8 @@ int main(int argc, char *argv[])
 				}
 				else if(strcasecmp(argv[ctr+1],"id3") == 0)
 					Lyrics.in_format=ID3_FORMAT;
+				else if(strcasecmp(argv[ctr+1],"srt") == 0)
+					Lyrics.in_format=SRT_FORMAT;
 				else
 					Input_failed(ctr+1,NULL);
 
@@ -323,6 +326,12 @@ int main(int argc, char *argv[])
 				}
 				Lyrics.out_format=ID3_FORMAT;
 				correct_extension=DuplicateString(".mp3");	//.mp3 is the correct extension for this file format
+			}
+			else if(strcasecmp(argv[ctr+1],"srt") == 0)	//-out srt output
+			{
+				Lyrics.out_format=SRT_FORMAT;
+				Lyrics.outfilename=argv[ctr+2];
+				correct_extension=DuplicateString(".srt");	//.srt is the correct extension for this file format
 			}
 			else	//Any other specified output format is invalid
 				Input_failed(ctr+1,NULL);
@@ -893,6 +902,11 @@ int main(int argc, char *argv[])
 			ID3_Load(inf);
 		break;
 
+		case SRT_FORMAT:	//Load SRT file
+			inf=fopen_err(Lyrics.infilename,"rt");	//SRT is a text format
+			SRT_Load(inf);
+		break;
+
 		default:
 			puts("Unexpected error in import switch\nAborting");
 			exit_wrapper(2);
@@ -1065,6 +1079,11 @@ int main(int argc, char *argv[])
 			Export_ID3(srcfile,outf);
 		break;
 
+		case SRT_FORMAT:	//Export as SRT subtitles
+			outf=fopen_err(Lyrics.outfilename,"wt");	//SRT is a text format
+			Export_SRT(outf);
+		break;
+
 		default:
 			puts("Unexpected error in export switch\nAborting");
 			exit_wrapper(4);
@@ -1184,7 +1203,7 @@ void DisplayHelp(void)
 //Describe general syntax and required parameters
 	DisplaySyntax();
 	puts("-The use of detect will halt a conversion specified by the other parameters");
-	puts("-Valid FORMATs are script,vl,midi,ustar,lrc,elrc,vrhythm,kar,skar or id3");
+	puts("-Valid FORMATs are script,vl,midi,ustar,lrc,elrc,vrhythm,kar,skar,id3 or srt");
 	puts("-infile is the name of the input file, whose FORMAT is optional");
 	puts("-outfile is the name of the file to create in the FORMAT preceding it");
 	puts("-If the input format is vrhythm, a source rhythm MIDI file (infile)");

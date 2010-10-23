@@ -49,13 +49,11 @@ Export functions are expected to:
 //
 //Global Macros- All relevant source/header files will include this header file to obtain these declarations
 //
-#define PROGVERSION "foflc2.34"
+#define PROGVERSION "foflc2.35"
 #define LYRIC_NOTE_ON 50
 	//Previously, if note #s 60-100 were used for Note On events for lyrics, FoF interpreted
 	//those notes to indicate playable instrument difficulties.  This was fixed, but I will
 	//continue to use this pitch to denote a pitchless lyric during MIDI export by default
-#define LRCTIMESTAMPMAXFIELDLENGTH 2
-	//Used to define the max length of the minutes, seconds and hundredths fields in LRC timestamps
 
 #define MINPITCH 36		//Harmonix's defined minimum pitch
 #define MAXPITCH 84		//Harmonix's defined maximum pitch
@@ -74,8 +72,9 @@ Export functions are expected to:
 #define PITCHED_LYRIC_FORMAT 9
 #define SKAR_FORMAT 10
 #define ID3_FORMAT 11
+#define SRT_FORMAT 12
 
-#define NUMBEROFLYRICFORMATS 11
+#define NUMBEROFLYRICFORMATS 12
 	//This defined number should be equal to the number of defined lyric macros above, for use with the LYRICFORMATNAMES[] array
 
 //#define NDEBUG		//This will disable the assert macros in the source file if defined
@@ -330,6 +329,8 @@ char *strcasestr_spec(char *str1,const char *str2);
 	//Performs a case INSENSITIVE search of str2 in str1, returning the character AFTER the match in str1 if it exists, else NULL
 char *ConvertNoteNum(unsigned char notenum);
 	//Takes a note number from 0 through 127 and returns a string representation of the note name, such as "C#-1" or "G9"
+char *RemoveLeadingZeroes(char *str);
+	//Allocate and return a string representing str without leading 0's
 
 
 //

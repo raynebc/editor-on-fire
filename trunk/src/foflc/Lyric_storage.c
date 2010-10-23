@@ -9,6 +9,7 @@
 #include "Midi_parse.h"
 #include "LRC_parse.h"
 #include "ID3_parse.h"
+#include "SRT_parse.h"
 
 #ifdef USEMEMWATCH
 #include <memwatch.h>
@@ -22,7 +23,7 @@ jmp_buf jumpbuffer;			//Used in the conditional compiling code to allow this pro
 							//in the event of an exception that would normally terminate the program
 jmp_buf FLjumpbuffer;		//This is used by FLC's internal logic to provide for exception handling (ie. in validating MIDI files with DetectLyricFormat())
 char useFLjumpbuffer=0;		//Boolean:  If nonzero, FLC's logic intercepts in exit_wrapper() regardless of whether EOF_BUILD is defined
-const char *LYRICFORMATNAMES[NUMBEROFLYRICFORMATS+1]={"UNKNOWN LYRIC TYPE","SCRIPT","VL","RB MIDI","UltraStar","LRC","Vocal Rhythm","ELRC","KAR","Pitched Lyrics","Soft Karaoke","ID3 Lyrics"};
+const char *LYRICFORMATNAMES[NUMBEROFLYRICFORMATS+1]={"UNKNOWN LYRIC TYPE","SCRIPT","VL","RB MIDI","UltraStar","LRC","Vocal Rhythm","ELRC","KAR","Pitched Lyrics","Soft Karaoke","ID3 Lyrics","SRT Subtitle"};
 
 
 
@@ -1060,7 +1061,9 @@ void PostProcessLyrics(void)
 				}
 
 				//Grouping was performed, amend the lyric line accordingly
-				pieceptr->duration+=temp->duration;	//Add duration
+//				pieceptr->duration+=temp->duration;	//Add duration
+//v2.35	Correct duration calculation for grouping
+				pieceptr->duration=temp->start+temp->duration-pieceptr->start;	//The new duration is the duration from the start of the current lyric to the end of the appended lyric
 
 				//Inherit these values
 				pieceptr->groupswithnext=temp->groupswithnext;
@@ -1981,11 +1984,6 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 				detectionlist->format=SCRIPT_FORMAT;
 				return detectionlist;
 			}
-			else
-			{
-				fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
-				continue;
-			}
 		}
 
 //Test for LRC
@@ -2011,6 +2009,36 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 					}
 
 					detectionlist->format=LRC_FORMAT;
+				}
+			}
+
+			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			continue;
+		}
+
+//Test for SRT
+		if(isdigit(temp3))
+		{	//This character is one of defined characters used to start an LRC timestamp, validate
+			errorcode=0;	//Reset this, as a failed Script match would set errorcode
+			temp=SeekNextSRTTimestamp(&(buffer[index]));	//Find first timestamp if one exists on this line
+			if(temp != NULL)	//If a timestamp is found
+			{
+				convertednum2=ConvertSRTTimestamp(&temp,&errorcode);
+				if(!errorcode)	//If the timestamp parsed correctly (valid SRT format)
+				{
+					temp2=SeekNextSRTTimestamp(temp);	//Look for a second timestamp on the same line
+					if(temp2 != NULL)	//If a second timestamp is found
+					{
+						convertednum2=ConvertSRTTimestamp(&temp2,&errorcode);
+						if(!errorcode)	//If the timestamp parsed correctly (valid ELRC format)
+						{
+							free(buffer);
+							fclose_err(inf);
+							detectionlist->format=SRT_FORMAT;
+							return detectionlist;
+						}
+					}
+
 				}
 			}
 
@@ -2264,6 +2292,7 @@ void EnumerateFormatDetectionList(struct Lyric_Format *detectionlist)
 			case ELRC_FORMAT:
 			case PITCHED_LYRIC_FORMAT:
 			case ID3_FORMAT:
+			case SRT_FORMAT:
 				if(lasttype == 1)
 				{
 					puts("Logic error:  A file cannot be both a MIDI format and a non MIDI format");
@@ -2524,4 +2553,27 @@ void WritePaddedString(FILE *outf,char *str,unsigned long num,unsigned char padd
 		fputc_err(padding,outf);	//Write padding
 		ctr++;						//increment counter
 	}
+}
+
+char *RemoveLeadingZeroes(char *str)	//Allocate and return a string representing str without leading 0's
+{
+	unsigned int ctr=0;
+	char *temp=NULL;
+	size_t size=0;
+
+	assert_wrapper(str != NULL);	//This must not be NULL
+
+	if(str[0] != '\0')	//If passed string is at least one character long
+		while(1)
+		{
+			if((str[ctr] == '0') && (str[ctr+1] != '\0'))	//If this char is '0' and the next character isn't NULL terminator
+				ctr++;	//increment index
+			else
+				break;	//if the next character was the NULL terminator, it would break from loop
+		}
+
+	size=strlen(&(str[ctr]));
+	temp=malloc_err(size+1);		//Allocate enough room to store truncated string AND a NULL terminator
+	strcpy(temp,&(str[ctr]));	//Copy input string, starting from past the leading zeroes
+	return temp;	//Return new string
 }
