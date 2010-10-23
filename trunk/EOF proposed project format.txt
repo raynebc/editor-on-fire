@@ -5,19 +5,44 @@ EOF proposed file format (revision 'H'):
 	8 bytes:	(padding)
 
 	SONG PROPERTIES:
-4 bytes:	File (chart) revision number
+4 bytes:	Project revision number
+*2 bytes:	Album string length
+*[varies]:	Album string
 2 bytes:	Artist string length
 [varies]:	Artist string
 2 bytes:	Title string length
 [varies]:	Title string
 2 bytes:	Frettist string length
 [varies]:	Frettist string
+*2 bytes:	Genre string length
+*[varies]:	Genre string
 2 bytes:	Year string length
 [varies]:	Year string
 2 bytes:	Loading Text string length
 [varies]:	Loading Text string
-1 byte:		Lyrics present (from Song Properties)
-1 byte:		Eighth note HOPO (from Song Properties)
+1 byte:		Boolean:  Lyrics present (from Song Properties)
+1 byte:		Boolean:  Eighth note HOPO (from Song Properties)
+*3 bytes:	Cassette color (8 bit intensity each for Red, Green and Blue)
+*1 byte:	Band difficulty level (0-6)
+*1 byte:	Bass difficulty level (0-6)
+*1 byte:	Drums difficulty level (0-6)
+*1 byte:	Guitar difficulty level (0-6)
+*1 byte:	Vocal difficulty level (0-6)
+	*FoFiX doesn't reportedly support a vocal difficulty value yet
+*1 byte:	Force FoFiX to use the chart's background.png as the background
+*1 byte:	HOPO frequency (0-5, requires the user's "Song HOPO Freq" FoFiX setting to be set to "Auto")
+*1 byte:	Icon ID string length
+*[varies]:	Icon ID string (The following are supportedly natively in FoFiX: rb1,rb2,rbdlc,rbtpk,gh1,gh2,gh2dlc,gh3,gh3dlc,gh80s,gha,ghm,ph1,ph2,ph3,ph4,phm.  Custom icon strings can be used in FoFiX.)
+*1 byte:	Boolean:  The song audio is a cover version
+*1 byte:	Boolean:  The chart is a tutorial and should be hidden during quickplay in FoFiX
+*1 byte:	Unlock ID string length
+*[varies]:	Unlock ID string (The tier this chart is in)
+*1 byte:	Unlock ID required string length
+*[varies]:	Unlock ID required string (The tier that needs to be finished for this chart to be unlocked)
+*1 byte:	Unlock text string length
+*[varies]:	Unlock text string (The text that FoFiX will display if this chart is not unlocked)
+*4 bytes:	Version number of the chart
+
 
 *1 byte:	Timing format (0=Milliseconds,1=Deltas)
 *4 bytes:	Time division (only to be used if the timing format is "deltas", will probably be informational unless EOF changes the time division used)
