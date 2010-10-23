@@ -1,11 +1,15 @@
 EOF proposed file format (revision 'H'):
 
-16 bytes:	File header:
-	8 bytes:	'E','O','F','S','O','N','H','\0'
-	8 bytes:	(padding)
+	FILE HEADER:
+8 bytes:	'E','O','F','S','O','N','H','\0'
+8 bytes:	(padding)
+
+	CHART PROPERTIES:
+4 bytes:	Project revision number
+*1 byte:	Timing format (0=Milliseconds,1=Deltas)
+*4 bytes:	Time division (only to be used if the timing format is "deltas", will probably be informational unless EOF changes the time division used)
 
 	SONG PROPERTIES:
-4 bytes:	Project revision number
 *2 bytes:	Album string length
 *[varies]:	Album string
 2 bytes:	Artist string length
@@ -41,11 +45,7 @@ EOF proposed file format (revision 'H'):
 *[varies]:	Unlock ID required string (The tier that needs to be finished for this chart to be unlocked)
 *1 byte:	Unlock text string length
 *[varies]:	Unlock text string (The text that FoFiX will display if this chart is not unlocked)
-*4 bytes:	Version number of the chart
-
-
-*1 byte:	Timing format (0=Milliseconds,1=Deltas)
-*4 bytes:	Time division (only to be used if the timing format is "deltas", will probably be informational unless EOF changes the time division used)
+*4 bytes:	User specified chart version number
 
 2 bytes:	Number of OGG profiles
 OGG PROFILE CHUNK, for each OGG profile:
@@ -170,14 +170,12 @@ TRACK CHUNK, for each track:
 *			2 bytes:	Note name string length
 *			[varies:]	Note name string
 *			1 byte:		Note type (difficulty)
-*			1 byte:		Note bitflag (string use statuses: set=played, reset=not played)
-*				*Bit 0 refers to string 1 (high E), bit 5 refers to string 6 (low E), consistent with guitar terminology
-*			1 byte:		Fret 1 tab (0=Open strum, #=Fret # pressed)
-*			1 byte:		Fret 2 tab (0=Open strum, #=Fret # pressed)
-*			1 byte:		Fret 3 tab (0=Open strum, #=Fret # pressed)
-*			1 byte:		Fret 4 tab (0=Open strum, #=Fret # pressed)
-*			1 byte:		Fret 5 tab (0=Open strum, #=Fret # pressed)
-*			1 byte:		Fret 6 tab (0=Open strum, #=Fret # pressed)
+*			2 bytes:	Note bitflag (string use statuses: set=played, reset=not played)
+!				*Bit 0 refers to string 1 (high E), bit 5 refers to string 6 (low E), consistent with guitar terminology
+*			FRET CHUNK, for each set bit in the guitar note bitflag
+*			{
+*				1 byte:		Fret # tab (0=Open strum, #=Fret # pressed)
+*			}
 *			4 bytes:	Note position (in milliseconds or delta ticks)
 *			4 bytes:	Note length (in milliseconds or delta ticks)
 *			4 byte:		Note flags (allow 32 flags for an unforsee-able number of techniques such as tapping, bending, etc)
