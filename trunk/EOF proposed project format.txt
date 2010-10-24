@@ -116,7 +116,7 @@ TRACK CHUNK, for each track:
 			1 byte:		Note bitflag (fret on/off statuses)
 			4 bytes:	Note position (in milliseconds or delta ticks)
 			4 bytes:	Note length (in milliseconds or delta ticks)
-			1 byte:		Note flags
+*			2 byte:		Note flags (allow for more flags, such as would be necessary for adding RB3 drum support before adding more lanes)
 		}
 
 	[VOCAL TRACK FORMAT]
@@ -130,6 +130,7 @@ TRACK CHUNK, for each track:
 			1 byte:		Note pitch
 			4 bytes:	Lyric position (in milliseconds or delta ticks)
 			4 bytes:	Lyric position (in milliseconds or delta ticks)
+*			1 byte:		Lyric flags
 		}
 
 		4 bytes:	Number of lyric phrases

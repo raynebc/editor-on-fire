@@ -3,6 +3,9 @@ EOF Version History
 
 1.7:
 
+Added Leading Silence option to Song menu. This can be used to add silence to
+the beginning of the loaded OGG.
+
 Fixed an issue where notes' statuses were not kept when they were auto-adjusted.
 
 Added time signature support. Time signatures will not be written to the MIDI
@@ -64,6 +67,9 @@ Added volume slider controls for the chart volume and each audio cue.
 
 Corrected the controller button defaults and conflict detection.
 
+Fixed a crash that could occur during MIDI export if a MIDI was imported and was
+longer than the audio file that was selected.
+
 Fixed a crash that could occur when canceling MIDI import.
 
 Fixed a crash that could occur parsing song.ini during MIDI import.
@@ -81,9 +87,6 @@ Fixed an issue where ] wouldn't work properly for lengthening lyrics.
 
 Fixed an issue where using the guitar strum input mode in PART VOCALS would
 destroy existing lyrics.
-
-Added Leading Silence option to Song menu. This can be used to add silence to
-the beginning of the loaded OGG.
 
 
 1.666:
