@@ -27,7 +27,7 @@ for use in FoF.
 Improved the MIDI import to be more efficient and to prepare for more
 comprehensive time signature support.
 
-Updated to latest version of FoFLC.
+Updated to version 2.35 of FoFLC.
 
 Made improvements to documentation and makefiles.
 

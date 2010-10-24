@@ -444,8 +444,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					}
 				}
 
-				if(j == EOF_TRACK_DRUM)
-				{	//Ensure that drum notes are not written with sustain
+				if((j == EOF_TRACK_DRUM) && (sp->track[j]->note[i]->type != EOF_NOTE_SPECIAL))
+				{	//Ensure that drum notes are not written with sustain (Unless they are BRE notes)
 					length = 1;
 				}
 				else
