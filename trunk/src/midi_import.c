@@ -711,9 +711,9 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 			lastppqn = curppqn;
 		}
 
-	//Update delta and realtime counters
+	//Update delta and realtime counters (the TS affects a beat's length in deltas, the tempo affects a beat's length in milliseconds)
 		beatlength = ((double)eof_work_midi->divisions * curden / 4.0);		//Determine the length of this beat in delta ticks
-		realtimepos += beatlength / eof_work_midi->divisions * (15000.0 / (60000000.0 / curppqn)) * curden;	//Add the realtime length of this beat to the time counter
+		realtimepos += (60000.0 / (60000000.0 / curppqn));	//Add the realtime length of this beat to the time counter
 		deltafpos += beatlength;	//Add the delta length of this beat to the delta counter
 		deltapos = deltafpos + 0.5;	//Round up to nearest delta tick
 		lastnum = curnum;
