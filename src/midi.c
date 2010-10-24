@@ -487,8 +487,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				}
 
 				/* write forced HOPO note off */
-				if((i + 1 >= sp->track[j]->notes) || !(sp->track[j]->note[i+1]->flags & EOF_NOTE_FLAG_F_HOPO))
-				{	//If this is the last note in the track or if the next note is not a forced HOPO on note
+//				if((i + 1 >= sp->track[j]->notes) || !(sp->track[j]->note[i+1]->flags & EOF_NOTE_FLAG_F_HOPO))	//If this is the last note in the track or if the next note is not a forced HOPO on note
+				if(sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO)
+				{	//thekiwimaddog indicated that Rock Band uses HOPO phrases per note/chord
 					if(eof_midi_note_status[midi_note_offset + 5])
 					{	//Only end a phrase marker if one is already in effect
 						eof_add_midi_event(sp->track[j]->note[i]->pos + sp->track[j]->note[i]->length, 0x80, midi_note_offset + 5);
@@ -496,14 +497,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				}
 
 				/* write forced non-HOPO note off */
-				else if((i + 1 >= sp->track[j]->notes) || !(sp->track[j]->note[i+1]->flags & EOF_NOTE_FLAG_NO_HOPO))
-				{	//If this is the lst note in the track or if the next note is not a forced HOPO off note
+//				else if((i + 1 >= sp->track[j]->notes) || !(sp->track[j]->note[i+1]->flags & EOF_NOTE_FLAG_NO_HOPO))	//If this is the lst note in the track or if the next note is not a forced HOPO off note
+				if(sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_NO_HOPO)
+				{	//thekiwimaddog indicated that Rock Band uses HOPO phrases per note/chord
 					if(eof_midi_note_status[midi_note_offset + 6])
 					{	//Only end a phrase marker if one is already in effect
 						eof_add_midi_event(sp->track[j]->note[i]->pos + sp->track[j]->note[i]->length, 0x80, midi_note_offset + 6);
 					}
 				}
-
 			}
 
 			/* fill in star power */
