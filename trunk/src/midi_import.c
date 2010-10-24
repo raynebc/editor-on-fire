@@ -182,58 +182,53 @@ static void eof_midi_import_add_text_event(EOF_IMPORT_MIDI_EVENT_LIST * events, 
 double eof_ConvertToRealTime(unsigned long absolutedelta,struct Tempo_change *anchorlist,EOF_MIDI_TS_LIST *tslist,unsigned long timedivision,unsigned long offset)
 {
 	struct Tempo_change *temp=anchorlist;	//Point to first link in list
-	double temptimer=0.0;	//Will be used to seek to appropriate beginning tempo change
-	unsigned long tempdelta=0;
-	double tempBPM=0.0;			//Stores BPM of current tempo change
-	unsigned int den=0;			//Stores the denominator of the current time signature
+	double time=0.0;
+	unsigned long reldelta=0;
+	double tstime=0.0;			//Stores the realtime position of the closest TS change before the specified realtime
+	unsigned long tsdelta=0;	//Stores the delta time position of the closest TS change before the specified realtime
+	unsigned int den=4;			//Stores the denominator of the closest TS change before the specified delta time (defaults to 4 as per MIDI specification)
 	unsigned long ctr=0;
 
-//Find the last time signature change before the target delta time
-	if((tslist == NULL) || (tslist->changes == 0))
-		den=4;				//As per MIDI specification, default to a time signature of 4/4 if no TS changes are present
-	else
-	{
+//Find the last time signature change at or before the target delta time
+	if((tslist != NULL) && (tslist->changes > 0))
+	{	//If there's at least one TS change
 		for(ctr=0;ctr < tslist->changes;ctr++)
 		{
-			if(absolutedelta >= tslist->change[ctr]->pos)	//If the delta time is enough to reach next tempo change
+			if(absolutedelta >= tslist->change[ctr]->pos)
+			{	//If the TS change is at or before the target delta time
 				den = tslist->change[ctr]->den;		//Store this time signature's denominator for use in the conversion
+				tstime = tslist->change[ctr]->realtime;		//Store the realtime position
+				tsdelta = tslist->change[ctr]->pos;			//Store the delta time position
+			}
 		}
 	}
 
 //Find the last tempo change before the target delta time
-	if(temp == NULL)
-	{
-		tempdelta=absolutedelta;
-		tempBPM=120.0;			//Default to a tempo of 120BPM if no tempo changes are present
+	while((temp->next != NULL) && (absolutedelta >= (temp->next)->delta))	//For each tempo change
+	{	//If the tempo change is at or before the target delta time
+		temp=temp->next;	//Advance to that time stamp
+	}
+
+//Find the latest tempo or TS change that occurs before the target delta position and use that event's timing for the conversion
+	if(tsdelta > temp->delta)
+	{	//If the TS change is closer to the target realtime, find the delta time relative from this event
+		reldelta=absolutedelta - tsdelta;	//Find the relative delta time from this TS change
+		time=tstime;						//Store the absolute realtime for the TS change
 	}
 	else
-	{
-		temptimer=temp->realtime;	//Start with the timestamp of the starting tempo change
-		tempBPM=temp->BPM;
-
-	//Find the real time of the specified delta time, which is relative from the defined starting timestamp
-		while((temp->next != NULL))
-		{		//Traverse tempo changes until absolutedelta is insufficient to reach the next tempo change
-				//or until there are no further tempo changes
-			if(absolutedelta >= (temp->next)->delta)	//If the delta time is enough to reach next tempo change
-			{
-				temp=temp->next;						//Advance to next tempo change
-				temptimer=temp->realtime;				//Set timer
-				tempBPM=temp->BPM;						//Set BPM
-			}
-			else
-				break;	//break from loop
-		}
-		tempdelta=absolutedelta-temp->delta;
+	{	//Find the delta time relative from the closest tempo change
+		reldelta=absolutedelta - temp->delta;	//Find the relative delta time from this tempo change
+		time=temp->realtime;					//Store the absolute realtime for the tempo change
 	}
 
+//reldelta is the amount of deltas we need to find a relative time for, and add to the absolute real time of the nearest preceding tempo/TS change
 //At this point, we have reached the tempo change that absolutedelta resides within, find the realtime
 //The updated theoretical conversion formula that takes the time signature into account is: deltas / (time division) * (60000.0 / (BPM * (TS denominator) / 4))
-	temptimer+=(double)tempdelta / (double)timedivision * ((double)60000.0 / (tempBPM * den / 4.0));
+	time+=(double)reldelta / (double)timedivision * ((double)60000.0 / (temp->BPM * den / 4.0));
 
 //The old conversion formula that doesn't take time signature into account
 //	temptimer+=(double)tempdelta / (double)timedivision * ((double)60000.0 / tempBPM);
-	return temptimer+offset;
+	return time+offset;
 }
 
 inline unsigned long eof_ConvertToRealTimeInt(unsigned long absolutedelta,struct Tempo_change *anchorlist,EOF_MIDI_TS_LIST *tslist,unsigned long timedivision,unsigned long offset)
@@ -661,14 +656,13 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 	/* second pass, create tempo map */
 	unsigned long deltapos = 0;		//Stores the ongoing delta time
 	double deltafpos = 0.0;			//Stores the ongoing delta time (with double floating precision)
-//	double realtimepos = sp->tags->ogg[0].midi_offset;	//Stores the ongoing real time (the first beat marker will be at the MIDI delay position)
 	double realtimepos = 0.0;		//Stores the ongoing real time (start at 0s, displace by the MIDI delay where appropriate)
-	unsigned lastnum=0,lastden=0;		//Stores the last applied time signature details
+	unsigned lastnum=4,lastden=4;	//Stores the last applied time signature details (default is 4/4)
 	unsigned curnum=4,curden=4;		//Stores the current time signature details (default is 4/4)
 	unsigned long lastppqn=0;		//Stores the last applied tempo information
-	unsigned long curppqn=500000;		//Stores the current tempo in PPQN (default is 120BPM)
+	unsigned long curppqn=500000;	//Stores the current tempo in PPQN (default is 120BPM)
 
-	unsigned long ctr;
+	unsigned long ctr,ctr2;
 	double beatlength;
 
 	while(deltapos <= last_delta_time)
@@ -704,11 +698,9 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 		sp->beat[sp->beats - 1]->pos = realtimepos + sp->tags->ogg[0].midi_offset + 0.5;	//Round up to nearest millisecond
 		sp->beat[sp->beats - 1]->midi_pos = deltapos;
 		sp->beat[sp->beats - 1]->ppqn = curppqn;
-		if(eof_use_midi_ts && ((lastnum != curnum) || (lastden != curden)))
-		{	//If the user opted to import TS changes, and this time signature is different than the last beat's time signature
+		if(eof_use_midi_ts && ((lastnum != curnum) || (lastden != curden) || (sp->beats - 1 == 0)))
+		{	//If the user opted to import TS changes, and this time signature is different than the last beat's time signature (or this is the first beat)
 			eof_apply_ts(curnum,curden,sp->beats - 1,sp,0);	//Set the TS flags for this beat
-			lastnum = curnum;
-			lastden = curden;
 		}
 
 	//Update anchor linked list
@@ -724,6 +716,32 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 		realtimepos += beatlength / eof_work_midi->divisions * (15000.0 / (60000000.0 / curppqn)) * curden;	//Add the realtime length of this beat to the time counter
 		deltafpos += beatlength;	//Add the delta length of this beat to the delta counter
 		deltapos = deltafpos + 0.5;	//Round up to nearest delta tick
+		lastnum = curnum;
+		lastden = curden;
+	}
+
+	double BPM=120.0;	//Assume a default tempo of 120BPM and TS of 4/4 at 0 deltas
+	realtimepos=0.0;
+	deltapos=0;
+	curden=lastden=4;
+	for(ctr = 0; ctr < eof_import_ts_changes[0]->changes; ctr++)
+	{	//For each TS change parsed from track 0
+		//Find the relevant tempo and nearest preceding beat's time stamp
+		for(ctr2 = 0; ctr2 < sp->beats; ctr2++)
+		{	//For each beat
+			if(sp->beat[ctr2]->midi_pos <= eof_import_ts_changes[0]->change[ctr]->pos)
+			{	//If this beat is at or before the target TS change
+				BPM = 60000000.0 / sp->beat[ctr2]->ppqn;	//Store the tempo
+				realtimepos = sp->beat[ctr2]->fpos;			//Store the realtime position
+				deltapos = sp->beat[ctr2]->midi_pos;		//Store the delta time position
+				eof_get_ts(NULL,&curden,ctr2);				//Find the TS denominator of this beat
+			}
+		}
+
+		//Store the TS change's realtime position, using the appropriate formula to find the time beyond the beat real time position if the TS change is not on a beat marker:
+		//time = deltas / (time division) * (60000.0 / (BPM * (TS denominator) / 4))
+		eof_import_ts_changes[0]->change[ctr]->realtime = (double)realtimepos + (eof_import_ts_changes[0]->change[ctr]->pos - deltapos) / eof_work_midi->divisions * (60000.0 / (BPM * lastden / 4.0));
+		lastden=curden;
 	}
 
 	/* third pass, create EOF notes */
