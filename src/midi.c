@@ -1096,8 +1096,6 @@ struct Tempo_change *eof_build_tempo_list(void)
 
 			lastppqn=eof_song->beat[ctr]->ppqn;	//Remember this ppqn
 			temp=eof_add_to_tempo_list(deltactr,eof_song->beat[ctr]->fpos,(double)60000000.0/lastppqn,list);
-//I'm leaving the deltas in this linked list as absolute, as it will make for quicker lookups
-//			deltactr=0;	//Clear delta counter
 
 			if(temp == NULL)
 			{
@@ -1152,40 +1150,52 @@ void eof_destroy_tempo_list(struct Tempo_change *ptr)
 
 unsigned long eof_ConvertToDeltaTime(double realtime,struct Tempo_change *anchorlist,EOF_MIDI_TS_LIST *tslist,unsigned long timedivision)
 {	//Uses the Tempo Changes list to calculate the absolute delta time of the specified realtime
-	struct Tempo_change *temp=anchorlist;	//Begin with first tempo change
-	unsigned int den=0;						//Stores the denominator of the current time signature
+	struct Tempo_change *temp=anchorlist;	//Stores the closest tempo change before the specified realtime
+	double tstime=0.0;						//Stores the realtime position of the closest TS change before the specified realtime
+	unsigned long tsdelta=0;				//Stores the delta time position of the closest TS change before the specified realtime
+	unsigned int den=4;						//Stores the denominator of the closest TS change before the specified realtime (defaults to 4 as per MIDI specification)
 	unsigned long delta=0;
-	double temptime=0.0;
+	double reltime=0.0;
 	unsigned long ctr=0;
 
 	assert_wrapper(temp != NULL);	//Ensure the tempomap is populated
 
-//Find the last time signature change before the specified real time value
-	if((tslist == NULL) || (tslist->changes == 0))
-		den=4;				//As per MIDI specification, default to a time signature of 4/4 if no TS changes are present
-	else
-	{
+//Find the last time signature change at or before the specified real time value
+	if((tslist != NULL) && (tslist->changes > 0))
+	{	//If there's at least one TS change
 		for(ctr=0;ctr < tslist->changes;ctr++)
 		{
-			if(realtime > tslist->change[ctr]->realtime)	//If the delta time is beyond the next tempo change, it's denominator will take effect in the timing conversion
+			if(realtime >= tslist->change[ctr]->realtime)
+			{	//If the TS change is at or before the target realtime
 				den = tslist->change[ctr]->den;				//Store this time signature's denominator for use in the conversion
+				tstime = tslist->change[ctr]->realtime;		//Store the realtime position
+				tsdelta = tslist->change[ctr]->pos;			//Store the delta time position
+			}
 		}
 	}
 
-//Seek to the latest tempo change at or before the specified real time value
-	while((temp->next != NULL) && (realtime >= (temp->next)->realtime))	//For each timestamp after the first
-	{	//If the starttime timestamp is equal to or greater than this timestamp,
+//Find the last tempo change at or before the specified real time value
+	while((temp->next != NULL) && (realtime >= (temp->next)->realtime))	//For each tempo change,
+	{	//If the tempo change is at or before the target realtime
 		temp=temp->next;	//Advance to that time stamp
-		delta=temp->delta;	//Store the absolute delta time for the anchor
 	}
 
-//Deltacounter is now the delta time of the latest tempo change the specified timestamp can reach
-	temptime=realtime - temp->realtime;	//Find the relative timestamp from this tempo change
+//Find the latest tempo or TS change that occurs before the target realtime position and use that event's timing for the conversion
+	if(tstime > temp->realtime)
+	{	//If the TS change is closer to the target realtime, find the delta time relative from this event
+		delta=tsdelta;				//Store the absolute delta time for this TS change
+		reltime=realtime - tstime;	//Find the relative timestamp from this TS change
+	}
+	else
+	{	//Find the delta time relative from the closest tempo change
+		delta=temp->delta;	//Store the absolute delta time for the anchor
+		reltime=realtime - temp->realtime;	//Find the relative timestamp from this tempo change
+	}
 
-//temptime is the amount of time we need to find a delta for, and add to deltacounter
+//reltime is the amount of time we need to find a relative delta for, and add to the absolute delta time of the nearest preceding tempo/TS change
 //By using the updated formula respecting time signature:	realtime = (delta / divisions) * (60000.0 / BPM) * TS_den/4;
 //The formula for delta is:		delta = realtime * divisions * BPM / 60000 * TS_den / 4
-	delta+=(unsigned long)((temptime * (double)timedivision * temp->BPM / 240000.0 * (double)den) + 0.5);
+	delta+=(unsigned long)((reltime * (double)timedivision * temp->BPM / 240000.0 * (double)den) + 0.5);
 
 //The old conversion formula that doesn't take time signature into account
 //By using NewCreature's formula:	realtime = (delta / divisions) * (60000.0 / bpm)
@@ -1333,8 +1343,11 @@ void eof_destroy_ts_list(EOF_MIDI_TS_LIST *ptr)
 EOF_MIDI_TS_LIST *eof_build_ts_list(struct Tempo_change *anchorlist)
 {
 	unsigned long ctr;
-	unsigned num=4,den=4;
+	unsigned num=4,den=4;			//Stores the current time signature
 	EOF_MIDI_TS_LIST * tslist=NULL;
+	unsigned long deltapos = 0;		//Stores the ongoing delta time
+	double deltafpos = 0.0;			//Stores the ongoing delta time (with double floating precision)
+	double beatlength = 0.0;		//Stores the current beat's length in deltas
 
 	if((eof_song == NULL) || (eof_song->beats <= 0))
 		return NULL;
@@ -1342,21 +1355,17 @@ EOF_MIDI_TS_LIST *eof_build_ts_list(struct Tempo_change *anchorlist)
 	if(tslist == NULL)
 		return NULL;
 
-	eof_get_ts(&num,&den,0);	//Get the first beat marker's time signature (if defined)
-	eof_midi_add_ts_realtime(tslist, eof_song->beat[0]->fpos, num, den, 0);	//Store the first beat marker's time signature
-
-	for(ctr=1;ctr < eof_song->beats;ctr++)
-	{	//For each beat (starting with the second, since the first beat's TS was already written above, or 4/4 if the first beat had no TS)
+	for(ctr=0;ctr < eof_song->beats;ctr++)
+	{	//For each beat, create a list of Time Signature changes and store the appropriate delta position of each
 		if(eof_get_ts(&num,&den,ctr) == 1)
 		{	//If a time signature exists on this beat
 			eof_midi_add_ts_realtime(tslist, eof_song->beat[ctr]->fpos, num, den, 0);	//Store the beat marker's time signature
+			tslist->change[tslist->changes-1]->pos = deltapos;	//Store the time signature's position in deltas
 		}
-	}
 
-//Using each beat marker's real time, calculate the delta times
-	for(ctr = 0; ctr < tslist->changes ; ctr++)
-	{	//For each beat marker
-		tslist->change[ctr]->pos = eof_ConvertToDeltaTime(tslist->change[ctr]->realtime,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
+		beatlength = ((double)EOF_DEFAULT_TIME_DIVISION * den / 4.0);		//Determine the length of this beat in deltas
+		deltafpos += beatlength;	//Add the delta length of this beat to the delta counter
+		deltapos = deltafpos + 0.5;	//Round up to nearest delta
 	}
 
 	return tslist;
