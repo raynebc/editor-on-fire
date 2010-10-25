@@ -27,12 +27,15 @@
 #define EOF_TRACK_VOCALS      5
 #define EOF_TRACK_MAX         5
 
-#define EOF_NOTE_FLAG_HOPO     1
-#define EOF_NOTE_FLAG_SP       2
-#define EOF_NOTE_FLAG_CRAZY    4	//This flag will represent overlap allowed for guitar tracks
-#define EOF_NOTE_FLAG_DBASS    4	//This flag will represent Expert+ bass drum for the drum track
-#define EOF_NOTE_FLAG_F_HOPO   8
-#define EOF_NOTE_FLAG_NO_HOPO 16
+#define EOF_NOTE_FLAG_HOPO       1
+#define EOF_NOTE_FLAG_SP         2
+#define EOF_NOTE_FLAG_CRAZY      4	//This flag will represent overlap allowed for guitar tracks
+#define EOF_NOTE_FLAG_DBASS      4	//This flag will represent Expert+ bass drum for the drum track
+#define EOF_NOTE_FLAG_F_HOPO     8
+#define EOF_NOTE_FLAG_NO_HOPO   16
+#define EOF_NOTE_FLAG_Y_CYMBAL  32	//This flag represents a yellow note charted as a RB3 Pro style cymbal
+#define EOF_NOTE_FLAG_B_CYMBAL  64	//This flag represents a blue note charted as a RB3 Pro style cymbal
+#define EOF_NOTE_FLAG_G_CYMBAL 128	//This flag represents a green note charted as a RB3 Pro style cymbal
 
 #define EOF_MAX_BEATS 32768
 

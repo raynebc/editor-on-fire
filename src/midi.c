@@ -322,6 +322,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	char correctlyrics = 0;					//If nonzero, logic will be performed to correct the pitchless lyrics to have a pound character and have a generic pitch note
 	char correctphrases = 0;				//If nonzero, logic will be performed to add missing lyric phrases to ensure all lyrics (except vocal percussion notes) are encompassed within a lyric phrase
 	unsigned long length;					//Used to cap drum notes
+	char prodrums = 0;						//Tracks whether the drum track being written includes Pro drum notation
 	char expertplus = 0;					//Tracks whether an expert+.mid track should be created to hold the Expert+ drum track
 	char expertpluswritten = 0;				//Tracks whether an expert+.mid track has been written
 	char trackctr;							//Used in the temp data creation to handle Expert+
@@ -356,6 +357,20 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			/* clear MIDI events list */
 			eof_clear_midi_events();
 			memset(eof_midi_note_status,0,sizeof(eof_midi_note_status));	//Clear note status array
+
+//Detect whether Pro drum notation is being used
+//Pro drum notation is that if a green, yellow or blue drum note is NOT to be marked as a cymbal,
+//it must be marked with the appropriate MIDI note, otherwise the note defaults as a cymbal
+			for(i = 0, prodrums = 0; i < sp->track[j]->notes; i++)
+			{
+				if(	((sp->track[j]->note[i]->note & 1) && ((sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_G_CYMBAL))) ||
+					((sp->track[j]->note[i]->note & 4) && ((sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_Y_CYMBAL))) ||
+					((sp->track[j]->note[i]->note & 8) && ((sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_B_CYMBAL))))
+				{	//If this note contains a green, yellow or blue drum marked with pro drum notation
+					prodrums = 1;
+					break;
+				}
+			}
 
 			/* write the MTrk MIDI data to a temp file
 	   		use size of the file as the MTrk header length */
@@ -393,6 +408,13 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				/* write green note */
 				if(sp->track[j]->note[i]->note & 1)
 				{
+					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_note_pos(sp->track[j],i,EOF_NOTE_FLAG_G_CYMBAL))
+					{	//If pro drum notation is in effect and no more green drum notes at this note's position are marked as cymbals
+						if(eof_midi_note_status[RB3_DRUM_GREEN_FORCE] == 0)
+						{	//Write a pro green drum marker if one isn't already in effect
+							eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, RB3_DRUM_GREEN_FORCE);
+						}
+					}
 					if((j == EOF_TRACK_DRUM) && (sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_DBASS))
 					{	//If the track being written is PART DRUMS, and this note is marked for Expert+ double bass
 						eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, 95);
@@ -411,12 +433,26 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				/* write yellow note */
 				if(sp->track[j]->note[i]->note & 4)
 				{
+					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_note_pos(sp->track[j],i,EOF_NOTE_FLAG_Y_CYMBAL))
+					{	//If pro drum notation is in effect and no more yellow drum notes at this note's position are marked as cymbals
+						if(eof_midi_note_status[RB3_DRUM_YELLOW_FORCE] == 0)
+						{	//Write a pro yellow drum marker if one isn't already in effect
+							eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, RB3_DRUM_YELLOW_FORCE);
+						}
+					}
 					eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 2);
 				}
 
 				/* write blue note */
 				if(sp->track[j]->note[i]->note & 8)
 				{
+					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_note_pos(sp->track[j],i,EOF_NOTE_FLAG_B_CYMBAL))
+					{	//If pro drum notation is in effect and no more blue drum notes at this note's position are marked as cymbals
+						if(eof_midi_note_status[RB3_DRUM_BLUE_FORCE] == 0)
+						{	//Write a pro blue drum marker if one isn't already in effect
+							eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, RB3_DRUM_BLUE_FORCE);
+						}
+					}
 					eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 3);
 				}
 
@@ -456,27 +492,48 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				/* write green note off */
 				if(sp->track[j]->note[i]->note & 1)
 				{
+					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_note_pos(sp->track[j],i,EOF_NOTE_FLAG_G_CYMBAL))
+					{	//If pro drum notation is in effect and no more drum notes at this note's position are marked as cymbals
+						if(eof_midi_note_status[RB3_DRUM_GREEN_FORCE] == 1)
+						{	//End a pro green drum marker if one is in effect
+							eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, RB3_DRUM_GREEN_FORCE);
+						}
+					}
 					if((j == EOF_TRACK_DRUM) && (sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_DBASS))	//If the track being written is PART DRUMS, and this note is marked for Expert+ double bass
 						eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, 95);
 					else	//Otherwise end a normal green gem
 						eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, midi_note_offset + 0);
 				}
 
-				/* write yellow note off */
+				/* write red note off */
 				if(sp->track[j]->note[i]->note & 2)
 				{
 					eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, midi_note_offset + 1);
 				}
 
-				/* write red note off */
+				/* write yellow note off */
 				if(sp->track[j]->note[i]->note & 4)
 				{
+					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_note_pos(sp->track[j],i,EOF_NOTE_FLAG_Y_CYMBAL))
+					{	//If pro drum notation is in effect and no more drum notes at this note's position are marked as cymbals
+						if(eof_midi_note_status[RB3_DRUM_YELLOW_FORCE] == 1)
+						{	//End a pro yellow drum marker if one is in effect
+							eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, RB3_DRUM_YELLOW_FORCE);
+						}
+					}
 					eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, midi_note_offset + 2);
 				}
 
 				/* write blue note off */
 				if(sp->track[j]->note[i]->note & 8)
 				{
+					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_note_pos(sp->track[j],i,EOF_NOTE_FLAG_B_CYMBAL))
+					{	//If pro drum notation is in effect and no more blue drum notes at this note's position are marked as cymbals
+						if(eof_midi_note_status[RB3_DRUM_BLUE_FORCE] == 1)
+						{	//End a pro blue drum marker if one is in effect
+							eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, RB3_DRUM_BLUE_FORCE);
+						}
+					}
 					eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, midi_note_offset + 3);
 				}
 
@@ -1458,4 +1515,41 @@ int eof_apply_ts(unsigned num,unsigned den,int beatnum,EOF_SONG *sp,char undo)
 	}
 
 	return 1;
+}
+
+char eof_check_flags_at_note_pos(EOF_TRACK *tp,unsigned notenum,char flag)
+{
+	unsigned long ctr,ctr2;
+	char match = 0;
+
+	if((tp == NULL) || (notenum >= tp->notes))
+		return 0;
+
+//Find the first note at the specified note's position
+	for(ctr = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the track
+		if(tp->note[ctr]->pos == tp->note[notenum]->pos)
+		{	//If the note is after the specified note's position
+			match = 1;
+			break;
+		}
+	}
+
+//Check all notes at its position for the presence of the specified flag
+	if(match)
+	{
+		match = 0;
+		for(ctr2 = ctr; ctr2 < tp->notes; ctr2++)
+		{	//For each note starting with the one found above
+			if(tp->note[ctr2]->pos > tp->note[notenum]->pos)
+				break;	//If there are no more notes at that position, stop looking
+			if(tp->note[ctr2]->flags & flag)
+			{	//If the note has the specified flag
+				match = 1;
+				break;
+			}
+		}
+	}
+
+	return match;
 }

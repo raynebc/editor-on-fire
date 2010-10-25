@@ -190,8 +190,17 @@ int eof_note_draw(EOF_NOTE * np, int p)
 					ncol = colors[ctr];	//Assign the appropriate fret color
 				}
 
-				if((eof_selected_track == EOF_TRACK_DRUM) && (np->type == EOF_NOTE_AMAZING) && (np->flags & EOF_NOTE_FLAG_DBASS) && (mask == 1))
-					dcol2 = eof_color_red;	//If this is an Expert+ bass drum note, render it with a red dot
+				if((eof_selected_track == EOF_TRACK_DRUM))
+				{	//Drum track specific dot color logic
+					if((np->type == EOF_NOTE_AMAZING) && (np->flags & EOF_NOTE_FLAG_DBASS) && (mask == 1))
+						dcol2 = eof_color_red;	//If this is an Expert+ bass drum note, render it with a red dot
+					else if(((np->flags & EOF_NOTE_FLAG_G_CYMBAL) && (mask == 1)) || ((np->flags & EOF_NOTE_FLAG_Y_CYMBAL) && (mask == 4)) || ((np->flags & EOF_NOTE_FLAG_B_CYMBAL) && (mask == 8)))
+					{	//If this drum note is marked as a green, yellow or blue cymbal
+						dcol2 = ncol;			//Render the dot the same color as the note
+					}
+					else
+						dcol2 = dcol;			//Otherwise render with the expected dot color
+				}
 				else
 					dcol2 = dcol;			//Otherwise render with the expected dot color
 
@@ -218,8 +227,18 @@ int eof_note_draw(EOF_NOTE * np, int p)
 				{	//If the note is not star power
 					ncol = colors[ctr];	//Assign the appropriate fret color
 				}
-				if((eof_selected_track == EOF_TRACK_DRUM) && (np->type == EOF_NOTE_AMAZING) && (np->flags & EOF_NOTE_FLAG_DBASS) && (mask == 1))
-					dcol2 = eof_color_red;	//If this is an Expert+ bass drum note, render it with a red dot
+
+				if((eof_selected_track == EOF_TRACK_DRUM))
+				{	//Drum track specific dot color logic
+					if((np->type == EOF_NOTE_AMAZING) && (np->flags & EOF_NOTE_FLAG_DBASS) && (mask == 1))
+						dcol2 = eof_color_red;	//If this is an Expert+ bass drum note, render it with a red dot
+					else if(((np->flags & EOF_NOTE_FLAG_G_CYMBAL) && (mask == 1)) || ((np->flags & EOF_NOTE_FLAG_Y_CYMBAL) && (mask == 4)) || ((np->flags & EOF_NOTE_FLAG_B_CYMBAL) && (mask == 8)))
+					{	//If this drum note is marked as a green, yellow or blue cymbal
+						dcol2 = ncol;			//Render the dot the same color as the note
+					}
+					else
+						dcol2 = dcol;			//Otherwise render with the expected dot color
+				}
 				else
 					dcol2 = dcol;			//Otherwise render with the expected dot color
 

@@ -117,11 +117,11 @@ MENU eof_edit_selection_menu[] =
 MENU eof_edit_menu[] =
 {
     {"&Undo\tCtrl+Z", eof_menu_edit_undo, NULL, D_DISABLED, NULL},
-    {"&Redo\tCtrl+Y", eof_menu_edit_redo, NULL, D_DISABLED, NULL},
+    {"&Redo\tCtrl+R", eof_menu_edit_redo, NULL, D_DISABLED, NULL},
     {"", NULL, NULL, 0, NULL},
     {"&Copy\tCtrl+C", eof_menu_edit_copy, NULL, 0, NULL},
     {"&Paste\tCtrl+V", eof_menu_edit_paste, NULL, 0, NULL},
-    {"Old Paste\tCtrl+B", eof_menu_edit_old_paste, NULL, 0, NULL},
+    {"Old Paste\tCtrl+P", eof_menu_edit_old_paste, NULL, 0, NULL},
     {"Paste &From", NULL, eof_edit_paste_from_menu, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"&Grid Snap", NULL, eof_edit_snap_menu, 0, NULL},
