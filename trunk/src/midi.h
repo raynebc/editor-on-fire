@@ -7,6 +7,11 @@
 #define EOF_MAX_TS 100
 #define EOF_MAX_MIDI_EVENTS 65536
 
+//Rock Band 3 Pro drum markers (force as drum instead of cymbal)
+#define RB3_DRUM_YELLOW_FORCE 110
+#define RB3_DRUM_BLUE_FORCE 111
+#define RB3_DRUM_GREEN_FORCE 112
+
 typedef struct
 {
 
@@ -78,5 +83,10 @@ int eof_get_ts(unsigned *num,unsigned *den,int beatnum);
 int eof_apply_ts(unsigned num,unsigned den,int beatnum,EOF_SONG *sp,char undo);
 	//Validates and applies the specified time signature to the specified beat
 	//If undo is nonzero, then an undo state is made before any changes are made
+
+char eof_check_flags_at_note_pos(EOF_TRACK *tp,unsigned notenum,char flag);
+	//Checks all notes in the track at the specified note's timestamp (starting at number 0)
+	//for the specified flag.  If any of the notes have the flag set, nonzero is returned
+	//This is used for writing RB3 style pro drum phrases during MIDI export
 
 #endif

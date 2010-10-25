@@ -128,6 +128,26 @@ Note and Beat Editing:
         Cycle the HOPO status for the selected notes.
 
 
+    Ctrl+E:
+
+        Toggle the Expert+ double bass status for the selected green Expert drum notes.
+
+
+    Ctrl+G:
+
+        Toggle the Pro drum cymbal notation for selected green drum notes.
+
+
+    Ctrl+Y:
+
+        Toggle the Pro drum cymbal notation for selected yellow drum notes.
+
+
+    Ctrl+B:
+
+        Toggle the Pro drum cymbal notation for selected blue drum notes.
+
+
     Tab:
 
         Cycle through difficulties.
@@ -189,11 +209,6 @@ Miscellaneous Controls:
     Ctrl+I:
 
         Invert the fretboard display.
-
-
-    Ctrl+R:
-
-        Toggle between normal Right handed or "lefty" mode for 3D display.
 
 
 EOF provides many useful functions which can be accessed through various menus and dialogs. Shortcuts keys are provided to access some of the more frequently used functions. This screen is not an exhaustive list of keyboard shortcuts. All menu functions with shortcuts will display that shortcut next to the name of the function in the menu.

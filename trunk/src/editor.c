@@ -611,24 +611,48 @@ void eof_read_editor_keys(void)
 		eof_menu_catalog_previous();
 		key[KEY_W] = 0;
 	}
-	if(key[KEY_E] && !KEY_EITHER_CTRL)
+	if(key[KEY_E])
 	{
-		eof_menu_catalog_next();
+		if(KEY_EITHER_CTRL)
+		{	//CTRL+E will toggle Expert+ double bass drum notation
+			eof_menu_note_toggle_double_bass();
+		}
+		else
+		{	//Otherwise E will cycle to the next catalog entry
+			eof_menu_catalog_next();
+		}
 		key[KEY_E] = 0;
 	}
 
 	if(key[KEY_G])
 	{
-		if(eof_snap_mode == EOF_SNAP_OFF)
-		{
-			eof_snap_mode = eof_last_snap_mode;
+		if(KEY_EITHER_CTRL)
+		{	//CTRL+G will toggle Pro green cymbal notation
+			eof_menu_note_toggle_rb3_cymbal_green();
 		}
 		else
-		{
-			eof_last_snap_mode = eof_snap_mode;
-			eof_snap_mode = EOF_SNAP_OFF;
+		{	//Otherwise G will toggle grid snap
+			if(eof_snap_mode == EOF_SNAP_OFF)
+			{
+				eof_snap_mode = eof_last_snap_mode;
+			}
+			else
+			{
+				eof_last_snap_mode = eof_snap_mode;
+				eof_snap_mode = EOF_SNAP_OFF;
+			}
 		}
 		key[KEY_G] = 0;
+	}
+	if(key[KEY_Y] && KEY_EITHER_CTRL)
+	{	//CTRL+Y will toggle Pro yellow cymbal notation
+		eof_menu_note_toggle_rb3_cymbal_yellow();
+		key[KEY_Y] = 0;
+	}
+	if(key[KEY_B] && KEY_EITHER_CTRL)
+	{	//CTRL+B will toggle Pro blue cymbal notation
+		eof_menu_note_toggle_rb3_cymbal_blue();
+		key[KEY_B] = 0;
 	}
 
 	if(eof_music_paused)
@@ -1168,7 +1192,7 @@ void eof_read_editor_keys(void)
 	if(KEY_EITHER_CTRL && key[KEY_A] && eof_music_paused && !eof_music_catalog_playback)
 	{
 		eof_menu_edit_select_all();
-		key[KEY_E] = 0;
+		key[KEY_A] = 0;
 	}
 
 	if(key[KEY_L])
@@ -1890,10 +1914,10 @@ void eof_read_editor_keys(void)
 				eof_menu_edit_paste();
 				key[KEY_V] = 0;
 			}
-			if(KEY_EITHER_CTRL && key[KEY_B])
-			{
+			if(KEY_EITHER_CTRL && key[KEY_P])
+			{	//CTRL+P is "Old Paste"
 				eof_menu_edit_old_paste();
-				key[KEY_B] = 0;
+				key[KEY_P] = 0;
 			}
 			if(key[KEY_F5])
 			{
@@ -3740,7 +3764,7 @@ void eof_vocal_editor_logic(void)
 			{
 				eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 1);
 			}
-			if(key[KEY_P])
+			if(key[KEY_P] && !KEY_EITHER_CTRL)
 			{
 				if(eof_pen_lyric.note != eof_last_tone)
 				{

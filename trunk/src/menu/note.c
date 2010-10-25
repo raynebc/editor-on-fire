@@ -85,7 +85,10 @@ MENU eof_note_menu[] =
     {"Delete\tDel", eof_menu_note_delete, NULL, 0, NULL},
     {"Display semitones as flat", eof_display_flats_menu, NULL, 0, NULL},
     {"&Freestyle", NULL, eof_note_freestyle_menu, 0, NULL},
-    {"Toggle &Expert+ bass drum", eof_menu_note_toggle_double_bass, NULL, 0, NULL},
+    {"Toggle &Expert+ bass drum\tCtrl+E", eof_menu_note_toggle_double_bass, NULL, 0, NULL},
+    {"Toggle Pro drum &Green cymbal\tCtrl+G", eof_menu_note_toggle_rb3_cymbal_green, NULL, 0, NULL},
+    {"Toggle Pro drum &Yellow cymbal\tCtrl+Y", eof_menu_note_toggle_rb3_cymbal_yellow, NULL, 0, NULL},
+    {"Toggle Pro drum &Blue cymbal\tCtrl+B", eof_menu_note_toggle_rb3_cymbal_blue, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -382,6 +385,9 @@ void eof_prepare_note_menu(void)
 			}
 
 			eof_note_menu[20].flags = D_DISABLED;	//Disable toggle Expert+ bass drum
+			eof_note_menu[21].flags = D_DISABLED;	//Disable toggle pro style green cymbal
+			eof_note_menu[22].flags = D_DISABLED;	//Disable toggle pro style yellow cymbal
+			eof_note_menu[23].flags = D_DISABLED;	//Disable toggle pro style blue cymbal
 		}
 		else
 		{	//PART VOCALS NOT SELECTED
@@ -412,12 +418,15 @@ void eof_prepare_note_menu(void)
 
 			/* toggle crazy , toggle Expert+ bass drum*/
 			if(eof_selected_track != EOF_TRACK_DRUM)
-			{
-				eof_note_menu[9].flags = 0;				//Enable toggle crazy when PART DRUMS is not active
+			{	//When PART DRUMS is not active
+				eof_note_menu[9].flags = 0;				//Enable toggle crazy
 			}
 			else
-			{
-				eof_note_menu[9].flags = D_DISABLED;	//Disable toggle crazy when PART DRUMS is active
+			{	//When PART DRUMS is active
+				eof_note_menu[9].flags = D_DISABLED;	//Disable toggle crazy
+				eof_note_menu[21].flags = 0;			//Enable toggle pro style green cymbal
+				eof_note_menu[22].flags = 0;			//Enable toggle pro style yellow cymbal
+				eof_note_menu[23].flags = 0;			//Enable toggle pro style blue cymbal
 			}
 
 			if((eof_selected_track == EOF_TRACK_DRUM) && (eof_note_type == EOF_NOTE_AMAZING))
@@ -712,6 +721,11 @@ int eof_menu_note_toggle_green(void)
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->track[eof_selected_track]->note[i]->type == eof_note_type))
 		{
 			eof_song->track[eof_selected_track]->note[i]->note ^= 1;
+			if(eof_selected_track == EOF_TRACK_DRUM)
+			{	//If green drum is being toggled on/off
+				eof_song->track[eof_selected_track]->note[i]->flags &= (~EOF_NOTE_FLAG_G_CYMBAL);	//Clear the Pro green cymbal status if it is set
+				eof_song->track[eof_selected_track]->note[i]->flags &= (~EOF_NOTE_FLAG_DBASS);		//Clear the Expert+ status if it is set
+			}
 		}
 	}
 	return 1;
@@ -750,6 +764,10 @@ int eof_menu_note_toggle_yellow(void)
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->track[eof_selected_track]->note[i]->type == eof_note_type))
 		{
 			eof_song->track[eof_selected_track]->note[i]->note ^= 4;
+			if(eof_selected_track == EOF_TRACK_DRUM)
+			{	//If yellow drum is being toggled on/off
+				eof_song->track[eof_selected_track]->note[i]->flags &= (~EOF_NOTE_FLAG_Y_CYMBAL);	//Clear the Pro yellow cymbal status if it is set
+			}
 		}
 	}
 	return 1;
@@ -769,6 +787,10 @@ int eof_menu_note_toggle_blue(void)
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->track[eof_selected_track]->note[i]->type == eof_note_type))
 		{
 			eof_song->track[eof_selected_track]->note[i]->note ^= 8;
+			if(eof_selected_track == EOF_TRACK_DRUM)
+			{	//If blue drum is being toggled on/off
+				eof_song->track[eof_selected_track]->note[i]->flags &= (~EOF_NOTE_FLAG_B_CYMBAL);	//Clear the Pro blue cymbal status if it is set
+			}
 		}
 	}
 	return 1;
@@ -833,7 +855,87 @@ int eof_menu_note_toggle_double_bass(void)
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				u = 1;
 			}
+			eof_song->track[eof_selected_track]->note[i]->flags &= (~EOF_NOTE_FLAG_G_CYMBAL);	//Clear the Pro green cymbal status if it is set
 			eof_song->track[eof_selected_track]->note[i]->flags ^= EOF_NOTE_FLAG_DBASS;
+		}
+	}
+	return 1;
+}
+
+int eof_menu_note_toggle_rb3_cymbal_green(void)
+{
+	int i;
+	int u = 0;
+
+	if(eof_selected_track != EOF_TRACK_DRUM)
+		return 1;	//Do not allow this function to run when PART DRUMS is not active
+
+	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
+	{
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			if(eof_song->track[eof_selected_track]->note[i]->note & 1)
+			{	//If this drum note is green
+				if(!u)
+				{	//Make a back up before changing the first note
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					u = 1;
+				}
+				eof_song->track[eof_selected_track]->note[i]->flags &= (~EOF_NOTE_FLAG_DBASS);	//Clear the Expert+ status if it is set
+				eof_song->track[eof_selected_track]->note[i]->flags ^= EOF_NOTE_FLAG_G_CYMBAL;
+			}
+		}
+	}
+	return 1;
+}
+
+int eof_menu_note_toggle_rb3_cymbal_yellow(void)
+{
+	int i;
+	int u = 0;
+
+	if(eof_selected_track != EOF_TRACK_DRUM)
+		return 1;	//Do not allow this function to run when PART DRUMS is not active
+
+	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
+	{
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			if(eof_song->track[eof_selected_track]->note[i]->note & 4)
+			{	//If this drum note is yellow
+				if(!u)
+				{	//Make a back up before changing the first note
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					u = 1;
+				}
+				eof_song->track[eof_selected_track]->note[i]->flags ^= EOF_NOTE_FLAG_Y_CYMBAL;
+			}
+		}
+	}
+	return 1;
+}
+
+int eof_menu_note_toggle_rb3_cymbal_blue(void)
+{
+	int i;
+	int u = 0;
+
+	if(eof_selected_track != EOF_TRACK_DRUM)
+		return 1;	//Do not allow this function to run when PART DRUMS is not active
+
+	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
+	{
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			if(eof_song->track[eof_selected_track]->note[i]->note & 8)
+			{	//If this drum note is blue
+				if(!u)
+				{	//Make a back up before changing the first note
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					u = 1;
+				}
+				eof_song->track[eof_selected_track]->note[i]->flags ^= EOF_NOTE_FLAG_B_CYMBAL;
+			}
 		}
 	}
 	return 1;

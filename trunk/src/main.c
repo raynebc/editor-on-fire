@@ -1418,10 +1418,10 @@ void eof_read_global_keys(void)
 		}
 
 		/* redo */
-		if(KEY_EITHER_CTRL && key[KEY_Y] && eof_redo_toggle)
+		if(KEY_EITHER_CTRL && key[KEY_R] && eof_redo_toggle)
 		{
 			eof_menu_edit_redo();
-			key[KEY_Y] = 0;
+			key[KEY_R] = 0;
 			eof_reset_lyric_preview_lines();	//Rebuild the preview lines
 		}
 
@@ -1433,12 +1433,13 @@ void eof_read_global_keys(void)
 		}
 
 		/* switch between normal and lefty 3D view */
+/*	Removed due to unlikeliness that this would need to be changed often enough to warrant a keyboard shortcut
 		if(KEY_EITHER_CTRL && key[KEY_R])
 		{
 			eof_lefty_mode = 1 - eof_lefty_mode;
 			key[KEY_R] = 0;
 		}
-
+*/
 		if(key[KEY_MINUS])
 		{
 			if(eof_av_delay > 0)
