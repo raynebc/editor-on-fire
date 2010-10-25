@@ -123,6 +123,10 @@ int eof_note_draw(EOF_NOTE * np, int p)
 	unsigned int mask;	//Used to mask out colors in the for loop
 	int radius,dotsize;
 
+//Since Expert+ double bass notation uses the same flag as crazy status, override the dot color for PART DRUMS
+	if(eof_selected_track == EOF_TRACK_DRUM)
+		dcol = eof_color_white;
+
 	if(eof_inverted_notes)
 	{
 		ychart[0] = eof_screen_layout.note_y[4];
