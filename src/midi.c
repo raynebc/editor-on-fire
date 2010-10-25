@@ -393,8 +393,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				/* write green note */
 				if(sp->track[j]->note[i]->note & 1)
 				{
-					if(sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_DBASS)	//If this is an Expert+ double bass note
-					{
+					if((j == EOF_TRACK_DRUM) && (sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_DBASS))
+					{	//If the track being written is PART DRUMS, and this note is marked for Expert+ double bass
 						eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, 95);
 						expertplus = 1;
 					}
@@ -456,7 +456,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				/* write green note off */
 				if(sp->track[j]->note[i]->note & 1)
 				{
-					if(sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_DBASS)	//If this is an Expert+ double bass note
+					if((j == EOF_TRACK_DRUM) && (sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_DBASS))	//If the track being written is PART DRUMS, and this note is marked for Expert+ double bass
 						eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, 95);
 					else	//Otherwise end a normal green gem
 						eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, midi_note_offset + 0);

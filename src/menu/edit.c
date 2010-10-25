@@ -1172,6 +1172,7 @@ int eof_menu_edit_copy(void)
 		allegro_message("Clipboard error!");
 		return 1;
 	}
+	pack_iputl(eof_selected_track, fp);	//Store the source track number
 	pack_iputl(copy_notes, fp);
 	pack_iputl(first_beat, fp);
 
@@ -1226,6 +1227,7 @@ int eof_menu_edit_paste(void)
 	EOF_EXTENDED_NOTE temp_note;
 	EOF_NOTE * new_note = NULL;
 	PACKFILE * fp;
+	int sourcetrack = 0;	//Will store the track that this clipboard data was from
 
 
 	/* open the file */
@@ -1240,6 +1242,7 @@ int eof_menu_edit_paste(void)
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
+	sourcetrack = pack_igetl(fp);	//Read the source track of the clipboard data
 	copy_notes = pack_igetl(fp);
 	first_beat = pack_igetl(fp);
 
@@ -1262,7 +1265,7 @@ int eof_menu_edit_paste(void)
 		}
 		temp_note.length = pack_igetl(fp);	//Read the note's length
 		temp_note.flags = pack_igetl(fp);	//Read the note's flags
-		eof_sanitize_note_flags(&temp_note.flags,eof_selected_track);	//Ensure the note flags are validated for the track being pasted into
+		eof_sanitize_note_flags(&temp_note.flags,eof_selected_track,sourcetrack);	//Ensure the note flags are validated for the track being pasted into
 
 		if(eof_music_pos + temp_note.pos + temp_note.length - eof_av_delay < eof_music_length)
 		{
@@ -1317,6 +1320,7 @@ int eof_menu_edit_old_paste(void)
 	PACKFILE * fp;
 	EOF_EXTENDED_NOTE temp_note;
 	EOF_NOTE * new_note = NULL;
+	int sourcetrack = 0;	//Will store the track that this clipboard data was from
 
 	fp = pack_fopen("eof.clipboard", "r");
 	if(!fp)
@@ -1326,6 +1330,7 @@ int eof_menu_edit_old_paste(void)
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 	memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+	sourcetrack = pack_igetl(fp);	//Read the source track of the clipboard data
 	copy_notes = pack_igetl(fp);
 	first_beat = pack_igetl(fp);
 	for(i = 0; i < copy_notes; i++)
@@ -1339,7 +1344,7 @@ int eof_menu_edit_old_paste(void)
 		temp_note.endbeat = pack_igetl(fp);	//Read the beat the note ends in
 		temp_note.length = pack_igetl(fp);	//Read the note's length
 		temp_note.flags = pack_igetl(fp);	//Read the note's flags
-		eof_sanitize_note_flags(&temp_note.flags,eof_selected_track);	//Ensure the note flags are validated for the track being pasted into
+		eof_sanitize_note_flags(&temp_note.flags,eof_selected_track,sourcetrack);	//Ensure the note flags are validated for the track being pasted into
 
 		if(eof_music_pos + temp_note.pos + temp_note.length - eof_av_delay < eof_music_length)
 		{
@@ -2660,25 +2665,30 @@ int eof_menu_edit_select_previous(void)
 	return 1;
 }
 
-void eof_sanitize_note_flags(char *flags,int tracknum)
+void eof_sanitize_note_flags(char *flags,int desttrack,int srctrack)
 {
 	if(flags == NULL)
 		return;
 
-	switch(tracknum)
+	switch(desttrack)
 	{
+/*	//Since EOF_NOTE_FLAG_DBASS and EOF_NOTE_FLAG_CRAZY now share the same status bit, comment this out until Expert+ is tracked on its own flag bit again
 		case EOF_TRACK_GUITAR:		//All guitar based tracks must not have the double bass flag set
 		case EOF_TRACK_BASS:
 		case EOF_TRACK_GUITAR_COOP:
 		case EOF_TRACK_RHYTHM:
 			*flags &= (~EOF_NOTE_FLAG_DBASS);	//Erase the double bass flag
 			break;
-
+*/
 		case EOF_TRACK_DRUM:	//The drum track must not have any HOPO or extended sustain flags set
 			*flags &= (~EOF_NOTE_FLAG_HOPO);	//Erase the temporary HOPO flag
-			*flags &= (~EOF_NOTE_FLAG_CRAZY);	//Erase the "crazy" note flag
 			*flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Erase the forced HOPO ON flag
 			*flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Erase the forced HOPO OFF flag
+		//The crazy flag is shared among the guitar and drum tracks because there weren't enough flags to give PART DRUMS pro charting support
+			if(srctrack != EOF_TRACK_DRUM)
+			{	//If the pasted notes are not from the drum track, erase the shared crazy status (Expert+ bass drum)
+				*flags &= (~EOF_NOTE_FLAG_CRAZY);	//Erase the "crazy" note flag
+			}
 			break;
 
 		default:	//Other tracks aren't accounted for yet

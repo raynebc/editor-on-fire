@@ -116,7 +116,7 @@ TRACK CHUNK, for each track:
 			1 byte:		Note bitflag (fret on/off statuses)
 			4 bytes:	Note position (in milliseconds or delta ticks)
 			4 bytes:	Note length (in milliseconds or delta ticks)
-*			2 byte:		Note flags (allow for more flags, such as would be necessary for adding RB3 drum support before adding more lanes)
+*			2 byte:		Note flags (allow for more flags, such as would be necessary for adding RB3 drum support before adding more lanes.  When this is implemented, ensure that Expert+ bass gets its own status again)
 		}
 
 	[VOCAL TRACK FORMAT]

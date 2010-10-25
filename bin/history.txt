@@ -3,6 +3,8 @@ EOF Version History
 
 1.7:
 
+Fixed an issue where forced HOPO on/off notes were saved to MIDI incorrectly.
+
 Added Leading Silence option to Song menu. This can be used to add silence to
 the beginning of the loaded OGG.
 
