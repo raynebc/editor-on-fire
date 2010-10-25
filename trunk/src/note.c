@@ -186,7 +186,7 @@ int eof_note_draw(EOF_NOTE * np, int p)
 					ncol = colors[ctr];	//Assign the appropriate fret color
 				}
 
-				if((np->type == EOF_NOTE_AMAZING) && (np->flags & EOF_NOTE_FLAG_DBASS) && (mask == 1))
+				if((eof_selected_track == EOF_TRACK_DRUM) && (np->type == EOF_NOTE_AMAZING) && (np->flags & EOF_NOTE_FLAG_DBASS) && (mask == 1))
 					dcol2 = eof_color_red;	//If this is an Expert+ bass drum note, render it with a red dot
 				else
 					dcol2 = dcol;			//Otherwise render with the expected dot color
@@ -214,7 +214,7 @@ int eof_note_draw(EOF_NOTE * np, int p)
 				{	//If the note is not star power
 					ncol = colors[ctr];	//Assign the appropriate fret color
 				}
-				if((np->type == EOF_NOTE_AMAZING) && (np->flags & EOF_NOTE_FLAG_DBASS) && (mask == 1))
+				if((eof_selected_track == EOF_TRACK_DRUM) && (np->type == EOF_NOTE_AMAZING) && (np->flags & EOF_NOTE_FLAG_DBASS) && (mask == 1))
 					dcol2 = eof_color_red;	//If this is an Expert+ bass drum note, render it with a red dot
 				else
 					dcol2 = dcol;			//Otherwise render with the expected dot color
