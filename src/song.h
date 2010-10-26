@@ -340,4 +340,16 @@ void eof_toggle_freestyle(EOF_VOCAL_TRACK * tp, unsigned long lyricnumber);
 int eof_song_tick_to_msec(EOF_SONG * sp, int track, unsigned long tick); // convert tick value to real time
 int eof_song_msec_to_tick(EOF_SONG * sp, int track, unsigned long msec); // convert real time value to tick
 
+char eof_check_flags_at_note_pos(EOF_TRACK *tp,unsigned notenum,char flag);
+	//Checks all notes in the track at the specified note's timestamp (numbered starting at number 0)
+	//for the specified flag.  If any of the notes have the flag set, nonzero is returned
+	//This is used for writing RB3 style pro drum phrases during MIDI export
+	//The track's notes array is expected to be sorted
+void eof_set_flags_at_note_pos(EOF_TRACK *tp,unsigned notenum,char flag,char operation);
+	//Sets or clears the specified flag on all notes at the specified note's timestamp (numbered starting at 0)
+	//If operation is 0, the specified flag is cleared on applicable notes
+	//If operation is 1, the specified flag is set on applicable notes
+	//If operation is 2, the specified flag is toggled on applicable notes
+	//The track's notes array is expected to be sorted
+
 #endif

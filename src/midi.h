@@ -84,9 +84,4 @@ int eof_apply_ts(unsigned num,unsigned den,int beatnum,EOF_SONG *sp,char undo);
 	//Validates and applies the specified time signature to the specified beat
 	//If undo is nonzero, then an undo state is made before any changes are made
 
-char eof_check_flags_at_note_pos(EOF_TRACK *tp,unsigned notenum,char flag);
-	//Checks all notes in the track at the specified note's timestamp (starting at number 0)
-	//for the specified flag.  If any of the notes have the flag set, nonzero is returned
-	//This is used for writing RB3 style pro drum phrases during MIDI export
-
 #endif

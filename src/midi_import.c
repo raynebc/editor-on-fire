@@ -757,6 +757,9 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 	unsigned long hopopos[4];
 	char hopotype[4];
 	int hopodiff;
+	unsigned long event_realtime;		//Store the delta time converted to realtime to avoid having to convert multiple times per note
+	char prodrums = 0;						//Tracks whether the drum track being written includes Pro drum notation
+
 	for(i = 0; i < tracks; i++)
 	{
 
@@ -793,6 +796,7 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 						set_window_title(ttit);
 					}
 
+					event_realtime = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 					eof_vocal_track_resize(sp->vocal_track, note_count[picked_track] + 1);
 					/* note on */
 					if(eof_import_events[i]->event[j]->type == 0x90)
@@ -800,14 +804,14 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 						/* lyric line indicator */
 						if(eof_import_events[i]->event[j]->d1 == 105)
 						{
-							sp->vocal_track->line[sp->vocal_track->lines].start_pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
+							sp->vocal_track->line[sp->vocal_track->lines].start_pos = event_realtime;
 							sp->vocal_track->line[sp->vocal_track->lines].flags=0;	//Init flags for this line as 0
 							last_105 = sp->vocal_track->lines;
 //							sp->vocal_track->lines++;
 						}
 						else if(eof_import_events[i]->event[j]->d1 == 106)
 						{
-							sp->vocal_track->line[sp->vocal_track->lines].start_pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
+							sp->vocal_track->line[sp->vocal_track->lines].start_pos = event_realtime;
 							sp->vocal_track->line[sp->vocal_track->lines].flags=0;	//Init flags for this line as 0
 							last_106 = sp->vocal_track->lines;
 //							sp->vocal_track->lines++;
@@ -815,13 +819,13 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 						/* overdrive */
 						else if(eof_import_events[i]->event[j]->d1 == 116)
 						{
-							overdrive_pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
+							overdrive_pos = event_realtime;
 						}
 						else if((eof_import_events[i]->event[j]->d1 == 96) || (eof_import_events[i]->event[j]->d1 == 97) || ((eof_import_events[i]->event[j]->d1 >= MINPITCH) && (eof_import_events[i]->event[j]->d1 <= MAXPITCH)))
 						{	//If this is a vocal percussion note (96 or 97) or if it is a valid vocal pitch
 							for(k = 0; k < note_count[picked_track]; k++)
 							{
-								if(sp->vocal_track->lyric[k]->pos == eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset))
+								if(sp->vocal_track->lyric[k]->pos == event_realtime)
 								{
 									break;
 								}
@@ -830,7 +834,7 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 							if(k == note_count[picked_track])
 							{
 								sp->vocal_track->lyric[note_count[picked_track]]->note = eof_import_events[i]->event[j]->d1;
-								sp->vocal_track->lyric[note_count[picked_track]]->pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
+								sp->vocal_track->lyric[note_count[picked_track]]->pos = event_realtime;
 								sp->vocal_track->lyric[note_count[picked_track]]->length = 100;
 								note_count[picked_track]++;
 							}
@@ -847,7 +851,7 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 						/* lyric line indicator */
 						if(eof_import_events[i]->event[j]->d1 == 105)
 						{
-							sp->vocal_track->line[last_105].end_pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
+							sp->vocal_track->line[last_105].end_pos = event_realtime;
 							sp->vocal_track->lines++;
 							if(overdrive_pos == sp->vocal_track->line[last_105].start_pos)
 							{
@@ -856,7 +860,7 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 						}
 						else if(eof_import_events[i]->event[j]->d1 == 106)
 						{
-							sp->vocal_track->line[last_106].end_pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
+							sp->vocal_track->line[last_106].end_pos = event_realtime;
 							sp->vocal_track->lines++;
 							if(overdrive_pos == sp->vocal_track->line[last_106].start_pos)
 							{
@@ -875,7 +879,7 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 						{
 							if(note_count[picked_track] > 0)
 							{
-								sp->vocal_track->lyric[note_count[picked_track] - 1]->length = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset) - sp->vocal_track->lyric[note_count[picked_track] - 1]->pos;
+								sp->vocal_track->lyric[note_count[picked_track] - 1]->length = event_realtime - sp->vocal_track->lyric[note_count[picked_track] - 1]->pos;
 							}
 						}
 					}
@@ -885,7 +889,7 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 					{
 						for(k = 0; k < note_count[picked_track]; k++)
 						{
-							if(sp->vocal_track->lyric[k]->pos == eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset))
+							if(sp->vocal_track->lyric[k]->pos == event_realtime)
 							{
 								break;
 							}
@@ -896,7 +900,7 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 						{
 							strcpy(sp->vocal_track->lyric[note_count[picked_track]]->text, eof_import_events[i]->event[j]->text);
 							sp->vocal_track->lyric[note_count[picked_track]]->note = 0;
-							sp->vocal_track->lyric[note_count[picked_track]]->pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
+							sp->vocal_track->lyric[note_count[picked_track]]->pos = event_realtime;
 							sp->vocal_track->lyric[note_count[picked_track]]->length = 100;
 							note_count[picked_track]++;
 						}
@@ -915,6 +919,33 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 			}
 			else
 			{
+//Detect whether Pro drum notation is being used
+//Pro drum notation is that if a green, yellow or blue drum note is NOT to be marked as a cymbal,
+//it must be marked with the appropriate MIDI note, otherwise the note defaults as a cymbal
+				char rb_pro_yellow = 0;					//Tracks the status of forced yellow pro drum notation
+				unsigned long rb_pro_yellow_pos = 0;	//Tracks the last start time of a forced yellow pro drum phrase
+				char rb_pro_blue = 0;					//Tracks the status of forced yellow pro drum notation
+				unsigned long rb_pro_blue_pos = 0;		//Tracks the last start time of a forced blue pro drum phrase
+				char rb_pro_green = 0;					//Tracks the status of forced yellow pro drum notation
+				unsigned long rb_pro_green_pos = 0;		//Tracks the last start time of a forced green pro drum phrase
+				EOF_NOTE * noteptr = NULL;
+				if(picked_track == EOF_TRACK_DRUM)
+				{
+					for(j = 0; j < eof_import_events[i]->events; j++)
+					{	//For each event in the track
+						if(eof_import_events[i]->event[j]->type == 0x90)
+						{	//If this is a Note on event
+							if(	(eof_import_events[i]->event[j]->d1 == RB3_DRUM_YELLOW_FORCE) ||
+								(eof_import_events[i]->event[j]->d1 == RB3_DRUM_BLUE_FORCE) ||
+								(eof_import_events[i]->event[j]->d1 == RB3_DRUM_GREEN_FORCE))
+							{	//If this is a pro drum marker
+									prodrums = 1;
+									break;
+							}
+						}
+					}
+				}
+
 				for(j = 0; j < eof_import_events[i]->events; j++)
 				{
 					if(key[KEY_ESC])
@@ -938,6 +969,7 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 						set_window_title(ttit);
 					}
 
+					event_realtime = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 					eof_track_resize(sp->track[picked_track], note_count[picked_track] + 1);
 					/* note on */
 					if(eof_import_events[i]->event[j]->type == 0x90)
@@ -979,78 +1011,114 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 							sp->track[picked_track]->note[note_count[picked_track]]->type = -1;
 						}
 
-						/* store forced HOPO marker, when the note off for this marker occurs, search for note with same
-						   position and apply it to that note */
+						/* store forced HOPO marker, when the note off for this marker occurs, search for note with same position and apply it to that note */
 						if(eof_import_events[i]->event[j]->d1 == 0x3C + 5)
 						{
-							hopopos[0] = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
+							hopopos[0] = event_realtime;
 							hopotype[0] = 0;
 						}
 						else if(eof_import_events[i]->event[j]->d1 == 0x48 + 5)
 						{
-							hopopos[1] = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
+							hopopos[1] = event_realtime;
 							hopotype[1] = 0;
 						}
 						else if(eof_import_events[i]->event[j]->d1 == 0x54 + 5)
 						{
-							hopopos[2] = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
+							hopopos[2] = event_realtime;
 							hopotype[2] = 0;
 						}
 						else if(eof_import_events[i]->event[j]->d1 == 0x60 + 5)
 						{
-							hopopos[3] = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
+							hopopos[3] = event_realtime;
 							hopotype[3] = 0;
 						}
 						else if(eof_import_events[i]->event[j]->d1 == 0x3C + 6)
 						{
-							hopopos[0] = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
+							hopopos[0] = event_realtime;
 							hopotype[0] = 1;
 						}
 						else if(eof_import_events[i]->event[j]->d1 == 0x48 + 6)
 						{
-							hopopos[1] = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
+							hopopos[1] = event_realtime;
 							hopotype[1] = 1;
 						}
 						else if(eof_import_events[i]->event[j]->d1 == 0x54 + 6)
 						{
-							hopopos[2] = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
+							hopopos[2] = event_realtime;
 							hopotype[2] = 1;
 						}
 						else if(eof_import_events[i]->event[j]->d1 == 0x60 + 6)
 						{
-							hopopos[3] = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
+							hopopos[3] = event_realtime;
 							hopotype[3] = 1;
 						}
 
 						/* star power and solos */
 						if((eof_import_events[i]->event[j]->d1 == 116) && (sp->track[picked_track]->star_power_paths < EOF_MAX_STAR_POWER))
 						{
-							sp->track[picked_track]->star_power_path[sp->track[picked_track]->star_power_paths].start_pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
+							sp->track[picked_track]->star_power_path[sp->track[picked_track]->star_power_paths].start_pos = event_realtime;
 						}
 						else if((eof_import_events[i]->event[j]->d1 == 103) && (sp->track[picked_track]->solos < EOF_MAX_SOLOS))
 						{
-							sp->track[picked_track]->solo[sp->track[picked_track]->solos].start_pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
+							sp->track[picked_track]->solo[sp->track[picked_track]->solos].start_pos = event_realtime;
+						}
+
+						/* rb pro markers */
+						if(prodrums)
+						{	//If the track was already found to have these markers
+							if(eof_import_events[i]->event[j]->d1 == RB3_DRUM_YELLOW_FORCE)
+							{
+								rb_pro_yellow = 1;
+								rb_pro_yellow_pos = event_realtime;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == RB3_DRUM_BLUE_FORCE)
+							{
+								rb_pro_blue = 1;
+								rb_pro_blue_pos = event_realtime;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == RB3_DRUM_GREEN_FORCE)
+							{
+								rb_pro_green = 1;
+								rb_pro_green_pos = event_realtime;
+							}
 						}
 
 						if(sp->track[picked_track]->note[note_count[picked_track]]->type != -1)
-						{
+						{	//If there was a note added
 							for(k = first_note; k < note_count[picked_track]; k++)
-							{
-								if((sp->track[picked_track]->note[k]->pos == eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset)) && (sp->track[picked_track]->note[k]->type == sp->track[picked_track]->note[note_count[picked_track]]->type))
+							{	//Traverse the note list in reverse to find the appropriate note to modify
+								if((sp->track[picked_track]->note[k]->pos == event_realtime) && (sp->track[picked_track]->note[k]->type == sp->track[picked_track]->note[note_count[picked_track]]->type))
 								{
 									break;
 								}
 							}
 							if(k == note_count[picked_track])
 							{
-								sp->track[picked_track]->note[note_count[picked_track]]->note = diff_chart[diff];
-								sp->track[picked_track]->note[note_count[picked_track]]->pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
-								sp->track[picked_track]->note[note_count[picked_track]]->length = 100;
+								noteptr = sp->track[picked_track]->note[note_count[picked_track]];	//Store this pointer
+								noteptr->note = diff_chart[diff];
+								noteptr->pos = event_realtime;
+								noteptr->length = 100;
 								note_count[picked_track]++;
 							}
 							else
 							{
-								sp->track[picked_track]->note[k]->note |= diff_chart[diff];
+								noteptr = sp->track[picked_track]->note[k];	//Store this pointer
+								noteptr->note |= diff_chart[diff];
+							}
+							if(prodrums && (picked_track == EOF_TRACK_DRUM) && (noteptr->type != EOF_NOTE_SPECIAL))
+							{	//If pro drum notation is in effect and this was a non BRE drum note
+								if(noteptr->note & 1)
+								{	//This is a green drum note, assume it is a cymbal unless a pro drum phrase indicates otherwise
+									noteptr->flags |= EOF_NOTE_FLAG_G_CYMBAL;		//Ensure the cymbal flag is set
+								}
+								if(noteptr->note & 4)
+								{	//This is a yellow drum note, assume it is a cymbal unless a pro drum phrase indicates otherwise
+									noteptr->flags |= EOF_NOTE_FLAG_Y_CYMBAL;		//Ensure the cymbal flag is set
+								}
+								if(noteptr->note & 8)
+								{	//This is a blue drum note, assume it is a cymbal unless a pro drum phrase indicates otherwise
+									noteptr->flags |= EOF_NOTE_FLAG_B_CYMBAL;		//Ensure the cymbal flag is set
+								}
 							}
 						}
 					}
@@ -1084,7 +1152,7 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 							diff = eof_import_events[i]->event[j]->d1 - 120;
 						}
 						else if((picked_track == EOF_TRACK_DRUM) && (eof_import_events[i]->event[j]->d1 == 95))
-						{
+						{	//Expert+ double bass note
 							sp->track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_AMAZING;
 							diff = eof_import_events[i]->event[j]->d1 - 0x60 + 1;	//Treat as gem 1 (bass drum)
 						}
@@ -1132,7 +1200,7 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 							for(k = note_count[picked_track] - 1; k >= first_note; k--)
 							{	//Check for each note that has been imported
 //								if((sp->track[picked_track]->note[k]->type == hopodiff) && (hopopos[hopodiff] == eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset)))
-								if((sp->track[picked_track]->note[k]->type == hopodiff) && (sp->track[picked_track]->note[k]->pos >= hopopos[hopodiff]) && (sp->track[picked_track]->note[k]->pos <= eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset)))
+								if((sp->track[picked_track]->note[k]->type == hopodiff) && (sp->track[picked_track]->note[k]->pos >= hopopos[hopodiff]) && (sp->track[picked_track]->note[k]->pos <= event_realtime))
 								{	//If the note is in the same difficulty as the HOPO phrase, and its timestamp falls between the HOPO On and HOPO Off marker
 									if(hopotype[hopodiff] == 0)
 									{
@@ -1147,14 +1215,52 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 							}
 						}
 
+						/* rb pro markers */
+						if(prodrums)
+						{	//If the track was already found to have these markers
+							if((eof_import_events[i]->event[j]->d1 == RB3_DRUM_YELLOW_FORCE) && rb_pro_yellow)
+							{	//If this event ends a pro yellow drum phrase
+								for(k = note_count[picked_track] - 1; k >= first_note; k--)
+								{	//Check for each note that has been imported for this track
+									if((sp->track[picked_track]->note[k]->pos >= rb_pro_yellow_pos) && (sp->track[picked_track]->note[k]->pos <= event_realtime))
+									{	//If the note is positioned within this pro yellow drum phrase
+										sp->track[picked_track]->note[k]->flags &= (~EOF_NOTE_FLAG_Y_CYMBAL);	//Clear the yellow cymbal marker on the note
+									}
+								}
+								rb_pro_yellow = 0;
+							}
+							else if((eof_import_events[i]->event[j]->d1 == RB3_DRUM_BLUE_FORCE) && rb_pro_blue)
+							{	//If this event ends a pro blue drum phrase
+								for(k = note_count[picked_track] - 1; k >= first_note; k--)
+								{	//Check for each note that has been imported for this track
+									if((sp->track[picked_track]->note[k]->pos >= rb_pro_blue_pos) && (sp->track[picked_track]->note[k]->pos <= event_realtime))
+									{	//If the note is positioned within this pro blue drum phrase
+										sp->track[picked_track]->note[k]->flags &= (~EOF_NOTE_FLAG_B_CYMBAL);	//Clear the blue cymbal marker on the note
+									}
+								}
+								rb_pro_blue = 0;
+							}
+							else if((eof_import_events[i]->event[j]->d1 == RB3_DRUM_GREEN_FORCE) && rb_pro_green)
+							{	//If this event ends a pro green drum phrase
+								for(k = note_count[picked_track] - 1; k >= first_note; k--)
+								{	//Check for each note that has been imported for this track
+									if((sp->track[picked_track]->note[k]->pos >= rb_pro_green_pos) && (sp->track[picked_track]->note[k]->pos <= event_realtime))
+									{	//If the note is positioned within this pro green drum phrase
+										sp->track[picked_track]->note[k]->flags &= (~EOF_NOTE_FLAG_G_CYMBAL);	//Clear the green cymbal marker on the note
+									}
+								}
+								rb_pro_green = 0;
+							}
+						}
+
 						if((eof_import_events[i]->event[j]->d1 == 116) && (sp->track[picked_track]->star_power_paths < EOF_MAX_STAR_POWER))
 						{
-							sp->track[picked_track]->star_power_path[sp->track[picked_track]->star_power_paths].end_pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset) - 1;
+							sp->track[picked_track]->star_power_path[sp->track[picked_track]->star_power_paths].end_pos = event_realtime - 1;
 							sp->track[picked_track]->star_power_paths++;
 						}
 						else if((eof_import_events[i]->event[j]->d1 == 103) && (sp->track[picked_track]->solos < EOF_MAX_SOLOS))
 						{
-							sp->track[picked_track]->solo[sp->track[picked_track]->solos].end_pos = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset) - 1;
+							sp->track[picked_track]->solo[sp->track[picked_track]->solos].end_pos = event_realtime - 1;
 							sp->track[picked_track]->solos++;
 						}
 						if((note_count[picked_track] > 0) && (sp->track[picked_track]->note[note_count[picked_track] - 1]->type != -1))
@@ -1164,7 +1270,7 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 								if((sp->track[picked_track]->note[k]->type == sp->track[picked_track]->note[note_count[picked_track]]->type) && (sp->track[picked_track]->note[k]->note & diff_chart[diff]))
 								{
 	//								allegro_message("break %d, %d, %d", k, sp->track[picked_track]->note[k]->note, sp->track[picked_track]->note[note_count[picked_track]]->note);
-									sp->track[picked_track]->note[k]->length = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset) - sp->track[picked_track]->note[k]->pos;
+									sp->track[picked_track]->note[k]->length = event_realtime - sp->track[picked_track]->note[k]->pos;
 									if(sp->track[picked_track]->note[k]->length <= 0)
 									{
 										sp->track[picked_track]->note[k]->length = 1;
@@ -1200,6 +1306,27 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 		if(lc <= 0)
 		{
 			eof_vocal_track_delete_line(sp->vocal_track, i);
+		}
+	}
+
+//Perform an additional check to ensure pro drum notations are correct
+	if(prodrums)
+	{
+		eof_track_sort_notes(sp->track[EOF_TRACK_DRUM]);	//Ensure this track is sorted
+		for(k = 0; k < sp->track[EOF_TRACK_DRUM]->notes; k++)
+		{	//For each note in the drum track
+			if((sp->track[EOF_TRACK_DRUM]->note[k]->flags & EOF_NOTE_FLAG_G_CYMBAL) == 0)
+			{	//If this green note has the cymbal marker cleared
+				eof_set_flags_at_note_pos(sp->track[EOF_TRACK_DRUM],k,EOF_NOTE_FLAG_G_CYMBAL,0);	//Ensure all drum notes at this position have the flag cleared
+			}
+			if((sp->track[EOF_TRACK_DRUM]->note[k]->flags & EOF_NOTE_FLAG_Y_CYMBAL) == 0)
+			{	//If this yellow note has the cymbal marker cleared
+				eof_set_flags_at_note_pos(sp->track[EOF_TRACK_DRUM],k,EOF_NOTE_FLAG_Y_CYMBAL,0);	//Ensure all drum notes at this position have the flag cleared
+			}
+			if((sp->track[EOF_TRACK_DRUM]->note[k]->flags & EOF_NOTE_FLAG_B_CYMBAL) == 0)
+			{	//If this blue note has the cymbal marker cleared
+				eof_set_flags_at_note_pos(sp->track[EOF_TRACK_DRUM],k,EOF_NOTE_FLAG_B_CYMBAL,0);	//Ensure all drum notes at this position have the flag cleared
+			}
 		}
 	}
 
