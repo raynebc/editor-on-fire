@@ -107,6 +107,7 @@ int qsort_helper3(const void * e1, const void * e2)
     EOF_MIDI_EVENT ** thing1 = (EOF_MIDI_EVENT **)e1;
     EOF_MIDI_EVENT ** thing2 = (EOF_MIDI_EVENT **)e2;
 
+	/* Chronological order takes precedence in sorting */
     if((*thing1)->pos < (*thing2)->pos)
 	{
         return -1;
@@ -116,13 +117,17 @@ int qsort_helper3(const void * e1, const void * e2)
         return 1;
     }
 
-	/* Logical order of lyric markings:  Overdrive on, lyric on, lyric, lyric pitch, ..., lyric off, overdrive off */
+	/* Logical order of lyric markings:  Overdrive on, solo on, lyric on, lyric, lyric pitch, ..., lyric off, solo off, overdrive off */
 	if(((*thing1)->type == 0x90) && ((*thing2)->type == 0x90))
 	{	//If both things are Note On events
 		if((*thing1)->note == 116)
 			return -1;	//Overdrive on written first
 		if((*thing2)->note == 116)
 			return 1;	//Overdrive on written first
+		if((*thing1)->note == 103)
+			return -1;	//Solo on written first
+		if((*thing2)->note == 103)
+			return 1;	//Solo on written first
 		if((*thing1)->note == 105)
 			return -1;	//Lyric phrase on written second
 		if((*thing2)->note == 105)
@@ -132,18 +137,24 @@ int qsort_helper3(const void * e1, const void * e2)
     /* put lyric events first, except for a lyric phrase on marker */
     if(((*thing1)->type == 0x05) && ((*thing2)->type == 0x90))
     {
-    	if(((*thing2)->note == 105) || ((*thing2)->note == 116))
+    	if(((*thing2)->note == 105) || ((*thing2)->note == 106))
 			return 1;	//lyric phrases should be written before the lyric event
 		else
 			return -1;
     }
     if(((*thing1)->type == 0x90) && ((*thing2)->type == 0x05))
     {
-    	if(((*thing1)->note == 105) || ((*thing1)->note == 116))
+    	if(((*thing1)->note == 105) || ((*thing1)->note == 106))
 			return -1;	//lyric phrase should be written before the lyric event
 		else
 			return 1;
     }
+
+	/* put pro drum phrase on markers before regular notes */
+	if(((*thing1)->type == 0x90) && (((*thing1)->note == RB3_DRUM_GREEN_FORCE) || ((*thing1)->note == RB3_DRUM_YELLOW_FORCE) || ((*thing1)->note == RB3_DRUM_BLUE_FORCE)))
+		return -1;
+	if(((*thing2)->type == 0x90) && (((*thing2)->note == RB3_DRUM_GREEN_FORCE) || ((*thing2)->note == RB3_DRUM_YELLOW_FORCE) || ((*thing2)->note == RB3_DRUM_BLUE_FORCE)))
+		return 1;
 
     /* put notes first and then markers, will numerically sort in this order:  lyric pitch, lyric off, overdrive off */
     if((*thing1)->note < (*thing2)->note)
@@ -363,10 +374,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 //it must be marked with the appropriate MIDI note, otherwise the note defaults as a cymbal
 			for(i = 0, prodrums = 0; i < sp->track[j]->notes; i++)
 			{
-				if(	((sp->track[j]->note[i]->note & 1) && ((sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_G_CYMBAL))) ||
-					((sp->track[j]->note[i]->note & 4) && ((sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_Y_CYMBAL))) ||
-					((sp->track[j]->note[i]->note & 8) && ((sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_B_CYMBAL))))
-				{	//If this note contains a green, yellow or blue drum marked with pro drum notation
+				if(	((sp->track[j]->note[i]->note & 4) && ((sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_Y_CYMBAL))) ||
+					((sp->track[j]->note[i]->note & 8) && ((sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_B_CYMBAL))) ||
+					((sp->track[j]->note[i]->note & 16) && ((sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_G_CYMBAL))))
+				{	//If this note contains a yellow, blue or purple (green in Rock Band) drum marked with pro drum notation
 					prodrums = 1;
 					break;
 				}
@@ -408,13 +419,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				/* write green note */
 				if(sp->track[j]->note[i]->note & 1)
 				{
-					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_note_pos(sp->track[j],i,EOF_NOTE_FLAG_G_CYMBAL))
-					{	//If pro drum notation is in effect and no more green drum notes at this note's position are marked as cymbals
-						if(eof_midi_note_status[RB3_DRUM_GREEN_FORCE] == 0)
-						{	//Write a pro green drum marker if one isn't already in effect
-							eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, RB3_DRUM_GREEN_FORCE);
-						}
-					}
 					if((j == EOF_TRACK_DRUM) && (sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_DBASS))
 					{	//If the track being written is PART DRUMS, and this note is marked for Expert+ double bass
 						eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, 95);
@@ -458,7 +462,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 				/* write purple note */
 				if(sp->track[j]->note[i]->note & 16)
-				{
+				{	//Note: EOF/FoF refer to this note color as purple/orange whereas Rock Band displays it as green
+					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_note_pos(sp->track[j],i,EOF_NOTE_FLAG_G_CYMBAL))
+					{	//If pro drum notation is in effect and no more green drum notes at this note's position are marked as cymbals
+						if(eof_midi_note_status[RB3_DRUM_GREEN_FORCE] == 0)
+						{	//Write a pro green drum marker if one isn't already in effect
+							eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, RB3_DRUM_GREEN_FORCE);
+						}
+					}
 					eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 4);
 				}
 
@@ -492,13 +503,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				/* write green note off */
 				if(sp->track[j]->note[i]->note & 1)
 				{
-					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_note_pos(sp->track[j],i,EOF_NOTE_FLAG_G_CYMBAL))
-					{	//If pro drum notation is in effect and no more drum notes at this note's position are marked as cymbals
-						if(eof_midi_note_status[RB3_DRUM_GREEN_FORCE] == 1)
-						{	//End a pro green drum marker if one is in effect
-							eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, RB3_DRUM_GREEN_FORCE);
-						}
-					}
 					if((j == EOF_TRACK_DRUM) && (sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_DBASS))	//If the track being written is PART DRUMS, and this note is marked for Expert+ double bass
 						eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, 95);
 					else	//Otherwise end a normal green gem
@@ -539,7 +543,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 				/* write purple note off */
 				if(sp->track[j]->note[i]->note & 16)
-				{
+				{	//Note: EOF/FoF refer to this note color as purple/orange whereas Rock Band displays it as green
+					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_note_pos(sp->track[j],i,EOF_NOTE_FLAG_G_CYMBAL))
+					{	//If pro drum notation is in effect and no more drum notes at this note's position are marked as cymbals
+						if(eof_midi_note_status[RB3_DRUM_GREEN_FORCE] == 1)
+						{	//End a pro green drum marker if one is in effect
+							eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, RB3_DRUM_GREEN_FORCE);
+						}
+					}
 					eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, midi_note_offset + 4);
 				}
 

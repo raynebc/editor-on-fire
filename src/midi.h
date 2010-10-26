@@ -8,9 +8,9 @@
 #define EOF_MAX_MIDI_EVENTS 65536
 
 //Rock Band 3 Pro drum markers (force as drum instead of cymbal)
-#define RB3_DRUM_YELLOW_FORCE 110
-#define RB3_DRUM_BLUE_FORCE 111
-#define RB3_DRUM_GREEN_FORCE 112
+#define RB3_DRUM_YELLOW_FORCE 110	//Force the 2nd pad as a cymbal
+#define RB3_DRUM_BLUE_FORCE 111		//Force the 3rd pad as a cymbal
+#define RB3_DRUM_GREEN_FORCE 112	//Force the 4th pad as a cymbal
 
 typedef struct
 {

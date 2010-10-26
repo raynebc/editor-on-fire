@@ -194,8 +194,8 @@ int eof_note_draw(EOF_NOTE * np, int p)
 				{	//Drum track specific dot color logic
 					if((np->type == EOF_NOTE_AMAZING) && (np->flags & EOF_NOTE_FLAG_DBASS) && (mask == 1))
 						dcol2 = eof_color_red;	//If this is an Expert+ bass drum note, render it with a red dot
-					else if(((np->flags & EOF_NOTE_FLAG_G_CYMBAL) && (mask == 1)) || ((np->flags & EOF_NOTE_FLAG_Y_CYMBAL) && (mask == 4)) || ((np->flags & EOF_NOTE_FLAG_B_CYMBAL) && (mask == 8)))
-					{	//If this drum note is marked as a green, yellow or blue cymbal
+					else if(((np->flags & EOF_NOTE_FLAG_Y_CYMBAL) && (mask == 4)) || ((np->flags & EOF_NOTE_FLAG_B_CYMBAL) && (mask == 8)) || ((np->flags & EOF_NOTE_FLAG_G_CYMBAL) && (mask == 16)))
+					{	//If this drum note is marked as a yellow, blue or green cymbal
 						dcol2 = ncol;			//Render the dot the same color as the note
 					}
 					else
@@ -232,8 +232,8 @@ int eof_note_draw(EOF_NOTE * np, int p)
 				{	//Drum track specific dot color logic
 					if((np->type == EOF_NOTE_AMAZING) && (np->flags & EOF_NOTE_FLAG_DBASS) && (mask == 1))
 						dcol2 = eof_color_red;	//If this is an Expert+ bass drum note, render it with a red dot
-					else if(((np->flags & EOF_NOTE_FLAG_G_CYMBAL) && (mask == 1)) || ((np->flags & EOF_NOTE_FLAG_Y_CYMBAL) && (mask == 4)) || ((np->flags & EOF_NOTE_FLAG_B_CYMBAL) && (mask == 8)))
-					{	//If this drum note is marked as a green, yellow or blue cymbal
+					else if(((np->flags & EOF_NOTE_FLAG_Y_CYMBAL) && (mask == 4)) || ((np->flags & EOF_NOTE_FLAG_B_CYMBAL) && (mask == 8)) || ((np->flags & EOF_NOTE_FLAG_G_CYMBAL) && (mask == 16)))
+					{	//If this drum note is marked as a yellow, blue or green cymbal
 						dcol2 = ncol;			//Render the dot the same color as the note
 					}
 					else

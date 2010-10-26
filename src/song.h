@@ -35,7 +35,7 @@
 #define EOF_NOTE_FLAG_NO_HOPO   16
 #define EOF_NOTE_FLAG_Y_CYMBAL  32	//This flag represents a yellow note charted as a RB3 Pro style cymbal
 #define EOF_NOTE_FLAG_B_CYMBAL  64	//This flag represents a blue note charted as a RB3 Pro style cymbal
-#define EOF_NOTE_FLAG_G_CYMBAL 128	//This flag represents a green note charted as a RB3 Pro style cymbal
+#define EOF_NOTE_FLAG_G_CYMBAL 128	//This flag represents a note charted as a RB3 Pro style green cymbal (pad 4)
 
 #define EOF_MAX_BEATS 32768
 

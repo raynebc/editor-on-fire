@@ -86,9 +86,9 @@ MENU eof_note_menu[] =
     {"Display semitones as flat", eof_display_flats_menu, NULL, 0, NULL},
     {"&Freestyle", NULL, eof_note_freestyle_menu, 0, NULL},
     {"Toggle &Expert+ bass drum\tCtrl+E", eof_menu_note_toggle_double_bass, NULL, 0, NULL},
-    {"Toggle Pro drum &Green cymbal\tCtrl+G", eof_menu_note_toggle_rb3_cymbal_green, NULL, 0, NULL},
-    {"Toggle Pro drum &Yellow cymbal\tCtrl+Y", eof_menu_note_toggle_rb3_cymbal_yellow, NULL, 0, NULL},
-    {"Toggle Pro drum &Blue cymbal\tCtrl+B", eof_menu_note_toggle_rb3_cymbal_blue, NULL, 0, NULL},
+    {"Toggle Pro &Yellow cymbal\tCtrl+Y", eof_menu_note_toggle_rb3_cymbal_yellow, NULL, 0, NULL},
+    {"Toggle Pro &Blue cymbal\tCtrl+B", eof_menu_note_toggle_rb3_cymbal_blue, NULL, 0, NULL},
+    {"Toggle Pro &Green cymbal (purple note)\tCtrl+G", eof_menu_note_toggle_rb3_cymbal_green, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -723,7 +723,6 @@ int eof_menu_note_toggle_green(void)
 			eof_song->track[eof_selected_track]->note[i]->note ^= 1;
 			if(eof_selected_track == EOF_TRACK_DRUM)
 			{	//If green drum is being toggled on/off
-				eof_song->track[eof_selected_track]->note[i]->flags &= (~EOF_NOTE_FLAG_G_CYMBAL);	//Clear the Pro green cymbal status if it is set
 				eof_song->track[eof_selected_track]->note[i]->flags &= (~EOF_NOTE_FLAG_DBASS);		//Clear the Expert+ status if it is set
 			}
 		}
@@ -810,6 +809,10 @@ int eof_menu_note_toggle_purple(void)
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->track[eof_selected_track]->note[i]->type == eof_note_type))
 		{
 			eof_song->track[eof_selected_track]->note[i]->note ^= 16;
+			if(eof_selected_track == EOF_TRACK_DRUM)
+			{	//If green drum is being toggled on/off
+				eof_song->track[eof_selected_track]->note[i]->flags &= (~EOF_NOTE_FLAG_G_CYMBAL);	//Clear the Pro green cymbal status if it is set
+			}
 		}
 	}
 	return 1;
@@ -855,7 +858,6 @@ int eof_menu_note_toggle_double_bass(void)
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				u = 1;
 			}
-			eof_song->track[eof_selected_track]->note[i]->flags &= (~EOF_NOTE_FLAG_G_CYMBAL);	//Clear the Pro green cymbal status if it is set
 			eof_song->track[eof_selected_track]->note[i]->flags ^= EOF_NOTE_FLAG_DBASS;
 		}
 	}
@@ -874,8 +876,8 @@ int eof_menu_note_toggle_rb3_cymbal_green(void)
 	{
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
-			if(eof_song->track[eof_selected_track]->note[i]->note & 1)
-			{	//If this drum note is green
+			if(eof_song->track[eof_selected_track]->note[i]->note & 16)
+			{	//If this drum note is purple (represents a green drum in Rock Band)
 				if(!u)
 				{	//Make a back up before changing the first note
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);

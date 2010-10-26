@@ -1107,10 +1107,6 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 							}
 							if(prodrums && (picked_track == EOF_TRACK_DRUM) && (noteptr->type != EOF_NOTE_SPECIAL))
 							{	//If pro drum notation is in effect and this was a non BRE drum note
-								if(noteptr->note & 1)
-								{	//This is a green drum note, assume it is a cymbal unless a pro drum phrase indicates otherwise
-									noteptr->flags |= EOF_NOTE_FLAG_G_CYMBAL;		//Ensure the cymbal flag is set
-								}
 								if(noteptr->note & 4)
 								{	//This is a yellow drum note, assume it is a cymbal unless a pro drum phrase indicates otherwise
 									noteptr->flags |= EOF_NOTE_FLAG_Y_CYMBAL;		//Ensure the cymbal flag is set
@@ -1118,6 +1114,10 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 								if(noteptr->note & 8)
 								{	//This is a blue drum note, assume it is a cymbal unless a pro drum phrase indicates otherwise
 									noteptr->flags |= EOF_NOTE_FLAG_B_CYMBAL;		//Ensure the cymbal flag is set
+								}
+								if(noteptr->note & 16)
+								{	//This is a purle drum note (green in Rock Band), assume it is a cymbal unless a pro drum phrase indicates otherwise
+									noteptr->flags |= EOF_NOTE_FLAG_G_CYMBAL;		//Ensure the cymbal flag is set
 								}
 							}
 						}
