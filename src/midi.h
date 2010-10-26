@@ -75,7 +75,7 @@ void eof_midi_add_ts_realtime(EOF_MIDI_TS_LIST * changes, double pos, unsigned l
 	//Adds the time signature information to the specified list of time signature changes, providing the absolute real time of the TS change
 EOF_MIDI_TS_LIST *eof_build_ts_list(struct Tempo_change *anchorlist);
 	//Parses eof_song->beat[], returning a linked list of time signature changes, or NULL on error
-int eof_get_ts(unsigned *num,unsigned *den,int beatnum);
+int eof_get_ts(EOF_SONG *sp,unsigned *num,unsigned *den,int beatnum);
 	//If the specified beat number has a defined TS, return the num and den through the passed pointers if they are not NULL
 	//Returns 1 if a time signature was returned
 	//Returns 0 if the specified beat was not a time signature

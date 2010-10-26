@@ -1898,7 +1898,7 @@ int eof_save_helper(char *destfilename)
 	char newfolderpath[1024] = {0};
 	char function;		//Will be set to 1 for "Save" or 2 for "Save as"
 
-	if(!eof_song_loaded)
+	if(!eof_song_loaded || !eof_song)
 		return 1;	//Return failure
 
 	if(destfilename == NULL)	//Perform save instead of save as
