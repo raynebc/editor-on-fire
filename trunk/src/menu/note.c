@@ -882,7 +882,8 @@ int eof_menu_note_toggle_rb3_cymbal_green(void)
 					u = 1;
 				}
 				eof_song->track[eof_selected_track]->note[i]->flags &= (~EOF_NOTE_FLAG_DBASS);	//Clear the Expert+ status if it is set
-				eof_song->track[eof_selected_track]->note[i]->flags ^= EOF_NOTE_FLAG_G_CYMBAL;
+//				eof_song->track[eof_selected_track]->note[i]->flags ^= EOF_NOTE_FLAG_G_CYMBAL;
+				eof_set_flags_at_note_pos(eof_song->track[eof_selected_track],i,EOF_NOTE_FLAG_G_CYMBAL,2);	//Toggle the green cymbal flag on all drum notes at this position
 			}
 		}
 	}
@@ -908,7 +909,8 @@ int eof_menu_note_toggle_rb3_cymbal_yellow(void)
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					u = 1;
 				}
-				eof_song->track[eof_selected_track]->note[i]->flags ^= EOF_NOTE_FLAG_Y_CYMBAL;
+//				eof_song->track[eof_selected_track]->note[i]->flags ^= EOF_NOTE_FLAG_Y_CYMBAL;
+				eof_set_flags_at_note_pos(eof_song->track[eof_selected_track],i,EOF_NOTE_FLAG_Y_CYMBAL,2);	//Toggle the yellow cymbal flag on all drum notes at this position
 			}
 		}
 	}
@@ -934,7 +936,8 @@ int eof_menu_note_toggle_rb3_cymbal_blue(void)
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					u = 1;
 				}
-				eof_song->track[eof_selected_track]->note[i]->flags ^= EOF_NOTE_FLAG_B_CYMBAL;
+//				eof_song->track[eof_selected_track]->note[i]->flags ^= EOF_NOTE_FLAG_B_CYMBAL;
+				eof_set_flags_at_note_pos(eof_song->track[eof_selected_track],i,EOF_NOTE_FLAG_B_CYMBAL,2);	//Toggle the blue cymbal flag on all drum notes at this position
 			}
 		}
 	}

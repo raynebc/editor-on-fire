@@ -596,6 +596,38 @@ void eof_track_fixup_notes(EOF_TRACK * tp, int sel)
 			eof_selection.multi[eof_selection.current] = 1;
 		}
 	}
+
+//Cleanup for pro drum notation
+	if(eof_song && (eof_song->track[EOF_TRACK_DRUM] == tp))
+	{	//If the track being cleaned is PART DRUMS
+		for(i = 0; i < tp->notes; i++)
+		{	//For each note in the drum track
+			if(eof_check_flags_at_note_pos(tp,i,EOF_NOTE_FLAG_G_CYMBAL))
+			{	//If any notes at this position are marked as a green cymbal
+				eof_set_flags_at_note_pos(tp,i,EOF_NOTE_FLAG_G_CYMBAL,1);	//Mark all notes at this position as green cymbal
+			}
+			else
+			{
+				eof_set_flags_at_note_pos(tp,i,EOF_NOTE_FLAG_G_CYMBAL,0);	//Mark all notes at this position as green drum
+			}
+			if(eof_check_flags_at_note_pos(tp,i,EOF_NOTE_FLAG_Y_CYMBAL))
+			{	//If any notes at this position are marked as a yellow cymbal
+				eof_set_flags_at_note_pos(tp,i,EOF_NOTE_FLAG_Y_CYMBAL,1);	//Mark all notes at this position as yellow cymbal
+			}
+			else
+			{
+				eof_set_flags_at_note_pos(tp,i,EOF_NOTE_FLAG_Y_CYMBAL,0);	//Mark all notes at this position as yellow drum
+			}
+			if(eof_check_flags_at_note_pos(tp,i,EOF_NOTE_FLAG_B_CYMBAL))
+			{	//If any notes at this position are marked as a blue cymbal
+				eof_set_flags_at_note_pos(tp,i,EOF_NOTE_FLAG_B_CYMBAL,1);	//Mark all notes at this position as blue cymbal
+			}
+			else
+			{
+				eof_set_flags_at_note_pos(tp,i,EOF_NOTE_FLAG_B_CYMBAL,0);	//Mark all notes at this position as blue drum
+			}
+		}
+	}
 }
 
 void eof_track_resize(EOF_TRACK * tp, int notes)
@@ -1202,4 +1234,83 @@ int eof_song_msec_to_tick(EOF_SONG * sp, int track, unsigned long msec)
 	portion = (((double)msec - beat_start) / beat_length) * ((double)sp->resolution) + 0.5;
 
 	return beat_tick + portion;
+}
+
+
+char eof_check_flags_at_note_pos(EOF_TRACK *tp,unsigned notenum,char flag)
+{
+	unsigned long ctr,ctr2;
+	char match = 0;
+
+	if((tp == NULL) || (notenum >= tp->notes))
+		return 0;
+
+//Find the first note at the specified note's position
+	for(ctr = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the track
+		if(tp->note[ctr]->pos == tp->note[notenum]->pos)
+		{	//If the note is after the specified note's position
+			match = 1;
+			break;
+		}
+	}
+
+//Check all notes at its position for the presence of the specified flag
+	if(match)
+	{
+		match = 0;
+		for(ctr2 = ctr; ctr2 < tp->notes; ctr2++)
+		{	//For each note starting with the one found above
+			if(tp->note[ctr2]->pos > tp->note[notenum]->pos)
+				break;	//If there are no more notes at that position, stop looking
+			if(tp->note[ctr2]->flags & flag)
+			{	//If the note has the specified flag
+				match = 1;
+				break;
+			}
+		}
+	}
+
+	return match;
+}
+
+void eof_set_flags_at_note_pos(EOF_TRACK *tp,unsigned notenum,char flag,char operation)
+{
+	unsigned long ctr,ctr2;
+	char match = 0;
+
+	if((tp == NULL) || (notenum >= tp->notes))
+		return;
+
+//Find the first note at the specified note's position
+	for(ctr = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the track
+		if(tp->note[ctr]->pos == tp->note[notenum]->pos)
+		{	//If the note is after the specified note's position
+			match = 1;
+			break;
+		}
+	}
+
+//Check all notes at its position for the presence of the specified flag
+	if(match)
+	{
+		for(ctr2 = ctr; ctr2 < tp->notes; ctr2++)
+		{	//For each note starting with the one found above
+			if(tp->note[ctr2]->pos > tp->note[notenum]->pos)
+				break;	//If there are no more notes at that position, stop looking
+			if(operation == 0)
+			{	//If the calling function indicated to clear the flag
+				tp->note[ctr2]->flags &= (~flag);
+			}
+			else if(operation == 1)
+			{	//If the calling function indicated to set the flag
+				tp->note[ctr2]->flags |= flag;
+			}
+			else if(operation == 2)
+			{	//If the calling function indicated to toggle the flag
+				tp->note[ctr2]->flags ^= flag;
+			}
+		}
+	}
 }
