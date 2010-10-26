@@ -1,4 +1,5 @@
 #include <allegro.h>
+#include <assert.h>
 #include "main.h"
 #include "utility.h"
 #include "song.h"
@@ -238,7 +239,7 @@ inline unsigned long eof_ConvertToRealTimeInt(unsigned long absolutedelta,struct
 
 EOF_SONG * eof_import_midi(const char * fn)
 {
-	EOF_SONG * sp;
+	EOF_SONG * sp = NULL;;
 	int pticker = 0;
 	int ptotal_events = 0;
 	int percent;
@@ -309,14 +310,14 @@ EOF_SONG * eof_import_midi(const char * fn)
 	if(!eof_import_bpm_events)
 	{
 		destroy_midi(eof_work_midi);
-		return 0;
+		return NULL;
 	}
 	eof_import_text_events = eof_import_create_events_list();
 	if(!eof_import_text_events)
 	{
 		eof_import_destroy_events_list(eof_import_bpm_events);
 		destroy_midi(eof_work_midi);
-		return 0;
+		return NULL;
 	}
 	for(i = 0; i < tracks; i++)
 	{
@@ -328,7 +329,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 			eof_import_destroy_events_list(eof_import_bpm_events);
 			eof_import_destroy_events_list(eof_import_text_events);
 			destroy_midi(eof_work_midi);
-			return 0;
+			return NULL;
 		}
 		track_pos = 0;
 //		absolute_pos = sp->tags->ogg[0].midi_offset;
@@ -665,20 +666,33 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 	unsigned long ctr,ctr2;
 	double beatlength;
 
+char debugtext[400];
+allegro_message("Pass two, adding beats.  last_delta_time = %lu",last_delta_time);
+
 	while(deltapos <= last_delta_time)
 	{//Add new beats until enough have been added to encompass the last MIDI event
+
+sprintf(debugtext,"Start delta %lu / %lu",deltapos,last_delta_time);
+set_window_title(debugtext);
+
 		if(eof_song_add_beat(sp) == NULL)	//Add a new beat
 		{					//Or return failure if that doesn't succeed
+
+allegro_message("Fail point 1");
+
 			eof_import_destroy_events_list(eof_import_bpm_events);
 			eof_import_destroy_events_list(eof_import_text_events);
 			destroy_midi(eof_work_midi);
 			eof_destroy_tempo_list(anchorlist);
-			return 0;
+			return NULL;
 		}
 
 	//Find the relevant tempo and time signature for the beat
 		for(ctr = 0; ctr < eof_import_bpm_events->events; ctr++)
 		{	//For each imported tempo change
+
+assert(eof_import_bpm_events->event[ctr] != NULL);
+
 			if(eof_import_bpm_events->event[ctr]->pos <= deltapos)
 			{	//If the tempo change is at or before the current delta time
 				curppqn = eof_import_bpm_events->event[ctr]->d1;	//Store the PPQN value
@@ -686,6 +700,9 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 		}
 		for(ctr = 0; ctr < eof_import_ts_changes[0]->changes; ctr++)
 		{	//For each imported TS change
+
+assert(eof_import_ts_changes[0]->change[ctr] != NULL);
+
 			if(eof_import_ts_changes[0]->change[ctr]->pos <= deltapos)
 			{	//If the TS change is at or before the current delta time
 				curnum = eof_import_ts_changes[0]->change[ctr]->num;	//Store the numerator and denominator
@@ -693,7 +710,12 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 			}
 		}
 
+assert((sp->beats < EOF_MAX_BEATS) && (sp->beat[sp->beats - 1] != NULL));
+
 	//Store timing information in the beat structure
+
+assert(sp->tags != NULL);
+
 		sp->beat[sp->beats - 1]->fpos = realtimepos + sp->tags->ogg[0].midi_offset;
 		sp->beat[sp->beats - 1]->pos = realtimepos + sp->tags->ogg[0].midi_offset + 0.5;	//Round up to nearest millisecond
 		sp->beat[sp->beats - 1]->midi_pos = deltapos;
@@ -712,13 +734,22 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 		}
 
 	//Update delta and realtime counters (the TS affects a beat's length in deltas, the tempo affects a beat's length in milliseconds)
+
+assert(curppqn != 0);
+
 		beatlength = ((double)eof_work_midi->divisions * curden / 4.0);		//Determine the length of this beat in delta ticks
 		realtimepos += (60000.0 / (60000000.0 / curppqn));	//Add the realtime length of this beat to the time counter
 		deltafpos += beatlength;	//Add the delta length of this beat to the delta counter
 		deltapos = deltafpos + 0.5;	//Round up to nearest delta tick
 		lastnum = curnum;
 		lastden = curden;
+
+sprintf(debugtext,"End delta %lu / %lu",deltapos,last_delta_time);
+set_window_title(debugtext);
+
 	}
+
+allegro_message("Pass two, configuring beat timings");
 
 	double BPM=120.0;	//Assume a default tempo of 120BPM and TS of 4/4 at 0 deltas
 	realtimepos=0.0;
@@ -734,7 +765,7 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 				BPM = 60000000.0 / sp->beat[ctr2]->ppqn;	//Store the tempo
 				realtimepos = sp->beat[ctr2]->fpos;			//Store the realtime position
 				deltapos = sp->beat[ctr2]->midi_pos;		//Store the delta time position
-				eof_get_ts(NULL,&curden,ctr2);				//Find the TS denominator of this beat
+				eof_get_ts(sp,NULL,&curden,ctr2);			//Find the TS denominator of this beat
 			}
 		}
 
@@ -743,6 +774,8 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 		eof_import_ts_changes[0]->change[ctr]->realtime = (double)realtimepos + (eof_import_ts_changes[0]->change[ctr]->pos - deltapos) / eof_work_midi->divisions * (60000.0 / (BPM * lastden / 4.0));
 		lastden=curden;
 	}
+
+allegro_message("Second pass complete");
 
 	/* third pass, create EOF notes */
 	int picked_track;
@@ -762,7 +795,6 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 
 	for(i = 0; i < tracks; i++)
 	{
-
 		picked_track = eof_import_events[i]->type >= 0 ? eof_import_events[i]->type : rbg == 0 ? EOF_TRACK_GUITAR : -1;
 		first_note = note_count[picked_track];
 		if((picked_track >= 0) && !used_track[picked_track])
@@ -1291,6 +1323,9 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 			}
 		}
 	}
+
+allegro_message("Third pass complete");
+
 	/* delete empty lyric lines */
 	int lc;
 	for(i = sp->vocal_track->lines - 1; i >= 0; i--)
@@ -1401,6 +1436,8 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 	eof_music_pos = 0;
 	eof_selected_track = 0;
 	eof_selected_ogg = 0;
+
+allegro_message("MIDI import complete");
 
 	return sp;
 }

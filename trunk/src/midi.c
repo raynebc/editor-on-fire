@@ -1156,7 +1156,7 @@ struct Tempo_change *eof_build_tempo_list(void)
 	{	//For each beat
 		if(eof_use_midi_ts)
 		{	//If the user opted to use time signatures during MIDI export
-			eof_get_ts(NULL,&den,ctr);	//Update the TS denominator if applicable
+			eof_get_ts(eof_song,NULL,&den,ctr);	//Update the TS denominator if applicable
 		}
 		if(eof_song->beat[ctr]->ppqn != lastppqn)
 		{	//If this beat has a different tempo than the last, add it to the list
@@ -1426,7 +1426,7 @@ EOF_MIDI_TS_LIST *eof_build_ts_list(struct Tempo_change *anchorlist)
 
 	for(ctr=0;ctr < eof_song->beats;ctr++)
 	{	//For each beat, create a list of Time Signature changes and store the appropriate delta position of each
-		if(eof_get_ts(&num,&den,ctr) == 1)
+		if(eof_get_ts(eof_song,&num,&den,ctr) == 1)
 		{	//If a time signature exists on this beat
 			eof_midi_add_ts_realtime(tslist, eof_song->beat[ctr]->fpos, num, den, 0);	//Store the beat marker's time signature
 			tslist->change[tslist->changes-1]->pos = deltapos;	//Store the time signature's position in deltas
@@ -1440,37 +1440,37 @@ EOF_MIDI_TS_LIST *eof_build_ts_list(struct Tempo_change *anchorlist)
 	return tslist;
 }
 
-int eof_get_ts(unsigned *num,unsigned *den,int beatnum)
+int eof_get_ts(EOF_SONG *sp,unsigned *num,unsigned *den,int beatnum)
 {
 	unsigned numerator=0,denominator=0;
 
-	if(beatnum >= eof_song->beats)
+	if((sp == NULL) || (beatnum >= sp->beats) || (sp->beat[beatnum] == NULL))
 		return -1;	//Return error
 
-	if(eof_song->beat[beatnum]->flags & EOF_BEAT_FLAG_START_4_4)
+	if(sp->beat[beatnum]->flags & EOF_BEAT_FLAG_START_4_4)
 	{
 		numerator = 4;
 		denominator = 4;
 	}
-	else if(eof_song->beat[beatnum]->flags & EOF_BEAT_FLAG_START_3_4)
+	else if(sp->beat[beatnum]->flags & EOF_BEAT_FLAG_START_3_4)
 	{
 		numerator = 3;
 		denominator = 4;
 	}
-	else if(eof_song->beat[beatnum]->flags & EOF_BEAT_FLAG_START_5_4)
+	else if(sp->beat[beatnum]->flags & EOF_BEAT_FLAG_START_5_4)
 	{
 		numerator = 5;
 		denominator = 4;
 	}
-	else if(eof_song->beat[beatnum]->flags & EOF_BEAT_FLAG_START_6_4)
+	else if(sp->beat[beatnum]->flags & EOF_BEAT_FLAG_START_6_4)
 	{
 		numerator = 6;
 		denominator = 4;
 	}
-	else if(eof_song->beat[beatnum]->flags & EOF_BEAT_FLAG_CUSTOM_TS)
+	else if(sp->beat[beatnum]->flags & EOF_BEAT_FLAG_CUSTOM_TS)
 	{
-		numerator = ((eof_song->beat[beatnum]->flags & 0xFF000000)>>24) + 1;
-		denominator = ((eof_song->beat[beatnum]->flags & 0x00FF0000)>>16) + 1;
+		numerator = ((sp->beat[beatnum]->flags & 0xFF000000)>>24) + 1;
+		denominator = ((sp->beat[beatnum]->flags & 0x00FF0000)>>16) + 1;
 	}
 	else
 		return 0;	//Return no TS change

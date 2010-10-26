@@ -4483,7 +4483,7 @@ void eof_render_editor_window_common(void)
 
 	for(i = 0; i < eof_song->beats; i++)
 	{
-		if(eof_get_ts(&beats_per_measure,NULL,i) == 1)
+		if(eof_get_ts(eof_song,&beats_per_measure,NULL,i) == 1)
 		{	//If this beat is a time signature
 			beat_counter = 0;
 		}

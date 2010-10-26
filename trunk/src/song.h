@@ -262,13 +262,13 @@ typedef struct
 	EOF_VOCAL_TRACK * vocal_track;
 
 	EOF_BEAT_MARKER * beat[EOF_MAX_BEATS];
-	int beats;
+	unsigned long beats;
 
 	EOF_TEXT_EVENT * text_event[EOF_MAX_TEXT_EVENTS];
-	int text_events;
+	unsigned long text_events;
 
 	/* miscellaneous */
-	int bookmark_pos[EOF_MAX_BOOKMARK_ENTRIES];
+	unsigned long bookmark_pos[EOF_MAX_BOOKMARK_ENTRIES];
 	EOF_CATALOG * catalog;
 
 } EOF_SONG;
