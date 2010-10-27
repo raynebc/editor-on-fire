@@ -176,6 +176,7 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 	EOF_LYRIC *temp;		//Pointer returned by eof_vocal_track_add_lyric()
 	unsigned long start=0;	//Used to track the start position of each line
 	char startfound=0;		//Used to help skip adding vocal percussion notes to lyric lines
+	char overdrive=0;		//Used to track the overdrive status of a lyric line
 
 	if((tp == NULL) || (lp == NULL))
 		return -1;	//Return error (invalid structure pointers)
@@ -184,6 +185,7 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 	while(curline != NULL)
 	{	//For each line of lyrics
 		startfound =  0;
+		overdrive = 0;
 
 		curpiece=curline->pieces;	//Point lyric conductor to first lyric in this line
 		while(curpiece != NULL)
@@ -195,8 +197,7 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 			}
 
 			if(curpiece->overdrive)				//If this lyric is overdrive
-				if(tp->lines-1 >= 0)			//only if tp->lines is greater than 0
-					tp->line[tp->lines-1].flags |= 1;	//Set the overdrive flag in the EOF line structure
+				overdrive = 1;
 
 			temp=eof_vocal_track_add_lyric(tp);	//Add a new lyric to EOF structure
 			if(temp == NULL)
@@ -209,7 +210,7 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 
 			temp->pos=curpiece->start;
 			temp->length=(long)curpiece->duration;	//curpiece->duration is an unsigned long value, hopefully this won't cause problems
-			if(ustrlen(curpiece->lyric) > 255)
+			if(ustrlen(curpiece->lyric) > EOF_MAX_LYRIC_LENGTH)
 				return -1;	//Return error (lyric too large to store in EOF's array)
 			if(curpiece->pitch == VOCALPERCUSSION)
 				ustrcpy(temp->text, "");	//Copy an empty string for a vocal percussion note
@@ -219,6 +220,9 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 			if((curpiece->next == NULL) && startfound)
 			{	//If this was the last lyric for this line, and at least one non vocal percussion note was found
 				eof_vocal_track_add_line(tp,start,curpiece->start + curpiece->duration);	//Add the lyric line definition to the EOF structure
+
+				if(overdrive && (tp->lines > 0))	//If this line had any overdriven lyrics
+					tp->line[tp->lines-1].flags |= EOF_LYRIC_LINE_FLAG_OVERDRIVE;	//Mark the line for overdrive
 			}
 
 			curpiece=curpiece->next;	//Point to next lyric in the line
