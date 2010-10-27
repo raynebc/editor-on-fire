@@ -196,7 +196,8 @@ int eof_note_draw(EOF_NOTE * np, int p)
 						dcol2 = eof_color_red;	//If this is an Expert+ bass drum note, render it with a red dot
 					else if(((np->flags & EOF_NOTE_FLAG_Y_CYMBAL) && (mask == 4)) || ((np->flags & EOF_NOTE_FLAG_B_CYMBAL) && (mask == 8)) || ((np->flags & EOF_NOTE_FLAG_G_CYMBAL) && (mask == 16)))
 					{	//If this drum note is marked as a yellow, blue or green cymbal
-						dcol2 = ncol;			//Render the dot the same color as the note
+//						dcol2 = ncol;			//Render the dot the same color as the note
+						dcol2 = eof_color_black;	//Render cymbal drum notes with a black center to make them more visible
 					}
 					else
 						dcol2 = dcol;			//Otherwise render with the expected dot color
@@ -234,7 +235,8 @@ int eof_note_draw(EOF_NOTE * np, int p)
 						dcol2 = eof_color_red;	//If this is an Expert+ bass drum note, render it with a red dot
 					else if(((np->flags & EOF_NOTE_FLAG_Y_CYMBAL) && (mask == 4)) || ((np->flags & EOF_NOTE_FLAG_B_CYMBAL) && (mask == 8)) || ((np->flags & EOF_NOTE_FLAG_G_CYMBAL) && (mask == 16)))
 					{	//If this drum note is marked as a yellow, blue or green cymbal
-						dcol2 = ncol;			//Render the dot the same color as the note
+//						dcol2 = ncol;			//Render the dot the same color as the note
+						dcol2 = eof_color_black;	//Render cymbal drum notes with a black center to make them more visible
 					}
 					else
 						dcol2 = dcol;			//Otherwise render with the expected dot color

@@ -63,6 +63,14 @@ MENU eof_note_freestyle_menu[] =
     {NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_note_prodrum_menu[] =
+{
+    {"Toggle &Yellow cymbal\tCtrl+Y", eof_menu_note_toggle_rb3_cymbal_yellow, NULL, 0, NULL},
+    {"Toggle &Blue cymbal\tCtrl+B", eof_menu_note_toggle_rb3_cymbal_blue, NULL, 0, NULL},
+    {"Toggle &Green cymbal\tCtrl+G", eof_menu_note_toggle_rb3_cymbal_green, NULL, 0, NULL},
+    {NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_note_menu[] =
 {
     {"&Toggle", NULL, eof_note_toggle_menu, 0, NULL},
@@ -86,9 +94,7 @@ MENU eof_note_menu[] =
     {"Display semitones as flat", eof_display_flats_menu, NULL, 0, NULL},
     {"&Freestyle", NULL, eof_note_freestyle_menu, 0, NULL},
     {"Toggle &Expert+ bass drum\tCtrl+E", eof_menu_note_toggle_double_bass, NULL, 0, NULL},
-    {"Toggle Pro &Yellow cymbal\tCtrl+Y", eof_menu_note_toggle_rb3_cymbal_yellow, NULL, 0, NULL},
-    {"Toggle Pro &Blue cymbal\tCtrl+B", eof_menu_note_toggle_rb3_cymbal_blue, NULL, 0, NULL},
-    {"Toggle Pro &Green cymbal (purple note)\tCtrl+G", eof_menu_note_toggle_rb3_cymbal_green, NULL, 0, NULL},
+    {"Pro drum mode notation", NULL, eof_note_prodrum_menu, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -385,9 +391,7 @@ void eof_prepare_note_menu(void)
 			}
 
 			eof_note_menu[20].flags = D_DISABLED;	//Disable toggle Expert+ bass drum
-			eof_note_menu[21].flags = D_DISABLED;	//Disable toggle pro style green cymbal
-			eof_note_menu[22].flags = D_DISABLED;	//Disable toggle pro style yellow cymbal
-			eof_note_menu[23].flags = D_DISABLED;	//Disable toggle pro style blue cymbal
+			eof_note_menu[21].flags = D_DISABLED;	//Disable pro drum mode menu
 		}
 		else
 		{	//PART VOCALS NOT SELECTED
@@ -420,13 +424,12 @@ void eof_prepare_note_menu(void)
 			if(eof_selected_track != EOF_TRACK_DRUM)
 			{	//When PART DRUMS is not active
 				eof_note_menu[9].flags = 0;				//Enable toggle crazy
+				eof_note_menu[21].flags = D_DISABLED;	//Disable pro drum mode menu
 			}
 			else
 			{	//When PART DRUMS is active
 				eof_note_menu[9].flags = D_DISABLED;	//Disable toggle crazy
-				eof_note_menu[21].flags = 0;			//Enable toggle pro style green cymbal
-				eof_note_menu[22].flags = 0;			//Enable toggle pro style yellow cymbal
-				eof_note_menu[23].flags = 0;			//Enable toggle pro style blue cymbal
+				eof_note_menu[21].flags = 0;			//Enable pro drum mode menu
 			}
 
 			if((eof_selected_track == EOF_TRACK_DRUM) && (eof_note_type == EOF_NOTE_AMAZING))

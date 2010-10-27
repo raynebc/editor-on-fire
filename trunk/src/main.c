@@ -812,13 +812,16 @@ int eof_note_is_hopo(int cnote)
 	double bpm;
 	double scale;
 
-	if(eof_song->track[eof_selected_track]->note[cnote]->flags & EOF_NOTE_FLAG_NO_HOPO)
+	if(eof_hopo_view == EOF_HOPO_MANUAL)
 	{
-		return 0;
-	}
-	if(eof_song->track[eof_selected_track]->note[cnote]->flags & EOF_NOTE_FLAG_F_HOPO)
-	{
-		return 1;
+		if(eof_song->track[eof_selected_track]->note[cnote]->flags & EOF_NOTE_FLAG_NO_HOPO)
+		{
+			return 0;
+		}
+		if(eof_song->track[eof_selected_track]->note[cnote]->flags & EOF_NOTE_FLAG_F_HOPO)
+		{
+			return 1;
+		}
 	}
 	for(i = 0; i < eof_song->beats - 1; i++)
 	{
