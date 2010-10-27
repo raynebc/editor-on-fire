@@ -666,14 +666,20 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 	unsigned long ctr,ctr2;
 	double beatlength;
 
+#define EOF_DEBUG_MIDI_IMPORT
+
+#ifdef EOF_DEBUG_MIDI_IMPORT
 char debugtext[400];
 allegro_message("Pass two, adding beats.  last_delta_time = %lu",last_delta_time);
+#endif
 
 	while(deltapos <= last_delta_time)
 	{//Add new beats until enough have been added to encompass the last MIDI event
 
+#ifdef EOF_DEBUG_MIDI_IMPORT
 sprintf(debugtext,"Start delta %lu / %lu",deltapos,last_delta_time);
 set_window_title(debugtext);
+#endif
 
 		if(eof_song_add_beat(sp) == NULL)	//Add a new beat
 		{					//Or return failure if that doesn't succeed
@@ -691,7 +697,7 @@ allegro_message("Fail point 1");
 		for(ctr = 0; ctr < eof_import_bpm_events->events; ctr++)
 		{	//For each imported tempo change
 
-assert(eof_import_bpm_events->event[ctr] != NULL);
+assert(eof_import_bpm_events->event[ctr] != NULL);	//Prevent a NULL dereference below
 
 			if(eof_import_bpm_events->event[ctr]->pos <= deltapos)
 			{	//If the tempo change is at or before the current delta time
@@ -701,7 +707,7 @@ assert(eof_import_bpm_events->event[ctr] != NULL);
 		for(ctr = 0; ctr < eof_import_ts_changes[0]->changes; ctr++)
 		{	//For each imported TS change
 
-assert(eof_import_ts_changes[0]->change[ctr] != NULL);
+assert(eof_import_ts_changes[0]->change[ctr] != NULL);	//Prevent a NULL dereference below
 
 			if(eof_import_ts_changes[0]->change[ctr]->pos <= deltapos)
 			{	//If the TS change is at or before the current delta time
@@ -710,11 +716,11 @@ assert(eof_import_ts_changes[0]->change[ctr] != NULL);
 			}
 		}
 
-assert((sp->beats < EOF_MAX_BEATS) && (sp->beat[sp->beats - 1] != NULL));
+assert((sp->beats < EOF_MAX_BEATS) && (sp->beat[sp->beats - 1] != NULL));	//Prevent out of bounds or NULL dereferences below
 
 	//Store timing information in the beat structure
 
-assert(sp->tags != NULL);
+assert(sp->tags != NULL);	//Prevent a NULL dereference below
 
 		sp->beat[sp->beats - 1]->fpos = realtimepos + sp->tags->ogg[0].midi_offset;
 		sp->beat[sp->beats - 1]->pos = realtimepos + sp->tags->ogg[0].midi_offset + 0.5;	//Round up to nearest millisecond
@@ -722,21 +728,26 @@ assert(sp->tags != NULL);
 		sp->beat[sp->beats - 1]->ppqn = curppqn;
 		if(eof_use_midi_ts && ((lastnum != curnum) || (lastden != curden) || (sp->beats - 1 == 0)))
 		{	//If the user opted to import TS changes, and this time signature is different than the last beat's time signature (or this is the first beat)
+
+assert(sp->beats > 0);	//Prevent eof_apply_ts() below from failing
+
 			eof_apply_ts(curnum,curden,sp->beats - 1,sp,0);	//Set the TS flags for this beat
 		}
+
+assert(curppqn != 0);	//Avoid a division by 0 below
 
 	//Update anchor linked list
 		if(lastppqn != curppqn)
 		{	//If this tempo is different than the last beat's tempo
 			anchorlist=eof_add_to_tempo_list(deltapos,realtimepos,60000000.0 / curppqn,anchorlist);
+
+assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
+
 			sp->beat[sp->beats - 1]->flags |= EOF_BEAT_FLAG_ANCHOR;
 			lastppqn = curppqn;
 		}
 
 	//Update delta and realtime counters (the TS affects a beat's length in deltas, the tempo affects a beat's length in milliseconds)
-
-assert(curppqn != 0);
-
 		beatlength = ((double)eof_work_midi->divisions * curden / 4.0);		//Determine the length of this beat in delta ticks
 		realtimepos += (60000.0 / (60000000.0 / curppqn));	//Add the realtime length of this beat to the time counter
 		deltafpos += beatlength;	//Add the delta length of this beat to the delta counter
@@ -744,12 +755,16 @@ assert(curppqn != 0);
 		lastnum = curnum;
 		lastden = curden;
 
+#ifdef EOF_DEBUG_MIDI_IMPORT
 sprintf(debugtext,"End delta %lu / %lu",deltapos,last_delta_time);
 set_window_title(debugtext);
+#endif
 
 	}
 
+#ifdef EOF_DEBUG_MIDI_IMPORT
 allegro_message("Pass two, configuring beat timings");
+#endif
 
 	double BPM=120.0;	//Assume a default tempo of 120BPM and TS of 4/4 at 0 deltas
 	realtimepos=0.0;
@@ -775,7 +790,9 @@ allegro_message("Pass two, configuring beat timings");
 		lastden=curden;
 	}
 
+#ifdef EOF_DEBUG_MIDI_IMPORT
 allegro_message("Second pass complete");
+#endif
 
 	/* third pass, create EOF notes */
 	int picked_track;
@@ -1324,7 +1341,9 @@ allegro_message("Second pass complete");
 		}
 	}
 
+#ifdef EOF_DEBUG_MIDI_IMPORT
 allegro_message("Third pass complete");
+#endif
 
 	/* delete empty lyric lines */
 	int lc;
@@ -1437,7 +1456,9 @@ allegro_message("Third pass complete");
 	eof_selected_track = 0;
 	eof_selected_ogg = 0;
 
+#ifdef EOF_DEBUG_MIDI_IMPORT
 allegro_message("MIDI import complete");
+#endif
 
 	return sp;
 }
