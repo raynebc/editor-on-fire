@@ -1202,7 +1202,7 @@ struct Tempo_change *eof_add_to_tempo_list(unsigned long delta,double realtime,d
 	for(cond=ptr;cond->next != NULL;cond=cond->next);	//Seek to last link in the list
 
 	cond->next=temp;	//Last link points forward to new link
-	return ptr;		//Return original head link
+	return ptr;			//Return original head link
 }
 
 void eof_destroy_tempo_list(struct Tempo_change *ptr)
@@ -1349,11 +1349,18 @@ int eof_extract_rba_midi(const char * source, const char * dest)
 
 EOF_MIDI_TS_LIST * eof_create_ts_list(void)
 {
+	unsigned long ctr;
+
 	EOF_MIDI_TS_LIST * lp;
 	lp = malloc(sizeof(EOF_MIDI_TS_LIST));
 	if(!lp)
 	{
 		return NULL;
+	}
+
+	for(ctr=0;ctr<EOF_MAX_TS;ctr++)
+	{	//Init all pointers in the array as NULL
+		lp->change[ctr]=NULL;
 	}
 	lp->changes = 0;
 	return lp;
