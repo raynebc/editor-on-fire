@@ -69,6 +69,7 @@ BEAT CHUNK, for each beat:
 	4 bytes:	PPQN
 	4 bytes:	Position (in milliseconds or delta ticks)
 	4 bytes:	Beat flags
+*	1 byte:		Key signature (If the MSB is zero, the KS is defined by the number of flats, otherwise the number of sharps.  Bits 0-6 define the number of sharps/flats in this Key Signature)
 }
 
 4 bytes:	Number of text events

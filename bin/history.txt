@@ -3,6 +3,11 @@ EOF Version History
 
 1.7:
 
+Fixed HOPO display in the 3D panel to respect the selected HOPO preview mode.
+
+Added the ability to mark pro drum notation, used by Rock Band 2 (for drummer
+animations) and Rock Band 3 (for pro drum mode).
+
 Fixed an issue where forced HOPO on/off notes were saved to MIDI incorrectly.
 
 Added Leading Silence option to Song menu. This can be used to add silence to
