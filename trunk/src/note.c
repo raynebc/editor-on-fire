@@ -57,9 +57,9 @@ void eof_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, int 
 	np->length = length;
 }
 
-void eof_note_create2(EOF_NOTE * np, char note, unsigned long pos, long length)
+void eof_note_create2(EOF_NOTE * np, unsigned long bitmask, unsigned long pos, long length)
 {
-	np->note = note;
+	np->note = bitmask;
 	np->pos = pos;
 	np->length = length;
 }

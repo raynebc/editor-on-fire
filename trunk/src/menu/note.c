@@ -68,14 +68,15 @@ MENU eof_note_prodrum_menu[] =
     {"Toggle &Yellow cymbal\tCtrl+Y", eof_menu_note_toggle_rb3_cymbal_yellow, NULL, 0, NULL},
     {"Toggle &Blue cymbal\tCtrl+B", eof_menu_note_toggle_rb3_cymbal_blue, NULL, 0, NULL},
     {"Toggle &Green cymbal\tCtrl+G", eof_menu_note_toggle_rb3_cymbal_green, NULL, 0, NULL},
+    {"&Mark new notes as cymbals", eof_menu_note_default_cymbal, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_note_menu[] =
 {
     {"&Toggle", NULL, eof_note_toggle_menu, 0, NULL},
-    {"Transpose &Up\tUp", eof_menu_note_transpose_up, NULL, 0, NULL},
-    {"Transpose &Down\tDown", eof_menu_note_transpose_down, NULL, 0, NULL},
+    {"Transpose Up\tUp", eof_menu_note_transpose_up, NULL, 0, NULL},
+    {"Transpose Down\tDown", eof_menu_note_transpose_down, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"&Resnap", eof_menu_note_resnap, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
@@ -94,7 +95,7 @@ MENU eof_note_menu[] =
     {"Display semitones as flat", eof_display_flats_menu, NULL, 0, NULL},
     {"&Freestyle", NULL, eof_note_freestyle_menu, 0, NULL},
     {"Toggle &Expert+ bass drum\tCtrl+E", eof_menu_note_toggle_double_bass, NULL, 0, NULL},
-    {"Pro drum mode notation", NULL, eof_note_prodrum_menu, 0, NULL},
+    {"Pro &Drum mode notation", NULL, eof_note_prodrum_menu, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -769,6 +770,10 @@ int eof_menu_note_toggle_yellow(void)
 			if(eof_selected_track == EOF_TRACK_DRUM)
 			{	//If yellow drum is being toggled on/off
 				eof_song->track[eof_selected_track]->note[i]->flags &= (~EOF_NOTE_FLAG_Y_CYMBAL);	//Clear the Pro yellow cymbal status if it is set
+				if(eof_mark_drums_as_cymbal && (eof_song->track[eof_selected_track]->note[i]->note & 4))
+				{	//If user specified to mark new notes as cymbals, and this note was toggled on
+					eof_set_flags_at_note_pos(eof_song->track[eof_selected_track],i,EOF_NOTE_FLAG_Y_CYMBAL,1);	//Set the yellow cymbal flag on all drum notes at this position
+				}
 			}
 		}
 	}
@@ -792,6 +797,10 @@ int eof_menu_note_toggle_blue(void)
 			if(eof_selected_track == EOF_TRACK_DRUM)
 			{	//If blue drum is being toggled on/off
 				eof_song->track[eof_selected_track]->note[i]->flags &= (~EOF_NOTE_FLAG_B_CYMBAL);	//Clear the Pro blue cymbal status if it is set
+				if(eof_mark_drums_as_cymbal && (eof_song->track[eof_selected_track]->note[i]->note & 8))
+				{	//If user specified to mark new notes as cymbals, and this note was toggled on
+					eof_set_flags_at_note_pos(eof_song->track[eof_selected_track],i,EOF_NOTE_FLAG_B_CYMBAL,1);	//Set the blue cymbal flag on all drum notes at this position
+				}
 			}
 		}
 	}
@@ -815,6 +824,10 @@ int eof_menu_note_toggle_purple(void)
 			if(eof_selected_track == EOF_TRACK_DRUM)
 			{	//If green drum is being toggled on/off
 				eof_song->track[eof_selected_track]->note[i]->flags &= (~EOF_NOTE_FLAG_G_CYMBAL);	//Clear the Pro green cymbal status if it is set
+				if(eof_mark_drums_as_cymbal && (eof_song->track[eof_selected_track]->note[i]->note & 16))
+				{	//If user specified to mark new notes as cymbals, and this note was toggled on
+					eof_set_flags_at_note_pos(eof_song->track[eof_selected_track],i,EOF_NOTE_FLAG_G_CYMBAL,1);	//Set the green cymbal flag on all drum notes at this position
+				}
 			}
 		}
 	}
@@ -945,6 +958,21 @@ int eof_menu_note_toggle_rb3_cymbal_blue(void)
 				eof_set_flags_at_note_pos(eof_song->track[eof_selected_track],i,EOF_NOTE_FLAG_B_CYMBAL,2);	//Toggle the blue cymbal flag on all drum notes at this position
 			}
 		}
+	}
+	return 1;
+}
+
+int eof_menu_note_default_cymbal(void)
+{
+	if(eof_mark_drums_as_cymbal)
+	{
+		eof_mark_drums_as_cymbal = 0;
+		eof_note_prodrum_menu[3].flags = 0;
+	}
+	else
+	{
+		eof_mark_drums_as_cymbal = 1;
+		eof_note_prodrum_menu[3].flags = D_SELECTED;
 	}
 	return 1;
 }

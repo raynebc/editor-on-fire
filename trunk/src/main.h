@@ -316,6 +316,7 @@ extern char        eof_vocal_tab_name[5][32];
 extern char        eof_supports_mp3;
 extern char        eof_supports_silence;
 extern char        eof_just_played;
+extern char        eof_mark_drums_as_cymbal;
 
 extern char eof_midi_initialized;			//Specifies whether Allegro was able to set up a MIDI device
 extern EOF_SELECTION_DATA eof_selection;
@@ -329,7 +330,7 @@ void eof_emergency_stop_music(void);	//Stops audio playback
 void eof_fix_catalog_selection(void);	//Ensures that a valid catalog entry is active, if any
 int eof_count_selected_notes(int * total, char v);
 	//Returns the number of notes selected in the active difficulty
-	//If total is not NULL, its value is incremeneted once for each note in the active difficulty
+	//If total is not NULL, its value is incremented once for each note in the active difficulty
 int eof_count_selected_notes_vocal(int * total, char v);	//Counts the number of selected lyrics
 void eof_fix_waveform_graph(void);	//Rebuild the waveform graph data if it exists
 void eof_clear_input(void);

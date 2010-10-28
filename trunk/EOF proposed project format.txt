@@ -90,7 +90,7 @@ TRACK CHUNK, for each track:
 *	2 bytes:	Track name string length
 *	[varies:]	Track name string
 *	4 byte:		Track number (Matching macros such as EOF_TRACK_GUITAR)
-*	1 byte:		Track type (1=Guitar/Drum,3=Vocal,4=Pro Guitar,5=Pro Drum,6=Keys, ...)
+*	1 byte:		Track type (1=Guitar,2=Drum,3=Pro drum,3=Vocal,4=Pro Guitar,5=Keys,6=extra lane drums ...)
 *	4 byte:		Track flags (ie. which difficulties are locked for editing)
 
 	[GUITAR/DRUM AND PRO DRUM TRACK FORMAT]
@@ -108,13 +108,41 @@ TRACK CHUNK, for each track:
 			4 bytes:	End position of star power section (in milliseconds or delta ticks)
 		}
 
+!		Rock Band 3 has a new type of phrase people are referring to as trill phrases
+!		This is sort of like a section with a freestyle strumming for a single button (fret 1-5), perhaps more
+!		Supposedly, the player can strum as slowly or quickly as desired provided that the specific notes defined
+!		in the trill phrase are hit.
+*		4 bytes:	Number of trill sections (FOR GUITAR TYPE TRACKS ONLY, other tracks should have this set to zero)
+*		{
+*			4 bytes:	Start position of trill section (in milliseconds or delta ticks)
+*			4 bytes:	End position of trill section (in milliseconds or delta ticks)
+*		}
+
+!		Rock Band 2 (drum animations) and Rock Band 3 (Pro drums) use MIDI markers to define which yellow, blue and green notes are
+!		to be played as toms (pads) instead of cymbals (which are separate from the 4 pads on a compatible drum set controller)
+*		4 bytes:	Number of forced yellow tom sections (FOR DRUM TYPE TRACKS ONLY, other tracks should have this set to zero)
+*		{
+*			4 bytes:	Start position of the pro drum section (in milliseconds or delta ticks)
+*			4 bytes:	End position of the pro drum section (in milliseconds or delta ticks)
+*		}
+*		4 bytes:	Number of forced blue tom sections (FOR DRUM TYPE TRACKS ONLY, other track types should have this set to zero)
+*		{
+*			4 bytes:	Start position of the pro drum section (in milliseconds or delta ticks)
+*			4 bytes:	End position of the pro drum section (in milliseconds or delta ticks)
+*		}
+*		4 bytes:	Number of forced green tom sections (FOR DRUM TYPE TRACKS ONLY, other track types should have this set to zero)
+*		{
+*			4 bytes:	Start position of the pro drum section (in milliseconds or delta ticks)
+*			4 bytes:	End position of the pro drum section (in milliseconds or delta ticks)
+*		}
+
 		4 bytes:	Number of notes
 		NOTE CHUNK, for each note
 		{
 *			2 bytes:	Chord name string length
 *			[varies:]	Chord name string
 			1 byte:		Note type (difficulty)
-			1 byte:		Note bitflag (fret on/off statuses)
+			1 byte:		Note bitflag (on/off statuses)
 			4 bytes:	Note position (in milliseconds or delta ticks)
 			4 bytes:	Note length (in milliseconds or delta ticks)
 *			2 byte:		Note flags (allow for more flags, such as would be necessary for adding RB3 drum support before adding more lanes.  When this is implemented, ensure that Expert+ bass gets its own status again)
@@ -217,6 +245,37 @@ TRACK CHUNK, for each track:
 *			4 bytes:	Note position (in milliseconds or delta ticks)
 *			4 bytes:	Note length (in milliseconds or delta ticks)
 *			1 byte:		Note flags
+*		}
+
+	[EXTRA LANE DRUMS TRACK FORMAT]
+*		1 byte:		DTX Mania compliance flag (1=compliant, the track has 8 drum lanes?)
+*		1 byte:		The number of lanes included in this track
+*		4 bytes:	Number of solo sections
+*		SOLO SECTION CHUNK, for each solo section
+*		{
+*			4 bytes:	Start position of solo section (in milliseconds or delta ticks)
+*			4 bytes:	End position of solo section (in milliseconds or delta ticks)
+*		}
+
+*		4 bytes:	Number of star power sections
+*		STAR POWER CHUNK, for each star power section
+*		{
+*			4 bytes:	Start position of star power section (in milliseconds or delta ticks)
+*			4 bytes:	End position of star power section (in milliseconds or delta ticks)
+*		}
+
+*		4 bytes:	Number of notes
+*		KEY NOTE CHUNK, for each note
+*		{
+*			1 byte:		Note type (difficulty)
+*			1 byte:		Number of drum lanes played at this position
+*			DRUM CHORD CHUNK, for each lane in the "chord"
+*			{
+*				1 byte:		Lane number
+*			}
+*			4 bytes:	Note position (in milliseconds or delta ticks)
+*			4 bytes:	Note length (in milliseconds or delta ticks)
+*			2 byte:		Note flags (among other specialized flags, DTXMania supposedly tracks whether hi-hat is open/closed)
 *		}
 }
 
