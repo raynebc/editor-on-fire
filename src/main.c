@@ -93,6 +93,7 @@ char        eof_supports_mp3 = 0;
 char        eof_supports_silence = 0;
 int         eof_new_idle_system = 0;
 char        eof_just_played = 0;
+char        eof_mark_drums_as_cymbal = 0;	//Allows the user to specify whether Y/B/G drum notes will be placed with cymbal notation by default
 
 int         eof_undo_toggle = 0;
 int         eof_redo_toggle = 0;

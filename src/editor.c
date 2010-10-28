@@ -542,7 +542,7 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 void eof_read_editor_keys(void)
 {
 	int i = 0;
-	int bitmask = 0;	//Used for simplifying note placement logic
+	unsigned long bitmask = 0;	//Used for simplifying note placement logic
 	EOF_NOTE * new_note = NULL;
 	EOF_LYRIC * new_lyric = NULL;
 
@@ -1454,8 +1454,12 @@ void eof_read_editor_keys(void)
 						eof_selection.range_pos_2 = 0;
 						eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 						if(eof_hover_note >= 0)
-						{
+						{	//If the user edited an existing note
 							eof_song->track[eof_selected_track]->note[eof_hover_note]->note ^= bitmask;
+							if(eof_mark_drums_as_cymbal)
+							{	//If the user opted to make all new drum notes cymbals automatically
+								eof_mark_edited_note_as_cymbal(eof_song,eof_selected_track,eof_hover_note,bitmask);
+							}
 							eof_selection.current = eof_hover_note;
 							if(!eof_song->track[eof_selected_track]->note[eof_hover_note]->note)
 							{
@@ -1478,12 +1482,16 @@ void eof_read_editor_keys(void)
 							}
 						}
 						else
-						{
+						{	//If the user created a new note
 							eof_pen_note.note ^= bitmask;
 							new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
 							if(new_note)
 							{
 								eof_note_create(new_note, eof_pen_note.note & 1, eof_pen_note.note & 2, eof_pen_note.note & 4, eof_pen_note.note & 8, eof_pen_note.note & 16, eof_pen_note.pos, eof_snap.length);
+								if(eof_mark_drums_as_cymbal)
+								{	//If the user opted to make all new drum notes cymbals automatically
+									eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_song->track[eof_selected_track]->notes-1);
+								}
 								new_note->type = eof_note_type;
 								eof_selection.current_pos = new_note->pos;
 								eof_selection.range_pos_1 = eof_selection.current_pos;
@@ -1587,6 +1595,10 @@ void eof_read_editor_keys(void)
 					if(new_note)
 					{
 						eof_note_create2(new_note, bitmask, eof_music_pos - eof_av_delay - eof_guitar.delay, 1);
+						if(eof_mark_drums_as_cymbal)
+						{	//If the user opted to make all new drum notes cymbals automatically
+							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_song->track[eof_selected_track]->notes-1);
+						}
 						new_note->type = eof_note_type;
 						eof_entering_note_note = new_note;
 						eof_entering_note = 1;
@@ -1676,6 +1688,10 @@ void eof_read_editor_keys(void)
 					if(new_note)
 					{
 						eof_note_create(new_note, 1, 0, 0, 0, 0, eof_music_pos - eof_av_delay - eof_guitar.delay, 1);
+						if(eof_mark_drums_as_cymbal)
+						{	//If the user opted to make all new drum notes cymbals automatically
+							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_song->track[eof_selected_track]->notes-1);
+						}
 						new_note->note = eof_snote;
 						new_note->type = eof_note_type;
 						eof_entering_note_note = new_note;
@@ -1713,6 +1729,10 @@ void eof_read_editor_keys(void)
 				if(new_note)
 				{
 					eof_note_create(new_note, eof_pen_note.note & 1, eof_pen_note.note & 2, eof_pen_note.note & 4, eof_pen_note.note & 8, eof_pen_note.note & 16, eof_music_pos - eof_av_delay, eof_snap.length);
+					if(eof_mark_drums_as_cymbal)
+					{	//If the user opted to make all new drum notes cymbals automatically
+						eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_song->track[eof_selected_track]->notes-1);
+					}
 					eof_song->track[eof_selected_track]->note[i]->type = eof_note_type;
 					eof_detect_difficulties(eof_song);
 				}
@@ -1728,6 +1748,10 @@ void eof_read_editor_keys(void)
 					if(new_note)
 					{
 						eof_note_create(new_note, eof_pen_note.note & 1, eof_pen_note.note & 2, eof_pen_note.note & 4, eof_pen_note.note & 8, eof_pen_note.note & 16, eof_music_pos - eof_av_delay, eof_snap.length);
+						if(eof_mark_drums_as_cymbal)
+						{	//If the user opted to make all new drum notes cymbals automatically
+							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_song->track[eof_selected_track]->notes-1);
+						}
 						eof_song->track[eof_selected_track]->note[i]->type = eof_note_type;
 						eof_entering_note_note = new_note;
 						eof_entering_note = 1;
@@ -2012,6 +2036,10 @@ void eof_editor_drum_logic(void)
 			if(new_note)
 			{
 				eof_note_create2(new_note, bitmask, eof_music_pos - eof_av_delay - eof_drums.delay, 1);
+				if(eof_mark_drums_as_cymbal)
+				{	//If the user opted to make all new drum notes cymbals automatically
+					eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_song->track[eof_selected_track]->notes-1);
+				}
 				eof_snap_logic(&eof_snap, new_note->pos);
 				new_note->pos = eof_snap.pos;
 				new_note->type = eof_note_type;
@@ -2027,7 +2055,7 @@ void eof_editor_drum_logic(void)
 void eof_editor_logic(void)
 {
 	int i;
-	int bitmask = 0;	//Used to reduce duplicated logic
+	unsigned long bitmask = 0;	//Used to reduce duplicated logic
 	int use_this_x = mouse_x;
 	int next_note_pos = 0;
 	EOF_NOTE * new_note = NULL;
@@ -2654,6 +2682,10 @@ void eof_editor_logic(void)
 						if(new_note)
 						{
 							eof_note_create(new_note, eof_pen_note.note & 1, eof_pen_note.note & 2, eof_pen_note.note & 4, eof_pen_note.note & 8, eof_pen_note.note & 16, eof_pen_note.pos, KEY_EITHER_SHIFT ? 1 : eof_snap.length);
+							if(eof_mark_drums_as_cymbal)
+							{	//If the user opted to make all new drum notes cymbals automatically
+								eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_song->track[eof_selected_track]->notes-1);
+							}
 							new_note->type = eof_note_type;
 							eof_selection.current_pos = new_note->pos;
 							eof_selection.range_pos_1 = eof_selection.current_pos;
@@ -2677,6 +2709,10 @@ void eof_editor_logic(void)
 					if(new_note)
 					{
 						eof_note_create(new_note, eof_pen_note.note & 1, eof_pen_note.note & 2, eof_pen_note.note & 4, eof_pen_note.note & 8, eof_pen_note.note & 16, eof_pen_note.pos, KEY_EITHER_SHIFT ? 1 : eof_snap.length);
+						if(eof_mark_drums_as_cymbal)
+						{	//If the user opted to make all new drum notes cymbals automatically
+							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_song->track[eof_selected_track]->notes-1);
+						}
 						new_note->type = eof_note_type;
 						eof_selection.current_pos = new_note->pos;
 						eof_selection.range_pos_1 = eof_selection.current_pos;
@@ -4622,4 +4658,31 @@ void eof_render_editor_window_common2(void)
 	vline(eof_window_editor->screen, 1, 25 + 8, eof_window_editor->h + 4, eof_color_black);
 	hline(eof_window_editor->screen, 1, eof_window_editor->h - 2, eof_window_editor->w - 1, makecol(224, 224, 224));
 	hline(eof_window_editor->screen, 0, eof_window_editor->h - 1, eof_window_editor->w - 1, eof_color_white);
+}
+
+void eof_mark_new_note_as_cymbal(EOF_SONG *sp, unsigned long tracknum, unsigned long notenum)
+{	//Perform the eof_mark_edited_note_as_cymbal() logic, applying cymbal status to all relevant frets in the note
+	eof_mark_edited_note_as_cymbal(sp,tracknum,notenum,0xFFFF);
+}
+
+void eof_mark_edited_note_as_cymbal(EOF_SONG *sp, unsigned long tracknum, unsigned long notenum, unsigned long bitmask)
+{
+	if((sp == NULL) || (tracknum >= EOF_MAX_TRACKS) || (notenum >= sp->track[tracknum]->notes) || (sp->track[tracknum]->note[notenum] == NULL))
+		return;
+
+	if(tracknum == EOF_TRACK_DRUM)
+	{
+		if((sp->track[tracknum]->note[notenum]->note & 4) && (bitmask & 4))
+		{	//If the note was changed to include a yellow note
+			eof_set_flags_at_note_pos(sp->track[tracknum],notenum,EOF_NOTE_FLAG_Y_CYMBAL,1);	//Set the yellow cymbal flag on all drum notes at this position
+		}
+		if((sp->track[tracknum]->note[notenum]->note & 8) && (bitmask & 8))
+		{	//If the note was changed to include a blue note
+			eof_set_flags_at_note_pos(sp->track[tracknum],notenum,EOF_NOTE_FLAG_B_CYMBAL,1);	//Set the blue cymbal flag on all drum notes at this position
+		}
+		if((sp->track[tracknum]->note[notenum]->note & 16) && (bitmask & 16))
+		{	//If the note was changed to include a green note
+			eof_set_flags_at_note_pos(sp->track[tracknum],notenum,EOF_NOTE_FLAG_G_CYMBAL,1);	//Set the green cymbal flag on all drum notes at this position
+		}
+	}
 }
