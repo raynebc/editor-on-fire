@@ -89,54 +89,25 @@ TRACK CHUNK, for each track:
 {
 *	2 bytes:	Track name string length
 *	[varies:]	Track name string
-*	4 byte:		Track number (Matching macros such as EOF_TRACK_GUITAR)
+*	4 bytes:	Track number (Matching macros such as EOF_TRACK_GUITAR)
 *	1 byte:		Track type (1=Guitar,2=Drum,3=Pro drum,3=Vocal,4=Pro Guitar,5=Keys,6=extra lane drums ...)
-*	4 byte:		Track flags (ie. which difficulties are locked for editing)
+*	4 bytes:	Track flags (ie. which difficulties are locked for editing)
 
-	[GUITAR/DRUM AND PRO DRUM TRACK FORMAT]
-*		4 bytes:	Number of solo sections
-		SOLO SECTION CHUNK, for each solo section
-		{
-			4 bytes:	Start position of solo section (in milliseconds or delta ticks)
-			4 bytes:	End position of solo section (in milliseconds or delta ticks)
-		}
+*	4 bytes:	Number of section types stored for this track
+*	SECTION TYPE CHUNK, for each section type
+*	{
+*		2 bytes:	Type of section (ie. solo, star power, lyric phrase, trill, yellow tom, blue tom, green tom, arpeggio, etc)
 
-*		4 bytes:	Number of star power sections
-		STAR POWER CHUNK, for each star power section
-		{
-			4 bytes:	Start position of star power section (in milliseconds or delta ticks)
-			4 bytes:	End position of star power section (in milliseconds or delta ticks)
-		}
-
-!		Rock Band 3 has a new type of phrase people are referring to as trill phrases
-!		This is sort of like a section with a freestyle strumming for a single button (fret 1-5), perhaps more
-!		Supposedly, the player can strum as slowly or quickly as desired provided that the specific notes defined
-!		in the trill phrase are hit.
-*		4 bytes:	Number of trill sections (FOR GUITAR TYPE TRACKS ONLY, other tracks should have this set to zero)
+*		4 bytes:	Number of the specified sections stored
+*		SECTION CHUNK, for each of the specified type of sections
 *		{
-*			4 bytes:	Start position of trill section (in milliseconds or delta ticks)
-*			4 bytes:	End position of trill section (in milliseconds or delta ticks)
+*			4 bytes:	Start position of section (in milliseconds or delta ticks)
+*			4 bytes:	End position of section (in milliseconds or delta ticks)
+*			2 bytes:	Section flags
 *		}
+*	}
 
-!		Rock Band 2 and Rock Band 3 (Pro drums) use MIDI markers to define which yellow, blue and green notes are to be played
-!		as toms (pads) instead of cymbals (which are separate from the 4 pads on a compatible drum set controller).
-!			Note:  Pro drums are currently being implemented as note statuses, requiring extra logic to simulate phrasing
-*		4 bytes:	Number of forced yellow tom sections (FOR DRUM TYPE TRACKS ONLY, other tracks should have this set to zero)
-*		{
-*			4 bytes:	Start position of the pro drum section (in milliseconds or delta ticks)
-*			4 bytes:	End position of the pro drum section (in milliseconds or delta ticks)
-*		}
-*		4 bytes:	Number of forced blue tom sections (FOR DRUM TYPE TRACKS ONLY, other track types should have this set to zero)
-*		{
-*			4 bytes:	Start position of the pro drum section (in milliseconds or delta ticks)
-*			4 bytes:	End position of the pro drum section (in milliseconds or delta ticks)
-*		}
-*		4 bytes:	Number of forced green tom sections (FOR DRUM TYPE TRACKS ONLY, other track types should have this set to zero)
-*		{
-*			4 bytes:	Start position of the pro drum section (in milliseconds or delta ticks)
-*			4 bytes:	End position of the pro drum section (in milliseconds or delta ticks)
-*		}
-
+	[GUITAR/DRUM/PRO DRUM TRACK FORMAT]
 		4 bytes:	Number of notes
 		NOTE CHUNK, for each note
 		{
@@ -146,7 +117,7 @@ TRACK CHUNK, for each track:
 			1 byte:		Note bitflag (on/off statuses)
 			4 bytes:	Note position (in milliseconds or delta ticks)
 			4 bytes:	Note length (in milliseconds or delta ticks)
-*			2 byte:		Note flags (allow for more flags, such as would be necessary for adding RB3 drum support before adding more lanes.  When this is implemented, ensure that Expert+ bass gets its own status again)
+*			2 bytes:	Note flags (allow for more flags.  When this is implemented, ensure that Expert+ bass gets its own status flag again)
 		}
 
 	[VOCAL TRACK FORMAT]
@@ -160,39 +131,11 @@ TRACK CHUNK, for each track:
 			1 byte:		Note pitch
 			4 bytes:	Lyric position (in milliseconds or delta ticks)
 			4 bytes:	Lyric position (in milliseconds or delta ticks)
-*			1 byte:		Lyric flags
-		}
-
-		4 bytes:	Number of lyric phrases
-		LYRIC PHRASE CHUNK, for each lyric phrase
-		{
-			4 bytes:	Start position of lyric phrase (in milliseconds or delta ticks)
-			4 bytes:	End position of lyric phrase (in milliseconds or delta ticks)
-*			1 bytes:	Lyric phrase flags (8 flags should be enough, there aren't many phrase types)
+*			2 bytes:	Lyric flags
 		}
 
 	[PRO GUITAR TRACK FORMAT]
 *		1 byte:		Rock Band compliance flag (1=compliant, presumably that the chart doesn't use any fret higher than 17)
-*		4 bytes:	Number of solo sections
-*		SOLO SECTION CHUNK, for each solo section
-*		{
-*			4 bytes:	Start position of solo section (in milliseconds or delta ticks)
-*			4 bytes:	End position of solo section (in milliseconds or delta ticks)
-*		}
-
-*		4 bytes:	Number of star power sections
-*		STAR POWER CHUNK, for each star power section
-*		{
-*			4 bytes:	Start position of star power section (in milliseconds or delta ticks)
-*			4 bytes:	End position of star power section (in milliseconds or delta ticks)
-*		}
-
-*		4 bytes:	Number of arpeggio sections
-*		ARPEGGIO CHUNK, for each arpeggio section
-*		{
-*			4 bytes:	Start position of the arpeggio section (in milliseconds or delta ticks)
-*			4 bytes:	End position of the arpeggio section (in milliseconds or delta ticks)
-*		}
 
 *		4 bytes:	Number of notes
 *		PRO GUITAR NOTE CHUNK, for each note
@@ -204,79 +147,57 @@ TRACK CHUNK, for each track:
 !				Bit 0 refers to string 1 (high E), bit 5 refers to string 6 (low E), consistent with guitar terminology
 *			FRET CHUNK, for each set bit in the guitar note bitflag
 *			{
-*				1 byte:		Fret # tab (0=Open strum, #=Fret # pressed)
+*				1 byte:		Fret # tab (0=Open strum, #=Fret # pressed, 0xFF=Muted)
 *			}
 *			4 bytes:	Note position (in milliseconds or delta ticks)
 *			4 bytes:	Note length (in milliseconds or delta ticks)
-*			4 byte:		Note flags (allow 32 flags for an unforsee-able number of techniques such as tapping, bending, etc)
+*			4 bytes:	Note flags (allow 32 flags for an unforsee-able number of techniques such as tapping, bending, etc)
 *		}
 
 	[KEYS TRACK FORMAT]
 *		1 byte:		Rock Band compliance flag (1=compliant, the chart doesn't use notes outside the currently unknown accepted range)
 *		1 byte:		Tone set number assigned to this track (ie. 0=Grand Piano, 1=MIDI device, ...)
-*		4 bytes:	Number of solo sections
-*		SOLO SECTION CHUNK, for each solo section
-*		{
-*			4 bytes:	Start position of solo section (in milliseconds or delta ticks)
-*			4 bytes:	End position of solo section (in milliseconds or delta ticks)
-*		}
 
-*		4 bytes:	Number of star power sections
-*		STAR POWER CHUNK, for each star power section
-*		{
-*			4 bytes:	Start position of star power section (in milliseconds or delta ticks)
-*			4 bytes:	End position of star power section (in milliseconds or delta ticks)
-*		}
-
-*		4 bytes:	Number of notes
-*		KEY NOTE CHUNK, for each note
+*		4 bytes:	Number of chords
+!			For the sake of this format, "chord" will refer to all notes defined at a given position in a difficulty in a keys track,
+!			even if there are not multiple notes, and notes will refer to individual notes in the chord
+*		KEY CHORD CHUNK, for each note
 *		{
 *			2 bytes:	Chord name string length
 *			[varies:]	Chord name string
-*			1 byte:		Note type (difficulty)
+*			1 byte:		Chord type (difficulty)
 *			1 byte:		Chord hand (1=right hand- ie. melody, 2=left hand- ie. chords)
 !				Rock Band 3 won't support two hand keys tracks, so this would be a feature for other games such as Synthesia/Doremi Mania)
+!				Two chords should be allowed to be defined at any timestamp, as each hand should be allowed to play one
 *			1 byte:		Number of keys played in this note/chord
 *			KEY CHORD CHUNK, for each key in the chord
 *			{
 *				1 byte:		Note number
 *				1 byte:		Note velocity
+*				1 byte:		Note flags (for storing accidentals)
 *			}
 
 *			4 bytes:	Note position (in milliseconds or delta ticks)
 *			4 bytes:	Note length (in milliseconds or delta ticks)
-*			1 byte:		Note flags
+*			2 bytes:	Chord flags
 *		}
 
 	[EXTRA LANE DRUMS TRACK FORMAT]
 *		1 byte:		DTX Mania compliance flag (1=compliant, the track has 8 drum lanes?)
 *		1 byte:		The number of lanes included in this track
-*		4 bytes:	Number of solo sections
-*		SOLO SECTION CHUNK, for each solo section
-*		{
-*			4 bytes:	Start position of solo section (in milliseconds or delta ticks)
-*			4 bytes:	End position of solo section (in milliseconds or delta ticks)
-*		}
 
-*		4 bytes:	Number of star power sections
-*		STAR POWER CHUNK, for each star power section
-*		{
-*			4 bytes:	Start position of star power section (in milliseconds or delta ticks)
-*			4 bytes:	End position of star power section (in milliseconds or delta ticks)
-*		}
-
-*		4 bytes:	Number of notes
-*		KEY NOTE CHUNK, for each note
+*		4 bytes:	Number of drum notes
+*		DRUM NOTE CHUNK, for each drum note
 *		{
 *			1 byte:		Note type (difficulty)
 *			1 byte:		Number of drum lanes played at this position
-*			DRUM CHORD CHUNK, for each lane in the "chord"
+*			DRUM CHORD CHUNK, for each lane played at this position
 *			{
 *				1 byte:		Lane number
 *			}
 *			4 bytes:	Note position (in milliseconds or delta ticks)
 *			4 bytes:	Note length (in milliseconds or delta ticks)
-*			2 byte:		Note flags (among other specialized flags, DTXMania supposedly tracks whether hi-hat is open/closed)
+*			2 bytes:	Note flags (among other specialized flags, DTXMania supposedly tracks whether hi-hat is open/closed)
 *		}
 }
 
@@ -291,8 +212,28 @@ FRET CATALOG CHUNK, for each catalog entry:
 {
 *	2 bytes:	Entry name string length
 *	[varies:]	Entry name string
-*	4 byte:		Track number (matching the track number in the track chunk)
+*	4 bytes:	Track number (matching the track number in the track chunk)
 	1 byte:		Entry type (difficulty)
-	4 byte:		Start position of entry (in milliseconds or delta ticks)
-	4 byte:		End position of entry (in milliseconds or delta ticks)
+	4 bytes:	Start position of entry (in milliseconds or delta ticks)
+	4 bytes:	End position of entry (in milliseconds or delta ticks)
 }
+
+
+!NOTES:
+
+!Rock Band 3 has a new type of phrase people are referring to as trill phrases
+!This is sort of like a section with a freestyle strumming for a single button (fret 1-5), perhaps more
+!Supposedly, the player can strum as slowly or quickly as desired provided that the specific notes defined
+!in the trill phrase are hit.
+
+!Rock Band 2 and Rock Band 3 (Pro drums) use MIDI markers to define which yellow, blue and green notes are to be played
+!as toms (pads) instead of cymbals (which are separate from the 4 pads on a compatible drum set controller).
+!	Note:  Pro drums are currently being implemented as note statuses, requiring extra logic to simulate phrasing
+
+!For keys and vocal track charting in grand staff mode, track accidentals for each note in each chord (4 bits):
+!The flat/sharp status of each line in the staff is refreshed at the beginning of each measure
+!If a note extends across a measure, its flat/sharp status is retained for the duration of that measure
+	00 : No accidental (any previous flat/sharp is still in effect)
+	01 : Flat (lower note by one semitone)
+	10 : Sharp (raise note by one semitone)
+	11 : Natural (cancel any flat/sharp in effect for this line in the staff, until the next measure/accidental/key change)
