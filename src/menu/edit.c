@@ -1720,53 +1720,37 @@ int eof_menu_edit_snap_off(void)
 
 int eof_menu_edit_hopo_rf(void)
 {
-	int i;
-	for(i = 0; i < EOF_NUM_HOPO_MODES; i++)
-	{
-		eof_edit_hopo_menu[i].flags = 0;
-	}
-	eof_edit_hopo_menu[EOF_HOPO_RF].flags = D_SELECTED;
-	eof_hopo_view = EOF_HOPO_RF;
-	eof_determine_hopos();
-	return 1;
+	return eof_menu_edit_hopo_helper(EOF_HOPO_RF);
 }
 
 int eof_menu_edit_hopo_fof(void)
 {
-	int i;
-	for(i = 0; i < EOF_NUM_HOPO_MODES; i++)
-	{
-		eof_edit_hopo_menu[i].flags = 0;
-	}
-	eof_edit_hopo_menu[EOF_HOPO_FOF].flags = D_SELECTED;
-	eof_hopo_view = EOF_HOPO_FOF;
-	eof_determine_hopos();
-	return 1;
+	return eof_menu_edit_hopo_helper(EOF_HOPO_FOF);
 }
 
 int eof_menu_edit_hopo_off(void)
 {
-	int i;
-	for(i = 0; i < EOF_NUM_HOPO_MODES; i++)
-	{
-		eof_edit_hopo_menu[i].flags = 0;
-	}
-	eof_edit_hopo_menu[EOF_HOPO_OFF].flags = D_SELECTED;
-	eof_hopo_view = EOF_HOPO_OFF;
-	eof_determine_hopos();
-	return 1;
+	return eof_menu_edit_hopo_helper(EOF_HOPO_OFF);
 }
 
 int eof_menu_edit_hopo_manual(void)
 {
+	return eof_menu_edit_hopo_helper(EOF_NUM_HOPO_MODES);
+}
+
+int eof_menu_edit_hopo_helper(int hopo_view)
+{
 	int i;
-	for(i = 0; i < EOF_NUM_HOPO_MODES; i++)
+	if(hopo_view < EOF_NUM_HOPO_MODES)
 	{
-		eof_edit_hopo_menu[i].flags = 0;
+		for(i = 0; i < EOF_NUM_HOPO_MODES; i++)
+		{
+			eof_edit_hopo_menu[i].flags = 0;
+		}
+		eof_edit_hopo_menu[hopo_view].flags = D_SELECTED;
+		eof_hopo_view = hopo_view;
+		eof_determine_hopos();
 	}
-	eof_edit_hopo_menu[EOF_HOPO_MANUAL].flags = D_SELECTED;
-	eof_hopo_view = EOF_HOPO_MANUAL;
-	eof_determine_hopos();
 	return 1;
 }
 
@@ -1787,73 +1771,43 @@ int eof_menu_edit_metronome(void)
 
 int eof_menu_edit_claps_all(void)
 {
-	int i;
-	for(i = 0; i < 6; i++)
-	{
-		eof_edit_claps_menu[i].flags = 0;
-	}
-	eof_edit_claps_menu[0].flags = D_SELECTED;
-	eof_mix_claps_note = 31;
-	return 1;
+	return eof_menu_edit_claps_helper(0,31);
 }
 
 int eof_menu_edit_claps_green(void)
 {
-	int i;
-	for(i = 0; i < 6; i++)
-	{
-		eof_edit_claps_menu[i].flags = 0;
-	}
-	eof_edit_claps_menu[1].flags = D_SELECTED;
-	eof_mix_claps_note = 1;
-	return 1;
+	return eof_menu_edit_claps_helper(1,1);
 }
 
 int eof_menu_edit_claps_red(void)
 {
-	int i;
-	for(i = 0; i < 6; i++)
-	{
-		eof_edit_claps_menu[i].flags = 0;
-	}
-	eof_edit_claps_menu[2].flags = D_SELECTED;
-	eof_mix_claps_note = 2;
-	return 1;
+	return eof_menu_edit_claps_helper(2,2);
 }
 
 int eof_menu_edit_claps_yellow(void)
 {
-	int i;
-	for(i = 0; i < 6; i++)
-	{
-		eof_edit_claps_menu[i].flags = 0;
-	}
-	eof_edit_claps_menu[3].flags = D_SELECTED;
-	eof_mix_claps_note = 4;
-	return 1;
+	return eof_menu_edit_claps_helper(3,4);
 }
 
 int eof_menu_edit_claps_blue(void)
 {
-	int i;
-	for(i = 0; i < 6; i++)
-	{
-		eof_edit_claps_menu[i].flags = 0;
-	}
-	eof_edit_claps_menu[4].flags = D_SELECTED;
-	eof_mix_claps_note = 8;
-	return 1;
+	return eof_menu_edit_claps_helper(4,8);
 }
 
 int eof_menu_edit_claps_purple(void)
+{
+	return eof_menu_edit_claps_helper(5,16);
+}
+
+int eof_menu_edit_claps_helper(unsigned long menu_item,char claps_flag)
 {
 	int i;
 	for(i = 0; i < 6; i++)
 	{
 		eof_edit_claps_menu[i].flags = 0;
 	}
-	eof_edit_claps_menu[5].flags = D_SELECTED;
-	eof_mix_claps_note = 16;
+	eof_edit_claps_menu[menu_item].flags = D_SELECTED;
+	eof_mix_claps_note = claps_flag;
 	return 1;
 }
 
@@ -1923,62 +1877,52 @@ int eof_menu_edit_bookmark_helper(int b)
 
 int eof_menu_edit_bookmark_0(void)
 {
-	eof_menu_edit_bookmark_helper(0);
-	return 1;
+	return eof_menu_edit_bookmark_helper(0);
 }
 
 int eof_menu_edit_bookmark_1(void)
 {
-	eof_menu_edit_bookmark_helper(1);
-	return 1;
+	return eof_menu_edit_bookmark_helper(1);
 }
 
 int eof_menu_edit_bookmark_2(void)
 {
-	eof_menu_edit_bookmark_helper(2);
-	return 1;
+	return eof_menu_edit_bookmark_helper(2);
 }
 
 int eof_menu_edit_bookmark_3(void)
 {
-	eof_menu_edit_bookmark_helper(3);
-	return 1;
+	return eof_menu_edit_bookmark_helper(3);
 }
 
 int eof_menu_edit_bookmark_4(void)
 {
-	eof_menu_edit_bookmark_helper(4);
-	return 1;
+	return eof_menu_edit_bookmark_helper(4);
 }
 
 int eof_menu_edit_bookmark_5(void)
 {
-	eof_menu_edit_bookmark_helper(5);
-	return 1;
+	return eof_menu_edit_bookmark_helper(5);
 }
 
 int eof_menu_edit_bookmark_6(void)
 {
-	eof_menu_edit_bookmark_helper(6);
-	return 1;
+	return eof_menu_edit_bookmark_helper(6);
 }
 
 int eof_menu_edit_bookmark_7(void)
 {
-	eof_menu_edit_bookmark_helper(7);
-	return 1;
+	return eof_menu_edit_bookmark_helper(7);
 }
 
 int eof_menu_edit_bookmark_8(void)
 {
-	eof_menu_edit_bookmark_helper(8);
-	return 1;
+	return eof_menu_edit_bookmark_helper(8);
 }
 
 int eof_menu_edit_bookmark_9(void)
 {
-	eof_menu_edit_bookmark_helper(9);
-	return 1;
+	return eof_menu_edit_bookmark_helper(9);
 }
 
 int eof_menu_edit_select_all_vocal(void)
@@ -2186,142 +2130,33 @@ int eof_menu_edit_select_rest(void)
 
 int eof_menu_edit_paste_from_supaeasy(void)
 {
-	int i;
-	EOF_NOTE * new_note = NULL;
-
-	if(eof_note_type != 0)
-	{
-		if(eof_note_type_name[eof_note_type][0] == '*')
-		{
-			if(alert(NULL, "Overwrite notes in this difficulty?", NULL, "&Yes", "&No", 'y', 'n') == 2)
-			{
-				return 1;
-			}
-		}
-		eof_clear_input();
-		eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-		for(i = eof_song->track[eof_selected_track]->notes - 1; i >= 0; i--)
-		{
-			if(eof_song->track[eof_selected_track]->note[i]->type == eof_note_type)
-			{
-				eof_track_delete_note(eof_song->track[eof_selected_track], i);
-			}
-		}
-		for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
-		{
-			if(eof_song->track[eof_selected_track]->note[i]->type == 0)
-			{
-				new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
-				if(new_note)
-				{
-					new_note->type = eof_note_type;
-					new_note->note = eof_song->track[eof_selected_track]->note[i]->note;
-					new_note->pos = eof_song->track[eof_selected_track]->note[i]->pos;
-					new_note->length = eof_song->track[eof_selected_track]->note[i]->length;
-					new_note->flags = eof_song->track[eof_selected_track]->note[i]->flags;
-				}
-			}
-		}
-		eof_detect_difficulties(eof_song);
-	}
-	return 1;
+	return eof_menu_edit_paste_from_difficulty(EOF_NOTE_SUPAEASY);
 }
 
 int eof_menu_edit_paste_from_easy(void)
 {
-	int i;
-	EOF_NOTE * new_note = NULL;
-
-	if(eof_note_type != 1)
-	{
-		if(eof_note_type_name[eof_note_type][0] == '*')
-		{
-			if(alert(NULL, "Overwrite notes in this difficulty?", NULL, "&Yes", "&No", 'y', 'n') == 2)
-			{
-				return 1;
-			}
-		}
-		eof_clear_input();
-		eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-		for(i = eof_song->track[eof_selected_track]->notes - 1; i >= 0; i--)
-		{
-			if(eof_song->track[eof_selected_track]->note[i]->type == eof_note_type)
-			{
-				eof_track_delete_note(eof_song->track[eof_selected_track], i);
-			}
-		}
-		for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
-		{
-			if(eof_song->track[eof_selected_track]->note[i]->type == 1)
-			{
-				new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
-				if(new_note)
-				{
-					new_note->type = eof_note_type;
-					new_note->note = eof_song->track[eof_selected_track]->note[i]->note;
-					new_note->pos = eof_song->track[eof_selected_track]->note[i]->pos;
-					new_note->length = eof_song->track[eof_selected_track]->note[i]->length;
-					new_note->flags = eof_song->track[eof_selected_track]->note[i]->flags;
-				}
-			}
-		}
-		eof_detect_difficulties(eof_song);
-	}
-	return 1;
+	return eof_menu_edit_paste_from_difficulty(EOF_NOTE_EASY);
 }
 
 int eof_menu_edit_paste_from_medium(void)
 {
-	int i;
-	EOF_NOTE * new_note = NULL;
-
-	if(eof_note_type != 2)
-	{
-		if(eof_note_type_name[eof_note_type][0] == '*')
-		{
-			if(alert(NULL, "Overwrite notes in this difficulty?", NULL, "&Yes", "&No", 'y', 'n') == 2)
-			{
-				return 1;
-			}
-		}
-		eof_clear_input();
-		eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-		for(i = eof_song->track[eof_selected_track]->notes - 1; i >= 0; i--)
-		{
-			if(eof_song->track[eof_selected_track]->note[i]->type == eof_note_type)
-			{
-				eof_track_delete_note(eof_song->track[eof_selected_track], i);
-			}
-		}
-		for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
-		{
-			if(eof_song->track[eof_selected_track]->note[i]->type == 2)
-			{
-				new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
-				if(new_note)
-				{
-					new_note->type = eof_note_type;
-					new_note->note = eof_song->track[eof_selected_track]->note[i]->note;
-					new_note->pos = eof_song->track[eof_selected_track]->note[i]->pos;
-					new_note->length = eof_song->track[eof_selected_track]->note[i]->length;
-					new_note->flags = eof_song->track[eof_selected_track]->note[i]->flags;
-				}
-			}
-		}
-		eof_detect_difficulties(eof_song);
-	}
-	return 1;
+	return eof_menu_edit_paste_from_difficulty(EOF_NOTE_MEDIUM);
 }
 
 int eof_menu_edit_paste_from_amazing(void)
 {
-	int i;
+	return eof_menu_edit_paste_from_difficulty(EOF_NOTE_AMAZING);
+}
+
+int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty)
+{
+	unsigned long i;
 	EOF_NOTE * new_note = NULL;
 
-	if(eof_note_type != 3)
-	{
+	if((eof_note_type != source_difficulty) && (source_difficulty < EOF_MAX_DIFFICULTIES))
+	{	//If the current difficulty is different than the source difficulty
 		if(eof_note_type_name[eof_note_type][0] == '*')
-		{
+		{	//If the current difficulty is populated
 			if(alert(NULL, "Overwrite notes in this difficulty?", NULL, "&Yes", "&No", 'y', 'n') == 2)
 			{
 				return 1;
@@ -2330,19 +2165,19 @@ int eof_menu_edit_paste_from_amazing(void)
 		eof_clear_input();
 		eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 		for(i = eof_song->track[eof_selected_track]->notes - 1; i >= 0; i--)
-		{
+		{	//For each note in this instrument track
 			if(eof_song->track[eof_selected_track]->note[i]->type == eof_note_type)
-			{
-				eof_track_delete_note(eof_song->track[eof_selected_track], i);
+			{	//If this note is in the current difficulty
+				eof_track_delete_note(eof_song->track[eof_selected_track], i);	//Delete it
 			}
 		}
 		for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
-		{
-			if(eof_song->track[eof_selected_track]->note[i]->type == 3)
-			{
-				new_note = eof_track_add_note(eof_song->track[eof_selected_track]);
+		{	//For each note in this instrument track
+			if(eof_song->track[eof_selected_track]->note[i]->type == source_difficulty)
+			{	//If this note is in the source difficulty
+				new_note = eof_track_add_note(eof_song->track[eof_selected_track]);	//Create a note
 				if(new_note)
-				{
+				{	//And copy the source note to the destination difficulty
 					new_note->type = eof_note_type;
 					new_note->note = eof_song->track[eof_selected_track]->note[i]->note;
 					new_note->pos = eof_song->track[eof_selected_track]->note[i]->pos;
