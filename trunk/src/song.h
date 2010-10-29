@@ -13,11 +13,12 @@
 #define EOF_MAX_INI_SETTINGS     32
 #define EOF_MAX_BOOKMARK_ENTRIES 10
 
-#define EOF_NOTE_SUPAEASY 0
-#define EOF_NOTE_EASY     1
-#define EOF_NOTE_MEDIUM   2
-#define EOF_NOTE_AMAZING  3
-#define EOF_NOTE_SPECIAL  4
+#define EOF_NOTE_SUPAEASY    0
+#define EOF_NOTE_EASY        1
+#define EOF_NOTE_MEDIUM      2
+#define EOF_NOTE_AMAZING     3
+#define EOF_MAX_DIFFICULTIES 4
+#define EOF_NOTE_SPECIAL     4
 
 #define EOF_TRACK_GUITAR      0
 #define EOF_TRACK_BASS        1

@@ -118,8 +118,9 @@ TRACK CHUNK, for each track:
 *			4 bytes:	End position of trill section (in milliseconds or delta ticks)
 *		}
 
-!		Rock Band 2 (drum animations) and Rock Band 3 (Pro drums) use MIDI markers to define which yellow, blue and green notes are
-!		to be played as toms (pads) instead of cymbals (which are separate from the 4 pads on a compatible drum set controller)
+!		Rock Band 2 and Rock Band 3 (Pro drums) use MIDI markers to define which yellow, blue and green notes are to be played
+!		as toms (pads) instead of cymbals (which are separate from the 4 pads on a compatible drum set controller).
+!			Note:  Pro drums are currently being implemented as note statuses, requiring extra logic to simulate phrasing
 *		4 bytes:	Number of forced yellow tom sections (FOR DRUM TYPE TRACKS ONLY, other tracks should have this set to zero)
 *		{
 *			4 bytes:	Start position of the pro drum section (in milliseconds or delta ticks)

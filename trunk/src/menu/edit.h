@@ -26,6 +26,7 @@ int eof_menu_edit_claps_yellow(void);
 int eof_menu_edit_claps_blue(void);
 int eof_menu_edit_claps_purple(void);
 int eof_menu_edit_claps(void);
+int eof_menu_edit_claps_helper(unsigned long menu_item,char claps_flag);	//Sets the specified clap note setting
 int eof_menu_edit_vocal_tones(void);
 int eof_menu_edit_midi_tones(void);		//Toggle MIDI tones on/off
 int eof_menu_edit_bookmark_0(void);
@@ -59,7 +60,8 @@ int eof_menu_edit_snap_custom(void);
 int eof_menu_edit_hopo_rf(void);
 int eof_menu_edit_hopo_fof(void);
 int eof_menu_edit_hopo_off(void);
-int eof_menu_edit_hopo_manual(void);	//A HOPO preview mode that only displays forced HOPO notes as HOPOs
+int eof_menu_edit_hopo_manual(void);			//A HOPO preview mode that only displays forced HOPO notes as HOPOs
+int eof_menu_edit_hopo_helper(int hopo_view);	//Sets the specified HOPO preview mode
 
 #define EOF_NUM_ZOOM_LEVELS 10
 int eof_menu_edit_zoom_helper_in(void);
@@ -92,6 +94,7 @@ int eof_menu_edit_paste_from_supaeasy(void);
 int eof_menu_edit_paste_from_easy(void);
 int eof_menu_edit_paste_from_medium(void);
 int eof_menu_edit_paste_from_amazing(void);
+int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty);	//Copies instrument notes from the specified difficulty into the currently selected difficulty
 int eof_menu_edit_paste_from_catalog(void);
 
 void eof_sanitize_note_flags(char *flags,int desttrack,int srctrack);
