@@ -32,7 +32,7 @@ EOF proposed file format (revision 'H'):
 *1 byte:	Drums difficulty level (0-6)
 *1 byte:	Guitar difficulty level (0-6)
 *1 byte:	Vocal difficulty level (0-6)
-!	FoFiX doesn't reportedly support a vocal difficulty value yet
+!	FoFiX doesn't reportedly support a vocal difficulty value yet, but planning ahead doesn't hurt
 *1 byte:	Force FoFiX to use the chart's background.png as the background
 *1 byte:	HOPO frequency (0-5, requires the user's "Song HOPO Freq" FoFiX setting to be set to "Auto")
 *1 byte:	Icon ID string length
@@ -53,7 +53,7 @@ OGG PROFILE CHUNK, for each OGG profile:
 *	2 bytes:	OGG file name string length
 	[varies:]	OGG file name string
 	4 bytes:	MIDI delay for this profile (milliseconds)
-*	1 byte:		OGG profile flags (such as whether the file was originally provided as an OGG or if it was re-encoded)
+*	1 byte:		OGG profile flags (such as whether the file was originally provided as an OGG or if it was re-encoded, is being mixed with active OGG profile audio, etc)
 }
 
 2 bytes:	Number of INI settings
@@ -90,7 +90,7 @@ TRACK CHUNK, for each track:
 *	2 bytes:	Track name string length
 *	[varies:]	Track name string
 *	4 bytes:	Track number (Matching macros such as EOF_TRACK_GUITAR)
-*	1 byte:		Track type (1=Guitar,2=Drum,3=Pro drum,3=Vocal,4=Pro Guitar,5=Keys,6=extra lane drums ...)
+*	1 byte:		Track type (1=Guitar,2=Drum,3=Pro drum,3=Vocal,4=Pro Guitar,5=Keys,6=extra lane drums,7=extra lane guitar ...)
 *	4 bytes:	Track flags (ie. which difficulties are locked for editing)
 
 *	4 bytes:	Number of section types stored for this track
@@ -137,6 +137,14 @@ TRACK CHUNK, for each track:
 	[PRO GUITAR TRACK FORMAT]
 *		1 byte:		Rock Band compliance flag (1=compliant, presumably that the chart doesn't use any fret higher than 17)
 
+*		1 byte:		The number of strings on this track's guitar (ie. 4 for standard bass guitar, 6 for standard guitar)
+*		PRO GUITAR TUNING CHUNK, for each string
+*		{
+*			1 byte:		The note this string sounds when played open (no frets held)
+*		}
+!			The first string defined refers to string 1 (high E), consistent with guitar terminology
+!			The note numbering system is based on A440 tuning, where note A4 is 440Hz and is referred to as note 69.  Mid C (note C4) is referred to as note 60
+
 *		4 bytes:	Number of notes
 *		PRO GUITAR NOTE CHUNK, for each note
 *		{
@@ -170,7 +178,7 @@ TRACK CHUNK, for each track:
 !				Rock Band 3 won't support two hand keys tracks, so this would be a feature for other games such as Synthesia/Doremi Mania)
 !				Two chords should be allowed to be defined at any timestamp, as each hand should be allowed to play one
 *			1 byte:		Number of keys played in this note/chord
-*			KEY CHORD CHUNK, for each key in the chord
+*			KEY NOTE CHUNK, for each key in the chord
 *			{
 *				1 byte:		Note number
 *				1 byte:		Note velocity
@@ -182,18 +190,18 @@ TRACK CHUNK, for each track:
 *			2 bytes:	Chord flags
 *		}
 
-	[EXTRA LANE DRUMS TRACK FORMAT]
+	[EXTRA LANE GUITAR/DRUMS TRACK FORMAT]
 *		1 byte:		DTX Mania compliance flag (1=compliant, the track has 8 drum lanes?)
 *		1 byte:		The number of lanes included in this track
 
-*		4 bytes:	Number of drum notes
-*		DRUM NOTE CHUNK, for each drum note
+*		4 bytes:	Number of notes
+*		EXTRA LANE CHORD CHUNK, for each note
 *		{
 *			1 byte:		Note type (difficulty)
-*			1 byte:		Number of drum lanes played at this position
-*			DRUM CHORD CHUNK, for each lane played at this position
+*			1 byte:		Number of lanes played at this position
+*			EXTRA LANE NOTE CHUNK, for each lane played at this position
 *			{
-*				1 byte:		Lane number
+*				1 byte:		Lane number containing a playable note
 *			}
 *			4 bytes:	Note position (in milliseconds or delta ticks)
 *			4 bytes:	Note length (in milliseconds or delta ticks)

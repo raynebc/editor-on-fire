@@ -122,6 +122,8 @@ int eof_note_draw(EOF_NOTE * np, int p)
 	int ctr;
 	unsigned int mask;	//Used to mask out colors in the for loop
 	int radius,dotsize;
+	char iscymbal;		//Used to track whether the specified note is marked as a cymbal
+	int x,y;
 
 //Since Expert+ double bass notation uses the same flag as crazy status, override the dot color for PART DRUMS
 	if(eof_selected_track == EOF_TRACK_DRUM)
@@ -183,6 +185,10 @@ int eof_note_draw(EOF_NOTE * np, int p)
 		dcol = eof_color_white;
 		for(ctr=0,mask=1;ctr<EOF_MAX_FRETS;ctr++,mask=mask<<1)
 		{	//Render for each of the available fret colors
+			iscymbal = 0;
+			x = npos;											//Store this to make the code more readable
+			y = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr];	//Store this to make the code more readable
+
 			if(np->note & mask)
 			{
 				if(!(np->flags & EOF_NOTE_FLAG_SP))
@@ -197,7 +203,8 @@ int eof_note_draw(EOF_NOTE * np, int p)
 					else if(((np->flags & EOF_NOTE_FLAG_Y_CYMBAL) && (mask == 4)) || ((np->flags & EOF_NOTE_FLAG_B_CYMBAL) && (mask == 8)) || ((np->flags & EOF_NOTE_FLAG_G_CYMBAL) && (mask == 16)))
 					{	//If this drum note is marked as a yellow, blue or green cymbal
 //						dcol2 = ncol;			//Render the dot the same color as the note
-						dcol2 = eof_color_black;	//Render cymbal drum notes with a black center to make them more visible
+//						dcol2 = eof_color_black;	//Render cymbal drum notes with a black center to make them more visible
+						iscymbal = 1;
 					}
 					else
 						dcol2 = dcol;			//Otherwise render with the expected dot color
@@ -205,16 +212,33 @@ int eof_note_draw(EOF_NOTE * np, int p)
 				else
 					dcol2 = dcol;			//Otherwise render with the expected dot color
 
-				rectfill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, ncol);
-				rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, pcol);
-				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], radius, ncol);
-				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], dotsize, dcol2);
-				circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], radius, pcol);
+				rectfill(eof_window_editor->screen, x, y - eof_screen_layout.note_tail_size, x + np->length / eof_zoom, y + eof_screen_layout.note_tail_size, ncol);
+				rect(eof_window_editor->screen, x, y - eof_screen_layout.note_tail_size, x + np->length / eof_zoom, y + eof_screen_layout.note_tail_size, pcol);
+
+				if(!iscymbal)
+				{	//If this note is not a cymbal, render note as a circle
+					circlefill(eof_window_editor->screen, x, y, radius, ncol);
+					circlefill(eof_window_editor->screen, x, y, dotsize, dcol2);
+					circle(eof_window_editor->screen, x, y, radius, pcol);
+				}
+				else
+				{	//Otherwise render it as a triangle
+					triangle(eof_window_editor->screen, x, y-radius, x+radius, y+radius, x-radius, y+radius, ncol);
+				}
 			}
 			else if(eof_hover_note >= 0)
 			{
-				rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, eof_color_gray);
-				circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], radius, eof_color_gray);
+				rect(eof_window_editor->screen, x, y - eof_screen_layout.note_tail_size, x + np->length / eof_zoom, y + eof_screen_layout.note_tail_size, eof_color_gray);
+				if(!iscymbal)
+				{	//If this note is not a cymbal, draw a non filled circle over the note
+					circle(eof_window_editor->screen, x, y, radius, eof_color_gray);
+				}
+				else
+				{	//Draw a non filled rectangle along the border of the filled triangle
+					line(eof_window_editor->screen, x, y-radius, x+radius, y+radius, eof_color_gray);
+					line(eof_window_editor->screen, x+radius, y+radius, x-radius, y+radius, eof_color_gray);
+					line(eof_window_editor->screen, x-radius, y+radius, x, y-radius, eof_color_gray);
+				}
 			}
 		}
 	}
@@ -222,6 +246,10 @@ int eof_note_draw(EOF_NOTE * np, int p)
 	{
 		for(ctr=0,mask=1;ctr<EOF_MAX_FRETS;ctr++,mask=mask<<1)
 		{	//Render for each of the available fret colors
+			iscymbal = 0;
+			x = npos;											//Store this to make the code more readable
+			y = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr];	//Store this to make the code more readable
+
 			if(np->note & mask)
 			{
 				if(!(np->flags & EOF_NOTE_FLAG_SP))
@@ -236,7 +264,8 @@ int eof_note_draw(EOF_NOTE * np, int p)
 					else if(((np->flags & EOF_NOTE_FLAG_Y_CYMBAL) && (mask == 4)) || ((np->flags & EOF_NOTE_FLAG_B_CYMBAL) && (mask == 8)) || ((np->flags & EOF_NOTE_FLAG_G_CYMBAL) && (mask == 16)))
 					{	//If this drum note is marked as a yellow, blue or green cymbal
 //						dcol2 = ncol;			//Render the dot the same color as the note
-						dcol2 = eof_color_black;	//Render cymbal drum notes with a black center to make them more visible
+//						dcol2 = eof_color_black;	//Render cymbal drum notes with a black center to make them more visible
+						iscymbal = 1;
 					}
 					else
 						dcol2 = dcol;			//Otherwise render with the expected dot color
@@ -244,16 +273,29 @@ int eof_note_draw(EOF_NOTE * np, int p)
 				else
 					dcol2 = dcol;			//Otherwise render with the expected dot color
 
-				rectfill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, ncol);
+				rectfill(eof_window_editor->screen, x, y - eof_screen_layout.note_tail_size, x + np->length / eof_zoom, y + eof_screen_layout.note_tail_size, ncol);
 				if(p)
 				{
-					rect(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - eof_screen_layout.note_tail_size, npos + np->length / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + eof_screen_layout.note_tail_size, pcol);
+					rect(eof_window_editor->screen, x, y - eof_screen_layout.note_tail_size, x + np->length / eof_zoom, y + eof_screen_layout.note_tail_size, pcol);
 				}
-				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], radius, ncol);
-				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], dotsize, dcol2);
-				if(p)
-				{
-					circle(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr], radius, pcol);
+				if(!iscymbal)
+				{	//If this note is not a cymbal, render note as a circle
+					circlefill(eof_window_editor->screen, x, y, radius, ncol);
+					circlefill(eof_window_editor->screen, x, y, dotsize, dcol2);
+					if(p)
+					{	//Draw a non filled circle over the note
+						circle(eof_window_editor->screen, x, y, radius, pcol);
+					}
+				}
+				else
+				{	//Otherwise render it as a triangle
+					triangle(eof_window_editor->screen, x, y-radius, x+radius, y+radius, x-radius, y+radius, ncol);
+					if(p)
+					{	//Draw a non filled rectangle along the border of the filled triangle
+						line(eof_window_editor->screen, x, y-radius, x+radius, y+radius, pcol);
+						line(eof_window_editor->screen, x+radius, y+radius, x-radius, y+radius, pcol);
+						line(eof_window_editor->screen, x-radius, y+radius, x, y-radius, pcol);
+					}
 				}
 			}
 		}
