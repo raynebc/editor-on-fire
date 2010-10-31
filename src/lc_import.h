@@ -4,9 +4,9 @@
 #include "song.h"
 
 int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format, char *inputfilename, char *string2);
-	//A reference to a destination EOF_VOCAL_TRACK structure and a destination Lyric_Format pointer must be given
+	//Performs a lyric import from the specified file to the specified EOF_VOCAL_TRACK structure
 	//The lyric format will be detected if format is 0.  If there is only one format detected in the lyrics, it will be
-	//imported into the given EOF lyric structure.  The return values are as follows:
+	//imported into the given EOF_VOCAL_TRACK structure.  The return values are as follows:
 	//	-2 if it is a MIDI file with more than one track containing lyrics.  The user should be prompted for which
 	//		track to import from.  lp will be modified to refer to a linked list of all candiate lyric formats the
 	//		file may contain.
@@ -28,8 +28,8 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 	//Accept the EOF lyric structure (tp) by reference, populate the Lyrics structure with it and perform
 	//the specified export.  string2 will be required to be either the pitched lyric filename to create
 	//during Vrhythm export, or the name to call the exported track (for MIDI based lyric exports)
-	//	string2 may be NULL for SKAR import, as the track to import is pre-determined
-	//	string2 may be NULL for MIDI import, as "PART VOCALS" will be assumed by default
+	//	string2 may be NULL for SKAR export, as the track to import is pre-determined
+	//	string2 may be NULL for MIDI export, as "PART VOCALS" will be assumed by default
 	//For export formats besides Vrhythm or other MIDI formats, string2 may be NULL
 	//Returns 1 on success, -1 on error and 0 if no lyrics were found in the structure
 
