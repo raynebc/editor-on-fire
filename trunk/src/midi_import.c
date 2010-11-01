@@ -666,7 +666,7 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 	unsigned long ctr,ctr2;
 	double beatlength;
 
-#define EOF_DEBUG_MIDI_IMPORT
+//#define EOF_DEBUG_MIDI_IMPORT
 
 #ifdef EOF_DEBUG_MIDI_IMPORT
 char debugtext[400];
@@ -1369,17 +1369,20 @@ allegro_message("Third pass complete");
 		eof_track_sort_notes(sp->track[EOF_TRACK_DRUM]);	//Ensure this track is sorted
 		for(k = 0; k < sp->track[EOF_TRACK_DRUM]->notes; k++)
 		{	//For each note in the drum track
-			if((sp->track[EOF_TRACK_DRUM]->note[k]->flags & EOF_NOTE_FLAG_G_CYMBAL) == 0)
-			{	//If this green note has the cymbal marker cleared
-				eof_set_flags_at_note_pos(sp->track[EOF_TRACK_DRUM],k,EOF_NOTE_FLAG_G_CYMBAL,0);	//Ensure all drum notes at this position have the flag cleared
-			}
-			if((sp->track[EOF_TRACK_DRUM]->note[k]->flags & EOF_NOTE_FLAG_Y_CYMBAL) == 0)
-			{	//If this yellow note has the cymbal marker cleared
-				eof_set_flags_at_note_pos(sp->track[EOF_TRACK_DRUM],k,EOF_NOTE_FLAG_Y_CYMBAL,0);	//Ensure all drum notes at this position have the flag cleared
-			}
-			if((sp->track[EOF_TRACK_DRUM]->note[k]->flags & EOF_NOTE_FLAG_B_CYMBAL) == 0)
-			{	//If this blue note has the cymbal marker cleared
-				eof_set_flags_at_note_pos(sp->track[EOF_TRACK_DRUM],k,EOF_NOTE_FLAG_B_CYMBAL,0);	//Ensure all drum notes at this position have the flag cleared
+			if(sp->track[EOF_TRACK_DRUM]->note[k]->type != EOF_NOTE_SPECIAL)
+			{	//Only process not BRE notes
+				if((sp->track[EOF_TRACK_DRUM]->note[k]->note & 4) && ((sp->track[EOF_TRACK_DRUM]->note[k]->flags & EOF_NOTE_FLAG_Y_CYMBAL) == 0))
+				{	//If this note has a yellow gem with the cymbal marker cleared
+					eof_set_flags_at_note_pos(sp->track[EOF_TRACK_DRUM],k,EOF_NOTE_FLAG_Y_CYMBAL,0);	//Ensure all drum notes at this position have the flag cleared
+				}
+				if((sp->track[EOF_TRACK_DRUM]->note[k]->note & 8) && ((sp->track[EOF_TRACK_DRUM]->note[k]->flags & EOF_NOTE_FLAG_B_CYMBAL) == 0))
+				{	//If this note has a blue gem with the cymbal marker cleared
+					eof_set_flags_at_note_pos(sp->track[EOF_TRACK_DRUM],k,EOF_NOTE_FLAG_B_CYMBAL,0);	//Ensure all drum notes at this position have the flag cleared
+				}
+				if((sp->track[EOF_TRACK_DRUM]->note[k]->note & 16) && ((sp->track[EOF_TRACK_DRUM]->note[k]->flags & EOF_NOTE_FLAG_G_CYMBAL) == 0))
+				{	//If this note has a green gem with the cymbal marker cleared
+					eof_set_flags_at_note_pos(sp->track[EOF_TRACK_DRUM],k,EOF_NOTE_FLAG_G_CYMBAL,0);	//Ensure all drum notes at this position have the flag cleared
+				}
 			}
 		}
 	}
