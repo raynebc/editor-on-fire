@@ -3,6 +3,7 @@
 #include "beat.h"
 #include "chart_import.h"
 #include "feedback.h"
+#include "midi.h"	//For eof_apply_ts()
 #include "menu/beat.h"
 #include "menu/file.h"
 
@@ -318,6 +319,26 @@ EOF_SONG * eof_import_chart(const char * fn)
 			sp->beat[b]->flags |= EOF_BEAT_FLAG_EVENTS;
 			current_event = current_event->next;
 		}
+
+		/* load time signatures */
+		if(eof_use_ts)
+		{	//If the user opted to import TS changes
+			current_anchor = chart->anchors;
+			eof_apply_ts(4,4,0,sp,0);	//Apply a default TS of 4/4 on the first beat marker
+			while(current_anchor)
+			{
+				if((current_anchor->TS != 0) && (current_anchor->chartpos % chart->resolution == 0))
+				{	//If there is a Time Signature defined here, and it is defined on a beat marker
+					if(current_anchor->chartpos / chart->resolution < sp->beats)
+					{	//And the beat in question is defined in the beat[] array, apply the TS change
+						eof_apply_ts(current_anchor->TS,4,current_anchor->chartpos / chart->resolution,sp,0);
+					}
+				}
+				current_anchor = current_anchor->next;
+			}
+		}
+
+		DestroyFeedbackChart(chart, 1);	//Free memory used by Feedback chart before exiting function
 	}
 	return sp;
 }

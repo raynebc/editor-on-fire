@@ -726,7 +726,7 @@ assert(sp->tags != NULL);	//Prevent a NULL dereference below
 		sp->beat[sp->beats - 1]->pos = realtimepos + sp->tags->ogg[0].midi_offset + 0.5;	//Round up to nearest millisecond
 		sp->beat[sp->beats - 1]->midi_pos = deltapos;
 		sp->beat[sp->beats - 1]->ppqn = curppqn;
-		if(eof_use_midi_ts && ((lastnum != curnum) || (lastden != curden) || (sp->beats - 1 == 0)))
+		if(eof_use_ts && ((lastnum != curnum) || (lastden != curden) || (sp->beats - 1 == 0)))
 		{	//If the user opted to import TS changes, and this time signature is different than the last beat's time signature (or this is the first beat)
 
 assert(sp->beats > 0);	//Prevent eof_apply_ts() below from failing
