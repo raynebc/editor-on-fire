@@ -343,7 +343,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	if(anchorlist == NULL)	//If the anchor list could not be created
 		return 0;	//Return failure
 
-	if(eof_use_midi_ts)
+	if(eof_use_ts)
 	{	//If the user opted to use the time signatures during export
 		tslist=eof_build_ts_list(anchorlist);	//Create a list of all TS changes in eof_song->beat[]
 		if(tslist == NULL)
@@ -850,7 +850,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	unsigned long nextanchorpos=0,next_tspos=0;
 	char whattowrite;	//Bitflag: bit 0=write tempo change, bit 1=write TS change
 	ptr = anchorlist;
-	while((ptr != NULL) || (eof_use_midi_ts && (current_ts < tslist->changes)))
+	while((ptr != NULL) || (eof_use_ts && (current_ts < tslist->changes)))
 	{	//While there are tempo changes or TS changes (if the user specified to write TS changes) to write
 		whattowrite = 0;
 		if(ptr != NULL)
@@ -858,7 +858,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			nextanchorpos=ptr->delta;
 			whattowrite |= 1;
 		}
-		if(eof_use_midi_ts && (current_ts < tslist->changes))
+		if(eof_use_ts && (current_ts < tslist->changes))
 		{	//Only process TS changes if the user opted to do so
 			next_tspos=tslist->change[current_ts]->pos;
 			whattowrite |= 2;
@@ -868,7 +868,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		{	//If both a TS change and a tempo change remain to be written
 			if(nextanchorpos < next_tspos)	//If the tempo change is earlier
 				whattowrite = 1;			//write it first
-			else if(eof_use_midi_ts)
+			else if(eof_use_ts)
 				whattowrite = 2;			//otherwise write the TS change first
 		}
 
@@ -886,7 +886,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			pack_putc((ppqn & 0xFF), fp);			//Write low order byte of ppqn
 			ptr=ptr->next;							//Iterate to next anchor
 		}
-		else if(eof_use_midi_ts)
+		else if(eof_use_ts)
 		{	//If writing a TS change
 			WriteVarLen(tslist->change[current_ts]->pos - lastdelta, fp);	//Write this time signature's relative delta time
 			lastdelta=tslist->change[current_ts]->pos;						//Store this time signature's absolute delta time
@@ -1154,7 +1154,7 @@ struct Tempo_change *eof_build_tempo_list(void)
 
 	for(ctr=0;ctr < eof_song->beats;ctr++)
 	{	//For each beat
-		if(eof_use_midi_ts)
+		if(eof_use_ts)
 		{	//If the user opted to use time signatures during MIDI export
 			eof_get_ts(eof_song,NULL,&den,ctr);	//Update the TS denominator if applicable
 		}

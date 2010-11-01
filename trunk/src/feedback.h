@@ -80,7 +80,7 @@ struct dbTrack *Validate_dB_instrument(char *buffer);
 	//track name.  buffer[] is modified to remove any whitespace after the closing bracket
 
 void DestroyFeedbackChart(struct FeedbackChart *ptr, char freestruct);
-	//Releases all memory used by the passed FeedbackChart, including that of the contained linked lists
+	//Releases memory used by the CONTENTS of the passed FeedbackChart, including that of the contained linked lists
 	//If freestruct is nonzero, the passed FeedbackChart structure's memory is also freed
 
 struct FeedbackChart *ImportFeedback(char *filename, int *error);
