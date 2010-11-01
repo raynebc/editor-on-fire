@@ -237,6 +237,8 @@ inline unsigned long eof_ConvertToRealTimeInt(unsigned long absolutedelta,struct
 	return eof_ConvertToRealTime(absolutedelta,anchorlist,tslist,timedivision,offset) + 0.5;
 }
 
+//#define EOF_DEBUG_MIDI_IMPORT
+
 EOF_SONG * eof_import_midi(const char * fn)
 {
 	EOF_SONG * sp = NULL;;
@@ -665,8 +667,6 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 
 	unsigned long ctr,ctr2;
 	double beatlength;
-
-//#define EOF_DEBUG_MIDI_IMPORT
 
 #ifdef EOF_DEBUG_MIDI_IMPORT
 char debugtext[400];
