@@ -623,7 +623,7 @@ int eof_note_draw_3d(EOF_NOTE * np, int p)
 			point[7] = ocd3d_project_y(200, rz);
 
 			if(np->flags & EOF_NOTE_FLAG_SP)			//If this bass drum note is star power, render it in silver
-				polygon(eof_window_3d->screen, 4, point, p ? makecol(192, 192, 192) : eof_color_white);
+				polygon(eof_window_3d->screen, 4, point, p ? eof_color_white : makecol(192, 192, 192));
 			else if(np->flags & EOF_NOTE_FLAG_DBASS)	//Or if it is double bass, render it in red
 				polygon(eof_window_3d->screen, 4, point, p ? makecol(255, 192, 192) : eof_color_red);
 			else										//Otherwise render it in green
