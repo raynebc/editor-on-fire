@@ -40,7 +40,7 @@
 #define EOF_INPUT_GUITAR_STRUM 5
 #define EOF_INPUT_FEEDBACK     6
 
-#define EOF_MAX_IMAGES 70
+#define EOF_MAX_IMAGES 72
 
 #define EOF_IMAGE_WAVE                    0
 #define EOF_IMAGE_TAB0                    1
@@ -96,6 +96,8 @@
 #define EOF_IMAGE_NOTE_BLUE_CYMBAL_HIT   51
 #define EOF_IMAGE_NOTE_PURPLE_CYMBAL     52
 #define EOF_IMAGE_NOTE_PURPLE_CYMBAL_HIT 53
+#define EOF_IMAGE_NOTE_WHITE_CYMBAL      54
+#define EOF_IMAGE_NOTE_WHITE_CYMBAL_HIT  55
 
 #define EOF_DISPLAY_640             0
 #define EOF_DISPLAY_800             1

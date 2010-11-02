@@ -2575,6 +2575,8 @@ int eof_load_data(void)
 	eof_image[EOF_IMAGE_NOTE_BLUE_CYMBAL_HIT] = load_pcx("eof.dat#note_blue_hit_cymbal.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_PURPLE_CYMBAL] = load_pcx("eof.dat#note_purple_cymbal.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_PURPLE_CYMBAL_HIT] = load_pcx("eof.dat#note_purple_hit_cymbal.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_WHITE_CYMBAL] = load_pcx("eof.dat#note_white_cymbal.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_WHITE_CYMBAL_HIT] = load_pcx("eof.dat#note_white_hit_cymbal.pcx", NULL);
 	for(i = 1; i <= EOF_IMAGE_MENU_NO_NOTE; i++)
 	{
 		if(!eof_image[i])

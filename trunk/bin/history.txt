@@ -3,6 +3,8 @@ EOF Version History
 
 1.7:
 
+Star Power drum notes are now rendered in silver in the 3D preview window.
+
 Corrects the tracking of star power phrases during lyric import.
 
 Fixed HOPO display in the 3D panel to respect the selected HOPO preview mode.
