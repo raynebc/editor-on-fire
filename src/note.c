@@ -622,9 +622,11 @@ int eof_note_draw_3d(EOF_NOTE * np, int p)
 			point[6] = ocd3d_project_x(bx + 232, rz);
 			point[7] = ocd3d_project_y(200, rz);
 
-			if(np->flags & EOF_NOTE_FLAG_DBASS)
+			if(np->flags & EOF_NOTE_FLAG_SP)			//If this bass drum note is star power, render it in silver
+				polygon(eof_window_3d->screen, 4, point, p ? makecol(192, 192, 192) : eof_color_white);
+			else if(np->flags & EOF_NOTE_FLAG_DBASS)	//Or if it is double bass, render it in red
 				polygon(eof_window_3d->screen, 4, point, p ? makecol(255, 192, 192) : eof_color_red);
-			else
+			else										//Otherwise render it in green
 				polygon(eof_window_3d->screen, 4, point, p ? makecol(192, 255, 192) : eof_color_green);
 		}
 		for(ctr=1,mask=2;ctr<EOF_MAX_FRETS;ctr++,mask=mask<<1)
@@ -633,11 +635,25 @@ int eof_note_draw_3d(EOF_NOTE * np, int p)
 			{
 				if(((np->flags & EOF_NOTE_FLAG_Y_CYMBAL) && (mask == 4)) || ((np->flags & EOF_NOTE_FLAG_B_CYMBAL) && (mask == 8)) || ((np->flags & EOF_NOTE_FLAG_G_CYMBAL) && (mask == 16)))
 				{	//If this is a cymbal note, render with the cymbal image
-					ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[cymbals_hit[ctr]] : eof_image[cymbals[ctr]], xchart[ctr-1] - 24 + 28, 200 - 48, npos);
+					if(np->flags & EOF_NOTE_FLAG_SP)
+					{	//If this cymbal note is star power, render it in silver
+						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_WHITE_CYMBAL_HIT] : eof_image[EOF_IMAGE_NOTE_WHITE_CYMBAL], xchart[ctr-1] - 24 + 28, 200 - 48, npos);
+					}
+					else
+					{	//Otherwise render in the appropriate color
+						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[cymbals_hit[ctr]] : eof_image[cymbals[ctr]], xchart[ctr-1] - 24 + 28, 200 - 48, npos);
+					}
 				}
 				else
 				{	//Otherwise render with the standard note image
-					ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[notes_hit[ctr]] : eof_image[notes[ctr]], xchart[ctr-1] - 24 + 28, 200 - 48, npos);
+					if(np->flags & EOF_NOTE_FLAG_SP)
+					{	//If this drum note is star power, render it in silver
+						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_WHITE_HIT] : eof_image[EOF_IMAGE_NOTE_WHITE], xchart[ctr-1] - 24 + 28, 200 - 48, npos);
+					}
+					else
+					{	//Otherwise render in the appropriate color
+						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[notes_hit[ctr]] : eof_image[notes[ctr]], xchart[ctr-1] - 24 + 28, 200 - 48, npos);
+					}
 				}
 			}
 		}
