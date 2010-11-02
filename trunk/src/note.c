@@ -587,6 +587,8 @@ int eof_note_draw_3d(EOF_NOTE * np, int p)
 	unsigned int notes_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN_HIT, EOF_IMAGE_NOTE_RED_HIT, EOF_IMAGE_NOTE_YELLOW_HIT, EOF_IMAGE_NOTE_BLUE_HIT, EOF_IMAGE_NOTE_PURPLE_HIT};
 	unsigned int hopo_notes[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_HGREEN, EOF_IMAGE_NOTE_HRED, EOF_IMAGE_NOTE_HYELLOW, EOF_IMAGE_NOTE_HBLUE, EOF_IMAGE_NOTE_HPURPLE};
 	unsigned int hopo_notes_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_HGREEN_HIT, EOF_IMAGE_NOTE_HRED_HIT, EOF_IMAGE_NOTE_HYELLOW_HIT, EOF_IMAGE_NOTE_HBLUE_HIT, EOF_IMAGE_NOTE_HPURPLE_HIT};
+	unsigned int cymbals[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN, EOF_IMAGE_NOTE_RED, EOF_IMAGE_NOTE_YELLOW_CYMBAL, EOF_IMAGE_NOTE_BLUE_CYMBAL, EOF_IMAGE_NOTE_PURPLE_CYMBAL};
+	unsigned int cymbals_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN_HIT, EOF_IMAGE_NOTE_RED_HIT, EOF_IMAGE_NOTE_YELLOW_CYMBAL_HIT, EOF_IMAGE_NOTE_BLUE_CYMBAL_HIT, EOF_IMAGE_NOTE_PURPLE_CYMBAL_HIT};
 
 	npos = -pos - 6 + np->pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
 	if(npos + np->length / eof_zoom_3d < -100)
@@ -629,7 +631,14 @@ int eof_note_draw_3d(EOF_NOTE * np, int p)
 		{	//Render for each of the available fret colors after 1 (bass drum)
 			if(np->note & mask)
 			{
-				ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[notes[ctr]] : eof_image[notes_hit[ctr]], xchart[ctr-1] - 24 + 28, 200 - 48, npos);
+				if(((np->flags & EOF_NOTE_FLAG_Y_CYMBAL) && (mask == 4)) || ((np->flags & EOF_NOTE_FLAG_B_CYMBAL) && (mask == 8)) || ((np->flags & EOF_NOTE_FLAG_G_CYMBAL) && (mask == 16)))
+				{	//If this is a cymbal note, render with the cymbal image
+					ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[cymbals_hit[ctr]] : eof_image[cymbals[ctr]], xchart[ctr-1] - 24 + 28, 200 - 48, npos);
+				}
+				else
+				{	//Otherwise render with the standard note image
+					ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[notes_hit[ctr]] : eof_image[notes[ctr]], xchart[ctr-1] - 24 + 28, 200 - 48, npos);
+				}
 			}
 		}
 	}

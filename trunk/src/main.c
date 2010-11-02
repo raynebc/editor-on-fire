@@ -2569,6 +2569,12 @@ int eof_load_data(void)
 	eof_image[EOF_IMAGE_CCONTROLS_1] = load_pcx("eof.dat#ccontrols2.pcx", NULL);
 	eof_image[EOF_IMAGE_CCONTROLS_2] = load_pcx("eof.dat#ccontrols3.pcx", NULL);
 	eof_image[EOF_IMAGE_MENU_NO_NOTE] = load_pcx("eof.dat#menunonote.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_YELLOW_CYMBAL] = load_pcx("eof.dat#note_yellow_cymbal.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_YELLOW_CYMBAL_HIT] = load_pcx("eof.dat#note_yellow_hit_cymbal.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_BLUE_CYMBAL] = load_pcx("eof.dat#note_blue_cymbal.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_BLUE_CYMBAL_HIT] = load_pcx("eof.dat#note_blue_hit_cymbal.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_PURPLE_CYMBAL] = load_pcx("eof.dat#note_purple_cymbal.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_PURPLE_CYMBAL_HIT] = load_pcx("eof.dat#note_purple_hit_cymbal.pcx", NULL);
 	for(i = 1; i <= EOF_IMAGE_MENU_NO_NOTE; i++)
 	{
 		if(!eof_image[i])
