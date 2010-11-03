@@ -313,7 +313,7 @@ void eof_find_lyric_preview_lines(void)
 	int i, j;
 	int current_line = -1;
 	int next_line = -1;
-	unsigned long dist = -1;
+	int dist = -1;
 	int beyond = 1;
 	int adj_eof_music_pos=eof_music_pos - eof_av_delay;	//The current seek position of the chart, adjusted for AV delay
 

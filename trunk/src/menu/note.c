@@ -1240,8 +1240,8 @@ int eof_menu_solo_mark(void)
 {
 	int i, j;
 	int insp = -1;
-	unsigned long sel_start = -1;
-	unsigned long sel_end = 0;
+	int sel_start = -1;
+	int sel_end = 0;
 
 	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
 	{
@@ -1313,8 +1313,8 @@ int eof_menu_star_power_mark(void)
 {
 	int i, j;
 	int insp = -1;
-	unsigned long sel_start = -1;
-	unsigned long sel_end = 0;
+	int sel_start = -1;
+	int sel_end = 0;
 
 	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
 	{
