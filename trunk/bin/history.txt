@@ -20,8 +20,8 @@ the beginning of the loaded OGG.
 Fixed an issue where notes' statuses were not kept when they were auto-adjusted.
 
 Added time signature support. Time signatures will not be written to the MIDI
-during save operations or loaded during MIDI import by default, but this can be
-enabled in File>Preferences.
+during save operations or loaded during MIDI/Feedback import by default, but
+this can be enabled in File>Preferences.
 
 Note statuses (HOPO/Crazy/Double Bass) are now kept during copy and paste
 operations.
