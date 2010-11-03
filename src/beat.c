@@ -102,33 +102,6 @@ void eof_calculate_beats(EOF_SONG * sp)
 	}
 }
 
-/*	Unused function
-void eof_change_bpm(int cbeat, unsigned long ppqn)
-{
-	int next_anchor = eof_find_next_anchor(cbeat);
-	double old_beat_length = (double)60000 / ((double)60000000.0 / (double)sp->beat[cbeat]->ppqn);
-	double beat_length = (double)60000 / ((double)60000000.0 / (double)ppqn);
-	double beats;
-	double offset;
-	int i;
-
-	if(next_anchor < 0)
-	{
-		return;
-	}
-	beats = next_anchor - cbeat;
-	offset = (old_beat_length * beats) - (beat_length * beats);
-	for(i = next_anchor; i < sp->beats; i++)
-	{
-		sp->beat[i]->pos += offset;
-	}
-	for(i = cbeat + 1; i < cbeat + beats; i++)
-	{
-		sp->beat[i]->pos = sp->beat[cbeat]->pos + (double)(i - cbeat) * beat_length;
-	}
-}
-*/
-
 int eof_beat_is_anchor(EOF_SONG * sp, int cbeat)
 {
 	if(cbeat >= EOF_MAX_BEATS)	//Bounds check

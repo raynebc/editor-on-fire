@@ -465,7 +465,7 @@ int eof_menu_edit_redo(void)
 int eof_menu_edit_cut_vocal(int anchor, int option)
 {
 	int i;
-	unsigned long first_pos = -1;
+	int first_pos = -1;
 	int first_beat = -1;
 	int start_pos, end_pos;
 	int last_anchor, next_anchor;
@@ -623,7 +623,7 @@ int eof_menu_edit_cut_paste_vocal(int anchor, int option)
 int eof_menu_edit_copy_vocal(void)
 {
 	int i;
-	unsigned long first_pos = -1;
+	int first_pos = -1;
 	int first_beat = -1;
 	char note_check = 0;
 	int copy_notes = 0;
@@ -903,7 +903,7 @@ int eof_menu_edit_old_paste_vocal(void)
 int eof_menu_edit_cut(int anchor, int option, float offset)
 {
 	int i, j;
-	unsigned long first_pos[EOF_MAX_TRACKS] = {-1, -1, -1, -1, -1};
+	int first_pos[EOF_MAX_TRACKS] = {-1, -1, -1, -1, -1};
 	int first_beat[EOF_MAX_TRACKS] = {-1, -1, -1, -1, -1};
 	int start_pos, end_pos;
 	int last_anchor, next_anchor;
@@ -1137,7 +1137,7 @@ int eof_menu_edit_copy(void)
 		return eof_menu_edit_copy_vocal();
 	}
 	int i;
-	unsigned long first_pos = -1;
+	int first_pos = -1;
 	int first_beat = -1;
 	char note_check = 0;
 	int copy_notes = 0;
@@ -2164,11 +2164,11 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty)
 		}
 		eof_clear_input();
 		eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-		for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
-		{	//For each note in this instrument track
+		for(i = eof_song->track[eof_selected_track]->notes; i > 0; i--)
+		{	//For each note in this instrument track, from last to first
 			if(eof_song->track[eof_selected_track]->note[i]->type == eof_note_type)
 			{	//If this note is in the current difficulty
-				eof_track_delete_note(eof_song->track[eof_selected_track], i);	//Delete it
+				eof_track_delete_note(eof_song->track[eof_selected_track], i - 1);	//Delete it
 			}
 		}
 		for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)

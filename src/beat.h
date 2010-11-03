@@ -9,11 +9,7 @@ int eof_get_beat_length(EOF_SONG * sp, int beat);		//Returns the difference in p
 int eof_find_previous_anchor(EOF_SONG * sp, int cbeat);	//Returns the beat number of the last anchor that occurs before the specified beat
 int eof_find_next_anchor(EOF_SONG * sp, int cbeat);		//Returns the beat number of the first anchor that occurs after the specified beat, or -1 if there is no such anchor
 int eof_beat_is_anchor(EOF_SONG * sp, int cbeat);		//Returns nonzero if the specified beat number is an anchor based on its flag or a change in tempo from the prior beat, or if the specified beat number is negative
-//int eof_beat_is_moveable(int cbeat);		//Undefined function
-//int eof_beat_is_bpm_change(int cbeat);	//Undefined function
 void eof_calculate_beats(EOF_SONG * sp);				//Sets the timestamp of each beat existing for the duration of the chart audio
-//void eof_change_bpm(int cbeat, unsigned long ppqn);	//Applies the change in timestamps based on the tempo change from the specified beat up to the next anchor
-														//This function is not actually used in the program
 void eof_realign_beats(EOF_SONG * sp, int cbeat);		//Recalculates and applies the tempo of the anchors before and after the specified beat, updating beat timestamps, etc.
 void eof_recalculate_beats(EOF_SONG * sp, int cbeat);	//Recalculates and applies the tempo and timings on both sides of cbeat based on the previous and next anchors, such as when dragging a beat marker to define cbeat as an anchor
 

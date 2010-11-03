@@ -517,7 +517,7 @@ int eof_menu_song_seek_rewind(void)
 int eof_menu_song_seek_first_note_vocals(void)
 {
 	int i;
-	unsigned long first_pos = -1;
+	int first_pos = -1;
 
 	if(!eof_music_catalog_playback)
 	{
@@ -540,7 +540,7 @@ int eof_menu_song_seek_first_note_vocals(void)
 int eof_menu_song_seek_first_note(void)
 {
 	int i;
-	unsigned long first_pos = -1;
+	int first_pos = -1;
 
 	if(eof_vocals_selected)
 	{
@@ -1522,7 +1522,7 @@ int eof_menu_song_add_silence(void)
 			eof_add_silence(eof_loaded_ogg_name, silence_length);
 			after_silence_length = get_ogg_length(eof_loaded_ogg_name);
 		}
-		
+
 		/* adjust notes/beats */
 		if(eof_leading_silence_dialog[8].flags & D_SELECTED)
 		{
