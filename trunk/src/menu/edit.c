@@ -2164,7 +2164,7 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty)
 		}
 		eof_clear_input();
 		eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-		for(i = eof_song->track[eof_selected_track]->notes - 1; i >= 0; i--)
+		for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
 		{	//For each note in this instrument track
 			if(eof_song->track[eof_selected_track]->note[i]->type == eof_note_type)
 			{	//If this note is in the current difficulty
