@@ -68,6 +68,7 @@ MENU eof_note_prodrum_menu[] =
     {"Toggle &Yellow cymbal\tCtrl+Y", eof_menu_note_toggle_rb3_cymbal_yellow, NULL, 0, NULL},
     {"Toggle &Blue cymbal\tCtrl+B", eof_menu_note_toggle_rb3_cymbal_blue, NULL, 0, NULL},
     {"Toggle &Green cymbal\tCtrl+G", eof_menu_note_toggle_rb3_cymbal_green, NULL, 0, NULL},
+    {"Mark as &Non cymbal", eof_menu_note_remove_cymbal, NULL, 0, NULL},
     {"&Mark new notes as cymbals", eof_menu_note_default_cymbal, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
@@ -962,17 +963,47 @@ int eof_menu_note_toggle_rb3_cymbal_blue(void)
 	return 1;
 }
 
+int eof_menu_note_remove_cymbal(void)
+{
+	int i;
+	int u = 0;
+
+	if(eof_selected_track != EOF_TRACK_DRUM)
+		return 1;	//Do not allow this function to run when PART DRUMS is not active
+
+	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
+	{
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			if(	((eof_song->track[eof_selected_track]->note[i]->note & 4) && (eof_song->track[eof_selected_track]->note[i]->flags & EOF_NOTE_FLAG_Y_CYMBAL)) ||
+				((eof_song->track[eof_selected_track]->note[i]->note & 8) && (eof_song->track[eof_selected_track]->note[i]->flags & EOF_NOTE_FLAG_B_CYMBAL)) ||
+				((eof_song->track[eof_selected_track]->note[i]->note & 16) && (eof_song->track[eof_selected_track]->note[i]->flags & EOF_NOTE_FLAG_G_CYMBAL)))
+			{	//If this note has a cymbal notation
+				if(!u)
+				{	//Make a back up before changing the first note
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					u = 1;
+				}
+				eof_set_flags_at_note_pos(eof_song->track[eof_selected_track],i,EOF_NOTE_FLAG_Y_CYMBAL,0);	//Clear the yellow cymbal flag on all drum notes at this position
+				eof_set_flags_at_note_pos(eof_song->track[eof_selected_track],i,EOF_NOTE_FLAG_B_CYMBAL,0);	//Clear the blue cymbal flag on all drum notes at this position
+				eof_set_flags_at_note_pos(eof_song->track[eof_selected_track],i,EOF_NOTE_FLAG_G_CYMBAL,0);	//Clear the green cymbal flag on all drum notes at this position
+			}
+		}
+	}
+	return 1;
+}
+
 int eof_menu_note_default_cymbal(void)
 {
 	if(eof_mark_drums_as_cymbal)
 	{
 		eof_mark_drums_as_cymbal = 0;
-		eof_note_prodrum_menu[3].flags = 0;
+		eof_note_prodrum_menu[4].flags = 0;
 	}
 	else
 	{
 		eof_mark_drums_as_cymbal = 1;
-		eof_note_prodrum_menu[3].flags = D_SELECTED;
+		eof_note_prodrum_menu[4].flags = D_SELECTED;
 	}
 	return 1;
 }
