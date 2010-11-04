@@ -96,11 +96,13 @@ TRACK CHUNK, for each track:
 *	4 bytes:	Number of section types stored for this track
 *	SECTION TYPE CHUNK, for each section type
 *	{
-*		2 bytes:	Type of section (ie. solo, star power, lyric phrase, trill, yellow tom, blue tom, green tom, arpeggio, etc)
+*		2 bytes:	Type of section (ie. solo, star power, lyric phrase, trill, yellow tom, blue tom, green tom, arpeggio, pro keys trainer, etc)
 
 *		4 bytes:	Number of the specified sections stored
 *		SECTION CHUNK, for each of the specified type of sections
 *		{
+*			2 bytes:	Section name string length
+*			[varies:]	Section name string
 *			4 bytes:	Start position of section (in milliseconds or delta ticks)
 *			4 bytes:	End position of section (in milliseconds or delta ticks)
 *			2 bytes:	Section flags
