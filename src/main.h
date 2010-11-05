@@ -323,6 +323,7 @@ extern char        eof_vocal_tab_name[5][32];
 
 extern char        eof_supports_mp3;
 extern char        eof_supports_silence;
+extern char        eof_supports_oggcat;
 extern char        eof_just_played;
 extern char        eof_mark_drums_as_cymbal;
 

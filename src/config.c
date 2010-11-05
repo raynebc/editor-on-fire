@@ -58,6 +58,7 @@ void eof_load_config(char * fn)
 	}
 	eof_supports_mp3 = get_config_int("config", "mp3_support", 0);
 	eof_supports_silence = get_config_int("config", "silence_support", 0);
+	eof_supports_oggcat = get_config_int("config", "oggcat_support", 0);
 	eof_audio_fine_tune = get_config_int("config", "fine_tune", 0);
 
 	/* read preferences */
@@ -131,6 +132,7 @@ void eof_save_config(char * fn)
 	set_config_int("config", "cpu_saver", eof_cpu_saver);;
 	set_config_int("config", "mp3_support", eof_supports_mp3);
 	set_config_int("config", "silence_support", eof_supports_silence);
+	set_config_int("config", "oggcat_support", eof_supports_oggcat);
 	set_config_int("config", "fine_tune", eof_audio_fine_tune);
 
 	/* write preferences */
