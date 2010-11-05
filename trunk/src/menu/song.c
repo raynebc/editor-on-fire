@@ -454,14 +454,15 @@ void eof_prepare_song_menu(void)
 		{
 			eof_track_selected_menu[EOF_TRACK_VOCALS].text[0] = ' ';
 		}
-		if(eof_supports_silence)
-		{
+//Leading silence can now be added by re-encoding, and the use of oggSilence is currently deprecated because it crashes in at least Win XP x64
+//		if(eof_supports_silence)
+//		{
 			eof_song_menu[9].flags = 0;
-		}
-		else
-		{
-			eof_song_menu[9].flags = D_DISABLED;
-		}
+//		}
+//		else
+//		{
+//			eof_song_menu[9].flags = D_DISABLED;
+//		}
 	}
 }
 
@@ -1421,7 +1422,7 @@ int eof_menu_song_waveform(void)
 DIALOG eof_leading_silence_dialog[] =
 {
    /* (proc) 		        (x)	(y)	(w)	(h)	(fg) (bg) (key) (flags)	(d1)(d2)(dp)						(dp2) (dp3) */
-   { d_agup_window_proc,  	  0,	 48,200,248,2,   23,  0,    0,      0,	0,	"Leading Silence",          NULL, NULL },
+   { d_agup_window_proc,  	  0,	 48,200,288,2,   23,  0,    0,      0,	0,	"Leading Silence",          NULL, NULL },
    { d_agup_text_proc      , 16,     80,110,20, 2,   23,  0,    0,      0,  0,  "Add:",                      NULL, NULL },
    { d_agup_radio_proc,		 16,	100,110,15,	2,   23,  0,    0,      0,	0,	"Milliseconds",             NULL, NULL },
    { d_agup_radio_proc,		 16,	120,110,15,	2,   23,  0,    0,      0,	0,	"Beats",                    NULL, NULL },
@@ -1429,9 +1430,11 @@ DIALOG eof_leading_silence_dialog[] =
    { d_agup_radio_proc,		 16,	160,110,15,	2,   23,  0,    0,      0,	0,	"Milliseconds",	            NULL, NULL },
    { d_agup_radio_proc,		 16,	180,110,15,	2,   23,  0,    0,      0,	0,	"Beats",                    NULL, NULL },
    { eof_verified_edit_proc, 16,    200,110,20, 2,   23,  0,    0,    255,  0,   eof_etext,         "1234567890", NULL },
-   { d_agup_check_proc,		  16,	226, 180,16,	2,   23,  0,    D_SELECTED,		1,	0,	"Adjust Notes/Beats",		NULL, NULL },
-   { d_agup_button_proc,	  16,	252, 68,28,	2,   23,  '\r',	D_EXIT, 0,	0,	"OK",             			NULL, NULL },
-   { d_agup_button_proc,	 116,252,68, 28,	2,   23,  0,	D_EXIT, 0,	0,	"Cancel",         			NULL, NULL },
+   { d_agup_check_proc,		  16,	226,180,16,	2,   23,  0,    D_SELECTED,		1,	0,	"Adjust Notes/Beats",		NULL, NULL },
+   { d_agup_radio_proc,		 16,	246,160,15,	2,   23,  0,    0,      1,	0,	"Stream copy (oggCat)",     NULL, NULL },
+   { d_agup_radio_proc,		 16,	266, 90,15,	2,   23,  0,    0,      1,	0,	"Re-encode",                NULL, NULL },
+   { d_agup_button_proc,	  16,	292, 68,28,	2,   23,  '\r',	D_EXIT, 0,	0,	"OK",             			NULL, NULL },
+   { d_agup_button_proc,	 116,   292,68, 28,	2,   23,  0,	D_EXIT, 0,	0,	"Cancel",         			NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1458,6 +1461,15 @@ int eof_menu_song_add_silence(void)
 	long adjust = 0;
 	int i, x;
 	char fn[1024] = {0};
+	static int creationmethod = 9;	//Stores the user's last selected leading silence creation method (default to oggCat, which is menu item 9 in eof_leading_silence_dialog[])
+
+	if(eof_supports_oggcat == 0)
+	{	//If EOF has not found oggCat to be available, disable it in the menu and select re-encode
+		creationmethod = 10;	//eof_leading_silence_dialog[10] is the re-encode option
+		eof_leading_silence_dialog[9].flags = D_DISABLED;	//Disable the stream copy option
+	}
+
+	eof_leading_silence_dialog[creationmethod].flags = D_SELECTED;	//Select the last selected creation method
 
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
@@ -1475,7 +1487,7 @@ int eof_menu_song_add_silence(void)
 	eof_leading_silence_dialog[6].flags = 0;
 	sprintf(eof_etext, "0");
 
-	if(eof_popup_dialog(eof_leading_silence_dialog, 0) == 9)			//User clicked OK
+	if(eof_popup_dialog(eof_leading_silence_dialog, 0) == 11)			//User clicked OK
 	{
 		sprintf(fn, "%s.backup", eof_loaded_ogg_name);
 		current_length = get_ogg_length(eof_loaded_ogg_name);
@@ -1519,7 +1531,17 @@ int eof_menu_song_add_silence(void)
 					silence_length -= eof_song->beat[0]->pos;
 				}
 			}
-			eof_add_silence(eof_loaded_ogg_name, silence_length);
+
+			if((eof_leading_silence_dialog[9].flags == D_SELECTED) && eof_supports_oggcat)
+			{	//User opted to use oggCat
+				creationmethod = 9;		//Remember this as the default next time
+				eof_add_silence(eof_loaded_ogg_name, silence_length);
+			}
+			else
+			{	//User opted to re-encode
+				creationmethod = 10;	//Remember this as the default next time
+				eof_add_silence_recode(eof_loaded_ogg_name, silence_length);
+			}
 			after_silence_length = get_ogg_length(eof_loaded_ogg_name);
 		}
 

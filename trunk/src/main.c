@@ -90,7 +90,8 @@ int         eof_debug_mode = 0;
 char        eof_cpu_saver = 0;
 char        eof_has_focus = 1;
 char        eof_supports_mp3 = 0;
-char        eof_supports_silence = 0;
+char        eof_supports_silence = 0;		//Set to nonzero if EOF determines oggSilence is usable
+char        eof_supports_oggcat = 0;		//Set to nonzero if EOF determines oggCat is usable
 int         eof_new_idle_system = 0;
 char        eof_just_played = 0;
 char        eof_mark_drums_as_cymbal = 0;	//Allows the user to specify whether Y/B/G drum notes will be placed with cymbal notation by default
@@ -2791,10 +2792,11 @@ int eof_initialize(int argc, char * argv[])
 	{
 		if(system("oggSilence -d 64000 -l 1000 -o test_silence.ogg") == 0)
 		{
+			eof_supports_silence = 1;
 			system("oggSilence -d 64000 -l 1000 -o test_silence2.ogg");
 			if(system("oggCat test_silence3.ogg test_silence.ogg test_silence2.ogg") == 0)
 			{
-				eof_supports_silence = 1;
+				eof_supports_oggcat = 1;
 			}
 		}
 		delete_file("test_silence.ogg");
