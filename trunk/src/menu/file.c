@@ -246,6 +246,11 @@ int eof_menu_file_new_supplement(char *directory)
 		{
 			err = 1;
 		}
+		replace_filename(eof_temp_filename, directory, "original.mp3", 1024);
+		if(exists(eof_temp_filename))
+		{
+			err = 1;
+		}
 		if(err)
 		{
 			if(alert(NULL, "Some files may be overwritten. Proceed?", NULL, "&Yes", "&No", 'y', 'n') == 2)
@@ -1597,6 +1602,22 @@ int eof_mp3_to_ogg(char *file,char *directory)
 
 	if(!ustricmp(get_extension(file), "mp3"))
 	{
+		//If an MP3 is to be encoded to OGG, store a copy of the MP3 as "original.mp3"
+		if(!eof_menu_file_new_supplement(directory))
+		{
+			eof_cursor_visible = 1;
+			eof_pen_visible = 1;
+			eof_show_mouse(NULL);
+			return 1;	//Return user declined to overwrite existing files
+		}
+		ustrcpy(syscommand, directory);
+		put_backslash(syscommand);
+		ustrcat(syscommand, "original.mp3");
+		if(ustricmp(file, syscommand))
+		{	//If the source and destination file are not the same, copy the file
+			eof_copy_file(file, syscommand);
+		}
+
 		if(!eof_soft_cursor)
 		{
 			if(show_os_cursor(2) < 0)
@@ -1607,13 +1628,6 @@ int eof_mp3_to_ogg(char *file,char *directory)
 
 		if(eof_ogg_settings())
 		{
-			if(!eof_menu_file_new_supplement(directory))
-			{
-				eof_cursor_visible = 1;
-				eof_pen_visible = 1;
-				eof_show_mouse(NULL);
-				return 1;	//Return user declined to overwrite existing files
-			}
 			put_backslash(directory);
 			#ifdef ALLEGRO_WINDOWS
 				eof_copy_file(file, "eoftemp.mp3");
@@ -1646,13 +1660,13 @@ int eof_mp3_to_ogg(char *file,char *directory)
 			eof_pen_visible = 1;
 			eof_changes = 0;
 			eof_show_mouse(NULL);
-			return 1;
+			return 1;	//Return user declined to overwrite existing files
 		}
 		ustrcpy(syscommand, directory);
 		put_backslash(syscommand);
 		ustrcat(syscommand, "guitar.ogg");
 		if(ustricmp(file, syscommand))
-		{
+		{	//If the source and destination file are not the same, copy the file
 			eof_copy_file(file, syscommand);
 		}
 	}
