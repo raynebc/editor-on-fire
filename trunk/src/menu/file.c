@@ -1589,6 +1589,7 @@ void EnumeratedBChartInfo(struct FeedbackChart *chart)
 int eof_mp3_to_ogg(char *file,char *directory)
 {
 	char syscommand[1024] = {0};
+	char cfn[1024] = {0};
 
 	if((file == NULL) || (directory == NULL))
 		return 3;	//Return invalid filename
@@ -1641,6 +1642,8 @@ int eof_mp3_to_ogg(char *file,char *directory)
 			#ifdef ALLEGRO_WINDOWS
 				delete_file("eoftemp.mp3");
 			#endif
+			sprintf(cfn, "%soriginal.mp3", directory);
+			eof_copy_file(file, cfn);
 		}
 		else
 		{
