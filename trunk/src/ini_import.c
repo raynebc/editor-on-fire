@@ -163,11 +163,17 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 				sp->tags->ogg[0].midi_offset = 0;
 			}
 		}
+		else if(!ustricmp(eof_import_ini_setting[i].type, "scores ") || !ustricmp(eof_import_ini_setting[i].type, "score"))
+		{
+		}
+		else if(!ustricmp(eof_import_ini_setting[i].type, "scores_ext ") || !ustricmp(eof_import_ini_setting[i].type, "score_ext"))
+		{
+		}
 
 		/* for custom settings */
 		else
 		{
-			sprintf(sp->tags->ini_setting[sp->tags->ini_settings], "%s = %s", eof_import_ini_setting[i].type, eof_import_ini_setting[i].value);
+			snprintf(sp->tags->ini_setting[sp->tags->ini_settings], 512, "%s = %s", eof_import_ini_setting[i].type, eof_import_ini_setting[i].value);
 			sp->tags->ini_settings++;
 		}
 	}
