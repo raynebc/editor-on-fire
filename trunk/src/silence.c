@@ -344,3 +344,93 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	eof_fix_window_title();
 	return 0;
 }
+
+int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
+{
+	char sys_command[1024] = {0};
+	char backupfn[1024] = {0};
+	char wavfn[1024] = {0};
+	char soggfn[1024] = {0};
+	char mp3fn[1024] = {0};
+	SAMPLE * decoded = NULL;
+	SAMPLE * combined = NULL;
+	int bits;
+	int stereo;
+	int freq;
+	unsigned long samples;
+	int channels;
+	unsigned long ctr,index;
+	
+	if(ms == 0)
+	{
+		return 0;
+	}
+	set_window_title("Adjusting Silence...");
+
+	/* back up original file */
+	sprintf(backupfn, "%s.backup", oggfn);
+	if(!exists(backupfn))
+	{
+		eof_copy_file((char *)oggfn, backupfn);
+	}
+	
+	/* decode MP3 */
+	replace_filename(wavfn, eof_song_path, "decode.wav", 1024);
+	replace_filename(mp3fn, eof_song_path, "original.mp3", 1024);
+	sprintf(sys_command, "lame --decode \"%s\" \"%s\"", mp3fn, wavfn);
+	system(sys_command);
+	
+	/* insert silence */
+	decoded = load_sample(wavfn);
+	save_wav("test.wav", decoded);
+	bits = decoded->bits;
+	stereo = decoded->stereo;
+	freq = decoded->freq;
+	samples = msec_to_samples(ms);
+	channels = stereo ? 2 : 1;
+	combined = create_sample(bits,stereo,freq,samples+decoded->len);	//Create a sample array long enough for the silence and the OGG file
+	if(combined == NULL)
+	{
+		destroy_sample(decoded);
+		return 0;	//Return failure
+	}
+	/* Add the PCM data for the silence */
+	if(bits == 8)
+	{	//Create 8 bit PCM data
+		for(ctr=0,index=0;ctr < samples * channels;ctr++)
+		{
+			((unsigned char *)(combined->data))[index++] = 0x80;
+		}
+	}
+	else
+	{	//Create 16 bit PCM data
+		for(ctr=0,index=0;ctr < samples * channels;ctr++)
+		{
+			((unsigned short *)(combined->data))[index++] = 0x8000;
+		}
+	}
+	
+	/* save combined WAV */
+	replace_filename(wavfn, eof_song_path, "encode.wav", 1024);
+	save_wav(wavfn, combined);
+	
+	/* destroy samples */
+	destroy_sample(decoded);	//This is no longer needed
+	destroy_sample(combined);	//This is no longer needed
+	
+	/* encode the audio */
+	printf("%s\n%s\n", eof_song_path, wavfn);
+	save_wav(wavfn, combined);
+	replace_filename(soggfn, eof_song_path, "encode.ogg", 1024);
+	#ifdef ALLEGRO_WINDOWS
+		sprintf(sys_command, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
+	#else
+		sprintf(sys_command, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
+	#endif
+	if(system(sys_command))
+	{
+		eof_fix_window_title();
+		return 0;
+	}
+	return 1;
+}

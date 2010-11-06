@@ -1461,6 +1461,7 @@ int eof_menu_song_add_silence(void)
 	long adjust = 0;
 	int i, x;
 	char fn[1024] = {0};
+	char mp3fn[1024] = {0};
 	static int creationmethod = 9;	//Stores the user's last selected leading silence creation method (default to oggCat, which is menu item 9 in eof_leading_silence_dialog[])
 
 	if(eof_supports_oggcat == 0)
@@ -1539,8 +1540,17 @@ int eof_menu_song_add_silence(void)
 			}
 			else
 			{	//User opted to re-encode
-				creationmethod = 10;	//Remember this as the default next time
-				eof_add_silence_recode(eof_loaded_ogg_name, silence_length);
+				replace_filename(mp3fn, eof_song_path, "original.mp3", 1024);
+				if(exists(mp3fn))
+				{
+					creationmethod = 10;	//Remember this as the default next time
+					eof_add_silence_recode_mp3(eof_loaded_ogg_name, silence_length);
+				}
+				else
+				{
+					creationmethod = 10;	//Remember this as the default next time
+					eof_add_silence_recode(eof_loaded_ogg_name, silence_length);
+				}
 			}
 			after_silence_length = get_ogg_length(eof_loaded_ogg_name);
 		}
