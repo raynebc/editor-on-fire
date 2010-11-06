@@ -86,7 +86,7 @@ static int save_wav_fp(SAMPLE * sp, PACKFILE * fp)
 	pack_iputw(1, fp);
 	pack_iputw(channels, fp);
 	pack_iputl(freq, fp);
-	pack_iputl(samples * channels * (bits / 8), fp);
+	pack_iputl(freq * channels * (bits / 8), fp);
 	pack_iputw(channels * (bits / 8), fp);
 	pack_iputw(bits, fp);
 
