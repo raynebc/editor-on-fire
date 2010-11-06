@@ -441,7 +441,6 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	destroy_sample(combined);	//This is no longer needed
 	
 	/* encode the audio */
-	save_wav(wavfn, combined);
 	replace_filename(soggfn, eof_song_path, "encode.ogg", 1024);
 	#ifdef ALLEGRO_WINDOWS
 		sprintf(sys_command, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
