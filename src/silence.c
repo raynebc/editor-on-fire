@@ -235,7 +235,6 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	{
 		return 0;
 	}
-
 	set_window_title("Adjusting Silence...");
 
 	/* back up original file */
@@ -244,7 +243,6 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	{
 		eof_copy_file((char *)oggfn, backupfn);
 	}
-	delete_file(oggfn);
 
 	/* Decode the OGG file into memory */
 	//Load OGG file into memory
@@ -317,6 +315,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	/* encode the audio */
 	destroy_sample(decoded);	//This is no longer needed
 	replace_filename(wavfn, eof_song_path, "encode.wav", 1024);
+	printf("%s\n%s\n", eof_song_path, wavfn);
 	save_wav(wavfn, combined);
 	destroy_sample(combined);	//This is no longer needed
 	replace_filename(soggfn, eof_song_path, "encode.ogg", 1024);
