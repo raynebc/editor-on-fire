@@ -166,7 +166,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 		else if(!ustricmp(eof_import_ini_setting[i].type, "scores ") || !ustricmp(eof_import_ini_setting[i].type, "score"))
 		{
 		}
-		else if(!ustricmp(eof_import_ini_setting[i].type, "scores_ext ") || !ustricmp(eof_import_ini_setting[i].type, "score_ext"))
+		else if(!ustricmp(eof_import_ini_setting[i].type, "scores_ext ") || !ustricmp(eof_import_ini_setting[i].type, "scores_ext"))
 		{
 		}
 
