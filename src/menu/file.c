@@ -1611,13 +1611,6 @@ int eof_mp3_to_ogg(char *file,char *directory)
 			eof_show_mouse(NULL);
 			return 1;	//Return user declined to overwrite existing files
 		}
-		ustrcpy(syscommand, directory);
-		put_backslash(syscommand);
-		ustrcat(syscommand, "original.mp3");
-		if(ustricmp(file, syscommand))
-		{	//If the source and destination file are not the same, copy the file
-			eof_copy_file(file, syscommand);
-		}
 
 		if(!eof_soft_cursor)
 		{
