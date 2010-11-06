@@ -127,12 +127,14 @@ static int save_wav(const char * fn, SAMPLE * sp)
     file = pack_fopen(fn, "w");
     if(file == NULL)
     {
+		pack_fclose(file);
         return 0;
     }
 
     /* save WAV to the file */
     if(!save_wav_fp(sp, file))
     {
+		pack_fclose(file);
         return 0;
     }
 
@@ -299,14 +301,14 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	/* Add the decoded OGG PCM data*/
 	if(bits == 8)
 	{	//Copy 8 bit PCM data
-		for(ctr=0;ctr < decoded->len;ctr++)
+		for(ctr=0;ctr < decoded->len * channels;ctr++)
 		{
 			((unsigned char *)(combined->data))[index++] = ((unsigned char *)(decoded->data))[ctr];
 		}
 	}
 	else
 	{	//Copy 16 bit PCM data
-		for(ctr=0;ctr < decoded->len;ctr++)
+		for(ctr=0;ctr < decoded->len * channels;ctr++)
 		{
 			((unsigned short *)(combined->data))[index++] = ((unsigned short *)(decoded->data))[ctr];
 		}
@@ -315,7 +317,6 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	/* encode the audio */
 	destroy_sample(decoded);	//This is no longer needed
 	replace_filename(wavfn, eof_song_path, "encode.wav", 1024);
-	printf("%s\n%s\n", eof_song_path, wavfn);
 	save_wav(wavfn, combined);
 	destroy_sample(combined);	//This is no longer needed
 	replace_filename(soggfn, eof_song_path, "encode.ogg", 1024);
@@ -408,27 +409,31 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 			((unsigned short *)(combined->data))[index++] = 0x8000;
 		}
 	}
-
 	/* Add the decoded OGG PCM data*/
 	if(bits == 8)
 	{	//Copy 8 bit PCM data
-		for(ctr=0;ctr < decoded->len;ctr++)
+		for(ctr=0;ctr < decoded->len * channels;ctr++)
 		{
 			((unsigned char *)(combined->data))[index++] = ((unsigned char *)(decoded->data))[ctr];
 		}
 	}
 	else
 	{	//Copy 16 bit PCM data
-		for(ctr=0;ctr < decoded->len;ctr++)
+		for(ctr=0;ctr < decoded->len * channels;ctr++)
 		{
 			((unsigned short *)(combined->data))[index++] = ((unsigned short *)(decoded->data))[ctr];
 		}
 	}
-
+	
 	/* save combined WAV */
 	replace_filename(wavfn, eof_song_path, "encode.wav", 1024);
-	save_wav(wavfn, combined);
-
+	if(!save_wav(wavfn, combined))
+	{
+		destroy_sample(decoded);	//This is no longer needed
+		destroy_sample(combined);	//This is no longer needed
+		return 0;
+	}
+	
 	/* destroy samples */
 	destroy_sample(decoded);	//This is no longer needed
 	destroy_sample(combined);	//This is no longer needed
@@ -447,17 +452,12 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 		eof_fix_window_title();
 		return 0;
 	}
-
+	
 	/* replace the current OGG file with the new file */
 	eof_copy_file(soggfn, (char *)oggfn);	//Copy encode.ogg to the filename of the original OGG
 
 	/* clean up */
-	replace_filename(wavfn, eof_song_path, "decode.wav", 1024);
-	delete_file(wavfn);		//Delete decode.wav
-	replace_filename(wavfn, eof_song_path, "encode.wav", 1024);
-	delete_file(wavfn);		//Delete encode.wav
 	delete_file(soggfn);	//Delete encode.ogg
-
 	if(eof_load_ogg((char *)oggfn))
 	{
 		eof_fix_waveform_graph();
