@@ -1497,6 +1497,10 @@ int eof_menu_song_add_silence(void)
 		/* revert to original file */
 		if(atoi(eof_etext) <= 0)
 		{
+			if(eof_file_compare(fn, eof_loaded_ogg_name) == 0)
+			{	//If the backup audio is already loaded (the loaded file is an exact copy of the backup)
+				return 1;	//Return without making any changes
+			}
 			if(exists(fn))
 			{	//Only attempt to restore the original audio if the backup exists
 				eof_prepare_undo(EOF_UNDO_TYPE_SILENCE);

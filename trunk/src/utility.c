@@ -127,3 +127,53 @@ int eof_check_string(char * tp)
 	}
 	return 0;
 }
+
+int eof_file_compare(char *file1, char *file2)
+{
+	uint64_t filesize,ctr;
+	int data1,data2;
+	PACKFILE *fp1 = NULL,*fp2 = NULL;
+	char result = 0;	//The result is assumed to "files identical" until found otherwise
+
+	if((file1 == NULL) || (file2 == NULL))
+	{
+		return 2;	//Return error
+	}
+
+	filesize = file_size_ex(file1);	//Get length of file1
+	if(filesize != file_size_ex(file2))
+	{	//If file1 and file2 are different lengths
+		return 1;	//Return files don't match
+	}
+
+	fp1 = pack_fopen(file1, "r");
+	if(fp1 == NULL)
+	{
+		return 2;	//Return error
+	}
+	fp2 = pack_fopen(file2, "r");
+	if(fp2 == NULL)
+	{
+		pack_fclose(fp1);
+		return 2;	//Return error
+	}
+
+	for(ctr = 0;ctr < filesize; ctr++)
+	{	//For each byte in the files
+		data1 = pack_getc(fp1);	//Read one byte from each
+		data2 = pack_getc(fp2);
+		if((data1 == EOF) || (data2 == EOF))
+		{	//If EOF was reached unexpectedly
+			break;	//Exit loop
+		}
+		if(data1 != data2)
+		{
+			result = 1;	//Store a "non identical" result
+			break;		//Exit loop
+		}
+	}
+	pack_fclose(fp1);
+	pack_fclose(fp2);
+
+	return result;
+}
