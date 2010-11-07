@@ -1464,6 +1464,8 @@ int eof_menu_song_add_silence(void)
 	char mp3fn[1024] = {0};
 	static int creationmethod = 9;	//Stores the user's last selected leading silence creation method (default to oggCat, which is menu item 9 in eof_leading_silence_dialog[])
 
+	eof_leading_silence_dialog[9].flags = 0;
+	eof_leading_silence_dialog[10].flags = 0;
 	if(eof_supports_oggcat == 0)
 	{	//If EOF has not found oggCat to be available, disable it in the menu and select re-encode
 		creationmethod = 10;	//eof_leading_silence_dialog[10] is the re-encode option
@@ -1493,18 +1495,26 @@ int eof_menu_song_add_silence(void)
 		sprintf(fn, "%s.backup", eof_loaded_ogg_name);
 		current_length = get_ogg_length(eof_loaded_ogg_name);
 		/* revert to original file */
-		eof_prepare_undo(EOF_UNDO_TYPE_SILENCE);
 		if(atoi(eof_etext) <= 0)
 		{
-			eof_copy_file(fn, eof_loaded_ogg_name);
-			if(eof_load_ogg(eof_loaded_ogg_name))
+			if(exists(fn))
+			{	//Only attempt to restore the original audio if the backup exists
+				eof_prepare_undo(EOF_UNDO_TYPE_SILENCE);
+				eof_copy_file(fn, eof_loaded_ogg_name);
+				if(eof_load_ogg(eof_loaded_ogg_name))
+				{
+					eof_fix_waveform_graph();
+					eof_fix_window_title();
+				}
+			}
+			else
 			{
-				eof_fix_waveform_graph();
-				eof_fix_window_title();
+				return 1;	//Return without making any changes
 			}
 		}
 		else
 		{
+			eof_prepare_undo(EOF_UNDO_TYPE_SILENCE);
 			if(eof_leading_silence_dialog[2].flags & D_SELECTED)
 			{
 				silence_length = atoi(eof_etext);

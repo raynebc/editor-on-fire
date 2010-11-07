@@ -165,15 +165,6 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	}
 	delete_file(oggfn);
 
-	/* encode the silence */
-/*	replace_filename(soggfn, eof_song_path, "silence.ogg", 1024);
-	sprintf(sys_command, "oggSilence -d %d -l%lu -o \"%s\"", alogg_get_bitrate_ogg(eof_music_track), ms, soggfn);
-	if(system(sys_command))
-	{
-		eof_copy_file(backupfn, (char *)oggfn);
-		eof_fix_window_title();
-		return 0;
-	} */
 	SAMPLE * silence_sample = create_silence_sample(ms);
 	if(!silence_sample)
 	{
@@ -206,7 +197,8 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	}
 
 	/* clean up */
-	delete_file(soggfn);
+	delete_file(wavfn);	//Delete silence.wav
+	delete_file(soggfn);	//Delete silence.ogg
 	if(eof_load_ogg((char *)oggfn))
 	{
 		eof_fix_waveform_graph();
