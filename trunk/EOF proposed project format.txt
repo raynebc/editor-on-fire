@@ -133,6 +133,7 @@ TRACK CHUNK, for each track:
 			1 byte:		Note pitch
 			4 bytes:	Lyric position (in milliseconds or delta ticks)
 			4 bytes:	Lyric position (in milliseconds or delta ticks)
+*			1 byte:		Track number (ie. 1=PART VOCALS, 2=PART HARM1, 3=PART HARM2...)
 *			2 bytes:	Lyric flags
 		}
 
