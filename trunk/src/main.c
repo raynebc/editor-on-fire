@@ -37,6 +37,7 @@
 #include "mix.h"
 #include "control.h"
 #include "waveform.h"
+#include "silence.h"
 
 char      * eof_track_name[EOF_MAX_TRACKS + 1] = {"PART GUITAR", "PART BASS", "PART GUITAR COOP", "PART RHYTHM", "PART DRUMS", "PART VOCALS"};
 char        eof_note_type_name[5][32] = {" Supaeasy", " Easy", " Medium", " Amazing", " BRE"};
@@ -90,7 +91,6 @@ int         eof_debug_mode = 0;
 char        eof_cpu_saver = 0;
 char        eof_has_focus = 1;
 char        eof_supports_mp3 = 0;
-char        eof_supports_silence = 0;		//Set to nonzero if EOF determines oggSilence is usable
 char        eof_supports_oggcat = 0;		//Set to nonzero if EOF determines oggCat is usable
 int         eof_new_idle_system = 0;
 char        eof_just_played = 0;
@@ -2788,20 +2788,38 @@ int eof_initialize(int argc, char * argv[])
 	}
 
 	/* check availability of silence generating tools */
-	if(!eof_supports_silence)
+	if(!eof_supports_oggcat)
 	{
-		if(system("oggSilence -d 64000 -l 1000 -o test_silence.ogg") == 0)
-		{
-			eof_supports_silence = 1;
-			system("oggSilence -d 64000 -l 1000 -o test_silence2.ogg");
-			if(system("oggCat test_silence3.ogg test_silence.ogg test_silence2.ogg") == 0)
-			{
-				eof_supports_oggcat = 1;
+		SAMPLE *silentaudio = create_silence_sample(1);	//Create 1ms worth of silence
+		if(silentaudio != NULL)
+		{	//If the silence was successfully created
+			delete_file("silence.wav");	//Delete these temp files if they exist
+			delete_file("silence.ogg");
+			delete_file("silence2.ogg");
+			delete_file("silence3.ogg");
+			if(save_wav("silence.wav", silentaudio) && exists("silence.wav"))
+			{	//If the wave file was successfully created
+				#ifdef ALLEGRO_WINDOWS
+				if((eof_system("oggenc2 -o silence.ogg -b 128 silence.wav") == 0) &&
+				#else
+				if((eof_system("oggenc -o silence.ogg -b 128 silence.wav") == 0) &&
+				#endif
+				   exists("silence.ogg"))
+					{	//If the OGG file was succesfully created
+					if(eof_copy_file("silence.ogg","silence2.ogg") && exists("silence2.ogg"))
+					{	//If the OGG file was successfully duplicated
+						if(!system("oggCat silence3.ogg silence.ogg silence2.ogg") && exists("silence3.ogg"))
+						{	//If oggCat successfully concatenated the two files
+							eof_supports_oggcat = 1;
+							delete_file("silence3.ogg");
+						}
+						delete_file("silence2.ogg");
+					}
+					delete_file("silence.ogg");
+				}
+				delete_file("silence.wav");
 			}
 		}
-		delete_file("test_silence.ogg");
-		delete_file("test_silence2.ogg");
-		delete_file("test_silence3.ogg");
 	}
 
 	/* make music filter */

@@ -14,7 +14,7 @@ static unsigned long msec_to_samples(unsigned long msec)
 	return sample;
 }
 
-static SAMPLE * create_silence_sample(unsigned long ms)
+SAMPLE * create_silence_sample(unsigned long ms)
 {
 	SAMPLE * sp = NULL;
 	int bits;
@@ -31,25 +31,35 @@ static SAMPLE * create_silence_sample(unsigned long ms)
 		freq = alogg_get_wave_freq_ogg(eof_music_track);
 		samples = msec_to_samples(ms);
 		channels = stereo ? 2 : 1;
-		sp = create_sample(bits, stereo, freq, samples);
-		if(sp)
+	}
+	else
+	{
+		bits = 16;
+		stereo = 1;
+		freq = 41000;
+		samples = ms * freq / 1000;
+		channels = 2;
+	}
+
+	sp = create_sample(bits, stereo, freq, samples);
+	if(sp)
+	{
+		if(bits == 8)
 		{
-			if(bits == 8)
+			for(i = 0; i < samples * channels; i++)
 			{
-				for(i = 0; i < samples * channels; i++)
-				{
-					((unsigned char *)(sp->data))[i] = 0x80;
-				}
+				((unsigned char *)(sp->data))[i] = 0x80;
 			}
-			else
+		}
+		else
+		{
+			for(i = 0; i < samples * channels; i++)
 			{
-				for(i = 0; i < samples * channels; i++)
-				{
-					((unsigned short *)(sp->data))[i] = 0x8000;
-				}
+				((unsigned short *)(sp->data))[i] = 0x8000;
 			}
 		}
 	}
+
 	return sp;
 }
 
@@ -119,7 +129,7 @@ static int save_wav_fp(SAMPLE * sp, PACKFILE * fp)
 
 /* fill this in with a WAV saving routine (Allegro does not supply one for some
  * reason */
-static int save_wav(const char * fn, SAMPLE * sp)
+int save_wav(const char * fn, SAMPLE * sp)
 {
     PACKFILE * file;
 
@@ -185,7 +195,6 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 		eof_fix_window_title();
 		return 0;
 	}
-
 
 	/* stitch the original file to the silence file */
 	sprintf(sys_command, "oggCat \"%s\" \"%s\" \"%s\"", oggfn, soggfn, backupfn);

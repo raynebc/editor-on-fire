@@ -63,8 +63,7 @@ int eof_menu_track_selected_vocals(void);
 int eof_menu_track_selected_track_number(int tracknum);	//Changes to the specified track number
 
 int eof_menu_song_waveform_settings(void);
-int eof_menu_song_waveform(void);
+int eof_menu_song_waveform(void);	//Toggle the display of the waveform on/off, generating the waveform data if necessary
 int eof_menu_song_add_silence(void);
-	//Toggle the display of the waveform on/off, generating the waveform data if necessary
 
 #endif

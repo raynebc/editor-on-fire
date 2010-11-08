@@ -454,15 +454,6 @@ void eof_prepare_song_menu(void)
 		{
 			eof_track_selected_menu[EOF_TRACK_VOCALS].text[0] = ' ';
 		}
-//Leading silence can now be added by re-encoding, and the use of oggSilence is currently deprecated because it crashes in at least Win XP x64
-//		if(eof_supports_silence)
-//		{
-			eof_song_menu[9].flags = 0;
-//		}
-//		else
-//		{
-//			eof_song_menu[9].flags = D_DISABLED;
-//		}
 	}
 }
 
