@@ -27,12 +27,19 @@ EOF proposed file format (revision 'H'):
 1 byte:		Boolean:  Lyrics present (from Song Properties)
 1 byte:		Boolean:  Eighth note HOPO (from Song Properties)
 *3 bytes:	Cassette color (8 bit intensity each for Red, Green and Blue)
-*1 byte:	Band difficulty level (0-6)
-*1 byte:	Bass difficulty level (0-6)
-*1 byte:	Drums difficulty level (0-6)
-*1 byte:	Guitar difficulty level (0-6)
-*1 byte:	Vocal difficulty level (0-6)
+*1 byte:	Band difficulty level (0-6 or 0xFF)
+*1 byte:	Bass difficulty level (0-6 or 0xFF)
+*1 byte:	Drums difficulty level (0-6 or 0xFF)
+*1 byte:	Guitar difficulty level (0-6 or 0xFF)
+*1 byte:	Vocal difficulty level (0-6 or 0xFF)
+*1 byte:	Keys difficulty level (0-6 or 0xFF)
+*1 byte:	Pro guitar difficulty level (0-6 or 0xFF)
+*1 byte:	Pro bass difficulty level (0-6 or 0xFF)
+*1 byte:	Pro keys difficulty level (0-6 or 0xFF)
 !	FoFiX doesn't reportedly support a vocal difficulty value yet, but planning ahead doesn't hurt
+!	Difficulty levels 0 through 5 are a regular graduated scale of difficulty, 6 represents "5 devil skulls" which is extra hard
+!	A difficulty level of 0xFF can be stored just so the chart author can indicate that an instrument/vocal part is not present
+!	If an instrument/vocal part is not present, EOF should skip writing a song.ini entry for it
 *1 byte:	Force FoFiX to use the chart's background.png as the background
 *1 byte:	HOPO frequency (0-5, requires the user's "Song HOPO Freq" FoFiX setting to be set to "Auto")
 *1 byte:	Icon ID string length
@@ -80,23 +87,19 @@ TEXT EVENT CHUNK, for each text event:
 	4 bytes:	Associated beat number
 }
 
-*4 bytes:	Start position of preview audio (in milliseconds or delta ticks)
-*4 bytes:	End position of preview audio (in milliseconds or delta ticks)
-!	If the user has not defined the preview.ogg start and end points, these two values should be 0
-
 *4 bytes:	Number of tracks
 TRACK CHUNK, for each track:
 {
 *	2 bytes:	Track name string length
 *	[varies:]	Track name string
 *	4 bytes:	Track number (Matching macros such as EOF_TRACK_GUITAR)
-*	1 byte:		Track type (1=Guitar,2=Drum,3=Pro drum,3=Vocal,4=Pro Guitar,5=Keys,6=extra lane drums,7=extra lane guitar ...)
+*	1 byte:		Track type (0=Global,1=Guitar,2=Drum,3=Pro drum,3=Vocal,4=Pro Guitar,5=Keys,6=extra lane drums,7=extra lane guitar ...)
 *	4 bytes:	Track flags (ie. which difficulties are locked for editing)
 
 *	4 bytes:	Number of section types stored for this track
 *	SECTION TYPE CHUNK, for each section type
 *	{
-*		2 bytes:	Type of section (ie. solo, star power, lyric phrase, trill, yellow tom, blue tom, green tom, arpeggio, pro keys trainer, etc)
+*		2 bytes:	Type of section (ie. solo, star power, lyric phrase, trill, yellow tom, blue tom, green tom, arpeggio, pro keys trainer, custom MIDI note, preview section, etc)
 
 *		4 bytes:	Number of the specified sections stored
 *		SECTION CHUNK, for each of the specified type of sections
@@ -108,6 +111,8 @@ TRACK CHUNK, for each track:
 *			2 bytes:	Section flags
 *		}
 *	}
+!	There can be a "global track" that stores sections or other data that apply to multiple tracks, such as unison SP sections,
+!	or sections that don't apply to any specific track, such as a song preview section
 
 	[GUITAR/DRUM/PRO DRUM TRACK FORMAT]
 		4 bytes:	Number of notes
