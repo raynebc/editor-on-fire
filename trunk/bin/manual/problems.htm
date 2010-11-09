@@ -33,6 +33,11 @@ There is no way to prevent this from happening as it has to do with the way the 
 <b>Problem:</b><br>
 A certain key press doesn't seem to work in EOF, even though it does in other programs.<br><br>
 <b>Solution:</b><br>
-We usually find that the key input is being intercepted by another program at a low enough level in the operating system that Allegro (which provides the input functionality for EOF) cannot read the key press.  For example, if your computer has the "Microsoft eHome Infrared Transceiver" driver installed, it could prevent EOF from reacting to the apostrophe (') or other keys.  The only real solution is to disable/terminate the conflicting software, or if you would prefer to do without it, uninstall it.
+We usually find that the key input is being intercepted by another program at a low enough level in the operating system that Allegro (which provides the input functionality for EOF) cannot read the key press.  For example, if your computer has the "Microsoft eHome Infrared Transceiver" driver installed, it could prevent EOF from reacting to the apostrophe (') or other keys.  The only real solution is to disable/terminate the conflicting software, or if you would prefer to do without it, uninstall it.<br><br>
+
+<b>Problem:</b><br>
+Notes are grid snapped at a small enough interval that they should play as HOPO notes in FoF/Phase Shift, but some of them do not register as HOPOs.<br><br>
+<b>Solution:</b><br>
+For notes that are not marked as forced HOPOs (forced HOPO phrases are presently only supported in Phase Shift), they must be close enough to each other.  If you place grid snapped notes and then later move a beat marker, the note will be allowed to move with the auto adjust feature, but the note's position may get rounded to the nearest millisecond, which could cause the note to be just barely too far away from the previous note to count as a HOPO when played in-game.  Most of the time, this timing difference is too small to see in the editor.  The best way to fix this is to select the notes, select a high grid snap value (such as 1/48, or use a high custom grid snap value) and use "Resnap" from the Note menu.  This will re-align the selected notes to the specified grid snap level positions and in normal cases should allow the notes to detect as HOPO if they are close enough (ie. 1/12 notes).  If your chart has notes that are not meant to be grid snapped, ie. a sloppily played guitar solo, make sure to not resnap those or they may lose their desired timing.<br><br>
 </BODY>
 </HTML>
