@@ -276,7 +276,7 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 	if(fp == NULL)
 	{
 		#ifdef EOF_DEBUG_WAVEFORM
-		allegro_message("Waveform: Failed to open input audio file");
+		allegro_message("Waveform: Failed to open input audio file: %s",strerror(errno));
 		#endif
 		return NULL;
 	}
