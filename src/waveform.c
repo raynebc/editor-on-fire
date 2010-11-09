@@ -397,10 +397,6 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 		return NULL;	//Return error
 	}
 
-	#ifdef EOF_DEBUG_WAVEFORM
-	allegro_message("Waveform: Waveform generation successful");
-	#endif
-
 	return waveform;	//Return waveform data
 }
 
