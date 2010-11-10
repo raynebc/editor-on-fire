@@ -537,6 +537,7 @@ int eof_menu_file_load_ogg(void)
 			{
 				ustrcpy(eof_song->tags->ogg[eof_song->tags->oggs].filename, fn);
 				eof_song->tags->ogg[eof_song->tags->oggs].midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
+				eof_song->tags->ogg[eof_song->tags->oggs].modified = 0;
 				eof_selected_ogg = eof_song->tags->oggs;
 				eof_song->tags->oggs++;
 			}
@@ -544,6 +545,7 @@ int eof_menu_file_load_ogg(void)
 			{
 				ustrcpy(eof_song->tags->ogg[eof_song->tags->oggs - 1].filename, fn);
 				eof_song->tags->ogg[eof_song->tags->oggs - 1].midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
+				eof_song->tags->ogg[eof_song->tags->oggs - 1].modified = 0;
 				eof_selected_ogg = eof_song->tags->oggs - 1;
 			}
 		}
@@ -1013,6 +1015,9 @@ int eof_menu_file_exit(void)
 {
 	int ret = 0;
 	int ret2 = 1;
+	char oggfn[1024] = {0};
+	char coggfn[1024] = {0};
+	int i;
 
 	if(eof_song_loaded)
 	{
@@ -1049,6 +1054,27 @@ int eof_menu_file_exit(void)
 		{
 			if(ret2 == 1)
 			{
+				/* see if we need to restore any OGGs before quitting */
+				for(i = 0; i < eof_song->tags->oggs; i++)
+				{
+					if(eof_song->tags->ogg[i].modified)
+					{
+						sprintf(coggfn, "%s%s", eof_song_path, eof_song->tags->ogg[i].filename);
+						sprintf(oggfn, "%s.lastsaved", coggfn);
+						if(exists(oggfn))
+						{
+							eof_copy_file(oggfn, coggfn);
+						}
+						else
+						{
+							sprintf(oggfn, "%s.backup", coggfn);
+							if(exists(oggfn))
+							{
+								eof_copy_file(oggfn, coggfn);
+							}
+						}
+					}
+				}
 				eof_quit = 1;
 			}
 		}
@@ -1998,6 +2024,7 @@ int eof_save_helper(char *destfilename)
 
 	/* finish up */
 	eof_changes = 0;
+	eof_song->tags->ogg[eof_selected_ogg].modified = 0;
 	eof_undo_last_type = 0;
 	eof_change_count = 0;
 	eof_fix_window_title();

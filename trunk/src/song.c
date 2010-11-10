@@ -88,6 +88,7 @@ EOF_SONG * eof_create_song(void)
 	sp->tags->eighth_note_hopo = 0;
 	sp->tags->ini_settings = 0;
 	sp->tags->ogg[0].midi_offset = 0;
+	sp->tags->ogg[0].modified = 0;
 	ustrcpy(sp->tags->ogg[0].filename, "guitar.ogg");
 	sp->tags->oggs = 1;
 	sp->tags->revision = 0;
