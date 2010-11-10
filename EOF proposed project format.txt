@@ -7,53 +7,35 @@ EOF proposed file format (revision 'H'):
 	CHART PROPERTIES:
 4 bytes:	Project revision number
 *1 byte:	Timing format (0=Milliseconds,1=Deltas)
-*4 bytes:	Time division (only to be used if the timing format is "deltas", will probably be informational unless EOF changes the time division used)
+*4 bytes:	Time division (only to be used if the timing format is "deltas", will probably be informational only unless EOF changes the time division used)
 
 	SONG PROPERTIES:
-*2 bytes:	Album string length
-*[varies]:	Album string
-2 bytes:	Artist string length
-[varies]:	Artist string
-2 bytes:	Title string length
-[varies]:	Title string
-2 bytes:	Frettist string length
-[varies]:	Frettist string
-*2 bytes:	Genre string length
-*[varies]:	Genre string
-2 bytes:	Year string length
-[varies]:	Year string
-2 bytes:	Loading Text string length
-[varies]:	Loading Text string
-1 byte:		Boolean:  Lyrics present (from Song Properties)
-1 byte:		Boolean:  Eighth note HOPO (from Song Properties)
-*3 bytes:	Cassette color (8 bit intensity each for Red, Green and Blue)
-*1 byte:	Band difficulty level (0-6 or 0xFF)
-*1 byte:	Bass difficulty level (0-6 or 0xFF)
-*1 byte:	Drums difficulty level (0-6 or 0xFF)
-*1 byte:	Guitar difficulty level (0-6 or 0xFF)
-*1 byte:	Vocal difficulty level (0-6 or 0xFF)
-*1 byte:	Keys difficulty level (0-6 or 0xFF)
-*1 byte:	Pro guitar difficulty level (0-6 or 0xFF)
-*1 byte:	Pro bass difficulty level (0-6 or 0xFF)
-*1 byte:	Pro keys difficulty level (0-6 or 0xFF)
-!	FoFiX doesn't reportedly support a vocal difficulty value yet, but planning ahead doesn't hurt
-!	Difficulty levels 0 through 5 are a regular graduated scale of difficulty, 6 represents "5 devil skulls" which is extra hard
-!	A difficulty level of 0xFF can be stored just so the chart author can indicate that an instrument/vocal part is not present
-!	If an instrument/vocal part is not present, EOF should skip writing a song.ini entry for it
-*1 byte:	Force FoFiX to use the chart's background.png as the background
-*1 byte:	HOPO frequency (0-5, requires the user's "Song HOPO Freq" FoFiX setting to be set to "Auto")
-*1 byte:	Icon ID string length
-*[varies]:	Icon ID string (The following are supportedly natively in FoFiX: rb1,rb2,rbdlc,rbtpk,gh1,gh2,gh2dlc,gh3,gh3dlc,gh80s,gha,ghm,ph1,ph2,ph3,ph4,phm.  Custom icon strings can be used in FoFiX.)
-*1 byte:	Boolean:  The song audio is a cover version
-*1 byte:	Boolean:  The chart is a tutorial and should be hidden during quickplay in FoFiX
-*1 byte:	Unlock ID string length
-*[varies]:	Unlock ID string (The tier this chart is in)
-*1 byte:	Unlock ID required string length
-*[varies]:	Unlock ID required string (The tier that needs to be finished for this chart to be unlocked)
-*1 byte:	Unlock text string length
-*[varies]:	Unlock text string (The text that FoFiX will display if this chart is not unlocked)
-*4 bytes:	User specified chart version number
+2 bytes:	Number of INI strings
+INI STRING CHUNK, for each INI string:
+{
+*	1 byte:		INI setting type (0=Custom,1=Album,2=Artist,3=Title,4=Frettist,5=Genre,6=Year,7=Loading Text,8=Icon ID,9=Unlock ID,10=Unlock ID required,11=Unlock text string,...)
+!	The following Icon IDs are supportedly natively in FoFiX: rb1,rb2,rbdlc,rbtpk,gh1,gh2,gh2dlc,gh3,gh3dlc,gh80s,gha,ghm,ph1,ph2,ph3,ph4,phm.  Custom icon strings can be used in FoFiX.
+!	Unlock text string is the text that FoFiX will display if this chart is not unlocked
+*	2 bytes:	INI setting string length
+*	[varies:]	INI setting string
+}
 
+2 bytes:	Number of INI booleans
+INI BOOLEAN CHUNK, for each INI boolean:
+{
+*	1 byte:		INI boolean type (0=Reserved,1=Lyrics present,2=Eighth note HOPO,3=background.png present,4=Is a cover,5=Is a tutorial,...)
+!	Tutorial songs are hidden during quickplay in FoFiX
+}
+
+2 bytes:	Number of INI numbers
+INI NUMBER CHUNK, for each INI number:
+{
+*	1 byte:		INI number type (0=Reserved,1=Casette color,2=Band difficulty level,3=HOPO frequency,4=User specified chart version #,...)
+!	Caseette color is an 8 bit intensity each for Red, Green and Blue
+!	HOPO frequency is 0-5, and is used if the player's "Song HOPO Freq" FoFiX setting is set to "Auto"
+}
+
+	CHART DATA:
 2 bytes:	Number of OGG profiles
 OGG PROFILE CHUNK, for each OGG profile:
 {
@@ -61,13 +43,6 @@ OGG PROFILE CHUNK, for each OGG profile:
 	[varies:]	OGG file name string
 	4 bytes:	MIDI delay for this profile (milliseconds)
 *	1 byte:		OGG profile flags (such as whether the file was originally provided as an OGG or if it was re-encoded, is being mixed with active OGG profile audio, etc)
-}
-
-2 bytes:	Number of INI settings
-INI SETTING CHUNK, for each INI setting:
-{
-*	2 bytes:	INI setting string length
-*	[varies:]	INI setting string
 }
 
 4 bytes:	Number of beats in the chart
@@ -92,14 +67,16 @@ TRACK CHUNK, for each track:
 {
 *	2 bytes:	Track name string length
 *	[varies:]	Track name string
-*	4 bytes:	Track number (Matching macros such as EOF_TRACK_GUITAR)
-*	1 byte:		Track type (0=Global,1=Guitar,2=Drum,3=Pro drum,3=Vocal,4=Pro Guitar,5=Keys,6=extra lane drums,7=extra lane guitar ...)
+*	2 bytes:	Track number (Matching macros such as EOF_TRACK_GUITAR)
+*	1 byte:		Track type (0=Global,1=Guitar,2=Drum,3=Pro drum,3=Vocal,4=Pro Guitar (17 frets),5=Pro Guitar (22 frets),6=Keys,7=variable lane drums,8=variable lane guitar ...)
+!	Rock Band 3 charts have separate tracks for the full 22 fret chart (PART REAL_GUITAR_22) usable on the Squier guiter, and a version transposed to be accurate on 17 frets (PART REAL_GUITAR)
+*	1 byte:		Track difficulty level (0-6 or 0xFF)
 *	4 bytes:	Track flags (ie. which difficulties are locked for editing)
 
 *	4 bytes:	Number of section types stored for this track
 *	SECTION TYPE CHUNK, for each section type
 *	{
-*		2 bytes:	Type of section (ie. solo, star power, lyric phrase, trill, yellow tom, blue tom, green tom, arpeggio, pro keys trainer, custom MIDI note, preview section, etc)
+*		2 bytes:	Type of section (ie. solo, star power, lyric phrase, trill, yellow tom, blue tom, green tom, arpeggio, pro keys trainer, custom MIDI note, preview section, bookmark, fret catalog entry)
 
 *		4 bytes:	Number of the specified sections stored
 *		SECTION CHUNK, for each of the specified type of sections
@@ -112,7 +89,9 @@ TRACK CHUNK, for each track:
 *		}
 *	}
 !	There can be a "global track" that stores sections or other data that apply to multiple tracks, such as unison SP sections,
-!	or sections that don't apply to any specific track, such as a song preview section
+!	or sections that don't apply to any specific track, such as a song preview section or bookmarks
+!		For bookmarks, there should be no string, and the end position will be ignored
+!		For fret catalog entries, the flags field stores the track number the catalog entry is from
 
 	[GUITAR/DRUM/PRO DRUM TRACK FORMAT]
 		4 bytes:	Number of notes
@@ -198,7 +177,7 @@ TRACK CHUNK, for each track:
 *			2 bytes:	Chord flags
 *		}
 
-	[EXTRA LANE GUITAR/DRUMS TRACK FORMAT]
+	[VARIABLE LANE GUITAR/DRUMS TRACK FORMAT]
 *		1 byte:		DTX Mania compliance flag (1=compliant, the track has 8 drum lanes?)
 *		1 byte:		The number of lanes included in this track
 
@@ -216,23 +195,7 @@ TRACK CHUNK, for each track:
 *			2 bytes:	Note flags (among other specialized flags, DTXMania supposedly tracks whether hi-hat is open/closed)
 *		}
 }
-
-*1 bytes:	Number of bookmarks
-BOOKMARK CHUNK, for each of the bookmarks:
-{
-	4 bytes:	Bookmark position (in milliseconds or delta ticks)
-}
-
-4 bytes:	Number of catalog entries
-FRET CATALOG CHUNK, for each catalog entry:
-{
-*	2 bytes:	Entry name string length
-*	[varies:]	Entry name string
-*	4 bytes:	Track number (matching the track number in the track chunk)
-	1 byte:		Entry type (difficulty)
-	4 bytes:	Start position of entry (in milliseconds or delta ticks)
-	4 bytes:	End position of entry (in milliseconds or delta ticks)
-}
+!	Open bass notes are planned to be charted on a sixth lane, so GH style charts with open bass will probably need to be charted on a variable lane bass track titled "PART BASS"
 
 
 !NOTES:
@@ -253,3 +216,6 @@ FRET CATALOG CHUNK, for each catalog entry:
 	01 : Flat (lower note by one semitone)
 	10 : Sharp (raise note by one semitone)
 	11 : Natural (cancel any flat/sharp in effect for this line in the staff, until the next measure/accidental/key change)
+
+!Difficulty levels 0 through 5 are a regular graduated scale of difficulty, 6 represents "5 devil skulls" which is extra hard
+!FoFiX doesn't reportedly support a vocal difficulty value yet, but planning ahead doesn't hurt
