@@ -582,9 +582,12 @@ void eof_track_fixup_notes(EOF_TRACK * tp, int sel)
 					tp->note[i]->note |= tp->note[next]->note;
 					eof_track_delete_note(tp, next);
 				}
-				else if(!(tp->note[i]->flags & EOF_NOTE_FLAG_CRAZY) && (tp->note[i]->pos + tp->note[i]->length > tp->note[next]->pos - 1))
+				else if(tp->note[i]->pos + tp->note[i]->length > tp->note[next]->pos - 1)
 				{
-					tp->note[i]->length = tp->note[next]->pos - tp->note[i]->pos - 1;
+					if(!(tp->note[i]->flags & EOF_NOTE_FLAG_CRAZY) || (tp->note[i]->note & tp->note[next]->note))
+					{
+						tp->note[i]->length = tp->note[next]->pos - tp->note[i]->pos - 1;
+					}
 				}
 			}
 		}
