@@ -3,6 +3,13 @@ EOF Version History
 
 1.7:
 
+Fixed an issue where "crazy" notes were allowed to lap notes in the same lane.
+
+Disabled the loading of scores during MIDI import to avoid writing a
+corrupted song.ini during save.
+
+Fixed a crash that could occur when using Paste From.
+
 Star Power drum notes are now rendered in silver in the 3D preview window.
 
 Corrects the tracking of star power phrases during lyric import.
