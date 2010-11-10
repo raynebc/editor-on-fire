@@ -1,5 +1,6 @@
 #include <math.h>	//For sqrt()
 #include <allegro.h>
+#include "utility.h"
 #include "waveform.h"
 #include "song.h"
 #include "main.h"
@@ -257,7 +258,7 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 {
 	ALOGG_OGG *oggstruct=NULL;
 	SAMPLE *audio=NULL;
-	FILE *fp=NULL;
+	void * oggbuffer = NULL;
 	struct wavestruct *waveform=NULL;
 	static struct wavestruct emptywaveform;	//all variables in this auto initialize to value 0
 	char done=0;	//-1 on unsuccessful completion, 1 on successful completion
@@ -272,21 +273,21 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 	}
 
 //Load OGG file into memory
-	fp=fopen(oggfilename,"rb");
-	if(fp == NULL)
+	oggbuffer = eof_buffer_file(oggfilename);
+	if(!oggbuffer)
 	{
 		#ifdef EOF_DEBUG_WAVEFORM
 		allegro_message("Waveform: Failed to open input audio file: %s",strerror(errno));
 		#endif
 		return NULL;
 	}
-	oggstruct=alogg_create_ogg_from_file(fp);
+	oggstruct=alogg_create_ogg_from_buffer(oggbuffer, file_size_ex(oggfilename));
 	if(oggstruct == NULL)
 	{
 		#ifdef EOF_DEBUG_WAVEFORM
 		allegro_message("Waveform: ALOGG failed to open input audio file");
 		#endif
-		fclose(fp);
+		free(oggbuffer);
 		return NULL;
 	}
 
@@ -383,6 +384,8 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 		alogg_destroy_ogg(oggstruct);
 	if(audio != NULL)
 		destroy_sample(audio);
+	if(oggbuffer)
+		free(oggbuffer);
 	if(done == -1)	//Unsuccessful completion
 	{
 		if(waveform)
