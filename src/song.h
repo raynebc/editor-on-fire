@@ -197,6 +197,7 @@ typedef struct
 
 	char filename[256];
 	int  midi_offset;
+	char modified;
 
 } EOF_OGG_INFO;
 
