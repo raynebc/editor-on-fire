@@ -11,6 +11,19 @@ Unversioned To-Do List
 [ ]Add extra vocal tracks that can be used as scratch space for vocal editing.
 
 
+EOF 1.8 To-Do List
+------------------
+[ ]Implement new EOF project format
+[ ]Implement pro drums as proper phrases
+[ ]Update MIDI import to be able to load scores into the project
+[ ]Implement delta timing
+[ ]Refactor code.
+   [ ]Make editor into separate modules.
+      [ ]Common module for things that are common to every edit mode.
+      [ ]Mode-specific modules for each input mode.
+   [ ]Make window logic/rendering modules.
+
+
 EOF 1.7 To-Do List
 ------------------
 
