@@ -116,7 +116,7 @@ int eof_note_draw(EOF_NOTE * np, int p)
 	int ychart[5] = {20, 40, 60, 80, 100};
 	int pcol = p == 1 ? eof_color_white : p == 2 ? makecol(224, 255, 224) : 0;
 	int dcol = (np->flags & EOF_NOTE_FLAG_CRAZY) ? eof_color_black : eof_color_white;
-	int dcol2;
+	int dcol2 = dcol;
 	int colors[EOF_MAX_FRETS] = {eof_color_green,eof_color_red,eof_color_yellow,eof_color_blue,eof_color_purple};	//Each of the fret colors
 	int ncol = makecol(192, 192, 192);	//Note color defaults to silver unless the note is not star power
 	int ctr;
