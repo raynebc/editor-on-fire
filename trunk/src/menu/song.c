@@ -1558,6 +1558,7 @@ int eof_menu_song_add_silence(void)
 				}
 			}
 			after_silence_length = get_ogg_length(eof_loaded_ogg_name);
+			eof_song->tags->ogg[eof_selected_ogg].modified = 1;
 		}
 
 		/* adjust notes/beats */
