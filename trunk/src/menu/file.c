@@ -473,6 +473,8 @@ int eof_menu_file_save_as(void)
 int eof_menu_file_load_ogg(void)
 {
 	char * returnedfn = NULL;
+	char checkfn[1024] = {0};
+	char checkfn2[1024] = {0};
 	unsigned long new_length;
 	char * fn = NULL;
 	int i, j;
@@ -481,7 +483,15 @@ int eof_menu_file_load_ogg(void)
 	eof_clear_input();
 	if(returnedfn)
 	{
-
+		/* make sure selected file is in the same path as the current chart */
+		replace_filename(checkfn, returnedfn, "", 1024);
+		replace_filename(checkfn2, eof_song_path, "", 1024);
+		if(ustricmp(checkfn, checkfn2))
+		{
+			allegro_message("OGGs can only be loaded from the current song folder!\n");
+			return 1;
+		}
+		
 		/* failed to load new OGG so reload old one */
 		if(!eof_load_ogg(returnedfn))
 		{
