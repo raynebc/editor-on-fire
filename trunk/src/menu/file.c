@@ -2076,6 +2076,9 @@ void eof_restore_oggs_helper(void)
 	int i;
 
 	/* see if we need to restore any OGGs before quitting */
+	if(eof_song == NULL)
+		return;
+
 	for(i = 0; i < eof_song->tags->oggs; i++)
 	{
 		if(eof_song->tags->ogg[i].modified)
