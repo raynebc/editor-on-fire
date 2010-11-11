@@ -274,6 +274,10 @@ int eof_menu_file_new_wizard(void)
 		{
 			eof_menu_file_save();
 		}
+		else
+		{
+			eof_restore_oggs_helper();
+		}
 		eof_clear_input();
 	}
 	if(ret == 3)
@@ -325,6 +329,10 @@ int eof_menu_file_load(void)
 		if(ret == 1)
 		{
 			eof_menu_file_save();
+		}
+		else
+		{
+			eof_restore_oggs_helper();
 		}
 		eof_clear_input();
 	}
@@ -743,6 +751,10 @@ int eof_menu_file_midi_import(void)
 		{
 			eof_menu_file_save();
 		}
+		else
+		{
+			eof_restore_oggs_helper();
+		}
 		eof_clear_input();
 	}
 	if(ret == 3)
@@ -1064,37 +1076,7 @@ int eof_menu_file_exit(void)
 		{
 			if(ret2 == 1)
 			{
-				/* see if we need to restore any OGGs before quitting */
-				for(i = 0; i < eof_song->tags->oggs; i++)
-				{
-					if(eof_song->tags->ogg[i].modified)
-					{
-						sprintf(coggfn, "%s%s", eof_song_path, eof_song->tags->ogg[i].filename);
-						sprintf(oggfn, "%s.lastsaved", coggfn);
-						if(exists(oggfn))
-						{
-							printf("restoring from .lastsaved\n");
-							eof_copy_file(oggfn, coggfn);
-							delete_file(oggfn);
-						}
-						else
-						{
-							sprintf(oggfn, "%s.backup", coggfn);
-							if(exists(oggfn))
-							{
-								printf("restoring from .backup\n");
-								eof_copy_file(oggfn, coggfn);
-							}
-						}
-					}
-					
-					/* clean up copies */
-					sprintf(oggfn, "%s.lastsaved", coggfn);
-					if(exists(oggfn))
-					{
-						delete_file(oggfn);
-					}
-				}
+				eof_restore_oggs_helper();
 				eof_quit = 1;
 			}
 		}
@@ -2063,4 +2045,39 @@ int eof_save_helper(char *destfilename)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	return 0;	//Return success
+}
+
+void eof_restore_oggs_helper(void)
+{
+	/* see if we need to restore any OGGs before quitting */
+	for(i = 0; i < eof_song->tags->oggs; i++)
+	{
+		if(eof_song->tags->ogg[i].modified)
+		{
+			sprintf(coggfn, "%s%s", eof_song_path, eof_song->tags->ogg[i].filename);
+			sprintf(oggfn, "%s.lastsaved", coggfn);
+			if(exists(oggfn))
+			{
+				printf("restoring from .lastsaved\n");
+				eof_copy_file(oggfn, coggfn);
+				delete_file(oggfn);
+			}
+			else
+			{
+				sprintf(oggfn, "%s.backup", coggfn);
+				if(exists(oggfn))
+				{
+					printf("restoring from .backup\n");
+					eof_copy_file(oggfn, coggfn);
+				}
+			}
+		}
+		
+		/* clean up copies */
+		sprintf(oggfn, "%s.lastsaved", coggfn);
+		if(exists(oggfn))
+		{
+			delete_file(oggfn);
+		}
+	}
 }
