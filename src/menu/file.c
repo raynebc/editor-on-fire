@@ -1037,9 +1037,6 @@ int eof_menu_file_exit(void)
 {
 	int ret = 0;
 	int ret2 = 1;
-	char oggfn[1024] = {0};
-	char coggfn[1024] = {0};
-	int i;
 
 	if(eof_song_loaded)
 	{
@@ -2049,6 +2046,10 @@ int eof_save_helper(char *destfilename)
 
 void eof_restore_oggs_helper(void)
 {
+	char oggfn[1024] = {0};
+	char coggfn[1024] = {0};
+	int i;
+	
 	/* see if we need to restore any OGGs before quitting */
 	for(i = 0; i < eof_song->tags->oggs; i++)
 	{
