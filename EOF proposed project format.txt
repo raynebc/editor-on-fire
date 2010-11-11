@@ -46,6 +46,8 @@ OGG PROFILE CHUNK, for each OGG profile:
 	[varies:]	OGG file name string
 *	2 bytes:	Original audio file name string length
 *	[varies]:	Original audio file name
+*	2 bytes:	OGG profile comments string length
+*	[varies:]	OGG profile comments string
 	4 bytes:	MIDI delay for this profile (milliseconds)
 *	1 byte:		OGG profile flags (such as whether the file was originally provided as an OGG or if it was re-encoded, is being mixed with active OGG profile audio, etc)
 }
@@ -73,7 +75,7 @@ TRACK CHUNK, for each track:
 *	2 bytes:	Track name string length
 *	[varies:]	Track name string
 *	2 bytes:	Track number (Matching macros such as EOF_TRACK_GUITAR)
-*	1 byte:		Track type (0=Global,1=Guitar,2=Drum,3=Pro drum,3=Vocal,4=Pro Guitar (17 frets),5=Pro Guitar (22 frets),6=Keys,7=variable lane drums,8=variable lane guitar ...)
+*	1 byte:		Track type (0=Global,1=Guitar,2=Bass,3=Drum,4=Vocal,5=Keys,6=Pro Guitar,7=Pro Bass,8=Pro Drum,9=Pro Keys,10=Variable Lane Guitar,11=Variable Lane Drums, ...)
 !	Rock Band 3 charts have separate tracks for the full 22 fret chart (PART REAL_GUITAR_22) usable on the Squier guiter, and a version transposed to be accurate on 17 frets (PART REAL_GUITAR)
 *	1 byte:		Track difficulty level (0-6 or 0xFF)
 *	4 bytes:	Track flags (ie. which difficulties are locked for editing)
@@ -98,7 +100,7 @@ TRACK CHUNK, for each track:
 !		For bookmarks, there should be no string, and the end position will be ignored
 !		For fret catalog entries, the flags field stores the track number the catalog entry is from
 
-	[GUITAR/DRUM/PRO DRUM TRACK FORMAT]
+	[GUITAR/BASS/DRUM/PRO DRUM/KEYS TRACK FORMAT]
 		4 bytes:	Number of notes
 		NOTE CHUNK, for each note
 		{
@@ -126,15 +128,16 @@ TRACK CHUNK, for each track:
 *			2 bytes:	Lyric flags
 		}
 
-	[PRO GUITAR TRACK FORMAT]
-*		1 byte:		Rock Band compliance flag (1=compliant, presumably that the chart doesn't use any fret higher than 17)
+	[PRO GUITAR/PRO BASS TRACK FORMAT]
+*		1 byte:		Rock Band compliance flag (1=compliant, no fret higher than 22 is used)
 
+*		1 byte:		The highest fret number allowed in this track (17 for Mustang, 22 for Squier)
 *		1 byte:		The number of strings on this track's guitar (ie. 4 for standard bass guitar, 6 for standard guitar)
 *		PRO GUITAR TUNING CHUNK, for each string
 *		{
 *			1 byte:		The note this string sounds when played open (no frets held)
 *		}
-!			The first string defined refers to string 1 (high E), consistent with guitar terminology
+!			The first string defined refers to string 1, the lowest guage string (high E on a standard guitar), consistent with guitar terminology
 !			The note numbering system is based on A440 tuning, where note A4 is 440Hz and is referred to as note 69.  Mid C (note C4) is referred to as note 60
 
 *		4 bytes:	Number of notes
@@ -154,7 +157,7 @@ TRACK CHUNK, for each track:
 *			4 bytes:	Note flags (allow 32 flags for an unforsee-able number of techniques such as tapping, bending, etc)
 *		}
 
-	[KEYS TRACK FORMAT]
+	[PRO KEYS TRACK FORMAT]
 *		1 byte:		Rock Band compliance flag (1=compliant, the chart doesn't use notes outside the currently unknown accepted range)
 *		1 byte:		Tone set number assigned to this track (ie. 0=Grand Piano, 1=MIDI device, ...)
 
@@ -182,7 +185,7 @@ TRACK CHUNK, for each track:
 *			2 bytes:	Chord flags
 *		}
 
-	[VARIABLE LANE GUITAR/DRUMS TRACK FORMAT]
+	[VARIABLE LANE GUITAR/DRUM TRACK FORMAT]
 *		1 byte:		DTX Mania compliance flag (1=compliant, the track has 8 drum lanes?)
 *		1 byte:		The number of lanes included in this track
 
