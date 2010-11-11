@@ -79,6 +79,9 @@ int eof_mp3_to_ogg(char *file,char *directory);
 	//If the extension of the file is .mp3, it is converted to OGG format, otherwise the specified file is copied
 	//Returns zero on successful conversion or nonzero if conversion was canceled/unsuccessful
 
+void eof_restore_oggs_helper(void);
+	//Function to discard changes made to OGGs during editing
+
 int eof_save_helper(char *destfilename);
 	//Performs logic that is common among "Save" and "Save as"
 	//"Save as" operations should pass the destination file path through destfilename
