@@ -499,7 +499,7 @@ int eof_menu_file_load_ogg(void)
 			allegro_message("OGGs can only be loaded from the current song folder!\n");
 			return 1;
 		}
-		
+
 		/* failed to load new OGG so reload old one */
 		if(!eof_load_ogg(returnedfn))
 		{
@@ -1501,6 +1501,31 @@ int eof_menu_file_feedback_import(void)
 {
 	char * returnedfn = NULL;
 	int jumpcode = 0;
+	int ret = 0;
+
+	if(eof_song_loaded)
+	{
+		eof_music_paused = 1;
+		eof_stop_midi();
+		alogg_stop_ogg(eof_music_track);
+	}
+	if(eof_changes)
+	{
+		ret = alert3(NULL, "You have unsaved changes.", NULL, "Save", "Discard", "Cancel", 0, 0, 0);
+		if(ret == 1)
+		{
+			eof_menu_file_save();
+		}
+		else
+		{
+			eof_restore_oggs_helper();
+		}
+		eof_clear_input();
+	}
+	if(ret == 3)
+	{
+		return 1;
+	}
 
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
@@ -2049,7 +2074,7 @@ void eof_restore_oggs_helper(void)
 	char oggfn[1024] = {0};
 	char coggfn[1024] = {0};
 	int i;
-	
+
 	/* see if we need to restore any OGGs before quitting */
 	for(i = 0; i < eof_song->tags->oggs; i++)
 	{
@@ -2073,7 +2098,7 @@ void eof_restore_oggs_helper(void)
 				}
 			}
 		}
-		
+
 		/* clean up copies */
 		sprintf(oggfn, "%s.lastsaved", coggfn);
 		if(exists(oggfn))
