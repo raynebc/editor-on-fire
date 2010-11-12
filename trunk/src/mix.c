@@ -84,8 +84,8 @@ void eof_mix_callback(void * buf, int length)
 {
 	unsigned long bytes_left = length / 2;
 	unsigned short * buffer = (unsigned short *)buf;
-	long sum;			//Use a signed long integer to allow the clipping logic to be more efficient
-	long cuesample;	//Used to apply a volume to cues, where the appropriate amplitude multiplier for changing the cue's loudness to X% is to multiply its amplitudes by sqrt(X/100)
+	long sum=0,sum2=0;	//Use a signed long integer to allow the clipping logic to be more efficient
+	long cuesample;		//Used to apply a volume to cues, where the appropriate amplitude multiplier for changing the cue's loudness to X% is to multiply its amplitudes by sqrt(X/100)
 	int i, j;
 	int increment = alogg_get_wave_is_stereo_ogg(eof_music_track) ? 2 : 1;
 
@@ -96,13 +96,11 @@ void eof_mix_callback(void * buf, int length)
 		{
 			sum = buffer[i] - 32768;	//Convert to signed sample
 			sum *= eof_chart_volume_multiplier;
-			buffer[i] = sum + 32768;	//Convert back to unsigned sample
 
 			if(increment > 1)
 			{	//If this is a stereo audio file, apply the volume to the other channel as well
-				sum = buffer[i] - 32768;		//Convert to signed sample
-				sum *= eof_chart_volume_multiplier;
-				buffer[i + 1] = sum + 32768;	//Convert back to unsigned sample
+				sum2 = buffer[i+1] - 32768;		//Convert to signed sample
+				sum2 *= eof_chart_volume_multiplier;
 			}
 		}
 
@@ -115,23 +113,11 @@ void eof_mix_callback(void * buf, int length)
 				if(eof_voice[j].volume != 100)
 					cuesample *= eof_voice[j].multiplier;	//Change the cue to the specified loudness
 
-				sum = buffer[i] + cuesample;
-				if(sum < 0)
-					sum = 0;
-				else if(sum > 65535)
-					sum = 65535;
+				sum += cuesample;
 
-				buffer[i] = sum;
 				if(increment > 1)
 				{
-					sum = buffer[i + 1] + cuesample;
-
-					if(sum < 0)
-						sum = 0;
-					else if(sum > 65535)
-						sum = 65535;
-
-					buffer[i + 1] = sum;
+					sum2 += cuesample;
 				}
 				eof_voice[j].pos += eof_mix_sample_increment;
 				if(eof_voice[j].pos >= eof_voice[j].sp->len)
@@ -139,6 +125,22 @@ void eof_mix_callback(void * buf, int length)
 					eof_voice[j].playing = 0;
 				}
 			}
+		}
+
+		/* Apply the floor and ceiling for 16 bit sample data as necessary */
+		if(sum < -32768)
+			sum = -32768;
+		else if(sum > 32767)
+			sum = 32767;
+		buffer[i] = sum + 32768;		//Convert the summed PCM samples to unsigned and store into buffer
+
+		if(increment > 1)
+		{
+			if(sum2 < -32768)
+				sum2 = -32768;
+			else if(sum2 > 32767)
+				sum2 = 32767;
+			buffer[i+1] = sum2 + 32768;	//Convert the summed PCM samples to unsigned and store into buffer
 		}
 
 		/* increment the sample and check sound triggers */
