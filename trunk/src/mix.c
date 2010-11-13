@@ -92,14 +92,19 @@ void eof_mix_callback(void * buf, int length)
 	/* add audio data to the buffer */
 	for(i = 0; i < bytes_left; i += increment)
 	{
+		/* store original sample values */
+		sum = buffer[i] - 32768;	//Convert to signed sample
+		if(increment > 1)
+		{
+			sum2 = buffer[i+1] - 32768;		//Convert to signed sample
+		}
+		
+		/* apply volume multiplier */
 		if(eof_chart_volume != 100)		//If the chart volume is to be less than 100%
 		{
-			sum = buffer[i] - 32768;	//Convert to signed sample
 			sum *= eof_chart_volume_multiplier;
-
 			if(increment > 1)
 			{	//If this is a stereo audio file, apply the volume to the other channel as well
-				sum2 = buffer[i+1] - 32768;		//Convert to signed sample
 				sum2 *= eof_chart_volume_multiplier;
 			}
 		}
