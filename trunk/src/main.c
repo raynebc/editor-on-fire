@@ -57,6 +57,7 @@ PALETTE     eof_palette;
 BITMAP *    eof_image[EOF_MAX_IMAGES] = {NULL};
 FONT *      eof_font;
 FONT *      eof_mono_font;
+int         eof_global_volume = 255;
 
 EOF_WINDOW * eof_window_editor = NULL;
 EOF_WINDOW * eof_window_note = NULL;
@@ -2993,6 +2994,7 @@ int eof_initialize(int argc, char * argv[])
 	gametime_init(100); // 100hz timer
 
 	MIDIqueue=MIDIqueuetail=NULL;	//Initialize the MIDI queue as empty
+	set_volume(eof_global_volume, eof_global_volume);
 
 	return 1;
 }
