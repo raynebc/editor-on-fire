@@ -165,6 +165,7 @@ extern NCDFS_FILTER_LIST * eof_filter_dB_files;
 
 extern PALETTE     eof_palette;
 extern BITMAP *    eof_image[EOF_MAX_IMAGES];
+extern int         eof_global_volume;
 
 extern EOF_WINDOW * eof_window_editor;
 extern EOF_WINDOW * eof_window_note;
