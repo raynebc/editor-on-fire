@@ -45,8 +45,9 @@ void eof_select_beat(int beat)
 {
 	int i;
 	int beat_counter = 0;
+	char first_measure = 0;
 	eof_selected_beat = beat;
-	eof_selected_measure = 0;
+	eof_selected_measure = -1;
 	eof_beat_in_measure = 0;
 	eof_beats_in_measure = 1;
 
@@ -56,29 +57,39 @@ void eof_select_beat(int beat)
 		{
 			eof_beats_in_measure = 4;
 			beat_counter = 0;
+			first_measure++;
 		}
 		else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_3_4)
 		{
 			eof_beats_in_measure = 3;
 			beat_counter = 0;
+			first_measure++;
 		}
 		else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_5_4)
 		{
 			eof_beats_in_measure = 5;
 			beat_counter = 0;
+			first_measure++;
 		}
 		else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_6_4)
 		{
 			eof_beats_in_measure = 6;
 			beat_counter = 0;
+			first_measure++;
 		}
 		else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_CUSTOM_TS)
 		{
 			eof_beats_in_measure = ((eof_song->beat[i]->flags & 0xFF000000)>>24) + 1;
 			beat_counter = 0;
+			first_measure++;
+		}
+		if(first_measure == 1)
+		{
+			eof_selected_measure = 0;
+			first_measure++;
 		}
 		eof_beat_in_measure = beat_counter;
-		if(eof_beat_in_measure == 0)
+		if(first_measure && eof_beat_in_measure == 0)
 		{
 			eof_selected_measure++;
 		}
@@ -4510,6 +4521,7 @@ void eof_render_editor_window_common(void)
 	char buffer[16] = {0};
 	unsigned long measure_counter=0;
 	unsigned long beat_in_measure=0;
+	char first_measure = 0;
 
 	bcol = makecol(128, 128, 128);
 	bscol = eof_color_white;
@@ -4521,10 +4533,11 @@ void eof_render_editor_window_common(void)
 	{
 		if(eof_get_ts(eof_song,&beats_per_measure,NULL,i) == 1)
 		{	//If this beat is a time signature
+			first_measure = 1;
 			beat_counter = 0;
 		}
 		beat_in_measure = beat_counter;
-		if(beat_in_measure == 0)
+		if(first_measure && beat_in_measure == 0)
 		{
 			measure_counter++;
 		}
@@ -4532,7 +4545,7 @@ void eof_render_editor_window_common(void)
 
 		if((xcoord >= 0) && (xcoord < eof_window_editor->screen->w))
 		{	//Only render vertical lines if they would be visible
-			vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35 + 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10 - 1, beat_counter == 0 ? eof_color_white : col);
+			vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35 + 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10 - 1, (first_measure && beat_counter == 0) ? eof_color_white : col);
 			vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + 34, eof_color_gray);
 			if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_ANCHOR)
 			{
@@ -4548,7 +4561,7 @@ void eof_render_editor_window_common(void)
 		{	//Draw event marker
 			line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
 		}
-		if(beat_counter == 0)
+		if(first_measure && beat_counter == 0)
 		{	//If this is a measure marker, draw the measure number to the right of the beat line
 			textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord + 2, EOF_EDITOR_RENDER_OFFSET + 22, eof_color_yellow, -1, "%lu", measure_counter);
 		}

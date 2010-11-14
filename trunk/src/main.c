@@ -1986,7 +1986,14 @@ void eof_render_note_window(void)
 			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Beat = %d : BPM = %f", eof_selected_beat, (double)60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn);
 		}
 		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Measure = %d (Beat %d/%d)", eof_selected_measure, eof_beat_in_measure + 1, eof_beats_in_measure);
+		if(eof_selected_measure >= 0)
+		{
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Measure = %d (Beat %d/%d)", eof_selected_measure, eof_beat_in_measure + 1, eof_beats_in_measure);
+		}
+		else
+		{
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Measure = N/A");
+		}
 		ypos += 12;
 		if(eof_vocals_selected)
 		{
