@@ -2079,34 +2079,37 @@ void eof_restore_oggs_helper(void)
 	if(eof_song == NULL)
 		return;
 
-	for(i = 0; i < eof_song->tags->oggs; i++)
+	if(eof_changes)
 	{
-		if(eof_song->tags->ogg[i].modified)
+		for(i = 0; i < eof_song->tags->oggs; i++)
 		{
-			sprintf(coggfn, "%s%s", eof_song_path, eof_song->tags->ogg[i].filename);
+			if(eof_song->tags->ogg[i].modified)
+			{
+				sprintf(coggfn, "%s%s", eof_song_path, eof_song->tags->ogg[i].filename);
+				sprintf(oggfn, "%s.lastsaved", coggfn);
+				if(exists(oggfn))
+				{
+					printf("restoring from .lastsaved\n");
+					eof_copy_file(oggfn, coggfn);
+					delete_file(oggfn);
+				}
+				else
+				{
+					sprintf(oggfn, "%s.backup", coggfn);
+					if(exists(oggfn))
+					{
+						printf("restoring from .backup\n");
+						eof_copy_file(oggfn, coggfn);
+					}
+				}
+			}
+
+			/* clean up copies */
 			sprintf(oggfn, "%s.lastsaved", coggfn);
 			if(exists(oggfn))
 			{
-				printf("restoring from .lastsaved\n");
-				eof_copy_file(oggfn, coggfn);
 				delete_file(oggfn);
 			}
-			else
-			{
-				sprintf(oggfn, "%s.backup", coggfn);
-				if(exists(oggfn))
-				{
-					printf("restoring from .backup\n");
-					eof_copy_file(oggfn, coggfn);
-				}
-			}
-		}
-
-		/* clean up copies */
-		sprintf(oggfn, "%s.lastsaved", coggfn);
-		if(exists(oggfn))
-		{
-			delete_file(oggfn);
 		}
 	}
 }
