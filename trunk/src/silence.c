@@ -212,6 +212,7 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	{
 		eof_fix_waveform_graph();
 		eof_fix_window_title();
+		eof_music_length = eof_music_actual_length;
 		return 1;
 	}
 	eof_fix_window_title();
@@ -341,6 +342,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	{
 		eof_fix_waveform_graph();
 		eof_fix_window_title();
+		eof_music_length = eof_music_actual_length;
 		return 1;
 	}
 	eof_fix_window_title();
@@ -467,6 +469,7 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	{
 		eof_fix_waveform_graph();
 		eof_fix_window_title();
+		eof_music_length = eof_music_actual_length;
 		return 1;
 	}
 	eof_fix_window_title();
