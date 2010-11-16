@@ -146,7 +146,7 @@ int eof_get_ts_denominator(int beat)
 	/* decode custom TS */
 	else if(eof_song->beat[tsbeat]->flags & EOF_BEAT_FLAG_CUSTOM_TS)
 	{
-		return ((eof_song->beat[beat]->flags & 0x00FF0000)>>16) + 1;
+		return ((eof_song->beat[tsbeat]->flags & 0x00FF0000)>>16) + 1;
 	}
 	return 4;
 }
@@ -255,6 +255,21 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 		/* do the actual snapping */
 		float least_amount = sp->beat_length;
 		int least = -1;
+		if(eof_snap_mode != EOF_SNAP_CUSTOM)
+		{
+			if(denominator == 2)
+			{
+				interval *= 2;
+			}
+			else if(denominator == 8)
+			{
+				interval /= 2;
+			}
+			else if(denominator == 16)
+			{
+				interval /= 4;
+			}
+		}
 		if(measure_snap)
 		{
 			int ts = 1;
@@ -382,7 +397,8 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 
 void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 {
-
+	int denominator = eof_get_ts_denominator(sp->beat);
+	
 	if(eof_snap_mode != EOF_SNAP_OFF)
 	{
 		/* if snapped to the next beat, make sure length is calculated from that beat */
@@ -450,6 +466,21 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 				if(sp->length <= 0)
 					sp->length = 1;	//Enforce a minimum grid snap length of 1ms
 				break;
+			}
+		}
+		if(eof_snap_mode != EOF_SNAP_CUSTOM)
+		{
+			if(denominator == 2)
+			{
+				sp->length /= 2;
+			}
+			else if(denominator == 8)
+			{
+				sp->length *= 2;
+			}
+			else if(denominator == 16)
+			{
+				sp->length *= 4;
 			}
 		}
 	}
