@@ -80,6 +80,7 @@ int eof_undo_add(int type)
 	{
 		eof_undo_count = EOF_MAX_UNDO;
 	}
+	eof_redo_count = 0;
 	return 1;
 }
 

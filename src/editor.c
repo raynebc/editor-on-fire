@@ -117,9 +117,46 @@ void eof_set_vocal_tail_pos(int note, unsigned long pos)
 	}
 }
 
+int eof_get_ts_denominator(int beat)
+{
+	int tsbeat = 0;
+	int i;
+	
+	for(i = beat; i >= 0; i--)
+	{
+		if(eof_song->beat[i]->flags & (EOF_BEAT_FLAG_START_3_4 | EOF_BEAT_FLAG_START_4_4 | EOF_BEAT_FLAG_START_5_4 | EOF_BEAT_FLAG_START_6_4 | EOF_BEAT_FLAG_CUSTOM_TS))
+		{
+			tsbeat = i;
+			break;
+		}
+	}
+	
+	/* return default denominator if no TS flags found */
+	if(i < 0)
+	{
+		return 4;
+	}
+	
+	/* all TS presets have a denominator of 4 */
+	if(eof_song->beat[tsbeat]->flags & (EOF_BEAT_FLAG_START_3_4 | EOF_BEAT_FLAG_START_4_4 | EOF_BEAT_FLAG_START_5_4 | EOF_BEAT_FLAG_START_6_4))
+	{
+		return 4;
+	}
+	
+	/* decode custom TS */
+	else if(eof_song->beat[tsbeat]->flags & EOF_BEAT_FLAG_CUSTOM_TS)
+	{
+		return ((eof_song->beat[beat]->flags & 0x00FF0000)>>16) + 1;
+	}
+	return 4;
+}
+
 void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 {
 	int i;
+	int denominator = 4;
+	int interval = 0;
+	char measure_snap = 0;
 
 	/* place pen at "real" location and adjust from there */
 	sp->pos = p;
@@ -162,310 +199,182 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			{
 				sp->beat_length = eof_song->beat[sp->beat + 1]->pos - eof_song->beat[sp->beat]->pos;
 			}
-			float least_amount = sp->beat_length;
-			int least = -1;
+			denominator = eof_get_ts_denominator(sp->beat);
 			switch(eof_snap_mode)
 			{
 				case EOF_SNAP_QUARTER:
 				{
-					if(eof_pos_distance(eof_song->beat[sp->beat]->pos, sp->pos) < eof_pos_distance(eof_song->beat[sp->beat + 1]->pos, sp->pos))
-					{
-						sp->pos = eof_song->beat[sp->beat]->pos;
-					}
-					else
-					{
-						sp->pos = eof_song->beat[sp->beat + 1]->pos;
-					}
+					interval = 1;
+					measure_snap = 0;
 					break;
 				}
 				case EOF_SNAP_EIGHTH:
 				{
-					sp->grid_pos[0] = eof_song->beat[sp->beat]->pos;
-					sp->grid_pos[1] = eof_song->beat[sp->beat]->pos + (float)(sp->beat_length) / 2.0;
-					sp->grid_pos[2] = eof_song->beat[sp->beat + 1]->pos;
-					for(i = 0; i < 3; i++)
-					{
-						sp->grid_distance[i] = eof_pos_distance(sp->grid_pos[i], sp->pos);
-					}
-					for(i = 0; i < 3; i++)
-					{
-						if(sp->grid_distance[i] < least_amount)
-						{
-							least = i;
-							least_amount = sp->grid_distance[i];
-						}
-					}
-					if(least >= 0)
-					{
-						sp->pos = sp->grid_pos[least];
-					}
+					interval = 2;
+					measure_snap = 0;
 					break;
 				}
 				case EOF_SNAP_TWELFTH:
 				{
-					sp->grid_pos[0] = eof_song->beat[sp->beat]->pos;
-					sp->grid_pos[1] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 3.0);
-					sp->grid_pos[2] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 3.0) * 2.0;
-					sp->grid_pos[3] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 3.0) * 3.0;
-					sp->grid_pos[4] = eof_song->beat[sp->beat + 1]->pos;
-					for(i = 0; i < 5; i++)
-					{
-						sp->grid_distance[i] = eof_pos_distance(sp->grid_pos[i], sp->pos);
-					}
-					for(i = 0; i < 5; i++)
-					{
-						if(sp->grid_distance[i] < least_amount)
-						{
-							least = i;
-							least_amount = sp->grid_distance[i];
-						}
-					}
-					if(least >= 0)
-					{
-						sp->pos = sp->grid_pos[least];
-					}
+					interval = 3;
+					measure_snap = 0;
 					break;
 				}
 				case EOF_SNAP_SIXTEENTH:
 				{
-					sp->grid_pos[0] = eof_song->beat[sp->beat]->pos;
-					sp->grid_pos[1] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 4.0);
-					sp->grid_pos[2] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 4.0) * 2.0;
-					sp->grid_pos[3] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 4.0) * 3.0;
-					sp->grid_pos[4] = eof_song->beat[sp->beat + 1]->pos;
-					for(i = 0; i < 5; i++)
-					{
-						sp->grid_distance[i] = eof_pos_distance(sp->grid_pos[i], sp->pos);
-					}
-					for(i = 0; i < 5; i++)
-					{
-						if(sp->grid_distance[i] < least_amount)
-						{
-							least = i;
-							least_amount = sp->grid_distance[i];
-						}
-					}
-					if(least >= 0)
-					{
-						sp->pos = sp->grid_pos[least];
-					}
+					interval = 4;
+					measure_snap = 0;
 					break;
 				}
 				case EOF_SNAP_TWENTY_FOURTH:
 				{
-					sp->grid_pos[0] = eof_song->beat[sp->beat]->pos;
-					sp->grid_pos[1] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 6.0);
-					sp->grid_pos[2] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 6.0) * 2.0;
-					sp->grid_pos[3] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 6.0) * 3.0;
-					sp->grid_pos[4] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 6.0) * 4.0;
-					sp->grid_pos[5] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 6.0) * 5.0;
-					sp->grid_pos[6] = eof_song->beat[sp->beat + 1]->pos;
-					for(i = 0; i < 7; i++)
-					{
-						sp->grid_distance[i] = eof_pos_distance(sp->grid_pos[i], sp->pos);
-					}
-					for(i = 0; i < 7; i++)
-					{
-						if(sp->grid_distance[i] < least_amount)
-						{
-							least = i;
-							least_amount = sp->grid_distance[i];
-						}
-					}
-					if(least >= 0)
-					{
-						sp->pos = sp->grid_pos[least];
-					}
+					interval = 6;
+					measure_snap = 0;
 					break;
 				}
 				case EOF_SNAP_THIRTY_SECOND:
 				{
-					sp->grid_pos[0] = eof_song->beat[sp->beat]->pos;
-					sp->grid_pos[1] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 8.0);
-					sp->grid_pos[2] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 8.0) * 2.0;
-					sp->grid_pos[3] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 8.0) * 3.0;
-					sp->grid_pos[4] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 8.0) * 4.0;
-					sp->grid_pos[5] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 8.0) * 5.0;
-					sp->grid_pos[6] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 8.0) * 6.0;
-					sp->grid_pos[7] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 8.0) * 7.0;
-					sp->grid_pos[8] = eof_song->beat[sp->beat + 1]->pos;
-					for(i = 0; i < 9; i++)
-					{
-						sp->grid_distance[i] = eof_pos_distance(sp->grid_pos[i], sp->pos);
-					}
-					for(i = 0; i < 9; i++)
-					{
-						if(sp->grid_distance[i] < least_amount)
-						{
-							least = i;
-							least_amount = sp->grid_distance[i];
-						}
-					}
-					if(least >= 0)
-					{
-						sp->pos = sp->grid_pos[least];
-					}
+					interval = 8;
+					measure_snap = 0;
 					break;
 				}
 				case EOF_SNAP_FORTY_EIGHTH:
 				{
-					sp->grid_pos[0] = eof_song->beat[sp->beat]->pos;
-					sp->grid_pos[1] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 12.0);
-					sp->grid_pos[2] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 12.0) * 2.0;
-					sp->grid_pos[3] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 12.0) * 3.0;
-					sp->grid_pos[4] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 12.0) * 4.0;
-					sp->grid_pos[5] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 12.0) * 5.0;
-					sp->grid_pos[6] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 12.0) * 6.0;
-					sp->grid_pos[7] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 12.0) * 7.0;
-					sp->grid_pos[8] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 12.0) * 8.0;
-					sp->grid_pos[9] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 12.0) * 9.0;
-					sp->grid_pos[10] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 12.0) * 10.0;
-					sp->grid_pos[11] = eof_song->beat[sp->beat]->pos + ((float)sp->beat_length / 12.0) * 11.0;
-					sp->grid_pos[12] = eof_song->beat[sp->beat + 1]->pos;
-					for(i = 0; i < 13; i++)
-					{
-						sp->grid_distance[i] = eof_pos_distance(sp->grid_pos[i], sp->pos);
-					}
-					for(i = 0; i < 13; i++)
-					{
-						if(sp->grid_distance[i] < least_amount)
-						{
-							least = i;
-							least_amount = sp->grid_distance[i];
-						}
-					}
-					if(least >= 0)
-					{
-						sp->pos = sp->grid_pos[least];
-					}
+					interval = 12;
+					measure_snap = 0;
 					break;
 				}
 				case EOF_SNAP_CUSTOM:
 				{
-					if(eof_custom_snap_measure)
-					{
-						int ts = 1;
-
-						/* find the measure we are currently in */
-						sp->measure_beat = 0;
-						for(i = sp->beat; i >= 0; i--)
-						{
-							if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_3_4)
-							{
-								ts = 3;
-								sp->measure_beat = i;
-								break;
-							}
-							else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_4_4)
-							{
-								ts = 4;
-								sp->measure_beat = i;
-								break;
-							}
-							else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_5_4)
-							{
-								ts = 5;
-								sp->measure_beat = i;
-								break;
-							}
-							else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_6_4)
-							{
-								ts = 6;
-								sp->measure_beat = i;
-								break;
-							}
-							else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_CUSTOM_TS)
-							{
-								ts = ((eof_song->beat[i]->flags & 0xFF000000)>>24) + 1;
-								sp->measure_beat = i;
-								break;
-							}
-						}
-						for(i = sp->beat; i >= sp->measure_beat; i--)
-						{
-
-							/* start of measure we are currently in */
-							if((i - sp->measure_beat) % ts == 0)
-							{
-								sp->measure_beat = i;
-								break;
-							}
-						}
-
-						/* add up beat times to find measure length */
-						int bl; // current beat length
-						if(sp->measure_beat + ts < eof_song->beats)
-						{
-							bl = eof_song->beat[sp->measure_beat + 1]->pos - eof_song->beat[sp->measure_beat]->pos;
-							sp->measure_length = 0;
-							for(i = sp->measure_beat; i < sp->measure_beat + ts; i++)
-							{
-								if(i < eof_song->beats - 1)
-								{
-									bl = eof_song->beat[i + 1]->pos - eof_song->beat[i]->pos;
-								}
-								sp->measure_length += bl;
-							}
-						}
-						else
-						{
-							bl = sp->beat_length * ts;
-						}
-
-						/* find the snap positions */
-						for(i = 0; i < eof_snap_interval; i++)
-						{
-							sp->grid_pos[i] = eof_song->beat[sp->measure_beat]->pos + (((float)sp->measure_length / (float)eof_snap_interval) * (float)i);
-						}
-						sp->grid_pos[eof_snap_interval] = eof_song->beat[sp->measure_beat]->pos + sp->measure_length;
-
-						/* see which one we snap to */
-						for(i = 0; i < eof_snap_interval + 1; i++)
-						{
-							sp->grid_distance[i] = eof_pos_distance(sp->grid_pos[i], sp->pos);
-						}
-						for(i = 0; i < eof_snap_interval + 1; i++)
-						{
-							if(sp->grid_distance[i] < least_amount)
-							{
-								least = i;
-								least_amount = sp->grid_distance[i];
-							}
-						}
-						if(least >= 0)
-						{
-							sp->pos = sp->grid_pos[least];
-						}
-					}
-					else
-					{
-						/* find the snap positions */
-						for(i = 0; i < eof_snap_interval; i++)
-						{
-							sp->grid_pos[i] = eof_song->beat[sp->beat]->pos + (((float)sp->beat_length / (float)eof_snap_interval) * (float)i);
-						}
-						sp->grid_pos[eof_snap_interval] = eof_song->beat[sp->beat + 1]->pos;
-
-						/* see which one we snap to */
-						for(i = 0; i < eof_snap_interval + 1; i++)
-						{
-							sp->grid_distance[i] = eof_pos_distance(sp->grid_pos[i], sp->pos);
-						}
-						for(i = 0; i < eof_snap_interval + 1; i++)
-						{
-							if(sp->grid_distance[i] < least_amount)
-							{
-								least = i;
-								least_amount = sp->grid_distance[i];
-							}
-						}
-						if(least >= 0)
-						{
-							sp->pos = sp->grid_pos[least];
-						}
-					}
+					interval = eof_snap_interval;
 					break;
 				}
+			}
+		}
+	
+		/* do the actual snapping */
+		float least_amount = sp->beat_length;
+		int least = -1;
+		if(measure_snap)
+		{
+			int ts = 1;
+
+			/* find the measure we are currently in */
+			sp->measure_beat = 0;
+			for(i = sp->beat; i >= 0; i--)
+			{
+				if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_3_4)
+				{
+					ts = 3;
+					sp->measure_beat = i;
+					break;
+				}
+				else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_4_4)
+				{
+					ts = 4;
+					sp->measure_beat = i;
+					break;
+				}
+				else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_5_4)
+				{
+					ts = 5;
+					sp->measure_beat = i;
+					break;
+				}
+				else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_6_4)
+				{
+					ts = 6;
+					sp->measure_beat = i;
+					break;
+				}
+				else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_CUSTOM_TS)
+				{
+					ts = ((eof_song->beat[i]->flags & 0xFF000000)>>24) + 1;
+					sp->measure_beat = i;
+					break;
+				}
+			}
+			for(i = sp->beat; i >= sp->measure_beat; i--)
+			{
+
+				/* start of measure we are currently in */
+				if((i - sp->measure_beat) % ts == 0)
+				{
+					sp->measure_beat = i;
+					break;
+				}
+			}
+
+			/* add up beat times to find measure length */
+			int bl; // current beat length
+			if(sp->measure_beat + ts < eof_song->beats)
+			{
+				bl = eof_song->beat[sp->measure_beat + 1]->pos - eof_song->beat[sp->measure_beat]->pos;
+				sp->measure_length = 0;
+				for(i = sp->measure_beat; i < sp->measure_beat + ts; i++)
+				{
+					if(i < eof_song->beats - 1)
+					{
+						bl = eof_song->beat[i + 1]->pos - eof_song->beat[i]->pos;
+					}
+					sp->measure_length += bl;
+				}
+			}
+			else
+			{
+				bl = sp->beat_length * ts;
+			}
+
+			/* find the snap positions */
+			for(i = 0; i < eof_snap_interval; i++)
+			{
+				sp->grid_pos[i] = eof_song->beat[sp->measure_beat]->pos + (((float)sp->measure_length / (float)eof_snap_interval) * (float)i);
+			}
+			sp->grid_pos[eof_snap_interval] = eof_song->beat[sp->measure_beat]->pos + sp->measure_length;
+
+			/* see which one we snap to */
+			for(i = 0; i < eof_snap_interval + 1; i++)
+			{
+				sp->grid_distance[i] = eof_pos_distance(sp->grid_pos[i], sp->pos);
+			}
+			for(i = 0; i < eof_snap_interval + 1; i++)
+			{
+				if(sp->grid_distance[i] < least_amount)
+				{
+					least = i;
+					least_amount = sp->grid_distance[i];
+				}
+			}
+			if(least >= 0)
+			{
+				sp->pos = sp->grid_pos[least];
+			}
+		}
+		else
+		{
+			/* find the snap positions */
+			for(i = 0; i < interval; i++)
+			{
+				sp->grid_pos[i] = eof_song->beat[sp->beat]->pos + (((float)sp->beat_length / (float)interval) * (float)i);
+			}
+			sp->grid_pos[interval] = eof_song->beat[sp->beat + 1]->pos;
+
+			/* see which one we snap to */
+			for(i = 0; i < interval + 1; i++)
+			{
+				sp->grid_distance[i] = eof_pos_distance(sp->grid_pos[i], sp->pos);
+			}
+			for(i = 0; i < interval + 1; i++)
+			{
+				if(sp->grid_distance[i] < least_amount)
+				{
+					least = i;
+					least_amount = sp->grid_distance[i];
+				}
+			}
+			if(least >= 0)
+			{
+				sp->pos = sp->grid_pos[least];
 			}
 		}
 	}
