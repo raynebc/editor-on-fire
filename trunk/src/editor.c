@@ -157,6 +157,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 	int denominator = 4;
 	int interval = 0;
 	char measure_snap = 0;
+	int note = 4;
 
 	/* place pen at "real" location and adjust from there */
 	sp->pos = p;
@@ -206,42 +207,49 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 				{
 					interval = 1;
 					measure_snap = 0;
+					note = 4;
 					break;
 				}
 				case EOF_SNAP_EIGHTH:
 				{
 					interval = 2;
 					measure_snap = 0;
+					note = 8;
 					break;
 				}
 				case EOF_SNAP_TWELFTH:
 				{
 					interval = 3;
 					measure_snap = 0;
+					note = 12;
 					break;
 				}
 				case EOF_SNAP_SIXTEENTH:
 				{
 					interval = 4;
 					measure_snap = 0;
+					note = 16;
 					break;
 				}
 				case EOF_SNAP_TWENTY_FOURTH:
 				{
 					interval = 6;
 					measure_snap = 0;
+					note = 24;
 					break;
 				}
 				case EOF_SNAP_THIRTY_SECOND:
 				{
 					interval = 8;
 					measure_snap = 0;
+					note = 32;
 					break;
 				}
 				case EOF_SNAP_FORTY_EIGHTH:
 				{
 					interval = 12;
 					measure_snap = 0;
+					note = 48;
 					break;
 				}
 				case EOF_SNAP_CUSTOM:
@@ -257,6 +265,10 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 		int least = -1;
 		if(eof_snap_mode != EOF_SNAP_CUSTOM)
 		{
+			if(note < denominator)
+			{
+				return;
+			}
 			if(denominator == 2)
 			{
 				interval *= 2;
