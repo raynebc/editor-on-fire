@@ -106,6 +106,8 @@ Fixed an issue where ] wouldn't work properly for lengthening lyrics.
 Fixed an issue where using the guitar strum input mode in PART VOCALS would
 destroy existing lyrics.
 
+Improved how grid snap works for time signatures other than 4/4.
+
 
 1.666:
 
