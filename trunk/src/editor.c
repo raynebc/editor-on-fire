@@ -288,10 +288,18 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			}
 			else if(sp->denominator == 8)
 			{
+				if(interval % 2)
+				{
+					return;
+				}
 				interval /= 2;
 			}
 			else if(sp->denominator == 16)
 			{
+				if(interval % 4)
+				{
+					return;
+				}
 				interval /= 4;
 			}
 		}
