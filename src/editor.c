@@ -117,7 +117,7 @@ void eof_set_vocal_tail_pos(int note, unsigned long pos)
 	}
 }
 
-int eof_get_ts_denominator(int beat)
+void eof_get_snap_ts(EOF_SNAP_DATA * sp, int beat)
 {
 	int tsbeat = 0;
 	int i;
@@ -131,30 +131,43 @@ int eof_get_ts_denominator(int beat)
 		}
 	}
 	
-	/* return default denominator if no TS flags found */
-	if(i < 0)
-	{
-		return 4;
-	}
+	/* set default denominator in case no TS flags found */
+	sp->numerator = 4;
+	sp->denominator = 4;
 	
 	/* all TS presets have a denominator of 4 */
-	if(eof_song->beat[tsbeat]->flags & (EOF_BEAT_FLAG_START_3_4 | EOF_BEAT_FLAG_START_4_4 | EOF_BEAT_FLAG_START_5_4 | EOF_BEAT_FLAG_START_6_4))
+	if(eof_song->beat[tsbeat]->flags & EOF_BEAT_FLAG_START_3_4)
 	{
-		return 4;
+		sp->numerator = 3;
+		sp->denominator = 4;
+	}
+	if(eof_song->beat[tsbeat]->flags & EOF_BEAT_FLAG_START_4_4)
+	{
+		sp->numerator = 4;
+		sp->denominator = 4;
+	}
+	if(eof_song->beat[tsbeat]->flags & EOF_BEAT_FLAG_START_5_4)
+	{
+		sp->numerator = 5;
+		sp->denominator = 4;
+	}
+	if(eof_song->beat[tsbeat]->flags & EOF_BEAT_FLAG_START_6_4)
+	{
+		sp->numerator = 6;
+		sp->denominator = 4;
 	}
 	
 	/* decode custom TS */
 	else if(eof_song->beat[tsbeat]->flags & EOF_BEAT_FLAG_CUSTOM_TS)
 	{
-		return ((eof_song->beat[tsbeat]->flags & 0x00FF0000)>>16) + 1;
+		sp->numerator = ((eof_song->beat[tsbeat]->flags & 0xFF000000)>>24) + 1;
+		sp->denominator = ((eof_song->beat[tsbeat]->flags & 0x00FF0000)>>16) + 1;
 	}
-	return 4;
 }
 
 void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 {
 	int i;
-	int denominator = 4;
 	int interval = 0;
 	char measure_snap = 0;
 	int note = 4;
@@ -200,7 +213,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			{
 				sp->beat_length = eof_song->beat[sp->beat + 1]->pos - eof_song->beat[sp->beat]->pos;
 			}
-			denominator = eof_get_ts_denominator(sp->beat);
+			eof_get_snap_ts(sp, sp->beat);
 			switch(eof_snap_mode)
 			{
 				case EOF_SNAP_QUARTER:
@@ -265,19 +278,19 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 		int least = -1;
 		if(eof_snap_mode != EOF_SNAP_CUSTOM)
 		{
-			if(note < denominator)
+			if(note < sp->denominator)
 			{
 				return;
 			}
-			if(denominator == 2)
+			if(sp->denominator == 2)
 			{
 				interval *= 2;
 			}
-			else if(denominator == 8)
+			else if(sp->denominator == 8)
 			{
 				interval /= 2;
 			}
-			else if(denominator == 16)
+			else if(sp->denominator == 16)
 			{
 				interval /= 4;
 			}
@@ -409,8 +422,6 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 
 void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 {
-	int denominator = eof_get_ts_denominator(sp->beat);
-	
 	if(eof_snap_mode != EOF_SNAP_OFF)
 	{
 		/* if snapped to the next beat, make sure length is calculated from that beat */
@@ -482,15 +493,15 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 		}
 		if(eof_snap_mode != EOF_SNAP_CUSTOM)
 		{
-			if(denominator == 2)
+			if(sp->denominator == 2)
 			{
 				sp->length /= 2;
 			}
-			else if(denominator == 8)
+			else if(sp->denominator == 8)
 			{
 				sp->length *= 2;
 			}
-			else if(denominator == 16)
+			else if(sp->denominator == 16)
 			{
 				sp->length *= 4;
 			}
