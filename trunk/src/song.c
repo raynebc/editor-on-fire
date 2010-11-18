@@ -269,153 +269,138 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 
 int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 {
-	int i, j, b, c, tl;
+	unsigned char inputc;
+	unsigned long inputl,count,ctr;
 
-	/* read file revision number */
-	sp->tags->revision = pack_igetl(fp);
+	#define EOFNUMINISTRINGTYPES 12
+	char *inistringbuffer[EOFNUMINISTRINGTYPES]={NULL,NULL,sp->tags->artist,sp->tags->title,sp->tags->frettist,NULL,sp->tags->year,sp->tags->loading_text,NULL,NULL,NULL,NULL};
+	unsigned long inistringbuffersize[12]={0,0,256,256,256,0,32,512,0,0,0,0};
+		//Store the buffer information of each of the 12 INI strings to simplify the loading code
+		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
 
-	/* read song info */
-	tl = pack_igetw(fp);
-	pack_fread(sp->tags->artist, tl, fp);
-	sp->tags->artist[tl] = 0;
-	tl = pack_igetw(fp);
-	pack_fread(sp->tags->title, tl, fp);
-	sp->tags->title[tl] = 0;
-	tl = pack_igetw(fp);
-	pack_fread(sp->tags->frettist, tl, fp);
-	sp->tags->frettist[tl] = 0;
-	tl = pack_igetw(fp);
-	pack_fread(sp->tags->year, tl, fp);
-	sp->tags->year[tl] = 0;
-	tl = pack_igetw(fp);
-	pack_fread(sp->tags->loading_text, tl, fp);
-	sp->tags->loading_text[tl] = 0;
-	sp->tags->lyrics = pack_getc(fp);
-	sp->tags->eighth_note_hopo = pack_getc(fp);
+	#define EOFNUMINIBOOLEANTYPES 6
+	char *inibooleanbuffer[EOFNUMINIBOOLEANTYPES]={NULL,&sp->tags->lyrics,&sp->tags->eighth_note_hopo,NULL,NULL,NULL};
+		//Store the pointers to each of the 5 boolean type INI settings (number 0 is reserved) to simplify the loading code
 
-	/* read OGG data */
-	sp->tags->oggs = pack_igetw(fp);
-	for(i = 0; i < sp->tags->oggs; i++)
+	#define EOFNUMININUMBERTYPES 5
+	unsigned long *ininumberbuffer[EOFNUMININUMBERTYPES]={NULL,NULL,NULL,NULL,NULL};
+		//Store the pointers to each of the 5 number type INI settings (number 0 is reserved) to simplify the loading code
+
+
+	if((sp == NULL) || (fp == NULL))
+		return 0;	//Return failure
+
+	/* read chart properties */
+	sp->tags->revision = pack_igetl(fp);	//Read file revision number
+	inputc = pack_getc(fp);			//Read timing format
+	if(inputc == 1)
 	{
-		pack_fread(sp->tags->ogg[i].filename, 256, fp);
-		sp->tags->ogg[i].midi_offset = pack_igetl(fp);
+		allegro_message("Error: Millisecond timing is not yet supported");
+		return 0;	//Return failure
 	}
+	inputl = pack_igetl(fp);		//Read time division (not supported yet)
 
-	/* read INI settings */
-	sp->tags->ini_settings = pack_igetw(fp);
-	for(i = 0; i < sp->tags->ini_settings; i++)
-	{
-		pack_fread(sp->tags->ini_setting[i], 512, fp);
-	}
-
-	/* read beat info */
-	b = pack_igetl(fp);
-	if(!eof_song_resize_beats(sp, b))
-	{
-		return 0;
-	}
-	for(i = 0; i < b; i++)
-	{
-		sp->beat[i]->ppqn = pack_igetl(fp);
-		sp->beat[i]->pos = pack_igetl(fp);
-		sp->beat[i]->fpos = sp->beat[i]->pos;
-		sp->beat[i]->flags = pack_igetl(fp);
-	}
-
-	/* read events info */
-	b = pack_igetl(fp);
-	eof_song_resize_text_events(sp, b);
-	for(i = 0; i < b; i++)
-	{
-		pack_fread(sp->text_event[i]->text, 256, fp);
-		sp->text_event[i]->beat = pack_igetl(fp);
-	}
-
-	/* read tracks */
-	for(i = 0; i < EOF_MAX_TRACKS; i++)
-	{
-
-		/* read solo sections */
-		sp->track[i]->solos = pack_igetw(fp);
-		for(j = 0; j < sp->track[i]->solos; j++)
-		{
-			sp->track[i]->solo[j].start_pos = pack_igetl(fp);
-			sp->track[i]->solo[j].end_pos = pack_igetl(fp);
+	/* read song properties */
+	count = pack_igetw(fp);			//Read the number of INI strings
+	for(ctr=0; ctr<count; ctr++)
+	{	//For each INI string in the project
+		inputc = pack_getc(fp);		//Read the type of INI string
+		if((inputc < EOFNUMINISTRINGTYPES) && (inistringbuffer[inputc] != NULL))
+		{	//If EOF can store the INI setting natively
+			eof_load_song_string_pf(inistringbuffer[inputc],fp,inistringbuffersize[inputc]);
 		}
-		if(sp->track[i]->solos < 0)
-		{
-			sp->track[i]->solos = 0;
-		}
-
-		/* read star power sections */
-		sp->track[i]->star_power_paths = pack_igetw(fp);
-		for(j = 0; j < sp->track[i]->star_power_paths; j++)
-		{
-			sp->track[i]->star_power_path[j].start_pos = pack_igetl(fp);
-			sp->track[i]->star_power_path[j].end_pos = pack_igetl(fp);
-		}
-		if(sp->track[i]->star_power_paths < 0)
-		{
-			sp->track[i]->star_power_paths = 0;
-		}
-
-		/* read notes */
-		b = pack_igetl(fp);
-		eof_track_resize(sp->track[i], b);
-		for(j = 0; j < b; j++)
-		{
-			sp->track[i]->note[j]->type = pack_getc(fp);
-			sp->track[i]->note[j]->note = pack_getc(fp);
-			sp->track[i]->note[j]->pos = pack_igetl(fp);
-			sp->track[i]->note[j]->length = pack_igetl(fp);
-			sp->track[i]->note[j]->flags = pack_getc(fp);
+		else
+		{	//If it is not natively supported or is otherwise a custom INI setting
+			if(sp->tags->ini_settings < EOF_MAX_INI_SETTINGS)
+			{	//If this INI setting can be stored
+				eof_load_song_string_pf(sp->tags->ini_setting[sp->tags->ini_settings],fp,sizeof(sp->tags->ini_setting[0]));
+				sp->tags->ini_settings++;
+			}
 		}
 	}
 
-	/* read lyric track */
-	b = pack_igetl(fp);
-	eof_vocal_track_resize(sp->vocal_track, b);
-	for(j = 0; j < b; j++)
-	{
-		sp->vocal_track->lyric[j]->note = pack_getc(fp);
-		sp->vocal_track->lyric[j]->pos = pack_igetl(fp);
-		sp->vocal_track->lyric[j]->length = pack_igetl(fp);
-		c = pack_igetw(fp);
-		pack_fread(sp->vocal_track->lyric[j]->text, c, fp);
-		sp->vocal_track->lyric[j]->text[c] = '\0';
-	}
-	sp->vocal_track->lines = pack_igetl(fp);
-	for(j = 0; j < sp->vocal_track->lines; j++)
-	{
-		sp->vocal_track->line[j].start_pos = pack_igetl(fp);
-		sp->vocal_track->line[j].end_pos = pack_igetl(fp);
-		sp->vocal_track->line[j].flags = pack_igetl(fp);
+	count = pack_igetw(fp);			//Read the number of INI booleans
+	for(ctr=0; ctr<count; ctr++)
+	{	//For each INI boolean in the project
+		inputc = pack_getc(fp);		//Read the type of INI boolean
+		if(((inputc & 0x7F) < EOFNUMINIBOOLEANTYPES) && (inibooleanbuffer[inputc] != NULL))
+		{	//Mask out the true/false bit to determine if it is a supported boolean setting
+			*inibooleanbuffer[(inputc & 0x7F)] = (inputc & 0xF0);	//Store the true/false status into the appropriate project variable
+		}
 	}
 
-	/* read bookmarks */
-	for(i = 0; i < EOF_MAX_BOOKMARK_ENTRIES; i++)
-	{
-		sp->bookmark_pos[i] = pack_igetl(fp);
+	count = pack_igetw(fp);			//Read the number of INI numbers
+	for(ctr=0; ctr<count; ctr++)
+	{	//For each INI number in the project
+		inputc = pack_getc(fp);		//Read the type of INI number
+		inputl = pack_igetl(fp);	//Read the INI number
+		if((inputc < EOFNUMININUMBERTYPES) && (ininumberbuffer[inputc] != NULL))
+		{	//If EOF can store the INI number natively
+			*ininumberbuffer[inputc] = inputl;
+		}
 	}
 
-	/* read fret catalog */
-	sp->catalog->entries = pack_igetl(fp);
-	for(i = 0; i < sp->catalog->entries; i++)
-	{
-		sp->catalog->entry[i].track = pack_getc(fp);
-		sp->catalog->entry[i].type = pack_getc(fp);
-		sp->catalog->entry[i].start_pos = pack_igetl(fp);
-		sp->catalog->entry[i].end_pos = pack_igetl(fp);
+	/* read chart data */
+	count = pack_igetw(fp);			//Read the number of OGG profiles
+	sp->tags->oggs = 0;
+	for(ctr=0; ctr<count; ctr++)
+	{	//For each OGG profile in the project
+		if(sp->tags->oggs < EOF_MAX_OGGS)
+		{	//IF EOF can store this OGG profile
+			eof_load_song_string_pf(sp->tags->ogg[sp->tags->oggs].filename,fp,256);	//Read the OGG filename
+			eof_load_song_string_pf(NULL,fp,0);				//Parse past the original audio file name (not supported yet)
+			eof_load_song_string_pf(NULL,fp,0);				//Parse past the OGG profile comments string (not supported yet)
+			sp->tags->ogg[sp->tags->oggs].midi_offset = pack_igetl(fp);	//Read the profile's MIDI delay
+			inputc = pack_getc(fp);						//Read the OGG profile flags (not supported yet)
+			sp->tags->oggs++;
+		}
 	}
 
-	return 1;
+	count = pack_igetl(fp);			//Read the number of beats
+	if(!eof_song_resize_beats(sp, count))	//Resize the beat array accordingly
+	{
+		return 0;	//Return error upon failure to do so
+	}
+	for(ctr=0; ctr<count; ctr++)
+	{	//For each beat in the project
+		sp->beat[ctr]->ppqn = pack_igetl(fp);		//Read the beat's tempo
+		sp->beat[ctr]->pos = pack_igetl(fp);		//Read the beat's position (milliseconds or delta ticks)
+		sp->beat[ctr]->fpos = sp->beat[ctr]->pos;	//For now, assume the position is in milliseconds and copy to the fpos variable as-is
+		sp->beat[ctr]->flags = pack_igetl(fp);		//Read the beat's flags
+		inputc = pack_getc(fp);				//Read the beat's key signature (not supported yet)
+	}
+
+	count = pack_igetl(fp);				//Read the number of text events
+	if(!eof_song_resize_text_events(sp, count))	//Resize the text event array accordingly
+	{
+		return 0;	//Return error upon failure to do so
+	}
+	for(ctr=0; ctr<count; ctr++)
+	{	//For each text event in the project
+		if((sp->text_events < EOF_MAX_TEXT_EVENTS) && eof_song_add_text_event(sp, 0, "") && (sp->text_events > 0))
+		{	//If EOF can store this text event
+			eof_load_song_string_pf(sp->text_event[sp->text_events-1]->text,fp,256);	//Read the text event string
+			sp->text_event[sp->text_events-1]->beat = pack_igetl(fp);	//Read the text event's beat number
+			inputl = pack_igetw(fp);		//Read the text event's associated track number (not supported yet)
+		}
+	}
+
+	/* read track data */
+	count = pack_igetl(fp);				//Read the number of tracks
+	for(ctr=0; ctr<count; ctr++)
+	{	//For each track in the project
+/*
+	THIS LOGIC IS TO BE COMPLETED PENDING HOW EOF IS UPDATED TO MANAGE TRACKS IN MEMORY
+*/
+	}
+	return 1;	//Return success
 }
 
 EOF_SONG * eof_load_song(const char * fn)
 {
 	PACKFILE * fp;
 	EOF_SONG * sp;
-	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'F', 0};
+	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};	//This header represents the current project format
 	char rheader[16];
 	int i;
 
@@ -943,7 +928,7 @@ int eof_song_resize_beats(EOF_SONG * sp, int beats)
 		{
 			if(!eof_song_add_beat(sp))
 			{
-				return 0;
+				return 0;	//Return failure
 			}
 		}
 	}
@@ -955,10 +940,10 @@ int eof_song_resize_beats(EOF_SONG * sp, int beats)
 			sp->beats--;
 		}
 	}
-	return 1;
+	return 1;	//Return success
 }
 
-void eof_song_add_text_event(EOF_SONG * sp, int beat, char * text)
+int eof_song_add_text_event(EOF_SONG * sp, int beat, char * text)
 {
 	if(sp->text_events < EOF_MAX_TEXT_EVENTS)
 	{	//If the maximum number of text events hasn't already been defined
@@ -969,7 +954,12 @@ void eof_song_add_text_event(EOF_SONG * sp, int beat, char * text)
 			sp->text_event[sp->text_events]->beat = beat;
 			sp->text_events++;
 		}
+		else
+		{
+			return 0;	//Return failure
+		}
 	}
+	return 1;	//Return success
 }
 
 void eof_song_delete_text_event(EOF_SONG * sp, int event)
@@ -998,7 +988,7 @@ void eof_song_move_text_events(EOF_SONG * sp, int beat, int offset)
 	}
 }
 
-void eof_song_resize_text_events(EOF_SONG * sp, int events)
+int eof_song_resize_text_events(EOF_SONG * sp, int events)
 {
 	int i;
 	int oldevents = sp->text_events;
@@ -1006,7 +996,10 @@ void eof_song_resize_text_events(EOF_SONG * sp, int events)
 	{
 		for(i = oldevents; i < events; i++)
 		{
-			eof_song_add_text_event(sp, 0, "");
+			if(!eof_song_add_text_event(sp, 0, ""))
+			{
+				return 0;	//Return failure
+			}
 		}
 	}
 	else if(events < oldevents)
@@ -1017,6 +1010,7 @@ void eof_song_resize_text_events(EOF_SONG * sp, int events)
 			sp->text_events--;
 		}
 	}
+	return 1;	//Return succes
 }
 
 void eof_sort_events(void)
@@ -1317,4 +1311,34 @@ void eof_set_flags_at_note_pos(EOF_TRACK *tp,unsigned notenum,char flag,char ope
 			}
 		}
 	}
+}
+
+int eof_load_song_string_pf(char *buffer, PACKFILE *fp, unsigned long buffersize)
+{
+	unsigned long ctr=0,stringsize=0;
+	int inputc=0;
+
+	if((fp == NULL) || ((buffer == NULL) && (buffersize != 0)))
+		return 1;	//Return error
+
+	stringsize = pack_igetw(fp);
+
+	for(ctr = 0; ctr < stringsize; ctr++)
+	{
+		inputc = pack_getc(fp);
+		if(inputc == EOF)		//If the end of file was reached
+			break;			//stop reading characters
+		if(ctr + 1 < buffersize)	//If the buffer can accommodate this character
+			buffer[ctr] = inputc;	//store it
+	}
+
+	if(buffersize != 0)
+	{	//Skip the termination of the buffer if none was presented
+		if(ctr < buffersize)
+			buffer[ctr] = '\0';		//NULL terminate the buffer
+		else
+			buffer[buffersize-1] = '\0';	//NULL terminate the end of the buffer
+	}
+
+	return 0;	//Return success
 }
