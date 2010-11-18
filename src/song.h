@@ -38,11 +38,10 @@
 #define EOF_NOTE_FLAG_B_CYMBAL  64	//This flag represents a blue note charted as a RB3 Pro style cymbal
 #define EOF_NOTE_FLAG_G_CYMBAL 128	//This flag represents a note charted as a RB3 Pro style green cymbal (pad 4)
 
-#define EOF_MAX_BEATS 32768
-
+#define EOF_MAX_BEATS   32768
 #define EOF_MAX_SOLOS      32
-
 #define EOF_MAX_STAR_POWER 32
+#define EOF_MAX_OGGS        8
 
 #define EOF_BEAT_FLAG_ANCHOR      1
 #define EOF_BEAT_FLAG_EVENTS      2
@@ -212,7 +211,7 @@ typedef struct
 	char          lyrics;
 	char          eighth_note_hopo;
 
-	EOF_OGG_INFO  ogg[8];
+	EOF_OGG_INFO  ogg[EOF_MAX_OGGS];
 	short         oggs;
 
 	char          ini_setting[EOF_MAX_INI_SETTINGS][512];
@@ -306,12 +305,12 @@ void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, int index);	//Deletes the
 
 EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp);	//Allocates, initializes and stores a new EOF_BEAT_MARKER structure into the beats array.  Returns the newly allocated structure or NULL upon error
 void eof_song_delete_beat(EOF_SONG * sp, int beat);	//Removes and frees the specified beat from the beats array.  All beats after the deleted beat are moved back in the array one position
-int eof_song_resize_beats(EOF_SONG * sp, int beats);	//Grows or shrinks the beats array to fit the specified number of beats by allocating/freeing EOF_BEAT_MARKER structures.  Returns nonzero on success
+int eof_song_resize_beats(EOF_SONG * sp, int beats);	//Grows or shrinks the beats array to fit the specified number of beats by allocating/freeing EOF_BEAT_MARKER structures.  Returns zero on error
 
-void eof_song_add_text_event(EOF_SONG * sp, int beat, char * text);	//Allocates, initializes and stores a new EOF_TEXT_EVENT structure into the text_event array.  Returns the newly allocated structure or NULL upon error
+int eof_song_add_text_event(EOF_SONG * sp, int beat, char * text);	//Allocates, initializes and stores a new EOF_TEXT_EVENT structure into the text_event array.  Returns 0 on error
 void eof_song_delete_text_event(EOF_SONG * sp, int event);	//Removes and frees the specified text event from the text_events array.  All text events after the deleted text event are moved back in the array one position
 void eof_song_move_text_events(EOF_SONG * sp, int beat, int offset);	//Displaces all beats starting with the specified beat by the given additive offset.  Each affected beat's flags are cleared except for the anchor and text event(s) present flags
-void eof_song_resize_text_events(EOF_SONG * sp, int events);	//Grows or shrinks the text events array to fit the specified number of notes by allocating/freeing EOF_LYRIC structures
+int eof_song_resize_text_events(EOF_SONG * sp, int events);	//Grows or shrinks the text events array to fit the specified number of notes by allocating/freeing EOF_LYRIC structures.  Return zero on error
 void eof_sort_events(void);	//Performs a quicksort of the events array
 int eof_song_qsort_events(const void * e1, const void * e2);	//The comparitor function used to quicksort the events array
 
@@ -353,5 +352,11 @@ void eof_set_flags_at_note_pos(EOF_TRACK *tp,unsigned notenum,char flag,char ope
 	//If operation is 1, the specified flag is set on applicable notes
 	//If operation is 2, the specified flag is toggled on applicable notes
 	//The track's notes array is expected to be sorted
+
+int eof_load_song_string_pf(char *buffer, PACKFILE *fp, unsigned long buffersize);
+	//Reads the next two bytes of the PACKFILE to determine how many characters long the string is
+	//That number of bytes is read, the first (buffersize-1) of which are copied to the buffer
+	//If buffersize is 0, the string is parsed in the file but not stored, otherwise the buffer is NULL terminated
+	//Nonzero is returned on error
 
 #endif

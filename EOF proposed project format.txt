@@ -23,9 +23,9 @@ INI STRING CHUNK, for each INI string:
 2 bytes:	Number of INI booleans
 INI BOOLEAN CHUNK, for each INI boolean:
 {
-*	1 byte:		INI boolean type (0=Reserved,128-255=Reserved,1=Lyrics present,2=Eighth note HOPO,3=background.png present,4=Is a cover,5=Is a tutorial,...)
-!	It is assumed that the presence of this boolean will mean that the relevant song.ini setting will be flagged as "true" (this is how all current boolean INI settings work)
-!	If some future boolean INI setting needs to be explicitly marked as "false" for some reason, EOF could set the MSB of the type value above to indicate as such, otherwise the reserved bit should be 0
+*	1 byte:		INI boolean type (0=Reserved,128-255=DISALLOWED,1=Lyrics present,2=Eighth note HOPO,3=background.png present,4=Is a cover,5=Is a tutorial,...)
+!	The MSB is the boolean status of the INI setting (1 is True), allowing for an explicit "value = False" setting to be stored if necessary
+!	The low 7 bits represents the boolean INI setting in question, numbered from 0 to 127 (number 0 reserved for future use)
 !	Tutorial songs are hidden during quickplay in FoFiX
 }
 
@@ -67,9 +67,10 @@ TEXT EVENT CHUNK, for each text event:
 *	2 bytes:	Text event string length
 *	[varies:]	Text event string
 	4 bytes:	Associated beat number
-*	2 bytes:	Associated track number (0xFF if it applies to the entire chart, such as generic section markers)
+*	2 bytes:	Associated track number (0 if it applies to the entire chart, such as generic section markers)
 }
 
+	TRACK DATA:
 *4 bytes:	Number of tracks
 TRACK CHUNK, for each track:
 {
@@ -77,8 +78,8 @@ TRACK CHUNK, for each track:
 *	[varies:]	Track name string
 *	2 bytes:	Track number (Matching macros such as EOF_TRACK_GUITAR)
 !	EOF currently uses macros to define guitar, bass, lead guitar, rhythm guitar, drum and vocals, but it may be ultimately necessary to allow custom tracks which can be any of those types
-!	So the track behavior below should define the track's ability to use HOPOs, etc.
-*	1 byte:		Track behavior (0=Guitar/Bass,1=Drum/pro drum,2=Vocal,3=Keys,4=Pro guitar/bass,5=Pro keys)
+!	So the track behavior below should define the track's ability to use HOPOs, etc. and could replace the current checks against a specific track number
+*	1 byte:		Track behavior (0=Guitar/Bass,1=Drum/pro drum,2=Vocal,3=Keys,4=Pro guitar/bass,5=Pro keys,...)
 *	1 byte:		Track type (0=Global,1=Guitar,2=Bass,3=Drum,4=Vocal,5=Keys,6=Pro Guitar,7=Pro Bass,8=Pro Drum,9=Pro Keys,10=Variable Lane Guitar,11=Variable Lane Drums, ...)
 !	Rock Band 3 charts have separate tracks for the full 22 fret chart (PART REAL_GUITAR_22) usable on the Squier guiter, and a version transposed to be accurate on 17 frets (PART REAL_GUITAR)
 *	1 byte:		Track difficulty level (0-6 or 0xFF)
@@ -100,8 +101,8 @@ TRACK CHUNK, for each track:
 *			2 bytes:	Section flags
 *		}
 *	}
-!	There can be a "global track" that stores sections or other data that apply to multiple tracks, such as unison SP sections,
-!	or sections that don't apply to any specific track, such as a song preview section or bookmarks
+!	The first track maintained by EOF will be the global track (track 0), which stores information that applies to the whole chart
+!	(ie. song preview sections or bookmarks) or information that otherwise applies to more than one track (ie. unison SP sections)
 !		For bookmarks, there should be no string, and the end position will be ignored
 !		For fret catalog entries, the flags field stores the track number the catalog entry is from
 
