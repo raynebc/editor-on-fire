@@ -92,22 +92,15 @@ EOF_SONG * eof_create_song(void)
 	ustrcpy(sp->tags->ogg[0].filename, "guitar.ogg");
 	sp->tags->oggs = 1;
 	sp->tags->revision = 0;
+	sp->tracks = 0;
+	sp->vocaltracks = 0;
 	for(i = 0; i < EOF_MAX_TRACKS; i++)
-	{
-		sp->track[i] = malloc(sizeof(EOF_TRACK));
-		if(!sp->track[i])
-		{
+	{	//Add tracks
+		if(eof_song_add_legacy_track(sp) == NULL)
 			return NULL;
-		}
-		sp->track[i]->notes = 0;
-		sp->track[i]->solos = 0;
-		sp->track[i]->star_power_paths = 0;
 	}
-	sp->vocal_track = malloc(sizeof(EOF_VOCAL_TRACK));
-	if(!sp->vocal_track)
-	{
+	if(eof_song_add_vocal_track(sp) == NULL)
 		return NULL;
-	}
 	sp->vocal_track->lyrics = 0;
 	sp->vocal_track->lines = 0;
 	sp->beats = 0;
@@ -1087,7 +1080,7 @@ int eof_song_resize_beats(EOF_SONG * sp, int beats)
 	return 1;	//Return success
 }
 
-int eof_song_add_text_event(EOF_SONG * sp, int beat, char * text)
+EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, int beat, char * text)
 {
 	if(sp->text_events < EOF_MAX_TEXT_EVENTS)
 	{	//If the maximum number of text events hasn't already been defined
@@ -1100,10 +1093,10 @@ int eof_song_add_text_event(EOF_SONG * sp, int beat, char * text)
 		}
 		else
 		{
-			return 0;	//Return failure
+			return NULL;	//Return failure
 		}
 	}
-	return 1;	//Return success
+	return sp->text_event[sp->text_events-1];	//Return successfully created text event
 }
 
 void eof_song_delete_text_event(EOF_SONG * sp, int event)
@@ -1209,17 +1202,23 @@ void eof_detect_difficulties(EOF_SONG * sp)
 	eof_note_type_name[3][0] = ' ';
 	eof_note_type_name[4][0] = ' ';
 	eof_vocal_tab_name[0][0] = ' ';
-	for(i = 0; i < sp->track[eof_selected_track]->notes; i++)
+	if(eof_selected_track != EOF_TRACK_VOCALS)
 	{
-		if((sp->track[eof_selected_track]->note[i]->type >= 0) && (sp->track[eof_selected_track]->note[i]->type < 5))
+		for(i = 0; i < sp->track[eof_selected_track]->notes; i++)
 		{
-			eof_note_difficulties[(int)sp->track[eof_selected_track]->note[i]->type] = 1;
-			eof_note_type_name[(int)sp->track[eof_selected_track]->note[i]->type][0] = '*';
+			if((sp->track[eof_selected_track]->note[i]->type >= 0) && (sp->track[eof_selected_track]->note[i]->type < 5))
+			{
+				eof_note_difficulties[(int)sp->track[eof_selected_track]->note[i]->type] = 1;
+				eof_note_type_name[(int)sp->track[eof_selected_track]->note[i]->type][0] = '*';
+			}
 		}
 	}
-	if(sp->vocal_track->lyrics)
+	else
 	{
-		eof_vocal_tab_name[0][0] = '*';
+		if(sp->vocal_track->lyrics)
+		{
+			eof_vocal_tab_name[0][0] = '*';
+		}
 	}
 }
 
@@ -1485,4 +1484,80 @@ int eof_load_song_string_pf(char *buffer, PACKFILE *fp, unsigned long buffersize
 	}
 
 	return 0;	//Return success
+}
+
+EOF_TRACK * eof_song_add_legacy_track(EOF_SONG * sp)
+{
+	EOF_TRACK * ptr = NULL;
+
+	if(sp == NULL)
+		return NULL;
+
+	if(sp->tracks < EOF_MAX_TRACKS)
+	{
+		ptr = malloc(sizeof(EOF_TRACK));
+		if(ptr != NULL)
+		{
+			ptr->notes = 0;
+			ptr->solos = 0;
+			ptr->star_power_paths = 0;
+			sp->track[sp->tracks] = ptr;
+			sp->tracks++;
+		}
+	}
+	return ptr;
+}
+
+int eof_song_delete_legacy_track(EOF_SONG * sp, unsigned long track)
+{
+	unsigned long ctr;
+
+	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track] == NULL))
+		return 0;	//Return error
+
+	if(sp->track[track]->notes != 0)
+		return 0;	//Return error (don't delete a track that has notes)
+
+	//Remove track from the list and cycle the other track pointers back one in the array
+	free(sp->track[track]);
+	for(ctr = track; ctr + 1 < sp->tracks; ctr++)
+	{
+		sp->track[ctr] = sp->track[ctr + 1];
+	}
+	sp->tracks--;
+
+	return 1;	//Return success
+}
+
+EOF_VOCAL_TRACK * eof_song_add_vocal_track(EOF_SONG * sp)
+{
+//	EOF_TRACK * ptr = NULL;
+
+	if(sp == NULL)
+		return NULL;
+
+	sp->vocal_track = malloc(sizeof(EOF_VOCAL_TRACK));
+	if(sp->vocal_track == NULL)
+	{
+		return NULL;
+	}
+	sp->vocal_track->lyrics = 0;
+	sp->vocal_track->lines = 0;
+	sp->vocaltracks = 1;	//This will need to be changed to increment once multiple vocal tracks are supported
+
+	return sp->vocal_track;
+}
+
+int eof_song_delete_vocal_track(EOF_SONG * sp, unsigned long track)
+{
+	if(track != 0)
+		return 0;	//Currently, only one vocal track is supported
+
+	if(sp->vocal_track == NULL)
+		return 0;	//Return error
+
+	free(sp->vocal_track);
+	sp->vocal_track = NULL;
+	sp->vocaltracks = 0;	//This will need to be changed to decrement once multiple vocal tracks are supported
+	return 1;
 }

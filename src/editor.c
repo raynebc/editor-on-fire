@@ -121,7 +121,7 @@ void eof_get_snap_ts(EOF_SNAP_DATA * sp, int beat)
 {
 	int tsbeat = 0;
 	int i;
-	
+
 	for(i = beat; i >= 0; i--)
 	{
 		if(eof_song->beat[i]->flags & (EOF_BEAT_FLAG_START_3_4 | EOF_BEAT_FLAG_START_4_4 | EOF_BEAT_FLAG_START_5_4 | EOF_BEAT_FLAG_START_6_4 | EOF_BEAT_FLAG_CUSTOM_TS))
@@ -130,11 +130,11 @@ void eof_get_snap_ts(EOF_SNAP_DATA * sp, int beat)
 			break;
 		}
 	}
-	
+
 	/* set default denominator in case no TS flags found */
 	sp->numerator = 4;
 	sp->denominator = 4;
-	
+
 	/* all TS presets have a denominator of 4 */
 	if(eof_song->beat[tsbeat]->flags & EOF_BEAT_FLAG_START_3_4)
 	{
@@ -156,7 +156,7 @@ void eof_get_snap_ts(EOF_SNAP_DATA * sp, int beat)
 		sp->numerator = 6;
 		sp->denominator = 4;
 	}
-	
+
 	/* decode custom TS */
 	else if(eof_song->beat[tsbeat]->flags & EOF_BEAT_FLAG_CUSTOM_TS)
 	{
@@ -272,7 +272,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 				}
 			}
 		}
-	
+
 		/* do the actual snapping */
 		float least_amount = sp->beat_length;
 		int least = -1;
@@ -663,11 +663,11 @@ void eof_read_editor_keys(void)
 				if(eof_selected_track > 0)
 					eof_selected_track--;
 				else
-					eof_selected_track = EOF_TRACK_MAX;	//Wrap around
+					eof_selected_track = EOF_MAX_TRACKS;	//Wrap around
 			}
 			else					//Shift instrument forward 1 number
 			{
-				if(eof_selected_track < EOF_TRACK_MAX)
+				if(eof_selected_track < EOF_MAX_TRACKS)
 					eof_selected_track++;
 				else
 					eof_selected_track = 0;	//Wrap around
