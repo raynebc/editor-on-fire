@@ -763,7 +763,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		}
 
 		/* insert padding as necessary between a lyric phrase on marker and the following lyric */
-		#define EOF_LYRIC_PHRASE_PADDING 5
+		#define EOF_LYRIC_PHRASE_PADDING 1
 		unsigned long last_phrase = 0;	//Stores the absolute delta time of the last Note 105 On
 
 		qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);	//Lyric events must be sorted for padding logic to work
