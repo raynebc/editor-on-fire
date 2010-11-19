@@ -8,7 +8,6 @@
 #define EOF_MAX_LYRICS EOF_MAX_NOTES
 #define EOF_MAX_LYRIC_LINES    4096
 #define EOF_MAX_LYRIC_LENGTH    255
-#define EOF_MAX_TRACKS            5
 #define EOF_MAX_CATALOG_ENTRIES 256
 #define EOF_MAX_INI_SETTINGS     32
 #define EOF_MAX_BOOKMARK_ENTRIES 10
@@ -26,7 +25,7 @@
 #define EOF_TRACK_RHYTHM      3
 #define EOF_TRACK_DRUM        4
 #define EOF_TRACK_VOCALS      5
-#define EOF_TRACK_MAX         5
+#define EOF_MAX_TRACKS        5
 
 #define EOF_NOTE_FLAG_HOPO       1
 #define EOF_NOTE_FLAG_SP         2
@@ -260,7 +259,10 @@ typedef struct
 
 	/* track data */
 	EOF_TRACK       * track[EOF_MAX_TRACKS];
+	unsigned long tracks;
+
 	EOF_VOCAL_TRACK * vocal_track;
+	unsigned long vocaltracks;
 
 	EOF_BEAT_MARKER * beat[EOF_MAX_BEATS];
 	unsigned long beats;
@@ -307,7 +309,7 @@ EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp);	//Allocates, initializes and
 void eof_song_delete_beat(EOF_SONG * sp, int beat);	//Removes and frees the specified beat from the beats array.  All beats after the deleted beat are moved back in the array one position
 int eof_song_resize_beats(EOF_SONG * sp, int beats);	//Grows or shrinks the beats array to fit the specified number of beats by allocating/freeing EOF_BEAT_MARKER structures.  Returns zero on error
 
-int eof_song_add_text_event(EOF_SONG * sp, int beat, char * text);	//Allocates, initializes and stores a new EOF_TEXT_EVENT structure into the text_event array.  Returns 0 on error
+EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, int beat, char * text);	//Allocates, initializes and stores a new EOF_TEXT_EVENT structure into the text_event array.  Returns the newly allocated structure or NULL upon error
 void eof_song_delete_text_event(EOF_SONG * sp, int event);	//Removes and frees the specified text event from the text_events array.  All text events after the deleted text event are moved back in the array one position
 void eof_song_move_text_events(EOF_SONG * sp, int beat, int offset);	//Displaces all beats starting with the specified beat by the given additive offset.  Each affected beat's flags are cleared except for the anchor and text event(s) present flags
 int eof_song_resize_text_events(EOF_SONG * sp, int events);	//Grows or shrinks the text events array to fit the specified number of notes by allocating/freeing EOF_LYRIC structures.  Return zero on error
@@ -316,7 +318,7 @@ int eof_song_qsort_events(const void * e1, const void * e2);	//The comparitor fu
 
 void eof_sort_notes(void);	//Sorts the notes in all tracks
 void eof_fixup_notes(void);	//Performs cleanup of the note selection, beats and all tracks
-void eof_detect_difficulties(EOF_SONG * sp);	//Sets the populated status by prefixing each populated tracks' difficulty name (stored in eof_note_type_name[] and eof_vocal_tab_name[]) with an asterisk
+void eof_detect_difficulties(EOF_SONG * sp);	//Sets the populated status by prefixing each populated difficulty name in the current track (stored in eof_note_type_name[] and eof_vocal_tab_name[]) with an asterisk
 
 int eof_is_freestyle(char *ptr);
 	//Returns 1 if the specified lyric contains a freestyle character (# or ^)
@@ -358,5 +360,15 @@ int eof_load_song_string_pf(char *buffer, PACKFILE *fp, unsigned long buffersize
 	//That number of bytes is read, the first (buffersize-1) of which are copied to the buffer
 	//If buffersize is 0, the string is parsed in the file but not stored, otherwise the buffer is NULL terminated
 	//Nonzero is returned on error
+
+EOF_TRACK * eof_song_add_legacy_track(EOF_SONG * sp);
+	//Allocates, initializes and stores a new EOF_TRACK structure into the tracks array.  Returns the newly allocated structure or NULL upon error
+int eof_song_delete_legacy_track(EOF_SONG * sp, unsigned long track);
+	//Deletes the specified track only if it contains no notes.  Returns zero on error
+EOF_VOCAL_TRACK * eof_song_add_vocal_track(EOF_SONG * sp);
+	//Allocates, initializes and stores a new EOF_VOCAL_TRACK structure into the vocal tracks array.  Returns the newly allocated structure or NULL upon error
+int eof_song_delete_vocal_track(EOF_SONG * sp, unsigned long track);
+	//Deletes the specified track only if it contains no notes.  Returns zero on error
+	//Until EOF can store an array of vocal tracks, track 0 will refer to the only destroyable track (sp->vocal_track)
 
 #endif
