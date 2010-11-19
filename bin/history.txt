@@ -1,6 +1,12 @@
 EOF Version History
 -------------------
 
+1.?:
+
+Fixed an issue where the padding between each lyric phrase and the first lyric
+in the phrase didn't work.
+
+
 1.7:
 
 Fixed an issue where "crazy" notes were allowed to lap notes in the same lane.
