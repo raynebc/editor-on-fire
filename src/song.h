@@ -247,10 +247,11 @@ typedef struct
 
 } EOF_CATALOG;
 
-#define EOF_LEGACY_TRACK_TYPE		1
-#define EOF_VOCAL_TRACK_TYPE		2
-#define EOF_PRO_KEYS_TRACK_TYPE		3
-#define EOF_PRO_GUITAR_TRACK_TYPE	4
+#define EOF_LEGACY_TRACK_TYPE				1
+#define EOF_VOCAL_TRACK_TYPE				2
+#define EOF_PRO_KEYS_TRACK_TYPE				3
+#define EOF_PRO_GUITAR_TRACK_TYPE			4
+#define EOF_PRO_VARIABLE_LEGACY_TRACK_TYPE	5
 typedef struct
 {
 	char tracktype;			//Specifies which track type this is, using one of the macros above
