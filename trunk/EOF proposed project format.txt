@@ -76,19 +76,22 @@ TRACK CHUNK, for each track:
 {
 *	2 bytes:	Track name string length
 *	[varies:]	Track name string
-*	2 bytes:	Track number (Matching macros such as EOF_TRACK_GUITAR)
-!	EOF currently uses macros to define guitar, bass, lead guitar, rhythm guitar, drum and vocals, but it may be ultimately necessary to allow custom tracks which can be any of those types
-!	So the track behavior below should define the track's ability to use HOPOs, etc. and could replace the current checks against a specific track number
-*	1 byte:		Track behavior (0=Guitar/Bass,1=Drum/pro drum,2=Vocal,3=Keys,4=Pro guitar/bass,5=Pro keys,...)
+*	1 byte:		Track format (1=Legacy,2=Vocal,3=Pro Guitar/Bass,4=Pro Keys,5=Variable Lane Legacy,...)
+*	1 byte:		Track behavior (1=Guitar/Bass,2=Drum/pro drum,3=Vocal,4=Keys,5=Pro guitar/bass,6=Pro keys,...)
 *	1 byte:		Track type (0=Global,1=Guitar,2=Bass,3=Drum,4=Vocal,5=Keys,6=Pro Guitar,7=Pro Bass,8=Pro Drum,9=Pro Keys,10=Variable Lane Guitar,11=Variable Lane Drums, ...)
 !	Rock Band 3 charts have separate tracks for the full 22 fret chart (PART REAL_GUITAR_22) usable on the Squier guiter, and a version transposed to be accurate on 17 frets (PART REAL_GUITAR)
+!	EOF currently uses macros to define guitar, bass, lead guitar, rhythm guitar, drum and vocals, but it may be ultimately necessary to allow custom tracks which can be any of those types
+!	So the track behavior below should define the track's ability to use HOPOs, etc. and could replace the current checks against a specific track number
+!	Until track numbering is completely removed, the track type can serve as a replacement
 *	1 byte:		Track difficulty level (0-6 or 0xFF)
 *	4 bytes:	Track flags (ie. which difficulties are locked for editing)
+
+*	[varies:]	Track data (depending on the format type as defined below)
 
 *	4 bytes:	Number of section types stored for this track
 *	SECTION TYPE CHUNK, for each section type
 *	{
-*		2 bytes:	Type of section (ie. solo, star power, lyric phrase, trill, yellow tom, blue tom, green tom, arpeggio, pro keys trainer, custom MIDI note, preview section, bookmark, fret catalog entry)
+*		2 bytes:	Type of section (1=solo,2=star power,3=bookmark,4=fret catalog entry,5=lyric phrase,6=yellow tom,7=blue tom,8=green tom,9=trill,10=arpeggio,11=pro trainer,12=custom MIDI note,13=preview section,...)
 
 *		4 bytes:	Number of the specified sections stored
 *		SECTION CHUNK, for each of the specified type of sections
@@ -105,111 +108,113 @@ TRACK CHUNK, for each track:
 !	(ie. song preview sections or bookmarks) or information that otherwise applies to more than one track (ie. unison SP sections)
 !		For bookmarks, there should be no string, and the end position will be ignored
 !		For fret catalog entries, the flags field stores the track number the catalog entry is from
-
-	["LEGACY" (GUITAR/BASS/DRUM/PRO DRUM/KEYS) TRACK FORMAT]
-		4 bytes:	Number of notes
-		NOTE CHUNK, for each note
-		{
-*			2 bytes:	Chord name string length
-*			[varies:]	Chord name string
-			1 byte:		Note type (difficulty)
-			1 byte:		Note bitflag (on/off statuses)
-			4 bytes:	Note position (in milliseconds or delta ticks)
-			4 bytes:	Note length (in milliseconds or delta ticks)
-*			2 bytes:	Note flags (allow for more flags.  When this is implemented, ensure that Expert+ bass gets its own status flag again)
-		}
-!	This track format could be referred to as "legacy" format, because it is the only format used prior to RB3
-
-	[VOCAL TRACK FORMAT]
-*		1 byte:		Rock Band compliance flag (1=compliant, the chart doesn't use pitches outside the allowed range of [36,84])
-*		1 byte:		Tone set number assigned to this track (ie. 0=Grand Piano, 1=MIDI device, ...)
-		4 bytes:	Number of lyrics
-		LYRIC CHUNK, for each lyric:
-		{
-*			2 bytes:	Lyric text string length
-*			[varies:]	Lyric text string
-*			1 byte:		Track number (ie. 1=PART VOCALS, 2=PART HARM1, 3=PART HARM2...)
-			1 byte:		Note pitch
-			4 bytes:	Lyric position (in milliseconds or delta ticks)
-			4 bytes:	Lyric position (in milliseconds or delta ticks)
-*			2 bytes:	Lyric flags
-		}
-
-	[PRO GUITAR/PRO BASS TRACK FORMAT]
-*		1 byte:		Rock Band compliance flag (1=compliant, no fret higher than 22 is used)
-
-*		1 byte:		The highest fret number allowed in this track (17 for Mustang, 22 for Squier)
-*		1 byte:		The number of strings on this track's guitar (ie. 4 for standard bass guitar, 6 for standard guitar)
-*		PRO GUITAR TUNING CHUNK, for each string
-*		{
-*			1 byte:		The note this string sounds when played open (no frets held)
-*		}
-!			The first string defined refers to string 1, the lowest guage string (high E on a standard guitar), consistent with guitar terminology
-!			The note numbering system is based on A440 tuning, where note A4 is 440Hz and is referred to as note 69.  Mid C (note C4) is referred to as note 60
-
-*		4 bytes:	Number of notes
-*		PRO GUITAR NOTE CHUNK, for each note
-*		{
-*			2 bytes:	Chord name string length
-*			[varies:]	Chord name string
-*			1 byte:		Note type (difficulty)
-*			2 bytes:	Note bitflag (string use statuses: set=played, reset=not played)
-!				Bit 0 refers to string 1 (high E), bit 5 refers to string 6 (low E), consistent with guitar terminology
-*			FRET CHUNK, for each set bit in the guitar note bitflag
-*			{
-*				1 byte:		Fret # tab (0=Open strum, #=Fret # pressed, 0xFF=Muted)
-*			}
-*			4 bytes:	Note position (in milliseconds or delta ticks)
-*			4 bytes:	Note length (in milliseconds or delta ticks)
-*			4 bytes:	Note flags (allow 32 flags for an unforsee-able number of techniques such as tapping, bending, etc)
-*		}
-
-	[PRO KEYS TRACK FORMAT]
-*		1 byte:		Rock Band compliance flag (1=compliant, the chart doesn't use notes outside the currently unknown accepted range)
-*		1 byte:		Tone set number assigned to this track (ie. 0=Grand Piano, 1=MIDI device, ...)
-
-*		4 bytes:	Number of chords
-!			For the sake of this format, "chord" will refer to all notes defined at a given position in a difficulty in a keys track,
-!			even if there are not multiple notes, and notes will refer to individual notes in the chord
-*		KEY CHORD CHUNK, for each note
-*		{
-*			2 bytes:	Chord name string length
-*			[varies:]	Chord name string
-*			1 byte:		Chord type (difficulty)
-*			1 byte:		Chord hand (1=right hand- ie. melody, 2=left hand- ie. chords)
-!				Rock Band 3 won't support two hand keys tracks, so this would be a feature for other games such as Synthesia/Doremi Mania)
-!				Two chords should be allowed to be defined at any timestamp, as each hand should be allowed to play one
-*			1 byte:		Number of keys played in this note/chord
-*			KEY NOTE CHUNK, for each key in the chord
-*			{
-*				1 byte:		Note number
-*				1 byte:		Note velocity
-*				1 byte:		Note flags (for storing accidentals)
-*			}
-
-*			4 bytes:	Note position (in milliseconds or delta ticks)
-*			4 bytes:	Note length (in milliseconds or delta ticks)
-*			2 bytes:	Chord flags
-*		}
-
-	[VARIABLE LANE GUITAR/DRUM TRACK FORMAT]
-*		1 byte:		DTX Mania compliance flag (1=compliant, the track has 8 drum lanes?)
-*		1 byte:		The number of lanes included in this track
-
-*		4 bytes:	Number of notes
-*		EXTRA LANE CHORD CHUNK, for each note
-*		{
-*			1 byte:		Note type (difficulty)
-*			1 byte:		Number of lanes played at this position
-*			EXTRA LANE NOTE CHUNK, for each lane played at this position
-*			{
-*				1 byte:		Lane number containing a playable note
-*			}
-*			4 bytes:	Note position (in milliseconds or delta ticks)
-*			4 bytes:	Note length (in milliseconds or delta ticks)
-*			2 bytes:	Note flags (among other specialized flags, DTXMania supposedly tracks whether hi-hat is open/closed)
-*		}
 }
+(End of file)
+
+	TRACK FORMAT DEFINITIONS
+["LEGACY" (GUITAR/BASS/DRUM/PRO DRUM/KEYS) TRACK FORMAT]
+	4 bytes:	Number of notes
+	NOTE CHUNK, for each note
+	{
+*		2 bytes:	Chord name string length
+*		[varies:]	Chord name string
+		1 byte:		Note type (difficulty)
+		1 byte:		Note bitflag (on/off statuses)
+		4 bytes:	Note position (in milliseconds or delta ticks)
+		4 bytes:	Note length (in milliseconds or delta ticks)
+*		2 bytes:	Note flags (allow for more flags.  When this is implemented, ensure that Expert+ bass gets its own status flag again)
+	}
+!This track format could be referred to as "legacy" format, because it is the only format used prior to RB3
+
+[VOCAL TRACK FORMAT]
+*	1 byte:		Rock Band compliance flag (1=compliant, the chart doesn't use pitches outside the allowed range of [36,84])
+*	1 byte:		Tone set number assigned to this track (ie. 0=Grand Piano, 1=MIDI device, ...)
+	4 bytes:	Number of lyrics
+	LYRIC CHUNK, for each lyric:
+	{
+*		2 bytes:	Lyric text string length
+*		[varies:]	Lyric text string
+*		1 byte:		Track number (ie. 1=PART VOCALS, 2=PART HARM1, 3=PART HARM2...)
+		1 byte:		Note pitch
+		4 bytes:	Lyric position (in milliseconds or delta ticks)
+		4 bytes:	Lyric position (in milliseconds or delta ticks)
+*		2 bytes:	Lyric flags
+	}
+
+[PRO GUITAR/PRO BASS TRACK FORMAT]
+*	1 byte:		Rock Band compliance flag (1=compliant, no fret higher than 22 is used)
+
+*	1 byte:		The highest fret number allowed in this track (17 for Mustang, 22 for Squier)
+*	1 byte:		The number of strings on this track's guitar (ie. 4 for standard bass guitar, 6 for standard guitar)
+*	PRO GUITAR TUNING CHUNK, for each string
+*	{
+*		1 byte:		The note this string sounds when played open (no frets held)
+*	}
+!		The first string defined refers to string 1, the lowest guage string (high E on a standard guitar), consistent with guitar terminology
+!		The note numbering system is based on A440 tuning, where note A4 is 440Hz and is referred to as note 69.  Mid C (note C4) is referred to as note 60
+
+*	4 bytes:	Number of notes
+*	PRO GUITAR NOTE CHUNK, for each note
+*	{
+*		2 bytes:	Chord name string length
+*		[varies:]	Chord name string
+*		1 byte:		Note type (difficulty)
+*		2 bytes:	Note bitflag (string use statuses: set=played, reset=not played)
+!				Bit 0 refers to string 1 (high E), bit 5 refers to string 6 (low E), consistent with guitar terminology
+*		FRET CHUNK, for each set bit in the guitar note bitflag
+*		{
+*			1 byte:		Fret # tab (0=Open strum, #=Fret # pressed, 0xFF=Muted)
+*		}
+*		4 bytes:	Note position (in milliseconds or delta ticks)
+*		4 bytes:	Note length (in milliseconds or delta ticks)
+*		4 bytes:	Note flags (allow 32 flags for an unforsee-able number of techniques such as tapping, bending, etc)
+*	}
+
+[PRO KEYS TRACK FORMAT]
+*	1 byte:		Rock Band compliance flag (1=compliant, the chart doesn't use notes outside the currently unknown accepted range)
+*	1 byte:		Tone set number assigned to this track (ie. 0=Grand Piano, 1=MIDI device, ...)
+
+*	4 bytes:	Number of chords
+!		For the sake of this format, "chord" will refer to all notes defined at a given position in a difficulty in a keys track,
+!		even if there are not multiple notes, and notes will refer to individual notes in the chord
+*	KEY CHORD CHUNK, for each note
+*	{
+*		2 bytes:	Chord name string length
+*		[varies:]	Chord name string
+*		1 byte:		Chord type (difficulty)
+*		1 byte:		Chord hand (1=right hand- ie. melody, 2=left hand- ie. chords)
+!			Rock Band 3 won't support two hand keys tracks, so this would be a feature for other games such as Synthesia/Doremi Mania)
+!			Two chords should be allowed to be defined at any timestamp, as each hand should be allowed to play one
+*		1 byte:		Number of keys played in this note/chord
+*		KEY NOTE CHUNK, for each key in the chord
+*		{
+*			1 byte:		Note number
+*			1 byte:		Note velocity
+*			1 byte:		Note flags (for storing accidentals)
+*		}
+
+*		4 bytes:	Note position (in milliseconds or delta ticks)
+*		4 bytes:	Note length (in milliseconds or delta ticks)
+*		2 bytes:	Chord flags
+*	}
+
+[VARIABLE LANE "LEGACY" FORMAT]
+*	1 byte:		DTX Mania compliance flag (1=compliant, the track has 8 drum lanes?)
+*	1 byte:		The number of lanes included in this track
+
+*	4 bytes:	Number of notes
+*	EXTRA LANE CHORD CHUNK, for each note
+*	{
+*		1 byte:		Note type (difficulty)
+*		1 byte:		Number of lanes played at this position
+*		EXTRA LANE NOTE CHUNK, for each lane played at this position
+*		{
+*			1 byte:		Lane number containing a playable note
+*		}
+*		4 bytes:	Note position (in milliseconds or delta ticks)
+*		4 bytes:	Note length (in milliseconds or delta ticks)
+*		2 bytes:	Note flags (among other specialized flags, DTXMania supposedly tracks whether hi-hat is open/closed)
+*	}
 !	Open bass notes are planned to be charted on a sixth lane, so GH style charts with open bass will probably need to be charted on a variable lane bass track titled "PART BASS"
 
 
