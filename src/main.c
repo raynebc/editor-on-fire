@@ -319,17 +319,17 @@ void eof_find_lyric_preview_lines(void)
 	int beyond = 1;
 	int adj_eof_music_pos=eof_music_pos - eof_av_delay;	//The current seek position of the chart, adjusted for AV delay
 
-	for(i = 0; i < eof_song->vocal_track->lines; i++)
+	for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
 	{
-		if((adj_eof_music_pos >= eof_song->vocal_track->line[i].start_pos) && (adj_eof_music_pos <= eof_song->vocal_track->line[i].end_pos))
+		if((adj_eof_music_pos >= eof_song->vocal_track[0]->line[i].start_pos) && (adj_eof_music_pos <= eof_song->vocal_track[0]->line[i].end_pos))
 		{
 			current_line = i;
 			break;
 		}
 	}
-	for(i = 0; i < eof_song->vocal_track->lines; i++)
+	for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
 	{
-		if(adj_eof_music_pos <= eof_song->vocal_track->line[i].end_pos)
+		if(adj_eof_music_pos <= eof_song->vocal_track[0]->line[i].end_pos)
 		{
 			beyond = 0;
 			break;
@@ -345,14 +345,14 @@ void eof_find_lyric_preview_lines(void)
 	if(current_line >= 0)
 	{
 		eof_preview_line[0] = current_line;
-		for(i = 0; i < eof_song->vocal_track->lyrics; i++)
+		for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
 		{
-			if((eof_song->vocal_track->lyric[i]->pos >= eof_song->vocal_track->line[eof_preview_line[0]].start_pos) && (eof_song->vocal_track->lyric[i]->pos <= eof_song->vocal_track->line[eof_preview_line[0]].end_pos))
+			if((eof_song->vocal_track[0]->lyric[i]->pos >= eof_song->vocal_track[0]->line[eof_preview_line[0]].start_pos) && (eof_song->vocal_track[0]->lyric[i]->pos <= eof_song->vocal_track[0]->line[eof_preview_line[0]].end_pos))
 			{
 				eof_preview_line_lyric[0] = i;
-				for(j = i; j < eof_song->vocal_track->lyrics; j++)
+				for(j = i; j < eof_song->vocal_track[0]->lyrics; j++)
 				{
-					if(eof_song->vocal_track->lyric[j]->pos > eof_song->vocal_track->line[eof_preview_line[0]].end_pos)
+					if(eof_song->vocal_track[0]->lyric[j]->pos > eof_song->vocal_track[0]->line[eof_preview_line[0]].end_pos)
 					{
 						break;
 					}
@@ -361,25 +361,25 @@ void eof_find_lyric_preview_lines(void)
 				break;
 			}
 		}
-		for(i = 0; i < eof_song->vocal_track->lines; i++)
+		for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
 		{
-			if((eof_song->vocal_track->line[current_line].start_pos < eof_song->vocal_track->line[i].start_pos) && (eof_song->vocal_track->line[i].start_pos - eof_song->vocal_track->line[current_line].start_pos < dist))
+			if((eof_song->vocal_track[0]->line[current_line].start_pos < eof_song->vocal_track[0]->line[i].start_pos) && (eof_song->vocal_track[0]->line[i].start_pos - eof_song->vocal_track[0]->line[current_line].start_pos < dist))
 			{
 				next_line = i;
-				dist = eof_song->vocal_track->line[i].start_pos - eof_song->vocal_track->line[current_line].start_pos;
+				dist = eof_song->vocal_track[0]->line[i].start_pos - eof_song->vocal_track[0]->line[current_line].start_pos;
 			}
 		}
 		if(next_line >= 0)
 		{
 			eof_preview_line[1] = next_line;
-			for(i = 0; i < eof_song->vocal_track->lyrics; i++)
+			for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
 			{
-				if((eof_song->vocal_track->lyric[i]->pos >= eof_song->vocal_track->line[eof_preview_line[1]].start_pos) && (eof_song->vocal_track->lyric[i]->pos <= eof_song->vocal_track->line[eof_preview_line[1]].end_pos))
+				if((eof_song->vocal_track[0]->lyric[i]->pos >= eof_song->vocal_track[0]->line[eof_preview_line[1]].start_pos) && (eof_song->vocal_track[0]->lyric[i]->pos <= eof_song->vocal_track[0]->line[eof_preview_line[1]].end_pos))
 				{
 					eof_preview_line_lyric[1] = i;
-					for(j = i; j < eof_song->vocal_track->lyrics; j++)
+					for(j = i; j < eof_song->vocal_track[0]->lyrics; j++)
 					{
-						if(eof_song->vocal_track->lyric[j]->pos > eof_song->vocal_track->line[eof_preview_line[1]].end_pos)
+						if(eof_song->vocal_track[0]->lyric[j]->pos > eof_song->vocal_track[0]->line[eof_preview_line[1]].end_pos)
 						{
 							break;
 						}
@@ -797,7 +797,7 @@ int eof_get_previous_note(int cnote)
 
 	for(i = cnote - 1; i >= 0; i--)
 	{
-		if(eof_song->track[eof_selected_track]->note[i]->type == eof_song->track[eof_selected_track]->note[cnote]->type)
+		if(eof_song->legacy_track[eof_selected_track]->note[i]->type == eof_song->legacy_track[eof_selected_track]->note[cnote]->type)
 		{
 			return i;
 		}
@@ -817,18 +817,18 @@ int eof_note_is_hopo(int cnote)
 
 	if(eof_hopo_view == EOF_HOPO_MANUAL)
 	{
-		if(eof_song->track[eof_selected_track]->note[cnote]->flags & EOF_NOTE_FLAG_NO_HOPO)
+		if(eof_song->legacy_track[eof_selected_track]->note[cnote]->flags & EOF_NOTE_FLAG_NO_HOPO)
 		{
 			return 0;
 		}
-		if(eof_song->track[eof_selected_track]->note[cnote]->flags & EOF_NOTE_FLAG_F_HOPO)
+		if(eof_song->legacy_track[eof_selected_track]->note[cnote]->flags & EOF_NOTE_FLAG_F_HOPO)
 		{
 			return 1;
 		}
 	}
 	for(i = 0; i < eof_song->beats - 1; i++)
 	{
-		if((eof_song->beat[i]->pos <= eof_song->track[eof_selected_track]->note[cnote]->pos) && eof_song->beat[i + 1]->pos > eof_song->track[eof_selected_track]->note[cnote]->pos)
+		if((eof_song->beat[i]->pos <= eof_song->legacy_track[eof_selected_track]->note[cnote]->pos) && eof_song->beat[i + 1]->pos > eof_song->legacy_track[eof_selected_track]->note[cnote]->pos)
 		{
 			beat = i;
 			break;
@@ -849,21 +849,21 @@ int eof_note_is_hopo(int cnote)
 		}
 		if(eof_hopo_view == EOF_HOPO_RF)
 		{
-			delta = eof_song->track[eof_selected_track]->note[cnote]->pos - eof_song->track[eof_selected_track]->note[pnote]->pos;
-			if((delta <= (hopo_delta * scale)) && (eof_note_count_colors(eof_song->track[eof_selected_track]->note[pnote]) == 1) && (eof_note_count_colors(eof_song->track[eof_selected_track]->note[cnote]) == 1) && (eof_song->track[eof_selected_track]->note[pnote]->note != eof_song->track[eof_selected_track]->note[cnote]->note))
+			delta = eof_song->legacy_track[eof_selected_track]->note[cnote]->pos - eof_song->legacy_track[eof_selected_track]->note[pnote]->pos;
+			if((delta <= (hopo_delta * scale)) && (eof_note_count_colors(eof_song->legacy_track[eof_selected_track]->note[pnote]) == 1) && (eof_note_count_colors(eof_song->legacy_track[eof_selected_track]->note[cnote]) == 1) && (eof_song->legacy_track[eof_selected_track]->note[pnote]->note != eof_song->legacy_track[eof_selected_track]->note[cnote]->note))
 			{
 				return 1;
 			}
 		}
 		else if(eof_hopo_view == EOF_HOPO_FOF)
 		{
-			delta = eof_song->track[eof_selected_track]->note[cnote]->pos - (eof_song->track[eof_selected_track]->note[pnote]->pos + eof_song->track[eof_selected_track]->note[pnote]->length);
-			if((delta <= hopo_delta * scale) && !(eof_song->track[eof_selected_track]->note[pnote]->note & eof_song->track[eof_selected_track]->note[cnote]->note))
+			delta = eof_song->legacy_track[eof_selected_track]->note[cnote]->pos - (eof_song->legacy_track[eof_selected_track]->note[pnote]->pos + eof_song->legacy_track[eof_selected_track]->note[pnote]->length);
+			if((delta <= hopo_delta * scale) && !(eof_song->legacy_track[eof_selected_track]->note[pnote]->note & eof_song->legacy_track[eof_selected_track]->note[cnote]->note))
 			{
 				return 1;
 			}
 		}
-//		allegro_message("bpm = %f\nscale = %f\ndelta = %f\npnote = %d(%d), cnote = %d(%d)", bpm, scale, delta, pnote, eof_song->track[eof_selected_track]->note[pnote].pos, cnote, eof_song->track[eof_selected_track]->note[cnote].pos);
+//		allegro_message("bpm = %f\nscale = %f\ndelta = %f\npnote = %d(%d), cnote = %d(%d)", bpm, scale, delta, pnote, eof_song->legacy_track[eof_selected_track]->note[pnote].pos, cnote, eof_song->legacy_track[eof_selected_track]->note[cnote].pos);
 	}
 	return 0;
 }
@@ -874,19 +874,19 @@ void eof_determine_hopos(void)
 	char sp[EOF_MAX_STAR_POWER] = {0};
 	char so[EOF_MAX_STAR_POWER] = {0};
 
-	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_selected_track]->notes; i++)
 	{
 
 		/* clear the flags */
-		if(eof_song->track[eof_selected_track]->note[i]->flags & EOF_NOTE_FLAG_HOPO)
+		if(eof_song->legacy_track[eof_selected_track]->note[i]->flags & EOF_NOTE_FLAG_HOPO)
 		{
-			eof_song->track[eof_selected_track]->note[i]->flags ^= EOF_NOTE_FLAG_HOPO;
+			eof_song->legacy_track[eof_selected_track]->note[i]->flags ^= EOF_NOTE_FLAG_HOPO;
 		}
-		if(eof_song->track[eof_selected_track]->note[i]->flags & EOF_NOTE_FLAG_SP)
+		if(eof_song->legacy_track[eof_selected_track]->note[i]->flags & EOF_NOTE_FLAG_SP)
 		{
-			eof_song->track[eof_selected_track]->note[i]->flags ^= EOF_NOTE_FLAG_SP;
+			eof_song->legacy_track[eof_selected_track]->note[i]->flags ^= EOF_NOTE_FLAG_SP;
 		}
-//		eof_song->track[eof_selected_track]->note[i]->flags = (eof_song->track[eof_selected_track]->note[i]->flags & EOF_NOTE_FLAG_CRAZY);
+//		eof_song->legacy_track[eof_selected_track]->note[i]->flags = (eof_song->legacy_track[eof_selected_track]->note[i]->flags & EOF_NOTE_FLAG_CRAZY);
 
 		/* mark HOPO notes */
 		switch(eof_hopo_view)
@@ -899,11 +899,11 @@ void eof_determine_hopos(void)
 			case EOF_HOPO_FOF:
 			case EOF_HOPO_MANUAL:
 			{
-				if(eof_song->track[eof_selected_track]->note[i]->type == eof_note_type)
+				if(eof_song->legacy_track[eof_selected_track]->note[i]->type == eof_note_type)
 				{
 					if(eof_note_is_hopo(i))
 					{
-						eof_song->track[eof_selected_track]->note[i]->flags |= EOF_NOTE_FLAG_HOPO;
+						eof_song->legacy_track[eof_selected_track]->note[i]->flags |= EOF_NOTE_FLAG_HOPO;
 					}
 				}
 				break;
@@ -911,19 +911,19 @@ void eof_determine_hopos(void)
 		}
 
 		/* mark star power notes */
-		for(j = 0; j < eof_song->track[eof_selected_track]->star_power_paths; j++)
+		for(j = 0; j < eof_song->legacy_track[eof_selected_track]->star_power_paths; j++)
 		{
-			if((eof_song->track[eof_selected_track]->note[i]->pos >= eof_song->track[eof_selected_track]->star_power_path[j].start_pos) && (eof_song->track[eof_selected_track]->note[i]->pos <= eof_song->track[eof_selected_track]->star_power_path[j].end_pos))
+			if((eof_song->legacy_track[eof_selected_track]->note[i]->pos >= eof_song->legacy_track[eof_selected_track]->star_power_path[j].start_pos) && (eof_song->legacy_track[eof_selected_track]->note[i]->pos <= eof_song->legacy_track[eof_selected_track]->star_power_path[j].end_pos))
 			{
-				eof_song->track[eof_selected_track]->note[i]->flags |= EOF_NOTE_FLAG_SP;
+				eof_song->legacy_track[eof_selected_track]->note[i]->flags |= EOF_NOTE_FLAG_SP;
 				sp[j] = 1;
 			}
 		}
 
 		/* check solos */
-		for(j = 0; j < eof_song->track[eof_selected_track]->solos; j++)
+		for(j = 0; j < eof_song->legacy_track[eof_selected_track]->solos; j++)
 		{
-			if((eof_song->track[eof_selected_track]->note[i]->pos >= eof_song->track[eof_selected_track]->solo[j].start_pos) && (eof_song->track[eof_selected_track]->note[i]->pos <= eof_song->track[eof_selected_track]->solo[j].end_pos))
+			if((eof_song->legacy_track[eof_selected_track]->note[i]->pos >= eof_song->legacy_track[eof_selected_track]->solo[j].start_pos) && (eof_song->legacy_track[eof_selected_track]->note[i]->pos <= eof_song->legacy_track[eof_selected_track]->solo[j].end_pos))
 			{
 				so[j] = 1;
 			}
@@ -931,20 +931,20 @@ void eof_determine_hopos(void)
 	}
 
 	/* delete star power phrases with no notes */
-	for(j = eof_song->track[eof_selected_track]->star_power_paths - 1; j >= 0; j--)
+	for(j = eof_song->legacy_track[eof_selected_track]->star_power_paths - 1; j >= 0; j--)
 	{
 		if(!sp[j])
 		{
-			eof_track_delete_star_power(eof_song->track[eof_selected_track], j);
+			eof_track_delete_star_power(eof_song->legacy_track[eof_selected_track], j);
 		}
 	}
 
 	/* delete solos with no notes */
-	for(j = eof_song->track[eof_selected_track]->solos - 1; j >= 0; j--)
+	for(j = eof_song->legacy_track[eof_selected_track]->solos - 1; j >= 0; j--)
 	{
 		if(!so[j])
 		{
-			eof_track_delete_solo(eof_song->track[eof_selected_track], j);
+			eof_track_delete_solo(eof_song->legacy_track[eof_selected_track], j);
 		}
 	}
 }
@@ -961,16 +961,16 @@ int eof_figure_difficulty(void)
 	{
 
 		/* see if there are any pitched lyrics */
-		for(i = 0; i < eof_song->vocal_track->lyrics; i++)
+		for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
 		{
-			if(eof_song->vocal_track->lyric[i]->note != 0)
+			if(eof_song->vocal_track[0]->lyric[i]->note != 0)
 			{
 				break;
 			}
 		}
 
 		/* if we have pitched lyrics and line definitions, allow test */
-		if((i < eof_song->vocal_track->lyrics) && (eof_song->vocal_track->lines > 0))
+		if((i < eof_song->vocal_track[0]->lyrics) && (eof_song->vocal_track[0]->lines > 0))
 		{
 			return 0;
 		}
@@ -978,9 +978,9 @@ int eof_figure_difficulty(void)
 	}
 
 	/* see which difficulties are populated with notes */
-	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_selected_track]->notes; i++)
 	{
-		nt[(int)eof_song->track[eof_selected_track]->note[i]->type] = 1;
+		nt[(int)eof_song->legacy_track[eof_selected_track]->note[i]->type] = 1;
 	}
 
 	/* no notes in this difficulty so don't allow test */
@@ -1001,7 +1001,7 @@ int eof_figure_difficulty(void)
 
 int eof_count_notes(void)
 {
-	return eof_song->track[eof_selected_track]->notes;
+	return eof_song->legacy_track[eof_selected_track]->notes;
 }
 
 int eof_count_selected_notes_vocal(int * total, char v)
@@ -1010,7 +1010,7 @@ int eof_count_selected_notes_vocal(int * total, char v)
 	int count = 0;
 	int last = -1;
 
-	for(i = 0; i < eof_song->vocal_track->lyrics; i++)
+	for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
 	{
 		if(eof_selection.track == EOF_TRACK_VOCALS)
 		{
@@ -1052,15 +1052,15 @@ int eof_count_selected_notes(int * total, char v)
 	int count = 0;
 	int last = -1;
 
-	for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_selected_track]->notes; i++)
 	{
-		if(eof_song->track[eof_selected_track]->note[i]->type == eof_note_type)
+		if(eof_song->legacy_track[eof_selected_track]->note[i]->type == eof_note_type)
 		{
 			if(eof_selection.track == eof_selected_track)
 			{
 				if(eof_selection.multi[i])
 				{
-					if((!v) || (v && eof_song->track[eof_selected_track]->note[i]->note))
+					if((!v) || (v && eof_song->legacy_track[eof_selected_track]->note[i]->note))
 					{
 						last = i;
 						count++;
@@ -1095,12 +1095,12 @@ int eof_figure_part(void)
 
 	if(eof_vocals_selected)
 	{
-		if(eof_song->vocal_track->lyrics <= 0)
+		if(eof_song->vocal_track[0]->lyrics <= 0)
 		{
 			return -1;
 		}
 	}
-	else if(eof_song->track[eof_selected_track]->notes <= 0)
+	else if(eof_song->legacy_track[eof_selected_track]->notes <= 0)
 	{
 		return -1;
 	}
@@ -1320,7 +1320,7 @@ int eof_first_selected_note(void)
 
 	for(i = 0; i < EOF_MAX_NOTES; i++)
 	{
-		if(eof_selection.multi[i] && (eof_song->track[eof_selected_track]->note[i]->type == eof_note_type))
+		if(eof_selection.multi[i] && (eof_song->legacy_track[eof_selected_track]->note[i]->type == eof_note_type))
 		{
 			return i;
 		}
@@ -1558,12 +1558,12 @@ void eof_lyric_logic(void)
 			{
 				if(mouse_b & 1)
 				{
-					if(KEY_EITHER_CTRL && (eof_selection.current < eof_song->vocal_track->lyrics))
+					if(KEY_EITHER_CTRL && (eof_selection.current < eof_song->vocal_track[0]->lyrics))
 					{
 						if(eof_count_selected_notes(NULL, 0) == 1)
 						{
 							eof_prepare_undo(EOF_UNDO_TYPE_LYRIC_NOTE);
-							eof_song->vocal_track->lyric[eof_selection.current]->note = eof_hover_key;
+							eof_song->vocal_track[0]->lyric[eof_selection.current]->note = eof_hover_key;
 						}
 					}
 					if(eof_hover_key != eof_last_tone)
@@ -1596,9 +1596,9 @@ void eof_lyric_logic(void)
 		}
 		else
 		{
-			if(eof_selection.current < eof_song->vocal_track->lyrics)
+			if(eof_selection.current < eof_song->vocal_track[0]->lyrics)
 			{
-				eof_hover_key = eof_song->vocal_track->lyric[eof_selection.current]->note;
+				eof_hover_key = eof_song->vocal_track[0]->lyric[eof_selection.current]->note;
 			}
 		}
 	}
@@ -1606,7 +1606,7 @@ void eof_lyric_logic(void)
 	{
 		if(eof_hover_note >= 0)
 		{
-			eof_hover_key = eof_song->vocal_track->lyric[eof_hover_note]->note;
+			eof_hover_key = eof_song->vocal_track[0]->lyric[eof_hover_note]->note;
 		}
 	}
 }
@@ -1894,11 +1894,11 @@ void eof_render_note_window(void)
 				rectfill(eof_window_note->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, eof_window_editor->w - 1, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, eof_color_black);
 				hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, lpos + (eof_music_length) / eof_zoom, eof_color_white);
 
-				for(i = 0; i < eof_song->vocal_track->lyrics; i++)
+				for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
 				{
-					if((eof_song->vocal_track->lyric[i]->pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_song->vocal_track->lyric[i]->pos <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos))
+					if((eof_song->vocal_track[0]->lyric[i]->pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_song->vocal_track[0]->lyric[i]->pos <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos))
 					{
-						eof_lyric_draw_catalog(eof_song->vocal_track->lyric[i], i == eof_hover_note_2 ? 2 : 0);
+						eof_lyric_draw_catalog(eof_song->vocal_track[0]->lyric[i], i == eof_hover_note_2 ? 2 : 0);
 					}
 				}
 
@@ -1949,11 +1949,11 @@ void eof_render_note_window(void)
 					vline(eof_window_note->screen, npos + eof_song->beat[i]->pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
 				}
 
-				for(i = 0; i < eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->notes; i++)
+				for(i = 0; i < eof_song->legacy_track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->notes; i++)
 				{
-					if((eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->type) && (eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->pos <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos))
+					if((eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_song->legacy_track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->type) && (eof_song->legacy_track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_song->legacy_track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->pos <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos))
 					{
-						eof_note_draw_catalog(eof_song->track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i], i == eof_hover_note_2 ? 2 : 0);
+						eof_note_draw_catalog(eof_song->legacy_track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i], i == eof_hover_note_2 ? 2 : 0);
 					}
 				}
 
@@ -1997,11 +1997,11 @@ void eof_render_note_window(void)
 		ypos += 12;
 		if(eof_vocals_selected)
 		{
-			if(eof_selection.current < eof_song->vocal_track->lyrics)
+			if(eof_selection.current < eof_song->vocal_track[0]->lyrics)
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Lyric = %d : Pos = %lu : Length = %lu", eof_selection.current, eof_song->vocal_track->lyric[eof_selection.current]->pos, eof_song->vocal_track->lyric[eof_selection.current]->length);
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Lyric = %d : Pos = %lu : Length = %lu", eof_selection.current, eof_song->vocal_track[0]->lyric[eof_selection.current]->pos, eof_song->vocal_track[0]->lyric[eof_selection.current]->length);
 				ypos += 12;
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Lyric Text = \"%s\" : Tone = %d (%s)", eof_song->vocal_track->lyric[eof_selection.current]->text, eof_song->vocal_track->lyric[eof_selection.current]->note, (eof_song->vocal_track->lyric[eof_selection.current]->note != 0) ? eof_get_tone_name(eof_song->vocal_track->lyric[eof_selection.current]->note) : "none");
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Lyric Text = \"%s\" : Tone = %d (%s)", eof_song->vocal_track[0]->lyric[eof_selection.current]->text, eof_song->vocal_track[0]->lyric[eof_selection.current]->note, (eof_song->vocal_track[0]->lyric[eof_selection.current]->note != 0) ? eof_get_tone_name(eof_song->vocal_track[0]->lyric[eof_selection.current]->note) : "none");
 			}
 			else
 			{
@@ -2019,9 +2019,9 @@ void eof_render_note_window(void)
 		}
 		else
 		{
-			if(eof_selection.current < eof_song->track[eof_selected_track]->notes)
+			if(eof_selection.current < eof_song->legacy_track[eof_selected_track]->notes)
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, 48, eof_color_white, -1, "Note = %d : Pos = %lu : Length = %lu", eof_selection.current, eof_song->track[eof_selected_track]->note[eof_selection.current]->pos, eof_song->track[eof_selected_track]->note[eof_selection.current]->length);
+				textprintf_ex(eof_window_note->screen, font, 2, 48, eof_color_white, -1, "Note = %d : Pos = %lu : Length = %lu", eof_selection.current, eof_song->legacy_track[eof_selected_track]->note[eof_selection.current]->pos, eof_song->legacy_track[eof_selected_track]->note[eof_selection.current]->length);
 			}
 			else
 			{
@@ -2112,10 +2112,10 @@ void eof_render_lyric_preview(BITMAP * bp)
 
 		for(i = eof_preview_line_lyric[x]; i < eof_preview_line_end_lyric[x]; i++)
 		{	//For each lyric in the preview line
-			lyriclength=ustrlen(eof_song->vocal_track->lyric[i]->text);	//This value will be used multiple times
+			lyriclength=ustrlen(eof_song->vocal_track[0]->lyric[i]->text);	//This value will be used multiple times
 
 		//Perform grouping logic
-			if((eof_song->vocal_track->lyric[i]->text[0] != '+'))
+			if((eof_song->vocal_track[0]->lyric[i]->text[0] != '+'))
 			{	//If the lyric is not a pitch shift
 				if(space)
 				{	//If space is nonzero, append a space if possible
@@ -2128,7 +2128,7 @@ void eof_render_lyric_preview(BITMAP * bp)
 						break;				//Stop building this line's preview
 				}
 
-				if(ustrchr(eof_song->vocal_track->lyric[i]->text,'-'))
+				if(ustrchr(eof_song->vocal_track[0]->lyric[i]->text,'-'))
 				{	//If the lyric contains a hyphen
 					space = 0;	//The next syllable will group with this one
 				}
@@ -2151,7 +2151,7 @@ void eof_render_lyric_preview(BITMAP * bp)
 				break;													//Stop building this line's preview
 
 		//Append string
-			ustrcat(lline[x], eof_song->vocal_track->lyric[i]->text);
+			ustrcat(lline[x], eof_song->vocal_track[0]->lyric[i]->text);
 			currentlength+=lyriclength;									//Track the length of this preview line
 
 		//Truncate a '/' character off the end of the lyric line if it exists (TB:RB notation for a forced line break)
@@ -2164,18 +2164,18 @@ void eof_render_lyric_preview(BITMAP * bp)
 	textout_centre_ex(bp, font, lline[1], bp->w / 2, 36, eof_color_white, bgcol2);
 	if((offset >= 0) && (eof_hover_lyric >= 0))
 	{
-		if(eof_song->vocal_track->lyric[eof_hover_lyric]->text[strlen(eof_song->vocal_track->lyric[eof_hover_lyric]->text)-1] == '/')
+		if(eof_song->vocal_track[0]->lyric[eof_hover_lyric]->text[strlen(eof_song->vocal_track[0]->lyric[eof_hover_lyric]->text)-1] == '/')
 		{	//If the at-playback position lyric ends in a forward slash, make a copy with the slash removed and display it instead
-			tempstring=malloc(ustrlen(eof_song->vocal_track->lyric[eof_hover_lyric]->text)+1);
+			tempstring=malloc(ustrlen(eof_song->vocal_track[0]->lyric[eof_hover_lyric]->text)+1);
 			if(tempstring==NULL)	//If there wasn't enough memory to copy this string...
 				return;
-			ustrcpy(tempstring,eof_song->vocal_track->lyric[eof_hover_lyric]->text);
+			ustrcpy(tempstring,eof_song->vocal_track[0]->lyric[eof_hover_lyric]->text);
 			tempstring[ustrlen(tempstring)-1]='\0';
 			textout_ex(bp, font, tempstring, bp->w / 2 - text_length(font, lline[0]) / 2 + offset, 20, eof_color_green, -1);
 			free(tempstring);
 		}
 		else	//Otherwise, display the regular string instead
-			textout_ex(bp, font, eof_song->vocal_track->lyric[eof_hover_lyric]->text, bp->w / 2 - text_length(font, lline[0]) / 2 + offset, 20, eof_color_green, -1);
+			textout_ex(bp, font, eof_song->vocal_track[0]->lyric[eof_hover_lyric]->text, bp->w / 2 - text_length(font, lline[0]) / 2 + offset, 20, eof_color_green, -1);
 	}
 }
 
@@ -2291,10 +2291,10 @@ void eof_render_3d_window(void)
 	/* render solo sections */
 	int sz, sez;
 	int spz, spez;
-	for(i = 0; i < eof_song->track[eof_selected_track]->solos; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_selected_track]->solos; i++)
 	{
-		sz = -eof_music_pos / eof_zoom_3d + eof_song->track[eof_selected_track]->solo[i].start_pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
-		sez = -eof_music_pos / eof_zoom_3d + eof_song->track[eof_selected_track]->solo[i].end_pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
+		sz = -eof_music_pos / eof_zoom_3d + eof_song->legacy_track[eof_selected_track]->solo[i].start_pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
+		sez = -eof_music_pos / eof_zoom_3d + eof_song->legacy_track[eof_selected_track]->solo[i].end_pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
 		if((-100 <= sez) && (600 >= sz))
 		{
 			spz = sz < -100 ? -100 : sz;
@@ -2379,12 +2379,12 @@ void eof_render_3d_window(void)
 //	int last_note = 0;
 	int tr;
 	/* draw the note tails and notes */
-	for(i = eof_song->track[eof_selected_track]->notes - 1; i >= 0; i--)
+	for(i = eof_song->legacy_track[eof_selected_track]->notes - 1; i >= 0; i--)
 	{	//Render 3D notes from last to first so that the earlier notes are in front
-		if(eof_note_type == eof_song->track[eof_selected_track]->note[i]->type)
+		if(eof_note_type == eof_song->legacy_track[eof_selected_track]->note[i]->type)
 		{
-			tr = eof_note_tail_draw_3d(eof_song->track[eof_selected_track]->note[i], (eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0);
-			eof_note_draw_3d(eof_song->track[eof_selected_track]->note[i], (eof_selection.track == eof_selected_track && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0);
+			tr = eof_note_tail_draw_3d(eof_song->legacy_track[eof_selected_track]->note[i], (eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0);
+			eof_note_draw_3d(eof_song->legacy_track[eof_selected_track]->note[i], (eof_selection.track == eof_selected_track && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0);
 
 			if(tr < 0)	//if eof_note_tail_draw_3d skipped rendering the tail because it renders before the visible area
 				break;	//Stop rendering 3d notes
@@ -2933,7 +2933,7 @@ int eof_initialize(int argc, char * argv[])
 				}
 				else
 				{
-					eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 0);
+					eof_vocal_track_fixup_lyrics(eof_song->vocal_track[0], 0);
 				}
 //				break;
 			}
@@ -2958,7 +2958,7 @@ int eof_initialize(int argc, char * argv[])
 				}
 				else
 				{
-					eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 0);
+					eof_vocal_track_fixup_lyrics(eof_song->vocal_track[0], 0);
 				}
 			}
 			else if(!ustricmp(get_extension(argv[i]), "chart"))

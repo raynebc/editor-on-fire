@@ -106,7 +106,7 @@ TRACK CHUNK, for each track:
 !		For bookmarks, there should be no string, and the end position will be ignored
 !		For fret catalog entries, the flags field stores the track number the catalog entry is from
 
-	[GUITAR/BASS/DRUM/PRO DRUM/KEYS TRACK FORMAT]
+	["LEGACY" (GUITAR/BASS/DRUM/PRO DRUM/KEYS) TRACK FORMAT]
 		4 bytes:	Number of notes
 		NOTE CHUNK, for each note
 		{
@@ -118,6 +118,7 @@ TRACK CHUNK, for each track:
 			4 bytes:	Note length (in milliseconds or delta ticks)
 *			2 bytes:	Note flags (allow for more flags.  When this is implemented, ensure that Expert+ bass gets its own status flag again)
 		}
+!	This track format could be referred to as "legacy" format, because it is the only format used prior to RB3
 
 	[VOCAL TRACK FORMAT]
 *		1 byte:		Rock Band compliance flag (1=compliant, the chart doesn't use pitches outside the allowed range of [36,84])

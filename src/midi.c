@@ -293,9 +293,9 @@ int eof_count_tracks(void)
 	int i;
 	int count = 0;
 
-	for(i = 0; i < EOF_MAX_TRACKS; i++)
+	for(i = 0; i < EOF_LEGACY_TRACKS_MAX; i++)
 	{
-		if(eof_song->track[i]->notes > 0)
+		if(eof_song->legacy_track[i]->notes > 0)
 		{
 			count++;
 		}
@@ -360,10 +360,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 	eof_sort_notes();	//Writing efficient on-the-fly HOPO phrasing relies on all notes being sorted
 
-	for(j = 0; j < EOF_MAX_TRACKS; j++)
+	for(j = 0; j < EOF_LEGACY_TRACKS_MAX; j++)
 	{
 		/* fill in notes */
-		if(sp->track[j]->notes > 0)
+		if(sp->legacy_track[j]->notes > 0)
 		{
 			/* clear MIDI events list */
 			eof_clear_midi_events();
@@ -372,11 +372,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 //Detect whether Pro drum notation is being used
 //Pro drum notation is that if a green, yellow or blue drum note is NOT to be marked as a cymbal,
 //it must be marked with the appropriate MIDI note, otherwise the note defaults as a cymbal
-			for(i = 0, prodrums = 0; i < sp->track[j]->notes; i++)
+			for(i = 0, prodrums = 0; i < sp->legacy_track[j]->notes; i++)
 			{
-				if(	((sp->track[j]->note[i]->note & 4) && ((sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_Y_CYMBAL))) ||
-					((sp->track[j]->note[i]->note & 8) && ((sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_B_CYMBAL))) ||
-					((sp->track[j]->note[i]->note & 16) && ((sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_G_CYMBAL))))
+				if(	((sp->legacy_track[j]->note[i]->note & 4) && ((sp->legacy_track[j]->note[i]->flags & EOF_NOTE_FLAG_Y_CYMBAL))) ||
+					((sp->legacy_track[j]->note[i]->note & 8) && ((sp->legacy_track[j]->note[i]->flags & EOF_NOTE_FLAG_B_CYMBAL))) ||
+					((sp->legacy_track[j]->note[i]->note & 16) && ((sp->legacy_track[j]->note[i]->flags & EOF_NOTE_FLAG_G_CYMBAL))))
 				{	//If this note contains a yellow, blue or purple (green in Rock Band) drum marked with pro drum notation
 					prodrums = 1;
 					break;
@@ -385,9 +385,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 			/* write the MTrk MIDI data to a temp file
 	   		use size of the file as the MTrk header length */
-			for(i = 0; i < sp->track[j]->notes; i++)
+			for(i = 0; i < sp->legacy_track[j]->notes; i++)
 			{
-				switch(sp->track[j]->note[i]->type)
+				switch(sp->legacy_track[j]->note[i]->type)
 				{
 					case EOF_NOTE_AMAZING:	//notes 96-100
 					{
@@ -417,182 +417,182 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				}
 
 				/* write green note */
-				if(sp->track[j]->note[i]->note & 1)
+				if(sp->legacy_track[j]->note[i]->note & 1)
 				{
-					if((j == EOF_TRACK_DRUM) && (sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_DBASS))
+					if((j == EOF_TRACK_DRUM) && (sp->legacy_track[j]->note[i]->flags & EOF_NOTE_FLAG_DBASS))
 					{	//If the track being written is PART DRUMS, and this note is marked for Expert+ double bass
-						eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, 95);
+						eof_add_midi_event(sp->legacy_track[j]->note[i]->pos, 0x90, 95);
 						expertplus = 1;
 					}
 					else	//Otherwise write a normal green gem
-						eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 0);
+						eof_add_midi_event(sp->legacy_track[j]->note[i]->pos, 0x90, midi_note_offset + 0);
 				}
 
 				/* write red note */
-				if(sp->track[j]->note[i]->note & 2)
+				if(sp->legacy_track[j]->note[i]->note & 2)
 				{
-					eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 1);
+					eof_add_midi_event(sp->legacy_track[j]->note[i]->pos, 0x90, midi_note_offset + 1);
 				}
 
 				/* write yellow note */
-				if(sp->track[j]->note[i]->note & 4)
+				if(sp->legacy_track[j]->note[i]->note & 4)
 				{
-					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_note_pos(sp->track[j],i,EOF_NOTE_FLAG_Y_CYMBAL))
+					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_note_pos(sp->legacy_track[j],i,EOF_NOTE_FLAG_Y_CYMBAL))
 					{	//If pro drum notation is in effect and no more yellow drum notes at this note's position are marked as cymbals
 						if(eof_midi_note_status[RB3_DRUM_YELLOW_FORCE] == 0)
 						{	//Write a pro yellow drum marker if one isn't already in effect
-							eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, RB3_DRUM_YELLOW_FORCE);
+							eof_add_midi_event(sp->legacy_track[j]->note[i]->pos, 0x90, RB3_DRUM_YELLOW_FORCE);
 						}
 					}
-					eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 2);
+					eof_add_midi_event(sp->legacy_track[j]->note[i]->pos, 0x90, midi_note_offset + 2);
 				}
 
 				/* write blue note */
-				if(sp->track[j]->note[i]->note & 8)
+				if(sp->legacy_track[j]->note[i]->note & 8)
 				{
-					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_note_pos(sp->track[j],i,EOF_NOTE_FLAG_B_CYMBAL))
+					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_note_pos(sp->legacy_track[j],i,EOF_NOTE_FLAG_B_CYMBAL))
 					{	//If pro drum notation is in effect and no more blue drum notes at this note's position are marked as cymbals
 						if(eof_midi_note_status[RB3_DRUM_BLUE_FORCE] == 0)
 						{	//Write a pro blue drum marker if one isn't already in effect
-							eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, RB3_DRUM_BLUE_FORCE);
+							eof_add_midi_event(sp->legacy_track[j]->note[i]->pos, 0x90, RB3_DRUM_BLUE_FORCE);
 						}
 					}
-					eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 3);
+					eof_add_midi_event(sp->legacy_track[j]->note[i]->pos, 0x90, midi_note_offset + 3);
 				}
 
 				/* write purple note */
-				if(sp->track[j]->note[i]->note & 16)
+				if(sp->legacy_track[j]->note[i]->note & 16)
 				{	//Note: EOF/FoF refer to this note color as purple/orange whereas Rock Band displays it as green
-					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_note_pos(sp->track[j],i,EOF_NOTE_FLAG_G_CYMBAL))
+					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_note_pos(sp->legacy_track[j],i,EOF_NOTE_FLAG_G_CYMBAL))
 					{	//If pro drum notation is in effect and no more green drum notes at this note's position are marked as cymbals
 						if(eof_midi_note_status[RB3_DRUM_GREEN_FORCE] == 0)
 						{	//Write a pro green drum marker if one isn't already in effect
-							eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, RB3_DRUM_GREEN_FORCE);
+							eof_add_midi_event(sp->legacy_track[j]->note[i]->pos, 0x90, RB3_DRUM_GREEN_FORCE);
 						}
 					}
-					eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 4);
+					eof_add_midi_event(sp->legacy_track[j]->note[i]->pos, 0x90, midi_note_offset + 4);
 				}
 
 				/* write forced HOPO */
-				if(sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO)
+				if(sp->legacy_track[j]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO)
 				{
 					if(eof_midi_note_status[midi_note_offset + 5] == 0)
 					{	//Only write a phrase marker if one isn't already in effect
-						eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 5);
+						eof_add_midi_event(sp->legacy_track[j]->note[i]->pos, 0x90, midi_note_offset + 5);
 					}
 				}
 
 				/* write forced non-HOPO */
-				else if(sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_NO_HOPO)
+				else if(sp->legacy_track[j]->note[i]->flags & EOF_NOTE_FLAG_NO_HOPO)
 				{
 					if(eof_midi_note_status[midi_note_offset + 6] == 0)
 					{	//Only write a phrase marker if one isn't already in effect
-						eof_add_midi_event(sp->track[j]->note[i]->pos, 0x90, midi_note_offset + 6);
+						eof_add_midi_event(sp->legacy_track[j]->note[i]->pos, 0x90, midi_note_offset + 6);
 					}
 				}
 
-				if((j == EOF_TRACK_DRUM) && (sp->track[j]->note[i]->type != EOF_NOTE_SPECIAL))
+				if((j == EOF_TRACK_DRUM) && (sp->legacy_track[j]->note[i]->type != EOF_NOTE_SPECIAL))
 				{	//Ensure that drum notes are not written with sustain (Unless they are BRE notes)
 					length = 1;
 				}
 				else
 				{
-					length = sp->track[j]->note[i]->length;
+					length = sp->legacy_track[j]->note[i]->length;
 				}
 
 				/* write green note off */
-				if(sp->track[j]->note[i]->note & 1)
+				if(sp->legacy_track[j]->note[i]->note & 1)
 				{
-					if((j == EOF_TRACK_DRUM) && (sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_DBASS))	//If the track being written is PART DRUMS, and this note is marked for Expert+ double bass
-						eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, 95);
+					if((j == EOF_TRACK_DRUM) && (sp->legacy_track[j]->note[i]->flags & EOF_NOTE_FLAG_DBASS))	//If the track being written is PART DRUMS, and this note is marked for Expert+ double bass
+						eof_add_midi_event(sp->legacy_track[j]->note[i]->pos + length, 0x80, 95);
 					else	//Otherwise end a normal green gem
-						eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, midi_note_offset + 0);
+						eof_add_midi_event(sp->legacy_track[j]->note[i]->pos + length, 0x80, midi_note_offset + 0);
 				}
 
 				/* write red note off */
-				if(sp->track[j]->note[i]->note & 2)
+				if(sp->legacy_track[j]->note[i]->note & 2)
 				{
-					eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, midi_note_offset + 1);
+					eof_add_midi_event(sp->legacy_track[j]->note[i]->pos + length, 0x80, midi_note_offset + 1);
 				}
 
 				/* write yellow note off */
-				if(sp->track[j]->note[i]->note & 4)
+				if(sp->legacy_track[j]->note[i]->note & 4)
 				{
-					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_note_pos(sp->track[j],i,EOF_NOTE_FLAG_Y_CYMBAL))
+					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_note_pos(sp->legacy_track[j],i,EOF_NOTE_FLAG_Y_CYMBAL))
 					{	//If pro drum notation is in effect and no more drum notes at this note's position are marked as cymbals
 						if(eof_midi_note_status[RB3_DRUM_YELLOW_FORCE] == 1)
 						{	//End a pro yellow drum marker if one is in effect
-							eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, RB3_DRUM_YELLOW_FORCE);
+							eof_add_midi_event(sp->legacy_track[j]->note[i]->pos + length, 0x80, RB3_DRUM_YELLOW_FORCE);
 						}
 					}
-					eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, midi_note_offset + 2);
+					eof_add_midi_event(sp->legacy_track[j]->note[i]->pos + length, 0x80, midi_note_offset + 2);
 				}
 
 				/* write blue note off */
-				if(sp->track[j]->note[i]->note & 8)
+				if(sp->legacy_track[j]->note[i]->note & 8)
 				{
-					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_note_pos(sp->track[j],i,EOF_NOTE_FLAG_B_CYMBAL))
+					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_note_pos(sp->legacy_track[j],i,EOF_NOTE_FLAG_B_CYMBAL))
 					{	//If pro drum notation is in effect and no more blue drum notes at this note's position are marked as cymbals
 						if(eof_midi_note_status[RB3_DRUM_BLUE_FORCE] == 1)
 						{	//End a pro blue drum marker if one is in effect
-							eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, RB3_DRUM_BLUE_FORCE);
+							eof_add_midi_event(sp->legacy_track[j]->note[i]->pos + length, 0x80, RB3_DRUM_BLUE_FORCE);
 						}
 					}
-					eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, midi_note_offset + 3);
+					eof_add_midi_event(sp->legacy_track[j]->note[i]->pos + length, 0x80, midi_note_offset + 3);
 				}
 
 				/* write purple note off */
-				if(sp->track[j]->note[i]->note & 16)
+				if(sp->legacy_track[j]->note[i]->note & 16)
 				{	//Note: EOF/FoF refer to this note color as purple/orange whereas Rock Band displays it as green
-					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_note_pos(sp->track[j],i,EOF_NOTE_FLAG_G_CYMBAL))
+					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_note_pos(sp->legacy_track[j],i,EOF_NOTE_FLAG_G_CYMBAL))
 					{	//If pro drum notation is in effect and no more drum notes at this note's position are marked as cymbals
 						if(eof_midi_note_status[RB3_DRUM_GREEN_FORCE] == 1)
 						{	//End a pro green drum marker if one is in effect
-							eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, RB3_DRUM_GREEN_FORCE);
+							eof_add_midi_event(sp->legacy_track[j]->note[i]->pos + length, 0x80, RB3_DRUM_GREEN_FORCE);
 						}
 					}
-					eof_add_midi_event(sp->track[j]->note[i]->pos + length, 0x80, midi_note_offset + 4);
+					eof_add_midi_event(sp->legacy_track[j]->note[i]->pos + length, 0x80, midi_note_offset + 4);
 				}
 
 				/* write forced HOPO note off */
-//				if((i + 1 >= sp->track[j]->notes) || !(sp->track[j]->note[i+1]->flags & EOF_NOTE_FLAG_F_HOPO))	//If this is the last note in the track or if the next note is not a forced HOPO on note
-				if(sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO)
+//				if((i + 1 >= sp->legacy_track[j]->notes) || !(sp->legacy_track[j]->note[i+1]->flags & EOF_NOTE_FLAG_F_HOPO))	//If this is the last note in the track or if the next note is not a forced HOPO on note
+				if(sp->legacy_track[j]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO)
 				{	//thekiwimaddog indicated that Rock Band uses HOPO phrases per note/chord
 					if(eof_midi_note_status[midi_note_offset + 5])
 					{	//Only end a phrase marker if one is already in effect
-						eof_add_midi_event(sp->track[j]->note[i]->pos + sp->track[j]->note[i]->length, 0x80, midi_note_offset + 5);
+						eof_add_midi_event(sp->legacy_track[j]->note[i]->pos + sp->legacy_track[j]->note[i]->length, 0x80, midi_note_offset + 5);
 					}
 				}
 
 				/* write forced non-HOPO note off */
-//				else if((i + 1 >= sp->track[j]->notes) || !(sp->track[j]->note[i+1]->flags & EOF_NOTE_FLAG_NO_HOPO))	//If this is the lst note in the track or if the next note is not a forced HOPO off note
-				if(sp->track[j]->note[i]->flags & EOF_NOTE_FLAG_NO_HOPO)
+//				else if((i + 1 >= sp->legacy_track[j]->notes) || !(sp->legacy_track[j]->note[i+1]->flags & EOF_NOTE_FLAG_NO_HOPO))	//If this is the lst note in the track or if the next note is not a forced HOPO off note
+				if(sp->legacy_track[j]->note[i]->flags & EOF_NOTE_FLAG_NO_HOPO)
 				{	//thekiwimaddog indicated that Rock Band uses HOPO phrases per note/chord
 					if(eof_midi_note_status[midi_note_offset + 6])
 					{	//Only end a phrase marker if one is already in effect
-						eof_add_midi_event(sp->track[j]->note[i]->pos + sp->track[j]->note[i]->length, 0x80, midi_note_offset + 6);
+						eof_add_midi_event(sp->legacy_track[j]->note[i]->pos + sp->legacy_track[j]->note[i]->length, 0x80, midi_note_offset + 6);
 					}
 				}
 			}
 
 			/* fill in star power */
-			for(i = 0; i < sp->track[j]->star_power_paths; i++)
+			for(i = 0; i < sp->legacy_track[j]->star_power_paths; i++)
 			{
-				eof_add_midi_event(sp->track[j]->star_power_path[i].start_pos, 0x90, 116);
-				eof_add_midi_event(sp->track[j]->star_power_path[i].end_pos, 0x80, 116);
+				eof_add_midi_event(sp->legacy_track[j]->star_power_path[i].start_pos, 0x90, 116);
+				eof_add_midi_event(sp->legacy_track[j]->star_power_path[i].end_pos, 0x80, 116);
 			}
 
 			/* fill in solos */
-			for(i = 0; i < sp->track[j]->solos; i++)
+			for(i = 0; i < sp->legacy_track[j]->solos; i++)
 			{
-				eof_add_midi_event(sp->track[j]->solo[i].start_pos, 0x90, 103);
-				eof_add_midi_event(sp->track[j]->solo[i].end_pos, 0x80, 103);
+				eof_add_midi_event(sp->legacy_track[j]->solo[i].start_pos, 0x90, 103);
+				eof_add_midi_event(sp->legacy_track[j]->solo[i].end_pos, 0x80, 103);
 			}
 
 			for(i=0;i < 128;i++)
 			{	//Ensure that any notes that are still on are terminated
 				if(eof_midi_note_status[i] != 0)	//If this note was left on, write a note off at the end of the last charted note
-					eof_add_midi_event(sp->track[j]->note[sp->track[j]->notes-1]->pos + sp->track[j]->note[sp->track[j]->notes-1]->length,0x80,i);
+					eof_add_midi_event(sp->legacy_track[j]->note[sp->legacy_track[j]->notes-1]->pos + sp->legacy_track[j]->note[sp->legacy_track[j]->notes-1]->length,0x80,i);
 			}
     		qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
 //			allegro_message("break1");
@@ -660,16 +660,16 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	}
 
 /* make vocals track */
-	if(sp->vocal_track->lyrics > 0)
+	if(sp->vocal_track[0]->lyrics > 0)
 	{
 		/* clear MIDI events list */
 		eof_clear_midi_events();
 
 		/* pre-parse the lyrics to determine if any pitchless lyrics are present */
 		correctlyrics = 0;	//By default, pitchless lyrics will not be changed to freestyle during export
-		for(ctr = 0; ctr < sp->vocal_track->lyrics; ctr++)
+		for(ctr = 0; ctr < sp->vocal_track[0]->lyrics; ctr++)
 		{
-			if(sp->vocal_track->lyric[ctr]->note == 0)
+			if(sp->vocal_track[0]->lyric[ctr]->note == 0)
 			{	//If any of the lyrics are missing the pitch, prompt for whether they should be corrected
 				eof_cursor_visible = 0;
 				eof_pen_visible = 0;
@@ -687,9 +687,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 		/* pre-parse the lyrics to see if any exist outside of lyric phrases */
 		correctphrases = 0;	//By default, missing lyric phrases won't be inserted
-		for(ctr = 0; ctr < sp->vocal_track->lyrics; ctr++)
+		for(ctr = 0; ctr < sp->vocal_track[0]->lyrics; ctr++)
 		{
-			if((FindLyricLine(ctr) == NULL) && (sp->vocal_track->lyric[ctr]->note != VOCALPERCUSSION))
+			if((FindLyricLine(ctr) == NULL) && (sp->vocal_track[0]->lyric[ctr]->note != VOCALPERCUSSION))
 			{	//If this lyric is not in a line and is not a vocal percussion note
 				eof_cursor_visible = 0;
 				eof_pen_visible = 0;
@@ -708,12 +708,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		/* insert the missing lyric phrases if the user opted to do so */
 		if(correctphrases)
 		{
-			for(ctr = 0; ctr < sp->vocal_track->lyrics; ctr++)
+			for(ctr = 0; ctr < sp->vocal_track[0]->lyrics; ctr++)
 			{
-				if((FindLyricLine(ctr) == NULL) && (sp->vocal_track->lyric[ctr]->note != VOCALPERCUSSION))
+				if((FindLyricLine(ctr) == NULL) && (sp->vocal_track[0]->lyric[ctr]->note != VOCALPERCUSSION))
 				{	//If this lyric is not in a line and is not a vocal percussion note, write the MIDI events for a line phrase to envelop it
-					eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[ctr]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, 105);
-					eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[ctr]->pos + sp->vocal_track->lyric[ctr]->length,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, 105);
+					eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[0]->lyric[ctr]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, 105);
+					eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[0]->lyric[ctr]->pos + sp->vocal_track[0]->lyric[ctr]->length,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, 105);
 
 				}
 			}
@@ -721,44 +721,44 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 		/* write the MTrk MIDI data to a temp file
 		use size of the file as the MTrk header length */
-		for(i = 0; i < sp->vocal_track->lyrics; i++)
+		for(i = 0; i < sp->vocal_track[0]->lyrics; i++)
 		{
 			//Copy each lyric string into a new array, perform correction on it if necessary
-			tempstring = malloc(sizeof(sp->vocal_track->lyric[i]->text));
+			tempstring = malloc(sizeof(sp->vocal_track[0]->lyric[i]->text));
 			if(tempstring == NULL)	//If allocation failed
 			{
 				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 				eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 				return 0;			//Return failure
 			}
-			sp->vocal_track->lyric[i]->text[EOF_MAX_LYRIC_LENGTH] = '\0';	//Guarantee that the lyric string is terminated
-			memcpy(tempstring,sp->vocal_track->lyric[i]->text,sizeof(sp->vocal_track->lyric[i]->text));	//Copy to new array
+			sp->vocal_track[0]->lyric[i]->text[EOF_MAX_LYRIC_LENGTH] = '\0';	//Guarantee that the lyric string is terminated
+			memcpy(tempstring,sp->vocal_track[0]->lyric[i]->text,sizeof(sp->vocal_track[0]->lyric[i]->text));	//Copy to new array
 
-			if(sp->vocal_track->lyric[i]->note > 0)
+			if(sp->vocal_track[0]->lyric[i]->note > 0)
 			{	//For the vocal track, store the converted delta times, to allow for artificial padding for lyric phrase markers
-				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, sp->vocal_track->lyric[i]->note);
-				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos + sp->vocal_track->lyric[i]->length,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, sp->vocal_track->lyric[i]->note);
+				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[0]->lyric[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, sp->vocal_track[0]->lyric[i]->note);
+				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[0]->lyric[i]->pos + sp->vocal_track[0]->lyric[i]->length,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, sp->vocal_track[0]->lyric[i]->note);
 			}
 			else if(correctlyrics)
 			{	//If performing pitchless lyric correction, write pitch 50 instead to guarantee it is usable as a freestyle lyric
-				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, 50);
-				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos + sp->vocal_track->lyric[i]->length,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, 50);
+				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[0]->lyric[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, 50);
+				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[0]->lyric[i]->pos + sp->vocal_track[0]->lyric[i]->length,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, 50);
 				eof_set_freestyle(tempstring,1);		//Ensure the lyric properly ends with a freestyle character
 			}
 
 			//Write the string, which was only corrected if correctlyrics was nonzero and the pitch was not defined
-			if(sp->vocal_track->lyric[i]->note != VOCALPERCUSSION)	//Do not write a lyric string for vocal percussion notes
-				eof_add_midi_lyric_event(eof_ConvertToDeltaTime(sp->vocal_track->lyric[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), tempstring);
+			if(sp->vocal_track[0]->lyric[i]->note != VOCALPERCUSSION)	//Do not write a lyric string for vocal percussion notes
+				eof_add_midi_lyric_event(eof_ConvertToDeltaTime(sp->vocal_track[0]->lyric[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), tempstring);
 		}
 		/* fill in lyric lines */
-		for(i = 0; i < sp->vocal_track->lines; i++)
+		for(i = 0; i < sp->vocal_track[0]->lines; i++)
 		{
-			eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->line[i].start_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, 105);
-			eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->line[i].end_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, 105);
-			if(sp->vocal_track->line[i].flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE)
+			eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[0]->line[i].start_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, 105);
+			eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[0]->line[i].end_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, 105);
+			if(sp->vocal_track[0]->line[i].flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE)
 			{	//For the vocal track, store the converted delta times, to allow for artificial padding for lyric phrase markers
-				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->line[i].start_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, 116);
-				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track->line[i].end_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, 116);
+				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[0]->line[i].start_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, 116);
+				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[0]->line[i].end_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, 116);
 			}
 		}
 
@@ -978,7 +978,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	}
 
 	/* write header data */
-	header[11] = eof_count_tracks() + 1 + (sp->text_events > 0 ? 1 : 0) + (sp->vocal_track->lyrics > 0 ? 1 : 0);
+	header[11] = eof_count_tracks() + 1 + (sp->text_events > 0 ? 1 : 0) + (sp->vocal_track[0]->lyrics > 0 ? 1 : 0);
 	pack_fwrite(header, 14, fp);
 
 	if(expertpluswritten)
@@ -1061,7 +1061,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 /* write note tracks */
 	for(j = 0; j < EOF_MAX_TRACKS; j++)
 	{
-		if(eof_song->track[j]->notes)
+		if(eof_song->legacy_track[j]->notes)
 		{
 			track_length = file_size_ex(tempname[j]);
 			fp2 = pack_fopen(tempname[j], "r");
@@ -1103,7 +1103,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 
 /* write lyric track if there are any lyrics */
-	if(sp->vocal_track->lyrics)
+	if(sp->vocal_track[0]->lyrics)
 	{
 		track_length = file_size_ex(tempname[7]);
 		fp2 = pack_fopen(tempname[7], "r");

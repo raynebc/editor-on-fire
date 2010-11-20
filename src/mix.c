@@ -98,7 +98,7 @@ void eof_mix_callback(void * buf, int length)
 		{
 			sum2 = buffer[i+1] - 32768;		//Convert to signed sample
 		}
-		
+
 		/* apply volume multiplier */
 		if(eof_chart_volume != 100)		//If the chart volume is to be less than 100%
 		{
@@ -232,19 +232,19 @@ void eof_mix_find_claps(void)
 	eof_mix_current_clap = 0;
 	if(eof_vocals_selected)
 	{
-		for(i = 0; i < eof_song->vocal_track->lyrics; i++)
+		for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
 		{
-			eof_mix_clap_pos[eof_mix_claps] = eof_mix_msec_to_sample(eof_song->vocal_track->lyric[i]->pos, alogg_get_wave_freq_ogg(eof_music_track));
+			eof_mix_clap_pos[eof_mix_claps] = eof_mix_msec_to_sample(eof_song->vocal_track[0]->lyric[i]->pos, alogg_get_wave_freq_ogg(eof_music_track));
 			eof_mix_claps++;
 		}
 	}
 	else
 	{
-		for(i = 0; i < eof_song->track[eof_selected_track]->notes; i++)
+		for(i = 0; i < eof_song->legacy_track[eof_selected_track]->notes; i++)
 		{
-			if((eof_song->track[eof_selected_track]->note[i]->type == eof_note_type) && (eof_song->track[eof_selected_track]->note[i]->note & eof_mix_claps_note))
+			if((eof_song->legacy_track[eof_selected_track]->note[i]->type == eof_note_type) && (eof_song->legacy_track[eof_selected_track]->note[i]->note & eof_mix_claps_note))
 			{
-				eof_mix_clap_pos[eof_mix_claps] = eof_mix_msec_to_sample(eof_song->track[eof_selected_track]->note[i]->pos, alogg_get_wave_freq_ogg(eof_music_track));
+				eof_mix_clap_pos[eof_mix_claps] = eof_mix_msec_to_sample(eof_song->legacy_track[eof_selected_track]->note[i]->pos, alogg_get_wave_freq_ogg(eof_music_track));
 				eof_mix_claps++;
 			}
 		}
@@ -261,19 +261,19 @@ void eof_mix_find_claps(void)
 	eof_mix_notes = 0;
 	eof_mix_current_note = 0;
 	eof_mix_percussions = 0;
-	for(i = 0; i < eof_song->vocal_track->lyrics; i++)
+	for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
 	{
-		if((eof_song->vocal_track->lyric[i]->note >= 36) && (eof_song->vocal_track->lyric[i]->note <= 84))
+		if((eof_song->vocal_track[0]->lyric[i]->note >= 36) && (eof_song->vocal_track[0]->lyric[i]->note <= 84))
 		{	//This is a vocal pitch
-			eof_mix_note_pos[eof_mix_notes] = eof_mix_msec_to_sample(eof_song->vocal_track->lyric[i]->pos, alogg_get_wave_freq_ogg(eof_music_track));
-			eof_mix_note_note[eof_mix_notes] = eof_song->vocal_track->lyric[i]->note;
-			eof_mix_note_ms_pos[eof_mix_notes] = eof_song->vocal_track->lyric[i]->pos;
-			eof_mix_note_ms_end[eof_mix_notes] = eof_song->vocal_track->lyric[i]->pos + eof_song->vocal_track->lyric[i]->length;
+			eof_mix_note_pos[eof_mix_notes] = eof_mix_msec_to_sample(eof_song->vocal_track[0]->lyric[i]->pos, alogg_get_wave_freq_ogg(eof_music_track));
+			eof_mix_note_note[eof_mix_notes] = eof_song->vocal_track[0]->lyric[i]->note;
+			eof_mix_note_ms_pos[eof_mix_notes] = eof_song->vocal_track[0]->lyric[i]->pos;
+			eof_mix_note_ms_end[eof_mix_notes] = eof_song->vocal_track[0]->lyric[i]->pos + eof_song->vocal_track[0]->lyric[i]->length;
 			eof_mix_notes++;
 		}
-		else if(eof_song->vocal_track->lyric[i]->note == EOF_LYRIC_PERCUSSION)
+		else if(eof_song->vocal_track[0]->lyric[i]->note == EOF_LYRIC_PERCUSSION)
 		{	//This is vocal percussion
-			eof_mix_percussion_pos[eof_mix_percussions] = eof_mix_msec_to_sample(eof_song->vocal_track->lyric[i]->pos, alogg_get_wave_freq_ogg(eof_music_track));
+			eof_mix_percussion_pos[eof_mix_percussions] = eof_mix_msec_to_sample(eof_song->vocal_track[0]->lyric[i]->pos, alogg_get_wave_freq_ogg(eof_music_track));
 			eof_mix_percussions++;
 		}
 	}
