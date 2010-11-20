@@ -410,6 +410,7 @@ int eof_load_song_pf_new(EOF_SONG * sp, PACKFILE * fp)
 	unsigned long inputl,count,ctr;
 	unsigned long track_count,track_ctr,track_format,track_behavior,track_type;
 	unsigned long section_type_count,section_type_ctr,section_type,section_count,section_ctr,section_start,section_end;
+	unsigned long custom_data_count,custom_data_ctr,custom_data_size;
 
 	#define EOFNUMINISTRINGTYPES 12
 	char *inistringbuffer[EOFNUMINISTRINGTYPES]={NULL,NULL,sp->tags->artist,sp->tags->title,sp->tags->frettist,NULL,sp->tags->year,sp->tags->loading_text,NULL,NULL,NULL,NULL};
@@ -524,6 +525,16 @@ int eof_load_song_pf_new(EOF_SONG * sp, PACKFILE * fp)
 		}
 	}
 
+	custom_data_count = pack_igetl(fp);		//Read the number of custom data blocks
+	for(custom_data_ctr=0; custom_data_ctr<custom_data_count; custom_data_ctr++)
+	{	//For each custom data block in the project
+		custom_data_size = pack_igetl(fp);	//Read the size of the custom data block
+		for(ctr=0; ctr<custom_data_size; ctr++)
+		{	//For each byte in the custom data block
+			pack_getc(fp);	//Read the data (not supported yet)
+		}
+	}
+
 	/* read track data */
 	track_count = pack_igetl(fp);		//Read the number of tracks
 	for(track_ctr=0; track_ctr<track_count; track_ctr++)
@@ -534,6 +545,7 @@ int eof_load_song_pf_new(EOF_SONG * sp, PACKFILE * fp)
 		track_type = pack_getc(fp);		//Read the track type
 		pack_getc(fp);					//Read the track difficulty level (not supported yet)
 		pack_igetl(fp);					//Read the track flags (not supported yet)
+		pack_igetw(fp);					//Read the track compliance flags (not supported yet)
 
 		switch(track_format)
 		{	//Perform the appropriate logic to load this format of track
@@ -593,6 +605,16 @@ int eof_load_song_pf_new(EOF_SONG * sp, PACKFILE * fp)
 						}
 					break;
 				}
+			}
+		}
+
+		custom_data_count = pack_igetl(fp);		//Read the number of custom data blocks
+		for(custom_data_ctr=0; custom_data_ctr<custom_data_count; custom_data_ctr++)
+		{	//For each custom data block in the project
+			custom_data_size = pack_igetl(fp);	//Read the size of the custom data block
+			for(ctr=0; ctr<custom_data_size; ctr++)
+			{	//For each byte in the custom data block
+				pack_getc(fp);	//Read the data (not supported yet)
 			}
 		}
 	}
