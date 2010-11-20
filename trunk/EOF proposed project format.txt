@@ -70,6 +70,15 @@ TEXT EVENT CHUNK, for each text event:
 *	2 bytes:	Associated track number (0 if it applies to the entire chart, such as generic section markers)
 }
 
+*4 bytes:	Number of custom data blocks
+CUSTOM DATA BLOCK CHUNK, for each custom data block
+{
+*	4 bytes:	The number of bytes this custom data block consumes
+*	[varies:]	(Custom data, can store anything)
+}
+!This will allow the storage of any data not specifically accounted for in this format, helping to future proof the format
+
+
 	TRACK DATA:
 *4 bytes:	Number of tracks
 TRACK CHUNK, for each track:
@@ -85,6 +94,7 @@ TRACK CHUNK, for each track:
 !	Until track numbering is completely removed, the track type can serve as a replacement
 *	1 byte:		Track difficulty level (0-6 or 0xFF)
 *	4 bytes:	Track flags (ie. which difficulties are locked for editing)
+*	2 bytes:	Compliance flags (ie. if it is valid as per constraints of Rock Band, etc)
 
 *	[varies:]	Track data (depending on the format type as defined below)
 
@@ -108,6 +118,13 @@ TRACK CHUNK, for each track:
 !	(ie. song preview sections or bookmarks) or information that otherwise applies to more than one track (ie. unison SP sections)
 !		For bookmarks, there should be no string, and the end position will be ignored
 !		For fret catalog entries, the flags field stores the track number the catalog entry is from
+
+*	4 bytes:	Number of custom data blocks
+*	CUSTOM DATA BLOCK CHUNK, for each custom data block
+*	{
+*		4 bytes:	The number of bytes this custom data block consumes
+*		[varies:]	(Custom data, can store anything)
+*	}
 }
 (End of file)
 
@@ -127,7 +144,6 @@ TRACK CHUNK, for each track:
 !This track format could be referred to as "legacy" format, because it is the only format used prior to RB3
 
 [VOCAL TRACK FORMAT]
-*	1 byte:		Rock Band compliance flag (1=compliant, the chart doesn't use pitches outside the allowed range of [36,84])
 *	1 byte:		Tone set number assigned to this track (ie. 0=Grand Piano, 1=MIDI device, ...)
 	4 bytes:	Number of lyrics
 	LYRIC CHUNK, for each lyric:
@@ -142,8 +158,6 @@ TRACK CHUNK, for each track:
 	}
 
 [PRO GUITAR/PRO BASS TRACK FORMAT]
-*	1 byte:		Rock Band compliance flag (1=compliant, no fret higher than 22 is used)
-
 *	1 byte:		The highest fret number allowed in this track (17 for Mustang, 22 for Squier)
 *	1 byte:		The number of strings on this track's guitar (ie. 4 for standard bass guitar, 6 for standard guitar)
 *	PRO GUITAR TUNING CHUNK, for each string
@@ -171,7 +185,6 @@ TRACK CHUNK, for each track:
 *	}
 
 [PRO KEYS TRACK FORMAT]
-*	1 byte:		Rock Band compliance flag (1=compliant, the chart doesn't use notes outside the currently unknown accepted range)
 *	1 byte:		Tone set number assigned to this track (ie. 0=Grand Piano, 1=MIDI device, ...)
 
 *	4 bytes:	Number of chords
@@ -199,7 +212,6 @@ TRACK CHUNK, for each track:
 *	}
 
 [VARIABLE LANE "LEGACY" FORMAT]
-*	1 byte:		DTX Mania compliance flag (1=compliant, the track has 8 drum lanes?)
 *	1 byte:		The number of lanes included in this track
 
 *	4 bytes:	Number of notes
