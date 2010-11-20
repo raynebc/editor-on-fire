@@ -405,7 +405,7 @@ int eof_menu_file_load(void)
 		eof_song_loaded = 1;
 		eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
 		eof_init_after_load();
-		eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 0);
+		eof_vocal_track_fixup_lyrics(eof_song->vocal_track[0], 0);
 	}
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
@@ -710,7 +710,7 @@ int eof_menu_file_lyrics_import(void)
 			if(lyricdetectionlist->next == NULL)	//If this file had only one detected lyric format
 			{
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make a generic undo state
-				EOF_IMPORT_VIA_LC(eof_song->vocal_track, NULL, lyricdetectionlist->format, returnedfn, lyricdetectionlist->track);
+				EOF_IMPORT_VIA_LC(eof_song->vocal_track[0], NULL, lyricdetectionlist->format, returnedfn, lyricdetectionlist->track);
 					//Import the format
 			}
 			else
@@ -719,12 +719,12 @@ int eof_menu_file_lyrics_import(void)
 				if(selectedformat)	//If a selection was made
 				{
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make a generic undo state
-					EOF_IMPORT_VIA_LC(eof_song->vocal_track, NULL, selectedformat, returnedfn, selectedtrack);
+					EOF_IMPORT_VIA_LC(eof_song->vocal_track[0], NULL, selectedformat, returnedfn, selectedtrack);
 				}
 			}
 		}
 	}
-	eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 0);
+	eof_vocal_track_fixup_lyrics(eof_song->vocal_track[0], 0);
 	eof_reset_lyric_preview_lines();
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
@@ -794,7 +794,7 @@ int eof_menu_file_midi_import(void)
 		{
 			eof_init_after_load();
 			eof_song_loaded = 1;
-			eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 0);
+			eof_vocal_track_fixup_lyrics(eof_song->vocal_track[0], 0);
 		}
 		else
 		{
@@ -1985,16 +1985,16 @@ int eof_save_helper(char *destfilename)
 	eof_fixup_notes();
 
 	/* prepare lyrics if applicable */
-	if(eof_song->vocal_track->lyrics > 0)
+	if(eof_song->vocal_track[0]->lyrics > 0)
 	{
 		/* sort and validate lyrics */
-		eof_vocal_track_sort_lyrics(eof_song->vocal_track);
-		eof_vocal_track_fixup_lyrics(eof_song->vocal_track, 0);
+		eof_vocal_track_sort_lyrics(eof_song->vocal_track[0]);
+		eof_vocal_track_fixup_lyrics(eof_song->vocal_track[0], 0);
 
 		/* pre-parse the lyrics to determine if any of them are not contained within a lyric phrase */
-		for(ctr = 0; ctr < eof_song->vocal_track->lyrics; ctr++)
+		for(ctr = 0; ctr < eof_song->vocal_track[0]->lyrics; ctr++)
 		{
-			if((eof_song->vocal_track->lyric[ctr]->note != EOF_LYRIC_PERCUSSION) && (FindLyricLine(ctr) == NULL))
+			if((eof_song->vocal_track[0]->lyric[ctr]->note != EOF_LYRIC_PERCUSSION) && (FindLyricLine(ctr) == NULL))
 			{	//If any of the non vocal percussion lyrics are not within a line
 				eof_cursor_visible = 0;
 				eof_pen_visible = 0;
@@ -2031,10 +2031,10 @@ int eof_save_helper(char *destfilename)
 	eof_save_ini(eof_song, eof_temp_filename);
 
 	/* save script lyrics if applicable) */
-	if(eof_song->tags->lyrics && eof_song->vocal_track->lyrics)							//If user enabled the Lyrics checkbox in song properties and there are lyrics defined
+	if(eof_song->tags->lyrics && eof_song->vocal_track[0]->lyrics)							//If user enabled the Lyrics checkbox in song properties and there are lyrics defined
 	{
 		append_filename(eof_temp_filename, newfolderpath, "script.txt", 1024);
-		EOF_EXPORT_TO_LC(eof_song->vocal_track,eof_temp_filename,NULL,SCRIPT_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
+		EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,SCRIPT_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
 	}
 
 	/* save OGG file if necessary*/

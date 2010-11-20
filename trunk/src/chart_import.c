@@ -268,7 +268,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 					/* import star power */
 					if(current_note->gemcolor == '2')
 					{
-						eof_track_add_star_power(sp->track[track], chartpos_to_msec(chart, current_note->chartpos), chartpos_to_msec(chart, current_note->chartpos + current_note->duration));
+						eof_track_add_star_power(sp->legacy_track[track], chartpos_to_msec(chart, current_note->chartpos), chartpos_to_msec(chart, current_note->chartpos + current_note->duration));
 					}
 
 					/* skip face-off sections for now */
@@ -281,7 +281,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 					{
 						if(current_note->chartpos != lastpos)
 						{
-							new_note = eof_track_add_note(sp->track[track]);
+							new_note = eof_track_add_note(sp->legacy_track[track]);
 							if(new_note)
 							{
 								new_note->pos = chartpos_to_msec(chart, current_note->chartpos);
