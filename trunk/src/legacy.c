@@ -23,6 +23,14 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 	{
 		return NULL;
 	}
+	//All EOF project formats before revision 'H' stored 5 legacy and 1 vocal track
+	for(i = 0; i < 5; i++)
+	{	//Add tracks
+		if(eof_song_add_track(sp, EOF_LEGACY_TRACK_TYPE) == 0)
+			return NULL;
+	}
+	if(eof_song_add_track(sp, EOF_VOCAL_TRACK_TYPE) == 0)
+		return NULL;
 	switch(version)
 	{
 		case 'G':
@@ -551,7 +559,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			for(i = 0; i < eof_max_tracks; i++)
 			{
 				b = pack_igetl(fp);
-				eof_track_resize(sp->legacy_track[i], b);
+				eof_legacy_track_resize(sp->legacy_track[i], b);
 				for(j = 0; j < b; j++)
 				{
 					sp->legacy_track[i]->note[j]->type = pack_getc(fp);
@@ -618,7 +626,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			for(i = 0; i < eof_max_tracks; i++)
 			{
 				b = pack_igetl(fp);
-				eof_track_resize(sp->legacy_track[i], b);
+				eof_legacy_track_resize(sp->legacy_track[i], b);
 				for(j = 0; j < b; j++)
 				{
 					sp->legacy_track[i]->note[j]->type = pack_getc(fp);
@@ -717,7 +725,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 
 				/* read notes */
 				b = pack_igetl(fp);
-				eof_track_resize(sp->legacy_track[i], b);
+				eof_legacy_track_resize(sp->legacy_track[i], b);
 				for(j = 0; j < b; j++)
 				{
 					sp->legacy_track[i]->note[j]->type = pack_getc(fp);
@@ -838,7 +846,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 
 				/* read notes */
 				b = pack_igetl(fp);
-				eof_track_resize(sp->legacy_track[i], b);
+				eof_legacy_track_resize(sp->legacy_track[i], b);
 				for(j = 0; j < b; j++)
 				{
 					sp->legacy_track[i]->note[j]->type = pack_getc(fp);
@@ -959,7 +967,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 
 				/* read notes */
 				b = pack_igetl(fp);
-				eof_track_resize(sp->legacy_track[i], b);
+				eof_legacy_track_resize(sp->legacy_track[i], b);
 				for(j = 0; j < b; j++)
 				{
 					sp->legacy_track[i]->note[j]->type = pack_getc(fp);
@@ -1098,7 +1106,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 
 				/* read notes */
 				b = pack_igetl(fp);
-				eof_track_resize(sp->legacy_track[i], b);
+				eof_legacy_track_resize(sp->legacy_track[i], b);
 				for(j = 0; j < b; j++)
 				{
 					sp->legacy_track[i]->note[j]->type = pack_getc(fp);
@@ -1211,7 +1219,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			}
 
 			/* read tracks */
-			for(i = 0; i < eof_max_tracks; i++)
+			for(i = 0; i < 5; i++)
 			{
 				/* read solo sections */
 				sp->legacy_track[i]->solos = pack_igetw(fp);
@@ -1239,7 +1247,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 
 				/* read notes */
 				b = pack_igetl(fp);
-				eof_track_resize(sp->legacy_track[i], b);
+				eof_legacy_track_resize(sp->legacy_track[i], b);
 				for(j = 0; j < b; j++)
 				{
 					sp->legacy_track[i]->note[j]->type = pack_getc(fp);
