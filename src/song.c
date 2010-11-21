@@ -93,16 +93,8 @@ EOF_SONG * eof_create_song(void)
 	sp->tags->oggs = 1;
 	sp->tags->revision = 0;
 	sp->tracks = 0;
-	sp->vocaltracks = 0;
-	for(i = 0; i < EOF_MAX_TRACKS; i++)
-	{	//Add tracks
-		if(eof_song_add_legacy_track(sp) == NULL)
-			return NULL;
-	}
-	if(eof_song_add_vocal_track(sp) == NULL)
-		return NULL;
-	sp->vocal_track[0]->lyrics = 0;
-	sp->vocal_track[0]->lines = 0;
+	sp->legacy_tracks = 0;
+	sp->vocal_tracks = 0;
 	sp->beats = 0;
 	sp->text_events = 0;
 	sp->catalog = malloc(sizeof(EOF_CATALOG));
@@ -191,10 +183,9 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		pack_iputl(sp->text_event[i]->beat, fp);
 	}
 
-	/* write tracks */
-	for(i = 0; i < EOF_MAX_TRACKS; i++)
+	/* write legacy tracks */
+	for(i = 0; i < sp->legacy_tracks; i++)
 	{
-
 		/* write solo sections */
 		pack_iputw(sp->legacy_track[i]->solos, fp);
 		for(j = 0; j < sp->legacy_track[i]->solos; j++)
@@ -223,22 +214,25 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		}
 	}
 
-	/* write lyric track */
-	pack_iputl(sp->vocal_track[0]->lyrics, fp);
-	for(j = 0; j < sp->vocal_track[0]->lyrics; j++)
+	/* write lyric tracks */
+	for(i = 0; i < sp->vocal_tracks; i++)
 	{
-		pack_putc(sp->vocal_track[0]->lyric[j]->note, fp);
-		pack_iputl(sp->vocal_track[0]->lyric[j]->pos, fp);
-		pack_iputl(sp->vocal_track[0]->lyric[j]->length, fp);
-		pack_iputw(ustrlen(sp->vocal_track[0]->lyric[j]->text), fp);
-		pack_fwrite(sp->vocal_track[0]->lyric[j]->text, ustrlen(sp->vocal_track[0]->lyric[j]->text), fp);
-	}
-	pack_iputl(sp->vocal_track[0]->lines, fp);
-	for(j = 0; j < sp->vocal_track[0]->lines; j++)
-	{
-		pack_iputl(sp->vocal_track[0]->line[j].start_pos, fp);
-		pack_iputl(sp->vocal_track[0]->line[j].end_pos, fp);
-		pack_iputl(sp->vocal_track[0]->line[j].flags, fp);
+		pack_iputl(sp->vocal_track[i]->lyrics, fp);
+		for(j = 0; j < sp->vocal_track[i]->lyrics; j++)
+		{
+			pack_putc(sp->vocal_track[i]->lyric[j]->note, fp);
+			pack_iputl(sp->vocal_track[i]->lyric[j]->pos, fp);
+			pack_iputl(sp->vocal_track[i]->lyric[j]->length, fp);
+			pack_iputw(ustrlen(sp->vocal_track[i]->lyric[j]->text), fp);
+			pack_fwrite(sp->vocal_track[i]->lyric[j]->text, ustrlen(sp->vocal_track[i]->lyric[j]->text), fp);
+		}
+		pack_iputl(sp->vocal_track[i]->lines, fp);
+		for(j = 0; j < sp->vocal_track[i]->lines; j++)
+		{
+			pack_iputl(sp->vocal_track[i]->line[j].start_pos, fp);
+			pack_iputl(sp->vocal_track[i]->line[j].end_pos, fp);
+			pack_iputl(sp->vocal_track[i]->line[j].flags, fp);
+		}
 	}
 
 	/* write bookmarks */
@@ -324,10 +318,9 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		sp->text_event[i]->beat = pack_igetl(fp);
 	}
 
-	/* read tracks */
-	for(i = 0; i < EOF_MAX_TRACKS; i++)
+	/* read legacy tracks */
+	for(i = 0; i < sp->legacy_tracks; i++)
 	{
-
 		/* read solo sections */
 		sp->legacy_track[i]->solos = pack_igetw(fp);
 		for(j = 0; j < sp->legacy_track[i]->solos; j++)
@@ -354,7 +347,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 
 		/* read notes */
 		b = pack_igetl(fp);
-		eof_track_resize(sp->legacy_track[i], b);
+		eof_legacy_track_resize(sp->legacy_track[i], b);
 		for(j = 0; j < b; j++)
 		{
 			sp->legacy_track[i]->note[j]->type = pack_getc(fp);
@@ -365,24 +358,27 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		}
 	}
 
-	/* read lyric track */
-	b = pack_igetl(fp);
-	eof_vocal_track_resize(sp->vocal_track[0], b);
-	for(j = 0; j < b; j++)
+	/* read lyric tracks */
+	for(i = 0; i < sp->vocal_tracks; i++)
 	{
-		sp->vocal_track[0]->lyric[j]->note = pack_getc(fp);
-		sp->vocal_track[0]->lyric[j]->pos = pack_igetl(fp);
-		sp->vocal_track[0]->lyric[j]->length = pack_igetl(fp);
-		c = pack_igetw(fp);
-		pack_fread(sp->vocal_track[0]->lyric[j]->text, c, fp);
-		sp->vocal_track[0]->lyric[j]->text[c] = '\0';
-	}
-	sp->vocal_track[0]->lines = pack_igetl(fp);
-	for(j = 0; j < sp->vocal_track[0]->lines; j++)
-	{
-		sp->vocal_track[0]->line[j].start_pos = pack_igetl(fp);
-		sp->vocal_track[0]->line[j].end_pos = pack_igetl(fp);
-		sp->vocal_track[0]->line[j].flags = pack_igetl(fp);
+		b = pack_igetl(fp);
+		eof_vocal_track_resize(sp->vocal_track[i], b);
+		for(j = 0; j < b; j++)
+		{
+			sp->vocal_track[i]->lyric[j]->note = pack_getc(fp);
+			sp->vocal_track[i]->lyric[j]->pos = pack_igetl(fp);
+			sp->vocal_track[i]->lyric[j]->length = pack_igetl(fp);
+			c = pack_igetw(fp);
+			pack_fread(sp->vocal_track[i]->lyric[j]->text, c, fp);
+			sp->vocal_track[i]->lyric[j]->text[c] = '\0';
+		}
+		sp->vocal_track[i]->lines = pack_igetl(fp);
+		for(j = 0; j < sp->vocal_track[i]->lines; j++)
+		{
+			sp->vocal_track[i]->line[j].start_pos = pack_igetl(fp);
+			sp->vocal_track[i]->line[j].end_pos = pack_igetl(fp);
+			sp->vocal_track[i]->line[j].flags = pack_igetl(fp);
+		}
 	}
 
 	/* read bookmarks */
@@ -435,7 +431,7 @@ int eof_load_song_pf_new(EOF_SONG * sp, PACKFILE * fp)
 	inputc = pack_getc(fp);			//Read timing format
 	if(inputc == 1)
 	{
-		allegro_message("Error: Millisecond timing is not yet supported");
+		allegro_message("Error: Delta timing is not yet supported");
 		return 0;	//Return failure
 	}
 	pack_igetl(fp);		//Read time division (not supported yet)
@@ -550,8 +546,12 @@ int eof_load_song_pf_new(EOF_SONG * sp, PACKFILE * fp)
 		switch(track_format)
 		{	//Perform the appropriate logic to load this format of track
 			case 1:	//Legacy (non pro guitar, non pro bass, non pro keys, pro or non pro drums)
+				if(eof_song_add_track(sp, EOF_LEGACY_TRACK_TYPE) == 0)	//Add a new legacy track
+					return 0;	//Return error upon failure
 			break;
 			case 2:	//Vocal
+				if(eof_song_add_track(sp, EOF_VOCAL_TRACK_TYPE) == 0)	//Add a new vocal track
+					return 0;	//Return error upon failure
 			break;
 			case 3:	//Pro Guitar/Bass
 			break;
@@ -669,7 +669,7 @@ EOF_SONG * eof_load_song(const char * fn)
 	return sp;
 }
 
-EOF_NOTE * eof_track_add_note(EOF_TRACK_LEGACY * tp)
+EOF_NOTE * eof_track_add_note(EOF_LEGACY_TRACK * tp)
 {
 	if(tp->notes < EOF_MAX_NOTES)
 	{
@@ -684,7 +684,7 @@ EOF_NOTE * eof_track_add_note(EOF_TRACK_LEGACY * tp)
 	return NULL;
 }
 
-void eof_track_delete_note(EOF_TRACK_LEGACY * tp, int note)
+void eof_track_delete_note(EOF_LEGACY_TRACK * tp, int note)
 {
 	int i;
 
@@ -699,12 +699,12 @@ void eof_track_delete_note(EOF_TRACK_LEGACY * tp, int note)
 	}
 }
 
-void eof_track_sort_notes(EOF_TRACK_LEGACY * tp)
+void eof_track_sort_notes(EOF_LEGACY_TRACK * tp)
 {
 	qsort(tp->note, tp->notes, sizeof(EOF_NOTE *), eof_song_qsort_notes);
 }
 
-int eof_fixup_next_note(EOF_TRACK_LEGACY * tp, int note)
+int eof_fixup_next_note(EOF_LEGACY_TRACK * tp, int note)
 {
 	int i;
 
@@ -719,7 +719,7 @@ int eof_fixup_next_note(EOF_TRACK_LEGACY * tp, int note)
 }
 
 /* find and mark crazy notes, use during MIDI import */
-void eof_track_find_crazy_notes(EOF_TRACK_LEGACY * tp)
+void eof_track_find_crazy_notes(EOF_LEGACY_TRACK * tp)
 {
 	int i;
 	int next;
@@ -737,7 +737,7 @@ void eof_track_find_crazy_notes(EOF_TRACK_LEGACY * tp)
 	}
 }
 
-void eof_track_fixup_notes(EOF_TRACK_LEGACY * tp, int sel)
+void eof_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 {
 	int i;
 	int next;
@@ -844,7 +844,7 @@ void eof_track_fixup_notes(EOF_TRACK_LEGACY * tp, int sel)
 	}
 }
 
-void eof_track_resize(EOF_TRACK_LEGACY * tp, int notes)
+void eof_legacy_track_resize(EOF_LEGACY_TRACK * tp, int notes)
 {
 	int i;
 	int oldnotes = tp->notes;
@@ -865,7 +865,7 @@ void eof_track_resize(EOF_TRACK_LEGACY * tp, int notes)
 	}
 }
 
-void eof_track_add_star_power(EOF_TRACK_LEGACY * tp, unsigned long start_pos, unsigned long end_pos)
+void eof_track_add_star_power(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
 {
 	if(tp->star_power_paths < EOF_MAX_STAR_POWER)
 	{	//If the maximum number of star power phrases for this track hasn't already been defined
@@ -875,7 +875,7 @@ void eof_track_add_star_power(EOF_TRACK_LEGACY * tp, unsigned long start_pos, un
 	}
 }
 
-void eof_track_delete_star_power(EOF_TRACK_LEGACY * tp, int index)
+void eof_track_delete_star_power(EOF_LEGACY_TRACK * tp, int index)
 {
 	int i;
 
@@ -886,7 +886,7 @@ void eof_track_delete_star_power(EOF_TRACK_LEGACY * tp, int index)
 	tp->star_power_paths--;
 }
 
-void eof_track_add_solo(EOF_TRACK_LEGACY * tp, unsigned long start_pos, unsigned long end_pos)
+void eof_track_add_solo(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
 {
 	if(tp->solos < EOF_MAX_SOLOS)
 	{	//If the maximum number of solo phrases for this track hasn't already been defined
@@ -896,7 +896,7 @@ void eof_track_add_solo(EOF_TRACK_LEGACY * tp, unsigned long start_pos, unsigned
 	}
 }
 
-void eof_track_delete_solo(EOF_TRACK_LEGACY * tp, int index)
+void eof_track_delete_solo(EOF_LEGACY_TRACK * tp, int index)
 {
 	int i;
 
@@ -1466,7 +1466,7 @@ int eof_song_msec_to_tick(EOF_SONG * sp, int track, unsigned long msec)
 }
 
 
-char eof_check_flags_at_note_pos(EOF_TRACK_LEGACY *tp,unsigned notenum,char flag)
+char eof_check_flags_at_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,char flag)
 {
 	unsigned long ctr,ctr2;
 	char match = 0;
@@ -1503,7 +1503,7 @@ char eof_check_flags_at_note_pos(EOF_TRACK_LEGACY *tp,unsigned notenum,char flag
 	return match;
 }
 
-void eof_set_flags_at_note_pos(EOF_TRACK_LEGACY *tp,unsigned notenum,char flag,char operation)
+void eof_set_flags_at_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,char flag,char operation)
 {
 	unsigned long ctr,ctr2;
 	char match = 0;
@@ -1574,78 +1574,108 @@ int eof_load_song_string_pf(char *buffer, PACKFILE *fp, unsigned long buffersize
 	return 0;	//Return success
 }
 
-EOF_TRACK_LEGACY * eof_song_add_legacy_track(EOF_SONG * sp)
+int eof_song_add_track(EOF_SONG * sp, int tracktype)
 {
-	EOF_TRACK_LEGACY * ptr = NULL;
+	EOF_LEGACY_TRACK *ptr = NULL;
+	EOF_VOCAL_TRACK *ptr2 = NULL;
+	EOF_TRACK_ENTRY *ptr3 = NULL;
+	unsigned long count=0;
 
 	if(sp == NULL)
-		return NULL;
+		return 0;	//Return error
 
 	if(sp->tracks < EOF_MAX_TRACKS)
 	{
-		ptr = malloc(sizeof(EOF_TRACK_LEGACY));
-		if(ptr != NULL)
+		ptr3 = malloc(sizeof(EOF_TRACK_ENTRY));
+		if(ptr3 == NULL)
+			return 0;	//Return error
+
+		//Insert new track structure in the appropriate track type array
+		switch(tracktype)
 		{
-			ptr->notes = 0;
-			ptr->solos = 0;
-			ptr->star_power_paths = 0;
-			sp->legacy_track[sp->tracks] = ptr;
-			sp->tracks++;
+			case EOF_LEGACY_TRACK_TYPE:
+				count = sp->legacy_tracks;
+				ptr = malloc(sizeof(EOF_LEGACY_TRACK));
+				if(ptr == NULL)
+					return 0;	//Return error
+				ptr->notes = 0;
+				ptr->solos = 0;
+				ptr->star_power_paths = 0;
+				sp->legacy_track[sp->legacy_tracks] = ptr;
+				sp->legacy_tracks++;
+			break;
+			case EOF_VOCAL_TRACK_TYPE:
+				count = sp->vocal_tracks;
+				ptr2 = malloc(sizeof(EOF_VOCAL_TRACK));
+				if(ptr2 == NULL)
+					return 0;	//Return error
+				ptr2->lyrics = 0;
+				ptr2->lines = 0;
+				sp->vocal_track[sp->vocal_tracks] = ptr2;
+				sp->vocal_tracks++;
+			break;
+			case EOF_PRO_KEYS_TRACK_TYPE:
+			break;
+			case EOF_PRO_GUITAR_TRACK_TYPE:
+			break;
+			case EOF_PRO_VARIABLE_LEGACY_TRACK_TYPE:
+			break;
+			default:
+			return 0;	//Return error
 		}
+
+		//Insert new track structure in the main track array
+		ptr3->tracknum = count;
+		ptr3->tracktype = tracktype;
+		sp->track[sp->tracks] = ptr3;
+		sp->tracks++;
 	}
-	return ptr;
-}
-
-int eof_song_delete_legacy_track(EOF_SONG * sp, unsigned long track)
-{
-	unsigned long ctr;
-
-	if((sp == NULL) || (track >= sp->tracks) || (sp->legacy_track[track] == NULL))
-		return 0;	//Return error
-
-	if(sp->legacy_track[track]->notes != 0)
-		return 0;	//Return error (don't delete a track that has notes)
-
-	//Remove track from the list and cycle the other track pointers back one in the array
-	free(sp->legacy_track[track]);
-	for(ctr = track; ctr + 1 < sp->tracks; ctr++)
-	{
-		sp->legacy_track[ctr] = sp->legacy_track[ctr + 1];
-	}
-	sp->tracks--;
-
 	return 1;	//Return success
 }
 
-EOF_VOCAL_TRACK * eof_song_add_vocal_track(EOF_SONG * sp)
+int eof_song_delete_track(EOF_SONG * sp, unsigned long track)
 {
-//	EOF_TRACK * ptr = NULL;
+	unsigned long ctr;
 
-	if(sp == NULL)
-		return NULL;
-
-	sp->vocal_track[0] = malloc(sizeof(EOF_VOCAL_TRACK));
-	if(sp->vocal_track == NULL)
-	{
-		return NULL;
-	}
-	sp->vocal_track[0]->lyrics = 0;
-	sp->vocal_track[0]->lines = 0;
-	sp->vocaltracks = 1;	//This will need to be changed to increment once multiple vocal tracks are supported
-
-	return sp->vocal_track[0];
-}
-
-int eof_song_delete_vocal_track(EOF_SONG * sp, unsigned long track)
-{
-	if(track != 0)
-		return 0;	//Currently, only one vocal track is supported
-
-	if(sp->vocal_track == NULL)
+	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track] == NULL))
 		return 0;	//Return error
 
-	free(sp->vocal_track);
-	sp->vocal_track[0] = NULL;
-	sp->vocaltracks = 0;	//This will need to be changed to decrement once multiple vocal tracks are supported
-	return 1;
+	//Remove the track from the appropriate track type array
+	switch(sp->track[track]->tracktype)
+	{
+		case EOF_LEGACY_TRACK_TYPE:
+			if((sp->track[track]->tracknum >= sp->legacy_tracks) || (sp->legacy_track[sp->track[track]->tracknum] == NULL))
+				return 0;	//Cannot remove a legacy track that doesn't exist
+			free(sp->legacy_track[sp->track[track]->tracknum]);
+			for(ctr = sp->track[track]->tracknum; ctr + 1 < sp->legacy_tracks; ctr++)
+			{
+				sp->legacy_track[ctr] = sp->legacy_track[ctr + 1];
+			}
+			sp->legacy_tracks--;
+		break;
+		case EOF_VOCAL_TRACK_TYPE:
+			if((sp->track[track]->tracknum >= sp->vocal_tracks) || (sp->vocal_track[sp->track[track]->tracknum] == NULL))
+				return 0;	//Cannot remove a vocal track that doesn't exist
+			free(sp->vocal_track[sp->track[track]->tracknum]);
+			for(ctr = sp->track[track]->tracknum; ctr + 1 < sp->vocal_tracks; ctr++)
+			{
+				sp->vocal_track[ctr] = sp->vocal_track[ctr + 1];
+			}
+			sp->vocal_tracks--;
+		break;
+		case EOF_PRO_KEYS_TRACK_TYPE:
+		break;
+		case EOF_PRO_GUITAR_TRACK_TYPE:
+		break;
+		case EOF_PRO_VARIABLE_LEGACY_TRACK_TYPE:
+		break;
+	}
+
+	//Remove the track from the main track array
+	free(sp->track[track]);
+	for(ctr = track; ctr + 1 < sp->tracks; ctr++)
+	{
+		sp->track[ctr] = sp->track[ctr + 1];
+	}
+	return 1;	//Return success
 }

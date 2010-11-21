@@ -86,8 +86,8 @@ TRACK CHUNK, for each track:
 *	2 bytes:	Track name string length
 *	[varies:]	Track name string
 *	1 byte:		Track format (1=Legacy,2=Vocal,3=Pro Guitar/Bass,4=Pro Keys,5=Variable Lane Legacy,...)
-*	1 byte:		Track behavior (1=Guitar/Bass,2=Drum/pro drum,3=Vocal,4=Keys,5=Pro guitar/bass,6=Pro keys,...)
-*	1 byte:		Track type (0=Global,1=Guitar,2=Bass,3=Drum,4=Vocal,5=Keys,6=Pro Guitar,7=Pro Bass,8=Pro Drum,9=Pro Keys,10=Variable Lane Guitar,11=Variable Lane Drums, ...)
+*	1 byte:		Track behavior (1=Guitar/Bass,2=Drum/Pro Drum,3=Vocal,4=Keys,5=Pro Guitar/Bass,6=Pro Keys,...)
+*	1 byte:		Track type (0=Global,1=Guitar,2=Bass,3=Lead Guitar,4=Rhythm Guitar,5=Drum,6=Vocal,7=Keys,8=Pro Guitar,9=Pro Bass,10=Pro Drum,11=Pro Keys,12=Variable Lane Guitar,13=Variable Lane Drums, ...)
 !	Rock Band 3 charts have separate tracks for the full 22 fret chart (PART REAL_GUITAR_22) usable on the Squier guiter, and a version transposed to be accurate on 17 frets (PART REAL_GUITAR)
 !	EOF currently uses macros to define guitar, bass, lead guitar, rhythm guitar, drum and vocals, but it may be ultimately necessary to allow custom tracks which can be any of those types
 !	So the track behavior below should define the track's ability to use HOPOs, etc. and could replace the current checks against a specific track number

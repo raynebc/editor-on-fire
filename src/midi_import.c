@@ -1019,7 +1019,7 @@ allegro_message("Second pass complete");
 					}
 
 					event_realtime = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
-					eof_track_resize(sp->legacy_track[picked_track], note_count[picked_track] + 1);
+					eof_legacy_track_resize(sp->legacy_track[picked_track], note_count[picked_track] + 1);
 					/* note on */
 					if(eof_import_events[i]->event[j]->type == 0x90)
 					{
@@ -1331,7 +1331,7 @@ allegro_message("Second pass complete");
 					}
 					pticker++;
 				}
-				eof_track_resize(sp->legacy_track[picked_track], note_count[picked_track]);
+				eof_legacy_track_resize(sp->legacy_track[picked_track], note_count[picked_track]);
 				if(sp->legacy_track[picked_track]->notes > 0)
 				{
 					eof_track_find_crazy_notes(sp->legacy_track[picked_track]);
