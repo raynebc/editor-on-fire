@@ -400,227 +400,6 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	return 1;
 }
 
-int eof_load_song_pf_new(EOF_SONG * sp, PACKFILE * fp)
-{
-	unsigned char inputc;
-	unsigned long inputl,count,ctr;
-	unsigned long track_count,track_ctr,track_format,track_behavior,track_type;
-	unsigned long section_type_count,section_type_ctr,section_type,section_count,section_ctr,section_start,section_end;
-	unsigned long custom_data_count,custom_data_ctr,custom_data_size;
-
-	#define EOFNUMINISTRINGTYPES 12
-	char *inistringbuffer[EOFNUMINISTRINGTYPES]={NULL,NULL,sp->tags->artist,sp->tags->title,sp->tags->frettist,NULL,sp->tags->year,sp->tags->loading_text,NULL,NULL,NULL,NULL};
-	unsigned long inistringbuffersize[12]={0,0,256,256,256,0,32,512,0,0,0,0};
-		//Store the buffer information of each of the 12 INI strings to simplify the loading code
-		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
-
-	#define EOFNUMINIBOOLEANTYPES 6
-	char *inibooleanbuffer[EOFNUMINIBOOLEANTYPES]={NULL,&sp->tags->lyrics,&sp->tags->eighth_note_hopo,NULL,NULL,NULL};
-		//Store the pointers to each of the 5 boolean type INI settings (number 0 is reserved) to simplify the loading code
-
-	#define EOFNUMININUMBERTYPES 5
-	unsigned long *ininumberbuffer[EOFNUMININUMBERTYPES]={NULL,NULL,NULL,NULL,NULL};
-		//Store the pointers to each of the 5 number type INI settings (number 0 is reserved) to simplify the loading code
-
-
-	if((sp == NULL) || (fp == NULL))
-		return 0;	//Return failure
-
-	/* read chart properties */
-	sp->tags->revision = pack_igetl(fp);	//Read file revision number
-	inputc = pack_getc(fp);			//Read timing format
-	if(inputc == 1)
-	{
-		allegro_message("Error: Delta timing is not yet supported");
-		return 0;	//Return failure
-	}
-	pack_igetl(fp);		//Read time division (not supported yet)
-
-	/* read song properties */
-	count = pack_igetw(fp);			//Read the number of INI strings
-	for(ctr=0; ctr<count; ctr++)
-	{	//For each INI string in the project
-		inputc = pack_getc(fp);		//Read the type of INI string
-		if((inputc < EOFNUMINISTRINGTYPES) && (inistringbuffer[inputc] != NULL))
-		{	//If EOF can store the INI setting natively
-			eof_load_song_string_pf(inistringbuffer[inputc],fp,inistringbuffersize[inputc]);
-		}
-		else
-		{	//If it is not natively supported or is otherwise a custom INI setting
-			if(sp->tags->ini_settings < EOF_MAX_INI_SETTINGS)
-			{	//If this INI setting can be stored
-				eof_load_song_string_pf(sp->tags->ini_setting[sp->tags->ini_settings],fp,sizeof(sp->tags->ini_setting[0]));
-				sp->tags->ini_settings++;
-			}
-		}
-	}
-
-	count = pack_igetw(fp);			//Read the number of INI booleans
-	for(ctr=0; ctr<count; ctr++)
-	{	//For each INI boolean in the project
-		inputc = pack_getc(fp);		//Read the type of INI boolean
-		if(((inputc & 0x7F) < EOFNUMINIBOOLEANTYPES) && (inibooleanbuffer[inputc] != NULL))
-		{	//Mask out the true/false bit to determine if it is a supported boolean setting
-			*inibooleanbuffer[(inputc & 0x7F)] = (inputc & 0xF0);	//Store the true/false status into the appropriate project variable
-		}
-	}
-
-	count = pack_igetw(fp);			//Read the number of INI numbers
-	for(ctr=0; ctr<count; ctr++)
-	{	//For each INI number in the project
-		inputc = pack_getc(fp);		//Read the type of INI number
-		inputl = pack_igetl(fp);	//Read the INI number
-		if((inputc < EOFNUMININUMBERTYPES) && (ininumberbuffer[inputc] != NULL))
-		{	//If EOF can store the INI number natively
-			*ininumberbuffer[inputc] = inputl;
-		}
-	}
-
-	/* read chart data */
-	count = pack_igetw(fp);			//Read the number of OGG profiles
-	sp->tags->oggs = 0;
-	for(ctr=0; ctr<count; ctr++)
-	{	//For each OGG profile in the project
-		if(sp->tags->oggs < EOF_MAX_OGGS)
-		{	//IF EOF can store this OGG profile
-			eof_load_song_string_pf(sp->tags->ogg[sp->tags->oggs].filename,fp,256);	//Read the OGG filename
-			eof_load_song_string_pf(NULL,fp,0);				//Parse past the original audio file name (not supported yet)
-			eof_load_song_string_pf(NULL,fp,0);				//Parse past the OGG profile comments string (not supported yet)
-			sp->tags->ogg[sp->tags->oggs].midi_offset = pack_igetl(fp);	//Read the profile's MIDI delay
-			pack_getc(fp);									//Read the OGG profile flags (not supported yet)
-			sp->tags->oggs++;
-		}
-	}
-
-	count = pack_igetl(fp);					//Read the number of beats
-	if(!eof_song_resize_beats(sp, count))	//Resize the beat array accordingly
-	{
-		return 0;	//Return error upon failure to do so
-	}
-	for(ctr=0; ctr<count; ctr++)
-	{	//For each beat in the project
-		sp->beat[ctr]->ppqn = pack_igetl(fp);		//Read the beat's tempo
-		sp->beat[ctr]->pos = pack_igetl(fp);		//Read the beat's position (milliseconds or delta ticks)
-		sp->beat[ctr]->fpos = sp->beat[ctr]->pos;	//For now, assume the position is in milliseconds and copy to the fpos variable as-is
-		sp->beat[ctr]->flags = pack_igetl(fp);		//Read the beat's flags
-		pack_getc(fp);								//Read the beat's key signature (not supported yet)
-	}
-
-	count = pack_igetl(fp);				//Read the number of text events
-	if(!eof_song_resize_text_events(sp, count))	//Resize the text event array accordingly
-	{
-		return 0;	//Return error upon failure to do so
-	}
-	for(ctr=0; ctr<count; ctr++)
-	{	//For each text event in the project
-		if((sp->text_events < EOF_MAX_TEXT_EVENTS) && eof_song_add_text_event(sp, 0, "") && (sp->text_events > 0))
-		{	//If EOF can store this text event
-			eof_load_song_string_pf(sp->text_event[sp->text_events-1]->text,fp,256);	//Read the text event string
-			sp->text_event[sp->text_events-1]->beat = pack_igetl(fp);	//Read the text event's beat number
-			pack_igetw(fp);	//Read the text event's associated track number (not supported yet)
-		}
-	}
-
-	custom_data_count = pack_igetl(fp);		//Read the number of custom data blocks
-	for(custom_data_ctr=0; custom_data_ctr<custom_data_count; custom_data_ctr++)
-	{	//For each custom data block in the project
-		custom_data_size = pack_igetl(fp);	//Read the size of the custom data block
-		for(ctr=0; ctr<custom_data_size; ctr++)
-		{	//For each byte in the custom data block
-			pack_getc(fp);	//Read the data (not supported yet)
-		}
-	}
-
-	/* read track data */
-	track_count = pack_igetl(fp);		//Read the number of tracks
-	for(track_ctr=0; track_ctr<track_count; track_ctr++)
-	{	//For each track in the project
-		eof_load_song_string_pf(NULL,fp,0);				//Parse past the track name (not supported yet)
-		track_format = pack_getc(fp);	//Read the track format
-		track_behavior = pack_getc(fp);	//Read the track behavior
-		track_type = pack_getc(fp);		//Read the track type
-		pack_getc(fp);					//Read the track difficulty level (not supported yet)
-		pack_igetl(fp);					//Read the track flags (not supported yet)
-		pack_igetw(fp);					//Read the track compliance flags (not supported yet)
-
-		switch(track_format)
-		{	//Perform the appropriate logic to load this format of track
-			case 1:	//Legacy (non pro guitar, non pro bass, non pro keys, pro or non pro drums)
-				if(eof_song_add_track(sp, EOF_LEGACY_TRACK_TYPE) == 0)	//Add a new legacy track
-					return 0;	//Return error upon failure
-			break;
-			case 2:	//Vocal
-				if(eof_song_add_track(sp, EOF_VOCAL_TRACK_TYPE) == 0)	//Add a new vocal track
-					return 0;	//Return error upon failure
-			break;
-			case 3:	//Pro Guitar/Bass
-			break;
-			case 4:	//Pro Keys
-			break;
-			case 5:	//Variable Lane Legacy
-			break;
-		}
-
-		section_type_count = pack_igetl(fp);	//Read the number of types of sections defined for this track
-		for(section_type_ctr=0; section_type_ctr<section_type_count; section_type_ctr++)
-		{	//For each type of section in this track
-			section_type = pack_igetw(fp);		//Read the type of section this is
-			section_count = pack_igetl(fp);		//Read the number of this type of section there is
-			for(section_ctr=0; section_ctr<section_count; section_ctr++)
-			{	//For each of the specified section
-				eof_load_song_string_pf(NULL,fp,0);				//Parse past the section name (not supported yet)
-				pack_getc(fp);					//Read the section's associated difficulty (not supported yet)
-				section_start = pack_igetl(fp);	//Read the start timestamp of the section
-				section_end = pack_igetl(fp);	//Read the end timestamp of the section
-				pack_igetw(fp);					//Read the section flags (not supported yet)
-
-				//Perform the appropriate logic to load this type of section
-				switch(track_ctr)
-				{
-					case 0:		//Read sections that are global
-						switch(section_type)
-						{
-							case 3:	//Bookmark section
-							break;
-							case 4:	//Fret Catalog section
-							break;
-						}
-					break;
-
-					default:	//Read track-specific sections
-						switch(section_type)
-						{
-							case 1:	//Solo section
-							break;
-							case 2:	//Star Power section
-							break;
-							case 5:	//Lyric Phrase section
-							break;
-							case 6:	//Yellow Tom section
-							break;
-							case 7:	//Blue Tom section
-							break;
-							case 8:	//Green Tom section
-							break;
-						}
-					break;
-				}
-			}
-		}
-
-		custom_data_count = pack_igetl(fp);		//Read the number of custom data blocks
-		for(custom_data_ctr=0; custom_data_ctr<custom_data_count; custom_data_ctr++)
-		{	//For each custom data block in the project
-			custom_data_size = pack_igetl(fp);	//Read the size of the custom data block
-			for(ctr=0; ctr<custom_data_size; ctr++)
-			{	//For each byte in the custom data block
-				pack_getc(fp);	//Read the data (not supported yet)
-			}
-		}
-	}
-	return 1;	//Return success
-}
-
 EOF_SONG * eof_load_song(const char * fn)
 {
 	PACKFILE * fp;
@@ -1574,7 +1353,7 @@ int eof_load_song_string_pf(char *buffer, PACKFILE *fp, unsigned long buffersize
 	return 0;	//Return success
 }
 
-int eof_song_add_track(EOF_SONG * sp, int tracktype)
+int eof_song_add_track(EOF_SONG * sp, int trackformat)
 {
 	EOF_LEGACY_TRACK *ptr = NULL;
 	EOF_VOCAL_TRACK *ptr2 = NULL;
@@ -1591,9 +1370,9 @@ int eof_song_add_track(EOF_SONG * sp, int tracktype)
 			return 0;	//Return error
 
 		//Insert new track structure in the appropriate track type array
-		switch(tracktype)
+		switch(trackformat)
 		{
-			case EOF_LEGACY_TRACK_TYPE:
+			case EOF_LEGACY_TRACK_FORMAT:
 				count = sp->legacy_tracks;
 				ptr = malloc(sizeof(EOF_LEGACY_TRACK));
 				if(ptr == NULL)
@@ -1604,7 +1383,7 @@ int eof_song_add_track(EOF_SONG * sp, int tracktype)
 				sp->legacy_track[sp->legacy_tracks] = ptr;
 				sp->legacy_tracks++;
 			break;
-			case EOF_VOCAL_TRACK_TYPE:
+			case EOF_VOCAL_TRACK_FORMAT:
 				count = sp->vocal_tracks;
 				ptr2 = malloc(sizeof(EOF_VOCAL_TRACK));
 				if(ptr2 == NULL)
@@ -1614,11 +1393,11 @@ int eof_song_add_track(EOF_SONG * sp, int tracktype)
 				sp->vocal_track[sp->vocal_tracks] = ptr2;
 				sp->vocal_tracks++;
 			break;
-			case EOF_PRO_KEYS_TRACK_TYPE:
+			case EOF_PRO_KEYS_TRACK_FORMAT:
 			break;
-			case EOF_PRO_GUITAR_TRACK_TYPE:
+			case EOF_PRO_GUITAR_TRACK_FORMAT:
 			break;
-			case EOF_PRO_VARIABLE_LEGACY_TRACK_TYPE:
+			case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:
 			break;
 			default:
 			return 0;	//Return error
@@ -1626,7 +1405,7 @@ int eof_song_add_track(EOF_SONG * sp, int tracktype)
 
 		//Insert new track structure in the main track array
 		ptr3->tracknum = count;
-		ptr3->tracktype = tracktype;
+		ptr3->trackformat = trackformat;
 		sp->track[sp->tracks] = ptr3;
 		sp->tracks++;
 	}
@@ -1641,9 +1420,9 @@ int eof_song_delete_track(EOF_SONG * sp, unsigned long track)
 		return 0;	//Return error
 
 	//Remove the track from the appropriate track type array
-	switch(sp->track[track]->tracktype)
+	switch(sp->track[track]->trackformat)
 	{
-		case EOF_LEGACY_TRACK_TYPE:
+		case EOF_LEGACY_TRACK_FORMAT:
 			if((sp->track[track]->tracknum >= sp->legacy_tracks) || (sp->legacy_track[sp->track[track]->tracknum] == NULL))
 				return 0;	//Cannot remove a legacy track that doesn't exist
 			free(sp->legacy_track[sp->track[track]->tracknum]);
@@ -1653,7 +1432,7 @@ int eof_song_delete_track(EOF_SONG * sp, unsigned long track)
 			}
 			sp->legacy_tracks--;
 		break;
-		case EOF_VOCAL_TRACK_TYPE:
+		case EOF_VOCAL_TRACK_FORMAT:
 			if((sp->track[track]->tracknum >= sp->vocal_tracks) || (sp->vocal_track[sp->track[track]->tracknum] == NULL))
 				return 0;	//Cannot remove a vocal track that doesn't exist
 			free(sp->vocal_track[sp->track[track]->tracknum]);
@@ -1663,11 +1442,11 @@ int eof_song_delete_track(EOF_SONG * sp, unsigned long track)
 			}
 			sp->vocal_tracks--;
 		break;
-		case EOF_PRO_KEYS_TRACK_TYPE:
+		case EOF_PRO_KEYS_TRACK_FORMAT:
 		break;
-		case EOF_PRO_GUITAR_TRACK_TYPE:
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
 		break;
-		case EOF_PRO_VARIABLE_LEGACY_TRACK_TYPE:
+		case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:
 		break;
 	}
 
@@ -1678,4 +1457,318 @@ int eof_song_delete_track(EOF_SONG * sp, unsigned long track)
 		sp->track[ctr] = sp->track[ctr + 1];
 	}
 	return 1;	//Return success
+}
+
+int eof_load_song_pf_new(EOF_SONG * sp, PACKFILE * fp)
+{
+	unsigned char inputc;
+	unsigned long inputl,count,ctr;
+	unsigned long track_count,track_ctr,track_format,track_behavior,track_type;
+	unsigned long section_type_count,section_type_ctr,section_type,section_count,section_ctr,section_start,section_end;
+	unsigned long custom_data_count,custom_data_ctr,custom_data_size;
+	unsigned long bookmarkctr = 0;
+
+	#define EOFNUMINISTRINGTYPES 12
+	char *inistringbuffer[EOFNUMINISTRINGTYPES]={NULL,NULL,sp->tags->artist,sp->tags->title,sp->tags->frettist,NULL,sp->tags->year,sp->tags->loading_text,NULL,NULL,NULL,NULL};
+	unsigned long inistringbuffersize[12]={0,0,256,256,256,0,32,512,0,0,0,0};
+		//Store the buffer information of each of the 12 INI strings to simplify the loading code
+		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
+
+	#define EOFNUMINIBOOLEANTYPES 6
+	char *inibooleanbuffer[EOFNUMINIBOOLEANTYPES]={NULL,&sp->tags->lyrics,&sp->tags->eighth_note_hopo,NULL,NULL,NULL};
+		//Store the pointers to each of the 5 boolean type INI settings (number 0 is reserved) to simplify the loading code
+
+	#define EOFNUMININUMBERTYPES 5
+	unsigned long *ininumberbuffer[EOFNUMININUMBERTYPES]={NULL,NULL,NULL,NULL,NULL};
+		//Store the pointers to each of the 5 number type INI settings (number 0 is reserved) to simplify the loading code
+
+
+	if((sp == NULL) || (fp == NULL))
+		return 0;	//Return failure
+
+	/* read chart properties */
+	sp->tags->revision = pack_igetl(fp);	//Read file revision number
+	inputc = pack_getc(fp);			//Read timing format
+	if(inputc == 1)
+	{
+		allegro_message("Error: Delta timing is not yet supported");
+		return 0;	//Return failure
+	}
+	pack_igetl(fp);		//Read time division (not supported yet)
+
+	/* read song properties */
+	count = pack_igetw(fp);			//Read the number of INI strings
+	for(ctr=0; ctr<count; ctr++)
+	{	//For each INI string in the project
+		inputc = pack_getc(fp);		//Read the type of INI string
+		if((inputc < EOFNUMINISTRINGTYPES) && (inistringbuffer[inputc] != NULL))
+		{	//If EOF can store the INI setting natively
+			eof_load_song_string_pf(inistringbuffer[inputc],fp,inistringbuffersize[inputc]);
+		}
+		else
+		{	//If it is not natively supported or is otherwise a custom INI setting
+			if(sp->tags->ini_settings < EOF_MAX_INI_SETTINGS)
+			{	//If this INI setting can be stored
+				eof_load_song_string_pf(sp->tags->ini_setting[sp->tags->ini_settings],fp,sizeof(sp->tags->ini_setting[0]));
+				sp->tags->ini_settings++;
+			}
+		}
+	}
+
+	count = pack_igetw(fp);			//Read the number of INI booleans
+	for(ctr=0; ctr<count; ctr++)
+	{	//For each INI boolean in the project
+		inputc = pack_getc(fp);		//Read the type of INI boolean
+		if(((inputc & 0x7F) < EOFNUMINIBOOLEANTYPES) && (inibooleanbuffer[inputc] != NULL))
+		{	//Mask out the true/false bit to determine if it is a supported boolean setting
+			*inibooleanbuffer[(inputc & 0x7F)] = (inputc & 0xF0);	//Store the true/false status into the appropriate project variable
+		}
+	}
+
+	count = pack_igetw(fp);			//Read the number of INI numbers
+	for(ctr=0; ctr<count; ctr++)
+	{	//For each INI number in the project
+		inputc = pack_getc(fp);		//Read the type of INI number
+		inputl = pack_igetl(fp);	//Read the INI number
+		if((inputc < EOFNUMININUMBERTYPES) && (ininumberbuffer[inputc] != NULL))
+		{	//If EOF can store the INI number natively
+			*ininumberbuffer[inputc] = inputl;
+		}
+	}
+
+	/* read chart data */
+	count = pack_igetw(fp);			//Read the number of OGG profiles
+	sp->tags->oggs = 0;
+	for(ctr=0; ctr<count; ctr++)
+	{	//For each OGG profile in the project
+		if(sp->tags->oggs < EOF_MAX_OGGS)
+		{	//IF EOF can store this OGG profile
+			eof_load_song_string_pf(sp->tags->ogg[sp->tags->oggs].filename,fp,256);	//Read the OGG filename
+			eof_load_song_string_pf(NULL,fp,0);				//Parse past the original audio file name (not supported yet)
+			eof_load_song_string_pf(NULL,fp,0);				//Parse past the OGG profile comments string (not supported yet)
+			sp->tags->ogg[sp->tags->oggs].midi_offset = pack_igetl(fp);	//Read the profile's MIDI delay
+			pack_getc(fp);									//Read the OGG profile flags (not supported yet)
+			sp->tags->oggs++;
+		}
+	}
+
+	count = pack_igetl(fp);					//Read the number of beats
+	if(!eof_song_resize_beats(sp, count))	//Resize the beat array accordingly
+	{
+		return 0;	//Return error upon failure to do so
+	}
+	for(ctr=0; ctr<count; ctr++)
+	{	//For each beat in the project
+		sp->beat[ctr]->ppqn = pack_igetl(fp);		//Read the beat's tempo
+		sp->beat[ctr]->pos = pack_igetl(fp);		//Read the beat's position (milliseconds or delta ticks)
+		sp->beat[ctr]->fpos = sp->beat[ctr]->pos;	//For now, assume the position is in milliseconds and copy to the fpos variable as-is
+		sp->beat[ctr]->flags = pack_igetl(fp);		//Read the beat's flags
+		pack_getc(fp);								//Read the beat's key signature (not supported yet)
+	}
+
+	count = pack_igetl(fp);				//Read the number of text events
+	if(!eof_song_resize_text_events(sp, count))	//Resize the text event array accordingly
+	{
+		return 0;	//Return error upon failure to do so
+	}
+	for(ctr=0; ctr<count; ctr++)
+	{	//For each text event in the project
+		eof_load_song_string_pf(sp->text_event[ctr]->text,fp,256);	//Read the text event string
+		sp->text_event[ctr]->beat = pack_igetl(fp);	//Read the text event's beat number
+		pack_igetl(fp);	//Read the text event's associated track number (not supported yet)
+	}
+
+	custom_data_count = pack_igetl(fp);		//Read the number of custom data blocks
+	for(custom_data_ctr=0; custom_data_ctr<custom_data_count; custom_data_ctr++)
+	{	//For each custom data block in the project
+		custom_data_size = pack_igetl(fp);	//Read the size of the custom data block
+		for(ctr=0; ctr<custom_data_size; ctr++)
+		{	//For each byte in the custom data block
+			pack_getc(fp);	//Read the data (not supported yet)
+		}
+	}
+
+	/* read track data */
+	track_count = pack_igetl(fp);		//Read the number of tracks
+	for(track_ctr=0; track_ctr<track_count; track_ctr++)
+	{	//For each track in the project
+		eof_load_song_string_pf(NULL,fp,0);				//Parse past the track name (not supported yet)
+		track_format = pack_getc(fp);	//Read the track format
+		track_behavior = pack_getc(fp);	//Read the track behavior
+		track_type = pack_getc(fp);		//Read the track type
+		pack_getc(fp);					//Read the track difficulty level (not supported yet)
+		pack_igetl(fp);					//Read the track flags (not supported yet)
+		pack_igetw(fp);					//Read the track compliance flags (not supported yet)
+
+		switch(track_format)
+		{	//Perform the appropriate logic to load this format of track
+			case 1:	//Legacy (non pro guitar, non pro bass, non pro keys, pro or non pro drums)
+				if(eof_song_add_track(sp, EOF_LEGACY_TRACK_FORMAT) == 0)	//Add a new legacy track
+					return 0;	//Return error upon failure
+				sp->track[sp->tracks-1]->trackbehavior = track_behavior;
+				count = pack_igetl(fp);	//Read the number of notes in this track
+				if(count > EOF_MAX_NOTES)
+				{
+					allegro_message("Error: Unsupported number of notes in track %lu.  Aborting",track_ctr);
+					return 0;
+				}
+				eof_legacy_track_resize(sp->legacy_track[sp->legacy_tracks-1],count);	//Resize the note array
+				for(ctr=0; ctr<count; ctr++)
+				{	//For each note in this track
+					eof_load_song_string_pf(NULL,fp,0);		//Parse past the note name (not supported yet)
+					sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->type = pack_getc(fp);		//Read the note's difficulty
+					sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->note = pack_getc(fp);		//Read note bitflags
+					sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->pos = pack_igetl(fp);		//Read note position
+					sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->length = pack_igetl(fp);	//Read note length
+					sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->flags = pack_igetw(fp);	//Read note flags
+				}
+			break;
+			case 2:	//Vocal
+				if(eof_song_add_track(sp, EOF_VOCAL_TRACK_FORMAT) == 0)	//Add a new vocal track
+					return 0;	//Return error upon failure
+				sp->track[sp->tracks-1]->trackbehavior = track_behavior;
+				pack_getc(fp);	//Read the tone set number assigned to this track (not supported yet)
+				count = pack_igetl(fp);	//Read the number of notes in this track
+				if(count > EOF_MAX_LYRICS)
+				{
+					allegro_message("Error: Unsupported number of lyrics in track %lu.  Aborting",track_ctr);
+					return 0;
+				}
+				eof_vocal_track_resize(sp->vocal_track[sp->vocal_tracks-1],count);	//Resize the lyrics array
+				for(ctr=0; ctr<count; ctr++)
+				{	//For each lyric in this track
+					eof_load_song_string_pf(sp->vocal_track[sp->vocal_tracks-1]->lyric[ctr]->text,fp,EOF_MAX_LYRIC_LENGTH);
+					pack_getc(fp);	//Read lyric set number (not supported yet)
+					sp->vocal_track[sp->vocal_tracks-1]->lyric[ctr]->note = pack_getc(fp);		//Read lyric pitch
+					sp->vocal_track[sp->vocal_tracks-1]->lyric[ctr]->pos = pack_igetl(fp);		//Read lyric position
+					sp->vocal_track[sp->vocal_tracks-1]->lyric[ctr]->length = pack_igetl(fp);	//Read lyric length
+					pack_igetw(fp);	//Read lyric flags (not supported yet)
+				}
+			break;
+			case 3:	//Pro Guitar/Bass
+				allegro_message("Error: Pro Guitar/Bass not supported yet.  Aborting");
+			return 0;
+			case 4:	//Pro Keys
+				allegro_message("Error: Pro Keys not supported yet.  Aborting");
+			return 0;
+			case 5:	//Variable Lane Legacy
+				allegro_message("Error: Variable lane not supported yet.  Aborting");
+			return 0;
+			default://Unknown track type
+				allegro_message("Error: Unsupported track type.  Aborting");
+			return 0;
+		}
+
+		section_type_count = pack_igetw(fp);	//Read the number of types of sections defined for this track
+		for(section_type_ctr=0; section_type_ctr<section_type_count; section_type_ctr++)
+		{	//For each type of section in this track
+			section_type = pack_igetw(fp);		//Read the type of section this is
+			section_count = pack_igetl(fp);		//Read the number of instances of this type of section there is
+			for(section_ctr=0; section_ctr<section_count; section_ctr++)
+			{	//For each instance of the specified section
+				eof_load_song_string_pf(NULL,fp,0);				//Parse past the section name (not supported yet)
+				inputc = pack_getc(fp);			//Read the section's associated difficulty
+				section_start = pack_igetl(fp);	//Read the start timestamp of the section
+				section_end = pack_igetl(fp);	//Read the end timestamp of the section
+				pack_igetw(fp);					//Read the section flags (not supported yet)
+
+				//Perform the appropriate logic to load this type of section
+				switch(track_ctr)
+				{
+					case 0:		//Read sections that are global
+						switch(section_type)
+						{
+							case 3:	//Bookmark section
+								eof_song_add_section(sp,0,EOF_BOOKMARK_SECTION,0,section_start,0,bookmarkctr);
+								bookmarkctr++;
+							break;
+							case 4:	//Fret Catalog section
+								eof_song_add_section(sp,0,EOF_FRET_CATALOG_SECTION,inputc,section_start,section_end,track_ctr-1);	//For now, EOF still numbers tracks starting from number 0 (ie EOF_TRACK_GUITAR)
+							break;
+						}
+					break;
+
+					default:	//Read track-specific sections
+						switch(section_type)
+						{
+							case 1:	//Solo section
+								if(track_behavior != 3)
+								{	//There are no vocal solo sections
+								}
+							break;
+							case 2:	//Star Power section
+							break;
+							case 5:	//Lyric Phrase section
+								if(track_behavior == 3)
+								{	//Lyric phrases are only valid for vocal tracks
+								}
+							break;
+							case 6:	//Yellow Tom section (not supported yet)
+								if(track_behavior == 2)
+								{	//Tom sections are only valid for drum tracks
+								}
+							break;
+							case 7:	//Blue Tom section (not supported yet)
+								if(track_behavior == 2)
+								{	//Tom sections are only valid for drum tracks
+								}
+							break;
+							case 8:	//Green Tom section (not supported yet)
+								if(track_behavior == 2)
+								{	//Tom sections are only valid for drum tracks
+								}
+							break;
+						}
+					break;
+				}
+
+//!For the section loading code, write abstracted functions that will check the track type and process it accordingly
+//!Consider a generic eof_add_section() type of function that will take a section type as a parameter
+
+			}
+		}//For each type of section in this track
+
+		custom_data_count = pack_igetl(fp);		//Read the number of custom data blocks
+		for(custom_data_ctr=0; custom_data_ctr<custom_data_count; custom_data_ctr++)
+		{	//For each custom data block in the project
+			custom_data_size = pack_igetl(fp);	//Read the size of the custom data block
+			for(ctr=0; ctr<custom_data_size; ctr++)
+			{	//For each byte in the custom data block
+				pack_getc(fp);	//Read the data (not supported yet)
+			}
+		}
+	}//For each track in the project
+	return 1;	//Return success
+}
+
+int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, char difficulty, unsigned long start, unsigned long stop, unsigned long flags)
+{
+	if((sp == NULL) || (track >= sp->tracks))
+		return 0;	//Return error
+
+	if(track == 0)
+	{	//Allow global sections to be added
+		switch(sectiontype)
+		{
+			case EOF_BOOKMARK_SECTION:
+				if(flags < EOF_MAX_BOOKMARK_ENTRIES)
+				{	//If EOF can store this bookmark
+					sp->bookmark_pos[flags] = start;
+				}
+			return 1;
+			case EOF_FRET_CATALOG_SECTION:
+				sp->catalog->entry[sp->catalog->entries].track = flags;		//For now, EOF still numbers tracks starting from number 0
+				sp->catalog->entry[sp->catalog->entries].type = difficulty;			//Store the fret catalog section's associated difficulty
+				sp->catalog->entry[sp->catalog->entries].start_pos = start;
+				sp->catalog->entry[sp->catalog->entries].end_pos = stop;
+			return 1;
+			default:	//Unknown global section type
+			return 0;	//Return error
+		}
+	}
+
+	switch(sp->track[track]->trackformat)
+	{	//Perform the appropriate logic to load this format of track
+	}
+	return 0;	//Return error
 }

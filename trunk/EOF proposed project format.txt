@@ -13,11 +13,11 @@ EOF proposed file format (revision 'H'):
 2 bytes:	Number of INI strings
 INI STRING CHUNK, for each INI string:
 {
-*	1 byte:		INI setting type (0=Custom,1=Album,2=Artist,3=Title,4=Frettist,5=Genre,6=Year,7=Loading Text,8=Icon ID,9=Unlock ID,10=Unlock ID required,11=Unlock text string,...)
+*	1 byte:		INI string type (0=Custom,1=Album,2=Artist,3=Title,4=Frettist,5=Genre,6=Year,7=Loading Text,8=Icon ID,9=Unlock ID,10=Unlock ID required,11=Unlock text string,...)
 !	The following Icon IDs are supportedly natively in FoFiX: rb1,rb2,rbdlc,rbtpk,gh1,gh2,gh2dlc,gh3,gh3dlc,gh80s,gha,ghm,ph1,ph2,ph3,ph4,phm.  Custom icon strings can be used in FoFiX.
 !	Unlock text string is the text that FoFiX will display if this chart is not unlocked
-*	2 bytes:	INI setting string length
-*	[varies:]	INI setting string
+*	2 bytes:	INI string length
+*	[varies:]	INI string
 }
 
 2 bytes:	Number of INI booleans
@@ -67,7 +67,7 @@ TEXT EVENT CHUNK, for each text event:
 *	2 bytes:	Text event string length
 *	[varies:]	Text event string
 	4 bytes:	Associated beat number
-*	2 bytes:	Associated track number (0 if it applies to the entire chart, such as generic section markers)
+*	4 bytes:	Associated track number (0 if it applies to the entire chart, such as generic section markers)
 }
 
 *4 bytes:	Number of custom data blocks
@@ -87,21 +87,22 @@ TRACK CHUNK, for each track:
 *	[varies:]	Track name string
 *	1 byte:		Track format (1=Legacy,2=Vocal,3=Pro Guitar/Bass,4=Pro Keys,5=Variable Lane Legacy,...)
 *	1 byte:		Track behavior (1=Guitar/Bass,2=Drum/Pro Drum,3=Vocal,4=Keys,5=Pro Guitar/Bass,6=Pro Keys,...)
-*	1 byte:		Track type (0=Global,1=Guitar,2=Bass,3=Lead Guitar,4=Rhythm Guitar,5=Drum,6=Vocal,7=Keys,8=Pro Guitar,9=Pro Bass,10=Pro Drum,11=Pro Keys,12=Variable Lane Guitar,13=Variable Lane Drums, ...)
+*	1 byte:		Track type (0=Global,1=Guitar,2=Bass,3=Lead Guitar,4=Rhythm Guitar,5=Drum/Pro Drum,6=Vocal,7=Keys,8=17 Fret Pro Guitar,9=17 Fret Pro Bass,10=Pro Keys,11=22 Fret Pro Guitar,12=22 Fret Pro Bass,13=Custom,...)
 !	Rock Band 3 charts have separate tracks for the full 22 fret chart (PART REAL_GUITAR_22) usable on the Squier guiter, and a version transposed to be accurate on 17 frets (PART REAL_GUITAR)
-!	EOF currently uses macros to define guitar, bass, lead guitar, rhythm guitar, drum and vocals, but it may be ultimately necessary to allow custom tracks which can be any of those types
-!	So the track behavior below should define the track's ability to use HOPOs, etc. and could replace the current checks against a specific track number
-!	Until track numbering is completely removed, the track type can serve as a replacement
-*	1 byte:		Track difficulty level (0-6 or 0xFF)
+!	Both EOF and Rock Band allow for the existence of one of each of the usual tracks, so the first of each will be assigned a unique number.  Any secondary tracks (ie. a second PART KEYS) will be marked as a custom track
+!	and will be identified by its format and behavior fields.  This will allow the ability to maintain some compatibility with EOF's current method of comparing tracks to defined macros
+!	The track format and behavior abstract the track to the point where any number of tracks can be handled, allowing an easy way to verify a track's ability to use HOPOs, etc. instead of relying on the track's number
+!	Until track number comparison is completely removed for this purpose, the track type can serve as a replacement
+*	1 byte:		Track difficulty level (0-6)
 *	4 bytes:	Track flags (ie. which difficulties are locked for editing)
 *	2 bytes:	Compliance flags (ie. if it is valid as per constraints of Rock Band, etc)
 
 *	[varies:]	Track data (depending on the format type as defined below)
 
-*	4 bytes:	Number of section types stored for this track
+*	2 bytes:	Number of section types stored for this track
 *	SECTION TYPE CHUNK, for each section type
 *	{
-*		2 bytes:	Type of section (1=solo,2=star power,3=bookmark,4=fret catalog entry,5=lyric phrase,6=yellow tom,7=blue tom,8=green tom,9=trill,10=arpeggio,11=pro trainer,12=custom MIDI note,13=preview section,...)
+*		2 bytes:	Type of section (1=solo,2=star power,3=bookmark,4=fret catalog entry,5=lyric phrase,6=yellow tom,7=blue tom,8=green tom,9=trill,10=arpeggio,11=trainer,12=custom MIDI note,13=preview section,...)
 
 *		4 bytes:	Number of the specified sections stored
 *		SECTION CHUNK, for each of the specified type of sections
@@ -150,7 +151,7 @@ TRACK CHUNK, for each track:
 	{
 *		2 bytes:	Lyric text string length
 *		[varies:]	Lyric text string
-*		1 byte:		Track number (ie. 1=PART VOCALS, 2=PART HARM1, 3=PART HARM2...)
+*		1 byte:		Lyric set number (1=PART VOCALS, 2=PART HARM1, 3=PART HARM2...)
 		1 byte:		Note pitch
 		4 bytes:	Lyric position (in milliseconds or delta ticks)
 		4 bytes:	Lyric position (in milliseconds or delta ticks)
