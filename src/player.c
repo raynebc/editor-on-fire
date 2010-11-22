@@ -61,15 +61,15 @@ void eof_music_play(void)
 			}
 			else
 			{
-				for(i = 0; i < eof_song->legacy_track[eof_selected_track]->notes; i++)
+				for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
 				{
-					if(eof_selection.multi[i] && (eof_song->legacy_track[eof_selected_track]->note[i]->pos + eof_song->legacy_track[eof_selected_track]->note[i]->length > eof_music_end_pos))
+					if(eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos + eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->length > eof_music_end_pos))
 					{
-						eof_music_end_pos = eof_song->legacy_track[eof_selected_track]->note[i]->pos + eof_song->legacy_track[eof_selected_track]->note[i]->length;
+						eof_music_end_pos = eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos + eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->length;
 					}
-					if(eof_selection.multi[i] && (eof_song->legacy_track[eof_selected_track]->note[i]->pos < eof_music_rewind_pos))
+					if(eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos < eof_music_rewind_pos))
 					{
-						eof_music_rewind_pos = eof_song->legacy_track[eof_selected_track]->note[i]->pos;
+						eof_music_rewind_pos = eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos;
 					}
 				}
 			}
