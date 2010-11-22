@@ -1027,7 +1027,7 @@ void eof_fixup_notes(void)
 {
 	int i, j;
 
-	if(eof_selection.current < eof_song->legacy_track[eof_selected_track]->notes)
+	if(eof_selection.current < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes)
 	{
 		eof_selection.multi[eof_selection.current] = 0;
 	}
@@ -1071,12 +1071,12 @@ void eof_detect_difficulties(EOF_SONG * sp)
 	eof_vocal_tab_name[0][0] = ' ';
 	if(eof_selected_track != EOF_TRACK_VOCALS)
 	{
-		for(i = 0; i < sp->legacy_track[eof_selected_track-1]->notes; i++)
+		for(i = 0; i < sp->legacy_track[sp->track[eof_selected_track]->tracknum]->notes; i++)
 		{
-			if((sp->legacy_track[eof_selected_track]->note[i]->type >= 0) && (sp->legacy_track[eof_selected_track]->note[i]->type < 5))
+			if((sp->legacy_track[sp->track[eof_selected_track]->tracknum]->note[i]->type >= 0) && (sp->legacy_track[sp->track[eof_selected_track]->tracknum]->note[i]->type < 5))
 			{
-				eof_note_difficulties[(int)sp->legacy_track[eof_selected_track]->note[i]->type] = 1;
-				eof_note_type_name[(int)sp->legacy_track[eof_selected_track]->note[i]->type][0] = '*';
+				eof_note_difficulties[(int)sp->legacy_track[sp->track[eof_selected_track]->tracknum]->note[i]->type] = 1;
+				eof_note_type_name[(int)sp->legacy_track[sp->track[eof_selected_track]->tracknum]->note[i]->type][0] = '*';
 			}
 		}
 	}
