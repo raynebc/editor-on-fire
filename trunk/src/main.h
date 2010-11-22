@@ -346,7 +346,7 @@ void eof_clear_input(void);
 void eof_prepare_undo(int type);
 int eof_count_notes(void);
 int eof_figure_difficulty(void);
-int eof_figure_part(void);	//Returns the active track number, or -1 if the active track has no notes/lyrics
+int eof_figure_part(void);	//Returns the active track number in terms of FoF's command line play functionality, or -1 on error
 int d_hackish_edit_proc (int msg, DIALOG *d, int c);
 int eof_set_display_mode(int mode);
 void eof_debug_message(char * text);

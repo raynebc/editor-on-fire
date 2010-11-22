@@ -694,19 +694,19 @@ int eof_menu_beat_calculate_bpm(void)
 	double bpm = 0.0;
 	int bpm_count = 0;
 
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
 		if(eof_selection.multi[i])
 		{
 			if(first)
 			{
-				curpos = eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos;
+				curpos = eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos;
 				first = 0;
 			}
 			else
 			{
-				delta = eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos - curpos;
-				curpos = eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos;
+				delta = eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos - curpos;
+				curpos = eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos;
 				bpm += (double)60000 / (double)delta;
 				bpm_count++;
 			}

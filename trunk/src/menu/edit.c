@@ -202,7 +202,7 @@ void eof_prepare_edit_menu(void)
 			eof_edit_selection_menu[1].flags = 0;	//select like
 
 			/* select rest */
-			if(eof_selection.current != (eof_vocals_selected ? eof_song->vocal_track[0]->lyrics -1 : eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes -1))
+			if(eof_selection.current != (eof_vocals_selected ? eof_song->vocal_track[0]->lyrics -1 : eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes -1))
 			{
 				eof_edit_selection_menu[2].flags = 0;
 			}
@@ -1145,18 +1145,18 @@ int eof_menu_edit_copy(void)
 	PACKFILE * fp;
 
 	/* first, scan for selected notes */
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
-		if((eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type) && (eof_selection.track == eof_selected_track && eof_selection.multi[i]))
+		if((eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type) && (eof_selection.track == eof_selected_track && eof_selection.multi[i]))
 		{
 			copy_notes++;
-			if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos < first_pos)
+			if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos < first_pos)
 			{
-				first_pos = eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos;
+				first_pos = eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos;
 			}
 			if(first_beat == -1)
 			{
-				first_beat = eof_get_beat(eof_song, eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos);
+				first_beat = eof_get_beat(eof_song, eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos);
 			}
 		}
 	}
@@ -1176,19 +1176,19 @@ int eof_menu_edit_copy(void)
 	pack_iputl(copy_notes, fp);
 	pack_iputl(first_beat, fp);
 
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
-		if((eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type) && (eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		if((eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type) && (eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{
 
 			/* check for accidentally moved note */
 			if(!note_check)
 			{
-				if(eof_song->beat[eof_get_beat(eof_song, eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos) + 1]->pos - eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos <= 10)
+				if(eof_song->beat[eof_get_beat(eof_song, eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos) + 1]->pos - eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos <= 10)
 				{
 					if(alert(NULL, "First note appears to be off.", "Adjust?", "&Yes", "&No", 'y', 'n') == 1)
 					{
-						eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos = eof_song->beat[eof_get_beat(eof_song, eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos) + 1]->pos;
+						eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos = eof_song->beat[eof_get_beat(eof_song, eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos) + 1]->pos;
 					}
 					eof_clear_input();
 				}
@@ -1196,16 +1196,16 @@ int eof_menu_edit_copy(void)
 			}
 
 			/* write note data to disk */
-			pack_iputl(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note, fp);				//Write the note fret values
-			pack_iputl(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos - first_pos, fp);	//Write the note's position relative to within the selection
-			tfloat = eof_get_porpos(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos);
+			pack_iputl(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note, fp);				//Write the note fret values
+			pack_iputl(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos - first_pos, fp);	//Write the note's position relative to within the selection
+			tfloat = eof_get_porpos(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos);
 			pack_fwrite(&tfloat, sizeof(float), fp);	//Write the percent representing the note's start position within a beat
-			tfloat = eof_get_porpos(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos + eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->length);
+			tfloat = eof_get_porpos(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos + eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->length);
 			pack_fwrite(&tfloat, sizeof(float), fp);	//Write the percent representing the note's end position within a beat
-			pack_iputl(eof_get_beat(eof_song, eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos), fp);	//Write the beat the note starts in
-			pack_iputl(eof_get_beat(eof_song, eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos + eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->length), fp);	//Write the beat the note ends in
-			pack_iputl(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->length, fp);	//Write the note's length
-			pack_iputl(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags, fp);	//Write the note's flags
+			pack_iputl(eof_get_beat(eof_song, eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos), fp);	//Write the beat the note starts in
+			pack_iputl(eof_get_beat(eof_song, eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos + eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->length), fp);	//Write the beat the note ends in
+			pack_iputl(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->length, fp);	//Write the note's length
+			pack_iputl(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags, fp);	//Write the note's flags
 		}
 	}
 	pack_fclose(fp);
@@ -1269,7 +1269,7 @@ int eof_menu_edit_paste(void)
 
 		if(eof_music_pos + temp_note.pos + temp_note.length - eof_av_delay < eof_music_length)
 		{
-			new_note = eof_track_add_note(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]);
+			new_note = eof_track_add_note(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]);
 			if(new_note)
 			{
 				new_note->type = eof_note_type;
@@ -1283,7 +1283,7 @@ int eof_menu_edit_paste(void)
 		}
 	}
 	pack_fclose(fp);
-	eof_track_sort_notes(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]);
+	eof_track_sort_notes(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]);
 	eof_fixup_notes();
 	eof_determine_hopos();
 	eof_detect_difficulties(eof_song);
@@ -1294,9 +1294,9 @@ int eof_menu_edit_paste(void)
 	}
 	for(i = 0; i < paste_count; i++)
 	{
-		for(j = 0; j < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; j++)
+		for(j = 0; j < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; j++)
 		{
-			if((eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[j]->type == eof_note_type) && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[j]->pos == paste_pos[i]))
+			if((eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[j]->type == eof_note_type) && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[j]->pos == paste_pos[i]))
 			{
 				eof_selection.multi[j] = 1;
 				break;
@@ -1348,7 +1348,7 @@ int eof_menu_edit_old_paste(void)
 
 		if(eof_music_pos + temp_note.pos + temp_note.length - eof_av_delay < eof_music_length)
 		{
-			new_note = eof_track_add_note(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]);
+			new_note = eof_track_add_note(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]);
 			if(new_note)
 			{
 				new_note->note = temp_note.note;
@@ -1361,7 +1361,7 @@ int eof_menu_edit_old_paste(void)
 			}
 		}
 	}
-	eof_track_sort_notes(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]);
+	eof_track_sort_notes(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]);
 	eof_fixup_notes();
 	eof_determine_hopos();
 	eof_detect_difficulties(eof_song);
@@ -1372,9 +1372,9 @@ int eof_menu_edit_old_paste(void)
 	}
 	for(i = 0; i < paste_count; i++)
 	{
-		for(j = 0; j < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; j++)
+		for(j = 0; j < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; j++)
 		{
-			if((eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[j]->type == eof_note_type) && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[j]->pos == paste_pos[i]))
+			if((eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[j]->type == eof_note_type) && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[j]->pos == paste_pos[i]))
 			{
 				eof_selection.multi[j] = 1;
 				break;
@@ -1945,9 +1945,9 @@ int eof_menu_edit_select_all(void)
 	}
 	int i;
 
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
-		if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type)
+		if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type)
 		{
 			eof_selection.track = eof_selected_track;
 			eof_selection.multi[i] = 1;
@@ -2021,34 +2021,34 @@ int eof_menu_edit_select_like(void)
 	{
 		return 1;
 	}
-	if(eof_selection.current >= eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes)
+	if(eof_selection.current >= eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes)
 	{
 		return 1;
 	}
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
-		if(eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type))
+		if(eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type))
 		{
 			for(j = 0; j < ntypes; j++)
 			{
-				if(ntype[j] == eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note)
+				if(ntype[j] == eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note)
 				{
 					break;
 				}
 			}
 			if(j == ntypes)
 			{
-				ntype[ntypes] = eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note;
+				ntype[ntypes] = eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note;
 				ntypes++;
 			}
 		}
 	}
 	memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
 		for(j = 0; j < ntypes; j++)
 		{
-			if((eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type) && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note == ntype[j]))
+			if((eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type) && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note == ntype[j]))
 			{
 				eof_selection.track = eof_selected_track;
 				eof_selection.multi[i] = 1;
@@ -2106,9 +2106,9 @@ int eof_menu_edit_select_rest(void)
 		return 1;
 	}
 /*Instead of finding the first selected note, start with the last note that was selected
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
-		if(eof_selection.multi[i] && eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type)
+		if(eof_selection.multi[i] && eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type)
 		{
 			break;
 		}
@@ -2117,9 +2117,9 @@ int eof_menu_edit_select_rest(void)
 	if(eof_selection.current == EOF_MAX_NOTES - 1)	//No notes selected?
 		return 1;	//Don't perform this operation
 
-	for(i = eof_selection.current; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = eof_selection.current; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
-		if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type)
+		if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type)
 		{
 			eof_selection.multi[i] = 1;
 		}
@@ -2164,25 +2164,25 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty)
 		}
 		eof_clear_input();
 		eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-		for(i = eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i > 0; i--)
+		for(i = eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i > 0; i--)
 		{	//For each note in this instrument track, from last to first
-			if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type)
+			if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type)
 			{	//If this note is in the current difficulty
-				eof_track_delete_note(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum], i - 1);	//Delete it
+				eof_track_delete_note(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum], i - 1);	//Delete it
 			}
 		}
-		for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+		for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 		{	//For each note in this instrument track
-			if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == source_difficulty)
+			if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == source_difficulty)
 			{	//If this note is in the source difficulty
-				new_note = eof_track_add_note(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]);	//Create a note
+				new_note = eof_track_add_note(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]);	//Create a note
 				if(new_note)
 				{	//And copy the source note to the destination difficulty
 					new_note->type = eof_note_type;
-					new_note->note = eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note;
-					new_note->pos = eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos;
-					new_note->length = eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->length;
-					new_note->flags = eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags;
+					new_note->note = eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note;
+					new_note->pos = eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos;
+					new_note->length = eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->length;
+					new_note->flags = eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags;
 				}
 			}
 		}
@@ -2198,9 +2198,9 @@ static int notes_in_beat(int beat)
 
 	if(beat > eof_song->beats - 2)
 	{
-		for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+		for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 		{
-			if((eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type) && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos >= eof_song->beat[beat]->pos))
+			if((eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type) && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos >= eof_song->beat[beat]->pos))
 			{
 				count++;
 			}
@@ -2208,9 +2208,9 @@ static int notes_in_beat(int beat)
 	}
 	else
 	{
-		for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+		for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 		{
-			if((eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type) && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos >= eof_song->beat[beat]->pos) && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos < eof_song->beat[beat + 1]->pos))
+			if((eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type) && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos >= eof_song->beat[beat]->pos) && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos < eof_song->beat[beat + 1]->pos))
 			{
 				count++;
 			}
@@ -2420,7 +2420,7 @@ int eof_menu_edit_paste_from_catalog(void)
 					/* paste the note */
 					if(end_beat - first_beat + start_beat < eof_song->beats)
 					{
-						new_note = eof_track_add_note(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]);
+						new_note = eof_track_add_note(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]);
 						if(new_note)
 						{
 							new_note->type = eof_note_type;
@@ -2433,7 +2433,7 @@ int eof_menu_edit_paste_from_catalog(void)
 					}
 				}
 			}
-			eof_track_sort_notes(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]);
+			eof_track_sort_notes(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]);
 			eof_fixup_notes();
 			eof_determine_hopos();
 			eof_detect_difficulties(eof_song);
@@ -2441,9 +2441,9 @@ int eof_menu_edit_paste_from_catalog(void)
 			memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
 			for(i = 0; i < paste_count; i++)
 			{
-				for(j = 0; j < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; j++)
+				for(j = 0; j < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; j++)
 				{
-					if((eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[j]->pos == paste_pos[i]) && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[j]->type == eof_note_type))
+					if((eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[j]->pos == paste_pos[i]) && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[j]->type == eof_note_type))
 					{
 						eof_selection.track = eof_selected_track;
 						eof_selection.multi[j] = 1;
@@ -2489,9 +2489,9 @@ int eof_menu_edit_select_previous(void)
 	if(eof_selection.current == EOF_MAX_NOTES - 1)	//No notes selected?
 		return 1;	//Don't perform this operation
 
-	for(i = 0; (i < eof_selection.current) && (i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes); i++)
+	for(i = 0; (i < eof_selection.current) && (i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes); i++)
 	{
-		if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type)
+		if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type)
 		{
 			eof_selection.multi[i] = 1;
 		}
