@@ -1071,7 +1071,7 @@ void eof_detect_difficulties(EOF_SONG * sp)
 	eof_vocal_tab_name[0][0] = ' ';
 	if(eof_selected_track != EOF_TRACK_VOCALS)
 	{
-		for(i = 0; i < sp->legacy_track[eof_selected_track]->notes; i++)
+		for(i = 0; i < sp->legacy_track[eof_selected_track-1]->notes; i++)
 		{
 			if((sp->legacy_track[eof_selected_track]->note[i]->type >= 0) && (sp->legacy_track[eof_selected_track]->note[i]->type < 5))
 			{
@@ -1363,7 +1363,7 @@ int eof_song_add_track(EOF_SONG * sp, int trackformat)
 	if(sp == NULL)
 		return 0;	//Return error
 
-	if(sp->tracks < EOF_MAX_TRACKS)
+	if(sp->tracks < EOF_TRACKS_MAX)
 	{
 		ptr3 = malloc(sizeof(EOF_TRACK_ENTRY));
 		if(ptr3 == NULL)
@@ -1606,6 +1606,7 @@ int eof_load_song_pf_new(EOF_SONG * sp, PACKFILE * fp)
 				if(eof_song_add_track(sp, EOF_LEGACY_TRACK_FORMAT) == 0)	//Add a new legacy track
 					return 0;	//Return error upon failure
 				sp->track[sp->tracks-1]->trackbehavior = track_behavior;
+				sp->track[sp->tracks-1]->tracktype = track_type;
 				count = pack_igetl(fp);	//Read the number of notes in this track
 				if(count > EOF_MAX_NOTES)
 				{
@@ -1627,6 +1628,7 @@ int eof_load_song_pf_new(EOF_SONG * sp, PACKFILE * fp)
 				if(eof_song_add_track(sp, EOF_VOCAL_TRACK_FORMAT) == 0)	//Add a new vocal track
 					return 0;	//Return error upon failure
 				sp->track[sp->tracks-1]->trackbehavior = track_behavior;
+				sp->track[sp->tracks-1]->tracktype = track_type;
 				pack_getc(fp);	//Read the tone set number assigned to this track (not supported yet)
 				count = pack_igetl(fp);	//Read the number of notes in this track
 				if(count > EOF_MAX_LYRICS)
@@ -1670,7 +1672,7 @@ int eof_load_song_pf_new(EOF_SONG * sp, PACKFILE * fp)
 				inputc = pack_getc(fp);			//Read the section's associated difficulty
 				section_start = pack_igetl(fp);	//Read the start timestamp of the section
 				section_end = pack_igetl(fp);	//Read the end timestamp of the section
-				pack_igetw(fp);					//Read the section flags (not supported yet)
+				inputl = pack_igetw(fp);		//Read the section flags (not supported yet)
 
 				//Perform the appropriate logic to load this type of section
 				switch(track_ctr)
@@ -1689,42 +1691,9 @@ int eof_load_song_pf_new(EOF_SONG * sp, PACKFILE * fp)
 					break;
 
 					default:	//Read track-specific sections
-						switch(section_type)
-						{
-							case 1:	//Solo section
-								if(track_behavior != 3)
-								{	//There are no vocal solo sections
-								}
-							break;
-							case 2:	//Star Power section
-							break;
-							case 5:	//Lyric Phrase section
-								if(track_behavior == 3)
-								{	//Lyric phrases are only valid for vocal tracks
-								}
-							break;
-							case 6:	//Yellow Tom section (not supported yet)
-								if(track_behavior == 2)
-								{	//Tom sections are only valid for drum tracks
-								}
-							break;
-							case 7:	//Blue Tom section (not supported yet)
-								if(track_behavior == 2)
-								{	//Tom sections are only valid for drum tracks
-								}
-							break;
-							case 8:	//Green Tom section (not supported yet)
-								if(track_behavior == 2)
-								{	//Tom sections are only valid for drum tracks
-								}
-							break;
-						}
+						eof_song_add_section(sp,track_ctr,section_type,inputc,section_start,section_end,inputl);
 					break;
 				}
-
-//!For the section loading code, write abstracted functions that will check the track type and process it accordingly
-//!Consider a generic eof_add_section() type of function that will take a section type as a parameter
-
 			}
 		}//For each type of section in this track
 
@@ -1767,8 +1736,35 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 		}
 	}
 
-	switch(sp->track[track]->trackformat)
-	{	//Perform the appropriate logic to load this format of track
+	switch(sectiontype)
+	{	//Perform the appropriate logic to add this type of section
+		case 1:	//Solo section
+			if(sp->track[track]->trackbehavior != 3)
+			{	//Solo sections are not valid for vocal tracks
+			}
+		break;
+		case 2:	//Star Power section
+		break;
+		case 5:	//Lyric Phrase section
+			if(sp->track[track]->trackbehavior == 3)
+			{	//Lyric phrases are only valid for vocal tracks
+			}
+		break;
+		case 6:	//Yellow Tom section (not supported yet)
+			if(sp->track[track]->trackbehavior == 2)
+			{	//Tom sections are only valid for drum tracks
+			}
+		break;
+		case 7:	//Blue Tom section (not supported yet)
+			if(sp->track[track]->trackbehavior == 2)
+			{	//Tom sections are only valid for drum tracks
+			}
+		break;
+		case 8:	//Green Tom section (not supported yet)
+			if(sp->track[track]->trackbehavior == 2)
+			{	//Tom sections are only valid for drum tracks
+			}
+		break;
 	}
 	return 0;	//Return error
 }

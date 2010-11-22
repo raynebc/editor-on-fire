@@ -39,7 +39,7 @@
 #include "waveform.h"
 #include "silence.h"
 
-char      * eof_track_name[EOF_MAX_TRACKS + 1] = {"PART GUITAR", "PART BASS", "PART GUITAR COOP", "PART RHYTHM", "PART DRUMS", "PART VOCALS"};
+char      * eof_track_name[EOF_TRACKS_MAX + 1] = {"PART GUITAR", "PART BASS", "PART GUITAR COOP", "PART RHYTHM", "PART DRUMS", "PART VOCALS"};
 char        eof_note_type_name[5][32] = {" Supaeasy", " Easy", " Medium", " Amazing", " BRE"};
 char        eof_vocal_tab_name[5][32] = {" Lyrics", " ", " ", " ", " "};
 char      * eof_snap_name[9] = {"Off", "1/4", "1/8", "1/12", "1/16", "1/24", "1/32", "1/48", "Custom"};
@@ -1105,12 +1105,12 @@ int eof_figure_part(void)
 		return -1;
 	}
 
-	part[EOF_TRACK_GUITAR] = 0;
-	part[EOF_TRACK_RHYTHM] = 1;
+	part[EOF_TRACK_GUITAR] = 1;
 	part[EOF_TRACK_BASS] = 2;
 	part[EOF_TRACK_GUITAR_COOP] = 3;
-	part[EOF_TRACK_DRUM] = 4;
-	part[EOF_TRACK_VOCALS] = 5;
+	part[EOF_TRACK_RHYTHM] = 4;
+	part[EOF_TRACK_DRUM] = 5;
+	part[EOF_TRACK_VOCALS] = 6;
 	return part[eof_selected_track];
 }
 

@@ -31,7 +31,7 @@ int         eof_snote = 0;
 int         eof_last_snote = 0;
 int         eof_moving_anchor = 0;
 int         eof_adjusted_anchor = 0;
-int         eof_anchor_diff[EOF_MAX_TRACKS + 1] = {0};
+int         eof_anchor_diff[EOF_TRACKS_MAX + 1] = {0};
 
 EOF_SNAP_DATA eof_snap;
 EOF_SNAP_DATA eof_tail_snap;
@@ -660,17 +660,17 @@ void eof_read_editor_keys(void)
 
 			if(KEY_EITHER_SHIFT)	//Shift instrument back 1 number
 			{
-				if(eof_selected_track > 0)
+				if(eof_selected_track > EOF_TRACKS_MIN)
 					eof_selected_track--;
 				else
-					eof_selected_track = EOF_MAX_TRACKS - 1;	//Wrap around
+					eof_selected_track = EOF_TRACKS_MAX;	//Wrap around
 			}
 			else					//Shift instrument forward 1 number
 			{
-				if(eof_selected_track + 1 < EOF_MAX_TRACKS)
+				if(eof_selected_track < EOF_TRACKS_MAX)
 					eof_selected_track++;
 				else
-					eof_selected_track = 0;	//Wrap around
+					eof_selected_track = EOF_TRACKS_MIN;	//Wrap around
 			}
 
 			if(eof_selected_track == EOF_TRACK_VOCALS)

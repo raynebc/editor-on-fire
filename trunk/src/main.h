@@ -172,7 +172,7 @@ extern EOF_WINDOW * eof_window_note;
 extern EOF_WINDOW * eof_window_3d;
 
 extern char        eof_last_frettist[256];
-extern char      * eof_track_name[EOF_MAX_TRACKS + 1];
+extern char      * eof_track_name[EOF_TRACKS_MAX + 1];
 extern int         eof_zoom;
 extern int         eof_zoom_3d;
 extern char        eof_changes;
@@ -243,7 +243,7 @@ extern int         eof_input_mode;
 extern int         eof_undo_toggle;
 extern int         eof_redo_toggle;
 extern int         eof_change_count;
-extern int         eof_anchor_diff[EOF_MAX_TRACKS + 1];
+extern int         eof_anchor_diff[EOF_TRACKS_MAX + 1];
 extern int         eof_last_note;
 extern int         eof_last_midi_offset;
 //extern int         eof_default_length;

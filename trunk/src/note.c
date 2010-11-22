@@ -68,7 +68,7 @@ int eof_adjust_notes(int offset)
 {
 	int i, j;
 
-	for(i = 0; i < EOF_MAX_TRACKS; i++)
+	for(i = 0; i < EOF_LEGACY_TRACKS_MAX; i++)
 	{
 		for(j = 0; j < eof_song->legacy_track[i]->notes; j++)
 		{

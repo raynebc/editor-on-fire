@@ -212,7 +212,7 @@ void eof_prepare_song_menu(void)
 		}
 
 		/* track */
-		for(i = 0; i < EOF_MAX_TRACKS + 1; i++)
+		for(i = 0; i < EOF_TRACKS_MAX + 1; i++)
 		{
 			eof_track_selected_menu[i].flags = 0;
 		}
@@ -447,12 +447,12 @@ void eof_prepare_song_menu(void)
 			}
 		}
 		if(eof_song->vocal_track[0]->lyrics > 0)
-		{
-			eof_track_selected_menu[EOF_TRACK_VOCALS].text[0] = '*';
+		{	//Index (EOF_TRACK_VOCALS-1) because the track numbering starts from 1 instead of 0
+			eof_track_selected_menu[EOF_TRACK_VOCALS-1].text[0] = '*';
 		}
 		else
 		{
-			eof_track_selected_menu[EOF_TRACK_VOCALS].text[0] = ' ';
+			eof_track_selected_menu[EOF_TRACK_VOCALS-1].text[0] = ' ';
 		}
 	}
 }
@@ -1081,9 +1081,9 @@ int eof_menu_track_selected_track_number(int tracknum)
 {
 	int i;
 
-	if((tracknum >= 0) && (tracknum <= EOF_MAX_TRACKS))
+	if((tracknum >= 0) && (tracknum <= EOF_TRACKS_MAX))
 	{
-		for(i = 0; i < EOF_MAX_TRACKS + 1; i++)
+		for(i = 0; i < EOF_TRACKS_MAX + 1; i++)
 		{
 			eof_track_selected_menu[i].flags = 0;
 		}

@@ -903,16 +903,16 @@ int eof_menu_edit_old_paste_vocal(void)
 int eof_menu_edit_cut(int anchor, int option, float offset)
 {
 	int i, j;
-	int first_pos[EOF_MAX_TRACKS] = {-1, -1, -1, -1, -1};
-	int first_beat[EOF_MAX_TRACKS] = {-1, -1, -1, -1, -1};
+	int first_pos[EOF_TRACKS_MAX] = {-1, -1, -1, -1, -1};
+	int first_beat[EOF_TRACKS_MAX] = {-1, -1, -1, -1, -1};
 	int start_pos, end_pos;
 	int last_anchor, next_anchor;
-	int copy_notes[EOF_MAX_TRACKS] = {0};
+	int copy_notes[EOF_TRACKS_MAX] = {0};
 	float tfloat;
 	PACKFILE * fp;
 
 	/* set boundary */
-	for(i = 0; i < EOF_MAX_TRACKS; i++)
+	for(i = 0; i < EOF_TRACKS_MAX; i++)
 	{
 		eof_anchor_diff[i] = 0;
 	}
@@ -932,7 +932,7 @@ int eof_menu_edit_cut(int anchor, int option, float offset)
 		end_pos = eof_song->beat[eof_song->beats - 1]->pos - 1;
 	}
 
-	for(j = 0; j < EOF_MAX_TRACKS; j++)
+	for(j = 0; j < EOF_LEGACY_TRACKS_MAX; j++)
 	{
 		for(i = 0; i < eof_song->legacy_track[j]->notes; i++)
 		{
@@ -961,7 +961,7 @@ int eof_menu_edit_cut(int anchor, int option, float offset)
 	}
 
 	/* copy all tracks */
-	for(j = 0; j < EOF_MAX_TRACKS; j++)
+	for(j = 0; j < EOF_LEGACY_TRACKS_MAX; j++)
 	{
 		/* notes */
 		pack_iputl(copy_notes[j], fp);
@@ -1016,17 +1016,17 @@ int eof_menu_edit_cut_paste(int anchor, int option, float offset)
 	int i, j, b;
 //	unsigned long paste_pos[EOF_MAX_NOTES] = {0};
 //	int paste_count = 0;
-	int first_beat[EOF_MAX_TRACKS] = {0};
-	int this_beat[EOF_MAX_TRACKS] = {0};
+	int first_beat[EOF_TRACKS_MAX] = {0};
+	int this_beat[EOF_TRACKS_MAX] = {0};
 	int start_pos, end_pos;
 	int last_anchor, next_anchor;
 	PACKFILE * fp;
-	int copy_notes[EOF_MAX_TRACKS];
+	int copy_notes[EOF_TRACKS_MAX];
 	EOF_EXTENDED_NOTE temp_note;
 	EOF_NOTE * new_note = NULL;
 	float tfloat;
 
-	for(i = 0; i < EOF_MAX_TRACKS; i++)
+	for(i = 0; i < EOF_TRACKS_MAX; i++)
 	{
 		this_beat[i] = eof_find_previous_anchor(eof_song, anchor) + eof_anchor_diff[i];
 	}
@@ -1054,7 +1054,7 @@ int eof_menu_edit_cut_paste(int anchor, int option, float offset)
 		allegro_message("Clipboard error!");
 		return 1;
 	}
-	for(j = 0; j < EOF_MAX_TRACKS; j++)
+	for(j = 0; j < EOF_LEGACY_TRACKS_MAX; j++)
 	{
 		for(i = eof_song->legacy_track[j]->notes - 1; i >= 0; i--)
 		{
@@ -1066,7 +1066,7 @@ int eof_menu_edit_cut_paste(int anchor, int option, float offset)
 	}
 
 	memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
-	for(j = 0; j < EOF_MAX_TRACKS; j++)
+	for(j = 0; j < EOF_LEGACY_TRACKS_MAX; j++)
 	{
 		copy_notes[j] = pack_igetl(fp);
 		first_beat[j] = pack_igetl(fp);

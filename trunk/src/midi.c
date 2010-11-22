@@ -1059,7 +1059,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 
 /* write note tracks */
-	for(j = 0; j < EOF_MAX_TRACKS; j++)
+	for(j = 0; j < EOF_LEGACY_TRACKS_MAX; j++)
 	{
 		if(eof_song->legacy_track[j]->notes)
 		{
