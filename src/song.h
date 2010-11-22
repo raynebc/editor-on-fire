@@ -19,13 +19,6 @@
 #define EOF_MAX_DIFFICULTIES 4
 #define EOF_NOTE_SPECIAL     4
 
-#define EOF_TRACK_GUITAR      0
-#define EOF_TRACK_BASS        1
-#define EOF_TRACK_GUITAR_COOP 2
-#define EOF_TRACK_RHYTHM      3
-#define EOF_TRACK_DRUM        4
-#define EOF_TRACK_VOCALS      5
-
 #define EOF_NOTE_FLAG_HOPO       1
 #define EOF_NOTE_FLAG_SP         2
 #define EOF_NOTE_FLAG_CRAZY      4	//This flag will represent overlap allowed for guitar tracks
@@ -247,15 +240,31 @@ typedef struct
 
 } EOF_CATALOG;
 
-#define EOF_LEGACY_TRACK_TYPE				1
-#define EOF_VOCAL_TRACK_TYPE				2
-#define EOF_PRO_KEYS_TRACK_TYPE				3
-#define EOF_PRO_GUITAR_TRACK_TYPE			4
-#define EOF_PRO_VARIABLE_LEGACY_TRACK_TYPE	5
+#define EOF_LEGACY_TRACK_FORMAT					1
+#define EOF_VOCAL_TRACK_FORMAT					2
+#define EOF_PRO_KEYS_TRACK_FORMAT				3
+#define EOF_PRO_GUITAR_TRACK_FORMAT				4
+#define EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT	5
+
+#define EOF_GUITAR_TRACK_BEHAVIOR		1
+#define EOF_DRUM_TRACK_BEHAVIOR			2
+#define EOF_VOCAL_TRACK_BEHAVIOR		3
+#define EOF_KEYS_TRACK_BEHAVIOR			4
+#define EOF_PRO_GUITAR_TRACK_BEHAVIOR	5
+#define EOF_PRO_KEYS_TRACK_BEHAVIOR		6
+
+#define EOF_TRACK_GUITAR      0
+#define EOF_TRACK_BASS        1
+#define EOF_TRACK_GUITAR_COOP 2
+#define EOF_TRACK_RHYTHM      3
+#define EOF_TRACK_DRUM        4
+#define EOF_TRACK_VOCALS      5
 typedef struct
 {
-	char tracktype;			//Specifies which track type this is, using one of the macros above
+	char trackformat;		//Specifies which track format this is, using one of the macros above
 	unsigned long tracknum;	//Specifies which number of that type this track is, used as an index into the type-specific track arrays
+	char trackbehavior;		//Specifies which behavior this track follows, using one of the macros above
+	char tracktype;			//Specifies which type of track this is (ie default PART GUITAR, custom track, etc)
 } EOF_TRACK_ENTRY;
 
 #define EOF_MAX_TRACKS	(EOF_LEGACY_TRACKS_MAX + EOF_VOCAL_TRACKS_MAX)
@@ -378,8 +387,28 @@ int eof_load_song_string_pf(char *buffer, PACKFILE *fp, unsigned long buffersize
 	//If buffersize is 0, the string is parsed in the file but not stored, otherwise the buffer is NULL terminated
 	//Nonzero is returned on error
 
-int eof_song_add_track(EOF_SONG * sp, int tracktype);
-	//Adds a new track of the specified track type.  Returns zero on error
+int eof_song_add_track(EOF_SONG * sp, int trackformat);
+	//Adds a new track of the specified format.  Returns zero on error
 int eof_song_delete_track(EOF_SONG * sp, unsigned long track);
 	//Deletes the specified track from the main track array and the appropriate track type array, but only if the track contains no notes.  Returns zero on error
+
+#define EOF_SOLO_SECTION				1
+#define EOF_SP_SECTION					2
+#define EOF_BOOKMARK_SECTION			3
+#define EOF_FRET_CATALOG_SECTION		4
+#define EOF_LYRIC_PHRASE_SECTION		5
+#define EOF_YELLOW_TOM_SECTION			6
+#define EOF_BLUE_TOM_SECTION			7
+#define EOF_GREEN_TOM_SECTION			8
+#define EOF_TRILL_SECTION				9
+#define EOF_ARPEGGIO_SECTION			10
+#define EOF_TRAINER_SECTION				11
+#define EOF_CUSTOM_MIDI_NOTE_SECTION	12
+#define EOF_PREVIEW_SECTION				13
+int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, char difficulty, unsigned long start, unsigned long stop, unsigned long flags);
+	//Adds the specified section to the specified track if it's valid for the track
+	//For bookmark sections, the flags variable represents which bookmark number is being set
+	//For fret catalog sections, the flags variable represents which track the catalog entry belongs to
+	//Returns zero on error
+
 #endif

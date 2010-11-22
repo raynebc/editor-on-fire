@@ -26,10 +26,10 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 	//All EOF project formats before revision 'H' stored 5 legacy and 1 vocal track
 	for(i = 0; i < 5; i++)
 	{	//Add tracks
-		if(eof_song_add_track(sp, EOF_LEGACY_TRACK_TYPE) == 0)
+		if(eof_song_add_track(sp, EOF_LEGACY_TRACK_FORMAT) == 0)
 			return NULL;
 	}
-	if(eof_song_add_track(sp, EOF_VOCAL_TRACK_TYPE) == 0)
+	if(eof_song_add_track(sp, EOF_VOCAL_TRACK_FORMAT) == 0)
 		return NULL;
 	switch(version)
 	{
