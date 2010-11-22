@@ -181,28 +181,28 @@ void eof_prepare_note_menu(void)
 		}
 		else
 		{	//PART VOCALS NOT SELECTED
-			for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+			for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 			{
-				if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type))
+				if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type))
 				{
-					if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos < sel_start)
+					if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos < sel_start)
 					{
-						sel_start = eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos;
+						sel_start = eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos;
 					}
-					if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos > sel_end)
+					if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos > sel_end)
 					{
-						sel_end = eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos + eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->length;
+						sel_end = eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos + eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->length;
 					}
 				}
-				if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type))
+				if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type))
 				{
 					selected++;
-					if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note)
+					if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note)
 					{
 						vselected++;
 					}
 				}
-				if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type)
+				if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type)
 				{
 					if(firstnote < 0)
 					{
@@ -211,9 +211,9 @@ void eof_prepare_note_menu(void)
 					lastnote = i;
 				}
 			}
-			for(j = 0; j < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->star_power_paths; j++)
+			for(j = 0; j < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->star_power_paths; j++)
 			{
-				if((sel_end >= eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->star_power_path[j].start_pos) && (sel_start <= eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->star_power_path[j].end_pos))
+				if((sel_end >= eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->star_power_path[j].start_pos) && (sel_start <= eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->star_power_path[j].end_pos))
 				{
 					insp = 1;
 					spstart = sel_start;
@@ -221,9 +221,9 @@ void eof_prepare_note_menu(void)
 					spp = j;
 				}
 			}
-			for(j = 0; j < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->solos; j++)
+			for(j = 0; j < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->solos; j++)
 			{
-				if((sel_end >= eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->solo[j].start_pos) && (sel_start <= eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->solo[j].end_pos))
+				if((sel_end >= eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->solo[j].start_pos) && (sel_start <= eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->solo[j].end_pos))
 				{
 					insolo = 1;
 					ssstart = sel_start;
@@ -236,7 +236,7 @@ void eof_prepare_note_menu(void)
 		if(vselected)
 		{	//ONE OR MORE NOTES/LYRICS SELECTED
 			/* star power mark */
-			if((spstart == eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->star_power_path[spp].start_pos) && (spend == eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->star_power_path[spp].end_pos))
+			if((spstart == eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->star_power_path[spp].start_pos) && (spend == eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->star_power_path[spp].end_pos))
 			{
 				eof_star_power_menu[0].flags = D_DISABLED;
 			}
@@ -246,7 +246,7 @@ void eof_prepare_note_menu(void)
 			}
 
 			/* solo mark */
-			if((ssstart == eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->solo[ssp].start_pos) && (ssend == eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->solo[ssp].end_pos))
+			if((ssstart == eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->solo[ssp].start_pos) && (ssend == eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->solo[ssp].end_pos))
 			{
 				eof_solo_menu[0].flags = D_DISABLED;
 			}
@@ -317,7 +317,7 @@ void eof_prepare_note_menu(void)
 		}
 
 		/* star power erase all */
-		if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->star_power_paths > 0)
+		if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->star_power_paths > 0)
 		{
 			eof_star_power_menu[2].flags = 0;
 		}
@@ -327,7 +327,7 @@ void eof_prepare_note_menu(void)
 		}
 
 		/* solo erase all */
-		if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->solos > 0)
+		if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->solos > 0)
 		{
 			eof_solo_menu[2].flags = 0;
 		}
@@ -498,11 +498,11 @@ int eof_menu_note_transpose_up(void)
 	else
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+		for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 		{
-			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type))
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type))
 			{
-				eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note = (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note << 1) & 31;
+				eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note = (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note << 1) & 31;
 			}
 		}
 	}
@@ -531,11 +531,11 @@ int eof_menu_note_transpose_down(void)
 	else
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+		for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 		{
-			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type))
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type))
 			{
-				eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note = (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note >> 1) & 31;
+				eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note = (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note >> 1) & 31;
 			}
 		}
 	}
@@ -614,34 +614,34 @@ int eof_menu_note_resnap(void)
 		return eof_menu_note_resnap_vocal();
 	}
 	int i;
-	int oldnotes = eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes;
+	int oldnotes = eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes;
 
 	if(eof_snap_mode == EOF_SNAP_OFF)
 	{
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type))
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type))
 		{
 
 			/* snap the note itself */
-			eof_snap_logic(&eof_tail_snap, eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos);
-			eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos = eof_tail_snap.pos;
+			eof_snap_logic(&eof_tail_snap, eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos);
+			eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos = eof_tail_snap.pos;
 
 			/* snap the tail */
-			eof_snap_logic(&eof_tail_snap, eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos + eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->length);
+			eof_snap_logic(&eof_tail_snap, eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos + eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->length);
 			eof_snap_length_logic(&eof_tail_snap);
-			if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->length > 1)
+			if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->length > 1)
 			{
-				eof_snap_logic(&eof_tail_snap, eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos + eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->length);
+				eof_snap_logic(&eof_tail_snap, eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos + eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->length);
 				eof_set_tail_pos(i, eof_tail_snap.pos);
 			}
 		}
 	}
-	eof_track_fixup_notes(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum], 1);
-	if(oldnotes != eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes)
+	eof_track_fixup_notes(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum], 1);
+	if(oldnotes != eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes)
 	{
 		allegro_message("Warning! Some notes snapped to the same position and were automatically combined.");
 	}
@@ -687,9 +687,9 @@ int eof_menu_note_delete(void)
 	}
 	int i, d = 0;
 
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type))
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type))
 		{
 			d++;
 		}
@@ -697,11 +697,11 @@ int eof_menu_note_delete(void)
 	if(d)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-		for(i = eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes - 1; i >= 0; i--)
+		for(i = eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes - 1; i >= 0; i--)
 		{
-			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_selection.track == eof_selected_track && eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type))
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_selection.track == eof_selected_track && eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type))
 			{
-				eof_track_delete_note(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum], i);
+				eof_track_delete_note(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum], i);
 				eof_selection.multi[i] = 0;
 			}
 		}
@@ -721,14 +721,14 @@ int eof_menu_note_toggle_green(void)
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type))
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type))
 		{
-			eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note ^= 1;
+			eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note ^= 1;
 			if(eof_selected_track == EOF_TRACK_DRUM)
 			{	//If green drum is being toggled on/off
-				eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_DBASS);		//Clear the Expert+ status if it is set
+				eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_DBASS);		//Clear the Expert+ status if it is set
 			}
 		}
 	}
@@ -744,11 +744,11 @@ int eof_menu_note_toggle_red(void)
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type))
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type))
 		{
-			eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note ^= 2;
+			eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note ^= 2;
 		}
 	}
 	return 1;
@@ -763,17 +763,17 @@ int eof_menu_note_toggle_yellow(void)
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type))
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type))
 		{
-			eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note ^= 4;
+			eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note ^= 4;
 			if(eof_selected_track == EOF_TRACK_DRUM)
 			{	//If yellow drum is being toggled on/off
-				eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_Y_CYMBAL);	//Clear the Pro yellow cymbal status if it is set
-				if(eof_mark_drums_as_cymbal && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note & 4))
+				eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_Y_CYMBAL);	//Clear the Pro yellow cymbal status if it is set
+				if(eof_mark_drums_as_cymbal && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note & 4))
 				{	//If user specified to mark new notes as cymbals, and this note was toggled on
-					eof_set_flags_at_note_pos(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,1);	//Set the yellow cymbal flag on all drum notes at this position
+					eof_set_flags_at_note_pos(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,1);	//Set the yellow cymbal flag on all drum notes at this position
 				}
 			}
 		}
@@ -790,17 +790,17 @@ int eof_menu_note_toggle_blue(void)
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type))
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type))
 		{
-			eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note ^= 8;
+			eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note ^= 8;
 			if(eof_selected_track == EOF_TRACK_DRUM)
 			{	//If blue drum is being toggled on/off
-				eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_B_CYMBAL);	//Clear the Pro blue cymbal status if it is set
-				if(eof_mark_drums_as_cymbal && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note & 8))
+				eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_B_CYMBAL);	//Clear the Pro blue cymbal status if it is set
+				if(eof_mark_drums_as_cymbal && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note & 8))
 				{	//If user specified to mark new notes as cymbals, and this note was toggled on
-					eof_set_flags_at_note_pos(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum],i,EOF_NOTE_FLAG_B_CYMBAL,1);	//Set the blue cymbal flag on all drum notes at this position
+					eof_set_flags_at_note_pos(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum],i,EOF_NOTE_FLAG_B_CYMBAL,1);	//Set the blue cymbal flag on all drum notes at this position
 				}
 			}
 		}
@@ -817,17 +817,17 @@ int eof_menu_note_toggle_purple(void)
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type))
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type))
 		{
-			eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note ^= 16;
+			eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note ^= 16;
 			if(eof_selected_track == EOF_TRACK_DRUM)
 			{	//If green drum is being toggled on/off
-				eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_G_CYMBAL);	//Clear the Pro green cymbal status if it is set
-				if(eof_mark_drums_as_cymbal && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note & 16))
+				eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_G_CYMBAL);	//Clear the Pro green cymbal status if it is set
+				if(eof_mark_drums_as_cymbal && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note & 16))
 				{	//If user specified to mark new notes as cymbals, and this note was toggled on
-					eof_set_flags_at_note_pos(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum],i,EOF_NOTE_FLAG_G_CYMBAL,1);	//Set the green cymbal flag on all drum notes at this position
+					eof_set_flags_at_note_pos(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum],i,EOF_NOTE_FLAG_G_CYMBAL,1);	//Set the green cymbal flag on all drum notes at this position
 				}
 			}
 		}
@@ -843,16 +843,16 @@ int eof_menu_note_toggle_crazy(void)
 	if((eof_selected_track == EOF_TRACK_DRUM) || eof_vocals_selected)
 		return 1;	//Do not allow this function to run when PART DRUMS or PART VOCALS is active
 
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type))
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type))
 		{
 			if(!u)
 			{
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				u = 1;
 			}
-			eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags ^= EOF_NOTE_FLAG_CRAZY;
+			eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags ^= EOF_NOTE_FLAG_CRAZY;
 		}
 	}
 	return 1;
@@ -866,16 +866,16 @@ int eof_menu_note_toggle_double_bass(void)
 	if(eof_selected_track != EOF_TRACK_DRUM)
 		return 1;	//Do not allow this function to run when PART DRUMS is not active
 
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == EOF_NOTE_AMAZING) && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note & 1))
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == EOF_NOTE_AMAZING) && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note & 1))
 		{	//If this note is in the currently active track, is selected, is in the Expert difficulty and has a green gem
 			if(!u)
 			{
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				u = 1;
 			}
-			eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags ^= EOF_NOTE_FLAG_DBASS;
+			eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags ^= EOF_NOTE_FLAG_DBASS;
 		}
 	}
 	return 1;
@@ -889,20 +889,20 @@ int eof_menu_note_toggle_rb3_cymbal_green(void)
 	if(eof_selected_track != EOF_TRACK_DRUM)
 		return 1;	//Do not allow this function to run when PART DRUMS is not active
 
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
-			if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note & 16)
+			if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note & 16)
 			{	//If this drum note is purple (represents a green drum in Rock Band)
 				if(!u)
 				{	//Make a back up before changing the first note
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					u = 1;
 				}
-				eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_DBASS);	//Clear the Expert+ status if it is set
-//				eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags ^= EOF_NOTE_FLAG_G_CYMBAL;
-				eof_set_flags_at_note_pos(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum],i,EOF_NOTE_FLAG_G_CYMBAL,2);	//Toggle the green cymbal flag on all drum notes at this position
+				eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_DBASS);	//Clear the Expert+ status if it is set
+//				eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags ^= EOF_NOTE_FLAG_G_CYMBAL;
+				eof_set_flags_at_note_pos(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum],i,EOF_NOTE_FLAG_G_CYMBAL,2);	//Toggle the green cymbal flag on all drum notes at this position
 			}
 		}
 	}
@@ -917,19 +917,19 @@ int eof_menu_note_toggle_rb3_cymbal_yellow(void)
 	if(eof_selected_track != EOF_TRACK_DRUM)
 		return 1;	//Do not allow this function to run when PART DRUMS is not active
 
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
-			if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note & 4)
+			if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note & 4)
 			{	//If this drum note is yellow
 				if(!u)
 				{	//Make a back up before changing the first note
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					u = 1;
 				}
-//				eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags ^= EOF_NOTE_FLAG_Y_CYMBAL;
-				eof_set_flags_at_note_pos(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,2);	//Toggle the yellow cymbal flag on all drum notes at this position
+//				eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags ^= EOF_NOTE_FLAG_Y_CYMBAL;
+				eof_set_flags_at_note_pos(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,2);	//Toggle the yellow cymbal flag on all drum notes at this position
 			}
 		}
 	}
@@ -944,19 +944,19 @@ int eof_menu_note_toggle_rb3_cymbal_blue(void)
 	if(eof_selected_track != EOF_TRACK_DRUM)
 		return 1;	//Do not allow this function to run when PART DRUMS is not active
 
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
-			if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note & 8)
+			if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note & 8)
 			{	//If this drum note is blue
 				if(!u)
 				{	//Make a back up before changing the first note
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					u = 1;
 				}
-//				eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags ^= EOF_NOTE_FLAG_B_CYMBAL;
-				eof_set_flags_at_note_pos(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum],i,EOF_NOTE_FLAG_B_CYMBAL,2);	//Toggle the blue cymbal flag on all drum notes at this position
+//				eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags ^= EOF_NOTE_FLAG_B_CYMBAL;
+				eof_set_flags_at_note_pos(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum],i,EOF_NOTE_FLAG_B_CYMBAL,2);	//Toggle the blue cymbal flag on all drum notes at this position
 			}
 		}
 	}
@@ -971,22 +971,22 @@ int eof_menu_note_remove_cymbal(void)
 	if(eof_selected_track != EOF_TRACK_DRUM)
 		return 1;	//Do not allow this function to run when PART DRUMS is not active
 
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
-			if(	((eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note & 4) && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags & EOF_NOTE_FLAG_Y_CYMBAL)) ||
-				((eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note & 8) && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags & EOF_NOTE_FLAG_B_CYMBAL)) ||
-				((eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note & 16) && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags & EOF_NOTE_FLAG_G_CYMBAL)))
+			if(	((eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note & 4) && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags & EOF_NOTE_FLAG_Y_CYMBAL)) ||
+				((eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note & 8) && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags & EOF_NOTE_FLAG_B_CYMBAL)) ||
+				((eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note & 16) && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags & EOF_NOTE_FLAG_G_CYMBAL)))
 			{	//If this note has a cymbal notation
 				if(!u)
 				{	//Make a back up before changing the first note
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					u = 1;
 				}
-				eof_set_flags_at_note_pos(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,0);	//Clear the yellow cymbal flag on all drum notes at this position
-				eof_set_flags_at_note_pos(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum],i,EOF_NOTE_FLAG_B_CYMBAL,0);	//Clear the blue cymbal flag on all drum notes at this position
-				eof_set_flags_at_note_pos(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum],i,EOF_NOTE_FLAG_G_CYMBAL,0);	//Clear the green cymbal flag on all drum notes at this position
+				eof_set_flags_at_note_pos(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,0);	//Clear the yellow cymbal flag on all drum notes at this position
+				eof_set_flags_at_note_pos(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum],i,EOF_NOTE_FLAG_B_CYMBAL,0);	//Clear the blue cymbal flag on all drum notes at this position
+				eof_set_flags_at_note_pos(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum],i,EOF_NOTE_FLAG_G_CYMBAL,0);	//Clear the green cymbal flag on all drum notes at this position
 			}
 		}
 	}
@@ -1056,25 +1056,25 @@ int eof_menu_note_push_back(void)
 
 	if(eof_count_selected_notes(NULL, 0) > 0)
 	{
-		for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+		for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 		{
 			if(eof_selection.multi[i])
 			{
-				beat = eof_get_beat(eof_song, eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos);
-				porpos = eof_get_porpos(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos);
-				eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos = eof_put_porpos(beat, porpos, eof_menu_note_push_get_offset());
+				beat = eof_get_beat(eof_song, eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos);
+				porpos = eof_get_porpos(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos);
+				eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos = eof_put_porpos(beat, porpos, eof_menu_note_push_get_offset());
 			}
 		}
 	}
 	else
 	{
-		for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+		for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 		{
-			if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos >= eof_music_pos - eof_av_delay)
+			if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos >= eof_music_pos - eof_av_delay)
 			{
-				beat = eof_get_beat(eof_song, eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos);
-				porpos = eof_get_porpos(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos);
-				eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos = eof_put_porpos(beat, porpos, eof_menu_note_push_get_offset());
+				beat = eof_get_beat(eof_song, eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos);
+				porpos = eof_get_porpos(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos);
+				eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos = eof_put_porpos(beat, porpos, eof_menu_note_push_get_offset());
 			}
 		}
 	}
@@ -1089,25 +1089,25 @@ int eof_menu_note_push_up(void)
 
 	if(eof_count_selected_notes(NULL, 0) > 0)
 	{
-		for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+		for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 		{
 			if(eof_selection.multi[i])
 			{
-				beat = eof_get_beat(eof_song, eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos);
-				porpos = eof_get_porpos(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos);
-				eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos = eof_put_porpos(beat, porpos, -eof_menu_note_push_get_offset());
+				beat = eof_get_beat(eof_song, eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos);
+				porpos = eof_get_porpos(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos);
+				eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos = eof_put_porpos(beat, porpos, -eof_menu_note_push_get_offset());
 			}
 		}
 	}
 	else
 	{
-		for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+		for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 		{
-			if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos >= eof_music_pos - eof_av_delay)
+			if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos >= eof_music_pos - eof_av_delay)
 			{
-				beat = eof_get_beat(eof_song, eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos);
-				porpos = eof_get_porpos(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos);
-				eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos = eof_put_porpos(beat, porpos, -eof_menu_note_push_get_offset());
+				beat = eof_get_beat(eof_song, eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos);
+				porpos = eof_get_porpos(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos);
+				eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos = eof_put_porpos(beat, porpos, -eof_menu_note_push_get_offset());
 			}
 		}
 	}
@@ -1121,17 +1121,17 @@ int eof_menu_note_create_bre(void)
 	int last_pos = eof_music_length;
 	EOF_NOTE * new_note = NULL;
 
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type))
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type))
 		{
-			if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos > first_pos)
+			if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos > first_pos)
 			{
-				first_pos = eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos;
+				first_pos = eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos;
 			}
-			if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos < last_pos)
+			if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos < last_pos)
 			{
-				last_pos = eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos;
+				last_pos = eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos;
 			}
 		}
 	}
@@ -1139,7 +1139,7 @@ int eof_menu_note_create_bre(void)
 	/* create the BRE marking note */
 	if((first_pos != 0) && (last_pos != eof_music_length))
 	{
-		new_note = eof_track_add_note(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]);
+		new_note = eof_track_add_note(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]);
 		eof_note_create(new_note, 1, 1, 1, 1, 1, first_pos, last_pos - first_pos);
 //		new_note->type = EOF_NOTE_SPECIAL;
 //		new_note->flags = EOF_NOTE_FLAG_BRE;
@@ -1243,23 +1243,23 @@ int eof_menu_solo_mark(void)
 	int sel_start = -1;
 	int sel_end = 0;
 
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type))
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type))
 		{
-			if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos < sel_start)
+			if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos < sel_start)
 			{
-				sel_start = eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos;
+				sel_start = eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos;
 			}
-			if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos + eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->length > sel_end)
+			if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos + eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->length > sel_end)
 			{
-				sel_end = eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos + eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->length;
+				sel_end = eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos + eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->length;
 			}
 		}
 	}
-	for(j = 0; j < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->solos; j++)
+	for(j = 0; j < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->solos; j++)
 	{
-		if((sel_end >= eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->solo[j].start_pos) && (sel_start <= eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->solo[j].end_pos))
+		if((sel_end >= eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->solo[j].start_pos) && (sel_start <= eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->solo[j].end_pos))
 		{
 			insp = j;
 		}
@@ -1267,12 +1267,12 @@ int eof_menu_solo_mark(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(insp < 0)
 	{
-		eof_track_add_solo(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum], sel_start, sel_end);
+		eof_track_add_solo(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum], sel_start, sel_end);
 	}
 	else
 	{
-		eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->solo[insp].start_pos = sel_start;
-		eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->solo[insp].end_pos = sel_end;
+		eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->solo[insp].start_pos = sel_start;
+		eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->solo[insp].end_pos = sel_end;
 	}
 	return 1;
 }
@@ -1282,15 +1282,15 @@ int eof_menu_solo_unmark(void)
 	int i, j;
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type))
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type))
 		{
-			for(j = 0; j < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->solos; j++)
+			for(j = 0; j < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->solos; j++)
 			{
-				if((eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos >= eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->solo[j].start_pos) && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos + eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->length <= eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->solo[j].end_pos))
+				if((eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos >= eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->solo[j].start_pos) && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos + eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->length <= eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->solo[j].end_pos))
 				{
-					eof_track_delete_solo(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum], j);
+					eof_track_delete_solo(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum], j);
 					break;
 				}
 			}
@@ -1304,7 +1304,7 @@ int eof_menu_solo_erase_all(void)
 	if(alert(NULL, "Erase all solos from this track?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->solos = 0;
+		eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->solos = 0;
 	}
 	return 1;
 }
@@ -1316,23 +1316,23 @@ int eof_menu_star_power_mark(void)
 	int sel_start = -1;
 	int sel_end = 0;
 
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type))
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type))
 		{
-			if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos < sel_start)
+			if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos < sel_start)
 			{
-				sel_start = eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos;
+				sel_start = eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos;
 			}
-			if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos > sel_end)
+			if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos > sel_end)
 			{
-				sel_end = eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos + (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->length > 20 ? eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->length : 20);
+				sel_end = eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos + (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->length > 20 ? eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->length : 20);
 			}
 		}
 	}
-	for(j = 0; j < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->star_power_paths; j++)
+	for(j = 0; j < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->star_power_paths; j++)
 	{
-		if((sel_end >= eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->star_power_path[j].start_pos) && (sel_start <= eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->star_power_path[j].end_pos))
+		if((sel_end >= eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->star_power_path[j].start_pos) && (sel_start <= eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->star_power_path[j].end_pos))
 		{
 			insp = j;
 		}
@@ -1340,12 +1340,12 @@ int eof_menu_star_power_mark(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(insp < 0)
 	{
-		eof_track_add_star_power(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum], sel_start, sel_end);
+		eof_track_add_star_power(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum], sel_start, sel_end);
 	}
 	else
 	{
-		eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->star_power_path[insp].start_pos = sel_start;
-		eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->star_power_path[insp].end_pos = sel_end;
+		eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->star_power_path[insp].start_pos = sel_start;
+		eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->star_power_path[insp].end_pos = sel_end;
 	}
 	eof_determine_hopos();
 	return 1;
@@ -1356,15 +1356,15 @@ int eof_menu_star_power_unmark(void)
 	int i, j;
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type))
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type))
 		{
-			for(j = 0; j < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->star_power_paths; j++)
+			for(j = 0; j < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->star_power_paths; j++)
 			{
-				if((eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos >= eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->star_power_path[j].start_pos) && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos <= eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->star_power_path[j].end_pos))
+				if((eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos >= eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->star_power_path[j].start_pos) && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos <= eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->star_power_path[j].end_pos))
 				{
-					eof_track_delete_star_power(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum], j);
+					eof_track_delete_star_power(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum], j);
 					break;
 				}
 			}
@@ -1379,7 +1379,7 @@ int eof_menu_star_power_erase_all(void)
 	if(alert(NULL, "Erase all star power from this track?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->star_power_paths = 0;
+		eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->star_power_paths = 0;
 	}
 	eof_determine_hopos();
 	return 1;
@@ -1509,17 +1509,17 @@ int eof_menu_hopo_auto(void)
 		return 1;	//Do not allow this function to run when PART DRUMS or PART VOCALS is active
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
 		if(eof_selection.multi[i])
 		{
-			if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO)
+			if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO)
 			{
-				eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags ^= EOF_NOTE_FLAG_F_HOPO;
+				eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags ^= EOF_NOTE_FLAG_F_HOPO;
 			}
-			if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags & EOF_NOTE_FLAG_NO_HOPO)
+			if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags & EOF_NOTE_FLAG_NO_HOPO)
 			{
-				eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags ^= EOF_NOTE_FLAG_NO_HOPO;
+				eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags ^= EOF_NOTE_FLAG_NO_HOPO;
 			}
 		}
 	}
@@ -1537,23 +1537,23 @@ int eof_menu_hopo_cycle(void)
 	if((eof_count_selected_notes(NULL, 0) > 0))
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+		for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 		{
 			if(eof_selection.multi[i])
 			{
-				if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO)
+				if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO)
 				{	//If the note was a forced on HOPO, make it a forced off HOPO
-					eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags &= !EOF_NOTE_FLAG_F_HOPO;	//Turn off forced on hopo
-					eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags |= EOF_NOTE_FLAG_NO_HOPO;	//Turn on forced off hopo
+					eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags &= !EOF_NOTE_FLAG_F_HOPO;	//Turn off forced on hopo
+					eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags |= EOF_NOTE_FLAG_NO_HOPO;	//Turn on forced off hopo
 				}
-				else if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags & EOF_NOTE_FLAG_NO_HOPO)
+				else if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags & EOF_NOTE_FLAG_NO_HOPO)
 				{	//If the note was a forced off HOPO, make it an auto HOPO
-					eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags &= !EOF_NOTE_FLAG_F_HOPO;
-					eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags &= !EOF_NOTE_FLAG_NO_HOPO;	//Turn off forced off hopo
+					eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags &= !EOF_NOTE_FLAG_F_HOPO;
+					eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags &= !EOF_NOTE_FLAG_NO_HOPO;	//Turn off forced off hopo
 				}
 				else
 				{	//If the note was an auto HOPO, make it a forced on HOPO
-					eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags |= EOF_NOTE_FLAG_F_HOPO;	//Turn on forced on hopo
+					eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags |= EOF_NOTE_FLAG_F_HOPO;	//Turn on forced on hopo
 				}
 			}
 		}
@@ -1570,14 +1570,14 @@ int eof_menu_hopo_force_on(void)
 		return 1;	//Do not allow this function to run when PART DRUMS or PART VOCALS is active
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
 		if(eof_selection.multi[i])
 		{
-			eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags |= EOF_NOTE_FLAG_F_HOPO;
-			if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags & EOF_NOTE_FLAG_NO_HOPO)
+			eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags |= EOF_NOTE_FLAG_F_HOPO;
+			if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags & EOF_NOTE_FLAG_NO_HOPO)
 			{
-				eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags ^= EOF_NOTE_FLAG_NO_HOPO;
+				eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags ^= EOF_NOTE_FLAG_NO_HOPO;
 			}
 		}
 	}
@@ -1593,14 +1593,14 @@ int eof_menu_hopo_force_off(void)
 		return 1;	//Do not allow this function to run when PART DRUMS or PART VOCALS is active
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 	{
 		if(eof_selection.multi[i])
 		{
-			eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags |= EOF_NOTE_FLAG_NO_HOPO;
-			if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO)
+			eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags |= EOF_NOTE_FLAG_NO_HOPO;
+			if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO)
 			{
-				eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->flags ^= EOF_NOTE_FLAG_F_HOPO;
+				eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->flags ^= EOF_NOTE_FLAG_F_HOPO;
 			}
 		}
 	}
@@ -1647,7 +1647,7 @@ int eof_transpose_possible(int dir)
 	}
 	else
 	{
-		if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes <= 0)
+		if(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes <= 0)
 		{
 			return 0;
 		}
@@ -1657,15 +1657,15 @@ int eof_transpose_possible(int dir)
 			return 0;
 		}
 
-		for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
+		for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
 		{
-			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type))
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type))
 			{
-				if((eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note & 1) && (dir > 0))
+				if((eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note & 1) && (dir > 0))
 				{
 					return 0;
 				}
-				else if((eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note & 16) && (dir < 0))
+				else if((eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note & 16) && (dir < 0))
 				{
 					return 0;
 				}
