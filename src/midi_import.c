@@ -1424,7 +1424,7 @@ allegro_message("Third pass complete");
 	}
 
 	/* convert solos to star power for GH charts using FoFiX's method */
-	for(i = 0; i < EOF_MAX_TRACKS; i++)
+	for(i = 0; i < EOF_LEGACY_TRACKS_MAX; i++)
 	{
 		if(sp->legacy_track[i]->star_power_paths < 2)
 		{
@@ -1456,7 +1456,7 @@ allegro_message("Third pass complete");
 	eof_changes = 0;
 //	eof_setup_menus();
 	eof_music_pos = 0;
-	eof_selected_track = 0;
+	eof_selected_track = EOF_TRACK_GUITAR;
 	eof_selected_ogg = 0;
 
 #ifdef EOF_DEBUG_MIDI_IMPORT

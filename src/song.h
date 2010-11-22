@@ -253,12 +253,13 @@ typedef struct
 #define EOF_PRO_GUITAR_TRACK_BEHAVIOR	5
 #define EOF_PRO_KEYS_TRACK_BEHAVIOR		6
 
-#define EOF_TRACK_GUITAR      0
-#define EOF_TRACK_BASS        1
-#define EOF_TRACK_GUITAR_COOP 2
-#define EOF_TRACK_RHYTHM      3
-#define EOF_TRACK_DRUM        4
-#define EOF_TRACK_VOCALS      5
+#define EOF_TRACKS_MIN        1
+#define EOF_TRACK_GUITAR      1
+#define EOF_TRACK_BASS        2
+#define EOF_TRACK_GUITAR_COOP 3
+#define EOF_TRACK_RHYTHM      4
+#define EOF_TRACK_DRUM        5
+#define EOF_TRACK_VOCALS      6
 typedef struct
 {
 	char trackformat;		//Specifies which track format this is, using one of the macros above
@@ -267,7 +268,7 @@ typedef struct
 	char tracktype;			//Specifies which type of track this is (ie default PART GUITAR, custom track, etc)
 } EOF_TRACK_ENTRY;
 
-#define EOF_MAX_TRACKS	(EOF_LEGACY_TRACKS_MAX + EOF_VOCAL_TRACKS_MAX)
+#define EOF_TRACKS_MAX	(EOF_LEGACY_TRACKS_MAX + EOF_VOCAL_TRACKS_MAX)
 
 typedef struct
 {
@@ -287,7 +288,7 @@ typedef struct
 	EOF_VOCAL_TRACK * vocal_track[EOF_VOCAL_TRACKS_MAX];
 	unsigned long vocal_tracks;
 
-	EOF_TRACK_ENTRY * track[EOF_MAX_TRACKS];	//track[] is a list of all existing tracks among all track types
+	EOF_TRACK_ENTRY * track[EOF_TRACKS_MAX];	//track[] is a list of all existing tracks among all track types
 	unsigned long tracks;
 
 	EOF_BEAT_MARKER * beat[EOF_MAX_BEATS];
