@@ -170,6 +170,9 @@ typedef struct
 	EOF_LYRIC_LINE line[EOF_MAX_LYRIC_LINES];
 	short lines;
 
+	EOF_STAR_POWER_ENTRY star_power_path[EOF_MAX_STAR_POWER];
+	unsigned long star_power_paths;
+
 } EOF_VOCAL_TRACK;
 
 typedef struct
@@ -289,7 +292,7 @@ typedef struct
 	unsigned long vocal_tracks;
 
 	EOF_TRACK_ENTRY * track[EOF_TRACKS_MAX];	//track[] is a list of all existing tracks among all track types
-	unsigned long tracks;
+	unsigned long tracks;						//track[0] is a dummy track and does not store actual track data
 
 	EOF_BEAT_MARKER * beat[EOF_MAX_BEATS];
 	unsigned long beats;
@@ -406,7 +409,7 @@ int eof_song_delete_track(EOF_SONG * sp, unsigned long track);
 #define EOF_TRAINER_SECTION				11
 #define EOF_CUSTOM_MIDI_NOTE_SECTION	12
 #define EOF_PREVIEW_SECTION				13
-int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, char difficulty, unsigned long start, unsigned long stop, unsigned long flags);
+int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, char difficulty, unsigned long start, unsigned long end, unsigned long flags);
 	//Adds the specified section to the specified track if it's valid for the track
 	//For bookmark sections, the flags variable represents which bookmark number is being set
 	//For fret catalog sections, the flags variable represents which track the catalog entry belongs to
