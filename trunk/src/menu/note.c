@@ -235,24 +235,27 @@ void eof_prepare_note_menu(void)
 		vselected = eof_count_selected_notes(NULL, 1);
 		if(vselected)
 		{	//ONE OR MORE NOTES/LYRICS SELECTED
-			/* star power mark */
-			if((spstart == eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->star_power_path[spp].start_pos) && (spend == eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->star_power_path[spp].end_pos))
-			{
-				eof_star_power_menu[0].flags = D_DISABLED;
-			}
-			else
-			{
-				eof_star_power_menu[0].flags = 0;
-			}
+			if(eof_song->track[eof_selected_track]->trackformat == EOF_LEGACY_TRACK_FORMAT)
+			{	//Only check the legacy track for star power if the seleced track is a legacy track
+				/* star power mark */
+				if((spstart == eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->star_power_path[spp].start_pos) && (spend == eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->star_power_path[spp].end_pos))
+				{
+					eof_star_power_menu[0].flags = D_DISABLED;
+				}
+				else
+				{
+					eof_star_power_menu[0].flags = 0;
+				}
 
-			/* solo mark */
-			if((ssstart == eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->solo[ssp].start_pos) && (ssend == eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->solo[ssp].end_pos))
-			{
-				eof_solo_menu[0].flags = D_DISABLED;
-			}
-			else
-			{
-				eof_solo_menu[0].flags = 0;
+				/* solo mark */
+				if((ssstart == eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->solo[ssp].start_pos) && (ssend == eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->solo[ssp].end_pos))
+				{
+					eof_solo_menu[0].flags = D_DISABLED;
+				}
+				else
+				{
+					eof_solo_menu[0].flags = 0;
+				}
 			}
 
 			/* lyric line mark */
@@ -316,24 +319,27 @@ void eof_prepare_note_menu(void)
 			ustrcpy(eof_lyric_line_menu_mark_text, "&Mark");
 		}
 
-		/* star power erase all */
-		if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->star_power_paths > 0)
-		{
-			eof_star_power_menu[2].flags = 0;
-		}
-		else
-		{
-			eof_star_power_menu[2].flags = D_DISABLED;
-		}
+		if(eof_song->track[eof_selected_track]->trackformat == EOF_LEGACY_TRACK_FORMAT)
+		{	//Perform checks for disabling note menu items
+			/* star power erase all */
+			if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->star_power_paths > 0)
+			{	//Only check the legacy track for star power if the seleced track is a legacy track
+				eof_star_power_menu[2].flags = 0;
+			}
+			else
+			{
+				eof_star_power_menu[2].flags = D_DISABLED;
+			}
 
 		/* solo erase all */
-		if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->solos > 0)
-		{
-			eof_solo_menu[2].flags = 0;
-		}
-		else
-		{
-			eof_solo_menu[2].flags = D_DISABLED;
+			if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->solos > 0)
+			{
+				eof_solo_menu[2].flags = 0;
+			}
+			else
+			{
+				eof_solo_menu[2].flags = D_DISABLED;
+			}
 		}
 
 		/* lyric lines erase all */
