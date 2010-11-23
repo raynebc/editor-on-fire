@@ -1390,6 +1390,7 @@ int eof_song_add_track(EOF_SONG * sp, int trackformat)
 					return 0;	//Return error
 				ptr2->lyrics = 0;
 				ptr2->lines = 0;
+				ptr->star_power_paths = 0;
 				sp->vocal_track[sp->vocal_tracks] = ptr2;
 				sp->vocal_tracks++;
 			break;
@@ -1460,6 +1461,11 @@ int eof_song_delete_track(EOF_SONG * sp, unsigned long track)
 	for(ctr = track; ctr + 1 < sp->tracks; ctr++)
 	{
 		sp->track[ctr] = sp->track[ctr + 1];
+	}
+	sp->tracks--;
+	if(sp->tracks == 1)
+	{	//If only the dummy track[0] entry remains
+		sp->tracks = 0;	//Drop it so sp->tracks equaling 0 can reflect that there are no tracks
 	}
 	return 1;	//Return success
 }
@@ -1682,7 +1688,7 @@ int eof_load_song_pf_new(EOF_SONG * sp, PACKFILE * fp)
 				//Perform the appropriate logic to load this type of section
 				switch(track_ctr)
 				{
-					case 0:		//Read sections that are global
+					case 0:		//Sections defined in track 0 are global
 						switch(section_type)
 						{
 							case 3:	//Bookmark section
@@ -1715,8 +1721,10 @@ int eof_load_song_pf_new(EOF_SONG * sp, PACKFILE * fp)
 	return 1;	//Return success
 }
 
-int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, char difficulty, unsigned long start, unsigned long stop, unsigned long flags)
+int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, char difficulty, unsigned long start, unsigned long end, unsigned long flags)
 {
+	unsigned long count,tracknum;	//Used to de-obfuscate the track handling
+
 	if((sp == NULL) || (track >= sp->tracks))
 		return 0;	//Return error
 
@@ -1734,39 +1742,80 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 				sp->catalog->entry[sp->catalog->entries].track = flags;		//For now, EOF still numbers tracks starting from number 0
 				sp->catalog->entry[sp->catalog->entries].type = difficulty;			//Store the fret catalog section's associated difficulty
 				sp->catalog->entry[sp->catalog->entries].start_pos = start;
-				sp->catalog->entry[sp->catalog->entries].end_pos = stop;
+				sp->catalog->entry[sp->catalog->entries].end_pos = end;
 			return 1;
 			default:	//Unknown global section type
 			return 0;	//Return error
 		}
 	}
 
+	tracknum = sp->track[track]->tracknum;
 	switch(sectiontype)
 	{	//Perform the appropriate logic to add this type of section
-		case 1:	//Solo section
-			if(sp->track[track]->trackbehavior != 3)
-			{	//Solo sections are not valid for vocal tracks
+		case EOF_SOLO_SECTION:
+			switch(sp->track[track]->trackformat)
+			{	//Solos are allowed for any track EXCEPT vocal tracks
+				case EOF_LEGACY_TRACK_FORMAT:
+					count = sp->legacy_track[tracknum]->solos;
+					if(count < EOF_MAX_SOLOS)
+					{	//If EOF can store the solo section
+						sp->legacy_track[tracknum]->solo[count].start_pos = start;
+						sp->legacy_track[tracknum]->solo[count].end_pos = end;
+						sp->legacy_track[tracknum]->solos++;
+					}
+				return 1;
 			}
 		break;
-		case 2:	//Star Power section
+		case EOF_SP_SECTION:
+			switch(sp->track[track]->trackformat)
+			{	//Star power is valid for any track
+				case EOF_LEGACY_TRACK_FORMAT:
+					count = sp->legacy_track[tracknum]->star_power_paths;
+					if(count < EOF_MAX_STAR_POWER)
+					{	//If EOF can store the star power section
+						sp->legacy_track[tracknum]->star_power_path[count].start_pos = start;
+						sp->legacy_track[tracknum]->star_power_path[count].end_pos = end;
+						sp->legacy_track[tracknum]->star_power_paths++;
+					}
+				return 1;
+				case EOF_VOCAL_TRACK_FORMAT:
+					count = sp->vocal_track[tracknum]->star_power_paths;
+					if(count < EOF_MAX_STAR_POWER)
+					{	//If EOF can store the star power section
+						sp->vocal_track[tracknum]->star_power_path[count].start_pos = start;
+						sp->vocal_track[tracknum]->star_power_path[count].end_pos = end;
+						sp->vocal_track[tracknum]->star_power_paths++;
+					}
+				return 1;
+			}
 		break;
-		case 5:	//Lyric Phrase section
-			if(sp->track[track]->trackbehavior == 3)
+		case EOF_LYRIC_PHRASE_SECTION:	//Lyric Phrase section
+			switch(sp->track[track]->trackformat)
 			{	//Lyric phrases are only valid for vocal tracks
+				case EOF_VOCAL_TRACK_FORMAT:
+					count = sp->vocal_track[tracknum]->lines;
+					if(count < EOF_MAX_LYRIC_LINES)
+					{	//If EOF can store the lyric phrase
+						sp->vocal_track[tracknum]->line[count].start_pos = start;
+						sp->vocal_track[tracknum]->line[count].end_pos = end;
+						sp->vocal_track[tracknum]->line[count].flags = flags;
+						sp->vocal_track[tracknum]->lines++;
+					}
+				return 1;
 			}
 		break;
 		case 6:	//Yellow Tom section (not supported yet)
-			if(sp->track[track]->trackbehavior == 2)
+			if(sp->track[track]->trackbehavior == EOF_DRUM_TRACK_BEHAVIOR)
 			{	//Tom sections are only valid for drum tracks
 			}
 		break;
 		case 7:	//Blue Tom section (not supported yet)
-			if(sp->track[track]->trackbehavior == 2)
+			if(sp->track[track]->trackbehavior == EOF_DRUM_TRACK_BEHAVIOR)
 			{	//Tom sections are only valid for drum tracks
 			}
 		break;
 		case 8:	//Green Tom section (not supported yet)
-			if(sp->track[track]->trackbehavior == 2)
+			if(sp->track[track]->trackbehavior == EOF_DRUM_TRACK_BEHAVIOR)
 			{	//Tom sections are only valid for drum tracks
 			}
 		break;
