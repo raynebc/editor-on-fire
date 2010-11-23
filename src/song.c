@@ -1027,7 +1027,7 @@ void eof_fixup_notes(void)
 {
 	int i, j;
 
-	if(eof_selection.current < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes)
+	if(eof_selection.current < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes)
 	{
 		eof_selection.multi[eof_selection.current] = 0;
 	}
@@ -1071,12 +1071,12 @@ void eof_detect_difficulties(EOF_SONG * sp)
 	eof_vocal_tab_name[0][0] = ' ';
 	if(eof_selected_track != EOF_TRACK_VOCALS)
 	{
-		for(i = 0; i < sp->legacy_track[sp->track[eof_selected_track-1]->tracknum]->notes; i++)
+		for(i = 0; i < sp->legacy_track[sp->track[eof_selected_track]->tracknum]->notes; i++)
 		{
-			if((sp->legacy_track[sp->track[eof_selected_track-1]->tracknum]->note[i]->type >= 0) && (sp->legacy_track[sp->track[eof_selected_track-1]->tracknum]->note[i]->type < 5))
+			if((sp->legacy_track[sp->track[eof_selected_track]->tracknum]->note[i]->type >= 0) && (sp->legacy_track[sp->track[eof_selected_track]->tracknum]->note[i]->type < 5))
 			{
-				eof_note_difficulties[(int)sp->legacy_track[sp->track[eof_selected_track-1]->tracknum]->note[i]->type] = 1;
-				eof_note_type_name[(int)sp->legacy_track[sp->track[eof_selected_track-1]->tracknum]->note[i]->type][0] = '*';
+				eof_note_difficulties[(int)sp->legacy_track[sp->track[eof_selected_track]->tracknum]->note[i]->type] = 1;
+				eof_note_type_name[(int)sp->legacy_track[sp->track[eof_selected_track]->tracknum]->note[i]->type][0] = '*';
 			}
 		}
 	}
@@ -1363,7 +1363,7 @@ int eof_song_add_track(EOF_SONG * sp, int trackformat)
 	if(sp == NULL)
 		return 0;	//Return error
 
-	if(sp->tracks < EOF_TRACKS_MAX)
+	if(sp->tracks <= EOF_TRACKS_MAX)
 	{
 		ptr3 = malloc(sizeof(EOF_TRACK_ENTRY));
 		if(ptr3 == NULL)
@@ -1406,6 +1406,11 @@ int eof_song_add_track(EOF_SONG * sp, int trackformat)
 		//Insert new track structure in the main track array
 		ptr3->tracknum = count;
 		ptr3->trackformat = trackformat;
+		if(sp->tracks == 0)
+		{	//If this is the first track being added, ensure that sp->track[0] is inserted
+			sp->track[0] = NULL;
+			sp->tracks++;
+		}
 		sp->track[sp->tracks] = ptr3;
 		sp->tracks++;
 	}

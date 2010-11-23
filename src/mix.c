@@ -240,11 +240,11 @@ void eof_mix_find_claps(void)
 	}
 	else
 	{
-		for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->notes; i++)
+		for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
 		{
-			if((eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->type == eof_note_type) && (eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->note & eof_mix_claps_note))
+			if((eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->type == eof_note_type) && (eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->note & eof_mix_claps_note))
 			{
-				eof_mix_clap_pos[eof_mix_claps] = eof_mix_msec_to_sample(eof_song->legacy_track[eof_song->track[eof_selected_track-1]->tracknum]->note[i]->pos, alogg_get_wave_freq_ogg(eof_music_track));
+				eof_mix_clap_pos[eof_mix_claps] = eof_mix_msec_to_sample(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->pos, alogg_get_wave_freq_ogg(eof_music_track));
 				eof_mix_claps++;
 			}
 		}
