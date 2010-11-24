@@ -103,7 +103,7 @@ void eof_select_beat(int beat)
 
 void eof_set_tail_pos(int note, unsigned long pos)
 {
-	if(eof_song->track[eof_selected_track]->trackformat == EOF_LEGACY_TRACK_FORMAT)
+	if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
 	{
 		if(note < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes)
 		{
