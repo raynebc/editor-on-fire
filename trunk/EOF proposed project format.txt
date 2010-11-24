@@ -80,14 +80,14 @@ CUSTOM DATA BLOCK CHUNK, for each custom data block
 
 
 	TRACK DATA:
-*4 bytes:	Number of tracks
+*4 bytes:	Number of tracks (including track 0, which stores non track-specific sections like bookmarks)
 TRACK CHUNK, for each track:
 {
 *	2 bytes:	Track name string length
 *	[varies:]	Track name string
-*	1 byte:		Track format (1=Legacy,2=Vocal,3=Pro Guitar/Bass,4=Pro Keys,5=Variable Lane Legacy,...)
+*	1 byte:		Track format (0=Global,1=Legacy,2=Vocal,3=Pro Guitar/Bass,4=Pro Keys,5=Variable Lane Legacy,...)
 *	1 byte:		Track behavior (1=Guitar/Bass,2=Drum/Pro Drum,3=Vocal,4=Keys,5=Pro Guitar/Bass,6=Pro Keys,...)
-*	1 byte:		Track type (0=Global,1=Guitar,2=Bass,3=Lead Guitar,4=Rhythm Guitar,5=Drum/Pro Drum,6=Vocal,7=Keys,8=17 Fret Pro Guitar,9=17 Fret Pro Bass,10=Pro Keys,11=22 Fret Pro Guitar,12=22 Fret Pro Bass,13=Custom,...)
+*	1 byte:		Track type (1=Guitar,2=Bass,3=Lead Guitar,4=Rhythm Guitar,5=Drum/Pro Drum,6=Vocal,7=Keys,8=17 Fret Pro Guitar,9=17 Fret Pro Bass,10=Pro Keys,11=22 Fret Pro Guitar,12=22 Fret Pro Bass,13=Custom,...)
 !	Rock Band 3 charts have separate tracks for the full 22 fret chart (PART REAL_GUITAR_22) usable on the Squier guiter, and a version transposed to be accurate on 17 frets (PART REAL_GUITAR)
 !	Both EOF and Rock Band allow for the existence of one of each of the usual tracks, so the first of each will be assigned a unique number.  Any secondary tracks (ie. a second PART KEYS) will be marked as a custom track
 !	and will be identified by its format and behavior fields.  This will allow the ability to maintain some compatibility with EOF's current method of comparing tracks to defined macros
@@ -95,7 +95,7 @@ TRACK CHUNK, for each track:
 !	Until track number comparison is completely removed for this purpose, the track type can serve as a replacement
 *	1 byte:		Track difficulty level (0-6)
 *	4 bytes:	Track flags (ie. which difficulties are locked for editing)
-*	2 bytes:	Compliance flags (ie. if it is valid as per constraints of Rock Band, etc)
+*	2 bytes:	Track compliance flags (ie. if it is valid as per constraints of Rock Band, etc)
 
 *	[varies:]	Track data (depending on the format type as defined below)
 
@@ -112,11 +112,11 @@ TRACK CHUNK, for each track:
 *			1 byte:		The difficulty that this phrase applies to (0xFF if it does not apply to a single difficulty, such as a solo phrase)
 *			4 bytes:	Start position of section (in milliseconds or delta ticks)
 *			4 bytes:	End position of section (in milliseconds or delta ticks)
-*			2 bytes:	Section flags
+*			4 bytes:	Section flags
 *		}
 *	}
 !	The first track maintained by EOF will be the global track (track 0), which stores information that applies to the whole chart
-!	(ie. song preview sections or bookmarks) or information that otherwise applies to more than one track (ie. unison SP sections)
+!	(ie. song preview sections, bookmarks, catalog entries) or information that otherwise applies to more than one track (ie. unison SP sections)
 !		For bookmarks, there should be no string, and the end position will be ignored
 !		For fret catalog entries, the flags field stores the track number the catalog entry is from
 

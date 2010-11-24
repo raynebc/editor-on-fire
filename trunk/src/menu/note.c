@@ -235,7 +235,7 @@ void eof_prepare_note_menu(void)
 		vselected = eof_count_selected_notes(NULL, 1);
 		if(vselected)
 		{	//ONE OR MORE NOTES/LYRICS SELECTED
-			if(eof_song->track[eof_selected_track]->trackformat == EOF_LEGACY_TRACK_FORMAT)
+			if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
 			{	//Only check the legacy track for star power if the seleced track is a legacy track
 				/* star power mark */
 				if((spstart == eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->star_power_path[spp].start_pos) && (spend == eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->star_power_path[spp].end_pos))
@@ -319,7 +319,7 @@ void eof_prepare_note_menu(void)
 			ustrcpy(eof_lyric_line_menu_mark_text, "&Mark");
 		}
 
-		if(eof_song->track[eof_selected_track]->trackformat == EOF_LEGACY_TRACK_FORMAT)
+		if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
 		{	//Perform checks for disabling note menu items
 			/* star power erase all */
 			if(eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->star_power_paths > 0)

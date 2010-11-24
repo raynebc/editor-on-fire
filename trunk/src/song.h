@@ -265,10 +265,10 @@ typedef struct
 #define EOF_TRACK_VOCALS      6
 typedef struct
 {
-	char trackformat;		//Specifies which track format this is, using one of the macros above
+	char track_format;		//Specifies which track format this is, using one of the macros above
 	unsigned long tracknum;	//Specifies which number of that type this track is, used as an index into the type-specific track arrays
-	char trackbehavior;		//Specifies which behavior this track follows, using one of the macros above
-	char tracktype;			//Specifies which type of track this is (ie default PART GUITAR, custom track, etc)
+	char track_behavior;		//Specifies which behavior this track follows, using one of the macros above
+	char track_type;			//Specifies which type of track this is (ie default PART GUITAR, custom track, etc)
 } EOF_TRACK_ENTRY;
 
 #define EOF_TRACKS_MAX	(EOF_LEGACY_TRACKS_MAX + EOF_VOCAL_TRACKS_MAX)
@@ -390,8 +390,13 @@ int eof_load_song_string_pf(char *buffer, PACKFILE *fp, unsigned long buffersize
 	//That number of bytes is read, the first (buffersize-1) of which are copied to the buffer
 	//If buffersize is 0, the string is parsed in the file but not stored, otherwise the buffer is NULL terminated
 	//Nonzero is returned on error
+int eof_save_song_string_pf(char *buffer, PACKFILE *fp);
+	//Writes two bytes for the length of the string, followed by the string (minus the NULL terminator)
+	//If buffer is NULL, a 0 (representing empty string) is written to the file
+	//The length of the string written is in bytes, not chars, so Unicode strings could be supported
+	//Nonzero is returned on error
 
-int eof_song_add_track(EOF_SONG * sp, int trackformat);
+int eof_song_add_track(EOF_SONG * sp, int track_format);
 	//Adds a new track of the specified format.  Returns zero on error
 int eof_song_delete_track(EOF_SONG * sp, unsigned long track);
 	//Deletes the specified track from the main track array and the appropriate track type array, but only if the track contains no notes.  Returns zero on error
