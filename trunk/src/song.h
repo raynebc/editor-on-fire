@@ -239,7 +239,7 @@ typedef struct
 {
 
 	EOF_CATALOG_ENTRY entry[EOF_MAX_CATALOG_ENTRIES];
-	int entries;
+	unsigned long entries;
 
 } EOF_CATALOG;
 
@@ -263,12 +263,15 @@ typedef struct
 #define EOF_TRACK_RHYTHM      4
 #define EOF_TRACK_DRUM        5
 #define EOF_TRACK_VOCALS      6
+
+#define EOF_TRACK_NAME_SIZE		31
 typedef struct
 {
-	char track_format;		//Specifies which track format this is, using one of the macros above
-	unsigned long tracknum;	//Specifies which number of that type this track is, used as an index into the type-specific track arrays
-	char track_behavior;		//Specifies which behavior this track follows, using one of the macros above
-	char track_type;			//Specifies which type of track this is (ie default PART GUITAR, custom track, etc)
+	char track_format;						//Specifies which track format this is, using one of the macros above
+	unsigned long tracknum;					//Specifies which number of that type this track is, used as an index into the type-specific track arrays
+	char track_behavior;					//Specifies which behavior this track follows, using one of the macros above
+	char track_type;						//Specifies which type of track this is (ie default PART GUITAR, custom track, etc)
+	char track_name[EOF_TRACK_NAME_SIZE];	//Specifies the name of the track
 } EOF_TRACK_ENTRY;
 
 #define EOF_TRACKS_MAX	(EOF_LEGACY_TRACKS_MAX + EOF_VOCAL_TRACKS_MAX)
@@ -285,14 +288,15 @@ typedef struct
 	int resolution;
 
 	/* track data */
+	EOF_TRACK_ENTRY * track[EOF_TRACKS_MAX+1];	//track[] is a list of all existing tracks among all track types
+	unsigned long tracks;						//track[0] is a dummy track and does not store actual track data
+	//one more track entry is allowed for so that track[EOF_TRACKS_MAX] will correctly index the last usable track
+
 	EOF_LEGACY_TRACK * legacy_track[EOF_LEGACY_TRACKS_MAX];
 	unsigned long legacy_tracks;
 
 	EOF_VOCAL_TRACK * vocal_track[EOF_VOCAL_TRACKS_MAX];
 	unsigned long vocal_tracks;
-
-	EOF_TRACK_ENTRY * track[EOF_TRACKS_MAX];	//track[] is a list of all existing tracks among all track types
-	unsigned long tracks;						//track[0] is a dummy track and does not store actual track data
 
 	EOF_BEAT_MARKER * beat[EOF_MAX_BEATS];
 	unsigned long beats;
@@ -342,7 +346,7 @@ int eof_song_resize_beats(EOF_SONG * sp, int beats);	//Grows or shrinks the beat
 EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, int beat, char * text);	//Allocates, initializes and stores a new EOF_TEXT_EVENT structure into the text_event array.  Returns the newly allocated structure or NULL upon error
 void eof_song_delete_text_event(EOF_SONG * sp, int event);	//Removes and frees the specified text event from the text_events array.  All text events after the deleted text event are moved back in the array one position
 void eof_song_move_text_events(EOF_SONG * sp, int beat, int offset);	//Displaces all beats starting with the specified beat by the given additive offset.  Each affected beat's flags are cleared except for the anchor and text event(s) present flags
-int eof_song_resize_text_events(EOF_SONG * sp, int events);	//Grows or shrinks the text events array to fit the specified number of notes by allocating/freeing EOF_LYRIC structures.  Return zero on error
+int eof_song_resize_text_events(EOF_SONG * sp, unsigned long events);	//Grows or shrinks the text events array to fit the specified number of notes by allocating/freeing EOF_LYRIC structures.  Return zero on error
 void eof_sort_events(void);	//Performs a quicksort of the events array
 int eof_song_qsort_events(const void * e1, const void * e2);	//The comparitor function used to quicksort the events array
 
@@ -385,12 +389,12 @@ void eof_set_flags_at_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,char flag,c
 	//If operation is 2, the specified flag is toggled on applicable notes
 	//The track's notes array is expected to be sorted
 
-int eof_load_song_string_pf(char *buffer, PACKFILE *fp, unsigned long buffersize);
+int eof_load_song_string_pf(char *const buffer, PACKFILE *fp, const unsigned long buffersize);
 	//Reads the next two bytes of the PACKFILE to determine how many characters long the string is
 	//That number of bytes is read, the first (buffersize-1) of which are copied to the buffer
 	//If buffersize is 0, the string is parsed in the file but not stored, otherwise the buffer is NULL terminated
 	//Nonzero is returned on error
-int eof_save_song_string_pf(char *buffer, PACKFILE *fp);
+int eof_save_song_string_pf(char *const buffer, PACKFILE *fp);
 	//Writes two bytes for the length of the string, followed by the string (minus the NULL terminator)
 	//If buffer is NULL, a 0 (representing empty string) is written to the file
 	//The length of the string written is in bytes, not chars, so Unicode strings could be supported
@@ -416,8 +420,9 @@ int eof_song_delete_track(EOF_SONG * sp, unsigned long track);
 #define EOF_PREVIEW_SECTION				13
 int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, char difficulty, unsigned long start, unsigned long end, unsigned long flags);
 	//Adds the specified section to the specified track if it's valid for the track
-	//For bookmark sections, the flags variable represents which bookmark number is being set
+	//For bookmark sections, the end variable represents which bookmark number is being set
 	//For fret catalog sections, the flags variable represents which track the catalog entry belongs to
+	//For lyric phrases, the difficulty field indicates which lyric set number (ie. PART VOCALS) the phrase applies to
 	//Returns zero on error
 
 #endif

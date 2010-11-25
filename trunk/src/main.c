@@ -146,7 +146,7 @@ int         eof_last_midi_offset = 0;
 /* mouse control data */
 int         eof_selected_control = -1;
 int         eof_cselected_control = -1;
-int         eof_selected_catalog_entry = 0;
+unsigned long eof_selected_catalog_entry = 0;
 int         eof_selected_beat = 0;
 int         eof_selected_measure = 0;
 int         eof_beat_in_measure = 0;
@@ -873,6 +873,9 @@ void eof_determine_hopos(void)
 	int i, j;
 	char sp[EOF_MAX_STAR_POWER] = {0};
 	char so[EOF_MAX_STAR_POWER] = {0};
+
+	if((eof_song->tracks == 0) || (eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT))
+		return;	//Do not check for hopos unless the active track is a legacy track
 
 	for(i = 0; i < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes; i++)
 	{
@@ -1838,7 +1841,7 @@ void eof_render_note_window(void)
 	{
 		textprintf_ex(eof_window_note->screen, font, 2, 0, eof_info_color, -1, "Fret Catalog");
 		textprintf_ex(eof_window_note->screen, font, 2, 12, eof_color_white, -1, "-------------------");
-		textprintf_ex(eof_window_note->screen, font, 2, 24,  eof_color_white, -1, "Entry: %d of %d", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
+		textprintf_ex(eof_window_note->screen, font, 2, 24,  eof_color_white, -1, "Entry: %lu of %lu", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
 
 		if(eof_cselected_control < 0)
 		{
@@ -2071,7 +2074,7 @@ void eof_render_note_window(void)
 		ypos += 12;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Playback Speed: %d%%", eof_playback_speed / 10);
 		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Catalog: %d of %d", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Catalog: %lu of %lu", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
 		ypos += 12;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "OGG File: \"%s\"", eof_song->tags->ogg[eof_selected_ogg].filename);
 	}
