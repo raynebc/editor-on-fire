@@ -133,6 +133,7 @@ TRACK CHUNK, for each track:
 
 	TRACK FORMAT DEFINITIONS
 ["LEGACY" (GUITAR/BASS/DRUM/PRO DRUM/KEYS) TRACK FORMAT]
+*	1 byte:		The number of lanes, keys, etc. used in this track (5 for a standard legacy track, 6 for legacy bass with open strum, etc.)
 	4 bytes:	Number of notes
 	NOTE CHUNK, for each note
 	{
@@ -230,7 +231,6 @@ TRACK CHUNK, for each track:
 *		4 bytes:	Note length (in milliseconds or delta ticks)
 *		2 bytes:	Note flags (among other specialized flags, DTXMania supposedly tracks whether hi-hat is open/closed)
 *	}
-!	Open bass notes are planned to be charted on a sixth lane, so GH style charts with open bass will probably need to be charted on a variable lane bass track titled "PART BASS"
 
 
 !NOTES:

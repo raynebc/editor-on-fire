@@ -1623,6 +1623,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					return 0;	//Return error upon failure
 				sp->track[sp->tracks-1]->track_behavior = track_behavior;
 				sp->track[sp->tracks-1]->track_type = track_type;
+				pack_getc(fp);			//Read the number of lanes/keys/etc. used in this track (not supported yet)
 				count = pack_igetl(fp);	//Read the number of notes in this track
 				if(count > EOF_MAX_NOTES)
 				{
@@ -2078,6 +2079,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			switch(sp->track[track_ctr]->track_format)
 			{	//Perform the appropriate logic to write this format of track
 				case EOF_LEGACY_TRACK_FORMAT:	//Legacy (non pro guitar, non pro bass, non pro keys, pro or non pro drums)
+					pack_putc(5, fp);	//Write the number of lanes/keys/etc. used in this track (not supported yet)
 					pack_iputl(sp->legacy_track[tracknum]->notes, fp);	//Write the number of notes in this track
 					for(ctr=0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
 					{	//For each note in this track
