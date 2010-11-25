@@ -208,12 +208,12 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 		/* make sure we found a suitable snap beat before proceeding */
 		if(sp->beat >= 0)
 		{
-			if(sp->beat >= eof_song->beats - 2)
-			{
+			if((sp->beat >= eof_song->beats - 2) && (sp->beat >= 2))
+			{	//Don't reference a negative index of eof_song->beat[]
 				sp->beat_length = eof_song->beat[sp->beat - 1]->pos - eof_song->beat[sp->beat - 2]->pos;
 			}
-			else
-			{
+			else if(sp->beat + 1 < eof_song->beats)
+			{	//Don't read out of bounds
 				sp->beat_length = eof_song->beat[sp->beat + 1]->pos - eof_song->beat[sp->beat]->pos;
 			}
 			eof_get_snap_ts(sp, sp->beat);
@@ -439,12 +439,12 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 		if(sp->pos >= eof_song->beat[sp->beat + 1]->pos)
 		{
 			sp->beat = sp->beat + 1;
-			if(sp->beat >= eof_song->beats - 2)
-			{
+			if((sp->beat >= eof_song->beats - 2) && (sp->beat >= 2))
+			{	//Don't reference a negative index of eof_song->beat[]
 				sp->beat_length = eof_song->beat[sp->beat - 1]->pos - eof_song->beat[sp->beat - 2]->pos;
 			}
-			else
-			{
+			else if(sp->beat + 1 < eof_song->beats)
+			{	//Don't read out of bounds
 				sp->beat_length = eof_song->beat[sp->beat + 1]->pos - eof_song->beat[sp->beat]->pos;
 			}
 		}

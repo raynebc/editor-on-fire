@@ -257,7 +257,7 @@ extern int         eof_snote;
 extern int         eof_selected_control;
 extern int         eof_cselected_control;
 //extern int         eof_selected_note;
-extern int         eof_selected_catalog_entry;
+extern unsigned long eof_selected_catalog_entry;
 //extern int         eof_selected_note_pos;
 extern int         eof_selected_beat;
 extern int         eof_selected_measure;

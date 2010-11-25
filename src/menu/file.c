@@ -1891,6 +1891,20 @@ int eof_new_chart(char * filename)
 		return 1;	//Return failure
 	}
 
+	/* Add default tracks */
+	for(ctr = 0; ctr < 5; ctr++)
+	{	//Add tracks
+		if(eof_song_add_track(eof_song, EOF_LEGACY_TRACK_FORMAT) == 0)
+			return 1;	//Return failure
+	}
+	if(eof_song_add_track(eof_song, EOF_VOCAL_TRACK_FORMAT) == 0)
+		return 1;	//Return failure
+
+	for(ctr = 1; ctr <= EOF_TRACKS_MAX; ctr++)
+	{	//Copy the default track names into the track[] array
+		ustrcpy(eof_song->track[ctr]->track_name, eof_track_name[ctr]);
+	}
+
 	/* fill in information */
 	ustrcpy(eof_song->tags->artist, eof_etext);
 	ustrcpy(eof_song->tags->title, eof_etext2);

@@ -4,7 +4,7 @@
 
 EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 {
-	EOF_SONG * sp;
+	EOF_SONG * sp = NULL;
 	EOF_NOTE * new_note = NULL;
 	int i, j;
 	char a;

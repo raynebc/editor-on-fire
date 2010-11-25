@@ -66,8 +66,8 @@ int eof_song_qsort_lyrics(const void * e1, const void * e2)
 
 EOF_SONG * eof_create_song(void)
 {
-	EOF_SONG * sp;
-	int i;
+	EOF_SONG * sp = NULL;
+	unsigned long i;
 
 	sp = malloc(sizeof(EOF_SONG));
 	if(!sp)
@@ -92,6 +92,7 @@ EOF_SONG * eof_create_song(void)
 	ustrcpy(sp->tags->ogg[0].filename, "guitar.ogg");
 	sp->tags->oggs = 1;
 	sp->tags->revision = 0;
+	sp->resolution = 0;
 	sp->tracks = 0;
 	sp->legacy_tracks = 0;
 	sp->vocal_tracks = 0;
@@ -115,7 +116,7 @@ void eof_destroy_song(EOF_SONG * sp)
 	free(sp);
 }
 
-int eof_save_song(EOF_SONG * sp, const char * fn)
+int eof_save_song_old(EOF_SONG * sp, const char * fn)
 {
 	PACKFILE * fp;
 	int i, j, tl;
@@ -254,7 +255,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	return 1;
 }
 
-int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
+int eof_load_song_pf_old(EOF_SONG * sp, PACKFILE * fp)
 {
 	int i, j, b, c, tl;
 
@@ -402,8 +403,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 
 EOF_SONG * eof_load_song(const char * fn)
 {
-	PACKFILE * fp;
-	EOF_SONG * sp;
+	PACKFILE * fp = NULL;
+	EOF_SONG * sp = NULL;
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};	//This header represents the current project format
 	char rheader[16];
 	int i;
@@ -992,10 +993,10 @@ void eof_song_move_text_events(EOF_SONG * sp, int beat, int offset)
 	}
 }
 
-int eof_song_resize_text_events(EOF_SONG * sp, int events)
+int eof_song_resize_text_events(EOF_SONG * sp, unsigned long events)
 {
-	int i;
-	int oldevents = sp->text_events;
+	unsigned long i;
+	unsigned long oldevents = sp->text_events;
 	if(events > oldevents)
 	{
 		for(i = oldevents; i < events; i++)
@@ -1323,7 +1324,7 @@ void eof_set_flags_at_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,char flag,c
 	}
 }
 
-int eof_load_song_string_pf(char *buffer, PACKFILE *fp, unsigned long buffersize)
+int eof_load_song_string_pf(char *const buffer, PACKFILE *fp, const unsigned long buffersize)
 {
 	unsigned long ctr=0,stringsize=0;
 	int inputc=0;
@@ -1390,7 +1391,7 @@ int eof_song_add_track(EOF_SONG * sp, int track_format)
 					return 0;	//Return error
 				ptr2->lyrics = 0;
 				ptr2->lines = 0;
-				ptr->star_power_paths = 0;
+				ptr2->star_power_paths = 0;
 				sp->vocal_track[sp->vocal_tracks] = ptr2;
 				sp->vocal_tracks++;
 			break;
@@ -1408,6 +1409,7 @@ int eof_song_add_track(EOF_SONG * sp, int track_format)
 		ptr3->tracknum = count;
 		ptr3->track_format = track_format;
 		ptr3->track_behavior = ptr3->track_type = 0;	//Initialize these to 0
+		ptr3->track_name[0] = '\0';
 		if(sp->tracks == 0)
 		{	//If this is the first track being added, ensure that sp->track[0] is inserted
 			sp->track[0] = NULL;
@@ -1471,27 +1473,27 @@ int eof_song_delete_track(EOF_SONG * sp, unsigned long track)
 	return 1;	//Return success
 }
 
-int eof_load_song_pf_new(EOF_SONG * sp, PACKFILE * fp)
+int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 {
 	unsigned char inputc;
 	unsigned long inputl,count,ctr;
 	unsigned long track_count,track_ctr,track_format,track_behavior,track_type;
 	unsigned long section_type_count,section_type_ctr,section_type,section_count,section_ctr,section_start,section_end;
 	unsigned long custom_data_count,custom_data_ctr,custom_data_size;
-	unsigned long bookmarkctr = 0;
+	char track_name[EOF_TRACK_NAME_SIZE]={0};
 
 	#define EOFNUMINISTRINGTYPES 12
-	char *inistringbuffer[EOFNUMINISTRINGTYPES]={NULL,NULL,sp->tags->artist,sp->tags->title,sp->tags->frettist,NULL,sp->tags->year,sp->tags->loading_text,NULL,NULL,NULL,NULL};
-	unsigned long inistringbuffersize[12]={0,0,256,256,256,0,32,512,0,0,0,0};
+	char *const inistringbuffer[EOFNUMINISTRINGTYPES]={NULL,NULL,sp->tags->artist,sp->tags->title,sp->tags->frettist,NULL,sp->tags->year,sp->tags->loading_text,NULL,NULL,NULL,NULL};
+	unsigned long const inistringbuffersize[12]={0,0,256,256,256,0,32,512,0,0,0,0};
 		//Store the buffer information of each of the 12 INI strings to simplify the loading code
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
 
 	#define EOFNUMINIBOOLEANTYPES 6
-	char *inibooleanbuffer[EOFNUMINIBOOLEANTYPES]={NULL,&sp->tags->lyrics,&sp->tags->eighth_note_hopo,NULL,NULL,NULL};
+	char *const inibooleanbuffer[EOFNUMINIBOOLEANTYPES]={NULL,&sp->tags->lyrics,&sp->tags->eighth_note_hopo,NULL,NULL,NULL};
 		//Store the pointers to each of the 5 boolean type INI settings (number 0 is reserved) to simplify the loading code
 
 	#define EOFNUMININUMBERTYPES 5
-	unsigned long *ininumberbuffer[EOFNUMININUMBERTYPES]={NULL,NULL,NULL,NULL,NULL};
+	unsigned long *const ininumberbuffer[EOFNUMININUMBERTYPES]={NULL,NULL,NULL,NULL,NULL};
 		//Store the pointers to each of the 5 number type INI settings (number 0 is reserved) to simplify the loading code
 
 
@@ -1531,7 +1533,7 @@ int eof_load_song_pf_new(EOF_SONG * sp, PACKFILE * fp)
 	for(ctr=0; ctr<count; ctr++)
 	{	//For each INI boolean in the project
 		inputc = pack_getc(fp);		//Read the type of INI boolean
-		if(((inputc & 0x7F) < EOFNUMINIBOOLEANTYPES) && (inibooleanbuffer[inputc] != NULL))
+		if(((inputc & 0x7F) < EOFNUMINIBOOLEANTYPES) && (inibooleanbuffer[(inputc & 0x7F)] != NULL))
 		{	//Mask out the true/false bit to determine if it is a supported boolean setting
 			*inibooleanbuffer[(inputc & 0x7F)] = (inputc & 0xF0);	//Store the true/false status into the appropriate project variable
 		}
@@ -1604,7 +1606,7 @@ int eof_load_song_pf_new(EOF_SONG * sp, PACKFILE * fp)
 	track_count = pack_igetl(fp);		//Read the number of tracks
 	for(track_ctr=0; track_ctr<track_count; track_ctr++)
 	{	//For each track in the project
-		eof_load_song_string_pf(NULL,fp,0);				//Parse past the track name (not supported yet)
+		eof_load_song_string_pf(track_name,fp,sizeof(track_name));	//Read the track name
 		track_format = pack_getc(fp);	//Read the track format
 		track_behavior = pack_getc(fp);	//Read the track behavior
 		track_type = pack_getc(fp);		//Read the track type
@@ -1675,6 +1677,11 @@ int eof_load_song_pf_new(EOF_SONG * sp, PACKFILE * fp)
 			return 0;
 		}
 
+		if(sp->track[sp->tracks-1] != NULL)
+		{	//Ignore the track name for NULL tracks such as track 0
+			ustrcpy(sp->track[sp->tracks-1]->track_name,track_name);	//Save the track name
+		}
+
 		section_type_count = pack_igetw(fp);	//Read the number of types of sections defined for this track
 		for(section_type_ctr=0; section_type_ctr<section_type_count; section_type_ctr++)
 		{	//For each type of section in this track
@@ -1695,8 +1702,7 @@ int eof_load_song_pf_new(EOF_SONG * sp, PACKFILE * fp)
 						switch(section_type)
 						{
 							case EOF_BOOKMARK_SECTION:		//Bookmark section
-								eof_song_add_section(sp,0,EOF_BOOKMARK_SECTION,0,section_start,0,bookmarkctr);
-								bookmarkctr++;
+								eof_song_add_section(sp,0,EOF_BOOKMARK_SECTION,0,section_start,inputl,0);
 							break;
 							case EOF_FRET_CATALOG_SECTION:	//Fret Catalog section
 								eof_song_add_section(sp,0,EOF_FRET_CATALOG_SECTION,inputc,section_start,section_end,inputl);	//For fret catalog sections, the flag represents the associated track number
@@ -1736,14 +1742,14 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 		switch(sectiontype)
 		{
 			case EOF_BOOKMARK_SECTION:
-				if(flags < EOF_MAX_BOOKMARK_ENTRIES)
+				if(end < EOF_MAX_BOOKMARK_ENTRIES)
 				{	//If EOF can store this bookmark
-					sp->bookmark_pos[flags] = start;
+					sp->bookmark_pos[end] = start;
 				}
 			return 1;
 			case EOF_FRET_CATALOG_SECTION:
 				sp->catalog->entry[sp->catalog->entries].track = flags;		//For now, EOF still numbers tracks starting from number 0
-				sp->catalog->entry[sp->catalog->entries].type = difficulty;			//Store the fret catalog section's associated difficulty
+				sp->catalog->entry[sp->catalog->entries].type = difficulty;	//Store the fret catalog section's associated difficulty
 				sp->catalog->entry[sp->catalog->entries].start_pos = start;
 				sp->catalog->entry[sp->catalog->entries].end_pos = end;
 			return 1;
@@ -1847,24 +1853,25 @@ int eof_save_song_string_pf(char *buffer, PACKFILE *fp)
 	return 0;	//Return success
 }
 
-int eof_save_song_new(EOF_SONG * sp, const char * fn)
+int eof_save_song(EOF_SONG * sp, const char * fn)
 {
 	PACKFILE * fp;
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};
 	unsigned long count,ctr,tracknum;
-	unsigned long track_count,track_ctr,bookmark_count,has_bookmarks,catalog_count,has_catalog;
+	unsigned long track_count,track_ctr,bookmark_count;
+	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases;
 
 	#define EOFNUMINISTRINGTYPES 12
-	char *inistringbuffer[EOFNUMINISTRINGTYPES]={NULL,NULL,sp->tags->artist,sp->tags->title,sp->tags->frettist,NULL,sp->tags->year,sp->tags->loading_text,NULL,NULL,NULL,NULL};
+	char *const inistringbuffer[EOFNUMINISTRINGTYPES]={NULL,NULL,sp->tags->artist,sp->tags->title,sp->tags->frettist,NULL,sp->tags->year,sp->tags->loading_text,NULL,NULL,NULL,NULL};
 		//Store the buffer information of each of the 12 INI strings to simplify the loading code
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
 
 	#define EOFNUMINIBOOLEANTYPES 6
-	char *inibooleanbuffer[EOFNUMINIBOOLEANTYPES]={NULL,&sp->tags->lyrics,&sp->tags->eighth_note_hopo,NULL,NULL,NULL};
+	char *const inibooleanbuffer[EOFNUMINIBOOLEANTYPES]={NULL,&sp->tags->lyrics,&sp->tags->eighth_note_hopo,NULL,NULL,NULL};
 		//Store the pointers to each of the 5 boolean type INI settings (number 0 is reserved) to simplify the loading code
 
 	#define EOFNUMININUMBERTYPES 5
-	unsigned long *ininumberbuffer[EOFNUMININUMBERTYPES]={NULL,NULL,NULL,NULL,NULL};
+	unsigned long *const ininumberbuffer[EOFNUMININUMBERTYPES]={NULL,NULL,NULL,NULL,NULL};
 		//Store the pointers to each of the 5 number type INI settings (number 0 is reserved) to simplify the loading code
 
 
@@ -1962,7 +1969,7 @@ int eof_save_song_new(EOF_SONG * sp, const char * fn)
 		pack_iputl(sp->beat[ctr]->ppqn, fp);	//Write the beat's tempo
 		pack_iputl(sp->beat[ctr]->pos, fp);		//Write the beat's position (milliseconds or delta ticks)
 		pack_iputl(sp->beat[ctr]->flags, fp);	//Write the beat's flags
-		pack_putc(0, fp);	//Write the beat's key signature (not supported yet)
+		pack_putc(0xFF, fp);	//Write the beat's key signature (not supported yet)
 	}
 	pack_iputl(sp->text_events, fp);	//Write the number of text events
 	for(ctr=0; ctr < sp->text_events; ctr++)
@@ -1971,7 +1978,13 @@ int eof_save_song_new(EOF_SONG * sp, const char * fn)
 		pack_iputl(sp->text_event[ctr]->beat, fp);	//Write the text event's associated beat number
 		pack_iputl(0, fp);	//Write the text event's associated track number (not supported yet)
 	}
-	pack_iputl(0, fp);	//Write an empty custom data block (not currently in use)
+
+
+//	pack_iputl(0, fp);	//Write an empty custom data block (not currently in use)
+	pack_iputl(1, fp);			//Write a debug custom data block
+	pack_iputl(4, fp);
+	pack_iputl(0xFFFFFFFF, fp);
+
 
 	/* write track data */
 	//Count the number of bookmarks
@@ -1984,26 +1997,31 @@ int eof_save_song_new(EOF_SONG * sp, const char * fn)
 		}
 	}
 	//Count the number of catalog entries
-	if(sp->catalog != NULL)
+	if((sp->catalog != NULL) && (sp->catalog->entries > 0))
 	{
-		catalog_count = sp->catalog->entries;
 		has_catalog = 1;
 	}
 	else
 	{
-		catalog_count = 0;
 		has_catalog = 0;
 	}
 	//Determine how many tracks need to be written
 	track_count = sp->tracks;
-	if((track_count == 0) && (bookmark_count || catalog_count))
+	if((track_count == 0) && (bookmark_count || sp->catalog->entries))
 	{	//Ensure that a global track is written if necessary to accommodate bookmarks and catalog entries
 		track_count = 1;
 	}
 	pack_iputl(track_count, fp);	//Write the number of tracks
 	for(track_ctr=0; track_ctr < track_count; track_ctr++)
 	{	//For each track in the project
-		eof_save_song_string_pf(NULL, fp);	//Write an empty track name string (not supported yet)
+		if(sp->track[track_ctr] != NULL)
+		{	//Skip NULL tracks, such as track 0
+			eof_save_song_string_pf(sp->track[track_ctr]->track_name, fp);	//Write track name string
+		}
+		else
+		{
+			eof_save_song_string_pf(NULL, fp);	//Write empty string
+		}
 		//Write global track
 		if(track_ctr == 0)
 		{
@@ -2012,27 +2030,30 @@ int eof_save_song_new(EOF_SONG * sp, const char * fn)
 			pack_putc(0, fp);	//Write track type (not used)
 			pack_putc(0, fp);	//Write track difficulty (not used)
 			pack_iputl(0, fp);	//Write global track flags (not supported yet)
-			pack_iputw(0, fp);	//Write compliance flags (not used)
+			pack_iputw(0xFFFF, fp);	//Write compliance flags (not used)
 			//Write global track section type chunk
 			pack_iputw(has_bookmarks + has_catalog, fp);	//Write number of section types
 			if(has_bookmarks)
 			{	//Write bookmarks
 				pack_iputw(EOF_BOOKMARK_SECTION, fp);	//Write bookmark section type
 				pack_iputl(bookmark_count, fp);			//Write number of bookmarks
-				for(ctr=0; ctr < bookmark_count; ctr++)
+				for(ctr=0; ctr < EOF_MAX_BOOKMARK_ENTRIES; ctr++)
 				{	//For each bookmark in the project
-					eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
-					pack_putc(0xFF, fp);					//Write an associated difficulty of "all difficulties"
-					pack_iputl(sp->bookmark_pos[ctr], fp);	//Write the bookmark's position
-					pack_iputl(0, fp);						//Write end position (not used)
-					pack_iputl(0, fp);						//Write section flags (not used)
+					if(eof_song->bookmark_pos[ctr] > 0)
+					{
+						eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
+						pack_putc(0xFF, fp);					//Write an associated difficulty of "all difficulties"
+						pack_iputl(sp->bookmark_pos[ctr], fp);	//Write the bookmark's position
+						pack_iputl(ctr, fp);					//Write end position (bookmark number)
+						pack_iputl(0, fp);						//Write section flags (not used)
+					}
 				}
 			}
 			if(has_catalog)
 			{	//Write fret catalog
 				pack_iputw(EOF_FRET_CATALOG_SECTION, fp);	//Write fret catalog section type
-				pack_iputl(catalog_count, fp);				//Write number of catalog entries
-				for(ctr=0; ctr < catalog_count; ctr++)
+				pack_iputl(sp->catalog->entries, fp);		//Write number of catalog entries
+				for(ctr=0; ctr < sp->catalog->entries; ctr++)
 				{	//For each fret catalog entry in the project
 					eof_save_song_string_pf(NULL, fp);					//Write an empty section name string (not supported yet)
 					pack_putc(sp->catalog->entry[ctr].type, fp);		//Write the associated difficulty
@@ -2053,6 +2074,7 @@ int eof_save_song_new(EOF_SONG * sp, const char * fn)
 			pack_iputw(0, fp);	//Write track compliance flags (not supported yet)
 
 			tracknum = sp->track[track_ctr]->tracknum;
+			has_solos = has_star_power = has_lyric_phrases = 0;
 			switch(sp->track[track_ctr]->track_format)
 			{	//Perform the appropriate logic to write this format of track
 				case EOF_LEGACY_TRACK_FORMAT:	//Legacy (non pro guitar, non pro bass, non pro keys, pro or non pro drums)
@@ -2066,6 +2088,42 @@ int eof_save_song_new(EOF_SONG * sp, const char * fn)
 						pack_iputl(sp->legacy_track[tracknum]->note[ctr]->length, fp);	//Write the note's length
 						pack_iputw(sp->legacy_track[tracknum]->note[ctr]->flags, fp);	//Write the note's flags
 					}
+					//Write the section type chunk
+					if(sp->legacy_track[tracknum]->solos)
+					{
+						has_solos = 1;
+					}
+					if(sp->legacy_track[tracknum]->star_power_paths)
+					{
+						has_star_power = 1;
+					}
+					pack_iputw(has_solos + has_star_power, fp);	//Write number of section types
+					if(has_solos)
+					{	//Write solo sections
+						pack_iputw(EOF_SOLO_SECTION, fp);	//Write solo section type
+						pack_iputl(sp->legacy_track[tracknum]->solos, fp);	//Write number of solo sections for this track
+						for(ctr=0; ctr < sp->legacy_track[tracknum]->solos; ctr++)
+						{	//For each solo section in the track
+							eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
+							pack_putc(0xFF, fp);					//Write an associated difficulty of "all difficulties"
+							pack_iputl(sp->legacy_track[tracknum]->solo[ctr].start_pos, fp);	//Write the solo's position
+							pack_iputl(sp->legacy_track[tracknum]->solo[ctr].end_pos, fp);		//Write the solo's end position
+							pack_iputl(0, fp);						//Write section flags (not used)
+						}
+					}
+					if(has_star_power)
+					{	//Write star power sections
+						pack_iputw(EOF_SP_SECTION, fp);		//Write star power section type
+						pack_iputl(sp->legacy_track[tracknum]->star_power_paths, fp);	//Write number of star power sections for this track
+						for(ctr=0; ctr < sp->legacy_track[tracknum]->star_power_paths; ctr++)
+						{	//For each star power section in the track
+							eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
+							pack_putc(0xFF, fp);					//Write an associated difficulty of "all difficulties"
+							pack_iputl(sp->legacy_track[tracknum]->star_power_path[ctr].start_pos, fp);	//Write the SP phrase's position
+							pack_iputl(sp->legacy_track[tracknum]->star_power_path[ctr].end_pos, fp);	//Write the SP phrase's end position
+							pack_iputl(0, fp);						//Write section flags (not used)
+						}
+					}
 				break;
 				case EOF_VOCAL_TRACK_FORMAT:	//Vocal
 					pack_putc(0, fp);	//Write the tone set number assigned to this track (not supported yet)
@@ -2078,6 +2136,42 @@ int eof_save_song_new(EOF_SONG * sp, const char * fn)
 						pack_iputl(sp->vocal_track[tracknum]->lyric[ctr]->pos, fp);		//Write the lyric position
 						pack_iputl(sp->vocal_track[tracknum]->lyric[ctr]->length, fp);	//Write the lyric length
 						pack_iputw(0, fp);	//Write the lyric flags (not supported yet)
+					}
+					//Write the section type chunk
+					if(sp->vocal_track[tracknum]->lines)
+					{
+						has_lyric_phrases = 1;
+					}
+					if(sp->vocal_track[tracknum]->star_power_paths)
+					{
+						has_star_power = 1;
+					}
+					pack_iputw(has_lyric_phrases + has_star_power, fp);	//Write number of section types
+					if(has_lyric_phrases)
+					{	//Write lyric phrases
+						pack_iputw(EOF_LYRIC_PHRASE_SECTION, fp);	//Write lyric phrase section type
+						pack_iputl(sp->vocal_track[tracknum]->lines, fp);	//Write number of star power sections for this track
+						for(ctr=0; ctr < sp->vocal_track[tracknum]->lines; ctr++)
+						{	//For each lyric phrase in the track
+							eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
+							pack_putc(0, fp);						//Write the associated difficulty (lyric set) (not supported yet)
+							pack_iputl(sp->vocal_track[tracknum]->line[ctr].start_pos, fp);	//Write the lyric phrase's position
+							pack_iputl(sp->vocal_track[tracknum]->line[ctr].end_pos, fp);	//Write the lyric phrase's end position
+							pack_iputl(0, fp);						//Write section flags (not used)
+						}
+					}
+					if(has_star_power)
+					{	//Write star power sections
+						pack_iputw(EOF_SP_SECTION, fp);		//Write star power section type
+						pack_iputl(sp->vocal_track[tracknum]->star_power_paths, fp);	//Write number of star power sections for this track
+						for(ctr=0; ctr < sp->vocal_track[tracknum]->star_power_paths; ctr++)
+						{	//For each solo section in the track
+							eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
+							pack_putc(0xFF, fp);					//Write an associated difficulty of "all difficulties"
+							pack_iputl(sp->vocal_track[tracknum]->star_power_path[ctr].start_pos, fp);	//Write the SP phrase's position
+							pack_iputl(sp->vocal_track[tracknum]->star_power_path[ctr].end_pos, fp);	//Write the SP phrase's end position
+							pack_iputl(0, fp);						//Write section flags (not used)
+						}
 					}
 				break;
 				case EOF_PRO_KEYS_TRACK_FORMAT:	//Pro Keys
@@ -2093,10 +2187,13 @@ int eof_save_song_new(EOF_SONG * sp, const char * fn)
 					allegro_message("Error: Unsupported track type.  Aborting");
 				return 0;
 			}
-
-		///Write sections
 		}
+//		pack_iputl(0, fp);	//Write an empty custom data block (not currently in use)
+		pack_iputl(1, fp);			//Write a debug custom data block
+		pack_iputl(4, fp);
+		pack_iputl(0xFFFFFFFF, fp);
 	}
 
+	pack_fclose(fp);
 	return 1;	//Return success
 }

@@ -117,8 +117,9 @@ TRACK CHUNK, for each track:
 *	}
 !	The first track maintained by EOF will be the global track (track 0), which stores information that applies to the whole chart
 !	(ie. song preview sections, bookmarks, catalog entries) or information that otherwise applies to more than one track (ie. unison SP sections)
-!		For bookmarks, there should be no string, and the end position will be ignored
+!		For bookmarks, the end position indicates which bookmark number it is
 !		For fret catalog entries, the flags field stores the track number the catalog entry is from
+!		For lyric phrases, the difficulty field indicates which lyric set number (ie. PART VOCALS) the phrase applies to
 
 *	4 bytes:	Number of custom data blocks
 *	CUSTOM DATA BLOCK CHUNK, for each custom data block
@@ -128,6 +129,7 @@ TRACK CHUNK, for each track:
 *	}
 }
 (End of file)
+
 
 	TRACK FORMAT DEFINITIONS
 ["LEGACY" (GUITAR/BASS/DRUM/PRO DRUM/KEYS) TRACK FORMAT]
