@@ -53,12 +53,12 @@ MENU eof_song_seek_menu[] =
 
 MENU eof_track_selected_menu[EOF_TRACKS_MAX+1] =
 {
-    {eof_track_selected_menu_text[0], eof_menu_track_selected_guitar, NULL, D_SELECTED, NULL},
-    {eof_track_selected_menu_text[1], eof_menu_track_selected_bass, NULL, 0, NULL},
-    {eof_track_selected_menu_text[2], eof_menu_track_selected_guitar_coop, NULL, 0, NULL},
-    {eof_track_selected_menu_text[3], eof_menu_track_selected_rhythm, NULL, 0, NULL},
-    {eof_track_selected_menu_text[4], eof_menu_track_selected_drum, NULL, 0, NULL},
-    {eof_track_selected_menu_text[5], eof_menu_track_selected_vocals, NULL, 0, NULL},
+    {eof_track_selected_menu_text[0], eof_menu_track_selected_1, NULL, D_SELECTED, NULL},
+    {eof_track_selected_menu_text[1], eof_menu_track_selected_2, NULL, 0, NULL},
+    {eof_track_selected_menu_text[2], eof_menu_track_selected_3, NULL, 0, NULL},
+    {eof_track_selected_menu_text[3], eof_menu_track_selected_4, NULL, 0, NULL},
+    {eof_track_selected_menu_text[4], eof_menu_track_selected_5, NULL, 0, NULL},
+    {eof_track_selected_menu_text[5], eof_menu_track_selected_6, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -213,14 +213,14 @@ void eof_prepare_song_menu(void)
 		}
 
 		/* track */
-		for(i = 0; i < EOF_TRACKS_MAX + 1; i++)
+		for(i = 0; i < EOF_TRACKS_MAX; i++)
 		{
 			char *ptr = eof_track_selected_menu_text[i];	//Do this to work around false alarm warnings
 			eof_track_selected_menu[i].flags = 0;
-			if((i + 1 < eof_song->tracks) && (eof_song->track[i] != NULL))
+			if((i + 1 < eof_song->tracks) && (eof_song->track[i+1] != NULL))
 			{	//If the track exists, copy its name into the string used by the track menu
 				ptr[0] = ' ';	//Add a leading space
-				ustrncpy(&(ptr[1]),eof_song->track[i]->track_name,EOF_TRACK_NAME_SIZE-1);
+				ustrncpy(&(ptr[1]),eof_song->track[i+1]->track_name,EOF_TRACK_NAME_SIZE-1);
 					//Append the track name to the menu string, starting at index 1
 			}
 			else
@@ -1059,48 +1059,48 @@ int eof_menu_song_test(void)
 	return 1;
 }
 
-int eof_menu_track_selected_guitar(void)
+int eof_menu_track_selected_1(void)
 {
-	return eof_menu_track_selected_track_number(EOF_TRACK_GUITAR);
+	return eof_menu_track_selected_track_number(1);
 }
 
-int eof_menu_track_selected_bass(void)
+int eof_menu_track_selected_2(void)
 {
-	return eof_menu_track_selected_track_number(EOF_TRACK_BASS);
+	return eof_menu_track_selected_track_number(2);
 }
 
-int eof_menu_track_selected_guitar_coop(void)
+int eof_menu_track_selected_3(void)
 {
-	return eof_menu_track_selected_track_number(EOF_TRACK_GUITAR_COOP);
+	return eof_menu_track_selected_track_number(3);
 }
 
-int eof_menu_track_selected_rhythm(void)
+int eof_menu_track_selected_4(void)
 {
-	return eof_menu_track_selected_track_number(EOF_TRACK_RHYTHM);
+	return eof_menu_track_selected_track_number(4);
 }
 
-int eof_menu_track_selected_drum(void)
+int eof_menu_track_selected_5(void)
 {
-	return eof_menu_track_selected_track_number(EOF_TRACK_DRUM);
+	return eof_menu_track_selected_track_number(5);
 }
 
-int eof_menu_track_selected_vocals(void)
+int eof_menu_track_selected_6(void)
 {
-	return eof_menu_track_selected_track_number(EOF_TRACK_VOCALS);
+	return eof_menu_track_selected_track_number(6);
 }
 
 int eof_menu_track_selected_track_number(int tracknum)
 {
 	int i;
 
-	if((tracknum >= 0) && (tracknum <= EOF_TRACKS_MAX))
+	if((tracknum > 0) && (tracknum < eof_song->tracks))
 	{
 		for(i = 0; i < EOF_TRACKS_MAX + 1; i++)
 		{
 			eof_track_selected_menu[i].flags = 0;
 		}
 
-		if(tracknum == EOF_TRACK_VOCALS)
+		if(eof_song->track[tracknum]->track_format == EOF_VOCAL_TRACK_FORMAT)
 			eof_vocals_selected = 1;
 		else
 			eof_vocals_selected = 0;
