@@ -18,19 +18,13 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 	unsigned eof_tracks_max=0;
 	unsigned eof_note_amazing=0;
 
+	//All EOF project formats before revision 'H' stored 5 legacy and 1 vocal track
+	sp = eof_create_song_populated(5,1);	//Create a new chart with 5 legacy tracks and 1 vocal track
 	sp = eof_create_song();
 	if(!sp)
 	{
 		return NULL;
 	}
-	//All EOF project formats before revision 'H' stored 5 legacy and 1 vocal track
-	for(i = 0; i < 5; i++)
-	{	//Add tracks
-		if(eof_song_add_track(sp, EOF_LEGACY_TRACK_FORMAT) == 0)
-			return NULL;
-	}
-	if(eof_song_add_track(sp, EOF_VOCAL_TRACK_FORMAT) == 0)
-		return NULL;
 	switch(version)
 	{
 		case 'G':
