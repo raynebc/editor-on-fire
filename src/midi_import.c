@@ -285,7 +285,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 		}
 	}
 
-	sp = eof_create_song();
+	sp = eof_create_song_populated(5,1);	//Create a new chart with 5 legacy tracks and 1 vocal track
 	if(!sp)
 	{
 		destroy_midi(eof_work_midi);
@@ -808,7 +808,8 @@ allegro_message("Second pass complete");
 	char hopotype[4];
 	int hopodiff;
 	unsigned long event_realtime;		//Store the delta time converted to realtime to avoid having to convert multiple times per note
-	char prodrums = 0;						//Tracks whether the drum track being written includes Pro drum notation
+	char prodrums = 0;					//Tracks whether the drum track being written includes Pro drum notation
+	unsigned long tracknum;				//Used to de-obfuscate the legacy track number
 
 	for(i = 0; i < tracks; i++)
 	{
@@ -816,6 +817,7 @@ allegro_message("Second pass complete");
 		first_note = note_count[picked_track];
 		if((picked_track >= 0) && !used_track[picked_track])
 		{
+			tracknum = sp->track[picked_track]->tracknum;
 			if(picked_track == EOF_TRACK_VOCALS)
 			{
 				int last_105 = 0;
@@ -1019,45 +1021,45 @@ allegro_message("Second pass complete");
 					}
 
 					event_realtime = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
-					eof_legacy_track_resize(sp->legacy_track[picked_track], note_count[picked_track] + 1);
+					eof_legacy_track_resize(sp->legacy_track[tracknum], note_count[picked_track] + 1);
 					/* note on */
 					if(eof_import_events[i]->event[j]->type == 0x90)
 					{
-						sp->legacy_track[picked_track]->note[note_count[picked_track]]->flags = 0;	//Clear the flag here so that the flag can be set if it's an Expert+ double bass note
+						sp->legacy_track[tracknum]->note[note_count[picked_track]]->flags = 0;	//Clear the flag here so that the flag can be set if it's an Expert+ double bass note
 						if((eof_import_events[i]->event[j]->d1 >= 0x3C) && (eof_import_events[i]->event[j]->d1 < 0x3C + 6))
 						{
-							sp->legacy_track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_SUPAEASY;
+							sp->legacy_track[tracknum]->note[note_count[picked_track]]->type = EOF_NOTE_SUPAEASY;
 							diff = eof_import_events[i]->event[j]->d1 - 0x3C;
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= 0x48) && (eof_import_events[i]->event[j]->d1 < 0x48 + 6))
 						{
-							sp->legacy_track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_EASY;
+							sp->legacy_track[tracknum]->note[note_count[picked_track]]->type = EOF_NOTE_EASY;
 							diff = eof_import_events[i]->event[j]->d1 - 0x48;
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= 0x54) && (eof_import_events[i]->event[j]->d1 < 0x54 + 6))
 						{
-							sp->legacy_track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_MEDIUM;
+							sp->legacy_track[tracknum]->note[note_count[picked_track]]->type = EOF_NOTE_MEDIUM;
 							diff = eof_import_events[i]->event[j]->d1 - 0x54;
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= 0x60) && (eof_import_events[i]->event[j]->d1 < 0x60 + 6))
 						{
-							sp->legacy_track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_AMAZING;
+							sp->legacy_track[tracknum]->note[note_count[picked_track]]->type = EOF_NOTE_AMAZING;
 							diff = eof_import_events[i]->event[j]->d1 - 0x60;
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= 120) && (eof_import_events[i]->event[j]->d1 <= 124))
 						{
-							sp->legacy_track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_SPECIAL;
+							sp->legacy_track[tracknum]->note[note_count[picked_track]]->type = EOF_NOTE_SPECIAL;
 							diff = eof_import_events[i]->event[j]->d1 - 120;
 						}
 						else if((picked_track == EOF_TRACK_DRUM) && (eof_import_events[i]->event[j]->d1 == 95))
 						{	//If the track being read is PART DRUMS, and this note is marked for Expert+ double bass
-							sp->legacy_track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_AMAZING;
-							sp->legacy_track[picked_track]->note[note_count[picked_track]]->flags ^= EOF_NOTE_FLAG_DBASS;	//Apply this status flag
+							sp->legacy_track[tracknum]->note[note_count[picked_track]]->type = EOF_NOTE_AMAZING;
+							sp->legacy_track[tracknum]->note[note_count[picked_track]]->flags ^= EOF_NOTE_FLAG_DBASS;	//Apply this status flag
 							diff = eof_import_events[i]->event[j]->d1 - 0x60 + 1;	//Treat as gem 1 (bass drum)
 						}
 						else
 						{
-							sp->legacy_track[picked_track]->note[note_count[picked_track]]->type = -1;
+							sp->legacy_track[tracknum]->note[note_count[picked_track]]->type = -1;
 						}
 
 						/* store forced HOPO marker, when the note off for this marker occurs, search for note with same position and apply it to that note */
@@ -1103,13 +1105,13 @@ allegro_message("Second pass complete");
 						}
 
 						/* star power and solos */
-						if((eof_import_events[i]->event[j]->d1 == 116) && (sp->legacy_track[picked_track]->star_power_paths < EOF_MAX_STAR_POWER))
+						if((eof_import_events[i]->event[j]->d1 == 116) && (sp->legacy_track[tracknum]->star_power_paths < EOF_MAX_STAR_POWER))
 						{
-							sp->legacy_track[picked_track]->star_power_path[sp->legacy_track[picked_track]->star_power_paths].start_pos = event_realtime;
+							sp->legacy_track[tracknum]->star_power_path[sp->legacy_track[tracknum]->star_power_paths].start_pos = event_realtime;
 						}
-						else if((eof_import_events[i]->event[j]->d1 == 103) && (sp->legacy_track[picked_track]->solos < EOF_MAX_SOLOS))
+						else if((eof_import_events[i]->event[j]->d1 == 103) && (sp->legacy_track[tracknum]->solos < EOF_MAX_SOLOS))
 						{
-							sp->legacy_track[picked_track]->solo[sp->legacy_track[picked_track]->solos].start_pos = event_realtime;
+							sp->legacy_track[tracknum]->solo[sp->legacy_track[tracknum]->solos].start_pos = event_realtime;
 						}
 
 						/* rb pro markers */
@@ -1132,18 +1134,18 @@ allegro_message("Second pass complete");
 							}
 						}
 
-						if(sp->legacy_track[picked_track]->note[note_count[picked_track]]->type != -1)
+						if(sp->legacy_track[tracknum]->note[note_count[picked_track]]->type != -1)
 						{	//If there was a note added
 							for(k = first_note; k < note_count[picked_track]; k++)
 							{	//Traverse the note list in reverse to find the appropriate note to modify
-								if((sp->legacy_track[picked_track]->note[k]->pos == event_realtime) && (sp->legacy_track[picked_track]->note[k]->type == sp->legacy_track[picked_track]->note[note_count[picked_track]]->type))
+								if((sp->legacy_track[tracknum]->note[k]->pos == event_realtime) && (sp->legacy_track[tracknum]->note[k]->type == sp->legacy_track[tracknum]->note[note_count[picked_track]]->type))
 								{
 									break;
 								}
 							}
 							if(k == note_count[picked_track])
 							{
-								noteptr = sp->legacy_track[picked_track]->note[note_count[picked_track]];	//Store this pointer
+								noteptr = sp->legacy_track[tracknum]->note[note_count[picked_track]];	//Store this pointer
 								noteptr->note = diff_chart[diff];
 								noteptr->pos = event_realtime;
 								noteptr->length = 100;
@@ -1151,7 +1153,7 @@ allegro_message("Second pass complete");
 							}
 							else
 							{
-								noteptr = sp->legacy_track[picked_track]->note[k];	//Store this pointer
+								noteptr = sp->legacy_track[tracknum]->note[k];	//Store this pointer
 								noteptr->note |= diff_chart[diff];
 							}
 							if(prodrums && (picked_track == EOF_TRACK_DRUM) && (noteptr->type != EOF_NOTE_SPECIAL))
@@ -1177,37 +1179,37 @@ allegro_message("Second pass complete");
 					{
 						if((eof_import_events[i]->event[j]->d1 >= 0x3C) && (eof_import_events[i]->event[j]->d1 < 0x3C + 6))
 						{
-							sp->legacy_track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_SUPAEASY;
+							sp->legacy_track[tracknum]->note[note_count[picked_track]]->type = EOF_NOTE_SUPAEASY;
 							diff = eof_import_events[i]->event[j]->d1 - 0x3C;
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= 0x48) && (eof_import_events[i]->event[j]->d1 < 0x48 + 6))
 						{
-							sp->legacy_track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_EASY;
+							sp->legacy_track[tracknum]->note[note_count[picked_track]]->type = EOF_NOTE_EASY;
 							diff = eof_import_events[i]->event[j]->d1 - 0x48;
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= 0x54) && (eof_import_events[i]->event[j]->d1 < 0x54 + 6))
 						{
-							sp->legacy_track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_MEDIUM;
+							sp->legacy_track[tracknum]->note[note_count[picked_track]]->type = EOF_NOTE_MEDIUM;
 							diff = eof_import_events[i]->event[j]->d1 - 0x54;
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= 0x60) && (eof_import_events[i]->event[j]->d1 < 0x60 + 6))
 						{
-							sp->legacy_track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_AMAZING;
+							sp->legacy_track[tracknum]->note[note_count[picked_track]]->type = EOF_NOTE_AMAZING;
 							diff = eof_import_events[i]->event[j]->d1 - 0x60;
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= 120) && (eof_import_events[i]->event[j]->d1 <= 124))
 						{
-							sp->legacy_track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_SPECIAL;
+							sp->legacy_track[tracknum]->note[note_count[picked_track]]->type = EOF_NOTE_SPECIAL;
 							diff = eof_import_events[i]->event[j]->d1 - 120;
 						}
 						else if((picked_track == EOF_TRACK_DRUM) && (eof_import_events[i]->event[j]->d1 == 95))
 						{	//Expert+ double bass note
-							sp->legacy_track[picked_track]->note[note_count[picked_track]]->type = EOF_NOTE_AMAZING;
+							sp->legacy_track[tracknum]->note[note_count[picked_track]]->type = EOF_NOTE_AMAZING;
 							diff = eof_import_events[i]->event[j]->d1 - 0x60 + 1;	//Treat as gem 1 (bass drum)
 						}
 						else
 						{
-							sp->legacy_track[picked_track]->note[note_count[picked_track]]->type = -1;
+							sp->legacy_track[tracknum]->note[note_count[picked_track]]->type = -1;
 						}
 
 						/* detect forced HOPO */
@@ -1249,15 +1251,15 @@ allegro_message("Second pass complete");
 							for(k = note_count[picked_track] - 1; k >= first_note; k--)
 							{	//Check for each note that has been imported
 //								if((sp->legacy_track[picked_track]->note[k]->type == hopodiff) && (hopopos[hopodiff] == eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,0,anchorlist,eof_work_midi->divisions,sp->tags->ogg[0].midi_offset)))
-								if((sp->legacy_track[picked_track]->note[k]->type == hopodiff) && (sp->legacy_track[picked_track]->note[k]->pos >= hopopos[hopodiff]) && (sp->legacy_track[picked_track]->note[k]->pos <= event_realtime))
+								if((sp->legacy_track[tracknum]->note[k]->type == hopodiff) && (sp->legacy_track[tracknum]->note[k]->pos >= hopopos[hopodiff]) && (sp->legacy_track[tracknum]->note[k]->pos <= event_realtime))
 								{	//If the note is in the same difficulty as the HOPO phrase, and its timestamp falls between the HOPO On and HOPO Off marker
 									if(hopotype[hopodiff] == 0)
 									{
-										sp->legacy_track[picked_track]->note[k]->flags |= EOF_NOTE_FLAG_F_HOPO;
+										sp->legacy_track[tracknum]->note[k]->flags |= EOF_NOTE_FLAG_F_HOPO;
 									}
 									else
 									{
-										sp->legacy_track[picked_track]->note[k]->flags |= EOF_NOTE_FLAG_NO_HOPO;
+										sp->legacy_track[tracknum]->note[k]->flags |= EOF_NOTE_FLAG_NO_HOPO;
 									}
 //									break;
 								}
@@ -1271,9 +1273,9 @@ allegro_message("Second pass complete");
 							{	//If this event ends a pro yellow drum phrase
 								for(k = note_count[picked_track] - 1; k >= first_note; k--)
 								{	//Check for each note that has been imported for this track
-									if((sp->legacy_track[picked_track]->note[k]->pos >= rb_pro_yellow_pos) && (sp->legacy_track[picked_track]->note[k]->pos <= event_realtime))
+									if((sp->legacy_track[tracknum]->note[k]->pos >= rb_pro_yellow_pos) && (sp->legacy_track[tracknum]->note[k]->pos <= event_realtime))
 									{	//If the note is positioned within this pro yellow drum phrase
-										sp->legacy_track[picked_track]->note[k]->flags &= (~EOF_NOTE_FLAG_Y_CYMBAL);	//Clear the yellow cymbal marker on the note
+										sp->legacy_track[tracknum]->note[k]->flags &= (~EOF_NOTE_FLAG_Y_CYMBAL);	//Clear the yellow cymbal marker on the note
 									}
 								}
 								rb_pro_yellow = 0;
@@ -1282,9 +1284,9 @@ allegro_message("Second pass complete");
 							{	//If this event ends a pro blue drum phrase
 								for(k = note_count[picked_track] - 1; k >= first_note; k--)
 								{	//Check for each note that has been imported for this track
-									if((sp->legacy_track[picked_track]->note[k]->pos >= rb_pro_blue_pos) && (sp->legacy_track[picked_track]->note[k]->pos <= event_realtime))
+									if((sp->legacy_track[tracknum]->note[k]->pos >= rb_pro_blue_pos) && (sp->legacy_track[tracknum]->note[k]->pos <= event_realtime))
 									{	//If the note is positioned within this pro blue drum phrase
-										sp->legacy_track[picked_track]->note[k]->flags &= (~EOF_NOTE_FLAG_B_CYMBAL);	//Clear the blue cymbal marker on the note
+										sp->legacy_track[tracknum]->note[k]->flags &= (~EOF_NOTE_FLAG_B_CYMBAL);	//Clear the blue cymbal marker on the note
 									}
 								}
 								rb_pro_blue = 0;
@@ -1293,36 +1295,36 @@ allegro_message("Second pass complete");
 							{	//If this event ends a pro green drum phrase
 								for(k = note_count[picked_track] - 1; k >= first_note; k--)
 								{	//Check for each note that has been imported for this track
-									if((sp->legacy_track[picked_track]->note[k]->pos >= rb_pro_green_pos) && (sp->legacy_track[picked_track]->note[k]->pos <= event_realtime))
+									if((sp->legacy_track[tracknum]->note[k]->pos >= rb_pro_green_pos) && (sp->legacy_track[tracknum]->note[k]->pos <= event_realtime))
 									{	//If the note is positioned within this pro green drum phrase
-										sp->legacy_track[picked_track]->note[k]->flags &= (~EOF_NOTE_FLAG_G_CYMBAL);	//Clear the green cymbal marker on the note
+										sp->legacy_track[tracknum]->note[k]->flags &= (~EOF_NOTE_FLAG_G_CYMBAL);	//Clear the green cymbal marker on the note
 									}
 								}
 								rb_pro_green = 0;
 							}
 						}
 
-						if((eof_import_events[i]->event[j]->d1 == 116) && (sp->legacy_track[picked_track]->star_power_paths < EOF_MAX_STAR_POWER))
+						if((eof_import_events[i]->event[j]->d1 == 116) && (sp->legacy_track[tracknum]->star_power_paths < EOF_MAX_STAR_POWER))
 						{
-							sp->legacy_track[picked_track]->star_power_path[sp->legacy_track[picked_track]->star_power_paths].end_pos = event_realtime - 1;
-							sp->legacy_track[picked_track]->star_power_paths++;
+							sp->legacy_track[tracknum]->star_power_path[sp->legacy_track[tracknum]->star_power_paths].end_pos = event_realtime - 1;
+							sp->legacy_track[tracknum]->star_power_paths++;
 						}
-						else if((eof_import_events[i]->event[j]->d1 == 103) && (sp->legacy_track[picked_track]->solos < EOF_MAX_SOLOS))
+						else if((eof_import_events[i]->event[j]->d1 == 103) && (sp->legacy_track[tracknum]->solos < EOF_MAX_SOLOS))
 						{
-							sp->legacy_track[picked_track]->solo[sp->legacy_track[picked_track]->solos].end_pos = event_realtime - 1;
-							sp->legacy_track[picked_track]->solos++;
+							sp->legacy_track[tracknum]->solo[sp->legacy_track[tracknum]->solos].end_pos = event_realtime - 1;
+							sp->legacy_track[tracknum]->solos++;
 						}
-						if((note_count[picked_track] > 0) && (sp->legacy_track[picked_track]->note[note_count[picked_track] - 1]->type != -1))
+						if((note_count[picked_track] > 0) && (sp->legacy_track[tracknum]->note[note_count[picked_track] - 1]->type != -1))
 						{
 							for(k = note_count[picked_track] - 1; k >= first_note; k--)
 							{
-								if((sp->legacy_track[picked_track]->note[k]->type == sp->legacy_track[picked_track]->note[note_count[picked_track]]->type) && (sp->legacy_track[picked_track]->note[k]->note & diff_chart[diff]))
+								if((sp->legacy_track[tracknum]->note[k]->type == sp->legacy_track[tracknum]->note[note_count[picked_track]]->type) && (sp->legacy_track[tracknum]->note[k]->note & diff_chart[diff]))
 								{
 	//								allegro_message("break %d, %d, %d", k, sp->legacy_track[picked_track]->note[k]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);
-									sp->legacy_track[picked_track]->note[k]->length = event_realtime - sp->legacy_track[picked_track]->note[k]->pos;
-									if(sp->legacy_track[picked_track]->note[k]->length <= 0)
+									sp->legacy_track[tracknum]->note[k]->length = event_realtime - sp->legacy_track[tracknum]->note[k]->pos;
+									if(sp->legacy_track[tracknum]->note[k]->length <= 0)
 									{
-										sp->legacy_track[picked_track]->note[k]->length = 1;
+										sp->legacy_track[tracknum]->note[k]->length = 1;
 									}
 									break;
 								}
@@ -1331,10 +1333,10 @@ allegro_message("Second pass complete");
 					}
 					pticker++;
 				}
-				eof_legacy_track_resize(sp->legacy_track[picked_track], note_count[picked_track]);
-				if(sp->legacy_track[picked_track]->notes > 0)
+				eof_legacy_track_resize(sp->legacy_track[tracknum], note_count[picked_track]);
+				if(sp->legacy_track[tracknum]->notes > 0)
 				{
-					eof_track_find_crazy_notes(sp->legacy_track[picked_track]);
+					eof_track_find_crazy_notes(sp->legacy_track[tracknum]);
 					used_track[picked_track] = 1;
 				}
 			}

@@ -404,6 +404,8 @@ int eof_song_add_track(EOF_SONG * sp, int track_format);
 	//Adds a new track of the specified format.  Returns zero on error
 int eof_song_delete_track(EOF_SONG * sp, unsigned long track);
 	//Deletes the specified track from the main track array and the appropriate track type array, but only if the track contains no notes.  Returns zero on error
+EOF_SONG * eof_create_song_populated(unsigned long legacy,unsigned long vocal);
+	//Allocates, initializes and returns an EOF_SONG structure pre-populated with the specified number of legacy and vocal tracks
 
 #define EOF_SOLO_SECTION				1
 #define EOF_SP_SECTION					2

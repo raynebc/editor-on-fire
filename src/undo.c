@@ -18,6 +18,7 @@ int eof_redo_type = 0;
 
 int eof_undo_load_state(const char * fn)
 {
+	EOF_SONG * sp = NULL;
 	PACKFILE * fp;
 	char rheader[16];
 
@@ -28,7 +29,15 @@ int eof_undo_load_state(const char * fn)
 	}
 	if(pack_fread(rheader, 16, fp) != 16)
 		return 0;	//Return error if 16 bytes cannot be read
-	eof_load_song_pf(eof_song, fp);
+	sp = eof_create_song();		//Initialize an empty chart
+	if(!eof_load_song_pf(sp, fp))
+	{	//If loading the undo state fails
+		allegro_message("Failed to perform undo");
+		return 0;	//Return failure
+	}
+	eof_destroy_song(eof_song);	//Destroy the chart that is open
+	eof_song = sp;	//Replacing it with the loaded undo state
+
 	pack_fclose(fp);
 	return 1;
 }
@@ -49,7 +58,7 @@ void eof_undo_reset(void)
 int eof_undo_add(int type)
 {
 	char fn[1024] = {0};
-	
+
 	if((type == EOF_UNDO_TYPE_NOTE_LENGTH) && (eof_undo_last_type == EOF_UNDO_TYPE_NOTE_LENGTH))
 	{
 		return 0;
@@ -87,7 +96,7 @@ int eof_undo_add(int type)
 int eof_undo_apply(void)
 {
 	char fn[1024] = {0};
-	
+
 	if(eof_undo_count > 0)
 	{
 		eof_save_song(eof_song, "eof.redo");

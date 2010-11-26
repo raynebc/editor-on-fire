@@ -113,6 +113,37 @@ EOF_SONG * eof_create_song(void)
 
 void eof_destroy_song(EOF_SONG * sp)
 {
+	unsigned long ctr;
+
+	if(sp == NULL)
+		return;
+
+	for(ctr=1; ctr <= sp->tracks; ctr++)
+	{	//If sp->tracks is nonzero, there are (tracks+1) number of entries in the track array
+		free(sp->track[ctr]);
+	}
+
+	for(ctr=0; ctr < sp->legacy_tracks; ctr++)
+	{	//For each entry in the legacy track array
+		free(sp->legacy_track[ctr]);
+	}
+
+	for(ctr=0; ctr < sp->vocal_tracks; ctr++)
+	{	//For each entry in the vocal track array
+		free(sp->vocal_track[ctr]);
+	}
+
+	for(ctr=0; ctr < sp->beats; ctr++)
+	{	//For each entry in the beat array
+		free(sp->beat[ctr]);
+	}
+
+	for(ctr=0; ctr < sp->text_events; ctr++)
+	{	//For each entry in the text event array
+		free(sp->text_event[ctr]);
+	}
+
+	free(sp->catalog);
 	free(sp);
 }
 
@@ -2198,4 +2229,28 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 
 	pack_fclose(fp);
 	return 1;	//Return success
+}
+
+EOF_SONG * eof_create_song_populated(unsigned long legacy,unsigned long vocal)
+{
+	EOF_SONG * sp = NULL;
+	unsigned long ctr;
+
+	/* create empty song */
+	sp = eof_create_song();
+	if(sp != NULL)
+	{
+		for(ctr = 0; ctr < legacy; ctr++)
+		{	//Add legacy tracks
+			if(eof_song_add_track(sp, EOF_LEGACY_TRACK_FORMAT) == 0)
+				return NULL;
+		}
+		for(ctr = 0; ctr < vocal; ctr++)
+		{	//Add vocal tracks
+			if(eof_song_add_track(sp, EOF_VOCAL_TRACK_FORMAT) == 0)
+				return NULL;
+		}
+	}
+
+	return sp;
 }

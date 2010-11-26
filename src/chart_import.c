@@ -122,7 +122,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		eof_music_actual_length = eof_music_length;
 
 		/* create empty song */
-		sp = eof_create_song();
+		sp = eof_create_song_populated(5,1);	//Create a new chart with 5 legacy tracks and 1 vocal track
 		if(!sp)
 		{
 			DestroyFeedbackChart(chart, 1);
