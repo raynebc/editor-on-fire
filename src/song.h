@@ -276,6 +276,9 @@ typedef struct
 
 #define EOF_TRACKS_MAX	(EOF_LEGACY_TRACKS_MAX + EOF_VOCAL_TRACKS_MAX)
 
+extern EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 1];
+	//This stores the details for the default tracks, allowing them to be easily added
+
 typedef struct
 {
 
@@ -400,12 +403,13 @@ int eof_save_song_string_pf(char *const buffer, PACKFILE *fp);
 	//The length of the string written is in bytes, not chars, so Unicode strings could be supported
 	//Nonzero is returned on error
 
-int eof_song_add_track(EOF_SONG * sp, int track_format);
-	//Adds a new track of the specified format.  Returns zero on error
+int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails);
+	//Adds a new track using the specified details.  The tracknum field of the track entry structure is ignored
+	//Returns zero on error
 int eof_song_delete_track(EOF_SONG * sp, unsigned long track);
 	//Deletes the specified track from the main track array and the appropriate track type array, but only if the track contains no notes.  Returns zero on error
-EOF_SONG * eof_create_song_populated(unsigned long legacy,unsigned long vocal);
-	//Allocates, initializes and returns an EOF_SONG structure pre-populated with the specified number of legacy and vocal tracks
+EOF_SONG * eof_create_song_populated(void);
+	//Allocates, initializes and returns an EOF_SONG structure pre-populated with the default legacy and vocal tracks
 
 #define EOF_SOLO_SECTION				1
 #define EOF_SP_SECTION					2

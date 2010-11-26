@@ -285,7 +285,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 		}
 	}
 
-	sp = eof_create_song_populated(5,1);	//Create a new chart with 5 legacy tracks and 1 vocal track
+	sp = eof_create_song_populated();	//Create a new chart with 5 legacy tracks and 1 vocal track
 	if(!sp)
 	{
 		destroy_midi(eof_work_midi);

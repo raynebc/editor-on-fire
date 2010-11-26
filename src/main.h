@@ -172,7 +172,6 @@ extern EOF_WINDOW * eof_window_note;
 extern EOF_WINDOW * eof_window_3d;
 
 extern char        eof_last_frettist[256];
-extern char      * eof_track_name[EOF_TRACKS_MAX + 1];
 extern int         eof_zoom;
 extern int         eof_zoom_3d;
 extern char        eof_changes;
