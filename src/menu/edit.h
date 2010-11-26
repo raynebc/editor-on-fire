@@ -97,7 +97,7 @@ int eof_menu_edit_paste_from_amazing(void);
 int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty);	//Copies instrument notes from the specified difficulty into the currently selected difficulty
 int eof_menu_edit_paste_from_catalog(void);
 
-void eof_sanitize_note_flags(char *flags,int desttrack,int srctrack);
+void eof_sanitize_note_flags(unsigned short *flags,int desttrack,int srctrack);
 	//Clears all flag bits that are invalid for notes pasted into the specified track number, given the source track of the copied notes
 
 #endif

@@ -22,12 +22,12 @@
 #define EOF_NOTE_FLAG_HOPO       1
 #define EOF_NOTE_FLAG_SP         2
 #define EOF_NOTE_FLAG_CRAZY      4	//This flag will represent overlap allowed for guitar tracks
-#define EOF_NOTE_FLAG_DBASS      4	//This flag will represent Expert+ bass drum for the drum track
 #define EOF_NOTE_FLAG_F_HOPO     8
 #define EOF_NOTE_FLAG_NO_HOPO   16
 #define EOF_NOTE_FLAG_Y_CYMBAL  32	//This flag represents a yellow note charted as a RB3 Pro style cymbal
 #define EOF_NOTE_FLAG_B_CYMBAL  64	//This flag represents a blue note charted as a RB3 Pro style cymbal
 #define EOF_NOTE_FLAG_G_CYMBAL 128	//This flag represents a note charted as a RB3 Pro style green cymbal (pad 4)
+#define EOF_NOTE_FLAG_DBASS    256	//This flag will represent Expert+ bass drum for the drum track
 
 #define EOF_MAX_BEATS   32768
 #define EOF_MAX_SOLOS      32
@@ -51,46 +51,50 @@
 
 #define EOF_MAX_GRID_SNAP_INTERVALS 64
 
+#define EOF_NOTE_NAME_LENGTH 31
 typedef struct
 {
 
+    char name[EOF_NOTE_NAME_LENGTH];
 	char          type;			//Stores the note's difficulty
-	char          note;			//Stores the note's fret values
+	unsigned char note;			//Stores the note's fret values
 	unsigned long midi_pos;
-	long          midi_length;
+	unsigned long midi_length;
 	unsigned long pos;
-	long          length;
-	char          flags;		//Stores various note statuses
+	unsigned long length;
+	unsigned short flags;		//Stores various note statuses
 
 } EOF_NOTE;
 
 typedef struct
 {
 
+	char name[EOF_NOTE_NAME_LENGTH];
 	char          type;
-	char          note;
-	short         endbeat;
-	short         beat;       // which beat this note was copied from
+	unsigned char note;
+	unsigned long endbeat;
+	unsigned long beat;       // which beat this note was copied from
 	unsigned long pos;
-	long          length;
+	unsigned long length;
 	unsigned long midi_pos;
-	long          midi_length;
+	unsigned long midi_length;
 	float         porpos;     // position of note within the beat (100.0 = full beat)
 	float         porendpos;
 	char          active;
-	char          flags;
+	unsigned short flags;
 
 } EOF_EXTENDED_NOTE;
 
 typedef struct
 {
 
-	char          note;		// if zero, the lyric has no defined pitch
+	unsigned char note;		// if zero, the lyric has no defined pitch
 	char          text[EOF_MAX_LYRIC_LENGTH+1];
 	unsigned long midi_pos;
-	long          midi_length;
+	unsigned long midi_length;
 	unsigned long pos;
-	long          length;
+	unsigned long length;
+	unsigned short flags;
 
 } EOF_LYRIC;
 
@@ -142,9 +146,21 @@ typedef struct
 
 } EOF_STAR_POWER_ENTRY;
 
+#define EOF_TRACK_NAME_SIZE		31
+typedef struct
+{
+	char track_format;						//Specifies which track format this is, using one of the macros above
+	unsigned long tracknum;					//Specifies which number of that type this track is, used as an index into the type-specific track arrays
+	char track_behavior;					//Specifies which behavior this track follows, using one of the macros above
+	char track_type;						//Specifies which type of track this is (ie default PART GUITAR, custom track, etc)
+	char track_name[EOF_TRACK_NAME_SIZE];	//Specifies the name of the track
+} EOF_TRACK_ENTRY;
+
 #define EOF_LEGACY_TRACKS_MAX		5
 typedef struct
 {
+	unsigned char numlanes;		//The number of lanes, keys, etc. in this track
+	EOF_TRACK_ENTRY * parent;	//Allows an easy means to look up the global track using a legacy track pointer
 
 	EOF_NOTE * note[EOF_MAX_NOTES];
 	unsigned long notes;
@@ -162,6 +178,8 @@ typedef struct
 #define EOF_VOCAL_TRACKS_MAX		1
 typedef struct
 {
+	unsigned char toneset;		//The tone cue set assigned for playback of this track
+	EOF_TRACK_ENTRY * parent;	//Allows an easy means to look up the global track using a vocal track pointer
 
 	EOF_LYRIC * lyric[EOF_MAX_LYRICS];
 	unsigned long lyrics;
@@ -263,16 +281,6 @@ typedef struct
 #define EOF_TRACK_RHYTHM      4
 #define EOF_TRACK_DRUM        5
 #define EOF_TRACK_VOCALS      6
-
-#define EOF_TRACK_NAME_SIZE		31
-typedef struct
-{
-	char track_format;						//Specifies which track format this is, using one of the macros above
-	unsigned long tracknum;					//Specifies which number of that type this track is, used as an index into the type-specific track arrays
-	char track_behavior;					//Specifies which behavior this track follows, using one of the macros above
-	char track_type;						//Specifies which type of track this is (ie default PART GUITAR, custom track, etc)
-	char track_name[EOF_TRACK_NAME_SIZE];	//Specifies the name of the track
-} EOF_TRACK_ENTRY;
 
 #define EOF_TRACKS_MAX	(EOF_LEGACY_TRACKS_MAX + EOF_VOCAL_TRACKS_MAX)
 

@@ -215,11 +215,12 @@ void eof_prepare_song_menu(void)
 		/* track */
 		for(i = 0; i < EOF_TRACKS_MAX + 1; i++)
 		{
+			char *ptr = eof_track_selected_menu_text[i];	//Do this to work around false alarm warnings
 			eof_track_selected_menu[i].flags = 0;
-			if(i + 1 < eof_song->tracks)
+			if((i + 1 < eof_song->tracks) && (eof_song->track[i] != NULL))
 			{	//If the track exists, copy its name into the string used by the track menu
-				eof_track_selected_menu_text[i][0] = ' ';	//Add a leading space
-				ustrncpy(&(eof_track_selected_menu_text[i][1]),eof_song->track[i+1]->track_name,EOF_TRACK_NAME_SIZE-1);
+				ptr[0] = ' ';	//Add a leading space
+				ustrncpy(&(ptr[1]),eof_song->track[i]->track_name,EOF_TRACK_NAME_SIZE-1);
 					//Append the track name to the menu string, starting at index 1
 			}
 			else

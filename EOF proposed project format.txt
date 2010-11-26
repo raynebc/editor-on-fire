@@ -143,9 +143,9 @@ TRACK CHUNK, for each track:
 		1 byte:		Note bitflag (on/off statuses)
 		4 bytes:	Note position (in milliseconds or delta ticks)
 		4 bytes:	Note length (in milliseconds or delta ticks)
-*		2 bytes:	Note flags (allow for more flags.  When this is implemented, ensure that Expert+ bass gets its own status flag again)
+*		2 bytes:	Note flags
 	}
-!This track format could be referred to as "legacy" format, because it is the only format used prior to RB3
+!This track format could be referred to as "legacy" format, because it is Harmonix's discontinued format used prior to RB3
 
 [VOCAL TRACK FORMAT]
 *	1 byte:		Tone set number assigned to this track (ie. 0=Grand Piano, 1=MIDI device, ...)
@@ -154,7 +154,7 @@ TRACK CHUNK, for each track:
 	{
 *		2 bytes:	Lyric text string length
 *		[varies:]	Lyric text string
-*		1 byte:		Lyric set number (1=PART VOCALS, 2=PART HARM1, 3=PART HARM2...)
+*		1 byte:		Lyric set number (1=PART VOCALS, 2=HARM1, 3=HARM2...)
 		1 byte:		Note pitch
 		4 bytes:	Lyric position (in milliseconds or delta ticks)
 		4 bytes:	Lyric position (in milliseconds or delta ticks)

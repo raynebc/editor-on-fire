@@ -327,7 +327,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	unsigned long track_length;
 	int midi_note_offset = 0;
 	int vel=0x64;	//Velocity
-	unsigned long tracknum;					//Used to de-obfuscate the track number
+	unsigned long tracknum=0;				//Used to de-obfuscate the track number
 
 	unsigned long ppqn=0;					//Used to store conversion of BPM to ppqn
 	struct Tempo_change *anchorlist=NULL;	//Linked list containing tempo changes
@@ -521,7 +521,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					{
 						if((j == EOF_TRACK_DRUM) && (sp->legacy_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_DBASS))	//If the track being written is PART DRUMS, and this note is marked for Expert+ double bass
 							eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos + length, 0x80, 95);
-					else	//Otherwise end a normal green gem
+						else	//Otherwise end a normal green gem
 							eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos + length, 0x80, midi_note_offset + 0);
 					}
 
