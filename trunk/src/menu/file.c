@@ -1881,7 +1881,7 @@ int eof_new_chart(char * filename)
 	eof_destroy_ogg();
 
 	/* create new song */
-	eof_song = eof_create_song_populated(5,1);	//Create a new chart with 5 legacy tracks and 1 vocal track
+	eof_song = eof_create_song_populated();	//Create a new chart with 5 legacy tracks and 1 vocal track
 	if(!eof_song)
 	{
 		allegro_message("Error creating new song!");
@@ -1889,11 +1889,6 @@ int eof_new_chart(char * filename)
 		eof_pen_visible = 1;
 		eof_show_mouse(NULL);
 		return 1;	//Return failure
-	}
-
-	for(ctr = 1; ctr <= EOF_TRACKS_MAX; ctr++)
-	{	//Copy the default track names into the track[] array
-		ustrcpy(eof_song->track[ctr]->track_name, eof_track_name[ctr]);
 	}
 
 	/* fill in information */

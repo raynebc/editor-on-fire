@@ -39,7 +39,6 @@
 #include "waveform.h"
 #include "silence.h"
 
-char      * eof_track_name[EOF_TRACKS_MAX + 1] = {"", "PART GUITAR", "PART BASS", "PART GUITAR COOP", "PART RHYTHM", "PART DRUMS", "PART VOCALS"};
 char        eof_note_type_name[5][32] = {" Supaeasy", " Easy", " Medium", " Amazing", " BRE"};
 char        eof_vocal_tab_name[5][32] = {" Lyrics", " ", " ", " ", " "};
 char      * eof_snap_name[9] = {"Off", "1/4", "1/8", "1/12", "1/16", "1/24", "1/32", "1/48", "Custom"};
@@ -743,7 +742,7 @@ void eof_fix_window_title(void)
 		}
 		else
 		{
-			ustrcat(eof_window_title, eof_track_name[eof_selected_track]);
+			ustrcat(eof_window_title, eof_song->track[eof_selected_track]->track_name);
 		}
 		ustrcat(eof_window_title, ")");
 	}

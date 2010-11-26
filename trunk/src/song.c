@@ -5,6 +5,17 @@
 #include "song.h"
 #include "legacy.h"
 
+EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 1] =
+{
+	{0},
+	{EOF_LEGACY_TRACK_FORMAT, 0, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_GUITAR, "PART GUITAR"},
+	{EOF_LEGACY_TRACK_FORMAT, 0, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_BASS, "PART BASS"},
+	{EOF_LEGACY_TRACK_FORMAT, 0, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_GUITAR_COOP, "PART GUITAR COOP"},
+	{EOF_LEGACY_TRACK_FORMAT, 0, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_RHYTHM, "PART RHYTHM"},
+	{EOF_LEGACY_TRACK_FORMAT, 0, EOF_DRUM_TRACK_BEHAVIOR, EOF_TRACK_DRUM, "PART DRUMS"},
+	{EOF_VOCAL_TRACK_FORMAT, 0, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, "PART VOCALS"}
+};
+
 /* sort all notes according to position */
 int eof_song_qsort_notes(const void * e1, const void * e2)
 {
@@ -118,8 +129,8 @@ void eof_destroy_song(EOF_SONG * sp)
 	if(sp == NULL)
 		return;
 
-	for(ctr=1; ctr <= sp->tracks; ctr++)
-	{	//If sp->tracks is nonzero, there are (tracks+1) number of entries in the track array
+	for(ctr=0; ctr < sp->tracks; ctr++)
+	{
 		free(sp->track[ctr]);
 	}
 
@@ -1385,14 +1396,14 @@ int eof_load_song_string_pf(char *const buffer, PACKFILE *fp, const unsigned lon
 	return 0;	//Return success
 }
 
-int eof_song_add_track(EOF_SONG * sp, int track_format)
+int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 {
 	EOF_LEGACY_TRACK *ptr = NULL;
 	EOF_VOCAL_TRACK *ptr2 = NULL;
 	EOF_TRACK_ENTRY *ptr3 = NULL;
 	unsigned long count=0;
 
-	if(sp == NULL)
+	if((sp == NULL) || (trackdetails == NULL))
 		return 0;	//Return error
 
 	if(sp->tracks <= EOF_TRACKS_MAX)
@@ -1402,7 +1413,7 @@ int eof_song_add_track(EOF_SONG * sp, int track_format)
 			return 0;	//Return error
 
 		//Insert new track structure in the appropriate track type array
-		switch(track_format)
+		switch(trackdetails->track_format)
 		{
 			case EOF_LEGACY_TRACK_FORMAT:
 				count = sp->legacy_tracks;
@@ -1436,11 +1447,12 @@ int eof_song_add_track(EOF_SONG * sp, int track_format)
 			return 0;	//Return error
 		}
 
-		//Insert new track structure in the main track array
+		//Insert new track structure in the main track array and copy details
 		ptr3->tracknum = count;
-		ptr3->track_format = track_format;
-		ptr3->track_behavior = ptr3->track_type = 0;	//Initialize these to 0
-		ptr3->track_name[0] = '\0';
+		ptr3->track_format = trackdetails->track_format;
+		ptr3->track_behavior = trackdetails->track_behavior;
+		ptr3->track_type = trackdetails->track_type;
+		ustrcpy(ptr3->track_name,trackdetails->track_name);
 		if(sp->tracks == 0)
 		{	//If this is the first track being added, ensure that sp->track[0] is inserted
 			sp->track[0] = NULL;
@@ -1512,6 +1524,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	unsigned long section_type_count,section_type_ctr,section_type,section_count,section_ctr,section_start,section_end;
 	unsigned long custom_data_count,custom_data_ctr,custom_data_size;
 	char track_name[EOF_TRACK_NAME_SIZE]={0};
+	EOF_TRACK_ENTRY temp={0};
 
 	#define EOFNUMINISTRINGTYPES 12
 	char *const inistringbuffer[EOFNUMINISTRINGTYPES]={NULL,NULL,sp->tags->artist,sp->tags->title,sp->tags->frettist,NULL,sp->tags->year,sp->tags->loading_text,NULL,NULL,NULL,NULL};
@@ -1645,15 +1658,19 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		pack_igetl(fp);					//Read the track flags (not supported yet)
 		pack_igetw(fp);					//Read the track compliance flags (not supported yet)
 
+		//Build the EOF_TRACK structure
+		temp.track_format=track_format;
+		temp.tracknum=0;	//Ignored
+		temp.track_behavior=track_behavior;
+		temp.track_type=track_type;
+		ustrcpy(temp.track_name,track_name);
+		if(eof_song_add_track(sp, &temp) == 0)	//Add the track
+			return 0;	//Return error upon failure
 		switch(track_format)
 		{	//Perform the appropriate logic to load this format of track
 			case 0:	//The global track only has section data
 			break;
 			case EOF_LEGACY_TRACK_FORMAT:	//Legacy (non pro guitar, non pro bass, non pro keys, pro or non pro drums)
-				if(eof_song_add_track(sp, EOF_LEGACY_TRACK_FORMAT) == 0)	//Add a new legacy track
-					return 0;	//Return error upon failure
-				sp->track[sp->tracks-1]->track_behavior = track_behavior;
-				sp->track[sp->tracks-1]->track_type = track_type;
 				pack_getc(fp);			//Read the number of lanes/keys/etc. used in this track (not supported yet)
 				count = pack_igetl(fp);	//Read the number of notes in this track
 				if(count > EOF_MAX_NOTES)
@@ -1673,10 +1690,6 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				}
 			break;
 			case EOF_VOCAL_TRACK_FORMAT:	//Vocal
-				if(eof_song_add_track(sp, EOF_VOCAL_TRACK_FORMAT) == 0)	//Add a new vocal track
-					return 0;	//Return error upon failure
-				sp->track[sp->tracks-1]->track_behavior = track_behavior;
-				sp->track[sp->tracks-1]->track_type = track_type;
 				pack_getc(fp);	//Read the tone set number assigned to this track (not supported yet)
 				count = pack_igetl(fp);	//Read the number of notes in this track
 				if(count > EOF_MAX_LYRICS)
@@ -2231,7 +2244,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	return 1;	//Return success
 }
 
-EOF_SONG * eof_create_song_populated(unsigned long legacy,unsigned long vocal)
+EOF_SONG * eof_create_song_populated(void)
 {
 	EOF_SONG * sp = NULL;
 	unsigned long ctr;
@@ -2240,14 +2253,9 @@ EOF_SONG * eof_create_song_populated(unsigned long legacy,unsigned long vocal)
 	sp = eof_create_song();
 	if(sp != NULL)
 	{
-		for(ctr = 0; ctr < legacy; ctr++)
-		{	//Add legacy tracks
-			if(eof_song_add_track(sp, EOF_LEGACY_TRACK_FORMAT) == 0)
-				return NULL;
-		}
-		for(ctr = 0; ctr < vocal; ctr++)
-		{	//Add vocal tracks
-			if(eof_song_add_track(sp, EOF_VOCAL_TRACK_FORMAT) == 0)
+		for(ctr = 1; ctr < EOF_TRACKS_MAX + 1; ctr++)
+		{	//For each track in the eof_default_tracks[] array
+			if(eof_song_add_track(sp,&eof_default_tracks[ctr]) == 0)
 				return NULL;
 		}
 	}
