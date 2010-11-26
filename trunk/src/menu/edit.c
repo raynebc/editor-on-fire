@@ -2500,21 +2500,20 @@ int eof_menu_edit_select_previous(void)
 	return 1;
 }
 
-void eof_sanitize_note_flags(char *flags,int desttrack,int srctrack)
+void eof_sanitize_note_flags(unsigned short *flags,int desttrack,int srctrack)
 {
 	if(flags == NULL)
 		return;
 
 	switch(desttrack)
 	{
-/*	//Since EOF_NOTE_FLAG_DBASS and EOF_NOTE_FLAG_CRAZY now share the same status bit, comment this out until Expert+ is tracked on its own flag bit again
 		case EOF_TRACK_GUITAR:		//All guitar based tracks must not have the double bass flag set
 		case EOF_TRACK_BASS:
 		case EOF_TRACK_GUITAR_COOP:
 		case EOF_TRACK_RHYTHM:
 			*flags &= (~EOF_NOTE_FLAG_DBASS);	//Erase the double bass flag
-			break;
-*/
+		break;
+
 		case EOF_TRACK_DRUM:	//The drum track must not have any HOPO or extended sustain flags set
 			*flags &= (~EOF_NOTE_FLAG_HOPO);	//Erase the temporary HOPO flag
 			*flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Erase the forced HOPO ON flag
@@ -2524,10 +2523,10 @@ void eof_sanitize_note_flags(char *flags,int desttrack,int srctrack)
 			{	//If the pasted notes are not from the drum track, erase the shared crazy status (Expert+ bass drum)
 				*flags &= (~EOF_NOTE_FLAG_CRAZY);	//Erase the "crazy" note flag
 			}
-			break;
+		break;
 
 		default:	//Other tracks aren't accounted for yet
 			*flags = 0;	//Clear all flags just to be safe
-			break;
+		break;
 	}
 }

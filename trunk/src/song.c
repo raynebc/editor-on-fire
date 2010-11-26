@@ -634,8 +634,8 @@ void eof_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 	}
 
 //Cleanup for pro drum notation
-	if(eof_song && (eof_song->legacy_track[EOF_TRACK_DRUM] == tp))
-	{	//If the track being cleaned is PART DRUMS
+	if(eof_song && (tp->parent->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
+	{	//If the track being cleaned is a drum track
 		for(i = 0; i < tp->notes; i++)
 		{	//For each note in the drum track
 			if(eof_check_flags_at_note_pos(tp,i,EOF_NOTE_FLAG_G_CYMBAL))
@@ -1423,6 +1423,8 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 				ptr->notes = 0;
 				ptr->solos = 0;
 				ptr->star_power_paths = 0;
+				ptr->numlanes = 5;	//By default, all legacy tracks will be 5 lanes
+				ptr->parent = ptr3;
 				sp->legacy_track[sp->legacy_tracks] = ptr;
 				sp->legacy_tracks++;
 			break;
@@ -1434,6 +1436,7 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 				ptr2->lyrics = 0;
 				ptr2->lines = 0;
 				ptr2->star_power_paths = 0;
+				ptr2->parent = ptr3;
 				sp->vocal_track[sp->vocal_tracks] = ptr2;
 				sp->vocal_tracks++;
 			break;
@@ -1678,7 +1681,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				eof_legacy_track_resize(sp->legacy_track[sp->legacy_tracks-1],count);	//Resize the note array
 				for(ctr=0; ctr<count; ctr++)
 				{	//For each note in this track
-					eof_load_song_string_pf(NULL,fp,0);		//Parse past the note name (not supported yet)
+					eof_load_song_string_pf(sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->name,fp,EOF_NOTE_NAME_LENGTH);	//Read the note's name
 					sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->type = pack_getc(fp);		//Read the note's difficulty
 					sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->note = pack_getc(fp);		//Read note bitflags
 					sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->pos = pack_igetl(fp);		//Read note position
@@ -1697,7 +1700,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				eof_vocal_track_resize(sp->vocal_track[sp->vocal_tracks-1],count);	//Resize the lyrics array
 				for(ctr=0; ctr<count; ctr++)
 				{	//For each lyric in this track
-					eof_load_song_string_pf(sp->vocal_track[sp->vocal_tracks-1]->lyric[ctr]->text,fp,EOF_MAX_LYRIC_LENGTH);
+					eof_load_song_string_pf(sp->vocal_track[sp->vocal_tracks-1]->lyric[ctr]->text,fp,EOF_MAX_LYRIC_LENGTH);	//Read the lyric text
 					pack_getc(fp);	//Read lyric set number (not supported yet)
 					sp->vocal_track[sp->vocal_tracks-1]->lyric[ctr]->note = pack_getc(fp);		//Read lyric pitch
 					sp->vocal_track[sp->vocal_tracks-1]->lyric[ctr]->pos = pack_igetl(fp);		//Read lyric position
@@ -2115,11 +2118,11 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			switch(sp->track[track_ctr]->track_format)
 			{	//Perform the appropriate logic to write this format of track
 				case EOF_LEGACY_TRACK_FORMAT:	//Legacy (non pro guitar, non pro bass, non pro keys, pro or non pro drums)
-					pack_putc(5, fp);	//Write the number of lanes/keys/etc. used in this track (not supported yet)
-					pack_iputl(sp->legacy_track[tracknum]->notes, fp);	//Write the number of notes in this track
+					pack_putc(sp->legacy_track[tracknum]->numlanes, fp);	//Write the number of lanes/keys/etc. used in this track
+					pack_iputl(sp->legacy_track[tracknum]->notes, fp);		//Write the number of notes in this track
 					for(ctr=0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
 					{	//For each note in this track
-						eof_save_song_string_pf(NULL, fp);	//Write an empty note name string (not supported yet)
+						eof_save_song_string_pf(sp->legacy_track[tracknum]->note[ctr]->name, fp);	//Write the note's name
 						pack_putc(sp->legacy_track[tracknum]->note[ctr]->type, fp);		//Write the note's difficulty
 						pack_putc(sp->legacy_track[tracknum]->note[ctr]->note, fp);		//Write the note's bitflags
 						pack_iputl(sp->legacy_track[tracknum]->note[ctr]->pos, fp);		//Write the note's position
