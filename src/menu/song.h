@@ -54,12 +54,12 @@ int eof_set_cue_volume(void *dp3, int d2);
 	//d2 is the value that was set by the slider
 	//returns nonzero on error
 
-int eof_menu_track_selected_guitar(void);
-int eof_menu_track_selected_bass(void);
-int eof_menu_track_selected_guitar_coop(void);
-int eof_menu_track_selected_rhythm(void);
-int eof_menu_track_selected_drum(void);
-int eof_menu_track_selected_vocals(void);
+int eof_menu_track_selected_1(void);
+int eof_menu_track_selected_2(void);
+int eof_menu_track_selected_3(void);
+int eof_menu_track_selected_4(void);
+int eof_menu_track_selected_5(void);
+int eof_menu_track_selected_6(void);
 int eof_menu_track_selected_track_number(int tracknum);	//Changes to the specified track number
 
 int eof_menu_song_waveform_settings(void);
