@@ -1520,10 +1520,9 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 {
 	unsigned char inputc;
 	unsigned long inputl,count,ctr;
-	unsigned long track_count,track_ctr,track_format,track_behavior,track_type;
+	unsigned long track_count,track_ctr;
 	unsigned long section_type_count,section_type_ctr,section_type,section_count,section_ctr,section_start,section_end;
 	unsigned long custom_data_count,custom_data_ctr,custom_data_size;
-	char track_name[EOF_TRACK_NAME_SIZE]={0};
 	EOF_TRACK_ENTRY temp={0};
 
 	#define EOFNUMINISTRINGTYPES 12
@@ -1650,23 +1649,21 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	track_count = pack_igetl(fp);		//Read the number of tracks
 	for(track_ctr=0; track_ctr<track_count; track_ctr++)
 	{	//For each track in the project
-		eof_load_song_string_pf(track_name,fp,sizeof(track_name));	//Read the track name
-		track_format = pack_getc(fp);	//Read the track format
-		track_behavior = pack_getc(fp);	//Read the track behavior
-		track_type = pack_getc(fp);		//Read the track type
+		eof_load_song_string_pf(temp.track_name,fp,sizeof(temp.track_name));	//Read the track name
+		temp.track_format = pack_getc(fp);		//Read the track format
+		temp.track_behavior = pack_getc(fp);	//Read the track behavior
+		temp.track_type = pack_getc(fp);		//Read the track type
 		pack_getc(fp);					//Read the track difficulty level (not supported yet)
 		pack_igetl(fp);					//Read the track flags (not supported yet)
 		pack_igetw(fp);					//Read the track compliance flags (not supported yet)
-
-		//Build the EOF_TRACK structure
-		temp.track_format=track_format;
 		temp.tracknum=0;	//Ignored
-		temp.track_behavior=track_behavior;
-		temp.track_type=track_type;
-		ustrcpy(temp.track_name,track_name);
-		if(eof_song_add_track(sp, &temp) == 0)	//Add the track
-			return 0;	//Return error upon failure
-		switch(track_format)
+
+		if(track_ctr != 0)
+		{	//Add track to project
+			if(eof_song_add_track(sp, &temp) == 0)	//Add the track
+				return 0;	//Return error upon failure
+		}
+		switch(temp.track_format)
 		{	//Perform the appropriate logic to load this format of track
 			case 0:	//The global track only has section data
 			break;
@@ -1720,11 +1717,6 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 			default://Unknown track type
 				allegro_message("Error: Unsupported track type.  Aborting");
 			return 0;
-		}
-
-		if(sp->track[sp->tracks-1] != NULL)
-		{	//Ignore the track name for NULL tracks such as track 0
-			ustrcpy(sp->track[sp->tracks-1]->track_name,track_name);	//Save the track name
 		}
 
 		section_type_count = pack_igetw(fp);	//Read the number of types of sections defined for this track

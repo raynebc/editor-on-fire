@@ -15,7 +15,8 @@
 #include "../silence.h"
 #include "song.h"
 
-char eof_track_selected_menu_text[6][32] = {" PART &GUITAR", " PART &BASS", " PART GUITAR &COOP", " PART &RHYTHM", " PART &DRUMS", " PART &VOCALS"};
+char eof_track_selected_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE+1] = {{0}};
+	//Allow an extra leading space due to the checkmark erasing the first character in each string
 
 MENU eof_song_seek_bookmark_menu[] =
 {
@@ -215,6 +216,16 @@ void eof_prepare_song_menu(void)
 		for(i = 0; i < EOF_TRACKS_MAX + 1; i++)
 		{
 			eof_track_selected_menu[i].flags = 0;
+			if(i + 1 < eof_song->tracks)
+			{	//If the track exists, copy its name into the string used by the track menu
+				eof_track_selected_menu_text[i][0] = ' ';	//Add a leading space
+				ustrncpy(&(eof_track_selected_menu_text[i][1]),eof_song->track[i+1]->track_name,EOF_TRACK_NAME_SIZE-1);
+					//Append the track name to the menu string, starting at index 1
+			}
+			else
+			{	//Write a blank string for the track name
+				ustrcpy(eof_track_selected_menu_text[i],"");
+			}
 		}
 		if(eof_vocals_selected)
 		{	//Track numbering begins at 1 instead of 0
