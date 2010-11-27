@@ -15,7 +15,7 @@ EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 1] =
 	{EOF_LEGACY_TRACK_FORMAT, 0, EOF_DRUM_TRACK_BEHAVIOR, EOF_TRACK_DRUM, "PART DRUMS"},
 	{EOF_VOCAL_TRACK_FORMAT, 0, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, "PART VOCALS"},
 	{EOF_LEGACY_TRACK_FORMAT, 0, EOF_KEYS_TRACK_BEHAVIOR, EOF_TRACK_KEYS, "PART KEYS"}
-};
+};	//These entries are indexed the same as the track type in the new EOF project format
 
 /* sort all notes according to position */
 int eof_song_qsort_notes(const void * e1, const void * e2)
@@ -562,7 +562,7 @@ void eof_track_find_crazy_notes(EOF_LEGACY_TRACK * tp)
 
 void eof_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 {
-	int i;
+	unsigned long i;
 	int next;
 
 	if(!sel)
@@ -573,54 +573,54 @@ void eof_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 		}
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
-	for(i = tp->notes - 1; i >= 0; i--)
+	for(i = tp->notes; i > 0; i--)
 	{
 
 		/* fix selections */
-		if((tp->note[i]->type == eof_note_type) && (tp->note[i]->pos == eof_selection.current_pos))
+		if((tp->note[i-1]->type == eof_note_type) && (tp->note[i-1]->pos == eof_selection.current_pos))
 		{
-			eof_selection.current = i;
+			eof_selection.current = i-1;
 		}
-		if((tp->note[i]->type == eof_note_type) && (tp->note[i]->pos == eof_selection.last_pos))
+		if((tp->note[i-1]->type == eof_note_type) && (tp->note[i-1]->pos == eof_selection.last_pos))
 		{
-			eof_selection.last = i;
+			eof_selection.last = i-1;
 		}
 
 		/* delete certain notes */
-		if((tp->note[i]->note == 0) || ((tp->note[i]->type < 0) || (tp->note[i]->type > 4)) || (tp->note[i]->pos < eof_song->tags->ogg[eof_selected_ogg].midi_offset) || (tp->note[i]->pos >= eof_music_length))
+		if((tp->note[i-1]->note == 0) || ((tp->note[i-1]->type < 0) || (tp->note[i-1]->type > 4)) || (tp->note[i-1]->pos < eof_song->tags->ogg[eof_selected_ogg].midi_offset) || (tp->note[i-1]->pos >= eof_music_length))
 		{
-			eof_track_delete_note(tp, i);
+			eof_track_delete_note(tp, i-1);
 		}
 
 		else
 		{
 			/* make sure there are no 0-length notes */
-			if(tp->note[i]->length <= 0)
+			if(tp->note[i-1]->length <= 0)
 			{
-				tp->note[i]->length = 1;
+				tp->note[i-1]->length = 1;
 			}
 
 			/* make sure note doesn't extend past end of song */
-			if(tp->note[i]->pos + tp->note[i]->length >= eof_music_length)
+			if(tp->note[i-1]->pos + tp->note[i-1]->length >= eof_music_length)
 			{
-				tp->note[i]->length = eof_music_length - tp->note[i]->pos;
+				tp->note[i-1]->length = eof_music_length - tp->note[i-1]->pos;
 			}
 
 			/* compare this note to the next one of the same type
 			   to make sure they don't overlap */
-			next = eof_fixup_next_note(tp, i);
+			next = eof_fixup_next_note(tp, i-1);
 			if(next >= 0)
 			{
-				if(tp->note[i]->pos == tp->note[next]->pos)
+				if(tp->note[i-1]->pos == tp->note[next]->pos)
 				{
-					tp->note[i]->note |= tp->note[next]->note;
+					tp->note[i-1]->note |= tp->note[next]->note;
 					eof_track_delete_note(tp, next);
 				}
-				else if(tp->note[i]->pos + tp->note[i]->length > tp->note[next]->pos - 1)
+				else if(tp->note[i-1]->pos + tp->note[i-1]->length > tp->note[next]->pos - 1)
 				{
-					if(!(tp->note[i]->flags & EOF_NOTE_FLAG_CRAZY) || (tp->note[i]->note & tp->note[next]->note))
+					if(!(tp->note[i-1]->flags & EOF_NOTE_FLAG_CRAZY) || (tp->note[i-1]->note & tp->note[next]->note))
 					{
-						tp->note[i]->length = tp->note[next]->pos - tp->note[i]->pos - 1;
+						tp->note[i-1]->length = tp->note[next]->pos - tp->note[i-1]->pos - 1;
 					}
 				}
 			}
@@ -778,7 +778,7 @@ int eof_fixup_next_lyric(EOF_VOCAL_TRACK * tp, int lyric)
 
 void eof_vocal_track_fixup_lyrics(EOF_VOCAL_TRACK * tp, int sel)
 {
-	int i, j;
+	unsigned long i, j;
 	int lc;
 	int next;
 
@@ -790,60 +790,60 @@ void eof_vocal_track_fixup_lyrics(EOF_VOCAL_TRACK * tp, int sel)
 		}
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
-	for(i = tp->lyrics - 1; i >= 0; i--)
+	for(i = tp->lyrics; i > 0; i--)
 	{
 
 		/* fix selections */
-		if(tp->lyric[i]->pos == eof_selection.current_pos)
+		if(tp->lyric[i-1]->pos == eof_selection.current_pos)
 		{
-			eof_selection.current = i;
+			eof_selection.current = i-1;
 		}
-		if(tp->lyric[i]->pos == eof_selection.last_pos)
+		if(tp->lyric[i-1]->pos == eof_selection.last_pos)
 		{
-			eof_selection.last = i;
+			eof_selection.last = i-1;
 		}
 
 		/* delete certain notes */
-		if((tp->lyric[i]->pos < eof_song->tags->ogg[eof_selected_ogg].midi_offset) || (tp->lyric[i]->pos >= eof_music_length))
+		if((tp->lyric[i-1]->pos < eof_song->tags->ogg[eof_selected_ogg].midi_offset) || (tp->lyric[i-1]->pos >= eof_music_length))
 		{
-			eof_vocal_track_delete_lyric(tp, i);
+			eof_vocal_track_delete_lyric(tp, i-1);
 		}
 
 		else
 		{
 
 			/* make sure there are no 0-length notes */
-			if(tp->lyric[i]->length <= 0)
+			if(tp->lyric[i-1]->length <= 0)
 			{
-				tp->lyric[i]->length = 1;
+				tp->lyric[i-1]->length = 1;
 			}
 
 			/* make sure note doesn't extend past end of song */
-			if(tp->lyric[i]->pos + tp->lyric[i]->length >= eof_music_length)
+			if(tp->lyric[i-1]->pos + tp->lyric[i-1]->length >= eof_music_length)
 			{
-				tp->lyric[i]->length = eof_music_length - tp->lyric[i]->pos;
+				tp->lyric[i-1]->length = eof_music_length - tp->lyric[i-1]->pos;
 			}
 
 			/* compare this note to the next one of the same type
 			   to make sure they don't overlap */
-			next = eof_fixup_next_lyric(tp, i);
+			next = eof_fixup_next_lyric(tp, i-1);
 			if(next >= 0)
 			{
-				if(tp->lyric[i]->pos == tp->lyric[next]->pos)
+				if(tp->lyric[i-1]->pos == tp->lyric[next]->pos)
 				{
 					eof_vocal_track_delete_lyric(tp, next);
 				}
-				else if(tp->lyric[i]->pos + tp->lyric[i]->length >= tp->lyric[next]->pos - 1)
+				else if(tp->lyric[i-1]->pos + tp->lyric[i-1]->length >= tp->lyric[next]->pos - 1)
 				{	//If this lyric does not end at least 1ms before the next lyric starts
-					tp->lyric[i]->length = tp->lyric[next]->pos - tp->lyric[i]->pos - 1 - 1;	//Subtract one more to ensure padding
-					if(tp->lyric[i]->length <= 0)
-						tp->lyric[i]->length = 1;	//Ensure that this doesn't cause the length to be invalid
+					tp->lyric[i-1]->length = tp->lyric[next]->pos - tp->lyric[i-1]->pos - 1 - 1;	//Subtract one more to ensure padding
+					if(tp->lyric[i-1]->length <= 0)
+						tp->lyric[i-1]->length = 1;	//Ensure that this doesn't cause the length to be invalid
 				}
 			}
 		}
 
 		/* validate lyric text, ie. freestyle marker */
-		eof_fix_lyric(tp,i);
+		eof_fix_lyric(tp,i-1);
 	}
 
 	/* make sure no lines overlap */
@@ -861,19 +861,19 @@ void eof_vocal_track_fixup_lyrics(EOF_VOCAL_TRACK * tp, int sel)
 		}
 	}
 	/* delete empty lines */
-	for(i = tp->lines - 1; i >= 0; i--)
+	for(i = tp->lines; i > 0; i--)
 	{
 		lc = 0;
 		for(j = 0; j < tp->lyrics; j++)
 		{
-			if((tp->lyric[j]->pos >= tp->line[i].start_pos) && (tp->lyric[j]->pos <= tp->line[i].end_pos))
+			if((tp->lyric[j]->pos >= tp->line[i-1].start_pos) && (tp->lyric[j]->pos <= tp->line[i-1].end_pos))
 			{
 				lc++;
 			}
 		}
 		if(lc <= 0)
 		{
-			eof_vocal_track_delete_line(tp, i);
+			eof_vocal_track_delete_line(tp, i-1);
 		}
 	}
 	if(!sel)
@@ -1776,7 +1776,7 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 {
 	unsigned long count,tracknum;	//Used to de-obfuscate the track handling
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || ((track != 0) && (track >= sp->tracks)))
 		return 0;	//Return error
 
 	if(track == 0)
@@ -1794,6 +1794,7 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 				sp->catalog->entry[sp->catalog->entries].type = difficulty;	//Store the fret catalog section's associated difficulty
 				sp->catalog->entry[sp->catalog->entries].start_pos = start;
 				sp->catalog->entry[sp->catalog->entries].end_pos = end;
+				sp->catalog->entries++;
 			return 1;
 			default:	//Unknown global section type
 			return 0;	//Return error

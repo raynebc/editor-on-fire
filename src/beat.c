@@ -40,7 +40,7 @@ int eof_get_beat_length(EOF_SONG * sp, int beat)
 
 void eof_calculate_beats(EOF_SONG * sp)
 {
-	int i;
+	unsigned long i;
 	double curpos = 0.0;
 	double beat_length;
 	int cbeat = 0;
@@ -89,15 +89,15 @@ void eof_calculate_beats(EOF_SONG * sp)
 		sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos +0.5;	//Round up
 		curpos += beat_length;
 	}
-	for(i = sp->beats - 1; i >= 0; i--)
+	for(i = sp->beats; i > 0; i--)
 	{
-		if(sp->beat[i]->pos <= (double)eof_music_length)
+		if(sp->beat[i-1]->pos <= (double)eof_music_length)
 		{
 			break;
 		}
 		else
 		{
-			eof_song_delete_beat(eof_song, i);
+			eof_song_delete_beat(eof_song, i-1);
 		}
 	}
 }

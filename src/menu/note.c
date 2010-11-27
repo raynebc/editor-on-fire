@@ -137,12 +137,13 @@ void eof_prepare_note_menu(void)
 	int llend = -1;
 	int llp = 0;
 	unsigned long i, j;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	unsigned long tracknum = 0;
 	int sel_start = eof_music_length, sel_end = 0;
 	int firstnote = 0, lastnote;
 
 	if(eof_song && eof_song_loaded)
 	{
+		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		if(eof_vocals_selected)
 		{	//PART VOCALS SELECTED
 			for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
@@ -683,12 +684,12 @@ int eof_menu_note_delete_vocal(void)
 	if(d)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-		for(i = eof_song->vocal_track[tracknum]->lyrics - 1; i >= 0; i--)
+		for(i = eof_song->vocal_track[tracknum]->lyrics; i > 0; i--)
 		{
-			if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
+			if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i-1])
 			{
-				eof_vocal_track_delete_lyric(eof_song->vocal_track[tracknum], i);
-				eof_selection.multi[i] = 0;
+				eof_vocal_track_delete_lyric(eof_song->vocal_track[tracknum], i-1);
+				eof_selection.multi[i-1] = 0;
 			}
 		}
 		eof_selection.current = EOF_MAX_NOTES - 1;
@@ -718,12 +719,12 @@ int eof_menu_note_delete(void)
 	if(d)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-		for(i = eof_song->legacy_track[tracknum]->notes - 1; i >= 0; i--)
+		for(i = eof_song->legacy_track[tracknum]->notes; i > 0; i--)
 		{
-			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_selection.track == eof_selected_track && eof_song->legacy_track[tracknum]->note[i]->type == eof_note_type))
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i-1] && (eof_selection.track == eof_selected_track && eof_song->legacy_track[tracknum]->note[i-1]->type == eof_note_type))
 			{
-				eof_track_delete_note(eof_song->legacy_track[tracknum], i);
-				eof_selection.multi[i] = 0;
+				eof_track_delete_note(eof_song->legacy_track[tracknum], i-1);
+				eof_selection.multi[i-1] = 0;
 			}
 		}
 		eof_selection.current = EOF_MAX_NOTES - 1;
@@ -866,9 +867,10 @@ int eof_menu_note_toggle_crazy(void)
 	unsigned long i;
 	int u = 0;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	unsigned long track_behavior = eof_song->track[eof_selected_track]->track_behavior;
 
-	if((eof_selected_track == EOF_TRACK_DRUM) || eof_vocals_selected)
-		return 1;	//Do not allow this function to run when PART DRUMS or PART VOCALS is active
+	if((track_behavior == EOF_DRUM_TRACK_BEHAVIOR) || (track_behavior == EOF_VOCAL_TRACK_BEHAVIOR) || (track_behavior == EOF_KEYS_TRACK_BEHAVIOR))
+		return 1;	//Do not allow this function to run on any drum, vocal or keys track
 
 	for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
 	{
@@ -1465,12 +1467,12 @@ int eof_menu_lyric_line_mark(void)
 		}
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Create the undo state before removing/adding phrase(s)
-	for(j = eof_song->vocal_track[tracknum]->lines - 1; j >= 0; j--)
+	for(j = eof_song->vocal_track[tracknum]->lines; j > 0; j--)
 	{
-		if((sel_end >= eof_song->vocal_track[tracknum]->line[j].start_pos) && (sel_start <= eof_song->vocal_track[tracknum]->line[j].end_pos))
+		if((sel_end >= eof_song->vocal_track[tracknum]->line[j-1].start_pos) && (sel_start <= eof_song->vocal_track[tracknum]->line[j-1].end_pos))
 		{
-			originalflags=eof_song->vocal_track[tracknum]->line[j].flags;	//Save this line's flags before deleting it
-			eof_vocal_track_delete_line(eof_song->vocal_track[tracknum], j);
+			originalflags=eof_song->vocal_track[tracknum]->line[j-1].flags;	//Save this line's flags before deleting it
+			eof_vocal_track_delete_line(eof_song->vocal_track[tracknum], j-1);
 		}
 	}
 	eof_vocal_track_add_line(eof_song->vocal_track[tracknum], sel_start, sel_end);

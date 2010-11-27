@@ -260,7 +260,7 @@ typedef struct
 typedef struct
 {
 
-	char track;
+	unsigned long track;
 	char type;
 	int start_pos;
 	int end_pos;
