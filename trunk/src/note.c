@@ -66,7 +66,8 @@ void eof_note_create2(EOF_NOTE * np, unsigned long bitmask, unsigned long pos, l
 
 int eof_adjust_notes(int offset)
 {
-	int i, j;
+	unsigned long i, j;
+	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 	for(i = 0; i < EOF_LEGACY_TRACKS_MAX; i++)
 	{
@@ -85,14 +86,14 @@ int eof_adjust_notes(int offset)
 			eof_song->legacy_track[i]->star_power_path[j].end_pos += offset;
 		}
 	}
-	for(j = 0; j < eof_song->vocal_track[0]->lyrics; j++)
+	for(j = 0; j < eof_song->vocal_track[tracknum]->lyrics; j++)
 	{
-		eof_song->vocal_track[0]->lyric[j]->pos += offset;
+		eof_song->vocal_track[tracknum]->lyric[j]->pos += offset;
 	}
-	for(j = 0; j < eof_song->vocal_track[0]->lines; j++)
+	for(j = 0; j < eof_song->vocal_track[tracknum]->lines; j++)
 	{
-		eof_song->vocal_track[0]->line[j].start_pos += offset;
-		eof_song->vocal_track[0]->line[j].end_pos += offset;
+		eof_song->vocal_track[tracknum]->line[j].start_pos += offset;
+		eof_song->vocal_track[tracknum]->line[j].end_pos += offset;
 	}
 	for(i = 0; i < eof_song->catalog->entries; i++)
 	{
@@ -386,11 +387,12 @@ int eof_lyric_draw_truncate(int notenum, int p)
 	int pcol = p == 1 ? eof_color_white : p == 2 ? makecol(224, 255, 224) : 0;
 	int dcol = eof_color_white;
 	int ncol = 0;
+	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 	EOF_LYRIC_LINE *lyricline;	//The line that this lyric is found to be in (if any) so the correct background color can be determined
 	int bgcol = eof_color_black;	//Unless the text is found to be in a lyric phrase, it will render with a black background
 
-	if(notenum >= eof_song->vocal_track[0]->lyrics)	//If this is outside the bounds of EOF's defined lyrics
+	if(notenum >= eof_song->vocal_track[tracknum]->lyrics)	//If this is outside the bounds of EOF's defined lyrics
 		return 1;	//Stop rendering
 
 	lyricline=FindLyricLine(notenum);	//Find which line this lyric is in
@@ -402,11 +404,11 @@ int eof_lyric_draw_truncate(int notenum, int p)
 			bgcol=makecol(0, 0, 127);	//Make dark blue the text's background colo
 	}
 
-	np=eof_song->vocal_track[0]->lyric[notenum];
+	np=eof_song->vocal_track[tracknum]->lyric[notenum];
 
-	if(notenum < eof_song->vocal_track[0]->lyrics-1)		//If there is another lyric
+	if(notenum < eof_song->vocal_track[tracknum]->lyrics-1)		//If there is another lyric
 	{							//Find its would-be X coordinate (use as X2 for clipping rect)
-		nextnp=eof_song->vocal_track[0]->lyric[notenum+1];
+		nextnp=eof_song->vocal_track[tracknum]->lyric[notenum+1];
 		if(pos < 300)
 			X2 = 20 + (nextnp->pos) / eof_zoom;
 		else
@@ -479,9 +481,9 @@ int eof_lyric_draw_truncate(int notenum, int p)
 			int note_y2 = 0;	//Used to store the y coordinate of the next lyric
 			int npos2 = 0;		//Stores the X coordinate of the next lyric
 
-			if((notenum + 1 < eof_song->vocal_track[0]->lyrics) && (eof_song->vocal_track[0]->lyric[notenum + 1]->text[0] == '+'))
+			if((notenum + 1 < eof_song->vocal_track[tracknum]->lyrics) && (eof_song->vocal_track[tracknum]->lyric[notenum + 1]->text[0] == '+'))
 			{	//If there's another lyric, and it begins with a plus sign, it's a pitch shift, draw a vocal slide polygon
-				np2=eof_song->vocal_track[0]->lyric[notenum+1];
+				np2=eof_song->vocal_track[tracknum]->lyric[notenum+1];
 				sliderect[0]=npos + np->length / eof_zoom;	//X1 (X coordinate of the end of this lyric's rectangle)
 				sliderect[1]=note_y;						//Y1 (Y coordinate of the bottom of this lyric's rectangle)
 
@@ -1159,17 +1161,18 @@ void eof_lyric_draw_catalog(EOF_LYRIC * np, int p)
 
 EOF_LYRIC_LINE *FindLyricLine_p(EOF_LYRIC * lp)
 {
-	int linectr;
+	unsigned long linectr;
+	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	unsigned long lyricpos;
 
 	if(eof_song == NULL)
 		return NULL;
 	lyricpos=lp->pos;
 
-	for(linectr=0;linectr<eof_song->vocal_track[0]->lines;linectr++)
+	for(linectr=0;linectr<eof_song->vocal_track[tracknum]->lines;linectr++)
 	{
-		if((eof_song->vocal_track[0]->line[linectr].start_pos <= lyricpos) && (eof_song->vocal_track[0]->line[linectr].end_pos >= lyricpos))
-			return &(eof_song->vocal_track[0]->line[linectr]);	//Line found, return it
+		if((eof_song->vocal_track[tracknum]->line[linectr].start_pos <= lyricpos) && (eof_song->vocal_track[tracknum]->line[linectr].end_pos >= lyricpos))
+			return &(eof_song->vocal_track[tracknum]->line[linectr]);	//Line found, return it
 	}
 
 	return NULL;	//No such line found
@@ -1177,21 +1180,22 @@ EOF_LYRIC_LINE *FindLyricLine_p(EOF_LYRIC * lp)
 
 EOF_LYRIC_LINE *FindLyricLine(unsigned long lyricnum)
 {
-	int linectr;
+	unsigned long linectr;
+	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	unsigned long lyricpos;
 
 	if(eof_song == NULL)
 		return NULL;
-	if(lyricnum >= eof_song->vocal_track[0]->lyrics)
+	if(lyricnum >= eof_song->vocal_track[tracknum]->lyrics)
 	{
 		return NULL;
 	}
-	lyricpos=eof_song->vocal_track[0]->lyric[lyricnum]->pos;
+	lyricpos=eof_song->vocal_track[tracknum]->lyric[lyricnum]->pos;
 
-	for(linectr=0;linectr<eof_song->vocal_track[0]->lines;linectr++)
+	for(linectr=0;linectr<eof_song->vocal_track[tracknum]->lines;linectr++)
 	{
-		if((eof_song->vocal_track[0]->line[linectr].start_pos <= lyricpos) && (eof_song->vocal_track[0]->line[linectr].end_pos >= lyricpos))
-			return &(eof_song->vocal_track[0]->line[linectr]);	//Line found, return it
+		if((eof_song->vocal_track[tracknum]->line[linectr].start_pos <= lyricpos) && (eof_song->vocal_track[tracknum]->line[linectr].end_pos >= lyricpos))
+			return &(eof_song->vocal_track[tracknum]->line[linectr]);	//Line found, return it
 	}
 
 	return NULL;	//No such line found
