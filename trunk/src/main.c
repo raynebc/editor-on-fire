@@ -1841,12 +1841,13 @@ void eof_render_note_window(void)
 	int i;
 	int pos;
 	int lpos, npos, ypos;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	unsigned long tracknum = 0;
 
 	clear_to_color(eof_window_note->screen, eof_color_gray);
 
 	if(eof_catalog_menu[0].flags & D_SELECTED)
-	{
+	{//If show catalog is selected
+		tracknum = eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->tracknum;	//Information about the active fret catalog entry is going to be displayed
 		textprintf_ex(eof_window_note->screen, font, 2, 0, eof_info_color, -1, "Fret Catalog");
 		textprintf_ex(eof_window_note->screen, font, 2, 12, eof_color_white, -1, "-------------------");
 		textprintf_ex(eof_window_note->screen, font, 2, 24,  eof_color_white, -1, "Entry: %lu of %lu", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
@@ -1864,7 +1865,7 @@ void eof_render_note_window(void)
 		if(eof_song->catalog->entries > 0)
 		{
 			if(eof_song->catalog->entry[eof_selected_catalog_entry].track == EOF_TRACK_VOCALS)
-			{
+			{	//If drawing a vocal catalog entry
 				/* draw the starting position */
 				pos = eof_music_catalog_pos / eof_zoom;
 				if(pos < 140)
@@ -1926,7 +1927,7 @@ void eof_render_note_window(void)
 						vline(eof_window_note->screen, 20 + 140 - eof_av_delay / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
 					}
 				}
-			}
+			}//If drawing a vocal catalog entry
 			else
 			{
 				/* draw the starting position */
@@ -1961,11 +1962,11 @@ void eof_render_note_window(void)
 					vline(eof_window_note->screen, npos + eof_song->beat[i]->pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
 				}
 
-				for(i = 0; i < eof_song->legacy_track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->notes; i++)
+				for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
 				{
-					if((eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_song->legacy_track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->type) && (eof_song->legacy_track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_song->legacy_track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->pos <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos))
-					{
-						eof_note_draw_catalog(eof_song->legacy_track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i], i == eof_hover_note_2 ? 2 : 0);
+					if((eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_song->legacy_track[tracknum]->note[i]->type) && (eof_song->legacy_track[tracknum]->note[i]->pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_song->legacy_track[tracknum]->note[i]->pos <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos))
+					{	//If this note is the same difficulty as that from where the catalog entry was taken, and is between the entry's start and stop position
+						eof_note_draw_catalog(eof_song->legacy_track[tracknum]->note[i], i == eof_hover_note_2 ? 2 : 0);
 					}
 				}
 
@@ -1982,10 +1983,11 @@ void eof_render_note_window(void)
 					}
 				}
 			}
-		}
-	}
+		}//if(eof_song->catalog->entries > 0)
+	}//If show catalog is selected
 	else
 	{
+		tracknum = eof_song->track[eof_selected_track]->tracknum;	//Information about the active track is going to be displayed
 		textprintf_ex(eof_window_note->screen, font, 2, 0, eof_info_color, -1, "Information Panel");
 		textprintf_ex(eof_window_note->screen, font, 2, 12, eof_color_white, -1, "----------------------------");
 		ypos = 24;
@@ -2287,7 +2289,7 @@ void eof_render_lyric_window(void)
 void eof_render_3d_window(void)
 {
 	int point[8];
-	int i;
+	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 	clear_to_color(eof_window_3d->screen, eof_color_gray);
@@ -2393,12 +2395,12 @@ void eof_render_3d_window(void)
 //	int last_note = 0;
 	int tr;
 	/* draw the note tails and notes */
-	for(i = eof_song->legacy_track[tracknum]->notes - 1; i >= 0; i--)
+	for(i = eof_song->legacy_track[tracknum]->notes; i > 0; i--)
 	{	//Render 3D notes from last to first so that the earlier notes are in front
-		if(eof_note_type == eof_song->legacy_track[tracknum]->note[i]->type)
+		if(eof_note_type == eof_song->legacy_track[tracknum]->note[i-1]->type)
 		{
-			tr = eof_note_tail_draw_3d(eof_song->legacy_track[tracknum]->note[i], (eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0);
-			eof_note_draw_3d(eof_song->legacy_track[tracknum]->note[i], (eof_selection.track == eof_selected_track && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0);
+			tr = eof_note_tail_draw_3d(eof_song->legacy_track[tracknum]->note[i-1], (eof_selection.multi[i-1] && eof_music_paused) ? 1 : (i-1) == eof_hover_note ? 2 : 0);
+			eof_note_draw_3d(eof_song->legacy_track[tracknum]->note[i-1], (eof_selection.track == eof_selected_track && eof_selection.multi[i-1] && eof_music_paused) ? 1 : (i-1) == eof_hover_note ? 2 : 0);
 
 			if(tr < 0)	//if eof_note_tail_draw_3d skipped rendering the tail because it renders before the visible area
 				break;	//Stop rendering 3d notes

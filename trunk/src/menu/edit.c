@@ -169,12 +169,14 @@ DIALOG eof_custom_speed_dialog[] =
 void eof_prepare_edit_menu(void)
 {
 	int i;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	unsigned long tracknum = 0;
 	int vselected = 0;
 //	int cnotes = 0;	//This was never effectively used
 
 	if(eof_song && eof_song_loaded)
 	{
+		tracknum = eof_song->track[eof_selected_track]->tracknum;
+
 		/* undo */
 		if(eof_undo_count > 0)
 		{
@@ -584,11 +586,11 @@ int eof_menu_edit_cut_paste_vocal(int anchor, int option)
 		allegro_message("Clipboard error!");
 		return 1;
 	}
-	for(i = eof_song->vocal_track[tracknum]->lyrics - 1; i >= 0; i--)
+	for(i = eof_song->vocal_track[tracknum]->lyrics; i > 0; i--)
 	{
-		if((eof_song->vocal_track[tracknum]->lyric[i]->pos >= start_pos) && (eof_song->vocal_track[tracknum]->lyric[i]->pos < end_pos))
+		if((eof_song->vocal_track[tracknum]->lyric[i-1]->pos >= start_pos) && (eof_song->vocal_track[tracknum]->lyric[i-1]->pos < end_pos))
 		{
-			eof_vocal_track_delete_lyric(eof_song->vocal_track[tracknum], i);
+			eof_vocal_track_delete_lyric(eof_song->vocal_track[tracknum], i-1);
 		}
 	}
 
@@ -714,21 +716,21 @@ int eof_menu_edit_copy_vocal(void)
 /* delete lyrics which overlap the specified range */
 static void eof_menu_edit_paste_clear_range_vocal(unsigned long start, unsigned long end)
 {
-	int i;
+	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 	if(!eof_vocals_selected)
 		return;
 
-	for(i = eof_song->vocal_track[tracknum]->lyrics - 1; i >= 0; i--)
+	for(i = eof_song->vocal_track[tracknum]->lyrics; i > 0; i--)
 	{
-		if((eof_song->vocal_track[tracknum]->lyric[i]->pos >= start) && (eof_song->vocal_track[tracknum]->lyric[i]->pos <= end))
+		if((eof_song->vocal_track[tracknum]->lyric[i-1]->pos >= start) && (eof_song->vocal_track[tracknum]->lyric[i-1]->pos <= end))
 		{
-			eof_vocal_track_delete_lyric(eof_song->vocal_track[tracknum], i);
+			eof_vocal_track_delete_lyric(eof_song->vocal_track[tracknum], i-1);
 		}
-		else if((eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length >= start) && (eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length <= end))
+		else if((eof_song->vocal_track[tracknum]->lyric[i-1]->pos + eof_song->vocal_track[tracknum]->lyric[i-1]->length >= start) && (eof_song->vocal_track[tracknum]->lyric[i-1]->pos + eof_song->vocal_track[tracknum]->lyric[i-1]->length <= end))
 		{
-			eof_vocal_track_delete_lyric(eof_song->vocal_track[tracknum], i);
+			eof_vocal_track_delete_lyric(eof_song->vocal_track[tracknum], i-1);
 		}
 	}
 }
@@ -1037,7 +1039,7 @@ int eof_menu_edit_cut(int anchor, int option, float offset)
 
 int eof_menu_edit_cut_paste(int anchor, int option, float offset)
 {
-	int i, j, b;
+	unsigned long i, j, b;
 //	unsigned long paste_pos[EOF_MAX_NOTES] = {0};
 //	int paste_count = 0;
 	int first_beat[EOF_TRACKS_MAX] = {0};
@@ -1080,11 +1082,11 @@ int eof_menu_edit_cut_paste(int anchor, int option, float offset)
 	}
 	for(j = 0; j < EOF_LEGACY_TRACKS_MAX; j++)
 	{
-		for(i = eof_song->legacy_track[j]->notes - 1; i >= 0; i--)
+		for(i = eof_song->legacy_track[j]->notes; i > 0; i--)
 		{
-			if((eof_song->legacy_track[j]->note[i]->pos + eof_song->legacy_track[j]->note[i]->length >= start_pos) && (eof_song->legacy_track[j]->note[i]->pos < end_pos))
+			if((eof_song->legacy_track[j]->note[i-1]->pos + eof_song->legacy_track[j]->note[i-1]->length >= start_pos) && (eof_song->legacy_track[j]->note[i-1]->pos < end_pos))
 			{
-				eof_track_delete_note(eof_song->legacy_track[j], i);
+				eof_track_delete_note(eof_song->legacy_track[j], i-1);
 			}
 		}
 	}

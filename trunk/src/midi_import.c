@@ -102,24 +102,27 @@ static int eof_import_distance(int pos1, int pos2)
 
 static int eof_import_closest_beat(EOF_SONG * sp, unsigned long pos)
 {
-	int i;
-	int bb = -1, ab = -1;
+	unsigned long i;
+	int bb = -1, ab = -1;	//If this function is changed to return unsigned long, then these can be changed to unsigned long as well
+	char check1 = 0, check2 = 0;
 
 	for(i = 0; i < sp->beats; i++)
 	{
 		if(sp->beat[i]->pos <= pos)
 		{
 			bb = i;
+			check1 = 1;
 		}
 	}
-	for(i = sp->beats - 1; i >= 0; i--)
+	for(i = sp->beats; i > 0; i--)
 	{
-		if(sp->beat[i]->pos >= pos)
+		if(sp->beat[i-1]->pos >= pos)
 		{
-			ab = i;
+			ab = i-1;
+			check2 = 1;
 		}
 	}
-	if((bb >= 0) && (ab >= 0))
+	if(check1 && check2)
 	{
 		if(eof_import_distance(sp->beat[bb]->pos, pos) < eof_import_distance(sp->beat[ab]->pos, pos))
 		{
@@ -245,7 +248,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	int pticker = 0;
 	int ptotal_events = 0;
 	int percent;
-	int i, j, k;
+	unsigned long i, j, k;
 	int rbg = 0;
 	int tracks = 0;
 	int track[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};
@@ -1349,19 +1352,19 @@ allegro_message("Third pass complete");
 
 	/* delete empty lyric lines */
 	int lc;
-	for(i = sp->vocal_track[0]->lines - 1; i >= 0; i--)
+	for(i = sp->vocal_track[0]->lines; i > 0; i--)
 	{
 		lc = 0;
 		for(j = 0; j < sp->vocal_track[0]->lyrics; j++)
 		{
-			if((sp->vocal_track[0]->lyric[j]->pos >= sp->vocal_track[0]->line[i].start_pos) && (sp->vocal_track[0]->lyric[j]->pos <= sp->vocal_track[0]->line[i].end_pos))
+			if((sp->vocal_track[0]->lyric[j]->pos >= sp->vocal_track[0]->line[i-1].start_pos) && (sp->vocal_track[0]->lyric[j]->pos <= sp->vocal_track[0]->line[i-1].end_pos))
 			{
 				lc++;
 			}
 		}
 		if(lc <= 0)
 		{
-			eof_vocal_track_delete_line(sp->vocal_track[0], i);
+			eof_vocal_track_delete_line(sp->vocal_track[0], i-1);
 		}
 	}
 
