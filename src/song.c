@@ -13,7 +13,8 @@ EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 1] =
 	{EOF_LEGACY_TRACK_FORMAT, 0, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_GUITAR_COOP, "PART GUITAR COOP"},
 	{EOF_LEGACY_TRACK_FORMAT, 0, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_RHYTHM, "PART RHYTHM"},
 	{EOF_LEGACY_TRACK_FORMAT, 0, EOF_DRUM_TRACK_BEHAVIOR, EOF_TRACK_DRUM, "PART DRUMS"},
-	{EOF_VOCAL_TRACK_FORMAT, 0, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, "PART VOCALS"}
+	{EOF_VOCAL_TRACK_FORMAT, 0, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, "PART VOCALS"},
+	{EOF_LEGACY_TRACK_FORMAT, 0, EOF_KEYS_TRACK_BEHAVIOR, EOF_TRACK_KEYS, "PART KEYS"}
 };
 
 /* sort all notes according to position */
@@ -1086,7 +1087,7 @@ void eof_fixup_notes(void)
 		}
 	}
 
-	for(j = 0; j < EOF_LEGACY_TRACKS_MAX; j++)
+	for(j = 0; j < eof_song->legacy_tracks; j++)
 	{
 		eof_track_fixup_notes(eof_song->legacy_track[j], j == eof_selected_track);
 	}
@@ -1096,7 +1097,7 @@ void eof_sort_notes(void)
 {
 	int j;
 
-	for(j = 0; j < EOF_LEGACY_TRACKS_MAX; j++)
+	for(j = 0; j < eof_song->legacy_tracks; j++)
 	{
 		eof_track_sort_notes(eof_song->legacy_track[j]);
 	}
@@ -2257,4 +2258,23 @@ EOF_SONG * eof_create_song_populated(void)
 	}
 
 	return sp;
+}
+
+unsigned long eof_track_note_count(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return 0;
+
+	tracknum = sp->track[track]->tracknum;
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+		return sp->legacy_track[tracknum]->notes;
+		case EOF_VOCAL_TRACK_FORMAT:
+		return sp->vocal_track[tracknum]->lyrics;
+	}
+
+	return 0;
 }

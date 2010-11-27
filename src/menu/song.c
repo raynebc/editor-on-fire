@@ -59,6 +59,7 @@ MENU eof_track_selected_menu[EOF_TRACKS_MAX+1] =
     {eof_track_selected_menu_text[3], eof_menu_track_selected_4, NULL, 0, NULL},
     {eof_track_selected_menu_text[4], eof_menu_track_selected_5, NULL, 0, NULL},
     {eof_track_selected_menu_text[5], eof_menu_track_selected_6, NULL, 0, NULL},
+    {eof_track_selected_menu_text[6], eof_menu_track_selected_7, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -448,24 +449,16 @@ void eof_prepare_song_menu(void)
 		}
 
 		/* track */
-		for(i = 0; i < EOF_LEGACY_TRACKS_MAX; i++)
+		for(i = 0; i < EOF_TRACKS_MAX; i++)
 		{
-			if(eof_song->legacy_track[i]->notes > 0)
-			{
+			if(eof_track_note_count(eof_song,i+1))
+			{	//If the track exists and is populated, draw the track populated indicator
 				eof_track_selected_menu[i].text[0] = '*';
 			}
 			else
-			{
+			{	//Otherwise clear the indicator from the menu
 				eof_track_selected_menu[i].text[0] = ' ';
 			}
-		}
-		if(eof_song->vocal_track[tracknum]->lyrics > 0)
-		{	//Track numbering begins at 1 instead of 0
-			eof_track_selected_menu[EOF_TRACK_VOCALS-1].text[0] = '*';
-		}
-		else
-		{
-			eof_track_selected_menu[EOF_TRACK_VOCALS-1].text[0] = ' ';
 		}
 	}
 }
@@ -525,6 +518,9 @@ int eof_menu_song_seek_first_note_vocals(void)
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int first_pos = -1;
 
+	if(!eof_vocals_selected)
+		return 1;
+
 	if(!eof_music_catalog_playback)
 	{
 		for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
@@ -580,6 +576,9 @@ int eof_menu_song_seek_last_note_vocals(void)
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	unsigned long last_pos = 0;
 
+	if(!eof_vocals_selected)
+		return 1;
+
 	if(!eof_music_catalog_playback)
 	{
 		for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
@@ -634,6 +633,9 @@ int eof_menu_song_seek_previous_note_vocals(void)
 	int i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
+	if(!eof_vocals_selected)
+		return 1;
+
 	for(i = eof_song->vocal_track[tracknum]->lyrics - 1; i >= 0; i--)
 	{
 		if(eof_song->vocal_track[tracknum]->lyric[i]->pos < ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0))
@@ -680,6 +682,9 @@ int eof_menu_song_seek_next_note_vocals(void)
 {
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+
+	if(!eof_vocals_selected)
+		return 1;
 
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{
@@ -1098,6 +1103,11 @@ int eof_menu_track_selected_6(void)
 	return eof_menu_track_selected_track_number(6);
 }
 
+int eof_menu_track_selected_7(void)
+{
+	return eof_menu_track_selected_track_number(7);
+}
+
 int eof_menu_track_selected_track_number(int tracknum)
 {
 	int i;
@@ -1195,6 +1205,9 @@ int eof_menu_catalog_add_vocals(void)
 	unsigned long i;
 	int next;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+
+	if(!eof_vocals_selected)
+		return 1;
 
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{

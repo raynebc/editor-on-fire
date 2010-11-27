@@ -60,6 +60,7 @@ int eof_menu_track_selected_3(void);
 int eof_menu_track_selected_4(void);
 int eof_menu_track_selected_5(void);
 int eof_menu_track_selected_6(void);
+int eof_menu_track_selected_7(void);
 int eof_menu_track_selected_track_number(int tracknum);	//Changes to the specified track number
 
 int eof_menu_song_waveform_settings(void);

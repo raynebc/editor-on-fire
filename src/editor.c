@@ -1112,7 +1112,7 @@ void eof_read_editor_keys(void)
 				}
 			}
 			eof_vocal_track_fixup_lyrics(eof_song->vocal_track[tracknum], 1);
-		}
+		}//if(eof_vocals_selected)
 		else
 		{
 			if(eof_count_selected_notes(NULL, 0) > 0)
@@ -1641,7 +1641,7 @@ void eof_read_editor_keys(void)
 						eof_vocal_track_fixup_lyrics(eof_song->vocal_track[tracknum], 1);
 					}
 				}
-			}
+			}//if(eof_vocals_selected)
 			else
 			{
 				eof_last_snote = eof_snote;
@@ -2046,11 +2046,14 @@ void eof_editor_drum_logic(void)
 void eof_editor_logic(void)
 {
 	unsigned long i;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	unsigned long tracknum = 0;
 	unsigned long bitmask = 0;	//Used to reduce duplicated logic
 	int use_this_x = mouse_x;
 	int next_note_pos = 0;
 	EOF_NOTE * new_note = NULL;
+
+	if(eof_song_loaded)
+		tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 	eof_hover_note = -1;
 	eof_hover_note_2 = -1;
@@ -3015,28 +3018,34 @@ void eof_editor_logic(void)
 		{
 			eof_hover_note = -1;
 		}
-		for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
+		if(!eof_vocals_selected)
 		{
-			if(eof_song->legacy_track[tracknum]->note[i]->type == eof_note_type)
+			for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
 			{
-				npos = eof_song->legacy_track[tracknum]->note[i]->pos;
-				if((eof_music_pos > npos) && (eof_music_pos < npos + (eof_song->legacy_track[tracknum]->note[i]->length > 100 ? eof_song->legacy_track[tracknum]->note[i]->length : 100)))
+				if(eof_song->legacy_track[tracknum]->note[i]->type == eof_note_type)
 				{
-					if(eof_hover_note_2 != i)
+					npos = eof_song->legacy_track[tracknum]->note[i]->pos;
+					if((eof_music_pos > npos) && (eof_music_pos < npos + (eof_song->legacy_track[tracknum]->note[i]->length > 100 ? eof_song->legacy_track[tracknum]->note[i]->length : 100)))
 					{
-						eof_hover_note_2 = i;
+						if(eof_hover_note_2 != i)
+					{
+							eof_hover_note_2 = i;
+						}
+						break;
 					}
-					break;
 				}
 			}
 		}
-		for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
+		else
 		{
-			npos = eof_song->vocal_track[tracknum]->lyric[i]->pos;
-			if((eof_music_pos - eof_av_delay > npos) && (eof_music_pos - eof_av_delay < npos + (eof_song->vocal_track[tracknum]->lyric[i]->length > 100 ? eof_song->vocal_track[tracknum]->lyric[i]->length : 100)))
+			for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 			{
-				eof_hover_lyric = i;
-				break;
+				npos = eof_song->vocal_track[tracknum]->lyric[i]->pos;
+				if((eof_music_pos - eof_av_delay > npos) && (eof_music_pos - eof_av_delay < npos + (eof_song->vocal_track[tracknum]->lyric[i]->length > 100 ? eof_song->vocal_track[tracknum]->lyric[i]->length : 100)))
+				{
+					eof_hover_lyric = i;
+					break;
+				}
 			}
 		}
 		if(eof_selected_track == EOF_TRACK_DRUM)
@@ -3213,6 +3222,9 @@ void eof_vocal_editor_logic(void)
 
 	eof_mickey_z = eof_mouse_z - mouse_z;
 	eof_mouse_z = mouse_z;
+
+	if(!eof_vocals_selected)
+		return;
 
 	if(eof_music_paused && eof_song_loaded)
 	{
@@ -4249,6 +4261,9 @@ void eof_render_vocal_editor_window(void)
 	unsigned long start;	//Will store the timestamp of the left visible edge of the piano roll
 
 	if(!eof_song_loaded)
+		return;
+
+	if(!eof_vocals_selected)
 		return;
 
 	eof_render_editor_window_common();
