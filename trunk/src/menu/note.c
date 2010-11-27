@@ -260,7 +260,7 @@ void eof_prepare_note_menu(void)
 			}
 
 			/* lyric line mark */
-			if((llstart == eof_song->vocal_track[tracknum]->line[llp].start_pos) && (llend == eof_song->vocal_track[tracknum]->line[llp].end_pos))
+			if((llstart == eof_song->vocal_track[0]->line[llp].start_pos) && (llend == eof_song->vocal_track[0]->line[llp].end_pos))
 			{
 				eof_lyric_line_menu[0].flags = D_DISABLED;
 			}
@@ -344,7 +344,7 @@ void eof_prepare_note_menu(void)
 		}
 
 		/* lyric lines erase all */
-		if(eof_song->vocal_track[tracknum]->lines > 0)
+		if(eof_song->vocal_track[0]->lines > 0)
 		{
 			eof_lyric_line_menu[2].flags = 0;
 		}
@@ -596,6 +596,9 @@ int eof_menu_note_resnap_vocal(void)
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int oldnotes = eof_song->vocal_track[tracknum]->lyrics;
 
+	if(!eof_vocals_selected)
+		return 1;
+
 	if(eof_snap_mode == EOF_SNAP_OFF)
 	{
 		return 1;
@@ -666,6 +669,9 @@ int eof_menu_note_delete_vocal(void)
 {
 	unsigned long i, d = 0;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+
+	if(!eof_vocals_selected)
+		return 1;
 
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{
@@ -1185,6 +1191,9 @@ static void eof_split_lyric(int lyric)
 	char * token = NULL;
 	EOF_LYRIC * new_lyric = NULL;
 
+	if(!eof_vocals_selected)
+		return;
+
 	/* see how many pieces there are */
 	for(i = 0; i < strlen(eof_song->vocal_track[tracknum]->lyric[lyric]->text); i++)
 	{
@@ -1241,6 +1250,8 @@ static void eof_split_lyric(int lyric)
 int eof_menu_split_lyric(void)
 {
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	if(!eof_vocals_selected)
+		return 1;
 	if(eof_count_selected_notes(NULL, 0) != 1)
 	{
 		return 1;
@@ -1428,6 +1439,9 @@ int eof_menu_lyric_line_mark(void)
 	long sel_end = 0;
 	int originalflags = 0; //Used to apply the line's original flags after the line is recreated
 
+	if(!eof_vocals_selected)
+		return 1;
+
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{
 		if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
@@ -1484,6 +1498,9 @@ int eof_menu_lyric_line_unmark(void)
 	unsigned long i, j;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
+	if(!eof_vocals_selected)
+		return 1;
+
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{
@@ -1507,6 +1524,9 @@ int eof_menu_lyric_line_erase_all(void)
 {
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
+	if(!eof_vocals_selected)
+		return 1;
+
 	if(alert(NULL, "Erase all lyric lines?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -1521,6 +1541,9 @@ int eof_menu_lyric_line_toggle_overdrive(void)
 	char used[1024] = {0};
 	unsigned long i, j;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+
+	if(!eof_vocals_selected)
+		return 1;
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
@@ -1725,6 +1748,9 @@ int eof_new_lyric_dialog(void)
 	int ret=0;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
+	if(!eof_vocals_selected)
+		return D_O_K;
+
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_lyric_dialog, gui_fg_color, gui_bg_color);
@@ -1766,6 +1792,9 @@ int eof_edit_lyric_dialog(void)
 {
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
+	if(!eof_vocals_selected)
+		return 1;
+
 	if(eof_count_selected_notes(NULL, 0) != 1)
 	{
 		return 1;
@@ -1804,6 +1833,9 @@ int eof_menu_set_freestyle(char status)
 {
 	unsigned long i=0,ctr=0;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+
+	if(!eof_vocals_selected)
+		return 1;
 
 //Determine if any lyrics will actually be affected by this action
 	if(eof_vocals_selected && (eof_selection.track == EOF_TRACK_VOCALS))

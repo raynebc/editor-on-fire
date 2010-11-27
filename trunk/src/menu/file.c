@@ -315,10 +315,11 @@ int eof_menu_file_load(void)
 	int ret = 0;
 	char temp_filename[1024] = {0};
 	char * returnedfn = NULL;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	unsigned long tracknum = 0;
 
 	if(eof_song_loaded)
 	{
+		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		if(!eof_music_paused)
 		{
 			eof_music_play();

@@ -290,12 +290,12 @@ double eof_calculate_delta(double start, double end)
 
 int eof_count_tracks(void)
 {
-	int i;
+	unsigned long i;
 	int count = 0;
 
-	for(i = 0; i < EOF_LEGACY_TRACKS_MAX; i++)
+	for(i = 1; i < eof_song->tracks; i++)
 	{
-		if(eof_song->legacy_track[i]->notes > 0)
+		if(eof_track_note_count(eof_song, i))
 		{
 			count++;
 		}
@@ -998,7 +998,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	}
 
 	/* write header data */
-	header[11] = eof_count_tracks() + 1 + (sp->text_events > 0 ? 1 : 0) + (sp->vocal_track[tracknum]->lyrics > 0 ? 1 : 0);
+//	header[11] = eof_count_tracks() + 1 + (sp->text_events > 0 ? 1 : 0) + (sp->vocal_track[tracknum]->lyrics > 0 ? 1 : 0);
+	header[11] = eof_count_tracks() + 1 + (sp->text_events > 0 ? 1 : 0);	//eof_count_track() will also count all lyric tracks
 	pack_fwrite(header, 14, fp);
 
 	if(expertpluswritten)

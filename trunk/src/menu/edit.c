@@ -475,6 +475,9 @@ int eof_menu_edit_cut_vocal(int anchor, int option)
 	float tfloat;
 	PACKFILE * fp;
 
+	if(!eof_vocals_selected)
+		return 1;	//Return error
+
 	/* set boundary */
 	eof_anchor_diff[EOF_TRACK_VOCALS] = 0;
 	last_anchor = eof_find_previous_anchor(eof_song, anchor);
@@ -552,6 +555,9 @@ int eof_menu_edit_cut_paste_vocal(int anchor, int option)
 	int copy_notes = 0;
 	EOF_EXTENDED_LYRIC temp_lyric;
 	EOF_LYRIC * new_lyric = NULL;
+
+	if(!eof_vocals_selected)
+		return 1;	//Return error
 
 	this_beat = eof_find_previous_anchor(eof_song, anchor) + eof_anchor_diff[EOF_TRACK_VOCALS];
 
@@ -634,6 +640,9 @@ int eof_menu_edit_copy_vocal(void)
 	float tfloat;
 	PACKFILE * fp;
 
+	if(!eof_vocals_selected)
+		return 1;	//Return error
+
 	/* first, scan for selected notes */
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{
@@ -708,6 +717,9 @@ static void eof_menu_edit_paste_clear_range_vocal(unsigned long start, unsigned 
 	int i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
+	if(!eof_vocals_selected)
+		return;
+
 	for(i = eof_song->vocal_track[tracknum]->lyrics - 1; i >= 0; i--)
 	{
 		if((eof_song->vocal_track[tracknum]->lyric[i]->pos >= start) && (eof_song->vocal_track[tracknum]->lyric[i]->pos <= end))
@@ -737,6 +749,8 @@ int eof_menu_edit_paste_vocal(void)
 	EOF_LYRIC * new_lyric = NULL;
 	PACKFILE * fp;
 
+	if(!eof_vocals_selected)
+		return 1;	//Return error
 
 	/* open the file */
 	fp = pack_fopen("eof.vocals.clipboard", "r");
@@ -836,6 +850,9 @@ int eof_menu_edit_old_paste_vocal(void)
 	int last_pos = -1;
 	EOF_EXTENDED_LYRIC temp_lyric;
 	EOF_LYRIC * new_lyric = NULL;
+
+	if(!eof_vocals_selected)
+		return 1;	//Return error
 
 	fp = pack_fopen("eof.vocals.clipboard", "r");
 	if(!fp)
@@ -1940,6 +1957,9 @@ int eof_menu_edit_select_all_vocal(void)
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
+	if(!eof_vocals_selected)
+		return 1;
+
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{
 		eof_selection.track = EOF_TRACK_VOCALS;
@@ -1978,6 +1998,9 @@ int eof_menu_edit_select_like_vocal(void)
 	int ntypes = 0;
 	unsigned long i, j;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+
+	if(!eof_vocals_selected)
+		return 1;
 
 	if(eof_selection.track != EOF_TRACK_VOCALS)
 	{
@@ -2084,6 +2107,9 @@ int eof_menu_edit_select_rest_vocal(void)
 {
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+
+	if(!eof_vocals_selected)
+		return 1;	//Return error
 
 	if(eof_count_selected_notes(NULL, 0) <= 0)
 	{
@@ -2241,13 +2267,13 @@ static int lyrics_in_beat(int beat)
 {
 	unsigned long count = 0;
 	unsigned long i;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+//	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 	if(beat > eof_song->beats - 2)
 	{
-		for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
+		for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
 		{
-			if(eof_song->vocal_track[tracknum]->lyric[i]->pos >= eof_song->beat[beat]->pos)
+			if(eof_song->vocal_track[0]->lyric[i]->pos >= eof_song->beat[beat]->pos)
 			{
 				count++;
 			}
@@ -2255,9 +2281,9 @@ static int lyrics_in_beat(int beat)
 	}
 	else
 	{
-		for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
+		for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
 		{
-			if((eof_song->vocal_track[tracknum]->lyric[i]->pos >= eof_song->beat[beat]->pos) && (eof_song->vocal_track[tracknum]->lyric[i]->pos < eof_song->beat[beat + 1]->pos))
+			if((eof_song->vocal_track[0]->lyric[i]->pos >= eof_song->beat[beat]->pos) && (eof_song->vocal_track[0]->lyric[i]->pos < eof_song->beat[beat + 1]->pos))
 			{
 				count++;
 			}
@@ -2383,7 +2409,7 @@ int eof_menu_edit_paste_from_catalog(void)
 					}
 				}
 			}
-		}
+		}//if(eof_vocals_selected)
 		else
 		{
 			if(eof_song->catalog->entry[eof_selected_catalog_entry].track == EOF_TRACK_VOCALS)
@@ -2480,6 +2506,9 @@ int eof_menu_edit_select_previous_vocal(void)
 {
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+
+	if(!eof_vocals_selected)
+		return 1;
 
 	if(eof_count_selected_notes(NULL, 0) <= 0)	//If no notes are selected
 	{

@@ -159,13 +159,14 @@ typedef struct
 #define EOF_PRO_GUITAR_TRACK_BEHAVIOR	5
 #define EOF_PRO_KEYS_TRACK_BEHAVIOR		6
 
-#define EOF_TRACKS_MIN        1
-#define EOF_TRACK_GUITAR      1
-#define EOF_TRACK_BASS        2
-#define EOF_TRACK_GUITAR_COOP 3
-#define EOF_TRACK_RHYTHM      4
-#define EOF_TRACK_DRUM        5
-#define EOF_TRACK_VOCALS      6
+#define EOF_TRACKS_MIN			1
+#define EOF_TRACK_GUITAR		1
+#define EOF_TRACK_BASS			2
+#define EOF_TRACK_GUITAR_COOP	3
+#define EOF_TRACK_RHYTHM		4
+#define EOF_TRACK_DRUM			5
+#define EOF_TRACK_VOCALS		6
+#define EOF_TRACK_KEYS			7
 
 #define EOF_TRACK_NAME_SIZE		31
 typedef struct
@@ -177,7 +178,7 @@ typedef struct
 	char track_name[EOF_TRACK_NAME_SIZE];	//Specifies the name of the track
 } EOF_TRACK_ENTRY;
 
-#define EOF_LEGACY_TRACKS_MAX		5
+#define EOF_LEGACY_TRACKS_MAX		6
 typedef struct
 {
 	unsigned char numlanes;		//The number of lanes, keys, etc. in this track
@@ -438,5 +439,8 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 	//For fret catalog sections, the flags variable represents which track the catalog entry belongs to
 	//For lyric phrases, the difficulty field indicates which lyric set number (ie. PART VOCALS) the phrase applies to
 	//Returns zero on error
+
+unsigned long eof_track_note_count(EOF_SONG *sp, unsigned long track);
+	//Returns the note/lyric count of the specified track, or 0 upon error
 
 #endif

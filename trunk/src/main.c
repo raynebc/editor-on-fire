@@ -134,7 +134,7 @@ int         eof_note_type = EOF_NOTE_AMAZING;
 int         eof_note_difficulties[5] = {0};
 int         eof_note_types = 0;
 int         eof_selected_track = EOF_TRACK_GUITAR;
-int         eof_vocals_selected = 0;
+int         eof_vocals_selected = 0;	//Is set to nonzero if the active track is a vocal track
 int         eof_vocals_tab = 0;
 int         eof_vocals_offset = 60; // Start at "middle C"
 int         eof_song_loaded = 0;	//The boolean condition that a chart and its audio are successfully loaded
@@ -312,24 +312,23 @@ void eof_reset_lyric_preview_lines(void)
 void eof_find_lyric_preview_lines(void)
 {
 	unsigned long i, j;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int current_line = -1;
 	int next_line = -1;
 	int dist = -1;
 	int beyond = 1;
 	int adj_eof_music_pos=eof_music_pos - eof_av_delay;	//The current seek position of the chart, adjusted for AV delay
 
-	for(i = 0; i < eof_song->vocal_track[tracknum]->lines; i++)
+	for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
 	{
-		if((adj_eof_music_pos >= eof_song->vocal_track[tracknum]->line[i].start_pos) && (adj_eof_music_pos <= eof_song->vocal_track[tracknum]->line[i].end_pos))
+		if((adj_eof_music_pos >= eof_song->vocal_track[0]->line[i].start_pos) && (adj_eof_music_pos <= eof_song->vocal_track[0]->line[i].end_pos))
 		{
 			current_line = i;
 			break;
 		}
 	}
-	for(i = 0; i < eof_song->vocal_track[tracknum]->lines; i++)
+	for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
 	{
-		if(adj_eof_music_pos <= eof_song->vocal_track[tracknum]->line[i].end_pos)
+		if(adj_eof_music_pos <= eof_song->vocal_track[0]->line[i].end_pos)
 		{
 			beyond = 0;
 			break;
@@ -345,14 +344,14 @@ void eof_find_lyric_preview_lines(void)
 	if(current_line >= 0)
 	{
 		eof_preview_line[0] = current_line;
-		for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
+		for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
 		{
-			if((eof_song->vocal_track[tracknum]->lyric[i]->pos >= eof_song->vocal_track[tracknum]->line[eof_preview_line[0]].start_pos) && (eof_song->vocal_track[tracknum]->lyric[i]->pos <= eof_song->vocal_track[tracknum]->line[eof_preview_line[0]].end_pos))
+			if((eof_song->vocal_track[0]->lyric[i]->pos >= eof_song->vocal_track[0]->line[eof_preview_line[0]].start_pos) && (eof_song->vocal_track[0]->lyric[i]->pos <= eof_song->vocal_track[0]->line[eof_preview_line[0]].end_pos))
 			{
 				eof_preview_line_lyric[0] = i;
-				for(j = i; j < eof_song->vocal_track[tracknum]->lyrics; j++)
+				for(j = i; j < eof_song->vocal_track[0]->lyrics; j++)
 				{
-					if(eof_song->vocal_track[tracknum]->lyric[j]->pos > eof_song->vocal_track[tracknum]->line[eof_preview_line[0]].end_pos)
+					if(eof_song->vocal_track[0]->lyric[j]->pos > eof_song->vocal_track[0]->line[eof_preview_line[0]].end_pos)
 					{
 						break;
 					}
@@ -361,25 +360,25 @@ void eof_find_lyric_preview_lines(void)
 				break;
 			}
 		}
-		for(i = 0; i < eof_song->vocal_track[tracknum]->lines; i++)
+		for(i = 0; i < eof_song->vocal_track[0]->lines; i++)
 		{
-			if((eof_song->vocal_track[tracknum]->line[current_line].start_pos < eof_song->vocal_track[tracknum]->line[i].start_pos) && (eof_song->vocal_track[tracknum]->line[i].start_pos - eof_song->vocal_track[tracknum]->line[current_line].start_pos < dist))
+			if((eof_song->vocal_track[0]->line[current_line].start_pos < eof_song->vocal_track[0]->line[i].start_pos) && (eof_song->vocal_track[0]->line[i].start_pos - eof_song->vocal_track[0]->line[current_line].start_pos < dist))
 			{
 				next_line = i;
-				dist = eof_song->vocal_track[tracknum]->line[i].start_pos - eof_song->vocal_track[tracknum]->line[current_line].start_pos;
+				dist = eof_song->vocal_track[0]->line[i].start_pos - eof_song->vocal_track[0]->line[current_line].start_pos;
 			}
 		}
 		if(next_line >= 0)
 		{
 			eof_preview_line[1] = next_line;
-			for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
+			for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
 			{
-				if((eof_song->vocal_track[tracknum]->lyric[i]->pos >= eof_song->vocal_track[tracknum]->line[eof_preview_line[1]].start_pos) && (eof_song->vocal_track[tracknum]->lyric[i]->pos <= eof_song->vocal_track[tracknum]->line[eof_preview_line[1]].end_pos))
+				if((eof_song->vocal_track[0]->lyric[i]->pos >= eof_song->vocal_track[0]->line[eof_preview_line[1]].start_pos) && (eof_song->vocal_track[0]->lyric[i]->pos <= eof_song->vocal_track[0]->line[eof_preview_line[1]].end_pos))
 				{
 					eof_preview_line_lyric[1] = i;
-					for(j = i; j < eof_song->vocal_track[tracknum]->lyrics; j++)
+					for(j = i; j < eof_song->vocal_track[0]->lyrics; j++)
 					{
-						if(eof_song->vocal_track[tracknum]->lyric[j]->pos > eof_song->vocal_track[tracknum]->line[eof_preview_line[1]].end_pos)
+						if(eof_song->vocal_track[0]->lyric[j]->pos > eof_song->vocal_track[0]->line[eof_preview_line[1]].end_pos)
 						{
 							break;
 						}
@@ -937,7 +936,7 @@ void eof_determine_hopos(void)
 	}
 
 	/* delete star power phrases with no notes */
-	for(j = eof_song->legacy_track[tracknum]->star_power_paths - 1; j >= 0; j--)
+	for(j = 0; j < eof_song->legacy_track[tracknum]->star_power_paths; j++)
 	{
 		if(!sp[j])
 		{
@@ -946,7 +945,7 @@ void eof_determine_hopos(void)
 	}
 
 	/* delete solos with no notes */
-	for(j = eof_song->legacy_track[tracknum]->solos - 1; j >= 0; j--)
+	for(j = 0; j < eof_song->legacy_track[tracknum]->solos; j++)
 	{
 		if(!so[j])
 		{
@@ -1019,6 +1018,9 @@ int eof_count_selected_notes_vocal(int * total, char v)
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int count = 0;
 	int last = -1;
+
+	if(!eof_vocals_selected)
+		return 0;
 
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{
@@ -1103,20 +1105,10 @@ int eof_count_selected_notes(int * total, char v)
 
 int eof_figure_part(void)
 {
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int part[EOF_TRACKS_MAX+1] = {0};
 
-	if(eof_vocals_selected)
-	{
-		if(eof_song->vocal_track[tracknum]->lyrics <= 0)
-		{
-			return -1;
-		}
-	}
-	else if(eof_song->legacy_track[tracknum]->notes <= 0)
-	{
+	if(eof_track_note_count(eof_song,eof_selected_track) == 0)
 		return -1;
-	}
 
 	part[EOF_TRACK_GUITAR] = 0;
 	part[EOF_TRACK_RHYTHM] = 1;
@@ -1124,6 +1116,7 @@ int eof_figure_part(void)
 	part[EOF_TRACK_GUITAR_COOP] = 3;
 	part[EOF_TRACK_DRUM] = 4;
 	part[EOF_TRACK_VOCALS] = 5;
+	part[EOF_TRACK_KEYS] = 6;
 	return part[eof_selected_track];
 }
 
@@ -1532,6 +1525,9 @@ void eof_lyric_logic(void)
 	eof_hover_key = -1;
 
 	if(eof_song == NULL)	//Do not allow lyric processing to occur if no song is loaded
+		return;
+
+	if(!eof_vocals_selected)
 		return;
 
 	if(eof_music_paused)
@@ -2108,7 +2104,7 @@ void eof_render_lyric_preview(BITMAP * bp)
 
 	char lline[2][MAX_LYRIC_PREVIEW_LENGTH+1] = {{0}};
 	unsigned long i,x;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+//	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int offset = -1;
 	int space;	//Track the spacing for lyric preview, taking pitch shift and grouping logic into account
 
@@ -2129,10 +2125,10 @@ void eof_render_lyric_preview(BITMAP * bp)
 
 		for(i = eof_preview_line_lyric[x]; i < eof_preview_line_end_lyric[x]; i++)
 		{	//For each lyric in the preview line
-			lyriclength=ustrlen(eof_song->vocal_track[tracknum]->lyric[i]->text);	//This value will be used multiple times
+			lyriclength=ustrlen(eof_song->vocal_track[0]->lyric[i]->text);	//This value will be used multiple times
 
 		//Perform grouping logic
-			if((eof_song->vocal_track[tracknum]->lyric[i]->text[0] != '+'))
+			if((eof_song->vocal_track[0]->lyric[i]->text[0] != '+'))
 			{	//If the lyric is not a pitch shift
 				if(space)
 				{	//If space is nonzero, append a space if possible
@@ -2145,7 +2141,7 @@ void eof_render_lyric_preview(BITMAP * bp)
 						break;				//Stop building this line's preview
 				}
 
-				if(ustrchr(eof_song->vocal_track[tracknum]->lyric[i]->text,'-'))
+				if(ustrchr(eof_song->vocal_track[0]->lyric[i]->text,'-'))
 				{	//If the lyric contains a hyphen
 					space = 0;	//The next syllable will group with this one
 				}
@@ -2168,7 +2164,7 @@ void eof_render_lyric_preview(BITMAP * bp)
 				break;													//Stop building this line's preview
 
 		//Append string
-			ustrcat(lline[x], eof_song->vocal_track[tracknum]->lyric[i]->text);
+			ustrcat(lline[x], eof_song->vocal_track[0]->lyric[i]->text);
 			currentlength+=lyriclength;									//Track the length of this preview line
 
 		//Truncate a '/' character off the end of the lyric line if it exists (TB:RB notation for a forced line break)
@@ -2181,18 +2177,18 @@ void eof_render_lyric_preview(BITMAP * bp)
 	textout_centre_ex(bp, font, lline[1], bp->w / 2, 36, eof_color_white, bgcol2);
 	if((offset >= 0) && (eof_hover_lyric >= 0))
 	{
-		if(eof_song->vocal_track[tracknum]->lyric[eof_hover_lyric]->text[strlen(eof_song->vocal_track[tracknum]->lyric[eof_hover_lyric]->text)-1] == '/')
+		if(eof_song->vocal_track[0]->lyric[eof_hover_lyric]->text[strlen(eof_song->vocal_track[0]->lyric[eof_hover_lyric]->text)-1] == '/')
 		{	//If the at-playback position lyric ends in a forward slash, make a copy with the slash removed and display it instead
-			tempstring=malloc(ustrlen(eof_song->vocal_track[tracknum]->lyric[eof_hover_lyric]->text)+1);
+			tempstring=malloc(ustrlen(eof_song->vocal_track[0]->lyric[eof_hover_lyric]->text)+1);
 			if(tempstring==NULL)	//If there wasn't enough memory to copy this string...
 				return;
-			ustrcpy(tempstring,eof_song->vocal_track[tracknum]->lyric[eof_hover_lyric]->text);
+			ustrcpy(tempstring,eof_song->vocal_track[0]->lyric[eof_hover_lyric]->text);
 			tempstring[ustrlen(tempstring)-1]='\0';
 			textout_ex(bp, font, tempstring, bp->w / 2 - text_length(font, lline[0]) / 2 + offset, 20, eof_color_green, -1);
 			free(tempstring);
 		}
 		else	//Otherwise, display the regular string instead
-			textout_ex(bp, font, eof_song->vocal_track[tracknum]->lyric[eof_hover_lyric]->text, bp->w / 2 - text_length(font, lline[0]) / 2 + offset, 20, eof_color_green, -1);
+			textout_ex(bp, font, eof_song->vocal_track[0]->lyric[eof_hover_lyric]->text, bp->w / 2 - text_length(font, lline[0]) / 2 + offset, 20, eof_color_green, -1);
 	}
 }
 
