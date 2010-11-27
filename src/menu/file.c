@@ -315,6 +315,7 @@ int eof_menu_file_load(void)
 	int ret = 0;
 	char temp_filename[1024] = {0};
 	char * returnedfn = NULL;
+	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 	if(eof_song_loaded)
 	{
@@ -405,7 +406,7 @@ int eof_menu_file_load(void)
 		eof_song_loaded = 1;
 		eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
 		eof_init_after_load();
-		eof_vocal_track_fixup_lyrics(eof_song->vocal_track[0], 0);
+		eof_vocal_track_fixup_lyrics(eof_song->vocal_track[tracknum], 0);
 	}
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;

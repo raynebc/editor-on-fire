@@ -1068,9 +1068,10 @@ void eof_sort_events(void)
 /* make sure notes don't overlap */
 void eof_fixup_notes(void)
 {
-	int i, j;
+	unsigned long i, j;
+	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
-	if(eof_selection.current < eof_song->legacy_track[eof_song->track[eof_selected_track]->tracknum]->notes)
+	if(eof_selection.current < eof_song->legacy_track[tracknum]->notes)
 	{
 		eof_selection.multi[eof_selection.current] = 0;
 	}
