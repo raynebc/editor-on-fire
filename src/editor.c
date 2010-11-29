@@ -3081,13 +3081,32 @@ void eof_editor_logic(void)
 	if(eof_music_catalog_playback)
 	{
 		int npos;
+		unsigned long tracknum = eof_song->catalog->entry[eof_selected_catalog_entry].track;	//The track this catalog entry pertains to
 		eof_hover_note_2 = -1;
-		for(i = 0; i < eof_song->legacy_track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->notes; i++)
-		{
-			if(eof_song->legacy_track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->type == eof_song->catalog->entry[eof_selected_catalog_entry].type)
+		if(eof_song->catalog->entry[eof_selected_catalog_entry].track != EOF_TRACK_VOCALS)
+		{	//Perform fret catalog playback logic for legacy format tracks
+			for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
 			{
-				npos = eof_song->legacy_track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->pos + eof_av_delay;
-				if((eof_music_catalog_pos > npos) && (eof_music_catalog_pos < npos + (eof_song->legacy_track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->length > 100 ? eof_song->legacy_track[(int)eof_song->catalog->entry[eof_selected_catalog_entry].track]->note[i]->length : 100)))
+				if(eof_song->legacy_track[tracknum]->note[i]->type == eof_song->catalog->entry[eof_selected_catalog_entry].type)
+				{
+					npos = eof_song->legacy_track[tracknum]->note[i]->pos + eof_av_delay;
+					if((eof_music_catalog_pos > npos) && (eof_music_catalog_pos < npos + (eof_song->legacy_track[tracknum]->note[i]->length > 100 ? eof_song->legacy_track[tracknum]->note[i]->length : 100)))
+					{
+						if(eof_hover_note_2 != i)
+						{
+							eof_hover_note_2 = i;
+						}
+						break;
+					}
+				}
+			}
+		}
+		else
+		{
+			for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
+			{
+				npos = eof_song->vocal_track[0]->lyric[i]->pos + eof_av_delay;
+				if((eof_music_catalog_pos > npos) && (eof_music_catalog_pos < npos + (eof_song->vocal_track[0]->lyric[i]->length > 100 ? eof_song->vocal_track[0]->lyric[i]->length : 100)))
 				{
 					if(eof_hover_note_2 != i)
 					{
