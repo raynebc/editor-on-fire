@@ -705,13 +705,13 @@ int eof_note_draw_3d(EOF_NOTE * np, int p)
 
 int eof_note_tail_draw_3d(EOF_NOTE * np, int p)
 {
-	int pos = eof_music_pos / eof_zoom_3d;
-	int npos;
+	long pos = eof_music_pos / eof_zoom_3d;
+	long npos;
 	int xchart[5] = {48, 48 + 56, 48 + 56 * 2, 48 + 56 * 3, 48 + 56 * 4};
 	int point[8];
 	int rz, ez;
 
-	npos = -pos - 6 + np->pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
+	npos = -pos - 6 + (np->pos + eof_av_delay) / eof_zoom_3d;
 	if(npos + np->length / eof_zoom_3d < -100)
 	{
 		return -1;
