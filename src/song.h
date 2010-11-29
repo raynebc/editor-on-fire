@@ -61,7 +61,7 @@ typedef struct
 	unsigned long midi_pos;
 	unsigned long midi_length;
 	unsigned long pos;
-	unsigned long length;
+	long length;				//Keep as signed, since the npos logic uses signed math
 	unsigned short flags;		//Stores various note statuses
 
 } EOF_NOTE;
