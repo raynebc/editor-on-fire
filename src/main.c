@@ -1842,11 +1842,15 @@ void eof_render_note_window(void)
 	int pos;
 	int lpos, npos, ypos;
 	unsigned long tracknum = 0;
+	int xcoord;
 
 	clear_to_color(eof_window_note->screen, eof_color_gray);
 
 	if(eof_catalog_menu[0].flags & D_SELECTED)
 	{//If show catalog is selected
+		if(eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track] == NULL)
+			return;	//If this is NULL for some reason (broken track array or corrupt catalog entry, abort rendering it
+
 		tracknum = eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->tracknum;	//Information about the active fret catalog entry is going to be displayed
 		textprintf_ex(eof_window_note->screen, font, 2, 0, eof_info_color, -1, "Fret Catalog");
 		textprintf_ex(eof_window_note->screen, font, 2, 12, eof_color_white, -1, "-------------------");
@@ -1900,7 +1904,15 @@ void eof_render_note_window(void)
 				}
 				for(i = 0; i < eof_song->beats; i++)
 				{
-					vline(eof_window_note->screen, npos + eof_song->beat[i]->pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
+					xcoord = npos + eof_song->beat[i]->pos / eof_zoom;
+					if(xcoord >= eof_window_note->screen->w)
+					{	//If this beat line would render off the edge of the screen
+						break;	//Stop rendering them
+					}
+					if(xcoord >= 0)
+					{	//If this beat line would render visibly, render it
+						vline(eof_window_note->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
+					}
 				}
 
 				/* clear lyric text area */
@@ -1909,8 +1921,12 @@ void eof_render_note_window(void)
 
 				for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 				{
-					if((eof_song->vocal_track[tracknum]->lyric[i]->pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_song->vocal_track[tracknum]->lyric[i]->pos <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos))
-					{
+					if(eof_song->vocal_track[tracknum]->lyric[i]->pos > eof_song->catalog->entry[eof_selected_catalog_entry].end_pos)
+					{	//If this lyric is after the end of the catalog entry
+						break;	//Stop processing lyrics
+					}
+					if(eof_song->vocal_track[tracknum]->lyric[i]->pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos)
+					{	//If this lyric is in the catalog entry, render it
 						eof_lyric_draw_catalog(eof_song->vocal_track[tracknum]->lyric[i], i == eof_hover_note_2 ? 2 : 0);
 					}
 				}
@@ -1959,13 +1975,25 @@ void eof_render_note_window(void)
 				}
 				for(i = 0; i < eof_song->beats; i++)
 				{
-					vline(eof_window_note->screen, npos + eof_song->beat[i]->pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
+					xcoord = npos + eof_song->beat[i]->pos / eof_zoom;
+					if(xcoord >= eof_window_note->screen->w)
+					{	//If this beat line would render off the edge of the screen
+						break;	//Stop rendering them
+					}
+					if(xcoord >= 0)
+					{	//If this beat line would render visibly, render it
+						vline(eof_window_note->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
+					}
 				}
 
 				for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
 				{
-					if((eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_song->legacy_track[tracknum]->note[i]->type) && (eof_song->legacy_track[tracknum]->note[i]->pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_song->legacy_track[tracknum]->note[i]->pos <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos))
-					{	//If this note is the same difficulty as that from where the catalog entry was taken, and is between the entry's start and stop position
+					if(eof_song->legacy_track[tracknum]->note[i]->pos > eof_song->catalog->entry[eof_selected_catalog_entry].end_pos)
+					{	//If this note is after the end of the catalog entry
+						break;	//Stop processing notes
+					}
+					if((eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_song->legacy_track[tracknum]->note[i]->type) && (eof_song->legacy_track[tracknum]->note[i]->pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos))
+					{	//If this note is the same difficulty as that from where the catalog entry was taken, and is in the catalog entry
 						eof_note_draw_catalog(eof_song->legacy_track[tracknum]->note[i], i == eof_hover_note_2 ? 2 : 0);
 					}
 				}
@@ -3363,6 +3391,7 @@ void eof_init_after_load(void)
 	eof_destroy_waveform(eof_waveform);	//If a waveform had already been created, destroy it
 	eof_waveform = NULL;
 	eof_display_waveform = 0;
+	eof_catalog_menu[0].flags = 0;	//Hide the fret catalog by default
 }
 
 END_OF_MAIN()
