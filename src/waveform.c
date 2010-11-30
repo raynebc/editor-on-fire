@@ -264,6 +264,8 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 	char done=0;	//-1 on unsuccessful completion, 1 on successful completion
 	unsigned long slicenum=0;
 
+	set_window_title("Generating Waveform Graph...");
+
 	if((oggfilename == NULL) || !slicelength)
 	{
 		#ifdef EOF_DEBUG_WAVEFORM

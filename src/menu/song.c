@@ -1420,7 +1420,6 @@ int eof_menu_song_waveform(void)
 	{
 		if(eof_music_paused)
 		{	//Don't try to generate the waveform data if the chart is playing
-			set_window_title("Generating Waveform Graph...");
 			if(eof_waveform == NULL)
 			{
 				eof_waveform = eof_create_waveform(eof_loaded_ogg_name,1);	//Generate 1ms waveform data from the current audio file
