@@ -311,20 +311,21 @@ int eof_count_tracks(void)
 int eof_export_midi(EOF_SONG * sp, char * fn)
 {
 	char header[14] = {'M', 'T', 'h', 'd', 0, 0, 0, 6, 0, 1, 0, 1, (EOF_DEFAULT_TIME_DIVISION >> 8), (EOF_DEFAULT_TIME_DIVISION & 0xFF)}; //The last two bytes are the time division
-	char trackheader[8] = {'M', 'T', 'r', 'k', 0, 0, 0, 0};
+//	char trackheader[8] = {'M', 'T', 'r', 'k', 0, 0, 0, 0};
 	char notetempname[EOF_TRACKS_MAX+1][15];
 	char notetrackspopulated[EOF_TRACKS_MAX+1] = {0};
 	char expertplustempname[] = {"expert+.tmp"};	//Stores the temporary filename for the Expert+ track data
 	char tempotempname[] = {"tempo.tmp"};
 	char eventtempname[] = {"event.tmp"};
-	char expertplusfilename[] = {"expert+.mid"};
+	char expertplusfilename[1024] = {0};
+	char expertplusshortname[] = {"expert+.mid"};
 	PACKFILE * fp;
-	PACKFILE * fp2;
+//	PACKFILE * fp2;
 	PACKFILE * fp3 = NULL;					//File pointer for the Expert+ file
-	unsigned long i, j;
+	unsigned long i, j, k;
 	unsigned long ctr;
 	unsigned long delta = 0;
-	unsigned long track_length;
+//	unsigned long track_length;
 	int midi_note_offset = 0;
 	int vel=0x64;	//Velocity
 	unsigned long tracknum=0;				//Used to de-obfuscate the track number
@@ -1008,13 +1009,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	}
 
 	/* write header data */
-//	header[11] = eof_count_tracks() + 1 + (sp->text_events > 0 ? 1 : 0) + (sp->vocal_track[tracknum]->lyrics > 0 ? 1 : 0);
 	header[11] = eof_count_tracks() + 1 + (sp->text_events > 0 ? 1 : 0);	//eof_count_track() will also count all lyric tracks
 	pack_fwrite(header, 14, fp);
 
 	if(expertpluswritten)
 	{
-		header[11] = 1 + 1 + (sp->text_events > 0 ? 1 : 0);
+		replace_filename(expertplusfilename, fn, expertplusshortname, 1024);	//Build the path for the output expert+ MIDI
 		fp3 = pack_fopen(expertplusfilename, "w");
 		if(!fp3)
 			expertpluswritten = 0;	//Cancel trying to write Expert+ and save the normal MIDI instead
@@ -1024,114 +1024,48 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 
 /* write tempo track */
-	track_length = file_size_ex(tempotempname);
-	fp2 = pack_fopen(tempotempname, "r");
-	if(!fp2)
-	{
-		pack_fclose(fp);
-		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
-		eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
-		return 0;
-	}
-	pack_fwrite(trackheader, 4, fp);
-	pack_mputl(track_length, fp);
-	for(i = 0; i < track_length; i++)
-	{
-		pack_putc(pack_getc(fp2), fp);
-	}
-
+	eof_dump_midi_track(tempotempname,fp);
 	if(expertpluswritten)
-	{	//Write the tempo track to the Expert+ MIDI file as well
-		pack_fclose(fp2);	//Since Allegro's pack_fseek() function doesn't support backward seeks,
-		fp2 = pack_fopen(tempotempname, "r");	//Close and re-open the file
-		pack_fwrite(trackheader, 4, fp3);
-		pack_mputl(track_length, fp3);
-		for(i = 0; i < track_length; i++)
-		{
-			pack_putc(pack_getc(fp2), fp3);
-		}
+	{	//If writing an expert+ MIDI as well
+		eof_dump_midi_track(tempotempname,fp3);
 	}
-	pack_fclose(fp2);
-
 
 /* write text event track if there are any events */
 	if(sp->text_events)
 	{
-		track_length = file_size_ex(eventtempname);
-		fp2 = pack_fopen(eventtempname, "r");
-		if(!fp2)
-		{
-			pack_fclose(fp);
-			eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
-			eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
-			return 0;
-		}
-		pack_fwrite(trackheader, 4, fp);
-		pack_mputl(track_length, fp);
-		for(i = 0; i < track_length; i++)
-		{
-			pack_putc(pack_getc(fp2), fp);
-		}
-
+		eof_dump_midi_track(eventtempname,fp);
 		if(expertpluswritten)
-		{	//Write the events track to the Expert+ MIDI file as well
-			pack_fclose(fp2);	//Since Allegro's pack_fseek() function doesn't support backward seeks,
-			fp2 = pack_fopen(eventtempname, "r");	//Close and re-open the file
-			pack_fwrite(trackheader, 4, fp3);
-			pack_mputl(track_length, fp3);
-			for(i = 0; i < track_length; i++)
-			{
-				pack_putc(pack_getc(fp2), fp3);
-			}
+		{
+			eof_dump_midi_track(eventtempname,fp3);
 		}
-		pack_fclose(fp2);
 	}
 
 
 /* write tracks */
-	for(j = 1; j < sp->tracks; j++)
-	{
-		if(notetrackspopulated[j])
-		{	//If this track had a temp file created
-			track_length = file_size_ex(notetempname[j]);
-			fp2 = pack_fopen(notetempname[j], "r");
-			if(!fp2)
-			{
-				pack_fclose(fp);
-				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
-				eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
-				return 0;
-			}
-			pack_fwrite(trackheader, 4, fp);
-			pack_mputl(track_length, fp);
-
-			for(i = 0; i < track_length; i++)
-			{
-				pack_putc(pack_getc(fp2), fp);
-			}
-			pack_fclose(fp2);
+	for(k = 0; k <= expertpluswritten; k++)
+	{	//Run loop a second time if expert plus MIDI is being written
+		if(k > 0)
+		{	//If the expert+ MIDI file is being written in this loop iteration
+			fp = fp3;	//Switch the output packfile pointer to the expert+ MIDI
+			fp3 = NULL;
 		}
-	}
-
-	if(expertpluswritten)
-	{	//Write the PART DRUMS track to the Expert+ MIDI file as well
-		track_length = file_size_ex(expertplustempname);
-		fp2 = pack_fopen(expertplustempname, "r");
-		if(fp2)
+		for(j = 1; j < sp->tracks; j++)
 		{
-			pack_fwrite(trackheader, 4, fp3);
-			pack_mputl(track_length, fp3);
-
-			for(i = 0; i < track_length; i++)
-			{
-				pack_putc(pack_getc(fp2), fp3);
+			if(notetrackspopulated[j])
+			{	//If this track had a temp file created
+				if((k > 0) && (j == EOF_TRACK_DRUM))
+				{	//If the expert+ drum track is being written
+					eof_dump_midi_track(expertplustempname,fp);
+				}
+				else
+				{	//Otherwise write the regular track
+					eof_dump_midi_track(notetempname[j],fp);
+				}
 			}
-			pack_fclose(fp2);
-			pack_fclose(fp3);	//Close Expert+ MIDI file
 		}
+		pack_fclose(fp);	//Close the output file
+		fp = NULL;
 	}
-
-	pack_fclose(fp);
 	eof_clear_midi_events();
 
 
@@ -1542,4 +1476,32 @@ int eof_apply_ts(unsigned num,unsigned den,int beatnum,EOF_SONG *sp,char undo)
 	}
 
 	return 1;
+}
+
+int eof_dump_midi_track(const char *inputfile,PACKFILE *outf)
+{
+	unsigned long track_length;
+	PACKFILE *inf = NULL;
+	char trackheader[8] = {'M', 'T', 'r', 'k', 0, 0, 0, 0};
+	unsigned long i;
+
+	if((inputfile == NULL) || (outf == NULL))
+		return 0;	//Return failure
+
+	track_length = file_size_ex(inputfile);
+	inf = pack_fopen(inputfile, "r");	//Open input file for reading
+	if(!inf)
+	{
+		return 0;	//Return failure
+	}
+
+	pack_fwrite(trackheader, 4, outf);	//Write the output track header
+	pack_mputl(track_length, outf);		//Write the output track length
+	for(i = 0; i < track_length; i++)
+	{	//For each byte in the input file
+		pack_putc(pack_getc(inf), outf);	//Copy the byte to the output file
+	}
+	pack_fclose(inf);
+
+	return 1;	//Return success
 }
