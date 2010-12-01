@@ -84,4 +84,7 @@ int eof_apply_ts(unsigned num,unsigned den,int beatnum,EOF_SONG *sp,char undo);
 	//Validates and applies the specified time signature to the specified beat
 	//If undo is nonzero, then an undo state is made before any changes are made
 
+int eof_dump_midi_track(const char *inputfile,PACKFILE *outf);
+	//Writes a MIDI track header to the output file, followed by the size of the input file, followed by the contents of the input file
+
 #endif
