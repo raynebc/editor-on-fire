@@ -167,6 +167,9 @@ typedef struct
 #define EOF_TRACK_DRUM			5
 #define EOF_TRACK_VOCALS		6
 #define EOF_TRACK_KEYS			7
+#define EOF_TRACK_PRO_BASS		8
+#define EOF_TRACK_PRO_GUITAR	9
+#define EOF_TRACK_PRO_KEYS		10
 
 #define EOF_TRACK_NAME_SIZE		31
 typedef struct
@@ -285,8 +288,10 @@ typedef struct
 
 #define EOF_TRACKS_MAX	(EOF_LEGACY_TRACKS_MAX + EOF_VOCAL_TRACKS_MAX)
 
-extern EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 1];
-	//This stores the details for the default tracks, allowing them to be easily added
+extern EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 3 + 1];
+	//The list of default tracks that should be presented in EOF
+extern EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 10 + 1];
+	//The list of MIDI track names pertaining to each instrument and harmony track
 
 typedef struct
 {
