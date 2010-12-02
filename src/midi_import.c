@@ -248,8 +248,9 @@ EOF_SONG * eof_import_midi(const char * fn)
 	int pticker = 0;
 	int ptotal_events = 0;
 	int percent;
-	unsigned long i, j, k;
-	int rbg = 0;
+	unsigned long i, j;
+	long k;			//k is being used with note_count[] with signed logic
+	int rbg = 0;	//Is set once the guitar track is parsed?
 	int tracks = 0;
 	int track[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};
 	int track_pos;
@@ -495,34 +496,27 @@ EOF_SONG * eof_import_midi(const char * fn)
 									text[EOF_MAX_MIDI_TEXT_SIZE] = '\0';	//Otherwise truncate it
 								track_pos++;
 
+								if(!ustricmp(text, "PART DRUM"))
+								{	//If this MIDI track is using the incorrect name of "PART DRUM"
+									ustrcpy(text, "PART DRUMS");	//Correct the name
+								}
+
 								/* detect what kind of track this is */
-								if(!ustricmp(text, "PART GUITAR"))
-								{
-									eof_import_events[i]->type = EOF_TRACK_GUITAR;
-									rbg = 1;
+								eof_import_events[i]->type = 0;
+								for(j = 1; j < EOF_TRACKS_MAX + 1; j++)
+								{	//Compare the track name against the tracks in eof_midi_tracks[]
+									if(!ustricmp(text, eof_midi_tracks[j].track_name))
+									{
+										eof_import_events[i]->type = eof_midi_tracks[j].track_type;
+										if(eof_midi_tracks[j].track_type == EOF_TRACK_GUITAR)
+										{
+											rbg = 1;
+										}
+									}
 								}
-								else if(!ustricmp(text, "PART BASS"))
+								if((eof_import_events[i]->type == 0) && ustrstr(text,"PART"))
 								{
-									eof_import_events[i]->type = EOF_TRACK_BASS;
-								}
-								else if(!ustricmp(text, "PART GUITAR COOP"))
-								{
-									eof_import_events[i]->type = EOF_TRACK_GUITAR_COOP;
-								}
-								else if(!ustricmp(text, "PART RHYTHM"))
-								{
-									eof_import_events[i]->type = EOF_TRACK_RHYTHM;
-								}
-								else if(!ustricmp(text, "PART DRUM") || !ustricmp(text, "PART DRUMS"))
-								{
-									eof_import_events[i]->type = EOF_TRACK_DRUM;
-								}
-								else if(!ustricmp(text, "PART VOCALS"))
-								{
-									eof_import_events[i]->type = EOF_TRACK_VOCALS;
-								}
-								else
-								{
+									allegro_message("Unidentified track \"%s\"",text);
 								}
 								break;
 							}
@@ -805,7 +799,7 @@ allegro_message("Second pass complete");
 
 	unsigned char diff = 0;
 	unsigned char diff_chart[5] = {1, 2, 4, 8, 16};
-	int note_count[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};
+	long note_count[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};
 	int first_note;
 	unsigned long hopopos[4];
 	char hopotype[4];
@@ -815,8 +809,8 @@ allegro_message("Second pass complete");
 	unsigned long tracknum;				//Used to de-obfuscate the legacy track number
 
 	for(i = 0; i < tracks; i++)
-	{
-		picked_track = eof_import_events[i]->type >= 0 ? eof_import_events[i]->type : rbg == 0 ? EOF_TRACK_GUITAR : -1;
+	{	//Valid track "types" begin at number 1
+		picked_track = eof_import_events[i]->type >= 1 ? eof_import_events[i]->type : rbg == 0 ? EOF_TRACK_GUITAR : -1;
 		first_note = note_count[picked_track];
 		if((picked_track >= 0) && !used_track[picked_track])
 		{
@@ -1391,6 +1385,13 @@ allegro_message("Third pass complete");
 				}
 			}
 		}
+	}
+
+//Ensure that any notes imported from PART KEYS are marked as "crazy"
+	tracknum = sp->track[EOF_TRACK_KEYS]->tracknum;
+	for(k = 0; k < sp->legacy_track[tracknum]->notes; k++)
+	{	//For each note in the keys track
+		sp->legacy_track[tracknum]->note[k]->flags ^= EOF_NOTE_FLAG_CRAZY;	//Set the crazy status flag
 	}
 
 	replace_filename(eof_song_path, fn, "", 1024);
