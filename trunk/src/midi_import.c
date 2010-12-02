@@ -816,7 +816,7 @@ allegro_message("Second pass complete");
 		{
 			tracknum = sp->track[picked_track]->tracknum;
 			if(picked_track == EOF_TRACK_VOCALS)
-			{
+			{	//If parsing the PART VOCALS track
 				int last_105 = 0;
 				int last_106 = 0;
 				int overdrive_pos = -1;
@@ -964,7 +964,7 @@ allegro_message("Second pass complete");
 				{
 					used_track[picked_track] = 1;
 				}
-			}
+			}//If parsing the PART VOCALS track
 			else
 			{
 //Detect whether Pro drum notation is being used
@@ -995,7 +995,7 @@ allegro_message("Second pass complete");
 				}
 
 				for(j = 0; j < eof_import_events[i]->events; j++)
-				{
+				{	//For each event in this track
 					if(key[KEY_ESC])
 					{
 						/* clean up and return */
@@ -1329,7 +1329,7 @@ allegro_message("Second pass complete");
 						}
 					}
 					pticker++;
-				}
+				}//For each event in this track
 				eof_legacy_track_resize(sp->legacy_track[tracknum], note_count[picked_track]);
 				if(sp->legacy_track[tracknum]->notes > 0)
 				{
@@ -1391,7 +1391,7 @@ allegro_message("Third pass complete");
 	tracknum = sp->track[EOF_TRACK_KEYS]->tracknum;
 	for(k = 0; k < sp->legacy_track[tracknum]->notes; k++)
 	{	//For each note in the keys track
-		sp->legacy_track[tracknum]->note[k]->flags ^= EOF_NOTE_FLAG_CRAZY;	//Set the crazy status flag
+		sp->legacy_track[tracknum]->note[k]->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy status flag
 	}
 
 	replace_filename(eof_song_path, fn, "", 1024);

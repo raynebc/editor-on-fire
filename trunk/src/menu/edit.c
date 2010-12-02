@@ -2560,10 +2560,11 @@ void eof_sanitize_note_flags(unsigned short *flags,int desttrack,int srctrack)
 
 	switch(desttrack)
 	{
-		case EOF_TRACK_GUITAR:		//All guitar based tracks must not have the double bass flag set
+		case EOF_TRACK_GUITAR:		//The only legacy style track that can use double bass is drums
 		case EOF_TRACK_BASS:
 		case EOF_TRACK_GUITAR_COOP:
 		case EOF_TRACK_RHYTHM:
+		case EOF_TRACK_KEYS:
 			*flags &= (~EOF_NOTE_FLAG_DBASS);	//Erase the double bass flag
 		break;
 
