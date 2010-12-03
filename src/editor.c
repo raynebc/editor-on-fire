@@ -669,16 +669,16 @@ void eof_read_editor_keys(void)
 			if(KEY_EITHER_SHIFT)	//Shift instrument back 1 number
 			{
 				if(eof_selected_track > EOF_TRACKS_MIN)
-					eof_selected_track--;
+					eof_menu_track_selected_track_number(eof_selected_track-1);
 				else
-					eof_selected_track = EOF_TRACKS_MAX;	//Wrap around
+					eof_menu_track_selected_track_number(EOF_TRACKS_MAX);	//Wrap around
 			}
 			else					//Shift instrument forward 1 number
 			{
 				if(eof_selected_track < EOF_TRACKS_MAX)
-					eof_selected_track++;
+					eof_menu_track_selected_track_number(eof_selected_track+1);
 				else
-					eof_selected_track = EOF_TRACKS_MIN;	//Wrap around
+					eof_menu_track_selected_track_number(EOF_TRACKS_MIN);	//Wrap around
 			}
 
 			if(eof_selected_track == EOF_TRACK_VOCALS)
@@ -4455,9 +4455,12 @@ void eof_render_editor_window_common(void)
 	int xcoord;							//Used to cache x coordinate to reduce recalculations
 	int col,col2;						//Temporary color variables
 	unsigned long start;				//Will store the timestamp of the left visible edge of the piano roll
+	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
 
 	if(!eof_song_loaded)
 		return;
+
+	numlanes = eof_count_track_lanes(eof_selected_track);
 
 	/* draw the starting position */
 	if(pos < 300)
@@ -4508,9 +4511,9 @@ void eof_render_editor_window_common(void)
 	if(eof_display_waveform)
 		eof_render_waveform(eof_waveform);
 
-	for(i = 0; i < EOF_MAX_FRETS; i++)
+	for(i = 0; i < numlanes; i++)
 	{
-		if(!i || (i + 1 >= EOF_MAX_FRETS))
+		if(!i || (i + 1 >= numlanes))
 		{	//Ensure the top and bottom lines extend to the left of the piano roll
 			hline(eof_window_editor->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
 		}

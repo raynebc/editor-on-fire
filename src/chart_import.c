@@ -342,5 +342,6 @@ EOF_SONG * eof_import_chart(const char * fn)
 
 		DestroyFeedbackChart(chart, 1);	//Free memory used by Feedback chart before exiting function
 	}
+	eof_selected_ogg = 0;
 	return sp;
 }

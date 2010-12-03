@@ -448,4 +448,7 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 unsigned long eof_track_note_count(EOF_SONG *sp, unsigned long track);
 	//Returns the note/lyric count of the specified track, or 0 upon error
 
+unsigned long eof_count_track_lanes(unsigned long track);
+	//Returns the number of lanes in the specified track, or the default of 5
+
 #endif

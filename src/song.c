@@ -2311,3 +2311,18 @@ unsigned long eof_track_note_count(EOF_SONG *sp, unsigned long track)
 
 	return 0;
 }
+
+unsigned long eof_count_track_lanes(unsigned long track)
+{
+	if((track == 0) || (track > EOF_TRACKS_MAX))
+		return 5;	//Return default value if the specified track doesn't exist
+
+	if(eof_song->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	{	//If this is a legacy track, return the number of lanes it uses
+		return eof_song->legacy_track[eof_song->track[track]->tracknum]->numlanes;
+	}
+	else
+	{	//Otherwise return 5, as so far, other track formats don't store this information
+		return 5;
+	}
+}

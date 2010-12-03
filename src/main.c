@@ -528,7 +528,7 @@ int eof_set_display_mode(int mode)
 				return 0;
 			}
 			eof_screen_layout.scrollbar_y = 203;
-			eof_screen_layout.string_space = 20;
+			eof_screen_layout.string_space_unscaled = 20;
 			eof_screen_layout.note_y[0] = 20;
 			eof_screen_layout.note_y[1] = 40;
 			eof_screen_layout.note_y[2] = 60;
@@ -606,7 +606,7 @@ int eof_set_display_mode(int mode)
 				return 0;
 			}
 			eof_screen_layout.scrollbar_y = 263;
-			eof_screen_layout.string_space = 30;
+			eof_screen_layout.string_space_unscaled = 30;
 			eof_screen_layout.note_y[0] = 20;
 			eof_screen_layout.note_y[1] = 50;
 			eof_screen_layout.note_y[2] = 80;
@@ -683,7 +683,7 @@ int eof_set_display_mode(int mode)
 				return 0;
 			}
 			eof_screen_layout.scrollbar_y = 347;
-			eof_screen_layout.string_space = 48;
+			eof_screen_layout.string_space_unscaled = 48;
 			eof_screen_layout.note_y[0] = 20;
 			eof_screen_layout.note_y[1] = 20 + 48 * 1;
 			eof_screen_layout.note_y[2] = 20 + 48 * 2;
@@ -1886,7 +1886,7 @@ void eof_render_note_window(void)
 				/* draw fretboard area */
 				rectfill(eof_window_note->screen, 0, EOF_EDITOR_RENDER_OFFSET + 25, eof_window_editor->w - 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_black);
 
-				for(i = 0; i < 5; i += 4)
+				for(i = 0; i < EOF_MAX_FRETS; i += 4)
 				{
 					hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
 				}
@@ -3372,7 +3372,7 @@ void eof_init_after_load(void)
 	eof_changes = 0;
 	eof_music_pos = eof_av_delay;
 	eof_music_paused = 1;
-	eof_selected_track = EOF_TRACK_GUITAR;
+	eof_menu_track_selected_track_number(EOF_TRACK_GUITAR);
 	eof_vocals_selected = 0;
 	eof_undo_last_type = 0;
 	eof_change_count = 0;
@@ -3391,6 +3391,24 @@ void eof_init_after_load(void)
 	eof_waveform = NULL;
 	eof_display_waveform = 0;
 	eof_catalog_menu[0].flags = 0;	//Hide the fret catalog by default
+}
+
+void eof_scale_fretboard(void)
+{
+	unsigned long ctr,numlanes;
+
+	eof_screen_layout.string_space = eof_screen_layout.string_space_unscaled;
+	numlanes = eof_count_track_lanes(eof_selected_track);
+	if(numlanes > 5)
+	{	//If the active track has more than 5 lanes, scale the spacing between the fretboard lanes
+		eof_screen_layout.string_space = (double)eof_screen_layout.string_space * (float)numlanes / 5.0;
+	}
+
+	eof_screen_layout.note_y[0] = 20;
+	for(ctr = 1; ctr < EOF_MAX_FRETS; ctr++)
+	{	//For each fretboard lane after the first is eof_screen_layout.string_space higher than the previous lane
+		eof_screen_layout.note_y[ctr] = eof_screen_layout.note_y[ctr-1] + eof_screen_layout.string_space;
+	}
 }
 
 END_OF_MAIN()
