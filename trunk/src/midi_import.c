@@ -1460,10 +1460,6 @@ allegro_message("Third pass complete");
 	destroy_midi(eof_work_midi);
 	eof_destroy_tempo_list(anchorlist);
 
-	eof_changes = 0;
-//	eof_setup_menus();
-	eof_music_pos = 0;
-	eof_selected_track = EOF_TRACK_GUITAR;
 	eof_selected_ogg = 0;
 
 #ifdef EOF_DEBUG_MIDI_IMPORT

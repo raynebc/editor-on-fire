@@ -113,8 +113,8 @@ typedef struct
 
 	/* rendering offsets */
 	int scrollbar_y;
-	int string_space;
-	int note_y[5];
+	int string_space, string_space_unscaled;	//string_space_unscaled is set by the display size, string_space is set by eof_scale_fretboard()
+	int note_y[EOF_MAX_FRETS];
 	int lyric_y;
 	int vocal_y;
 	int vocal_tail_size;
@@ -369,5 +369,9 @@ void eof_stop_midi(void);	//To be called whenever playback stops, turning of all
 void eof_exit(void);
 
 void eof_init_after_load(void);	//Initializes variables and cleans up notes, should be used after loading or creating a chart
+
+void eof_scale_fretboard(void);
+	//Prepares screen layout offsets, etc. for the active track, based on EOF's window display size and the number of frets in the track
+	//If the number of frets is less than 5, the original 5 lane spacing will be used
 
 #endif

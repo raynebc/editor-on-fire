@@ -114,17 +114,18 @@ int eof_note_draw(EOF_NOTE * np, int p)
 {
 	int pos = eof_music_pos / eof_zoom;
 	int npos;
-	int ychart[5] = {20, 40, 60, 80, 100};
+	int ychart[EOF_MAX_FRETS];
 	int pcol = p == 1 ? eof_color_white : p == 2 ? makecol(224, 255, 224) : 0;
 	int dcol = (np->flags & EOF_NOTE_FLAG_CRAZY) ? eof_color_black : eof_color_white;
 	int dcol2 = dcol;
-	int colors[EOF_MAX_FRETS] = {eof_color_green,eof_color_red,eof_color_yellow,eof_color_blue,eof_color_purple};	//Each of the fret colors
+	int colors[EOF_MAX_FRETS] = {eof_color_green,eof_color_red,eof_color_yellow,eof_color_blue,eof_color_purple,eof_color_purple};	//Each of the fret colors
 	int ncol = makecol(192, 192, 192);	//Note color defaults to silver unless the note is not star power
-	int ctr;
+	int ctr,ctr2;
 	unsigned int mask;	//Used to mask out colors in the for loop
 	int radius,dotsize;
 	char iscymbal;		//Used to track whether the specified note is marked as a cymbal
 	int x,y;
+	unsigned long numlanes;
 
 //Since Expert+ double bass notation uses the same flag as crazy status, override the dot color for PART DRUMS
 	if(eof_selected_track == EOF_TRACK_DRUM)
@@ -132,19 +133,21 @@ int eof_note_draw(EOF_NOTE * np, int p)
 
 	if(eof_inverted_notes)
 	{
-		ychart[0] = eof_screen_layout.note_y[4];
-		ychart[1] = eof_screen_layout.note_y[3];
-		ychart[2] = eof_screen_layout.note_y[2];
-		ychart[3] = eof_screen_layout.note_y[1];
-		ychart[4] = eof_screen_layout.note_y[0];
+		numlanes = eof_count_track_lanes(eof_selected_track);
+		for(ctr = 0, ctr2 = 0; ctr < EOF_MAX_FRETS; ctr++)
+		{	//Store the fretboard lane positions in reverse order, with respect to the number of lanes in use
+			if(EOF_MAX_FRETS - ctr <= numlanes)
+			{	//If this lane is used in the chart, store it in ychart[] in reverse order
+				ychart[ctr2++] = eof_screen_layout.note_y[EOF_MAX_FRETS - 1 - ctr];
+			}
+		}
 	}
 	else
 	{
-		ychart[0] = eof_screen_layout.note_y[0];
-		ychart[1] = eof_screen_layout.note_y[1];
-		ychart[2] = eof_screen_layout.note_y[2];
-		ychart[3] = eof_screen_layout.note_y[3];
-		ychart[4] = eof_screen_layout.note_y[4];
+		for(ctr = 0; ctr < EOF_MAX_FRETS; ctr++)
+		{	//Store the fretboard lane positions in normal order
+			ychart[ctr] = eof_screen_layout.note_y[ctr];
+		}
 	}
 
 	if(pos < 300)
@@ -585,12 +588,12 @@ int eof_note_draw_3d(EOF_NOTE * np, int p)
 	int rz, ez;
 	int ctr;
 	unsigned int mask;	//Used to mask out colors in the for loop
-	unsigned int notes[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN, EOF_IMAGE_NOTE_RED, EOF_IMAGE_NOTE_YELLOW, EOF_IMAGE_NOTE_BLUE, EOF_IMAGE_NOTE_PURPLE};
-	unsigned int notes_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN_HIT, EOF_IMAGE_NOTE_RED_HIT, EOF_IMAGE_NOTE_YELLOW_HIT, EOF_IMAGE_NOTE_BLUE_HIT, EOF_IMAGE_NOTE_PURPLE_HIT};
-	unsigned int hopo_notes[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_HGREEN, EOF_IMAGE_NOTE_HRED, EOF_IMAGE_NOTE_HYELLOW, EOF_IMAGE_NOTE_HBLUE, EOF_IMAGE_NOTE_HPURPLE};
-	unsigned int hopo_notes_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_HGREEN_HIT, EOF_IMAGE_NOTE_HRED_HIT, EOF_IMAGE_NOTE_HYELLOW_HIT, EOF_IMAGE_NOTE_HBLUE_HIT, EOF_IMAGE_NOTE_HPURPLE_HIT};
-	unsigned int cymbals[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN, EOF_IMAGE_NOTE_RED, EOF_IMAGE_NOTE_YELLOW_CYMBAL, EOF_IMAGE_NOTE_BLUE_CYMBAL, EOF_IMAGE_NOTE_PURPLE_CYMBAL};
-	unsigned int cymbals_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN_HIT, EOF_IMAGE_NOTE_RED_HIT, EOF_IMAGE_NOTE_YELLOW_CYMBAL_HIT, EOF_IMAGE_NOTE_BLUE_CYMBAL_HIT, EOF_IMAGE_NOTE_PURPLE_CYMBAL_HIT};
+	unsigned int notes[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN, EOF_IMAGE_NOTE_RED, EOF_IMAGE_NOTE_YELLOW, EOF_IMAGE_NOTE_BLUE, EOF_IMAGE_NOTE_PURPLE, EOF_IMAGE_NOTE_PURPLE};
+	unsigned int notes_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN_HIT, EOF_IMAGE_NOTE_RED_HIT, EOF_IMAGE_NOTE_YELLOW_HIT, EOF_IMAGE_NOTE_BLUE_HIT, EOF_IMAGE_NOTE_PURPLE_HIT, EOF_IMAGE_NOTE_PURPLE_HIT};
+	unsigned int hopo_notes[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_HGREEN, EOF_IMAGE_NOTE_HRED, EOF_IMAGE_NOTE_HYELLOW, EOF_IMAGE_NOTE_HBLUE, EOF_IMAGE_NOTE_HPURPLE, EOF_IMAGE_NOTE_HPURPLE};
+	unsigned int hopo_notes_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_HGREEN_HIT, EOF_IMAGE_NOTE_HRED_HIT, EOF_IMAGE_NOTE_HYELLOW_HIT, EOF_IMAGE_NOTE_HBLUE_HIT, EOF_IMAGE_NOTE_HPURPLE_HIT, EOF_IMAGE_NOTE_HPURPLE_HIT};
+	unsigned int cymbals[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN, EOF_IMAGE_NOTE_RED, EOF_IMAGE_NOTE_YELLOW_CYMBAL, EOF_IMAGE_NOTE_BLUE_CYMBAL, EOF_IMAGE_NOTE_PURPLE_CYMBAL, EOF_IMAGE_NOTE_PURPLE_CYMBAL};
+	unsigned int cymbals_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN_HIT, EOF_IMAGE_NOTE_RED_HIT, EOF_IMAGE_NOTE_YELLOW_CYMBAL_HIT, EOF_IMAGE_NOTE_BLUE_CYMBAL_HIT, EOF_IMAGE_NOTE_PURPLE_CYMBAL_HIT, EOF_IMAGE_NOTE_PURPLE_CYMBAL_HIT};
 
 	npos = -pos - 6 + np->pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
 	if(npos + np->length / eof_zoom_3d < -100)

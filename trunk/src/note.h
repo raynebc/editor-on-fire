@@ -3,8 +3,7 @@
 
 #include "song.h"
 
-#define EOF_MAX_FRETS 5
-	//Currently, EOF supports only 5 frets
+#define EOF_MAX_FRETS 6
 #define EOF_LYRIC_PERCUSSION 96
 
 
