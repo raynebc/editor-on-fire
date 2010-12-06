@@ -176,6 +176,7 @@ TRACK CHUNK, for each track:
 *	{
 *		2 bytes:	Chord name string length
 *		[varies:]	Chord name string
+*		1 byte:		Chord number
 *		1 byte:		Note type (difficulty)
 *		2 bytes:	Note bitflag (string use statuses: set=played, reset=not played)
 !				Bit 0 refers to string 1 (high E), bit 5 refers to string 6 (low E), consistent with guitar terminology
@@ -187,6 +188,7 @@ TRACK CHUNK, for each track:
 *		4 bytes:	Note length (in milliseconds or delta ticks)
 *		4 bytes:	Note flags (allow 32 flags for an unforsee-able number of techniques such as tapping, bending, etc)
 *	}
+!	It has been said that 21 pre-defined chord numbers (0-20, ie. note 9 for A5) are used in the Rock Band 3 MIDIs, this is currently unverified
 
 [PRO KEYS TRACK FORMAT]
 *	1 byte:		Tone set number assigned to this track (ie. 0=Grand Piano, 1=MIDI device, ...)

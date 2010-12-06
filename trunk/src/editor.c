@@ -4262,17 +4262,17 @@ void eof_render_editor_window(void)
 			{
 				if(eof_hover_note == i)
 				{
-					eof_note_draw(eof_song->legacy_track[tracknum]->note[i], ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 3);
+					eof_note_draw(eof_song->legacy_track[tracknum]->note[i], ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 3, eof_window_editor);
 				}
 				else
 				{
-					if(eof_note_draw(eof_song->legacy_track[tracknum]->note[i], ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0) == 1)
+					if(eof_note_draw(eof_song->legacy_track[tracknum]->note[i], ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0, eof_window_editor) == 1)
 						break;	//If this note was rendered right of the viewable area, all following notes will too, so stop rendering
 				}
 			}
 			else
 			{
-				if(eof_note_draw(eof_song->legacy_track[tracknum]->note[i], ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0) == 1)
+				if(eof_note_draw(eof_song->legacy_track[tracknum]->note[i], ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0, eof_window_editor) == 1)
 						break;	//If this note was rendered right of the viewable area, all following notes will too, so stop rendering
 			}
 		}
@@ -4283,11 +4283,11 @@ void eof_render_editor_window(void)
 		{
 			if((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX))
 			{
-				eof_note_draw(&eof_pen_note, 3);
+				eof_note_draw(&eof_pen_note, 3, eof_window_editor);
 			}
 			else
 			{
-				eof_note_draw(&eof_pen_note, 0);
+				eof_note_draw(&eof_pen_note, 0, eof_window_editor);
 			}
 		}
 	}
@@ -4357,7 +4357,7 @@ void eof_render_vocal_editor_window(void)
 	}
 	if(eof_hover_note >= 0)
 	{
-		eof_lyric_draw(eof_song->vocal_track[tracknum]->lyric[eof_hover_note], 2);
+		eof_lyric_draw_truncate(eof_hover_note, 2);
 	}
 	if(eof_music_paused && eof_pen_visible && (eof_pen_note.pos < eof_music_length))
 	{
