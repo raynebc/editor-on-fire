@@ -15,8 +15,9 @@ void eof_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, int 
 void eof_note_create2(EOF_NOTE * np, unsigned long bitmask, unsigned long pos, long length);
 	//A simplified version of eof_note_create that accepts the fret status as a bitflag instead of individual characters
 int eof_adjust_notes(int offset);	//Applies the given additive offset to all notes, lyrics, bookmarks, catalog entries and solo/star power/lyric phrases
-int eof_note_draw(EOF_NOTE * np, int p);
-	//Renders the note to the piano roll area, unless it would be outside the viewable area
+int eof_note_draw(EOF_NOTE * np, int p, EOF_WINDOW *window);
+	//Renders the note to the specified window, unless it would be outside the viewable area
+	//The position specified should be eof_music_catalog_pos when rendering the fret catalog, or eof_music_pos when rendering the editor window
 	//If the note is 100% clipped, nonzero is returned
 	//-1 Clipped completely to the left of the viewing window
 	//1 Clipped completely to the right of the viewing window
@@ -31,7 +32,7 @@ int eof_note_tail_draw_3d(EOF_NOTE * np, int p);
 	//If the note is 100% clipped, nonzero is returned
 	//-1 Clipped completely before the viewing window
 	//1 Clipped completely after of the viewing window
-void eof_note_draw_catalog(EOF_NOTE * np, int p);	//Renders the note to the fret catalog area
+//void eof_note_draw_catalog(EOF_NOTE * np, int p);	//Renders the note to the fret catalog area
 void eof_lyric_draw_catalog(EOF_LYRIC * np, int p);	//Renders the lyric to the fret catalog area
 
 int eof_lyric_draw_truncate(int notenum, int p);

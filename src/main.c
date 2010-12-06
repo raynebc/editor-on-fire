@@ -1845,8 +1845,8 @@ void eof_render_note_window(void)
 
 	clear_to_color(eof_window_note->screen, eof_color_gray);
 
-	if(eof_catalog_menu[0].flags & D_SELECTED)
-	{//If show catalog is selected
+	if((eof_catalog_menu[0].flags & D_SELECTED) && eof_song->catalog->entries)
+	{//If show catalog is selected and there's at least one entry
 		if(eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track] == NULL)
 			return;	//If this is NULL for some reason (broken track array or corrupt catalog entry, abort rendering it
 
@@ -1993,7 +1993,7 @@ void eof_render_note_window(void)
 					}
 					if((eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_song->legacy_track[tracknum]->note[i]->type) && (eof_song->legacy_track[tracknum]->note[i]->pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos))
 					{	//If this note is the same difficulty as that from where the catalog entry was taken, and is in the catalog entry
-						eof_note_draw_catalog(eof_song->legacy_track[tracknum]->note[i], i == eof_hover_note_2 ? 2 : 0);
+						eof_note_draw(eof_song->legacy_track[tracknum]->note[i], i == eof_hover_note_2 ? 2 : 0, eof_window_note);
 					}
 				}
 
