@@ -21,7 +21,6 @@ int eof_note_draw(EOF_NOTE * np, int p, EOF_WINDOW *window);
 	//If the note is 100% clipped, nonzero is returned
 	//-1 Clipped completely to the left of the viewing window
 	//1 Clipped completely to the right of the viewing window
-void eof_lyric_draw(EOF_LYRIC * np, int p);	//Renders the lyric to the piano roll area
 int eof_note_draw_3d(EOF_NOTE * np, int p);
 	//Renders the note to the 3D preview area
 	//If the note is 100% clipped, nonzero is returned
@@ -32,17 +31,18 @@ int eof_note_tail_draw_3d(EOF_NOTE * np, int p);
 	//If the note is 100% clipped, nonzero is returned
 	//-1 Clipped completely before the viewing window
 	//1 Clipped completely after of the viewing window
-//void eof_note_draw_catalog(EOF_NOTE * np, int p);	//Renders the note to the fret catalog area
-void eof_lyric_draw_catalog(EOF_LYRIC * np, int p);	//Renders the lyric to the fret catalog area
-
-int eof_lyric_draw_truncate(int notenum, int p);
+int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window);
+	//Renders the lyric to the specified window
 	//If notenum < eof_song->vocal_track[tracknum]->lyrics, renders the text to the lyric lane
 	//If notenum < eof_song->vocal_track[tracknum]->lyrics-1, the X coordinate of the next lyric's position in the lane is used
 	//to clip the drawing of lyric #notenum, performing effective truncate logic
 	//Returns nonzero if the x position that the text was written to was outside of the clip region for the lyric lane,
 	//so the calling function is able to stop rendering lyrics that won't be seen
-EOF_LYRIC_LINE *FindLyricLine_p(EOF_LYRIC * lp);
-EOF_LYRIC_LINE *FindLyricLine(unsigned long lyricnum);
+EOF_LYRIC_LINE *eof_find_lyric_line(unsigned long lyricnum);
 	//Returns a pointer to whichever line the specified lyric exists in, or NULL if it is not in a line
+unsigned long eof_find_lyric_number(EOF_LYRIC * np);
+	//Finds the lyric in the lyric[] array and returns its index, or 0 on error or lyric not found
+	//error checking can be achieved by testing if(!returnval && (lyric[returnval] != np))
+
 
 #endif
