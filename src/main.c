@@ -1926,7 +1926,8 @@ void eof_render_note_window(void)
 					}
 					if(eof_song->vocal_track[tracknum]->lyric[i]->pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos)
 					{	//If this lyric is in the catalog entry, render it
-						eof_lyric_draw_catalog(eof_song->vocal_track[tracknum]->lyric[i], i == eof_hover_note_2 ? 2 : 0);
+						if(eof_lyric_draw(eof_song->vocal_track[tracknum]->lyric[i], i == eof_hover_note_2 ? 2 : 0, eof_window_note))
+							break;	//Break if the function indicated that the lyric was rendered beyond the clip window
 					}
 				}
 
@@ -2143,7 +2144,7 @@ void eof_render_lyric_preview(BITMAP * bp)
 		space = 0;			//The first lyric will have no space inserted in front of it
 		currentlength = 0;	//Reset preview line length counter
 
-		linenum=FindLyricLine(eof_preview_line_lyric[x]);	//Find the line structure representing this lyric preview
+		linenum=eof_find_lyric_line(eof_preview_line_lyric[x]);	//Find the line structure representing this lyric preview
 		if(linenum && (linenum->flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE))	//If this line is overdrive
 		{
 			if(x == 0)	//This is the first preview line

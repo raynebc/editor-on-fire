@@ -130,12 +130,12 @@ int eof_note_draw(EOF_NOTE * np, int p, EOF_WINDOW *window)
 	unsigned long numlanes;
 
 	if(window == eof_window_note)
-	{
+	{	//If rendering to the fret catalog
 		position = eof_music_catalog_pos;
 		leftcoord = 140;
 	}
 	else
-	{
+	{	//Otherwise assume it's being rendered to the editor window
 		position = eof_music_pos;
 		leftcoord = 300;
 	}
@@ -276,164 +276,63 @@ int eof_note_draw(EOF_NOTE * np, int p, EOF_WINDOW *window)
 	return 0;	//Return status:  Note was not clipped in its entirety
 }
 
-void eof_lyric_draw(EOF_LYRIC * np, int p)
+int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 {
-	int pos = eof_music_pos / eof_zoom;
-	int npos;
-	int nplace;
-	int note_y;
-	int native = 0;
-	int ychart[5] = {20, 40, 60, 80, 100};
-	int pcol = p == 1 ? eof_color_white : p == 2 ? makecol(224, 255, 224) : 0;
-	int dcol = eof_color_white;
-	int ncol = 0;
-
-	EOF_LYRIC_LINE *lyricline;	//The line that this lyric is found to be in (if any) so the correct background color can be determined
-	int bgcol = eof_color_black;	//Unless the text is found to be in a lyric phrase, it will render with a black background
-
-	if(p == 3)
-	{
-		pcol = eof_color_white;
-		dcol = eof_color_white;
-	}
-
-	lyricline=FindLyricLine_p(np);	//Find which line this lyric is in
-	if(lyricline != NULL)
-	{
-		if((lyricline->flags) & EOF_LYRIC_LINE_FLAG_OVERDRIVE)	//If the overdrive flag is set
-			bgcol=makecol(64, 128, 64);	//Make dark green the text's background color
-		else
-			bgcol=makecol(0, 0, 127);	//Make dark blue the text's background colo
-	}
-
-	ychart[0] = eof_screen_layout.note_y[0];
-	ychart[1] = eof_screen_layout.note_y[1];
-	ychart[2] = eof_screen_layout.note_y[2];
-	ychart[3] = eof_screen_layout.note_y[3];
-	ychart[4] = eof_screen_layout.note_y[4];
-
-	if(pos < 300)
-	{
-		npos = 20 + (np->pos) / eof_zoom;
-	}
-	else
-	{
-		npos = 20 - ((pos - 300)) + np->pos / eof_zoom;
-	}
-	nplace = np->note - eof_vocals_offset;
-	if(nplace < 0)
-	{
-		native = -1;
-	}
-	else if(nplace >= eof_screen_layout.vocal_view_size)
-	{
-		native = 1;
-	}
-	while(nplace < 0)
-	{
-		nplace += eof_screen_layout.vocal_view_size;
-	}
-	if(native < 0)
-	{
-		note_y = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y;
-	}
-	else if(native > 0)
-	{
-		note_y = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - (eof_screen_layout.vocal_view_size + 1) * eof_screen_layout.vocal_tail_size;
-	}
-	else
-	{
-		note_y = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - (nplace % eof_screen_layout.vocal_view_size + 1) * eof_screen_layout.vocal_tail_size;
-	}
-
-//Rewritten logic to remove duplicated code and render pitchless lyrics at the bottom of the piano roll in gray
-	vline(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 + eof_screen_layout.note_marker_size, makecol(128, 128, 128));
-	if((np->note != 0) && !eof_is_freestyle(np->text))
-	{
-		ncol = native ? eof_color_red : eof_color_green;
-		if(np->note != EOF_LYRIC_PERCUSSION)
-			rectfill(eof_window_editor->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, ncol);
-		else
-		{	//Render a vocal percussion note as a fret note in the middle lane
-			circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.string_space / 2, eof_screen_layout.note_size, eof_color_white);
-			circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.string_space / 2, eof_screen_layout.note_size-2, eof_color_black);
-		}
-
-		if(p)
-		{
-			if(np->note == EOF_LYRIC_PERCUSSION)
-			{	//Render a vocal percussion note as a fret note in the middle lane
-				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.string_space / 2, eof_screen_layout.note_size, eof_color_white);
-				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.string_space / 2, eof_screen_layout.note_size-2, eof_color_black);
-			}
-			else
-			{	//Render a regular vocal note
-				rect(eof_window_editor->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, pcol);
-			}
-		}
-	}
-	else	//If the lyric is pitchless or freestyle, render with gray
-		rectfill(eof_window_editor->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, makecol(128, 128, 128));
-
-	if(p == 3)
-	{
-		set_clip_rect(eof_window_editor->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, eof_window_editor->screen->w, eof_window_editor->screen->h);
-		textprintf_ex(eof_window_editor->screen, font, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y, eof_color_white, bgcol, "%s", np->text);
-		set_clip_rect(eof_window_editor->screen, 0, 0, eof_window_editor->screen->w, eof_window_editor->screen->h);
-	}
-	else
-	{
-		set_clip_rect(eof_window_editor->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, eof_window_editor->screen->w, eof_window_editor->screen->h);
-		textprintf_ex(eof_window_editor->screen, font, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y, p ? eof_color_green : eof_color_white, bgcol, "%s", np->text);
-		set_clip_rect(eof_window_editor->screen, 0, 0, eof_window_editor->screen->w, eof_window_editor->screen->h);
-	}
-}
-
-int eof_lyric_draw_truncate(int notenum, int p)
-{
-	EOF_LYRIC *np=NULL;
 	EOF_LYRIC *nextnp=NULL;	//Used to find the would-be X coordinate of the next lyric in the lyric lane
-
-	int pos = eof_music_pos / eof_zoom;
+	unsigned long notenum = 0;
+	char notpen = 0;	//Is set to nonzero if the passed lyric is determined to already be defined
+	int position;	//This is the position for the specified window's piano roll and is based on the passed window pointer
+	int leftcoord;	//This is the position of the left end of the piano roll
+	int pos;		//This is the position of the specified window's piano roll, scaled by the current zoom level
 	int npos;		//Stores the X coordinate at which to draw lyric #notenum
 	int X2;			//Stores the X coordinate at which lyric #notenum+1 would be drawn (to set the clip rectangle)
 	int nplace;
 	int note_y;
 	int native = 0;
-	int ychart[5] = {20, 40, 60, 80, 100};
 	int pcol = p == 1 ? eof_color_white : p == 2 ? makecol(224, 255, 224) : 0;
 	int dcol = eof_color_white;
 	int ncol = 0;
-//	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-
 	EOF_LYRIC_LINE *lyricline;	//The line that this lyric is found to be in (if any) so the correct background color can be determined
 	int bgcol = eof_color_black;	//Unless the text is found to be in a lyric phrase, it will render with a black background
 
-	if(notenum >= eof_song->vocal_track[0]->lyrics)	//If this is outside the bounds of EOF's defined lyrics
-		return 1;	//Stop rendering
+	if((np == NULL) || (window == NULL))	//If this is not a valid lyric or window pointer
+		return 1;			//Stop rendering
+	X2=window->screen->w;		//The default X2 coordinate for the clipping rectangle
 
-	lyricline=FindLyricLine(notenum);	//Find which line this lyric is in
-	if(lyricline != NULL)
-	{
-		if((lyricline->flags) & EOF_LYRIC_LINE_FLAG_OVERDRIVE)	//If the overdrive flag is set
-			bgcol=makecol(64, 128, 64);	//Make dark green the text's background color
-		else
-			bgcol=makecol(0, 0, 127);	//Make dark blue the text's background colo
-	}
-
-	np=eof_song->vocal_track[0]->lyric[notenum];
-
-	if(notenum < eof_song->vocal_track[0]->lyrics-1)		//If there is another lyric
-	{							//Find its would-be X coordinate (use as X2 for clipping rect)
-		nextnp=eof_song->vocal_track[0]->lyric[notenum+1];
-		if(pos < 300)
-			X2 = 20 + (nextnp->pos) / eof_zoom;
-		else
-			X2 = 20 - ((pos - 300)) + nextnp->pos / eof_zoom;
+	if(window == eof_window_note)
+	{	//If rendering to the fret catalog
+		position = eof_music_catalog_pos;
+		leftcoord = 140;
 	}
 	else
-		X2=eof_window_editor->screen->w;		//The default X2 coordinate for the clipping rectangle
+	{	//Otherwise assume it's being rendered to the editor window
+		position = eof_music_pos;
+		leftcoord = 300;
+	}
+	pos = position / eof_zoom;
 
+	notenum = eof_find_lyric_number(np);	//Find which lyric number this is
+	if(notenum || (eof_song->vocal_track[0]->lyric[0] == np))
+	{	//If the passed lyric is already defined (not the pen lyric)
+		notpen = 1;
+		lyricline=eof_find_lyric_line(notenum);	//Find which line this lyric is in
+		if(lyricline != NULL)
+		{
+			if((lyricline->flags) & EOF_LYRIC_LINE_FLAG_OVERDRIVE)	//If the overdrive flag is set
+				bgcol=makecol(64, 128, 64);	//Make dark green the text's background color
+			else
+				bgcol=makecol(0, 0, 127);	//Make dark blue the text's background colo
+		}
+
+		if(notenum < eof_song->vocal_track[0]->lyrics-1)		//If there is another lyric
+		{							//Find its would-be X coordinate (use as X2 for clipping rect)
+			nextnp=eof_song->vocal_track[0]->lyric[notenum+1];
+			if(pos < leftcoord)
+				X2 = 20 + (nextnp->pos) / eof_zoom;
+			else
+				X2 = 20 - ((pos - leftcoord)) + nextnp->pos / eof_zoom;
+		}
+	}
 
 	if(p == 3)
 	{
@@ -441,20 +340,19 @@ int eof_lyric_draw_truncate(int notenum, int p)
 		dcol = eof_color_white;
 	}
 
-	ychart[0] = eof_screen_layout.note_y[0];
-	ychart[1] = eof_screen_layout.note_y[1];
-	ychart[2] = eof_screen_layout.note_y[2];
-	ychart[3] = eof_screen_layout.note_y[3];
-	ychart[4] = eof_screen_layout.note_y[4];
-
-	if(pos < 300)
+	if(pos < leftcoord)
 	{
 		npos = 20 + (np->pos) / eof_zoom;
 	}
 	else
 	{
-		npos = 20 - ((pos - 300)) + np->pos / eof_zoom;
+		npos = 20 - ((pos - leftcoord)) + np->pos / eof_zoom;
 	}
+
+//Rewritten logic returns nonzero if NO pixels would be written to the left of the window's X2 coordinate
+	if(npos > window->screen->w)	//If text was rendered beginning beyond EOF's right window border
+		return 1;
+
 	nplace = np->note - eof_vocals_offset;
 	if(nplace < 0)
 	{
@@ -483,13 +381,13 @@ int eof_lyric_draw_truncate(int notenum, int p)
 
 
 //Rewritten logic to remove duplicated code and render pitchless lyrics at the bottom of the piano roll in gray
-	vline(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 + eof_screen_layout.note_marker_size, makecol(128, 128, 128));
+	vline(window->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 + eof_screen_layout.note_marker_size, makecol(128, 128, 128));
 	if((np->note != 0) && !eof_is_freestyle(np->text))
 	{
 		ncol = native ? eof_color_red : eof_color_green;
 		if(np->note != EOF_LYRIC_PERCUSSION)
 		{
-			rectfill(eof_window_editor->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, ncol);
+			rectfill(window->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, ncol);
 
 			int sliderect[8] = {0};	//An array of 4 vertices, used to draw a diagonal rectangle
 			EOF_LYRIC *np2=NULL;	//Stores a pointer to the next lyric
@@ -498,7 +396,7 @@ int eof_lyric_draw_truncate(int notenum, int p)
 			int note_y2 = 0;	//Used to store the y coordinate of the next lyric
 			int npos2 = 0;		//Stores the X coordinate of the next lyric
 
-			if((notenum + 1 < eof_song->vocal_track[0]->lyrics) && (eof_song->vocal_track[0]->lyric[notenum + 1]->text[0] == '+'))
+			if(notpen && (notenum + 1 < eof_song->vocal_track[0]->lyrics) && (eof_song->vocal_track[0]->lyric[notenum + 1]->text[0] == '+'))
 			{	//If there's another lyric, and it begins with a plus sign, it's a pitch shift, draw a vocal slide polygon
 				np2=eof_song->vocal_track[0]->lyric[notenum+1];
 				sliderect[0]=npos + np->length / eof_zoom;	//X1 (X coordinate of the end of this lyric's rectangle)
@@ -546,50 +444,46 @@ int eof_lyric_draw_truncate(int notenum, int p)
 				sliderect[4]=sliderect[2];	//X4 (X coordinate of the next lyric's rectangle)
 				sliderect[5]=sliderect[3] + eof_screen_layout.vocal_tail_size - 1;	//Y4 (Y coordinate of the bottom of next lyric's rectangle)
 
-				if((sliderect[0] < eof_window_editor->w) && (sliderect[2] >= 0))
+				if((sliderect[0] < window->w) && (sliderect[2] >= 0))
 				{	//If the left end of the polygon doesn't render off the right edge of the editor window and the right end of the polygon doesn't render off the left edge
-					polygon(eof_window_editor->screen, 4, sliderect, makecol(128, 0, 128));	//Render the 4 point polygon in purple
+					polygon(window->screen, 4, sliderect, makecol(128, 0, 128));	//Render the 4 point polygon in purple
 				}
 			}
 		}
 		else
 		{	//Render a vocal percussion note as a fret note in the middle lane
-			circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.string_space / 2, eof_screen_layout.note_size, eof_color_white);
-			circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.string_space / 2, eof_screen_layout.note_size-2, eof_color_black);
+			circlefill(window->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.string_space / 2, eof_screen_layout.note_size, eof_color_white);
+			circlefill(window->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.string_space / 2, eof_screen_layout.note_size-2, eof_color_black);
 		}
 
 		if(p)
 		{
 			if(np->note == EOF_LYRIC_PERCUSSION)
 			{	//Render a vocal percussion note as a fret note in the middle lane
-				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.string_space / 2, eof_screen_layout.note_size, eof_color_white);
-				circlefill(eof_window_editor->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.string_space / 2, eof_screen_layout.note_size-2, eof_color_black);
+				circlefill(window->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.string_space / 2, eof_screen_layout.note_size, eof_color_white);
+				circlefill(window->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.string_space / 2, eof_screen_layout.note_size-2, eof_color_black);
 			}
 			else
 			{	//Render a regular vocal note
-				rect(eof_window_editor->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, pcol);
+				rect(window->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, pcol);
 			}
 		}
 	}
 	else	//If the lyric is pitchless or freestyle, render with gray
-		rectfill(eof_window_editor->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, makecol(128, 128, 128));
+		rectfill(window->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, makecol(128, 128, 128));
 
 
 //Rewritten logic checks the next lyric to set an appropriate clipping rectangle for truncation purposes, and use the determined background color (so phrase marking rectangle isn't erased by text)
-	set_clip_rect(eof_window_editor->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, X2-2, eof_window_editor->screen->h);	//Alteration: Provide at least two pixels of clearance for the edge of the clip rectangle
+	set_clip_rect(window->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, X2-2, window->screen->h);	//Alteration: Provide at least two pixels of clearance for the edge of the clip rectangle
 
 	if(p == 3)
-		textprintf_ex(eof_window_editor->screen, font, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y, eof_color_white, bgcol, "%s", np->text);
+		textprintf_ex(window->screen, font, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y, eof_color_white, bgcol, "%s", np->text);
 	else
-		textprintf_ex(eof_window_editor->screen, font, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y, p ? eof_color_green : eof_color_white, bgcol, "%s", np->text);
+		textprintf_ex(window->screen, font, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y, p ? eof_color_green : eof_color_white, bgcol, "%s", np->text);
 
-	set_clip_rect(eof_window_editor->screen, 0, 0, eof_window_editor->screen->w, eof_window_editor->screen->h);	//Restore original clipping rectangle
+	set_clip_rect(window->screen, 0, 0, window->screen->w, window->screen->h);	//Restore original clipping rectangle
 
-//Rewritten logic returns nonzero if NO pixels were written to the left of the EOF window's X2 coordinate
-	if(npos > eof_window_editor->screen->w)	//If text was rendered beginning beyond EOF's right window border
-		return 1;
-	else
-		return 0;
+	return 0;	//Return status:  Note was not clipped in its entirety
 }
 
 int eof_note_draw_3d(EOF_NOTE * np, int p)
@@ -838,132 +732,9 @@ int eof_note_tail_draw_3d(EOF_NOTE * np, int p)
 	return 0;
 }
 
-void eof_lyric_draw_catalog(EOF_LYRIC * np, int p)
-{
-	int pos = eof_music_catalog_pos / eof_zoom;
-	int npos;
-	int nplace;
-	int note_y;
-	int native = 0;
-	int ychart[5] = {20, 40, 60, 80, 100};
-	int pcol = p == 1 ? eof_color_white : p == 2 ? makecol(224, 255, 224) : 0;
-	int dcol = eof_color_white;
-	int ncol = 0;
-
-	if(p == 3)
-	{
-		pcol = eof_color_white;
-		dcol = eof_color_white;
-	}
-
-	ychart[0] = eof_screen_layout.note_y[0];
-	ychart[1] = eof_screen_layout.note_y[1];
-	ychart[2] = eof_screen_layout.note_y[2];
-	ychart[3] = eof_screen_layout.note_y[3];
-	ychart[4] = eof_screen_layout.note_y[4];
-
-	if(pos < 140)
-	{
-		npos = 20 + (np->pos) / eof_zoom;
-	}
-	else
-	{
-		npos = 20 - ((pos - 140)) + np->pos / eof_zoom;
-	}
-	nplace = np->note - eof_vocals_offset;
-	if(nplace < 0)
-	{
-		native = -1;
-	}
-	else if(nplace >= eof_screen_layout.vocal_view_size)
-	{
-		native = 1;
-	}
-	while(nplace < 0)
-	{
-		nplace += eof_screen_layout.vocal_view_size;
-	}
-	if(native < 0)
-	{
-		note_y = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y;
-	}
-	else if(native > 0)
-	{
-		note_y = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - (eof_screen_layout.vocal_view_size + 1) * eof_screen_layout.vocal_tail_size;
-	}
-	else
-	{
-		note_y = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - (nplace % eof_screen_layout.vocal_view_size + 1) * eof_screen_layout.vocal_tail_size;
-	}
-	if(p == 3)
-	{
-		vline(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 + eof_screen_layout.note_marker_size, makecol(128, 128, 128));
-		if(np->note != 0)
-		{
-			ncol = native ? eof_color_red : eof_color_green;
-			rectfill(eof_window_note->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, ncol);
-			if(p)
-			{
-				rect(eof_window_note->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, pcol);
-			}
-		}
-		set_clip_rect(eof_window_note->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, eof_window_note->screen->w, eof_window_note->screen->h);
-		textprintf_ex(eof_window_note->screen, font, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y, eof_color_white, eof_color_black, "%s", np->text);
-		set_clip_rect(eof_window_note->screen, 0, 0, eof_window_note->screen->w, eof_window_note->screen->h);
-	}
-	else
-	{
-		vline(eof_window_note->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 + eof_screen_layout.note_marker_size, makecol(128, 128, 128));
-		if(np->note != 0)
-		{
-			ncol = native ? eof_color_red : eof_color_green;
-			if(native < 0)
-			{
-				note_y = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y;
-			}
-			else if(native > 0)
-			{
-				note_y = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - (eof_screen_layout.vocal_view_size + 1) * eof_screen_layout.vocal_tail_size;
-			}
-			else
-			{
-				note_y = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - (nplace % eof_screen_layout.vocal_view_size + 1) * eof_screen_layout.vocal_tail_size;
-			}
-			rectfill(eof_window_note->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, ncol);
-			if(p)
-			{
-				rect(eof_window_note->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, pcol);
-			}
-		}
-		set_clip_rect(eof_window_note->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, eof_window_note->screen->w, eof_window_note->screen->h);
-		textprintf_ex(eof_window_note->screen, font, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y, p ? eof_color_green : eof_color_white, eof_color_black, "%s", np->text);
-		set_clip_rect(eof_window_note->screen, 0, 0, eof_window_note->screen->w, eof_window_note->screen->h);
-	}
-}
-
-EOF_LYRIC_LINE *FindLyricLine_p(EOF_LYRIC * lp)
+EOF_LYRIC_LINE *eof_find_lyric_line(unsigned long lyricnum)
 {
 	unsigned long linectr;
-//	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	unsigned long lyricpos;
-
-	if(eof_song == NULL)
-		return NULL;
-	lyricpos=lp->pos;
-
-	for(linectr=0;linectr<eof_song->vocal_track[0]->lines;linectr++)
-	{
-		if((eof_song->vocal_track[0]->line[linectr].start_pos <= lyricpos) && (eof_song->vocal_track[0]->line[linectr].end_pos >= lyricpos))
-			return &(eof_song->vocal_track[0]->line[linectr]);	//Line found, return it
-	}
-
-	return NULL;	//No such line found
-}
-
-EOF_LYRIC_LINE *FindLyricLine(unsigned long lyricnum)
-{
-	unsigned long linectr;
-//	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	unsigned long lyricpos;
 
 	if(eof_song == NULL)
@@ -981,4 +752,20 @@ EOF_LYRIC_LINE *FindLyricLine(unsigned long lyricnum)
 	}
 
 	return NULL;	//No such line found
+}
+
+unsigned long eof_find_lyric_number(EOF_LYRIC * np)
+{
+	unsigned long ctr;
+
+	if(np == NULL)
+		return 0;
+
+	for(ctr = 0; ctr < eof_song->vocal_track[0]->lyrics; ctr++)
+	{	//For each lyric
+		if(np == eof_song->vocal_track[0]->lyric[ctr])
+			return ctr;
+	}
+
+	return 0;
 }

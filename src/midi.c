@@ -711,7 +711,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				correctphrases = 0;	//By default, missing lyric phrases won't be inserted
 				for(ctr = 0; ctr < sp->vocal_track[tracknum]->lyrics; ctr++)
 				{
-					if((FindLyricLine(ctr) == NULL) && (sp->vocal_track[tracknum]->lyric[ctr]->note != VOCALPERCUSSION))
+					if((eof_find_lyric_line(ctr) == NULL) && (sp->vocal_track[tracknum]->lyric[ctr]->note != VOCALPERCUSSION))
 					{	//If this lyric is not in a line and is not a vocal percussion note
 						eof_cursor_visible = 0;
 						eof_pen_visible = 0;
@@ -732,7 +732,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				{
 					for(ctr = 0; ctr < sp->vocal_track[tracknum]->lyrics; ctr++)
 					{
-						if((FindLyricLine(ctr) == NULL) && (sp->vocal_track[tracknum]->lyric[ctr]->note != VOCALPERCUSSION))
+						if((eof_find_lyric_line(ctr) == NULL) && (sp->vocal_track[tracknum]->lyric[ctr]->note != VOCALPERCUSSION))
 						{	//If this lyric is not in a line and is not a vocal percussion note, write the MIDI events for a line phrase to envelop it
 							eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[ctr]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, 105);
 							eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[ctr]->pos + sp->vocal_track[tracknum]->lyric[ctr]->length,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, 105);

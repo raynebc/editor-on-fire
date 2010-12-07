@@ -4339,25 +4339,25 @@ void eof_render_vocal_editor_window(void)
 			{
 				if(eof_hover_note == i)
 				{
-					if(eof_lyric_draw_truncate(i, ((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 3))
+					if(eof_lyric_draw(eof_song->vocal_track[tracknum]->lyric[i], ((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 3, eof_window_editor))
 						break;	//Break if the function indicated that the lyric was rendered beyond the clip window
 				}
 				else
 				{
-					if(eof_lyric_draw_truncate(i, ((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0))
+					if(eof_lyric_draw(eof_song->vocal_track[tracknum]->lyric[i], ((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0, eof_window_editor))
 						break;	//Break if the function indicated that the lyric was rendered beyond the clip window
 				}
 			}
 			else
 			{
-				if(eof_lyric_draw_truncate(i, ((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0))
+				if(eof_lyric_draw(eof_song->vocal_track[tracknum]->lyric[i], ((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0, eof_window_editor))
 					break;	//Break if the function indicated that the lyric was rendered beyond the clip window
 			}
 		}
 	}
 	if(eof_hover_note >= 0)
 	{
-		eof_lyric_draw_truncate(eof_hover_note, 2);
+		eof_lyric_draw(eof_song->vocal_track[tracknum]->lyric[eof_hover_note], 2, eof_window_editor);
 	}
 	if(eof_music_paused && eof_pen_visible && (eof_pen_note.pos < eof_music_length))
 	{
@@ -4365,11 +4365,11 @@ void eof_render_vocal_editor_window(void)
 		{
 			if((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX))
 			{
-				eof_lyric_draw(&eof_pen_lyric, 3);
+				eof_lyric_draw(&eof_pen_lyric, 3, eof_window_editor);
 			}
 			else
 			{
-				eof_lyric_draw(&eof_pen_lyric, 0);
+				eof_lyric_draw(&eof_pen_lyric, 0, eof_window_editor);
 			}
 		}
 	}
