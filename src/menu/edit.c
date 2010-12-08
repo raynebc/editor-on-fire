@@ -1086,7 +1086,7 @@ int eof_menu_edit_cut_paste(int anchor, int option, float offset)
 		{
 			if((eof_song->legacy_track[j]->note[i-1]->pos + eof_song->legacy_track[j]->note[i-1]->length >= start_pos) && (eof_song->legacy_track[j]->note[i-1]->pos < end_pos))
 			{
-				eof_track_delete_note(eof_song->legacy_track[j], i-1);
+				eof_legacy_track_delete_note(eof_song->legacy_track[j], i-1);
 			}
 		}
 	}
@@ -1113,7 +1113,7 @@ int eof_menu_edit_cut_paste(int anchor, int option, float offset)
 
 			if(temp_note.pos + temp_note.length < eof_music_length)
 			{
-				new_note = eof_track_add_note(eof_song->legacy_track[j]);
+				new_note = eof_legacy_track_add_note(eof_song->legacy_track[j]);
 				if(new_note)
 				{
 					new_note->type = temp_note.type;
@@ -1124,7 +1124,7 @@ int eof_menu_edit_cut_paste(int anchor, int option, float offset)
 				}
 			}
 		}
-		eof_track_sort_notes(eof_song->legacy_track[j]);
+		eof_legacy_track_sort_notes(eof_song->legacy_track[j]);
 
 		/* star power */
 		for(i = 0; i < eof_song->legacy_track[j]->star_power_paths; i++)
@@ -1297,7 +1297,7 @@ int eof_menu_edit_paste(void)
 
 		if(eof_music_pos + temp_note.pos + temp_note.length - eof_av_delay < eof_music_length)
 		{
-			new_note = eof_track_add_note(eof_song->legacy_track[tracknum]);
+			new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
 			if(new_note)
 			{
 				new_note->type = eof_note_type;
@@ -1311,7 +1311,7 @@ int eof_menu_edit_paste(void)
 		}
 	}
 	pack_fclose(fp);
-	eof_track_sort_notes(eof_song->legacy_track[tracknum]);
+	eof_legacy_track_sort_notes(eof_song->legacy_track[tracknum]);
 	eof_fixup_notes();
 	eof_determine_hopos();
 	eof_detect_difficulties(eof_song);
@@ -1377,7 +1377,7 @@ int eof_menu_edit_old_paste(void)
 
 		if(eof_music_pos + temp_note.pos + temp_note.length - eof_av_delay < eof_music_length)
 		{
-			new_note = eof_track_add_note(eof_song->legacy_track[tracknum]);
+			new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
 			if(new_note)
 			{
 				new_note->note = temp_note.note;
@@ -1390,7 +1390,7 @@ int eof_menu_edit_old_paste(void)
 			}
 		}
 	}
-	eof_track_sort_notes(eof_song->legacy_track[tracknum]);
+	eof_legacy_track_sort_notes(eof_song->legacy_track[tracknum]);
 	eof_fixup_notes();
 	eof_determine_hopos();
 	eof_detect_difficulties(eof_song);
@@ -2213,14 +2213,14 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty)
 		{	//For each note in this instrument track, from last to first
 			if(eof_song->legacy_track[tracknum]->note[i-1]->type == eof_note_type)
 			{	//If this note is in the current difficulty
-				eof_track_delete_note(eof_song->legacy_track[tracknum], i - 1);	//Delete it
+				eof_legacy_track_delete_note(eof_song->legacy_track[tracknum], i - 1);	//Delete it
 			}
 		}
 		for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
 		{	//For each note in this instrument track
 			if(eof_song->legacy_track[tracknum]->note[i]->type == source_difficulty)
 			{	//If this note is in the source difficulty
-				new_note = eof_track_add_note(eof_song->legacy_track[tracknum]);	//Create a note
+				new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);	//Create a note
 				if(new_note)
 				{	//And copy the source note to the destination difficulty
 					new_note->type = eof_note_type;
@@ -2468,7 +2468,7 @@ int eof_menu_edit_paste_from_catalog(void)
 					/* paste the note */
 					if(end_beat - first_beat + start_beat < eof_song->beats)
 					{
-						new_note = eof_track_add_note(eof_song->legacy_track[tracknum]);
+						new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
 						if(new_note)
 						{
 							new_note->type = eof_note_type;
@@ -2481,7 +2481,7 @@ int eof_menu_edit_paste_from_catalog(void)
 					}
 				}
 			}
-			eof_track_sort_notes(eof_song->legacy_track[tracknum]);
+			eof_legacy_track_sort_notes(eof_song->legacy_track[tracknum]);
 			eof_fixup_notes();
 			eof_determine_hopos();
 			eof_detect_difficulties(eof_song);

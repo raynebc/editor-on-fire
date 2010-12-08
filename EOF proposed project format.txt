@@ -192,6 +192,8 @@ TRACK CHUNK, for each track:
 
 [PRO KEYS TRACK FORMAT]
 *	1 byte:		Tone set number assigned to this track (ie. 0=Grand Piano, 1=MIDI device, ...)
+*	1 byte:		The lowest note used in this track (Rock Band standard is 48)
+*	1 byte:		The highest note used in this track (Rock Band standard is 72)
 
 *	4 bytes:	Number of chords
 !		For the sake of this format, "chord" will refer to all notes defined at a given position in a difficulty in a keys track,

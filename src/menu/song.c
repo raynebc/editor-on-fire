@@ -1274,7 +1274,7 @@ int eof_menu_catalog_add(void)
 			if(eof_song->legacy_track[tracknum]->note[i]->length < 100)
 			{
 				last_pos = eof_song->legacy_track[tracknum]->note[i]->pos + 100;
-				next = eof_fixup_next_note(eof_song->legacy_track[tracknum], i);
+				next = eof_fixup_next_legacy_note(eof_song->legacy_track[tracknum], i);
 				if(next >= 0)
 				{
 					if(last_pos >= eof_song->legacy_track[tracknum]->note[next]->pos)
