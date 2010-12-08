@@ -107,6 +107,8 @@ MENU eof_song_menu[] =
 	{"&Waveform Graph", NULL, eof_waveform_menu, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"T&est In FOF\tF12", eof_menu_song_test, NULL, EOF_LINUX_DISABLE, NULL},
+    {"", NULL, NULL, 0, NULL},
+    {"Enable open strum bass", eof_menu_song_open_bass, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -166,7 +168,7 @@ void eof_prepare_song_menu(void)
 	int seekn = 0;
 
 	if(eof_song && eof_song_loaded)
-	{
+	{//If a chart is loaded
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		if(eof_vocals_selected)
 		{
@@ -460,7 +462,7 @@ void eof_prepare_song_menu(void)
 				eof_track_selected_menu[i].text[0] = ' ';
 			}
 		}
-	}
+	}//If a chart is loaded
 }
 
 int eof_menu_song_seek_start(void)
@@ -1915,5 +1917,25 @@ int eof_menu_song_waveform_settings(void)
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
+	return 1;
+}
+
+int eof_menu_song_open_bass(void)
+{
+	unsigned long tracknum = eof_song->track[EOF_TRACK_BASS]->tracknum;
+
+	if(eof_open_bass)
+	{
+		eof_open_bass = 0;
+		eof_song_menu[16].flags = 0;
+		eof_song->legacy_track[tracknum]->numlanes = 5;
+	}
+	else
+	{
+		eof_open_bass = 1;
+		eof_song_menu[16].flags = D_SELECTED;
+		eof_song->legacy_track[tracknum]->numlanes = 6;
+	}
+	eof_scale_fretboard();
 	return 1;
 }

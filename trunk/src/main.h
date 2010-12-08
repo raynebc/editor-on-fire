@@ -328,6 +328,7 @@ extern char        eof_mark_drums_as_cymbal;
 
 extern char eof_midi_initialized;			//Specifies whether Allegro was able to set up a MIDI device
 extern EOF_SELECTION_DATA eof_selection;
+extern char eof_open_bass;					//Specifies whether the sixth lane in PART BASS is enabled
 
 void eof_show_mouse(BITMAP * bp);	//Shows the software mouse if it is being used
 float eof_get_porpos(unsigned long pos);	//Returns the timestamps position within a beat (percentage)?
