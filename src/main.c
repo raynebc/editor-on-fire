@@ -1842,7 +1842,9 @@ void eof_render_note_window(void)
 	int lpos, npos, ypos;
 	unsigned long tracknum = 0;
 	int xcoord;
+	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
 
+	numlanes = eof_count_track_lanes(eof_selected_track);
 	clear_to_color(eof_window_note->screen, eof_color_gray);
 
 	if((eof_catalog_menu[0].flags & D_SELECTED) && eof_song->catalog->entries)
@@ -1886,7 +1888,7 @@ void eof_render_note_window(void)
 				/* draw fretboard area */
 				rectfill(eof_window_note->screen, 0, EOF_EDITOR_RENDER_OFFSET + 25, eof_window_editor->w - 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_black);
 
-				for(i = 0; i < EOF_MAX_FRETS; i += 4)
+				for(i = 0; i < EOF_MAX_FRETS; i += EOF_MAX_FRETS - 1)
 				{
 					hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
 				}
@@ -1958,7 +1960,7 @@ void eof_render_note_window(void)
 				}
 
 				rectfill(eof_window_note->screen, 0, EOF_EDITOR_RENDER_OFFSET + 25, eof_window_note->w - 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_black);
-				for(i = 0; i < 5; i++)
+				for(i = 0; i < numlanes; i++)
 				{
 					hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
 				}
@@ -1994,7 +1996,7 @@ void eof_render_note_window(void)
 					}
 					if((eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_song->legacy_track[tracknum]->note[i]->type) && (eof_song->legacy_track[tracknum]->note[i]->pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos))
 					{	//If this note is the same difficulty as that from where the catalog entry was taken, and is in the catalog entry
-						eof_note_draw(eof_song->legacy_track[tracknum]->note[i], i == eof_hover_note_2 ? 2 : 0, eof_window_note);
+						eof_note_draw(eof_song->catalog->entry[eof_selected_catalog_entry].track, i, i == eof_hover_note_2 ? 2 : 0, eof_window_note);
 					}
 				}
 
