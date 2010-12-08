@@ -749,7 +749,7 @@ void eof_read_editor_keys(void)
 					}
 					else
 					{
-						eof_track_fixup_notes(eof_song->legacy_track[tracknum], 1);
+						eof_legacy_track_fixup_notes(eof_song->legacy_track[tracknum], 1);
 					}
 					if(eof_undo_last_type == EOF_UNDO_TYPE_RECORD)
 					{
@@ -1055,7 +1055,7 @@ void eof_read_editor_keys(void)
 					}
 				}
 			}
-			eof_track_fixup_notes(eof_song->legacy_track[tracknum], 1);
+			eof_legacy_track_fixup_notes(eof_song->legacy_track[tracknum], 1);
 		}
 		key[KEY_OPENBRACE] = 0;
 	}
@@ -1163,7 +1163,7 @@ void eof_read_editor_keys(void)
 					}
 				}
 			}
-			eof_track_fixup_notes(eof_song->legacy_track[tracknum], 1);
+			eof_legacy_track_fixup_notes(eof_song->legacy_track[tracknum], 1);
 		}
 		key[KEY_CLOSEBRACE] = 0;
 	}
@@ -1453,11 +1453,11 @@ void eof_read_editor_keys(void)
 							eof_selection.current = eof_hover_note;
 							if(!eof_song->legacy_track[tracknum]->note[eof_hover_note]->note)
 							{
-								eof_track_delete_note(eof_song->legacy_track[tracknum], eof_hover_note);
+								eof_legacy_track_delete_note(eof_song->legacy_track[tracknum], eof_hover_note);
 								eof_selection.multi[eof_selection.current] = 0;
 								eof_selection.current = EOF_MAX_NOTES - 1;
-								eof_track_sort_notes(eof_song->legacy_track[tracknum]);
-								eof_track_fixup_notes(eof_song->legacy_track[tracknum], 1);
+								eof_legacy_track_sort_notes(eof_song->legacy_track[tracknum]);
+								eof_legacy_track_fixup_notes(eof_song->legacy_track[tracknum], 1);
 								eof_determine_hopos();
 								eof_detect_difficulties(eof_song);
 							}
@@ -1474,7 +1474,7 @@ void eof_read_editor_keys(void)
 						else
 						{	//If the user created a new note
 							eof_pen_note.note ^= bitmask;
-							new_note = eof_track_add_note(eof_song->legacy_track[tracknum]);
+							new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
 							if(new_note)
 							{
 								eof_note_create(new_note, eof_pen_note.note & 1, eof_pen_note.note & 2, eof_pen_note.note & 4, eof_pen_note.note & 8, eof_pen_note.note & 16, eof_pen_note.pos, eof_snap.length);
@@ -1492,8 +1492,8 @@ void eof_read_editor_keys(void)
 								eof_selection.range_pos_2 = eof_selection.current_pos;
 								eof_selection.track = eof_selected_track;
 								memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
-								eof_track_sort_notes(eof_song->legacy_track[tracknum]);
-								eof_track_fixup_notes(eof_song->legacy_track[tracknum], 0);
+								eof_legacy_track_sort_notes(eof_song->legacy_track[tracknum]);
+								eof_legacy_track_fixup_notes(eof_song->legacy_track[tracknum], 0);
 								eof_determine_hopos();
 								eof_selection.multi[eof_selection.current] = 1;
 								eof_detect_difficulties(eof_song);
@@ -1585,7 +1585,7 @@ void eof_read_editor_keys(void)
 				}
 				else
 				{
-					new_note = eof_track_add_note(eof_song->legacy_track[tracknum]);
+					new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
 					if(new_note)
 					{
 						eof_note_create2(new_note, bitmask, eof_music_pos - eof_av_delay - eof_guitar.delay, 1);
@@ -1597,7 +1597,7 @@ void eof_read_editor_keys(void)
 						eof_entering_note_note = new_note;
 						eof_entering_note = 1;
 						eof_detect_difficulties(eof_song);
-						eof_track_sort_notes(eof_song->legacy_track[tracknum]);
+						eof_legacy_track_sort_notes(eof_song->legacy_track[tracknum]);
 					}
 				}
 			}
@@ -1678,7 +1678,7 @@ void eof_read_editor_keys(void)
 						eof_entering_note_note->length = (eof_music_pos - eof_av_delay - eof_guitar.delay) - eof_entering_note_note->pos - 10;
 					}
 					eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
-					new_note = eof_track_add_note(eof_song->legacy_track[tracknum]);
+					new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
 					if(new_note)
 					{
 						eof_note_create(new_note, 1, 0, 0, 0, 0, eof_music_pos - eof_av_delay - eof_guitar.delay, 1);
@@ -1695,7 +1695,7 @@ void eof_read_editor_keys(void)
 						eof_entering_note_note = new_note;
 						eof_entering_note = 1;
 						eof_detect_difficulties(eof_song);
-						eof_track_sort_notes(eof_song->legacy_track[tracknum]);
+						eof_legacy_track_sort_notes(eof_song->legacy_track[tracknum]);
 					}
 				}
 				if(eof_entering_note)
@@ -1704,12 +1704,12 @@ void eof_read_editor_keys(void)
 					{
 						eof_entering_note = 0;
 						eof_entering_note_note->length = (eof_music_pos - eof_av_delay - eof_guitar.delay) - eof_entering_note_note->pos - 10;
-						eof_track_fixup_notes(eof_song->legacy_track[tracknum], 1);
+						eof_legacy_track_fixup_notes(eof_song->legacy_track[tracknum], 1);
 					}
 					else
 					{
 						eof_entering_note_note->length = (eof_music_pos - eof_av_delay - eof_guitar.delay) - eof_entering_note_note->pos - 10;
-						eof_track_fixup_notes(eof_song->legacy_track[tracknum], 1);
+						eof_legacy_track_fixup_notes(eof_song->legacy_track[tracknum], 1);
 					}
 				}
 			}
@@ -1723,7 +1723,7 @@ void eof_read_editor_keys(void)
 			/* place note with default length if song is paused */
 			if(eof_music_paused)
 			{
-				new_note = eof_track_add_note(eof_song->legacy_track[tracknum]);
+				new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
 				if(new_note)
 				{
 					eof_note_create(new_note, eof_pen_note.note & 1, eof_pen_note.note & 2, eof_pen_note.note & 4, eof_pen_note.note & 8, eof_pen_note.note & 16, eof_music_pos - eof_av_delay, eof_snap.length);
@@ -1746,7 +1746,7 @@ void eof_read_editor_keys(void)
 			{
 				if(!eof_entering_note_note)
 				{
-					new_note = eof_track_add_note(eof_song->legacy_track[tracknum]);
+					new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
 					if(new_note)
 					{
 						eof_note_create(new_note, eof_pen_note.note & 1, eof_pen_note.note & 2, eof_pen_note.note & 4, eof_pen_note.note & 8, eof_pen_note.note & 16, eof_music_pos - eof_av_delay, eof_snap.length);
@@ -2039,7 +2039,7 @@ void eof_editor_drum_logic(void)
 		}
 		else
 		{
-			new_note = eof_track_add_note(eof_song->legacy_track[tracknum]);
+			new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
 			if(new_note)
 			{
 				eof_note_create2(new_note, bitmask, eof_music_pos - eof_av_delay - eof_drums.delay, 1);
@@ -2053,7 +2053,7 @@ void eof_editor_drum_logic(void)
 				eof_entering_note_note = new_note;
 				eof_entering_note = 1;
 				eof_detect_difficulties(eof_song);
-				eof_track_sort_notes(eof_song->legacy_track[tracknum]);
+				eof_legacy_track_sort_notes(eof_song->legacy_track[tracknum]);
 			}
 		}
 	}
@@ -2088,8 +2088,8 @@ void eof_editor_logic(void)
 			eof_undo_toggle = 0;
 			if(eof_notes_moved)
 			{
-				eof_track_sort_notes(eof_song->legacy_track[tracknum]);
-				eof_track_fixup_notes(eof_song->legacy_track[tracknum], 1);
+				eof_legacy_track_sort_notes(eof_song->legacy_track[tracknum]);
+				eof_legacy_track_fixup_notes(eof_song->legacy_track[tracknum], 1);
 				eof_determine_hopos();
 				eof_notes_moved = 0;
 			}
@@ -2670,10 +2670,10 @@ void eof_editor_logic(void)
 							memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
 							if(!eof_song->legacy_track[tracknum]->note[eof_hover_note]->note)
 							{
-								eof_track_delete_note(eof_song->legacy_track[tracknum], eof_hover_note);
+								eof_legacy_track_delete_note(eof_song->legacy_track[tracknum], eof_hover_note);
 								eof_selection.current = EOF_MAX_NOTES - 1;
-								eof_track_sort_notes(eof_song->legacy_track[tracknum]);
-								eof_track_fixup_notes(eof_song->legacy_track[tracknum], 1);
+								eof_legacy_track_sort_notes(eof_song->legacy_track[tracknum]);
+								eof_legacy_track_fixup_notes(eof_song->legacy_track[tracknum], 1);
 								eof_determine_hopos();
 								eof_detect_difficulties(eof_song);
 							}
@@ -2689,7 +2689,7 @@ void eof_editor_logic(void)
 					}
 					else
 					{
-						new_note = eof_track_add_note(eof_song->legacy_track[tracknum]);
+						new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
 						if(new_note)
 						{
 							eof_note_create(new_note, eof_pen_note.note & 1, eof_pen_note.note & 2, eof_pen_note.note & 4, eof_pen_note.note & 8, eof_pen_note.note & 16, eof_pen_note.pos, KEY_EITHER_SHIFT ? 1 : eof_snap.length);
@@ -2707,8 +2707,8 @@ void eof_editor_logic(void)
 							eof_selection.range_pos_2 = eof_selection.current_pos;
 							eof_selection.track = eof_selected_track;
 							memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
-							eof_track_sort_notes(eof_song->legacy_track[tracknum]);
-							eof_track_fixup_notes(eof_song->legacy_track[tracknum], 0);
+							eof_legacy_track_sort_notes(eof_song->legacy_track[tracknum]);
+							eof_legacy_track_fixup_notes(eof_song->legacy_track[tracknum], 0);
 							eof_determine_hopos();
 							eof_detect_difficulties(eof_song);
 						}
@@ -2720,7 +2720,7 @@ void eof_editor_logic(void)
 					{
 						eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 					}
-					new_note = eof_track_add_note(eof_song->legacy_track[tracknum]);
+					new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
 					if(new_note)
 					{
 						eof_note_create(new_note, eof_pen_note.note & 1, eof_pen_note.note & 2, eof_pen_note.note & 4, eof_pen_note.note & 8, eof_pen_note.note & 16, eof_pen_note.pos, KEY_EITHER_SHIFT ? 1 : eof_snap.length);
@@ -2738,8 +2738,8 @@ void eof_editor_logic(void)
 						eof_selection.range_pos_2 = eof_selection.current_pos;
 						eof_selection.track = eof_selected_track;
 						memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
-						eof_track_sort_notes(eof_song->legacy_track[tracknum]);
-						eof_track_fixup_notes(eof_song->legacy_track[tracknum], 0);
+						eof_legacy_track_sort_notes(eof_song->legacy_track[tracknum]);
+						eof_legacy_track_fixup_notes(eof_song->legacy_track[tracknum], 0);
 						eof_determine_hopos();
 						eof_detect_difficulties(eof_song);
 					}
@@ -2833,7 +2833,7 @@ void eof_editor_logic(void)
 			}
 			if(eof_mickey_z != 0)
 			{
-				eof_track_fixup_notes(eof_song->legacy_track[tracknum], 1);
+				eof_legacy_track_fixup_notes(eof_song->legacy_track[tracknum], 1);
 			}
 		}
 		else
@@ -4733,15 +4733,15 @@ void eof_mark_edited_note_as_cymbal(EOF_SONG *sp, unsigned long tracknum, unsign
 	{
 		if((sp->legacy_track[tracknum]->note[notenum]->note & 4) && (bitmask & 4))
 		{	//If the note was changed to include a yellow note
-			eof_set_flags_at_note_pos(sp->legacy_track[tracknum],notenum,EOF_NOTE_FLAG_Y_CYMBAL,1);	//Set the yellow cymbal flag on all drum notes at this position
+			eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,EOF_NOTE_FLAG_Y_CYMBAL,1);	//Set the yellow cymbal flag on all drum notes at this position
 		}
 		if((sp->legacy_track[tracknum]->note[notenum]->note & 8) && (bitmask & 8))
 		{	//If the note was changed to include a blue note
-			eof_set_flags_at_note_pos(sp->legacy_track[tracknum],notenum,EOF_NOTE_FLAG_B_CYMBAL,1);	//Set the blue cymbal flag on all drum notes at this position
+			eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,EOF_NOTE_FLAG_B_CYMBAL,1);	//Set the blue cymbal flag on all drum notes at this position
 		}
 		if((sp->legacy_track[tracknum]->note[notenum]->note & 16) && (bitmask & 16))
 		{	//If the note was changed to include a green note
-			eof_set_flags_at_note_pos(sp->legacy_track[tracknum],notenum,EOF_NOTE_FLAG_G_CYMBAL,1);	//Set the green cymbal flag on all drum notes at this position
+			eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,EOF_NOTE_FLAG_G_CYMBAL,1);	//Set the green cymbal flag on all drum notes at this position
 		}
 	}
 }

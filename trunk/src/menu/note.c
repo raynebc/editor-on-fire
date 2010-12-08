@@ -657,7 +657,7 @@ int eof_menu_note_resnap(void)
 			}
 		}
 	}
-	eof_track_fixup_notes(eof_song->legacy_track[tracknum], 1);
+	eof_legacy_track_fixup_notes(eof_song->legacy_track[tracknum], 1);
 	if(oldnotes != eof_song->legacy_track[tracknum]->notes)
 	{
 		allegro_message("Warning! Some notes snapped to the same position and were automatically combined.");
@@ -723,7 +723,7 @@ int eof_menu_note_delete(void)
 		{
 			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i-1] && (eof_selection.track == eof_selected_track && eof_song->legacy_track[tracknum]->note[i-1]->type == eof_note_type))
 			{
-				eof_track_delete_note(eof_song->legacy_track[tracknum], i-1);
+				eof_legacy_track_delete_note(eof_song->legacy_track[tracknum], i-1);
 				eof_selection.multi[i-1] = 0;
 			}
 		}
@@ -798,7 +798,7 @@ int eof_menu_note_toggle_yellow(void)
 				eof_song->legacy_track[tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_Y_CYMBAL);	//Clear the Pro yellow cymbal status if it is set
 				if(eof_mark_drums_as_cymbal && (eof_song->legacy_track[tracknum]->note[i]->note & 4))
 				{	//If user specified to mark new notes as cymbals, and this note was toggled on
-					eof_set_flags_at_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,1);	//Set the yellow cymbal flag on all drum notes at this position
+					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,1);	//Set the yellow cymbal flag on all drum notes at this position
 				}
 			}
 		}
@@ -826,7 +826,7 @@ int eof_menu_note_toggle_blue(void)
 				eof_song->legacy_track[tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_B_CYMBAL);	//Clear the Pro blue cymbal status if it is set
 				if(eof_mark_drums_as_cymbal && (eof_song->legacy_track[tracknum]->note[i]->note & 8))
 				{	//If user specified to mark new notes as cymbals, and this note was toggled on
-					eof_set_flags_at_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_B_CYMBAL,1);	//Set the blue cymbal flag on all drum notes at this position
+					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_B_CYMBAL,1);	//Set the blue cymbal flag on all drum notes at this position
 				}
 			}
 		}
@@ -854,7 +854,7 @@ int eof_menu_note_toggle_purple(void)
 				eof_song->legacy_track[tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_G_CYMBAL);	//Clear the Pro green cymbal status if it is set
 				if(eof_mark_drums_as_cymbal && (eof_song->legacy_track[tracknum]->note[i]->note & 16))
 				{	//If user specified to mark new notes as cymbals, and this note was toggled on
-					eof_set_flags_at_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_G_CYMBAL,1);	//Set the green cymbal flag on all drum notes at this position
+					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_G_CYMBAL,1);	//Set the green cymbal flag on all drum notes at this position
 				}
 			}
 		}
@@ -932,7 +932,7 @@ int eof_menu_note_toggle_rb3_cymbal_green(void)
 					u = 1;
 				}
 				eof_song->legacy_track[tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_DBASS);	//Clear the Expert+ status if it is set
-				eof_set_flags_at_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_G_CYMBAL,2);	//Toggle the green cymbal flag on all drum notes at this position
+				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_G_CYMBAL,2);	//Toggle the green cymbal flag on all drum notes at this position
 			}
 		}
 	}
@@ -959,7 +959,7 @@ int eof_menu_note_toggle_rb3_cymbal_yellow(void)
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					u = 1;
 				}
-				eof_set_flags_at_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,2);	//Toggle the yellow cymbal flag on all drum notes at this position
+				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,2);	//Toggle the yellow cymbal flag on all drum notes at this position
 			}
 		}
 	}
@@ -987,7 +987,7 @@ int eof_menu_note_toggle_rb3_cymbal_blue(void)
 					u = 1;
 				}
 //				eof_song->legacy_track[tracknum]->note[i]->flags ^= EOF_NOTE_FLAG_B_CYMBAL;
-				eof_set_flags_at_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_B_CYMBAL,2);	//Toggle the blue cymbal flag on all drum notes at this position
+				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_B_CYMBAL,2);	//Toggle the blue cymbal flag on all drum notes at this position
 			}
 		}
 	}
@@ -1016,9 +1016,9 @@ int eof_menu_note_remove_cymbal(void)
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					u = 1;
 				}
-				eof_set_flags_at_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,0);	//Clear the yellow cymbal flag on all drum notes at this position
-				eof_set_flags_at_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_B_CYMBAL,0);	//Clear the blue cymbal flag on all drum notes at this position
-				eof_set_flags_at_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_G_CYMBAL,0);	//Clear the green cymbal flag on all drum notes at this position
+				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,0);	//Clear the yellow cymbal flag on all drum notes at this position
+				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_B_CYMBAL,0);	//Clear the blue cymbal flag on all drum notes at this position
+				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_G_CYMBAL,0);	//Clear the green cymbal flag on all drum notes at this position
 			}
 		}
 	}
@@ -1174,7 +1174,7 @@ int eof_menu_note_create_bre(void)
 	/* create the BRE marking note */
 	if((first_pos != 0) && (last_pos != eof_music_length))
 	{
-		new_note = eof_track_add_note(eof_song->legacy_track[tracknum]);
+		new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
 		eof_note_create(new_note, 1, 1, 1, 1, 1, first_pos, last_pos - first_pos);
 //		new_note->type = EOF_NOTE_SPECIAL;
 //		new_note->flags = EOF_NOTE_FLAG_BRE;
@@ -1310,7 +1310,7 @@ int eof_menu_solo_mark(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(insp < 0)
 	{
-		eof_track_add_solo(eof_song->legacy_track[tracknum], sel_start, sel_end);
+		eof_legacy_track_add_solo(eof_song->legacy_track[tracknum], sel_start, sel_end);
 	}
 	else
 	{
@@ -1334,7 +1334,7 @@ int eof_menu_solo_unmark(void)
 			{
 				if((eof_song->legacy_track[tracknum]->note[i]->pos >= eof_song->legacy_track[tracknum]->solo[j].start_pos) && (eof_song->legacy_track[tracknum]->note[i]->pos + eof_song->legacy_track[tracknum]->note[i]->length <= eof_song->legacy_track[tracknum]->solo[j].end_pos))
 				{
-					eof_track_delete_solo(eof_song->legacy_track[tracknum], j);
+					eof_legacy_track_delete_solo(eof_song->legacy_track[tracknum], j);
 					break;
 				}
 			}
@@ -1386,7 +1386,7 @@ int eof_menu_star_power_mark(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(insp < 0)
 	{
-		eof_track_add_star_power(eof_song->legacy_track[tracknum], sel_start, sel_end);
+		eof_legacy_track_add_star_power(eof_song->legacy_track[tracknum], sel_start, sel_end);
 	}
 	else
 	{
@@ -1411,7 +1411,7 @@ int eof_menu_star_power_unmark(void)
 			{
 				if((eof_song->legacy_track[tracknum]->note[i]->pos >= eof_song->legacy_track[tracknum]->star_power_path[j].start_pos) && (eof_song->legacy_track[tracknum]->note[i]->pos <= eof_song->legacy_track[tracknum]->star_power_path[j].end_pos))
 				{
-					eof_track_delete_star_power(eof_song->legacy_track[tracknum], j);
+					eof_legacy_track_delete_star_power(eof_song->legacy_track[tracknum], j);
 					break;
 				}
 			}

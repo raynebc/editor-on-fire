@@ -333,18 +333,18 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp);	//Loads data from the specif
 EOF_SONG * eof_load_song(const char * fn);	//Loads the specified EOF file, validating the file header and loading the appropriate OGG file
 int eof_save_song(EOF_SONG * sp, const char * fn);	//Saves the song to file
 
-EOF_NOTE * eof_track_add_note(EOF_LEGACY_TRACK * tp);	//Allocates, initializes and stores a new EOF_NOTE structure into the notes array.  Returns the newly allocated structure or NULL upon error
-void eof_track_delete_note(EOF_LEGACY_TRACK * tp, int note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position
-void eof_track_sort_notes(EOF_LEGACY_TRACK * tp);	//Performs a quicksort of the notes array
-int eof_song_qsort_notes(const void * e1, const void * e2);	//The comparitor function used to quicksort the notes array
-int eof_fixup_next_note(EOF_LEGACY_TRACK * tp, int note);	//Returns the note one after the specified note number that is in the same difficulty, or -1 if there is none
-void eof_track_find_crazy_notes(EOF_LEGACY_TRACK * tp);	//Used during MIDI import to mark a note as "crazy" if it overlaps with the next note in the same difficulty
-void eof_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel);	//Performs cleanup of the specified instrument track
+EOF_NOTE * eof_legacy_track_add_note(EOF_LEGACY_TRACK * tp);	//Allocates, initializes and stores a new EOF_NOTE structure into the notes array.  Returns the newly allocated structure or NULL upon error
+void eof_legacy_track_delete_note(EOF_LEGACY_TRACK * tp, int note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position
+void eof_legacy_track_sort_notes(EOF_LEGACY_TRACK * tp);	//Performs a quicksort of the notes array
+int eof_song_qsort_legacy_notes(const void * e1, const void * e2);	//The comparitor function used to quicksort the legacy notes array
+int eof_fixup_next_legacy_note(EOF_LEGACY_TRACK * tp, int note);	//Returns the note one after the specified note number that is in the same difficulty, or -1 if there is none
+void eof_legacy_track_find_crazy_notes(EOF_LEGACY_TRACK * tp);	//Used during MIDI import to mark a note as "crazy" if it overlaps with the next note in the same difficulty
+void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel);	//Performs cleanup of the specified instrument track
 void eof_legacy_track_resize(EOF_LEGACY_TRACK * tp, int notes);	//Grows or shrinks the notes array to fit the specified number of notes by allocating/freeing EOF_NOTE structures
-void eof_track_add_star_power(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a star power phrase at the specified start and stop timestamp for the specified track
-void eof_track_delete_star_power(EOF_LEGACY_TRACK * tp, int index);	//Deletes the specified star power phrase and moves all phrases that follow back in the array one position
-void eof_track_add_solo(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track
-void eof_track_delete_solo(EOF_LEGACY_TRACK * tp, int index);	//Deletes the specified solo phrase and moves all phrases that follow back in the array one position
+void eof_legacy_track_add_star_power(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a star power phrase at the specified start and stop timestamp for the specified track
+void eof_legacy_track_delete_star_power(EOF_LEGACY_TRACK * tp, int index);	//Deletes the specified star power phrase and moves all phrases that follow back in the array one position
+void eof_legacy_track_add_solo(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track
+void eof_legacy_track_delete_solo(EOF_LEGACY_TRACK * tp, int index);	//Deletes the specified solo phrase and moves all phrases that follow back in the array one position
 
 EOF_LYRIC * eof_vocal_track_add_lyric(EOF_VOCAL_TRACK * tp);	//Allocates, initializes and stores a new EOF_LYRIC structure into the lyrics array.  Returns the newly allocated structure or NULL upon error
 void eof_vocal_track_delete_lyric(EOF_VOCAL_TRACK * tp, int lyric);	//Removes and frees the specified lyric from the lyrics array.  All lyrics after the deleted lyric are moved back in the array one position
@@ -394,12 +394,12 @@ void eof_toggle_freestyle(EOF_VOCAL_TRACK * tp, unsigned long lyricnumber);
 int eof_song_tick_to_msec(EOF_SONG * sp, int track, unsigned long tick); // convert tick value to real time
 int eof_song_msec_to_tick(EOF_SONG * sp, int track, unsigned long msec); // convert real time value to tick
 
-char eof_check_flags_at_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,char flag);
+char eof_check_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,char flag);
 	//Checks all notes in the track at the specified note's timestamp (numbered starting at number 0)
 	//for the specified flag.  If any of the notes have the flag set, nonzero is returned
 	//This is used for writing RB3 style pro drum phrases during MIDI export
 	//The track's notes array is expected to be sorted
-void eof_set_flags_at_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,char flag,char operation);
+void eof_set_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,char flag,char operation);
 	//Sets or clears the specified flag on all notes at the specified note's timestamp (numbered starting at 0)
 	//If operation is 0, the specified flag is cleared on applicable notes
 	//If operation is 1, the specified flag is set on applicable notes

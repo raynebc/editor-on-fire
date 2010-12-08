@@ -407,7 +407,7 @@ void eof_editor_logic_feedback(void)
 		{
 			if(!eof_feedback_new_note)
 			{
-				eof_feedback_new_note = eof_track_add_note(eof_song->legacy_track[tracknum]);
+				eof_feedback_new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
 				eof_note_create(eof_feedback_new_note, 1, 0, 0, 0, 0, eof_music_pos - eof_av_delay, 1);
 				eof_feedback_new_note->type = eof_note_type;
 				eof_selection.current_pos = eof_feedback_new_note->pos;
@@ -437,7 +437,7 @@ void eof_editor_logic_feedback(void)
 		{
 			if(!eof_feedback_new_note)
 			{
-				eof_feedback_new_note = eof_track_add_note(eof_song->legacy_track[tracknum]);
+				eof_feedback_new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
 				eof_note_create(eof_feedback_new_note, 0, 1, 0, 0, 0, eof_music_pos - eof_av_delay, 1);
 				eof_feedback_new_note->type = eof_note_type;
 				eof_selection.current_pos = eof_feedback_new_note->pos;
@@ -467,7 +467,7 @@ void eof_editor_logic_feedback(void)
 		{
 			if(!eof_feedback_new_note)
 			{
-				eof_feedback_new_note = eof_track_add_note(eof_song->legacy_track[tracknum]);
+				eof_feedback_new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
 				eof_note_create(eof_feedback_new_note, 0, 0, 1, 0, 0, eof_music_pos - eof_av_delay, 1);
 				eof_feedback_new_note->type = eof_note_type;
 				eof_selection.current_pos = eof_feedback_new_note->pos;
@@ -497,7 +497,7 @@ void eof_editor_logic_feedback(void)
 		{
 			if(!eof_feedback_new_note)
 			{
-				eof_feedback_new_note = eof_track_add_note(eof_song->legacy_track[tracknum]);
+				eof_feedback_new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
 				eof_note_create(eof_feedback_new_note, 0, 0, 0, 1, 0, eof_music_pos - eof_av_delay, 1);
 				eof_feedback_new_note->type = eof_note_type;
 				eof_selection.current_pos = eof_feedback_new_note->pos;
@@ -527,7 +527,7 @@ void eof_editor_logic_feedback(void)
 		{
 			if(!eof_feedback_new_note)
 			{
-				eof_feedback_new_note = eof_track_add_note(eof_song->legacy_track[tracknum]);
+				eof_feedback_new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
 				eof_note_create(eof_feedback_new_note, 0, 0, 0, 0, 1, eof_music_pos - eof_av_delay, 1);
 				eof_feedback_new_note->type = eof_note_type;
 				eof_selection.current_pos = eof_feedback_new_note->pos;
@@ -560,7 +560,7 @@ void eof_editor_logic_feedback(void)
 
 	if((eof_hover_note >= 0) && !eof_song->legacy_track[tracknum]->note[eof_hover_note]->note)
 	{
-		eof_track_delete_note(eof_song->legacy_track[tracknum], eof_hover_note);
+		eof_legacy_track_delete_note(eof_song->legacy_track[tracknum], eof_hover_note);
 		eof_sort_notes();
 		eof_fixup_notes();
 		eof_determine_hopos();

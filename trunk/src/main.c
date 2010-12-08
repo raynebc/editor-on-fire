@@ -940,7 +940,7 @@ void eof_determine_hopos(void)
 	{
 		if(!sp[j])
 		{
-			eof_track_delete_star_power(eof_song->legacy_track[tracknum], j);
+			eof_legacy_track_delete_star_power(eof_song->legacy_track[tracknum], j);
 		}
 	}
 
@@ -949,7 +949,7 @@ void eof_determine_hopos(void)
 	{
 		if(!so[j])
 		{
-			eof_track_delete_solo(eof_song->legacy_track[tracknum], j);
+			eof_legacy_track_delete_solo(eof_song->legacy_track[tracknum], j);
 		}
 	}
 }

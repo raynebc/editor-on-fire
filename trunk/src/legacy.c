@@ -44,7 +44,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 						a = pack_getc(fp);
 						if(a)
 						{
-							new_note = eof_track_add_note(sp->legacy_track[i]);
+							new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
 							new_note->type = pack_getc(fp);
 							new_note->note = pack_getc(fp);
 							new_note->pos = pack_igetl(fp);
@@ -77,7 +77,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 						a = pack_getc(fp);
 						if(a)
 						{
-							new_note = eof_track_add_note(sp->legacy_track[i]);
+							new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
 							new_note->type = pack_getc(fp);
 							new_note->note = pack_getc(fp);
 							new_note->pos = pack_igetl(fp);
@@ -132,7 +132,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 						{
 							if(a)
 							{
-								new_note = eof_track_add_note(sp->legacy_track[i]);
+								new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
 								new_note->type = pack_getc(fp);
 								new_note->note = pack_getc(fp);
 								new_note->pos = pack_igetl(fp);
@@ -187,7 +187,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 						a = pack_getc(fp);
 						if(a)
 						{
-							new_note = eof_track_add_note(sp->legacy_track[i]);
+							new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
 							new_note->type = pack_getc(fp);
 							new_note->note = pack_getc(fp);
 							new_note->pos = pack_igetl(fp);
@@ -230,7 +230,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 						a = pack_getc(fp);
 						if(a)
 						{
-							new_note = eof_track_add_note(sp->legacy_track[i]);
+							new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
 							new_note->type = pack_getc(fp);
 							new_note->note = pack_getc(fp);
 							new_note->pos = pack_igetl(fp);
@@ -282,7 +282,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 						a = pack_getc(fp);
 						if(a)
 						{
-							new_note = eof_track_add_note(sp->legacy_track[i]);
+							new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
 							new_note->type = pack_getc(fp);
 							new_note->note = pack_getc(fp);
 							new_note->pos = pack_igetl(fp);
@@ -336,7 +336,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 						a = pack_getc(fp);
 						if(a)
 						{
-							new_note = eof_track_add_note(sp->legacy_track[i]);
+							new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
 							new_note->type = pack_getc(fp);
 							new_note->note = pack_getc(fp);
 							new_note->pos = pack_igetl(fp);
@@ -410,7 +410,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 						a = pack_getc(fp);
 						if(a)
 						{
-							new_note = eof_track_add_note(sp->legacy_track[i]);
+							new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
 							new_note->type = pack_getc(fp);
 							new_note->note = pack_getc(fp);
 							new_note->pos = pack_igetl(fp);
@@ -484,7 +484,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 						a = pack_getc(fp);
 						if(a)
 						{
-							new_note = eof_track_add_note(sp->legacy_track[i]);
+							new_note = eof_legacy_track_add_note(sp->legacy_track[i]);
 							new_note->type = pack_getc(fp);
 							new_note->note = pack_getc(fp);
 							new_note->pos = pack_igetl(fp);

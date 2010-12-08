@@ -54,7 +54,7 @@ EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 13 + 1] =
 
 
 /* sort all notes according to position */
-int eof_song_qsort_notes(const void * e1, const void * e2)
+int eof_song_qsort_legacy_notes(const void * e1, const void * e2)
 {
     EOF_NOTE ** thing1 = (EOF_NOTE **)e1;
     EOF_NOTE ** thing2 = (EOF_NOTE **)e2;
@@ -528,7 +528,7 @@ EOF_SONG * eof_load_song(const char * fn)
 	return sp;
 }
 
-EOF_NOTE * eof_track_add_note(EOF_LEGACY_TRACK * tp)
+EOF_NOTE * eof_legacy_track_add_note(EOF_LEGACY_TRACK * tp)
 {
 	if(tp->notes < EOF_MAX_NOTES)
 	{
@@ -543,7 +543,7 @@ EOF_NOTE * eof_track_add_note(EOF_LEGACY_TRACK * tp)
 	return NULL;
 }
 
-void eof_track_delete_note(EOF_LEGACY_TRACK * tp, int note)
+void eof_legacy_track_delete_note(EOF_LEGACY_TRACK * tp, int note)
 {
 	int i;
 
@@ -558,12 +558,12 @@ void eof_track_delete_note(EOF_LEGACY_TRACK * tp, int note)
 	}
 }
 
-void eof_track_sort_notes(EOF_LEGACY_TRACK * tp)
+void eof_legacy_track_sort_notes(EOF_LEGACY_TRACK * tp)
 {
-	qsort(tp->note, tp->notes, sizeof(EOF_NOTE *), eof_song_qsort_notes);
+	qsort(tp->note, tp->notes, sizeof(EOF_NOTE *), eof_song_qsort_legacy_notes);
 }
 
-int eof_fixup_next_note(EOF_LEGACY_TRACK * tp, int note)
+int eof_fixup_next_legacy_note(EOF_LEGACY_TRACK * tp, int note)
 {
 	int i;
 
@@ -578,14 +578,14 @@ int eof_fixup_next_note(EOF_LEGACY_TRACK * tp, int note)
 }
 
 /* find and mark crazy notes, use during MIDI import */
-void eof_track_find_crazy_notes(EOF_LEGACY_TRACK * tp)
+void eof_legacy_track_find_crazy_notes(EOF_LEGACY_TRACK * tp)
 {
 	int i;
 	int next;
 
 	for(i = 0; i < tp->notes; i++)
 	{
-		next = eof_fixup_next_note(tp, i);
+		next = eof_fixup_next_legacy_note(tp, i);
 		if(next >= 0)
 		{
 			if(tp->note[i]->pos + tp->note[i]->length > tp->note[next]->pos)
@@ -596,7 +596,7 @@ void eof_track_find_crazy_notes(EOF_LEGACY_TRACK * tp)
 	}
 }
 
-void eof_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
+void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 {
 	unsigned long i;
 	int next;
@@ -625,7 +625,7 @@ void eof_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 		/* delete certain notes */
 		if((tp->note[i-1]->note == 0) || ((tp->note[i-1]->type < 0) || (tp->note[i-1]->type > 4)) || (tp->note[i-1]->pos < eof_song->tags->ogg[eof_selected_ogg].midi_offset) || (tp->note[i-1]->pos >= eof_music_length))
 		{
-			eof_track_delete_note(tp, i-1);
+			eof_legacy_track_delete_note(tp, i-1);
 		}
 
 		else
@@ -644,13 +644,13 @@ void eof_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 
 			/* compare this note to the next one of the same type
 			   to make sure they don't overlap */
-			next = eof_fixup_next_note(tp, i-1);
+			next = eof_fixup_next_legacy_note(tp, i-1);
 			if(next >= 0)
 			{
 				if(tp->note[i-1]->pos == tp->note[next]->pos)
 				{
 					tp->note[i-1]->note |= tp->note[next]->note;
-					eof_track_delete_note(tp, next);
+					eof_legacy_track_delete_note(tp, next);
 				}
 				else if(tp->note[i-1]->pos + tp->note[i-1]->length > tp->note[next]->pos - 1)
 				{
@@ -675,29 +675,29 @@ void eof_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 	{	//If the track being cleaned is a drum track
 		for(i = 0; i < tp->notes; i++)
 		{	//For each note in the drum track
-			if(eof_check_flags_at_note_pos(tp,i,EOF_NOTE_FLAG_G_CYMBAL))
+			if(eof_check_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_G_CYMBAL))
 			{	//If any notes at this position are marked as a green cymbal
-				eof_set_flags_at_note_pos(tp,i,EOF_NOTE_FLAG_G_CYMBAL,1);	//Mark all notes at this position as green cymbal
+				eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_G_CYMBAL,1);	//Mark all notes at this position as green cymbal
 			}
 			else
 			{
-				eof_set_flags_at_note_pos(tp,i,EOF_NOTE_FLAG_G_CYMBAL,0);	//Mark all notes at this position as green drum
+				eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_G_CYMBAL,0);	//Mark all notes at this position as green drum
 			}
-			if(eof_check_flags_at_note_pos(tp,i,EOF_NOTE_FLAG_Y_CYMBAL))
+			if(eof_check_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_Y_CYMBAL))
 			{	//If any notes at this position are marked as a yellow cymbal
-				eof_set_flags_at_note_pos(tp,i,EOF_NOTE_FLAG_Y_CYMBAL,1);	//Mark all notes at this position as yellow cymbal
+				eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_Y_CYMBAL,1);	//Mark all notes at this position as yellow cymbal
 			}
 			else
 			{
-				eof_set_flags_at_note_pos(tp,i,EOF_NOTE_FLAG_Y_CYMBAL,0);	//Mark all notes at this position as yellow drum
+				eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_Y_CYMBAL,0);	//Mark all notes at this position as yellow drum
 			}
-			if(eof_check_flags_at_note_pos(tp,i,EOF_NOTE_FLAG_B_CYMBAL))
+			if(eof_check_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_B_CYMBAL))
 			{	//If any notes at this position are marked as a blue cymbal
-				eof_set_flags_at_note_pos(tp,i,EOF_NOTE_FLAG_B_CYMBAL,1);	//Mark all notes at this position as blue cymbal
+				eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_B_CYMBAL,1);	//Mark all notes at this position as blue cymbal
 			}
 			else
 			{
-				eof_set_flags_at_note_pos(tp,i,EOF_NOTE_FLAG_B_CYMBAL,0);	//Mark all notes at this position as blue drum
+				eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_B_CYMBAL,0);	//Mark all notes at this position as blue drum
 			}
 		}
 	}
@@ -711,7 +711,7 @@ void eof_legacy_track_resize(EOF_LEGACY_TRACK * tp, int notes)
 	{
 		for(i = oldnotes; i < notes; i++)
 		{
-			eof_track_add_note(tp);
+			eof_legacy_track_add_note(tp);
 		}
 	}
 	else if(notes < oldnotes)
@@ -724,7 +724,7 @@ void eof_legacy_track_resize(EOF_LEGACY_TRACK * tp, int notes)
 	}
 }
 
-void eof_track_add_star_power(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
+void eof_legacy_track_add_star_power(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
 {
 	if(tp->star_power_paths < EOF_MAX_STAR_POWER)
 	{	//If the maximum number of star power phrases for this track hasn't already been defined
@@ -734,7 +734,7 @@ void eof_track_add_star_power(EOF_LEGACY_TRACK * tp, unsigned long start_pos, un
 	}
 }
 
-void eof_track_delete_star_power(EOF_LEGACY_TRACK * tp, int index)
+void eof_legacy_track_delete_star_power(EOF_LEGACY_TRACK * tp, int index)
 {
 	int i;
 
@@ -745,7 +745,7 @@ void eof_track_delete_star_power(EOF_LEGACY_TRACK * tp, int index)
 	tp->star_power_paths--;
 }
 
-void eof_track_add_solo(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
+void eof_legacy_track_add_solo(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
 {
 	if(tp->solos < EOF_MAX_SOLOS)
 	{	//If the maximum number of solo phrases for this track hasn't already been defined
@@ -755,7 +755,7 @@ void eof_track_add_solo(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned
 	}
 }
 
-void eof_track_delete_solo(EOF_LEGACY_TRACK * tp, int index)
+void eof_legacy_track_delete_solo(EOF_LEGACY_TRACK * tp, int index)
 {
 	int i;
 
@@ -1125,7 +1125,7 @@ void eof_fixup_notes(void)
 
 	for(j = 0; j < eof_song->legacy_tracks; j++)
 	{
-		eof_track_fixup_notes(eof_song->legacy_track[j], j == eof_selected_track);
+		eof_legacy_track_fixup_notes(eof_song->legacy_track[j], j == eof_selected_track);
 	}
 }
 
@@ -1135,7 +1135,7 @@ void eof_sort_notes(void)
 
 	for(j = 0; j < eof_song->legacy_tracks; j++)
 	{
-		eof_track_sort_notes(eof_song->legacy_track[j]);
+		eof_legacy_track_sort_notes(eof_song->legacy_track[j]);
 	}
 }
 
@@ -1326,7 +1326,7 @@ int eof_song_msec_to_tick(EOF_SONG * sp, int track, unsigned long msec)
 }
 
 
-char eof_check_flags_at_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,char flag)
+char eof_check_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,char flag)
 {
 	unsigned long ctr,ctr2;
 	char match = 0;
@@ -1363,7 +1363,7 @@ char eof_check_flags_at_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,char flag
 	return match;
 }
 
-void eof_set_flags_at_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,char flag,char operation)
+void eof_set_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,char flag,char operation)
 {
 	unsigned long ctr,ctr2;
 	char match = 0;
