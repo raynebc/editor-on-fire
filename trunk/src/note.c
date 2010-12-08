@@ -110,7 +110,7 @@ int eof_adjust_notes(int offset)
 	return 1;
 }
 
-int eof_note_draw(EOF_NOTE * np, int p, EOF_WINDOW *window)
+int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW *window)
 {
 	int position;	//This is the position for the specified window's piano roll and is based on the passed window pointer
 	int leftcoord;	//This is the position of the left end of the piano roll
@@ -118,7 +118,7 @@ int eof_note_draw(EOF_NOTE * np, int p, EOF_WINDOW *window)
 	int npos;
 	int ychart[EOF_MAX_FRETS];
 	int pcol = p == 1 ? eof_color_white : p == 2 ? makecol(224, 255, 224) : 0;
-	int dcol = (np->flags & EOF_NOTE_FLAG_CRAZY) ? eof_color_black : eof_color_white;
+	int dcol = eof_color_white;
 	int dcol2 = dcol;
 	int colors[EOF_MAX_FRETS] = {eof_color_green,eof_color_red,eof_color_yellow,eof_color_blue,eof_color_purple,eof_color_purple};	//Each of the fret colors
 	int ncol = makecol(192, 192, 192);	//Note color defaults to silver unless the note is not star power
@@ -127,7 +127,28 @@ int eof_note_draw(EOF_NOTE * np, int p, EOF_WINDOW *window)
 	int radius,dotsize;
 	char iscymbal;		//Used to track whether the specified note is marked as a cymbal
 	int x,y;
-	unsigned long numlanes;
+	unsigned long numlanes, tracknum;
+	EOF_NOTE * np = NULL;
+
+//Validate parameters
+	if(window == NULL)
+		return 1;	//Error, signal to stop rendering
+	if(track != 0)
+	{	//Render an existing note
+		if(track >= eof_song->tracks)
+			return 1;	//Error, signal to stop rendering
+		tracknum = eof_song->track[track]->tracknum;
+		if((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) || (notenum >= eof_song->legacy_track[tracknum]->notes))
+			return 1;	//Error, signal to stop rendering
+		np = eof_song->legacy_track[tracknum]->note[notenum];	//Store the pointer to this note
+	}
+	else
+	{	//Render the pen note
+		np = &eof_pen_note;
+	}
+
+	if(np->flags & EOF_NOTE_FLAG_CRAZY)
+		dcol = eof_color_black;	//"Crazy" notes render with a black dot in the center
 
 	if(window == eof_window_note)
 	{	//If rendering to the fret catalog
@@ -147,7 +168,7 @@ int eof_note_draw(EOF_NOTE * np, int p, EOF_WINDOW *window)
 
 	if(eof_inverted_notes)
 	{
-		numlanes = eof_count_track_lanes(eof_selected_track);
+		numlanes = eof_count_track_lanes(track);
 		for(ctr = 0, ctr2 = 0; ctr < EOF_MAX_FRETS; ctr++)
 		{	//Store the fretboard lane positions in reverse order, with respect to the number of lanes in use
 			if(EOF_MAX_FRETS - ctr <= numlanes)

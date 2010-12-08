@@ -290,7 +290,7 @@ typedef struct
 
 extern EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 3 + 1];
 	//The list of default tracks that should be presented in EOF
-extern EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 10 + 1];
+extern EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 13 + 1];
 	//The list of MIDI track names pertaining to each instrument and harmony track
 
 typedef struct
