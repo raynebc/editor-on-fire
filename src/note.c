@@ -147,9 +147,6 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		np = &eof_pen_note;
 	}
 
-	if(np->flags & EOF_NOTE_FLAG_CRAZY)
-		dcol = eof_color_black;	//"Crazy" notes render with a black dot in the center
-
 	if(window == eof_window_note)
 	{	//If rendering to the fret catalog
 		position = eof_music_catalog_pos;
@@ -161,6 +158,24 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		leftcoord = 300;
 	}
 	pos = position / eof_zoom;
+	if(pos < leftcoord)
+	{	//Scroll the left edge of the piano roll based on the roll's position
+		npos = 20 + (np->pos) / eof_zoom;
+	}
+	else
+	{
+		npos = 20 - ((pos - leftcoord)) + np->pos / eof_zoom;
+	}
+
+//Determine if the entire note would clip.  If so, return without attempting to render
+	if(npos - eof_screen_layout.note_size > window->screen->w)	//If the note would render entirely to the right of the visible area
+		return 1;	//Return status:  Clipping to the right of the viewing window
+
+	if((npos < 0) && (npos + np->length / eof_zoom < 0))	//If the note and its tail would render entirely to the left of the visible area
+		return -1;	//Return status:  Clipping to the left of the viewing window
+
+	if(np->flags & EOF_NOTE_FLAG_CRAZY)
+		dcol = eof_color_black;	//"Crazy" notes render with a black dot in the center
 
 //Since Expert+ double bass notation uses the same flag as crazy status, override the dot color for PART DRUMS
 	if(eof_selected_track == EOF_TRACK_DRUM)
@@ -184,22 +199,6 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 			ychart[ctr] = eof_screen_layout.note_y[ctr];
 		}
 	}
-
-	if(pos < leftcoord)
-	{	//Scroll the left edge of the piano roll based on the roll's position
-		npos = 20 + (np->pos) / eof_zoom;
-	}
-	else
-	{
-		npos = 20 - ((pos - leftcoord)) + np->pos / eof_zoom;
-	}
-
-//Determine if the entire note would clip.  If so, return without attempting to render
-	if(npos - eof_screen_layout.note_size > window->screen->w)	//If the note would render entirely to the right of the visible area
-		return 1;	//Return status:  Clipping to the right of the viewing window
-
-	if((npos < 0) && (npos + np->length / eof_zoom < 0))	//If the note and its tail would render entirely to the left of the visible area
-		return -1;	//Return status:  Clipping to the left of the viewing window
 
 	if(np->flags & EOF_NOTE_FLAG_F_HOPO)				//If this note is forced as HOPO on
 	{
@@ -307,6 +306,7 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 	int pos;		//This is the position of the specified window's piano roll, scaled by the current zoom level
 	int npos;		//Stores the X coordinate at which to draw lyric #notenum
 	int X2;			//Stores the X coordinate at which lyric #notenum+1 would be drawn (to set the clip rectangle)
+	int stringend;	//Stores the coordinate position of the end of the lyric string, used for clipping logic
 	int nplace;
 	int note_y;
 	int native = 0;
@@ -315,10 +315,11 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 	int ncol = 0;
 	EOF_LYRIC_LINE *lyricline;	//The line that this lyric is found to be in (if any) so the correct background color can be determined
 	int bgcol = eof_color_black;	//Unless the text is found to be in a lyric phrase, it will render with a black background
+	int endpos;		//This will store the effective end position for the lyric's rendering (taking lyric text, note rectangles and vocal slides into account)
 
+//Validate parameters
 	if((np == NULL) || (window == NULL))	//If this is not a valid lyric or window pointer
 		return 1;			//Stop rendering
-	X2=window->screen->w;		//The default X2 coordinate for the clipping rectangle
 
 	if(window == eof_window_note)
 	{	//If rendering to the fret catalog
@@ -331,7 +332,20 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 		leftcoord = 300;
 	}
 	pos = position / eof_zoom;
+	if(pos < leftcoord)
+	{
+		npos = 20 + (np->pos) / eof_zoom;
+	}
+	else
+	{
+		npos = 20 - ((pos - leftcoord)) + np->pos / eof_zoom;
+	}
 
+//Determine if the entire note would clip right of the viewable area.  If so, return without attempting to render
+	if(npos > window->screen->w)	//If the lyric would render beginning beyond EOF's right window border
+		return 1;
+
+	X2=window->screen->w;		//The default X2 coordinate for the clipping rectangle
 	notenum = eof_find_lyric_number(np);	//Find which lyric number this is
 	if(notenum || (eof_song->vocal_track[0]->lyric[0] == np))
 	{	//If the passed lyric is already defined (not the pen lyric)
@@ -355,24 +369,35 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 		}
 	}
 
+//Determine if the entire note would clip left of the viewable area.  If so, return without attempting to render
+	endpos = np->pos + np->length;	//The normal end of the lyric is based on its rectangle
+	if(notpen && (notenum + 1 < eof_song->vocal_track[0]->lyrics) && (eof_song->vocal_track[0]->lyric[notenum + 1]->text[0] == '+'))
+	{	//If there is another lyric and it is a pitch shift
+		endpos = eof_song->vocal_track[0]->lyric[notenum + 1]->pos;
+	}
+	//Map the timestamp to a screen coordinate
+	if(pos < leftcoord)
+	{
+		endpos = 20 + endpos / eof_zoom;
+	}
+	else
+	{
+		endpos = 20 - ((pos - leftcoord)) + endpos / eof_zoom;
+	}
+	//Map the end of the lyric text to a screen coordinate, compare with the other and keep the higher of the two
+	stringend = npos + text_length(font, np->text);	//Get the would be end position of the rendered string
+	if(stringend > endpos)
+	{	//If the lyric text is longer on screen than the lyric rectangle or vocal slide
+		endpos = stringend;	//Use it for the clipping logic
+	}
+	if(endpos < 0)
+		return -1;	//Return status:  Clipping to the left of the viewing window
+
 	if(p == 3)
 	{
 		pcol = eof_color_white;
 		dcol = eof_color_white;
 	}
-
-	if(pos < leftcoord)
-	{
-		npos = 20 + (np->pos) / eof_zoom;
-	}
-	else
-	{
-		npos = 20 - ((pos - leftcoord)) + np->pos / eof_zoom;
-	}
-
-//Rewritten logic returns nonzero if NO pixels would be written to the left of the window's X2 coordinate
-	if(npos > window->screen->w)	//If text was rendered beginning beyond EOF's right window border
-		return 1;
 
 	nplace = np->note - eof_vocals_offset;
 	if(nplace < 0)
