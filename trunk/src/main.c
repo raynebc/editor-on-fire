@@ -1869,127 +1869,73 @@ void eof_render_note_window(void)
 		/* render catalog entry */
 		if(eof_song->catalog->entries > 0)
 		{
-			if(eof_song->catalog->entry[eof_selected_catalog_entry].track == EOF_TRACK_VOCALS)
-			{	//If drawing a vocal catalog entry
-				/* draw the starting position */
-				pos = eof_music_catalog_pos / eof_zoom;
-				if(pos < 140)
-				{
-					lpos = 20;
-				}
-				else
-				{
-					lpos = 20 - (pos - 140);
-				}
-
-				/* fill in window background color */
-//				rectfill(eof_window_note->screen, 0, 25 + 8, eof_window_editor->w - 1, eof_window_editor->h - 1, eof_color_gray);
-
-				/* draw fretboard area */
-				rectfill(eof_window_note->screen, 0, EOF_EDITOR_RENDER_OFFSET + 25, eof_window_editor->w - 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_black);
-
-				for(i = 0; i < EOF_MAX_FRETS; i += EOF_MAX_FRETS - 1)
-				{
+			pos = eof_music_catalog_pos / eof_zoom;
+			if(pos < 140)
+			{
+				lpos = 20;
+			}
+			else
+			{
+				lpos = 20 - (pos - 140);
+			}
+			/* draw fretboard area */
+			rectfill(eof_window_note->screen, 0, EOF_EDITOR_RENDER_OFFSET + 25, eof_window_note->w - 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_black);
+			for(i = 0; i < numlanes; i++)
+			{
+				if(!i || (i + 1 >= numlanes))
+				{	//Ensure the top and bottom lines extend to the left of the piano roll
 					hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
 				}
-				vline(eof_window_note->screen, lpos + (eof_music_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
-
-				/* draw beat lines */
-				if(pos < 140)
-				{
-					npos = 20;
+				else if(eof_song->catalog->entry[eof_selected_catalog_entry].track != EOF_TRACK_VOCALS)
+				{	//Otherwise, if not drawing the vocal editor, draw the other fret lines from the first beat marker to the end of the chart
+					hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
 				}
-				else
-				{
-					npos = 20 - ((pos - 140));
+			}
+			vline(eof_window_note->screen, lpos + (eof_music_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
+			/* draw beat lines */
+			if(pos < 140)
+			{
+				npos = 20;
+			}
+			else
+			{
+				npos = 20 - ((pos - 140));
+			}
+			for(i = 0; i < eof_song->beats; i++)
+			{
+				xcoord = npos + eof_song->beat[i]->pos / eof_zoom;
+				if(xcoord >= eof_window_note->screen->w)
+				{	//If this beat line would render off the edge of the screen
+					break;	//Stop rendering them
 				}
-				for(i = 0; i < eof_song->beats; i++)
-				{
-					xcoord = npos + eof_song->beat[i]->pos / eof_zoom;
-					if(xcoord >= eof_window_note->screen->w)
-					{	//If this beat line would render off the edge of the screen
-						break;	//Stop rendering them
-					}
-					if(xcoord >= 0)
-					{	//If this beat line would render visibly, render it
-						vline(eof_window_note->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
-					}
+				if(xcoord >= 0)
+				{	//If this beat line would render visibly, render it
+					vline(eof_window_note->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
 				}
-
+			}
+			if(eof_song->catalog->entry[eof_selected_catalog_entry].track == EOF_TRACK_VOCALS)
+			{	//If drawing a vocal catalog entry
 				/* clear lyric text area */
 				rectfill(eof_window_note->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, eof_window_editor->w - 1, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, eof_color_black);
 				hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, lpos + (eof_music_length) / eof_zoom, eof_color_white);
 
 				for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-				{
+				{	//For each lyric
 					if(eof_song->vocal_track[tracknum]->lyric[i]->pos > eof_song->catalog->entry[eof_selected_catalog_entry].end_pos)
 					{	//If this lyric is after the end of the catalog entry
 						break;	//Stop processing lyrics
 					}
 					if(eof_song->vocal_track[tracknum]->lyric[i]->pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos)
 					{	//If this lyric is in the catalog entry, render it
-						if(eof_lyric_draw(eof_song->vocal_track[tracknum]->lyric[i], i == eof_hover_note_2 ? 2 : 0, eof_window_note))
+						if(eof_lyric_draw(eof_song->vocal_track[tracknum]->lyric[i], i == eof_hover_note_2 ? 2 : 0, eof_window_note) > 0)
 							break;	//Break if the function indicated that the lyric was rendered beyond the clip window
-					}
-				}
-
-				/* draw the current position */
-				if(pos > eof_av_delay / eof_zoom)
-				{
-					if(pos < 140)
-					{
-						vline(eof_window_note->screen, 20 + pos - eof_av_delay / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
-					}
-					else
-					{
-						vline(eof_window_note->screen, 20 + 140 - eof_av_delay / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
 					}
 				}
 			}//If drawing a vocal catalog entry
 			else
 			{
-				/* draw the starting position */
-				pos = eof_music_catalog_pos / eof_zoom;
-				if(pos < 140)
-				{
-					lpos = 20;
-				}
-				else
-				{
-					lpos = 20 - (pos - 140);
-				}
-
-				rectfill(eof_window_note->screen, 0, EOF_EDITOR_RENDER_OFFSET + 25, eof_window_note->w - 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_black);
-				for(i = 0; i < numlanes; i++)
-				{
-					hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
-				}
-				vline(eof_window_note->screen, lpos + (eof_music_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
-
-				/* draw beat lines */
-				if(pos < 140)
-				{
-					npos = 20;
-				}
-				else
-				{
-					npos = 20 - ((pos - 140));
-				}
-				for(i = 0; i < eof_song->beats; i++)
-				{
-					xcoord = npos + eof_song->beat[i]->pos / eof_zoom;
-					if(xcoord >= eof_window_note->screen->w)
-					{	//If this beat line would render off the edge of the screen
-						break;	//Stop rendering them
-					}
-					if(xcoord >= 0)
-					{	//If this beat line would render visibly, render it
-						vline(eof_window_note->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
-					}
-				}
-
 				for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
-				{
+				{	//For each note
 					if(eof_song->legacy_track[tracknum]->note[i]->pos > eof_song->catalog->entry[eof_selected_catalog_entry].end_pos)
 					{	//If this note is after the end of the catalog entry
 						break;	//Stop processing notes
@@ -1999,18 +1945,17 @@ void eof_render_note_window(void)
 						eof_note_draw(eof_song->catalog->entry[eof_selected_catalog_entry].track, i, i == eof_hover_note_2 ? 2 : 0, eof_window_note);
 					}
 				}
-
-				/* draw the current position */
-				if(pos > eof_av_delay / eof_zoom)
+			}//If erawing a non vocal catalog entry
+			/* draw the current position */
+			if(pos > eof_av_delay / eof_zoom)
+			{
+				if(pos < 140)
 				{
-					if(pos < 140)
-					{
-						vline(eof_window_note->screen, 20 + pos - eof_av_delay / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
-					}
-					else
-					{
-						vline(eof_window_note->screen, 20 + 140 - eof_av_delay / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
-					}
+					vline(eof_window_note->screen, 20 + pos - eof_av_delay / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
+				}
+				else
+				{
+					vline(eof_window_note->screen, 20 + 140 - eof_av_delay / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
 				}
 			}
 		}//if(eof_song->catalog->entries > 0)
