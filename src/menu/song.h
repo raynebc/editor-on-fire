@@ -67,4 +67,6 @@ int eof_menu_song_waveform_settings(void);
 int eof_menu_song_waveform(void);	//Toggle the display of the waveform on/off, generating the waveform data if necessary
 int eof_menu_song_add_silence(void);
 
+int eof_menu_song_open_bass(void);	//Toggle the ability to use a sixth lane in PART BASS on/off
+
 #endif

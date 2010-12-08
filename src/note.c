@@ -181,9 +181,9 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	if(eof_selected_track == EOF_TRACK_DRUM)
 		dcol = eof_color_white;
 
+	numlanes = eof_count_track_lanes(track);
 	if(eof_inverted_notes)
 	{
-		numlanes = eof_count_track_lanes(track);
 		for(ctr = 0, ctr2 = 0; ctr < EOF_MAX_FRETS; ctr++)
 		{	//Store the fretboard lane positions in reverse order, with respect to the number of lanes in use
 			if(EOF_MAX_FRETS - ctr <= numlanes)
@@ -223,7 +223,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		dcol = eof_color_white;
 	}
 
-	for(ctr=0,mask=1;ctr<EOF_MAX_FRETS;ctr++,mask=mask<<1)
+	for(ctr=0,mask=1;ctr<numlanes;ctr++,mask=mask<<1)
 	{	//Render for each of the available fret colors
 		iscymbal = 0;
 		x = npos;											//Store this to make the code more readable
