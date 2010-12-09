@@ -446,10 +446,7 @@ int eof_menu_beat_delete(void)
 			eof_realign_beats(eof_song, eof_selected_beat - 1);
 		}
 		eof_move_text_events(eof_song, eof_selected_beat, -1);
-		if(flags & EOF_BEAT_FLAG_ANCHOR)
-		{
-			flags ^= EOF_BEAT_FLAG_ANCHOR;
-		}
+		flags &= (~EOF_BEAT_FLAG_ANCHOR);	//Clear the anchor flag
 		eof_song->beat[eof_selected_beat - 1]->flags |= flags;
 	}
 	return 1;
@@ -786,11 +783,8 @@ int eof_menu_beat_clear_events(void)
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		eof_song_resize_text_events(eof_song, 0);
 		for(i = 0; i < eof_song->beats; i++)
-		{
-			if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_EVENTS)
-			{
-				eof_song->beat[i]->flags ^= EOF_BEAT_FLAG_EVENTS;
-			}
+		{	//For each beat
+			eof_song->beat[i]->flags &= (~EOF_BEAT_FLAG_EVENTS);	//Clear the event flag
 		}
 	}
 	eof_clear_input();
@@ -972,9 +966,9 @@ int eof_events_dialog_delete(DIALOG * d)
 
 				/* remove flag if no more events tied to this beat */
 				c = eof_events_dialog_delete_events_count();
-				if((c <= 0) && (eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_EVENTS))
+				if(c <= 0)
 				{
-					eof_song->beat[eof_selected_beat]->flags ^= 2;
+					eof_song->beat[eof_selected_beat]->flags &= (~EOF_BEAT_FLAG_EVENTS);	//Clear the event flag
 				}
 				if((eof_events_dialog[1].d1 >= c) && (c > 0))
 				{

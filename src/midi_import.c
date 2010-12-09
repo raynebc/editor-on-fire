@@ -1051,7 +1051,7 @@ allegro_message("Second pass complete");
 						else if((picked_track == EOF_TRACK_DRUM) && (eof_import_events[i]->event[j]->d1 == 95))
 						{	//If the track being read is PART DRUMS, and this note is marked for Expert+ double bass
 							sp->legacy_track[tracknum]->note[note_count[picked_track]]->type = EOF_NOTE_AMAZING;
-							sp->legacy_track[tracknum]->note[note_count[picked_track]]->flags ^= EOF_NOTE_FLAG_DBASS;	//Apply this status flag
+							sp->legacy_track[tracknum]->note[note_count[picked_track]]->flags |= EOF_NOTE_FLAG_DBASS;	//Apply this status flag
 							diff = eof_import_events[i]->event[j]->d1 - 0x60 + 1;	//Treat as gem 1 (bass drum)
 						}
 						else

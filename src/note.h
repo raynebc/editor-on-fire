@@ -8,7 +8,7 @@
 
 
 int eof_note_count_colors(EOF_NOTE * np);	//Performs bit masking to determine the number of gems the note defines being present
-void eof_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, int pos, int length);
+void eof_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, char L6, int pos, int length);
 	//Creates a note by by storing the specified on/off status of the green, yellow, red, blue and purple gem colors
 	//as well as the position and length into the given EOF_NOTE structure, whose contents are overwritten
 	//The note type and flags are not altered
@@ -22,12 +22,12 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	//If the note is 100% clipped, nonzero is returned
 	//-1 Clipped completely to the left of the viewing window
 	//1 Clipped completely to the right of the viewing window
-int eof_note_draw_3d(EOF_NOTE * np, int p);
+int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p);
 	//Renders the note to the 3D preview area
 	//If the note is 100% clipped, nonzero is returned
 	//-1 Clipped completely before the viewing window
 	//1 Clipped completely after the viewing window
-int eof_note_tail_draw_3d(EOF_NOTE * np, int p);
+int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p);
 	//Renders the note's tail to the 3D preview area
 	//If the note is 100% clipped, nonzero is returned
 	//-1 Clipped completely before the viewing window

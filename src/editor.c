@@ -535,6 +535,7 @@ void eof_read_editor_keys(void)
 	unsigned long bitmask = 0;	//Used for simplifying note placement logic
 	EOF_NOTE * new_note = NULL;
 	EOF_LYRIC * new_lyric = NULL;
+	unsigned long numlanes = eof_count_track_lanes(eof_selected_track);
 
 	eof_read_controller(&eof_guitar);
 	eof_read_controller(&eof_drums);
@@ -1170,11 +1171,7 @@ void eof_read_editor_keys(void)
 
 	if(key[KEY_T])
 	{
-//eof_menu_note_toggle_crazy() now checks the active track
-//		if(!eof_vocals_selected && eof_selected_track != EOF_TRACK_DRUM)
-//		{
-			eof_menu_note_toggle_crazy();
-//		}
+		eof_menu_note_toggle_crazy();
 		key[KEY_T] = 0;
 	}
 
@@ -1229,64 +1226,75 @@ void eof_read_editor_keys(void)
 	}
 
 	if(key[KEY_M])
-	{
+	{	//Toggle metronome
 		eof_menu_edit_metronome();
 		key[KEY_M] = 0;
 	}
 	if(key[KEY_C] && !KEY_EITHER_CTRL)
-	{
+	{	//Toggle claps
 		eof_menu_edit_claps();
 		key[KEY_C] = 0;
 	}
 	if(key[KEY_V] && !KEY_EITHER_CTRL)
-	{
+	{	//Toggle vocal tones
 		eof_menu_edit_vocal_tones();
 		key[KEY_V] = 0;
 	}
-	if(key[KEY_1] && KEY_EITHER_CTRL && eof_music_paused && !eof_music_catalog_playback && !eof_vocals_selected)
-	{
-		eof_menu_note_toggle_green();
-		key[KEY_1] = 0;
+	if(KEY_EITHER_CTRL && eof_music_paused && !eof_music_catalog_playback && !eof_vocals_selected)
+	{	//Toggle lanes on/off
+		if(key[KEY_1])
+		{
+			eof_menu_note_toggle_green();
+			key[KEY_1] = 0;
+		}
+		else if(key[KEY_2])
+		{
+			eof_menu_note_toggle_red();
+			key[KEY_2] = 0;
+		}
+		else if(key[KEY_3])
+		{
+			eof_menu_note_toggle_yellow();
+			key[KEY_3] = 0;
+		}
+		else if(key[KEY_4])
+		{
+			eof_menu_note_toggle_blue();
+			key[KEY_4] = 0;
+		}
+		else if(key[KEY_5])
+		{
+			eof_menu_note_toggle_purple();
+			key[KEY_5] = 0;
+		}
+		else if(key[KEY_6] && (numlanes >= 6))
+		{	//Only allow use of the 6 key if lane 6 is available
+			eof_menu_note_toggle_lane6();
+			key[KEY_6] = 0;
+		}
 	}
-	else if(key[KEY_2] && KEY_EITHER_CTRL && eof_music_paused && !eof_music_catalog_playback && !eof_vocals_selected)
+	else if(KEY_EITHER_SHIFT)
 	{
-		eof_menu_note_toggle_red();
-		key[KEY_2] = 0;
-	}
-	else if(key[KEY_3] && KEY_EITHER_CTRL && eof_music_paused && !eof_music_catalog_playback && !eof_vocals_selected)
-	{
-		eof_menu_note_toggle_yellow();
-		key[KEY_3] = 0;
-	}
-	else if(key[KEY_4] && KEY_EITHER_CTRL && eof_music_paused && !eof_music_catalog_playback && !eof_vocals_selected)
-	{
-		eof_menu_note_toggle_blue();
-		key[KEY_4] = 0;
-	}
-	else if(key[KEY_5] && KEY_EITHER_CTRL && eof_music_paused && !eof_music_catalog_playback && !eof_vocals_selected)
-	{
-		eof_menu_note_toggle_purple();
-		key[KEY_5] = 0;
-	}
-	else if(key[KEY_1] && KEY_EITHER_SHIFT)	//Change mini piano focus to first usable octave
-	{
-		eof_vocals_offset = MINPITCH;
-		key[KEY_1] = 0;
-	}
-	else if(key[KEY_2] && KEY_EITHER_SHIFT)	//Change mini piano focus to second usable octave
-	{
-		eof_vocals_offset = MINPITCH+12;
-		key[KEY_2] = 0;
-	}
-	else if(key[KEY_3] && KEY_EITHER_SHIFT)	//Change mini piano focus to third usable octave
-	{
-		eof_vocals_offset = MINPITCH+24;
-		key[KEY_3] = 0;
-	}
-	else if(key[KEY_4] && KEY_EITHER_SHIFT)	//Change mini piano focus to fourth usable octave
-	{
-		eof_vocals_offset = MINPITCH+36;
-		key[KEY_4] = 0;
+		if(key[KEY_1])	//Change mini piano focus to first usable octave
+		{
+			eof_vocals_offset = MINPITCH;
+			key[KEY_1] = 0;
+		}
+		else if(key[KEY_2])	//Change mini piano focus to second usable octave
+		{
+			eof_vocals_offset = MINPITCH+12;
+			key[KEY_2] = 0;
+		}
+		else if(key[KEY_3])	//Change mini piano focus to third usable octave
+		{
+			eof_vocals_offset = MINPITCH+24;
+			key[KEY_3] = 0;
+		}
+		else if(key[KEY_4])	//Change mini piano focus to fourth usable octave
+		{
+			eof_vocals_offset = MINPITCH+36;
+			key[KEY_4] = 0;
+		}
 	}
 	else if(!KEY_EITHER_CTRL)
 	{
@@ -1296,73 +1304,51 @@ void eof_read_editor_keys(void)
 			{
 				if(key[KEY_1])
 				{
-					if(!(eof_pen_note.note & 1))
-					{
-						eof_pen_note.note ^= 1;
-					}
+					eof_pen_note.note |= 1;	//Set the bit for lane 1
 				}
 				else
 				{
-					if((eof_pen_note.note & 1))
-					{
-						eof_pen_note.note ^= 1;
-					}
+					eof_pen_note.note &= (~1);	//Clear the bit for lane 1
 				}
 				if(key[KEY_2])
 				{
-					if(!(eof_pen_note.note & 2))
-					{
-						eof_pen_note.note ^= 2;
-					}
+					eof_pen_note.note |= 2;	//Set the bit for lane 2
 				}
 				else
 				{
-					if((eof_pen_note.note & 2))
-					{
-						eof_pen_note.note ^= 2;
-					}
+					eof_pen_note.note &= (~2);	//Clear the bit for lane 2
 				}
 				if(key[KEY_3])
 				{
-					if(!(eof_pen_note.note & 4))
-					{
-						eof_pen_note.note ^= 4;
-					}
+					eof_pen_note.note |= 4;	//Set the bit for lane 3
 				}
 				else
 				{
-					if((eof_pen_note.note & 4))
-					{
-						eof_pen_note.note ^= 4;
-					}
+					eof_pen_note.note &= (~4);	//Clear the bit for lane 3
 				}
 				if(key[KEY_4])
 				{
-					if(!(eof_pen_note.note & 8))
-					{
-						eof_pen_note.note ^= 8;
-					}
+					eof_pen_note.note |= 8;	//Set the bit for lane 4
 				}
 				else
 				{
-					if((eof_pen_note.note & 8))
-					{
-						eof_pen_note.note ^= 8;
-					}
+					eof_pen_note.note &= (~8);	//Clear the bit for lane 4
 				}
 				if(key[KEY_5])
 				{
-					if(!(eof_pen_note.note & 16))
-					{
-						eof_pen_note.note ^= 16;
-					}
+					eof_pen_note.note |= 16;	//Set the bit for lane 5
 				}
 				else
 				{
-					if((eof_pen_note.note & 16))
-					{
-						eof_pen_note.note ^= 16;
-					}
+					eof_pen_note.note &= (~16);	//Clear the bit for lane 5
+				}
+				if(key[KEY_6] && (numlanes >= 6))
+				{	//Only allow use of the 6 key if lane 6 is available
+					eof_pen_note.note |= 32;	//Set the bit for lane 6
+				}
+				else
+				{
+					eof_pen_note.note &= (~32);	//Clear the bit for lane 6
 				}
 			}
 		}
@@ -1394,6 +1380,11 @@ void eof_read_editor_keys(void)
 				{
 					eof_pen_note.note ^= 16;
 					key[KEY_5] = 0;
+				}
+				if(key[KEY_6] && (numlanes >= 6))
+				{	//Only allow use of the 6 key if lane 6 is available
+					eof_pen_note.note ^= 32;
+					key[KEY_6] = 0;
 				}
 			}
 		}
@@ -1437,8 +1428,13 @@ void eof_read_editor_keys(void)
 						bitmask = 16;
 						key[KEY_5] = 0;
 					}
+					else if(key[KEY_6] && (numlanes >= 6))
+					{	//Only allow use of the 6 key if lane 6 is available
+						bitmask = 32;
+						key[KEY_6] = 0;
+					}
 
-					if(bitmask)	//If user has pressed any key from 1 through 5
+					if(bitmask)	//If user has pressed any key from 1 through 6
 					{
 						eof_selection.range_pos_1 = 0;
 						eof_selection.range_pos_2 = 0;
@@ -1477,7 +1473,7 @@ void eof_read_editor_keys(void)
 							new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
 							if(new_note)
 							{
-								eof_note_create(new_note, eof_pen_note.note & 1, eof_pen_note.note & 2, eof_pen_note.note & 4, eof_pen_note.note & 8, eof_pen_note.note & 16, eof_pen_note.pos, eof_snap.length);
+								eof_note_create2(new_note, eof_pen_note.note, eof_pen_note.pos, eof_snap.length);
 								if(eof_mark_drums_as_cymbal)
 								{	//If the user opted to make all new drum notes cymbals automatically
 									eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_song->legacy_track[tracknum]->notes-1);
@@ -1681,7 +1677,7 @@ void eof_read_editor_keys(void)
 					new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
 					if(new_note)
 					{
-						eof_note_create(new_note, 1, 0, 0, 0, 0, eof_music_pos - eof_av_delay - eof_guitar.delay, 1);
+						eof_note_create2(new_note, eof_snote, eof_music_pos - eof_av_delay - eof_guitar.delay, 1);
 						if(eof_mark_drums_as_cymbal)
 						{	//If the user opted to make all new drum notes cymbals automatically
 							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_song->legacy_track[tracknum]->notes-1);
@@ -1690,7 +1686,7 @@ void eof_read_editor_keys(void)
 						{	//In a keys track, all lanes are forced to be "crazy" and be allowed to overlap other lanes
 							new_note->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag bit
 						}
-						new_note->note = eof_snote;
+//						new_note->note = eof_snote;
 						new_note->type = eof_note_type;
 						eof_entering_note_note = new_note;
 						eof_entering_note = 1;
@@ -1726,7 +1722,7 @@ void eof_read_editor_keys(void)
 				new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
 				if(new_note)
 				{
-					eof_note_create(new_note, eof_pen_note.note & 1, eof_pen_note.note & 2, eof_pen_note.note & 4, eof_pen_note.note & 8, eof_pen_note.note & 16, eof_music_pos - eof_av_delay, eof_snap.length);
+					eof_note_create2(new_note, eof_pen_note.note, eof_music_pos - eof_av_delay, eof_snap.length);
 					if(eof_mark_drums_as_cymbal)
 					{	//If the user opted to make all new drum notes cymbals automatically
 						eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_song->legacy_track[tracknum]->notes-1);
@@ -1749,7 +1745,7 @@ void eof_read_editor_keys(void)
 					new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
 					if(new_note)
 					{
-						eof_note_create(new_note, eof_pen_note.note & 1, eof_pen_note.note & 2, eof_pen_note.note & 4, eof_pen_note.note & 8, eof_pen_note.note & 16, eof_music_pos - eof_av_delay, eof_snap.length);
+						eof_note_create2(new_note, eof_pen_note.note, eof_music_pos - eof_av_delay, eof_snap.length);
 						if(eof_mark_drums_as_cymbal)
 						{	//If the user opted to make all new drum notes cymbals automatically
 							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_song->legacy_track[tracknum]->notes-1);
@@ -2692,7 +2688,7 @@ void eof_editor_logic(void)
 						new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
 						if(new_note)
 						{
-							eof_note_create(new_note, eof_pen_note.note & 1, eof_pen_note.note & 2, eof_pen_note.note & 4, eof_pen_note.note & 8, eof_pen_note.note & 16, eof_pen_note.pos, KEY_EITHER_SHIFT ? 1 : eof_snap.length);
+							eof_note_create2(new_note, eof_pen_note.note, eof_pen_note.pos, KEY_EITHER_SHIFT ? 1 : eof_snap.length);
 							if(eof_mark_drums_as_cymbal)
 							{	//If the user opted to make all new drum notes cymbals automatically
 								eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_song->legacy_track[tracknum]->notes-1);
@@ -2723,7 +2719,7 @@ void eof_editor_logic(void)
 					new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
 					if(new_note)
 					{
-						eof_note_create(new_note, eof_pen_note.note & 1, eof_pen_note.note & 2, eof_pen_note.note & 4, eof_pen_note.note & 8, eof_pen_note.note & 16, eof_pen_note.pos, KEY_EITHER_SHIFT ? 1 : eof_snap.length);
+						eof_note_create2(new_note, eof_pen_note.note, eof_pen_note.pos, KEY_EITHER_SHIFT ? 1 : eof_snap.length);
 						if(eof_mark_drums_as_cymbal)
 						{	//If the user opted to make all new drum notes cymbals automatically
 							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_song->legacy_track[tracknum]->notes-1);
@@ -3670,7 +3666,7 @@ void eof_vocal_editor_logic(void)
 					}
 				}
 			}
-			if((((eof_input_mode != EOF_INPUT_REX) && ((mouse_b & 2) || key[KEY_INSERT])) || (((eof_input_mode == EOF_INPUT_REX) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL && (key[KEY_1] || key[KEY_2] || key[KEY_3] || key[KEY_4] || key[KEY_5])) && eof_rclick_released && (eof_pen_lyric.pos < eof_music_length))) || key[KEY_BACKSPACE])
+			if((((eof_input_mode != EOF_INPUT_REX) && ((mouse_b & 2) || key[KEY_INSERT])) || (((eof_input_mode == EOF_INPUT_REX) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL && (key[KEY_1] || key[KEY_2] || key[KEY_3] || key[KEY_4] || key[KEY_5] || key[KEY_6])) && eof_rclick_released && (eof_pen_lyric.pos < eof_music_length))) || key[KEY_BACKSPACE])
 			{
 				eof_selection.range_pos_1 = 0;
 				eof_selection.range_pos_2 = 0;
@@ -3754,7 +3750,7 @@ void eof_vocal_editor_logic(void)
 			}
 			if(eof_input_mode == EOF_INPUT_REX)
 			{
-				if(!key[KEY_1] && !key[KEY_2] && !key[KEY_3] && !key[KEY_4] && !key[KEY_5])
+				if(!key[KEY_1] && !key[KEY_2] && !key[KEY_3] && !key[KEY_4] && !key[KEY_5] && !key[KEY_6])
 				{
 					eof_rclick_released = 1;
 				}
@@ -4407,7 +4403,7 @@ void eof_render_vocal_editor_window(void)
 		else
 		{
 			kcol = eof_color_white;
-			kcol2 = makecol(192, 192, 192);
+			kcol2 = eof_color_silver;
 		}
 		rectfill(eof_window_editor->screen, 0, ny, 19, ny + eof_screen_layout.vocal_tail_size - 1, kcol);
 		hline(eof_window_editor->screen, 0, ny + eof_screen_layout.vocal_tail_size - 1, 19, kcol2);

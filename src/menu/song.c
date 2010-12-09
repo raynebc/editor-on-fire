@@ -462,6 +462,16 @@ void eof_prepare_song_menu(void)
 				eof_track_selected_menu[i].text[0] = ' ';
 			}
 		}
+
+		/* enable open strum bass */
+		if(eof_open_bass)
+		{
+			eof_song_menu[16].flags = D_SELECTED;
+		}
+		else
+		{
+			eof_song_menu[16].flags = 0;
+		}
 	}//If a chart is loaded
 }
 

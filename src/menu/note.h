@@ -59,6 +59,7 @@ int eof_menu_note_toggle_red(void);
 int eof_menu_note_toggle_yellow(void);
 int eof_menu_note_toggle_blue(void);
 int eof_menu_note_toggle_purple(void);
+int eof_menu_note_toggle_lane6(void);
 
 int eof_menu_split_lyric(void);
 

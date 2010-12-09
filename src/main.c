@@ -201,6 +201,8 @@ int eof_color_green;
 int eof_color_blue;
 int eof_color_yellow;
 int eof_color_purple;
+int eof_color_orange;
+int eof_color_silver;
 int eof_info_color;
 
 EOF_SCREEN_LAYOUT eof_screen_layout;
@@ -886,17 +888,9 @@ void eof_determine_hopos(void)
 
 	for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
 	{
-
 		/* clear the flags */
-		if(eof_song->legacy_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_HOPO)
-		{
-			eof_song->legacy_track[tracknum]->note[i]->flags ^= EOF_NOTE_FLAG_HOPO;
-		}
-		if(eof_song->legacy_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_SP)
-		{
-			eof_song->legacy_track[tracknum]->note[i]->flags ^= EOF_NOTE_FLAG_SP;
-		}
-//		eof_song->legacy_track[tracknum]->note[i]->flags = (eof_song->legacy_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_CRAZY);
+		eof_song->legacy_track[tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_HOPO);
+		eof_song->legacy_track[tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_SP);
 
 		/* mark HOPO notes */
 		switch(eof_hopo_view)
@@ -2208,7 +2202,7 @@ void eof_render_lyric_window(void)
 			if((n >= eof_vocals_offset) && (n < eof_vocals_offset + eof_screen_layout.vocal_view_size))
 			{
 				kcol = eof_color_white;
-				kcol2 = makecol(192, 192, 192);
+				kcol2 = eof_color_silver;
 			}
 			else
 			{
@@ -2379,8 +2373,8 @@ void eof_render_3d_window(void)
 	{	//Render 3D notes from last to first so that the earlier notes are in front
 		if(eof_note_type == eof_song->legacy_track[tracknum]->note[i-1]->type)
 		{
-			tr = eof_note_tail_draw_3d(eof_song->legacy_track[tracknum]->note[i-1], (eof_selection.multi[i-1] && eof_music_paused) ? 1 : (i-1) == eof_hover_note ? 2 : 0);
-			eof_note_draw_3d(eof_song->legacy_track[tracknum]->note[i-1], (eof_selection.track == eof_selected_track && eof_selection.multi[i-1] && eof_music_paused) ? 1 : (i-1) == eof_hover_note ? 2 : 0);
+			tr = eof_note_tail_draw_3d(eof_selected_track, i-1, (eof_selection.multi[i-1] && eof_music_paused) ? 1 : (i-1) == eof_hover_note ? 2 : 0);
+			eof_note_draw_3d(eof_selected_track, i-1, (eof_selection.track == eof_selected_track && eof_selection.multi[i-1] && eof_music_paused) ? 1 : (i-1) == eof_hover_note ? 2 : 0);
 
 			if(tr < 0)	//if eof_note_tail_draw_3d skipped rendering the tail because it renders before the visible area
 				break;	//Stop rendering 3d notes
@@ -2582,6 +2576,10 @@ int eof_load_data(void)
 	eof_image[EOF_IMAGE_NOTE_PURPLE_CYMBAL_HIT] = load_pcx("eof.dat#note_purple_hit_cymbal.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_WHITE_CYMBAL] = load_pcx("eof.dat#note_white_cymbal.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_WHITE_CYMBAL_HIT] = load_pcx("eof.dat#note_white_hit_cymbal.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_ORANGE] = load_pcx("eof.dat#note_orange.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_ORANGE_HIT] = load_pcx("eof.dat#note_orange_hit.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_HORANGE] = load_pcx("eof.dat#note_orange_hopo.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_HORANGE_HIT] = load_pcx("eof.dat#note_orange_hopo_hit.pcx", NULL);
 	for(i = 1; i <= EOF_IMAGE_MENU_NO_NOTE; i++)
 	{
 		if(!eof_image[i])
@@ -2615,6 +2613,8 @@ int eof_load_data(void)
 	eof_color_blue = makecol(0, 0, 255);
 	eof_color_yellow = makecol(255, 255, 0);
 	eof_color_purple = makecol(255, 0, 255);
+	eof_color_orange = makecol(255, 127, 0);
+	eof_color_silver = makecol(192, 192, 192);
 
     gui_fg_color = agup_fg_color;
     gui_bg_color = agup_bg_color;
@@ -3348,9 +3348,20 @@ void eof_init_after_load(void)
 
 void eof_scale_fretboard(void)
 {
-	unsigned long ctr,numlanes;
+	unsigned long ctr,numlanes,tracknum;
 
 	eof_screen_layout.string_space = eof_screen_layout.string_space_unscaled;
+
+	tracknum = eof_song->track[EOF_TRACK_BASS]->tracknum;
+	if(eof_open_bass)
+	{	//Ensure that the sixth lane is correctly enabled/disabled after performing undo/redo
+		eof_song->legacy_track[tracknum]->numlanes = 6;
+	}
+	else
+	{
+		eof_song->legacy_track[tracknum]->numlanes = 5;
+	}
+
 	numlanes = eof_count_track_lanes(eof_selected_track);
 	if(numlanes > 5)
 	{	//If the active track has more than 5 lanes, scale the spacing between the fretboard lanes
