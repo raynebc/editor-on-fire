@@ -259,6 +259,10 @@ float eof_get_porpos(unsigned long pos)
 	{
 		blength = eof_song->beat[eof_song->beats - 1]->pos - eof_song->beat[eof_song->beats - 2]->pos;
 	}
+	if(beat < 0)
+	{	//If eof_get_beat() returned error
+		beat = eof_song->beats - 1;	//Assume the note position is relative to the last beat marker
+	}
 	rpos = pos - eof_song->beat[beat]->pos;
 	porpos = ((float)rpos / (float)blength) * 100.0;
 	return porpos;
