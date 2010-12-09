@@ -40,7 +40,7 @@
 #define EOF_INPUT_GUITAR_STRUM 5
 #define EOF_INPUT_FEEDBACK     6
 
-#define EOF_MAX_IMAGES 72
+#define EOF_MAX_IMAGES 76
 
 #define EOF_IMAGE_WAVE                    0
 #define EOF_IMAGE_TAB0                    1
@@ -98,6 +98,10 @@
 #define EOF_IMAGE_NOTE_PURPLE_CYMBAL_HIT 53
 #define EOF_IMAGE_NOTE_WHITE_CYMBAL      54
 #define EOF_IMAGE_NOTE_WHITE_CYMBAL_HIT  55
+#define EOF_IMAGE_NOTE_ORANGE            56
+#define EOF_IMAGE_NOTE_ORANGE_HIT        57
+#define EOF_IMAGE_NOTE_HORANGE           58
+#define EOF_IMAGE_NOTE_HORANGE_HIT       59
 
 #define EOF_DISPLAY_640             0
 #define EOF_DISPLAY_800             1
@@ -312,6 +316,8 @@ extern int eof_color_green;
 extern int eof_color_blue;
 extern int eof_color_yellow;
 extern int eof_color_purple;
+extern int eof_color_orange;
+extern int eof_color_silver;
 extern int eof_info_color;
 
 extern PALETTE     eof_palette;

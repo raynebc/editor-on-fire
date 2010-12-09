@@ -30,7 +30,7 @@ int eof_note_count_colors(EOF_NOTE * np)
 	return count;
 }
 
-void eof_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, int pos, int length)
+void eof_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, char L6, int pos, int length)
 {
 	np->note = 0;
 	if(g)
@@ -52,6 +52,10 @@ void eof_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, int 
 	if(p)
 	{
 		np->note |= 16;
+	}
+	if(L6)
+	{
+		np->note |= 32;
 	}
 	np->pos = pos;
 	np->length = length;
@@ -120,8 +124,8 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	int pcol = p == 1 ? eof_color_white : p == 2 ? makecol(224, 255, 224) : 0;
 	int dcol = eof_color_white;
 	int dcol2 = dcol;
-	int colors[EOF_MAX_FRETS] = {eof_color_green,eof_color_red,eof_color_yellow,eof_color_blue,eof_color_purple,eof_color_purple};	//Each of the fret colors
-	int ncol = makecol(192, 192, 192);	//Note color defaults to silver unless the note is not star power
+	int colors[EOF_MAX_FRETS] = {eof_color_green,eof_color_red,eof_color_yellow,eof_color_blue,eof_color_purple,eof_color_orange};	//Each of the fret colors
+	int ncol = eof_color_silver;	//Note color defaults to silver unless the note is not star power
 	int ctr,ctr2;
 	unsigned int mask;	//Used to mask out colors in the for loop
 	int radius,dotsize;
@@ -532,7 +536,7 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 	return 0;	//Return status:  Note was not clipped in its entirety
 }
 
-int eof_note_draw_3d(EOF_NOTE * np, int p)
+int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 {
 	int pos = eof_music_pos / eof_zoom_3d;
 	int npos;
@@ -542,12 +546,23 @@ int eof_note_draw_3d(EOF_NOTE * np, int p)
 	int rz, ez;
 	int ctr;
 	unsigned int mask;	//Used to mask out colors in the for loop
-	unsigned int notes[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN, EOF_IMAGE_NOTE_RED, EOF_IMAGE_NOTE_YELLOW, EOF_IMAGE_NOTE_BLUE, EOF_IMAGE_NOTE_PURPLE, EOF_IMAGE_NOTE_PURPLE};
-	unsigned int notes_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN_HIT, EOF_IMAGE_NOTE_RED_HIT, EOF_IMAGE_NOTE_YELLOW_HIT, EOF_IMAGE_NOTE_BLUE_HIT, EOF_IMAGE_NOTE_PURPLE_HIT, EOF_IMAGE_NOTE_PURPLE_HIT};
-	unsigned int hopo_notes[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_HGREEN, EOF_IMAGE_NOTE_HRED, EOF_IMAGE_NOTE_HYELLOW, EOF_IMAGE_NOTE_HBLUE, EOF_IMAGE_NOTE_HPURPLE, EOF_IMAGE_NOTE_HPURPLE};
-	unsigned int hopo_notes_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_HGREEN_HIT, EOF_IMAGE_NOTE_HRED_HIT, EOF_IMAGE_NOTE_HYELLOW_HIT, EOF_IMAGE_NOTE_HBLUE_HIT, EOF_IMAGE_NOTE_HPURPLE_HIT, EOF_IMAGE_NOTE_HPURPLE_HIT};
-	unsigned int cymbals[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN, EOF_IMAGE_NOTE_RED, EOF_IMAGE_NOTE_YELLOW_CYMBAL, EOF_IMAGE_NOTE_BLUE_CYMBAL, EOF_IMAGE_NOTE_PURPLE_CYMBAL, EOF_IMAGE_NOTE_PURPLE_CYMBAL};
-	unsigned int cymbals_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN_HIT, EOF_IMAGE_NOTE_RED_HIT, EOF_IMAGE_NOTE_YELLOW_CYMBAL_HIT, EOF_IMAGE_NOTE_BLUE_CYMBAL_HIT, EOF_IMAGE_NOTE_PURPLE_CYMBAL_HIT, EOF_IMAGE_NOTE_PURPLE_CYMBAL_HIT};
+	unsigned int notes[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN, EOF_IMAGE_NOTE_RED, EOF_IMAGE_NOTE_YELLOW, EOF_IMAGE_NOTE_BLUE, EOF_IMAGE_NOTE_PURPLE, EOF_IMAGE_NOTE_ORANGE};
+	unsigned int notes_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN_HIT, EOF_IMAGE_NOTE_RED_HIT, EOF_IMAGE_NOTE_YELLOW_HIT, EOF_IMAGE_NOTE_BLUE_HIT, EOF_IMAGE_NOTE_PURPLE_HIT, EOF_IMAGE_NOTE_ORANGE_HIT};
+	unsigned int hopo_notes[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_HGREEN, EOF_IMAGE_NOTE_HRED, EOF_IMAGE_NOTE_HYELLOW, EOF_IMAGE_NOTE_HBLUE, EOF_IMAGE_NOTE_HPURPLE, EOF_IMAGE_NOTE_HORANGE};
+	unsigned int hopo_notes_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_HGREEN_HIT, EOF_IMAGE_NOTE_HRED_HIT, EOF_IMAGE_NOTE_HYELLOW_HIT, EOF_IMAGE_NOTE_HBLUE_HIT, EOF_IMAGE_NOTE_HPURPLE_HIT, EOF_IMAGE_NOTE_HORANGE_HIT};
+	unsigned int cymbals[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN, EOF_IMAGE_NOTE_RED, EOF_IMAGE_NOTE_YELLOW_CYMBAL, EOF_IMAGE_NOTE_BLUE_CYMBAL, EOF_IMAGE_NOTE_PURPLE_CYMBAL, EOF_IMAGE_NOTE_ORANGE};
+	unsigned int cymbals_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN_HIT, EOF_IMAGE_NOTE_RED_HIT, EOF_IMAGE_NOTE_YELLOW_CYMBAL_HIT, EOF_IMAGE_NOTE_BLUE_CYMBAL_HIT, EOF_IMAGE_NOTE_PURPLE_CYMBAL_HIT, EOF_IMAGE_NOTE_ORANGE_HIT};
+	unsigned long numlanes, tracknum;
+	EOF_NOTE * np = NULL;
+
+//Validate parameters
+	tracknum = eof_song->track[track]->tracknum;
+	if((track == 0) || (track >= eof_song->tracks) || (eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) || (notenum >= eof_song->legacy_track[tracknum]->notes))
+	{	//If an invalid track or note number was passsed
+		return -1;	//Error, signal to stop rendering (3D window renders last note to first)
+	}
+	np = eof_song->legacy_track[tracknum]->note[notenum];	//Store the pointer to this note
+	numlanes = eof_count_track_lanes(track);
 
 	npos = -pos - 6 + np->pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
 	if(npos + np->length / eof_zoom_3d < -100)
@@ -558,7 +573,7 @@ int eof_note_draw_3d(EOF_NOTE * np, int p)
 	{				//If the note would render entirely after the visible area
 		return 1;	//Return status:  Clipping after the viewing window
 	}
-	if(eof_selected_track == EOF_TRACK_DRUM)
+	if(track == EOF_TRACK_DRUM)
 	{
 		if(eof_lefty_mode)
 		{
@@ -582,7 +597,7 @@ int eof_note_draw_3d(EOF_NOTE * np, int p)
 			point[7] = ocd3d_project_y(200, rz);
 
 			if(np->flags & EOF_NOTE_FLAG_SP)			//If this bass drum note is star power, render it in silver
-				polygon(eof_window_3d->screen, 4, point, p ? eof_color_white : makecol(192, 192, 192));
+				polygon(eof_window_3d->screen, 4, point, p ? eof_color_white : eof_color_silver);
 			else if(np->flags & EOF_NOTE_FLAG_DBASS)	//Or if it is double bass, render it in red
 				polygon(eof_window_3d->screen, 4, point, p ? makecol(255, 192, 192) : eof_color_red);
 			else										//Otherwise render it in green
@@ -631,26 +646,47 @@ int eof_note_draw_3d(EOF_NOTE * np, int p)
 		{	//Render for each of the available fret colors
 			if(np->note & mask)
 			{
-				if(np->flags & EOF_NOTE_FLAG_HOPO)
-				{	//If this is a HOPO note
-					if(np->flags & EOF_NOTE_FLAG_SP)
-					{	//If this is also a SP note
-						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_HWHITE_HIT] : eof_image[EOF_IMAGE_NOTE_HWHITE], xchart[ctr] - 24, 200 - 48, npos);
-					}
-					else
-					{
-						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[hopo_notes_hit[ctr]] : eof_image[hopo_notes[ctr]], xchart[ctr] - 24, 200 - 48, npos);
-					}
+				if((mask == 32) && (track == EOF_TRACK_BASS) && eof_open_bass)
+				{	//Lane 6 for the bass track (if enabled) renders similarly to a bass drum note
+					rz = npos;
+					ez = npos + 14;
+					point[0] = ocd3d_project_x(bx - 10, rz);
+					point[1] = ocd3d_project_y(200, rz);
+					point[2] = ocd3d_project_x(bx - 10, ez);
+					point[3] = ocd3d_project_y(200, ez);
+					point[4] = ocd3d_project_x(bx + 232, ez);
+					point[5] = ocd3d_project_y(200, ez);
+					point[6] = ocd3d_project_x(bx + 232, rz);
+					point[7] = ocd3d_project_y(200, rz);
+
+					if(np->flags & EOF_NOTE_FLAG_SP)			//If this open bass note is star power, render it in silver
+						polygon(eof_window_3d->screen, 4, point, p ? eof_color_white : eof_color_silver);
+					else										//Otherwise render it in orange
+						polygon(eof_window_3d->screen, 4, point, p ? makecol(255, 192, 0) : eof_color_orange);
 				}
-				else
-				{
-					if(np->flags & EOF_NOTE_FLAG_SP)
-					{	//If this is an SP note
-						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_WHITE_HIT] : eof_image[EOF_IMAGE_NOTE_WHITE], xchart[ctr] - 24, 200 - 48, npos);
+				else if(mask < 32)
+				{	//For now, lane 6 is not rendered except for open bass
+					if(np->flags & EOF_NOTE_FLAG_HOPO)
+					{	//If this is a HOPO note
+						if(np->flags & EOF_NOTE_FLAG_SP)
+						{	//If this is also a SP note
+							ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_HWHITE_HIT] : eof_image[EOF_IMAGE_NOTE_HWHITE], xchart[ctr] - 24, 200 - 48, npos);
+						}
+						else
+						{
+							ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[hopo_notes_hit[ctr]] : eof_image[hopo_notes[ctr]], xchart[ctr] - 24, 200 - 48, npos);
+						}
 					}
 					else
 					{
-						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[notes_hit[ctr]] : eof_image[notes[ctr]], xchart[ctr] - 24, 200 - 48, npos);
+						if(np->flags & EOF_NOTE_FLAG_SP)
+						{	//If this is an SP note
+							ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_WHITE_HIT] : eof_image[EOF_IMAGE_NOTE_WHITE], xchart[ctr] - 24, 200 - 48, npos);
+						}
+						else
+						{
+							ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[notes_hit[ctr]] : eof_image[notes[ctr]], xchart[ctr] - 24, 200 - 48, npos);
+						}
 					}
 				}
 			}
@@ -660,13 +696,25 @@ int eof_note_draw_3d(EOF_NOTE * np, int p)
 	return 0;	//Return status:  Note was not clipped in its entirety
 }
 
-int eof_note_tail_draw_3d(EOF_NOTE * np, int p)
+int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 {
 	long pos = eof_music_pos / eof_zoom_3d;
 	long npos;
 	int xchart[5] = {48, 48 + 56, 48 + 56 * 2, 48 + 56 * 3, 48 + 56 * 4};
 	int point[8];
 	int rz, ez;
+	unsigned long numlanes, tracknum, ctr, mask;
+	EOF_NOTE * np = NULL;
+	int colortable[5][2] = {{makecol(192, 255, 192), eof_color_green}, {makecol(255, 192, 192), eof_color_red}, {makecol(255, 255, 192), eof_color_yellow}, {makecol(192, 192, 255), eof_color_blue}, {makecol(255, 192, 255), eof_color_purple}};
+
+//Validate parameters
+	tracknum = eof_song->track[track]->tracknum;
+	if((track == 0) || (track >= eof_song->tracks) || (eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) || (notenum >= eof_song->legacy_track[tracknum]->notes))
+	{	//If an invalid track or note number was passsed
+		return -1;	//Error, signal to stop rendering (3D window renders last note to first)
+	}
+	np = eof_song->legacy_track[tracknum]->note[notenum];	//Store the pointer to this note
+	numlanes = eof_count_track_lanes(track);
 
 	npos = -pos - 6 + (np->pos + eof_av_delay) / eof_zoom_3d;
 	if(npos + np->length / eof_zoom_3d < -100)
@@ -687,92 +735,24 @@ int eof_note_tail_draw_3d(EOF_NOTE * np, int p)
 		xchart[4] = 48;
 	}
 
-	if(eof_selected_track != EOF_TRACK_DRUM)
-	{
-		if(np->note & 1)
-		{
-			rz = npos < -100 ? -100 : npos + 10;
-			ez = npos + np->length / eof_zoom_3d > 600 ? 600 : npos + np->length / eof_zoom_3d + 6;
-			point[0] = ocd3d_project_x(xchart[0] - 10, rz);
+	if((eof_selected_track == EOF_TRACK_DRUM) || (np->length <= 10))
+		return 0;	//Don't render tails for drum notes or notes that aren't over 10ms long
+
+	rz = npos < -100 ? -100 : npos + 10;
+	ez = npos + np->length / eof_zoom_3d > 600 ? 600 : npos + np->length / eof_zoom_3d + 6;
+	for(ctr=0,mask=1;ctr<5;ctr++,mask=mask<<1)
+	{	//For each of the available 3D lanes (currently 5)
+		if(np->note & mask)
+		{	//If this lane has a gem to render
+			point[0] = ocd3d_project_x(xchart[ctr] - 10, rz);
 			point[1] = ocd3d_project_y(200, rz);
-			point[2] = ocd3d_project_x(xchart[0] - 10, ez);
+			point[2] = ocd3d_project_x(xchart[ctr] - 10, ez);
 			point[3] = ocd3d_project_y(200, ez);
-			point[4] = ocd3d_project_x(xchart[0] + 10, ez);
+			point[4] = ocd3d_project_x(xchart[ctr] + 10, ez);
 			point[5] = ocd3d_project_y(200, ez);
-			point[6] = ocd3d_project_x(xchart[0] + 10, rz);
+			point[6] = ocd3d_project_x(xchart[ctr] + 10, rz);
 			point[7] = ocd3d_project_y(200, rz);
-			if(np->length > 10)
-			{
-				polygon(eof_window_3d->screen, 4, point, np->flags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : makecol(192, 192, 192)) : (p ? makecol(192, 255, 192) : eof_color_green));
-			}
-		}
-		if(np->note & 2)
-		{
-			rz = npos < -100 ? -100 : npos + 10;
-			ez = npos + np->length / eof_zoom_3d > 600 ? 600 : npos + np->length / eof_zoom_3d + 6;
-			point[0] = ocd3d_project_x(xchart[1] - 10, rz);
-			point[1] = ocd3d_project_y(200, rz);
-			point[2] = ocd3d_project_x(xchart[1] - 10, ez);
-			point[3] = ocd3d_project_y(200, ez);
-			point[4] = ocd3d_project_x(xchart[1] + 10, ez);
-			point[5] = ocd3d_project_y(200, ez);
-			point[6] = ocd3d_project_x(xchart[1] + 10, rz);
-			point[7] = ocd3d_project_y(200, rz);
-			if(np->length > 10)
-			{
-				polygon(eof_window_3d->screen, 4, point, np->flags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : makecol(192, 192, 192)) : (p ? makecol(255, 192, 192) : eof_color_red));
-			}
-		}
-		if(np->note & 4)
-		{
-			rz = npos < -100 ? -100 : npos + 10;
-			ez = npos + np->length / eof_zoom_3d > 600 ? 600 : npos + np->length / eof_zoom_3d + 6;
-			point[0] = ocd3d_project_x(xchart[2] - 10, rz);
-			point[1] = ocd3d_project_y(200, rz);
-			point[2] = ocd3d_project_x(xchart[2] - 10, ez);
-			point[3] = ocd3d_project_y(200, ez);
-			point[4] = ocd3d_project_x(xchart[2] + 10, ez);
-			point[5] = ocd3d_project_y(200, ez);
-			point[6] = ocd3d_project_x(xchart[2] + 10, rz);
-			point[7] = ocd3d_project_y(200, rz);
-			if(np->length > 10)
-			{
-				polygon(eof_window_3d->screen, 4, point, np->flags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : makecol(192, 192, 192)) : (p ? makecol(255, 255, 192) : eof_color_yellow));
-			}
-		}
-		if(np->note & 8)
-		{
-			rz = npos < -100 ? -100 : npos + 10;
-			ez = npos + np->length / eof_zoom_3d > 600 ? 600 : npos + np->length / eof_zoom_3d + 6;
-			point[0] = ocd3d_project_x(xchart[3] - 10, rz);
-			point[1] = ocd3d_project_y(200, rz);
-			point[2] = ocd3d_project_x(xchart[3] - 10, ez);
-			point[3] = ocd3d_project_y(200, ez);
-			point[4] = ocd3d_project_x(xchart[3] + 10, ez);
-			point[5] = ocd3d_project_y(200, ez);
-			point[6] = ocd3d_project_x(xchart[3] + 10, rz);
-			point[7] = ocd3d_project_y(200, rz);
-			if(np->length > 10)
-			{
-				polygon(eof_window_3d->screen, 4, point, np->flags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : makecol(192, 192, 192)) : (p ? makecol(192, 192, 255) : eof_color_blue));
-			}
-		}
-		if(np->note & 16)
-		{
-			rz = npos < -100 ? -100 : npos + 10;
-			ez = npos + np->length / eof_zoom_3d > 600 ? 600 : npos + np->length / eof_zoom_3d + 6;
-			point[0] = ocd3d_project_x(xchart[4] - 10, rz);
-			point[1] = ocd3d_project_y(200, rz);
-			point[2] = ocd3d_project_x(xchart[4] - 10, ez);
-			point[3] = ocd3d_project_y(200, ez);
-			point[4] = ocd3d_project_x(xchart[4] + 10, ez);
-			point[5] = ocd3d_project_y(200, ez);
-			point[6] = ocd3d_project_x(xchart[4] + 10, rz);
-			point[7] = ocd3d_project_y(200, rz);
-			if(np->length > 10)
-			{
-				polygon(eof_window_3d->screen, 4, point, np->flags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : makecol(192, 192, 192)) : (p ? makecol(255, 192, 255) : eof_color_purple));
-			}
+			polygon(eof_window_3d->screen, 4, point, np->flags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : eof_color_silver) : (p ? colortable[ctr][0] : colortable[ctr][1]));
 		}
 	}
 	return 0;

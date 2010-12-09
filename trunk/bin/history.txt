@@ -3,15 +3,26 @@ EOF Version History
 
 1.?:
 
+Fixed a crash that could occur with copy functions after importing a MIDI
+that is longer than the loaded audio.
+
 Removed duplicated rendering code, allowing HOPO on/off notes, percussion
 notes, vocal slides and cymbals to be shown correctly in the fret catalog.
 
+
+1.71:
+
 Fixed a crash in the Paste From function.
 
-Fixed a build issue with FoFLC's MinGW makefile.
+Fixed the lyric padding logic by ensuring the events were sorted before
+processing lyric phrase padding.
 
-Fixed an issue where the padding between each lyric phrase and the first lyric
-in the phrase didn't work.
+Fixed a bug in the grid snap logic that would crash on charts that were
+less than 3 beats long or so.
+
+Added a lyric padding loop to add padding to vocal percussion phrases.
+
+Fixed a build issue with FoFLC's MinGW makefile.
 
 
 1.7:
