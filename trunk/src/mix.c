@@ -38,7 +38,7 @@ EOF_MIX_VOICE eof_voice[EOF_MIX_MAX_CHANNELS];	//eof_voice[0] is "clap", eof_voi
 //int eof_mix_buffer_size = 4096;
 char eof_mix_claps_enabled = 0;
 char eof_mix_metronome_enabled = 0;
-char eof_mix_claps_note = 31; /* enable all by default */
+char eof_mix_claps_note = 63; /* enable all by default */
 char eof_mix_vocal_tones_enabled = 0;
 char eof_mix_midi_tones_enabled = 0;
 char eof_mix_percussion_enabled = 0;
@@ -211,18 +211,6 @@ unsigned long eof_mix_msec_to_sample(unsigned long msec, int freq)
 	sample = (unsigned long)(second * (double)freq);
 	return sample;
 }
-
-/*Unused function, it may have malfunctioned anyway, because it divided seconds by 1000 and casted
- to integer from floating point, which would not have returned the correct millisecond time value?
-unsigned long eof_mix_sample_to_msec(unsigned long sample, int freq)
-{
-	unsigned long msec;
-	double second = (double)sample / (double)freq;
-
-	msec = (unsigned long)(second / (double)1000.0);
-	return msec;
-}
-*/
 
 void eof_mix_find_claps(void)
 {

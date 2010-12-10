@@ -44,6 +44,7 @@ MENU eof_edit_claps_menu[] =
     {"&Yellow", eof_menu_edit_claps_yellow, NULL, 0, NULL},
     {"&Blue", eof_menu_edit_claps_blue, NULL, 0, NULL},
     {"&Purple", eof_menu_edit_claps_purple, NULL, 0, NULL},
+    {"&Orange", eof_menu_edit_claps_orange, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -1800,7 +1801,7 @@ int eof_menu_edit_metronome(void)
 
 int eof_menu_edit_claps_all(void)
 {
-	return eof_menu_edit_claps_helper(0,31);
+	return eof_menu_edit_claps_helper(0,63);
 }
 
 int eof_menu_edit_claps_green(void)
@@ -1828,10 +1829,15 @@ int eof_menu_edit_claps_purple(void)
 	return eof_menu_edit_claps_helper(5,16);
 }
 
+int eof_menu_edit_claps_orange(void)
+{
+	return eof_menu_edit_claps_helper(6,32);
+}
+
 int eof_menu_edit_claps_helper(unsigned long menu_item,char claps_flag)
 {
 	int i;
-	for(i = 0; i < 6; i++)
+	for(i = 0; i < 7; i++)
 	{
 		eof_edit_claps_menu[i].flags = 0;
 	}
