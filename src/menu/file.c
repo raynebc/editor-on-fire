@@ -1960,6 +1960,7 @@ int eof_save_helper(char *destfilename)
 	char newfolderpath[1024] = {0};
 	char oggfn[1024] = {0};
 	char function;		//Will be set to 1 for "Save" or 2 for "Save as"
+	unsigned long tracknum;
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Return failure
@@ -1985,6 +1986,29 @@ int eof_save_helper(char *destfilename)
 	/* sort notes so they are in order of position */
 	eof_sort_notes();
 	eof_fixup_notes();
+
+	/* check to make sure open bass guitar and forced HOPO on don't conflict */
+	if(eof_open_bass)
+	{
+		tracknum = eof_song->track[EOF_TRACK_BASS]->tracknum;
+		for(ctr = 0; ctr < eof_song->legacy_track[tracknum]->notes; ctr++)
+		{	//For each note in the bass guitar track
+			if((eof_song->legacy_track[tracknum]->note[ctr]->note & 1) && (eof_song->legacy_track[tracknum]->note[ctr]->flags & EOF_NOTE_FLAG_F_HOPO))
+			{	//If this note has a gem in lane one and is forced as a HOPO
+				eof_cursor_visible = 0;
+				eof_pen_visible = 0;
+				eof_show_mouse(screen);
+				if(alert(NULL, "Warning: One or more forced HOPOs for bass guitar notes/chords on lane 1 will be omitted when open bass strums are enabled.  Continue?", NULL, "&Yes", "&No", 'y', 'n') == 2)
+				{	//If user opts cancel the save
+					eof_show_mouse(NULL);
+					eof_cursor_visible = 1;
+					eof_pen_visible = 1;
+					return 2;	//Return cancellation
+				}
+				break;
+			}
+		}
+	}
 
 	/* prepare lyrics if applicable */
 	if(eof_song->vocal_track[0]->lyrics > 0)

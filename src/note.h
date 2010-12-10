@@ -8,7 +8,7 @@
 
 
 int eof_note_count_colors(EOF_NOTE * np);	//Performs bit masking to determine the number of gems the note defines being present
-void eof_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, char L6, int pos, int length);
+void eof_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, char o, int pos, int length);
 	//Creates a note by by storing the specified on/off status of the green, yellow, red, blue and purple gem colors
 	//as well as the position and length into the given EOF_NOTE structure, whose contents are overwritten
 	//The note type and flags are not altered

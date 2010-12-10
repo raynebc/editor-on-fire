@@ -1457,6 +1457,10 @@ void eof_read_editor_keys(void)
 								eof_determine_hopos();
 								eof_detect_difficulties(eof_song);
 							}
+							else
+							{	//Run cleanup to prevent open bass<->lane 1 conflicts
+								eof_legacy_track_fixup_notes(eof_song->legacy_track[tracknum], 0);
+							}
 							if(eof_selection.current != EOF_MAX_NOTES - 1)
 							{
 								memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
@@ -2680,6 +2684,7 @@ void eof_editor_logic(void)
 								eof_selection.current_pos = eof_song->legacy_track[tracknum]->note[eof_selection.current]->pos;
 								eof_selection.range_pos_1 = eof_selection.current_pos;
 								eof_selection.range_pos_2 = eof_selection.current_pos;
+								eof_legacy_track_fixup_notes(eof_song->legacy_track[tracknum], 0);	//Run cleanup to prevent open bass<->lane 1 conflicts
 							}
 						}
 					}

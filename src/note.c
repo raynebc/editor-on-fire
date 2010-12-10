@@ -30,7 +30,7 @@ int eof_note_count_colors(EOF_NOTE * np)
 	return count;
 }
 
-void eof_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, char L6, int pos, int length)
+void eof_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, char o, int pos, int length)
 {
 	np->note = 0;
 	if(g)
@@ -53,7 +53,7 @@ void eof_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, char
 	{
 		np->note |= 16;
 	}
-	if(L6)
+	if(o)
 	{
 		np->note |= 32;
 	}
@@ -259,7 +259,6 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 			{
 				rect(window->screen, x, y - eof_screen_layout.note_tail_size, x + np->length / eof_zoom, y + eof_screen_layout.note_tail_size, pcol);
 			}
-
 
 			if(!iscymbal)
 			{	//If this note is not a cymbal, render note as a circle
