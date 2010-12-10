@@ -1505,7 +1505,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 						switch(section_type)
 						{
 							case EOF_BOOKMARK_SECTION:		//Bookmark section
-								eof_song_add_section(sp,0,EOF_BOOKMARK_SECTION,0,section_start,inputl,0);
+								eof_song_add_section(sp,0,EOF_BOOKMARK_SECTION,0,section_start,section_end,inputl);
 							break;
 							case EOF_FRET_CATALOG_SECTION:	//Fret Catalog section
 								eof_song_add_section(sp,0,EOF_FRET_CATALOG_SECTION,inputc,section_start,section_end,inputl);	//For fret catalog sections, the flag represents the associated track number
