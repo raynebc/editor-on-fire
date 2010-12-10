@@ -1394,6 +1394,35 @@ allegro_message("Third pass complete");
 		sp->legacy_track[tracknum]->note[k]->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy status flag
 	}
 
+//Check for forced HOPO on lane 1 in PART BASS and prompt for whether to treat as open bass strumming
+	tracknum = sp->track[EOF_TRACK_BASS]->tracknum;
+	for(i = 0; i < sp->legacy_track[tracknum]->notes; i++)
+	{	//For each note in the bass track
+		if((sp->legacy_track[tracknum]->note[i]->note & 1) && (sp->legacy_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO))
+		{	//If this note has a gem in lane one and is forced as a HOPO, prompt the user how to handle them
+			eof_cursor_visible = 0;
+			eof_pen_visible = 0;
+			eof_show_mouse(screen);
+			if(alert(NULL, "Import lane 1 forced HOPO bass notes as open strums?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+			{	//If user selected yes
+				sp->legacy_track[tracknum]->numlanes = 6;		//Set this track to have 6 lanes instead of 5
+				for(k = 0; k < sp->legacy_track[tracknum]->notes; k++)
+				{	//For each note in the bass track
+					if((sp->legacy_track[tracknum]->note[k]->note & 1) && (sp->legacy_track[tracknum]->note[k]->flags & EOF_NOTE_FLAG_F_HOPO))
+					{	//If this note has a gem in lane one and is forced as a HOPO, convert it to open bass
+						sp->legacy_track[tracknum]->note[k]->note &= ~(1);	//Clear lane 1
+						sp->legacy_track[tracknum]->note[k]->note |= 32;		//Set lane 6
+						sp->legacy_track[tracknum]->note[k]->flags &= ~(EOF_NOTE_FLAG_F_HOPO);	//Clear the forced HOPO on flag
+					}
+				}
+			}
+			eof_show_mouse(NULL);
+			eof_cursor_visible = 1;
+			eof_pen_visible = 1;
+			break;
+		}
+	}
+
 	replace_filename(eof_song_path, fn, "", 1024);
 	append_filename(nfn, eof_song_path, "guitar.ogg", 1024);
 	if(!eof_load_ogg(nfn))

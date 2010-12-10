@@ -341,6 +341,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	char trackctr;							//Used in the temp data creation to handle Expert+
 	EOF_MIDI_TS_LIST *tslist=NULL;			//List containing TS changes
 	unsigned short noteflags;				//Stores the note flag for handling open bass <-> forced HOPO lane 1 conflicts
+	unsigned char note;						//Stores the note bitflag for handling open bass <-> forced HOPO lane 1 conflicts
 
 	anchorlist=eof_build_tempo_list();	//Create a linked list of all tempo changes in eof_song->beat[]
 	if(anchorlist == NULL)	//If the anchor list could not be created
@@ -432,8 +433,18 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					}
 
 					noteflags = sp->legacy_track[tracknum]->note[i]->flags;	//Store the note flags for easier use
+					note = sp->legacy_track[tracknum]->note[i]->note;	//Store the note bitflag for easier use
+
+					if(eof_open_bass && (j == EOF_TRACK_BASS))
+					{	//Ensure that for PART BASS, green gems and open bass notes don't exist at the same location
+						if((note & 1) && (note & 32))
+						{	//If this bass guitar note has lane 1 and 6 gems
+							note &= ~(1);	//Clear lane 1
+						}
+					}
+
 					/* write green note */
-					if(sp->legacy_track[tracknum]->note[i]->note & 1)
+					if(note & 1)
 					{
 						if((j == EOF_TRACK_DRUM) && (noteflags & EOF_NOTE_FLAG_DBASS))
 						{	//If the track being written is PART DRUMS, and this note is marked for Expert+ double bass
@@ -445,13 +456,13 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					}
 
 					/* write red note */
-					if(sp->legacy_track[tracknum]->note[i]->note & 2)
+					if(note & 2)
 					{
 						eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos, 0x90, midi_note_offset + 1);
 					}
 
 					/* write yellow note */
-					if(sp->legacy_track[tracknum]->note[i]->note & 4)
+					if(note & 4)
 					{
 						if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL))
 						{	//If pro drum notation is in effect and no more yellow drum notes at this note's position are marked as cymbals
@@ -464,7 +475,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					}
 
 					/* write blue note */
-					if(sp->legacy_track[tracknum]->note[i]->note & 8)
+					if(note & 8)
 					{
 						if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_B_CYMBAL))
 						{	//If pro drum notation is in effect and no more blue drum notes at this note's position are marked as cymbals
@@ -477,7 +488,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					}
 
 					/* write purple note */
-					if(sp->legacy_track[tracknum]->note[i]->note & 16)
+					if(note & 16)
 					{	//Note: EOF/FoF refer to this note color as purple/orange whereas Rock Band displays it as green
 						if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_G_CYMBAL))
 						{	//If pro drum notation is in effect and no more green drum notes at this note's position are marked as cymbals
@@ -489,17 +500,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 						eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos, 0x90, midi_note_offset + 4);
 					}
 
-					/* write open bass note, ensuring that if open bass was enabled during save, forced HOPO on notes for lane 1 are filtered out */
-					if(eof_open_bass && (j == EOF_TRACK_BASS))
-					{
-						if(sp->legacy_track[tracknum]->note[i]->note & 1)
-						{	//If open bass was enabled and this note has a lane 1 bass gem
-							noteflags &= (~EOF_NOTE_FLAG_F_HOPO);	//Ensure that the forced HOPO on flag is cleared
-						}
-						if(sp->legacy_track[tracknum]->note[i]->note & 32)
-						{	//If this is an open bass note
-							noteflags |= EOF_NOTE_FLAG_F_HOPO;	//Set the forced HOPO on flag, which is used to denote open bass
-						}
+					/* write open bass note, if the feature was enabled during save */
+					if(eof_open_bass && (j == EOF_TRACK_BASS) && (note & 32))
+					{	//If this is an open bass note
+						noteflags |= EOF_NOTE_FLAG_F_HOPO;	//Set the forced HOPO on flag, which is used to denote open bass
+						eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos, 0x90, midi_note_offset + 0);	//Write a gem for lane 1
 					}
 
 					/* write forced HOPO */
@@ -530,7 +535,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					}
 
 					/* write green note off */
-					if(sp->legacy_track[tracknum]->note[i]->note & 1)
+					if(note & 1)
 					{
 						if((j == EOF_TRACK_DRUM) && (noteflags & EOF_NOTE_FLAG_DBASS))	//If the track being written is PART DRUMS, and this note is marked for Expert+ double bass
 							eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos + length, 0x80, 95);
@@ -539,13 +544,13 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					}
 
 					/* write red note off */
-					if(sp->legacy_track[tracknum]->note[i]->note & 2)
+					if(note & 2)
 					{
 						eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos + length, 0x80, midi_note_offset + 1);
 					}
 
 					/* write yellow note off */
-					if(sp->legacy_track[tracknum]->note[i]->note & 4)
+					if(note & 4)
 					{
 						if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL))
 						{	//If pro drum notation is in effect and no more drum notes at this note's position are marked as cymbals
@@ -558,7 +563,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					}
 
 					/* write blue note off */
-					if(sp->legacy_track[tracknum]->note[i]->note & 8)
+					if(note & 8)
 					{
 						if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_B_CYMBAL))
 						{	//If pro drum notation is in effect and no more blue drum notes at this note's position are marked as cymbals
@@ -571,7 +576,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					}
 
 					/* write purple note off */
-					if(sp->legacy_track[tracknum]->note[i]->note & 16)
+					if(note & 16)
 					{	//Note: EOF/FoF refer to this note color as purple/orange whereas Rock Band displays it as green
 						if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_G_CYMBAL))
 						{	//If pro drum notation is in effect and no more drum notes at this note's position are marked as cymbals
@@ -581,6 +586,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 							}
 						}
 						eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos + length, 0x80, midi_note_offset + 4);
+					}
+
+					/* write open bass note off */
+					if(eof_open_bass && (j == EOF_TRACK_BASS) && (note & 32))
+					{
+						eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos + length, 0x80, midi_note_offset + 0);
 					}
 
 					/* write forced HOPO note off */

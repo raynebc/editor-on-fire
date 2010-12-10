@@ -71,6 +71,7 @@ void eof_load_config(char * fn)
 	eof_input_mode = get_config_int("preferences", "input_mode", EOF_INPUT_PIANO_ROLL);
 	eof_ogg_setting = get_config_int("preferences", "ogg_quality", 1);
 	eof_use_ts = get_config_int("preferences", "use_midi_ts", 0);
+	eof_open_bass = get_config_int("preferences", "enable_open_bass", 0);
 
 	/* read display settings */
 	eof_screen_layout.mode = get_config_int("display", "display_mode", 0);
@@ -145,6 +146,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "input_mode", eof_input_mode);
 	set_config_int("preferences", "ogg_quality", eof_ogg_setting);
 	set_config_int("preferences", "use_ts", eof_use_ts);
+	set_config_int("preferences", "enable_open_bass", eof_open_bass);
 
 	/* write display settings */
 	set_config_int("display", "display_mode", eof_screen_layout.mode);
