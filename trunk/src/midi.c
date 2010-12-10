@@ -311,7 +311,6 @@ int eof_count_tracks(void)
 int eof_export_midi(EOF_SONG * sp, char * fn)
 {
 	char header[14] = {'M', 'T', 'h', 'd', 0, 0, 0, 6, 0, 1, 0, 1, (EOF_DEFAULT_TIME_DIVISION >> 8), (EOF_DEFAULT_TIME_DIVISION & 0xFF)}; //The last two bytes are the time division
-//	char trackheader[8] = {'M', 'T', 'r', 'k', 0, 0, 0, 0};
 	char notetempname[EOF_TRACKS_MAX+1][15];
 	char notetrackspopulated[EOF_TRACKS_MAX+1] = {0};
 	char expertplustempname[] = {"expert+.tmp"};	//Stores the temporary filename for the Expert+ track data
@@ -320,12 +319,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	char expertplusfilename[1024] = {0};
 	char expertplusshortname[] = {"expert+.mid"};
 	PACKFILE * fp;
-//	PACKFILE * fp2;
 	PACKFILE * fp3 = NULL;					//File pointer for the Expert+ file
 	unsigned long i, j, k;
 	unsigned long ctr;
 	unsigned long delta = 0;
-//	unsigned long track_length;
 	int midi_note_offset = 0;
 	int vel=0x64;	//Velocity
 	unsigned long tracknum=0;				//Used to de-obfuscate the track number
@@ -343,6 +340,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	char expertpluswritten = 0;				//Tracks whether an expert+.mid track has been written
 	char trackctr;							//Used in the temp data creation to handle Expert+
 	EOF_MIDI_TS_LIST *tslist=NULL;			//List containing TS changes
+	unsigned short noteflags;				//Stores the note flag for handling open bass <-> forced HOPO lane 1 conflicts
 
 	anchorlist=eof_build_tempo_list();	//Create a linked list of all tempo changes in eof_song->beat[]
 	if(anchorlist == NULL)	//If the anchor list could not be created
@@ -403,7 +401,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				/* write the MTrk MIDI data to a temp file
 				use size of the file as the MTrk header length */
 				for(i = 0; i < sp->legacy_track[tracknum]->notes; i++)
-				{
+				{	//For each note in the legacy track
 					switch(sp->legacy_track[tracknum]->note[i]->type)
 					{
 						case EOF_NOTE_AMAZING:	//notes 96-100
@@ -433,10 +431,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 						}
 					}
 
+					noteflags = sp->legacy_track[tracknum]->note[i]->flags;	//Store the note flags for easier use
 					/* write green note */
 					if(sp->legacy_track[tracknum]->note[i]->note & 1)
 					{
-						if((j == EOF_TRACK_DRUM) && (sp->legacy_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_DBASS))
+						if((j == EOF_TRACK_DRUM) && (noteflags & EOF_NOTE_FLAG_DBASS))
 						{	//If the track being written is PART DRUMS, and this note is marked for Expert+ double bass
 							eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos, 0x90, 95);
 							expertplus = 1;
@@ -490,8 +489,21 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 						eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos, 0x90, midi_note_offset + 4);
 					}
 
+					/* write open bass note, ensuring that if open bass was enabled during save, forced HOPO on notes for lane 1 are filtered out */
+					if(eof_open_bass && (j == EOF_TRACK_BASS))
+					{
+						if(sp->legacy_track[tracknum]->note[i]->note & 1)
+						{	//If open bass was enabled and this note has a lane 1 bass gem
+							noteflags &= (~EOF_NOTE_FLAG_F_HOPO);	//Ensure that the forced HOPO on flag is cleared
+						}
+						if(sp->legacy_track[tracknum]->note[i]->note & 32)
+						{	//If this is an open bass note
+							noteflags |= EOF_NOTE_FLAG_F_HOPO;	//Set the forced HOPO on flag, which is used to denote open bass
+						}
+					}
+
 					/* write forced HOPO */
-					if(sp->legacy_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO)
+					if(noteflags & EOF_NOTE_FLAG_F_HOPO)
 					{
 						if(eof_midi_note_status[midi_note_offset + 5] == 0)
 						{	//Only write a phrase marker if one isn't already in effect
@@ -500,7 +512,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					}
 
 					/* write forced non-HOPO */
-					else if(sp->legacy_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_NO_HOPO)
+					else if(noteflags & EOF_NOTE_FLAG_NO_HOPO)
 					{
 						if(eof_midi_note_status[midi_note_offset + 6] == 0)
 						{	//Only write a phrase marker if one isn't already in effect
@@ -520,7 +532,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					/* write green note off */
 					if(sp->legacy_track[tracknum]->note[i]->note & 1)
 					{
-						if((j == EOF_TRACK_DRUM) && (sp->legacy_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_DBASS))	//If the track being written is PART DRUMS, and this note is marked for Expert+ double bass
+						if((j == EOF_TRACK_DRUM) && (noteflags & EOF_NOTE_FLAG_DBASS))	//If the track being written is PART DRUMS, and this note is marked for Expert+ double bass
 							eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos + length, 0x80, 95);
 						else	//Otherwise end a normal green gem
 							eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos + length, 0x80, midi_note_offset + 0);
@@ -573,7 +585,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 					/* write forced HOPO note off */
 //					if((i + 1 >= sp->legacy_track[j]->notes) || !(sp->legacy_track[j]->note[i+1]->flags & EOF_NOTE_FLAG_F_HOPO))	//If this is the last note in the track or if the next note is not a forced HOPO on note
-					if(sp->legacy_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO)
+					if(noteflags & EOF_NOTE_FLAG_F_HOPO)
 					{	//thekiwimaddog indicated that Rock Band uses HOPO phrases per note/chord
 						if(eof_midi_note_status[midi_note_offset + 5])
 						{	//Only end a phrase marker if one is already in effect
@@ -583,7 +595,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 					/* write forced non-HOPO note off */
 //					else if((i + 1 >= sp->legacy_track[j]->notes) || !(sp->legacy_track[j]->note[i+1]->flags & EOF_NOTE_FLAG_NO_HOPO))	//If this is the lst note in the track or if the next note is not a forced HOPO off note
-					if(sp->legacy_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_NO_HOPO)
+					if(noteflags & EOF_NOTE_FLAG_NO_HOPO)
 					{	//thekiwimaddog indicated that Rock Band uses HOPO phrases per note/chord
 						if(eof_midi_note_status[midi_note_offset + 6])
 						{	//Only end a phrase marker if one is already in effect

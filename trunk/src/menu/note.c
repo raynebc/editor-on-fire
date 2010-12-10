@@ -753,6 +753,10 @@ int eof_menu_note_toggle_green(void)
 			{	//If green drum is being toggled on/off
 				eof_song->legacy_track[tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_DBASS);		//Clear the Expert+ status if it is set
 			}
+			else if(eof_selected_track == EOF_TRACK_BASS)
+			{	//When a lane 1 bass note is added, open bass must be forced clear, because they use conflicting MIDI notation
+				eof_song->legacy_track[tracknum]->note[i]->note &= ~(32);	//Clear the bit for lane 6 (open bass)
+			}
 		}
 	}
 	return 1;
@@ -880,6 +884,10 @@ int eof_menu_note_toggle_lane6(void)
 	{
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[tracknum]->note[i]->type == eof_note_type))
 		{
+			if(eof_selected_track == EOF_TRACK_BASS)
+			{	//When an open bass note is added, lane 1 must be forced clear, because they use conflicting MIDI notation
+				eof_song->legacy_track[tracknum]->note[i]->note &= ~(1);	//Clear the bit for lane 1
+			}
 			eof_song->legacy_track[tracknum]->note[i]->note ^= 32;
 		}
 	}
