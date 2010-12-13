@@ -185,7 +185,14 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	if(eof_selected_track == EOF_TRACK_DRUM)
 		dcol = eof_color_white;
 
-	numlanes = eof_count_track_lanes(track);
+	if(track != 0)
+	{	//If rendering an existing note
+		numlanes = eof_count_track_lanes(track);	//Count the number of lanes in that note's track
+	}
+	else
+	{
+		numlanes = eof_count_track_lanes(eof_selected_track);	//Count the number of lanes in the active track
+	}
 	if(eof_inverted_notes)
 	{
 		for(ctr = 0, ctr2 = 0; ctr < EOF_MAX_FRETS; ctr++)
