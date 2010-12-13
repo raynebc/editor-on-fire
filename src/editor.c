@@ -2067,6 +2067,8 @@ void eof_editor_logic(void)
 	int use_this_x = mouse_x;
 	int next_note_pos = 0;
 	EOF_NOTE * new_note = NULL;
+	int pos = eof_music_pos / eof_zoom;
+	int npos, lpos;
 
 	if(eof_song_loaded)
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -2079,12 +2081,9 @@ void eof_editor_logic(void)
 	eof_mouse_z = mouse_z;
 
 	if(eof_music_paused && eof_song_loaded)
-	{
-		int pos = eof_music_pos / eof_zoom;
-		int npos;
-
+	{	//If a chart is loaded and is paused
 		if(!(mouse_b & 1) && !(mouse_b & 2) && !key[KEY_INSERT])
-		{
+		{	//If the left and right mouse buttons and insert key are NOT pressed
 			eof_undo_toggle = 0;
 			if(eof_notes_moved)
 			{
@@ -2098,17 +2097,16 @@ void eof_editor_logic(void)
 		/* mouse is in the fretboard area */
 		if((mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
 		{
-			int pos = eof_music_pos / eof_zoom;
-			int lpos = pos < 300 ? (mouse_x - 20) * eof_zoom : ((pos - 300) + mouse_x - 20) * eof_zoom;
+			lpos = pos < 300 ? (mouse_x - 20) * eof_zoom : ((pos - 300) + mouse_x - 20) * eof_zoom;
 			eof_snap_logic(&eof_snap, lpos);
 			eof_snap_length_logic(&eof_snap);
 			eof_pen_note.pos = eof_snap.pos;
 			use_this_x = lpos;
 			eof_pen_visible = 1;
 			for(i = 0; (i < eof_song->legacy_track[tracknum]->notes) && (eof_hover_note < 0); i++)
-			{
+			{	//For each note in the active track, until a hover note is found
 				if(eof_song->legacy_track[tracknum]->note[i]->type == eof_note_type)
-				{
+				{	//If the note is in the active difficulty
 					npos = eof_song->legacy_track[tracknum]->note[i]->pos;
 					if((use_this_x > npos - (6 * eof_zoom)) && (use_this_x < npos + (6 * eof_zoom)))
 					{
@@ -2125,70 +2123,15 @@ void eof_editor_logic(void)
 				}
 			}
 			if((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX))
-			{
+			{	//If piano roll or rex mundi input modes are in use
 				if(eof_hover_note >= 0)
-				{
+				{	//If a note is being moused over
 					eof_pen_note.note = eof_song->legacy_track[tracknum]->note[eof_hover_note]->note;
 					eof_pen_note.length = eof_song->legacy_track[tracknum]->note[eof_hover_note]->length;
 					if(!eof_mouse_drug)
 					{
 						eof_pen_note.pos = eof_song->legacy_track[tracknum]->note[eof_hover_note]->pos;
-						switch(eof_hover_piece)
-						{
-							case 0:
-							{
-								if(eof_inverted_notes)
-								{
-									eof_pen_note.note |= 16;
-								}
-								else
-								{
-									eof_pen_note.note |= 1;
-								}
-								break;
-							}
-							case 1:
-							{
-								if(eof_inverted_notes)
-								{
-									eof_pen_note.note |= 8;
-								}
-								else
-								{
-									eof_pen_note.note |= 2;
-								}
-								break;
-							}
-							case 2:
-							{
-								eof_pen_note.note |= 4;
-								break;
-							}
-							case 3:
-							{
-								if(eof_inverted_notes)
-								{
-									eof_pen_note.note |= 2;
-								}
-								else
-								{
-									eof_pen_note.note |= 8;
-								}
-								break;
-							}
-							case 4:
-							{
-								if(eof_inverted_notes)
-								{
-									eof_pen_note.note |= 1;
-								}
-								else
-								{
-									eof_pen_note.note |= 16;
-								}
-								break;
-							}
-						}
+						eof_pen_note.note |= eof_find_pen_note_mask();	//Set the appropriate bits
 					}
 				}
 				else
@@ -2198,11 +2141,11 @@ void eof_editor_logic(void)
 						eof_pen_note.note = 0;
 					}
 					if(KEY_EITHER_SHIFT)
-					{
+					{	//If shift is held down, a new note will be 1ms long
 						eof_pen_note.length = 1;
 					}
 					else
-					{
+					{	//Otherwise it will be as long as the current grid snap value (or 100ms if grid snap is off)
 						eof_pen_note.length = eof_snap.length;
 						if((eof_hover_note < 0) && (next_note_pos > 0) && (eof_pen_note.pos + eof_pen_note.length >= next_note_pos))
 						{
@@ -2210,99 +2153,12 @@ void eof_editor_logic(void)
 						}
 					}
 				}
-			}
+			}//If piano roll or rex mundi input modes are in use
 
 			/* calculate piece for piano roll mode */
 			if(eof_input_mode == EOF_INPUT_PIANO_ROLL)
 			{
-				if((mouse_y > eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 35 - 10) && (mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 15 + 10 + eof_screen_layout.note_y[0]))
-				{
-					eof_hover_piece = 0;
-				}
-				else if((mouse_y > eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 35 - 10 + 20) && (mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 15 + 10 + eof_screen_layout.note_y[1]))
-				{
-					eof_hover_piece = 1;
-				}
-				else if((mouse_y > eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 35 - 10 + 40) && (mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 15 + 10 + eof_screen_layout.note_y[2]))
-				{
-					eof_hover_piece = 2;
-				}
-				else if((mouse_y > eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 35 - 10 + 60) && (mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 15 + 10 + eof_screen_layout.note_y[3]))
-				{
-					eof_hover_piece = 3;
-				}
-				else if((mouse_y > eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 35 - 10 + 80) && (mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 15 + 10 + eof_screen_layout.note_y[4]))
-				{
-					eof_hover_piece = 4;
-				}
-				else
-				{
-					eof_hover_piece = -1;
-				}
-				if(eof_hover_note < 0)
-				{
-					switch(eof_hover_piece)
-					{
-						case -1:
-						{
-							eof_pen_note.note = 0;
-							break;
-						}
-						case 0:
-						{
-							if(eof_inverted_notes)
-							{
-								eof_pen_note.note = 16;
-							}
-							else
-							{
-								eof_pen_note.note = 1;
-							}
-							break;
-						}
-						case 1:
-						{
-							if(eof_inverted_notes)
-							{
-								eof_pen_note.note = 8;
-							}
-							else
-							{
-								eof_pen_note.note = 2;
-							}
-							break;
-						}
-						case 2:
-						{
-							eof_pen_note.note = 4;
-							break;
-						}
-						case 3:
-						{
-							if(eof_inverted_notes)
-							{
-								eof_pen_note.note = 2;
-							}
-							else
-							{
-								eof_pen_note.note = 8;
-							}
-							break;
-						}
-						case 4:
-						{
-							if(eof_inverted_notes)
-							{
-								eof_pen_note.note = 1;
-							}
-							else
-							{
-								eof_pen_note.note = 16;
-							}
-							break;
-						}
-					}
-				}
+				eof_pen_note.note = eof_find_pen_note_mask();	//Find eof_hover_piece and set the appropriate bits in the pen note
 			}
 
 			/* handle initial click */
@@ -2461,9 +2317,9 @@ void eof_editor_logic(void)
 						eof_selection.range_pos_2 = 0;
 					}
 				}
-			}
+			}// handle initial click
 			if(!(mouse_b & 1))
-			{
+			{	//If the left mouse button is NOT pressed
 				if(!eof_lclick_released)
 				{
 					eof_lclick_released++;
@@ -2522,7 +2378,7 @@ void eof_editor_logic(void)
 						eof_mouse_drug = 0;
 					}
 				}
-			}
+			}//If the left mouse button is NOT pressed
 			unsigned long move_offset = 0;
 			int revert = 0;
 			int revert_amount = 0;
@@ -2613,54 +2469,7 @@ void eof_editor_logic(void)
 					}
 					if(eof_hover_note >= 0)
 					{
-						if(eof_hover_piece == 0)
-						{
-							if(eof_inverted_notes)
-							{
-								bitmask = 16;
-							}
-							else
-							{
-								bitmask = 1;
-							}
-						}
-						else if(eof_hover_piece == 1)
-						{
-							if(eof_inverted_notes)
-							{
-								bitmask = 8;
-							}
-							else
-							{
-								bitmask = 2;
-							}
-						}
-						else if(eof_hover_piece == 2)
-						{
-							bitmask = 4;
-						}
-						else if(eof_hover_piece == 3)
-						{
-							if(eof_inverted_notes)
-							{
-								bitmask = 2;
-							}
-							else
-							{
-								bitmask = 8;
-							}
-						}
-						else if(eof_hover_piece == 4)
-						{
-							if(eof_inverted_notes)
-							{
-								bitmask = 1;
-							}
-							else
-							{
-								bitmask = 16;
-							}
-						}
+						bitmask = eof_find_pen_note_mask();	//Set the appropriate bits
 
 						if(bitmask)
 						{
@@ -2751,8 +2560,6 @@ void eof_editor_logic(void)
 				eof_rclick_released = 1;
 			}
 
-//			eof_mickey_z = eof_mouse_z - mouse_z;
-//			eof_mouse_z = mouse_z;
 			if((eof_mickey_z != 0) && eof_count_selected_notes(NULL, 0))
 			{
 				eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
@@ -2836,7 +2643,7 @@ void eof_editor_logic(void)
 			{
 				eof_legacy_track_fixup_notes(eof_song->legacy_track[tracknum], 1);
 			}
-		}
+		}//mouse is in the fretboard area
 		else
 		{
 			eof_pen_visible = 0;
@@ -2844,7 +2651,6 @@ void eof_editor_logic(void)
 		}
 
 		/* mouse is in beat marker area */
-		pos = eof_music_pos / eof_zoom;
 		if((mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4) && (mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18))
 		{
 			for(i = 0; i < eof_song->beats; i++)
@@ -2988,7 +2794,7 @@ void eof_editor_logic(void)
 			{
 				eof_rclick_released = 1;
 			}
-		}
+		}//mouse is in beat marker area
 		else
 		{
 			eof_hover_beat = -1;
@@ -3011,11 +2817,9 @@ void eof_editor_logic(void)
 				eof_mix_seek(eof_music_actual_pos);
 			}
 		}
-	}
+	}//If a chart is loaded and is paused
 	else if(eof_song_loaded)
-	{
-		int pos = eof_music_pos / eof_zoom;
-		int npos;
+	{	//If a chart is loaded and is not paused
 		for(i = 0; i < eof_song->beats - 1; i++)
 		{
 			if((eof_music_pos >= eof_song->beat[i]->pos) && (eof_music_pos < eof_song->beat[i + 1]->pos))
@@ -3077,12 +2881,11 @@ void eof_editor_logic(void)
 		{
 			eof_editor_drum_logic();
 		}
-	}
+	}//If a chart is loaded and is not paused
 
 	if(eof_music_catalog_playback)
 	{
-		int npos;
-		unsigned long tracknum = eof_song->catalog->entry[eof_selected_catalog_entry].track;	//The track this catalog entry pertains to
+		tracknum = eof_song->catalog->entry[eof_selected_catalog_entry].track;	//The track this catalog entry pertains to
 		eof_hover_note_2 = -1;
 		if(eof_song->catalog->entry[eof_selected_catalog_entry].track != EOF_TRACK_VOCALS)
 		{	//Perform fret catalog playback logic for legacy format tracks
@@ -3190,15 +2993,13 @@ void eof_editor_logic(void)
 	}
 
 	if(((mouse_b & 2) || key[KEY_INSERT]) && (eof_input_mode == EOF_INPUT_REX) && eof_song_loaded)
-	{
+	{	//If the right mouse button or Insert key is pressed, a song is loaded and Rex Mundi input mode is in use
 		eof_emergency_stop_music();
 		eof_render();
 		eof_show_mouse(screen);
 		if((mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4) && (mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18))
 		{
-			int pos = eof_music_pos / eof_zoom;
-//			int lpos = pos < 300 ? (mouse_x - 20) * eof_zoom : ((pos - 300) + mouse_x - 20) * eof_zoom;
-			int lpos = pos < 300 ? (eof_song->beat[eof_selected_beat]->pos / eof_zoom + 20) : 300;
+			lpos = pos < 300 ? (eof_song->beat[eof_selected_beat]->pos / eof_zoom + 20) : 300;
 			eof_prepare_menus();
 			do_menu(eof_beat_menu, lpos, mouse_y);
 			eof_clear_input();
@@ -4259,22 +4060,14 @@ void eof_render_editor_window(void)
 	{	//Render all visible notes in the list
 		if((eof_note_type == eof_song->legacy_track[tracknum]->note[i]->type) && (eof_song->legacy_track[tracknum]->note[i]->pos + eof_song->legacy_track[tracknum]->note[i]->length >= start))
 		{	//If this note is in the selected instrument difficulty and would render at or after the left edge of the piano roll
-			if(((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX)) && eof_music_paused)
-			{
-				if(eof_hover_note == i)
-				{
-					eof_note_draw(eof_selected_track, i, ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 3, eof_window_editor);
-				}
-				else
-				{
-					if(eof_note_draw(eof_selected_track, i, ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0, eof_window_editor) == 1)
-						break;	//If this note was rendered right of the viewable area, all following notes will too, so stop rendering
-				}
+			if(((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX)) && eof_music_paused && (eof_hover_note == i))
+			{	//If the input mode is piano roll or rex mundi and the chart is paused, and the note is being moused over
+				eof_note_draw(eof_selected_track, i, ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 3, eof_window_editor);
 			}
 			else
-			{
+			{	//Render the note normally
 				if(eof_note_draw(eof_selected_track, i, ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 0, eof_window_editor) == 1)
-						break;	//If this note was rendered right of the viewable area, all following notes will too, so stop rendering
+					break;	//If this note was rendered right of the viewable area, all following notes will too, so stop rendering
 			}
 		}
 	}
@@ -4745,4 +4538,97 @@ void eof_mark_edited_note_as_cymbal(EOF_SONG *sp, unsigned long tracknum, unsign
 			eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,EOF_NOTE_FLAG_G_CYMBAL,1);	//Set the green cymbal flag on all drum notes at this position
 		}
 	}
+}
+
+unsigned char eof_find_pen_note_mask(void)
+{
+	unsigned long laneborder;
+	int bitmaskshift;	//Used to find the pen note bitmask if the notes are inverted (taking lane 6 into account)
+	unsigned char returnvalue = 0;
+	unsigned long i,tracknum;
+
+	//Determine which lane the mouse is in
+	eof_hover_piece = -1;
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	for(i = 0; i < eof_song->legacy_track[tracknum]->numlanes; i++)
+	{	//For each of the usable lanes
+		laneborder = eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 15 + 10 + eof_screen_layout.note_y[i];	//This represents the y position of the boundary between the current lane and the next
+		if((mouse_y < laneborder) && (mouse_y > laneborder - eof_screen_layout.string_space))
+		{	//If the mouse's Y position is below the boundary to the next lane but above the boundary to the previous lane
+			eof_hover_piece = i;	//Store the lane number
+		}
+	}
+	if(eof_hover_note < 0)
+	{
+		bitmaskshift = eof_song->legacy_track[tracknum]->numlanes - 5;	//If the 6th lane is in use, the inverted mask will be shifted left by one
+		switch(eof_hover_piece)
+		{
+			case 0:
+				if(eof_inverted_notes)
+				{
+					returnvalue = 16 << bitmaskshift;
+				}
+				else
+				{
+					returnvalue = 1;
+				}
+			break;
+
+			case 1:
+				if(eof_inverted_notes)
+				{
+					returnvalue = 8 << bitmaskshift;
+				}
+				else
+				{
+					returnvalue = 2;
+				}
+			break;
+
+			case 2:
+				if(eof_inverted_notes)
+				{
+					returnvalue = 4 << bitmaskshift;
+				}
+				else
+				{
+					returnvalue = 4;
+				}
+			break;
+
+			case 3:
+				if(eof_inverted_notes)
+				{
+					returnvalue = 2 << bitmaskshift;
+				}
+				else
+				{
+					returnvalue = 8;
+				}
+			break;
+
+			case 4:
+				if(eof_inverted_notes)
+				{
+					returnvalue = 1 << bitmaskshift;
+				}
+				else
+				{
+					returnvalue = 16;
+				}
+			break;
+
+			case 5:
+				if(eof_inverted_notes)
+				{
+					returnvalue = 1;
+				}
+				else
+				{
+					returnvalue = 32;
+				}
+			break;
+		}
+	}
+	return returnvalue;
 }
