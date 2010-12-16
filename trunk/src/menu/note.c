@@ -1601,17 +1601,25 @@ int eof_menu_hopo_auto(void)
 {
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	char undo_made = 0;	//Set to nonzero if an undo state was saved
 
 	if((eof_selected_track == EOF_TRACK_DRUM) || eof_vocals_selected)
 		return 1;	//Do not allow this function to run when PART DRUMS or PART VOCALS is active
 
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
-	{
+	{	//For each note in the active track
 		if(eof_selection.multi[i])
-		{
-			eof_song->legacy_track[tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO on flag
-			eof_song->legacy_track[tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Clear the HOPO off flag
+		{	//If the note is selected
+			if(!((eof_selected_track == EOF_TRACK_BASS) && (eof_song->legacy_track[tracknum]->note[i]->note & 32)))
+			{	//If the note is not an open bass strum note
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+					undo_made = 1;
+				}
+				eof_song->legacy_track[tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO on flag
+				eof_song->legacy_track[tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Clear the HOPO off flag
+			}
 		}
 	}
 	eof_determine_hopos();
@@ -1622,30 +1630,42 @@ int eof_menu_hopo_cycle(void)
 {
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	char undo_made = 0;	//Set to nonzero if an undo state was saved
 
 	if((eof_selected_track == EOF_TRACK_DRUM) || eof_vocals_selected)
 		return 1;	//Do not allow this function to run when PART DRUMS or PART VOCALS is active
 
 	if((eof_count_selected_notes(NULL, 0) > 0))
 	{
-		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
-		{
+		{	//For each note in the active track
 			if(eof_selection.multi[i])
-			{
-				if(eof_song->legacy_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO)
-				{	//If the note was a forced on HOPO, make it a forced off HOPO
-					eof_song->legacy_track[tracknum]->note[i]->flags &= !EOF_NOTE_FLAG_F_HOPO;	//Turn off forced on hopo
-					eof_song->legacy_track[tracknum]->note[i]->flags |= EOF_NOTE_FLAG_NO_HOPO;	//Turn on forced off hopo
-				}
-				else if(eof_song->legacy_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_NO_HOPO)
-				{	//If the note was a forced off HOPO, make it an auto HOPO
-					eof_song->legacy_track[tracknum]->note[i]->flags &= !EOF_NOTE_FLAG_F_HOPO;
-					eof_song->legacy_track[tracknum]->note[i]->flags &= !EOF_NOTE_FLAG_NO_HOPO;	//Turn off forced off hopo
-				}
-				else
-				{	//If the note was an auto HOPO, make it a forced on HOPO
-					eof_song->legacy_track[tracknum]->note[i]->flags |= EOF_NOTE_FLAG_F_HOPO;	//Turn on forced on hopo
+			{	//If the note is selected
+				if(!((eof_selected_track == EOF_TRACK_BASS) && (eof_song->legacy_track[tracknum]->note[i]->note & 32)))
+				{	//If the note is not an open bass strum note
+					if((eof_selected_track == EOF_TRACK_BASS) && eof_open_bass && (eof_song->legacy_track[tracknum]->note[i]->note & 1))
+					{	//If open bass strumming is enabled and this is a bass guitar note that uses lane 1
+						continue;	//Skip this note, as open bass and forced HOPO on lane 1 conflict
+					}
+					if(!undo_made)
+					{	//If an undo state hasn't been made yet
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+						undo_made = 1;
+					}
+					if(eof_song->legacy_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO)
+					{	//If the note was a forced on HOPO, make it a forced off HOPO
+						eof_song->legacy_track[tracknum]->note[i]->flags &= !EOF_NOTE_FLAG_F_HOPO;	//Turn off forced on hopo
+						eof_song->legacy_track[tracknum]->note[i]->flags |= EOF_NOTE_FLAG_NO_HOPO;	//Turn on forced off hopo
+					}
+					else if(eof_song->legacy_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_NO_HOPO)
+					{	//If the note was a forced off HOPO, make it an auto HOPO
+						eof_song->legacy_track[tracknum]->note[i]->flags &= !EOF_NOTE_FLAG_F_HOPO;
+						eof_song->legacy_track[tracknum]->note[i]->flags &= !EOF_NOTE_FLAG_NO_HOPO;	//Turn off forced off hopo
+					}
+					else
+					{	//If the note was an auto HOPO, make it a forced on HOPO
+						eof_song->legacy_track[tracknum]->note[i]->flags |= EOF_NOTE_FLAG_F_HOPO;	//Turn on forced on hopo
+					}
 				}
 			}
 		}
@@ -1658,17 +1678,29 @@ int eof_menu_hopo_force_on(void)
 {
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	char undo_made = 0;	//Set to nonzero if an undo state was saved
 
 	if((eof_selected_track == EOF_TRACK_DRUM) || eof_vocals_selected)
 		return 1;	//Do not allow this function to run when PART DRUMS or PART VOCALS is active
 
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
 	{
 		if(eof_selection.multi[i])
 		{
-			eof_song->legacy_track[tracknum]->note[i]->flags |= EOF_NOTE_FLAG_F_HOPO;		//Set the HOPO on flag
-			eof_song->legacy_track[tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Clear the HOPO off flag
+			if(!((eof_selected_track == EOF_TRACK_BASS) && (eof_song->legacy_track[tracknum]->note[i]->note & 32)))
+			{	//If the note is not an open bass strum note
+				if((eof_selected_track == EOF_TRACK_BASS) && eof_open_bass && (eof_song->legacy_track[tracknum]->note[i]->note & 1))
+				{	//If open bass strumming is enabled and this is a bass guitar note that uses lane 1
+					continue;	//Skip this note, as open bass and forced HOPO on lane 1 conflict
+				}
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+					undo_made = 1;
+				}
+				eof_song->legacy_track[tracknum]->note[i]->flags |= EOF_NOTE_FLAG_F_HOPO;		//Set the HOPO on flag
+				eof_song->legacy_track[tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Clear the HOPO off flag
+			}
 		}
 	}
 	eof_determine_hopos();
@@ -1679,17 +1711,25 @@ int eof_menu_hopo_force_off(void)
 {
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	char undo_made = 0;	//Set to nonzero if an undo state was saved
 
 	if((eof_selected_track == EOF_TRACK_DRUM) || eof_vocals_selected)
 		return 1;	//Do not allow this function to run when PART DRUMS or PART VOCALS is active
 
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
 	{
 		if(eof_selection.multi[i])
 		{
-			eof_song->legacy_track[tracknum]->note[i]->flags |= EOF_NOTE_FLAG_NO_HOPO;		//Set the HOPO off flag
-			eof_song->legacy_track[tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO on flag
+			if(!((eof_selected_track == EOF_TRACK_BASS) && (eof_song->legacy_track[tracknum]->note[i]->note & 32)))
+			{	//If the note is not an open bass strum note
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+					undo_made = 1;
+				}
+				eof_song->legacy_track[tracknum]->note[i]->flags |= EOF_NOTE_FLAG_NO_HOPO;		//Set the HOPO off flag
+				eof_song->legacy_track[tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO on flag
+			}
 		}
 	}
 	eof_determine_hopos();

@@ -34,6 +34,7 @@ EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 13 + 1] =
 	{EOF_VOCAL_TRACK_FORMAT, 0, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, "PART VOCALS"},
 	{EOF_LEGACY_TRACK_FORMAT, 0, EOF_KEYS_TRACK_BEHAVIOR, EOF_TRACK_KEYS, "PART KEYS"},
 
+	//These tracks are not supported for import yet, but these entries describe the tracks' details
 	{EOF_PRO_GUITAR_TRACK_FORMAT, 0, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_BASS, "PART REAL_BASS"},
 	{EOF_PRO_GUITAR_TRACK_FORMAT, 0, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR, "PART REAL_GUITAR"},
 	{EOF_PRO_GUITAR_TRACK_FORMAT, 0, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR, "PART REAL_GUITAR_22"},
@@ -377,13 +378,22 @@ void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 			}
 		}
 	}
-	if(tp == eof_song->legacy_track[eof_song->track[EOF_TRACK_BASS]->tracknum])
-	{	//If this is the bass guitar track, check to ensure that open bass and lane 1 don't conflict
+	if(eof_open_bass && (tp == eof_song->legacy_track[eof_song->track[EOF_TRACK_BASS]->tracknum]))
+	{	//If open bass strumming is enabled, and this is the bass guitar track, check to ensure that open bass doesn't conflict with other notes/HOPO statuses
 		for(i = 0; i < tp->notes; i++)
 		{	//For each note in the track
-			if((tp->note[i]->note & 1) && (tp->note[i]->note & 32))
-			{	//If a lane 1 and a lane 6 (open bass) gem are enabled simultaneously
-				tp->note[i]->note &= (~1);	//Clear lane 1
+			if(tp->note[i]->note & 32)
+			{	//If this note contains open bass (lane 6)
+				if(tp->note[i]->note & ~(32))
+				{	//If this note also uses another lane besides lane 6
+					tp->note[i]->note = 32;	//Remove the gems from those lanes, as they are not compatible with open strum notes
+				}
+				tp->note[i]->flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Clear the forced HOPO on flag
+				tp->note[i]->flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Clear the forced HOPO off flag
+			}
+			else if((tp->note[i]->note & 1) && (tp->note[i]->flags & EOF_NOTE_FLAG_F_HOPO))
+			{	//If this note contains a gem on lane 1 and the note has the forced HOPO on status
+				tp->note[i]->flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Clear the forced HOPO on flag
 			}
 		}
 	}
