@@ -1933,15 +1933,77 @@ int eof_menu_song_waveform_settings(void)
 int eof_menu_song_open_bass(void)
 {
 	unsigned long tracknum = eof_song->track[EOF_TRACK_BASS]->tracknum;
+	unsigned long ctr;
+	char undo_made = 0;	//Set to nonzero if an undo state was saved
 
 	if(eof_open_bass)
-	{
+	{	//Turn off open bass notes
 		eof_open_bass = 0;
 		eof_song_menu[16].flags = 0;
 		eof_song->legacy_track[tracknum]->numlanes = 5;
 	}
 	else
-	{
+	{	//Turn on open bass notes
+		//Examine existing notes to ensure that lane 1 doesn't have forced HOPO, as this conflicts with open bass notation
+		for(ctr = 0; ctr < eof_song->legacy_track[tracknum]->notes; ctr++)
+		{	//For each note in PART BASS
+			if((eof_song->legacy_track[tracknum]->note[ctr]->note & 1) && (eof_song->legacy_track[tracknum]->note[ctr]->flags & EOF_NOTE_FLAG_F_HOPO))
+			{	//If forced HOPO on status would have to be removed from this note to enable open bass
+				eof_cursor_visible = 0;
+				eof_pen_visible = 0;
+				eof_show_mouse(screen);
+				if(alert(NULL, "Warning: Lane 1 forced HOPO on status must be removed to enable open bass.  Continue?", NULL, "&Yes", "&No", 'y', 'n') == 2)
+				{	//If user opts cancel the save
+					eof_show_mouse(NULL);
+					eof_cursor_visible = 1;
+					eof_pen_visible = 1;
+					return 1;	//Return cancellation
+				}
+			}
+		}
+
+		//Examine existing notes to ensure that lanes don't have to be erased for notes that use open bass strumming
+		for(ctr = 0; ctr < eof_song->legacy_track[tracknum]->notes; ctr++)
+		{	//For each note in PART BASS
+			if((eof_song->legacy_track[tracknum]->note[ctr]->note & 32) && (eof_song->legacy_track[tracknum]->note[ctr]->note & ~32))
+			{	//If this note uses lane 6 (open bass) and at least one other lane
+				eof_cursor_visible = 0;
+				eof_pen_visible = 0;
+				eof_show_mouse(screen);
+				if(alert(NULL, "Warning: Open bass strum notes must have other lanes cleared to enable open bass.  Continue?", NULL, "&Yes", "&No", 'y', 'n') == 2)
+				{	//If user opts cancel the save
+					eof_show_mouse(NULL);
+					eof_cursor_visible = 1;
+					eof_pen_visible = 1;
+					return 1;	//Return cancellation
+				}
+			}
+		}
+		eof_show_mouse(NULL);
+		eof_cursor_visible = 1;
+		eof_pen_visible = 1;
+
+		for(ctr = 0; ctr < eof_song->legacy_track[tracknum]->notes; ctr++)
+		{	//For each note in PART BASS
+			if((eof_song->legacy_track[tracknum]->note[ctr]->note & 1) && (eof_song->legacy_track[tracknum]->note[ctr]->flags & EOF_NOTE_FLAG_F_HOPO))
+			{	//If forced HOPO on status would have to be removed from this note to enable open bass
+				if(!undo_made)
+				{
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Create an undo state before making the first change
+					undo_made = 1;
+				}
+				eof_song->legacy_track[tracknum]->note[ctr]->flags &= ~(EOF_NOTE_FLAG_F_HOPO);	//Clear the forced HOPO on flag
+			}
+			if((eof_song->legacy_track[tracknum]->note[ctr]->note & 32) && (eof_song->legacy_track[tracknum]->note[ctr]->note & ~32))
+			{	//If this note uses lane 6 (open bass) and at least one other lane
+				if(!undo_made)
+				{
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Create an undo state before making the first change
+					undo_made = 1;
+				}
+				eof_song->legacy_track[tracknum]->note[ctr]->note = 32;	//Clear all lanes for this note except for lane 6 (open bass)
+			}
+		}
 		eof_open_bass = 1;
 		eof_song_menu[16].flags = D_SELECTED;
 		eof_song->legacy_track[tracknum]->numlanes = 6;
