@@ -171,14 +171,19 @@ typedef struct
 #define EOF_TRACK_PRO_GUITAR	9
 #define EOF_TRACK_PRO_KEYS		10
 
+#define EOF_TRACK_FLAG_OPEN_STRUM	1
+	//Specifies if the track has open strumming enabled (ie. PART BASS)
+
 #define EOF_TRACK_NAME_SIZE		31
 typedef struct
 {
 	char track_format;						//Specifies which track format this is, using one of the macros above
-	unsigned long tracknum;					//Specifies which number of that type this track is, used as an index into the type-specific track arrays
 	char track_behavior;					//Specifies which behavior this track follows, using one of the macros above
 	char track_type;						//Specifies which type of track this is (ie default PART GUITAR, custom track, etc)
+	unsigned long tracknum;					//Specifies which number of that type this track is, used as an index into the type-specific track arrays
 	char track_name[EOF_TRACK_NAME_SIZE];	//Specifies the name of the track
+	char difficulty;						//Specifies the difficulty level from 0-5 (standard 0-5 scale), or 6 for devil heads (extreme difficulty)
+	unsigned long flags;
 } EOF_TRACK_ENTRY;
 
 #define EOF_LEGACY_TRACKS_MAX		6
@@ -450,5 +455,8 @@ unsigned long eof_track_note_count(EOF_SONG *sp, unsigned long track);
 
 unsigned long eof_count_track_lanes(unsigned long track);
 	//Returns the number of lanes in the specified track, or the default of 5
+
+inline int eof_open_bass_enabled(void);
+	//A simple function returning nonzero if PART BASS has open strumming enabled
 
 #endif

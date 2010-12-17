@@ -435,7 +435,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					noteflags = sp->legacy_track[tracknum]->note[i]->flags;	//Store the note flags for easier use
 					note = sp->legacy_track[tracknum]->note[i]->note;	//Store the note bitflag for easier use
 
-					if(eof_open_bass && (j == EOF_TRACK_BASS))
+					if(eof_open_bass_enabled() && (j == EOF_TRACK_BASS))
 					{	//Ensure that for PART BASS, green gems and open bass notes don't exist at the same location
 						if((note & 1) && (note & 32))
 						{	//If this bass guitar note has lane 1 and 6 gems
@@ -501,7 +501,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					}
 
 					/* write open bass note, if the feature was enabled during save */
-					if(eof_open_bass && (j == EOF_TRACK_BASS) && (note & 32))
+					if(eof_open_bass_enabled() && (j == EOF_TRACK_BASS) && (note & 32))
 					{	//If this is an open bass note
 						noteflags |= EOF_NOTE_FLAG_F_HOPO;	//Set the forced HOPO on flag, which is used to denote open bass
 						eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos, 0x90, midi_note_offset + 0);	//Write a gem for lane 1
@@ -589,7 +589,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					}
 
 					/* write open bass note off */
-					if(eof_open_bass && (j == EOF_TRACK_BASS) && (note & 32))
+					if(eof_open_bass_enabled() && (j == EOF_TRACK_BASS) && (note & 32))
 					{
 						eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos + length, 0x80, midi_note_offset + 0);
 					}

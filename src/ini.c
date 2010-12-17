@@ -80,7 +80,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	}
 
 	/* check for use of open bass strumming and write a tag if necessary */
-	if(eof_open_bass)
+	if(eof_open_bass_enabled())
 	{	//If open bass was enabled during the time of the save
 		tracknum = sp->track[EOF_TRACK_BASS]->tracknum;
 		for(i = 0; i < sp->legacy_track[tracknum]->notes; i++)

@@ -1269,7 +1269,7 @@ void eof_read_editor_keys(void)
 		}
 		else if(key[KEY_6] && (numlanes >= 6))
 		{	//Only allow use of the 6 key if lane 6 is available
-			eof_menu_note_toggle_lane6();
+			eof_menu_note_toggle_orange();
 			key[KEY_6] = 0;
 		}
 	}

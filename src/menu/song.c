@@ -464,7 +464,7 @@ void eof_prepare_song_menu(void)
 		}
 
 		/* enable open strum bass */
-		if(eof_open_bass)
+		if(eof_open_bass_enabled())
 		{
 			eof_song_menu[16].flags = D_SELECTED;
 		}
@@ -1936,9 +1936,9 @@ int eof_menu_song_open_bass(void)
 	unsigned long ctr;
 	char undo_made = 0;	//Set to nonzero if an undo state was saved
 
-	if(eof_open_bass)
+	if(eof_open_bass_enabled())
 	{	//Turn off open bass notes
-		eof_open_bass = 0;
+		eof_song->track[EOF_TRACK_BASS]->flags &= ~(EOF_TRACK_FLAG_OPEN_STRUM);	//Clear the flag
 		eof_song_menu[16].flags = 0;
 		eof_song->legacy_track[tracknum]->numlanes = 5;
 	}
@@ -2004,7 +2004,7 @@ int eof_menu_song_open_bass(void)
 				eof_song->legacy_track[tracknum]->note[ctr]->note = 32;	//Clear all lanes for this note except for lane 6 (open bass)
 			}
 		}
-		eof_open_bass = 1;
+		eof_song->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_OPEN_STRUM;	//Set the flag
 		eof_song_menu[16].flags = D_SELECTED;
 		eof_song->legacy_track[tracknum]->numlanes = 6;
 	}
