@@ -897,7 +897,7 @@ int eof_menu_note_toggle_orange(void)
 int eof_menu_note_toggle_crazy(void)
 {
 	unsigned long i;
-	int u = 0;
+	int u = 0;	//Is set to nonzero when an undo state has been made
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	unsigned long track_behavior = eof_song->track[eof_selected_track]->track_behavior;
 
@@ -905,15 +905,18 @@ int eof_menu_note_toggle_crazy(void)
 		return 1;	//Do not allow this function to run on any drum, vocal or keys track
 
 	for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
-	{
+	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[tracknum]->note[i]->type == eof_note_type))
-		{
-			if(!u)
-			{
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				u = 1;
+		{	//If the note is in the active instrument difficulty and is selected
+			if(!((eof_selected_track == EOF_TRACK_BASS) && (eof_song->legacy_track[tracknum]->note[i]->note & 32)))
+			{	//If the note is not an open bass strum note (lane 6)
+				if(!u)
+				{
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					u = 1;
+				}
+				eof_song->legacy_track[tracknum]->note[i]->flags ^= EOF_NOTE_FLAG_CRAZY;
 			}
-			eof_song->legacy_track[tracknum]->note[i]->flags ^= EOF_NOTE_FLAG_CRAZY;
 		}
 	}
 	return 1;
