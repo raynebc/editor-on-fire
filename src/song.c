@@ -379,17 +379,15 @@ void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 		}
 	}
 	if(eof_open_bass_enabled() && (tp == eof_song->legacy_track[eof_song->track[EOF_TRACK_BASS]->tracknum]))
-	{	//If open bass strumming is enabled, and this is the bass guitar track, check to ensure that open bass doesn't conflict with other notes/HOPO statuses
+	{	//If open bass strumming is enabled, and this is the bass guitar track, check to ensure that open bass doesn't conflict with other notes/HOPOs/statuses
 		for(i = 0; i < tp->notes; i++)
 		{	//For each note in the track
 			if(tp->note[i]->note & 32)
 			{	//If this note contains open bass (lane 6)
-				if(tp->note[i]->note & ~(32))
-				{	//If this note also uses another lane besides lane 6
-					tp->note[i]->note = 32;	//Remove the gems from those lanes, as they are not compatible with open strum notes
-				}
+				tp->note[i]->note = 32;							//Clear all lanes except lane 6
 				tp->note[i]->flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Clear the forced HOPO on flag
 				tp->note[i]->flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Clear the forced HOPO off flag
+				tp->note[i]->flags &= (~EOF_NOTE_FLAG_CRAZY);	//Clear the crazy status
 			}
 			else if((tp->note[i]->note & 1) && (tp->note[i]->flags & EOF_NOTE_FLAG_F_HOPO))
 			{	//If this note contains a gem on lane 1 and the note has the forced HOPO on status
