@@ -762,7 +762,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 				point[7] = ocd3d_project_y(200, rz);
 				polygon(eof_window_3d->screen, 4, point, np->flags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : eof_color_silver) : (p ? colortable[ctr][0] : colortable[ctr][1]));
 			}
-			else if((ctr == 5) && (track == EOF_TRACK_BASS))
+			else if((ctr == 5) && (track == EOF_TRACK_BASS) && eof_open_bass_enabled())
 			{	//Logic to render open bass strum notes (a rectangle covering the width of rendering of frets 2, 3 and 4
 				point[0] = ocd3d_project_x(xchart[1] - 10, rz);
 				point[1] = ocd3d_project_y(200, rz);

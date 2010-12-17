@@ -487,6 +487,7 @@ void eof_prepare_note_menu(void)
 int eof_menu_note_transpose_up(void)
 {
 	unsigned long i;
+	unsigned long max = 31;	//This represents the highest valid note bitmask, based on the current track options (including open bass strumming)
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 	if(!eof_transpose_possible(-1))
@@ -506,12 +507,23 @@ int eof_menu_note_transpose_up(void)
 	}
 	else
 	{
+		if(eof_open_bass_enabled())
+		{	//If open bass is enabled, lane 6 is valid for use
+			max = 63;
+		}
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
 		{
 			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[tracknum]->note[i]->type == eof_note_type))
 			{
-				eof_song->legacy_track[tracknum]->note[i]->note = (eof_song->legacy_track[tracknum]->note[i]->note << 1) & 31;
+				eof_song->legacy_track[tracknum]->note[i]->note = (eof_song->legacy_track[tracknum]->note[i]->note << 1) & max;
+				if((eof_selected_track == EOF_TRACK_BASS) && eof_open_bass_enabled() && (eof_song->legacy_track[tracknum]->note[i]->note & 32))
+				{	//If open bass is enabled, and this transpose operation resulted in a bass guitar gem in lane 6
+					eof_song->legacy_track[tracknum]->note[i]->note = 32;							//Clear all lanes except lane 6
+					eof_song->legacy_track[tracknum]->note[i]->flags &= ~(EOF_NOTE_FLAG_CRAZY);		//Clear the crazy flag, which is invalid for open strum notes
+					eof_song->legacy_track[tracknum]->note[i]->flags &= ~(EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO flags, which are invalid for open strum notes
+					eof_song->legacy_track[tracknum]->note[i]->flags &= ~(EOF_NOTE_FLAG_NO_HOPO);
+				}
 			}
 		}
 	}
@@ -546,6 +558,10 @@ int eof_menu_note_transpose_down(void)
 			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[tracknum]->note[i]->type == eof_note_type))
 			{
 				eof_song->legacy_track[tracknum]->note[i]->note = (eof_song->legacy_track[tracknum]->note[i]->note >> 1) & 31;
+				if((eof_selected_track == EOF_TRACK_BASS) && eof_open_bass_enabled() && (eof_song->legacy_track[tracknum]->note[i]->note & 1))
+				{	//If open bass is enabled, and this tranpose operation resulted in a bass guitar gem in lane 1
+					eof_song->legacy_track[tracknum]->note[i]->flags &= ~(EOF_NOTE_FLAG_F_HOPO);	//Clear the forced HOPO on flag, which conflicts with open bass strum notation
+				}
 			}
 		}
 	}
@@ -885,10 +901,12 @@ int eof_menu_note_toggle_orange(void)
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[tracknum]->note[i]->type == eof_note_type))
 		{
 			if(eof_selected_track == EOF_TRACK_BASS)
-			{	//When an open bass note is added, lane 1 must be forced clear, because they use conflicting MIDI notation
-				eof_song->legacy_track[tracknum]->note[i]->note &= ~(1);	//Clear the bit for lane 1
+			{	//When an open bass note is added, all other lanes must be forced clear, because they use conflicting MIDI notation
+				eof_song->legacy_track[tracknum]->note[i]->note = 32;	//Clear all lanes except lane 6
+				eof_song->legacy_track[tracknum]->note[i]->flags &= ~(EOF_NOTE_FLAG_CRAZY);		//Clear the crazy flag, which is invalid for open strum notes
+				eof_song->legacy_track[tracknum]->note[i]->flags &= ~(EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO flags, which are invalid for open strum notes
+				eof_song->legacy_track[tracknum]->note[i]->flags &= ~(EOF_NOTE_FLAG_NO_HOPO);
 			}
-			eof_song->legacy_track[tracknum]->note[i]->note ^= 32;
 		}
 	}
 	return 1;
@@ -1742,6 +1760,7 @@ int eof_menu_hopo_force_off(void)
 int eof_transpose_possible(int dir)
 {
 	unsigned long i;
+	unsigned long max = 16;	//This represents the highest note bitmask value that will be allowed to transpose up, based on the current track options (including open bass strumming)
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 	/* no notes, no transpose */
@@ -1779,6 +1798,10 @@ int eof_transpose_possible(int dir)
 	}
 	else
 	{
+		if(eof_open_bass_enabled())
+		{	//If open bass is enabled, lane 5 can transpose up to lane 6
+			max = 32;
+		}
 		if(eof_song->legacy_track[tracknum]->notes <= 0)
 		{
 			return 0;
@@ -1797,7 +1820,7 @@ int eof_transpose_possible(int dir)
 				{
 					return 0;
 				}
-				else if((eof_song->legacy_track[tracknum]->note[i]->note & 16) && (dir < 0))
+				else if((eof_song->legacy_track[tracknum]->note[i]->note & max) && (dir < 0))
 				{
 					return 0;
 				}
