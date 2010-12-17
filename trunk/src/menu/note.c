@@ -866,7 +866,7 @@ int eof_menu_note_toggle_purple(void)
 	return 1;
 }
 
-int eof_menu_note_toggle_lane6(void)
+int eof_menu_note_toggle_orange(void)
 {
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -1643,7 +1643,7 @@ int eof_menu_hopo_cycle(void)
 			{	//If the note is selected
 				if(!((eof_selected_track == EOF_TRACK_BASS) && (eof_song->legacy_track[tracknum]->note[i]->note & 32)))
 				{	//If the note is not an open bass strum note
-					if((eof_selected_track == EOF_TRACK_BASS) && eof_open_bass && (eof_song->legacy_track[tracknum]->note[i]->note & 1))
+					if((eof_selected_track == EOF_TRACK_BASS) && eof_open_bass_enabled() && (eof_song->legacy_track[tracknum]->note[i]->note & 1))
 					{	//If open bass strumming is enabled and this is a bass guitar note that uses lane 1
 						continue;	//Skip this note, as open bass and forced HOPO on lane 1 conflict
 					}
@@ -1689,7 +1689,7 @@ int eof_menu_hopo_force_on(void)
 		{
 			if(!((eof_selected_track == EOF_TRACK_BASS) && (eof_song->legacy_track[tracknum]->note[i]->note & 32)))
 			{	//If the note is not an open bass strum note
-				if((eof_selected_track == EOF_TRACK_BASS) && eof_open_bass && (eof_song->legacy_track[tracknum]->note[i]->note & 1))
+				if((eof_selected_track == EOF_TRACK_BASS) && eof_open_bass_enabled() && (eof_song->legacy_track[tracknum]->note[i]->note & 1))
 				{	//If open bass strumming is enabled and this is a bass guitar note that uses lane 1
 					continue;	//Skip this note, as open bass and forced HOPO on lane 1 conflict
 				}

@@ -1988,7 +1988,7 @@ int eof_save_helper(char *destfilename)
 	eof_fixup_notes();
 
 	/* check to make sure open bass guitar and forced HOPO on don't conflict */
-	if(eof_open_bass)
+	if(eof_open_bass_enabled())
 	{
 		tracknum = eof_song->track[EOF_TRACK_BASS]->tracknum;
 		for(ctr = 0; ctr < eof_song->legacy_track[tracknum]->notes; ctr++)

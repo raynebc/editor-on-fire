@@ -652,7 +652,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 		{	//Render for each of the available fret colors
 			if(np->note & mask)
 			{
-				if((mask == 32) && (track == EOF_TRACK_BASS) && eof_open_bass)
+				if((mask == 32) && (track == EOF_TRACK_BASS) && eof_open_bass_enabled())
 				{	//Lane 6 for the bass track (if enabled) renders similarly to a bass drum note
 					rz = npos;
 					ez = npos + 14;
@@ -711,7 +711,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	int rz, ez;
 	unsigned long numlanes, tracknum, ctr, mask;
 	EOF_NOTE * np = NULL;
-	int colortable[5][2] = {{makecol(192, 255, 192), eof_color_green}, {makecol(255, 192, 192), eof_color_red}, {makecol(255, 255, 192), eof_color_yellow}, {makecol(192, 192, 255), eof_color_blue}, {makecol(255, 192, 255), eof_color_purple}};
+	int colortable[EOF_MAX_FRETS][2] = {{makecol(192, 255, 192), eof_color_green}, {makecol(255, 192, 192), eof_color_red}, {makecol(255, 255, 192), eof_color_yellow}, {makecol(192, 192, 255), eof_color_blue}, {makecol(255, 192, 255), eof_color_purple}, {makecol(255, 192, 0), eof_color_orange}};
 
 //Validate parameters
 	tracknum = eof_song->track[track]->tracknum;
@@ -746,19 +746,34 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 	rz = npos < -100 ? -100 : npos + 10;
 	ez = npos + np->length / eof_zoom_3d > 600 ? 600 : npos + np->length / eof_zoom_3d + 6;
-	for(ctr=0,mask=1;ctr<5;ctr++,mask=mask<<1)
-	{	//For each of the available 3D lanes (currently 5)
+	for(ctr=0,mask=1; ctr < EOF_MAX_FRETS; ctr++,mask=mask<<1)
+	{	//For each of the available frets
 		if(np->note & mask)
 		{	//If this lane has a gem to render
-			point[0] = ocd3d_project_x(xchart[ctr] - 10, rz);
-			point[1] = ocd3d_project_y(200, rz);
-			point[2] = ocd3d_project_x(xchart[ctr] - 10, ez);
-			point[3] = ocd3d_project_y(200, ez);
-			point[4] = ocd3d_project_x(xchart[ctr] + 10, ez);
-			point[5] = ocd3d_project_y(200, ez);
-			point[6] = ocd3d_project_x(xchart[ctr] + 10, rz);
-			point[7] = ocd3d_project_y(200, rz);
-			polygon(eof_window_3d->screen, 4, point, np->flags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : eof_color_silver) : (p ? colortable[ctr][0] : colortable[ctr][1]));
+			if(ctr < 5)
+			{	//Logic to render lanes 1 through 5
+				point[0] = ocd3d_project_x(xchart[ctr] - 10, rz);
+				point[1] = ocd3d_project_y(200, rz);
+				point[2] = ocd3d_project_x(xchart[ctr] - 10, ez);
+				point[3] = ocd3d_project_y(200, ez);
+				point[4] = ocd3d_project_x(xchart[ctr] + 10, ez);
+				point[5] = ocd3d_project_y(200, ez);
+				point[6] = ocd3d_project_x(xchart[ctr] + 10, rz);
+				point[7] = ocd3d_project_y(200, rz);
+				polygon(eof_window_3d->screen, 4, point, np->flags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : eof_color_silver) : (p ? colortable[ctr][0] : colortable[ctr][1]));
+			}
+			else if((ctr == 5) && (track == EOF_TRACK_BASS))
+			{	//Logic to render open bass strum notes (a rectangle covering the width of rendering of frets 2, 3 and 4
+				point[0] = ocd3d_project_x(xchart[1] - 10, rz);
+				point[1] = ocd3d_project_y(200, rz);
+				point[2] = ocd3d_project_x(xchart[1] - 10, ez);
+				point[3] = ocd3d_project_y(200, ez);
+				point[4] = ocd3d_project_x(xchart[3] + 10, ez);
+				point[5] = ocd3d_project_y(200, ez);
+				point[6] = ocd3d_project_x(xchart[3] + 10, rz);
+				point[7] = ocd3d_project_y(200, rz);
+				polygon(eof_window_3d->screen, 4, point, np->flags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : eof_color_silver) : (p ? colortable[ctr][0] : colortable[ctr][1]));
+			}
 		}
 	}
 	return 0;

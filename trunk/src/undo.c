@@ -133,7 +133,6 @@ int eof_undo_apply(void)
 		}
 		eof_undo_last_type = 0;
 
-		eof_legacy_track_fixup_notes(eof_song->legacy_track[eof_song->track[EOF_TRACK_BASS]->tracknum], 0);	//Fix up bass guitar track to resolve open bass conflicts if necessary
 		eof_detect_difficulties(eof_song);
 		eof_select_beat(eof_selected_beat);
 		eof_fix_catalog_selection();
@@ -176,7 +175,7 @@ void eof_redo_apply(void)
 		{
 			eof_changes = 1;
 		}
-		eof_legacy_track_fixup_notes(eof_song->legacy_track[eof_song->track[EOF_TRACK_BASS]->tracknum], 0);	//Fix up bass guitar track to resolve open bass conflicts if necessary
+
 		eof_detect_difficulties(eof_song);
 		eof_select_beat(eof_selected_beat);
 		eof_fix_catalog_selection();

@@ -378,7 +378,7 @@ void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 			}
 		}
 	}
-	if(eof_open_bass && (tp == eof_song->legacy_track[eof_song->track[EOF_TRACK_BASS]->tracknum]))
+	if(eof_open_bass_enabled() && (tp == eof_song->legacy_track[eof_song->track[EOF_TRACK_BASS]->tracknum]))
 	{	//If open bass strumming is enabled, and this is the bass guitar track, check to ensure that open bass doesn't conflict with other notes/HOPO statuses
 		for(i = 0; i < tp->notes; i++)
 		{	//For each note in the track
@@ -1196,7 +1196,14 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 				ptr->notes = 0;
 				ptr->solos = 0;
 				ptr->star_power_paths = 0;
-				ptr->numlanes = 5;	//By default, all legacy tracks will be 5 lanes
+				if(trackdetails->flags & EOF_TRACK_FLAG_OPEN_STRUM)
+				{	//Open strum is tracked as a sixth lane
+					ptr->numlanes = 6;
+				}
+				else
+				{	//Otherwise, all legacy tracks will be 5 lanes by default
+					ptr->numlanes = 5;
+				}
 				ptr->parent = ptr3;
 				sp->legacy_track[sp->legacy_tracks] = ptr;
 				sp->legacy_tracks++;
@@ -1229,6 +1236,8 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 		ptr3->track_behavior = trackdetails->track_behavior;
 		ptr3->track_type = trackdetails->track_type;
 		ustrcpy(ptr3->track_name,trackdetails->track_name);
+		ptr3->difficulty = trackdetails->difficulty;
+		ptr3->flags = trackdetails->flags;
 		if(sp->tracks == 0)
 		{	//If this is the first track being added, ensure that sp->track[0] is inserted
 			sp->track[0] = NULL;
@@ -1429,8 +1438,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		temp.track_format = pack_getc(fp);		//Read the track format
 		temp.track_behavior = pack_getc(fp);	//Read the track behavior
 		temp.track_type = pack_getc(fp);		//Read the track type
-		pack_getc(fp);					//Read the track difficulty level (not supported yet)
-		pack_igetl(fp);					//Read the track flags (not supported yet)
+		temp.difficulty = pack_getc(fp);		//Read the track difficulty level
+		temp.flags = pack_igetl(fp);			//Read the track flags
 		pack_igetw(fp);					//Read the track compliance flags (not supported yet)
 		temp.tracknum=0;	//Ignored
 
@@ -1883,8 +1892,8 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			pack_putc(sp->track[track_ctr]->track_format, fp);		//Write track format
 			pack_putc(sp->track[track_ctr]->track_behavior, fp);	//Write track behavior
 			pack_putc(sp->track[track_ctr]->track_type, fp);		//Write track type
-			pack_putc(0, fp);	//Write track difficulty (not supported yet)
-			pack_iputl(0, fp);	//Write track flags (not supported yet)
+			pack_putc(sp->track[track_ctr]->difficulty, fp);		//Write track difficulty
+			pack_iputl(sp->track[track_ctr]->flags, fp);			//Write track flags
 			pack_iputw(0, fp);	//Write track compliance flags (not supported yet)
 
 			tracknum = sp->track[track_ctr]->tracknum;
@@ -2064,4 +2073,9 @@ unsigned long eof_count_track_lanes(unsigned long track)
 	{	//Otherwise return 5, as so far, other track formats don't store this information
 		return 5;
 	}
+}
+
+inline int eof_open_bass_enabled(void)
+{
+	return (eof_song->track[EOF_TRACK_BASS]->flags & EOF_TRACK_FLAG_OPEN_STRUM);
 }

@@ -226,7 +226,6 @@ char ** eof_windows_argv;
 struct MIDIentry *MIDIqueue=NULL;		//Linked list of queued MIDI notes
 struct MIDIentry *MIDIqueuetail=NULL;	//Points to the tail of the list
 char eof_midi_initialized=0;			//Specifies whether Allegro was able to set up a MIDI device
-char eof_open_bass=0;					//Specifies whether the sixth lane in PART BASS is enabled
 
 void eof_debug_message(char * text)
 {
@@ -3353,15 +3352,6 @@ void eof_scale_fretboard(void)
 	eof_screen_layout.string_space = eof_screen_layout.string_space_unscaled;
 
 	tracknum = eof_song->track[EOF_TRACK_BASS]->tracknum;
-	if(eof_open_bass)
-	{	//Ensure that the sixth lane is correctly enabled/disabled after performing undo/redo
-		eof_song->legacy_track[tracknum]->numlanes = 6;
-	}
-	else
-	{
-		eof_song->legacy_track[tracknum]->numlanes = 5;
-	}
-
 	numlanes = eof_count_track_lanes(eof_selected_track);
 	if(numlanes > 5)
 	{	//If the active track has more than 5 lanes, scale the spacing between the fretboard lanes
