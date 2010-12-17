@@ -507,7 +507,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 								{	//Compare the track name against the tracks in eof_midi_tracks[]
 									if(!ustricmp(text, eof_midi_tracks[j].track_name))
 									{
-										eof_import_events[i]->type = eof_midi_tracks[j].track_type;
+										eof_import_events[i]->type = eof_midi_tracks[j].tracknum;
 										if(eof_midi_tracks[j].track_type == EOF_TRACK_GUITAR)
 										{
 											rbg = 1;
@@ -1405,7 +1405,8 @@ allegro_message("Third pass complete");
 			eof_show_mouse(screen);
 			if(alert(NULL, "Import lane 1 forced HOPO bass notes as open strums?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 			{	//If user selected yes
-				sp->legacy_track[tracknum]->numlanes = 6;		//Set this track to have 6 lanes instead of 5
+				sp->legacy_track[tracknum]->numlanes = 6;						//Set this track to have 6 lanes instead of 5
+				sp->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_OPEN_STRUM;	//Set this flag
 				for(k = 0; k < sp->legacy_track[tracknum]->notes; k++)
 				{	//For each note in the bass track
 					if((sp->legacy_track[tracknum]->note[k]->note & 1) && (sp->legacy_track[tracknum]->note[k]->flags & EOF_NOTE_FLAG_F_HOPO))
