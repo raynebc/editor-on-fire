@@ -60,6 +60,8 @@ MENU eof_track_selected_menu[EOF_TRACKS_MAX+1] =
     {eof_track_selected_menu_text[4], eof_menu_track_selected_5, NULL, 0, NULL},
     {eof_track_selected_menu_text[5], eof_menu_track_selected_6, NULL, 0, NULL},
     {eof_track_selected_menu_text[6], eof_menu_track_selected_7, NULL, 0, NULL},
+    {eof_track_selected_menu_text[7], eof_menu_track_selected_7, NULL, 0, NULL},
+    {eof_track_selected_menu_text[8], eof_menu_track_selected_7, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
