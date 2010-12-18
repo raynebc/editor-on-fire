@@ -78,4 +78,8 @@ unsigned char eof_find_pen_note_mask(void);
 	//For the current track, sets eof_hover_piece appropriately and return the pen note mask,
 	//based on the value of eof_hover_note, eof_inverted_notes and the number of lanes in the active track
 
+void eof_editor_logic_common(void);
+	//Performs editor logic common to both the editor and vocal editor windows (some variable initialization, handling beat marker, seek bar and playback controls)
+
+
 #endif

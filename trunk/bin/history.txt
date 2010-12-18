@@ -3,6 +3,11 @@ EOF Version History
 
 1.?:
 
+Added the ability to chart open strum bass guitar notes, compatible with
+Phase Shift.
+
+Updated the EOF project file format to support new features.
+
 Fixed a crash that could occur with copy functions after importing a MIDI
 that is longer than the loaded audio.
 
