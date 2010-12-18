@@ -1449,7 +1449,7 @@ void eof_read_editor_keys(void)
 							eof_selection.current = eof_hover_note;
 							if(!eof_song->legacy_track[tracknum]->note[eof_hover_note]->note)
 							{
-								eof_track_delete_note(eof_selected_track, eof_hover_note);
+								eof_track_delete_note(eof_song, eof_selected_track, eof_hover_note);
 								eof_selection.multi[eof_selection.current] = 0;
 								eof_selection.current = EOF_MAX_NOTES - 1;
 								eof_legacy_track_sort_notes(eof_song->legacy_track[tracknum]);
@@ -2480,7 +2480,7 @@ void eof_editor_logic(void)
 							memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
 							if(!eof_song->legacy_track[tracknum]->note[eof_hover_note]->note)
 							{
-								eof_track_delete_note(eof_selected_track, eof_hover_note);
+								eof_track_delete_note(eof_song, eof_selected_track, eof_hover_note);
 								eof_selection.current = EOF_MAX_NOTES - 1;
 								eof_legacy_track_sort_notes(eof_song->legacy_track[tracknum]);
 								eof_legacy_track_fixup_notes(eof_song->legacy_track[tracknum], 1);
@@ -3257,7 +3257,7 @@ void eof_vocal_editor_logic(void)
 					/* delete whole lyric if clicking word */
 					if((mouse_y >= EOF_EDITOR_RENDER_OFFSET + 35 + eof_screen_layout.lyric_y) && (mouse_y < EOF_EDITOR_RENDER_OFFSET + 35 + eof_screen_layout.lyric_y + 16))
 					{
-						eof_track_delete_note(eof_selected_track, eof_hover_note);	//Delete the hovered over lyric
+						eof_track_delete_note(eof_song, eof_selected_track, eof_hover_note);	//Delete the hovered over lyric
 						eof_selection.current = EOF_MAX_NOTES - 1;
 						eof_vocal_track_sort_lyrics(eof_song->vocal_track[tracknum]);
 					}
@@ -3267,7 +3267,7 @@ void eof_vocal_editor_logic(void)
 					{
 						if(!eof_check_string(eof_song->vocal_track[tracknum]->lyric[eof_hover_note]->text))	//If removing the pitch from a note that is already textless
 						{	//Perform the cleanup code as if the lyric was deleted by inputting on top of the lyric text as above
-							eof_track_delete_note(eof_selected_track, eof_hover_note);	//Delete the hovered over lyric
+							eof_track_delete_note(eof_song, eof_selected_track, eof_hover_note);	//Delete the hovered over lyric
 							eof_selection.current = EOF_MAX_NOTES - 1;
 							eof_vocal_track_sort_lyrics(eof_song->vocal_track[tracknum]);
 						}

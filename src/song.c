@@ -1286,7 +1286,7 @@ int eof_song_delete_track(EOF_SONG * sp, unsigned long track)
 int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 {
 	unsigned char inputc;
-	unsigned long inputl,count,ctr;
+	unsigned long inputl,count,ctr,ctr2,bitmask;
 	unsigned long track_count,track_ctr;
 	unsigned long section_type_count,section_type_ctr,section_type,section_count,section_ctr,section_start,section_end;
 	unsigned long custom_data_count,custom_data_ctr,custom_data_size;
@@ -1442,7 +1442,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					allegro_message("Error: Unsupported number of notes in track %lu.  Aborting",track_ctr);
 					return 0;
 				}
-				eof_track_resize(sp->tracks-1,count);	//Resize the note array
+				eof_track_resize(sp, sp->tracks-1,count);	//Resize the note array
 				for(ctr=0; ctr<count; ctr++)
 				{	//For each note in this track
 					eof_load_song_string_pf(sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->name,fp,EOF_NOTE_NAME_LENGTH);	//Read the note's name
@@ -1461,7 +1461,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					allegro_message("Error: Unsupported number of lyrics in track %lu.  Aborting",track_ctr);
 					return 0;
 				}
-				eof_track_resize(sp->tracks-1,count);	//Resize the lyrics array
+				eof_track_resize(sp, sp->tracks-1,count);	//Resize the lyrics array
 				for(ctr=0; ctr<count; ctr++)
 				{	//For each lyric in this track
 					eof_load_song_string_pf(sp->vocal_track[sp->vocal_tracks-1]->lyric[ctr]->text,fp,EOF_MAX_LYRIC_LENGTH);	//Read the lyric text
@@ -1488,15 +1488,27 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					allegro_message("Error: Unsupported number of notes in track %lu.  Aborting",track_ctr);
 					return 0;
 				}
-				eof_track_resize(sp->tracks-1,count);	//Resize the note array
+				eof_track_resize(sp, sp->tracks-1,count);	//Resize the note array
 				for(ctr=0; ctr<count; ctr++)
 				{	//For each note in this track
 					eof_load_song_string_pf(sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->name,fp,EOF_NOTE_NAME_LENGTH);	//Read the note's name
-					sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->type = pack_getc(fp);		//Read the note's difficulty
-					sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->note = pack_getc(fp);		//Read note bitflags
-					sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->pos = pack_igetl(fp);		//Read note position
-					sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->length = pack_igetl(fp);	//Read note length
-					sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->flags = pack_igetw(fp);	//Read note flags
+					pack_getc(fp);																	//Read the chord's number (not supported yet)
+					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->type = pack_getc(fp);	//Read the note's difficulty
+					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->note = pack_igetw(fp);//Read note bitflags
+					for(ctr2=0, bitmask=1; ctr2 < 16; ctr2++, bitmask <<= 1)
+					{	//For each of the 16 bits in the note bitflag
+						if(sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->note & bitmask)
+						{	//If this bit is set
+							sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->frets[ctr2] = pack_getc(fp);	//Read this string's fret value
+						}
+						else
+						{	//Write a default value of 0
+							sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->frets[ctr2] = 0;
+						}
+					}
+					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->pos = pack_igetl(fp);		//Read note position
+					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->length = pack_igetl(fp);	//Read note length
+					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->flags = pack_igetw(fp);	//Read note flags
 				}
 			break;
 			case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:	//Variable Lane Legacy
@@ -1599,6 +1611,15 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 						sp->legacy_track[tracknum]->solos++;
 					}
 				return 1;
+				case EOF_PRO_GUITAR_TRACK_FORMAT:
+					count = sp->pro_guitar_track[tracknum]->solos;
+					if(count < EOF_MAX_SOLOS)
+					{	//If EOF can store the solo section
+						sp->pro_guitar_track[tracknum]->solo[count].start_pos = start;
+						sp->pro_guitar_track[tracknum]->solo[count].end_pos = end;
+						sp->pro_guitar_track[tracknum]->solos++;
+					}
+				return 1;
 			}
 		break;
 		case EOF_SP_SECTION:
@@ -1620,6 +1641,15 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 						sp->vocal_track[tracknum]->star_power_path[count].start_pos = start;
 						sp->vocal_track[tracknum]->star_power_path[count].end_pos = end;
 						sp->vocal_track[tracknum]->star_power_paths++;
+					}
+				return 1;
+				case EOF_PRO_GUITAR_TRACK_FORMAT:
+					count = sp->pro_guitar_track[tracknum]->star_power_paths;
+					if(count < EOF_MAX_STAR_POWER)
+					{	//If EOF can store the star power section
+						sp->pro_guitar_track[tracknum]->star_power_path[count].start_pos = start;
+						sp->pro_guitar_track[tracknum]->star_power_path[count].end_pos = end;
+						sp->pro_guitar_track[tracknum]->star_power_paths++;
 					}
 				return 1;
 			}
@@ -2171,125 +2201,125 @@ EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_note(EOF_PRO_GUITAR_TRACK *tp)
 	return NULL;
 }
 
-unsigned long eof_track_get_size(unsigned long track)
+unsigned long eof_track_get_size(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long tracknum;
 
-	if(track >= eof_song->tracks)
+	if((sp == NULL) || (track >= sp->tracks))
 		return 0;
-	tracknum = eof_song->track[track]->tracknum;
+	tracknum = sp->track[track]->tracknum;
 
-	switch(eof_song->track[track]->track_format)
+	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
-		return eof_song->legacy_track[tracknum]->notes;
+		return sp->legacy_track[tracknum]->notes;
 
 		case EOF_VOCAL_TRACK_FORMAT:
-		return eof_song->vocal_track[tracknum]->lyrics;
+		return sp->vocal_track[tracknum]->lyrics;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-		return eof_song->pro_guitar_track[tracknum]->notes;
+		return sp->pro_guitar_track[tracknum]->notes;
 	}
 
 	return 0;
 }
 
-void *eof_track_add_note(unsigned long track)
+void *eof_track_add_note(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long tracknum;
 
-	if(track >= eof_song->tracks)
+	if((sp == NULL) || (track >= sp->tracks))
 		return 0;
-	tracknum = eof_song->track[track]->tracknum;
+	tracknum = sp->track[track]->tracknum;
 
-	switch(eof_song->track[track]->track_format)
+	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
-		return eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
+		return eof_legacy_track_add_note(sp->legacy_track[tracknum]);
 
 		case EOF_VOCAL_TRACK_FORMAT:
-		return eof_vocal_track_add_lyric(eof_song->vocal_track[tracknum]);
+		return eof_vocal_track_add_lyric(sp->vocal_track[tracknum]);
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-		return eof_pro_guitar_track_add_note(eof_song->pro_guitar_track[tracknum]);
+		return eof_pro_guitar_track_add_note(sp->pro_guitar_track[tracknum]);
 	}
 
 	return NULL;
 }
 
-void eof_track_delete_note(unsigned long track, unsigned long note)
+void eof_track_delete_note(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	unsigned long i, oldsize, tracknum;
 
-	if(track >= eof_song->tracks)
+	if((sp == NULL) || (track >= sp->tracks))
 		return;
-	tracknum = eof_song->track[track]->tracknum;
-	oldsize = eof_track_get_size(track);
+	tracknum = sp->track[track]->tracknum;
+	oldsize = eof_track_get_size(sp, track);
 
 	if(note < oldsize)
 	{
-		switch(eof_song->track[track]->track_format)
+		switch(sp->track[track]->track_format)
 		{
 			case EOF_LEGACY_TRACK_FORMAT:
-				if(note < eof_song->legacy_track[tracknum]->notes)
+				if(note < sp->legacy_track[tracknum]->notes)
 				{
-					free(eof_song->legacy_track[tracknum]->note[note]);
+					free(sp->legacy_track[tracknum]->note[note]);
 					for(i = note; i < oldsize - 1; i++)
 					{
-						eof_song->legacy_track[tracknum]->note[i] = eof_song->legacy_track[tracknum]->note[i + 1];
+						sp->legacy_track[tracknum]->note[i] = sp->legacy_track[tracknum]->note[i + 1];
 					}
-					eof_song->legacy_track[tracknum]->notes--;
+					sp->legacy_track[tracknum]->notes--;
 				}
 			break;
 
 			case EOF_VOCAL_TRACK_FORMAT:
-				if(note < eof_song->vocal_track[tracknum]->lyrics)
+				if(note < sp->vocal_track[tracknum]->lyrics)
 				{
-					free(eof_song->vocal_track[tracknum]->lyric[note]);
+					free(sp->vocal_track[tracknum]->lyric[note]);
 					for(i = note; i < oldsize - 1; i++)
 					{
-						eof_song->vocal_track[tracknum]->lyric[i] = eof_song->vocal_track[tracknum]->lyric[i + 1];
+						sp->vocal_track[tracknum]->lyric[i] = sp->vocal_track[tracknum]->lyric[i + 1];
 					}
-					eof_song->vocal_track[tracknum]->lyrics--;
+					sp->vocal_track[tracknum]->lyrics--;
 				}
 			break;
 
 			case EOF_PRO_GUITAR_TRACK_FORMAT:
-				if(note < eof_song->pro_guitar_track[tracknum]->notes)
+				if(note < sp->pro_guitar_track[tracknum]->notes)
 				{
-					free(eof_song->pro_guitar_track[tracknum]->note[note]);
+					free(sp->pro_guitar_track[tracknum]->note[note]);
 					for(i = note; i < oldsize - 1; i++)
 					{
-						eof_song->pro_guitar_track[tracknum]->note[i] = eof_song->pro_guitar_track[tracknum]->note[i + 1];
+						sp->pro_guitar_track[tracknum]->note[i] = eof_song->pro_guitar_track[tracknum]->note[i + 1];
 					}
-					eof_song->pro_guitar_track[tracknum]->notes--;
+					sp->pro_guitar_track[tracknum]->notes--;
 				}
 			break;
 		}
 	}
 }
 
-void eof_track_resize(unsigned long track, unsigned long size)
+void eof_track_resize(EOF_SONG *sp, unsigned long track, unsigned long size)
 {
 	unsigned long tracknum, i, oldsize;
 
-	if(track >= eof_song->tracks)
+	if((sp == NULL) || (track >= sp->tracks))
 		return;
-	tracknum = eof_song->track[track]->tracknum;
-	oldsize = eof_track_get_size(track);
+	tracknum = sp->track[track]->tracknum;
+	oldsize = eof_track_get_size(sp, track);
 
 	if(size > oldsize)
 	{	//If this track is being grown
 		for(i=oldsize; i < size; i++)
 		{
-			eof_track_add_note(track);
+			eof_track_add_note(sp, track);
 		}
 	}
 	else if(size < oldsize)
 	{	//If this track is being shrunk
 		for(i=oldsize; i > size; i--)
 		{	//Delete notes from the end of the array
-			eof_track_delete_note(track, i-1);
+			eof_track_delete_note(sp, track, i-1);
 		}
 	}
 }
