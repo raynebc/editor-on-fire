@@ -1403,8 +1403,8 @@ allegro_message("Third pass complete");
 			eof_cursor_visible = 0;
 			eof_pen_visible = 0;
 			eof_show_mouse(screen);
-			if(alert(NULL, "Import lane 1 forced HOPO bass notes as open strums?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-			{	//If user selected yes
+			if((sp->track[EOF_TRACK_BASS]->flags & EOF_TRACK_FLAG_OPEN_STRUM) || (alert(NULL, "Import lane 1 forced HOPO bass notes as open strums?", NULL, "&Yes", "&No", 'y', 'n') == 1))
+			{	//If the open bass strum flag was set during INI import or if the user opts to import lane 1 HOPO bass notes as open strums
 				sp->legacy_track[tracknum]->numlanes = 6;						//Set this track to have 6 lanes instead of 5
 				sp->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_OPEN_STRUM;	//Set this flag
 				for(k = 0; k < sp->legacy_track[tracknum]->notes; k++)

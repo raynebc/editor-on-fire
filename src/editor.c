@@ -1671,33 +1671,39 @@ void eof_read_editor_keys(void)
 				{
 					eof_snote |= 16;
 				}
-				if((eof_guitar.button[0].pressed || eof_guitar.button[1].pressed) && eof_snote)
-				{
-					if(eof_entering_note && eof_entering_note_note)
-					{
-						eof_entering_note_note->length = (eof_music_pos - eof_av_delay - eof_guitar.delay) - eof_entering_note_note->pos - 10;
-					}
-					eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
-					new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
-					if(new_note)
-					{
-						eof_note_create2(new_note, eof_snote, eof_music_pos - eof_av_delay - eof_guitar.delay, 1);
-						if(eof_mark_drums_as_cymbal)
-						{	//If the user opted to make all new drum notes cymbals automatically
-							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_song->legacy_track[tracknum]->notes-1);
-						}
-						if(eof_song->track[eof_selected_track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR)
-						{	//In a keys track, all lanes are forced to be "crazy" and be allowed to overlap other lanes
-							new_note->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag bit
-						}
-//						new_note->note = eof_snote;
-						new_note->type = eof_note_type;
-						eof_entering_note_note = new_note;
-						eof_entering_note = 1;
-						eof_detect_difficulties(eof_song);
-						eof_legacy_track_sort_notes(eof_song->legacy_track[tracknum]);
-					}
+				if(eof_open_bass_enabled() && (eof_selected_track == EOF_TRACK_BASS) && !eof_snote && (eof_guitar.button[0].held || eof_guitar.button[1].held))
+				{	//If the strum is being held up/down with no frets, PART BASS is active, and open bass strumming is enabled
+					eof_snote = 32;	//The strum note is lane 6
 				}
+				if(eof_guitar.button[0].pressed || eof_guitar.button[1].pressed)
+				{	//If the user strummed
+					if(eof_snote)
+					{	//If a note is being added from this strum
+						if(eof_entering_note && eof_entering_note_note)
+						{
+							eof_entering_note_note->length = (eof_music_pos - eof_av_delay - eof_guitar.delay) - eof_entering_note_note->pos - 10;
+						}
+						eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
+						new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
+						if(new_note)
+						{
+							eof_note_create2(new_note, eof_snote, eof_music_pos - eof_av_delay - eof_guitar.delay, 1);
+							if(eof_mark_drums_as_cymbal)
+							{	//If the user opted to make all new drum notes cymbals automatically
+								eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_song->legacy_track[tracknum]->notes-1);
+							}
+							if(eof_song->track[eof_selected_track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR)
+							{	//In a keys track, all lanes are forced to be "crazy" and be allowed to overlap other lanes
+								new_note->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag bit
+							}
+							new_note->type = eof_note_type;
+							eof_entering_note_note = new_note;
+							eof_entering_note = 1;
+							eof_detect_difficulties(eof_song);
+							eof_legacy_track_sort_notes(eof_song->legacy_track[tracknum]);
+						}
+					}
+				}//If the user strummed
 				if(eof_entering_note)
 				{
 					if(eof_snote != eof_last_snote)
