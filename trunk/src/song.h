@@ -380,10 +380,10 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp);	//Loads data from the specif
 EOF_SONG * eof_load_song(const char * fn);	//Loads the specified EOF file, validating the file header and loading the appropriate OGG file
 int eof_save_song(EOF_SONG * sp, const char * fn);	//Saves the song to file
 
-unsigned long eof_track_get_size(unsigned long track);						//Returns the number of notes/lyrics in the specified track, or 0 on error
-void *eof_track_add_note(unsigned long track);								//Calls the appropriate add function for the specified track, returning the newly allocated structure or NULL upon error
-void eof_track_delete_note(unsigned long track, unsigned long note);		//Performs the appropriate logic to remove the specified note/lyric from the specified track
-void eof_track_resize(unsigned long track, unsigned long size);				//Performs the appropriate logic to resize the specified track
+unsigned long eof_track_get_size(EOF_SONG *sp, unsigned long track);		//Returns the number of notes/lyrics in the specified track, or 0 on error
+void *eof_track_add_note(EOF_SONG *sp, unsigned long track);				//Calls the appropriate add function for the specified track, returning the newly allocated structure or NULL upon error
+void eof_track_delete_note(EOF_SONG *sp, unsigned long track, unsigned long note);		//Performs the appropriate logic to remove the specified note/lyric from the specified track
+void eof_track_resize(EOF_SONG *sp, unsigned long track, unsigned long size);	//Performs the appropriate logic to resize the specified track
 char eof_get_note_difficulty(unsigned long track, unsigned long note);		//Returns the type (difficulty/lyric set) of the specified track's note/lyric, or 0xFF on error
 unsigned long eof_get_note_pos(unsigned long track, unsigned long note);	//Returns the position of the specified track's note/lyric, or 0 on error
 unsigned long eof_get_note_length(unsigned long track, unsigned long note);	//Returns the length of the specified track's note/lyric, or 0 on error

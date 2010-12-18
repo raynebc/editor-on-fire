@@ -60,8 +60,8 @@ MENU eof_track_selected_menu[EOF_TRACKS_MAX+1] =
     {eof_track_selected_menu_text[4], eof_menu_track_selected_5, NULL, 0, NULL},
     {eof_track_selected_menu_text[5], eof_menu_track_selected_6, NULL, 0, NULL},
     {eof_track_selected_menu_text[6], eof_menu_track_selected_7, NULL, 0, NULL},
-    {eof_track_selected_menu_text[7], eof_menu_track_selected_7, NULL, 0, NULL},
-    {eof_track_selected_menu_text[8], eof_menu_track_selected_7, NULL, 0, NULL},
+    {eof_track_selected_menu_text[7], eof_menu_track_selected_8, NULL, 0, NULL},
+    {eof_track_selected_menu_text[8], eof_menu_track_selected_9, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -1120,6 +1120,16 @@ int eof_menu_track_selected_6(void)
 int eof_menu_track_selected_7(void)
 {
 	return eof_menu_track_selected_track_number(7);
+}
+
+int eof_menu_track_selected_8(void)
+{
+	return eof_menu_track_selected_track_number(8);
+}
+
+int eof_menu_track_selected_9(void)
+{
+	return eof_menu_track_selected_track_number(9);
 }
 
 int eof_menu_track_selected_track_number(int tracknum)

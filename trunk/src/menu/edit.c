@@ -591,11 +591,11 @@ int eof_menu_edit_cut_paste_vocal(int anchor, int option)
 	{	//For each track
 		if(eof_song->track[j]->track_format == EOF_VOCAL_TRACK_FORMAT)
 		{	//If this is a vocal track, perform cleanup logic from the auto-adjust operation
-			for(i = eof_track_get_size(j); i > 0; i--)
+			for(i = eof_track_get_size(eof_song, j); i > 0; i--)
 			{	//For each lyric in the active track
 				if((eof_get_note_pos(j, i-1) + eof_get_note_length(j, i-1) >= start_pos) && (eof_get_note_pos(j, i-1) < end_pos))
 				{	//If the lyric's end position is after the target beat or if the lyric's start position is before the target beat
-					eof_track_delete_note(j, i-1);	//Delete the lyric
+					eof_track_delete_note(eof_song, j, i-1);	//Delete the lyric
 				}
 			}
 		}
@@ -733,11 +733,11 @@ static void eof_menu_edit_paste_clear_range_vocal(unsigned long start, unsigned 
 	{
 		if((eof_song->vocal_track[tracknum]->lyric[i-1]->pos >= start) && (eof_song->vocal_track[tracknum]->lyric[i-1]->pos <= end))
 		{
-			eof_track_delete_note(eof_selected_track, i-1);
+			eof_track_delete_note(eof_song, eof_selected_track, i-1);
 		}
 		else if((eof_song->vocal_track[tracknum]->lyric[i-1]->pos + eof_song->vocal_track[tracknum]->lyric[i-1]->length >= start) && (eof_song->vocal_track[tracknum]->lyric[i-1]->pos + eof_song->vocal_track[tracknum]->lyric[i-1]->length <= end))
 		{
-			eof_track_delete_note(eof_selected_track, i-1);
+			eof_track_delete_note(eof_song, eof_selected_track, i-1);
 		}
 	}
 }
@@ -1091,11 +1091,11 @@ int eof_menu_edit_cut_paste(int anchor, int option, float offset)
 	{	//For each track
 		if(eof_song->track[j]->track_format == EOF_LEGACY_TRACK_FORMAT)
 		{	//If this is a legacy track, perform cleanup logic from the auto-adjust operation
-			for(i = eof_track_get_size(j); i > 0; i--)
+			for(i = eof_track_get_size(eof_song, j); i > 0; i--)
 			{	//For each note in the track, starting from the last note
 				if((eof_get_note_pos(j, i-1) + eof_get_note_length(j, i-1) >= start_pos) && (eof_get_note_pos(j, i-1) < end_pos))
 				{	//If the note's end position is after the target beat or if the note's start position is before the target beat
-					eof_track_delete_note(j, i-1);	//Delete the note
+					eof_track_delete_note(eof_song, j, i-1);	//Delete the note
 				}
 			}
 		}
@@ -2224,11 +2224,11 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty)
 		}
 		eof_clear_input();
 		eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-		for(i = eof_track_get_size(eof_selected_track); i > 0; i--)
+		for(i = eof_track_get_size(eof_song, eof_selected_track); i > 0; i--)
 		{	//For each note/lyric in this track, from last to first
 			if(eof_get_note_difficulty(eof_selected_track, i-1) == eof_note_type)
 			{	//If this note is in the current difficulty/lyric set
-				eof_track_delete_note(eof_selected_track, i - 1);	//Delete it
+				eof_track_delete_note(eof_song, eof_selected_track, i - 1);	//Delete it
 			}
 		}
 		for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
