@@ -845,7 +845,8 @@ allegro_message("Second pass complete");
 					}
 
 					event_realtime = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
-					eof_vocal_track_resize(sp->vocal_track[0], note_count[picked_track] + 1);
+//					eof_vocal_track_resize(sp->vocal_track[0], note_count[picked_track] + 1);
+					eof_track_resize(EOF_TRACK_VOCALS,note_count[picked_track] + 1);
 					/* note on */
 					if(eof_import_events[i]->event[j]->type == 0x90)
 					{
@@ -959,7 +960,8 @@ allegro_message("Second pass complete");
 					}
 					pticker++;
 				}
-				eof_vocal_track_resize(sp->vocal_track[0], note_count[picked_track]);
+//				eof_vocal_track_resize(sp->vocal_track[0], note_count[picked_track]);
+				eof_track_resize(EOF_TRACK_VOCALS,note_count[picked_track]);
 				if(sp->vocal_track[0]->lyrics > 0)
 				{
 					used_track[picked_track] = 1;
@@ -1018,7 +1020,8 @@ allegro_message("Second pass complete");
 					}
 
 					event_realtime = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
-					eof_legacy_track_resize(sp->legacy_track[tracknum], note_count[picked_track] + 1);
+//					eof_legacy_track_resize(sp->legacy_track[tracknum], note_count[picked_track] + 1);
+					eof_track_resize(picked_track, note_count[picked_track] + 1);
 					/* note on */
 					if(eof_import_events[i]->event[j]->type == 0x90)
 					{
@@ -1330,7 +1333,8 @@ allegro_message("Second pass complete");
 					}
 					pticker++;
 				}//For each event in this track
-				eof_legacy_track_resize(sp->legacy_track[tracknum], note_count[picked_track]);
+//				eof_legacy_track_resize(sp->legacy_track[tracknum], note_count[picked_track]);
+				eof_track_resize(picked_track, note_count[picked_track]);
 				if(sp->legacy_track[tracknum]->notes > 0)
 				{
 					eof_legacy_track_find_crazy_notes(sp->legacy_track[tracknum]);

@@ -154,7 +154,7 @@ TRACK CHUNK, for each track:
 	{
 *		2 bytes:	Lyric text string length
 *		[varies:]	Lyric text string
-*		1 byte:		Lyric set number (1=PART VOCALS, 2=HARM1, 3=HARM2...)
+*		1 byte:		Lyric set number (0=PART VOCALS, 1=HARM1, 2=HARM2...)
 		1 byte:		Note pitch
 		4 bytes:	Lyric position (in milliseconds or delta ticks)
 		4 bytes:	Lyric position (in milliseconds or delta ticks)
