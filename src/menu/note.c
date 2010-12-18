@@ -704,7 +704,7 @@ int eof_menu_note_delete_vocal(void)
 		{
 			if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i-1])
 			{
-				eof_vocal_track_delete_lyric(eof_song->vocal_track[tracknum], i-1);
+				eof_track_delete_note(eof_selected_track, i-1);
 				eof_selection.multi[i-1] = 0;
 			}
 		}
@@ -735,11 +735,11 @@ int eof_menu_note_delete(void)
 	if(d)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-		for(i = eof_song->legacy_track[tracknum]->notes; i > 0; i--)
+		for(i = eof_track_get_size(eof_selected_track); i > 0; i--)
 		{
-			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i-1] && (eof_selection.track == eof_selected_track && eof_song->legacy_track[tracknum]->note[i-1]->type == eof_note_type))
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i-1] && (eof_selection.track == eof_selected_track) && (eof_get_note_difficulty(eof_selected_track, i-1) == eof_note_type))
 			{
-				eof_legacy_track_delete_note(eof_song->legacy_track[tracknum], i-1);
+				eof_track_delete_note(eof_selected_track, i-1);
 				eof_selection.multi[i-1] = 0;
 			}
 		}
@@ -1902,7 +1902,7 @@ int eof_edit_lyric_dialog(void)
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			if(!eof_check_string(eof_etext))
 			{	//If the updated string is empty or just whitespace
-				eof_vocal_track_delete_lyric(eof_song->vocal_track[tracknum], eof_selection.current);
+				eof_track_delete_note(eof_selected_track, eof_selection.current);
 			}
 			else
 			{

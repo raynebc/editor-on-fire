@@ -552,7 +552,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			for(i = 0; i < eof_tracks_max; i++)
 			{
 				b = pack_igetl(fp);
-				eof_legacy_track_resize(sp->legacy_track[i], b);
+//				eof_legacy_track_resize(sp->legacy_track[i], b);
+				eof_track_resize(i + 1,b);
 				for(j = 0; j < b; j++)
 				{
 					sp->legacy_track[i]->note[j]->type = pack_getc(fp);
@@ -619,7 +620,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			for(i = 0; i < eof_tracks_max; i++)
 			{
 				b = pack_igetl(fp);
-				eof_legacy_track_resize(sp->legacy_track[i], b);
+//				eof_legacy_track_resize(sp->legacy_track[i], b);
+				eof_track_resize(i + 1,b);
 				for(j = 0; j < b; j++)
 				{
 					sp->legacy_track[i]->note[j]->type = pack_getc(fp);
@@ -718,7 +720,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 
 				/* read notes */
 				b = pack_igetl(fp);
-				eof_legacy_track_resize(sp->legacy_track[i], b);
+//				eof_legacy_track_resize(sp->legacy_track[i], b);
+				eof_track_resize(i + 1,b);
 				for(j = 0; j < b; j++)
 				{
 					sp->legacy_track[i]->note[j]->type = pack_getc(fp);
@@ -812,7 +815,6 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			/* read tracks */
 			for(i = 0; i < eof_tracks_max; i++)
 			{
-
 				/* read solo sections */
 				sp->legacy_track[i]->solos = pack_igetw(fp);
 				for(j = 0; j < sp->legacy_track[i]->solos; j++)
@@ -839,7 +841,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 
 				/* read notes */
 				b = pack_igetl(fp);
-				eof_legacy_track_resize(sp->legacy_track[i], b);
+//				eof_legacy_track_resize(sp->legacy_track[i], b);
+				eof_track_resize(i + 1,b);
 				for(j = 0; j < b; j++)
 				{
 					sp->legacy_track[i]->note[j]->type = pack_getc(fp);
@@ -933,7 +936,6 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			/* read tracks */
 			for(i = 0; i < eof_tracks_max; i++)
 			{
-
 				/* read solo sections */
 				sp->legacy_track[i]->solos = pack_igetw(fp);
 				for(j = 0; j < sp->legacy_track[i]->solos; j++)
@@ -960,7 +962,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 
 				/* read notes */
 				b = pack_igetl(fp);
-				eof_legacy_track_resize(sp->legacy_track[i], b);
+//				eof_legacy_track_resize(sp->legacy_track[i], b);
+				eof_track_resize(i + 1,b);
 				for(j = 0; j < b; j++)
 				{
 					sp->legacy_track[i]->note[j]->type = pack_getc(fp);
@@ -973,7 +976,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 
 			/* read lyric track */
 			b = pack_igetl(fp);
-			eof_vocal_track_resize(sp->vocal_track[0], b);
+//			eof_vocal_track_resize(sp->vocal_track[0], b);
+			eof_track_resize(EOF_TRACK_VOCALS,b);
 			for(j = 0; j < b; j++)
 			{
 				sp->vocal_track[0]->lyric[j]->pos = pack_igetl(fp);
@@ -1072,7 +1076,6 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			/* read tracks */
 			for(i = 0; i < eof_tracks_max; i++)
 			{
-
 				/* read solo sections */
 				sp->legacy_track[i]->solos = pack_igetw(fp);
 				for(j = 0; j < sp->legacy_track[i]->solos; j++)
@@ -1099,7 +1102,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 
 				/* read notes */
 				b = pack_igetl(fp);
-				eof_legacy_track_resize(sp->legacy_track[i], b);
+//				eof_legacy_track_resize(sp->legacy_track[i], b);
+				eof_track_resize(i + 1,b);
 				for(j = 0; j < b; j++)
 				{
 					sp->legacy_track[i]->note[j]->type = pack_getc(fp);
@@ -1112,7 +1116,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 
 			/* read lyric track */
 			b = pack_igetl(fp);
-			eof_vocal_track_resize(sp->vocal_track[0], b);
+//			eof_vocal_track_resize(sp->vocal_track[0], b);
+			eof_track_resize(EOF_TRACK_VOCALS,b);
 			for(j = 0; j < b; j++)
 			{
 				sp->vocal_track[0]->lyric[j]->note = pack_getc(fp);
@@ -1240,7 +1245,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 
 				/* read notes */
 				b = pack_igetl(fp);
-				eof_legacy_track_resize(sp->legacy_track[i], b);
+//				eof_legacy_track_resize(sp->legacy_track[i], b);
+				eof_track_resize(i + 1,b);
 				for(j = 0; j < b; j++)
 				{
 					sp->legacy_track[i]->note[j]->type = pack_getc(fp);
@@ -1253,7 +1259,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 
 			/* read lyric track */
 			b = pack_igetl(fp);
-			eof_vocal_track_resize(sp->vocal_track[0], b);
+//			eof_vocal_track_resize(sp->vocal_track[0], b);
+			eof_track_resize(EOF_TRACK_VOCALS,b);
 			for(j = 0; j < b; j++)
 			{
 				sp->vocal_track[0]->lyric[j]->note = pack_getc(fp);

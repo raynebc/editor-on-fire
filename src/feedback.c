@@ -560,7 +560,7 @@ void eof_editor_logic_feedback(void)
 
 	if((eof_hover_note >= 0) && !eof_song->legacy_track[tracknum]->note[eof_hover_note]->note)
 	{
-		eof_legacy_track_delete_note(eof_song->legacy_track[tracknum], eof_hover_note);
+		eof_track_delete_note(eof_selected_track, eof_hover_note);
 		eof_sort_notes();
 		eof_fixup_notes();
 		eof_determine_hopos();
