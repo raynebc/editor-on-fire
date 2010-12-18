@@ -169,6 +169,20 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 		else if(!ustricmp(eof_import_ini_setting[i].type, "scores_ext ") || !ustricmp(eof_import_ini_setting[i].type, "scores_ext"))
 		{
 		}
+		else if(!ustricmp(eof_import_ini_setting[i].type, "open_strum ") || !ustricmp(eof_import_ini_setting[i].type, "open_strum"))
+		{
+			for(j = 0; j < ustrlen(eof_import_ini_setting[i].value); j++)
+			{
+				if(eof_import_ini_setting[i].value[j] != ' ')
+				{
+					if(!ustricmp(&(eof_import_ini_setting[i].value[j]), "True"))
+					{
+						sp->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_OPEN_STRUM;	//Set the open bass strum flag
+					}
+					break;
+				}
+			}
+		}
 
 		/* for custom settings */
 		else
