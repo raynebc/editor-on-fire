@@ -3347,11 +3347,10 @@ void eof_init_after_load(void)
 
 void eof_scale_fretboard(void)
 {
-	unsigned long ctr,numlanes,tracknum;
+	unsigned long ctr,numlanes;
 
 	eof_screen_layout.string_space = eof_screen_layout.string_space_unscaled;
 
-	tracknum = eof_song->track[EOF_TRACK_BASS]->tracknum;
 	numlanes = eof_count_track_lanes(eof_selected_track);
 	if(numlanes > 5)
 	{	//If the active track has more than 5 lanes, scale the spacing between the fretboard lanes

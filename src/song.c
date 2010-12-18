@@ -5,7 +5,7 @@
 #include "song.h"
 #include "legacy.h"
 
-EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 3 + 1] =
+EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 1 + 1] =
 {
 	{0},
 	{EOF_LEGACY_TRACK_FORMAT, 0, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_GUITAR, "PART GUITAR"},
@@ -15,15 +15,15 @@ EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 3 + 1] =
 	{EOF_LEGACY_TRACK_FORMAT, 0, EOF_DRUM_TRACK_BEHAVIOR, EOF_TRACK_DRUM, "PART DRUMS"},
 	{EOF_VOCAL_TRACK_FORMAT, 0, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, "PART VOCALS"},
 	{EOF_LEGACY_TRACK_FORMAT, 0, EOF_KEYS_TRACK_BEHAVIOR, EOF_TRACK_KEYS, "PART KEYS"},
-
-	//These pro formats are not supported yet, but these entries describe the tracks' details
 	{EOF_PRO_GUITAR_TRACK_FORMAT, 0, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_BASS, "PART REAL_BASS"},
 	{EOF_PRO_GUITAR_TRACK_FORMAT, 0, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR, "PART REAL_GUITAR"},
+
+	//This pro format is not supported yet, but the entry describes the track's details
 	{EOF_PRO_KEYS_TRACK_FORMAT, 0, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, "PART REAL_KEYS"}
 };	//These entries describe the tracks that EOF should present by default
 	//These entries are indexed the same as the track type in the new EOF project format
 
-EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 13 + 1] =
+EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 11 + 1] =
 {
 	{0},
 	{EOF_LEGACY_TRACK_FORMAT, 0, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_GUITAR, "PART GUITAR"},
@@ -33,10 +33,10 @@ EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 13 + 1] =
 	{EOF_LEGACY_TRACK_FORMAT, 0, EOF_DRUM_TRACK_BEHAVIOR, EOF_TRACK_DRUM, "PART DRUMS"},
 	{EOF_VOCAL_TRACK_FORMAT, 0, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, "PART VOCALS"},
 	{EOF_LEGACY_TRACK_FORMAT, 0, EOF_KEYS_TRACK_BEHAVIOR, EOF_TRACK_KEYS, "PART KEYS"},
-
-	//These tracks are not supported for import yet, but these entries describe the tracks' details
 	{EOF_PRO_GUITAR_TRACK_FORMAT, 0, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_BASS, "PART REAL_BASS"},
 	{EOF_PRO_GUITAR_TRACK_FORMAT, 0, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR, "PART REAL_GUITAR"},
+
+	//These tracks are not supported for import yet, but these entries describe the tracks' details
 	{EOF_PRO_GUITAR_TRACK_FORMAT, 0, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR, "PART REAL_GUITAR_22"},
 	{EOF_PRO_KEYS_TRACK_FORMAT, 0, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, "PART REAL_KEYS_X"},
 	{EOF_PRO_KEYS_TRACK_FORMAT, 0, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, "PART REAL_KEYS_H"},
@@ -145,6 +145,7 @@ EOF_SONG * eof_create_song(void)
 	sp->tracks = 0;
 	sp->legacy_tracks = 0;
 	sp->vocal_tracks = 0;
+	sp->pro_guitar_tracks = 0;
 	sp->beats = 0;
 	sp->text_events = 0;
 	sp->catalog = malloc(sizeof(EOF_CATALOG));
@@ -1172,6 +1173,7 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 	EOF_LEGACY_TRACK *ptr = NULL;
 	EOF_VOCAL_TRACK *ptr2 = NULL;
 	EOF_TRACK_ENTRY *ptr3 = NULL;
+	EOF_PRO_GUITAR_TRACK *ptr4 = NULL;
 	unsigned long count=0;
 
 	if((sp == NULL) || (trackdetails == NULL))
@@ -1221,6 +1223,19 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 			case EOF_PRO_KEYS_TRACK_FORMAT:
 			break;
 			case EOF_PRO_GUITAR_TRACK_FORMAT:
+				count = sp->pro_guitar_tracks;
+				ptr4 = malloc(sizeof(EOF_PRO_GUITAR_TRACK));
+				if(ptr4 == NULL)
+					return 0;	//Return error
+				ptr4->numfrets = 17;	//By default, assume a 17 fret guitar (ie. Mustang controller)
+				ptr4->numstrings = 6;	//By default, assume a 6 string guitar
+				ptr4->tuning = NULL;	//(not implemented yet)
+				ptr4->notes = 0;
+				ptr4->solos = 0;
+				ptr4->star_power_paths = 0;
+				ptr4->parent = ptr3;
+				sp->pro_guitar_track[sp->pro_guitar_tracks] = ptr4;
+				sp->pro_guitar_tracks++;
 			break;
 			case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:
 			break;
@@ -2066,6 +2081,10 @@ unsigned long eof_count_track_lanes(unsigned long track)
 	if(eof_song->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
 	{	//If this is a legacy track, return the number of lanes it uses
 		return eof_song->legacy_track[eof_song->track[track]->tracknum]->numlanes;
+	}
+	else if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{
+		return eof_song->pro_guitar_track[eof_song->track[track]->tracknum]->numstrings;
 	}
 	else
 	{	//Otherwise return 5, as so far, other track formats don't store this information

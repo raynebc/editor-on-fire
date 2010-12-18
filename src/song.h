@@ -69,6 +69,22 @@ typedef struct
 typedef struct
 {
 
+    char name[EOF_NOTE_NAME_LENGTH];
+    unsigned char number;		//The chord's number (using RB3's chord number system)
+	char          type;			//Stores the note's difficulty
+	unsigned short note;		//Stores the note's string statuses (set=played, reset=not played).  Bit 0 refers to string 1 (high E), bit 5 refers to string 6 (low E), etc.
+	unsigned char frets[16];	//Stores the fret number for each string, where frets[0] refers to string 1 (high E).  Possible values:0=Open strum, #=Fret # pressed, 0xFF=Muted
+	unsigned long midi_pos;
+	unsigned long midi_length;
+	unsigned long pos;
+	long length;				//Keep as signed, since the npos logic uses signed math
+	unsigned long flags;		//Stores various note statuses
+
+} EOF_PRO_GUITAR_NOTE;
+
+typedef struct
+{
+
 	char name[EOF_NOTE_NAME_LENGTH];
 	char          type;
 	unsigned char note;
@@ -218,10 +234,32 @@ typedef struct
 	EOF_LYRIC_LINE line[EOF_MAX_LYRIC_LINES];
 	short lines;
 
+	/* star power */
 	EOF_STAR_POWER_ENTRY star_power_path[EOF_MAX_STAR_POWER];
 	unsigned long star_power_paths;
 
 } EOF_VOCAL_TRACK;
+
+#define EOF_PRO_GUITAR_TRACKS_MAX	2
+typedef struct
+{
+	unsigned char numfrets;		//The number of frets in this track
+	unsigned char numstrings;	//The number of strings/lanes in this track
+	unsigned char *tuning;		//An array with at least (numstrings) elements, each of which defines the string's note when played open (tuning[0] refers to string 1, which is high E)
+	EOF_TRACK_ENTRY * parent;	//Allows an easy means to look up the global track using a pro guitar track pointer
+
+	EOF_PRO_GUITAR_NOTE * note[EOF_MAX_NOTES];
+	unsigned long notes;
+
+	/* solos */
+	EOF_SOLO_ENTRY solo[EOF_MAX_SOLOS];
+	short solos;
+
+	/* star power */
+	EOF_STAR_POWER_ENTRY star_power_path[EOF_MAX_STAR_POWER];
+	short star_power_paths;
+
+} EOF_PRO_GUITAR_TRACK;
 
 typedef struct
 {
@@ -291,11 +329,11 @@ typedef struct
 
 } EOF_CATALOG;
 
-#define EOF_TRACKS_MAX	(EOF_LEGACY_TRACKS_MAX + EOF_VOCAL_TRACKS_MAX)
+#define EOF_TRACKS_MAX	(EOF_LEGACY_TRACKS_MAX + EOF_VOCAL_TRACKS_MAX + EOF_PRO_GUITAR_TRACKS_MAX)
 
-extern EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 3 + 1];
+extern EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 1 + 1];
 	//The list of default tracks that should be presented in EOF
-extern EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 13 + 1];
+extern EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 11 + 1];
 	//The list of MIDI track names pertaining to each instrument and harmony track
 
 typedef struct
@@ -319,6 +357,9 @@ typedef struct
 
 	EOF_VOCAL_TRACK * vocal_track[EOF_VOCAL_TRACKS_MAX];
 	unsigned long vocal_tracks;
+
+	EOF_PRO_GUITAR_TRACK * pro_guitar_track[EOF_PRO_GUITAR_TRACKS_MAX];
+	unsigned long pro_guitar_tracks;
 
 	EOF_BEAT_MARKER * beat[EOF_MAX_BEATS];
 	unsigned long beats;
