@@ -939,6 +939,7 @@ int eof_menu_file_display(void)
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
+	eof_scale_fretboard();
 	return 1;
 }
 
