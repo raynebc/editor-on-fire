@@ -1960,7 +1960,7 @@ int eof_menu_toggle_freestyle(void)
 	unsigned long i=0;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
-	if(eof_vocals_selected && (eof_selection.track == EOF_TRACK_VOCALS) && eof_count_selected_notes_vocal(NULL, 0))
+	if(eof_vocals_selected && (eof_selection.track == EOF_TRACK_VOCALS) && eof_count_selected_notes(NULL, 0))
 	{	//If lyrics are selected
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
 

@@ -386,7 +386,9 @@ void eof_track_delete_note(EOF_SONG *sp, unsigned long track, unsigned long note
 void eof_track_resize(EOF_SONG *sp, unsigned long track, unsigned long size);	//Performs the appropriate logic to resize the specified track
 char eof_get_note_difficulty(unsigned long track, unsigned long note);		//Returns the type (difficulty/lyric set) of the specified track's note/lyric, or 0xFF on error
 unsigned long eof_get_note_pos(unsigned long track, unsigned long note);	//Returns the position of the specified track's note/lyric, or 0 on error
-unsigned long eof_get_note_length(unsigned long track, unsigned long note);	//Returns the length of the specified track's note/lyric, or 0 on error
+long eof_get_note_length(unsigned long track, unsigned long note);	//Returns the length of the specified track's note/lyric, or 0 on error
+unsigned long eof_get_note_flags(unsigned long track, unsigned long note);	//Returns the flags of the specified track's note/lyric, or 0 on error
+unsigned long eof_get_note_note(unsigned long track, unsigned long note);	//Returns the note bitflag of the specified track's note/lyric, or 0 on error
 void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos, long length, char type, char *text);
 	//Adds and initializes the appropriate note for the specified track, returning the newly created note structure, or NULL on error
 	//Automatic flags will be applied appropriately (ie. crazy status for all notes in PART KEYS)
@@ -476,7 +478,7 @@ int eof_load_song_string_pf(char *const buffer, PACKFILE *fp, const unsigned lon
 	//Nonzero is returned on error
 int eof_save_song_string_pf(char *const buffer, PACKFILE *fp);
 	//Writes two bytes for the length of the string, followed by the string (minus the NULL terminator)
-	//If buffer is NULL, a 0 (representing empty string) is written to the file
+	//If buffer is NULL, two zero bytes (representing empty string) are written to the file
 	//The length of the string written is in bytes, not chars, so Unicode strings could be supported
 	//Nonzero is returned on error
 

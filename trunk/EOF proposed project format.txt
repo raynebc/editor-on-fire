@@ -85,9 +85,9 @@ TRACK CHUNK, for each track:
 {
 *	2 bytes:	Track name string length
 *	[varies:]	Track name string
-*	1 byte:		Track format (0=Global,1=Legacy,2=Vocal,3=Pro Guitar/Bass,4=Pro Keys,5=Variable Lane Legacy,...)
+*	1 byte:		Track format (0=Global,1=Legacy,2=Vocal,3=Pro Keys,4=Pro Guitar/Bass,5=Variable Lane Legacy,...)
 *	1 byte:		Track behavior (1=Guitar/Bass,2=Drum/Pro Drum,3=Vocal,4=Keys,5=Pro Guitar/Bass,6=Pro Keys,...)
-*	1 byte:		Track type (1=Guitar,2=Bass,3=Lead Guitar,4=Rhythm Guitar,5=Drum/Pro Drum,6=Vocal,7=Keys,8=17 Fret Pro Guitar,9=17 Fret Pro Bass,10=Pro Keys,11=22 Fret Pro Guitar,12=22 Fret Pro Bass,13=Custom,...)
+*	1 byte:		Track type (1=Guitar,2=Bass,3=Lead Guitar,4=Rhythm Guitar,5=Drum/Pro Drum,6=Vocal,7=Keys,8=17 Fret Pro Bass,9=17 Fret Pro Guitar,10=Pro Keys,11=22 Fret Pro Guitar,12=22 Fret Pro Bass,13=Custom,...)
 !	Rock Band 3 charts have separate tracks for the full 22 fret chart (PART REAL_GUITAR_22) usable on the Squier guiter, and a version transposed to be accurate on 17 frets (PART REAL_GUITAR)
 !	Both EOF and Rock Band allow for the existence of one of each of the usual tracks, so the first of each will be assigned a unique number as the track type.  Any secondary tracks (ie. a second PART KEYS) will be marked as a custom track
 !	and will be identified by its format and behavior fields.  This will allow the ability to maintain some compatibility with EOF's current method of comparing tracks to defined macros

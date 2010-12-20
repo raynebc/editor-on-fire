@@ -1010,80 +1010,81 @@ int eof_count_notes(void)
 	return eof_song->legacy_track[tracknum]->notes;
 }
 
-int eof_count_selected_notes_vocal(int * total, char v)
-{
-	unsigned long i;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	int count = 0;
-	int last = -1;
-
-	if(!eof_vocals_selected)
-		return 0;
-
-	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-	{
-		if(eof_selection.track == EOF_TRACK_VOCALS)
-		{
-			if(eof_selection.multi[i])
-			{
-				last = i;
-				count++;
-			}
-		}
-		if(total)
-		{
-			(*total)++;
-		}
-	}
-
-	/* if no notes remain selected, current note should be unset */
-	if(count == 0)
-	{
-		eof_selection.current = EOF_MAX_NOTES - 1;
-		eof_selection.current_pos = 0;
-	}
-
-	/* if only one note is selected, make sure current note is set to that note */
-	else if(count == 1)
-	{
-		eof_selection.current = last;
-	}
-	return count;
-}
-
 /* total is used to determine the total number of notes including unselected notes */
-int eof_count_selected_notes(int * total, char v)
+unsigned long eof_count_selected_notes(unsigned long * total, char v)
 {
-	if(eof_vocals_selected)
-	{
-		return eof_count_selected_notes_vocal(total, v);
-	}
-	unsigned long i;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	int count = 0;
-	int last = -1;
+	unsigned long tracknum;
+	unsigned long count=0, i;
+	long last = -1;
 
-	//eof_selected_track begins numbering at 1 instead of 0
-	for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	switch(eof_song->track[eof_selected_track]->track_format)
 	{
-		if(eof_song->legacy_track[tracknum]->note[i]->type == eof_note_type)
-		{
-			if(eof_selection.track == eof_selected_track)
+		case EOF_LEGACY_TRACK_FORMAT:
+			for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
 			{
-				if(eof_selection.multi[i])
+				if(eof_song->legacy_track[tracknum]->note[i]->type == eof_note_type)
 				{
-					if((!v) || (v && eof_song->legacy_track[tracknum]->note[i]->note))
+					if(eof_selection.track == eof_selected_track)
+					{
+						if(eof_selection.multi[i])
+						{
+							if((!v) || (v && eof_song->legacy_track[tracknum]->note[i]->note))
+							{
+								last = i;
+								count++;
+							}
+						}
+					}
+					if(total)
+					{
+						(*total)++;
+					}
+				}
+			}
+		break;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+			for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
+			{
+				if(eof_selection.track == eof_selected_track)
+				{
+					if(eof_selection.multi[i])
 					{
 						last = i;
 						count++;
 					}
 				}
+				if(total)
+				{
+					(*total)++;
+				}
 			}
-			if(total)
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			for(i = 0; i < eof_song->pro_guitar_track[tracknum]->notes; i++)
 			{
-				(*total)++;
+				if(eof_song->pro_guitar_track[tracknum]->note[i]->type == eof_note_type)
+				{
+					if(eof_selection.track == eof_selected_track)
+					{
+						if(eof_selection.multi[i])
+						{
+							if((!v) || (v && eof_song->pro_guitar_track[tracknum]->note[i]->note))
+							{
+								last = i;
+								count++;
+							}
+						}
+					}
+					if(total)
+					{
+						(*total)++;
+					}
+				}
 			}
-		}
+		break;
 	}
 
 	/* if no notes remain selected, current note should be unset */
@@ -1986,7 +1987,7 @@ void eof_render_note_window(void)
 		{
 			if(eof_selection.current < eof_song->vocal_track[tracknum]->lyrics)
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Lyric = %d : Pos = %lu : Length = %lu", eof_selection.current, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->pos, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->length);
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Lyric = %ld : Pos = %lu : Length = %lu", eof_selection.current, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->pos, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->length);
 				ypos += 12;
 				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Lyric Text = \"%s\" : Tone = %d (%s)", eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note, (eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note != 0) ? eof_get_tone_name(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note) : "none");
 			}
@@ -2008,7 +2009,7 @@ void eof_render_note_window(void)
 		{
 			if(eof_selection.current < eof_song->legacy_track[tracknum]->notes)
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, 48, eof_color_white, -1, "Note = %d : Pos = %lu : Length = %lu", eof_selection.current, eof_song->legacy_track[tracknum]->note[eof_selection.current]->pos, eof_song->legacy_track[tracknum]->note[eof_selection.current]->length);
+				textprintf_ex(eof_window_note->screen, font, 2, 48, eof_color_white, -1, "Note = %ld : Pos = %lu : Length = %lu", eof_selection.current, eof_song->legacy_track[tracknum]->note[eof_selection.current]->pos, eof_song->legacy_track[tracknum]->note[eof_selection.current]->length);
 			}
 			else
 			{
@@ -2027,12 +2028,12 @@ void eof_render_note_window(void)
 		int ism = ((eof_music_pos - eof_av_delay) / 1000) / 60;
 		int iss = ((eof_music_pos - eof_av_delay) / 1000) % 60;
 		int isms = ((eof_music_pos - eof_av_delay) % 1000);
-		int itn = 0;
+		unsigned long itn = 0;
 		int isn = eof_count_selected_notes(&itn, 0);
 		ypos += 12;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Seek Position = %02d:%02d:%03d", ism, iss, isms >= 0 ? isms : 0);
 		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s Selected = %d/%d", eof_vocals_selected ? "Lyrics" : "Notes", isn, itn);
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s Selected = %d/%lu", eof_vocals_selected ? "Lyrics" : "Notes", isn, itn);
 
 		ypos += 24;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Input Mode: %s", eof_input_name[eof_input_mode]);

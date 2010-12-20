@@ -1508,7 +1508,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					}
 					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->pos = pack_igetl(fp);		//Read note position
 					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->length = pack_igetl(fp);	//Read note length
-					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->flags = pack_igetw(fp);	//Read note flags
+					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->flags = pack_igetl(fp);	//Read note flags
 				}
 			break;
 			case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:	//Variable Lane Legacy
@@ -2394,7 +2394,7 @@ unsigned long eof_get_note_pos(unsigned long track, unsigned long note)
 	return 0;	//Return error
 }
 
-unsigned long eof_get_note_length(unsigned long track, unsigned long note)
+long eof_get_note_length(unsigned long track, unsigned long note)
 {
 	unsigned long tracknum;
 
@@ -2422,6 +2422,76 @@ unsigned long eof_get_note_length(unsigned long track, unsigned long note)
 			if(note < eof_song->pro_guitar_track[tracknum]->notes)
 			{
 				return eof_song->pro_guitar_track[tracknum]->note[note]->length;
+			}
+		break;
+	}
+
+	return 0;	//Return error
+}
+
+unsigned long eof_get_note_flags(unsigned long track, unsigned long note)
+{
+	unsigned long tracknum;
+
+	if(track >= eof_song->tracks)
+		return 0;	//Return error
+	tracknum = eof_song->track[track]->tracknum;
+
+	switch(eof_song->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < eof_song->legacy_track[tracknum]->notes)
+			{
+				return eof_song->legacy_track[tracknum]->note[note]->flags;
+			}
+		break;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+			if(note < eof_song->vocal_track[tracknum]->lyrics)
+			{
+				return eof_song->vocal_track[tracknum]->lyric[note]->flags;
+			}
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(note < eof_song->pro_guitar_track[tracknum]->notes)
+			{
+				return eof_song->pro_guitar_track[tracknum]->note[note]->flags;
+			}
+		break;
+	}
+
+	return 0;	//Return error
+}
+
+unsigned long eof_get_note_note(unsigned long track, unsigned long note)
+{
+	unsigned long tracknum;
+
+	if(track >= eof_song->tracks)
+		return 0;	//Return error
+	tracknum = eof_song->track[track]->tracknum;
+
+	switch(eof_song->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < eof_song->legacy_track[tracknum]->notes)
+			{
+				return eof_song->legacy_track[tracknum]->note[note]->note;
+			}
+		break;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+			if(note < eof_song->vocal_track[tracknum]->lyrics)
+			{
+				return eof_song->vocal_track[tracknum]->lyric[note]->note;
+			}
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(note < eof_song->pro_guitar_track[tracknum]->notes)
+			{
+				return eof_song->pro_guitar_track[tracknum]->note[note]->note;
 			}
 		break;
 	}
