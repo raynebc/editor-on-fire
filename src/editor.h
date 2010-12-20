@@ -7,14 +7,14 @@ typedef struct
 {
 
 	/* which track the selection pertains to */
-	int track;
+	unsigned long track;
 
 	/* the current selection */
-	int current;
+	long current;	//-1 is used to represent no notes selected?
 	unsigned long current_pos;
 
 	/* the previous selection */
-	int last;
+	long last;
 	unsigned long last_pos;
 
 	/* which notes are selected */

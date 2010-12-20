@@ -342,10 +342,9 @@ void eof_reset_lyric_preview_lines(void);	//Resets the preview line variables to
 void eof_find_lyric_preview_lines(void);	//Sets the first and second preview line variables
 void eof_emergency_stop_music(void);	//Stops audio playback
 void eof_fix_catalog_selection(void);	//Ensures that a valid catalog entry is active, if any
-int eof_count_selected_notes(int * total, char v);
-	//Returns the number of notes selected in the active difficulty
+unsigned long eof_count_selected_notes(unsigned long * total, char v);
+	//Returns the number of notes selected in the active instrument difficulty
 	//If total is not NULL, its value is incremented once for each note in the active difficulty
-int eof_count_selected_notes_vocal(int * total, char v);	//Counts the number of selected lyrics
 void eof_fix_waveform_graph(void);	//Rebuild the waveform graph data if it exists
 void eof_clear_input(void);
 void eof_prepare_undo(int type);

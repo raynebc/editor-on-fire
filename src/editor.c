@@ -1389,7 +1389,7 @@ void eof_read_editor_keys(void)
 			}
 		}
 		else if((eof_input_mode == EOF_INPUT_REX) && eof_music_paused && !eof_music_catalog_playback)
-		{
+		{	//If the chart is paused, there is no fret catalog playback and the Rex Mundi input method is in use
 			eof_hover_piece = -1;
 			if((mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
 			{
@@ -1434,8 +1434,8 @@ void eof_read_editor_keys(void)
 						key[KEY_6] = 0;
 					}
 
-					if(bitmask)	//If user has pressed any key from 1 through 6
-					{
+					if(bitmask)
+					{	//If user has pressed any key from 1 through 6
 						eof_selection.range_pos_1 = 0;
 						eof_selection.range_pos_2 = 0;
 						eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
@@ -1493,10 +1493,10 @@ void eof_read_editor_keys(void)
 								eof_detect_difficulties(eof_song);
 							}
 						}
-					}
+					}//If user has pressed any key from 1 through 6
 				}
 			}
-		}
+		}//If the chart is paused, there is no fret catalog playback and the Rex Mundi input method is in use
 		else if((eof_input_mode == EOF_INPUT_GUITAR_TAP) && !eof_music_paused && (eof_selected_track != EOF_TRACK_DRUM))
 		{
 			if(eof_guitar.button[2].held)
@@ -3536,18 +3536,18 @@ int eof_get_ts_text(int beat, char * buffer)
 void eof_render_editor_window(void)
 {
 	unsigned long start;	//Will store the timestamp of the left visible edge of the piano roll
-	unsigned long i;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	unsigned long i,numnotes;
 
 	if(!eof_song_loaded)
 		return;
 
 	eof_render_editor_window_common();	//Perform rendering that is common to the note and the vocal editor displays
 
+	numnotes = eof_track_get_size(eof_song, eof_selected_track);	//Get the number of notes in this legacy/pro guitar track
 	start = eof_determine_piano_roll_left_edge();
-	for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
+	for(i = 0; i < numnotes; i++)
 	{	//Render all visible notes in the list
-		if((eof_note_type == eof_song->legacy_track[tracknum]->note[i]->type) && (eof_song->legacy_track[tracknum]->note[i]->pos + eof_song->legacy_track[tracknum]->note[i]->length >= start))
+		if((eof_note_type == eof_get_note_difficulty(eof_selected_track, i)) && (eof_get_note_pos(eof_selected_track, i) + eof_get_note_length(eof_selected_track, i) >= start))
 		{	//If this note is in the selected instrument difficulty and would render at or after the left edge of the piano roll
 			if(((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX)) && eof_music_paused && (eof_hover_note == i))
 			{	//If the input mode is piano roll or rex mundi and the chart is paused, and the note is being moused over

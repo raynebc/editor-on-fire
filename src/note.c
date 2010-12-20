@@ -132,7 +132,15 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	char iscymbal;		//Used to track whether the specified note is marked as a cymbal
 	int x,y;
 	unsigned long numlanes, tracknum;
-	EOF_NOTE * np = NULL;
+//	EOF_NOTE * np = NULL;
+
+	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
+	unsigned long notepos = 0;
+	long notelength = 0;
+	unsigned long noteflags = 0;
+	unsigned long notenote = 0;
+	char notetype = 0;
+
 
 //Validate parameters
 	if(window == NULL)
@@ -141,14 +149,27 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	{	//Render an existing note
 		if(track >= eof_song->tracks)
 			return 1;	//Error, signal to stop rendering
+		if(notenum >= eof_track_get_size(eof_song, track))
+			return 1;	//Invalid note number, signal to stop rendering
+
 		tracknum = eof_song->track[track]->tracknum;
-		if((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) || (notenum >= eof_song->legacy_track[tracknum]->notes))
-			return 1;	//Error, signal to stop rendering
-		np = eof_song->legacy_track[tracknum]->note[notenum];	//Store the pointer to this note
+		if((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+			return 1;	//Invalid track format, signal to stop rendering
+//		np = eof_song->legacy_track[tracknum]->note[notenum];	//Store the pointer to this note
+		notepos = eof_get_note_pos(track, notenum);
+		notelength = eof_get_note_length(track, notenum);
+		noteflags = eof_get_note_flags(track, notenum);
+		notenote = eof_get_note_note(track, notenum);
+		notetype = eof_get_note_difficulty(track, notenum);
 	}
 	else
 	{	//Render the pen note
-		np = &eof_pen_note;
+//		np = &eof_pen_note;
+		notepos = eof_pen_note.pos;
+		notelength = eof_pen_note.length;
+		noteflags = eof_pen_note.flags;
+		notenote = eof_pen_note.note;
+		notetype = eof_pen_note.type;
 	}
 
 	if(window == eof_window_note)
@@ -164,21 +185,21 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	pos = position / eof_zoom;
 	if(pos < leftcoord)
 	{	//Scroll the left edge of the piano roll based on the roll's position
-		npos = 20 + (np->pos) / eof_zoom;
+		npos = 20 + (notepos) / eof_zoom;
 	}
 	else
 	{
-		npos = 20 - ((pos - leftcoord)) + np->pos / eof_zoom;
+		npos = 20 - ((pos - leftcoord)) + notepos / eof_zoom;
 	}
 
 //Determine if the entire note would clip.  If so, return without attempting to render
 	if(npos - eof_screen_layout.note_size > window->screen->w)	//If the note would render entirely to the right of the visible area
 		return 1;	//Return status:  Clipping to the right of the viewing window
 
-	if((npos < 0) && (npos + np->length / eof_zoom < 0))	//If the note and its tail would render entirely to the left of the visible area
+	if((npos < 0) && (npos + notelength / eof_zoom < 0))	//If the note and its tail would render entirely to the left of the visible area
 		return -1;	//Return status:  Clipping to the left of the viewing window
 
-	if(np->flags & EOF_NOTE_FLAG_CRAZY)
+	if(noteflags & EOF_NOTE_FLAG_CRAZY)
 		dcol = eof_color_black;	//"Crazy" notes render with a black dot in the center
 
 //Since Expert+ double bass notation uses the same flag as crazy status, override the dot color for PART DRUMS
@@ -211,12 +232,12 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		}
 	}
 
-	if(np->flags & EOF_NOTE_FLAG_F_HOPO)				//If this note is forced as HOPO on
+	if(noteflags & EOF_NOTE_FLAG_F_HOPO)				//If this note is forced as HOPO on
 	{
 		radius=eof_screen_layout.hopo_note_size;		//Draw the note in the defined HOPO on size
 		dotsize=eof_screen_layout.hopo_note_dot_size;
 	}
-	else if(np->flags & EOF_NOTE_FLAG_NO_HOPO)			//Or if this note is forced as HOPO off
+	else if(noteflags & EOF_NOTE_FLAG_NO_HOPO)			//Or if this note is forced as HOPO off
 	{
 		radius=eof_screen_layout.anti_hopo_note_size;	//Draw the note in the defined HOPO off size
 		dotsize=eof_screen_layout.anti_hopo_note_dot_size;
@@ -240,18 +261,18 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		x = npos;											//Store this to make the code more readable
 		y = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr];	//Store this to make the code more readable
 
-		if(np->note & mask)
+		if(notenote & mask)
 		{
-			if(!(np->flags & EOF_NOTE_FLAG_SP))
+			if(!(noteflags & EOF_NOTE_FLAG_SP))
 			{	//If the note is not star power
 				ncol = colors[ctr];	//Assign the appropriate fret color
 			}
 
 			if((eof_selected_track == EOF_TRACK_DRUM))
 			{	//Drum track specific dot color logic
-				if((np->type == EOF_NOTE_AMAZING) && (np->flags & EOF_NOTE_FLAG_DBASS) && (mask == 1))
+				if((notetype == EOF_NOTE_AMAZING) && (noteflags & EOF_NOTE_FLAG_DBASS) && (mask == 1))
 					dcol2 = eof_color_red;	//If this is an Expert+ bass drum note, render it with a red dot
-				else if(((np->flags & EOF_NOTE_FLAG_Y_CYMBAL) && (mask == 4)) || ((np->flags & EOF_NOTE_FLAG_B_CYMBAL) && (mask == 8)) || ((np->flags & EOF_NOTE_FLAG_G_CYMBAL) && (mask == 16)))
+				else if(((noteflags & EOF_NOTE_FLAG_Y_CYMBAL) && (mask == 4)) || ((noteflags & EOF_NOTE_FLAG_B_CYMBAL) && (mask == 8)) || ((noteflags & EOF_NOTE_FLAG_G_CYMBAL) && (mask == 16)))
 				{	//If this drum note is marked as a yellow, blue or green cymbal
 					iscymbal = 1;
 				}
@@ -261,10 +282,10 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 			else
 				dcol2 = dcol;			//Otherwise render with the expected dot color
 
-			rectfill(window->screen, x, y - eof_screen_layout.note_tail_size, x + np->length / eof_zoom, y + eof_screen_layout.note_tail_size, ncol);
+			rectfill(window->screen, x, y - eof_screen_layout.note_tail_size, x + notelength / eof_zoom, y + eof_screen_layout.note_tail_size, ncol);
 			if(p)
 			{
-				rect(window->screen, x, y - eof_screen_layout.note_tail_size, x + np->length / eof_zoom, y + eof_screen_layout.note_tail_size, pcol);
+				rect(window->screen, x, y - eof_screen_layout.note_tail_size, x + notelength / eof_zoom, y + eof_screen_layout.note_tail_size, pcol);
 			}
 
 			if(!iscymbal)
@@ -289,7 +310,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		}
 		else if((eof_hover_note >= 0) && (p == 3))
 		{
-			rect(window->screen, x, y - eof_screen_layout.note_tail_size, x + np->length / eof_zoom, y + eof_screen_layout.note_tail_size, eof_color_gray);
+			rect(window->screen, x, y - eof_screen_layout.note_tail_size, x + notelength / eof_zoom, y + eof_screen_layout.note_tail_size, eof_color_gray);
 			if(!iscymbal)
 			{	//If this note is not a cymbal, draw a non filled circle over the note
 				circle(window->screen, x, y, radius, eof_color_gray);
