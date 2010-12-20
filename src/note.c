@@ -123,6 +123,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	int ychart[EOF_MAX_FRETS];
 	int pcol = p == 1 ? eof_color_white : p == 2 ? makecol(224, 255, 224) : 0;
 	int dcol = eof_color_white;
+	int tcol = eof_color_black;	//This color is used as the fret text color (for pro guitar notes)
 	int dcol2 = dcol;
 	int colors[EOF_MAX_FRETS] = {eof_color_green,eof_color_red,eof_color_yellow,eof_color_blue,eof_color_purple,eof_color_orange};	//Each of the fret colors
 	int ncol = eof_color_silver;	//Note color defaults to silver unless the note is not star power
@@ -132,7 +133,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	char iscymbal;		//Used to track whether the specified note is marked as a cymbal
 	int x,y;
 	unsigned long numlanes, tracknum;
-//	EOF_NOTE * np = NULL;
+	char fretstring[5] = {0};
 
 	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
 	unsigned long notepos = 0;
@@ -155,7 +156,6 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		tracknum = eof_song->track[track]->tracknum;
 		if((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 			return 1;	//Invalid track format, signal to stop rendering
-//		np = eof_song->legacy_track[tracknum]->note[notenum];	//Store the pointer to this note
 		notepos = eof_get_note_pos(track, notenum);
 		notelength = eof_get_note_length(track, notenum);
 		noteflags = eof_get_note_flags(track, notenum);
@@ -164,7 +164,6 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	}
 	else
 	{	//Render the pen note
-//		np = &eof_pen_note;
 		notepos = eof_pen_note.pos;
 		notelength = eof_pen_note.length;
 		noteflags = eof_pen_note.flags;
@@ -200,7 +199,10 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		return -1;	//Return status:  Clipping to the left of the viewing window
 
 	if(noteflags & EOF_NOTE_FLAG_CRAZY)
+	{
 		dcol = eof_color_black;	//"Crazy" notes render with a black dot in the center
+		tcol = eof_color_white;	//In which case, render the fret number (pro guitar) with the opposite color
+	}
 
 //Since Expert+ double bass notation uses the same flag as crazy status, override the dot color for PART DRUMS
 	if(eof_selected_track == EOF_TRACK_DRUM)
@@ -256,13 +258,13 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	}
 
 	for(ctr=0,mask=1;ctr<numlanes;ctr++,mask=mask<<1)
-	{	//Render for each of the available fret colors
+	{	//Render for each of the available fret lanes
 		iscymbal = 0;
 		x = npos;											//Store this to make the code more readable
 		y = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr];	//Store this to make the code more readable
 
 		if(notenote & mask)
-		{
+		{	//If this lane is populated
 			if(!(noteflags & EOF_NOTE_FLAG_SP))
 			{	//If the note is not star power
 				ncol = colors[ctr];	//Assign the appropriate fret color
@@ -296,6 +298,19 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 				{
 					circle(window->screen, x, y, radius, pcol);
 				}
+
+				if((track > 0) && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				{	//If this is a pro guitar note, render the fret number over the center of the note
+					if(eof_song->pro_guitar_track[tracknum]->note[notenum]->frets[ctr] == 0xFF)
+					{	//This is a muted fret
+						snprintf(fretstring,sizeof(fretstring),"X");
+					}
+					else
+					{	//This is a non muted fret
+						snprintf(fretstring,sizeof(fretstring),"%d",eof_song->pro_guitar_track[tracknum]->note[notenum]->frets[ctr]);
+					}
+					textout_centre_ex(window->screen, font, fretstring, x+1, y - text_height(font)/2, tcol, dcol);	//Fudge (x,y) to make it print centered over the gem
+				}
 			}
 			else
 			{	//Otherwise render it as a triangle
@@ -307,7 +322,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 					line(window->screen, x-radius, y+radius, x, y-radius, pcol);
 				}
 			}
-		}
+		}//If this lane is populated
 		else if((eof_hover_note >= 0) && (p == 3))
 		{
 			rect(window->screen, x, y - eof_screen_layout.note_tail_size, x + notelength / eof_zoom, y + eof_screen_layout.note_tail_size, eof_color_gray);
@@ -322,7 +337,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 				line(window->screen, x-radius, y+radius, x, y-radius, eof_color_gray);
 			}
 		}
-	}
+	}//Render for each of the available fret lanes
 
 	return 0;	//Return status:  Note was not clipped in its entirety
 }
