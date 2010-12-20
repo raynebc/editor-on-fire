@@ -1474,19 +1474,13 @@ void eof_read_editor_keys(void)
 						else
 						{	//If the user created a new note
 							eof_pen_note.note ^= bitmask;
-							new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
+							new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, eof_pen_note.pos, eof_snap.length, eof_note_type, NULL);
 							if(new_note)
 							{
-								eof_note_create2(new_note, eof_pen_note.note, eof_pen_note.pos, eof_snap.length);
 								if(eof_mark_drums_as_cymbal)
 								{	//If the user opted to make all new drum notes cymbals automatically
 									eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_song->legacy_track[tracknum]->notes-1);
 								}
-								if(eof_song->track[eof_selected_track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR)
-								{	//In a keys track, all lanes are forced to be "crazy" and be allowed to overlap other lanes
-									new_note->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag bit
-								}
-								new_note->type = eof_note_type;
 								eof_selection.current_pos = new_note->pos;
 								eof_selection.range_pos_1 = eof_selection.current_pos;
 								eof_selection.range_pos_2 = eof_selection.current_pos;
@@ -1572,28 +1566,22 @@ void eof_read_editor_keys(void)
 				eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
 				if(eof_vocals_selected)
 				{
-					new_lyric = eof_vocal_track_add_lyric(eof_song->vocal_track[tracknum]);
+					new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, eof_vocals_offset, eof_music_pos - eof_av_delay - eof_guitar.delay, 1, 0, "");
 					if(new_lyric)
 					{
-						new_lyric->note = eof_vocals_offset;
-						new_lyric->pos = eof_music_pos - eof_av_delay - eof_guitar.delay;
-						new_lyric->length = 1;
-						strcpy(new_lyric->text, "");
 						eof_detect_difficulties(eof_song);
 						eof_vocal_track_sort_lyrics(eof_song->vocal_track[tracknum]);
 					}
 				}
 				else
 				{
-					new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
+					new_note = eof_track_add_create_note(eof_song, eof_selected_track, bitmask, eof_music_pos - eof_av_delay - eof_guitar.delay, 1, eof_note_type, NULL);
 					if(new_note)
 					{
-						eof_note_create2(new_note, bitmask, eof_music_pos - eof_av_delay - eof_guitar.delay, 1);
 						if(eof_mark_drums_as_cymbal)
 						{	//If the user opted to make all new drum notes cymbals automatically
 							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_song->legacy_track[tracknum]->notes-1);
 						}
-						new_note->type = eof_note_type;
 						eof_entering_note_note = new_note;
 						eof_entering_note = 1;
 						eof_detect_difficulties(eof_song);
@@ -1620,11 +1608,9 @@ void eof_read_editor_keys(void)
 						eof_entering_note_lyric->length = (eof_music_pos - eof_av_delay - eof_guitar.delay) - eof_entering_note_lyric->pos - 10;
 					}
 					eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
-					new_lyric = eof_vocal_track_add_lyric(eof_song->vocal_track[tracknum]);
+					new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, eof_vocals_offset, eof_music_pos - eof_av_delay - eof_guitar.delay, 1, 0, "");
 					if(new_lyric)
 					{
-						new_lyric->pos = eof_music_pos - eof_av_delay - eof_guitar.delay;
-						new_lyric->note = eof_vocals_offset;
 						eof_entering_note_lyric = new_lyric;
 						eof_entering_note = 1;
 						eof_detect_difficulties(eof_song);
@@ -1684,19 +1670,13 @@ void eof_read_editor_keys(void)
 							eof_entering_note_note->length = (eof_music_pos - eof_av_delay - eof_guitar.delay) - eof_entering_note_note->pos - 10;
 						}
 						eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
-						new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
+						new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_snote, eof_music_pos - eof_av_delay - eof_guitar.delay, 1, eof_note_type, NULL);
 						if(new_note)
 						{
-							eof_note_create2(new_note, eof_snote, eof_music_pos - eof_av_delay - eof_guitar.delay, 1);
 							if(eof_mark_drums_as_cymbal)
 							{	//If the user opted to make all new drum notes cymbals automatically
 								eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_song->legacy_track[tracknum]->notes-1);
 							}
-							if(eof_song->track[eof_selected_track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR)
-							{	//In a keys track, all lanes are forced to be "crazy" and be allowed to overlap other lanes
-								new_note->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag bit
-							}
-							new_note->type = eof_note_type;
 							eof_entering_note_note = new_note;
 							eof_entering_note = 1;
 							eof_detect_difficulties(eof_song);
@@ -1728,19 +1708,13 @@ void eof_read_editor_keys(void)
 			/* place note with default length if song is paused */
 			if(eof_music_paused)
 			{
-				new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
+				new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, eof_music_pos - eof_av_delay, eof_snap.length, eof_note_type, NULL);
 				if(new_note)
 				{
-					eof_note_create2(new_note, eof_pen_note.note, eof_music_pos - eof_av_delay, eof_snap.length);
 					if(eof_mark_drums_as_cymbal)
 					{	//If the user opted to make all new drum notes cymbals automatically
 						eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_song->legacy_track[tracknum]->notes-1);
 					}
-					if(eof_song->track[eof_selected_track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR)
-					{	//In a keys track, all lanes are forced to be "crazy" and be allowed to overlap other lanes
-						new_note->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag bit
-					}
-					eof_song->legacy_track[tracknum]->note[i]->type = eof_note_type;
 					eof_detect_difficulties(eof_song);
 				}
 				key[KEY_ENTER] = 0;
@@ -1751,19 +1725,13 @@ void eof_read_editor_keys(void)
 			{
 				if(!eof_entering_note_note)
 				{
-					new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
+					new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, eof_music_pos - eof_av_delay, eof_snap.length, eof_note_type, NULL);
 					if(new_note)
 					{
-						eof_note_create2(new_note, eof_pen_note.note, eof_music_pos - eof_av_delay, eof_snap.length);
 						if(eof_mark_drums_as_cymbal)
 						{	//If the user opted to make all new drum notes cymbals automatically
 							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_song->legacy_track[tracknum]->notes-1);
 						}
-						if(eof_song->track[eof_selected_track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR)
-						{	//In a keys track, all lanes are forced to be "crazy" and be allowed to overlap other lanes
-							new_note->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag bit
-						}
-						eof_song->legacy_track[tracknum]->note[i]->type = eof_note_type;
 						eof_entering_note_note = new_note;
 						eof_entering_note = 1;
 						eof_detect_difficulties(eof_song);
@@ -2044,17 +2012,15 @@ void eof_editor_drum_logic(void)
 		}
 		else
 		{
-			new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
+			new_note = eof_track_add_create_note(eof_song, eof_selected_track, bitmask, eof_music_pos - eof_av_delay - eof_drums.delay, 1, eof_note_type, NULL);
 			if(new_note)
 			{
-				eof_note_create2(new_note, bitmask, eof_music_pos - eof_av_delay - eof_drums.delay, 1);
 				if(eof_mark_drums_as_cymbal)
 				{	//If the user opted to make all new drum notes cymbals automatically
 					eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_song->legacy_track[tracknum]->notes-1);
 				}
 				eof_snap_logic(&eof_snap, new_note->pos);
 				new_note->pos = eof_snap.pos;
-				new_note->type = eof_note_type;
 				eof_entering_note_note = new_note;
 				eof_entering_note = 1;
 				eof_detect_difficulties(eof_song);
@@ -2500,19 +2466,13 @@ void eof_editor_logic(void)
 					}
 					else
 					{
-						new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
+						new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, eof_pen_note.pos, (KEY_EITHER_SHIFT ? 1 : eof_snap.length), eof_note_type, NULL);
 						if(new_note)
 						{
-							eof_note_create2(new_note, eof_pen_note.note, eof_pen_note.pos, KEY_EITHER_SHIFT ? 1 : eof_snap.length);
 							if(eof_mark_drums_as_cymbal)
 							{	//If the user opted to make all new drum notes cymbals automatically
 								eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_song->legacy_track[tracknum]->notes-1);
 							}
-							if(eof_song->track[eof_selected_track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR)
-							{	//In a keys track, all lanes are forced to be "crazy" and be allowed to overlap other lanes
-								new_note->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag bit
-							}
-							new_note->type = eof_note_type;
 							eof_selection.current_pos = new_note->pos;
 							eof_selection.range_pos_1 = eof_selection.current_pos;
 							eof_selection.range_pos_2 = eof_selection.current_pos;
@@ -2531,19 +2491,13 @@ void eof_editor_logic(void)
 					{
 						eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 					}
-					new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
+					new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, eof_pen_note.pos, (KEY_EITHER_SHIFT ? 1 : eof_snap.length), eof_note_type, NULL);
 					if(new_note)
 					{
-						eof_note_create2(new_note, eof_pen_note.note, eof_pen_note.pos, KEY_EITHER_SHIFT ? 1 : eof_snap.length);
 						if(eof_mark_drums_as_cymbal)
 						{	//If the user opted to make all new drum notes cymbals automatically
 							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_song->legacy_track[tracknum]->notes-1);
 						}
-						if(eof_song->track[eof_selected_track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR)
-						{	//In a keys track, all lanes are forced to be "crazy" and be allowed to overlap other lanes
-							new_note->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag bit
-						}
-						new_note->type = eof_note_type;
 						eof_selection.current_pos = new_note->pos;
 						eof_selection.range_pos_1 = eof_selection.current_pos;
 						eof_selection.range_pos_2 = eof_selection.current_pos;
@@ -4038,18 +3992,24 @@ void eof_render_editor_window_common2(void)
 	hline(eof_window_editor->screen, 0, eof_window_editor->h - 1, eof_window_editor->w - 1, eof_color_white);
 }
 
-void eof_mark_new_note_as_cymbal(EOF_SONG *sp, unsigned long tracknum, unsigned long notenum)
+void eof_mark_new_note_as_cymbal(EOF_SONG *sp, unsigned long track, unsigned long notenum)
 {	//Perform the eof_mark_edited_note_as_cymbal() logic, applying cymbal status to all relevant frets in the note
-	eof_mark_edited_note_as_cymbal(sp,tracknum,notenum,0xFFFF);
+	eof_mark_edited_note_as_cymbal(sp,track,notenum,0xFFFF);
 }
 
-void eof_mark_edited_note_as_cymbal(EOF_SONG *sp, unsigned long tracknum, unsigned long notenum, unsigned long bitmask)
+void eof_mark_edited_note_as_cymbal(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long bitmask)
 {
-	if((sp == NULL) || (tracknum >= EOF_LEGACY_TRACKS_MAX) || (notenum >= sp->legacy_track[tracknum]->notes) || (sp->legacy_track[tracknum]->note[notenum] == NULL))
-		return;
+	unsigned long tracknum;
 
-	if(tracknum == EOF_TRACK_DRUM)
-	{
+	if((sp == NULL) || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	if(sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+	{	//For now, it's assumed that any drum behavior track will be a legacy format track
+		if((notenum >= sp->legacy_track[tracknum]->notes) || (sp->legacy_track[tracknum]->note[notenum] == NULL))
+			return;
+
 		if((sp->legacy_track[tracknum]->note[notenum]->note & 4) && (bitmask & 4))
 		{	//If the note was changed to include a yellow note
 			eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,EOF_NOTE_FLAG_Y_CYMBAL,1);	//Set the yellow cymbal flag on all drum notes at this position

@@ -1227,8 +1227,7 @@ int eof_menu_note_create_bre(void)
 	/* create the BRE marking note */
 	if((first_pos != 0) && (last_pos != eof_music_length))
 	{
-		new_note = eof_legacy_track_add_note(eof_song->legacy_track[tracknum]);
-		eof_note_create(new_note, 1, 1, 1, 1, 1, 0, first_pos, last_pos - first_pos);
+		new_note = eof_track_add_create_note(eof_song, eof_selected_track, 31, first_pos, last_pos - first_pos, EOF_NOTE_SPECIAL, NULL);
 //		new_note->type = EOF_NOTE_SPECIAL;
 //		new_note->flags = EOF_NOTE_FLAG_BRE;
 	}
@@ -1284,15 +1283,7 @@ static void eof_split_lyric(int lyric)
 		{
 //			if(!first)
 			{
-				new_lyric = eof_vocal_track_add_lyric(eof_song->vocal_track[tracknum]);
-				new_lyric->pos = eof_song->vocal_track[tracknum]->lyric[lyric]->pos + (l / pieces) * piece;
-				new_lyric->note = eof_song->vocal_track[tracknum]->lyric[lyric]->note;
-				new_lyric->length = l / pieces - 20;
-				if(new_lyric->length < 1)
-				{
-					new_lyric->length = 1;
-				}
-				ustrcpy(new_lyric->text, token);
+				new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, eof_song->vocal_track[tracknum]->lyric[lyric]->note, eof_song->vocal_track[tracknum]->lyric[lyric]->pos + (l / pieces) * piece, l / pieces - 20, 0, token);
 				piece++;
 			}
 			first = 0;
@@ -1855,10 +1846,7 @@ int eof_new_lyric_dialog(void)
 	if((ret == 3) || (eof_pen_lyric.note == EOF_LYRIC_PERCUSSION))
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		new_lyric = eof_vocal_track_add_lyric(eof_song->vocal_track[tracknum]);
-		new_lyric->pos = eof_pen_lyric.pos;
-		new_lyric->note = eof_pen_lyric.note;
-		new_lyric->length = eof_pen_lyric.length;
+		new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_lyric.note, eof_pen_lyric.pos, eof_pen_lyric.length, 0, NULL);
 		ustrcpy(new_lyric->text, eof_etext);
 		eof_selection.track = EOF_TRACK_VOCALS;
 		eof_selection.current_pos = new_lyric->pos;

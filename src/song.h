@@ -69,8 +69,8 @@ typedef struct
 typedef struct
 {
 
-    char name[EOF_NOTE_NAME_LENGTH];
     unsigned char number;		//The chord's number (using RB3's chord number system)
+    char name[EOF_NOTE_NAME_LENGTH+1];
 	char          type;			//Stores the note's difficulty
 	unsigned short note;		//Stores the note's string statuses (set=played, reset=not played).  Bit 0 refers to string 1 (high E), bit 5 refers to string 6 (low E), etc.
 	unsigned char frets[16];	//Stores the fret number for each string, where frets[0] refers to string 1 (high E).  Possible values:0=Open strum, #=Fret # pressed, 0xFF=Muted
@@ -85,7 +85,7 @@ typedef struct
 typedef struct
 {
 
-	char name[EOF_NOTE_NAME_LENGTH];
+	char name[EOF_NOTE_NAME_LENGTH+1];
 	char          type;
 	unsigned char note;
 	unsigned long endbeat;
@@ -387,6 +387,14 @@ void eof_track_resize(EOF_SONG *sp, unsigned long track, unsigned long size);	//
 char eof_get_note_difficulty(unsigned long track, unsigned long note);		//Returns the type (difficulty/lyric set) of the specified track's note/lyric, or 0xFF on error
 unsigned long eof_get_note_pos(unsigned long track, unsigned long note);	//Returns the position of the specified track's note/lyric, or 0 on error
 unsigned long eof_get_note_length(unsigned long track, unsigned long note);	//Returns the length of the specified track's note/lyric, or 0 on error
+void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos, long length, char type, char *text);
+	//Adds and initializes the appropriate note for the specified track, returning the newly created note structure, or NULL on error
+	//Automatic flags will be applied appropriately (ie. crazy status for all notes in PART KEYS)
+	//text is used to initialize the chord name or lyric text for pro guitar/lyric notes.  It is ignored for legacy notes
+void *eof_track_add_create_note2(EOF_SONG *sp, unsigned long track, EOF_NOTE *note);
+	//Adds and initializes the appropriate note for the specified track, returning the newly created note structure, or NULL on error
+	//If track refers to a legacy track, it is created and initialized using the passed structure
+	//If track refers to a pro guitar track, a pro guitar note is partially initialized and the rest of the data is set to default values, ie. fret values set to 0xFF (muted)
 
 EOF_NOTE * eof_legacy_track_add_note(EOF_LEGACY_TRACK * tp);	//Allocates, initializes and stores a new EOF_NOTE structure into the notes array.  Returns the newly allocated structure or NULL upon error
 void eof_legacy_track_delete_note(EOF_LEGACY_TRACK * tp, int note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position

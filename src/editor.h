@@ -66,10 +66,10 @@ void eof_render_editor_window_common(void);
 void eof_render_editor_window_common2(void);
 	//Performs rendering common to both the nromal and vocal editor windows, after the notes are rendered
 
-void eof_mark_new_note_as_cymbal(EOF_SONG *sp, unsigned long tracknum, unsigned long notenum);
+void eof_mark_new_note_as_cymbal(EOF_SONG *sp, unsigned long track, unsigned long notenum);
 	//Checks if the newly-created note is in PART DRUMS, if so, and the new note contains
 	//yellow, blue or green pad, cymbal status is applied to this note position accordingly
-void eof_mark_edited_note_as_cymbal(EOF_SONG *sp, unsigned long tracknum, unsigned long notenum, unsigned long bitmask);
+void eof_mark_edited_note_as_cymbal(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long bitmask);
 	//Performs similar logic to eof_mark_new_note_as_cymbal(), but only applies cymbal status to
 	//the frets based on the specified bitmask, ie. only applying the status of the cymbal that
 	//was added to the drum note
