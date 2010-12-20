@@ -30,7 +30,7 @@ int eof_note_count_colors(EOF_NOTE * np)
 	return count;
 }
 
-void eof_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, char o, int pos, int length)
+void eof_legacy_track_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, char o, int pos, int length)
 {
 	np->note = 0;
 	if(g)
@@ -61,7 +61,7 @@ void eof_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, char
 	np->length = length;
 }
 
-void eof_note_create2(EOF_NOTE * np, unsigned long bitmask, unsigned long pos, long length)
+void eof_legacy_track_note_create2(EOF_NOTE * np, unsigned long bitmask, unsigned long pos, long length)
 {
 	np->note = bitmask;
 	np->pos = pos;
