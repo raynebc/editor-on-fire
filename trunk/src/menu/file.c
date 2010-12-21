@@ -407,7 +407,7 @@ int eof_menu_file_load(void)
 		eof_song_loaded = 1;
 		eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
 		eof_init_after_load();
-		eof_vocal_track_fixup_lyrics(eof_song->vocal_track[0], 0);
+		eof_track_fixup_notes(EOF_TRACK_VOCALS, 0);
 	}
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
@@ -726,7 +726,7 @@ int eof_menu_file_lyrics_import(void)
 			}
 		}
 	}
-	eof_vocal_track_fixup_lyrics(eof_song->vocal_track[0], 0);
+	eof_track_fixup_notes(EOF_TRACK_VOCALS, 0);
 	eof_reset_lyric_preview_lines();
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
@@ -796,7 +796,7 @@ int eof_menu_file_midi_import(void)
 		{
 			eof_init_after_load();
 			eof_song_loaded = 1;
-			eof_vocal_track_fixup_lyrics(eof_song->vocal_track[0], 0);
+			eof_track_fixup_notes(EOF_TRACK_VOCALS, 0);
 		}
 		else
 		{
@@ -2015,8 +2015,8 @@ int eof_save_helper(char *destfilename)
 	if(eof_song->vocal_track[0]->lyrics > 0)
 	{
 		/* sort and validate lyrics */
-		eof_vocal_track_sort_lyrics(eof_song->vocal_track[0]);
-		eof_vocal_track_fixup_lyrics(eof_song->vocal_track[0], 0);
+		eof_track_sort_notes(EOF_TRACK_VOCALS);
+		eof_track_fixup_notes(EOF_TRACK_VOCALS, 0);
 
 		/* pre-parse the lyrics to determine if any of them are not contained within a lyric phrase */
 		for(ctr = 0; ctr < eof_song->vocal_track[0]->lyrics; ctr++)

@@ -2267,6 +2267,7 @@ void eof_render_3d_window(void)
 	short numsolos = 0;					//Used to abstract the solo sections
 	EOF_SOLO_ENTRY *soloptr = NULL;		//Used to abstract the solo sections
 	unsigned long numnotes;				//Used to abstract the notes
+	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
 
 	clear_to_color(eof_window_3d->screen, eof_color_gray);
 
@@ -2312,6 +2313,7 @@ void eof_render_3d_window(void)
 	int obx, oby, oex, oey;
 	int px, py, pw;
 
+	numlanes = eof_count_track_lanes(eof_selected_track);
 	px = eof_window_3d->w / 2;
 	py = 0;
 	pw = 320;
@@ -2359,10 +2361,11 @@ void eof_render_3d_window(void)
 		}
 	}
 
-	for(i = 0; i < 5; i++)
+	float lanewidth = 56.0 * (4.0 / (numlanes-1));	//This is the correct lane width for either 5 or 6 lanes
+	for(i = 0; i < numlanes; i++)
 	{
-		obx = ocd3d_project_x(20 + i * 56 + 28, -100);
-		oex = ocd3d_project_x(20 + i * 56 + 28, 600);
+		obx = ocd3d_project_x(20.0 + ((float)i * lanewidth) + 28.0, -100);
+		oex = ocd3d_project_x(20.0 + ((float)i * lanewidth) + 28.0, 600);
 		oby = ocd3d_project_y(200, -100);
 		oey = ocd3d_project_y(200, 600);
 
@@ -2937,7 +2940,7 @@ int eof_initialize(int argc, char * argv[])
 				}
 				else
 				{	//!This will need to be updated to scan for lyric tracks and fix them
-					eof_vocal_track_fixup_lyrics(eof_song->vocal_track[0], 0);
+					eof_track_fixup_notes(EOF_TRACK_VOCALS, 0);
 				}
 //				break;
 			}
@@ -2962,7 +2965,7 @@ int eof_initialize(int argc, char * argv[])
 				}
 				else
 				{
-					eof_vocal_track_fixup_lyrics(eof_song->vocal_track[0], 0);
+					eof_track_fixup_notes(EOF_TRACK_VOCALS, 0);
 				}
 			}
 			else if(!ustricmp(get_extension(argv[i]), "chart"))

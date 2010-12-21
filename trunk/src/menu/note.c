@@ -631,7 +631,7 @@ int eof_menu_note_resnap_vocal(void)
 			eof_song->vocal_track[tracknum]->lyric[i]->pos = eof_tail_snap.pos;
 		}
 	}
-	eof_vocal_track_fixup_lyrics(eof_song->vocal_track[tracknum], 1);
+	eof_track_fixup_notes(eof_selected_track, 1);
 	if(oldnotes != eof_song->vocal_track[tracknum]->lyrics)
 	{
 		allegro_message("Warning! Some lyrics snapped to the same position and were automatically combined.");
@@ -673,7 +673,7 @@ int eof_menu_note_resnap(void)
 			}
 		}
 	}
-	eof_legacy_track_fixup_notes(eof_song->legacy_track[tracknum], 1);
+	eof_track_fixup_notes(eof_selected_track, 1);
 	if(oldnotes != eof_song->legacy_track[tracknum]->notes)
 	{
 		allegro_message("Warning! Some notes snapped to the same position and were automatically combined.");
@@ -692,24 +692,24 @@ int eof_menu_note_delete_vocal(void)
 
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{
-		if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
-		{
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_difficulty(eof_selected_track, i) == eof_note_type))
+		{	//Add logic to match the selected lyric type (set) in preparation for supporting vocal harmonies
 			d++;
 		}
 	}
 	if(d)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-		for(i = eof_song->vocal_track[tracknum]->lyrics; i > 0; i--)
+		for(i = eof_track_get_size(eof_song, eof_selected_track); i > 0; i--)
 		{
-			if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i-1])
+			if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i-1] && (eof_get_note_difficulty(eof_selected_track, i-1) == eof_note_type))
 			{
 				eof_track_delete_note(eof_song, eof_selected_track, i-1);
 				eof_selection.multi[i-1] = 0;
 			}
 		}
 		eof_selection.current = EOF_MAX_NOTES - 1;
-		eof_vocal_track_fixup_lyrics(eof_song->vocal_track[tracknum], 0);
+		eof_track_fixup_notes(eof_selected_track, 0);
 		eof_detect_difficulties(eof_song);
 		eof_reset_lyric_preview_lines();
 	}
@@ -723,11 +723,10 @@ int eof_menu_note_delete(void)
 		return eof_menu_note_delete_vocal();
 	}
 	unsigned long i, d = 0;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
-	for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
+	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
 	{
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[tracknum]->note[i]->type == eof_note_type))
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_difficulty(eof_selected_track, i) == eof_note_type))
 		{
 			d++;
 		}
@@ -1289,8 +1288,8 @@ static void eof_split_lyric(int lyric)
 			first = 0;
 		}
 	} while(token != NULL);
-	eof_vocal_track_sort_lyrics(eof_song->vocal_track[tracknum]);
-	eof_vocal_track_fixup_lyrics(eof_song->vocal_track[tracknum], 1);
+	eof_track_sort_notes(eof_selected_track);
+	eof_track_fixup_notes(eof_selected_track, 1);
 }
 
 int eof_menu_split_lyric(void)
@@ -1825,7 +1824,6 @@ int eof_new_lyric_dialog(void)
 {
 	EOF_LYRIC * new_lyric = NULL;
 	int ret=0;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 	if(!eof_vocals_selected)
 		return D_O_K;
@@ -1853,8 +1851,8 @@ int eof_new_lyric_dialog(void)
 		eof_selection.range_pos_1 = eof_selection.current_pos;
 		eof_selection.range_pos_2 = eof_selection.current_pos;
 		memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
-		eof_vocal_track_sort_lyrics(eof_song->vocal_track[tracknum]);
-		eof_vocal_track_fixup_lyrics(eof_song->vocal_track[tracknum], 0);
+		eof_track_sort_notes(eof_selected_track);
+		eof_track_fixup_notes(eof_selected_track, 0);
 		eof_detect_difficulties(eof_song);
 		eof_reset_lyric_preview_lines();
 	}

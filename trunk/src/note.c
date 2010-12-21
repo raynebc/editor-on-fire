@@ -582,7 +582,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 {
 	int pos = eof_music_pos / eof_zoom_3d;
 	int npos;
-	int xchart[5] = {48, 48 + 56, 48 + 56 * 2, 48 + 56 * 3, 48 + 56 * 4};
+	int xchart[EOF_MAX_FRETS] = {48, 48 + 56, 48 + 56 * 2, 48 + 56 * 3, 48 + 56 * 4};
 	int bx = 48;
 	int point[8];
 	int rz, ez;
@@ -596,6 +596,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	unsigned int cymbals_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN_HIT, EOF_IMAGE_NOTE_RED_HIT, EOF_IMAGE_NOTE_YELLOW_CYMBAL_HIT, EOF_IMAGE_NOTE_BLUE_CYMBAL_HIT, EOF_IMAGE_NOTE_PURPLE_CYMBAL_HIT, EOF_IMAGE_NOTE_ORANGE_HIT};
 	unsigned long numlanes, tracknum;
 	char fretstring[5] = {0};
+	float lanewidth = 0.0;
 
 	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
 	unsigned long notepos = 0;
@@ -610,13 +611,11 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	{	//If an invalid track or note number was passsed
 		return -1;	//Error, signal to stop rendering (3D window renders last note to first)
 	}
-//	np = eof_song->legacy_track[tracknum]->note[notenum];	//Store the pointer to this note
 	notepos = eof_get_note_pos(track, notenum);
 	notelength = eof_get_note_length(track, notenum);
 	noteflags = eof_get_note_flags(track, notenum);
 	notenote = eof_get_note_note(track, notenum);
 	notetype = eof_get_note_difficulty(track, notenum);
-	numlanes = eof_count_track_lanes(track);
 
 	npos = -pos - 6 + notepos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
 	if(npos + notelength / eof_zoom_3d < -100)
@@ -627,16 +626,25 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	{				//If the note would render entirely after the visible area
 		return 1;	//Return status:  Clipping after the viewing window
 	}
+
 	numlanes = eof_count_track_lanes(track);	//Count the number of lanes in that note's track
+	lanewidth = 56.0 * (4.0 / (numlanes-1));	//This is the correct lane width for either 5 or 6 lanes
+
 	if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 	{	//If this is a drum track
 		if(eof_lefty_mode)
 		{
-			xchart[0] = 48 + 56 * 3;
-			xchart[1] = 48 + 56 * 2;
-			xchart[2] = 48 + 56;
-			xchart[3] = 48;
-			xchart[4] = 48;
+			for(ctr = 0; ctr < numlanes - 1; ctr++)
+			{	//Store the fretboard lane positions in reverse order, with respect to the number of lanes in use
+				xchart[ctr] = 48 + (lanewidth * (numlanes - 2 - ctr));
+			}
+		}
+		else
+		{
+			for(ctr = 0; ctr < numlanes -1; ctr++)
+			{	//Store the fretboard lane positions in normal order
+				xchart[ctr] = 48 + (lanewidth * ctr);
+			}
 		}
 		if(notenote & 1)
 		{
@@ -691,11 +699,17 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	{
 		if(eof_lefty_mode)
 		{
-			xchart[0] = 48 + 56 * 4;
-			xchart[1] = 48 + 56 * 3;
-			xchart[2] = 48 + 56 * 2;
-			xchart[3] = 48 + 56;
-			xchart[4] = 48;
+			for(ctr = 0; ctr < numlanes; ctr++)
+			{	//Store the fretboard lane positions in reverse order, with respect to the number of lanes in use
+				xchart[ctr] = 48 + (lanewidth * (numlanes - 1 - ctr));
+			}
+		}
+		else
+		{
+			for(ctr = 0; ctr < numlanes; ctr++)
+			{	//Store the fretboard lane positions in normal order
+				xchart[ctr] = 48 + (lanewidth * ctr);
+			}
 		}
 		for(ctr=0,mask=1;ctr<numlanes;ctr++,mask=mask<<1)
 		{	//Render for each of the available fret colors
@@ -720,7 +734,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 						polygon(eof_window_3d->screen, 4, point, p ? makecol(255, 192, 0) : eof_color_orange);
 				}
 				else
-				{	//For now, lane 6 is not rendered except for open bass
+				{
 					if(noteflags & EOF_NOTE_FLAG_HOPO)
 					{	//If this is a HOPO note
 						if(noteflags & EOF_NOTE_FLAG_SP)
@@ -747,6 +761,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 					if((notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 					{	//If this is a pro guitar note, render the fret number over the center of the note
 						BITMAP *fretbmp = NULL;
+						int height, width;
 
 						if(eof_song->pro_guitar_track[tracknum]->note[notenum]->frets[ctr] == 0xFF)
 						{	//This is a muted fret
@@ -756,10 +771,15 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 						{	//This is a non muted fret
 							snprintf(fretstring,sizeof(fretstring),"%d",eof_song->pro_guitar_track[tracknum]->note[notenum]->frets[ctr]);
 						}
-						fretbmp = create_bitmap(text_length(font,fretstring),text_height(font));
+						width = text_length(font,fretstring) + 8;	//Allow one extra character's width for padding
+						height = text_height(font);
+						fretbmp = create_bitmap(width,height);
 						if(fretbmp != NULL)
 						{	//Render the fret number on top of the 3D note
-							ocd3d_draw_bitmap(eof_window_3d->screen, fretbmp, xchart[ctr] - 24, 200 - 48, npos);
+							clear_to_color(fretbmp, eof_color_black);
+							rect(fretbmp, 0, 0, width-1, height-1, eof_color_white);	//Draw a border along the edge of this bitmap
+							textprintf_ex(fretbmp, font, 4, 0, eof_color_white, -1, "%s", fretstring);	//Pad the left edge of the bitmap by 4 pixels
+							ocd3d_draw_bitmap(eof_window_3d->screen, fretbmp, xchart[ctr] - 8, 200 - 24, npos);
 							destroy_bitmap(fretbmp);
 						}
 					}
@@ -780,6 +800,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	int rz, ez;
 	unsigned long numlanes, tracknum, ctr, mask;
 	int colortable[EOF_MAX_FRETS][2] = {{makecol(192, 255, 192), eof_color_green}, {makecol(255, 192, 192), eof_color_red}, {makecol(255, 255, 192), eof_color_yellow}, {makecol(192, 192, 255), eof_color_blue}, {makecol(255, 192, 255), eof_color_purple}, {makecol(255, 192, 0), eof_color_orange}};
+	float lanewidth = 0.0;
 
 	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
 	unsigned long notepos = 0;
@@ -799,7 +820,6 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	noteflags = eof_get_note_flags(track, notenum);
 	notenote = eof_get_note_note(track, notenum);
 	notetype = eof_get_note_difficulty(track, notenum);
-	numlanes = eof_count_track_lanes(track);
 
 	npos = -pos - 6 + (notepos + eof_av_delay) / eof_zoom_3d;
 	if(npos + notelength / eof_zoom_3d < -100)
@@ -811,13 +831,22 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 		return 1;
 	}
 
+	//Determine the width of the fret lanes
+	numlanes = eof_count_track_lanes(track);	//Count the number of lanes in that note's track
+	lanewidth = 56.0 * (4.0 / (numlanes-1));	//This is the correct lane width for either 5 or 6 lanes
 	if(eof_lefty_mode)
 	{
-		xchart[0] = 48 + 56 * 4;
-		xchart[1] = 48 + 56 * 3;
-		xchart[2] = 48 + 56 * 2;
-		xchart[3] = 48 + 56;
-		xchart[4] = 48;
+		for(ctr = 0; ctr < numlanes; ctr++)
+		{	//Store the fretboard lane positions in reverse order, with respect to the number of lanes in use
+			xchart[ctr] = 48 + (lanewidth * (numlanes - 1 - ctr));
+		}
+	}
+	else
+	{
+		for(ctr = 0; ctr < numlanes; ctr++)
+		{	//Store the fretboard lane positions in normal order
+			xchart[ctr] = 48 + (lanewidth * ctr);
+		}
 	}
 
 	if((eof_selected_track == EOF_TRACK_DRUM) || (notelength <= 10))
