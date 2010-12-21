@@ -3720,7 +3720,6 @@ unsigned long eof_determine_piano_roll_right_edge(void)
 void eof_render_editor_window_common(void)
 {
 	unsigned long i, j;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int pos = eof_music_pos / eof_zoom;	//Current seek position
 	int lpos;							//The position of the first beatmarker
 	int pmin = 0;
@@ -3729,6 +3728,8 @@ void eof_render_editor_window_common(void)
 	int col,col2;						//Temporary color variables
 	unsigned long start;				//Will store the timestamp of the left visible edge of the piano roll
 	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
+	short numsolos = 0;					//Used to abstract the solo sections
+	EOF_SOLO_ENTRY *soloptr = NULL;		//Used to abstract the solo sections
 
 	if(!eof_song_loaded)
 		return;
@@ -3774,10 +3775,15 @@ void eof_render_editor_window_common(void)
 	{
 		col = makecol(0, 0, 64);	//Store dark blue color
 		/* draw solo sections */
-		for(i = 0; i < eof_song->legacy_track[tracknum]->solos; i++)
+		numsolos = eof_get_num_solos(eof_selected_track);
+		for(i = 0; i < numsolos; i++)
 		{
-			if(eof_song->legacy_track[tracknum]->solo[i].end_pos >= start)	//If the solo section would render at or after the left edge of the piano roll
-				rectfill(eof_window_editor->screen, lpos + eof_song->legacy_track[tracknum]->solo[i].start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, lpos + eof_song->legacy_track[tracknum]->solo[i].end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, col);
+			soloptr = eof_get_solo(eof_selected_track, i);	//Obtain the information for this legacy/pro guitar solo
+			if(soloptr != NULL)
+			{
+				if(soloptr->end_pos >= start)	//If the solo section would render at or after the left edge of the piano roll
+					rectfill(eof_window_editor->screen, lpos + soloptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, lpos + soloptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, col);
+			}
 		}
 	}
 

@@ -2586,3 +2586,52 @@ void *eof_track_add_create_note2(EOF_SONG *sp, unsigned long track, EOF_NOTE *no
 
 	return eof_track_add_create_note(sp, track, note->note, note->pos, note->length, note->type, NULL);
 }
+
+short eof_get_num_solos(unsigned long track)
+{
+	unsigned long tracknum;
+
+	if(track >= eof_song->tracks)
+		return 0;	//Return error
+	tracknum = eof_song->track[track]->tracknum;
+
+	switch(eof_song->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+		return eof_song->legacy_track[tracknum]->solos;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+		return eof_song->pro_guitar_track[tracknum]->solos;
+	}
+
+	return 0;	//Return error
+}
+
+EOF_SOLO_ENTRY *eof_get_solo(unsigned long track,unsigned long solonum)
+{
+	unsigned long tracknum;
+
+	if(track >= eof_song->tracks)
+		return NULL;	//Return error
+	tracknum = eof_song->track[track]->tracknum;
+
+	switch(eof_song->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(solonum < eof_song->legacy_track[tracknum]->solos)
+			{
+				return &eof_song->legacy_track[tracknum]->solo[solonum];
+			}
+		break;
+
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(solonum < eof_song->pro_guitar_track[tracknum]->solos)
+			{
+				return &eof_song->pro_guitar_track[tracknum]->solo[solonum];
+			}
+		break;
+	}
+
+	return NULL;	//Return error
+}

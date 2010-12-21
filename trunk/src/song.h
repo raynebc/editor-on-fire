@@ -381,12 +381,14 @@ EOF_SONG * eof_load_song(const char * fn);	//Loads the specified EOF file, valid
 int eof_save_song(EOF_SONG * sp, const char * fn);	//Saves the song to file
 
 unsigned long eof_track_get_size(EOF_SONG *sp, unsigned long track);		//Returns the number of notes/lyrics in the specified track, or 0 on error
+short eof_get_num_solos(unsigned long track);								//Returns the number of solos in the specified track, or 0 on error
+EOF_SOLO_ENTRY *eof_get_solo(unsigned long track,unsigned long solonum);	//Returns a pointer to the specified solo, or NULL on error
 void *eof_track_add_note(EOF_SONG *sp, unsigned long track);				//Calls the appropriate add function for the specified track, returning the newly allocated structure or NULL upon error
 void eof_track_delete_note(EOF_SONG *sp, unsigned long track, unsigned long note);		//Performs the appropriate logic to remove the specified note/lyric from the specified track
 void eof_track_resize(EOF_SONG *sp, unsigned long track, unsigned long size);	//Performs the appropriate logic to resize the specified track
 char eof_get_note_difficulty(unsigned long track, unsigned long note);		//Returns the type (difficulty/lyric set) of the specified track's note/lyric, or 0xFF on error
 unsigned long eof_get_note_pos(unsigned long track, unsigned long note);	//Returns the position of the specified track's note/lyric, or 0 on error
-long eof_get_note_length(unsigned long track, unsigned long note);	//Returns the length of the specified track's note/lyric, or 0 on error
+long eof_get_note_length(unsigned long track, unsigned long note);			//Returns the length of the specified track's note/lyric, or 0 on error
 unsigned long eof_get_note_flags(unsigned long track, unsigned long note);	//Returns the flags of the specified track's note/lyric, or 0 on error
 unsigned long eof_get_note_note(unsigned long track, unsigned long note);	//Returns the note bitflag of the specified track's note/lyric, or 0 on error
 void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos, long length, char type, char *text);
