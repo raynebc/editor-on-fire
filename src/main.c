@@ -2264,7 +2264,9 @@ void eof_render_3d_window(void)
 {
 	int point[8];
 	unsigned long i;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	short numsolos = 0;					//Used to abstract the solo sections
+	EOF_SOLO_ENTRY *soloptr = NULL;		//Used to abstract the solo sections
+	unsigned long numnotes;				//Used to abstract the notes
 
 	clear_to_color(eof_window_3d->screen, eof_color_gray);
 
@@ -2281,23 +2283,28 @@ void eof_render_3d_window(void)
 	/* render solo sections */
 	int sz, sez;
 	int spz, spez;
-	for(i = 0; i < eof_song->legacy_track[tracknum]->solos; i++)
+	numsolos = eof_get_num_solos(eof_selected_track);
+	for(i = 0; i < numsolos; i++)
 	{
-		sz = -eof_music_pos / eof_zoom_3d + eof_song->legacy_track[tracknum]->solo[i].start_pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
-		sez = -eof_music_pos / eof_zoom_3d + eof_song->legacy_track[tracknum]->solo[i].end_pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
-		if((-100 <= sez) && (600 >= sz))
+		soloptr = eof_get_solo(eof_selected_track, i);	//Obtain the information for this legacy/pro guitar solo
+		if(soloptr != NULL)
 		{
-			spz = sz < -100 ? -100 : sz;
-			spez = sez > 600 ? 600 : sez;
-			point[0] = ocd3d_project_x(20, spez);
-			point[1] = ocd3d_project_y(200, spez);
-			point[2] = ocd3d_project_x(300, spez);
-			point[3] = ocd3d_project_y(200, spez);
-			point[4] = ocd3d_project_x(300, spz);
-			point[5] = ocd3d_project_y(200, spz);
-			point[6] = ocd3d_project_x(20, spz);
-			point[7] = ocd3d_project_y(200, spz);
-			polygon(eof_window_3d->screen, 4, point, makecol(0, 0, 64));
+			sz = -eof_music_pos / eof_zoom_3d + soloptr->start_pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
+			sez = -eof_music_pos / eof_zoom_3d + soloptr->end_pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
+			if((-100 <= sez) && (600 >= sz))
+			{
+				spz = sz < -100 ? -100 : sz;
+				spez = sez > 600 ? 600 : sez;
+				point[0] = ocd3d_project_x(20, spez);
+				point[1] = ocd3d_project_y(200, spez);
+				point[2] = ocd3d_project_x(300, spez);
+				point[3] = ocd3d_project_y(200, spez);
+				point[4] = ocd3d_project_x(300, spz);
+				point[5] = ocd3d_project_y(200, spz);
+				point[6] = ocd3d_project_x(20, spz);
+				point[7] = ocd3d_project_y(200, spz);
+				polygon(eof_window_3d->screen, 4, point, makecol(0, 0, 64));
+			}
 		}
 	}
 
@@ -2369,9 +2376,10 @@ void eof_render_3d_window(void)
 //	int last_note = 0;
 	int tr;
 	/* draw the note tails and notes */
-	for(i = eof_song->legacy_track[tracknum]->notes; i > 0; i--)
+	numnotes = eof_track_get_size(eof_song, eof_selected_track);	//Get the number of notes in this legacy/pro guitar track
+	for(i = numnotes; i > 0; i--)
 	{	//Render 3D notes from last to first so that the earlier notes are in front
-		if(eof_note_type == eof_song->legacy_track[tracknum]->note[i-1]->type)
+		if(eof_note_type == eof_get_note_difficulty(eof_selected_track, i-1))
 		{
 			tr = eof_note_tail_draw_3d(eof_selected_track, i-1, (eof_selection.multi[i-1] && eof_music_paused) ? 1 : (i-1) == eof_hover_note ? 2 : 0);
 			eof_note_draw_3d(eof_selected_track, i-1, (eof_selection.track == eof_selected_track && eof_selection.multi[i-1] && eof_music_paused) ? 1 : (i-1) == eof_hover_note ? 2 : 0);

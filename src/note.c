@@ -595,19 +595,31 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	unsigned int cymbals[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN, EOF_IMAGE_NOTE_RED, EOF_IMAGE_NOTE_YELLOW_CYMBAL, EOF_IMAGE_NOTE_BLUE_CYMBAL, EOF_IMAGE_NOTE_PURPLE_CYMBAL, EOF_IMAGE_NOTE_ORANGE};
 	unsigned int cymbals_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN_HIT, EOF_IMAGE_NOTE_RED_HIT, EOF_IMAGE_NOTE_YELLOW_CYMBAL_HIT, EOF_IMAGE_NOTE_BLUE_CYMBAL_HIT, EOF_IMAGE_NOTE_PURPLE_CYMBAL_HIT, EOF_IMAGE_NOTE_ORANGE_HIT};
 	unsigned long numlanes, tracknum;
-	EOF_NOTE * np = NULL;
+	char fretstring[5] = {0};
+
+	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
+	unsigned long notepos = 0;
+	long notelength = 0;
+	unsigned long noteflags = 0;
+	unsigned long notenote = 0;
+	char notetype = 0;
 
 //Validate parameters
 	tracknum = eof_song->track[track]->tracknum;
-	if((track == 0) || (track >= eof_song->tracks) || (eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) || (notenum >= eof_song->legacy_track[tracknum]->notes))
+	if((track == 0) || (track >= eof_song->tracks) || ((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)) || (notenum >= eof_track_get_size(eof_song, track)))
 	{	//If an invalid track or note number was passsed
 		return -1;	//Error, signal to stop rendering (3D window renders last note to first)
 	}
-	np = eof_song->legacy_track[tracknum]->note[notenum];	//Store the pointer to this note
+//	np = eof_song->legacy_track[tracknum]->note[notenum];	//Store the pointer to this note
+	notepos = eof_get_note_pos(track, notenum);
+	notelength = eof_get_note_length(track, notenum);
+	noteflags = eof_get_note_flags(track, notenum);
+	notenote = eof_get_note_note(track, notenum);
+	notetype = eof_get_note_difficulty(track, notenum);
 	numlanes = eof_count_track_lanes(track);
 
-	npos = -pos - 6 + np->pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
-	if(npos + np->length / eof_zoom_3d < -100)
+	npos = -pos - 6 + notepos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
+	if(npos + notelength / eof_zoom_3d < -100)
 	{				//If the note would render entirely before the visible area
 		return -1;	//Return status:  Clipping before the viewing window
 	}
@@ -615,8 +627,9 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	{				//If the note would render entirely after the visible area
 		return 1;	//Return status:  Clipping after the viewing window
 	}
-	if(track == EOF_TRACK_DRUM)
-	{
+	numlanes = eof_count_track_lanes(track);	//Count the number of lanes in that note's track
+	if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+	{	//If this is a drum track
 		if(eof_lefty_mode)
 		{
 			xchart[0] = 48 + 56 * 3;
@@ -625,7 +638,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			xchart[3] = 48;
 			xchart[4] = 48;
 		}
-		if(np->note & 1)
+		if(notenote & 1)
 		{
 			rz = npos;
 			ez = npos + 14;
@@ -638,20 +651,20 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			point[6] = ocd3d_project_x(bx + 232, rz);
 			point[7] = ocd3d_project_y(200, rz);
 
-			if(np->flags & EOF_NOTE_FLAG_SP)			//If this bass drum note is star power, render it in silver
+			if(noteflags & EOF_NOTE_FLAG_SP)			//If this bass drum note is star power, render it in silver
 				polygon(eof_window_3d->screen, 4, point, p ? eof_color_white : eof_color_silver);
-			else if(np->flags & EOF_NOTE_FLAG_DBASS)	//Or if it is double bass, render it in red
+			else if(noteflags & EOF_NOTE_FLAG_DBASS)	//Or if it is double bass, render it in red
 				polygon(eof_window_3d->screen, 4, point, p ? makecol(255, 192, 192) : eof_color_red);
 			else										//Otherwise render it in green
 				polygon(eof_window_3d->screen, 4, point, p ? makecol(192, 255, 192) : eof_color_green);
 		}
-		for(ctr=1,mask=2;ctr<EOF_MAX_FRETS;ctr++,mask=mask<<1)
+		for(ctr=1,mask=2;ctr<numlanes;ctr++,mask=mask<<1)
 		{	//Render for each of the available fret colors after 1 (bass drum)
-			if(np->note & mask)
+			if(notenote & mask)
 			{
-				if(((np->flags & EOF_NOTE_FLAG_Y_CYMBAL) && (mask == 4)) || ((np->flags & EOF_NOTE_FLAG_B_CYMBAL) && (mask == 8)) || ((np->flags & EOF_NOTE_FLAG_G_CYMBAL) && (mask == 16)))
+				if(((noteflags & EOF_NOTE_FLAG_Y_CYMBAL) && (mask == 4)) || ((noteflags & EOF_NOTE_FLAG_B_CYMBAL) && (mask == 8)) || ((noteflags & EOF_NOTE_FLAG_G_CYMBAL) && (mask == 16)))
 				{	//If this is a cymbal note, render with the cymbal image
-					if(np->flags & EOF_NOTE_FLAG_SP)
+					if(noteflags & EOF_NOTE_FLAG_SP)
 					{	//If this cymbal note is star power, render it in silver
 						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_WHITE_CYMBAL_HIT] : eof_image[EOF_IMAGE_NOTE_WHITE_CYMBAL], xchart[ctr-1] - 24 + 28, 200 - 48, npos);
 					}
@@ -662,7 +675,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 				}
 				else
 				{	//Otherwise render with the standard note image
-					if(np->flags & EOF_NOTE_FLAG_SP)
+					if(noteflags & EOF_NOTE_FLAG_SP)
 					{	//If this drum note is star power, render it in silver
 						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_WHITE_HIT] : eof_image[EOF_IMAGE_NOTE_WHITE], xchart[ctr-1] - 24 + 28, 200 - 48, npos);
 					}
@@ -673,7 +686,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 				}
 			}
 		}
-	}
+	}//If this is a drum track
 	else
 	{
 		if(eof_lefty_mode)
@@ -684,9 +697,9 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			xchart[3] = 48 + 56;
 			xchart[4] = 48;
 		}
-		for(ctr=0,mask=1;ctr<EOF_MAX_FRETS;ctr++,mask=mask<<1)
+		for(ctr=0,mask=1;ctr<numlanes;ctr++,mask=mask<<1)
 		{	//Render for each of the available fret colors
-			if(np->note & mask)
+			if(notenote & mask)
 			{
 				if((mask == 32) && (track == EOF_TRACK_BASS) && eof_open_bass_enabled())
 				{	//Lane 6 for the bass track (if enabled) renders similarly to a bass drum note
@@ -701,16 +714,16 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 					point[6] = ocd3d_project_x(bx + 232, rz);
 					point[7] = ocd3d_project_y(200, rz);
 
-					if(np->flags & EOF_NOTE_FLAG_SP)			//If this open bass note is star power, render it in silver
+					if(noteflags & EOF_NOTE_FLAG_SP)			//If this open bass note is star power, render it in silver
 						polygon(eof_window_3d->screen, 4, point, p ? eof_color_white : eof_color_silver);
 					else										//Otherwise render it in orange
 						polygon(eof_window_3d->screen, 4, point, p ? makecol(255, 192, 0) : eof_color_orange);
 				}
-				else if(mask < 32)
+				else
 				{	//For now, lane 6 is not rendered except for open bass
-					if(np->flags & EOF_NOTE_FLAG_HOPO)
+					if(noteflags & EOF_NOTE_FLAG_HOPO)
 					{	//If this is a HOPO note
-						if(np->flags & EOF_NOTE_FLAG_SP)
+						if(noteflags & EOF_NOTE_FLAG_SP)
 						{	//If this is also a SP note
 							ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_HWHITE_HIT] : eof_image[EOF_IMAGE_NOTE_HWHITE], xchart[ctr] - 24, 200 - 48, npos);
 						}
@@ -721,13 +734,33 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 					}
 					else
 					{
-						if(np->flags & EOF_NOTE_FLAG_SP)
+						if(noteflags & EOF_NOTE_FLAG_SP)
 						{	//If this is an SP note
 							ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_WHITE_HIT] : eof_image[EOF_IMAGE_NOTE_WHITE], xchart[ctr] - 24, 200 - 48, npos);
 						}
 						else
 						{
 							ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[notes_hit[ctr]] : eof_image[notes[ctr]], xchart[ctr] - 24, 200 - 48, npos);
+						}
+					}
+
+					if((notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+					{	//If this is a pro guitar note, render the fret number over the center of the note
+						BITMAP *fretbmp = NULL;
+
+						if(eof_song->pro_guitar_track[tracknum]->note[notenum]->frets[ctr] == 0xFF)
+						{	//This is a muted fret
+							snprintf(fretstring,sizeof(fretstring),"X");
+						}
+						else
+						{	//This is a non muted fret
+							snprintf(fretstring,sizeof(fretstring),"%d",eof_song->pro_guitar_track[tracknum]->note[notenum]->frets[ctr]);
+						}
+						fretbmp = create_bitmap(text_length(font,fretstring),text_height(font));
+						if(fretbmp != NULL)
+						{	//Render the fret number on top of the 3D note
+							ocd3d_draw_bitmap(eof_window_3d->screen, fretbmp, xchart[ctr] - 24, 200 - 48, npos);
+							destroy_bitmap(fretbmp);
 						}
 					}
 				}
@@ -746,20 +779,30 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	int point[8];
 	int rz, ez;
 	unsigned long numlanes, tracknum, ctr, mask;
-	EOF_NOTE * np = NULL;
 	int colortable[EOF_MAX_FRETS][2] = {{makecol(192, 255, 192), eof_color_green}, {makecol(255, 192, 192), eof_color_red}, {makecol(255, 255, 192), eof_color_yellow}, {makecol(192, 192, 255), eof_color_blue}, {makecol(255, 192, 255), eof_color_purple}, {makecol(255, 192, 0), eof_color_orange}};
+
+	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
+	unsigned long notepos = 0;
+	long notelength = 0;
+	unsigned long noteflags = 0;
+	unsigned long notenote = 0;
+	char notetype = 0;
 
 //Validate parameters
 	tracknum = eof_song->track[track]->tracknum;
-	if((track == 0) || (track >= eof_song->tracks) || (eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) || (notenum >= eof_song->legacy_track[tracknum]->notes))
+	if((track == 0) || (track >= eof_song->tracks) || ((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)) || (notenum >= eof_track_get_size(eof_song, track)))
 	{	//If an invalid track or note number was passsed
 		return -1;	//Error, signal to stop rendering (3D window renders last note to first)
 	}
-	np = eof_song->legacy_track[tracknum]->note[notenum];	//Store the pointer to this note
+	notepos = eof_get_note_pos(track, notenum);
+	notelength = eof_get_note_length(track, notenum);
+	noteflags = eof_get_note_flags(track, notenum);
+	notenote = eof_get_note_note(track, notenum);
+	notetype = eof_get_note_difficulty(track, notenum);
 	numlanes = eof_count_track_lanes(track);
 
-	npos = -pos - 6 + (np->pos + eof_av_delay) / eof_zoom_3d;
-	if(npos + np->length / eof_zoom_3d < -100)
+	npos = -pos - 6 + (notepos + eof_av_delay) / eof_zoom_3d;
+	if(npos + notelength / eof_zoom_3d < -100)
 	{
 		return -1;
 	}
@@ -777,14 +820,14 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 		xchart[4] = 48;
 	}
 
-	if((eof_selected_track == EOF_TRACK_DRUM) || (np->length <= 10))
+	if((eof_selected_track == EOF_TRACK_DRUM) || (notelength <= 10))
 		return 0;	//Don't render tails for drum notes or notes that aren't over 10ms long
 
 	rz = npos < -100 ? -100 : npos + 10;
-	ez = npos + np->length / eof_zoom_3d > 600 ? 600 : npos + np->length / eof_zoom_3d + 6;
+	ez = npos + notelength / eof_zoom_3d > 600 ? 600 : npos + notelength / eof_zoom_3d + 6;
 	for(ctr=0,mask=1; ctr < EOF_MAX_FRETS; ctr++,mask=mask<<1)
 	{	//For each of the available frets
-		if(np->note & mask)
+		if(notenote & mask)
 		{	//If this lane has a gem to render
 			if(ctr < 5)
 			{	//Logic to render lanes 1 through 5
@@ -796,7 +839,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 				point[5] = ocd3d_project_y(200, ez);
 				point[6] = ocd3d_project_x(xchart[ctr] + 10, rz);
 				point[7] = ocd3d_project_y(200, rz);
-				polygon(eof_window_3d->screen, 4, point, np->flags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : eof_color_silver) : (p ? colortable[ctr][0] : colortable[ctr][1]));
+				polygon(eof_window_3d->screen, 4, point, noteflags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : eof_color_silver) : (p ? colortable[ctr][0] : colortable[ctr][1]));
 			}
 			else if((ctr == 5) && (track == EOF_TRACK_BASS) && eof_open_bass_enabled())
 			{	//Logic to render open bass strum notes (a rectangle covering the width of rendering of frets 2, 3 and 4
@@ -808,7 +851,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 				point[5] = ocd3d_project_y(200, ez);
 				point[6] = ocd3d_project_x(xchart[3] + 10, rz);
 				point[7] = ocd3d_project_y(200, rz);
-				polygon(eof_window_3d->screen, 4, point, np->flags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : eof_color_silver) : (p ? colortable[ctr][0] : colortable[ctr][1]));
+				polygon(eof_window_3d->screen, 4, point, noteflags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : eof_color_silver) : (p ? colortable[ctr][0] : colortable[ctr][1]));
 			}
 		}
 	}
