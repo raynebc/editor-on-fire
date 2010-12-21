@@ -388,9 +388,12 @@ void eof_track_delete_note(EOF_SONG *sp, unsigned long track, unsigned long note
 void eof_track_resize(EOF_SONG *sp, unsigned long track, unsigned long size);	//Performs the appropriate logic to resize the specified track
 char eof_get_note_difficulty(unsigned long track, unsigned long note);		//Returns the type (difficulty/lyric set) of the specified track's note/lyric, or 0xFF on error
 unsigned long eof_get_note_pos(unsigned long track, unsigned long note);	//Returns the position of the specified track's note/lyric, or 0 on error
+void eof_set_note_pos(unsigned long track, unsigned long note, unsigned long pos);	//Sets the position of the specified track's note/lyric
 long eof_get_note_length(unsigned long track, unsigned long note);			//Returns the length of the specified track's note/lyric, or 0 on error
+void eof_set_note_length(unsigned long track, unsigned long note, long length);	//Sets the length of the specified track's note/lyric
 unsigned long eof_get_note_flags(unsigned long track, unsigned long note);	//Returns the flags of the specified track's note/lyric, or 0 on error
 unsigned long eof_get_note_note(unsigned long track, unsigned long note);	//Returns the note bitflag of the specified track's note/lyric, or 0 on error
+void eof_set_note_note(unsigned long track, unsigned long note, unsigned long value);	//Sets the note value of the specified track's note/lyric
 void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos, long length, char type, char *text);
 	//Adds and initializes the appropriate note for the specified track, returning the newly created note structure, or NULL on error
 	//Automatic flags will be applied appropriately (ie. crazy status for all notes in PART KEYS)
@@ -399,9 +402,11 @@ void *eof_track_add_create_note2(EOF_SONG *sp, unsigned long track, EOF_NOTE *no
 	//Adds and initializes the appropriate note for the specified track, returning the newly created note structure, or NULL on error
 	//If track refers to a legacy track, it is created and initialized using the passed structure
 	//If track refers to a pro guitar track, a pro guitar note is partially initialized and the rest of the data is set to default values, ie. fret values set to 0xFF (muted)
+void eof_track_sort_notes(unsigned long track);		//Calls the appropriate sort function for the specified track
+void eof_track_fixup_notes(unsigned long track, int sel);	//Calls the appropriate fixup function for the specified track
 
 EOF_NOTE * eof_legacy_track_add_note(EOF_LEGACY_TRACK * tp);	//Allocates, initializes and stores a new EOF_NOTE structure into the notes array.  Returns the newly allocated structure or NULL upon error
-void eof_legacy_track_delete_note(EOF_LEGACY_TRACK * tp, int note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position
+void eof_legacy_track_delete_note(EOF_LEGACY_TRACK * tp, unsigned long note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position
 void eof_legacy_track_sort_notes(EOF_LEGACY_TRACK * tp);	//Performs a quicksort of the notes array
 int eof_song_qsort_legacy_notes(const void * e1, const void * e2);	//The comparitor function used to quicksort the legacy notes array
 int eof_fixup_next_legacy_note(EOF_LEGACY_TRACK * tp, int note);	//Returns the note one after the specified note number that is in the same difficulty, or -1 if there is none
@@ -413,7 +418,7 @@ void eof_legacy_track_add_solo(EOF_LEGACY_TRACK * tp, unsigned long start_pos, u
 void eof_legacy_track_delete_solo(EOF_LEGACY_TRACK * tp, int index);	//Deletes the specified solo phrase and moves all phrases that follow back in the array one position
 
 EOF_LYRIC * eof_vocal_track_add_lyric(EOF_VOCAL_TRACK * tp);	//Allocates, initializes and stores a new EOF_LYRIC structure into the lyrics array.  Returns the newly allocated structure or NULL upon error
-void eof_vocal_track_delete_lyric(EOF_VOCAL_TRACK * tp, int lyric);	//Removes and frees the specified lyric from the lyrics array.  All lyrics after the deleted lyric are moved back in the array one position
+void eof_vocal_track_delete_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric);	//Removes and frees the specified lyric from the lyrics array.  All lyrics after the deleted lyric are moved back in the array one position
 void eof_vocal_track_sort_lyrics(EOF_VOCAL_TRACK * tp);		//Performs a quicksort of the lyrics array
 int eof_song_qsort_lyrics(const void * e1, const void * e2);	//The comparitor function used to quicksort the lyrics array
 int eof_fixup_next_lyric(EOF_VOCAL_TRACK * tp, int lyric);	//Returns the next lyric, or -1 if there is none
@@ -422,6 +427,10 @@ void eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, uns
 void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, int index);	//Deletes the specified lyric phrase and moves all phrases that follow back in the array one position
 
 EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_note(EOF_PRO_GUITAR_TRACK *tp);	//Allocates, initializes and stores a new EOF_PRO_GUITAR_NOTE structure into the notes array.  Returns the newly allocated structure or NULL upon error
+void eof_pro_guitar_track_sort_notes(EOF_PRO_GUITAR_TRACK * tp);	//Performs a quicksort of the notes array
+int eof_song_qsort_pro_guitar_notes(const void * e1, const void * e2);	//The comparitor function used to quicksort the pro guitar notes array
+void eof_pro_guitar_track_delete_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position
+void eof_pro_guitar_track_fixup_notes(EOF_PRO_GUITAR_TRACK * tp, int sel);	//Performs cleanup of the specified instrument track
 
 EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp);	//Allocates, initializes and stores a new EOF_BEAT_MARKER structure into the beats array.  Returns the newly allocated structure or NULL upon error
 void eof_song_delete_beat(EOF_SONG * sp, int beat);	//Removes and frees the specified beat from the beats array.  All beats after the deleted beat are moved back in the array one position

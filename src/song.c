@@ -260,9 +260,9 @@ EOF_NOTE * eof_legacy_track_add_note(EOF_LEGACY_TRACK * tp)
 	return NULL;
 }
 
-void eof_legacy_track_delete_note(EOF_LEGACY_TRACK * tp, int note)
+void eof_legacy_track_delete_note(EOF_LEGACY_TRACK * tp, unsigned long note)
 {
-	int i;
+	unsigned long i;
 
 	if(note < tp->notes)
 	{
@@ -493,9 +493,9 @@ EOF_LYRIC * eof_vocal_track_add_lyric(EOF_VOCAL_TRACK * tp)
 	return NULL;
 }
 
-void eof_vocal_track_delete_lyric(EOF_VOCAL_TRACK * tp, int lyric)
+void eof_vocal_track_delete_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric)
 {
-	int i;
+	unsigned long i;
 
 	if(lyric < tp->lyrics)
 	{
@@ -814,25 +814,25 @@ void eof_fixup_notes(void)
 		}
 	}
 
-	for(j = 0; j < eof_song->legacy_tracks; j++)
+	for(j = 1; j < eof_song->tracks; j++)
 	{
-		eof_legacy_track_fixup_notes(eof_song->legacy_track[j], j == eof_selected_track);
+		eof_track_fixup_notes(j, j == eof_selected_track);
 	}
 }
 
 void eof_sort_notes(void)
 {
-	int j;
+	unsigned long j;
 
-	for(j = 0; j < eof_song->legacy_tracks; j++)
+	for(j = 1; j < eof_song->tracks; j++)
 	{
-		eof_legacy_track_sort_notes(eof_song->legacy_track[j]);
+		eof_track_sort_notes(j);
 	}
 }
 
 void eof_detect_difficulties(EOF_SONG * sp)
 {
-	int i;
+	unsigned long i;
 
 	memset(eof_note_difficulties, 0, sizeof(int) * 4);
 	eof_note_type_name[0][0] = ' ';
@@ -841,22 +841,24 @@ void eof_detect_difficulties(EOF_SONG * sp)
 	eof_note_type_name[3][0] = ' ';
 	eof_note_type_name[4][0] = ' ';
 	eof_vocal_tab_name[0][0] = ' ';
-	if(eof_selected_track != EOF_TRACK_VOCALS)
+
+	for(i = 0; i < eof_track_get_size(sp, eof_selected_track); i++)
 	{
-		for(i = 0; i < sp->legacy_track[sp->track[eof_selected_track]->tracknum]->notes; i++)
+		if(sp->track[eof_selected_track]->track_format == EOF_VOCAL_TRACK_FORMAT)
 		{
-			if((sp->legacy_track[sp->track[eof_selected_track]->tracknum]->note[i]->type >= 0) && (sp->legacy_track[sp->track[eof_selected_track]->tracknum]->note[i]->type < 5))
+			if(sp->vocal_track[sp->track[eof_selected_track]->tracknum]->lyrics)
 			{
-				eof_note_difficulties[(int)sp->legacy_track[sp->track[eof_selected_track]->tracknum]->note[i]->type] = 1;
-				eof_note_type_name[(int)sp->legacy_track[sp->track[eof_selected_track]->tracknum]->note[i]->type][0] = '*';
+				eof_vocal_tab_name[0][0] = '*';
+				break;
 			}
 		}
-	}
-	else
-	{
-		if(sp->vocal_track[0]->lyrics)
+		else
 		{
-			eof_vocal_tab_name[0][0] = '*';
+			if((eof_get_note_difficulty(eof_selected_track, i) >= 0) && (eof_get_note_difficulty(eof_selected_track, i) < 5))
+			{
+				eof_note_difficulties[(int)eof_get_note_difficulty(eof_selected_track, i)] = 1;
+				eof_note_type_name[(int)eof_get_note_difficulty(eof_selected_track, i)][0] = '*';
+			}
 		}
 	}
 }
@@ -2249,51 +2251,26 @@ void *eof_track_add_note(EOF_SONG *sp, unsigned long track)
 
 void eof_track_delete_note(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
-	unsigned long i, oldsize, tracknum;
+	unsigned long tracknum;
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
 	tracknum = sp->track[track]->tracknum;
-	oldsize = eof_track_get_size(sp, track);
 
-	if(note < oldsize)
+	if(note < eof_track_get_size(sp, track))
 	{
 		switch(sp->track[track]->track_format)
 		{
 			case EOF_LEGACY_TRACK_FORMAT:
-				if(note < sp->legacy_track[tracknum]->notes)
-				{
-					free(sp->legacy_track[tracknum]->note[note]);
-					for(i = note; i < oldsize - 1; i++)
-					{
-						sp->legacy_track[tracknum]->note[i] = sp->legacy_track[tracknum]->note[i + 1];
-					}
-					sp->legacy_track[tracknum]->notes--;
-				}
+				eof_legacy_track_delete_note(sp->legacy_track[tracknum], note);
 			break;
 
 			case EOF_VOCAL_TRACK_FORMAT:
-				if(note < sp->vocal_track[tracknum]->lyrics)
-				{
-					free(sp->vocal_track[tracknum]->lyric[note]);
-					for(i = note; i < oldsize - 1; i++)
-					{
-						sp->vocal_track[tracknum]->lyric[i] = sp->vocal_track[tracknum]->lyric[i + 1];
-					}
-					sp->vocal_track[tracknum]->lyrics--;
-				}
+				eof_vocal_track_delete_lyric(sp->vocal_track[tracknum], note);
 			break;
 
 			case EOF_PRO_GUITAR_TRACK_FORMAT:
-				if(note < sp->pro_guitar_track[tracknum]->notes)
-				{
-					free(sp->pro_guitar_track[tracknum]->note[note]);
-					for(i = note; i < oldsize - 1; i++)
-					{
-						sp->pro_guitar_track[tracknum]->note[i] = eof_song->pro_guitar_track[tracknum]->note[i + 1];
-					}
-					sp->pro_guitar_track[tracknum]->notes--;
-				}
+				eof_pro_guitar_track_delete_note(sp->pro_guitar_track[tracknum], note);
 			break;
 		}
 	}
@@ -2427,6 +2404,39 @@ long eof_get_note_length(unsigned long track, unsigned long note)
 	}
 
 	return 0;	//Return error
+}
+
+void eof_set_note_length(unsigned long track, unsigned long note, long length)
+{
+	unsigned long tracknum;
+
+	if(track >= eof_song->tracks)
+		return;
+	tracknum = eof_song->track[track]->tracknum;
+
+	switch(eof_song->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < eof_song->legacy_track[tracknum]->notes)
+			{
+				eof_song->legacy_track[tracknum]->note[note]->length = length;
+			}
+		break;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+			if(note < eof_song->vocal_track[tracknum]->lyrics)
+			{
+				eof_song->vocal_track[tracknum]->lyric[note]->length = length;
+			}
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(note < eof_song->pro_guitar_track[tracknum]->notes)
+			{
+				eof_song->pro_guitar_track[tracknum]->note[note]->length = length;
+			}
+		break;
+	}
 }
 
 unsigned long eof_get_note_flags(unsigned long track, unsigned long note)
@@ -2634,4 +2644,245 @@ EOF_SOLO_ENTRY *eof_get_solo(unsigned long track,unsigned long solonum)
 	}
 
 	return NULL;	//Return error
+}
+
+void eof_set_note_pos(unsigned long track, unsigned long note, unsigned long pos)
+{
+	unsigned long tracknum;
+
+	if(track >= eof_song->tracks)
+		return;
+	tracknum = eof_song->track[track]->tracknum;
+
+	switch(eof_song->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < eof_song->legacy_track[tracknum]->notes)
+			{
+				eof_song->legacy_track[tracknum]->note[note]->pos = pos;
+			}
+		break;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+			if(note < eof_song->vocal_track[tracknum]->lyrics)
+			{
+				eof_song->vocal_track[tracknum]->lyric[note]->pos = pos;
+			}
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(note < eof_song->pro_guitar_track[tracknum]->notes)
+			{
+				eof_song->pro_guitar_track[tracknum]->note[note]->pos = pos;
+			}
+		break;
+	}
+}
+
+void eof_set_note_note(unsigned long track, unsigned long note, unsigned long value)
+{
+	unsigned long tracknum;
+
+	if(track >= eof_song->tracks)
+		return;
+	tracknum = eof_song->track[track]->tracknum;
+
+	switch(eof_song->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < eof_song->legacy_track[tracknum]->notes)
+			{
+				eof_song->legacy_track[tracknum]->note[note]->pos = value;
+			}
+		break;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+			if(note < eof_song->vocal_track[tracknum]->lyrics)
+			{
+				eof_song->vocal_track[tracknum]->lyric[note]->pos = value;
+			}
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(note < eof_song->pro_guitar_track[tracknum]->notes)
+			{
+				eof_song->pro_guitar_track[tracknum]->note[note]->pos = value;
+			}
+		break;
+	}
+}
+
+void eof_track_sort_notes(unsigned long track)
+{
+	unsigned long tracknum;
+
+	if((eof_song == NULL) || (track >= eof_song->tracks) || (track == 0))
+		return;
+	tracknum = eof_song->track[track]->tracknum;
+
+	switch(eof_song->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			eof_legacy_track_sort_notes(eof_song->legacy_track[tracknum]);
+		break;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+			eof_vocal_track_sort_lyrics(eof_song->vocal_track[tracknum]);
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			eof_pro_guitar_track_sort_notes(eof_song->pro_guitar_track[tracknum]);
+		break;
+	}
+}
+
+void eof_track_fixup_notes(unsigned long track, int sel)
+{
+	unsigned long tracknum;
+
+	if((eof_song == NULL) || (track >= eof_song->tracks))
+		return;
+	tracknum = eof_song->track[track]->tracknum;
+
+	switch(eof_song->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			eof_legacy_track_fixup_notes(eof_song->legacy_track[tracknum], sel);
+		break;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+			eof_vocal_track_fixup_lyrics(eof_song->vocal_track[tracknum], sel);
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			eof_pro_guitar_track_fixup_notes(eof_song->pro_guitar_track[tracknum], sel);
+		break;
+	}
+}
+
+void eof_pro_guitar_track_sort_notes(EOF_PRO_GUITAR_TRACK * tp)
+{
+	qsort(tp->note, tp->notes, sizeof(EOF_PRO_GUITAR_NOTE *), eof_song_qsort_pro_guitar_notes);
+}
+
+/* sort all notes according to position */
+int eof_song_qsort_pro_guitar_notes(const void * e1, const void * e2)
+{
+    EOF_PRO_GUITAR_NOTE ** thing1 = (EOF_PRO_GUITAR_NOTE **)e1;
+    EOF_PRO_GUITAR_NOTE ** thing2 = (EOF_PRO_GUITAR_NOTE **)e2;
+
+    if((*thing1)->pos < (*thing2)->pos)
+	{
+        return -1;
+    }
+    if((*thing1)->pos > (*thing2)->pos)
+    {
+        return 1;
+    }
+
+    // they are equal...
+    return 0;
+}
+
+void eof_pro_guitar_track_delete_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note)
+{
+	unsigned long i;
+
+	if(note < tp->notes)
+	{
+		free(tp->note[note]);
+		for(i = note; i < tp->notes - 1; i++)
+		{
+			tp->note[i] = tp->note[i + 1];
+		}
+		tp->notes--;
+	}
+}
+
+int eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, int note)
+{
+	int i;
+
+	for(i = note + 1; i < tp->notes; i++)
+	{
+		if(tp->note[i]->type == tp->note[note]->type)
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
+void eof_pro_guitar_track_fixup_notes(EOF_PRO_GUITAR_TRACK * tp, int sel)
+{
+	unsigned long i;
+	int next;
+
+	if(!sel)
+	{
+		if(eof_selection.current < tp->notes)
+		{
+			eof_selection.multi[eof_selection.current] = 0;
+		}
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	for(i = tp->notes; i > 0; i--)
+	{
+		/* fix selections */
+		if((tp->note[i-1]->type == eof_note_type) && (tp->note[i-1]->pos == eof_selection.current_pos))
+		{
+			eof_selection.current = i-1;
+		}
+		if((tp->note[i-1]->type == eof_note_type) && (tp->note[i-1]->pos == eof_selection.last_pos))
+		{
+			eof_selection.last = i-1;
+		}
+
+		/* delete certain notes */
+		if((tp->note[i-1]->note == 0) || ((tp->note[i-1]->type < 0) || (tp->note[i-1]->type > 4)) || (tp->note[i-1]->pos < eof_song->tags->ogg[eof_selected_ogg].midi_offset) || (tp->note[i-1]->pos >= eof_music_length))
+		{
+			eof_pro_guitar_track_delete_note(tp, i-1);
+		}
+
+		else
+		{
+			/* make sure there are no 0-length notes */
+			if(tp->note[i-1]->length <= 0)
+			{
+				tp->note[i-1]->length = 1;
+			}
+
+			/* make sure note doesn't extend past end of song */
+			if(tp->note[i-1]->pos + tp->note[i-1]->length >= eof_music_length)
+			{
+				tp->note[i-1]->length = eof_music_length - tp->note[i-1]->pos;
+			}
+
+			/* compare this note to the next one of the same type
+			   to make sure they don't overlap */
+			next = eof_fixup_next_pro_guitar_note(tp, i-1);
+			if(next >= 0)
+			{
+				if(tp->note[i-1]->pos == tp->note[next]->pos)
+				{
+					tp->note[i-1]->note |= tp->note[next]->note;
+					eof_pro_guitar_track_delete_note(tp, next);
+				}
+				else if(tp->note[i-1]->pos + tp->note[i-1]->length > tp->note[next]->pos - 1)
+				{
+					if(!(tp->note[i-1]->flags & EOF_NOTE_FLAG_CRAZY) || (tp->note[i-1]->note & tp->note[next]->note))
+					{
+						tp->note[i-1]->length = tp->note[next]->pos - tp->note[i-1]->pos - 1;
+					}
+				}
+			}
+		}
+	}
+	if(!sel)
+	{
+		if(eof_selection.current < tp->notes)
+		{
+			eof_selection.multi[eof_selection.current] = 1;
+		}
+	}
 }
