@@ -8,8 +8,7 @@
 void eof_music_play(void)
 {
 	int speed = eof_playback_speed;
-	int i;
-	unsigned long tracknum=0;
+	unsigned long i;
 
 	if(eof_music_catalog_playback)
 	{
@@ -46,33 +45,15 @@ void eof_music_play(void)
 		{
 			eof_music_end_pos = 0;
 			eof_music_rewind_pos = eof_music_length;
-			if(eof_vocals_selected)
-			{
-				for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
+			for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+			{	//For each note in the current track
+				if(eof_selection.multi[i] && (eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) > eof_music_end_pos))
 				{
-					if(eof_selection.multi[i] && (eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length > eof_music_end_pos))
-					{
-						eof_music_end_pos = eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length;
-					}
-					if(eof_selection.multi[i] && (eof_song->vocal_track[tracknum]->lyric[i]->pos < eof_music_rewind_pos))
-					{
-						eof_music_rewind_pos = eof_song->vocal_track[tracknum]->lyric[i]->pos;
-					}
+					eof_music_end_pos = eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i);
 				}
-			}
-			else
-			{
-				tracknum = eof_song->track[eof_selected_track]->tracknum;
-				for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
+				if(eof_selection.multi[i] && (eof_get_note_pos(eof_song, eof_selected_track, i) < eof_music_rewind_pos))
 				{
-					if(eof_selection.multi[i] && (eof_song->legacy_track[tracknum]->note[i]->pos + eof_song->legacy_track[tracknum]->note[i]->length > eof_music_end_pos))
-					{
-						eof_music_end_pos = eof_song->legacy_track[tracknum]->note[i]->pos + eof_song->legacy_track[tracknum]->note[i]->length;
-					}
-					if(eof_selection.multi[i] && (eof_song->legacy_track[tracknum]->note[i]->pos < eof_music_rewind_pos))
-					{
-						eof_music_rewind_pos = eof_song->legacy_track[tracknum]->note[i]->pos;
-					}
+					eof_music_rewind_pos = eof_get_note_pos(eof_song, eof_selected_track, i);
 				}
 			}
 			eof_music_seek(eof_music_rewind_pos);

@@ -71,33 +71,37 @@ void eof_legacy_track_note_create2(EOF_NOTE * np, unsigned long bitmask, unsigne
 int eof_adjust_notes(int offset)
 {
 	unsigned long i, j;
-//	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	EOF_SOLO_ENTRY *soloptr = NULL;
+	EOF_STAR_POWER_ENTRY *starpowerptr= NULL;
+	unsigned long tracknum = 0;
 
-	for(i = 0; i < EOF_LEGACY_TRACKS_MAX; i++)
-	{
-		for(j = 0; j < eof_song->legacy_track[i]->notes; j++)
-		{
-			eof_song->legacy_track[i]->note[j]->pos += offset;
+	for(i = 1; i < eof_song->tracks; i++)
+	{	//For each track
+		for(j = 0; j < eof_track_get_size(eof_song, i); j++)
+		{	//For each note in the track
+			eof_set_note_pos(eof_song, i, j, eof_get_note_pos(eof_song, i, j) + offset);	//Add the offset to the note's position
 		}
-		for(j = 0; j < eof_song->legacy_track[i]->solos; j++)
-		{
-			eof_song->legacy_track[i]->solo[j].start_pos += offset;
-			eof_song->legacy_track[i]->solo[j].end_pos += offset;
+		for(j = 0; j < eof_get_num_solos(eof_song, i); j++)
+		{	//For each solo section in the track
+			soloptr = eof_get_solo(eof_song, i, j);
+			soloptr->start_pos += offset;
+			soloptr->end_pos += offset;
 		}
-		for(j = 0; j < eof_song->legacy_track[i]->star_power_paths; j++)
-		{
-			eof_song->legacy_track[i]->star_power_path[j].start_pos += offset;
-			eof_song->legacy_track[i]->star_power_path[j].end_pos += offset;
+		for(j = 0; j < eof_get_num_star_power_paths(eof_song, i); j++)
+		{	//For each star power path in the track
+			starpowerptr = eof_get_star_power_path(eof_song, i, j);
+			starpowerptr->start_pos += offset;
+			starpowerptr->end_pos += offset;
 		}
-	}
-	for(j = 0; j < eof_song->vocal_track[0]->lyrics; j++)
-	{
-		eof_song->vocal_track[0]->lyric[j]->pos += offset;
-	}
-	for(j = 0; j < eof_song->vocal_track[0]->lines; j++)
-	{
-		eof_song->vocal_track[0]->line[j].start_pos += offset;
-		eof_song->vocal_track[0]->line[j].end_pos += offset;
+		if(eof_song->track[i]->track_format == EOF_VOCAL_TRACK_FORMAT)
+		{	//If this is a vocal track
+			tracknum = eof_song->track[i]->tracknum;
+			for(j = 0; j < eof_song->vocal_track[tracknum]->lines; j++)
+			{	//For each lyric phrase in the track
+				eof_song->vocal_track[tracknum]->line[j].start_pos += offset;
+				eof_song->vocal_track[tracknum]->line[j].end_pos += offset;
+			}
+		}
 	}
 	for(i = 0; i < eof_song->catalog->entries; i++)
 	{
@@ -156,11 +160,11 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		tracknum = eof_song->track[track]->tracknum;
 		if((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 			return 1;	//Invalid track format, signal to stop rendering
-		notepos = eof_get_note_pos(track, notenum);
-		notelength = eof_get_note_length(track, notenum);
-		noteflags = eof_get_note_flags(track, notenum);
-		notenote = eof_get_note_note(track, notenum);
-		notetype = eof_get_note_difficulty(track, notenum);
+		notepos = eof_get_note_pos(eof_song, track, notenum);
+		notelength = eof_get_note_length(eof_song, track, notenum);
+		noteflags = eof_get_note_flags(eof_song, track, notenum);
+		notenote = eof_get_note_note(eof_song, track, notenum);
+		notetype = eof_get_note_type(eof_song, track, notenum);
 	}
 	else
 	{	//Render the pen note
@@ -611,11 +615,11 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	{	//If an invalid track or note number was passsed
 		return -1;	//Error, signal to stop rendering (3D window renders last note to first)
 	}
-	notepos = eof_get_note_pos(track, notenum);
-	notelength = eof_get_note_length(track, notenum);
-	noteflags = eof_get_note_flags(track, notenum);
-	notenote = eof_get_note_note(track, notenum);
-	notetype = eof_get_note_difficulty(track, notenum);
+	notepos = eof_get_note_pos(eof_song, track, notenum);
+	notelength = eof_get_note_length(eof_song, track, notenum);
+	noteflags = eof_get_note_flags(eof_song, track, notenum);
+	notenote = eof_get_note_note(eof_song, track, notenum);
+	notetype = eof_get_note_type(eof_song, track, notenum);
 
 	npos = -pos - 6 + notepos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
 	if(npos + notelength / eof_zoom_3d < -100)
@@ -815,11 +819,11 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	{	//If an invalid track or note number was passsed
 		return -1;	//Error, signal to stop rendering (3D window renders last note to first)
 	}
-	notepos = eof_get_note_pos(track, notenum);
-	notelength = eof_get_note_length(track, notenum);
-	noteflags = eof_get_note_flags(track, notenum);
-	notenote = eof_get_note_note(track, notenum);
-	notetype = eof_get_note_difficulty(track, notenum);
+	notepos = eof_get_note_pos(eof_song, track, notenum);
+	notelength = eof_get_note_length(eof_song, track, notenum);
+	noteflags = eof_get_note_flags(eof_song, track, notenum);
+	notenote = eof_get_note_note(eof_song, track, notenum);
+	notetype = eof_get_note_type(eof_song, track, notenum);
 
 	npos = -pos - 6 + (notepos + eof_av_delay) / eof_zoom_3d;
 	if(npos + notelength / eof_zoom_3d < -100)

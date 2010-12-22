@@ -163,11 +163,11 @@ DIALOG eof_song_properties_dialog[] =
 void eof_prepare_song_menu(void)
 {
 	unsigned long i, tracknum = 0;
-	int firstnote = -1;
-	int lastnote = -1;
-	int noted[4] = {0};
-	int seekp = 0;
-	int seekn = 0;
+	long firstnote = -1;
+	long lastnote = -1;
+	long noted[4] = {0};
+	long seekp = 0;
+	long seekn = 0;
 
 	if(eof_song && eof_song_loaded)
 	{//If a chart is loaded
@@ -193,9 +193,9 @@ void eof_prepare_song_menu(void)
 		}
 		else
 		{
-			for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
+			for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
 			{
-				if(eof_song->legacy_track[tracknum]->note[i]->type == eof_note_type)
+				if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
 				{
 					if(firstnote < 0)
 					{
@@ -203,15 +203,15 @@ void eof_prepare_song_menu(void)
 					}
 					lastnote = i;
 				}
-				if((eof_song->legacy_track[tracknum]->note[i]->type >= 0) && (eof_song->legacy_track[tracknum]->note[i]->type < 4))
+				if((eof_get_note_type(eof_song, eof_selected_track, i) >= 0) && (eof_get_note_type(eof_song, eof_selected_track, i) < 4))
 				{
-					noted[(int)eof_song->legacy_track[tracknum]->note[i]->type] = 1;	//Type cast to avoid a nag warning about indexing with a char type
+					noted[(int)eof_get_note_type(eof_song, eof_selected_track, i)] = 1;	//Type cast to avoid a nag warning about indexing with a char type
 				}
-				if((eof_song->legacy_track[tracknum]->note[i]->type == eof_note_type) && (eof_song->legacy_track[tracknum]->note[i]->pos < ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
+				if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
 				{
 					seekp = 1;
 				}
-				if((eof_song->legacy_track[tracknum]->note[i]->type == eof_note_type) && (eof_song->legacy_track[tracknum]->note[i]->pos > ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
+				if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) > ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
 				{
 					seekn = 1;
 				}
@@ -309,7 +309,7 @@ void eof_prepare_song_menu(void)
 			{
 
 				/* seek first note */
-				if((firstnote >= 0) && (eof_song->legacy_track[tracknum]->note[firstnote]->pos == eof_music_pos - eof_av_delay))
+				if((firstnote >= 0) && (eof_get_note_pos(eof_song, eof_selected_track, firstnote) == eof_music_pos - eof_av_delay))
 				{
 					eof_song_seek_menu[4].flags = D_DISABLED;
 				}
@@ -319,7 +319,7 @@ void eof_prepare_song_menu(void)
 				}
 
 				/* seek last note */
-				if((lastnote >= 0) && (eof_song->legacy_track[tracknum]->note[lastnote]->pos == eof_music_pos - eof_av_delay))
+				if((lastnote >= 0) && (eof_get_note_pos(eof_song, eof_selected_track, lastnote) == eof_music_pos - eof_av_delay))
 				{
 					eof_song_seek_menu[5].flags = D_DISABLED;
 				}
@@ -455,7 +455,7 @@ void eof_prepare_song_menu(void)
 		/* track */
 		for(i = 0; i < EOF_TRACKS_MAX; i++)
 		{
-			if(eof_track_note_count(eof_song,i+1))
+			if(eof_track_get_size(eof_song,i+1))
 			{	//If the track exists and is populated, draw the track populated indicator
 				eof_track_selected_menu[i].text[0] = '*';
 			}
@@ -529,19 +529,18 @@ int eof_menu_song_seek_rewind(void)
 int eof_menu_song_seek_first_note_vocals(void)
 {
 	unsigned long i;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	int first_pos = -1;
+	long first_pos = -1;
 
 	if(!eof_vocals_selected)
 		return 1;
 
 	if(!eof_music_catalog_playback)
 	{
-		for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-		{
-			if(eof_song->vocal_track[tracknum]->lyric[i]->pos < first_pos)
+		for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+		{	//For each lyric in the active track
+			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < first_pos))
 			{
-				first_pos = eof_song->vocal_track[tracknum]->lyric[i]->pos;
+				first_pos = eof_get_note_pos(eof_song, eof_selected_track, i);
 			}
 		}
 		alogg_seek_abs_msecs_ogg(eof_music_track, first_pos + eof_av_delay);
@@ -556,7 +555,7 @@ int eof_menu_song_seek_first_note_vocals(void)
 int eof_menu_song_seek_first_note(void)
 {
 	unsigned long i, tracknum = 0;
-	int first_pos = -1;
+	long first_pos = -1;
 
 	if(eof_vocals_selected)
 	{
@@ -567,11 +566,11 @@ int eof_menu_song_seek_first_note(void)
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		if(!eof_music_catalog_playback)
 		{
-			for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
-			{
-				if((eof_song->legacy_track[tracknum]->note[i]->type == eof_note_type) && (eof_song->legacy_track[tracknum]->note[i]->pos < first_pos))
+			for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+			{	//For each note in the active track
+				if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < first_pos))
 				{
-					first_pos = eof_song->legacy_track[tracknum]->note[i]->pos;
+					first_pos = eof_get_note_pos(eof_song, eof_selected_track, i);
 				}
 			}
 			alogg_seek_abs_msecs_ogg(eof_music_track, first_pos + eof_av_delay);
@@ -587,7 +586,6 @@ int eof_menu_song_seek_first_note(void)
 int eof_menu_song_seek_last_note_vocals(void)
 {
 	unsigned long i;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	unsigned long last_pos = 0;
 
 	if(!eof_vocals_selected)
@@ -595,11 +593,11 @@ int eof_menu_song_seek_last_note_vocals(void)
 
 	if(!eof_music_catalog_playback)
 	{
-		for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-		{
-			if((eof_song->vocal_track[tracknum]->lyric[i]->pos > last_pos) && (eof_song->vocal_track[tracknum]->lyric[i]->pos < eof_music_length))
+		for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+		{	//For each lyric in the active track
+			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) > last_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) < eof_music_length))
 			{
-				last_pos = eof_song->vocal_track[tracknum]->lyric[i]->pos;
+				last_pos = eof_get_note_pos(eof_song, eof_selected_track, i);
 			}
 		}
 		alogg_seek_abs_msecs_ogg(eof_music_track, last_pos + eof_av_delay);
@@ -625,11 +623,11 @@ int eof_menu_song_seek_last_note(void)
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		if(!eof_music_catalog_playback)
 		{
-			for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
-			{
-				if((eof_song->legacy_track[tracknum]->note[i]->type == eof_note_type) && (eof_song->legacy_track[tracknum]->note[i]->pos > last_pos) && (eof_song->legacy_track[tracknum]->note[i]->pos < eof_music_length))
+			for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+			{	//For each note in the active track
+				if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) > last_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) < eof_music_length))
 				{
-					last_pos = eof_song->legacy_track[tracknum]->note[i]->pos;
+					last_pos = eof_get_note_pos(eof_song, eof_selected_track, i);
 				}
 			}
 			alogg_seek_abs_msecs_ogg(eof_music_track, last_pos + eof_av_delay);
@@ -645,18 +643,17 @@ int eof_menu_song_seek_last_note(void)
 int eof_menu_song_seek_previous_note_vocals(void)
 {
 	unsigned long i;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 	if(!eof_vocals_selected)
 		return 1;
 
-	for(i = eof_song->vocal_track[tracknum]->lyrics; i > 0; i--)
-	{
-		if(eof_song->vocal_track[tracknum]->lyric[i-1]->pos < ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0))
+	for(i = eof_track_get_size(eof_song, eof_selected_track); i > 0; i--)
+	{	//For each lyric in the active track
+		if((eof_get_note_type(eof_song, eof_selected_track, i-1) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i-1) < ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
 		{
-			alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->vocal_track[tracknum]->lyric[i-1]->pos + eof_av_delay);
+			alogg_seek_abs_msecs_ogg(eof_music_track, eof_get_note_pos(eof_song, eof_selected_track, i-1) + eof_av_delay);
 			eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
-			eof_music_pos = eof_song->vocal_track[tracknum]->lyric[i-1]->pos + eof_av_delay;
+			eof_music_pos = eof_get_note_pos(eof_song, eof_selected_track, i-1) + eof_av_delay;
 			eof_mix_seek(eof_music_pos);
 			eof_reset_lyric_preview_lines();
 			break;
@@ -676,13 +673,13 @@ int eof_menu_song_seek_previous_note(void)
 	else
 	{
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
-		for(i = eof_song->legacy_track[tracknum]->notes; i > 0; i--)
-		{
-			if((eof_song->legacy_track[tracknum]->note[i-1]->type == eof_note_type) && (eof_song->legacy_track[tracknum]->note[i-1]->pos < ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
+		for(i = eof_track_get_size(eof_song, eof_selected_track); i > 0; i--)
+		{	//For each note in the active track
+			if((eof_get_note_type(eof_song, eof_selected_track, i-1) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i-1) < ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
 			{
-				alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->legacy_track[tracknum]->note[i-1]->pos + eof_av_delay);
+				alogg_seek_abs_msecs_ogg(eof_music_track, eof_get_note_pos(eof_song, eof_selected_track, i-1) + eof_av_delay);
 				eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
-				eof_music_pos = eof_song->legacy_track[tracknum]->note[i-1]->pos + eof_av_delay;
+				eof_music_pos = eof_get_note_pos(eof_song, eof_selected_track, i-1) + eof_av_delay;
 				eof_mix_seek(eof_music_pos);
 				eof_reset_lyric_preview_lines();
 				break;
@@ -695,18 +692,17 @@ int eof_menu_song_seek_previous_note(void)
 int eof_menu_song_seek_next_note_vocals(void)
 {
 	unsigned long i;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 	if(!eof_vocals_selected)
 		return 1;
 
-	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-	{
-		if((eof_song->vocal_track[tracknum]->lyric[i]->pos < eof_music_length) && (eof_song->vocal_track[tracknum]->lyric[i]->pos > ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
+	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	{	//For each lyric in the active track
+		if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < eof_music_length) && (eof_get_note_pos(eof_song, eof_selected_track, i) > ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
 		{
-			alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_av_delay);
+			alogg_seek_abs_msecs_ogg(eof_music_track, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay);
 			eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
-			eof_music_pos = eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_av_delay;
+			eof_music_pos = eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay;
 			eof_mix_seek(eof_music_pos);
 			eof_reset_lyric_preview_lines();
 			break;
@@ -726,13 +722,13 @@ int eof_menu_song_seek_next_note(void)
 	else
 	{
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
-		for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
-		{
-			if((eof_song->legacy_track[tracknum]->note[i]->type == eof_note_type) && (eof_song->legacy_track[tracknum]->note[i]->pos < eof_music_length) && (eof_song->legacy_track[tracknum]->note[i]->pos > ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
+		for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+		{	//For each note in the active track
+			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < eof_music_length) && (eof_get_note_pos(eof_song, eof_selected_track, i) > ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
 			{
-				alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->legacy_track[tracknum]->note[i]->pos + eof_av_delay);
+				alogg_seek_abs_msecs_ogg(eof_music_track, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay);
 				eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
-				eof_music_pos = eof_song->legacy_track[tracknum]->note[i]->pos + eof_av_delay;
+				eof_music_pos = eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay;
 				eof_mix_seek(eof_music_pos);
 				eof_reset_lyric_preview_lines();
 				break;
@@ -1225,38 +1221,38 @@ int eof_menu_catalog_show(void)
 
 int eof_menu_catalog_add_vocals(void)
 {
-	int first_pos = -1;
-	int last_pos = -1;
+	long first_pos = -1;
+	long last_pos = -1;
 	unsigned long i;
-	int next;
+	long next;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 	if(!eof_vocals_selected)
 		return 1;
 
-	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-	{
-		if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
+	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	{	//For each lyric in the active track
+		if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
 			if(first_pos == -1)
 			{
-				first_pos = eof_song->vocal_track[tracknum]->lyric[i]->pos;
+				first_pos = eof_get_note_pos(eof_song, eof_selected_track, i);
 			}
 			if(eof_song->vocal_track[tracknum]->lyric[i]->length < 100)
 			{
-				last_pos = eof_song->vocal_track[tracknum]->lyric[i]->pos + 100;
-				next = eof_fixup_next_lyric(eof_song->vocal_track[tracknum], i);
+				last_pos = eof_get_note_pos(eof_song, eof_selected_track, i) + 100;
+				next = eof_track_fixup_next_note(eof_song, eof_selected_track, i);
 				if(next >= 0)
 				{
-					if(last_pos >= eof_song->vocal_track[tracknum]->lyric[next]->pos)
+					if(last_pos >= eof_get_note_pos(eof_song, eof_selected_track, next))
 					{
-						last_pos = eof_song->vocal_track[tracknum]->lyric[next]->pos - 1;
+						last_pos = eof_get_note_pos(eof_song, eof_selected_track, next) - 1;
 					}
 				}
 			}
 			else
 			{
-				last_pos = eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length;
+				last_pos = eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i);
 			}
 		}
 	}
@@ -1276,40 +1272,40 @@ int eof_menu_catalog_add_vocals(void)
 
 int eof_menu_catalog_add(void)
 {
-	int first_pos = -1;
-	int last_pos = -1;
+	long first_pos = -1;
+	long last_pos = -1;
 	unsigned long i;
 	unsigned long tracknum = 0;
-	int next;
+	long next;
 
 	if(eof_vocals_selected)
 	{
 		return eof_menu_catalog_add_vocals();
 	}
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
-	{
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->legacy_track[tracknum]->note[i]->type == eof_note_type))
+	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
 			if(first_pos == -1)
 			{
-				first_pos = eof_song->legacy_track[tracknum]->note[i]->pos;
+				first_pos = eof_get_note_pos(eof_song, eof_selected_track, i);
 			}
-			if(eof_song->legacy_track[tracknum]->note[i]->length < 100)
+			if(eof_get_note_length(eof_song, eof_selected_track, i) < 100)
 			{
-				last_pos = eof_song->legacy_track[tracknum]->note[i]->pos + 100;
-				next = eof_fixup_next_legacy_note(eof_song->legacy_track[tracknum], i);
+				last_pos = eof_get_note_pos(eof_song, eof_selected_track, i) + 100;
+				next = eof_track_fixup_next_note(eof_song, eof_selected_track, i);
 				if(next >= 0)
 				{
-					if(last_pos >= eof_song->legacy_track[tracknum]->note[next]->pos)
+					if(last_pos >= eof_get_note_pos(eof_song, eof_selected_track, next))
 					{
-						last_pos = eof_song->legacy_track[tracknum]->note[next]->pos - 1;
+						last_pos = eof_get_note_pos(eof_song, eof_selected_track, next) - 1;
 					}
 				}
 			}
 			else
 			{
-				last_pos = eof_song->legacy_track[tracknum]->note[i]->pos + eof_song->legacy_track[tracknum]->note[i]->length;
+				last_pos = eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i);
 			}
 		}
 	}

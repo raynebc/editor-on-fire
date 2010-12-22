@@ -214,11 +214,11 @@ typedef struct
 
 	/* solos */
 	EOF_SOLO_ENTRY solo[EOF_MAX_SOLOS];
-	short solos;
+	unsigned long solos;
 
 	/* star power */
 	EOF_STAR_POWER_ENTRY star_power_path[EOF_MAX_STAR_POWER];
-	short star_power_paths;
+	unsigned long star_power_paths;
 
 } EOF_LEGACY_TRACK;
 
@@ -233,7 +233,7 @@ typedef struct
 
 	/* lyric lines */
 	EOF_LYRIC_LINE line[EOF_MAX_LYRIC_LINES];
-	short lines;
+	unsigned long lines;
 
 	/* star power */
 	EOF_STAR_POWER_ENTRY star_power_path[EOF_MAX_STAR_POWER];
@@ -254,11 +254,11 @@ typedef struct
 
 	/* solos */
 	EOF_SOLO_ENTRY solo[EOF_MAX_SOLOS];
-	short solos;
+	unsigned long solos;
 
 	/* star power */
 	EOF_STAR_POWER_ENTRY star_power_path[EOF_MAX_STAR_POWER];
-	short star_power_paths;
+	unsigned long star_power_paths;
 
 } EOF_PRO_GUITAR_TRACK;
 
@@ -380,20 +380,26 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp);	//Loads data from the specif
 EOF_SONG * eof_load_song(const char * fn);	//Loads the specified EOF file, validating the file header and loading the appropriate OGG file
 int eof_save_song(EOF_SONG * sp, const char * fn);	//Saves the song to file
 
-unsigned long eof_track_get_size(EOF_SONG *sp, unsigned long track);		//Returns the number of notes/lyrics in the specified track, or 0 on error
-short eof_get_num_solos(unsigned long track);								//Returns the number of solos in the specified track, or 0 on error
-EOF_SOLO_ENTRY *eof_get_solo(unsigned long track,unsigned long solonum);	//Returns a pointer to the specified solo, or NULL on error
-void *eof_track_add_note(EOF_SONG *sp, unsigned long track);				//Calls the appropriate add function for the specified track, returning the newly allocated structure or NULL upon error
+unsigned long eof_track_get_size(EOF_SONG *sp, unsigned long track);					//Returns the number of notes/lyrics in the specified track, or 0 on error
+unsigned long eof_get_num_solos(EOF_SONG *sp, unsigned long track);								//Returns the number of solos in the specified track, or 0 on error
+void eof_set_num_solos(EOF_SONG *sp, unsigned long track, unsigned long number);		//Sets the number of solos in the specified track
+EOF_SOLO_ENTRY *eof_get_solo(EOF_SONG *sp, unsigned long track, unsigned long solonum);	//Returns a pointer to the specified solo, or NULL on error
+unsigned long eof_get_num_star_power_paths(EOF_SONG *sp, unsigned long track);					//Returns the number of star power paths in the specified track, or 0 on error
+void eof_set_num_star_power_paths(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of star power paths in the specified track
+EOF_STAR_POWER_ENTRY *eof_get_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long pathnum);	//Returns a pointer to the specified star power path, or NULL on error
+void *eof_track_add_note(EOF_SONG *sp, unsigned long track);							//Calls the appropriate add function for the specified track, returning the newly allocated structure or NULL upon error
 void eof_track_delete_note(EOF_SONG *sp, unsigned long track, unsigned long note);		//Performs the appropriate logic to remove the specified note/lyric from the specified track
-void eof_track_resize(EOF_SONG *sp, unsigned long track, unsigned long size);	//Performs the appropriate logic to resize the specified track
-char eof_get_note_difficulty(unsigned long track, unsigned long note);		//Returns the type (difficulty/lyric set) of the specified track's note/lyric, or 0xFF on error
-unsigned long eof_get_note_pos(unsigned long track, unsigned long note);	//Returns the position of the specified track's note/lyric, or 0 on error
-void eof_set_note_pos(unsigned long track, unsigned long note, unsigned long pos);	//Sets the position of the specified track's note/lyric
-long eof_get_note_length(unsigned long track, unsigned long note);			//Returns the length of the specified track's note/lyric, or 0 on error
-void eof_set_note_length(unsigned long track, unsigned long note, long length);	//Sets the length of the specified track's note/lyric
-unsigned long eof_get_note_flags(unsigned long track, unsigned long note);	//Returns the flags of the specified track's note/lyric, or 0 on error
-unsigned long eof_get_note_note(unsigned long track, unsigned long note);	//Returns the note bitflag of the specified track's note/lyric, or 0 on error
-void eof_set_note_note(unsigned long track, unsigned long note, unsigned long value);	//Sets the note value of the specified track's note/lyric
+void eof_track_resize(EOF_SONG *sp, unsigned long track, unsigned long size);			//Performs the appropriate logic to resize the specified track
+char eof_get_note_type(EOF_SONG *sp, unsigned long track, unsigned long note);			//Returns the type (difficulty/lyric set) of the specified track's note/lyric, or 0xFF on error
+void eof_set_note_type(EOF_SONG *sp, unsigned long track, unsigned long note, char type);	//Sets the type (difficulty/lyric set) of the specified track's note/lyric
+unsigned long eof_get_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the position of the specified track's note/lyric, or 0 on error
+void eof_set_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos);	//Sets the position of the specified track's note/lyric
+long eof_get_note_length(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the length of the specified track's note/lyric, or 0 on error
+void eof_set_note_length(EOF_SONG *sp, unsigned long track, unsigned long note, long length);	//Sets the length of the specified track's note/lyric
+unsigned long eof_get_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note);//Returns the flags of the specified track's note/lyric, or 0 on error
+void eof_set_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long flags);	//Sets the flags of the specified track's note/lyric
+unsigned long eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the note bitflag of the specified track's note/lyric, or 0 on error
+void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long value);	//Sets the note value of the specified track's note/lyric
 void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos, long length, char type, char *text);
 	//Adds and initializes the appropriate note for the specified track, returning the newly created note structure, or NULL on error
 	//Automatic flags will be applied appropriately (ie. crazy status for all notes in PART KEYS)
@@ -402,35 +408,47 @@ void *eof_track_add_create_note2(EOF_SONG *sp, unsigned long track, EOF_NOTE *no
 	//Adds and initializes the appropriate note for the specified track, returning the newly created note structure, or NULL on error
 	//If track refers to a legacy track, it is created and initialized using the passed structure
 	//If track refers to a pro guitar track, a pro guitar note is partially initialized and the rest of the data is set to default values, ie. fret values set to 0xFF (muted)
-void eof_track_sort_notes(unsigned long track);		//Calls the appropriate sort function for the specified track
-void eof_track_fixup_notes(unsigned long track, int sel);	//Calls the appropriate fixup function for the specified track
+void eof_track_sort_notes(EOF_SONG *sp, unsigned long track);		//Calls the appropriate sort function for the specified track
+long eof_track_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the note/lyric one after the specified note/lyric number that is in the same difficulty, or -1 if there is none
+void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel);	//Calls the appropriate fixup function for the specified track
+void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track);	//Used during MIDI import to mark a note as "crazy" if it overlaps with the next note in the same difficulty
+void eof_track_add_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a star power phrase at the specified start and stop timestamp for the specified track
+void eof_track_delete_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long pathnum);	//Deletes the specified star power phrase and moves all phrases that follow back in the array one position
+void eof_track_add_solo(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track
+void eof_track_delete_solo(EOF_SONG *sp, unsigned long track, unsigned long pathnum);	//Deletes the specified solo phrase and moves all phrases that follow back in the array one position
 
 EOF_NOTE * eof_legacy_track_add_note(EOF_LEGACY_TRACK * tp);	//Allocates, initializes and stores a new EOF_NOTE structure into the notes array.  Returns the newly allocated structure or NULL upon error
 void eof_legacy_track_delete_note(EOF_LEGACY_TRACK * tp, unsigned long note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position
 void eof_legacy_track_sort_notes(EOF_LEGACY_TRACK * tp);	//Performs a quicksort of the notes array
 int eof_song_qsort_legacy_notes(const void * e1, const void * e2);	//The comparitor function used to quicksort the legacy notes array
-int eof_fixup_next_legacy_note(EOF_LEGACY_TRACK * tp, int note);	//Returns the note one after the specified note number that is in the same difficulty, or -1 if there is none
-void eof_legacy_track_find_crazy_notes(EOF_LEGACY_TRACK * tp);	//Used during MIDI import to mark a note as "crazy" if it overlaps with the next note in the same difficulty
+long eof_fixup_next_legacy_note(EOF_LEGACY_TRACK * tp, unsigned long note);	//Returns the note one after the specified note number that is in the same difficulty, or -1 if there is none
 void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel);	//Performs cleanup of the specified instrument track
 void eof_legacy_track_add_star_power(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a star power phrase at the specified start and stop timestamp for the specified track
-void eof_legacy_track_delete_star_power(EOF_LEGACY_TRACK * tp, int index);	//Deletes the specified star power phrase and moves all phrases that follow back in the array one position
+void eof_legacy_track_delete_star_power(EOF_LEGACY_TRACK * tp, unsigned long index);	//Deletes the specified star power phrase and moves all phrases that follow back in the array one position
 void eof_legacy_track_add_solo(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track
-void eof_legacy_track_delete_solo(EOF_LEGACY_TRACK * tp, int index);	//Deletes the specified solo phrase and moves all phrases that follow back in the array one position
+void eof_legacy_track_delete_solo(EOF_LEGACY_TRACK * tp, unsigned long index);	//Deletes the specified solo phrase and moves all phrases that follow back in the array one position
 
 EOF_LYRIC * eof_vocal_track_add_lyric(EOF_VOCAL_TRACK * tp);	//Allocates, initializes and stores a new EOF_LYRIC structure into the lyrics array.  Returns the newly allocated structure or NULL upon error
 void eof_vocal_track_delete_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric);	//Removes and frees the specified lyric from the lyrics array.  All lyrics after the deleted lyric are moved back in the array one position
 void eof_vocal_track_sort_lyrics(EOF_VOCAL_TRACK * tp);		//Performs a quicksort of the lyrics array
 int eof_song_qsort_lyrics(const void * e1, const void * e2);	//The comparitor function used to quicksort the lyrics array
-int eof_fixup_next_lyric(EOF_VOCAL_TRACK * tp, int lyric);	//Returns the next lyric, or -1 if there is none
+long eof_fixup_next_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric);	//Returns the next lyric, or -1 if there is none
 void eof_vocal_track_fixup_lyrics(EOF_VOCAL_TRACK * tp, int sel);	//Performs cleanup of the specified lyric track
 void eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a lyric phrase at the specified start and stop timestamp for the specified track
 void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, int index);	//Deletes the specified lyric phrase and moves all phrases that follow back in the array one position
+void eof_vocal_track_add_star_power(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a star power phrase at the specified start and stop timestamp for the specified track
+void eof_vocal_track_delete_star_power(EOF_VOCAL_TRACK * tp, unsigned long index);	//Deletes the specified star power phrase and moves all phrases that follow back in the array one position
 
 EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_note(EOF_PRO_GUITAR_TRACK *tp);	//Allocates, initializes and stores a new EOF_PRO_GUITAR_NOTE structure into the notes array.  Returns the newly allocated structure or NULL upon error
 void eof_pro_guitar_track_sort_notes(EOF_PRO_GUITAR_TRACK * tp);	//Performs a quicksort of the notes array
 int eof_song_qsort_pro_guitar_notes(const void * e1, const void * e2);	//The comparitor function used to quicksort the pro guitar notes array
 void eof_pro_guitar_track_delete_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position
+long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Returns the note one after the specified note number that is in the same difficulty, or -1 if there is none
 void eof_pro_guitar_track_fixup_notes(EOF_PRO_GUITAR_TRACK * tp, int sel);	//Performs cleanup of the specified instrument track
+void eof_pro_guitar_track_add_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a star power phrase at the specified start and stop timestamp for the specified track
+void eof_pro_guitar_track_delete_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned long index);	//Deletes the specified star power phrase and moves all phrases that follow back in the array one position
+void eof_pro_guitar_track_add_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track
+void eof_pro_guitar_track_delete_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long index);	//Deletes the specified solo phrase and moves all phrases that follow back in the array one position
 
 EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp);	//Allocates, initializes and stores a new EOF_BEAT_MARKER structure into the beats array.  Returns the newly allocated structure or NULL upon error
 void eof_song_delete_beat(EOF_SONG * sp, int beat);	//Removes and frees the specified beat from the beats array.  All beats after the deleted beat are moved back in the array one position
@@ -520,9 +538,6 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 	//For fret catalog sections, the flags variable represents which track the catalog entry belongs to
 	//For lyric phrases, the difficulty field indicates which lyric set number (ie. PART VOCALS) the phrase applies to
 	//Returns zero on error
-
-unsigned long eof_track_note_count(EOF_SONG *sp, unsigned long track);
-	//Returns the note/lyric count of the specified track, or 0 upon error
 
 unsigned long eof_count_track_lanes(unsigned long track);
 	//Returns the number of lanes in the specified track, or the default of 5
