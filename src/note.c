@@ -137,7 +137,6 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	char iscymbal;		//Used to track whether the specified note is marked as a cymbal
 	int x,y;
 	unsigned long numlanes, tracknum;
-	char fretstring[5] = {0};
 
 	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
 	unsigned long notepos = 0;
@@ -305,15 +304,12 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 
 				if((track > 0) && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 				{	//If this is a pro guitar note, render the fret number over the center of the note
-					if(eof_song->pro_guitar_track[tracknum]->note[notenum]->frets[ctr] == 0xFF)
-					{	//This is a muted fret
-						snprintf(fretstring,sizeof(fretstring),"X");
+					BITMAP *fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], ctr, 0, tcol, dcol);
+					if(fretbmp != NULL)
+					{	//Render the bitmap on top of the 3D note and then destroy the bitmap
+						draw_sprite(window->screen, fretbmp, x + 1 - (fretbmp->w/2), y - (text_height(font)/2));	//Fudge (x,y) to make it print centered over the gem
+						destroy_bitmap(fretbmp);
 					}
-					else
-					{	//This is a non muted fret
-						snprintf(fretstring,sizeof(fretstring),"%d",eof_song->pro_guitar_track[tracknum]->note[notenum]->frets[ctr]);
-					}
-					textout_centre_ex(window->screen, font, fretstring, x+1, y - text_height(font)/2, tcol, dcol);	//Fudge (x,y) to make it print centered over the gem
 				}
 			}
 			else
@@ -599,7 +595,6 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	unsigned int cymbals[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN, EOF_IMAGE_NOTE_RED, EOF_IMAGE_NOTE_YELLOW_CYMBAL, EOF_IMAGE_NOTE_BLUE_CYMBAL, EOF_IMAGE_NOTE_PURPLE_CYMBAL, EOF_IMAGE_NOTE_ORANGE};
 	unsigned int cymbals_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN_HIT, EOF_IMAGE_NOTE_RED_HIT, EOF_IMAGE_NOTE_YELLOW_CYMBAL_HIT, EOF_IMAGE_NOTE_BLUE_CYMBAL_HIT, EOF_IMAGE_NOTE_PURPLE_CYMBAL_HIT, EOF_IMAGE_NOTE_ORANGE_HIT};
 	unsigned long numlanes, tracknum;
-	char fretstring[5] = {0};
 	float lanewidth = 0.0;
 
 	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
@@ -764,25 +759,9 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 					if((notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 					{	//If this is a pro guitar note, render the fret number over the center of the note
-						BITMAP *fretbmp = NULL;
-						int height, width;
-
-						if(eof_song->pro_guitar_track[tracknum]->note[notenum]->frets[ctr] == 0xFF)
-						{	//This is a muted fret
-							snprintf(fretstring,sizeof(fretstring),"X");
-						}
-						else
-						{	//This is a non muted fret
-							snprintf(fretstring,sizeof(fretstring),"%d",eof_song->pro_guitar_track[tracknum]->note[notenum]->frets[ctr]);
-						}
-						width = text_length(font,fretstring) + 8;	//Allow one extra character's width for padding
-						height = text_height(font);
-						fretbmp = create_bitmap(width,height);
+						BITMAP *fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], ctr, 8, eof_color_white, eof_color_black);	//Allow one extra character's width for padding
 						if(fretbmp != NULL)
-						{	//Render the fret number on top of the 3D note
-							clear_to_color(fretbmp, eof_color_black);
-							rect(fretbmp, 0, 0, width-1, height-1, eof_color_white);	//Draw a border along the edge of this bitmap
-							textprintf_ex(fretbmp, font, 4, 0, eof_color_white, -1, "%s", fretstring);	//Pad the left edge of the bitmap by 4 pixels
+						{	//Render the bitmap on top of the 3D note and then destroy the bitmap
 							ocd3d_draw_bitmap(eof_window_3d->screen, fretbmp, xchart[ctr] - 8, 200 - 24, npos);
 							destroy_bitmap(fretbmp);
 						}
@@ -927,4 +906,35 @@ unsigned long eof_find_lyric_number(EOF_LYRIC * np)
 	}
 
 	return 0;
+}
+
+BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, unsigned char fretnum, unsigned long padding, int textcol, int fillcol)
+{
+	BITMAP *fretbmp = NULL;
+	int height, width;
+	char fretstring[5] = {0};
+
+	if(note != NULL)
+	{
+		if(note->frets[fretnum] == 0xFF)
+		{	//This is a muted fret
+			snprintf(fretstring,sizeof(fretstring),"X");
+		}
+		else
+		{	//This is a non muted fret
+			snprintf(fretstring,sizeof(fretstring),"%d",note->frets[fretnum]);
+		}
+
+		width = text_length(font,fretstring) + padding;
+		height = text_height(font);
+		fretbmp = create_bitmap(width,height);
+		if(fretbmp != NULL)
+		{	//Render the fret number on top of the 3D note
+			clear_to_color(fretbmp, fillcol);
+			rect(fretbmp, 0, 0, width-1, height-1, textcol);	//Draw a border along the edge of this bitmap
+			textprintf_ex(fretbmp, font, padding/2, 0, textcol, -1, "%s", fretstring);	//Center the text between the padding
+		}
+	}
+
+	return fretbmp;
 }
