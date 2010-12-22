@@ -1106,7 +1106,7 @@ int eof_figure_part(void)
 {
 	int part[EOF_TRACKS_MAX+1] = {0};
 
-	if(eof_track_note_count(eof_song,eof_selected_track) == 0)
+	if(eof_track_get_size(eof_song,eof_selected_track) == 0)
 		return -1;
 
 	part[EOF_TRACK_GUITAR] = 0;
@@ -2284,10 +2284,10 @@ void eof_render_3d_window(void)
 	/* render solo sections */
 	int sz, sez;
 	int spz, spez;
-	numsolos = eof_get_num_solos(eof_selected_track);
+	numsolos = eof_get_num_solos(eof_song, eof_selected_track);
 	for(i = 0; i < numsolos; i++)
 	{
-		soloptr = eof_get_solo(eof_selected_track, i);	//Obtain the information for this legacy/pro guitar solo
+		soloptr = eof_get_solo(eof_song, eof_selected_track, i);	//Obtain the information for this legacy/pro guitar solo
 		if(soloptr != NULL)
 		{
 			sz = -eof_music_pos / eof_zoom_3d + soloptr->start_pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
@@ -2382,7 +2382,7 @@ void eof_render_3d_window(void)
 	numnotes = eof_track_get_size(eof_song, eof_selected_track);	//Get the number of notes in this legacy/pro guitar track
 	for(i = numnotes; i > 0; i--)
 	{	//Render 3D notes from last to first so that the earlier notes are in front
-		if(eof_note_type == eof_get_note_difficulty(eof_selected_track, i-1))
+		if(eof_note_type == eof_get_note_type(eof_song, eof_selected_track, i-1))
 		{
 			tr = eof_note_tail_draw_3d(eof_selected_track, i-1, (eof_selection.multi[i-1] && eof_music_paused) ? 1 : (i-1) == eof_hover_note ? 2 : 0);
 			eof_note_draw_3d(eof_selected_track, i-1, (eof_selection.track == eof_selected_track && eof_selection.multi[i-1] && eof_music_paused) ? 1 : (i-1) == eof_hover_note ? 2 : 0);
@@ -2940,7 +2940,7 @@ int eof_initialize(int argc, char * argv[])
 				}
 				else
 				{	//!This will need to be updated to scan for lyric tracks and fix them
-					eof_track_fixup_notes(EOF_TRACK_VOCALS, 0);
+					eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
 				}
 //				break;
 			}
@@ -2965,7 +2965,7 @@ int eof_initialize(int argc, char * argv[])
 				}
 				else
 				{
-					eof_track_fixup_notes(EOF_TRACK_VOCALS, 0);
+					eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
 				}
 			}
 			else if(!ustricmp(get_extension(argv[i]), "chart"))

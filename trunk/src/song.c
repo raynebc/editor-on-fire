@@ -168,19 +168,9 @@ void eof_destroy_song(EOF_SONG * sp)
 	if(sp == NULL)
 		return;
 
-	for(ctr=0; ctr < sp->tracks; ctr++)
+	for(ctr= sp->tracks-1; ctr > 0; ctr--)
 	{
-		free(sp->track[ctr]);
-	}
-
-	for(ctr=0; ctr < sp->legacy_tracks; ctr++)
-	{	//For each entry in the legacy track array
-		free(sp->legacy_track[ctr]);
-	}
-
-	for(ctr=0; ctr < sp->vocal_tracks; ctr++)
-	{	//For each entry in the vocal track array
-		free(sp->vocal_track[ctr]);
+		eof_song_delete_track(sp, ctr);
 	}
 
 	for(ctr=0; ctr < sp->beats; ctr++)
@@ -280,9 +270,9 @@ void eof_legacy_track_sort_notes(EOF_LEGACY_TRACK * tp)
 	qsort(tp->note, tp->notes, sizeof(EOF_NOTE *), eof_song_qsort_legacy_notes);
 }
 
-int eof_fixup_next_legacy_note(EOF_LEGACY_TRACK * tp, int note)
+long eof_fixup_next_legacy_note(EOF_LEGACY_TRACK * tp, unsigned long note)
 {
-	int i;
+	long i;
 
 	for(i = note + 1; i < tp->notes; i++)
 	{
@@ -292,25 +282,6 @@ int eof_fixup_next_legacy_note(EOF_LEGACY_TRACK * tp, int note)
 		}
 	}
 	return -1;
-}
-
-/* find and mark crazy notes, use during MIDI import */
-void eof_legacy_track_find_crazy_notes(EOF_LEGACY_TRACK * tp)
-{
-	int i;
-	int next;
-
-	for(i = 0; i < tp->notes; i++)
-	{
-		next = eof_fixup_next_legacy_note(tp, i);
-		if(next >= 0)
-		{
-			if(tp->note[i]->pos + tp->note[i]->length > tp->note[next]->pos)
-			{
-				tp->note[i]->flags |= EOF_NOTE_FLAG_CRAZY;
-			}
-		}
-	}
 }
 
 void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
@@ -446,9 +417,12 @@ void eof_legacy_track_add_star_power(EOF_LEGACY_TRACK * tp, unsigned long start_
 	}
 }
 
-void eof_legacy_track_delete_star_power(EOF_LEGACY_TRACK * tp, int index)
+void eof_legacy_track_delete_star_power(EOF_LEGACY_TRACK * tp, unsigned long index)
 {
-	int i;
+	unsigned long i;
+
+	if(index >= tp->star_power_paths)
+		return;
 
 	for(i = index; i < tp->star_power_paths - 1; i++)
 	{
@@ -467,9 +441,12 @@ void eof_legacy_track_add_solo(EOF_LEGACY_TRACK * tp, unsigned long start_pos, u
 	}
 }
 
-void eof_legacy_track_delete_solo(EOF_LEGACY_TRACK * tp, int index)
+void eof_legacy_track_delete_solo(EOF_LEGACY_TRACK * tp, unsigned long index)
 {
-	int i;
+	unsigned long i;
+
+	if(index >= tp->solos)
+		return;
 
 	for(i = index; i < tp->solos - 1; i++)
 	{
@@ -513,9 +490,9 @@ void eof_vocal_track_sort_lyrics(EOF_VOCAL_TRACK * tp)
 	qsort(tp->lyric, tp->lyrics, sizeof(EOF_LYRIC *), eof_song_qsort_lyrics);
 }
 
-int eof_fixup_next_lyric(EOF_VOCAL_TRACK * tp, int lyric)
+long eof_fixup_next_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric)
 {
-	int i;
+	long i;
 
 	for(i = lyric + 1; i < tp->lyrics; i++)
 	{
@@ -797,9 +774,8 @@ void eof_sort_events(void)
 void eof_fixup_notes(void)
 {
 	unsigned long i, j;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
-	if(eof_selection.current < eof_song->legacy_track[tracknum]->notes)
+	if(eof_selection.current < eof_track_get_size(eof_song, eof_selected_track))
 	{
 		eof_selection.multi[eof_selection.current] = 0;
 	}
@@ -816,7 +792,7 @@ void eof_fixup_notes(void)
 
 	for(j = 1; j < eof_song->tracks; j++)
 	{
-		eof_track_fixup_notes(j, j == eof_selected_track);
+		eof_track_fixup_notes(eof_song, j, j == eof_selected_track);
 	}
 }
 
@@ -826,7 +802,7 @@ void eof_sort_notes(void)
 
 	for(j = 1; j < eof_song->tracks; j++)
 	{
-		eof_track_sort_notes(j);
+		eof_track_sort_notes(eof_song, j);
 	}
 }
 
@@ -854,10 +830,10 @@ void eof_detect_difficulties(EOF_SONG * sp)
 		}
 		else
 		{
-			if((eof_get_note_difficulty(eof_selected_track, i) >= 0) && (eof_get_note_difficulty(eof_selected_track, i) < 5))
+			if((eof_get_note_type(sp, eof_selected_track, i) >= 0) && (eof_get_note_type(sp, eof_selected_track, i) < 5))
 			{
-				eof_note_difficulties[(int)eof_get_note_difficulty(eof_selected_track, i)] = 1;
-				eof_note_type_name[(int)eof_get_note_difficulty(eof_selected_track, i)][0] = '*';
+				eof_note_difficulties[(int)eof_get_note_type(sp, eof_selected_track, i)] = 1;
+				eof_note_type_name[(int)eof_get_note_type(sp, eof_selected_track, i)][0] = '*';
 			}
 		}
 	}
@@ -1848,7 +1824,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	//Count the number of bookmarks
 	for(ctr=0,bookmark_count=0,has_bookmarks=0; ctr < EOF_MAX_BOOKMARK_ENTRIES; ctr++)
 	{
-		if(eof_song->bookmark_pos[ctr] > 0)
+		if(sp->bookmark_pos[ctr] > 0)
 		{	//If this bookmark exists
 			bookmark_count++;
 			has_bookmarks = 1;
@@ -1897,7 +1873,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				pack_iputl(bookmark_count, fp);			//Write number of bookmarks
 				for(ctr=0; ctr < EOF_MAX_BOOKMARK_ENTRIES; ctr++)
 				{	//For each bookmark in the project
-					if(eof_song->bookmark_pos[ctr] > 0)
+					if(sp->bookmark_pos[ctr] > 0)
 					{
 						eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
 						pack_putc(0xFF, fp);					//Write an associated difficulty of "all difficulties"
@@ -2142,25 +2118,6 @@ EOF_SONG * eof_create_song_populated(void)
 	return sp;
 }
 
-unsigned long eof_track_note_count(EOF_SONG *sp, unsigned long track)
-{
-	unsigned long tracknum;
-
-	if((sp == NULL) || (track >= sp->tracks))
-		return 0;
-
-	tracknum = sp->track[track]->tracknum;
-	switch(sp->track[track]->track_format)
-	{
-		case EOF_LEGACY_TRACK_FORMAT:
-		return sp->legacy_track[tracknum]->notes;
-		case EOF_VOCAL_TRACK_FORMAT:
-		return sp->vocal_track[tracknum]->lyrics;
-	}
-
-	return 0;
-}
-
 unsigned long eof_count_track_lanes(unsigned long track)
 {
 	if((track == 0) || (track > EOF_TRACKS_MAX))
@@ -2301,34 +2258,34 @@ void eof_track_resize(EOF_SONG *sp, unsigned long track, unsigned long size)
 	}
 }
 
-char eof_get_note_difficulty(unsigned long track, unsigned long note)
+char eof_get_note_type(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	unsigned long tracknum;
 
-	if(track >= eof_song->tracks)
+	if((sp == NULL) || (track >= sp->tracks))
 		return 0xFF;	//Return error
-	tracknum = eof_song->track[track]->tracknum;
+	tracknum = sp->track[track]->tracknum;
 
-	switch(eof_song->track[track]->track_format)
+	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
-			if(note < eof_song->legacy_track[tracknum]->notes)
+			if(note < sp->legacy_track[tracknum]->notes)
 			{
-				return eof_song->legacy_track[tracknum]->note[note]->type;
+				return sp->legacy_track[tracknum]->note[note]->type;
 			}
 		break;
 
 		case EOF_VOCAL_TRACK_FORMAT:
-			if(note < eof_song->vocal_track[tracknum]->lyrics)
+			if(note < sp->vocal_track[tracknum]->lyrics)
 			{
-				return eof_song->vocal_track[tracknum]->lyric[note]->type;
+				return sp->vocal_track[tracknum]->lyric[note]->type;
 			}
 		break;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			if(note < eof_song->pro_guitar_track[tracknum]->notes)
+			if(note < sp->pro_guitar_track[tracknum]->notes)
 			{
-				return eof_song->pro_guitar_track[tracknum]->note[note]->type;
+				return sp->pro_guitar_track[tracknum]->note[note]->type;
 			}
 		break;
 	}
@@ -2336,34 +2293,34 @@ char eof_get_note_difficulty(unsigned long track, unsigned long note)
 	return 0xFF;	//Return error
 }
 
-unsigned long eof_get_note_pos(unsigned long track, unsigned long note)
+unsigned long eof_get_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	unsigned long tracknum;
 
-	if(track >= eof_song->tracks)
+	if((sp == NULL) || (track >= sp->tracks))
 		return 0;	//Return error
-	tracknum = eof_song->track[track]->tracknum;
+	tracknum = sp->track[track]->tracknum;
 
-	switch(eof_song->track[track]->track_format)
+	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
-			if(note < eof_song->legacy_track[tracknum]->notes)
+			if(note < sp->legacy_track[tracknum]->notes)
 			{
-				return eof_song->legacy_track[tracknum]->note[note]->pos;
+				return sp->legacy_track[tracknum]->note[note]->pos;
 			}
 		break;
 
 		case EOF_VOCAL_TRACK_FORMAT:
-			if(note < eof_song->vocal_track[tracknum]->lyrics)
+			if(note < sp->vocal_track[tracknum]->lyrics)
 			{
-				return eof_song->vocal_track[tracknum]->lyric[note]->pos;
+				return sp->vocal_track[tracknum]->lyric[note]->pos;
 			}
 		break;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			if(note < eof_song->pro_guitar_track[tracknum]->notes)
+			if(note < sp->pro_guitar_track[tracknum]->notes)
 			{
-				return eof_song->pro_guitar_track[tracknum]->note[note]->pos;
+				return sp->pro_guitar_track[tracknum]->note[note]->pos;
 			}
 		break;
 	}
@@ -2371,34 +2328,34 @@ unsigned long eof_get_note_pos(unsigned long track, unsigned long note)
 	return 0;	//Return error
 }
 
-long eof_get_note_length(unsigned long track, unsigned long note)
+long eof_get_note_length(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	unsigned long tracknum;
 
-	if(track >= eof_song->tracks)
+	if((sp == NULL) || (track >= sp->tracks))
 		return 0;	//Return error
-	tracknum = eof_song->track[track]->tracknum;
+	tracknum = sp->track[track]->tracknum;
 
-	switch(eof_song->track[track]->track_format)
+	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
-			if(note < eof_song->legacy_track[tracknum]->notes)
+			if(note < sp->legacy_track[tracknum]->notes)
 			{
-				return eof_song->legacy_track[tracknum]->note[note]->length;
+				return sp->legacy_track[tracknum]->note[note]->length;
 			}
 		break;
 
 		case EOF_VOCAL_TRACK_FORMAT:
-			if(note < eof_song->vocal_track[tracknum]->lyrics)
+			if(note < sp->vocal_track[tracknum]->lyrics)
 			{
-				return eof_song->vocal_track[tracknum]->lyric[note]->length;
+				return sp->vocal_track[tracknum]->lyric[note]->length;
 			}
 		break;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			if(note < eof_song->pro_guitar_track[tracknum]->notes)
+			if(note < sp->pro_guitar_track[tracknum]->notes)
 			{
-				return eof_song->pro_guitar_track[tracknum]->note[note]->length;
+				return sp->pro_guitar_track[tracknum]->note[note]->length;
 			}
 		break;
 	}
@@ -2406,67 +2363,67 @@ long eof_get_note_length(unsigned long track, unsigned long note)
 	return 0;	//Return error
 }
 
-void eof_set_note_length(unsigned long track, unsigned long note, long length)
+void eof_set_note_length(EOF_SONG *sp, unsigned long track, unsigned long note, long length)
 {
 	unsigned long tracknum;
 
-	if(track >= eof_song->tracks)
+	if((sp == NULL) || (track >= sp->tracks))
 		return;
-	tracknum = eof_song->track[track]->tracknum;
+	tracknum = sp->track[track]->tracknum;
 
-	switch(eof_song->track[track]->track_format)
+	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
-			if(note < eof_song->legacy_track[tracknum]->notes)
+			if(note < sp->legacy_track[tracknum]->notes)
 			{
-				eof_song->legacy_track[tracknum]->note[note]->length = length;
+				sp->legacy_track[tracknum]->note[note]->length = length;
 			}
 		break;
 
 		case EOF_VOCAL_TRACK_FORMAT:
-			if(note < eof_song->vocal_track[tracknum]->lyrics)
+			if(note < sp->vocal_track[tracknum]->lyrics)
 			{
-				eof_song->vocal_track[tracknum]->lyric[note]->length = length;
+				sp->vocal_track[tracknum]->lyric[note]->length = length;
 			}
 		break;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			if(note < eof_song->pro_guitar_track[tracknum]->notes)
+			if(note < sp->pro_guitar_track[tracknum]->notes)
 			{
-				eof_song->pro_guitar_track[tracknum]->note[note]->length = length;
+				sp->pro_guitar_track[tracknum]->note[note]->length = length;
 			}
 		break;
 	}
 }
 
-unsigned long eof_get_note_flags(unsigned long track, unsigned long note)
+unsigned long eof_get_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	unsigned long tracknum;
 
-	if(track >= eof_song->tracks)
+	if((sp == NULL) || (track >= sp->tracks))
 		return 0;	//Return error
-	tracknum = eof_song->track[track]->tracknum;
+	tracknum = sp->track[track]->tracknum;
 
-	switch(eof_song->track[track]->track_format)
+	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
-			if(note < eof_song->legacy_track[tracknum]->notes)
+			if(note < sp->legacy_track[tracknum]->notes)
 			{
-				return eof_song->legacy_track[tracknum]->note[note]->flags;
+				return sp->legacy_track[tracknum]->note[note]->flags;
 			}
 		break;
 
 		case EOF_VOCAL_TRACK_FORMAT:
-			if(note < eof_song->vocal_track[tracknum]->lyrics)
+			if(note < sp->vocal_track[tracknum]->lyrics)
 			{
-				return eof_song->vocal_track[tracknum]->lyric[note]->flags;
+				return sp->vocal_track[tracknum]->lyric[note]->flags;
 			}
 		break;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			if(note < eof_song->pro_guitar_track[tracknum]->notes)
+			if(note < sp->pro_guitar_track[tracknum]->notes)
 			{
-				return eof_song->pro_guitar_track[tracknum]->note[note]->flags;
+				return sp->pro_guitar_track[tracknum]->note[note]->flags;
 			}
 		break;
 	}
@@ -2474,34 +2431,34 @@ unsigned long eof_get_note_flags(unsigned long track, unsigned long note)
 	return 0;	//Return error
 }
 
-unsigned long eof_get_note_note(unsigned long track, unsigned long note)
+unsigned long eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	unsigned long tracknum;
 
-	if(track >= eof_song->tracks)
+	if((sp == NULL) || (track >= sp->tracks))
 		return 0;	//Return error
-	tracknum = eof_song->track[track]->tracknum;
+	tracknum = sp->track[track]->tracknum;
 
-	switch(eof_song->track[track]->track_format)
+	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
-			if(note < eof_song->legacy_track[tracknum]->notes)
+			if(note < sp->legacy_track[tracknum]->notes)
 			{
-				return eof_song->legacy_track[tracknum]->note[note]->note;
+				return sp->legacy_track[tracknum]->note[note]->note;
 			}
 		break;
 
 		case EOF_VOCAL_TRACK_FORMAT:
-			if(note < eof_song->vocal_track[tracknum]->lyrics)
+			if(note < sp->vocal_track[tracknum]->lyrics)
 			{
-				return eof_song->vocal_track[tracknum]->lyric[note]->note;
+				return sp->vocal_track[tracknum]->lyric[note]->note;
 			}
 		break;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			if(note < eof_song->pro_guitar_track[tracknum]->notes)
+			if(note < sp->pro_guitar_track[tracknum]->notes)
 			{
-				return eof_song->pro_guitar_track[tracknum]->note[note]->note;
+				return sp->pro_guitar_track[tracknum]->note[note]->note;
 			}
 		break;
 	}
@@ -2597,48 +2554,48 @@ void *eof_track_add_create_note2(EOF_SONG *sp, unsigned long track, EOF_NOTE *no
 	return eof_track_add_create_note(sp, track, note->note, note->pos, note->length, note->type, NULL);
 }
 
-short eof_get_num_solos(unsigned long track)
+unsigned long eof_get_num_solos(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long tracknum;
 
-	if(track >= eof_song->tracks)
+	if((sp == NULL) || (track >= sp->tracks))
 		return 0;	//Return error
-	tracknum = eof_song->track[track]->tracknum;
+	tracknum = sp->track[track]->tracknum;
 
-	switch(eof_song->track[track]->track_format)
+	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
-		return eof_song->legacy_track[tracknum]->solos;
+		return sp->legacy_track[tracknum]->solos;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-		return eof_song->pro_guitar_track[tracknum]->solos;
+		return sp->pro_guitar_track[tracknum]->solos;
 	}
 
 	return 0;	//Return error
 }
 
-EOF_SOLO_ENTRY *eof_get_solo(unsigned long track,unsigned long solonum)
+EOF_SOLO_ENTRY *eof_get_solo(EOF_SONG *sp, unsigned long track, unsigned long solonum)
 {
 	unsigned long tracknum;
 
-	if(track >= eof_song->tracks)
+	if((sp == NULL) || (track >= sp->tracks))
 		return NULL;	//Return error
-	tracknum = eof_song->track[track]->tracknum;
+	tracknum = sp->track[track]->tracknum;
 
-	switch(eof_song->track[track]->track_format)
+	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
-			if(solonum < eof_song->legacy_track[tracknum]->solos)
+			if(solonum < sp->legacy_track[tracknum]->solos)
 			{
-				return &eof_song->legacy_track[tracknum]->solo[solonum];
+				return &sp->legacy_track[tracknum]->solo[solonum];
 			}
 		break;
 
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			if(solonum < eof_song->pro_guitar_track[tracknum]->solos)
+			if(solonum < sp->pro_guitar_track[tracknum]->solos)
 			{
-				return &eof_song->pro_guitar_track[tracknum]->solo[solonum];
+				return &sp->pro_guitar_track[tracknum]->solo[solonum];
 			}
 		break;
 	}
@@ -2646,116 +2603,116 @@ EOF_SOLO_ENTRY *eof_get_solo(unsigned long track,unsigned long solonum)
 	return NULL;	//Return error
 }
 
-void eof_set_note_pos(unsigned long track, unsigned long note, unsigned long pos)
+void eof_set_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos)
 {
 	unsigned long tracknum;
 
-	if(track >= eof_song->tracks)
+	if((sp == NULL) || (track >= sp->tracks))
 		return;
-	tracknum = eof_song->track[track]->tracknum;
+	tracknum = sp->track[track]->tracknum;
 
-	switch(eof_song->track[track]->track_format)
+	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
-			if(note < eof_song->legacy_track[tracknum]->notes)
+			if(note < sp->legacy_track[tracknum]->notes)
 			{
-				eof_song->legacy_track[tracknum]->note[note]->pos = pos;
+				sp->legacy_track[tracknum]->note[note]->pos = pos;
 			}
 		break;
 
 		case EOF_VOCAL_TRACK_FORMAT:
-			if(note < eof_song->vocal_track[tracknum]->lyrics)
+			if(note < sp->vocal_track[tracknum]->lyrics)
 			{
-				eof_song->vocal_track[tracknum]->lyric[note]->pos = pos;
+				sp->vocal_track[tracknum]->lyric[note]->pos = pos;
 			}
 		break;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			if(note < eof_song->pro_guitar_track[tracknum]->notes)
+			if(note < sp->pro_guitar_track[tracknum]->notes)
 			{
-				eof_song->pro_guitar_track[tracknum]->note[note]->pos = pos;
+				sp->pro_guitar_track[tracknum]->note[note]->pos = pos;
 			}
 		break;
 	}
 }
 
-void eof_set_note_note(unsigned long track, unsigned long note, unsigned long value)
+void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long value)
 {
 	unsigned long tracknum;
 
-	if(track >= eof_song->tracks)
+	if((sp == NULL) || (track >= sp->tracks))
 		return;
-	tracknum = eof_song->track[track]->tracknum;
+	tracknum = sp->track[track]->tracknum;
 
-	switch(eof_song->track[track]->track_format)
+	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
-			if(note < eof_song->legacy_track[tracknum]->notes)
+			if(note < sp->legacy_track[tracknum]->notes)
 			{
-				eof_song->legacy_track[tracknum]->note[note]->pos = value;
+				sp->legacy_track[tracknum]->note[note]->pos = value;
 			}
 		break;
 
 		case EOF_VOCAL_TRACK_FORMAT:
-			if(note < eof_song->vocal_track[tracknum]->lyrics)
+			if(note < sp->vocal_track[tracknum]->lyrics)
 			{
-				eof_song->vocal_track[tracknum]->lyric[note]->pos = value;
+				sp->vocal_track[tracknum]->lyric[note]->pos = value;
 			}
 		break;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			if(note < eof_song->pro_guitar_track[tracknum]->notes)
+			if(note < sp->pro_guitar_track[tracknum]->notes)
 			{
-				eof_song->pro_guitar_track[tracknum]->note[note]->pos = value;
+				sp->pro_guitar_track[tracknum]->note[note]->pos = value;
 			}
 		break;
 	}
 }
 
-void eof_track_sort_notes(unsigned long track)
+void eof_track_sort_notes(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long tracknum;
 
-	if((eof_song == NULL) || (track >= eof_song->tracks) || (track == 0))
+	if((sp == NULL) || (track >= sp->tracks) || (track == 0))
 		return;
-	tracknum = eof_song->track[track]->tracknum;
+	tracknum = sp->track[track]->tracknum;
 
-	switch(eof_song->track[track]->track_format)
+	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
-			eof_legacy_track_sort_notes(eof_song->legacy_track[tracknum]);
+			eof_legacy_track_sort_notes(sp->legacy_track[tracknum]);
 		break;
 
 		case EOF_VOCAL_TRACK_FORMAT:
-			eof_vocal_track_sort_lyrics(eof_song->vocal_track[tracknum]);
+			eof_vocal_track_sort_lyrics(sp->vocal_track[tracknum]);
 		break;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			eof_pro_guitar_track_sort_notes(eof_song->pro_guitar_track[tracknum]);
+			eof_pro_guitar_track_sort_notes(sp->pro_guitar_track[tracknum]);
 		break;
 	}
 }
 
-void eof_track_fixup_notes(unsigned long track, int sel)
+void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 {
 	unsigned long tracknum;
 
-	if((eof_song == NULL) || (track >= eof_song->tracks))
+	if((sp == NULL) || (track >= sp->tracks))
 		return;
-	tracknum = eof_song->track[track]->tracknum;
+	tracknum = sp->track[track]->tracknum;
 
-	switch(eof_song->track[track]->track_format)
+	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
-			eof_legacy_track_fixup_notes(eof_song->legacy_track[tracknum], sel);
+			eof_legacy_track_fixup_notes(sp->legacy_track[tracknum], sel);
 		break;
 
 		case EOF_VOCAL_TRACK_FORMAT:
-			eof_vocal_track_fixup_lyrics(eof_song->vocal_track[tracknum], sel);
+			eof_vocal_track_fixup_lyrics(sp->vocal_track[tracknum], sel);
 		break;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			eof_pro_guitar_track_fixup_notes(eof_song->pro_guitar_track[tracknum], sel);
+			eof_pro_guitar_track_fixup_notes(sp->pro_guitar_track[tracknum], sel);
 		break;
 	}
 }
@@ -2799,9 +2756,9 @@ void eof_pro_guitar_track_delete_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long n
 	}
 }
 
-int eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, int note)
+long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note)
 {
-	int i;
+	long i;
 
 	for(i = note + 1; i < tp->notes; i++)
 	{
@@ -2884,5 +2841,376 @@ void eof_pro_guitar_track_fixup_notes(EOF_PRO_GUITAR_TRACK * tp, int sel)
 		{
 			eof_selection.multi[eof_selection.current] = 1;
 		}
+	}
+}
+
+unsigned long eof_get_num_star_power_paths(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+		return sp->legacy_track[tracknum]->star_power_paths;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+		return sp->pro_guitar_track[tracknum]->star_power_paths;
+	}
+
+	return 0;	//Return error
+}
+
+EOF_STAR_POWER_ENTRY *eof_get_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long pathnum)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return NULL;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(pathnum < sp->legacy_track[tracknum]->star_power_paths)
+			{
+				return &sp->legacy_track[tracknum]->star_power_path[pathnum];
+			}
+		break;
+
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(pathnum < sp->pro_guitar_track[tracknum]->star_power_paths)
+			{
+				return &sp->pro_guitar_track[tracknum]->star_power_path[pathnum];
+			}
+		break;
+	}
+
+	return NULL;	//Return error
+}
+
+void eof_set_num_solos(EOF_SONG *sp, unsigned long track, unsigned long number)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			sp->legacy_track[tracknum]->solos = number;
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			sp->pro_guitar_track[tracknum]->solos = number;
+		break;
+	}
+}
+
+void eof_set_num_star_power_paths(EOF_SONG *sp, unsigned long track, unsigned long number)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			sp->legacy_track[tracknum]->star_power_paths = number;
+		break;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+			sp->vocal_track[tracknum]->star_power_paths = number;
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			sp->pro_guitar_track[tracknum]->star_power_paths = number;
+		break;
+	}
+}
+
+long eof_track_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return -1;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+		return eof_fixup_next_legacy_note(sp->legacy_track[tracknum], note);
+
+		case EOF_VOCAL_TRACK_FORMAT:
+		return eof_fixup_next_lyric(sp->vocal_track[tracknum], note);
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+		return eof_fixup_next_pro_guitar_note(sp->pro_guitar_track[tracknum], note);
+	}
+
+	return -1;
+}
+
+void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long tracknum;
+	unsigned long i;
+	long next;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	for(i = 0; i < eof_track_get_size(sp, track); i++)
+	{	//For each note in the track
+		next = eof_track_fixup_next_note(sp, track, i);
+		if(next >= 0)
+		{
+			if(eof_get_note_pos(sp, track, i) + eof_get_note_length(sp, track, i) > eof_get_note_pos(sp, track, next))
+			{
+				eof_set_note_flags(sp, track, i, eof_get_note_flags(sp, track, i) | EOF_NOTE_FLAG_CRAZY);
+			}
+		}
+	}
+}
+
+void eof_set_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long flags)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				sp->legacy_track[tracknum]->note[note]->flags = flags;
+			}
+		break;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+			if(note < sp->vocal_track[tracknum]->lyrics)
+			{
+				sp->vocal_track[tracknum]->lyric[note]->flags = flags;
+			}
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(note < sp->pro_guitar_track[tracknum]->notes)
+			{
+				sp->pro_guitar_track[tracknum]->note[note]->flags = flags;
+			}
+		break;
+	}
+}
+
+void eof_set_note_type(EOF_SONG *sp, unsigned long track, unsigned long note, char type)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				sp->legacy_track[tracknum]->note[note]->type = type;
+			}
+		break;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+			if(note < sp->vocal_track[tracknum]->lyrics)
+			{
+				sp->vocal_track[tracknum]->lyric[note]->type = type;
+			}
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(note < sp->pro_guitar_track[tracknum]->notes)
+			{
+				sp->pro_guitar_track[tracknum]->note[note]->type = type;
+			}
+		break;
+	}
+}
+
+void eof_track_delete_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long pathnum)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(pathnum < sp->legacy_track[tracknum]->star_power_paths)
+			{
+				eof_legacy_track_delete_star_power(sp->legacy_track[tracknum], pathnum);
+			}
+		break;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+			if(pathnum < sp->vocal_track[tracknum]->star_power_paths)
+			{
+				eof_vocal_track_delete_star_power(sp->vocal_track[tracknum], pathnum);
+			}
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(pathnum < sp->pro_guitar_track[tracknum]->star_power_paths)
+			{
+				eof_pro_guitar_track_delete_star_power(sp->pro_guitar_track[tracknum], pathnum);
+			}
+		break;
+	}
+}
+
+void eof_vocal_track_delete_star_power(EOF_VOCAL_TRACK * tp, unsigned long index)
+{
+	unsigned long i;
+
+	for(i = index; i < tp->star_power_paths - 1; i++)
+	{
+		memcpy(&tp->star_power_path[i], &tp->star_power_path[i + 1], sizeof(EOF_STAR_POWER_ENTRY));
+	}
+	tp->star_power_paths--;
+}
+
+void eof_pro_guitar_track_delete_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned long index)
+{
+	unsigned long i;
+
+	if(index >= tp->star_power_paths)
+		return;
+
+	for(i = index; i < tp->star_power_paths - 1; i++)
+	{
+		memcpy(&tp->star_power_path[i], &tp->star_power_path[i + 1], sizeof(EOF_STAR_POWER_ENTRY));
+	}
+	tp->star_power_paths--;
+}
+
+void eof_track_add_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			eof_legacy_track_add_star_power(sp->legacy_track[tracknum], start_pos, end_pos);
+		break;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+			eof_vocal_track_add_star_power(sp->vocal_track[tracknum], start_pos, end_pos);
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			eof_pro_guitar_track_add_star_power(sp->pro_guitar_track[tracknum], start_pos, end_pos);
+		break;
+	}
+}
+
+void eof_vocal_track_add_star_power(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
+{
+	if(tp->star_power_paths < EOF_MAX_STAR_POWER)
+	{	//If the maximum number of star power phrases for this track hasn't already been defined
+		tp->star_power_path[tp->star_power_paths].start_pos = start_pos;
+		tp->star_power_path[tp->star_power_paths].end_pos = end_pos;
+		tp->star_power_paths++;
+	}
+}
+
+void eof_pro_guitar_track_add_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
+{
+	if(tp->star_power_paths < EOF_MAX_STAR_POWER)
+	{	//If the maximum number of star power phrases for this track hasn't already been defined
+		tp->star_power_path[tp->star_power_paths].start_pos = start_pos;
+		tp->star_power_path[tp->star_power_paths].end_pos = end_pos;
+		tp->star_power_paths++;
+	}
+}
+
+void eof_track_delete_solo(EOF_SONG *sp, unsigned long track, unsigned long pathnum)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			eof_legacy_track_delete_solo(sp->legacy_track[tracknum], pathnum);
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			eof_pro_guitar_track_delete_solo(sp->pro_guitar_track[tracknum], pathnum);
+		break;
+	}
+}
+
+void eof_pro_guitar_track_delete_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long index)
+{
+	unsigned long i;
+
+	if(index >= tp->solos)
+		return;
+
+	for(i = index; i < tp->solos - 1; i++)
+	{
+		memcpy(&tp->solo[i], &tp->solo[i + 1], sizeof(EOF_SOLO_ENTRY));
+	}
+	tp->solos--;
+}
+
+void eof_track_add_solo(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			eof_legacy_track_add_solo(sp->legacy_track[tracknum], start_pos, end_pos);
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			eof_pro_guitar_track_add_solo(sp->pro_guitar_track[tracknum], start_pos, end_pos);
+		break;
+	}
+}
+
+void eof_pro_guitar_track_add_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
+{
+	if(tp->solos < EOF_MAX_SOLOS)
+	{	//If the maximum number of solo phrases for this track hasn't already been defined
+		tp->solo[tp->solos].start_pos = start_pos;
+		tp->solo[tp->solos].end_pos = end_pos;
+		tp->solos++;
 	}
 }

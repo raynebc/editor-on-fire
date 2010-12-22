@@ -295,7 +295,7 @@ int eof_count_tracks(void)
 
 	for(i = 1; i < eof_song->tracks; i++)
 	{
-		if(eof_track_note_count(eof_song, i))
+		if(eof_track_get_size(eof_song, i))
 		{
 			count++;
 		}
@@ -342,6 +342,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	EOF_MIDI_TS_LIST *tslist=NULL;			//List containing TS changes
 	unsigned short noteflags;				//Stores the note flag for handling open bass <-> forced HOPO lane 1 conflicts
 	unsigned char note;						//Stores the note bitflag for handling open bass <-> forced HOPO lane 1 conflicts
+	EOF_SOLO_ENTRY *soloptr = NULL;
+	EOF_STAR_POWER_ENTRY *starpowerptr = NULL;
+	unsigned long notenum;
 
 	anchorlist=eof_build_tempo_list();	//Create a linked list of all tempo changes in eof_song->beat[]
 	if(anchorlist == NULL)	//If the anchor list could not be created
@@ -378,7 +381,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			tracknum = sp->track[j]->tracknum;
 
 			/* fill in notes */
-			if(sp->legacy_track[tracknum]->notes > 0)
+			if(eof_track_get_size(sp, j) > 0)
 			{	//If this track has notes
 				notetrackspopulated[j] = 1;	//Remember that this track is populated
 				/* clear MIDI events list */
@@ -388,22 +391,28 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 //Detect whether Pro drum notation is being used
 //Pro drum notation is that if a green, yellow or blue drum note is NOT to be marked as a cymbal,
 //it must be marked with the appropriate MIDI note, otherwise the note defaults as a cymbal
-				for(i = 0, prodrums = 0; i < sp->legacy_track[tracknum]->notes; i++)
-				{
-					if(	((sp->legacy_track[tracknum]->note[i]->note & 4) && ((sp->legacy_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_Y_CYMBAL))) ||
-						((sp->legacy_track[tracknum]->note[i]->note & 8) && ((sp->legacy_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_B_CYMBAL))) ||
-						((sp->legacy_track[tracknum]->note[i]->note & 16) && ((sp->legacy_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_G_CYMBAL))))
-					{	//If this note contains a yellow, blue or purple (green in Rock Band) drum marked with pro drum notation
-						prodrums = 1;
-						break;
+				prodrums = 0;
+				if(sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+				{	//If this is a drum track
+					for(i = 0, prodrums = 0; i < eof_track_get_size(sp, j); i++)
+					{	//For each note in the track
+						note = eof_get_note_note(sp, j, i);
+						noteflags = eof_get_note_flags(sp, j, i);
+						if(	((note & 4) && ((noteflags & EOF_NOTE_FLAG_Y_CYMBAL))) ||
+							((note & 8) && ((noteflags & EOF_NOTE_FLAG_B_CYMBAL))) ||
+							((note & 16) && ((noteflags & EOF_NOTE_FLAG_G_CYMBAL))))
+						{	//If this note contains a yellow, blue or purple (green in Rock Band) drum marked with pro drum notation
+							prodrums = 1;
+							break;
+						}
 					}
 				}
 
 				/* write the MTrk MIDI data to a temp file
 				use size of the file as the MTrk header length */
-				for(i = 0; i < sp->legacy_track[tracknum]->notes; i++)
-				{	//For each note in the legacy track
-					switch(sp->legacy_track[tracknum]->note[i]->type)
+				for(i = 0; i < eof_track_get_size(sp, j); i++)
+				{	//For each note in the track
+					switch(eof_get_note_type(sp, j, i))
 					{
 						case EOF_NOTE_AMAZING:	//notes 96-100
 						{
@@ -432,8 +441,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 						}
 					}
 
-					noteflags = sp->legacy_track[tracknum]->note[i]->flags;	//Store the note flags for easier use
-					note = sp->legacy_track[tracknum]->note[i]->note;	//Store the note bitflag for easier use
+					noteflags = eof_get_note_flags(sp, j, i);	//Store the note flags for easier use
+					note = eof_get_note_note(sp, j, i);			//Store the note bitflag for easier use
 
 					if(eof_open_bass_enabled() && (j == EOF_TRACK_BASS))
 					{	//Ensure that for PART BASS, green gems and open bass notes don't exist at the same location
@@ -448,17 +457,17 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					{
 						if((j == EOF_TRACK_DRUM) && (noteflags & EOF_NOTE_FLAG_DBASS))
 						{	//If the track being written is PART DRUMS, and this note is marked for Expert+ double bass
-							eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos, 0x90, 95);
+							eof_add_midi_event(eof_get_note_pos(sp, j, i), 0x90, 95);
 							expertplus = 1;
 						}
 						else	//Otherwise write a normal green gem
-							eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos, 0x90, midi_note_offset + 0);
+							eof_add_midi_event(eof_get_note_pos(sp, j, i), 0x90, midi_note_offset + 0);
 					}
 
 					/* write red note */
 					if(note & 2)
 					{
-						eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos, 0x90, midi_note_offset + 1);
+						eof_add_midi_event(eof_get_note_pos(sp, j, i), 0x90, midi_note_offset + 1);
 					}
 
 					/* write yellow note */
@@ -468,10 +477,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 						{	//If pro drum notation is in effect and no more yellow drum notes at this note's position are marked as cymbals
 							if(eof_midi_note_status[RB3_DRUM_YELLOW_FORCE] == 0)
 							{	//Write a pro yellow drum marker if one isn't already in effect
-								eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos, 0x90, RB3_DRUM_YELLOW_FORCE);
+								eof_add_midi_event(eof_get_note_pos(sp, j, i), 0x90, RB3_DRUM_YELLOW_FORCE);
 							}
 						}
-						eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos, 0x90, midi_note_offset + 2);
+						eof_add_midi_event(eof_get_note_pos(sp, j, i), 0x90, midi_note_offset + 2);
 					}
 
 					/* write blue note */
@@ -481,10 +490,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 						{	//If pro drum notation is in effect and no more blue drum notes at this note's position are marked as cymbals
 							if(eof_midi_note_status[RB3_DRUM_BLUE_FORCE] == 0)
 							{	//Write a pro blue drum marker if one isn't already in effect
-								eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos, 0x90, RB3_DRUM_BLUE_FORCE);
+								eof_add_midi_event(eof_get_note_pos(sp, j, i), 0x90, RB3_DRUM_BLUE_FORCE);
 							}
 						}
-						eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos, 0x90, midi_note_offset + 3);
+						eof_add_midi_event(eof_get_note_pos(sp, j, i), 0x90, midi_note_offset + 3);
 					}
 
 					/* write purple note */
@@ -494,17 +503,17 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 						{	//If pro drum notation is in effect and no more green drum notes at this note's position are marked as cymbals
 							if(eof_midi_note_status[RB3_DRUM_GREEN_FORCE] == 0)
 							{	//Write a pro green drum marker if one isn't already in effect
-								eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos, 0x90, RB3_DRUM_GREEN_FORCE);
+								eof_add_midi_event(eof_get_note_pos(sp, j, i), 0x90, RB3_DRUM_GREEN_FORCE);
 							}
 						}
-						eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos, 0x90, midi_note_offset + 4);
+						eof_add_midi_event(eof_get_note_pos(sp, j, i), 0x90, midi_note_offset + 4);
 					}
 
 					/* write open bass note, if the feature was enabled during save */
 					if(eof_open_bass_enabled() && (j == EOF_TRACK_BASS) && (note & 32))
 					{	//If this is an open bass note
 						noteflags |= EOF_NOTE_FLAG_F_HOPO;	//Set the forced HOPO on flag, which is used to denote open bass
-						eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos, 0x90, midi_note_offset + 0);	//Write a gem for lane 1
+						eof_add_midi_event(eof_get_note_pos(sp, j, i), 0x90, midi_note_offset + 0);	//Write a gem for lane 1
 					}
 
 					/* write forced HOPO */
@@ -512,7 +521,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					{
 						if(eof_midi_note_status[midi_note_offset + 5] == 0)
 						{	//Only write a phrase marker if one isn't already in effect
-							eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos, 0x90, midi_note_offset + 5);
+							eof_add_midi_event(eof_get_note_pos(sp, j, i), 0x90, midi_note_offset + 5);
 						}
 					}
 
@@ -521,32 +530,32 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					{
 						if(eof_midi_note_status[midi_note_offset + 6] == 0)
 						{	//Only write a phrase marker if one isn't already in effect
-							eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos, 0x90, midi_note_offset + 6);
+							eof_add_midi_event(eof_get_note_pos(sp, j, i), 0x90, midi_note_offset + 6);
 						}
 					}
 
-					if((j == EOF_TRACK_DRUM) && (sp->legacy_track[tracknum]->note[i]->type != EOF_NOTE_SPECIAL))
+					if((j == EOF_TRACK_DRUM) && (eof_get_note_type(sp, j, i) != EOF_NOTE_SPECIAL))
 					{	//Ensure that drum notes are not written with sustain (Unless they are BRE notes)
 						length = 1;
 					}
 					else
 					{
-						length = sp->legacy_track[tracknum]->note[i]->length;
+						length = eof_get_note_length(sp, j, i);
 					}
 
 					/* write green note off */
 					if(note & 1)
 					{
 						if((j == EOF_TRACK_DRUM) && (noteflags & EOF_NOTE_FLAG_DBASS))	//If the track being written is PART DRUMS, and this note is marked for Expert+ double bass
-							eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos + length, 0x80, 95);
+							eof_add_midi_event(eof_get_note_pos(sp, j, i) + length, 0x80, 95);
 						else	//Otherwise end a normal green gem
-							eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos + length, 0x80, midi_note_offset + 0);
+							eof_add_midi_event(eof_get_note_pos(sp, j, i) + length, 0x80, midi_note_offset + 0);
 					}
 
 					/* write red note off */
 					if(note & 2)
 					{
-						eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos + length, 0x80, midi_note_offset + 1);
+						eof_add_midi_event(eof_get_note_pos(sp, j, i) + length, 0x80, midi_note_offset + 1);
 					}
 
 					/* write yellow note off */
@@ -556,10 +565,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 						{	//If pro drum notation is in effect and no more drum notes at this note's position are marked as cymbals
 							if(eof_midi_note_status[RB3_DRUM_YELLOW_FORCE] == 1)
 							{	//End a pro yellow drum marker if one is in effect
-								eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos + length, 0x80, RB3_DRUM_YELLOW_FORCE);
+								eof_add_midi_event(eof_get_note_pos(sp, j, i) + length, 0x80, RB3_DRUM_YELLOW_FORCE);
 							}
 						}
-						eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos + length, 0x80, midi_note_offset + 2);
+						eof_add_midi_event(eof_get_note_pos(sp, j, i) + length, 0x80, midi_note_offset + 2);
 					}
 
 					/* write blue note off */
@@ -569,10 +578,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 						{	//If pro drum notation is in effect and no more blue drum notes at this note's position are marked as cymbals
 							if(eof_midi_note_status[RB3_DRUM_BLUE_FORCE] == 1)
 							{	//End a pro blue drum marker if one is in effect
-								eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos + length, 0x80, RB3_DRUM_BLUE_FORCE);
+								eof_add_midi_event(eof_get_note_pos(sp, j, i) + length, 0x80, RB3_DRUM_BLUE_FORCE);
 							}
 						}
-						eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos + length, 0x80, midi_note_offset + 3);
+						eof_add_midi_event(eof_get_note_pos(sp, j, i) + length, 0x80, midi_note_offset + 3);
 					}
 
 					/* write purple note off */
@@ -582,16 +591,16 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 						{	//If pro drum notation is in effect and no more drum notes at this note's position are marked as cymbals
 							if(eof_midi_note_status[RB3_DRUM_GREEN_FORCE] == 1)
 							{	//End a pro green drum marker if one is in effect
-								eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos + length, 0x80, RB3_DRUM_GREEN_FORCE);
+								eof_add_midi_event(eof_get_note_pos(sp, j, i) + length, 0x80, RB3_DRUM_GREEN_FORCE);
 							}
 						}
-						eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos + length, 0x80, midi_note_offset + 4);
+						eof_add_midi_event(eof_get_note_pos(sp, j, i) + length, 0x80, midi_note_offset + 4);
 					}
 
 					/* write open bass note off */
 					if(eof_open_bass_enabled() && (j == EOF_TRACK_BASS) && (note & 32))
 					{
-						eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos + length, 0x80, midi_note_offset + 0);
+						eof_add_midi_event(eof_get_note_pos(sp, j, i) + length, 0x80, midi_note_offset + 0);
 					}
 
 					/* write forced HOPO note off */
@@ -600,7 +609,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					{	//thekiwimaddog indicated that Rock Band uses HOPO phrases per note/chord
 						if(eof_midi_note_status[midi_note_offset + 5])
 						{	//Only end a phrase marker if one is already in effect
-							eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos + sp->legacy_track[tracknum]->note[i]->length, 0x80, midi_note_offset + 5);
+							eof_add_midi_event(eof_get_note_pos(sp, j, i) + eof_get_note_length(sp, j, i), 0x80, midi_note_offset + 5);
 						}
 					}
 
@@ -610,29 +619,34 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					{	//thekiwimaddog indicated that Rock Band uses HOPO phrases per note/chord
 						if(eof_midi_note_status[midi_note_offset + 6])
 						{	//Only end a phrase marker if one is already in effect
-							eof_add_midi_event(sp->legacy_track[tracknum]->note[i]->pos + sp->legacy_track[tracknum]->note[i]->length, 0x80, midi_note_offset + 6);
+							eof_add_midi_event(eof_get_note_pos(sp, j, i) + eof_get_note_length(sp, j, i), 0x80, midi_note_offset + 6);
 						}
 					}
-				}
+				}//For each note in the track
 
 				/* fill in star power */
-				for(i = 0; i < sp->legacy_track[tracknum]->star_power_paths; i++)
-				{
-					eof_add_midi_event(sp->legacy_track[tracknum]->star_power_path[i].start_pos, 0x90, 116);
-					eof_add_midi_event(sp->legacy_track[tracknum]->star_power_path[i].end_pos, 0x80, 116);
+				for(i = 0; i < eof_get_num_star_power_paths(sp, j); i++)
+				{	//For each star power path in the track
+					starpowerptr = eof_get_star_power_path(sp, j, i);
+					eof_add_midi_event(starpowerptr->start_pos, 0x90, 116);
+					eof_add_midi_event(starpowerptr->end_pos, 0x80, 116);
 				}
 
 				/* fill in solos */
-				for(i = 0; i < sp->legacy_track[tracknum]->solos; i++)
-				{
-					eof_add_midi_event(sp->legacy_track[tracknum]->solo[i].start_pos, 0x90, 103);
-					eof_add_midi_event(sp->legacy_track[tracknum]->solo[i].end_pos, 0x80, 103);
+				for(i = 0; i < eof_get_num_solos(sp, j); i++)
+				{	//For each solo in the track
+					soloptr = eof_get_solo(sp, j, i);
+					eof_add_midi_event(soloptr->start_pos, 0x90, 103);
+					eof_add_midi_event(soloptr->end_pos, 0x80, 103);
 				}
 
 				for(i=0;i < 128;i++)
 				{	//Ensure that any notes that are still on are terminated
 					if(eof_midi_note_status[i] != 0)	//If this note was left on, write a note off at the end of the last charted note
-						eof_add_midi_event(sp->legacy_track[tracknum]->note[sp->legacy_track[tracknum]->notes-1]->pos + sp->legacy_track[tracknum]->note[sp->legacy_track[tracknum]->notes-1]->length,0x80,i);
+					{
+						notenum = eof_track_get_size(sp, j) - 1;	//The index of the last note in this track
+						eof_add_midi_event(eof_get_note_pos(sp, j, notenum) + eof_get_note_length(sp, j, notenum),0x80,i);
+					}
 				}
 				qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
 //				allegro_message("break1");
