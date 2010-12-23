@@ -3214,3 +3214,11 @@ void eof_pro_guitar_track_add_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long star
 		tp->solos++;
 	}
 }
+
+void eof_note_set_tail_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos)
+{
+	if((sp == NULL) || (track >= sp->tracks) || (note >= eof_track_get_size(sp, track)))
+		return;
+
+	eof_set_note_length(sp, track, note, pos - eof_get_note_pos(sp, track, note));
+}

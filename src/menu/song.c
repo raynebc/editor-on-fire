@@ -963,7 +963,7 @@ int eof_menu_song_properties(void)
 				eof_song->beat[i]->pos = eof_song->beat[i]->fpos;
 			}
 		}
-		if((eof_song->tags->ogg[eof_selected_ogg].midi_offset != old_offset) && (eof_count_notes() > 0))
+		if((eof_song->tags->ogg[eof_selected_ogg].midi_offset != old_offset) && (eof_track_get_size(eof_song, eof_selected_track) > 0))
 		{
 			if(alert(NULL, "Adjust notes to new offset?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 			{

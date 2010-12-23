@@ -3,27 +3,32 @@
 #include "main.h"
 #include "note.h"
 
-int eof_note_count_colors(EOF_NOTE * np)
+unsigned long eof_note_count_colors(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
-	int count = 0;
+	unsigned long count = 0;
+	unsigned long notemask = eof_get_note_note(sp, track, note);
 
-	if(np->note & 1)
+	if(notemask & 1)
 	{
 		count++;
 	}
-	if(np->note & 2)
+	if(notemask & 2)
 	{
 		count++;
 	}
-	if(np->note & 4)
+	if(notemask & 4)
 	{
 		count++;
 	}
-	if(np->note & 8)
+	if(notemask & 8)
 	{
 		count++;
 	}
-	if(np->note & 16)
+	if(notemask & 16)
+	{
+		count++;
+	}
+	if(notemask & 32)
 	{
 		count++;
 	}

@@ -684,27 +684,26 @@ int eof_menu_beat_reset_bpm(void)
 int eof_menu_beat_calculate_bpm(void)
 {
 	unsigned long i;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int first = 1;
 	unsigned long curpos = 0;
 	unsigned long delta;
 	unsigned long cppqn = eof_song->beat[eof_selected_beat]->ppqn;
 	double bpm = 0.0;
-	int bpm_count = 0;
+	unsigned long bpm_count = 0;
 
-	for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
-	{
+	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
 		if(eof_selection.multi[i])
 		{
 			if(first)
 			{
-				curpos = eof_song->legacy_track[tracknum]->note[i]->pos;
+				curpos = eof_get_note_pos(eof_song, eof_selected_track, i);
 				first = 0;
 			}
 			else
 			{
-				delta = eof_song->legacy_track[tracknum]->note[i]->pos - curpos;
-				curpos = eof_song->legacy_track[tracknum]->note[i]->pos;
+				delta = eof_get_note_pos(eof_song, eof_selected_track, i) - curpos;
+				curpos = eof_get_note_pos(eof_song, eof_selected_track, i);
 				bpm += (double)60000 / (double)delta;
 				bpm_count++;
 			}

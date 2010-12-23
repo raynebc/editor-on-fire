@@ -416,6 +416,14 @@ void eof_track_add_star_power_path(EOF_SONG *sp, unsigned long track, unsigned l
 void eof_track_delete_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long pathnum);	//Deletes the specified star power phrase and moves all phrases that follow back in the array one position
 void eof_track_add_solo(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track
 void eof_track_delete_solo(EOF_SONG *sp, unsigned long track, unsigned long pathnum);	//Deletes the specified solo phrase and moves all phrases that follow back in the array one position
+void eof_note_set_tail_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos);	//Sets the note's length value to (pos - [note]->pos)
+int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, char difficulty, unsigned long start, unsigned long end, unsigned long flags);
+	//Adds the specified section to the specified track if it's valid for the track
+	//For bookmark sections, the end variable represents which bookmark number is being set
+	//For fret catalog sections, the flags variable represents which track the catalog entry belongs to
+	//For lyric phrases, the difficulty field indicates which lyric set number (ie. PART VOCALS) the phrase applies to
+	//Returns zero on error
+unsigned long eof_count_track_lanes(unsigned long track);	//Returns the number of lanes in the specified track, or the default of 5
 
 EOF_NOTE * eof_legacy_track_add_note(EOF_LEGACY_TRACK * tp);	//Allocates, initializes and stores a new EOF_NOTE structure into the notes array.  Returns the newly allocated structure or NULL upon error
 void eof_legacy_track_delete_note(EOF_LEGACY_TRACK * tp, unsigned long note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position
@@ -532,15 +540,6 @@ EOF_SONG * eof_create_song_populated(void);
 #define EOF_TRAINER_SECTION				11
 #define EOF_CUSTOM_MIDI_NOTE_SECTION	12
 #define EOF_PREVIEW_SECTION				13
-int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, char difficulty, unsigned long start, unsigned long end, unsigned long flags);
-	//Adds the specified section to the specified track if it's valid for the track
-	//For bookmark sections, the end variable represents which bookmark number is being set
-	//For fret catalog sections, the flags variable represents which track the catalog entry belongs to
-	//For lyric phrases, the difficulty field indicates which lyric set number (ie. PART VOCALS) the phrase applies to
-	//Returns zero on error
-
-unsigned long eof_count_track_lanes(unsigned long track);
-	//Returns the number of lanes in the specified track, or the default of 5
 
 inline int eof_open_bass_enabled(void);
 	//A simple function returning nonzero if PART BASS has open strumming enabled

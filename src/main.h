@@ -348,7 +348,6 @@ unsigned long eof_count_selected_notes(unsigned long * total, char v);
 void eof_fix_waveform_graph(void);	//Rebuild the waveform graph data if it exists
 void eof_clear_input(void);
 void eof_prepare_undo(int type);
-int eof_count_notes(void);
 int eof_figure_difficulty(void);
 int eof_figure_part(void);	//Returns the active track number in terms of FoF's command line play functionality, or -1 on error
 int d_hackish_edit_proc (int msg, DIALOG *d, int c);

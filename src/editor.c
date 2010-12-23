@@ -101,29 +101,6 @@ void eof_select_beat(int beat)
 	}
 }
 
-void eof_set_tail_pos(int note, unsigned long pos)
-{
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-
-	if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
-	{
-		if(note < eof_track_get_size(eof_song, eof_selected_track))
-		{
-			eof_song->legacy_track[tracknum]->note[note]->length = pos - eof_song->legacy_track[tracknum]->note[note]->pos;
-		}
-	}
-}
-
-void eof_set_vocal_tail_pos(int note, unsigned long pos)
-{
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-
-	if(note < eof_song->vocal_track[tracknum]->lyrics)
-	{
-		eof_song->vocal_track[tracknum]->lyric[note]->length = pos - eof_song->vocal_track[tracknum]->lyric[note]->pos;
-	}
-}
-
 void eof_get_snap_ts(EOF_SNAP_DATA * sp, int beat)
 {
 	int tsbeat = 0;
@@ -536,6 +513,7 @@ void eof_read_editor_keys(void)
 	EOF_NOTE * new_note = NULL;
 	EOF_LYRIC * new_lyric = NULL;
 	unsigned long numlanes = eof_count_track_lanes(eof_selected_track);
+	unsigned long note;
 
 	eof_read_controller(&eof_guitar);
 	eof_read_controller(&eof_drums);
@@ -987,7 +965,7 @@ void eof_read_editor_keys(void)
 						if(eof_song->vocal_track[tracknum]->lyric[i]->length > 1)
 						{
 							eof_snap_logic(&eof_tail_snap, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length);
-							eof_set_tail_pos(i, eof_tail_snap.pos);
+							eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
 						}
 					}
 				}
@@ -1044,7 +1022,7 @@ void eof_read_editor_keys(void)
 						if(eof_get_note_length(eof_song, eof_selected_track, i) > 1)
 						{
 							eof_snap_logic(&eof_tail_snap, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i));
-							eof_set_tail_pos(i, eof_tail_snap.pos);
+							eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
 						}
 					}
 				}
@@ -1093,14 +1071,14 @@ void eof_read_editor_keys(void)
 						eof_snap_logic(&eof_tail_snap, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length + 1);
 						if(eof_tail_snap.pos > eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length + 1)
 						{
-							eof_set_tail_pos(i, eof_tail_snap.pos);
+							eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
 						}
 						else
 						{
 							eof_snap_length_logic(&eof_tail_snap);
 							eof_song->vocal_track[tracknum]->lyric[i]->length += eof_tail_snap.length;
 							eof_snap_logic(&eof_tail_snap, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length);
-							eof_set_vocal_tail_pos(i, eof_tail_snap.pos);
+							eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
 						}
 					}
 				}
@@ -1145,14 +1123,14 @@ void eof_read_editor_keys(void)
 						eof_snap_logic(&eof_tail_snap, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) + 1);
 						if(eof_tail_snap.pos > eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) + 1)
 						{
-							eof_set_tail_pos(i, eof_tail_snap.pos);
+							eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
 						}
 						else
 						{
 							eof_snap_length_logic(&eof_tail_snap);
 							eof_set_note_length(eof_song, eof_selected_track, i, eof_get_note_length(eof_song, eof_selected_track, i) + eof_tail_snap.length);
 							eof_snap_logic(&eof_tail_snap, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i));
-							eof_set_tail_pos(i, eof_tail_snap.pos);
+							eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
 						}
 					}
 				}
@@ -1434,13 +1412,15 @@ void eof_read_editor_keys(void)
 						eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 						if(eof_hover_note >= 0)
 						{	//If the user edited an existing note
-							eof_song->legacy_track[tracknum]->note[eof_hover_note]->note ^= bitmask;
+							note = eof_get_note_note(eof_song, eof_selected_track, eof_hover_note);
+							note ^= bitmask;
+							eof_set_note_note(eof_song, eof_selected_track, eof_hover_note, note);
 							if(eof_mark_drums_as_cymbal)
 							{	//If the user opted to make all new drum notes cymbals automatically
 								eof_mark_edited_note_as_cymbal(eof_song,eof_selected_track,eof_hover_note,bitmask);
 							}
 							eof_selection.current = eof_hover_note;
-							if(!eof_song->legacy_track[tracknum]->note[eof_hover_note]->note)
+							if(!eof_get_note_note(eof_song, eof_selected_track, eof_hover_note))
 							{
 								eof_track_delete_note(eof_song, eof_selected_track, eof_hover_note);
 								eof_selection.multi[eof_selection.current] = 0;
@@ -1459,7 +1439,7 @@ void eof_read_editor_keys(void)
 								memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
 								eof_selection.track = eof_selected_track;
 								eof_selection.multi[eof_selection.current] = 1;
-								eof_selection.current_pos = eof_song->legacy_track[tracknum]->note[eof_selection.current]->pos;
+								eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current);
 								eof_selection.range_pos_1 = eof_selection.current_pos;
 								eof_selection.range_pos_2 = eof_selection.current_pos;
 							}
@@ -2558,7 +2538,7 @@ void eof_editor_logic(void)
 							if(eof_get_note_length(eof_song, eof_selected_track, i) > 1)
 							{
 								eof_snap_logic(&eof_tail_snap, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i));
-								eof_set_tail_pos(i, eof_tail_snap.pos);
+								eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
 							}
 						}
 					}
@@ -2572,14 +2552,14 @@ void eof_editor_logic(void)
 							eof_snap_logic(&eof_tail_snap, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) + 1);
 							if(eof_tail_snap.pos > eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) + 1)
 							{
-								eof_set_tail_pos(i, eof_tail_snap.pos);
+								eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
 							}
 							else
 							{
 								eof_snap_length_logic(&eof_tail_snap);
 								eof_set_note_length(eof_song, eof_selected_track, i, eof_get_note_length(eof_song, eof_selected_track, i) + eof_tail_snap.length);
 								eof_snap_logic(&eof_tail_snap, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i));
-								eof_set_tail_pos(i, eof_tail_snap.pos);
+								eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
 							}
 //							eof_snap_logic(&eof_tail_snap, eof_get_note_pos(eof_selected_track, i) + eof_get_note_length(eof_selected_track, i) + 1);
 						}
@@ -3335,7 +3315,7 @@ void eof_vocal_editor_logic(void)
 							if(eof_song->vocal_track[tracknum]->lyric[i]->length > 1)
 							{
 								eof_snap_logic(&eof_tail_snap, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length);
-								eof_set_vocal_tail_pos(i, eof_tail_snap.pos);
+								eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
 							}
 						}
 					}
@@ -3349,14 +3329,14 @@ void eof_vocal_editor_logic(void)
 							eof_snap_logic(&eof_tail_snap, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length + 1);
 							if(eof_tail_snap.pos > eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length + 1)
 							{
-								eof_set_vocal_tail_pos(i, eof_tail_snap.pos);
+								eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
 							}
 							else
 							{
 								eof_snap_length_logic(&eof_tail_snap);
 								eof_song->vocal_track[tracknum]->lyric[i]->length += eof_tail_snap.length;
 								eof_snap_logic(&eof_tail_snap, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length);
-								eof_set_vocal_tail_pos(i, eof_tail_snap.pos);
+								eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
 							}
 						}
 					}
@@ -4033,7 +4013,7 @@ unsigned char eof_find_pen_note_mask(void)
 	//Determine which lane the mouse is in
 	eof_hover_piece = -1;
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	for(i = 0; i < eof_song->legacy_track[tracknum]->numlanes; i++)
+	for(i = 0; i < eof_count_track_lanes(eof_selected_track); i++)
 	{	//For each of the usable lanes
 		laneborder = eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 15 + 10 + eof_screen_layout.note_y[i];	//This represents the y position of the boundary between the current lane and the next
 		if((mouse_y < laneborder) && (mouse_y > laneborder - eof_screen_layout.string_space))
@@ -4043,7 +4023,7 @@ unsigned char eof_find_pen_note_mask(void)
 	}
 	if(eof_hover_note < 0)
 	{
-		bitmaskshift = eof_song->legacy_track[tracknum]->numlanes - 5;	//If the 6th lane is in use, the inverted mask will be shifted left by one
+		bitmaskshift = eof_count_track_lanes(eof_selected_track) - 5;	//If the 6th lane is in use, the inverted mask will be shifted left by one
 		switch(eof_hover_piece)
 		{
 			case 0:
