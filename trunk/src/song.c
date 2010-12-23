@@ -193,7 +193,7 @@ EOF_SONG * eof_load_song(const char * fn)
 	EOF_SONG * sp = NULL;
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};	//This header represents the current project format
 	char rheader[16];
-	int i;
+	short i;
 
 	fp = pack_fopen(fn, "r");
 	if(!fp)
@@ -619,9 +619,9 @@ void eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, uns
 	}
 }
 
-void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, int index)
+void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, unsigned long index)
 {
-	int i;
+	unsigned long i;
 
 	if(tp->lines == 0)	//If there are no lyric line phrases to delete
 		return;			//Cancel this to avoid problems
@@ -656,9 +656,9 @@ EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp)
 	return NULL;
 }
 
-void eof_song_delete_beat(EOF_SONG * sp, int beat)
+void eof_song_delete_beat(EOF_SONG * sp, unsigned long beat)
 {
-	int i;
+	unsigned long i;
 
 	free(sp->beat[beat]);
 	for(i = beat; i < sp->beats - 1; i++)
@@ -668,10 +668,10 @@ void eof_song_delete_beat(EOF_SONG * sp, int beat)
 	sp->beats--;
 }
 
-int eof_song_resize_beats(EOF_SONG * sp, int beats)
+int eof_song_resize_beats(EOF_SONG * sp, unsigned long beats)
 {
-	int i;
-	int oldbeats = sp->beats;
+	unsigned long i;
+	unsigned long oldbeats = sp->beats;
 	if(beats > oldbeats)
 	{
 		for(i = oldbeats; i < beats; i++)
@@ -693,7 +693,7 @@ int eof_song_resize_beats(EOF_SONG * sp, int beats)
 	return 1;	//Return success
 }
 
-EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, int beat, char * text)
+EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, unsigned long beat, char * text)
 {
 	if(sp->text_events < EOF_MAX_TEXT_EVENTS)
 	{	//If the maximum number of text events hasn't already been defined
@@ -712,9 +712,9 @@ EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, int beat, char * text)
 	return sp->text_event[sp->text_events-1];	//Return successfully created text event
 }
 
-void eof_song_delete_text_event(EOF_SONG * sp, int event)
+void eof_song_delete_text_event(EOF_SONG * sp, unsigned long event)
 {
-	int i;
+	unsigned long i;
 	free(sp->text_event[event]);
 	for(i = event; i < sp->text_events - 1; i++)
 	{
@@ -723,9 +723,9 @@ void eof_song_delete_text_event(EOF_SONG * sp, int event)
 	sp->text_events--;
 }
 
-void eof_song_move_text_events(EOF_SONG * sp, int beat, int offset)
+void eof_song_move_text_events(EOF_SONG * sp, unsigned long beat, int offset)
 {
-	int i;
+	unsigned long i;
 
 	for(i = 0; i < sp->text_events; i++)
 	{
@@ -945,10 +945,10 @@ void eof_toggle_freestyle(EOF_VOCAL_TRACK * tp, unsigned long lyricnumber)
 /* function to convert a MIDI-style tick to msec time */
 long eof_song_tick_to_msec(EOF_SONG * sp, unsigned long track, unsigned long tick)
 {
-	int beat; // which beat 'tick' lies in
+	unsigned long beat; // which beat 'tick' lies in
 	double curpos = sp->tags->ogg[eof_selected_ogg].midi_offset;
 	double portion;
-	int i;
+	unsigned long i;
 
 	beat = tick / sp->resolution;
 	portion = (double)((tick % sp->resolution)) / (double)(sp->resolution);
@@ -969,8 +969,8 @@ long eof_song_tick_to_msec(EOF_SONG * sp, unsigned long track, unsigned long tic
 long eof_song_msec_to_tick(EOF_SONG * sp, unsigned long track, unsigned long msec)
 {
 	long beat; // which beat 'msec' lies in
-	int beat_tick;
-	int portion;
+	long beat_tick;
+	long portion;
 	double beat_start, beat_end, beat_length;
 
 	/* figure out which beat we are in */

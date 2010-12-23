@@ -8,7 +8,7 @@
 
 
 unsigned long eof_note_count_colors(EOF_SONG *sp, unsigned long track, unsigned long note);	//Performs bit masking to determine the number of gems the note defines being present
-void eof_legacy_track_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, char o, int pos, int length);
+void eof_legacy_track_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, char o, unsigned long pos, long length);
 	//Initializes a note by by storing the specified on/off status of the green, yellow, red, blue and purple gem colors
 	//as well as the position and length into the given EOF_NOTE structure, whose contents are overwritten
 	//The note type and flags are not altered

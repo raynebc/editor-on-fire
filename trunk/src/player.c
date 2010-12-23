@@ -74,7 +74,7 @@ void eof_music_play(void)
 		eof_mix_find_claps();
 
 	//Prevent playback as long as the user is holding down guitar/drum buttons
-		int x;
+		unsigned long x;
 		int held;	//Tracks whether the user is holding down one of the defined controller buttons
 		do{
 			held = 0;	//Reset this status

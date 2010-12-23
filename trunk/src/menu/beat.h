@@ -13,7 +13,7 @@ extern DIALOG eof_bpm_change_dialog[];
 extern DIALOG eof_anchor_dialog[];
 
 void eof_prepare_beat_menu(void);			//Enable/disable Beat menu items prior to drawing the menu
-
+int eof_menu_beat_add(void);
 int eof_menu_beat_bpm_change(void);
 int eof_menu_beat_ts_4_4(void);
 int eof_menu_beat_ts_3_4(void);
