@@ -35,7 +35,7 @@ unsigned long eof_note_count_colors(EOF_SONG *sp, unsigned long track, unsigned 
 	return count;
 }
 
-void eof_legacy_track_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, char o, int pos, int length)
+void eof_legacy_track_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, char o, unsigned long pos, long length)
 {
 	np->note = 0;
 	if(g)
@@ -125,22 +125,22 @@ int eof_adjust_notes(int offset)
 
 int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW *window)
 {
-	int position;	//This is the position for the specified window's piano roll and is based on the passed window pointer
-	int leftcoord;	//This is the position of the left end of the piano roll
-	int pos;		//This is the position of the specified window's piano roll, scaled by the current zoom level
-	int npos;
-	int ychart[EOF_MAX_FRETS];
+	long position;	//This is the position for the specified window's piano roll and is based on the passed window pointer
+	long leftcoord;	//This is the position of the left end of the piano roll
+	long pos;		//This is the position of the specified window's piano roll, scaled by the current zoom level
+	long npos;
+	long ychart[EOF_MAX_FRETS];
 	int pcol = p == 1 ? eof_color_white : p == 2 ? makecol(224, 255, 224) : 0;
 	int dcol = eof_color_white;
 	int tcol = eof_color_black;	//This color is used as the fret text color (for pro guitar notes)
 	int dcol2 = dcol;
 	int colors[EOF_MAX_FRETS] = {eof_color_green,eof_color_red,eof_color_yellow,eof_color_blue,eof_color_purple,eof_color_orange};	//Each of the fret colors
 	int ncol = eof_color_silver;	//Note color defaults to silver unless the note is not star power
-	int ctr,ctr2;
-	unsigned int mask;	//Used to mask out colors in the for loop
+	unsigned long ctr,ctr2;
+	unsigned long mask;	//Used to mask out colors in the for loop
 	int radius,dotsize;
 	char iscymbal;		//Used to track whether the specified note is marked as a cymbal
-	int x,y;
+	long x,y;
 	unsigned long numlanes, tracknum;
 
 	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
@@ -352,21 +352,21 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 	EOF_LYRIC *nextnp=NULL;	//Used to find the would-be X coordinate of the next lyric in the lyric lane
 	unsigned long notenum = 0;
 	char notpen = 0;	//Is set to nonzero if the passed lyric is determined to already be defined
-	int position;	//This is the position for the specified window's piano roll and is based on the passed window pointer
-	int leftcoord;	//This is the position of the left end of the piano roll
-	int pos;		//This is the position of the specified window's piano roll, scaled by the current zoom level
-	int npos;		//Stores the X coordinate at which to draw lyric #notenum
-	int X2;			//Stores the X coordinate at which lyric #notenum+1 would be drawn (to set the clip rectangle)
-	int stringend;	//Stores the coordinate position of the end of the lyric string, used for clipping logic
-	int nplace;
-	int note_y;
-	int native = 0;
+	long position;	//This is the position for the specified window's piano roll and is based on the passed window pointer
+	long leftcoord;	//This is the position of the left end of the piano roll
+	long pos;		//This is the position of the specified window's piano roll, scaled by the current zoom level
+	long npos;		//Stores the X coordinate at which to draw lyric #notenum
+	long X2;		//Stores the X coordinate at which lyric #notenum+1 would be drawn (to set the clip rectangle)
+	long stringend;	//Stores the coordinate position of the end of the lyric string, used for clipping logic
+	long nplace;
+	long note_y;
+	long native = 0;
 	int pcol = p == 1 ? eof_color_white : p == 2 ? makecol(224, 255, 224) : 0;
 	int dcol = eof_color_white;
 	int ncol = 0;
 	EOF_LYRIC_LINE *lyricline;	//The line that this lyric is found to be in (if any) so the correct background color can be determined
 	int bgcol = eof_color_black;	//Unless the text is found to be in a lyric phrase, it will render with a black background
-	int endpos;		//This will store the effective end position for the lyric's rendering (taking lyric text, note rectangles and vocal slides into account)
+	long endpos;		//This will store the effective end position for the lyric's rendering (taking lyric text, note rectangles and vocal slides into account)
 
 //Validate parameters
 	if((np == NULL) || (window == NULL))	//If this is not a valid lyric or window pointer
@@ -488,10 +488,10 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 
 			int sliderect[8] = {0};	//An array of 4 vertices, used to draw a diagonal rectangle
 			EOF_LYRIC *np2=NULL;	//Stores a pointer to the next lyric
-			int nplace2 = 0;
-			int native2 = 0;
-			int note_y2 = 0;	//Used to store the y coordinate of the next lyric
-			int npos2 = 0;		//Stores the X coordinate of the next lyric
+			long nplace2 = 0;
+			long native2 = 0;
+			long note_y2 = 0;	//Used to store the y coordinate of the next lyric
+			long npos2 = 0;		//Stores the X coordinate of the next lyric
 
 			if(notpen && (notenum + 1 < eof_song->vocal_track[0]->lyrics) && (eof_song->vocal_track[0]->lyric[notenum + 1]->text[0] == '+'))
 			{	//If there's another lyric, and it begins with a plus sign, it's a pitch shift, draw a vocal slide polygon
@@ -585,14 +585,14 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 
 int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 {
-	int pos = eof_music_pos / eof_zoom_3d;
-	int npos;
+	long pos = eof_music_pos / eof_zoom_3d;
+	long npos;
 	int xchart[EOF_MAX_FRETS] = {48, 48 + 56, 48 + 56 * 2, 48 + 56 * 3, 48 + 56 * 4};
 	int bx = 48;
 	int point[8];
 	int rz, ez;
-	int ctr;
-	unsigned int mask;	//Used to mask out colors in the for loop
+	unsigned long ctr;
+	unsigned long mask;	//Used to mask out colors in the for loop
 	unsigned int notes[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN, EOF_IMAGE_NOTE_RED, EOF_IMAGE_NOTE_YELLOW, EOF_IMAGE_NOTE_BLUE, EOF_IMAGE_NOTE_PURPLE, EOF_IMAGE_NOTE_ORANGE};
 	unsigned int notes_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN_HIT, EOF_IMAGE_NOTE_RED_HIT, EOF_IMAGE_NOTE_YELLOW_HIT, EOF_IMAGE_NOTE_BLUE_HIT, EOF_IMAGE_NOTE_PURPLE_HIT, EOF_IMAGE_NOTE_ORANGE_HIT};
 	unsigned int hopo_notes[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_HGREEN, EOF_IMAGE_NOTE_HRED, EOF_IMAGE_NOTE_HYELLOW, EOF_IMAGE_NOTE_HBLUE, EOF_IMAGE_NOTE_HPURPLE, EOF_IMAGE_NOTE_HORANGE};

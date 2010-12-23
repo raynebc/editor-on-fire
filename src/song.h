@@ -75,7 +75,7 @@ typedef struct
 	unsigned short note;		//Stores the note's string statuses (set=played, reset=not played).  Bit 0 refers to string 1 (high E), bit 5 refers to string 6 (low E), etc.
 	unsigned char frets[16];	//Stores the fret number for each string, where frets[0] refers to string 1 (high E).  Possible values:0=Open strum, #=Fret # pressed, 0xFF=Muted
 	unsigned long midi_pos;
-	unsigned long midi_length;
+	long midi_length;			//Keep as signed, since the npos logic uses signed math
 	unsigned long pos;
 	long length;				//Keep as signed, since the npos logic uses signed math
 	unsigned long flags;		//Stores various note statuses
@@ -91,7 +91,7 @@ typedef struct
 	unsigned long endbeat;
 	unsigned long beat;       // which beat this note was copied from
 	unsigned long pos;
-	unsigned long length;
+	long length;				//Keep as signed, since the npos logic uses signed math
 	unsigned long midi_pos;
 	unsigned long midi_length;
 	float         porpos;     // position of note within the beat (100.0 = full beat)
@@ -108,25 +108,24 @@ typedef struct
 	unsigned char note;		// if zero, the lyric has no defined pitch
 	char          text[EOF_MAX_LYRIC_LENGTH+1];
 	unsigned long midi_pos;
-	unsigned long midi_length;
+	long midi_length;		//Keep as signed, since the npos logic uses signed math
 	unsigned long pos;
-	unsigned long length;
+	long length;			//Keep as signed, since the npos logic uses signed math
 	unsigned short flags;
 
 } EOF_LYRIC;
 
 typedef struct
 {
-
 	char          note;
 	char          text[EOF_MAX_LYRIC_LENGTH+1];
 	unsigned long midi_pos;
-	long          midi_length;
+	long          midi_length;	//Keep as signed, since the npos logic uses signed math
 	unsigned long pos;
-	long          length;
+	long          length;		//Keep as signed, since the npos logic uses signed math
 
-	short         beat;       // which beat this note was copied from
-	short         endbeat;    // which beat this note was copied from
+	unsigned long beat;       // which beat this note was copied from
+	unsigned long endbeat;    // which beat this note was copied from
 	float         porpos;     // position of note within the beat (100.0 = full beat)
 	float         porendpos;
 
@@ -134,32 +133,29 @@ typedef struct
 
 typedef struct
 {
-
-	int midi_start_pos;
-	int midi_end_pos;
-	int start_pos;
-	int end_pos;
-	int flags;
+	unsigned long midi_start_pos;
+	unsigned long midi_end_pos;
+	unsigned long start_pos;
+	unsigned long end_pos;
+	unsigned long flags;
 
 } EOF_LYRIC_LINE;
 
 typedef struct
 {
-
-	int midi_start_pos;
-	int midi_end_pos;
-	int start_pos;
-	int end_pos;
+	unsigned long midi_start_pos;
+	unsigned long midi_end_pos;
+	unsigned long start_pos;
+	unsigned long end_pos;
 
 } EOF_SOLO_ENTRY;
 
 typedef struct
 {
-
-	int midi_start_pos;
-	int midi_end_pos;
-	int start_pos;
-	int end_pos;
+	unsigned long midi_start_pos;
+	unsigned long midi_end_pos;
+	unsigned long start_pos;
+	unsigned long end_pos;
 
 } EOF_STAR_POWER_ENTRY;
 
@@ -278,7 +274,7 @@ typedef struct
 {
 
 	char filename[256];
-	int  midi_offset;
+	long  midi_offset;	//Leave signed just in case this is eventually used to allow for insertion of leading silence via specifying a negative midi offset
 	char modified;
 
 } EOF_OGG_INFO;
@@ -309,8 +305,8 @@ typedef struct
 
 	unsigned long track;
 	char type;
-	int start_pos;
-	int end_pos;
+	unsigned long start_pos;
+	unsigned long end_pos;
 
 } EOF_CATALOG_ENTRY;
 
@@ -318,7 +314,7 @@ typedef struct
 {
 
 	char text[256];
-	int beat;
+	unsigned long beat;
 
 } EOF_TEXT_EVENT;
 
@@ -443,7 +439,7 @@ int eof_song_qsort_lyrics(const void * e1, const void * e2);	//The comparitor fu
 long eof_fixup_next_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric);	//Returns the next lyric, or -1 if there is none
 void eof_vocal_track_fixup_lyrics(EOF_VOCAL_TRACK * tp, int sel);	//Performs cleanup of the specified lyric track
 void eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a lyric phrase at the specified start and stop timestamp for the specified track
-void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, int index);	//Deletes the specified lyric phrase and moves all phrases that follow back in the array one position
+void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, unsigned long index);	//Deletes the specified lyric phrase and moves all phrases that follow back in the array one position
 void eof_vocal_track_add_star_power(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a star power phrase at the specified start and stop timestamp for the specified track
 void eof_vocal_track_delete_star_power(EOF_VOCAL_TRACK * tp, unsigned long index);	//Deletes the specified star power phrase and moves all phrases that follow back in the array one position
 
@@ -459,12 +455,12 @@ void eof_pro_guitar_track_add_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long star
 void eof_pro_guitar_track_delete_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long index);	//Deletes the specified solo phrase and moves all phrases that follow back in the array one position
 
 EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp);	//Allocates, initializes and stores a new EOF_BEAT_MARKER structure into the beats array.  Returns the newly allocated structure or NULL upon error
-void eof_song_delete_beat(EOF_SONG * sp, int beat);	//Removes and frees the specified beat from the beats array.  All beats after the deleted beat are moved back in the array one position
-int eof_song_resize_beats(EOF_SONG * sp, int beats);	//Grows or shrinks the beats array to fit the specified number of beats by allocating/freeing EOF_BEAT_MARKER structures.  Returns zero on error
+void eof_song_delete_beat(EOF_SONG * sp, unsigned long beat);	//Removes and frees the specified beat from the beats array.  All beats after the deleted beat are moved back in the array one position
+int eof_song_resize_beats(EOF_SONG * sp, unsigned long beats);	//Grows or shrinks the beats array to fit the specified number of beats by allocating/freeing EOF_BEAT_MARKER structures.  Returns zero on error
 
-EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, int beat, char * text);	//Allocates, initializes and stores a new EOF_TEXT_EVENT structure into the text_event array.  Returns the newly allocated structure or NULL upon error
-void eof_song_delete_text_event(EOF_SONG * sp, int event);	//Removes and frees the specified text event from the text_events array.  All text events after the deleted text event are moved back in the array one position
-void eof_song_move_text_events(EOF_SONG * sp, int beat, int offset);	//Displaces all beats starting with the specified beat by the given additive offset.  Each affected beat's flags are cleared except for the anchor and text event(s) present flags
+EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, unsigned long beat, char * text);	//Allocates, initializes and stores a new EOF_TEXT_EVENT structure into the text_event array.  Returns the newly allocated structure or NULL upon error
+void eof_song_delete_text_event(EOF_SONG * sp, unsigned long event);	//Removes and frees the specified text event from the text_events array.  All text events after the deleted text event are moved back in the array one position
+void eof_song_move_text_events(EOF_SONG * sp, unsigned long beat, int offset);	//Displaces all beats starting with the specified beat by the given additive offset.  Each affected beat's flags are cleared except for the anchor and text event(s) present flags
 int eof_song_resize_text_events(EOF_SONG * sp, unsigned long events);	//Grows or shrinks the text events array to fit the specified number of notes by allocating/freeing EOF_LYRIC structures.  Return zero on error
 void eof_sort_events(void);	//Performs a quicksort of the events array
 int eof_song_qsort_events(const void * e1, const void * e2);	//The comparitor function used to quicksort the events array

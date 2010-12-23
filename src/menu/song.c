@@ -875,7 +875,7 @@ int eof_menu_song_ini_settings(void)
 
 int eof_is_number(char * buffer)
 {
-	int i;
+	unsigned long i;
 
 	for(i = 0; i < ustrlen(buffer); i++)
 	{
@@ -907,7 +907,7 @@ int eof_menu_song_properties(void)
 	ustrcpy(eof_etext2, eof_song->tags->artist);
 	ustrcpy(eof_etext3, eof_song->tags->frettist);
 //	sprintf(eof_etext4, "%f", bpm);
-	sprintf(eof_etext4, "%d", eof_song->tags->ogg[eof_selected_ogg].midi_offset);
+	sprintf(eof_etext4, "%ld", eof_song->tags->ogg[eof_selected_ogg].midi_offset);
 	ustrcpy(eof_etext5, eof_song->tags->year);
 	ustrcpy(eof_etext6, eof_song->tags->loading_text);
 	eof_song_properties_dialog[15].flags = eof_song->tags->lyrics ? D_SELECTED : 0;
@@ -1130,7 +1130,7 @@ int eof_menu_track_selected_9(void)
 
 int eof_menu_track_selected_track_number(int tracknum)
 {
-	int i;
+	unsigned long i;
 
 	if((tracknum > 0) && (tracknum < eof_song->tracks))
 	{
@@ -1156,7 +1156,7 @@ int eof_menu_track_selected_track_number(int tracknum)
 
 char * eof_ini_list(int index, int * size)
 {
-	int i;
+	short i;
 	int ecount = 0;
 	char * etextpointer[EOF_MAX_INI_SETTINGS] = {NULL};
 
@@ -1325,7 +1325,7 @@ int eof_menu_catalog_add(void)
 
 int eof_menu_catalog_delete(void)
 {
-	int i;
+	unsigned long i;
 
 	if(eof_song->catalog->entries > 0)
 	{
@@ -1511,7 +1511,7 @@ int eof_menu_song_add_silence(void)
 	long current_length = 0;
 	long after_silence_length = 0;
 	long adjust = 0;
-	int i, x;
+	unsigned long i, x;
 	char fn[1024] = {0};
 	char mp3fn[1024] = {0};
 	static int creationmethod = 9;	//Stores the user's last selected leading silence creation method (default to oggCat, which is menu item 9 in eof_leading_silence_dialog[])
@@ -1532,7 +1532,7 @@ int eof_menu_song_add_silence(void)
 	eof_color_dialog(eof_leading_silence_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_leading_silence_dialog);
 
-	for(x=1;x<=4;x++)
+	for(x = 1; x <= 4; x++)
 	{
 		eof_leading_silence_dialog[x].flags = 0;
 	}
@@ -1727,7 +1727,7 @@ int eof_set_cue_volume(void *dp3, int d2)
 
 int eof_menu_audio_cues(void)
 {
-	int x;
+	unsigned long x;
 
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
@@ -1740,7 +1740,7 @@ int eof_menu_audio_cues(void)
 	eof_audio_cues_dialog[11].d2 = eof_tone_volume;
 	eof_audio_cues_dialog[14].d2 = eof_percussion_volume;
 
-	for(x=17;x<=36;x++)
+	for(x = 17; x <= 36; x++)
 	{	//Deselect all vocal percussion radio buttons
 		eof_audio_cues_dialog[x].flags = 0;
 	}

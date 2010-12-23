@@ -966,3 +966,23 @@ int eof_events_dialog_delete(DIALOG * d)
 	}
 	return D_O_K;
 }
+
+int eof_menu_beat_add(void)
+{
+	int i;
+
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	if(eof_song_add_beat(eof_song) != NULL)
+	{	//Only if the new beat structure was successfully created
+		for(i = eof_song->beats - 1; i > eof_selected_beat; i--)
+		{
+			memcpy(eof_song->beat[i], eof_song->beat[i - 1], sizeof(EOF_BEAT_MARKER));
+		}
+		eof_song->beat[eof_selected_beat + 1]->flags = 0;
+		eof_realign_beats(eof_song, eof_selected_beat + 1);
+		eof_move_text_events(eof_song, eof_selected_beat + 1, 1);
+		return 1;
+	}
+	else
+		return -1;	//Otherwise return error
+}

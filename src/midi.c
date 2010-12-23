@@ -13,7 +13,7 @@
 #define EOF_MIDI_TIMER_FREQUENCY  40
 
 static EOF_MIDI_EVENT * eof_midi_event[EOF_MAX_MIDI_EVENTS];
-static int eof_midi_events = 0;
+static unsigned long eof_midi_events = 0;
 static char eof_midi_note_status[128] = {0};	//Tracks the on/off status of notes 0 through 127, maintained by eof_add_midi_event()
 
 void eof_add_midi_event(unsigned long pos, int type, int note)
@@ -36,7 +36,7 @@ void eof_add_midi_event(unsigned long pos, int type, int note)
 	}
 }
 
-void eof_add_midi_lyric_event(int pos, char * text)
+void eof_add_midi_lyric_event(unsigned long pos, char * text)
 {
 	eof_midi_event[eof_midi_events] = malloc(sizeof(EOF_MIDI_EVENT));
 	if(eof_midi_event[eof_midi_events])
@@ -50,7 +50,7 @@ void eof_add_midi_lyric_event(int pos, char * text)
 
 void eof_clear_midi_events(void)
 {
-	int i;
+	unsigned long i;
 	for(i = 0; i < eof_midi_events; i++)
 	{
 		free(eof_midi_event[i]);
@@ -223,7 +223,7 @@ int eof_check_bpm_change(unsigned long start, unsigned long end)
 	long startbeat = eof_figure_beat(start);
 	long endbeat = eof_figure_beat(end);
 //	unsigned long startbpm = sp->beat[startbeat].ppqn;
-	int i;
+	long i;
 
 	/* same beat, no brainer */
 	if(startbeat == endbeat)
@@ -257,7 +257,7 @@ int eof_check_bpm_change(unsigned long start, unsigned long end)
 //The simplified formula is deltas=realtime * timedivision * 1000 / ppqn
 double eof_calculate_delta(double start, double end)
 {
-	int i;
+	long i;
 	long startbeat = eof_figure_beat(start);
 	long endbeat = eof_figure_beat(end);
 	double total_delta = 0.0;	//Delta counter
@@ -288,10 +288,10 @@ double eof_calculate_delta(double start, double end)
 	return total_delta;
 }
 
-int eof_count_tracks(void)
+unsigned long eof_count_tracks(void)
 {
 	unsigned long i;
-	int count = 0;
+	unsigned long count = 0;
 
 	for(i = 1; i < eof_song->tracks; i++)
 	{

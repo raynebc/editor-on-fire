@@ -1,9 +1,6 @@
 #include "main.h"
 #include "beat.h"
 
-//EOF_BEAT_MARKER sp->beat[EOF_MAX_BEATS];
-//int sp->beats = 0;
-
 long eof_get_beat(EOF_SONG * sp, unsigned long pos)
 {
 	long i;
@@ -26,7 +23,7 @@ long eof_get_beat(EOF_SONG * sp, unsigned long pos)
 	return 0;
 }
 
-int eof_get_beat_length(EOF_SONG * sp, int beat)
+long eof_get_beat_length(EOF_SONG * sp, int beat)
 {
 	if(beat < sp->beats - 1)
 	{
@@ -43,7 +40,7 @@ void eof_calculate_beats(EOF_SONG * sp)
 	unsigned long i;
 	double curpos = 0.0;
 	double beat_length;
-	int cbeat = 0;
+	unsigned long cbeat = 0;
 
 	/* correct BPM if it hasn't been set at all */
 	if(sp->beats <= 0)
@@ -173,12 +170,6 @@ void eof_realign_beats(EOF_SONG * sp, int cbeat)
 		next_anchor = sp->beats;
 	}
 
-	/* count beats */
-/*	for(i = last_anchor; i < next_anchor; i++)
-	{
-		beats++;
-	}
-*/
 	if(last_anchor < next_anchor)
 		beats=next_anchor - last_anchor;	//The number of beats between the previous and next anchor
 

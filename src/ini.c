@@ -52,7 +52,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 
 	/* write midi offset */
 	ustrcat(ini_string, "\r\ndelay = ");
-	sprintf(buffer, "%d", sp->tags->ogg[eof_selected_ogg].midi_offset);
+	sprintf(buffer, "%ld", sp->tags->ogg[eof_selected_ogg].midi_offset);
 	ustrcat(ini_string, buffer);
 
 	/* write year */
