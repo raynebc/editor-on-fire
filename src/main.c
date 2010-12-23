@@ -1499,9 +1499,6 @@ void eof_read_global_keys(void)
 
 void eof_lyric_logic(void)
 {
-//	int kw = (eof_window_3d->screen->w - eof_window_3d->screen->w % 29) / 29;
-//	int kh = kw * 4;
-//	int bkh = kw * 3;
 	int note[7] = {0, 2, 4, 5, 7, 9, 11};
 	int bnote[7] = {1, 3, 0, 6, 8, 10, 0};
 	unsigned long i, k;
@@ -1825,7 +1822,7 @@ void eof_render_note_window(void)
 	unsigned long i;
 	int pos;
 	int lpos, npos, ypos;
-	unsigned long tracknum = 0;
+	unsigned long tracknum;
 	int xcoord;
 	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
 
@@ -2066,7 +2063,6 @@ void eof_render_lyric_preview(BITMAP * bp)
 
 	char lline[2][MAX_LYRIC_PREVIEW_LENGTH+1] = {{0}};
 	unsigned long i,x;
-//	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int offset = -1;
 	int space;	//Track the spacing for lyric preview, taking pitch shift and grouping logic into account
 

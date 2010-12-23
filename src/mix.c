@@ -217,7 +217,7 @@ void eof_mix_find_claps(void)
 	unsigned long i;
 	eof_mix_claps = 0;
 	eof_mix_current_clap = 0;
-	unsigned long tracknum = 0;
+	unsigned long tracknum;
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if(eof_vocals_selected)

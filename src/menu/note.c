@@ -137,7 +137,7 @@ void eof_prepare_note_menu(void)
 	int llend = -1;
 	int llp = 0;
 	unsigned long i, j;
-	unsigned long tracknum = 0;
+	unsigned long tracknum;
 	int sel_start = eof_music_length, sel_end = 0;
 	int firstnote = 0, lastnote;
 	EOF_STAR_POWER_ENTRY *starpowerptr;

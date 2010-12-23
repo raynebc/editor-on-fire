@@ -2233,11 +2233,10 @@ void eof_track_delete_note(EOF_SONG *sp, unsigned long track, unsigned long note
 
 void eof_track_resize(EOF_SONG *sp, unsigned long track, unsigned long size)
 {
-	unsigned long tracknum, i, oldsize;
+	unsigned long i, oldsize;
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
-	tracknum = sp->track[track]->tracknum;
 	oldsize = eof_track_get_size(sp, track);
 
 	if(size > oldsize)
@@ -2470,12 +2469,10 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long
 	EOF_NOTE *ptr = NULL;
 	EOF_LYRIC *ptr2 = NULL;
 	EOF_PRO_GUITAR_NOTE *ptr3 = NULL;
-	unsigned long tracknum;
 
 	new_note = eof_track_add_note(sp, track);
 	if(new_note != NULL)
 	{
-		tracknum = sp->track[track]->tracknum;
 		if(length < 1)
 		{
 			length = 1;	//1 is the minimum length of any note/lyric
@@ -2960,13 +2957,11 @@ long eof_track_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long 
 
 void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track)
 {
-	unsigned long tracknum;
 	unsigned long i;
 	long next;
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
-	tracknum = sp->track[track]->tracknum;
 
 	for(i = 0; i < eof_track_get_size(sp, track); i++)
 	{	//For each note in the track

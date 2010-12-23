@@ -170,7 +170,7 @@ DIALOG eof_custom_speed_dialog[] =
 void eof_prepare_edit_menu(void)
 {
 	int i;
-	unsigned long tracknum = 0;
+	unsigned long tracknum;
 	int vselected = 0;
 //	int cnotes = 0;	//This was never effectively used
 
@@ -2120,15 +2120,6 @@ int eof_menu_edit_select_rest_vocal(void)
 	{
 		return 1;
 	}
-/*Instead of finding the first selected note, start with the last note that was selected
-	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-	{
-		if(eof_selection.multi[i])
-		{
-			break;
-		}
-	}
-*/
 	if(eof_selection.current == EOF_MAX_NOTES - 1)	//No Notes selected?
 		return 1;	//Don't perform this operation
 
@@ -2257,7 +2248,6 @@ static int lyrics_in_beat(int beat)
 {
 	unsigned long count = 0;
 	unsigned long i;
-//	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 	if(beat > eof_song->beats - 2)
 	{
