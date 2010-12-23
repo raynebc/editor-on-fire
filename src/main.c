@@ -882,8 +882,8 @@ void eof_determine_hopos(void)
 	char sp[EOF_MAX_STAR_POWER] = {0};
 	char so[EOF_MAX_STAR_POWER] = {0};
 	unsigned long flags;
-	EOF_STAR_POWER_ENTRY *starpowerptr;
-	EOF_SOLO_ENTRY *soloptr;
+	EOF_STAR_POWER_ENTRY *starpowerptr = NULL;
+	EOF_SOLO_ENTRY *soloptr = NULL;
 
 	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
