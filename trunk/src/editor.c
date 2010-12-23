@@ -1454,7 +1454,7 @@ void eof_read_editor_keys(void)
 								{	//If the user opted to make all new drum notes cymbals automatically
 									eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_track_get_size(eof_song, eof_selected_track)-1);
 								}
-								eof_selection.current_pos = new_note->pos;
+								eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_track_get_size(eof_song, eof_selected_track) - 1);	//Get the position of the last note that was added
 								eof_selection.range_pos_1 = eof_selection.current_pos;
 								eof_selection.range_pos_2 = eof_selection.current_pos;
 								eof_selection.track = eof_selected_track;

@@ -2644,21 +2644,21 @@ void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, un
 		case EOF_LEGACY_TRACK_FORMAT:
 			if(note < sp->legacy_track[tracknum]->notes)
 			{
-				sp->legacy_track[tracknum]->note[note]->pos = value;
+				sp->legacy_track[tracknum]->note[note]->note = value;
 			}
 		break;
 
 		case EOF_VOCAL_TRACK_FORMAT:
 			if(note < sp->vocal_track[tracknum]->lyrics)
 			{
-				sp->vocal_track[tracknum]->lyric[note]->pos = value;
+				sp->vocal_track[tracknum]->lyric[note]->note = value;
 			}
 		break;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			if(note < sp->pro_guitar_track[tracknum]->notes)
 			{
-				sp->pro_guitar_track[tracknum]->note[note]->pos = value;
+				sp->pro_guitar_track[tracknum]->note[note]->note = value;
 			}
 		break;
 	}
@@ -2876,6 +2876,8 @@ EOF_STAR_POWER_ENTRY *eof_get_star_power_path(EOF_SONG *sp, unsigned long track,
 			}
 		break;
 
+		case EOF_VOCAL_TRACK_FORMAT:
+		return NULL;	//Vocal star power is not implemented yet
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			if(pathnum < sp->pro_guitar_track[tracknum]->star_power_paths)

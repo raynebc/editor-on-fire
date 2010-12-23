@@ -140,8 +140,8 @@ void eof_prepare_note_menu(void)
 	unsigned long tracknum;
 	int sel_start = eof_music_length, sel_end = 0;
 	int firstnote = 0, lastnote;
-	EOF_STAR_POWER_ENTRY *starpowerptr;
-	EOF_SOLO_ENTRY *soloptr;
+	EOF_STAR_POWER_ENTRY *starpowerptr = NULL;
+	EOF_SOLO_ENTRY *soloptr = NULL;
 
 	if(eof_song && eof_song_loaded)
 	{
@@ -216,7 +216,7 @@ void eof_prepare_note_menu(void)
 				}
 			}
 			for(j = 0; j < eof_get_num_star_power_paths(eof_song, eof_selected_track); j++)
-			{
+			{	//For each star power path in the active track
 				starpowerptr = eof_get_star_power_path(eof_song, eof_selected_track, j);
 				if((sel_end >= starpowerptr->start_pos) && (sel_start <= starpowerptr->end_pos))
 				{
@@ -227,7 +227,7 @@ void eof_prepare_note_menu(void)
 				}
 			}
 			for(j = 0; j < eof_get_num_solos(eof_song, eof_selected_track); j++)
-			{
+			{	//For each solo section in the active track
 				soloptr = eof_get_solo(eof_song, eof_selected_track, j);
 				if((sel_end >= soloptr->start_pos) && (sel_start <= soloptr->end_pos))
 				{
@@ -243,7 +243,7 @@ void eof_prepare_note_menu(void)
 		{	//ONE OR MORE NOTES/LYRICS SELECTED
 			/* star power mark */
 			starpowerptr = eof_get_star_power_path(eof_song, eof_selected_track, spp);
-			if((spstart == starpowerptr->start_pos) && (spend == starpowerptr->end_pos))
+			if((starpowerptr != NULL) && (spstart == starpowerptr->start_pos) && (spend == starpowerptr->end_pos))
 			{
 				eof_star_power_menu[0].flags = D_DISABLED;
 			}
@@ -254,7 +254,7 @@ void eof_prepare_note_menu(void)
 
 			/* solo mark */
 			soloptr = eof_get_solo(eof_song, eof_selected_track, ssp);
-			if((ssstart == soloptr->start_pos) && (ssend == soloptr->end_pos))
+			if((soloptr != NULL) && (ssstart == soloptr->start_pos) && (ssend == soloptr->end_pos))
 			{
 				eof_solo_menu[0].flags = D_DISABLED;
 			}
@@ -486,9 +486,9 @@ void eof_prepare_note_menu(void)
 
 int eof_menu_note_transpose_up(void)
 {
-	unsigned long i;
+	unsigned long i, j;
 	unsigned long max = 31;	//This represents the highest valid note bitmask, based on the current track options (including open bass strumming)
-	unsigned long flags, note;
+	unsigned long flags, note, tracknum;
 
 	if(!eof_transpose_possible(-1))
 	{
@@ -531,6 +531,15 @@ int eof_menu_note_transpose_up(void)
 				}
 				eof_set_note_note(eof_song, eof_selected_track, i, note);
 			}
+			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If a pro guitar note was tranposed, move the fret values accordingly
+				tracknum = eof_song->track[eof_selected_track]->tracknum;
+				for(j = 15; j > 0; j--)
+				{	//For the upper 15 frets
+					eof_song->pro_guitar_track[tracknum]->note[i]->frets[j] = eof_song->pro_guitar_track[tracknum]->note[i]->frets[j-1];	//Cycle fret values up from lower lane
+				}
+				eof_song->pro_guitar_track[tracknum]->note[i]->frets[0] = 0xFF;	//Re-initialize lane 1 to the default of (muted)
+			}
 		}
 	}
 	return 1;
@@ -538,8 +547,8 @@ int eof_menu_note_transpose_up(void)
 
 int eof_menu_note_transpose_down(void)
 {
-	unsigned long i;
-	unsigned long flags, note;
+	unsigned long i, j;
+	unsigned long flags, note, tracknum;
 
 	if(!eof_transpose_possible(1))
 	{
@@ -574,6 +583,15 @@ int eof_menu_note_transpose_down(void)
 					flags &= ~(EOF_NOTE_FLAG_F_HOPO);	//Clear the forced HOPO on flag, which conflicts with open bass strum notation
 					eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 				}
+			}
+			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If a pro guitar note was tranposed, move the fret values accordingly
+				tracknum = eof_song->track[eof_selected_track]->tracknum;
+				for(j = 0; j < 15; j++)
+				{	//For the lower 15 frets
+					eof_song->pro_guitar_track[tracknum]->note[i]->frets[j] = eof_song->pro_guitar_track[tracknum]->note[i]->frets[j+1];	//Cycle fret values down from upper lane
+				}
+				eof_song->pro_guitar_track[tracknum]->note[i]->frets[15] = 0xFF;	//Re-initialize lane 15 to the default of (muted)
 			}
 		}
 	}
@@ -1453,7 +1471,7 @@ int eof_menu_star_power_mark(void)
 	long insp = -1;
 	long sel_start = -1;
 	long sel_end = 0;
-	EOF_STAR_POWER_ENTRY *starpowerptr;
+	EOF_STAR_POWER_ENTRY *starpowerptr = NULL;
 
 	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -1485,8 +1503,11 @@ int eof_menu_star_power_mark(void)
 	else
 	{
 		starpowerptr = eof_get_star_power_path(eof_song, eof_selected_track, insp);
-		starpowerptr->start_pos = sel_start;
-		starpowerptr->end_pos = sel_end;
+		if(starpowerptr != NULL)
+		{
+			starpowerptr->start_pos = sel_start;
+			starpowerptr->end_pos = sel_end;
+		}
 	}
 	eof_determine_hopos();
 	return 1;
@@ -1495,7 +1516,7 @@ int eof_menu_star_power_mark(void)
 int eof_menu_star_power_unmark(void)
 {
 	unsigned long i, j;
-	EOF_STAR_POWER_ENTRY *starpowerptr;
+	EOF_STAR_POWER_ENTRY *starpowerptr = NULL;
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
@@ -1847,8 +1868,8 @@ int eof_transpose_possible(int dir)
 	}
 	else
 	{
-		if(eof_open_bass_enabled())
-		{	//If open bass is enabled, lane 5 can transpose up to lane 6
+		if(eof_open_bass_enabled() || (eof_count_track_lanes(eof_selected_track) > 5))
+		{	//If open bass is enabled, or the track has more than 5 lanes, lane 5 can transpose up to lane 6
 			max = 32;
 		}
 		if(eof_track_get_size(eof_song, eof_selected_track) <= 0)
