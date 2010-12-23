@@ -100,10 +100,10 @@ static int eof_import_distance(int pos1, int pos2)
 	return distance;
 }
 
-static int eof_import_closest_beat(EOF_SONG * sp, unsigned long pos)
+static long eof_import_closest_beat(EOF_SONG * sp, unsigned long pos)
 {
 	unsigned long i;
-	int bb = -1, ab = -1;	//If this function is changed to return unsigned long, then these can be changed to unsigned long as well
+	long bb = -1, ab = -1;	//If this function is changed to return unsigned long, then these can be changed to unsigned long as well
 	char check1 = 0, check2 = 0;
 
 	for(i = 0; i < sp->beats; i++)
@@ -1454,7 +1454,7 @@ allegro_message("Third pass complete");
 	eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
 
 	/* create text events */
-	int b = -1;
+	long b = -1;
 	unsigned long tp;
 	for(i = 0; i < eof_import_text_events->events; i++)
 	{

@@ -38,7 +38,7 @@ typedef struct
 	unsigned long changes;					//The number of time signatures changes found in this list
 } EOF_MIDI_TS_LIST;
 
-int eof_figure_beat(double pos);				//Returns the beat marker immediately before the specified timestamp, or -1 on failure
+long eof_figure_beat(double pos);				//Returns the beat marker immediately before the specified timestamp, or -1 on failure
 double eof_calculate_bpm_absolute(double pos);	//Returns the tempo defined by the beat marker immediately before the specified timestamp, or 0.0 on failure
 double eof_calculate_delta(double start, double end);	//Finds the number of delta ticks within the specified time span?
 	//Warning: This function does not take the time signature into account

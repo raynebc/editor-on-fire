@@ -493,8 +493,8 @@ void eof_set_freestyle(char *ptr, char status);
 void eof_toggle_freestyle(EOF_VOCAL_TRACK * tp, unsigned long lyricnumber);
 	//Makes a lyric freestyle if it isn't already and vice versa
 
-int eof_song_tick_to_msec(EOF_SONG * sp, int track, unsigned long tick); // convert tick value to real time
-int eof_song_msec_to_tick(EOF_SONG * sp, int track, unsigned long msec); // convert real time value to tick
+long eof_song_tick_to_msec(EOF_SONG * sp, unsigned long track, unsigned long tick); // convert tick value to real time
+long eof_song_msec_to_tick(EOF_SONG * sp, unsigned long track, unsigned long msec); // convert real time value to tick
 
 char eof_check_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,char flag);
 	//Checks all notes in the track at the specified note's timestamp (numbered starting at number 0)

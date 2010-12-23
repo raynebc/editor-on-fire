@@ -471,9 +471,9 @@ int eof_menu_edit_cut_vocal(int anchor, int option)
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int first_pos = -1;
-	int first_beat = -1;
+	long first_beat = -1;
 	int start_pos, end_pos;
-	int last_anchor, next_anchor;
+	long last_anchor, next_anchor;
 	int copy_notes = 0;
 	float tfloat;
 	PACKFILE * fp;
@@ -552,7 +552,7 @@ int eof_menu_edit_cut_paste_vocal(int anchor, int option)
 	int first_beat = 0;
 	int this_beat = 0;
 	int start_pos, end_pos;
-	int last_anchor, next_anchor;
+	long last_anchor, next_anchor;
 	PACKFILE * fp;
 	int copy_notes = 0;
 	EOF_EXTENDED_LYRIC temp_lyric;
@@ -635,7 +635,7 @@ int eof_menu_edit_copy_vocal(void)
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int first_pos = -1;
-	int first_beat = -1;
+	long first_beat = -1;
 	char note_check = 0;
 	int copy_notes = 0;
 	float tfloat;
@@ -739,13 +739,13 @@ int eof_menu_edit_paste_vocal(void)
 	unsigned long i, j, t;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	unsigned long paste_pos[EOF_MAX_NOTES] = {0};
-	int paste_count = 0;
-	int first_beat = 0;
-	int this_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
-	int copy_notes;
-	int new_pos = -1;
-	int new_end_pos = -1;
-	int last_pos = -1;
+	long paste_count = 0;
+	long first_beat = 0;
+	long this_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	long copy_notes;
+	long new_pos = -1;
+	long new_end_pos = -1;
+	long last_pos = -1;
 	EOF_EXTENDED_LYRIC temp_lyric;
 	EOF_LYRIC * new_lyric = NULL;
 	PACKFILE * fp;
@@ -1171,7 +1171,7 @@ int eof_menu_edit_copy(void)
 	}
 	unsigned long i;
 	unsigned long first_pos = 0;
-	unsigned long first_beat = 0;
+	long first_beat = 0;
 	char first_beat_read = 0;
 	char note_check = 0;
 	unsigned long copy_notes = 0;
@@ -1256,7 +1256,7 @@ int eof_menu_edit_paste(void)
 	unsigned long paste_pos[EOF_MAX_NOTES] = {0};
 	unsigned long paste_count = 0;
 	unsigned long first_beat = 0;
-	unsigned long this_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	long this_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 	unsigned long copy_notes;
 	EOF_EXTENDED_NOTE temp_note;
 	EOF_NOTE * new_note = NULL;

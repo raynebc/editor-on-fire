@@ -22,7 +22,6 @@ int eof_menu_beat_ts_6_4(void);
 int eof_menu_beat_ts_custom(void);
 
 int eof_menu_beat_ts_off(void);
-int eof_menu_beat_add(void);
 int eof_menu_beat_delete(void);
 int eof_menu_beat_anchor(void);
 int eof_menu_beat_push_offset_back(void);	//Appends a new beat structure and moves all beats one forward, with their timestamps adjusted to compensate for the duration of the first beat.  Returns nonzero on success.
