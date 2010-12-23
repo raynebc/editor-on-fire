@@ -161,7 +161,7 @@ void eof_realign_beats(EOF_SONG * sp, int cbeat)
 {
 	int i;
 	int last_anchor = eof_find_previous_anchor(sp, cbeat);
-	int next_anchor = eof_find_next_anchor(sp, cbeat);
+	long next_anchor = eof_find_next_anchor(sp, cbeat);
 	int beats = 0;
 	int count = 1;
 	double beats_length;
@@ -202,19 +202,13 @@ void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 {
 	int i;
 	int last_anchor = eof_find_previous_anchor(sp, cbeat);
-	int next_anchor = eof_find_next_anchor(sp, cbeat);
+	long next_anchor = eof_find_next_anchor(sp, cbeat);
 	int beats = 0;
 	int count = 1;
 	double beats_length;
 	double newbpm;
 	double newppqn;
 
-	/* count beats */
-/*	for(i = last_anchor; i < cbeat; i++)
-	{
-		beats++;
-	}
-*/
 	if(cbeat >= EOF_MAX_BEATS)	//Bounds check
 		return;
 

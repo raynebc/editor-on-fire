@@ -452,26 +452,6 @@ int eof_menu_beat_delete(void)
 	return 1;
 }
 
-int eof_menu_beat_add(void)
-{
-	int i;
-
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	if(eof_song_add_beat(eof_song) != NULL)
-	{	//Only if the new beat structure was successfully created
-		for(i = eof_song->beats - 1; i > eof_selected_beat; i--)
-		{
-			memcpy(eof_song->beat[i], eof_song->beat[i - 1], sizeof(EOF_BEAT_MARKER));
-		}
-		eof_song->beat[eof_selected_beat + 1]->flags = 0;
-		eof_realign_beats(eof_song, eof_selected_beat + 1);
-		eof_move_text_events(eof_song, eof_selected_beat + 1, 1);
-		return 1;
-	}
-	else
-		return -1;	//Otherwise return error
-}
-
 int eof_menu_beat_push_offset_back(void)
 {
 	int i;

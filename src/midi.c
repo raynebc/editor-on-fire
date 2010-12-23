@@ -189,9 +189,9 @@ int qsort_helper4(const void * e1, const void * e2)
     return 0;
 }
 
-int eof_figure_beat(double pos)
+long eof_figure_beat(double pos)
 {
-	int i;
+	long i;
 
 	for(i = 0; i < eof_song->beats - 1; i++)
 	{
@@ -210,7 +210,7 @@ int eof_figure_beat(double pos)
 
 double eof_calculate_bpm_absolute(double pos)
 {
-	int beat = eof_figure_beat(pos);
+	long beat = eof_figure_beat(pos);
 	if(beat >= 0)
 	{
 		return (double)60000000.0 / (double)eof_song->beat[beat]->ppqn;
@@ -220,8 +220,8 @@ double eof_calculate_bpm_absolute(double pos)
 
 int eof_check_bpm_change(unsigned long start, unsigned long end)
 {
-	int startbeat = eof_figure_beat(start);
-	int endbeat = eof_figure_beat(end);
+	long startbeat = eof_figure_beat(start);
+	long endbeat = eof_figure_beat(end);
 //	unsigned long startbpm = sp->beat[startbeat].ppqn;
 	int i;
 
@@ -258,8 +258,8 @@ int eof_check_bpm_change(unsigned long start, unsigned long end)
 double eof_calculate_delta(double start, double end)
 {
 	int i;
-	int startbeat = eof_figure_beat(start);
-	int endbeat = eof_figure_beat(end);
+	long startbeat = eof_figure_beat(start);
+	long endbeat = eof_figure_beat(end);
 	double total_delta = 0.0;	//Delta counter
 	double total_time = 0.0;	//Count the segments of time that were converted, for debugging
 

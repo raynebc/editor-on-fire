@@ -31,7 +31,7 @@ int         eof_snote = 0;
 int         eof_last_snote = 0;
 int         eof_moving_anchor = 0;
 int         eof_adjusted_anchor = 0;
-int         eof_anchor_diff[EOF_TRACKS_MAX + 1] = {0};
+long        eof_anchor_diff[EOF_TRACKS_MAX + 1] = {0};
 
 EOF_SNAP_DATA eof_snap;
 EOF_SNAP_DATA eof_tail_snap;
@@ -755,7 +755,7 @@ void eof_read_editor_keys(void)
 			}
 			else
 			{
-				int b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+				long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 
 				if(b > 0)
 				{
@@ -796,7 +796,7 @@ void eof_read_editor_keys(void)
 			}
 			else
 			{
-				int b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+				long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 				if(eof_music_pos - eof_av_delay < 0)
 				{
 					b = -1;
@@ -946,7 +946,7 @@ void eof_read_editor_keys(void)
 			}
 			else
 			{
-				int b;
+				long b;
 				for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 				{
 					if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
@@ -1003,7 +1003,7 @@ void eof_read_editor_keys(void)
 			}
 			else
 			{
-				int b;
+				long b;
 				for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
 				{
 					if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
@@ -2516,7 +2516,7 @@ void eof_editor_logic(void)
 			}
 			else
 			{
-				int b;
+				long b;
 				if(eof_mickey_z > 0)
 				{
 					for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
@@ -3293,7 +3293,7 @@ void eof_vocal_editor_logic(void)
 			}
 			else
 			{
-				int b;
+				long b;
 				if(eof_mickey_z > 0)
 				{
 					for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)

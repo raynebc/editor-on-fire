@@ -287,7 +287,7 @@ long eof_fixup_next_legacy_note(EOF_LEGACY_TRACK * tp, unsigned long note)
 void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 {
 	unsigned long i;
-	int next;
+	long next;
 
 	if(!sel)
 	{
@@ -505,7 +505,7 @@ void eof_vocal_track_fixup_lyrics(EOF_VOCAL_TRACK * tp, int sel)
 {
 	unsigned long i, j;
 	int lc;
-	int next;
+	long next;
 
 	if(!sel)
 	{
@@ -517,7 +517,6 @@ void eof_vocal_track_fixup_lyrics(EOF_VOCAL_TRACK * tp, int sel)
 	}
 	for(i = tp->lyrics; i > 0; i--)
 	{
-
 		/* fix selections */
 		if(tp->lyric[i-1]->pos == eof_selection.current_pos)
 		{
@@ -536,7 +535,6 @@ void eof_vocal_track_fixup_lyrics(EOF_VOCAL_TRACK * tp, int sel)
 
 		else
 		{
-
 			/* make sure there are no 0-length notes */
 			if(tp->lyric[i-1]->length <= 0)
 			{
@@ -945,7 +943,7 @@ void eof_toggle_freestyle(EOF_VOCAL_TRACK * tp, unsigned long lyricnumber)
 }
 
 /* function to convert a MIDI-style tick to msec time */
-int eof_song_tick_to_msec(EOF_SONG * sp, int track, unsigned long tick)
+long eof_song_tick_to_msec(EOF_SONG * sp, unsigned long track, unsigned long tick)
 {
 	int beat; // which beat 'tick' lies in
 	double curpos = sp->tags->ogg[eof_selected_ogg].midi_offset;
@@ -968,9 +966,9 @@ int eof_song_tick_to_msec(EOF_SONG * sp, int track, unsigned long tick)
 }
 
 /* function to convert msec time to a MIDI-style tick */
-int eof_song_msec_to_tick(EOF_SONG * sp, int track, unsigned long msec)
+long eof_song_msec_to_tick(EOF_SONG * sp, unsigned long track, unsigned long msec)
 {
-	int beat; // which beat 'msec' lies in
+	long beat; // which beat 'msec' lies in
 	int beat_tick;
 	int portion;
 	double beat_start, beat_end, beat_length;
@@ -2773,7 +2771,7 @@ long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long not
 void eof_pro_guitar_track_fixup_notes(EOF_PRO_GUITAR_TRACK * tp, int sel)
 {
 	unsigned long i;
-	int next;
+	long next;
 
 	if(!sel)
 	{

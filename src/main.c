@@ -247,7 +247,7 @@ void eof_show_mouse(BITMAP * bp)
 float eof_get_porpos(unsigned long pos)
 {
 	float porpos = 0.0;
-	int beat = 0;
+	long beat = 0;
 	int blength;
 	unsigned long rpos;
 
@@ -269,7 +269,7 @@ float eof_get_porpos(unsigned long pos)
 	return porpos;
 }
 
-unsigned long eof_put_porpos(int beat, float porpos, float offset)
+long eof_put_porpos(int beat, float porpos, float offset)
 {
 	float fporpos = porpos + offset;
 	int cbeat = beat;
@@ -1318,20 +1318,6 @@ int eof_notes_selected(void)
 		}
 	}
 	return count;
-}
-
-int eof_first_selected_note(void)
-{
-	unsigned long i;
-
-	for(i = 0; i < EOF_MAX_NOTES; i++)
-	{
-		if(eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-		{
-			return i;
-		}
-	}
-	return -1;
 }
 
 void eof_fix_waveform_graph(void)

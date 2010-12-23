@@ -57,7 +57,7 @@ int eof_feedback_any_note(void)
 void eof_editor_logic_feedback(void)
 {
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	int fbeat = 0;
+	long fbeat = 0;
 //	int fcstep;
 	int fcpos[32];
 	int fppos[32];

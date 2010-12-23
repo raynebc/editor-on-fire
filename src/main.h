@@ -337,7 +337,7 @@ extern EOF_SELECTION_DATA eof_selection;
 
 void eof_show_mouse(BITMAP * bp);	//Shows the software mouse if it is being used
 float eof_get_porpos(unsigned long pos);	//Returns the timestamps position within a beat (percentage)?
-unsigned long eof_put_porpos(int beat, float porpos, float offset);
+long eof_put_porpos(int beat, float porpos, float offset);
 void eof_reset_lyric_preview_lines(void);	//Resets the preview line variables to 0
 void eof_find_lyric_preview_lines(void);	//Sets the first and second preview line variables
 void eof_emergency_stop_music(void);	//Stops audio playback
