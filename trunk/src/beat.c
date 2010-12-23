@@ -4,9 +4,9 @@
 //EOF_BEAT_MARKER sp->beat[EOF_MAX_BEATS];
 //int sp->beats = 0;
 
-int eof_get_beat(EOF_SONG * sp, unsigned long pos)
+long eof_get_beat(EOF_SONG * sp, unsigned long pos)
 {
-	int i;
+	long i;
 
 	if(pos >= eof_music_length)
 	{
@@ -122,21 +122,20 @@ int eof_beat_is_anchor(EOF_SONG * sp, int cbeat)
 	return 0;
 }
 
-int eof_find_previous_anchor(EOF_SONG * sp, int cbeat)
+unsigned long eof_find_previous_anchor(EOF_SONG * sp, unsigned long cbeat)
 {
-	int beat = cbeat;
+	unsigned long beat = cbeat;
 
 	if(cbeat >= EOF_MAX_BEATS)	//Bounds check
 		return 0;
 
-	while(beat >= 0)
-	{
+	do{
 		beat--;
 		if(sp->beat[beat]->flags & EOF_BEAT_FLAG_ANCHOR)
 		{
 			return beat;
 		}
-	}
+	}while(beat > 0);
 	return 0;
 }
 
