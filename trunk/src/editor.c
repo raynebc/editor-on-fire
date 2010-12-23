@@ -2005,7 +2005,7 @@ void eof_editor_drum_logic(void)
 void eof_editor_logic(void)
 {
 	unsigned long i;
-	unsigned long tracknum = 0;
+	unsigned long tracknum;
 	unsigned long bitmask = 0;	//Used to reduce duplicated logic
 	int use_this_x = mouse_x;
 	int next_note_pos = 0;
@@ -4008,11 +4008,10 @@ unsigned char eof_find_pen_note_mask(void)
 	unsigned long laneborder;
 	int bitmaskshift;	//Used to find the pen note bitmask if the notes are inverted (taking lane 6 into account)
 	unsigned char returnvalue = 0;
-	unsigned long i,tracknum;
+	unsigned long i;
 
 	//Determine which lane the mouse is in
 	eof_hover_piece = -1;
-	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(i = 0; i < eof_count_track_lanes(eof_selected_track); i++)
 	{	//For each of the usable lanes
 		laneborder = eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 15 + 10 + eof_screen_layout.note_y[i];	//This represents the y position of the boundary between the current lane and the next

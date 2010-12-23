@@ -78,7 +78,7 @@ int eof_adjust_notes(int offset)
 	unsigned long i, j;
 	EOF_SOLO_ENTRY *soloptr = NULL;
 	EOF_STAR_POWER_ENTRY *starpowerptr= NULL;
-	unsigned long tracknum = 0;
+	unsigned long tracknum;
 
 	for(i = 1; i < eof_song->tracks; i++)
 	{	//For each track
@@ -141,7 +141,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	int radius,dotsize;
 	char iscymbal;		//Used to track whether the specified note is marked as a cymbal
 	long x,y;
-	unsigned long numlanes, tracknum;
+	unsigned long numlanes, tracknum=0;
 
 	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
 	unsigned long notepos = 0;
@@ -786,7 +786,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	int xchart[5] = {48, 48 + 56, 48 + 56 * 2, 48 + 56 * 3, 48 + 56 * 4};
 	int point[8];
 	int rz, ez;
-	unsigned long numlanes, tracknum, ctr, mask;
+	unsigned long numlanes, ctr, mask;
 	int colortable[EOF_MAX_FRETS][2] = {{makecol(192, 255, 192), eof_color_green}, {makecol(255, 192, 192), eof_color_red}, {makecol(255, 255, 192), eof_color_yellow}, {makecol(192, 192, 255), eof_color_blue}, {makecol(255, 192, 255), eof_color_purple}, {makecol(255, 192, 0), eof_color_orange}};
 	float lanewidth = 0.0;
 
@@ -798,7 +798,6 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	char notetype = 0;
 
 //Validate parameters
-	tracknum = eof_song->track[track]->tracknum;
 	if((track == 0) || (track >= eof_song->tracks) || ((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)) || (notenum >= eof_track_get_size(eof_song, track)))
 	{	//If an invalid track or note number was passsed
 		return -1;	//Error, signal to stop rendering (3D window renders last note to first)

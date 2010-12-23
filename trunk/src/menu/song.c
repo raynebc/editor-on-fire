@@ -162,7 +162,7 @@ DIALOG eof_song_properties_dialog[] =
 
 void eof_prepare_song_menu(void)
 {
-	unsigned long i, tracknum = 0;
+	unsigned long i, tracknum;
 	long firstnote = -1;
 	long lastnote = -1;
 	long noted[4] = {0};
@@ -554,7 +554,7 @@ int eof_menu_song_seek_first_note_vocals(void)
 
 int eof_menu_song_seek_first_note(void)
 {
-	unsigned long i, tracknum = 0;
+	unsigned long i;
 	long first_pos = -1;
 
 	if(eof_vocals_selected)
@@ -563,7 +563,6 @@ int eof_menu_song_seek_first_note(void)
 	}
 	else
 	{
-		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		if(!eof_music_catalog_playback)
 		{
 			for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
@@ -611,7 +610,7 @@ int eof_menu_song_seek_last_note_vocals(void)
 
 int eof_menu_song_seek_last_note(void)
 {
-	unsigned long i, tracknum = 0;
+	unsigned long i;
 	unsigned long last_pos = 0;
 
 	if(eof_vocals_selected)
@@ -620,7 +619,6 @@ int eof_menu_song_seek_last_note(void)
 	}
 	else
 	{
-		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		if(!eof_music_catalog_playback)
 		{
 			for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
@@ -664,7 +662,7 @@ int eof_menu_song_seek_previous_note_vocals(void)
 
 int eof_menu_song_seek_previous_note(void)
 {
-	unsigned long i, tracknum = 0;
+	unsigned long i;
 
 	if(eof_vocals_selected)
 	{
@@ -672,7 +670,6 @@ int eof_menu_song_seek_previous_note(void)
 	}
 	else
 	{
-		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		for(i = eof_track_get_size(eof_song, eof_selected_track); i > 0; i--)
 		{	//For each note in the active track
 			if((eof_get_note_type(eof_song, eof_selected_track, i-1) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i-1) < ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
@@ -713,7 +710,7 @@ int eof_menu_song_seek_next_note_vocals(void)
 
 int eof_menu_song_seek_next_note(void)
 {
-	unsigned long i, tracknum = 0;
+	unsigned long i;
 
 	if(eof_vocals_selected)
 	{
@@ -721,7 +718,6 @@ int eof_menu_song_seek_next_note(void)
 	}
 	else
 	{
-		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the active track
 			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < eof_music_length) && (eof_get_note_pos(eof_song, eof_selected_track, i) > ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
@@ -1275,14 +1271,12 @@ int eof_menu_catalog_add(void)
 	long first_pos = -1;
 	long last_pos = -1;
 	unsigned long i;
-	unsigned long tracknum = 0;
 	long next;
 
 	if(eof_vocals_selected)
 	{
 		return eof_menu_catalog_add_vocals();
 	}
-	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
