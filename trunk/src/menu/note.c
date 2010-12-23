@@ -679,7 +679,7 @@ int eof_menu_note_resnap(void)
 			if(eof_get_note_length(eof_song, eof_selected_track, i) > 1)
 			{
 				eof_snap_logic(&eof_tail_snap, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i));
-				eof_set_tail_pos(i, eof_tail_snap.pos);
+				eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
 			}
 		}
 	}

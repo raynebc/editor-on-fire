@@ -139,9 +139,9 @@ unsigned long eof_find_previous_anchor(EOF_SONG * sp, unsigned long cbeat)
 	return 0;
 }
 
-int eof_find_next_anchor(EOF_SONG * sp, int cbeat)
+long eof_find_next_anchor(EOF_SONG * sp, unsigned long cbeat)
 {
-	int beat = cbeat;
+	unsigned long beat = cbeat;
 
 	if(cbeat >= EOF_MAX_BEATS)	//Bounds check
 		return 0;

@@ -46,7 +46,6 @@ extern EOF_SNAP_DATA eof_snap;
 extern EOF_SNAP_DATA eof_tail_snap;
 
 void eof_select_beat(int beat);
-void eof_set_tail_pos(int note, unsigned long pos);
 void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p);
 void eof_snap_length_logic(EOF_SNAP_DATA * sp);
 void eof_read_editor_keys(void);

@@ -796,14 +796,13 @@ void eof_prepare_undo(int type)
 	}
 }
 
-int eof_get_previous_note(int cnote)
+long eof_get_previous_note(long cnote)
 {
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	int i;
+	long i;
 
 	for(i = cnote - 1; i >= 0; i--)
 	{
-		if(eof_song->legacy_track[tracknum]->note[i]->type == eof_song->legacy_track[tracknum]->note[cnote]->type)
+		if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_get_note_type(eof_song, eof_selected_track, cnote))
 		{
 			return i;
 		}
@@ -811,31 +810,33 @@ int eof_get_previous_note(int cnote)
 	return -1;
 }
 
-int eof_note_is_hopo(int cnote)
+int eof_note_is_hopo(unsigned long cnote)
 {
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	double delta;
 	float hopo_delta = eof_song->tags->eighth_note_hopo ? 250.0 : 170.0;
-	int i;
-	int pnote;
-	int beat = -1;
+	unsigned long i;
+	long pnote;
+	long beat = -1;
 	double bpm;
 	double scale;
 
+	if(eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR)
+		return 0;	//Only guitar/bass tracks can have HOPO notes
+
 	if(eof_hopo_view == EOF_HOPO_MANUAL)
 	{
-		if(eof_song->legacy_track[tracknum]->note[cnote]->flags & EOF_NOTE_FLAG_NO_HOPO)
+		if(eof_get_note_flags(eof_song, eof_selected_track, cnote) & EOF_NOTE_FLAG_NO_HOPO)
 		{
 			return 0;
 		}
-		if(eof_song->legacy_track[tracknum]->note[cnote]->flags & EOF_NOTE_FLAG_F_HOPO)
+		if(eof_get_note_flags(eof_song, eof_selected_track, cnote) & EOF_NOTE_FLAG_F_HOPO)
 		{
 			return 1;
 		}
 	}
 	for(i = 0; i < eof_song->beats - 1; i++)
 	{
-		if((eof_song->beat[i]->pos <= eof_song->legacy_track[tracknum]->note[cnote]->pos) && eof_song->beat[i + 1]->pos > eof_song->legacy_track[tracknum]->note[cnote]->pos)
+		if((eof_song->beat[i]->pos <= eof_get_note_pos(eof_song, eof_selected_track, cnote)) && eof_song->beat[i + 1]->pos > eof_get_note_pos(eof_song, eof_selected_track, cnote))
 		{
 			beat = i;
 			break;
@@ -856,16 +857,16 @@ int eof_note_is_hopo(int cnote)
 		}
 		if(eof_hopo_view == EOF_HOPO_RF)
 		{
-			delta = eof_song->legacy_track[tracknum]->note[cnote]->pos - eof_song->legacy_track[tracknum]->note[pnote]->pos;
-			if((delta <= (hopo_delta * scale)) && (eof_note_count_colors(eof_song->legacy_track[tracknum]->note[pnote]) == 1) && (eof_note_count_colors(eof_song->legacy_track[tracknum]->note[cnote]) == 1) && (eof_song->legacy_track[tracknum]->note[pnote]->note != eof_song->legacy_track[tracknum]->note[cnote]->note))
+			delta = eof_get_note_pos(eof_song, eof_selected_track, cnote) - eof_get_note_pos(eof_song, eof_selected_track, pnote);
+			if((delta <= (hopo_delta * scale)) && (eof_note_count_colors(eof_song, eof_selected_track, pnote) == 1) && (eof_note_count_colors(eof_song, eof_selected_track, cnote) == 1) && (eof_get_note_note(eof_song, eof_selected_track, pnote) != eof_get_note_note(eof_song, eof_selected_track, cnote)))
 			{
 				return 1;
 			}
 		}
 		else if(eof_hopo_view == EOF_HOPO_FOF)
 		{
-			delta = eof_song->legacy_track[tracknum]->note[cnote]->pos - (eof_song->legacy_track[tracknum]->note[pnote]->pos + eof_song->legacy_track[tracknum]->note[pnote]->length);
-			if((delta <= hopo_delta * scale) && !(eof_song->legacy_track[tracknum]->note[pnote]->note & eof_song->legacy_track[tracknum]->note[cnote]->note))
+			delta = eof_get_note_pos(eof_song, eof_selected_track, cnote) - (eof_get_note_pos(eof_song, eof_selected_track, pnote) + eof_get_note_length(eof_song, eof_selected_track, pnote));
+			if((delta <= hopo_delta * scale) && !(eof_get_note_note(eof_song, eof_selected_track, pnote) & eof_get_note_note(eof_song, eof_selected_track, cnote)))
 			{
 				return 1;
 			}
@@ -878,18 +879,19 @@ int eof_note_is_hopo(int cnote)
 void eof_determine_hopos(void)
 {
 	unsigned long i, j;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	char sp[EOF_MAX_STAR_POWER] = {0};
 	char so[EOF_MAX_STAR_POWER] = {0};
+	unsigned long flags;
+	EOF_STAR_POWER_ENTRY *starpowerptr;
+	EOF_SOLO_ENTRY *soloptr;
 
-	if((eof_song->tracks == 0) || (eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT))
-		return;	//Do not check for hopos unless the active track is a legacy track
-
-	for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
-	{
+	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
 		/* clear the flags */
-		eof_song->legacy_track[tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_HOPO);
-		eof_song->legacy_track[tracknum]->note[i]->flags &= (~EOF_NOTE_FLAG_SP);
+		flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+		flags &= (~EOF_NOTE_FLAG_HOPO);
+		flags &= (~EOF_NOTE_FLAG_SP);
+		eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 
 		/* mark HOPO notes */
 		switch(eof_hopo_view)
@@ -902,11 +904,12 @@ void eof_determine_hopos(void)
 			case EOF_HOPO_FOF:
 			case EOF_HOPO_MANUAL:
 			{
-				if(eof_song->legacy_track[tracknum]->note[i]->type == eof_note_type)
+				if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
 				{
 					if(eof_note_is_hopo(i))
 					{
-						eof_song->legacy_track[tracknum]->note[i]->flags |= EOF_NOTE_FLAG_HOPO;
+						flags |= EOF_NOTE_FLAG_HOPO;
+						eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 					}
 				}
 				break;
@@ -914,19 +917,22 @@ void eof_determine_hopos(void)
 		}
 
 		/* mark star power notes */
-		for(j = 0; j < eof_song->legacy_track[tracknum]->star_power_paths; j++)
-		{
-			if((eof_song->legacy_track[tracknum]->note[i]->pos >= eof_song->legacy_track[tracknum]->star_power_path[j].start_pos) && (eof_song->legacy_track[tracknum]->note[i]->pos <= eof_song->legacy_track[tracknum]->star_power_path[j].end_pos))
+		for(j = 0; j < eof_get_num_star_power_paths(eof_song, eof_selected_track); j++)
+		{	//For each star power path in the active track
+			starpowerptr = eof_get_star_power_path(eof_song, eof_selected_track, j);
+			if((eof_get_note_pos(eof_song, eof_selected_track, i) >= starpowerptr->start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= starpowerptr->end_pos))
 			{
-				eof_song->legacy_track[tracknum]->note[i]->flags |= EOF_NOTE_FLAG_SP;
+				flags |= EOF_NOTE_FLAG_SP;
+				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 				sp[j] = 1;
 			}
 		}
 
 		/* check solos */
-		for(j = 0; j < eof_song->legacy_track[tracknum]->solos; j++)
-		{
-			if((eof_song->legacy_track[tracknum]->note[i]->pos >= eof_song->legacy_track[tracknum]->solo[j].start_pos) && (eof_song->legacy_track[tracknum]->note[i]->pos <= eof_song->legacy_track[tracknum]->solo[j].end_pos))
+		for(j = 0; j < eof_get_num_solos(eof_song, eof_selected_track); j++)
+		{	//For each solo section in the active track
+			soloptr = eof_get_solo(eof_song, eof_selected_track, j);
+			if((eof_get_note_pos(eof_song, eof_selected_track, i) >= soloptr->start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= soloptr->end_pos))
 			{
 				so[j] = 1;
 			}
@@ -934,20 +940,20 @@ void eof_determine_hopos(void)
 	}
 
 	/* delete star power phrases with no notes */
-	for(j = 0; j < eof_song->legacy_track[tracknum]->star_power_paths; j++)
+	for(j = 0; j < eof_get_num_star_power_paths(eof_song, eof_selected_track); j++)
 	{
 		if(!sp[j])
 		{
-			eof_legacy_track_delete_star_power(eof_song->legacy_track[tracknum], j);
+			eof_track_delete_star_power_path(eof_song, eof_selected_track, j);
 		}
 	}
 
 	/* delete solos with no notes */
-	for(j = 0; j < eof_song->legacy_track[tracknum]->solos; j++)
+	for(j = 0; j < eof_get_num_solos(eof_song, eof_selected_track); j++)
 	{
 		if(!so[j])
 		{
-			eof_legacy_track_delete_solo(eof_song->legacy_track[tracknum], j);
+			eof_track_delete_solo(eof_song, eof_selected_track, j);
 		}
 	}
 }
@@ -960,10 +966,12 @@ int eof_figure_difficulty(void)
 	int dt[5] = {-1, -1, -1, -1};
 	int count = 0;
 
-	/* check for lyrics if PART VOCALS is selected */
-	if(eof_vocals_selected)
-	{
+	if(eof_selected_track > EOF_TRACK_VOCALS)
+		return -1;	//FoFiX does not support any custom, keys or pro tracks
 
+	/* check for lyrics if PART VOCALS is selected */
+	if(eof_selected_track == EOF_TRACK_VOCALS)
+	{
 		/* see if there are any pitched lyrics */
 		for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 		{
@@ -982,9 +990,9 @@ int eof_figure_difficulty(void)
 	}
 
 	/* see which difficulties are populated with notes */
-	for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
-	{
-		nt[(int)eof_song->legacy_track[tracknum]->note[i]->type] = 1;
+	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		nt[(int)eof_get_note_type(eof_song, eof_selected_track, i)] = 1;
 	}
 
 	/* no notes in this difficulty so don't allow test */
@@ -1001,13 +1009,6 @@ int eof_figure_difficulty(void)
 		}
 	}
 	return dt[eof_note_type];
-}
-
-int eof_count_notes(void)
-{
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-
-	return eof_song->legacy_track[tracknum]->notes;
 }
 
 /* total is used to determine the total number of notes including unselected notes */
@@ -1322,11 +1323,10 @@ int eof_notes_selected(void)
 int eof_first_selected_note(void)
 {
 	unsigned long i;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 	for(i = 0; i < EOF_MAX_NOTES; i++)
 	{
-		if(eof_selection.multi[i] && (eof_song->legacy_track[tracknum]->note[i]->type == eof_note_type))
+		if(eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
 			return i;
 		}
@@ -1836,7 +1836,7 @@ char * eof_get_tone_name(int tone)
 
 void eof_render_note_window(void)
 {
-	int i;
+	unsigned long i;
 	int pos;
 	int lpos, npos, ypos;
 	unsigned long tracknum = 0;
@@ -1933,13 +1933,13 @@ void eof_render_note_window(void)
 			}//If drawing a vocal catalog entry
 			else
 			{
-				for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
-				{	//For each note
-					if(eof_song->legacy_track[tracknum]->note[i]->pos > eof_song->catalog->entry[eof_selected_catalog_entry].end_pos)
+				for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+				{	//For each note in the active track
+					if(eof_get_note_pos(eof_song, eof_selected_track, i) > eof_song->catalog->entry[eof_selected_catalog_entry].end_pos)
 					{	//If this note is after the end of the catalog entry
 						break;	//Stop processing notes
 					}
-					if((eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_song->legacy_track[tracknum]->note[i]->type) && (eof_song->legacy_track[tracknum]->note[i]->pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos))
+					if((eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_get_note_type(eof_song, eof_selected_track, i)) && (eof_get_note_pos(eof_song, eof_selected_track, i) >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos))
 					{	//If this note is the same difficulty as that from where the catalog entry was taken, and is in the catalog entry
 						eof_note_draw(eof_song->catalog->entry[eof_selected_catalog_entry].track, i, i == eof_hover_note_2 ? 2 : 0, eof_window_note);
 					}
@@ -2007,9 +2007,9 @@ void eof_render_note_window(void)
 		}
 		else
 		{
-			if(eof_selection.current < eof_song->legacy_track[tracknum]->notes)
+			if(eof_selection.current < eof_track_get_size(eof_song, eof_selected_track))
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, 48, eof_color_white, -1, "Note = %ld : Pos = %lu : Length = %lu", eof_selection.current, eof_song->legacy_track[tracknum]->note[eof_selection.current]->pos, eof_song->legacy_track[tracknum]->note[eof_selection.current]->length);
+				textprintf_ex(eof_window_note->screen, font, 2, 48, eof_color_white, -1, "Note = %ld : Pos = %lu : Length = %lu", eof_selection.current, eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current), eof_get_note_length(eof_song, eof_selected_track, eof_selection.current));
 			}
 			else
 			{
