@@ -2,10 +2,13 @@
 #include "../agup/agup.h"
 #include "../undo.h"
 #include "../dialog.h"
+#include "../dialog/proc.h"
+#include "../player.h"
 #include "../utility.h"
 #include "../foflc/Lyric_storage.h"
 #include "../main.h"
 #include "note.h"
+#include "ctype.h"
 
 char eof_solo_menu_mark_text[32] = "&Mark";
 char eof_star_power_menu_mark_text[32] = "&Mark";
@@ -2051,5 +2054,141 @@ int eof_menu_toggle_freestyle(void)
 		}
 	}
 
+	return 1;
+}
+
+char eof_fret1[4] = {0};	//Use a fourth byte to guarantee proper truncation
+char eof_fret2[4] = {0};
+char eof_fret3[4] = {0};
+char eof_fret4[4] = {0};
+char eof_fret5[4] = {0};
+char eof_fret6[4] = {0};
+char *eof_fret_strings[6] = {eof_fret1, eof_fret2, eof_fret3, eof_fret4, eof_fret5, eof_fret6};
+
+DIALOG eof_pro_guitar_frets_dialog[] =
+{
+/*	(proc)			(x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1) (d2) (dp)          (dp2)          (dp3) */
+	{d_agup_window_proc,    0,   48,  200, 220,2,   23,  0,    0,      0,   0,   "Fret values",NULL,          NULL },
+	{d_agup_text_proc,      16,  84,  64,  8,  2,   23,  0,    0,      0,   0,   "String 1:",  NULL,          NULL },
+	{eof_verified_edit_proc,128, 80,  64,  20, 2,   23,  0,    0,      2,   0,   eof_fret1,    "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  108, 64,  8,  2,   23,  0,    0,      0,   0,   "String 2:",  NULL,          NULL },
+	{eof_verified_edit_proc,128, 104, 64,  20, 2,   23,  0,    0,      2,   0,   eof_fret2,    "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  132, 64,  8,  2,   23,  0,    0,      0,   0,   "String 3:",  NULL,          NULL },
+	{eof_verified_edit_proc,128, 128, 64,  20, 2,   23,  0,    0,      2,   0,   eof_fret3,    "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  156, 64,  8,  2,   23,  0,    0,      0,   0,   "String 4:",  NULL,          NULL },
+	{eof_verified_edit_proc,128, 152, 64,  20, 2,   23,  0,    0,      2,   0,   eof_fret4,    "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  180, 64,  8,  2,   23,  0,    0,      0,   0,   "String 5:",  NULL,          NULL },
+	{eof_verified_edit_proc,128, 176, 64,  20, 2,   23,  0,    0,      2,   0,   eof_fret5,    "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  204, 64,  8,  2,   23,  0,    0,      0,   0,   "String 6:",  NULL,          NULL },
+	{eof_verified_edit_proc,128, 200, 64,  20, 2,   23,  0,    0,      2,   0,   eof_fret6,    "0123456789Xx",NULL },
+
+	{d_agup_button_proc,    16,  228, 68,  28, 2,   23,  '\r', D_EXIT, 0,   0,   "OK",         NULL,          NULL },
+	{d_agup_button_proc,    116, 228, 68,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Cancel",     NULL,          NULL },
+	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_menu_note_frets(void)
+{
+	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	unsigned long ctr, fretcount;
+	char undo_made = 0;	//Set to nonzero when an undo state is created
+	long fretvalue;
+	unsigned long bitmask = 0;	//Used to build the updated pro guitar note bitmask
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run unless the pro guitar track is active
+
+	if(!eof_music_paused)
+	{
+		eof_music_play();
+	}
+
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_pro_guitar_frets_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_pro_guitar_frets_dialog);
+
+//Copy the fret values into the fret strings
+	fretcount = eof_count_track_lanes(eof_selected_track);
+	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
+	{	//For each of the 6 supported strings
+		if(ctr < fretcount)
+		{	//If this track uses this string, copy the fret value to the appropriate string
+			eof_pro_guitar_frets_dialog[12 - (2 * ctr)].flags = 0;	//Ensure this text box is enabled
+			if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->note & bitmask)
+			{	//If this string is already defined as being in use, copy its fret value to the string
+				if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] == 0xFF)
+				{	//If this string is muted
+					snprintf(eof_fret_strings[ctr], 3, "X");
+				}
+				else
+				{
+					snprintf(eof_fret_strings[ctr], 3, "%d", eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr]);
+				}
+			}
+			else
+			{	//Otherwise empty the string
+				eof_fret_strings[ctr][0] = '\0';
+			}
+		}
+		else
+		{	//Otherwise disable the text box for this fret and empty the string
+			eof_pro_guitar_frets_dialog[12 - (2 * ctr)].flags = D_DISABLED;	//Ensure this text box is disabled
+			eof_fret_strings[ctr][0] = '\0';
+		}
+	}
+
+	bitmask = 0;
+	if(eof_popup_dialog(eof_pro_guitar_frets_dialog, 0) == 13)
+	{	//If user clicked OK
+		//Validate and store the input
+		for(ctr = 0; ctr < 6; ctr++)
+		{	//For each of the 6 supported frets
+			if(eof_fret_strings[ctr][0] != '\0')
+			{	//If this string isn't empty, set the fret value
+				bitmask |= (1 << ctr);	//Set the appropriate bit for this lane
+				if(toupper(eof_fret_strings[ctr][0]) == 'X')
+				{	//If the user defined this string as muted
+					fretvalue = 0xFF;
+				}
+				else
+				{	//Get the appropriate fret value
+					fretvalue = atol(eof_fret_strings[ctr]);
+					if((fretvalue < 0) || (fretvalue > eof_song->pro_guitar_track[tracknum]->numfrets))
+					{	//If the conversion to number failed, or an invalid fret number was entered, enter a value of (muted) for the string
+						fretvalue = 0xFF;
+					}
+				}
+				if(!undo_made && (fretvalue != eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr]))
+				{	//If an undo state hasn't been made yet, and this fret value changed
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] = fretvalue;
+			}
+			else
+			{	//Clear the fret value and return the fret back to its default of 0 (open)
+				bitmask &= ~(1 << ctr);	//Clear the appropriate bit for this lane
+				if(!undo_made && (eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] != 0))
+				{	//If an undo state hasn't been made yet, and this fret value changed
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] = 0;
+			}
+		}
+
+		//Save the updated not bitmask
+		if(!undo_made && (eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->note != bitmask))
+		{	//If an undo state hasn't been made yet, and the note bitmask changed
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			undo_made = 1;
+		}
+		eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->note = bitmask;
+	}
+	eof_show_mouse(NULL);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
 	return 1;
 }

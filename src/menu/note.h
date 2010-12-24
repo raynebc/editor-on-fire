@@ -53,6 +53,7 @@ int eof_menu_set_freestyle(char status);	//Applies the specified freestyle statu
 int eof_menu_set_freestyle_on(void);		//Applies freestyle for all selected lyrics
 int eof_menu_set_freestyle_off(void);		//Removes freestyle for all selected lyrics
 int eof_menu_toggle_freestyle(void);		//Toggles the freestyle status of all selected lyrics
+int eof_menu_note_frets(void);				//Allows a pro guitar's fret values to be defined
 
 int eof_menu_note_toggle_green(void);
 int eof_menu_note_toggle_red(void);

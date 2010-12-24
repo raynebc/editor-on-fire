@@ -2526,7 +2526,7 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long
 				}
 				ptr3->type = type;
 				ptr3->note = note;
-				memset(ptr3->frets, 0xFF, 16);	//Initialize all frets to "muted"
+				memset(ptr3->frets, 0, 16);	//Initialize all frets to open
 				ptr3->midi_pos = 0;	//Not implemented yet
 				ptr3->midi_length = 0;	//Not implemented yet
 				ptr3->pos = pos;

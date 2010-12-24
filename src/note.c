@@ -309,10 +309,10 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 
 				if((track > 0) && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 				{	//If this is a pro guitar note, render the fret number over the center of the note
-					BITMAP *fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], ctr, 0, tcol, dcol);
+					BITMAP *fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], ctr, 2, tcol, dcol);	//Allow 2 pixels for padding
 					if(fretbmp != NULL)
 					{	//Render the bitmap on top of the 3D note and then destroy the bitmap
-						draw_sprite(window->screen, fretbmp, x + 1 - (fretbmp->w/2), y - (text_height(font)/2));	//Fudge (x,y) to make it print centered over the gem
+						draw_sprite(window->screen, fretbmp, x - (fretbmp->w/2), y - (text_height(font)/2));	//Fudge (x,y) to make it print centered over the gem
 						destroy_bitmap(fretbmp);
 					}
 				}
@@ -587,7 +587,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 {
 	long pos = eof_music_pos / eof_zoom_3d;
 	long npos;
-	int xchart[EOF_MAX_FRETS] = {48, 48 + 56, 48 + 56 * 2, 48 + 56 * 3, 48 + 56 * 4};
+	int xchart[EOF_MAX_FRETS] = {48, 48 + 56, 48 + 56 * 2, 48 + 56 * 3, 48 + 56 * 4, 48 + 56 * 5};
 	int bx = 48;
 	int point[8];
 	int rz, ez;
@@ -783,7 +783,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 {
 	long pos = eof_music_pos / eof_zoom_3d;
 	long npos;
-	int xchart[5] = {48, 48 + 56, 48 + 56 * 2, 48 + 56 * 3, 48 + 56 * 4};
+	int xchart[EOF_MAX_FRETS] = {48, 48 + 56, 48 + 56 * 2, 48 + 56 * 3, 48 + 56 * 4};
 	int point[8];
 	int rz, ez;
 	unsigned long numlanes, ctr, mask;
@@ -841,23 +841,11 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 	rz = npos < -100 ? -100 : npos + 10;
 	ez = npos + notelength / eof_zoom_3d > 600 ? 600 : npos + notelength / eof_zoom_3d + 6;
-	for(ctr=0,mask=1; ctr < EOF_MAX_FRETS; ctr++,mask=mask<<1)
-	{	//For each of the available frets
+	for(ctr=0,mask=1; ctr < eof_count_track_lanes(track); ctr++,mask=mask<<1)
+	{	//For each of the lanes in this track
 		if(notenote & mask)
 		{	//If this lane has a gem to render
-			if(ctr < 5)
-			{	//Logic to render lanes 1 through 5
-				point[0] = ocd3d_project_x(xchart[ctr] - 10, rz);
-				point[1] = ocd3d_project_y(200, rz);
-				point[2] = ocd3d_project_x(xchart[ctr] - 10, ez);
-				point[3] = ocd3d_project_y(200, ez);
-				point[4] = ocd3d_project_x(xchart[ctr] + 10, ez);
-				point[5] = ocd3d_project_y(200, ez);
-				point[6] = ocd3d_project_x(xchart[ctr] + 10, rz);
-				point[7] = ocd3d_project_y(200, rz);
-				polygon(eof_window_3d->screen, 4, point, noteflags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : eof_color_silver) : (p ? colortable[ctr][0] : colortable[ctr][1]));
-			}
-			else if((ctr == 5) && (track == EOF_TRACK_BASS) && eof_open_bass_enabled())
+			if((ctr == 5) && (track == EOF_TRACK_BASS) && eof_open_bass_enabled())
 			{	//Logic to render open bass strum notes (a rectangle covering the width of rendering of frets 2, 3 and 4
 				point[0] = ocd3d_project_x(xchart[1] - 10, rz);
 				point[1] = ocd3d_project_y(200, rz);
@@ -868,6 +856,21 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 				point[6] = ocd3d_project_x(xchart[3] + 10, rz);
 				point[7] = ocd3d_project_y(200, rz);
 				polygon(eof_window_3d->screen, 4, point, noteflags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : eof_color_silver) : (p ? colortable[ctr][0] : colortable[ctr][1]));
+			}
+			else
+			{	//Logic to render lanes 1 through 6
+				if(!((ctr == 5) && (track == EOF_TRACK_BASS)))
+				{	//If this is not a hidden open bass note
+					point[0] = ocd3d_project_x(xchart[ctr] - 10, rz);
+					point[1] = ocd3d_project_y(200, rz);
+					point[2] = ocd3d_project_x(xchart[ctr] - 10, ez);
+					point[3] = ocd3d_project_y(200, ez);
+					point[4] = ocd3d_project_x(xchart[ctr] + 10, ez);
+					point[5] = ocd3d_project_y(200, ez);
+					point[6] = ocd3d_project_x(xchart[ctr] + 10, rz);
+					point[7] = ocd3d_project_y(200, rz);
+					polygon(eof_window_3d->screen, 4, point, noteflags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : eof_color_silver) : (p ? colortable[ctr][0] : colortable[ctr][1]));
+				}
 			}
 		}
 	}
@@ -929,14 +932,14 @@ BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, unsigned char f
 			snprintf(fretstring,sizeof(fretstring),"%d",note->frets[fretnum]);
 		}
 
-		width = text_length(font,fretstring) + padding;
+		width = text_length(font,fretstring) + padding + 1;	//The font in use doesn't look centered, so pad the left by one pixel
 		height = text_height(font);
 		fretbmp = create_bitmap(width,height);
 		if(fretbmp != NULL)
 		{	//Render the fret number on top of the 3D note
 			clear_to_color(fretbmp, fillcol);
 			rect(fretbmp, 0, 0, width-1, height-1, textcol);	//Draw a border along the edge of this bitmap
-			textprintf_ex(fretbmp, font, padding/2, 0, textcol, -1, "%s", fretstring);	//Center the text between the padding
+			textprintf_ex(fretbmp, font, (padding/2.0) + 1, 0, textcol, -1, "%s", fretstring);	//Center the text between the padding (including one extra pixel for left padding), rounding to the right if the padding is an odd value
 		}
 	}
 
