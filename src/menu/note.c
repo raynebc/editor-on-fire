@@ -100,6 +100,7 @@ MENU eof_note_menu[] =
     {"&Freestyle", NULL, eof_note_freestyle_menu, 0, NULL},
     {"Toggle &Expert+ bass drum\tCtrl+E", eof_menu_note_toggle_double_bass, NULL, 0, NULL},
     {"Pro &Drum mode notation", NULL, eof_note_prodrum_menu, 0, NULL},
+    {"Edit fret values\tF", eof_menu_note_frets, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -393,10 +394,6 @@ void eof_prepare_note_menu(void)
 			{
 				eof_note_menu[13].flags = 0;	// lyric lines
 			}
-//			else
-//			{
-//				eof_note_menu[13].flags = D_DISABLED;
-//			}
 
 			if(vselected)
 			{
@@ -483,6 +480,16 @@ void eof_prepare_note_menu(void)
 			}
 
 			eof_note_menu[19].flags = D_DISABLED; // freestyle submenu
+
+			/* Edit fret values */
+			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If the active track is a pro guitar track
+				eof_note_menu[22].flags = 0;			//Enable the ability to edit the note's fret values
+			}
+			else
+			{
+				eof_note_menu[22].flags = D_DISABLED;	//Otherwise disable the menu item
+			}
 		}
 	}
 }
@@ -512,7 +519,7 @@ int eof_menu_note_transpose_up(void)
 	}
 	else
 	{
-		if(eof_open_bass_enabled() || (eof_count_track_lanes(eof_selected_track) > 5))
+		if(eof_open_bass_enabled() || (eof_count_track_lanes(eof_song, eof_selected_track) > 5))
 		{	//If open bass is enabled, or the track has more than 5 lanes, lane 6 is valid for use
 			max = 63;
 		}
@@ -939,7 +946,7 @@ int eof_menu_note_toggle_orange(void)
 	unsigned long i;
 	unsigned long flags, note;
 
-	if(eof_count_track_lanes(eof_selected_track) < 6)
+	if(eof_count_track_lanes(eof_song, eof_selected_track) < 6)
 	{
 		return 1;	//Don't do anything if there is less than 6 tracks available
 	}
@@ -1871,7 +1878,7 @@ int eof_transpose_possible(int dir)
 	}
 	else
 	{
-		if(eof_open_bass_enabled() || (eof_count_track_lanes(eof_selected_track) > 5))
+		if(eof_open_bass_enabled() || (eof_count_track_lanes(eof_song, eof_selected_track) > 5))
 		{	//If open bass is enabled, or the track has more than 5 lanes, lane 5 can transpose up to lane 6
 			max = 32;
 		}
@@ -2098,6 +2105,9 @@ int eof_menu_note_frets(void)
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run unless the pro guitar track is active
 
+	if(eof_selection.current >= eof_track_get_size(eof_song, eof_selected_track))
+		return 1;	//Do not allow this function to run if a valid note isn't selected
+
 	if(!eof_music_paused)
 	{
 		eof_music_play();
@@ -2110,7 +2120,7 @@ int eof_menu_note_frets(void)
 	centre_dialog(eof_pro_guitar_frets_dialog);
 
 //Copy the fret values into the fret strings
-	fretcount = eof_count_track_lanes(eof_selected_track);
+	fretcount = eof_count_track_lanes(eof_song, eof_selected_track);
 	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
 	{	//For each of the 6 supported strings
 		if(ctr < fretcount)

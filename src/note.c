@@ -218,11 +218,11 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 
 	if(track != 0)
 	{	//If rendering an existing note
-		numlanes = eof_count_track_lanes(track);	//Count the number of lanes in that note's track
+		numlanes = eof_count_track_lanes(eof_song, track);	//Count the number of lanes in that note's track
 	}
 	else
 	{
-		numlanes = eof_count_track_lanes(eof_selected_track);	//Count the number of lanes in the active track
+		numlanes = eof_count_track_lanes(eof_song, eof_selected_track);	//Count the number of lanes in the active track
 	}
 	if(eof_inverted_notes)
 	{
@@ -631,7 +631,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 		return 1;	//Return status:  Clipping after the viewing window
 	}
 
-	numlanes = eof_count_track_lanes(track);	//Count the number of lanes in that note's track
+	numlanes = eof_count_track_lanes(eof_song, track);	//Count the number of lanes in that note's track
 	lanewidth = 56.0 * (4.0 / (numlanes-1));	//This is the correct lane width for either 5 or 6 lanes
 
 	if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
@@ -819,7 +819,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	}
 
 	//Determine the width of the fret lanes
-	numlanes = eof_count_track_lanes(track);	//Count the number of lanes in that note's track
+	numlanes = eof_count_track_lanes(eof_song, track);	//Count the number of lanes in that note's track
 	lanewidth = 56.0 * (4.0 / (numlanes-1));	//This is the correct lane width for either 5 or 6 lanes
 	if(eof_lefty_mode)
 	{
@@ -841,7 +841,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 	rz = npos < -100 ? -100 : npos + 10;
 	ez = npos + notelength / eof_zoom_3d > 600 ? 600 : npos + notelength / eof_zoom_3d + 6;
-	for(ctr=0,mask=1; ctr < eof_count_track_lanes(track); ctr++,mask=mask<<1)
+	for(ctr=0,mask=1; ctr < eof_count_track_lanes(eof_song, track); ctr++,mask=mask<<1)
 	{	//For each of the lanes in this track
 		if(notenote & mask)
 		{	//If this lane has a gem to render

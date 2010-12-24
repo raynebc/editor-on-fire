@@ -408,7 +408,7 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 	//For fret catalog sections, the flags variable represents which track the catalog entry belongs to
 	//For lyric phrases, the difficulty field indicates which lyric set number (ie. PART VOCALS) the phrase applies to
 	//Returns zero on error
-unsigned long eof_count_track_lanes(unsigned long track);	//Returns the number of lanes in the specified track, or the default of 5
+unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track);	//Returns the number of lanes in the specified track, or the default of 5
 
 EOF_NOTE * eof_legacy_track_add_note(EOF_LEGACY_TRACK * tp);	//Allocates, initializes and stores a new EOF_NOTE structure into the notes array.  Returns the newly allocated structure or NULL upon error
 void eof_legacy_track_delete_note(EOF_LEGACY_TRACK * tp, unsigned long note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position

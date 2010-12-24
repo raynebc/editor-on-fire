@@ -1826,7 +1826,7 @@ void eof_render_note_window(void)
 	int xcoord;
 	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
 
-	numlanes = eof_count_track_lanes(eof_selected_track);
+	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	clear_to_color(eof_window_note->screen, eof_color_gray);
 
 	if((eof_catalog_menu[0].flags & D_SELECTED) && eof_song->catalog->entries)
@@ -2295,7 +2295,7 @@ void eof_render_3d_window(void)
 	int obx, oby, oex, oey;
 	int px, py, pw;
 
-	numlanes = eof_count_track_lanes(eof_selected_track);
+	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	px = eof_window_3d->w / 2;
 	py = 0;
 	pw = 320;
@@ -3345,7 +3345,7 @@ void eof_scale_fretboard(void)
 
 	eof_screen_layout.string_space = eof_screen_layout.string_space_unscaled;
 
-	numlanes = eof_count_track_lanes(eof_selected_track);
+	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	if(numlanes > 5)
 	{	//If the active track has more than 5 lanes, scale the spacing between the fretboard lanes
 		eof_screen_layout.string_space = (double)eof_screen_layout.string_space * 5.0 / (double)numlanes;
