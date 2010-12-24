@@ -1179,6 +1179,10 @@ void eof_read_editor_keys(void)
 		{	//Toggle freestyle
 			eof_menu_toggle_freestyle();
 		}
+		else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//Edit fret values
+			eof_menu_note_frets();
+		}
 		key[KEY_F] = 0;
 	}
 

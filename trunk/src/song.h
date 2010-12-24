@@ -54,7 +54,6 @@
 #define EOF_NOTE_NAME_LENGTH 31
 typedef struct
 {
-
     char name[EOF_NOTE_NAME_LENGTH];
 	char          type;			//Stores the note's difficulty
 	unsigned char note;			//Stores the note's fret values
@@ -68,7 +67,6 @@ typedef struct
 
 typedef struct
 {
-
     unsigned char number;		//The chord's number (using RB3's chord number system)
     char name[EOF_NOTE_NAME_LENGTH+1];
 	char          type;			//Stores the note's difficulty
@@ -84,7 +82,6 @@ typedef struct
 
 typedef struct
 {
-
 	char name[EOF_NOTE_NAME_LENGTH+1];
 	char          type;
 	unsigned char note;
@@ -103,7 +100,6 @@ typedef struct
 
 typedef struct
 {
-
 	unsigned char type;		//The lyric set this lyric belongs to (0=PART VOCALS, 1=HARM1, 2=HARM2...)
 	unsigned char note;		// if zero, the lyric has no defined pitch
 	char          text[EOF_MAX_LYRIC_LENGTH+1];
@@ -260,7 +256,6 @@ typedef struct
 
 typedef struct
 {
-
 	unsigned long ppqn;
 	unsigned long midi_pos;
 	unsigned long pos;
@@ -272,7 +267,6 @@ typedef struct
 
 typedef struct
 {
-
 	char filename[256];
 	long  midi_offset;	//Leave signed just in case this is eventually used to allow for insertion of leading silence via specifying a negative midi offset
 	char modified;
@@ -281,7 +275,6 @@ typedef struct
 
 typedef struct
 {
-
 	char          artist[256];
 	char          title[256];
 	char          frettist[256];
@@ -302,7 +295,6 @@ typedef struct
 
 typedef struct
 {
-
 	unsigned long track;
 	char type;
 	unsigned long start_pos;
@@ -312,7 +304,6 @@ typedef struct
 
 typedef struct
 {
-
 	char text[256];
 	unsigned long beat;
 
@@ -320,7 +311,6 @@ typedef struct
 
 typedef struct
 {
-
 	EOF_CATALOG_ENTRY entry[EOF_MAX_CATALOG_ENTRIES];
 	unsigned long entries;
 
@@ -335,7 +325,6 @@ extern EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 11 + 1];
 
 typedef struct
 {
-
 	/* song info */
 	EOF_SONG_TAGS * tags;
 
