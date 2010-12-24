@@ -2116,7 +2116,7 @@ EOF_SONG * eof_create_song_populated(void)
 	return sp;
 }
 
-unsigned long eof_count_track_lanes(unsigned long track)
+unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track)
 {
 	if((track == 0) || (track > EOF_TRACKS_MAX))
 		return 5;	//Return default value if the specified track doesn't exist
@@ -2488,6 +2488,10 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long
 				ptr->pos = pos;
 				ptr->length = length;
 				ptr->flags = 0;
+				if(!((eof_count_track_lanes(sp, track) > 5) && (track != EOF_TRACK_BASS)))
+				{	//If the track storing the new note does not have six lanes (with the exclusion of the bass track's open strum lane)
+					note &= ~32;	//Clear lane 6
+				}
 				if(sp->track[track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR)
 				{	//In a keys track, all lanes are forced to be "crazy" and be allowed to overlap other lanes
 					ptr->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag bit

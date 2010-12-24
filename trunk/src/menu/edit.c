@@ -1177,12 +1177,14 @@ int eof_menu_edit_copy(void)
 	unsigned long copy_notes = 0;
 	float tfloat;
 	PACKFILE * fp;
+	unsigned char frets[16] = {0};	//Used to store NULL fret data to support copying legacy notes to a pro guitar track
+	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 	/* first, scan for selected notes */
 	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_selection.track == eof_selected_track && eof_selection.multi[i]))
-		{
+		if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the active difficulty, is in the active track and is selected
 			copy_notes++;
 			if(eof_get_note_pos(eof_song, eof_selected_track, i) < first_pos)
 			{
@@ -1240,6 +1242,16 @@ int eof_menu_edit_copy(void)
 			pack_iputl(eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i)), fp);	//Write the beat the note ends in
 			pack_iputl(eof_get_note_length(eof_song, eof_selected_track, i), fp);	//Write the note's length
 			pack_iputl(eof_get_note_flags(eof_song, eof_selected_track, i), fp);	//Write the note's flags
+
+			/* write fret values to disk, or NULL data */
+			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If this is a pro guitar note
+				pack_fwrite(eof_song->pro_guitar_track[tracknum]->note[i]->frets, sizeof(frets), fp);	//Write the note's fret array
+			}
+			else
+			{
+				pack_fwrite(frets, sizeof(frets), fp);	//Write NULL data for the note's fret array
+			}
 		}
 	}
 	pack_fclose(fp);
@@ -1262,6 +1274,8 @@ int eof_menu_edit_paste(void)
 	EOF_NOTE * new_note = NULL;
 	PACKFILE * fp;
 	unsigned long sourcetrack = 0;	//Will store the track that this clipboard data was from
+	unsigned char frets[16] = {0};	//Used to store fret data to support copying to a pro guitar track
+	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 	/* open the file */
 	fp = pack_fopen("eof.clipboard", "r");
@@ -1283,7 +1297,7 @@ int eof_menu_edit_paste(void)
 	eof_selection.current = EOF_MAX_NOTES - 1;
 	eof_selection.current_pos = 0;
 	for(i = 0; i < copy_notes; i++)
-	{
+	{	//For each note in the clipboard file
 		/* read the note */
 		temp_note.note = pack_igetl(fp);	//Read the note fret values
 		temp_note.pos = pack_igetl(fp);		//Read the note's position relative to within the selection
@@ -1308,6 +1322,13 @@ int eof_menu_edit_paste(void)
 				paste_pos[paste_count] = new_note->pos;
 				paste_count++;
 			}
+		}
+
+		/* read fret values */
+		pack_fread(frets, sizeof(frets), fp);	//Read the note's fret array
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If this is a pro guitar track
+			memcpy(eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->frets, frets, sizeof(frets));	//Copy the fret array to the last created pro guitar note
 		}
 	}
 	pack_fclose(fp);
@@ -1349,6 +1370,8 @@ int eof_menu_edit_old_paste(void)
 	EOF_EXTENDED_NOTE temp_note;
 	EOF_NOTE * new_note = NULL;
 	unsigned long sourcetrack = 0;	//Will store the track that this clipboard data was from
+	unsigned char frets[16] = {0};	//Used to store fret data to support copying to a pro guitar track
+	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 	fp = pack_fopen("eof.clipboard", "r");
 	if(!fp)
@@ -1362,7 +1385,7 @@ int eof_menu_edit_old_paste(void)
 	copy_notes = pack_igetl(fp);
 	first_beat = pack_igetl(fp);
 	for(i = 0; i < copy_notes; i++)
-	{
+	{	//For each note in the clipboard file
 		/* read the note */
 		temp_note.note = pack_igetl(fp);	//Read the note fret values
 		temp_note.pos = pack_igetl(fp);		//Read the note's position relative to within the selection
@@ -1383,6 +1406,13 @@ int eof_menu_edit_old_paste(void)
 				paste_pos[paste_count] = new_note->pos;
 				paste_count++;
 			}
+		}
+
+		/* read fret values */
+		pack_fread(frets, sizeof(frets), fp);	//Read the note's fret array
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If this is a pro guitar track
+			memcpy(eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->frets, frets, sizeof(frets));	//Copy the fret array to the last created pro guitar note
 		}
 	}
 	eof_track_sort_notes(eof_song, eof_selected_track);

@@ -512,7 +512,7 @@ void eof_read_editor_keys(void)
 	unsigned long bitmask = 0;	//Used for simplifying note placement logic
 	EOF_NOTE * new_note = NULL;
 	EOF_LYRIC * new_lyric = NULL;
-	unsigned long numlanes = eof_count_track_lanes(eof_selected_track);
+	unsigned long numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	unsigned long note;
 
 	eof_read_controller(&eof_guitar);
@@ -3710,7 +3710,7 @@ void eof_render_editor_window_common(void)
 	if(!eof_song_loaded)
 		return;
 
-	numlanes = eof_count_track_lanes(eof_selected_track);
+	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 
 	/* draw the starting position */
 	if(pos < 300)
@@ -4016,7 +4016,7 @@ unsigned char eof_find_pen_note_mask(void)
 
 	//Determine which lane the mouse is in
 	eof_hover_piece = -1;
-	for(i = 0; i < eof_count_track_lanes(eof_selected_track); i++)
+	for(i = 0; i < eof_count_track_lanes(eof_song, eof_selected_track); i++)
 	{	//For each of the usable lanes
 		laneborder = eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 15 + 10 + eof_screen_layout.note_y[i];	//This represents the y position of the boundary between the current lane and the next
 		if((mouse_y < laneborder) && (mouse_y > laneborder - eof_screen_layout.string_space))
@@ -4026,7 +4026,7 @@ unsigned char eof_find_pen_note_mask(void)
 	}
 	if(eof_hover_note < 0)
 	{
-		bitmaskshift = eof_count_track_lanes(eof_selected_track) - 5;	//If the 6th lane is in use, the inverted mask will be shifted left by one
+		bitmaskshift = eof_count_track_lanes(eof_song, eof_selected_track) - 5;	//If the 6th lane is in use, the inverted mask will be shifted left by one
 		switch(eof_hover_piece)
 		{
 			case 0:
