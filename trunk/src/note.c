@@ -142,6 +142,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	char iscymbal;		//Used to track whether the specified note is marked as a cymbal
 	long x,y;
 	unsigned long numlanes, tracknum=0;
+	char notation[11];	//Used to store tab style notation for pro guitar notes
 
 	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
 	unsigned long notepos = 0;
@@ -169,6 +170,18 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		noteflags = eof_get_note_flags(eof_song, track, notenum);
 		notenote = eof_get_note_note(eof_song, track, notenum);
 		notetype = eof_get_note_type(eof_song, track, notenum);
+
+		if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If the catalog entry is a pro guitar note and the active track is a legacy track
+			if(eof_song->pro_guitar_track[tracknum]->note[notenum]->legacymask != 0)
+			{	//If the user defined how this pro guitar note would transcribe to a legacy track
+				notenote = eof_song->pro_guitar_track[tracknum]->note[notenum]->legacymask;
+			}
+			else
+			{
+				notenote &= 31;	//Mask out lane 6 (this is how it would be treated when notes were created via a paste operation)
+			}
+		}
 	}
 	else
 	{	//Render the pen note
@@ -307,14 +320,19 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 					circle(window->screen, x, y, radius, pcol);
 				}
 
-				if((track > 0) && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-				{	//If this is a pro guitar note, render the fret number over the center of the note
+				if((track > 0) && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				{	//If this is a pro guitar note and a pro guitar track is active, perform pro guitar specific rendering
+					//Render the fret number over the center of the note (but only if the active track is a pro guitar track)
 					BITMAP *fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], ctr, 2, tcol, dcol);	//Allow 2 pixels for padding
 					if(fretbmp != NULL)
 					{	//Render the bitmap on top of the 3D note and then destroy the bitmap
 						draw_sprite(window->screen, fretbmp, x - (fretbmp->w/2), y - (text_height(font)/2));	//Fudge (x,y) to make it print centered over the gem
 						destroy_bitmap(fretbmp);
 					}
+
+					//Render tab notations
+					eof_get_pro_note_notation(notation, eof_song->pro_guitar_track[tracknum]->note[notenum]);	//Get the tab playing notation for this note
+					textprintf_centre_ex(window->screen, eof_mono_font, x, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 3, eof_color_red, -1, notation);
 				}
 			}
 			else
@@ -944,4 +962,46 @@ BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, unsigned char f
 	}
 
 	return fretbmp;
+}
+
+void eof_get_pro_note_notation(char *buffer, EOF_PRO_GUITAR_NOTE *note)
+{
+	unsigned long index = 0;
+
+	if((note != NULL) && (buffer != NULL))
+	{
+		if(note->flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
+		{
+			buffer[index++] = 'H';
+		}
+		else if(note->flags & EOF_PRO_GUITAR_NOTE_FLAG_PO)
+		{
+			buffer[index++] = 'P';
+		}
+		else if(note->flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
+		{
+			buffer[index++] = 'T';
+		}
+
+		if(note->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+		{
+			buffer[index++] = '/';
+		}
+		else if(note->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+		{
+			buffer[index++] = '\\';
+		}
+
+		if(note->flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
+		{
+			buffer[index++] = 'P';
+			buffer[index++] = 'M';
+		}
+		else if(note->flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE)
+		{
+			buffer[index++] = 'X';
+		}
+
+		buffer[index] = '\0';
+	}
 }

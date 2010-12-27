@@ -45,6 +45,7 @@ MENU eof_hopo_menu[] =
     {"&Auto", eof_menu_hopo_auto, NULL, 0, NULL},
     {"&Force On", eof_menu_hopo_force_on, NULL, 0, NULL},
     {"Force &Off", eof_menu_hopo_force_off, NULL, 0, NULL},
+    {"&Cycle On/Off/Auto\tH", eof_menu_hopo_cycle, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -76,6 +77,19 @@ MENU eof_note_prodrum_menu[] =
     {NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_note_proguitar_menu[] =
+{
+    {"Edit pro guitar &note\tN", eof_menu_note_edit_pro_guitar_note, NULL, 0, NULL},
+    {"Toggle tapping\tCtrl+T", eof_menu_note_toggle_tapping, NULL, 0, NULL},
+    {"Mark as non &Tapping", eof_menu_note_remove_tapping, NULL, 0, NULL},
+    {"Toggle Slide &Up\tCtrl+Up", eof_menu_note_toggle_slide_up, NULL, 0, NULL},
+    {"Toggle Slide &Down\tCtrl+Down", eof_menu_note_toggle_slide_down, NULL, 0, NULL},
+    {"Mark as non &Slide", eof_menu_note_remove_slide, NULL, 0, NULL},
+    {"Toggle &Palm muting", eof_menu_note_toggle_palm_muting, NULL, 0, NULL},
+    {"Mark as non palm &Muting", eof_menu_note_remove_palm_muting, NULL, 0, NULL},
+    {NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_note_menu[] =
 {
     {"&Toggle", NULL, eof_note_toggle_menu, 0, NULL},
@@ -100,7 +114,7 @@ MENU eof_note_menu[] =
     {"&Freestyle", NULL, eof_note_freestyle_menu, 0, NULL},
     {"Toggle &Expert+ bass drum\tCtrl+E", eof_menu_note_toggle_double_bass, NULL, 0, NULL},
     {"Pro &Drum mode notation", NULL, eof_note_prodrum_menu, 0, NULL},
-    {"Edit pro guitar &note\tN", eof_menu_note_edit_pro_guitar_note, NULL, 0, NULL},
+    {"Pro &Guitar mode notation", NULL, eof_note_proguitar_menu, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -481,14 +495,14 @@ void eof_prepare_note_menu(void)
 
 			eof_note_menu[19].flags = D_DISABLED; // freestyle submenu
 
-			/* Edit fret values */
+			/* Pro Guitar mode notation> */
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If the active track is a pro guitar track
-				eof_note_menu[22].flags = 0;			//Enable the ability to edit the note's fret values
+				eof_note_menu[22].flags = 0;			//Enable the Pro Guitar mode notation submenu
 			}
 			else
 			{
-				eof_note_menu[22].flags = D_DISABLED;	//Otherwise disable the menu item
+				eof_note_menu[22].flags = D_DISABLED;	//Otherwise disable the submenu
 			}
 		}
 	}
@@ -527,7 +541,7 @@ int eof_menu_note_transpose_up(void)
 		for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the active track
 			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-			{
+			{	//If the note is in the same track as the selected notes, is selected and is the same difficulty as the selected notes
 				note = eof_get_note_note(eof_song, eof_selected_track, i);
 				note = (note << 1) & max;
 				if((eof_selected_track == EOF_TRACK_BASS) && eof_open_bass_enabled() && (note & 32))
@@ -540,15 +554,15 @@ int eof_menu_note_transpose_up(void)
 					eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 				}
 				eof_set_note_note(eof_song, eof_selected_track, i, note);
-			}
-			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-			{	//If a pro guitar note was tranposed, move the fret values accordingly
-				tracknum = eof_song->track[eof_selected_track]->tracknum;
-				for(j = 15; j > 0; j--)
-				{	//For the upper 15 frets
+				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{	//If a pro guitar note was tranposed, move the fret values accordingly
+					tracknum = eof_song->track[eof_selected_track]->tracknum;
+					for(j = 15; j > 0; j--)
+					{	//For the upper 15 frets
 					eof_song->pro_guitar_track[tracknum]->note[i]->frets[j] = eof_song->pro_guitar_track[tracknum]->note[i]->frets[j-1];	//Cycle fret values up from lower lane
+					}
+					eof_song->pro_guitar_track[tracknum]->note[i]->frets[0] = 0xFF;	//Re-initialize lane 1 to the default of (muted)
 				}
-				eof_song->pro_guitar_track[tracknum]->note[i]->frets[0] = 0xFF;	//Re-initialize lane 1 to the default of (muted)
 			}
 		}
 	}
@@ -583,7 +597,7 @@ int eof_menu_note_transpose_down(void)
 		for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the active track
 			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-			{
+			{	//If the note is in the same track as the selected notes, is selected and is the same difficulty as the selected notes
 				note = eof_get_note_note(eof_song, eof_selected_track, i);
 				note = (note >> 1) & 63;
 				eof_set_note_note(eof_song, eof_selected_track, i, note);
@@ -593,15 +607,15 @@ int eof_menu_note_transpose_down(void)
 					flags &= ~(EOF_NOTE_FLAG_F_HOPO);	//Clear the forced HOPO on flag, which conflicts with open bass strum notation
 					eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 				}
-			}
-			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-			{	//If a pro guitar note was tranposed, move the fret values accordingly
-				tracknum = eof_song->track[eof_selected_track]->tracknum;
-				for(j = 0; j < 15; j++)
-				{	//For the lower 15 frets
-					eof_song->pro_guitar_track[tracknum]->note[i]->frets[j] = eof_song->pro_guitar_track[tracknum]->note[i]->frets[j+1];	//Cycle fret values down from upper lane
+				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{	//If a pro guitar note was tranposed, move the fret values accordingly
+					tracknum = eof_song->track[eof_selected_track]->tracknum;
+					for(j = 0; j < 15; j++)
+					{	//For the lower 15 frets
+						eof_song->pro_guitar_track[tracknum]->note[i]->frets[j] = eof_song->pro_guitar_track[tracknum]->note[i]->frets[j+1];	//Cycle fret values down from upper lane
+					}
+					eof_song->pro_guitar_track[tracknum]->note[i]->frets[15] = 0xFF;	//Re-initialize lane 15 to the default of (muted)
 				}
-				eof_song->pro_guitar_track[tracknum]->note[i]->frets[15] = 0xFF;	//Re-initialize lane 15 to the default of (muted)
 			}
 		}
 	}
@@ -1126,7 +1140,7 @@ int eof_menu_note_remove_cymbal(void)
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	long u = 0;
-	unsigned long flags, note;
+	unsigned long flags, oldflags, note;
 
 	if(eof_selected_track != EOF_TRACK_DRUM)
 		return 1;	//Do not allow this function to run when PART DRUMS is not active
@@ -1137,11 +1151,12 @@ int eof_menu_note_remove_cymbal(void)
 		{	//If this note is in the currently active track and is selected
 			note = eof_get_note_note(eof_song, eof_selected_track, i);
 			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			oldflags = flags;	//Save an extra copy of the original flags
 			if(	((note & 4) && (flags & EOF_NOTE_FLAG_Y_CYMBAL)) ||
 				((note & 8) && (flags & EOF_NOTE_FLAG_B_CYMBAL)) ||
 				((note & 16) && (flags & EOF_NOTE_FLAG_G_CYMBAL)))
 			{	//If this note has a cymbal notation
-				if(!u)
+				if(!u && (oldflags != flags))
 				{	//Make a back up before changing the first note
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					u = 1;
@@ -2160,7 +2175,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	unsigned long ctr, fretcount;
 	char undo_made = 0;	//Set to nonzero when an undo state is created
 	long fretvalue;
-	char allmuted;
+	char allmuted;					//Used to track whether all used strings are string muted
 	unsigned long bitmask = 0;		//Used to build the updated pro guitar note bitmask
 	unsigned long legacymask;		//Used to build the updated legacy note bitmask
 	unsigned long flags;			//Used to build the updated flag bitmask
@@ -2380,9 +2395,8 @@ int eof_menu_note_edit_pro_guitar_note(void)
 			flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
 		}
 		if(!allmuted)
-		{	//If any used strings in this note/chord weren't muted
+		{	//If any used strings in this note/chord weren't string muted
 			flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE);	//Clear the string mute flag
-			flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE);		//Clear the palm mute flag
 		}
 		else if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
 		{	//If all strings are muted and the user didn't specify a palm mute
@@ -2398,5 +2412,206 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
+	return 1;
+}
+
+int eof_menu_note_toggle_tapping(void)
+{
+	unsigned long i;
+	long u = 0;
+	unsigned long flags;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			flags ^= EOF_PRO_GUITAR_NOTE_FLAG_TAP;	//Toggle the tap flag
+			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
+			{	//If tapping was just enabled
+				flags |= EOF_NOTE_FLAG_F_HOPO;			//Set the legacy HOPO on flag (no strum required for this note)
+				flags &= ~(EOF_NOTE_FLAG_NO_HOPO);		//Clear the HOPO off flag
+				flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_HO);	//Clear the hammer on flag
+				flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_PO);	//Clear the pull off flag
+			}
+			else
+			{	//If tapping was just disabled
+				flags &= ~(EOF_NOTE_FLAG_F_HOPO);		//Clear the legacy HOPO on flag
+			}
+			if(!u)
+			{	//Make a back up before changing the first note
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				u = 1;
+			}
+			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		}
+	}
+	return 1;
+}
+
+int eof_menu_note_remove_tapping(void)
+{
+	unsigned long i;
+	long u = 0;
+	unsigned long flags, oldflags;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			oldflags = flags;							//Save an extra copy of the original flags
+			flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_TAP);	//Clear the tap flag
+			flags &= ~(EOF_NOTE_FLAG_F_HOPO);			//Clear the legacy HOPO on flag
+			if(!u && (oldflags != flags))
+			{	//Make a back up before changing the first note
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				u = 1;
+			}
+			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		}
+	}
+	return 1;
+}
+
+int eof_menu_note_toggle_slide_up(void)
+{
+	unsigned long i;
+	long u = 0;
+	unsigned long flags;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			flags ^= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;			//Toggle the slide up flag
+			flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Clear the slide down flag
+			if(!u)
+			{	//Make a back up before changing the first note
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				u = 1;
+			}
+			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		}
+	}
+	return 1;
+}
+
+int eof_menu_note_toggle_slide_down(void)
+{
+	unsigned long i;
+	long u = 0;
+	unsigned long flags;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			flags ^= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;		//Toggle the slide down flag
+			flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);		//Clear the slide down flag
+			if(!u)
+			{	//Make a back up before changing the first note
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				u = 1;
+			}
+			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		}
+	}
+	return 1;
+}
+
+int eof_menu_note_remove_slide(void)
+{
+	unsigned long i;
+	long u = 0;
+	unsigned long flags, oldflags;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			oldflags = flags;							//Save an extra copy of the original flags
+			flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);		//Clear the tap flag
+			flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Clear the tap flag
+			if(!u && (oldflags != flags))
+			{	//Make a back up before changing the first note
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				u = 1;
+			}
+			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		}
+	}
+	return 1;
+}
+
+int eof_menu_note_toggle_palm_muting(void)
+{
+	unsigned long i;
+	long u = 0;
+	unsigned long flags;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			flags ^= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;		//Toggle the palm mute flag
+			flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE);	//Clear the string mute flag
+			if(!u)
+			{	//Make a back up before changing the first note
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				u = 1;
+			}
+			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		}
+	}
+	return 1;
+}
+
+int eof_menu_note_remove_palm_muting(void)
+{
+	unsigned long i;
+	long u = 0;
+	unsigned long flags, oldflags;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			oldflags = flags;								//Save an extra copy of the original flags
+			flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE);	//Clear the palm mute flag
+			if(!u && (oldflags != flags))
+			{	//Make a back up before changing the first note
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				u = 1;
+			}
+			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		}
+	}
 	return 1;
 }

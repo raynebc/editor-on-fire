@@ -45,5 +45,7 @@ unsigned long eof_find_lyric_number(EOF_LYRIC * np);
 
 BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, unsigned char fretnum, unsigned long padding, int textcol, int fillcol);
 	//Used to create a bordered rectangle bitmap with the specified fret number, for use in the editor or 3D window, returns NULL on error
+void eof_get_pro_note_notation(char *buffer, EOF_PRO_GUITAR_NOTE *note);
+	//Used to store guitar tab style notations (ie. "PM" for palm mute) for the specified note into the buffer, which should be able to hold at least 5 characters
 
 #endif

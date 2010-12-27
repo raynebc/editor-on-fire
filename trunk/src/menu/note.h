@@ -46,14 +46,22 @@ int eof_menu_note_toggle_rb3_cymbal_yellow(void);	//Toggles the RB3 Pro yellow c
 int eof_menu_note_toggle_rb3_cymbal_blue(void);		//Toggles the RB3 Pro blue cymbal flag on selected blue drum notes
 int eof_menu_note_remove_cymbal(void);				//Removes cymbal notation from selected drum notes
 int eof_menu_note_default_cymbal(void);				//Toggles whether newly-placed blue, yellow or green drum notes are marked as cymbals automatically
-int eof_menu_note_push_back(void);
+int eof_menu_note_push_back(void);					//A currently unused Feedback input mode function
 int eof_menu_note_push_up(void);
 int eof_menu_note_delete(void);
 int eof_menu_set_freestyle(char status);	//Applies the specified freestyle status to all selected lyrics
 int eof_menu_set_freestyle_on(void);		//Applies freestyle for all selected lyrics
 int eof_menu_set_freestyle_off(void);		//Removes freestyle for all selected lyrics
 int eof_menu_toggle_freestyle(void);		//Toggles the freestyle status of all selected lyrics
+
 int eof_menu_note_edit_pro_guitar_note(void);	//Allows a pro guitar's fret values to be defined
+int eof_menu_note_toggle_tapping(void);			//Toggles the tapping status of all selected notes
+int eof_menu_note_remove_tapping(void);			//Removes the tapping status of all selected notes
+int eof_menu_note_toggle_slide_up(void);		//Toggles the slide up status of all selected notes
+int eof_menu_note_toggle_slide_down(void);		//Toggles the slide down status of all selected notes
+int eof_menu_note_remove_slide(void);			//Removes the slide status of all selected notes
+int eof_menu_note_toggle_palm_muting(void);		//Toggles the palm muting status of all selected notes
+int eof_menu_note_remove_palm_muting(void);		//Removes the palm muting status of all selected notes
 
 int eof_menu_note_toggle_green(void);
 int eof_menu_note_toggle_red(void);

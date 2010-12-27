@@ -2321,7 +2321,7 @@ static int lyrics_in_beat(int beat)
 int eof_menu_edit_paste_from_catalog(void)
 {
 	unsigned long i, j;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum, tracknum2;
 	unsigned long paste_pos[EOF_MAX_NOTES] = {0};
 	long paste_count = 0;
 	long note_count = 0;
@@ -2335,6 +2335,7 @@ int eof_menu_edit_paste_from_catalog(void)
 	float nporpos, nporendpos;
 	EOF_NOTE * new_note = NULL;
 	EOF_LYRIC * new_lyric = NULL;
+	unsigned long note;
 
 	if(eof_song->catalog->entries > 0)
 	{
@@ -2350,7 +2351,7 @@ int eof_menu_edit_paste_from_catalog(void)
 			return 1;
 		}
 		if(eof_vocals_selected)
-		{
+		{	//If pasting into a vocal track
 			if(eof_song->catalog->entry[eof_selected_catalog_entry].track != EOF_TRACK_VOCALS)
 			{
 				return 1;
@@ -2431,11 +2432,11 @@ int eof_menu_edit_paste_from_catalog(void)
 					}
 				}
 			}
-		}//if(eof_vocals_selected)
+		}//If pasting into a vocal track
 		else
-		{
+		{	//If pasting into a non vocal track
 			if(eof_song->catalog->entry[eof_selected_catalog_entry].track == EOF_TRACK_VOCALS)
-			{
+			{	//Disallow pasting from PART VOCALS to any other track
 				return 1;
 			}
 			for(i = 0; i < eof_track_get_size(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track); i++)
@@ -2486,9 +2487,18 @@ int eof_menu_edit_paste_from_catalog(void)
 					}
 
 					/* paste the note */
+					note = eof_get_note_note(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track, i);
+					if((eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+					{	//If pasting from a pro guitar track into a legacy track
+						tracknum2 = eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->tracknum;	//De-obfuscate the entry's pro guitar track number
+						if(eof_song->pro_guitar_track[tracknum2]->note[i]->legacymask != 0)
+						{	//If the user defined how this pro guitar note would transcribe to a legacy track
+							note = eof_song->pro_guitar_track[tracknum2]->note[i]->legacymask;	//Use that bitmask
+						}
+					}
 					if(end_beat - first_beat + start_beat < eof_song->beats)
 					{
-						new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_get_note_note(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track, i), eof_put_porpos(current_beat, nporpos, 0.0), eof_put_porpos(end_beat - first_beat + start_beat, nporendpos, 0.0) - eof_put_porpos(current_beat, nporpos, 0.0), eof_note_type, NULL);
+						new_note = eof_track_add_create_note(eof_song, eof_selected_track, note, eof_put_porpos(current_beat, nporpos, 0.0), eof_put_porpos(end_beat - first_beat + start_beat, nporendpos, 0.0) - eof_put_porpos(current_beat, nporpos, 0.0), eof_note_type, NULL);
 						if(new_note)
 						{
 							paste_pos[paste_count] = new_note->pos;
@@ -2515,7 +2525,7 @@ int eof_menu_edit_paste_from_catalog(void)
 					}
 				}
 			}
-		}
+		}//If pasting into a non vocal track
 	}
 	return 1;
 }
