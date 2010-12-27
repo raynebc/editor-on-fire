@@ -1482,9 +1482,10 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 							sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->frets[ctr2] = 0;
 						}
 					}
-					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->pos = pack_igetl(fp);		//Read note position
-					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->length = pack_igetl(fp);	//Read note length
-					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->flags = pack_igetl(fp);	//Read note flags
+					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->legacymask = pack_getc(fp);	//Read the legacy note bitmask
+					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->pos = pack_igetl(fp);			//Read note position
+					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->length = pack_igetl(fp);		//Read note length
+					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->flags = pack_igetl(fp);		//Read note flags
 				}
 			break;
 			case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:	//Variable Lane Legacy
@@ -2038,9 +2039,10 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 								pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2], fp);	//Write this string's fret value
 							}
 						}
-						pack_iputl(sp->pro_guitar_track[tracknum]->note[ctr]->pos, fp);		//Write the note's position
-						pack_iputl(sp->pro_guitar_track[tracknum]->note[ctr]->length, fp);	//Write the note's length
-						pack_iputl(sp->pro_guitar_track[tracknum]->note[ctr]->flags, fp);	//Write the note's flags
+						pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->legacymask, fp);	//Write the legacy note bitmask
+						pack_iputl(sp->pro_guitar_track[tracknum]->note[ctr]->pos, fp);			//Write the note's position
+						pack_iputl(sp->pro_guitar_track[tracknum]->note[ctr]->length, fp);		//Write the note's length
+						pack_iputl(sp->pro_guitar_track[tracknum]->note[ctr]->flags, fp);		//Write the note's flags
 					}
 					//Write the section type chunk
 					if(sp->pro_guitar_track[tracknum]->solos)

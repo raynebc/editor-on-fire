@@ -184,6 +184,8 @@ TRACK CHUNK, for each track:
 *		{
 *			1 byte:		Fret # tab (0=Open strum, #=Fret # pressed, 0xFF=Muted)
 *		}
+*		1 byte:		Legacy bitflags (the 5 least significant bits represent the lanes that would be set when pasting this note into a legacy track)
+!			If the MSB is set, this bitmask was user-defined, otherwise it will be dynamically defined during the paste operation (basically just keep lanes 1-5 set/clear based on the pro guitar note's lanes)
 *		4 bytes:	Note position (in milliseconds or delta ticks)
 *		4 bytes:	Note length (in milliseconds or delta ticks)
 *		4 bytes:	Note flags (allow 32 flags for an unforsee-able number of techniques such as tapping, bending, etc)

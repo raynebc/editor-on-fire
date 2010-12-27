@@ -1179,10 +1179,6 @@ void eof_read_editor_keys(void)
 		{	//Toggle freestyle
 			eof_menu_toggle_freestyle();
 		}
-		else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-		{	//Edit fret values
-			eof_menu_note_frets();
-		}
 		key[KEY_F] = 0;
 	}
 
@@ -1215,6 +1211,11 @@ void eof_read_editor_keys(void)
 		eof_menu_edit_vocal_tones();
 		key[KEY_V] = 0;
 	}
+	if((key[KEY_N] && !KEY_EITHER_CTRL) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+	{	//Edit pro guitar note
+		eof_menu_note_edit_pro_guitar_note();
+	}
+
 	if(KEY_EITHER_CTRL && eof_music_paused && !eof_music_catalog_playback && !eof_vocals_selected)
 	{	//Toggle lanes on/off
 		if(key[KEY_1])

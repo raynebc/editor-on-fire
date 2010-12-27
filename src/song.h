@@ -19,7 +19,7 @@
 #define EOF_MAX_DIFFICULTIES 4
 #define EOF_NOTE_SPECIAL     4
 
-#define EOF_NOTE_FLAG_HOPO       1
+#define EOF_NOTE_FLAG_HOPO       1	//This flag will represent a note that does not require a strum (ie. HOPO or Tapping)
 #define EOF_NOTE_FLAG_SP         2
 #define EOF_NOTE_FLAG_CRAZY      4	//This flag will represent overlap allowed for guitar tracks
 #define EOF_NOTE_FLAG_F_HOPO     8
@@ -28,6 +28,15 @@
 #define EOF_NOTE_FLAG_B_CYMBAL  64	//This flag represents a blue note charted as a RB3 Pro style cymbal
 #define EOF_NOTE_FLAG_G_CYMBAL 128	//This flag represents a note charted as a RB3 Pro style green cymbal (pad 4)
 #define EOF_NOTE_FLAG_DBASS    256	//This flag will represent Expert+ bass drum for the drum track
+
+//The following flags pertain to pro guitar notes
+#define EOF_PRO_GUITAR_NOTE_FLAG_HO				512		//This flag will represent a hammer on
+#define EOF_PRO_GUITAR_NOTE_FLAG_PO				1024	//This flag will represent a pull off
+#define EOF_PRO_GUITAR_NOTE_FLAG_TAP			2048	//This flag will represent a tapped note
+#define EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP		4096	//This flag will represent a note that slides up to the next note
+#define EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN		8192	//This flag will represent a note that slides down to the next note
+#define EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE	16384	//This flag will represent a note whose strings are muted by the fretting hand
+#define EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE		32768	//This flag will represent a note whose strings are muted by the strumming hand
 
 #define EOF_MAX_BEATS   32768
 #define EOF_MAX_SOLOS      32
@@ -72,6 +81,7 @@ typedef struct
 	char          type;			//Stores the note's difficulty
 	unsigned short note;		//Stores the note's string statuses (set=played, reset=not played).  Bit 0 refers to string 1 (high E), bit 5 refers to string 6 (low E), etc.
 	unsigned char frets[16];	//Stores the fret number for each string, where frets[0] refers to string 1 (high E).  Possible values:0=Open strum, #=Fret # pressed, 0xFF=Muted
+	unsigned char legacymask;	//If this is nonzero, it indicates that the user defined this as the bitmask to use when pasting this into a legacy track
 	unsigned long midi_pos;
 	long midi_length;			//Keep as signed, since the npos logic uses signed math
 	unsigned long pos;
@@ -94,7 +104,7 @@ typedef struct
 	float         porpos;     // position of note within the beat (100.0 = full beat)
 	float         porendpos;
 	char          active;
-	unsigned short flags;
+	unsigned long flags;
 
 } EOF_EXTENDED_NOTE;
 
