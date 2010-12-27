@@ -813,7 +813,7 @@ void eof_read_editor_keys(void)
 		}
 		key[KEY_PGDN] = 0;
 	}
-	if(KEY_EITHER_SHIFT && key[KEY_UP])
+	if(KEY_EITHER_SHIFT && key[KEY_UP] && !KEY_EITHER_CTRL)
 	{
 		if(eof_vocals_selected && (eof_vocals_offset < MAXPITCH - eof_screen_layout.vocal_view_size + 1))
 		{
@@ -834,9 +834,16 @@ void eof_read_editor_keys(void)
 	}
 	else if(key[KEY_UP] && eof_music_paused && !eof_music_catalog_playback)
 	{
-		if(eof_vocals_selected && KEY_EITHER_CTRL)
+		if(KEY_EITHER_CTRL)
 		{
+			if(eof_vocals_selected)
+			{	/* tranpose up octave */
 				eof_menu_note_transpose_up_octave();	//Move up 12 pitches at once, performing a single undo beforehand
+			}
+			else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	/* toggle slide up */
+				eof_menu_note_toggle_slide_up();
+			}
 		}
 		else
 		{
@@ -869,9 +876,16 @@ void eof_read_editor_keys(void)
 	}
 	else if(key[KEY_DOWN] && eof_music_paused && !eof_music_catalog_playback)
 	{
-		if(eof_vocals_selected && KEY_EITHER_CTRL)
+		if(KEY_EITHER_CTRL)
 		{
+			if(eof_vocals_selected)
+			{	/* transpose down octave */
 				eof_menu_note_transpose_down_octave();	//Move down 12 pitches at once, performing a single undo beforehand
+			}
+			else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	/* toggle slide down */
+				eof_menu_note_toggle_slide_down();
+			}
 		}
 		else
 		{
@@ -1142,7 +1156,17 @@ void eof_read_editor_keys(void)
 
 	if(key[KEY_T])
 	{
-		eof_menu_note_toggle_crazy();
+		if(KEY_EITHER_CTRL)
+		{
+			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	/* toggle tapping */
+				eof_menu_note_toggle_tapping();
+			}
+		}
+		else
+		{	/* toggle crazy */
+			eof_menu_note_toggle_crazy();
+		}
 		key[KEY_T] = 0;
 	}
 
@@ -3767,15 +3791,18 @@ void eof_render_editor_window_common(void)
 	if(eof_display_waveform)
 		eof_render_waveform(eof_waveform);
 
+	/* draw fretboard area */
 	for(i = 0; i < numlanes; i++)
 	{
 		if(!i || (i + 1 >= numlanes))
 		{	//Ensure the top and bottom lines extend to the left of the piano roll
-			hline(eof_window_editor->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
+//			hline(eof_window_editor->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
+			hline(eof_window_editor->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_music_length) / eof_zoom, eof_color_white);
 		}
 		else if(eof_selected_track != EOF_TRACK_VOCALS)
 		{	//Otherwise, if not drawing the vocal editor, draw the other fret lines from the first beat marker to the end of the chart
-			hline(eof_window_editor->screen, lpos + eof_song->tags->ogg[eof_selected_ogg].midi_offset / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
+//			hline(eof_window_editor->screen, lpos + eof_song->tags->ogg[eof_selected_ogg].midi_offset / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
+			hline(eof_window_editor->screen, lpos + eof_song->tags->ogg[eof_selected_ogg].midi_offset / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_music_length) / eof_zoom, eof_color_white);
 		}
 	}
 	vline(eof_window_editor->screen, lpos + (eof_music_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);

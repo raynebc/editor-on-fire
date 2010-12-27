@@ -1429,14 +1429,6 @@ void eof_read_global_keys(void)
 			key[KEY_I] = 0;
 		}
 
-		/* switch between normal and lefty 3D view */
-/*	Removed due to unlikeliness that this would need to be changed often enough to warrant a keyboard shortcut
-		if(KEY_EITHER_CTRL && key[KEY_R])
-		{
-			eof_lefty_mode = 1 - eof_lefty_mode;
-			key[KEY_R] = 0;
-		}
-*/
 		if(key[KEY_MINUS])
 		{
 			if(eof_av_delay > 0)
@@ -1825,6 +1817,8 @@ void eof_render_note_window(void)
 	unsigned long tracknum;
 	int xcoord;
 	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
+	char temp[1024] = {0};
+	unsigned long notepos;
 
 	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	clear_to_color(eof_window_note->screen, eof_color_gray);
@@ -1838,6 +1832,11 @@ void eof_render_note_window(void)
 		textprintf_ex(eof_window_note->screen, font, 2, 0, eof_info_color, -1, "Fret Catalog");
 		textprintf_ex(eof_window_note->screen, font, 2, 12, eof_color_white, -1, "-------------------");
 		textprintf_ex(eof_window_note->screen, font, 2, 24,  eof_color_white, -1, "Entry: %lu of %lu", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
+		if((eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If the catalog entry is a pro guitar note and the active track is a legacy track
+			snprintf(temp, 1023, "Would paste from \"%s\" as:",eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->track_name);
+			textprintf_ex(eof_window_note->screen, font, 2, 60, eof_color_white, -1, temp);
+		}
 
 		if(eof_cselected_control < 0)
 		{
@@ -1862,15 +1861,18 @@ void eof_render_note_window(void)
 			}
 			/* draw fretboard area */
 			rectfill(eof_window_note->screen, 0, EOF_EDITOR_RENDER_OFFSET + 25, eof_window_note->w - 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_black);
+			/* draw fretboard area */
 			for(i = 0; i < numlanes; i++)
 			{
 				if(!i || (i + 1 >= numlanes))
 				{	//Ensure the top and bottom lines extend to the left of the piano roll
-					hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
+//					hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
+					hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_music_length) / eof_zoom, eof_color_white);
 				}
-				else if(eof_song->catalog->entry[eof_selected_catalog_entry].track != EOF_TRACK_VOCALS)
+				else if(eof_selected_track != EOF_TRACK_VOCALS)
 				{	//Otherwise, if not drawing the vocal editor, draw the other fret lines from the first beat marker to the end of the chart
-					hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
+//					hline(eof_window_note->screen, lpos + eof_song->tags->ogg[eof_selected_ogg].midi_offset / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
+					hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_music_length) / eof_zoom, eof_color_white);
 				}
 			}
 			vline(eof_window_note->screen, lpos + (eof_music_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
@@ -1915,19 +1917,21 @@ void eof_render_note_window(void)
 				}
 			}//If drawing a vocal catalog entry
 			else
-			{
-				for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
-				{	//For each note in the active track
-					if(eof_get_note_pos(eof_song, eof_selected_track, i) > eof_song->catalog->entry[eof_selected_catalog_entry].end_pos)
+			{	//If drawing a non vocal catalog entry
+				for(i = 0; i < eof_track_get_size(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track); i++)
+				{	//For each note in the entry's track
+					notepos = eof_get_note_pos(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track, i);	//Get the note's position
+					if(notepos > eof_song->catalog->entry[eof_selected_catalog_entry].end_pos)
 					{	//If this note is after the end of the catalog entry
 						break;	//Stop processing notes
 					}
-					if((eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_get_note_type(eof_song, eof_selected_track, i)) && (eof_get_note_pos(eof_song, eof_selected_track, i) >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos))
+					if((eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_get_note_type(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track, i)) &&
+					  (notepos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos))
 					{	//If this note is the same difficulty as that from where the catalog entry was taken, and is in the catalog entry
 						eof_note_draw(eof_song->catalog->entry[eof_selected_catalog_entry].track, i, i == eof_hover_note_2 ? 2 : 0, eof_window_note);
 					}
 				}
-			}//If erawing a non vocal catalog entry
+			}//If drawing a non vocal catalog entry
 			/* draw the current position */
 			if(pos > eof_av_delay / eof_zoom)
 			{
@@ -3342,19 +3346,20 @@ void eof_init_after_load(void)
 void eof_scale_fretboard(void)
 {
 	unsigned long ctr,numlanes;
+	float lanewidth;
 
 	eof_screen_layout.string_space = eof_screen_layout.string_space_unscaled;
 
 	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
+	lanewidth = (float)eof_screen_layout.string_space * (4.0 / (numlanes-1));	//This is the correct lane width for either 5 or 6 lanes
 	if(numlanes > 5)
 	{	//If the active track has more than 5 lanes, scale the spacing between the fretboard lanes
 		eof_screen_layout.string_space = (double)eof_screen_layout.string_space * 5.0 / (double)numlanes;
 	}
 
-	eof_screen_layout.note_y[0] = 20;
-	for(ctr = 1; ctr < EOF_MAX_FRETS; ctr++)
+	for(ctr = 0; ctr < EOF_MAX_FRETS; ctr++)
 	{	//For each fretboard lane after the first is eof_screen_layout.string_space higher than the previous lane
-		eof_screen_layout.note_y[ctr] = eof_screen_layout.note_y[ctr-1] + eof_screen_layout.string_space;
+		eof_screen_layout.note_y[ctr] = 20.0 + ((float)ctr * lanewidth);
 	}
 }
 
