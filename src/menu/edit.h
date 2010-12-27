@@ -41,7 +41,7 @@ int eof_menu_edit_bookmark_7(void);
 int eof_menu_edit_bookmark_8(void);
 int eof_menu_edit_bookmark_9(void);
 int eof_menu_edit_select_all(void);
-int eof_menu_edit_select_like(void);
+int eof_menu_edit_select_like(void);			//For each unique selected note, selects all matching notes/lyrics in the same track and difficulty
 int eof_menu_edit_deselect_all(void);
 int eof_menu_edit_select_rest(void);
 int eof_menu_edit_select_rest_vocal(void);

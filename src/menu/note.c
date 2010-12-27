@@ -1994,7 +1994,7 @@ int eof_new_lyric_dialog(void)
 		eof_selection.current_pos = new_lyric->pos;
 		eof_selection.range_pos_1 = eof_selection.current_pos;
 		eof_selection.range_pos_2 = eof_selection.current_pos;
-		memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+		memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 		eof_track_sort_notes(eof_song, eof_selected_track);
 		eof_track_fixup_notes(eof_song, eof_selected_track, 0);
 		eof_detect_difficulties(eof_song);

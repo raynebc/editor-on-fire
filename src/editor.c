@@ -1465,7 +1465,7 @@ void eof_read_editor_keys(void)
 							}
 							if(eof_selection.current != EOF_MAX_NOTES - 1)
 							{
-								memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 								eof_selection.track = eof_selected_track;
 								eof_selection.multi[eof_selection.current] = 1;
 								eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current);
@@ -1487,7 +1487,7 @@ void eof_read_editor_keys(void)
 								eof_selection.range_pos_1 = eof_selection.current_pos;
 								eof_selection.range_pos_2 = eof_selection.current_pos;
 								eof_selection.track = eof_selected_track;
-								memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 								eof_track_sort_notes(eof_song, eof_selected_track);
 								eof_track_fixup_notes(eof_song, eof_selected_track, 0);
 								eof_determine_hopos();
@@ -2193,7 +2193,7 @@ void eof_editor_logic(void)
 										if(eof_selection.track != eof_selected_track)
 										{
 											eof_selection.track = eof_selected_track;
-											memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+											memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 										}
 										eof_selection.multi[i] = 1;
 										eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -2209,7 +2209,7 @@ void eof_editor_logic(void)
 										if(eof_selection.track != eof_selected_track)
 										{
 											eof_selection.track = eof_selected_track;
-											memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+											memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 										}
 										eof_selection.multi[i] = 1;
 										eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -2222,14 +2222,14 @@ void eof_editor_logic(void)
 							if(!eof_selection.multi[eof_selection.current])
 							{
 //								printf("notes %d\n", eof_notes_selected());
-								memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 							}
 							if(eof_selection.multi[eof_selection.current] == 1)
 							{
 								if(eof_selection.track != eof_selected_track)
 								{
 									eof_selection.track = eof_selected_track;
-									memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+									memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 								}
 								eof_selection.multi[eof_selection.current] = 2;
 								eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -2239,7 +2239,7 @@ void eof_editor_logic(void)
 								if(eof_selection.track != eof_selected_track)
 								{
 									eof_selection.track = eof_selected_track;
-									memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+									memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 								}
 								eof_selection.multi[eof_selection.current] = 1;
 								eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -2255,7 +2255,7 @@ void eof_editor_logic(void)
 							if(eof_selection.track != eof_selected_track)
 							{
 								eof_selection.track = eof_selected_track;
-								memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 							}
 							eof_selection.multi[eof_selection.current] = 2;
 							eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -2265,7 +2265,7 @@ void eof_editor_logic(void)
 							if(eof_selection.track != eof_selected_track)
 							{
 								eof_selection.track = eof_selected_track;
-								memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 							}
 							eof_selection.multi[eof_selection.current] = 1;
 							eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -2278,7 +2278,7 @@ void eof_editor_logic(void)
 				{
 					if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 					{
-						memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 						eof_selection.current = EOF_MAX_NOTES - 1;
 						eof_selection.current_pos = 0;
 						eof_selection.range_pos_1 = 0;
@@ -2305,7 +2305,7 @@ void eof_editor_logic(void)
 							}
 							else
 							{
-								memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 								if(eof_selection.multi[eof_selection.current])
 								{
 									eof_selection.multi[eof_selection.current] = 0;
@@ -2330,7 +2330,7 @@ void eof_editor_logic(void)
 								if(eof_selection.track != eof_selected_track)
 								{
 									eof_selection.track = eof_selected_track;
-									memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+									memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 								}
 								eof_selection.multi[eof_selection.current] = 1;
 								eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -2444,7 +2444,7 @@ void eof_editor_logic(void)
 							eof_set_note_note(eof_song, eof_selected_track, eof_hover_note, eof_get_note_note(eof_song, eof_selected_track, eof_hover_note) ^ bitmask);
 							eof_selection.current = eof_hover_note;
 							eof_selection.track = eof_selected_track;
-							memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+							memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 							if(!eof_get_note_note(eof_song, eof_selected_track, eof_hover_note))
 							{
 								eof_track_delete_note(eof_song, eof_selected_track, eof_hover_note);
@@ -2478,7 +2478,7 @@ void eof_editor_logic(void)
 							eof_selection.range_pos_1 = eof_selection.current_pos;
 							eof_selection.range_pos_2 = eof_selection.current_pos;
 							eof_selection.track = eof_selected_track;
-							memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+							memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 							eof_track_sort_notes(eof_song, eof_selected_track);
 							eof_track_fixup_notes(eof_song, eof_selected_track, 0);
 							eof_determine_hopos();
@@ -2503,7 +2503,7 @@ void eof_editor_logic(void)
 						eof_selection.range_pos_1 = eof_selection.current_pos;
 						eof_selection.range_pos_2 = eof_selection.current_pos;
 						eof_selection.track = eof_selected_track;
-						memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 						eof_track_sort_notes(eof_song, eof_selected_track);
 						eof_track_fixup_notes(eof_song, eof_selected_track, 0);
 						eof_determine_hopos();
@@ -2746,7 +2746,7 @@ void eof_editor_logic(void)
 					if(eof_selection.track != eof_selected_track)
 					{
 						eof_selection.track = eof_selected_track;
-						memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 					}
 					eof_selection.multi[eof_selection.current] = 1;
 					eof_render();
@@ -2757,7 +2757,7 @@ void eof_editor_logic(void)
 					{
 						eof_selection.current = eof_hover_note;
 						eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current);
-						memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 						eof_selection.multi[eof_selection.current] = 1;
 						eof_render();
 					}
@@ -2966,7 +2966,7 @@ void eof_vocal_editor_logic(void)
 										if(eof_selection.track != EOF_TRACK_VOCALS)
 										{
 											eof_selection.track = EOF_TRACK_VOCALS;
-											memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+											memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 										}
 										eof_selection.multi[i] = 1;
 										eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -2982,7 +2982,7 @@ void eof_vocal_editor_logic(void)
 										if(eof_selection.track != EOF_TRACK_VOCALS)
 										{
 											eof_selection.track = EOF_TRACK_VOCALS;
-											memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+											memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 										}
 										eof_selection.multi[i] = 1;
 										eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -2994,14 +2994,14 @@ void eof_vocal_editor_logic(void)
 						{
 							if(!eof_selection.multi[eof_selection.current])
 							{
-								memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 							}
 							if(eof_selection.multi[eof_selection.current] == 1)
 							{
 								if(eof_selection.track != EOF_TRACK_VOCALS)
 								{
 									eof_selection.track = EOF_TRACK_VOCALS;
-									memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+									memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 								}
 								eof_selection.multi[eof_selection.current] = 2;
 								eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -3011,7 +3011,7 @@ void eof_vocal_editor_logic(void)
 								if(eof_selection.track != EOF_TRACK_VOCALS)
 								{
 									eof_selection.track = EOF_TRACK_VOCALS;
-									memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+									memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 								}
 								eof_selection.multi[eof_selection.current] = 1;
 								eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -3027,7 +3027,7 @@ void eof_vocal_editor_logic(void)
 							if(eof_selection.track != EOF_TRACK_VOCALS)
 							{
 								eof_selection.track = EOF_TRACK_VOCALS;
-								memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 							}
 							eof_selection.multi[eof_selection.current] = 2;
 							eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -3037,7 +3037,7 @@ void eof_vocal_editor_logic(void)
 							if(eof_selection.track != EOF_TRACK_VOCALS)
 							{
 								eof_selection.track = EOF_TRACK_VOCALS;
-								memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 							}
 							eof_selection.multi[eof_selection.current] = 1;
 							eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -3050,7 +3050,7 @@ void eof_vocal_editor_logic(void)
 				{
 					if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 					{
-						memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 						eof_selection.current = EOF_MAX_NOTES - 1;
 						eof_selection.current_pos = 0;
 						eof_selection.range_pos_1 = 0;
@@ -3077,7 +3077,7 @@ void eof_vocal_editor_logic(void)
 							}
 							else
 							{
-								memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 								if(eof_selection.multi[eof_selection.current])
 								{
 									eof_selection.multi[eof_selection.current] = 0;
@@ -3102,7 +3102,7 @@ void eof_vocal_editor_logic(void)
 								if(eof_selection.track != EOF_TRACK_VOCALS)
 								{
 									eof_selection.track = EOF_TRACK_VOCALS;
-									memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+									memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 								}
 								eof_selection.multi[eof_selection.current] = 1;
 								eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -3231,7 +3231,7 @@ void eof_vocal_editor_logic(void)
 							eof_song->vocal_track[tracknum]->lyric[eof_hover_note]->note = 0;
 							eof_selection.current = eof_hover_note;
 							eof_selection.track = eof_selected_track;
-							memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+							memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 							eof_selection.multi[eof_selection.current] = 1;
 							eof_selection.current_pos = eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->pos;
 							eof_selection.range_pos_1 = eof_selection.current_pos;
@@ -3245,7 +3245,7 @@ void eof_vocal_editor_logic(void)
 						eof_song->vocal_track[tracknum]->lyric[eof_hover_note]->note = eof_pen_lyric.note;
 						eof_selection.current = eof_hover_note;
 						eof_selection.track = EOF_TRACK_VOCALS;
-						memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 						eof_selection.multi[eof_selection.current] = 1;
 						eof_selection.current_pos = eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->pos;
 						eof_selection.range_pos_1 = eof_selection.current_pos;
@@ -3460,7 +3460,7 @@ void eof_vocal_editor_logic(void)
 					if(eof_selection.track != EOF_TRACK_VOCALS)
 					{
 						eof_selection.track = EOF_TRACK_VOCALS;
-						memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 					}
 					eof_selection.multi[eof_selection.current] = 1;
 					eof_render();
@@ -3471,7 +3471,7 @@ void eof_vocal_editor_logic(void)
 					{
 						eof_selection.current = eof_hover_note;
 						eof_selection.current_pos = eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->pos;
-						memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 						eof_selection.multi[eof_selection.current] = 1;
 						eof_render();
 					}

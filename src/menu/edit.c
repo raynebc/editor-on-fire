@@ -600,7 +600,7 @@ int eof_menu_edit_cut_paste_vocal(int anchor, int option)
 		}
 	}
 
-	memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 	copy_notes = pack_igetl(fp);
 	first_beat = pack_igetl(fp);
 
@@ -768,7 +768,7 @@ int eof_menu_edit_paste_vocal(void)
 	copy_notes = pack_igetl(fp);
 	first_beat = pack_igetl(fp);
 
-	memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 	eof_selection.current = EOF_MAX_NOTES - 1;
 	eof_selection.current_pos = 0;
 	for(i = 0; i < copy_notes; i++)
@@ -817,7 +817,7 @@ int eof_menu_edit_paste_vocal(void)
 	if((paste_count > 0) && (eof_selection.track != EOF_TRACK_VOCALS))
 	{
 		eof_selection.track = EOF_TRACK_VOCALS;
-		memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+		memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 	}
 	for(i = 0; i < paste_count; i++)
 	{
@@ -858,7 +858,7 @@ int eof_menu_edit_old_paste_vocal(void)
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-	memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 	copy_notes = pack_igetl(fp);
 	first_beat = pack_igetl(fp);
 	for(i = 0; i < copy_notes; i++)
@@ -901,7 +901,7 @@ int eof_menu_edit_old_paste_vocal(void)
 	if((paste_count > 0) && (eof_selection.track != EOF_TRACK_VOCALS))
 	{
 		eof_selection.track = EOF_TRACK_VOCALS;
-		memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+		memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 	}
 	for(i = 0; i < paste_count; i++)
 	{
@@ -1097,7 +1097,7 @@ int eof_menu_edit_cut_paste(int anchor, int option, float offset)
 		}
 	}
 
-	memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 	for(j = 1; j < eof_song->tracks; j++)
 	{	//For each track
 		if(eof_song->track[j]->track_format == EOF_LEGACY_TRACK_FORMAT)
@@ -1296,7 +1296,7 @@ int eof_menu_edit_paste(void)
 	copy_notes = pack_igetl(fp);
 	first_beat = pack_igetl(fp);
 
-	memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 	eof_selection.current = EOF_MAX_NOTES - 1;
 	eof_selection.current_pos = 0;
 	for(i = 0; i < copy_notes; i++)
@@ -1348,7 +1348,7 @@ int eof_menu_edit_paste(void)
 	if((paste_count > 0) && (eof_selection.track != eof_selected_track))
 	{
 		eof_selection.track = eof_selected_track;
-		memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+		memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 	}
 	for(i = 0; i < paste_count; i++)
 	{
@@ -1390,7 +1390,7 @@ int eof_menu_edit_old_paste(void)
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-	memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 	sourcetrack = pack_igetl(fp);	//Read the source track of the clipboard data
 	copy_notes = pack_igetl(fp);
 	first_beat = pack_igetl(fp);
@@ -1438,7 +1438,7 @@ int eof_menu_edit_old_paste(void)
 	if((paste_count > 0) && (eof_selection.track != eof_selected_track))
 	{
 		eof_selection.track = eof_selected_track;
-		memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+		memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 	}
 	for(i = 0; i < paste_count; i++)
 	{
@@ -2045,66 +2045,11 @@ int eof_menu_edit_select_all(void)
 	return 1;
 }
 
-int eof_menu_edit_select_like_vocal(void)
-{
-	char ntype[256];
-	int ntypes = 0;
-	unsigned long i, j;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-
-	if(!eof_vocals_selected)
-		return 1;
-
-	if(eof_selection.track != EOF_TRACK_VOCALS)
-	{
-		return 1;
-	}
-	if(eof_selection.current >= eof_song->vocal_track[tracknum]->lyrics)
-	{
-		return 1;
-	}
-	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-	{
-		if(eof_selection.multi[i])
-		{
-			for(j = 0; j < ntypes; j++)
-			{
-				if(ntype[j] == eof_song->vocal_track[tracknum]->lyric[i]->note)
-				{
-					break;
-				}
-			}
-			if(j == ntypes)
-			{
-				ntype[ntypes] = eof_song->vocal_track[tracknum]->lyric[i]->note;
-				ntypes++;
-			}
-		}
-	}
-	memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
-	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-	{
-		for(j = 0; j < ntypes; j++)
-		{
-			if(eof_song->vocal_track[tracknum]->lyric[i]->note == ntype[j])
-			{
-				eof_selection.multi[i] = 1;
-			}
-		}
-	}
-	printf("done\n");
-	return 1;
-}
-
 int eof_menu_edit_select_like(void)
 {
 	unsigned long i, j, ntypes = 0;
-	char ntype[32];
+	unsigned long ntype[100];	//This tracks each unique selected note to allow multiple dislike notes to be selected during a "select like" operation
 
-	if(eof_vocals_selected)
-	{
-		return eof_menu_edit_select_like_vocal();
-	}
 	if(eof_selection.track != eof_selected_track)
 	{
 		return 1;
@@ -2113,33 +2058,37 @@ int eof_menu_edit_select_like(void)
 	{
 		return 1;
 	}
+	//Make a list of all the unique selected notes
 	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if(eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-		{
+		{	//If the note is selected and is in the active difficulty
 			for(j = 0; j < ntypes; j++)
-			{
-				if(ntype[j] == eof_get_note_note(eof_song, eof_selected_track, i))
-				{
-					break;
+			{	//For each unique note number in the ntype array
+				if(eof_note_compare(eof_selected_track, ntype[j], i) == 0)
+				{	//If the stored unique note is the same as this note
+					break;	//Break loop
 				}
 			}
 			if(j == ntypes)
-			{
-				ntype[ntypes] = eof_get_note_note(eof_song, eof_selected_track, i);
-				ntypes++;
+			{	//If no match was found
+				if(ntypes < 100)
+				{	//If the limit hasn't been reached
+					ntype[ntypes] = i;	//Append this note's number to the ntype array
+					ntypes++;
+				}
 			}
 		}
 	}
-	memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		for(j = 0; j < ntypes; j++)
-		{
-			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_note(eof_song, eof_selected_track, i) == ntype[j]))
-			{
-				eof_selection.track = eof_selected_track;
-				eof_selection.multi[i] = 1;
+		{	//For each note bitmask in the ntype array
+			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_note_compare(eof_selected_track, ntype[j], i) == 0))
+			{	//If the note is in the active difficulty and matches one of the unique notes that are selected
+				eof_selection.track = eof_selected_track;	//Change the selection's track to the active track
+				eof_selection.multi[i] = 1;					//Mark the note as selected
 			}
 		}
 	}
@@ -2148,7 +2097,7 @@ int eof_menu_edit_select_like(void)
 
 int eof_menu_edit_deselect_all(void)
 {
-	memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 	eof_selection.current = EOF_MAX_NOTES - 1;
 	eof_selection.current_pos = 0;
 	return 1;
@@ -2419,7 +2368,7 @@ int eof_menu_edit_paste_from_catalog(void)
 			eof_track_fixup_notes(eof_song, eof_selected_track, 0);
 			eof_detect_difficulties(eof_song);
 			eof_selection.current_pos = 0;
-			memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+			memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 			for(i = 0; i < paste_count; i++)
 			{
 				for(j = 0; j < eof_song->vocal_track[tracknum]->lyrics; j++)
@@ -2512,7 +2461,7 @@ int eof_menu_edit_paste_from_catalog(void)
 			eof_determine_hopos();
 			eof_detect_difficulties(eof_song);
 			eof_selection.current_pos = 0;
-			memset(eof_selection.multi, 0, sizeof(char) * EOF_MAX_NOTES);
+			memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 			for(i = 0; i < paste_count; i++)
 			{
 				for(j = 0; j < eof_track_get_size(eof_song, eof_selected_track); j++)
