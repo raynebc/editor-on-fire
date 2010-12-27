@@ -1246,11 +1246,13 @@ int eof_menu_edit_copy(void)
 			/* write fret values to disk, or NULL data */
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If this is a pro guitar note
+				pack_iputl(eof_song->pro_guitar_track[tracknum]->note[i]->legacymask, fp);				//Write the pro guitar note's legacy bitmask
 				pack_fwrite(eof_song->pro_guitar_track[tracknum]->note[i]->frets, sizeof(frets), fp);	//Write the note's fret array
 			}
 			else
 			{
-				pack_fwrite(frets, sizeof(frets), fp);	//Write NULL data for the note's fret array
+				pack_iputl(0, fp);	//Write a legacy bitmask indicating that the original note bitmask is to be used
+				pack_fwrite(frets, sizeof(frets), fp);	//Write 0 data for the note's fret array (legacy notes pasted into a pro guitar track will be played open by default)
 			}
 		}
 	}
@@ -1276,6 +1278,7 @@ int eof_menu_edit_paste(void)
 	unsigned long sourcetrack = 0;	//Will store the track that this clipboard data was from
 	unsigned char frets[16] = {0};	//Used to store fret data to support copying to a pro guitar track
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	unsigned long legacymask;
 
 	/* open the file */
 	fp = pack_fopen("eof.clipboard", "r");
@@ -1311,8 +1314,14 @@ int eof_menu_edit_paste(void)
 		}
 		temp_note.length = pack_igetl(fp);	//Read the note's length
 		temp_note.flags = pack_igetl(fp);	//Read the note's flags
-		eof_sanitize_note_flags(&temp_note.flags,eof_selected_track,sourcetrack);	//Ensure the note flags are validated for the track being pasted into
+		legacymask = pack_igetl(fp);		//Read the note's legacy bitmask
+		if(legacymask != 0)
+		{	//If the copied note indicated that this overrides the original bitmask (pasting pro guitar into a legacy track)
+			temp_note.note = legacymask;
+		}
+		eof_sanitize_note_flags(&temp_note.flags,eof_selected_track);	//Ensure the note flags are validated for the track being pasted into
 
+		/* create the note */
 		if(eof_music_pos + temp_note.pos + temp_note.length - eof_av_delay < eof_music_length)
 		{
 			new_note = eof_track_add_create_note(eof_song, eof_selected_track, temp_note.note, eof_put_porpos(temp_note.beat - first_beat + this_beat, temp_note.porpos, 0.0), eof_put_porpos(temp_note.endbeat - first_beat + this_beat, temp_note.porendpos, 0.0) - eof_put_porpos(temp_note.beat - first_beat + this_beat, temp_note.porpos, 0.0), eof_note_type, NULL);
@@ -1372,6 +1381,7 @@ int eof_menu_edit_old_paste(void)
 	unsigned long sourcetrack = 0;	//Will store the track that this clipboard data was from
 	unsigned char frets[16] = {0};	//Used to store fret data to support copying to a pro guitar track
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	unsigned long legacymask;
 
 	fp = pack_fopen("eof.clipboard", "r");
 	if(!fp)
@@ -1395,8 +1405,14 @@ int eof_menu_edit_old_paste(void)
 		temp_note.endbeat = pack_igetl(fp);	//Read the beat the note ends in
 		temp_note.length = pack_igetl(fp);	//Read the note's length
 		temp_note.flags = pack_igetl(fp);	//Read the note's flags
-		eof_sanitize_note_flags(&temp_note.flags,eof_selected_track,sourcetrack);	//Ensure the note flags are validated for the track being pasted into
+		legacymask = pack_igetl(fp);		//Read the note's legacy bitmask
+		if(legacymask != 0)
+		{	//If the copied note indicated that this overrides the original bitmask (pasting pro guitar into a legacy track)
+			temp_note.note = legacymask;
+		}
+		eof_sanitize_note_flags(&temp_note.flags,eof_selected_track);	//Ensure the note flags are validated for the track being pasted into
 
+		/* create the note */
 		if(eof_music_pos + temp_note.pos + temp_note.length - eof_av_delay < eof_music_length)
 		{
 			new_note = eof_track_add_create_note(eof_song, eof_selected_track, temp_note.note, eof_music_pos + temp_note.pos - eof_av_delay, temp_note.length, eof_note_type, NULL);
@@ -2551,34 +2567,64 @@ int eof_menu_edit_select_previous(void)
 	return 1;
 }
 
-void eof_sanitize_note_flags(unsigned short *flags,int desttrack,int srctrack)
+void eof_sanitize_note_flags(unsigned long *flags,unsigned long desttrack)
 {
 	if(flags == NULL)
 		return;
 
-	switch(desttrack)
-	{
-		case EOF_TRACK_GUITAR:		//The only legacy style track that can use double bass is drums
-		case EOF_TRACK_BASS:
-		case EOF_TRACK_GUITAR_COOP:
-		case EOF_TRACK_RHYTHM:
-		case EOF_TRACK_KEYS:
-			*flags &= (~EOF_NOTE_FLAG_DBASS);	//Erase the double bass flag
-		break;
-
-		case EOF_TRACK_DRUM:	//The drum track must not have any HOPO or extended sustain flags set
-			*flags &= (~EOF_NOTE_FLAG_HOPO);	//Erase the temporary HOPO flag
-			*flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Erase the forced HOPO ON flag
-			*flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Erase the forced HOPO OFF flag
-		//The crazy flag is shared among the guitar and drum tracks because there weren't enough flags to give PART DRUMS pro charting support
-			if(srctrack != EOF_TRACK_DRUM)
-			{	//If the pasted notes are not from the drum track, erase the shared crazy status (Expert+ bass drum)
-				*flags &= (~EOF_NOTE_FLAG_CRAZY);	//Erase the "crazy" note flag
+	if(eof_song->track[desttrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//Erase all pro guitar flags from a non pro guitar note
+		*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_HO);			//Erase the pro hammer on flag
+		*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_PO);			//Erase the pro hammer off flag
+		*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);		//Erase the pro slide up flag
+		*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Erase the pro slide down flag
+		*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE);	//Erase the pro string mute flag
+		*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE);	//Erase the pro palm mute flag
+	}
+	else
+	{	//Resolve pro guitar flag conflicts
+		if((*flags & EOF_PRO_GUITAR_NOTE_FLAG_HO) && (*flags & EOF_PRO_GUITAR_NOTE_FLAG_PO))
+		{	//If both the hammer on AND the pull off flags are set, clear both
+			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_HO);
+			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_PO);
+		}
+		if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
+		{	//If the tap flag is set
+			if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
+			{	//If the hammer on flag is also set, clear both
+				*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_TAP);
+				*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_HO);
 			}
-		break;
+			if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_PO)
+			{	//If the pull off flag is also set, clear both
+				*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_TAP);
+				*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_PO);
+			}
+		}
+		if((*flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && (*flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+		{	//If both the slide up AND the slide down flags are set, clear both
+			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);
+			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);
+		}
+		if((*flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) && (*flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
+		{	//If both the string mute AND the palm mute flags are set, clear both
+			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE);
+			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE);
+		}
+	}
 
-		default:	//Other tracks aren't accounted for yet
-			*flags = 0;	//Clear all flags just to be safe
-		break;
+	if(desttrack != EOF_TRACK_DRUM)
+	{	//Erase all drum flags from a non PART DRUMS note
+		*flags &= (~EOF_NOTE_FLAG_Y_CYMBAL);				//Erase the yellow cymbal flag
+		*flags &= (~EOF_NOTE_FLAG_B_CYMBAL);				//Erase the blue cymbal flag
+		*flags &= (~EOF_NOTE_FLAG_G_CYMBAL);				//Erase the green cymbal flag
+		*flags &= (~EOF_NOTE_FLAG_DBASS);					//Erase the double bass flag
+	}
+	else
+	{	//Erase all non drum flags from a PART DRUMS note
+		*flags &= (~EOF_NOTE_FLAG_HOPO);	//Erase the temporary HOPO flag
+		*flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Erase the forced HOPO ON flag
+		*flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Erase the forced HOPO OFF flag
+		*flags &= (~EOF_NOTE_FLAG_CRAZY);	//Erase the "crazy" note flag
 	}
 }
