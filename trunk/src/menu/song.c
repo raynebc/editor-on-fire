@@ -1136,7 +1136,10 @@ int eof_menu_track_selected_track_number(int tracknum)
 		}
 
 		if(eof_song->track[tracknum]->track_format == EOF_VOCAL_TRACK_FORMAT)
+		{
 			eof_vocals_selected = 1;
+			eof_note_type = 0;	//For now, the default lyric set (PART VOCALS) will be selected when changing to PART VOCALS
+		}
 		else
 			eof_vocals_selected = 0;
 

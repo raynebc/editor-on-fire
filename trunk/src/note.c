@@ -1005,3 +1005,55 @@ void eof_get_pro_note_notation(char *buffer, EOF_PRO_GUITAR_NOTE *note)
 		buffer[index] = '\0';
 	}
 }
+
+int eof_note_compare(unsigned long track, unsigned long note1, unsigned long note2)
+{
+	unsigned long tracknum, ctr, bitmask;
+	unsigned long note1note, note2note;
+
+	//Validate parameters
+	if((track == 0) || (track >= eof_song->tracks) || (note1 >= eof_track_get_size(eof_song, track)) || (note2 >= eof_track_get_size(eof_song, track)))
+	{	//If an invalid track or note number was passed
+		return -1;	//Return error
+	}
+
+	note1note = eof_get_note_note(eof_song, track, note1);
+	note2note = eof_get_note_note(eof_song, track, note2);
+
+	tracknum = eof_song->track[track]->tracknum;
+	switch(eof_song->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note1note == note2note)
+			{	//If both notes' bitmasks match
+				return 0;	//Return equal
+			}
+		break;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+			if(note1note == note2note)
+			{	//If both lyrics' pitches match
+				return 0;	//Return equal
+			}
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(note1note == note2note)
+			{	//If both note's bitmasks match
+				for(ctr = 0, bitmask = 1; ctr < 16; ctr ++, bitmask <<= 1)
+				{	//For each of the 16 bits in the note bitmask
+					if(note1note & bitmask)
+					{	//If this bit is set
+						if(eof_song->pro_guitar_track[tracknum]->note[note1]->frets[ctr] != eof_song->pro_guitar_track[tracknum]->note[note2]->frets[ctr])
+						{	//If this string's fret value isn't the same for both notes
+							return 1;	//Return not equal
+						}
+					}
+				}
+				return 0;	//Return equal
+			}
+		break;
+	}
+
+	return 1;	//Return not equal
+}
