@@ -409,7 +409,7 @@ void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 
 void eof_legacy_track_add_star_power(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
 {
-	if(tp->star_power_paths < EOF_MAX_STAR_POWER)
+	if(tp->star_power_paths < EOF_MAX_PHRASES)
 	{	//If the maximum number of star power phrases for this track hasn't already been defined
 		tp->star_power_path[tp->star_power_paths].start_pos = start_pos;
 		tp->star_power_path[tp->star_power_paths].end_pos = end_pos;
@@ -424,16 +424,21 @@ void eof_legacy_track_delete_star_power(EOF_LEGACY_TRACK * tp, unsigned long ind
 	if(index >= tp->star_power_paths)
 		return;
 
+	if(tp->star_power_path[index].name != NULL)
+	{	//If the section has a name
+		free(tp->star_power_path[index].name);	//Free it
+	}
+
 	for(i = index; i < tp->star_power_paths - 1; i++)
 	{
-		memcpy(&tp->star_power_path[i], &tp->star_power_path[i + 1], sizeof(EOF_STAR_POWER_ENTRY));
+		memcpy(&tp->star_power_path[i], &tp->star_power_path[i + 1], sizeof(EOF_PHRASE_SECTION));
 	}
 	tp->star_power_paths--;
 }
 
 void eof_legacy_track_add_solo(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
 {
-	if(tp->solos < EOF_MAX_SOLOS)
+	if(tp->solos < EOF_MAX_PHRASES)
 	{	//If the maximum number of solo phrases for this track hasn't already been defined
 		tp->solo[tp->solos].start_pos = start_pos;
 		tp->solo[tp->solos].end_pos = end_pos;
@@ -448,9 +453,14 @@ void eof_legacy_track_delete_solo(EOF_LEGACY_TRACK * tp, unsigned long index)
 	if(index >= tp->solos)
 		return;
 
+	if(tp->solo[index].name != NULL)
+	{	//If the section has a name
+		free(tp->solo[index].name);	//Free it
+	}
+
 	for(i = index; i < tp->solos - 1; i++)
 	{
-		memcpy(&tp->solo[i], &tp->solo[i + 1], sizeof(EOF_SOLO_ENTRY));
+		memcpy(&tp->solo[i], &tp->solo[i + 1], sizeof(EOF_PHRASE_SECTION));
 	}
 	tp->solos--;
 }
@@ -1166,6 +1176,7 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 				ptr4->notes = 0;
 				ptr4->solos = 0;
 				ptr4->star_power_paths = 0;
+				ptr4->arpeggios = 0;
 				ptr4->parent = ptr3;
 				sp->pro_guitar_track[sp->pro_guitar_tracks] = ptr4;
 				sp->pro_guitar_tracks++;
@@ -1581,19 +1592,23 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 			{	//Solos are allowed for any track EXCEPT vocal tracks
 				case EOF_LEGACY_TRACK_FORMAT:
 					count = sp->legacy_track[tracknum]->solos;
-					if(count < EOF_MAX_SOLOS)
+					if(count < EOF_MAX_PHRASES)
 					{	//If EOF can store the solo section
 						sp->legacy_track[tracknum]->solo[count].start_pos = start;
 						sp->legacy_track[tracknum]->solo[count].end_pos = end;
+						sp->legacy_track[tracknum]->solo[count].flags = 0;
+						sp->legacy_track[tracknum]->solo[count].name = NULL;
 						sp->legacy_track[tracknum]->solos++;
 					}
 				return 1;
 				case EOF_PRO_GUITAR_TRACK_FORMAT:
 					count = sp->pro_guitar_track[tracknum]->solos;
-					if(count < EOF_MAX_SOLOS)
+					if(count < EOF_MAX_PHRASES)
 					{	//If EOF can store the solo section
 						sp->pro_guitar_track[tracknum]->solo[count].start_pos = start;
 						sp->pro_guitar_track[tracknum]->solo[count].end_pos = end;
+						sp->pro_guitar_track[tracknum]->solo[count].flags = 0;
+						sp->pro_guitar_track[tracknum]->solo[count].name = NULL;
 						sp->pro_guitar_track[tracknum]->solos++;
 					}
 				return 1;
@@ -1604,28 +1619,34 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 			{	//Star power is valid for any track
 				case EOF_LEGACY_TRACK_FORMAT:
 					count = sp->legacy_track[tracknum]->star_power_paths;
-					if(count < EOF_MAX_STAR_POWER)
+					if(count < EOF_MAX_PHRASES)
 					{	//If EOF can store the star power section
 						sp->legacy_track[tracknum]->star_power_path[count].start_pos = start;
 						sp->legacy_track[tracknum]->star_power_path[count].end_pos = end;
+						sp->legacy_track[tracknum]->star_power_path[count].flags = 0;
+						sp->legacy_track[tracknum]->star_power_path[count].name = NULL;
 						sp->legacy_track[tracknum]->star_power_paths++;
 					}
 				return 1;
 				case EOF_VOCAL_TRACK_FORMAT:
 					count = sp->vocal_track[tracknum]->star_power_paths;
-					if(count < EOF_MAX_STAR_POWER)
+					if(count < EOF_MAX_PHRASES)
 					{	//If EOF can store the star power section
 						sp->vocal_track[tracknum]->star_power_path[count].start_pos = start;
 						sp->vocal_track[tracknum]->star_power_path[count].end_pos = end;
+						sp->vocal_track[tracknum]->star_power_path[count].flags = 0;
+						sp->vocal_track[tracknum]->star_power_path[count].name = NULL;
 						sp->vocal_track[tracknum]->star_power_paths++;
 					}
 				return 1;
 				case EOF_PRO_GUITAR_TRACK_FORMAT:
 					count = sp->pro_guitar_track[tracknum]->star_power_paths;
-					if(count < EOF_MAX_STAR_POWER)
+					if(count < EOF_MAX_PHRASES)
 					{	//If EOF can store the star power section
 						sp->pro_guitar_track[tracknum]->star_power_path[count].start_pos = start;
 						sp->pro_guitar_track[tracknum]->star_power_path[count].end_pos = end;
+						sp->pro_guitar_track[tracknum]->star_power_path[count].flags = 0;
+						sp->pro_guitar_track[tracknum]->star_power_path[count].name = NULL;
 						sp->pro_guitar_track[tracknum]->star_power_paths++;
 					}
 				return 1;
@@ -1661,6 +1682,25 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 			{	//Tom sections are only valid for drum tracks
 			}
 		break;
+		case EOF_TRILL_SECTION:		//Trill section (not supported yet)
+		break;
+		case EOF_ARPEGGIO_SECTION:	//Arpeggio section
+			if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{
+				count = sp->pro_guitar_track[tracknum]->arpeggios;
+				sp->pro_guitar_track[tracknum]->arpeggio[count].start_pos = start;
+				sp->pro_guitar_track[tracknum]->arpeggio[count].end_pos = end;
+				sp->pro_guitar_track[tracknum]->arpeggio[count].flags = 0;
+				sp->pro_guitar_track[tracknum]->arpeggios++;
+				return 1;
+			}
+		break;
+		case EOF_TRAINER_SECTION:	//Pro trainer section (not supported yet)
+		break;
+		case EOF_CUSTOM_MIDI_NOTE_SECTION:	//Custom MIDI note section (not supported yet)
+		break;
+		case EOF_PREVIEW_SECTION:	//Preview audio section (not supported yet)
+		break;
 	}
 	return 0;	//Return error
 }
@@ -1692,7 +1732,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};
 	unsigned long count,ctr,ctr2,tracknum;
 	unsigned long track_count,track_ctr,bookmark_count,bitmask;
-	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases;
+	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios;
 
 	#define EOFNUMINISTRINGTYPES 12
 	char *const inistringbuffer[EOFNUMINISTRINGTYPES]={NULL,NULL,sp->tags->artist,sp->tags->title,sp->tags->frettist,NULL,sp->tags->year,sp->tags->loading_text,NULL,NULL,NULL,NULL};
@@ -1907,7 +1947,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			pack_iputw(0, fp);	//Write track compliance flags (not supported yet)
 
 			tracknum = sp->track[track_ctr]->tracknum;
-			has_solos = has_star_power = has_lyric_phrases = 0;
+			has_solos = has_star_power = has_lyric_phrases = has_arpeggios = 0;
 			switch(sp->track[track_ctr]->track_format)
 			{	//Perform the appropriate logic to write this format of track
 				case EOF_LEGACY_TRACK_FORMAT:	//Legacy (non pro guitar, non pro bass, non pro keys, pro or non pro drums)
@@ -2053,7 +2093,11 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					{
 						has_star_power=1;
 					}
-					pack_iputw(has_solos + has_star_power, fp);		//Write the number of section types
+					if(sp->pro_guitar_track[tracknum]->arpeggios)
+					{
+						has_arpeggios=1;
+					}
+					pack_iputw(has_solos + has_star_power + has_arpeggios, fp);		//Write the number of section types
 					if(has_solos)
 					{	//Write solo sections
 						pack_iputw(EOF_SOLO_SECTION, fp);			//Write solo section type
@@ -2077,6 +2121,19 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 							pack_putc(0xFF, fp);					//Write an associated difficulty of "all difficulties"
 							pack_iputl(sp->pro_guitar_track[tracknum]->star_power_path[ctr].start_pos, fp);	//Write the SP phrase's position
 							pack_iputl(sp->pro_guitar_track[tracknum]->star_power_path[ctr].end_pos, fp);	//Write the SP phrase's end position
+							pack_iputl(0, fp);						//Write section flags (not used)
+						}
+					}
+					if(has_arpeggios)
+					{	//Write arpeggio section
+						pack_iputw(EOF_ARPEGGIO_SECTION, fp);		//Write arpeggio section type
+						pack_iputl(sp->pro_guitar_track[tracknum]->arpeggios, fp);	//Write number of arpeggio sections for this track
+						for(ctr=0; ctr < sp->pro_guitar_track[tracknum]->arpeggios; ctr++)
+						{	//For each arpegio section in the track
+							eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
+							pack_putc(0xFF, fp);					//Write an associated difficulty of "all difficulties"
+							pack_iputl(sp->pro_guitar_track[tracknum]->arpeggio[ctr].start_pos, fp);	//Write the arpeggio phrase's position
+							pack_iputl(sp->pro_guitar_track[tracknum]->arpeggio[ctr].end_pos, fp);		//Write the arpeggio phrase's end position
 							pack_iputl(0, fp);						//Write section flags (not used)
 						}
 					}
@@ -2575,7 +2632,7 @@ unsigned long eof_get_num_solos(EOF_SONG *sp, unsigned long track)
 	return 0;	//Return error
 }
 
-EOF_SOLO_ENTRY *eof_get_solo(EOF_SONG *sp, unsigned long track, unsigned long solonum)
+EOF_PHRASE_SECTION *eof_get_solo(EOF_SONG *sp, unsigned long track, unsigned long solonum)
 {
 	unsigned long tracknum;
 
@@ -2865,7 +2922,7 @@ unsigned long eof_get_num_star_power_paths(EOF_SONG *sp, unsigned long track)
 	return 0;	//Return error
 }
 
-EOF_STAR_POWER_ENTRY *eof_get_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long pathnum)
+EOF_PHRASE_SECTION *eof_get_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long pathnum)
 {
 	unsigned long tracknum;
 
@@ -2899,6 +2956,7 @@ EOF_STAR_POWER_ENTRY *eof_get_star_power_path(EOF_SONG *sp, unsigned long track,
 void eof_set_num_solos(EOF_SONG *sp, unsigned long track, unsigned long number)
 {
 	unsigned long tracknum;
+	unsigned long ctr;
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
@@ -2907,10 +2965,20 @@ void eof_set_num_solos(EOF_SONG *sp, unsigned long track, unsigned long number)
 	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
+			for(ctr = 0; ctr < sp->legacy_track[tracknum]->solos; ctr++)
+			{	//For each existing solo
+				if(sp->legacy_track[tracknum]->solo[ctr].name != NULL)	//If the phrase has a defined name
+					free(sp->legacy_track[tracknum]->solo[ctr].name);	//Free it
+			}
 			sp->legacy_track[tracknum]->solos = number;
 		break;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			for(ctr = 0; ctr < sp->pro_guitar_track[tracknum]->solos; ctr++)
+			{	//For each existing solo
+				if(sp->pro_guitar_track[tracknum]->solo[ctr].name != NULL)	//If the phrase has a defined name
+					free(sp->pro_guitar_track[tracknum]->solo[ctr].name);	//Free it
+			}
 			sp->pro_guitar_track[tracknum]->solos = number;
 		break;
 	}
@@ -2919,6 +2987,7 @@ void eof_set_num_solos(EOF_SONG *sp, unsigned long track, unsigned long number)
 void eof_set_num_star_power_paths(EOF_SONG *sp, unsigned long track, unsigned long number)
 {
 	unsigned long tracknum;
+	unsigned long ctr;
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
@@ -2927,14 +2996,29 @@ void eof_set_num_star_power_paths(EOF_SONG *sp, unsigned long track, unsigned lo
 	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
+			for(ctr = 0; ctr < sp->legacy_track[tracknum]->star_power_paths; ctr++)
+			{	//For each existing star power phrase
+				if(sp->legacy_track[tracknum]->star_power_path[ctr].name != NULL)	//If the phrase has a defined name
+					free(sp->legacy_track[tracknum]->star_power_path[ctr].name);	//Free it
+			}
 			sp->legacy_track[tracknum]->star_power_paths = number;
 		break;
 
 		case EOF_VOCAL_TRACK_FORMAT:
+			for(ctr = 0; ctr < sp->vocal_track[tracknum]->star_power_paths; ctr++)
+			{	//For each existing star power phrase
+				if(sp->vocal_track[tracknum]->star_power_path[ctr].name != NULL)	//If the phrase has a defined name
+					free(sp->vocal_track[tracknum]->star_power_path[ctr].name);		//Free it
+			}
 			sp->vocal_track[tracknum]->star_power_paths = number;
 		break;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			for(ctr = 0; ctr < sp->pro_guitar_track[tracknum]->star_power_paths; ctr++)
+			{	//For each existing star power phrase
+				if(sp->pro_guitar_track[tracknum]->star_power_path[ctr].name != NULL)	//If the phrase has a defined name
+					free(sp->pro_guitar_track[tracknum]->star_power_path[ctr].name);	//Free it
+			}
 			sp->pro_guitar_track[tracknum]->star_power_paths = number;
 		break;
 	}
@@ -3087,9 +3171,17 @@ void eof_vocal_track_delete_star_power(EOF_VOCAL_TRACK * tp, unsigned long index
 {
 	unsigned long i;
 
+	if(index >= tp->star_power_paths)
+		return;
+
+	if(tp->star_power_path[index].name != NULL)
+	{	//If the section has a name
+		free(tp->star_power_path[index].name);	//Free it
+	}
+
 	for(i = index; i < tp->star_power_paths - 1; i++)
 	{
-		memcpy(&tp->star_power_path[i], &tp->star_power_path[i + 1], sizeof(EOF_STAR_POWER_ENTRY));
+		memcpy(&tp->star_power_path[i], &tp->star_power_path[i + 1], sizeof(EOF_PHRASE_SECTION));
 	}
 	tp->star_power_paths--;
 }
@@ -3101,9 +3193,14 @@ void eof_pro_guitar_track_delete_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned 
 	if(index >= tp->star_power_paths)
 		return;
 
+	if(tp->star_power_path[index].name != NULL)
+	{	//If the section has a name
+		free(tp->star_power_path[index].name);	//Free it
+	}
+
 	for(i = index; i < tp->star_power_paths - 1; i++)
 	{
-		memcpy(&tp->star_power_path[i], &tp->star_power_path[i + 1], sizeof(EOF_STAR_POWER_ENTRY));
+		memcpy(&tp->star_power_path[i], &tp->star_power_path[i + 1], sizeof(EOF_PHRASE_SECTION));
 	}
 	tp->star_power_paths--;
 }
@@ -3134,7 +3231,7 @@ void eof_track_add_star_power_path(EOF_SONG *sp, unsigned long track, unsigned l
 
 void eof_vocal_track_add_star_power(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
 {
-	if(tp->star_power_paths < EOF_MAX_STAR_POWER)
+	if(tp->star_power_paths < EOF_MAX_PHRASES)
 	{	//If the maximum number of star power phrases for this track hasn't already been defined
 		tp->star_power_path[tp->star_power_paths].start_pos = start_pos;
 		tp->star_power_path[tp->star_power_paths].end_pos = end_pos;
@@ -3144,7 +3241,7 @@ void eof_vocal_track_add_star_power(EOF_VOCAL_TRACK * tp, unsigned long start_po
 
 void eof_pro_guitar_track_add_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
 {
-	if(tp->star_power_paths < EOF_MAX_STAR_POWER)
+	if(tp->star_power_paths < EOF_MAX_PHRASES)
 	{	//If the maximum number of star power phrases for this track hasn't already been defined
 		tp->star_power_path[tp->star_power_paths].start_pos = start_pos;
 		tp->star_power_path[tp->star_power_paths].end_pos = end_pos;
@@ -3179,9 +3276,14 @@ void eof_pro_guitar_track_delete_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long i
 	if(index >= tp->solos)
 		return;
 
+	if(tp->solo[index].name != NULL)
+	{	//If the section has a name
+		free(tp->solo[index].name);	//Free it
+	}
+
 	for(i = index; i < tp->solos - 1; i++)
 	{
-		memcpy(&tp->solo[i], &tp->solo[i + 1], sizeof(EOF_SOLO_ENTRY));
+		memcpy(&tp->solo[i], &tp->solo[i + 1], sizeof(EOF_PHRASE_SECTION));
 	}
 	tp->solos--;
 }
@@ -3208,7 +3310,7 @@ void eof_track_add_solo(EOF_SONG *sp, unsigned long track, unsigned long start_p
 
 void eof_pro_guitar_track_add_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
 {
-	if(tp->solos < EOF_MAX_SOLOS)
+	if(tp->solos < EOF_MAX_PHRASES)
 	{	//If the maximum number of solo phrases for this track hasn't already been defined
 		tp->solo[tp->solos].start_pos = start_pos;
 		tp->solo[tp->solos].end_pos = end_pos;

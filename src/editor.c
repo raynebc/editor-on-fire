@@ -3730,7 +3730,8 @@ void eof_render_editor_window_common(void)
 	unsigned long start;				//Will store the timestamp of the left visible edge of the piano roll
 	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
 	short numsolos = 0;					//Used to abstract the solo sections
-	EOF_SOLO_ENTRY *soloptr = NULL;		//Used to abstract the solo sections
+	EOF_PHRASE_SECTION *soloptr = NULL;		//Used to abstract the solo sections
+	unsigned long tracknum;
 
 	if(!eof_song_loaded)
 		return;
@@ -3778,12 +3779,26 @@ void eof_render_editor_window_common(void)
 		/* draw solo sections */
 		numsolos = eof_get_num_solos(eof_song, eof_selected_track);
 		for(i = 0; i < numsolos; i++)
-		{
+		{	//For each solo section in the track
 			soloptr = eof_get_solo(eof_song, eof_selected_track, i);	//Obtain the information for this legacy/pro guitar solo
 			if(soloptr != NULL)
 			{
 				if(soloptr->end_pos >= start)	//If the solo section would render at or after the left edge of the piano roll
 					rectfill(eof_window_editor->screen, lpos + soloptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, lpos + soloptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, col);
+			}
+		}
+	}
+
+	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{
+		col = makecol(156, 255, 156);	//Store light green color
+		tracknum = eof_song->track[eof_selected_track]->tracknum;
+		/* draw arpeggio sections */
+		for(i = 0; i < eof_song->pro_guitar_track[tracknum]->arpeggios; i++)
+		{	//For each arpeggio section in the track
+			if(eof_song->pro_guitar_track[tracknum]->arpeggio->end_pos >= start)
+			{	//If the arpeggio section would render at or after the left edge of the piano roll, fill the sixth lane with light green
+				rectfill(eof_window_editor->screen, lpos + eof_song->pro_guitar_track[tracknum]->arpeggio[i].start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[4], lpos + eof_song->pro_guitar_track[tracknum]->arpeggio[i].end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[5], col);
 			}
 		}
 	}

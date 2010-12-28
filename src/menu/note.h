@@ -62,6 +62,10 @@ int eof_menu_note_toggle_slide_down(void);		//Toggles the slide down status of a
 int eof_menu_note_remove_slide(void);			//Removes the slide status of all selected notes
 int eof_menu_note_toggle_palm_muting(void);		//Toggles the palm muting status of all selected notes
 int eof_menu_note_remove_palm_muting(void);		//Removes the palm muting status of all selected notes
+int eof_menu_arpeggio_mark(void);				//Marks/remarks an arpeggio phrase encompassing the selected notes
+int eof_menu_arpeggio_unmark(void);				//Removes arpeggio phrases that include any of the selected notes
+void eof_pro_guitar_track_delete_arpeggio(EOF_PRO_GUITAR_TRACK * tp, unsigned long index);	//Deletes the specified arpeggio phrase
+int eof_menu_arpeggio_erase_all(void);			//Removes all arpeggio phrase, freeing phrase names as necessary
 
 int eof_menu_note_toggle_green(void);
 int eof_menu_note_toggle_red(void);

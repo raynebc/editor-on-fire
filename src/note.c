@@ -76,8 +76,8 @@ void eof_legacy_track_note_create2(EOF_NOTE * np, unsigned long bitmask, unsigne
 int eof_adjust_notes(int offset)
 {
 	unsigned long i, j;
-	EOF_SOLO_ENTRY *soloptr = NULL;
-	EOF_STAR_POWER_ENTRY *starpowerptr= NULL;
+	EOF_PHRASE_SECTION *soloptr = NULL;
+	EOF_PHRASE_SECTION *starpowerptr= NULL;
 	unsigned long tracknum;
 
 	for(i = 1; i < eof_song->tracks; i++)

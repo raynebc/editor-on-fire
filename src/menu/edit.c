@@ -927,8 +927,8 @@ int eof_menu_edit_cut(int anchor, int option, float offset)
 	unsigned long copy_notes[EOF_TRACKS_MAX] = {0};
 	float tfloat;
 	PACKFILE * fp;
-	EOF_STAR_POWER_ENTRY *starpowerptr = NULL;
-	EOF_SOLO_ENTRY *soloptr = NULL;
+	EOF_PHRASE_SECTION *starpowerptr = NULL;
+	EOF_PHRASE_SECTION *soloptr = NULL;
 
 	/* set boundary */
 	for(i = 0; i < EOF_TRACKS_MAX; i++)
@@ -1052,8 +1052,8 @@ int eof_menu_edit_cut_paste(int anchor, int option, float offset)
 	EOF_EXTENDED_NOTE temp_note;
 	EOF_NOTE * new_note = NULL;
 	float tfloat;
-	EOF_SOLO_ENTRY *soloptr = NULL;
-	EOF_STAR_POWER_ENTRY *starpowerptr = NULL;
+	EOF_PHRASE_SECTION *soloptr = NULL;
+	EOF_PHRASE_SECTION *starpowerptr = NULL;
 
 	for(i = 0; i < EOF_TRACKS_MAX; i++)
 	{

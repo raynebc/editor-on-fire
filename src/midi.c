@@ -342,8 +342,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	EOF_MIDI_TS_LIST *tslist=NULL;			//List containing TS changes
 	unsigned short noteflags;				//Stores the note flag for handling open bass <-> forced HOPO lane 1 conflicts
 	unsigned char note;						//Stores the note bitflag for handling open bass <-> forced HOPO lane 1 conflicts
-	EOF_SOLO_ENTRY *soloptr = NULL;
-	EOF_STAR_POWER_ENTRY *starpowerptr = NULL;
+	EOF_PHRASE_SECTION *soloptr = NULL;
+	EOF_PHRASE_SECTION *starpowerptr = NULL;
 	unsigned long notenum;
 
 	anchorlist=eof_build_tempo_list();	//Create a linked list of all tempo changes in eof_song->beat[]

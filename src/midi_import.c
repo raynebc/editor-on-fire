@@ -267,8 +267,8 @@ EOF_SONG * eof_import_midi(const char * fn)
 	char nfn[1024] = {0};
 	char backup_filename[1024] = {0};
 	char ttit[256] = {0};
-	EOF_SOLO_ENTRY *soloptr = NULL;
-	EOF_STAR_POWER_ENTRY *starpowerptr = NULL;
+	EOF_PHRASE_SECTION *soloptr = NULL;
+	EOF_PHRASE_SECTION *starpowerptr = NULL;
 
 	/* load MIDI */
 	eof_work_midi = load_midi(fn);
@@ -1108,12 +1108,12 @@ allegro_message("Second pass complete");
 						}
 
 						/* star power and solos */
-						if((eof_import_events[i]->event[j]->d1 == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_STAR_POWER))
+						if((eof_import_events[i]->event[j]->d1 == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
 						{
 							starpowerptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
 							starpowerptr->start_pos = event_realtime;
 						}
-						else if((eof_import_events[i]->event[j]->d1 == 103) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_SOLOS))
+						else if((eof_import_events[i]->event[j]->d1 == 103) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
 						{
 							soloptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
 							soloptr->start_pos = event_realtime;
@@ -1309,13 +1309,13 @@ allegro_message("Second pass complete");
 							}
 						}
 
-						if((eof_import_events[i]->event[j]->d1 == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_STAR_POWER))
+						if((eof_import_events[i]->event[j]->d1 == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
 						{
 							starpowerptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
 							starpowerptr->end_pos = event_realtime - 1;
 							eof_set_num_star_power_paths(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track) + 1);
 						}
-						else if((eof_import_events[i]->event[j]->d1 == 103) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_SOLOS))
+						else if((eof_import_events[i]->event[j]->d1 == 103) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
 						{
 							soloptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
 							soloptr->end_pos = event_realtime - 1;

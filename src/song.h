@@ -39,8 +39,7 @@
 #define EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE		32768	//This flag will represent a note whose strings are muted by the strumming hand
 
 #define EOF_MAX_BEATS   32768
-#define EOF_MAX_SOLOS      32
-#define EOF_MAX_STAR_POWER 32
+#define EOF_MAX_PHRASES    32
 #define EOF_MAX_OGGS        8
 
 #define EOF_BEAT_FLAG_ANCHOR      1
@@ -153,17 +152,10 @@ typedef struct
 	unsigned long midi_end_pos;
 	unsigned long start_pos;
 	unsigned long end_pos;
+	unsigned long flags;
+	char *name;
 
-} EOF_SOLO_ENTRY;
-
-typedef struct
-{
-	unsigned long midi_start_pos;
-	unsigned long midi_end_pos;
-	unsigned long start_pos;
-	unsigned long end_pos;
-
-} EOF_STAR_POWER_ENTRY;
+} EOF_PHRASE_SECTION;
 
 #define EOF_LEGACY_TRACK_FORMAT					1
 #define EOF_VOCAL_TRACK_FORMAT					2
@@ -215,11 +207,11 @@ typedef struct
 	unsigned long notes;
 
 	/* solos */
-	EOF_SOLO_ENTRY solo[EOF_MAX_SOLOS];
+	EOF_PHRASE_SECTION solo[EOF_MAX_PHRASES];
 	unsigned long solos;
 
 	/* star power */
-	EOF_STAR_POWER_ENTRY star_power_path[EOF_MAX_STAR_POWER];
+	EOF_PHRASE_SECTION star_power_path[EOF_MAX_PHRASES];
 	unsigned long star_power_paths;
 
 } EOF_LEGACY_TRACK;
@@ -238,7 +230,7 @@ typedef struct
 	unsigned long lines;
 
 	/* star power */
-	EOF_STAR_POWER_ENTRY star_power_path[EOF_MAX_STAR_POWER];
+	EOF_PHRASE_SECTION star_power_path[EOF_MAX_PHRASES];
 	unsigned long star_power_paths;
 
 } EOF_VOCAL_TRACK;
@@ -255,12 +247,15 @@ typedef struct
 	unsigned long notes;
 
 	/* solos */
-	EOF_SOLO_ENTRY solo[EOF_MAX_SOLOS];
+	EOF_PHRASE_SECTION solo[EOF_MAX_PHRASES];
 	unsigned long solos;
 
 	/* star power */
-	EOF_STAR_POWER_ENTRY star_power_path[EOF_MAX_STAR_POWER];
+	EOF_PHRASE_SECTION star_power_path[EOF_MAX_PHRASES];
 	unsigned long star_power_paths;
+
+	EOF_PHRASE_SECTION arpeggio[EOF_MAX_PHRASES];
+	unsigned long arpeggios;
 
 } EOF_PRO_GUITAR_TRACK;
 
@@ -378,10 +373,10 @@ int eof_save_song(EOF_SONG * sp, const char * fn);	//Saves the song to file
 unsigned long eof_track_get_size(EOF_SONG *sp, unsigned long track);					//Returns the number of notes/lyrics in the specified track, or 0 on error
 unsigned long eof_get_num_solos(EOF_SONG *sp, unsigned long track);								//Returns the number of solos in the specified track, or 0 on error
 void eof_set_num_solos(EOF_SONG *sp, unsigned long track, unsigned long number);		//Sets the number of solos in the specified track
-EOF_SOLO_ENTRY *eof_get_solo(EOF_SONG *sp, unsigned long track, unsigned long solonum);	//Returns a pointer to the specified solo, or NULL on error
+EOF_PHRASE_SECTION *eof_get_solo(EOF_SONG *sp, unsigned long track, unsigned long solonum);	//Returns a pointer to the specified solo, or NULL on error
 unsigned long eof_get_num_star_power_paths(EOF_SONG *sp, unsigned long track);					//Returns the number of star power paths in the specified track, or 0 on error
 void eof_set_num_star_power_paths(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of star power paths in the specified track
-EOF_STAR_POWER_ENTRY *eof_get_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long pathnum);	//Returns a pointer to the specified star power path, or NULL on error
+EOF_PHRASE_SECTION *eof_get_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long pathnum);	//Returns a pointer to the specified star power path, or NULL on error
 void *eof_track_add_note(EOF_SONG *sp, unsigned long track);							//Calls the appropriate add function for the specified track, returning the newly allocated structure or NULL upon error
 void eof_track_delete_note(EOF_SONG *sp, unsigned long track, unsigned long note);		//Performs the appropriate logic to remove the specified note/lyric from the specified track
 void eof_track_resize(EOF_SONG *sp, unsigned long track, unsigned long size);			//Performs the appropriate logic to resize the specified track

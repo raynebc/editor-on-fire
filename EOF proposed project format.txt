@@ -109,7 +109,7 @@ TRACK CHUNK, for each track:
 *		{
 *			2 bytes:	Section name string length
 *			[varies:]	Section name string
-*			1 byte:		The difficulty that this phrase applies to (0xFF if it does not apply to a single difficulty, such as a solo phrase)
+*			1 byte:		The type/difficulty that this phrase applies to (0xFF if it does not apply to a single difficulty, such as a solo phrase)
 *			4 bytes:	Start position of section (in milliseconds or delta ticks)
 *			4 bytes:	End position of section (in milliseconds or delta ticks)
 *			4 bytes:	Section flags
