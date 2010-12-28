@@ -3720,7 +3720,7 @@ unsigned long eof_determine_piano_roll_right_edge(void)
 
 void eof_render_editor_window_common(void)
 {
-	unsigned long i, j;
+	unsigned long i, j, ctr, ctr2;
 	int pos = eof_music_pos / eof_zoom;	//Current seek position
 	int lpos;							//The position of the first beatmarker
 	int pmin = 0;
@@ -3729,9 +3729,14 @@ void eof_render_editor_window_common(void)
 	int col,col2;						//Temporary color variables
 	unsigned long start;				//Will store the timestamp of the left visible edge of the piano roll
 	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
-	short numsolos = 0;					//Used to abstract the solo sections
-	EOF_PHRASE_SECTION *soloptr = NULL;		//Used to abstract the solo sections
+	short numsections = 0;					//Used to abstract the solo sections
+	EOF_PHRASE_SECTION *sectionptr = NULL;	//Used to abstract sections
 	unsigned long tracknum;
+	unsigned long bitmask, usedlanes;
+
+	long ychart[EOF_MAX_FRETS];			//Used for rendering tremolo and trill phrass
+//	int colors[EOF_MAX_FRETS] = {eof_color_green,eof_color_red,eof_color_yellow,eof_color_blue,eof_color_purple,eof_color_orange};	//Used for rendering tremolo and trill phrass
+	int colors[EOF_MAX_FRETS] = {makecol(170,255,170), makecol(255,156,156), makecol(255,255,224), makecol(156,156,255), makecol(255,156,255), makecol(255,170,128)};	//Lightened versions of the standard fret colors
 
 	if(!eof_song_loaded)
 		return;
@@ -3773,27 +3778,27 @@ void eof_render_editor_window_common(void)
 	/* draw fretboard area */
 	rectfill(eof_window_editor->screen, 0, EOF_EDITOR_RENDER_OFFSET + 25, eof_window_editor->w - 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_black);
 
+	/* draw solo sections */
 	if(eof_selected_track != EOF_TRACK_VOCALS)
 	{
 		col = makecol(0, 0, 64);	//Store dark blue color
-		/* draw solo sections */
-		numsolos = eof_get_num_solos(eof_song, eof_selected_track);
-		for(i = 0; i < numsolos; i++)
+		numsections = eof_get_num_solos(eof_song, eof_selected_track);
+		for(i = 0; i < numsections; i++)
 		{	//For each solo section in the track
-			soloptr = eof_get_solo(eof_song, eof_selected_track, i);	//Obtain the information for this legacy/pro guitar solo
-			if(soloptr != NULL)
+			sectionptr = eof_get_solo(eof_song, eof_selected_track, i);	//Obtain the information for this legacy/pro guitar solo
+			if(sectionptr != NULL)
 			{
-				if(soloptr->end_pos >= start)	//If the solo section would render at or after the left edge of the piano roll
-					rectfill(eof_window_editor->screen, lpos + soloptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, lpos + soloptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, col);
+				if(sectionptr->end_pos >= start)	//If the solo section would render at or after the left edge of the piano roll
+					rectfill(eof_window_editor->screen, lpos + sectionptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, lpos + sectionptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, col);
 			}
 		}
 	}
 
+	/* draw arpeggio sections */
 	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{
-		col = makecol(156, 255, 156);	//Store light green color
+		col = makecol(170,255,170);	//Store light green color
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
-		/* draw arpeggio sections */
 		for(i = 0; i < eof_song->pro_guitar_track[tracknum]->arpeggios; i++)
 		{	//For each arpeggio section in the track
 			if(eof_song->pro_guitar_track[tracknum]->arpeggio->end_pos >= start)
@@ -3802,6 +3807,69 @@ void eof_render_editor_window_common(void)
 			}
 		}
 	}
+
+	/* draw trill and tremolo sections */
+	if(eof_get_num_trills(eof_song, eof_selected_track) || eof_get_num_tremolos(eof_song, eof_selected_track))
+	{	//If this track has any trill or tremolo sections
+		//Build the lane Y coordinate array
+		if(eof_inverted_notes)
+		{
+			for(ctr = 0, ctr2 = 0; ctr < EOF_MAX_FRETS; ctr++)
+			{	//Store the fretboard lane positions in reverse order, with respect to the number of lanes in use
+				if(EOF_MAX_FRETS - ctr <= numlanes)
+				{	//If this lane is used in the chart, store it in ychart[] in reverse order
+					ychart[ctr2++] = eof_screen_layout.note_y[EOF_MAX_FRETS - 1 - ctr];
+				}
+			}
+		}
+		else
+		{
+			for(ctr = 0; ctr < EOF_MAX_FRETS; ctr++)
+			{	//Store the fretboard lane positions in normal order
+				ychart[ctr] = eof_screen_layout.note_y[ctr];
+			}
+		}
+		for(j = 0; j < 2; j++)
+		{	//For each of the two phrase types (trills and tremolos)
+			if(j == 0)
+			{	//On the first pass, render trill sections
+				numsections = eof_get_num_trills(eof_song, eof_selected_track);
+			}
+			else
+			{	//On the second pass, render tremolo sections
+				numsections = eof_get_num_tremolos(eof_song, eof_selected_track);
+			}
+			for(i = 0; i < numsections; i++)
+			{	//For each trill or tremolo section in the track
+				if(j == 0)
+				{	//On the first pass, render trill sections
+					sectionptr = eof_get_trill(eof_song, eof_selected_track, i);
+				}
+				else
+				{	//On the second pass, render tremolo sections
+					sectionptr = eof_get_tremolo(eof_song, eof_selected_track, i);
+				}
+				if(sectionptr != NULL)
+				{	//If the section exists
+					if(sectionptr->end_pos >= start)
+					{	//If the trill or tremolo section would render at or after the left edge of the piano roll
+						usedlanes = eof_get_used_lanes(eof_selected_track, sectionptr->start_pos, sectionptr->end_pos, eof_note_type);	//Determine which lane(s) use this phrase
+						for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+						{	//For each of the usable lanes
+							if(usedlanes & bitmask)
+							{	//If this lane is used in the phrase
+								int x1 = lpos + sectionptr->start_pos / eof_zoom;
+								int y1 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - (eof_screen_layout.string_space / 2);
+								int x2 = lpos + sectionptr->end_pos / eof_zoom;
+								int y2 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + (eof_screen_layout.string_space / 2);
+								rectfill(eof_window_editor->screen, x1, y1, x2, y2, colors[ctr]);	//Draw a rectangle one lane high centered over that lane's fret line
+							}
+						}
+					}
+				}
+			}
+		}
+	}//If this track has any trill or tremolo sections
 
 	if(eof_display_waveform)
 		eof_render_waveform(eof_waveform);

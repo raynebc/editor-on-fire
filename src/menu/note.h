@@ -65,7 +65,13 @@ int eof_menu_note_remove_palm_muting(void);		//Removes the palm muting status of
 int eof_menu_arpeggio_mark(void);				//Marks/remarks an arpeggio phrase encompassing the selected notes
 int eof_menu_arpeggio_unmark(void);				//Removes arpeggio phrases that include any of the selected notes
 void eof_pro_guitar_track_delete_arpeggio(EOF_PRO_GUITAR_TRACK * tp, unsigned long index);	//Deletes the specified arpeggio phrase
-int eof_menu_arpeggio_erase_all(void);			//Removes all arpeggio phrase, freeing phrase names as necessary
+int eof_menu_arpeggio_erase_all(void);			//Removes all arpeggio phrases, freeing phrase names as necessary
+int eof_menu_trill_mark(void);					//Marks/remarks a trill phrase encompassing the seleted notes
+int eof_menu_tremolo_mark(void);				//Marks/remarks a tremolo phrase encompassing the seleted notes
+int eof_menu_trill_unmark(void);				//Removes trill phrases that include any of the selected notes
+int eof_menu_tremolo_unmark(void);				//Removes tremolo phrases that include any of the selected notes
+int eof_menu_trill_erase_all(void);				//Removes all trill phrases, freeing phrase names as necessary
+int eof_menu_tremolo_erase_all(void);			//Removes all tremolo phrases, freeing phrase names as necessary
 
 int eof_menu_note_toggle_green(void);
 int eof_menu_note_toggle_red(void);
