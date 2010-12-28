@@ -214,6 +214,14 @@ typedef struct
 	EOF_PHRASE_SECTION star_power_path[EOF_MAX_PHRASES];
 	unsigned long star_power_paths;
 
+	/* trill sections */
+	EOF_PHRASE_SECTION trill[EOF_MAX_PHRASES];
+	unsigned long trills;
+
+	/* tremolo sections */
+	EOF_PHRASE_SECTION tremolo[EOF_MAX_PHRASES];
+	unsigned long tremolos;
+
 } EOF_LEGACY_TRACK;
 
 #define EOF_VOCAL_TRACKS_MAX		1
@@ -254,8 +262,17 @@ typedef struct
 	EOF_PHRASE_SECTION star_power_path[EOF_MAX_PHRASES];
 	unsigned long star_power_paths;
 
+	/* arpeggios */
 	EOF_PHRASE_SECTION arpeggio[EOF_MAX_PHRASES];
 	unsigned long arpeggios;
+
+	/* trill sections */
+	EOF_PHRASE_SECTION trill[EOF_MAX_PHRASES];
+	unsigned long trills;
+
+	/* tremolo sections */
+	EOF_PHRASE_SECTION tremolo[EOF_MAX_PHRASES];
+	unsigned long tremolos;
 
 } EOF_PRO_GUITAR_TRACK;
 
@@ -370,25 +387,27 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp);	//Loads data from the specif
 EOF_SONG * eof_load_song(const char * fn);	//Loads the specified EOF file, validating the file header and loading the appropriate OGG file
 int eof_save_song(EOF_SONG * sp, const char * fn);	//Saves the song to file
 
-unsigned long eof_track_get_size(EOF_SONG *sp, unsigned long track);					//Returns the number of notes/lyrics in the specified track, or 0 on error
-unsigned long eof_get_num_solos(EOF_SONG *sp, unsigned long track);								//Returns the number of solos in the specified track, or 0 on error
-void eof_set_num_solos(EOF_SONG *sp, unsigned long track, unsigned long number);		//Sets the number of solos in the specified track
+unsigned long eof_track_get_size(EOF_SONG *sp, unsigned long track);						//Returns the number of notes/lyrics in the specified track, or 0 on error
+unsigned long eof_get_used_lanes(unsigned long track, unsigned long startpos, unsigned long endpos, char type);
+	//Returns a bitmask representing all lanes used within the specified track difficulty during the specified time span
+unsigned long eof_get_num_solos(EOF_SONG *sp, unsigned long track);							//Returns the number of solos in the specified track, or 0 on error
+void eof_set_num_solos(EOF_SONG *sp, unsigned long track, unsigned long number);			//Sets the number of solos in the specified track
 EOF_PHRASE_SECTION *eof_get_solo(EOF_SONG *sp, unsigned long track, unsigned long solonum);	//Returns a pointer to the specified solo, or NULL on error
-unsigned long eof_get_num_star_power_paths(EOF_SONG *sp, unsigned long track);					//Returns the number of star power paths in the specified track, or 0 on error
+unsigned long eof_get_num_star_power_paths(EOF_SONG *sp, unsigned long track);				//Returns the number of star power paths in the specified track, or 0 on error
 void eof_set_num_star_power_paths(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of star power paths in the specified track
 EOF_PHRASE_SECTION *eof_get_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long pathnum);	//Returns a pointer to the specified star power path, or NULL on error
-void *eof_track_add_note(EOF_SONG *sp, unsigned long track);							//Calls the appropriate add function for the specified track, returning the newly allocated structure or NULL upon error
-void eof_track_delete_note(EOF_SONG *sp, unsigned long track, unsigned long note);		//Performs the appropriate logic to remove the specified note/lyric from the specified track
-void eof_track_resize(EOF_SONG *sp, unsigned long track, unsigned long size);			//Performs the appropriate logic to resize the specified track
-char eof_get_note_type(EOF_SONG *sp, unsigned long track, unsigned long note);			//Returns the type (difficulty/lyric set) of the specified track's note/lyric, or 0xFF on error
+void *eof_track_add_note(EOF_SONG *sp, unsigned long track);								//Calls the appropriate add function for the specified track, returning the newly allocated structure or NULL upon error
+void eof_track_delete_note(EOF_SONG *sp, unsigned long track, unsigned long note);			//Performs the appropriate logic to remove the specified note/lyric from the specified track
+void eof_track_resize(EOF_SONG *sp, unsigned long track, unsigned long size);				//Performs the appropriate logic to resize the specified track
+char eof_get_note_type(EOF_SONG *sp, unsigned long track, unsigned long note);				//Returns the type (difficulty/lyric set) of the specified track's note/lyric, or 0xFF on error
 void eof_set_note_type(EOF_SONG *sp, unsigned long track, unsigned long note, char type);	//Sets the type (difficulty/lyric set) of the specified track's note/lyric
-unsigned long eof_get_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the position of the specified track's note/lyric, or 0 on error
+unsigned long eof_get_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the position of the specified track's note/lyric, or 0 on error
 void eof_set_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos);	//Sets the position of the specified track's note/lyric
-long eof_get_note_length(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the length of the specified track's note/lyric, or 0 on error
+long eof_get_note_length(EOF_SONG *sp, unsigned long track, unsigned long note);			//Returns the length of the specified track's note/lyric, or 0 on error
 void eof_set_note_length(EOF_SONG *sp, unsigned long track, unsigned long note, long length);	//Sets the length of the specified track's note/lyric
-unsigned long eof_get_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note);//Returns the flags of the specified track's note/lyric, or 0 on error
+unsigned long eof_get_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the flags of the specified track's note/lyric, or 0 on error
 void eof_set_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long flags);	//Sets the flags of the specified track's note/lyric
-unsigned long eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the note bitflag of the specified track's note/lyric, or 0 on error
+unsigned long eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the note bitflag of the specified track's note/lyric, or 0 on error
 void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long value);	//Sets the note value of the specified track's note/lyric
 void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos, long length, char type, char *text);
 	//Adds and initializes the appropriate note for the specified track, returning the newly created note structure, or NULL on error
@@ -413,7 +432,15 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 	//For fret catalog sections, the flags variable represents which track the catalog entry belongs to
 	//For lyric phrases, the difficulty field indicates which lyric set number (ie. PART VOCALS) the phrase applies to
 	//Returns zero on error
-unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track);	//Returns the number of lanes in the specified track, or the default of 5
+unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track);		//Returns the number of lanes in the specified track, or the default of 5
+unsigned long eof_get_num_trills(EOF_SONG *sp, unsigned long track);		//Returns the number of trill phrases in the specified track, or 0 on error
+EOF_PHRASE_SECTION *eof_get_trill(EOF_SONG *sp, unsigned long track, unsigned long index);		//Returns a pointer to the specified trill phrase, or NULL on error
+void eof_set_num_trills(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of trill phrases in the specified track
+unsigned long eof_get_num_tremolos(EOF_SONG *sp, unsigned long track);		//Returns the number of tremolo phrases in the specified track, or 0 on error
+EOF_PHRASE_SECTION *eof_get_tremolo(EOF_SONG *sp, unsigned long track, unsigned long index);	//Returns a pointer to the specified tremolo phrase, or NULL on error
+void eof_set_num_tremolos(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of tremolo phrases in the specified track
+void eof_track_delete_trill(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified trill phrase and moves all phrases that follow back in the array one position
+void eof_track_delete_tremolo(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified tremolo phrase and moves all phrases that follow back in the array one position
 
 EOF_NOTE * eof_legacy_track_add_note(EOF_LEGACY_TRACK * tp);	//Allocates, initializes and stores a new EOF_NOTE structure into the notes array.  Returns the newly allocated structure or NULL upon error
 void eof_legacy_track_delete_note(EOF_LEGACY_TRACK * tp, unsigned long note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position
@@ -530,6 +557,7 @@ EOF_SONG * eof_create_song_populated(void);
 #define EOF_TRAINER_SECTION				11
 #define EOF_CUSTOM_MIDI_NOTE_SECTION	12
 #define EOF_PREVIEW_SECTION				13
+#define EOF_TREMOLO_SECTION				14
 
 inline int eof_open_bass_enabled(void);
 	//A simple function returning nonzero if PART BASS has open strumming enabled

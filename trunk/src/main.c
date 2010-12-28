@@ -820,7 +820,7 @@ int eof_note_is_hopo(unsigned long cnote)
 	double bpm;
 	double scale;
 
-	if(eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR)
+	if((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR))
 		return 0;	//Only guitar/bass tracks can have HOPO notes
 
 	if(eof_hopo_view == EOF_HOPO_MANUAL)
@@ -2255,8 +2255,17 @@ void eof_render_3d_window(void)
 	unsigned long numnotes;				//Used to abstract the notes
 	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
 	unsigned long tracknum;
+	float lanewidth;
+
+	//Used to draw trill and tremolo sections:
+	unsigned long j, ctr, usedlanes, bitmask, numsections;
+	EOF_PHRASE_SECTION *sectionptr = NULL;	//Used to abstract sections
+	int xchart[EOF_MAX_FRETS] = {48, 48 + 56, 48 + 56 * 2, 48 + 56 * 3, 48 + 56 * 4, 48 + 56 * 5};
+	int colors[EOF_MAX_FRETS] = {makecol(170,255,170), makecol(255,156,156), makecol(255,255,224), makecol(156,156,255), makecol(255,156,255), makecol(255,170,128)};	//Lightened versions of the standard fret colors
 
 	clear_to_color(eof_window_3d->screen, eof_color_gray);
+	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
+	lanewidth = 56.0 * (4.0 / (numlanes-1));	//This is the correct lane width for either 5 or 6 lanes
 
 	point[0] = ocd3d_project_x(20, 600);
 	point[1] = ocd3d_project_y(200, 600);
@@ -2296,10 +2305,10 @@ void eof_render_3d_window(void)
 		}
 	}
 
+	/* render arpeggio sections */
 	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
-		/* draw arpeggio sections */
 		for(i = 0; i < eof_song->pro_guitar_track[tracknum]->arpeggios; i++)
 		{	//For each arpeggio section in the track
 			sz = -eof_music_pos / eof_zoom_3d + eof_song->pro_guitar_track[tracknum]->arpeggio[i].start_pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
@@ -2316,16 +2325,83 @@ void eof_render_3d_window(void)
 				point[5] = ocd3d_project_y(200, spz);
 				point[6] = ocd3d_project_x(20, spz);
 				point[7] = ocd3d_project_y(200, spz);
-				polygon(eof_window_3d->screen, 4, point, makecol(156, 255, 156));	//Fill with a light green color
+				polygon(eof_window_3d->screen, 4, point, makecol(170,255,170));	//Fill with a light green color
 			}
 		}
 	}
+
+	/* render trill and tremolo sections */
+	if(eof_get_num_trills(eof_song, eof_selected_track) || eof_get_num_tremolos(eof_song, eof_selected_track))
+	{	//If this track has any trill or tremolo sections
+		//Build the lane X coordinate array
+		if(eof_lefty_mode)
+		{
+			for(ctr = 0; ctr < numlanes; ctr++)
+			{	//Store the fretboard lane positions in reverse order, with respect to the number of lanes in use
+				xchart[ctr] = 48 + (lanewidth * (numlanes - 1 - ctr));
+			}
+		}
+		else
+		{
+			for(ctr = 0; ctr < numlanes; ctr++)
+			{	//Store the fretboard lane positions in normal order
+				xchart[ctr] = 48 + (lanewidth * ctr);
+			}
+		}
+		for(j = 0; j < 2; j++)
+		{	//For each of the two phrase types (trills and tremolos)
+			if(j == 0)
+			{	//On the first pass, render trill sections
+				numsections = eof_get_num_trills(eof_song, eof_selected_track);
+			}
+			else
+			{	//On the second pass, render tremolo sections
+				numsections = eof_get_num_tremolos(eof_song, eof_selected_track);
+			}
+			for(i = 0; i < numsections; i++)
+			{	//For each trill or tremolo section in the track
+				if(j == 0)
+				{	//On the first pass, render trill sections
+					sectionptr = eof_get_trill(eof_song, eof_selected_track, i);
+				}
+				else
+				{	//On the second pass, render tremolo sections
+					sectionptr = eof_get_tremolo(eof_song, eof_selected_track, i);
+				}
+				if(sectionptr != NULL)
+				{	//If the section exists
+					sz = -eof_music_pos / eof_zoom_3d + sectionptr->start_pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
+					sez = -eof_music_pos / eof_zoom_3d + sectionptr->end_pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
+					if((-100 <= sez) && (600 >= sz))
+					{
+						usedlanes = eof_get_used_lanes(eof_selected_track, sectionptr->start_pos, sectionptr->end_pos, eof_note_type);	//Determine which lane(s) use this phrase
+						for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+						{	//For each of the usable lanes
+							if(usedlanes & bitmask)
+							{	//If this lane is used in the phrase
+								spz = sz < -100 ? -100 : sz;
+								spez = sez > 600 ? 600 : sez;
+								point[0] = ocd3d_project_x(xchart[ctr] - 25, spez);
+								point[1] = ocd3d_project_y(200, spez);
+								point[2] = ocd3d_project_x(xchart[ctr] + 25, spez);
+								point[3] = ocd3d_project_y(200, spez);
+								point[4] = ocd3d_project_x(xchart[ctr] + 25, spz);
+								point[5] = ocd3d_project_y(200, spz);
+								point[6] = ocd3d_project_x(xchart[ctr] - 25, spz);
+								point[7] = ocd3d_project_y(200, spz);
+								polygon(eof_window_3d->screen, 4, point, colors[ctr]);
+							}
+						}
+					}
+				}
+			}
+		}
+	}//If this track has any trill or tremolo sections
 
 	/* draw the 'strings' */
 	int obx, oby, oex, oey;
 	int px, py, pw;
 
-	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	px = eof_window_3d->w / 2;
 	py = 0;
 	pw = 320;
@@ -2373,7 +2449,7 @@ void eof_render_3d_window(void)
 		}
 	}
 
-	float lanewidth = 56.0 * (4.0 / (numlanes-1));	//This is the correct lane width for either 5 or 6 lanes
+	//Draw fret lanes
 	for(i = 0; i < numlanes; i++)
 	{
 		obx = ocd3d_project_x(20.0 + ((float)i * lanewidth) + 28.0, -100);
