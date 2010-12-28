@@ -879,11 +879,11 @@ int eof_note_is_hopo(unsigned long cnote)
 void eof_determine_hopos(void)
 {
 	unsigned long i, j;
-	char sp[EOF_MAX_STAR_POWER] = {0};
-	char so[EOF_MAX_STAR_POWER] = {0};
+	char sp[EOF_MAX_PHRASES] = {0};
+	char so[EOF_MAX_PHRASES] = {0};
 	unsigned long flags;
-	EOF_STAR_POWER_ENTRY *starpowerptr = NULL;
-	EOF_SOLO_ENTRY *soloptr = NULL;
+	EOF_PHRASE_SECTION *starpowerptr = NULL;
+	EOF_PHRASE_SECTION *soloptr = NULL;
 
 	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -2251,9 +2251,10 @@ void eof_render_3d_window(void)
 	int point[8];
 	unsigned long i;
 	short numsolos = 0;					//Used to abstract the solo sections
-	EOF_SOLO_ENTRY *soloptr = NULL;		//Used to abstract the solo sections
+	EOF_PHRASE_SECTION *soloptr = NULL;		//Used to abstract the solo sections
 	unsigned long numnotes;				//Used to abstract the notes
 	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
+	unsigned long tracknum;
 
 	clear_to_color(eof_window_3d->screen, eof_color_gray);
 
@@ -2291,6 +2292,31 @@ void eof_render_3d_window(void)
 				point[6] = ocd3d_project_x(20, spz);
 				point[7] = ocd3d_project_y(200, spz);
 				polygon(eof_window_3d->screen, 4, point, makecol(0, 0, 64));
+			}
+		}
+	}
+
+	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{
+		tracknum = eof_song->track[eof_selected_track]->tracknum;
+		/* draw arpeggio sections */
+		for(i = 0; i < eof_song->pro_guitar_track[tracknum]->arpeggios; i++)
+		{	//For each arpeggio section in the track
+			sz = -eof_music_pos / eof_zoom_3d + eof_song->pro_guitar_track[tracknum]->arpeggio[i].start_pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
+			sez = -eof_music_pos / eof_zoom_3d + eof_song->pro_guitar_track[tracknum]->arpeggio[i].end_pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
+			if((-100 <= sez) && (600 >= sz))
+			{	//If the arpeggio section would render at or after the left edge of the piano roll, fill the topmost lane with light green
+				spz = sz < -100 ? -100 : sz;
+				spez = sez > 600 ? 600 : sez;
+				point[0] = ocd3d_project_x(20, spez);
+				point[1] = ocd3d_project_y(200, spez);
+				point[2] = ocd3d_project_x(300, spez);
+				point[3] = ocd3d_project_y(200, spez);
+				point[4] = ocd3d_project_x(300, spz);
+				point[5] = ocd3d_project_y(200, spz);
+				point[6] = ocd3d_project_x(20, spz);
+				point[7] = ocd3d_project_y(200, spz);
+				polygon(eof_window_3d->screen, 4, point, makecol(156, 255, 156));	//Fill with a light green color
 			}
 		}
 	}
