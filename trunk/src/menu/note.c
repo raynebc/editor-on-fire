@@ -405,12 +405,12 @@ void eof_prepare_note_menu(void)
 
 		if(inarpeggio)
 		{
-			eof_note_proguitar_menu[1].flags = 0;	//Remove arpeggio
+			eof_arpeggio_menu[1].flags = 0;				//Remove arpeggio
 			ustrcpy(eof_arpeggio_menu_mark_text, "Re-&Mark");
 		}
 		else
 		{
-			eof_note_proguitar_menu[1].flags = D_DISABLED;	//Remove arpeggio
+			eof_arpeggio_menu[1].flags = D_DISABLED;	//Remove arpeggio
 			ustrcpy(eof_arpeggio_menu_mark_text, "&Mark");
 		}
 
@@ -434,14 +434,24 @@ void eof_prepare_note_menu(void)
 			eof_solo_menu[2].flags = D_DISABLED;
 		}
 
-		/* lyric lines erase all */
-		if(eof_song->vocal_track[0]->lines > 0)
-		{
-			eof_lyric_line_menu[2].flags = 0;
+		/* trill erase all */
+		if(eof_get_num_trills(eof_song, eof_selected_track) > 0)
+		{	//If there are one or more trill phrases in the active track
+			eof_trill_menu[2].flags = 0;
 		}
 		else
 		{
-			eof_lyric_line_menu[2].flags = D_DISABLED;
+			eof_trill_menu[2].flags = D_DISABLED;
+		}
+
+		/* tremolo erase all */
+		if(eof_get_num_tremolos(eof_song, eof_selected_track) > 0)
+		{	//If there are one or more tremolo phrases in the active track
+			eof_tremolo_menu[2].flags = 0;
+		}
+		else
+		{
+			eof_tremolo_menu[2].flags = D_DISABLED;
 		}
 
 		/* resnap */
@@ -486,6 +496,15 @@ void eof_prepare_note_menu(void)
 				eof_note_menu[19].flags = 0; // freestyle submenu
 			}
 
+			/* lyric lines erase all */
+			if(eof_song->vocal_track[0]->lines > 0)
+			{
+				eof_lyric_line_menu[2].flags = 0;
+			}
+			else
+			{
+				eof_lyric_line_menu[2].flags = D_DISABLED;
+			}
 			eof_note_menu[20].flags = D_DISABLED;	//Disable toggle Expert+ bass drum
 			eof_note_menu[21].flags = D_DISABLED;	//Disable pro drum mode menu
 		}
@@ -571,6 +590,16 @@ void eof_prepare_note_menu(void)
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If the active track is a pro guitar track
 				eof_note_menu[22].flags = 0;			//Enable the Pro Guitar mode notation submenu
+
+				/* Arpeggio>Erase all */
+				if(eof_song->pro_guitar_track[tracknum]->arpeggios)
+				{	//If there's at least one arpeggio phrase
+					eof_arpeggio_menu[2].flags = 0;		//Enable Arpeggio>Erase all
+				}
+				else
+				{
+					eof_arpeggio_menu[2].flags = D_DISABLED;
+				}
 			}
 			else
 			{
@@ -2894,8 +2923,8 @@ int eof_menu_trill_mark(void)
 	unsigned long tracknum;
 	EOF_PHRASE_SECTION *sectionptr;
 
-	if((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR))
-		return 1;	//Don't allow this function to run unless a legacy/pro guitar/bass track is active
+	if((eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR) && ((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR)))
+		return 1;	//Do not allow this function to run unless a pro/legacy guitar/bass track is active
 
 	//Find the start and end position of the collection of selected notes in the active difficulty
 	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
@@ -2955,8 +2984,8 @@ int eof_menu_tremolo_mark(void)
 	unsigned long tracknum;
 	EOF_PHRASE_SECTION *sectionptr;
 
-	if((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR))
-		return 1;	//Don't allow this function to run unless a legacy/pro guitar/bass track is active
+	if((eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR) && ((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR)))
+		return 1;	//Do not allow this function to run unless a pro/legacy guitar/bass track is active
 
 	//Find the start and end position of the collection of selected notes in the active difficulty
 	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
@@ -3011,8 +3040,8 @@ int eof_menu_trill_unmark(void)
 	unsigned long tracknum;
 	EOF_PHRASE_SECTION *sectionptr;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
-		return 1;	//Don't allow this function to run unless a pro guitar track is active
+	if((eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR) && ((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR)))
+		return 1;	//Do not allow this function to run unless a pro/legacy guitar/bass track is active
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -3040,8 +3069,8 @@ int eof_menu_tremolo_unmark(void)
 	unsigned long tracknum;
 	EOF_PHRASE_SECTION *sectionptr;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
-		return 1;	//Don't allow this function to run unless a pro guitar track is active
+	if((eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR) && ((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR)))
+		return 1;	//Do not allow this function to run unless a pro/legacy guitar/bass track is active
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -3068,8 +3097,8 @@ int eof_menu_trill_erase_all(void)
 	unsigned long ctr, tracknum;
 	EOF_PHRASE_SECTION *sectionptr;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
-		return 1;	//Do not allow this function to run unless a pro guitar track is active
+	if((eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR) && ((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR)))
+		return 1;	//Do not allow this function to run unless a pro/legacy guitar/bass track is active
 
 	if(alert(NULL, "Erase all trills from this track?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{
@@ -3096,8 +3125,8 @@ int eof_menu_tremolo_erase_all(void)
 	unsigned long ctr, tracknum;
 	EOF_PHRASE_SECTION *sectionptr;
 
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
-		return 1;	//Do not allow this function to run unless a pro guitar track is active
+	if((eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR) && ((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR)))
+		return 1;	//Do not allow this function to run unless a pro/legacy guitar/bass track is active
 
 	if(alert(NULL, "Erase all tremolos from this track?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{
