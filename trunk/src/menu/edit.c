@@ -626,7 +626,7 @@ int eof_menu_edit_cut_paste_vocal(int anchor, int option)
 	eof_track_sort_notes(eof_song, eof_selected_track);
 	pack_fclose(fp);
 	eof_fixup_notes();
-	eof_determine_hopos();
+	eof_determine_phrase_status();
 	return 1;
 }
 
@@ -1159,7 +1159,7 @@ int eof_menu_edit_cut_paste(int anchor, int option, float offset)
 	}//For each track
 	pack_fclose(fp);
 	eof_fixup_notes();
-	eof_determine_hopos();
+	eof_determine_phrase_status();
 	return eof_menu_edit_cut_paste_vocal(anchor, option);
 }
 
@@ -1343,7 +1343,7 @@ int eof_menu_edit_paste(void)
 	pack_fclose(fp);
 	eof_track_sort_notes(eof_song, eof_selected_track);
 	eof_fixup_notes();
-	eof_determine_hopos();
+	eof_determine_phrase_status();
 	eof_detect_difficulties(eof_song);
 	if((paste_count > 0) && (eof_selection.track != eof_selected_track))
 	{
@@ -1433,7 +1433,7 @@ int eof_menu_edit_old_paste(void)
 	}
 	eof_track_sort_notes(eof_song, eof_selected_track);
 	eof_fixup_notes();
-	eof_determine_hopos();
+	eof_determine_phrase_status();
 	eof_detect_difficulties(eof_song);
 	if((paste_count > 0) && (eof_selection.track != eof_selected_track))
 	{
@@ -1819,7 +1819,7 @@ int eof_menu_edit_hopo_helper(int hopo_view)
 		}
 		eof_edit_hopo_menu[hopo_view].flags = D_SELECTED;
 		eof_hopo_view = hopo_view;
-		eof_determine_hopos();
+		eof_determine_phrase_status();
 	}
 	return 1;
 }
@@ -2458,7 +2458,7 @@ int eof_menu_edit_paste_from_catalog(void)
 			}
 			eof_track_sort_notes(eof_song, eof_selected_track);
 			eof_fixup_notes();
-			eof_determine_hopos();
+			eof_determine_phrase_status();
 			eof_detect_difficulties(eof_song);
 			eof_selection.current_pos = 0;
 			memset(eof_selection.multi, 0, sizeof(eof_selection.multi));

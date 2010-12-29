@@ -4,6 +4,7 @@
 #include "beat.h"
 #include "song.h"
 #include "legacy.h"
+#include "undo.h"
 
 EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 1 + 1] =
 {
@@ -2951,7 +2952,7 @@ long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long not
 
 void eof_pro_guitar_track_fixup_notes(EOF_PRO_GUITAR_TRACK * tp, int sel)
 {
-	unsigned long i;
+	unsigned long i, ctr, bitmask;
 	long next;
 
 	if(!sel)
@@ -2963,7 +2964,17 @@ void eof_pro_guitar_track_fixup_notes(EOF_PRO_GUITAR_TRACK * tp, int sel)
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
 	for(i = tp->notes; i > 0; i--)
-	{
+	{	//For each note in the track
+		/* ensure notes within an arpeggio phrase are marked as "crazy" */
+		for(ctr = 0; ctr < tp->arpeggios; ctr++)
+		{	//For each arpeggio section in this track
+			if((tp->note[i-1]->pos >= tp->arpeggio[ctr].start_pos) && (tp->note[i-1]->pos <= tp->arpeggio[ctr].end_pos))
+			{	//If this note is in an arpeggio phrase
+				tp->note[i-1]->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag bit
+				break;
+			}
+		}
+
 		/* fix selections */
 		if((tp->note[i-1]->type == eof_note_type) && (tp->note[i-1]->pos == eof_selection.current_pos))
 		{
@@ -2979,7 +2990,6 @@ void eof_pro_guitar_track_fixup_notes(EOF_PRO_GUITAR_TRACK * tp, int sel)
 		{
 			eof_pro_guitar_track_delete_note(tp, i-1);
 		}
-
 		else
 		{
 			/* make sure there are no 0-length notes */
@@ -2998,22 +3008,34 @@ void eof_pro_guitar_track_fixup_notes(EOF_PRO_GUITAR_TRACK * tp, int sel)
 			   to make sure they don't overlap */
 			next = eof_fixup_next_pro_guitar_note(tp, i-1);
 			if(next >= 0)
-			{
+			{	//If there is another note in this track
 				if(tp->note[i-1]->pos == tp->note[next]->pos)
-				{
-					tp->note[i-1]->note |= tp->note[next]->note;
+				{	//If this note and the next are at the same position
+					tp->note[i-1]->note |= tp->note[next]->note;	//Merge the two notes' bitmasks
+					for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
+					{	//For each of the next note's 6 usable strings
+						if(tp->note[next]->note & bitmask)
+						{	//If this string is used
+							tp->note[i-1]->frets[ctr] = tp->note[next]->frets[ctr];	//Overwrite this note's fret value on this string with that of the next note
+						}
+					}
 					eof_pro_guitar_track_delete_note(tp, next);
 				}
 				else if(tp->note[i-1]->pos + tp->note[i-1]->length > tp->note[next]->pos - 1)
-				{
+				{	//If this note overlaps the next note
 					if(!(tp->note[i-1]->flags & EOF_NOTE_FLAG_CRAZY) || (tp->note[i-1]->note & tp->note[next]->note))
-					{
-						tp->note[i-1]->length = tp->note[next]->pos - tp->note[i-1]->pos - 1;
+					{	//If this note isn't a "crazy" note or is overlapping the next note on the same lanes it uses
+						tp->note[i-1]->length = tp->note[next]->pos - tp->note[i-1]->pos - 1;	//Alter the length to reach the next note
 					}
+				}
+
+				if((tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+				{	//If this note slides up or down to the next note
+					tp->note[i-1]->length = tp->note[next]->pos - tp->note[i-1]->pos - 1;	//Alter the length to reach the next note
 				}
 			}
 		}
-	}
+	}//For each note in the track
 	if(!sel)
 	{
 		if(eof_selection.current < tp->notes)
@@ -3656,5 +3678,37 @@ void eof_set_num_tremolos(EOF_SONG *sp, unsigned long track, unsigned long numbe
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			sp->pro_guitar_track[tracknum]->tremolos = number;
 		break;
+	}
+}
+
+void eof_set_pro_guitar_fret_number(unsigned long fretvalue)
+{
+	unsigned long ctr, ctr2, bitmask, tracknum;
+	char undo_made = 0;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return;	//Do not allow this function to run unless a pro guitar/bass track is active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	if((fretvalue != 0xFF) && (fretvalue > eof_song->pro_guitar_track[tracknum]->numfrets))
+		return;	//Do not allow this function to set a fret number higher than this track supports
+
+	for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->notes; ctr++)
+	{	//For each note in the active pro guitar track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (eof_song->pro_guitar_track[tracknum]->note[ctr]->type == eof_note_type))
+		{	//If the note is selected and is in the active difficulty
+			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask<<=1)
+			{	//For each of the usable lanes
+				if(eof_song->pro_guitar_track[tracknum]->note[ctr]->note & bitmask)
+				{	//If this lane is in use
+					if(!undo_made && (eof_song->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2] != fretvalue))
+					{	//Make an undo state before making the first change
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						undo_made = 1;
+					}
+					eof_song->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2] = fretvalue;	//Set this string's fret value
+				}
+			}
+		}
 	}
 }
