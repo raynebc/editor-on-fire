@@ -876,54 +876,41 @@ int eof_note_is_hopo(unsigned long cnote)
 	return 0;
 }
 
-void eof_determine_hopos(void)
+void eof_determine_phrase_status(void)
 {
-	unsigned long i, j;
+	unsigned long i, j, tracknum;
 	char sp[EOF_MAX_PHRASES] = {0};
 	char so[EOF_MAX_PHRASES] = {0};
-	unsigned long flags;
-	EOF_PHRASE_SECTION *starpowerptr = NULL;
-	EOF_PHRASE_SECTION *soloptr = NULL;
+	char trills[EOF_MAX_PHRASES] = {0};
+	char tremolos[EOF_MAX_PHRASES] = {0};
+	char arpeggios[EOF_MAX_PHRASES] = {0};
+	unsigned long notepos, flags;
+	EOF_PHRASE_SECTION *sectionptr = NULL;
 
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		/* clear the flags */
+		notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
 		flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 		flags &= (~EOF_NOTE_FLAG_HOPO);
 		flags &= (~EOF_NOTE_FLAG_SP);
-		eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_IS_TRILL);
+		flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_IS_TREMOLO);
 
-		/* mark HOPO notes */
-		switch(eof_hopo_view)
+		/* mark HOPO */
+		if((eof_hopo_view == EOF_HOPO_MANUAL) && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_note_is_hopo(i)))
 		{
-			case EOF_HOPO_OFF:
-			{
-				break;
-			}
-			case EOF_HOPO_RF:
-			case EOF_HOPO_FOF:
-			case EOF_HOPO_MANUAL:
-			{
-				if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
-				{
-					if(eof_note_is_hopo(i))
-					{
-						flags |= EOF_NOTE_FLAG_HOPO;
-						eof_set_note_flags(eof_song, eof_selected_track, i, flags);
-					}
-				}
-				break;
-			}
+			flags |= EOF_NOTE_FLAG_HOPO;
 		}
 
-		/* mark star power notes */
+		/* mark and check star power notes */
 		for(j = 0; j < eof_get_num_star_power_paths(eof_song, eof_selected_track); j++)
 		{	//For each star power path in the active track
-			starpowerptr = eof_get_star_power_path(eof_song, eof_selected_track, j);
-			if((eof_get_note_pos(eof_song, eof_selected_track, i) >= starpowerptr->start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= starpowerptr->end_pos))
-			{
+			sectionptr = eof_get_star_power_path(eof_song, eof_selected_track, j);
+			if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
+			{	//If the note is in this star power section
 				flags |= EOF_NOTE_FLAG_SP;
-				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 				sp[j] = 1;
 			}
 		}
@@ -931,29 +918,95 @@ void eof_determine_hopos(void)
 		/* check solos */
 		for(j = 0; j < eof_get_num_solos(eof_song, eof_selected_track); j++)
 		{	//For each solo section in the active track
-			soloptr = eof_get_solo(eof_song, eof_selected_track, j);
-			if((eof_get_note_pos(eof_song, eof_selected_track, i) >= soloptr->start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= soloptr->end_pos))
-			{
+			sectionptr = eof_get_solo(eof_song, eof_selected_track, j);
+			if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
+			{	//If the note is in this solo section
 				so[j] = 1;
 			}
 		}
-	}
+
+		/* mark and check trills */
+		for(j = 0; j < eof_get_num_trills(eof_song, eof_selected_track); j++)
+		{	//For each trill section in the active track
+			sectionptr = eof_get_trill(eof_song, eof_selected_track, j);
+			if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
+			{	//If the note is in this trill section
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_IS_TRILL;
+				trills[j] = 1;
+			}
+		}
+
+		/* mark and check tremolos */
+		for(j = 0; j < eof_get_num_tremolos(eof_song, eof_selected_track); j++)
+		{	//For each tremolo section in the active track
+			sectionptr = eof_get_tremolo(eof_song, eof_selected_track, j);
+			if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
+			{	//If the note is in this tremolo section
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_IS_TREMOLO;
+				tremolos[j] = 1;
+			}
+		}
+
+		/* check arpeggios */
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If this is a pro guitar track
+			for(j = 0; j < eof_song->pro_guitar_track[tracknum]->arpeggios; j++)
+			{	//For each arpeggio section in the active track
+				if((notepos >= eof_song->pro_guitar_track[tracknum]->arpeggio[j].start_pos) && (notepos <= eof_song->pro_guitar_track[tracknum]->arpeggio[j].end_pos))
+				{	//If the note is in this arpeggio section
+					arpeggios[j] = 1;
+				}
+			}
+		}
+
+		eof_set_note_flags(eof_song, eof_selected_track, i, flags);	//Update the note's flags variable
+	}//For each note in the active track
 
 	/* delete star power phrases with no notes */
 	for(j = 0; j < eof_get_num_star_power_paths(eof_song, eof_selected_track); j++)
-	{
+	{	//For each star power section in the active track
 		if(!sp[j])
-		{
+		{	//If the section's note count taken above was 0
 			eof_track_delete_star_power_path(eof_song, eof_selected_track, j);
 		}
 	}
 
 	/* delete solos with no notes */
 	for(j = 0; j < eof_get_num_solos(eof_song, eof_selected_track); j++)
-	{
+	{	//For each solo section in the active track
 		if(!so[j])
-		{
+		{	//If the section's note count taken above was 0
 			eof_track_delete_solo(eof_song, eof_selected_track, j);
+		}
+	}
+
+	/* delete trills with no notes */
+	for(j = 0; j < eof_get_num_trills(eof_song, eof_selected_track); j++)
+	{	//For each trill section in the active track
+		if(!trills[j])
+		{	//If the section's note count taken above was 0
+			eof_track_delete_trill(eof_song, eof_selected_track, j);
+		}
+	}
+
+	/* delete tremolos with no notes */
+	for(j = 0; j < eof_get_num_tremolos(eof_song, eof_selected_track); j++)
+	{	//For each tremolo section in the active track
+		if(!tremolos[j])
+		{	//If the section's note count taken above was 0
+			eof_track_delete_tremolo(eof_song, eof_selected_track, j);
+		}
+	}
+
+	/* delete arpeggios with no notes */
+	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If this is a pro guitar track
+		for(j = 0; j < eof_song->pro_guitar_track[tracknum]->arpeggios; j++)
+		{	//For each arpeggio section in the active track
+			if(!arpeggios[j])
+			{	//If the section's note count taken above was 0
+				eof_pro_guitar_track_delete_arpeggio(eof_song->pro_guitar_track[tracknum], j);
+			}
 		}
 	}
 }
@@ -1395,7 +1448,7 @@ void eof_read_global_keys(void)
 	}
 
 	/* show help */
-	if(key[KEY_F1])
+	if(key[KEY_F1] && !KEY_EITHER_CTRL)
 	{
 		clear_keybuf();
 		eof_menu_help_keys();
@@ -1444,44 +1497,44 @@ void eof_read_global_keys(void)
 		}
 	}
 
-	if(key[KEY_F4] || (KEY_EITHER_CTRL && key[KEY_N]))
+	if((key[KEY_F4] && !KEY_EITHER_CTRL) || (KEY_EITHER_CTRL && key[KEY_N]))
 	{
 		clear_keybuf();
 		eof_menu_file_new_wizard();
 		key[KEY_F4] = 0;
 	}
-	if(key[KEY_F3] || (KEY_EITHER_CTRL && key[KEY_O]))
+	if((key[KEY_F3] && !KEY_EITHER_CTRL) || (KEY_EITHER_CTRL && key[KEY_O]))
 	{	//File>Load
 		clear_keybuf();
 		eof_menu_file_load();
 		key[KEY_F3] = 0;
 		key[KEY_O] = 0;
 	}
-	if(key[KEY_F10])
+	if(key[KEY_F10] && !KEY_EITHER_CTRL)
 	{
 		clear_keybuf();
 		eof_menu_file_settings();
 		key[KEY_F10] = 0;
 	}
-	if(key[KEY_F11])
+	if(key[KEY_F11] && !KEY_EITHER_CTRL)
 	{
 		clear_keybuf();
 		eof_menu_file_preferences();
 		key[KEY_F11] = 0;
 	}
-	if(key[KEY_F8])
+	if(key[KEY_F8] && !KEY_EITHER_CTRL)
 	{
 		clear_keybuf();
 		eof_menu_file_lyrics_import();
 		key[KEY_F8] = 0;
 	}
-	if(key[KEY_F7])
+	if(key[KEY_F7] && !KEY_EITHER_CTRL)
 	{	//Launch Feedback chart import
 		clear_keybuf();
 		eof_menu_file_feedback_import();
 		key[KEY_F7] = 0;
 	}
-	if(key[KEY_F6])
+	if(key[KEY_F6] && !KEY_EITHER_CTRL)
 	{	//Launch Feedback chart import
 		clear_keybuf();
 		eof_menu_file_midi_import();
@@ -2251,7 +2304,7 @@ void eof_render_3d_window(void)
 	int point[8];
 	unsigned long i;
 	short numsolos = 0;					//Used to abstract the solo sections
-	EOF_PHRASE_SECTION *soloptr = NULL;		//Used to abstract the solo sections
+//	EOF_PHRASE_SECTION *soloptr = NULL;		//Used to abstract the solo sections
 	unsigned long numnotes;				//Used to abstract the notes
 	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
 	unsigned long tracknum;
@@ -2260,11 +2313,15 @@ void eof_render_3d_window(void)
 	//Used to draw trill and tremolo sections:
 	unsigned long j, ctr, usedlanes, bitmask, numsections;
 	EOF_PHRASE_SECTION *sectionptr = NULL;	//Used to abstract sections
-	int xchart[EOF_MAX_FRETS] = {48, 48 + 56, 48 + 56 * 2, 48 + 56 * 3, 48 + 56 * 4, 48 + 56 * 5};
+	long xchart[EOF_MAX_FRETS] = {48, 48 + 56, 48 + 56 * 2, 48 + 56 * 3, 48 + 56 * 4, 48 + 56 * 5};
 	int colors[EOF_MAX_FRETS] = {makecol(170,255,170), makecol(255,156,156), makecol(255,255,224), makecol(156,156,255), makecol(255,156,255), makecol(255,170,128)};	//Lightened versions of the standard fret colors
 
 	clear_to_color(eof_window_3d->screen, eof_color_gray);
 	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
+	if(eof_selected_track == EOF_TRACK_BASS)
+	{	//Special case:  The bass track can use a sixth lane but its 3D representation still only draws 5 lanes
+		numlanes = 5;
+	}
 	lanewidth = 56.0 * (4.0 / (numlanes-1));	//This is the correct lane width for either 5 or 6 lanes
 
 	point[0] = ocd3d_project_x(20, 600);
@@ -2278,16 +2335,16 @@ void eof_render_3d_window(void)
 	polygon(eof_window_3d->screen, 4, point, eof_color_black);
 
 	/* render solo sections */
-	int sz, sez;
-	int spz, spez;
+	long sz, sez;
+	long spz, spez;
 	numsolos = eof_get_num_solos(eof_song, eof_selected_track);
 	for(i = 0; i < numsolos; i++)
 	{
-		soloptr = eof_get_solo(eof_song, eof_selected_track, i);	//Obtain the information for this legacy/pro guitar solo
-		if(soloptr != NULL)
+		sectionptr = eof_get_solo(eof_song, eof_selected_track, i);	//Obtain the information for this legacy/pro guitar solo
+		if(sectionptr != NULL)
 		{
-			sz = -eof_music_pos / eof_zoom_3d + soloptr->start_pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
-			sez = -eof_music_pos / eof_zoom_3d + soloptr->end_pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
+			sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
+			sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
 			if((-100 <= sez) && (600 >= sz))
 			{
 				spz = sz < -100 ? -100 : sz;
@@ -2311,8 +2368,8 @@ void eof_render_3d_window(void)
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		for(i = 0; i < eof_song->pro_guitar_track[tracknum]->arpeggios; i++)
 		{	//For each arpeggio section in the track
-			sz = -eof_music_pos / eof_zoom_3d + eof_song->pro_guitar_track[tracknum]->arpeggio[i].start_pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
-			sez = -eof_music_pos / eof_zoom_3d + eof_song->pro_guitar_track[tracknum]->arpeggio[i].end_pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
+			sz = (long)(eof_song->pro_guitar_track[tracknum]->arpeggio[i].start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
+			sez = (long)(eof_song->pro_guitar_track[tracknum]->arpeggio[i].end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
 			if((-100 <= sez) && (600 >= sz))
 			{	//If the arpeggio section would render at or after the left edge of the piano roll, fill the topmost lane with light green
 				spz = sz < -100 ? -100 : sz;
@@ -2333,6 +2390,7 @@ void eof_render_3d_window(void)
 	/* render trill and tremolo sections */
 	if(eof_get_num_trills(eof_song, eof_selected_track) || eof_get_num_tremolos(eof_song, eof_selected_track))
 	{	//If this track has any trill or tremolo sections
+		unsigned long halflanewidth = lanewidth / 2;
 		//Build the lane X coordinate array
 		if(eof_lefty_mode)
 		{
@@ -2370,8 +2428,8 @@ void eof_render_3d_window(void)
 				}
 				if(sectionptr != NULL)
 				{	//If the section exists
-					sz = -eof_music_pos / eof_zoom_3d + sectionptr->start_pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
-					sez = -eof_music_pos / eof_zoom_3d + sectionptr->end_pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
+					sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
+					sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
 					if((-100 <= sez) && (600 >= sz))
 					{
 						usedlanes = eof_get_used_lanes(eof_selected_track, sectionptr->start_pos, sectionptr->end_pos, eof_note_type);	//Determine which lane(s) use this phrase
@@ -2381,35 +2439,35 @@ void eof_render_3d_window(void)
 							{	//If this lane is used in the phrase
 								spz = sz < -100 ? -100 : sz;
 								spez = sez > 600 ? 600 : sez;
-								point[0] = ocd3d_project_x(xchart[ctr] - 25, spez);
+								point[0] = ocd3d_project_x(xchart[ctr] - halflanewidth, spez);
 								point[1] = ocd3d_project_y(200, spez);
-								point[2] = ocd3d_project_x(xchart[ctr] + 25, spez);
+								point[2] = ocd3d_project_x(xchart[ctr] + halflanewidth, spez);
 								point[3] = ocd3d_project_y(200, spez);
-								point[4] = ocd3d_project_x(xchart[ctr] + 25, spz);
+								point[4] = ocd3d_project_x(xchart[ctr] + halflanewidth, spz);
 								point[5] = ocd3d_project_y(200, spz);
-								point[6] = ocd3d_project_x(xchart[ctr] - 25, spz);
+								point[6] = ocd3d_project_x(xchart[ctr] - halflanewidth, spz);
 								point[7] = ocd3d_project_y(200, spz);
 								polygon(eof_window_3d->screen, 4, point, colors[ctr]);
 							}
 						}
 					}
-				}
-			}
-		}
+				}//If the section exists
+			}//For each trill or tremolo section in the track
+		}//For each of the two phrase types (trills and tremolos)
 	}//If this track has any trill or tremolo sections
 
 	/* draw the 'strings' */
-	int obx, oby, oex, oey;
-	int px, py, pw;
+	long obx, oby, oex, oey;
+	long px, py, pw;
 
 	px = eof_window_3d->w / 2;
 	py = 0;
 	pw = 320;
 
 	/* draw the beat markers */
-	int bz;
-	int beat_counter = 0;
-	int beats_per_measure = 0;
+	long bz;
+	long beat_counter = 0;
+	long beats_per_measure = 0;
 	for(i = 0; i < eof_song->beats; i++)
 	{
 		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_4_4)
@@ -2437,7 +2495,7 @@ void eof_render_3d_window(void)
 			beats_per_measure = ((eof_song->beat[i]->flags & 0xFF000000)>>24) + 1;
 			beat_counter = 0;
 		}
-		bz = -eof_music_pos / eof_zoom_3d + eof_song->beat[i]->pos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
+		bz = (long)(eof_song->beat[i]->pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
 		if((bz >= -100) && (bz <= 600))
 		{
 			line(eof_window_3d->screen, ocd3d_project_x(48, bz), ocd3d_project_y(200, bz), ocd3d_project_x(48 + 4 * 56, bz), ocd3d_project_y(200, bz), beat_counter == 0 ? eof_color_white : makecol(160, 160, 160));
@@ -2465,7 +2523,7 @@ void eof_render_3d_window(void)
 
 //	int first_note = -1;	//Used for debugging
 //	int last_note = 0;
-	int tr;
+	long tr;
 	/* draw the note tails and notes */
 	numnotes = eof_track_get_size(eof_song, eof_selected_track);	//Get the number of notes in this legacy/pro guitar track
 	for(i = numnotes; i > 0; i--)
@@ -3430,7 +3488,6 @@ void eof_init_after_load(void)
 	eof_change_count = 0;
 	eof_selected_catalog_entry = 0;
 	eof_calculate_beats(eof_song);
-	eof_determine_hopos();
 	eof_detect_difficulties(eof_song);
 	eof_reset_lyric_preview_lines();
 	eof_select_beat(0);

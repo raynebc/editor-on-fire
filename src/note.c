@@ -172,7 +172,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		notetype = eof_get_note_type(eof_song, track, notenum);
 
 		if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
-		{	//If the catalog entry is a pro guitar note and the active track is a legacy track
+		{	//If the catalog entry is a pro guitar note and the active track is not
 			if(eof_song->pro_guitar_track[tracknum]->note[notenum]->legacymask != 0)
 			{	//If the user defined how this pro guitar note would transcribe to a legacy track
 				notenote = eof_song->pro_guitar_track[tracknum]->note[notenum]->legacymask;
@@ -305,11 +305,64 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 			else
 				dcol2 = dcol;			//Otherwise render with the expected dot color
 
-			rectfill(window->screen, x, y - eof_screen_layout.note_tail_size, x + notelength / eof_zoom, y + eof_screen_layout.note_tail_size, ncol);
+			rectfill(window->screen, x, y - eof_screen_layout.note_tail_size, x + notelength / eof_zoom, y + eof_screen_layout.note_tail_size, ncol);	//Draw the note tail
 			if(p)
-			{
-				rect(window->screen, x, y - eof_screen_layout.note_tail_size, x + notelength / eof_zoom, y + eof_screen_layout.note_tail_size, pcol);
+			{	//If this note is moused over
+				rect(window->screen, x, y - eof_screen_layout.note_tail_size, x + notelength / eof_zoom, y + eof_screen_layout.note_tail_size, pcol);	//Draw a border around the rectangle
 			}
+
+			//Render pro guitar note slide if applicable
+			if((track != 0) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && ((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)))
+			{	//If rendering an existing pro guitar track that slides up or down
+				long next, x2;			//Used for slide note rendering
+				unsigned long notepos2;		//Used for slide note rendering
+				int sliderect[8];		//An array of 4 vertices, used to draw a diagonal rectangle
+
+				next = eof_fixup_next_pro_guitar_note(eof_song->pro_guitar_track[tracknum], notenum);
+				if(next >= 0)
+				{	//If another pro guitar note in the same difficulty follows this one
+					//Find the screen coordinate of the next note
+					notepos2 = eof_get_note_pos(eof_song, track, next);
+					if(pos < leftcoord)
+					{
+						x2 = 20 + (notepos2) / eof_zoom;
+					}
+					else
+					{
+						x2 = 20 - ((pos - leftcoord)) + notepos2 / eof_zoom;
+					}
+
+					//Define the slide rectangle coordinates in clockwise order
+					#define EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS 1
+					sliderect[0] = x;	//X1 (X coordinate of the left end of the slide)
+					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+					{	//If this note slides up, start the slide line at the bottom of this note
+						sliderect[1] = y + radius - EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS;	//Y1 (Y coordinate of the left end of the slide)
+					}
+					else
+					{	//Otherwise start the slide line at the top of this note
+						sliderect[1] = y - radius - EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS;	//Y1 (Y coordinate of the left end of the slide)
+					}
+					sliderect[2] = x2;	//X2 (X coordinate of the right end of the slide)
+					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+					{	//If this note slides up, end the slide line at the top of the next note
+						sliderect[3] = y - radius - EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS;	//Y2 (Y coordinate of the right end of the slide)
+					}
+					else
+					{	//Otherwise end the slide line at the bottom of the next note
+						sliderect[3] = y + radius - EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS;	//Y2 (Y coordinate of the right end of the slide)
+					}
+					sliderect[4] = x2;	//X3 (X coordinate of the right end of the slide)
+					sliderect[5] = sliderect[3] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS);	//Y3 (the specified number of pixels below Y2)
+					sliderect[6] = x;	//X4 (X coordinate of the left end of the slide)
+					sliderect[7] = sliderect[1] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS);	//Y4 (the specified number of pixels below Y1)
+
+					if((sliderect[0] < window->w) && (sliderect[2] >= 0))
+					{	//If the left end of the polygon doesn't render off the right edge of the editor window and the right end of the polygon doesn't render off the left edge
+						polygon(window->screen, 4, sliderect, makecol(128, 0, 128));		//Render the 4 point polygon in purple
+					}
+				}//If another pro guitar note in the same difficulty follows this one
+			}//If rendering an existing pro guitar track that slides up or down
 
 			if(!iscymbal)
 			{	//If this note is not a cymbal, render note as a circle
@@ -331,7 +384,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 					}
 
 					//Render tab notations
-					eof_get_pro_note_notation(notation, eof_song->pro_guitar_track[tracknum]->note[notenum]);	//Get the tab playing notation for this note
+					eof_get_pro_note_notation(notation, eof_selected_track, notenum);	//Get the tab playing notation for this note
 					textprintf_centre_ex(window->screen, eof_mono_font, x, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 3, eof_color_red, -1, notation);
 				}
 			}
@@ -498,7 +551,7 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 //Rewritten logic to remove duplicated code and render pitchless lyrics at the bottom of the piano roll in gray
 	vline(window->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 + eof_screen_layout.note_marker_size, makecol(128, 128, 128));
 	if((np->note != 0) && !eof_is_freestyle(np->text))
-	{
+	{	//If this lyric is not pitchless/freestyle
 		ncol = native ? eof_color_red : eof_color_green;
 		if(np->note != EOF_LYRIC_PERCUSSION)
 		{
@@ -583,7 +636,7 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 				rect(window->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, pcol);
 			}
 		}
-	}
+	}//If this lyric is not pitchless/freestyle
 	else	//If the lyric is pitchless or freestyle, render with gray
 		rectfill(window->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, makecol(128, 128, 128));
 
@@ -650,6 +703,10 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	}
 
 	numlanes = eof_count_track_lanes(eof_song, track);	//Count the number of lanes in that note's track
+	if(eof_selected_track == EOF_TRACK_BASS)
+	{	//Special case:  The bass track can use a sixth lane but its 3D representation still only draws 5 lanes
+		numlanes = 5;
+	}
 	lanewidth = 56.0 * (4.0 / (numlanes-1));	//This is the correct lane width for either 5 or 6 lanes
 
 	if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
@@ -718,7 +775,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 		}
 	}//If this is a drum track
 	else
-	{
+	{	//This is a non drum track
 		if(eof_lefty_mode)
 		{
 			for(ctr = 0; ctr < numlanes; ctr++)
@@ -733,10 +790,10 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 				xchart[ctr] = 48 + (lanewidth * ctr);
 			}
 		}
-		for(ctr=0,mask=1;ctr<numlanes;ctr++,mask=mask<<1)
-		{	//Render for each of the available fret colors
+		for(ctr=0,mask=1;ctr<eof_count_track_lanes(eof_song, track);ctr++,mask=mask<<1)
+		{	//Render for each of the available fret lanes (count the active track's lanes to work around numlanes not being equal to 6 for open bass)
 			if(notenote & mask)
-			{
+			{	//If this lane is used
 				if((mask == 32) && (track == EOF_TRACK_BASS) && eof_open_bass_enabled())
 				{	//Lane 6 for the bass track (if enabled) renders similarly to a bass drum note
 					rz = npos;
@@ -790,9 +847,9 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 						}
 					}
 				}
-			}
-		}
-	}
+			}//If this lane is used
+		}//Render for each of the available fret lanes
+	}//This is a non drum track
 
 	return 0;	//Return status:  Note was not clipped in its entirety
 }
@@ -838,6 +895,10 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 	//Determine the width of the fret lanes
 	numlanes = eof_count_track_lanes(eof_song, track);	//Count the number of lanes in that note's track
+	if(eof_selected_track == EOF_TRACK_BASS)
+	{	//Special case:  The bass track can use a sixth lane but its 3D representation still only draws 5 lanes
+		numlanes = 5;
+	}
 	lanewidth = 56.0 * (4.0 / (numlanes-1));	//This is the correct lane width for either 5 or 6 lanes
 	if(eof_lefty_mode)
 	{
@@ -890,8 +951,52 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 					polygon(eof_window_3d->screen, 4, point, noteflags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : eof_color_silver) : (p ? colortable[ctr][0] : colortable[ctr][1]));
 				}
 			}
-		}
-	}
+
+			//Render pro guitar note slide if applicable
+			if((track != 0) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && ((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)))
+			{	//If rendering an existing pro guitar track that slides up or down
+				long next, npos2, rz2;
+				unsigned long notepos2;		//Used for slide note rendering
+				unsigned long halflanewidth = lanewidth / 2;
+				unsigned long tracknum = eof_song->track[track]->tracknum;
+
+				next = eof_fixup_next_pro_guitar_note(eof_song->pro_guitar_track[tracknum], notenum);
+				if(next >= 0)
+				{	//If another pro guitar note in the same difficulty follows this one
+					//Find the screen coordinate of the next note
+					notepos2 = eof_get_note_pos(eof_song, track, next);
+					npos2 = -pos - 6 + (notepos2 + eof_av_delay) / eof_zoom_3d;
+					rz2 = npos2 < -100 ? -100 : npos2 + 10;
+
+					//Define the slide rectangle coordinates in clockwise order
+					#define EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D 4
+					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+					{	//If this note slides up (3D view from left to right), start the slide line at the left of this note
+						point[0] = ocd3d_project_x(xchart[ctr] - halflanewidth, rz);	//X1 (X coordinate of the front end of the slide)
+					}
+					else
+					{	//Otherwise start the slide line at the right of this note
+						point[0] = ocd3d_project_x(xchart[ctr] + halflanewidth, rz);	//X1 (X coordinate of the front end of the slide)
+					}
+					point[1] = ocd3d_project_y(200, rz);	//Y1 (Y coordinate of the front end of the slide)
+					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+					{	//If this note slides up (3D view from left to right), end the slide line at the right of the next note
+						point[2] = ocd3d_project_x(xchart[ctr] + halflanewidth, rz2);	//X2 (X coordinate of the back end of the slide)
+					}
+					else
+					{	//Otherwise end the slide line at the left of the next note
+						point[2] = ocd3d_project_x(xchart[ctr] - halflanewidth, rz2);	//X2 (X coordinate of the back end of the slide)
+					}
+					point[3] = ocd3d_project_y(200, rz2);	//Y2 (Y coordinate of the back end of the slide
+					point[4] = point[2] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X3 (the specified number of pixels right of X2)
+					point[5] = point[3];	//Y3 (Y coordinate of the back end of the slide)
+					point[6] = point[0] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X4 (the specified number of pixels right of X1)
+					point[7] = point[1];	//Y4 (Y coordinate of the front end of the slide)
+					polygon(eof_window_3d->screen, 4, point, makecol(128, 0, 128));	//Render the 4 point polygon in purple
+				}//If another pro guitar note in the same difficulty follows this one
+			}//If rendering an existing pro guitar track that slides up or down
+		}//If this lane has a gem to render
+	}//For each of the lanes in this track
 	return 0;
 }
 
@@ -964,46 +1069,88 @@ BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, unsigned char f
 	return fretbmp;
 }
 
-void eof_get_pro_note_notation(char *buffer, EOF_PRO_GUITAR_NOTE *note)
+void eof_get_pro_note_notation(char *buffer, unsigned long track, unsigned long note)
 {
-	unsigned long index = 0;
+	unsigned long index = 0, tracknum;
+	EOF_PRO_GUITAR_NOTE *np, *prevnote = NULL;
 
-	if((note != NULL) && (buffer != NULL))
+	if((track >= eof_song->tracks) || (buffer == NULL) || (eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return;
+	tracknum = eof_song->track[track]->tracknum;
+	if(note >= eof_song->pro_guitar_track[tracknum]->notes)
+		return;
+	if(note > 0)
+	{	//If there is a previous note in this track
+		prevnote = eof_song->pro_guitar_track[tracknum]->note[note - 1];	//Store its pointer
+	}
+
+	np = eof_song->pro_guitar_track[tracknum]->note[note];
+	if(np->flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
 	{
-		if(note->flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
-		{
-			buffer[index++] = 'H';
-		}
-		else if(note->flags & EOF_PRO_GUITAR_NOTE_FLAG_PO)
-		{
-			buffer[index++] = 'P';
-		}
-		else if(note->flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
-		{
-			buffer[index++] = 'T';
-		}
+		buffer[index++] = 'H';
+	}
+	else if(np->flags & EOF_PRO_GUITAR_NOTE_FLAG_PO)
+	{
+		buffer[index++] = 'P';
+	}
+	else if(np->flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
+	{
+		buffer[index++] = 'T';
+	}
 
-		if(note->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-		{
-			buffer[index++] = '/';
-		}
-		else if(note->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
-		{
-			buffer[index++] = '\\';
-		}
+	if(np->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+	{
+		buffer[index++] = '/';
+	}
+	else if(np->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+	{
+		buffer[index++] = '\\';
+	}
 
-		if(note->flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
+	if(np->flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
+	{
+		if(prevnote && (prevnote->flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
+		{	//If there is a previous note that was also a palm mute
+			buffer[index++] = '-';	//Write a palm mute continuation character
+		}
+		else
 		{
 			buffer[index++] = 'P';
 			buffer[index++] = 'M';
 		}
-		else if(note->flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE)
-		{
-			buffer[index++] = 'X';
-		}
-
-		buffer[index] = '\0';
 	}
+	else if(np->flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE)
+	{
+		buffer[index++] = 'X';
+	}
+
+	if(np->flags & EOF_PRO_GUITAR_NOTE_FLAG_IS_TRILL)
+	{
+		if(prevnote && (prevnote->flags & EOF_PRO_GUITAR_NOTE_FLAG_IS_TRILL))
+		{	//If there is a previous note that was also in a trill
+			buffer[index++] = '~';	//Write a trill continuation character
+		}
+		else
+		{
+			buffer[index++] = 't';	//Write start of trill notation
+			buffer[index++] = 'r';
+		}
+	}
+
+	if(np->flags & EOF_PRO_GUITAR_NOTE_FLAG_IS_TREMOLO)
+	{
+		if(prevnote && (prevnote->flags & EOF_PRO_GUITAR_NOTE_FLAG_IS_TREMOLO))
+		{	//If there is a previous note that was also in a tremolo
+			buffer[index++] = '-';	//Write a tremolo continuation character
+		}
+		else
+		{
+			buffer[index++] = 'T';	//Write a start of tremolo notation
+			buffer[index++] = 'P';
+		}
+	}
+
+	buffer[index] = '\0';
 }
 
 int eof_note_compare(unsigned long track, unsigned long note1, unsigned long note2)

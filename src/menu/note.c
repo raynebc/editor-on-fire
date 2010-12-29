@@ -78,11 +78,12 @@ MENU eof_hopo_menu[] =
 
 MENU eof_note_toggle_menu[] =
 {
-    {"&Green\tCtrl+1", eof_menu_note_toggle_green, NULL, 0, NULL},
-    {"&Red\tCtrl+2", eof_menu_note_toggle_red, NULL, 0, NULL},
-    {"&Yellow\tCtrl+3", eof_menu_note_toggle_yellow, NULL, 0, NULL},
-    {"&Blue\tCtrl+4", eof_menu_note_toggle_blue, NULL, 0, NULL},
-    {"&Purple\tCtrl+5", eof_menu_note_toggle_purple, NULL, 0, NULL},
+    {"&Green\tShift+1", eof_menu_note_toggle_green, NULL, 0, NULL},
+    {"&Red\tShift+2", eof_menu_note_toggle_red, NULL, 0, NULL},
+    {"&Yellow\tShift+3", eof_menu_note_toggle_yellow, NULL, 0, NULL},
+    {"&Blue\tShift+4", eof_menu_note_toggle_blue, NULL, 0, NULL},
+    {"&Purple\tShift+5", eof_menu_note_toggle_purple, NULL, 0, NULL},
+    {"&Orange\tShift+6", eof_menu_note_toggle_orange, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -639,7 +640,17 @@ void eof_prepare_note_menu(void)
 				eof_note_menu[23].flags = D_DISABLED;
 				eof_note_menu[24].flags = D_DISABLED;
 			}
-		}
+
+			/* Toggle>Orange */
+			if(eof_count_track_lanes(eof_song, eof_selected_track) > 5)
+			{	//If the active track has a sixth usable lane
+				eof_note_toggle_menu[5].flags = 0;	//Enable Toggle>Orange
+			}
+			else
+			{
+				eof_note_toggle_menu[5].flags = D_DISABLED;
+			}
+		}//PART VOCALS NOT SELECTED
 	}
 }
 
@@ -865,7 +876,7 @@ int eof_menu_note_resnap(void)
 	{
 		allegro_message("Warning! Some notes snapped to the same position and were automatically combined.");
 	}
-	eof_determine_hopos();
+	eof_determine_phrase_status();
 	return 1;
 }
 
@@ -931,7 +942,7 @@ int eof_menu_note_delete(void)
 		}
 		eof_selection.current = EOF_MAX_NOTES - 1;
 		eof_detect_difficulties(eof_song);
-		eof_determine_hopos();
+		eof_determine_phrase_status();
 	}
 	return 1;
 }
@@ -1680,7 +1691,7 @@ int eof_menu_star_power_mark(void)
 			starpowerptr->end_pos = sel_end;
 		}
 	}
-	eof_determine_hopos();
+	eof_determine_phrase_status();
 	return 1;
 }
 
@@ -1705,7 +1716,7 @@ int eof_menu_star_power_unmark(void)
 			}
 		}
 	}
-	eof_determine_hopos();
+	eof_determine_phrase_status();
 	return 1;
 }
 
@@ -1727,7 +1738,7 @@ int eof_menu_star_power_erase_all(void)
 		}
 		eof_set_num_star_power_paths(eof_song, eof_selected_track, 0);
 	}
-	eof_determine_hopos();
+	eof_determine_phrase_status();
 	return 1;
 }
 
@@ -1897,7 +1908,7 @@ int eof_menu_hopo_auto(void)
 			}
 		}
 	}
-	eof_determine_hopos();
+	eof_determine_phrase_status();
 	return 1;
 }
 
@@ -1964,7 +1975,7 @@ int eof_menu_hopo_cycle(void)
 				}
 			}
 		}
-		eof_determine_hopos();
+		eof_determine_phrase_status();
 	}
 	return 1;
 }
@@ -2007,7 +2018,7 @@ int eof_menu_hopo_force_on(void)
 			}
 		}
 	}
-	eof_determine_hopos();
+	eof_determine_phrase_status();
 	return 1;
 }
 
@@ -2045,7 +2056,7 @@ int eof_menu_hopo_force_off(void)
 			}
 		}
 	}
-	eof_determine_hopos();
+	eof_determine_phrase_status();
 	return 1;
 }
 
@@ -2662,6 +2673,7 @@ int eof_menu_note_toggle_slide_up(void)
 			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 		}
 	}
+	eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes to adjust the slide note's length as appropriate
 	return 1;
 }
 
@@ -2689,6 +2701,7 @@ int eof_menu_note_toggle_slide_down(void)
 			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 		}
 	}
+	eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes to adjust the slide note's length as appropriate
 	return 1;
 }
 

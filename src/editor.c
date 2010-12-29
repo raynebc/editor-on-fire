@@ -1240,60 +1240,190 @@ void eof_read_editor_keys(void)
 		eof_menu_note_edit_pro_guitar_note();
 	}
 
-	if(KEY_EITHER_CTRL && eof_music_paused && !eof_music_catalog_playback && !eof_vocals_selected)
-	{	//Toggle lanes on/off
-		if(key[KEY_1])
+	if(KEY_EITHER_CTRL && eof_music_paused && !eof_music_catalog_playback)
+	{	//CTRL+# or CTRL+Fn # in a pro guitar track sets the fret values of selected notes
+		//CTRL+~ sets fret values to 0 and CTRL+X sets fret values to (muted)
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{
-			eof_menu_note_toggle_green();
-			key[KEY_1] = 0;
-		}
-		else if(key[KEY_2])
-		{
-			eof_menu_note_toggle_red();
-			key[KEY_2] = 0;
-		}
-		else if(key[KEY_3])
-		{
-			eof_menu_note_toggle_yellow();
-			key[KEY_3] = 0;
-		}
-		else if(key[KEY_4])
-		{
-			eof_menu_note_toggle_blue();
-			key[KEY_4] = 0;
-		}
-		else if(key[KEY_5])
-		{
-			eof_menu_note_toggle_purple();
-			key[KEY_5] = 0;
-		}
-		else if(key[KEY_6] && (numlanes >= 6))
-		{	//Only allow use of the 6 key if lane 6 is available
-			eof_menu_note_toggle_orange();
-			key[KEY_6] = 0;
+			if(key[KEY_TILDE])
+			{
+				eof_set_pro_guitar_fret_number(0);
+				key[KEY_TILDE] = 0;
+			}
+			if(key[KEY_1])
+			{
+				eof_set_pro_guitar_fret_number(1);
+				key[KEY_1] = 0;
+			}
+			else if(key[KEY_2])
+			{
+				eof_set_pro_guitar_fret_number(2);
+				key[KEY_2] = 0;
+			}
+			else if(key[KEY_3])
+			{
+				eof_set_pro_guitar_fret_number(3);
+				key[KEY_3] = 0;
+			}
+			else if(key[KEY_4])
+			{
+				eof_set_pro_guitar_fret_number(4);
+				key[KEY_4] = 0;
+			}
+			else if(key[KEY_5])
+			{
+				eof_set_pro_guitar_fret_number(5);
+				key[KEY_5] = 0;
+			}
+			else if(key[KEY_6])
+			{
+				eof_set_pro_guitar_fret_number(6);
+				key[KEY_6] = 0;
+			}
+			else if(key[KEY_7])
+			{
+				eof_set_pro_guitar_fret_number(7);
+				key[KEY_7] = 0;
+			}
+			else if(key[KEY_8])
+			{
+				eof_set_pro_guitar_fret_number(8);
+				key[KEY_8] = 0;
+			}
+			else if(key[KEY_9])
+			{
+				eof_set_pro_guitar_fret_number(9);
+				key[KEY_9] = 0;
+			}
+			else if(key[KEY_0])
+			{
+				eof_set_pro_guitar_fret_number(10);
+				key[KEY_0] = 0;
+			}
+			else if(key[KEY_F1])
+			{
+				eof_set_pro_guitar_fret_number(11);
+				key[KEY_F1] = 0;
+			}
+			else if(key[KEY_F2])
+			{
+				eof_set_pro_guitar_fret_number(12);
+				key[KEY_F2] = 0;
+			}
+			else if(key[KEY_F3])
+			{
+				eof_set_pro_guitar_fret_number(13);
+				key[KEY_F3] = 0;
+			}
+			else if(key[KEY_F4])
+			{
+				eof_set_pro_guitar_fret_number(14);
+				key[KEY_F4] = 0;
+			}
+			else if(key[KEY_F5])
+			{
+				eof_set_pro_guitar_fret_number(15);
+				key[KEY_F5] = 0;
+			}
+			else if(key[KEY_F6])
+			{
+				eof_set_pro_guitar_fret_number(16);
+				key[KEY_F6] = 0;
+			}
+			else if(key[KEY_F7])
+			{
+				eof_set_pro_guitar_fret_number(17);
+				key[KEY_F7] = 0;
+			}
+			else if(key[KEY_F8])
+			{
+				eof_set_pro_guitar_fret_number(18);
+				key[KEY_F8] = 0;
+			}
+			else if(key[KEY_F9])
+			{
+				eof_set_pro_guitar_fret_number(19);
+				key[KEY_F9] = 0;
+			}
+			else if(key[KEY_F10])
+			{
+				eof_set_pro_guitar_fret_number(20);
+				key[KEY_F10] = 0;
+			}
+			else if(key[KEY_F11])
+			{
+				eof_set_pro_guitar_fret_number(21);
+				key[KEY_F11] = 0;
+			}
+			else if(key[KEY_F12])
+			{
+				eof_set_pro_guitar_fret_number(22);
+				key[KEY_F12] = 0;
+			}
+			else if(key[KEY_X])
+			{
+				eof_set_pro_guitar_fret_number(255);	//CTRL+X sets frets to (muted)
+				key[KEY_X] = 0;
+			}
 		}
 	}
 	else if(KEY_EITHER_SHIFT)
 	{
-		if(key[KEY_1])	//Change mini piano focus to first usable octave
-		{
-			eof_vocals_offset = MINPITCH;
-			key[KEY_1] = 0;
+		if(eof_vocals_selected)
+		{	//SHIFT+# in a vocal track sets the octave view
+			if(key[KEY_1])	//Change mini piano focus to first usable octave
+			{
+				eof_vocals_offset = MINPITCH;
+				key[KEY_1] = 0;
+			}
+			else if(key[KEY_2])	//Change mini piano focus to second usable octave
+			{
+				eof_vocals_offset = MINPITCH+12;
+				key[KEY_2] = 0;
+			}
+			else if(key[KEY_3])	//Change mini piano focus to third usable octave
+			{
+				eof_vocals_offset = MINPITCH+24;
+				key[KEY_3] = 0;
+			}
+			else if(key[KEY_4])	//Change mini piano focus to fourth usable octave
+			{
+				eof_vocals_offset = MINPITCH+36;
+				key[KEY_4] = 0;
+			}
 		}
-		else if(key[KEY_2])	//Change mini piano focus to second usable octave
-		{
-			eof_vocals_offset = MINPITCH+12;
-			key[KEY_2] = 0;
-		}
-		else if(key[KEY_3])	//Change mini piano focus to third usable octave
-		{
-			eof_vocals_offset = MINPITCH+24;
-			key[KEY_3] = 0;
-		}
-		else if(key[KEY_4])	//Change mini piano focus to fourth usable octave
-		{
-			eof_vocals_offset = MINPITCH+36;
-			key[KEY_4] = 0;
+		else if(eof_music_paused && !eof_music_catalog_playback)
+		{	//In other tracks, SHIFT+# toggles lanes on/off
+			if(key[KEY_1])
+			{
+				eof_menu_note_toggle_green();
+				key[KEY_1] = 0;
+			}
+			else if(key[KEY_2])
+			{
+				eof_menu_note_toggle_red();
+				key[KEY_2] = 0;
+			}
+			else if(key[KEY_3])
+			{
+				eof_menu_note_toggle_yellow();
+				key[KEY_3] = 0;
+			}
+			else if(key[KEY_4])
+			{
+				eof_menu_note_toggle_blue();
+				key[KEY_4] = 0;
+			}
+			else if(key[KEY_5])
+			{
+				eof_menu_note_toggle_purple();
+				key[KEY_5] = 0;
+			}
+			else if(key[KEY_6] && (numlanes >= 6))
+			{	//Only allow use of the 6 key if lane 6 is available
+				eof_menu_note_toggle_orange();
+				key[KEY_6] = 0;
+			}
 		}
 	}
 	else if(!KEY_EITHER_CTRL)
@@ -1456,7 +1586,7 @@ void eof_read_editor_keys(void)
 								eof_selection.current = EOF_MAX_NOTES - 1;
 								eof_track_sort_notes(eof_song, eof_selected_track);
 								eof_track_fixup_notes(eof_song, eof_selected_track, 1);
-								eof_determine_hopos();
+								eof_determine_phrase_status();
 								eof_detect_difficulties(eof_song);
 							}
 							else
@@ -1490,7 +1620,7 @@ void eof_read_editor_keys(void)
 								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 								eof_track_sort_notes(eof_song, eof_selected_track);
 								eof_track_fixup_notes(eof_song, eof_selected_track, 0);
-								eof_determine_hopos();
+								eof_determine_phrase_status();
 								eof_selection.multi[eof_selection.current] = 1;
 								eof_detect_difficulties(eof_song);
 							}
@@ -1761,7 +1891,7 @@ void eof_read_editor_keys(void)
 	{
 		if(eof_song_loaded)
 		{
-			if(key[KEY_F2] || (KEY_EITHER_CTRL && key[KEY_S]))
+			if((key[KEY_F2] && !KEY_EITHER_CTRL) || (KEY_EITHER_CTRL && key[KEY_S]))
 			{
 				eof_menu_file_save();
 				key[KEY_F2] = 0;
@@ -1898,13 +2028,13 @@ void eof_read_editor_keys(void)
 				}
 				key[KEY_9_PAD] = 0;
 			}
-			if(key[KEY_F9])
+			if(key[KEY_F9] && !KEY_EITHER_CTRL)
 			{
 				clear_keybuf();
 				eof_menu_song_properties();
 				key[KEY_F9] = 0;
 			}
-			if(key[KEY_F12])
+			if(key[KEY_F12] && !KEY_EITHER_CTRL)
 			{
 				eof_menu_song_test();
 				key[KEY_F12] = 0;
@@ -1924,7 +2054,7 @@ void eof_read_editor_keys(void)
 				eof_menu_edit_old_paste();
 				key[KEY_P] = 0;
 			}
-			if(key[KEY_F5])
+			if(key[KEY_F5] && !KEY_EITHER_CTRL)
 			{
 				eof_menu_song_waveform();
 				key[KEY_F5] = 0;
@@ -2059,7 +2189,7 @@ void eof_editor_logic(void)
 			{
 				eof_track_sort_notes(eof_song, eof_selected_track);
 				eof_track_fixup_notes(eof_song, eof_selected_track, 1);
-				eof_determine_hopos();
+				eof_determine_phrase_status();
 				eof_notes_moved = 0;
 			}
 		}
@@ -2451,7 +2581,7 @@ void eof_editor_logic(void)
 								eof_selection.current = EOF_MAX_NOTES - 1;
 								eof_track_sort_notes(eof_song, eof_selected_track);
 								eof_track_fixup_notes(eof_song, eof_selected_track, 1);
-								eof_determine_hopos();
+								eof_determine_phrase_status();
 								eof_detect_difficulties(eof_song);
 							}
 							else
@@ -2481,7 +2611,7 @@ void eof_editor_logic(void)
 							memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 							eof_track_sort_notes(eof_song, eof_selected_track);
 							eof_track_fixup_notes(eof_song, eof_selected_track, 0);
-							eof_determine_hopos();
+							eof_determine_phrase_status();
 							eof_detect_difficulties(eof_song);
 						}
 					}
@@ -2506,7 +2636,7 @@ void eof_editor_logic(void)
 						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 						eof_track_sort_notes(eof_song, eof_selected_track);
 						eof_track_fixup_notes(eof_song, eof_selected_track, 0);
-						eof_determine_hopos();
+						eof_determine_phrase_status();
 						eof_detect_difficulties(eof_song);
 					}
 				}
@@ -3801,7 +3931,7 @@ void eof_render_editor_window_common(void)
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		for(i = 0; i < eof_song->pro_guitar_track[tracknum]->arpeggios; i++)
 		{	//For each arpeggio section in the track
-			if(eof_song->pro_guitar_track[tracknum]->arpeggio->end_pos >= start)
+			if(eof_song->pro_guitar_track[tracknum]->arpeggio[i].end_pos >= start)
 			{	//If the arpeggio section would render at or after the left edge of the piano roll, fill the sixth lane with light green
 				rectfill(eof_window_editor->screen, lpos + eof_song->pro_guitar_track[tracknum]->arpeggio[i].start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[4], lpos + eof_song->pro_guitar_track[tracknum]->arpeggio[i].end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[5], col);
 			}

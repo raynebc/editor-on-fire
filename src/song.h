@@ -19,8 +19,8 @@
 #define EOF_MAX_DIFFICULTIES 4
 #define EOF_NOTE_SPECIAL     4
 
-#define EOF_NOTE_FLAG_HOPO       1	//This flag will represent a note that does not require a strum (ie. HOPO or Tapping)
-#define EOF_NOTE_FLAG_SP         2
+#define EOF_NOTE_FLAG_HOPO       1	//This flag will be set by eof_determine_phrase_status() if the note displays as a HOPO
+#define EOF_NOTE_FLAG_SP         2	//This flag will be set by eof_determine_phrase_status() if the note is in a star power section
 #define EOF_NOTE_FLAG_CRAZY      4	//This flag will represent overlap allowed for guitar tracks
 #define EOF_NOTE_FLAG_F_HOPO     8
 #define EOF_NOTE_FLAG_NO_HOPO   16
@@ -37,6 +37,8 @@
 #define EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN		8192	//This flag will represent a note that slides down to the next note
 #define EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE	16384	//This flag will represent a note whose strings are muted by the fretting hand
 #define EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE		32768	//This flag will represent a note whose strings are muted by the strumming hand
+#define EOF_PRO_GUITAR_NOTE_FLAG_IS_TRILL		65536	//This flag will be set by eof_determine_phrase_status() if the note is in a trill section
+#define EOF_PRO_GUITAR_NOTE_FLAG_IS_TREMOLO		131072	//This flag will be set by eof_determine_phrase_status() if the note is in a tremolo section
 
 #define EOF_MAX_BEATS   32768
 #define EOF_MAX_PHRASES    32
@@ -474,6 +476,7 @@ void eof_pro_guitar_track_add_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned lon
 void eof_pro_guitar_track_delete_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned long index);	//Deletes the specified star power phrase and moves all phrases that follow back in the array one position
 void eof_pro_guitar_track_add_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track
 void eof_pro_guitar_track_delete_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long index);	//Deletes the specified solo phrase and moves all phrases that follow back in the array one position
+void eof_set_pro_guitar_fret_number(unsigned long fretvalue);	//Sets all used strings for all selected pro guitar notes to the specified fret value
 
 EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp);	//Allocates, initializes and stores a new EOF_BEAT_MARKER structure into the beats array.  Returns the newly allocated structure or NULL upon error
 void eof_song_delete_beat(EOF_SONG * sp, unsigned long beat);	//Removes and frees the specified beat from the beats array.  All beats after the deleted beat are moved back in the array one position
