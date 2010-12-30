@@ -1004,7 +1004,7 @@ long eof_song_msec_to_tick(EOF_SONG * sp, unsigned long track, unsigned long mse
 }
 
 
-char eof_check_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,char flag)
+char eof_check_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,unsigned long flag)
 {
 	unsigned long ctr,ctr2;
 	char match = 0;
@@ -1041,7 +1041,7 @@ char eof_check_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,ch
 	return match;
 }
 
-void eof_set_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,char flag,char operation)
+void eof_set_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,unsigned long flag,char operation)
 {
 	unsigned long ctr,ctr2;
 	char match = 0;
@@ -3698,9 +3698,9 @@ void eof_set_pro_guitar_fret_number(unsigned long fretvalue)
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (eof_song->pro_guitar_track[tracknum]->note[ctr]->type == eof_note_type))
 		{	//If the note is selected and is in the active difficulty
 			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask<<=1)
-			{	//For each of the usable lanes
-				if(eof_song->pro_guitar_track[tracknum]->note[ctr]->note & bitmask)
-				{	//If this lane is in use
+			{	//For each of the 6 usable strings
+				if((eof_song->pro_guitar_track[tracknum]->note[ctr]->note & bitmask) && (eof_pro_guitar_fret_bitmask & bitmask))
+				{	//If this string is in use, and this string is enabled for fret shortcut manipulation
 					if(!undo_made && (eof_song->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2] != fretvalue))
 					{	//Make an undo state before making the first change
 						eof_prepare_undo(EOF_UNDO_TYPE_NONE);

@@ -95,6 +95,7 @@ char        eof_supports_oggcat = 0;		//Set to nonzero if EOF determines oggCat 
 int         eof_new_idle_system = 0;
 char        eof_just_played = 0;
 char        eof_mark_drums_as_cymbal = 0;	//Allows the user to specify whether Y/B/G drum notes will be placed with cymbal notation by default
+unsigned long eof_pro_guitar_fret_bitmask = 63;	//Defines which lanes are affected by CTRL+Fn fret setting shortcuts
 
 int         eof_undo_toggle = 0;
 int         eof_redo_toggle = 0;
@@ -1394,9 +1395,8 @@ void eof_fix_waveform_graph(void)
 /* read keys that are universally usable */
 void eof_read_global_keys(void)
 {
-
-	/* exit program */
-	if(key[KEY_ESC])
+	/* exit program (Esc) */
+	if(key[KEY_ESC] && !KEY_EITHER_SHIFT)
 	{
 		eof_menu_file_exit();
 		key[KEY_ESC] = 0;
@@ -1447,19 +1447,10 @@ void eof_read_global_keys(void)
 		}
 	}
 
-	/* show help */
-	if(key[KEY_F1] && !KEY_EITHER_CTRL)
-	{
-		clear_keybuf();
-		eof_menu_help_keys();
-		key[KEY_ESC] = 0;
-	}
-
 	/* stuff you can only do when a chart is loaded */
 	if(eof_song_loaded && eof_song)
 	{
-
-		/* undo */
+		/* undo (CTRL+Z) */
 		if(KEY_EITHER_CTRL && key[KEY_Z] && (eof_undo_count > 0))
 		{
 			eof_menu_edit_undo();
@@ -1467,7 +1458,7 @@ void eof_read_global_keys(void)
 			eof_reset_lyric_preview_lines();	//Rebuild the preview lines
 		}
 
-		/* redo */
+		/* redo (CTRL+R) */
 		if(KEY_EITHER_CTRL && key[KEY_R] && eof_redo_toggle)
 		{
 			eof_menu_edit_redo();
@@ -1475,13 +1466,14 @@ void eof_read_global_keys(void)
 			eof_reset_lyric_preview_lines();	//Rebuild the preview lines
 		}
 
-		/* switch between inverted and normal editor view */
+		/* switch between inverted and normal editor view (CTRL+I) */
 		if(KEY_EITHER_CTRL && key[KEY_I])
 		{
 			eof_inverted_notes = 1 - eof_inverted_notes;
 			key[KEY_I] = 0;
 		}
 
+		/* decrement AV delay (-) */
 		if(key[KEY_MINUS])
 		{
 			if(eof_av_delay > 0)
@@ -1490,6 +1482,8 @@ void eof_read_global_keys(void)
 			}
 			key[KEY_MINUS] = 0;
 		}
+
+		/* increment AV delay (+) */
 		if(key[KEY_EQUALS])
 		{
 			eof_av_delay++;
@@ -1497,49 +1491,105 @@ void eof_read_global_keys(void)
 		}
 	}
 
-	if((key[KEY_F4] && !KEY_EITHER_CTRL) || (KEY_EITHER_CTRL && key[KEY_N]))
+	/* save (F2 or CTRL+S) */
+	if((key[KEY_F2] && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT) || (KEY_EITHER_CTRL && key[KEY_S]))
 	{
-		clear_keybuf();
-		eof_menu_file_new_wizard();
-		key[KEY_F4] = 0;
+		eof_menu_file_save();
+		key[KEY_F2] = 0;
+		key[KEY_S] = 0;
 	}
-	if((key[KEY_F3] && !KEY_EITHER_CTRL) || (KEY_EITHER_CTRL && key[KEY_O]))
+
+	/* load chart (F3 or CTRL+O) */
+	if((key[KEY_F3] && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT) || (KEY_EITHER_CTRL && key[KEY_O]))
 	{	//File>Load
 		clear_keybuf();
 		eof_menu_file_load();
 		key[KEY_F3] = 0;
 		key[KEY_O] = 0;
 	}
-	if(key[KEY_F10] && !KEY_EITHER_CTRL)
+
+	/* new chart (F4 or CTRL+N) */
+	if((key[KEY_F4] && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT) || (KEY_EITHER_CTRL && key[KEY_N]))
 	{
 		clear_keybuf();
-		eof_menu_file_settings();
-		key[KEY_F10] = 0;
+		eof_menu_file_new_wizard();
+		key[KEY_F4] = 0;
 	}
-	if(key[KEY_F11] && !KEY_EITHER_CTRL)
-	{
-		clear_keybuf();
-		eof_menu_file_preferences();
-		key[KEY_F11] = 0;
-	}
-	if(key[KEY_F8] && !KEY_EITHER_CTRL)
-	{
-		clear_keybuf();
-		eof_menu_file_lyrics_import();
-		key[KEY_F8] = 0;
-	}
-	if(key[KEY_F7] && !KEY_EITHER_CTRL)
-	{	//Launch Feedback chart import
-		clear_keybuf();
-		eof_menu_file_feedback_import();
-		key[KEY_F7] = 0;
-	}
-	if(key[KEY_F6] && !KEY_EITHER_CTRL)
-	{	//Launch Feedback chart import
-		clear_keybuf();
-		eof_menu_file_midi_import();
-		key[KEY_F6] = 0;
-	}
+
+	if(!KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
+	{	//If neither CTRL nor SHIFT are held
+	/* show help */
+		if(key[KEY_F1])
+		{
+			clear_keybuf();
+			eof_menu_help_keys();
+			key[KEY_ESC] = 0;
+		}
+
+	/* show waveform graph (F5) */
+		else if(key[KEY_F5])
+		{
+			clear_keybuf();
+			eof_menu_song_waveform();
+			key[KEY_F5] = 0;
+		}
+
+	/* midi import (F6) */
+		else if(key[KEY_F6])
+		{	//Launch MIDI import
+			clear_keybuf();
+			eof_menu_file_midi_import();
+			key[KEY_F6] = 0;
+		}
+
+	/* feedback import (F7) */
+		else if(key[KEY_F7])
+		{	//Launch Feedback chart import
+			clear_keybuf();
+			eof_menu_file_feedback_import();
+			key[KEY_F7] = 0;
+		}
+
+	/* lyric import (F8) */
+		else if(key[KEY_F8])
+		{
+			clear_keybuf();
+			eof_menu_file_lyrics_import();
+			key[KEY_F8] = 0;
+		}
+
+	/* song properties (F9) */
+		else if(key[KEY_F9])
+		{
+			clear_keybuf();
+			eof_menu_song_properties();
+			key[KEY_F9] = 0;
+		}
+
+	/* settings (F10) */
+		else if(key[KEY_F10])
+		{
+			clear_keybuf();
+			eof_menu_file_settings();
+			key[KEY_F10] = 0;
+		}
+
+	/* preferences (F11) */
+		else if(key[KEY_F11])
+		{
+			clear_keybuf();
+			eof_menu_file_preferences();
+			key[KEY_F11] = 0;
+		}
+
+	/* test in FoF (F12) */
+		else if(key[KEY_F12])
+		{
+			clear_keybuf();
+			eof_menu_song_test();
+			key[KEY_F12] = 0;
+		}
+	}//If neither CTRL nor SHIFT are held
 }
 
 void eof_lyric_logic(void)
@@ -1864,7 +1914,7 @@ char * eof_get_tone_name(int tone)
 
 void eof_render_note_window(void)
 {
-	unsigned long i;
+	unsigned long i, bitmask, index;
 	int pos;
 	int lpos, npos, ypos;
 	unsigned long tracknum;
@@ -1872,6 +1922,7 @@ void eof_render_note_window(void)
 	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
 	char temp[1024] = {0};
 	unsigned long notepos;
+	char eof_pro_guitar_fret_bitmask_string[21] = {0};
 
 	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	clear_to_color(eof_window_note->screen, eof_color_gray);
@@ -1919,12 +1970,10 @@ void eof_render_note_window(void)
 			{
 				if(!i || (i + 1 >= numlanes))
 				{	//Ensure the top and bottom lines extend to the left of the piano roll
-//					hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
 					hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_music_length) / eof_zoom, eof_color_white);
 				}
 				else if(eof_selected_track != EOF_TRACK_VOCALS)
 				{	//Otherwise, if not drawing the vocal editor, draw the other fret lines from the first beat marker to the end of the chart
-//					hline(eof_window_note->screen, lpos + eof_song->tags->ogg[eof_selected_ogg].midi_offset / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
 					hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_music_length) / eof_zoom, eof_color_white);
 				}
 			}
@@ -2000,7 +2049,7 @@ void eof_render_note_window(void)
 		}//if(eof_song->catalog->entries > 0)
 	}//If show catalog is selected
 	else
-	{
+	{	//If show catalog is disabled
 		tracknum = eof_song->track[eof_selected_track]->tracknum;	//Information about the active track is going to be displayed
 		textprintf_ex(eof_window_note->screen, font, 2, 0, eof_info_color, -1, "Information Panel");
 		textprintf_ex(eof_window_note->screen, font, 2, 12, eof_color_white, -1, "----------------------------");
@@ -2090,18 +2139,48 @@ void eof_render_note_window(void)
 		}
 
 		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Metronome: %s", eof_mix_metronome_enabled ? "On" : "Off");
-		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Claps: %s", eof_mix_claps_enabled ? "On" : "Off");
-		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Vocal Tones: %s", eof_mix_vocal_tones_enabled ? "On" : "Off");
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Metronome: %s Claps: %s Vocal Tones: %s", eof_mix_metronome_enabled ? "On" : "Off", eof_mix_claps_enabled ? "On" : "Off", eof_mix_vocal_tones_enabled ? "On" : "Off");
 		ypos += 12;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Playback Speed: %d%%", eof_playback_speed / 10);
 		ypos += 12;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Catalog: %lu of %lu", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
 		ypos += 12;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "OGG File: \"%s\"", eof_song->tags->ogg[eof_selected_ogg].filename);
-	}
+
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//Display information specific to pro guitar tracks
+			ypos += 12;
+			ypos += 12;
+			if(!eof_pro_guitar_fret_bitmask || (eof_pro_guitar_fret_bitmask == 63))
+			{	//If the fret shortcut bitmask is set to no strings or all 6 strings
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Fret value shortcuts apply to %s strings", (eof_pro_guitar_fret_bitmask == 0) ? "no" : "all");
+			}
+			else
+			{	//Build a string to indicate which strings the bitmask pertains to
+				for(i = 0, bitmask = 1, index = 0; i < 6; i++, bitmask<<=1)
+				{	//For each of the 6 usable strings
+					if(eof_pro_guitar_fret_bitmask & bitmask)
+					{	//If the bitmask applies to this string
+						if(index != 0)
+						{	//If another string number was already written to this string
+							eof_pro_guitar_fret_bitmask_string[index++] = ',';	//Insert a comma
+							eof_pro_guitar_fret_bitmask_string[index++] = ' ';	//And a space
+						}
+						eof_pro_guitar_fret_bitmask_string[index++] = '1' + i;	//'0' + # is converts a number of value # to a text character representation
+					}
+				}
+				eof_pro_guitar_fret_bitmask_string[index] = '\0';	//Terminate the string
+				if(eof_pro_guitar_fret_bitmask_string[1] != '\0')
+				{	//If there are at least two strings denoted
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Fret value shortcuts apply to strings %s", eof_pro_guitar_fret_bitmask_string);
+				}
+				else
+				{	//There's only one string denoted, use a shortcut to just display the one character
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Fret value shortcuts apply to string %c", eof_pro_guitar_fret_bitmask_string[0]);
+				}
+			}
+		}
+	}//If show catalog is disabled
 
 	rect(eof_window_note->screen, 0, 0, eof_window_note->w - 1, eof_window_note->h - 1, makecol(160, 160, 160));
 	rect(eof_window_note->screen, 1, 1, eof_window_note->w - 2, eof_window_note->h - 2, eof_color_black);

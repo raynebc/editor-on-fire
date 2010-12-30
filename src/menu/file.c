@@ -589,12 +589,12 @@ int eof_menu_file_save(void)
 {
 	int err;
 
-	if(eof_song_loaded)
+	if(!eof_song_loaded || !eof_song)
+		return 1;	//Do not allow this function to run if no chart is loaded
+
+	if(!eof_music_paused)
 	{
-		if(!eof_music_paused)
-		{
-			eof_music_play();
-		}
+		eof_music_play();
 	}
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;

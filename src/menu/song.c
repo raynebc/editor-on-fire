@@ -886,9 +886,13 @@ int eof_is_number(char * buffer)
 int eof_menu_song_properties(void)
 {
 //	double bpm = (double)60000000 / (double)eof_song->beat[0]->ppqn;
-	int old_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
+	int old_offset = 0;
 	int i, invalid = 0;
 
+	if(!eof_song_loaded || !eof_song)
+		return 1;	//Do not allow this function to run if a chart is not loaded
+
+	old_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
 	eof_cursor_visible = 0;
 	if(eof_song_loaded)
 	{
@@ -984,6 +988,9 @@ int eof_menu_song_test(void)
 	char temppath2[1024] = {0};
 	int difficulty = 0;
 	int part = 0;
+
+	if(!eof_song_loaded || !eof_song)
+		return 1;	//Do not allow this function to run if a chart is not loaded
 
 	/* check difficulty before allowing test */
 	difficulty = eof_figure_difficulty();

@@ -331,6 +331,7 @@ extern char        eof_supports_mp3;
 extern char        eof_supports_oggcat;
 extern char        eof_just_played;
 extern char        eof_mark_drums_as_cymbal;
+extern unsigned long eof_pro_guitar_fret_bitmask;
 
 extern char eof_midi_initialized;			//Specifies whether Allegro was able to set up a MIDI device
 extern EOF_SELECTION_DATA eof_selection;
