@@ -1200,7 +1200,6 @@ int eof_menu_note_toggle_rb3_cymbal_green(void)
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	long u = 0;
-	unsigned long flags;
 
 	if(eof_selected_track != EOF_TRACK_DRUM)
 		return 1;	//Do not allow this function to run when PART DRUMS is not active
@@ -1216,9 +1215,6 @@ int eof_menu_note_toggle_rb3_cymbal_green(void)
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					u = 1;
 				}
-				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-				flags &= (~EOF_NOTE_FLAG_DBASS);	//Clear the Expert+ status if it is set
-				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_G_CYMBAL,2);	//Toggle the green cymbal flag on all drum notes at this position
 			}
 		}
@@ -1273,7 +1269,6 @@ int eof_menu_note_toggle_rb3_cymbal_blue(void)
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					u = 1;
 				}
-//				eof_song->legacy_track[tracknum]->note[i]->flags ^= EOF_NOTE_FLAG_B_CYMBAL;
 				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_B_CYMBAL,2);	//Toggle the blue cymbal flag on all drum notes at this position
 			}
 		}
@@ -2792,9 +2787,9 @@ int eof_menu_arpeggio_mark(void)
 	unsigned long i, j;
 	unsigned long sel_start = 0;
 	unsigned long sel_end = 0;
-	char firstnote = 0;	//Is set to nonzero when the first selected note in the active track difficulty is found
-	char existingphrase = 0;	//Is set to nonzero if any selected notes are within an existing phrase
-	unsigned long existingphrasenum;	//Is set to the last arpeggio phrase number that encompasses existing notes
+	char firstnote = 0;						//Is set to nonzero when the first selected note in the active track difficulty is found
+	char existingphrase = 0;				//Is set to nonzero if any selected notes are within an existing phrase
+	unsigned long existingphrasenum = 0;	//Is set to the last arpeggio phrase number that encompasses existing notes
 	unsigned long tracknum;
 	unsigned long flags;
 
@@ -2930,9 +2925,9 @@ int eof_menu_trill_mark(void)
 	unsigned long i, j;
 	unsigned long sel_start = 0;
 	unsigned long sel_end = 0;
-	char firstnote = 0;	//Is set to nonzero when the first selected note in the active track difficulty is found
-	char existingphrase = 0;	//Is set to nonzero if any selected notes are within an existing phrase
-	unsigned long existingphrasenum;	//Is set to the last trill phrase number that encompasses existing notes
+	char firstnote = 0;						//Is set to nonzero when the first selected note in the active track difficulty is found
+	char existingphrase = 0;				//Is set to nonzero if any selected notes are within an existing phrase
+	unsigned long existingphrasenum = 0;	//Is set to the last trill phrase number that encompasses existing notes
 	unsigned long tracknum;
 	EOF_PHRASE_SECTION *sectionptr;
 
@@ -2991,9 +2986,9 @@ int eof_menu_tremolo_mark(void)
 	unsigned long i, j;
 	unsigned long sel_start = 0;
 	unsigned long sel_end = 0;
-	char firstnote = 0;	//Is set to nonzero when the first selected note in the active track difficulty is found
-	char existingphrase = 0;	//Is set to nonzero if any selected notes are within an existing phrase
-	unsigned long existingphrasenum;	//Is set to the last tremolo phrase number that encompasses existing notes
+	char firstnote = 0;						//Is set to nonzero when the first selected note in the active track difficulty is found
+	char existingphrase = 0;				//Is set to nonzero if any selected notes are within an existing phrase
+	unsigned long existingphrasenum = 0;	//Is set to the last tremolo phrase number that encompasses existing notes
 	unsigned long tracknum;
 	EOF_PHRASE_SECTION *sectionptr;
 

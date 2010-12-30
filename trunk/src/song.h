@@ -26,7 +26,7 @@
 #define EOF_NOTE_FLAG_NO_HOPO   16
 #define EOF_NOTE_FLAG_Y_CYMBAL  32	//This flag represents a yellow note charted as a RB3 Pro style cymbal
 #define EOF_NOTE_FLAG_B_CYMBAL  64	//This flag represents a blue note charted as a RB3 Pro style cymbal
-#define EOF_NOTE_FLAG_G_CYMBAL 128	//This flag represents a note charted as a RB3 Pro style green cymbal (pad 4)
+#define EOF_NOTE_FLAG_G_CYMBAL 128	//This flag represents a note charted as a RB3 Pro style green cymbal (lane 5)
 #define EOF_NOTE_FLAG_DBASS    256	//This flag will represent Expert+ bass drum for the drum track
 
 //The following flags pertain to pro guitar notes
@@ -476,7 +476,7 @@ void eof_pro_guitar_track_add_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned lon
 void eof_pro_guitar_track_delete_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned long index);	//Deletes the specified star power phrase and moves all phrases that follow back in the array one position
 void eof_pro_guitar_track_add_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track
 void eof_pro_guitar_track_delete_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long index);	//Deletes the specified solo phrase and moves all phrases that follow back in the array one position
-void eof_set_pro_guitar_fret_number(unsigned long fretvalue);	//Sets all used strings for all selected pro guitar notes to the specified fret value
+void eof_set_pro_guitar_fret_number(unsigned long fretvalue);	//Sets used strings (that match the eof_pro_guitar_fret_bitmask bitmask) for all selected pro guitar notes to the specified fret value
 
 EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp);	//Allocates, initializes and stores a new EOF_BEAT_MARKER structure into the beats array.  Returns the newly allocated structure or NULL upon error
 void eof_song_delete_beat(EOF_SONG * sp, unsigned long beat);	//Removes and frees the specified beat from the beats array.  All beats after the deleted beat are moved back in the array one position
@@ -516,12 +516,12 @@ void eof_toggle_freestyle(EOF_VOCAL_TRACK * tp, unsigned long lyricnumber);
 long eof_song_tick_to_msec(EOF_SONG * sp, unsigned long track, unsigned long tick); // convert tick value to real time
 long eof_song_msec_to_tick(EOF_SONG * sp, unsigned long track, unsigned long msec); // convert real time value to tick
 
-char eof_check_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,char flag);
+char eof_check_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,unsigned long flag);
 	//Checks all notes in the track at the specified note's timestamp (numbered starting at number 0)
 	//for the specified flag.  If any of the notes have the flag set, nonzero is returned
 	//This is used for writing RB3 style pro drum phrases during MIDI export
 	//The track's notes array is expected to be sorted
-void eof_set_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,char flag,char operation);
+void eof_set_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,unsigned long flag,char operation);
 	//Sets or clears the specified flag on all notes at the specified note's timestamp (numbered starting at 0)
 	//If operation is 0, the specified flag is cleared on applicable notes
 	//If operation is 1, the specified flag is set on applicable notes
