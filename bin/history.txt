@@ -3,6 +3,9 @@ EOF Version History
 
 1.8:
 
+Restored the ability to use the tranpose mini piano up octave keyboard
+shortcut (CTRL+SHIFT+Up).
+
 Corrected some bugs involving expert and pro drum statuses.
 
 Added the ability to chart open strum bass guitar notes, compatible with

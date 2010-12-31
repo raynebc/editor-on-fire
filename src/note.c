@@ -141,8 +141,9 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	int radius,dotsize;
 	char iscymbal;		//Used to track whether the specified note is marked as a cymbal
 	long x,y;
-	unsigned long numlanes, tracknum=0;
+	unsigned long numlanes, tracknum=0, numlanes2;
 	char notation[11];	//Used to store tab style notation for pro guitar notes
+	char *nameptr = NULL;
 
 	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
 	unsigned long notepos = 0;
@@ -231,7 +232,12 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 
 	if(track != 0)
 	{	//If rendering an existing note
-		numlanes = eof_count_track_lanes(eof_song, track);	//Count the number of lanes in that note's track
+		numlanes = eof_count_track_lanes(eof_song, eof_selected_track);	//Count the number of lanes in the active track
+		numlanes2 = eof_count_track_lanes(eof_song, track);	//Count the number of lanes in that note's track
+		if(numlanes > numlanes2)
+		{	//Special case (ie. viewing an open bass guitar catalog entry when any other legacy track is active)
+			numlanes = numlanes2;	//Use the number of lanes in the active track
+		}
 	}
 	else
 	{
@@ -313,7 +319,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 
 			//Render pro guitar note slide if applicable
 			if((track != 0) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && ((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)))
-			{	//If rendering an existing pro guitar track that slides up or down
+			{	//If rendering an existing pro guitar note that slides up or down
 				long next, x2;			//Used for slide note rendering
 				unsigned long notepos2;		//Used for slide note rendering
 				int sliderect[8];		//An array of 4 vertices, used to draw a diagonal rectangle
@@ -384,7 +390,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 					}
 
 					//Render tab notations
-					eof_get_pro_note_notation(notation, eof_selected_track, notenum);	//Get the tab playing notation for this note
+					eof_get_pro_note_notation(notation, track, notenum);	//Get the tab playing notation for this note
 					textprintf_centre_ex(window->screen, eof_mono_font, x, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 3, eof_color_red, -1, notation);
 				}
 			}
@@ -414,6 +420,23 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 			}
 		}
 	}//Render for each of the available fret lanes
+
+	//Render note names
+	if((track != 0) && (eof_song->track[track]->track_format != EOF_VOCAL_TRACK_FORMAT))
+	{	//If rendering a non lyric note
+		nameptr = eof_get_note_name(eof_song, track, notenum);
+		if((nameptr != NULL) && (nameptr[0] != '\0'))
+		{	//If this note has a defined name
+			if(window == eof_window_editor)
+			{	//If rendering to the editor window
+				textprintf_centre_ex(window->screen, font, x, 25 + 5, eof_color_white, -1, nameptr);
+			}
+			else
+			{	//If rendering to the note window
+				textprintf_centre_ex(window->screen, font, x, EOF_EDITOR_RENDER_OFFSET + 10, eof_color_white, -1, nameptr);
+			}
+		}
+	}
 
 	return 0;	//Return status:  Note was not clipped in its entirety
 }

@@ -552,16 +552,18 @@ int eof_menu_file_load_ogg(void)
 		if(i == eof_song->tags->oggs)
 		{
 			if(eof_song->tags->oggs < 8)
-			{
+			{	//Create a new OGG profile
 				ustrcpy(eof_song->tags->ogg[eof_song->tags->oggs].filename, fn);
+				eof_song->tags->ogg[eof_song->tags->oggs].description[0] = '\0';
 				eof_song->tags->ogg[eof_song->tags->oggs].midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
 				eof_song->tags->ogg[eof_song->tags->oggs].modified = 0;
 				eof_selected_ogg = eof_song->tags->oggs;
 				eof_song->tags->oggs++;
 			}
 			else
-			{
+			{	//Replace the last OGG profile
 				ustrcpy(eof_song->tags->ogg[eof_song->tags->oggs - 1].filename, fn);
+				eof_song->tags->ogg[eof_song->tags->oggs - 1].description[0] = '\0';
 				eof_song->tags->ogg[eof_song->tags->oggs - 1].midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
 				eof_song->tags->ogg[eof_song->tags->oggs - 1].modified = 0;
 				eof_selected_ogg = eof_song->tags->oggs - 1;

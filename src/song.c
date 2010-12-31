@@ -1197,7 +1197,7 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 		ptr3->track_format = trackdetails->track_format;
 		ptr3->track_behavior = trackdetails->track_behavior;
 		ptr3->track_type = trackdetails->track_type;
-		ustrcpy(ptr3->track_name,trackdetails->track_name);
+		ustrcpy(ptr3->name,trackdetails->name);
 		ptr3->difficulty = trackdetails->difficulty;
 		ptr3->flags = trackdetails->flags;
 		if(sp->tracks == 0)
@@ -1361,9 +1361,9 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		{	//IF EOF can store this OGG profile
 			eof_load_song_string_pf(sp->tags->ogg[sp->tags->oggs].filename,fp,256);	//Read the OGG filename
 			eof_load_song_string_pf(NULL,fp,0);				//Parse past the original audio file name (not supported yet)
-			eof_load_song_string_pf(NULL,fp,0);				//Parse past the OGG profile comments string (not supported yet)
+			eof_load_song_string_pf(sp->tags->ogg[sp->tags->oggs].description,fp,0);	//Read the OGG profile description string
 			sp->tags->ogg[sp->tags->oggs].midi_offset = pack_igetl(fp);	//Read the profile's MIDI delay
-			pack_getc(fp);									//Read the OGG profile flags (not supported yet)
+			pack_igetl(fp);									//Read the OGG profile flags (not supported yet)
 			sp->tags->oggs++;
 		}
 	}
@@ -1408,7 +1408,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	track_count = pack_igetl(fp);		//Read the number of tracks
 	for(track_ctr=0; track_ctr<track_count; track_ctr++)
 	{	//For each track in the project
-		eof_load_song_string_pf(temp.track_name,fp,sizeof(temp.track_name));	//Read the track name
+		eof_load_song_string_pf(temp.name,fp,sizeof(temp.name));	//Read the track name
 		temp.track_format = pack_getc(fp);		//Read the track format
 		temp.track_behavior = pack_getc(fp);	//Read the track behavior
 		temp.track_type = pack_getc(fp);		//Read the track type
@@ -1437,12 +1437,12 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				eof_track_resize(sp, sp->tracks-1,count);	//Resize the note array
 				for(ctr=0; ctr<count; ctr++)
 				{	//For each note in this track
-					eof_load_song_string_pf(sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->name,fp,EOF_NOTE_NAME_LENGTH);	//Read the note's name
+					eof_load_song_string_pf(sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->name,fp,EOF_NAME_LENGTH);	//Read the note's name
 					sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->type = pack_getc(fp);		//Read the note's difficulty
 					sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->note = pack_getc(fp);		//Read note bitflags
 					sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->pos = pack_igetl(fp);		//Read note position
 					sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->length = pack_igetl(fp);	//Read note length
-					sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->flags = pack_igetw(fp);	//Read note flags
+					sp->legacy_track[sp->legacy_tracks-1]->note[ctr]->flags = pack_igetl(fp);	//Read note flags
 				}
 			break;
 			case EOF_VOCAL_TRACK_FORMAT:	//Vocal
@@ -1461,7 +1461,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					sp->vocal_track[sp->vocal_tracks-1]->lyric[ctr]->note = pack_getc(fp);		//Read lyric pitch
 					sp->vocal_track[sp->vocal_tracks-1]->lyric[ctr]->pos = pack_igetl(fp);		//Read lyric position
 					sp->vocal_track[sp->vocal_tracks-1]->lyric[ctr]->length = pack_igetl(fp);	//Read lyric length
-					pack_igetw(fp);	//Read lyric flags (not supported yet)
+					pack_igetl(fp);	//Read lyric flags (not supported yet)
 				}
 			break;
 			case EOF_PRO_KEYS_TRACK_FORMAT:	//Pro Keys
@@ -1483,7 +1483,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				eof_track_resize(sp, sp->tracks-1,count);	//Resize the note array
 				for(ctr=0; ctr<count; ctr++)
 				{	//For each note in this track
-					eof_load_song_string_pf(sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->name,fp,EOF_NOTE_NAME_LENGTH);	//Read the note's name
+					eof_load_song_string_pf(sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->name,fp,EOF_NAME_LENGTH);	//Read the note's name
 					pack_getc(fp);																	//Read the chord's number (not supported yet)
 					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->type = pack_getc(fp);	//Read the note's difficulty
 					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->note = pack_igetw(fp);//Read note bitflags
@@ -1532,16 +1532,16 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 						switch(section_type)
 						{
 							case EOF_BOOKMARK_SECTION:		//Bookmark section
-								eof_song_add_section(sp,0,EOF_BOOKMARK_SECTION,0,section_start,section_end,inputl);
+								eof_track_add_section(sp,0,EOF_BOOKMARK_SECTION,0,section_start,section_end,inputl);
 							break;
 							case EOF_FRET_CATALOG_SECTION:	//Fret Catalog section
-								eof_song_add_section(sp,0,EOF_FRET_CATALOG_SECTION,inputc,section_start,section_end,inputl);	//For fret catalog sections, the flag represents the associated track number
+								eof_track_add_section(sp,0,EOF_FRET_CATALOG_SECTION,inputc,section_start,section_end,inputl);	//For fret catalog sections, the flag represents the associated track number
 							break;
 						}
 					break;
 
 					default:	//Read track-specific sections
-						eof_song_add_section(sp,track_ctr,section_type,inputc,section_start,section_end,inputl);
+						eof_track_add_section(sp,track_ctr,section_type,inputc,section_start,section_end,inputl);
 					break;
 				}
 			}
@@ -1560,7 +1560,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	return 1;	//Return success
 }
 
-int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, char difficulty, unsigned long start, unsigned long end, unsigned long flags)
+int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, char difficulty, unsigned long start, unsigned long end, unsigned long flags)
 {
 	unsigned long count,tracknum;	//Used to de-obfuscate the track handling
 
@@ -1582,6 +1582,7 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 				sp->catalog->entry[sp->catalog->entries].type = difficulty;	//Store the fret catalog section's associated difficulty
 				sp->catalog->entry[sp->catalog->entries].start_pos = start;
 				sp->catalog->entry[sp->catalog->entries].end_pos = end;
+				sp->catalog->entry[sp->catalog->entries].name[0] = '\0';
 				sp->catalog->entries++;
 			return 1;
 			default:	//Unknown global section type
@@ -1602,7 +1603,7 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 						sp->legacy_track[tracknum]->solo[count].start_pos = start;
 						sp->legacy_track[tracknum]->solo[count].end_pos = end;
 						sp->legacy_track[tracknum]->solo[count].flags = 0;
-						sp->legacy_track[tracknum]->solo[count].name = NULL;
+						sp->legacy_track[tracknum]->solo[count].name[0] = '\0';
 						sp->legacy_track[tracknum]->solos++;
 					}
 				return 1;
@@ -1613,7 +1614,7 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 						sp->pro_guitar_track[tracknum]->solo[count].start_pos = start;
 						sp->pro_guitar_track[tracknum]->solo[count].end_pos = end;
 						sp->pro_guitar_track[tracknum]->solo[count].flags = 0;
-						sp->pro_guitar_track[tracknum]->solo[count].name = NULL;
+						sp->pro_guitar_track[tracknum]->solo[count].name[0] = '\0';
 						sp->pro_guitar_track[tracknum]->solos++;
 					}
 				return 1;
@@ -1629,7 +1630,7 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 						sp->legacy_track[tracknum]->star_power_path[count].start_pos = start;
 						sp->legacy_track[tracknum]->star_power_path[count].end_pos = end;
 						sp->legacy_track[tracknum]->star_power_path[count].flags = 0;
-						sp->legacy_track[tracknum]->star_power_path[count].name = NULL;
+						sp->legacy_track[tracknum]->star_power_path[count].name[0] = '\0';
 						sp->legacy_track[tracknum]->star_power_paths++;
 					}
 				return 1;
@@ -1640,7 +1641,7 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 						sp->vocal_track[tracknum]->star_power_path[count].start_pos = start;
 						sp->vocal_track[tracknum]->star_power_path[count].end_pos = end;
 						sp->vocal_track[tracknum]->star_power_path[count].flags = 0;
-						sp->vocal_track[tracknum]->star_power_path[count].name = NULL;
+						sp->vocal_track[tracknum]->star_power_path[count].name[0] = '\0';
 						sp->vocal_track[tracknum]->star_power_paths++;
 					}
 				return 1;
@@ -1651,7 +1652,7 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 						sp->pro_guitar_track[tracknum]->star_power_path[count].start_pos = start;
 						sp->pro_guitar_track[tracknum]->star_power_path[count].end_pos = end;
 						sp->pro_guitar_track[tracknum]->star_power_path[count].flags = 0;
-						sp->pro_guitar_track[tracknum]->star_power_path[count].name = NULL;
+						sp->pro_guitar_track[tracknum]->star_power_path[count].name[0] = '\0';
 						sp->pro_guitar_track[tracknum]->star_power_paths++;
 					}
 				return 1;
@@ -1697,7 +1698,7 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 						sp->legacy_track[tracknum]->trill[count].start_pos = start;
 						sp->legacy_track[tracknum]->trill[count].end_pos = end;
 						sp->legacy_track[tracknum]->trill[count].flags = 0;
-						sp->legacy_track[tracknum]->trill[count].name = NULL;
+						sp->legacy_track[tracknum]->trill[count].name[0] = '\0';
 						sp->legacy_track[tracknum]->trills++;
 					return 1;
 
@@ -1706,7 +1707,7 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 						sp->pro_guitar_track[tracknum]->trill[count].start_pos = start;
 						sp->pro_guitar_track[tracknum]->trill[count].end_pos = end;
 						sp->pro_guitar_track[tracknum]->trill[count].flags = 0;
-						sp->pro_guitar_track[tracknum]->trill[count].name = NULL;
+						sp->pro_guitar_track[tracknum]->trill[count].name[0] = '\0';
 						sp->pro_guitar_track[tracknum]->trills++;
 					return 1;
 				}
@@ -1719,7 +1720,7 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 				sp->pro_guitar_track[tracknum]->arpeggio[count].start_pos = start;
 				sp->pro_guitar_track[tracknum]->arpeggio[count].end_pos = end;
 				sp->pro_guitar_track[tracknum]->arpeggio[count].flags = 0;
-				sp->pro_guitar_track[tracknum]->arpeggio[count].name = NULL;
+				sp->pro_guitar_track[tracknum]->arpeggio[count].name[0] = '\0';
 				sp->pro_guitar_track[tracknum]->arpeggios++;
 				return 1;
 			}
@@ -1740,7 +1741,7 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 						sp->legacy_track[tracknum]->tremolo[count].start_pos = start;
 						sp->legacy_track[tracknum]->tremolo[count].end_pos = end;
 						sp->legacy_track[tracknum]->tremolo[count].flags = 0;
-						sp->legacy_track[tracknum]->tremolo[count].name = NULL;
+						sp->legacy_track[tracknum]->tremolo[count].name[0] = '\0';
 						sp->legacy_track[tracknum]->tremolos++;
 					return 1;
 
@@ -1749,7 +1750,7 @@ int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long secti
 						sp->pro_guitar_track[tracknum]->tremolo[count].start_pos = start;
 						sp->pro_guitar_track[tracknum]->tremolo[count].end_pos = end;
 						sp->pro_guitar_track[tracknum]->tremolo[count].flags = 0;
-						sp->pro_guitar_track[tracknum]->tremolo[count].name = NULL;
+						sp->pro_guitar_track[tracknum]->tremolo[count].name[0] = '\0';
 						sp->pro_guitar_track[tracknum]->tremolos++;
 					return 1;
 				}
@@ -1886,9 +1887,9 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	{	//For each OGG profile in the project
 		eof_save_song_string_pf(sp->tags->ogg[ctr].filename, fp);	//Write the OGG filename string
 		eof_save_song_string_pf(NULL, fp);	//Write an empty original audio file name string (not supported yet)
-		eof_save_song_string_pf(NULL, fp);	//Write an empty OGG profile comments string (not supported yet)
+		eof_save_song_string_pf(sp->tags->ogg[ctr].description, fp);	//Write an OGG profile description string
 		pack_iputl(sp->tags->ogg[ctr].midi_offset, fp);	//Write the profile's MIDI delay
-		pack_putc(0, fp);	//Write the profile's flags (not supported yet)
+		pack_iputl(0, fp);	//Write the profile's flags (not supported yet)
 	}
 	pack_iputl(sp->beats, fp);	//Write the number of beats
 	for(ctr=0; ctr < sp->beats; ctr++)
@@ -1943,7 +1944,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	{	//For each track in the project
 		if(sp->track[track_ctr] != NULL)
 		{	//Skip NULL tracks, such as track 0
-			eof_save_song_string_pf(sp->track[track_ctr]->track_name, fp);	//Write track name string
+			eof_save_song_string_pf(sp->track[track_ctr]->name, fp);	//Write track name string
 		}
 		else
 		{
@@ -2014,7 +2015,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 						pack_putc(sp->legacy_track[tracknum]->note[ctr]->note, fp);		//Write the note's bitflags
 						pack_iputl(sp->legacy_track[tracknum]->note[ctr]->pos, fp);		//Write the note's position
 						pack_iputl(sp->legacy_track[tracknum]->note[ctr]->length, fp);	//Write the note's length
-						pack_iputw(sp->legacy_track[tracknum]->note[ctr]->flags, fp);	//Write the note's flags
+						pack_iputl(sp->legacy_track[tracknum]->note[ctr]->flags, fp);	//Write the note's flags
 					}
 					//Write the section type chunk
 					if(sp->legacy_track[tracknum]->solos)
@@ -2097,7 +2098,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 						pack_putc(sp->vocal_track[tracknum]->lyric[ctr]->note, fp);		//Write the lyric pitch
 						pack_iputl(sp->vocal_track[tracknum]->lyric[ctr]->pos, fp);		//Write the lyric position
 						pack_iputl(sp->vocal_track[tracknum]->lyric[ctr]->length, fp);	//Write the lyric length
-						pack_iputw(0, fp);	//Write the lyric flags (not supported yet)
+						pack_iputl(0, fp);	//Write the lyric flags (not supported yet)
 					}
 					//Write the section type chunk
 					if(sp->vocal_track[tracknum]->lines)
@@ -2669,6 +2670,14 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long
 				ptr->pos = pos;
 				ptr->length = length;
 				ptr->flags = 0;
+				if(text != NULL)
+				{
+					ustrncpy(ptr->name, text, EOF_NAME_LENGTH);
+				}
+				else
+				{
+					ptr->name[0] = '\0';	//Empty the string
+				}
 				if(!((eof_count_track_lanes(sp, track) > 5) && (track != EOF_TRACK_BASS)))
 				{	//If the track storing the new note does not have six lanes (with the exclusion of the bass track's open strum lane)
 					note &= ~32;	//Clear lane 6
@@ -2703,7 +2712,7 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long
 				ptr3->number = 0;	//Not implemented yet
 				if(text != NULL)
 				{
-					ustrncpy(ptr3->name, text, EOF_NOTE_NAME_LENGTH);
+					ustrncpy(ptr3->name, text, EOF_NAME_LENGTH);
 				}
 				else
 				{
@@ -2731,7 +2740,7 @@ void *eof_track_add_create_note2(EOF_SONG *sp, unsigned long track, EOF_NOTE *no
 		return NULL;
 	}
 
-	return eof_track_add_create_note(sp, track, note->note, note->pos, note->length, note->type, NULL);
+	return eof_track_add_create_note(sp, track, note->note, note->pos, note->length, note->type, note->name);
 }
 
 unsigned long eof_get_num_solos(EOF_SONG *sp, unsigned long track)
@@ -2953,6 +2962,7 @@ long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long not
 void eof_pro_guitar_track_fixup_notes(EOF_PRO_GUITAR_TRACK * tp, int sel)
 {
 	unsigned long i, ctr, bitmask;
+	unsigned char fretvalue;
 	long next;
 
 	if(!sel)
@@ -3032,6 +3042,16 @@ void eof_pro_guitar_track_fixup_notes(EOF_PRO_GUITAR_TRACK * tp, int sel)
 				if((tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 				{	//If this note slides up or down to the next note
 					tp->note[i-1]->length = tp->note[next]->pos - tp->note[i-1]->pos - 1;	//Alter the length to reach the next note
+				}
+			}
+
+			/* make sure that there aren't any invalid fret values */
+			for(ctr = 0; ctr < 6; ctr++)
+			{	//For each of the 6 usable strings
+				fretvalue = tp->note[i-1]->frets[ctr];
+				if((fretvalue > tp->numfrets) && (fretvalue != 0xFF))
+				{	//If this fret value is invalid
+					tp->note[i-1]->frets[ctr] = 0;	//Revert to default fret value of 0
 				}
 			}
 		}
@@ -3681,18 +3701,16 @@ void eof_set_num_tremolos(EOF_SONG *sp, unsigned long track, unsigned long numbe
 	}
 }
 
-void eof_set_pro_guitar_fret_number(unsigned long fretvalue)
+void eof_set_pro_guitar_fret_number(char function, unsigned long fretvalue)
 {
 	unsigned long ctr, ctr2, bitmask, tracknum;
 	char undo_made = 0;
+	unsigned char oldfretvalue = 0, newfretvalue = 0;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return;	//Do not allow this function to run unless a pro guitar/bass track is active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	if((fretvalue != 0xFF) && (fretvalue > eof_song->pro_guitar_track[tracknum]->numfrets))
-		return;	//Do not allow this function to set a fret number higher than this track supports
-
 	for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->notes; ctr++)
 	{	//For each note in the active pro guitar track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (eof_song->pro_guitar_track[tracknum]->note[ctr]->type == eof_note_type))
@@ -3701,14 +3719,159 @@ void eof_set_pro_guitar_fret_number(unsigned long fretvalue)
 			{	//For each of the 6 usable strings
 				if((eof_song->pro_guitar_track[tracknum]->note[ctr]->note & bitmask) && (eof_pro_guitar_fret_bitmask & bitmask))
 				{	//If this string is in use, and this string is enabled for fret shortcut manipulation
-					if(!undo_made && (eof_song->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2] != fretvalue))
-					{	//Make an undo state before making the first change
-						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-						undo_made = 1;
+					oldfretvalue = eof_song->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2];
+					newfretvalue = oldfretvalue;
+					switch(function)
+					{
+						case 0:	//Set fret value
+							newfretvalue = fretvalue;
+						break;
+
+						case 1:	//Increment fret value
+							if(oldfretvalue != 0xFF)	//Don't increment a muted note
+								newfretvalue++;
+						break;
+
+						case 2:	//Decrement fret value
+							if(oldfretvalue > 0)	//Don't decrement an open note
+								newfretvalue--;
+						break;
 					}
-					eof_song->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2] = fretvalue;	//Set this string's fret value
+					if((newfretvalue <= eof_song->pro_guitar_track[tracknum]->numfrets) || (newfretvalue == 0xFF))
+					{	//Only set the fret value if it is valid
+						if(!undo_made && (newfretvalue != oldfretvalue))
+						{	//Make an undo state before making the first change
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+							undo_made = 1;
+						}
+						eof_song->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2] = newfretvalue;	//Update the string's fret value
+					}
 				}
 			}
 		}
 	}
+}
+
+char *eof_get_note_name(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				return sp->legacy_track[tracknum]->note[note]->name;
+			}
+		break;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+			if(note < sp->vocal_track[tracknum]->lyrics)
+			{
+				return sp->vocal_track[tracknum]->lyric[note]->text;
+			}
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(note < sp->pro_guitar_track[tracknum]->notes)
+			{
+				return sp->pro_guitar_track[tracknum]->note[note]->name;
+			}
+		break;
+	}
+
+	return NULL;	//Return error
+}
+
+void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourcenote, unsigned long desttrack, unsigned long pos, long length, char type)
+{
+	unsigned long sourcetracknum, desttracknum, newnotenum;
+	unsigned long note, flags;
+	char *text;
+	void *result = NULL;
+
+	//Validate parameters
+	if((sp == NULL) || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcenote >= eof_track_get_size(sp, sourcetrack)))
+		return NULL;
+
+	//Don't allow copying instrument track notes to PART VOCALS and vice versa
+	if(((sourcetrack == EOF_TRACK_VOCALS) && (desttrack != EOF_TRACK_VOCALS)) || ((sourcetrack != EOF_TRACK_VOCALS) && (desttrack == EOF_TRACK_VOCALS)))
+		return NULL;
+
+	sourcetracknum = sp->track[sourcetrack]->tracknum;
+	desttracknum = sp->track[desttrack]->tracknum;
+
+	note = eof_get_note_note(sp, sourcetrack, sourcenote);
+	text = eof_get_note_name(sp, sourcetrack, sourcenote);
+	flags = eof_get_note_flags(sp, sourcetrack, sourcenote);
+
+	if(desttrack == EOF_TRACK_VOCALS)
+	{	//If copying from PART VOCALS
+		return eof_track_add_create_note(sp, desttrack, note, pos, length, type, text);
+	}
+	else
+	{	//If copying from a non vocal track
+		if((sp->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (sp->track[desttrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If copying from a pro guitar track to a non pro guitar track
+			if(eof_song->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask != 0)
+			{	//If the user defined how this pro guitar note would transcribe to a legacy track
+				note = eof_song->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask;	//Use that bitmask
+			}
+		}
+
+		result = eof_track_add_create_note(sp, desttrack, note, pos, length, type, text);
+		if(result)
+		{	//If the note was successfully created
+			newnotenum = eof_track_get_size(sp, desttrack) - 1;		//The index of the new note
+			eof_set_note_flags(sp, desttrack, newnotenum, flags);	//Copy the souce note's flags to the newly created note
+			if((sp->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (sp->track[desttrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+			{	//If the note was copied from a pro guitar track and pasted to a pro guitar track
+				memcpy(sp->pro_guitar_track[desttracknum]->note[newnotenum]->frets, eof_song->pro_guitar_track[sourcetracknum]->note[sourcenote]->frets, 6);	//Copy the six usable string fret values from the source note to the newly created note
+			}
+		}
+	}//If copying from a non vocal track
+
+	return result;
+}
+
+unsigned long eof_get_num_arpeggios(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+		return sp->pro_guitar_track[tracknum]->arpeggios;
+	}
+
+	return 0;	//Return error
+}
+
+EOF_PHRASE_SECTION *eof_get_arpeggio(EOF_SONG *sp, unsigned long track, unsigned long index)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return NULL;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(index < sp->pro_guitar_track[tracknum]->arpeggios)
+			{
+				return &sp->pro_guitar_track[tracknum]->arpeggio[index];
+			}
+		break;
+	}
+
+	return NULL;	//Return error
 }

@@ -466,170 +466,6 @@ int eof_menu_edit_redo(void)
 	return 1;
 }
 
-int eof_menu_edit_cut_vocal(int anchor, int option)
-{
-	unsigned long i;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	int first_pos = -1;
-	long first_beat = -1;
-	int start_pos, end_pos;
-	long last_anchor, next_anchor;
-	int copy_notes = 0;
-	float tfloat;
-	PACKFILE * fp;
-
-	if(!eof_vocals_selected)
-		return 1;	//Return error
-
-	/* set boundary */
-	eof_anchor_diff[EOF_TRACK_VOCALS] = 0;
-	last_anchor = eof_find_previous_anchor(eof_song, anchor);
-	next_anchor = eof_find_next_anchor(eof_song, anchor);
-	start_pos = eof_song->beat[last_anchor]->pos;
-	if(next_anchor < 0)
-	{
-		end_pos = eof_song->beat[eof_song->beats - 1]->pos - 1;
-	}
-	else
-	{
-		end_pos = eof_song->beat[next_anchor]->pos;
-	}
-	if(option == 1)
-	{
-		end_pos = eof_song->beat[eof_song->beats - 1]->pos - 1;
-	}
-
-	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-	{
-		if((eof_song->vocal_track[tracknum]->lyric[i]->pos >= start_pos) && (eof_song->vocal_track[tracknum]->lyric[i]->pos < end_pos))
-		{
-			copy_notes++;
-			if(eof_song->vocal_track[tracknum]->lyric[i]->pos < first_pos)
-			{
-				first_pos = eof_song->vocal_track[tracknum]->lyric[i]->pos;
-				eof_anchor_diff[EOF_TRACK_VOCALS] = eof_get_beat(eof_song, eof_song->vocal_track[tracknum]->lyric[i]->pos) - last_anchor;
-			}
-			if(first_beat == -1)
-			{
-				first_beat = eof_get_beat(eof_song, eof_song->vocal_track[tracknum]->lyric[i]->pos);
-			}
-		}
-	}
-
-	/* get ready to write clipboard to disk */
-	fp = pack_fopen("eof.autoadjust.vocals", "w");
-	if(!fp)
-	{
-		allegro_message("Clipboard error!");
-		return 1;
-	}
-
-	pack_iputl(copy_notes, fp);
-	pack_iputl(first_beat, fp);
-	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-	{
-		if((eof_song->vocal_track[tracknum]->lyric[i]->pos >= start_pos) && (eof_song->vocal_track[tracknum]->lyric[i]->pos < end_pos))
-		{
-			pack_putc(eof_song->vocal_track[tracknum]->lyric[i]->note, fp);
-			pack_iputl(eof_song->vocal_track[tracknum]->lyric[i]->pos - first_pos, fp);
-			pack_iputl(eof_get_beat(eof_song, eof_song->vocal_track[tracknum]->lyric[i]->pos), fp);
-			pack_iputl(eof_get_beat(eof_song, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length), fp);
-			tfloat = eof_get_porpos(eof_song->vocal_track[tracknum]->lyric[i]->pos);
-			pack_fwrite(&tfloat, sizeof(float), fp);
-			tfloat = eof_get_porpos(eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length);
-			pack_fwrite(&tfloat, sizeof(float), fp);
-			pack_iputw(ustrlen(eof_song->vocal_track[tracknum]->lyric[i]->text), fp);
-			pack_fwrite(eof_song->vocal_track[tracknum]->lyric[i]->text, ustrlen(eof_song->vocal_track[tracknum]->lyric[i]->text), fp);
-		}
-	}
-	pack_fclose(fp);
-	return 1;
-}
-
-int eof_menu_edit_cut_paste_vocal(int anchor, int option)
-{
-	unsigned long i, j, t;
-	int first_beat = 0;
-	int this_beat = 0;
-	int start_pos, end_pos;
-	long last_anchor, next_anchor;
-	PACKFILE * fp;
-	int copy_notes = 0;
-	EOF_EXTENDED_LYRIC temp_lyric;
-	EOF_LYRIC * new_lyric = NULL;
-
-	if(!eof_vocals_selected)
-		return 1;	//Return error
-
-	this_beat = eof_find_previous_anchor(eof_song, anchor) + eof_anchor_diff[EOF_TRACK_VOCALS];
-
-	/* set boundary */
-	last_anchor = eof_find_previous_anchor(eof_song, anchor);
-	next_anchor = eof_find_next_anchor(eof_song, anchor);
-	start_pos = eof_song->beat[last_anchor]->pos;
-	if(next_anchor < 0)
-	{
-		end_pos = eof_song->beat[eof_song->beats - 1]->pos - 1;
-	}
-	else
-	{
-		end_pos = eof_song->beat[next_anchor]->pos;
-	}
-	if(option == 1)
-	{
-		end_pos = eof_song->beat[eof_song->beats - 1]->pos - 1;
-	}
-
-	fp = pack_fopen("eof.autoadjust.vocals", "r");
-	if(!fp)
-	{
-		allegro_message("Clipboard error!");
-		return 1;
-	}
-	for(j = 1; j < eof_song->tracks; j++)
-	{	//For each track
-		if(eof_song->track[j]->track_format == EOF_VOCAL_TRACK_FORMAT)
-		{	//If this is a vocal track, perform cleanup logic from the auto-adjust operation
-			for(i = eof_track_get_size(eof_song, j); i > 0; i--)
-			{	//For each lyric in the active track
-				if((eof_get_note_pos(eof_song, j, i-1) + eof_get_note_length(eof_song, j, i-1) >= start_pos) && (eof_get_note_pos(eof_song, j, i-1) < end_pos))
-				{	//If the lyric's end position is after the target beat or if the lyric's start position is before the target beat
-					eof_track_delete_note(eof_song, j, i-1);	//Delete the lyric
-				}
-			}
-		}
-	}
-
-	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
-	copy_notes = pack_igetl(fp);
-	first_beat = pack_igetl(fp);
-
-	for(i = 0; i < copy_notes; i++)
-	{
-
-		/* read the note */
-		temp_lyric.note = pack_getc(fp);
-		temp_lyric.pos = pack_igetl(fp);
-		temp_lyric.beat = pack_igetl(fp);
-		temp_lyric.endbeat = pack_igetl(fp);
-		pack_fread(&temp_lyric.porpos, sizeof(float), fp);
-		pack_fread(&temp_lyric.porendpos, sizeof(float), fp);
-		t = pack_igetw(fp);
-		pack_fread(temp_lyric.text, t, fp);
-		temp_lyric.text[t] = '\0';
-
-		if(temp_lyric.pos < eof_music_length)
-		{
-			new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, temp_lyric.note, eof_put_porpos(temp_lyric.beat - first_beat + this_beat, temp_lyric.porpos, 0.0), eof_put_porpos(temp_lyric.endbeat - first_beat + this_beat, temp_lyric.porendpos, 0.0) - eof_put_porpos(temp_lyric.beat - first_beat + this_beat, temp_lyric.porpos, 0.0), 0, temp_lyric.text);
-		}
-	}
-	eof_track_sort_notes(eof_song, eof_selected_track);
-	pack_fclose(fp);
-	eof_fixup_notes();
-	eof_determine_phrase_status();
-	return 1;
-}
-
 int eof_menu_edit_copy_vocal(void)
 {
 	unsigned long i;
@@ -917,18 +753,19 @@ int eof_menu_edit_old_paste_vocal(void)
 	return 1;
 }
 
-int eof_menu_edit_cut(int anchor, int option, float offset)
+int eof_menu_edit_cut(unsigned long anchor, int option, float offset)
 {
-	unsigned long i, j;
-	long first_pos[EOF_TRACKS_MAX] = {-1, -1, -1, -1, -1};
-	long first_beat[EOF_TRACKS_MAX] = {-1, -1, -1, -1, -1};
+	unsigned long i, j, tracknum;
+	char first_pos_found[EOF_TRACKS_MAX] = {0};
+	unsigned long first_pos[EOF_TRACKS_MAX] = {0};
+	char first_beat_found[EOF_TRACKS_MAX] = {0};
+	unsigned long first_beat[EOF_TRACKS_MAX] = {0};
 	unsigned long start_pos, end_pos;
 	long last_anchor, next_anchor;
 	unsigned long copy_notes[EOF_TRACKS_MAX] = {0};
 	float tfloat;
 	PACKFILE * fp;
-	EOF_PHRASE_SECTION *starpowerptr = NULL;
-	EOF_PHRASE_SECTION *soloptr = NULL;
+	EOF_PHRASE_SECTION *sectionptr = NULL;
 
 	/* set boundary */
 	for(i = 0; i < EOF_TRACKS_MAX; i++)
@@ -953,22 +790,25 @@ int eof_menu_edit_cut(int anchor, int option, float offset)
 
 	for(j = 1; j < eof_song->tracks; j++)
 	{	//For each track
-		if(eof_song->track[j]->track_format != EOF_VOCAL_TRACK_FORMAT)
-		{	//For now, there will remain a vocal track version of this function
-			for(i = 0; i < eof_track_get_size(eof_song, j); i++)
-			{	//For each note in the track
-				if((eof_get_note_pos(eof_song, j, i) + eof_get_note_length(eof_song, j, i) >= start_pos) && (eof_get_note_pos(eof_song, j, i) < end_pos))
+		for(i = 0; i < eof_track_get_size(eof_song, j); i++)
+		{	//For each note in the track
+			if((eof_get_note_pos(eof_song, j, i) + eof_get_note_length(eof_song, j, i) >= start_pos) && (eof_get_note_pos(eof_song, j, i) < end_pos))
+			{
+				copy_notes[j]++;
+				if(!first_pos_found[j])
 				{
-					copy_notes[j]++;
-					if(eof_get_note_pos(eof_song, j, i) < first_pos[j])
-					{
-						first_pos[j] = eof_get_note_pos(eof_song, j, i);
-						eof_anchor_diff[j] = eof_get_beat(eof_song, eof_get_note_pos(eof_song, j, i)) - last_anchor;
-					}
-					if(first_beat[j] == -1)
-					{
-						first_beat[j] = eof_get_beat(eof_song, eof_get_note_pos(eof_song, j, i));
-					}
+					first_pos[j] = eof_get_note_pos(eof_song, j, i);
+					first_pos_found[j] = 1;
+				}
+				if(eof_get_note_pos(eof_song, j, i) < first_pos[j])
+				{
+					first_pos[j] = eof_get_note_pos(eof_song, j, i);
+					eof_anchor_diff[j] = eof_get_beat(eof_song, eof_get_note_pos(eof_song, j, i)) - last_anchor;
+				}
+				if(!first_beat_found[j])
+				{
+					first_beat[j] = eof_get_beat(eof_song, eof_get_note_pos(eof_song, j, i));
+					first_beat_found[j] = 1;
 				}
 			}
 		}
@@ -985,64 +825,105 @@ int eof_menu_edit_cut(int anchor, int option, float offset)
 	/* copy all tracks */
 	for(j = 1; j < eof_song->tracks; j++)
 	{	//For each track
-		if(eof_song->track[j]->track_format != EOF_VOCAL_TRACK_FORMAT)
-		{	//For now, there will remain a vocal track version of this function
-			/* notes */
-			pack_iputl(copy_notes[j], fp);
-			pack_iputl(first_beat[j], fp);
-			for(i = 0; i < eof_track_get_size(eof_song, j); i++)
-			{	//For each note in this track
-				if((eof_get_note_pos(eof_song, j, i) + eof_get_note_length(eof_song, j, i) >= start_pos) && (eof_get_note_pos(eof_song, j, i) < end_pos))
-				{
-					pack_iputl(eof_get_note_type(eof_song, j, i), fp);
-					pack_iputl(eof_get_note_note(eof_song, j, i), fp);
-					pack_iputl(eof_get_note_pos(eof_song, j, i) - first_pos[j], fp);
-					tfloat = eof_get_porpos(eof_get_note_pos(eof_song, j, i));
-					pack_fwrite(&tfloat, sizeof(float), fp);
-					tfloat = eof_get_porpos(eof_get_note_pos(eof_song, j, i) + eof_get_note_length(eof_song, j, i));
-					pack_fwrite(&tfloat, sizeof(float), fp);
-					pack_iputl(eof_get_beat(eof_song, eof_get_note_pos(eof_song, j, i)), fp);
-					pack_iputl(eof_get_beat(eof_song, eof_get_note_pos(eof_song, j, i) + eof_get_note_length(eof_song, j, i)), fp);
-					pack_iputl(eof_get_note_length(eof_song, j, i), fp);
-					pack_iputl(eof_get_note_flags(eof_song, j, i), fp);	//Write the note flags
+		/* notes */
+		pack_iputl(copy_notes[j], fp);
+		pack_iputl(first_beat[j], fp);
+		for(i = 0; i < eof_track_get_size(eof_song, j); i++)
+		{	//For each note in this track
+			if((eof_get_note_pos(eof_song, j, i) + eof_get_note_length(eof_song, j, i) >= start_pos) && (eof_get_note_pos(eof_song, j, i) < end_pos))
+			{	//If this note falls within the start->end time range
+				pack_iputl(eof_get_note_type(eof_song, j, i), fp);
+				pack_iputl(eof_get_note_note(eof_song, j, i), fp);
+				pack_iputl(eof_get_note_pos(eof_song, j, i) - first_pos[j], fp);
+				tfloat = eof_get_porpos(eof_get_note_pos(eof_song, j, i));
+				pack_fwrite(&tfloat, sizeof(float), fp);
+				tfloat = eof_get_porpos(eof_get_note_pos(eof_song, j, i) + eof_get_note_length(eof_song, j, i));
+				pack_fwrite(&tfloat, sizeof(float), fp);
+				pack_iputl(eof_get_beat(eof_song, eof_get_note_pos(eof_song, j, i)), fp);
+				pack_iputl(eof_get_beat(eof_song, eof_get_note_pos(eof_song, j, i) + eof_get_note_length(eof_song, j, i)), fp);
+				pack_iputl(eof_get_note_length(eof_song, j, i), fp);
+				pack_iputl(eof_get_note_flags(eof_song, j, i), fp);	//Write the note flags
+				eof_save_song_string_pf(eof_get_note_name(eof_song, j, i), fp);	//Write the note/lyric name/text
+
+				if(eof_song->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{	//If this is a pro guitar track
+					tracknum = eof_song->track[j]->tracknum;
+					pack_fwrite(eof_song->pro_guitar_track[tracknum]->note[i]->frets, 6, fp);	//Write the fret values for the six usable strings
 				}
 			}
-			/* star power */
-			for(i = 0; i < eof_get_num_star_power_paths(eof_song, j); i++)
-			{	//For each star power path in the track
-				/* which beat */
-				starpowerptr = eof_get_star_power_path(eof_song, j, i);
-				pack_iputl(eof_get_beat(eof_song, starpowerptr->start_pos), fp);
-				tfloat = eof_get_porpos(starpowerptr->start_pos);
-				pack_fwrite(&tfloat, sizeof(float), fp);
-				pack_iputl(eof_get_beat(eof_song, starpowerptr->end_pos), fp);
-				tfloat = eof_get_porpos(starpowerptr->end_pos);
-				pack_fwrite(&tfloat, sizeof(float), fp);
-			}
+		}
+		/* star power */
+		for(i = 0; i < eof_get_num_star_power_paths(eof_song, j); i++)
+		{	//For each star power path in the track
+			/* which beat */
+			sectionptr = eof_get_star_power_path(eof_song, j, i);
+			pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
+			tfloat = eof_get_porpos(sectionptr->start_pos);
+			pack_fwrite(&tfloat, sizeof(float), fp);
+			pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
+			tfloat = eof_get_porpos(sectionptr->end_pos);
+			pack_fwrite(&tfloat, sizeof(float), fp);
+		}
 
-			/* solos */
-			for(i = 0; i < eof_get_num_solos(eof_song, j); i++)
-			{	//For each solo section in the track
-				/* which beat */
-				soloptr = eof_get_solo(eof_song, j, i);
-				pack_iputl(eof_get_beat(eof_song, soloptr->start_pos), fp);
-				tfloat = eof_get_porpos(soloptr->start_pos);
-				pack_fwrite(&tfloat, sizeof(float), fp);
-				pack_iputl(eof_get_beat(eof_song, soloptr->end_pos), fp);
-				tfloat = eof_get_porpos(soloptr->end_pos);
-				pack_fwrite(&tfloat, sizeof(float), fp);
-			}
+		/* solos */
+		for(i = 0; i < eof_get_num_solos(eof_song, j); i++)
+		{	//For each solo section in the track
+			/* which beat */
+			sectionptr = eof_get_solo(eof_song, j, i);
+			pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
+			tfloat = eof_get_porpos(sectionptr->start_pos);
+			pack_fwrite(&tfloat, sizeof(float), fp);
+			pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
+			tfloat = eof_get_porpos(sectionptr->end_pos);
+			pack_fwrite(&tfloat, sizeof(float), fp);
+		}
+
+		/* trills */
+		for(i = 0; i < eof_get_num_trills(eof_song, j); i++)
+		{	//For each trill section in the track
+			/* which beat */
+			sectionptr = eof_get_trill(eof_song, j, i);
+			pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
+			tfloat = eof_get_porpos(sectionptr->start_pos);
+			pack_fwrite(&tfloat, sizeof(float), fp);
+			pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
+			tfloat = eof_get_porpos(sectionptr->end_pos);
+			pack_fwrite(&tfloat, sizeof(float), fp);
+		}
+
+		/* tremolos */
+		for(i = 0; i < eof_get_num_tremolos(eof_song, j); i++)
+		{	//For each tremolo section in the track
+			/* which beat */
+			sectionptr = eof_get_tremolo(eof_song, j, i);
+			pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
+			tfloat = eof_get_porpos(sectionptr->start_pos);
+			pack_fwrite(&tfloat, sizeof(float), fp);
+			pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
+			tfloat = eof_get_porpos(sectionptr->end_pos);
+			pack_fwrite(&tfloat, sizeof(float), fp);
+		}
+
+		/* arpeggios */
+		for(i = 0; i < eof_get_num_arpeggios(eof_song, j); i++)
+		{	//For each tremolo section in the track
+			/* which beat */
+			sectionptr = eof_get_arpeggio(eof_song, j, i);
+			pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
+			tfloat = eof_get_porpos(sectionptr->start_pos);
+			pack_fwrite(&tfloat, sizeof(float), fp);
+			pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
+			tfloat = eof_get_porpos(sectionptr->end_pos);
+			pack_fwrite(&tfloat, sizeof(float), fp);
 		}
 	}//For each track
 	pack_fclose(fp);
-	return eof_menu_edit_cut_vocal(anchor, option);
+	return 1;
 }
 
-int eof_menu_edit_cut_paste(int anchor, int option, float offset)
+int eof_menu_edit_cut_paste(unsigned long anchor, int option, float offset)
 {
 	unsigned long i, j, b, tracknum;
-//	unsigned long paste_pos[EOF_MAX_NOTES] = {0};
-//	int paste_count = 0;
 	unsigned long first_beat[EOF_TRACKS_MAX] = {0};
 	unsigned long this_beat[EOF_TRACKS_MAX] = {0};
 	unsigned long start_pos, end_pos;
@@ -1052,8 +933,8 @@ int eof_menu_edit_cut_paste(int anchor, int option, float offset)
 	EOF_EXTENDED_NOTE temp_note;
 	EOF_NOTE * new_note = NULL;
 	float tfloat;
-	EOF_PHRASE_SECTION *soloptr = NULL;
-	EOF_PHRASE_SECTION *starpowerptr = NULL;
+	EOF_PHRASE_SECTION *sectionptr = NULL;
+	char text[EOF_MAX_LYRIC_LENGTH+1];
 
 	for(i = 0; i < EOF_TRACKS_MAX; i++)
 	{
@@ -1085,14 +966,11 @@ int eof_menu_edit_cut_paste(int anchor, int option, float offset)
 	}
 	for(j = 1; j < eof_song->tracks; j++)
 	{	//For each track
-		if(eof_song->track[j]->track_format == EOF_LEGACY_TRACK_FORMAT)
-		{	//If this is a legacy track, perform cleanup logic from the auto-adjust operation
-			for(i = eof_track_get_size(eof_song, j); i > 0; i--)
-			{	//For each note in the track, starting from the last note
-				if((eof_get_note_pos(eof_song, j, i-1) + eof_get_note_length(eof_song, j, i-1) >= start_pos) && (eof_get_note_pos(eof_song, j, i-1) < end_pos))
-				{	//If the note's end position is after the target beat or if the note's start position is before the target beat
-					eof_track_delete_note(eof_song, j, i-1);	//Delete the note
-				}
+		for(i = eof_track_get_size(eof_song, j); i > 0; i--)
+		{	//For each note in the track, starting from the last note
+			if((eof_get_note_pos(eof_song, j, i-1) + eof_get_note_length(eof_song, j, i-1) >= start_pos) && (eof_get_note_pos(eof_song, j, i-1) < end_pos))
+			{	//If the note's end position is after the target beat or if the note's start position is before the target beat
+				eof_track_delete_note(eof_song, j, i-1);	//Delete the note
 			}
 		}
 	}
@@ -1100,67 +978,107 @@ int eof_menu_edit_cut_paste(int anchor, int option, float offset)
 	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 	for(j = 1; j < eof_song->tracks; j++)
 	{	//For each track
-		if(eof_song->track[j]->track_format == EOF_LEGACY_TRACK_FORMAT)
-		{	//If this is a legacy track
-			tracknum = eof_song->track[j]->tracknum;
+		copy_notes[j] = pack_igetl(fp);
+		first_beat[j] = pack_igetl(fp);
+		for(i = 0; i < copy_notes[j]; i++)
+		{
+		/* read the note */
+			temp_note.type = pack_igetl(fp);
+			temp_note.note = pack_igetl(fp);
+			temp_note.pos = pack_igetl(fp);
+			pack_fread(&temp_note.porpos, sizeof(float), fp);
+			pack_fread(&temp_note.porendpos, sizeof(float), fp);
+			temp_note.beat = pack_igetl(fp);
+			temp_note.endbeat = pack_igetl(fp);
+			temp_note.length = pack_igetl(fp);
+			temp_note.flags = pack_igetl(fp);	//Store the note flags
+			eof_load_song_string_pf(text, fp, sizeof(text));	//Store the note/lyric name/text
 
-			copy_notes[tracknum] = pack_igetl(fp);
-			first_beat[tracknum] = pack_igetl(fp);
-			for(i = 0; i < copy_notes[j]; i++)
+			if(eof_song->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If this is a pro guitar track
+				tracknum = eof_song->track[j]->tracknum;
+				pack_fread(eof_song->pro_guitar_track[tracknum]->note[i]->frets, 6, fp);	//Read the fret values for the six usable strings
+			}
+			if(temp_note.pos + temp_note.length < eof_music_length)
 			{
-			/* read the note */
-				temp_note.type = pack_igetl(fp);
-				temp_note.note = pack_igetl(fp);
-				temp_note.pos = pack_igetl(fp);
-				pack_fread(&temp_note.porpos, sizeof(float), fp);
-				pack_fread(&temp_note.porendpos, sizeof(float), fp);
-				temp_note.beat = pack_igetl(fp);
-				temp_note.endbeat = pack_igetl(fp);
-				temp_note.length = pack_igetl(fp);
-				temp_note.flags = pack_igetl(fp);	//Store the note flags
-
-				if(temp_note.pos + temp_note.length < eof_music_length)
+				new_note = eof_track_add_create_note(eof_song, j, temp_note.note, eof_put_porpos(temp_note.beat - first_beat[j] + this_beat[j], temp_note.porpos, 0.0), eof_put_porpos(temp_note.endbeat - first_beat[j] + this_beat[j], temp_note.porendpos, 0.0) - eof_put_porpos(temp_note.beat - first_beat[j] + this_beat[j], temp_note.porpos, 0.0), temp_note.type, text);
+				if(new_note)
 				{
-					new_note = eof_track_add_create_note(eof_song, j, temp_note.note, eof_put_porpos(temp_note.beat - first_beat[tracknum] + this_beat[tracknum], temp_note.porpos, 0.0), eof_put_porpos(temp_note.endbeat - first_beat[tracknum] + this_beat[tracknum], temp_note.porendpos, 0.0) - eof_put_porpos(temp_note.beat - first_beat[tracknum] + this_beat[tracknum], temp_note.porpos, 0.0), temp_note.type, NULL);
-					if(new_note)
-					{
-						new_note->flags = temp_note.flags;
-					}
+					eof_set_note_flags(eof_song, j, eof_track_get_size(eof_song, j) - 1, temp_note.flags);	//Set the last created note's flags
 				}
 			}
-			eof_track_sort_notes(eof_song, j);
+		}
+		eof_track_sort_notes(eof_song, j);
 
-			/* star power */
-			for(i = 0; i < eof_get_num_star_power_paths(eof_song, j); i++)
-			{	//For each star power path in the active track
-				/* which beat */
-				b = pack_igetl(fp);
-				pack_fread(&tfloat, sizeof(float), fp);
-				starpowerptr = eof_get_star_power_path(eof_song, j, i);
-				starpowerptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
-				b = pack_igetl(fp);
-				pack_fread(&tfloat, sizeof(float), fp);
-				starpowerptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
-			}
+		/* star power */
+		for(i = 0; i < eof_get_num_star_power_paths(eof_song, j); i++)
+		{	//For each star power path in the active track
+			/* which beat */
+			b = pack_igetl(fp);
+			pack_fread(&tfloat, sizeof(float), fp);
+			sectionptr = eof_get_star_power_path(eof_song, j, i);
+			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
+			b = pack_igetl(fp);
+			pack_fread(&tfloat, sizeof(float), fp);
+			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
+		}
 
-			/* solos */
-			for(i = 0; i < eof_get_num_solos(eof_song, j); i++)
-			{	//For each solo section in the active track
-				/* which beat */
-				b = pack_igetl(fp);
-				pack_fread(&tfloat, sizeof(float), fp);
-				soloptr = eof_get_solo(eof_song, j, i);
-				soloptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
-				b = pack_igetl(fp);
-				pack_fread(&tfloat, sizeof(float), fp);
-				soloptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
-			}
-		}//If this is a legacy track
+		/* solos */
+		for(i = 0; i < eof_get_num_solos(eof_song, j); i++)
+		{	//For each solo section in the active track
+			/* which beat */
+			b = pack_igetl(fp);
+			pack_fread(&tfloat, sizeof(float), fp);
+			sectionptr = eof_get_solo(eof_song, j, i);
+			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
+			b = pack_igetl(fp);
+			pack_fread(&tfloat, sizeof(float), fp);
+			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
+		}
+
+		/* trills */
+		for(i = 0; i < eof_get_num_trills(eof_song, j); i++)
+		{	//For each trill section in the active track
+			/* which beat */
+			b = pack_igetl(fp);
+			pack_fread(&tfloat, sizeof(float), fp);
+			sectionptr = eof_get_trill(eof_song, j, i);
+			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
+			b = pack_igetl(fp);
+			pack_fread(&tfloat, sizeof(float), fp);
+			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
+		}
+
+		/* tremolos */
+		for(i = 0; i < eof_get_num_tremolos(eof_song, j); i++)
+		{	//For each tremolo section in the active track
+			/* which beat */
+			b = pack_igetl(fp);
+			pack_fread(&tfloat, sizeof(float), fp);
+			sectionptr = eof_get_tremolo(eof_song, j, i);
+			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
+			b = pack_igetl(fp);
+			pack_fread(&tfloat, sizeof(float), fp);
+			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
+		}
+
+		/* arpeggios */
+		for(i = 0; i < eof_get_num_arpeggios(eof_song, j); i++)
+		{	//For each arpeggio section in the active track
+			/* which beat */
+			b = pack_igetl(fp);
+			pack_fread(&tfloat, sizeof(float), fp);
+			sectionptr = eof_get_arpeggio(eof_song, j, i);
+			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
+			b = pack_igetl(fp);
+			pack_fread(&tfloat, sizeof(float), fp);
+			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
+		}
 	}//For each track
 	pack_fclose(fp);
 	eof_fixup_notes();
 	eof_determine_phrase_status();
-	return eof_menu_edit_cut_paste_vocal(anchor, option);
+	return 1;
 }
 
 int eof_menu_edit_copy(void)
@@ -1232,8 +1150,9 @@ int eof_menu_edit_copy(void)
 			}
 
 			/* write note data to disk */
-			pack_iputl(eof_get_note_note(eof_song, eof_selected_track, i), fp);				//Write the note fret values
-			pack_iputl(eof_get_note_pos(eof_song, eof_selected_track, i) - first_pos, fp);	//Write the note's position relative to within the selection
+			eof_save_song_string_pf(eof_get_note_name(eof_song, eof_selected_track, i), fp);	//Write the note's name
+			pack_iputl(eof_get_note_note(eof_song, eof_selected_track, i), fp);					//Write the note fret values
+			pack_iputl(eof_get_note_pos(eof_song, eof_selected_track, i) - first_pos, fp);		//Write the note's position relative to within the selection
 			tfloat = eof_get_porpos(eof_get_note_pos(eof_song, eof_selected_track, i));
 			pack_fwrite(&tfloat, sizeof(float), fp);	//Write the percent representing the note's start position within a beat
 			tfloat = eof_get_porpos(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i));
@@ -1279,6 +1198,7 @@ int eof_menu_edit_paste(void)
 	unsigned char frets[16] = {0};	//Used to store fret data to support copying to a pro guitar track
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	unsigned long legacymask;
+	char name[EOF_NAME_LENGTH+1] = {0};
 
 	/* open the file */
 	fp = pack_fopen("eof.clipboard", "r");
@@ -1302,6 +1222,7 @@ int eof_menu_edit_paste(void)
 	for(i = 0; i < copy_notes; i++)
 	{	//For each note in the clipboard file
 		/* read the note */
+		eof_load_song_string_pf(name, fp, sizeof(name));	//Read the note's name
 		temp_note.note = pack_igetl(fp);	//Read the note fret values
 		temp_note.pos = pack_igetl(fp);		//Read the note's position relative to within the selection
 		pack_fread(&temp_note.porpos, sizeof(float), fp);	//Read the percent representing the note's start position within a beat
@@ -1315,7 +1236,7 @@ int eof_menu_edit_paste(void)
 		temp_note.length = pack_igetl(fp);	//Read the note's length
 		temp_note.flags = pack_igetl(fp);	//Read the note's flags
 		legacymask = pack_igetl(fp);		//Read the note's legacy bitmask
-		if(legacymask != 0)
+		if((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (legacymask != 0))
 		{	//If the copied note indicated that this overrides the original bitmask (pasting pro guitar into a legacy track)
 			temp_note.note = legacymask;
 		}
@@ -1324,7 +1245,7 @@ int eof_menu_edit_paste(void)
 		/* create the note */
 		if(eof_music_pos + temp_note.pos + temp_note.length - eof_av_delay < eof_music_length)
 		{
-			new_note = eof_track_add_create_note(eof_song, eof_selected_track, temp_note.note, eof_put_porpos(temp_note.beat - first_beat + this_beat, temp_note.porpos, 0.0), eof_put_porpos(temp_note.endbeat - first_beat + this_beat, temp_note.porendpos, 0.0) - eof_put_porpos(temp_note.beat - first_beat + this_beat, temp_note.porpos, 0.0), eof_note_type, NULL);
+			new_note = eof_track_add_create_note(eof_song, eof_selected_track, temp_note.note, eof_put_porpos(temp_note.beat - first_beat + this_beat, temp_note.porpos, 0.0), eof_put_porpos(temp_note.endbeat - first_beat + this_beat, temp_note.porendpos, 0.0) - eof_put_porpos(temp_note.beat - first_beat + this_beat, temp_note.porpos, 0.0), eof_note_type, name);
 			if(new_note)
 			{
 				new_note->flags = temp_note.flags;
@@ -1382,6 +1303,7 @@ int eof_menu_edit_old_paste(void)
 	unsigned char frets[16] = {0};	//Used to store fret data to support copying to a pro guitar track
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	unsigned long legacymask;
+	char name[EOF_NAME_LENGTH+1] = {0};
 
 	fp = pack_fopen("eof.clipboard", "r");
 	if(!fp)
@@ -1397,6 +1319,7 @@ int eof_menu_edit_old_paste(void)
 	for(i = 0; i < copy_notes; i++)
 	{	//For each note in the clipboard file
 		/* read the note */
+		eof_load_song_string_pf(name, fp, sizeof(name));	//Read the note's name
 		temp_note.note = pack_igetl(fp);	//Read the note fret values
 		temp_note.pos = pack_igetl(fp);		//Read the note's position relative to within the selection
 		pack_fread(&temp_note.porpos, sizeof(float), fp);	//Read the percent representing the note's start position within a beat
@@ -1406,7 +1329,7 @@ int eof_menu_edit_old_paste(void)
 		temp_note.length = pack_igetl(fp);	//Read the note's length
 		temp_note.flags = pack_igetl(fp);	//Read the note's flags
 		legacymask = pack_igetl(fp);		//Read the note's legacy bitmask
-		if(legacymask != 0)
+		if((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (legacymask != 0))
 		{	//If the copied note indicated that this overrides the original bitmask (pasting pro guitar into a legacy track)
 			temp_note.note = legacymask;
 		}
@@ -1415,7 +1338,7 @@ int eof_menu_edit_old_paste(void)
 		/* create the note */
 		if(eof_music_pos + temp_note.pos + temp_note.length - eof_av_delay < eof_music_length)
 		{
-			new_note = eof_track_add_create_note(eof_song, eof_selected_track, temp_note.note, eof_music_pos + temp_note.pos - eof_av_delay, temp_note.length, eof_note_type, NULL);
+			new_note = eof_track_add_create_note(eof_song, eof_selected_track, temp_note.note, eof_music_pos + temp_note.pos - eof_av_delay, temp_note.length, eof_note_type, name);
 			if(new_note)
 			{
 				new_note->flags = temp_note.flags;
@@ -2174,8 +2097,9 @@ int eof_menu_edit_paste_from_amazing(void)
 int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty)
 {
 	unsigned long i;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	EOF_NOTE * new_note = NULL;
+	unsigned long pos, flags;
+	long length;
 
 	if((eof_note_type != source_difficulty) && (source_difficulty < EOF_MAX_DIFFICULTIES))
 	{	//If the current difficulty is different than the source difficulty
@@ -2199,11 +2123,10 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty)
 		{	//For each note in this instrument track
 			if(eof_get_note_type(eof_song, eof_selected_track, i) == source_difficulty)
 			{	//If this note is in the source difficulty
-				new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_song->legacy_track[tracknum]->note[i]->note, eof_song->legacy_track[tracknum]->note[i]->pos, eof_song->legacy_track[tracknum]->note[i]->length, eof_note_type, NULL);
-				if(new_note)
-				{	//And copy the source note's flags to the newly created note (which will be the last one in the track)
-					eof_set_note_flags(eof_song, eof_selected_track, eof_track_get_size(eof_song, eof_selected_track)-1, eof_get_note_flags(eof_song, eof_selected_track, i));
-				}
+				pos = eof_get_note_pos(eof_song, eof_selected_track, i);
+				length = eof_get_note_length(eof_song, eof_selected_track, i);
+				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+				new_note = eof_copy_note(eof_song, eof_selected_track, i, eof_selected_track, pos, length, eof_note_type);
 			}
 		}
 		eof_detect_difficulties(eof_song);
@@ -2270,10 +2193,9 @@ static int lyrics_in_beat(int beat)
 int eof_menu_edit_paste_from_catalog(void)
 {
 	unsigned long i, j;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum, tracknum2;
 	unsigned long paste_pos[EOF_MAX_NOTES] = {0};
 	long paste_count = 0;
-	long note_count = 0;
+	unsigned long note_count = 0;
 	long first = -1;
 	long first_beat = -1;
 	long start_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
@@ -2283,199 +2205,113 @@ int eof_menu_edit_paste_from_catalog(void)
 	long end_beat = -1;
 	float nporpos, nporendpos;
 	EOF_NOTE * new_note = NULL;
-	EOF_LYRIC * new_lyric = NULL;
-	unsigned long note;
+	unsigned long newnotenum, sourcetrack;
 
-	if(eof_song->catalog->entries > 0)
-	{
+	if((eof_selected_catalog_entry < eof_song->catalog->entries) && eof_song->catalog->entries)
+	{	//If a valid catalog entry is selected
 		/* make sure we can paste */
 		if(eof_music_pos - eof_av_delay < eof_song->beat[0]->pos)
 		{
 			return 1;
 		}
 
+		sourcetrack = eof_song->catalog->entry[eof_selected_catalog_entry].track;
+
 		/* make sure we can't paste inside of the catalog entry */
-		if((eof_song->catalog->entry[eof_selected_catalog_entry].track == eof_selected_track) && (eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_note_type) && (eof_music_pos - eof_av_delay >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_music_pos - eof_av_delay <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos))
+		if((sourcetrack == eof_selected_track) && (eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_note_type) && (eof_music_pos - eof_av_delay >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_music_pos - eof_av_delay <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos))
 		{
 			return 1;
 		}
-		if(eof_vocals_selected)
-		{	//If pasting into a vocal track
-			if(eof_song->catalog->entry[eof_selected_catalog_entry].track != EOF_TRACK_VOCALS)
-			{
-				return 1;
-			}
-			for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-			{
-				if((eof_song->vocal_track[tracknum]->lyric[i]->pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos))
-				{
-					note_count++;
-				}
-			}
-			if(note_count <= 0)
-			{
-				return 1;
-			}
-			eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-			for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-			{
-				/* this note needs to be copied */
-				if((eof_song->vocal_track[tracknum]->lyric[i]->pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos))
-				{
-					if(first == -1)
-					{
-						first_beat = eof_get_beat(eof_song, eof_song->vocal_track[tracknum]->lyric[i]->pos);
-						first = 1;
-					}
-					this_beat = eof_get_beat(eof_song, eof_song->vocal_track[tracknum]->lyric[i]->pos);
-					if(this_beat < 0)
-					{
-						break;
-					}
-					last_current_beat = current_beat;
-					current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay) + (this_beat - first_beat);
-					if(current_beat >= eof_song->beats - 1)
-					{
-						break;
-					}
 
-					/* if we run into notes, abort */
-					if(lyrics_in_beat(current_beat) && (last_current_beat != current_beat))
-					{
-						break;
-					}
-					nporpos = eof_get_porpos(eof_song->vocal_track[tracknum]->lyric[i]->pos);
-					nporendpos = eof_get_porpos(eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length);
-					end_beat = eof_get_beat(eof_song, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length);
-					if(end_beat < 0)
-					{
-						break;
-					}
+		//Don't allow copying instrument track notes to PART VOCALS and vice versa
+		if(((sourcetrack == EOF_TRACK_VOCALS) && (eof_selected_track != EOF_TRACK_VOCALS)) || ((sourcetrack != EOF_TRACK_VOCALS) && (eof_selected_track == EOF_TRACK_VOCALS)))
+			return 1;
 
-					/* paste the note */
-					if(end_beat - first_beat + start_beat < eof_song->beats)
-					{
-						new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, eof_song->vocal_track[tracknum]->lyric[i]->note, eof_put_porpos(current_beat, nporpos, 0.0), eof_put_porpos(end_beat - first_beat + start_beat, nporendpos, 0.0) - eof_put_porpos(current_beat, nporpos, 0.0), 0, eof_song->vocal_track[tracknum]->lyric[i]->text);
-						if(new_lyric)
-						{
-							paste_pos[paste_count] = new_lyric->pos;
-							paste_count++;
-						}
-					}
-				}
-			}
-			eof_track_sort_notes(eof_song, eof_selected_track);
-			eof_track_fixup_notes(eof_song, eof_selected_track, 0);
-			eof_detect_difficulties(eof_song);
-			eof_selection.current_pos = 0;
-			memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
-			for(i = 0; i < paste_count; i++)
+		for(i = 0; i < eof_track_get_size(eof_song, sourcetrack); i++)
+		{	//For each note in the active catalog entry's track
+			if((eof_get_note_type(eof_song, sourcetrack, i) == eof_song->catalog->entry[eof_selected_catalog_entry].type) && (eof_get_note_pos(eof_song, sourcetrack, i) >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_get_note_pos(eof_song, sourcetrack, i) + eof_get_note_length(eof_song, sourcetrack, i) <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos))
 			{
-				for(j = 0; j < eof_song->vocal_track[tracknum]->lyrics; j++)
-				{
-					if(eof_song->vocal_track[tracknum]->lyric[j]->pos == paste_pos[i])
-					{
-						eof_selection.track = EOF_TRACK_VOCALS;
-						eof_selection.multi[j] = 1;
-						break;
-					}
-				}
+				note_count++;
 			}
-		}//If pasting into a vocal track
-		else
-		{	//If pasting into a non vocal track
-			if(eof_song->catalog->entry[eof_selected_catalog_entry].track == EOF_TRACK_VOCALS)
-			{	//Disallow pasting from PART VOCALS to any other track
-				return 1;
-			}
-			for(i = 0; i < eof_track_get_size(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track); i++)
-			{	//For each note in the active catalog entry's track
-				if((eof_get_note_type(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track, i) == eof_song->catalog->entry[eof_selected_catalog_entry].type) && (eof_get_note_pos(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track, i) >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_get_note_pos(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track, i) + eof_get_note_length(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track, i) <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos))
-				{
-					note_count++;
-				}
-			}
-			if(note_count <= 0)
-			{
-				return 1;
-			}
-			eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-			for(i = 0; i < eof_track_get_size(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track); i++)
-			{	//For each note in the active catalog entry's track
-				/* this note needs to be copied */
-				if((eof_get_note_type(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track, i) == eof_song->catalog->entry[eof_selected_catalog_entry].type) && (eof_get_note_pos(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track, i) >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_get_note_pos(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track, i) + eof_get_note_length(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track, i) <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos))
-				{
-					if(first == -1)
-					{
-						first_beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track, i));
-						first = 1;
-					}
-					this_beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track, i));
-					if(this_beat < 0)
-					{
-						break;
-					}
-					last_current_beat = current_beat;
-					current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay) + (this_beat - first_beat);
-					if(current_beat >= eof_song->beats - 1)
-					{
-						break;
-					}
+		}
+		if(note_count == 0)
+		{
+			return 1;
+		}
 
-					/* if we run into notes, abort */
-					if(notes_in_beat(current_beat) && (last_current_beat != current_beat))
-					{
-						break;
-					}
-					nporpos = eof_get_porpos(eof_get_note_pos(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track, i));
-					nporendpos = eof_get_porpos(eof_get_note_pos(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track, i) + eof_get_note_length(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track, i));
-					end_beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track, i) + eof_get_note_length(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track, i));
-					if(end_beat < 0)
-					{
-						break;
-					}
-
-					/* paste the note */
-					note = eof_get_note_note(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track, i);
-					if((eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
-					{	//If pasting from a pro guitar track into a legacy track
-						tracknum2 = eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->tracknum;	//De-obfuscate the entry's pro guitar track number
-						if(eof_song->pro_guitar_track[tracknum2]->note[i]->legacymask != 0)
-						{	//If the user defined how this pro guitar note would transcribe to a legacy track
-							note = eof_song->pro_guitar_track[tracknum2]->note[i]->legacymask;	//Use that bitmask
-						}
-					}
-					if(end_beat - first_beat + start_beat < eof_song->beats)
-					{
-						new_note = eof_track_add_create_note(eof_song, eof_selected_track, note, eof_put_porpos(current_beat, nporpos, 0.0), eof_put_porpos(end_beat - first_beat + start_beat, nporendpos, 0.0) - eof_put_porpos(current_beat, nporpos, 0.0), eof_note_type, NULL);
-						if(new_note)
-						{
-							paste_pos[paste_count] = new_note->pos;
-							paste_count++;
-						}
-					}
-				}
-			}
-			eof_track_sort_notes(eof_song, eof_selected_track);
-			eof_fixup_notes();
-			eof_determine_phrase_status();
-			eof_detect_difficulties(eof_song);
-			eof_selection.current_pos = 0;
-			memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
-			for(i = 0; i < paste_count; i++)
+		eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
+		for(i = 0; i < eof_track_get_size(eof_song, sourcetrack); i++)
+		{	//For each note in the active catalog entry's track
+			/* this note needs to be copied */
+			if((eof_get_note_type(eof_song, sourcetrack, i) == eof_song->catalog->entry[eof_selected_catalog_entry].type) && (eof_get_note_pos(eof_song, sourcetrack, i) >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_get_note_pos(eof_song, sourcetrack, i) + eof_get_note_length(eof_song, sourcetrack, i) <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos))
 			{
-				for(j = 0; j < eof_track_get_size(eof_song, eof_selected_track); j++)
-				{	//For each note in the active track
-					if((eof_get_note_pos(eof_song, eof_selected_track, j) == paste_pos[i]) && (eof_get_note_type(eof_song, eof_selected_track, j) == eof_note_type))
-					{
-						eof_selection.track = eof_selected_track;
-						eof_selection.multi[j] = 1;
-						break;
+				if(first == -1)
+				{
+					first_beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, sourcetrack, i));
+					first = 1;
+				}
+				this_beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, sourcetrack, i));
+				if(this_beat < 0)
+				{
+					break;
+				}
+				last_current_beat = current_beat;
+				current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay) + (this_beat - first_beat);
+				if(current_beat >= eof_song->beats - 1)
+				{
+					break;
+				}
+
+				/* if we run into notes, abort */
+				if((eof_vocals_selected) && (lyrics_in_beat(current_beat) && (last_current_beat != current_beat)))
+				{
+					break;
+				}
+				else if(notes_in_beat(current_beat) && (last_current_beat != current_beat))
+				{
+					break;
+				}
+				nporpos = eof_get_porpos(eof_get_note_pos(eof_song, sourcetrack, i));
+				nporendpos = eof_get_porpos(eof_get_note_pos(eof_song, sourcetrack, i) + eof_get_note_length(eof_song, sourcetrack, i));
+				end_beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, sourcetrack, i) + eof_get_note_length(eof_song, sourcetrack, i));
+				if(end_beat < 0)
+				{
+					break;
+				}
+
+				/* paste the note */
+				if(end_beat - first_beat + start_beat < eof_song->beats)
+				{
+					new_note = eof_copy_note(eof_song, sourcetrack, i, eof_selected_track, eof_put_porpos(current_beat, nporpos, 0.0), eof_put_porpos(end_beat - first_beat + start_beat, nporendpos, 0.0) - eof_put_porpos(current_beat, nporpos, 0.0), eof_note_type);
+					if(new_note)
+					{	//If the note was successfully created
+						newnotenum = eof_track_get_size(eof_song, eof_selected_track) - 1;	//The index of the new note
+						paste_pos[paste_count] = eof_get_note_pos(eof_song, eof_selected_track, newnotenum);
+						paste_count++;
 					}
 				}
 			}
-		}//If pasting into a non vocal track
-	}
+		}//For each note in the active catalog entry's track
+
+		eof_track_sort_notes(eof_song, eof_selected_track);
+		eof_track_fixup_notes(eof_song, eof_selected_track, 0);
+		eof_determine_phrase_status();
+		eof_detect_difficulties(eof_song);
+		eof_selection.current_pos = 0;
+		memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+		for(i = 0; i < paste_count; i++)
+		{	//For each of the pasted notes
+			for(j = 0; j < eof_track_get_size(eof_song, eof_selected_track); j++)
+			{	//For each note in the destination track
+				if((eof_get_note_pos(eof_song, eof_selected_track, j) == paste_pos[i]) && (eof_get_note_type(eof_song, eof_selected_track, j) == eof_note_type))
+				{	//If this note is in the current difficulty and matches the position of one of the pasted notes
+					eof_selection.track = eof_selected_track;	//Mark the note as selected
+					eof_selection.multi[j] = 1;
+					break;
+				}
+			}
+		}
+	}//If a valid catalog entry is selected
 	return 1;
 }
 

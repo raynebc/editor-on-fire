@@ -61,24 +61,25 @@
 
 #define EOF_MAX_GRID_SNAP_INTERVALS 64
 
-#define EOF_NOTE_NAME_LENGTH 31
+#define EOF_NAME_LENGTH 30
+
 typedef struct
 {
-    char name[EOF_NOTE_NAME_LENGTH];
+    char name[EOF_NAME_LENGTH+1];
 	char          type;			//Stores the note's difficulty
 	unsigned char note;			//Stores the note's fret values
 	unsigned long midi_pos;
 	unsigned long midi_length;
 	unsigned long pos;
 	long length;				//Keep as signed, since the npos logic uses signed math
-	unsigned short flags;		//Stores various note statuses
+	unsigned long flags;		//Stores various note statuses
 
 } EOF_NOTE;
 
 typedef struct
 {
     unsigned char number;		//The chord's number (using RB3's chord number system)
-    char name[EOF_NOTE_NAME_LENGTH+1];
+    char name[EOF_NAME_LENGTH+1];
 	char          type;			//Stores the note's difficulty
 	unsigned short note;		//Stores the note's string statuses (set=played, reset=not played).  Bit 0 refers to string 1 (high E), bit 5 refers to string 6 (low E), etc.
 	unsigned char frets[16];	//Stores the fret number for each string, where frets[0] refers to string 1 (high E).  Possible values:0=Open strum, #=Fret # pressed, 0xFF=Muted
@@ -93,7 +94,7 @@ typedef struct
 
 typedef struct
 {
-	char name[EOF_NOTE_NAME_LENGTH+1];
+	char name[EOF_NAME_LENGTH+1];
 	char          type;
 	unsigned char note;
 	unsigned long endbeat;
@@ -118,7 +119,7 @@ typedef struct
 	long midi_length;		//Keep as signed, since the npos logic uses signed math
 	unsigned long pos;
 	long length;			//Keep as signed, since the npos logic uses signed math
-	unsigned short flags;
+	unsigned long flags;
 
 } EOF_LYRIC;
 
@@ -155,7 +156,7 @@ typedef struct
 	unsigned long start_pos;
 	unsigned long end_pos;
 	unsigned long flags;
-	char *name;
+    char name[EOF_NAME_LENGTH+1];
 
 } EOF_PHRASE_SECTION;
 
@@ -190,12 +191,12 @@ typedef struct
 #define EOF_TRACK_NAME_SIZE		31
 typedef struct
 {
-	char track_format;						//Specifies which track format this is, using one of the macros above
-	char track_behavior;					//Specifies which behavior this track follows, using one of the macros above
-	char track_type;						//Specifies which type of track this is (ie default PART GUITAR, custom track, etc)
-	unsigned long tracknum;					//Specifies which number of that type this track is, used as an index into the type-specific track arrays
-	char track_name[EOF_TRACK_NAME_SIZE];	//Specifies the name of the track
-	char difficulty;						//Specifies the difficulty level from 0-5 (standard 0-5 scale), or 6 for devil heads (extreme difficulty)
+	char track_format;				//Specifies which track format this is, using one of the macros above
+	char track_behavior;			//Specifies which behavior this track follows, using one of the macros above
+	char track_type;				//Specifies which type of track this is (ie default PART GUITAR, custom track, etc)
+	unsigned long tracknum;			//Specifies which number of that type this track is, used as an index into the type-specific track arrays
+	char name[EOF_NAME_LENGTH+1];	//Specifies the name of the track
+	char difficulty;				//Specifies the difficulty level from 0-5 (standard 0-5 scale), or 6 for devil heads (extreme difficulty)
 	unsigned long flags;
 } EOF_TRACK_ENTRY;
 
@@ -294,6 +295,8 @@ typedef struct
 	char filename[256];
 	long  midi_offset;	//Leave signed just in case this is eventually used to allow for insertion of leading silence via specifying a negative midi offset
 	char modified;
+	unsigned long flags;
+	char description[EOF_NAME_LENGTH+1];
 
 } EOF_OGG_INFO;
 
@@ -323,6 +326,7 @@ typedef struct
 	char type;
 	unsigned long start_pos;
 	unsigned long end_pos;
+	char name[EOF_NAME_LENGTH+1];
 
 } EOF_CATALOG_ENTRY;
 
@@ -411,10 +415,11 @@ unsigned long eof_get_note_flags(EOF_SONG *sp, unsigned long track, unsigned lon
 void eof_set_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long flags);	//Sets the flags of the specified track's note/lyric
 unsigned long eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the note bitflag of the specified track's note/lyric, or 0 on error
 void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long value);	//Sets the note value of the specified track's note/lyric
+char *eof_get_note_name(EOF_SONG *sp, unsigned long track, unsigned long note);				//Returns a pointer to the note's statically allocated name array, or a lyric's text array, or NULL on error
 void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos, long length, char type, char *text);
 	//Adds and initializes the appropriate note for the specified track, returning the newly created note structure, or NULL on error
 	//Automatic flags will be applied appropriately (ie. crazy status for all notes in PART KEYS)
-	//text is used to initialize the chord name or lyric text for pro guitar/lyric notes.  It is ignored for legacy notes
+	//text is used to initialize the note name or lyric text
 void *eof_track_add_create_note2(EOF_SONG *sp, unsigned long track, EOF_NOTE *note);
 	//Adds and initializes the appropriate note for the specified track, returning the newly created note structure, or NULL on error
 	//If track refers to a legacy track, it is created and initialized using the passed structure
@@ -428,7 +433,7 @@ void eof_track_delete_star_power_path(EOF_SONG *sp, unsigned long track, unsigne
 void eof_track_add_solo(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track
 void eof_track_delete_solo(EOF_SONG *sp, unsigned long track, unsigned long pathnum);	//Deletes the specified solo phrase and moves all phrases that follow back in the array one position
 void eof_note_set_tail_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos);	//Sets the note's length value to (pos - [note]->pos)
-int eof_song_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, char difficulty, unsigned long start, unsigned long end, unsigned long flags);
+int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, char difficulty, unsigned long start, unsigned long end, unsigned long flags);
 	//Adds the specified section to the specified track if it's valid for the track
 	//For bookmark sections, the end variable represents which bookmark number is being set
 	//For fret catalog sections, the flags variable represents which track the catalog entry belongs to
@@ -441,8 +446,15 @@ void eof_set_num_trills(EOF_SONG *sp, unsigned long track, unsigned long number)
 unsigned long eof_get_num_tremolos(EOF_SONG *sp, unsigned long track);		//Returns the number of tremolo phrases in the specified track, or 0 on error
 EOF_PHRASE_SECTION *eof_get_tremolo(EOF_SONG *sp, unsigned long track, unsigned long index);	//Returns a pointer to the specified tremolo phrase, or NULL on error
 void eof_set_num_tremolos(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of tremolo phrases in the specified track
+unsigned long eof_get_num_arpeggios(EOF_SONG *sp, unsigned long track);		//Returns the number of arpeggio phrases in the specified track, or 0 on error
+EOF_PHRASE_SECTION *eof_get_arpeggio(EOF_SONG *sp, unsigned long track, unsigned long index);	//Returns a pointer to the specified arpeggio phrase, or NULL on error
 void eof_track_delete_trill(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified trill phrase and moves all phrases that follow back in the array one position
 void eof_track_delete_tremolo(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified tremolo phrase and moves all phrases that follow back in the array one position
+void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourcenote, unsigned long desttrack, unsigned long pos, long length, char type);
+	//Copies the specified note to the specified track, returning a pointer to the newly created note structure, or NULL on error
+	//The specified position, length and type are applied to the new note.  Other note variables such as the bitmask/pitch and name/lyric text are copied as-is
+	//If the source is a pro guitar track and the destination is not, the source note's legacy bitmask is used if defined
+	//If the source and destination are both pro guitar tracks, the source note's fret values are copied
 
 EOF_NOTE * eof_legacy_track_add_note(EOF_LEGACY_TRACK * tp);	//Allocates, initializes and stores a new EOF_NOTE structure into the notes array.  Returns the newly allocated structure or NULL upon error
 void eof_legacy_track_delete_note(EOF_LEGACY_TRACK * tp, unsigned long note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position
@@ -476,7 +488,11 @@ void eof_pro_guitar_track_add_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned lon
 void eof_pro_guitar_track_delete_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned long index);	//Deletes the specified star power phrase and moves all phrases that follow back in the array one position
 void eof_pro_guitar_track_add_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track
 void eof_pro_guitar_track_delete_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long index);	//Deletes the specified solo phrase and moves all phrases that follow back in the array one position
-void eof_set_pro_guitar_fret_number(unsigned long fretvalue);	//Sets used strings (that match the eof_pro_guitar_fret_bitmask bitmask) for all selected pro guitar notes to the specified fret value
+void eof_set_pro_guitar_fret_number(char function, unsigned long fretvalue);
+	//Alters each selected pro guitar note's fret values on used strings (that match the eof_pro_guitar_fret_bitmask bitmask) based on the parameters:
+	//If function is 0, the applicable strings' fret values are set to the specified value
+	//If function is 1, the applicable strings' fret values are incremented
+	//If function is 2, the applicable strings' fret values are decremented
 
 EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp);	//Allocates, initializes and stores a new EOF_BEAT_MARKER structure into the beats array.  Returns the newly allocated structure or NULL upon error
 void eof_song_delete_beat(EOF_SONG * sp, unsigned long beat);	//Removes and frees the specified beat from the beats array.  All beats after the deleted beat are moved back in the array one position
