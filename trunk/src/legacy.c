@@ -63,6 +63,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			pack_fread(sp->tags->title, 256, fp);
 			pack_fread(sp->tags->frettist, 256, fp);
 			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
+			sp->tags->ogg[0].description[0] = '\0';
 			eof_song_add_beat(sp);
 			sp->beat[0]->ppqn = pack_igetl(fp);
 			sp->beats = 1;
@@ -99,6 +100,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			pack_fread(sp->tags->title, 256, fp);
 			pack_fread(sp->tags->frettist, 256, fp);
 			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
+			sp->tags->ogg[0].description[0] = '\0';
 
 			/* read beat info */
 			b = pack_igetl(fp);
@@ -164,6 +166,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			pack_fread(sp->tags->title, 256, fp);
 			pack_fread(sp->tags->frettist, 256, fp);
 			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
+			sp->tags->ogg[0].description[0] = '\0';
 
 			/* read beat info */
 			b = pack_igetl(fp);
@@ -207,6 +210,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			pack_fread(sp->tags->title, 256, fp);
 			pack_fread(sp->tags->frettist, 256, fp);
 			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
+			sp->tags->ogg[0].description[0] = '\0';
 
 			/* read beat info */
 			b = pack_igetl(fp);
@@ -250,6 +254,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			pack_fread(sp->tags->title, 256, fp);
 			pack_fread(sp->tags->frettist, 256, fp);
 			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
+			sp->tags->ogg[0].description[0] = '\0';
 
 			/* read beat info */
 			b = pack_igetl(fp);
@@ -303,6 +308,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			pack_fread(sp->tags->title, 256, fp);
 			pack_fread(sp->tags->frettist, 256, fp);
 			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
+			sp->tags->ogg[0].description[0] = '\0';
 
 			/* read beat info */
 			b = pack_igetl(fp);
@@ -373,6 +379,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			pack_fread(sp->tags->title, 256, fp);
 			pack_fread(sp->tags->frettist, 256, fp);
 			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
+			sp->tags->ogg[0].description[0] = '\0';
 			sp->tags->ini_settings = pack_igetw(fp);
 			for(i = 0; i < sp->tags->ini_settings; i++)
 			{
@@ -447,6 +454,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			pack_fread(sp->tags->title, 256, fp);
 			pack_fread(sp->tags->frettist, 256, fp);
 			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
+			sp->tags->ogg[0].description[0] = '\0';
 			sp->tags->ini_settings = pack_igetw(fp);
 			for(i = 0; i < sp->tags->ini_settings; i++)
 			{
@@ -520,6 +528,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			pack_fread(sp->tags->title, 256, fp);
 			pack_fread(sp->tags->frettist, 256, fp);
 			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
+			sp->tags->ogg[0].description[0] = '\0';
 			sp->tags->ini_settings = pack_igetw(fp);
 			for(i = 0; i < sp->tags->ini_settings; i++)
 			{
@@ -588,6 +597,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			pack_fread(sp->tags->title, 256, fp);
 			pack_fread(sp->tags->frettist, 256, fp);
 			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
+			sp->tags->ogg[0].description[0] = '\0';
 			sp->tags->ini_settings = pack_igetw(fp);
 			for(i = 0; i < sp->tags->ini_settings; i++)
 			{
@@ -664,6 +674,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				pack_fread(sp->tags->ogg[i].filename, 256, fp);
 				sp->tags->ogg[i].midi_offset = pack_igetl(fp);
+				sp->tags->ogg[i].description[0] = '\0';
 			}
 
 			/* read file revision number */
@@ -781,6 +792,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				pack_fread(sp->tags->ogg[i].filename, 256, fp);
 				sp->tags->ogg[i].midi_offset = pack_igetl(fp);
+				sp->tags->ogg[i].description[0] = '\0';
 			}
 
 			/* read INI settings */
@@ -902,6 +914,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				pack_fread(sp->tags->ogg[i].filename, 256, fp);
 				sp->tags->ogg[i].midi_offset = pack_igetl(fp);
+				sp->tags->ogg[i].description[0] = '\0';
 			}
 
 			/* read INI settings */
@@ -1042,6 +1055,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				pack_fread(sp->tags->ogg[i].filename, 256, fp);
 				sp->tags->ogg[i].midi_offset = pack_igetl(fp);
+				sp->tags->ogg[i].description[0] = '\0';
 			}
 
 			/* read INI settings */
@@ -1184,6 +1198,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				pack_fread(sp->tags->ogg[i].filename, 256, fp);
 				sp->tags->ogg[i].midi_offset = pack_igetl(fp);
+				sp->tags->ogg[i].description[0] = '\0';
 			}
 
 			/* read INI settings */

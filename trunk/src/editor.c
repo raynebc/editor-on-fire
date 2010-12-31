@@ -1325,7 +1325,7 @@ void eof_read_editor_keys(void)
 	/* anchor beat (SHIFT+A) */
 	/* toggle anchor (A) */
 	/* select all (CTRL+A) */
-		if(key[KEY_A] && !KEY_EITHER_CTRL)
+		if(key[KEY_A])
 		{
 			if(!KEY_EITHER_CTRL)
 			{
@@ -1518,135 +1518,146 @@ void eof_read_editor_keys(void)
 				key[KEY_N] = 0;
 			}
 
-	/* set pro guitar fret values (CTRL+#, CTRL+Fn #, CTRL+X, CTRL+~) */
-			if(KEY_EITHER_CTRL)
-			{	//CTRL+# or CTRL+Fn # in a pro guitar track sets the fret values of selected notes
+	/* set pro guitar fret values (CTRL+#, CTRL+Fn #, CTRL+X, CTRL+~, CTRL++, CTRL+-) */
+			if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
+			{	//If CTRL is held but SHIFT is not
+				//CTRL+# or CTRL+Fn # in a pro guitar track sets the fret values of selected notes
 				//CTRL+~ sets fret values to 0 and CTRL+X sets fret values to (muted)
 				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 				{
 					if(key[KEY_TILDE])
 					{
-						eof_set_pro_guitar_fret_number(0);
+						eof_set_pro_guitar_fret_number(0,0);
 						key[KEY_TILDE] = 0;
 					}
 					if(key[KEY_1])
 					{
-						eof_set_pro_guitar_fret_number(1);
+						eof_set_pro_guitar_fret_number(0,1);
 						key[KEY_1] = 0;
 					}
 					else if(key[KEY_2])
 					{
-						eof_set_pro_guitar_fret_number(2);
+						eof_set_pro_guitar_fret_number(0,2);
 						key[KEY_2] = 0;
 					}
 					else if(key[KEY_3])
 					{
-						eof_set_pro_guitar_fret_number(3);
+						eof_set_pro_guitar_fret_number(0,3);
 						key[KEY_3] = 0;
 					}
 					else if(key[KEY_4])
 					{
-						eof_set_pro_guitar_fret_number(4);
+						eof_set_pro_guitar_fret_number(0,4);
 						key[KEY_4] = 0;
 					}
 					else if(key[KEY_5])
 					{
-						eof_set_pro_guitar_fret_number(5);
+						eof_set_pro_guitar_fret_number(0,5);
 						key[KEY_5] = 0;
 					}
 					else if(key[KEY_6])
 					{
-						eof_set_pro_guitar_fret_number(6);
+						eof_set_pro_guitar_fret_number(0,6);
 						key[KEY_6] = 0;
 					}
 					else if(key[KEY_7])
 					{
-						eof_set_pro_guitar_fret_number(7);
+						eof_set_pro_guitar_fret_number(0,7);
 						key[KEY_7] = 0;
 					}
 					else if(key[KEY_8])
 					{
-						eof_set_pro_guitar_fret_number(8);
+						eof_set_pro_guitar_fret_number(0,8);
 						key[KEY_8] = 0;
 					}
 					else if(key[KEY_9])
 					{
-						eof_set_pro_guitar_fret_number(9);
+						eof_set_pro_guitar_fret_number(0,9);
 						key[KEY_9] = 0;
 					}
 					else if(key[KEY_0])
 					{
-						eof_set_pro_guitar_fret_number(10);
+						eof_set_pro_guitar_fret_number(0,10);
 						key[KEY_0] = 0;
 					}
 					else if(key[KEY_F1])
 					{
-						eof_set_pro_guitar_fret_number(11);
+						eof_set_pro_guitar_fret_number(0,11);
 						key[KEY_F1] = 0;
 					}
 					else if(key[KEY_F2])
 					{
-						eof_set_pro_guitar_fret_number(12);
+						eof_set_pro_guitar_fret_number(0,12);
 						key[KEY_F2] = 0;
 					}
 					else if(key[KEY_F3])
 					{
-						eof_set_pro_guitar_fret_number(13);
+						eof_set_pro_guitar_fret_number(0,13);
 						key[KEY_F3] = 0;
 					}
 					else if(key[KEY_F4])
 					{
-						eof_set_pro_guitar_fret_number(14);
+						eof_set_pro_guitar_fret_number(0,14);
 						key[KEY_F4] = 0;
 					}
 					else if(key[KEY_F5])
 					{
-						eof_set_pro_guitar_fret_number(15);
+						eof_set_pro_guitar_fret_number(0,15);
 						key[KEY_F5] = 0;
 					}
 					else if(key[KEY_F6])
 					{
-						eof_set_pro_guitar_fret_number(16);
+						eof_set_pro_guitar_fret_number(0,16);
 						key[KEY_F6] = 0;
 					}
 					else if(key[KEY_F7])
 					{
-						eof_set_pro_guitar_fret_number(17);
+						eof_set_pro_guitar_fret_number(0,17);
 						key[KEY_F7] = 0;
 					}
 					else if(key[KEY_F8])
 					{
-						eof_set_pro_guitar_fret_number(18);
+						eof_set_pro_guitar_fret_number(0,18);
 						key[KEY_F8] = 0;
 					}
 					else if(key[KEY_F9])
 					{
-						eof_set_pro_guitar_fret_number(19);
+						eof_set_pro_guitar_fret_number(0,19);
 						key[KEY_F9] = 0;
 					}
 					else if(key[KEY_F10])
 					{
-						eof_set_pro_guitar_fret_number(20);
+						eof_set_pro_guitar_fret_number(0,20);
 						key[KEY_F10] = 0;
 					}
 					else if(key[KEY_F11])
 					{
-						eof_set_pro_guitar_fret_number(21);
+						eof_set_pro_guitar_fret_number(0,21);
 						key[KEY_F11] = 0;
 					}
 					else if(key[KEY_F12])
 					{
-						eof_set_pro_guitar_fret_number(22);
+						eof_set_pro_guitar_fret_number(0,22);
 						key[KEY_F12] = 0;
 					}
 					else if(key[KEY_X])
 					{
-						eof_set_pro_guitar_fret_number(255);	//CTRL+X sets frets to (muted)
+						eof_set_pro_guitar_fret_number(0,255);	//CTRL+X sets frets to (muted)
 						key[KEY_X] = 0;
 					}
+					else if(key[KEY_MINUS])
+					{
+						eof_set_pro_guitar_fret_number(2,0);	//Decrement fret value
+						key[KEY_MINUS] = 0;
+					}
+					else if(key[KEY_EQUALS])
+					{
+						eof_set_pro_guitar_fret_number(1,0);	//Increment fret value
+						key[KEY_EQUALS] = 0;
+					}
 				}
-			}//CTRL is held
-			else if(KEY_EITHER_SHIFT)
+			}//If CTRL is held but SHIFT is not
+			else if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 			{	//If SHIFT is held, but CTRL is not
 	/* set fret value shortcut bitmask (SHIFT+Esc, SHIFT+Fn #) */
 				if(key[KEY_ESC])
@@ -4102,21 +4113,21 @@ void eof_render_editor_window_common(void)
 		}
 		if(i == eof_selected_beat)
 		{	//Draw selected beat's tempo
-			textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord - 28, EOF_EDITOR_RENDER_OFFSET + 4 - (i % 2 == 0 ? 0 : 10), i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "<%03.2f>", current_bpm);
+			textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord - 28, EOF_EDITOR_RENDER_OFFSET + 6 - (i % 2 == 0 ? 0 : 10), i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "<%03.2f>", current_bpm);
 			current_ppqn_used = 1;
 		}
 		else if(!current_ppqn_used)
 		{	//Draw tempo
-			textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord - 20, EOF_EDITOR_RENDER_OFFSET + 4 - (i % 2 == 0 ? 0 : 10), i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "%03.2f", current_bpm);
+			textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord - 20, EOF_EDITOR_RENDER_OFFSET + 6 - (i % 2 == 0 ? 0 : 10), i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "%03.2f", current_bpm);
 			current_ppqn_used = 1;
 		}
 		else
 		{	//Draw beat arrow
-			textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord - 20 + 9, EOF_EDITOR_RENDER_OFFSET + 4 - (i % 2 == 0 ? 0 : 10), i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "-->");
+			textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord - 20 + 9, EOF_EDITOR_RENDER_OFFSET + 6 - (i % 2 == 0 ? 0 : 10), i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "-->");
 		}
 		if(eof_get_ts_text(i, buffer))
 		{	//Draw time signature
-			textprintf_centre_ex(eof_window_editor->screen, eof_mono_font, xcoord - 20 + 3 + 16, EOF_EDITOR_RENDER_OFFSET + 4 - (i % 2 == 0 ? 0 : 10) - 12, i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "(%s)", buffer);
+			textprintf_centre_ex(eof_window_editor->screen, eof_mono_font, xcoord - 20 + 3 + 16, EOF_EDITOR_RENDER_OFFSET + 6 - (i % 2 == 0 ? 0 : 10) - 12, i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "(%s)", buffer);
 		}
 		beat_counter++;
 		if(beat_counter >= beats_per_measure)

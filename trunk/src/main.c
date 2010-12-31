@@ -270,10 +270,10 @@ float eof_get_porpos(unsigned long pos)
 	return porpos;
 }
 
-long eof_put_porpos(int beat, float porpos, float offset)
+long eof_put_porpos(unsigned long beat, float porpos, float offset)
 {
 	float fporpos = porpos + offset;
-	int cbeat = beat;
+	unsigned long cbeat = beat;
 	if(fporpos <= -1.0)
 	{
 //		allegro_message("a - %f", fporpos);
@@ -749,7 +749,7 @@ void eof_fix_window_title(void)
 		}
 		else
 		{
-			ustrcat(eof_window_title, eof_song->track[eof_selected_track]->track_name);
+			ustrcat(eof_window_title, eof_song->track[eof_selected_track]->name);
 		}
 		ustrcat(eof_window_title, ")");
 	}
@@ -1473,21 +1473,24 @@ void eof_read_global_keys(void)
 			key[KEY_I] = 0;
 		}
 
+		if(!KEY_EITHER_CTRL)
+		{	//Ensure these do not get used for the pro guitar keyboard shortcuts
 		/* decrement AV delay (-) */
-		if(key[KEY_MINUS])
-		{
-			if(eof_av_delay > 0)
+			if(key[KEY_MINUS])
 			{
-				eof_av_delay--;
+				if(eof_av_delay > 0)
+				{
+					eof_av_delay--;
+				}
+				key[KEY_MINUS] = 0;
 			}
-			key[KEY_MINUS] = 0;
-		}
 
 		/* increment AV delay (+) */
-		if(key[KEY_EQUALS])
-		{
-			eof_av_delay++;
-			key[KEY_EQUALS] = 0;
+			if(key[KEY_EQUALS])
+			{
+				eof_av_delay++;
+				key[KEY_EQUALS] = 0;
+			}
 		}
 	}
 
@@ -1922,7 +1925,8 @@ void eof_render_note_window(void)
 	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
 	char temp[1024] = {0};
 	unsigned long notepos;
-	char eof_pro_guitar_fret_bitmask_string[21] = {0};
+	char pro_guitar_string[30] = {0};
+	unsigned char fretvalue;
 
 	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	clear_to_color(eof_window_note->screen, eof_color_gray);
@@ -1938,8 +1942,8 @@ void eof_render_note_window(void)
 		textprintf_ex(eof_window_note->screen, font, 2, 24,  eof_color_white, -1, "Entry: %lu of %lu", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
 		if((eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		{	//If the catalog entry is a pro guitar note and the active track is a legacy track
-			snprintf(temp, 1023, "Would paste from \"%s\" as:",eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->track_name);
-			textprintf_ex(eof_window_note->screen, font, 2, 60, eof_color_white, -1, temp);
+			snprintf(temp, 1023, "Would paste from \"%s\" as:",eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->name);
+			textprintf_ex(eof_window_note->screen, font, 2, 53, eof_color_white, -1, temp);
 		}
 
 		if(eof_cselected_control < 0)
@@ -1972,7 +1976,7 @@ void eof_render_note_window(void)
 				{	//Ensure the top and bottom lines extend to the left of the piano roll
 					hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_music_length) / eof_zoom, eof_color_white);
 				}
-				else if(eof_selected_track != EOF_TRACK_VOCALS)
+				else if(eof_song->catalog->entry[eof_selected_catalog_entry].track != EOF_TRACK_VOCALS)
 				{	//Otherwise, if not drawing the vocal editor, draw the other fret lines from the first beat marker to the end of the chart
 					hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_music_length) / eof_zoom, eof_color_white);
 				}
@@ -2163,23 +2167,65 @@ void eof_render_note_window(void)
 					{	//If the bitmask applies to this string
 						if(index != 0)
 						{	//If another string number was already written to this string
-							eof_pro_guitar_fret_bitmask_string[index++] = ',';	//Insert a comma
-							eof_pro_guitar_fret_bitmask_string[index++] = ' ';	//And a space
+							pro_guitar_string[index++] = ',';	//Insert a comma
+							pro_guitar_string[index++] = ' ';	//And a space
 						}
-						eof_pro_guitar_fret_bitmask_string[index++] = '1' + i;	//'0' + # is converts a number of value # to a text character representation
+						pro_guitar_string[index++] = '1' + i;	//'0' + # is converts a number of value # to a text character representation
 					}
 				}
-				eof_pro_guitar_fret_bitmask_string[index] = '\0';	//Terminate the string
-				if(eof_pro_guitar_fret_bitmask_string[1] != '\0')
+				pro_guitar_string[index] = '\0';	//Terminate the string
+				if(pro_guitar_string[1] != '\0')
 				{	//If there are at least two strings denoted
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Fret value shortcuts apply to strings %s", eof_pro_guitar_fret_bitmask_string);
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Fret value shortcuts apply to strings %s", pro_guitar_string);
 				}
 				else
 				{	//There's only one string denoted, use a shortcut to just display the one character
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Fret value shortcuts apply to string %c", eof_pro_guitar_fret_bitmask_string[0]);
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Fret value shortcuts apply to string %c", pro_guitar_string[0]);
 				}
 			}
-		}
+
+			tracknum = eof_song->track[eof_selected_track]->tracknum;
+			if((eof_selection.current < eof_song->pro_guitar_track[tracknum]->notes) && (eof_selection.track == eof_selected_track))
+			{	//If a note in the active track is selected, display a line with its information
+				ypos += 12;
+				for(i = 0, bitmask = 1, index = 0; i < 6; i++, bitmask<<=1)
+				{	//For each of the 6 usable strings
+					if(index != 0)
+					{	//If another fret value was already written to this string
+						pro_guitar_string[index++] = ' ';	//Insert a space
+					}
+					if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->note & bitmask)
+					{	//If the string is populated for the selected pro guitar note
+						fretvalue = eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[i];
+						if(fretvalue == 0xFF)
+						{	//If this string is muted
+							pro_guitar_string[index++] = 'X';	//Write a capital x to indicate muted string
+						}
+						else
+						{
+							if(fretvalue > 9)
+							{	//If the fret value uses two digits instead of one
+								pro_guitar_string[index++] = '0' + (fretvalue / 10);	//Write the tens digit
+							}
+							pro_guitar_string[index++] = '0' + (fretvalue % 10);	//Write the ones digit
+						}
+					}
+					else
+					{
+						pro_guitar_string[index++] = '_';	//Write an underscore to indicate string not played
+					}
+				}
+				pro_guitar_string[index] = '\0';	//Terminate the string
+				if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name[0] != '\0')
+				{	//If this note was given a name, display it in addition to the fretting
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: %s", pro_guitar_string, eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name);
+				}
+				else
+				{	//Otherwise just display the fretting
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s", pro_guitar_string);
+				}
+			}//If a note in the active track is selected, display a line with its information
+		}//Display information specific to pro guitar tracks
 	}//If show catalog is disabled
 
 	rect(eof_window_note->screen, 0, 0, eof_window_note->w - 1, eof_window_note->h - 1, makecol(160, 160, 160));

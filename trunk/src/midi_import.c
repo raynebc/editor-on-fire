@@ -507,7 +507,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 								eof_import_events[i]->type = 0;
 								for(j = 1; j < EOF_TRACKS_MAX + 1; j++)
 								{	//Compare the track name against the tracks in eof_midi_tracks[]
-									if(!ustricmp(text, eof_midi_tracks[j].track_name))
+									if(!ustricmp(text, eof_midi_tracks[j].name))
 									{
 										eof_import_events[i]->type = eof_midi_tracks[j].tracknum;
 										if(eof_midi_tracks[j].track_type == EOF_TRACK_GUITAR)

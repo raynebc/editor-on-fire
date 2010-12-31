@@ -226,7 +226,7 @@ void eof_prepare_song_menu(void)
 			if((i + 1 < eof_song->tracks) && (eof_song->track[i+1] != NULL))
 			{	//If the track exists, copy its name into the string used by the track menu
 				ptr[0] = ' ';	//Add a leading space
-				ustrncpy(&(ptr[1]),eof_song->track[i+1]->track_name,EOF_TRACK_NAME_SIZE-1);
+				ustrncpy(&(ptr[1]),eof_song->track[i+1]->name,EOF_TRACK_NAME_SIZE-1);
 					//Append the track name to the menu string, starting at index 1
 			}
 			else
@@ -1338,8 +1338,6 @@ int eof_menu_catalog_delete(void)
 		for(i = eof_selected_catalog_entry; i < eof_song->catalog->entries - 1; i++)
 		{
 			memcpy(&eof_song->catalog->entry[i], &eof_song->catalog->entry[i + 1], sizeof(EOF_CATALOG_ENTRY));
-//			eof_song->catalog->entry[i].start_pos = eof_song->catalog->entry[i + 1].start_pos;
-//			eof_song->catalog->entry[i].end_pos = eof_song->catalog->entry[i + 1].end_pos;
 		}
 		eof_song->catalog->entries--;
 		if((eof_selected_catalog_entry >= eof_song->catalog->entries) && (eof_selected_catalog_entry > 0))

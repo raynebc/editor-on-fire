@@ -677,8 +677,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					WriteVarLen(0, fp);
 					pack_putc(0xff, fp);
 					pack_putc(0x03, fp);
-					WriteVarLen(ustrlen(sp->track[j]->track_name), fp);
-					pack_fwrite(sp->track[j]->track_name, ustrlen(sp->track[j]->track_name), fp);
+					WriteVarLen(ustrlen(sp->track[j]->name), fp);
+					pack_fwrite(sp->track[j]->name, ustrlen(sp->track[j]->name), fp);
 
 					/* add MIDI events */
 					lastdelta = 0;
@@ -870,8 +870,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				WriteVarLen(0, fp);
 				pack_putc(0xff, fp);
 				pack_putc(0x03, fp);
-				WriteVarLen(ustrlen(sp->track[j]->track_name), fp);
-				pack_fwrite(sp->track[j]->track_name, ustrlen(sp->track[j]->track_name), fp);
+				WriteVarLen(ustrlen(sp->track[j]->name), fp);
+				pack_fwrite(sp->track[j]->name, ustrlen(sp->track[j]->name), fp);
 
 				/* add MIDI events */
 				lastdelta=0;
