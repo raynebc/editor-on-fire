@@ -1342,7 +1342,7 @@ allegro_message("Second pass complete");
 				}//For each event in this track
 //				eof_legacy_track_resize(sp->legacy_track[tracknum], note_count[picked_track]);
 				eof_track_resize(sp, picked_track, note_count[picked_track]);
-				if(eof_track_get_size(sp, picked_track) > 0)
+				if(eof_get_track_size(sp, picked_track) > 0)
 				{
 					eof_track_find_crazy_notes(sp, picked_track);
 					used_track[picked_track] = 1;

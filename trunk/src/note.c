@@ -82,7 +82,7 @@ int eof_adjust_notes(int offset)
 
 	for(i = 1; i < eof_song->tracks; i++)
 	{	//For each track
-		for(j = 0; j < eof_track_get_size(eof_song, i); j++)
+		for(j = 0; j < eof_get_track_size(eof_song, i); j++)
 		{	//For each note in the track
 			eof_set_note_pos(eof_song, i, j, eof_get_note_pos(eof_song, i, j) + offset);	//Add the offset to the note's position
 		}
@@ -160,7 +160,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	{	//Render an existing note
 		if(track >= eof_song->tracks)
 			return 1;	//Error, signal to stop rendering
-		if(notenum >= eof_track_get_size(eof_song, track))
+		if(notenum >= eof_get_track_size(eof_song, track))
 			return 1;	//Invalid note number, signal to stop rendering
 
 		tracknum = eof_song->track[track]->tracknum;
@@ -705,7 +705,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 //Validate parameters
 	tracknum = eof_song->track[track]->tracknum;
-	if((track == 0) || (track >= eof_song->tracks) || ((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)) || (notenum >= eof_track_get_size(eof_song, track)))
+	if((track == 0) || (track >= eof_song->tracks) || ((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)) || (notenum >= eof_get_track_size(eof_song, track)))
 	{	//If an invalid track or note number was passsed
 		return -1;	//Error, signal to stop rendering (3D window renders last note to first)
 	}
@@ -896,7 +896,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	char notetype = 0;
 
 //Validate parameters
-	if((track == 0) || (track >= eof_song->tracks) || ((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)) || (notenum >= eof_track_get_size(eof_song, track)))
+	if((track == 0) || (track >= eof_song->tracks) || ((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)) || (notenum >= eof_get_track_size(eof_song, track)))
 	{	//If an invalid track or note number was passsed
 		return -1;	//Error, signal to stop rendering (3D window renders last note to first)
 	}
@@ -1182,7 +1182,7 @@ int eof_note_compare(unsigned long track, unsigned long note1, unsigned long not
 	unsigned long note1note, note2note;
 
 	//Validate parameters
-	if((track == 0) || (track >= eof_song->tracks) || (note1 >= eof_track_get_size(eof_song, track)) || (note2 >= eof_track_get_size(eof_song, track)))
+	if((track == 0) || (track >= eof_song->tracks) || (note1 >= eof_get_track_size(eof_song, track)) || (note2 >= eof_get_track_size(eof_song, track)))
 	{	//If an invalid track or note number was passed
 		return -1;	//Return error
 	}

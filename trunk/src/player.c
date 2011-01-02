@@ -45,7 +45,7 @@ void eof_music_play(void)
 		{
 			eof_music_end_pos = 0;
 			eof_music_rewind_pos = eof_music_length;
-			for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 			{	//For each note in the current track
 				if(eof_selection.multi[i] && (eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) > eof_music_end_pos))
 				{

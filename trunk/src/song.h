@@ -393,7 +393,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp);	//Loads data from the specif
 EOF_SONG * eof_load_song(const char * fn);	//Loads the specified EOF file, validating the file header and loading the appropriate OGG file
 int eof_save_song(EOF_SONG * sp, const char * fn);	//Saves the song to file
 
-unsigned long eof_track_get_size(EOF_SONG *sp, unsigned long track);						//Returns the number of notes/lyrics in the specified track, or 0 on error
+unsigned long eof_get_track_size(EOF_SONG *sp, unsigned long track);						//Returns the number of notes/lyrics in the specified track, or 0 on error
 unsigned long eof_get_used_lanes(unsigned long track, unsigned long startpos, unsigned long endpos, char type);
 	//Returns a bitmask representing all lanes used within the specified track difficulty during the specified time span
 unsigned long eof_get_num_solos(EOF_SONG *sp, unsigned long track);							//Returns the number of solos in the specified track, or 0 on error
