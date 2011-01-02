@@ -1067,7 +1067,7 @@ void eof_read_editor_keys(void)
 				{
 					if(eof_mark_drums_as_cymbal)
 					{	//If the user opted to make all new drum notes cymbals automatically
-						eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_track_get_size(eof_song, eof_selected_track)-1);
+						eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track)-1);
 					}
 					eof_detect_difficulties(eof_song);
 				}
@@ -1084,7 +1084,7 @@ void eof_read_editor_keys(void)
 					{
 						if(eof_mark_drums_as_cymbal)
 						{	//If the user opted to make all new drum notes cymbals automatically
-							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_track_get_size(eof_song, eof_selected_track)-1);
+							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track)-1);
 						}
 						eof_entering_note_note = new_note;
 						eof_entering_note = 1;
@@ -1181,7 +1181,7 @@ void eof_read_editor_keys(void)
 					{
 						if(eof_mark_drums_as_cymbal)
 						{	//If the user opted to make all new drum notes cymbals automatically
-							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_track_get_size(eof_song, eof_selected_track)-1);
+							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track)-1);
 						}
 						eof_entering_note_note = new_note;
 						eof_entering_note = 1;
@@ -1278,7 +1278,7 @@ void eof_read_editor_keys(void)
 						{
 							if(eof_mark_drums_as_cymbal)
 							{	//If the user opted to make all new drum notes cymbals automatically
-								eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_track_get_size(eof_song, eof_selected_track)-1);
+								eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track)-1);
 							}
 							eof_entering_note_note = new_note;
 							eof_entering_note = 1;
@@ -1359,7 +1359,7 @@ void eof_read_editor_keys(void)
 				{
 					reductionvalue = 10;
 				}
-				for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+				for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 				{
 					if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 					{
@@ -1370,7 +1370,7 @@ void eof_read_editor_keys(void)
 			else
 			{
 				long b;
-				for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+				for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 				{
 					if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 					{
@@ -1411,7 +1411,7 @@ void eof_read_editor_keys(void)
 				{
 					increasevalue = 10;
 				}
-				for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+				for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 				{
 					if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 					{
@@ -1421,7 +1421,7 @@ void eof_read_editor_keys(void)
 			}
 			else
 			{
-				for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+				for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 				{
 					if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 					{
@@ -1880,9 +1880,9 @@ void eof_read_editor_keys(void)
 							{
 								if(eof_mark_drums_as_cymbal)
 								{	//If the user opted to make all new drum notes cymbals automatically
-									eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_track_get_size(eof_song, eof_selected_track)-1);
+									eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track)-1);
 								}
-								eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_track_get_size(eof_song, eof_selected_track) - 1);	//Get the position of the last note that was added
+								eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1);	//Get the position of the last note that was added
 								eof_selection.range_pos_1 = eof_selection.current_pos;
 								eof_selection.range_pos_2 = eof_selection.current_pos;
 								eof_selection.track = eof_selected_track;
@@ -2148,7 +2148,7 @@ void eof_editor_drum_logic(void)
 			{
 				if(eof_mark_drums_as_cymbal)
 				{	//If the user opted to make all new drum notes cymbals automatically
-					eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_track_get_size(eof_song, eof_selected_track)-1);
+					eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track)-1);
 				}
 				eof_snap_logic(&eof_snap, new_note->pos);
 				new_note->pos = eof_snap.pos;
@@ -2203,7 +2203,7 @@ void eof_editor_logic(void)
 			eof_pen_note.pos = eof_snap.pos;
 			use_this_x = lpos;
 			eof_pen_visible = 1;
-			for(i = 0; (i < eof_track_get_size(eof_song, eof_selected_track)) && (eof_hover_note < 0); i++)
+			for(i = 0; (i < eof_get_track_size(eof_song, eof_selected_track)) && (eof_hover_note < 0); i++)
 			{	//For each note in the active track, until a hover note is found
 				if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
 				{	//If the note is in the active difficulty
@@ -2316,7 +2316,7 @@ void eof_editor_logic(void)
 						{
 							if(eof_selection.range_pos_1 < eof_selection.range_pos_2)
 							{
-								for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+								for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 								{
 									if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) >= eof_selection.range_pos_1) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= eof_selection.range_pos_2))
 									{
@@ -2332,7 +2332,7 @@ void eof_editor_logic(void)
 							}
 							else
 							{
-								for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+								for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 								{
 									if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) >= eof_selection.range_pos_2) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= eof_selection.range_pos_1))
 									{
@@ -2514,7 +2514,7 @@ void eof_editor_logic(void)
 						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					}
 					eof_notes_moved = 1;
-					for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+					for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 					{
 						if(eof_selection.multi[i])
 						{
@@ -2543,7 +2543,7 @@ void eof_editor_logic(void)
 					}
 					if(revert)
 					{
-						for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+						for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 						{
 							if(eof_selection.multi[i])
 							{
@@ -2602,7 +2602,7 @@ void eof_editor_logic(void)
 						{
 							if(eof_mark_drums_as_cymbal)
 							{	//If the user opted to make all new drum notes cymbals automatically
-								eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_track_get_size(eof_song, eof_selected_track)-1);
+								eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track)-1);
 							}
 							eof_selection.current_pos = new_note->pos;
 							eof_selection.range_pos_1 = eof_selection.current_pos;
@@ -2627,7 +2627,7 @@ void eof_editor_logic(void)
 					{
 						if(eof_mark_drums_as_cymbal)
 						{	//If the user opted to make all new drum notes cymbals automatically
-							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_track_get_size(eof_song,eof_selected_track)-1);
+							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song,eof_selected_track)-1);
 						}
 						eof_selection.current_pos = new_note->pos;
 						eof_selection.range_pos_1 = eof_selection.current_pos;
@@ -2658,7 +2658,7 @@ void eof_editor_logic(void)
 					reductionvalue = eof_mickey_z * 10;
 				}
 
-				for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+				for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 				{
 					if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 					{
@@ -2671,7 +2671,7 @@ void eof_editor_logic(void)
 				long b;
 				if(eof_mickey_z > 0)
 				{
-					for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+					for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 					{
 						if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 						{
@@ -2697,7 +2697,7 @@ void eof_editor_logic(void)
 				}
 				else if(eof_mickey_z < 0)
 				{
-					for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+					for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 					{
 						if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 						{
@@ -2742,7 +2742,7 @@ void eof_editor_logic(void)
 				break;
 			}
 		}
-		for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{
 			if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
 			{
@@ -2754,11 +2754,11 @@ void eof_editor_logic(void)
 				}
 			}
 		}
-		if(i == eof_track_get_size(eof_song, eof_selected_track))
+		if(i == eof_get_track_size(eof_song, eof_selected_track))
 		{
 			eof_hover_note = -1;
 		}
-		for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{
 			if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
 			{
@@ -2785,7 +2785,7 @@ void eof_editor_logic(void)
 		eof_hover_note_2 = -1;
 		if(eof_song->catalog->entry[eof_selected_catalog_entry].track != EOF_TRACK_VOCALS)
 		{	//Perform fret catalog playback logic for legacy format tracks
-			for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 			{
 				if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_song->catalog->entry[eof_selected_catalog_entry].type)
 				{
@@ -3667,7 +3667,7 @@ void eof_render_editor_window(void)
 
 	eof_render_editor_window_common();	//Perform rendering that is common to the note and the vocal editor displays
 
-	numnotes = eof_track_get_size(eof_song, eof_selected_track);	//Get the number of notes in this legacy/pro guitar track
+	numnotes = eof_get_track_size(eof_song, eof_selected_track);	//Get the number of notes in this legacy/pro guitar track
 	start = eof_determine_piano_roll_left_edge();
 	for(i = 0; i < numnotes; i++)
 	{	//Render all visible notes in the list

@@ -671,7 +671,7 @@ int eof_menu_beat_calculate_bpm(void)
 	double bpm = 0.0;
 	unsigned long bpm_count = 0;
 
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if(eof_selection.multi[i])
 		{

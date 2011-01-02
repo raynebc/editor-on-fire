@@ -889,7 +889,7 @@ void eof_determine_phrase_status(void)
 	EOF_PHRASE_SECTION *sectionptr = NULL;
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		/* clear the flags */
 		notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
@@ -1044,7 +1044,7 @@ int eof_figure_difficulty(void)
 	}
 
 	/* see which difficulties are populated with notes */
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		nt[(int)eof_get_note_type(eof_song, eof_selected_track, i)] = 1;
 	}
@@ -1161,7 +1161,7 @@ int eof_figure_part(void)
 {
 	int part[EOF_TRACKS_MAX+1] = {0};
 
-	if(eof_track_get_size(eof_song,eof_selected_track) == 0)
+	if(eof_get_track_size(eof_song,eof_selected_track) == 0)
 		return -1;
 
 	part[EOF_TRACK_GUITAR] = 0;
@@ -2024,7 +2024,7 @@ void eof_render_note_window(void)
 			}//If drawing a vocal catalog entry
 			else
 			{	//If drawing a non vocal catalog entry
-				for(i = 0; i < eof_track_get_size(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track); i++)
+				for(i = 0; i < eof_get_track_size(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track); i++)
 				{	//For each note in the entry's track
 					notepos = eof_get_note_pos(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track, i);	//Get the note's position
 					if(notepos > eof_song->catalog->entry[eof_selected_catalog_entry].end_pos)
@@ -2100,7 +2100,7 @@ void eof_render_note_window(void)
 		}
 		else
 		{
-			if(eof_selection.current < eof_track_get_size(eof_song, eof_selected_track))
+			if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
 			{
 				textprintf_ex(eof_window_note->screen, font, 2, 48, eof_color_white, -1, "Note = %ld : Pos = %lu : Length = %lu", eof_selection.current, eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current), eof_get_note_length(eof_song, eof_selected_track, eof_selection.current));
 			}
@@ -2650,7 +2650,7 @@ void eof_render_3d_window(void)
 //	int last_note = 0;
 	long tr;
 	/* draw the note tails and notes */
-	numnotes = eof_track_get_size(eof_song, eof_selected_track);	//Get the number of notes in this legacy/pro guitar track
+	numnotes = eof_get_track_size(eof_song, eof_selected_track);	//Get the number of notes in this legacy/pro guitar track
 	for(i = numnotes; i > 0; i--)
 	{	//Render 3D notes from last to first so that the earlier notes are in front
 		if(eof_note_type == eof_get_note_type(eof_song, eof_selected_track, i-1))

@@ -295,7 +295,7 @@ unsigned long eof_count_tracks(void)
 
 	for(i = 1; i < eof_song->tracks; i++)
 	{
-		if(eof_track_get_size(eof_song, i))
+		if(eof_get_track_size(eof_song, i))
 		{
 			count++;
 		}
@@ -381,7 +381,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			tracknum = sp->track[j]->tracknum;
 
 			/* fill in notes */
-			if(eof_track_get_size(sp, j) > 0)
+			if(eof_get_track_size(sp, j) > 0)
 			{	//If this track has notes
 				notetrackspopulated[j] = 1;	//Remember that this track is populated
 				/* clear MIDI events list */
@@ -394,7 +394,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				prodrums = 0;
 				if(sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 				{	//If this is a drum track
-					for(i = 0, prodrums = 0; i < eof_track_get_size(sp, j); i++)
+					for(i = 0, prodrums = 0; i < eof_get_track_size(sp, j); i++)
 					{	//For each note in the track
 						note = eof_get_note_note(sp, j, i);
 						noteflags = eof_get_note_flags(sp, j, i);
@@ -410,7 +410,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 				/* write the MTrk MIDI data to a temp file
 				use size of the file as the MTrk header length */
-				for(i = 0; i < eof_track_get_size(sp, j); i++)
+				for(i = 0; i < eof_get_track_size(sp, j); i++)
 				{	//For each note in the track
 					switch(eof_get_note_type(sp, j, i))
 					{
@@ -644,7 +644,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				{	//Ensure that any notes that are still on are terminated
 					if(eof_midi_note_status[i] != 0)	//If this note was left on, write a note off at the end of the last charted note
 					{
-						notenum = eof_track_get_size(sp, j) - 1;	//The index of the last note in this track
+						notenum = eof_get_track_size(sp, j) - 1;	//The index of the last note in this track
 						eof_add_midi_event(eof_get_note_pos(sp, j, notenum) + eof_get_note_length(sp, j, notenum),0x80,i);
 					}
 				}

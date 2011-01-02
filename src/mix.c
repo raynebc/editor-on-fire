@@ -230,7 +230,7 @@ void eof_mix_find_claps(void)
 	}
 	else
 	{
-		for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{
 			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_note(eof_song, eof_selected_track, i) & eof_mix_claps_note))
 			{

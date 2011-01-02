@@ -227,7 +227,7 @@ void eof_prepare_note_menu(void)
 		}
 		else
 		{	//PART VOCALS NOT SELECTED
-			for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 			{	//For each note in the active track
 				if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 				{
@@ -667,7 +667,7 @@ int eof_menu_note_transpose_up(void)
 	if(eof_vocals_selected)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_LYRIC_NOTE);	//Perform a cumulative undo for lyric pitch transpose operations
-		for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each lyric in the active track
 			note = eof_get_note_note(eof_song, eof_selected_track, i);
 			if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && (note != EOF_LYRIC_PERCUSSION))
@@ -684,7 +684,7 @@ int eof_menu_note_transpose_up(void)
 			max = 63;
 		}
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the active track
 			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 			{	//If the note is in the same track as the selected notes, is selected and is the same difficulty as the selected notes
@@ -727,7 +727,7 @@ int eof_menu_note_transpose_down(void)
 	if(eof_vocals_selected)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_LYRIC_NOTE);	//Perform a cumulative undo for lyric pitch transpose operations
-		for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each lyric in the active track
 			note = eof_get_note_note(eof_song, eof_selected_track, i);
 			if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && (note != EOF_LYRIC_PERCUSSION))
@@ -740,7 +740,7 @@ int eof_menu_note_transpose_down(void)
 	else
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the active track
 			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 			{	//If the note is in the same track as the selected notes, is selected and is the same difficulty as the selected notes
@@ -846,14 +846,14 @@ int eof_menu_note_resnap(void)
 		return eof_menu_note_resnap_vocal();
 	}
 	unsigned long i;
-	unsigned long oldnotes = eof_track_get_size(eof_song, eof_selected_track);
+	unsigned long oldnotes = eof_get_track_size(eof_song, eof_selected_track);
 
 	if(eof_snap_mode == EOF_SNAP_OFF)
 	{
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
@@ -872,7 +872,7 @@ int eof_menu_note_resnap(void)
 		}
 	}
 	eof_track_fixup_notes(eof_song, eof_selected_track, 1);
-	if(oldnotes != eof_track_get_size(eof_song, eof_selected_track))
+	if(oldnotes != eof_get_track_size(eof_song, eof_selected_track))
 	{
 		allegro_message("Warning! Some notes snapped to the same position and were automatically combined.");
 	}
@@ -898,7 +898,7 @@ int eof_menu_note_delete_vocal(void)
 	if(d)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-		for(i = eof_track_get_size(eof_song, eof_selected_track); i > 0; i--)
+		for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
 		{
 			if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i-1] && (eof_get_note_type(eof_song, eof_selected_track, i-1) == eof_note_type))
 			{
@@ -922,7 +922,7 @@ int eof_menu_note_delete(void)
 	}
 	unsigned long i, d = 0;
 
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
@@ -932,7 +932,7 @@ int eof_menu_note_delete(void)
 	if(d)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-		for(i = eof_track_get_size(eof_song, eof_selected_track); i > 0; i--)
+		for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
 		{
 			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i-1] && (eof_selection.track == eof_selected_track) && (eof_get_note_type(eof_song, eof_selected_track, i-1) == eof_note_type))
 			{
@@ -957,7 +957,7 @@ int eof_menu_note_toggle_green(void)
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
@@ -990,7 +990,7 @@ int eof_menu_note_toggle_red(void)
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
@@ -1013,7 +1013,7 @@ int eof_menu_note_toggle_yellow(void)
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
@@ -1046,7 +1046,7 @@ int eof_menu_note_toggle_blue(void)
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
@@ -1079,7 +1079,7 @@ int eof_menu_note_toggle_purple(void)
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
@@ -1115,7 +1115,7 @@ int eof_menu_note_toggle_orange(void)
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
@@ -1149,7 +1149,7 @@ int eof_menu_note_toggle_crazy(void)
 	if((track_behavior == EOF_DRUM_TRACK_BEHAVIOR) || (track_behavior == EOF_VOCAL_TRACK_BEHAVIOR) || (track_behavior == EOF_KEYS_TRACK_BEHAVIOR))
 		return 1;	//Do not allow this function to run on any drum, vocal or keys track
 
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{	//If the note is in the active instrument difficulty and is selected
@@ -1178,7 +1178,7 @@ int eof_menu_note_toggle_double_bass(void)
 	if(eof_selected_track != EOF_TRACK_DRUM)
 		return 1;	//Do not allow this function to run when PART DRUMS is not active
 
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == EOF_NOTE_AMAZING) && (eof_get_note_note(eof_song, eof_selected_track, i) & 1))
 		{	//If this note is in the currently active track, is selected, is in the Expert difficulty and has a green gem
@@ -1204,7 +1204,7 @@ int eof_menu_note_toggle_rb3_cymbal_green(void)
 	if(eof_selected_track != EOF_TRACK_DRUM)
 		return 1;	//Do not allow this function to run when PART DRUMS is not active
 
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
@@ -1231,7 +1231,7 @@ int eof_menu_note_toggle_rb3_cymbal_yellow(void)
 	if(eof_selected_track != EOF_TRACK_DRUM)
 		return 1;	//Do not allow this function to run when PART DRUMS is not active
 
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
@@ -1258,7 +1258,7 @@ int eof_menu_note_toggle_rb3_cymbal_blue(void)
 	if(eof_selected_track != EOF_TRACK_DRUM)
 		return 1;	//Do not allow this function to run when PART DRUMS is not active
 
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
@@ -1286,7 +1286,7 @@ int eof_menu_note_remove_cymbal(void)
 	if(eof_selected_track != EOF_TRACK_DRUM)
 		return 1;	//Do not allow this function to run when PART DRUMS is not active
 
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
@@ -1374,7 +1374,7 @@ int eof_menu_note_push_back(void)
 
 	if(eof_count_selected_notes(NULL, 0) > 0)
 	{	//If notes are selected
-		for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the active track
 			if(eof_selection.multi[i])
 			{
@@ -1386,7 +1386,7 @@ int eof_menu_note_push_back(void)
 	}
 	else
 	{
-		for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{
 			if(eof_get_note_pos(eof_song, eof_selected_track, i) >= eof_music_pos - eof_av_delay)
 			{
@@ -1402,25 +1402,24 @@ int eof_menu_note_push_back(void)
 int eof_menu_note_push_up(void)
 {
 	unsigned long i;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	float porpos;
 	long beat;
 
 	if(eof_count_selected_notes(NULL, 0) > 0)
 	{	//If notes are selected
-		for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the active track
 			if(eof_selection.multi[i])
 			{
 				beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i));
-				porpos = eof_get_porpos(eof_song->legacy_track[tracknum]->note[i]->pos);
+				porpos = eof_get_porpos(eof_get_note_pos(eof_song, eof_selected_track, i));
 				eof_set_note_pos(eof_song, eof_selected_track, i, eof_put_porpos(beat, porpos, -eof_menu_note_push_get_offset()));
 			}
 		}
 	}
 	else
 	{
-		for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the active track
 			if(eof_get_note_pos(eof_song, eof_selected_track, i) >= eof_music_pos - eof_av_delay)
 			{
@@ -1440,7 +1439,7 @@ int eof_menu_note_create_bre(void)
 	long last_pos = eof_music_length;
 	EOF_NOTE * new_note = NULL;
 
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
@@ -1559,7 +1558,7 @@ int eof_menu_solo_mark(void)
 	long sel_end = 0;
 	EOF_PHRASE_SECTION *soloptr = NULL;
 
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
@@ -1601,7 +1600,7 @@ int eof_menu_solo_unmark(void)
 	EOF_PHRASE_SECTION *soloptr = NULL;
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
@@ -1648,7 +1647,7 @@ int eof_menu_star_power_mark(void)
 	long sel_end = 0;
 	EOF_PHRASE_SECTION *starpowerptr = NULL;
 
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
@@ -1694,7 +1693,7 @@ int eof_menu_star_power_unmark(void)
 	EOF_PHRASE_SECTION *starpowerptr = NULL;
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
@@ -1876,7 +1875,7 @@ int eof_menu_hopo_auto(void)
 	if((eof_selected_track == EOF_TRACK_DRUM) || eof_vocals_selected)
 		return 1;	//Do not allow this function to run when PART DRUMS or PART VOCALS is active
 
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if(eof_selection.multi[i])
 		{	//If the note is selected
@@ -1916,7 +1915,7 @@ int eof_menu_hopo_cycle(void)
 
 	if((eof_count_selected_notes(NULL, 0) > 0))
 	{
-		for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the active track
 			if(eof_selection.multi[i])
 			{	//If the note is selected
@@ -1982,7 +1981,7 @@ int eof_menu_hopo_force_on(void)
 	if((eof_selected_track == EOF_TRACK_DRUM) || eof_vocals_selected)
 		return 1;	//Do not allow this function to run when PART DRUMS or PART VOCALS is active
 
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if(eof_selection.multi[i])
 		{
@@ -2024,7 +2023,7 @@ int eof_menu_hopo_force_off(void)
 	if((eof_selected_track == EOF_TRACK_DRUM) || eof_vocals_selected)
 		return 1;	//Do not allow this function to run when PART DRUMS or PART VOCALS is active
 
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if(eof_selection.multi[i])
 		{
@@ -2061,7 +2060,7 @@ int eof_transpose_possible(int dir)
 	/* no notes, no transpose */
 	if(eof_vocals_selected)
 	{
-		if(eof_track_get_size(eof_song, eof_selected_track) <= 0)
+		if(eof_get_track_size(eof_song, eof_selected_track) <= 0)
 		{
 			return 0;
 		}
@@ -2071,7 +2070,7 @@ int eof_transpose_possible(int dir)
 			return 0;
 		}
 
-		for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//Test if the lyric can transpose the given amount in the given direction
 			if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
 			{
@@ -2097,7 +2096,7 @@ int eof_transpose_possible(int dir)
 		{	//If open bass is enabled, or the track has more than 5 lanes, lane 5 can transpose up to lane 6
 			max = 32;
 		}
-		if(eof_track_get_size(eof_song, eof_selected_track) <= 0)
+		if(eof_get_track_size(eof_song, eof_selected_track) <= 0)
 		{
 			return 0;
 		}
@@ -2107,7 +2106,7 @@ int eof_transpose_possible(int dir)
 			return 0;
 		}
 
-		for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{
 			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 			{
@@ -2348,7 +2347,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run unless the pro guitar track is active
 
-	if(eof_selection.current >= eof_track_get_size(eof_song, eof_selected_track))
+	if(eof_selection.current >= eof_get_track_size(eof_song, eof_selected_track))
 		return 1;	//Do not allow this function to run if a valid note isn't selected
 
 	if(!eof_music_paused)
@@ -2602,7 +2601,7 @@ int eof_menu_note_toggle_tapping(void)
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
@@ -2639,7 +2638,7 @@ int eof_menu_note_remove_tapping(void)
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
@@ -2667,7 +2666,7 @@ int eof_menu_note_toggle_slide_up(void)
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
@@ -2695,7 +2694,7 @@ int eof_menu_note_toggle_slide_down(void)
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
@@ -2723,7 +2722,7 @@ int eof_menu_note_remove_slide(void)
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
@@ -2751,7 +2750,7 @@ int eof_menu_note_toggle_palm_muting(void)
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
@@ -2778,7 +2777,7 @@ int eof_menu_note_remove_palm_muting(void)
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
@@ -2811,7 +2810,7 @@ int eof_menu_arpeggio_mark(void)
 		return 1;	//Do not allow this function to run unless a pro guitar track is active
 
 	//Find the start and end position of the collection of selected notes in the active difficulty
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{	//If the note is selected and is in the active track and difficulty
@@ -2853,7 +2852,7 @@ int eof_menu_arpeggio_mark(void)
 		eof_song->pro_guitar_track[tracknum]->arpeggio[existingphrasenum].start_pos = sel_start;
 		eof_song->pro_guitar_track[tracknum]->arpeggio[existingphrasenum].end_pos = sel_end;
 	}
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && ((eof_get_note_pos(eof_song, eof_selected_track, i) >= sel_start) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= sel_end)))
 		{	//If the note is in the active track difficulty and is within the created/edited phrase
@@ -2875,7 +2874,7 @@ int eof_menu_arpeggio_unmark(void)
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{	//If the note is selected and is in the active track difficulty
@@ -2949,7 +2948,7 @@ int eof_menu_trill_mark(void)
 		return 1;	//Do not allow this function to run unless a pro/legacy guitar/bass track is active
 
 	//Find the start and end position of the collection of selected notes in the active difficulty
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{	//If the note is selected and is in the active track and difficulty
@@ -3010,7 +3009,7 @@ int eof_menu_tremolo_mark(void)
 		return 1;	//Do not allow this function to run unless a pro/legacy guitar/bass track is active
 
 	//Find the start and end position of the collection of selected notes in the active difficulty
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{	//If the note is selected and is in the active track and difficulty
@@ -3067,7 +3066,7 @@ int eof_menu_trill_unmark(void)
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{	//If the note is selected and is in the active track difficulty
@@ -3096,7 +3095,7 @@ int eof_menu_tremolo_unmark(void)
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	for(i = 0; i < eof_track_get_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{	//If the note is selected and is in the active track difficulty

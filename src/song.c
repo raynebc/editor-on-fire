@@ -784,7 +784,7 @@ void eof_fixup_notes(void)
 {
 	unsigned long i, j;
 
-	if(eof_selection.current < eof_track_get_size(eof_song, eof_selected_track))
+	if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
 	{
 		eof_selection.multi[eof_selection.current] = 0;
 	}
@@ -827,7 +827,7 @@ void eof_detect_difficulties(EOF_SONG * sp)
 	eof_note_type_name[4][0] = ' ';
 	eof_vocal_tab_name[0][0] = ' ';
 
-	for(i = 0; i < eof_track_get_size(sp, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(sp, eof_selected_track); i++)
 	{
 		if(sp->track[eof_selected_track]->track_format == EOF_VOCAL_TRACK_FORMAT)
 		{
@@ -2340,7 +2340,7 @@ EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_note(EOF_PRO_GUITAR_TRACK *tp)
 	return NULL;
 }
 
-unsigned long eof_track_get_size(EOF_SONG *sp, unsigned long track)
+unsigned long eof_get_track_size(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long tracknum;
 
@@ -2394,7 +2394,7 @@ void eof_track_delete_note(EOF_SONG *sp, unsigned long track, unsigned long note
 		return;
 	tracknum = sp->track[track]->tracknum;
 
-	if(note < eof_track_get_size(sp, track))
+	if(note < eof_get_track_size(sp, track))
 	{
 		switch(sp->track[track]->track_format)
 		{
@@ -2419,7 +2419,7 @@ void eof_track_resize(EOF_SONG *sp, unsigned long track, unsigned long size)
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
-	oldsize = eof_track_get_size(sp, track);
+	oldsize = eof_get_track_size(sp, track);
 
 	if(size > oldsize)
 	{	//If this track is being grown
@@ -3191,7 +3191,7 @@ void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track)
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
 
-	for(i = 0; i < eof_track_get_size(sp, track); i++)
+	for(i = 0; i < eof_get_track_size(sp, track); i++)
 	{	//For each note in the track
 		next = eof_track_fixup_next_note(sp, track, i);
 		if(next >= 0)
@@ -3456,7 +3456,7 @@ void eof_pro_guitar_track_add_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long star
 
 void eof_note_set_tail_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos)
 {
-	if((sp == NULL) || (track >= sp->tracks) || (note >= eof_track_get_size(sp, track)))
+	if((sp == NULL) || (track >= sp->tracks) || (note >= eof_get_track_size(sp, track)))
 		return;
 
 	eof_set_note_length(sp, track, note, pos - eof_get_note_pos(sp, track, note));
@@ -3466,7 +3466,7 @@ unsigned long eof_get_used_lanes(unsigned long track, unsigned long startpos, un
 {
 	unsigned long ctr, bitmask = 0;
 
-	for(ctr = 0; ctr < eof_track_get_size(eof_song, track); ctr++)
+	for(ctr = 0; ctr < eof_get_track_size(eof_song, track); ctr++)
 	{	//For each note in the specified track
 		if((eof_get_note_type(eof_song, track, ctr) == type) && (eof_get_note_pos(eof_song, track, ctr) >= startpos) && (eof_get_note_pos(eof_song, track, ctr) <= endpos))
 		{	//If the note is in the specified difficulty and is within the specified time range
@@ -3795,7 +3795,7 @@ void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourc
 	void *result = NULL;
 
 	//Validate parameters
-	if((sp == NULL) || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcenote >= eof_track_get_size(sp, sourcetrack)))
+	if((sp == NULL) || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcenote >= eof_get_track_size(sp, sourcetrack)))
 		return NULL;
 
 	//Don't allow copying instrument track notes to PART VOCALS and vice versa
@@ -3826,7 +3826,7 @@ void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourc
 		result = eof_track_add_create_note(sp, desttrack, note, pos, length, type, text);
 		if(result)
 		{	//If the note was successfully created
-			newnotenum = eof_track_get_size(sp, desttrack) - 1;		//The index of the new note
+			newnotenum = eof_get_track_size(sp, desttrack) - 1;		//The index of the new note
 			eof_set_note_flags(sp, desttrack, newnotenum, flags);	//Copy the souce note's flags to the newly created note
 			if((sp->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (sp->track[desttrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If the note was copied from a pro guitar track and pasted to a pro guitar track
