@@ -15,6 +15,7 @@ extern MENU eof_song_menu[];
 extern DIALOG eof_ini_dialog[];
 extern DIALOG eof_ini_add_dialog[];
 extern DIALOG eof_song_properties_dialog[];
+extern DIALOG eof_catalog_entry_name_dialog[];
 
 void eof_prepare_song_menu(void);
 
@@ -69,6 +70,7 @@ int eof_menu_song_waveform_settings(void);
 int eof_menu_song_waveform(void);	//Toggle the display of the waveform on/off, generating the waveform data if necessary
 int eof_menu_song_add_silence(void);
 
-int eof_menu_song_open_bass(void);	//Toggle the ability to use a sixth lane in PART BASS on/off
+int eof_menu_song_open_bass(void);		//Toggle the ability to use a sixth lane in PART BASS on/off
+int eof_menu_catalog_edit_name(void);	//Brings up a dialog window allowing the user to define a fret catalog entry's name
 
 #endif
