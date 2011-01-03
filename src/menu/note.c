@@ -807,44 +807,8 @@ int eof_menu_note_transpose_down_octave(void)
 	return 1;
 }
 
-int eof_menu_note_resnap_vocal(void)
-{
-	unsigned long i;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	int oldnotes = eof_song->vocal_track[tracknum]->lyrics;
-
-	if(!eof_vocals_selected)
-		return 1;
-
-	if(eof_snap_mode == EOF_SNAP_OFF)
-	{
-		return 1;
-	}
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-	{
-		if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
-		{
-
-			/* snap the note itself */
-			eof_snap_logic(&eof_tail_snap, eof_song->vocal_track[tracknum]->lyric[i]->pos);
-			eof_song->vocal_track[tracknum]->lyric[i]->pos = eof_tail_snap.pos;
-		}
-	}
-	eof_track_fixup_notes(eof_song, eof_selected_track, 1);
-	if(oldnotes != eof_song->vocal_track[tracknum]->lyrics)
-	{
-		allegro_message("Warning! Some lyrics snapped to the same position and were automatically combined.");
-	}
-	return 1;
-}
-
 int eof_menu_note_resnap(void)
 {
-	if(eof_vocals_selected)
-	{
-		return eof_menu_note_resnap_vocal();
-	}
 	unsigned long i;
 	unsigned long oldnotes = eof_get_track_size(eof_song, eof_selected_track);
 
@@ -874,52 +838,14 @@ int eof_menu_note_resnap(void)
 	eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 	if(oldnotes != eof_get_track_size(eof_song, eof_selected_track))
 	{
-		allegro_message("Warning! Some notes snapped to the same position and were automatically combined.");
+		allegro_message("Warning! Some %s snapped to the same position and were automatically combined.", (eof_song->track[eof_selected_track]->track_format == EOF_VOCAL_TRACK_FORMAT) ? "lyrics" : "notes");
 	}
 	eof_determine_phrase_status();
 	return 1;
 }
 
-int eof_menu_note_delete_vocal(void)
-{
-	unsigned long i, d = 0;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-
-	if(!eof_vocals_selected)
-		return 1;
-
-	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-	{
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-		{	//Add logic to match the selected lyric type (set) in preparation for supporting vocal harmonies
-			d++;
-		}
-	}
-	if(d)
-	{
-		eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-		for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
-		{
-			if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i-1] && (eof_get_note_type(eof_song, eof_selected_track, i-1) == eof_note_type))
-			{
-				eof_track_delete_note(eof_song, eof_selected_track, i-1);
-				eof_selection.multi[i-1] = 0;
-			}
-		}
-		eof_selection.current = EOF_MAX_NOTES - 1;
-		eof_track_fixup_notes(eof_song, eof_selected_track, 0);
-		eof_detect_difficulties(eof_song);
-		eof_reset_lyric_preview_lines();
-	}
-	return 1;
-}
-
 int eof_menu_note_delete(void)
 {
-	if(eof_vocals_selected)
-	{
-		return eof_menu_note_delete_vocal();
-	}
 	unsigned long i, d = 0;
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
@@ -934,13 +860,15 @@ int eof_menu_note_delete(void)
 		eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 		for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
 		{
-			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i-1] && (eof_selection.track == eof_selected_track) && (eof_get_note_type(eof_song, eof_selected_track, i-1) == eof_note_type))
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i-1] && (eof_get_note_type(eof_song, eof_selected_track, i-1) == eof_note_type))
 			{
 				eof_track_delete_note(eof_song, eof_selected_track, i-1);
 				eof_selection.multi[i-1] = 0;
 			}
 		}
 		eof_selection.current = EOF_MAX_NOTES - 1;
+		eof_track_fixup_notes(eof_song, eof_selected_track, 0);
+		eof_reset_lyric_preview_lines();
 		eof_detect_difficulties(eof_song);
 		eof_determine_phrase_status();
 	}
@@ -2336,7 +2264,7 @@ DIALOG eof_pro_guitar_note_dialog[] =
 int eof_menu_note_edit_pro_guitar_note(void)
 {
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	unsigned long ctr, fretcount;
+	unsigned long ctr, ctr2, fretcount;
 	char undo_made = 0;	//Set to nonzero when an undo state is created
 	long fretvalue;
 	char allmuted;					//Used to track whether all used strings are string muted
@@ -2345,6 +2273,10 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	unsigned long flags;			//Used to build the updated flag bitmask
 	char namechanged = 0;
 	EOF_PRO_GUITAR_NOTE junknote;	//Just used with sizeof() to get the name string's length to guarantee a safe string copy
+	char *newname = NULL;
+	char autonameprompt[100] = {0};
+	char previously_refused;
+	char declined_rename_list[EOF_MAX_NOTES] = {0};	//This lists all notes whose names the user declined to have the edited note's name changed to
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run unless the pro guitar track is active
@@ -2591,34 +2523,68 @@ int eof_menu_note_edit_pro_guitar_note(void)
 
 
 //If the note name was edited, see if any matching notes besides those that are selected need to have their name updated
-		if(namechanged)
+		newname = eof_get_note_name(eof_song, eof_selected_track, eof_selection.current);
+		if(newname != NULL)
 		{
-			for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
-			{	//For each note in the active track
-				if(ctr != eof_selection.current)
-				{	//If this note isn't the one that was just edited (don't compare a note to itself)
-					if(eof_note_compare(eof_selected_track, eof_selection.current, ctr) == 0)
-					{	//If the two notes' used strings and fret values are identical
-						if(ustrcmp(eof_get_note_name(eof_song, eof_selected_track, eof_selection.current), eof_get_note_name(eof_song, eof_selected_track, ctr)))
+			if((newname[0] != '\0') && namechanged)
+			{	//If the note name was changed and contains text
+				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+				{	//For each note in the active track
+					if((ctr != eof_selection.current) && (eof_note_compare(eof_selected_track, eof_selection.current, ctr) == 0))
+					{	//If this note isn't the one that was just edited, but it matches it
+						if(ustrcmp(newname, eof_get_note_name(eof_song, eof_selected_track, ctr)))
 						{	//If the two notes have different names
 							if(alert(NULL, "Update other matching notes in this track to have the same name?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 							{	//If the user opts to use the updated note name on matching notes in this track
 								for(; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 								{	//For each note in the active track, starting from the one that was just matched the comparison
-									if(ctr != eof_selection.current)
-									{	//If this note isn't the one that was just edited
-										if(eof_note_compare(eof_selected_track, eof_selection.current, ctr) == 0)
-										{	//If the two notes' used strings and fret values are identical, copy the edited note's name to this note
-											ustrncpy(eof_get_note_name(eof_song, eof_selected_track, ctr), eof_get_note_name(eof_song, eof_selected_track, eof_selection.current), sizeof(junknote.name));
-										}
+									if((ctr != eof_selection.current) && (eof_note_compare(eof_selected_track, eof_selection.current, ctr) == 0))
+									{	//If this note isn't the one that was just edited, but it matches it, copy the edited note's name to this note
+										ustrncpy(eof_get_note_name(eof_song, eof_selected_track, ctr), newname, sizeof(junknote.name));
 									}
 								}
 							}
 							break;	//Break from loop
 						}
 					}
-				}
-			}//For each note in the active track
+				}//For each note in the active track
+			}//If the note name was changed and contains text
+			else if(newname[0] == '\0')
+			{	//The note name is not defined
+				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+				{	//For each note in the active track
+					if((ctr != eof_selection.current) && (eof_note_compare(eof_selected_track, eof_selection.current, ctr) == 0))
+					{	//If this note isn't the one that was just edited, but it matches it
+						newname = eof_get_note_name(eof_song, eof_selected_track, ctr);
+						if(newname && (newname[0] != '\0'))
+						{	//If this note has a name
+							previously_refused = 0;
+							for(ctr2 = 0; ctr2 < ctr; ctr2++)
+							{	//For each previous note that was checked
+								if(declined_rename_list[ctr2] && !ustrcmp(newname, eof_get_note_name(eof_song, eof_selected_track, ctr2)))
+								{	//If this note name matches one the user previously rejected to assign to the edited note
+									declined_rename_list[ctr] = 1;	//Automatically decline this instance of the same name
+									previously_refused = 1;
+									break;
+								}
+							}
+							if(!previously_refused)
+							{	//If this name isn't one the user already refused
+								snprintf(autonameprompt, sizeof(autonameprompt), "Set this note's name to \"%s\"?",newname);
+								if(alert(NULL, autonameprompt, NULL, "&Yes", "&No", 'y', 'n') == 1)
+								{	//If the user opts to assign this note's name to the edited note
+									ustrncpy(eof_get_note_name(eof_song, eof_selected_track, eof_selection.current), newname, sizeof(junknote.name));
+									break;
+								}
+								else
+								{	//Otherwise mark this note's name as refused
+									declined_rename_list[ctr] = 1;	//Mark this note's name as having been declined
+								}
+							}
+						}//If this note has a name
+					}//If this note isn't the one that was just edited, but it matches it
+				}//For each note in the active track
+			}//The note name is not defined
 		}
 	}//If user clicked OK
 

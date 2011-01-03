@@ -367,6 +367,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				sp->catalog->entry[i].start_pos = pack_igetl(fp);
 				sp->catalog->entry[i].end_pos = pack_igetl(fp);
 				sp->catalog->entry[i].type = eof_note_amazing;
+				sp->catalog->entry[i].name[0] = '\0';
 			}
 			return sp;
 		}
@@ -442,6 +443,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				sp->catalog->entry[i].start_pos = pack_igetl(fp);
 				sp->catalog->entry[i].end_pos = pack_igetl(fp);
 				sp->catalog->entry[i].type = eof_note_amazing;
+				sp->catalog->entry[i].name[0] = '\0';
 			}
 			return sp;
 		}
@@ -517,6 +519,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				sp->catalog->entry[i].start_pos = pack_igetl(fp);
 				sp->catalog->entry[i].end_pos = pack_igetl(fp);
 				sp->catalog->entry[i].type = eof_note_amazing;
+				sp->catalog->entry[i].name[0] = '\0';
 			}
 			return sp;
 		}
@@ -587,6 +590,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				sp->catalog->entry[i].start_pos = pack_igetl(fp);
 				sp->catalog->entry[i].end_pos = pack_igetl(fp);
 				sp->catalog->entry[i].type = eof_note_amazing;
+				sp->catalog->entry[i].name[0] = '\0';
 			}
 			return sp;
 		}
@@ -656,6 +660,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				sp->catalog->entry[i].type = pack_getc(fp);
 				sp->catalog->entry[i].start_pos = pack_igetl(fp);
 				sp->catalog->entry[i].end_pos = pack_igetl(fp);
+				sp->catalog->entry[i].name[0] = '\0';
 			}
 			return sp;
 		}
@@ -757,6 +762,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				sp->catalog->entry[i].type = pack_getc(fp);
 				sp->catalog->entry[i].start_pos = pack_igetl(fp);
 				sp->catalog->entry[i].end_pos = pack_igetl(fp);
+				sp->catalog->entry[i].name[0] = '\0';
 			}
 			return sp;
 		}
@@ -879,6 +885,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				sp->catalog->entry[i].type = pack_getc(fp);
 				sp->catalog->entry[i].start_pos = pack_igetl(fp);
 				sp->catalog->entry[i].end_pos = pack_igetl(fp);
+				sp->catalog->entry[i].name[0] = '\0';
 			}
 			return sp;
 		}
@@ -1020,6 +1027,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				sp->catalog->entry[i].type = pack_getc(fp);
 				sp->catalog->entry[i].start_pos = pack_igetl(fp);
 				sp->catalog->entry[i].end_pos = pack_igetl(fp);
+				sp->catalog->entry[i].name[0] = '\0';
 			}
 			return sp;
 		}
@@ -1163,6 +1171,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				sp->catalog->entry[i].type = pack_getc(fp);
 				sp->catalog->entry[i].start_pos = pack_igetl(fp);
 				sp->catalog->entry[i].end_pos = pack_igetl(fp);
+				sp->catalog->entry[i].name[0] = '\0';
 			}
 			return sp;
 		}
@@ -1307,6 +1316,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				sp->catalog->entry[i].type = pack_getc(fp);
 				sp->catalog->entry[i].start_pos = pack_igetl(fp);
 				sp->catalog->entry[i].end_pos = pack_igetl(fp);
+				sp->catalog->entry[i].name[0] = '\0';
 			}
 			return sp;
 		}
