@@ -1283,6 +1283,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	unsigned long section_type_count,section_type_ctr,section_type,section_count,section_ctr,section_start,section_end;
 	unsigned long custom_data_count,custom_data_ctr,custom_data_size;
 	EOF_TRACK_ENTRY temp={0};
+	char name[EOF_NAME_LENGTH+1];	//Used to load note/section names
 
 	#define EOFNUMINISTRINGTYPES 12
 	char *const inistringbuffer[EOFNUMINISTRINGTYPES]={NULL,NULL,sp->tags->artist,sp->tags->title,sp->tags->frettist,NULL,sp->tags->year,sp->tags->loading_text,NULL,NULL,NULL,NULL};
@@ -1519,11 +1520,11 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 			section_count = pack_igetl(fp);		//Read the number of instances of this type of section there is
 			for(section_ctr=0; section_ctr<section_count; section_ctr++)
 			{	//For each instance of the specified section
-				eof_load_song_string_pf(NULL,fp,0);				//Parse past the section name (not supported yet)
-				inputc = pack_getc(fp);			//Read the section's associated difficulty
-				section_start = pack_igetl(fp);	//Read the start timestamp of the section
-				section_end = pack_igetl(fp);	//Read the end timestamp of the section
-				inputl = pack_igetl(fp);		//Read the section flags
+				eof_load_song_string_pf(name,fp,EOF_NAME_LENGTH+1);	//Parse past the section name
+				inputc = pack_getc(fp);								//Read the section's associated difficulty
+				section_start = pack_igetl(fp);						//Read the start timestamp of the section
+				section_end = pack_igetl(fp);						//Read the end timestamp of the section
+				inputl = pack_igetl(fp);							//Read the section flags
 
 				//Perform the appropriate logic to load this type of section
 				switch(track_ctr)
@@ -1532,16 +1533,16 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 						switch(section_type)
 						{
 							case EOF_BOOKMARK_SECTION:		//Bookmark section
-								eof_track_add_section(sp,0,EOF_BOOKMARK_SECTION,0,section_start,section_end,inputl);
+								eof_track_add_section(sp,0,EOF_BOOKMARK_SECTION,0,section_start,section_end,inputl,NULL);
 							break;
 							case EOF_FRET_CATALOG_SECTION:	//Fret Catalog section
-								eof_track_add_section(sp,0,EOF_FRET_CATALOG_SECTION,inputc,section_start,section_end,inputl);	//For fret catalog sections, the flag represents the associated track number
+								eof_track_add_section(sp,0,EOF_FRET_CATALOG_SECTION,inputc,section_start,section_end,inputl,name);	//For fret catalog sections, the flag represents the associated track number
 							break;
 						}
 					break;
 
 					default:	//Read track-specific sections
-						eof_track_add_section(sp,track_ctr,section_type,inputc,section_start,section_end,inputl);
+						eof_track_add_section(sp,track_ctr,section_type,inputc,section_start,section_end,inputl,name);
 					break;
 				}
 			}
@@ -1560,7 +1561,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	return 1;	//Return success
 }
 
-int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, char difficulty, unsigned long start, unsigned long end, unsigned long flags)
+int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, char difficulty, unsigned long start, unsigned long end, unsigned long flags, char *name)
 {
 	unsigned long count,tracknum;	//Used to de-obfuscate the track handling
 
@@ -1578,12 +1579,22 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				}
 			return 1;
 			case EOF_FRET_CATALOG_SECTION:
-				sp->catalog->entry[sp->catalog->entries].track = flags;		//For now, EOF still numbers tracks starting from number 0
-				sp->catalog->entry[sp->catalog->entries].type = difficulty;	//Store the fret catalog section's associated difficulty
-				sp->catalog->entry[sp->catalog->entries].start_pos = start;
-				sp->catalog->entry[sp->catalog->entries].end_pos = end;
-				sp->catalog->entry[sp->catalog->entries].name[0] = '\0';
-				sp->catalog->entries++;
+				if(sp->catalog->entries < EOF_MAX_CATALOG_ENTRIES)
+				{
+					sp->catalog->entry[sp->catalog->entries].track = flags;		//For now, EOF still numbers tracks starting from number 0
+					sp->catalog->entry[sp->catalog->entries].type = difficulty;	//Store the fret catalog section's associated difficulty
+					sp->catalog->entry[sp->catalog->entries].start_pos = start;
+					sp->catalog->entry[sp->catalog->entries].end_pos = end;
+					if(name == NULL)
+					{
+						sp->catalog->entry[sp->catalog->entries].name[0] = '\0';
+					}
+					else
+					{
+						ustrcpy(sp->catalog->entry[sp->catalog->entries].name, name);
+					}
+					sp->catalog->entries++;
+				}
 			return 1;
 			default:	//Unknown global section type
 			return 0;	//Return error
@@ -1603,7 +1614,14 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 						sp->legacy_track[tracknum]->solo[count].start_pos = start;
 						sp->legacy_track[tracknum]->solo[count].end_pos = end;
 						sp->legacy_track[tracknum]->solo[count].flags = 0;
-						sp->legacy_track[tracknum]->solo[count].name[0] = '\0';
+						if(name == NULL)
+						{
+							sp->legacy_track[tracknum]->solo[count].name[0] = '\0';
+						}
+						else
+						{
+							ustrcpy(sp->legacy_track[tracknum]->solo[count].name, name);
+						}
 						sp->legacy_track[tracknum]->solos++;
 					}
 				return 1;
@@ -1614,7 +1632,14 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 						sp->pro_guitar_track[tracknum]->solo[count].start_pos = start;
 						sp->pro_guitar_track[tracknum]->solo[count].end_pos = end;
 						sp->pro_guitar_track[tracknum]->solo[count].flags = 0;
-						sp->pro_guitar_track[tracknum]->solo[count].name[0] = '\0';
+						if(name == NULL)
+						{
+							sp->pro_guitar_track[tracknum]->solo[count].name[0] = '\0';
+						}
+						else
+						{
+							ustrcpy(sp->pro_guitar_track[tracknum]->solo[count].name, name);
+						}
 						sp->pro_guitar_track[tracknum]->solos++;
 					}
 				return 1;
@@ -1630,7 +1655,14 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 						sp->legacy_track[tracknum]->star_power_path[count].start_pos = start;
 						sp->legacy_track[tracknum]->star_power_path[count].end_pos = end;
 						sp->legacy_track[tracknum]->star_power_path[count].flags = 0;
-						sp->legacy_track[tracknum]->star_power_path[count].name[0] = '\0';
+						if(name == NULL)
+						{
+							sp->legacy_track[tracknum]->star_power_path[count].name[0] = '\0';
+						}
+						else
+						{
+							ustrcpy(sp->legacy_track[tracknum]->star_power_path[count].name, name);
+						}
 						sp->legacy_track[tracknum]->star_power_paths++;
 					}
 				return 1;
@@ -1641,7 +1673,14 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 						sp->vocal_track[tracknum]->star_power_path[count].start_pos = start;
 						sp->vocal_track[tracknum]->star_power_path[count].end_pos = end;
 						sp->vocal_track[tracknum]->star_power_path[count].flags = 0;
-						sp->vocal_track[tracknum]->star_power_path[count].name[0] = '\0';
+						if(name == NULL)
+						{
+							sp->vocal_track[tracknum]->star_power_path[count].name[0] = '\0';
+						}
+						else
+						{
+							ustrcpy(sp->vocal_track[tracknum]->star_power_path[count].name, name);
+						}
 						sp->vocal_track[tracknum]->star_power_paths++;
 					}
 				return 1;
@@ -1652,7 +1691,14 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 						sp->pro_guitar_track[tracknum]->star_power_path[count].start_pos = start;
 						sp->pro_guitar_track[tracknum]->star_power_path[count].end_pos = end;
 						sp->pro_guitar_track[tracknum]->star_power_path[count].flags = 0;
-						sp->pro_guitar_track[tracknum]->star_power_path[count].name[0] = '\0';
+						if(name == NULL)
+						{
+							sp->pro_guitar_track[tracknum]->star_power_path[count].name[0] = '\0';
+						}
+						else
+						{
+							ustrcpy(sp->pro_guitar_track[tracknum]->star_power_path[count].name, name);
+						}
 						sp->pro_guitar_track[tracknum]->star_power_paths++;
 					}
 				return 1;
@@ -1698,7 +1744,14 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 						sp->legacy_track[tracknum]->trill[count].start_pos = start;
 						sp->legacy_track[tracknum]->trill[count].end_pos = end;
 						sp->legacy_track[tracknum]->trill[count].flags = 0;
-						sp->legacy_track[tracknum]->trill[count].name[0] = '\0';
+						if(name == NULL)
+						{
+							sp->legacy_track[tracknum]->trill[count].name[0] = '\0';
+						}
+						else
+						{
+							ustrcpy(sp->legacy_track[tracknum]->trill[count].name, name);
+						}
 						sp->legacy_track[tracknum]->trills++;
 					return 1;
 
@@ -1707,7 +1760,14 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 						sp->pro_guitar_track[tracknum]->trill[count].start_pos = start;
 						sp->pro_guitar_track[tracknum]->trill[count].end_pos = end;
 						sp->pro_guitar_track[tracknum]->trill[count].flags = 0;
-						sp->pro_guitar_track[tracknum]->trill[count].name[0] = '\0';
+						if(name == NULL)
+						{
+							sp->pro_guitar_track[tracknum]->trill[count].name[0] = '\0';
+						}
+						else
+						{
+							ustrcpy(sp->pro_guitar_track[tracknum]->trill[count].name, name);
+						}
 						sp->pro_guitar_track[tracknum]->trills++;
 					return 1;
 				}
@@ -1720,7 +1780,14 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				sp->pro_guitar_track[tracknum]->arpeggio[count].start_pos = start;
 				sp->pro_guitar_track[tracknum]->arpeggio[count].end_pos = end;
 				sp->pro_guitar_track[tracknum]->arpeggio[count].flags = 0;
-				sp->pro_guitar_track[tracknum]->arpeggio[count].name[0] = '\0';
+				if(name == NULL)
+				{
+					sp->pro_guitar_track[tracknum]->arpeggio[count].name[0] = '\0';
+				}
+				else
+				{
+					ustrcpy(sp->pro_guitar_track[tracknum]->arpeggio[count].name, name);
+				}
 				sp->pro_guitar_track[tracknum]->arpeggios++;
 				return 1;
 			}
@@ -1741,7 +1808,14 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 						sp->legacy_track[tracknum]->tremolo[count].start_pos = start;
 						sp->legacy_track[tracknum]->tremolo[count].end_pos = end;
 						sp->legacy_track[tracknum]->tremolo[count].flags = 0;
-						sp->legacy_track[tracknum]->tremolo[count].name[0] = '\0';
+						if(name == NULL)
+						{
+							sp->legacy_track[tracknum]->tremolo[count].name[0] = '\0';
+						}
+						else
+						{
+							ustrcpy(sp->legacy_track[tracknum]->tremolo[count].name, name);
+						}
 						sp->legacy_track[tracknum]->tremolos++;
 					return 1;
 
@@ -1750,7 +1824,14 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 						sp->pro_guitar_track[tracknum]->tremolo[count].start_pos = start;
 						sp->pro_guitar_track[tracknum]->tremolo[count].end_pos = end;
 						sp->pro_guitar_track[tracknum]->tremolo[count].flags = 0;
-						sp->pro_guitar_track[tracknum]->tremolo[count].name[0] = '\0';
+						if(name == NULL)
+						{
+							sp->pro_guitar_track[tracknum]->tremolo[count].name[0] = '\0';
+						}
+						else
+						{
+							ustrcpy(sp->pro_guitar_track[tracknum]->tremolo[count].name, name);
+						}
 						sp->pro_guitar_track[tracknum]->tremolos++;
 					return 1;
 				}
@@ -1983,11 +2064,11 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				pack_iputl(sp->catalog->entries, fp);		//Write number of catalog entries
 				for(ctr=0; ctr < sp->catalog->entries; ctr++)
 				{	//For each fret catalog entry in the project
-					eof_save_song_string_pf(NULL, fp);					//Write an empty section name string (not supported yet)
-					pack_putc(sp->catalog->entry[ctr].type, fp);		//Write the associated difficulty
-					pack_iputl(sp->catalog->entry[ctr].start_pos, fp);	//Write the catalog entry's position
-					pack_iputl(sp->catalog->entry[ctr].end_pos, fp);	//Write the catalog entry's end position
-					pack_iputl(sp->catalog->entry[ctr].track, fp);		//Write the flags (associated track number)
+					eof_save_song_string_pf(sp->catalog->entry[ctr].name, fp);	//Write the section name string
+					pack_putc(sp->catalog->entry[ctr].type, fp);				//Write the associated difficulty
+					pack_iputl(sp->catalog->entry[ctr].start_pos, fp);			//Write the catalog entry's position
+					pack_iputl(sp->catalog->entry[ctr].end_pos, fp);			//Write the catalog entry's end position
+					pack_iputl(sp->catalog->entry[ctr].track, fp);				//Write the flags (associated track number)
 				}
 			}
 		}

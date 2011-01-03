@@ -76,6 +76,7 @@ MENU eof_track_menu[] =
 MENU eof_catalog_menu[] =
 {
     {"&Show\tQ", eof_menu_catalog_show, NULL, 0, NULL},
+    {"&Edit Name", eof_menu_catalog_edit_name, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"&Add", eof_menu_catalog_add, NULL, 0, NULL},
     {"&Delete", eof_menu_catalog_delete, NULL, 0, NULL},
@@ -401,27 +402,20 @@ void eof_prepare_song_menu(void)
 		}
 
 		/* show catalog */
+		/* edit name */
 		if(eof_song->catalog->entries > 0)
 		{
-			eof_catalog_menu[0].flags = eof_catalog_menu[0].flags & D_SELECTED;
+			eof_catalog_menu[0].flags = eof_catalog_menu[0].flags & D_SELECTED;	//Enable "Show Catalog" and check it if it's already checked
+			eof_catalog_menu[1].flags = 0;	//Enable "Edit name"
 		}
 		else
 		{
-			eof_catalog_menu[0].flags = D_DISABLED;
+			eof_catalog_menu[0].flags = D_DISABLED;	//Disable "Show catalog"
+			eof_catalog_menu[1].flags = D_DISABLED;	//Disable "Edit name"
 		}
 
 		/* add catalog entry */
 		if(eof_count_selected_notes(NULL,0))	//If there are notes selected
-		{
-			eof_catalog_menu[2].flags = 0;
-		}
-		else
-		{
-			eof_catalog_menu[2].flags = D_DISABLED;
-		}
-
-		/* remove catalog entry */
-		if(eof_selected_catalog_entry < eof_song->catalog->entries)
 		{
 			eof_catalog_menu[3].flags = 0;
 		}
@@ -430,26 +424,36 @@ void eof_prepare_song_menu(void)
 			eof_catalog_menu[3].flags = D_DISABLED;
 		}
 
+		/* remove catalog entry */
+		if(eof_selected_catalog_entry < eof_song->catalog->entries)
+		{
+			eof_catalog_menu[4].flags = 0;
+		}
+		else
+		{
+			eof_catalog_menu[4].flags = D_DISABLED;
+		}
+
 		/* previous/next catalog entry */
 		if(eof_song->catalog->entries > 1)
 		{
-			eof_catalog_menu[5].flags = 0;
 			eof_catalog_menu[6].flags = 0;
+			eof_catalog_menu[7].flags = 0;
 		}
 		else
 		{
-			eof_catalog_menu[5].flags = D_DISABLED;
 			eof_catalog_menu[6].flags = D_DISABLED;
+			eof_catalog_menu[7].flags = D_DISABLED;
 		}
 
 		/* catalog */
-		if((eof_catalog_menu[0].flags & D_DISABLED) && (eof_catalog_menu[2].flags & D_DISABLED) && (eof_catalog_menu[3].flags & D_DISABLED) && (eof_catalog_menu[5].flags & D_DISABLED) && (eof_catalog_menu[6].flags & D_DISABLED))
+		if((eof_catalog_menu[0].flags & D_DISABLED) && (eof_catalog_menu[3].flags & D_DISABLED) && (eof_catalog_menu[4].flags & D_DISABLED) && (eof_catalog_menu[6].flags & D_DISABLED) && (eof_catalog_menu[7].flags & D_DISABLED))
 		{
-			eof_song_menu[4].flags = D_DISABLED;
+			eof_song_menu[5].flags = D_DISABLED;
 		}
 		else
 		{
-			eof_song_menu[4].flags = 0;
+			eof_song_menu[5].flags = 0;
 		}
 
 		/* track */
@@ -1226,57 +1230,6 @@ int eof_menu_catalog_show(void)
 	return 1;
 }
 
-int eof_menu_catalog_add_vocals(void)
-{
-	long first_pos = -1;
-	long last_pos = -1;
-	unsigned long i;
-	long next;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-
-	if(!eof_vocals_selected)
-		return 1;
-
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each lyric in the active track
-		if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-		{
-			if(first_pos == -1)
-			{
-				first_pos = eof_get_note_pos(eof_song, eof_selected_track, i);
-			}
-			if(eof_song->vocal_track[tracknum]->lyric[i]->length < 100)
-			{
-				last_pos = eof_get_note_pos(eof_song, eof_selected_track, i) + 100;
-				next = eof_track_fixup_next_note(eof_song, eof_selected_track, i);
-				if(next >= 0)
-				{
-					if(last_pos >= eof_get_note_pos(eof_song, eof_selected_track, next))
-					{
-						last_pos = eof_get_note_pos(eof_song, eof_selected_track, next) - 1;
-					}
-				}
-			}
-			else
-			{
-				last_pos = eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i);
-			}
-		}
-	}
-	eof_song->catalog->entry[eof_song->catalog->entries].track = EOF_TRACK_VOCALS;
-	eof_song->catalog->entry[eof_song->catalog->entries].type = 0;
-	eof_song->catalog->entry[eof_song->catalog->entries].start_pos = first_pos;
-	eof_song->catalog->entry[eof_song->catalog->entries].end_pos = last_pos;
-	if((eof_song->catalog->entry[eof_song->catalog->entries].start_pos != -1) && (eof_song->catalog->entry[eof_song->catalog->entries].end_pos != -1))
-	{
-		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		eof_song->catalog->entries++;
-		eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
-	}
-
-	return 1;
-}
-
 int eof_menu_catalog_add(void)
 {
 	long first_pos = -1;
@@ -1284,10 +1237,6 @@ int eof_menu_catalog_add(void)
 	unsigned long i;
 	long next;
 
-	if(eof_vocals_selected)
-	{
-		return eof_menu_catalog_add_vocals();
-	}
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
@@ -1314,14 +1263,10 @@ int eof_menu_catalog_add(void)
 			}
 		}
 	}
-	eof_song->catalog->entry[eof_song->catalog->entries].track = eof_selected_track;
-	eof_song->catalog->entry[eof_song->catalog->entries].type = eof_note_type;
-	eof_song->catalog->entry[eof_song->catalog->entries].start_pos = first_pos;
-	eof_song->catalog->entry[eof_song->catalog->entries].end_pos = last_pos;
 	if((eof_song->catalog->entry[eof_song->catalog->entries].start_pos != -1) && (eof_song->catalog->entry[eof_song->catalog->entries].end_pos != -1))
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		eof_song->catalog->entries++;
+		eof_track_add_section(eof_song, 0, EOF_FRET_CATALOG_SECTION, eof_note_type, first_pos, last_pos, eof_selected_track, NULL);
 		eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 	}
 
@@ -2021,4 +1966,39 @@ int eof_menu_song_open_bass(void)
 	}
 	eof_scale_fretboard();
 	return 1;
+}
+
+DIALOG eof_catalog_entry_name_dialog[] =
+{
+   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
+   { d_agup_window_proc,    0,  48,  204 + 110, 106, 2,   23,  0,    0,      0,   0,   "Edit catalog entry name",               NULL, NULL },
+   { d_agup_text_proc,   12,  84,  64,  8,  2,   23,  0,    0,      0,   0,   "Text:",         NULL, NULL },
+   { d_agup_edit_proc,   48, 80,  144 + 110,  20,  2,   23,  0,    0,      EOF_NAME_LENGTH,   0,   eof_etext,           NULL, NULL },
+   { d_agup_button_proc, 12 + 55,  112, 84,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "OK",               NULL, NULL },
+   { d_agup_button_proc, 108 + 55, 112, 78,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_menu_catalog_edit_name(void)
+{
+	if((eof_song->catalog->entries > 0) && (eof_selected_catalog_entry < eof_song->catalog->entries) && !eof_music_catalog_playback)
+	{
+		eof_cursor_visible = 0;
+		eof_render();
+		eof_color_dialog(eof_catalog_entry_name_dialog, gui_fg_color, gui_bg_color);
+		centre_dialog(eof_catalog_entry_name_dialog);
+		ustrcpy(eof_etext, eof_song->catalog->entry[eof_selected_catalog_entry].name);
+		if(eof_popup_dialog(eof_catalog_entry_name_dialog, 2) == 3)	//User hit OK
+		{
+			if(ustricmp(eof_song->catalog->entry[eof_selected_catalog_entry].name, eof_etext))	//If the updated string (eof_etext) is different
+			{
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				ustrcpy(eof_song->catalog->entry[eof_selected_catalog_entry].name, eof_etext);
+			}
+		}
+	}
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(screen);
+	return D_O_K;
 }

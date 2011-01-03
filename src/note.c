@@ -143,7 +143,9 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	long x,y;
 	unsigned long numlanes, tracknum=0, numlanes2;
 	char notation[11];	//Used to store tab style notation for pro guitar notes
-	char *nameptr = NULL;
+	char *nameptr = NULL;		//This points to the display name string for the note
+	char *nameptrprev = NULL;	//This points to the display name string for the previous note (if applicable)
+	char samename[] = "/";		//This is what a repeated note name will display as
 
 	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
 	unsigned long notepos = 0;
@@ -212,6 +214,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	{
 		npos = 20 - ((pos - leftcoord)) + notepos / eof_zoom;
 	}
+	x = npos;	//Store this to make the code more readable
 
 //Determine if the entire note would clip.  If so, return without attempting to render
 	if(npos - eof_screen_layout.note_size > window->screen->w)	//If the note would render entirely to the right of the visible area
@@ -243,8 +246,8 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	{
 		numlanes = eof_count_track_lanes(eof_song, eof_selected_track);	//Count the number of lanes in the active track
 	}
-	if(eof_inverted_notes)
-	{
+	if(eof_inverted_notes || (track && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)))
+	{	//If the user selected the inverted notes option OR a pro guitar track is active (force inverted notes display)
 		for(ctr = 0, ctr2 = 0; ctr < EOF_MAX_FRETS; ctr++)
 		{	//Store the fretboard lane positions in reverse order, with respect to the number of lanes in use
 			if(EOF_MAX_FRETS - ctr <= numlanes)
@@ -287,7 +290,6 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	for(ctr=0,mask=1;ctr<numlanes;ctr++,mask=mask<<1)
 	{	//Render for each of the available fret lanes
 		iscymbal = 0;
-		x = npos;											//Store this to make the code more readable
 		y = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr];	//Store this to make the code more readable
 
 		if(notenote & mask)
@@ -427,6 +429,11 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		nameptr = eof_get_note_name(eof_song, track, notenum);
 		if((nameptr != NULL) && (nameptr[0] != '\0'))
 		{	//If this note has a defined name
+			nameptrprev = eof_get_note_name(eof_song, track, notenum - 1);	//Get the previous note's name
+			if(nameptrprev && (!ustricmp(nameptr, nameptrprev)))
+			{	//If there was a previous note, and it has the same name as this note's name
+				nameptr = samename;	//Display this note's name as "/" to indicate a repeat of the last note
+			}
 			if(window == eof_window_editor)
 			{	//If rendering to the editor window
 				textprintf_centre_ex(window->screen, font, x, 25 + 5, eof_color_white, -1, nameptr);
@@ -679,12 +686,11 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 
 int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 {
-	long pos = eof_music_pos / eof_zoom_3d;
 	long npos;
 	int xchart[EOF_MAX_FRETS] = {48, 48 + 56, 48 + 56 * 2, 48 + 56 * 3, 48 + 56 * 4, 48 + 56 * 5};
 	int bx = 48;
 	int point[8];
-	int rz, ez;
+	long rz, ez;
 	unsigned long ctr;
 	unsigned long mask;	//Used to mask out colors in the for loop
 	unsigned int notes[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN, EOF_IMAGE_NOTE_RED, EOF_IMAGE_NOTE_YELLOW, EOF_IMAGE_NOTE_BLUE, EOF_IMAGE_NOTE_PURPLE, EOF_IMAGE_NOTE_ORANGE};
@@ -695,6 +701,12 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	unsigned int cymbals_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN_HIT, EOF_IMAGE_NOTE_RED_HIT, EOF_IMAGE_NOTE_YELLOW_CYMBAL_HIT, EOF_IMAGE_NOTE_BLUE_CYMBAL_HIT, EOF_IMAGE_NOTE_PURPLE_CYMBAL_HIT, EOF_IMAGE_NOTE_ORANGE_HIT};
 	unsigned long numlanes, tracknum;
 	float lanewidth = 0.0;
+
+	//These variables are used for the name rendering logic
+	char *nameptr = NULL;		//This points to the display name string for the note
+	char *nameptrprev = NULL;	//This points to the display name string for the previous note (if applicable)
+	char samename[] = "/";		//This is what a repeated note name will display as
+	long x3d, y3d, z3d;			//The coordinate at which to draw the name string (right aligned)
 
 	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
 	unsigned long notepos = 0;
@@ -715,7 +727,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	notenote = eof_get_note_note(eof_song, track, notenum);
 	notetype = eof_get_note_type(eof_song, track, notenum);
 
-	npos = -pos - 6 + notepos / eof_zoom_3d + eof_av_delay / eof_zoom_3d;
+	npos = (long)(notepos + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
 	if(npos + notelength / eof_zoom_3d < -100)
 	{				//If the note would render entirely before the visible area
 		return -1;	//Return status:  Clipping before the viewing window
@@ -874,12 +886,27 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 		}//Render for each of the available fret lanes
 	}//This is a non drum track
 
+	//Render note names
+	nameptr = eof_get_note_name(eof_song, track, notenum);
+	if((nameptr != NULL) && (nameptr[0] != '\0'))
+	{	//If this note has a defined name
+		nameptrprev = eof_get_note_name(eof_song, track, notenum - 1);	//Get the previous note's name
+		if(nameptrprev && (!ustricmp(nameptr, nameptrprev)))
+		{	//If there was a previous note, and it has the same name as this note's name
+			nameptr = samename;	//Display this note's name as "/" to indicate a repeat of the last note
+		}
+		z3d = npos + 6 + text_height(font);	//Restore the 6 that was subtracted earlier when finding npos, and add the font's height to have the text line up with the note's z position
+		z3d = z3d < -100 ? -100 : z3d;
+		x3d = ocd3d_project_x(xchart[0] - 8, z3d);
+		y3d = ocd3d_project_y(200, z3d);
+		textprintf_right_ex(eof_window_3d->screen, font, x3d, y3d, eof_color_white, -1, nameptr);
+	}
+
 	return 0;	//Return status:  Note was not clipped in its entirety
 }
 
 int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 {
-	long pos = eof_music_pos / eof_zoom_3d;
 	long npos;
 	int xchart[EOF_MAX_FRETS] = {48, 48 + 56, 48 + 56 * 2, 48 + 56 * 3, 48 + 56 * 4};
 	int point[8];
@@ -906,7 +933,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	notenote = eof_get_note_note(eof_song, track, notenum);
 	notetype = eof_get_note_type(eof_song, track, notenum);
 
-	npos = -pos - 6 + (notepos + eof_av_delay) / eof_zoom_3d;
+	npos = (long)(notepos + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
 	if(npos + notelength / eof_zoom_3d < -100)
 	{
 		return -1;
@@ -988,7 +1015,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 				{	//If another pro guitar note in the same difficulty follows this one
 					//Find the screen coordinate of the next note
 					notepos2 = eof_get_note_pos(eof_song, track, next);
-					npos2 = -pos - 6 + (notepos2 + eof_av_delay) / eof_zoom_3d;
+					npos2 = (long)(notepos2 + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
 					rz2 = npos2 < -100 ? -100 : npos2 + 10;
 
 					//Define the slide rectangle coordinates in clockwise order

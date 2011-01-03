@@ -2294,26 +2294,26 @@ DIALOG eof_pro_guitar_note_dialog[] =
 	{d_agup_text_proc,      16,  80,  64,  8,  2,   23,  0,    0,      0,         0,   "Name:",      NULL,          NULL },
 	{d_agup_edit_proc,		74,  76,  134, 20, 2,   23,  0,    0, EOF_NAME_LENGTH,0,eof_note_edit_name,       NULL, NULL },
 
-	{d_agup_text_proc,      16,  128, 64,  8,  2,   23,  0,    0,      0,         0,   "String 1:",  NULL,          NULL },
-	{eof_verified_edit_proc,74,  124, 22,  20, 2,   23,  0,    0,      2,         0,   eof_fret1,    "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  152, 64,  8,  2,   23,  0,    0,      0,         0,   "String 2:",  NULL,          NULL },
-	{eof_verified_edit_proc,74,  148, 22,  20, 2,   23,  0,    0,      2,         0,   eof_fret2,    "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  176, 64,  8,  2,   23,  0,    0,      0,         0,   "String 3:",  NULL,          NULL },
-	{eof_verified_edit_proc,74,  172, 22,  20, 2,   23,  0,    0,      2,         0,   eof_fret3,    "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  200, 64,  8,  2,   23,  0,    0,      0,         0,   "String 4:",  NULL,          NULL },
-	{eof_verified_edit_proc,74,  196, 22,  20, 2,   23,  0,    0,      2,         0,   eof_fret4,    "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  224, 64,  8,  2,   23,  0,    0,      0,         0,   "String 5:",  NULL,          NULL },
-	{eof_verified_edit_proc,74,  220, 22,  20, 2,   23,  0,    0,      2,         0,   eof_fret5,    "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  248, 64,  8,  2,   23,  0,    0,      0,         0,   "String 6:",  NULL,          NULL },
-	{eof_verified_edit_proc,74,  244, 22,  20, 2,   23,  0,    0,      2,         0,   eof_fret6,    "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  128, 64,  8,  2,   23,  0,    0,      0,         0,   "String 6:",  NULL,          NULL },
+	{eof_verified_edit_proc,74,  124, 22,  20, 2,   23,  0,    0,      2,         0,   eof_fret6,    "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  152, 64,  8,  2,   23,  0,    0,      0,         0,   "String 5:",  NULL,          NULL },
+	{eof_verified_edit_proc,74,  148, 22,  20, 2,   23,  0,    0,      2,         0,   eof_fret5,    "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  176, 64,  8,  2,   23,  0,    0,      0,         0,   "String 4:",  NULL,          NULL },
+	{eof_verified_edit_proc,74,  172, 22,  20, 2,   23,  0,    0,      2,         0,   eof_fret4,    "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  200, 64,  8,  2,   23,  0,    0,      0,         0,   "String 3:",  NULL,          NULL },
+	{eof_verified_edit_proc,74,  196, 22,  20, 2,   23,  0,    0,      2,         0,   eof_fret3,    "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  224, 64,  8,  2,   23,  0,    0,      0,         0,   "String 2:",  NULL,          NULL },
+	{eof_verified_edit_proc,74,  220, 22,  20, 2,   23,  0,    0,      2,         0,   eof_fret2,    "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  248, 64,  8,  2,   23,  0,    0,      0,         0,   "String 1:",  NULL,          NULL },
+	{eof_verified_edit_proc,74,  244, 22,  20, 2,   23,  0,    0,      2,         0,   eof_fret1,    "0123456789Xx",NULL },
 
 	{d_agup_text_proc,      16,  108, 64,  8,  2,   23,  0,    0,      0,         0,   "Pro",        NULL,          NULL },
 	{d_agup_text_proc,      124, 108, 64,  8,  2,   23,  0,    0,      0,         0,   "Legacy",     NULL,          NULL },
-	{d_agup_check_proc,		122, 127, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 1",     NULL,          NULL },
-	{d_agup_check_proc,		122, 151, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 2",     NULL,          NULL },
-	{d_agup_check_proc,		122, 175, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 3",     NULL,          NULL },
-	{d_agup_check_proc,		122, 199, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 4",     NULL,          NULL },
-	{d_agup_check_proc,		122, 223, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 5",     NULL,          NULL },
+	{d_agup_check_proc,		122, 151, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 5",     NULL,          NULL },
+	{d_agup_check_proc,		122, 175, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 4",     NULL,          NULL },
+	{d_agup_check_proc,		122, 199, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 3",     NULL,          NULL },
+	{d_agup_check_proc,		122, 223, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 2",     NULL,          NULL },
+	{d_agup_check_proc,		122, 247, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 1",     NULL,          NULL },
 
 	{d_agup_text_proc,      10,  292, 64,  8,  2,   23,  0,    0,      0,         0,   "Slide:",     NULL,          NULL },
 	{d_agup_text_proc,      10,  312, 64,  8,  2,   23,  0,    0,      0,         0,   "Mute:",      NULL,          NULL },
@@ -2343,6 +2343,8 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	unsigned long bitmask = 0;		//Used to build the updated pro guitar note bitmask
 	unsigned long legacymask;		//Used to build the updated legacy note bitmask
 	unsigned long flags;			//Used to build the updated flag bitmask
+	char namechanged = 0;
+	EOF_PRO_GUITAR_NOTE junknote;	//Just used with sizeof() to get the name string's length to guarantee a safe string copy
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run unless the pro guitar track is active
@@ -2364,7 +2366,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 //Update the note name text box
 	memcpy(eof_note_edit_name, eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name, sizeof(eof_note_edit_name));
 
-//Update the fret text boxes
+//Update the fret text boxes (listed from top to bottom as string 6 through string 1)
 	fretcount = eof_count_track_lanes(eof_song, eof_selected_track);
 	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
 	{	//For each of the 6 supported strings
@@ -2375,7 +2377,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 			{	//If this string is already defined as being in use, copy its fret value to the string
 				if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] == 0xFF)
 				{	//If this string is muted
-					snprintf(eof_fret_strings[ctr], 3, "X");
+					snprintf(eof_fret_strings[5 - ctr], 3, "X");
 				}
 				else
 				{
@@ -2396,11 +2398,11 @@ int eof_menu_note_edit_pro_guitar_note(void)
 
 //Update the legacy bitmask checkboxes
 	legacymask = eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->legacymask;
-	eof_pro_guitar_note_dialog[17].flags = (legacymask & 1) ? D_SELECTED : 0;
-	eof_pro_guitar_note_dialog[18].flags = (legacymask & 2) ? D_SELECTED : 0;
+	eof_pro_guitar_note_dialog[17].flags = (legacymask & 16) ? D_SELECTED : 0;
+	eof_pro_guitar_note_dialog[18].flags = (legacymask & 8) ? D_SELECTED : 0;
 	eof_pro_guitar_note_dialog[19].flags = (legacymask & 4) ? D_SELECTED : 0;
-	eof_pro_guitar_note_dialog[20].flags = (legacymask & 8) ? D_SELECTED : 0;
-	eof_pro_guitar_note_dialog[21].flags = (legacymask & 16) ? D_SELECTED : 0;
+	eof_pro_guitar_note_dialog[20].flags = (legacymask & 2) ? D_SELECTED : 0;
+	eof_pro_guitar_note_dialog[21].flags = (legacymask & 1) ? D_SELECTED : 0;
 
 //Update the note flag radio buttons
 	for(ctr = 0; ctr < 10; ctr++)
@@ -2454,13 +2456,14 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	{	//If user clicked OK
 		//Validate and store the input
 
-//Save the updated note name
+//Save the updated note name  (listed from top to bottom as string 6 through string 1)
 		if((!undo_made) && ustrcmp(eof_note_edit_name, eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name))
 		{	//If the name was changed
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			undo_made = 1;
+			memcpy(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name, eof_note_edit_name, sizeof(eof_note_edit_name));
+			namechanged = 1;
 		}
-		memcpy(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name, eof_note_edit_name, sizeof(eof_note_edit_name));
 
 		for(ctr = 0, allmuted = 1; ctr < 6; ctr++)
 		{	//For each of the 6 supported strings
@@ -2518,15 +2521,15 @@ int eof_menu_note_edit_pro_guitar_note(void)
 //Save the updated legacy note bitmask
 		legacymask = 0;
 		if(eof_pro_guitar_note_dialog[17].flags == D_SELECTED)
-			legacymask |= 1;
+			legacymask |= 16;
 		if(eof_pro_guitar_note_dialog[18].flags == D_SELECTED)
-			legacymask |= 2;
+			legacymask |= 8;
 		if(eof_pro_guitar_note_dialog[19].flags == D_SELECTED)
 			legacymask |= 4;
 		if(eof_pro_guitar_note_dialog[20].flags == D_SELECTED)
-			legacymask |= 8;
+			legacymask |= 2;
 		if(eof_pro_guitar_note_dialog[21].flags == D_SELECTED)
-			legacymask |= 16;
+			legacymask |= 1;
 		if(!undo_made && (legacymask != eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->legacymask))
 		{
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -2585,7 +2588,40 @@ int eof_menu_note_edit_pro_guitar_note(void)
 			undo_made = 1;
 		}
 		eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->flags = flags;
-	}
+
+
+//If the note name was edited, see if any matching notes besides those that are selected need to have their name updated
+		if(namechanged)
+		{
+			for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+			{	//For each note in the active track
+				if(ctr != eof_selection.current)
+				{	//If this note isn't the one that was just edited (don't compare a note to itself)
+					if(eof_note_compare(eof_selected_track, eof_selection.current, ctr) == 0)
+					{	//If the two notes' used strings and fret values are identical
+						if(ustrcmp(eof_get_note_name(eof_song, eof_selected_track, eof_selection.current), eof_get_note_name(eof_song, eof_selected_track, ctr)))
+						{	//If the two notes have different names
+							if(alert(NULL, "Update other matching notes in this track to have the same name?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+							{	//If the user opts to use the updated note name on matching notes in this track
+								for(; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+								{	//For each note in the active track, starting from the one that was just matched the comparison
+									if(ctr != eof_selection.current)
+									{	//If this note isn't the one that was just edited
+										if(eof_note_compare(eof_selected_track, eof_selection.current, ctr) == 0)
+										{	//If the two notes' used strings and fret values are identical, copy the edited note's name to this note
+											ustrncpy(eof_get_note_name(eof_song, eof_selected_track, ctr), eof_get_note_name(eof_song, eof_selected_track, eof_selection.current), sizeof(junknote.name));
+										}
+									}
+								}
+							}
+							break;	//Break from loop
+						}
+					}
+				}
+			}//For each note in the active track
+		}
+	}//If user clicked OK
+
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
@@ -2845,7 +2881,7 @@ int eof_menu_arpeggio_mark(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(!existingphrase)
 	{	//If the selected notes are not within an existing arpeggio phrase, create one
-		eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, 0, sel_start, sel_end, 0);
+		eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, 0, sel_start, sel_end, 0, NULL);
 	}
 	else
 	{	//Otherwise edit the existing phrase
@@ -2984,7 +3020,7 @@ int eof_menu_trill_mark(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(!existingphrase)
 	{	//If the selected notes are not within an existing trill phrase, create one
-		eof_track_add_section(eof_song, eof_selected_track, EOF_TRILL_SECTION, 0, sel_start, sel_end, 0);
+		eof_track_add_section(eof_song, eof_selected_track, EOF_TRILL_SECTION, 0, sel_start, sel_end, 0, NULL);
 	}
 	else
 	{	//Otherwise edit the existing phrase
@@ -3045,7 +3081,7 @@ int eof_menu_tremolo_mark(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(!existingphrase)
 	{	//If the selected notes are not within an existing tremolo phrase, create one
-		eof_track_add_section(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, 0, sel_start, sel_end, 0);
+		eof_track_add_section(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, 0, sel_start, sel_end, 0, NULL);
 	}
 	else
 	{	//Otherwise edit the existing phrase
