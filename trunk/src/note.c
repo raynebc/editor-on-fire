@@ -429,7 +429,8 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		nameptr = eof_get_note_name(eof_song, track, notenum);
 		if((nameptr != NULL) && (nameptr[0] != '\0'))
 		{	//If this note has a defined name
-			nameptrprev = eof_get_note_name(eof_song, track, notenum - 1);	//Get the previous note's name
+//			nameptrprev = eof_get_note_name(eof_song, track, notenum - 1);	//Get the previous note's name
+			nameptrprev = eof_get_note_name(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum));	//Get the previous note's (in the same difficulty's) name
 			if(nameptrprev && (!ustricmp(nameptr, nameptrprev)))
 			{	//If there was a previous note, and it has the same name as this note's name
 				nameptr = samename;	//Display this note's name as "/" to indicate a repeat of the last note
@@ -890,7 +891,8 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	nameptr = eof_get_note_name(eof_song, track, notenum);
 	if((nameptr != NULL) && (nameptr[0] != '\0'))
 	{	//If this note has a defined name
-		nameptrprev = eof_get_note_name(eof_song, track, notenum - 1);	//Get the previous note's name
+//		nameptrprev = eof_get_note_name(eof_song, track, notenum - 1);	//Get the previous note's name
+		nameptrprev = eof_get_note_name(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum));	//Get the previous note's (in the same difficulty's) name
 		if(nameptrprev && (!ustricmp(nameptr, nameptrprev)))
 		{	//If there was a previous note, and it has the same name as this note's name
 			nameptr = samename;	//Display this note's name as "/" to indicate a repeat of the last note

@@ -1965,34 +1965,8 @@ int eof_menu_edit_bookmark_9(void)
 	return eof_menu_edit_bookmark_helper(9);
 }
 
-int eof_menu_edit_select_all_vocal(void)
-{
-	unsigned long i;
-
-	if(!eof_vocals_selected)
-		return 1;
-
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{
-		if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
-		{	//Add type checking in preparation for vocal harmonies
-			eof_selection.track = eof_selected_track;
-			eof_selection.multi[i] = 1;
-		}
-		else
-		{
-			eof_selection.multi[i] = 0;
-		}
-	}
-	return 1;
-}
-
 int eof_menu_edit_select_all(void)
 {
-	if(eof_vocals_selected)
-	{
-		return eof_menu_edit_select_all_vocal();
-	}
 	unsigned long i;
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
@@ -2068,36 +2042,10 @@ int eof_menu_edit_deselect_all(void)
 	return 1;
 }
 
-int eof_menu_edit_select_rest_vocal(void)
-{
-	unsigned long i;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-
-	if(!eof_vocals_selected)
-		return 1;	//Return error
-
-	if(eof_count_selected_notes(NULL, 0) <= 0)
-	{
-		return 1;
-	}
-	if(eof_selection.current == EOF_MAX_NOTES - 1)	//No Notes selected?
-		return 1;	//Don't perform this operation
-
-	for(i = eof_selection.current; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-	{
-		eof_selection.multi[i] = 1;
-	}
-	return 1;
-}
-
 int eof_menu_edit_select_rest(void)
 {
 	unsigned long i;
 
-	if(eof_vocals_selected)
-	{
-		return eof_menu_edit_select_rest_vocal();
-	}
 	if(eof_count_selected_notes(NULL, 0) <= 0)
 	{
 		return 1;
@@ -2357,35 +2305,10 @@ int eof_menu_edit_paste_from_catalog(void)
 	return 1;
 }
 
-int eof_menu_edit_select_previous_vocal(void)
-{
-	unsigned long i;
-
-	if(!eof_vocals_selected)
-		return 1;
-
-	if(eof_count_selected_notes(NULL, 0) <= 0)	//If no notes are selected
-	{
-		return 1;
-	}
-	if(eof_selection.current == EOF_MAX_NOTES - 1)	//No Notes selected?
-		return 1;	//Don't perform this operation
-
-	for(i = 0; (i < eof_selection.current) && (i < eof_get_track_size(eof_song, eof_selected_track)); i++)
-	{
-		eof_selection.multi[i] = 1;
-	}
-	return 1;
-}
-
 int eof_menu_edit_select_previous(void)
 {
 	unsigned long i;
 
-	if(eof_vocals_selected)
-	{
-		return eof_menu_edit_select_previous_vocal();
-	}
 	if(eof_count_selected_notes(NULL, 0) <= 0)	//If no notes are selected
 	{
 		return 1;

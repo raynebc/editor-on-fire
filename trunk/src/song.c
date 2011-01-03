@@ -3040,6 +3040,20 @@ long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long not
 	return -1;
 }
 
+long eof_get_prev_note_type_num(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	long i;
+
+	for(i = note - 1; i >= 0; i--)
+	{	//For each note before the specified note number, starting with the one immediately before it
+		if(eof_get_note_type(sp, track, note) == eof_get_note_type(sp, track, i))
+		{	//If this note has the same type/difficulty
+			return i;
+		}
+	}
+	return -1;	//Return note not found
+}
+
 void eof_pro_guitar_track_fixup_notes(EOF_PRO_GUITAR_TRACK * tp, int sel)
 {
 	unsigned long i, ctr, bitmask;

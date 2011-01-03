@@ -83,7 +83,7 @@ DIALOG eof_display_dialog[] =
    /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
    { d_agup_window_proc,    0,  48,  200, 196, 2,   23,  0,    0,      0,   0,   "Display Settings",               NULL, NULL },
 
-   { d_agup_check_proc, 16,  80, 128,  16, 2,   23,  0,    0, 1,   0,   "Use Software Cursor",               NULL, NULL },
+   { d_agup_check_proc, 16,  80, 160,  16, 2,   23,  0,    0, 1,   0,   "Use Software Cursor",               NULL, NULL },
    { d_agup_check_proc, 16,  100, 128,  16, 2,   23,  0,    0, 1,   0,   "Force 8-Bit Color",               NULL, NULL },
    { d_agup_text_proc,   56, 124,  48,  8,   2,   23,  0,    0,      0,   0,   "Window Size",            NULL, NULL },
    { d_agup_list_proc,   43, 140,  110,  94 - 45,  2,   23,  0,    0,      0,   0,   eof_display_list, NULL, NULL },
