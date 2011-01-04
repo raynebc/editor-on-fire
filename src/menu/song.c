@@ -112,6 +112,7 @@ MENU eof_song_menu[] =
     {"T&est In FOF\tF12", eof_menu_song_test, NULL, EOF_LINUX_DISABLE, NULL},
     {"", NULL, NULL, 0, NULL},
     {"Enable open strum bass", eof_menu_song_open_bass, NULL, 0, NULL},
+    {"Create image sequence", eof_create_image_sequence, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 

@@ -583,5 +583,7 @@ EOF_SONG * eof_create_song_populated(void);
 
 inline int eof_open_bass_enabled(void);
 	//A simple function returning nonzero if PART BASS has open strumming enabled
+int eof_create_image_sequence(void);
+	//Creates a PCX format image sequence in a subfolder of the chart's folder called "\sequence"
 
 #endif
