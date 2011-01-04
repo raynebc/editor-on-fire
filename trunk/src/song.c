@@ -4,7 +4,10 @@
 #include "beat.h"
 #include "song.h"
 #include "legacy.h"
+#include "mix.h"
 #include "undo.h"
+#include "utility.h"
+#include "menu/song.h"
 
 EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 1 + 1] =
 {
@@ -3969,4 +3972,90 @@ EOF_PHRASE_SECTION *eof_get_arpeggio(EOF_SONG *sp, unsigned long track, unsigned
 	}
 
 	return NULL;	//Return error
+}
+
+int eof_create_image_sequence(void)
+{
+	unsigned long framectr = 0, refreshctr = 0;
+	unsigned long remainder = 0;
+	char filename[20] = {0};
+	char windowtitle[101] = {0};
+	int err;
+
+	/* check to make sure \sequence folder exists */
+	ustrcpy(eof_temp_filename, eof_song_path);
+	replace_filename(eof_temp_filename, eof_temp_filename, "", sizeof(eof_temp_filename));
+	put_backslash(eof_temp_filename);
+	ustrcat(eof_temp_filename, "sequence");
+	if(!file_exists(eof_temp_filename, FA_DIREC | FA_HIDDEN, NULL))
+	{	//If this folder doesn't already exist
+		err = eof_mkdir(eof_temp_filename);
+		if(err)
+		{	//If the folder could not be created
+			allegro_message("Could not create folder!\n%s", eof_temp_filename);
+			return 1;
+		}
+	}
+	else if(alert(NULL, "Overwrite contents of existing \\sequence folder?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+	{	//If user declined to overwrite the contents of the folder
+		return 1;
+	}
+	put_backslash(eof_temp_filename);	//eof_temp_filename is now the path of the \sequence folder
+
+	alogg_seek_abs_msecs_ogg(eof_music_track, 0);
+	eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
+	eof_music_pos = eof_music_actual_pos + eof_av_delay;
+	clear_to_color(eof_screen, makecol(224, 224, 224));
+	blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+	while(eof_music_pos <  eof_music_actual_length)
+	{
+		if(key[KEY_ESC])
+			break;
+
+		if(refreshctr >= 10)
+		{
+		//Update EOF's window title to provide a status
+			snprintf(windowtitle, sizeof(windowtitle)-1, "Exporting image sequence: %.2f%% - Press Esc to cancel",(float)eof_music_pos/(float)eof_music_actual_length);
+			set_window_title(windowtitle);
+			refreshctr -= 10;
+		}
+
+		//Render the screen
+//		clear_to_color(eof_screen, makecol(224, 224, 224));
+//		blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+		eof_find_lyric_preview_lines();
+		if(eof_vocals_selected)
+		{
+			eof_render_vocal_editor_window();
+			eof_render_lyric_window();
+		}
+		else
+		{
+			eof_render_editor_window();
+			eof_render_3d_window();
+		}
+		eof_render_note_window();
+
+	//Export the image for this frame
+		snprintf(filename, sizeof(filename), "%08lu.pcx",framectr);
+		replace_filename(eof_temp_filename, eof_temp_filename, filename, sizeof(eof_temp_filename));
+//		save_tga(eof_temp_filename, eof_screen, NULL);	//Pass a NULL palette
+		save_pcx(eof_temp_filename, eof_screen, NULL);	//Pass a NULL palette
+
+	//Seek one frame (1/30 second) further into the audio, tracking for rounding errors
+		#define EOF_IMAGE_SEQUENCE_FPS 30
+		framectr++;
+		refreshctr++;
+		eof_music_pos += 1000 / EOF_IMAGE_SEQUENCE_FPS;
+		remainder += 1000 % EOF_IMAGE_SEQUENCE_FPS;	//Track the remainder
+		while(remainder >= EOF_IMAGE_SEQUENCE_FPS)
+		{
+			eof_music_pos++;
+			remainder -= EOF_IMAGE_SEQUENCE_FPS;
+		}
+//		eof_music_pos = eof_music_actual_pos;
+	}
+
+	eof_fix_window_title();
+	return 1;
 }

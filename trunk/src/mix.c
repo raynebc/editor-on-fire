@@ -595,7 +595,7 @@ int eof_read_pcm_samples(ALOGG_OGG *ogg,void *data,unsigned bytenum)
 	while(1)
 	{
 		temp = &(ogg->vf);
-		ret = ov_read(temp, data, bytenum, 0, alogg_get_wave_bits_ogg(ogg)/8, 0, &section);	//Read one sample
+		ret = ov_read(temp, data, bytenum, 0, 2, 0, &section);	//Read one sample
 
 		if(ret == 0)
 			return 1;	//EOF

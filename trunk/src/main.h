@@ -362,6 +362,9 @@ int eof_load_complete_song(char * filename);
 int eof_destroy_ogg(void);
 int eof_save_ogg(char * fn);
 void eof_render(void);
+void eof_render_lyric_window(void);
+void eof_render_3d_window(void);
+void eof_render_note_window(void);
 void eof_reset_song(void);
 int eof_load_data(void);	//Loads graphics and fonts from eof.dat
 void eof_destroy_data(void);	//Frees graphics and fonts from memory
