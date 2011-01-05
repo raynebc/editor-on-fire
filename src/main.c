@@ -1470,6 +1470,7 @@ void eof_read_global_keys(void)
 		if(KEY_EITHER_CTRL && key[KEY_I])
 		{
 			eof_inverted_notes = 1 - eof_inverted_notes;
+			eof_set_2D_lane_positions(0);	//Update ychart[] by force since the lane positions have changed
 			key[KEY_I] = 0;
 		}
 
@@ -1933,6 +1934,7 @@ void eof_render_note_window(void)
 
 	if((eof_catalog_menu[0].flags & D_SELECTED) && eof_song->catalog->entries)
 	{//If show catalog is selected and there's at least one entry
+		eof_set_2D_lane_positions(eof_selected_track);	//Update the ychart[] array
 		if(eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track] == NULL)
 			return;	//If this is NULL for some reason (broken track array or corrupt catalog entry, abort rendering it
 
@@ -2436,25 +2438,22 @@ void eof_render_3d_window(void)
 	int point[8];
 	unsigned long i;
 	short numsolos = 0;					//Used to abstract the solo sections
-//	EOF_PHRASE_SECTION *soloptr = NULL;		//Used to abstract the solo sections
 	unsigned long numnotes;				//Used to abstract the notes
 	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
 	unsigned long tracknum;
-	float lanewidth;
 
 	//Used to draw trill and tremolo sections:
 	unsigned long j, ctr, usedlanes, bitmask, numsections;
 	EOF_PHRASE_SECTION *sectionptr = NULL;	//Used to abstract sections
-	long xchart[EOF_MAX_FRETS] = {48, 48 + 56, 48 + 56 * 2, 48 + 56 * 3, 48 + 56 * 4, 48 + 56 * 5};
 	int colors[EOF_MAX_FRETS] = {makecol(170,255,170), makecol(255,156,156), makecol(255,255,224), makecol(156,156,255), makecol(255,156,255), makecol(255,170,128)};	//Lightened versions of the standard fret colors
 
 	clear_to_color(eof_window_3d->screen, eof_color_gray);
 	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
+	eof_set_3D_lane_positions(eof_selected_track);	//Update the xchart[] array
 	if(eof_selected_track == EOF_TRACK_BASS)
 	{	//Special case:  The bass track can use a sixth lane but its 3D representation still only draws 5 lanes
 		numlanes = 5;
 	}
-	lanewidth = 56.0 * (4.0 / (numlanes-1));	//This is the correct lane width for either 5 or 6 lanes
 
 	point[0] = ocd3d_project_x(20, 600);
 	point[1] = ocd3d_project_y(200, 600);
@@ -2522,22 +2521,9 @@ void eof_render_3d_window(void)
 	/* render trill and tremolo sections */
 	if(eof_get_num_trills(eof_song, eof_selected_track) || eof_get_num_tremolos(eof_song, eof_selected_track))
 	{	//If this track has any trill or tremolo sections
-		unsigned long halflanewidth = lanewidth / 2;
+		unsigned long halflanewidth = (56.0 * (4.0 / (numlanes-1))) / 2;
+
 		//Build the lane X coordinate array
-		if(eof_lefty_mode)
-		{
-			for(ctr = 0; ctr < numlanes; ctr++)
-			{	//Store the fretboard lane positions in reverse order, with respect to the number of lanes in use
-				xchart[ctr] = 48 + (lanewidth * (numlanes - 1 - ctr));
-			}
-		}
-		else
-		{
-			for(ctr = 0; ctr < numlanes; ctr++)
-			{	//Store the fretboard lane positions in normal order
-				xchart[ctr] = 48 + (lanewidth * ctr);
-			}
-		}
 		for(j = 0; j < 2; j++)
 		{	//For each of the two phrase types (trills and tremolos)
 			if(j == 0)
@@ -2642,8 +2628,8 @@ void eof_render_3d_window(void)
 	//Draw fret lanes
 	for(i = 0; i < numlanes; i++)
 	{
-		obx = ocd3d_project_x(20.0 + ((float)i * lanewidth) + 28.0, -100);
-		oex = ocd3d_project_x(20.0 + ((float)i * lanewidth) + 28.0, 600);
+		obx = ocd3d_project_x(xchart[i], -100);
+		oex = ocd3d_project_x(xchart[i], 600);
 		oby = ocd3d_project_y(200, -100);
 		oey = ocd3d_project_y(200, 600);
 
@@ -3651,6 +3637,88 @@ void eof_scale_fretboard(void)
 	for(ctr = 0; ctr < EOF_MAX_FRETS; ctr++)
 	{	//For each fretboard lane after the first is eof_screen_layout.string_space higher than the previous lane
 		eof_screen_layout.note_y[ctr] = 20.0 + ((float)ctr * lanewidth);
+	}
+}
+
+long xchart[EOF_MAX_FRETS] = {0};
+
+void eof_set_3D_lane_positions(unsigned long track)
+{
+	static unsigned long numlanes = 0;	//This remembers the number of lanes handled by the previous call
+	unsigned long newnumlanes = eof_count_track_lanes(eof_song, track);	//This is the number of lanes in the specified track
+	unsigned long numlaneswidth = 5 - 1;	//By default, the lane width will be based on a 5 lane track
+	unsigned long ctr;
+	float lanewidth = 0.0;
+
+	if(eof_selected_track == EOF_TRACK_BASS)
+	{	//Special case:  The bass track can use a sixth lane but its 3D representation still only draws 5 lanes
+		newnumlanes = 5;
+	}
+	else if(track && (eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
+	{	//Special case:  The drum track renders with only 4 lanes
+		newnumlanes = 4;
+	}
+	else
+	{
+		numlaneswidth = newnumlanes - 1;	//Otherwise, base the lane width on the number of lanes used in the track
+	}
+
+	if(track && (newnumlanes == numlanes))	//If the xchart[] array doesn't need to be updated
+		return;			//Return immediately
+
+	numlanes = newnumlanes;		//Permanently store this as the number of lanes the xchart[] array represents
+	lanewidth = 56.0 * (4.0 / numlaneswidth);
+	if(eof_lefty_mode)
+	{
+		for(ctr = 0; ctr < numlanes; ctr++)
+		{	//Store the fretboard lane positions in reverse order, with respect to the number of lanes in use
+			xchart[ctr] = 48 + (lanewidth * (numlanes - 1 - ctr));
+		}
+	}
+	else
+	{
+		for(ctr = 0; ctr < numlanes; ctr++)
+		{	//Store the fretboard lane positions in normal order
+			xchart[ctr] = 48 + (lanewidth * ctr);
+		}
+	}
+}
+
+long ychart[EOF_MAX_FRETS] = {0};
+
+void eof_set_2D_lane_positions(unsigned long track)
+{
+	static unsigned long numlanes = 0;		//This remembers the number of lanes handled by the previous call
+	unsigned long newnumlanes, newnumlanes2;
+	unsigned long ctr, ctr2;
+
+	newnumlanes = eof_count_track_lanes(eof_song, eof_selected_track);	//Count the number of lanes in the active track
+	newnumlanes2 = eof_count_track_lanes(eof_song, track);	//Count the number of lanes in that note's track
+	if(newnumlanes > newnumlanes2)
+	{	//Special case (ie. viewing an open bass guitar catalog entry when any other legacy track is active)
+		newnumlanes = newnumlanes2;	//Use the number of lanes in the active track
+	}
+
+	if(track && (newnumlanes == numlanes))	//If the ychart[] array doesn't need to be updated
+		return;			//Return immediately
+
+	numlanes = newnumlanes;		//Permanently store this as the number of lanes the xchart[] array represents
+	if(eof_inverted_notes || (track && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)))
+	{	//If the user selected the inverted notes option OR a pro guitar track is active (force inverted notes display)
+		for(ctr = 0, ctr2 = 0; ctr < EOF_MAX_FRETS; ctr++)
+		{	//Store the fretboard lane positions in reverse order, with respect to the number of lanes in use
+			if(EOF_MAX_FRETS - ctr <= numlanes)
+			{	//If this lane is used in the chart, store it in ychart[] in reverse order
+				ychart[ctr2++] = eof_screen_layout.note_y[EOF_MAX_FRETS - 1 - ctr];
+			}
+		}
+	}
+	else
+	{
+		for(ctr = 0; ctr < EOF_MAX_FRETS; ctr++)
+		{	//Store the fretboard lane positions in normal order
+			ychart[ctr] = eof_screen_layout.note_y[ctr];
+		}
 	}
 }
 
