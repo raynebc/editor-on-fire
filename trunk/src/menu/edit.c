@@ -1131,6 +1131,7 @@ int eof_menu_edit_copy(void)
 	}
 	unsigned long i;
 	unsigned long first_pos = 0;
+	char first_pos_read = 0;
 	long first_beat = 0;
 	char first_beat_read = 0;
 	char note_check = 0;
@@ -1146,9 +1147,10 @@ int eof_menu_edit_copy(void)
 		if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the active difficulty, is in the active track and is selected
 			copy_notes++;
-			if(eof_get_note_pos(eof_song, eof_selected_track, i) < first_pos)
+			if(!first_pos_read || (eof_get_note_pos(eof_song, eof_selected_track, i) < first_pos))
 			{
 				first_pos = eof_get_note_pos(eof_song, eof_selected_track, i);
+				first_pos_read = 1;
 			}
 			if(!first_beat_read)
 			{
