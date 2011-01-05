@@ -336,6 +336,9 @@ extern unsigned long eof_pro_guitar_fret_bitmask;
 extern char eof_midi_initialized;			//Specifies whether Allegro was able to set up a MIDI device
 extern EOF_SELECTION_DATA eof_selection;
 
+extern long xchart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D rendering, updated by eof_set_3D_lane_positions()
+extern long ychart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D rendering, updated by eof_set_2D_lane_positions()
+
 void eof_show_mouse(BITMAP * bp);	//Shows the software mouse if it is being used
 float eof_get_porpos(unsigned long pos);	//Returns the timestamps position within a beat (percentage)?
 long eof_put_porpos(unsigned long beat, float porpos, float offset);
@@ -381,5 +384,14 @@ void eof_init_after_load(void);	//Initializes variables and cleans up notes, sho
 void eof_scale_fretboard(void);
 	//Prepares screen layout offsets, etc. for the active track, based on EOF's window display size and the number of frets in the track
 	//If the number of frets is less than 5, the original 5 lane spacing will be used
+
+void eof_set_3D_lane_positions(unsigned long track);
+	//Sets the 3D coordinate values in the global xchart[] array based on the needs of the specified track
+	//If the array doesn't need to be changed, the function returns without recalculating the array's values
+	//If a track value of 0 is passed, xchart[] is forcibly updated, such as to be used after changing window size, lefty mode, etc.
+void eof_set_2D_lane_positions(unsigned long track);
+	//Sets the 2D coordinate values in the global ychart[] array based on the needs of the specified track
+	//If the array doesn't need to be changed, the function returns without recalculating the array's values
+	//If a track value of 0 is passed, ychart[] is forcibly updated, such as to be used after changing window size, inverted note mode, etc.
 
 #endif

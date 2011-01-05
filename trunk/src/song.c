@@ -1,4 +1,5 @@
 #include <allegro.h>
+#include <time.h>
 #include "main.h"
 #include "editor.h"
 #include "beat.h"
@@ -7,6 +8,7 @@
 #include "mix.h"
 #include "undo.h"
 #include "utility.h"
+#include "menu/file.h"
 #include "menu/song.h"
 
 EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 1 + 1] =
@@ -2384,16 +2386,16 @@ EOF_SONG * eof_create_song_populated(void)
 
 unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track)
 {
-	if((track == 0) || (track > EOF_TRACKS_MAX))
+	if((track == 0) || (track > EOF_TRACKS_MAX) || (sp == NULL))
 		return 5;	//Return default value if the specified track doesn't exist
 
-	if(eof_song->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
 	{	//If this is a legacy track, return the number of lanes it uses
-		return eof_song->legacy_track[eof_song->track[track]->tracknum]->numlanes;
+		return sp->legacy_track[eof_song->track[track]->tracknum]->numlanes;
 	}
-	else if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	else if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{
-		return eof_song->pro_guitar_track[eof_song->track[track]->tracknum]->numstrings;
+		return sp->pro_guitar_track[eof_song->track[track]->tracknum]->numstrings;
 	}
 	else
 	{	//Otherwise return 5, as so far, other track formats don't store this information
@@ -3974,13 +3976,19 @@ EOF_PHRASE_SECTION *eof_get_arpeggio(EOF_SONG *sp, unsigned long track, unsigned
 	return NULL;	//Return error
 }
 
+//#define EOF_CREATE_IMAGE_SEQUENCE_SHOW_FPS_ONLY
 int eof_create_image_sequence(void)
 {
-	unsigned long framectr = 0, refreshctr = 0;
+	unsigned long framectr = 0, refreshctr = 0, lastpollctr = 0;
 	unsigned long remainder = 0;
-	char filename[20] = {0};
 	char windowtitle[101] = {0};
+	float fps = 0.0;
+	clock_t starttime, curtime, endtime, lastpolltime = 0;
+	char original_eof_desktop = eof_desktop;
+
+	#ifndef EOF_CREATE_IMAGE_SEQUENCE_SHOW_FPS_ONLY
 	int err;
+	char filename[20] = {0};
 
 	/* check to make sure \sequence folder exists */
 	ustrcpy(eof_temp_filename, eof_song_path);
@@ -4001,12 +4009,18 @@ int eof_create_image_sequence(void)
 		return 1;
 	}
 	put_backslash(eof_temp_filename);	//eof_temp_filename is now the path of the \sequence folder
+	#endif
+
+//Change to 8 bit color mode
+	eof_desktop = 0;
+	eof_apply_display_settings(eof_screen_layout.mode);
 
 	alogg_seek_abs_msecs_ogg(eof_music_track, 0);
 	eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 	eof_music_pos = eof_music_actual_pos + eof_av_delay;
 	clear_to_color(eof_screen, makecol(224, 224, 224));
 	blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+	starttime = clock();	//Get the start time of the image sequence export
 	while(eof_music_pos <  eof_music_actual_length)
 	{
 		if(key[KEY_ESC])
@@ -4015,14 +4029,16 @@ int eof_create_image_sequence(void)
 		if(refreshctr >= 10)
 		{
 		//Update EOF's window title to provide a status
-			snprintf(windowtitle, sizeof(windowtitle)-1, "Exporting image sequence: %.2f%% - Press Esc to cancel",(float)eof_music_pos/(float)eof_music_actual_length);
+			curtime = clock();	//Get the current time
+			fps = (float)(framectr - lastpollctr) / ((float)(curtime - lastpolltime) / (float)CLOCKS_PER_SEC);	//Find the number of FPS rendered since the last poll
+			snprintf(windowtitle, sizeof(windowtitle)-1, "Exporting image sequence: %.2f%% (%.2fFPS) - Press Esc to cancel",(float)eof_music_pos/(float)eof_music_actual_length * 100.0, fps);
 			set_window_title(windowtitle);
 			refreshctr -= 10;
+			lastpolltime = curtime;
+			lastpollctr = framectr;
 		}
 
 		//Render the screen
-//		clear_to_color(eof_screen, makecol(224, 224, 224));
-//		blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
 		eof_find_lyric_preview_lines();
 		if(eof_vocals_selected)
 		{
@@ -4036,11 +4052,12 @@ int eof_create_image_sequence(void)
 		}
 		eof_render_note_window();
 
+		#ifndef EOF_CREATE_IMAGE_SEQUENCE_SHOW_FPS_ONLY
 	//Export the image for this frame
 		snprintf(filename, sizeof(filename), "%08lu.pcx",framectr);
 		replace_filename(eof_temp_filename, eof_temp_filename, filename, sizeof(eof_temp_filename));
-//		save_tga(eof_temp_filename, eof_screen, NULL);	//Pass a NULL palette
 		save_pcx(eof_temp_filename, eof_screen, NULL);	//Pass a NULL palette
+		#endif
 
 	//Seek one frame (1/30 second) further into the audio, tracking for rounding errors
 		#define EOF_IMAGE_SEQUENCE_FPS 30
@@ -4053,8 +4070,18 @@ int eof_create_image_sequence(void)
 			eof_music_pos++;
 			remainder -= EOF_IMAGE_SEQUENCE_FPS;
 		}
-//		eof_music_pos = eof_music_actual_pos;
 	}
+	endtime = clock();	//Get the start time of the image sequence export
+
+	#ifdef EOF_CREATE_IMAGE_SEQUENCE_SHOW_FPS_ONLY
+	fps = (float)framectr / ((float)(endtime - starttime) / (float)CLOCKS_PER_SEC);	//Find the average FPS
+	snprintf(windowtitle, sizeof(windowtitle)-1, "Average render rate was %.2fFPS",fps);
+	allegro_message("%s", windowtitle);
+	#endif
+
+//Restore original display settings
+	eof_desktop = original_eof_desktop;
+	eof_apply_display_settings(eof_screen_layout.mode);
 
 	eof_fix_window_title();
 	return 1;

@@ -1067,7 +1067,7 @@ void eof_read_editor_keys(void)
 				{
 					if(eof_mark_drums_as_cymbal)
 					{	//If the user opted to make all new drum notes cymbals automatically
-						eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track)-1);
+						eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
 					}
 					eof_detect_difficulties(eof_song);
 				}
@@ -1084,7 +1084,7 @@ void eof_read_editor_keys(void)
 					{
 						if(eof_mark_drums_as_cymbal)
 						{	//If the user opted to make all new drum notes cymbals automatically
-							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track)-1);
+							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
 						}
 						eof_entering_note_note = new_note;
 						eof_entering_note = 1;
@@ -1181,7 +1181,7 @@ void eof_read_editor_keys(void)
 					{
 						if(eof_mark_drums_as_cymbal)
 						{	//If the user opted to make all new drum notes cymbals automatically
-							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track)-1);
+							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
 						}
 						eof_entering_note_note = new_note;
 						eof_entering_note = 1;
@@ -1278,7 +1278,7 @@ void eof_read_editor_keys(void)
 						{
 							if(eof_mark_drums_as_cymbal)
 							{	//If the user opted to make all new drum notes cymbals automatically
-								eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track)-1);
+								eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
 							}
 							eof_entering_note_note = new_note;
 							eof_entering_note = 1;
@@ -1880,7 +1880,7 @@ void eof_read_editor_keys(void)
 							{
 								if(eof_mark_drums_as_cymbal)
 								{	//If the user opted to make all new drum notes cymbals automatically
-									eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track)-1);
+									eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
 								}
 								eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1);	//Get the position of the last note that was added
 								eof_selection.range_pos_1 = eof_selection.current_pos;
@@ -2148,10 +2148,10 @@ void eof_editor_drum_logic(void)
 			{
 				if(eof_mark_drums_as_cymbal)
 				{	//If the user opted to make all new drum notes cymbals automatically
-					eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track)-1);
+					eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
 				}
-				eof_snap_logic(&eof_snap, new_note->pos);
-				new_note->pos = eof_snap.pos;
+				eof_snap_logic(&eof_snap, eof_get_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1));
+				eof_set_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, eof_snap.pos);
 				eof_entering_note_note = new_note;
 				eof_entering_note = 1;
 				eof_detect_difficulties(eof_song);
@@ -2602,9 +2602,9 @@ void eof_editor_logic(void)
 						{
 							if(eof_mark_drums_as_cymbal)
 							{	//If the user opted to make all new drum notes cymbals automatically
-								eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track)-1);
+								eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
 							}
-							eof_selection.current_pos = new_note->pos;
+							eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1);
 							eof_selection.range_pos_1 = eof_selection.current_pos;
 							eof_selection.range_pos_2 = eof_selection.current_pos;
 							eof_selection.track = eof_selected_track;
@@ -2629,7 +2629,7 @@ void eof_editor_logic(void)
 						{	//If the user opted to make all new drum notes cymbals automatically
 							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song,eof_selected_track)-1);
 						}
-						eof_selection.current_pos = new_note->pos;
+						eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1);
 						eof_selection.range_pos_1 = eof_selection.current_pos;
 						eof_selection.range_pos_2 = eof_selection.current_pos;
 						eof_selection.track = eof_selected_track;
@@ -3843,7 +3843,7 @@ unsigned long eof_determine_piano_roll_right_edge(void)
 
 void eof_render_editor_window_common(void)
 {
-	unsigned long i, j, ctr, ctr2;
+	unsigned long i, j, ctr;
 	int pos = eof_music_pos / eof_zoom;	//Current seek position
 	int lpos;							//The position of the first beatmarker
 	int pmin = 0;
@@ -3857,14 +3857,13 @@ void eof_render_editor_window_common(void)
 	unsigned long tracknum;
 	unsigned long bitmask, usedlanes;
 
-	long ychart[EOF_MAX_FRETS];			//Used for rendering tremolo and trill phrass
-//	int colors[EOF_MAX_FRETS] = {eof_color_green,eof_color_red,eof_color_yellow,eof_color_blue,eof_color_purple,eof_color_orange};	//Used for rendering tremolo and trill phrass
 	int colors[EOF_MAX_FRETS] = {makecol(170,255,170), makecol(255,156,156), makecol(255,255,224), makecol(156,156,255), makecol(255,156,255), makecol(255,170,128)};	//Lightened versions of the standard fret colors
 
 	if(!eof_song_loaded)
 		return;
 
 	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
+	eof_set_2D_lane_positions(eof_selected_track);	//Update the ychart[] array
 
 	/* draw the starting position */
 	if(pos < 300)
@@ -3934,24 +3933,6 @@ void eof_render_editor_window_common(void)
 	/* draw trill and tremolo sections */
 	if(eof_get_num_trills(eof_song, eof_selected_track) || eof_get_num_tremolos(eof_song, eof_selected_track))
 	{	//If this track has any trill or tremolo sections
-		//Build the lane Y coordinate array
-		if(eof_inverted_notes)
-		{
-			for(ctr = 0, ctr2 = 0; ctr < EOF_MAX_FRETS; ctr++)
-			{	//Store the fretboard lane positions in reverse order, with respect to the number of lanes in use
-				if(EOF_MAX_FRETS - ctr <= numlanes)
-				{	//If this lane is used in the chart, store it in ychart[] in reverse order
-					ychart[ctr2++] = eof_screen_layout.note_y[EOF_MAX_FRETS - 1 - ctr];
-				}
-			}
-		}
-		else
-		{
-			for(ctr = 0; ctr < EOF_MAX_FRETS; ctr++)
-			{	//Store the fretboard lane positions in normal order
-				ychart[ctr] = eof_screen_layout.note_y[ctr];
-			}
-		}
 		for(j = 0; j < 2; j++)
 		{	//For each of the two phrase types (trills and tremolos)
 			if(j == 0)
@@ -4002,12 +3983,10 @@ void eof_render_editor_window_common(void)
 	{
 		if(!i || (i + 1 >= numlanes))
 		{	//Ensure the top and bottom lines extend to the left of the piano roll
-//			hline(eof_window_editor->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
 			hline(eof_window_editor->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_music_length) / eof_zoom, eof_color_white);
 		}
 		else if(eof_selected_track != EOF_TRACK_VOCALS)
 		{	//Otherwise, if not drawing the vocal editor, draw the other fret lines from the first beat marker to the end of the chart
-//			hline(eof_window_editor->screen, lpos + eof_song->tags->ogg[eof_selected_ogg].midi_offset / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35 + i * eof_screen_layout.string_space, lpos + (eof_music_length) / eof_zoom, eof_color_white);
 			hline(eof_window_editor->screen, lpos + eof_song->tags->ogg[eof_selected_ogg].midi_offset / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_music_length) / eof_zoom, eof_color_white);
 		}
 	}

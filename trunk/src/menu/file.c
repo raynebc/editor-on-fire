@@ -888,6 +888,8 @@ int eof_menu_file_preferences(void)
 		eof_use_ts = (eof_preferences_dialog[4].flags == D_SELECTED ? 1 : 0);
 		eof_input_mode = eof_preferences_dialog[6].d1;
 	}
+	eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case eof_inverted_notes was changed
+	eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case eof_lefty_mode was changed
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
@@ -906,41 +908,51 @@ int eof_menu_file_display(void)
 	eof_display_dialog[2].flags = (eof_desktop == 0) ? D_SELECTED : 0;
 	if(eof_popup_dialog(eof_display_dialog, 0) == 5)
 	{
-		eof_destroy_data();
 		eof_soft_cursor = (eof_display_dialog[1].flags & D_SELECTED) ? 1 : 0;
 		eof_desktop = (eof_display_dialog[2].flags & D_SELECTED) ? 0 : 1;
-		if(eof_desktop)
-		{
-			set_color_depth(desktop_color_depth() != 0 ? desktop_color_depth() : 8);
-		}
-		else
-		{
-			set_color_depth(8);
-		}
-		if(!eof_load_data())
-		{
-			allegro_message("Could not reload program data!");
-			exit(0);
-		}
-		eof_set_display_mode(eof_display_dialog[4].d1);
-		set_palette(eof_palette);
-		if(!eof_soft_cursor)
-		{
-			if(show_os_cursor(2) < 0)
-			{
-				eof_soft_cursor = 1;
-			}
-		}
-		else
-		{
-			show_os_cursor(0);
-		}
+		eof_apply_display_settings(eof_display_dialog[4].d1);
 	}
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
-	eof_scale_fretboard();
+
 	return 1;
+}
+
+void eof_apply_display_settings(int mode)
+{
+	eof_destroy_data();
+	if(eof_desktop)
+	{
+		set_color_depth(desktop_color_depth() != 0 ? desktop_color_depth() : 8);
+	}
+	else
+	{
+		set_color_depth(8);
+	}
+	if(!eof_load_data())
+	{
+		allegro_message("Could not reload program data!");
+		exit(0);
+	}
+	eof_set_display_mode(mode);
+	set_palette(eof_palette);
+	if(!eof_soft_cursor)
+	{
+		if(show_os_cursor(2) < 0)
+		{
+			eof_soft_cursor = 1;
+		}
+	}
+	else
+	{
+		show_os_cursor(0);
+	}
+
+	//Update coordinate related items
+	eof_scale_fretboard();
+	eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case the display window size was changed
+	eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case the display window size was changed
 }
 
 int eof_ogg_settings(void)
