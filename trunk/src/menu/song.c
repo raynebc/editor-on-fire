@@ -1048,7 +1048,7 @@ int eof_menu_track_selected_track_number(int tracknum)
 		eof_selected_track = tracknum;
 		eof_detect_difficulties(eof_song);
 		eof_fix_window_title();
-		eof_scale_fretboard();
+		eof_scale_fretboard(0);
 		eof_determine_phrase_status();
 	}
 	return 1;
@@ -1853,7 +1853,7 @@ int eof_menu_song_open_bass(void)
 		eof_song_menu[16].flags = D_SELECTED;
 		eof_song->legacy_track[tracknum]->numlanes = 6;
 	}
-	eof_scale_fretboard();
+	eof_scale_fretboard(0);
 	return 1;
 }
 

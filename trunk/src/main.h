@@ -381,9 +381,10 @@ void eof_exit(void);
 
 void eof_init_after_load(void);	//Initializes variables and cleans up notes, should be used after loading or creating a chart
 
-void eof_scale_fretboard(void);
-	//Prepares screen layout offsets, etc. for the active track, based on EOF's window display size and the number of frets in the track
-	//If the number of frets is less than 5, the original 5 lane spacing will be used
+void eof_scale_fretboard(unsigned long numlanes);
+	//Prepares screen layout offsets, etc. based on EOF's window display size and a given number of lanes (depending on the passed numlanes parameter)
+	//If numlanes is 0, the number of lanes of the active track is used, otherwise the parameter itself is used
+	//If the number of lanes is less than 5, the original 5 lane spacing will be used
 
 void eof_set_3D_lane_positions(unsigned long track);
 	//Sets the 3D coordinate values in the global xchart[] array based on the needs of the specified track

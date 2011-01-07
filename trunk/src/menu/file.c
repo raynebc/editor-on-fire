@@ -950,7 +950,7 @@ void eof_apply_display_settings(int mode)
 	}
 
 	//Update coordinate related items
-	eof_scale_fretboard();
+	eof_scale_fretboard(0);
 	eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case the display window size was changed
 	eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case the display window size was changed
 }

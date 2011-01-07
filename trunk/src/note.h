@@ -51,7 +51,7 @@ int eof_note_compare(unsigned long track, unsigned long note1, unsigned long not
 	//Compares the two notes and returns 0 under the following conditions:
 	//1. The track is a legacy format track and both notes have the same bitmask
 	//2. The track is a vocal format track and both lyrics have the same pitch
-	//3. The track is a pro guitar format track and both notes have the same bitmask and active frets have matching values
+	//3. The track is a pro guitar format track and both notes have the same bitmask (legacy bitmasks are not compared) and active frets have matching values
 	//If the notes do not match, 1 is returned
 	//-1 is returned on error
 

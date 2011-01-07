@@ -208,7 +208,6 @@ int eof_info_color;
 
 EOF_SCREEN_LAYOUT eof_screen_layout;
 BITMAP * eof_screen = NULL;
-BITMAP * eof_screen_3d = NULL;
 
 EOF_SELECTION_DATA eof_selection;
 
@@ -459,6 +458,7 @@ void eof_fix_catalog_selection(void)
 
 int eof_set_display_mode(int mode)
 {
+	unsigned long screen_width, screen_height, default_zoom_level;
 
 	/* destroy windows first */
 	if(eof_window_editor)
@@ -481,74 +481,17 @@ int eof_set_display_mode(int mode)
 		destroy_bitmap(eof_screen);
 		eof_screen = NULL;
 	}
-	if(eof_screen_3d)
-	{
-		destroy_bitmap(eof_screen_3d);
-		eof_screen_3d = NULL;
-	}
 
 	switch(mode)
 	{
 		case EOF_DISPLAY_640:
-		{
-			if(set_gfx_mode(GFX_AUTODETECT_WINDOWED, 640, 480, 0, 0))
-			{
-				if(set_gfx_mode(GFX_AUTODETECT, 640, 480, 0, 0))
-				{
-					if(set_gfx_mode(GFX_SAFE, 640, 480, 0, 0))
-					{
-						allegro_message("Can't set up screen!  Error: %s",allegro_error);
-						return 0;
-					}
-					else
-					{
-						allegro_message("EOF is in safe mode!\nThings may not work as expected.");
-					}
-				}
-			}
-			eof_screen = create_bitmap(640, 480);
-			if(!eof_screen)
-			{
-				return 0;
-			}
-/*			eof_screen_3d = create_bitmap(320, 240);
-			if(!eof_screen_3d)
-			{
-				return 0;
-			} */
-			eof_window_editor = eof_window_create(0, 20, 640, 220, eof_screen);
-			if(!eof_window_editor)
-			{
-				allegro_message("Unable to create editor window!");
-				return 0;
-			}
-			eof_window_note = eof_window_create(0, 240, 320, 240, eof_screen);
-			if(!eof_window_note)
-			{
-				allegro_message("Unable to create information window!");
-				return 0;
-			}
-			eof_window_3d = eof_window_create(320, 240, 320, 240, eof_screen);
-			if(!eof_window_3d)
-			{
-				allegro_message("Unable to create 3D preview window!");
-				return 0;
-			}
-			eof_screen_layout.scrollbar_y = 203;
+			screen_width = 640;
+			screen_height = 480;
+			default_zoom_level = 10;
 			eof_screen_layout.string_space_unscaled = 20;
-			eof_screen_layout.note_y[0] = 20;
-			eof_screen_layout.note_y[1] = 40;
-			eof_screen_layout.note_y[2] = 60;
-			eof_screen_layout.note_y[3] = 80;
-			eof_screen_layout.note_y[4] = 100;
-			eof_screen_layout.lyric_y = 20;
 			eof_screen_layout.vocal_y = 96;
-			eof_screen_layout.vocal_view_size = 13;
 			eof_screen_layout.vocal_tail_size = 4;
-			eof_screen_layout.lyric_view_key_width = (eof_window_3d->screen->w - eof_window_3d->screen->w % 29) / 29;
-			eof_screen_layout.lyric_view_key_height = eof_screen_layout.lyric_view_key_width * 4;
 			eof_screen_layout.lyric_view_bkey_width = 3;
-			eof_screen_layout.lyric_view_bkey_height = eof_screen_layout.lyric_view_key_width * 3;
 			eof_screen_layout.note_size = 6;
 			eof_screen_layout.hopo_note_size = 4;
 			eof_screen_layout.anti_hopo_note_size = 8;
@@ -558,75 +501,16 @@ int eof_set_display_mode(int mode)
 			eof_screen_layout.note_marker_size = 10;
 			eof_screen_layout.note_tail_size = 3;
 			eof_screen_layout.note_kick_size = 2;
-			eof_screen_layout.fretboard_h = 125;
-			eof_screen_layout.buffered_preview = 0;
-			eof_screen_layout.controls_x = 443;
-			eof_screen_layout.mode = mode;
-			eof_menu_edit_zoom_10();
-			ocd3d_set_projection(1.0, 1.0, 160.0, 0.0, 320.0, 320.0);
-			break;
-		}
+		break;
+
 		case EOF_DISPLAY_800:
-		{
-			if(set_gfx_mode(GFX_AUTODETECT_WINDOWED, 800, 600, 0, 0))
-			{
-				if(set_gfx_mode(GFX_AUTODETECT, 800, 600, 0, 0))
-				{
-					if(set_gfx_mode(GFX_SAFE, 800, 600, 0, 0))
-					{
-						allegro_message("Can't set up screen!  Error: %s",allegro_error);
-						return 0;
-					}
-					else
-					{
-						allegro_message("EOF is in safe mode!\nThings may not work as expected.");
-					}
-				}
-			}
-			eof_screen = create_bitmap(800, 600);
-			if(!eof_screen)
-			{
-				return 0;
-			}
-/*			eof_screen_3d = create_bitmap(320, 240);
-			if(!eof_screen_3d)
-			{
-				return 0;
-			} */
-			eof_window_editor = eof_window_create(0, 20, 800, 280, eof_screen);
-			if(!eof_window_editor)
-			{
-				allegro_message("Unable to create editor window!");
-				return 0;
-			}
-			eof_window_note = eof_window_create(0, 300, 400, 300, eof_screen);
-			if(!eof_window_note)
-			{
-				allegro_message("Unable to create information window!");
-				return 0;
-			}
-			eof_window_3d = eof_window_create(400, 300, 400, 300, eof_screen);
-//			eof_window_3d = eof_window_create(0, 0, 320, 240, eof_screen_3d);
-			if(!eof_window_3d)
-			{
-				allegro_message("Unable to create 3D preview window!");
-				return 0;
-			}
-			eof_screen_layout.scrollbar_y = 263;
+			screen_width = 800;
+			screen_height = 600;
+			default_zoom_level = 8;
 			eof_screen_layout.string_space_unscaled = 30;
-			eof_screen_layout.note_y[0] = 20;
-			eof_screen_layout.note_y[1] = 50;
-			eof_screen_layout.note_y[2] = 80;
-			eof_screen_layout.note_y[3] = 110;
-			eof_screen_layout.note_y[4] = 140;
-			eof_screen_layout.lyric_y = 20;
 			eof_screen_layout.vocal_y = 128;
-			eof_screen_layout.vocal_view_size = 13;
 			eof_screen_layout.vocal_tail_size = 6;
-			eof_screen_layout.lyric_view_key_width = eof_window_3d->screen->w / 29;
-			eof_screen_layout.lyric_view_key_height = eof_screen_layout.lyric_view_key_width * 4;
 			eof_screen_layout.lyric_view_bkey_width = 4;
-			eof_screen_layout.lyric_view_bkey_height = eof_screen_layout.lyric_view_key_width * 3;
 			eof_screen_layout.note_size = 8;
 			eof_screen_layout.hopo_note_size = 5;
 			eof_screen_layout.anti_hopo_note_size = 11;
@@ -636,74 +520,16 @@ int eof_set_display_mode(int mode)
 			eof_screen_layout.note_marker_size = 12;
 			eof_screen_layout.note_tail_size = 4;
 			eof_screen_layout.note_kick_size = 3;
-			eof_screen_layout.fretboard_h = 165;
-			eof_screen_layout.buffered_preview = 0;
-			eof_screen_layout.controls_x = 800 - 197;
-			eof_screen_layout.mode = mode;
-			eof_menu_edit_zoom_8();
-			ocd3d_set_projection(800.0 / 640.0, 600.0 / 480.0, 160.0, 0.0, 320.0, 320.0);
-			break;
-		}
+		break;
+
 		case EOF_DISPLAY_1024:
-		{
-			if(set_gfx_mode(GFX_AUTODETECT_WINDOWED, 1024, 768, 0, 0))
-			{
-				if(set_gfx_mode(GFX_AUTODETECT, 1024, 768, 0, 0))
-				{
-					if(set_gfx_mode(GFX_SAFE, 1024, 768, 0, 0))
-					{
-						allegro_message("Can't set up screen!  Error: %s",allegro_error);
-						return 0;
-					}
-					else
-					{
-						allegro_message("EOF is in safe mode!\nThings may not work as expected.");
-					}
-				}
-			}
-			eof_screen = create_bitmap(1024, 768);
-			if(!eof_screen)
-			{
-				return 0;
-			}
-/*			eof_screen_3d = create_bitmap(320, 240);
-			if(!eof_screen_3d)
-			{
-				return 0;
-			} */
-			eof_window_editor = eof_window_create(0, 20, 1024, 364, eof_screen);
-			if(!eof_window_editor)
-			{
-				allegro_message("Unable to create editor window!");
-				return 0;
-			}
-			eof_window_note = eof_window_create(0, 384, 512, 384, eof_screen);
-			if(!eof_window_note)
-			{
-				allegro_message("Unable to create information window!");
-				return 0;
-			}
-			eof_window_3d = eof_window_create(512, 384, 512, 384, eof_screen);
-			if(!eof_window_3d)
-			{
-				allegro_message("Unable to create 3D preview window!");
-				return 0;
-			}
-			eof_screen_layout.scrollbar_y = 347;
+			screen_width = 1024;
+			screen_height = 768;
+			default_zoom_level = 5;
 			eof_screen_layout.string_space_unscaled = 48;
-			eof_screen_layout.note_y[0] = 20;
-			eof_screen_layout.note_y[1] = 20 + 48 * 1;
-			eof_screen_layout.note_y[2] = 20 + 48 * 2;
-			eof_screen_layout.note_y[3] = 20 + 48 * 3;
-			eof_screen_layout.note_y[4] = 20 + 48 * 4;
-			eof_screen_layout.lyric_y = 20;
 			eof_screen_layout.vocal_y = 197;
-			eof_screen_layout.vocal_view_size = 13;
 			eof_screen_layout.vocal_tail_size = 11;
-			eof_screen_layout.lyric_view_key_width = eof_window_3d->screen->w / 29;
-			eof_screen_layout.lyric_view_key_height = eof_screen_layout.lyric_view_key_width * 4;
 			eof_screen_layout.lyric_view_bkey_width = 5;
-			eof_screen_layout.lyric_view_bkey_height = eof_screen_layout.lyric_view_key_width * 3;
 			eof_screen_layout.note_size = 10;
 			eof_screen_layout.hopo_note_size = 7;
 			eof_screen_layout.anti_hopo_note_size = 14;
@@ -713,15 +539,60 @@ int eof_set_display_mode(int mode)
 			eof_screen_layout.note_marker_size = 15;
 			eof_screen_layout.note_tail_size = 5;
 			eof_screen_layout.note_kick_size = 4;
-			eof_screen_layout.fretboard_h = 20 + 48 * 4 + 25;
-			eof_screen_layout.buffered_preview = 0;
-			eof_screen_layout.controls_x = 1024 - 197;
-			eof_screen_layout.mode = mode;
-			eof_menu_edit_zoom_5();
-			ocd3d_set_projection(1024.0 / 640.0, 768.0 / 480.0, 160.0, 0.0, 320.0, 320.0);
-			break;
+		break;
+	}
+
+	if(set_gfx_mode(GFX_AUTODETECT_WINDOWED, screen_width, screen_height, 0, 0))
+	{
+		if(set_gfx_mode(GFX_AUTODETECT, screen_width, screen_height, 0, 0))
+		{
+			if(set_gfx_mode(GFX_SAFE, screen_width, screen_height, 0, 0))
+			{
+				allegro_message("Can't set up screen!  Error: %s",allegro_error);
+				return 0;
+			}
+			else
+			{
+				allegro_message("EOF is in safe mode!\nThings may not work as expected.");
+			}
 		}
 	}
+	eof_screen = create_bitmap(screen_width, screen_height);
+	if(!eof_screen)
+	{
+		return 0;
+	}
+	eof_window_editor = eof_window_create(0, 20, screen_width, (screen_height / 2) - 20, eof_screen);
+	if(!eof_window_editor)
+	{
+		allegro_message("Unable to create editor window!");
+		return 0;
+	}
+	eof_window_note = eof_window_create(0, screen_height / 2, screen_width / 2, screen_height / 2, eof_screen);
+	if(!eof_window_note)
+	{
+		allegro_message("Unable to create information window!");
+		return 0;
+	}
+	eof_window_3d = eof_window_create(screen_width / 2, screen_height / 2, screen_width / 2, screen_height / 2, eof_screen);
+	if(!eof_window_3d)
+	{
+		allegro_message("Unable to create 3D preview window!");
+		return 0;
+	}
+	eof_screen_layout.scrollbar_y = (screen_height / 2) - 37;
+	eof_scale_fretboard(5);	//Set the eof_screen_layout.note_y[] array based on a 5 lane track, for setting the fretboard height below
+	eof_screen_layout.lyric_y = 20;
+	eof_screen_layout.vocal_view_size = 13;
+	eof_screen_layout.lyric_view_key_width = eof_window_3d->screen->w / 29;
+	eof_screen_layout.lyric_view_key_height = eof_screen_layout.lyric_view_key_width * 4;
+	eof_screen_layout.lyric_view_bkey_height = eof_screen_layout.lyric_view_key_width * 3;
+	eof_screen_layout.fretboard_h = eof_screen_layout.note_y[4] + 25;
+	eof_screen_layout.buffered_preview = 0;
+	eof_screen_layout.controls_x = screen_width - 197;
+	eof_screen_layout.mode = mode;
+	eof_menu_edit_zoom_level(default_zoom_level);
+	ocd3d_set_projection((float)screen_width / 640.0, (float)screen_height / 480.0, 160.0, 0.0, 320.0, 320.0);
 	set_display_switch_mode(SWITCH_BACKGROUND);
 	set_display_switch_callback(SWITCH_OUT, eof_switch_out_callback);
 	set_display_switch_callback(SWITCH_IN, eof_switch_in_callback);
@@ -3620,14 +3491,16 @@ void eof_init_after_load(void)
 	eof_catalog_menu[0].flags = 0;	//Hide the fret catalog by default
 }
 
-void eof_scale_fretboard(void)
+void eof_scale_fretboard(unsigned long numlanes)
 {
-	unsigned long ctr,numlanes;
+	unsigned long ctr;
 	float lanewidth;
 
 	eof_screen_layout.string_space = eof_screen_layout.string_space_unscaled;
 
-	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
+	if(!numlanes)	//If 0 was passed, find the number of lanes in the active track
+		numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
+
 	lanewidth = (float)eof_screen_layout.string_space * (4.0 / (numlanes-1));	//This is the correct lane width for either 5 or 6 lanes
 	if(numlanes > 5)
 	{	//If the active track has more than 5 lanes, scale the spacing between the fretboard lanes
