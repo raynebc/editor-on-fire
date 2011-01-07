@@ -3064,6 +3064,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_PRO_GUITAR_TRACK * tp, int sel)
 	unsigned long i, ctr, bitmask;
 	unsigned char fretvalue;
 	long next;
+	char allmuted;	//Used to track whether all used strings are string muted
 
 	if(!sel)
 	{
@@ -3097,11 +3098,11 @@ void eof_pro_guitar_track_fixup_notes(EOF_PRO_GUITAR_TRACK * tp, int sel)
 
 		/* delete certain notes */
 		if((tp->note[i-1]->note == 0) || ((tp->note[i-1]->type < 0) || (tp->note[i-1]->type > 4)) || (tp->note[i-1]->pos < eof_song->tags->ogg[eof_selected_ogg].midi_offset) || (tp->note[i-1]->pos >= eof_music_length))
-		{
+		{	//If the note is not valid
 			eof_pro_guitar_track_delete_note(tp, i-1);
 		}
 		else
-		{
+		{	//If the note is valid, perform other cleanup
 			/* make sure there are no 0-length notes */
 			if(tp->note[i-1]->length <= 0)
 			{
@@ -3145,16 +3146,33 @@ void eof_pro_guitar_track_fixup_notes(EOF_PRO_GUITAR_TRACK * tp, int sel)
 				}
 			}
 
-			/* make sure that there aren't any invalid fret values */
-			for(ctr = 0; ctr < 6; ctr++)
+			/* make sure that there aren't any invalid fret values, and inspect the mute flag status */
+			for(ctr = 0, allmuted = 1, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
 			{	//For each of the 6 usable strings
 				fretvalue = tp->note[i-1]->frets[ctr];
-				if((fretvalue > tp->numfrets) && (fretvalue != 0xFF))
-				{	//If this fret value is invalid
-					tp->note[i-1]->frets[ctr] = 0;	//Revert to default fret value of 0
+				if(fretvalue != 0xFF)
+				{	//Track whether the all used strings in this note/chord are muted
+					if(tp->note[i-1]->note & bitmask)
+					{	//If this string is used in the note
+						allmuted = 0;
+					}
+					if(fretvalue > tp->numfrets)
+					{	//If this fret value is invalid
+						tp->note[i-1]->frets[ctr] = 0;	//Revert to default fret value of 0
+					}
 				}
 			}
-		}
+
+			/* correct the mute flag status if necessary */
+			if(!allmuted)
+			{	//If any used strings in this note/chord weren't string muted
+				tp->note[i-1]->flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE);	//Clear the string mute flag
+			}
+			else if(!(tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
+			{	//If all strings are muted and the user didn't specify a palm mute
+				tp->note[i-1]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;		//Set the string mute flag
+			}
+		}//If the note is valid, perform other cleanup
 	}//For each note in the track
 	if(!sel)
 	{

@@ -2270,14 +2270,16 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	long fretvalue;
 	char allmuted;					//Used to track whether all used strings are string muted
 	unsigned long bitmask = 0;		//Used to build the updated pro guitar note bitmask
-	unsigned long legacymask;		//Used to build the updated legacy note bitmask
+	unsigned char legacymask;		//Used to build the updated legacy note bitmask
 	unsigned long flags;			//Used to build the updated flag bitmask
-	char namechanged = 0;
+	char namechanged = 0, legacymaskchanged = 0;
 	EOF_PRO_GUITAR_NOTE junknote;	//Just used with sizeof() to get the name string's length to guarantee a safe string copy
 	char *newname = NULL;
-	char autonameprompt[100] = {0};
+	char autoprompt[100] = {0};
 	char previously_refused;
-	char declined_rename_list[EOF_MAX_NOTES] = {0};	//This lists all notes whose names the user declined to have the edited note's name changed to
+	char declined_list[EOF_MAX_NOTES] = {0};	//This lists all notes whose names/legacy bitmasks the user declined to have applied to the edited note
+	char autobitmask[10] = {0};
+	unsigned long index = 0;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run unless the pro guitar track is active
@@ -2467,6 +2469,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 		{
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			undo_made = 1;
+			legacymaskchanged = 1;
 		}
 		eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->legacymask = legacymask;
 
@@ -2523,7 +2526,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 		eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->flags = flags;
 
 
-//If the note name was edited, see if any matching notes besides those that are selected need to have their name updated
+//If the note name was edited, see if any matching notes need to have their name updated
 		newname = eof_get_note_name(eof_song, eof_selected_track, eof_selection.current);
 		if(newname != NULL)
 		{
@@ -2538,7 +2541,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 							if(alert(NULL, "Update other matching notes in this track to have the same name?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 							{	//If the user opts to use the updated note name on matching notes in this track
 								for(; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
-								{	//For each note in the active track, starting from the one that was just matched the comparison
+								{	//For each note in the active track, starting from the one that just matched the comparison
 									if((ctr != eof_selection.current) && (eof_note_compare(eof_selected_track, eof_selection.current, ctr) == 0))
 									{	//If this note isn't the one that was just edited, but it matches it, copy the edited note's name to this note
 										ustrncpy(eof_get_note_name(eof_song, eof_selected_track, ctr), newname, sizeof(junknote.name));
@@ -2550,6 +2553,8 @@ int eof_menu_note_edit_pro_guitar_note(void)
 					}
 				}//For each note in the active track
 			}//If the note name was changed and contains text
+
+//Or see if this note's name should be updated from the other existing notes
 			else if(newname[0] == '\0')
 			{	//The note name is not defined
 				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
@@ -2562,31 +2567,104 @@ int eof_menu_note_edit_pro_guitar_note(void)
 							previously_refused = 0;
 							for(ctr2 = 0; ctr2 < ctr; ctr2++)
 							{	//For each previous note that was checked
-								if(declined_rename_list[ctr2] && !ustrcmp(newname, eof_get_note_name(eof_song, eof_selected_track, ctr2)))
+								if(declined_list[ctr2] && !ustrcmp(newname, eof_get_note_name(eof_song, eof_selected_track, ctr2)))
 								{	//If this note name matches one the user previously rejected to assign to the edited note
-									declined_rename_list[ctr] = 1;	//Automatically decline this instance of the same name
+									declined_list[ctr] = 1;	//Automatically decline this instance of the same name
 									previously_refused = 1;
 									break;
 								}
 							}
 							if(!previously_refused)
 							{	//If this name isn't one the user already refused
-								snprintf(autonameprompt, sizeof(autonameprompt), "Set this note's name to \"%s\"?",newname);
-								if(alert(NULL, autonameprompt, NULL, "&Yes", "&No", 'y', 'n') == 1)
+								snprintf(autoprompt, sizeof(autoprompt), "Set this note's name to \"%s\"?",newname);
+								if(alert(NULL, autoprompt, NULL, "&Yes", "&No", 'y', 'n') == 1)
 								{	//If the user opts to assign this note's name to the edited note
 									ustrncpy(eof_get_note_name(eof_song, eof_selected_track, eof_selection.current), newname, sizeof(junknote.name));
 									break;
 								}
 								else
 								{	//Otherwise mark this note's name as refused
-									declined_rename_list[ctr] = 1;	//Mark this note's name as having been declined
+									declined_list[ctr] = 1;	//Mark this note's name as having been declined
 								}
 							}
 						}//If this note has a name
 					}//If this note isn't the one that was just edited, but it matches it
 				}//For each note in the active track
 			}//The note name is not defined
-		}
+		}//if(newname != NULL)
+
+//If a different legacy bitmask was supplied, see if any matching notes need to have their legacy bitmask updated
+		if(legacymaskchanged && legacymask)
+		{	//If the legacy bitmask was changed and isn't all lanes blank
+			for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+			{	//For each note in the active track
+				if((ctr != eof_selection.current) && (eof_note_compare(eof_selected_track, eof_selection.current, ctr) == 0))
+				{	//If this note isn't the one that was just edited, but it matches it
+					if(legacymask != eof_song->pro_guitar_track[tracknum]->note[ctr]->legacymask)
+					{	//If the two notes have different legacy bitmasks
+						if(alert(NULL, "Update other matching notes in this track to have the same legacy bitmask?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+						{	//If the user opts to use the updated note legacy bitmask on matching notes in this track
+							for(; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+							{	//For each note in the active track, starting from the one that just matched the comparison
+								if((ctr != eof_selection.current) && (eof_note_compare(eof_selected_track, eof_selection.current, ctr) == 0))
+								{	//If this note isn't the one that was just edited, but it matches it, copy the edited note's legacy bitmask to this note
+									eof_song->pro_guitar_track[tracknum]->note[ctr]->legacymask = legacymask;
+								}
+							}
+						}
+						break;	//Break from loop
+					}
+				}
+			}//For each note in the active track
+		}//If the legacy bitmask was changed and isn't all lanes blank
+
+//Or see if this note' legacy bitmask should be updated from the other existing notes
+		else if(legacymask == 0)
+		{	//The note's legacy bitmask is not defined
+			memset(declined_list, 0, sizeof(declined_list));	//Clear the declined list
+
+			for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+			{	//For each note in the active track
+				if((ctr != eof_selection.current) && (eof_note_compare(eof_selected_track, eof_selection.current, ctr) == 0))
+				{	//If this note isn't the one that was just edited, but it matches it
+					legacymask = eof_song->pro_guitar_track[tracknum]->note[ctr]->legacymask;
+					if(legacymask)
+					{	//If this note has a legacy bitmask
+						previously_refused = 0;
+						for(ctr2 = 0; ctr2 < ctr; ctr2++)
+						{	//For each previous note that was checked
+							if(declined_list[ctr2] && (legacymask == eof_song->pro_guitar_track[tracknum]->note[ctr2]->legacymask))
+							{	//If this note's legacy mask matches one the user previously rejected to assign to the edited note
+								declined_list[ctr] = 1;	//Automatically decline this instance of the same legacy bitmask
+								previously_refused = 1;
+								break;
+							}
+						}
+						if(!previously_refused)
+						{	//If this legacy bitmask isn't one the user already refused
+							for(ctr2 = 0, bitmask = 1, index = 0; ctr2 < 5; ctr2++, bitmask<<=1)
+							{	//For each of the legacy bitmasks 5 usable bits
+								if(legacymask & bitmask)
+								{	//If this bit is set, append the fret number to the autobitmask string
+									autobitmask[index++] = '1' + ctr2;
+								}
+								autobitmask[index] = '\0';	//Ensure the string is terminated
+							}
+							snprintf(autoprompt, sizeof(autoprompt), "Set this note's legacy bitmask to \"%s\"?",autobitmask);
+							if(alert(NULL, autoprompt, NULL, "&Yes", "&No", 'y', 'n') == 1)
+							{	//If the user opts to assign this note's legacy bitmask to the edited note
+								eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->legacymask = legacymask;
+								break;
+							}
+							else
+							{	//Otherwise mark this note's name as refused
+								declined_list[ctr] = 1;	//Mark this note's name as having been declined
+							}
+						}
+					}//If this note has a legacy bitmask
+				}//If this note isn't the one that was just edited, but it matches it
+			}//For each note in the active track
+		}//The note's legacy bitmask is not defined
 	}//If user clicked OK
 
 	eof_show_mouse(NULL);
