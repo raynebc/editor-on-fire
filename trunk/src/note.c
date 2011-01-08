@@ -173,8 +173,8 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		notenote = eof_get_note_note(eof_song, track, notenum);
 		notetype = eof_get_note_type(eof_song, track, notenum);
 
-		if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
-		{	//If the catalog entry is a pro guitar note and the active track is not
+		if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && ((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || eof_legacy_view))
+		{	//If the catalog entry is a pro guitar note and the active track is not, or the user specified to display pro guitar notes as legacy notes
 			if(eof_song->pro_guitar_track[tracknum]->note[notenum]->legacymask != 0)
 			{	//If the user defined how this pro guitar note would transcribe to a legacy track
 				notenote = eof_song->pro_guitar_track[tracknum]->note[notenum]->legacymask;
@@ -363,8 +363,8 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 					circle(window->screen, x, y, radius, pcol);
 				}
 
-				if((track > 0) && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-				{	//If this is a pro guitar note and a pro guitar track is active, perform pro guitar specific rendering
+				if(!eof_legacy_view && (track > 0) && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				{	//If legacy view is disabled, this is a pro guitar note and a pro guitar track is active, perform pro guitar specific rendering
 					//Render the fret number over the center of the note (but only if the active track is a pro guitar track)
 					BITMAP *fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], ctr, 2, tcol, dcol);	//Allow 2 pixels for padding
 					if(fretbmp != NULL)
@@ -707,6 +707,18 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	notenote = eof_get_note_note(eof_song, track, notenum);
 	notetype = eof_get_note_type(eof_song, track, notenum);
 
+	if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && ((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || eof_legacy_view))
+	{	//If the catalog entry is a pro guitar note and the active track is not, or the user specified to display pro guitar notes as legacy notes
+		if(eof_song->pro_guitar_track[tracknum]->note[notenum]->legacymask != 0)
+		{	//If the user defined how this pro guitar note would transcribe to a legacy track
+			notenote = eof_song->pro_guitar_track[tracknum]->note[notenum]->legacymask;
+		}
+		else
+		{
+			notenote &= 31;	//Mask out lane 6 (this is how it would be treated when notes were created via a paste operation)
+		}
+	}
+
 	npos = (long)(notepos + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
 	if(npos + notelength / eof_zoom_3d < -100)
 	{				//If the note would render entirely before the visible area
@@ -824,8 +836,8 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 						}
 					}
 
-					if((notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-					{	//If this is a pro guitar note, render the fret number over the center of the note
+					if(!eof_legacy_view && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+					{	//If legacy view is disabled and this is a pro guitar note, render the fret number over the center of the note
 						BITMAP *fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], ctr, 8, eof_color_white, eof_color_black);	//Allow one extra character's width for padding
 						if(fretbmp != NULL)
 						{	//Render the bitmap on top of the 3D note and then destroy the bitmap
@@ -862,7 +874,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	long npos;
 	int point[8];
 	int rz, ez;
-	unsigned long numlanes, ctr, mask;
+	unsigned long numlanes, ctr, mask, tracknum;
 	int colortable[EOF_MAX_FRETS][2] = {{makecol(192, 255, 192), eof_color_green}, {makecol(255, 192, 192), eof_color_red}, {makecol(255, 255, 192), eof_color_yellow}, {makecol(192, 192, 255), eof_color_blue}, {makecol(255, 192, 255), eof_color_purple}, {makecol(255, 192, 0), eof_color_orange}};
 
 	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
@@ -885,6 +897,19 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 	if((eof_selected_track == EOF_TRACK_DRUM) || (notelength <= 10))
 		return 0;	//Don't render tails for drum notes or notes that aren't over 10ms long
+
+	tracknum = eof_song->track[track]->tracknum;
+	if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && ((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || eof_legacy_view))
+	{	//If the catalog entry is a pro guitar note and the active track is not, or the user specified to display pro guitar notes as legacy notes
+		if(eof_song->pro_guitar_track[tracknum]->note[notenum]->legacymask != 0)
+		{	//If the user defined how this pro guitar note would transcribe to a legacy track
+			notenote = eof_song->pro_guitar_track[tracknum]->note[notenum]->legacymask;
+		}
+		else
+		{
+			notenote &= 31;	//Mask out lane 6 (this is how it would be treated when notes were created via a paste operation)
+		}
+	}
 
 	npos = (long)(notepos + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
 	if(npos + notelength / eof_zoom_3d < -100)

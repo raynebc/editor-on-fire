@@ -74,7 +74,7 @@ void eof_mark_edited_note_as_cymbal(EOF_SONG *sp, unsigned long track, unsigned 
 	//was added to the drum note
 
 unsigned char eof_find_pen_note_mask(void);
-	//For the current track, sets eof_hover_piece appropriately and return the pen note mask,
+	//For the current track, sets eof_hover_piece appropriately and returns the pen note mask,
 	//based on the value of eof_hover_note, eof_inverted_notes and the number of lanes in the active track
 
 void eof_editor_logic_common(void);

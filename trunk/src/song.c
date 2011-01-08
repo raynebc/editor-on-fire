@@ -2395,7 +2395,14 @@ unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track)
 	}
 	else if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{
-		return sp->pro_guitar_track[eof_song->track[track]->tracknum]->numstrings;
+		if(eof_legacy_view)
+		{	//If the legacy view is in effect, force pro guitar tracks to render as 5 lane tracks
+			return 5;
+		}
+		else
+		{
+			return sp->pro_guitar_track[eof_song->track[track]->tracknum]->numstrings;
+		}
 	}
 	else
 	{	//Otherwise return 5, as so far, other track formats don't store this information
@@ -2812,6 +2819,14 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long
 				ptr3->pos = pos;
 				ptr3->length = length;
 				ptr3->flags = 0;
+				if(eof_legacy_view)
+				{	//If legacy view is in effect, initialize the legacy bitmask to whichever lanes (1-5) created the note
+					ptr3->legacymask = note & 31;
+				}
+				else
+				{	//Otherwise initialize the legacy bitmask to zero
+					ptr3->legacymask = 0;
+				}
 			return ptr3;
 		}
 	}
