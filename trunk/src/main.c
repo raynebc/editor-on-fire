@@ -1036,7 +1036,7 @@ unsigned long eof_count_selected_notes(unsigned long * total, char v)
 
 int eof_figure_part(void)
 {
-	int part[EOF_TRACKS_MAX+1] = {0};
+	int part[EOF_TRACKS_MAX] = {0};
 
 	if(eof_get_track_size(eof_song,eof_selected_track) == 0)
 		return -1;
@@ -2123,10 +2123,10 @@ void eof_render_note_window(void)
 void eof_render_lyric_preview(BITMAP * bp)
 {
 	#define MAX_LYRIC_PREVIEW_LENGTH 255
-	unsigned long currentlength=0;	//Used to track the length of the preview line being built
-	unsigned long lyriclength=0;	//The length of the lyric being added
-	char *tempstring=NULL;			//The code to render in green needs special handling to suppress the / character
-	EOF_LYRIC_LINE *linenum=NULL;	//Used to find the background color to render the lyric lines in (green for overdrive, otherwise transparent)
+	unsigned long currentlength=0;		//Used to track the length of the preview line being built
+	unsigned long lyriclength=0;		//The length of the lyric being added
+	char *tempstring=NULL;				//The code to render in green needs special handling to suppress the / character
+	EOF_PHRASE_SECTION *linenum=NULL;	//Used to find the background color to render the lyric lines in (green for overdrive, otherwise transparent)
 	int bgcol1=-1,bgcol2=-1;
 
 	char lline[2][MAX_LYRIC_PREVIEW_LENGTH+1] = {{0}};

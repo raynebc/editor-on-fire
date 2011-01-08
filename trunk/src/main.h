@@ -246,7 +246,7 @@ extern int         eof_input_mode;
 extern int         eof_undo_toggle;
 extern int         eof_redo_toggle;
 extern int         eof_change_count;
-extern long        eof_anchor_diff[EOF_TRACKS_MAX + 1];
+extern long        eof_anchor_diff[EOF_TRACKS_MAX];
 extern int         eof_last_note;
 extern int         eof_last_midi_offset;
 //extern int         eof_default_length;

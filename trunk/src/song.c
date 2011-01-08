@@ -11,7 +11,7 @@
 #include "menu/file.h"
 #include "menu/song.h"
 
-EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 1 + 1] =
+EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 1] =
 {
 	{0},
 	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_GUITAR, 0, "PART GUITAR", 0, 0},
@@ -29,7 +29,7 @@ EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 1 + 1] =
 };	//These entries describe the tracks that EOF should present by default
 	//These entries are indexed the same as the track type in the new EOF project format
 
-EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 11 + 1] =
+EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 11] =
 {
 	{0},
 	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_GUITAR, 0, "PART GUITAR", 0, 0},
@@ -644,7 +644,7 @@ void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, unsigned long index)
 
 	for(i = index; i < tp->lines - 1; i++)
 	{
-		memcpy(&tp->line[i], &tp->line[i + 1], sizeof(EOF_LYRIC_LINE));
+		memcpy(&tp->line[i], &tp->line[i + 1], sizeof(EOF_PHRASE_SECTION));
 	}
 	tp->lines--;
 }
@@ -1719,6 +1719,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 						sp->vocal_track[tracknum]->line[count].start_pos = start;
 						sp->vocal_track[tracknum]->line[count].end_pos = end;
 						sp->vocal_track[tracknum]->line[count].flags = flags;
+						sp->vocal_track[tracknum]->line[count].name[0] = '\0';
 						sp->vocal_track[tracknum]->lines++;
 					}
 				return 1;
@@ -2374,7 +2375,7 @@ EOF_SONG * eof_create_song_populated(void)
 	sp = eof_create_song();
 	if(sp != NULL)
 	{
-		for(ctr = 1; ctr < EOF_TRACKS_MAX + 1; ctr++)
+		for(ctr = 1; ctr < EOF_TRACKS_MAX; ctr++)
 		{	//For each track in the eof_default_tracks[] array
 			if(eof_song_add_track(sp,&eof_default_tracks[ctr]) == 0)
 				return NULL;
@@ -4118,4 +4119,42 @@ int eof_create_image_sequence(void)
 
 	eof_fix_window_title();
 	return 1;
+}
+
+unsigned long eof_get_num_lyric_sections(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_VOCAL_TRACK_FORMAT:
+		return sp->vocal_track[tracknum]->lines;
+	}
+
+	return 0;	//Return error
+}
+
+EOF_PHRASE_SECTION *eof_get_lyric_section(EOF_SONG *sp, unsigned long track, unsigned long sectionnum)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return NULL;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_VOCAL_TRACK_FORMAT:
+			if(sectionnum < sp->vocal_track[tracknum]->lines)
+			{
+				return &sp->vocal_track[tracknum]->line[sectionnum];
+			}
+		break;
+	}
+
+	return NULL;	//Return error
 }

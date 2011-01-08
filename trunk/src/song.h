@@ -146,16 +146,6 @@ typedef struct
 	unsigned long start_pos;
 	unsigned long end_pos;
 	unsigned long flags;
-
-} EOF_LYRIC_LINE;
-
-typedef struct
-{
-	unsigned long midi_start_pos;
-	unsigned long midi_end_pos;
-	unsigned long start_pos;
-	unsigned long end_pos;
-	unsigned long flags;
     char name[EOF_NAME_LENGTH+1];
 
 } EOF_PHRASE_SECTION;
@@ -237,7 +227,7 @@ typedef struct
 	unsigned long lyrics;
 
 	/* lyric lines */
-	EOF_LYRIC_LINE line[EOF_MAX_LYRIC_LINES];
+	EOF_PHRASE_SECTION line[EOF_MAX_LYRIC_LINES];
 	unsigned long lines;
 
 	/* star power */
@@ -344,11 +334,12 @@ typedef struct
 
 } EOF_CATALOG;
 
-#define EOF_TRACKS_MAX	(EOF_LEGACY_TRACKS_MAX + EOF_VOCAL_TRACKS_MAX + EOF_PRO_GUITAR_TRACKS_MAX)
+#define EOF_TRACKS_MAX	(EOF_LEGACY_TRACKS_MAX + EOF_VOCAL_TRACKS_MAX + EOF_PRO_GUITAR_TRACKS_MAX + 1)
+//Add 1 to reflect that track[0] is added but not used
 
-extern EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 1 + 1];
+extern EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 1];
 	//The list of default tracks that should be presented in EOF
-extern EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 11 + 1];
+extern EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 11];
 	//The list of MIDI track names pertaining to each instrument and harmony track
 
 typedef struct
@@ -362,7 +353,7 @@ typedef struct
 	int resolution;
 
 	/* track data */
-	EOF_TRACK_ENTRY * track[EOF_TRACKS_MAX+1];	//track[] is a list of all existing tracks among all track types
+	EOF_TRACK_ENTRY * track[EOF_TRACKS_MAX];	//track[] is a list of all existing tracks among all track types
 	unsigned long tracks;						//track[0] is a dummy track and does not store actual track data
 	//one more track entry is allowed for so that track[EOF_TRACKS_MAX] will correctly index the last usable track
 
@@ -451,6 +442,8 @@ unsigned long eof_get_num_arpeggios(EOF_SONG *sp, unsigned long track);		//Retur
 EOF_PHRASE_SECTION *eof_get_arpeggio(EOF_SONG *sp, unsigned long track, unsigned long index);	//Returns a pointer to the specified arpeggio phrase, or NULL on error
 void eof_track_delete_trill(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified trill phrase and moves all phrases that follow back in the array one position
 void eof_track_delete_tremolo(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified tremolo phrase and moves all phrases that follow back in the array one position
+unsigned long eof_get_num_lyric_sections(EOF_SONG *sp, unsigned long track);	//Returns the number of lyric sections in the specified track, or 0 on error
+EOF_PHRASE_SECTION *eof_get_lyric_section(EOF_SONG *sp, unsigned long track, unsigned long sectionnum);	//Returns a pointer to the specified lyric section, or NULL on error
 void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourcenote, unsigned long desttrack, unsigned long pos, long length, char type);
 	//Copies the specified note to the specified track, returning a pointer to the newly created note structure, or NULL on error
 	//The specified position, length and type are applied to the new note.  Other note variables such as the bitmask/pitch and name/lyric text are copied as-is

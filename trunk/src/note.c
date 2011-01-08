@@ -447,7 +447,7 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 	int pcol = p == 1 ? eof_color_white : p == 2 ? makecol(224, 255, 224) : 0;
 	int dcol = eof_color_white;
 	int ncol = 0;
-	EOF_LYRIC_LINE *lyricline;	//The line that this lyric is found to be in (if any) so the correct background color can be determined
+	EOF_PHRASE_SECTION *lyricline;	//The line that this lyric is found to be in (if any) so the correct background color can be determined
 	int bgcol = eof_color_black;	//Unless the text is found to be in a lyric phrase, it will render with a black background
 	long endpos;		//This will store the effective end position for the lyric's rendering (taking lyric text, note rectangles and vocal slides into account)
 
@@ -1010,7 +1010,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	return 0;
 }
 
-EOF_LYRIC_LINE *eof_find_lyric_line(unsigned long lyricnum)
+EOF_PHRASE_SECTION *eof_find_lyric_line(unsigned long lyricnum)
 {
 	unsigned long linectr;
 	unsigned long lyricpos;

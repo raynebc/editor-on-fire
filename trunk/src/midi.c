@@ -311,8 +311,8 @@ unsigned long eof_count_tracks(void)
 int eof_export_midi(EOF_SONG * sp, char * fn)
 {
 	char header[14] = {'M', 'T', 'h', 'd', 0, 0, 0, 6, 0, 1, 0, 1, (EOF_DEFAULT_TIME_DIVISION >> 8), (EOF_DEFAULT_TIME_DIVISION & 0xFF)}; //The last two bytes are the time division
-	char notetempname[EOF_TRACKS_MAX+1][15];
-	char notetrackspopulated[EOF_TRACKS_MAX+1] = {0};
+	char notetempname[EOF_TRACKS_MAX][15];
+	char notetrackspopulated[EOF_TRACKS_MAX] = {0};
 	char expertplustempname[] = {"expert+.tmp"};	//Stores the temporary filename for the Expert+ track data
 	char tempotempname[] = {"tempo.tmp"};
 	char eventtempname[] = {"event.tmp"};
