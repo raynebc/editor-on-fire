@@ -96,6 +96,7 @@ int         eof_new_idle_system = 0;
 char        eof_just_played = 0;
 char        eof_mark_drums_as_cymbal = 0;	//Allows the user to specify whether Y/B/G drum notes will be placed with cymbal notation by default
 unsigned long eof_pro_guitar_fret_bitmask = 63;	//Defines which lanes are affected by CTRL+Fn fret setting shortcuts
+char		eof_legacy_view = 0;			//Specifies whether pro guitar notes will render as legacy notes
 
 int         eof_undo_toggle = 0;
 int         eof_redo_toggle = 0;
@@ -623,6 +624,11 @@ void eof_fix_window_title(void)
 			ustrcat(eof_window_title, eof_song->track[eof_selected_track]->name);
 		}
 		ustrcat(eof_window_title, ")");
+
+		if((eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && eof_legacy_view)
+		{	//If this is a pro guitar track being displayed with the legacy view enabled
+			ustrcat(eof_window_title, "(Legacy view)");
+		}
 	}
 	else
 	{

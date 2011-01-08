@@ -113,7 +113,7 @@ MENU eof_note_proguitar_menu[] =
     {"Toggle Slide &Up\tCtrl+Up", eof_menu_note_toggle_slide_up, NULL, 0, NULL},
     {"Toggle Slide &Down\tCtrl+Down", eof_menu_note_toggle_slide_down, NULL, 0, NULL},
     {"Mark as non &Slide", eof_menu_note_remove_slide, NULL, 0, NULL},
-    {"Toggle &Palm muting", eof_menu_note_toggle_palm_muting, NULL, 0, NULL},
+    {"Toggle &Palm muting\tCtrl+M", eof_menu_note_toggle_palm_muting, NULL, 0, NULL},
     {"Mark as non palm &Muting", eof_menu_note_remove_palm_muting, NULL, 0, NULL},
     {"&Arpeggio", NULL, eof_arpeggio_menu, 0, NULL},
     {"Set max &Fret value", eof_menu_set_max_fret, NULL, 0, NULL},
@@ -684,12 +684,24 @@ int eof_menu_note_transpose_up(void)
 		{	//If open bass is enabled, or the track has more than 5 lanes, lane 6 is valid for use
 			max = 63;
 		}
+		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//Special case:  Legacy view is in effect, display pro guitar notes as 5 lane notes
+			max = 31;
+		}
+		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the active track
 			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 			{	//If the note is in the same track as the selected notes, is selected and is the same difficulty as the selected notes
-				note = eof_get_note_note(eof_song, eof_selected_track, i);
+				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				{	//If legacy view is in effect, get the note's legacy bitmask
+					note = eof_song->pro_guitar_track[tracknum]->note[i]->legacymask;
+				}
+				else
+				{	//Otherwise get the note's normal bitmask
+					note = eof_get_note_note(eof_song, eof_selected_track, i);
+				}
 				note = (note << 1) & max;
 				if((eof_selected_track == EOF_TRACK_BASS) && eof_open_bass_enabled() && (note & 32))
 				{	//If open bass is enabled, and this transpose operation resulted in a bass guitar gem in lane 6
@@ -700,10 +712,16 @@ int eof_menu_note_transpose_up(void)
 					flags &= ~(EOF_NOTE_FLAG_NO_HOPO);
 					eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 				}
-				eof_set_note_note(eof_song, eof_selected_track, i, note);
-				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-				{	//If a pro guitar note was tranposed, move the fret values accordingly
-					tracknum = eof_song->track[eof_selected_track]->tracknum;
+				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				{	//If legacy view is in effect, set the note's legacy bitmask
+					eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = note;
+				}
+				else
+				{	//Otherwise set the note's normal bitmask
+					eof_set_note_note(eof_song, eof_selected_track, i, note);
+				}
+				if(!eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				{	//If a pro guitar note was tranposed, move the fret values accordingly (only if legacy view isn't in effect)
 					for(j = 15; j > 0; j--)
 					{	//For the upper 15 frets
 					eof_song->pro_guitar_track[tracknum]->note[i]->frets[j] = eof_song->pro_guitar_track[tracknum]->note[i]->frets[j-1];	//Cycle fret values up from lower lane
@@ -740,23 +758,37 @@ int eof_menu_note_transpose_down(void)
 	}
 	else
 	{
+		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the active track
 			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 			{	//If the note is in the same track as the selected notes, is selected and is the same difficulty as the selected notes
-				note = eof_get_note_note(eof_song, eof_selected_track, i);
+				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				{	//If legacy view is in effect, get the note's legacy bitmask
+					note = eof_song->pro_guitar_track[tracknum]->note[i]->legacymask;
+				}
+				else
+				{	//Otherwise get the note's normal bitmask
+					note = eof_get_note_note(eof_song, eof_selected_track, i);
+				}
 				note = (note >> 1) & 63;
-				eof_set_note_note(eof_song, eof_selected_track, i, note);
+				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				{	//If legacy view is in effect, set the note's legacy bitmask
+					eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = note;
+				}
+				else
+				{	//Otherwise set the note's normal bitmask
+					eof_set_note_note(eof_song, eof_selected_track, i, note);
+				}
 				if((eof_selected_track == EOF_TRACK_BASS) && eof_open_bass_enabled() && (note & 1))
 				{	//If open bass is enabled, and this tranpose operation resulted in a bass guitar gem in lane 1
 					flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 					flags &= ~(EOF_NOTE_FLAG_F_HOPO);	//Clear the forced HOPO on flag, which conflicts with open bass strum notation
 					eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 				}
-				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-				{	//If a pro guitar note was tranposed, move the fret values accordingly
-					tracknum = eof_song->track[eof_selected_track]->tracknum;
+				if(!eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				{	//If a pro guitar note was tranposed, move the fret values accordingly (only if legacy view isn't in effect)
 					for(j = 0; j < 15; j++)
 					{	//For the lower 15 frets
 						eof_song->pro_guitar_track[tracknum]->note[i]->frets[j] = eof_song->pro_guitar_track[tracknum]->note[i]->frets[j+1];	//Cycle fret values down from upper lane
@@ -879,7 +911,7 @@ int eof_menu_note_delete(void)
 int eof_menu_note_toggle_green(void)
 {
 	unsigned long i;
-	unsigned long flags, note;
+	unsigned long flags, note, tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 	if(eof_count_selected_notes(NULL, 0) <= 0)
 	{
@@ -890,9 +922,15 @@ int eof_menu_note_toggle_green(void)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
-			note = eof_get_note_note(eof_song, eof_selected_track, i);
-			note ^= 1;
-			eof_set_note_note(eof_song, eof_selected_track, i, note);
+			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+			{	//If legacy view is in effect, alter the note's legacy bitmask
+				eof_song->pro_guitar_track[tracknum]->note[i]->legacymask ^= 1;
+			}
+			else
+			{	//Otherwise alter the note's normal bitmask
+				note = eof_get_note_note(eof_song, eof_selected_track, i);
+				eof_set_note_note(eof_song, eof_selected_track, i, note ^ 1);
+			}
 			if(eof_selected_track == EOF_TRACK_DRUM)
 			{	//If green drum is being toggled on/off
 				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
@@ -912,7 +950,7 @@ int eof_menu_note_toggle_green(void)
 int eof_menu_note_toggle_red(void)
 {
 	unsigned long i;
-	unsigned long note;
+	unsigned long note, tracknum = eof_song->track[eof_selected_track]->tracknum;;
 
 	if(eof_count_selected_notes(NULL, 0) <= 0)
 	{
@@ -923,9 +961,15 @@ int eof_menu_note_toggle_red(void)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
-			note = eof_get_note_note(eof_song, eof_selected_track, i);
-			note ^= 2;
-			eof_set_note_note(eof_song, eof_selected_track, i, note);
+			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+			{	//If legacy view is in effect, alter the note's legacy bitmask
+				eof_song->pro_guitar_track[tracknum]->note[i]->legacymask ^= 2;
+			}
+			else
+			{	//Otherwise alter the note's normal bitmask
+				note = eof_get_note_note(eof_song, eof_selected_track, i);
+				eof_set_note_note(eof_song, eof_selected_track, i, note ^ 2);
+			}
 		}
 	}
 	return 1;
@@ -946,8 +990,15 @@ int eof_menu_note_toggle_yellow(void)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
-			note = eof_get_note_note(eof_song, eof_selected_track, i);
-			note ^= 4;
+			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+			{	//If legacy view is in effect, alter the note's legacy bitmask
+				eof_song->pro_guitar_track[tracknum]->note[i]->legacymask ^= 4;
+			}
+			else
+			{	//Otherwise alter the note's normal bitmask
+				note = eof_get_note_note(eof_song, eof_selected_track, i);
+				eof_set_note_note(eof_song, eof_selected_track, i, note ^ 4);
+			}
 			if(eof_selected_track == EOF_TRACK_DRUM)
 			{	//If yellow drum is being toggled on/off
 				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
@@ -958,7 +1009,6 @@ int eof_menu_note_toggle_yellow(void)
 					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,1);	//Set the yellow cymbal flag on all drum notes at this position
 				}
 			}
-			eof_set_note_note(eof_song, eof_selected_track, i, note);
 		}
 	}
 	return 1;
@@ -979,8 +1029,15 @@ int eof_menu_note_toggle_blue(void)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
-			note = eof_get_note_note(eof_song, eof_selected_track, i);
-			note ^= 8;
+			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+			{	//If legacy view is in effect, alter the note's legacy bitmask
+				eof_song->pro_guitar_track[tracknum]->note[i]->legacymask ^= 8;
+			}
+			else
+			{	//Otherwise alter the note's normal bitmask
+				note = eof_get_note_note(eof_song, eof_selected_track, i);
+				eof_set_note_note(eof_song, eof_selected_track, i, note ^ 8);
+			}
 			if(eof_selected_track == EOF_TRACK_DRUM)
 			{	//If blue drum is being toggled on/off
 				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
@@ -991,7 +1048,6 @@ int eof_menu_note_toggle_blue(void)
 					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_B_CYMBAL,1);	//Set the blue cymbal flag on all drum notes at this position
 				}
 			}
-			eof_set_note_note(eof_song, eof_selected_track, i, note);
 		}
 	}
 	return 1;
@@ -1012,8 +1068,15 @@ int eof_menu_note_toggle_purple(void)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
-			note = eof_get_note_note(eof_song, eof_selected_track, i);
-			note ^= 16;	//Toggle lane 5
+			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+			{	//If legacy view is in effect, alter the note's legacy bitmask
+				eof_song->pro_guitar_track[tracknum]->note[i]->legacymask ^= 16;
+			}
+			else
+			{	//Otherwise alter the note's normal bitmask
+				note = eof_get_note_note(eof_song, eof_selected_track, i);
+				eof_set_note_note(eof_song, eof_selected_track, i, note ^ 16);
+			}
 			if(eof_selected_track == EOF_TRACK_DRUM)
 			{	//If green drum is being toggled on/off
 				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
@@ -1024,7 +1087,6 @@ int eof_menu_note_toggle_purple(void)
 					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_G_CYMBAL,1);	//Set the green cymbal flag on all drum notes at this position
 				}
 			}
-			eof_set_note_note(eof_song, eof_selected_track, i, note);
 		}
 	}
 	return 1;
@@ -1033,7 +1095,7 @@ int eof_menu_note_toggle_purple(void)
 int eof_menu_note_toggle_orange(void)
 {
 	unsigned long i;
-	unsigned long flags, note;
+	unsigned long flags, note, tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 	if(eof_count_track_lanes(eof_song, eof_selected_track) < 6)
 	{
@@ -1059,9 +1121,15 @@ int eof_menu_note_toggle_orange(void)
 			}
 			else
 			{
-				note = eof_get_note_note(eof_song, eof_selected_track, i);
-				note ^= 32;	//Toggle lane 6
-				eof_set_note_note(eof_song, eof_selected_track, i, note);
+				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				{	//If legacy view is in effect, alter the note's legacy bitmask
+					eof_song->pro_guitar_track[tracknum]->note[i]->legacymask ^= 32;
+				}
+				else
+				{	//Otherwise alter the note's normal bitmask
+					note = eof_get_note_note(eof_song, eof_selected_track, i);
+					eof_set_note_note(eof_song, eof_selected_track, i, note ^ 32);
+				}
 			}
 		}
 	}
@@ -1983,7 +2051,7 @@ int eof_menu_hopo_force_off(void)
 
 int eof_transpose_possible(int dir)
 {
-	unsigned long i;
+	unsigned long i, note, tracknum;
 	unsigned long max = 16;	//This represents the highest note bitmask value that will be allowed to transpose up, based on the current track options (including open bass strumming)
 
 	/* no notes, no transpose */
@@ -2025,25 +2093,41 @@ int eof_transpose_possible(int dir)
 		{	//If open bass is enabled, or the track has more than 5 lanes, lane 5 can transpose up to lane 6
 			max = 32;
 		}
+		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//Special case:  Legacy view is in effect, revert to lane 4 being the highest that can transpose up
+			max = 16;
+		}
 		if(eof_get_track_size(eof_song, eof_selected_track) <= 0)
 		{
 			return 0;
 		}
-
 		if(eof_count_selected_notes(NULL, 1) <= 0)
 		{
 			return 0;
 		}
 
+		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-		{
+		{	//For each note in the active track
 			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-			{
-				if((eof_get_note_note(eof_song, eof_selected_track, i) & 1) && (dir > 0))
+			{	//If the note is selected and in the active instrument difficulty
+				if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+				{	//If legacy view is in effect, get the note's legacy bitmask
+					note = eof_song->pro_guitar_track[tracknum]->note[i]->legacymask;
+				}
+				else
+				{	//Otherwise get the note's normal bitmask
+					note = eof_get_note_note(eof_song, eof_selected_track, i);
+				}
+				if(note == 0)
+				{	//Special case: In legacy view, a note's legacy bitmask is undefined
+					return 0;	//Disallow tranposing for this selection of notes
+				}
+				if((note & 1) && (dir > 0))
 				{
 					return 0;
 				}
-				else if((eof_get_note_note(eof_song, eof_selected_track, i) & max) && (dir < 0))
+				else if((note & max) && (dir < 0))
 				{
 					return 0;
 				}
@@ -2303,6 +2387,10 @@ int eof_menu_note_edit_pro_guitar_note(void)
 
 //Update the fret text boxes (listed from top to bottom as string 6 through string 1)
 	fretcount = eof_count_track_lanes(eof_song, eof_selected_track);
+	if(eof_legacy_view)
+	{	//Special case:  If legacy view is enabled, correct fretcount
+		fretcount = eof_song->pro_guitar_track[tracknum]->numstrings;
+	}
 	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
 	{	//For each of the 6 supported strings
 		if(ctr < fretcount)
@@ -2526,12 +2614,12 @@ int eof_menu_note_edit_pro_guitar_note(void)
 		eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->flags = flags;
 
 
-//If the note name was edited, see if any matching notes need to have their name updated
+//Prompt whether matching notes need to have their name updated
 		newname = eof_get_note_name(eof_song, eof_selected_track, eof_selection.current);
 		if(newname != NULL)
 		{
-			if((newname[0] != '\0') && namechanged)
-			{	//If the note name was changed and contains text
+			if(newname[0] != '\0')
+			{	//If the note name contains text
 				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 				{	//For each note in the active track
 					if((ctr != eof_selection.current) && (eof_note_compare(eof_selected_track, eof_selection.current, ctr) == 0))
@@ -2552,10 +2640,10 @@ int eof_menu_note_edit_pro_guitar_note(void)
 						}
 					}
 				}//For each note in the active track
-			}//If the note name was changed and contains text
+			}//If the note name contains text
 
-//Or see if this note's name should be updated from the other existing notes
-			else if(newname[0] == '\0')
+//Or prompt whether this note's name should be updated from the other existing notes
+			else
 			{	//The note name is not defined
 				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 				{	//For each note in the active track
@@ -2593,9 +2681,9 @@ int eof_menu_note_edit_pro_guitar_note(void)
 			}//The note name is not defined
 		}//if(newname != NULL)
 
-//If a different legacy bitmask was supplied, see if any matching notes need to have their legacy bitmask updated
-		if(legacymaskchanged && legacymask)
-		{	//If the legacy bitmask was changed and isn't all lanes blank
+//Prompt whether matching notes need to have their legacy bitmask updated
+		if(legacymask)
+		{	//If the legacy bitmask isn't all lanes blank
 			for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 			{	//For each note in the active track
 				if((ctr != eof_selection.current) && (eof_note_compare(eof_selected_track, eof_selection.current, ctr) == 0))
@@ -2616,10 +2704,10 @@ int eof_menu_note_edit_pro_guitar_note(void)
 					}
 				}
 			}//For each note in the active track
-		}//If the legacy bitmask was changed and isn't all lanes blank
+		}//If the legacy bitmask isn't all lanes blank
 
-//Or see if this note' legacy bitmask should be updated from the other existing notes
-		else if(legacymask == 0)
+//Or prompt whether this note' legacy bitmask should be updated from the other existing notes
+		else
 		{	//The note's legacy bitmask is not defined
 			memset(declined_list, 0, sizeof(declined_list));	//Clear the declined list
 

@@ -945,10 +945,18 @@ void eof_read_editor_keys(void)
 		key[KEY_STOP] = 0;
 	}
 
+	/* toggle palm muting (CTRL+M) */
 	/* toggle metronome (M) */
 	if(key[KEY_M])
 	{
-		eof_menu_edit_metronome();
+		if(KEY_EITHER_CTRL)
+		{
+			eof_menu_note_toggle_palm_muting();
+		}
+		else
+		{
+			eof_menu_edit_metronome();
+		}
 		key[KEY_M] = 0;
 	}
 
@@ -1465,6 +1473,7 @@ void eof_read_editor_keys(void)
 	/* select like (CTRL+L) */
 	/* split lyric (SHIFT+L in PART VOCALS) */
 	/* edit lyric (L in PART VOCALS */
+	/* enable legacy view (SHIFT+L in pro guitar track) */
 		if(key[KEY_L])
 		{
 			if(KEY_EITHER_CTRL)
@@ -1480,6 +1489,13 @@ void eof_read_editor_keys(void)
 				else
 				{	//Edit lyric
 					eof_edit_lyric_dialog();
+				}
+			}
+			else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{
+				if(KEY_EITHER_SHIFT)
+				{
+					eof_menu_song_legacy_view();
 				}
 			}
 			key[KEY_L] = 0;
@@ -1840,28 +1856,49 @@ void eof_read_editor_keys(void)
 						eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 						if(eof_hover_note >= 0)
 						{	//If the user edited an existing note
-							note = eof_get_note_note(eof_song, eof_selected_track, eof_hover_note);
-							note ^= bitmask;
-							eof_set_note_note(eof_song, eof_selected_track, eof_hover_note, note);
+							if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+							{	//If legacy view is in effect, alter the note's legacy bitmask
+								eof_song->pro_guitar_track[tracknum]->note[eof_hover_note]->legacymask ^= bitmask;
+							}
+							else
+							{	//Otherwise alter the note's normal bitmask
+								note = eof_get_note_note(eof_song, eof_selected_track, eof_hover_note);
+								note ^= bitmask;
+								eof_set_note_note(eof_song, eof_selected_track, eof_hover_note, note);
+							}
 							if(eof_mark_drums_as_cymbal)
 							{	//If the user opted to make all new drum notes cymbals automatically
 								eof_mark_edited_note_as_cymbal(eof_song,eof_selected_track,eof_hover_note,bitmask);
 							}
 							eof_selection.current = eof_hover_note;
-							if(!eof_get_note_note(eof_song, eof_selected_track, eof_hover_note))
-							{
-								eof_track_delete_note(eof_song, eof_selected_track, eof_hover_note);
-								eof_selection.multi[eof_selection.current] = 0;
-								eof_selection.current = EOF_MAX_NOTES - 1;
-								eof_track_sort_notes(eof_song, eof_selected_track);
-								eof_track_fixup_notes(eof_song, eof_selected_track, 1);
-								eof_determine_phrase_status();
-								eof_detect_difficulties(eof_song);
+							if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+							{	//If legacy view is in effect, check the note's legacy bitmask
+								note = eof_song->pro_guitar_track[tracknum]->note[eof_hover_note]->legacymask;
+
+if(!note)
+printf("BLARG");
+
+
 							}
 							else
+							{	//Otherwise check the note's normal bitmask and delete the note if necessary
+								note = eof_get_note_note(eof_song, eof_selected_track, eof_hover_note);
+								if(note == 0)
+								{	//If the note just had all lanes cleared, delete the note
+									eof_track_delete_note(eof_song, eof_selected_track, eof_hover_note);
+									eof_selection.multi[eof_selection.current] = 0;
+									eof_selection.current = EOF_MAX_NOTES - 1;
+									eof_track_sort_notes(eof_song, eof_selected_track);
+									eof_track_fixup_notes(eof_song, eof_selected_track, 1);
+									eof_determine_phrase_status();
+									eof_detect_difficulties(eof_song);
+								}
+							}
+							if(note != 0)
 							{	//Run cleanup to prevent open bass<->lane 1 conflicts
 								eof_track_fixup_notes(eof_song, eof_selected_track, 0);
 							}
+
 							if(eof_selection.current != EOF_MAX_NOTES - 1)
 							{
 								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
@@ -2163,7 +2200,7 @@ void eof_editor_drum_logic(void)
 
 void eof_editor_logic(void)
 {
-	unsigned long i;
+	unsigned long i, note;
 	unsigned long tracknum;
 	unsigned long bitmask = 0;	//Used to reduce duplicated logic
 	int use_this_x = mouse_x;
@@ -2226,7 +2263,14 @@ void eof_editor_logic(void)
 			{	//If piano roll or rex mundi input modes are in use
 				if(eof_hover_note >= 0)
 				{	//If a note is being moused over
-					eof_pen_note.note = eof_get_note_note(eof_song, eof_selected_track, eof_hover_note);
+					if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+					{	//If legacy view is in effect, set the pen note to the legacy mask
+						eof_pen_note.note = eof_song->pro_guitar_track[tracknum]->note[eof_hover_note]->legacymask;
+					}
+					else
+					{	//Otherwise set it to the note's normal bitmask
+						eof_pen_note.note = eof_get_note_note(eof_song, eof_selected_track, eof_hover_note);
+					}
 					eof_pen_note.length = eof_get_note_length(eof_song, eof_selected_track, eof_hover_note);
 					if(!eof_mouse_drug)
 					{
@@ -2571,21 +2615,36 @@ void eof_editor_logic(void)
 
 						if(bitmask)
 						{
-							eof_set_note_note(eof_song, eof_selected_track, eof_hover_note, eof_get_note_note(eof_song, eof_selected_track, eof_hover_note) ^ bitmask);
 							eof_selection.current = eof_hover_note;
 							eof_selection.track = eof_selected_track;
 							memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
-							if(!eof_get_note_note(eof_song, eof_selected_track, eof_hover_note))
-							{
-								eof_track_delete_note(eof_song, eof_selected_track, eof_hover_note);
-								eof_selection.current = EOF_MAX_NOTES - 1;
-								eof_track_sort_notes(eof_song, eof_selected_track);
-								eof_track_fixup_notes(eof_song, eof_selected_track, 1);
-								eof_determine_phrase_status();
-								eof_detect_difficulties(eof_song);
+							if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+							{	//If legacy view is in effect, alter the note's legacy bitmask
+								note = eof_song->pro_guitar_track[tracknum]->note[eof_hover_note]->legacymask;
+								note ^= bitmask;
+								eof_song->pro_guitar_track[tracknum]->note[eof_hover_note]->legacymask = note;
+
+if(!note)
+printf("BLARG");
+
 							}
 							else
-							{
+							{	//Otherwise alter the note's normal bitmask and delete the note if necessary
+								note = eof_get_note_note(eof_song, eof_selected_track, eof_hover_note);
+								note ^= bitmask;
+								eof_set_note_note(eof_song, eof_selected_track, eof_hover_note, note);
+								if(note == 0)
+								{	//If the note just had all lanes cleared, delete the note
+									eof_track_delete_note(eof_song, eof_selected_track, eof_hover_note);
+									eof_selection.current = EOF_MAX_NOTES - 1;
+									eof_track_sort_notes(eof_song, eof_selected_track);
+									eof_track_fixup_notes(eof_song, eof_selected_track, 1);
+									eof_determine_phrase_status();
+									eof_detect_difficulties(eof_song);
+								}
+							}
+							if(note != 0)
+							{	//Cleanup edited/added note
 								eof_selection.track = eof_selected_track;
 								eof_selection.multi[eof_selection.current] = 1;
 								eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current);
@@ -3843,7 +3902,7 @@ unsigned long eof_determine_piano_roll_right_edge(void)
 
 void eof_render_editor_window_common(void)
 {
-	unsigned long i, j, ctr;
+	unsigned long i, j, ctr, notepos, markerlength;
 	int pos = eof_music_pos / eof_zoom;	//Current seek position
 	int lpos;							//The position of the first beatmarker
 	int pmin = 0;
@@ -3856,6 +3915,7 @@ void eof_render_editor_window_common(void)
 	EOF_PHRASE_SECTION *sectionptr = NULL;	//Used to abstract sections
 	unsigned long tracknum;
 	unsigned long bitmask, usedlanes;
+	long notelength;
 
 	int colors[EOF_MAX_FRETS] = {makecol(170,255,170), makecol(255,156,156), makecol(255,255,224), makecol(156,156,255), makecol(255,156,255), makecol(255,170,128)};	//Lightened versions of the standard fret colors
 
@@ -3917,10 +3977,10 @@ void eof_render_editor_window_common(void)
 	}
 
 	/* draw arpeggio sections */
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{
 		col = makecol(170,255,170);	//Store light green color
-		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		for(i = 0; i < eof_song->pro_guitar_track[tracknum]->arpeggios; i++)
 		{	//For each arpeggio section in the track
 			if(eof_song->pro_guitar_track[tracknum]->arpeggio[i].end_pos >= start)
@@ -3974,6 +4034,29 @@ void eof_render_editor_window_common(void)
 			}
 		}
 	}//If this track has any trill or tremolo sections
+
+	/* draw undefined legacy mask markers */
+	if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+	{	//If legacy view is in effect
+		col = makecol(176, 48, 96);	//Store maroon color
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+		{	//For each note in this track
+			notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
+			notelength = eof_get_note_length(eof_song, eof_selected_track, i);
+			if((eof_note_type == eof_get_note_type(eof_song, eof_selected_track, i)) && (notepos + notelength >= start))
+			{	//If this note is in the selected instrument difficulty and would render at or after the left edge of the piano roll
+				if(eof_song->pro_guitar_track[tracknum]->note[i]->legacymask == 0)
+				{	//If this note does not have a defined legacy mask, render a maroon colored section a minimum of eof_screen_layout.note_size pixels long
+					markerlength = notelength / eof_zoom;
+					if(markerlength < eof_screen_layout.note_size)
+					{	//If this marker isn't at least as wide as a note gem
+						markerlength = eof_screen_layout.note_size;	//Make it longer
+					}
+					rectfill(eof_window_editor->screen, lpos + notepos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, lpos + (notepos / eof_zoom) + markerlength, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, col);
+				}
+			}
+		}
+	}
 
 	if(eof_display_waveform)
 		eof_render_waveform(eof_waveform);

@@ -113,6 +113,7 @@ MENU eof_song_menu[] =
     {"", NULL, NULL, 0, NULL},
     {"Enable open strum bass", eof_menu_song_open_bass, NULL, 0, NULL},
     {"Create image sequence", eof_create_image_sequence, NULL, 0, NULL},
+    {"Enable legacy view\tShift+L", eof_menu_song_legacy_view, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -478,6 +479,16 @@ void eof_prepare_song_menu(void)
 		else
 		{
 			eof_song_menu[16].flags = 0;
+		}
+
+		/* enable legacy view */
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If a pro guitar track is active
+			eof_song_menu[18].flags = eof_song_menu[18].flags & D_SELECTED;	//Enable the menu item and check it if it's already checked
+		}
+		else
+		{	//Otherwise disable this menu item, but keep it checked if it's already checked
+			eof_song_menu[18].flags = D_DISABLED | (eof_song_menu[18].flags & D_SELECTED);
 		}
 	}//If a chart is loaded
 }
@@ -1890,4 +1901,25 @@ int eof_menu_catalog_edit_name(void)
 	eof_pen_visible = 1;
 	eof_show_mouse(screen);
 	return D_O_K;
+}
+
+int eof_menu_song_legacy_view(void)
+{
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run unless a pro guitar track is active
+
+	if(eof_legacy_view)
+	{
+		eof_legacy_view = 0;
+		eof_song_menu[18].flags = 0;
+		eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
+	}
+	else
+	{
+		eof_legacy_view = 1;
+		eof_song_menu[18].flags = D_SELECTED;
+		eof_scale_fretboard(5);	//Recalculate the 2D screen positioning based on a 5 lane track
+	}
+	eof_fix_window_title();
+	return 1;
 }
