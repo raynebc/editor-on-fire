@@ -775,17 +775,13 @@ int eof_menu_edit_cut(unsigned long anchor, int option, float offset)
 	last_anchor = eof_find_previous_anchor(eof_song, anchor);
 	next_anchor = eof_find_next_anchor(eof_song, anchor);
 	start_pos = eof_song->beat[last_anchor]->pos;
-	if(next_anchor < 0)
+	if((next_anchor < 0) || (option == 1))
 	{
 		end_pos = eof_song->beat[eof_song->beats - 1]->pos - 1;
 	}
 	else
 	{
 		end_pos = eof_song->beat[next_anchor]->pos;
-	}
-	if(option == 1)
-	{
-		end_pos = eof_song->beat[eof_song->beats - 1]->pos - 1;
 	}
 
 	for(j = 1; j < eof_song->tracks; j++)
@@ -799,6 +795,7 @@ int eof_menu_edit_cut(unsigned long anchor, int option, float offset)
 				{
 					first_pos[j] = eof_get_note_pos(eof_song, j, i);
 					first_pos_found[j] = 1;
+					eof_anchor_diff[j] = eof_get_beat(eof_song, eof_get_note_pos(eof_song, j, i)) - last_anchor;
 				}
 				if(eof_get_note_pos(eof_song, j, i) < first_pos[j])
 				{
@@ -849,7 +846,7 @@ unsigned long notestartbeat=0, noteendbeat=0;
 
 //				pack_iputl(eof_get_note_pos(eof_song, j, i) - first_pos[j], fp);
 				noterelativepos = eof_get_note_pos(eof_song, j, i) - first_pos[j];
-				pack_iputl(noterelativestart, fp);
+				pack_iputl(noterelativepos, fp);
 
 //				tfloat = eof_get_porpos(eof_get_note_pos(eof_song, j, i));
 //				pack_fwrite(&tfloat, sizeof(float), fp);
@@ -868,7 +865,7 @@ unsigned long notestartbeat=0, noteendbeat=0;
 				pack_iputl(notestartbeat, fp);
 
 //				pack_iputl(eof_get_beat(eof_song, eof_get_note_pos(eof_song, j, i) + eof_get_note_length(eof_song, j, i)), fp);
-				noteendbeat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, j, i) + eof_get_note_length(eof_song, j, i));
+				noteendbeat = eof_get_beat(eof_song, originalnotepos + notelength);
 				pack_iputl(noteendbeat, fp);
 
 //				pack_iputl(eof_get_note_length(eof_song, j, i), fp);
@@ -1039,7 +1036,6 @@ long notepos=0, notelength=0;
 			}
 			if(temp_note.pos + temp_note.length < eof_music_length)
 			{
-//				new_note = eof_track_add_create_note(eof_song, j, temp_note.note, eof_put_porpos(temp_note.beat - first_beat[j] + this_beat[j], temp_note.porpos, 0.0), eof_put_porpos(temp_note.endbeat - first_beat[j] + this_beat[j], temp_note.porendpos, 0.0) - eof_put_porpos(temp_note.beat - first_beat[j] + this_beat[j], temp_note.porpos, 0.0), temp_note.type, text);
 				notepos = eof_put_porpos(temp_note.beat - first_beat[j] + this_beat[j], temp_note.porpos, 0.0);
 				notelength = eof_put_porpos(temp_note.endbeat - first_beat[j] + this_beat[j], temp_note.porendpos, 0.0) - eof_put_porpos(temp_note.beat - first_beat[j] + this_beat[j], temp_note.porpos, 0.0);
 				new_note = eof_track_add_create_note(eof_song, j, temp_note.note, notepos, notelength, temp_note.type, text);
