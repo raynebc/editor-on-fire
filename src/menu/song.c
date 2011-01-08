@@ -51,7 +51,7 @@ MENU eof_song_seek_menu[] =
     {NULL, NULL, NULL, 0, NULL}
 };
 
-MENU eof_track_selected_menu[EOF_TRACKS_MAX+1] =
+MENU eof_track_selected_menu[EOF_TRACKS_MAX] =
 {
     {eof_track_selected_menu_text[0], eof_menu_track_selected_1, NULL, D_SELECTED, NULL},
     {eof_track_selected_menu_text[1], eof_menu_track_selected_2, NULL, 0, NULL},
@@ -459,8 +459,8 @@ void eof_prepare_song_menu(void)
 		}
 
 		/* track */
-		for(i = 0; i < EOF_TRACKS_MAX; i++)
-		{
+		for(i = 0; i < EOF_TRACKS_MAX - 1; i++)
+		{	//Access this array reflecting track numbering starting from 0 instead of 1
 			if(eof_get_track_size(eof_song,i+1))
 			{	//If the track exists and is populated, draw the track populated indicator
 				eof_track_selected_menu[i].text[0] = '*';
@@ -1041,7 +1041,7 @@ int eof_menu_track_selected_track_number(int tracknum)
 
 	if((tracknum > 0) && (tracknum < eof_song->tracks))
 	{
-		for(i = 0; i < EOF_TRACKS_MAX + 1; i++)
+		for(i = 0; i < EOF_TRACKS_MAX; i++)
 		{
 			eof_track_selected_menu[i].flags = 0;
 		}

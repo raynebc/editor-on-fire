@@ -766,6 +766,9 @@ int eof_menu_edit_cut(unsigned long anchor, int option, float offset)
 	float tfloat;
 	PACKFILE * fp;
 	EOF_PHRASE_SECTION *sectionptr = NULL;
+	unsigned long notepos=0;
+	long notelength;
+	float noterelativestart=0.0,noterelativeend=0.0;
 
 	/* set boundary */
 	for(i = 0; i < EOF_TRACKS_MAX; i++)
@@ -826,54 +829,23 @@ int eof_menu_edit_cut(unsigned long anchor, int option, float offset)
 		pack_iputl(copy_notes[j], fp);
 		pack_iputl(first_beat[j], fp);
 
-//DEBUG
-char notetype=0;
-unsigned long notenote=0, noterelativepos=0, notelength=0, noteflags=0, originalnotepos=0;
-float noterelativestart=0.0,noterelativeend=0.0;
-unsigned long notestartbeat=0, noteendbeat=0;
-
 		for(i = 0; i < eof_get_track_size(eof_song, j); i++)
 		{	//For each note in this track
-			if((eof_get_note_pos(eof_song, j, i) + eof_get_note_length(eof_song, j, i) >= start_pos) && (eof_get_note_pos(eof_song, j, i) < end_pos))
+			notepos = eof_get_note_pos(eof_song, j, i);
+			notelength = eof_get_note_length(eof_song, j, i);
+			if((notepos + notelength >= start_pos) && (notepos < end_pos))
 			{	//If this note falls within the start->end time range
-//				pack_iputl(eof_get_note_type(eof_song, j, i), fp);
-				notetype = eof_get_note_type(eof_song, j, i);
-				pack_iputl(notetype, fp);
-
-//				pack_iputl(eof_get_note_note(eof_song, j, i), fp);
-				notenote = eof_get_note_note(eof_song, j, i);
-				pack_iputl(notenote, fp);
-
-//				pack_iputl(eof_get_note_pos(eof_song, j, i) - first_pos[j], fp);
-				noterelativepos = eof_get_note_pos(eof_song, j, i) - first_pos[j];
-				pack_iputl(noterelativepos, fp);
-
-//				tfloat = eof_get_porpos(eof_get_note_pos(eof_song, j, i));
-//				pack_fwrite(&tfloat, sizeof(float), fp);
-				noterelativestart = eof_get_porpos(eof_get_note_pos(eof_song, j, i));
+				pack_iputl(eof_get_note_type(eof_song, j, i), fp);
+				pack_iputl(eof_get_note_note(eof_song, j, i), fp);
+				pack_iputl(notepos - first_pos[j], fp);
+				noterelativestart = eof_get_porpos(notepos);
 				pack_fwrite(&noterelativestart, sizeof(float), fp);
-
-//				tfloat = eof_get_porpos(eof_get_note_pos(eof_song, j, i) + eof_get_note_length(eof_song, j, i));
-//				pack_fwrite(&tfloat, sizeof(float), fp);
-				originalnotepos = eof_get_note_pos(eof_song, j, i);
-				notelength = eof_get_note_length(eof_song, j, i);
-				noterelativeend = eof_get_porpos(originalnotepos + notelength);
+				noterelativeend = eof_get_porpos(notepos + notelength);
 				pack_fwrite(&noterelativeend, sizeof(float), fp);
-
-//				pack_iputl(eof_get_beat(eof_song, eof_get_note_pos(eof_song, j, i)), fp);
-				notestartbeat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, j, i));
-				pack_iputl(notestartbeat, fp);
-
-//				pack_iputl(eof_get_beat(eof_song, eof_get_note_pos(eof_song, j, i) + eof_get_note_length(eof_song, j, i)), fp);
-				noteendbeat = eof_get_beat(eof_song, originalnotepos + notelength);
-				pack_iputl(noteendbeat, fp);
-
-//				pack_iputl(eof_get_note_length(eof_song, j, i), fp);
+				pack_iputl(eof_get_beat(eof_song, notepos), fp);
+				pack_iputl(eof_get_beat(eof_song, notepos + notelength), fp);
 				pack_iputl(notelength, fp);
-
-//				pack_iputl(eof_get_note_flags(eof_song, j, i), fp);	//Write the note flags
-				noteflags = eof_get_note_flags(eof_song, j, i);
-				pack_iputl(noteflags, fp);
+				pack_iputl(eof_get_note_flags(eof_song, j, i), fp);
 
 				eof_save_song_string_pf(eof_get_note_name(eof_song, j, i), fp);	//Write the note/lyric name/text
 
@@ -902,6 +874,19 @@ unsigned long notestartbeat=0, noteendbeat=0;
 		{	//For each solo section in the track
 			/* which beat */
 			sectionptr = eof_get_solo(eof_song, j, i);
+			pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
+			tfloat = eof_get_porpos(sectionptr->start_pos);
+			pack_fwrite(&tfloat, sizeof(float), fp);
+			pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
+			tfloat = eof_get_porpos(sectionptr->end_pos);
+			pack_fwrite(&tfloat, sizeof(float), fp);
+		}
+
+		/* lyric lines */
+		for(i = 0; i < eof_get_num_lyric_sections(eof_song, j); i++)
+		{	//For each lyric section in the track
+			/* which beat */
+			sectionptr = eof_get_lyric_section(eof_song, j, i);
 			pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->start_pos);
 			pack_fwrite(&tfloat, sizeof(float), fp);
@@ -967,6 +952,8 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option, float offset)
 	float tfloat;
 	EOF_PHRASE_SECTION *sectionptr = NULL;
 	char text[EOF_MAX_LYRIC_LENGTH+1] = {0};
+	unsigned long notepos=0;
+	long notelength=0;
 
 	for(i = 0; i < EOF_TRACKS_MAX; i++)
 	{
@@ -977,17 +964,13 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option, float offset)
 	last_anchor = eof_find_previous_anchor(eof_song, anchor);
 	next_anchor = eof_find_next_anchor(eof_song, anchor);
 	start_pos = eof_song->beat[last_anchor]->pos;
-	if(next_anchor < 0)
+	if((next_anchor < 0) || (option == 1))
 	{
 		end_pos = eof_song->beat[eof_song->beats - 1]->pos - 1;
 	}
 	else
 	{
 		end_pos = eof_song->beat[next_anchor]->pos;
-	}
-	if(option == 1)
-	{
-		end_pos = eof_song->beat[eof_song->beats - 1]->pos - 1;
 	}
 
 	fp = pack_fopen("eof.autoadjust", "r");
@@ -1000,15 +983,13 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option, float offset)
 	{	//For each track
 		for(i = eof_get_track_size(eof_song, j); i > 0; i--)
 		{	//For each note in the track, starting from the last note
-			if((eof_get_note_pos(eof_song, j, i-1) + eof_get_note_length(eof_song, j, i-1) >= start_pos) && (eof_get_note_pos(eof_song, j, i-1) < end_pos))
+			notepos = eof_get_note_pos(eof_song, j, i-1);
+			if((notepos + eof_get_note_length(eof_song, j, i-1) >= start_pos) && (notepos < end_pos))
 			{	//If the note's end position is after the target beat or if the note's start position is before the target beat
 				eof_track_delete_note(eof_song, j, i-1);	//Delete the note
 			}
 		}
 	}
-
-//DEBUG
-long notepos=0, notelength=0;
 
 	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 	for(j = 1; j < eof_song->tracks; j++)
@@ -1029,20 +1010,21 @@ long notepos=0, notelength=0;
 			temp_note.flags = pack_igetl(fp);	//Store the note flags
 			eof_load_song_string_pf(text, fp, sizeof(text));	//Store the note/lyric name/text
 
-			if(eof_song->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-			{	//If this is a pro guitar track
-				tracknum = eof_song->track[j]->tracknum;
-				pack_fread(eof_song->pro_guitar_track[tracknum]->note[i]->frets, 6, fp);	//Read the fret values for the six usable strings
-			}
 			if(temp_note.pos + temp_note.length < eof_music_length)
 			{
 				notepos = eof_put_porpos(temp_note.beat - first_beat[j] + this_beat[j], temp_note.porpos, 0.0);
-				notelength = eof_put_porpos(temp_note.endbeat - first_beat[j] + this_beat[j], temp_note.porendpos, 0.0) - eof_put_porpos(temp_note.beat - first_beat[j] + this_beat[j], temp_note.porpos, 0.0);
+				notelength = eof_put_porpos(temp_note.endbeat - first_beat[j] + this_beat[j], temp_note.porendpos, 0.0) - notepos;
 				new_note = eof_track_add_create_note(eof_song, j, temp_note.note, notepos, notelength, temp_note.type, text);
 
 				if(new_note)
-				{
-					eof_set_note_flags(eof_song, j, eof_get_track_size(eof_song, j) - 1, temp_note.flags);	//Set the last created note's flags
+				{	//If the note was successfully created
+					eof_set_note_flags(eof_song, j, i, temp_note.flags);	//Set the last created note's flags
+
+					if(eof_song->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+					{	//If this is a pro guitar track
+						tracknum = eof_song->track[j]->tracknum;
+						pack_fread(eof_song->pro_guitar_track[tracknum]->note[i]->frets, 6, fp);	//Set the fret values for the six usable strings
+					}
 				}
 			}
 		}
@@ -1068,6 +1050,19 @@ long notepos=0, notelength=0;
 			b = pack_igetl(fp);
 			pack_fread(&tfloat, sizeof(float), fp);
 			sectionptr = eof_get_solo(eof_song, j, i);
+			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
+			b = pack_igetl(fp);
+			pack_fread(&tfloat, sizeof(float), fp);
+			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
+		}
+
+		/* lyric lines */
+		for(i = 0; i < eof_get_num_lyric_sections(eof_song, j); i++)
+		{	//For each lyric section in the active track
+			/* which beat */
+			b = pack_igetl(fp);
+			pack_fread(&tfloat, sizeof(float), fp);
+			sectionptr = eof_get_lyric_section(eof_song, j, i);
 			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
 			b = pack_igetl(fp);
 			pack_fread(&tfloat, sizeof(float), fp);
