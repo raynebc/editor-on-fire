@@ -541,6 +541,9 @@ int eof_set_display_mode(int mode)
 			eof_screen_layout.note_tail_size = 5;
 			eof_screen_layout.note_kick_size = 4;
 		break;
+
+		default:
+		return 0;	//Invalid display mode
 	}
 
 	if(set_gfx_mode(GFX_AUTODETECT_WINDOWED, screen_width, screen_height, 0, 0))
