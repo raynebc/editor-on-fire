@@ -4158,3 +4158,77 @@ EOF_PHRASE_SECTION *eof_get_lyric_section(EOF_SONG *sp, unsigned long track, uns
 
 	return NULL;	//Return error
 }
+
+void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long amount, int dir)
+{
+	unsigned long i, undo_made = 0, adjustment, notepos, notelength;
+	long b, next_note;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return;
+
+	adjustment = amount;	//This would be the amount to adjust the note by
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the track
+		notepos = eof_get_note_pos(sp, track, i);
+		notelength = eof_get_note_length(eof_song, track, i);
+
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If the note is selected and in the active instrument difficulty
+			if(amount == 0)
+			{	//If adjusting the note's length by the grid snap value, find the grid snap length for the note
+				b = eof_get_beat(eof_song, notepos + notelength - 1);
+				if(b >= 0)
+				{
+					eof_snap_logic(&eof_tail_snap, eof_song->beat[b]->pos);
+				}
+				else
+				{
+					eof_snap_logic(&eof_tail_snap, notepos + notelength - 1);
+				}
+				eof_snap_length_logic(&eof_tail_snap);
+				adjustment = eof_tail_snap.length;
+			}
+			if(dir < 0)
+			{	//If the note length is to be decreased
+				if(notelength < 2)
+				{	//If the note cannot have its length decreased
+					continue;	//Skip adjusting this note
+				}
+				if(!undo_made)
+				{	//Ensure an undo state was made before decreasing the length
+					eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
+					undo_made = 1;
+				}
+				eof_set_note_length(eof_song, eof_selected_track, i, notelength - adjustment);
+			}
+			else
+			{	//If the note length is to be increased
+				next_note = eof_track_fixup_next_note(sp, track, i);	//Get the index of the next note in the active instrument difficulty
+				if(next_note > 0)
+				{	//Check if the increase would be canceled due to being unable to overlap the next note
+					if((notepos + notelength + 1 >= eof_get_note_pos(sp, track, next_note)) && !(eof_get_note_flags(sp, track, i) & EOF_NOTE_FLAG_CRAZY))
+					{	//If this note cannot increase its length because it would overlap the next and the note isn't "crazy"
+						continue;	//Skip adjusting this note
+					}
+				}
+				if(!undo_made)
+				{	//Ensure an undo state was made before increasing the length
+					eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
+					undo_made = 1;
+				}
+				eof_set_note_length(eof_song, eof_selected_track, i, notelength + adjustment);
+			}
+			if(amount == 0)
+			{	//If adjusting the note's length by the grid snap value, snap the tail's end position
+				notelength = eof_get_note_length(eof_song, eof_selected_track, i);
+				if(notelength > 1)
+				{	//If the note's length, after the adjustment, is over 1
+					eof_snap_logic(&eof_tail_snap, notepos + notelength);
+					eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
+				}
+			}
+		}
+	}//For each note in the track
+	eof_track_fixup_notes(eof_song, eof_selected_track, 1);
+}
