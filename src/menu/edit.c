@@ -791,23 +791,25 @@ int eof_menu_edit_cut(unsigned long anchor, int option, float offset)
 	{	//For each track
 		for(i = 0; i < eof_get_track_size(eof_song, j); i++)
 		{	//For each note in the track
-			if((eof_get_note_pos(eof_song, j, i) + eof_get_note_length(eof_song, j, i) >= start_pos) && (eof_get_note_pos(eof_song, j, i) < end_pos))
+			notepos = eof_get_note_pos(eof_song, j, i);
+			notelength = eof_get_note_length(eof_song, j, i);
+			if((notepos + notelength >= start_pos) && (notepos < end_pos))
 			{
 				copy_notes[j]++;
 				if(!first_pos_found[j])
 				{
-					first_pos[j] = eof_get_note_pos(eof_song, j, i);
+					first_pos[j] = notepos;
 					first_pos_found[j] = 1;
-					eof_anchor_diff[j] = eof_get_beat(eof_song, eof_get_note_pos(eof_song, j, i)) - last_anchor;
+					eof_anchor_diff[j] = eof_get_beat(eof_song, notepos) - last_anchor;
 				}
-				if(eof_get_note_pos(eof_song, j, i) < first_pos[j])
+				if(notepos < first_pos[j])
 				{
-					first_pos[j] = eof_get_note_pos(eof_song, j, i);
-					eof_anchor_diff[j] = eof_get_beat(eof_song, eof_get_note_pos(eof_song, j, i)) - last_anchor;
+					first_pos[j] = notepos;
+					eof_anchor_diff[j] = eof_get_beat(eof_song, notepos) - last_anchor;
 				}
 				if(!first_beat_found[j])
 				{
-					first_beat[j] = eof_get_beat(eof_song, eof_get_note_pos(eof_song, j, i));
+					first_beat[j] = eof_get_beat(eof_song, notepos);
 					first_beat_found[j] = 1;
 				}
 			}

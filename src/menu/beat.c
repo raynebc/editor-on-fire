@@ -543,8 +543,8 @@ int eof_menu_beat_anchor(void)
 		{
 			while(eof_song->beat[eof_selected_beat]->pos < newpos)
 			{
-				eof_song->beat[eof_selected_beat]->pos++;
-				eof_song->beat[eof_selected_beat]->fpos = eof_song->beat[eof_selected_beat]->pos;
+				eof_song->beat[eof_selected_beat]->fpos++;
+				eof_song->beat[eof_selected_beat]->pos = eof_song->beat[eof_selected_beat]->fpos + 0.5;	//Round up to nearest ms
 				eof_mickeys_x = 1;
 				eof_recalculate_beats(eof_song, eof_selected_beat);
 				if(eof_song->beat[eof_selected_beat]->pos > eof_song->beat[eof_selected_beat + 1]->pos - 100)
@@ -559,7 +559,8 @@ int eof_menu_beat_anchor(void)
 		{
 			while(eof_song->beat[eof_selected_beat]->pos > newpos)
 			{
-				eof_song->beat[eof_selected_beat]->pos--;
+				eof_song->beat[eof_selected_beat]->fpos--;
+				eof_song->beat[eof_selected_beat]->pos = eof_song->beat[eof_selected_beat]->fpos + 0.5;	//Round up to nearest ms
 				eof_mickeys_x = 1;
 				eof_recalculate_beats(eof_song, eof_selected_beat);
 				if(eof_song->beat[eof_selected_beat]->pos < eof_song->beat[eof_selected_beat - 1]->pos + 100)
