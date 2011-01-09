@@ -2650,37 +2650,25 @@ void eof_editor_logic(void)
 			/* increase/decrease note length ( scroll wheel or CTRL+scroll wheel ) */
 			if(eof_mickey_z != 0)
 			{	//If there was scroll wheel activity
+				unsigned long adjust = eof_mickey_z * 100;	//Default adjustment length when grid snap is disabled
+				if(eof_snap_mode == EOF_SNAP_OFF)
+				{
+					if(KEY_EITHER_CTRL)
+					{
+						adjust = eof_mickey_z * 10;
+					}
+				}
+				else
+				{
+					adjust = 0;	//Will indicate to eof_adjust_note_length() to use the grid snap value
+				}
 				if(eof_mickey_z > 0)
 				{	//Decrease note length
-					unsigned long reductionvalue = eof_mickey_z * 100;	//Default decrease length when grid snap is disabled
-					if(eof_snap_mode == EOF_SNAP_OFF)
-					{
-						if(KEY_EITHER_CTRL)
-						{
-							reductionvalue = eof_mickey_z * 10;
-						}
-					}
-					else
-					{
-						reductionvalue = 0;	//Will indicate to eof_adjust_note_length() to use the grid snap value
-					}
-					eof_adjust_note_length(eof_song, eof_selected_track, reductionvalue, -1);	//Decrease selected notes by the appropriate length
+					eof_adjust_note_length(eof_song, eof_selected_track, adjust, -1);	//Decrease selected notes by the appropriate length
 				}
 				else
 				{	//Increase note length
-					unsigned long increasevalue = 100;	//Default increase length when grid snap is disabled
-					if(eof_snap_mode == EOF_SNAP_OFF)
-					{
-						if(KEY_EITHER_CTRL)
-						{
-							increasevalue = eof_mickey_z * 10;
-						}
-					}
-					else
-					{
-						increasevalue = 0;	//Will indicate to eof_adjust_note_length() to use the grid snap value
-					}
-					eof_adjust_note_length(eof_song, eof_selected_track, increasevalue, 1);	//Increase selected notes by the appropriate length
+					eof_adjust_note_length(eof_song, eof_selected_track, adjust, 1);	//Increase selected notes by the appropriate length
 				}
 			}//If there was scroll wheel activity
 		}//mouse is in the fretboard area
