@@ -1874,11 +1874,6 @@ void eof_read_editor_keys(void)
 							if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 							{	//If legacy view is in effect, check the note's legacy bitmask
 								note = eof_song->pro_guitar_track[tracknum]->note[eof_hover_note]->legacymask;
-
-if(!note)
-printf("BLARG");
-
-
 							}
 							else
 							{	//Otherwise check the note's normal bitmask and delete the note if necessary
@@ -2200,7 +2195,7 @@ void eof_editor_drum_logic(void)
 
 void eof_editor_logic(void)
 {
-	unsigned long i, note;
+	unsigned long i, note, notepos;
 	unsigned long tracknum;
 	unsigned long bitmask = 0;	//Used to reduce duplicated logic
 	int use_this_x = mouse_x;
@@ -2208,6 +2203,7 @@ void eof_editor_logic(void)
 	EOF_NOTE * new_note = NULL;
 	int pos = eof_music_pos / eof_zoom;
 	int npos, lpos;
+	long notelength;
 
 	if(!eof_song_loaded)
 		return;
@@ -2559,34 +2555,46 @@ void eof_editor_logic(void)
 					}
 					eof_notes_moved = 1;
 					for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-					{
+					{	//For each note in the active track
 						if(eof_selection.multi[i])
-						{
+						{	//If the note is selected
+							notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
 							if((eof_snap_mode == EOF_SNAP_OFF) || KEY_EITHER_CTRL)
 							{
-								if(eof_get_note_pos(eof_song, eof_selected_track, i) == eof_selection.current_pos)
+								if(notepos == eof_selection.current_pos)
 								{
 									eof_selection.current_pos += eof_mickeys_x * eof_zoom;
 								}
-								eof_set_note_pos(eof_song, eof_selected_track, i, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_mickeys_x * eof_zoom);
+								eof_set_note_pos(eof_song, eof_selected_track, i, notepos + eof_mickeys_x * eof_zoom);
 							}
 							else
 							{
-								if(eof_get_note_pos(eof_song, eof_selected_track, i) == eof_selection.current_pos)
+								if(notepos == eof_selection.current_pos)
 								{
 									eof_selection.current_pos += move_offset;
 								}
-								eof_set_note_pos(eof_song, eof_selected_track, i, eof_get_note_pos(eof_song, eof_selected_track, i) + move_offset);
+								eof_set_note_pos(eof_song, eof_selected_track, i, notepos + move_offset);
 							}
-							if(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) >= eof_music_length)
-							{
-								revert = 1;
-								revert_amount = eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) - eof_music_length;
+							notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
+							notelength = eof_get_note_length(eof_song, eof_selected_track, i);
+							if(notepos + notelength >= eof_music_length)
+							{	//If the moved note is at or after the end of the chart
+								revert |= 1;
+								revert_amount = notepos + notelength - eof_music_length;	//This positive value will be subtracted from the note via the revert loop
+							}
+							else if(notepos <= eof_song->beat[0]->pos)
+							{	//If the moved note is at or before the first beat marker
+								revert |= 2;
+								revert_amount = eof_song->beat[0]->pos - notepos;			//This negative value will be subtracted from the note via the revert loop
 							}
 						}
 					}
 					if(revert)
 					{
+						if(revert == 3)
+						{	//If something unexpected happened and the drag operation resulted in both edges of the chart having note(s) pushed beyond the edge
+							allegro_message("Logic error in eof_editor_logic() note drag handling");
+						}
 						for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 						{
 							if(eof_selection.multi[i])
@@ -2623,10 +2631,6 @@ void eof_editor_logic(void)
 								note = eof_song->pro_guitar_track[tracknum]->note[eof_hover_note]->legacymask;
 								note ^= bitmask;
 								eof_song->pro_guitar_track[tracknum]->note[eof_hover_note]->legacymask = note;
-
-if(!note)
-printf("BLARG");
-
 							}
 							else
 							{	//Otherwise alter the note's normal bitmask and delete the note if necessary
