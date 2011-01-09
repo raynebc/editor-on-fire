@@ -922,13 +922,13 @@ int eof_menu_note_toggle_green(void)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
+			note = eof_get_note_note(eof_song, eof_selected_track, i);
 			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If legacy view is in effect, alter the note's legacy bitmask
 				eof_song->pro_guitar_track[tracknum]->note[i]->legacymask ^= 1;
 			}
 			else
 			{	//Otherwise alter the note's normal bitmask
-				note = eof_get_note_note(eof_song, eof_selected_track, i);
 				eof_set_note_note(eof_song, eof_selected_track, i, note ^ 1);
 			}
 			if(eof_selected_track == EOF_TRACK_DRUM)
@@ -990,13 +990,13 @@ int eof_menu_note_toggle_yellow(void)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
+			note = eof_get_note_note(eof_song, eof_selected_track, i);
 			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If legacy view is in effect, alter the note's legacy bitmask
 				eof_song->pro_guitar_track[tracknum]->note[i]->legacymask ^= 4;
 			}
 			else
 			{	//Otherwise alter the note's normal bitmask
-				note = eof_get_note_note(eof_song, eof_selected_track, i);
 				eof_set_note_note(eof_song, eof_selected_track, i, note ^ 4);
 			}
 			if(eof_selected_track == EOF_TRACK_DRUM)
@@ -1004,7 +1004,7 @@ int eof_menu_note_toggle_yellow(void)
 				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 				flags &= (~EOF_NOTE_FLAG_Y_CYMBAL);	//Clear the Pro yellow cymbal status if it is set
 				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
-				if(eof_mark_drums_as_cymbal && (eof_song->legacy_track[tracknum]->note[i]->note & 4))
+				if(eof_mark_drums_as_cymbal && (note & 4))
 				{	//If user specified to mark new notes as cymbals, and this note was toggled on
 					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,1);	//Set the yellow cymbal flag on all drum notes at this position
 				}
@@ -1029,13 +1029,13 @@ int eof_menu_note_toggle_blue(void)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
+			note = eof_get_note_note(eof_song, eof_selected_track, i);
 			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If legacy view is in effect, alter the note's legacy bitmask
 				eof_song->pro_guitar_track[tracknum]->note[i]->legacymask ^= 8;
 			}
 			else
 			{	//Otherwise alter the note's normal bitmask
-				note = eof_get_note_note(eof_song, eof_selected_track, i);
 				eof_set_note_note(eof_song, eof_selected_track, i, note ^ 8);
 			}
 			if(eof_selected_track == EOF_TRACK_DRUM)
@@ -1068,13 +1068,13 @@ int eof_menu_note_toggle_purple(void)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 		{
+			note = eof_get_note_note(eof_song, eof_selected_track, i);
 			if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If legacy view is in effect, alter the note's legacy bitmask
 				eof_song->pro_guitar_track[tracknum]->note[i]->legacymask ^= 16;
 			}
 			else
 			{	//Otherwise alter the note's normal bitmask
-				note = eof_get_note_note(eof_song, eof_selected_track, i);
 				eof_set_note_note(eof_song, eof_selected_track, i, note ^ 16);
 			}
 			if(eof_selected_track == EOF_TRACK_DRUM)
