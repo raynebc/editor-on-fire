@@ -451,6 +451,11 @@ void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourc
 	//If the source and destination are both pro guitar tracks, the source note's fret values are copied
 long eof_get_prev_note_type_num(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//Returns the note immediately before the specified that is in the same difficulty, provided that the notes are sorted chronologically, or -1 if no such note exists
+void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long amount, int dir);
+	//If dir is >= 0, increases all selected notes in the active instrument difficulty by the specified amount
+	//If dir is < 0, decreases all selected notes in the active instrument difficulty by the specified amount
+	//If amount is 0, then the notes are adjusted by the current grid snap value
+	//An undo state is only created if at least one note's length is altered
 
 EOF_NOTE * eof_legacy_track_add_note(EOF_LEGACY_TRACK * tp);	//Allocates, initializes and stores a new EOF_NOTE structure into the notes array.  Returns the newly allocated structure or NULL upon error
 void eof_legacy_track_delete_note(EOF_LEGACY_TRACK * tp, unsigned long note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position

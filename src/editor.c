@@ -507,7 +507,6 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 
 void eof_read_editor_keys(void)
 {
-	unsigned long i = 0;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	unsigned long bitmask = 0;	//Used for simplifying note placement logic
 	EOF_NOTE * new_note = NULL;
@@ -1356,99 +1355,38 @@ void eof_read_editor_keys(void)
 	/* decrease note length ( [ or CTRL+[ ) */
 		if(key[KEY_OPENBRACE])
 		{
-			if(eof_count_selected_notes(NULL, 0) > 0)
-			{
-				eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
-			}
+			unsigned long reductionvalue = 100;	//Default decrease length when grid snap is disabled
 			if(eof_snap_mode == EOF_SNAP_OFF)
 			{
-				unsigned long reductionvalue = 100;
 				if(KEY_EITHER_CTRL)
 				{
 					reductionvalue = 10;
 				}
-				for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-				{
-					if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-					{
-						eof_set_note_length(eof_song, eof_selected_track, i, eof_get_note_length(eof_song, eof_selected_track, i) - reductionvalue);
-					}
-				}
 			}
 			else
 			{
-				long b;
-				for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-				{
-					if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-					{
-						b = eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) - 1);
-						if(b >= 0)
-						{
-							eof_snap_logic(&eof_tail_snap, eof_song->beat[b]->pos);
-						}
-						else
-						{
-							eof_snap_logic(&eof_tail_snap, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) - 1);
-						}
-						eof_snap_length_logic(&eof_tail_snap);
-						eof_set_note_length(eof_song, eof_selected_track, i, eof_get_note_length(eof_song, eof_selected_track, i) - eof_tail_snap.length);
-						if(eof_get_note_length(eof_song, eof_selected_track, i) > 1)
-						{
-							eof_snap_logic(&eof_tail_snap, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i));
-							eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
-						}
-					}
-				}
+				reductionvalue = 0;	//Will indicate to eof_adjust_note_length() to use the grid snap value
 			}
-			eof_track_fixup_notes(eof_song, eof_selected_track, 1);
+			eof_adjust_note_length(eof_song, eof_selected_track, reductionvalue, -1);	//Decrease selected notes by the appropriate length
 			key[KEY_OPENBRACE] = 0;
 		}
 
 	/* increase note length ( ] or CTRL+] ) */
 		if(key[KEY_CLOSEBRACE])
 		{
-			if(eof_count_selected_notes(NULL, 0) > 0)
-			{
-				eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
-			}
+			unsigned long increasevalue = 100;	//Default increase length when grid snap is disabled
 			if(eof_snap_mode == EOF_SNAP_OFF)
 			{
-				unsigned long increasevalue = 100;
 				if(KEY_EITHER_CTRL)
 				{
 					increasevalue = 10;
 				}
-				for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-				{
-					if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-					{
-						eof_set_note_length(eof_song, eof_selected_track, i, eof_get_note_length(eof_song, eof_selected_track, i) + increasevalue);
-					}
-				}
 			}
 			else
 			{
-				for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-				{
-					if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-					{
-						eof_snap_logic(&eof_tail_snap, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) + 1);
-						if(eof_tail_snap.pos > eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) + 1)
-						{
-							eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
-						}
-						else
-						{
-							eof_snap_length_logic(&eof_tail_snap);
-							eof_set_note_length(eof_song, eof_selected_track, i, eof_get_note_length(eof_song, eof_selected_track, i) + eof_tail_snap.length);
-							eof_snap_logic(&eof_tail_snap, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i));
-							eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
-						}
-					}
-				}
+				increasevalue = 0;	//Will indicate to eof_adjust_note_length() to use the grid snap value
 			}
-			eof_track_fixup_notes(eof_song, eof_selected_track, 1);
+			eof_adjust_note_length(eof_song, eof_selected_track, increasevalue, 1);	//Increase selected notes by the appropriate length
 			key[KEY_CLOSEBRACE] = 0;
 		}
 
@@ -2709,82 +2647,42 @@ void eof_editor_logic(void)
 				eof_rclick_released = 1;
 			}
 
-			if((eof_mickey_z != 0) && eof_count_selected_notes(NULL, 0))
-			{
-				eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
-			}
-			if(eof_snap_mode == EOF_SNAP_OFF)
-			{
-				unsigned long reductionvalue = eof_mickey_z * 100;
-				if(KEY_EITHER_CTRL)
-				{
-					reductionvalue = eof_mickey_z * 10;
-				}
-
-				for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-				{
-					if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-					{
-						eof_set_note_length(eof_song, eof_selected_track, i, eof_get_note_length(eof_song, eof_selected_track, i) - reductionvalue);
-					}
-				}
-			}
-			else
-			{
-				long b;
-				if(eof_mickey_z > 0)
-				{
-					for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-					{
-						if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-						{
-							b = eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) - 1);
-							if(b >= 0)
-							{
-								eof_snap_logic(&eof_tail_snap, eof_song->beat[b]->pos);
-							}
-							else
-							{
-								eof_snap_logic(&eof_tail_snap, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) - 1);
-							}
-							eof_snap_length_logic(&eof_tail_snap);
-//							allegro_message("%d, %d\n%lu, %lu", eof_tail_snap.length, eof_tail_snap.beat, eof_get_note_pos(eof_selected_track, i) + eof_get_note_length(eof_selected_track, i), eof_song->beat[eof_tail_snap.beat]->pos);
-							eof_set_note_length(eof_song, eof_selected_track, i, eof_get_note_length(eof_song, eof_selected_track, i) - eof_tail_snap.length);
-							if(eof_get_note_length(eof_song, eof_selected_track, i) > 1)
-							{
-								eof_snap_logic(&eof_tail_snap, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i));
-								eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
-							}
-						}
-					}
-				}
-				else if(eof_mickey_z < 0)
-				{
-					for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-					{
-						if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-						{
-							eof_snap_logic(&eof_tail_snap, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) + 1);
-							if(eof_tail_snap.pos > eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) + 1)
-							{
-								eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
-							}
-							else
-							{
-								eof_snap_length_logic(&eof_tail_snap);
-								eof_set_note_length(eof_song, eof_selected_track, i, eof_get_note_length(eof_song, eof_selected_track, i) + eof_tail_snap.length);
-								eof_snap_logic(&eof_tail_snap, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i));
-								eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
-							}
-//							eof_snap_logic(&eof_tail_snap, eof_get_note_pos(eof_selected_track, i) + eof_get_note_length(eof_selected_track, i) + 1);
-						}
-					}
-				}
-			}
+			/* increase/decrease note length ( scroll wheel or CTRL+scroll wheel ) */
 			if(eof_mickey_z != 0)
-			{
-				eof_track_fixup_notes(eof_song, eof_selected_track, 1);
-			}
+			{	//If there was scroll wheel activity
+				if(eof_mickey_z > 0)
+				{	//Decrease note length
+					unsigned long reductionvalue = eof_mickey_z * 100;	//Default decrease length when grid snap is disabled
+					if(eof_snap_mode == EOF_SNAP_OFF)
+					{
+						if(KEY_EITHER_CTRL)
+						{
+							reductionvalue = eof_mickey_z * 10;
+						}
+					}
+					else
+					{
+						reductionvalue = 0;	//Will indicate to eof_adjust_note_length() to use the grid snap value
+					}
+					eof_adjust_note_length(eof_song, eof_selected_track, reductionvalue, -1);	//Decrease selected notes by the appropriate length
+				}
+				else
+				{	//Increase note length
+					unsigned long increasevalue = 100;	//Default increase length when grid snap is disabled
+					if(eof_snap_mode == EOF_SNAP_OFF)
+					{
+						if(KEY_EITHER_CTRL)
+						{
+							increasevalue = eof_mickey_z * 10;
+						}
+					}
+					else
+					{
+						increasevalue = 0;	//Will indicate to eof_adjust_note_length() to use the grid snap value
+					}
+					eof_adjust_note_length(eof_song, eof_selected_track, increasevalue, 1);	//Increase selected notes by the appropriate length
+				}
+			}//If there was scroll wheel activity
 		}//mouse is in the fretboard area
 		else
 		{
