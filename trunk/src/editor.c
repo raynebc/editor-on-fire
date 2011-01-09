@@ -4500,11 +4500,12 @@ void eof_editor_logic_common(void)
 							eof_menu_edit_cut(eof_selected_beat, 0, 0.0);
 						}
 					}
-					eof_song->beat[eof_selected_beat]->pos += eof_mickeys_x * eof_zoom;
+					eof_song->beat[eof_selected_beat]->fpos += eof_mickeys_x * eof_zoom;
+					eof_song->beat[eof_selected_beat]->pos = eof_song->beat[eof_selected_beat]->fpos + 0.5;	//Round up to nearest ms
 					if((eof_song->beat[eof_selected_beat]->pos <= eof_song->beat[eof_selected_beat - 1]->pos + 100) || ((eof_selected_beat + 1 < eof_song->beats) && (eof_song->beat[eof_selected_beat]->pos >= eof_song->beat[eof_selected_beat + 1]->pos - 10)))
 					{
-						eof_song->beat[eof_selected_beat]->pos -= eof_mickeys_x * eof_zoom;
-						eof_song->beat[eof_selected_beat]->fpos = eof_song->beat[eof_selected_beat]->pos;
+						eof_song->beat[eof_selected_beat]->fpos -= eof_mickeys_x * eof_zoom;
+						eof_song->beat[eof_selected_beat]->pos = eof_song->beat[eof_selected_beat]->fpos + 0.5;	//Round up to nearest ms
 					}
 					else
 					{
