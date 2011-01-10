@@ -810,7 +810,7 @@ void eof_read_editor_keys(void)
 					b = -1;
 				}
 
-				if((b < eof_song->beats - 1) && (eof_song->beat[b + 1]->pos < eof_music_actual_length))
+				if(((b < 0) || (b < eof_song->beats - 1)) && (eof_song->beat[b + 1]->pos < eof_music_actual_length))
 				{
 					alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->beat[b + 1]->pos + eof_av_delay);
 					eof_music_pos = eof_song->beat[b + 1]->pos + eof_av_delay;
