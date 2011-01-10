@@ -3156,10 +3156,12 @@ void eof_pro_guitar_track_fixup_notes(EOF_PRO_GUITAR_TRACK * tp, int sel)
 					}
 				}
 
+/*	For now, I've determined it's a bad idea to force slide notes to extend to the next note, because this is not how they work in RB3
 				if((tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 				{	//If this note slides up or down to the next note
 					tp->note[i-1]->length = tp->note[next]->pos - tp->note[i-1]->pos - 1;	//Alter the length to reach the next note
 				}
+*/
 			}
 
 			/* make sure that there aren't any invalid fret values, and inspect the mute flag status */

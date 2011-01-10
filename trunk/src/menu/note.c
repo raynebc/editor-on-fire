@@ -2702,7 +2702,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 						{	//If this note isn't the one that was just edited, but it matches it and is in the active track difficulty
 							if(legacymask != eof_song->pro_guitar_track[tracknum]->note[ctr]->legacymask)
 							{	//If the two notes have different legacy bitmasks
-								if(alert(NULL, "Update other matching notes in this track to have the same legacy bitmask?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+								if(alert(NULL, "Update other matching notes in this track difficulty to have the same legacy bitmask?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 								{	//If the user opts to use the updated note legacy bitmask on matching notes in this track
 									for(; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 									{	//For each note in the active track, starting from the one that just matched the comparison

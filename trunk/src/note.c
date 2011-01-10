@@ -304,54 +304,49 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 			//Render pro guitar note slide if applicable
 			if((track != 0) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && ((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)))
 			{	//If rendering an existing pro guitar note that slides up or down
-				long next, x2;			//Used for slide note rendering
+				long x2;			//Used for slide note rendering
 				unsigned long notepos2;		//Used for slide note rendering
 				int sliderect[8];		//An array of 4 vertices, used to draw a diagonal rectangle
 
-				next = eof_fixup_next_pro_guitar_note(eof_song->pro_guitar_track[tracknum], notenum);
-				if(next >= 0)
-				{	//If another pro guitar note in the same difficulty follows this one
-					//Find the screen coordinate of the next note
-					notepos2 = eof_get_note_pos(eof_song, track, next);
-					if(pos < leftcoord)
-					{
-						x2 = 20 + (notepos2) / eof_zoom;
-					}
-					else
-					{
-						x2 = 20 - ((pos - leftcoord)) + notepos2 / eof_zoom;
-					}
+				notepos2 = notepos + notelength;	//Find the position of the end of the note
+				if(pos < leftcoord)
+				{
+					x2 = 20 + (notepos2) / eof_zoom;
+				}
+				else
+				{
+					x2 = 20 - ((pos - leftcoord)) + notepos2 / eof_zoom;
+				}
 
-					//Define the slide rectangle coordinates in clockwise order
-					#define EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS 1
-					sliderect[0] = x;	//X1 (X coordinate of the left end of the slide)
-					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-					{	//If this note slides up, start the slide line at the bottom of this note
-						sliderect[1] = y + radius - EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS;	//Y1 (Y coordinate of the left end of the slide)
-					}
-					else
-					{	//Otherwise start the slide line at the top of this note
-						sliderect[1] = y - radius - EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS;	//Y1 (Y coordinate of the left end of the slide)
-					}
-					sliderect[2] = x2;	//X2 (X coordinate of the right end of the slide)
-					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-					{	//If this note slides up, end the slide line at the top of the next note
-						sliderect[3] = y - radius - EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS;	//Y2 (Y coordinate of the right end of the slide)
-					}
-					else
-					{	//Otherwise end the slide line at the bottom of the next note
-						sliderect[3] = y + radius - EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS;	//Y2 (Y coordinate of the right end of the slide)
-					}
-					sliderect[4] = x2;	//X3 (X coordinate of the right end of the slide)
-					sliderect[5] = sliderect[3] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS);	//Y3 (the specified number of pixels below Y2)
-					sliderect[6] = x;	//X4 (X coordinate of the left end of the slide)
-					sliderect[7] = sliderect[1] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS);	//Y4 (the specified number of pixels below Y1)
+				//Define the slide rectangle coordinates in clockwise order
+				#define EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS 1
+				sliderect[0] = x;	//X1 (X coordinate of the left end of the slide)
+				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+				{	//If this note slides up, start the slide line at the bottom of this note
+					sliderect[1] = y + radius - EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS;	//Y1 (Y coordinate of the left end of the slide)
+				}
+				else
+				{	//Otherwise start the slide line at the top of this note
+					sliderect[1] = y - radius - EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS;	//Y1 (Y coordinate of the left end of the slide)
+				}
+				sliderect[2] = x2;	//X2 (X coordinate of the right end of the slide)
+				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+				{	//If this note slides up, end the slide line at the top of the next note
+					sliderect[3] = y - radius - EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS;	//Y2 (Y coordinate of the right end of the slide)
+				}
+				else
+				{	//Otherwise end the slide line at the bottom of the next note
+					sliderect[3] = y + radius - EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS;	//Y2 (Y coordinate of the right end of the slide)
+				}
+				sliderect[4] = x2;	//X3 (X coordinate of the right end of the slide)
+				sliderect[5] = sliderect[3] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS);	//Y3 (the specified number of pixels below Y2)
+				sliderect[6] = x;	//X4 (X coordinate of the left end of the slide)
+				sliderect[7] = sliderect[1] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS);	//Y4 (the specified number of pixels below Y1)
 
-					if((sliderect[0] < window->w) && (sliderect[2] >= 0))
-					{	//If the left end of the polygon doesn't render off the right edge of the editor window and the right end of the polygon doesn't render off the left edge
-						polygon(window->screen, 4, sliderect, makecol(128, 0, 128));		//Render the 4 point polygon in purple
-					}
-				}//If another pro guitar note in the same difficulty follows this one
+				if((sliderect[0] < window->w) && (sliderect[2] >= 0))
+				{	//If the left end of the polygon doesn't render off the right edge of the editor window and the right end of the polygon doesn't render off the left edge
+					polygon(window->screen, 4, sliderect, makecol(128, 0, 128));		//Render the 4 point polygon in purple
+				}
 			}//If rendering an existing pro guitar track that slides up or down
 
 			if(!iscymbal)
@@ -965,45 +960,39 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 			//Render pro guitar note slide if applicable
 			if((track != 0) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && ((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)))
 			{	//If rendering an existing pro guitar track that slides up or down
-				long next, npos2, rz2;
+				long npos2, rz2;
 				unsigned long notepos2;		//Used for slide note rendering
 				unsigned long halflanewidth = (56.0 * (4.0 / (numlanes-1))) / 2;
-				unsigned long tracknum = eof_song->track[track]->tracknum;
 
-				next = eof_fixup_next_pro_guitar_note(eof_song->pro_guitar_track[tracknum], notenum);
-				if(next >= 0)
-				{	//If another pro guitar note in the same difficulty follows this one
-					//Find the screen coordinate of the next note
-					notepos2 = eof_get_note_pos(eof_song, track, next);
-					npos2 = (long)(notepos2 + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
-					rz2 = npos2 < -100 ? -100 : npos2 + 10;
+				notepos2 = notepos + notelength;	//Find the position of the end of the note
+				npos2 = (long)(notepos2 + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
+				rz2 = npos2 < -100 ? -100 : npos2 + 10;
 
-					//Define the slide rectangle coordinates in clockwise order
-					#define EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D 4
-					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-					{	//If this note slides up (3D view from left to right), start the slide line at the left of this note
-						point[0] = ocd3d_project_x(xchart[ctr] - halflanewidth, rz);	//X1 (X coordinate of the front end of the slide)
-					}
-					else
-					{	//Otherwise start the slide line at the right of this note
-						point[0] = ocd3d_project_x(xchart[ctr] + halflanewidth, rz);	//X1 (X coordinate of the front end of the slide)
-					}
-					point[1] = ocd3d_project_y(200, rz);	//Y1 (Y coordinate of the front end of the slide)
-					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-					{	//If this note slides up (3D view from left to right), end the slide line at the right of the next note
-						point[2] = ocd3d_project_x(xchart[ctr] + halflanewidth, rz2);	//X2 (X coordinate of the back end of the slide)
-					}
-					else
-					{	//Otherwise end the slide line at the left of the next note
-						point[2] = ocd3d_project_x(xchart[ctr] - halflanewidth, rz2);	//X2 (X coordinate of the back end of the slide)
-					}
-					point[3] = ocd3d_project_y(200, rz2);	//Y2 (Y coordinate of the back end of the slide
-					point[4] = point[2] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X3 (the specified number of pixels right of X2)
-					point[5] = point[3];	//Y3 (Y coordinate of the back end of the slide)
-					point[6] = point[0] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X4 (the specified number of pixels right of X1)
-					point[7] = point[1];	//Y4 (Y coordinate of the front end of the slide)
-					polygon(eof_window_3d->screen, 4, point, makecol(128, 0, 128));	//Render the 4 point polygon in purple
-				}//If another pro guitar note in the same difficulty follows this one
+				//Define the slide rectangle coordinates in clockwise order
+				#define EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D 4
+				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+				{	//If this note slides up (3D view from left to right), start the slide line at the left of this note
+					point[0] = ocd3d_project_x(xchart[ctr] - halflanewidth, rz);	//X1 (X coordinate of the front end of the slide)
+				}
+				else
+				{	//Otherwise start the slide line at the right of this note
+					point[0] = ocd3d_project_x(xchart[ctr] + halflanewidth, rz);	//X1 (X coordinate of the front end of the slide)
+				}
+				point[1] = ocd3d_project_y(200, rz);	//Y1 (Y coordinate of the front end of the slide)
+				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+				{	//If this note slides up (3D view from left to right), end the slide line at the right of the next note
+					point[2] = ocd3d_project_x(xchart[ctr] + halflanewidth, rz2);	//X2 (X coordinate of the back end of the slide)
+				}
+				else
+				{	//Otherwise end the slide line at the left of the next note
+					point[2] = ocd3d_project_x(xchart[ctr] - halflanewidth, rz2);	//X2 (X coordinate of the back end of the slide)
+				}
+				point[3] = ocd3d_project_y(200, rz2);	//Y2 (Y coordinate of the back end of the slide
+				point[4] = point[2] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X3 (the specified number of pixels right of X2)
+				point[5] = point[3];	//Y3 (Y coordinate of the back end of the slide)
+				point[6] = point[0] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X4 (the specified number of pixels right of X1)
+				point[7] = point[1];	//Y4 (Y coordinate of the front end of the slide)
+				polygon(eof_window_3d->screen, 4, point, makecol(128, 0, 128));	//Render the 4 point polygon in purple
 			}//If rendering an existing pro guitar track that slides up or down
 		}//If this lane has a gem to render
 	}//For each of the lanes in this track
