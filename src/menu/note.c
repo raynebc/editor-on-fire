@@ -2349,7 +2349,7 @@ DIALOG eof_pro_guitar_note_dialog[] =
 int eof_menu_note_edit_pro_guitar_note(void)
 {
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	unsigned long ctr, ctr2, fretcount;
+	unsigned long ctr, ctr2, fretcount, i;
 	char undo_made = 0;	//Set to nonzero when an undo state is created
 	long fretvalue;
 	char allmuted;					//Used to track whether all used strings are string muted
@@ -2382,7 +2382,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	eof_color_dialog(eof_pro_guitar_note_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_pro_guitar_note_dialog);
 
-//Update the note name text box
+//Update the note name text box to match the last selected note
 	memcpy(eof_note_edit_name, eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name, sizeof(eof_note_edit_name));
 
 //Update the fret text boxes (listed from top to bottom as string 6 through string 1)
@@ -2478,281 +2478,294 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	if(eof_popup_dialog(eof_pro_guitar_note_dialog, 0) == 34)
 	{	//If user clicked OK
 		//Validate and store the input
+		if(eof_count_selected_notes(NULL, 0) > 1)
+		{	//If multiple notes are selected, warn the user
+			if(alert(NULL, "Warning:  These fret values will be applied to all selected notes.", NULL, "&OK", "&Cancel", 0, 0) == 2)
+			{	//If user opts to cancel the operation
+				return 1;
+			}
+		}
 
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+		{	//For each note in the track
+			namechanged = 0;	//Reset this status
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+			{	//If the note is in the active instrument difficulty and is selected
 //Save the updated note name  (listed from top to bottom as string 6 through string 1)
-		if((!undo_made) && ustrcmp(eof_note_edit_name, eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name))
-		{	//If the name was changed
-			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			undo_made = 1;
-			memcpy(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name, eof_note_edit_name, sizeof(eof_note_edit_name));
-			namechanged = 1;
-		}
-
-		for(ctr = 0, allmuted = 1; ctr < 6; ctr++)
-		{	//For each of the 6 supported strings
-			if(eof_fret_strings[ctr][0] != '\0')
-			{	//If this string isn't empty, set the fret value
-				bitmask |= (1 << ctr);	//Set the appropriate bit for this lane
-				if(toupper(eof_fret_strings[ctr][0]) == 'X')
-				{	//If the user defined this string as muted
-					fretvalue = 0xFF;
+				if((!undo_made) && ustrcmp(eof_note_edit_name, eof_song->pro_guitar_track[tracknum]->note[i]->name))
+				{	//If the name was changed
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+					memcpy(eof_song->pro_guitar_track[tracknum]->note[i]->name, eof_note_edit_name, sizeof(eof_note_edit_name));
+					namechanged = 1;
 				}
-				else
-				{	//Get the appropriate fret value
-					fretvalue = atol(eof_fret_strings[ctr]);
-					if((fretvalue < 0) || (fretvalue > eof_song->pro_guitar_track[tracknum]->numfrets))
-					{	//If the conversion to number failed, or an invalid fret number was entered, enter a value of (muted) for the string
-						fretvalue = 0xFF;
+
+				for(ctr = 0, allmuted = 1; ctr < 6; ctr++)
+				{	//For each of the 6 supported strings
+					if(eof_fret_strings[ctr][0] != '\0')
+					{	//If this string isn't empty, set the fret value
+						bitmask |= (1 << ctr);	//Set the appropriate bit for this lane
+						if(toupper(eof_fret_strings[ctr][0]) == 'X')
+						{	//If the user defined this string as muted
+							fretvalue = 0xFF;
+						}
+						else
+						{	//Get the appropriate fret value
+						fretvalue = atol(eof_fret_strings[ctr]);
+						if((fretvalue < 0) || (fretvalue > eof_song->pro_guitar_track[tracknum]->numfrets))
+						{	//If the conversion to number failed, or an invalid fret number was entered, enter a value of (muted) for the string
+							fretvalue = 0xFF;
+						}
 					}
+					if(!undo_made && (fretvalue != eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr]))
+					{	//If an undo state hasn't been made yet, and this fret value changed
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						undo_made = 1;
+					}
+					eof_song->pro_guitar_track[tracknum]->note[i]->frets[ctr] = fretvalue;
+					if(fretvalue != 0xFF)
+					{	//Track whether the all used strings in this note/chord are muted
+						allmuted = 0;
+					}
+					}
+					else
+					{	//Clear the fret value and return the fret back to its default of 0 (open)
+						bitmask &= ~(1 << ctr);	//Clear the appropriate bit for this lane
+						if(!undo_made && (eof_song->pro_guitar_track[tracknum]->note[i]->frets[ctr] != 0))
+						{	//If an undo state hasn't been made yet, and this fret value changed
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+							undo_made = 1;
+						}
+						eof_song->pro_guitar_track[tracknum]->note[i]->frets[ctr] = 0;
+					}
+				}//For each of the 6 supported strings
+				if(bitmask == 0)
+				{	//If edits results in this note having no played strings
+					eof_track_delete_note(eof_song, eof_selected_track, i);	//Delete this note because it no longer exists
+					i--;		//Compensate for the counter increment, since note[i] already references the next note
+					continue;	//Skip the rest of the processing for this note
 				}
-				if(!undo_made && (fretvalue != eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr]))
-				{	//If an undo state hasn't been made yet, and this fret value changed
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					undo_made = 1;
-				}
-				eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] = fretvalue;
-				if(fretvalue != 0xFF)
-				{	//Track whether the all used strings in this note/chord are muted
-					allmuted = 0;
-				}
-			}
-			else
-			{	//Clear the fret value and return the fret back to its default of 0 (open)
-				bitmask &= ~(1 << ctr);	//Clear the appropriate bit for this lane
-				if(!undo_made && (eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] != 0))
-				{	//If an undo state hasn't been made yet, and this fret value changed
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					undo_made = 1;
-				}
-				eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] = 0;
-			}
-		}
-		if(bitmask == 0)
-		{	//If edits results in this note having no played strings
-			eof_track_delete_note(eof_song, eof_selected_track, eof_selection.current);	//Delete this note because it no longer exists
-			return 1;
-		}
-
 //Save the updated note bitmask
-		if(!undo_made && (eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->note != bitmask))
-		{	//If an undo state hasn't been made yet, and the note bitmask changed
-			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			undo_made = 1;
-		}
-		eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->note = bitmask;
+				if(!undo_made && (eof_song->pro_guitar_track[tracknum]->note[i]->note != bitmask))
+				{	//If an undo state hasn't been made yet, and the note bitmask changed
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				eof_song->pro_guitar_track[tracknum]->note[i]->note = bitmask;
 
 //Save the updated legacy note bitmask
-		legacymask = 0;
-		if(eof_pro_guitar_note_dialog[17].flags == D_SELECTED)
-			legacymask |= 16;
-		if(eof_pro_guitar_note_dialog[18].flags == D_SELECTED)
-			legacymask |= 8;
-		if(eof_pro_guitar_note_dialog[19].flags == D_SELECTED)
-			legacymask |= 4;
-		if(eof_pro_guitar_note_dialog[20].flags == D_SELECTED)
-			legacymask |= 2;
-		if(eof_pro_guitar_note_dialog[21].flags == D_SELECTED)
-			legacymask |= 1;
-		if(!undo_made && (legacymask != eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->legacymask))
-		{
-			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			undo_made = 1;
-			legacymaskchanged = 1;
-		}
-		eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->legacymask = legacymask;
+				legacymask = 0;
+				if(eof_pro_guitar_note_dialog[17].flags == D_SELECTED)
+					legacymask |= 16;
+				if(eof_pro_guitar_note_dialog[18].flags == D_SELECTED)
+					legacymask |= 8;
+				if(eof_pro_guitar_note_dialog[19].flags == D_SELECTED)
+					legacymask |= 4;
+				if(eof_pro_guitar_note_dialog[20].flags == D_SELECTED)
+					legacymask |= 2;
+				if(eof_pro_guitar_note_dialog[21].flags == D_SELECTED)
+					legacymask |= 1;
+				if(!undo_made && (legacymask != eof_song->pro_guitar_track[tracknum]->note[i]->legacymask))
+				{
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+					legacymaskchanged = 1;
+				}
+				eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = legacymask;
 
 //Save the updated note flag bitmask
-		flags = 0;
-		if(eof_pro_guitar_note_dialog[24].flags == D_SELECTED)
-		{	//HO is selected
-			flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;	//Set the hammer on flag
-			flags &= (~EOF_NOTE_FLAG_NO_HOPO);		//Clear the forced HOPO off note
-			flags |= EOF_NOTE_FLAG_F_HOPO;			//Set the legacy HOPO flag
-		}
-		else if(eof_pro_guitar_note_dialog[25].flags == D_SELECTED)
-		{	//PO is selected
-			flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;	//Set the pull off flag
-			flags &= (~EOF_NOTE_FLAG_NO_HOPO);		//Clear the forced HOPO off flag
-			flags |= EOF_NOTE_FLAG_F_HOPO;			//Set the legacy HOPO flag
-		}
-		else if(eof_pro_guitar_note_dialog[26].flags == D_SELECTED)
-		{	//Tap is selected
-			flags |= EOF_PRO_GUITAR_NOTE_FLAG_TAP;	//Set the tap flag
-			flags &= (~EOF_NOTE_FLAG_NO_HOPO);		//Clear the forced HOPO off flag
-			flags |= EOF_NOTE_FLAG_F_HOPO;			//Set the legacy HOPO flag
-		}
-		if(eof_pro_guitar_note_dialog[28].flags == D_SELECTED)
-		{	//Up is selected
-			flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
-		}
-		else if(eof_pro_guitar_note_dialog[29].flags == D_SELECTED)
-		{	//Down is selected
-			flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
-		}
-		if(eof_pro_guitar_note_dialog[31].flags == D_SELECTED)
-		{	//String is selected
-			flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;
-		}
-		else if(eof_pro_guitar_note_dialog[32].flags == D_SELECTED)
-		{	//Palm is selected
-			flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
-		}
-		if(!allmuted)
-		{	//If any used strings in this note/chord weren't string muted
-			flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE);	//Clear the string mute flag
-		}
-		else if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
-		{	//If all strings are muted and the user didn't specify a palm mute
-			flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;		//Set the string mute flag
-		}
-		flags |= (eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->flags & EOF_NOTE_FLAG_CRAZY);	//Retain the note's original crazy status
-		if(!undo_made && (flags != eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->flags))
-		{
-			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			undo_made = 1;
-		}
-		eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->flags = flags;
-
+				flags = 0;
+				if(eof_pro_guitar_note_dialog[24].flags == D_SELECTED)
+				{	//HO is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;	//Set the hammer on flag
+					flags &= (~EOF_NOTE_FLAG_NO_HOPO);		//Clear the forced HOPO off note
+					flags |= EOF_NOTE_FLAG_F_HOPO;			//Set the legacy HOPO flag
+				}
+				else if(eof_pro_guitar_note_dialog[25].flags == D_SELECTED)
+				{	//PO is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;	//Set the pull off flag
+					flags &= (~EOF_NOTE_FLAG_NO_HOPO);		//Clear the forced HOPO off flag
+					flags |= EOF_NOTE_FLAG_F_HOPO;			//Set the legacy HOPO flag
+				}
+				else if(eof_pro_guitar_note_dialog[26].flags == D_SELECTED)
+				{	//Tap is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_TAP;	//Set the tap flag
+					flags &= (~EOF_NOTE_FLAG_NO_HOPO);		//Clear the forced HOPO off flag
+					flags |= EOF_NOTE_FLAG_F_HOPO;			//Set the legacy HOPO flag
+				}
+				if(eof_pro_guitar_note_dialog[28].flags == D_SELECTED)
+				{	//Up is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
+				}
+				else if(eof_pro_guitar_note_dialog[29].flags == D_SELECTED)
+				{	//Down is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+				}
+				if(eof_pro_guitar_note_dialog[31].flags == D_SELECTED)
+				{	//String is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;
+				}
+				else if(eof_pro_guitar_note_dialog[32].flags == D_SELECTED)
+				{	//Palm is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
+				}
+				if(!allmuted)
+				{	//If any used strings in this note/chord weren't string muted
+					flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE);	//Clear the string mute flag
+				}
+				else if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
+				{	//If all strings are muted and the user didn't specify a palm mute
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;		//Set the string mute flag
+				}
+				flags |= (eof_song->pro_guitar_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_CRAZY);	//Retain the note's original crazy status
+				if(!undo_made && (flags != eof_song->pro_guitar_track[tracknum]->note[i]->flags))
+				{
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				eof_song->pro_guitar_track[tracknum]->note[i]->flags = flags;
 
 //Prompt whether matching notes need to have their name updated
-		newname = eof_get_note_name(eof_song, eof_selected_track, eof_selection.current);
-		if(newname != NULL)
-		{
-			if(newname[0] != '\0')
-			{	//If the note name contains text
-				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
-				{	//For each note in the active track
-					if((ctr != eof_selection.current) && (eof_note_compare(eof_selected_track, eof_selection.current, ctr) == 0))
-					{	//If this note isn't the one that was just edited, but it matches it
-						if(ustrcmp(newname, eof_get_note_name(eof_song, eof_selected_track, ctr)))
-						{	//If the two notes have different names
-							if(alert(NULL, "Update other matching notes in this track to have the same name?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-							{	//If the user opts to use the updated note name on matching notes in this track
-								for(; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
-								{	//For each note in the active track, starting from the one that just matched the comparison
-									if((ctr != eof_selection.current) && (eof_note_compare(eof_selected_track, eof_selection.current, ctr) == 0))
-									{	//If this note isn't the one that was just edited, but it matches it, copy the edited note's name to this note
-										ustrncpy(eof_get_note_name(eof_song, eof_selected_track, ctr), newname, sizeof(junknote.name));
+				newname = eof_get_note_name(eof_song, eof_selected_track, i);
+				if(newname != NULL)
+				{
+					if(newname[0] != '\0')
+					{	//If the note name contains text
+						for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+						{	//For each note in the active track
+							if((ctr != i) && (eof_note_compare(eof_selected_track, i, ctr) == 0))
+							{	//If this note isn't the one that was just edited, but it matches it
+								if(ustrcmp(newname, eof_get_note_name(eof_song, eof_selected_track, ctr)))
+								{	//If the two notes have different names
+									if(alert(NULL, "Update other matching notes in this track to have the same name?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+									{	//If the user opts to use the updated note name on matching notes in this track
+										for(; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+										{	//For each note in the active track, starting from the one that just matched the comparison
+											if((ctr != i) && (eof_note_compare(eof_selected_track, i, ctr) == 0))
+											{	//If this note isn't the one that was just edited, but it matches it, copy the edited note's name to this note
+												ustrncpy(eof_get_note_name(eof_song, eof_selected_track, ctr), newname, sizeof(junknote.name));
+											}
+										}
 									}
+									break;	//Break from loop
 								}
 							}
-							break;	//Break from loop
-						}
-					}
-				}//For each note in the active track
-			}//If the note name contains text
+						}//For each note in the active track
+					}//If the note name contains text
 
 //Or prompt whether this note's name should be updated from the other existing notes
-			else
-			{	//The note name is not defined
-				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
-				{	//For each note in the active track
-					if((ctr != eof_selection.current) && (eof_note_compare(eof_selected_track, eof_selection.current, ctr) == 0))
-					{	//If this note isn't the one that was just edited, but it matches it
-						newname = eof_get_note_name(eof_song, eof_selected_track, ctr);
-						if(newname && (newname[0] != '\0'))
-						{	//If this note has a name
-							previously_refused = 0;
-							for(ctr2 = 0; ctr2 < ctr; ctr2++)
-							{	//For each previous note that was checked
-								if(declined_list[ctr2] && !ustrcmp(newname, eof_get_note_name(eof_song, eof_selected_track, ctr2)))
-								{	//If this note name matches one the user previously rejected to assign to the edited note
-									declined_list[ctr] = 1;	//Automatically decline this instance of the same name
-									previously_refused = 1;
-									break;
-								}
-							}
-							if(!previously_refused)
-							{	//If this name isn't one the user already refused
-								snprintf(autoprompt, sizeof(autoprompt), "Set this note's name to \"%s\"?",newname);
-								if(alert(NULL, autoprompt, NULL, "&Yes", "&No", 'y', 'n') == 1)
-								{	//If the user opts to assign this note's name to the edited note
-									ustrncpy(eof_get_note_name(eof_song, eof_selected_track, eof_selection.current), newname, sizeof(junknote.name));
-									break;
-								}
-								else
-								{	//Otherwise mark this note's name as refused
-									declined_list[ctr] = 1;	//Mark this note's name as having been declined
-								}
-							}
-						}//If this note has a name
-					}//If this note isn't the one that was just edited, but it matches it
-				}//For each note in the active track
-			}//The note name is not defined
-		}//if(newname != NULL)
+					else
+					{	//The note name is not defined
+						memset(declined_list, 0, sizeof(declined_list));	//Clear the declined list
+						for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+						{	//For each note in the active track
+							if((ctr != i) && (eof_note_compare(eof_selected_track, i, ctr) == 0))
+							{	//If this note isn't the one that was just edited, but it matches it
+								newname = eof_get_note_name(eof_song, eof_selected_track, ctr);
+								if(newname && (newname[0] != '\0'))
+								{	//If this note has a name
+									previously_refused = 0;
+									for(ctr2 = 0; ctr2 < ctr; ctr2++)
+									{	//For each previous note that was checked
+										if(declined_list[ctr2] && !ustrcmp(newname, eof_get_note_name(eof_song, eof_selected_track, ctr2)))
+										{	//If this note name matches one the user previously rejected to assign to the edited note
+											declined_list[ctr] = 1;	//Automatically decline this instance of the same name
+											previously_refused = 1;
+											break;
+										}
+									}
+									if(!previously_refused)
+									{	//If this name isn't one the user already refused
+										snprintf(autoprompt, sizeof(autoprompt), "Set this note's name to \"%s\"?",newname);
+										if(alert(NULL, autoprompt, NULL, "&Yes", "&No", 'y', 'n') == 1)
+										{	//If the user opts to assign this note's name to the edited note
+											ustrncpy(eof_get_note_name(eof_song, eof_selected_track, i), newname, sizeof(junknote.name));
+											break;
+										}
+										else
+										{	//Otherwise mark this note's name as refused
+											declined_list[ctr] = 1;	//Mark this note's name as having been declined
+										}
+									}
+								}//If this note has a name
+							}//If this note isn't the one that was just edited, but it matches it
+						}//For each note in the active track
+					}//The note name is not defined
+				}//if(newname != NULL)
 
 //Prompt whether matching notes need to have their legacy bitmask updated
-		if(legacymask)
-		{	//If the legacy bitmask isn't all lanes blank
-			for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
-			{	//For each note in the active track
-				if((ctr != eof_selection.current) && (eof_note_compare(eof_selected_track, eof_selection.current, ctr) == 0))
-				{	//If this note isn't the one that was just edited, but it matches it
-					if(legacymask != eof_song->pro_guitar_track[tracknum]->note[ctr]->legacymask)
-					{	//If the two notes have different legacy bitmasks
-						if(alert(NULL, "Update other matching notes in this track to have the same legacy bitmask?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-						{	//If the user opts to use the updated note legacy bitmask on matching notes in this track
-							for(; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
-							{	//For each note in the active track, starting from the one that just matched the comparison
-								if((ctr != eof_selection.current) && (eof_note_compare(eof_selected_track, eof_selection.current, ctr) == 0))
-								{	//If this note isn't the one that was just edited, but it matches it, copy the edited note's legacy bitmask to this note
-									eof_song->pro_guitar_track[tracknum]->note[ctr]->legacymask = legacymask;
+				if(legacymask)
+				{	//If the legacy bitmask isn't all lanes blank
+					for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+					{	//For each note in the active track
+						if((ctr != i) && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type) && (eof_note_compare(eof_selected_track, i, ctr) == 0))
+						{	//If this note isn't the one that was just edited, but it matches it and is in the active track difficulty
+							if(legacymask != eof_song->pro_guitar_track[tracknum]->note[ctr]->legacymask)
+							{	//If the two notes have different legacy bitmasks
+								if(alert(NULL, "Update other matching notes in this track to have the same legacy bitmask?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+								{	//If the user opts to use the updated note legacy bitmask on matching notes in this track
+									for(; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+									{	//For each note in the active track, starting from the one that just matched the comparison
+										if((ctr != i) && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type) && (eof_note_compare(eof_selected_track, i, ctr) == 0))
+										{	//If this note isn't the one that was just edited, but it matches it and is in the active track difficulty, copy the edited note's legacy bitmask to this note
+											eof_song->pro_guitar_track[tracknum]->note[ctr]->legacymask = legacymask;
+										}
+									}
 								}
+								break;	//Break from loop
 							}
 						}
-						break;	//Break from loop
-					}
-				}
-			}//For each note in the active track
-		}//If the legacy bitmask isn't all lanes blank
+					}//For each note in the active track
+				}//If the legacy bitmask isn't all lanes blank
 
 //Or prompt whether this note' legacy bitmask should be updated from the other existing notes
-		else
-		{	//The note's legacy bitmask is not defined
-			memset(declined_list, 0, sizeof(declined_list));	//Clear the declined list
-
-			for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
-			{	//For each note in the active track
-				if((ctr != eof_selection.current) && (eof_note_compare(eof_selected_track, eof_selection.current, ctr) == 0))
-				{	//If this note isn't the one that was just edited, but it matches it
-					legacymask = eof_song->pro_guitar_track[tracknum]->note[ctr]->legacymask;
-					if(legacymask)
-					{	//If this note has a legacy bitmask
-						previously_refused = 0;
-						for(ctr2 = 0; ctr2 < ctr; ctr2++)
-						{	//For each previous note that was checked
-							if(declined_list[ctr2] && (legacymask == eof_song->pro_guitar_track[tracknum]->note[ctr2]->legacymask))
-							{	//If this note's legacy mask matches one the user previously rejected to assign to the edited note
-								declined_list[ctr] = 1;	//Automatically decline this instance of the same legacy bitmask
-								previously_refused = 1;
-								break;
-							}
-						}
-						if(!previously_refused)
-						{	//If this legacy bitmask isn't one the user already refused
-							for(ctr2 = 0, bitmask = 1, index = 0; ctr2 < 5; ctr2++, bitmask<<=1)
-							{	//For each of the legacy bitmasks 5 usable bits
-								if(legacymask & bitmask)
-								{	//If this bit is set, append the fret number to the autobitmask string
-									autobitmask[index++] = '1' + ctr2;
+				else
+				{	//The note's legacy bitmask is not defined
+					memset(declined_list, 0, sizeof(declined_list));	//Clear the declined list
+					for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+					{	//For each note in the active track
+						if((ctr != i) && (eof_note_compare(eof_selected_track, i, ctr) == 0))
+						{	//If this note isn't the one that was just edited, but it matches it
+							legacymask = eof_song->pro_guitar_track[tracknum]->note[ctr]->legacymask;
+							if(legacymask)
+							{	//If this note has a legacy bitmask
+								previously_refused = 0;
+								for(ctr2 = 0; ctr2 < ctr; ctr2++)
+								{	//For each previous note that was checked
+									if(declined_list[ctr2] && (legacymask == eof_song->pro_guitar_track[tracknum]->note[ctr2]->legacymask))
+									{	//If this note's legacy mask matches one the user previously rejected to assign to the edited note
+										declined_list[ctr] = 1;	//Automatically decline this instance of the same legacy bitmask
+										previously_refused = 1;
+										break;
+									}
 								}
-								autobitmask[index] = '\0';	//Ensure the string is terminated
-							}
-							snprintf(autoprompt, sizeof(autoprompt), "Set this note's legacy bitmask to \"%s\"?",autobitmask);
-							if(alert(NULL, autoprompt, NULL, "&Yes", "&No", 'y', 'n') == 1)
-							{	//If the user opts to assign this note's legacy bitmask to the edited note
-								eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->legacymask = legacymask;
-								break;
-							}
-							else
-							{	//Otherwise mark this note's name as refused
-								declined_list[ctr] = 1;	//Mark this note's name as having been declined
-							}
-						}
-					}//If this note has a legacy bitmask
-				}//If this note isn't the one that was just edited, but it matches it
-			}//For each note in the active track
-		}//The note's legacy bitmask is not defined
+								if(!previously_refused)
+								{	//If this legacy bitmask isn't one the user already refused
+									for(ctr2 = 0, bitmask = 1, index = 0; ctr2 < 5; ctr2++, bitmask<<=1)
+									{	//For each of the legacy bitmasks 5 usable bits
+										if(legacymask & bitmask)
+										{	//If this bit is set, append the fret number to the autobitmask string
+											autobitmask[index++] = '1' + ctr2;
+										}
+										autobitmask[index] = '\0';	//Ensure the string is terminated
+									}
+									snprintf(autoprompt, sizeof(autoprompt), "Set this note's legacy bitmask to \"%s\"?",autobitmask);
+									if(alert(NULL, autoprompt, NULL, "&Yes", "&No", 'y', 'n') == 1)
+									{	//If the user opts to assign this note's legacy bitmask to the edited note
+										eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = legacymask;
+										break;
+									}
+									else
+									{	//Otherwise mark this note's name as refused
+										declined_list[ctr] = 1;	//Mark this note's name as having been declined
+									}
+								}
+							}//If this note has a legacy bitmask
+						}//If this note isn't the one that was just edited, but it matches it
+					}//For each note in the active track
+				}//The note's legacy bitmask is not defined
+			}//If the note is in the active instrument difficulty and is selected
+		}//For each note in the track
 	}//If user clicked OK
 
 	eof_show_mouse(NULL);
