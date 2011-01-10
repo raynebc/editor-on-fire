@@ -1295,6 +1295,7 @@ int eof_menu_edit_paste(void)
 		pack_fread(frets, sizeof(frets), fp);	//Read the note's fret array
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If this is a pro guitar track
+			eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->legacymask = legacymask;				//Copy the legacy bitmask to the last created pro guitar note
 			memcpy(eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->frets, frets, sizeof(frets));	//Copy the fret array to the last created pro guitar note
 		}
 	}
