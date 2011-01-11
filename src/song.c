@@ -43,11 +43,11 @@ EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 11] =
 	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR, 0, "PART REAL_GUITAR", 0, 0},
 
 	//These tracks are not supported for import yet, but these entries describe the tracks' details
-	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR, 0, "PART REAL_GUITAR_22", 0, 0},
 	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS_X", 0, 0},
 	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS_H", 0, 0},
 	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS_M", 0, 0},
 	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS_E", 0, 0},
+	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR, 0, "PART REAL_GUITAR_22", 0, 0},
 	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "HARM1", 0, 0},
 	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "HARM2", 0, 0},
 	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "HARM3", 0, 0},
@@ -58,6 +58,8 @@ EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 11] =
 	//One complication here is that the pro keys charting gets one MIDI track for each difficulty
 	//Another is that the pro guitar could have a separate track for use with the Squier guitar (22 frets instead of 17)
 	//Another is that although the best way to offer harmony charting would be in PART VOCALS, each harmony gets its own MIDI track
+	//For the purpose of MIDI import, it will be expected that eof_midi_tracks[track_type].track_format is correct for the given track,
+	// so eof_midi_tracks[EOF_TRACK_PRO_GUITAR].track_format references the correct behavior for the track
 
 
 /* sort all notes according to position */
@@ -2876,7 +2878,7 @@ EOF_PHRASE_SECTION *eof_get_solo(EOF_SONG *sp, unsigned long track, unsigned lon
 	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
-			if(solonum < sp->legacy_track[tracknum]->solos)
+			if(solonum < EOF_MAX_PHRASES)
 			{
 				return &sp->legacy_track[tracknum]->solo[solonum];
 			}
@@ -2884,7 +2886,7 @@ EOF_PHRASE_SECTION *eof_get_solo(EOF_SONG *sp, unsigned long track, unsigned lon
 
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			if(solonum < sp->pro_guitar_track[tracknum]->solos)
+			if(solonum < EOF_MAX_PHRASES)
 			{
 				return &sp->pro_guitar_track[tracknum]->solo[solonum];
 			}
@@ -3232,7 +3234,7 @@ EOF_PHRASE_SECTION *eof_get_star_power_path(EOF_SONG *sp, unsigned long track, u
 	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
-			if(pathnum < sp->legacy_track[tracknum]->star_power_paths)
+			if(pathnum < EOF_MAX_PHRASES)
 			{
 				return &sp->legacy_track[tracknum]->star_power_path[pathnum];
 			}
@@ -3242,7 +3244,7 @@ EOF_PHRASE_SECTION *eof_get_star_power_path(EOF_SONG *sp, unsigned long track, u
 		return NULL;	//Vocal star power is not implemented yet
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			if(pathnum < sp->pro_guitar_track[tracknum]->star_power_paths)
+			if(pathnum < EOF_MAX_PHRASES)
 			{
 				return &sp->pro_guitar_track[tracknum]->star_power_path[pathnum];
 			}
@@ -3664,7 +3666,7 @@ EOF_PHRASE_SECTION *eof_get_trill(EOF_SONG *sp, unsigned long track, unsigned lo
 	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
-			if(index < sp->legacy_track[tracknum]->trills)
+			if(index < EOF_MAX_PHRASES)
 			{
 				return &sp->legacy_track[tracknum]->trill[index];
 			}
@@ -3672,7 +3674,7 @@ EOF_PHRASE_SECTION *eof_get_trill(EOF_SONG *sp, unsigned long track, unsigned lo
 
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			if(index < sp->pro_guitar_track[tracknum]->trills)
+			if(index < EOF_MAX_PHRASES)
 			{
 				return &sp->pro_guitar_track[tracknum]->trill[index];
 			}
@@ -3693,7 +3695,7 @@ EOF_PHRASE_SECTION *eof_get_tremolo(EOF_SONG *sp, unsigned long track, unsigned 
 	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
-			if(index < sp->legacy_track[tracknum]->tremolos)
+			if(index < EOF_MAX_PHRASES)
 			{
 				return &sp->legacy_track[tracknum]->tremolo[index];
 			}
@@ -3701,7 +3703,7 @@ EOF_PHRASE_SECTION *eof_get_tremolo(EOF_SONG *sp, unsigned long track, unsigned 
 
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			if(index < sp->pro_guitar_track[tracknum]->tremolos)
+			if(index < EOF_MAX_PHRASES)
 			{
 				return &sp->pro_guitar_track[tracknum]->tremolo[index];
 			}
@@ -4002,7 +4004,7 @@ EOF_PHRASE_SECTION *eof_get_arpeggio(EOF_SONG *sp, unsigned long track, unsigned
 	switch(sp->track[track]->track_format)
 	{
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			if(index < sp->pro_guitar_track[tracknum]->arpeggios)
+			if(index < EOF_MAX_PHRASES)
 			{
 				return &sp->pro_guitar_track[tracknum]->arpeggio[index];
 			}
@@ -4151,7 +4153,7 @@ EOF_PHRASE_SECTION *eof_get_lyric_section(EOF_SONG *sp, unsigned long track, uns
 	switch(sp->track[track]->track_format)
 	{
 		case EOF_VOCAL_TRACK_FORMAT:
-			if(sectionnum < sp->vocal_track[tracknum]->lines)
+			if(sectionnum < EOF_MAX_LYRIC_LINES)
 			{
 				return &sp->vocal_track[tracknum]->line[sectionnum];
 			}

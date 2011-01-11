@@ -328,7 +328,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 		return NULL;
 	}
 	for(i = 0; i < tracks; i++)
-	{
+	{	//For each imported track
 		last_event = 0;	//Running status resets at beginning of each track
 		eof_import_events[i] = eof_import_create_events_list();
 		eof_import_ts_changes[i] = eof_create_ts_list();
@@ -343,7 +343,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 //		absolute_pos = sp->tags->ogg[0].midi_offset;
 		absolute_pos = 0;
 		while(track_pos < eof_work_midi->track[track[i]].len)
-		{
+		{	//While the byte index of this MIDI track hasn't reached the end of the track data
 			/* read delta */
 			bytes_used = 0;
 			delta = eof_parse_var_len(eof_work_midi->track[track[i]].data, track_pos, &bytes_used);
@@ -377,7 +377,6 @@ EOF_SONG * eof_import_midi(const char * fn)
 			}
 			switch(current_event_hi)
 			{
-
 				/* note off */
 				case 0x80:
 				{
@@ -508,8 +507,8 @@ EOF_SONG * eof_import_midi(const char * fn)
 								for(j = 1; j < EOF_TRACKS_MAX + 1; j++)
 								{	//Compare the track name against the tracks in eof_midi_tracks[]
 									if(!ustricmp(text, eof_midi_tracks[j].name))
-									{
-										eof_import_events[i]->type = eof_midi_tracks[j].tracknum;
+									{	//If this track name matches an expected name
+										eof_import_events[i]->type = eof_midi_tracks[j].track_type;
 										if(eof_midi_tracks[j].track_type == EOF_TRACK_GUITAR)
 										{
 											rbg = 1;
@@ -649,9 +648,9 @@ EOF_SONG * eof_import_midi(const char * fn)
 					track_pos--;		//Rewind one of the two bytes that were seeked
 					break;
 				}
-			}
-		}
-	}
+			}//switch(current_event_hi)
+		}//While the byte index of this MIDI track hasn't reached the end of the track data
+	}//For each imported track
 
 struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 
@@ -811,14 +810,15 @@ allegro_message("Second pass complete");
 	unsigned long tracknum;				//Used to de-obfuscate the legacy track number
 
 	for(i = 0; i < tracks; i++)
-	{	//Valid track "types" begin at number 1
+	{	//For each imported track
 		picked_track = eof_import_events[i]->type >= 1 ? eof_import_events[i]->type : rbg == 0 ? EOF_TRACK_GUITAR : -1;
 		first_note = note_count[picked_track];
 		if((picked_track >= 0) && !used_track[picked_track])
 		{
 			tracknum = sp->track[picked_track]->tracknum;
-			if(picked_track == EOF_TRACK_VOCALS)
-			{	//If parsing the PART VOCALS track
+//			if(picked_track == EOF_TRACK_VOCALS)
+			if(eof_midi_tracks[picked_track].track_format == EOF_VOCAL_TRACK_FORMAT)
+			{	//If parsing a vocal track
 				int last_105 = 0;
 				int last_106 = 0;
 				int overdrive_pos = -1;
@@ -968,9 +968,10 @@ allegro_message("Second pass complete");
 				{
 					used_track[picked_track] = 1;
 				}
-			}//If parsing the PART VOCALS track
-			else
-			{
+			}//If parsing a vocal track
+//			else
+			if(eof_midi_tracks[picked_track].track_format == EOF_LEGACY_TRACK_FORMAT)
+			{	//If parsing a legacy track
 //Detect whether Pro drum notation is being used
 //Pro drum notation is that if a green, yellow or blue drum note is NOT to be marked as a cymbal,
 //it must be marked with the appropriate MIDI note, otherwise the note defaults as a cymbal
@@ -1347,9 +1348,9 @@ allegro_message("Second pass complete");
 					eof_track_find_crazy_notes(sp, picked_track);
 					used_track[picked_track] = 1;
 				}
-			}
+			}//If parsing a legacy track
 		}
-	}
+	}//For each imported track
 
 #ifdef EOF_DEBUG_MIDI_IMPORT
 allegro_message("Third pass complete");
