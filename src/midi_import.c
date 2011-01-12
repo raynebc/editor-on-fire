@@ -1299,10 +1299,6 @@ allegro_message("Second pass complete");
 						{
 							eof_set_note_type(sp, picked_track, note_count[picked_track], -1);
 						}
-						if(eof_get_note_type(sp, picked_track, note_count[picked_track]) != -1)
-						{	//If this note was in a valid difficulty range, store the fret value of this string
-							sp->pro_guitar_track[tracknum]->note[note_count[picked_track]]->frets[diff] = eof_import_events[i]->event[j]->d2 - 100;	//Velocity (100 + X) represents fret # X
-						}
 					}
 
 					/* note on */
@@ -1331,7 +1327,7 @@ allegro_message("Second pass complete");
 								}
 							}
 							if(k == note_count[picked_track])
-							{
+							{	//If a new note was created, add the note
 								notenum = note_count[picked_track];
 								eof_set_note_note(sp, picked_track, notenum, diff_chart[diff]);
 								eof_set_note_pos(sp, picked_track, notenum, event_realtime);
@@ -1339,10 +1335,11 @@ allegro_message("Second pass complete");
 								note_count[picked_track]++;
 							}
 							else
-							{
+							{	//Otherwise edit the existing note
 								notenum = k;
 								eof_set_note_note(sp, picked_track, notenum, eof_get_note_note(sp, picked_track, notenum) | diff_chart[diff]);
 							}
+							sp->pro_guitar_track[tracknum]->note[notenum]->frets[diff] = eof_import_events[i]->event[j]->d2 - 100;	//Velocity (100 + X) represents fret # X
 						}
 					}
 
