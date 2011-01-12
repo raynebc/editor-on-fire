@@ -4199,6 +4199,7 @@ unsigned char eof_find_pen_note_mask(void)
 	int bitmaskshift;	//Used to find the pen note bitmask if the notes are inverted (taking lane 6 into account)
 	unsigned char returnvalue = 0;
 	unsigned long i;
+	char invert = 0;
 
 	//Determine which lane the mouse is in
 	eof_hover_piece = -1;
@@ -4211,10 +4212,16 @@ unsigned char eof_find_pen_note_mask(void)
 		}
 	}
 	bitmaskshift = eof_count_track_lanes(eof_song, eof_selected_track) - 5;	//If the 6th lane is in use, the inverted mask will be shifted left by one
+	
+	/* see if we are inverting the lanes */
+	if(eof_inverted_notes || eof_count_track_lanes(eof_song, eof_selected_track) > 5)
+	{
+		invert = 1;
+	}
 	switch(eof_hover_piece)
 	{
 		case 0:
-			if(eof_inverted_notes)
+			if(invert)
 			{
 				returnvalue = 16 << bitmaskshift;
 			}
@@ -4225,7 +4232,7 @@ unsigned char eof_find_pen_note_mask(void)
 		break;
 
 		case 1:
-			if(eof_inverted_notes)
+			if(invert)
 			{
 				returnvalue = 8 << bitmaskshift;
 			}
@@ -4236,7 +4243,7 @@ unsigned char eof_find_pen_note_mask(void)
 		break;
 
 		case 2:
-			if(eof_inverted_notes)
+			if(invert)
 			{
 				returnvalue = 4 << bitmaskshift;
 			}
@@ -4247,7 +4254,7 @@ unsigned char eof_find_pen_note_mask(void)
 		break;
 
 		case 3:
-			if(eof_inverted_notes)
+			if(invert)
 			{
 				returnvalue = 2 << bitmaskshift;
 			}
@@ -4258,7 +4265,7 @@ unsigned char eof_find_pen_note_mask(void)
 		break;
 
 		case 4:
-			if(eof_inverted_notes)
+			if(invert)
 			{
 				returnvalue = 1 << bitmaskshift;
 			}
@@ -4269,7 +4276,7 @@ unsigned char eof_find_pen_note_mask(void)
 		break;
 
 		case 5:
-			if(eof_inverted_notes)
+			if(invert)
 			{
 				returnvalue = 1;
 			}
