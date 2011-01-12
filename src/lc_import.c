@@ -295,8 +295,8 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 			AddLyricPiece((tp->lyric[lyrctr])->text,(tp->lyric[lyrctr])->pos,(tp->lyric[lyrctr])->pos+(tp->lyric[lyrctr])->length,pitch,0);
 				//Add the lyric to the Lyrics structure
 
-			assert_wrapper(Lyrics.lastpiece != NULL);
-			if(Lyrics.lastpiece->lyric[strlen(Lyrics.lastpiece->lyric)-1] == '-')	//If the piece that was just added ended in a hyphen
+//			assert_wrapper(Lyrics.lastpiece != NULL);	//If an empty string was not added, allow export to continue
+			if((Lyrics.lastpiece != NULL) && (Lyrics.lastpiece->lyric[strlen(Lyrics.lastpiece->lyric)-1] == '-'))	//If the piece that was just added ended in a hyphen
 				Lyrics.lastpiece->groupswithnext=1;	//Set its grouping status
 
 			lyrctr++;	//Advance to next lyric

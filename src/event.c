@@ -22,17 +22,28 @@ void eof_add_text_event(EOF_SONG * sp, int beat, char * text)
 	}
 }
 
-void eof_move_text_events(EOF_SONG * sp, int beat, int offset)
+void eof_move_text_events(EOF_SONG * sp, unsigned long beat, unsigned long offset, int dir)
 {
-	int i;
+	unsigned long i;
 
 	for(i = 0; i < sp->text_events; i++)
 	{
 		if(sp->text_event[i]->beat >= beat)
 		{
-			sp->beat[sp->text_event[i]->beat]->flags = sp->beat[sp->text_event[i]->beat]->flags & EOF_BEAT_FLAG_ANCHOR;
-			sp->text_event[i]->beat += offset;
-			sp->beat[sp->text_event[i]->beat]->flags |= EOF_BEAT_FLAG_EVENTS;
+			if(sp->text_event[i]->beat >= sp->beats)
+				continue;	//Do not allow an out of bound access
+			sp->beat[sp->text_event[i]->beat]->flags &= ~(EOF_BEAT_FLAG_EVENTS);	//Clear the event flag
+			if(dir < 0)
+			{
+				if(offset > sp->text_event[i]->beat)
+					continue;	//Do not allow an underflow
+				sp->text_event[i]->beat -= offset;
+			}
+			else
+			{
+				sp->text_event[i]->beat += offset;
+			}
+			sp->beat[sp->text_event[i]->beat]->flags |= EOF_BEAT_FLAG_EVENTS;	//Set the event flag
 		}
 	}
 }

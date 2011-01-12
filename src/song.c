@@ -3329,6 +3329,9 @@ void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track)
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
 
+	if(sp->track[track]->track_format == EOF_VOCAL_TRACK_FORMAT)
+		return;	//Vocal tracks don't have the capability to have "crazy" notes
+
 	for(i = 0; i < eof_get_track_size(sp, track); i++)
 	{	//For each note in the track
 		next = eof_track_fixup_next_note(sp, track, i);
