@@ -445,7 +445,7 @@ int eof_menu_beat_delete(void)
 		{
 			eof_realign_beats(eof_song, eof_selected_beat - 1);
 		}
-		eof_move_text_events(eof_song, eof_selected_beat, -1);
+		eof_move_text_events(eof_song, eof_selected_beat, 1, -1);
 		flags &= (~EOF_BEAT_FLAG_ANCHOR);	//Clear the anchor flag
 		eof_song->beat[eof_selected_beat - 1]->flags |= flags;
 	}
@@ -471,7 +471,7 @@ int eof_menu_beat_push_offset_back(void)
 			eof_song->beat[0]->fpos = eof_song->beat[0]->pos;
 			eof_song->beat[1]->flags = 0;
 			eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
-			eof_move_text_events(eof_song, 0, 1);
+			eof_move_text_events(eof_song, 0, 1, 1);
 		}
 		else
 			return 0;	//Return failure
@@ -491,7 +491,7 @@ int eof_menu_beat_push_offset_up(void)
 	eof_song_delete_beat(eof_song, eof_song->beats - 1);
 //	eof_song->beats--;
 	eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
-	eof_move_text_events(eof_song, 0, -1);
+	eof_move_text_events(eof_song, 0, 1, -1);
 	eof_fixup_notes();
 	return 1;
 }
@@ -981,7 +981,7 @@ int eof_menu_beat_add(void)
 		}
 		eof_song->beat[eof_selected_beat + 1]->flags = 0;
 		eof_realign_beats(eof_song, eof_selected_beat + 1);
-		eof_move_text_events(eof_song, eof_selected_beat + 1, 1);
+		eof_move_text_events(eof_song, eof_selected_beat + 1, 1, 1);
 		return 1;
 	}
 	else

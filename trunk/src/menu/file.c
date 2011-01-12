@@ -1974,6 +1974,7 @@ int eof_save_helper(char *destfilename)
 	char oggfn[1024] = {0};
 	char function;		//Will be set to 1 for "Save" or 2 for "Save as"
 	unsigned long tracknum;
+	int jumpcode = 0;
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Return failure
@@ -2073,7 +2074,16 @@ int eof_save_helper(char *destfilename)
 	if(eof_song->tags->lyrics && eof_song->vocal_track[0]->lyrics)							//If user enabled the Lyrics checkbox in song properties and there are lyrics defined
 	{
 		append_filename(eof_temp_filename, newfolderpath, "script.txt", 1024);
-		EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,SCRIPT_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
+		jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
+		if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
+		{	//Lyric export failed
+			puts("Assert() handled sucessfully!");
+			allegro_message("Lyric export failed");
+		}
+		else
+		{
+			EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,SCRIPT_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
+		}
 	}
 
 	/* save OGG file if necessary*/
