@@ -2218,6 +2218,12 @@ void eof_editor_logic(void)
 					{
 						eof_pen_note.note = 0;
 					}
+					/* calculate piece for piano roll mode */
+					else if(eof_input_mode == EOF_INPUT_PIANO_ROLL)
+					{
+						eof_pen_note.note = eof_find_pen_note_mask();	//Find eof_hover_piece and set the appropriate bits in the pen note
+					}
+
 					if(KEY_EITHER_SHIFT)
 					{	//If shift is held down, a new note will be 1ms long
 						eof_pen_note.length = 1;
@@ -2232,12 +2238,6 @@ void eof_editor_logic(void)
 					}
 				}
 			}//If piano roll or rex mundi input modes are in use
-
-			/* calculate piece for piano roll mode */
-			if(eof_input_mode == EOF_INPUT_PIANO_ROLL)
-			{
-				eof_pen_note.note = eof_find_pen_note_mask();	//Find eof_hover_piece and set the appropriate bits in the pen note
-			}
 
 			/* handle initial click */
 			if((mouse_b & 1) && eof_lclick_released)
@@ -4210,77 +4210,74 @@ unsigned char eof_find_pen_note_mask(void)
 			eof_hover_piece = i;	//Store the lane number
 		}
 	}
-	if(eof_hover_note < 0)
+	bitmaskshift = eof_count_track_lanes(eof_song, eof_selected_track) - 5;	//If the 6th lane is in use, the inverted mask will be shifted left by one
+	switch(eof_hover_piece)
 	{
-		bitmaskshift = eof_count_track_lanes(eof_song, eof_selected_track) - 5;	//If the 6th lane is in use, the inverted mask will be shifted left by one
-		switch(eof_hover_piece)
-		{
-			case 0:
-				if(eof_inverted_notes)
-				{
-					returnvalue = 16 << bitmaskshift;
-				}
-				else
-				{
-					returnvalue = 1;
-				}
-			break;
+		case 0:
+			if(eof_inverted_notes)
+			{
+				returnvalue = 16 << bitmaskshift;
+			}
+			else
+			{
+				returnvalue = 1;
+			}
+		break;
 
-			case 1:
-				if(eof_inverted_notes)
-				{
-					returnvalue = 8 << bitmaskshift;
-				}
-				else
-				{
-					returnvalue = 2;
-				}
-			break;
+		case 1:
+			if(eof_inverted_notes)
+			{
+				returnvalue = 8 << bitmaskshift;
+			}
+			else
+			{
+				returnvalue = 2;
+			}
+		break;
 
-			case 2:
-				if(eof_inverted_notes)
-				{
-					returnvalue = 4 << bitmaskshift;
-				}
-				else
-				{
-					returnvalue = 4;
-				}
-			break;
+		case 2:
+			if(eof_inverted_notes)
+			{
+				returnvalue = 4 << bitmaskshift;
+			}
+			else
+			{
+				returnvalue = 4;
+			}
+		break;
 
-			case 3:
-				if(eof_inverted_notes)
-				{
-					returnvalue = 2 << bitmaskshift;
-				}
-				else
-				{
-					returnvalue = 8;
-				}
-			break;
+		case 3:
+			if(eof_inverted_notes)
+			{
+				returnvalue = 2 << bitmaskshift;
+			}
+			else
+			{
+				returnvalue = 8;
+			}
+		break;
 
-			case 4:
-				if(eof_inverted_notes)
-				{
-					returnvalue = 1 << bitmaskshift;
-				}
-				else
-				{
-					returnvalue = 16;
-				}
-			break;
+		case 4:
+			if(eof_inverted_notes)
+			{
+				returnvalue = 1 << bitmaskshift;
+			}
+			else
+			{
+				returnvalue = 16;
+			}
+		break;
 
-			case 5:
-				if(eof_inverted_notes)
-				{
-					returnvalue = 1;
-				}
-				else
-				{
-					returnvalue = 32;
-				}
-			break;
-		}
+		case 5:
+			if(eof_inverted_notes)
+			{
+				returnvalue = 1;
+			}
+			else
+			{
+				returnvalue = 32;
+			}
+		break;
 	}
 	return returnvalue;
 }
