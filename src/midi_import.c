@@ -799,7 +799,7 @@ allegro_message("Second pass complete");
 	char used_track[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};
 
 	unsigned char diff = 0;
-	unsigned char diff_chart[5] = {1, 2, 4, 8, 16};
+	unsigned char diff_chart[EOF_MAX_FRETS] = {1, 2, 4, 8, 16, 32};
 	long note_count[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};
 	int first_note;
 	unsigned long hopopos[4];
@@ -1304,7 +1304,6 @@ allegro_message("Second pass complete");
 					/* note on */
 					if(eof_import_events[i]->event[j]->type == 0x90)
 					{
-						eof_set_note_flags(sp, picked_track, note_count[picked_track], 0);	//Clear the flag here so that the flag can be set if it has a special status
 						/* star power and solos */
 						if((eof_import_events[i]->event[j]->d1 == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
 						{
@@ -1332,6 +1331,7 @@ allegro_message("Second pass complete");
 								eof_set_note_note(sp, picked_track, notenum, diff_chart[diff]);
 								eof_set_note_pos(sp, picked_track, notenum, event_realtime);
 								eof_set_note_length(sp, picked_track, notenum, 100);
+								eof_set_note_flags(sp, picked_track, notenum, 0);	//Clear the flag here so that the flag can be set if it has a special status
 								note_count[picked_track]++;
 							}
 							else
