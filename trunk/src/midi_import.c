@@ -13,6 +13,7 @@ typedef struct
 
 	unsigned long pos;
 	unsigned char type;
+	unsigned char channel;
 	int d1, d2, d3, d4;
 	unsigned long track;	//The track number this event is from
 	char text[EOF_MAX_MIDI_TEXT_SIZE+1];
@@ -144,7 +145,8 @@ static void eof_midi_import_add_event(EOF_IMPORT_MIDI_EVENT_LIST * events, unsig
 		if(events->event[events->events])
 		{
 			events->event[events->events]->pos = pos;
-			events->event[events->events]->type = event;
+			events->event[events->events]->type = event & 0xF0;		//The event type
+			events->event[events->events]->channel = event & 0xF;	//The channel number
 			events->event[events->events]->d1 = d1;
 			events->event[events->events]->d2 = d2;
 			events->event[events->events]->track = track;	//Store the event's track number
@@ -169,7 +171,8 @@ static void eof_midi_import_add_text_event(EOF_IMPORT_MIDI_EVENT_LIST * events, 
 		if(events->event[events->events])
 		{
 			events->event[events->events]->pos = pos;
-			events->event[events->events]->type = event;
+			events->event[events->events]->type = event & 0xF0;		//The event type
+			events->event[events->events]->channel = event & 0xF;	//The channel number
 			memcpy(events->event[events->events]->text, text, size);
 			events->event[events->events]->text[size] = '\0';
 			events->event[events->events]->track = track;	//Store the event's track number
@@ -269,6 +272,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	char ttit[256] = {0};
 	EOF_PHRASE_SECTION *soloptr = NULL;
 	EOF_PHRASE_SECTION *starpowerptr = NULL;
+	unsigned long bitmask;
 
 	/* load MIDI */
 	eof_work_midi = load_midi(fn);
@@ -330,6 +334,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	for(i = 0; i < tracks; i++)
 	{	//For each imported track
 		last_event = 0;	//Running status resets at beginning of each track
+		current_event = current_event_hi = 0;
 		eof_import_events[i] = eof_import_create_events_list();
 		eof_import_ts_changes[i] = eof_create_ts_list();
 		if(!eof_import_events[i])
@@ -340,7 +345,6 @@ EOF_SONG * eof_import_midi(const char * fn)
 			return NULL;
 		}
 		track_pos = 0;
-//		absolute_pos = sp->tags->ogg[0].midi_offset;
 		absolute_pos = 0;
 		while(track_pos < eof_work_midi->track[track[i]].len)
 		{	//While the byte index of this MIDI track hasn't reached the end of the track data
@@ -355,19 +359,19 @@ EOF_SONG * eof_import_midi(const char * fn)
 			/* read event type */
 			if((current_event_hi >= 0x80) && (current_event_hi < 0xF0))
 			{	//If the last loop iteration's event was normal
-				last_event = current_event_hi;	//Store it
+				last_event = current_event;	//Store it (including the original channel number)
 			}
 			current_event = eof_work_midi->track[track[i]].data[track_pos];
-			current_event_hi = current_event & 0xF0;
 
-			if(current_event_hi < 0x80)	//If this event is a running status event
+			if((current_event & 0xF0) < 0x80)	//If this event is a running status event
 			{
-				current_event_hi = last_event;	//Recall the previous normal event
+				current_event = last_event;	//Recall the previous normal event
 			}
 			else
 			{
 				track_pos++;	//Increment buffer pointer past the status byte
 			}
+			current_event_hi = current_event & 0xF0;
 
 			ptotal_events++;	//Any event that is parsed should increment this counter
 			if(current_event_hi < 0xF0)
@@ -380,7 +384,8 @@ EOF_SONG * eof_import_midi(const char * fn)
 				/* note off */
 				case 0x80:
 				{
-					eof_midi_import_add_event(eof_import_events[i], absolute_pos, 0x80, d1, d2, i);
+//					eof_midi_import_add_event(eof_import_events[i], absolute_pos, 0x80, d1, d2, i);
+					eof_midi_import_add_event(eof_import_events[i], absolute_pos, current_event, d1, d2, i);
 					break;
 				}
 
@@ -389,11 +394,13 @@ EOF_SONG * eof_import_midi(const char * fn)
 				{
 					if(d2 <= 0)
 					{	//Any Note On event with a velocity of 0 is to be treated as a Note Off event
-						eof_midi_import_add_event(eof_import_events[i], absolute_pos, 0x80, d1, d2, i);
+//						eof_midi_import_add_event(eof_import_events[i], absolute_pos, 0x80, d1, d2, i);
+						eof_midi_import_add_event(eof_import_events[i], absolute_pos, 0x80 + (current_event & 0xF), d1, d2, i);	//Retain the original channel number for this event
 					}
 					else
 					{
-						eof_midi_import_add_event(eof_import_events[i], absolute_pos, 0x90, d1, d2, i);
+//						eof_midi_import_add_event(eof_import_events[i], absolute_pos, 0x90, d1, d2, i);
+						eof_midi_import_add_event(eof_import_events[i], absolute_pos, current_event, d1, d2, i);
 					}
 					break;
 				}
@@ -1310,21 +1317,22 @@ allegro_message("Second pass complete");
 							starpowerptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
 							starpowerptr->start_pos = event_realtime;
 						}
+/*Note 103 does not mark solo sections for pro guitar tracks
 						else if((eof_import_events[i]->event[j]->d1 == 103) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
 						{
 							soloptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
 							soloptr->start_pos = event_realtime;
 						}
-
-						if(eof_get_note_type(sp, picked_track, note_count[picked_track]) != -1)
-						{	//If there was a note added
-							for(k = first_note; k < note_count[picked_track]; k++)
-							{	//Traverse the note list in reverse to find the appropriate note to modify
-								if((eof_get_note_pos(sp, picked_track, k) == event_realtime) && (eof_get_note_type(sp, picked_track, k) == eof_get_note_type(sp, picked_track, note_count[picked_track])))
-								{
-									break;
-								}
+*/
+						for(k = first_note; k < note_count[picked_track]; k++)
+						{	//Traverse the note list in reverse to find the appropriate note to modify
+							if((eof_get_note_pos(sp, picked_track, k) == event_realtime) && (eof_get_note_type(sp, picked_track, k) == eof_get_note_type(sp, picked_track, note_count[picked_track])))
+							{
+								break;
 							}
+						}
+						if(eof_get_note_type(sp, picked_track, note_count[picked_track]) != -1)
+						{	//If there is a gem to add
 							if(k == note_count[picked_track])
 							{	//If a new note was created, add the note
 								notenum = note_count[picked_track];
@@ -1340,6 +1348,28 @@ allegro_message("Second pass complete");
 								eof_set_note_note(sp, picked_track, notenum, eof_get_note_note(sp, picked_track, notenum) | diff_chart[diff]);
 							}
 							sp->pro_guitar_track[tracknum]->note[notenum]->frets[diff] = eof_import_events[i]->event[j]->d2 - 100;	//Velocity (100 + X) represents fret # X
+							if(eof_import_events[i]->event[j]->channel == 2)
+							{	//If this note was sent over channel 2, it is a forced hammer on
+								sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;	//Set the forced HO flag
+							}
+							else if(eof_import_events[i]->event[j]->channel == 3)
+							{	//If this note was sent over channel 3, it is string muted
+								sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;	//Set the string mute flag
+							}
+						}
+						else
+						{	//Apply other phrasings
+							if(eof_import_events[i]->event[j]->d1 == 103)
+							{	//If this event represents a slide section
+								if((eof_import_events[i]->event[j]->d2 == 105) || (eof_import_events[i]->event[j]->d2 == 107) || (eof_import_events[i]->event[j]->d2 == 109))
+								{	//If this is a slide down section
+									sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+								}
+								else if((eof_import_events[i]->event[j]->d2 == 102) || (eof_import_events[i]->event[j]->d2 == 103))
+								{	//If this is a slide up section
+									sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
+								}
+							}
 						}
 					}
 
@@ -1352,12 +1382,14 @@ allegro_message("Second pass complete");
 							starpowerptr->end_pos = event_realtime - 1;
 							eof_set_num_star_power_paths(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track) + 1);
 						}
+/*Note 103 does not mark solo sections for pro guitar tracks
 						else if((eof_import_events[i]->event[j]->d1 == 103) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
 						{
 							soloptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
 							soloptr->end_pos = event_realtime - 1;
 							eof_set_num_solos(sp, picked_track, eof_get_num_solos(sp, picked_track) + 1);
 						}
+*/
 						if((note_count[picked_track] > 0) && (eof_get_note_type(sp, picked_track, note_count[picked_track] - 1) != -1))
 						{
 							for(k = note_count[picked_track] - 1; k >= first_note; k--)
@@ -1472,6 +1504,23 @@ allegro_message("Third pass complete");
 		}
 	}
 
+//Check for string muted notes and force them to use the 0xFF (muted) fret value so the pro guitar fixup logic won't remove the string mute status
+	for(i = 0; i < sp->pro_guitar_tracks; i++)
+	{	//For each pro guitar track
+		for(j = 0; j < sp->pro_guitar_track[i]->notes; j++)
+		{	//For each note in the track
+			if(sp->pro_guitar_track[i]->note[j]->flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE)
+			{	//If the note imported as being string muted
+				for(k = 0, bitmask = 1; k < 6; k++, bitmask<<=1)
+				{	//For each of the 6 usable strings
+					if(sp->pro_guitar_track[i]->note[j]->note & bitmask)
+					{	//If the string is used in this note
+						sp->pro_guitar_track[i]->note[j]->frets[k] = 0xFF;	//Set this string to be muted
+					}
+				}
+			}
+		}
+	}
 	replace_filename(eof_song_path, fn, "", 1024);
 	append_filename(nfn, eof_song_path, "guitar.ogg", 1024);
 	if(!eof_load_ogg(nfn))
