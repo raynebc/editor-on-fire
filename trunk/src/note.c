@@ -1072,15 +1072,18 @@ void eof_get_pro_note_notation(char *buffer, unsigned long track, unsigned long 
 {
 	unsigned long index = 0, tracknum;
 	EOF_PRO_GUITAR_NOTE *np, *prevnote = NULL;
+	long prevnotenum;
 
 	if((track >= eof_song->tracks) || (buffer == NULL) || (eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return;
 	tracknum = eof_song->track[track]->tracknum;
 	if(note >= eof_song->pro_guitar_track[tracknum]->notes)
 		return;
-	if(note > 0)
-	{	//If there is a previous note in this track
-		prevnote = eof_song->pro_guitar_track[tracknum]->note[note - 1];	//Store its pointer
+
+	prevnotenum = eof_get_prev_note_type_num(eof_song, track, note);	//Get the index of the previous note in this track difficulty
+	if(prevnotenum > 0)
+	{	//If there is a previous note in this track difficulty
+		prevnote = eof_song->pro_guitar_track[tracknum]->note[prevnotenum];	//Store its pointer
 	}
 
 	np = eof_song->pro_guitar_track[tracknum]->note[note];
