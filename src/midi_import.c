@@ -1311,29 +1311,28 @@ allegro_message("Second pass complete");
 					/* note on */
 					if(eof_import_events[i]->event[j]->type == 0x90)
 					{
-						/* star power, tremolos and trills */
-						if((eof_import_events[i]->event[j]->d1 == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
-						{
+						/* solos, star power, tremolos and trills */
+						if((eof_import_events[i]->event[j]->d1 == 115) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
+						{	//Pro guitar solos are marked with note 115
+							phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
+							phraseptr->start_pos = event_realtime;
+						}
+						else if((eof_import_events[i]->event[j]->d1 == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
+						{	//Star power is marked with note 116
 							phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
 							phraseptr->start_pos = event_realtime;
 						}
 						else if((eof_import_events[i]->event[j]->d1 == 126) && (eof_get_num_tremolos(sp, picked_track) < EOF_MAX_PHRASES))
-						{
+						{	//Tremolos are marked with note 126
 							phraseptr = eof_get_tremolo(sp, picked_track, eof_get_num_tremolos(sp, picked_track));
 							phraseptr->start_pos = event_realtime;
 						}
 						else if((eof_import_events[i]->event[j]->d1 == 127) && (eof_get_num_trills(sp, picked_track) < EOF_MAX_PHRASES))
-						{
+						{	//Trills are marked with note 127
 							phraseptr = eof_get_trill(sp, picked_track, eof_get_num_trills(sp, picked_track));
 							phraseptr->start_pos = event_realtime;
 						}
-/*Note 103 does not mark solo sections for pro guitar tracks
-						else if((eof_import_events[i]->event[j]->d1 == 103) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
-						{
-							soloptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
-							soloptr->start_pos = event_realtime;
-						}
-*/
+
 						for(k = first_note; k < note_count[picked_track]; k++)
 						{	//Traverse the note list in reverse to find the appropriate note to modify
 							if((eof_get_note_pos(sp, picked_track, k) == event_realtime) && (eof_get_note_type(sp, picked_track, k) == eof_get_note_type(sp, picked_track, note_count[picked_track])))
@@ -1386,7 +1385,13 @@ allegro_message("Second pass complete");
 					/* note off so get length of note */
 					else if(eof_import_events[i]->event[j]->type == 0x80)
 					{
-						if((eof_import_events[i]->event[j]->d1 == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
+						if((eof_import_events[i]->event[j]->d1 == 115) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
+						{	//Pro guitar solos are marked with note 115
+							phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
+							phraseptr->end_pos = event_realtime - 1;
+							eof_set_num_solos(sp, picked_track, eof_get_num_solos(sp, picked_track) + 1);
+						}
+						else if((eof_import_events[i]->event[j]->d1 == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
 						{
 							phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
 							phraseptr->end_pos = event_realtime - 1;
@@ -1404,14 +1409,7 @@ allegro_message("Second pass complete");
 							phraseptr->end_pos = event_realtime - 1;
 							eof_set_num_trills(sp, picked_track, eof_get_num_trills(sp, picked_track) + 1);
 						}
-/*Note 103 does not mark solo sections for pro guitar tracks
-						else if((eof_import_events[i]->event[j]->d1 == 103) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
-						{
-							soloptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
-							soloptr->end_pos = event_realtime - 1;
-							eof_set_num_solos(sp, picked_track, eof_get_num_solos(sp, picked_track) + 1);
-						}
-*/
+
 						if((note_count[picked_track] > 0) && (eof_get_note_type(sp, picked_track, note_count[picked_track] - 1) != -1))
 						{
 							for(k = note_count[picked_track] - 1; k >= first_note; k--)
@@ -1582,17 +1580,20 @@ allegro_message("Third pass complete");
 	/* convert solos to star power for GH charts using FoFiX's method */
 	for(i = 1; i < sp->tracks; i++)
 	{	//For each track
-		if(eof_get_num_solos(sp, i) < 2)
-		{	//If this track has less than two solos
-			for(j = 0; j < eof_get_num_solos(sp, i); j++)
-			{	//For each solo
-				phraseptr = eof_get_solo(sp, i, j);
-				phraseptr2 = eof_get_star_power_path(sp, i, j);
-				phraseptr2->start_pos = phraseptr->start_pos;
-				phraseptr2->end_pos = phraseptr->end_pos;
+		if(sp->track[i]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//Only perform this conversion for non pro guitar tracks, since they use different markers
+			if(eof_get_num_star_power_paths(sp, i) < 2)
+			{	//If this track has less than two star power sections
+				for(j = 0; j < eof_get_num_solos(sp, i); j++)
+				{	//For each solo, convert to a star power section
+					phraseptr = eof_get_solo(sp, i, j);
+					phraseptr2 = eof_get_star_power_path(sp, i, j);
+					phraseptr2->start_pos = phraseptr->start_pos;
+					phraseptr2->end_pos = phraseptr->end_pos;
+				}
+				eof_set_num_star_power_paths(sp, i, eof_get_num_star_power_paths(sp, i) + eof_get_num_solos(sp, i));
+				eof_set_num_solos(sp, i, 0);
 			}
-			eof_set_num_star_power_paths(sp, i, eof_get_num_solos(sp, i));
-			eof_set_num_solos(sp, i, 0);
 		}
 	}
 
