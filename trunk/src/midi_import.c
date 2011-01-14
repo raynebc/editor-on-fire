@@ -1311,8 +1311,13 @@ allegro_message("Second pass complete");
 					/* note on */
 					if(eof_import_events[i]->event[j]->type == 0x90)
 					{
-						/* solos, star power, tremolos and trills */
-						if((eof_import_events[i]->event[j]->d1 == 115) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
+						/* arpeggios, solos, star power, tremolos and trills */
+						if((eof_import_events[i]->event[j]->d1 == 104) && (eof_get_num_arpeggios(sp, picked_track) < EOF_MAX_PHRASES))
+						{	//Arpeggios are marked with note 104
+							phraseptr = eof_get_arpeggio(sp, picked_track, eof_get_num_arpeggios(sp, picked_track));
+							phraseptr->start_pos = event_realtime;
+						}
+						else if((eof_import_events[i]->event[j]->d1 == 115) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
 						{	//Pro guitar solos are marked with note 115
 							phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
 							phraseptr->start_pos = event_realtime;
@@ -1385,8 +1390,14 @@ allegro_message("Second pass complete");
 					/* note off so get length of note */
 					else if(eof_import_events[i]->event[j]->type == 0x80)
 					{
-						if((eof_import_events[i]->event[j]->d1 == 115) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
-						{	//Pro guitar solos are marked with note 115
+						if((eof_import_events[i]->event[j]->d1 == 104) && (eof_get_num_arpeggios(sp, picked_track) < EOF_MAX_PHRASES))
+						{
+							phraseptr = eof_get_arpeggio(sp, picked_track, eof_get_num_arpeggios(sp, picked_track));
+							phraseptr->end_pos = event_realtime - 1;
+							eof_set_num_arpeggios(sp, picked_track, eof_get_num_arpeggios(sp, picked_track) + 1);
+						}
+						else if((eof_import_events[i]->event[j]->d1 == 115) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
+						{
 							phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
 							phraseptr->end_pos = event_realtime - 1;
 							eof_set_num_solos(sp, picked_track, eof_get_num_solos(sp, picked_track) + 1);

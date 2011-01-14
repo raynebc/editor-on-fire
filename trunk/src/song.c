@@ -4244,3 +4244,19 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 	}//For each note in the track
 	eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 }
+
+void eof_set_num_arpeggios(EOF_SONG *sp, unsigned long track, unsigned long number)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			sp->pro_guitar_track[tracknum]->arpeggios = number;
+		break;
+	}
+}
