@@ -942,7 +942,7 @@ int eof_menu_edit_cut(unsigned long anchor, int option, float offset)
 
 int eof_menu_edit_cut_paste(unsigned long anchor, int option, float offset)
 {
-	unsigned long i, j, b, tracknum;
+	unsigned long i, j, b, tracknum, notenum;
 	unsigned long first_beat[EOF_TRACKS_MAX] = {0};
 	unsigned long this_beat[EOF_TRACKS_MAX] = {0};
 	unsigned long start_pos, end_pos;
@@ -1020,12 +1020,13 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option, float offset)
 
 				if(new_note)
 				{	//If the note was successfully created
-					eof_set_note_flags(eof_song, j, i, temp_note.flags);	//Set the last created note's flags
+					notenum = eof_get_track_size(eof_song, j) - 1;	//Get the index of the note that was just created
+					eof_set_note_flags(eof_song, j, notenum, temp_note.flags);	//Set the last created note's flags
 
 					if(eof_song->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 					{	//If this is a pro guitar track
 						tracknum = eof_song->track[j]->tracknum;
-						pack_fread(eof_song->pro_guitar_track[tracknum]->note[i]->frets, 6, fp);	//Set the fret values for the six usable strings
+						pack_fread(eof_song->pro_guitar_track[tracknum]->note[notenum]->frets, 6, fp);	//Set the fret values for the six usable strings
 					}
 				}
 			}
