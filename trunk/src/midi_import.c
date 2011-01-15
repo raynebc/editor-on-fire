@@ -670,8 +670,9 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 	unsigned long lastppqn=0;		//Stores the last applied tempo information
 	unsigned long curppqn=500000;	//Stores the current tempo in PPQN (default is 120BPM)
 
-	unsigned long ctr,ctr2;
-	double beatlength;
+	unsigned long ctr,ctr2,nextanchor;
+	char midbeatchange;
+	double beatlength, beatreallength;;
 
 #ifdef EOF_DEBUG_MIDI_IMPORT
 char debugtext[400];
@@ -727,6 +728,10 @@ assert((sp->beats < EOF_MAX_BEATS) && (sp->beat[sp->beats - 1] != NULL));	//Prev
 
 assert(sp->tags != NULL);	//Prevent a NULL dereference below
 
+//DEBUG
+if(deltapos == 7680)
+puts("Blarg");	//This is the beat immediately before the glitched anchor
+
 		sp->beat[sp->beats - 1]->fpos = realtimepos + sp->tags->ogg[0].midi_offset;
 		sp->beat[sp->beats - 1]->pos = realtimepos + sp->tags->ogg[0].midi_offset + 0.5;	//Round up to nearest millisecond
 		sp->beat[sp->beats - 1]->midi_pos = deltapos;
@@ -752,9 +757,46 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 			lastppqn = curppqn;
 		}
 
+	//Find the number of deltas to the next tempo or time signature change, in order to handle mid beat changes
+		midbeatchange = 0;
+		beatlength = ((double)eof_work_midi->divisions * curden / 4.0);		//Determine the length of one full beat in delta ticks
+		nextanchor = deltafpos + beatlength + 0.5;	//By default, the delta position of the next beat will be the standard length of delta ticks
+		for(ctr = 0; ctr < eof_import_bpm_events->events; ctr++)
+		{	//For each imported tempo change
+			if(eof_import_bpm_events->event[ctr]->pos > deltapos)
+			{	//If this tempo change is ahead of the current delta position
+				if(eof_import_bpm_events->event[ctr]->pos < nextanchor)
+				{	//If this tempo change occurs before the next beat marker
+					nextanchor = eof_import_bpm_events->event[ctr]->pos;	//Store its delta time
+					midbeatchange = 1;
+				}
+				break;
+			}
+		}
+		for(ctr = 0; ctr < eof_import_ts_changes[0]->changes; ctr++)
+		{	//For each imported TS change
+			if(eof_import_ts_changes[0]->change[ctr]->pos > deltapos)
+			{	//If this TS change is ahead of the current delta position
+				if(eof_import_ts_changes[0]->change[ctr]->pos < nextanchor)
+				{	//If this TS change occurs before the next beat marker or mid-beat tempo change
+					nextanchor = eof_import_ts_changes[0]->change[ctr]->pos;	//store its delta time
+					midbeatchange = 1;
+				}
+				break;
+			}
+		}
+		if(midbeatchange)
+		{	//If there is a mid-beat tempo/TS change, this beat needs to be anchored and its tempo (and the current tempo) altered
+			//Also update beatlength to reflect that less than a full beat's worth of deltas will be used to advance to the next beat marker
+			sp->beat[sp->beats - 1]->flags |= EOF_BEAT_FLAG_ANCHOR;
+			curppqn = (double)curppqn * (((double)nextanchor - deltafpos) / beatlength) + 0.5;	//Scale the current beat's tempo based on the adjusted delta length (rounded to nearest whole number)
+			sp->beat[sp->beats - 1]->ppqn = curppqn;		//Update the beat's (now an anchor) tempo
+			beatlength = (double)nextanchor - deltafpos;	//This is the distance between the current beat, and the upcoming mid-beat change
+		}
+
 	//Update delta and realtime counters (the TS affects a beat's length in deltas, the tempo affects a beat's length in milliseconds)
-		beatlength = ((double)eof_work_midi->divisions * curden / 4.0);		//Determine the length of this beat in delta ticks
-		realtimepos += (60000.0 / (60000000.0 / curppqn));	//Add the realtime length of this beat to the time counter
+		beatreallength = (60000.0 / (60000000.0 / (double)curppqn));		//Determine the length of this beat in milliseconds
+		realtimepos += beatreallength;	//Add the realtime length of this beat to the time counter
 		deltafpos += beatlength;	//Add the delta length of this beat to the delta counter
 		deltapos = deltafpos + 0.5;	//Round up to nearest delta tick
 		lastnum = curnum;
@@ -765,7 +807,7 @@ sprintf(debugtext,"End delta %lu / %lu",deltapos,last_delta_time);
 set_window_title(debugtext);
 #endif
 
-	}
+	}//Add new beats until enough have been added to encompass the last MIDI event
 
 #ifdef EOF_DEBUG_MIDI_IMPORT
 allegro_message("Pass two, configuring beat timings");
