@@ -77,14 +77,13 @@ EOF_SONG * eof_import_chart(const char * fn)
 	else
 	{
 		/* load audio */
-		if(chart->audiofile != NULL)
-		{	//If the imported chart defines which audio file to use
+		replace_filename(oggfn, fn, "guitar.ogg", 1024);	//Look for guitar.ogg by default
+		if((chart->audiofile != NULL) && !exists(oggfn))
+		{	//If the imported chart defines which audio file to use AND guitar.ogg doesn't exist
 			replace_filename(oggfn, fn, chart->audiofile, 1024);
 			if(!exists(oggfn))	//If the file doesn't exist in the chart's parent directory
 				replace_filename(oggfn, fn, "guitar.ogg", 1024);	//Look for guitar.ogg instead
 		}
-		else
-			replace_filename(oggfn, fn, "guitar.ogg", 1024);	//Look for guitar.ogg by default
 
 		/* if the audio file doesn't exist, look for any OGG file in the chart directory */
 		if(!exists(oggfn))
