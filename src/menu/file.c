@@ -794,8 +794,8 @@ int eof_menu_file_midi_import(void)
 		}
 		if(eof_song)
 		{
-			eof_init_after_load();
 			eof_song_loaded = 1;
+			eof_init_after_load();
 			eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
 		}
 		else
@@ -803,10 +803,10 @@ int eof_menu_file_midi_import(void)
 			eof_song_loaded = 0;
 			allegro_message("Could not import song!");
 			eof_fix_window_title();
+			eof_changes = 0;
+			eof_undo_last_type = 0;
+			eof_change_count = 0;
 		}
-		eof_changes = 0;
-		eof_undo_last_type = 0;
-		eof_change_count = 0;
 	}
 	eof_reset_lyric_preview_lines();
 	eof_show_mouse(NULL);
@@ -1577,13 +1577,14 @@ int eof_menu_file_feedback_import(void)
 			eof_song = eof_import_chart(returnedfn);
 			if(eof_song)
 			{
-				eof_init_after_load();
 				eof_song_loaded = 1;
+				eof_init_after_load();
 			}
 			else
 			{
 				eof_song_loaded = 0;
 				eof_changes = 0;
+				eof_fix_window_title();
 			}
 		}
 	}

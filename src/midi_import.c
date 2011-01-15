@@ -171,8 +171,7 @@ static void eof_midi_import_add_text_event(EOF_IMPORT_MIDI_EVENT_LIST * events, 
 		if(events->event[events->events])
 		{
 			events->event[events->events]->pos = pos;
-			events->event[events->events]->type = event & 0xF0;		//The event type
-			events->event[events->events]->channel = event & 0xF;	//The channel number
+			events->event[events->events]->type = event;			//The meta event type
 			memcpy(events->event[events->events]->text, text, size);
 			events->event[events->events]->text[size] = '\0';
 			events->event[events->events]->track = track;	//Store the event's track number
@@ -727,10 +726,6 @@ assert((sp->beats < EOF_MAX_BEATS) && (sp->beat[sp->beats - 1] != NULL));	//Prev
 	//Store timing information in the beat structure
 
 assert(sp->tags != NULL);	//Prevent a NULL dereference below
-
-//DEBUG
-if(deltapos == 7680)
-puts("Blarg");	//This is the beat immediately before the glitched anchor
 
 		sp->beat[sp->beats - 1]->fpos = realtimepos + sp->tags->ogg[0].midi_offset;
 		sp->beat[sp->beats - 1]->pos = realtimepos + sp->tags->ogg[0].midi_offset + 0.5;	//Round up to nearest millisecond

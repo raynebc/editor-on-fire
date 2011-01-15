@@ -70,7 +70,7 @@ void eof_load_config(char * fn)
 	eof_lefty_mode = get_config_int("preferences", "lefty", 0);
 	eof_input_mode = get_config_int("preferences", "input_mode", EOF_INPUT_PIANO_ROLL);
 	eof_ogg_setting = get_config_int("preferences", "ogg_quality", 1);
-	eof_use_ts = get_config_int("preferences", "use_midi_ts", 0);
+	eof_use_ts = get_config_int("preferences", "use_ts", 0);
 
 	/* read display settings */
 	eof_screen_layout.mode = get_config_int("display", "display_mode", 0);
