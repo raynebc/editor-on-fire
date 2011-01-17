@@ -7,9 +7,6 @@ Fixed a MIDI import bug where mid-beat tempo and time signature events
 were not handled correctly.  Now, anchoring will be used to ensure that
 all tempo and time signature changes are placed onto beat markers.
 
-Restored the ability to use the tranpose mini piano up octave keyboard
-shortcut (CTRL+SHIFT+Up).
-
 Corrected some bugs involving expert and pro drum statuses.
 
 Added the ability to chart open strum bass guitar notes, compatible with
