@@ -2321,12 +2321,20 @@ DIALOG eof_pro_guitar_note_dialog[] =
 	{eof_verified_edit_proc,74,  244, 22,  20, 2,   23,  0,    0,      2,         0,   eof_fret1,    "0123456789Xx",NULL },
 
 	{d_agup_text_proc,      16,  108, 64,  8,  2,   23,  0,    0,      0,         0,   "Pro",        NULL,          NULL },
-	{d_agup_text_proc,      124, 108, 64,  8,  2,   23,  0,    0,      0,         0,   "Legacy",     NULL,          NULL },
-	{d_agup_check_proc,		122, 151, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 5",     NULL,          NULL },
-	{d_agup_check_proc,		122, 175, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 4",     NULL,          NULL },
-	{d_agup_check_proc,		122, 199, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 3",     NULL,          NULL },
-	{d_agup_check_proc,		122, 223, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 2",     NULL,          NULL },
-	{d_agup_check_proc,		122, 247, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 1",     NULL,          NULL },
+	{d_agup_text_proc,      160, 108, 64,  8,  2,   23,  0,    0,      0,         0,   "Legacy",     NULL,          NULL },
+	{d_agup_check_proc,		158, 151, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 5",     NULL,          NULL },
+	{d_agup_check_proc,		158, 175, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 4",     NULL,          NULL },
+	{d_agup_check_proc,		158, 199, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 3",     NULL,          NULL },
+	{d_agup_check_proc,		158, 223, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 2",     NULL,          NULL },
+	{d_agup_check_proc,		158, 247, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 1",     NULL,          NULL },
+
+	{d_agup_text_proc,      102, 108, 64,  8,  2,   23,  0,    0,      0,         0,   "Ghost",      NULL,          NULL },
+	{d_agup_check_proc,		100, 127, 14,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,		100, 151, 14,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,		100, 175, 14,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,		100, 199, 14,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,		100, 223, 14,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,		100, 247, 14,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
 
 	{d_agup_text_proc,      10,  292, 64,  8,  2,   23,  0,    0,      0,         0,   "Slide:",     NULL,          NULL },
 	{d_agup_text_proc,      10,  312, 64,  8,  2,   23,  0,    0,      0,         0,   "Mute:",      NULL,          NULL },
@@ -2355,6 +2363,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	char allmuted;					//Used to track whether all used strings are string muted
 	unsigned long bitmask = 0;		//Used to build the updated pro guitar note bitmask
 	unsigned char legacymask;		//Used to build the updated legacy note bitmask
+	unsigned char ghostmask;		//Used to build the updated ghost bitmask
 	unsigned long flags;			//Used to build the updated flag bitmask
 	char namechanged = 0, legacymaskchanged = 0;
 	EOF_PRO_GUITAR_NOTE junknote;	//Just used with sizeof() to get the name string's length to guarantee a safe string copy
@@ -2427,55 +2436,64 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	eof_pro_guitar_note_dialog[20].flags = (legacymask & 2) ? D_SELECTED : 0;
 	eof_pro_guitar_note_dialog[21].flags = (legacymask & 1) ? D_SELECTED : 0;
 
+//Update the ghost bitmask checkboxes
+	ghostmask = eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->ghost;
+	eof_pro_guitar_note_dialog[23].flags = (ghostmask & 32) ? D_SELECTED : 0;
+	eof_pro_guitar_note_dialog[24].flags = (ghostmask & 16) ? D_SELECTED : 0;
+	eof_pro_guitar_note_dialog[25].flags = (ghostmask & 8) ? D_SELECTED : 0;
+	eof_pro_guitar_note_dialog[26].flags = (ghostmask & 4) ? D_SELECTED : 0;
+	eof_pro_guitar_note_dialog[27].flags = (ghostmask & 2) ? D_SELECTED : 0;
+	eof_pro_guitar_note_dialog[28].flags = (ghostmask & 1) ? D_SELECTED : 0;
+
 //Update the note flag radio buttons
 	for(ctr = 0; ctr < 10; ctr++)
 	{	//Clear each of the 10 status radio buttons
-		eof_pro_guitar_note_dialog[24 + ctr].flags = 0;
+		eof_pro_guitar_note_dialog[31 + ctr].flags = 0;
 	}
 	flags = eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->flags;
 	if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
 	{	//Select "HO"
-		eof_pro_guitar_note_dialog[24].flags = D_SELECTED;
+		eof_pro_guitar_note_dialog[31].flags = D_SELECTED;
 	}
 	else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PO)
 	{	//Select "PO"
-		eof_pro_guitar_note_dialog[25].flags = D_SELECTED;
+		eof_pro_guitar_note_dialog[32].flags = D_SELECTED;
 	}
 	else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
 	{	//Select "Tap"
-		eof_pro_guitar_note_dialog[26].flags = D_SELECTED;
+		eof_pro_guitar_note_dialog[33].flags = D_SELECTED;
 	}
 	else
 	{	//Select "None"
-		eof_pro_guitar_note_dialog[27].flags = D_SELECTED;
+		eof_pro_guitar_note_dialog[34].flags = D_SELECTED;
 	}
 	if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
 	{	//Select "Up"
-		eof_pro_guitar_note_dialog[28].flags = D_SELECTED;
+		eof_pro_guitar_note_dialog[35].flags = D_SELECTED;
 	}
 	else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
 	{	//Select "Down"
-		eof_pro_guitar_note_dialog[29].flags = D_SELECTED;
+		eof_pro_guitar_note_dialog[36].flags = D_SELECTED;
 	}
 	else
 	{	//Select "Neither"
-		eof_pro_guitar_note_dialog[30].flags = D_SELECTED;
+		eof_pro_guitar_note_dialog[37].flags = D_SELECTED;
 	}
 	if(flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE)
 	{	//Select "String"
-		eof_pro_guitar_note_dialog[31].flags = D_SELECTED;
+		eof_pro_guitar_note_dialog[38].flags = D_SELECTED;
 	}
 	else if(flags &EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
 	{	//Select "Palm"
-		eof_pro_guitar_note_dialog[32].flags = D_SELECTED;
+		eof_pro_guitar_note_dialog[39].flags = D_SELECTED;
 	}
 	else
 	{	//Select "Neither"
-		eof_pro_guitar_note_dialog[33].flags = D_SELECTED;
+		eof_pro_guitar_note_dialog[40].flags = D_SELECTED;
 	}
 
 	bitmask = 0;
-	if(eof_popup_dialog(eof_pro_guitar_note_dialog, 0) == 34)
+	if(eof_popup_dialog(eof_pro_guitar_note_dialog, 0) == 41)
 	{	//If user clicked OK
 		//Validate and store the input
 		if(eof_count_selected_notes(NULL, 0) > 1)
@@ -2573,39 +2591,60 @@ int eof_menu_note_edit_pro_guitar_note(void)
 				}
 				eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = legacymask;
 
+//Save the updated ghost bitmask
+				ghostmask = 0;
+				if(eof_pro_guitar_note_dialog[23].flags == D_SELECTED)
+					ghostmask |= 32;
+				if(eof_pro_guitar_note_dialog[24].flags == D_SELECTED)
+					ghostmask |= 16;
+				if(eof_pro_guitar_note_dialog[25].flags == D_SELECTED)
+					ghostmask |= 8;
+				if(eof_pro_guitar_note_dialog[26].flags == D_SELECTED)
+					ghostmask |= 4;
+				if(eof_pro_guitar_note_dialog[27].flags == D_SELECTED)
+					ghostmask |= 2;
+				if(eof_pro_guitar_note_dialog[28].flags == D_SELECTED)
+					ghostmask |= 1;
+				if(!undo_made && (ghostmask != eof_song->pro_guitar_track[tracknum]->note[i]->ghost))
+				{
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				eof_song->pro_guitar_track[tracknum]->note[i]->ghost = ghostmask;
+
 //Save the updated note flag bitmask
 				flags = 0;
-				if(eof_pro_guitar_note_dialog[24].flags == D_SELECTED)
+				if(eof_pro_guitar_note_dialog[31].flags == D_SELECTED)
 				{	//HO is selected
 					flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;	//Set the hammer on flag
 					flags &= (~EOF_NOTE_FLAG_NO_HOPO);		//Clear the forced HOPO off note
 					flags |= EOF_NOTE_FLAG_F_HOPO;			//Set the legacy HOPO flag
 				}
-				else if(eof_pro_guitar_note_dialog[25].flags == D_SELECTED)
+				else if(eof_pro_guitar_note_dialog[32].flags == D_SELECTED)
 				{	//PO is selected
 					flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;	//Set the pull off flag
 					flags &= (~EOF_NOTE_FLAG_NO_HOPO);		//Clear the forced HOPO off flag
 					flags |= EOF_NOTE_FLAG_F_HOPO;			//Set the legacy HOPO flag
 				}
-				else if(eof_pro_guitar_note_dialog[26].flags == D_SELECTED)
+				else if(eof_pro_guitar_note_dialog[33].flags == D_SELECTED)
 				{	//Tap is selected
 					flags |= EOF_PRO_GUITAR_NOTE_FLAG_TAP;	//Set the tap flag
 					flags &= (~EOF_NOTE_FLAG_NO_HOPO);		//Clear the forced HOPO off flag
 					flags |= EOF_NOTE_FLAG_F_HOPO;			//Set the legacy HOPO flag
 				}
-				if(eof_pro_guitar_note_dialog[28].flags == D_SELECTED)
+				if(eof_pro_guitar_note_dialog[35].flags == D_SELECTED)
 				{	//Up is selected
 					flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
 				}
-				else if(eof_pro_guitar_note_dialog[29].flags == D_SELECTED)
+				else if(eof_pro_guitar_note_dialog[36].flags == D_SELECTED)
 				{	//Down is selected
 					flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
 				}
-				if(eof_pro_guitar_note_dialog[31].flags == D_SELECTED)
+				if(eof_pro_guitar_note_dialog[38].flags == D_SELECTED)
 				{	//String is selected
 					flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;
 				}
-				else if(eof_pro_guitar_note_dialog[32].flags == D_SELECTED)
+				else if(eof_pro_guitar_note_dialog[39].flags == D_SELECTED)
 				{	//Palm is selected
 					flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
 				}

@@ -163,7 +163,7 @@ TRACK CHUNK, for each track:
 
 [PRO GUITAR/PRO BASS TRACK FORMAT]
 *	1 byte:		The highest fret number allowed in this track (17 for Mustang, 22 for Squier)
-*	1 byte:		The number of strings on this track's guitar (ie. 4 for standard bass guitar, 6 for standard guitar)
+*	1 byte:		The number of strings on this track's guitar (ie. 4 for standard bass guitar, 6 for standard guitar, for now, the max number supported is 8)
 *	PRO GUITAR TUNING CHUNK, for each string
 *	{
 *		1 byte:		The note this string sounds when played open (no frets held)
@@ -178,8 +178,9 @@ TRACK CHUNK, for each track:
 *		[varies:]	Chord name string
 *		1 byte:		Chord number
 *		1 byte:		Note type (difficulty)
-*		2 bytes:	Note bitflag (string use statuses: set=played, reset=not played)
+*		1 byte:		Note bitflag (string use statuses: set=played, reset=not played)
 !				Bit 0 refers to string 1 (high E), bit 5 refers to string 6 (low E), consistent with guitar terminology
+!		1 byte:		Ghost bitflag (specifies which lanes in the note are treated as "ghost" notes, ie. for Arpeggio phrases)
 *		FRET CHUNK, for each set bit in the guitar note bitflag
 *		{
 *			1 byte:		Fret # tab (0=Open strum, #=Fret # pressed, 0xFF=Muted)
