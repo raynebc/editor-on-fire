@@ -2382,7 +2382,7 @@ void eof_render_3d_window(void)
 			sz = (long)(eof_song->pro_guitar_track[tracknum]->arpeggio[i].start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
 			sez = (long)(eof_song->pro_guitar_track[tracknum]->arpeggio[i].end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
 			if((-100 <= sez) && (600 >= sz))
-			{	//If the arpeggio section would render at or after the left edge of the piano roll, fill the topmost lane with light green
+			{	//If the arpeggio section would render at or after the left edge of the piano roll, fill the topmost lane with turquoise
 				spz = sz < -100 ? -100 : sz;
 				spez = sez > 600 ? 600 : sez;
 				point[0] = ocd3d_project_x(20, spez);
@@ -2393,7 +2393,7 @@ void eof_render_3d_window(void)
 				point[5] = ocd3d_project_y(200, spz);
 				point[6] = ocd3d_project_x(20, spz);
 				point[7] = ocd3d_project_y(200, spz);
-				polygon(eof_window_3d->screen, 4, point, makecol(170,255,170));	//Fill with a light green color
+				polygon(eof_window_3d->screen, 4, point, makecol(51,166,153));	//Fill with a turquoise color (use (68,221,204) for light turquoise)
 			}
 		}
 	}

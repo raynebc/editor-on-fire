@@ -145,7 +145,7 @@ TRACK CHUNK, for each track:
 		4 bytes:	Note length (in milliseconds or delta ticks)
 *		4 bytes:	Note flags
 	}
-!This track format could be referred to as "legacy" format, because it is Harmonix's discontinued format used prior to RB3
+!This track format could be referred to as "legacy" format, because it is Harmonix's old format used prior to RB3
 
 [VOCAL TRACK FORMAT]
 *	1 byte:		Tone set number assigned to this track (ie. 0=Grand Piano, 1=MIDI device, ...)

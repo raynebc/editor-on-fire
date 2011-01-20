@@ -1399,7 +1399,11 @@ allegro_message("Second pass complete");
 								eof_set_note_note(sp, picked_track, notenum, eof_get_note_note(sp, picked_track, notenum) | diff_chart[diff]);
 							}
 							sp->pro_guitar_track[tracknum]->note[notenum]->frets[diff] = eof_import_events[i]->event[j]->d2 - 100;	//Velocity (100 + X) represents fret # X
-							if(eof_import_events[i]->event[j]->channel == 2)
+							if(eof_import_events[i]->event[j]->channel == 1)
+							{	//If this note was sent over channel 1, it is a ghost note
+								sp->pro_guitar_track[tracknum]->note[notenum]->ghost |= diff_chart[diff];	//Set the ghost flag for this gem's string
+							}
+							else if(eof_import_events[i]->event[j]->channel == 2)
 							{	//If this note was sent over channel 2, it is a forced hammer on
 								sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;	//Set the forced HO flag
 							}
