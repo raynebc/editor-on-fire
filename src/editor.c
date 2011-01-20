@@ -3870,11 +3870,11 @@ void eof_render_editor_window_common(void)
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{
-		col = makecol(170,255,170);	//Store light green color
+		col = makecol(51,166,153);	//Store turquoise color (use (68,221,204) for light turquoise)
 		for(i = 0; i < eof_song->pro_guitar_track[tracknum]->arpeggios; i++)
 		{	//For each arpeggio section in the track
 			if(eof_song->pro_guitar_track[tracknum]->arpeggio[i].end_pos >= start)
-			{	//If the arpeggio section would render at or after the left edge of the piano roll, fill the sixth lane with light green
+			{	//If the arpeggio section would render at or after the left edge of the piano roll, fill the sixth lane with turquoise
 				rectfill(eof_window_editor->screen, lpos + eof_song->pro_guitar_track[tracknum]->arpeggio[i].start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[4], lpos + eof_song->pro_guitar_track[tracknum]->arpeggio[i].end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[5], col);
 			}
 		}

@@ -3193,6 +3193,12 @@ void eof_pro_guitar_track_fixup_notes(EOF_PRO_GUITAR_TRACK * tp, int sel)
 			{	//If all strings are muted and the user didn't specify a palm mute
 				tp->note[i-1]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;		//Set the string mute flag
 			}
+
+			/* ensure that a note isn't both ghosted AND string muted */
+			if((tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) && tp->note[i-1]->ghost)
+			{	//If this note is string muted and any strings are ghosted
+				tp->note[i-1]->ghost = 0;	//Remove ghost status from all strings
+			}
 		}//If the note is valid, perform other cleanup
 	}//For each note in the track
 

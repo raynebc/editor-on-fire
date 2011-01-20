@@ -1037,21 +1037,28 @@ unsigned long eof_find_lyric_number(EOF_LYRIC * np)
 	return 0;
 }
 
-BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, unsigned char fretnum, unsigned long padding, int textcol, int fillcol)
+BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, unsigned char stringnum, unsigned long padding, int textcol, int fillcol)
 {
 	BITMAP *fretbmp = NULL;
 	int height, width;
-	char fretstring[5] = {0};
+	char fretstring[10] = {0};
 
 	if(note != NULL)
 	{
-		if(note->frets[fretnum] == 0xFF)
+		if(note->frets[stringnum] == 0xFF)
 		{	//This is a muted fret
 			snprintf(fretstring,sizeof(fretstring),"X");
 		}
 		else
 		{	//This is a non muted fret
-			snprintf(fretstring,sizeof(fretstring),"%d",note->frets[fretnum]);
+			if(note->ghost & (1 << stringnum))
+			{	//This is a ghosted note
+				snprintf(fretstring,sizeof(fretstring),"(%d)",note->frets[stringnum]);
+			}
+			else
+			{	//This is a normal note
+				snprintf(fretstring,sizeof(fretstring),"%d",note->frets[stringnum]);
+			}
 		}
 
 		width = text_length(font,fretstring) + padding + 1;	//The font in use doesn't look centered, so pad the left by one pixel
