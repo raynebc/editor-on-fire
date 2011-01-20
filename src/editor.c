@@ -2666,7 +2666,7 @@ void eof_editor_logic(void)
 				{	//Decrease note length
 					eof_adjust_note_length(eof_song, eof_selected_track, adjust, -1);	//Decrease selected notes by the appropriate length
 				}
-				else
+				else if(eof_mickey_z < 0)
 				{	//Increase note length
 					eof_adjust_note_length(eof_song, eof_selected_track, adjust, 1);	//Increase selected notes by the appropriate length
 				}
@@ -4212,7 +4212,7 @@ unsigned char eof_find_pen_note_mask(void)
 		}
 	}
 	bitmaskshift = eof_count_track_lanes(eof_song, eof_selected_track) - 5;	//If the 6th lane is in use, the inverted mask will be shifted left by one
-	
+
 	/* see if we are inverting the lanes */
 	if(eof_inverted_notes || eof_count_track_lanes(eof_song, eof_selected_track) > 5)
 	{

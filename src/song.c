@@ -1477,7 +1477,13 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 			return 0;
 			case EOF_PRO_GUITAR_TRACK_FORMAT:	//Pro Guitar/Bass
 				sp->pro_guitar_track[sp->pro_guitar_tracks-1]->numfrets = pack_getc(fp);	//Read the number of frets used in this track
-				sp->pro_guitar_track[sp->pro_guitar_tracks-1]->numstrings = pack_getc(fp);	//Read the number of strings used in this track
+				count = pack_getc(fp);	//Read the number of strings used in this track
+				if(count > 8)
+				{
+					allegro_message("Error: Unsupported number of strings in track %lu.  Aborting",track_ctr);
+					return 0;
+				}
+				sp->pro_guitar_track[sp->pro_guitar_tracks-1]->numstrings = count;
 				for(ctr=0; ctr < sp->pro_guitar_track[sp->pro_guitar_tracks-1]->numstrings; ctr++)
 				{	//For each string
 					pack_getc(fp);	//Read the string's tuning (not supported yet)
@@ -1494,7 +1500,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					eof_load_song_string_pf(sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->name,fp,EOF_NAME_LENGTH);	//Read the note's name
 					pack_getc(fp);																	//Read the chord's number (not supported yet)
 					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->type = pack_getc(fp);	//Read the note's difficulty
-					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->note = pack_igetw(fp);//Read note bitflags
+					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->note = pack_getc(fp);	//Read note bitflags
+					pack_getc(fp);	//Read ghost bitflags (not supported yet)
 					for(ctr2=0, bitmask=1; ctr2 < 16; ctr2++, bitmask <<= 1)
 					{	//For each of the 16 bits in the note bitflag
 						if(sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->note & bitmask)
@@ -2249,7 +2256,8 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 						eof_save_song_string_pf(sp->pro_guitar_track[tracknum]->note[ctr]->name, fp);	//Write the note's name
 						pack_putc(0, fp);													//Write the chord's number (not supported yet)
 						pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->type, fp);		//Write the note's difficulty
-						pack_iputw(sp->pro_guitar_track[tracknum]->note[ctr]->note, fp);	//Write the note's bitflags
+						pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->note, fp);		//Write the note's bitflags
+						pack_putc(0, fp);	//Write the note's ghost bitflags (not supported yet)
 						for(ctr2=0, bitmask=1; ctr2 < 16; ctr2++, bitmask <<= 1)
 						{	//For each of the 16 bits in the note bitflag
 							if(sp->pro_guitar_track[tracknum]->note[ctr]->note & bitmask)
