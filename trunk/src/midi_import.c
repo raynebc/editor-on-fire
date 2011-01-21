@@ -721,7 +721,8 @@ assert(eof_import_ts_changes[0]->change[ctr] != NULL);	//Prevent a NULL derefere
 			}
 		}
 
-assert((sp->beats < EOF_MAX_BEATS) && (sp->beat[sp->beats - 1] != NULL));	//Prevent out of bounds or NULL dereferences below
+assert(sp->beats < EOF_MAX_BEATS);			//Prevent out of bounds reference below
+assert(sp->beat[sp->beats - 1] != NULL);	//Prevent NULL dereference below
 
 	//Store timing information in the beat structure
 

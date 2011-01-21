@@ -2650,12 +2650,12 @@ void eof_editor_logic(void)
 			/* increase/decrease note length ( scroll wheel or CTRL+scroll wheel ) */
 			if(eof_mickey_z != 0)
 			{	//If there was scroll wheel activity
-				unsigned long adjust = eof_mickey_z * 100;	//Default adjustment length when grid snap is disabled
+				unsigned long adjust = abs(eof_mickey_z) * 100;	//Default adjustment length when grid snap is disabled
 				if(eof_snap_mode == EOF_SNAP_OFF)
 				{
 					if(KEY_EITHER_CTRL)
 					{
-						adjust = eof_mickey_z * 10;
+						adjust = abs(eof_mickey_z) * 10;
 					}
 				}
 				else
