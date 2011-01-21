@@ -18,6 +18,8 @@ typedef struct
 	unsigned long pos;
 	int type;
 	int note;
+	int velocity;
+	int channel;
 	char * dp;
 
 } EOF_MIDI_EVENT;
