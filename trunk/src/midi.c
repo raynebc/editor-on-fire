@@ -341,6 +341,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	unsigned long note, notenum, noteflags, notepos;
 	int channel, velocity, bitmask;	//Used for pro guitar export
 	EOF_PHRASE_SECTION *sectionptr;
+	char *lastname = NULL, *currentname = NULL, nochord[]="NC", chordname[100]="";
 
 	anchorlist=eof_build_tempo_list();	//Create a linked list of all tempo changes in eof_song->beat[]
 	if(anchorlist == NULL)	//If the anchor list could not be created
@@ -871,6 +872,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			/* fill in notes */
 			/* write the MTrk MIDI data to a temp file
 			use size of the file as the MTrk header length */
+			lastname = nochord;
 			for(i = 0; i < eof_get_track_size(sp, j); i++)
 			{	//For each note in the track
 				switch(eof_get_note_type(sp, j, i))
@@ -906,6 +908,21 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				note = eof_get_note_note(sp, j, i);			//Store the note bitflag for easier use
 				notepos = eof_get_note_pos(sp, j, i);		//Store the note position for easier use
 				length = eof_get_note_length(sp, j, i);		//Store the note length for easier use
+				currentname = eof_get_note_name(sp, j, i);
+
+				if((currentname == NULL) || (currentname[0] == '\0'))		//If this note has no name
+					currentname = nochord;	//Refer to its name as "NC"
+				if(((lastname == nochord) && (currentname != nochord)) || ((lastname != nochord) && (currentname == nochord)) || (ustrcmp(lastname, currentname) != 0))
+				{	//If the previous note wasn't named and this one is, or the previous note was named and this one isn't, or the previous and current notes have different names
+					snprintf(chordname, sizeof(chordname), "[Chord=\"%s\"]", currentname);	//Build the chord name text event
+					tempstring = malloc(ustrsizez(chordname));
+					if(tempstring != NULL)
+					{	//If allocation was successful
+						memcpy(tempstring, chordname, ustrsizez(chordname));	//Copy the string to the newly allocated memory
+						eof_add_midi_lyric_event(notepos, tempstring);			//Store the new string in a text event
+					}
+					lastname = currentname;
+				}
 
 				/* write slide sections */
 				if(eof_midi_note_status[103] == 0)
@@ -1025,9 +1042,20 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				delta = eof_ConvertToDeltaTime(eof_midi_event[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
 				WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
 				lastdelta = delta;					//Store this event's absolute delta time
-				pack_putc(eof_midi_event[i]->type + eof_midi_event[i]->channel, fp);
-				pack_putc(eof_midi_event[i]->note, fp);
-				pack_putc(eof_midi_event[i]->velocity, fp);
+				if(eof_midi_event[i]->type == 0x05)
+				{	//Write a note name text event
+					pack_putc(0xFF, fp);
+					pack_putc(0x01, fp);
+					pack_putc(ustrlen(eof_midi_event[i]->dp), fp);
+					pack_fwrite(eof_midi_event[i]->dp, ustrlen(eof_midi_event[i]->dp), fp);
+					free(eof_midi_event[i]->dp);	//Free the copied string from memory
+				}
+				else
+				{	//Write a non meta MIDI event
+					pack_putc(eof_midi_event[i]->type + eof_midi_event[i]->channel, fp);
+					pack_putc(eof_midi_event[i]->note, fp);
+					pack_putc(eof_midi_event[i]->velocity, fp);
+				}
 			}
 
 			/* end of track */

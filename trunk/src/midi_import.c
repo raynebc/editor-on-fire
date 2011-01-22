@@ -272,6 +272,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	EOF_PHRASE_SECTION *phraseptr = NULL, *phraseptr2 = NULL;
 //	EOF_PHRASE_SECTION *starpowerptr = NULL;
 	unsigned long bitmask;
+	char chordname[100] = "";
 
 	/* load MIDI */
 	eof_work_midi = load_midi(fn);
@@ -475,7 +476,16 @@ EOF_SONG * eof_import_midi(const char * fn)
 								}
 								if(j >= EOF_MAX_MIDI_TEXT_SIZE)	//If the string needs to be truncated
 									text[EOF_MAX_MIDI_TEXT_SIZE] = '\0';
-								eof_midi_import_add_text_event(eof_import_text_events, absolute_pos, 0x01, text, eof_work_midi->track[track[i]].data[track_pos], i);
+								else
+									text[j] = '\0';	//Truncate the string normally
+								if(ustrstr(text, "[Chord=\"") != NULL)
+								{	//If this is a chord name text event
+									eof_midi_import_add_text_event(eof_import_events[i], absolute_pos, 0x01, text, eof_work_midi->track[track[i]].data[track_pos], i);
+								}
+								else
+								{	//Otherwise add it to the regular text event list
+									eof_midi_import_add_text_event(eof_import_text_events, absolute_pos, 0x01, text, eof_work_midi->track[track[i]].data[track_pos], i);
+								}
 								track_pos += eof_work_midi->track[track[i]].data[track_pos] + 1;
 								break;
 							}
@@ -1005,7 +1015,7 @@ allegro_message("Second pass complete");
 
 					/* lyric */
 					else if(((eof_import_events[i]->event[j]->type == 0x05) || (eof_import_events[i]->event[j]->type == 0x01)) && (eof_import_events[i]->event[j]->text[0] != '['))
-					{
+					{	//!Note: The text event import puts all text events in a global list instead of the track event list, so it's not currently possible for EOF to import text events as lyrics
 						for(k = 0; k < note_count[picked_track]; k++)
 						{
 							if(sp->vocal_track[0]->lyric[k]->pos == event_realtime)
@@ -1392,6 +1402,7 @@ allegro_message("Second pass complete");
 								eof_set_note_pos(sp, picked_track, notenum, event_realtime);
 								eof_set_note_length(sp, picked_track, notenum, 100);
 								eof_set_note_flags(sp, picked_track, notenum, 0);	//Clear the flag here so that the flag can be set if it has a special status
+								eof_set_note_name(sp, picked_track, notenum, chordname);	//Populate the note name with whatever name was read last
 								note_count[picked_track]++;
 							}
 							else
@@ -1477,6 +1488,28 @@ allegro_message("Second pass complete");
 									}
 									break;
 								}
+							}
+						}
+					}
+
+					else if((eof_import_events[i]->event[j]->type == 0x01) && (ustrstr(eof_import_events[i]->event[j]->text, "[Chord=\"") != NULL))
+					{	//If this is a text event and EOF's note name notation ([Chord=") is found
+						char *ptr = ustrchr(eof_import_events[i]->event[j]->text, '\"');	//Get the address of the string's first quote mark
+						unsigned long index = 0;
+						if(ptr != NULL)
+						{
+							ptr++;	//Advance past the first quote mark
+							while((ptr[0] != '\0') && (ptr[0] != '\"'))
+							{	//Until the end of string or end of chord name are reached
+								if(index >= 99)
+									break;	//Prevent a buffer overflow
+								chordname[index++] = ptr[0];	//Store this character
+								ptr++;	//Advance to the next character
+							}
+							chordname[index]='\0';	//Terminate the string
+							if(ustrcmp(chordname, "NC") == 0)
+							{	//If the name is a "No Chord" marker
+								chordname[0] = '\0';	//Empty the string
 							}
 						}
 					}
