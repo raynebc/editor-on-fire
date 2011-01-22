@@ -216,6 +216,7 @@ TRACK CHUNK, for each track:
 *			1 byte:		Note velocity
 *			1 byte:		Note flags (for storing accidentals)
 *		}
+*		1 byte:		Legacy bitflags (how this chord is pasted into a legacy track)
 
 *		4 bytes:	Note position (in milliseconds or delta ticks)
 *		4 bytes:	Note length (in milliseconds or delta ticks)

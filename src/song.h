@@ -408,6 +408,7 @@ void eof_set_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, u
 unsigned long eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the note bitflag of the specified track's note/lyric, or 0 on error
 void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long value);	//Sets the note value of the specified track's note/lyric
 char *eof_get_note_name(EOF_SONG *sp, unsigned long track, unsigned long note);				//Returns a pointer to the note's statically allocated name array, or a lyric's text array, or NULL on error
+void eof_set_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, char *name);	//Copies the string into the note's statically allocated name array, or a lyric's text array
 void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos, long length, char type, char *text);
 	//Adds and initializes the appropriate note for the specified track, returning the newly created note structure, or NULL on error
 	//Automatic flags will be applied appropriately (ie. crazy status for all notes in PART KEYS)

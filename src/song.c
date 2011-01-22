@@ -3194,8 +3194,8 @@ void eof_pro_guitar_track_fixup_notes(EOF_PRO_GUITAR_TRACK * tp, int sel)
 				tp->note[i-1]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;		//Set the string mute flag
 			}
 
-			/* ensure that a note isn't both ghosted AND string muted */
-			if((tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) && tp->note[i-1]->ghost)
+			/* ensure that a note isn't both ghosted AND string muted/hammer on */
+			if(((tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) || (tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)) && tp->note[i-1]->ghost)
 			{	//If this note is string muted and any strings are ghosted
 				tp->note[i-1]->ghost = 0;	//Remove ghost status from all strings
 			}
@@ -3917,7 +3917,7 @@ char *eof_get_note_name(EOF_SONG *sp, unsigned long track, unsigned long note)
 	unsigned long tracknum;
 
 	if((sp == NULL) || (track >= sp->tracks))
-		return 0;	//Return error
+		return NULL;	//Return error
 	tracknum = sp->track[track]->tracknum;
 
 	switch(sp->track[track]->track_format)
@@ -4271,6 +4271,39 @@ void eof_set_num_arpeggios(EOF_SONG *sp, unsigned long track, unsigned long numb
 	{
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			sp->pro_guitar_track[tracknum]->arpeggios = number;
+		break;
+	}
+}
+
+void eof_set_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, char *name)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks) || (name == NULL))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				ustrncpy(sp->legacy_track[tracknum]->note[note]->name, name, EOF_NAME_LENGTH);
+			}
+		break;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+			if(note < sp->vocal_track[tracknum]->lyrics)
+			{
+				ustrncpy(sp->vocal_track[tracknum]->lyric[note]->text, name, EOF_MAX_LYRIC_LENGTH);
+			}
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(note < sp->pro_guitar_track[tracknum]->notes)
+			{
+				ustrncpy(sp->pro_guitar_track[tracknum]->note[note]->name, name, EOF_NAME_LENGTH);
+			}
 		break;
 	}
 }
