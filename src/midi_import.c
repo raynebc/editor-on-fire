@@ -863,6 +863,7 @@ allegro_message("Second pass complete");
 	unsigned long event_realtime;		//Store the delta time converted to realtime to avoid having to convert multiple times per note
 	char prodrums = 0;					//Tracks whether the drum track being written includes Pro drum notation
 	unsigned long tracknum;				//Used to de-obfuscate the legacy track number
+	EOF_PRO_GUITAR_NOTE *currentsupaeasy, *currenteasy, *currentmedium, *currentamazing, **lastaddednotedifficulty;	//Used to import pro guitar slides, stores the pointer to the active note for each difficulty and set back to NULL when the note's first note off is reached
 
 	for(i = 0; i < tracks; i++)
 	{	//For each imported track
@@ -902,6 +903,8 @@ allegro_message("Second pass complete");
 				}
 			}
 
+			currentsupaeasy = currenteasy = currentmedium = currentamazing = NULL;	//These point to nothing at the start of each track
+			lastaddednotedifficulty = NULL;
 			for(j = 0; j < eof_import_events[i]->events; j++)
 			{	//For each event in this track
 				if(key[KEY_ESC])
@@ -1329,21 +1332,25 @@ allegro_message("Second pass complete");
 						{	//Notes 24 through 29 represent supaeasy pro guitar
 							eof_set_note_type(sp, picked_track, note_count[picked_track], EOF_NOTE_SUPAEASY);
 							diff = eof_import_events[i]->event[j]->d1 - 24;
+							lastaddednotedifficulty = &currentsupaeasy;	//Remember that this is the note that will be added
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= 48) && (eof_import_events[i]->event[j]->d1 <= 53))
 						{	//Notes 48 through 53 represent easy pro guitar
 							eof_set_note_type(sp, picked_track, note_count[picked_track], EOF_NOTE_EASY);
 							diff = eof_import_events[i]->event[j]->d1 - 48;
+							lastaddednotedifficulty = &currenteasy;	//Remember that this is the note that will be added
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= 72) && (eof_import_events[i]->event[j]->d1 <= 77))
 						{	//Notes 72 through 77 represent medium pro guitar
 							eof_set_note_type(sp, picked_track, note_count[picked_track], EOF_NOTE_MEDIUM);
 							diff = eof_import_events[i]->event[j]->d1 - 72;
+							lastaddednotedifficulty = &currentmedium;	//Remember that this is the note that will be added
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= 96) && (eof_import_events[i]->event[j]->d1 <= 101))
 						{	//Notes 96 through 101 represent amazing pro guitar
 							eof_set_note_type(sp, picked_track, note_count[picked_track], EOF_NOTE_AMAZING);
 							diff = eof_import_events[i]->event[j]->d1 - 96;
+							lastaddednotedifficulty = &currentamazing;	//Remember that this is the note that will be added
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= 120) && (eof_import_events[i]->event[j]->d1 <= 124))
 						{
@@ -1403,6 +1410,8 @@ allegro_message("Second pass complete");
 								eof_set_note_length(sp, picked_track, notenum, 100);
 								eof_set_note_flags(sp, picked_track, notenum, 0);	//Clear the flag here so that the flag can be set if it has a special status
 								eof_set_note_name(sp, picked_track, notenum, chordname);	//Populate the note name with whatever name was read last
+								assert(lastaddednotedifficulty != NULL);	//lastaddednotedifficulty should be correctly set from above
+								*lastaddednotedifficulty = sp->pro_guitar_track[tracknum]->note[notenum];	//Store a pointer to this new note into the appropriate "current" pro note pointer
 								note_count[picked_track]++;
 							}
 							else
@@ -1426,15 +1435,42 @@ allegro_message("Second pass complete");
 						}
 						else
 						{	//Apply other markers
-							if(eof_import_events[i]->event[j]->d1 == 103)
-							{	//If this event represents a slide section
-								if((eof_import_events[i]->event[j]->d2 == 104) || (eof_import_events[i]->event[j]->d2 == 105) || (eof_import_events[i]->event[j]->d2 == 106) || (eof_import_events[i]->event[j]->d2 == 107) || (eof_import_events[i]->event[j]->d2 == 108) || (eof_import_events[i]->event[j]->d2 == 109) || (eof_import_events[i]->event[j]->d2 == 112) || (eof_import_events[i]->event[j]->d2 == 115))
-								{	//If this is a slide down section
-									sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+							if((eof_import_events[i]->event[j]->d2 == 104) || (eof_import_events[i]->event[j]->d2 == 105) || (eof_import_events[i]->event[j]->d2 == 106) || (eof_import_events[i]->event[j]->d2 == 107) || (eof_import_events[i]->event[j]->d2 == 108) || (eof_import_events[i]->event[j]->d2 == 109) || (eof_import_events[i]->event[j]->d2 == 112) || (eof_import_events[i]->event[j]->d2 == 115) || (eof_import_events[i]->event[j]->d2 == 116) || (eof_import_events[i]->event[j]->d2 == 117))
+							{	//If this note uses any of the velocities representing a slide down section
+								if((eof_import_events[i]->event[j]->d1 == 31) && currentsupaeasy)
+								{	//If this is a supaeasy slide down and a supaeasy difficulty note is in progess
+									currentsupaeasy->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
 								}
-								else if((eof_import_events[i]->event[j]->d2 == 102) || (eof_import_events[i]->event[j]->d2 == 103) || (eof_import_events[i]->event[j]->d2 == 110))
-								{	//If this is a slide up section
-									sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
+								else if((eof_import_events[i]->event[j]->d1 == 55) && currenteasy)
+								{	//If this is an easy slide down and an easy difficulty note is in progess
+									currenteasy->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+								}
+								else if((eof_import_events[i]->event[j]->d1 == 79) && currentmedium)
+								{	//If this is a medium slide down and a medium difficulty note is in progess
+									currentmedium->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+								}
+								else if((eof_import_events[i]->event[j]->d1 == 103) && currentamazing)
+								{	//If this is an expert slide down and an amazing difficulty note is in progess
+									currentamazing->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+								}
+							}
+							else if((eof_import_events[i]->event[j]->d2 == 102) || (eof_import_events[i]->event[j]->d2 == 103) || (eof_import_events[i]->event[j]->d2 == 110))
+							{	//If this note uses any of the velocities representing a slide up section
+								if((eof_import_events[i]->event[j]->d1 == 31) && currentsupaeasy)
+								{	//If this is a supaeasy slide up and a supaeasy difficulty note is in progess
+									currentsupaeasy->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
+								}
+								else if((eof_import_events[i]->event[j]->d1 == 55) && currenteasy)
+								{	//If this is an easy slide up and an easy difficulty note is in progess
+									currenteasy->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
+								}
+								else if((eof_import_events[i]->event[j]->d1 == 79) && currentmedium)
+								{	//If this is a medium slide up and a medium difficulty note is in progess
+									currentmedium->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
+								}
+								else if((eof_import_events[i]->event[j]->d1 == 103) && currentamazing)
+								{	//If this is an expert slide up and an amazing difficulty note is in progess
+									currentamazing->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
 								}
 							}
 						}
@@ -1444,31 +1480,31 @@ allegro_message("Second pass complete");
 					else if(eof_import_events[i]->event[j]->type == 0x80)
 					{
 						if((eof_import_events[i]->event[j]->d1 == 104) && (eof_get_num_arpeggios(sp, picked_track) < EOF_MAX_PHRASES))
-						{
+						{	//End of an arpeggio phrase
 							phraseptr = eof_get_arpeggio(sp, picked_track, eof_get_num_arpeggios(sp, picked_track));
 							phraseptr->end_pos = event_realtime - 1;
 							eof_set_num_arpeggios(sp, picked_track, eof_get_num_arpeggios(sp, picked_track) + 1);
 						}
 						else if((eof_import_events[i]->event[j]->d1 == 115) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
-						{
+						{	//End of a solo phrase
 							phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
 							phraseptr->end_pos = event_realtime - 1;
 							eof_set_num_solos(sp, picked_track, eof_get_num_solos(sp, picked_track) + 1);
 						}
 						else if((eof_import_events[i]->event[j]->d1 == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
-						{
+						{	//End of a star power phrase
 							phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
 							phraseptr->end_pos = event_realtime - 1;
 							eof_set_num_star_power_paths(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track) + 1);
 						}
 						else if((eof_import_events[i]->event[j]->d1 == 126) && (eof_get_num_tremolos(sp, picked_track) < EOF_MAX_PHRASES))
-						{
+						{	//End of a tremolo phrase
 							phraseptr = eof_get_tremolo(sp, picked_track, eof_get_num_tremolos(sp, picked_track));
 							phraseptr->end_pos = event_realtime - 1;
 							eof_set_num_tremolos(sp, picked_track, eof_get_num_tremolos(sp, picked_track) + 1);
 						}
 						else if((eof_import_events[i]->event[j]->d1 == 127) && (eof_get_num_trills(sp, picked_track) < EOF_MAX_PHRASES))
-						{
+						{	//End of a trill phrase
 							phraseptr = eof_get_trill(sp, picked_track, eof_get_num_trills(sp, picked_track));
 							phraseptr->end_pos = event_realtime - 1;
 							eof_set_num_trills(sp, picked_track, eof_get_num_trills(sp, picked_track) + 1);
@@ -1480,6 +1516,21 @@ allegro_message("Second pass complete");
 							{
 								if((eof_get_note_type(sp, picked_track, k) == eof_get_note_type(sp, picked_track, note_count[picked_track])) && (eof_get_note_note(sp, picked_track, k) & diff_chart[diff]))
 								{
+									switch(eof_get_note_type(sp, picked_track, k))
+									{
+										case EOF_NOTE_AMAZING:
+											currentamazing = NULL;	//The end of this note has been reached
+										break;
+										case EOF_NOTE_MEDIUM:
+											currentmedium = NULL;	//The end of this note has been reached
+										break;
+										case EOF_NOTE_EASY:
+											currenteasy = NULL;		//The end of this note has been reached
+										break;
+										case EOF_NOTE_SUPAEASY:
+											currentsupaeasy = NULL;	//The end of this note has been reached
+										break;
+									}
 	//								allegro_message("break %d, %d, %d", k, sp->legacy_track[picked_track]->note[k]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);
 									eof_set_note_length(sp, picked_track, k, event_realtime - eof_get_note_pos(sp, picked_track, k));
 									if(eof_get_note_length(sp, picked_track, k ) <= 0)
