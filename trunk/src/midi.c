@@ -339,7 +339,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	char trackctr;							//Used in the temp data creation to handle Expert+
 	EOF_MIDI_TS_LIST *tslist=NULL;			//List containing TS changes
 	unsigned long note, notenum, noteflags, notepos;
-	int channel, velocity, bitmask;	//Used for pro guitar export
+	int channel, velocity, bitmask, slidenote;	//Used for pro guitar export
 	EOF_PHRASE_SECTION *sectionptr;
 	char *lastname = NULL, *currentname = NULL, nochord[]="NC", chordname[100]="";
 
@@ -880,21 +880,25 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					case EOF_NOTE_AMAZING:	//notes 96-101
 					{
 						midi_note_offset = 96;
+						slidenote = 103;	//The note used to mark an Amazing slide
 						break;
 					}
 					case EOF_NOTE_MEDIUM:	//notes 72-77
 					{
 						midi_note_offset = 72;
+						slidenote = 79;		//The note used to mark a Medium slide
 						break;
 					}
 					case EOF_NOTE_EASY:		//notes 48-58
 					{
 						midi_note_offset = 48;
+						slidenote = 55;		//The note used to mark an easy slide
 						break;
 					}
 					case EOF_NOTE_SUPAEASY:	//notes 24-29
 					{
 						midi_note_offset = 24;
+						slidenote = 31;		//The note used to mark a supaeasy slide
 						break;
 					}
 					case EOF_NOTE_SPECIAL:	//BRE/drum fill: notes 120-124
@@ -925,18 +929,15 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				}
 
 				/* write slide sections */
-				if(eof_midi_note_status[103] == 0)
-				{	//Only start a slide marker if one isn't already in effect
-					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
-					{	//If this note slides down
-						eof_add_midi_event(notepos, 0x90, 103, 104, 0);	//Note 103, velocity 104 denotes slide down
-						eof_add_midi_event(notepos + length, 0x80, 103, 104, 0);
-					}
-					else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-					{	//If this note slides up
-						eof_add_midi_event(notepos, 0x90, 103, 102, 0);	//Note 103, velocity 102 denotes slide up
-						eof_add_midi_event(notepos + length, 0x80, 103, 102, 0);
-					}
+				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+				{	//If this note slides down
+					eof_add_midi_event(notepos, 0x90, slidenote, 104, 0);	//Velocity 104 denotes slide down
+					eof_add_midi_event(notepos + length, 0x80, slidenote, 104, 0);
+				}
+				else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+				{	//If this note slides up
+					eof_add_midi_event(notepos, 0x90, slidenote, 102, 0);	//Velocity 102 denotes slide up
+					eof_add_midi_event(notepos + length, 0x80, slidenote, 102, 0);
 				}
 
 				/* write note gems */
