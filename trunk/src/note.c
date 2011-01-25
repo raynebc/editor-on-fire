@@ -367,10 +367,6 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 						draw_sprite(window->screen, fretbmp, x - (fretbmp->w/2), y - (text_height(font)/2));	//Fudge (x,y) to make it print centered over the gem
 						destroy_bitmap(fretbmp);
 					}
-
-					//Render tab notations
-					eof_get_pro_note_notation(notation, track, notenum);	//Get the tab playing notation for this note
-					textprintf_centre_ex(window->screen, eof_mono_font, x, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 3, eof_color_red, -1, notation);
 				}
 			}
 			else
@@ -400,9 +396,13 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		}
 	}//Render for each of the available fret lanes
 
-	//Render note names
-	if((track != 0) && (eof_song->track[track]->track_format != EOF_VOCAL_TRACK_FORMAT))
-	{	//If rendering a non lyric note
+	if(track != 0)
+	{	//If rendering an existing note instead of the pen note
+		//Render tab notations
+		eof_get_note_tab_notation(notation, track, notenum);	//Get the tab playing notation for this note
+		textprintf_centre_ex(window->screen, eof_mono_font, x, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 3, eof_color_red, -1, notation);
+
+		//Render note names
 		nameptr = eof_get_note_name(eof_song, track, notenum);
 		if((nameptr != NULL) && (nameptr[0] != '\0'))
 		{	//If this note has a defined name
@@ -1075,50 +1075,49 @@ BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, unsigned char s
 	return fretbmp;
 }
 
-void eof_get_pro_note_notation(char *buffer, unsigned long track, unsigned long note)
+void eof_get_note_tab_notation(char *buffer, unsigned long track, unsigned long note)
 {
-	unsigned long index = 0, tracknum;
-	EOF_PRO_GUITAR_NOTE *np, *prevnote = NULL;
+	unsigned long index = 0, tracknum, flags = 0, prevnoteflags;
 	long prevnotenum;
 
-	if((track >= eof_song->tracks) || (buffer == NULL) || (eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
-		return;
+	if((track >= eof_song->tracks) || (buffer == NULL) || ((eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT)))
+		return;	//If this is an invalid track number, the buffer is NULL or the specified track isn't a pro guitar or legacy track, return
 	tracknum = eof_song->track[track]->tracknum;
-	if(note >= eof_song->pro_guitar_track[tracknum]->notes)
+	if(note >= eof_get_track_size(eof_song, track))
 		return;
+	flags = eof_get_note_flags(eof_song, track, note);
 
 	prevnotenum = eof_get_prev_note_type_num(eof_song, track, note);	//Get the index of the previous note in this track difficulty
 	if(prevnotenum > 0)
 	{	//If there is a previous note in this track difficulty
-		prevnote = eof_song->pro_guitar_track[tracknum]->note[prevnotenum];	//Store its pointer
+		prevnoteflags = eof_get_note_flags(eof_song, track, prevnotenum);	//Store its flags
 	}
 
-	np = eof_song->pro_guitar_track[tracknum]->note[note];
-	if(np->flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
+	if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
 	{
 		buffer[index++] = 'H';
 	}
-	else if(np->flags & EOF_PRO_GUITAR_NOTE_FLAG_PO)
+	else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PO)
 	{
 		buffer[index++] = 'P';
 	}
-	else if(np->flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
+	else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
 	{
 		buffer[index++] = 'T';
 	}
 
-	if(np->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+	if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
 	{
 		buffer[index++] = '/';
 	}
-	else if(np->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+	else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
 	{
 		buffer[index++] = '\\';
 	}
 
-	if(np->flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
+	if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
 	{
-		if(prevnote && (prevnote->flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
+		if(prevnotenum && (prevnoteflags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
 		{	//If there is a previous note that was also a palm mute
 			buffer[index++] = '-';	//Write a palm mute continuation character
 		}
@@ -1128,14 +1127,14 @@ void eof_get_pro_note_notation(char *buffer, unsigned long track, unsigned long 
 			buffer[index++] = 'M';
 		}
 	}
-	else if(np->flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE)
+	else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE)
 	{
 		buffer[index++] = 'X';
 	}
 
-	if(np->flags & EOF_PRO_GUITAR_NOTE_FLAG_IS_TRILL)
+	if(flags & EOF_NOTE_FLAG_IS_TRILL)
 	{
-		if(prevnote && (prevnote->flags & EOF_PRO_GUITAR_NOTE_FLAG_IS_TRILL))
+		if(prevnotenum && (prevnoteflags & EOF_NOTE_FLAG_IS_TRILL))
 		{	//If there is a previous note that was also in a trill
 			buffer[index++] = '~';	//Write a trill continuation character
 		}
@@ -1146,9 +1145,9 @@ void eof_get_pro_note_notation(char *buffer, unsigned long track, unsigned long 
 		}
 	}
 
-	if(np->flags & EOF_PRO_GUITAR_NOTE_FLAG_IS_TREMOLO)
+	if(flags & EOF_NOTE_FLAG_IS_TREMOLO)
 	{
-		if(prevnote && (prevnote->flags & EOF_PRO_GUITAR_NOTE_FLAG_IS_TREMOLO))
+		if(prevnotenum && (prevnoteflags & EOF_NOTE_FLAG_IS_TREMOLO))
 		{	//If there is a previous note that was also in a tremolo
 			buffer[index++] = '-';	//Write a tremolo continuation character
 		}

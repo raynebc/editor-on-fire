@@ -776,8 +776,8 @@ void eof_determine_phrase_status(void)
 		flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 		flags &= (~EOF_NOTE_FLAG_HOPO);
 		flags &= (~EOF_NOTE_FLAG_SP);
-		flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_IS_TRILL);
-		flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_IS_TREMOLO);
+		flags &= (~EOF_NOTE_FLAG_IS_TRILL);
+		flags &= (~EOF_NOTE_FLAG_IS_TREMOLO);
 
 		/* mark HOPO */
 		if((eof_hopo_view == EOF_HOPO_MANUAL) && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_note_is_hopo(i)))
@@ -812,7 +812,7 @@ void eof_determine_phrase_status(void)
 			sectionptr = eof_get_trill(eof_song, eof_selected_track, j);
 			if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
 			{	//If the note is in this trill section
-				flags |= EOF_PRO_GUITAR_NOTE_FLAG_IS_TRILL;
+				flags |= EOF_NOTE_FLAG_IS_TRILL;
 				trills[j] = 1;
 			}
 		}
@@ -823,7 +823,7 @@ void eof_determine_phrase_status(void)
 			sectionptr = eof_get_tremolo(eof_song, eof_selected_track, j);
 			if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
 			{	//If the note is in this tremolo section
-				flags |= EOF_PRO_GUITAR_NOTE_FLAG_IS_TREMOLO;
+				flags |= EOF_NOTE_FLAG_IS_TREMOLO;
 				tremolos[j] = 1;
 			}
 		}
