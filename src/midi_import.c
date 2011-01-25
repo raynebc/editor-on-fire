@@ -868,7 +868,6 @@ allegro_message("Second pass complete");
 	for(i = 0; i < tracks; i++)
 	{	//For each imported track
 		picked_track = eof_import_events[i]->type >= 1 ? eof_import_events[i]->type : rbg == 0 ? EOF_TRACK_GUITAR : -1;
-		first_note = note_count[picked_track];
 		if((picked_track >= 0) && !used_track[picked_track] && (picked_track < sp->tracks))
 		{	//If this is a valid track to process
 			int last_105 = 0;
@@ -881,6 +880,7 @@ allegro_message("Second pass complete");
 			char rb_pro_green = 0;					//Tracks the status of forced yellow pro drum notation
 			unsigned long rb_pro_green_pos = 0;		//Tracks the last start time of a forced green pro drum phrase
 			unsigned long notenum = 0;
+			first_note = note_count[picked_track];
 			tracknum = sp->track[picked_track]->tracknum;
 
 //Detect whether Pro drum notation is being used
@@ -1129,16 +1129,32 @@ allegro_message("Second pass complete");
 							hopotype[3] = 1;
 						}
 
-						/* star power and solos */
-						if((eof_import_events[i]->event[j]->d1 == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
-						{
+						/* solos, star power, tremolos and trills */
+						phraseptr = NULL;
+						if((eof_import_events[i]->event[j]->d1 == 103) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
+						{	//Legacy solos are marked with note 103
+							phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
+							phraseptr->start_pos = event_realtime;
+						}
+						else if((eof_import_events[i]->event[j]->d1 == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
+						{	//Star power is marked with note 116
 							phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
 							phraseptr->start_pos = event_realtime;
 						}
-						else if((eof_import_events[i]->event[j]->d1 == 103) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
-						{
-							phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
+						else if((eof_import_events[i]->event[j]->d1 == 126) && (eof_get_num_tremolos(sp, picked_track) < EOF_MAX_PHRASES))
+						{	//Tremolos are marked with note 126
+							phraseptr = eof_get_tremolo(sp, picked_track, eof_get_num_tremolos(sp, picked_track));
 							phraseptr->start_pos = event_realtime;
+						}
+						else if((eof_import_events[i]->event[j]->d1 == 127) && (eof_get_num_trills(sp, picked_track) < EOF_MAX_PHRASES))
+						{	//Trills are marked with note 127
+							phraseptr = eof_get_trill(sp, picked_track, eof_get_num_trills(sp, picked_track));
+							phraseptr->start_pos = event_realtime;
+						}
+						if(phraseptr)
+						{	//If a phrase was created, initialize some other values
+							phraseptr->flags = 0;
+							phraseptr->name[0] = '\0';
 						}
 
 						/* rb pro markers */
@@ -1294,18 +1310,31 @@ allegro_message("Second pass complete");
 							}
 						}
 
-						if((eof_import_events[i]->event[j]->d1 == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
-						{
-							phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
-							phraseptr->end_pos = event_realtime - 1;
-							eof_set_num_star_power_paths(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track) + 1);
-						}
-						else if((eof_import_events[i]->event[j]->d1 == 103) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
+						if((eof_import_events[i]->event[j]->d1 == 103) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
 						{
 							phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
 							phraseptr->end_pos = event_realtime - 1;
 							eof_set_num_solos(sp, picked_track, eof_get_num_solos(sp, picked_track) + 1);
 						}
+						else if((eof_import_events[i]->event[j]->d1 == 116) && (eof_get_num_star_power_paths(sp, picked_track) < EOF_MAX_PHRASES))
+						{
+							phraseptr = eof_get_star_power_path(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track));
+							phraseptr->end_pos = event_realtime - 1;
+							eof_set_num_star_power_paths(sp, picked_track, eof_get_num_star_power_paths(sp, picked_track) + 1);
+						}
+						else if((eof_import_events[i]->event[j]->d1 == 126) && (eof_get_num_tremolos(sp, picked_track) < EOF_MAX_PHRASES))
+						{	//End of a tremolo phrase
+							phraseptr = eof_get_tremolo(sp, picked_track, eof_get_num_tremolos(sp, picked_track));
+							phraseptr->end_pos = event_realtime - 1;
+							eof_set_num_tremolos(sp, picked_track, eof_get_num_tremolos(sp, picked_track) + 1);
+						}
+						else if((eof_import_events[i]->event[j]->d1 == 127) && (eof_get_num_trills(sp, picked_track) < EOF_MAX_PHRASES))
+						{	//End of a trill phrase
+							phraseptr = eof_get_trill(sp, picked_track, eof_get_num_trills(sp, picked_track));
+							phraseptr->end_pos = event_realtime - 1;
+							eof_set_num_trills(sp, picked_track, eof_get_num_trills(sp, picked_track) + 1);
+						}
+
 						if((note_count[picked_track] > 0) && (eof_get_note_type(sp, picked_track, note_count[picked_track] - 1) != -1))
 						{
 							for(k = note_count[picked_track] - 1; k >= first_note; k--)
@@ -1367,6 +1396,7 @@ allegro_message("Second pass complete");
 					if(eof_import_events[i]->event[j]->type == 0x90)
 					{
 						/* arpeggios, solos, star power, tremolos and trills */
+						phraseptr = NULL;
 						if((eof_import_events[i]->event[j]->d1 == 104) && (eof_get_num_arpeggios(sp, picked_track) < EOF_MAX_PHRASES))
 						{	//Arpeggios are marked with note 104
 							phraseptr = eof_get_arpeggio(sp, picked_track, eof_get_num_arpeggios(sp, picked_track));
@@ -1391,6 +1421,11 @@ allegro_message("Second pass complete");
 						{	//Trills are marked with note 127
 							phraseptr = eof_get_trill(sp, picked_track, eof_get_num_trills(sp, picked_track));
 							phraseptr->start_pos = event_realtime;
+						}
+						if(phraseptr)
+						{	//If a phrase was created, initialize some other values
+							phraseptr->flags = 0;
+							phraseptr->name[0] = '\0';
 						}
 
 						for(k = first_note; k < note_count[picked_track]; k++)

@@ -37,8 +37,8 @@
 #define EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN		8192	//This flag will represent a note that slides down to the next note
 #define EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE	16384	//This flag will represent a note whose strings are muted by the fretting hand
 #define EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE		32768	//This flag will represent a note whose strings are muted by the strumming hand
-#define EOF_PRO_GUITAR_NOTE_FLAG_IS_TRILL		65536	//This flag will be set by eof_determine_phrase_status() if the note is in a trill section
-#define EOF_PRO_GUITAR_NOTE_FLAG_IS_TREMOLO		131072	//This flag will be set by eof_determine_phrase_status() if the note is in a tremolo section
+#define EOF_NOTE_FLAG_IS_TRILL		            65536	//This flag will be set by eof_determine_phrase_status() if the note is in a trill section
+#define EOF_NOTE_FLAG_IS_TREMOLO		        131072	//This flag will be set by eof_determine_phrase_status() if the note is in a tremolo section
 
 #define EOF_MAX_BEATS   32768
 #define EOF_MAX_PHRASES   100
