@@ -855,6 +855,7 @@ int eof_menu_edit_cut(unsigned long anchor, int option, float offset)
 				{	//If this is a pro guitar track
 					tracknum = eof_song->track[j]->tracknum;
 					pack_fwrite(eof_song->pro_guitar_track[tracknum]->note[i]->frets, 6, fp);	//Write the fret values for the six usable strings
+					pack_putc(eof_song->pro_guitar_track[tracknum]->note[i]->legacymask, fp);	//Write the legacy bitmask
 				}
 			}
 		}
@@ -1026,7 +1027,8 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option, float offset)
 					if(eof_song->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 					{	//If this is a pro guitar track
 						tracknum = eof_song->track[j]->tracknum;
-						pack_fread(eof_song->pro_guitar_track[tracknum]->note[notenum]->frets, 6, fp);	//Set the fret values for the six usable strings
+						pack_fread(eof_song->pro_guitar_track[tracknum]->note[notenum]->frets, 6, fp);		//Set the fret values for the six usable strings
+						eof_song->pro_guitar_track[tracknum]->note[notenum]->legacymask = pack_getc(fp);	//Set the legacy bitmask
 					}
 				}
 			}

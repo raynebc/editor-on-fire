@@ -117,6 +117,7 @@ MENU eof_note_proguitar_menu[] =
     {"Mark as non palm &Muting", eof_menu_note_remove_palm_muting, NULL, 0, NULL},
     {"&Arpeggio", NULL, eof_arpeggio_menu, 0, NULL},
     {"Set max &Fret value", eof_menu_set_max_fret, NULL, 0, NULL},
+    {"Clear legacy bitmask", eof_menu_note_clear_legacy_values, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -143,8 +144,8 @@ MENU eof_note_menu[] =
     {"Display semitones as flat", eof_display_flats_menu, NULL, 0, NULL},
     {"&Freestyle", NULL, eof_note_freestyle_menu, 0, NULL},
     {"Toggle &Expert+ bass drum\tCtrl+E", eof_menu_note_toggle_double_bass, NULL, 0, NULL},
-    {"Pro &Drum mode notation", NULL, eof_note_prodrum_menu, 0, NULL},
-    {"Pro &Guitar mode notation", NULL, eof_note_proguitar_menu, 0, NULL},
+    {"Pro &Drum", NULL, eof_note_prodrum_menu, 0, NULL},
+    {"Pro &Guitar", NULL, eof_note_proguitar_menu, 0, NULL},
     {"Trill", NULL, eof_trill_menu, 0, NULL},
     {"Tremolo", NULL, eof_tremolo_menu, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
@@ -3426,5 +3427,30 @@ int eof_menu_set_max_fret(void)
 		}
 	}
 
+	return 1;
+}
+
+int eof_menu_note_clear_legacy_values(void)
+{
+	unsigned long i;
+	long u = 0;
+	unsigned long tracknum;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			if(!u && eof_song->pro_guitar_track[tracknum]->note[i]->legacymask)
+			{	//Make a back up before clearing the first legacy bitmask
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				u = 1;
+			}
+			eof_song->pro_guitar_track[tracknum]->note[i]->legacymask = 0;
+		}
+	}
 	return 1;
 }
