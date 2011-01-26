@@ -1088,7 +1088,7 @@ void eof_get_note_tab_notation(char *buffer, unsigned long track, unsigned long 
 	flags = eof_get_note_flags(eof_song, track, note);
 
 	prevnotenum = eof_get_prev_note_type_num(eof_song, track, note);	//Get the index of the previous note in this track difficulty
-	if(prevnotenum > 0)
+	if(prevnotenum >= 0)
 	{	//If there is a previous note in this track difficulty
 		prevnoteflags = eof_get_note_flags(eof_song, track, prevnotenum);	//Store its flags
 	}
@@ -1117,7 +1117,7 @@ void eof_get_note_tab_notation(char *buffer, unsigned long track, unsigned long 
 
 	if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
 	{
-		if(prevnotenum && (prevnoteflags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
+		if((prevnotenum >= 0) && (prevnoteflags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
 		{	//If there is a previous note that was also a palm mute
 			buffer[index++] = '-';	//Write a palm mute continuation character
 		}
@@ -1134,27 +1134,44 @@ void eof_get_note_tab_notation(char *buffer, unsigned long track, unsigned long 
 
 	if(flags & EOF_NOTE_FLAG_IS_TRILL)
 	{
-		if(prevnotenum && (prevnoteflags & EOF_NOTE_FLAG_IS_TRILL))
+		if((prevnotenum >= 0) && (prevnoteflags & EOF_NOTE_FLAG_IS_TRILL))
 		{	//If there is a previous note that was also in a trill
 			buffer[index++] = '~';	//Write a trill continuation character
 		}
 		else
 		{
-			buffer[index++] = 't';	//Write start of trill notation
-			buffer[index++] = 'r';
+			if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+			{	//If this is a drum track, white the notation for special drum roll
+				buffer[index++] = 'S';
+				buffer[index++] = 'D';
+				buffer[index++] = 'R';
+			}
+			else
+			{	//Otherwise assume a guitar track, write the notation for a trill
+				buffer[index++] = 't';
+				buffer[index++] = 'r';
+			}
 		}
 	}
 
 	if(flags & EOF_NOTE_FLAG_IS_TREMOLO)
 	{
-		if(prevnotenum && (prevnoteflags & EOF_NOTE_FLAG_IS_TREMOLO))
+		if((prevnotenum >= 0) && (prevnoteflags & EOF_NOTE_FLAG_IS_TREMOLO))
 		{	//If there is a previous note that was also in a tremolo
 			buffer[index++] = '-';	//Write a tremolo continuation character
 		}
 		else
 		{
-			buffer[index++] = 'T';	//Write a start of tremolo notation
-			buffer[index++] = 'P';
+			if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+			{	//If this is a drum track, white the notation for drum roll
+				buffer[index++] = 'D';
+				buffer[index++] = 'R';
+			}
+			else
+			{	//Otherwise assume a guitar track, write the notation for a tremolo
+				buffer[index++] = 'T';
+				buffer[index++] = 'P';
+			}
 		}
 	}
 

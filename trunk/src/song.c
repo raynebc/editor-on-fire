@@ -1750,8 +1750,8 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 			}
 		break;
 		case EOF_TRILL_SECTION:
-			if((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (sp->track[track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR))
-			{	//Only legacy/pro guitar/bass type tracks are able to use this type of section
+			if((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (sp->track[track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR) || (sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
+			{	//Only legacy/pro guitar/bass/drum type tracks are able to use this type of section
 				switch(sp->track[track]->track_format)
 				{
 					case EOF_LEGACY_TRACK_FORMAT:
@@ -1814,8 +1814,8 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 		case EOF_PREVIEW_SECTION:	//Preview audio section (not supported yet)
 		break;
 		case EOF_TREMOLO_SECTION:
-			if((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (sp->track[track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR))
-			{	//Only legacy/pro guitar/bass type tracks are able to use this type of section
+			if((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (sp->track[track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR) || (sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
+			{	//Only legacy/pro guitar/bass/drum type tracks are able to use this type of section
 				switch(sp->track[track]->track_format)
 				{
 					case EOF_LEGACY_TRACK_FORMAT:
