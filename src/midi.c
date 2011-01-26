@@ -615,6 +615,22 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				eof_add_midi_event(sectionptr->end_pos, 0x80, 103, vel, 0);
 			}
 
+			/* fill in tremolos */
+			for(i = 0; i < eof_get_num_tremolos(sp, j); i++)
+			{	//For each tremolo in the track
+				sectionptr = eof_get_tremolo(sp, j, i);
+				eof_add_midi_event(sectionptr->start_pos, 0x90, 126, vel, 0);	//Note 126 denotes a tremolo marker
+				eof_add_midi_event(sectionptr->end_pos, 0x80, 126, vel, 0);
+			}
+
+			/* fill in trills */
+			for(i = 0; i < eof_get_num_trills(sp, j); i++)
+			{	//For each trill in the track
+				sectionptr = eof_get_trill(sp, j, i);
+				eof_add_midi_event(sectionptr->start_pos, 0x90, 127, vel, 0);	//Note 127 denotes a trill marker
+				eof_add_midi_event(sectionptr->end_pos, 0x80, 127, vel, 0);
+			}
+
 			for(i=0;i < 128;i++)
 			{	//Ensure that any notes that are still on are terminated
 				if(eof_midi_note_status[i] != 0)	//If this note was left on, write a note off at the end of the last charted note
@@ -627,7 +643,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 //			allegro_message("break1");
 
 			for(trackctr=0;trackctr<=expertplus;trackctr++)
-			{
+			{	//This loop makes a second pass to write the expert+ drum MIDI if applicable
 				/* open the file */
 				if(trackctr == 0)	//Writing the normal temp file
 					fp = pack_fopen(notetempname[j], "w");
@@ -1065,7 +1081,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			pack_putc(0x2F, fp);
 			pack_putc(0x00, fp);
 			pack_fclose(fp);
-		}
+		}//If this is a pro guitar track
 	}//For each track in the project
 
 /* make tempo track */

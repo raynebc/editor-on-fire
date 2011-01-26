@@ -3866,6 +3866,21 @@ void eof_render_editor_window_common(void)
 		}
 	}
 
+	/* draw SP sections */
+	if(eof_selected_track != EOF_TRACK_VOCALS)
+	{
+		numsections = eof_get_num_star_power_paths(eof_song, eof_selected_track);
+		for(i = 0; i < numsections; i++)
+		{	//For each solo section in the track
+			sectionptr = eof_get_star_power_path(eof_song, eof_selected_track, i);	//Obtain the information for this star power section
+			if(sectionptr != NULL)
+			{
+				if(sectionptr->end_pos >= start)	//If the star power section would render at or after the left edge of the piano roll, render a silver rectangle from the top most lane to the top of the fretboard area
+					rectfill(eof_window_editor->screen, lpos + sectionptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, lpos + sectionptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes-1], eof_color_silver);
+			}
+		}
+	}
+
 	/* draw arpeggio sections */
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -3908,14 +3923,22 @@ void eof_render_editor_window_common(void)
 					if(sectionptr->end_pos >= start)
 					{	//If the trill or tremolo section would render at or after the left edge of the piano roll
 						usedlanes = eof_get_used_lanes(eof_selected_track, sectionptr->start_pos, sectionptr->end_pos, eof_note_type);	//Determine which lane(s) use this phrase
-						for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
-						{	//For each of the usable lanes
+						if(usedlanes == 0)
+						{	//If there are no notes in this marker, render the marker in all lanes
+							usedlanes = 0xFF;
+						}
+						for(ctr = 0, bitmask = 1; ctr < eof_count_track_lanes(eof_song, eof_selected_track); ctr++, bitmask <<= 1)
+						{	//For each of the track's usable lanes
 							if(usedlanes & bitmask)
 							{	//If this lane is used in the phrase
 								int x1 = lpos + sectionptr->start_pos / eof_zoom;
 								int y1 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - (eof_screen_layout.string_space / 2);
 								int x2 = lpos + sectionptr->end_pos / eof_zoom;
 								int y2 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + (eof_screen_layout.string_space / 2);
+								if(y1 < EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0])
+									y1 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0];	//Ensure that the phrase cannot render above the top most lane
+								if(y2 > EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes-1])
+									y2 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes-1];	//Ensure that the phrase cannot render below the bottom most lane
 								rectfill(eof_window_editor->screen, x1, y1, x2, y2, colors[ctr]);	//Draw a rectangle one lane high centered over that lane's fret line
 							}
 						}
