@@ -1168,7 +1168,6 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 					return 0;	//Return error
 				ptr2->lyrics = 0;
 				ptr2->lines = 0;
-				ptr2->star_power_paths = 0;
 				ptr2->parent = ptr3;
 				sp->vocal_track[sp->vocal_tracks] = ptr2;
 				sp->vocal_tracks++;
@@ -1680,24 +1679,6 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 						sp->legacy_track[tracknum]->star_power_paths++;
 					}
 				return 1;
-				case EOF_VOCAL_TRACK_FORMAT:
-					count = sp->vocal_track[tracknum]->star_power_paths;
-					if(count < EOF_MAX_PHRASES)
-					{	//If EOF can store the star power section
-						sp->vocal_track[tracknum]->star_power_path[count].start_pos = start;
-						sp->vocal_track[tracknum]->star_power_path[count].end_pos = end;
-						sp->vocal_track[tracknum]->star_power_path[count].flags = 0;
-						if(name == NULL)
-						{
-							sp->vocal_track[tracknum]->star_power_path[count].name[0] = '\0';
-						}
-						else
-						{
-							ustrcpy(sp->vocal_track[tracknum]->star_power_path[count].name, name);
-						}
-						sp->vocal_track[tracknum]->star_power_paths++;
-					}
-				return 1;
 				case EOF_PRO_GUITAR_TRACK_FORMAT:
 					count = sp->pro_guitar_track[tracknum]->star_power_paths;
 					if(count < EOF_MAX_PHRASES)
@@ -2201,11 +2182,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					{
 						has_lyric_phrases = 1;
 					}
-					if(sp->vocal_track[tracknum]->star_power_paths)
-					{
-						has_star_power = 1;
-					}
-					pack_iputw(has_lyric_phrases + has_star_power, fp);	//Write number of section types
+					pack_iputw(has_lyric_phrases, fp);	//Write number of section types
 					if(has_lyric_phrases)
 					{	//Write lyric phrases
 						pack_iputw(EOF_LYRIC_PHRASE_SECTION, fp);	//Write lyric phrase section type
@@ -2216,20 +2193,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 							pack_putc(0, fp);						//Write the associated difficulty (lyric set) (not supported yet)
 							pack_iputl(sp->vocal_track[tracknum]->line[ctr].start_pos, fp);	//Write the lyric phrase's position
 							pack_iputl(sp->vocal_track[tracknum]->line[ctr].end_pos, fp);	//Write the lyric phrase's end position
-							pack_iputl(0, fp);						//Write section flags (not used)
-						}
-					}
-					if(has_star_power)
-					{	//Write star power sections
-						pack_iputw(EOF_SP_SECTION, fp);		//Write star power section type
-						pack_iputl(sp->vocal_track[tracknum]->star_power_paths, fp);	//Write number of star power sections for this track
-						for(ctr=0; ctr < sp->vocal_track[tracknum]->star_power_paths; ctr++)
-						{	//For each solo section in the track
-							eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
-							pack_putc(0xFF, fp);					//Write an associated difficulty of "all difficulties"
-							pack_iputl(sp->vocal_track[tracknum]->star_power_path[ctr].start_pos, fp);	//Write the SP phrase's position
-							pack_iputl(sp->vocal_track[tracknum]->star_power_path[ctr].end_pos, fp);	//Write the SP phrase's end position
-							pack_iputl(0, fp);						//Write section flags (not used)
+							pack_iputl(sp->vocal_track[tracknum]->line[ctr].flags, fp);		//Write section flags
 						}
 					}
 				break;
@@ -3237,9 +3201,6 @@ unsigned long eof_get_num_star_power_paths(EOF_SONG *sp, unsigned long track)
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 		return sp->pro_guitar_track[tracknum]->star_power_paths;
-
-		case EOF_VOCAL_TRACK_FORMAT:
-		return sp->vocal_track[tracknum]->star_power_paths;
 	}
 
 	return 0;	//Return error
@@ -3263,7 +3224,7 @@ EOF_PHRASE_SECTION *eof_get_star_power_path(EOF_SONG *sp, unsigned long track, u
 		break;
 
 		case EOF_VOCAL_TRACK_FORMAT:
-		return &sp->vocal_track[tracknum]->star_power_path[pathnum];
+		return NULL;	//Vocal star power is not implemented yet
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			if(pathnum < EOF_MAX_PHRASES)
@@ -3308,10 +3269,6 @@ void eof_set_num_star_power_paths(EOF_SONG *sp, unsigned long track, unsigned lo
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
 			sp->legacy_track[tracknum]->star_power_paths = number;
-		break;
-
-		case EOF_VOCAL_TRACK_FORMAT:
-			sp->vocal_track[tracknum]->star_power_paths = number;
 		break;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
@@ -3450,13 +3407,6 @@ void eof_track_delete_star_power_path(EOF_SONG *sp, unsigned long track, unsigne
 			}
 		break;
 
-		case EOF_VOCAL_TRACK_FORMAT:
-			if(pathnum < sp->vocal_track[tracknum]->star_power_paths)
-			{
-				eof_vocal_track_delete_star_power(sp->vocal_track[tracknum], pathnum);
-			}
-		break;
-
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			if(pathnum < sp->pro_guitar_track[tracknum]->star_power_paths)
 			{
@@ -3464,25 +3414,6 @@ void eof_track_delete_star_power_path(EOF_SONG *sp, unsigned long track, unsigne
 			}
 		break;
 	}
-}
-
-void eof_vocal_track_delete_star_power(EOF_VOCAL_TRACK * tp, unsigned long index)
-{
-	unsigned long i;
-
-	if(index >= tp->star_power_paths)
-		return;
-
-	if(tp->star_power_path[index].name != NULL)
-	{	//If the section has a name
-		free(tp->star_power_path[index].name);	//Free it
-	}
-
-	for(i = index; i < tp->star_power_paths - 1; i++)
-	{
-		memcpy(&tp->star_power_path[i], &tp->star_power_path[i + 1], sizeof(EOF_PHRASE_SECTION));
-	}
-	tp->star_power_paths--;
 }
 
 void eof_pro_guitar_track_delete_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned long index)
@@ -3518,23 +3449,9 @@ void eof_track_add_star_power_path(EOF_SONG *sp, unsigned long track, unsigned l
 			eof_legacy_track_add_star_power(sp->legacy_track[tracknum], start_pos, end_pos);
 		break;
 
-		case EOF_VOCAL_TRACK_FORMAT:
-			eof_vocal_track_add_star_power(sp->vocal_track[tracknum], start_pos, end_pos);
-		break;
-
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			eof_pro_guitar_track_add_star_power(sp->pro_guitar_track[tracknum], start_pos, end_pos);
 		break;
-	}
-}
-
-void eof_vocal_track_add_star_power(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos)
-{
-	if(tp->star_power_paths < EOF_MAX_PHRASES)
-	{	//If the maximum number of star power phrases for this track hasn't already been defined
-		tp->star_power_path[tp->star_power_paths].start_pos = start_pos;
-		tp->star_power_path[tp->star_power_paths].end_pos = end_pos;
-		tp->star_power_paths++;
 	}
 }
 

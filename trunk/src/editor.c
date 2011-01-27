@@ -3867,8 +3867,8 @@ void eof_render_editor_window_common(void)
 	}
 
 	/* draw SP sections */
-//	if(eof_selected_track != EOF_TRACK_VOCALS)
-//	{
+	if(eof_selected_track != EOF_TRACK_VOCALS)
+	{
 		numsections = eof_get_num_star_power_paths(eof_song, eof_selected_track);
 		for(i = 0; i < numsections; i++)
 		{	//For each solo section in the track
@@ -3876,11 +3876,10 @@ void eof_render_editor_window_common(void)
 			if(sectionptr != NULL)
 			{
 				if(sectionptr->end_pos >= start)	//If the star power section would render at or after the left edge of the piano roll, render a silver rectangle from the top most lane to the top of the fretboard area
-//					rectfill(eof_window_editor->screen, lpos + sectionptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, lpos + sectionptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes-1], eof_color_silver);
 					rectfill(eof_window_editor->screen, lpos + sectionptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, lpos + sectionptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0], eof_color_silver);
 			}
 		}
-//	}
+	}
 
 	/* draw arpeggio sections */
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
