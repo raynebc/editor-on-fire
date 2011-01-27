@@ -3237,6 +3237,9 @@ unsigned long eof_get_num_star_power_paths(EOF_SONG *sp, unsigned long track)
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 		return sp->pro_guitar_track[tracknum]->star_power_paths;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+		return sp->vocal_track[tracknum]->star_power_paths;
 	}
 
 	return 0;	//Return error
@@ -3260,7 +3263,7 @@ EOF_PHRASE_SECTION *eof_get_star_power_path(EOF_SONG *sp, unsigned long track, u
 		break;
 
 		case EOF_VOCAL_TRACK_FORMAT:
-		return NULL;	//Vocal star power is not implemented yet
+		return &sp->vocal_track[tracknum]->star_power_path[pathnum];
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			if(pathnum < EOF_MAX_PHRASES)
