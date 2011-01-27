@@ -190,7 +190,7 @@ void eof_prepare_note_menu(void)
 	EOF_PHRASE_SECTION *sectionptr = NULL;
 
 	if(eof_song && eof_song_loaded)
-	{	//If a song is loaded
+	{
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		if(eof_vocals_selected)
 		{	//PART VOCALS SELECTED
@@ -261,6 +261,17 @@ void eof_prepare_note_menu(void)
 					lastnote = i;
 				}
 			}
+			for(j = 0; j < eof_get_num_star_power_paths(eof_song, eof_selected_track); j++)
+			{	//For each star power path in the active track
+				sectionptr = eof_get_star_power_path(eof_song, eof_selected_track, j);
+				if((sel_end >= sectionptr->start_pos) && (sel_start <= sectionptr->end_pos))
+				{
+					insp = 1;
+					spstart = sel_start;
+					spend = sel_end;
+					spp = j;
+				}
+			}
 			for(j = 0; j < eof_get_num_solos(eof_song, eof_selected_track); j++)
 			{	//For each solo section in the active track
 				sectionptr = eof_get_solo(eof_song, eof_selected_track, j);
@@ -311,17 +322,6 @@ void eof_prepare_note_menu(void)
 				}
 			}
 		}//PART VOCALS NOT SELECTED
-		for(j = 0; j < eof_get_num_star_power_paths(eof_song, eof_selected_track); j++)
-		{	//For each star power path in the active track
-			sectionptr = eof_get_star_power_path(eof_song, eof_selected_track, j);
-			if((sel_end >= sectionptr->start_pos) && (sel_start <= sectionptr->end_pos))
-			{
-				insp = 1;
-				spstart = sel_start;
-				spend = sel_end;
-				spp = j;
-			}
-		}
 		vselected = eof_count_selected_notes(NULL, 1);
 		if(vselected)
 		{	//ONE OR MORE NOTES/LYRICS SELECTED
@@ -487,7 +487,7 @@ void eof_prepare_note_menu(void)
 			}
 			eof_note_menu[9].flags = D_DISABLED; // toggle crazy
 			eof_note_menu[11].flags = D_DISABLED; // solos
-//			eof_note_menu[12].flags = D_DISABLED; // star power
+			eof_note_menu[12].flags = D_DISABLED; // star power
 			eof_note_menu[15].flags = D_DISABLED; // HOPO
 
 			/* lyric lines */
@@ -497,7 +497,7 @@ void eof_prepare_note_menu(void)
 			}
 
 			if(vselected)
-			{	//If one or more lyrics are selected
+			{
 				eof_note_menu[19].flags = 0; // freestyle submenu
 			}
 
@@ -662,7 +662,7 @@ void eof_prepare_note_menu(void)
 				eof_note_toggle_menu[5].flags = D_DISABLED;
 			}
 		}//PART VOCALS NOT SELECTED
-	}//If a song is loaded
+	}
 }
 
 int eof_menu_note_transpose_up(void)

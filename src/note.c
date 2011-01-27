@@ -559,7 +559,7 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 	vline(window->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 + eof_screen_layout.note_marker_size, makecol(128, 128, 128));
 	if((np->note != 0) && !eof_is_freestyle(np->text))
 	{	//If this lyric is not pitchless/freestyle
-		ncol = native ? eof_color_red : (np->flags & EOF_NOTE_FLAG_SP ? eof_color_silver : eof_color_green);
+		ncol = native ? eof_color_red : eof_color_green;
 		if(np->note != EOF_LYRIC_PERCUSSION)
 		{
 			rectfill(window->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, ncol);
