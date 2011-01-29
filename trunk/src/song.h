@@ -187,7 +187,7 @@ typedef struct
 	char track_type;				//Specifies which type of track this is (ie default PART GUITAR, custom track, etc)
 	unsigned long tracknum;			//Specifies which number of that type this track is, used as an index into the type-specific track arrays
 	char name[EOF_NAME_LENGTH+1];	//Specifies the name of the track
-	char difficulty;				//Specifies the difficulty level from 0-5 (standard 0-5 scale), or 6 for devil heads (extreme difficulty)
+	unsigned char difficulty;		//Specifies the difficulty level from 0-5 (standard 0-5 scale), or 6 for devil heads (extreme difficulty)
 	unsigned long flags;
 } EOF_TRACK_ENTRY;
 

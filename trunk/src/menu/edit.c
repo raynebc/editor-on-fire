@@ -2328,7 +2328,7 @@ int eof_menu_edit_select_previous(void)
 
 void eof_sanitize_note_flags(unsigned long *flags,unsigned long desttrack)
 {
-	if(flags == NULL)
+	if((flags == NULL) || (desttrack >= eof_song->tracks))
 		return;
 
 	if(eof_song->track[desttrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -2385,5 +2385,10 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long desttrack)
 		*flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Erase the forced HOPO ON flag
 		*flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Erase the forced HOPO OFF flag
 		*flags &= (~EOF_NOTE_FLAG_CRAZY);	//Erase the "crazy" note flag
+	}
+
+	if(eof_song->track[desttrack]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR)
+	{	//For a note in any keys track, force the crazy flag to be set
+		*flags |= EOF_NOTE_FLAG_CRAZY;
 	}
 }

@@ -73,5 +73,6 @@ int eof_menu_song_add_silence(void);
 int eof_menu_song_open_bass(void);		//Toggle the ability to use a sixth lane in PART BASS on/off
 int eof_menu_catalog_edit_name(void);	//Brings up a dialog window allowing the user to define a fret catalog entry's name
 int eof_menu_song_legacy_view(void);	//Toggles the view of pro guitar tracks as legacy notes
+int eof_song_track_difficulty_dialog(void);	//Allow the active track's difficulty to be set to a value from 0 through 6
 
 #endif
