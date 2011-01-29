@@ -2539,22 +2539,22 @@ int eof_menu_note_edit_pro_guitar_note(void)
 						}
 						else
 						{	//Get the appropriate fret value
-						fretvalue = atol(eof_fret_strings[ctr]);
-						if((fretvalue < 0) || (fretvalue > eof_song->pro_guitar_track[tracknum]->numfrets))
-						{	//If the conversion to number failed, or an invalid fret number was entered, enter a value of (muted) for the string
-							fretvalue = 0xFF;
+							fretvalue = atol(eof_fret_strings[ctr]);
+							if((fretvalue < 0) || (fretvalue > eof_song->pro_guitar_track[tracknum]->numfrets))
+							{	//If the conversion to number failed, or an invalid fret number was entered, enter a value of (muted) for the string
+								fretvalue = 0xFF;
+							}
 						}
-					}
-					if(!undo_made && (fretvalue != eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr]))
-					{	//If an undo state hasn't been made yet, and this fret value changed
-						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-						undo_made = 1;
-					}
-					eof_song->pro_guitar_track[tracknum]->note[i]->frets[ctr] = fretvalue;
-					if(fretvalue != 0xFF)
-					{	//Track whether the all used strings in this note/chord are muted
-						allmuted = 0;
-					}
+						if(!undo_made && (fretvalue != eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr]))
+						{	//If an undo state hasn't been made yet, and this fret value changed
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+							undo_made = 1;
+						}
+						eof_song->pro_guitar_track[tracknum]->note[i]->frets[ctr] = fretvalue;
+						if(fretvalue != 0xFF)
+						{	//Track whether the all used strings in this note/chord are muted
+							allmuted = 0;
+						}
 					}
 					else
 					{	//Clear the fret value and return the fret back to its default of 0 (open)

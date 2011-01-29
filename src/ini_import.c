@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "song.h"
 #include "utility.h"	//For eof_buffer_file()
+#include "ini.h"		//For eof_difficulty_ini_tags[]
 
 typedef struct
 {
@@ -25,6 +26,8 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 	char * equals = NULL;
 	int i;
 	int j;
+	unsigned long stringlen;
+	char setting_stored;
 
 	eof_import_ini_settings = 0;
 	textbuffer = (char *)eof_buffer_file(fn);	//Buffer the INI file into memory
@@ -65,14 +68,29 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 					token = equals + 1;
 					ustrcpy(eof_import_ini_setting[eof_import_ini_settings].type, line_token);
 					ustrcpy(eof_import_ini_setting[eof_import_ini_settings].value, token);
-					eof_import_ini_settings++;
+					while(1)
+					{	//Drop all trailing space characters from the tag type string
+						stringlen = ustrlen(eof_import_ini_setting[eof_import_ini_settings].type);
+						if(stringlen < 1)
+							break;
+						if(eof_import_ini_setting[eof_import_ini_settings].type[stringlen - 1] == ' ')
+						{	//If the last character in this tag type is a space character, truncate it to simplify the tag matching below
+							eof_import_ini_setting[eof_import_ini_settings].type[stringlen - 1] = '\0';
+						}
+						else
+							break;
+					}
+					if(eof_import_ini_setting[eof_import_ini_settings].type[0] != '\0')
+					{	//If the type string wasn't just space characters up to the equal sign, add the INI setting
+						eof_import_ini_settings++;
+					}
 				}
 			}
 		}
 	}
 	for(i = 0; i < eof_import_ini_settings; i++)
-	{
-		if(!ustricmp(eof_import_ini_setting[i].type, "artist ") || !ustricmp(eof_import_ini_setting[i].type, "artist"))
+	{	//For each imported INI setting
+		if(!ustricmp(eof_import_ini_setting[i].type, "artist"))
 		{
 			for(j = 0; j < ustrlen(eof_import_ini_setting[i].value); j++)
 			{
@@ -83,7 +101,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 				}
 			}
 		}
-		else if(!ustricmp(eof_import_ini_setting[i].type, "name ") || !ustricmp(eof_import_ini_setting[i].type, "name"))
+		else if(!ustricmp(eof_import_ini_setting[i].type, "name"))
 		{
 			for(j = 0; j < ustrlen(eof_import_ini_setting[i].value); j++)
 			{
@@ -94,7 +112,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 				}
 			}
 		}
-		else if(!ustricmp(eof_import_ini_setting[i].type, "frets ") || !ustricmp(eof_import_ini_setting[i].type, "frets"))
+		else if(!ustricmp(eof_import_ini_setting[i].type, "frets"))
 		{
 			for(j = 0; j < ustrlen(eof_import_ini_setting[i].value); j++)
 			{
@@ -105,7 +123,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 				}
 			}
 		}
-		else if(!ustricmp(eof_import_ini_setting[i].type, "year ") || !ustricmp(eof_import_ini_setting[i].type, "year"))
+		else if(!ustricmp(eof_import_ini_setting[i].type, "year"))
 		{
 			for(j = 0; j < ustrlen(eof_import_ini_setting[i].value); j++)
 			{
@@ -116,7 +134,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 				}
 			}
 		}
-		else if(!ustricmp(eof_import_ini_setting[i].type, "loading_phrase ") || !ustricmp(eof_import_ini_setting[i].type, "loading_phrase"))
+		else if(!ustricmp(eof_import_ini_setting[i].type, "loading_phrase"))
 		{
 			for(j = 0; j < ustrlen(eof_import_ini_setting[i].value); j++)
 			{
@@ -127,7 +145,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 				}
 			}
 		}
-		else if(!ustricmp(eof_import_ini_setting[i].type, "lyrics ") || !ustricmp(eof_import_ini_setting[i].type, "lyrics"))
+		else if(!ustricmp(eof_import_ini_setting[i].type, "lyrics"))
 		{
 			for(j = 0; j < ustrlen(eof_import_ini_setting[i].value); j++)
 			{
@@ -141,7 +159,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 				}
 			}
 		}
-		else if(!ustricmp(eof_import_ini_setting[i].type, "eighthnote_hopo ") || !ustricmp(eof_import_ini_setting[i].type, "eighthnote_hopo"))
+		else if(!ustricmp(eof_import_ini_setting[i].type, "eighthnote_hopo"))
 		{
 			for(j = 0; j < ustrlen(eof_import_ini_setting[i].value); j++)
 			{
@@ -155,7 +173,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 				}
 			}
 		}
-		else if(!ustricmp(eof_import_ini_setting[i].type, "delay ") || !ustricmp(eof_import_ini_setting[i].type, "delay"))
+		else if(!ustricmp(eof_import_ini_setting[i].type, "delay"))
 		{
 			sp->tags->ogg[0].midi_offset = atoi(eof_import_ini_setting[i].value);
 			if(sp->tags->ogg[0].midi_offset < 0)
@@ -163,13 +181,13 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 				sp->tags->ogg[0].midi_offset = 0;
 			}
 		}
-		else if(!ustricmp(eof_import_ini_setting[i].type, "scores ") || !ustricmp(eof_import_ini_setting[i].type, "score"))
+		else if(!ustricmp(eof_import_ini_setting[i].type, "score"))
 		{
 		}
-		else if(!ustricmp(eof_import_ini_setting[i].type, "scores_ext ") || !ustricmp(eof_import_ini_setting[i].type, "scores_ext"))
+		else if(!ustricmp(eof_import_ini_setting[i].type, "scores_ext"))
 		{
 		}
-		else if(!ustricmp(eof_import_ini_setting[i].type, "open_strum ") || !ustricmp(eof_import_ini_setting[i].type, "open_strum"))
+		else if(!ustricmp(eof_import_ini_setting[i].type, "open_strum"))
 		{
 			for(j = 0; j < ustrlen(eof_import_ini_setting[i].value); j++)
 			{
@@ -184,13 +202,39 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 			}
 		}
 
-		/* for custom settings */
+		/* for custom settings or difficulty strings */
 		else
 		{
-			snprintf(sp->tags->ini_setting[sp->tags->ini_settings], 512, "%s = %s", eof_import_ini_setting[i].type, eof_import_ini_setting[i].value);
-			sp->tags->ini_settings++;
+			setting_stored = 0;
+			for(j = 0; j < EOF_TRACKS_MAX + 1; j++)
+			{	//For each string in the eof_difficulty_ini_tags[] array
+				if(!ustricmp(eof_import_ini_setting[i].type, eof_difficulty_ini_tags[j]))
+				{	//If this INI setting matches the difficulty tag, store the difficulty value into the appropriate track structure
+					sp->track[j]->difficulty = atoi(eof_import_ini_setting[i].value);
+					setting_stored = 1;
+					break;
+				}
+			}
+			if(!setting_stored)
+			{
+				if(!ustricmp(eof_import_ini_setting[i].type, "diff_drums_real"))
+				{	//If this is a pro drum difficulty tag
+					sp->track[EOF_TRACK_DRUM]->flags &= ~(0xFF << 24);		//Clear the drum track's flag's most significant byte
+					sp->track[EOF_TRACK_DRUM]->flags |= (atoi(eof_import_ini_setting[i].value) << 24);	//Store the pro drum difficulty in the drum track's flag's most significant byte
+				}
+				else if(!ustricmp(eof_import_ini_setting[i].type, "diff_vocals_harm"))
+				{	//If this is a harmony difficulty tag
+					sp->track[EOF_TRACK_VOCALS]->flags &= ~(0xFF << 24);	//Clear the vocal track's flag's most significant byte
+					sp->track[EOF_TRACK_VOCALS]->flags |= (atoi(eof_import_ini_setting[i].value) << 24);	//Store the harmony difficulty in the vocal track's flag's most significant byte
+				}
+				else
+				{	//Store it as a custom INI setting
+					snprintf(sp->tags->ini_setting[sp->tags->ini_settings], 512, "%s = %s", eof_import_ini_setting[i].type, eof_import_ini_setting[i].value);
+					sp->tags->ini_settings++;
+				}
+			}
 		}
-	}
+	}//For each imported INI setting
 	free(textbuffer);	//Free buffered INI file from memory
 	return 1;
 }

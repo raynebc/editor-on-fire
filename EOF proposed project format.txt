@@ -93,7 +93,7 @@ TRACK CHUNK, for each track:
 !	and will be identified by its format and behavior fields.  This will allow the ability to maintain some compatibility with EOF's current method of comparing tracks to defined macros
 !	The track format and behavior abstract the track to the point where any number of tracks can be handled, allowing an easy way to verify a track's ability to use HOPOs, etc. instead of relying on the track's number
 !	Until track number comparison is completely removed for this purpose, the track type can serve as a replacement
-*	1 byte:		Track difficulty level (0-6)
+*	1 byte:		Track difficulty level (0-6), 0xFF represents an undefined track difficulty
 *	4 bytes:	Track flags (ie. which difficulties are locked for editing)
 *	2 bytes:	Track compliance flags (ie. if it is valid as per constraints of Rock Band, etc)
 
@@ -146,6 +146,8 @@ TRACK CHUNK, for each track:
 *		4 bytes:	Note flags
 	}
 !This track format could be referred to as "legacy" format, because it is Harmonix's old format used prior to RB3
+!The most significant byte of PART DRUMS' flags variable stores the pro drum difficulty
+!The most significant byte of PART VOCALS' flags variable stores the harmony difficulty
 
 [VOCAL TRACK FORMAT]
 *	1 byte:		Tone set number assigned to this track (ie. 0=Grand Piano, 1=MIDI device, ...)

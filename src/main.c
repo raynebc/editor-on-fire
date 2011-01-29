@@ -1809,6 +1809,7 @@ void eof_render_note_window(void)
 	unsigned long notepos;
 	char pro_guitar_string[30] = {0};
 	unsigned char fretvalue;
+	char difficulty1[20], difficulty2[50];
 
 	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	clear_to_color(eof_window_note->screen, eof_color_gray);
@@ -2040,6 +2041,45 @@ void eof_render_note_window(void)
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Catalog: %lu of %lu", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
 		ypos += 12;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "OGG File: \"%s\"", eof_song->tags->ogg[eof_selected_ogg].filename);
+
+		//Display the difficulties associated with the active track
+		if(eof_song->track[eof_selected_track]->difficulty != 0xFF)
+		{	//If the active track has a defined difficulty
+			sprintf(difficulty1, "%d", eof_song->track[eof_selected_track]->difficulty);
+		}
+		else
+		{
+			sprintf(difficulty1, "(undefined)");
+		}
+		difficulty2[0] = '\0';
+		if(eof_selected_track == EOF_TRACK_DRUM)
+		{	//Write the difficulty string to display for pro drums
+			if(((eof_song->track[EOF_TRACK_DRUM]->flags & 0xFF000000) >> 24) != 0xFF)
+			{	//If the pro drum difficulty is defined
+				sprintf(difficulty2, "(Pro drums: %lu)", (eof_song->track[EOF_TRACK_DRUM]->flags & 0xFF000000) >> 24);	//Mask out the high order byte of the drum track's flags (pro drum difficulty)
+			}
+			else
+			{
+				sprintf(difficulty2, "(Pro drums: Undefined)");
+			}
+		}
+		else if(eof_selected_track == EOF_TRACK_VOCALS)
+		{	//Write the difficulty string to display for vocal harmony
+			if(((eof_song->track[EOF_TRACK_VOCALS]->flags & 0xFF000000) >> 24) != 0xFF)
+			{	//If the harmony difficulty is defined
+				sprintf(difficulty2, "(Harmony: %lu)", (eof_song->track[EOF_TRACK_VOCALS]->flags & 0xFF000000) >> 24);	//Mask out the high order byte of the vocal track's flags (harmony difficulty)
+			}
+			else
+			{
+				sprintf(difficulty2, "(Harmony: Undefined)");
+			}
+		}
+		else
+		{	//Otherwise truncate the string
+			difficulty2[0] = '\0';
+		}
+		ypos += 12;
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Difficulty: %s %s", difficulty1, difficulty2);
 
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//Display information specific to pro guitar tracks

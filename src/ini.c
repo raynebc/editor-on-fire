@@ -6,6 +6,8 @@
 #include "ini.h"
 #include "legacy.h"
 
+char *eof_difficulty_ini_tags[EOF_TRACKS_MAX + 1] = {"diff_band", "diff_guitar", "diff_bass", "", "", "diff_drums", "diff_vocals", "diff_keys", "diff_bass_real", "diff_guitar_real", "diff_keys_real"};
+
 int eof_save_ini(EOF_SONG * sp, char * fn)
 {
 	PACKFILE * fp;
@@ -67,6 +69,29 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	{
 		ustrcat(ini_string, "\r\nloading_phrase = ");
 		ustrcat(ini_string, sp->tags->loading_text);
+	}
+
+	/* write difficulty tags */
+	for(i = 0; i < sp->tracks; i++)
+	{	//For each track in the chart
+		if(i == 0)
+			continue;	//Until the band difficulty is implemented, skip this iteration
+
+		if((eof_difficulty_ini_tags[i][0] != '\0') && (sp->track[i]->difficulty != 0xFF))
+		{	//If this track has a supported difficulty tag and the difficulty is defined
+			sprintf(buffer, "\r\n%s = %d", eof_difficulty_ini_tags[i], sp->track[i]->difficulty);
+			ustrcat(ini_string, buffer);
+		}
+	}
+	if(((eof_song->track[EOF_TRACK_DRUM]->flags & 0xFF000000) >> 24) != 0xFF)
+	{	//If there is a defined pro drum difficulty
+		sprintf(buffer, "\r\ndiff_drums_real = %lu", (eof_song->track[EOF_TRACK_DRUM]->flags & 0xFF000000) >> 24);
+		ustrcat(ini_string, buffer);
+	}
+	if(((eof_song->track[EOF_TRACK_VOCALS]->flags & 0xFF000000) >> 24) != 0xFF)
+	{	//If there is a defined harmony difficulty
+		sprintf(buffer, "\r\ndiff_vocals_harm = %lu", (eof_song->track[EOF_TRACK_VOCALS]->flags & 0xFF000000) >> 24);
+		ustrcat(ini_string, buffer);
 	}
 
 	/* write other settings */
