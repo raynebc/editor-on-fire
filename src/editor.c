@@ -420,14 +420,14 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 		if(sp->pos >= eof_song->beat[sp->beat + 1]->pos)
 		{
 			sp->beat = sp->beat + 1;
-			if((sp->beat >= eof_song->beats - 2) && (sp->beat >= 2))
-			{	//Don't reference a negative index of eof_song->beat[]
-				sp->beat_length = eof_song->beat[sp->beat - 1]->pos - eof_song->beat[sp->beat - 2]->pos;
-			}
-			else if(sp->beat + 1 < eof_song->beats)
-			{	//Don't read out of bounds
-				sp->beat_length = eof_song->beat[sp->beat + 1]->pos - eof_song->beat[sp->beat]->pos;
-			}
+		}
+		if((sp->beat >= eof_song->beats - 2) && (sp->beat >= 2))
+		{	//Don't reference a negative index of eof_song->beat[]
+			sp->beat_length = eof_song->beat[sp->beat - 1]->pos - eof_song->beat[sp->beat - 2]->pos;
+		}
+		else if(sp->beat + 1 < eof_song->beats)
+		{	//Don't read out of bounds
+			sp->beat_length = eof_song->beat[sp->beat + 1]->pos - eof_song->beat[sp->beat]->pos;
 		}
 
 		/* calculate the length of the snap position */
