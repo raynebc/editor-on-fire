@@ -2038,7 +2038,14 @@ void eof_render_note_window(void)
 		ypos += 12;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Playback Speed: %d%%", eof_playback_speed / 10);
 		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Catalog: %lu of %lu", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
+		if((eof_selected_catalog_entry < eof_song->catalog->entries) && (eof_song->catalog->entry[eof_selected_catalog_entry].name[0] != '\0'))
+		{	//If the active fret catalog has a defined name
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Catalog: %lu of %lu: %s", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries, eof_song->catalog->entry[eof_selected_catalog_entry].name);
+		}
+		else
+		{
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Catalog: %lu of %lu", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
+		}
 		ypos += 12;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "OGG File: \"%s\"", eof_song->tags->ogg[eof_selected_ogg].filename);
 
