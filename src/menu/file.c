@@ -355,6 +355,8 @@ int eof_menu_file_load(void)
 		if(eof_song)
 		{
 			eof_destroy_song(eof_song);
+			eof_song = NULL;
+			eof_song_loaded = 0;
 		}
 		eof_destroy_ogg();
 		eof_song = eof_load_song(eof_filename);
@@ -377,7 +379,7 @@ int eof_menu_file_load(void)
 			if(!eof_load_ogg(temp_filename))
 			{
 				eof_destroy_song(eof_song);
-				eof_song=NULL;
+				eof_song = NULL;
 				eof_song_loaded = 0;
 				eof_changes = 0;
 				eof_change_count = 0;
@@ -773,6 +775,8 @@ int eof_menu_file_midi_import(void)
 		if(eof_song)
 		{
 			eof_destroy_song(eof_song);
+			eof_song = NULL;
+			eof_song_loaded = 0;
 		}
 		eof_destroy_ogg();
 		ustrcpy(eof_filename, returnedfn);
@@ -1566,6 +1570,8 @@ int eof_menu_file_feedback_import(void)
 			if(eof_song)
 			{
 				eof_destroy_song(eof_song);
+				eof_song = NULL;
+				eof_song_loaded = 0;
 			}
 			eof_destroy_ogg();
 			ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
@@ -1893,6 +1899,8 @@ int eof_new_chart(char * filename)
 	if(eof_song)
 	{
 		eof_destroy_song(eof_song);
+		eof_song = NULL;
+		eof_song_loaded = 0;
 	}
 	eof_destroy_ogg();
 
