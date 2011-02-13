@@ -339,7 +339,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	char trackctr;							//Used in the temp data creation to handle Expert+
 	EOF_MIDI_TS_LIST *tslist=NULL;			//List containing TS changes
 	unsigned long note, notenum, noteflags, notepos;
-	int channel, velocity, bitmask, slidenote;	//Used for pro guitar export
+	int channel, velocity, bitmask, slidenote = 0;	//Used for pro guitar export
 	EOF_PHRASE_SECTION *sectionptr;
 	char *lastname = NULL, *currentname = NULL, nochord[]="NC", chordname[100]="";
 
