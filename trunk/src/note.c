@@ -1077,7 +1077,7 @@ BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, unsigned char s
 
 void eof_get_note_tab_notation(char *buffer, unsigned long track, unsigned long note)
 {
-	unsigned long index = 0, tracknum, flags = 0, prevnoteflags;
+	unsigned long index = 0, tracknum, flags = 0, prevnoteflags = 0;
 	long prevnotenum;
 
 	if((track >= eof_song->tracks) || (buffer == NULL) || ((eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT)))
