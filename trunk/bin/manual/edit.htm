@@ -16,7 +16,7 @@ p {text-indent: 1cm}
 <h1><a name="Edit">Editing Songs</a></h1>
 Now let's get into the heart of EOF, editing songs. EOF has several edit modes and each one operates in a different fashion. In order to get the most out of EOF you will want to use an edit mode that you are comfortable with. Before we go there, you will need to have a song opened for editing.<br><br>
 
-[ <a href="edit.htm#create">Creating Songs</a> ] [ <a href="edit.htm#load">Loading Songs</a> ] [ <a href="edit.htm#save">Saving Songs</a> ] [ <a href="edit.htm#edit">Edit Modes</a> ] [ <a href="edit.htm#ekeys">Editor Keys</a> ] [ <a href="edit.htm#record">Recording Input</a> ]
+[ <a href="edit.htm#create">Creating Songs</a> ] [ <a href="edit.htm#load">Loading Songs</a> ] [ <a href="edit.htm#save">Saving Songs</a> ] [ <a href="edit.htm#edit">Edit Modes</a> ] [ <a href="edit.htm#record">Recording Input</a> ] [ <a href="edit.htm#ekeys">Editor Keys</a> ] [ <a href="edit.htm#notes">Notes</a> ] [ <a href="edit.htm#beats">Beat Markers</a> ] [ <a href="edit.htm#tracks">Tracks</a> ] [ <a href="edit.htm#catalog">Catalog</a> ] [ <a href="edit.htm#events">Events</a> ] [ <a href="edit.htm#bre">Big Rock Endings</a> ] [ <a href="edit.htm#drumfill">Drum Fills</a> ]
 <br><br>
 
 <h1><a name="create">Creating Songs</a></h1>
@@ -104,5 +104,11 @@ EOF provides you with a catalog where you can store your frets for the current s
 Some Frets On Fire mods allow you to use additional events in your songs for things such as adding a solo section. EOF allows you to place events at any beat marker in the song  by first selecting a beat marker and then going to "Beat->Events" in the menu. From the "Events" dialog box use the "Add," "Edit," and "Delete" buttons to edit your events for the currently selected beat. You can view a list of all events for the entire song in "All Events" dialog ("Beat->All Events").<br><br>
 One neat thing you can do with events is add Practice mode sections to your song. To define a Practice mode section, simply add a text event to the beat where you want the section to start and name it "section whatever" where "whatever" is replaced with the name of the section as you want it displayed in the game.<br><br>
 Text events can also be used to define guitar solos but this method is deprecated (see "<a href="functions.htm#solos">Note->Solos</a>" for the correct way to define solo sections). Nonetheless, I will explain how to do so. To mark a solo section you simply add a text event at the start of the solo named "solo_on" and one at the end of the solo named "solo_off." Solos marked this way will appear in the Practice mode listing. Alternately, naming your event "section Guitar_Solo" or something containing the word "solo" will start a solo section. Solo sections defined this way will end when the next text event not containing the word "solo" is reached. You will need to define section markers where your solo sections are if you want them to show up in the Practice Mode listing.
+
+<h1><a name="bre">Big Rock Endings</a></h1>
+To add a big rock ending for an instrument, click the "BRE" tab for the desired instrument track and place a five note chord that runs the desired length of the BRE section. For a drum track, you also have to place a text event saying <b><u>big_rock_ending</u></b> at the beat where the BRE starts, otherwise the game will treat it as a drum fill section instead.
+
+<h1><a name="drumfill">Drum Fills</a></h1>
+A drum fill is a freestyle drum section that ends in a note that the drummer must hit in order to deploy overdrive.  To author a drum fill, author a five note chord in the desired area of the chart in PART DRUMS, but do not place a big_rock_ending text event.
 </BODY>
 </HTML>
