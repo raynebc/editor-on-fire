@@ -304,6 +304,7 @@ typedef struct
 	short         ini_settings;
 
 	unsigned long revision;
+	unsigned long difficulty;		//Specifies the difficulty level from 0-5 (standard 0-5 scale), or 6 for devil heads (extreme difficulty)
 
 } EOF_SONG_TAGS;
 

@@ -149,6 +149,7 @@ EOF_SONG * eof_create_song(void)
 	ustrcpy(sp->tags->ogg[0].filename, "guitar.ogg");
 	sp->tags->oggs = 1;
 	sp->tags->revision = 0;
+	sp->tags->difficulty = 0xFF;
 	sp->resolution = 0;
 	sp->tracks = 0;
 	sp->legacy_tracks = 0;
@@ -1302,7 +1303,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		//Store the pointers to each of the 5 boolean type INI settings (number 0 is reserved) to simplify the loading code
 
 	#define EOFNUMININUMBERTYPES 5
-	unsigned long *const ininumberbuffer[EOFNUMININUMBERTYPES]={NULL,NULL,NULL,NULL,NULL};
+	unsigned long *const ininumberbuffer[EOFNUMININUMBERTYPES]={NULL,NULL,&sp->tags->difficulty,NULL,NULL};
 		//Store the pointers to each of the 5 number type INI settings (number 0 is reserved) to simplify the loading code
 
 
@@ -1876,7 +1877,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		//Store the pointers to each of the 5 boolean type INI settings (number 0 is reserved) to simplify the loading code
 
 	#define EOFNUMININUMBERTYPES 5
-	unsigned long *const ininumberbuffer[EOFNUMININUMBERTYPES]={NULL,NULL,NULL,NULL,NULL};
+	unsigned long *const ininumberbuffer[EOFNUMININUMBERTYPES]={NULL,NULL,&sp->tags->difficulty,NULL,NULL};
 		//Store the pointers to each of the 5 number type INI settings (number 0 is reserved) to simplify the loading code
 
 
@@ -1948,7 +1949,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			count++;
 		}
 	}
-	pack_iputw(0, fp);	//Write the number of INI numbers
+	pack_iputw(count, fp);	//Write the number of INI numbers
 	for(ctr=0; ctr < EOFNUMININUMBERTYPES; ctr++)
 	{
 		if(ininumberbuffer[ctr] != NULL)
