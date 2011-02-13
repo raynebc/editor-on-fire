@@ -150,10 +150,10 @@ DIALOG eof_song_properties_dialog[] =
    { d_agup_edit_proc,    12,  104, 184, 20,  0,   0,   0,    0,      255, 0,   eof_etext2,             NULL, NULL },
    { d_agup_text_proc,    12,  136, 108, 12,  0,   0,   0,    0,      0,   0,   "Frettist",             NULL, NULL },
    { d_agup_edit_proc,    12,  152, 184, 20,  0,   0,   0,    0,      255, 0,   eof_etext3,             NULL, NULL },
-   { d_agup_text_proc,    12,  184, 60,  12,  0,   0,   0,    0,      0,   0,   "Delay",                NULL, NULL },
-   { eof_verified_edit_proc,    12,  204, 60,  20,  0,   0,   0,    0,      6,   0, eof_etext4, "0123456789", NULL },
-   { d_agup_text_proc,    84,  184, 48,  12,  0,   0,   0,    0,      0,   0,   "Year",                 NULL, NULL },
-   { eof_verified_edit_proc,    84,  204, 48,  20,  0,   0,   0,    0,      4,   0, eof_etext5, "0123456789", NULL },
+   { d_agup_text_proc,    12,  188, 60,  12,  0,   0,   0,    0,      0,   0,   "Delay",                NULL, NULL },
+   { eof_verified_edit_proc,12,204, 50,  20,  0,   0,   0,    0,      6,   0,   eof_etext4,     "0123456789", NULL },
+   { d_agup_text_proc,    74,  188, 48,  12,  0,   0,   0,    0,      0,   0,   "Year",                 NULL, NULL },
+   { eof_verified_edit_proc,74,204, 38,  20,  0,   0,   0,    0,      4,   0,   eof_etext5,     "0123456789", NULL },
    { d_agup_text_proc,    208, 40,  96,  12,  0,   0,   0,    0,      0,   0,   "Loading Text",         NULL, NULL },
    { d_agup_edit_proc,    208, 56,  216, 20,  0,   0,   0,    0,      255, 0,   eof_etext6,             NULL, NULL },
    { d_agup_text_proc,    208, 88,  96,  12,  0,   0,   0,    0,      0,   0,   "Loading Text Preview", NULL, NULL },
@@ -161,6 +161,8 @@ DIALOG eof_song_properties_dialog[] =
    { d_agup_check_proc,   160, 188, 136, 16,  0,   0,   0,    0,      1,   0,   "Lyrics",               NULL, NULL },
    { d_agup_check_proc,   160, 208, 136, 16,  0,   0,   0,    0,      1,   0,   "8th Note HO/PO",       NULL, NULL },
    { d_agup_button_proc,  340, 200, 84,  24,  0,   0,   '\r', D_EXIT, 0,   0,   "OK",                   NULL, NULL },
+   { d_agup_text_proc,    124, 188, 60,  12,  0,   0,   0,    0,      0,   0,   "Diff.",                 NULL, NULL },
+   { eof_verified_edit_proc,124,204,26,  20,  0,   0,   0,    0,      1,   0,   eof_etext7,        "0123456", NULL },
    { NULL,                0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                   NULL, NULL }
 };
 
@@ -793,6 +795,7 @@ int eof_menu_song_properties(void)
 //	double bpm = (double)60000000 / (double)eof_song->beat[0]->ppqn;
 	int old_offset = 0;
 	int i, invalid = 0;
+	unsigned long difficulty, undo_made = 0;
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
@@ -817,18 +820,29 @@ int eof_menu_song_properties(void)
 	ustrcpy(eof_etext6, eof_song->tags->loading_text);
 	eof_song_properties_dialog[15].flags = eof_song->tags->lyrics ? D_SELECTED : 0;
 	eof_song_properties_dialog[16].flags = eof_song->tags->eighth_note_hopo ? D_SELECTED : 0;
+	if(eof_song->tags->difficulty != 0xFF)
+	{	//If there is a band difficulty defined, populate the band difficulty field
+		sprintf(eof_etext7, "%lu", eof_song->tags->difficulty);
+	}
+	else
+	{	//Othewise leave the field blank
+		eof_etext7[0] = '\0';
+	}
 	if(eof_popup_dialog(eof_song_properties_dialog, 2) == 17)
-	{
+	{	//User clicked OK
 		if(ustricmp(eof_song->tags->title, eof_etext) || ustricmp(eof_song->tags->artist, eof_etext2) || ustricmp(eof_song->tags->frettist, eof_etext3) || ustricmp(eof_song->tags->year, eof_etext5) || ustricmp(eof_song->tags->loading_text, eof_etext6))
 		{
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			undo_made = 1;
 		}
 		else if(eof_is_number(eof_etext4) && (eof_song->tags->ogg[eof_selected_ogg].midi_offset != atol(eof_etext4)))
 		{
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			undo_made = 1;
 		}
 		else if((eof_song->tags->lyrics && !(eof_song_properties_dialog[15].flags & D_SELECTED)) || (!eof_song->tags->lyrics && (eof_song_properties_dialog[15].flags & D_SELECTED)) || (eof_song->tags->eighth_note_hopo && !(eof_song_properties_dialog[16].flags & D_SELECTED)) || (!eof_song->tags->eighth_note_hopo && (eof_song_properties_dialog[16].flags & D_SELECTED)))
 		{
+			undo_made = 1;
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		}
 		if((ustrlen(eof_etext) > 255) || (ustrlen(eof_etext2) > 255) || (ustrlen(eof_etext3) > 255) || (ustrlen(eof_etext5) > 31) || (ustrlen(eof_etext6) > 511))
@@ -876,6 +890,20 @@ int eof_menu_song_properties(void)
 			}
 			eof_clear_input();
 		}
+		if(eof_etext7[0] != '\0')
+		{	//If the band difficulty field is populated
+			difficulty = eof_etext7[0] - '0';	//Convert the ASCII character to its numerical value
+		}
+		else
+		{
+			difficulty = 0xFF;
+		}
+		if(!undo_made && (difficulty != eof_song->tags->difficulty))
+		{	//If the band difficulty field was edited, make an undo state if one hasn't been made already
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			undo_made = 1;
+		}
+		eof_song->tags->difficulty = difficulty;	//Save the value reflected by the band difficulty field
 		eof_fixup_notes();
 		eof_calculate_beats(eof_song);
 		eof_fix_window_title();
