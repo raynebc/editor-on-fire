@@ -227,6 +227,14 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 					sp->track[EOF_TRACK_VOCALS]->flags &= ~(0xFF << 24);	//Clear the vocal track's flag's most significant byte
 					sp->track[EOF_TRACK_VOCALS]->flags |= (atoi(eof_import_ini_setting[i].value) << 24);	//Store the harmony difficulty in the vocal track's flag's most significant byte
 				}
+				else if(!ustricmp(eof_import_ini_setting[i].type, "diff_band"))
+				{	//If this is a band difficulty tag
+					sp->tags->difficulty = atoi(eof_import_ini_setting[i].value);
+					if(sp->tags->difficulty > 6)
+					{	//If the band difficulty is invalid, set it to undefined
+						sp->tags->difficulty = 0xFF;
+					}
+				}
 				else
 				{	//Store it as a custom INI setting
 					snprintf(sp->tags->ini_setting[sp->tags->ini_settings], 512, "%s = %s", eof_import_ini_setting[i].type, eof_import_ini_setting[i].value);
