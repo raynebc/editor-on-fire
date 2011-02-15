@@ -6,7 +6,7 @@
 #include "ini.h"
 #include "legacy.h"
 
-char *eof_difficulty_ini_tags[EOF_TRACKS_MAX + 1] = {"diff_band", "diff_guitar", "diff_bass", "", "", "diff_drums", "diff_vocals", "diff_keys", "diff_bass_real", "diff_guitar_real", "diff_keys_real"};
+char *eof_difficulty_ini_tags[EOF_TRACKS_MAX + 1] = {"", "diff_guitar", "diff_bass", "", "", "diff_drums", "diff_vocals", "diff_keys", "diff_bass_real", "diff_guitar_real", "diff_keys_real"};
 
 int eof_save_ini(EOF_SONG * sp, char * fn)
 {
@@ -91,6 +91,11 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	if(((eof_song->track[EOF_TRACK_VOCALS]->flags & 0xFF000000) >> 24) != 0xFF)
 	{	//If there is a defined harmony difficulty
 		sprintf(buffer, "\r\ndiff_vocals_harm = %lu", (eof_song->track[EOF_TRACK_VOCALS]->flags & 0xFF000000) >> 24);
+		ustrcat(ini_string, buffer);
+	}
+	if(eof_song->tags->difficulty != 0xFF)
+	{	//If there is a defined band difficulty
+		sprintf(buffer, "\r\ndiff_band = %lu", eof_song->tags->difficulty);
 		ustrcat(ini_string, buffer);
 	}
 
