@@ -90,6 +90,9 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 	}
 	for(i = 0; i < eof_import_ini_settings; i++)
 	{	//For each imported INI setting
+		if(eof_import_ini_setting[i].type == '\0')
+			continue;	//Skip this INI type if its string is empty
+
 		if(!ustricmp(eof_import_ini_setting[i].type, "artist"))
 		{
 			for(j = 0; j < ustrlen(eof_import_ini_setting[i].value); j++)

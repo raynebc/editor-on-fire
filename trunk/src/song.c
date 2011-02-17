@@ -433,11 +433,7 @@ void eof_legacy_track_delete_star_power(EOF_LEGACY_TRACK * tp, unsigned long ind
 	if(index >= tp->star_power_paths)
 		return;
 
-	if(tp->star_power_path[index].name != NULL)
-	{	//If the section has a name
-		free(tp->star_power_path[index].name);	//Free it
-	}
-
+	tp->star_power_path[index].name[0] = '\0';	//Empty the name string
 	for(i = index; i < tp->star_power_paths - 1; i++)
 	{
 		memcpy(&tp->star_power_path[i], &tp->star_power_path[i + 1], sizeof(EOF_PHRASE_SECTION));
@@ -462,11 +458,7 @@ void eof_legacy_track_delete_solo(EOF_LEGACY_TRACK * tp, unsigned long index)
 	if(index >= tp->solos)
 		return;
 
-	if(tp->solo[index].name != NULL)
-	{	//If the section has a name
-		free(tp->solo[index].name);	//Free it
-	}
-
+	tp->solo[index].name[0] = '\0';	//Empty the name string
 	for(i = index; i < tp->solos - 1; i++)
 	{
 		memcpy(&tp->solo[i], &tp->solo[i + 1], sizeof(EOF_PHRASE_SECTION));
@@ -3424,11 +3416,7 @@ void eof_pro_guitar_track_delete_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned 
 	if(index >= tp->star_power_paths)
 		return;
 
-	if(tp->star_power_path[index].name != NULL)
-	{	//If the section has a name
-		free(tp->star_power_path[index].name);	//Free it
-	}
-
+	tp->star_power_path[index].name[0] = '\0';	//Empty the name string
 	for(i = index; i < tp->star_power_paths - 1; i++)
 	{
 		memcpy(&tp->star_power_path[i], &tp->star_power_path[i + 1], sizeof(EOF_PHRASE_SECTION));
@@ -3493,11 +3481,7 @@ void eof_pro_guitar_track_delete_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long i
 	if(index >= tp->solos)
 		return;
 
-	if(tp->solo[index].name != NULL)
-	{	//If the section has a name
-		free(tp->solo[index].name);	//Free it
-	}
-
+	tp->solo[index].name[0] = '\0';	//Empty the name string
 	for(i = index; i < tp->solos - 1; i++)
 	{
 		memcpy(&tp->solo[i], &tp->solo[i + 1], sizeof(EOF_PHRASE_SECTION));
@@ -3670,10 +3654,7 @@ void eof_track_delete_trill(EOF_SONG *sp, unsigned long track, unsigned long ind
 		case EOF_LEGACY_TRACK_FORMAT:
 			if(index < sp->legacy_track[tracknum]->trills)
 			{
-				if(sp->legacy_track[tracknum]->trill[index].name != NULL)
-				{	//If the section has a name
-					free(sp->legacy_track[tracknum]->trill[index].name);	//Free it
-				}
+				sp->legacy_track[tracknum]->trill[index].name[0] = '\0';	//Empty the name string
 				for(ctr = index; ctr < sp->legacy_track[tracknum]->trills; ctr++)
 				{
 					memcpy(&sp->legacy_track[tracknum]->trill[ctr], &sp->legacy_track[tracknum]->trill[ctr + 1], sizeof(EOF_PHRASE_SECTION));
@@ -3685,10 +3666,7 @@ void eof_track_delete_trill(EOF_SONG *sp, unsigned long track, unsigned long ind
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			if(index < sp->pro_guitar_track[tracknum]->trills)
 			{
-				if(sp->pro_guitar_track[tracknum]->trill[index].name != NULL)
-				{	//If the section has a name
-					free(sp->pro_guitar_track[tracknum]->trill[index].name);	//Free it
-				}
+				sp->pro_guitar_track[tracknum]->trill[index].name[0] = '\0';	//Empty the name string
 				for(ctr = index; ctr < sp->pro_guitar_track[tracknum]->trills; ctr++)
 				{
 					memcpy(&sp->pro_guitar_track[tracknum]->trill[ctr], &sp->pro_guitar_track[tracknum]->trill[ctr + 1], sizeof(EOF_PHRASE_SECTION));
@@ -3713,10 +3691,7 @@ void eof_track_delete_tremolo(EOF_SONG *sp, unsigned long track, unsigned long i
 		case EOF_LEGACY_TRACK_FORMAT:
 			if(index < sp->legacy_track[tracknum]->tremolos)
 			{
-				if(sp->legacy_track[tracknum]->tremolo[index].name != NULL)
-				{	//If the section has a name
-					free(sp->legacy_track[tracknum]->tremolo[index].name);	//Free it
-				}
+				sp->legacy_track[tracknum]->tremolo[index].name[0] = '\0';	//Empty the name string
 				for(ctr = index; ctr < sp->legacy_track[tracknum]->tremolos; ctr++)
 				{
 					memcpy(&sp->legacy_track[tracknum]->tremolo[ctr], &sp->legacy_track[tracknum]->tremolo[ctr + 1], sizeof(EOF_PHRASE_SECTION));
@@ -3728,10 +3703,7 @@ void eof_track_delete_tremolo(EOF_SONG *sp, unsigned long track, unsigned long i
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			if(index < sp->pro_guitar_track[tracknum]->tremolos)
 			{
-				if(sp->pro_guitar_track[tracknum]->tremolo[index].name != NULL)
-				{	//If the section has a name
-					free(sp->pro_guitar_track[tracknum]->tremolo[index].name);	//Free it
-				}
+				sp->pro_guitar_track[tracknum]->tremolo[index].name[0] = '\0';	//Empty the name string
 				for(ctr = index; ctr < sp->pro_guitar_track[tracknum]->tremolos; ctr++)
 				{
 					memcpy(&sp->pro_guitar_track[tracknum]->tremolo[ctr], &sp->pro_guitar_track[tracknum]->tremolo[ctr + 1], sizeof(EOF_PHRASE_SECTION));

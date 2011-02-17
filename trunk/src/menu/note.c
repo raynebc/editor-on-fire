@@ -3129,11 +3129,7 @@ void eof_pro_guitar_track_delete_arpeggio(EOF_PRO_GUITAR_TRACK * tp, unsigned lo
 	if(index >= tp->arpeggios)
 		return;
 
-	if(tp->arpeggio[index].name != NULL)
-	{	//If the section has a name
-		free(tp->arpeggio[index].name);	//Free it
-	}
-
+	tp->arpeggio[index].name[0] = '\0';	//Empty the name string
 	for(i = index; i < tp->arpeggios - 1; i++)
 	{
 		memcpy(&tp->arpeggio[i], &tp->arpeggio[i + 1], sizeof(EOF_PHRASE_SECTION));
@@ -3154,10 +3150,7 @@ int eof_menu_arpeggio_erase_all(void)
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->arpeggios; ctr++)
 		{	//For each arpeggio section in this track
-			if(eof_song->pro_guitar_track[tracknum]->arpeggio[ctr].name != NULL)
-			{	//If this section has a name
-				free(eof_song->pro_guitar_track[tracknum]->arpeggio[ctr].name);	//Free it
-			}
+			eof_song->pro_guitar_track[tracknum]->arpeggio[ctr].name[0] = '\0';	//Empty the name string
 		}
 		eof_song->pro_guitar_track[tracknum]->arpeggios = 0;
 	}
