@@ -339,6 +339,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	char trackctr;							//Used in the temp data creation to handle Expert+
 	EOF_MIDI_TS_LIST *tslist=NULL;			//List containing TS changes
 	unsigned long note, notenum, noteflags, notepos;
+	char type;
 	int channel, velocity, bitmask, slidenote = 0;	//Used for pro guitar export
 	EOF_PHRASE_SECTION *sectionptr;
 	char *lastname = NULL, *currentname = NULL, nochord[]="NC", chordname[100]="";
@@ -440,7 +441,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				note = eof_get_note_note(sp, j, i);			//Store the note bitflag for easier use
 				notepos = eof_get_note_pos(sp, j, i);		//Store the note position for easier use
 				length = eof_get_note_length(sp, j, i);		//Store the note length for easier use
-				if((j == EOF_TRACK_DRUM) && (eof_get_note_type(sp, j, i) != EOF_NOTE_SPECIAL))
+				type = eof_get_note_type(sp, j, i);			//Store the note type for easier use
+				if((j == EOF_TRACK_DRUM) && (type != EOF_NOTE_SPECIAL))
 				{	//Ensure that drum notes are not written with sustain (Unless they are BRE notes)
 					length = 1;
 				}
@@ -481,8 +483,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				{
 					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL))
 					{	//If pro drum notation is in effect and no more yellow drum notes at this note's position are marked as cymbals
-						if(eof_midi_note_status[RB3_DRUM_YELLOW_FORCE] == 0)
-						{	//Write a pro yellow drum marker if one isn't already in effect
+						if((eof_midi_note_status[RB3_DRUM_YELLOW_FORCE] == 0) && (type != EOF_NOTE_SPECIAL))
+						{	//Write a pro yellow drum marker if one isn't already in effect, but only if this isn't a BRE note
 							eof_add_midi_event(notepos, 0x90, RB3_DRUM_YELLOW_FORCE, vel, 0);
 						}
 					}
@@ -494,8 +496,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				{
 					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_B_CYMBAL))
 					{	//If pro drum notation is in effect and no more blue drum notes at this note's position are marked as cymbals
-						if(eof_midi_note_status[RB3_DRUM_BLUE_FORCE] == 0)
-						{	//Write a pro blue drum marker if one isn't already in effect
+						if((eof_midi_note_status[RB3_DRUM_BLUE_FORCE] == 0) && (type != EOF_NOTE_SPECIAL))
+						{	//Write a pro blue drum marker if one isn't already in effect, but only if this isn't a BRE note
 							eof_add_midi_event(notepos, 0x90, RB3_DRUM_BLUE_FORCE, vel, 0);
 						}
 					}
@@ -507,8 +509,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				{	//Note: EOF/FoF refer to this note color as purple/orange whereas Rock Band displays it as green
 					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_G_CYMBAL))
 					{	//If pro drum notation is in effect and no more green drum notes at this note's position are marked as cymbals
-						if(eof_midi_note_status[RB3_DRUM_GREEN_FORCE] == 0)
-						{	//Write a pro green drum marker if one isn't already in effect
+						if((eof_midi_note_status[RB3_DRUM_GREEN_FORCE] == 0) && (type != EOF_NOTE_SPECIAL))
+						{	//Write a pro green drum marker if one isn't already in effect, but only if this isn't a BRE note
 							eof_add_midi_event(notepos, 0x90, RB3_DRUM_GREEN_FORCE, vel, 0);
 						}
 					}
@@ -546,8 +548,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				{
 					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL))
 					{	//If pro drum notation is in effect and no more drum notes at this note's position are marked as cymbals
-						if(eof_midi_note_status[RB3_DRUM_YELLOW_FORCE] == 1)
-						{	//End a pro yellow drum marker if one is in effect
+						if((eof_midi_note_status[RB3_DRUM_YELLOW_FORCE] == 1) && (type != EOF_NOTE_SPECIAL))
+						{	//End a pro yellow drum marker if one is in effect, but only if this isn't a BRE note
 							eof_add_midi_event(notepos + length, 0x80, RB3_DRUM_YELLOW_FORCE, vel, 0);
 						}
 					}
@@ -559,8 +561,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				{
 					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_B_CYMBAL))
 					{	//If pro drum notation is in effect and no more blue drum notes at this note's position are marked as cymbals
-						if(eof_midi_note_status[RB3_DRUM_BLUE_FORCE] == 1)
-						{	//End a pro blue drum marker if one is in effect
+						if((eof_midi_note_status[RB3_DRUM_BLUE_FORCE] == 1) && (type != EOF_NOTE_SPECIAL))
+						{	//End a pro blue drum marker if one is in effect, but only if this isn't a BRE note
 							eof_add_midi_event(notepos + length, 0x80, RB3_DRUM_BLUE_FORCE, vel, 0);
 						}
 					}
@@ -572,8 +574,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				{	//Note: EOF/FoF refer to this note color as purple/orange whereas Rock Band displays it as green
 					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_G_CYMBAL))
 					{	//If pro drum notation is in effect and no more drum notes at this note's position are marked as cymbals
-						if(eof_midi_note_status[RB3_DRUM_GREEN_FORCE] == 1)
-						{	//End a pro green drum marker if one is in effect
+						if((eof_midi_note_status[RB3_DRUM_GREEN_FORCE] == 1) && (type != EOF_NOTE_SPECIAL))
+						{	//End a pro green drum marker if one is in effect, but only if this isn't a BRE note
 							eof_add_midi_event(notepos + length, 0x80, RB3_DRUM_GREEN_FORCE, vel, 0);
 						}
 					}
