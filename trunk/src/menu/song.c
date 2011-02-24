@@ -109,7 +109,8 @@ MENU eof_song_menu[] =
 	{"&Audio cues", eof_menu_audio_cues, NULL, 0, NULL},
 	{"&Waveform Graph", NULL, eof_waveform_menu, 0, NULL},
     {"", NULL, NULL, 0, NULL},
-    {"T&est In FOF\tF12", eof_menu_song_test, NULL, EOF_LINUX_DISABLE, NULL},
+    {"T&est In FOF\tF12", eof_menu_song_test_fof, NULL, EOF_LINUX_DISABLE, NULL},
+    {"Test In Phase &Shift", eof_menu_song_test_ps, NULL, EOF_LINUX_DISABLE, NULL},
     {"", NULL, NULL, 0, NULL},
     {"Enable open strum bass", eof_menu_song_open_bass, NULL, 0, NULL},
     {"Create image sequence", eof_create_image_sequence, NULL, 0, NULL},
@@ -477,17 +478,17 @@ void eof_prepare_song_menu(void)
 		/* enable open strum bass */
 		if(eof_open_bass_enabled())
 		{
-			eof_song_menu[16].flags = D_SELECTED;
+			eof_song_menu[17].flags = D_SELECTED;
 		}
 		else
 		{
-			eof_song_menu[16].flags = 0;
+			eof_song_menu[17].flags = 0;
 		}
 
 		/* enable legacy view */
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar track is active
-			eof_song_menu[18].flags = eof_song_menu[18].flags & D_SELECTED;	//Enable the menu item and check it if it's already checked
+			eof_song_menu[19].flags = eof_song_menu[19].flags & D_SELECTED;	//Enable the menu item and check it if it's already checked
 		}
 		else
 		{	//Otherwise disable this menu item, but keep it checked if it's already checked
@@ -914,8 +915,14 @@ int eof_menu_song_properties(void)
 	return 1;
 }
 
-int eof_menu_song_test(void)
+int eof_menu_song_test(char application)
 {
+	char *songs_path = NULL;
+	char *executablepath = NULL;
+	char *executablename = NULL;
+	char *fofdisplayname = "FoF";
+	char *psdisplayname = "Phase Shift";
+	char *appdisplayname = NULL;
 	char syscommand[1024] = {0};
 	char temppath[1024] = {0};
 	char temppath2[1024] = {0};
@@ -925,28 +932,43 @@ int eof_menu_song_test(void)
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
 
-	/* check difficulty before allowing test */
-	difficulty = eof_figure_difficulty();
-	if(difficulty < 0)
-	{
-		alert("Error", NULL, "No Notes!", "OK", NULL, 0, KEY_ENTER);
-		eof_clear_input();
-		return 1;
-	}
+	if(application == 1)
+	{	//If the user wants to test the chart in FoF
+		/* check difficulty before allowing test */
+		difficulty = eof_figure_difficulty();
+		if(difficulty < 0)
+		{
+			alert("Error", NULL, "No Notes!", "OK", NULL, 0, KEY_ENTER);
+			eof_clear_input();
+			return 1;
+		}
 
-	/* which part are we going to play */
-	part = eof_figure_part();
-	if(part < 0)
-	{
-		alert("Error", NULL, "No Notes!", "OK", NULL, 0, KEY_ENTER);
-		eof_clear_input();
-		return 1;
+		/* which part are we going to play */
+		part = eof_figure_part();
+		if(part < 0)
+		{
+			alert("Error", NULL, "No Notes!", "OK", NULL, 0, KEY_ENTER);
+			eof_clear_input();
+			return 1;
+		}
+
+		appdisplayname = fofdisplayname;
+		songs_path = eof_fof_songs_path;
+		executablepath = eof_fof_executable_path;
+		executablename = eof_fof_executable_name;
+	}
+	else
+	{	//The user wants to test the chart in Phase Shift
+		appdisplayname = psdisplayname;
+		songs_path = eof_ps_songs_path;
+		executablepath = eof_ps_executable_path;
+		executablename = eof_ps_executable_name;
 	}
 
 	/* switch to songs folder */
-	if(eof_chdir(eof_fof_songs_path))
+	if(eof_chdir(songs_path))
 	{
-		allegro_message("Song could not be tested!\nMake sure you set the FOF song folder correctly (\"Link To FOF\")!");
+		allegro_message("Song could not be tested!\nMake sure you set the %s song folder correctly (\"Link To %s\")!", appdisplayname, appdisplayname);
 		return 1;
 	}
 
@@ -954,14 +976,14 @@ int eof_menu_song_test(void)
 	eof_mkdir("EOFTemp");
 
 	/* save temporary song */
-	ustrcpy(temppath, eof_fof_songs_path);
+	ustrcpy(temppath, songs_path);
 	ustrcat(temppath, "EOFTemp\\");
 	append_filename(temppath2, temppath, "notes.eof", 1024);
 	eof_sort_notes();
 	eof_fixup_notes();
 	if(!eof_save_song(eof_song, temppath2))
 	{
-		allegro_message("Song could not be tested!\nMake sure you set the FOF song folder correctly (\"Link To FOF\")!");
+		allegro_message("Song could not be tested!\nMake sure you set the %s song folder correctly (\"Link To %s\")!", appdisplayname, appdisplayname);
 		get_executable_name(temppath, 1024);
 		replace_filename(temppath, temppath, "", 1024);
 		eof_chdir(temppath);
@@ -975,29 +997,38 @@ int eof_menu_song_test(void)
 	append_filename(temppath2, temppath, "song.ini", 1024);
 	eof_save_ini(eof_song, temppath2);
 	sprintf(syscommand, "%sguitar.ogg", eof_song_path);
-	sprintf(temppath2, "%sEOFTemp\\guitar.ogg", eof_fof_songs_path);
+	sprintf(temppath2, "%sEOFTemp\\guitar.ogg", songs_path);
 	eof_copy_file(syscommand, temppath2);
 
-	/* switch to FOF folder */
-	replace_filename(temppath, eof_fof_executable_path, "", 1024);
+	/* switch to application folder */
+	replace_filename(temppath, executablepath, "", 1024);
 	if(eof_chdir(temppath))
 	{
-		allegro_message("Song could not be tested!\nMake sure you set the FOF song folder correctly (\"Link To FOF\")!");
+		allegro_message("Song could not be tested!\nMake sure you set the %s song folder correctly (\"Link To %s\")!", appdisplayname, appdisplayname);
 		return 1;
 	}
 
-	/* execute FOF */
-	ustrcpy(syscommand, eof_fof_executable_name);
-	ustrcat(syscommand, " -p \"EOFTemp\" -D ");
-	sprintf(temppath, "%d", difficulty);
-	ustrcat(syscommand, temppath);
-	ustrcat(syscommand, " -P ");
-	sprintf(temppath, "%d", part);
-	ustrcat(syscommand, temppath);
-	eof_system(syscommand);
+	/* execute appropriate application to launch chart */
+	if(application == 1)
+	{	//If the user wants to test the chart in FoF
+		ustrcpy(syscommand, executablename);
+		ustrcat(syscommand, " -p \"EOFTemp\" -D ");
+		sprintf(temppath, "%d", difficulty);
+		ustrcat(syscommand, temppath);
+		ustrcat(syscommand, " -P ");
+		sprintf(temppath, "%d", part);
+		ustrcat(syscommand, temppath);
+		eof_system(syscommand);
+	}
+	else
+	{	//The user wants to test the chart in Phase Shift
+		ustrcpy(syscommand, executablename);
+		ustrcat(syscommand, " \"EOFTemp\" /p");
+		eof_system(syscommand);
+	}
 
 	/* switch to songs folder */
-	if(eof_chdir(eof_fof_songs_path))
+	if(eof_chdir(songs_path))
 	{
 		allegro_message("Cleanup failed!");
 		return 1;
@@ -1015,8 +1046,17 @@ int eof_menu_song_test(void)
 	replace_filename(temppath, temppath, "", 1024);
 	eof_chdir(temppath);
 
-
 	return 1;
+}
+
+int eof_menu_song_test_fof(void)
+{
+	return eof_menu_song_test(1);	//Launch the chart in FoF
+}
+
+int eof_menu_song_test_ps(void)
+{
+	return eof_menu_song_test(2);	//Launch the chart in Phase Shift
 }
 
 int eof_menu_track_selected_1(void)
@@ -1824,7 +1864,7 @@ int eof_menu_song_open_bass(void)
 	if(eof_open_bass_enabled())
 	{	//Turn off open bass notes
 		eof_song->track[EOF_TRACK_BASS]->flags &= ~(EOF_TRACK_FLAG_OPEN_STRUM);	//Clear the flag
-		eof_song_menu[16].flags = 0;
+		eof_song_menu[17].flags = 0;
 		eof_song->legacy_track[tracknum]->numlanes = 5;
 	}
 	else
@@ -1890,7 +1930,7 @@ int eof_menu_song_open_bass(void)
 			}
 		}
 		eof_song->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_OPEN_STRUM;	//Set the flag
-		eof_song_menu[16].flags = D_SELECTED;
+		eof_song_menu[17].flags = D_SELECTED;
 		eof_song->legacy_track[tracknum]->numlanes = 6;
 	}
 	eof_scale_fretboard(0);
@@ -1940,13 +1980,13 @@ int eof_menu_song_legacy_view(void)
 	if(eof_legacy_view)
 	{
 		eof_legacy_view = 0;
-		eof_song_menu[18].flags = 0;
+		eof_song_menu[19].flags = 0;
 		eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
 	}
 	else
 	{
 		eof_legacy_view = 1;
-		eof_song_menu[18].flags = D_SELECTED;
+		eof_song_menu[19].flags = D_SELECTED;
 		eof_scale_fretboard(5);	//Recalculate the 2D screen positioning based on a 5 lane track
 	}
 	eof_fix_window_title();
