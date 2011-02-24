@@ -1022,8 +1022,8 @@ int eof_menu_song_test(char application)
 	}
 	else
 	{	//The user wants to test the chart in Phase Shift
-		ustrcpy(syscommand, executablename);
-		ustrcat(syscommand, " \"EOFTemp\" /p");
+		replace_filename(temppath, temppath2, "", 1024);	//Get the path to the temporary chart's folder
+		sprintf(syscommand, "%s \"%s\" /p", executablename, temppath);
 		eof_system(syscommand);
 	}
 
