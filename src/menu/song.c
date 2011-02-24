@@ -1008,6 +1008,13 @@ int eof_menu_song_test(char application)
 		return 1;
 	}
 
+//DEBUG
+FILE *debugfp = fopen("eof_ps_debug.txt", "wt");
+if(debugfp)
+{
+fprintf(debugfp, "cd %s\n", temppath);
+}
+
 	/* execute appropriate application to launch chart */
 	if(application == 1)
 	{	//If the user wants to test the chart in FoF
@@ -1023,8 +1030,16 @@ int eof_menu_song_test(char application)
 	else
 	{	//The user wants to test the chart in Phase Shift
 		replace_filename(temppath, temppath2, "", 1024);	//Get the path to the temporary chart's folder
-		sprintf(syscommand, "%s \"%s\" /p", executablename, temppath);
+		sprintf(syscommand, "\"%s\" \"%s\" /p", executablename, temppath);
 		eof_system(syscommand);
+
+//DEBUG
+if(debugfp)
+{
+fprintf(debugfp, "\"%s\" \"%s\" /p\n", executablename, temppath);
+fclose(debugfp);
+}
+
 	}
 
 	/* switch to songs folder */
