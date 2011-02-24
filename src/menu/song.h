@@ -48,7 +48,9 @@ int eof_menu_song_seek_bookmark_9(void);
 int eof_menu_song_file_info(void);
 int eof_menu_song_ini_settings(void);
 int eof_menu_song_properties(void);
-int eof_menu_song_test(void);
+int eof_menu_song_test(char application);	//Launches the current chart in FoF if application is 1, otherwise launches the chart in Phase Shift
+int eof_menu_song_test_fof(void);	//Calls eof_menu_song_test() to launch the chart with FoF
+int eof_menu_song_test_ps(void);	//Calls eof_menu_song_test() to launch the chart with Phase Shift
 int eof_menu_audio_cues(void);
 int eof_set_cue_volume(void *dp3, int d2);
 	//Callback function used by the volume slider GUI control in eof_audio_cues_dialog[].  dp3 is a pointer to the appropriate cue's volume variable

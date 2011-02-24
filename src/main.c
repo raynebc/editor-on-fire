@@ -66,6 +66,9 @@ EOF_WINDOW * eof_window_3d = NULL;
 char        eof_fof_executable_path[1024] = {0};
 char        eof_fof_executable_name[1024] = {0};
 char        eof_fof_songs_path[1024] = {0};
+char        eof_ps_executable_path[1024] = {0};
+char        eof_ps_executable_name[1024] = {0};
+char        eof_ps_songs_path[1024] = {0};
 char        eof_last_frettist[256] = {0};
 char        eof_temp_filename[1024] = {0};
 char        eof_soft_cursor = 0;
@@ -1471,7 +1474,7 @@ void eof_read_global_keys(void)
 		else if(key[KEY_F12])
 		{
 			clear_keybuf();
-			eof_menu_song_test();
+			eof_menu_song_test_fof();
 			key[KEY_F12] = 0;
 		}
 	}//If neither CTRL nor SHIFT are held

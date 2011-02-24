@@ -40,7 +40,9 @@ int eof_menu_file_preferences(void);
 int eof_menu_file_display(void);
 int eof_menu_file_controllers(void);
 int eof_menu_file_song_folder(void);
-int eof_menu_file_link(void);
+int eof_menu_file_link(char application);	//Prompts the user for an executable and song path, if application is 1, they are stored as a link to FoF, otherwise as a link to Phase Shift
+int eof_menu_file_link_fof(void);	//Calls eof_menu_file_link() to link to FoF
+int eof_menu_file_link_ps(void);	//Calls eof_menu_file_link() to link to Phase Shift
 int eof_menu_file_exit(void);
 
 char * eof_ogg_list(int index, int * size);

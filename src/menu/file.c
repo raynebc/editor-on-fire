@@ -37,7 +37,8 @@ MENU eof_file_menu[] =
     {"&Controllers", eof_menu_file_controllers, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"Song Folder", eof_menu_file_song_folder, NULL, 0, NULL},
-    {"Link to FOF", eof_menu_file_link, NULL, EOF_LINUX_DISABLE, NULL},
+    {"Link to FOF", eof_menu_file_link_fof, NULL, EOF_LINUX_DISABLE, NULL},
+    {"Link to Phase Shift", eof_menu_file_link_ps, NULL, EOF_LINUX_DISABLE, NULL},
     {"", NULL, NULL, 0, NULL},
     {"E&xit\tEsc", eof_menu_file_exit, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
@@ -1019,8 +1020,12 @@ int eof_menu_file_song_folder(void)
 	return 1;
 }
 
-int eof_menu_file_link(void)
+int eof_menu_file_link(char application)
 {
+	char *fofdisplayname = "FoF";
+	char *psdisplayname = "Phase Shift";
+	char titlebartext[100] = {0};
+	char *appdisplayname = NULL;
 	char * returnfolder = NULL;
 	char * returnedfn = NULL;
 
@@ -1034,22 +1039,51 @@ int eof_menu_file_link(void)
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
-	returnedfn = ncd_file_select(0, NULL, "Locate FOF Executable", eof_filter_exe_files);
+	if(application == 1)
+	{	//User is linking to FoF
+		appdisplayname = fofdisplayname;
+	}
+	else
+	{	//User is linking to Phase Shift
+		appdisplayname = psdisplayname;
+	}
+	snprintf(titlebartext, sizeof(titlebartext), "Locate %s Executable", appdisplayname);
+	returnedfn = ncd_file_select(0, NULL, titlebartext, eof_filter_exe_files);
 	eof_clear_input();
 	if(returnedfn)
 	{
-		returnfolder = ncd_folder_select("Locate FOF Songs Folder");
+		snprintf(titlebartext, sizeof(titlebartext), "Locate %s Songs Folder", appdisplayname);
+		returnfolder = ncd_folder_select(titlebartext);
 		if(returnfolder)
 		{
-			ustrcpy(eof_fof_executable_name, get_filename(returnedfn));
-			ustrcpy(eof_fof_executable_path, returnedfn);
-			ustrcpy(eof_fof_songs_path, returnfolder);
+			if(application == 1)
+			{	//User is linking to FoF
+				ustrcpy(eof_fof_executable_name, get_filename(returnedfn));
+				ustrcpy(eof_fof_executable_path, returnedfn);
+				ustrcpy(eof_fof_songs_path, returnfolder);
+			}
+			else
+			{	//User is linking to Phase Shift
+				ustrcpy(eof_ps_executable_name, get_filename(returnedfn));
+				ustrcpy(eof_ps_executable_path, returnedfn);
+				ustrcpy(eof_ps_songs_path, returnfolder);
+			}
 		}
 	}
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	return 1;
+}
+
+int eof_menu_file_link_fof(void)
+{
+	return eof_menu_file_link(1);	//Link to FoF
+}
+
+int eof_menu_file_link_ps(void)
+{
+	return eof_menu_file_link(2);	//Link to Phase Shift
 }
 
 int eof_menu_file_exit(void)

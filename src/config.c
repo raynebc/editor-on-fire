@@ -86,6 +86,9 @@ void eof_load_config(char * fn)
 	ustrcpy(eof_fof_executable_path, get_config_string("paths", "fof_path", ""));
 	ustrcpy(eof_fof_executable_name, get_filename(eof_fof_executable_path));
 	ustrcpy(eof_fof_songs_path, get_config_string("paths", "fof_songs_path", ""));
+	ustrcpy(eof_ps_executable_path, get_config_string("paths", "ps_path", ""));
+	ustrcpy(eof_ps_executable_name, get_filename(eof_ps_executable_path));
+	ustrcpy(eof_ps_songs_path, get_config_string("paths", "ps_songs_path", ""));
 	ustrcpy(eof_songs_path, get_config_string("paths", "songs_path", ""));
 	ustrcpy(eof_last_eof_path, get_config_string("paths", "eof_path", ""));
 	ustrcpy(eof_last_ogg_path, get_config_string("paths", "ogg_path", ""));
@@ -155,6 +158,8 @@ void eof_save_config(char * fn)
 	/* write paths */
 	set_config_string("paths", "fof_path", eof_fof_executable_path);
 	set_config_string("paths", "fof_songs_path", eof_fof_songs_path);
+	set_config_string("paths", "ps_path", eof_ps_executable_path);
+	set_config_string("paths", "ps_songs_path", eof_ps_songs_path);
 	set_config_string("paths", "songs_path", eof_songs_path);
 	set_config_string("paths", "eof_path", eof_last_eof_path);
 	set_config_string("paths", "ogg_path", eof_last_ogg_path);
