@@ -1621,32 +1621,32 @@ void eof_read_editor_keys(void)
 				}
 				else if(key[KEY_F1])
 				{
-					eof_pro_guitar_fret_bitmask ^= 1;	//Toggle string 1
+					eof_pro_guitar_fret_bitmask ^= 1;	//Toggle string 6 (low E)
 					key[KEY_F1] = 0;
 				}
 				else if(key[KEY_F2])
 				{
-					eof_pro_guitar_fret_bitmask ^= 2;	//Toggle string 2
+					eof_pro_guitar_fret_bitmask ^= 2;	//Toggle string 5
 					key[KEY_F2] = 0;
 				}
 				else if(key[KEY_F3])
 				{
-					eof_pro_guitar_fret_bitmask ^= 4;	//Toggle string 3
+					eof_pro_guitar_fret_bitmask ^= 4;	//Toggle string 4
 					key[KEY_F3] = 0;
 				}
 				else if(key[KEY_F4])
 				{
-					eof_pro_guitar_fret_bitmask ^= 8;	//Toggle string 4
+					eof_pro_guitar_fret_bitmask ^= 8;	//Toggle string 3
 					key[KEY_F4] = 0;
 				}
 				else if(key[KEY_F5])
 				{
-					eof_pro_guitar_fret_bitmask ^= 16;	//Toggle string 5
+					eof_pro_guitar_fret_bitmask ^= 16;	//Toggle string 2
 					key[KEY_F5] = 0;
 				}
 				else if(key[KEY_F6])
 				{
-					eof_pro_guitar_fret_bitmask ^= 32;	//Toggle string 6
+					eof_pro_guitar_fret_bitmask ^= 32;	//Toggle string 1 (high e)
 					key[KEY_F6] = 0;
 				}
 				else if(key[KEY_F7])

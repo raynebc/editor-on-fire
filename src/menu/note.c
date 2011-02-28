@@ -2317,17 +2317,18 @@ DIALOG eof_pro_guitar_note_dialog[] =
 	{d_agup_text_proc,      16,  80,  64,  8,  2,   23,  0,    0,      0,         0,   "Name:",      NULL,          NULL },
 	{d_agup_edit_proc,		74,  76,  134, 20, 2,   23,  0,    0, EOF_NAME_LENGTH,0,eof_note_edit_name,       NULL, NULL },
 
-	{d_agup_text_proc,      16,  128, 64,  8,  2,   23,  0,    0,      0,         0,   "String 6:",  NULL,          NULL },
+	//Note:  In guitar theory, string 1 refers to high e
+	{d_agup_text_proc,      16,  128, 64,  8,  2,   23,  0,    0,      0,         0,   "String 1:",  NULL,          NULL },
 	{eof_verified_edit_proc,74,  124, 22,  20, 2,   23,  0,    0,      2,         0,   eof_fret6,    "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  152, 64,  8,  2,   23,  0,    0,      0,         0,   "String 5:",  NULL,          NULL },
+	{d_agup_text_proc,      16,  152, 64,  8,  2,   23,  0,    0,      0,         0,   "String 2:",  NULL,          NULL },
 	{eof_verified_edit_proc,74,  148, 22,  20, 2,   23,  0,    0,      2,         0,   eof_fret5,    "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  176, 64,  8,  2,   23,  0,    0,      0,         0,   "String 4:",  NULL,          NULL },
+	{d_agup_text_proc,      16,  176, 64,  8,  2,   23,  0,    0,      0,         0,   "String 3:",  NULL,          NULL },
 	{eof_verified_edit_proc,74,  172, 22,  20, 2,   23,  0,    0,      2,         0,   eof_fret4,    "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  200, 64,  8,  2,   23,  0,    0,      0,         0,   "String 3:",  NULL,          NULL },
+	{d_agup_text_proc,      16,  200, 64,  8,  2,   23,  0,    0,      0,         0,   "String 4:",  NULL,          NULL },
 	{eof_verified_edit_proc,74,  196, 22,  20, 2,   23,  0,    0,      2,         0,   eof_fret3,    "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  224, 64,  8,  2,   23,  0,    0,      0,         0,   "String 2:",  NULL,          NULL },
+	{d_agup_text_proc,      16,  224, 64,  8,  2,   23,  0,    0,      0,         0,   "String 5:",  NULL,          NULL },
 	{eof_verified_edit_proc,74,  220, 22,  20, 2,   23,  0,    0,      2,         0,   eof_fret2,    "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  248, 64,  8,  2,   23,  0,    0,      0,         0,   "String 1:",  NULL,          NULL },
+	{d_agup_text_proc,      16,  248, 64,  8,  2,   23,  0,    0,      0,         0,   "String 6:",  NULL,          NULL },
 	{eof_verified_edit_proc,74,  244, 22,  20, 2,   23,  0,    0,      2,         0,   eof_fret1,    "0123456789Xx",NULL },
 
 	{d_agup_text_proc,      16,  108, 64,  8,  2,   23,  0,    0,      0,         0,   "Pro",        NULL,          NULL },
@@ -2404,7 +2405,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 //Update the note name text box to match the last selected note
 	memcpy(eof_note_edit_name, eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name, sizeof(eof_note_edit_name));
 
-//Update the fret text boxes (listed from top to bottom as string 6 through string 1)
+//Update the fret text boxes (listed from top to bottom as string 1 through string 6)
 	fretcount = eof_count_track_lanes(eof_song, eof_selected_track);
 	if(eof_legacy_view)
 	{	//Special case:  If legacy view is enabled, correct fretcount
@@ -2519,7 +2520,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 			namechanged = 0;	//Reset this status
 			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
 			{	//If the note is in the active instrument difficulty and is selected
-//Save the updated note name  (listed from top to bottom as string 6 through string 1)
+//Save the updated note name  (listed from top to bottom as string 1 through string 6)
 				if((!undo_made) && ustrcmp(eof_note_edit_name, eof_song->pro_guitar_track[tracknum]->note[i]->name))
 				{	//If the name was changed
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);

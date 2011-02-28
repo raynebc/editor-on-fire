@@ -81,9 +81,9 @@ typedef struct
     unsigned char number;		//The chord's number (using RB3's chord number system)
     char name[EOF_NAME_LENGTH+1];
 	char          type;			//Stores the note's difficulty
-	unsigned char note;			//Stores the note's string statuses (set=played, reset=not played).  Bit 0 refers to string 1 (high E), bit 5 refers to string 6 (low E), etc.
+	unsigned char note;			//Stores the note's string statuses (set=played, reset=not played).  Bit 0 refers to string 6 (low E), bit 5 refers to string 1 (high e), etc.
 	unsigned char ghost;		//Stores the note's ghost statuses.  Bit 0 indicates whether string 1 is ghosted, etc.
-	unsigned char frets[16];	//Stores the fret number for each string, where frets[0] refers to string 1 (high E).  Possible values:0=Open strum, #=Fret # pressed, 0xFF=Muted
+	unsigned char frets[16];	//Stores the fret number for each string, where frets[0] refers to string 6 (low E).  Possible values:0=Open strum, #=Fret # pressed, 0xFF=Muted
 	unsigned char legacymask;	//If this is nonzero, it indicates that the user defined this as the bitmask to use when pasting this into a legacy track
 	unsigned long midi_pos;
 	long midi_length;			//Keep as signed, since the npos logic uses signed math
