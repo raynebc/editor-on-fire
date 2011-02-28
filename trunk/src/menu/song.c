@@ -1010,6 +1010,7 @@ int eof_menu_song_test(char application)
 
 //DEBUG
 FILE *debugfp = fopen("eof_ps_debug.txt", "wt");
+int returnval = 0;
 if(debugfp)
 {
 fprintf(debugfp, "cd %s\n", temppath);
@@ -1031,13 +1032,14 @@ fprintf(debugfp, "cd %s\n", temppath);
 	{	//The user wants to test the chart in Phase Shift
 		replace_filename(temppath, temppath2, "", 1024);	//Get the path to the temporary chart's folder
 		sprintf(syscommand, "\"%s\" \"%s\" /p", executablepath, temppath);
-		eof_system(syscommand);
+		returnval = eof_system(syscommand);
 
 //DEBUG
 if(debugfp)
 {
 fprintf(debugfp, "%s\n", syscommand);
 fclose(debugfp);
+allegro_message("Return value of eof_system() was %d\nError: %s", returnval, strerror(errno));
 }
 
 	}
