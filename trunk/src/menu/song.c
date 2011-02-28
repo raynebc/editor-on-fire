@@ -1030,13 +1030,13 @@ fprintf(debugfp, "cd %s\n", temppath);
 	else
 	{	//The user wants to test the chart in Phase Shift
 		replace_filename(temppath, temppath2, "", 1024);	//Get the path to the temporary chart's folder
-		sprintf(syscommand, "\"%s\" \"%s\" /p", executablename, temppath);
+		sprintf(syscommand, "\"%s\" \"%s\" /p", executablepath, temppath);
 		eof_system(syscommand);
 
 //DEBUG
 if(debugfp)
 {
-fprintf(debugfp, "\"%s\" \"%s\" /p\n", executablename, temppath);
+fprintf(debugfp, "%s\n", syscommand);
 fclose(debugfp);
 }
 
