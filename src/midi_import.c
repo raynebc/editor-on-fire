@@ -242,7 +242,7 @@ inline unsigned long eof_ConvertToRealTimeInt(unsigned long absolutedelta,struct
 	return eof_ConvertToRealTime(absolutedelta,anchorlist,tslist,timedivision,offset) + 0.5;
 }
 
-//#define EOF_DEBUG_MIDI_IMPORT
+#define EOF_DEBUG_MIDI_IMPORT
 
 EOF_SONG * eof_import_midi(const char * fn)
 {
