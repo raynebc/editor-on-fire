@@ -242,7 +242,7 @@ inline unsigned long eof_ConvertToRealTimeInt(unsigned long absolutedelta,struct
 	return eof_ConvertToRealTime(absolutedelta,anchorlist,tslist,timedivision,offset) + 0.5;
 }
 
-#define EOF_DEBUG_MIDI_IMPORT
+//#define EOF_DEBUG_MIDI_IMPORT
 
 EOF_SONG * eof_import_midi(const char * fn)
 {
@@ -692,7 +692,7 @@ allegro_message("Pass two, adding beats.  last_delta_time = %lu",last_delta_time
 	{//Add new beats until enough have been added to encompass the last MIDI event
 
 #ifdef EOF_DEBUG_MIDI_IMPORT
-sprintf(debugtext,"Start delta %lu / %lu",deltapos,last_delta_time);
+sprintf(debugtext,"Start delta %lu / %lu: Adding beat",deltapos,last_delta_time);
 set_window_title(debugtext);
 #endif
 
@@ -709,6 +709,12 @@ allegro_message("Fail point 1");
 		}
 
 	//Find the relevant tempo and time signature for the beat
+
+#ifdef EOF_DEBUG_MIDI_IMPORT
+sprintf(debugtext,"Start delta %lu / %lu: Finding tempo and TS",deltapos,last_delta_time);
+set_window_title(debugtext);
+#endif
+
 		for(ctr = 0; ctr < eof_import_bpm_events->events; ctr++)
 		{	//For each imported tempo change
 
@@ -736,6 +742,11 @@ assert(sp->beat[sp->beats - 1] != NULL);	//Prevent NULL dereference below
 
 	//Store timing information in the beat structure
 
+#ifdef EOF_DEBUG_MIDI_IMPORT
+sprintf(debugtext,"Start delta %lu / %lu: Storing timing info",deltapos,last_delta_time);
+set_window_title(debugtext);
+#endif
+
 assert(sp->tags != NULL);	//Prevent a NULL dereference below
 
 		sp->beat[sp->beats - 1]->fpos = realtimepos + sp->tags->ogg[0].midi_offset;
@@ -753,6 +764,12 @@ assert(sp->beats > 0);	//Prevent eof_apply_ts() below from failing
 assert(curppqn != 0);	//Avoid a division by 0 below
 
 	//Update anchor linked list
+
+#ifdef EOF_DEBUG_MIDI_IMPORT
+sprintf(debugtext,"Start delta %lu / %lu: Updating anchor list",deltapos,last_delta_time);
+set_window_title(debugtext);
+#endif
+
 		if(lastppqn != curppqn)
 		{	//If this tempo is different than the last beat's tempo
 			anchorlist=eof_add_to_tempo_list(deltapos,realtimepos,60000000.0 / curppqn,anchorlist);
@@ -764,6 +781,12 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 		}
 
 	//Find the number of deltas to the next tempo or time signature change, in order to handle mid beat changes
+
+#ifdef EOF_DEBUG_MIDI_IMPORT
+sprintf(debugtext,"Start delta %lu / %lu: Calculate mid best tempo/TS change",deltapos,last_delta_time);
+set_window_title(debugtext);
+#endif
+
 		midbeatchange = 0;
 		beatlength = ((double)eof_work_midi->divisions * curden / 4.0);		//Determine the length of one full beat in delta ticks
 		nextanchor = deltafpos + beatlength + 0.5;	//By default, the delta position of the next beat will be the standard length of delta ticks
@@ -801,18 +824,18 @@ assert(anchorlist != NULL);	//This would mean eof_add_to_tempo_list() failed
 		}
 
 	//Update delta and realtime counters (the TS affects a beat's length in deltas, the tempo affects a beat's length in milliseconds)
+
+#ifdef EOF_DEBUG_MIDI_IMPORT
+sprintf(debugtext,"Start delta %lu / %lu: Updating counters",deltapos,last_delta_time);
+set_window_title(debugtext);
+#endif
+
 		beatreallength = (60000.0 / (60000000.0 / (double)curppqn));		//Determine the length of this beat in milliseconds
 		realtimepos += beatreallength;	//Add the realtime length of this beat to the time counter
 		deltafpos += beatlength;	//Add the delta length of this beat to the delta counter
 		deltapos = deltafpos + 0.5;	//Round up to nearest delta tick
 		lastnum = curnum;
 		lastden = curden;
-
-#ifdef EOF_DEBUG_MIDI_IMPORT
-sprintf(debugtext,"End delta %lu / %lu",deltapos,last_delta_time);
-set_window_title(debugtext);
-#endif
-
 	}//Add new beats until enough have been added to encompass the last MIDI event
 
 #ifdef EOF_DEBUG_MIDI_IMPORT
@@ -1046,6 +1069,10 @@ allegro_message("Second pass complete");
 				{	//If parsing a legacy track
 					if((eof_import_events[i]->event[j]->type == 0x80) || (eof_import_events[i]->event[j]->type == 0x90))
 					{	//For note on/off events, determine the type (difficulty) of the event
+						if(eof_import_events[i]->event[j]->type == 0x90)
+						{	//If this is a Note on event
+							eof_set_note_flags(sp, picked_track, note_count[picked_track], 0);	//Clear the flag here so that the flag can be set if it's an Expert+ double bass note
+						}
 						if((eof_import_events[i]->event[j]->d1 >= 0x3C) && (eof_import_events[i]->event[j]->d1 < 0x3C + 6))
 						{
 							eof_set_note_type(sp, picked_track, note_count[picked_track], EOF_NOTE_SUPAEASY);
@@ -1086,7 +1113,6 @@ allegro_message("Second pass complete");
 					/* note on */
 					if(eof_import_events[i]->event[j]->type == 0x90)
 					{
-						eof_set_note_flags(sp, picked_track, note_count[picked_track], 0);	//Clear the flag here so that the flag can be set if it's an Expert+ double bass note
 						/* store forced HOPO marker, when the note off for this marker occurs, search for note with same position and apply it to that note */
 						if(eof_import_events[i]->event[j]->d1 == 0x3C + 5)
 						{
