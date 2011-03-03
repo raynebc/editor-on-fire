@@ -126,13 +126,14 @@ unsigned long eof_find_previous_anchor(EOF_SONG * sp, unsigned long cbeat)
 	if(cbeat >= EOF_MAX_BEATS)	//Bounds check
 		return 0;
 
-	do{
+	while(beat > 1)
+	{
 		beat--;
 		if(sp->beat[beat]->flags & EOF_BEAT_FLAG_ANCHOR)
 		{
 			return beat;
 		}
-	}while(beat > 0);
+	}
 	return 0;
 }
 
