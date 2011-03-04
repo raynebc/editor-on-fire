@@ -771,7 +771,8 @@ void eof_determine_phrase_status(void)
 	unsigned long notepos, flags;
 	EOF_PHRASE_SECTION *sectionptr = NULL;
 
-	eof_track_sort_notes(eof_song, eof_selected_track);	//The trill and tremolo phrasing depend on the notes being sorted
+//This sorting causes issue #236.  Sorting should only be performed by operations that alter note order, such as notes being moved, deleted or added
+//	eof_track_sort_notes(eof_song, eof_selected_track);	//The trill and tremolo phrasing depend on the notes being sorted
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
