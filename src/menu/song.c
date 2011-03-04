@@ -110,7 +110,7 @@ MENU eof_song_menu[] =
 	{"&Waveform Graph", NULL, eof_waveform_menu, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"T&est In FOF\tF12", eof_menu_song_test_fof, NULL, EOF_LINUX_DISABLE, NULL},
-    {"Test In Phase &Shift", eof_menu_song_test_ps, NULL, EOF_LINUX_DISABLE, NULL},
+    {"Test I&n Phase Shift", eof_menu_song_test_ps, NULL, EOF_LINUX_DISABLE, NULL},
     {"", NULL, NULL, 0, NULL},
     {"Enable open strum bass", eof_menu_song_open_bass, NULL, 0, NULL},
     {"Create image sequence", eof_create_image_sequence, NULL, 0, NULL},
@@ -1008,14 +1008,6 @@ int eof_menu_song_test(char application)
 		return 1;
 	}
 
-//DEBUG
-FILE *debugfp = fopen("eof_ps_debug.txt", "wt");
-int returnval = 0;
-if(debugfp)
-{
-fprintf(debugfp, "cd %s\n", temppath);
-}
-
 	/* execute appropriate application to launch chart */
 	if(application == 1)
 	{	//If the user wants to test the chart in FoF
@@ -1030,18 +1022,22 @@ fprintf(debugfp, "cd %s\n", temppath);
 	}
 	else
 	{	//The user wants to test the chart in Phase Shift
-		replace_filename(temppath, temppath2, "", 1024);	//Get the path to the temporary chart's folder
-		sprintf(syscommand, "\"%s\" \"%s\" /p", executablepath, temppath);
-		returnval = eof_system(syscommand);
+		FILE *phaseshiftfp = fopen("launch_ps.bat", "wt");	//Write a batch file to launch Phase Shift
 
-//DEBUG
-if(debugfp)
-{
-fprintf(debugfp, "%s\n", syscommand);
-fclose(debugfp);
-allegro_message("Return value of eof_system() was %d\nError: %s", returnval, strerror(errno));
-}
-
+		if(phaseshiftfp)
+		{
+			fprintf(phaseshiftfp, "cd %s\n", temppath);
+			replace_filename(temppath, temppath2, "", 1024);	//Get the path to the temporary chart's folder
+			if(temppath[strlen(temppath)-1] == '\\')
+			{	//Remove the trailing backslash because Phase Shift doesn't handle it correctly
+				temppath[strlen(temppath)-1] = '\0';
+			}
+			sprintf(syscommand, "\"%s\" \"%s\" /p", executablepath, temppath);
+			fprintf(phaseshiftfp, "%s", syscommand);
+			fclose(phaseshiftfp);
+			eof_system("launch_ps.bat");
+			delete_file("launch_ps.bat");
+		}
 	}
 
 	/* switch to songs folder */
@@ -1056,7 +1052,7 @@ allegro_message("Return value of eof_system() was %d\nError: %s", returnval, str
 	delete_file("EOFTemp\\notes.mid");
 	delete_file("EOFTemp\\song.ini");
 	delete_file("EOFTemp\\notes.eof");
-	eof_system("rd EOFTemp");
+	eof_system("rd /s /q EOFTemp");
 
 	/* switch back to EOF folder */
 	get_executable_name(temppath, 1024);
