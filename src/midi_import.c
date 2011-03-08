@@ -1490,8 +1490,9 @@ allegro_message("Second pass complete");
 								sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;	//Set the forced HO flag
 							}
 							else if(eof_import_events[i]->event[j]->channel == 3)
-							{	//If this note was sent over channel 3, it is string muted
-								sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;	//Set the string mute flag
+							{	//If this note was sent over channel 3, the gem is muted
+//								sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;	//Set the string mute flag
+								sp->pro_guitar_track[tracknum]->note[notenum]->frets[diff] = 0xFF;
 							}
 						}
 						else
