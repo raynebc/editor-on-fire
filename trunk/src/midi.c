@@ -961,7 +961,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				/* write note gems */
 				for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
 				{	//For each of the 6 usable strings
-					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE)
+					if((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) || (sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] == 0xFF))
 					{	//Mute gems are written on channel 3
 						channel = 3;
 					}
@@ -978,7 +978,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 						channel = 0;
 					}
 
-					velocity = sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] + 100;	//Velocity (100 + X) represents fret # X
+					if(sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] == 0xFF)
+					{	//If this is a muted gem
+						velocity = 100;	//Write it as a muted note at fret 0
+					}
+					else
+					{	//Otherwise write it normally
+						velocity = sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] + 100;	//Velocity (100 + X) represents fret # X
+					}
 					if(note & bitmask)
 					{	//If the note uses this string
 						eof_add_midi_event(notepos, 0x90, midi_note_offset + ctr, velocity, channel);	//Write the note on event
