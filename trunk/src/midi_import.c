@@ -788,7 +788,9 @@ set_window_title(debugtext);
 #endif
 
 		midbeatchange = 0;
-		beatlength = ((double)eof_work_midi->divisions * curden / 4.0);		//Determine the length of one full beat in delta ticks
+//This commented out line was causing timing errors when importing a RB MIDI that used #/8 TS
+//		beatlength = ((double)eof_work_midi->divisions * curden / 4.0);		//Determine the length of one full beat in delta ticks
+		beatlength = eof_work_midi->divisions;		//Determine the length of one full beat in delta ticks
 		nextanchor = deltafpos + beatlength + 0.5;	//By default, the delta position of the next beat will be the standard length of delta ticks
 		for(ctr = 0; ctr < eof_import_bpm_events->events; ctr++)
 		{	//For each imported tempo change
