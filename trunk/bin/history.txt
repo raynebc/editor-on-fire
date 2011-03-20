@@ -3,6 +3,10 @@ EOF Version History
 
 1.8:
 
+Fixed the handling of time signatures in the MIDI import and export
+logic that would cause incorrect timings when #/8 time signatures
+were encountered.
+
 Added support for launching a chart in Phase Shift's practice mode by
 adding a "Link to Phase Shift" function in the File menu and a "Test in
 Phase Shift" function in the Song menu.
