@@ -1340,8 +1340,9 @@ struct Tempo_change *eof_build_tempo_list(void)
 			list=temp;	//Update list pointer
 		}
 
-
-		deltactr+=((double)EOF_DEFAULT_TIME_DIVISION * den / 4.0) + 0.5;	//Add the number of deltas of one beat (scale to convert from deltas per quarternote) to the counter
+//This commented out line was causing timing errors when importing a RB MIDI that used #/8 TS
+//		deltactr+=((double)EOF_DEFAULT_TIME_DIVISION * den / 4.0) + 0.5;	//Add the number of deltas of one beat (scale to convert from deltas per quarternote) to the counter
+		deltactr+=(double)EOF_DEFAULT_TIME_DIVISION + 0.5;	//Add the number of deltas of one beat to the counter
 	}
 
 	return list;
@@ -1430,7 +1431,10 @@ unsigned long eof_ConvertToDeltaTime(double realtime,struct Tempo_change *anchor
 //reltime is the amount of time we need to find a relative delta for, and add to the absolute delta time of the nearest preceding tempo/TS change
 //By using the updated formula respecting time signature:	realtime = (delta / divisions) * (60000.0 / BPM) * TS_den/4;
 //The formula for delta is:		delta = realtime * divisions * BPM / 60000 * TS_den / 4
-	delta+=(unsigned long)((reltime * (double)timedivision * temp->BPM / 240000.0 * (double)den) + 0.5);
+
+//This commented out line was causing timing errors when importing a RB MIDI that used #/8 TS
+//	delta+=(unsigned long)((reltime * (double)timedivision * temp->BPM / 240000.0 * (double)den) + 0.5);
+	delta+=(unsigned long)((reltime * (double)timedivision * temp->BPM / 60000.0) + 0.5);
 
 //The old conversion formula that doesn't take time signature into account
 //By using NewCreature's formula:	realtime = (delta / divisions) * (60000.0 / bpm)
@@ -1605,7 +1609,9 @@ EOF_MIDI_TS_LIST *eof_build_ts_list(struct Tempo_change *anchorlist)
 			tslist->change[tslist->changes-1]->pos = deltapos;	//Store the time signature's position in deltas
 		}
 
-		beatlength = ((double)EOF_DEFAULT_TIME_DIVISION * den / 4.0);		//Determine the length of this beat in deltas
+//This commented out line was causing timing errors when importing a RB MIDI that used #/8 TS
+//		beatlength = ((double)EOF_DEFAULT_TIME_DIVISION * den / 4.0);		//Determine the length of this beat in deltas
+		beatlength = (double)EOF_DEFAULT_TIME_DIVISION;		//Determine the length of this beat in deltas
 		deltafpos += beatlength;	//Add the delta length of this beat to the delta counter
 		deltapos = deltafpos + 0.5;	//Round up to nearest delta
 	}
