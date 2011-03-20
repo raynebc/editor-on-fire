@@ -230,7 +230,9 @@ double eof_ConvertToRealTime(unsigned long absolutedelta,struct Tempo_change *an
 //reldelta is the amount of deltas we need to find a relative time for, and add to the absolute real time of the nearest preceding tempo/TS change
 //At this point, we have reached the tempo change that absolutedelta resides within, find the realtime
 //The updated theoretical conversion formula that takes the time signature into account is: deltas / (time division) * (60000.0 / (BPM * (TS denominator) / 4))
-	time+=(double)reldelta / (double)timedivision * ((double)60000.0 / (temp->BPM * den / 4.0));
+//This commented out line was causing timing errors when importing a RB MIDI that used #/8 TS
+//	time+=(double)reldelta / (double)timedivision * ((double)60000.0 / (temp->BPM * den / 4.0));
+	time+=(double)reldelta / (double)timedivision * ((double)60000.0 / (temp->BPM));
 
 //The old conversion formula that doesn't take time signature into account
 //	temptimer+=(double)tempdelta / (double)timedivision * ((double)60000.0 / tempBPM);
