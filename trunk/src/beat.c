@@ -48,7 +48,7 @@ void eof_calculate_beats(EOF_SONG * sp)
 		beat_length = (double)60000 / ((double)60000000.0 / (double)500000.0);	//Default beat length is 500ms, which reflects a tempo of 120BPM
 		while(curpos < eof_music_length)
 		{
-			eof_song_add_beat(eof_song);
+			eof_song_add_beat(sp);
 			sp->beat[sp->beats - 1]->ppqn = 500000;
 			sp->beat[sp->beats - 1]->fpos = (double)sp->tags->ogg[eof_selected_ogg].midi_offset + curpos;
 			sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos +0.5;	//Round up
@@ -80,7 +80,7 @@ void eof_calculate_beats(EOF_SONG * sp)
 	curpos += beat_length;
 	while(sp->tags->ogg[eof_selected_ogg].midi_offset + curpos < eof_music_length)
 	{
-		eof_song_add_beat(eof_song);
+		eof_song_add_beat(sp);
 		sp->beat[sp->beats - 1]->ppqn = sp->beat[cbeat]->ppqn;
 		sp->beat[sp->beats - 1]->fpos = (double)sp->tags->ogg[eof_selected_ogg].midi_offset + curpos;
 		sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos +0.5;	//Round up
@@ -94,7 +94,7 @@ void eof_calculate_beats(EOF_SONG * sp)
 		}
 		else
 		{
-			eof_song_delete_beat(eof_song, i-1);
+			eof_song_delete_beat(sp, i-1);
 		}
 	}
 }
