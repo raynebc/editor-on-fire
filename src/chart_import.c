@@ -157,10 +157,9 @@ EOF_SONG * eof_import_chart(const char * fn)
 				max_chartpos = current_anchor->chartpos;
 			}
 
-			/* remember final BPM */
-			if(!current_anchor->next)
-			{
-				final_bpm = current_anchor->BPM;
+			if(current_anchor->BPM > 0)
+			{	//If this is a valid tempo
+				final_bpm = current_anchor->BPM;	//store it so that the final tempo can be remembered
 			}
 
 			current_anchor = current_anchor->next;
