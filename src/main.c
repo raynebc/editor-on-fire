@@ -306,7 +306,12 @@ long eof_put_porpos(unsigned long beat, float porpos, float offset)
 		return -1;
 	}
 //	allegro_message("c - %f", fporpos);
-	return ((eof_song->beat[cbeat]->fpos + ((float)eof_get_beat_length(eof_song, cbeat) * fporpos) / 100.0) + 0.5);	//Round up to nearest millisecond
+
+	if(cbeat < eof_song->beats)
+	{	//If cbeat is valid
+		return ((eof_song->beat[cbeat]->fpos + ((float)eof_get_beat_length(eof_song, cbeat) * fporpos) / 100.0) + 0.5);	//Round up to nearest millisecond
+	}
+	return -1;	//Error
 }
 
 void eof_reset_lyric_preview_lines(void)
