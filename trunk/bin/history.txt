@@ -3,6 +3,10 @@ EOF Version History
 
 1.8:
 
+Fixed a bug in the Feedback import logic that would cause a crash
+or hang if the chart had a time signature change after the last
+tempo change.
+
 Fixed the handling of time signatures in the MIDI import and export
 logic that would cause incorrect timings when #/8 time signatures
 were encountered.

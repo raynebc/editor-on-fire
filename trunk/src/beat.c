@@ -5,7 +5,7 @@ long eof_get_beat(EOF_SONG * sp, unsigned long pos)
 {
 	long i;
 
-	if(pos >= eof_music_length)
+	if(pos > eof_music_length)
 	{
 		return -1;
 	}
