@@ -536,6 +536,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 								if((eof_import_events[i]->type == 0) && ustrstr(text,"PART"))
 								{
 									allegro_message("Unidentified track \"%s\"",text);
+									eof_import_events[i]->type = -1;	//Flag this as being a track that gets skipped
 								}
 								break;
 							}
@@ -894,6 +895,10 @@ allegro_message("Second pass complete");
 
 	for(i = 0; i < tracks; i++)
 	{	//For each imported track
+		if(eof_import_events[i]->type < 0)
+		{	//If this track is to be skipped (ie. unidentified track)
+			continue;
+		}
 		picked_track = eof_import_events[i]->type >= 1 ? eof_import_events[i]->type : rbg == 0 ? EOF_TRACK_GUITAR : -1;
 		if((picked_track >= 0) && !used_track[picked_track] && (picked_track < sp->tracks))
 		{	//If this is a valid track to process
