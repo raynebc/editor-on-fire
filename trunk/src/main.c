@@ -97,9 +97,10 @@ char        eof_supports_mp3 = 0;
 char        eof_supports_oggcat = 0;		//Set to nonzero if EOF determines oggCat is usable
 int         eof_new_idle_system = 0;
 char        eof_just_played = 0;
-char        eof_mark_drums_as_cymbal = 0;	//Allows the user to specify whether Y/B/G drum notes will be placed with cymbal notation by default
+char        eof_mark_drums_as_cymbal = 0;		//Allows the user to specify whether Y/B/G drum notes will be placed with cymbal notation by default
+char        eof_mark_drums_as_double_bass = 0;	//Allows the user to specify whether expert bass drum notes will be placed with expert+ notation by default
 unsigned long eof_pro_guitar_fret_bitmask = 63;	//Defines which lanes are affected by CTRL+Fn fret setting shortcuts
-char		eof_legacy_view = 0;			//Specifies whether pro guitar notes will render as legacy notes
+char		eof_legacy_view = 0;				//Specifies whether pro guitar notes will render as legacy notes
 
 int         eof_undo_toggle = 0;
 int         eof_redo_toggle = 0;

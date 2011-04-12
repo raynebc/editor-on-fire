@@ -72,6 +72,9 @@ void eof_mark_edited_note_as_cymbal(EOF_SONG *sp, unsigned long track, unsigned 
 	//Performs similar logic to eof_mark_new_note_as_cymbal(), but only applies cymbal status to
 	//the frets based on the specified bitmask, ie. only applying the status of the cymbal that
 	//was added to the drum note
+void eof_mark_new_note_as_double_bass(EOF_SONG *sp, unsigned long track, unsigned long notenum);
+	//Checks if the newly-created note is in PART DRUMS, if so, and the new note is an expert
+	//bass note, expert+ status is applied to this note
 
 unsigned char eof_find_pen_note_mask(void);
 	//For the current track, sets eof_hover_piece appropriately and returns the pen note mask,
