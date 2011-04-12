@@ -97,13 +97,15 @@ MENU eof_note_freestyle_menu[] =
     {NULL, NULL, NULL, 0, NULL}
 };
 
-MENU eof_note_prodrum_menu[] =
+MENU eof_note_drum_menu[] =
 {
     {"Toggle &Yellow cymbal\tCtrl+Y", eof_menu_note_toggle_rb3_cymbal_yellow, NULL, 0, NULL},
     {"Toggle &Blue cymbal\tCtrl+B", eof_menu_note_toggle_rb3_cymbal_blue, NULL, 0, NULL},
     {"Toggle &Green cymbal\tCtrl+G", eof_menu_note_toggle_rb3_cymbal_green, NULL, 0, NULL},
     {"Mark as &Non cymbal", eof_menu_note_remove_cymbal, NULL, 0, NULL},
     {"&Mark new notes as cymbals", eof_menu_note_default_cymbal, NULL, 0, NULL},
+    {"Toggle &Expert+ bass drum\tCtrl+E", eof_menu_note_toggle_double_bass, NULL, 0, NULL},
+    {"Mark new notes as Expert+", eof_menu_note_default_double_bass, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -145,8 +147,8 @@ MENU eof_note_menu[] =
     {"Delete\tDel", eof_menu_note_delete, NULL, 0, NULL},
     {"Display semitones as flat", eof_display_flats_menu, NULL, 0, NULL},
     {"&Freestyle", NULL, eof_note_freestyle_menu, 0, NULL},
-    {"Toggle &Expert+ bass drum\tCtrl+E", eof_menu_note_toggle_double_bass, NULL, 0, NULL},
-    {"Pro &Drum", NULL, eof_note_prodrum_menu, 0, NULL},
+//    {"Toggle &Expert+ bass drum\tCtrl+E", eof_menu_note_toggle_double_bass, NULL, 0, NULL},
+    {"&Drum", NULL, eof_note_drum_menu, 0, NULL},
     {"Pro &Guitar", NULL, eof_note_proguitar_menu, 0, NULL},
     {eof_trill_menu_text, NULL, eof_trill_menu, 0, NULL},
     {eof_tremolo_menu_text, NULL, eof_tremolo_menu, 0, NULL},
@@ -510,8 +512,8 @@ void eof_prepare_note_menu(void)
 			{
 				eof_lyric_line_menu[2].flags = D_DISABLED;
 			}
-			eof_note_menu[20].flags = D_DISABLED;	//Disable toggle Expert+ bass drum
-			eof_note_menu[21].flags = D_DISABLED;	//Disable pro drum mode menu
+			eof_note_drum_menu[5].flags = D_DISABLED;	//Disable toggle Expert+ bass drum
+			eof_note_menu[20].flags = D_DISABLED;	//Disable pro drum mode menu
 		}
 		else
 		{	//PART VOCALS NOT SELECTED
@@ -544,18 +546,18 @@ void eof_prepare_note_menu(void)
 			if(eof_selected_track != EOF_TRACK_DRUM)
 			{	//When PART DRUMS is not active
 				eof_note_menu[9].flags = 0;				//Enable toggle crazy
-				eof_note_menu[21].flags = D_DISABLED;	//Disable pro drum mode menu
+				eof_note_menu[20].flags = D_DISABLED;	//Disable pro drum mode menu
 			}
 			else
 			{	//When PART DRUMS is active
 				eof_note_menu[9].flags = D_DISABLED;	//Disable toggle crazy
-				eof_note_menu[21].flags = 0;			//Enable pro drum mode menu
+				eof_note_menu[20].flags = 0;			//Enable pro drum mode menu
 			}
 
 			if((eof_selected_track == EOF_TRACK_DRUM) && (eof_note_type == EOF_NOTE_AMAZING))
-				eof_note_menu[20].flags = 0;			//Enable toggle Expert+ bass drum only on Expert Drums
+				eof_note_drum_menu[5].flags = 0;			//Enable toggle Expert+ bass drum only on Expert Drums
 			else
-				eof_note_menu[20].flags = D_DISABLED;	//Otherwise disable the menu item
+				eof_note_drum_menu[5].flags = D_DISABLED;	//Otherwise disable the menu item
 
 			/* solos */
 			if(selected)
@@ -594,7 +596,7 @@ void eof_prepare_note_menu(void)
 			/* Pro Guitar mode notation> */
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If the active track is a pro guitar track
-				eof_note_menu[22].flags = 0;			//Enable the Pro Guitar mode notation submenu
+				eof_note_menu[21].flags = 0;			//Enable the Pro Guitar mode notation submenu
 
 				/* Arpeggio>Erase all */
 				if(eof_song->pro_guitar_track[tracknum]->arpeggios)
@@ -608,11 +610,11 @@ void eof_prepare_note_menu(void)
 			}
 			else
 			{
-				eof_note_menu[22].flags = D_DISABLED;	//Otherwise disable the submenu
+				eof_note_menu[21].flags = D_DISABLED;	//Otherwise disable the submenu
 			}
 
 			/* Trill */
-			eof_note_menu[23].flags = 0;	//Enable the Trill submenu
+			eof_note_menu[22].flags = 0;	//Enable the Trill submenu
 			if(intrill)
 			{
 				eof_trill_menu[1].flags = 0;	//Enable Trill>Remove
@@ -625,7 +627,7 @@ void eof_prepare_note_menu(void)
 			}
 
 			/* Tremolo */
-			eof_note_menu[24].flags = 0;	//Enable the Tremolo submenu
+			eof_note_menu[23].flags = 0;	//Enable the Tremolo submenu
 			if(intremolo)
 			{
 				eof_tremolo_menu[1].flags = 0;	//Enable Tremolo>Remove
@@ -648,8 +650,8 @@ void eof_prepare_note_menu(void)
 			}
 			else
 			{	//Disable these submenus unless a track that can use them is active
+				eof_note_menu[22].flags = D_DISABLED;
 				eof_note_menu[23].flags = D_DISABLED;
-				eof_note_menu[24].flags = D_DISABLED;
 			}
 
 			/* Toggle>Orange */
@@ -1323,12 +1325,27 @@ int eof_menu_note_default_cymbal(void)
 	if(eof_mark_drums_as_cymbal)
 	{
 		eof_mark_drums_as_cymbal = 0;
-		eof_note_prodrum_menu[4].flags = 0;
+		eof_note_drum_menu[4].flags = 0;
 	}
 	else
 	{
 		eof_mark_drums_as_cymbal = 1;
-		eof_note_prodrum_menu[4].flags = D_SELECTED;
+		eof_note_drum_menu[4].flags = D_SELECTED;
+	}
+	return 1;
+}
+
+int eof_menu_note_default_double_bass(void)
+{
+	if(eof_mark_drums_as_double_bass)
+	{
+		eof_mark_drums_as_double_bass = 0;
+		eof_note_drum_menu[6].flags = 0;
+	}
+	else
+	{
+		eof_mark_drums_as_double_bass = 1;
+		eof_note_drum_menu[6].flags = D_SELECTED;
 	}
 	return 1;
 }

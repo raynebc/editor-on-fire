@@ -1076,6 +1076,10 @@ void eof_read_editor_keys(void)
 					{	//If the user opted to make all new drum notes cymbals automatically
 						eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
 					}
+					if(eof_mark_drums_as_double_bass)
+					{	//If the user opted to make all new expert bass drum notes as double bass automatically
+						eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+					}
 					eof_detect_difficulties(eof_song);
 				}
 				key[KEY_ENTER] = 0;
@@ -1092,6 +1096,10 @@ void eof_read_editor_keys(void)
 						if(eof_mark_drums_as_cymbal)
 						{	//If the user opted to make all new drum notes cymbals automatically
 							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+						}
+						if(eof_mark_drums_as_double_bass)
+						{	//If the user opted to make all new expert bass drum notes as double bass automatically
+							eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
 						}
 						eof_entering_note_note = new_note;
 						eof_entering_note = 1;
@@ -1190,6 +1198,10 @@ void eof_read_editor_keys(void)
 						{	//If the user opted to make all new drum notes cymbals automatically
 							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
 						}
+						if(eof_mark_drums_as_double_bass)
+						{	//If the user opted to make all new expert bass drum notes as double bass automatically
+							eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+						}
 						eof_entering_note_note = new_note;
 						eof_entering_note = 1;
 					}
@@ -1286,6 +1298,10 @@ void eof_read_editor_keys(void)
 							if(eof_mark_drums_as_cymbal)
 							{	//If the user opted to make all new drum notes cymbals automatically
 								eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+							}
+							if(eof_mark_drums_as_double_bass)
+							{	//If the user opted to make all new expert bass drum notes as double bass automatically
+								eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
 							}
 							eof_entering_note_note = new_note;
 							eof_entering_note = 1;
@@ -1808,6 +1824,10 @@ void eof_read_editor_keys(void)
 							{	//If the user opted to make all new drum notes cymbals automatically
 								eof_mark_edited_note_as_cymbal(eof_song,eof_selected_track,eof_hover_note,bitmask);
 							}
+							if(eof_mark_drums_as_double_bass)
+							{	//If the user opted to make all new expert bass drum notes as double bass automatically
+								eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+							}
 							eof_selection.current = eof_hover_note;
 							if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 							{	//If legacy view is in effect, check the note's legacy bitmask
@@ -1851,6 +1871,10 @@ void eof_read_editor_keys(void)
 								if(eof_mark_drums_as_cymbal)
 								{	//If the user opted to make all new drum notes cymbals automatically
 									eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+								}
+								if(eof_mark_drums_as_double_bass)
+								{	//If the user opted to make all new expert bass drum notes as double bass automatically
+									eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
 								}
 								eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1);	//Get the position of the last note that was added
 								eof_selection.range_pos_1 = eof_selection.current_pos;
@@ -2119,6 +2143,10 @@ void eof_editor_drum_logic(void)
 				if(eof_mark_drums_as_cymbal)
 				{	//If the user opted to make all new drum notes cymbals automatically
 					eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+				}
+				if(eof_mark_drums_as_double_bass)
+				{	//If the user opted to make all new expert bass drum notes as double bass automatically
+					eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
 				}
 				eof_snap_logic(&eof_snap, eof_get_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1));
 				eof_set_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, eof_snap.pos);
@@ -2605,6 +2633,10 @@ void eof_editor_logic(void)
 							{	//If the user opted to make all new drum notes cymbals automatically
 								eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
 							}
+							if(eof_mark_drums_as_double_bass)
+							{	//If the user opted to make all new expert bass drum notes as double bass automatically
+								eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+							}
 							eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1);
 							eof_selection.range_pos_1 = eof_selection.current_pos;
 							eof_selection.range_pos_2 = eof_selection.current_pos;
@@ -2629,6 +2661,10 @@ void eof_editor_logic(void)
 						if(eof_mark_drums_as_cymbal)
 						{	//If the user opted to make all new drum notes cymbals automatically
 							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song,eof_selected_track)-1);
+						}
+						if(eof_mark_drums_as_double_bass)
+						{	//If the user opted to make all new expert bass drum notes as double bass automatically
+							eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
 						}
 						eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1);
 						eof_selection.range_pos_1 = eof_selection.current_pos;
@@ -4212,6 +4248,27 @@ void eof_mark_edited_note_as_cymbal(EOF_SONG *sp, unsigned long track, unsigned 
 		if((sp->legacy_track[tracknum]->note[notenum]->note & 16) && (bitmask & 16))
 		{	//If the note was changed to include a green note
 			eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,EOF_NOTE_FLAG_G_CYMBAL,1);	//Set the green cymbal flag on all drum notes at this position
+		}
+	}
+}
+
+void eof_mark_new_note_as_double_bass(EOF_SONG *sp, unsigned long track, unsigned long notenum)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	if((sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (eof_get_note_type(eof_song, eof_selected_track, notenum) == EOF_NOTE_AMAZING))
+	{	//If the note is an Expert drum note
+		if((notenum >= sp->legacy_track[tracknum]->notes) || (sp->legacy_track[tracknum]->note[notenum] == NULL))
+			return;
+
+		//For now, it's assumed that any drum behavior track will be a legacy format track
+		if(sp->legacy_track[tracknum]->note[notenum]->note & 1)
+		{	//If the note has lane 1 populated
+			sp->legacy_track[tracknum]->note[notenum]->flags |= EOF_NOTE_FLAG_DBASS;	//Set the double bass flag
 		}
 	}
 }
