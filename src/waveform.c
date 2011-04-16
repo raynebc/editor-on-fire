@@ -13,6 +13,8 @@ char eof_waveform_renderrightchannel=0;	//Specifies whether the right channel's 
 
 int eof_waveform_slice_mean(struct waveformslice *left,struct waveformslice *right,struct wavestruct *waveform,unsigned long slicestart, unsigned long num)
 {
+// 	eof_log("eof_waveform_slice_mean() entered");
+
 	unsigned long ctr,ctr2;
 	struct waveformslice results;
 	struct waveformslice *channel=NULL;
@@ -71,6 +73,8 @@ int eof_waveform_slice_mean(struct waveformslice *left,struct waveformslice *rig
 
 void eof_destroy_waveform(struct wavestruct *ptr)
 {
+ 	eof_log("eof_destroy_waveform() entered");
+
 	if(ptr)
 	{
 		if(ptr->oggfilename)
@@ -85,6 +89,8 @@ void eof_destroy_waveform(struct wavestruct *ptr)
 
 int eof_render_waveform(struct wavestruct *waveform)
 {
+// 	eof_log("eof_render_waveform() entered");
+
 	unsigned long x,startslice,startpixel,ctr;
 	struct waveformslice left,right;
 	unsigned long ycoord1,ycoord2;	//Stores the Y coordinates of graph 1's and 2's Y axis
@@ -256,6 +262,8 @@ void eof_render_waveform_line(struct wavestruct *waveform,struct waveformchannel
 #define EOF_DEBUG_WAVEFORM
 struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long slicelength)
 {
+ 	eof_log("\tGenerating waveform\neof_create_waveform() entered");
+
 	ALOGG_OGG *oggstruct=NULL;
 	SAMPLE *audio=NULL;
 	void * oggbuffer = NULL;
@@ -401,6 +409,8 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 		#endif
 		return NULL;	//Return error
 	}
+
+	eof_log("\tWaveform generated");
 
 	return waveform;	//Return waveform data
 }

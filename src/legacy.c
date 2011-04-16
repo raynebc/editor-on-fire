@@ -1,9 +1,12 @@
 #include <allegro.h>
 #include "song.h"
 #include "event.h"
+#include "main.h"	//For logging
 
 EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 {
+	eof_log("eof_load_notes_legacy() entered");
+
 	EOF_SONG * sp = NULL;
 	EOF_NOTE * new_note = NULL;
 	int i, j;

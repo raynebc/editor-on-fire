@@ -9,6 +9,8 @@ char eof_event_list_text[EOF_MAX_TEXT_EVENTS][256] = {{0}};
 
 void eof_add_text_event(EOF_SONG * sp, int beat, char * text)
 {
+	eof_log("eof_add_text_event() entered");
+
 	if(sp->text_events < EOF_MAX_TEXT_EVENTS)
 	{	//If the maximum number of text events hasn't been defined already
 		sp->text_event[sp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
@@ -24,6 +26,8 @@ void eof_add_text_event(EOF_SONG * sp, int beat, char * text)
 
 void eof_move_text_events(EOF_SONG * sp, unsigned long beat, unsigned long offset, int dir)
 {
+	eof_log("eof_move_text_events() entered");
+
 	unsigned long i;
 
 	for(i = 0; i < sp->text_events; i++)

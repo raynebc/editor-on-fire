@@ -1,9 +1,12 @@
 #include <allegro.h>
 #include <stdio.h>
 #include "control.h"
+#include "main.h"
 
 void eof_read_controller(EOF_CONTROLLER * cp)
 {
+//	eof_log("eof_read_controller() entered");
+
 	int i;
 
 	poll_joystick();
@@ -139,6 +142,8 @@ void eof_read_controller(EOF_CONTROLLER * cp)
 
 int eof_controller_set_button(EOF_CONTROLLER_BUTTON * bp)
 {
+	eof_log("eof_controller_set_button() entered");
+
 	int i, j, k;
 	int count = 0;
 	char ignore[4][8][2] = {{{0}}};
@@ -242,6 +247,8 @@ int eof_controller_set_button(EOF_CONTROLLER_BUTTON * bp)
 
 void eof_controller_read_button_names(EOF_CONTROLLER * cp)
 {
+	eof_log("eof_controller_read_button_names() entered");
+
 	int i;
 
 	for(i = 0; i < EOF_CONTROLLER_MAX_BUTTONS; i++)
@@ -269,6 +276,8 @@ void eof_controller_read_button_names(EOF_CONTROLLER * cp)
 
 void eof_controller_save_config(EOF_CONTROLLER * cp, char * name)
 {
+	eof_log("eof_controller_save_config() entered");
+
 	int i;
 	char string[256] = {0};
 
@@ -311,6 +320,8 @@ void eof_controller_save_config(EOF_CONTROLLER * cp, char * name)
 
 void eof_controller_load_config(EOF_CONTROLLER * cp, char * name)
 {
+	eof_log("eof_controller_load_config() entered");
+
 	int i;
 	char string[256] = {0};
 

@@ -10,6 +10,8 @@
 /* convert Feedback chart time to milliseconds for use with EOF */
 static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chartpos)
 {
+//	eof_log("chartpos_to_msec() entered");
+
 	double offset = chart->offset * 1000.0;
 	double curpos = offset;
 	unsigned long lastchartpos = 0;
@@ -55,6 +57,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 
 EOF_SONG * eof_import_chart(const char * fn)
 {
+	eof_log("\tImporting Feedback chart\neof_import_chart() entered");
 
 	struct FeedbackChart * chart = NULL;
 	EOF_SONG * sp = NULL;
@@ -341,5 +344,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 		DestroyFeedbackChart(chart, 1);	//Free memory used by Feedback chart before exiting function
 	}
 	eof_selected_ogg = 0;
+
+	eof_log("\tFeedback import completed");
+
 	return sp;
 }

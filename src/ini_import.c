@@ -3,6 +3,7 @@
 #include "song.h"
 #include "utility.h"	//For eof_buffer_file()
 #include "ini.h"		//For eof_difficulty_ini_tags[]
+#include "main.h"		//For logging
 
 typedef struct
 {
@@ -19,6 +20,8 @@ int eof_import_ini_settings = 0;
  * the ini files since it looks like they are formatted correctly */
 int eof_import_ini(EOF_SONG * sp, char * fn)
 {
+	eof_log("eof_import_ini() entered");
+
 	char * textbuffer = NULL;
 	char * line_token = NULL;
 	int textlength = 0;

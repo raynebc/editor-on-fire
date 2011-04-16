@@ -492,7 +492,7 @@ void eof_prepare_song_menu(void)
 		}
 		else
 		{	//Otherwise disable this menu item, but keep it checked if it's already checked
-			eof_song_menu[18].flags = D_DISABLED | (eof_song_menu[18].flags & D_SELECTED);
+			eof_song_menu[19].flags = D_DISABLED | (eof_song_menu[19].flags & D_SELECTED);
 		}
 	}//If a chart is loaded
 }
@@ -1117,6 +1117,8 @@ int eof_menu_track_selected_9(void)
 
 int eof_menu_track_selected_track_number(int tracknum)
 {
+	eof_log("\tChanging active track\neof_menu_track_selected_track_number() entered");
+
 	unsigned long i;
 
 	if((tracknum > 0) && (tracknum < eof_song->tracks))

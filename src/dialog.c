@@ -54,6 +54,8 @@ char eof_display_flats = 0;		//Used to allow eof_get_tone_name() to return note 
 
 void eof_prepare_menus(void)
 {
+	eof_log("eof_prepare_menus() entered");
+
 	eof_prepare_main_menu();
 	eof_prepare_beat_menu();
 	eof_prepare_file_menu();
@@ -65,6 +67,8 @@ void eof_prepare_menus(void)
 
 void eof_color_dialog(DIALOG * dp, int fg, int bg)
 {
+	eof_log("eof_color_dialog() entered");
+
 	int i;
 
 	if(dp == NULL)
@@ -79,6 +83,8 @@ void eof_color_dialog(DIALOG * dp, int fg, int bg)
 
 int eof_popup_dialog(DIALOG * dp, int n)
 {
+	eof_log("eof_popup_dialog() entered");
+
 	int ret;
 	int oldlen = 0;
 	int dflag = 0;
@@ -207,6 +213,8 @@ int eof_popup_dialog(DIALOG * dp, int n)
 
 int eof_display_flats_menu(void)
 {
+	eof_log("eof_display_flats_menu() entered");
+
    if(eof_display_flats)
    {
       eof_display_flats = 0;

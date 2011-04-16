@@ -124,6 +124,8 @@ int eof_song_qsort_lyrics(const void * e1, const void * e2)
 
 EOF_SONG * eof_create_song(void)
 {
+ 	eof_log("eof_create_song() entered");
+
 	EOF_SONG * sp = NULL;
 	unsigned long i;
 
@@ -173,6 +175,8 @@ EOF_SONG * eof_create_song(void)
 
 void eof_destroy_song(EOF_SONG * sp)
 {
+ 	eof_log("\tClosing project\neof_destroy_song() entered");
+
 	unsigned long ctr;
 
 	if(sp == NULL)
@@ -195,10 +199,14 @@ void eof_destroy_song(EOF_SONG * sp)
 
 	free(sp->catalog);
 	free(sp);
+
+	eof_log("\tProject closed");
 }
 
 EOF_SONG * eof_load_song(const char * fn)
 {
+ 	eof_log("\tLoading project\neof_load_song() entered");
+
 	PACKFILE * fp = NULL;
 	EOF_SONG * sp = NULL;
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};	//This header represents the current project format
@@ -242,6 +250,7 @@ EOF_SONG * eof_load_song(const char * fn)
 		}
 	}
 
+	eof_log("\tProject loaded");
 	return sp;
 }
 
@@ -670,6 +679,8 @@ EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp)
 
 void eof_song_delete_beat(EOF_SONG * sp, unsigned long beat)
 {
+ 	eof_log("eof_song_delete_beat() entered");
+
 	unsigned long i;
 
 	free(sp->beat[beat]);
@@ -707,6 +718,8 @@ int eof_song_resize_beats(EOF_SONG * sp, unsigned long beats)
 
 EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, unsigned long beat, char * text)
 {
+// 	eof_log("eof_song_add_text_event() entered");
+
 	if(sp->text_events < EOF_MAX_TEXT_EVENTS)
 	{	//If the maximum number of text events hasn't already been defined
 		sp->text_event[sp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
@@ -726,6 +739,8 @@ EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, unsigned long beat, char
 
 void eof_song_delete_text_event(EOF_SONG * sp, unsigned long event)
 {
+ 	eof_log("eof_song_delete_text_event() entered");
+
 	unsigned long i;
 	free(sp->text_event[event]);
 	for(i = event; i < sp->text_events - 1; i++)
@@ -737,6 +752,8 @@ void eof_song_delete_text_event(EOF_SONG * sp, unsigned long event)
 
 void eof_song_move_text_events(EOF_SONG * sp, unsigned long beat, int offset)
 {
+ 	eof_log("eof_song_move_text_events() entered");
+
 	unsigned long i;
 
 	for(i = 0; i < sp->text_events; i++)
@@ -777,12 +794,16 @@ int eof_song_resize_text_events(EOF_SONG * sp, unsigned long events)
 
 void eof_sort_events(void)
 {
+ 	eof_log("eof_sort_events() entered");
+
 	qsort(eof_song->text_event, eof_song->text_events, sizeof(EOF_TEXT_EVENT *), eof_song_qsort_events);
 }
 
 /* make sure notes don't overlap */
 void eof_fixup_notes(void)
 {
+ 	eof_log("eof_fixup_notes() entered");
+
 	unsigned long i, j;
 
 	if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
@@ -808,6 +829,8 @@ void eof_fixup_notes(void)
 
 void eof_sort_notes(void)
 {
+ 	eof_log("eof_sort_notes() entered");
+
 	unsigned long j;
 
 	for(j = 1; j < eof_song->tracks; j++)
@@ -818,6 +841,8 @@ void eof_sort_notes(void)
 
 void eof_detect_difficulties(EOF_SONG * sp)
 {
+ 	eof_log("eof_detect_difficulties() entered");
+
 	unsigned long i;
 
 	memset(eof_note_difficulties, 0, sizeof(int) * 4);
@@ -881,6 +906,8 @@ int eof_is_freestyle(char *ptr)
 
 void eof_set_freestyle(char *ptr, char status)
 {
+// 	eof_log("eof_set_freestyle() entered");
+
 	unsigned long ctr=0,ctr2=0;
 	char c=0,style=0;
 
@@ -1007,6 +1034,8 @@ long eof_song_msec_to_tick(EOF_SONG * sp, unsigned long track, unsigned long mse
 
 char eof_check_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,unsigned long flag)
 {
+// 	eof_log("eof_check_flags_at_legacy_note_pos() entered");
+
 	unsigned long ctr,ctr2;
 	char match = 0;
 
@@ -1044,6 +1073,8 @@ char eof_check_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,un
 
 void eof_set_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,unsigned long flag,char operation)
 {
+// 	eof_log("eof_set_flags_at_legacy_note_pos() entered");
+
 	unsigned long ctr,ctr2;
 	char match = 0;
 
@@ -1115,6 +1146,8 @@ int eof_load_song_string_pf(char *const buffer, PACKFILE *fp, const unsigned lon
 
 int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 {
+ 	eof_log("eof_song_add_track() entered");
+
 	EOF_LEGACY_TRACK *ptr = NULL;
 	EOF_VOCAL_TRACK *ptr2 = NULL;
 	EOF_TRACK_ENTRY *ptr3 = NULL;
@@ -1213,6 +1246,8 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 
 int eof_song_delete_track(EOF_SONG * sp, unsigned long track)
 {
+ 	eof_log("eof_song_delete_track() entered");
+
 	unsigned long ctr;
 
 	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track] == NULL))
@@ -1277,6 +1312,8 @@ int eof_song_delete_track(EOF_SONG * sp, unsigned long track)
 
 int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 {
+ 	eof_log("eof_load_song_pf() entered");
+
 	unsigned char inputc;
 	unsigned long inputl,count,ctr,ctr2,bitmask;
 	unsigned long track_count,track_ctr;
@@ -1570,6 +1607,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 
 int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, char difficulty, unsigned long start, unsigned long end, unsigned long flags, char *name)
 {
+ 	eof_log("eof_track_add_section() entered");
+
 	unsigned long count,tracknum;	//Used to de-obfuscate the track handling
 
 	if((sp == NULL) || ((track != 0) && (track >= sp->tracks)))
@@ -1854,6 +1893,8 @@ int eof_save_song_string_pf(char *buffer, PACKFILE *fp)
 
 int eof_save_song(EOF_SONG * sp, const char * fn)
 {
+ 	eof_log("\tSaving project\neof_save_song() entered");
+
 	PACKFILE * fp;
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};
 	unsigned long count,ctr,ctr2,tracknum;
@@ -2331,11 +2372,14 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	}
 
 	pack_fclose(fp);
+	eof_log("\tProject saved");
 	return 1;	//Return success
 }
 
 EOF_SONG * eof_create_song_populated(void)
 {
+ 	eof_log("eof_create_song_populated() entered");
+
 	EOF_SONG * sp = NULL;
 	unsigned long ctr;
 
@@ -2355,6 +2399,8 @@ EOF_SONG * eof_create_song_populated(void)
 
 unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track)
 {
+// 	eof_log("eof_count_track_lanes() entered");
+
 	if((track == 0) || (track > EOF_TRACKS_MAX) || (sp == NULL))
 		return 5;	//Return default value if the specified track doesn't exist
 
@@ -2427,6 +2473,8 @@ unsigned long eof_get_track_size(EOF_SONG *sp, unsigned long track)
 
 void *eof_track_add_note(EOF_SONG *sp, unsigned long track)
 {
+// 	eof_log("eof_track_add_note() entered");
+
 	unsigned long tracknum;
 
 	if((sp == NULL) || (track >= sp->tracks))
@@ -2450,6 +2498,8 @@ void *eof_track_add_note(EOF_SONG *sp, unsigned long track)
 
 void eof_track_delete_note(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
+ 	eof_log("eof_track_delete_note() entered");
+
 	unsigned long tracknum;
 
 	if((sp == NULL) || (track >= sp->tracks))
@@ -2606,6 +2656,8 @@ long eof_get_note_length(EOF_SONG *sp, unsigned long track, unsigned long note)
 
 void eof_set_note_length(EOF_SONG *sp, unsigned long track, unsigned long note, long length)
 {
+// 	eof_log("eof_set_note_length() entered");
+
 	unsigned long tracknum;
 
 	if((sp == NULL) || (track >= sp->tracks))
@@ -2709,6 +2761,8 @@ unsigned long eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long
 
 void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos, long length, char type, char *text)
 {
+ 	eof_log("eof_track_add_create_note() entered");
+
 	void *new_note = NULL;
 	EOF_NOTE *ptr = NULL;
 	EOF_LYRIC *ptr2 = NULL;
@@ -2864,6 +2918,8 @@ EOF_PHRASE_SECTION *eof_get_solo(EOF_SONG *sp, unsigned long track, unsigned lon
 
 void eof_set_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos)
 {
+// 	eof_log("eof_set_note_pos() entered");
+
 	unsigned long tracknum;
 
 	if((sp == NULL) || (track >= sp->tracks))
@@ -2897,6 +2953,8 @@ void eof_set_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note, uns
 
 void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long value)
 {
+// 	eof_log("eof_set_note_note() entered");
+
 	unsigned long tracknum;
 
 	if((sp == NULL) || (track >= sp->tracks))
@@ -2930,6 +2988,8 @@ void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, un
 
 void eof_track_sort_notes(EOF_SONG *sp, unsigned long track)
 {
+ 	eof_log("eof_track_sort_notes() entered");
+
 	unsigned long tracknum;
 
 	if((sp == NULL) || (track >= sp->tracks) || (track == 0))
@@ -2954,6 +3014,8 @@ void eof_track_sort_notes(EOF_SONG *sp, unsigned long track)
 
 void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 {
+ 	eof_log("eof_track_fixup_notes() entered");
+
 	unsigned long tracknum;
 
 	if((sp == NULL) || (track >= sp->tracks))
@@ -3233,6 +3295,8 @@ EOF_PHRASE_SECTION *eof_get_star_power_path(EOF_SONG *sp, unsigned long track, u
 
 void eof_set_num_solos(EOF_SONG *sp, unsigned long track, unsigned long number)
 {
+ 	eof_log("eof_set_num_solos() entered");
+
 	unsigned long tracknum;
 
 	if((sp == NULL) || (track >= sp->tracks))
@@ -3253,6 +3317,8 @@ void eof_set_num_solos(EOF_SONG *sp, unsigned long track, unsigned long number)
 
 void eof_set_num_star_power_paths(EOF_SONG *sp, unsigned long track, unsigned long number)
 {
+// 	eof_log("eof_set_num_star_power_paths() entered");
+
 	unsigned long tracknum;
 
 	if((sp == NULL) || (track >= sp->tracks))
@@ -3296,6 +3362,8 @@ long eof_track_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long 
 
 void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track)
 {
+ 	eof_log("eof_track_find_crazy_notes() entered");
+
 	unsigned long i;
 	long next;
 
@@ -3320,6 +3388,8 @@ void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track)
 
 void eof_set_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long flags)
 {
+// 	eof_log("eof_set_note_flags() entered");
+
 	unsigned long tracknum;
 
 	if((sp == NULL) || (track >= sp->tracks))
@@ -3353,6 +3423,8 @@ void eof_set_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, u
 
 void eof_set_note_type(EOF_SONG *sp, unsigned long track, unsigned long note, char type)
 {
+// 	eof_log("eof_set_note_type() entered");
+
 	unsigned long tracknum;
 
 	if((sp == NULL) || (track >= sp->tracks))
@@ -3386,6 +3458,8 @@ void eof_set_note_type(EOF_SONG *sp, unsigned long track, unsigned long note, ch
 
 void eof_track_delete_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long pathnum)
 {
+ 	eof_log("eof_track_delete_star_power_path() entered");
+
 	unsigned long tracknum;
 
 	if((sp == NULL) || (track >= sp->tracks))
@@ -3427,6 +3501,8 @@ void eof_pro_guitar_track_delete_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned 
 
 void eof_track_add_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos)
 {
+ 	eof_log("eof_track_add_star_power_path() entered");
+
 	unsigned long tracknum;
 
 	if((sp == NULL) || (track >= sp->tracks))
@@ -3457,6 +3533,8 @@ void eof_pro_guitar_track_add_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned lon
 
 void eof_track_delete_solo(EOF_SONG *sp, unsigned long track, unsigned long pathnum)
 {
+ 	eof_log("eof_track_delete_solo() entered");
+
 	unsigned long tracknum;
 
 	if((sp == NULL) || (track >= sp->tracks))
@@ -3492,6 +3570,8 @@ void eof_pro_guitar_track_delete_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long i
 
 void eof_track_add_solo(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos)
 {
+ 	eof_log("eof_track_add_solo() entered");
+
 	unsigned long tracknum;
 
 	if((sp == NULL) || (track >= sp->tracks))
@@ -3522,6 +3602,8 @@ void eof_pro_guitar_track_add_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long star
 
 void eof_note_set_tail_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos)
 {
+ 	eof_log("eof_note_set_tail_pos() entered");
+
 	if((sp == NULL) || (track >= sp->tracks) || (note >= eof_get_track_size(sp, track)))
 		return;
 
@@ -3643,6 +3725,8 @@ EOF_PHRASE_SECTION *eof_get_tremolo(EOF_SONG *sp, unsigned long track, unsigned 
 
 void eof_track_delete_trill(EOF_SONG *sp, unsigned long track, unsigned long index)
 {
+ 	eof_log("eof_track_delete_trill() entered");
+
 	unsigned long ctr;
 	unsigned long tracknum;
 
@@ -3680,6 +3764,8 @@ void eof_track_delete_trill(EOF_SONG *sp, unsigned long track, unsigned long ind
 
 void eof_track_delete_tremolo(EOF_SONG *sp, unsigned long track, unsigned long index)
 {
+ 	eof_log("eof_track_delete_tremolo() entered");
+
 	unsigned long ctr;
 	unsigned long tracknum;
 
@@ -3717,6 +3803,8 @@ void eof_track_delete_tremolo(EOF_SONG *sp, unsigned long track, unsigned long i
 
 void eof_set_num_trills(EOF_SONG *sp, unsigned long track, unsigned long number)
 {
+ 	eof_log("eof_set_num_trills() entered");
+
 	unsigned long tracknum;
 
 	if((sp == NULL) || (track >= sp->tracks))
@@ -3737,6 +3825,8 @@ void eof_set_num_trills(EOF_SONG *sp, unsigned long track, unsigned long number)
 
 void eof_set_num_tremolos(EOF_SONG *sp, unsigned long track, unsigned long number)
 {
+ 	eof_log("eof_set_num_tremolos() entered");
+
 	unsigned long tracknum;
 
 	if((sp == NULL) || (track >= sp->tracks))
@@ -3757,6 +3847,8 @@ void eof_set_num_tremolos(EOF_SONG *sp, unsigned long track, unsigned long numbe
 
 void eof_set_pro_guitar_fret_number(char function, unsigned long fretvalue)
 {
+ 	eof_log("eof_set_pro_guitar_fret_number() entered");
+
 	unsigned long ctr, ctr2, bitmask, tracknum;
 	char undo_made = 0;
 	unsigned char oldfretvalue = 0, newfretvalue = 0;
@@ -3843,6 +3935,8 @@ char *eof_get_note_name(EOF_SONG *sp, unsigned long track, unsigned long note)
 
 void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourcenote, unsigned long desttrack, unsigned long pos, long length, char type)
 {
+ 	eof_log("eof_copy_note() entered");
+
 	unsigned long sourcetracknum, desttracknum, newnotenum;
 	unsigned long note, flags;
 	char *text;
@@ -3933,6 +4027,8 @@ EOF_PHRASE_SECTION *eof_get_arpeggio(EOF_SONG *sp, unsigned long track, unsigned
 //#define EOF_CREATE_IMAGE_SEQUENCE_SHOW_FPS_ONLY
 int eof_create_image_sequence(void)
 {
+ 	eof_log("\tCreating image sequence\neof_create_image_sequence() entered");
+
 	unsigned long framectr = 0, refreshctr = 0, lastpollctr = 0;
 	unsigned long remainder = 0;
 	char windowtitle[101] = {0};
@@ -4038,6 +4134,9 @@ int eof_create_image_sequence(void)
 	eof_apply_display_settings(eof_screen_layout.mode);
 
 	eof_fix_window_title();
+
+	eof_log("\tImage sequence created");
+
 	return 1;
 }
 
@@ -4081,6 +4180,8 @@ EOF_PHRASE_SECTION *eof_get_lyric_section(EOF_SONG *sp, unsigned long track, uns
 
 void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long amount, int dir)
 {
+ 	eof_log("eof_adjust_note_length() entered");
+
 	unsigned long i, undo_made = 0, adjustment, notepos, notelength;
 	long b, next_note;
 
@@ -4155,6 +4256,8 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 
 void eof_set_num_arpeggios(EOF_SONG *sp, unsigned long track, unsigned long number)
 {
+ 	eof_log("eof_set_num_arpeggios() entered");
+
 	unsigned long tracknum;
 
 	if((sp == NULL) || (track >= sp->tracks))
@@ -4171,6 +4274,8 @@ void eof_set_num_arpeggios(EOF_SONG *sp, unsigned long track, unsigned long numb
 
 void eof_set_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, char *name)
 {
+// 	eof_log("eof_set_note_name() entered");
+
 	unsigned long tracknum;
 
 	if((sp == NULL) || (track >= sp->tracks) || (name == NULL))

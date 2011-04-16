@@ -41,6 +41,8 @@ int         eof_feedback_note[5] = {0};
 
 int eof_feedback_any_note(void)
 {
+	eof_log("eof_feedback_any_note() entered");
+
 	int i;
 
 	for(i = 0; i < 5; i++)
@@ -56,6 +58,8 @@ int eof_feedback_any_note(void)
 /* read keys only available to editor (use after song is loaded */
 void eof_editor_logic_feedback(void)
 {
+	eof_log("eof_editor_logic_feedback() entered");
+
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	long fbeat = 0;
 //	int fcstep;
@@ -571,6 +575,8 @@ void eof_editor_logic_feedback(void)
 
 struct FeedbackChart *ImportFeedback(char *filename, int *error)
 {
+	eof_log("ImportFeedback() entered");
+
 	FILE *inf=NULL;
 	char songparsed=0,syncparsed=0,eventsparsed=0;
 		//Flags to indicate whether each of the mentioned sections had already been parsed
@@ -1175,6 +1181,8 @@ int Read_dB_string(char *source,char **str1, char **str2)
 	//Nonzero is returned upon success, or zero is returned if source did not contain two sets of non whitespace characters
 	//separated by an equal sign character, or if the closing quotation mark is missing.
 
+//	eof_log("Read_dB_string() entered");
+
 	unsigned long srcindex;	//Index into source string
 	unsigned long index;	//Index into destination strings
 	char *string1,*string2;	//Working strings
@@ -1245,6 +1253,9 @@ struct dbTrack *Validate_dB_instrument(char *buffer)
 	//(track name is allocated, tracktype and difftype are set and the linked lists are set to NULL)
 	//The track strcture is returned, otherwise NULL is returned if the string did not contain a valid
 	//track name.  buffer[] is modified to remove any whitespace after the closing bracket
+
+	eof_log("Validate_dB_instrument() entered");
+
 	unsigned long index=0;	//Used to index into buffer
 	char *endbracket=NULL;	//The pointer to the end bracket
 	char *diffstring=NULL;	//Used to find the difficulty substring
@@ -1413,6 +1424,8 @@ struct dbTrack *Validate_dB_instrument(char *buffer)
 
 void DestroyFeedbackChart(struct FeedbackChart *ptr, char freestruct)
 {
+	eof_log("DestroyFeedbackChart() entered");
+
 	struct dBAnchor *anchorptr;	//Conductor for the anchors linked list
 	struct dbText *eventptr;	//Conductor for the events linked list
 	struct dbTrack *trackptr;	//Conductor for the tracks linked list

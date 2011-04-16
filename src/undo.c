@@ -18,6 +18,8 @@ int eof_redo_type = 0;
 
 int eof_undo_load_state(const char * fn)
 {
+ 	eof_log("eof_undo_load_state() entered");
+
 	EOF_SONG * sp = NULL;
 	PACKFILE * fp;
 	char rheader[16];
@@ -44,6 +46,8 @@ int eof_undo_load_state(const char * fn)
 
 void eof_undo_reset(void)
 {
+ 	eof_log("eof_undo_reset() entered");
+
 	int i;
 
 	for(i = 0; i < EOF_MAX_UNDO; i++)
@@ -57,6 +61,8 @@ void eof_undo_reset(void)
 
 int eof_undo_add(int type)
 {
+ 	eof_log("eof_undo_add() entered");
+
 	char fn[1024] = {0};
 
 	if((type == EOF_UNDO_TYPE_NOTE_LENGTH) && (eof_undo_last_type == EOF_UNDO_TYPE_NOTE_LENGTH))
@@ -95,6 +101,8 @@ int eof_undo_add(int type)
 
 int eof_undo_apply(void)
 {
+ 	eof_log("eof_undo_apply() entered");
+
 	char fn[1024] = {0};
 
 	if(eof_undo_count > 0)
@@ -145,6 +153,8 @@ int eof_undo_apply(void)
 
 void eof_redo_apply(void)
 {
+ 	eof_log("eof_redo_apply() entered");
+
 	if(eof_redo_count > 0)
 	{
 		eof_save_song(eof_song, eof_undo_filename[eof_undo_current_index]);
