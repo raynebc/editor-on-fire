@@ -5,6 +5,8 @@
 
 unsigned long eof_note_count_colors(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
+	eof_log("eof_note_count_colors() entered");
+
 	unsigned long count = 0;
 	unsigned long notemask = eof_get_note_note(sp, track, note);
 
@@ -37,6 +39,8 @@ unsigned long eof_note_count_colors(EOF_SONG *sp, unsigned long track, unsigned 
 
 void eof_legacy_track_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, char o, unsigned long pos, long length)
 {
+	eof_log("eof_legacy_track_note_create() entered");
+
 	np->note = 0;
 	if(g)
 	{
@@ -68,6 +72,8 @@ void eof_legacy_track_note_create(EOF_NOTE * np, char g, char y, char r, char b,
 
 void eof_legacy_track_note_create2(EOF_NOTE * np, unsigned long bitmask, unsigned long pos, long length)
 {
+	eof_log("eof_legacy_track_note_create2() entered");
+
 	np->note = bitmask;
 	np->pos = pos;
 	np->length = length;
@@ -75,6 +81,8 @@ void eof_legacy_track_note_create2(EOF_NOTE * np, unsigned long bitmask, unsigne
 
 int eof_adjust_notes(int offset)
 {
+	eof_log("eof_adjust_notes() entered");
+
 	unsigned long i, j;
 	EOF_PHRASE_SECTION *soloptr = NULL;
 	EOF_PHRASE_SECTION *starpowerptr= NULL;

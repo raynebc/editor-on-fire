@@ -38,11 +38,15 @@ EOF_SNAP_DATA eof_tail_snap;
 
 float eof_pos_distance(float p1, float p2)
 {
+//	eof_log("eof_pos_distance() entered");
+
 	return sqrt((p1 - p2) * (p1 - p2));
 }
 
 void eof_select_beat(int beat)
 {
+	eof_log("eof_select_beat() entered");
+
 	int i;
 	int beat_counter = 0;
 	char first_measure = 0;
@@ -103,6 +107,8 @@ void eof_select_beat(int beat)
 
 void eof_get_snap_ts(EOF_SNAP_DATA * sp, int beat)
 {
+//	eof_log("eof_get_snap_ts() entered");
+
 	int tsbeat = 0;
 	int i;
 
@@ -151,6 +157,8 @@ void eof_get_snap_ts(EOF_SNAP_DATA * sp, int beat)
 
 void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 {
+//	eof_log("eof_snap_logic() entered");
+
 	int i;
 	int interval = 0;
 	char measure_snap = 0;
@@ -414,6 +422,8 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 
 void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 {
+//	eof_log("eof_snap_length_logic() entered");
+
 	if(eof_snap_mode != EOF_SNAP_OFF)
 	{
 		/* if snapped to the next beat, make sure length is calculated from that beat */
@@ -507,6 +517,8 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 
 void eof_read_editor_keys(void)
 {
+//	eof_log("eof_read_editor_keys() entered");
+
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	unsigned long bitmask = 0;	//Used for simplifying note placement logic
 	EOF_NOTE * new_note = NULL;
@@ -2059,6 +2071,8 @@ void eof_read_editor_keys(void)
 
 void eof_editor_drum_logic(void)
 {
+	eof_log("eof_editor_drum_logic() entered");
+
 	int bitmask;	//Used for simplifying note placement logic
 	EOF_NOTE * new_note = NULL;
 
@@ -2161,6 +2175,8 @@ void eof_editor_drum_logic(void)
 
 void eof_editor_logic(void)
 {
+//	eof_log("eof_editor_logic() entered");
+
 	unsigned long i, note, notepos;
 	unsigned long tracknum;
 	unsigned long bitmask = 0;	//Used to reduce duplicated logic
@@ -2894,6 +2910,8 @@ void eof_editor_logic(void)
 
 void eof_vocal_editor_logic(void)
 {
+//	eof_log("eof_vocal_editor_logic() entered");
+
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int use_this_x = mouse_x;
@@ -3609,6 +3627,8 @@ void eof_vocal_editor_logic(void)
 
 int eof_get_ts_text(int beat, char * buffer)
 {
+//	eof_log("eof_get_ts_text() entered");
+
 	int ret = 0;
 	if(eof_song->beat[beat]->flags & EOF_BEAT_FLAG_START_4_4)
 	{
@@ -3644,6 +3664,8 @@ int eof_get_ts_text(int beat, char * buffer)
 
 void eof_render_editor_window(void)
 {
+//	eof_log("eof_render_editor_window() entered");
+
 	unsigned long start;	//Will store the timestamp of the left visible edge of the piano roll
 	unsigned long i,numnotes;
 
@@ -3689,6 +3711,8 @@ void eof_render_editor_window(void)
 
 void eof_render_vocal_editor_window(void)
 {
+//	eof_log("eof_render_vocal_editor_window() entered");
+
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int pos = eof_music_pos / eof_zoom;	//Current seek position
@@ -3800,6 +3824,8 @@ void eof_render_vocal_editor_window(void)
 
 unsigned long eof_determine_piano_roll_left_edge(void)
 {
+//	eof_log("eof_determine_piano_roll_left_edge() entered");
+
 	unsigned long pos = eof_music_pos / eof_zoom;
 
 	if(pos <= 320)
@@ -3814,6 +3840,8 @@ unsigned long eof_determine_piano_roll_left_edge(void)
 
 unsigned long eof_determine_piano_roll_right_edge(void)
 {
+	eof_log("eof_determine_piano_roll_right_edge() entered");
+
 	unsigned long pos = eof_music_pos / eof_zoom;
 
 	if(pos < 300)
@@ -3828,6 +3856,8 @@ unsigned long eof_determine_piano_roll_right_edge(void)
 
 void eof_render_editor_window_common(void)
 {
+//	eof_log("eof_render_editor_window_common() entered");
+
 	unsigned long i, j, ctr, notepos, markerlength;
 	int pos = eof_music_pos / eof_zoom;	//Current seek position
 	int lpos;							//The position of the first beatmarker
@@ -4159,6 +4189,8 @@ void eof_render_editor_window_common(void)
 
 void eof_render_editor_window_common2(void)
 {
+//	eof_log("eof_render_editor_window_common2() entered");
+
 	int i;
 	int pos = eof_music_pos / eof_zoom;	//Current seek position
 
@@ -4221,11 +4253,15 @@ void eof_render_editor_window_common2(void)
 
 void eof_mark_new_note_as_cymbal(EOF_SONG *sp, unsigned long track, unsigned long notenum)
 {	//Perform the eof_mark_edited_note_as_cymbal() logic, applying cymbal status to all relevant frets in the note
+	eof_log("eof_mark_new_note_as_cymbal() entered");
+
 	eof_mark_edited_note_as_cymbal(sp,track,notenum,0xFFFF);
 }
 
 void eof_mark_edited_note_as_cymbal(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long bitmask)
 {
+	eof_log("eof_mark_edited_note_as_cymbal() entered");
+
 	unsigned long tracknum;
 
 	if((sp == NULL) || (track >= sp->tracks))
@@ -4254,6 +4290,8 @@ void eof_mark_edited_note_as_cymbal(EOF_SONG *sp, unsigned long track, unsigned 
 
 void eof_mark_new_note_as_double_bass(EOF_SONG *sp, unsigned long track, unsigned long notenum)
 {
+	eof_log("eof_mark_new_note_as_double_bass() entered");
+
 	unsigned long tracknum;
 
 	if((sp == NULL) || (track >= sp->tracks))
@@ -4275,6 +4313,8 @@ void eof_mark_new_note_as_double_bass(EOF_SONG *sp, unsigned long track, unsigne
 
 unsigned char eof_find_pen_note_mask(void)
 {
+//	eof_log("eof_find_pen_note_mask() entered");
+
 	unsigned long laneborder;
 	int bitmaskshift;	//Used to find the pen note bitmask if the notes are inverted (taking lane 6 into account)
 	unsigned char returnvalue = 0;
@@ -4371,6 +4411,8 @@ unsigned char eof_find_pen_note_mask(void)
 
 void eof_editor_logic_common(void)
 {
+//	eof_log("eof_editor_logic_common() entered");
+
 	int pos = eof_music_pos / eof_zoom;
 	int npos;
 	unsigned long i;

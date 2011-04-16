@@ -39,6 +39,8 @@ int eof_import_bpm_count = 0;
 
 static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_create_events_list(void)
 {
+//	eof_log("eof_import_create_events_list() entered");
+
 	EOF_IMPORT_MIDI_EVENT_LIST * lp;
 	lp = malloc(sizeof(EOF_IMPORT_MIDI_EVENT_LIST));
 	if(!lp)
@@ -52,6 +54,8 @@ static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_create_events_list(void)
 
 static void eof_import_destroy_events_list(EOF_IMPORT_MIDI_EVENT_LIST * lp)
 {
+//	eof_log("eof_import_destroy_events_list() entered");
+
 	int i;
 
 	for(i = 0; i < lp->events; i++)
@@ -70,6 +74,8 @@ static void eof_import_destroy_events_list(EOF_IMPORT_MIDI_EVENT_LIST * lp)
  */
 static unsigned long eof_parse_var_len(unsigned char * data, unsigned long pos, unsigned long * bytes_used)
 {
+//	eof_log("eof_parse_var_len() entered");
+
 	int cpos = pos;
 	unsigned long val = *(&data[cpos]) & 0x7F;
 
@@ -88,6 +94,8 @@ static unsigned long eof_parse_var_len(unsigned char * data, unsigned long pos, 
 
 static int eof_import_distance(int pos1, int pos2)
 {
+//	eof_log("eof_import_distance() entered");
+
 	int distance;
 
 	if(pos1 > pos2)
@@ -103,6 +111,8 @@ static int eof_import_distance(int pos1, int pos2)
 
 static long eof_import_closest_beat(EOF_SONG * sp, unsigned long pos)
 {
+//	eof_log("eof_import_closest_beat() entered");
+
 	unsigned long i;
 	long bb = -1, ab = -1;	//If this function is changed to return unsigned long, then these can be changed to unsigned long as well
 	char check1 = 0, check2 = 0;
@@ -139,6 +149,8 @@ static long eof_import_closest_beat(EOF_SONG * sp, unsigned long pos)
 
 static void eof_midi_import_add_event(EOF_IMPORT_MIDI_EVENT_LIST * events, unsigned long pos, unsigned char event, unsigned long d1, unsigned long d2, unsigned long track)
 {
+//	eof_log("eof_midi_import_add_event() entered");
+
 	if(events->events < EOF_IMPORT_MAX_EVENTS)
 	{
 		events->event[events->events] = malloc(sizeof(EOF_IMPORT_MIDI_EVENT));
@@ -162,6 +174,8 @@ static void eof_midi_import_add_event(EOF_IMPORT_MIDI_EVENT_LIST * events, unsig
 
 static void eof_midi_import_add_text_event(EOF_IMPORT_MIDI_EVENT_LIST * events, unsigned long pos, unsigned char event, char * text, unsigned long size, unsigned long track)
 {
+//	eof_log("eof_midi_import_add_text_event() entered");
+
 	if(events->events < EOF_IMPORT_MAX_EVENTS)
 	{
 		if(size > EOF_MAX_MIDI_TEXT_SIZE)	//Prevent a buffer overflow by truncating the string if necessary
@@ -187,6 +201,8 @@ static void eof_midi_import_add_text_event(EOF_IMPORT_MIDI_EVENT_LIST * events, 
 
 double eof_ConvertToRealTime(unsigned long absolutedelta,struct Tempo_change *anchorlist,EOF_MIDI_TS_LIST *tslist,unsigned long timedivision,unsigned long offset)
 {
+//	eof_log("eof_ConvertToRealTime() entered");
+
 	struct Tempo_change *temp=anchorlist;	//Point to first link in list
 	double time=0.0;
 	unsigned long reldelta=0;
@@ -248,6 +264,8 @@ inline unsigned long eof_ConvertToRealTimeInt(unsigned long absolutedelta,struct
 
 EOF_SONG * eof_import_midi(const char * fn)
 {
+	eof_log("eof_import_midi() entered");
+
 	EOF_SONG * sp = NULL;;
 	int pticker = 0;
 	int ptotal_events = 0;

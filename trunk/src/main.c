@@ -232,8 +232,12 @@ struct MIDIentry *MIDIqueue=NULL;		//Linked list of queued MIDI notes
 struct MIDIentry *MIDIqueuetail=NULL;	//Points to the tail of the list
 char eof_midi_initialized=0;			//Specifies whether Allegro was able to set up a MIDI device
 
+FILE *eof_log_fp = NULL;	//Is set to NULL if logging is disabled
+
 void eof_debug_message(char * text)
 {
+	eof_log("eof_debug_message() entered");
+
 	if(eof_debug_mode)
 	{
 		allegro_message("%s", text);
@@ -243,6 +247,8 @@ void eof_debug_message(char * text)
 
 void eof_show_mouse(BITMAP * bp)
 {
+	eof_log("eof_show_mouse() entered");
+
 	if(eof_soft_cursor)
 	{
 		show_mouse(bp);
@@ -251,6 +257,8 @@ void eof_show_mouse(BITMAP * bp)
 
 float eof_get_porpos(unsigned long pos)
 {
+	eof_log("eof_get_porpos() entered");
+
 	float porpos = 0.0;
 	long beat = 0;
 	int blength;
@@ -276,6 +284,8 @@ float eof_get_porpos(unsigned long pos)
 
 long eof_put_porpos(unsigned long beat, float porpos, float offset)
 {
+	eof_log("eof_put_porpos() entered");
+
 	float fporpos = porpos + offset;
 	unsigned long cbeat = beat;
 	if(fporpos <= -1.0)
@@ -317,6 +327,8 @@ long eof_put_porpos(unsigned long beat, float porpos, float offset)
 
 void eof_reset_lyric_preview_lines(void)
 {
+	eof_log("eof_reset_lyric_preview_lines() entered");
+
 	eof_preview_line[0] = 0;
 	eof_preview_line[1] = 0;
 	eof_preview_line_lyric[0] = 0;
@@ -327,6 +339,8 @@ void eof_reset_lyric_preview_lines(void)
 
 void eof_find_lyric_preview_lines(void)
 {
+//	eof_log("eof_find_lyric_preview_lines() entered");
+
 	unsigned long i, j;
 	int current_line = -1;
 	int next_line = -1;
@@ -419,16 +433,20 @@ void eof_find_lyric_preview_lines(void)
 
 void eof_emergency_stop_music(void)
 {
+	eof_log("eof_emergency_stop_music() entered");
+
 	if(eof_song_loaded)
 	{
 		if(!eof_music_paused)
 		{
+			eof_log("\tStopping playback");
 			eof_music_paused = 1;
 			eof_stop_midi();
 			alogg_stop_ogg(eof_music_track);
 		}
 		else if(eof_music_catalog_playback)
 		{
+			eof_log("\tStopping playback");
 			eof_music_catalog_playback = 0;
 			eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 			eof_stop_midi();
@@ -439,6 +457,8 @@ void eof_emergency_stop_music(void)
 
 void eof_switch_out_callback(void)
 {
+	eof_log("eof_switch_out_callback() entered");
+
 	eof_emergency_stop_music();
 	key[KEY_TAB] = 0;
 	eof_has_focus = 0;
@@ -446,6 +466,8 @@ void eof_switch_out_callback(void)
 
 void eof_switch_in_callback(void)
 {
+	eof_log("eof_switch_in_callback() entered");
+
 	key[KEY_TAB] = 0;
 	eof_has_focus = 1;
 	gametime_reset();
@@ -453,6 +475,8 @@ void eof_switch_in_callback(void)
 
 void eof_fix_catalog_selection(void)
 {
+	eof_log("eof_fix_catalog_selection() entered");
+
 	if(eof_song->catalog->entries > 0)
 	{
 		if(eof_selected_catalog_entry >= eof_song->catalog->entries)
@@ -468,6 +492,8 @@ void eof_fix_catalog_selection(void)
 
 int eof_set_display_mode(int mode)
 {
+	eof_log("eof_set_display_mode() entered");
+
 	unsigned long screen_width, screen_height, default_zoom_level;
 
 	/* destroy windows first */
@@ -615,6 +641,8 @@ int eof_set_display_mode(int mode)
 
 void eof_fix_window_title(void)
 {
+	eof_log("eof_fix_window_title() entered");
+
 	if(eof_changes)
 	{
 		ustrcpy(eof_window_title, "*EOF - ");
@@ -651,6 +679,8 @@ void eof_fix_window_title(void)
 
 void eof_clear_input(void)
 {
+	eof_log("eof_clear_input() entered");
+
 	int i;
 
 	clear_keybuf();
@@ -666,6 +696,8 @@ void eof_clear_input(void)
 
 void eof_prepare_undo(int type)
 {
+	eof_log("eof_prepare_undo() entered");
+
 	if(eof_undo_add(type))
 	{
 		eof_change_count++;
@@ -688,6 +720,8 @@ void eof_prepare_undo(int type)
 
 long eof_get_previous_note(long cnote)
 {
+	eof_log("eof_get_previous_note() entered");
+
 	long i;
 
 	for(i = cnote - 1; i >= 0; i--)
@@ -702,6 +736,8 @@ long eof_get_previous_note(long cnote)
 
 int eof_note_is_hopo(unsigned long cnote)
 {
+	eof_log("eof_note_is_hopo() entered");
+
 	double delta;
 	float hopo_delta = eof_song->tags->eighth_note_hopo ? 250.0 : 170.0;
 	unsigned long i;
@@ -768,6 +804,8 @@ int eof_note_is_hopo(unsigned long cnote)
 
 void eof_determine_phrase_status(void)
 {
+	eof_log("eof_determine_phrase_status() entered");
+
 	unsigned long i, j, tracknum;
 	char sp[EOF_MAX_PHRASES] = {0};
 	char so[EOF_MAX_PHRASES] = {0};
@@ -905,6 +943,8 @@ void eof_determine_phrase_status(void)
 
 int eof_figure_difficulty(void)
 {
+	eof_log("eof_figure_difficulty() entered");
+
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int nt[5] = {0};
@@ -959,6 +999,8 @@ int eof_figure_difficulty(void)
 /* total is used to determine the total number of notes including unselected notes */
 unsigned long eof_count_selected_notes(unsigned long * total, char v)
 {
+//	eof_log("eof_count_selected_notes() entered");
+
 	unsigned long tracknum;
 	unsigned long count=0, i;
 	long last = -1;
@@ -1050,6 +1092,8 @@ unsigned long eof_count_selected_notes(unsigned long * total, char v)
 
 int eof_figure_part(void)
 {
+	eof_log("eof_figure_part() entered");
+
 	int part[EOF_TRACKS_MAX] = {0};
 
 	if(eof_get_track_size(eof_song,eof_selected_track) == 0)
@@ -1067,6 +1111,8 @@ int eof_figure_part(void)
 
 int eof_load_ogg_quick(char * filename)
 {
+	eof_log("eof_load_ogg_quick() entered");
+
 	int loaded = 0;
 
 	eof_destroy_ogg();
@@ -1106,6 +1152,8 @@ int eof_load_ogg_quick(char * filename)
 
 int eof_load_ogg(char * filename)
 {
+	eof_log("eof_load_ogg() entered");
+
 	char * returnedfn = NULL;
 	char directory[1024] = {0};
 	int loaded = 0;
@@ -1220,6 +1268,8 @@ int eof_load_ogg(char * filename)
 
 int eof_destroy_ogg(void)
 {
+	eof_log("eof_destroy_ogg() entered");
+
 	int failed = 1;
 
 	if(eof_music_track)
@@ -1235,6 +1285,8 @@ int eof_destroy_ogg(void)
 
 int eof_save_ogg(char * fn)
 {
+	eof_log("eof_save_ogg() entered");
+
 	PACKFILE * fp;
 	if(eof_music_data)
 	{
@@ -1252,6 +1304,8 @@ int eof_save_ogg(char * fn)
 
 int eof_notes_selected(void)
 {
+	eof_log("eof_notes_selected() entered");
+
 	int count = 0;
 	int i;
 
@@ -1267,6 +1321,8 @@ int eof_notes_selected(void)
 
 void eof_fix_waveform_graph(void)
 {
+	eof_log("eof_fix_waveform_graph() entered");
+
 	if(eof_music_paused && eof_waveform)
 	{
 		eof_destroy_waveform(eof_waveform);
@@ -1286,6 +1342,8 @@ void eof_fix_waveform_graph(void)
 /* read keys that are universally usable */
 void eof_read_global_keys(void)
 {
+//	eof_log("eof_read_global_keys() entered");
+
 	/* exit program (Esc) */
 	if(key[KEY_ESC] && !KEY_EITHER_SHIFT)
 	{
@@ -1489,6 +1547,8 @@ void eof_read_global_keys(void)
 
 void eof_lyric_logic(void)
 {
+//	eof_log("eof_lyric_logic() entered");
+
 	int note[7] = {0, 2, 4, 5, 7, 9, 11};
 	int bnote[7] = {1, 3, 0, 6, 8, 10, 0};
 	unsigned long i, k;
@@ -1595,6 +1655,8 @@ void eof_lyric_logic(void)
 
 void eof_note_logic(void)
 {
+//	eof_log("eof_note_logic() entered");
+
 	if((eof_catalog_menu[0].flags & D_SELECTED) && (mouse_x >= 0) && (mouse_x < 90) && (mouse_y > 40 + eof_window_note->y) && (mouse_y < 40 + 18 + eof_window_note->y))
 	{
 		eof_cselected_control = mouse_x / 30;
@@ -1650,6 +1712,8 @@ void eof_note_logic(void)
 
 void eof_logic(void)
 {
+//	eof_log("eof_logic() entered");
+
 	eof_read_global_keys();
 
 	/* see if we need to activate the menu */
@@ -1796,6 +1860,8 @@ void eof_logic(void)
 static char eof_tone_name_buffer[16] = {0};
 char * eof_get_tone_name(int tone)
 {
+//	eof_log("eof_get_tone_name() entered");
+
 	char * note_name[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 	char * note_name_flats[12] = {"C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"};
 	char ** array_to_use=note_name;	//Default to using the regular note name array
@@ -1809,6 +1875,8 @@ char * eof_get_tone_name(int tone)
 
 void eof_render_note_window(void)
 {
+//	eof_log("eof_render_note_window() entered");
+
 	unsigned long i, bitmask, index;
 	int pos;
 	int lpos, npos, ypos;
@@ -2183,6 +2251,8 @@ void eof_render_note_window(void)
 
 void eof_render_lyric_preview(BITMAP * bp)
 {
+//	eof_log("eof_render_lyric_preview() entered");
+
 	#define MAX_LYRIC_PREVIEW_LENGTH 255
 	unsigned long currentlength=0;		//Used to track the length of the preview line being built
 	unsigned long lyriclength=0;		//The length of the lyric being added
@@ -2281,6 +2351,8 @@ void eof_render_lyric_preview(BITMAP * bp)
 
 void eof_render_lyric_window(void)
 {
+//	eof_log("eof_render_lyric_window() entered");
+
 	int i;
 	int k, n;
 	int kcol;
@@ -2373,6 +2445,8 @@ void eof_render_lyric_window(void)
 
 void eof_render_3d_window(void)
 {
+//	eof_log("eof_render_3d_window() entered");
+
 	int point[8];
 	unsigned long i;
 	short numsolos = 0;					//Used to abstract the solo sections
@@ -2622,6 +2696,8 @@ void eof_render_3d_window(void)
 
 void eof_render(void)
 {
+//	eof_log("eof_render() entered");
+
 	/* don't draw if window is out of focus */
 	if(!eof_has_focus)
 	{
@@ -2668,10 +2744,6 @@ void eof_render(void)
 		DoneVSync();
 	}
 	blit(eof_screen, screen, 0, 0, 0, 0, SCREEN_W, SCREEN_H);
-}
-
-void eof_reset_song(void)
-{
 }
 
 static int work_around_fsel_bug = 0;
@@ -2733,6 +2805,8 @@ int eof_check_arg_softmouse(int argc, char * argv[])
 
 int eof_load_data(void)
 {
+	eof_log("eof_load_data() entered");
+
 	int i;
 
 	eof_image[EOF_IMAGE_TAB0] = load_pcx("eof.dat#tab0.pcx", eof_palette);
@@ -2839,6 +2913,8 @@ int eof_load_data(void)
 
 void eof_destroy_data(void)
 {
+	eof_log("eof_destroy_data() entered");
+
 	int i;
 
 	agup_shutdown();
@@ -2855,10 +2931,17 @@ void eof_destroy_data(void)
 
 int eof_initialize(int argc, char * argv[])
 {
+	eof_log("eof_initialize() entered");
+
 	int i;
 	char temp_filename[1024] = {0};
 
 	allegro_init();
+
+	//Start the logging system
+	eof_start_logging();
+	eof_log("Logging started during program initialization");
+
 	set_window_title("EOF - No Song");
 	if(install_sound(DIGI_AUTODETECT, MIDI_AUTODETECT, NULL))
 	{	//If Allegro failed to initialize the sound AND midi
@@ -2892,7 +2975,6 @@ int eof_initialize(int argc, char * argv[])
 	InitIdleSystem();
 
 	show_mouse(NULL);
-	eof_reset_song();
 
 	/* make sure we are in the proper directory before loading external data */
 	if(argc > 1)
@@ -3199,6 +3281,7 @@ int eof_initialize(int argc, char * argv[])
 			}
 		}
 	}
+	eof_log("\tInitializing audio");
 	eof_mix_init();
 	if(!eof_soft_cursor)
 	{
@@ -3235,6 +3318,8 @@ int eof_initialize(int argc, char * argv[])
 
 void eof_exit(void)
 {
+	eof_log("eof_exit() entered");
+
 	int i;
 
 	StopIdleSystem();
@@ -3290,6 +3375,9 @@ int main(int argc, char * argv[])
 			return 1;
 		}
 	#endif
+
+	eof_log("\tEntering main program loop");
+
 	while(!eof_quit)
 	{
 		/* frame skip mode */
@@ -3410,6 +3498,8 @@ int main(int argc, char * argv[])
 
 void eof_process_midi_queue(int pos)
 {	//Process the MIDI queue based on the current chart timestamp (eof_music_pos)
+	eof_log("eof_process_midi_queue() entered");
+
 	unsigned char NOTE_ON_DATA[3]={0x91,0x0,127};	//Data sequence for a Note On, channel 1, Note 0
 	unsigned char NOTE_OFF_DATA[3]={0x81,0x0,127};	//Data sequence for a Note Off, channel 1, Note 0
 
@@ -3464,6 +3554,8 @@ void eof_process_midi_queue(int pos)
 
 int eof_midi_queue_add(unsigned char note,int startpos,int endpos)
 {
+	eof_log("eof_midi_queue_add() entered");
+
 	struct MIDIentry *ptr=NULL;	//Stores the newly allocated link
 
 //Validate input
@@ -3500,6 +3592,8 @@ int eof_midi_queue_add(unsigned char note,int startpos,int endpos)
 
 void eof_midi_queue_destroy(void)
 {
+	eof_log("eof_midi_queue_destroy() entered");
+
 	struct MIDIentry *ptr=MIDIqueue,*temp=NULL;
 
 	while(ptr != NULL)	//For all links in the list
@@ -3514,6 +3608,8 @@ void eof_midi_queue_destroy(void)
 
 void eof_all_midi_notes_off(void)
 {
+	eof_log("eof_all_midi_notes_off() entered");
+
 	unsigned char ALL_NOTES_OFF[3]={0xB1,123,0};	//Data sequence for a Control Change, controller 123, value 0 (All notes off)
 
 	if(midi_driver)
@@ -3526,6 +3622,8 @@ void eof_all_midi_notes_off(void)
 
 void eof_stop_midi(void)
 {
+	eof_log("eof_stop_midi() entered");
+
 	if(eof_midi_initialized)
 	{
 		eof_all_midi_notes_off();
@@ -3535,6 +3633,8 @@ void eof_stop_midi(void)
 
 void eof_init_after_load(void)
 {
+	eof_log("\tInitializing after load\neof_init_after_load() entered");
+
 	eof_changes = 0;
 	eof_music_pos = eof_av_delay;
 	eof_music_paused = 1;
@@ -3556,10 +3656,14 @@ void eof_init_after_load(void)
 	eof_waveform = NULL;
 	eof_display_waveform = 0;
 	eof_catalog_menu[0].flags = 0;	//Hide the fret catalog by default
+
+	eof_log("\tInitialization after load complete");
 }
 
 void eof_scale_fretboard(unsigned long numlanes)
 {
+	eof_log("eof_scale_fretboard() entered");
+
 	unsigned long ctr;
 	float lanewidth;
 
@@ -3584,6 +3688,8 @@ long xchart[EOF_MAX_FRETS] = {0};
 
 void eof_set_3D_lane_positions(unsigned long track)
 {
+//	eof_log("eof_set_3D_lane_positions() entered");
+
 	static unsigned long numlanes = 0;	//This remembers the number of lanes handled by the previous call
 	unsigned long newnumlanes = eof_count_track_lanes(eof_song, track);	//This is the number of lanes in the specified track
 	unsigned long numlaneswidth = 5 - 1;	//By default, the lane width will be based on a 5 lane track
@@ -3628,6 +3734,8 @@ long ychart[EOF_MAX_FRETS] = {0};
 
 void eof_set_2D_lane_positions(unsigned long track)
 {
+//	eof_log("eof_set_2D_lane_positions() entered");
+
 	static unsigned long numlanes = 0;		//This remembers the number of lanes handled by the previous call
 	unsigned long newnumlanes, newnumlanes2;
 	unsigned long ctr, ctr2;
@@ -3659,6 +3767,41 @@ void eof_set_2D_lane_positions(unsigned long track)
 		{	//Store the fretboard lane positions in normal order
 			ychart[ctr] = eof_screen_layout.note_y[ctr];
 		}
+	}
+}
+
+void eof_start_logging(void)
+{
+	char log_filename[1024] = {0};
+
+	if(eof_log_fp == NULL)
+	{
+		get_executable_name(log_filename, 1024);	//Get the path of the EOF binary that is running
+		replace_filename(log_filename, log_filename, "eof_log.txt", 1024);
+		eof_log_fp = fopen(log_filename, "w");
+
+		if(eof_log_fp == NULL)
+		{
+			allegro_message("Error opening log file for writing");
+		}
+	}
+}
+
+void eof_stop_logging(void)
+{
+	if(eof_log_fp)
+	{
+		fclose(eof_log_fp);
+		eof_log_fp = NULL;
+	}
+}
+
+void eof_log(const char *text)
+{
+	if(eof_log_fp)
+	{	//If logging is enabled and the log file is open
+		fprintf(eof_log_fp, "%s\n", text);
+		fflush(eof_log_fp);
 	}
 }
 

@@ -10,6 +10,8 @@ char *eof_difficulty_ini_tags[EOF_TRACKS_MAX + 1] = {"", "diff_guitar", "diff_ba
 
 int eof_save_ini(EOF_SONG * sp, char * fn)
 {
+	eof_log("eof_save_ini() entered");
+
 	PACKFILE * fp;
 	char buffer[256] = {0};
 	char ini_string[4096] = {0};

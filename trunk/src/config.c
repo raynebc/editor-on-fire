@@ -7,6 +7,8 @@ static void set_default_config(void);	//Applies the default settings, and overwr
 
 void set_default_config(void)
 {
+	eof_log("set_default_config() entered");
+
 	eof_guitar.button[0].type = EOF_CONTROLLER_BUTTON_TYPE_KEY;
 	eof_guitar.button[0].key = KEY_ENTER;
 	eof_guitar.button[1].type = EOF_CONTROLLER_BUTTON_TYPE_KEY;
@@ -40,6 +42,8 @@ void set_default_config(void)
 
 void eof_load_config(char * fn)
 {
+	eof_log("eof_load_config() entered");
+
 	set_default_config();
 
 	set_config_file(fn);
@@ -128,6 +132,8 @@ void eof_load_config(char * fn)
 
 void eof_save_config(char * fn)
 {
+	eof_log("eof_save_config() entered");
+
 	set_config_file(fn);
 
 	/* write configuration */

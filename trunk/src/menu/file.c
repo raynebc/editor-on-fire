@@ -440,6 +440,8 @@ int eof_menu_file_save_as(void)
 	eof_clear_input();
 	if(returnedfn)
 	{
+		eof_log("\tPerforming \"Save as\"");
+
 		replace_filename(new_foldername, returnedfn, "", 1024);	//Obtain the chosen destination folder path
 		if(eof_menu_file_new_supplement(new_foldername) == 0)	//If the folder doesn't exist, or the user has decline to overwrite existing files
 			return 1;	//Return failure
@@ -644,6 +646,8 @@ int eof_menu_file_save(void)
 		}
 	}
 
+	eof_log("\tSaving chart");
+
 	return eof_save_helper(NULL);	//Perform "Save" operation to the chart's current path
 }
 
@@ -773,6 +777,8 @@ int eof_menu_file_midi_import(void)
 	eof_clear_input();
 	if(returnedfn)
 	{
+		eof_log("\tImporting MIDI");
+
 		if(eof_song)
 		{
 			eof_destroy_song(eof_song);
@@ -817,6 +823,9 @@ int eof_menu_file_midi_import(void)
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
+
+	eof_log("\tMIDI loaded");
+
 	return 1;
 }
 
@@ -1135,6 +1144,10 @@ int eof_menu_file_exit(void)
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
+
+	//Stop the logging system
+	eof_log("Logging stopped during program completion");
+	eof_stop_logging();
 	return 1;
 }
 
@@ -2158,6 +2171,9 @@ int eof_save_helper(char *destfilename)
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
+
+	eof_log("\tSave completed");
+
 	return 0;	//Return success
 }
 

@@ -341,6 +341,8 @@ extern char        eof_legacy_view;
 extern char eof_midi_initialized;			//Specifies whether Allegro was able to set up a MIDI device
 extern EOF_SELECTION_DATA eof_selection;
 
+extern FILE *eof_log_fp;
+
 extern long xchart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D rendering, updated by eof_set_3D_lane_positions()
 extern long ychart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D rendering, updated by eof_set_2D_lane_positions()
 
@@ -373,7 +375,6 @@ void eof_render(void);
 void eof_render_lyric_window(void);
 void eof_render_3d_window(void);
 void eof_render_note_window(void);
-void eof_reset_song(void);
 int eof_load_data(void);	//Loads graphics and fonts from eof.dat
 void eof_destroy_data(void);	//Frees graphics and fonts from memory
 char * eof_get_tone_name(int tone);	//Returns the name of the given note number (ie. C# or Db) based on the value of eof_display_flats
@@ -399,5 +400,9 @@ void eof_set_2D_lane_positions(unsigned long track);
 	//Sets the 2D coordinate values in the global ychart[] array based on the needs of the specified track
 	//If the array doesn't need to be changed, the function returns without recalculating the array's values
 	//If a track value of 0 is passed, ychart[] is forcibly updated, such as to be used after changing window size, inverted note mode, etc.
+
+void eof_start_logging(void);	//Opens the log file for writing if it isn't already open
+void eof_stop_logging(void);	//Closes the log file if it is open
+void eof_log(const char *text);	//If the log is open, writes the string to the log file, followed by a newline character, and flushes the I/O stream
 
 #endif

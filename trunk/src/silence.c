@@ -6,6 +6,8 @@
 
 static unsigned long msec_to_samples(unsigned long msec)
 {
+	eof_log("msec_to_samples() entered");
+
 	unsigned long sample;
 	double second = (double)msec / (double)1000.0;
 	unsigned long freq = alogg_get_wave_freq_ogg(eof_music_track);
@@ -16,6 +18,8 @@ static unsigned long msec_to_samples(unsigned long msec)
 
 SAMPLE * create_silence_sample(unsigned long ms)
 {
+	eof_log("create_silence_sample() entered");
+
 	SAMPLE * sp = NULL;
 	int bits;
 	int stereo;
@@ -66,6 +70,8 @@ SAMPLE * create_silence_sample(unsigned long ms)
 /* saves a wave file to file pointer */
 static int save_wav_fp(SAMPLE * sp, PACKFILE * fp)
 {
+	eof_log("save_wav_fp() entered");
+
 	size_t channels, bits, freq;
 	size_t data_size;
 	size_t samples;
@@ -131,6 +137,8 @@ static int save_wav_fp(SAMPLE * sp, PACKFILE * fp)
  * reason */
 int save_wav(const char * fn, SAMPLE * sp)
 {
+ 	eof_log("save_wav() entered");
+
     PACKFILE * file;
 
     /* open file */
@@ -156,6 +164,8 @@ int save_wav(const char * fn, SAMPLE * sp)
 
 int eof_add_silence(const char * oggfn, unsigned long ms)
 {
+ 	eof_log("eof_add_silence() entered");
+
 	char sys_command[1024] = {0};
 	char backupfn[1024] = {0};
 	char wavfn[1024] = {0};
@@ -221,6 +231,8 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 
 int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 {
+ 	eof_log("eof_add_silence_recode() entered");
+
 	char sys_command[1024] = {0};
 	char backupfn[1024] = {0};
 	char wavfn[1024] = {0};
@@ -351,6 +363,8 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 
 int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 {
+ 	eof_log("eof_add_silence_recode_mp3() entered");
+
 	char sys_command[1024] = {0};
 	char backupfn[1024] = {0};
 	char wavfn[1024] = {0};

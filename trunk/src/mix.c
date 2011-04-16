@@ -214,6 +214,8 @@ unsigned long eof_mix_msec_to_sample(unsigned long msec, int freq)
 
 void eof_mix_find_claps(void)
 {
+	eof_log("eof_mix_find_claps() entered");
+
 	unsigned long i;
 	eof_mix_claps = 0;
 	eof_mix_current_clap = 0;
@@ -271,6 +273,8 @@ void eof_mix_find_claps(void)
 
 void eof_mix_init(void)
 {
+	eof_log("eof_mix_init() entered");
+
 	int i;
 	char fbuffer[1024] = {0};
 
@@ -317,6 +321,8 @@ void eof_mix_init(void)
 
 SAMPLE *eof_mix_load_ogg_sample(char *fn)
 {
+//	eof_log("eof_mix_load_ogg_sample() entered");
+
 	ALOGG_OGG * temp_ogg = NULL;
 	char * buffer = NULL;
 	SAMPLE *loadedsample = NULL;
@@ -343,6 +349,8 @@ SAMPLE *eof_mix_load_ogg_sample(char *fn)
 
 void eof_mix_exit(void)
 {
+	eof_log("eof_mix_exit() entered");
+
 	int i;
 
 	destroy_sample(eof_sound_clap);
@@ -402,6 +410,8 @@ void eof_mix_exit(void)
 
 void eof_mix_start_helper(void)
 {
+	eof_log("eof_mix_start_helper() entered");
+
 	int i;
 
 	eof_mix_current_clap = -1;
@@ -452,6 +462,8 @@ void eof_mix_start_helper(void)
 
 void eof_mix_start(unsigned long start, int speed)
 {
+	eof_log("eof_mix_start() entered");
+
 	int i;
 
 	eof_mix_next_clap = -1;
@@ -485,6 +497,8 @@ void eof_mix_start(unsigned long start, int speed)
 
 void eof_mix_seek(int pos)
 {
+	eof_log("eof_mix_seek() entered");
+
 	int i;
 
 	eof_mix_next_clap = -1;

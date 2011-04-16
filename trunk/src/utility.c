@@ -1,6 +1,7 @@
 #include <allegro.h>
 #include <sys/stat.h>
 #include "utility.h"
+#include "main.h"	//For logging
 
 int eof_chdir(const char * dir)
 {
@@ -46,6 +47,8 @@ int eof_system(const char * command)
 
 void * eof_buffer_file(char * fn)
 {
+// 	eof_log("eof_buffer_file() entered");
+
 	void * data;
 	PACKFILE * fp;
 
@@ -67,6 +70,8 @@ void * eof_buffer_file(char * fn)
 
 int eof_copy_file(char * src, char * dest)
 {
+ 	eof_log("eof_copy_file() entered");
+
 	PACKFILE * src_fp;
 	PACKFILE * dest_fp;
 	void *ptr;	//Used to buffer memory
@@ -130,6 +135,8 @@ int eof_check_string(char * tp)
 
 int eof_file_compare(char *file1, char *file2)
 {
+ 	eof_log("eof_file_compare() entered");
+
 	uint64_t filesize,ctr;
 	int data1,data2;
 	PACKFILE *fp1 = NULL,*fp2 = NULL;

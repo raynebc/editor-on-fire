@@ -5,6 +5,8 @@ long eof_get_beat(EOF_SONG * sp, unsigned long pos)
 {
 	long i;
 
+	eof_log("eof_get_beat() entered");
+
 	if(pos > eof_music_length)
 	{
 		return -1;
@@ -25,6 +27,8 @@ long eof_get_beat(EOF_SONG * sp, unsigned long pos)
 
 long eof_get_beat_length(EOF_SONG * sp, int beat)
 {
+	eof_log("eof_get_beat_length() entered");
+
 	if(beat < sp->beats - 1)
 	{
 		return sp->beat[beat + 1]->pos - sp->beat[beat]->pos;
@@ -41,6 +45,8 @@ void eof_calculate_beats(EOF_SONG * sp)
 	double curpos = 0.0;
 	double beat_length;
 	unsigned long cbeat = 0;
+
+	eof_log("eof_calculate_beats() entered");
 
 	/* correct BPM if it hasn't been set at all */
 	if(sp->beats <= 0)
@@ -101,6 +107,8 @@ void eof_calculate_beats(EOF_SONG * sp)
 
 int eof_beat_is_anchor(EOF_SONG * sp, int cbeat)
 {
+	eof_log("eof_beat_is_anchor() entered");
+
 	if(cbeat >= EOF_MAX_BEATS)	//Bounds check
 		return 0;
 
@@ -123,6 +131,8 @@ unsigned long eof_find_previous_anchor(EOF_SONG * sp, unsigned long cbeat)
 {
 	unsigned long beat = cbeat;
 
+//	eof_log("eof_find_previous_anchor() entered");
+
 	if(cbeat >= EOF_MAX_BEATS)	//Bounds check
 		return 0;
 
@@ -141,6 +151,8 @@ long eof_find_next_anchor(EOF_SONG * sp, unsigned long cbeat)
 {
 	unsigned long beat = cbeat;
 
+//	eof_log("eof_find_next_anchor() entered");
+
 	if(cbeat >= EOF_MAX_BEATS)	//Bounds check
 		return 0;
 
@@ -157,6 +169,8 @@ long eof_find_next_anchor(EOF_SONG * sp, unsigned long cbeat)
 
 void eof_realign_beats(EOF_SONG * sp, int cbeat)
 {
+	eof_log("eof_realign_beats() entered");
+
 	int i;
 	int last_anchor = eof_find_previous_anchor(sp, cbeat);
 	long next_anchor = eof_find_next_anchor(sp, cbeat);
@@ -192,6 +206,8 @@ void eof_realign_beats(EOF_SONG * sp, int cbeat)
 
 void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 {
+//	eof_log("eof_recalculate_beats() entered");
+
 	int i;
 	int last_anchor = eof_find_previous_anchor(sp, cbeat);
 	long next_anchor = eof_find_next_anchor(sp, cbeat);
