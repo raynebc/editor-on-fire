@@ -881,8 +881,8 @@ int eof_menu_song_properties(void)
 				eof_song->beat[i]->pos = eof_song->beat[i]->fpos;
 			}
 		}
-		if((eof_song->tags->ogg[eof_selected_ogg].midi_offset != old_offset) && (eof_get_track_size(eof_song, eof_selected_track) > 0))
-		{
+		if((eof_song->tags->ogg[eof_selected_ogg].midi_offset != old_offset) && (eof_get_chart_size(eof_song) > 0))
+		{	//If the MIDI offset was changed and there is at least one note/lyric in the chart, prompt to adjust the notes/lyrics
 			if(alert(NULL, "Adjust notes to new offset?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 			{
 				eof_adjust_notes(eof_song->tags->ogg[eof_selected_ogg].midi_offset - old_offset);

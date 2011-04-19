@@ -3,6 +3,9 @@ EOF Version History
 
 1.8:
 
+Added a "Mark new notes as expert+" toggle-able option to make it
+more convenient to create double bass drum charts.
+
 Fixed a bug in the Feedback import logic that would cause a crash
 or hang if the chart had a time signature change after the last
 tempo change.

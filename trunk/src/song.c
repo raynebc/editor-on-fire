@@ -2471,6 +2471,21 @@ unsigned long eof_get_track_size(EOF_SONG *sp, unsigned long track)
 	return 0;
 }
 
+unsigned long eof_get_chart_size(EOF_SONG *sp)
+{
+	unsigned long notectr = 0, trackctr;
+
+	if(sp == NULL)
+		return 0;
+
+	for(trackctr = 1; trackctr < sp->tracks; trackctr++)
+	{
+		notectr += eof_get_track_size(sp, trackctr);	//Add the number of notes in this track to the counter
+	}
+
+	return notectr;
+}
+
 void *eof_track_add_note(EOF_SONG *sp, unsigned long track)
 {
 // 	eof_log("eof_track_add_note() entered");
