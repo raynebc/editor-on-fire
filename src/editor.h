@@ -47,7 +47,7 @@ extern EOF_SNAP_DATA eof_tail_snap;
 
 void eof_select_beat(int beat);
 void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p);
-void eof_snap_length_logic(EOF_SNAP_DATA * sp);
+void eof_snap_length_logic(EOF_SNAP_DATA * sp);	//Calculates the grid snap interval length for sp->beat
 void eof_read_editor_keys(void);
 void eof_editor_logic(void);
 void eof_editor_drum_logic(void);	//The drum record mode logic
