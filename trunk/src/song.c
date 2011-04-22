@@ -4258,7 +4258,7 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 			if(amount == 0)
 			{	//If adjusting the note's length by the grid snap value, snap the tail's end position
 				newnotelength = eof_get_note_length(eof_song, eof_selected_track, i);
-				if(notelength > 1)
+				if(newnotelength > 1)
 				{	//If the note's length, after the adjustment, is over 1
 					eof_snap_logic(&eof_tail_snap, notepos + newnotelength);
 					eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
