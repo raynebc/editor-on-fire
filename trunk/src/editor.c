@@ -260,6 +260,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 				case EOF_SNAP_CUSTOM:
 				{
 					interval = eof_snap_interval;
+					measure_snap = 1;
 					break;
 				}
 			}
