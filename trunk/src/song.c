@@ -4197,7 +4197,7 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 {
  	eof_log("eof_adjust_note_length() entered");
 
-	unsigned long i, undo_made = 0, adjustment, notepos, notelength;
+	unsigned long i, undo_made = 0, adjustment, notepos, notelength, newnotelength, newnotelength2;
 	long b, next_note;
 
 	if((sp == NULL) || (track >= sp->tracks))
@@ -4257,11 +4257,19 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 			}
 			if(amount == 0)
 			{	//If adjusting the note's length by the grid snap value, snap the tail's end position
-				notelength = eof_get_note_length(eof_song, eof_selected_track, i);
+				newnotelength = eof_get_note_length(eof_song, eof_selected_track, i);
 				if(notelength > 1)
 				{	//If the note's length, after the adjustment, is over 1
-					eof_snap_logic(&eof_tail_snap, notepos + notelength);
+					eof_snap_logic(&eof_tail_snap, notepos + newnotelength);
 					eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
+
+					newnotelength2 = eof_get_note_length(eof_song, eof_selected_track, i);
+					if((dir > 0) && (amount == 0) && (notelength == newnotelength2))
+					{	//Special case:  If the grid snap length increase was nullified by the snap logic, force the tail to increase one snap interval higher
+						float difference = eof_tail_snap.grid_pos[1] - eof_tail_snap.grid_pos[0];	//This is the length of one grid snap in the target beat
+
+						eof_note_set_tail_pos(eof_song, eof_selected_track, i, notepos + notelength + difference);	//Resnap the tail one grid snap higher
+					}
 				}
 			}
 		}

@@ -40,7 +40,14 @@ float eof_pos_distance(float p1, float p2)
 {
 //	eof_log("eof_pos_distance() entered");
 
-	return sqrt((p1 - p2) * (p1 - p2));
+	if(p1 > p2)
+	{
+		return p1 - p2;
+	}
+	else
+	{
+		return p2 - p1;
+	}
 }
 
 void eof_select_beat(int beat)
