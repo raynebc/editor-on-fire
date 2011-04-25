@@ -137,7 +137,7 @@ void eof_save_config(char * fn)
 {
 	eof_log("eof_save_config() entered");
 
-	if(!fn);
+	if(!fn)
 	{
 		return;
 	}
