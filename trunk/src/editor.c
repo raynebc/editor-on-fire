@@ -119,6 +119,10 @@ void eof_get_snap_ts(EOF_SNAP_DATA * sp, int beat)
 	int tsbeat = 0;
 	int i;
 
+	if(!sp)
+	{
+		return;
+	}
 	for(i = beat; i >= 0; i--)
 	{
 		if(eof_song->beat[i]->flags & (EOF_BEAT_FLAG_START_3_4 | EOF_BEAT_FLAG_START_4_4 | EOF_BEAT_FLAG_START_5_4 | EOF_BEAT_FLAG_START_6_4 | EOF_BEAT_FLAG_CUSTOM_TS))
@@ -171,6 +175,10 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 	char measure_snap = 0;
 	int note = 4;
 
+	if(!sp)
+	{
+		return;
+	}
 	/* place pen at "real" location and adjust from there */
 	sp->pos = p;
 
@@ -432,6 +440,10 @@ void eof_snap_length_logic(EOF_SNAP_DATA * sp)
 {
 //	eof_log("eof_snap_length_logic() entered");
 
+	if(!sp)
+	{
+		return;
+	}
 	if(eof_snap_mode != EOF_SNAP_OFF)
 	{
 		/* if snapped to the next beat, make sure length is calculated from that beat */
@@ -3637,6 +3649,11 @@ int eof_get_ts_text(int beat, char * buffer)
 {
 //	eof_log("eof_get_ts_text() entered");
 
+	if(!buffer)
+	{
+		return 0;
+	}
+
 	int ret = 0;
 	if(eof_song->beat[beat]->flags & EOF_BEAT_FLAG_START_4_4)
 	{
@@ -4263,7 +4280,10 @@ void eof_mark_new_note_as_cymbal(EOF_SONG *sp, unsigned long track, unsigned lon
 {	//Perform the eof_mark_edited_note_as_cymbal() logic, applying cymbal status to all relevant frets in the note
 	eof_log("eof_mark_new_note_as_cymbal() entered");
 
-	eof_mark_edited_note_as_cymbal(sp,track,notenum,0xFFFF);
+	if(sp)
+	{
+		eof_mark_edited_note_as_cymbal(sp,track,notenum,0xFFFF);
+	}
 }
 
 void eof_mark_edited_note_as_cymbal(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long bitmask)
@@ -4549,7 +4569,7 @@ void eof_editor_logic_common(void)
 						{
 							eof_adjust_notes(eof_song->tags->ogg[eof_selected_ogg].midi_offset - eof_last_midi_offset);
 						}
-						eof_fixup_notes();
+						eof_fixup_notes(eof_song);
 					}
 				}
 				if(eof_adjusted_anchor)

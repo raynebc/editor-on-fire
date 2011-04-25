@@ -7,6 +7,11 @@ unsigned long eof_note_count_colors(EOF_SONG *sp, unsigned long track, unsigned 
 {
 	eof_log("eof_note_count_colors() entered");
 
+	if(!sp)
+	{
+		return 0;
+	}
+
 	unsigned long count = 0;
 	unsigned long notemask = eof_get_note_note(sp, track, note);
 
@@ -41,6 +46,10 @@ void eof_legacy_track_note_create(EOF_NOTE * np, char g, char y, char r, char b,
 {
 	eof_log("eof_legacy_track_note_create() entered");
 
+	if(!np)
+	{
+		return;
+	}
 	np->note = 0;
 	if(g)
 	{
@@ -74,9 +83,12 @@ void eof_legacy_track_note_create2(EOF_NOTE * np, unsigned long bitmask, unsigne
 {
 	eof_log("eof_legacy_track_note_create2() entered");
 
-	np->note = bitmask;
-	np->pos = pos;
-	np->length = length;
+	if(np)
+	{
+		np->note = bitmask;
+		np->pos = pos;
+		np->length = length;
+	}
 }
 
 int eof_adjust_notes(int offset)
@@ -164,7 +176,9 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 
 //Validate parameters
 	if(window == NULL)
+	{
 		return 1;	//Error, signal to stop rendering
+	}
 	if(track != 0)
 	{	//Render an existing note
 		if(track >= eof_song->tracks)
@@ -562,7 +576,6 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 		note_y = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - (nplace % eof_screen_layout.vocal_view_size + 1) * eof_screen_layout.vocal_tail_size;
 	}
 
-
 //Rewritten logic to remove duplicated code and render pitchless lyrics at the bottom of the piano roll in gray
 	vline(window->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.vocal_y - ((eof_screen_layout.vocal_view_size + 2) * eof_screen_layout.vocal_tail_size) / 2 + eof_screen_layout.note_marker_size, makecol(128, 128, 128));
 	if((np->note != 0) && !eof_is_freestyle(np->text))
@@ -654,7 +667,6 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 	}//If this lyric is not pitchless/freestyle
 	else	//If the lyric is pitchless or freestyle, render with gray
 		rectfill(window->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, makecol(128, 128, 128));
-
 
 //Rewritten logic checks the next lyric to set an appropriate clipping rectangle for truncation purposes, and use the determined background color (so phrase marking rectangle isn't erased by text)
 	set_clip_rect(window->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, X2-2, window->screen->h);	//Alteration: Provide at least two pixels of clearance for the edge of the clip rectangle
@@ -1034,8 +1046,9 @@ unsigned long eof_find_lyric_number(EOF_LYRIC * np)
 	unsigned long ctr;
 
 	if(np == NULL)
+	{
 		return 0;
-
+	}
 	for(ctr = 0; ctr < eof_song->vocal_track[0]->lyrics; ctr++)
 	{	//For each lyric
 		if(np == eof_song->vocal_track[0]->lyric[ctr])
@@ -1089,10 +1102,14 @@ void eof_get_note_tab_notation(char *buffer, unsigned long track, unsigned long 
 	long prevnotenum;
 
 	if((track >= eof_song->tracks) || (buffer == NULL) || ((eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT)))
+	{
 		return;	//If this is an invalid track number, the buffer is NULL or the specified track isn't a pro guitar or legacy track, return
+	}
 	tracknum = eof_song->track[track]->tracknum;
 	if(note >= eof_get_track_size(eof_song, track))
+	{
 		return;
+	}
 	flags = eof_get_note_flags(eof_song, track, note);
 
 	prevnotenum = eof_get_prev_note_type_num(eof_song, track, note);	//Get the index of the previous note in this track difficulty

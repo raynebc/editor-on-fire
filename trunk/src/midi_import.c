@@ -58,11 +58,14 @@ static void eof_import_destroy_events_list(EOF_IMPORT_MIDI_EVENT_LIST * lp)
 
 	int i;
 
-	for(i = 0; i < lp->events; i++)
+	if(lp)
 	{
-		free(lp->event[i]);
+		for(i = 0; i < lp->events; i++)
+		{
+			free(lp->event[i]);
+		}
+		free(lp);
 	}
-	free(lp);
 }
 
 /* parse_var_len:
@@ -75,6 +78,11 @@ static void eof_import_destroy_events_list(EOF_IMPORT_MIDI_EVENT_LIST * lp)
 static unsigned long eof_parse_var_len(unsigned char * data, unsigned long pos, unsigned long * bytes_used)
 {
 //	eof_log("eof_parse_var_len() entered");
+
+	if(!data || !bytes_used)
+	{
+		return 0;
+	}
 
 	int cpos = pos;
 	unsigned long val = *(&data[cpos]) & 0x7F;
@@ -117,6 +125,10 @@ static long eof_import_closest_beat(EOF_SONG * sp, unsigned long pos)
 	long bb = -1, ab = -1;	//If this function is changed to return unsigned long, then these can be changed to unsigned long as well
 	char check1 = 0, check2 = 0;
 
+	if(!sp)
+	{
+		return -1;
+	}
 	for(i = 0; i < sp->beats; i++)
 	{
 		if(sp->beat[i]->pos <= pos)
@@ -151,7 +163,7 @@ static void eof_midi_import_add_event(EOF_IMPORT_MIDI_EVENT_LIST * events, unsig
 {
 //	eof_log("eof_midi_import_add_event() entered");
 
-	if(events->events < EOF_IMPORT_MAX_EVENTS)
+	if(events && (events->events < EOF_IMPORT_MAX_EVENTS))
 	{
 		events->event[events->events] = malloc(sizeof(EOF_IMPORT_MIDI_EVENT));
 		if(events->event[events->events])
@@ -176,7 +188,7 @@ static void eof_midi_import_add_text_event(EOF_IMPORT_MIDI_EVENT_LIST * events, 
 {
 //	eof_log("eof_midi_import_add_text_event() entered");
 
-	if(events->events < EOF_IMPORT_MAX_EVENTS)
+	if(events && text && (events->events < EOF_IMPORT_MAX_EVENTS))
 	{
 		if(size > EOF_MAX_MIDI_TEXT_SIZE)	//Prevent a buffer overflow by truncating the string if necessary
 			size = EOF_MAX_MIDI_TEXT_SIZE;
@@ -295,6 +307,10 @@ EOF_SONG * eof_import_midi(const char * fn)
 	char chordname[100] = "";
 
 	/* load MIDI */
+	if(!fn)
+	{
+		return 0;
+	}
 	eof_work_midi = load_midi(fn);
 	if(!eof_work_midi)
 	{

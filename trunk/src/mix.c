@@ -328,8 +328,9 @@ SAMPLE *eof_mix_load_ogg_sample(char *fn)
 	SAMPLE *loadedsample = NULL;
 
 	if(fn == NULL)
+	{
 		return NULL;
-
+	}
 	buffer = eof_buffer_file(fn);
 	if(buffer)
 	{

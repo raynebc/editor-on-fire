@@ -21,23 +21,36 @@ int eof_undo_load_state(const char * fn)
  	eof_log("eof_undo_load_state() entered");
 
 	EOF_SONG * sp = NULL;
-	PACKFILE * fp;
-	char rheader[16];
+	PACKFILE * fp = NULL;
+	char rheader[16] = {0};
 
+	if(fn == NULL)
+	{
+		return 0;
+	}
 	fp = pack_fopen(fn, "r");
 	if(!fp)
 	{
 		return 0;
 	}
 	if(pack_fread(rheader, 16, fp) != 16)
+	{
 		return 0;	//Return error if 16 bytes cannot be read
+	}
 	sp = eof_create_song();		//Initialize an empty chart
+	if(sp == NULL)
+	{
+		return 0;
+	}
 	if(!eof_load_song_pf(sp, fp))
 	{	//If loading the undo state fails
 		allegro_message("Failed to perform undo");
 		return 0;	//Return failure
 	}
-	eof_destroy_song(eof_song);	//Destroy the chart that is open
+	if(eof_song)
+	{
+		eof_destroy_song(eof_song);	//Destroy the chart that is open
+	}
 	eof_song = sp;	//Replacing it with the loaded undo state
 
 	pack_fclose(fp);

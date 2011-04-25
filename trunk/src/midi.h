@@ -47,8 +47,8 @@ double eof_calculate_delta(double start, double end);	//Finds the number of delt
 
 int eof_export_midi(EOF_SONG * sp, char * fn);	//Writes the specified chart's contents to the specified file
 
-struct Tempo_change *eof_build_tempo_list(void);
-	//Parses eof_song->beat[], returning a linked list of anchors (tempo changes), or NULL on error
+struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp);
+	//Parses the chart, returning a linked list of anchors (tempo changes), or NULL on error
 	//Each link in the list gives the absolute deltatime and absolute realtime of the anchor
 
 struct Tempo_change *eof_add_to_tempo_list(unsigned long delta,double realtime,double BPM,struct Tempo_change *ptr);

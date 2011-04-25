@@ -553,7 +553,7 @@ int eof_menu_file_load_ogg(void)
 				break;
 			}
 		}
-		eof_fixup_notes();
+		eof_fixup_notes(eof_song);
 		if(i == eof_song->tags->oggs)
 		{
 			if(eof_song->tags->oggs < 8)
@@ -2054,8 +2054,8 @@ int eof_save_helper(char *destfilename)
 	}
 
 	/* sort notes so they are in order of position */
-	eof_sort_notes();
-	eof_fixup_notes();
+	eof_sort_notes(eof_song);
+	eof_fixup_notes(eof_song);
 
 	/* check to make sure open bass guitar and forced HOPO on don't conflict */
 	if(eof_open_bass_enabled())

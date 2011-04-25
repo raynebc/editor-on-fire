@@ -21,6 +21,10 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 	unsigned eof_tracks_max=0;
 	unsigned eof_note_amazing=0;
 
+	if(!fp)
+	{
+		return NULL;
+	}
 	//All EOF project formats before revision 'H' stored 5 legacy and 1 vocal track
 	sp = eof_create_song_populated();	//Create a new chart with 5 legacy tracks and 1 vocal track
 	if(!sp)
