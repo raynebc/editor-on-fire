@@ -492,7 +492,7 @@ int eof_menu_beat_push_offset_up(void)
 //	eof_song->beats--;
 	eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
 	eof_move_text_events(eof_song, 0, 1, -1);
-	eof_fixup_notes();
+	eof_fixup_notes(eof_song);
 	return 1;
 }
 

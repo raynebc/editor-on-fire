@@ -44,8 +44,11 @@ void eof_load_config(char * fn)
 {
 	eof_log("eof_load_config() entered");
 
+	if(!fn)
+	{
+		return;
+	}
 	set_default_config();
-
 	set_config_file(fn);
 
 	/* read configuration */
@@ -134,6 +137,10 @@ void eof_save_config(char * fn)
 {
 	eof_log("eof_save_config() entered");
 
+	if(!fn);
+	{
+		return;
+	}
 	set_config_file(fn);
 
 	/* write configuration */
@@ -181,4 +188,3 @@ void eof_save_config(char * fn)
 	eof_controller_save_config(&eof_guitar, "guitar");
 	eof_controller_save_config(&eof_drums, "drums");
 }
-

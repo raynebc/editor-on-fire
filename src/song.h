@@ -505,8 +505,8 @@ int eof_song_resize_text_events(EOF_SONG * sp, unsigned long events);	//Grows or
 void eof_sort_events(void);	//Performs a quicksort of the events array
 int eof_song_qsort_events(const void * e1, const void * e2);	//The comparitor function used to quicksort the events array
 
-void eof_sort_notes(void);	//Sorts the notes in all tracks
-void eof_fixup_notes(void);	//Performs cleanup of the note selection, beats and all tracks
+void eof_sort_notes(EOF_SONG *sp);	//Sorts the notes in all tracks
+void eof_fixup_notes(EOF_SONG *sp);	//Performs cleanup of the note selection, beats and all tracks
 void eof_detect_difficulties(EOF_SONG * sp);	//Sets the populated status by prefixing each populated difficulty name in the current track (stored in eof_note_type_name[] and eof_vocal_tab_name[]) with an asterisk
 
 int eof_is_freestyle(char *ptr);
@@ -529,8 +529,8 @@ void eof_set_freestyle(char *ptr, char status);
 void eof_toggle_freestyle(EOF_VOCAL_TRACK * tp, unsigned long lyricnumber);
 	//Makes a lyric freestyle if it isn't already and vice versa
 
-long eof_song_tick_to_msec(EOF_SONG * sp, unsigned long track, unsigned long tick); // convert tick value to real time
-long eof_song_msec_to_tick(EOF_SONG * sp, unsigned long track, unsigned long msec); // convert real time value to tick
+long eof_song_tick_to_msec(EOF_SONG * sp, unsigned long tick); // convert tick value to real time, or -1 on error
+long eof_song_msec_to_tick(EOF_SONG * sp, unsigned long msec); // convert real time value to tick, or -1 on error
 
 char eof_check_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,unsigned long flag);
 	//Checks all notes in the track at the specified note's timestamp (numbered starting at number 0)

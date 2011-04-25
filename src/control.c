@@ -9,6 +9,10 @@ void eof_read_controller(EOF_CONTROLLER * cp)
 
 	int i;
 
+	if(!cp)
+	{
+		return;
+	}
 	poll_joystick();
 	for(i = 0; i < EOF_CONTROLLER_MAX_BUTTONS; i++)
 	{
@@ -149,6 +153,10 @@ int eof_controller_set_button(EOF_CONTROLLER_BUTTON * bp)
 	char ignore[4][8][2] = {{{0}}};
 	char ignoreb[4][32] = {{0}};
 
+	if(!bp)
+	{
+		return 0;
+	}
 	while(!key[KEY_ESC])
 	{
 		/* scan keyboard keys first */
@@ -251,6 +259,10 @@ void eof_controller_read_button_names(EOF_CONTROLLER * cp)
 
 	int i;
 
+	if(!cp)
+	{
+		return;
+	}
 	for(i = 0; i < EOF_CONTROLLER_MAX_BUTTONS; i++)
 	{
 		switch(cp->button[i].type)
@@ -281,6 +293,10 @@ void eof_controller_save_config(EOF_CONTROLLER * cp, char * name)
 	int i;
 	char string[256] = {0};
 
+	if(!cp || !name)
+	{
+		return;
+	}
 	for(i = 0; i < EOF_CONTROLLER_MAX_BUTTONS; i++)
 	{
 		sprintf(string, "button_%d_type", i);
@@ -325,6 +341,10 @@ void eof_controller_load_config(EOF_CONTROLLER * cp, char * name)
 	int i;
 	char string[256] = {0};
 
+	if(!cp || !name)
+	{
+		return;
+	}
 	for(i = 0; i < EOF_CONTROLLER_MAX_BUTTONS; i++)
 	{
 		sprintf(string, "button_%d_type", i);

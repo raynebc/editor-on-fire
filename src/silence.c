@@ -78,11 +78,15 @@ static int save_wav_fp(SAMPLE * sp, PACKFILE * fp)
 	size_t i, n;
 	int val;
 
+	if(!sp || !fp)
+	{
+		return 0;
+	}
 	channels = sp->stereo ? 2 : 1;
 	bits = sp->bits;
 	void * pval = NULL;
 
-	if(channels < 1 || channels > 2)
+	if((channels < 1) || (channels > 2))
 	{
 		return 0;
 	}
@@ -141,6 +145,10 @@ int save_wav(const char * fn, SAMPLE * sp)
 
     PACKFILE * file;
 
+	if(!fn || !sp)
+	{
+		return 0;
+	}
     /* open file */
     file = pack_fopen(fn, "w");
     if(file == NULL)
@@ -170,7 +178,7 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	char backupfn[1024] = {0};
 	char wavfn[1024] = {0};
 	char soggfn[1024] = {0};
-	if(ms == 0)
+	if(!oggfn || (ms == 0))
 	{
 		return 0;
 	}
@@ -247,7 +255,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	int channels;
 	unsigned long ctr,index;
 
-	if(ms == 0)
+	if(!oggfn || (ms == 0))
 	{
 		return 0;
 	}
@@ -379,7 +387,7 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	int channels;
 	unsigned long ctr,index;
 
-	if(ms == 0)
+	if(!oggfn || (ms == 0))
 	{
 		return 0;
 	}

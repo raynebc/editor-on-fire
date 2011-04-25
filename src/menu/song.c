@@ -903,7 +903,7 @@ int eof_menu_song_properties(void)
 			undo_made = 1;
 		}
 		eof_song->tags->difficulty = difficulty;	//Save the value reflected by the band difficulty field
-		eof_fixup_notes();
+		eof_fixup_notes(eof_song);
 		eof_calculate_beats(eof_song);
 		eof_fix_window_title();
 	}
@@ -977,8 +977,8 @@ int eof_menu_song_test(char application)
 	ustrcpy(temppath, songs_path);
 	ustrcat(temppath, "EOFTemp\\");
 	append_filename(temppath2, temppath, "notes.eof", 1024);
-	eof_sort_notes();
-	eof_fixup_notes();
+	eof_sort_notes(eof_song);
+	eof_fixup_notes(eof_song);
 	if(!eof_save_song(eof_song, temppath2))
 	{
 		allegro_message("Song could not be tested!\nMake sure you set the %s song folder correctly (\"Link To %s\")!", appdisplayname, appdisplayname);
@@ -1578,7 +1578,7 @@ int eof_menu_song_add_silence(void)
 			}
 			eof_adjust_notes(adjust);
 		}
-		eof_fixup_notes();
+		eof_fixup_notes(eof_song);
 		eof_calculate_beats(eof_song);
 		eof_fix_window_title();
 	}

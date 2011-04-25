@@ -17,6 +17,10 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	char ini_string[4096] = {0};
 	unsigned long i, tracknum;
 
+	if(!sp || !fn)
+	{
+		return 0;
+	}
 	fp = pack_fopen(fn, "w");
 	if(!fp)
 	{

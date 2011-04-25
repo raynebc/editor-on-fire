@@ -7,6 +7,10 @@ long eof_get_beat(EOF_SONG * sp, unsigned long pos)
 
 	eof_log("eof_get_beat() entered");
 
+	if(!sp)
+	{
+		return -1;
+	}
 	if(pos > eof_music_length)
 	{
 		return -1;
@@ -29,6 +33,10 @@ long eof_get_beat_length(EOF_SONG * sp, int beat)
 {
 	eof_log("eof_get_beat_length() entered");
 
+	if(!sp)
+	{
+		return 0;
+	}
 	if(beat < sp->beats - 1)
 	{
 		return sp->beat[beat + 1]->pos - sp->beat[beat]->pos;
@@ -48,6 +56,10 @@ void eof_calculate_beats(EOF_SONG * sp)
 
 	eof_log("eof_calculate_beats() entered");
 
+	if(!sp)
+	{
+		return;
+	}
 	/* correct BPM if it hasn't been set at all */
 	if(sp->beats <= 0)
 	{
@@ -112,6 +124,10 @@ int eof_beat_is_anchor(EOF_SONG * sp, int cbeat)
 	if(cbeat >= EOF_MAX_BEATS)	//Bounds check
 		return 0;
 
+	if(!sp)
+	{
+		return 0;
+	}
 	if(cbeat <= 0)
 	{
 		return 1;
@@ -134,8 +150,13 @@ unsigned long eof_find_previous_anchor(EOF_SONG * sp, unsigned long cbeat)
 //	eof_log("eof_find_previous_anchor() entered");
 
 	if(cbeat >= EOF_MAX_BEATS)	//Bounds check
+	{
 		return 0;
-
+	}
+	if(!sp)
+	{
+		return 0;
+	}
 	while(beat > 1)
 	{
 		beat--;
@@ -154,8 +175,13 @@ long eof_find_next_anchor(EOF_SONG * sp, unsigned long cbeat)
 //	eof_log("eof_find_next_anchor() entered");
 
 	if(cbeat >= EOF_MAX_BEATS)	//Bounds check
+	{
 		return 0;
-
+	}
+	if(!sp)
+	{
+		return 0;
+	}
 	while(beat < sp->beats - 1)
 	{
 		beat++;
@@ -180,6 +206,10 @@ void eof_realign_beats(EOF_SONG * sp, int cbeat)
 	double newbpm;
 	double newppqn;
 
+	if(!sp)
+	{
+		return;
+	}
 	if(next_anchor < 0)
 	{
 		next_anchor = sp->beats;
@@ -218,10 +248,17 @@ void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 	double newppqn;
 
 	if(cbeat >= EOF_MAX_BEATS)	//Bounds check
+	{
 		return;
-
+	}
+	if(!sp)
+	{
+		return;
+	}
 	if(last_anchor < cbeat)
+	{
 		beats=cbeat - last_anchor;	//The number of beats between the previous anchor and the specified beat
+	}
 
 	/* figure out what the new BPM should be */
 	beats_length = sp->beat[cbeat]->pos - sp->beat[last_anchor]->pos;

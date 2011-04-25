@@ -12,6 +12,10 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 {
 //	eof_log("chartpos_to_msec() entered");
 
+	if(!chart)
+	{
+		return 0;
+	}
 	double offset = chart->offset * 1000.0;
 	double curpos = offset;
 	unsigned long lastchartpos = 0;
@@ -70,6 +74,10 @@ EOF_SONG * eof_import_chart(const char * fn)
 	struct al_ffblk info; // for file search
 	int ret=0;
 
+	if(!fn)
+	{
+		return NULL;
+	}
 	chart = ImportFeedback((char *)fn, &err);
 	if(chart == NULL)
 	{

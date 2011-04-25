@@ -44,13 +44,16 @@ void eof_add_midi_lyric_event(unsigned long pos, char * text)
 {
 //	eof_log("eof_add_midi_lyric_event() entered");
 
-	eof_midi_event[eof_midi_events] = malloc(sizeof(EOF_MIDI_EVENT));
-	if(eof_midi_event[eof_midi_events])
+	if(text)
 	{
-		eof_midi_event[eof_midi_events]->pos = pos;
-		eof_midi_event[eof_midi_events]->type = 0x05;
-		eof_midi_event[eof_midi_events]->dp = text;
-		eof_midi_events++;
+		eof_midi_event[eof_midi_events] = malloc(sizeof(EOF_MIDI_EVENT));
+		if(eof_midi_event[eof_midi_events])
+		{
+			eof_midi_event[eof_midi_events]->pos = pos;
+			eof_midi_event[eof_midi_events]->type = 0x05;
+			eof_midi_event[eof_midi_events]->dp = text;
+			eof_midi_events++;
+		}
 	}
 }
 
@@ -73,6 +76,10 @@ void WriteVarLen(unsigned long value, PACKFILE * fp)
 	unsigned long buffer;
 	buffer = value & 0x7F;
 
+	if(!fp)
+	{
+		return;
+	}
 	while((value >>= 7))
 	{
 		buffer <<= 8;
@@ -101,6 +108,10 @@ unsigned long ReadVarLen(PACKFILE * fp)
 	unsigned long value;
 	unsigned char c;
 
+	if(!fp)
+	{
+		return 0;
+	}
 	if((value = pack_getc(fp)) & 0x80)
 	{
 		value &= 0x7F;
@@ -370,9 +381,15 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	EOF_PHRASE_SECTION *sectionptr;
 	char *lastname = NULL, *currentname = NULL, nochord[]="NC", chordname[100]="";
 
-	anchorlist=eof_build_tempo_list();	//Create a linked list of all tempo changes in eof_song->beat[]
-	if(anchorlist == NULL)	//If the anchor list could not be created
+	if(!sp | !fn)
+	{
 		return 0;	//Return failure
+	}
+	anchorlist=eof_build_tempo_list(sp);	//Create a linked list of all tempo changes in eof_song->beat[]
+	if(anchorlist == NULL)	//If the anchor list could not be created
+	{
+		return 0;	//Return failure
+	}
 
 	//Initialize the temporary filename array
 	for(i = 0; i < EOF_TRACKS_MAX+1; i++)
@@ -395,7 +412,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		eof_midi_add_ts_realtime(tslist, eof_song->beat[0]->fpos, 4, 4, 0);	//use an implied TS of 4/4 on the first beat marker
 	}
 
-	eof_sort_notes();	//Writing efficient on-the-fly HOPO phrasing relies on all notes being sorted
+	eof_sort_notes(sp);	//Writing efficient on-the-fly HOPO phrasing relies on all notes being sorted
 
 	//Write tracks
 	for(j = 1; j < sp->tracks; j++)
@@ -1332,7 +1349,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	return 1;
 }
 
-struct Tempo_change *eof_build_tempo_list(void)
+struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp)
 {
 	eof_log("eof_build_tempo_list() entered");
 
@@ -1343,22 +1360,23 @@ struct Tempo_change *eof_build_tempo_list(void)
 	unsigned long deltactr=0;	//Counts the number of deltas between anchors
 	unsigned den=4;				//Stores the most recent TS change's denominator (default to 4)
 
-	if((eof_song == NULL) || (eof_song->beats < 1))
+	if((sp == NULL) || (sp->beats < 1))
+	{
 		return NULL;
-
-	for(ctr=0;ctr < eof_song->beats;ctr++)
+	}
+	for(ctr=0;ctr < sp->beats;ctr++)
 	{	//For each beat
 		if(eof_use_ts)
 		{	//If the user opted to use time signatures during MIDI export
-			eof_get_ts(eof_song,NULL,&den,ctr);	//Update the TS denominator if applicable
+			eof_get_ts(sp,NULL,&den,ctr);	//Update the TS denominator if applicable
 		}
-		if(eof_song->beat[ctr]->ppqn != lastppqn)
+		if(sp->beat[ctr]->ppqn != lastppqn)
 		{	//If this beat has a different tempo than the last, add it to the list
-			if((list == NULL) && (eof_song->beat[ctr]->fpos != 0.0))	//If the first anchor isn't at position 0
+			if((list == NULL) && (sp->beat[ctr]->fpos != 0.0))	//If the first anchor isn't at position 0
 				temp=eof_add_to_tempo_list(0,0.0,(double)120.0,list);	//Add a default 120BPM anchor
 
-			lastppqn=eof_song->beat[ctr]->ppqn;	//Remember this ppqn
-			temp=eof_add_to_tempo_list(deltactr,eof_song->beat[ctr]->fpos,(double)60000000.0/lastppqn,list);
+			lastppqn=sp->beat[ctr]->ppqn;	//Remember this ppqn
+			temp=eof_add_to_tempo_list(deltactr,sp->beat[ctr]->fpos,(double)60000000.0/lastppqn,list);
 
 			if(temp == NULL)
 			{
@@ -1386,7 +1404,9 @@ struct Tempo_change *eof_add_to_tempo_list(unsigned long delta,double realtime,d
 //Allocate and initialize new link
 	temp=(struct Tempo_change *)malloc(sizeof(struct Tempo_change));
 	if(temp == NULL)
+	{
 		return NULL;
+	}
 	temp->delta=delta;
 	temp->realtime=realtime;
 	temp->BPM=BPM;
@@ -1394,8 +1414,9 @@ struct Tempo_change *eof_add_to_tempo_list(unsigned long delta,double realtime,d
 
 //Append to linked list
 	if(ptr == NULL)		//If the passed list was empty
+	{
 		return temp;	//Return the new head link
-
+	}
 	for(cond=ptr;cond->next != NULL;cond=cond->next);	//Seek to last link in the list
 
 	cond->next=temp;	//Last link points forward to new link
@@ -1490,10 +1511,14 @@ int eof_extract_rba_midi(const char * source, const char * dest)
 
 //Open specified file
 	if((source == NULL) || (dest == NULL))
+	{
 		return 1;	//Return failure
+	}
 	fp=fopen(source,"rb");
 	if(fp == NULL)
+	{
 		return 1;	//Return failure
+	}
 
 //Set up for catching an exception thrown by FoFLC's logic in the event of an error (such as an invalid MIDI file)
 	jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
@@ -1578,7 +1603,7 @@ void eof_midi_add_ts_deltas(EOF_MIDI_TS_LIST * changes, unsigned long pos, unsig
 {
 //	eof_log("eof_midi_add_ts_deltas() entered");
 
-	if((changes->changes < EOF_MAX_TS) && (track == 0))
+	if(changes && (changes->changes < EOF_MAX_TS) && (track == 0))
 	{	//For now, only store time signatures in track 0
 		changes->change[changes->changes] = malloc(sizeof(EOF_MIDI_TS_CHANGE));
 		if(changes->change[changes->changes])
@@ -1598,7 +1623,7 @@ void eof_midi_add_ts_realtime(EOF_MIDI_TS_LIST * changes, double pos, unsigned l
 {
 	eof_log("eof_midi_add_ts_realtime() entered");
 
-	if((changes->changes < EOF_MAX_TS) && (track == 0))
+	if(changes && (changes->changes < EOF_MAX_TS) && (track == 0))
 	{	//For now, only store time signatures in track 0
 		changes->change[changes->changes] = malloc(sizeof(EOF_MIDI_TS_CHANGE));
 		if(changes->change[changes->changes])
@@ -1717,8 +1742,9 @@ int eof_apply_ts(unsigned num,unsigned den,int beatnum,EOF_SONG *sp,char undo)
 	int flags = 0;
 
 	if((sp == NULL) || (beatnum >= sp->beats))
+	{
 		return 0;	//Return error
-
+	}
 	if((num > 0) && (num <= 256) && ((den == 1) || (den == 2) || (den == 4) || (den == 8) || (den == 16) || (den == 32) || (den == 64) || (den == 128) || (den == 256)))
 	{	//If this is a valid time signature
 		//Clear the beat's status except for its anchor and event flags
@@ -1767,8 +1793,9 @@ int eof_dump_midi_track(const char *inputfile,PACKFILE *outf)
 	unsigned long i;
 
 	if((inputfile == NULL) || (outf == NULL))
+	{
 		return 0;	//Return failure
-
+	}
 	track_length = file_size_ex(inputfile);
 	inf = pack_fopen(inputfile, "r");	//Open input file for reading
 	if(!inf)

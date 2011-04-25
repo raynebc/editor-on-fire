@@ -1114,7 +1114,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option, float offset)
 		}
 	}//For each track
 	pack_fclose(fp);
-	eof_fixup_notes();
+	eof_fixup_notes(eof_song);
 	eof_determine_phrase_status();
 	return 1;
 }
@@ -1304,7 +1304,7 @@ int eof_menu_edit_paste(void)
 	}
 	pack_fclose(fp);
 	eof_track_sort_notes(eof_song, eof_selected_track);
-	eof_fixup_notes();
+	eof_fixup_notes(eof_song);
 	eof_determine_phrase_status();
 	eof_detect_difficulties(eof_song);
 	if((paste_count > 0) && (eof_selection.track != eof_selected_track))
@@ -1396,7 +1396,7 @@ int eof_menu_edit_old_paste(void)
 		}
 	}
 	eof_track_sort_notes(eof_song, eof_selected_track);
-	eof_fixup_notes();
+	eof_fixup_notes(eof_song);
 	eof_determine_phrase_status();
 	eof_detect_difficulties(eof_song);
 	if((paste_count > 0) && (eof_selection.track != eof_selected_track))

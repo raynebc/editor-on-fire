@@ -417,8 +417,8 @@ void eof_editor_logic_feedback(void)
 				eof_selection.current_pos = eof_feedback_new_note->pos;
 				eof_selection.track = eof_selected_track;
 				memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
-				eof_sort_notes();
-				eof_fixup_notes();
+				eof_sort_notes(eof_song);
+				eof_fixup_notes(eof_song);
 				eof_determine_phrase_status();
 				eof_selection.multi[eof_selection.current] = 1;
 			}
@@ -447,8 +447,8 @@ void eof_editor_logic_feedback(void)
 				eof_selection.current_pos = eof_feedback_new_note->pos;
 				eof_selection.track = eof_selected_track;
 				memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
-				eof_sort_notes();
-				eof_fixup_notes();
+				eof_sort_notes(eof_song);
+				eof_fixup_notes(eof_song);
 				eof_determine_phrase_status();
 				eof_selection.multi[eof_selection.current] = 1;
 			}
@@ -477,8 +477,8 @@ void eof_editor_logic_feedback(void)
 				eof_selection.current_pos = eof_feedback_new_note->pos;
 				eof_selection.track = eof_selected_track;
 				memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
-				eof_sort_notes();
-				eof_fixup_notes();
+				eof_sort_notes(eof_song);
+				eof_fixup_notes(eof_song);
 				eof_determine_phrase_status();
 				eof_selection.multi[eof_selection.current] = 1;
 			}
@@ -507,8 +507,8 @@ void eof_editor_logic_feedback(void)
 				eof_selection.current_pos = eof_feedback_new_note->pos;
 				eof_selection.track = eof_selected_track;
 				memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
-				eof_sort_notes();
-				eof_fixup_notes();
+				eof_sort_notes(eof_song);
+				eof_fixup_notes(eof_song);
 				eof_determine_phrase_status();
 				eof_selection.multi[eof_selection.current] = 1;
 			}
@@ -537,8 +537,8 @@ void eof_editor_logic_feedback(void)
 				eof_selection.current_pos = eof_feedback_new_note->pos;
 				eof_selection.track = eof_selected_track;
 				memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
-				eof_sort_notes();
-				eof_fixup_notes();
+				eof_sort_notes(eof_song);
+				eof_fixup_notes(eof_song);
 				eof_determine_phrase_status();
 				eof_selection.multi[eof_selection.current] = 1;
 			}
@@ -565,8 +565,8 @@ void eof_editor_logic_feedback(void)
 	if((eof_hover_note >= 0) && !eof_song->legacy_track[tracknum]->note[eof_hover_note]->note)
 	{
 		eof_track_delete_note(eof_song, eof_selected_track, eof_hover_note);
-		eof_sort_notes();
-		eof_fixup_notes();
+		eof_sort_notes(eof_song);
+		eof_fixup_notes(eof_song);
 		eof_determine_phrase_status();
 		eof_selection.current = EOF_MAX_NOTES - 1;
 		eof_selection.multi[eof_hover_note] = 0;
@@ -610,6 +610,10 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 //	chart->linesprocessed=chart->tracksloaded=0;
 
 //Open file in text mode
+	if(!filename)
+	{
+		return NULL;
+	}
 	inf=fopen(filename,"rt");
 	if(inf == NULL)
 	{
@@ -1189,6 +1193,11 @@ int Read_dB_string(char *source,char **str1, char **str2)
 	char findquote=0;	//Boolean:	The element to the right of the equal sign began with a quotation mark
 				//		str2 will stop filling with characters when the next quotation mark is read
 
+	if(!source || !str1 || !str2)
+	{
+		return 0;	//return error
+	}
+
 //Allocate memory for strings
 	string1=malloc_err(strlen(source)+1);
 	string2=malloc_err(strlen(source)+2);
@@ -1430,6 +1439,11 @@ void DestroyFeedbackChart(struct FeedbackChart *ptr, char freestruct)
 	struct dbText *eventptr;	//Conductor for the events linked list
 	struct dbTrack *trackptr;	//Conductor for the tracks linked list
 	struct dbNote *noteptr;	//Conductor for the notes linked lists
+
+	if(!ptr)
+	{
+		return;
+	}
 
 //Free and re-init tags
 	if(ptr->name)

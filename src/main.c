@@ -238,7 +238,7 @@ void eof_debug_message(char * text)
 {
 	eof_log("eof_debug_message() entered");
 
-	if(eof_debug_mode)
+	if(text && eof_debug_mode)
 	{
 		allegro_message("%s", text);
 		gametime_reset();
@@ -249,7 +249,7 @@ void eof_show_mouse(BITMAP * bp)
 {
 	eof_log("eof_show_mouse() entered");
 
-	if(eof_soft_cursor)
+	if(bp && eof_soft_cursor)
 	{
 		show_mouse(bp);
 	}
@@ -1115,6 +1115,10 @@ int eof_load_ogg_quick(char * filename)
 
 	int loaded = 0;
 
+	if(!filename)
+	{
+		return 0;
+	}
 	eof_destroy_ogg();
 	eof_music_data = (void *)eof_buffer_file(filename);
 	eof_music_data_size = file_size_ex(filename);
@@ -1158,6 +1162,10 @@ int eof_load_ogg(char * filename)
 	char directory[1024] = {0};
 	int loaded = 0;
 
+	if(!filename)
+	{
+		return 0;
+	}
 	eof_destroy_ogg();
 	eof_music_data = (void *)eof_buffer_file(filename);
 	eof_music_data_size = file_size_ex(filename);
@@ -1238,28 +1246,6 @@ int eof_load_ogg(char * filename)
 			eof_song_loaded = 0;
 		}
 	}
-/*	if(eof_song && !loaded)
-	{
-		if(eof_music_data)
-		{
-			free(eof_music_data);
-		}
-		eof_destroy_song(eof_song);
-		eof_song = NULL;
-		eof_song_loaded = 0;
-	}
-	else if(!loaded)
-	{
-		if(eof_music_data)
-		{
-			free(eof_music_data);
-		}
-		eof_song_loaded = 0;
-	}
-	else
-	{
-		eof_music_actual_length = alogg_get_length_msecs_ogg(eof_music_track);
-	} */
 
 	ustrncpy(eof_loaded_ogg_name,filename,1024);	//Store the loaded OGG filename
 	eof_loaded_ogg_name[1023] = '\0';
@@ -1288,7 +1274,7 @@ int eof_save_ogg(char * fn)
 	eof_log("eof_save_ogg() entered");
 
 	PACKFILE * fp;
-	if(eof_music_data)
+	if(fn && eof_music_data)
 	{
 		fp = pack_fopen(fn, "w");
 		if(!fp)
@@ -2265,6 +2251,10 @@ void eof_render_lyric_preview(BITMAP * bp)
 	int offset = -1;
 	int space;	//Track the spacing for lyric preview, taking pitch shift and grouping logic into account
 
+	if(!bp)
+	{
+		return;
+	}
 //Build both lyric preview lines
 	for(x = 0; x < 2; x++)
 	{	//For each of the two lyric preview lines to build
@@ -2772,37 +2762,6 @@ int d_hackish_edit_proc (int msg, DIALOG *d, int c)
     return d_agup_edit_proc (msg, d, c);
 }
 
-/*
-int eof_check_arg_desktop(int argc, char * argv[])
-{
-	int i;
-
-	for(i = 0; i < argc; i++)
-	{
-		if(!ustricmp(argv[i], "-desktop"))
-		{
-			set_color_depth(desktop_color_depth() != 0 ? desktop_color_depth() : 8);
-		}
-	}
-	return 1;
-}
-
-
-int eof_check_arg_softmouse(int argc, char * argv[])
-{
-	int i;
-
-	for(i = 0; i < argc; i++)
-	{
-		if(!ustricmp(argv[i], "-softmouse"))
-		{
-			eof_soft_cursor = 1;
-		}
-	}
-	return 1;
-}
-*/
-
 int eof_load_data(void)
 {
 	eof_log("eof_load_data() entered");
@@ -2936,6 +2895,10 @@ int eof_initialize(int argc, char * argv[])
 	int i;
 	char temp_filename[1024] = {0};
 
+	if(!argv)
+	{
+		return 0;
+	}
 	allegro_init();
 
 	//Start the logging system
@@ -3649,8 +3612,8 @@ void eof_init_after_load(void)
 	eof_select_beat(0);
 	eof_prepare_menus();
 	eof_undo_reset();
-	eof_sort_notes();
-	eof_fixup_notes();
+	eof_sort_notes(eof_song);
+	eof_fixup_notes(eof_song);
 	eof_fix_window_title();
 	eof_destroy_waveform(eof_waveform);	//If a waveform had already been created, destroy it
 	eof_waveform = NULL;

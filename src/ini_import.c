@@ -32,6 +32,10 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 	unsigned long stringlen;
 	char setting_stored;
 
+	if(!sp || !fn)
+	{
+		return 0;
+	}
 	eof_import_ini_settings = 0;
 	textbuffer = (char *)eof_buffer_file(fn);	//Buffer the INI file into memory
 	if(!textbuffer)

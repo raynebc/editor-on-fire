@@ -49,8 +49,8 @@ void * eof_buffer_file(char * fn)
 {
 // 	eof_log("eof_buffer_file() entered");
 
-	void * data;
-	PACKFILE * fp;
+	void * data = NULL;
+	PACKFILE * fp = NULL;
 
 	if(fn == NULL)
 		return NULL;
@@ -72,9 +72,9 @@ int eof_copy_file(char * src, char * dest)
 {
  	eof_log("eof_copy_file() entered");
 
-	PACKFILE * src_fp;
-	PACKFILE * dest_fp;
-	void *ptr;	//Used to buffer memory
+	PACKFILE * src_fp = NULL;
+	PACKFILE * dest_fp = NULL;
+	void *ptr = NULL;	//Used to buffer memory
 	unsigned long src_size = 0;
 	int i;
 
