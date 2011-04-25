@@ -810,6 +810,7 @@ void eof_read_editor_keys(void)
 				}
 				else
 				{
+					alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->beat[0]->pos + eof_av_delay);
 					eof_music_pos = eof_song->beat[0]->pos + eof_av_delay;
 					eof_music_actual_pos = eof_music_pos;
 					eof_mix_seek(eof_music_actual_pos);
