@@ -23,6 +23,7 @@ EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 1] =
 	{EOF_LEGACY_TRACK_FORMAT, EOF_KEYS_TRACK_BEHAVIOR, EOF_TRACK_KEYS, 0, "PART KEYS", 0xFF, 0},
 	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_BASS, 0, "PART REAL_BASS", 0xFF, 0},
 	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR, 0, "PART REAL_GUITAR", 0xFF, 0},
+	{EOF_LEGACY_TRACK_FORMAT, EOF_DANCE_TRACK_BEHAVIOR, EOF_TRACK_DANCE, 0, "PART DANCE", 0xFF, 0},
 
 	//This pro format is not supported yet, but the entry describes the track's details
 	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS", 0xFF, 0}
@@ -41,6 +42,7 @@ EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 12] =
 	{EOF_LEGACY_TRACK_FORMAT, EOF_KEYS_TRACK_BEHAVIOR, EOF_TRACK_KEYS, 0, "PART KEYS", 0, 0},
 	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_BASS, 0, "PART REAL_BASS", 0, 0},
 	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR, 0, "PART REAL_GUITAR", 0, 0},
+	{EOF_LEGACY_TRACK_FORMAT, EOF_DANCE_TRACK_BEHAVIOR, EOF_TRACK_DANCE, 0, "PART DANCE", 0, 0},
 
 	//These tracks are not supported for import yet, but these entries describe the tracks' details
 	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS_X", 0, 0},
@@ -232,6 +234,14 @@ EOF_SONG * eof_load_song(const char * fn)
 		if(!eof_load_song_pf(sp, fp))
 		{
 			return NULL;
+		}
+		if(EOF_TRACK_DANCE >= sp->tracks)
+		{	//If the chart loaded does not contain a dance track (a 1.8beta revision chart)
+			if(eof_song_add_track(sp,&eof_default_tracks[EOF_TRACK_DANCE]) == 0)	//Add a blank dance track
+			{	//If the track failed to be added
+				eof_destroy_song(sp);	//Destroy the song and return on error
+				return NULL;
+			}
 		}
 	}
 	else
@@ -1249,6 +1259,10 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 				if(trackdetails->flags & EOF_TRACK_FLAG_OPEN_STRUM)
 				{	//Open strum is tracked as a sixth lane
 					ptr->numlanes = 6;
+				}
+				else if(trackdetails->track_type == EOF_TRACK_DANCE)
+				{	//For now, the dance track is 4 lanes
+					ptr->numlanes = 4;
 				}
 				else
 				{	//Otherwise, all legacy tracks will be 5 lanes by default

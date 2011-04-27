@@ -163,6 +163,7 @@ typedef struct
 #define EOF_KEYS_TRACK_BEHAVIOR			4
 #define EOF_PRO_GUITAR_TRACK_BEHAVIOR	5
 #define EOF_PRO_KEYS_TRACK_BEHAVIOR		6
+#define EOF_DANCE_TRACK_BEHAVIOR        7
 
 #define EOF_TRACKS_MIN			1
 #define EOF_TRACK_GUITAR		1
@@ -174,7 +175,8 @@ typedef struct
 #define EOF_TRACK_KEYS			7
 #define EOF_TRACK_PRO_BASS		8
 #define EOF_TRACK_PRO_GUITAR	9
-#define EOF_TRACK_PRO_KEYS		10
+#define EOF_TRACK_DANCE         10
+#define EOF_TRACK_PRO_KEYS		11
 
 #define EOF_TRACK_FLAG_OPEN_STRUM	1
 	//Specifies if the track has open strumming enabled (ie. PART BASS)
@@ -191,7 +193,7 @@ typedef struct
 	unsigned long flags;
 } EOF_TRACK_ENTRY;
 
-#define EOF_LEGACY_TRACKS_MAX		6
+#define EOF_LEGACY_TRACKS_MAX		7
 typedef struct
 {
 	unsigned char numlanes;		//The number of lanes, keys, etc. in this track

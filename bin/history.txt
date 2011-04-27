@@ -3,6 +3,9 @@ EOF Version History
 
 1.8:
 
+Fixed a bug where seek to previous beat wouldn't work correctly if the
+current seek position was before the first beat marker.
+
 Fixed some grid snap related bugs.
 
 Added a "Mark new notes as expert+" toggle-able option to make it

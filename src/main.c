@@ -41,6 +41,7 @@
 
 char        eof_note_type_name[5][32] = {" Supaeasy", " Easy", " Medium", " Amazing", " BRE"};
 char        eof_vocal_tab_name[5][32] = {" Lyrics", " ", " ", " ", " "};
+char        eof_dance_tab_name[5][32] = {" Beginner", " Easy", " Medium", " Hard", " Challenge"};
 char      * eof_snap_name[9] = {"Off", "1/4", "1/8", "1/12", "1/16", "1/24", "1/32", "1/48", "Custom"};
 char      * eof_input_name[EOF_INPUT_NAME_NUM] = {"Classic", "Piano Roll", "Hold", "RexMundi", "Guitar Tap", "Guitar Strum", "Feedback"};
 
@@ -2826,14 +2827,15 @@ int eof_load_data(void)
 	eof_image[EOF_IMAGE_NOTE_ORANGE_HIT] = load_pcx("eof.dat#note_orange_hit.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_HORANGE] = load_pcx("eof.dat#note_orange_hopo.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_HORANGE_HIT] = load_pcx("eof.dat#note_orange_hopo_hit.pcx", NULL);
-	for(i = 1; i <= EOF_IMAGE_MENU_NO_NOTE; i++)
-	{
-		if(!eof_image[i])
-		{
-			allegro_message("Could not load all images!\nFailed on %d", i);
-			return 0;
-		}
-	}
+	eof_image[EOF_IMAGE_NOTE_GREEN_ARROW] = load_pcx("eof.dat#note_green_arrow.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_RED_ARROW] = load_pcx("eof.dat#note_red_arrow.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_YELLOW_ARROW] = load_pcx("eof.dat#note_yellow_arrow.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_BLUE_ARROW] = load_pcx("eof.dat#note_blue_arrow.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GREEN_ARROW_HIT] = load_pcx("eof.dat#note_green_hit_arrow.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_RED_ARROW_HIT] = load_pcx("eof.dat#note_red_hit_arrow.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_YELLOW_ARROW_HIT] = load_pcx("eof.dat#note_yellow_hit_arrow.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_BLUE_ARROW_HIT] = load_pcx("eof.dat#note_blue_hit_arrow.pcx", NULL);
+
 	eof_font = load_bitmap_font("eof.dat#font_times_new_roman.pcx", NULL, NULL);
 	if(!eof_font)
 	{
@@ -2850,6 +2852,15 @@ int eof_load_data(void)
 	font = eof_font;
 	set_palette(eof_palette);
 	set_mouse_sprite(NULL);
+
+	for(i = 1; i <= EOF_IMAGE_NOTE_BLUE_ARROW_HIT; i++)
+	{
+		if(!eof_image[i])
+		{
+			allegro_message("Could not load all images!\nFailed on %d", i);
+			return 0;
+		}
+	}
 
 	eof_color_black = makecol(0, 0, 0);
 	eof_color_white = makecol(255, 255, 255);
