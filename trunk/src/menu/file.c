@@ -1952,7 +1952,7 @@ int eof_new_chart(char * filename)
 	eof_destroy_ogg();
 
 	/* create new song */
-	eof_song = eof_create_song_populated();	//Create a new chart with 5 legacy tracks and 1 vocal track
+	eof_song = eof_create_song_populated();
 	if(!eof_song)
 	{
 		allegro_message("Error creating new song!");

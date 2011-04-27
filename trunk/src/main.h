@@ -102,6 +102,14 @@
 #define EOF_IMAGE_NOTE_ORANGE_HIT        57
 #define EOF_IMAGE_NOTE_HORANGE           58
 #define EOF_IMAGE_NOTE_HORANGE_HIT       59
+#define EOF_IMAGE_NOTE_GREEN_ARROW       60
+#define EOF_IMAGE_NOTE_RED_ARROW         61
+#define EOF_IMAGE_NOTE_YELLOW_ARROW      62
+#define EOF_IMAGE_NOTE_BLUE_ARROW        63
+#define EOF_IMAGE_NOTE_GREEN_ARROW_HIT   64
+#define EOF_IMAGE_NOTE_RED_ARROW_HIT     65
+#define EOF_IMAGE_NOTE_YELLOW_ARROW_HIT  66
+#define EOF_IMAGE_NOTE_BLUE_ARROW_HIT    67
 
 #define EOF_DISPLAY_640             0
 #define EOF_DISPLAY_800             1
@@ -167,8 +175,6 @@ extern NCDFS_FILTER_LIST * eof_filter_exe_files;
 extern NCDFS_FILTER_LIST * eof_filter_lyrics_files;
 extern NCDFS_FILTER_LIST * eof_filter_dB_files;
 
-extern PALETTE     eof_palette;
-extern BITMAP *    eof_image[EOF_MAX_IMAGES];
 extern int         eof_global_volume;
 
 extern EOF_WINDOW * eof_window_editor;
@@ -329,6 +335,7 @@ extern FONT *      eof_font;
 extern FONT *      eof_mono_font;
 extern char        eof_note_type_name[5][32];
 extern char        eof_vocal_tab_name[5][32];
+extern char        eof_dance_tab_name[5][32];
 
 extern char        eof_supports_mp3;
 extern char        eof_supports_oggcat;

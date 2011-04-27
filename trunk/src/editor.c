@@ -1043,7 +1043,7 @@ void eof_read_editor_keys(void)
 			{
 				eof_pen_note.note &= (~8);	//Clear the bit for lane 4
 			}
-			if(key[KEY_5])
+			if(key[KEY_5] && (numlanes >= 5))
 			{
 				eof_pen_note.note |= 16;	//Set the bit for lane 5
 			}
@@ -1082,7 +1082,7 @@ void eof_read_editor_keys(void)
 				eof_pen_note.note ^= 8;
 				key[KEY_4] = 0;
 			}
-			if(key[KEY_5])
+			if(key[KEY_5] && (numlanes >= 5))
 			{
 				eof_pen_note.note ^= 16;
 				key[KEY_5] = 0;
@@ -1780,7 +1780,7 @@ void eof_read_editor_keys(void)
 					eof_menu_note_toggle_blue();
 					key[KEY_4] = 0;
 				}
-				else if(key[KEY_5])
+				else if(key[KEY_5] && (numlanes >= 5))
 				{
 					eof_menu_note_toggle_purple();
 					key[KEY_5] = 0;
@@ -1825,7 +1825,7 @@ void eof_read_editor_keys(void)
 						bitmask = 8;
 						key[KEY_4] = 0;
 					}
-					else if(key[KEY_5] && !KEY_EITHER_SHIFT)
+					else if(key[KEY_5] && (numlanes >= 5) && !KEY_EITHER_SHIFT)
 					{
 						bitmask = 16;
 						key[KEY_5] = 0;
@@ -4249,20 +4249,32 @@ void eof_render_editor_window_common2(void)
 		}
 	}
 
+	char *tab_name;
 	for(i = 0; i < 5; i++)
 	{	//Draw tab difficulty names
-		if((eof_selected_track == EOF_TRACK_VOCALS) && (i == eof_vocals_tab))
+		if(eof_selected_track == EOF_TRACK_VOCALS)
 		{
-			textprintf_ex(eof_window_editor->screen, font, 20 + i * 80, 2 + 8, eof_color_black, -1, "%s", eof_vocal_tab_name[i]);
-			break;
+			tab_name = eof_vocal_tab_name[i];
 		}
-		if(i == eof_note_type)
+		else if(eof_selected_track == EOF_TRACK_DANCE)
 		{
-			textprintf_ex(eof_window_editor->screen, font, 20 + i * 80, 2 + 8, eof_color_black, -1, "%s", eof_note_type_name[i]);
+			tab_name = eof_dance_tab_name[i];
 		}
 		else
 		{
-			textprintf_ex(eof_window_editor->screen, font, 20 + i * 80, 2 + 2 + 8, makecol(128, 128, 128), -1, "%s", eof_note_type_name[i]);
+			tab_name = eof_note_type_name[i];
+		}
+		if(i == eof_note_type)
+		{
+			textprintf_centre_ex(eof_window_editor->screen, font, 50 + i * 80, 2 + 8, eof_color_black, -1, "%s", tab_name);
+		}
+		else
+		{
+			textprintf_centre_ex(eof_window_editor->screen, font, 50 + i * 80, 2 + 2 + 8, makecol(128, 128, 128), -1, "%s", tab_name);
+		}
+		if((eof_selected_track == EOF_TRACK_VOCALS) && (i == eof_vocals_tab))
+		{
+			break;
 		}
 	}
 

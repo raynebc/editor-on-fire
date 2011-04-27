@@ -695,6 +695,8 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	unsigned int hopo_notes_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_HGREEN_HIT, EOF_IMAGE_NOTE_HRED_HIT, EOF_IMAGE_NOTE_HYELLOW_HIT, EOF_IMAGE_NOTE_HBLUE_HIT, EOF_IMAGE_NOTE_HPURPLE_HIT, EOF_IMAGE_NOTE_HORANGE_HIT};
 	unsigned int cymbals[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN, EOF_IMAGE_NOTE_RED, EOF_IMAGE_NOTE_YELLOW_CYMBAL, EOF_IMAGE_NOTE_BLUE_CYMBAL, EOF_IMAGE_NOTE_PURPLE_CYMBAL, EOF_IMAGE_NOTE_ORANGE};
 	unsigned int cymbals_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN_HIT, EOF_IMAGE_NOTE_RED_HIT, EOF_IMAGE_NOTE_YELLOW_CYMBAL_HIT, EOF_IMAGE_NOTE_BLUE_CYMBAL_HIT, EOF_IMAGE_NOTE_PURPLE_CYMBAL_HIT, EOF_IMAGE_NOTE_ORANGE_HIT};
+	unsigned int arrows[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN_ARROW, EOF_IMAGE_NOTE_RED_ARROW, EOF_IMAGE_NOTE_YELLOW_ARROW, EOF_IMAGE_NOTE_BLUE_ARROW, EOF_IMAGE_NOTE_PURPLE, EOF_IMAGE_NOTE_ORANGE};
+	unsigned int arrows_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN_ARROW_HIT, EOF_IMAGE_NOTE_RED_ARROW_HIT, EOF_IMAGE_NOTE_YELLOW_ARROW_HIT, EOF_IMAGE_NOTE_BLUE_ARROW_HIT, EOF_IMAGE_NOTE_PURPLE_HIT, EOF_IMAGE_NOTE_ORANGE_HIT};
 	unsigned long numlanes, tracknum;
 
 	//These variables are used for the name rendering logic
@@ -828,37 +830,44 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 				}
 				else
 				{
-					if(noteflags & EOF_NOTE_FLAG_HOPO)
-					{	//If this is a HOPO note
-						if(noteflags & EOF_NOTE_FLAG_SP)
-						{	//If this is also a SP note
-							ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_HWHITE_HIT] : eof_image[EOF_IMAGE_NOTE_HWHITE], xchart[ctr] - 24, 200 - 48, npos);
+					if(track != EOF_TRACK_DANCE)
+					{	//If this is not a dance track
+						if(noteflags & EOF_NOTE_FLAG_HOPO)
+						{	//If this is a HOPO note
+							if(noteflags & EOF_NOTE_FLAG_SP)
+							{	//If this is also a SP note
+								ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_HWHITE_HIT] : eof_image[EOF_IMAGE_NOTE_HWHITE], xchart[ctr] - 24, 200 - 48, npos);
+							}
+							else
+							{
+								ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[hopo_notes_hit[ctr]] : eof_image[hopo_notes[ctr]], xchart[ctr] - 24, 200 - 48, npos);
+							}
 						}
 						else
 						{
-							ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[hopo_notes_hit[ctr]] : eof_image[hopo_notes[ctr]], xchart[ctr] - 24, 200 - 48, npos);
+							if(noteflags & EOF_NOTE_FLAG_SP)
+							{	//If this is an SP note
+								ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_WHITE_HIT] : eof_image[EOF_IMAGE_NOTE_WHITE], xchart[ctr] - 24, 200 - 48, npos);
+							}
+							else
+							{
+								ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[notes_hit[ctr]] : eof_image[notes[ctr]], xchart[ctr] - 24, 200 - 48, npos);
+							}
 						}
-					}
-					else
-					{
-						if(noteflags & EOF_NOTE_FLAG_SP)
-						{	//If this is an SP note
-							ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_WHITE_HIT] : eof_image[EOF_IMAGE_NOTE_WHITE], xchart[ctr] - 24, 200 - 48, npos);
-						}
-						else
-						{
-							ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[notes_hit[ctr]] : eof_image[notes[ctr]], xchart[ctr] - 24, 200 - 48, npos);
-						}
-					}
 
-					if(!eof_legacy_view && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-					{	//If legacy view is disabled and this is a pro guitar note, render the fret number over the center of the note
-						BITMAP *fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], ctr, 8, eof_color_white, eof_color_black);	//Allow one extra character's width for padding
-						if(fretbmp != NULL)
-						{	//Render the bitmap on top of the 3D note and then destroy the bitmap
-							ocd3d_draw_bitmap(eof_window_3d->screen, fretbmp, xchart[ctr] - 8, 200 - 24, npos);
-							destroy_bitmap(fretbmp);
+						if(!eof_legacy_view && (notenote & mask) && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+						{	//If legacy view is disabled and this is a pro guitar note, render the fret number over the center of the note
+							BITMAP *fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], ctr, 8, eof_color_white, eof_color_black);	//Allow one extra character's width for padding
+							if(fretbmp != NULL)
+							{	//Render the bitmap on top of the 3D note and then destroy the bitmap
+								ocd3d_draw_bitmap(eof_window_3d->screen, fretbmp, xchart[ctr] - 8, 200 - 24, npos);
+								destroy_bitmap(fretbmp);
+							}
 						}
+					}//If this is not a dance track
+					else
+					{	//This is a dance track
+						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[arrows_hit[ctr]] : eof_image[arrows[ctr]], xchart[ctr] - 24, 200 - 48, npos);
 					}
 				}
 			}//If this lane is used
