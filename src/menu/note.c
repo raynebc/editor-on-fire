@@ -147,7 +147,6 @@ MENU eof_note_menu[] =
     {"Delete\tDel", eof_menu_note_delete, NULL, 0, NULL},
     {"Display semitones as flat", eof_display_flats_menu, NULL, 0, NULL},
     {"&Freestyle", NULL, eof_note_freestyle_menu, 0, NULL},
-//    {"Toggle &Expert+ bass drum\tCtrl+E", eof_menu_note_toggle_double_bass, NULL, 0, NULL},
     {"&Drum", NULL, eof_note_drum_menu, 0, NULL},
     {"Pro &Guitar", NULL, eof_note_proguitar_menu, 0, NULL},
     {eof_trill_menu_text, NULL, eof_trill_menu, 0, NULL},
@@ -190,6 +189,7 @@ void eof_prepare_note_menu(void)
 	int sel_start = eof_music_length, sel_end = 0;
 	int firstnote = 0, lastnote;
 	EOF_PHRASE_SECTION *sectionptr = NULL;
+	unsigned long track_behavior = eof_song->track[eof_selected_track]->track_behavior;
 
 	if(eof_song && eof_song_loaded)
 	{
@@ -542,15 +542,23 @@ void eof_prepare_note_menu(void)
 			eof_note_menu[6].flags = D_DISABLED; // edit lyric
 			eof_note_menu[7].flags = D_DISABLED; // split lyric
 
-			/* toggle crazy , toggle Expert+ bass drum*/
+			/* toggle crazy */
+			if((track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR))
+			{	//When a guitar track is active
+				eof_note_menu[9].flags = 0;				//Enable toggle crazy
+			}
+			else
+			{
+				eof_note_menu[9].flags = D_DISABLED;	//Disable toggle crazy
+			}
+
+			/* toggle Expert+ bass drum */
 			if(eof_selected_track != EOF_TRACK_DRUM)
 			{	//When PART DRUMS is not active
-				eof_note_menu[9].flags = 0;				//Enable toggle crazy
 				eof_note_menu[20].flags = D_DISABLED;	//Disable pro drum mode menu
 			}
 			else
 			{	//When PART DRUMS is active
-				eof_note_menu[9].flags = D_DISABLED;	//Disable toggle crazy
 				eof_note_menu[20].flags = 0;			//Enable pro drum mode menu
 			}
 
@@ -582,8 +590,8 @@ void eof_prepare_note_menu(void)
 			eof_note_menu[13].flags = D_DISABLED; // lyric lines
 
 			/* HOPO */
-			if(eof_selected_track != EOF_TRACK_DRUM)
-			{
+			if((track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR))
+			{	//When a guitar track is active
 				eof_note_menu[15].flags = 0;
 			}
 			else
@@ -652,6 +660,16 @@ void eof_prepare_note_menu(void)
 			{	//Disable these submenus unless a track that can use them is active
 				eof_note_menu[22].flags = D_DISABLED;
 				eof_note_menu[23].flags = D_DISABLED;
+			}
+
+			/* Toggle>Purple */
+			if(eof_count_track_lanes(eof_song, eof_selected_track) > 4)
+			{	//If the active track has a sixth usable lane
+				eof_note_toggle_menu[4].flags = 0;	//Enable Toggle>Purple
+			}
+			else
+			{
+				eof_note_toggle_menu[4].flags = D_DISABLED;
 			}
 
 			/* Toggle>Orange */
@@ -1155,8 +1173,8 @@ int eof_menu_note_toggle_crazy(void)
 	unsigned long track_behavior = eof_song->track[eof_selected_track]->track_behavior;
 	unsigned long flags;
 
-	if((track_behavior == EOF_DRUM_TRACK_BEHAVIOR) || (track_behavior == EOF_VOCAL_TRACK_BEHAVIOR) || (track_behavior == EOF_KEYS_TRACK_BEHAVIOR))
-		return 1;	//Do not allow this function to run on any drum, vocal or keys track
+	if((track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR))
+		return 1;	//Do not allow this function to run unless a guitar track is active
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -1933,9 +1951,10 @@ int eof_menu_hopo_cycle(void)
 	unsigned long i;
 	char undo_made = 0;	//Set to nonzero if an undo state was saved
 	unsigned long flags;
+	unsigned long track_behavior = eof_song->track[eof_selected_track]->track_behavior;
 
-	if((eof_selected_track == EOF_TRACK_DRUM) || eof_vocals_selected)
-		return 1;	//Do not allow this function to run when PART DRUMS or PART VOCALS is active
+	if((track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR))
+		return 1;	//Do not allow this function to run unless a guitar track is active
 
 	if((eof_count_selected_notes(NULL, 0) > 0))
 	{
@@ -2123,6 +2142,10 @@ int eof_transpose_possible(int dir)
 		if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 		{	//Special case:  Legacy view is in effect, revert to lane 4 being the highest that can transpose up
 			max = 16;
+		}
+		if(eof_count_track_lanes(eof_song, eof_selected_track) == 4)
+		{	//If the active track has 4 lanes (ie. PART DANCE), make lane 3 the highest that can transpose up
+			max = 8;
 		}
 		if(eof_get_track_size(eof_song, eof_selected_track) <= 0)
 		{
