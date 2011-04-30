@@ -570,7 +570,7 @@ static void eof_menu_edit_paste_clear_range_vocal(unsigned long start, unsigned 
 	}
 }
 
-int eof_menu_edit_paste_vocal(void)
+int eof_menu_edit_paste_vocal_logic(int oldpaste)
 {
 	unsigned long i, j, t;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -596,26 +596,25 @@ int eof_menu_edit_paste_vocal(void)
 		allegro_message("Clipboard error!\nNothing to paste!");
 		return 1;
 	}
-	if(first_beat + this_beat >= eof_song->beats - 1)
-	{
+	if(!oldpaste && (first_beat + this_beat >= eof_song->beats - 1))
+	{	//If new paste logic is being used, return from function if the first lyric would paste after the last beat
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 	copy_notes = pack_igetl(fp);
 	first_beat = pack_igetl(fp);
-
 	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 	eof_selection.current = EOF_MAX_NOTES - 1;
 	eof_selection.current_pos = 0;
+
 	for(i = 0; i < copy_notes; i++)
 	{
-
 		/* read the note */
 		temp_lyric.note = pack_getc(fp);
 		temp_lyric.pos = pack_igetl(fp);
 		temp_lyric.beat = pack_igetl(fp);
-		if(temp_lyric.beat - first_beat + this_beat >= eof_song->beats - 1)
-		{
+		if(!oldpaste && (temp_lyric.beat - first_beat + this_beat >= eof_song->beats - 1))
+		{	//If new paste logic is being used, return from function if this lyric (and the subsequent lyrics) would paste after the last beat
 			break;
 		}
 		temp_lyric.endbeat = pack_igetl(fp);
@@ -632,14 +631,29 @@ int eof_menu_edit_paste_vocal(void)
 			{
 				last_pos = new_end_pos + 1;
 			}
-			new_pos = eof_put_porpos(temp_lyric.beat - first_beat + this_beat, temp_lyric.porpos, 0.0);
-			new_end_pos = eof_put_porpos(temp_lyric.endbeat - first_beat + this_beat, temp_lyric.porendpos, 0.0);
+			if(!oldpaste)
+			{	//If new paste logic is being used, this lyric pastes into a position relative to the start and end of a beat marker
+				new_pos = eof_put_porpos(temp_lyric.beat - first_beat + this_beat, temp_lyric.porpos, 0.0);
+				new_end_pos = eof_put_porpos(temp_lyric.endbeat - first_beat + this_beat, temp_lyric.porendpos, 0.0);
+			}
+			else
+			{	//If old paste logic is being used, this lyric pastes into a position relative to the previous pasted note
+				new_pos = eof_music_pos + temp_lyric.pos - eof_av_delay;
+				new_end_pos = new_pos + temp_lyric.length;
+			}
 			if(last_pos < 0)
 			{
 				last_pos = new_pos;
 			}
 			eof_menu_edit_paste_clear_range_vocal(last_pos, new_end_pos);
-			new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, temp_lyric.note, new_pos, new_end_pos - new_pos, 0, temp_lyric.text);
+			if(!oldpaste)
+			{	//If new paste logic is being used, this lyric pastes into a position relative to the start and end of a beat marker
+				new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, temp_lyric.note, new_pos, new_end_pos - new_pos, 0, temp_lyric.text);
+			}
+			else
+			{	//If old paste logic is being used, this lyric pastes into a position relative to the previous pasted note
+				new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, temp_lyric.note, new_pos, temp_lyric.length, 0, temp_lyric.text);
+			}
 			if(new_lyric)
 			{
 				paste_pos[paste_count] = new_lyric->pos;
@@ -669,88 +683,14 @@ int eof_menu_edit_paste_vocal(void)
 	return 1;
 }
 
+int eof_menu_edit_paste_vocal(void)
+{
+	return eof_menu_edit_paste_vocal_logic(0);	//Use new paste logic
+}
+
 int eof_menu_edit_old_paste_vocal(void)
 {
-	unsigned long i, j, t;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	unsigned long paste_pos[EOF_MAX_NOTES] = {0};
-	int paste_count = 0;
-	int copy_notes;
-	int first_beat;
-	PACKFILE * fp;
-	int new_pos = -1;
-	int new_end_pos = -1;
-	int last_pos = -1;
-	EOF_EXTENDED_LYRIC temp_lyric;
-	EOF_LYRIC * new_lyric = NULL;
-
-	if(!eof_vocals_selected)
-		return 1;	//Return error
-
-	fp = pack_fopen("eof.vocals.clipboard", "r");
-	if(!fp)
-	{
-		allegro_message("Clipboard error!\nNothing to paste!");
-		return 1;
-	}
-	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
-	copy_notes = pack_igetl(fp);
-	first_beat = pack_igetl(fp);
-	for(i = 0; i < copy_notes; i++)
-	{
-		/* read the note */
-		temp_lyric.note = pack_getc(fp);
-		temp_lyric.pos = pack_igetl(fp);
-		temp_lyric.beat = pack_igetl(fp);
-		temp_lyric.endbeat = pack_igetl(fp);
-		temp_lyric.length = pack_igetl(fp);
-		pack_fread(&temp_lyric.porpos, sizeof(float), fp);
-		pack_fread(&temp_lyric.porendpos, sizeof(float), fp);
-		t = pack_igetw(fp);
-		pack_fread(temp_lyric.text, t, fp);
-		temp_lyric.text[t] = '\0';
-
-		if(eof_music_pos + temp_lyric.pos - eof_av_delay < eof_music_length)
-		{
-			if(last_pos >= 0)
-			{
-				last_pos = new_end_pos + 1;
-			}
-			new_pos = eof_music_pos + temp_lyric.pos - eof_av_delay;
-			new_end_pos = new_pos + temp_lyric.length;
-			if(last_pos < 0)
-			{
-				last_pos = new_pos;
-			}
-			eof_menu_edit_paste_clear_range_vocal(last_pos, new_end_pos);
-			new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, temp_lyric.note, new_pos, temp_lyric.length, 0, temp_lyric.text);
-			if(new_lyric)
-			{
-				paste_pos[paste_count] = new_lyric->pos;
-				paste_count++;
-			}
-		}
-	}
-	eof_track_sort_notes(eof_song, eof_selected_track);
-	eof_track_fixup_notes(eof_song, eof_selected_track, 0);
-	if((paste_count > 0) && (eof_selection.track != EOF_TRACK_VOCALS))
-	{
-		eof_selection.track = EOF_TRACK_VOCALS;
-		memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
-	}
-	for(i = 0; i < paste_count; i++)
-	{
-		for(j = 0; j < eof_song->vocal_track[tracknum]->lyrics; j++)
-		{
-			if(eof_song->vocal_track[tracknum]->lyric[j]->pos == paste_pos[i])
-			{
-				eof_selection.multi[j] = 1;
-				break;
-			}
-		}
-	}
-	return 1;
+	return eof_menu_edit_paste_vocal_logic(1);	//Use old paste logic
 }
 
 int eof_menu_edit_cut(unsigned long anchor, int option, float offset)
@@ -1219,11 +1159,11 @@ int eof_menu_edit_copy(void)
 	return 1;
 }
 
-int eof_menu_edit_paste(void)
+int eof_menu_edit_paste_logic(int oldpaste)
 {
 	if(eof_vocals_selected)
-	{
-		return eof_menu_edit_paste_vocal();
+	{	//The vocal track uses its own clipboard logic
+		return eof_menu_edit_paste_vocal_logic(oldpaste);	//Call the old or new vocal paste logic accordingly
 	}
 	unsigned long i, j;
 	unsigned long paste_pos[EOF_MAX_NOTES] = {0};
@@ -1231,9 +1171,9 @@ int eof_menu_edit_paste(void)
 	unsigned long first_beat = 0;
 	long this_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 	unsigned long copy_notes;
+	PACKFILE * fp;
 	EOF_EXTENDED_NOTE temp_note;
 	EOF_NOTE * new_note = NULL;
-	PACKFILE * fp;
 	unsigned long sourcetrack = 0;	//Will store the track that this clipboard data was from
 	unsigned char frets[16] = {0};	//Used to store fret data to support copying to a pro guitar track
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -1247,8 +1187,8 @@ int eof_menu_edit_paste(void)
 		allegro_message("Clipboard error!\nNothing to paste!");
 		return 1;
 	}
-	if(first_beat + this_beat >= eof_song->beats - 1)
-	{
+	if(!oldpaste && (first_beat + this_beat >= eof_song->beats - 1))
+	{	//If new paste logic is being used, return from function if the first note would paste after the last beat
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
@@ -1269,8 +1209,8 @@ int eof_menu_edit_paste(void)
 		pack_fread(&temp_note.porendpos, sizeof(float), fp);	//Read the percent representing the note's end position within a beat
 		temp_note.beat = pack_igetl(fp);	//Read the beat the note starts in
 		temp_note.endbeat = pack_igetl(fp);	//Read the beat the note ends in
-		if((temp_note.beat - first_beat + this_beat >= eof_song->beats - 1) || (temp_note.endbeat - first_beat + this_beat >= eof_song->beats - 1))
-		{
+		if(!oldpaste && ((temp_note.beat - first_beat + this_beat >= eof_song->beats - 1) || (temp_note.endbeat - first_beat + this_beat >= eof_song->beats - 1)))
+		{	//If new paste logic is being used, return from function if this note (and the subsequent notes) would paste after the last beat
 			break;
 		}
 		temp_note.length = pack_igetl(fp);	//Read the note's length
@@ -1285,7 +1225,14 @@ int eof_menu_edit_paste(void)
 		/* create the note */
 		if(eof_music_pos + temp_note.pos + temp_note.length - eof_av_delay < eof_music_length)
 		{
-			new_note = eof_track_add_create_note(eof_song, eof_selected_track, temp_note.note, eof_put_porpos(temp_note.beat - first_beat + this_beat, temp_note.porpos, 0.0), eof_put_porpos(temp_note.endbeat - first_beat + this_beat, temp_note.porendpos, 0.0) - eof_put_porpos(temp_note.beat - first_beat + this_beat, temp_note.porpos, 0.0), eof_note_type, name);
+			if(!oldpaste)
+			{	//If new paste logic is being used, this note pastes into a position relative to the start and end of a beat marker
+				new_note = eof_track_add_create_note(eof_song, eof_selected_track, temp_note.note, eof_put_porpos(temp_note.beat - first_beat + this_beat, temp_note.porpos, 0.0), eof_put_porpos(temp_note.endbeat - first_beat + this_beat, temp_note.porendpos, 0.0) - eof_put_porpos(temp_note.beat - first_beat + this_beat, temp_note.porpos, 0.0), eof_note_type, name);
+			}
+			else
+			{	//If old paste logic is being used, this note pastes into a position relative to the previous pasted note
+				new_note = eof_track_add_create_note(eof_song, eof_selected_track, temp_note.note, eof_music_pos + temp_note.pos - eof_av_delay, temp_note.length, eof_note_type, name);
+			}
 			if(new_note)
 			{
 				eof_set_note_flags(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.flags);
@@ -1326,96 +1273,14 @@ int eof_menu_edit_paste(void)
 	return 1;
 }
 
+int eof_menu_edit_paste(void)
+{
+	return eof_menu_edit_paste_logic(0);	//Use new paste logic
+}
+
 int eof_menu_edit_old_paste(void)
 {
-	if(eof_vocals_selected)
-	{
-		return eof_menu_edit_old_paste_vocal();
-	}
-	unsigned long i, j;
-	unsigned long paste_pos[EOF_MAX_NOTES] = {0};
-	unsigned long paste_count = 0;
-	unsigned long copy_notes;
-	unsigned long first_beat;
-	PACKFILE * fp;
-	EOF_EXTENDED_NOTE temp_note;
-	EOF_NOTE * new_note = NULL;
-	unsigned long sourcetrack = 0;	//Will store the track that this clipboard data was from
-	unsigned char frets[16] = {0};	//Used to store fret data to support copying to a pro guitar track
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	unsigned long legacymask;
-	char name[EOF_NAME_LENGTH+1] = {0};
-
-	fp = pack_fopen("eof.clipboard", "r");
-	if(!fp)
-	{
-		allegro_message("Clipboard error!\nNothing to paste!");
-		return 1;
-	}
-	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
-	sourcetrack = pack_igetl(fp);	//Read the source track of the clipboard data
-	copy_notes = pack_igetl(fp);
-	first_beat = pack_igetl(fp);
-	for(i = 0; i < copy_notes; i++)
-	{	//For each note in the clipboard file
-		/* read the note */
-		eof_load_song_string_pf(name, fp, sizeof(name));	//Read the note's name
-		temp_note.note = pack_igetl(fp);	//Read the note fret values
-		temp_note.pos = pack_igetl(fp);		//Read the note's position relative to within the selection
-		pack_fread(&temp_note.porpos, sizeof(float), fp);	//Read the percent representing the note's start position within a beat
-		pack_fread(&temp_note.porendpos, sizeof(float), fp);	//Read the percent representing the note's end position within a beat
-		temp_note.beat = pack_igetl(fp);	//Read the beat the note starts in
-		temp_note.endbeat = pack_igetl(fp);	//Read the beat the note ends in
-		temp_note.length = pack_igetl(fp);	//Read the note's length
-		temp_note.flags = pack_igetl(fp);	//Read the note's flags
-		legacymask = pack_igetl(fp);		//Read the note's legacy bitmask
-		if((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (legacymask != 0))
-		{	//If the copied note indicated that this overrides the original bitmask (pasting pro guitar into a legacy track)
-			temp_note.note = legacymask;
-		}
-		eof_sanitize_note_flags(&temp_note.flags,eof_selected_track);	//Ensure the note flags are validated for the track being pasted into
-
-		/* create the note */
-		if(eof_music_pos + temp_note.pos + temp_note.length - eof_av_delay < eof_music_length)
-		{
-			new_note = eof_track_add_create_note(eof_song, eof_selected_track, temp_note.note, eof_music_pos + temp_note.pos - eof_av_delay, temp_note.length, eof_note_type, name);
-			if(new_note)
-			{
-				eof_set_note_flags(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.flags);
-				paste_pos[paste_count] = eof_get_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1);
-				paste_count++;
-			}
-		}
-
-		/* read fret values */
-		pack_fread(frets, sizeof(frets), fp);	//Read the note's fret array
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-		{	//If this is a pro guitar track
-			memcpy(eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->frets, frets, sizeof(frets));	//Copy the fret array to the last created pro guitar note
-		}
-	}
-	eof_track_sort_notes(eof_song, eof_selected_track);
-	eof_fixup_notes(eof_song);
-	eof_determine_phrase_status();
-	eof_detect_difficulties(eof_song);
-	if((paste_count > 0) && (eof_selection.track != eof_selected_track))
-	{
-		eof_selection.track = eof_selected_track;
-		memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
-	}
-	for(i = 0; i < paste_count; i++)
-	{
-		for(j = 0; j < eof_get_track_size(eof_song, eof_selected_track); j++)
-		{	//For each note in the active track
-			if((eof_get_note_type(eof_song, eof_selected_track, j) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, j) == paste_pos[i]))
-			{
-				eof_selection.multi[j] = 1;
-				break;
-			}
-		}
-	}
-	return 1;
+	return eof_menu_edit_paste_logic(1);	//Use old paste logic
 }
 
 int eof_menu_edit_snap_quarter(void)
@@ -2339,6 +2204,13 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long desttrack)
 		*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Erase the pro slide down flag
 		*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE);	//Erase the pro string mute flag
 		*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE);	//Erase the pro palm mute flag
+
+		if(eof_song->track[desttrack]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR)
+		{	//If this isn't a 5 lane guitar track either
+			*flags &= (~EOF_NOTE_FLAG_HOPO);	//Erase the temporary HOPO flag
+			*flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Erase the forced HOPO ON flag
+			*flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Erase the forced HOPO OFF flag
+		}
 	}
 	else
 	{	//Resolve pro guitar flag conflicts
@@ -2381,9 +2253,6 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long desttrack)
 	}
 	else
 	{	//Erase all non drum flags from a PART DRUMS note
-		*flags &= (~EOF_NOTE_FLAG_HOPO);	//Erase the temporary HOPO flag
-		*flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Erase the forced HOPO ON flag
-		*flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Erase the forced HOPO OFF flag
 		*flags &= (~EOF_NOTE_FLAG_CRAZY);	//Erase the "crazy" note flag
 	}
 

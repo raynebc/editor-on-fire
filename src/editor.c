@@ -706,18 +706,24 @@ void eof_read_editor_keys(void)
 		}
 		else
 		{
+			int eof_note_type_max = 3;	//By default, assume this track has 4 usable difficulties
+			if(eof_selected_track == EOF_TRACK_DANCE)
+			{
+				eof_note_type_max = 4;	//However, the dance track has 5 usable difficulties
+			}
+
 			if(KEY_EITHER_SHIFT)
 			{
 				eof_note_type--;
 				if(eof_note_type < 0)
 				{
-					eof_note_type = 3;
+					eof_note_type = eof_note_type_max;
 				}
 			}
 			else
 			{
 				eof_note_type++;
-				if(eof_note_type > 3)
+				if(eof_note_type > eof_note_type_max)
 				{
 					eof_note_type = 0;
 				}

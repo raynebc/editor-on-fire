@@ -16,8 +16,9 @@ void eof_prepare_edit_menu(void);		//Enable/disable Edit menu items prior to dra
 int eof_menu_edit_undo(void);
 int eof_menu_edit_redo(void);
 int eof_menu_edit_copy(void);
-int eof_menu_edit_paste(void);
-int eof_menu_edit_old_paste(void);
+int eof_menu_edit_paste_logic(int oldpaste);	//If oldpaste is nonzero, uses old paste logic (notes paste to positions relative to each other), otherwise uses new paste logic (notes paste into positions relative to the copied notes positions within their beats)
+int eof_menu_edit_paste(void);					//Calls eof_menu_edit_paste_logic() to use new paste logic
+int eof_menu_edit_old_paste(void);				//Calls eof_menu_edit_paste_logic() to use old paste logic
 int eof_menu_edit_metronome(void);
 int eof_menu_edit_claps_all(void);
 int eof_menu_edit_claps_green(void);

@@ -1173,8 +1173,8 @@ int eof_menu_note_toggle_crazy(void)
 	unsigned long track_behavior = eof_song->track[eof_selected_track]->track_behavior;
 	unsigned long flags;
 
-	if((track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR))
-		return 1;	//Do not allow this function to run unless a guitar track is active
+	if((track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR) && (track_behavior != EOF_DANCE_TRACK_BEHAVIOR))
+		return 1;	//Do not allow this function to run unless a guitar or dance track is active
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track

@@ -3,6 +3,8 @@ EOF Version History
 
 1.8:
 
+Fixed a couple paste related bugs.
+
 Fixed a bug where seek to previous beat wouldn't work correctly if the
 current seek position was before the first beat marker.
 
@@ -32,7 +34,8 @@ Corrected some bugs involving expert and pro drum statuses.
 Added the ability to chart open strum bass guitar notes, compatible with
 Phase Shift.
 
-Updated the EOF project file format to support new features.
+Updated the EOF project file format to support new features including pro
+guitar/bass, keys, dance, open bass strumming, etc.
 
 Fixed a crash that could occur with copy functions after importing a MIDI
 that is longer than the loaded audio.

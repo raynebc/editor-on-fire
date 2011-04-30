@@ -324,7 +324,7 @@ long eof_fixup_next_legacy_note(EOF_LEGACY_TRACK * tp, unsigned long note)
 
 void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 {
-	unsigned long i;
+	unsigned long i, ctr, mask;
 	long next;
 
 	if(!tp)
@@ -351,9 +351,17 @@ void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 			eof_selection.last = i-1;
 		}
 
+		for(ctr=0,mask=1;ctr<8;ctr++,mask=mask<<1)
+		{	//For each lane
+			if((tp->note[i-1]->note & mask) && (ctr >= tp->numlanes))
+			{	//If this lane is populated and is above the highest valid lane number for this track
+				tp->note[i-1]->note &= (~mask);	//Clear the lane
+			}
+		}
+
 		/* delete certain notes */
 		if((tp->note[i-1]->note == 0) || ((tp->note[i-1]->type < 0) || (tp->note[i-1]->type > 4)) || (tp->note[i-1]->pos < eof_song->tags->ogg[eof_selected_ogg].midi_offset) || (tp->note[i-1]->pos >= eof_music_length))
-		{
+		{	//Delete the note if all lanes are clear, if it is an invalid type, if the position is before the first beat marker or if it is after the last beat marker
 			eof_legacy_track_delete_note(tp, i-1);
 		}
 
@@ -913,6 +921,7 @@ void eof_detect_difficulties(EOF_SONG * sp)
  	eof_log("eof_detect_difficulties() entered");
 
 	unsigned long i;
+	int note_type;
 
 	if(sp)
 	{
@@ -936,10 +945,19 @@ void eof_detect_difficulties(EOF_SONG * sp)
 			}
 			else
 			{
-				if((eof_get_note_type(sp, eof_selected_track, i) >= 0) && (eof_get_note_type(sp, eof_selected_track, i) < 5))
-				{
-					eof_note_difficulties[(int)eof_get_note_type(sp, eof_selected_track, i)] = 1;
-					eof_note_type_name[(int)eof_get_note_type(sp, eof_selected_track, i)][0] = '*';
+				note_type = eof_get_note_type(sp, eof_selected_track, i);
+				if((note_type >= 0) && (note_type < 5))
+				{	//If this note has a valid type (difficulty)
+					eof_note_difficulties[note_type] = 1;
+
+					if(eof_selected_track == EOF_TRACK_DANCE)
+					{	//If this is the dance track, update the dance track tabs
+						eof_dance_tab_name[note_type][0] = '*';
+					}
+					else
+					{	//Otherwise update the legacy track tabs
+						eof_note_type_name[note_type][0] = '*';
+					}
 				}
 			}
 		}
