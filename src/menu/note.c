@@ -189,10 +189,11 @@ void eof_prepare_note_menu(void)
 	int sel_start = eof_music_length, sel_end = 0;
 	int firstnote = 0, lastnote;
 	EOF_PHRASE_SECTION *sectionptr = NULL;
-	unsigned long track_behavior = eof_song->track[eof_selected_track]->track_behavior;
+	unsigned long track_behavior = 0;
 
 	if(eof_song && eof_song_loaded)
 	{
+		track_behavior = eof_song->track[eof_selected_track]->track_behavior;
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		if(eof_vocals_selected)
 		{	//PART VOCALS SELECTED
