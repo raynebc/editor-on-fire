@@ -359,7 +359,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	unsigned long ctr;
 	unsigned long delta = 0;
 	int midi_note_offset = 0;
-	int vel=0x64;	//The generic velocity used for note on/off events
+	int vel;
 	unsigned long tracknum=0;				//Used to de-obfuscate the track number
 
 	unsigned long ppqn=0;					//Used to store conversion of BPM to ppqn
@@ -420,6 +420,15 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		if(eof_get_track_size(sp, j) == 0)	//If this track has no notes
 			continue;	//Skip the track
 
+		if(j == EOF_TRACK_DANCE)
+		{	//Phase Shift's dance track specification is for dance notes to use a velocity of 127
+			vel=127;
+		}
+		else
+		{	//For other tracks, the generic velocity is 100
+			vel=100;
+		}
+
 		notetrackspopulated[j] = 1;	//Remember that this track is populated
 		eof_clear_midi_events();
 		tracknum = sp->track[j]->tracknum;
@@ -451,32 +460,66 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			use size of the file as the MTrk header length */
 			for(i = 0; i < eof_get_track_size(sp, j); i++)
 			{	//For each note in the track
-				switch(eof_get_note_type(sp, j, i))
+				if(j != EOF_TRACK_DANCE)
+				{	//All legacy style tracks besides the dance track use the same offsets
+					switch(eof_get_note_type(sp, j, i))
+					{
+						case EOF_NOTE_AMAZING:	//notes 96-100
+						{
+							midi_note_offset = 0x60;
+							break;
+						}
+						case EOF_NOTE_MEDIUM:	//notes 84-88
+						{
+							midi_note_offset = 0x54;
+							break;
+						}
+						case EOF_NOTE_EASY:		//notes 72-76
+						{
+							midi_note_offset = 0x48;
+							break;
+						}
+						case EOF_NOTE_SUPAEASY:	//notes 60-64
+						{
+							midi_note_offset = 0x3C;
+							break;
+						}
+						case EOF_NOTE_SPECIAL:	//BRE/drum fill: notes 120-124
+						{
+							midi_note_offset = 120;
+							break;
+						}
+					}
+				}
+				else
 				{
-					case EOF_NOTE_AMAZING:	//notes 96-100
+					switch(eof_get_note_type(sp, j, i))
 					{
-						midi_note_offset = 0x60;
-						break;
-					}
-					case EOF_NOTE_MEDIUM:	//notes 84-88
-					{
-						midi_note_offset = 0x54;
-						break;
-					}
-					case EOF_NOTE_EASY:		//notes 72-76
-					{
-						midi_note_offset = 0x48;
-						break;
-					}
-					case EOF_NOTE_SUPAEASY:	//notes 60-64
-					{
-						midi_note_offset = 0x3C;
-						break;
-					}
-					case EOF_NOTE_SPECIAL:	//BRE/drum fill: notes 120-124
-					{
-						midi_note_offset = 120;
-						break;
+						case EOF_NOTE_CHALLENGE:	//notes 96-107
+						{
+							midi_note_offset = 96;
+							break;
+						}
+						case EOF_NOTE_AMAZING:	//notes 84-95
+						{
+							midi_note_offset = 84;
+							break;
+						}
+						case EOF_NOTE_MEDIUM:	//notes 72-83
+						{
+							midi_note_offset = 72;
+							break;
+						}
+						case EOF_NOTE_EASY:		//notes 60-71
+						{
+							midi_note_offset = 60;
+							break;
+						}
+						case EOF_NOTE_SUPAEASY:	//notes 48-59
+						{
+							midi_note_offset = 48;
+							break;
+						}
 					}
 				}
 

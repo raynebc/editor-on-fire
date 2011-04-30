@@ -18,6 +18,8 @@
 #define EOF_NOTE_AMAZING     3
 #define EOF_MAX_DIFFICULTIES 4
 #define EOF_NOTE_SPECIAL     4
+#define EOF_NOTE_CHALLENGE   4
+	//Note: EOF_NOTE_SPECIAL references the same difficulty that the dance track uses for "Challenge" difficulty
 
 #define EOF_NOTE_FLAG_HOPO       1	//This flag will be set by eof_determine_phrase_status() if the note displays as a HOPO
 #define EOF_NOTE_FLAG_SP         2	//This flag will be set by eof_determine_phrase_status() if the note is in a star power section

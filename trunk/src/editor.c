@@ -706,10 +706,10 @@ void eof_read_editor_keys(void)
 		}
 		else
 		{
-			int eof_note_type_max = 3;	//By default, assume this track has 4 usable difficulties
+			int eof_note_type_max = EOF_NOTE_AMAZING;	//By default, assume this track has 4 usable difficulties
 			if(eof_selected_track == EOF_TRACK_DANCE)
 			{
-				eof_note_type_max = 4;	//However, the dance track has 5 usable difficulties
+				eof_note_type_max = EOF_NOTE_CHALLENGE;	//However, the dance track has 5 usable difficulties
 			}
 
 			if(KEY_EITHER_SHIFT)
