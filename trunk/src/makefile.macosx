@@ -2,6 +2,7 @@ CC = gcc
 CFLAGS = -O2 -fomit-frame-pointer -ffast-math -arch i386 -arch ppc -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -funroll-loops -Ialogg/include -I/opt/local/include -DEOF_BUILD
 LIBS = -L/opt/local/lib `allegro-config --frameworks`
 
+
 include makefile.common
 
 EXENAME = eof
