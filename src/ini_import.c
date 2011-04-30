@@ -218,7 +218,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 			setting_stored = 0;
 			for(j = 0; j < EOF_TRACKS_MAX + 1; j++)
 			{	//For each string in the eof_difficulty_ini_tags[] array
-				if(!ustricmp(eof_import_ini_setting[i].type, eof_difficulty_ini_tags[j]))
+				if(eof_difficulty_ini_tags[j] && !ustricmp(eof_import_ini_setting[i].type, eof_difficulty_ini_tags[j]))
 				{	//If this INI setting matches the difficulty tag, store the difficulty value into the appropriate track structure
 					sp->track[j]->difficulty = atoi(eof_import_ini_setting[i].value);
 					setting_stored = 1;
