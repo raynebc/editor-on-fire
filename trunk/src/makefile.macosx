@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -O2 -fomit-frame-pointer -ffast-math -arch i386 -arch ppc -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -funroll-loops -Ialogg/include -I/opt/local/include -DEOF_BUILD
-LIBS = -L/opt/local/lib `allegro-config --frameworks`
+CFLAGS = -I/usr/local/include -O2 -fomit-frame-pointer -ffast-math -arch i386 -arch ppc -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -funroll-loops -Ialogg/include -DEOF_BUILD
+LIBS = `allegro-config --libs` -framework Cocoa -framework Carbon -framework IOKit -framework System -framework CoreAudio -framework AudioUnit -framework AudioToolBox -framework QuickTime -logg -lvorbis -lvorbisfile
 
 include makefile.common
 
