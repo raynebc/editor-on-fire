@@ -3,6 +3,14 @@ EOF Version History
 
 1.8:
 
+Various MIDI export improvements, including better Rock Band Network
+compliance, resolving many errors that would occur when trying to build
+EOF's MIDI files in Harmonix's Magma utility.
+
+Fixed a crash that could occur when using Beat>Push Offset Back or Up.
+
+Added support for building in Mac OS X.
+
 Fixed a couple paste related bugs.
 
 Fixed a bug where seek to previous beat wouldn't work correctly if the
