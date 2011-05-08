@@ -42,7 +42,7 @@ void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int
 }
 
 void eof_add_midi_lyric_event(unsigned long pos, char * text)
-{
+{	//To avoid rounding issues during timing conversion, this should be called with the MIDI tick position of the event being stored
 //	eof_log("eof_add_midi_lyric_event() entered");
 
 	if(text)
@@ -379,7 +379,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	char beattrackwritten = 0;				//Tracks whether a beat track has been written
 	char trackctr;							//Used in the temp data creation to handle Expert+
 	EOF_MIDI_TS_LIST *tslist=NULL;			//List containing TS changes
-	unsigned long note, notenum, noteflags, notepos, deltapos;
+	unsigned long note, noteflags, notepos, deltapos;
 	char type;
 	int channel, velocity, bitmask, slidenote = 0;	//Used for pro guitar export
 	EOF_PHRASE_SECTION *sectionptr;
@@ -757,7 +757,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 			for(i=0;i < 128;i++)
 			{	//Ensure that any notes that are still on are terminated
-				if(eof_midi_note_status[i] != 0)	//If this note was left on, write a note off at the end of the last charted note
+				if(eof_midi_note_status[i] != 0)	//If this note was left on, send an alert message, as this is abnormal
 				{
 					allegro_message("MIDI export error:  Note %lu was not turned off", i);
 //					notenum = eof_get_track_size(sp, j) - 1;	//The index of the last note in this track
@@ -791,10 +791,21 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 				/* write the track name */
 				WriteVarLen(0, fp);
-				pack_putc(0xff, fp);
+				pack_putc(0xFF, fp);
 				pack_putc(0x03, fp);
 				WriteVarLen(ustrlen(sp->track[j]->name), fp);
 				pack_fwrite(sp->track[j]->name, ustrlen(sp->track[j]->name), fp);
+
+				#ifdef EOF_RBN_COMPATIBILITY
+				//RBN requires that drum mix events have been defined
+				if(j == EOF_TRACK_DRUM)
+				{
+					eof_write_text_event(0, "[mix 0 drums0]", fp);
+					eof_write_text_event(0, "[mix 1 drums0]", fp);
+					eof_write_text_event(0, "[mix 2 drums0]", fp);
+					eof_write_text_event(0, "[mix 3 drums0]", fp);
+				}
+				#endif
 
 				/* add MIDI events */
 				lastdelta = 0;
@@ -803,10 +814,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					if((trackctr == 1) && (eof_midi_event[i]->note < 96))
 						continue;	//Filter out all non Expert drum notes for the Expert+ track
 
-//To resolve errors where Note Off events were written 0 deltas away from their Note On events, the MIDI data logic above was altered to store MIDI timing instead of milli timing
-//					delta = eof_ConvertToDeltaTime(eof_midi_event[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
 					delta = eof_midi_event[i]->pos;
-
 					WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
 					lastdelta = delta;					//Store this event's absolute delta time
 					pack_putc(eof_midi_event[i]->type, fp);
@@ -876,18 +884,27 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			if(correctphrases)
 			{
 				char phrase_in_progress = 0;	//This will be used to track the open/closed status of the automatic phrases, so adjacent lyrics/percussions can be added to the same auto-generated phrase
+				unsigned long phrase_start;		//This will store the delta time of the last opened lyric phrase
 				for(ctr = 0; ctr < sp->vocal_track[tracknum]->lyrics; ctr++)
 				{
 					if(eof_find_lyric_line(ctr) == NULL)
 					{	//If this lyric is not in a line and is not a vocal percussion note, write the MIDI events for a line phrase to envelop it
 						if(!phrase_in_progress)
 						{	//If a note on for the phrase hasn't been added already
-							eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[ctr]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, 105, vel, 0);
+//							eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[ctr]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, 105, vel, 0);
+							phrase_start = eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[ctr]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);	//Store the tick position of the phrase
+							eof_add_midi_event(phrase_start, 0x90, 105, vel, 0);
 							phrase_in_progress = 1;
 						}
 						if(!((ctr + 1 < sp->vocal_track[tracknum]->lyrics) && (eof_find_lyric_line(ctr + 1) == NULL)))
 						{	//Only if there isn't a next lyric that is also missing a vocal phrase, write the note off for the phrase
-							eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[ctr]->pos + sp->vocal_track[tracknum]->lyric[ctr]->length,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, 105, vel, 0);
+//							eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[ctr]->pos + sp->vocal_track[tracknum]->lyric[ctr]->length,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, 105, vel, 0);
+							deltalength = eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[ctr]->pos + sp->vocal_track[tracknum]->lyric[ctr]->length,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION) - phrase_start;	//Store the number of delta ticks representing the phrase's length
+							if(deltalength < 1)
+							{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
+								deltalength = 1;
+							}
+							eof_add_midi_event(phrase_start + deltalength, 0x80, 105, vel, 0);
 							phrase_in_progress = 0;
 						}
 					}
@@ -909,27 +926,46 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				sp->vocal_track[tracknum]->lyric[i]->text[EOF_MAX_LYRIC_LENGTH] = '\0';	//Guarantee that the lyric string is terminated
 				memcpy(tempstring,sp->vocal_track[tracknum]->lyric[i]->text,sizeof(sp->vocal_track[tracknum]->lyric[i]->text));	//Copy to new array
 
+				deltapos = eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
+				deltalength = eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[i]->pos + sp->vocal_track[tracknum]->lyric[i]->length,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION) - deltapos;
+				if(deltalength < 1)
+				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
+					deltalength = 1;
+				}
 				if(sp->vocal_track[tracknum]->lyric[i]->note > 0)
 				{	//For the vocal track, store the converted delta times, to allow for artificial padding for lyric phrase markers
-					eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, sp->vocal_track[tracknum]->lyric[i]->note, vel, 0);
-					eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[i]->pos + sp->vocal_track[tracknum]->lyric[i]->length,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, sp->vocal_track[tracknum]->lyric[i]->note, vel, 0);
+//					eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, sp->vocal_track[tracknum]->lyric[i]->note, vel, 0);
+//					eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[i]->pos + sp->vocal_track[tracknum]->lyric[i]->length,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, sp->vocal_track[tracknum]->lyric[i]->note, vel, 0);
+					eof_add_midi_event(deltapos, 0x90, sp->vocal_track[tracknum]->lyric[i]->note, vel, 0);
+					eof_add_midi_event(deltapos + deltalength, 0x80, sp->vocal_track[tracknum]->lyric[i]->note, vel, 0);
 				}
 				else if(correctlyrics)
 				{	//If performing pitchless lyric correction, write pitch 50 instead to guarantee it is usable as a freestyle lyric
-					eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, 50, vel, 0);
-					eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[i]->pos + sp->vocal_track[tracknum]->lyric[i]->length,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, 50, vel, 0);
+//					eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, 50, vel, 0);
+//					eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[i]->pos + sp->vocal_track[tracknum]->lyric[i]->length,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, 50, vel, 0);
+					eof_add_midi_event(deltapos, 0x90, 50, vel, 0);
+					eof_add_midi_event(deltapos + deltalength, 0x80, 50, vel, 0);
 					eof_set_freestyle(tempstring,1);		//Ensure the lyric properly ends with a freestyle character
 				}
-
 				//Write the string, which was only corrected if correctlyrics was nonzero and the pitch was not defined
-				if(sp->vocal_track[tracknum]->lyric[i]->note != VOCALPERCUSSION)	//Do not write a lyric string for vocal percussion notes
+				if(sp->vocal_track[tracknum]->lyric[i]->note != VOCALPERCUSSION)
+				{	//Do not write a lyric string for vocal percussion notes
 					eof_add_midi_lyric_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), tempstring);
+				}
 			}
 			/* fill in lyric lines */
 			for(i = 0; i < sp->vocal_track[tracknum]->lines; i++)
 			{
-				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->line[i].start_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, 105, vel, 0);
-				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->line[i].end_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, 105, vel, 0);
+//				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->line[i].start_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, 105, vel, 0);
+//				eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->line[i].end_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, 105, vel, 0);
+				deltapos = eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->line[i].start_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
+				deltalength = eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->line[i].end_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION) - deltapos;
+				if(deltalength < 1)
+				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
+					deltalength = 1;
+				}
+				eof_add_midi_event(deltapos, 0x90, 105, vel, 0);
+				eof_add_midi_event(deltapos + deltalength, 0x80, 105, vel, 0);
 				if(sp->vocal_track[tracknum]->line[i].flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE)
 				{	//For the vocal track, store the converted delta times, to allow for artificial padding for lyric phrase markers
 					eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->line[i].start_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, 116, vel, 0);
@@ -984,7 +1020,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 			/* write the track name */
 			WriteVarLen(0, fp);
-			pack_putc(0xff, fp);
+			pack_putc(0xFF, fp);
 			pack_putc(0x03, fp);
 			WriteVarLen(ustrlen(sp->track[j]->name), fp);
 			pack_fwrite(sp->track[j]->name, ustrlen(sp->track[j]->name), fp);
@@ -1067,6 +1103,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				length = eof_get_note_length(sp, j, i);		//Store the note length for easier use
 				currentname = eof_get_note_name(sp, j, i);
 
+				deltapos = eof_ConvertToDeltaTime(notepos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);	//Store the tick position of the note
+				deltalength = eof_ConvertToDeltaTime(notepos + length,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION) - deltapos;	//Store the number of delta ticks representing the note's length
+				if(deltalength < 1)
+				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
+					deltalength = 1;
+				}
 				if((currentname == NULL) || (currentname[0] == '\0'))		//If this note has no name
 					currentname = nochord;	//Refer to its name as "NC"
 				if(((lastname == nochord) && (currentname != nochord)) || ((lastname != nochord) && (currentname == nochord)) || (ustrcmp(lastname, currentname) != 0))
@@ -1076,7 +1118,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					if(tempstring != NULL)
 					{	//If allocation was successful
 						memcpy(tempstring, chordname, ustrsizez(chordname));	//Copy the string to the newly allocated memory
-						eof_add_midi_lyric_event(notepos, tempstring);			//Store the new string in a text event
+//						eof_add_midi_lyric_event(notepos, tempstring);			//Store the new string in a text event
+						eof_add_midi_lyric_event(deltapos, tempstring);			//Store the new string in a text event
 					}
 					lastname = currentname;
 				}
@@ -1084,13 +1127,17 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				/* write slide sections */
 				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
 				{	//If this note slides down
-					eof_add_midi_event(notepos, 0x90, slidenote, 104, 0);	//Velocity 104 denotes slide down
-					eof_add_midi_event(notepos + length, 0x80, slidenote, 104, 0);
+//					eof_add_midi_event(notepos, 0x90, slidenote, 104, 0);	//Velocity 104 denotes slide down
+//					eof_add_midi_event(notepos + length, 0x80, slidenote, 104, 0);
+					eof_add_midi_event(deltapos, 0x90, slidenote, 104, 0);	//Velocity 104 denotes slide down
+					eof_add_midi_event(deltapos + deltalength, 0x80, slidenote, 104, 0);
 				}
 				else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
 				{	//If this note slides up
-					eof_add_midi_event(notepos, 0x90, slidenote, 102, 0);	//Velocity 102 denotes slide up
-					eof_add_midi_event(notepos + length, 0x80, slidenote, 102, 0);
+//					eof_add_midi_event(notepos, 0x90, slidenote, 102, 0);	//Velocity 102 denotes slide up
+//					eof_add_midi_event(notepos + length, 0x80, slidenote, 102, 0);
+					eof_add_midi_event(deltapos, 0x90, slidenote, 102, 0);	//Velocity 102 denotes slide up
+					eof_add_midi_event(deltapos + deltalength, 0x80, slidenote, 102, 0);
 				}
 
 				/* write note gems */
@@ -1123,8 +1170,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					}
 					if(note & bitmask)
 					{	//If the note uses this string
-						eof_add_midi_event(notepos, 0x90, midi_note_offset + ctr, velocity, channel);	//Write the note on event
-						eof_add_midi_event(notepos + length, 0x80, midi_note_offset + ctr, velocity, channel);	//Write the note off event
+//						eof_add_midi_event(notepos, 0x90, midi_note_offset + ctr, velocity, channel);	//Write the note on event
+//						eof_add_midi_event(notepos + length, 0x80, midi_note_offset + ctr, velocity, channel);	//Write the note off event
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + ctr, velocity, channel);	//Write the note on event
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + ctr, velocity, channel);	//Write the note off event
 					}
 				}
 			}//For each note in the track
@@ -1133,48 +1182,89 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			for(i = 0; i < eof_get_num_arpeggios(sp, j); i++)
 			{	//For each arpeggio in the track
 				sectionptr = eof_get_arpeggio(sp, j, i);
-				eof_add_midi_event(sectionptr->start_pos, 0x90, 104, vel, 0);	//Note 104 denotes an arpeggio marker
-				eof_add_midi_event(sectionptr->end_pos, 0x80, 104, vel, 0);
+//				eof_add_midi_event(sectionptr->start_pos, 0x90, 104, vel, 0);	//Note 104 denotes an arpeggio marker
+//				eof_add_midi_event(sectionptr->end_pos, 0x80, 104, vel, 0);
+				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);	//Store the tick position of the phrase
+				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION) - deltapos;	//Store the number of delta ticks representing the phrase's length
+				if(deltalength < 1)
+				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
+					deltalength = 1;
+				}
+				eof_add_midi_event(deltapos, 0x90, 104, vel, 0);	//Note 104 denotes an arpeggio marker
+				eof_add_midi_event(deltapos + deltalength, 0x80, 104, vel, 0);
 			}
 
 			/* fill in solos */
 			for(i = 0; i < eof_get_num_solos(sp, j); i++)
 			{	//For each solo in the track
 				sectionptr = eof_get_solo(sp, j, i);
-				eof_add_midi_event(sectionptr->start_pos, 0x90, 115, vel, 0);	//Note 115 denotes a pro guitar solo marker
-				eof_add_midi_event(sectionptr->end_pos, 0x80, 115, vel, 0);
+//				eof_add_midi_event(sectionptr->start_pos, 0x90, 115, vel, 0);	//Note 115 denotes a pro guitar solo marker
+//				eof_add_midi_event(sectionptr->end_pos, 0x80, 115, vel, 0);
+				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);	//Store the tick position of the phrase
+				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION) - deltapos;	//Store the number of delta ticks representing the phrase's length
+				if(deltalength < 1)
+				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
+					deltalength = 1;
+				}
+				eof_add_midi_event(deltapos, 0x90, 115, vel, 0);	//Note 115 denotes a pro guitar solo marker
+				eof_add_midi_event(deltapos + deltalength, 0x80, 115, vel, 0);
 			}
 
 			/* fill in star power */
 			for(i = 0; i < eof_get_num_star_power_paths(sp, j); i++)
 			{	//For each star power path in the track
 				sectionptr = eof_get_star_power_path(sp, j, i);
-				eof_add_midi_event(sectionptr->start_pos, 0x90, 116, vel, 0);	//Note 116 denotes a star power marker
-				eof_add_midi_event(sectionptr->end_pos, 0x80, 116, vel, 0);
+//				eof_add_midi_event(sectionptr->start_pos, 0x90, 116, vel, 0);	//Note 116 denotes a star power marker
+//				eof_add_midi_event(sectionptr->end_pos, 0x80, 116, vel, 0);
+				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);	//Store the tick position of the phrase
+				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION) - deltapos;	//Store the number of delta ticks representing the phrase's length
+				if(deltalength < 1)
+				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
+					deltalength = 1;
+				}
+				eof_add_midi_event(deltapos, 0x90, 116, vel, 0);	//Note 116 denotes a star power marker
+				eof_add_midi_event(deltapos + deltalength, 0x80, 116, vel, 0);
 			}
 
 			/* fill in tremolos */
 			for(i = 0; i < eof_get_num_tremolos(sp, j); i++)
 			{	//For each tremolo in the track
 				sectionptr = eof_get_tremolo(sp, j, i);
-				eof_add_midi_event(sectionptr->start_pos, 0x90, 126, vel, 0);	//Note 126 denotes a tremolo marker
-				eof_add_midi_event(sectionptr->end_pos, 0x80, 126, vel, 0);
+//				eof_add_midi_event(sectionptr->start_pos, 0x90, 126, vel, 0);	//Note 126 denotes a tremolo marker
+//				eof_add_midi_event(sectionptr->end_pos, 0x80, 126, vel, 0);
+				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);	//Store the tick position of the phrase
+				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION) - deltapos;	//Store the number of delta ticks representing the phrase's length
+				if(deltalength < 1)
+				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
+					deltalength = 1;
+				}
+				eof_add_midi_event(deltapos, 0x90, 126, vel, 0);	//Note 126 denotes a tremolo marker
+				eof_add_midi_event(deltapos + deltalength, 0x80, 126, vel, 0);
 			}
 
 			/* fill in trills */
 			for(i = 0; i < eof_get_num_trills(sp, j); i++)
 			{	//For each trill in the track
 				sectionptr = eof_get_trill(sp, j, i);
-				eof_add_midi_event(sectionptr->start_pos, 0x90, 127, vel, 0);	//Note 127 denotes a trill marker
-				eof_add_midi_event(sectionptr->end_pos, 0x80, 127, vel, 0);
+//				eof_add_midi_event(sectionptr->start_pos, 0x90, 127, vel, 0);	//Note 127 denotes a trill marker
+//				eof_add_midi_event(sectionptr->end_pos, 0x80, 127, vel, 0);
+				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);	//Store the tick position of the phrase
+				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION) - deltapos;	//Store the number of delta ticks representing the phrase's length
+				if(deltalength < 1)
+				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
+					deltalength = 1;
+				}
+				eof_add_midi_event(deltapos, 0x90, 127, vel, 0);	//Note 127 denotes a trill marker
+				eof_add_midi_event(deltapos + deltalength, 0x80, 127, vel, 0);
 			}
 
 			for(i=0;i < 128;i++)
 			{	//Ensure that any notes that are still on are terminated
-				if(eof_midi_note_status[i] != 0)	//If this note was left on, write a note off at the end of the last charted note
+				if(eof_midi_note_status[i] != 0)	//If this note was left on, send an alert message, as this is abnormal
 				{
-					notenum = eof_get_track_size(sp, j) - 1;	//The index of the last note in this track
-					eof_add_midi_event(eof_get_note_pos(sp, j, notenum) + eof_get_note_length(sp, j, notenum), 0x80, i, vel, 0);
+					allegro_message("MIDI export error:  Note %lu was not turned off", i);
+//					notenum = eof_get_track_size(sp, j) - 1;	//The index of the last note in this track
+//					eof_add_midi_event(eof_get_note_pos(sp, j, notenum) + eof_get_note_length(sp, j, notenum), 0x80, i, vel, 0);
 				}
 			}
 			qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
@@ -1191,7 +1281,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 			/* write the track name */
 			WriteVarLen(0, fp);
-			pack_putc(0xff, fp);
+			pack_putc(0xFF, fp);
 			pack_putc(0x03, fp);
 			WriteVarLen(ustrlen(sp->track[j]->name), fp);
 			pack_fwrite(sp->track[j]->name, ustrlen(sp->track[j]->name), fp);
@@ -1200,23 +1290,21 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			lastdelta = 0;
 			for(i = 0; i < eof_midi_events; i++)
 			{
-				delta = eof_ConvertToDeltaTime(eof_midi_event[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
-				WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
-				lastdelta = delta;					//Store this event's absolute delta time
+//				delta = eof_ConvertToDeltaTime(eof_midi_event[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
+				delta = eof_midi_event[i]->pos;
 				if(eof_midi_event[i]->type == 0x05)
 				{	//Write a note name text event
-					pack_putc(0xFF, fp);
-					pack_putc(0x01, fp);
-					pack_putc(ustrlen(eof_midi_event[i]->dp), fp);
-					pack_fwrite(eof_midi_event[i]->dp, ustrlen(eof_midi_event[i]->dp), fp);
+					eof_write_text_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
 					free(eof_midi_event[i]->dp);	//Free the copied string from memory
 				}
 				else
 				{	//Write a non meta MIDI event
+					WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
 					pack_putc(eof_midi_event[i]->type + eof_midi_event[i]->channel, fp);
 					pack_putc(eof_midi_event[i]->note, fp);
 					pack_putc(eof_midi_event[i]->velocity, fp);
 				}
+				lastdelta = delta;					//Store this event's absolute delta time
 			}
 
 			/* end of track */
@@ -1241,7 +1329,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	//I've found that Magma will not recognize tracks correctly unless track 0 has a name defined
 	/* write the track name */
 	WriteVarLen(0, fp);
-	pack_putc(0xff, fp);
+	pack_putc(0xFF, fp);
 	pack_putc(0x03, fp);
 	WriteVarLen(ustrlen(sp->tags->title), fp);
 	snprintf(chordname, sizeof(chordname), "%s", sp->tags->title);	//Borrow this array to store the chart title
@@ -1281,7 +1369,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			lastdelta=ptr->delta;						//Store this anchor's absolute delta time
 
 			ppqn = ((double) 60000000.0 / ptr->BPM) + 0.5;	//Convert BPM to ppqn, rounding up
-			pack_putc(0xff, fp);					//Write Meta Event 0x51 (Set Tempo)
+			pack_putc(0xFF, fp);					//Write Meta Event 0x51 (Set Tempo)
 			pack_putc(0x51, fp);
 			pack_putc(0x03, fp);					//Write event length of 3
 			pack_putc((ppqn & 0xFF0000) >> 16, fp);	//Write high order byte of ppqn
@@ -1304,7 +1392,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				i = 2;	//An unsupported time signature was somehow set, change the denominator to 4
 			}
 
-			pack_putc(0xff, fp);							//Write Meta Event 0x58 (Time Signature)
+			pack_putc(0xFF, fp);							//Write Meta Event 0x58 (Time Signature)
 			pack_putc(0x58, fp);
 			pack_putc(0x04, fp);							//Write event length of 4
 			pack_putc(tslist->change[current_ts]->num, fp);	//Write the numerator
@@ -1372,7 +1460,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 		/* write the track name */
 		WriteVarLen(0, fp);
-		pack_putc(0xff, fp);
+		pack_putc(0xFF, fp);
 		pack_putc(0x03, fp);
 		WriteVarLen(ustrlen("EVENTS"), fp);
 		pack_fwrite("EVENTS", ustrlen("EVENTS"), fp);
@@ -1386,13 +1474,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				break;	//Don't dereference the beat[] array in a way that could crash
 			}
 			delta = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
-
-			WriteVarLen(delta - lastdelta, fp);	//Write this event's relative delta time
+			eof_write_text_event(delta - lastdelta, sp->text_event[i]->text, fp);
 			lastdelta = delta;					//Store this event's absolute delta time
-			pack_putc(0xFF, fp);				//Text event
-			pack_putc(0x01, fp);
-			pack_putc(ustrlen(sp->text_event[i]->text), fp);
-			pack_fwrite(sp->text_event[i]->text, ustrlen(sp->text_event[i]->text), fp);
 		}
 
 		#ifdef EOF_RBN_COMPATIBILITY
@@ -1409,12 +1492,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		if(!match)
 		{	//If there wasn't one, add one
 			delta = eof_ConvertToDeltaTime(eof_music_length+1,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
-			WriteVarLen(delta - lastdelta, fp);	//Write this event's relative delta time
+			eof_write_text_event(delta - lastdelta, "[end]", fp);
 			lastdelta = delta;					//Store this event's absolute delta time
-			pack_putc(0xFF, fp);				//Text event
-			pack_putc(0x01, fp);
-			pack_putc(ustrlen("[end]"), fp);
-			pack_fwrite("[end]", ustrlen("[end]"), fp);
 		}
 		#endif
 
@@ -1444,7 +1523,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 	/* write the track name */
 	WriteVarLen(0, fp);
-	pack_putc(0xff, fp);
+	pack_putc(0xFF, fp);
 	pack_putc(0x03, fp);
 	WriteVarLen(ustrlen("BEAT"), fp);
 	pack_fwrite("BEAT", ustrlen("BEAT"), fp);
@@ -2072,4 +2151,21 @@ int eof_dump_midi_track(const char *inputfile,PACKFILE *outf)
 	pack_fclose(inf);
 
 	return 1;	//Return success
+}
+
+void eof_write_text_event(unsigned long deltas, const char *str, PACKFILE *fp)
+{
+	unsigned long length;
+	if(str && fp)
+	{
+		length = ustrlen(str);
+		if(length < 128)
+		{	//EOF's implementation is a bit lax and only accounts for 1 byte variable length values (7 bits)
+			WriteVarLen(deltas, fp);
+			pack_putc(0xFF, fp);	//Text event
+			pack_putc(0x01, fp);
+			pack_putc(length, fp);
+			pack_fwrite(str, length, fp);
+		}
+	}
 }
