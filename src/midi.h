@@ -88,5 +88,7 @@ int eof_apply_ts(unsigned num,unsigned den,int beatnum,EOF_SONG *sp,char undo);
 
 int eof_dump_midi_track(const char *inputfile,PACKFILE *outf);
 	//Writes a MIDI track header to the output file, followed by the size of the input file, followed by the contents of the input file
+void eof_write_text_event(unsigned long deltas, const char *str, PACKFILE *fp);
+	//Writes a text event to the given file stream
 
 #endif
