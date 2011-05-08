@@ -49,6 +49,8 @@ void eof_move_text_events(EOF_SONG * sp, unsigned long beat, unsigned long offse
 			}
 			else
 			{
+				if(sp->text_event[i]->beat + offset >= sp->beats)
+					continue;	//Do not allow an overflow
 				sp->text_event[i]->beat += offset;
 			}
 			sp->beat[sp->text_event[i]->beat]->flags |= EOF_BEAT_FLAG_EVENTS;	//Set the event flag
