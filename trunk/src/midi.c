@@ -11,13 +11,14 @@
 #include "foflc/Midi_parse.h"
 
 #define EOF_MIDI_TIMER_FREQUENCY  40
+#define EOF_RBN_COMPATIBILITY		//Alters MIDI export logic to create a MIDI more suitable for use with the "Magma" RBN tool
 
 static EOF_MIDI_EVENT * eof_midi_event[EOF_MAX_MIDI_EVENTS];
 static unsigned long eof_midi_events = 0;
 static char eof_midi_note_status[128] = {0};	//Tracks the on/off status of notes 0 through 127, maintained by eof_add_midi_event()
 
 void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int channel)
-{
+{	//To avoid rounding issues during timing conversion, this should be called with the MIDI tick position of the event being stored
 //	eof_log("eof_add_midi_event() entered");
 
 	eof_midi_event[eof_midi_events] = malloc(sizeof(EOF_MIDI_EVENT));
@@ -351,6 +352,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	char expertplustempname[] = {"expert+.tmp"};	//Stores the temporary filename for the Expert+ track data
 	char tempotempname[] = {"tempo.tmp"};
 	char eventtempname[] = {"event.tmp"};
+	char beattempname[] = {"beat.tmp"};
 	char expertplusfilename[1024] = {0};
 	char expertplusshortname[] = {"expert+.mid"};
 	PACKFILE * fp;
@@ -369,17 +371,20 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	char * tempstring = NULL;				//Used to store a copy of the lyric string into eof_midi_event[], so the string can be modified from the original
 	char correctlyrics = 0;					//If nonzero, logic will be performed to correct the pitchless lyrics to have a pound character and have a generic pitch note
 	char correctphrases = 0;				//If nonzero, logic will be performed to add missing lyric phrases to ensure all lyrics (except vocal percussion notes) are encompassed within a lyric phrase
-	long length;							//Used to cap drum notes
+	long length, deltalength;				//Used to cap drum notes
 	char prodrums = 0;						//Tracks whether the drum track being written includes Pro drum notation
 	char expertplus = 0;					//Tracks whether an expert+.mid track should be created to hold the Expert+ drum track
 	char expertpluswritten = 0;				//Tracks whether an expert+.mid track has been written
+	char eventstrackwritten = 0;			//Tracks whether an events track has been written
+	char beattrackwritten = 0;				//Tracks whether a beat track has been written
 	char trackctr;							//Used in the temp data creation to handle Expert+
 	EOF_MIDI_TS_LIST *tslist=NULL;			//List containing TS changes
-	unsigned long note, notenum, noteflags, notepos;
+	unsigned long note, notenum, noteflags, notepos, deltapos;
 	char type;
 	int channel, velocity, bitmask, slidenote = 0;	//Used for pro guitar export
 	EOF_PHRASE_SECTION *sectionptr;
 	char *lastname = NULL, *currentname = NULL, nochord[]="NC", chordname[100]="";
+	char match = 0;
 
 	if(!sp | !fn)
 	{
@@ -528,9 +533,16 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				notepos = eof_get_note_pos(sp, j, i);		//Store the note position for easier use
 				length = eof_get_note_length(sp, j, i);		//Store the note length for easier use
 				type = eof_get_note_type(sp, j, i);			//Store the note type for easier use
+
+				deltapos = eof_ConvertToDeltaTime(notepos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);	//Store the tick position of the note
+				deltalength = eof_ConvertToDeltaTime(notepos + length,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION) - deltapos;	//Store the number of delta ticks representing the note's length
+				if(deltalength < 1)
+				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
+					deltalength = 1;
+				}
 				if((j == EOF_TRACK_DRUM) && (type != EOF_NOTE_SPECIAL))
 				{	//Ensure that drum notes are not written with sustain (Unless they are BRE notes)
-					length = 1;
+					deltalength = 1;
 				}
 
 				if(eof_open_bass_enabled() && (j == EOF_TRACK_BASS))
@@ -546,22 +558,22 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				{
 					if((j == EOF_TRACK_DRUM) && (noteflags & EOF_NOTE_FLAG_DBASS))
 					{	//If the track being written is PART DRUMS, and this note is marked for Expert+ double bass
-						eof_add_midi_event(notepos, 0x90, 95, vel, 0);
-						eof_add_midi_event(notepos + length, 0x80, 95, vel, 0);
+						eof_add_midi_event(deltapos, 0x90, 95, vel, 0);
+						eof_add_midi_event(deltapos + deltalength, 0x80, 95, vel, 0);
 						expertplus = 1;
 					}
 					else	//Otherwise write a normal green gem
 					{
-						eof_add_midi_event(notepos, 0x90, midi_note_offset + 0, vel, 0);
-						eof_add_midi_event(notepos + length, 0x80, midi_note_offset + 0, vel, 0);
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 0, vel, 0);
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 0, vel, 0);
 					}
 				}
 
 				/* write red note */
 				if(note & 2)
 				{
-					eof_add_midi_event(notepos, 0x90, midi_note_offset + 1, vel, 0);
-					eof_add_midi_event(notepos + length, 0x80, midi_note_offset + 1, vel, 0);
+					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 1, vel, 0);
+					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 1, vel, 0);
 				}
 
 				/* write yellow note */
@@ -571,10 +583,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					{	//If pro drum notation is in effect and no more yellow drum notes at this note's position are marked as cymbals
 						if((eof_midi_note_status[RB3_DRUM_YELLOW_FORCE] == 0) && (type != EOF_NOTE_SPECIAL))
 						{	//Write a pro yellow drum marker if one isn't already in effect, but only if this isn't a BRE note
-							eof_add_midi_event(notepos, 0x90, RB3_DRUM_YELLOW_FORCE, vel, 0);
+							eof_add_midi_event(deltapos, 0x90, RB3_DRUM_YELLOW_FORCE, vel, 0);
 						}
 					}
-					eof_add_midi_event(notepos, 0x90, midi_note_offset + 2, vel, 0);
+					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 2, vel, 0);
 				}
 
 				/* write blue note */
@@ -584,10 +596,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					{	//If pro drum notation is in effect and no more blue drum notes at this note's position are marked as cymbals
 						if((eof_midi_note_status[RB3_DRUM_BLUE_FORCE] == 0) && (type != EOF_NOTE_SPECIAL))
 						{	//Write a pro blue drum marker if one isn't already in effect, but only if this isn't a BRE note
-							eof_add_midi_event(notepos, 0x90, RB3_DRUM_BLUE_FORCE, vel, 0);
+							eof_add_midi_event(deltapos, 0x90, RB3_DRUM_BLUE_FORCE, vel, 0);
 						}
 					}
-					eof_add_midi_event(notepos, 0x90, midi_note_offset + 3, vel, 0);
+					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 3, vel, 0);
 				}
 
 				/* write purple note */
@@ -597,18 +609,18 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					{	//If pro drum notation is in effect and no more green drum notes at this note's position are marked as cymbals
 						if((eof_midi_note_status[RB3_DRUM_GREEN_FORCE] == 0) && (type != EOF_NOTE_SPECIAL))
 						{	//Write a pro green drum marker if one isn't already in effect, but only if this isn't a BRE note
-							eof_add_midi_event(notepos, 0x90, RB3_DRUM_GREEN_FORCE, vel, 0);
+							eof_add_midi_event(deltapos, 0x90, RB3_DRUM_GREEN_FORCE, vel, 0);
 						}
 					}
-					eof_add_midi_event(notepos, 0x90, midi_note_offset + 4, vel, 0);
+					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 4, vel, 0);
 				}
 
 				/* write open bass note, if the feature was enabled during save */
 				if(eof_open_bass_enabled() && (j == EOF_TRACK_BASS) && (note & 32))
 				{	//If this is an open bass note
 					noteflags |= EOF_NOTE_FLAG_F_HOPO;	//Set the forced HOPO on flag, which is used to denote open bass
-					eof_add_midi_event(notepos, 0x90, midi_note_offset + 0, vel, 0);	//Write a gem for lane 1
-					eof_add_midi_event(notepos + length, 0x80, midi_note_offset + 0, vel, 0);
+					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 0, vel, 0);	//Write a gem for lane 1
+					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 0, vel, 0);
 				}
 
 				/* write forced HOPO */
@@ -616,7 +628,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				{
 					if(eof_midi_note_status[midi_note_offset + 5] == 0)
 					{	//Only write a phrase marker if one isn't already in effect
-						eof_add_midi_event(notepos, 0x90, midi_note_offset + 5, vel, 0);
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 5, vel, 0);
 					}
 				}
 
@@ -625,7 +637,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				{
 					if(eof_midi_note_status[midi_note_offset + 6] == 0)
 					{	//Only write a phrase marker if one isn't already in effect
-						eof_add_midi_event(notepos, 0x90, midi_note_offset + 6, vel, 0);
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 6, vel, 0);
 					}
 				}
 
@@ -636,10 +648,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					{	//If pro drum notation is in effect and no more drum notes at this note's position are marked as cymbals
 						if((eof_midi_note_status[RB3_DRUM_YELLOW_FORCE] == 1) && (type != EOF_NOTE_SPECIAL))
 						{	//End a pro yellow drum marker if one is in effect, but only if this isn't a BRE note
-							eof_add_midi_event(notepos + length, 0x80, RB3_DRUM_YELLOW_FORCE, vel, 0);
+							eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_YELLOW_FORCE, vel, 0);
 						}
 					}
-					eof_add_midi_event(notepos + length, 0x80, midi_note_offset + 2, vel, 0);
+					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 2, vel, 0);
 				}
 
 				/* write blue note off */
@@ -649,10 +661,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					{	//If pro drum notation is in effect and no more blue drum notes at this note's position are marked as cymbals
 						if((eof_midi_note_status[RB3_DRUM_BLUE_FORCE] == 1) && (type != EOF_NOTE_SPECIAL))
 						{	//End a pro blue drum marker if one is in effect, but only if this isn't a BRE note
-							eof_add_midi_event(notepos + length, 0x80, RB3_DRUM_BLUE_FORCE, vel, 0);
+							eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_BLUE_FORCE, vel, 0);
 						}
 					}
-					eof_add_midi_event(notepos + length, 0x80, midi_note_offset + 3, vel, 0);
+					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 3, vel, 0);
 				}
 
 				/* write purple note off */
@@ -662,10 +674,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					{	//If pro drum notation is in effect and no more drum notes at this note's position are marked as cymbals
 						if((eof_midi_note_status[RB3_DRUM_GREEN_FORCE] == 1) && (type != EOF_NOTE_SPECIAL))
 						{	//End a pro green drum marker if one is in effect, but only if this isn't a BRE note
-							eof_add_midi_event(notepos + length, 0x80, RB3_DRUM_GREEN_FORCE, vel, 0);
+							eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_GREEN_FORCE, vel, 0);
 						}
 					}
-					eof_add_midi_event(notepos + length, 0x80, midi_note_offset + 4, vel, 0);
+					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 4, vel, 0);
 				}
 
 				/* write forced HOPO note off */
@@ -673,7 +685,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				{	//thekiwimaddog indicated that Rock Band uses HOPO phrases per note/chord
 					if(eof_midi_note_status[midi_note_offset + 5])
 					{	//Only end a phrase marker if one is already in effect
-						eof_add_midi_event(notepos + length, 0x80, midi_note_offset + 5, vel, 0);
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 5, vel, 0);
 					}
 				}
 
@@ -682,7 +694,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				{	//thekiwimaddog indicated that Rock Band uses HOPO phrases per note/chord
 					if(eof_midi_note_status[midi_note_offset + 6])
 					{	//Only end a phrase marker if one is already in effect
-						eof_add_midi_event(notepos + length, 0x80, midi_note_offset + 6, vel, 0);
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 6, vel, 0);
 					}
 				}
 			}//For each note in the track
@@ -691,40 +703,65 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			for(i = 0; i < eof_get_num_star_power_paths(sp, j); i++)
 			{	//For each star power path in the track
 				sectionptr = eof_get_star_power_path(sp, j, i);
-				eof_add_midi_event(sectionptr->start_pos, 0x90, 116, vel, 0);
-				eof_add_midi_event(sectionptr->end_pos, 0x80, 116, vel, 0);
+				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);	//Store the tick position of the phrase
+				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION) - deltapos;	//Store the number of delta ticks representing the phrase's length
+				if(deltalength < 1)
+				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
+					deltalength = 1;
+				}
+				eof_add_midi_event(deltapos, 0x90, 116, vel, 0);
+				eof_add_midi_event(deltapos + deltalength, 0x80, 116, vel, 0);
 			}
 
 			/* fill in solos */
 			for(i = 0; i < eof_get_num_solos(sp, j); i++)
 			{	//For each solo in the track
 				sectionptr = eof_get_solo(sp, j, i);
-				eof_add_midi_event(sectionptr->start_pos, 0x90, 103, vel, 0);
-				eof_add_midi_event(sectionptr->end_pos, 0x80, 103, vel, 0);
+				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);	//Store the tick position of the phrase
+				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION) - deltapos;	//Store the number of delta ticks representing the phrase's length
+				if(deltalength < 1)
+				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
+					deltalength = 1;
+				}
+				eof_add_midi_event(deltapos, 0x90, 103, vel, 0);
+				eof_add_midi_event(deltapos + deltalength, 0x80, 103, vel, 0);
 			}
 
 			/* fill in tremolos */
 			for(i = 0; i < eof_get_num_tremolos(sp, j); i++)
 			{	//For each tremolo in the track
 				sectionptr = eof_get_tremolo(sp, j, i);
-				eof_add_midi_event(sectionptr->start_pos, 0x90, 126, vel, 0);	//Note 126 denotes a tremolo marker
-				eof_add_midi_event(sectionptr->end_pos, 0x80, 126, vel, 0);
+				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);	//Store the tick position of the phrase
+				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION) - deltapos;	//Store the number of delta ticks representing the phrase's length
+				if(deltalength < 1)
+				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
+					deltalength = 1;
+				}
+				eof_add_midi_event(deltapos, 0x90, 126, vel, 0);	//Note 126 denotes a tremolo marker
+				eof_add_midi_event(deltapos + deltalength, 0x80, 126, vel, 0);
 			}
 
 			/* fill in trills */
 			for(i = 0; i < eof_get_num_trills(sp, j); i++)
 			{	//For each trill in the track
 				sectionptr = eof_get_trill(sp, j, i);
-				eof_add_midi_event(sectionptr->start_pos, 0x90, 127, vel, 0);	//Note 127 denotes a trill marker
-				eof_add_midi_event(sectionptr->end_pos, 0x80, 127, vel, 0);
+				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);	//Store the tick position of the phrase
+				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION) - deltapos;	//Store the number of delta ticks representing the phrase's length
+				if(deltalength < 1)
+				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
+					deltalength = 1;
+				}
+				eof_add_midi_event(deltapos, 0x90, 127, vel, 0);	//Note 127 denotes a trill marker
+				eof_add_midi_event(deltapos + deltalength, 0x80, 127, vel, 0);
 			}
 
 			for(i=0;i < 128;i++)
 			{	//Ensure that any notes that are still on are terminated
 				if(eof_midi_note_status[i] != 0)	//If this note was left on, write a note off at the end of the last charted note
 				{
-					notenum = eof_get_track_size(sp, j) - 1;	//The index of the last note in this track
-					eof_add_midi_event(eof_get_note_pos(sp, j, notenum) + eof_get_note_length(sp, j, notenum),0x80,i, vel, 0);
+					allegro_message("MIDI export error:  Note %lu was not turned off", i);
+//					notenum = eof_get_track_size(sp, j) - 1;	//The index of the last note in this track
+//					eof_add_midi_event(eof_get_note_pos(sp, j, notenum) + eof_get_note_length(sp, j, notenum),0x80,i, vel, 0);
 				}
 			}
 			qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
@@ -766,7 +803,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					if((trackctr == 1) && (eof_midi_event[i]->note < 96))
 						continue;	//Filter out all non Expert drum notes for the Expert+ track
 
-					delta = eof_ConvertToDeltaTime(eof_midi_event[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
+//To resolve errors where Note Off events were written 0 deltas away from their Note On events, the MIDI data logic above was altered to store MIDI timing instead of milli timing
+//					delta = eof_ConvertToDeltaTime(eof_midi_event[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
+					delta = eof_midi_event[i]->pos;
+
 					WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
 					lastdelta = delta;					//Store this event's absolute delta time
 					pack_putc(eof_midi_event[i]->type, fp);
@@ -816,12 +856,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			correctphrases = 0;	//By default, missing lyric phrases won't be inserted
 			for(ctr = 0; ctr < sp->vocal_track[tracknum]->lyrics; ctr++)
 			{
-				if((eof_find_lyric_line(ctr) == NULL) && (sp->vocal_track[tracknum]->lyric[ctr]->note != VOCALPERCUSSION))
+				if(eof_find_lyric_line(ctr) == NULL)
 				{	//If this lyric is not in a line and is not a vocal percussion note
 					eof_cursor_visible = 0;
 					eof_pen_visible = 0;
 					eof_show_mouse(screen);
-					if(alert(NULL, "Add phrases for lyrics not in lyric phrases?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+					if(alert(NULL, "Add phrases for lyrics/percussions not in lyric phrases?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 					{	//If user opts to have missing lyric phrases inserted
 						correctphrases = 1;
 					}
@@ -835,12 +875,21 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			/* insert the missing lyric phrases if the user opted to do so */
 			if(correctphrases)
 			{
+				char phrase_in_progress = 0;	//This will be used to track the open/closed status of the automatic phrases, so adjacent lyrics/percussions can be added to the same auto-generated phrase
 				for(ctr = 0; ctr < sp->vocal_track[tracknum]->lyrics; ctr++)
 				{
-					if((eof_find_lyric_line(ctr) == NULL) && (sp->vocal_track[tracknum]->lyric[ctr]->note != VOCALPERCUSSION))
+					if(eof_find_lyric_line(ctr) == NULL)
 					{	//If this lyric is not in a line and is not a vocal percussion note, write the MIDI events for a line phrase to envelop it
-						eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[ctr]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, 105, vel, 0);
-						eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[ctr]->pos + sp->vocal_track[tracknum]->lyric[ctr]->length,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, 105, vel, 0);
+						if(!phrase_in_progress)
+						{	//If a note on for the phrase hasn't been added already
+							eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[ctr]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x90, 105, vel, 0);
+							phrase_in_progress = 1;
+						}
+						if(!((ctr + 1 < sp->vocal_track[tracknum]->lyrics) && (eof_find_lyric_line(ctr + 1) == NULL)))
+						{	//Only if there isn't a next lyric that is also missing a vocal phrase, write the note off for the phrase
+							eof_add_midi_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[ctr]->pos + sp->vocal_track[tracknum]->lyric[ctr]->length,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), 0x80, 105, vel, 0);
+							phrase_in_progress = 0;
+						}
 					}
 				}
 			}
@@ -1188,6 +1237,17 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		return 0;
 	}
 
+	#ifdef EOF_RBN_COMPATIBILITY
+	//I've found that Magma will not recognize tracks correctly unless track 0 has a name defined
+	/* write the track name */
+	WriteVarLen(0, fp);
+	pack_putc(0xff, fp);
+	pack_putc(0x03, fp);
+	WriteVarLen(ustrlen(sp->tags->title), fp);
+	snprintf(chordname, sizeof(chordname), "%s", sp->tags->title);	//Borrow this array to store the chart title
+	pack_fwrite(chordname, ustrlen(chordname), fp);
+	#endif
+
 	lastdelta=0;
 	unsigned long current_ts=0;
 	unsigned long nextanchorpos=0,next_tspos=0;
@@ -1262,8 +1322,43 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 
 /* make events track */
+	#ifdef EOF_RBN_COMPATIBILITY
+	//Magma requires some default track events to be written, even if there are no text events defined
+		if(sp->beats > 3)
+		{	//Only add these if there are at least 4 beats
+			//Check the existing events to see if a [music_start] event is defined
+			match = 0;
+			for(i = 0; i < sp->text_events; i++)
+			{
+				if(!ustrcmp(sp->text_event[i]->text, "[music_start]"))
+				{
+					match = 1;
+				}
+			}
+			if(!match)
+			{	//If there wasn't one, add one
+				eof_add_text_event(sp, 2, "[music_start]");				//Add the [music_start] event two beats into the song (at the third beat)
+			}
+
+			//Check the existing events to see if a [music_end] event is defined
+			match = 0;
+			for(i = 0; i < sp->text_events; i++)
+			{
+				if(!ustrcmp(sp->text_event[i]->text, "[music_end]"))
+				{
+					match = 1;
+				}
+			}
+			if(!match)
+			{	//If there wasn't one, add one
+				eof_add_text_event(sp, sp->beats-1, "[music_end]");		//Add the [music_end] event on the last beat
+			}
+		}
+	#else
+	//Otherwise only write an EVENTS track if the user manually defined text events
 	if(sp->text_events)
 	{
+	#endif
 		eof_sort_events();
 
 		/* open the file */
@@ -1282,7 +1377,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		WriteVarLen(ustrlen("EVENTS"), fp);
 		pack_fwrite("EVENTS", ustrlen("EVENTS"), fp);
 
-    		/* add MIDI events */
+		/* add MIDI events */
 		lastdelta = 0;
 		for(i = 0; i < sp->text_events; i++)
 		{
@@ -1292,13 +1387,36 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			}
 			delta = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
 
-			WriteVarLen(delta - lastdelta, fp);	//Write this note's relative delta time
-			lastdelta = delta;					//Store this note's absolute delta time
-			pack_putc(0xFF, fp);
+			WriteVarLen(delta - lastdelta, fp);	//Write this event's relative delta time
+			lastdelta = delta;					//Store this event's absolute delta time
+			pack_putc(0xFF, fp);				//Text event
 			pack_putc(0x01, fp);
 			pack_putc(ustrlen(sp->text_event[i]->text), fp);
 			pack_fwrite(sp->text_event[i]->text, ustrlen(sp->text_event[i]->text), fp);
 		}
+
+		#ifdef EOF_RBN_COMPATIBILITY
+		//Magma requires that the [end] event is the last MIDI event in the track, so it will be written 1ms after the end of the audio
+		//Check the existing events to see if a [music_end] event is defined
+		match = 0;
+		for(i = 0; i < sp->text_events; i++)
+		{
+			if(!ustrcmp(sp->text_event[i]->text, "[end]"))
+			{
+				match = 1;
+			}
+		}
+		if(!match)
+		{	//If there wasn't one, add one
+			delta = eof_ConvertToDeltaTime(eof_music_length+1,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
+			WriteVarLen(delta - lastdelta, fp);	//Write this event's relative delta time
+			lastdelta = delta;					//Store this event's absolute delta time
+			pack_putc(0xFF, fp);				//Text event
+			pack_putc(0x01, fp);
+			pack_putc(ustrlen("[end]"), fp);
+			pack_fwrite("[end]", ustrlen("[end]"), fp);
+		}
+		#endif
 
 		/* end of track */
 		WriteVarLen(0, fp);
@@ -1307,7 +1425,91 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		pack_putc(0x00, fp);
 
 		pack_fclose(fp);
+		eventstrackwritten = 1;
+	#ifndef EOF_RBN_COMPATIBILITY
 	}
+	#endif
+
+
+/* make beat track */
+	#ifdef EOF_RBN_COMPATIBILITY
+		/* open the file */
+	fp = pack_fopen(beattempname, "w");
+	if(!fp)
+	{
+		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+		eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
+		return 0;
+	}
+
+	/* write the track name */
+	WriteVarLen(0, fp);
+	pack_putc(0xff, fp);
+	pack_putc(0x03, fp);
+	WriteVarLen(ustrlen("BEAT"), fp);
+	pack_fwrite("BEAT", ustrlen("BEAT"), fp);
+
+	/* parse the beat array, writing a note #12 at the first beat of every measure, and a note #13 at every other beat */
+	unsigned long beat_counter = 0;
+	unsigned beats_per_measure = 4;		//By default, a 4/4 time signature is assumed until a TS event is reached
+	unsigned note_to_write = 0;
+	unsigned length_to_write = 0;
+
+	lastdelta = 0;
+	for(i = 0; i < sp->beats; i++)
+	{
+		//Determine if this is the first beat in a measure and which note number to write
+		if(eof_get_ts(sp,&beats_per_measure,NULL,i) == 1)
+		{	//If this beat is a time signature
+			beat_counter = 0;
+		}
+		if(beat_counter == 0)
+		{	//If this is the first beat in a measure (the downbeat), write a note #12
+			note_to_write = 12;
+		}
+		else
+		{	//Otherwise write a note #13 for all non downbeats
+			note_to_write = 13;
+		}
+
+		//Determine the length of 1/4 of the current beat, which will be the length of the beat notes written
+		//Based on the formula "length of beat = 60000 ms / BPM", the formula "length of beat = ppqn / 1000" can be derived
+		length_to_write = (double)sp->beat[i]->ppqn / 1000.0 / 4.0 + 0.5;	//Round up to nearest millisecond
+
+		//Write the note on event
+		delta = eof_ConvertToDeltaTime(sp->beat[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
+		WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
+		lastdelta = delta;			//Store this event's absolute delta time
+		pack_putc(0x90, fp);			//MIDI event 0x9 (note on), channel 0
+		pack_putc(note_to_write, fp);		//Note 12 or 13
+		pack_putc(vel, fp);			//Pre-determined velocity
+
+		//Write the note off event
+		delta = eof_ConvertToDeltaTime(sp->beat[i]->pos + length_to_write,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
+		WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
+		lastdelta = delta;			//Store this event's absolute delta time
+		pack_putc(0x80, fp);			//MIDI event 0x8 (note off), channel 0
+		pack_putc(note_to_write, fp);		//Note 12 or 13
+		pack_putc(vel, fp);			//Pre-determined velocity
+
+		//Increment to the next beat
+		beat_counter++;
+		if(beat_counter >= beats_per_measure)
+		{
+			beat_counter = 0;
+		}
+	}
+
+	/* end of track */
+	WriteVarLen(0, fp);
+	pack_putc(0xFF, fp);
+	pack_putc(0x2F, fp);
+	pack_putc(0x00, fp);
+
+	pack_fclose(fp);
+	beattrackwritten = 1;
+	#endif
+
 
 	fp = pack_fopen(fn, "w");
 	if(!fp)
@@ -1318,7 +1520,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	}
 
 	/* write header data */
-	header[11] = eof_count_tracks() + 1 + (sp->text_events > 0 ? 1 : 0);	//eof_count_track() will also count all lyric tracks
+	header[11] = eof_count_tracks() + 1 + eventstrackwritten + beattrackwritten;	//Add 1 for track 0 and one each for the events and beat tracks if applicable
 	pack_fwrite(header, 14, fp);
 
 	if(expertpluswritten)
@@ -1340,15 +1542,28 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	}
 
 /* write text event track if there are any events */
+	#ifndef EOF_RBN_COMPATIBILITY
+	//If RBN compatibility is in effect, the events track will be populated by force with at least the required events
 	if(sp->text_events)
 	{
+	#endif
 		eof_dump_midi_track(eventtempname,fp);
 		if(expertpluswritten)
 		{
 			eof_dump_midi_track(eventtempname,fp3);
 		}
+	#ifndef EOF_RBN_COMPATIBILITY
 	}
+	#endif
 
+	#ifdef EOF_RBN_COMPATIBILITY
+/* If RBN compatibility is in effect, write a beat track */
+	eof_dump_midi_track(beattempname,fp);
+	if(expertpluswritten)
+	{	//If writing an expert+ MIDI as well
+		eof_dump_midi_track(tempotempname,fp3);
+	}
+	#endif
 
 /* write tracks */
 	for(k = 0; k <= expertpluswritten; k++)
@@ -1386,6 +1601,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	delete_file(expertplustempname);
 	delete_file(tempotempname);
 	delete_file(eventtempname);
+	delete_file(beattempname);
+
 	eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 	eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 
