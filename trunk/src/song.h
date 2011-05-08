@@ -23,7 +23,7 @@
 
 #define EOF_NOTE_FLAG_HOPO       1	//This flag will be set by eof_determine_phrase_status() if the note displays as a HOPO
 #define EOF_NOTE_FLAG_SP         2	//This flag will be set by eof_determine_phrase_status() if the note is in a star power section
-#define EOF_NOTE_FLAG_CRAZY      4	//This flag will represent overlap allowed for guitar tracks
+#define EOF_NOTE_FLAG_CRAZY      4	//This flag will represent overlap allowed for guitar/dance/keys tracks
 #define EOF_NOTE_FLAG_F_HOPO     8
 #define EOF_NOTE_FLAG_NO_HOPO   16
 #define EOF_NOTE_FLAG_Y_CYMBAL  32	//This flag represents a yellow note charted as a RB3 Pro style cymbal
@@ -39,6 +39,8 @@
 #define EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN		8192	//This flag will represent a note that slides down to the next note
 #define EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE	16384	//This flag will represent a note whose strings are muted by the fretting hand
 #define EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE		32768	//This flag will represent a note whose strings are muted by the strumming hand
+
+//The following flags pertain to legacy and pro guitar notes
 #define EOF_NOTE_FLAG_IS_TRILL		            65536	//This flag will be set by eof_determine_phrase_status() if the note is in a trill section
 #define EOF_NOTE_FLAG_IS_TREMOLO		        131072	//This flag will be set by eof_determine_phrase_status() if the note is in a tremolo section
 
