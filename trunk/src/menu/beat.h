@@ -33,5 +33,6 @@ int eof_menu_beat_reset_bpm(void);
 int eof_menu_beat_all_events(void);
 int eof_menu_beat_events(void);
 int eof_menu_beat_clear_events(void);
+int eof_menu_beat_reset_offset(void);	//Similar to eof_menu_beat_push_offset_back(), but uses anchoring to change the MIDI offset to 0 without moving any existing beats, notes, text events, etc.
 
 #endif
