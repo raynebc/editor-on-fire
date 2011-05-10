@@ -358,6 +358,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 
 	/* clean up */
 	delete_file(soggfn);	//Delete encode.ogg
+	delete_file(wavfn);		//Delete encode.wav
 	if(eof_load_ogg((char *)oggfn))
 	{
 		eof_fix_waveform_graph();
