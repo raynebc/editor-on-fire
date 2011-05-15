@@ -2,9 +2,13 @@
 #include "window.h"
 #include "main.h"	//For logging
 
+#ifdef USEMEMWATCH
+#include "memwatch.h"
+#endif
+
 EOF_WINDOW * eof_window_create(int x, int y, int w, int h, BITMAP * bp)
 {
- 	eof_log("eof_window_create() entered");
+ 	eof_log("eof_window_create() entered", 1);
 
 	EOF_WINDOW * wp = NULL;
 	if(bp == NULL)
@@ -24,7 +28,7 @@ EOF_WINDOW * eof_window_create(int x, int y, int w, int h, BITMAP * bp)
 
 void eof_window_destroy(EOF_WINDOW * wp)
 {
- 	eof_log("eof_window_destroy() entered");
+ 	eof_log("eof_window_destroy() entered", 1);
 
 	if(wp)
 	{

@@ -400,6 +400,7 @@ void eof_set_num_star_power_paths(EOF_SONG *sp, unsigned long track, unsigned lo
 EOF_PHRASE_SECTION *eof_get_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long pathnum);	//Returns a pointer to the specified star power path, or NULL on error
 void *eof_track_add_note(EOF_SONG *sp, unsigned long track);								//Calls the appropriate add function for the specified track, returning the newly allocated structure or NULL upon error
 void eof_track_delete_note(EOF_SONG *sp, unsigned long track, unsigned long note);			//Performs the appropriate logic to remove the specified note/lyric from the specified track
+void eof_song_empty_track(EOF_SONG * sp, unsigned long track);								//Deletes all notes from the track
 void eof_track_resize(EOF_SONG *sp, unsigned long track, unsigned long size);				//Performs the appropriate logic to resize the specified track
 char eof_get_note_type(EOF_SONG *sp, unsigned long track, unsigned long note);				//Returns the type (difficulty/lyric set) of the specified track's note/lyric, or 0xFF on error
 void eof_set_note_type(EOF_SONG *sp, unsigned long track, unsigned long note, char type);	//Sets the type (difficulty/lyric set) of the specified track's note/lyric

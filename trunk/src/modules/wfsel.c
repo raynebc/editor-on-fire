@@ -7,6 +7,10 @@
 
 #include "wfsel.h"
 
+#ifdef USEMEMWATCH
+#include "../memwatch.h"
+#endif
+
 char ncdfs_internal_return_path[4096] = {0};
 char ncdfs_internal_return_folder[4096] = {0};
 
@@ -24,7 +28,7 @@ int  ncdfs_use_allegro = 0;
 NCDFS_FILTER_LIST * ncdfs_filter_list_create(void)
 {
 	NCDFS_FILTER_LIST * flist;
-	
+
 	flist = malloc(sizeof(NCDFS_FILTER_LIST));
 	if(flist)
 	{
@@ -50,14 +54,14 @@ int ncdfs_filter_list_add(NCDFS_FILTER_LIST * lp, char * ext, char * desc, int d
 	example filter string
 
 	"Bitmaps\0*.bmp\0All Files\0*.*\0\0"
-   
+
 */
 
 char * ncd_file_select_allegro(int type, char * initial, const char * title, NCDFS_FILTER_LIST * lp)
 {
 	char realfilter[1024] = {0};
 	int i, j, epos;
-	
+
 	if(!initial)
 	{
 //		ustrcpy(ncdfs_internal_return_path, ncdfs_last_path);
@@ -66,7 +70,7 @@ char * ncd_file_select_allegro(int type, char * initial, const char * title, NCD
 	{
 		ustrcpy(ncdfs_internal_return_path, initial);
 	}
-		
+
 	/* build filter string */
 	if(!lp)
 	{
@@ -77,19 +81,19 @@ char * ncd_file_select_allegro(int type, char * initial, const char * title, NCD
 		epos = 0;
 		for(i = 0; i < lp->filters; i++)
 		{
-			
+
 			for(j = 0; j < ustrlen(lp->filter[i].extension); j++)
 			{
 				realfilter[epos] = lp->filter[i].extension[j];
 				epos++;
 			}
-			
+
 			if(i < lp->filters - 1)
 			{
 				realfilter[epos] = ';';
 				epos++;
 			}
-				
+
 			realfilter[epos] = '\0';
 			epos++;
 		}
@@ -116,7 +120,7 @@ char * ncd_file_select(int type, char * initial, const char * title, NCDFS_FILTE
 		{
 			return ncd_file_select_allegro(type, initial, title, lp);
 		}
-	
+
 		if(!initial)
 		{
 			ustrcpy(ncdfs_internal_return_path, "");
@@ -125,7 +129,7 @@ char * ncd_file_select(int type, char * initial, const char * title, NCDFS_FILTE
 		{
 			ustrcpy(ncdfs_internal_return_path, initial);
 		}
-		
+
 		/* build filter string */
 		if(!lp)
 		{
@@ -137,7 +141,7 @@ char * ncd_file_select(int type, char * initial, const char * title, NCDFS_FILTE
 			{
 				set_uformat(U_UTF8);
 				l = ustrlen(lp->filter[i].description); // need to get the length of the string in characters
-				
+
 				/* append U_UNICODE characters one at a time */
 				for(j = 0; j < l; j++)
 				{
@@ -145,15 +149,15 @@ char * ncd_file_select(int type, char * initial, const char * title, NCDFS_FILTE
 					cl = usetc(&realfilter[epos], lp->filter[i].description[j]);
 					epos += cl;
 				}
-				
+
 				cl = usetc(&realfilter[epos], '\0');
 				epos += cl;
 				cl = usetc(&realfilter[epos], '*');
 				epos += cl;
 				cl = usetc(&realfilter[epos], '.');
 				epos += cl;
-				
-				
+
+
 				set_uformat(U_UTF8); // lp->filter fields are in U_UTF8
 				l = ustrlen(lp->filter[i].extension);
 				for(j = 0; j < l; j++)
@@ -174,7 +178,7 @@ char * ncd_file_select(int type, char * initial, const char * title, NCDFS_FILTE
 						epos += cl;
 					}
 				}
-				
+
 				cl = usetc(&realfilter[epos], '\0');
 				epos += cl;
 			}
@@ -187,7 +191,7 @@ char * ncd_file_select(int type, char * initial, const char * title, NCDFS_FILTE
 		uconvert(title, U_UTF8, (char *)(&ncdfs_internal_windows_title[0]), U_UNICODE, 4096);
 		uconvert(initial ? initial : "", U_UTF8, (char *)(&ncdfs_internal_windows_initial[0]), U_UNICODE, 4096);
 //		uconvert(realfilter ? realfilter : "", U_UTF8, (char *)(&ncdfs_internal_windows_filter[0]), U_UNICODE, 4096);
-		
+
 		ofn.lStructSize = sizeof(OPENFILENAME);
 		ofn.hwndOwner = allegro_window;
 		ofn.hInstance = 0;
@@ -199,9 +203,9 @@ char * ncd_file_select(int type, char * initial, const char * title, NCDFS_FILTE
 		ofn.lpstrFileTitle = NULL;
 		ofn.lpstrInitialDir = ncdfs_internal_windows_initial;
 		ofn.Flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR;
-	
+
 		ofn.lpstrFilter = (wchar_t *)realfilter;
-	
+
 		if(type == 0)
 		{
 			if(GetOpenFileName(&ofn) != 0)
@@ -228,13 +232,13 @@ char * ncd_file_select(int type, char * initial, const char * title, NCDFS_FILTE
 		}
 		return NULL;
 	}
-	
+
 #else
 
 	{
 		return ncd_file_select_allegro(type, initial, title, lp);
 	}
-	
+
 #endif
 
 char * ncd_folder_select_allegro(char * title)
@@ -258,16 +262,16 @@ char * ncd_folder_select(char * title)
 		{
 			return ncd_folder_select_allegro(title);
 		}
-	
+
 		uconvert(title, U_UTF8, (char *)(&ncdfs_internal_windows_title[0]), U_UNICODE, 4096);
-		
+
 		folderinfo.hwndOwner = allegro_window;
 		folderinfo.pidlRoot = NULL;
 		folderinfo.pszDisplayName = ncdfs_internal_windows_return_folder;
 		folderinfo.lpszTitle = ncdfs_internal_windows_title;
 		folderinfo.ulFlags = 0;
 		folderinfo.lpfn = NULL;
-	
+
 		pidl = SHBrowseForFolder(&folderinfo);
 		if(pidl)
 		{

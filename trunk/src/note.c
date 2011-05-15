@@ -3,9 +3,13 @@
 #include "main.h"
 #include "note.h"
 
+#ifdef USEMEMWATCH
+#include "memwatch.h"
+#endif
+
 unsigned long eof_note_count_colors(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
-	eof_log("eof_note_count_colors() entered");
+	eof_log("eof_note_count_colors() entered", 1);
 
 	if(!sp)
 	{
@@ -44,7 +48,7 @@ unsigned long eof_note_count_colors(EOF_SONG *sp, unsigned long track, unsigned 
 
 void eof_legacy_track_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, char o, unsigned long pos, long length)
 {
-	eof_log("eof_legacy_track_note_create() entered");
+	eof_log("eof_legacy_track_note_create() entered", 1);
 
 	if(!np)
 	{
@@ -81,7 +85,7 @@ void eof_legacy_track_note_create(EOF_NOTE * np, char g, char y, char r, char b,
 
 void eof_legacy_track_note_create2(EOF_NOTE * np, unsigned long bitmask, unsigned long pos, long length)
 {
-	eof_log("eof_legacy_track_note_create2() entered");
+	eof_log("eof_legacy_track_note_create2() entered", 1);
 
 	if(np)
 	{
@@ -93,7 +97,7 @@ void eof_legacy_track_note_create2(EOF_NOTE * np, unsigned long bitmask, unsigne
 
 int eof_adjust_notes(int offset)
 {
-	eof_log("eof_adjust_notes() entered");
+	eof_log("eof_adjust_notes() entered", 1);
 
 	unsigned long i, j;
 	EOF_PHRASE_SECTION *soloptr = NULL;

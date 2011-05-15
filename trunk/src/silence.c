@@ -4,9 +4,13 @@
 #include "waveform.h"
 #include "utility.h"
 
+#ifdef USEMEMWATCH
+#include "memwatch.h"
+#endif
+
 static unsigned long msec_to_samples(unsigned long msec)
 {
-	eof_log("msec_to_samples() entered");
+	eof_log("msec_to_samples() entered", 1);
 
 	unsigned long sample;
 	double second = (double)msec / (double)1000.0;
@@ -18,7 +22,7 @@ static unsigned long msec_to_samples(unsigned long msec)
 
 SAMPLE * create_silence_sample(unsigned long ms)
 {
-	eof_log("create_silence_sample() entered");
+	eof_log("create_silence_sample() entered", 1);
 
 	SAMPLE * sp = NULL;
 	int bits;
@@ -70,7 +74,7 @@ SAMPLE * create_silence_sample(unsigned long ms)
 /* saves a wave file to file pointer */
 static int save_wav_fp(SAMPLE * sp, PACKFILE * fp)
 {
-	eof_log("save_wav_fp() entered");
+	eof_log("save_wav_fp() entered", 1);
 
 	size_t channels, bits, freq;
 	size_t data_size;
@@ -141,7 +145,7 @@ static int save_wav_fp(SAMPLE * sp, PACKFILE * fp)
  * reason */
 int save_wav(const char * fn, SAMPLE * sp)
 {
- 	eof_log("save_wav() entered");
+ 	eof_log("save_wav() entered", 1);
 
     PACKFILE * file;
 
@@ -172,7 +176,7 @@ int save_wav(const char * fn, SAMPLE * sp)
 
 int eof_add_silence(const char * oggfn, unsigned long ms)
 {
- 	eof_log("eof_add_silence() entered");
+ 	eof_log("eof_add_silence() entered", 1);
 
 	char sys_command[1024] = {0};
 	char backupfn[1024] = {0};
@@ -239,7 +243,7 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 
 int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 {
- 	eof_log("eof_add_silence_recode() entered");
+ 	eof_log("eof_add_silence_recode() entered", 1);
 
 	char sys_command[1024] = {0};
 	char backupfn[1024] = {0};
@@ -372,7 +376,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 
 int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 {
- 	eof_log("eof_add_silence_recode_mp3() entered");
+ 	eof_log("eof_add_silence_recode_mp3() entered", 1);
 
 	char sys_command[1024] = {0};
 	char backupfn[1024] = {0};

@@ -3,11 +3,15 @@
 #include "config.h"
 #include "mix.h"
 
+#ifdef USEMEMWATCH
+#include "memwatch.h"
+#endif
+
 static void set_default_config(void);	//Applies the default settings, and overwrites settings from a loaded configuration where applicable
 
 void set_default_config(void)
 {
-	eof_log("set_default_config() entered");
+	eof_log("set_default_config() entered", 1);
 
 	eof_guitar.button[0].type = EOF_CONTROLLER_BUTTON_TYPE_KEY;
 	eof_guitar.button[0].key = KEY_ENTER;
@@ -42,7 +46,7 @@ void set_default_config(void)
 
 void eof_load_config(char * fn)
 {
-	eof_log("eof_load_config() entered");
+	eof_log("eof_load_config() entered", 1);
 
 	if(!fn)
 	{
@@ -135,7 +139,7 @@ void eof_load_config(char * fn)
 
 void eof_save_config(char * fn)
 {
-	eof_log("eof_save_config() entered");
+	eof_log("eof_save_config() entered", 1);
 
 	if(!fn)
 	{

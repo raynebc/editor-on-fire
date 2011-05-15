@@ -4,6 +4,10 @@
 #include "note.h"
 #include "context.h"
 
+#ifdef USEMEMWATCH
+#include "../memwatch.h"
+#endif
+
 MENU eof_right_click_menu_normal[] =
 {
     {"&Copy\tCtrl+C", eof_menu_edit_copy, NULL, 0, NULL},

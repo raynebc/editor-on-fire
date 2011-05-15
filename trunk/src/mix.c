@@ -8,6 +8,10 @@
 #include "beat.h"
 #include "mix.h"
 
+#ifdef USEMEMWATCH
+#include "memwatch.h"
+#endif
+
 //AUDIOSTREAM * eof_mix_stream = NULL;
 SAMPLE *    eof_sound_clap = NULL;
 SAMPLE *    eof_sound_metronome = NULL;
@@ -214,7 +218,7 @@ unsigned long eof_mix_msec_to_sample(unsigned long msec, int freq)
 
 void eof_mix_find_claps(void)
 {
-	eof_log("eof_mix_find_claps() entered");
+	eof_log("eof_mix_find_claps() entered", 1);
 
 	unsigned long i;
 	eof_mix_claps = 0;
@@ -273,7 +277,7 @@ void eof_mix_find_claps(void)
 
 void eof_mix_init(void)
 {
-	eof_log("eof_mix_init() entered");
+	eof_log("eof_mix_init() entered", 1);
 
 	int i;
 	char fbuffer[1024] = {0};
@@ -350,7 +354,7 @@ SAMPLE *eof_mix_load_ogg_sample(char *fn)
 
 void eof_mix_exit(void)
 {
-	eof_log("eof_mix_exit() entered");
+	eof_log("eof_mix_exit() entered", 1);
 
 	int i;
 
@@ -411,7 +415,7 @@ void eof_mix_exit(void)
 
 void eof_mix_start_helper(void)
 {
-	eof_log("eof_mix_start_helper() entered");
+	eof_log("eof_mix_start_helper() entered", 1);
 
 	int i;
 
@@ -463,7 +467,7 @@ void eof_mix_start_helper(void)
 
 void eof_mix_start(unsigned long start, int speed)
 {
-	eof_log("eof_mix_start() entered");
+	eof_log("eof_mix_start() entered", 1);
 
 	int i;
 
@@ -498,7 +502,7 @@ void eof_mix_start(unsigned long start, int speed)
 
 void eof_mix_seek(int pos)
 {
-	eof_log("eof_mix_seek() entered");
+	eof_log("eof_mix_seek() entered", 1);
 
 	int i;
 

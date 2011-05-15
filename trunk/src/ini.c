@@ -6,11 +6,15 @@
 #include "ini.h"
 #include "legacy.h"
 
+#ifdef USEMEMWATCH
+#include "memwatch.h"
+#endif
+
 char *eof_difficulty_ini_tags[EOF_TRACKS_MAX + 1] = {"", "diff_guitar", "diff_bass", "", "", "diff_drums", "diff_vocals", "diff_keys", "diff_bass_real", "diff_guitar_real", "", "diff_keys_real"};
 
 int eof_save_ini(EOF_SONG * sp, char * fn)
 {
-	eof_log("eof_save_ini() entered");
+	eof_log("eof_save_ini() entered", 1);
 
 	PACKFILE * fp;
 	char buffer[256] = {0};

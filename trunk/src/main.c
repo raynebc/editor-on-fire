@@ -39,6 +39,10 @@
 #include "waveform.h"
 #include "silence.h"
 
+#ifdef USEMEMWATCH
+#include "memwatch.h"
+#endif
+
 char        eof_note_type_name[5][32] = {" Supaeasy", " Easy", " Medium", " Amazing", " BRE"};
 char        eof_vocal_tab_name[5][32] = {" Lyrics", " ", " ", " ", " "};
 char        eof_dance_tab_name[5][32] = {" Beginner", " Easy", " Medium", " Hard", " Challenge"};
@@ -234,10 +238,11 @@ struct MIDIentry *MIDIqueuetail=NULL;	//Points to the tail of the list
 char eof_midi_initialized=0;			//Specifies whether Allegro was able to set up a MIDI device
 
 FILE *eof_log_fp = NULL;	//Is set to NULL if logging is disabled
+char eof_log_level = 0;		//Is set to 0 if logging is disabled
 
 void eof_debug_message(char * text)
 {
-	eof_log("eof_debug_message() entered");
+	eof_log("eof_debug_message() entered", 1);
 
 	if(text && eof_debug_mode)
 	{
@@ -248,7 +253,7 @@ void eof_debug_message(char * text)
 
 void eof_show_mouse(BITMAP * bp)
 {
-	eof_log("eof_show_mouse() entered");
+	eof_log("eof_show_mouse() entered", 1);
 
 	if(bp && eof_soft_cursor)
 	{
@@ -258,7 +263,7 @@ void eof_show_mouse(BITMAP * bp)
 
 float eof_get_porpos(unsigned long pos)
 {
-	eof_log("eof_get_porpos() entered");
+	eof_log("eof_get_porpos() entered", 1);
 
 	float porpos = 0.0;
 	long beat = 0;
@@ -285,7 +290,7 @@ float eof_get_porpos(unsigned long pos)
 
 long eof_put_porpos(unsigned long beat, float porpos, float offset)
 {
-	eof_log("eof_put_porpos() entered");
+	eof_log("eof_put_porpos() entered", 1);
 
 	float fporpos = porpos + offset;
 	unsigned long cbeat = beat;
@@ -328,7 +333,7 @@ long eof_put_porpos(unsigned long beat, float porpos, float offset)
 
 void eof_reset_lyric_preview_lines(void)
 {
-	eof_log("eof_reset_lyric_preview_lines() entered");
+	eof_log("eof_reset_lyric_preview_lines() entered", 1);
 
 	eof_preview_line[0] = 0;
 	eof_preview_line[1] = 0;
@@ -434,20 +439,20 @@ void eof_find_lyric_preview_lines(void)
 
 void eof_emergency_stop_music(void)
 {
-	eof_log("eof_emergency_stop_music() entered");
+	eof_log("eof_emergency_stop_music() entered", 1);
 
 	if(eof_song_loaded)
 	{
 		if(!eof_music_paused)
 		{
-			eof_log("\tStopping playback");
+			eof_log("\tStopping playback", 1);
 			eof_music_paused = 1;
 			eof_stop_midi();
 			alogg_stop_ogg(eof_music_track);
 		}
 		else if(eof_music_catalog_playback)
 		{
-			eof_log("\tStopping playback");
+			eof_log("\tStopping playback", 1);
 			eof_music_catalog_playback = 0;
 			eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 			eof_stop_midi();
@@ -458,7 +463,7 @@ void eof_emergency_stop_music(void)
 
 void eof_switch_out_callback(void)
 {
-	eof_log("eof_switch_out_callback() entered");
+	eof_log("eof_switch_out_callback() entered", 1);
 
 	eof_emergency_stop_music();
 	key[KEY_TAB] = 0;
@@ -467,7 +472,7 @@ void eof_switch_out_callback(void)
 
 void eof_switch_in_callback(void)
 {
-	eof_log("eof_switch_in_callback() entered");
+	eof_log("eof_switch_in_callback() entered", 1);
 
 	key[KEY_TAB] = 0;
 	eof_has_focus = 1;
@@ -476,7 +481,7 @@ void eof_switch_in_callback(void)
 
 void eof_fix_catalog_selection(void)
 {
-	eof_log("eof_fix_catalog_selection() entered");
+	eof_log("eof_fix_catalog_selection() entered", 1);
 
 	if(eof_song->catalog->entries > 0)
 	{
@@ -493,7 +498,7 @@ void eof_fix_catalog_selection(void)
 
 int eof_set_display_mode(int mode)
 {
-	eof_log("eof_set_display_mode() entered");
+	eof_log("eof_set_display_mode() entered", 1);
 
 	unsigned long screen_width, screen_height, default_zoom_level;
 
@@ -642,7 +647,7 @@ int eof_set_display_mode(int mode)
 
 void eof_fix_window_title(void)
 {
-	eof_log("eof_fix_window_title() entered");
+	eof_log("eof_fix_window_title() entered", 1);
 
 	if(eof_changes)
 	{
@@ -680,7 +685,7 @@ void eof_fix_window_title(void)
 
 void eof_clear_input(void)
 {
-	eof_log("eof_clear_input() entered");
+	eof_log("eof_clear_input() entered", 1);
 
 	int i;
 
@@ -697,7 +702,7 @@ void eof_clear_input(void)
 
 void eof_prepare_undo(int type)
 {
-	eof_log("eof_prepare_undo() entered");
+	eof_log("eof_prepare_undo() entered", 1);
 
 	if(eof_undo_add(type))
 	{
@@ -721,7 +726,7 @@ void eof_prepare_undo(int type)
 
 long eof_get_previous_note(long cnote)
 {
-	eof_log("eof_get_previous_note() entered");
+	eof_log("eof_get_previous_note() entered", 1);
 
 	long i;
 
@@ -737,7 +742,7 @@ long eof_get_previous_note(long cnote)
 
 int eof_note_is_hopo(unsigned long cnote)
 {
-	eof_log("eof_note_is_hopo() entered");
+	eof_log("eof_note_is_hopo() entered", 1);
 
 	double delta;
 	float hopo_delta = eof_song->tags->eighth_note_hopo ? 250.0 : 170.0;
@@ -805,7 +810,7 @@ int eof_note_is_hopo(unsigned long cnote)
 
 void eof_determine_phrase_status(void)
 {
-	eof_log("eof_determine_phrase_status() entered");
+	eof_log("eof_determine_phrase_status() entered", 1);
 
 	unsigned long i, j, tracknum;
 	char sp[EOF_MAX_PHRASES] = {0};
@@ -944,7 +949,7 @@ void eof_determine_phrase_status(void)
 
 int eof_figure_difficulty(void)
 {
-	eof_log("eof_figure_difficulty() entered");
+	eof_log("eof_figure_difficulty() entered", 1);
 
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
@@ -1093,7 +1098,7 @@ unsigned long eof_count_selected_notes(unsigned long * total, char v)
 
 int eof_figure_part(void)
 {
-	eof_log("eof_figure_part() entered");
+	eof_log("eof_figure_part() entered", 1);
 
 	int part[EOF_TRACKS_MAX] = {0};
 
@@ -1112,7 +1117,7 @@ int eof_figure_part(void)
 
 int eof_load_ogg_quick(char * filename)
 {
-	eof_log("eof_load_ogg_quick() entered");
+	eof_log("eof_load_ogg_quick() entered", 1);
 
 	int loaded = 0;
 
@@ -1157,7 +1162,7 @@ int eof_load_ogg_quick(char * filename)
 
 int eof_load_ogg(char * filename)
 {
-	eof_log("eof_load_ogg() entered");
+	eof_log("eof_load_ogg() entered", 1);
 
 	char * returnedfn = NULL;
 	char directory[1024] = {0};
@@ -1255,7 +1260,7 @@ int eof_load_ogg(char * filename)
 
 int eof_destroy_ogg(void)
 {
-	eof_log("eof_destroy_ogg() entered");
+	eof_log("eof_destroy_ogg() entered", 1);
 
 	int failed = 1;
 
@@ -1272,7 +1277,7 @@ int eof_destroy_ogg(void)
 
 int eof_save_ogg(char * fn)
 {
-	eof_log("eof_save_ogg() entered");
+	eof_log("eof_save_ogg() entered", 1);
 
 	PACKFILE * fp;
 	if(fn && eof_music_data)
@@ -1291,7 +1296,7 @@ int eof_save_ogg(char * fn)
 
 int eof_notes_selected(void)
 {
-	eof_log("eof_notes_selected() entered");
+	eof_log("eof_notes_selected() entered", 1);
 
 	int count = 0;
 	int i;
@@ -1308,7 +1313,7 @@ int eof_notes_selected(void)
 
 void eof_fix_waveform_graph(void)
 {
-	eof_log("eof_fix_waveform_graph() entered");
+	eof_log("eof_fix_waveform_graph() entered", 1);
 
 	if(eof_music_paused && eof_waveform)
 	{
@@ -1335,7 +1340,8 @@ void eof_read_global_keys(void)
 	if(key[KEY_ESC] && !KEY_EITHER_SHIFT)
 	{
 		eof_menu_file_exit();
-		key[KEY_ESC] = 0;
+		key[KEY_ESC] = 0;	//If user cancelled quitting, make sure these keys are cleared
+		key[KEY_N] = 0;
 	}
 
 	if(!eof_music_paused)
@@ -2765,7 +2771,7 @@ int d_hackish_edit_proc (int msg, DIALOG *d, int c)
 
 int eof_load_data(void)
 {
-	eof_log("eof_load_data() entered");
+	eof_log("eof_load_data() entered", 1);
 
 	int i;
 
@@ -2883,7 +2889,7 @@ int eof_load_data(void)
 
 void eof_destroy_data(void)
 {
-	eof_log("eof_destroy_data() entered");
+	eof_log("eof_destroy_data() entered", 1);
 
 	int i;
 
@@ -2893,15 +2899,18 @@ void eof_destroy_data(void)
 		if(eof_image[i])
 		{
 			destroy_bitmap(eof_image[i]);
+			eof_image[i] = NULL;
 		}
 	}
 	destroy_font(eof_font);
+	eof_font = NULL;
 	destroy_font(eof_mono_font);
+	eof_mono_font = NULL;
 }
 
 int eof_initialize(int argc, char * argv[])
 {
-	eof_log("eof_initialize() entered");
+	eof_log("eof_initialize() entered", 1);
 
 	int i;
 	char temp_filename[1024] = {0};
@@ -2914,7 +2923,7 @@ int eof_initialize(int argc, char * argv[])
 
 	//Start the logging system
 	eof_start_logging();
-	eof_log("Logging started during program initialization");
+	eof_log("Logging started during program initialization", 1);
 
 	set_window_title("EOF - No Song");
 	if(install_sound(DIGI_AUTODETECT, MIDI_AUTODETECT, NULL))
@@ -3255,7 +3264,7 @@ int eof_initialize(int argc, char * argv[])
 			}
 		}
 	}
-	eof_log("\tInitializing audio");
+	eof_log("\tInitializing audio", 1);
 	eof_mix_init();
 	if(!eof_soft_cursor)
 	{
@@ -3272,32 +3281,15 @@ int eof_initialize(int argc, char * argv[])
 	return 1;
 }
 
-#ifdef ALLEGRO_WINDOWS
-	int eof_initialize_windows(void)
-	{
-		int i;
-		wchar_t * cl = GetCommandLineW();
-
-		eof_windows_internal_argv = CommandLineToArgvW(cl, &eof_windows_argc);
-		eof_windows_argv = malloc(eof_windows_argc * sizeof(char *));
-		for(i = 0; i < eof_windows_argc; i++)
-		{
-			eof_windows_argv[i] = malloc(1024 * sizeof(char));
-			memset(eof_windows_argv[i], 0, 1024);
-			uconvert((char *)eof_windows_internal_argv[i], U_UNICODE, eof_windows_argv[i], U_UTF8, 4096);
-		}
-		return eof_initialize(eof_windows_argc, eof_windows_argv);
-	}
-#endif
-
 void eof_exit(void)
 {
-	eof_log("eof_exit() entered");
+	unsigned long i;
 
-	int i;
+	eof_log("eof_exit() entered", 1);
 
 	StopIdleSystem();
-	eof_mix_exit();
+
+	//Delete the undo/redo related files
 	eof_save_config("eof.cfg");
 	delete_file("eof.redo");
 	delete_file("eof.undo0");
@@ -3318,21 +3310,374 @@ void eof_exit(void)
 	delete_file("eof.undo6.ogg");
 	delete_file("eof.undo7.ogg");
 	delete_file("eof.autoadjust");
+
+	//Free the file filters
+	free(eof_filter_music_files);
+	eof_filter_music_files = NULL;
+	free(eof_filter_ogg_files);
+	eof_filter_ogg_files = NULL;
+	free(eof_filter_midi_files);
+	eof_filter_midi_files = NULL;
+	free(eof_filter_eof_files);
+	eof_filter_eof_files = NULL;
+	free(eof_filter_exe_files);
+	eof_filter_exe_files = NULL;
+	free(eof_filter_lyrics_files);
+	eof_filter_lyrics_files = NULL;
+	free(eof_filter_dB_files);
+	eof_filter_dB_files = NULL;
+
+	//Free command line storage variables (for Windows build)
+	for(i = 0; i < eof_windows_argc; i++)
+	{	//For each stored command line parameter
+		free(eof_windows_argv[i]);
+		eof_windows_argv[i] = NULL;
+	}
+	free(eof_windows_argv);
+	eof_windows_argv = NULL;
+
 	agup_shutdown();
-	eof_destroy_ogg();
+	eof_mix_exit();		//Frees memory used by audio cues
+	eof_destroy_data();	//Frees graphics and fonts from memory
+	eof_destroy_ogg();	//Frees chart audio
+	eof_destroy_song(eof_song);	//Frees memory used by any currently loaded chart
+	eof_destroy_waveform(eof_waveform);	//Frees memory used by any currently loaded waveform data
+	eof_waveform = NULL;
 	eof_window_destroy(eof_window_editor);
 	eof_window_destroy(eof_window_note);
 	eof_window_destroy(eof_window_3d);
-	for(i = 0; i < EOF_MAX_IMAGES; i++)
-	{
-		if(eof_image[i])
+
+	//Stop the logging system
+	eof_log("Logging stopped during program completion", 1);
+	eof_stop_logging();
+}
+
+void eof_process_midi_queue(int pos)
+{	//Process the MIDI queue based on the current chart timestamp (eof_music_pos)
+	eof_log("eof_process_midi_queue() entered", 1);
+
+	unsigned char NOTE_ON_DATA[3]={0x91,0x0,127};	//Data sequence for a Note On, channel 1, Note 0
+	unsigned char NOTE_OFF_DATA[3]={0x81,0x0,127};	//Data sequence for a Note Off, channel 1, Note 0
+
+	struct MIDIentry *ptr=MIDIqueue;	//Points to the head of the list
+	struct MIDIentry *temp=NULL;
+
+	if(midi_driver == NULL)
+		return;
+
+	while(ptr != NULL)
+	{	//Process all queue entries
+		if(ptr->status == 0)	//If this queued note has not been played yet
 		{
-			destroy_bitmap(eof_image[i]);
+			if(pos >= ptr->startpos)	//If the current chart position is at or past this note's start position
+			{
+				NOTE_ON_DATA[1]=ptr->note;	//Alter the data sequence to be the appropriate note number
+				midi_driver->raw_midi(NOTE_ON_DATA[0]);
+				midi_driver->raw_midi(NOTE_ON_DATA[1]);
+				midi_driver->raw_midi(NOTE_ON_DATA[2]);
+				ptr->status=1;			//Track that it is playing
+			}
+		}
+		else			//This queued note has already been played
+		{
+			if(pos >= ptr->endpos)	//If the current chart position is at or past this note's stop position
+			{
+				NOTE_OFF_DATA[1]=ptr->note;	//Alter the data sequence to be the appropriate note number
+				midi_driver->raw_midi(NOTE_OFF_DATA[0]);
+				midi_driver->raw_midi(NOTE_OFF_DATA[1]);
+				midi_driver->raw_midi(NOTE_OFF_DATA[2]);
+
+			//Remove this link from the list
+				if(ptr->prev)	//If there's a link that precedes this link
+					ptr->prev->next=ptr->next;	//It now points forward to the next link (if there is one)
+				else
+					MIDIqueue=ptr->next;		//Update head of list
+
+				if(ptr->next)	//If there's a link that follows this link
+					ptr->next->prev=ptr->prev;	//It now points back to the previous link (if there is one)
+				else
+					MIDIqueuetail=ptr->prev;	//Update tail of list
+
+				temp=ptr->next;	//Save the address of the next link (if there is one)
+				free(ptr);
+				ptr=temp;	//Iterate to the link that followed the deleted link
+				continue;	//Restart at top of loop without iterating to the next link
+			}
+		}
+		ptr=ptr->next;	//Point to the next link
+	}
+}
+
+int eof_midi_queue_add(unsigned char note,int startpos,int endpos)
+{
+	eof_log("eof_midi_queue_add() entered", 1);
+
+	struct MIDIentry *ptr=NULL;	//Stores the newly allocated link
+
+//Validate input
+	if(note > 127)
+		return -1;	//return error:  Invalid MIDI note
+	if(startpos >= endpos)
+		return -1;	//return error:  Duration must be > 0
+
+//Allocate and initialize MIDI queue entry
+	ptr=malloc(sizeof(struct MIDIentry));
+	if(ptr == NULL)
+		return -1;	//return error:  Unable to allocate memory
+	ptr->status=0;
+	ptr->note=note;
+	ptr->startpos=startpos;
+	ptr->endpos=endpos;
+	ptr->next=NULL;		//When appended to the end of the list, it will never point forward to anything
+
+//Append to list
+	if(MIDIqueuetail)	//If the list isn't empty
+	{
+		MIDIqueuetail->next=ptr;	//Tail points forward to new link
+		ptr->prev=MIDIqueuetail;	//New link points backward to tail
+		MIDIqueuetail=ptr;		//Update tail
+	}
+	else
+	{
+		MIDIqueue=MIDIqueuetail=ptr;	//This new link is both the head and the tail of the list
+		ptr->prev=NULL;			//New link points backward to nothing
+	}
+
+	return 0;	//return success
+}
+
+void eof_midi_queue_destroy(void)
+{
+	eof_log("eof_midi_queue_destroy() entered", 1);
+
+	struct MIDIentry *ptr=MIDIqueue,*temp=NULL;
+
+	while(ptr != NULL)	//For all links in the list
+	{
+		temp=ptr->next;	//Save address of next link
+		free(ptr);	//Destroy this link
+		ptr=temp;	//Point to next link
+	}
+
+	MIDIqueue=MIDIqueuetail=NULL;
+}
+
+void eof_all_midi_notes_off(void)
+{
+	eof_log("eof_all_midi_notes_off() entered", 1);
+
+	unsigned char ALL_NOTES_OFF[3]={0xB1,123,0};	//Data sequence for a Control Change, controller 123, value 0 (All notes off)
+
+	if(midi_driver)
+	{
+		midi_driver->raw_midi(ALL_NOTES_OFF[0]);
+		midi_driver->raw_midi(ALL_NOTES_OFF[1]);
+		midi_driver->raw_midi(ALL_NOTES_OFF[2]);
+	}
+}
+
+void eof_stop_midi(void)
+{
+	eof_log("eof_stop_midi() entered", 1);
+
+	if(eof_midi_initialized)
+	{
+		eof_all_midi_notes_off();
+		eof_midi_queue_destroy();
+	}
+}
+
+void eof_init_after_load(void)
+{
+	eof_log("\tInitializing after load\neof_init_after_load() entered", 1);
+
+	eof_changes = 0;
+	eof_music_pos = eof_av_delay;
+	eof_music_paused = 1;
+	eof_menu_track_selected_track_number(EOF_TRACK_GUITAR);
+	eof_vocals_selected = 0;
+	eof_undo_last_type = 0;
+	eof_change_count = 0;
+	eof_selected_catalog_entry = 0;
+	eof_calculate_beats(eof_song);
+	eof_detect_difficulties(eof_song);
+	eof_reset_lyric_preview_lines();
+	eof_select_beat(0);
+	eof_prepare_menus();
+	eof_undo_reset();
+	eof_sort_notes(eof_song);
+	eof_fixup_notes(eof_song);
+	eof_fix_window_title();
+	eof_display_waveform = 0;
+	eof_catalog_menu[0].flags = 0;	//Hide the fret catalog by default
+
+	eof_log("\tInitialization after load complete", 1);
+}
+
+void eof_scale_fretboard(unsigned long numlanes)
+{
+	eof_log("eof_scale_fretboard() entered", 1);
+
+	unsigned long ctr;
+	float lanewidth;
+
+	eof_screen_layout.string_space = eof_screen_layout.string_space_unscaled;
+
+	if(!numlanes)	//If 0 was passed, find the number of lanes in the active track
+		numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
+
+	lanewidth = (float)eof_screen_layout.string_space * (4.0 / (numlanes-1));	//This is the correct lane width for either 5 or 6 lanes
+	if(numlanes > 5)
+	{	//If the active track has more than 5 lanes, scale the spacing between the fretboard lanes
+		eof_screen_layout.string_space = (double)eof_screen_layout.string_space * 5.0 / (double)numlanes;
+	}
+
+	for(ctr = 0; ctr < EOF_MAX_FRETS; ctr++)
+	{	//For each fretboard lane after the first is eof_screen_layout.string_space higher than the previous lane
+		eof_screen_layout.note_y[ctr] = 20.0 + ((float)ctr * lanewidth);
+	}
+}
+
+long xchart[EOF_MAX_FRETS] = {0};
+
+void eof_set_3D_lane_positions(unsigned long track)
+{
+//	eof_log("eof_set_3D_lane_positions() entered");
+
+	static unsigned long numlanes = 0;	//This remembers the number of lanes handled by the previous call
+	unsigned long newnumlanes = eof_count_track_lanes(eof_song, track);	//This is the number of lanes in the specified track
+	unsigned long numlaneswidth = 5 - 1;	//By default, the lane width will be based on a 5 lane track
+	unsigned long ctr;
+	float lanewidth = 0.0;
+
+	if(eof_selected_track == EOF_TRACK_BASS)
+	{	//Special case:  The bass track can use a sixth lane but its 3D representation still only draws 5 lanes
+		newnumlanes = 5;
+	}
+	else if(track && (eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
+	{	//Special case:  The drum track renders with only 4 lanes
+		newnumlanes = 4;
+	}
+	else
+	{
+		numlaneswidth = newnumlanes - 1;	//Otherwise, base the lane width on the number of lanes used in the track
+	}
+
+	if(track && (newnumlanes == numlanes))	//If the xchart[] array doesn't need to be updated
+		return;			//Return immediately
+
+	numlanes = newnumlanes;		//Permanently store this as the number of lanes the xchart[] array represents
+	lanewidth = 56.0 * (4.0 / numlaneswidth);
+	if(eof_lefty_mode)
+	{
+		for(ctr = 0; ctr < numlanes; ctr++)
+		{	//Store the fretboard lane positions in reverse order, with respect to the number of lanes in use
+			xchart[ctr] = 48 + (lanewidth * (numlanes - 1 - ctr));
 		}
 	}
-	destroy_font(eof_font);
-	destroy_font(eof_mono_font);
+	else
+	{
+		for(ctr = 0; ctr < numlanes; ctr++)
+		{	//Store the fretboard lane positions in normal order
+			xchart[ctr] = 48 + (lanewidth * ctr);
+		}
+	}
 }
+
+long ychart[EOF_MAX_FRETS] = {0};
+
+void eof_set_2D_lane_positions(unsigned long track)
+{
+//	eof_log("eof_set_2D_lane_positions() entered");
+
+	static unsigned long numlanes = 0;		//This remembers the number of lanes handled by the previous call
+	unsigned long newnumlanes, newnumlanes2;
+	unsigned long ctr, ctr2;
+
+	newnumlanes = eof_count_track_lanes(eof_song, eof_selected_track);	//Count the number of lanes in the active track
+	newnumlanes2 = eof_count_track_lanes(eof_song, track);	//Count the number of lanes in that note's track
+	if(newnumlanes > newnumlanes2)
+	{	//Special case (ie. viewing an open bass guitar catalog entry when any other legacy track is active)
+		newnumlanes = newnumlanes2;	//Use the number of lanes in the active track
+	}
+
+	if(track && (newnumlanes == numlanes))	//If the ychart[] array doesn't need to be updated
+		return;			//Return immediately
+
+	numlanes = newnumlanes;		//Permanently store this as the number of lanes the xchart[] array represents
+	if(eof_inverted_notes || (track && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)))
+	{	//If the user selected the inverted notes option OR a pro guitar track is active (force inverted notes display)
+		for(ctr = 0, ctr2 = 0; ctr < EOF_MAX_FRETS; ctr++)
+		{	//Store the fretboard lane positions in reverse order, with respect to the number of lanes in use
+			if(EOF_MAX_FRETS - ctr <= numlanes)
+			{	//If this lane is used in the chart, store it in ychart[] in reverse order
+				ychart[ctr2++] = eof_screen_layout.note_y[EOF_MAX_FRETS - 1 - ctr];
+			}
+		}
+	}
+	else
+	{
+		for(ctr = 0; ctr < EOF_MAX_FRETS; ctr++)
+		{	//Store the fretboard lane positions in normal order
+			ychart[ctr] = eof_screen_layout.note_y[ctr];
+		}
+	}
+}
+
+void eof_start_logging(void)
+{
+	char log_filename[1024] = {0};
+
+	if(eof_log_fp == NULL)
+	{
+		get_executable_name(log_filename, 1024);	//Get the path of the EOF binary that is running
+		replace_filename(log_filename, log_filename, "eof_log.txt", 1024);
+		eof_log_fp = fopen(log_filename, "w");
+		eof_log_level |= 1;	//Set the logging enabled bit
+
+		if(eof_log_fp == NULL)
+		{
+			allegro_message("Error opening log file for writing");
+		}
+	}
+}
+
+void eof_stop_logging(void)
+{
+	if(eof_log_fp)
+	{
+		fclose(eof_log_fp);
+		eof_log_fp = NULL;
+		eof_log_level &= ~1;	//Disable the logging enabled bit
+	}
+}
+
+void eof_log(const char *text, char level)
+{
+	if(eof_log_fp && (eof_log_level & 1) && (eof_log_level >= level))
+	{	//If the log file is open, logging is enabled and the current logging level is high enough
+		fprintf(eof_log_fp, "%s\n", text);
+		fflush(eof_log_fp);
+	}
+}
+
+#ifdef ALLEGRO_WINDOWS
+	int eof_initialize_windows(void)
+	{
+		int i;
+		wchar_t * cl = GetCommandLineW();
+
+		eof_windows_internal_argv = CommandLineToArgvW(cl, &eof_windows_argc);
+		eof_windows_argv = malloc(eof_windows_argc * sizeof(char *));
+		for(i = 0; i < eof_windows_argc; i++)
+		{
+			eof_windows_argv[i] = malloc(1024 * sizeof(char));
+			memset(eof_windows_argv[i], 0, 1024);
+			uconvert((char *)eof_windows_internal_argv[i], U_UNICODE, eof_windows_argv[i], U_UTF8, 4096);
+		}
+		return eof_initialize(eof_windows_argc, eof_windows_argv);
+	}
+#endif
 
 int main(int argc, char * argv[])
 {
@@ -3350,7 +3695,7 @@ int main(int argc, char * argv[])
 		}
 	#endif
 
-	eof_log("\tEntering main program loop");
+	eof_log("\tEntering main program loop", 1);
 
 	while(!eof_quit)
 	{
@@ -3468,315 +3813,6 @@ int main(int argc, char * argv[])
 	}
 	eof_exit();
 	return 0;
-}
-
-void eof_process_midi_queue(int pos)
-{	//Process the MIDI queue based on the current chart timestamp (eof_music_pos)
-	eof_log("eof_process_midi_queue() entered");
-
-	unsigned char NOTE_ON_DATA[3]={0x91,0x0,127};	//Data sequence for a Note On, channel 1, Note 0
-	unsigned char NOTE_OFF_DATA[3]={0x81,0x0,127};	//Data sequence for a Note Off, channel 1, Note 0
-
-	struct MIDIentry *ptr=MIDIqueue;	//Points to the head of the list
-	struct MIDIentry *temp=NULL;
-
-	if(midi_driver == NULL)
-		return;
-
-	while(ptr != NULL)
-	{	//Process all queue entries
-		if(ptr->status == 0)	//If this queued note has not been played yet
-		{
-			if(pos >= ptr->startpos)	//If the current chart position is at or past this note's start position
-			{
-				NOTE_ON_DATA[1]=ptr->note;	//Alter the data sequence to be the appropriate note number
-				midi_driver->raw_midi(NOTE_ON_DATA[0]);
-				midi_driver->raw_midi(NOTE_ON_DATA[1]);
-				midi_driver->raw_midi(NOTE_ON_DATA[2]);
-				ptr->status=1;			//Track that it is playing
-			}
-		}
-		else			//This queued note has already been played
-		{
-			if(pos >= ptr->endpos)	//If the current chart position is at or past this note's stop position
-			{
-				NOTE_OFF_DATA[1]=ptr->note;	//Alter the data sequence to be the appropriate note number
-				midi_driver->raw_midi(NOTE_OFF_DATA[0]);
-				midi_driver->raw_midi(NOTE_OFF_DATA[1]);
-				midi_driver->raw_midi(NOTE_OFF_DATA[2]);
-
-			//Remove this link from the list
-				if(ptr->prev)	//If there's a link that precedes this link
-					ptr->prev->next=ptr->next;	//It now points forward to the next link (if there is one)
-				else
-					MIDIqueue=ptr->next;		//Update head of list
-
-				if(ptr->next)	//If there's a link that follows this link
-					ptr->next->prev=ptr->prev;	//It now points back to the previous link (if there is one)
-				else
-					MIDIqueuetail=ptr->prev;	//Update tail of list
-
-				temp=ptr->next;	//Save the address of the next link (if there is one)
-				free(ptr);
-				ptr=temp;	//Iterate to the link that followed the deleted link
-				continue;	//Restart at top of loop without iterating to the next link
-			}
-		}
-		ptr=ptr->next;	//Point to the next link
-	}
-}
-
-int eof_midi_queue_add(unsigned char note,int startpos,int endpos)
-{
-	eof_log("eof_midi_queue_add() entered");
-
-	struct MIDIentry *ptr=NULL;	//Stores the newly allocated link
-
-//Validate input
-	if(note > 127)
-		return -1;	//return error:  Invalid MIDI note
-	if(startpos >= endpos)
-		return -1;	//return error:  Duration must be > 0
-
-//Allocate and initialize MIDI queue entry
-	ptr=malloc(sizeof(struct MIDIentry));
-	if(ptr == NULL)
-		return -1;	//return error:  Unable to allocate memory
-	ptr->status=0;
-	ptr->note=note;
-	ptr->startpos=startpos;
-	ptr->endpos=endpos;
-	ptr->next=NULL;		//When appended to the end of the list, it will never point forward to anything
-
-//Append to list
-	if(MIDIqueuetail)	//If the list isn't empty
-	{
-		MIDIqueuetail->next=ptr;	//Tail points forward to new link
-		ptr->prev=MIDIqueuetail;	//New link points backward to tail
-		MIDIqueuetail=ptr;		//Update tail
-	}
-	else
-	{
-		MIDIqueue=MIDIqueuetail=ptr;	//This new link is both the head and the tail of the list
-		ptr->prev=NULL;			//New link points backward to nothing
-	}
-
-	return 0;	//return success
-}
-
-void eof_midi_queue_destroy(void)
-{
-	eof_log("eof_midi_queue_destroy() entered");
-
-	struct MIDIentry *ptr=MIDIqueue,*temp=NULL;
-
-	while(ptr != NULL)	//For all links in the list
-	{
-		temp=ptr->next;	//Save address of next link
-		free(ptr);	//Destroy this link
-		ptr=temp;	//Point to next link
-	}
-
-	MIDIqueue=MIDIqueuetail=NULL;
-}
-
-void eof_all_midi_notes_off(void)
-{
-	eof_log("eof_all_midi_notes_off() entered");
-
-	unsigned char ALL_NOTES_OFF[3]={0xB1,123,0};	//Data sequence for a Control Change, controller 123, value 0 (All notes off)
-
-	if(midi_driver)
-	{
-		midi_driver->raw_midi(ALL_NOTES_OFF[0]);
-		midi_driver->raw_midi(ALL_NOTES_OFF[1]);
-		midi_driver->raw_midi(ALL_NOTES_OFF[2]);
-	}
-}
-
-void eof_stop_midi(void)
-{
-	eof_log("eof_stop_midi() entered");
-
-	if(eof_midi_initialized)
-	{
-		eof_all_midi_notes_off();
-		eof_midi_queue_destroy();
-	}
-}
-
-void eof_init_after_load(void)
-{
-	eof_log("\tInitializing after load\neof_init_after_load() entered");
-
-	eof_changes = 0;
-	eof_music_pos = eof_av_delay;
-	eof_music_paused = 1;
-	eof_menu_track_selected_track_number(EOF_TRACK_GUITAR);
-	eof_vocals_selected = 0;
-	eof_undo_last_type = 0;
-	eof_change_count = 0;
-	eof_selected_catalog_entry = 0;
-	eof_calculate_beats(eof_song);
-	eof_detect_difficulties(eof_song);
-	eof_reset_lyric_preview_lines();
-	eof_select_beat(0);
-	eof_prepare_menus();
-	eof_undo_reset();
-	eof_sort_notes(eof_song);
-	eof_fixup_notes(eof_song);
-	eof_fix_window_title();
-	eof_destroy_waveform(eof_waveform);	//If a waveform had already been created, destroy it
-	eof_waveform = NULL;
-	eof_display_waveform = 0;
-	eof_catalog_menu[0].flags = 0;	//Hide the fret catalog by default
-
-	eof_log("\tInitialization after load complete");
-}
-
-void eof_scale_fretboard(unsigned long numlanes)
-{
-	eof_log("eof_scale_fretboard() entered");
-
-	unsigned long ctr;
-	float lanewidth;
-
-	eof_screen_layout.string_space = eof_screen_layout.string_space_unscaled;
-
-	if(!numlanes)	//If 0 was passed, find the number of lanes in the active track
-		numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
-
-	lanewidth = (float)eof_screen_layout.string_space * (4.0 / (numlanes-1));	//This is the correct lane width for either 5 or 6 lanes
-	if(numlanes > 5)
-	{	//If the active track has more than 5 lanes, scale the spacing between the fretboard lanes
-		eof_screen_layout.string_space = (double)eof_screen_layout.string_space * 5.0 / (double)numlanes;
-	}
-
-	for(ctr = 0; ctr < EOF_MAX_FRETS; ctr++)
-	{	//For each fretboard lane after the first is eof_screen_layout.string_space higher than the previous lane
-		eof_screen_layout.note_y[ctr] = 20.0 + ((float)ctr * lanewidth);
-	}
-}
-
-long xchart[EOF_MAX_FRETS] = {0};
-
-void eof_set_3D_lane_positions(unsigned long track)
-{
-//	eof_log("eof_set_3D_lane_positions() entered");
-
-	static unsigned long numlanes = 0;	//This remembers the number of lanes handled by the previous call
-	unsigned long newnumlanes = eof_count_track_lanes(eof_song, track);	//This is the number of lanes in the specified track
-	unsigned long numlaneswidth = 5 - 1;	//By default, the lane width will be based on a 5 lane track
-	unsigned long ctr;
-	float lanewidth = 0.0;
-
-	if(eof_selected_track == EOF_TRACK_BASS)
-	{	//Special case:  The bass track can use a sixth lane but its 3D representation still only draws 5 lanes
-		newnumlanes = 5;
-	}
-	else if(track && (eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
-	{	//Special case:  The drum track renders with only 4 lanes
-		newnumlanes = 4;
-	}
-	else
-	{
-		numlaneswidth = newnumlanes - 1;	//Otherwise, base the lane width on the number of lanes used in the track
-	}
-
-	if(track && (newnumlanes == numlanes))	//If the xchart[] array doesn't need to be updated
-		return;			//Return immediately
-
-	numlanes = newnumlanes;		//Permanently store this as the number of lanes the xchart[] array represents
-	lanewidth = 56.0 * (4.0 / numlaneswidth);
-	if(eof_lefty_mode)
-	{
-		for(ctr = 0; ctr < numlanes; ctr++)
-		{	//Store the fretboard lane positions in reverse order, with respect to the number of lanes in use
-			xchart[ctr] = 48 + (lanewidth * (numlanes - 1 - ctr));
-		}
-	}
-	else
-	{
-		for(ctr = 0; ctr < numlanes; ctr++)
-		{	//Store the fretboard lane positions in normal order
-			xchart[ctr] = 48 + (lanewidth * ctr);
-		}
-	}
-}
-
-long ychart[EOF_MAX_FRETS] = {0};
-
-void eof_set_2D_lane_positions(unsigned long track)
-{
-//	eof_log("eof_set_2D_lane_positions() entered");
-
-	static unsigned long numlanes = 0;		//This remembers the number of lanes handled by the previous call
-	unsigned long newnumlanes, newnumlanes2;
-	unsigned long ctr, ctr2;
-
-	newnumlanes = eof_count_track_lanes(eof_song, eof_selected_track);	//Count the number of lanes in the active track
-	newnumlanes2 = eof_count_track_lanes(eof_song, track);	//Count the number of lanes in that note's track
-	if(newnumlanes > newnumlanes2)
-	{	//Special case (ie. viewing an open bass guitar catalog entry when any other legacy track is active)
-		newnumlanes = newnumlanes2;	//Use the number of lanes in the active track
-	}
-
-	if(track && (newnumlanes == numlanes))	//If the ychart[] array doesn't need to be updated
-		return;			//Return immediately
-
-	numlanes = newnumlanes;		//Permanently store this as the number of lanes the xchart[] array represents
-	if(eof_inverted_notes || (track && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)))
-	{	//If the user selected the inverted notes option OR a pro guitar track is active (force inverted notes display)
-		for(ctr = 0, ctr2 = 0; ctr < EOF_MAX_FRETS; ctr++)
-		{	//Store the fretboard lane positions in reverse order, with respect to the number of lanes in use
-			if(EOF_MAX_FRETS - ctr <= numlanes)
-			{	//If this lane is used in the chart, store it in ychart[] in reverse order
-				ychart[ctr2++] = eof_screen_layout.note_y[EOF_MAX_FRETS - 1 - ctr];
-			}
-		}
-	}
-	else
-	{
-		for(ctr = 0; ctr < EOF_MAX_FRETS; ctr++)
-		{	//Store the fretboard lane positions in normal order
-			ychart[ctr] = eof_screen_layout.note_y[ctr];
-		}
-	}
-}
-
-void eof_start_logging(void)
-{
-	char log_filename[1024] = {0};
-
-	if(eof_log_fp == NULL)
-	{
-		get_executable_name(log_filename, 1024);	//Get the path of the EOF binary that is running
-		replace_filename(log_filename, log_filename, "eof_log.txt", 1024);
-		eof_log_fp = fopen(log_filename, "w");
-
-		if(eof_log_fp == NULL)
-		{
-			allegro_message("Error opening log file for writing");
-		}
-	}
-}
-
-void eof_stop_logging(void)
-{
-	if(eof_log_fp)
-	{
-		fclose(eof_log_fp);
-		eof_log_fp = NULL;
-	}
-}
-
-void eof_log(const char *text)
-{
-	if(eof_log_fp)
-	{	//If logging is enabled and the log file is open
-		fprintf(eof_log_fp, "%s\n", text);
-		fflush(eof_log_fp);
-	}
 }
 
 END_OF_MAIN()

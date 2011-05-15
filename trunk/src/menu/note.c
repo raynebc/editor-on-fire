@@ -10,6 +10,10 @@
 #include "note.h"
 #include "ctype.h"
 
+#ifdef USEMEMWATCH
+#include "../memwatch.h"
+#endif
+
 char eof_solo_menu_mark_text[32] = "&Mark";
 char eof_star_power_menu_mark_text[32] = "&Mark";
 char eof_lyric_line_menu_mark_text[32] = "&Mark";

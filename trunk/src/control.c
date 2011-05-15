@@ -3,6 +3,10 @@
 #include "control.h"
 #include "main.h"
 
+#ifdef USEMEMWATCH
+#include "memwatch.h"
+#endif
+
 void eof_read_controller(EOF_CONTROLLER * cp)
 {
 //	eof_log("eof_read_controller() entered");
@@ -146,7 +150,7 @@ void eof_read_controller(EOF_CONTROLLER * cp)
 
 int eof_controller_set_button(EOF_CONTROLLER_BUTTON * bp)
 {
-	eof_log("eof_controller_set_button() entered");
+	eof_log("eof_controller_set_button() entered", 1);
 
 	int i, j, k;
 	int count = 0;
@@ -255,7 +259,7 @@ int eof_controller_set_button(EOF_CONTROLLER_BUTTON * bp)
 
 void eof_controller_read_button_names(EOF_CONTROLLER * cp)
 {
-	eof_log("eof_controller_read_button_names() entered");
+	eof_log("eof_controller_read_button_names() entered", 1);
 
 	int i;
 
@@ -288,7 +292,7 @@ void eof_controller_read_button_names(EOF_CONTROLLER * cp)
 
 void eof_controller_save_config(EOF_CONTROLLER * cp, char * name)
 {
-	eof_log("eof_controller_save_config() entered");
+	eof_log("eof_controller_save_config() entered", 1);
 
 	int i;
 	char string[256] = {0};
@@ -336,7 +340,7 @@ void eof_controller_save_config(EOF_CONTROLLER * cp, char * name)
 
 void eof_controller_load_config(EOF_CONTROLLER * cp, char * name)
 {
-	eof_log("eof_controller_load_config() entered");
+	eof_log("eof_controller_load_config() entered", 1);
 
 	int i;
 	char string[256] = {0};

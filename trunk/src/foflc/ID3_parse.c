@@ -8,7 +8,7 @@
 #include "ID3_parse.h"
 
 #ifdef USEMEMWATCH
-#include "memwatch.h"
+#include "../memwatch.h"
 #endif
 
 

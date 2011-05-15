@@ -2,6 +2,10 @@
 #include "../agup/agup.h"
 #include "../menu/main.h"
 
+#ifdef USEMEMWATCH
+#include "../memwatch.h"
+#endif
+
 DIALOG eof_main_dialog[] =
 {
    /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */

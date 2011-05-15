@@ -15,8 +15,13 @@
 #include "../ini.h"
 #include "../feedback.h"
 #include "../dialog/proc.h"
+#include "../mix.h"
 #include "file.h"
 #include "song.h"
+
+#ifdef USEMEMWATCH
+#include "../memwatch.h"
+#endif
 
 MENU eof_file_menu[] =
 {
@@ -440,7 +445,7 @@ int eof_menu_file_save_as(void)
 	eof_clear_input();
 	if(returnedfn)
 	{
-		eof_log("\tPerforming \"Save as\"");
+		eof_log("\tPerforming \"Save as\"", 1);
 
 		replace_filename(new_foldername, returnedfn, "", 1024);	//Obtain the chosen destination folder path
 		if(eof_menu_file_new_supplement(new_foldername) == 0)	//If the folder doesn't exist, or the user has decline to overwrite existing files
@@ -646,7 +651,7 @@ int eof_menu_file_save(void)
 		}
 	}
 
-	eof_log("\tSaving chart");
+	eof_log("\tSaving chart", 1);
 
 	return eof_save_helper(NULL);	//Perform "Save" operation to the chart's current path
 }
@@ -777,7 +782,7 @@ int eof_menu_file_midi_import(void)
 	eof_clear_input();
 	if(returnedfn)
 	{
-		eof_log("\tImporting MIDI");
+		eof_log("\tImporting MIDI", 1);
 
 		if(eof_song)
 		{
@@ -824,7 +829,7 @@ int eof_menu_file_midi_import(void)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 
-	eof_log("\tMIDI loaded");
+	eof_log("\tMIDI loaded", 1);
 
 	return 1;
 }
@@ -1145,9 +1150,6 @@ int eof_menu_file_exit(void)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 
-	//Stop the logging system
-	eof_log("Logging stopped during program completion");
-	eof_stop_logging();
 	return 1;
 }
 
@@ -2172,7 +2174,7 @@ int eof_save_helper(char *destfilename)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 
-	eof_log("\tSave completed");
+	eof_log("\tSave completed", 1);
 
 	return 0;	//Return success
 }

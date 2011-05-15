@@ -5,6 +5,10 @@
 #include "../utility.h"
 #include "help.h"
 
+#ifdef USEMEMWATCH
+#include "../memwatch.h"
+#endif
+
 MENU eof_help_menu[] =
 {
     {"&Manual", eof_menu_help_manual, NULL, 0, NULL},
@@ -30,11 +34,11 @@ DIALOG eof_help_dialog[] =
 int eof_menu_help_keys(void)
 {
 	PACKFILE * fp;
-	
+
 	fp = pack_fopen("keys.txt", "r");
 	pack_fread(eof_help_text, file_size_ex("keys.txt"), fp);
 	pack_fclose(fp);
-	
+
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();

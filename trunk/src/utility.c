@@ -3,6 +3,10 @@
 #include "utility.h"
 #include "main.h"	//For logging
 
+#ifdef USEMEMWATCH
+#include "memwatch.h"
+#endif
+
 int eof_chdir(const char * dir)
 {
 	if(dir == NULL)
@@ -70,7 +74,7 @@ void * eof_buffer_file(char * fn)
 
 int eof_copy_file(char * src, char * dest)
 {
- 	eof_log("eof_copy_file() entered");
+ 	eof_log("eof_copy_file() entered", 1);
 
 	PACKFILE * src_fp = NULL;
 	PACKFILE * dest_fp = NULL;
@@ -135,7 +139,7 @@ int eof_check_string(char * tp)
 
 int eof_file_compare(char *file1, char *file2)
 {
- 	eof_log("eof_file_compare() entered");
+ 	eof_log("eof_file_compare() entered", 1);
 
 	uint64_t filesize,ctr;
 	int data1,data2;

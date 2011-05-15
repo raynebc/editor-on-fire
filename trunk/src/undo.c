@@ -5,6 +5,10 @@
 #include "editor.h"
 #include "utility.h"
 
+#ifdef USEMEMWATCH
+#include "memwatch.h"
+#endif
+
 //EOF_UNDO_STATE eof_undo[EOF_MAX_UNDO];
 //EOF_UNDO_STATE eof_redo;
 char * eof_undo_filename[EOF_MAX_UNDO] = {"eof.undo0", "eof.undo1", "eof.undo2", "eof.undo3", "eof.undo4", "eof.undo5", "eof.undo6", "eof.undo7"};
@@ -18,7 +22,7 @@ int eof_redo_type = 0;
 
 int eof_undo_load_state(const char * fn)
 {
- 	eof_log("eof_undo_load_state() entered");
+ 	eof_log("eof_undo_load_state() entered", 1);
 
 	EOF_SONG * sp = NULL;
 	PACKFILE * fp = NULL;
@@ -59,7 +63,7 @@ int eof_undo_load_state(const char * fn)
 
 void eof_undo_reset(void)
 {
- 	eof_log("eof_undo_reset() entered");
+ 	eof_log("eof_undo_reset() entered", 1);
 
 	int i;
 
@@ -74,7 +78,7 @@ void eof_undo_reset(void)
 
 int eof_undo_add(int type)
 {
- 	eof_log("eof_undo_add() entered");
+ 	eof_log("eof_undo_add() entered", 1);
 
 	char fn[1024] = {0};
 
@@ -114,7 +118,7 @@ int eof_undo_add(int type)
 
 int eof_undo_apply(void)
 {
- 	eof_log("eof_undo_apply() entered");
+ 	eof_log("eof_undo_apply() entered", 1);
 
 	char fn[1024] = {0};
 
@@ -166,7 +170,7 @@ int eof_undo_apply(void)
 
 void eof_redo_apply(void)
 {
- 	eof_log("eof_redo_apply() entered");
+ 	eof_log("eof_redo_apply() entered", 1);
 
 	if(eof_redo_count > 0)
 	{

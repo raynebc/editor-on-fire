@@ -1,6 +1,10 @@
 #include <allegro.h>
 #include "ocd3d.h"
 
+#ifdef USEMEMWATCH
+#include "../memwatch.h"
+#endif
+
 /* This module contains basic functions for projecting 3D points for use on a
    2D surface. A little note: the two functions below you should use the same
    pw and ph if you want the scaling to be 1:1, if you use a 3:4 or something
@@ -11,7 +15,7 @@
    z is the z-coordinate of the point in space
    px is the center of the 2d plane
    pw is the width of the 2d plane */
-   
+
 /* internal state of the 3d engine */
 static OCD3D_STATE ocd3d_internal_state;
 
@@ -38,7 +42,7 @@ void ocd3d_restore_state(OCD3D_STATE * sp)
 float ocd3d_project_x(float x, float z)
 {
 	float rx;
-	
+
 	if(z + ocd3d_internal_state.view_w > 0)
 	{
 		rx = ocd3d_internal_state.scale_x * (((x - ocd3d_internal_state.vp_x) * ocd3d_internal_state.view_w) / (z + ocd3d_internal_state.view_w) + ocd3d_internal_state.vp_x);
@@ -58,7 +62,7 @@ float ocd3d_project_x(float x, float z)
 float ocd3d_project_y(float y, float z)
 {
 	float ry;
-	
+
 	if(z + ocd3d_internal_state.view_h > 0)
 	{
 		ry = ocd3d_internal_state.scale_y * (((y - ocd3d_internal_state.vp_y) * ocd3d_internal_state.view_h) / (z + ocd3d_internal_state.view_h) + ocd3d_internal_state.vp_y);
@@ -73,12 +77,12 @@ float ocd3d_project_y(float y, float z)
 void ocd3d_draw_line(BITMAP * bp, float x, float y, float z, float x2, float y2, float z2, int color)
 {
 	float obx, oby, oex, oey;
-	
+
 	obx = ocd3d_project_x(x, z);
 	oex = ocd3d_project_x(x2, z2);
 	oby = ocd3d_project_y(y, z);
 	oey = ocd3d_project_y(y2, z2);
-	
+
 	line(bp, obx, oby, oex, oey, color);
 }
 
@@ -86,7 +90,7 @@ void ocd3d_draw_bitmap(BITMAP * dest, BITMAP * bp, float x, float y, float z)
 {
 	/* upper left and bottom right points in 3d */
 	float obj_x[2], obj_y[2], obj_z[2];
-	
+
 	/* upper left and bottom right points in 2d */
 //	int screen_x[2], screen_y[2];
 	float screen_w, screen_h;
@@ -97,7 +101,7 @@ void ocd3d_draw_bitmap(BITMAP * dest, BITMAP * bp, float x, float y, float z)
 	obj_y[1] = ocd3d_project_y(y + bp->h, z);
 	obj_z[0] = z + dest->w;
 	obj_z[1] = z + dest->h;
-	
+
 	/* clip sprites at z = 0 */
 	if(obj_z[0] > 0)
 	{

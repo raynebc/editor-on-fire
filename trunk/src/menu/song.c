@@ -15,6 +15,10 @@
 #include "../silence.h"
 #include "song.h"
 
+#ifdef USEMEMWATCH
+#include "../memwatch.h"
+#endif
+
 char eof_track_selected_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE+1] = {{0}};
 	//Allow an extra leading space due to the checkmark erasing the first character in each string
 
@@ -1123,7 +1127,7 @@ int eof_menu_track_selected_10(void)
 
 int eof_menu_track_selected_track_number(int tracknum)
 {
-	eof_log("\tChanging active track\neof_menu_track_selected_track_number() entered");
+	eof_log("\tChanging active track\neof_menu_track_selected_track_number() entered", 1);
 
 	unsigned long i;
 

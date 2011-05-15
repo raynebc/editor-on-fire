@@ -32,6 +32,10 @@ Ctrl-c / Ctrl-v: copy/paste.
 #include "undo.h"
 #include "foflc/Lyric_storage.h"
 
+#ifdef USEMEMWATCH
+#include "memwatch.h"
+#endif
+
 int         eof_feedback_step = 0;
 int         eof_feedback_selecting = 0;
 int         eof_feedback_selecting_start_pos = 0;
@@ -41,7 +45,7 @@ int         eof_feedback_note[5] = {0};
 
 int eof_feedback_any_note(void)
 {
-	eof_log("eof_feedback_any_note() entered");
+	eof_log("eof_feedback_any_note() entered", 1);
 
 	int i;
 
@@ -58,7 +62,7 @@ int eof_feedback_any_note(void)
 /* read keys only available to editor (use after song is loaded */
 void eof_editor_logic_feedback(void)
 {
-	eof_log("eof_editor_logic_feedback() entered");
+	eof_log("eof_editor_logic_feedback() entered", 1);
 
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	long fbeat = 0;
@@ -575,7 +579,7 @@ void eof_editor_logic_feedback(void)
 
 struct FeedbackChart *ImportFeedback(char *filename, int *error)
 {
-	eof_log("ImportFeedback() entered");
+	eof_log("ImportFeedback() entered", 1);
 
 	FILE *inf=NULL;
 	char songparsed=0,syncparsed=0,eventsparsed=0;
@@ -1263,7 +1267,7 @@ struct dbTrack *Validate_dB_instrument(char *buffer)
 	//The track strcture is returned, otherwise NULL is returned if the string did not contain a valid
 	//track name.  buffer[] is modified to remove any whitespace after the closing bracket
 
-	eof_log("Validate_dB_instrument() entered");
+	eof_log("Validate_dB_instrument() entered", 1);
 
 	unsigned long index=0;	//Used to index into buffer
 	char *endbracket=NULL;	//The pointer to the end bracket
@@ -1433,7 +1437,7 @@ struct dbTrack *Validate_dB_instrument(char *buffer)
 
 void DestroyFeedbackChart(struct FeedbackChart *ptr, char freestruct)
 {
-	eof_log("DestroyFeedbackChart() entered");
+	eof_log("DestroyFeedbackChart() entered", 1);
 
 	struct dBAnchor *anchorptr;	//Conductor for the anchors linked list
 	struct dbText *eventptr;	//Conductor for the events linked list

@@ -1,10 +1,10 @@
 /* awin95.c
- * 
+ *
  * This file is part of the Allegro GUI Un-uglification Project.
  * It emulates the default look of the Win95 widget set.
- * 
+ *
  * Widgets created by Robert J Ohannessian.
- * 
+ *
  * Window frames adapted from DIME by Sven Sandberg, by Peter Wang.
  *
  * Many changes by David A. Capello.
@@ -14,6 +14,10 @@
 #include <allegro.h>
 #include "awin95.h"
 #include "agupitrn.h"
+
+#ifdef USEMEMWATCH
+#include "../memwatch.h"
+#endif
 
 
 /*----------------------------------------------------------------------*/
@@ -56,7 +60,7 @@ static BITMAP *generate_bitmap(AL_CONST char *templat[], int w, int h)
     BITMAP *bmp = create_bitmap(w, h);
     int x, y;
 
-    for (y = 0; y < h; y++) for (x = 0; x < w; x++) 
+    for (y = 0; y < h; y++) for (x = 0; x < w; x++)
 	switch (templat[y][x]) {
 	    case '.': putpixel(bmp, x, y, white); break;
 	    case 'X': putpixel(bmp, x, y, black); break;
@@ -64,7 +68,7 @@ static BITMAP *generate_bitmap(AL_CONST char *templat[], int w, int h)
 	    case 'a': putpixel(bmp, x, y, hshadow); break;
 	    case ' ': putpixel(bmp, x, y, bitmap_mask_color(bmp)); break;
 	}
-    
+
     return bmp;
 }
 
@@ -142,12 +146,12 @@ static void win95_bevel(BITMAP *bmp, int x, int y, int w, int h, int state)
 	    vline(bmp, x+w-2, y+2, y+h-2, nshadow);
 	    rect(bmp, x, y, x+w-1, y+h-1, black);
 	    break;
-	    
+
 	case 2: /* pressed */
 	    rect(bmp, x, y, x+w-1, y+h-1, black);
 	    rect(bmp, x+1, y+1, x+w-2, y+h-2, nshadow);
 	    break;
-	    
+
 	case 3: /* highlight and pressed */
 	    rect(bmp, x, y, x+w-1, y+h-1, black);
 	    rect(bmp, x+1, y+1, x+w-2, y+h-2, nshadow);
@@ -473,7 +477,7 @@ int d_awin95_icon_proc(int msg, DIALOG *d, int c)
 	BITMAP *bmp = gui_get_screen();
 	BITMAP *img = (BITMAP *)d->dp;
 	int x = 0;
-	
+
 	if (d->flags & D_SELECTED)
 	    x |= 2;
 	if (d->flags & D_GOTFOCUS)
@@ -484,7 +488,7 @@ int d_awin95_icon_proc(int msg, DIALOG *d, int c)
 	stretch_sprite(bmp, img, d->x+2, d->y+2, d->w-4, d->h-4);
 	return D_O_K;
     }
-    
+
     return d_awin95_button_proc(msg, d, c);
 }
 
@@ -518,7 +522,7 @@ int d_awin95_edit_proc(int msg, DIALOG *d, int c)
 	{
 	    x = 2;
     }
-	
+
 	b = 0;	  /* num of chars to be blitted */
 	/* get the part of the string to be blitted */
 	for (p = d->d2; p >= 0; p--) {
@@ -531,7 +535,7 @@ int d_awin95_edit_proc(int msg, DIALOG *d, int c)
 
 	/* see if length of text is too wide */
 	if (x <= d->w-2) {
-	    b = l; 
+	    b = l;
 	    if(text_length(font, s) <= d->w - 4)
 	    {
 	    	p = 0;
@@ -539,8 +543,8 @@ int d_awin95_edit_proc(int msg, DIALOG *d, int c)
 	}
 	else {
 	    b--;
-	    p = d->d2-b+1; 
-	    b = d->d2; 
+	    p = d->d2-b+1;
+	    b = d->d2;
 	}
 	if(p < 0)
 	{
@@ -703,7 +707,7 @@ int d_awin95_textbox_proc(int msg, DIALOG *d, int c)
 	height = (d->h-8) / text_height(font);
 
 	/* tell the object to sort of draw, but only calculate the listsize */
-	_draw_textbox((char *)d->dp, &d->d1, 
+	_draw_textbox((char *)d->dp, &d->d1,
 		      0, /* DONT DRAW anything */
 		      d->d2, !(d->flags & D_SELECTED), 8,
 		      d->x, d->y, d->w, d->h,
@@ -729,7 +733,7 @@ int d_awin95_textbox_proc(int msg, DIALOG *d, int c)
 	win95_draw_scrollable_frame(d, d->d1, d->d2, height);
 	return D_O_K;
     }
-    
+
     return d_textbox_proc(msg, d, c);
 }
 
@@ -757,7 +761,7 @@ int d_awin95_slider_proc(int msg, DIALOG *d, int c)
 
 	/* draw background */
 	win95_box(bmp, d->x, d->y, d->w, d->h, 1);
-	
+
 	/* now draw the handle */
 	if (vert) {
 	    slx = d->x+2;
@@ -770,12 +774,12 @@ int d_awin95_slider_proc(int msg, DIALOG *d, int c)
 	    slw = hh-1-3;
 	    slh = d->h-1-3;
 	}
-	    
+
 	win95_box(bmp, slx, sly, slw, slh, 0);
 
 	return D_O_K;
     }
-    
+
     return d_slider_proc(msg, d, c);
 }
 
@@ -818,7 +822,7 @@ static void win95_draw_menu_item(MENU *m, int x, int y, int w, int h, int bar, i
     int fg, bg;
     int i, j;
     char buf[256], *tok;
-    
+
     if (m->flags & D_DISABLED) {
 	fg = nshadow;
 	bg = normal;
@@ -928,14 +932,14 @@ static void draw_window_title(DIALOG *d, AL_CONST char *text)
 		 d->y + border_thickness + 1 + internal_border_thickness,
 		 d->w - 2 * (border_thickness + 1 + internal_border_thickness),
 		 white, blue);
-    hline(bmp, 
+    hline(bmp,
 	  d->x + border_thickness, d->y + border_thickness,
-	  d->x + d->w - border_thickness - 2, 
+	  d->x + d->w - border_thickness - 2,
 	  nshadow);
     vline(bmp,
 	  d->x + border_thickness,
 	  d->y + border_thickness,
-	  d->y + border_thickness + 2 * internal_border_thickness + height, 
+	  d->y + border_thickness + 2 * internal_border_thickness + height,
 	  nshadow);
     hline(bmp,
 	  d->x + border_thickness,
@@ -979,7 +983,7 @@ void awin95_init(void)
     hshadow = makecol(0xa5, 0xa5, 0xa5);
     nshadow = makecol(0x95, 0x95, 0x95);
     blue = makecol(49, 106, 197);
-    
+
     awin95_fg_color = black;
     awin95_bg_color = normal;
     awin95_mg_color = nshadow;

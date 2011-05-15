@@ -5,6 +5,10 @@
 #include "song.h"
 #include "main.h"
 
+#ifdef USEMEMWATCH
+#include "memwatch.h"
+#endif
+
 struct wavestruct *eof_waveform=NULL;	//Stores the waveform data
 char eof_display_waveform=0;			//Specifies whether the waveform display is enabled
 char eof_waveform_renderlocation=0;		//Specifies where and how high the graph will render (0 = fretboard area, 1 = editor window)
@@ -73,7 +77,7 @@ int eof_waveform_slice_mean(struct waveformslice *left,struct waveformslice *rig
 
 void eof_destroy_waveform(struct wavestruct *ptr)
 {
- 	eof_log("eof_destroy_waveform() entered");
+ 	eof_log("eof_destroy_waveform() entered", 1);
 
 	if(ptr)
 	{
@@ -262,7 +266,7 @@ void eof_render_waveform_line(struct wavestruct *waveform,struct waveformchannel
 #define EOF_DEBUG_WAVEFORM
 struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long slicelength)
 {
- 	eof_log("\tGenerating waveform\neof_create_waveform() entered");
+ 	eof_log("\tGenerating waveform\neof_create_waveform() entered", 1);
 
 	ALOGG_OGG *oggstruct=NULL;
 	SAMPLE *audio=NULL;
@@ -410,7 +414,7 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 		return NULL;	//Return error
 	}
 
-	eof_log("\tWaveform generated");
+	eof_log("\tWaveform generated", 1);
 
 	return waveform;	//Return waveform data
 }

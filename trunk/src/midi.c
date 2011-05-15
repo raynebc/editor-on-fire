@@ -10,6 +10,10 @@
 #include "foflc/Lyric_storage.h"	//For RBA extraction
 #include "foflc/Midi_parse.h"
 
+#ifdef USEMEMWATCH
+#include "memwatch.h"
+#endif
+
 #define EOF_MIDI_TIMER_FREQUENCY  40
 #define EOF_RBN_COMPATIBILITY		//Alters MIDI export logic to create a MIDI more suitable for use with the "Magma" RBN tool
 
@@ -19,7 +23,7 @@ static char eof_midi_note_status[128] = {0};	//Tracks the on/off status of notes
 
 void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int channel)
 {	//To avoid rounding issues during timing conversion, this should be called with the MIDI tick position of the event being stored
-//	eof_log("eof_add_midi_event() entered");
+	eof_log("eof_add_midi_event() entered", 2);	//Only log this if verbose logging is on
 
 	eof_midi_event[eof_midi_events] = malloc(sizeof(EOF_MIDI_EVENT));
 	if(eof_midi_event[eof_midi_events])
@@ -43,7 +47,7 @@ void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int
 
 void eof_add_midi_lyric_event(unsigned long pos, char * text)
 {	//To avoid rounding issues during timing conversion, this should be called with the MIDI tick position of the event being stored
-//	eof_log("eof_add_midi_lyric_event() entered");
+	eof_log("eof_add_midi_lyric_event() entered", 2);	//Only log this if verbose logging is on
 
 	if(text)
 	{
@@ -60,7 +64,7 @@ void eof_add_midi_lyric_event(unsigned long pos, char * text)
 
 void eof_clear_midi_events(void)
 {
-	eof_log("eof_clear_midi_events() entered");
+	eof_log("eof_clear_midi_events() entered", 1);
 
 	unsigned long i;
 	for(i = 0; i < eof_midi_events; i++)
@@ -104,7 +108,7 @@ void WriteVarLen(unsigned long value, PACKFILE * fp)
 
 unsigned long ReadVarLen(PACKFILE * fp)
 {
-	eof_log("ReadVarLen() entered");
+	eof_log("ReadVarLen() entered", 1);
 
 	unsigned long value;
 	unsigned char c;
@@ -195,7 +199,7 @@ int qsort_helper3(const void * e1, const void * e2)
 /* sorter for MIDI events so I can ouput proper MTrk data */
 int qsort_helper4(const void * e1, const void * e2)
 {
-	eof_log("qsort_helper4() entered");
+	eof_log("qsort_helper4() entered", 1);
 
     EOF_MIDI_EVENT ** thing1 = (EOF_MIDI_EVENT **)e1;
     EOF_MIDI_EVENT ** thing2 = (EOF_MIDI_EVENT **)e2;
@@ -215,7 +219,7 @@ int qsort_helper4(const void * e1, const void * e2)
 
 long eof_figure_beat(double pos)
 {
-	eof_log("eof_figure_beat() entered");
+	eof_log("eof_figure_beat() entered", 1);
 
 	long i;
 
@@ -236,7 +240,7 @@ long eof_figure_beat(double pos)
 
 double eof_calculate_bpm_absolute(double pos)
 {
-	eof_log("eof_calculate_bpm_absolute() entered");
+	eof_log("eof_calculate_bpm_absolute() entered", 1);
 
 	long beat = eof_figure_beat(pos);
 	if(beat >= 0)
@@ -248,7 +252,7 @@ double eof_calculate_bpm_absolute(double pos)
 
 int eof_check_bpm_change(unsigned long start, unsigned long end)
 {
-	eof_log("eof_check_bpm_change() entered");
+	eof_log("eof_check_bpm_change() entered", 1);
 
 	long startbeat = eof_figure_beat(start);
 	long endbeat = eof_figure_beat(end);
@@ -287,7 +291,7 @@ int eof_check_bpm_change(unsigned long start, unsigned long end)
 //The simplified formula is deltas=realtime * timedivision * 1000 / ppqn
 double eof_calculate_delta(double start, double end)
 {
-	eof_log("eof_calculate_delta() entered");
+	eof_log("eof_calculate_delta() entered", 1);
 
 	long i;
 	long startbeat = eof_figure_beat(start);
@@ -322,7 +326,7 @@ double eof_calculate_delta(double start, double end)
 
 unsigned long eof_count_tracks(void)
 {
-	eof_log("eof_count_tracks() entered");
+	eof_log("eof_count_tracks() entered", 1);
 
 	unsigned long i;
 	unsigned long count = 0;
@@ -344,7 +348,7 @@ unsigned long eof_count_tracks(void)
    voila, correctly formatted MIDI file */
 int eof_export_midi(EOF_SONG * sp, char * fn)
 {
-	eof_log("eof_export_midi() entered");
+	eof_log("eof_export_midi() entered", 1);
 
 	char header[14] = {'M', 'T', 'h', 'd', 0, 0, 0, 6, 0, 1, 0, 1, (EOF_DEFAULT_TIME_DIVISION >> 8), (EOF_DEFAULT_TIME_DIVISION & 0xFF)}; //The last two bytes are the time division
 	char notetempname[EOF_TRACKS_MAX+1][15];
@@ -1664,7 +1668,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp)
 {
-	eof_log("eof_build_tempo_list() entered");
+	eof_log("eof_build_tempo_list() entered", 1);
 
 	unsigned long ctr;
 	struct Tempo_change *list=NULL;	//The linked list
@@ -1709,7 +1713,7 @@ struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp)
 
 struct Tempo_change *eof_add_to_tempo_list(unsigned long delta,double realtime,double BPM,struct Tempo_change *ptr)
 {
-//	eof_log("eof_add_to_tempo_list() entered");
+	eof_log("eof_add_to_tempo_list() entered", 2);	//Only log this if verbose logging is on
 
 	struct Tempo_change *temp=NULL;
 	struct Tempo_change *cond=NULL;	//A conductor for the linked list
@@ -1738,7 +1742,7 @@ struct Tempo_change *eof_add_to_tempo_list(unsigned long delta,double realtime,d
 
 void eof_destroy_tempo_list(struct Tempo_change *ptr)
 {
-	eof_log("eof_destroy_tempo_list() entered");
+	eof_log("eof_destroy_tempo_list() entered", 1);
 
 	struct Tempo_change *temp=NULL;
 
@@ -1814,7 +1818,7 @@ unsigned long eof_ConvertToDeltaTime(double realtime,struct Tempo_change *anchor
 
 int eof_extract_rba_midi(const char * source, const char * dest)
 {
-	eof_log("eof_extract_rba_midi() entered");
+	eof_log("eof_extract_rba_midi() entered", 1);
 
 	FILE *fp=NULL;
 	FILE *tempfile=NULL;
@@ -1893,7 +1897,7 @@ int eof_extract_rba_midi(const char * source, const char * dest)
 
 EOF_MIDI_TS_LIST * eof_create_ts_list(void)
 {
-//	eof_log("eof_create_ts_list() entered");
+	eof_log("eof_create_ts_list() entered", 1);
 
 	unsigned long ctr;
 
@@ -1934,7 +1938,7 @@ void eof_midi_add_ts_deltas(EOF_MIDI_TS_LIST * changes, unsigned long pos, unsig
 
 void eof_midi_add_ts_realtime(EOF_MIDI_TS_LIST * changes, double pos, unsigned long num, unsigned long den, unsigned long track)
 {
-	eof_log("eof_midi_add_ts_realtime() entered");
+	eof_log("eof_midi_add_ts_realtime() entered", 1);
 
 	if(changes && (changes->changes < EOF_MAX_TS) && (track == 0))
 	{	//For now, only store time signatures in track 0
@@ -1954,7 +1958,7 @@ void eof_midi_add_ts_realtime(EOF_MIDI_TS_LIST * changes, double pos, unsigned l
 
 void eof_destroy_ts_list(EOF_MIDI_TS_LIST *ptr)
 {
-//	eof_log("eof_destroy_ts_list() entered");
+	eof_log("eof_destroy_ts_list() entered", 1);
 
 	unsigned long i;
 
@@ -1970,7 +1974,7 @@ void eof_destroy_ts_list(EOF_MIDI_TS_LIST *ptr)
 
 EOF_MIDI_TS_LIST *eof_build_ts_list(struct Tempo_change *anchorlist)
 {
-	eof_log("eof_build_ts_list() entered");
+	eof_log("eof_build_ts_list() entered", 1);
 
 	unsigned long ctr;
 	unsigned num=4,den=4;			//Stores the current time signature
@@ -2098,7 +2102,7 @@ int eof_apply_ts(unsigned num,unsigned den,int beatnum,EOF_SONG *sp,char undo)
 
 int eof_dump_midi_track(const char *inputfile,PACKFILE *outf)
 {
-	eof_log("eof_dump_midi_track() entered");
+	eof_log("eof_dump_midi_track() entered", 1);
 
 	unsigned long track_length;
 	PACKFILE *inf = NULL;
