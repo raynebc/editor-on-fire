@@ -19,6 +19,10 @@
 #include "midi.h"
 #include "waveform.h"
 
+#ifdef USEMEMWATCH
+#include "memwatch.h"
+#endif
+
 int         eof_held_1 = 0;
 int         eof_held_2 = 0;
 int         eof_held_3 = 0;
@@ -52,7 +56,7 @@ float eof_pos_distance(float p1, float p2)
 
 void eof_select_beat(int beat)
 {
-	eof_log("eof_select_beat() entered");
+	eof_log("eof_select_beat() entered", 1);
 
 	int i;
 	int beat_counter = 0;
@@ -2098,7 +2102,7 @@ void eof_read_editor_keys(void)
 
 void eof_editor_drum_logic(void)
 {
-	eof_log("eof_editor_drum_logic() entered");
+	eof_log("eof_editor_drum_logic() entered", 1);
 
 	int bitmask;	//Used for simplifying note placement logic
 	EOF_NOTE * new_note = NULL;
@@ -3872,7 +3876,7 @@ unsigned long eof_determine_piano_roll_left_edge(void)
 
 unsigned long eof_determine_piano_roll_right_edge(void)
 {
-	eof_log("eof_determine_piano_roll_right_edge() entered");
+	eof_log("eof_determine_piano_roll_right_edge() entered", 1);
 
 	unsigned long pos = eof_music_pos / eof_zoom;
 
@@ -4297,7 +4301,7 @@ void eof_render_editor_window_common2(void)
 
 void eof_mark_new_note_as_cymbal(EOF_SONG *sp, unsigned long track, unsigned long notenum)
 {	//Perform the eof_mark_edited_note_as_cymbal() logic, applying cymbal status to all relevant frets in the note
-	eof_log("eof_mark_new_note_as_cymbal() entered");
+	eof_log("eof_mark_new_note_as_cymbal() entered", 1);
 
 	if(sp)
 	{
@@ -4307,7 +4311,7 @@ void eof_mark_new_note_as_cymbal(EOF_SONG *sp, unsigned long track, unsigned lon
 
 void eof_mark_edited_note_as_cymbal(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long bitmask)
 {
-	eof_log("eof_mark_edited_note_as_cymbal() entered");
+	eof_log("eof_mark_edited_note_as_cymbal() entered", 1);
 
 	unsigned long tracknum;
 
@@ -4337,7 +4341,7 @@ void eof_mark_edited_note_as_cymbal(EOF_SONG *sp, unsigned long track, unsigned 
 
 void eof_mark_new_note_as_double_bass(EOF_SONG *sp, unsigned long track, unsigned long notenum)
 {
-	eof_log("eof_mark_new_note_as_double_bass() entered");
+	eof_log("eof_mark_new_note_as_double_bass() entered", 1);
 
 	unsigned long tracknum;
 

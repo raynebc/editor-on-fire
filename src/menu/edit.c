@@ -8,6 +8,10 @@
 #include "edit.h"
 #include "song.h"
 
+#ifdef USEMEMWATCH
+#include "../memwatch.h"
+#endif
+
 MENU eof_edit_paste_from_menu[] =
 {
     {"&Supaeasy", eof_menu_edit_paste_from_supaeasy, NULL, 0, NULL},

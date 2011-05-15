@@ -25,6 +25,10 @@
 	HANDLE hSema;
 #endif
 
+#ifdef USEMEMWATCH
+#include "../memwatch.h"
+#endif
+
 volatile int tickcount = 0;
 int vsync_ticks = 0;
 int sys_active = 0;

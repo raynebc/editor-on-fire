@@ -27,6 +27,10 @@
 #define snprintf _snprintf
 #endif
 
+#ifdef USEMEMWATCH
+#include "../memwatch.h"
+#endif
+
 /* internally recognized bitmap elements */
 enum B_ELEMENT
 {
@@ -915,10 +919,10 @@ abitmap_draw_menu_item (MENU * m, int x, int y, int w, int h, int bar,
     {
         /* Draw the menu background. */
         if (bar)
-            abitmap_draw_bmp (bmp, &theme->bitmaps[B_MENUBAR][c], last_x, last_y, last_w, 
+            abitmap_draw_bmp (bmp, &theme->bitmaps[B_MENUBAR][c], last_x, last_y, last_w,
 last_h);
         else
-            abitmap_draw_bmp (bmp, &theme->bitmaps[B_MENU][c], last_x, last_y, last_w, 
+            abitmap_draw_bmp (bmp, &theme->bitmaps[B_MENU][c], last_x, last_y, last_w,
 last_h);
         menu_done = TRUE;
     }
@@ -1411,12 +1415,12 @@ struct AGUP_THEME *agup_load_bitmap_theme (char const *path, DATAFILE *datafile)
     if (dat != datafile)
         unload_datafile (dat);
     box = get_config_string ("agup.cfg", "box", NULL);
-    name = strdup (get_config_string ("agup.cfg", "name", "unnamed")); 
+    name = strdup (get_config_string ("agup.cfg", "name", "unnamed"));
     pop_config_state ();
 
     if (!box)
     {
-        free (name); 
+        free (name);
         return NULL;
     }
 

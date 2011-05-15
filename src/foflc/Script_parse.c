@@ -7,7 +7,7 @@
 #include "Lyric_storage.h"
 
 #ifdef USEMEMWATCH
-#include <memwatch.h>
+#include "../memwatch.h"
 #endif
 
 

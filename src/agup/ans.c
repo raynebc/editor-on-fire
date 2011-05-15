@@ -11,6 +11,10 @@
 #include "ans.h"
 #include "agupitrn.h"
 
+#ifdef USEMEMWATCH
+#include "../memwatch.h"
+#endif
+
 
 /*----------------------------------------------------------------------*/
 /* Recommend fg/bg colors                                               */

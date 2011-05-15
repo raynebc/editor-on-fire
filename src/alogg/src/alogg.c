@@ -13,6 +13,10 @@
 #include "vorbis/vorbisfile.h"
 #include "vorbis/codec.h"
 
+#ifdef USEMEMWATCH
+#include "../../memwatch.h"
+#endif
+
 
 /* standard ALOGG_OGG structure */
 
@@ -218,7 +222,7 @@ ALOGG_OGG *alogg_create_ogg_from_buffer(void *data, int data_len) {
     ogg->stereo = FALSE;
   ogg->freq = vi->rate;
   ogg->bitrate = vi->bitrate_nominal;
- 
+
   return ogg;
 }
 
@@ -264,7 +268,7 @@ ALOGG_OGG *alogg_create_ogg_from_file(FILE *f) {
   else
     ogg->stereo = FALSE;
   ogg->freq = vi->rate;
- 
+
   return ogg;
 }
 
@@ -272,11 +276,11 @@ ALOGG_OGG *alogg_create_ogg_from_file(FILE *f) {
 void alogg_destroy_ogg(ALOGG_OGG *ogg) {
   if (ogg == NULL)
     return;
-  
+
   alogg_stop_ogg(ogg);          /* note alogg_stop_ogg will also remove */
                                 /* autopolling interrupts */
   ov_clear(&(ogg->vf));
-  free(ogg);  
+  free(ogg);
 }
 
 int alogg_play_ogg(ALOGG_OGG *ogg, int buffer_len, int vol, int pan) {
@@ -294,7 +298,7 @@ int alogg_play_ex_ogg(ALOGG_OGG *ogg, int buffer_len, int vol, int pan, int spee
   /* check the buffer is big enough*/
   if (buffer_len < 1024)
     return ALOGG_PLAY_BUFFERTOOSMALL;
-   
+
   /* create a new audiostream and play it */
   samples = buffer_len / (ogg->stereo ? 2 : 1) / 2; /* / 2 = 16 bits samples */
   ogg->audiostream = play_audio_stream(samples, 16, ogg->stereo, ogg->freq, vol, pan);
@@ -556,7 +560,7 @@ SAMPLE *alogg_create_sample_from_ogg(ALOGG_OGG *ogg) {
   /* first we need to calculate the len of the sample in bytes */
   sample_len = ov_pcm_total(&(ogg->vf), -1);
   sample_len_bytes = (sample_len * (ogg->stereo ? 2 : 1)) * 2; /* / 2 = 16 bits */
-  
+
   /* create the sample */
   sample = create_sample(16, ogg->stereo, ogg->freq, sample_len);
 
@@ -874,14 +878,14 @@ ALOGG_OGGSTREAM *alogg_create_oggstream(void *first_data_buffer, int data_buffer
 void alogg_destroy_oggstream(ALOGG_OGGSTREAM *ogg) {
   if (ogg == NULL)
     return;
-  
+
   alogg_stop_oggstream(ogg);          /* note alogg_stop_oggstream will */
                                       /* remove autopolling interrupts */
   ov_clear(&(ogg->vf));
   free(ogg->full_databuf);
   free(ogg->databuf1);
   free(ogg->databuf2);
-  free(ogg);  
+  free(ogg);
 }
 
 
@@ -892,7 +896,7 @@ int alogg_play_oggstream(ALOGG_OGGSTREAM *ogg, int buffer_len, int vol, int pan)
 
 int alogg_play_ex_oggstream(ALOGG_OGGSTREAM *ogg, int buffer_len, int vol, int pan, int speed) {
   int samples;
- 
+
   /* continue only if we are not already playing it */
   if (alogg_is_playing_oggstream(ogg))
     return ALOGG_OK;
@@ -900,7 +904,7 @@ int alogg_play_ex_oggstream(ALOGG_OGGSTREAM *ogg, int buffer_len, int vol, int p
   /* check the buffer is big enough*/
   if (buffer_len < 1024)
     return ALOGG_PLAY_BUFFERTOOSMALL;
-   
+
   /* create a new audiostream and play it */
   samples = buffer_len / (ogg->stereo ? 2 : 1) / 2; /* / 2 = 16 bits samples */
   ogg->audiostream = play_audio_stream(samples, 16, ogg->stereo, ogg->freq, vol, pan);

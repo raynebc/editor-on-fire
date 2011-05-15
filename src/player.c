@@ -5,9 +5,13 @@
 #include "mix.h"
 #include "player.h"
 
+#ifdef USEMEMWATCH
+#include "memwatch.h"
+#endif
+
 void eof_music_play(void)
 {
-	eof_log("eof_music_play() entered");
+	eof_log("eof_music_play() entered", 1);
 
 	int speed = eof_playback_speed;
 	unsigned long i;
@@ -28,7 +32,7 @@ void eof_music_play(void)
 	}
 	if(eof_music_paused)
 	{
-		eof_log("\tStopping playback");
+		eof_log("\tStopping playback", 1);
 		eof_stop_midi();
 		alogg_stop_ogg(eof_music_track);
 		eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
@@ -44,7 +48,7 @@ void eof_music_play(void)
 	}
 	else
 	{
-		eof_log("\tStarting playback");
+		eof_log("\tStarting playback", 1);
 		if(key[KEY_S] && (eof_count_selected_notes(NULL, 0) > 0))
 		{
 			eof_music_end_pos = 0;
@@ -111,7 +115,7 @@ void eof_music_play(void)
 
 void eof_catalog_play(void)
 {
-	eof_log("eof_catalog_play() entered");
+	eof_log("eof_catalog_play() entered", 1);
 
 	if(eof_song->catalog->entries > 0)
 	{
@@ -148,7 +152,7 @@ void eof_catalog_play(void)
 
 void eof_music_seek(unsigned long pos)
 {
-	eof_log("eof_music_seek() entered");
+	eof_log("eof_music_seek() entered", 1);
 
 	alogg_seek_abs_msecs_ogg(eof_music_track, pos + eof_av_delay);
 	eof_music_pos = pos + eof_av_delay;
@@ -158,7 +162,7 @@ void eof_music_seek(unsigned long pos)
 
 void eof_music_rewind(void)
 {
-	eof_log("eof_music_rewind() entered");
+	eof_log("eof_music_rewind() entered", 1);
 
 	int amount = 0;
 	eof_stop_midi();
@@ -192,7 +196,7 @@ void eof_music_rewind(void)
 
 void eof_music_forward(void)
 {
-	eof_log("eof_music_forward() entered");
+	eof_log("eof_music_forward() entered", 1);
 
 	eof_stop_midi();
 	if(!eof_music_catalog_playback)

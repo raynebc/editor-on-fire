@@ -1,9 +1,9 @@
 /* abeos.c
- * 
+ *
  * This file is part of the Allegro GUI Un-uglification Project.
  * It emulates the look of the original BeOS GUI (the GUI you don't like
  * if you don't like yellow).
- * 
+ *
  * Elias Pschernig <elias@users.sourceforge.net>
  *
  * Note1: Auto-formatted with "cindent -bli0 -cli2 -i2 -cbi0 -npro -nut"
@@ -14,6 +14,10 @@
 #include <allegro.h>
 #include "abeos.h"
 #include "agupitrn.h"
+
+#ifdef USEMEMWATCH
+#include "../memwatch.h"
+#endif
 
 /*----------------------------------------------------------------------*/
 /* Recommend fg/mg/bg colors                                            */

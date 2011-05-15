@@ -7,6 +7,10 @@
 #include "menu/beat.h"
 #include "menu/file.h"
 
+#ifdef USEMEMWATCH
+#include "memwatch.h"
+#endif
+
 /* convert Feedback chart time to milliseconds for use with EOF */
 static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chartpos)
 {
@@ -61,7 +65,7 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 
 EOF_SONG * eof_import_chart(const char * fn)
 {
-	eof_log("\tImporting Feedback chart\neof_import_chart() entered");
+	eof_log("\tImporting Feedback chart\neof_import_chart() entered", 1);
 
 	struct FeedbackChart * chart = NULL;
 	EOF_SONG * sp = NULL;
@@ -78,6 +82,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	{
 		return NULL;
 	}
+	eof_log_level &= ~2;	//Disable verbose logging
 	chart = ImportFeedback((char *)fn, &err);
 	if(chart == NULL)
 	{
@@ -353,7 +358,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 	}
 	eof_selected_ogg = 0;
 
-	eof_log("\tFeedback import completed");
+	eof_log("\tFeedback import completed", 1);
 
+	eof_log_level |= 2;	//Enable verbose logging
 	return sp;
 }

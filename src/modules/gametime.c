@@ -5,6 +5,10 @@
 	#include <winalleg.h>
 	#include "gametime.h"
 
+#ifdef USEMEMWATCH
+#include "../memwatch.h"
+#endif
+
 	static unsigned int clocks_per_tic = 1;
 	static unsigned int base_clock;
 	int tic_counter;
@@ -69,7 +73,7 @@
 	{
 		tic_counter++;
 	}
-	
+
 	int gametime_init(unsigned int freq)
 	{
 		install_int_ex(gametime_ticker, BPS_TO_TIMER(freq));

@@ -2,6 +2,10 @@
 #include "aalg.h"
 #include "agupitrn.h"
 
+#ifdef USEMEMWATCH
+#include "../memwatch.h"
+#endif
+
 int d_aalg_push_proc(int msg, DIALOG *d, int c)
 {
    int ret = D_O_K;

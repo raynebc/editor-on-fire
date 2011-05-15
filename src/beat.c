@@ -1,11 +1,15 @@
 #include "main.h"
 #include "beat.h"
 
+#ifdef USEMEMWATCH
+#include "memwatch.h"
+#endif
+
 long eof_get_beat(EOF_SONG * sp, unsigned long pos)
 {
 	long i;
 
-	eof_log("eof_get_beat() entered");
+	eof_log("eof_get_beat() entered", 1);
 
 	if(!sp)
 	{
@@ -31,7 +35,7 @@ long eof_get_beat(EOF_SONG * sp, unsigned long pos)
 
 long eof_get_beat_length(EOF_SONG * sp, int beat)
 {
-	eof_log("eof_get_beat_length() entered");
+	eof_log("eof_get_beat_length() entered", 1);
 
 	if(!sp)
 	{
@@ -54,7 +58,7 @@ void eof_calculate_beats(EOF_SONG * sp)
 	double beat_length;
 	unsigned long cbeat = 0;
 
-	eof_log("eof_calculate_beats() entered");
+	eof_log("eof_calculate_beats() entered", 1);
 
 	if(!sp)
 	{
@@ -119,7 +123,7 @@ void eof_calculate_beats(EOF_SONG * sp)
 
 int eof_beat_is_anchor(EOF_SONG * sp, int cbeat)
 {
-	eof_log("eof_beat_is_anchor() entered");
+	eof_log("eof_beat_is_anchor() entered", 1);
 
 	if(cbeat >= EOF_MAX_BEATS)	//Bounds check
 		return 0;
@@ -195,7 +199,7 @@ long eof_find_next_anchor(EOF_SONG * sp, unsigned long cbeat)
 
 void eof_realign_beats(EOF_SONG * sp, int cbeat)
 {
-	eof_log("eof_realign_beats() entered");
+	eof_log("eof_realign_beats() entered", 1);
 
 	int i;
 	int last_anchor = eof_find_previous_anchor(sp, cbeat);
@@ -236,7 +240,7 @@ void eof_realign_beats(EOF_SONG * sp, int cbeat)
 
 void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 {
-//	eof_log("eof_recalculate_beats() entered");
+	eof_log("eof_recalculate_beats() entered", 2);	//Only log this if verbose logging is on
 
 	int i;
 	int last_anchor = eof_find_previous_anchor(sp, cbeat);

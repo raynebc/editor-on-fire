@@ -5,6 +5,10 @@
 #include "ini.h"		//For eof_difficulty_ini_tags[]
 #include "main.h"		//For logging
 
+#ifdef USEMEMWATCH
+#include "memwatch.h"
+#endif
+
 typedef struct
 {
 
@@ -20,7 +24,7 @@ int eof_import_ini_settings = 0;
  * the ini files since it looks like they are formatted correctly */
 int eof_import_ini(EOF_SONG * sp, char * fn)
 {
-	eof_log("eof_import_ini() entered");
+	eof_log("eof_import_ini() entered", 1);
 
 	char * textbuffer = NULL;
 	char * line_token = NULL;

@@ -1,8 +1,8 @@
 /* aphoton.c
- * 
+ *
  * This file is part of the Allegro GUI Un-uglification Project.
  * It emulates the look of the QNX Photon MicroGUI widget set.
- * 
+ *
  * Eric Botcazou <ebotcazou@multimania.com>
  */
 
@@ -10,6 +10,10 @@
 #include <allegro.h>
 #include "aphoton.h"
 #include "agupitrn.h"
+
+#ifdef USEMEMWATCH
+#include "../memwatch.h"
+#endif
 
 
 /*----------------------------------------------------------------------*/
@@ -84,8 +88,8 @@ static BITMAP *generate_bitmap(AL_CONST unsigned char templat[], int w, int h)
 		putpixel(bmp, x, y, makecol(*p, *p, *p));
             p++;
         }
-    }            
-        
+    }
+
     return bmp;
 }
 
@@ -106,7 +110,7 @@ static void rectgouraud(BITMAP *bmp, int x1, int y1, int x2, int y2,
             gamma.r = range->from.r + (range->to.r - range->from.r) * (x - x1) / (x2 - x1);
             gamma.g = range->from.g + (range->to.g - range->from.g) * (x - x1) / (x2 - x1);
             gamma.b = range->from.b + (range->to.b - range->from.b) * (x - x1) / (x2 - x1);
-            
+
 	    vline(bmp, x, y1, y2, makecol(gamma.r, gamma.g, gamma.b));
 	}
     }
@@ -115,7 +119,7 @@ static void rectgouraud(BITMAP *bmp, int x1, int y1, int x2, int y2,
             gamma.r = range->from.r + (range->to.r - range->from.r) * (y - y1) / (y2 - y1);
             gamma.g = range->from.g + (range->to.g - range->from.g) * (y - y1) / (y2 - y1);
             gamma.b = range->from.b + (range->to.b - range->from.b) * (y - y1) / (y2 - y1);
-	
+
             hline(bmp, x1, y, x2, makecol(gamma.r, gamma.g, gamma.b));
         }
     }
@@ -152,13 +156,13 @@ static void photon_textout(BITMAP *bmp, AL_CONST char *text, int x, int y,
 
     if (flags & D_DISABLED)
         gui_textout_ex(bmp, text, x+1, y+1, white, -1, centre);
-			    
+
     gui_textout_ex(bmp, text, x, y, (flags & D_DISABLED? shadow : black), -1, centre);
-			
+
     if (flags & D_GOTFOCUS) {
 	height = text_height(font);
         len = text_length(font, text);
-        
+
         if (centre)
             hline(bmp, x-len/2, y+height, x+len/2-1, highlight);
         else
@@ -171,19 +175,19 @@ static void photon_scrollbar(BITMAP *bmp, int x, int y, int w, int h,
                                           int vert, int pos, int len)
 {
     int slx, sly, slw, slh;
-    
+
     hline(bmp, x, y, x+w-1, scrollbar_gray2);
     vline(bmp, x, y, y+h-1, scrollbar_gray2);
-	
+
     if (vert) {
 	slx = x;
 	slw = w;
 	sly = y + pos;
 	slh = len;
-    
+
 	hline(bmp, slx, sly-1, slx+slw-1, black);
 	hline(bmp, slx, sly+slh, slx+slw-1, black);
-	
+
 	if (sly+slh+1 < y+h)
 	    hline(bmp, slx, sly+slh+1, slx+slw-1, scrollbar_gray2);
     }
@@ -192,14 +196,14 @@ static void photon_scrollbar(BITMAP *bmp, int x, int y, int w, int h,
     	slw = len;
     	sly = y;
     	slh = h;
-    
+
 	vline(bmp, slx-1, sly, sly+slh-1, black);
 	vline(bmp, slx+slw, sly, sly+slh-1, black);
-	
+
 	if (slx+slw+1 < x+w)
 	    vline(bmp, slx+slw+1, sly, sly+slh-1, scrollbar_gray2);
     }
-    
+
     hline(bmp, slx, sly, slx+slw-1, white);
     vline(bmp, slx, sly, sly+slh-1, white);
     hline(bmp, slx, sly+slh-1, slx+slw-1, button_border_gray);
@@ -228,15 +232,15 @@ static void photon_slider_cursor(BITMAP *bmp, int x, int y, int w, int h, int ve
    hline(bmp, x+1, y+h-1, x+w-1, slider_gray5);
    vline(bmp, x+w-1, y+1, y+h-1, slider_gray5);
 }
-   
+
 
 int d_aphoton_box_proc(int msg, DIALOG *d, int c)
 {
     (void)c;
-    
+
     if (msg == MSG_DRAW)
 	photon_box(gui_get_screen(), d->x, d->y, d->w, d->h, normal);
-	
+
     return D_O_K;
 }
 
@@ -247,7 +251,7 @@ int d_aphoton_shadow_box_proc(int msg, DIALOG *d, int c)
 
     if (msg == MSG_DRAW)
 	photon_box(gui_get_screen(), d->x, d->y, d->w, d->h, normal);
-	
+
     return D_O_K;
 }
 
@@ -255,33 +259,33 @@ int d_aphoton_shadow_box_proc(int msg, DIALOG *d, int c)
 int d_aphoton_button_proc(int msg, DIALOG *d, int c)
 {
     int top_color, bottom_color, shift;
-        
+
     if (msg == MSG_DRAW) {
         BITMAP *bmp = gui_get_screen();
         photon_container(bmp, d->x, d->y, d->w, d->h);
-    
+
         /* internal frame */
         if (d->flags & D_SELECTED) {
             top_color = button_border_gray;
             bottom_color = white;
-            shift = 1;   
+            shift = 1;
         }
         else {
             top_color = white;
             bottom_color = button_border_gray;
             shift = 0;
         }
-        
+
         hline(bmp, d->x+2, d->y+2, d->x+d->w-3, top_color);
         vline(bmp, d->x+2, d->y+2, d->y+d->h-3, top_color);
         hline(bmp, d->x+2, d->y+d->h-3, d->x+d->w-3, bottom_color);
         vline(bmp, d->x+d->w-3, d->y+2, d->y+d->h-3, bottom_color);
         rectgouraud(bmp, d->x+3, d->y+3, d->x+d->w-4, d->y+d->h-4, &button_gray_range, FALSE);
-	    
+
 	if (d->dp)
 	    photon_textout(bmp, (char *)d->dp, d->x+d->w/2+shift,
 	                   d->y+d->h/2-text_height(font)/2+shift, d->flags, TRUE);
-	    
+
 	return D_O_K;
     }
 
@@ -292,38 +296,38 @@ int d_aphoton_button_proc(int msg, DIALOG *d, int c)
 int d_aphoton_push_proc(int msg, DIALOG *d, int c)
 {
     int ret = D_O_K;
-    
+
     d->flags |= D_EXIT;
-    
+
     ret |= d_aphoton_button_proc(msg, d, c);
-    
+
     if (ret & D_CLOSE) {
 	ret &= ~D_CLOSE;
 	REDRAW(d);
-	
+
 	if (d->dp3)
 	    ret |= ((int (*)(DIALOG *))d->dp3)(d);
     }
-    
+
     return ret;
 }
 
 
 int d_aphoton_check_proc(int msg, DIALOG *d, int c)
-{  
+{
     if (msg == MSG_DRAW) {
         BITMAP *bmp = gui_get_screen();
         draw_base(bmp, d);
         photon_container(bmp, d->x+3, d->y+d->h/2-7, 14, 14);
         rectfillwh(bmp, d->x+5, d->y+d->h/2-5, 10, 10, white);
-		
+
 	if (d->flags & D_SELECTED) {
 	    /* shadow */
 	    line(bmp, d->x+6, d->y+d->h/2-3, d->x+12, d->y+d->h/2+3, check_gray1);
 	    line(bmp, d->x+7, d->y+d->h/2-4, d->x+13, d->y+d->h/2+2, check_gray1);
 	    line(bmp, d->x+6, d->y+d->h/2+2, d->x+12, d->y+d->h/2-4, check_gray1);
 	    line(bmp, d->x+7, d->y+d->h/2+3, d->x+13, d->y+d->h/2-3, check_gray1);
-	    
+
 	    /* cross */
 	    line(bmp, d->x+6, d->y+d->h/2-4, d->x+13, d->y+d->h/2+3, check_black);
 	    line(bmp, d->x+6, d->y+d->h/2+3, d->x+13, d->y+d->h/2-4, check_black);
@@ -331,11 +335,11 @@ int d_aphoton_check_proc(int msg, DIALOG *d, int c)
 	else {
   	    rect(bmp, d->x+6, d->y+d->h/2-4, d->x+13, d->y+d->h/2+3, check_gray2);
 	}
-	
+
 	if (d->dp)
 	    photon_textout(bmp, (char *)d->dp, d->x+20,
 	                   d->y+d->h/2-text_height(font)/2, d->flags, FALSE);
-	
+
 	return D_O_K;
     }
 
@@ -346,19 +350,19 @@ int d_aphoton_check_proc(int msg, DIALOG *d, int c)
 static AL_CONST unsigned char radio[] =
 {
     /* 14 x 14 */
-    0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 
-    0xd8, 0xd8, 0xd8, 0xd8, 0xb4, 0x61, 0x43, 0x43, 0x61, 0xb4, 0xd8, 0xd8, 0xd8, 0xd8, 
-    0xd8, 0xd8, 0xd8, 0x7f, 0x82, 0xc5, 0xe0, 0xde, 0xbf, 0x78, 0x78, 0xc7, 0xd8, 0xd8, 
-    0xd8, 0xd8, 0x7f, 0xa9, 0xe0, 0xe0, 0xe0, 0xe0, 0xe0, 0xde, 0x99, 0x74, 0xcd, 0xd8, 
-    0xd8, 0xb4, 0x82, 0xe0, 0xe0, 0xe0, 0xde, 0xde, 0xd6, 0xd6, 0xd3, 0x6e, 0xb2, 0xd8, 
-    0xd8, 0x61, 0xc8, 0xe0, 0xe0, 0xe0, 0xde, 0xd6, 0xd3, 0xd0, 0xcd, 0xad, 0x4d, 0xc6, 
-    0xd8, 0x42, 0xe0, 0xe0, 0xe0, 0xd6, 0xd6, 0xd3, 0xcd, 0xca, 0xca, 0xb2, 0x34, 0xc6, 
-    0xd8, 0x42, 0xde, 0xe0, 0xd6, 0xd6, 0xd0, 0xca, 0xc5, 0xc2, 0xc3, 0xaf, 0x34, 0xc6, 
-    0xd8, 0x5e, 0xbf, 0xde, 0xd6, 0xd0, 0xc9, 0xc4, 0xbe, 0xbc, 0xb5, 0x8e, 0x48, 0xc6, 
-    0xd8, 0xb2, 0x79, 0xde, 0xd4, 0xcd, 0xc4, 0xbe, 0xb5, 0xb5, 0xae, 0x61, 0xb2, 0xcd, 
-    0xd8, 0xc9, 0x6e, 0x99, 0xd4, 0xca, 0xc2, 0xbc, 0xb5, 0xad, 0x73, 0x55, 0xc1, 0xd8, 
-    0xd8, 0xcd, 0xc1, 0x66, 0x6e, 0x97, 0xb2, 0xaf, 0x8e, 0x61, 0x55, 0xc1, 0xcd, 0xd8, 
-    0xd8, 0xd8, 0xcd, 0xc9, 0xb2, 0x48, 0x32, 0x32, 0x47, 0xb2, 0xc1, 0xcd, 0xd8, 0xd8, 
+    0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8,
+    0xd8, 0xd8, 0xd8, 0xd8, 0xb4, 0x61, 0x43, 0x43, 0x61, 0xb4, 0xd8, 0xd8, 0xd8, 0xd8,
+    0xd8, 0xd8, 0xd8, 0x7f, 0x82, 0xc5, 0xe0, 0xde, 0xbf, 0x78, 0x78, 0xc7, 0xd8, 0xd8,
+    0xd8, 0xd8, 0x7f, 0xa9, 0xe0, 0xe0, 0xe0, 0xe0, 0xe0, 0xde, 0x99, 0x74, 0xcd, 0xd8,
+    0xd8, 0xb4, 0x82, 0xe0, 0xe0, 0xe0, 0xde, 0xde, 0xd6, 0xd6, 0xd3, 0x6e, 0xb2, 0xd8,
+    0xd8, 0x61, 0xc8, 0xe0, 0xe0, 0xe0, 0xde, 0xd6, 0xd3, 0xd0, 0xcd, 0xad, 0x4d, 0xc6,
+    0xd8, 0x42, 0xe0, 0xe0, 0xe0, 0xd6, 0xd6, 0xd3, 0xcd, 0xca, 0xca, 0xb2, 0x34, 0xc6,
+    0xd8, 0x42, 0xde, 0xe0, 0xd6, 0xd6, 0xd0, 0xca, 0xc5, 0xc2, 0xc3, 0xaf, 0x34, 0xc6,
+    0xd8, 0x5e, 0xbf, 0xde, 0xd6, 0xd0, 0xc9, 0xc4, 0xbe, 0xbc, 0xb5, 0x8e, 0x48, 0xc6,
+    0xd8, 0xb2, 0x79, 0xde, 0xd4, 0xcd, 0xc4, 0xbe, 0xb5, 0xb5, 0xae, 0x61, 0xb2, 0xcd,
+    0xd8, 0xc9, 0x6e, 0x99, 0xd4, 0xca, 0xc2, 0xbc, 0xb5, 0xad, 0x73, 0x55, 0xc1, 0xd8,
+    0xd8, 0xcd, 0xc1, 0x66, 0x6e, 0x97, 0xb2, 0xaf, 0x8e, 0x61, 0x55, 0xc1, 0xcd, 0xd8,
+    0xd8, 0xd8, 0xcd, 0xc9, 0xb2, 0x48, 0x32, 0x32, 0x47, 0xb2, 0xc1, 0xcd, 0xd8, 0xd8,
     0xd8, 0xd8, 0xd8, 0xd8, 0xcd, 0xc4, 0xc4, 0xc4, 0xc4, 0xcd, 0xcd, 0xd8, 0xd8, 0xd8
 };
 
@@ -366,19 +370,19 @@ static AL_CONST unsigned char radio[] =
 static AL_CONST unsigned char radio_sel[] =
 {
     /* 14 x 14 */
-    0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 
-    0xd8, 0xd8, 0xd8, 0xd8, 0xb4, 0x61, 0x43, 0x43, 0x61, 0xb4, 0xd8, 0xd8, 0xd8, 0xd8, 
-    0xd8, 0xd8, 0xd8, 0x7f, 0x82, 0xc5, 0xe0, 0xde, 0xbf, 0x78, 0x78, 0xc7, 0xd8, 0xd8, 
-    0xd8, 0xd8, 0x7f, 0xa9, 0xd4, 0xbd, 0xb2, 0xb5, 0xc4, 0xd6, 0x99, 0x74, 0xcd, 0xd8, 
-    0xd8, 0xb4, 0x82, 0xd4, 0xae, 0x8f, 0x71, 0x73, 0x99, 0xbd, 0xce, 0x6e, 0xb2, 0xd8, 
-    0xd8, 0x61, 0xc5, 0xbe, 0x8f, 0x58, 0x4b, 0x4e, 0x5f, 0xa2, 0xca, 0xad, 0x4d, 0xc6, 
-    0xd8, 0x42, 0xe0, 0xb2, 0x70, 0x4b, 0x48, 0x4a, 0x52, 0x81, 0xce, 0xb2, 0x34, 0xc6, 
-    0xd8, 0x42, 0xde, 0xb3, 0x72, 0x4d, 0x4a, 0x4c, 0x53, 0x83, 0xcd, 0xaf, 0x34, 0xc6, 
-    0xd8, 0x5e, 0xbf, 0xc2, 0x98, 0x5f, 0x51, 0x52, 0x64, 0xab, 0xc4, 0x8e, 0x48, 0xc6, 
-    0xd8, 0xb2, 0x79, 0xd3, 0xbc, 0xa0, 0x7d, 0x82, 0xa7, 0xc4, 0xb5, 0x61, 0xb2, 0xcd, 
-    0xd8, 0xc9, 0x6e, 0x99, 0xd0, 0xc8, 0xc8, 0xc9, 0xc3, 0xb3, 0x73, 0x55, 0xc1, 0xd8, 
-    0xd8, 0xcd, 0xc1, 0x66, 0x6e, 0x97, 0xb2, 0xaf, 0x8e, 0x61, 0x55, 0xc1, 0xcd, 0xd8, 
-    0xd8, 0xd8, 0xcd, 0xc9, 0xb2, 0x48, 0x32, 0x32, 0x47, 0xb2, 0xc1, 0xcd, 0xd8, 0xd8, 
+    0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8, 0xd8,
+    0xd8, 0xd8, 0xd8, 0xd8, 0xb4, 0x61, 0x43, 0x43, 0x61, 0xb4, 0xd8, 0xd8, 0xd8, 0xd8,
+    0xd8, 0xd8, 0xd8, 0x7f, 0x82, 0xc5, 0xe0, 0xde, 0xbf, 0x78, 0x78, 0xc7, 0xd8, 0xd8,
+    0xd8, 0xd8, 0x7f, 0xa9, 0xd4, 0xbd, 0xb2, 0xb5, 0xc4, 0xd6, 0x99, 0x74, 0xcd, 0xd8,
+    0xd8, 0xb4, 0x82, 0xd4, 0xae, 0x8f, 0x71, 0x73, 0x99, 0xbd, 0xce, 0x6e, 0xb2, 0xd8,
+    0xd8, 0x61, 0xc5, 0xbe, 0x8f, 0x58, 0x4b, 0x4e, 0x5f, 0xa2, 0xca, 0xad, 0x4d, 0xc6,
+    0xd8, 0x42, 0xe0, 0xb2, 0x70, 0x4b, 0x48, 0x4a, 0x52, 0x81, 0xce, 0xb2, 0x34, 0xc6,
+    0xd8, 0x42, 0xde, 0xb3, 0x72, 0x4d, 0x4a, 0x4c, 0x53, 0x83, 0xcd, 0xaf, 0x34, 0xc6,
+    0xd8, 0x5e, 0xbf, 0xc2, 0x98, 0x5f, 0x51, 0x52, 0x64, 0xab, 0xc4, 0x8e, 0x48, 0xc6,
+    0xd8, 0xb2, 0x79, 0xd3, 0xbc, 0xa0, 0x7d, 0x82, 0xa7, 0xc4, 0xb5, 0x61, 0xb2, 0xcd,
+    0xd8, 0xc9, 0x6e, 0x99, 0xd0, 0xc8, 0xc8, 0xc9, 0xc3, 0xb3, 0x73, 0x55, 0xc1, 0xd8,
+    0xd8, 0xcd, 0xc1, 0x66, 0x6e, 0x97, 0xb2, 0xaf, 0x8e, 0x61, 0x55, 0xc1, 0xcd, 0xd8,
+    0xd8, 0xd8, 0xcd, 0xc9, 0xb2, 0x48, 0x32, 0x32, 0x47, 0xb2, 0xc1, 0xcd, 0xd8, 0xd8,
     0xd8, 0xd8, 0xd8, 0xd8, 0xcd, 0xc4, 0xc4, 0xc4, 0xc4, 0xcd, 0xcd, 0xd8, 0xd8, 0xd8
 };
 
@@ -416,13 +420,13 @@ int d_aphoton_icon_proc(int msg, DIALOG *d, int c)
     if (msg == MSG_DRAW) {
     BITMAP *bmp = gui_get_screen();
 	BITMAP *img = (BITMAP *)d->dp;
-	
+
 	photon_container(bmp, d->x, d->y, d->w, d->h);
-	
+
 	stretch_sprite(bmp, img, d->x+2, d->y+2, d->w-4, d->h-4);
 	return D_O_K;
     }
-    
+
     return d_aphoton_button_proc(msg, d, c);
 }
 
@@ -438,9 +442,9 @@ int d_aphoton_edit_proc(int msg, DIALOG *d, int c)
 	int fonth;
 
 	agup_edit_adjust_position (d);
-	
+
 	fonth = text_height(font);
-	
+
 	l = ustrlen(s);
 	/* set cursor pos */
 	if (d->d2 >= l) {
@@ -450,7 +454,7 @@ int d_aphoton_edit_proc(int msg, DIALOG *d, int c)
 	}
 	else
 	    x = 2;
-	
+
 	b = 0;	  /* num of chars to be blitted */
 	/* get the part of the string to be blitted */
 	for (p = d->d2; p >= 0; p--) {
@@ -463,13 +467,13 @@ int d_aphoton_edit_proc(int msg, DIALOG *d, int c)
 
 	/* see if length of text is too wide */
 	if (x <= d->w-2) {
-	    b = l; 
+	    b = l;
 	    p = 0;
 	}
 	else {
 	    b--;
-	    p = d->d2-b+1; 
-	    b = d->d2; 
+	    p = d->d2-b+1;
+	    b = d->d2;
 	}
 
 	photon_box(bmp, d->x, d->y, d->w, fonth+8, edit_white);
@@ -515,12 +519,12 @@ static void photon_draw_scrollable_frame(DIALOG *d, int listsize, int offset,
     if (listsize > height) {
         rect(bmp, d->x+d->w-13, d->y+1, d->x+d->w-2, d->y+d->h-2, container_black);
 	rectfill(bmp, d->x+d->w-12, d->y+2, d->x+d->w-3, d->y+d->h-3, scrollbar_gray1);
-	
+
 	if (offset > 0)
 	    pos = ((d->h-4) * offset + listsize/2) / listsize;
 	else
 	    pos = 0;
-	
+
 	len = ((d->h-4) * height + listsize/2) / listsize;
 
 	photon_scrollbar(bmp, d->x+d->w-12, d->y+2, 10, d->h-4, TRUE, pos, len);
@@ -558,23 +562,23 @@ int d_aphoton_list_proc(int msg, DIALOG *d, int c)
 		    fg = black;
 		    bg = list_white;
 		}
-		
+
 		ustrzcpy(s, sizeof(s), (*(getfuncptr)d->dp)(i+d->d2, NULL));
-		
+
 		x = d->x + 2;
 		y = d->y + 2 + i*char_height;
 
 		rectfill(bmp, x, y, x+7, y+char_height-1, bg);
 		x += 8;
-		
+
 		len = ustrlen(s);
 		while (text_length(font, s) >= MAX(d->w - 1 - (bar ? 22 : 10), 1)) {
 		    len--;
 		    usetat(s, len, 0);
 		}
-		
+
 		textout_ex(bmp, font, s, x, y, fg, bg);
-		
+
 		x += text_length(font, s);
 		if (x <= d->x+w)
 		    rectfill(bmp, x, y, d->x+w, y+char_height-1, bg);
@@ -603,7 +607,7 @@ int d_aphoton_text_list_proc(int msg, DIALOG *d, int c)
 {
     if (msg == MSG_DRAW)
 	return d_aphoton_list_proc(msg, d, c);
-	
+
     return d_text_list_proc(msg, d, c);
 }
 
@@ -611,14 +615,14 @@ int d_aphoton_text_list_proc(int msg, DIALOG *d, int c)
 int d_aphoton_textbox_proc(int msg, DIALOG *d, int c)
 {
     int height, bar, fg_color;
-	
+
     if (msg == MSG_DRAW) {
 
 	fg_color = (d->flags & D_DISABLED) ? aphoton_mg_color : black;
 	height = (d->h-8) / text_height(font);
 
 	/* tell the object to sort of draw, but only calculate the listsize */
-	_draw_textbox((char *)d->dp, &d->d1, 
+	_draw_textbox((char *)d->dp, &d->d1,
 		      0, /* DONT DRAW anything */
 		      d->d2, !(d->flags & D_SELECTED), 8,
 		      d->x, d->y, d->w, d->h,
@@ -642,10 +646,10 @@ int d_aphoton_textbox_proc(int msg, DIALOG *d, int c)
 
 	/* draw the frame around */
 	photon_draw_scrollable_frame(d, d->d1, d->d2, height);
-	
+
 	return D_O_K;
     }
-    
+
     return d_textbox_proc(msg, d, c);
 }
 
@@ -684,11 +688,11 @@ int d_aphoton_slider_proc(int msg, DIALOG *d, int c)
            vline(bmp, d->x+d->w/2+1, d->y+1, d->y+d->h-2, slider_white1);
            hline(bmp, d->x+d->w/2-1, d->y, d->x+d->w/2+0, slider_gray2);
            hline(bmp, d->x+d->w/2-1, d->y+d->h-1, d->x+d->w/2+0, slider_gray2);
-           
+
            /* marks */
            for (i=0; i<inmark; i++)
               photon_slider_mark(bmp, d->x+d->w-3, d->y+1 + i*ismark);
-           
+
            photon_slider_mark(bmp, d->x+d->w-3, d->y+d->h-2);
 
 	   photon_slider_cursor(bmp, d->x, d->y+d->h-slp-HHEIGHT, d->w, HHEIGHT, TRUE);
@@ -702,19 +706,19 @@ int d_aphoton_slider_proc(int msg, DIALOG *d, int c)
            hline(bmp, d->x+1, d->y+d->h/2+1, d->x+d->w-2, slider_white1);
            vline(bmp, d->x, d->y+d->h/2-1, d->y+d->h/2+0, slider_gray2);
            vline(bmp, d->x+d->w-1, d->y+d->h/2-1, d->y+d->h/2+0, slider_gray2);
-           
+
            /* marks */
            for (i=0; i<inmark; i++)
               photon_slider_mark(bmp, d->x+1 + i*ismark, d->y+d->h-3);
-           
+
            photon_slider_mark(bmp, d->x+d->w-2, d->y+d->h-3);
-           
+
 	   photon_slider_cursor(bmp, d->x+slp, d->y, HHEIGHT, d->h, FALSE);
         }
-	
+
 	return D_O_K;
     }
-    
+
     return d_slider_proc(msg, d, c);
 }
 
@@ -747,8 +751,8 @@ static AL_CONST unsigned char menu_arrow[] =
     0x00, 0x00, 0x33, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x33, 0x33, 0x00, 0x00,
     0x33, 0x33, 0x33, 0x33, 0x33, 0x00,
-    0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 
-    0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 
+    0x33, 0x33, 0x33, 0x33, 0x33, 0x33,
+    0x33, 0x33, 0x33, 0x33, 0x33, 0x33,
     0x33, 0x33, 0x33, 0x33, 0x33, 0x00,
     0x00, 0x00, 0x33, 0x33, 0x00, 0x00,
     0x00, 0x00, 0x33, 0x00, 0x00, 0x00
@@ -772,7 +776,7 @@ static void photon_draw_menu(int x, int y, int w, int h)
     last_h = h;
     menu_done = FALSE;
 }
-     
+
 
 static void photon_do_draw_menu(int x, int y, int w, int h, int bar)
 {
@@ -782,7 +786,7 @@ static void photon_do_draw_menu(int x, int y, int w, int h, int bar)
     vline(bmp, x+1, y+1, y+h-2, white);
     hline(bmp, x+1, y+h-2, x+w-2, check_gray1);
     vline(bmp, x+w-2, y+1, y+h-2, check_gray1);
-    
+
     if (bar)
 	rectgouraud(bmp, x+2, y+2, x+w-3, y+h-3, &menu_gray_range, FALSE);
     else
@@ -884,16 +888,16 @@ int d_aphoton_window_proc(int msg, DIALOG *d, int c)
 	BITMAP *bmp = gui_get_screen();
 	rect(bmp, d->x, d->y, d->x+d->w-1, d->y+d->h-1, black);
 	rect(bmp, d->x+1, d->y+1, d->x+d->w-2, d->y+d->h-2, window_black);
-	
+
 	/* gray frame */
 	vline(bmp, d->x+2, d->y+2, d->y+d->h-3, white);
 	hline(bmp, d->x+2, d->y+d->h-3, d->x+d->w-3, window_gray);
 	vline(bmp, d->x+d->w-3, d->y+2, d->y+d->h-3, window_gray);
-	
+
 	vline(bmp, d->x+3, d->y+3, d->y+d->h-4, menu_gray_to);
 	hline(bmp, d->x+3, d->y+d->h-4, d->x+d->w-4, menu_gray_to);
 	vline(bmp, d->x+d->w-4, d->y+3, d->y+d->h-4, menu_gray_to);
-	
+
 	vline(bmp, d->x+4, d->y+4, d->y+d->h-5, window_gray);
 	hline(bmp, d->x+4, d->y+d->h-5, d->x+d->w-5, white);
 	vline(bmp, d->x+d->w-5, d->y+4, d->y+d->h-5, white);
@@ -903,13 +907,13 @@ int d_aphoton_window_proc(int msg, DIALOG *d, int c)
 	hline(bmp, d->x+2, d->y+3, d->x+d->w-3, window_blue2);
 	hline(bmp, d->x+2, d->y+4, d->x+d->w-3, window_blue3);
 	hline(bmp, d->x+2, d->y+5, d->x+d->w-3, window_blue2);
-	
+
 	rectgouraud(bmp, d->x+2, d->y+6, d->x+d->w-3, d->y+19, &window_blue_range, FALSE);
 	hline(bmp, d->x+2, d->y+20, d->x+d->w-3, window_blue3);
-	
+
 	vline(bmp, d->x+2, d->y+6, d->y+20, window_blue1);
 	vline(bmp, d->x+d->w-3, d->y+6, d->y+20, window_blue3);
-	
+
 	/* background */
 	rectfill(bmp, d->x+5, d->y+21, d->x+d->w-6, d->y+d->h-6, normal);
 
@@ -918,7 +922,7 @@ int d_aphoton_window_proc(int msg, DIALOG *d, int c)
 	    ct = bmp->ct;
 	    cr = bmp->cr;
 	    cb = bmp->cb;
-	    
+
 	    set_clip_rect(bmp, d->x, d->y, d->x+d->w-1, d->y+d->h-1);
 
 	    textout_centre_ex(bmp, font, (char *)d->dp, d->x+d->w/2, d->y+8, black, -1);
@@ -949,8 +953,8 @@ int d_aphoton_window_proc(int msg, DIALOG *d, int c)
 
 #define MAKECOL_RANGE_FROM(range) \
     makecol(range.from.r, range.from.g, range.from.b)
-    
-   
+
+
 #define MAKECOL_RANGE_TO(range) \
     makecol(range.to.r, range.to.g, range.to.b)
 
@@ -963,25 +967,25 @@ void aphoton_init(void)
     container_black = makecol(75, 75, 75);
     container_gray1 = makecol(177, 177, 177);
     container_gray2 = makecol(201, 201, 201);
-    
+
     check_black = makecol(24, 24, 24);
     check_gray1 = makecol(153, 153, 153);
     check_gray2 = makecol(204, 204, 204);
-    
+
     MAKE_GRAY_RANGE(scrollbar_gray_range, 195, 235);
     scrollbar_gray1 = makecol(181, 181, 181);
     scrollbar_gray2 = makecol(161, 161, 161);
-    
+
     edit_gray = makecol(192, 192, 192);
     edit_white = makecol(244, 244, 244);
-    
+
     list_white = makecol(248, 248, 248);
     list_green = makecol(142, 162, 155);
-    
+
     MAKE_GRAY_RANGE(menu_gray_range, 197, 217);
     menu_gray_from = MAKECOL_RANGE_FROM(menu_gray_range);
     menu_gray_to = MAKECOL_RANGE_TO(menu_gray_range);
-    
+
     checked_gray = makecol(92, 92, 92);
 
     slider_white1 = makecol(235, 235, 235);
@@ -1006,13 +1010,13 @@ void aphoton_init(void)
     window_blue_range.to.r = 71;
     window_blue_range.to.g = 118;
     window_blue_range.to.b = 202;
-    
-    black = makecol(0, 0, 0);    
+
+    black = makecol(0, 0, 0);
     white = makecol(255, 255, 255);
     normal = makecol(216, 216, 216);
     highlight = makecol(144, 152, 248);
     shadow = makecol(127, 127, 127);
-    
+
     aphoton_fg_color = black;
     aphoton_bg_color = normal;
     aphoton_mg_color = shadow;

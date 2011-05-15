@@ -9,6 +9,10 @@
 #include "beat.h"
 #include "help.h"
 
+#ifdef USEMEMWATCH
+#include "../memwatch.h"
+#endif
+
 MENU eof_main_menu[] =
 {
     {"&File", NULL, eof_file_menu, 0, NULL},

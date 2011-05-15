@@ -1,8 +1,8 @@
 /* agtk.c
- * 
+ *
  * This file is part of the Allegro GUI Un-uglification Project.
  * It emulates the default look of the GTK widget set.
- * 
+ *
  * Peter Wang <tjaden@users.sourceforge.net>
  */
 
@@ -10,6 +10,10 @@
 #include <allegro.h>
 #include "agtk.h"
 #include "agupitrn.h"
+
+#ifdef USEMEMWATCH
+#include "../memwatch.h"
+#endif
 
 
 /*----------------------------------------------------------------------*/
@@ -55,7 +59,7 @@ static BITMAP *generate_bitmap(AL_CONST char *templat[], int w, int h)
     BITMAP *bmp = create_bitmap(w, h);
     int x, y;
 
-    for (y = 0; y < h; y++) for (x = 0; x < w; x++) 
+    for (y = 0; y < h; y++) for (x = 0; x < w; x++)
 	switch (templat[y][x]) {
 	    case '.': putpixel(bmp, x, y, white); break;
 	    case 'X': putpixel(bmp, x, y, black); break;
@@ -63,7 +67,7 @@ static BITMAP *generate_bitmap(AL_CONST char *templat[], int w, int h)
 	    case 'a': putpixel(bmp, x, y, hshadow); break;
 	    case ' ': putpixel(bmp, x, y, bitmap_mask_color(bmp)); break;
 	}
-    
+
     return bmp;
 }
 
@@ -99,7 +103,7 @@ static void gtk_bevel(BITMAP *bmp, int x, int y, int w, int h, int state)
 	    hline(bmp, x, y+h-1, x+w-1, black);
 	    vline(bmp, x+w-1, y, y+h-1, black);
 	    break;
-	    
+
 	case 2: /* pressed */
 	    hline(bmp, x, y, x+w-1, nshadow);
 	    vline(bmp, x, y, y+h-1, nshadow);
@@ -110,7 +114,7 @@ static void gtk_bevel(BITMAP *bmp, int x, int y, int w, int h, int state)
 	    hline(bmp, x+2, y+h-2, x+w-2, pressed);
 	    vline(bmp, x+w-2, y+2, y+h-2, pressed);
 	    break;
-	    
+
 	case 3: /* focused for text box and slider */
 	    rect(bmp, x, y, x+w-1, y+h-1, black);
 	    hline(bmp, x+1, y+1, x+w-2, nshadow);
@@ -175,7 +179,7 @@ int d_agtk_button_proc(int msg, DIALOG *d, int c)
 	else
 	    x = 0;
 	gtk_box(bmp, d->x, d->y, d->w, d->h, x, d->flags & D_GOTFOCUS);
-	    
+
 	if (d->dp) {
 	    gui_textout_ex(bmp, (char *)d->dp,
 			d->x+d->w/2, d->y+d->h/2-text_height(font)/2,
@@ -191,19 +195,19 @@ int d_agtk_button_proc(int msg, DIALOG *d, int c)
 int d_agtk_push_proc(int msg, DIALOG *d, int c)
 {
     int ret = D_O_K;
-    
+
     d->flags |= D_EXIT;
-    
+
     ret |= d_agtk_button_proc(msg, d, c);
-    
+
     if (ret & D_CLOSE) {
 	ret &= ~D_CLOSE;
 	REDRAW(d);
-	
+
 	if (d->dp3)
 	    ret |= ((int (*)(DIALOG *))d->dp3)(d);
     }
-    
+
     return ret;
 }
 
@@ -289,7 +293,7 @@ int d_agtk_icon_proc(int msg, DIALOG *d, int c)
 	BITMAP *bmp = gui_get_screen();
 	BITMAP *img = (BITMAP *)d->dp;
 	int x;
-	
+
 	if (d->flags & D_SELECTED)
 	    x = 2;
 	else if (d->flags & D_GOTFOCUS)
@@ -297,11 +301,11 @@ int d_agtk_icon_proc(int msg, DIALOG *d, int c)
 	else
 	    x = 0;
 	gtk_box(bmp, d->x, d->y, d->w, d->h, x, d->flags & D_GOTFOCUS);
-	
+
 	stretch_sprite(bmp, img, d->x+2, d->y+2, d->w-4, d->h-4);
 	return D_O_K;
     }
-    
+
     return d_agtk_button_proc(msg, d, c);
 }
 
@@ -319,7 +323,7 @@ int d_agtk_edit_proc(int msg, DIALOG *d, int c)
 	agup_edit_adjust_position (d);
 
 	fonth = text_height(font);
-	
+
 	l = ustrlen(s);
 	/* set cursor pos */
 	if (d->d2 >= l) {
@@ -329,7 +333,7 @@ int d_agtk_edit_proc(int msg, DIALOG *d, int c)
 	}
 	else
 	    x = 2;
-	
+
 	b = 0;	  /* num of chars to be blitted */
 	/* get the part of the string to be blitted */
 	for (p = d->d2; p >= 0; p--) {
@@ -342,16 +346,16 @@ int d_agtk_edit_proc(int msg, DIALOG *d, int c)
 
 	/* see if length of text is too wide */
 	if (x <= d->w-2) {
-	    b = l; 
+	    b = l;
 	    p = 0;
 	}
 	else {
 	    b--;
-	    p = d->d2-b+1; 
-	    b = d->d2; 
+	    p = d->d2-b+1;
+	    b = d->d2;
 	}
 
-	if (d->flags & D_GOTFOCUS) 
+	if (d->flags & D_GOTFOCUS)
 	    gtk_bevel(bmp, d->x, d->y, d->w, fonth+6, 3);
 	else
 	    gtk_bevel(bmp, d->x, d->y, d->w, fonth+6, 2);
@@ -374,7 +378,7 @@ int d_agtk_edit_proc(int msg, DIALOG *d, int c)
 	return D_O_K;
     }
 
-    return d_agup_adjusted_edit_proc(msg, d, c); 
+    return d_agup_adjusted_edit_proc(msg, d, c);
 }
 
 
@@ -521,7 +525,7 @@ int d_agtk_textbox_proc(int msg, DIALOG *d, int c)
 	height = (d->h-8) / text_height(font);
 
 	/* tell the object to sort of draw, but only calculate the listsize */
-	_draw_textbox((char *)d->dp, &d->d1, 
+	_draw_textbox((char *)d->dp, &d->d1,
 		      0, /* DONT DRAW anything */
 		      d->d2, !(d->flags & D_SELECTED), 8,
 		      d->x, d->y, d->w, d->h,
@@ -575,7 +579,7 @@ int d_agtk_slider_proc(int msg, DIALOG *d, int c)
 
 	/* draw background */
 	gtk_box(bmp, d->x, d->y, d->w, d->h, 2, 0);
-	
+
 	/* now draw the handle */
 	if (vert) {
 	    slx = d->x+2;
@@ -588,12 +592,12 @@ int d_agtk_slider_proc(int msg, DIALOG *d, int c)
 	    slw = hh-1-3;
 	    slh = d->h-1-3;
 	}
-	    
+
 	gtk_box(bmp, slx, sly, slw, slh, (d->flags & D_GOTFOCUS) ? 1 : 0, 0);
 
 	return D_O_K;
     }
-    
+
     return d_slider_proc(msg, d, c);
 }
 
@@ -707,7 +711,7 @@ int d_agtk_menu_proc(int msg, DIALOG *d, int c)
 int d_agtk_window_proc(int msg, DIALOG *d, int c)
 {
     (void)c;
-    
+
     if (msg == MSG_DRAW) {
 	BITMAP *bmp = gui_get_screen();
 	gtk_box(bmp, d->x, d->y, d->w, d->h, 0, 1);
@@ -742,7 +746,7 @@ void agtk_init(void)
     black = makecol(0, 0, 0);
     blue = makecol(0, 0, 0x9c);
     yellow = makecol(0xff, 0xff, 0x62);
-    
+
     agtk_fg_color = black;
     agtk_bg_color = normal;
     agtk_mg_color = nshadow;

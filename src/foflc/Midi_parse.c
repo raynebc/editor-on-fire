@@ -8,7 +8,7 @@
 #include "Midi_parse.h"
 
 #ifdef USEMEMWATCH
-#include <memwatch.h>
+#include "../memwatch.h"
 #endif
 
 //

@@ -349,6 +349,7 @@ extern char eof_midi_initialized;			//Specifies whether Allegro was able to set 
 extern EOF_SELECTION_DATA eof_selection;
 
 extern FILE *eof_log_fp;
+extern char eof_log_level;
 
 extern long xchart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D rendering, updated by eof_set_3D_lane_positions()
 extern long ychart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D rendering, updated by eof_set_2D_lane_positions()
@@ -376,7 +377,7 @@ void eof_fix_window_title(void);
 int eof_load_ogg_quick(char * filename);
 int eof_load_ogg(char * filename);
 int eof_load_complete_song(char * filename);
-int eof_destroy_ogg(void);
+int eof_destroy_ogg(void);	//Frees chart audio
 int eof_save_ogg(char * fn);
 void eof_render(void);
 void eof_render_lyric_window(void);
@@ -390,7 +391,7 @@ int eof_midi_queue_add(unsigned char note,int startpos,int endpos);	//Appends th
 void eof_midi_queue_destroy(void);	//Destroys the MIDI queue
 void eof_all_midi_notes_off(void);	//Sends a channel mode message to turn off all active notes, as per MIDI specification
 void eof_stop_midi(void);	//To be called whenever playback stops, turning of all playing MIDI notes and destroying the MIDI queue
-void eof_exit(void);
+void eof_exit(void);		//Formally exits the program, releasing all data structures allocated
 
 void eof_init_after_load(void);	//Initializes variables and cleans up notes, should be used after loading or creating a chart
 
@@ -410,6 +411,10 @@ void eof_set_2D_lane_positions(unsigned long track);
 
 void eof_start_logging(void);	//Opens the log file for writing if it isn't already open
 void eof_stop_logging(void);	//Closes the log file if it is open
-void eof_log(const char *text);	//If the log is open, writes the string to the log file, followed by a newline character, and flushes the I/O stream
+void eof_log(const char *text, char level);
+	//If the log is open, writes the string to the log file, followed by a newline character, and flushes the I/O stream
+	//Level indicates the minimum level of logging that must be in effect to log the message (ie. 1 = on, 2 = verbose)
+	//Verbose logging should be disabled during chart creation/deletion due to the large amount of note creations/deletions
+	//The logging verbosity can be altered by toggling bit 1, as bit 0 must be also set in order to log
 
 #endif

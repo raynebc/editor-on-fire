@@ -12,10 +12,14 @@
 #include "main.h"
 #include "lc_import.h"
 
+#ifdef USEMEMWATCH
+#include "memwatch.h"
+#endif
+
 
 int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format, char *inputfilename, char *string2)
 {
-	eof_log("EOF_IMPORT_VIA_LC() entered");
+	eof_log("EOF_IMPORT_VIA_LC() entered", 1);
 
 	char * returnedfn = NULL;	//Return string from dialog window
 	FILE *inf;	  //Used to open the input file
@@ -173,7 +177,7 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 
 int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 {
-	eof_log("\tImporting lyrics\nEOF_TRANSFER_FROM_LC() entered");
+	eof_log("\tImporting lyrics\nEOF_TRANSFER_FROM_LC() entered", 1);
 
 	struct Lyric_Line *curline;	//Conductor of the lyric line linked list
 	struct Lyric_Piece *curpiece;	//Conductor of the lyric piece linked list
@@ -235,14 +239,14 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 		curline=curline->next;	//Point to next line of lyrics
 	}
 
-	eof_log("\tLyrics imported");
+	eof_log("\tLyrics imported", 1);
 
 	return 0;	//Return success
 }
 
 int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int format)
 {
-	eof_log("EOF_EXPORT_TO_LC() entered");
+	eof_log("EOF_EXPORT_TO_LC() entered", 1);
 
 	unsigned long linectr=0,lyrctr=0,lastlyrtime=0,linestart=0,lineend=0;
 	unsigned char pitch=0;

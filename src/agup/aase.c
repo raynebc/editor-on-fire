@@ -1,8 +1,8 @@
 /* aase.c
- * 
+ *
  * This file is part of the Allegro GUI Un-uglification Project.
  * It emulates the look of the allegro-sprite-editor widget set.
- * 
+ *
  * David A. Capello <dacap@users.sourceforge.net>
  * http://ase.sourceforge.net
  */
@@ -12,6 +12,9 @@
 #include "aase.h"
 #include "agupitrn.h"
 
+#ifdef USEMEMWATCH
+#include "../memwatch.h"
+#endif
 
 
 int aase_fg_color;
@@ -257,7 +260,7 @@ int d_aase_edit_proc(int msg, DIALOG *d, int c)
 
     s = (char *)d->dp;
     l = ustrlen(s);
-    if (d->d2 > l) 
+    if (d->d2 > l)
        d->d2 = l;
 
     /* calculate maximal number of displayable characters */
@@ -274,16 +277,16 @@ int d_aase_edit_proc(int msg, DIALOG *d, int c)
        usetc(buf+usetc(buf, ugetat(s, p)), 0);
        x += text_length(font, buf);
        b++;
-       if (x > d->w) 
+       if (x > d->w)
          break;
     }
 
     if (x <= d->w) {
-       b = l; 
+       b = l;
        scroll = FALSE;
     }
     else {
-       b--; 
+       b--;
        scroll = TRUE;
     }
 
@@ -304,11 +307,11 @@ int d_aase_edit_proc(int msg, DIALOG *d, int c)
     x = 3;
 
     if (scroll) {
-       p = d->d2-b+1; 
-       b = d->d2; 
+       p = d->d2-b+1;
+       b = d->d2;
     }
-    else 
-       p = 0; 
+    else
+       p = 0;
 
     for (; p<=b; p++) {
        f = ugetat(s, p);

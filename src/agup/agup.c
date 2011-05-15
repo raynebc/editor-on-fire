@@ -1,5 +1,5 @@
 /* agup.c
- * 
+ *
  * This file is part of the Allegro GUI Un-uglification Project.
  * It provides "theming" ability.
  *
@@ -10,6 +10,10 @@
 #include <allegro.h>
 #include "agup.h"
 #include "agupitrn.h"
+
+#ifdef USEMEMWATCH
+#include "../memwatch.h"
+#endif
 
 
 #define MAX_THEMES 256
@@ -153,7 +157,7 @@ AGUP_THEME const *agup_theme_by_name (char const *name)
     {
         if (!ustrcmp (agup_themes_list[i]->name, name))
         {
-            return agup_themes_list[i]; 
+            return agup_themes_list[i];
         }
     }
     return NULL;

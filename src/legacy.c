@@ -3,9 +3,13 @@
 #include "event.h"
 #include "main.h"	//For logging
 
+#ifdef USEMEMWATCH
+#include "memwatch.h"
+#endif
+
 EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 {
-	eof_log("eof_load_notes_legacy() entered");
+	eof_log("eof_load_notes_legacy() entered", 1);
 
 	EOF_SONG * sp = NULL;
 	EOF_NOTE * new_note = NULL;

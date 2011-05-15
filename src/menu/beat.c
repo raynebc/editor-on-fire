@@ -11,6 +11,10 @@
 #include "../dialog/proc.h"
 #include "beat.h"
 
+#ifdef USEMEMWATCH
+#include "../memwatch.h"
+#endif
+
 char eof_ts_menu_off_text[32] = {0};
 
 MENU eof_beat_time_signature_menu[] =

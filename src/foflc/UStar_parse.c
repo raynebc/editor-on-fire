@@ -7,7 +7,7 @@
 #include "UStar_parse.h"
 
 #ifdef USEMEMWATCH
-#include <memwatch.h>
+#include "../memwatch.h"
 #endif
 
 double Weighted_Mean_Tempo(void)

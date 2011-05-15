@@ -2,6 +2,10 @@
 #include <stdio.h>
 #include "../agup/agup.h"
 
+#ifdef USEMEMWATCH
+#include "../memwatch.h"
+#endif
+
 int eof_verified_edit_proc(int msg, DIALOG *d, int c)
 {
 	int i;
