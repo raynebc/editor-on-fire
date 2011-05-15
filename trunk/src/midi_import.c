@@ -24,7 +24,7 @@ typedef struct
 {
 
 	EOF_IMPORT_MIDI_EVENT * event[EOF_IMPORT_MAX_EVENTS];
-	int events;
+	unsigned long events;
 	int type;
 
 } EOF_IMPORT_MIDI_EVENT_LIST;
@@ -162,12 +162,23 @@ static long eof_import_closest_beat(EOF_SONG * sp, unsigned long pos)
 static void eof_midi_import_add_event(EOF_IMPORT_MIDI_EVENT_LIST * events, unsigned long pos, unsigned char event, unsigned long d1, unsigned long d2, unsigned long track)
 {
 //	eof_log("eof_midi_import_add_event() entered");
+//DEBUG
+//if(track_pos == 714)
+EOF_IMPORT_MIDI_EVENT *ptr = malloc(sizeof(EOF_IMPORT_MIDI_EVENT));
+eof_log("\t\t\t\tCheckpoint D.1");
 
 	if(events && (events->events < EOF_IMPORT_MAX_EVENTS))
 	{
-		events->event[events->events] = malloc(sizeof(EOF_IMPORT_MIDI_EVENT));
-		if(events->event[events->events])
+//DEBUG
+//if(track_pos == 714)
+eof_log("\t\t\t\tCheckpoint D.2");
+//		if(events->event[events->events])
+		if(ptr != NULL)
 		{
+//DEBUG
+//if(track_pos == 714)
+eof_log("\t\t\t\tCheckpoint D.3");
+			events->event[events->events] = ptr;
 			events->event[events->events]->pos = pos;
 			events->event[events->events]->type = event & 0xF0;		//The event type
 			events->event[events->events]->channel = event & 0xF;	//The channel number
@@ -182,6 +193,9 @@ static void eof_midi_import_add_event(EOF_IMPORT_MIDI_EVENT_LIST * events, unsig
 	{
 //		allegro_message("too many events!");
 	}
+//DEBUG
+//if(track_pos == 714)
+eof_log("\t\t\t\tCheckpoint D.4");
 }
 
 static void eof_midi_import_add_text_event(EOF_IMPORT_MIDI_EVENT_LIST * events, unsigned long pos, unsigned char event, char * text, unsigned long size, unsigned long track)
@@ -272,7 +286,7 @@ inline unsigned long eof_ConvertToRealTimeInt(unsigned long absolutedelta,struct
 	return eof_ConvertToRealTime(absolutedelta,anchorlist,tslist,timedivision,offset) + 0.5;
 }
 
-//#define EOF_DEBUG_MIDI_IMPORT
+#define EOF_DEBUG_MIDI_IMPORT
 
 EOF_SONG * eof_import_midi(const char * fn)
 {
@@ -305,6 +319,10 @@ EOF_SONG * eof_import_midi(const char * fn)
 //	EOF_PHRASE_SECTION *starpowerptr = NULL;
 	unsigned long bitmask;
 	char chordname[100] = "";
+
+#ifdef EOF_DEBUG_MIDI_IMPORT
+	char debugstring[100];
+#endif
 
 	/* load MIDI */
 	if(!fn)
@@ -354,6 +372,11 @@ EOF_SONG * eof_import_midi(const char * fn)
 	}
 
 	/* first pass, build events list for each track */
+
+#ifdef EOF_DEBUG_MIDI_IMPORT
+	eof_log("\tFirst pass, building events lists");
+#endif
+
 	eof_import_bpm_events = eof_import_create_events_list();
 	if(!eof_import_bpm_events)
 	{
@@ -369,6 +392,10 @@ EOF_SONG * eof_import_midi(const char * fn)
 	}
 	for(i = 0; i < tracks; i++)
 	{	//For each imported track
+#ifdef EOF_DEBUG_MIDI_IMPORT
+		sprintf(debugstring, "\t\tParsing track #%lu of %d",i,tracks);
+		eof_log(debugstring);
+#endif
 		last_event = 0;	//Running status resets at beginning of each track
 		current_event = current_event_hi = 0;
 		eof_import_events[i] = eof_import_create_events_list();
@@ -385,8 +412,20 @@ EOF_SONG * eof_import_midi(const char * fn)
 		while(track_pos < eof_work_midi->track[track[i]].len)
 		{	//While the byte index of this MIDI track hasn't reached the end of the track data
 			/* read delta */
+#ifdef EOF_DEBUG_MIDI_IMPORT
+		sprintf(debugstring, "\t\t\tParsing byte #%d of %d",track_pos,eof_work_midi->track[track[i]].len);
+		eof_log(debugstring);
+#endif
+
+//DEBUG
+if(track_pos == 714)
+puts("BLARG");
+
 			bytes_used = 0;
 			delta = eof_parse_var_len(eof_work_midi->track[track[i]].data, track_pos, &bytes_used);
+//DEBUG
+//if(track_pos == 714)
+eof_log("\t\t\t\tCheckpoint A");
 			absolute_pos += delta;
 			if(absolute_pos > last_delta_time)
 				last_delta_time = absolute_pos;	//Remember the delta position of the latest event in the MIDI (among all tracks)
@@ -397,7 +436,14 @@ EOF_SONG * eof_import_midi(const char * fn)
 			{	//If the last loop iteration's event was normal
 				last_event = current_event;	//Store it (including the original channel number)
 			}
+//DEBUG
+//if(track_pos == 714)
+eof_log("\t\t\t\tCheckpoint B");
+assert(track_pos < eof_work_midi->track[track[i]].len);
 			current_event = eof_work_midi->track[track[i]].data[track_pos];
+//DEBUG
+//if(track_pos == 714)
+eof_log("\t\t\t\tCheckpoint C");
 
 			if((current_event & 0xF0) < 0x80)	//If this event is a running status event
 			{
@@ -415,6 +461,9 @@ EOF_SONG * eof_import_midi(const char * fn)
 				d1 = eof_work_midi->track[track[i]].data[track_pos++];
 				d2 = eof_work_midi->track[track[i]].data[track_pos++];
 			}
+//DEBUG
+//if(track_pos == 714)
+eof_log("\t\t\t\tCheckpoint D");
 			switch(current_event_hi)
 			{
 				/* note off */
@@ -702,6 +751,9 @@ EOF_SONG * eof_import_midi(const char * fn)
 					break;
 				}
 			}//switch(current_event_hi)
+//DEBUG
+//if(track_pos == 714)
+eof_log("\t\t\t\tCheckpoint E");
 		}//While the byte index of this MIDI track hasn't reached the end of the track data
 	}//For each imported track
 
@@ -723,6 +775,7 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 #ifdef EOF_DEBUG_MIDI_IMPORT
 char debugtext[400];
 allegro_message("Pass two, adding beats.  last_delta_time = %lu",last_delta_time);
+	eof_log("Pass two, adding beats");
 #endif
 
 	while(deltapos <= last_delta_time)
