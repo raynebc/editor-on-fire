@@ -12,7 +12,11 @@
 #include "SRT_parse.h"
 
 #ifdef USEMEMWATCH
+#ifdef EOF_BUILD	//In the EOF code base, memwatch.h is at the root
 #include "../memwatch.h"
+#else
+#include "memwatch.h"
+#endif
 #endif
 
 //

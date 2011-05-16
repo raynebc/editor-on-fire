@@ -40,6 +40,8 @@ struct Tempo_change{
 	unsigned long delta;		//The delta time since last tempo change
 	double realtime;			//The realtime of this tempo change in milliseconds
 	double BPM;					//The BPM associated with this tempo change
+	unsigned TS_num;			//The numerator of the Time Signature in effect at this tempo change
+	unsigned TS_den;			//The numerator of the Time Signature in effect at this tempo change
 	struct Tempo_change *next;	//Pointer to next tempo change structure
 };	//This structure is used in a singly-linked list containing all tempo changes, and the delta times between them.
 	//It will be used to find the realtime of events outside of track 0, which is generally the only track that
@@ -77,7 +79,9 @@ struct _MIDISTRUCT_{
 	volatile double realtime;	//At each tempo change, the deltacounter will be used to determine the current time
 	unsigned short trackswritten;	//The current number of MIDI tracks that have been written (for MIDI export formats such as MIDI, Vrhythm, KAR)
 									//This value should be updated by any functions that write tracks to the output file
-	double BPM;					//Default BPM is assumed until MPQN is defined
+	double BPM;					//Default BPM of 120BPM is assumed until MPQN is defined
+	unsigned TS_num;			//The numerator of the current time signature (defaults to 4)
+	unsigned TS_den;			//The denominator of the current time signature (defaults to 4)
 
 	unsigned char diff_lo,diff_hi;
 		//The lower and upper boundaries for which range of MIDI notes to parse, based on the indicated difficulty

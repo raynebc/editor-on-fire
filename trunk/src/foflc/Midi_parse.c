@@ -8,7 +8,11 @@
 #include "Midi_parse.h"
 
 #ifdef USEMEMWATCH
+#ifdef EOF_BUILD	//In the EOF code base, memwatch.h is at the root
 #include "../memwatch.h"
+#else
+#include "memwatch.h"
+#endif
 #endif
 
 //
@@ -17,7 +21,7 @@
 struct _MIDISTRUCT_ MIDIstruct;
 struct _MIDI_LYRIC_STRUCT_ MIDI_Lyrics;
 
-struct Tempo_change DEFAULTTEMPO={0,0,120.0,NULL};
+struct Tempo_change DEFAULTTEMPO={0,0.0,120.0,0,0,NULL};
 	//Until a Set Tempo event is encountered in a track, 120BPM will be assumed
 
 
@@ -26,7 +30,8 @@ void InitMIDI(void)
 	if(Lyrics.verbose)	puts("Initializing MIDI variables");
 
 //Initialize global variables
-	MIDIstruct.BPM=(double)120.0;								//Default BPM is assumed until MPQN is defined
+	MIDIstruct.BPM=(double)120.0;								//Default tempo of 120 BPM is assumed until MPQN is defined
+	MIDIstruct.TS_num=MIDIstruct.TS_den=4;						//Default Time Signature of 4/4 is assumed until one is defined
 	MIDIstruct.MPQN_defined=0;									//Default MPQN is assumed until one is defined
 	MIDIstruct.hchunk.tempomap=MIDIstruct.hchunk.curtempo=NULL;	//Empty linked list of tempo information
 	MIDIstruct.hchunk.tracks=NULL;
@@ -264,7 +269,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 	vars.trackname=NULL;
 	vars.tracknum=tchunk->tracknum;
 
-	if(Lyrics.verbose)	puts("\n\tStart of track");
+	if(Lyrics.verbose)	printf("\n\tStart of track #%lu\n", vars.tracknum);
 
 	while(1)
 	{
@@ -290,7 +295,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 		vars.eventindex=vars.startindex+deltalength;	//Add the number of bytes read for the delta to find the file position
 
 		if(Lyrics.verbose>=2)
-				printf("Delta time=%lu\tReal time=%fms \tEvent's file pos=0x%lX\t",vars.delta,ConvertToRealTime(MIDIstruct.absdelta,0.0),vars.eventindex);	//Use the absolute delta counter
+				printf("Deltas=%lu\tReal time=%fms\tDelta time=%lu\tAdj. real time=%fms\tEvent file pos=0x%lX\t",vars.delta,ConvertToRealTime(MIDIstruct.absdelta,0.0),MIDIstruct.absdelta,ConvertToRealTime(MIDIstruct.absdelta,0.0)-Lyrics.realoffset,vars.eventindex);
 
 //Expected input is an event type (4 bits) and midi channel (4 bits)
 		vars.eventtype=fgetc_err(inf);
@@ -571,7 +576,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 							}
 							vars.current_MPQN=(vars.parameters[0]<<16) | (vars.parameters[1]<<8) | vars.parameters[2];	//Convert MPQN (Microseconds per quarter note)
 							MIDIstruct.MPQN_defined=1;
-//Convert cumulative delta time to real time, add to our real time clock
+//Convert cumulative delta time to real time, add to our real time counter
 							MIDIstruct.realtime+=(double)MIDIstruct.deltacounter / (double)MIDIstruct.hchunk.division * ((double)60000.0 / MIDIstruct.BPM);
 							MIDIstruct.BPM=(double)60000000.0/(double)vars.current_MPQN;	//Calculate new tempo
 
@@ -591,6 +596,8 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 							MIDIstruct.hchunk.curtempo->delta=MIDIstruct.deltacounter;
 							MIDIstruct.hchunk.curtempo->realtime=MIDIstruct.realtime;
 							MIDIstruct.hchunk.curtempo->BPM=MIDIstruct.BPM;
+							MIDIstruct.hchunk.curtempo->TS_num=MIDIstruct.TS_num;
+							MIDIstruct.hchunk.curtempo->TS_den=MIDIstruct.TS_den;
 
 							MIDIstruct.deltacounter=0;		//Reset cumulative delta time to 0
 							if(Lyrics.verbose>=2)	printf("Meta Event: Set Tempo=%lu MPQN (%f BPM)\n",vars.current_MPQN,(double)60000000.0/(double)vars.current_MPQN);
@@ -617,7 +624,32 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 							}
 							fread_err(vars.parameters,4,1,inf);
 
-							if(Lyrics.verbose)	printf("Meta Event: Time Signature: Num=%u, Den=(2^)%u, Metro=%u, 32nds=%u\n",vars.parameters[0],vars.parameters[1],vars.parameters[2],vars.parameters[3]);
+//Convert cumulative delta time to real time, add to our real time counter
+							MIDIstruct.realtime+=(double)MIDIstruct.deltacounter / (double)MIDIstruct.hchunk.division * ((double)60000.0 / MIDIstruct.BPM);
+							MIDIstruct.TS_num=vars.parameters[0];			//Store the new TS numerator
+							MIDIstruct.TS_den=(1 << vars.parameters[1]);	//Store the new TS denominator
+
+//Track the information in our tempo linked list by adding a link
+							if(MIDIstruct.hchunk.tempomap == NULL)
+							{	//Special condition:  Empty list (this is the first Tempo Change)
+								MIDIstruct.hchunk.tempomap=(struct Tempo_change *)malloc_err(sizeof(struct Tempo_change));
+								MIDIstruct.hchunk.curtempo=MIDIstruct.hchunk.tempomap;	//Conductor points at start of list
+							}
+							else	//A link exists already
+							{
+								MIDIstruct.hchunk.curtempo->next=(struct Tempo_change *)malloc_err(sizeof(struct Tempo_change));
+								MIDIstruct.hchunk.curtempo=MIDIstruct.hchunk.curtempo->next;	//Conductor points at new link
+							}
+
+							MIDIstruct.hchunk.curtempo->next=NULL;		//No further BPM changes found yet
+							MIDIstruct.hchunk.curtempo->delta=MIDIstruct.deltacounter;
+							MIDIstruct.hchunk.curtempo->realtime=MIDIstruct.realtime;
+							MIDIstruct.hchunk.curtempo->BPM=MIDIstruct.BPM;
+							MIDIstruct.hchunk.curtempo->TS_num=MIDIstruct.TS_num;
+							MIDIstruct.hchunk.curtempo->TS_den=MIDIstruct.TS_den;
+
+							MIDIstruct.deltacounter=0;		//Reset cumulative delta time to 0
+							if(Lyrics.verbose)	printf("Meta Event: Time Signature: %u/%u (Num=%u, Den=(2^)%u, Metro=%u, 32nds=%u)\n",vars.parameters[0],(1 << vars.parameters[1]),vars.parameters[0],vars.parameters[1],vars.parameters[2],vars.parameters[3]);
 						break;
 
 						case 0x59:	//Key Signature
@@ -2905,8 +2937,17 @@ void Write_Default_Track_Zero(FILE *outmidi)
 
 	chunkfileposition=Write_MIDI_Track_Header(outmidi);	//Write header for track 0
 
-	fputc_err(0,outmidi);					//Write a delta time of 0
+	//Write initial time signature
+	fputc_err(0,outmidi);			//Write a delta time of 0
+	WriteWORDBE(outmidi,0xFF58);	//Write meta event type 0x58
+	fputc_err(4,outmidi);			//Write length field specifying 4 bytes
+	fputc_err(4,outmidi);			//Write numerator (4)
+	fputc_err(2,outmidi);			//Write denominator (2^2)
+	fputc_err(24,outmidi);			//Write metronome pulse
+	fputc_err(8,outmidi);			//Write number of 32nd notes per 24 MIDI clocks
 
+	//Write initial tempo
+	fputc_err(0,outmidi);					//Write a delta time of 0
 	if(Lyrics.explicittempo < 2.0)			//If no tempo was manually provided via command line
 	{
 		Write_Tempo_Change(120.0,outmidi);			//Write a tempo change of 120BPM

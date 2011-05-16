@@ -192,6 +192,17 @@ int qsort_helper3(const void * e1, const void * e2)
 	    return 1;
     }
 
+	/* to avoid strange overlap problems, ensure that if a note on and a note off occur at the same time, the note off is written first.
+	  This requires that all notes/phrases are at least 1 delta/ms long */
+	if(((*thing1)->type == 0x90) && ((*thing2)->type == 0x80))
+	{
+		return 1;
+	}
+	if(((*thing1)->type == 0x80) && ((*thing2)->type == 0x90))
+	{
+		return -1;
+	}
+
     // they are equal...
     return 0;
 }

@@ -49,7 +49,7 @@ Export functions are expected to:
 //
 //Global Macros- All relevant source/header files will include this header file to obtain these declarations
 //
-#define PROGVERSION "foflc2.35"
+#define PROGVERSION "foflc2.36"
 #define LYRIC_NOTE_ON 50
 	//Previously, if note #s 60-100 were used for Note On events for lyrics, FoF interpreted
 	//those notes to indicate playable instrument difficulties.  This was fixed, but I will
@@ -418,6 +418,7 @@ char *ReadString(FILE *inf,unsigned long *bytesread,unsigned long maxread);
 	//If maxread is nonzero, it specifies the maximum number of characters to read into the new string (ie. 30 for
 	//an ID3v1 Title, Artist or Album string).
 	//NULL is returned upon error
+	//If bytesread is not NULL, the number of bytes read from file (including NULL terminator) is returned through it
 	//Upon success, the file position is left after the null terminator of the string that was read
 unsigned long GetFileEndPos(FILE *fp);
 	//Accepts a binary mode stream pointer, seeks to the last byte, obtains the file position,

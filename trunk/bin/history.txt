@@ -3,6 +3,11 @@ EOF Version History
 
 1.8:
 
+Updated FoFLC to the latest version.
+
+Adds the Memwatch source package, helping various memory leaks to be
+corrected.
+
 Various MIDI export improvements, including better Rock Band Network
 compliance, resolving many errors that would occur when trying to build
 EOF's MIDI files in Harmonix's Magma utility.
