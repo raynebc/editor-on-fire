@@ -1,4 +1,4 @@
-EOF v1.71 (c)2008-2010 T³ Software
+EOF v1.8b (c)2008-2010 T³ Software
 ----------------------------------
 
 EOF is freeware and may be distributed freely (without charge). Please review
@@ -19,9 +19,9 @@ Installation
 ------------
 
 Just unzip the archive into a user-writeable folder. Do not install EOF into
-your "Program Files" or other system folders, especially if you are using Vista
-as EOF will need to be able to create and modify files in the folder in which
-it resides.
+your "Program Files" or other system folders, especially if you are using
+Windows Vista or Windows 7 as EOF will need to be able to create and modify
+files in the folder in which it resides.
 
 
 Usage

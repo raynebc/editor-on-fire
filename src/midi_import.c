@@ -311,9 +311,9 @@ EOF_SONG * eof_import_midi(const char * fn)
 	unsigned long bitmask;
 	char chordname[100] = "";
 
-#ifdef EOF_DEBUG_MIDI_IMPORT
+//#ifdef EOF_DEBUG_MIDI_IMPORT
 	char debugstring[100];
-#endif
+//#endif
 
 	/* load MIDI */
 	if(!fn)
@@ -384,10 +384,10 @@ EOF_SONG * eof_import_midi(const char * fn)
 	}
 	for(i = 0; i < tracks; i++)
 	{	//For each imported track
-#ifdef EOF_DEBUG_MIDI_IMPORT
+//#ifdef EOF_DEBUG_MIDI_IMPORT
 		sprintf(debugstring, "\t\tParsing track #%lu of %d",i,tracks);
 		eof_log(debugstring, 1);
-#endif
+//#endif
 		last_event = 0;	//Running status resets at beginning of each track
 		current_event = current_event_hi = 0;
 		eof_import_events[i] = eof_import_create_events_list();
@@ -407,6 +407,13 @@ EOF_SONG * eof_import_midi(const char * fn)
 #ifdef EOF_DEBUG_MIDI_IMPORT
 		sprintf(debugstring, "\t\t\tParsing byte #%d of %d",track_pos,eof_work_midi->track[track[i]].len);
 		eof_log(debugstring, 1);
+DEBUG
+//if(track_pos == 714)
+//{
+//eof_log("!Exiting for debugging",1 );
+//CHECK();	//Run Memwatch's memory validation test
+//exit(1);
+//}
 #endif
 
 			bytes_used = 0;

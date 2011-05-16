@@ -3,14 +3,26 @@ EOF Version History
 
 1.8:
 
-Updated FoFLC to the latest version.
+Adds the ability to define band and track-specific difficulties.
+
+Adds initial support for pro guitar/bass and 4 lane dance authoring.
+
+Adds some logging functionality to help identify points of malfunction.
+
+Adds a "Reset Offset to Zero" function to assist with preparing charts
+for use as Rock Band customs.
+
+Updated FoFLC to the latest version (2.36).
 
 Adds the Memwatch source package, helping various memory leaks to be
 corrected.
 
+Various MIDI import improvements, including handling for mid-beat tempo
+and time signature changes and fixing an INI import related crash.
+
 Various MIDI export improvements, including better Rock Band Network
 compliance, resolving many errors that would occur when trying to build
-EOF's MIDI files in Harmonix's Magma utility.
+EOF's MIDI files in Harmonix's Magma utility, corrected tom phrasing.
 
 Fixed a crash that could occur when using Beat>Push Offset Back or Up.
 
@@ -37,10 +49,6 @@ were encountered.
 Added support for launching a chart in Phase Shift's practice mode by
 adding a "Link to Phase Shift" function in the File menu and a "Test in
 Phase Shift" function in the Song menu.
-
-Fixed a MIDI import bug where mid-beat tempo and time signature events
-were not handled correctly.  Now, anchoring will be used to ensure that
-all tempo and time signature changes are placed onto beat markers.
 
 Corrected some bugs involving expert and pro drum statuses.
 
@@ -124,7 +132,7 @@ Updated to version 2.35 of FoFLC.
 Made improvements to documentation and makefiles.
 
 Made improvements to MIDI export: offers to correct pitchless lyrics, warns if
-lyrics are outside phrase markers, corrects MIDI event order, adds padding for 
+lyrics are outside phrase markers, corrects MIDI event order, adds padding for
 lyric phrases (to work around bugs in FoFiX) and enforces a length of 1ms for
 drum notes (to work around bugs in FoFiX).
 
