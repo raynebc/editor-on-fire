@@ -3328,6 +3328,7 @@ void eof_exit(void)
 	eof_filter_dB_files = NULL;
 
 	//Free command line storage variables (for Windows build)
+	#ifdef ALLEGRO_WINDOWS
 	for(i = 0; i < eof_windows_argc; i++)
 	{	//For each stored command line parameter
 		free(eof_windows_argv[i]);
@@ -3335,6 +3336,7 @@ void eof_exit(void)
 	}
 	free(eof_windows_argv);
 	eof_windows_argv = NULL;
+	#endif
 
 	agup_shutdown();
 	eof_mix_exit();		//Frees memory used by audio cues
