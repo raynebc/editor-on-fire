@@ -1,3 +1,7 @@
+Changelog: 2.35 to 2.36
+	Improved debug logging for MIDI import
+	Corrected the handling of Time Signature changes that weren't at the start of the imported MIDI
+
 Changelog: 2.34 to 2.35
 	Added support for importing/exporting SRT subtitle format
 	Corrected grouping logic regarding the tracking of lyric durations

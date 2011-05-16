@@ -14,7 +14,11 @@
 #include "SRT_parse.h"
 
 #ifdef USEMEMWATCH
+#ifdef EOF_BUILD	//In the EOF code base, memwatch.h is at the root
+#include "../memwatch.h"
+#else
 #include "memwatch.h"
+#endif
 #endif
 
 //To enable memwatch, add memwatch.c to the build/project, uncomment the USEMEMWATCH #define in Lyric_storage.h and pass these parameters to the compiler:
