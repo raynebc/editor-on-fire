@@ -793,6 +793,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				else if(strcasecmp(string1,"Offset") == 0)
 				{
 					chart->offset=atof(string2);
+					free(string2);	//This string is no longer used
+					string2 = NULL;
 				}
 				else if(strcasecmp(string1,"Resolution") == 0)
 				{
@@ -805,9 +807,18 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 							*error=11;
 						return NULL;					//Invalid number, return error
 					}
+					free(string2);	//This string is no longer used
+					string2 = NULL;
 				}
 				else if(strcasecmp(string1,"MusicStream") == 0)
 					chart->audiofile=string2;	//Save the name of the audio file for the chart
+				else
+				{	//No recognized tag was found
+					free(string2);
+					string2 = NULL;
+				}
+				free(string1);	//This string is no longer used
+				string1 = NULL;
 			}
 		}
 
@@ -1176,6 +1187,9 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 	if(error)
 		*error=0;
 
+	free(buffer);
+	free(buffer2);
+
 	return chart;
 }
 
@@ -1464,6 +1478,11 @@ void DestroyFeedbackChart(struct FeedbackChart *ptr, char freestruct)
 	{
 		free(ptr->charter);
 		ptr->charter=NULL;
+	}
+	if(ptr->audiofile)
+	{
+		free(ptr->audiofile);
+		ptr->audiofile=NULL;
 	}
 
 //Re-init variables
