@@ -24,6 +24,7 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 	char * returnedfn = NULL;	//Return string from dialog window
 	FILE *inf;	  //Used to open the input file
 	struct Lyric_Format *detectionlist;
+	unsigned long i;
 
 //Validate parameters
 	if((tp == NULL) || (inputfilename == NULL))
@@ -76,8 +77,6 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 			eof_clear_input();
 			if(!returnedfn)
 				return 0;	//Return error or user canceled
-
-			ustrcpy(eof_filename, returnedfn);	//Save the last user-selected dialog path
 		}
 	}
 
@@ -118,9 +117,15 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 		break;
 
 		case VRHYTHM_FORMAT:	//Load vocal rhythm (MIDI) and pitched lyrics
-			Lyrics.inputtrack=string2;
+//			Lyrics.inputtrack=string2;
 			inf=fopen_err(returnedfn,"rb");	//Vrhythm is a binary format
 			VRhythm_Load(inputfilename,returnedfn,inf);
+		break;
+
+		case PITCHED_LYRIC_FORMAT:
+//			Lyrics.inputtrack=string2;
+			inf=fopen_err(returnedfn,"rb");	//Vrhythm is a binary format
+			VRhythm_Load(eof_filename,returnedfn,inf);
 		break;
 
 		case KAR_FORMAT:	//Load KAR MIDI file
@@ -149,6 +154,9 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 		return 0;	//Return failure
 	}//switch(Lyrics.in_format)
 
+	free(Lyrics.infilename);
+	Lyrics.infilename = NULL;
+
 //Validate imported lyrics
 	if((Lyrics.piececount == 0) || (MIDI_Lyrics.head != NULL))	//If the imported MIDI track had no valid lyrics or otherwise was incorrectly formatted
 	{
@@ -161,7 +169,13 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 
 	RemapPitches();		//Ensure pitches are within the correct range (except for pitchless lyrics)
 
-	tp->lyrics=tp->lines=0;	//Initialize the structure to be empty
+	//Delete any existing lyrics and lines
+	for(i = 0; i < tp->lyrics; i++)
+	{
+		free(tp->lyric[i]);
+	}
+	tp->lyrics = 0;
+	tp->lines = 0;
 
 	if(EOF_TRANSFER_FROM_LC(tp,&Lyrics) != 0)	//Pass the Lyrics global variable by reference
 	{

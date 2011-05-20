@@ -743,6 +743,7 @@ int eof_menu_file_lyrics_import(void)
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
+	DestroyLyricFormatList(lyricdetectionlist);	//Free the detection list
 	return 1;
 }
 

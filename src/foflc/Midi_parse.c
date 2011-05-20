@@ -1742,8 +1742,11 @@ void PitchedLyric_Load(FILE *inf)
 //Load each line and parse it
 	fgets_err(buffer,maxlinelength,inf);	//Read and ignore first line of text, as it is the vrhythm track identifier
 
-	assert_wrapper(Lyrics.srclyrname != NULL);
-	if(Lyrics.verbose)	printf("\nImporting pitched lyrics from file \"%s\"\n\n",Lyrics.srclyrname);
+	if(Lyrics.verbose)
+	{
+		assert_wrapper(Lyrics.srclyrname != NULL);
+		printf("\nImporting pitched lyrics from file \"%s\"\n\n",Lyrics.srclyrname);
+	}
 
 	processedctr=1;			//This will be set to 2 at the beginning of the main loop, denoting starting at line 2
 	while(!feof(inf))		//Until end of file is reached
@@ -2324,11 +2327,11 @@ int Lyric_handler(struct TEPstruct *data)
 	//Perform KAR specific grouping logic for this new lyric
 		if(Lyrics.in_format == KAR_FORMAT)
 		{	//Handle whitespace at the beginning of the parsed lyric piece as a signal that the piece will not group with previous piece
-			if(isspace((Lyric_Piece->lyric)[0]))
+			if(isspace((data->buffer)[0]))
 				if(Lyrics.curline->pieces != NULL)	//If there was a previous lyric piece on this line
 					Lyrics.lastpiece->groupswithnext=0;	//Ensure it is set to not group with this lyric piece
 
-			if(isspace((Lyric_Piece->lyric)[strlen(Lyric_Piece->lyric)-1]))	//If the lyric ends in a space
+			if(isspace((data->buffer)[strlen(data->buffer)-1]))	//If the lyric ends in a space
 				groupswithnext=0;
 			else
 				groupswithnext=1;

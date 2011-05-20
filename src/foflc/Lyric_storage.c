@@ -2082,6 +2082,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 	if(errorcode > 1)	//If VL file header was present, but the VL file was invalid
 	{
 		fclose_err(inf);
+		DestroyLyricFormatList(detectionlist);
 		return NULL;		//Return invalid file
 	}
 
@@ -2116,6 +2117,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 		fclose_err(inf);
 		useFLjumpbuffer=0;		//Restore normal functionality of exit_wrapper
 		Lyrics.quick=quicktemp;	//Restore original quick processing setting
+		DestroyLyricFormatList(detectionlist);
 		return NULL;			//This statement is reached if ReadMIDIHeader() below calles exit_wrapper(), indicating an invalid MIDI header (it is not a MIDI or any of the above defined lyric types, return unknown file)
 	}
 
@@ -2131,6 +2133,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 		fclose_err(inf);
 		useFLjumpbuffer=0;	//Restore normal functionality of exit_wrapper
 		Lyrics.quick=quicktemp;	//Restore original quick processing setting
+		DestroyLyricFormatList(detectionlist);
 		return NULL;	//This statement is reached if MIDI_Load() below calles exit_wrapper(), indicating an invalid MIDI file
 	}
 	MIDI_Load(inf,MIDI_Stats,1);	//Call MIDI_Load with the statistics tracking handler.  Lyric structure is NOT re-init'd- it's already populated.  SUPPRESS error messages during detection
@@ -2218,12 +2221,16 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 
 //Parse the detection list and remove an existing unpopulated link, if it exists
 	for(curdetection=detectionlist;curdetection != NULL;curdetection=curdetection->next)
+	{
 		if(curdetection->next != NULL)	//If there's another link
+		{
 			if(curdetection->next->format == 0)	//If it's unpopulated
 			{
 				free(curdetection->next);	//Release its memory
 				curdetection->next=NULL;	//Remove it from the list
 			}
+		}
+	}
 
 	ReleaseMemory(0);
 	fclose_err(inf);
