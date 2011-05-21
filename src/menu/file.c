@@ -18,6 +18,7 @@
 #include "../mix.h"
 #include "file.h"
 #include "song.h"
+#include "edit.h"	//For eof_menu_edit_undo()
 
 #ifdef USEMEMWATCH
 #include "../memwatch.h"
@@ -687,6 +688,7 @@ int eof_menu_file_lyrics_import(void)
 	int jumpcode = 0;
 	int selectedformat=0;
 	char *selectedtrack;
+	int returncode = 1;	//Stores the return value of EOF_IMPORT_VIA_LC() to check for error
 //	struct Lyric_Format *detectionlist;	//This is the list populated by EOF_IMPORT_VIA_LC() in the event of multiple possible imports
 
 	if(eof_song == NULL)	//Do not import lyrics if no chart is open
@@ -724,7 +726,7 @@ int eof_menu_file_lyrics_import(void)
 			if(lyricdetectionlist->next == NULL)	//If this file had only one detected lyric format
 			{
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make a generic undo state
-				EOF_IMPORT_VIA_LC(eof_song->vocal_track[0], NULL, lyricdetectionlist->format, returnedfn, lyricdetectionlist->track);
+				returncode = EOF_IMPORT_VIA_LC(eof_song->vocal_track[0], NULL, lyricdetectionlist->format, returnedfn, lyricdetectionlist->track);
 					//Import the format
 			}
 			else
@@ -733,8 +735,13 @@ int eof_menu_file_lyrics_import(void)
 				if(selectedformat)	//If a selection was made
 				{
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make a generic undo state
-					EOF_IMPORT_VIA_LC(eof_song->vocal_track[0], NULL, selectedformat, returnedfn, selectedtrack);
+					returncode = EOF_IMPORT_VIA_LC(eof_song->vocal_track[0], NULL, selectedformat, returnedfn, selectedtrack);
 				}
+			}
+			if(returncode == 0)
+			{	//This was initialized to nonzero, so if it's zero now, the import above failed, undo the import by loading the last undo state
+				alert("Error", NULL, "Invalid lyric file", "OK", NULL, 0, KEY_ENTER);
+				eof_menu_edit_undo();
 			}
 		}
 	}
