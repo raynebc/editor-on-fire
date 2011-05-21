@@ -303,8 +303,8 @@ void eof_prepare_note_menu(void)
 					}
 				}
 			}
-			if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR))
-			{	//If a legacy/pro guitar/bass track is active
+			if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
+			{	//If a legacy/pro guitar/bass or drum track is active
 				for(j = 0; j < eof_get_num_trills(eof_song, eof_selected_track); j++)
 				{	//For each trill phrase in the active track
 					sectionptr = eof_get_trill(eof_song, eof_selected_track, j);
@@ -3258,8 +3258,9 @@ int eof_menu_trill_mark(void)
 	}
 	else
 	{	//Otherwise edit the existing phrase
-		eof_song->pro_guitar_track[tracknum]->trill[existingphrasenum].start_pos = sel_start;
-		eof_song->pro_guitar_track[tracknum]->trill[existingphrasenum].end_pos = sel_end;
+		sectionptr = eof_get_trill(eof_song, eof_selected_track, existingphrasenum);
+		sectionptr->start_pos = sel_start;
+		sectionptr->end_pos = sel_end;
 	}
 	eof_determine_phrase_status();
 	return 1;
@@ -3320,8 +3321,9 @@ int eof_menu_tremolo_mark(void)
 	}
 	else
 	{	//Otherwise edit the existing phrase
-		eof_song->pro_guitar_track[tracknum]->tremolo[existingphrasenum].start_pos = sel_start;
-		eof_song->pro_guitar_track[tracknum]->tremolo[existingphrasenum].end_pos = sel_end;
+		sectionptr = eof_get_tremolo(eof_song, eof_selected_track, existingphrasenum);
+		sectionptr->start_pos = sel_start;
+		sectionptr->end_pos = sel_end;
 	}
 	eof_determine_phrase_status();
 	return 1;
@@ -3389,27 +3391,19 @@ int eof_menu_tremolo_unmark(void)
 
 int eof_menu_trill_erase_all(void)
 {
-	unsigned long ctr, tracknum;
-	EOF_PHRASE_SECTION *sectionptr;
+	char drum_track_prompt[] = "Erase all special drum rolls from this track?";
+	char other_track_prompt[] = "Erase all trills from this track?";
+	char *prompt = other_track_prompt;	//By default, assume a non drum track
 
 	if((eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR))
 		return 1;	//Do not allow this function to run unless a pro/legacy guitar/bass/drum track is active
 
-	if(alert(NULL, "Erase all trills from this track?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+	if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		prompt = drum_track_prompt;	//If this is a drum track, refer to the sections as "special drum rolls" instead of "trills"
+
+	if(alert(NULL, prompt, NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{
-		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		for(ctr = 0; ctr < eof_get_num_trills(eof_song, eof_selected_track); ctr++)
-		{	//For each trill section in this track
-			sectionptr = eof_get_trill(eof_song, eof_selected_track, ctr);
-			if(sectionptr)
-			{
-				if(sectionptr->name != NULL)
-				{	//If this section has a name
-					free(sectionptr->name);	//Free it
-				}
-			}
-		}
 		eof_set_num_trills(eof_song, eof_selected_track, 0);
 	}
 	eof_determine_phrase_status();
@@ -3418,27 +3412,19 @@ int eof_menu_trill_erase_all(void)
 
 int eof_menu_tremolo_erase_all(void)
 {
-	unsigned long ctr, tracknum;
-	EOF_PHRASE_SECTION *sectionptr;
+	char drum_track_prompt[] = "Erase all drum rolls from this track?";
+	char other_track_prompt[] = "Erase all tremolos from this track?";
+	char *prompt = other_track_prompt;	//By default, assume a non drum track
 
 	if((eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) & (eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR))
 		return 1;	//Do not allow this function to run unless a pro/legacy guitar/bass/drum track is active
 
-	if(alert(NULL, "Erase all tremolos from this track?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+	if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		prompt = drum_track_prompt;	//If this is a drum track, refer to the sections as "drum rolls" instead of "tremolos"
+
+	if(alert(NULL, prompt, NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{
-		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		for(ctr = 0; ctr < eof_get_num_tremolos(eof_song, eof_selected_track); ctr++)
-		{	//For each tremolo section in this track
-			sectionptr = eof_get_tremolo(eof_song, eof_selected_track, ctr);
-			if(sectionptr)
-			{
-				if(sectionptr->name != NULL)
-				{	//If this section has a name
-					free(sectionptr->name);	//Free it
-				}
-			}
-		}
 		eof_set_num_tremolos(eof_song, eof_selected_track, 0);
 	}
 	eof_determine_phrase_status();

@@ -25,6 +25,7 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 	FILE *inf;	  //Used to open the input file
 	struct Lyric_Format *detectionlist;
 	unsigned long i;
+	int jumpcode = 0;
 
 //Validate parameters
 	if((tp == NULL) || (inputfilename == NULL))
@@ -81,6 +82,16 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 	}
 
 	Lyrics.infilename=DuplicateString(inputfilename);	//Make a duplicate, so it's de-allocation won't affect calling function
+
+	jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
+	if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
+	{
+		puts("Assert() handled sucessfully!");
+		free(Lyrics.infilename);
+		Lyrics.infilename = NULL;
+		ReleaseMemory(1);	//Release memory allocated during lyric import
+		return 0;	//Return error
+	}
 
 //Import lyrics
 	switch(Lyrics.in_format)
