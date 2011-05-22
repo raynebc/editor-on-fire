@@ -858,6 +858,10 @@ char * eof_events_list_all(int index, int * size)
 		}
 		default:
 		{
+			if(eof_song->text_event[index]->beat >= eof_song->beats)
+			{	//Something bad happened, repair the event
+				eof_song->text_event[index]->beat = eof_song->beats - 1;	//Reset the text event to be at the last beat marker
+			}
 			sprintf(eof_event_list_text[index], "(%02lu:%02lu.%02lu) %s", eof_song->beat[eof_song->text_event[index]->beat]->pos / 60000, (eof_song->beat[eof_song->text_event[index]->beat]->pos / 1000) % 60, (eof_song->beat[eof_song->text_event[index]->beat]->pos / 10) % 100, eof_song->text_event[index]->text);
 			return eof_event_list_text[index];
 		}

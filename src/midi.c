@@ -158,6 +158,11 @@ int qsort_helper3(const void * e1, const void * e2)
 			return -1;	//Lyric phrase on written second
 		if((*thing2)->note == 105)
 			return 1;	//Lyric phrase on written second
+
+		if((*thing1)->note == 108)
+			return -1;	//Left hand position note (pro guitar) written before gem notes
+		if((*thing2)->note == 108)
+			return 1;	//Left hand position note (pro guitar) written before gem notes
 	}
 
     /* put lyric events first, except for a lyric phrase on marker */
@@ -208,6 +213,7 @@ int qsort_helper3(const void * e1, const void * e2)
 }
 
 /* sorter for MIDI events so I can ouput proper MTrk data */
+/* This function isn't currently used anywhere */
 int qsort_helper4(const void * e1, const void * e2)
 {
 	eof_log("qsort_helper4() entered", 1);
@@ -394,6 +400,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	char beattrackwritten = 0;				//Tracks whether a beat track has been written
 	char trackctr;							//Used in the temp data creation to handle Expert+
 	EOF_MIDI_TS_LIST *tslist=NULL;			//List containing TS changes
+	unsigned char rootvel;					//Used to write root notes for pro guitar tracks
 	unsigned long note, noteflags, notepos, deltapos;
 	char type;
 	int channel, velocity, bitmask, slidenote = 0;	//Used for pro guitar export
@@ -596,12 +603,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				{
 					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL))
 					{	//If pro drum notation is in effect and no more yellow drum notes at this note's position are marked as cymbals
-						if((eof_midi_note_status[RB3_DRUM_YELLOW_FORCE] == 0) && (type != EOF_NOTE_SPECIAL))
-						{	//Write a pro yellow drum marker if one isn't already in effect, but only if this isn't a BRE note
+						if(type != EOF_NOTE_SPECIAL)
+						{	//Write a pro yellow drum marker only if this isn't a BRE note
 							eof_add_midi_event(deltapos, 0x90, RB3_DRUM_YELLOW_FORCE, vel, 0);
+							eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_YELLOW_FORCE, vel, 0);
 						}
 					}
 					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 2, vel, 0);
+					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 2, vel, 0);
 				}
 
 				/* write blue note */
@@ -609,12 +618,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				{
 					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_B_CYMBAL))
 					{	//If pro drum notation is in effect and no more blue drum notes at this note's position are marked as cymbals
-						if((eof_midi_note_status[RB3_DRUM_BLUE_FORCE] == 0) && (type != EOF_NOTE_SPECIAL))
-						{	//Write a pro blue drum marker if one isn't already in effect, but only if this isn't a BRE note
+						if(type != EOF_NOTE_SPECIAL)
+						{	//Write a pro blue drum marker only if this isn't a BRE note
 							eof_add_midi_event(deltapos, 0x90, RB3_DRUM_BLUE_FORCE, vel, 0);
+							eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_BLUE_FORCE, vel, 0);
 						}
 					}
 					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 3, vel, 0);
+					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 3, vel, 0);
 				}
 
 				/* write purple note */
@@ -622,12 +633,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				{	//Note: EOF/FoF refer to this note color as purple/orange whereas Rock Band displays it as green
 					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_G_CYMBAL))
 					{	//If pro drum notation is in effect and no more green drum notes at this note's position are marked as cymbals
-						if((eof_midi_note_status[RB3_DRUM_GREEN_FORCE] == 0) && (type != EOF_NOTE_SPECIAL))
+						if(type != EOF_NOTE_SPECIAL)
 						{	//Write a pro green drum marker if one isn't already in effect, but only if this isn't a BRE note
 							eof_add_midi_event(deltapos, 0x90, RB3_DRUM_GREEN_FORCE, vel, 0);
+							eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_GREEN_FORCE, vel, 0);
 						}
 					}
 					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 4, vel, 0);
+					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 4, vel, 0);
 				}
 
 				/* write open bass note, if the feature was enabled during save */
@@ -640,77 +653,16 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 				/* write forced HOPO */
 				if(noteflags & EOF_NOTE_FLAG_F_HOPO)
-				{
-					if(eof_midi_note_status[midi_note_offset + 5] == 0)
-					{	//Only write a phrase marker if one isn't already in effect
-						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 5, vel, 0);
-					}
+				{	//thekiwimaddog indicated that Rock Band uses HOPO phrases per note/chord
+					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 5, vel, 0);
+					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 5, vel, 0);
 				}
 
 				/* write forced non-HOPO */
 				else if(noteflags & EOF_NOTE_FLAG_NO_HOPO)
-				{
-					if(eof_midi_note_status[midi_note_offset + 6] == 0)
-					{	//Only write a phrase marker if one isn't already in effect
-						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 6, vel, 0);
-					}
-				}
-
-				/* write yellow note off */
-				if(note & 4)
-				{
-					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL))
-					{	//If pro drum notation is in effect and no more drum notes at this note's position are marked as cymbals
-						if((eof_midi_note_status[RB3_DRUM_YELLOW_FORCE] == 1) && (type != EOF_NOTE_SPECIAL))
-						{	//End a pro yellow drum marker if one is in effect, but only if this isn't a BRE note
-							eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_YELLOW_FORCE, vel, 0);
-						}
-					}
-					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 2, vel, 0);
-				}
-
-				/* write blue note off */
-				if(note & 8)
-				{
-					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_B_CYMBAL))
-					{	//If pro drum notation is in effect and no more blue drum notes at this note's position are marked as cymbals
-						if((eof_midi_note_status[RB3_DRUM_BLUE_FORCE] == 1) && (type != EOF_NOTE_SPECIAL))
-						{	//End a pro blue drum marker if one is in effect, but only if this isn't a BRE note
-							eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_BLUE_FORCE, vel, 0);
-						}
-					}
-					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 3, vel, 0);
-				}
-
-				/* write purple note off */
-				if(note & 16)
-				{	//Note: EOF/FoF refer to this note color as purple/orange whereas Rock Band displays it as green
-					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_G_CYMBAL))
-					{	//If pro drum notation is in effect and no more drum notes at this note's position are marked as cymbals
-						if((eof_midi_note_status[RB3_DRUM_GREEN_FORCE] == 1) && (type != EOF_NOTE_SPECIAL))
-						{	//End a pro green drum marker if one is in effect, but only if this isn't a BRE note
-							eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_GREEN_FORCE, vel, 0);
-						}
-					}
-					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 4, vel, 0);
-				}
-
-				/* write forced HOPO note off */
-				if(noteflags & EOF_NOTE_FLAG_F_HOPO)
 				{	//thekiwimaddog indicated that Rock Band uses HOPO phrases per note/chord
-					if(eof_midi_note_status[midi_note_offset + 5])
-					{	//Only end a phrase marker if one is already in effect
-						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 5, vel, 0);
-					}
-				}
-
-				/* write forced non-HOPO note off */
-				if(noteflags & EOF_NOTE_FLAG_NO_HOPO)
-				{	//thekiwimaddog indicated that Rock Band uses HOPO phrases per note/chord
-					if(eof_midi_note_status[midi_note_offset + 6])
-					{	//Only end a phrase marker if one is already in effect
-						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 6, vel, 0);
-					}
+					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 6, vel, 0);
+					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 6, vel, 0);
 				}
 			}//For each note in the track
 
@@ -1176,6 +1128,38 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + ctr, velocity, channel);	//Write the note off event
 					}
 				}
+
+				if(eof_get_note_type(sp, j, i) == EOF_NOTE_AMAZING)
+				{	//For the Expert difficulty, write required specialty notes
+				/* write left hand position note, which is a note 108 with the same velocity of the lowest fret used in the pro guitar note */
+					rootvel = 0xFF;
+					for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+					{	//For each of the 6 usable strings, from lowest to highest gauge
+						if(note & bitmask)
+						{	//If this string is used
+							if(rootvel == 0xFF)
+							{	//If no velocity has been recorded so far
+								rootvel = sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] + 100;	//Store the velocity used for this gem
+							}
+							else if(sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] + 100 < rootvel)
+							{	//Otherwise store this gem's velocity if it is lower than the others checked for this note
+								rootvel = sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] + 100;
+							}
+						}
+					}
+					eof_add_midi_event(deltapos, 0x90, 108, rootvel, 0);	//Note 108 denotes a root note
+					eof_add_midi_event(deltapos + deltalength, 0x80, 108, 64, 0);	//Write the note off event (using the same velocity that RB3 MIDIs use)
+
+				/* write root note, which is a note from 4 to 15, to represent the chord's base type (where any E chord derivation is 4, F is 5, Bb is 6, ..., Eb is 15) */
+					if(eof_note_count_colors(sp, j, i) > 1)
+					{	//If this is a chord
+///**
+///INCOMPLETE LOGIC
+///**
+						eof_add_midi_event(deltapos, 0x90, 4, vel, 0);					//Until chord lookup logic is done, write this root note as if the chord is an E chord
+						eof_add_midi_event(deltapos + deltalength, 0x80, 4, vel, 0);
+					}
+				}
 			}//For each note in the track
 
 			/* fill in arpeggios */
@@ -1401,36 +1385,36 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 /* make events track */
 	#ifdef EOF_RBN_COMPATIBILITY
 	//Magma requires some default track events to be written, even if there are no text events defined
-		if(sp->beats > 3)
-		{	//Only add these if there are at least 4 beats
-			//Check the existing events to see if a [music_start] event is defined
-			match = 0;
-			for(i = 0; i < sp->text_events; i++)
+	if(sp->beats > 3)
+	{	//Only add these if there are at least 4 beats
+		//Check the existing events to see if a [music_start] event is defined
+		match = 0;
+		for(i = 0; i < sp->text_events; i++)
+		{
+			if(!ustrcmp(sp->text_event[i]->text, "[music_start]"))
 			{
-				if(!ustrcmp(sp->text_event[i]->text, "[music_start]"))
-				{
-					match = 1;
-				}
-			}
-			if(!match)
-			{	//If there wasn't one, add one
-				eof_add_text_event(sp, 2, "[music_start]");				//Add the [music_start] event two beats into the song (at the third beat)
-			}
-
-			//Check the existing events to see if a [music_end] event is defined
-			match = 0;
-			for(i = 0; i < sp->text_events; i++)
-			{
-				if(!ustrcmp(sp->text_event[i]->text, "[music_end]"))
-				{
-					match = 1;
-				}
-			}
-			if(!match)
-			{	//If there wasn't one, add one
-				eof_add_text_event(sp, sp->beats-1, "[music_end]");		//Add the [music_end] event on the last beat
+				match = 1;
 			}
 		}
+		if(!match)
+		{	//If there wasn't one, add one
+			eof_add_text_event(sp, 2, "[music_start]");				//Add the [music_start] event two beats into the song (at the third beat)
+		}
+
+		//Check the existing events to see if a [music_end] event is defined
+		match = 0;
+		for(i = 0; i < sp->text_events; i++)
+		{
+			if(!ustrcmp(sp->text_event[i]->text, "[music_end]"))
+			{
+				match = 1;
+			}
+		}
+		if(!match)
+		{	//If there wasn't one, add one
+			eof_add_text_event(sp, sp->beats-1, "[music_end]");		//Add the [music_end] event on the last beat
+		}
+	}
 	#else
 	//Otherwise only write an EVENTS track if the user manually defined text events
 	if(sp->text_events)
@@ -1459,8 +1443,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		for(i = 0; i < sp->text_events; i++)
 		{
 			if(sp->text_event[i]->beat >= sp->beats)
-			{	//If the text events are corrupted
-				break;	//Don't dereference the beat[] array in a way that could crash
+			{	//If the text event is corrupted
+				sp->text_event[i]->beat = sp->beats - 1;	//Repair it by assigning it to the last beat marker
 			}
 			delta = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
 			eof_write_text_event(delta - lastdelta, sp->text_event[i]->text, fp);
