@@ -3,6 +3,8 @@ EOF Version History
 
 1.8:
 
+Fixed various bugs in the lyric import.
+
 Adds the ability to define band and track-specific difficulties.
 
 Adds initial support for pro guitar/bass and 4 lane dance authoring.
