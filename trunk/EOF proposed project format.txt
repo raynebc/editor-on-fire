@@ -166,12 +166,12 @@ TRACK CHUNK, for each track:
 [PRO GUITAR/PRO BASS TRACK FORMAT]
 *	1 byte:		The highest fret number allowed in this track (17 for Mustang, 22 for Squier)
 *	1 byte:		The number of strings on this track's guitar (ie. 4 for standard bass guitar, 6 for standard guitar, for now, the max number supported is 8)
-*	PRO GUITAR TUNING CHUNK, for each string
+*	PRO GUITAR TUNING CHUNK, for each string (starting from the string for lane 1):
 *	{
-*		1 byte:		The note this string sounds when played open (no frets held)
+*		1 byte:		(Signed value) The number of half steps above or below (negative value) the standard tuning for this string
 *	}
 !		The first string defined refers to string 1, the lowest guage string (high E on a standard guitar), consistent with guitar terminology
-!		The note numbering system is based on A440 tuning, where note A4 is 440Hz and is referred to as note 69.  Mid C (note C4) is referred to as note 60
+!		The tuning information will be written to song.ini from lowest to highest guage, ie. "real_guitar_tuning (-2 0 0 0 0 0)" would indicate drop D tuning
 
 *	4 bytes:	Number of notes
 *	PRO GUITAR NOTE CHUNK, for each note

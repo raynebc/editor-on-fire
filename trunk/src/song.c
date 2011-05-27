@@ -10,6 +10,7 @@
 #include "utility.h"
 #include "menu/file.h"
 #include "menu/song.h"
+#include "agup/agup.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -1320,7 +1321,9 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 					return 0;	//Return error
 				ptr4->numfrets = 17;	//By default, assume a 17 fret guitar (ie. Mustang controller)
 				ptr4->numstrings = 6;	//By default, assume a 6 string guitar
-				ptr4->tuning = NULL;	//(not implemented yet)
+				if(ptr4->numstrings > EOF_TUNING_LENGTH)	//Ensure that the tuning array is large enough
+					return 0;	//Return error
+				memset(ptr4->tuning, 0, EOF_TUNING_LENGTH);	//Initialize the tuning for all strings to "standard" (zero)
 				ptr4->notes = 0;
 				ptr4->solos = 0;
 				ptr4->star_power_paths = 0;
@@ -1393,10 +1396,6 @@ int eof_song_delete_track(EOF_SONG * sp, unsigned long track)
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			if((sp->track[track]->tracknum >= sp->pro_guitar_tracks) || (sp->pro_guitar_track[sp->track[track]->tracknum] == NULL))
 				return 0;	//Cannot remove a pro guitar track that doesn't exist
-			if(sp->pro_guitar_track[sp->track[track]->tracknum]->tuning)
-			{	//If this track has a defined tuning array, free the array
-				free(sp->pro_guitar_track[sp->track[track]->tracknum]->tuning);
-			}
 			free(sp->pro_guitar_track[sp->track[track]->tracknum]);
 			for(ctr = sp->track[track]->tracknum; ctr + 1 < sp->pro_guitar_tracks; ctr++)
 			{
@@ -1625,9 +1624,14 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					return 0;
 				}
 				sp->pro_guitar_track[sp->pro_guitar_tracks-1]->numstrings = count;
+				if(sp->pro_guitar_track[sp->pro_guitar_tracks-1]->numstrings > EOF_TUNING_LENGTH)
+				{	//Prevent overflow
+					allegro_message("Unsupported number of strings in track %lu.  Aborting",track_ctr);
+					return 0;
+				}
 				for(ctr=0; ctr < sp->pro_guitar_track[sp->pro_guitar_tracks-1]->numstrings; ctr++)
 				{	//For each string
-					pack_getc(fp);	//Read the string's tuning (not supported yet)
+					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->tuning[ctr] = pack_getc(fp);	//Read the string's tuning
 				}
 				count = pack_igetl(fp);	//Read the number of notes in this track
 				if(count > EOF_MAX_NOTES)
@@ -2350,14 +2354,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					pack_putc(sp->pro_guitar_track[tracknum]->numstrings, fp);	//Write the number of strings used in this track
 					for(ctr=0; ctr < sp->pro_guitar_track[tracknum]->numstrings; ctr++)
 					{	//For each string
-						if(sp->pro_guitar_track[tracknum]->tuning != NULL)
-						{	//If the tuning array is defined
-							pack_putc(sp->pro_guitar_track[tracknum]->tuning[ctr], fp);	//Write this string's tuning value
-						}
-						else
-						{
-							pack_putc(0, fp);	//Otherwise write 0 (undefined tuning)
-						}
+						pack_putc(sp->pro_guitar_track[tracknum]->tuning[ctr], fp);	//Write this string's tuning value
 					}
 					pack_iputl(sp->pro_guitar_track[tracknum]->notes, fp);					//Write the number of notes in this track
 					for(ctr=0; ctr < sp->pro_guitar_track[tracknum]->notes; ctr++)
@@ -4467,4 +4464,114 @@ void eof_set_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, ch
 			}
 		break;
 	}
+}
+
+char eof_tuning_unknown[] = {"Unknown"};
+EOF_TUNING_DEFINITION eof_tuning_definitions[EOF_NUM_TUNING_DEFINITIONS] = {{"Standard", 0, {0,0,0,0,0,0}}};
+
+char *eof_lookup_tuning(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long tracknum, ctr, ctr2;
+	char matchfailed;
+
+	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return eof_tuning_unknown;	//Invalid song pointer or track number
+	tracknum = sp->track[track]->tracknum;
+	if(sp->pro_guitar_track[tracknum]->numstrings > EOF_TUNING_LENGTH)
+		return eof_tuning_unknown;	//Unsupported number of strings
+
+	for(ctr = 0; ctr < EOF_NUM_TUNING_DEFINITIONS; ctr++)
+	{	//For each defined tuning
+		matchfailed = 0;	//Reset this failure status
+		if((eof_tuning_definitions[ctr].numstrings == 0) || (eof_tuning_definitions[ctr].numstrings == sp->pro_guitar_track[tracknum]->numstrings))
+		{	//If this is a valid tuning definition to check against
+			for(ctr2 = 0; ctr2 < eof_tuning_definitions[ctr].numstrings; ctr2++)
+			{	//For each string in the definition
+				if(eof_tuning_definitions[ctr].tuning[ctr2] != sp->pro_guitar_track[tracknum]->tuning[ctr2])
+				{	//This string doesn't match the definition's tuning
+					matchfailed = 1;
+					break;
+				}
+			}
+			if(!matchfailed)
+			{	//If all strings matched the definition
+				return eof_tuning_definitions[ctr].name;	//Return this tuning's name
+			}
+		}
+	}
+	return eof_tuning_unknown;	//No matching tuning definition found
+}
+
+int eof_lookup_default_string_tuning(EOF_SONG *sp, unsigned long track, unsigned long stringnum)
+{
+	unsigned long tracknum;
+	int default_tuning_6_string[] = {7,0,6,10,2,7};		//Half steps above note A, representing "EADGBE"
+	int default_tuning_4_string_bass[] = {7,0,6,10};	//Half steps above note A, representing "EADG";
+	int default_tuning_5_string_bass[] = {2,7,0,6,10};	//Half steps above note A, representing "BEADG";
+	int default_tuning_6_string_bass[] = {2,7,0,6,10,3};//Half steps above note A, representing "BEADGC";
+
+	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return -1;	//Invalid song pointer or track number
+	tracknum = sp->track[track]->tracknum;
+	if(stringnum >= sp->pro_guitar_track[tracknum]->numstrings)
+		return -1;	//Invalid string number
+	if(track == EOF_TRACK_PRO_GUITAR)
+	{	//Standard tuning is EADGBe
+		return default_tuning_6_string[stringnum];	//Return this string's default tuning
+	}
+	else if(track == EOF_TRACK_PRO_BASS)
+	{
+		if(sp->pro_guitar_track[tracknum]->numstrings == 4)
+		{	//Standard tuning for 4 string bass is EADG
+			return default_tuning_4_string_bass[stringnum];	//Return this string's default tuning
+		}
+		else if(sp->pro_guitar_track[tracknum]->numstrings == 5)
+		{	//Standard tuning for 5 string bass is BEADG
+			return default_tuning_5_string_bass[stringnum];	//Return this string's default tuning
+		}
+		else if(sp->pro_guitar_track[tracknum]->numstrings == 6)
+		{	//Standard tuning for 6 string bass is BEADGC
+			return default_tuning_6_string_bass[stringnum];	//Return this string's default tuning
+		}
+	}
+
+	return -1;	//Unsupported pro guitar track
+}
+
+int eof_lookup_tuned_note(EOF_SONG *sp, unsigned long track, unsigned long stringnum, int halfsteps)
+{
+	unsigned long tracknum;
+	int notenum;
+
+	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return -1;	//Invalid song pointer or track number
+	tracknum = sp->track[track]->tracknum;
+	if(stringnum >= sp->pro_guitar_track[tracknum]->numstrings)
+		return -1;	//Invalid string number
+
+	notenum = eof_lookup_default_string_tuning(sp, track, stringnum);	//Look up the default tuning for this string
+	if(notenum < 0)	//If lookup failed,
+		return -1;	//Return error
+	notenum += halfsteps;	//Adjust for the number of half steps above/below the default tuning
+
+	return (notenum % 12);	//Return the note value in terms of half steps above note A
+}
+
+int eof_lookup_played_note(EOF_SONG *sp, unsigned long track, unsigned long stringnum, unsigned long fretnum)
+{
+	unsigned long tracknum;
+	int notenum;
+
+	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return -1;	//Invalid song pointer or track number
+	tracknum = sp->track[track]->tracknum;
+	if((stringnum >= sp->pro_guitar_track[tracknum]->numstrings) || (fretnum > sp->pro_guitar_track[tracknum]->numfrets))
+		return -1;	//Invalid string number or fret number
+
+	notenum = eof_lookup_tuned_note(sp, track, stringnum, sp->pro_guitar_track[tracknum]->tuning[stringnum]);	//Look up the open note this string plays
+	if(notenum < 0)	//If lookup failed,
+		return -1;	//Return error
+	notenum += fretnum;	//Take the fret number into account
+
+	return (notenum % 12);	//Return the note value in terms of half steps above note A
 }
