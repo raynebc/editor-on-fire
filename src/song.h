@@ -182,6 +182,21 @@ typedef struct
 #define EOF_TRACK_DANCE         10
 #define EOF_TRACK_PRO_KEYS		11
 
+#define EOF_SOLO_SECTION				1
+#define EOF_SP_SECTION					2
+#define EOF_BOOKMARK_SECTION			3
+#define EOF_FRET_CATALOG_SECTION		4
+#define EOF_LYRIC_PHRASE_SECTION		5
+#define EOF_YELLOW_TOM_SECTION			6
+#define EOF_BLUE_TOM_SECTION			7
+#define EOF_GREEN_TOM_SECTION			8
+#define EOF_TRILL_SECTION				9
+#define EOF_ARPEGGIO_SECTION			10
+#define EOF_TRAINER_SECTION				11
+#define EOF_CUSTOM_MIDI_NOTE_SECTION	12
+#define EOF_PREVIEW_SECTION				13
+#define EOF_TREMOLO_SECTION				14
+
 #define EOF_TRACK_FLAG_OPEN_STRUM	1
 	//Specifies if the track has open strumming enabled (ie. PART BASS)
 
@@ -240,11 +255,12 @@ typedef struct
 } EOF_VOCAL_TRACK;
 
 #define EOF_PRO_GUITAR_TRACKS_MAX	2
+#define EOF_TUNING_LENGTH 6	//For now, the tuning array will only track 6 strings
 typedef struct
 {
 	unsigned char numfrets;		//The number of frets in this track
 	unsigned char numstrings;	//The number of strings/lanes in this track
-	unsigned char *tuning;		//An array with at least (numstrings) elements, each of which defines the string's note when played open (tuning[0] refers to string 1, which is high E)
+	char tuning[EOF_TUNING_LENGTH];	//An array with at least (numstrings) elements, each of which defines the string's relative tuning as the +/- number of half steps from standard tuning (tuning[0] refers to lane 1's string, which is low E)
 	EOF_TRACK_ENTRY * parent;	//Allows an easy means to look up the global track using a pro guitar track pointer
 
 	EOF_PRO_GUITAR_NOTE * note[EOF_MAX_NOTES];
@@ -381,6 +397,17 @@ typedef struct
 	EOF_CATALOG * catalog;
 
 } EOF_SONG;
+
+typedef struct
+{
+	char *name;
+	unsigned char numstrings;	//Is set to 0 if the tuning array below applies to any number of strings for guitar/bass (ie. standard)
+	char tuning[EOF_TUNING_LENGTH];
+} EOF_TUNING_DEFINITION;
+
+#define EOF_NUM_TUNING_DEFINITIONS 1
+extern EOF_TUNING_DEFINITION eof_tuning_definitions[EOF_NUM_TUNING_DEFINITIONS];
+extern char eof_tuning_unknown[];
 
 EOF_SONG * eof_create_song(void);	//Allocates, initializes and returns an EOF_SONG structure
 void eof_destroy_song(EOF_SONG * sp);	//De-allocates the memory used by the EOF_SONG structure
@@ -570,20 +597,19 @@ int eof_song_delete_track(EOF_SONG * sp, unsigned long track);
 EOF_SONG * eof_create_song_populated(void);
 	//Allocates, initializes and returns an EOF_SONG structure pre-populated with the default legacy and vocal tracks
 
-#define EOF_SOLO_SECTION				1
-#define EOF_SP_SECTION					2
-#define EOF_BOOKMARK_SECTION			3
-#define EOF_FRET_CATALOG_SECTION		4
-#define EOF_LYRIC_PHRASE_SECTION		5
-#define EOF_YELLOW_TOM_SECTION			6
-#define EOF_BLUE_TOM_SECTION			7
-#define EOF_GREEN_TOM_SECTION			8
-#define EOF_TRILL_SECTION				9
-#define EOF_ARPEGGIO_SECTION			10
-#define EOF_TRAINER_SECTION				11
-#define EOF_CUSTOM_MIDI_NOTE_SECTION	12
-#define EOF_PREVIEW_SECTION				13
-#define EOF_TREMOLO_SECTION				14
+char *eof_lookup_tuning(EOF_SONG *sp, unsigned long track);	//This returns a string to a pre-defined string naming the track's tuning
+int eof_lookup_default_string_tuning(EOF_SONG *sp, unsigned long track, unsigned long stringnum);
+	//Determines the default tuning of the given string for the given pro guitar/bass track, taking the number of strings into account for pro bass
+	//The returned number is the number of half steps above A (a value from 0 to 11) upon success (usable with eof_note_names[])
+	//-1 is returned upon error
+int eof_lookup_tuned_note(EOF_SONG *sp, unsigned long track, unsigned long stringnum, int halfsteps);
+	//Determines the note of the specified string tuned the specified number of half steps above/below default tuning, taking the number of strings into account for pro bass
+	//The returned number is the number of half steps above A (a value from 0 to 11) upon success (usable with eof_note_names[])
+	//-1 is returned upon error
+int eof_lookup_played_note(EOF_SONG *sp, unsigned long track, unsigned long stringnum, unsigned long fretnum);
+	//Looks up the tuning for the track and returns the note played by the specified string at the specified fret
+	//The returned number is the number of half steps above A (a value from 0 to 11) upon success (usable with eof_note_names[])
+	//-1 is returned upon error
 
 inline int eof_open_bass_enabled(void);
 	//A simple function returning nonzero if PART BASS has open strumming enabled

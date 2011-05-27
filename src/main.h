@@ -329,6 +329,15 @@ extern int eof_color_orange;
 extern int eof_color_silver;
 extern int eof_info_color;
 
+extern char eof_string1[4];
+extern char eof_string2[4];
+extern char eof_string3[4];
+extern char eof_string4[4];
+extern char eof_string5[4];
+extern char eof_string6[4];
+extern char *eof_fret_strings[6];
+extern char *eof_note_names[12];
+
 extern PALETTE     eof_palette;
 extern BITMAP *    eof_image[EOF_MAX_IMAGES];
 extern FONT *      eof_font;
