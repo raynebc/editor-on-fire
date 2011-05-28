@@ -81,4 +81,7 @@ int eof_song_track_difficulty_dialog(void);	//Allow the active track's difficult
 int eof_menu_song_track_tuning(void);	//Allow the active track's tuning to be defined
 int eof_edit_tuning_proc(int msg, DIALOG *d, int c);	//This is a modification of eof_verified_edit_proc() allowing the note names to be redrawn when a tuning field is altered
 
+//DEBUG
+int custom_edit_proc(int msg, DIALOG *d, int c);	//A test to try to identify why eof_edit_tuning_proc isn't working as expected
+
 #endif

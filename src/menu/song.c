@@ -2203,8 +2203,8 @@ int eof_edit_tuning_proc(int msg, DIALOG *d, int c)
 
 		for(ctr = 0; ctr < EOF_TUNING_LENGTH; ctr++)
 		{	//For each usable string in the track
-			if(ctr < eof_song->pro_guitar_track[tracknum]->numstrings)
-			{	//If this string is used
+			if((ctr < eof_song->pro_guitar_track[tracknum]->numstrings) && (eof_fret_strings[ctr][0] != '\0'))
+			{	//If this string is used by the track and its tuning field is populated
 				halfsteps = atol(eof_fret_strings[ctr]);
 				if(!halfsteps && (eof_fret_strings[ctr][0] != '0'))
 				{	//If there was some kind of error converting this character to a number
@@ -2221,7 +2221,7 @@ int eof_edit_tuning_proc(int msg, DIALOG *d, int c)
 					{	//Otherwise update the tuning string
 						tuning %= 12;	//Guarantee this value is in the range of [0,11]
 						strncpy(tuning_list[ctr], eof_note_names[tuning], sizeof(tuning_list[0]));
-						tuning_list[sizeof(tuning_list)-1] = '\0';	//Guarantee this string is truncated
+						tuning_list[ctr][sizeof(tuning_list[0])-1] = '\0';	//Guarantee this string is truncated
 					}
 				}
 			}
@@ -2275,6 +2275,9 @@ DIALOG eof_pro_guitar_tuning_dialog[] =
 	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
+//DEBUG
+DIALOG my_dialog[];
+
 int eof_menu_song_track_tuning(void)
 {
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -2288,13 +2291,17 @@ int eof_menu_song_track_tuning(void)
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
-	eof_color_dialog(eof_pro_guitar_tuning_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_pro_guitar_tuning_dialog);
+//DEBUG
+//	eof_color_dialog(eof_pro_guitar_tuning_dialog, gui_fg_color, gui_bg_color);
+//	centre_dialog(eof_pro_guitar_tuning_dialog);
+	eof_color_dialog(my_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(my_dialog);
 
 //Update the tuning name string to reflect the currently set tuning
 	memcpy(eof_tuning_name, eof_lookup_tuning(eof_song, eof_selected_track), sizeof(eof_tuning_name));
 
-	if(eof_popup_dialog(eof_pro_guitar_tuning_dialog, 0) == 22)
+//	if(eof_popup_dialog(eof_pro_guitar_tuning_dialog, 0) == 22)
+	if(eof_popup_dialog(my_dialog, 0) == 22)
 	{	//If user clicked OK
 	}//If user clicked OK
 
@@ -2303,3 +2310,38 @@ int eof_menu_song_track_tuning(void)
 	eof_pen_visible = 1;
 	return 1;
 }
+
+//DEBUG
+#define STRINGSIZE 10
+char string[STRINGSIZE] = {0};
+char string2[STRINGSIZE * 2] = {0};
+
+int custom_edit_proc(int msg, DIALOG *d, int c)
+{
+  int retval;
+
+  if(msg == MSG_CHAR)
+  {
+    retval = d_agup_edit_proc(msg, d, c);
+    if(string[0] != '\0')
+    {  //If there is text in the input field, recreate string2[]
+      snprintf(string2, STRINGSIZE * 2, "Test=%s", string);
+    }
+    object_message(&my_dialog[3], MSG_DRAW, 0);  //Have Allegro redraw the edited string2[] string
+    return retval;
+  }
+
+  return d_agup_edit_proc(msg, d, c);
+}
+
+DIALOG my_dialog[] =
+{
+/*  (proc)      		(x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1)         (d2) (dp)          (dp2) (dp3) */
+  {d_agup_window_proc,	0,   0,   200, 200,2,   23,  0,    0,      0,           0,	 "Test",	   NULL, NULL },
+  {d_agup_text_proc,    12,  80,  44,  8,  2,   23,  0,    0,      0,           0,   "Type here:", NULL, NULL },
+  {custom_edit_proc,  	100, 76,  88,  8,  2,   23,  0,    0,      STRINGSIZE-1,0,   string,       NULL, NULL },
+  {d_agup_text_proc,    12,  100, 28,  8,  2,   23,  0,    0,      0,           0,   string2,      NULL, NULL },
+  {d_agup_button_proc,  12,  160, 68,  28, 2,   23,  '\r', D_EXIT, 0,           0,   "OK",         NULL, NULL },
+  {d_agup_button_proc,  120, 160, 68,  28, 2,   23,  0,    D_EXIT, 0,           0,   "Cancel",     NULL, NULL },
+  {NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
