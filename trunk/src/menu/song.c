@@ -2320,14 +2320,20 @@ int custom_edit_proc(int msg, DIALOG *d, int c)
 {
   int retval;
 
-  if(msg == MSG_CHAR)
-  {
+  if((msg == MSG_CHAR) || (msg == MSG_UCHAR))
+  {	//ASCII is not handled until the MSG_UCHAR event is sent
     retval = d_agup_edit_proc(msg, d, c);
-    if(string[0] != '\0')
-    {  //If there is text in the input field, recreate string2[]
-      snprintf(string2, STRINGSIZE * 2, "Test=%s", string);
-    }
-    object_message(&my_dialog[3], MSG_DRAW, 0);  //Have Allegro redraw the edited string2[] string
+//    if(string[0] != '\0')
+//   {	//If there is text in the input field, erase the string area
+    	memset(string2, ' ', sizeof(string2) - 1);
+    	string2[STRINGSIZE * 2 - 1] = '\0';	//Ensure the string is terminated
+    	object_message(&my_dialog[3], MSG_DRAW, 0);  //Have Allegro redraw the edited string2[] string
+
+		//recreate string2[] and draw it
+		snprintf(string2, STRINGSIZE * 2, "Test=%s", string);
+//    }
+		object_message(&my_dialog[3], MSG_DRAW, 0);  //Have Allegro redraw the edited string2[] string
+//    broadcast_dialog_message(MSG_DRAW , 0);
     return retval;
   }
 
@@ -2337,6 +2343,7 @@ int custom_edit_proc(int msg, DIALOG *d, int c)
 DIALOG my_dialog[] =
 {
 /*  (proc)      		(x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1)         (d2) (dp)          (dp2) (dp3) */
+//  {d_agup_clear_proc,	0,   0,   200, 200,2,   23,  0,    0,      0,           0,	 NULL,  	   NULL, NULL },
   {d_agup_window_proc,	0,   0,   200, 200,2,   23,  0,    0,      0,           0,	 "Test",	   NULL, NULL },
   {d_agup_text_proc,    12,  80,  44,  8,  2,   23,  0,    0,      0,           0,   "Type here:", NULL, NULL },
   {custom_edit_proc,  	100, 76,  88,  8,  2,   23,  0,    0,      STRINGSIZE-1,0,   string,       NULL, NULL },
