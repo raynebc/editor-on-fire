@@ -338,6 +338,15 @@ extern char eof_string6[4];
 extern char *eof_fret_strings[6];
 extern char *eof_note_names[12];
 
+extern char eof_tuning_name[EOF_NAME_LENGTH+1];
+extern char string_1_name[5];
+extern char string_2_name[5];
+extern char string_3_name[5];
+extern char string_4_name[5];
+extern char string_5_name[5];
+extern char string_6_name[5];
+extern char *tuning_list[EOF_TUNING_LENGTH];
+
 extern PALETTE     eof_palette;
 extern BITMAP *    eof_image[EOF_MAX_IMAGES];
 extern FONT *      eof_font;

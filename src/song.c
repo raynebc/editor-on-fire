@@ -4467,9 +4467,26 @@ void eof_set_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, ch
 }
 
 char eof_tuning_unknown[] = {"Unknown"};
-EOF_TUNING_DEFINITION eof_tuning_definitions[EOF_NUM_TUNING_DEFINITIONS] = {{"Standard", 0, {0,0,0,0,0,0}}};
+EOF_TUNING_DEFINITION eof_tuning_definitions[EOF_NUM_TUNING_DEFINITIONS] =
+{
+ {"Standard tuning", 4, {0,0,0,0}},
+ {"Standard tuning", 5, {0,0,0,0,0}},
+ {"Standard tuning", 6, {0,0,0,0,0,0}},
+ {"D# tuning", 6, {-1,-1,-1,-1,-1,-1}},
+ {"D tuning", 6, {-2,-2,-2,-2,-2,-2}},
+ {"C# tuning", 6, {-3,-3,-3,-3,-3,-3}},
+ {"C tuning", 6, {-4,-4,-4,-4,-4,-4}},
+ {"B tuning", 6, {-5,-5,-5,-5,-5,-5}},
+ {"A# tuning", 6, {-6,-6,-6,-6,-6,-6}},
+ {"A tuning", 6, {-7,-7,-7,-7,-7,-7}},
+ {"G# tuning", 6, {-8,-8,-8,-8,-8,-8}},
+ {"G tuning", 6, {-9,-9,-9,-9,-9,-8}},
+ {"F# tuning", 6, {-10,-10,-10,-10,-10,-10}},
+ {"F tuning", 6, {-11,-11,-11,-11,-11,-11}},
+ {"Drop D tuning", 6, {-2,0,0,0,0,0}}
+};
 
-char *eof_lookup_tuning(EOF_SONG *sp, unsigned long track)
+char *eof_lookup_tuning(EOF_SONG *sp, unsigned long track, char *tuning)
 {
 	unsigned long tracknum, ctr, ctr2;
 	char matchfailed;
@@ -4483,11 +4500,11 @@ char *eof_lookup_tuning(EOF_SONG *sp, unsigned long track)
 	for(ctr = 0; ctr < EOF_NUM_TUNING_DEFINITIONS; ctr++)
 	{	//For each defined tuning
 		matchfailed = 0;	//Reset this failure status
-		if((eof_tuning_definitions[ctr].numstrings == 0) || (eof_tuning_definitions[ctr].numstrings == sp->pro_guitar_track[tracknum]->numstrings))
+		if(eof_tuning_definitions[ctr].numstrings == sp->pro_guitar_track[tracknum]->numstrings)
 		{	//If this is a valid tuning definition to check against
 			for(ctr2 = 0; ctr2 < eof_tuning_definitions[ctr].numstrings; ctr2++)
 			{	//For each string in the definition
-				if(eof_tuning_definitions[ctr].tuning[ctr2] != sp->pro_guitar_track[tracknum]->tuning[ctr2])
+				if(eof_tuning_definitions[ctr].tuning[ctr2] != tuning[ctr2])
 				{	//This string doesn't match the definition's tuning
 					matchfailed = 1;
 					break;
@@ -4503,12 +4520,13 @@ char *eof_lookup_tuning(EOF_SONG *sp, unsigned long track)
 }
 
 int eof_lookup_default_string_tuning(EOF_SONG *sp, unsigned long track, unsigned long stringnum)
-{
+{	//A A# B C C# D D# E F F# G  G#
+	//0 1  2 3 4  5 6  7 8 9  10 11
 	unsigned long tracknum;
-	int default_tuning_6_string[] = {7,0,6,10,2,7};		//Half steps above note A, representing "EADGBE"
-	int default_tuning_4_string_bass[] = {7,0,6,10};	//Half steps above note A, representing "EADG";
-	int default_tuning_5_string_bass[] = {2,7,0,6,10};	//Half steps above note A, representing "BEADG";
-	int default_tuning_6_string_bass[] = {2,7,0,6,10,3};//Half steps above note A, representing "BEADGC";
+	int default_tuning_6_string[] = {7,0,5,10,2,7};		//Half steps above note A, representing "EADGBE"
+	int default_tuning_4_string_bass[] = {7,0,5,10};	//Half steps above note A, representing "EADG";
+	int default_tuning_5_string_bass[] = {2,7,0,5,10};	//Half steps above note A, representing "BEADG";
+	int default_tuning_6_string_bass[] = {2,7,0,5,10,3};//Half steps above note A, representing "BEADGC";
 
 	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return -1;	//Invalid song pointer or track number
@@ -4553,6 +4571,10 @@ int eof_lookup_tuned_note(EOF_SONG *sp, unsigned long track, unsigned long strin
 	if(notenum < 0)	//If lookup failed,
 		return -1;	//Return error
 	notenum += halfsteps;	//Adjust for the number of half steps above/below the default tuning
+
+	notenum %= 12;
+	if(notenum < 0)		//Handle for down tuning
+		notenum += 12;
 
 	return (notenum % 12);	//Return the note value in terms of half steps above note A
 }
