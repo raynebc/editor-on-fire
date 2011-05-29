@@ -4469,27 +4469,28 @@ void eof_set_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, ch
 char eof_tuning_unknown[] = {"Unknown"};
 EOF_TUNING_DEFINITION eof_tuning_definitions[EOF_NUM_TUNING_DEFINITIONS] =
 {
- {"Standard tuning", 4, {0,0,0,0}},
- {"Standard tuning", 5, {0,0,0,0,0}},
- {"Standard tuning", 6, {0,0,0,0,0,0}},
- {"D# tuning", 6, {-1,-1,-1,-1,-1,-1}},
- {"D tuning", 6, {-2,-2,-2,-2,-2,-2}},
- {"C# tuning", 6, {-3,-3,-3,-3,-3,-3}},
- {"C tuning", 6, {-4,-4,-4,-4,-4,-4}},
- {"B tuning", 6, {-5,-5,-5,-5,-5,-5}},
- {"A# tuning", 6, {-6,-6,-6,-6,-6,-6}},
- {"A tuning", 6, {-7,-7,-7,-7,-7,-7}},
- {"G# tuning", 6, {-8,-8,-8,-8,-8,-8}},
- {"G tuning", 6, {-9,-9,-9,-9,-9,-8}},
- {"F# tuning", 6, {-10,-10,-10,-10,-10,-10}},
- {"F tuning", 6, {-11,-11,-11,-11,-11,-11}},
- {"Drop D tuning", 6, {-2,0,0,0,0,0}}
+ {"Standard tuning", 1, 4, {0,0,0,0}},
+ {"Standard tuning", 1, 5, {0,0,0,0,0}},
+ {"Standard tuning", 0, 6, {0,0,0,0,0,0}},
+ {"D# tuning", 0, 6, {-1,-1,-1,-1,-1,-1}},
+ {"D tuning", 0, 6, {-2,-2,-2,-2,-2,-2}},
+ {"C# tuning", 0, 6, {-3,-3,-3,-3,-3,-3}},
+ {"C tuning", 0, 6, {-4,-4,-4,-4,-4,-4}},
+ {"B tuning", 0, 6, {-5,-5,-5,-5,-5,-5}},
+ {"A# tuning", 0, 6, {-6,-6,-6,-6,-6,-6}},
+ {"A tuning", 0, 6, {-7,-7,-7,-7,-7,-7}},
+ {"G# tuning", 0, 6, {-8,-8,-8,-8,-8,-8}},
+ {"G tuning", 0, 6, {-9,-9,-9,-9,-9,-8}},
+ {"F# tuning", 0, 6, {-10,-10,-10,-10,-10,-10}},
+ {"F tuning", 0, 6, {-11,-11,-11,-11,-11,-11}},
+ {"Drop D tuning", 0, 6, {-2,0,0,0,0,0}}
 };
 
 char *eof_lookup_tuning(EOF_SONG *sp, unsigned long track, char *tuning)
 {
 	unsigned long tracknum, ctr, ctr2;
 	char matchfailed;
+	char isbass = 0;	//By default, assume this is not a pro bass track
 
 	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return eof_tuning_unknown;	//Invalid song pointer or track number
@@ -4497,11 +4498,16 @@ char *eof_lookup_tuning(EOF_SONG *sp, unsigned long track, char *tuning)
 	if(sp->pro_guitar_track[tracknum]->numstrings > EOF_TUNING_LENGTH)
 		return eof_tuning_unknown;	//Unsupported number of strings
 
+	if(track == EOF_TRACK_PRO_BASS)
+	{
+		isbass = 1;
+	}
+
 	for(ctr = 0; ctr < EOF_NUM_TUNING_DEFINITIONS; ctr++)
 	{	//For each defined tuning
 		matchfailed = 0;	//Reset this failure status
-		if(eof_tuning_definitions[ctr].numstrings == sp->pro_guitar_track[tracknum]->numstrings)
-		{	//If this is a valid tuning definition to check against
+		if((eof_tuning_definitions[ctr].numstrings == sp->pro_guitar_track[tracknum]->numstrings) && (isbass == eof_tuning_definitions[ctr].isbass))
+		{	//If this is a valid tuning definition to check against (matching number of strings and guitar type)
 			for(ctr2 = 0; ctr2 < eof_tuning_definitions[ctr].numstrings; ctr2++)
 			{	//For each string in the definition
 				if(eof_tuning_definitions[ctr].tuning[ctr2] != tuning[ctr2])
