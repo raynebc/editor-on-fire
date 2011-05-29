@@ -20,6 +20,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	char buffer[256] = {0};
 	char ini_string[4096] = {0};
 	unsigned long i, tracknum;
+	char *tuning_name = NULL;
 
 	if(!sp || !fn)
 	{
@@ -130,6 +131,42 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 				ustrcat(ini_string, "\r\nopen_strum = True");	//Write the open strum tag (used in Phase Shift)
 				break;	//Exit loop
 			}
+		}
+	}
+
+	/* write tuning tags */
+	if(eof_get_track_size(sp, EOF_TRACK_PRO_GUITAR))
+	{	//If there is one or more notes in the pro guitar track
+		ustrcat(ini_string, "\r\n");
+		tracknum = sp->track[EOF_TRACK_PRO_GUITAR]->tracknum;
+		ustrcat(ini_string, "real_guitar_tuning =");	//Write the pro guitar tuning tag
+		for(i = 0; i < sp->pro_guitar_track[tracknum]->numstrings; i++)
+		{	//For each string used in the track
+			sprintf(buffer, " %d", sp->pro_guitar_track[tracknum]->tuning[i]);	//Write the string's tuning value (signed integer)
+			ustrcat(ini_string, buffer);	//Append the string's tuning value to the ongoing INI string
+		}
+		tuning_name = eof_lookup_tuning(sp, EOF_TRACK_PRO_GUITAR, sp->pro_guitar_track[tracknum]->tuning);	//Check to see if this track's tuning has a defined name
+		if(tuning_name != eof_tuning_unknown)
+		{	//If the lookup found a name
+			sprintf(buffer, " \"%s\"", tuning_name);
+			ustrcat(ini_string, buffer);
+		}
+	}
+	if(eof_get_track_size(sp, EOF_TRACK_PRO_BASS))
+	{	//If there is one or more notes in the pro bass track
+		ustrcat(ini_string, "\r\n");
+		tracknum = sp->track[EOF_TRACK_PRO_BASS]->tracknum;
+		ustrcat(ini_string, "real_bass_tuning =");	//Write the pro bass tuning tag
+		for(i = 0; i < sp->pro_guitar_track[tracknum]->numstrings; i++)
+		{	//For each string used in the track
+			sprintf(buffer, " %d", sp->pro_guitar_track[tracknum]->tuning[i]);	//Write the string's tuning value (signed integer)
+			ustrcat(ini_string, buffer);	//Append the string's tuning value to the ongoing INI string
+		}
+		tuning_name = eof_lookup_tuning(sp, EOF_TRACK_PRO_BASS, sp->pro_guitar_track[tracknum]->tuning);	//Check to see if this track's tuning has a defined name
+		if(tuning_name != eof_tuning_unknown)
+		{	//If the lookup found a name
+			sprintf(buffer, " \"%s\"", tuning_name);
+			ustrcat(ini_string, buffer);
 		}
 	}
 

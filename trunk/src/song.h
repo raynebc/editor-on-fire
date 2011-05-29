@@ -401,6 +401,7 @@ typedef struct
 typedef struct
 {
 	char *name;
+	char isbass;				//Is nonzero if this is a bass guitar tuning
 	unsigned char numstrings;	//The number of strings defined for this tuning
 	char tuning[EOF_TUNING_LENGTH];
 } EOF_TUNING_DEFINITION;

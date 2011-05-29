@@ -33,8 +33,9 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 	char * equals = NULL;
 	int i;
 	int j;
-	unsigned long stringlen;
+	unsigned long stringlen, tracknum;
 	char setting_stored;
+	unsigned ctr;	//Used to count the number of strings defined in pro guitar/bass tuning tag
 
 	if(!sp || !fn)
 	{
@@ -213,6 +214,38 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 					}
 					break;
 				}
+			}
+		}
+		else if(!ustricmp(eof_import_ini_setting[i].type, "real_guitar_tuning"))
+		{
+			ctr = 0;	//Reset counter
+			tracknum = sp->track[EOF_TRACK_PRO_GUITAR]->tracknum;
+			line_token = ustrtok(eof_import_ini_setting[i].value, " \r\n");	//Find first token (string of characters that isn't whitespace, carriage return or newline)
+			while(line_token != NULL)
+			{	//For each string tuning that is parsed
+				if(line_token[0] == '"')
+					break;	//Stop parsing if the tuning name string has been reached
+				if(ctr >= EOF_TUNING_LENGTH)
+					break;	//Do not read more string tunings than are supported
+				sp->pro_guitar_track[tracknum]->tuning[ctr] = atol(line_token) % 12;	//Convert the string to an integer value
+				ctr++;	//Increment the counter
+				line_token = ustrtok(NULL, " \r\n");	//Find next token
+			}
+		}
+		else if(!ustricmp(eof_import_ini_setting[i].type, "real_bass_tuning"))
+		{
+			ctr = 0;	//Reset counter
+			tracknum = sp->track[EOF_TRACK_PRO_BASS]->tracknum;
+			line_token = ustrtok(eof_import_ini_setting[i].value, " \r\n");	//Find first token (string of characters that isn't whitespace, carriage return or newline)
+			while(line_token != NULL)
+			{	//For each string tuning that is parsed
+				if(line_token[0] == '"')
+					break;	//Stop parsing if the tuning name string has been reached
+				if(ctr >= EOF_TUNING_LENGTH)
+					break;	//Do not read more string tunings than are supported
+				sp->pro_guitar_track[tracknum]->tuning[ctr] = atol(line_token) % 12;	//Convert the string to an integer value
+				ctr++;	//Increment the counter
+				line_token = ustrtok(NULL, " \r\n");	//Find next token
 			}
 		}
 
