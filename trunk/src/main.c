@@ -243,6 +243,15 @@ char eof_string6[4] = {0};
 char *eof_fret_strings[6] = {eof_string1, eof_string2, eof_string3, eof_string4, eof_string5, eof_string6};
 char *eof_note_names[12] = {"A","A#","B","C","C#","D","D#","E","F","F#","G","G#"};
 
+char eof_tuning_name[EOF_NAME_LENGTH+1] = {"Unknown"};
+char string_1_name[5] = {0};
+char string_2_name[5] = {0};
+char string_3_name[5] = {0};
+char string_4_name[5] = {0};
+char string_5_name[5] = {0};
+char string_6_name[5] = {0};
+char *tuning_list[EOF_TUNING_LENGTH] = {string_1_name,string_2_name,string_3_name,string_4_name,string_5_name,string_6_name};
+
 struct MIDIentry *MIDIqueue=NULL;		//Linked list of queued MIDI notes
 struct MIDIentry *MIDIqueuetail=NULL;	//Points to the tail of the list
 char eof_midi_initialized=0;			//Specifies whether Allegro was able to set up a MIDI device

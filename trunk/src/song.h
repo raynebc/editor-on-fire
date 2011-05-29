@@ -401,11 +401,11 @@ typedef struct
 typedef struct
 {
 	char *name;
-	unsigned char numstrings;	//Is set to 0 if the tuning array below applies to any number of strings for guitar/bass (ie. standard)
+	unsigned char numstrings;	//The number of strings defined for this tuning
 	char tuning[EOF_TUNING_LENGTH];
 } EOF_TUNING_DEFINITION;
 
-#define EOF_NUM_TUNING_DEFINITIONS 1
+#define EOF_NUM_TUNING_DEFINITIONS 15
 extern EOF_TUNING_DEFINITION eof_tuning_definitions[EOF_NUM_TUNING_DEFINITIONS];
 extern char eof_tuning_unknown[];
 
@@ -597,7 +597,9 @@ int eof_song_delete_track(EOF_SONG * sp, unsigned long track);
 EOF_SONG * eof_create_song_populated(void);
 	//Allocates, initializes and returns an EOF_SONG structure pre-populated with the default legacy and vocal tracks
 
-char *eof_lookup_tuning(EOF_SONG *sp, unsigned long track);	//This returns a string to a pre-defined string naming the track's tuning
+char *eof_lookup_tuning(EOF_SONG *sp, unsigned long track, char *tuning);
+	//This returns a string to a pre-defined string naming the track's tuning
+	//The tuning array is passed by reference, making it useful for the edit tuning dialog functions
 int eof_lookup_default_string_tuning(EOF_SONG *sp, unsigned long track, unsigned long stringnum);
 	//Determines the default tuning of the given string for the given pro guitar/bass track, taking the number of strings into account for pro bass
 	//The returned number is the number of half steps above A (a value from 0 to 11) upon success (usable with eof_note_names[])

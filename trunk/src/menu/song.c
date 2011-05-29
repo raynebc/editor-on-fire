@@ -2148,13 +2148,50 @@ int eof_song_track_difficulty_dialog(void)
 	return 1;
 }
 
-char *eof_tuning_name[EOF_NAME_LENGTH+1] = {"Unknown"};
-char string_1_name[4] = {0};
-char string_2_name[4] = {0};
-char string_3_name[4] = {0};
-char string_4_name[4] = {0};
-char string_5_name[4] = {0};
-char string_6_name[4] = {0};
+void eof_rebuild_tuning_strings(char *tuningarray)
+{
+	unsigned long tracknum, ctr;
+	int tuning, halfsteps;
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return;	//Return without rebuilding string tunings if there is an error
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+
+	for(ctr = 0; ctr < EOF_TUNING_LENGTH; ctr++)
+	{	//For each usable string in the track
+		if((ctr < eof_song->pro_guitar_track[tracknum]->numstrings) && (eof_fret_strings[ctr][0] != '\0'))
+		{	//If this string is used by the track and its tuning field is populated
+			halfsteps = atol(eof_fret_strings[ctr]);
+			if(!halfsteps && (eof_fret_strings[ctr][0] != '0'))
+			{	//If there was some kind of error converting this character to a number
+				strncpy(tuning_list[ctr], "   ", sizeof(tuning_list[0])-1);	//Empty the tuning string
+			}
+			else
+			{	//Otherwise look up the tuning
+				tuning = eof_lookup_tuned_note(eof_song, eof_selected_track, ctr, halfsteps);
+				if(tuning < 0)
+				{	//If there was an error determining the tuning
+					strncpy(tuning_list[ctr], "   ", sizeof(tuning_list[0])-1);	//Empty the tuning string
+				}
+				else
+				{	//Otherwise update the tuning string
+					tuning %= 12;	//Guarantee this value is in the range of [0,11]
+					strncpy(tuning_list[ctr], eof_note_names[tuning], sizeof(tuning_list[0]));
+					strncat(tuning_list[ctr], "  ", sizeof(tuning_list[0])-1);	//Pad with a space to ensure old string is overwritten
+					tuning_list[ctr][sizeof(tuning_list[0])-1] = '\0';	//Guarantee this string is truncated
+				}
+			}
+		}
+		else
+		{	//Otherwise empty the string
+			strncpy(tuning_list[ctr], "   ", sizeof(tuning_list[0])-1);	//Empty the tuning string
+		}
+	}
+
+	//Rebuild the tuning name string
+	strncpy(eof_tuning_name, eof_lookup_tuning(eof_song, eof_selected_track, tuningarray), sizeof(eof_tuning_name)-1);
+	strncat(eof_tuning_name, "        ", sizeof(eof_tuning_name) - strlen(eof_tuning_name));	//Pad the end of the string with several spaces
+}
 
 int eof_edit_tuning_proc(int msg, DIALOG *d, int c)
 {
@@ -2163,14 +2200,21 @@ int eof_edit_tuning_proc(int msg, DIALOG *d, int c)
 	int key_list[32] = {KEY_BACKSPACE, KEY_DEL, KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_ESC};
 	int match = 0;
 	int retval;
-	unsigned long tracknum, ctr;
-	int tuning, halfsteps;
-	char *tuning_list[EOF_TUNING_LENGTH] = {string_1_name,string_2_name,string_3_name,string_4_name,string_5_name,string_6_name};
+	char tuning[EOF_TUNING_LENGTH];
 
-	if(msg == MSG_CHAR)
-	{
+	if((msg == MSG_CHAR) || (msg == MSG_UCHAR))
+	{	//ASCII is not handled until the MSG_UCHAR event is sent
 		for(i = 0; i < 7; i++)
 		{
+			if((msg == MSG_UCHAR) && (c == 27))
+			{	//If the Escape ASCII character was trapped
+				return d_agup_edit_proc(msg, d, c);	//Immediately allow the input character to be returned (so the user can escape to cancel the dialog)
+			}
+			if((msg == MSG_CHAR) && ((c >> 8 == KEY_BACKSPACE) || (c >> 8 == KEY_DEL)))
+			{	//If the backspace or delete keys are trapped
+				match = 1;	//Ensure the full function runs, so that the strings are rebuilt
+				break;
+			}
 			if(c >> 8 == key_list[i])			//If the input is permanently allowed
 			{
 				return d_agup_edit_proc(msg, d, c);	//Immediately allow the input character to be returned
@@ -2178,17 +2222,20 @@ int eof_edit_tuning_proc(int msg, DIALOG *d, int c)
 		}
 
 		/* see if key is an allowed key */
-		string = (char *)(d->dp2);
-		if(string == NULL)	//If the accepted characters list is NULL for some reason
-			match = 1;	//Implicitly accept the input character instead of allowing a crash
-		else
+		if(!match)
 		{
-			for(i = 0; string[i] != '\0'; i++)	//Search all characters of the accepted characters list
+			string = (char *)(d->dp2);
+			if(string == NULL)	//If the accepted characters list is NULL for some reason
+				match = 1;	//Implicitly accept the input character instead of allowing a crash
+			else
 			{
-				if(string[i] == (c & 0xff))
+				for(i = 0; string[i] != '\0'; i++)	//Search all characters of the accepted characters list
 				{
-					match = 1;
-					break;
+					if(string[i] == (c & 0xff))
+					{
+						match = 1;
+						break;
+					}
 				}
 			}
 		}
@@ -2199,37 +2246,14 @@ int eof_edit_tuning_proc(int msg, DIALOG *d, int c)
 		retval = d_agup_edit_proc(msg, d, c);	//Allow the input character to be returned
 		if(!eof_song || (eof_selected_track >= eof_song->tracks) || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 			return retval;	//Return without redrawing string tunings if there is an error
-		tracknum = eof_song->track[eof_selected_track]->tracknum;
 
-		for(ctr = 0; ctr < EOF_TUNING_LENGTH; ctr++)
-		{	//For each usable string in the track
-			if((ctr < eof_song->pro_guitar_track[tracknum]->numstrings) && (eof_fret_strings[ctr][0] != '\0'))
-			{	//If this string is used by the track and its tuning field is populated
-				halfsteps = atol(eof_fret_strings[ctr]);
-				if(!halfsteps && (eof_fret_strings[ctr][0] != '0'))
-				{	//If there was some kind of error converting this character to a number
-					tuning_list[ctr][0] = '\0';	//Empty the tuning string
-				}
-				else
-				{	//Otherwise look up the tuning
-					tuning = eof_lookup_tuned_note(eof_song, eof_selected_track, ctr, halfsteps);
-					if(tuning < 0)
-					{	//If there was an error determining the tuning
-						tuning_list[ctr][0] = '\0';	//Empty the tuning string
-					}
-					else
-					{	//Otherwise update the tuning string
-						tuning %= 12;	//Guarantee this value is in the range of [0,11]
-						strncpy(tuning_list[ctr], eof_note_names[tuning], sizeof(tuning_list[0]));
-						tuning_list[ctr][sizeof(tuning_list[0])-1] = '\0';	//Guarantee this string is truncated
-					}
-				}
-			}
-			else
-			{	//Otherwise empty the string
-				tuning_list[ctr][0] = '\0';
-			}
+		//Build an integer type tuning array from the current input
+		for(i = 0; i < EOF_TUNING_LENGTH; i++)
+		{
+			tuning[i] = atol(eof_fret_strings[i]) % 12;	//Convert the text input to integer value
 		}
+		eof_rebuild_tuning_strings(tuning);
+		object_message(&eof_pro_guitar_tuning_dialog[2], MSG_DRAW, 0);	//Have Allegro redraw the tuning name
 		object_message(&eof_pro_guitar_tuning_dialog[6], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
 		object_message(&eof_pro_guitar_tuning_dialog[9], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
 		object_message(&eof_pro_guitar_tuning_dialog[12], MSG_DRAW, 0);	//Have Allegro redraw the string tuning strings
@@ -2245,43 +2269,44 @@ int eof_edit_tuning_proc(int msg, DIALOG *d, int c)
 DIALOG eof_pro_guitar_tuning_dialog[] =
 {
 /*	(proc)					(x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1)       (d2) (dp)          		(dp2) (dp3) */
-	{d_agup_window_proc,	0,   48,  230, 272,2,   23,  0,    0,      0,         0,	"Edit guitar tuning",NULL, NULL },
-	{d_agup_text_proc,  	16,  80,  44,  8,  2,   23,  0,    0,      0,         0,	"Tuning:",      	NULL, NULL },
-	{d_agup_text_proc,		74,  80,  154, 8,  2,   23,  0,    0, EOF_NAME_LENGTH,0,	eof_tuning_name,    NULL, NULL },
+	{d_agup_window_proc,	0,   48,  230, 272,0,   0,   0,    0,      0,         0,	"Edit guitar tuning",NULL, NULL },
+	{d_agup_text_proc,  	16,  80,  44,  8,  0,   0,   0,    0,      0,         0,	"Tuning:",      	NULL, NULL },
+	{d_agup_text_proc,		74,  80,  154, 8,  0,   0,   0,    0, EOF_NAME_LENGTH,0,	eof_tuning_name,    NULL, NULL },
 
 	//Note:  In guitar theory, string 1 refers to high e
-	{d_agup_text_proc,      16,  108, 64,  8,  2,   23,  0,    0,      0,         0,   "Half steps above/below standard",NULL,NULL },
-	{d_agup_text_proc,      16,  132, 64,  8,  2,   23,  0,    0,      0,         0,   "String 1:",  NULL,          NULL },
-	{eof_edit_tuning_proc,	74,  128, 28,  28, 2,   23,  0,    0,      3,         0,   eof_string1,  "0123456789-",NULL },
-	{d_agup_text_proc,      110, 132, 28,  8,  2,   23,  0,    0,      0,         0,   string_1_name,NULL,          NULL },
-	{d_agup_text_proc,      16,  156, 64,  8,  2,   23,  0,    0,      0,         0,   "String 2:",  NULL,          NULL },
-	{eof_edit_tuning_proc,	74,  152, 28,  28, 2,   23,  0,    0,      3,         0,   eof_string2,  "0123456789-",NULL },
-	{d_agup_text_proc,      110, 132, 28,  8,  2,   23,  0,    0,      0,         0,   string_2_name,NULL,          NULL },
-	{d_agup_text_proc,      16,  180, 64,  8,  2,   23,  0,    0,      0,         0,   "String 3:",  NULL,          NULL },
-	{eof_edit_tuning_proc,	74,  176, 28,  28, 2,   23,  0,    0,      3,         0,   eof_string3,  "0123456789-",NULL },
-	{d_agup_text_proc,      110, 132, 28,  8,  2,   23,  0,    0,      0,         0,   string_3_name,NULL,          NULL },
-	{d_agup_text_proc,      16,  204, 64,  8,  2,   23,  0,    0,      0,         0,   "String 4:",  NULL,          NULL },
-	{eof_edit_tuning_proc,	74,  200, 28,  28, 2,   23,  0,    0,      3,         0,   eof_string4,  "0123456789-",NULL },
-	{d_agup_text_proc,      110, 132, 28,  8,  2,   23,  0,    0,      0,         0,   string_4_name,NULL,          NULL },
-	{d_agup_text_proc,      16,  228, 64,  8,  2,   23,  0,    0,      0,         0,   "String 5:",  NULL,          NULL },
-	{eof_edit_tuning_proc,	74,  224, 28,  28, 2,   23,  0,    0,      3,         0,   eof_string5,  "0123456789-",NULL },
-	{d_agup_text_proc,      110, 132, 28,  8,  2,   23,  0,    0,      0,         0,   string_5_name,NULL,          NULL },
-	{d_agup_text_proc,      16,  252, 64,  8,  2,   23,  0,    0,      0,         0,   "String 6:",  NULL,          NULL },
-	{eof_edit_tuning_proc,	74,  248, 28,  28, 2,   23,  0,    0,      3,         0,   eof_string6,  "0123456789-",NULL },
-	{d_agup_text_proc,      110, 132, 28,  8,  2,   23,  0,    0,      0,         0,   string_6_name,NULL,          NULL },
+	{d_agup_text_proc,      16,  108, 64,  12,  0,   0,   0,    0,      0,         0,   "Half steps above/below standard",NULL,NULL },
+	{d_agup_text_proc,      16,  132, 64,  12,  0,   0,   0,    0,      0,         0,   "String 1:",  NULL,          NULL },
+	{eof_edit_tuning_proc,	74,  128, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string1,  "0123456789-",NULL },
+	{d_agup_text_proc,      110, 132, 28,  12,  0,   0,   0,    0,      0,         0,   string_1_name,NULL,          NULL },
+	{d_agup_text_proc,      16,  156, 64,  12,  0,   0,   0,    0,      0,         0,   "String 2:",  NULL,          NULL },
+	{eof_edit_tuning_proc,	74,  152, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string2,  "0123456789-",NULL },
+	{d_agup_text_proc,      110, 156, 28,  12,  0,   0,   0,    0,      0,         0,   string_2_name,NULL,          NULL },
+	{d_agup_text_proc,      16,  180, 64,  12,  0,   0,   0,    0,      0,         0,   "String 3:",  NULL,          NULL },
+	{eof_edit_tuning_proc,	74,  176, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string3,  "0123456789-",NULL },
+	{d_agup_text_proc,      110, 180, 28,  12,  0,   0,   0,    0,      0,         0,   string_3_name,NULL,          NULL },
+	{d_agup_text_proc,      16,  204, 64,  12,  0,   0,   0,    0,      0,         0,   "String 4:",  NULL,          NULL },
+	{eof_edit_tuning_proc,	74,  200, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string4,  "0123456789-",NULL },
+	{d_agup_text_proc,      110, 204, 28,  12,  0,   0,   0,    0,      0,         0,   string_4_name,NULL,          NULL },
+	{d_agup_text_proc,      16,  228, 64,  12,  0,   0,   0,    0,      0,         0,   "String 5:",  NULL,          NULL },
+	{eof_edit_tuning_proc,	74,  224, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string5,  "0123456789-",NULL },
+	{d_agup_text_proc,      110, 228, 28,  12,  0,   0,   0,    0,      0,         0,   string_5_name,NULL,          NULL },
+	{d_agup_text_proc,      16,  252, 64,  12,  0,   0,   0,    0,      0,         0,   "String 6:",  NULL,          NULL },
+	{eof_edit_tuning_proc,	74,  248, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string6,  "0123456789-",NULL },
+	{d_agup_text_proc,      110, 252, 28,  12,  0,   0,   0,    0,      0,         0,   string_6_name,NULL,          NULL },
 
-	{d_agup_button_proc,    20,  280, 68,  28, 2,   23,  '\r', D_EXIT, 0,         0,   "OK",         NULL,          NULL },
-	{d_agup_button_proc,    140, 280, 68,  28, 2,   23,  0,    D_EXIT, 0,         0,   "Cancel",     NULL,          NULL },
+	{d_agup_button_proc,    20,  280, 68,  28, 0,   0,   '\r', D_EXIT, 0,         0,   "OK",         NULL,          NULL },
+	{d_agup_button_proc,    140, 280, 68,  28, 0,   0,   0,    D_EXIT, 0,         0,   "Cancel",     NULL,          NULL },
 	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
-//DEBUG
-DIALOG my_dialog[];
-
 int eof_menu_song_track_tuning(void)
 {
+	unsigned long ctr, tracknum;
+	char undo_made = 0;
+
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run unless the pro guitar track is active
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
 
 	if(!eof_music_paused)
 	{
@@ -2291,18 +2316,46 @@ int eof_menu_song_track_tuning(void)
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
-//DEBUG
-//	eof_color_dialog(eof_pro_guitar_tuning_dialog, gui_fg_color, gui_bg_color);
-//	centre_dialog(eof_pro_guitar_tuning_dialog);
-	eof_color_dialog(my_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(my_dialog);
+	eof_color_dialog(eof_pro_guitar_tuning_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_pro_guitar_tuning_dialog);
 
-//Update the tuning name string to reflect the currently set tuning
-	memcpy(eof_tuning_name, eof_lookup_tuning(eof_song, eof_selected_track), sizeof(eof_tuning_name));
+//Update the strings to reflect the currently set tuning
+	for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->numstrings; ctr++)
+	{	//For each string in the track, convert the tuning to its string representation
+		snprintf(eof_fret_strings[ctr], sizeof(eof_string1), "%d", eof_song->pro_guitar_track[tracknum]->tuning[ctr]);
+	}
+	eof_rebuild_tuning_strings(eof_song->pro_guitar_track[tracknum]->tuning);
 
-//	if(eof_popup_dialog(eof_pro_guitar_tuning_dialog, 0) == 22)
-	if(eof_popup_dialog(my_dialog, 0) == 22)
+	if(eof_popup_dialog(eof_pro_guitar_tuning_dialog, 0) == 22)
 	{	//If user clicked OK
+		//Validate and store the input
+		for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->numstrings; ctr++)
+		{	//For each string in the track, ensure the user entered a tuning
+			if(eof_fret_strings[ctr][0] == '\0')
+			{	//Ensure the user entered a tuning
+				allegro_message("Error:  Each of the track's strings must have a defined tuning");
+				return 1;
+			}
+			if(!atol(eof_fret_strings[ctr]) && (eof_fret_strings[ctr][0] != '0'))
+			{	//Ensure the tuning is valid (ie. not "-")
+				allegro_message("Error:  Invalid tuning value");
+				return 1;
+			}
+			if((atol(eof_fret_strings[ctr]) > 11) || (atol(eof_fret_strings[ctr]) < -11))
+			{	//Ensure the tuning is valid (ie. not "-")
+				allegro_message("Error:  Invalid tuning value (must be between -11 and 11)");
+				return 1;
+			}
+		}
+		for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->numstrings; ctr++)
+		{	//For each string in the track, store the numerical value into the track's tuning array
+			if(!undo_made && (eof_song->pro_guitar_track[tracknum]->tuning[ctr] != atol(eof_fret_strings[ctr]) % 12))
+			{	//If a tuning was changed
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				undo_made = 1;
+			}
+			eof_song->pro_guitar_track[tracknum]->tuning[ctr] = atol(eof_fret_strings[ctr]) % 12;
+		}
 	}//If user clicked OK
 
 	eof_show_mouse(NULL);
@@ -2311,44 +2364,3 @@ int eof_menu_song_track_tuning(void)
 	return 1;
 }
 
-//DEBUG
-#define STRINGSIZE 10
-char string[STRINGSIZE] = {0};
-char string2[STRINGSIZE * 2] = {0};
-
-int custom_edit_proc(int msg, DIALOG *d, int c)
-{
-  int retval;
-
-  if((msg == MSG_CHAR) || (msg == MSG_UCHAR))
-  {	//ASCII is not handled until the MSG_UCHAR event is sent
-    retval = d_agup_edit_proc(msg, d, c);
-//    if(string[0] != '\0')
-//   {	//If there is text in the input field, erase the string area
-    	memset(string2, ' ', sizeof(string2) - 1);
-    	string2[STRINGSIZE * 2 - 1] = '\0';	//Ensure the string is terminated
-    	object_message(&my_dialog[3], MSG_DRAW, 0);  //Have Allegro redraw the edited string2[] string
-
-		//recreate string2[] and draw it
-		snprintf(string2, STRINGSIZE * 2, "Test=%s", string);
-//    }
-		object_message(&my_dialog[3], MSG_DRAW, 0);  //Have Allegro redraw the edited string2[] string
-//    broadcast_dialog_message(MSG_DRAW , 0);
-    return retval;
-  }
-
-  return d_agup_edit_proc(msg, d, c);
-}
-
-DIALOG my_dialog[] =
-{
-/*  (proc)      		(x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1)         (d2) (dp)          (dp2) (dp3) */
-//  {d_agup_clear_proc,	0,   0,   200, 200,2,   23,  0,    0,      0,           0,	 NULL,  	   NULL, NULL },
-  {d_agup_window_proc,	0,   0,   200, 200,2,   23,  0,    0,      0,           0,	 "Test",	   NULL, NULL },
-  {d_agup_text_proc,    12,  80,  44,  8,  2,   23,  0,    0,      0,           0,   "Type here:", NULL, NULL },
-  {custom_edit_proc,  	100, 76,  88,  8,  2,   23,  0,    0,      STRINGSIZE-1,0,   string,       NULL, NULL },
-  {d_agup_text_proc,    12,  100, 28,  8,  2,   23,  0,    0,      0,           0,   string2,      NULL, NULL },
-  {d_agup_button_proc,  12,  160, 68,  28, 2,   23,  '\r', D_EXIT, 0,           0,   "OK",         NULL, NULL },
-  {d_agup_button_proc,  120, 160, 68,  28, 2,   23,  0,    D_EXIT, 0,           0,   "Cancel",     NULL, NULL },
-  {NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
-};
