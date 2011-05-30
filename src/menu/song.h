@@ -10,6 +10,7 @@ extern MENU eof_lyric_line_menu[];
 extern MENU eof_song_seek_menu[];
 extern MENU eof_song_seek_bookmark_menu[];
 extern MENU eof_waveform_menu[];
+extern MENU eof_song_proguitar_menu[];
 extern MENU eof_song_menu[];
 
 extern DIALOG eof_ini_dialog[];
@@ -17,6 +18,7 @@ extern DIALOG eof_ini_add_dialog[];
 extern DIALOG eof_song_properties_dialog[];
 extern DIALOG eof_catalog_entry_name_dialog[];
 extern DIALOG eof_pro_guitar_tuning_dialog[];
+extern DIALOG eof_note_set_num_frets_strings_dialog[];
 
 void eof_prepare_song_menu(void);
 
@@ -78,7 +80,8 @@ int eof_menu_song_open_bass(void);		//Toggle the ability to use a sixth lane in 
 int eof_menu_catalog_edit_name(void);	//Brings up a dialog window allowing the user to define a fret catalog entry's name
 int eof_menu_song_legacy_view(void);	//Toggles the view of pro guitar tracks as legacy notes
 int eof_song_track_difficulty_dialog(void);	//Allow the active track's difficulty to be set to a value from 0 through 6
-int eof_menu_song_track_tuning(void);	//Allow the active track's tuning to be defined
+int eof_menu_song_track_tuning(void);	//Allows the active track's tuning to be defined
 int eof_edit_tuning_proc(int msg, DIALOG *d, int c);	//This is a modification of eof_verified_edit_proc() allowing the note names to be redrawn when a tuning field is altered
+int eof_menu_set_num_frets_strings(void);		//Allows the track's number of frets (pro guitar/bass) and strings (pro bass only) to be defined
 
 #endif

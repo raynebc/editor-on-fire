@@ -231,6 +231,13 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 				ctr++;	//Increment the counter
 				line_token = ustrtok(NULL, " \r\n");	//Find next token
 			}
+			sp->pro_guitar_track[tracknum]->numstrings = ctr;	//Define the number of strings in the track based on the tuning tag
+			if((ctr < 4 || ctr > 6))
+			{	//If the number of strings defined isn't supported
+				allegro_message("Warning:  Invalid pro guitar tuning tag.  Reverting to 6 string standard tuning.");
+				sp->pro_guitar_track[tracknum]->numstrings = 6;
+				memset(sp->pro_guitar_track[tracknum]->tuning, 0, EOF_TUNING_LENGTH);
+			}
 		}
 		else if(!ustricmp(eof_import_ini_setting[i].type, "real_bass_tuning"))
 		{
@@ -246,6 +253,13 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 				sp->pro_guitar_track[tracknum]->tuning[ctr] = atol(line_token) % 12;	//Convert the string to an integer value
 				ctr++;	//Increment the counter
 				line_token = ustrtok(NULL, " \r\n");	//Find next token
+			}
+			sp->pro_guitar_track[tracknum]->numstrings = ctr;	//Define the number of strings in the track based on the tuning tag
+			if((ctr < 4 || ctr > 6))
+			{	//If the number of strings defined isn't supported
+				allegro_message("Warning:  Invalid pro bass tuning tag.  Reverting to 6 string standard tuning.");
+				sp->pro_guitar_track[tracknum]->numstrings = 6;
+				memset(sp->pro_guitar_track[tracknum]->tuning, 0, EOF_TUNING_LENGTH);
 			}
 		}
 
