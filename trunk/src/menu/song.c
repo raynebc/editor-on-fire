@@ -100,6 +100,29 @@ MENU eof_waveform_menu[] =
 	{NULL, NULL, NULL, 0, NULL}
 };
 
+DIALOG eof_note_set_num_frets_strings_dialog[] =
+{
+   /* (proc)                  (x)  (y) (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)  (            dp2) (dp3) */
+//   { d_agup_shadow_box_proc,  32,  68, 170, 120, 2,   23,   0,    0,     0,   0,   NULL,              NULL, NULL },
+   { d_agup_window_proc,      32,  68, 170, 136, 0,   0,    0,    0,     0,   0,   "Edit fret/string count", NULL, NULL },
+   { d_agup_text_proc,        44,  100,110, 8,   2,   23,   0,    0,     0,   0,   "Max fret value:", NULL, NULL },
+   { eof_verified_edit_proc,  158, 96, 26,  20,  2,   23,   0,    0,     2,   0,   eof_etext2,        "0123456789", NULL },
+   { d_agup_text_proc,		  44,  120,64,	8,   2,   23,   0,    0,     0,   0,   "Number of strings:",NULL, NULL },
+   { d_agup_radio_proc,	      44,  140,36,  15,  2,   23,   0,    0,     0,   0,   "4",               NULL, NULL },
+   { d_agup_radio_proc,	      80,  140,36,  15,  2,   23,   0,    0,     0,   0,   "5",               NULL, NULL },
+   { d_agup_radio_proc,	      116, 140,36,  15,  2,   23,   0,    0,     0,   0,   "6",               NULL, NULL },
+   { d_agup_button_proc,      42,  164,68,  28,  2,   23,   '\r', D_EXIT,0,   0,   "OK",              NULL, NULL },
+   { d_agup_button_proc,      120, 164,68,  28,  2,   23,   0,    D_EXIT,0,   0,   "Cancel",          NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+MENU eof_song_proguitar_menu[] =
+{
+    {"Set track &Tuning", eof_menu_song_track_tuning, NULL, 0, NULL},
+    {"Set &Number of frets/strings", eof_menu_set_num_frets_strings, NULL, 0, NULL},
+    {NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_song_menu[] =
 {
     {"&Seek", NULL, eof_song_seek_menu, 0, NULL},
@@ -111,10 +134,10 @@ MENU eof_song_menu[] =
     {"&File Info", eof_menu_song_file_info, NULL, 0, NULL},
     {"&INI Settings", eof_menu_song_ini_settings, NULL, 0, NULL},
     {"&Properties\tF9", eof_menu_song_properties, NULL, 0, NULL},
-	{"&Leading Silence", eof_menu_song_add_silence, NULL, 0, NULL},
+    {"&Leading Silence", eof_menu_song_add_silence, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
-	{"&Audio cues", eof_menu_audio_cues, NULL, 0, NULL},
-	{"&Waveform Graph", NULL, eof_waveform_menu, 0, NULL},
+    {"&Audio cues", eof_menu_audio_cues, NULL, 0, NULL},
+    {"&Waveform Graph", NULL, eof_waveform_menu, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"T&est In FOF\tF12", eof_menu_song_test_fof, NULL, EOF_LINUX_DISABLE, NULL},
     {"Test I&n Phase Shift", eof_menu_song_test_ps, NULL, EOF_LINUX_DISABLE, NULL},
@@ -123,7 +146,7 @@ MENU eof_song_menu[] =
     {"Create image sequence", eof_create_image_sequence, NULL, 0, NULL},
     {"Enable legacy view\tShift+L", eof_menu_song_legacy_view, NULL, 0, NULL},
     {"Set track difficulty", eof_song_track_difficulty_dialog, NULL, 0, NULL},
-    {"Set track tuning", eof_menu_song_track_tuning, NULL, 0, NULL},
+    {"Pro &Guitar", NULL, eof_song_proguitar_menu, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -494,13 +517,16 @@ void eof_prepare_song_menu(void)
 		}
 
 		/* enable legacy view */
+		/* enable pro guitar submenu */
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar track is active
-			eof_song_menu[19].flags = eof_song_menu[19].flags & D_SELECTED;	//Enable the menu item and check it if it's already checked
+			eof_song_menu[19].flags = eof_song_menu[19].flags & D_SELECTED;	//Enable legacy view and check it if it's already checked
+			eof_song_menu[21].flags = eof_song_menu[19].flags = 0;			//Enable the pro guitar submenu
 		}
 		else
 		{	//Otherwise disable this menu item, but keep it checked if it's already checked
-			eof_song_menu[19].flags = D_DISABLED | (eof_song_menu[19].flags & D_SELECTED);
+			eof_song_menu[19].flags = D_DISABLED | (eof_song_menu[19].flags & D_SELECTED);	//Disable legacy view
+			eof_song_menu[21].flags = D_DISABLED;	//Disable the pro guitar submenu
 		}
 	}//If a chart is loaded
 }
@@ -1154,7 +1180,7 @@ int eof_menu_track_selected_track_number(int tracknum)
 		eof_selected_track = tracknum;
 		eof_detect_difficulties(eof_song);
 		eof_fix_window_title();
-		eof_scale_fretboard(0);
+		eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
 		eof_determine_phrase_status();
 	}
 	return 1;
@@ -1959,7 +1985,7 @@ int eof_menu_song_open_bass(void)
 		eof_song_menu[17].flags = D_SELECTED;
 		eof_song->legacy_track[tracknum]->numlanes = 6;
 	}
-	eof_scale_fretboard(0);
+	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
 	return 1;
 }
 
@@ -2326,6 +2352,24 @@ int eof_menu_song_track_tuning(void)
 	}
 	eof_rebuild_tuning_strings(eof_song->pro_guitar_track[tracknum]->tuning);
 
+//Disable string fields higher than the track's highest usable string
+	if(eof_song->pro_guitar_track[tracknum]->numstrings < 6)
+	{	//If this track doesn't have a string 6
+		eof_pro_guitar_tuning_dialog[20].flags = D_HIDDEN;	//Hide the input field for string 6
+	}
+	else
+	{
+		eof_pro_guitar_tuning_dialog[20].flags = 0;
+	}
+	if(eof_song->pro_guitar_track[tracknum]->numstrings < 5)
+	{	//If this track doesn't have a string 5
+		eof_pro_guitar_tuning_dialog[17].flags = D_HIDDEN;	//Hide the input field for string 5
+	}
+	else
+	{
+		eof_pro_guitar_tuning_dialog[17].flags = 0;
+	}
+
 	if(eof_popup_dialog(eof_pro_guitar_tuning_dialog, 0) == 22)
 	{	//If user clicked OK
 		//Validate and store the input
@@ -2364,3 +2408,89 @@ int eof_menu_song_track_tuning(void)
 	return 1;
 }
 
+int eof_menu_set_num_frets_strings(void)
+{
+	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	unsigned char newnumfrets = 0, newnumstrings = 0;
+	char undo_made = 0, cancel = 0;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run if a pro guitar track isn't active
+
+	//Update dialog fields
+	snprintf(eof_etext2, sizeof(eof_etext2), "%d", eof_song->pro_guitar_track[tracknum]->numfrets);
+	eof_note_set_num_frets_strings_dialog[4].flags = eof_note_set_num_frets_strings_dialog[5].flags = eof_note_set_num_frets_strings_dialog[6].flags = 0;
+	switch(eof_song->pro_guitar_track[tracknum]->numstrings)
+	{
+		case 4:
+			eof_note_set_num_frets_strings_dialog[4].flags = D_SELECTED;
+		break;
+		case 5:
+			eof_note_set_num_frets_strings_dialog[5].flags = D_SELECTED;
+		break;
+		case 6:
+			eof_note_set_num_frets_strings_dialog[6].flags = D_SELECTED;
+		break;
+	}
+
+	eof_cursor_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_note_set_num_frets_strings_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_note_set_num_frets_strings_dialog);
+	if(eof_popup_dialog(eof_note_set_num_frets_strings_dialog, 2) == 7)
+	{	//If the user clicked OK
+		//Update max fret number
+		newnumfrets = atol(eof_etext2);
+		if(newnumfrets && (newnumfrets != eof_song->pro_guitar_track[tracknum]->numfrets))
+		{	//If the specified number of frets was changed
+			if(!undo_made)
+			{
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				undo_made = 1;
+			}
+			eof_song->pro_guitar_track[tracknum]->numfrets = newnumfrets;
+		}
+		//Update number of strings
+		newnumstrings = eof_song->pro_guitar_track[tracknum]->numstrings;
+		if(eof_note_set_num_frets_strings_dialog[4].flags == D_SELECTED)
+		{
+			newnumstrings = 4;
+		}
+		else if(eof_note_set_num_frets_strings_dialog[5].flags == D_SELECTED)
+		{
+			newnumstrings = 5;
+		}
+		else if(eof_note_set_num_frets_strings_dialog[6].flags == D_SELECTED)
+		{
+			newnumstrings = 6;
+		}
+		if(newnumstrings != eof_song->pro_guitar_track[tracknum]->numstrings)
+		{	//If the specified number of strings was changed
+			if(eof_detect_string_gem_conflicts(eof_song->pro_guitar_track[tracknum], newnumstrings))
+			{
+				if(alert(NULL, "Warning:  Changing the # of strings will cause one or more gems to be deleted.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+				{	//If user opts to cancel
+					cancel = 1;
+				}
+			}
+
+			if(!cancel)
+			{
+				if(!undo_made)
+				{
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				eof_song->pro_guitar_track[tracknum]->numstrings = newnumstrings;
+				eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
+			}
+		}
+		//Perform cleanup
+		if(undo_made)
+		{
+			eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fix fret/string conflicts
+		}
+	}
+
+	return 1;
+}

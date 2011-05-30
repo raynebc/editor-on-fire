@@ -73,7 +73,6 @@ int eof_menu_trill_unmark(void);				//Removes trill phrases that include any of 
 int eof_menu_tremolo_unmark(void);				//Removes tremolo phrases that include any of the selected notes
 int eof_menu_trill_erase_all(void);				//Removes all trill phrases, freeing phrase names as necessary
 int eof_menu_tremolo_erase_all(void);			//Removes all tremolo phrases, freeing phrase names as necessary
-int eof_menu_set_max_fret(void);				//Allows the maximum fret number for a pro guitar track to be defined
 int eof_menu_note_clear_legacy_values(void);	//Resets the legacy bitmasks of all selected notes
 
 int eof_menu_note_toggle_green(void);

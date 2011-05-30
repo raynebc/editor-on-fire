@@ -1320,7 +1320,14 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 				if(ptr4 == NULL)
 					return 0;	//Return error
 				ptr4->numfrets = 17;	//By default, assume a 17 fret guitar (ie. Mustang controller)
-				ptr4->numstrings = 6;	//By default, assume a 6 string guitar
+				if(trackdetails->track_type == EOF_TRACK_PRO_BASS)
+				{	//By default, set a pro bass track to 4 strings
+					ptr4->numstrings = 4;
+				}
+				else
+				{
+					ptr4->numstrings = 6;	//Otherwise, assume a 6 string guitar
+				}
 				if(ptr4->numstrings > EOF_TUNING_LENGTH)	//Ensure that the tuning array is large enough
 					return 0;	//Return error
 				memset(ptr4->tuning, 0, EOF_TUNING_LENGTH);	//Initialize the tuning for all strings to "standard" (zero)
@@ -3293,6 +3300,14 @@ void eof_pro_guitar_track_fixup_notes(EOF_PRO_GUITAR_TRACK * tp, int sel)
 			eof_selection.last = i-1;
 		}
 
+		for(ctr=0, bitmask=1; ctr < 8; ctr++, bitmask <<= 1)
+		{	//For each lane
+			if((tp->note[i-1]->note & bitmask) && (ctr >= tp->numstrings))
+			{	//If this lane is populated and is above the highest valid string number for this track
+				tp->note[i-1]->note &= (~bitmask);	//Clear the lane
+			}
+		}
+
 		/* delete certain notes */
 		if((tp->note[i-1]->note == 0) || ((tp->note[i-1]->type < 0) || (tp->note[i-1]->type > 4)) || (tp->note[i-1]->pos < eof_song->tags->ogg[eof_selected_ogg].midi_offset) || (tp->note[i-1]->pos >= eof_music_length))
 		{	//If the note is not valid
@@ -4471,6 +4486,7 @@ EOF_TUNING_DEFINITION eof_tuning_definitions[EOF_NUM_TUNING_DEFINITIONS] =
 {
  {"Standard tuning", 1, 4, {0,0,0,0}},
  {"Standard tuning", 1, 5, {0,0,0,0,0}},
+ {"Standard tuning", 1, 6, {0,0,0,0,0,0}},
  {"Standard tuning", 0, 6, {0,0,0,0,0,0}},
  {"D# tuning", 0, 6, {-1,-1,-1,-1,-1,-1}},
  {"D tuning", 0, 6, {-2,-2,-2,-2,-2,-2}},
@@ -4602,4 +4618,36 @@ int eof_lookup_played_note(EOF_SONG *sp, unsigned long track, unsigned long stri
 	notenum += fretnum;	//Take the fret number into account
 
 	return (notenum % 12);	//Return the note value in terms of half steps above note A
+}
+
+int eof_detect_string_gem_conflicts(EOF_PRO_GUITAR_TRACK *tp, unsigned long newnumstrings)
+{
+	unsigned long ctr, bitmask, i, higheststring = 0, conflict = 0;
+
+	if(tp == NULL)
+		return -1;	//Return error
+
+	for(i = tp->notes; i > 0; i--)
+	{	//For each note in the track
+		for(ctr=0, bitmask=1; ctr < 8; ctr++, bitmask <<= 1)
+		{	//For each lane
+			if(tp->note[i-1]->note & bitmask)
+			{	//If this lane is populated
+				if(ctr + 1 > higheststring)
+				{
+					higheststring = ctr + 1;	//Track the highest used string in the track (ctr counts beginning at zero)
+				}
+				if(ctr >= newnumstrings)
+				{	//If the string count is higher than the specified string
+					conflict = 1;	//Note that a conflict occurred
+				}
+			}
+		}
+	}
+
+	if(conflict)
+	{	//If there was a conflict
+		return higheststring;	//Return the highest used string number
+	}
+	return 0;	//Return no conflict
 }

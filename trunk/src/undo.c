@@ -162,7 +162,7 @@ int eof_undo_apply(void)
 		eof_select_beat(eof_selected_beat);
 		eof_fix_catalog_selection();
 		eof_fix_window_title();
-		eof_scale_fretboard(0);
+		eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
 		return 1;
 	}
 	return 0;
@@ -207,6 +207,6 @@ void eof_redo_apply(void)
 		eof_select_beat(eof_selected_beat);
 		eof_fix_catalog_selection();
 		eof_fix_window_title();
-		eof_scale_fretboard(0);
+		eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
 	}
 }

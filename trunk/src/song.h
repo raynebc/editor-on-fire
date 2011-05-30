@@ -406,7 +406,7 @@ typedef struct
 	char tuning[EOF_TUNING_LENGTH];
 } EOF_TUNING_DEFINITION;
 
-#define EOF_NUM_TUNING_DEFINITIONS 15
+#define EOF_NUM_TUNING_DEFINITIONS 16
 extern EOF_TUNING_DEFINITION eof_tuning_definitions[EOF_NUM_TUNING_DEFINITIONS];
 extern char eof_tuning_unknown[];
 
@@ -528,6 +528,10 @@ void eof_set_pro_guitar_fret_number(char function, unsigned long fretvalue);
 	//If function is 0, the applicable strings' fret values are set to the specified value
 	//If function is 1, the applicable strings' fret values are incremented
 	//If function is 2, the applicable strings' fret values are decremented
+int eof_detect_string_gem_conflicts(EOF_PRO_GUITAR_TRACK *tp, unsigned long newnumstrings);
+	//If there are any gems on a string higher than the specified number of strings for the specified track, the highest used string number is returned
+	//0 is returned if there are no conflicts
+	//-1 is returned on error
 
 EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp);	//Allocates, initializes and stores a new EOF_BEAT_MARKER structure into the beats array.  Returns the newly allocated structure or NULL upon error
 void eof_song_delete_beat(EOF_SONG * sp, unsigned long beat);	//Removes and frees the specified beat from the beats array.  All beats after the deleted beat are moved back in the array one position

@@ -124,7 +124,6 @@ MENU eof_note_proguitar_menu[] =
     {"Toggle &Palm muting\tCtrl+M", eof_menu_note_toggle_palm_muting, NULL, 0, NULL},
     {"Mark as non palm &Muting", eof_menu_note_remove_palm_muting, NULL, 0, NULL},
     {"&Arpeggio", NULL, eof_arpeggio_menu, 0, NULL},
-    {"Set max &Fret value", eof_menu_set_max_fret, NULL, 0, NULL},
     {"Clear legacy bitmask", eof_menu_note_clear_legacy_values, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
@@ -3421,45 +3420,6 @@ int eof_menu_tremolo_erase_all(void)
 		eof_set_num_tremolos(eof_song, eof_selected_track, 0);
 	}
 	eof_determine_phrase_status();
-	return 1;
-}
-
-DIALOG eof_note_set_max_fret_dialog[] =
-{
-   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_shadow_box_proc,    32,  68,  170, 72 + 8, 2,   23,  0,    0,      0,   0,   NULL,               NULL, NULL },
-   { d_agup_text_proc,   56,  84,  110,  8,  2,   23,  0,    0,      0,   0,   "Max fret value:",         NULL, NULL },
-   { eof_verified_edit_proc,   158, 80,  26,  20,  2,   23,  0,    0,      2,   0,   eof_etext2,           "0123456789", NULL },
-   { d_agup_button_proc, 42,  108, 68,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "OK",               NULL, NULL },
-   { d_agup_button_proc, 120, 108, 68,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
-};
-
-int eof_menu_set_max_fret(void)
-{
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	unsigned char newnumfrets = 0;
-
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
-		return 1;	//Do not allow this function to run if a pro guitar track isn't active
-
-	snprintf(eof_etext2, sizeof(eof_etext2), "%d", eof_song->pro_guitar_track[tracknum]->numfrets);
-
-	eof_cursor_visible = 0;
-	eof_render();
-	eof_color_dialog(eof_note_set_max_fret_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_note_set_max_fret_dialog);
-	if(eof_popup_dialog(eof_note_set_max_fret_dialog, 2) == 3)
-	{	//If the user clicked OK
-		newnumfrets = atol(eof_etext2);
-		if(newnumfrets && (newnumfrets != eof_song->pro_guitar_track[tracknum]->numfrets))
-		{	//If the specified number of frets was changed
-			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			eof_song->pro_guitar_track[tracknum]->numfrets = newnumfrets;
-			eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fix fret conflicts
-		}
-	}
-
 	return 1;
 }
 
