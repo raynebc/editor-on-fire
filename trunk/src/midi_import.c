@@ -1893,7 +1893,7 @@ allegro_message("Third pass complete");
 
 	eof_selected_ogg = 0;
 
-	//Check for conflicts between the imported pro guitar/bass track (if any) and thei tuning tags
+	//Check for conflicts between the imported pro guitar/bass track (if any) and their tuning tags
 	tracknum = sp->track[EOF_TRACK_PRO_GUITAR]->tracknum;
 	if(eof_detect_string_gem_conflicts(sp->pro_guitar_track[tracknum], sp->pro_guitar_track[tracknum]->numstrings))
 	{
