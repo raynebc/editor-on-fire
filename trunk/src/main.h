@@ -337,6 +337,7 @@ extern char eof_string5[4];
 extern char eof_string6[4];
 extern char *eof_fret_strings[6];
 extern char *eof_note_names[12];
+extern char *eof_major_scale_names[12];
 
 extern char eof_tuning_name[EOF_NAME_LENGTH+1];
 extern char string_1_name[5];

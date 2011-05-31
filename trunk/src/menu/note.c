@@ -2355,18 +2355,18 @@ DIALOG eof_pro_guitar_note_dialog[] =
 	{d_agup_edit_proc,		74,  76,  134, 20, 2,   23,  0,    0, EOF_NAME_LENGTH,0,eof_note_edit_name,       NULL, NULL },
 
 	//Note:  In guitar theory, string 1 refers to high e
-	{d_agup_text_proc,      16,  128, 64,  8,  2,   23,  0,    0,      0,         0,   "String 1:",  NULL,          NULL },
-	{eof_verified_edit_proc,74,  124, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string1,  "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  152, 64,  8,  2,   23,  0,    0,      0,         0,   "String 2:",  NULL,          NULL },
-	{eof_verified_edit_proc,74,  148, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string2,  "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  176, 64,  8,  2,   23,  0,    0,      0,         0,   "String 3:",  NULL,          NULL },
-	{eof_verified_edit_proc,74,  172, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string3,  "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  200, 64,  8,  2,   23,  0,    0,      0,         0,   "String 4:",  NULL,          NULL },
-	{eof_verified_edit_proc,74,  196, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string4,  "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  224, 64,  8,  2,   23,  0,    0,      0,         0,   "String 5:",  NULL,          NULL },
-	{eof_verified_edit_proc,74,  220, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string5,  "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  248, 64,  8,  2,   23,  0,    0,      0,         0,   "String 6:",  NULL,          NULL },
-	{eof_verified_edit_proc,74,  244, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string6,  "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  128, 64,  8,  2,   23,  0,    0,      0,         0,   "String 6:",  NULL,          NULL },
+	{eof_verified_edit_proc,74,  124, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string6,  "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  152, 64,  8,  2,   23,  0,    0,      0,         0,   "String 5:",  NULL,          NULL },
+	{eof_verified_edit_proc,74,  148, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string5,  "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  176, 64,  8,  2,   23,  0,    0,      0,         0,   "String 4:",  NULL,          NULL },
+	{eof_verified_edit_proc,74,  172, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string4,  "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  200, 64,  8,  2,   23,  0,    0,      0,         0,   "String 3:",  NULL,          NULL },
+	{eof_verified_edit_proc,74,  196, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string3,  "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  224, 64,  8,  2,   23,  0,    0,      0,         0,   "String 2:",  NULL,          NULL },
+	{eof_verified_edit_proc,74,  220, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string2,  "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  248, 64,  8,  2,   23,  0,    0,      0,         0,   "String 1:",  NULL,          NULL },
+	{eof_verified_edit_proc,74,  244, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string1,  "0123456789Xx",NULL },
 
 	{d_agup_text_proc,      16,  108, 64,  8,  2,   23,  0,    0,      0,         0,   "Pro",        NULL,          NULL },
 	{d_agup_text_proc,      160, 108, 64,  8,  2,   23,  0,    0,      0,         0,   "Legacy",     NULL,          NULL },
@@ -2452,7 +2452,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	{	//For each of the 6 supported strings
 		if(ctr < fretcount)
 		{	//If this track uses this string, copy the fret value to the appropriate string
-			eof_pro_guitar_note_dialog[4 + (2 * ctr)].flags = 0;	//Ensure this text box is enabled
+			eof_pro_guitar_note_dialog[14 - (2 * ctr)].flags = 0;	//Ensure this text box is enabled
 			if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->note & bitmask)
 			{	//If this string is already defined as being in use, copy its fret value to the string
 				if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] == 0xFF)
@@ -2471,7 +2471,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 		}
 		else
 		{	//Otherwise disable the text box for this fret and empty the string
-			eof_pro_guitar_note_dialog[4 + (2 * ctr)].flags = D_DISABLED;	//Ensure this text box is disabled
+			eof_pro_guitar_note_dialog[14 - (2 * ctr)].flags = D_DISABLED;	//Ensure this text box is disabled
 			eof_fret_strings[ctr][0] = '\0';
 		}
 	}

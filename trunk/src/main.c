@@ -242,6 +242,7 @@ char eof_string5[4] = {0};
 char eof_string6[4] = {0};
 char *eof_fret_strings[6] = {eof_string1, eof_string2, eof_string3, eof_string4, eof_string5, eof_string6};
 char *eof_note_names[12] = {"A","A#","B","C","C#","D","D#","E","F","F#","G","G#"};
+char *eof_major_scale_names[12] = {"A","Bb","B","C","Db","D","Eb","E","F","F#","G","Ab"};		//The name of each scale in order from 0 (0 semitones above A) to 11 (11 semitones above A)
 
 char eof_tuning_name[EOF_NAME_LENGTH+1] = {"Unknown"};
 char string_1_name[5] = {0};
@@ -1900,6 +1901,7 @@ void eof_render_note_window(void)
 	char pro_guitar_string[30] = {0};
 	unsigned char fretvalue;
 	char difficulty1[20], difficulty2[50];
+	int scale, chord;	//Used when looking up the chord name (if the last selected note is not already named)
 
 	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	clear_to_color(eof_window_note->screen, eof_color_gray);
@@ -2246,6 +2248,12 @@ void eof_render_note_window(void)
 				if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name[0] != '\0')
 				{	//If this note was given a name, display it in addition to the fretting
 					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: %s", pro_guitar_string, eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name);
+				}
+				else if(eof_lookup_chord(eof_song, eof_selected_track, eof_selection.current, &scale, &chord))
+				{	//Perform a chord name lookup, and if a match is found, display it in addition to the fretting
+					scale %= 12;	//Ensure this is a value from 0 to 11
+					chord %= 12;	//Ensure this is a value from 0 to 11
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: [%s%s]", pro_guitar_string, eof_major_scale_names[scale], eof_chord_names[chord].chordname);
 				}
 				else
 				{	//Otherwise just display the fretting
