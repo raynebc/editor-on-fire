@@ -2301,24 +2301,24 @@ DIALOG eof_pro_guitar_tuning_dialog[] =
 
 	//Note:  In guitar theory, string 1 refers to high e
 	{d_agup_text_proc,      16,  108, 64,  12,  0,   0,   0,    0,      0,         0,   "Half steps above/below standard",NULL,NULL },
-	{d_agup_text_proc,      16,  132, 64,  12,  0,   0,   0,    0,      0,         0,   "String 1:",  NULL,          NULL },
-	{eof_edit_tuning_proc,	74,  128, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string1,  "0123456789-",NULL },
-	{d_agup_text_proc,      110, 132, 28,  12,  0,   0,   0,    0,      0,         0,   string_1_name,NULL,          NULL },
-	{d_agup_text_proc,      16,  156, 64,  12,  0,   0,   0,    0,      0,         0,   "String 2:",  NULL,          NULL },
-	{eof_edit_tuning_proc,	74,  152, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string2,  "0123456789-",NULL },
-	{d_agup_text_proc,      110, 156, 28,  12,  0,   0,   0,    0,      0,         0,   string_2_name,NULL,          NULL },
-	{d_agup_text_proc,      16,  180, 64,  12,  0,   0,   0,    0,      0,         0,   "String 3:",  NULL,          NULL },
-	{eof_edit_tuning_proc,	74,  176, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string3,  "0123456789-",NULL },
-	{d_agup_text_proc,      110, 180, 28,  12,  0,   0,   0,    0,      0,         0,   string_3_name,NULL,          NULL },
-	{d_agup_text_proc,      16,  204, 64,  12,  0,   0,   0,    0,      0,         0,   "String 4:",  NULL,          NULL },
-	{eof_edit_tuning_proc,	74,  200, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string4,  "0123456789-",NULL },
-	{d_agup_text_proc,      110, 204, 28,  12,  0,   0,   0,    0,      0,         0,   string_4_name,NULL,          NULL },
-	{d_agup_text_proc,      16,  228, 64,  12,  0,   0,   0,    0,      0,         0,   "String 5:",  NULL,          NULL },
-	{eof_edit_tuning_proc,	74,  224, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string5,  "0123456789-",NULL },
-	{d_agup_text_proc,      110, 228, 28,  12,  0,   0,   0,    0,      0,         0,   string_5_name,NULL,          NULL },
-	{d_agup_text_proc,      16,  252, 64,  12,  0,   0,   0,    0,      0,         0,   "String 6:",  NULL,          NULL },
-	{eof_edit_tuning_proc,	74,  248, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string6,  "0123456789-",NULL },
-	{d_agup_text_proc,      110, 252, 28,  12,  0,   0,   0,    0,      0,         0,   string_6_name,NULL,          NULL },
+	{d_agup_text_proc,      16,  132, 64,  12,  0,   0,   0,    0,      0,         0,   "String 6:",  NULL,          NULL },
+	{eof_edit_tuning_proc,	74,  128, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string6,  "0123456789-",NULL },
+	{d_agup_text_proc,      110, 132, 28,  12,  0,   0,   0,    0,      0,         0,   string_6_name,NULL,          NULL },
+	{d_agup_text_proc,      16,  156, 64,  12,  0,   0,   0,    0,      0,         0,   "String 5:",  NULL,          NULL },
+	{eof_edit_tuning_proc,	74,  152, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string5,  "0123456789-",NULL },
+	{d_agup_text_proc,      110, 156, 28,  12,  0,   0,   0,    0,      0,         0,   string_5_name,NULL,          NULL },
+	{d_agup_text_proc,      16,  180, 64,  12,  0,   0,   0,    0,      0,         0,   "String 4:",  NULL,          NULL },
+	{eof_edit_tuning_proc,	74,  176, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string4,  "0123456789-",NULL },
+	{d_agup_text_proc,      110, 180, 28,  12,  0,   0,   0,    0,      0,         0,   string_4_name,NULL,          NULL },
+	{d_agup_text_proc,      16,  204, 64,  12,  0,   0,   0,    0,      0,         0,   "String 3:",  NULL,          NULL },
+	{eof_edit_tuning_proc,	74,  200, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string3,  "0123456789-",NULL },
+	{d_agup_text_proc,      110, 204, 28,  12,  0,   0,   0,    0,      0,         0,   string_3_name,NULL,          NULL },
+	{d_agup_text_proc,      16,  228, 64,  12,  0,   0,   0,    0,      0,         0,   "String 2:",  NULL,          NULL },
+	{eof_edit_tuning_proc,	74,  224, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string2,  "0123456789-",NULL },
+	{d_agup_text_proc,      110, 228, 28,  12,  0,   0,   0,    0,      0,         0,   string_2_name,NULL,          NULL },
+	{d_agup_text_proc,      16,  252, 64,  12,  0,   0,   0,    0,      0,         0,   "String 1:",  NULL,          NULL },
+	{eof_edit_tuning_proc,	74,  248, 28,  20,  0,   0,   0,    0,      3,         0,   eof_string1,  "0123456789-",NULL },
+	{d_agup_text_proc,      110, 252, 28,  12,  0,   0,   0,    0,      0,         0,   string_1_name,NULL,          NULL },
 
 	{d_agup_button_proc,    20,  280, 68,  28, 0,   0,   '\r', D_EXIT, 0,         0,   "OK",         NULL,          NULL },
 	{d_agup_button_proc,    140, 280, 68,  28, 0,   0,   0,    D_EXIT, 0,         0,   "Cancel",     NULL,          NULL },
@@ -2355,19 +2355,19 @@ int eof_menu_song_track_tuning(void)
 //Disable string fields higher than the track's highest usable string
 	if(eof_song->pro_guitar_track[tracknum]->numstrings < 6)
 	{	//If this track doesn't have a string 6
-		eof_pro_guitar_tuning_dialog[20].flags = D_HIDDEN;	//Hide the input field for string 6
+		eof_pro_guitar_tuning_dialog[5].flags = D_HIDDEN;	//Hide the input field for string 6
 	}
 	else
 	{
-		eof_pro_guitar_tuning_dialog[20].flags = 0;
+		eof_pro_guitar_tuning_dialog[5].flags = 0;
 	}
 	if(eof_song->pro_guitar_track[tracknum]->numstrings < 5)
 	{	//If this track doesn't have a string 5
-		eof_pro_guitar_tuning_dialog[17].flags = D_HIDDEN;	//Hide the input field for string 5
+		eof_pro_guitar_tuning_dialog[8].flags = D_HIDDEN;	//Hide the input field for string 5
 	}
 	else
 	{
-		eof_pro_guitar_tuning_dialog[17].flags = 0;
+		eof_pro_guitar_tuning_dialog[8].flags = 0;
 	}
 
 	if(eof_popup_dialog(eof_pro_guitar_tuning_dialog, 0) == 22)
