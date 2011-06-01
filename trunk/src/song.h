@@ -416,7 +416,7 @@ typedef struct
 	char *formula;
 } EOF_CHORD_DEFINITION;
 
-#define EOF_NUM_DEFINED_CHORDS 12
+#define EOF_NUM_DEFINED_CHORDS 18
 extern EOF_CHORD_DEFINITION eof_chord_names[EOF_NUM_DEFINED_CHORDS];
 
 EOF_SONG * eof_create_song(void);	//Allocates, initializes and returns an EOF_SONG structure

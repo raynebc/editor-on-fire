@@ -4654,18 +4654,24 @@ int eof_detect_string_gem_conflicts(EOF_PRO_GUITAR_TRACK *tp, unsigned long newn
 
 EOF_CHORD_DEFINITION eof_chord_names[EOF_NUM_DEFINED_CHORDS] =
 {
-	{"maj", "1,3,5"},
-	{"min", "1,b3,5"},
+	{"madd4", "1,b3,4,5"},
 	{"dim", "1,b3,b5"},
-	{"aug", "1,3,#5"},
-	{"maj6", "1,3,5,6"},
+	{"dim7", "1,b3,b5,6"},
+	{"m7b5", "1,b3,b5,b7"},
+	{"min", "1,b3,5"},
 	{"min6", "1,b3,5,6"},
-	{"7", "1,3,5,b7"},
-	{"maj7", "1,3,5,7"},
 	{"min7", "1,b3,5,b7"},
+	{"m/Maj7", "1,b3,5,7"},
+	{"add4", "1,3,4,5"},
+	{"majb5", "1,3,b5"},
 	{"7b5", "1,3,b5,b7"},
+	{"maj", "1,3,5"},
+	{"6", "1,3,5,6"},
+	{"maj7", "1,3,5,7"},
+	{"7", "1,3,5,b7"},
+	{"aug", "1,3,#5"},
 	{"7#5", "1,3,#5,b7"},
-	{"dim7", "1,b3,b5,6"}
+	{"5", "1,5"}
 };
 
 int eof_lookup_chord(EOF_SONG *sp, unsigned long track, unsigned long note, int *scale, int *chord)
@@ -4723,7 +4729,7 @@ int eof_lookup_chord(EOF_SONG *sp, unsigned long track, unsigned long note, int 
 		chord_intervals[0] = '\0';	//Truncate the intervals string
 		for(ctr2 = 0; ctr2 < 7; ctr2++)
 		{	//For each interval in the scale
-			//See if the normal/flat/sharp variation of this interval is played
+			//See if any normal/flat/sharp variations of this interval is played
 			interval_name[0] = '\0';	//Empty the interval name string
 			halfstep = (major_scales[ctr][ctr2] + 11) % 12;	//Look up one half step lower than the note for this interval (as a value from 0 to 11)
 			if(notes_played[halfstep])
@@ -4765,7 +4771,7 @@ int eof_lookup_chord(EOF_SONG *sp, unsigned long track, unsigned long note, int 
 				{
 					halfstep = (halfstep + 11) % 12;	//Look up the note for this interval (one half step below the previous sharp, as a value from 0 to 11)
 					if(notes_played[halfstep])
-					{	//If the interval is played in this note
+					{	//If the normal interval is played in this note
 						snprintf(interval_name, 5, "%lu", ctr2+1);	//Use this interval (numbering starts at 1 instead of 0)
 					}
 				}
