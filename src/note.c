@@ -169,6 +169,8 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	char *nameptr = NULL;		//This points to the display name string for the note
 	char *nameptrprev = NULL;	//This points to the display name string for the previous note (if applicable)
 	char samename[] = "/";		//This is what a repeated note name will display as
+	char autoname[EOF_NAME_LENGTH+1];	//This is used with the chord lookup logic
+	int scale, scale2, chord, chord2;	//Also used with the chord lookup logic
 
 	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
 	unsigned long notepos = 0;
@@ -437,6 +439,22 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 			{	//If there was a previous note, and it has the same name as this note's name
 				nameptr = samename;	//Display this note's name as "/" to indicate a repeat of the last note
 			}
+		}
+		else if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_lookup_chord(eof_song, track, notenum, &scale, &chord)))
+		{	//If the note has no manually defined name, but is in a pro guitar/bass track, perform the chord lookup logic.  If there's a match found,
+			if(eof_lookup_chord(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum), &scale2, &chord2) && (scale == scale2) && (chord == chord2))
+			{	//Compare with the previous note in the difficulty.  If it is the same chord,
+				snprintf(autoname, sizeof(autoname), "[/]");	//Write the auto-name version of "same chord"
+			}
+			else
+			{	//Otherwise construct the chord name
+				snprintf(autoname, sizeof(autoname), "[%s%s]", eof_major_scale_names[scale], eof_chord_names[chord].chordname);
+			}
+			nameptr = autoname;
+		}
+
+		if((nameptr != NULL) && (nameptr[0] != '\0'))
+		{	//If a manual or automatic chord name was found, render the name
 			if(window == eof_window_editor)
 			{	//If rendering to the editor window
 				textprintf_centre_ex(window->screen, font, x, 25 + 5, eof_color_white, -1, nameptr);
@@ -707,6 +725,8 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	char *nameptr = NULL;		//This points to the display name string for the note
 	char *nameptrprev = NULL;	//This points to the display name string for the previous note (if applicable)
 	char samename[] = "/";		//This is what a repeated note name will display as
+	char autoname[EOF_NAME_LENGTH+1];	//This is used with the chord lookup logic
+	int scale, scale2, chord, chord2;	//Also used with the chord lookup logic
 	long x3d, y3d, z3d;			//The coordinate at which to draw the name string (right aligned)
 
 	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
@@ -887,6 +907,22 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 		{	//If there was a previous note, and it has the same name as this note's name
 			nameptr = samename;	//Display this note's name as "/" to indicate a repeat of the last note
 		}
+	}
+	else if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_lookup_chord(eof_song, track, notenum, &scale, &chord)))
+	{	//If the note has no manually defined name, but is in a pro guitar/bass track, perform the chord lookup logic.  If there's a match found,
+		if(eof_lookup_chord(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum), &scale2, &chord2) && (scale == scale2) && (chord == chord2))
+		{	//Compare with the previous note in the difficulty.  If it is the same chord,
+			snprintf(autoname, sizeof(autoname), "[/]");	//Write the auto-name version of "same chord"
+		}
+		else
+		{	//Otherwise construct the chord name
+			snprintf(autoname, sizeof(autoname), "[%s%s]", eof_major_scale_names[scale], eof_chord_names[chord].chordname);
+		}
+		nameptr = autoname;
+	}
+
+	if((nameptr != NULL) && (nameptr[0] != '\0'))
+	{	//If a manual or automatic chord name was found, render the name
 		z3d = npos + 6 + text_height(font);	//Restore the 6 that was subtracted earlier when finding npos, and add the font's height to have the text line up with the note's z position
 		z3d = z3d < -100 ? -100 : z3d;
 		x3d = ocd3d_project_x(20 - 4, z3d);

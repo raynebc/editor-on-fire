@@ -2252,7 +2252,6 @@ void eof_render_note_window(void)
 				else if(eof_lookup_chord(eof_song, eof_selected_track, eof_selection.current, &scale, &chord))
 				{	//Perform a chord name lookup, and if a match is found, display it in addition to the fretting
 					scale %= 12;	//Ensure this is a value from 0 to 11
-					chord %= 12;	//Ensure this is a value from 0 to 11
 					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: [%s%s]", pro_guitar_string, eof_major_scale_names[scale], eof_chord_names[chord].chordname);
 				}
 				else
