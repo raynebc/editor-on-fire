@@ -4654,23 +4654,31 @@ int eof_detect_string_gem_conflicts(EOF_PRO_GUITAR_TRACK *tp, unsigned long newn
 
 EOF_CHORD_DEFINITION eof_chord_names[EOF_NUM_DEFINED_CHORDS] =
 {
+	{"sus2", "1,2,5"},
 	{"madd4", "1,b3,4,5"},
 	{"dim", "1,b3,b5"},
 	{"dim7", "1,b3,b5,6"},
 	{"m7b5", "1,b3,b5,b7"},
 	{"min", "1,b3,5"},
+	{"min7b6", "1,b3,5,b6,b7"},
 	{"min6", "1,b3,5,6"},
+	{"min6/Maj7", "1,b3,5,6,7"},
 	{"min7", "1,b3,5,b7"},
 	{"m/Maj7", "1,b3,5,7"},
 	{"add4", "1,3,4,5"},
 	{"majb5", "1,3,b5"},
 	{"7b5", "1,3,b5,b7"},
+	{"maj7b5", "1,3,b5,7"},
 	{"maj", "1,3,5"},
 	{"6", "1,3,5,6"},
-	{"maj7", "1,3,5,7"},
 	{"7", "1,3,5,b7"},
+	{"maj7", "1,3,5,7"},
 	{"aug", "1,3,#5"},
-	{"7#5", "1,3,#5,b7"},
+	{"aug7", "1,3,#5,b7"},
+	{"majAug7", "1,3,#5,7"},
+	{"sus4", "1,4,5"},
+	{"7sus4", "1,4,5,b7"},
+	{"b5", "1,b5"},
 	{"5", "1,5"}
 };
 

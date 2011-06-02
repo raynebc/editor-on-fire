@@ -403,7 +403,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	unsigned char rootvel;					//Used to write root notes for pro guitar tracks
 	unsigned long note, noteflags, notepos, deltapos;
 	char type;
-	int channel, velocity, bitmask, slidenote = 0;	//Used for pro guitar export
+	int channel, velocity, bitmask, slidenote = 0, scale, chord;	//Used for pro guitar export
 	EOF_PHRASE_SECTION *sectionptr;
 	char *lastname = NULL, *currentname = NULL, nochord[]="NC", chordname[100]="";
 	char match = 0;
@@ -1150,14 +1150,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					eof_add_midi_event(deltapos, 0x90, 108, rootvel, 0);	//Note 108 denotes a root note
 					eof_add_midi_event(deltapos + deltalength, 0x80, 108, 64, 0);	//Write the note off event (using the same velocity that RB3 MIDIs use)
 
-				/* write root note, which is a note from 4 to 15, to represent the chord's base type (where any E chord derivation is 4, F is 5, Bb is 6, ..., Eb is 15) */
+				/* write root note, which is a note from 4 to 15, to represent the chord's major scale (where any E scale chord is 4, F is 5, Bb is 6, ..., Eb is 15) */
 					if(eof_note_count_colors(sp, j, i) > 1)
 					{	//If this is a chord
-///**
-///INCOMPLETE LOGIC
-///**
-						eof_add_midi_event(deltapos, 0x90, 4, vel, 0);					//Until chord lookup logic is done, write this root note as if the chord is an E chord
-						eof_add_midi_event(deltapos + deltalength, 0x80, 4, vel, 0);
+						scale = 0;	//By default, assume an E chord
+						eof_lookup_chord(sp, j, i, &scale, &chord);	//Update the scale variable if a chord match is found
+						scale = (scale + 9) % 16 + (4 * ((scale + 9) / 16));	//Convert the scale to RB3's numbering system
+						eof_add_midi_event(deltapos, 0x90, scale, vel, 0);		//Write a root note reflecting the scale the chord is in
+						eof_add_midi_event(deltapos + deltalength, 0x80, scale, vel, 0);
 					}
 				}
 			}//For each note in the track
