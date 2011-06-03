@@ -38,6 +38,7 @@
 #include "control.h"
 #include "waveform.h"
 #include "silence.h"
+#include "tuning.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -233,7 +234,7 @@ wchar_t ** eof_windows_internal_argv;
 char ** eof_windows_argv;
 #endif
 
-/* tuning/fret/note name arrays */
+/* fret/tuning editing arrays */
 char eof_string1[4] = {0};	//Use a fourth byte to guarantee proper truncation
 char eof_string2[4] = {0};
 char eof_string3[4] = {0};
@@ -241,17 +242,6 @@ char eof_string4[4] = {0};
 char eof_string5[4] = {0};
 char eof_string6[4] = {0};
 char *eof_fret_strings[6] = {eof_string1, eof_string2, eof_string3, eof_string4, eof_string5, eof_string6};
-char *eof_note_names[12] = {"A","A#","B","C","C#","D","D#","E","F","F#","G","G#"};
-char *eof_major_scale_names[12] = {"A","Bb","B","C","Db","D","Eb","E","F","F#","G","Ab"};		//The name of each scale in order from 0 (0 semitones above A) to 11 (11 semitones above A)
-
-char eof_tuning_name[EOF_NAME_LENGTH+1] = {"Unknown"};
-char string_1_name[5] = {0};
-char string_2_name[5] = {0};
-char string_3_name[5] = {0};
-char string_4_name[5] = {0};
-char string_5_name[5] = {0};
-char string_6_name[5] = {0};
-char *tuning_list[EOF_TUNING_LENGTH] = {string_1_name,string_2_name,string_3_name,string_4_name,string_5_name,string_6_name};
 
 struct MIDIentry *MIDIqueue=NULL;		//Linked list of queued MIDI notes
 struct MIDIentry *MIDIqueuetail=NULL;	//Points to the tail of the list

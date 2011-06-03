@@ -2,6 +2,7 @@
 #include "modules/ocd3d.h"
 #include "main.h"
 #include "note.h"
+#include "tuning.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"

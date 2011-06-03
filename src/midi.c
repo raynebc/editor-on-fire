@@ -6,6 +6,7 @@
 #include "midi.h"
 #include "undo.h"
 #include "utility.h"
+#include "tuning.h"
 #include "menu/note.h"	//For pitch macros
 #include "foflc/Lyric_storage.h"	//For RBA extraction
 #include "foflc/Midi_parse.h"
@@ -1150,10 +1151,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					eof_add_midi_event(deltapos, 0x90, 108, rootvel, 0);	//Note 108 denotes a root note
 					eof_add_midi_event(deltapos + deltalength, 0x80, 108, 64, 0);	//Write the note off event (using the same velocity that RB3 MIDIs use)
 
-				/* write root note, which is a note from 4 to 15, to represent the chord's major scale (where any E scale chord is 4, F is 5, Bb is 6, ..., Eb is 15) */
+				/* write root note, which is a note from 4 to 15, to represent the chord's major scale (where any E scale chord is 4, F is 5, Gb is 6, ..., Eb is 15) */
 					if(eof_note_count_colors(sp, j, i) > 1)
 					{	//If this is a chord
-						scale = 0;	//By default, assume an E chord
+						scale = 0;	//By default, assume an A chord
 						eof_lookup_chord(sp, j, i, &scale, &chord);	//Update the scale variable if a chord match is found
 						scale = (scale + 9) % 16 + (4 * ((scale + 9) / 16));	//Convert the scale to RB3's numbering system
 						eof_add_midi_event(deltapos, 0x90, scale, vel, 0);		//Write a root note reflecting the scale the chord is in
