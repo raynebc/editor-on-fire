@@ -15,6 +15,7 @@
 #include "../waveform.h"
 #include "../silence.h"
 #include "../song.h"
+#include "../tuning.h"
 #include "song.h"
 
 #ifdef USEMEMWATCH

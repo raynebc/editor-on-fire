@@ -5,6 +5,7 @@
 #include "event.h"
 #include "ini.h"
 #include "legacy.h"
+#include "tuning.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"

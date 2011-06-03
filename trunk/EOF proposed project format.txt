@@ -170,7 +170,7 @@ TRACK CHUNK, for each track:
 *	{
 *		1 byte:		(Signed value) The number of half steps above or below (negative value) the standard tuning for this string
 *	}
-!		The first string defined refers to string 1, the lowest guage string (high E on a standard guitar), consistent with guitar terminology
+!		The first string defined refers to the lowest guage string (low E on a standard guitar)
 !		The tuning information will be written to song.ini from lowest to highest guage, ie. "real_guitar_tuning (-2 0 0 0 0 0)" would indicate drop D tuning
 
 *	4 bytes:	Number of notes
