@@ -1889,7 +1889,6 @@ void eof_render_note_window(void)
 	char temp[1024] = {0};
 	unsigned long notepos;
 	char pro_guitar_string[30] = {0};
-	unsigned char fretvalue;
 	char difficulty1[20], difficulty2[50];
 	int scale, chord;	//Used when looking up the chord name (if the last selected note is not already named)
 
