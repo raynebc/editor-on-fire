@@ -4512,3 +4512,44 @@ int eof_detect_string_gem_conflicts(EOF_PRO_GUITAR_TRACK *tp, unsigned long newn
 	}
 	return 0;	//Return no conflict
 }
+
+int eof_get_pro_guitar_note_fret_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, char *pro_guitar_string)
+{
+	unsigned long i, bitmask, index, fretvalue;
+
+	if(!tp || (note >= tp->notes) || !pro_guitar_string)
+	{	//If there was an invalid parameter
+		return 0;	//Return error
+	}
+
+	for(i = 0, bitmask = 1, index = 0; i < tp->numstrings; i++, bitmask<<=1)
+	{	//For each of the track's usable strings
+		if(index != 0)
+		{	//If another fret value was already written to this string
+			pro_guitar_string[index++] = ' ';	//Insert a space
+		}
+		if(tp->note[note]->note & bitmask)
+		{	//If the string is populated for the selected pro guitar note
+			fretvalue = tp->note[note]->frets[i];
+			if(fretvalue == 0xFF)
+			{	//If this string is muted
+				pro_guitar_string[index++] = 'X';	//Write a capital x to indicate muted string
+			}
+			else
+			{
+				if(fretvalue > 9)
+				{	//If the fret value uses two digits instead of one
+					pro_guitar_string[index++] = '0' + (fretvalue / 10);	//Write the tens digit
+				}
+				pro_guitar_string[index++] = '0' + (fretvalue % 10);	//Write the ones digit
+			}
+		}
+		else
+		{
+			pro_guitar_string[index++] = '_';	//Write an underscore to indicate string not played
+		}
+	}
+	pro_guitar_string[index] = '\0';	//Terminate the string
+
+	return 1;	//Return success
+}
