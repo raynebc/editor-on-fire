@@ -596,4 +596,9 @@ inline int eof_open_bass_enabled(void);
 int eof_create_image_sequence(void);
 	//Creates a PCX format image sequence in a subfolder of the chart's folder called "\sequence"
 
+int eof_get_pro_guitar_note_fret_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, char *pro_guitar_string);
+	//Writes a string representation of the specified pro guitar/bass note from lowest to highest gauge string into pro_guitar_string[] which must be at least
+	//3 * # of strings number of bytes long in order to store the maximum length string
+	//Returns 0 on error or 1 on success
+
 #endif

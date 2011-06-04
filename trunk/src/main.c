@@ -2205,48 +2205,23 @@ void eof_render_note_window(void)
 
 			tracknum = eof_song->track[eof_selected_track]->tracknum;
 			if((eof_selection.current < eof_song->pro_guitar_track[tracknum]->notes) && (eof_selection.track == eof_selected_track))
-			{	//If a note in the active track is selected, display a line with its information
+			{	//If a note in the active track is selected, display a line with its fretting information
 				ypos += 12;
-				for(i = 0, bitmask = 1, index = 0; i < 6; i++, bitmask<<=1)
-				{	//For each of the 6 usable strings
-					if(index != 0)
-					{	//If another fret value was already written to this string
-						pro_guitar_string[index++] = ' ';	//Insert a space
+				if(eof_get_pro_guitar_note_fret_string(eof_song->pro_guitar_track[tracknum], eof_selection.current, pro_guitar_string))
+				{	//If the note's frets can be represented in string format
+					if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name[0] != '\0')
+					{	//If this note was given a name, display it in addition to the fretting
+						textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: %s", pro_guitar_string, eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name);
 					}
-					if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->note & bitmask)
-					{	//If the string is populated for the selected pro guitar note
-						fretvalue = eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[i];
-						if(fretvalue == 0xFF)
-						{	//If this string is muted
-							pro_guitar_string[index++] = 'X';	//Write a capital x to indicate muted string
-						}
-						else
-						{
-							if(fretvalue > 9)
-							{	//If the fret value uses two digits instead of one
-								pro_guitar_string[index++] = '0' + (fretvalue / 10);	//Write the tens digit
-							}
-							pro_guitar_string[index++] = '0' + (fretvalue % 10);	//Write the ones digit
-						}
+					else if(eof_lookup_chord(eof_song, eof_selected_track, eof_selection.current, &scale, &chord))
+					{	//Perform a chord name lookup, and if a match is found, display it in addition to the fretting
+						scale %= 12;	//Ensure this is a value from 0 to 11
+						textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: [%s%s]", pro_guitar_string, eof_major_scale_names[scale], eof_chord_names[chord].chordname);
 					}
 					else
-					{
-						pro_guitar_string[index++] = '_';	//Write an underscore to indicate string not played
+					{	//Otherwise just display the fretting
+						textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s", pro_guitar_string);
 					}
-				}
-				pro_guitar_string[index] = '\0';	//Terminate the string
-				if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name[0] != '\0')
-				{	//If this note was given a name, display it in addition to the fretting
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: %s", pro_guitar_string, eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name);
-				}
-				else if(eof_lookup_chord(eof_song, eof_selected_track, eof_selection.current, &scale, &chord))
-				{	//Perform a chord name lookup, and if a match is found, display it in addition to the fretting
-					scale %= 12;	//Ensure this is a value from 0 to 11
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: [%s%s]", pro_guitar_string, eof_major_scale_names[scale], eof_chord_names[chord].chordname);
-				}
-				else
-				{	//Otherwise just display the fretting
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s", pro_guitar_string);
 				}
 			}//If a note in the active track is selected, display a line with its information
 		}//Display information specific to pro guitar tracks

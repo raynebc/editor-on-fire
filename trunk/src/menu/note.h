@@ -7,6 +7,7 @@ extern MENU eof_note_menu[];
 
 extern DIALOG eof_lyric_dialog[];
 extern DIALOG eof_split_lyric_dialog[];
+extern DIALOG eof_note_name_dialog[];
 
 extern char eof_solo_menu_mark_text[32];
 extern char eof_star_power_menu_mark_text[32];
@@ -83,5 +84,6 @@ int eof_menu_note_toggle_purple(void);
 int eof_menu_note_toggle_orange(void);
 
 int eof_menu_split_lyric(void);
+int eof_menu_note_edit_name(void);				//Enables the name for selected notes to be altered
 
 #endif
