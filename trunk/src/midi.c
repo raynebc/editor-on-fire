@@ -1130,6 +1130,18 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					}
 				}
 
+				/* write strum direction markers */
+				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM)
+				{	//If this note strums down
+					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 9, 114, 15);	//Down strum markers are note # (lane 1 + 9), velocity 114, channel 15
+					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 9, velocity, 15);
+				}
+				else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
+				{	//If this note strums up
+					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 9, 96, 13);	//Down strum markers are note # (lane 1 + 9), velocity 96, channel 13
+					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 9, velocity, 13);
+				}
+
 				if(eof_get_note_type(sp, j, i) == EOF_NOTE_AMAZING)
 				{	//For the Expert difficulty, write required specialty notes
 				/* write left hand position note, which is a note 108 with the same velocity of the lowest fret used in the pro guitar note */
@@ -1155,7 +1167,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					if(eof_note_count_colors(sp, j, i) > 1)
 					{	//If this is a chord
 						scale = 0;	//By default, assume an A chord
-						eof_lookup_chord(sp, j, i, &scale, &chord);	//Update the scale variable if a chord match is found
+						eof_lookup_chord(sp, j, i, &scale, &chord);				//Update the scale variable if a chord match is found
 						scale = (scale + 9) % 16 + (4 * ((scale + 9) / 16));	//Convert the scale to RB3's numbering system
 						eof_add_midi_event(deltapos, 0x90, scale, vel, 0);		//Write a root note reflecting the scale the chord is in
 						eof_add_midi_event(deltapos + deltalength, 0x80, scale, vel, 0);

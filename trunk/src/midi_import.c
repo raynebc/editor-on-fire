@@ -952,9 +952,12 @@ allegro_message("Second pass complete");
 	unsigned char diff_chart[EOF_MAX_FRETS] = {1, 2, 4, 8, 16, 32};
 	long note_count[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};
 	int first_note;
-	unsigned long hopopos[4];
-	char hopotype[4];
-	int hopodiff;
+	unsigned long hopopos[4];			//Used for forced HOPO On/Off parsing
+	char hopotype[4];					//Used for forced HOPO On/Off parsing
+	int hopodiff;						//Used for forced HOPO On/Off parsing
+	unsigned long strumpos[4];			//Used for pro guitar strum direction parsing
+	char strumtype[4];					//Used for pro guitar strum direction parsing
+	int strumdiff;						//Used for pro guitar strum direction parsing
 	unsigned long event_realtime;		//Store the delta time converted to realtime to avoid having to convert multiple times per note
 	char prodrums = 0;					//Tracks whether the drum track being written includes Pro drum notation
 	unsigned long tracknum;				//Used to de-obfuscate the legacy track number
@@ -1497,6 +1500,54 @@ allegro_message("Second pass complete");
 					/* note on */
 					if(eof_import_events[i]->event[j]->type == 0x90)
 					{
+						/* store strum direction marker, when the note off for this marker occurs, search for notes with same position and apply it to them */
+						if((eof_import_events[i]->event[j]->d2 == 96) && (eof_import_events[i]->event[j]->channel == 13))
+						{	//Lane (1+9), Velocity 96 and channel 13 are used in up strum markers
+							if(eof_import_events[i]->event[j]->d1 == 24 + 9)
+							{
+								strumpos[0] = event_realtime;
+								strumtype[0] = 0;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 48 + 9)
+							{
+								strumpos[1] = event_realtime;
+								strumtype[1] = 0;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 72 + 9)
+							{
+								strumpos[2] = event_realtime;
+								strumtype[2] = 0;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 96 + 9)
+							{
+								strumpos[3] = event_realtime;
+								strumtype[3] = 0;
+							}
+						}
+						if((eof_import_events[i]->event[j]->d2 == 114) && (eof_import_events[i]->event[j]->channel == 15))
+						{	//Lane (1+9), Velocity 114 and channel 15 are used in down strum markers
+							if(eof_import_events[i]->event[j]->d1 == 24 + 9)
+							{
+								strumpos[0] = event_realtime;
+								strumtype[0] = 1;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 48 + 9)
+							{
+								strumpos[1] = event_realtime;
+								strumtype[1] = 1;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 72 + 9)
+							{
+								strumpos[2] = event_realtime;
+								strumtype[2] = 1;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 96 + 9)
+							{
+								strumpos[3] = event_realtime;
+								strumtype[3] = 1;
+							}
+						}
+
 						/* arpeggios, solos, star power, tremolos and trills */
 						phraseptr = NULL;
 						if((eof_import_events[i]->event[j]->d1 == 104) && (eof_get_num_arpeggios(sp, picked_track) < EOF_MAX_PHRASES))
@@ -1621,6 +1672,64 @@ allegro_message("Second pass complete");
 					/* note off so get length of note */
 					else if(eof_import_events[i]->event[j]->type == 0x80)
 					{
+						strumdiff = -1;
+						/* detect strum direction markers */
+						if(eof_import_events[i]->event[j]->channel == 13)
+						{	//Lane (1+9), Velocity 96 and channel 13 are used in up strum markers
+							if(eof_import_events[i]->event[j]->d1 == 24 + 9)
+							{
+								strumdiff = 0;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 48 + 9)
+							{
+								strumdiff = 1;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 72 + 9)
+							{
+								strumdiff = 2;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 96 + 9)
+							{
+								strumdiff = 3;
+							}
+						}
+						if(eof_import_events[i]->event[j]->channel == 15)
+						{	//Lane (1+9), Velocity 114 and channel 15 are used in down strum markers
+							if(eof_import_events[i]->event[j]->d1 == 24 + 9)
+							{
+								strumdiff = 0;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 48 + 9)
+							{
+								strumdiff = 1;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 72 + 9)
+							{
+								strumdiff = 2;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 96 + 9)
+							{
+								strumdiff = 3;
+							}
+						}
+						if(strumdiff >= 0)
+						{
+							for(k = note_count[picked_track] - 1; k >= first_note; k--)
+							{	//Check for each note that has been imported
+								if((eof_get_note_type(sp, picked_track, k) == strumdiff) && (eof_get_note_pos(sp, picked_track, k) >= strumpos[strumdiff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+								{	//If the note is in the same difficulty as the strum direction marker, and its timestamp falls between the start and stop of the marker
+									if(strumtype[strumdiff] == 0)
+									{	//This was an up strum marker
+										eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM);
+									}
+									else
+									{	//This was a down strum marker
+										eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM);
+									}
+								}
+							}
+						}
+
 						if((eof_import_events[i]->event[j]->d1 == 104) && (eof_get_num_arpeggios(sp, picked_track) < EOF_MAX_PHRASES))
 						{	//End of an arpeggio phrase
 							phraseptr = eof_get_arpeggio(sp, picked_track, eof_get_num_arpeggios(sp, picked_track));

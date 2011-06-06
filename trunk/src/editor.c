@@ -915,6 +915,19 @@ void eof_read_editor_keys(void)
 		key[KEY_UP] = 0;
 	}
 
+	/* cycle strum direction (CTRL+U in a pro guitar track) */
+	if(key[KEY_U])
+	{
+		if(KEY_EITHER_CTRL)
+		{
+			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{
+				eof_pro_guitar_cycle_strum_direction();
+			}
+		}
+		key[KEY_U] = 0;
+	}
+
 	/* transpose mini piano visible area down one octave (CTRL+SHIFT+Down) */
 	/* transpose mini piano visible area down one (SHIFT+Down) */
 	/* transpose lyric down one octave (CTRL+Down in a vocal track) */

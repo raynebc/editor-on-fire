@@ -6,7 +6,9 @@
 #endif
 
 char *eof_note_names[12] =			{"A","A#","B","C","C#","D","D#","E","F","F#","G","G#"};
-char *eof_major_scale_names[12] =	{"A","Bb","B","C","Db","D","Eb","E","F","F#","G","Ab"};		//The name of each scale in order from 0 (0 semitones above A) to 11 (11 semitones above A)
+char *eof_major_scale_names_flat[12] =	{"A","Bb","B","C","Db","D","Eb","E","F","Gb","G","Ab"};		//The name of each scale in order from 0 (0 semitones above A) to 11 (11 semitones above A)
+char *eof_major_scale_names_sharp[12] =	{"A","A#","B","C","C#","D","D#","E","F","F#","G","G#"};		//The name of each scale in order from 0 (0 semitones above A) to 11 (11 semitones above A)
+char **eof_major_scale_names =	eof_major_scale_names_sharp;	//By default, display scales with sharp accidentals
 char eof_tuning_unknown[] = {"Unknown"};
 
 char eof_tuning_name[EOF_NAME_LENGTH+1] = {"Unknown"};
