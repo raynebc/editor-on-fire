@@ -4,7 +4,9 @@
 #include "song.h"
 
 extern char *eof_note_names[12];
-extern char *eof_major_scale_names[12];
+extern char *eof_major_scale_names_flat[12];
+extern char *eof_major_scale_names_sharp[12];
+extern char **eof_major_scale_names;
 
 extern char eof_tuning_name[EOF_NAME_LENGTH+1];
 extern char string_1_name[5];

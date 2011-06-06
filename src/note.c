@@ -1250,6 +1250,15 @@ void eof_get_note_tab_notation(char *buffer, unsigned long track, unsigned long 
 		}
 	}
 
+	if(flags & EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM)
+	{
+		buffer[index++] = 'D';
+	}
+	else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
+	{
+		buffer[index++] = 'U';
+	}
+
 	buffer[index] = '\0';
 }
 

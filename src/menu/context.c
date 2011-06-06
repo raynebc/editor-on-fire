@@ -34,7 +34,6 @@ MENU eof_right_click_menu_note[] =
 
 void eof_prepare_context_menu(void)
 {
-//	int selected = 0;	//This was never effectively used
 	int vselected = 0;
 
 	if(eof_song && eof_song_loaded)

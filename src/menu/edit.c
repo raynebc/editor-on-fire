@@ -176,7 +176,6 @@ void eof_prepare_edit_menu(void)
 	int i;
 	unsigned long tracknum;
 	int vselected = 0;
-//	int cnotes = 0;	//This was never effectively used
 
 	if(eof_song && eof_song_loaded)
 	{
@@ -2208,6 +2207,8 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long desttrack)
 		*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Erase the pro slide down flag
 		*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE);	//Erase the pro string mute flag
 		*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE);	//Erase the pro palm mute flag
+		*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM);	//Erase the pro strum down flag
+		*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM);		//Erase the pro strum up flag
 
 		if(eof_song->track[desttrack]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR)
 		{	//If this isn't a 5 lane guitar track either

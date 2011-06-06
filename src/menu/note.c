@@ -107,9 +107,9 @@ MENU eof_note_drum_menu[] =
     {"Toggle &Blue cymbal\tCtrl+B", eof_menu_note_toggle_rb3_cymbal_blue, NULL, 0, NULL},
     {"Toggle &Green cymbal\tCtrl+G", eof_menu_note_toggle_rb3_cymbal_green, NULL, 0, NULL},
     {"Mark as &Non cymbal", eof_menu_note_remove_cymbal, NULL, 0, NULL},
-    {"&Mark new notes as cymbals", eof_menu_note_default_cymbal, NULL, 0, NULL},
+    {"Mark new notes as &Cymbals", eof_menu_note_default_cymbal, NULL, 0, NULL},
     {"Toggle &Expert+ bass drum\tCtrl+E", eof_menu_note_toggle_double_bass, NULL, 0, NULL},
-    {"Mark new notes as Expert+", eof_menu_note_default_double_bass, NULL, 0, NULL},
+    {"&Mark new notes as Expert+", eof_menu_note_default_double_bass, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -124,7 +124,18 @@ MENU eof_note_proguitar_menu[] =
     {"Toggle &Palm muting\tCtrl+M", eof_menu_note_toggle_palm_muting, NULL, 0, NULL},
     {"Mark as non palm &Muting", eof_menu_note_remove_palm_muting, NULL, 0, NULL},
     {"&Arpeggio", NULL, eof_arpeggio_menu, 0, NULL},
-    {"Clear legacy bitmask", eof_menu_note_clear_legacy_values, NULL, 0, NULL},
+    {"&Clear legacy bitmask", eof_menu_note_clear_legacy_values, NULL, 0, NULL},
+    {"Cycle strum direction\tCtrl+U", eof_pro_guitar_cycle_strum_direction, NULL, 0, NULL},
+    {"Remove strum direction", eof_menu_note_remove_strum_direction, NULL, 0, NULL},
+    {NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_lyrics_menu[] =
+{
+    {"&Edit Lyric\tL", eof_edit_lyric_dialog, NULL, 0, NULL},
+    {"&Split Lyric\tShift+L", eof_menu_split_lyric, NULL, 0, NULL},
+    {"&Lyric Lines", NULL, eof_lyric_line_menu, 0, NULL},
+    {"&Freestyle", NULL, eof_note_freestyle_menu, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -133,28 +144,20 @@ MENU eof_note_menu[] =
     {"&Toggle", NULL, eof_note_toggle_menu, 0, NULL},
     {"Transpose Up\tUp", eof_menu_note_transpose_up, NULL, 0, NULL},
     {"Transpose Down\tDown", eof_menu_note_transpose_down, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
     {"&Resnap", eof_menu_note_resnap, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"Ed&it Lyric\tL", eof_edit_lyric_dialog, NULL, 0, NULL},
-    {"Split Lyric\tShift+L", eof_menu_split_lyric, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"Toggle &Crazy\tT", eof_menu_note_toggle_crazy, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
     {"&Solos", NULL, eof_solo_menu, 0, NULL},
     {"Star &Power", NULL, eof_star_power_menu, 0, NULL},
-    {"&Lyric Lines", NULL, eof_lyric_line_menu, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"&HOPO", NULL, eof_hopo_menu, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
     {"Delete\tDel", eof_menu_note_delete, NULL, 0, NULL},
-    {"Display semitones as flat", eof_display_flats_menu, NULL, 0, NULL},
-    {"&Freestyle", NULL, eof_note_freestyle_menu, 0, NULL},
-    {"&Drum", NULL, eof_note_drum_menu, 0, NULL},
-    {"Pro &Guitar", NULL, eof_note_proguitar_menu, 0, NULL},
+    {"Edit &Name", eof_menu_note_edit_name, NULL, 0, NULL},
+    {"", NULL, NULL, 0, NULL},
+    {"Toggle &Crazy\tT", eof_menu_note_toggle_crazy, NULL, 0, NULL},
+    {"&HOPO", NULL, eof_hopo_menu, 0, NULL},
     {eof_trill_menu_text, NULL, eof_trill_menu, 0, NULL},
     {eof_tremolo_menu_text, NULL, eof_tremolo_menu, 0, NULL},
-    {"Edit &Name", eof_menu_note_edit_name, NULL, 0, NULL},
+    {"", NULL, NULL, 0, NULL},
+    {"&Drum", NULL, eof_note_drum_menu, 0, NULL},
+    {"Pro &Guitar", NULL, eof_note_proguitar_menu, 0, NULL},
+    {"&Lyrics", NULL, eof_note_lyrics_menu, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -193,8 +196,7 @@ DIALOG eof_note_name_dialog[] =
 
 void eof_prepare_note_menu(void)
 {
-	int selected = 0;
-	int vselected = 0;
+	int vselected;
 	int insp = 0, insolo = 0, inll = 0, inarpeggio = 0, intrill = 0, intremolo = 0;
 	int spstart = -1, ssstart = -1, llstart = -1, arpeggiostart = -1, trillstart = -1, tremolostart = -1;
 	int spend = -1, ssend = -1, llend = -1, arpeggioend = -1, trillend = -1, tremoloend = -1;
@@ -224,11 +226,6 @@ void eof_prepare_note_menu(void)
 					{
 						sel_end = eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length;
 					}
-				}
-				if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
-				{
-					selected++;
-					vselected++;
 				}
 				if(firstnote < 0)
 				{
@@ -260,14 +257,6 @@ void eof_prepare_note_menu(void)
 					if(eof_get_note_pos(eof_song, eof_selected_track, i) > sel_end)
 					{
 						sel_end = eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i);
-					}
-				}
-				if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-				{
-					selected++;
-					if(eof_get_note_note(eof_song, eof_selected_track, i))
-					{
-						vselected++;
 					}
 				}
 				if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
@@ -347,7 +336,7 @@ void eof_prepare_note_menu(void)
 			sectionptr = eof_get_star_power_path(eof_song, eof_selected_track, spp);
 			if((sectionptr != NULL) && (spstart == sectionptr->start_pos) && (spend == sectionptr->end_pos))
 			{
-				eof_star_power_menu[0].flags = D_DISABLED;
+				eof_star_power_menu[0].flags = D_DISABLED;	//Note>Star Power>Mark/Remark
 			}
 			else
 			{
@@ -358,7 +347,7 @@ void eof_prepare_note_menu(void)
 			sectionptr = eof_get_solo(eof_song, eof_selected_track, ssp);
 			if((sectionptr != NULL) && (ssstart == sectionptr->start_pos) && (ssend == sectionptr->end_pos))
 			{
-				eof_solo_menu[0].flags = D_DISABLED;
+				eof_solo_menu[0].flags = D_DISABLED;		//Note>Solos>Mark/Remark
 			}
 			else
 			{
@@ -368,27 +357,26 @@ void eof_prepare_note_menu(void)
 			/* lyric line mark */
 			if((llstart == eof_song->vocal_track[0]->line[llp].start_pos) && (llend == eof_song->vocal_track[0]->line[llp].end_pos))
 			{
-				eof_lyric_line_menu[0].flags = D_DISABLED;
+				eof_lyric_line_menu[0].flags = D_DISABLED;	//Note>Lyrics>Lyric Lines>Mark/Remark
 			}
 			else
 			{
 				eof_lyric_line_menu[0].flags = 0;
 			}
 
-			eof_note_menu[11].flags = 0; // solos
-			eof_note_menu[12].flags = 0; // star power
+			eof_note_menu[4].flags = 0;	//Note>Solos> submenu
+			eof_note_menu[5].flags = 0; //Note>Star Power> submenu
 		}
 		else
 		{	//NO NOTES/LYRICS SELECTED
-			eof_star_power_menu[0].flags = D_DISABLED; // star power mark
-			eof_solo_menu[0].flags = D_DISABLED; // solo mark
-			eof_lyric_line_menu[0].flags = D_DISABLED; // lyric line mark
-			eof_note_menu[6].flags = D_DISABLED; // edit lyric
-			eof_note_menu[11].flags = D_DISABLED; // solos
-			eof_note_menu[12].flags = D_DISABLED; // star power
+			eof_star_power_menu[0].flags = D_DISABLED;	//Note>Star Power>Mark/Remark
+			eof_solo_menu[0].flags = D_DISABLED; 		//Note>Solos>Mark/Remark
+			eof_lyric_line_menu[0].flags = D_DISABLED;	//Note>Lyrics>Lyric Lines>Mark/Remark
+			eof_note_menu[4].flags = D_DISABLED; 		//Note>Solos> submenu
+			eof_note_menu[5].flags = D_DISABLED; 		//Note>Star Power> submenu
 		}
 
-		/* star power remove */
+		/* star power mark/remark */
 		if(insp)
 		{
 			eof_star_power_menu[1].flags = 0;
@@ -400,7 +388,7 @@ void eof_prepare_note_menu(void)
 			ustrcpy(eof_star_power_menu_mark_text, "&Mark");
 		}
 
-		/* solo remove */
+		/* solo mark/remark */
 		if(insolo)
 		{
 			eof_solo_menu[1].flags = 0;
@@ -415,32 +403,33 @@ void eof_prepare_note_menu(void)
 		/* lyric line */
 		if(inll)
 		{
-			eof_lyric_line_menu[1].flags = 0; // remove
-			eof_lyric_line_menu[4].flags = 0; // toggle overdrive
+			eof_lyric_line_menu[1].flags = 0;	//Note>Lyrics>Lyric Lines>Remove
+			eof_lyric_line_menu[4].flags = 0; 	//Note>Lyrics>Lyric Lines>Toggle Overdrive
 			ustrcpy(eof_lyric_line_menu_mark_text, "Re-&Mark");
 		}
 		else
 		{
-			eof_lyric_line_menu[1].flags = D_DISABLED; // remove
-			eof_lyric_line_menu[4].flags = D_DISABLED; // toggle overdrive
+			eof_lyric_line_menu[1].flags = D_DISABLED;
+			eof_lyric_line_menu[4].flags = D_DISABLED;
 			ustrcpy(eof_lyric_line_menu_mark_text, "&Mark");
 		}
 
+		/* arpeggio */
 		if(inarpeggio)
 		{
-			eof_arpeggio_menu[1].flags = 0;				//Remove arpeggio
+			eof_arpeggio_menu[1].flags = 0;				//Note>Pro Guitar>Arpeggio>Remove
 			ustrcpy(eof_arpeggio_menu_mark_text, "Re-&Mark");
 		}
 		else
 		{
-			eof_arpeggio_menu[1].flags = D_DISABLED;	//Remove arpeggio
+			eof_arpeggio_menu[1].flags = D_DISABLED;
 			ustrcpy(eof_arpeggio_menu_mark_text, "&Mark");
 		}
 
 		/* star power erase all */
 		if(eof_get_num_star_power_paths(eof_song, eof_selected_track) > 0)
 		{	//If there are one or more star power paths in the active track
-			eof_star_power_menu[2].flags = 0;
+			eof_star_power_menu[2].flags = 0;	//Note>Star Power>Erase All
 		}
 		else
 		{
@@ -450,7 +439,7 @@ void eof_prepare_note_menu(void)
 		/* solo erase all */
 		if(eof_get_num_solos(eof_song, eof_selected_track) > 0)
 		{	//If there are one or more solo paths in the active track
-			eof_solo_menu[2].flags = 0;
+			eof_solo_menu[2].flags = 0;	//Note>Solos>Erase All
 		}
 		else
 		{
@@ -460,7 +449,7 @@ void eof_prepare_note_menu(void)
 		/* trill erase all */
 		if(eof_get_num_trills(eof_song, eof_selected_track) > 0)
 		{	//If there are one or more trill phrases in the active track
-			eof_trill_menu[2].flags = 0;
+			eof_trill_menu[2].flags = 0;	//Note>Trill>Erase All
 		}
 		else
 		{
@@ -470,7 +459,7 @@ void eof_prepare_note_menu(void)
 		/* tremolo erase all */
 		if(eof_get_num_tremolos(eof_song, eof_selected_track) > 0)
 		{	//If there are one or more tremolo phrases in the active track
-			eof_tremolo_menu[2].flags = 0;
+			eof_tremolo_menu[2].flags = 0;	//Note>Tremolo>Erase All
 		}
 		else
 		{
@@ -480,67 +469,81 @@ void eof_prepare_note_menu(void)
 		/* resnap */
 		if(eof_snap_mode == EOF_SNAP_OFF)
 		{
-			eof_note_menu[4].flags = D_DISABLED;
+			eof_note_menu[3].flags = D_DISABLED;	//Note>Resnap
 		}
 		else
 		{
-			eof_note_menu[4].flags = 0;
+			eof_note_menu[3].flags = 0;
 		}
 
 		if(eof_vocals_selected)
 		{	//PART VOCALS SELECTED
-			eof_note_menu[0].flags = D_DISABLED; // toggle
-			eof_note_menu[1].flags = D_DISABLED; // transpose up
-			eof_note_menu[2].flags = D_DISABLED; // transpose down
+			eof_note_menu[0].flags = D_DISABLED;	//Note>Toggle
+			eof_note_menu[1].flags = D_DISABLED;	//Note>Transpose Up
+			eof_note_menu[2].flags = D_DISABLED;	//Note>Transpose Down
+			eof_note_menu[4].flags = D_DISABLED;	//Note>Solos
+			eof_note_menu[5].flags = D_DISABLED;	//Note>Star power
+			eof_note_menu[7].flags = D_DISABLED;	//Note>Edit Name
+			eof_note_menu[9].flags = D_DISABLED;	//Note>Toggle Crazy
+			eof_note_menu[10].flags = D_DISABLED;	//Note>HOPO
+			eof_note_menu[11].flags = D_DISABLED;	//Note>Trill> submenu
+			eof_note_menu[12].flags = D_DISABLED;	//Note>Tremolo> submenu
+			eof_note_menu[14].flags = D_DISABLED;	//Note>Drum> submenu
+			eof_note_menu[15].flags = D_DISABLED;	//Note>Pro Guitar> submenu
 
+			eof_note_menu[16].flags = 0;	//Note>Lyrics> submenu
 			if((eof_selection.current < eof_song->vocal_track[tracknum]->lyrics) && (vselected == 1))
 			{	//Only enable edit and split lyric if only one lyric is selected
-				eof_note_menu[6].flags = 0; // edit lyric
-				eof_note_menu[7].flags = 0; // split lyric
+				eof_note_lyrics_menu[0].flags = 0;	//Note>Lyrics>Edit Lyric
+				eof_note_lyrics_menu[1].flags = 0;	//Note>Lyrics>Split Lyric
 			}
 			else
 			{
-				eof_note_menu[6].flags = D_DISABLED; // edit lyric
-				eof_note_menu[7].flags = D_DISABLED; // split lyric
+				eof_note_lyrics_menu[0].flags = D_DISABLED;
+				eof_note_lyrics_menu[1].flags = D_DISABLED;
 			}
-			eof_note_menu[9].flags = D_DISABLED; // toggle crazy
-			eof_note_menu[11].flags = D_DISABLED; // solos
-			eof_note_menu[12].flags = D_DISABLED; // star power
-			eof_note_menu[15].flags = D_DISABLED; // HOPO
 
 			/* lyric lines */
 			if((eof_song->vocal_track[tracknum]->lines > 0) || vselected)
 			{
-				eof_note_menu[13].flags = 0;	// lyric lines
+				eof_note_lyrics_menu[2].flags = 0;			//Note>Lyrics>Lyric Lines
+			}
+			else
+			{
+				eof_note_lyrics_menu[2].flags = D_DISABLED;
 			}
 
 			if(vselected)
 			{
-				eof_note_menu[19].flags = 0; // freestyle submenu
+				eof_note_lyrics_menu[3].flags = 0;			//Note>Lyrics>Freestyle> submenu
+			}
+			else
+			{
+				eof_note_lyrics_menu[3].flags = D_DISABLED;
 			}
 
 			/* lyric lines erase all */
 			if(eof_song->vocal_track[0]->lines > 0)
 			{
-				eof_lyric_line_menu[2].flags = 0;
+				eof_lyric_line_menu[2].flags = 0;		//Note>Lyrics>Lyric Lines>Erase All
 			}
 			else
 			{
 				eof_lyric_line_menu[2].flags = D_DISABLED;
 			}
-			eof_note_drum_menu[5].flags = D_DISABLED;	//Disable toggle Expert+ bass drum
-			eof_note_menu[20].flags = D_DISABLED;		//Disable pro drum mode menu
-			eof_note_menu[24].flags = D_DISABLED;		//Disable edit name
-		}
+		}//PART VOCALS SELECTED
 		else
 		{	//PART VOCALS NOT SELECTED
-			eof_note_menu[0].flags = 0; 				// toggle
-			eof_note_menu[24].flags = 0;		//edit name
+			eof_note_menu[0].flags = 0; 			//Note>Toggle
+			eof_note_menu[7].flags = 0;				//Note>Edit Name
+			eof_note_menu[11].flags = 0;			//Note>Trill> submenu
+			eof_note_menu[12].flags = 0;			//Note>Tremolo> submenu
+			eof_note_menu[16].flags = D_DISABLED;	//Note>Lyrics> submenu
 
 			/* transpose up */
 			if(eof_transpose_possible(-1))
 			{
-				eof_note_menu[1].flags = 0;
+				eof_note_menu[1].flags = 0;			//Note>Transpose Up
 			}
 			else
 			{
@@ -550,84 +553,61 @@ void eof_prepare_note_menu(void)
 			/* transpose down */
 			if(eof_transpose_possible(1))
 			{
-				eof_note_menu[2].flags = 0;
+				eof_note_menu[2].flags = 0;			//Note>Transpose Down
 			}
 			else
 			{
 				eof_note_menu[2].flags = D_DISABLED;
 			}
 
-			eof_note_menu[6].flags = D_DISABLED; // edit lyric
-			eof_note_menu[7].flags = D_DISABLED; // split lyric
-
 			/* toggle crazy */
 			if((track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR))
 			{	//When a guitar track is active
-				eof_note_menu[9].flags = 0;				//Enable toggle crazy
+				eof_note_menu[9].flags = 0;				//Note>Toggle Crazy
 			}
 			else
 			{
-				eof_note_menu[9].flags = D_DISABLED;	//Disable toggle crazy
+				eof_note_menu[9].flags = D_DISABLED;
 			}
 
-			/* toggle Expert+ bass drum */
 			if(eof_selected_track != EOF_TRACK_DRUM)
 			{	//When PART DRUMS is not active
-				eof_note_menu[20].flags = D_DISABLED;	//Disable pro drum mode menu
+				eof_note_menu[14].flags = D_DISABLED;	//Note>Drum> submenu
 			}
 			else
 			{	//When PART DRUMS is active
-				eof_note_menu[20].flags = 0;			//Enable pro drum mode menu
+				eof_note_menu[14].flags = 0;
 			}
 
+			/* toggle Expert+ bass drum */
 			if((eof_selected_track == EOF_TRACK_DRUM) && (eof_note_type == EOF_NOTE_AMAZING))
-				eof_note_drum_menu[5].flags = 0;			//Enable toggle Expert+ bass drum only on Expert Drums
-			else
-				eof_note_drum_menu[5].flags = D_DISABLED;	//Otherwise disable the menu item
-
-			/* solos */
-			if(selected)
-			{
-				eof_note_menu[11].flags = 0;
+			{	//If the Amazing difficulty of PART DRUMS is active
+				eof_note_drum_menu[5].flags = 0;			//Note>Drum>Toggle Expert+ Bass Drum
 			}
 			else
 			{
-				eof_note_menu[11].flags = D_DISABLED;
+				eof_note_drum_menu[5].flags = D_DISABLED;
 			}
-
-			/* star power */
-			if(selected)
-			{
-				eof_note_menu[12].flags = 0;
-			}
-			else
-			{
-				eof_note_menu[12].flags = D_DISABLED;
-			}
-
-			eof_note_menu[13].flags = D_DISABLED; // lyric lines
 
 			/* HOPO */
 			if((track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR))
 			{	//When a guitar track is active
-				eof_note_menu[15].flags = 0;
+				eof_note_menu[10].flags = 0;	//Note>HOPO> submenu
 			}
 			else
 			{
-				eof_note_menu[15].flags = D_DISABLED;
+				eof_note_menu[10].flags = D_DISABLED;
 			}
-
-			eof_note_menu[19].flags = D_DISABLED; // freestyle submenu
 
 			/* Pro Guitar mode notation> */
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If the active track is a pro guitar track
-				eof_note_menu[21].flags = 0;			//Enable the Pro Guitar mode notation submenu
+				eof_note_menu[15].flags = 0;			//Note>Pro Guitar> submenu
 
 				/* Arpeggio>Erase all */
 				if(eof_song->pro_guitar_track[tracknum]->arpeggios)
 				{	//If there's at least one arpeggio phrase
-					eof_arpeggio_menu[2].flags = 0;		//Enable Arpeggio>Erase all
+					eof_arpeggio_menu[2].flags = 0;		//Note>Pro Guitar>Arpeggio>Erase All
 				}
 				else
 				{
@@ -636,14 +616,13 @@ void eof_prepare_note_menu(void)
 			}
 			else
 			{
-				eof_note_menu[21].flags = D_DISABLED;	//Otherwise disable the submenu
+				eof_note_menu[15].flags = D_DISABLED;
 			}
 
 			/* Trill */
-			eof_note_menu[22].flags = 0;	//Enable the Trill submenu
 			if(intrill)
 			{
-				eof_trill_menu[1].flags = 0;	//Enable Trill>Remove
+				eof_trill_menu[1].flags = 0;	//Note>Trill>Remove
 				ustrcpy(eof_trill_menu_mark_text, "Re-&Mark");
 			}
 			else
@@ -653,10 +632,9 @@ void eof_prepare_note_menu(void)
 			}
 
 			/* Tremolo */
-			eof_note_menu[23].flags = 0;	//Enable the Tremolo submenu
 			if(intremolo)
 			{
-				eof_tremolo_menu[1].flags = 0;	//Enable Tremolo>Remove
+				eof_tremolo_menu[1].flags = 0;	//Note>Tremolo>Remove
 				ustrcpy(eof_tremolo_menu_mark_text, "Re-&Mark");
 			}
 			else
@@ -665,25 +643,25 @@ void eof_prepare_note_menu(void)
 				ustrcpy(eof_tremolo_menu_mark_text, "&Mark");
 			}
 			if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR))
-			{	//If a legacy/pro guitar/bass track is active
+			{	//If a legacy/pro guitar/bass track is active, set the guitar terminology for trill and tremolo sections
 				ustrcpy(eof_trill_menu_text, "Trill");
 				ustrcpy(eof_tremolo_menu_text, "Tremolo");
 			}
 			else if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-			{	//If a legacy drum track is active
+			{	//If a legacy drum track is active, set the drum terminology for trill and tremolo sections
 				ustrcpy(eof_trill_menu_text, "Special Drum Roll");
 				ustrcpy(eof_tremolo_menu_text, "Drum Roll");
 			}
 			else
 			{	//Disable these submenus unless a track that can use them is active
-				eof_note_menu[22].flags = D_DISABLED;
-				eof_note_menu[23].flags = D_DISABLED;
+				eof_note_menu[11].flags = D_DISABLED;	//Note>Trill> submenu
+				eof_note_menu[12].flags = D_DISABLED;	//Note>Tremolo> submenu
 			}
 
 			/* Toggle>Purple */
 			if(eof_count_track_lanes(eof_song, eof_selected_track) > 4)
 			{	//If the active track has a sixth usable lane
-				eof_note_toggle_menu[4].flags = 0;	//Enable Toggle>Purple
+				eof_note_toggle_menu[4].flags = 0;	//Note>Toggle>Purple
 			}
 			else
 			{
@@ -693,7 +671,7 @@ void eof_prepare_note_menu(void)
 			/* Toggle>Orange */
 			if(eof_count_track_lanes(eof_song, eof_selected_track) > 5)
 			{	//If the active track has a sixth usable lane
-				eof_note_toggle_menu[5].flags = 0;	//Enable Toggle>Orange
+				eof_note_toggle_menu[5].flags = 0;	//Note>Toggle>Orange
 			}
 			else
 			{
@@ -2364,7 +2342,7 @@ char eof_note_edit_name[EOF_NAME_LENGTH+1] = {0};
 DIALOG eof_pro_guitar_note_dialog[] =
 {
 /*	(proc)					(x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1)       (d2) (dp)          (dp2)          (dp3) */
-	{d_agup_window_proc,    0,   48,  224, 332,2,   23,  0,    0,      0,         0,   "Edit pro guitar note",NULL, NULL },
+	{d_agup_window_proc,    0,   48,  224, 352,2,   23,  0,    0,      0,         0,   "Edit pro guitar note",NULL, NULL },
 	{d_agup_text_proc,      16,  80,  64,  8,  2,   23,  0,    0,      0,         0,   "Name:",      NULL,          NULL },
 	{d_agup_edit_proc,		74,  76,  134, 20, 2,   23,  0,    0, EOF_NAME_LENGTH,0,eof_note_edit_name,       NULL, NULL },
 
@@ -2400,6 +2378,7 @@ DIALOG eof_pro_guitar_note_dialog[] =
 
 	{d_agup_text_proc,      10,  292, 64,  8,  2,   23,  0,    0,      0,         0,   "Slide:",     NULL,          NULL },
 	{d_agup_text_proc,      10,  312, 64,  8,  2,   23,  0,    0,      0,         0,   "Mute:",      NULL,          NULL },
+	{d_agup_text_proc,      10,  332, 64,  8,  2,   23,  0,    0,      0,         0,   "Strum:",     NULL,          NULL },
 	{d_agup_radio_proc,		10,  272, 38,  16, 2,   23,  0,    0,      1,         0,   "HO",         NULL,          NULL },
 	{d_agup_radio_proc,		58,  272, 38,  16, 2,   23,  0,    0,      1,         0,   "PO",         NULL,          NULL },
 	{d_agup_radio_proc,		102, 272, 45,  16, 2,   23,  0,    0,      1,         0,   "Tap",        NULL,          NULL },
@@ -2410,9 +2389,12 @@ DIALOG eof_pro_guitar_note_dialog[] =
 	{d_agup_radio_proc,		46,  312, 58,  16, 2,   23,  0,    0,      3,         0,   "String",     NULL,          NULL },
 	{d_agup_radio_proc,		102, 312, 52,  16, 2,   23,  0,    0,      3,         0,   "Palm",       NULL,          NULL },
 	{d_agup_radio_proc,		154, 312, 64,  16, 2,   23,  0,    0,      3,         0,   "Neither",    NULL,          NULL },
+	{d_agup_radio_proc,		46,  332, 38,  16, 2,   23,  0,    0,      4,         0,   "Up",         NULL,          NULL },
+	{d_agup_radio_proc,		102, 332, 54,  16, 2,   23,  0,    0,      4,         0,   "Down",       NULL,          NULL },
+	{d_agup_radio_proc,		154, 332, 64,  16, 2,   23,  0,    0,      4,         0,   "Either",     NULL,          NULL },
 
-	{d_agup_button_proc,    20,  340, 68,  28, 2,   23,  '\r', D_EXIT, 0,         0,   "OK",         NULL,          NULL },
-	{d_agup_button_proc,    140, 340, 68,  28, 2,   23,  0,    D_EXIT, 0,         0,   "Cancel",     NULL,          NULL },
+	{d_agup_button_proc,    20,  360, 68,  28, 2,   23,  '\r', D_EXIT, 0,         0,   "OK",         NULL,          NULL },
+	{d_agup_button_proc,    140, 360, 68,  28, 2,   23,  0,    D_EXIT, 0,         0,   "Cancel",     NULL,          NULL },
 	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -2508,54 +2490,66 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	eof_pro_guitar_note_dialog[28].flags = (ghostmask & 1) ? D_SELECTED : 0;
 
 //Update the note flag radio buttons
-	for(ctr = 0; ctr < 10; ctr++)
-	{	//Clear each of the 10 status radio buttons
-		eof_pro_guitar_note_dialog[31 + ctr].flags = 0;
+	for(ctr = 0; ctr < 13; ctr++)
+	{	//Clear each of the 13 status radio buttons
+		eof_pro_guitar_note_dialog[32 + ctr].flags = 0;
 	}
 	flags = eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->flags;
 	if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
 	{	//Select "HO"
-		eof_pro_guitar_note_dialog[31].flags = D_SELECTED;
+		eof_pro_guitar_note_dialog[32].flags = D_SELECTED;
 	}
 	else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PO)
 	{	//Select "PO"
-		eof_pro_guitar_note_dialog[32].flags = D_SELECTED;
+		eof_pro_guitar_note_dialog[33].flags = D_SELECTED;
 	}
 	else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
 	{	//Select "Tap"
-		eof_pro_guitar_note_dialog[33].flags = D_SELECTED;
+		eof_pro_guitar_note_dialog[34].flags = D_SELECTED;
 	}
 	else
 	{	//Select "None"
-		eof_pro_guitar_note_dialog[34].flags = D_SELECTED;
-	}
-	if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-	{	//Select "Up"
 		eof_pro_guitar_note_dialog[35].flags = D_SELECTED;
 	}
-	else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
-	{	//Select "Down"
+	if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+	{	//Select Slide "Up"
 		eof_pro_guitar_note_dialog[36].flags = D_SELECTED;
 	}
-	else
-	{	//Select "Neither"
+	else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+	{	//Select Slide "Down"
 		eof_pro_guitar_note_dialog[37].flags = D_SELECTED;
 	}
-	if(flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE)
-	{	//Select "String"
+	else
+	{	//Select Slide "Neither"
 		eof_pro_guitar_note_dialog[38].flags = D_SELECTED;
 	}
-	else if(flags &EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
-	{	//Select "Palm"
+	if(flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE)
+	{	//Select Mute "String"
 		eof_pro_guitar_note_dialog[39].flags = D_SELECTED;
 	}
-	else
-	{	//Select "Neither"
+	else if(flags &EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
+	{	//Select Mute "Palm"
 		eof_pro_guitar_note_dialog[40].flags = D_SELECTED;
+	}
+	else
+	{	//Select Mute "Neither"
+		eof_pro_guitar_note_dialog[41].flags = D_SELECTED;
+	}
+	if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
+	{	//Select Strum "Up"
+		eof_pro_guitar_note_dialog[42].flags = D_SELECTED;
+	}
+	else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM)
+	{	//Selct Strum "Down"
+		eof_pro_guitar_note_dialog[43].flags = D_SELECTED;
+	}
+	else
+	{	//Select Strum "Either"
+		eof_pro_guitar_note_dialog[44].flags = D_SELECTED;
 	}
 
 	bitmask = 0;
-	if(eof_popup_dialog(eof_pro_guitar_note_dialog, 0) == 41)
+	if(eof_popup_dialog(eof_pro_guitar_note_dialog, 0) == 45)
 	{	//If user clicked OK
 		//Validate and store the input
 		if(eof_count_selected_notes(NULL, 0) > 1)
@@ -2691,39 +2685,47 @@ int eof_menu_note_edit_pro_guitar_note(void)
 
 //Save the updated note flag bitmask
 				flags = 0;
-				if(eof_pro_guitar_note_dialog[31].flags == D_SELECTED)
+				if(eof_pro_guitar_note_dialog[32].flags == D_SELECTED)
 				{	//HO is selected
 					flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;	//Set the hammer on flag
 					flags &= (~EOF_NOTE_FLAG_NO_HOPO);		//Clear the forced HOPO off note
 					flags |= EOF_NOTE_FLAG_F_HOPO;			//Set the legacy HOPO flag
 				}
-				else if(eof_pro_guitar_note_dialog[32].flags == D_SELECTED)
+				else if(eof_pro_guitar_note_dialog[33].flags == D_SELECTED)
 				{	//PO is selected
 					flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;	//Set the pull off flag
 					flags &= (~EOF_NOTE_FLAG_NO_HOPO);		//Clear the forced HOPO off flag
 					flags |= EOF_NOTE_FLAG_F_HOPO;			//Set the legacy HOPO flag
 				}
-				else if(eof_pro_guitar_note_dialog[33].flags == D_SELECTED)
+				else if(eof_pro_guitar_note_dialog[34].flags == D_SELECTED)
 				{	//Tap is selected
 					flags |= EOF_PRO_GUITAR_NOTE_FLAG_TAP;	//Set the tap flag
 					flags &= (~EOF_NOTE_FLAG_NO_HOPO);		//Clear the forced HOPO off flag
 					flags |= EOF_NOTE_FLAG_F_HOPO;			//Set the legacy HOPO flag
 				}
-				if(eof_pro_guitar_note_dialog[35].flags == D_SELECTED)
-				{	//Up is selected
+				if(eof_pro_guitar_note_dialog[36].flags == D_SELECTED)
+				{	//Slide Up is selected
 					flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
 				}
-				else if(eof_pro_guitar_note_dialog[36].flags == D_SELECTED)
-				{	//Down is selected
+				else if(eof_pro_guitar_note_dialog[37].flags == D_SELECTED)
+				{	//Slide Down is selected
 					flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
 				}
-				if(eof_pro_guitar_note_dialog[38].flags == D_SELECTED)
-				{	//String is selected
+				if(eof_pro_guitar_note_dialog[39].flags == D_SELECTED)
+				{	//Mute String is selected
 					flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;
 				}
-				else if(eof_pro_guitar_note_dialog[39].flags == D_SELECTED)
-				{	//Palm is selected
+				else if(eof_pro_guitar_note_dialog[40].flags == D_SELECTED)
+				{	//Mute Palm is selected
 					flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
+				}
+				if(eof_pro_guitar_note_dialog[42].flags == D_SELECTED)
+				{	//Strum Up is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;
+				}
+				else if(eof_pro_guitar_note_dialog[43].flags == D_SELECTED)
+				{	//Strum Down is selected
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;
 				}
 				if(!allmuted)
 				{	//If any used strings in this note/chord weren't string muted
@@ -3576,4 +3578,71 @@ int eof_menu_note_edit_name(void)
 	eof_pen_visible = 1;
 	eof_show_mouse(screen);
 	return D_O_K;
+}
+
+int eof_pro_guitar_cycle_strum_direction(void)
+{
+	unsigned long i;
+	char undo_made = 0;	//Set to nonzero if an undo state was saved
+	unsigned long flags;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			if(!undo_made)
+			{	//If an undo state hasn't been made yet
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+				undo_made = 1;
+			}
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM)
+			{	//If the note was already set to strum down, set it to strum up
+				flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM);	//Clear the strum down flag
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;		//Set the strum up flag
+			}
+			else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
+			{	//If the note was already set to strum up, set it to strum either
+				flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM);		//Clear the strum up flag
+			}
+			else
+			{	//If the note wasn't set to strum up or down, set it to strum down
+				flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Clear the slide down flag
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;		//Set the strum down flag
+			}
+			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		}
+	}
+	return 1;
+}
+
+int eof_menu_note_remove_strum_direction(void)
+{
+	unsigned long i;
+	long u = 0;
+	unsigned long flags, oldflags;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			oldflags = flags;							//Save an extra copy of the original flags
+			flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM);	//Clear the strum down flag
+			flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM);		//Clear the strum up flag
+			if(!u && (oldflags != flags))
+			{	//Make a back up before changing the first note
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				u = 1;
+			}
+			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		}
+	}
+	return 1;
 }

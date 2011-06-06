@@ -25,6 +25,7 @@
 #include "midi.h"
 #include "undo.h"
 #include "mix.h"
+#include "tuning.h"
 #include "menu/file.h"
 #include "menu/edit.h"
 #include "menu/song.h"
@@ -222,12 +223,14 @@ int eof_display_flats_menu(void)
    if(eof_display_flats)
    {
       eof_display_flats = 0;
-      eof_note_menu[18].flags = 0;
+      eof_song_menu[4].flags = 0;	//Song>Display semitones as flat
+      eof_major_scale_names = eof_major_scale_names_sharp;	//Switch to displaying guitar chords with sharps
    }
    else
    {
       eof_display_flats = 1;
-      eof_note_menu[18].flags = D_SELECTED;
+      eof_song_menu[4].flags = D_SELECTED;
+      eof_major_scale_names = eof_major_scale_names_flat;	//Switch to displaying guitar chords with flats
    }
    return 1;
 }

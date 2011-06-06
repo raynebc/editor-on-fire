@@ -127,27 +127,24 @@ MENU eof_song_proguitar_menu[] =
 MENU eof_song_menu[] =
 {
     {"&Seek", NULL, eof_song_seek_menu, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
     {"&Track", NULL, eof_track_selected_menu, 0, NULL},
+    {"&File Info", eof_menu_song_file_info, NULL, 0, NULL},
+    {"&Audio cues", eof_menu_audio_cues, NULL, 0, NULL},
+    {"Display semitones as flat", eof_display_flats_menu, NULL, 0, NULL},
+    {"Create image sequence", eof_create_image_sequence, NULL, 0, NULL},
+    {"&Waveform Graph", NULL, eof_waveform_menu, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"&Catalog", NULL, eof_catalog_menu, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"&File Info", eof_menu_song_file_info, NULL, 0, NULL},
     {"&INI Settings", eof_menu_song_ini_settings, NULL, 0, NULL},
     {"&Properties\tF9", eof_menu_song_properties, NULL, 0, NULL},
+    {"Set track difficulty", eof_song_track_difficulty_dialog, NULL, 0, NULL},
     {"&Leading Silence", eof_menu_song_add_silence, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"&Audio cues", eof_menu_audio_cues, NULL, 0, NULL},
-    {"&Waveform Graph", NULL, eof_waveform_menu, 0, NULL},
+    {"Enable open strum bass", eof_menu_song_open_bass, NULL, 0, NULL},
+    {"Pro &Guitar", NULL, eof_song_proguitar_menu, 0, NULL},
+    {"Enable legacy view\tShift+L", eof_menu_song_legacy_view, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"T&est In FOF\tF12", eof_menu_song_test_fof, NULL, EOF_LINUX_DISABLE, NULL},
     {"Test I&n Phase Shift", eof_menu_song_test_ps, NULL, EOF_LINUX_DISABLE, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"Enable open strum bass", eof_menu_song_open_bass, NULL, 0, NULL},
-    {"Create image sequence", eof_create_image_sequence, NULL, 0, NULL},
-    {"Enable legacy view\tShift+L", eof_menu_song_legacy_view, NULL, 0, NULL},
-    {"Set track difficulty", eof_song_track_difficulty_dialog, NULL, 0, NULL},
-    {"Pro &Guitar", NULL, eof_song_proguitar_menu, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -211,49 +208,27 @@ void eof_prepare_song_menu(void)
 	if(eof_song && eof_song_loaded)
 	{//If a chart is loaded
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
-		if(eof_vocals_selected)
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{
-			for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
+			if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
 			{
 				if(firstnote < 0)
 				{
 					firstnote = i;
 				}
 				lastnote = i;
-				if(eof_song->vocal_track[tracknum]->lyric[i]->pos < ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0))
-				{
-					seekp = 1;
-				}
-				if(eof_song->vocal_track[tracknum]->lyric[i]->pos > ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0))
-				{
-					seekn = 1;
-				}
 			}
-		}
-		else
-		{
-			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+			if((eof_get_note_type(eof_song, eof_selected_track, i) >= 0) && (eof_get_note_type(eof_song, eof_selected_track, i) < 4))
 			{
-				if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
-				{
-					if(firstnote < 0)
-					{
-						firstnote = i;
-					}
-					lastnote = i;
-				}
-				if((eof_get_note_type(eof_song, eof_selected_track, i) >= 0) && (eof_get_note_type(eof_song, eof_selected_track, i) < 4))
-				{
-					noted[(int)eof_get_note_type(eof_song, eof_selected_track, i)] = 1;	//Type cast to avoid a nag warning about indexing with a char type
-				}
-				if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
-				{
-					seekp = 1;
-				}
-				if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) > ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
-				{
-					seekn = 1;
-				}
+				noted[(int)eof_get_note_type(eof_song, eof_selected_track, i)] = 1;	//Type cast to avoid a nag warning about indexing with a char type
+			}
+			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
+			{
+				seekp = 1;
+			}
+			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) > ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
+			{
+				seekn = 1;
 			}
 		}
 
@@ -273,18 +248,11 @@ void eof_prepare_song_menu(void)
 				ustrcpy(eof_track_selected_menu_text[i],"");
 			}
 		}
-		if(eof_vocals_selected)
-		{	//Track numbering begins at 1 instead of 0
-			eof_track_selected_menu[EOF_TRACK_VOCALS-1].flags = D_SELECTED;
-		}
-		else
-		{
-			eof_track_selected_menu[eof_selected_track-1].flags = D_SELECTED;
-		}
+		eof_track_selected_menu[eof_selected_track-1].flags = D_SELECTED;	//Track numbering begins at 1 instead of 0
 
 		/* seek start */
-		if(eof_music_pos == 0)
-		{
+		if(eof_music_pos == eof_av_delay)
+		{	//If the seek position is already at the start of the chart
 			eof_song_seek_menu[0].flags = D_DISABLED;
 		}
 		else
@@ -315,7 +283,6 @@ void eof_prepare_song_menu(void)
 		{
 			if(eof_song->vocal_track[tracknum]->lyrics)
 			{
-
 				/* seek first note */
 				if(eof_song->vocal_track[tracknum]->lyric[0]->pos == eof_music_pos - eof_av_delay)
 				{
@@ -346,7 +313,6 @@ void eof_prepare_song_menu(void)
 		{
 			if(noted[eof_note_type])
 			{
-
 				/* seek first note */
 				if((firstnote >= 0) && (eof_get_note_pos(eof_song, eof_selected_track, firstnote) == eof_music_pos - eof_av_delay))
 				{
@@ -485,13 +451,13 @@ void eof_prepare_song_menu(void)
 		}
 
 		/* catalog */
-		if((eof_catalog_menu[0].flags & D_DISABLED) && (eof_catalog_menu[3].flags & D_DISABLED) && (eof_catalog_menu[4].flags & D_DISABLED) && (eof_catalog_menu[6].flags & D_DISABLED) && (eof_catalog_menu[7].flags & D_DISABLED))
-		{
-			eof_song_menu[5].flags = D_DISABLED;
+		if(!eof_song->catalog->entries && (eof_catalog_menu[3].flags == D_DISABLED))
+		{	//If there are no catalog entries and no notes selected (in which case Song>Catalog>Add would have been disabled earlier)
+			eof_song_menu[8].flags = D_DISABLED;	//Song>Catalog> submenu
 		}
 		else
 		{
-			eof_song_menu[5].flags = 0;
+			eof_song_menu[8].flags = 0;
 		}
 
 		/* track */
@@ -510,24 +476,24 @@ void eof_prepare_song_menu(void)
 		/* enable open strum bass */
 		if(eof_open_bass_enabled())
 		{
-			eof_song_menu[17].flags = D_SELECTED;
+			eof_song_menu[13].flags = D_SELECTED;	//Song>Enable open strum bass
 		}
 		else
 		{
-			eof_song_menu[17].flags = 0;
+			eof_song_menu[13].flags = 0;
 		}
 
 		/* enable legacy view */
 		/* enable pro guitar submenu */
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar track is active
-			eof_song_menu[19].flags = eof_song_menu[19].flags & D_SELECTED;	//Enable legacy view and check it if it's already checked
-			eof_song_menu[21].flags = eof_song_menu[19].flags = 0;			//Enable the pro guitar submenu
+			eof_song_menu[14].flags = 0;			//Song>Pro Guitar> submenu
+			eof_song_menu[15].flags = eof_song_menu[15].flags & D_SELECTED;	//Enable Song>Enable legacy view (retaining its checked/unchecked status)
 		}
 		else
 		{	//Otherwise disable this menu item, but keep it checked if it's already checked
-			eof_song_menu[19].flags = D_DISABLED | (eof_song_menu[19].flags & D_SELECTED);	//Disable legacy view
-			eof_song_menu[21].flags = D_DISABLED;	//Disable the pro guitar submenu
+			eof_song_menu[14].flags = D_DISABLED;
+			eof_song_menu[15].flags = D_DISABLED | (eof_song_menu[15].flags & D_SELECTED);	//Disable legacy view (retaining its checked/unchecked status)
 		}
 	}//If a chart is loaded
 }
@@ -1917,7 +1883,6 @@ int eof_menu_song_open_bass(void)
 	if(eof_open_bass_enabled())
 	{	//Turn off open bass notes
 		eof_song->track[EOF_TRACK_BASS]->flags &= ~(EOF_TRACK_FLAG_OPEN_STRUM);	//Clear the flag
-		eof_song_menu[17].flags = 0;
 		eof_song->legacy_track[tracknum]->numlanes = 5;
 	}
 	else
@@ -1983,7 +1948,6 @@ int eof_menu_song_open_bass(void)
 			}
 		}
 		eof_song->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_OPEN_STRUM;	//Set the flag
-		eof_song_menu[17].flags = D_SELECTED;
 		eof_song->legacy_track[tracknum]->numlanes = 6;
 	}
 	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
@@ -2033,13 +1997,13 @@ int eof_menu_song_legacy_view(void)
 	if(eof_legacy_view)
 	{
 		eof_legacy_view = 0;
-		eof_song_menu[19].flags = 0;
+		eof_song_menu[15].flags = 0;	//Song>Enable legacy view
 		eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
 	}
 	else
 	{
 		eof_legacy_view = 1;
-		eof_song_menu[19].flags = D_SELECTED;
+		eof_song_menu[15].flags = D_SELECTED;
 		eof_scale_fretboard(5);	//Recalculate the 2D screen positioning based on a 5 lane track
 	}
 	eof_fix_window_title();
