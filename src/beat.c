@@ -142,6 +142,7 @@ int eof_beat_is_anchor(EOF_SONG * sp, int cbeat)
 	}
 	else if(sp->beat[cbeat]->ppqn != sp->beat[cbeat - 1]->ppqn)
 	{
+		eof_log("eof_beat_is_anchor() detected a beat flag error", 1);
 		return 1;
 	}
 	return 0;

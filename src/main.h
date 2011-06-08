@@ -402,6 +402,7 @@ void eof_stop_midi(void);	//To be called whenever playback stops, turning of all
 void eof_exit(void);		//Formally exits the program, releasing all data structures allocated
 
 void eof_init_after_load(void);	//Initializes variables and cleans up notes, should be used after loading or creating a chart
+void eof_cleanup_beat_flags(EOF_SONG *sp);	//Repairs the text event and anchor statuses for beats in the specified chart
 
 void eof_scale_fretboard(unsigned long numlanes);
 	//Prepares screen layout offsets, etc. based on EOF's window display size and a given number of lanes (depending on the passed numlanes parameter)

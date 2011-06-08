@@ -3502,6 +3502,7 @@ void eof_init_after_load(void)
 	eof_fix_window_title();
 	eof_display_waveform = 0;
 	eof_catalog_menu[0].flags = 0;	//Hide the fret catalog by default
+	eof_cleanup_beat_flags(eof_song);	//Make corrections to beat statuses if necessary
 
 	eof_log("\tInitialization after load complete", 1);
 }
@@ -3805,6 +3806,37 @@ int main(int argc, char * argv[])
 	}
 	eof_exit();
 	return 0;
+}
+
+void eof_cleanup_beat_flags(EOF_SONG *sp)
+{
+	unsigned long ctr;
+
+	eof_log("eof_cleanup_beat_flags() entered", 1);
+
+	if(sp == NULL)
+		return;
+
+	for(ctr = 0; ctr < sp->text_events; ctr++)
+	{	//For each text event
+		if(sp->text_event[ctr]->beat >= sp->beats)
+		{	//If the text event is assigned to an invalid beat number
+			sp->text_event[ctr]->beat = sp->beats - 1;	//Re-assign to the last beat marker
+		}
+		sp->beat[sp->text_event[ctr]->beat]->flags |= EOF_BEAT_FLAG_EVENTS;	//Ensure the text event status flag is set
+	}
+
+	if(sp->beats < 1)
+		return;
+
+	sp->beat[0]->flags |= EOF_BEAT_FLAG_ANCHOR;	//The first beat marker is required to be an anchor
+	for(ctr = 1; ctr < sp->beats; ctr++)
+	{	//For each beat after the first
+		if(sp->beat[ctr]->ppqn != sp->beat[ctr - 1]->ppqn)
+		{	//If the beat has a different tempo than the previous beat
+			sp->beat[ctr]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Ensure the anchor status flag is set
+		}
+	}
 }
 
 END_OF_MAIN()

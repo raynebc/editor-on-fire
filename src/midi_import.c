@@ -309,7 +309,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	EOF_PHRASE_SECTION *phraseptr = NULL, *phraseptr2 = NULL;
 //	EOF_PHRASE_SECTION *starpowerptr = NULL;
 	unsigned long bitmask;
-	char chordname[100] = "";
+	char chord0name[100] = "", chord1name[100] = "", chord2name[100] = "", chord3name[100] = "", *chordname = NULL;	//Used for chord name import
 
 //#ifdef EOF_DEBUG_MIDI_IMPORT
 	char debugstring[100];
@@ -407,13 +407,6 @@ EOF_SONG * eof_import_midi(const char * fn)
 #ifdef EOF_DEBUG_MIDI_IMPORT
 		sprintf(debugstring, "\t\t\tParsing byte #%d of %d",track_pos,eof_work_midi->track[track[i]].len);
 		eof_log(debugstring, 1);
-DEBUG
-//if(track_pos == 714)
-//{
-//eof_log("!Exiting for debugging",1 );
-//CHECK();	//Run Memwatch's memory validation test
-//exit(1);
-//}
 #endif
 
 			bytes_used = 0;
@@ -546,7 +539,7 @@ DEBUG
 									text[EOF_MAX_MIDI_TEXT_SIZE] = '\0';
 								else
 									text[j] = '\0';	//Truncate the string normally
-								if(ustrstr(text, "[Chord=\"") != NULL)
+								if(ustrstr(text, "[chrd") != NULL)
 								{	//If this is a chord name text event
 									eof_midi_import_add_text_event(eof_import_events[i], absolute_pos, 0x01, text, eof_work_midi->track[track[i]].data[track_pos], i);
 								}
@@ -1466,30 +1459,35 @@ allegro_message("Second pass complete");
 						{	//Notes 24 through 29 represent supaeasy pro guitar
 							eof_set_note_type(sp, picked_track, note_count[picked_track], EOF_NOTE_SUPAEASY);
 							diff = eof_import_events[i]->event[j]->d1 - 24;
+							chordname = chord0name;		//Have this pointer reference the supaeasy note name array
 							lastaddednotedifficulty = &currentsupaeasy;	//Remember that this is the note that will be added
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= 48) && (eof_import_events[i]->event[j]->d1 <= 53))
 						{	//Notes 48 through 53 represent easy pro guitar
 							eof_set_note_type(sp, picked_track, note_count[picked_track], EOF_NOTE_EASY);
 							diff = eof_import_events[i]->event[j]->d1 - 48;
+							chordname = chord1name;		//Have this pointer reference the easy note name array
 							lastaddednotedifficulty = &currenteasy;	//Remember that this is the note that will be added
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= 72) && (eof_import_events[i]->event[j]->d1 <= 77))
 						{	//Notes 72 through 77 represent medium pro guitar
 							eof_set_note_type(sp, picked_track, note_count[picked_track], EOF_NOTE_MEDIUM);
 							diff = eof_import_events[i]->event[j]->d1 - 72;
+							chordname = chord2name;		//Have this pointer reference the medium note name array
 							lastaddednotedifficulty = &currentmedium;	//Remember that this is the note that will be added
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= 96) && (eof_import_events[i]->event[j]->d1 <= 101))
 						{	//Notes 96 through 101 represent amazing pro guitar
 							eof_set_note_type(sp, picked_track, note_count[picked_track], EOF_NOTE_AMAZING);
 							diff = eof_import_events[i]->event[j]->d1 - 96;
+							chordname = chord3name;		//Have this pointer reference the amazing note name array
 							lastaddednotedifficulty = &currentamazing;	//Remember that this is the note that will be added
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= 120) && (eof_import_events[i]->event[j]->d1 <= 124))
 						{
 							eof_set_note_type(sp, picked_track, note_count[picked_track], EOF_NOTE_SPECIAL);
 							diff = eof_import_events[i]->event[j]->d1 - 120;
+							chordname = NULL;		//BRE notes do not store chord names
 						}
 						else
 						{
@@ -1597,7 +1595,15 @@ allegro_message("Second pass complete");
 								eof_set_note_pos(sp, picked_track, notenum, event_realtime);
 								eof_set_note_length(sp, picked_track, notenum, 100);
 								eof_set_note_flags(sp, picked_track, notenum, 0);	//Clear the flag here so that the flag can be set if it has a special status
-								eof_set_note_name(sp, picked_track, notenum, chordname);	//Populate the note name with whatever name was read last
+								if(chordname && (chordname[0] != '\0'))
+								{	//If there is a chord name stored for this difficulty
+									eof_set_note_name(sp, picked_track, notenum, chordname);	//Populate the note name with whatever name was read last
+									chordname[0] = '\0';										//Empty the chord name array for this difficulty
+								}
+								else
+								{	//Otherwise ensure the note has an empty name string
+									eof_set_note_name(sp, picked_track, notenum, "");
+								}
 								assert(lastaddednotedifficulty != NULL);	//lastaddednotedifficulty should be correctly set from above
 								*lastaddednotedifficulty = sp->pro_guitar_track[tracknum]->note[notenum];	//Store a pointer to this new note into the appropriate "current" pro note pointer
 								note_count[picked_track]++;
@@ -1794,24 +1800,48 @@ allegro_message("Second pass complete");
 						}
 					}
 
-					else if((eof_import_events[i]->event[j]->type == 0x01) && (ustrstr(eof_import_events[i]->event[j]->text, "[Chord=\"") != NULL))
-					{	//If this is a text event and EOF's note name notation ([Chord=") is found
-						char *ptr = ustrchr(eof_import_events[i]->event[j]->text, '\"');	//Get the address of the string's first quote mark
+					else if((eof_import_events[i]->event[j]->type == 0x01) && (ustrstr(eof_import_events[i]->event[j]->text, "[chrd") == eof_import_events[i]->event[j]->text))
+					{	//If this is a text event that begins with RB3's note name notation "[chrd"
+						char *ptr = NULL;	//This will point to the destination name array
+						char *ptr2 = NULL;	//This will be used to index into the text event
 						unsigned long index = 0;
-						if(ptr != NULL)
-						{
-							ptr++;	//Advance past the first quote mark
-							while((ptr[0] != '\0') && (ptr[0] != '\"'))
-							{	//Until the end of string or end of chord name are reached
-								if(index >= 99)
-									break;	//Prevent a buffer overflow
-								chordname[index++] = ptr[0];	//Store this character
-								ptr++;	//Advance to the next character
+						if(eof_import_events[i]->event[j]->text[5] != '\0')
+						{	//If the string is long enough to have a difficulty ID
+							switch(eof_import_events[i]->event[j]->text[5])
+							{
+								case '0':	//Easy
+									ptr = chord0name;
+								break;
+								case '1':	//Medium
+									ptr = chord1name;
+								break;
+								case '2':	//Hard
+									ptr = chord2name;
+								break;
+								case '3':	//Expert
+									ptr = chord3name;
+								break;
 							}
-							chordname[index]='\0';	//Terminate the string
-							if(ustrcmp(chordname, "NC") == 0)
-							{	//If the name is a "No Chord" marker
-								chordname[0] = '\0';	//Empty the string
+							if((ptr != NULL) && (eof_import_events[i]->event[j]->text[6] == ' '))
+							{	//If a valid difficulty ID was parsed and the following character is a space
+								ptr2 = ustrchr(eof_import_events[i]->event[j]->text, ' ');	//Get the address of the string's first space character
+								if(ptr2 != NULL)
+								{
+									ptr2++;	//Advance past the first space character
+									while((ptr2[0] != '\0') && (ptr2[0] != ']'))
+									{	//Until the end of string or end of chord name are reached
+										if(index >= 99)
+											break;	//Prevent a buffer overflow
+										ptr[index++] = ptr2[0];	//Store this character into the appropriate string
+										ptr2++;	//Advance to the next character
+									}
+									ptr[index]='\0';	//Terminate the string
+//For now, prefer RB3's system, where "NC" isn't automatically written for un-named chords
+//							if(ustrcmp(chordname, "NC") == 0)
+//							{	//If the name is a "No Chord" marker
+//								chordname[0] = '\0';	//Empty the string
+//							}
+								}
 							}
 						}
 					}
