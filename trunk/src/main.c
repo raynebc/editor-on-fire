@@ -1890,7 +1890,7 @@ void eof_render_note_window(void)
 	unsigned long notepos;
 	char pro_guitar_string[30] = {0};
 	char difficulty1[20], difficulty2[50];
-	int scale, chord;	//Used when looking up the chord name (if the last selected note is not already named)
+	int scale, chord, isslash, bassnote;	//Used when looking up the chord name (if the last selected note is not already named)
 
 	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	clear_to_color(eof_window_note->screen, eof_color_gray);
@@ -2212,10 +2212,18 @@ void eof_render_note_window(void)
 					{	//If this note was given a name, display it in addition to the fretting
 						textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: %s", pro_guitar_string, eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name);
 					}
-					else if(eof_lookup_chord(eof_song, eof_selected_track, eof_selection.current, &scale, &chord))
+					else if(eof_lookup_chord(eof_song, eof_selected_track, eof_selection.current, &scale, &chord, &isslash, &bassnote))
 					{	//Perform a chord name lookup, and if a match is found, display it in addition to the fretting
 						scale %= 12;	//Ensure this is a value from 0 to 11
-						textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: [%s%s]", pro_guitar_string, eof_major_scale_names[scale], eof_chord_names[chord].chordname);
+						bassnote %= 12;
+						if(!isslash)
+						{	//If it's a normal chord
+							textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: [%s%s]", pro_guitar_string, eof_major_scale_names[scale], eof_chord_names[chord].chordname);
+						}
+						else
+						{	//If it's a slash chord
+							textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: [%s%s%s]", pro_guitar_string, eof_major_scale_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote]);
+						}
 					}
 					else
 					{	//Otherwise just display the fretting

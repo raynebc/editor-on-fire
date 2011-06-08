@@ -5,10 +5,12 @@
 #include "memwatch.h"
 #endif
 
-char *eof_note_names[12] =			{"A","A#","B","C","C#","D","D#","E","F","F#","G","G#"};
 char *eof_major_scale_names_flat[12] =	{"A","Bb","B","C","Db","D","Eb","E","F","Gb","G","Ab"};		//The name of each scale in order from 0 (0 semitones above A) to 11 (11 semitones above A)
 char *eof_major_scale_names_sharp[12] =	{"A","A#","B","C","C#","D","D#","E","F","F#","G","G#"};		//The name of each scale in order from 0 (0 semitones above A) to 11 (11 semitones above A)
 char **eof_major_scale_names =	eof_major_scale_names_sharp;	//By default, display scales with sharp accidentals
+char *eof_slash_note_names_flat[12] =	{"/A","/Bb","/B","/C","/Db","/D","/Eb","/E","/F","/Gb","/G","/Ab"};	//The suffix of each type of slash chord
+char *eof_slash_note_names_sharp[12] =	{"/A","/A#","/B","/C","/C#","/D","/D#","/E","/F","/F#","/G","/G#"};
+char **eof_slash_note_names = eof_slash_note_names_sharp;	//By default, display slash chords with sharp accidentals
 char eof_tuning_unknown[] = {"Unknown"};
 
 char eof_tuning_name[EOF_NAME_LENGTH+1] = {"Unknown"};
@@ -188,18 +190,18 @@ int eof_lookup_played_note(EOF_SONG *sp, unsigned long track, unsigned long stri
 	return (notenum % 12);	//Return the note value in terms of half steps above note A
 }
 
-int eof_lookup_chord(EOF_SONG *sp, unsigned long track, unsigned long note, int *scale, int *chord)
+int eof_lookup_chord(EOF_SONG *sp, unsigned long track, unsigned long note, int *scale, int *chord, int *isslash, int *bassnote)
 {
 	unsigned long tracknum, bitmask;
 	static char major_scales[12][7];
-	char notes_played[12] = {0};   	//Will indicate which notes are present in the chord
+	char notes_played[12];  	 	//Will indicate which notes are present in the chord
 	static char scales_created = 0;	//This will be set to one after the major_scales[] array has been created
 	char chord_intervals[30];		//This stores the referred note's interval makeup for the current scale being checked against
 	char interval_name[5];
 	unsigned long ctr, ctr2, ctr3, halfstep, skipaccidental;
-	int retval;
+	int retval, bass = -1, pass;
 
-	if((sp == NULL) || (track >= sp->tracks) || (note >= eof_get_track_size(sp, track)) || !scale || !chord)
+	if((sp == NULL) || (track >= sp->tracks) || (note >= eof_get_track_size(sp, track)) || !scale || !chord || !isslash || !bassnote)
 		return 0;	//Return error if any of the parameters are not valid
 
 	if(sp->track[track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR)
@@ -222,54 +224,50 @@ int eof_lookup_chord(EOF_SONG *sp, unsigned long track, unsigned long note, int 
 		scales_created = 1;
 	}
 
-	//Determine which musical notes are contained in the specified note
-	for(ctr = 0, bitmask = 1; ctr < sp->pro_guitar_track[tracknum]->numstrings; ctr++, bitmask <<= 1)
-	{	//For each string in this track
-		if(sp->pro_guitar_track[tracknum]->note[note]->note & bitmask)
-		{	//If this string is used in the note
-			retval = eof_lookup_played_note(sp, track, ctr, sp->pro_guitar_track[tracknum]->note[note]->frets[ctr]);	//Look up the note played on this string at the specified fret
-			if(retval >= 0)
-			{	//The note lookup succeeded
-				retval %= 12;	//Guarantee it is a value from 0 to 11
-				notes_played[retval] = 1;	//Mark this musical note as existing in the specified note
-			}
-		}
-	}
+	#define MAX_CHORD_LOOKUP_PASSES 1	//Until working slash chord detection logic can be put together, don't waste a second pass looking for it
+	//This loop will run twice.  On the first pass, normal chords will be looked for.
+	//On the second pass, the note played on the lowest used string is removed from the notes_played[] list
+	//and the remaining notes are checked against the defined chords to see if the match is a slash chord
+	for(pass = 0; pass < MAX_CHORD_LOOKUP_PASSES; pass++)
+	{	//For each of two passes
+		memset(notes_played, 0, 12);	//Erase the notes_played[] array
 
-	//Look up the note against each major scale
-	for(ctr = 0; ctr < 12; ctr++)
-	{	//For each major scale
-		//Create the list of intervals this note uses for this scale
-		chord_intervals[0] = '\0';	//Truncate the intervals string
-		for(ctr2 = 0; ctr2 < 7; ctr2++)
-		{	//For each interval in the scale
-			//See if any normal/flat/sharp variations of this interval is played
-			interval_name[0] = '\0';	//Empty the interval name string
-			halfstep = (major_scales[ctr][ctr2] + 11) % 12;	//Look up one half step lower than the note for this interval (as a value from 0 to 11)
-			if(notes_played[halfstep])
-			{	//If the flat of this interval is played in this note
-				skipaccidental = 0;	//Reset this status
-				for(ctr3 = 0; ctr3 < 7; ctr3++)
-				{	//Check to make sure the flat of this interval isn't already a non accidental interval (ie. In the A major scale, interval 3 and flat interval 4 are the same note)
-					if(halfstep == major_scales[ctr][ctr3])
-					{	//Skip checking for the flat variation of this interval
-						skipaccidental = 1;
-						break;
+		//Determine which musical notes are contained with the specified note's strings
+		for(ctr = 0, bitmask = 1; ctr < sp->pro_guitar_track[tracknum]->numstrings; ctr++, bitmask <<= 1)
+		{	//For each string in this track
+			if(sp->pro_guitar_track[tracknum]->note[note]->note & bitmask)
+			{	//If this string is used in the note
+				retval = eof_lookup_played_note(sp, track, ctr, sp->pro_guitar_track[tracknum]->note[note]->frets[ctr]);	//Look up the note played on this string at the specified fret
+				if(retval >= 0)
+				{	//The note lookup succeeded
+					retval %= 12;	//Guarantee it is a value from 0 to 11
+					if((pass > 0) && (bass < 0))
+					{	//If the 2nd (slash chord detection) pass is being run, ensure the lowest used string has its note kept out of the notes_played[] array
+						bass = retval;
+					}
+					else
+					{
+						notes_played[retval] = 1;	//Mark this musical note as existing in the specified note
 					}
 				}
-				if(!skipaccidental)
-				{	//If the flat of this interval is played in this note
-					snprintf(interval_name, 5, "b%lu", ctr2+1);	//Use the flat variation of this interval (numbering starts at 1 instead of 0)
-				}
 			}
-			else
-			{
-				halfstep = (halfstep + 2) % 12;	//Look up one half step higher than the note for this interval (two half steps above the previous flat, as a value from 0 to 11)
-				if((notes_played[halfstep]) && (ctr2 == 4))
-				{	//If the sharp of this interval is played in this note (only check interval 5 for sharp interval variations to avoid matching issues)
+		}
+
+		//Look up the note against each major scale
+		for(ctr = 0; ctr < 12; ctr++)
+		{	//For each major scale
+			//Create the list of intervals this note uses for this scale
+			chord_intervals[0] = '\0';	//Truncate the intervals string
+			for(ctr2 = 0; ctr2 < 7; ctr2++)
+			{	//For each interval in the scale
+				//See if any normal/flat/sharp variations of this interval is played
+				interval_name[0] = '\0';	//Empty the interval name string
+				halfstep = (major_scales[ctr][ctr2] + 11) % 12;	//Look up one half step lower than the note for this interval (as a value from 0 to 11)
+				if(notes_played[halfstep])
+				{	//If the flat of this interval is played in this note
 					skipaccidental = 0;	//Reset this status
 					for(ctr3 = 0; ctr3 < 7; ctr3++)
-					{	//Check to make sure the sharp of this interval isn't already a non accidental interval (ie. In the A major scale, sharp interval 3 and interval 4 are the same note)
+					{	//Check to make sure the flat of this interval isn't already a non accidental interval (ie. In the A major scale, interval 3 and flat interval 4 are the same note)
 						if(halfstep == major_scales[ctr][ctr3])
 						{	//Skip checking for the flat variation of this interval
 							skipaccidental = 1;
@@ -278,39 +276,68 @@ int eof_lookup_chord(EOF_SONG *sp, unsigned long track, unsigned long note, int 
 					}
 					if(!skipaccidental)
 					{	//If the flat of this interval is played in this note
-						snprintf(interval_name, 5, "#%lu", ctr2+1);	//Use the sharp variation of this interval (numbering starts at 1 instead of 0)
+						snprintf(interval_name, 5, "b%lu", ctr2+1);	//Use the flat variation of this interval (numbering starts at 1 instead of 0)
 					}
 				}
 				else
 				{
-					halfstep = (halfstep + 11) % 12;	//Look up the note for this interval (one half step below the previous sharp, as a value from 0 to 11)
-					if(notes_played[halfstep])
-					{	//If the normal interval is played in this note
-						snprintf(interval_name, 5, "%lu", ctr2+1);	//Use this interval (numbering starts at 1 instead of 0)
+					halfstep = (halfstep + 2) % 12;	//Look up one half step higher than the note for this interval (two half steps above the previous flat, as a value from 0 to 11)
+					if((notes_played[halfstep]) && (ctr2 == 4))
+					{	//If the sharp of this interval is played in this note (only check interval 5 for sharp interval variations to avoid matching issues)
+						skipaccidental = 0;	//Reset this status
+						for(ctr3 = 0; ctr3 < 7; ctr3++)
+						{	//Check to make sure the sharp of this interval isn't already a non accidental interval (ie. In the A major scale, sharp interval 3 and interval 4 are the same note)
+							if(halfstep == major_scales[ctr][ctr3])
+							{	//Skip checking for the flat variation of this interval
+								skipaccidental = 1;
+								break;
+							}
+						}
+						if(!skipaccidental)
+						{	//If the flat of this interval is played in this note
+							snprintf(interval_name, 5, "#%lu", ctr2+1);	//Use the sharp variation of this interval (numbering starts at 1 instead of 0)
+						}
+					}
+					else
+					{
+						halfstep = (halfstep + 11) % 12;	//Look up the note for this interval (one half step below the previous sharp, as a value from 0 to 11)
+						if(notes_played[halfstep])
+						{	//If the normal interval is played in this note
+							snprintf(interval_name, 5, "%lu", ctr2+1);	//Use this interval (numbering starts at 1 instead of 0)
+						}
 					}
 				}
-			}
-			//If a variation of the interval was found, add it to the intervals list
-			if(interval_name[0] != '\0')
-			{	//If a normal/flat/sharp variation of this interval exists in the note,
-				if(chord_intervals[0] != '\0')
-				{	//If this isn't the first interval stored in the array
-					strcat(chord_intervals, ",");	//append a comma first
+				//If a variation of the interval was found, add it to the intervals list
+				if(interval_name[0] != '\0')
+				{	//If a normal/flat/sharp variation of this interval exists in the note,
+					if(chord_intervals[0] != '\0')
+					{	//If this isn't the first interval stored in the array
+						strcat(chord_intervals, ",");	//append a comma first
+					}
+					strcat(chord_intervals, interval_name);	//append the interval variation to the chord_intervals[] string
 				}
-				strcat(chord_intervals, interval_name);	//append the interval variation to the chord_intervals[] string
 			}
-		}
-		//Look up the list of defined chords to see if this note's intervals matches any
-		for(ctr2 = 0; ctr2 < EOF_NUM_DEFINED_CHORDS; ctr2++)
-		{	//For each defiend chord
-			if(!strcmp(eof_chord_names[ctr2].formula, chord_intervals))
-			{	//A match was found
-				*scale = ctr;	//Pass the scale back through the pointer
-				*chord = ctr2;	//Pass the chord name back through the pointer
-				return 1;		//Return match found
+			//Look up the list of defined chords to see if this note's intervals matches any
+			for(ctr2 = 0; ctr2 < EOF_NUM_DEFINED_CHORDS; ctr2++)
+			{	//For each defined chord
+				if(!strcmp(eof_chord_names[ctr2].formula, chord_intervals))
+				{	//A match was found
+					if(pass > 0)
+					{	//If this was the slash chord detection pass
+						*isslash = 1;			//Pass the slash chord TRUE status through the pointer
+						*bassnote = bass;		//Pass the bass note back through the pointer
+					}
+					else
+					{
+						*isslash = 0;
+					}
+					*scale = ctr;	//Pass the scale back through the pointer
+					*chord = ctr2;	//Pass the chord name back through the pointer
+					return 1;		//Return match found
+				}
 			}
-		}
-	}
+		}//For each major scale
+	}//For each of two passes
 
 	return 0;	//Return no match found
 }

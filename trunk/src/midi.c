@@ -404,7 +404,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	unsigned char rootvel;					//Used to write root notes for pro guitar tracks
 	unsigned long note, noteflags, notepos, deltapos;
 	char type;
-	int channel, velocity, bitmask, slidenote = 0, scale, chord;	//Used for pro guitar export
+	int channel, velocity, bitmask, slidenote = 0, scale, chord, isslash, bassnote;	//Used for pro guitar export
 	EOF_PHRASE_SECTION *sectionptr;
 	char *lastname = NULL, *currentname = NULL, nochord[]="NC", chordname[100]="";
 	char match = 0;
@@ -1172,8 +1172,15 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					if(eof_note_count_colors(sp, j, i) > 1)
 					{	//If this is a chord
 						scale = 17;	//Unless a chord name is found, write a root note of 17 (no name)
-						eof_lookup_chord(sp, j, i, &scale, &chord);				//Update the scale variable if a chord match is found
-						scale = (scale + 9) % 16 + (4 * ((scale + 9) / 16));	//Convert the scale to RB3's numbering system
+						if(eof_lookup_chord(sp, j, i, &scale, &chord, &isslash, &bassnote))
+						{	//If the chord lookup logic found a match
+							if(isslash)
+							{	//If it was found to be a slash chord
+								eof_add_midi_event(deltapos, 0x90, 16, vel, 0);		//Write a "slash" supplemental root note identifier of 16
+								eof_add_midi_event(deltapos + deltalength, 0x80, 16, vel, 0);
+							}
+							scale = (scale + 9) % 16 + (4 * ((scale + 9) / 16));	//Convert the scale to RB3's numbering system
+						}
 						eof_add_midi_event(deltapos, 0x90, scale, vel, 0);		//Write a root note reflecting the scale the chord is in
 						eof_add_midi_event(deltapos + deltalength, 0x80, scale, vel, 0);
 					}
