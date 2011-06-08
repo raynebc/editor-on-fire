@@ -224,14 +224,14 @@ int eof_display_flats_menu(void)
    {
       eof_display_flats = 0;
       eof_song_menu[4].flags = 0;	//Song>Display semitones as flat
-      eof_major_scale_names = eof_major_scale_names_sharp;	//Switch to displaying guitar chords with sharps
+      eof_note_names = eof_note_names_sharp;	//Switch to displaying guitar chords with sharps
       eof_slash_note_names = eof_slash_note_names_sharp;
    }
    else
    {
       eof_display_flats = 1;
       eof_song_menu[4].flags = D_SELECTED;
-      eof_major_scale_names = eof_major_scale_names_flat;	//Switch to displaying guitar chords with flats
+      eof_note_names = eof_note_names_flat;	//Switch to displaying guitar chords with flats
       eof_slash_note_names = eof_slash_note_names_flat;
    }
    return 1;

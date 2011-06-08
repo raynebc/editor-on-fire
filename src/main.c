@@ -2218,11 +2218,11 @@ void eof_render_note_window(void)
 						bassnote %= 12;
 						if(!isslash)
 						{	//If it's a normal chord
-							textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: [%s%s]", pro_guitar_string, eof_major_scale_names[scale], eof_chord_names[chord].chordname);
+							textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: [%s%s]", pro_guitar_string, eof_note_names[scale], eof_chord_names[chord].chordname);
 						}
 						else
 						{	//If it's a slash chord
-							textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: [%s%s%s]", pro_guitar_string, eof_major_scale_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote]);
+							textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: [%s%s%s]", pro_guitar_string, eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote]);
 						}
 					}
 					else

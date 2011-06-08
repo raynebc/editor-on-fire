@@ -451,11 +451,11 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 			{	//Otherwise construct the chord name
 				if(!isslash)
 				{	//If it's a normal chord
-					snprintf(autoname, sizeof(autoname), "[%s%s]", eof_major_scale_names[scale], eof_chord_names[chord].chordname);
+					snprintf(autoname, sizeof(autoname), "[%s%s]", eof_note_names[scale], eof_chord_names[chord].chordname);
 				}
 				else
 				{	//If it's a slash chord
-					snprintf(autoname, sizeof(autoname), "[%s%s%s]", eof_major_scale_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote]);
+					snprintf(autoname, sizeof(autoname), "[%s%s%s]", eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote]);
 				}
 			}
 			nameptr = autoname;
@@ -926,11 +926,11 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 		{	//Otherwise construct the chord name
 			if(!isslash)
 			{	//If it's a normal chord
-				snprintf(autoname, sizeof(autoname), "[%s%s]", eof_major_scale_names[scale], eof_chord_names[chord].chordname);
+				snprintf(autoname, sizeof(autoname), "[%s%s]", eof_note_names[scale], eof_chord_names[chord].chordname);
 			}
 			else
 			{	//If it's a slash chord
-				snprintf(autoname, sizeof(autoname), "[%s%s%s]", eof_major_scale_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote]);
+				snprintf(autoname, sizeof(autoname), "[%s%s%s]", eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote]);
 			}
 		}
 		nameptr = autoname;
