@@ -1024,7 +1024,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			lastname = nochord;
 			for(i = 0; i < eof_get_track_size(sp, j); i++)
 			{	//For each note in the track
-				switch(eof_get_note_type(sp, j, i))
+				type = eof_get_note_type(sp, j, i);
+				switch(type)
 				{
 					case EOF_NOTE_AMAZING:	//notes 96-101
 					{
@@ -1069,18 +1070,22 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 					deltalength = 1;
 				}
-				if((currentname == NULL) || (currentname[0] == '\0'))		//If this note has no name
-					currentname = nochord;	//Refer to its name as "NC"
+//For now, prefer RB3's system, where "NC" isn't automatically written for un-named chords
+//				if((currentname == NULL) || (currentname[0] == '\0'))		//If this note has no name
+//					currentname = nochord;	//Refer to its name as "NC"
 				if(((lastname == nochord) && (currentname != nochord)) || ((lastname != nochord) && (currentname == nochord)) || (ustrcmp(lastname, currentname) != 0))
 				{	//If the previous note wasn't named and this one is, or the previous note was named and this one isn't, or the previous and current notes have different names
-					snprintf(chordname, sizeof(chordname), "[Chord=\"%s\"]", currentname);	//Build the chord name text event
-					tempstring = malloc(ustrsizez(chordname));
-					if(tempstring != NULL)
-					{	//If allocation was successful
-						memcpy(tempstring, chordname, ustrsizez(chordname));	//Copy the string to the newly allocated memory
-						eof_add_midi_lyric_event(deltapos, tempstring);			//Store the new string in a text event
+					if((type >= EOF_NOTE_SUPAEASY) && (type <= EOF_NOTE_AMAZING))
+					{	//only write names for the 4 difficulties, don't for BRE notes
+						snprintf(chordname, sizeof(chordname), "[chrd%d %s]", type, currentname);	//Build the chord name text event as per RB3's convention
+						tempstring = malloc(ustrsizez(chordname));
+						if(tempstring != NULL)
+						{	//If allocation was successful
+							memcpy(tempstring, chordname, ustrsizez(chordname));	//Copy the string to the newly allocated memory
+							eof_add_midi_lyric_event(deltapos, tempstring);			//Store the new string in a text event
+						}
+						lastname = currentname;
 					}
-					lastname = currentname;
 				}
 
 				/* write slide sections */
@@ -1166,7 +1171,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				/* write root note, which is a note from 4 to 15, to represent the chord's major scale (where any E scale chord is 4, F is 5, Gb is 6, ..., Eb is 15) */
 					if(eof_note_count_colors(sp, j, i) > 1)
 					{	//If this is a chord
-						scale = 0;	//By default, assume an A chord
+						scale = 17;	//Unless a chord name is found, write a root note of 17 (no name)
 						eof_lookup_chord(sp, j, i, &scale, &chord);				//Update the scale variable if a chord match is found
 						scale = (scale + 9) % 16 + (4 * ((scale + 9) / 16));	//Convert the scale to RB3's numbering system
 						eof_add_midi_event(deltapos, 0x90, scale, vel, 0);		//Write a root note reflecting the scale the chord is in
