@@ -520,7 +520,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					}
 				}
 				else
-				{
+				{	//This is the dance track
 					switch(eof_get_note_type(sp, j, i))
 					{
 						case EOF_NOTE_CHALLENGE:	//notes 96-107
@@ -650,6 +650,13 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					noteflags |= EOF_NOTE_FLAG_F_HOPO;	//Set the forced HOPO on flag, which is used to denote open bass
 					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 0, vel, 0);	//Write a gem for lane 1
 					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 0, vel, 0);
+				}
+
+				/* write fifth lane drum note, if the feature was enabled during save */
+				if(eof_five_lane_drums_enabled() && (j == EOF_TRACK_DRUM) && (note & 32))
+				{	//If this is a lane 6 gem (referred to as lane 5 for drums, seeing as bass drum doesn't use a lane)
+					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 5, vel, 0);
+					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 5, vel, 0);
 				}
 
 				/* write forced HOPO */
@@ -1172,7 +1179,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					if(eof_note_count_colors(sp, j, i) > 1)
 					{	//If this is a chord
 						scale = 17;	//Unless a chord name is found, write a root note of 17 (no name)
-						if(eof_lookup_chord(sp, j, i, &scale, &chord, &isslash, &bassnote))
+						if(eof_lookup_chord(sp->pro_guitar_track[tracknum], j, i, &scale, &chord, &isslash, &bassnote))
 						{	//If the chord lookup logic found a match
 							if(isslash)
 							{	//If it was found to be a slash chord

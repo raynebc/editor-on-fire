@@ -146,7 +146,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 			sprintf(buffer, " %d", sp->pro_guitar_track[tracknum]->tuning[i]);	//Write the string's tuning value (signed integer)
 			ustrcat(ini_string, buffer);	//Append the string's tuning value to the ongoing INI string
 		}
-		tuning_name = eof_lookup_tuning(sp, EOF_TRACK_PRO_GUITAR, sp->pro_guitar_track[tracknum]->tuning);	//Check to see if this track's tuning has a defined name
+		tuning_name = eof_lookup_tuning_name(sp, EOF_TRACK_PRO_GUITAR, sp->pro_guitar_track[tracknum]->tuning);	//Check to see if this track's tuning has a defined name
 		if(tuning_name != eof_tuning_unknown)
 		{	//If the lookup found a name
 			sprintf(buffer, " \"%s\"", tuning_name);
@@ -163,7 +163,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 			sprintf(buffer, " %d", sp->pro_guitar_track[tracknum]->tuning[i]);	//Write the string's tuning value (signed integer)
 			ustrcat(ini_string, buffer);	//Append the string's tuning value to the ongoing INI string
 		}
-		tuning_name = eof_lookup_tuning(sp, EOF_TRACK_PRO_BASS, sp->pro_guitar_track[tracknum]->tuning);	//Check to see if this track's tuning has a defined name
+		tuning_name = eof_lookup_tuning_name(sp, EOF_TRACK_PRO_BASS, sp->pro_guitar_track[tracknum]->tuning);	//Check to see if this track's tuning has a defined name
 		if(tuning_name != eof_tuning_unknown)
 		{	//If the lookup found a name
 			sprintf(buffer, " \"%s\"", tuning_name);

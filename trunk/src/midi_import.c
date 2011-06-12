@@ -1143,7 +1143,7 @@ allegro_message("Second pass complete");
 					{	//For note on/off events, determine the type (difficulty) of the event
 						if(eof_import_events[i]->event[j]->type == 0x90)
 						{	//If this is a Note on event
-							eof_set_note_flags(sp, picked_track, note_count[picked_track], 0);	//Clear the flag here so that the flag can be set if it's an Expert+ double bass note
+							eof_set_note_flags(sp, picked_track, note_count[picked_track], 0);	//Clear the flag here so that the flag can be set later (ie. if it's an Expert+ double bass note)
 						}
 						if((eof_import_events[i]->event[j]->d1 >= 0x3C) && (eof_import_events[i]->event[j]->d1 < 0x3C + 6))
 						{
@@ -1185,46 +1185,56 @@ allegro_message("Second pass complete");
 					/* note on */
 					if(eof_import_events[i]->event[j]->type == 0x90)
 					{
-						/* store forced HOPO marker, when the note off for this marker occurs, search for note with same position and apply it to that note */
-						if(eof_import_events[i]->event[j]->d1 == 0x3C + 5)
-						{
-							hopopos[0] = event_realtime;
-							hopotype[0] = 0;
+						if(eof_midi_tracks[picked_track].track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+						{	//If this is a drum track, lane 6 is used for the fifth drum lane and not a HOPO marker
+							if(diff == 5)
+							{	//A lane 6 gem encountered for a drum track will cause the track to be marked as being a "five lane" drum track
+								sp->track[picked_track]->flags |= EOF_TRACK_FLAG_FIVE_LANE_DRUM;	//Set the five lane drum flag
+								sp->legacy_track[tracknum]->numlanes = 6;
+							}
 						}
-						else if(eof_import_events[i]->event[j]->d1 == 0x48 + 5)
-						{
-							hopopos[1] = event_realtime;
-							hopotype[1] = 0;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 0x54 + 5)
-						{
-							hopopos[2] = event_realtime;
-							hopotype[2] = 0;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 0x60 + 5)
-						{
-							hopopos[3] = event_realtime;
-							hopotype[3] = 0;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 0x3C + 6)
-						{
-							hopopos[0] = event_realtime;
-							hopotype[0] = 1;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 0x48 + 6)
-						{
-							hopopos[1] = event_realtime;
-							hopotype[1] = 1;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 0x54 + 6)
-						{
-							hopopos[2] = event_realtime;
-							hopotype[2] = 1;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 0x60 + 6)
-						{
-							hopopos[3] = event_realtime;
-							hopotype[3] = 1;
+						else
+						{	/* store forced HOPO marker, when the note off for this marker occurs, search for note with same position and apply it to that note */
+							if(eof_import_events[i]->event[j]->d1 == 0x3C + 5)
+							{
+								hopopos[0] = event_realtime;
+								hopotype[0] = 0;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 0x48 + 5)
+							{
+								hopopos[1] = event_realtime;
+								hopotype[1] = 0;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 0x54 + 5)
+							{
+								hopopos[2] = event_realtime;
+								hopotype[2] = 0;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 0x60 + 5)
+							{
+								hopopos[3] = event_realtime;
+								hopotype[3] = 0;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 0x3C + 6)
+							{
+								hopopos[0] = event_realtime;
+								hopotype[0] = 1;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 0x48 + 6)
+							{
+								hopopos[1] = event_realtime;
+								hopotype[1] = 1;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 0x54 + 6)
+							{
+								hopopos[2] = event_realtime;
+								hopotype[2] = 1;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 0x60 + 6)
+							{
+								hopopos[3] = event_realtime;
+								hopotype[3] = 1;
+							}
 						}
 
 						/* solos, star power, tremolos and trills */
@@ -1318,57 +1328,62 @@ allegro_message("Second pass complete");
 					/* note off so get length of note */
 					else if(eof_import_events[i]->event[j]->type == 0x80)
 					{
-						/* detect forced HOPO */
-						hopodiff = -1;
-						if(eof_import_events[i]->event[j]->d1 == 0x3C + 5)
-						{
-							hopodiff = 0;
+						if(eof_midi_tracks[picked_track].track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+						{	//If this is a drum track, lane 6 is used for the fifth drum lane and not a HOPO marker
 						}
-						else if(eof_import_events[i]->event[j]->d1 == 0x48 + 5)
-						{
-							hopodiff = 1;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 0x54 + 5)
-						{
-							hopodiff = 2;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 0x60 + 5)
-						{
-							hopodiff = 3;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 0x3C + 6)
-						{
-							hopodiff = 0;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 0x48 + 6)
-						{
-							hopodiff = 1;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 0x54 + 6)
-						{
-							hopodiff = 2;
-						}
-						else if(eof_import_events[i]->event[j]->d1 == 0x60 + 6)
-						{
-							hopodiff = 3;
-						}
-						if(hopodiff >= 0)
-						{
-							for(k = note_count[picked_track] - 1; k >= first_note; k--)
-							{	//Check for each note that has been imported
-								if((eof_get_note_type(sp, picked_track, k) == hopodiff) && (eof_get_note_pos(sp, picked_track, k) >= hopopos[hopodiff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
-								{	//If the note is in the same difficulty as the HOPO phrase, and its timestamp falls between the HOPO On and HOPO Off marker
-									if(hopotype[hopodiff] == 0)
-									{
-										eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_NOTE_FLAG_F_HOPO);
-									}
-									else
-									{
-										eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_NOTE_FLAG_NO_HOPO);
+						else
+						{	/* detect forced HOPO */
+							hopodiff = -1;
+							if(eof_import_events[i]->event[j]->d1 == 0x3C + 5)
+							{
+								hopodiff = 0;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 0x48 + 5)
+							{
+								hopodiff = 1;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 0x54 + 5)
+							{
+								hopodiff = 2;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 0x60 + 5)
+							{
+								hopodiff = 3;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 0x3C + 6)
+							{
+								hopodiff = 0;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 0x48 + 6)
+							{
+								hopodiff = 1;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 0x54 + 6)
+							{
+								hopodiff = 2;
+							}
+							else if(eof_import_events[i]->event[j]->d1 == 0x60 + 6)
+							{
+								hopodiff = 3;
+							}
+							if(hopodiff >= 0)
+							{
+								for(k = note_count[picked_track] - 1; k >= first_note; k--)
+								{	//Check for each note that has been imported
+									if((eof_get_note_type(sp, picked_track, k) == hopodiff) && (eof_get_note_pos(sp, picked_track, k) >= hopopos[hopodiff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+									{	//If the note is in the same difficulty as the HOPO phrase, and its timestamp falls between the HOPO On and HOPO Off marker
+										if(hopotype[hopodiff] == 0)
+										{
+											eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_NOTE_FLAG_F_HOPO);
+										}
+										else
+										{
+											eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_NOTE_FLAG_NO_HOPO);
+										}
 									}
 								}
 							}
-						}
+						}/* detect forced HOPO */
 
 						/* rb pro markers */
 						if(prodrums)

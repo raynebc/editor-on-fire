@@ -2256,6 +2256,7 @@ void eof_editor_logic(void)
 		/* mouse is in the fretboard area */
 		if((mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
 		{
+			int x_tolerance = 6 * eof_zoom;	//This is how far left or right of a note the mouse is allowed to be to still be considered to hover over that note
 			lpos = pos < 300 ? (mouse_x - 20) * eof_zoom : ((pos - 300) + mouse_x - 20) * eof_zoom;
 			eof_snap_logic(&eof_snap, lpos);
 			eof_snap_length_logic(&eof_snap);
@@ -2267,11 +2268,11 @@ void eof_editor_logic(void)
 				if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
 				{	//If the note is in the active difficulty
 					npos = eof_get_note_pos(eof_song, eof_selected_track, i);
-					if((use_this_x > npos - (6 * eof_zoom)) && (use_this_x < npos + (6 * eof_zoom)))
+					if((use_this_x > npos - x_tolerance) && (use_this_x < npos + x_tolerance))
 					{
 						eof_hover_note = i;
 					}
-					else if((eof_pen_note.pos > npos - (6 * eof_zoom)) && (eof_pen_note.pos < npos + (6 * eof_zoom)))
+					else if((eof_pen_note.pos > npos - x_tolerance) && (eof_pen_note.pos < npos + x_tolerance))
 					{
 						eof_hover_note = i;
 					}
@@ -2771,7 +2772,6 @@ void eof_editor_logic(void)
 		else
 		{
 			eof_pen_visible = 0;
-//			eof_hover_note = -1;
 		}
 	}//If the chart is paused
 	else
@@ -2799,10 +2799,6 @@ void eof_editor_logic(void)
 				}
 			}
 		}
-		if(i == eof_get_track_size(eof_song, eof_selected_track))
-		{
-			eof_hover_note = -1;
-		}
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{
 			if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
@@ -2811,7 +2807,7 @@ void eof_editor_logic(void)
 				if((eof_music_pos > npos) && (eof_music_pos < npos + (eof_get_note_length(eof_song, eof_selected_track, i) > 100 ? eof_get_note_length(eof_song, eof_selected_track, i) : 100)))
 				{
 					if(eof_hover_note_2 != i)
-				{
+					{
 						eof_hover_note_2 = i;
 					}
 					break;
@@ -3036,12 +3032,13 @@ void eof_vocal_editor_logic(void)
 			eof_pen_visible = 1;
 			for(i = 0; (i < eof_song->vocal_track[tracknum]->lyrics) && (eof_hover_note < 0); i++)
 			{
+				int x_tolerance = 6 * eof_zoom;	//This is how far left or right of a lyric the mouse is allowed to be to still be considered to hover over that lyric
 				npos = eof_song->vocal_track[tracknum]->lyric[i]->pos;
 				if((use_this_x > npos) && (use_this_x < npos + eof_song->vocal_track[tracknum]->lyric[i]->length))
 				{
 					eof_hover_note = i;
 				}
-				else if((eof_pen_lyric.pos > npos - (6 * eof_zoom)) && (eof_pen_lyric.pos < npos + (6 * eof_zoom)))
+				else if((eof_pen_lyric.pos > npos - x_tolerance) && (eof_pen_lyric.pos < npos + x_tolerance))
 				{
 					eof_hover_note = i;
 				}
@@ -3590,7 +3587,6 @@ void eof_vocal_editor_logic(void)
 		}
 		if(i == eof_song->vocal_track[tracknum]->lyrics)
 		{
-			eof_hover_note = -1;
 			eof_pen_lyric.note = 0;
 		}
 		for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
@@ -4380,14 +4376,13 @@ unsigned char eof_find_pen_note_mask(void)
 //	eof_log("eof_find_pen_note_mask() entered");
 
 	unsigned long laneborder;
-	int bitmaskshift;	//Used to find the pen note bitmask if the notes are inverted (taking lane 6 into account)
-	unsigned char returnvalue = 0;
 	unsigned long i;
-	char invert = 0;
+	unsigned long lanecount = 0;
 
 	//Determine which lane the mouse is in
 	eof_hover_piece = -1;
-	for(i = 0; i < eof_count_track_lanes(eof_song, eof_selected_track); i++)
+	lanecount = eof_count_track_lanes(eof_song, eof_selected_track);
+	for(i = 0; i < lanecount; i++)
 	{	//For each of the usable lanes
 		laneborder = eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 15 + 10 + eof_screen_layout.note_y[i];	//This represents the y position of the boundary between the current lane and the next
 		if((mouse_y < laneborder) && (mouse_y > laneborder - eof_screen_layout.string_space))
@@ -4395,82 +4390,14 @@ unsigned char eof_find_pen_note_mask(void)
 			eof_hover_piece = i;	//Store the lane number
 		}
 	}
-	bitmaskshift = eof_count_track_lanes(eof_song, eof_selected_track) - 5;	//If the 6th lane is in use, the inverted mask will be shifted left by one
 
 	/* see if we are inverting the lanes */
-	if(eof_inverted_notes || eof_count_track_lanes(eof_song, eof_selected_track) > 5)
-	{
-		invert = 1;
+	if(eof_inverted_notes || (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+	{	//If the user opted to invert the notes in the piano roll, or if the current track is a pro guitar/bass track, return the appropriate inverted pen mask
+		return ((1 << (lanecount - 1)) >> eof_hover_piece);	//This finds the appropriate invert mask, where mousing over the bottom most lane activates lane 1 for the pen mask
 	}
-	switch(eof_hover_piece)
-	{
-		case 0:
-			if(invert)
-			{
-				returnvalue = 16 << bitmaskshift;
-			}
-			else
-			{
-				returnvalue = 1;
-			}
-		break;
 
-		case 1:
-			if(invert)
-			{
-				returnvalue = 8 << bitmaskshift;
-			}
-			else
-			{
-				returnvalue = 2;
-			}
-		break;
-
-		case 2:
-			if(invert)
-			{
-				returnvalue = 4 << bitmaskshift;
-			}
-			else
-			{
-				returnvalue = 4;
-			}
-		break;
-
-		case 3:
-			if(invert)
-			{
-				returnvalue = 2 << bitmaskshift;
-			}
-			else
-			{
-				returnvalue = 8;
-			}
-		break;
-
-		case 4:
-			if(invert)
-			{
-				returnvalue = 1 << bitmaskshift;
-			}
-			else
-			{
-				returnvalue = 16;
-			}
-		break;
-
-		case 5:
-			if(invert)
-			{
-				returnvalue = 1;
-			}
-			else
-			{
-				returnvalue = 32;
-			}
-		break;
-	}
-	return returnvalue;
+	return (1 << eof_hover_piece);	//Return the normal pen mask, where mousing over the top most lane activates lane 1 for the pen mask
 }
 
 void eof_editor_logic_common(void)
