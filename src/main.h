@@ -9,7 +9,7 @@
 #include "control.h"
 #include "editor.h"
 
-#define EOF_VERSION_STRING "EOF v1.8beta11"
+#define EOF_VERSION_STRING "EOF v1.8beta12"
 #define EOF_COPYRIGHT_STRING "(c)2008-2010 T^3 Software."
 
 #define KEY_EITHER_ALT (key[KEY_ALT] || key[KEY_ALTGR])
@@ -425,5 +425,6 @@ void eof_log(const char *text, char level);
 	//Level indicates the minimum level of logging that must be in effect to log the message (ie. 1 = on, 2 = verbose)
 	//Verbose logging should be disabled during chart creation/deletion due to the large amount of note creations/deletions
 	//The logging verbosity can be altered by toggling bit 1, as bit 0 must be also set in order to log
+extern char eof_log_string[1024];	//A string reserved for use with eof_log()
 
 #endif

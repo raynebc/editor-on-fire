@@ -2,6 +2,7 @@
 #define EOF_SONG_H
 
 #include <allegro.h>
+//#include "tuning.h"	//For tuning struct definitions
 
 #define EOF_OLD_MAX_NOTES     65536
 #define EOF_MAX_NOTES         32768
@@ -199,8 +200,10 @@ typedef struct
 #define EOF_PREVIEW_SECTION				13
 #define EOF_TREMOLO_SECTION				14
 
-#define EOF_TRACK_FLAG_OPEN_STRUM	1
+#define EOF_TRACK_FLAG_OPEN_STRUM		1
 	//Specifies if the track has open strumming enabled (ie. PART BASS)
+#define EOF_TRACK_FLAG_FIVE_LANE_DRUM	2
+	//Specifies if the track has the fifth lane (gem 6) enabled in PART DRUMS
 
 #define EOF_TRACK_NAME_SIZE		31
 typedef struct
@@ -256,8 +259,20 @@ typedef struct
 
 } EOF_VOCAL_TRACK;
 
+#define EOF_MAX_CHORD_VARIATIONS 500
+	//There will be a 3D array of chord variation structs in each pro guitar/bas track, this macro defines the size of the third dimension
 #define EOF_PRO_GUITAR_TRACKS_MAX	2
 #define EOF_TUNING_LENGTH 6	//For now, the tuning array will only track 6 strings
+#define EOF_NUM_DEFINED_CHORDS 27
+typedef struct
+{
+	unsigned char frets[EOF_TUNING_LENGTH];	//The fretted position of each string
+	unsigned char bassnote;			//The bass note of the chord
+} EOF_CHORD_VARIATION;
+
+typedef EOF_CHORD_VARIATION EOF_CHORD_VARIATION_ARRAY[12][EOF_NUM_DEFINED_CHORDS][EOF_MAX_CHORD_VARIATIONS];
+typedef unsigned char EOF_CHORD_NUM_VARIATION_ARRAY[12][EOF_NUM_DEFINED_CHORDS];
+
 typedef struct
 {
 	unsigned char numfrets;		//The number of frets in this track
@@ -287,6 +302,11 @@ typedef struct
 	/* tremolo sections */
 	EOF_PHRASE_SECTION tremolo[EOF_MAX_PHRASES];
 	unsigned long tremolos;
+
+	/* chord array variables */
+	EOF_CHORD_VARIATION_ARRAY eof_chord_variations;			//This will track each detected match for chord variations for the track based on its tuning
+	EOF_CHORD_NUM_VARIATION_ARRAY eof_chord_num_variations;	//This will track the number of chord variations for each chord in the above 3D array
+	char eof_chord_variations_array_ready;	//This will track if the chord variation array is ready to use
 
 } EOF_PRO_GUITAR_TRACK;
 
@@ -602,5 +622,6 @@ int eof_get_pro_guitar_note_fret_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 	//Writes a string representation of the specified pro guitar/bass note from lowest to highest gauge string into pro_guitar_string[] which must be at least
 	//3 * # of strings number of bytes long in order to store the maximum length string
 	//Returns 0 on error or 1 on success
+inline int eof_five_lane_drums_enabled(void);	//A simple function returning nonzero if PART DRUM has the fifth lane enabled
 
 #endif

@@ -441,9 +441,9 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 				nameptr = samename;	//Display this note's name as "/" to indicate a repeat of the last note
 			}
 		}
-		else if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_lookup_chord(eof_song, track, notenum, &scale, &chord, &isslash, &bassnote)))
+		else if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_lookup_chord(eof_song->pro_guitar_track[tracknum], track, notenum, &scale, &chord, &isslash, &bassnote)))
 		{	//If the note has no manually defined name, but is in a pro guitar/bass track, perform the chord lookup logic.  If there's a match found,
-			if(eof_lookup_chord(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum),&scale2,&chord2,&isslash2,&bassnote2) && (scale == scale2) && (chord == chord2) && (isslash == isslash2) && (bassnote == bassnote2))
+			if(eof_lookup_chord(eof_song->pro_guitar_track[tracknum], track, eof_get_prev_note_type_num(eof_song, track, notenum),&scale2,&chord2,&isslash2,&bassnote2) && (scale == scale2) && (chord == chord2) && (isslash == isslash2) && (bassnote == bassnote2))
 			{	//Compare with the previous note in the difficulty.  If it is the same chord,
 				snprintf(autoname, sizeof(autoname), "[/]");	//Write the auto-name version of "same chord"
 			}
@@ -916,9 +916,9 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			nameptr = samename;	//Display this note's name as "/" to indicate a repeat of the last note
 		}
 	}
-	else if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_lookup_chord(eof_song, track, notenum, &scale, &chord, &isslash, &bassnote)))
+	else if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_lookup_chord(eof_song->pro_guitar_track[tracknum], track, notenum, &scale, &chord, &isslash, &bassnote)))
 	{	//If the note has no manually defined name, but is in a pro guitar/bass track, perform the chord lookup logic.  If there's a match found,
-		if(eof_lookup_chord(eof_song, track, eof_get_prev_note_type_num(eof_song,track,notenum),&scale2,&chord2,&isslash2,&bassnote2) && (scale == scale2) && (chord == chord2) && (isslash == isslash2) && (bassnote == bassnote2))
+		if(eof_lookup_chord(eof_song->pro_guitar_track[tracknum], track, eof_get_prev_note_type_num(eof_song,track,notenum),&scale2,&chord2,&isslash2,&bassnote2) && (scale == scale2) && (chord == chord2) && (isslash == isslash2) && (bassnote == bassnote2))
 		{	//Compare with the previous note in the difficulty.  If it is the same chord,
 			snprintf(autoname, sizeof(autoname), "[/]");	//Write the auto-name version of "same chord"
 		}

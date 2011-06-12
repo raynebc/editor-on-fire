@@ -7,6 +7,7 @@
 #include "legacy.h"
 #include "mix.h"
 #include "undo.h"
+#include "tuning.h"
 #include "utility.h"
 #include "menu/file.h"
 #include "menu/song.h"
@@ -1331,6 +1332,9 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 				if(ptr4->numstrings > EOF_TUNING_LENGTH)	//Ensure that the tuning array is large enough
 					return 0;	//Return error
 				memset(ptr4->tuning, 0, EOF_TUNING_LENGTH);	//Initialize the tuning for all strings to "standard" (zero)
+				memset(ptr4->eof_chord_variations, 0, sizeof(EOF_CHORD_VARIATION));	//Initialize the chord variations array to undefined
+				memset(ptr4->eof_chord_num_variations, 0, sizeof(EOF_CHORD_NUM_VARIATION_ARRAY));
+				ptr4->eof_chord_variations_array_ready = 0;
 				ptr4->notes = 0;
 				ptr4->solos = 0;
 				ptr4->star_power_paths = 0;
@@ -4552,4 +4556,9 @@ int eof_get_pro_guitar_note_fret_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 	pro_guitar_string[index] = '\0';	//Terminate the string
 
 	return 1;	//Return success
+}
+
+inline int eof_five_lane_drums_enabled(void)
+{
+	return (eof_song->track[EOF_TRACK_DRUM]->flags & EOF_TRACK_FLAG_FIVE_LANE_DRUM);
 }

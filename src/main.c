@@ -2212,7 +2212,7 @@ void eof_render_note_window(void)
 					{	//If this note was given a name, display it in addition to the fretting
 						textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: %s", pro_guitar_string, eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name);
 					}
-					else if(eof_lookup_chord(eof_song, eof_selected_track, eof_selection.current, &scale, &chord, &isslash, &bassnote))
+					else if(eof_lookup_chord(eof_song->pro_guitar_track[tracknum], eof_selected_track, eof_selection.current, &scale, &chord, &isslash, &bassnote))
 					{	//Perform a chord name lookup, and if a match is found, display it in addition to the fretting
 						scale %= 12;	//Ensure this is a value from 0 to 11
 						bassnote %= 12;
@@ -3511,6 +3511,10 @@ void eof_init_after_load(void)
 	eof_display_waveform = 0;
 	eof_catalog_menu[0].flags = 0;	//Hide the fret catalog by default
 	eof_cleanup_beat_flags(eof_song);	//Make corrections to beat statuses if necessary
+//DEBUG:  Re-enable this when slash chord detection is ready
+//	eof_pro_guitar_track_build_chord_variations(eof_song, EOF_TRACK_PRO_BASS);		//Build chord variations for the track's tuning
+//	eof_pro_guitar_track_build_chord_variations(eof_song, EOF_TRACK_PRO_GUITAR);	//Build chord variations for the track's tuning
+//	EOF_DEBUG_OUTPUT_CHORD_VARIATION_ARRAYS();
 
 	eof_log("\tInitialization after load complete", 1);
 }
@@ -3557,7 +3561,15 @@ void eof_set_3D_lane_positions(unsigned long track)
 	}
 	else if(track && (eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
 	{	//Special case:  The drum track renders with only 4 lanes
-		newnumlanes = 4;
+		if(eof_five_lane_drums_enabled())
+		{	//The exception is if the fifth drum lane has been enabled
+			newnumlanes = 6;
+			numlaneswidth = 5;	//Draw six lines on the 3D fretboard like with pro guitar
+		}
+		else
+		{
+			newnumlanes = 4;
+		}
 	}
 	else
 	{
@@ -3653,6 +3665,7 @@ void eof_stop_logging(void)
 	}
 }
 
+char eof_log_string[1024];
 void eof_log(const char *text, char level)
 {
 	if(eof_log_fp && (eof_log_level & 1) && (eof_log_level >= level))

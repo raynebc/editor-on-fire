@@ -140,6 +140,7 @@ MENU eof_song_menu[] =
     {"Set track difficulty", eof_song_track_difficulty_dialog, NULL, 0, NULL},
     {"&Leading Silence", eof_menu_song_add_silence, NULL, 0, NULL},
     {"Enable open strum bass", eof_menu_song_open_bass, NULL, 0, NULL},
+    {"Enable five lane drums", eof_menu_song_five_lane_drums, NULL, 0, NULL},
     {"Pro &Guitar", NULL, eof_song_proguitar_menu, 0, NULL},
     {"Enable legacy view\tShift+L", eof_menu_song_legacy_view, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
@@ -483,17 +484,27 @@ void eof_prepare_song_menu(void)
 			eof_song_menu[13].flags = 0;
 		}
 
+		/* enable five lane drums */
+		if(eof_five_lane_drums_enabled())
+		{
+			eof_song_menu[14].flags = D_SELECTED;	//Song>Enable five lane drums
+		}
+		else
+		{
+			eof_song_menu[14].flags = 0;
+		}
+
 		/* enable legacy view */
 		/* enable pro guitar submenu */
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar track is active
-			eof_song_menu[14].flags = 0;			//Song>Pro Guitar> submenu
-			eof_song_menu[15].flags = eof_song_menu[15].flags & D_SELECTED;	//Enable Song>Enable legacy view (retaining its checked/unchecked status)
+			eof_song_menu[15].flags = 0;			//Song>Pro Guitar> submenu
+			eof_song_menu[16].flags = eof_song_menu[15].flags & D_SELECTED;	//Enable Song>Enable legacy view (retaining its checked/unchecked status)
 		}
 		else
 		{	//Otherwise disable this menu item, but keep it checked if it's already checked
-			eof_song_menu[14].flags = D_DISABLED;
-			eof_song_menu[15].flags = D_DISABLED | (eof_song_menu[15].flags & D_SELECTED);	//Disable legacy view (retaining its checked/unchecked status)
+			eof_song_menu[15].flags = D_DISABLED;
+			eof_song_menu[16].flags = D_DISABLED | (eof_song_menu[15].flags & D_SELECTED);	//Disable legacy view (retaining its checked/unchecked status)
 		}
 	}//If a chart is loaded
 }
@@ -1997,13 +2008,13 @@ int eof_menu_song_legacy_view(void)
 	if(eof_legacy_view)
 	{
 		eof_legacy_view = 0;
-		eof_song_menu[15].flags = 0;	//Song>Enable legacy view
+		eof_song_menu[16].flags = 0;	//Song>Enable legacy view
 		eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
 	}
 	else
 	{
 		eof_legacy_view = 1;
-		eof_song_menu[15].flags = D_SELECTED;
+		eof_song_menu[16].flags = D_SELECTED;
 		eof_scale_fretboard(5);	//Recalculate the 2D screen positioning based on a 5 lane track
 	}
 	eof_fix_window_title();
@@ -2159,7 +2170,7 @@ void eof_rebuild_tuning_strings(char *tuningarray)
 			}
 			else
 			{	//Otherwise look up the tuning
-				tuning = eof_lookup_tuned_note(eof_song, eof_selected_track, ctr, halfsteps);
+				tuning = eof_lookup_tuned_note(eof_song->pro_guitar_track[tracknum], eof_selected_track, ctr, halfsteps);
 				if(tuning < 0)
 				{	//If there was an error determining the tuning
 					strncpy(tuning_list[ctr], "   ", sizeof(tuning_list[0])-1);	//Empty the tuning string
@@ -2180,7 +2191,7 @@ void eof_rebuild_tuning_strings(char *tuningarray)
 	}
 
 	//Rebuild the tuning name string
-	strncpy(eof_tuning_name, eof_lookup_tuning(eof_song, eof_selected_track, tuningarray), sizeof(eof_tuning_name)-1);
+	strncpy(eof_tuning_name, eof_lookup_tuning_name(eof_song, eof_selected_track, tuningarray), sizeof(eof_tuning_name)-1);
 	strncat(eof_tuning_name, "        ", sizeof(eof_tuning_name) - strlen(eof_tuning_name));	//Pad the end of the string with several spaces
 }
 
@@ -2457,5 +2468,25 @@ int eof_menu_set_num_frets_strings(void)
 		}
 	}
 
+	return 1;
+}
+
+int eof_menu_song_five_lane_drums(void)
+{
+	unsigned long tracknum = eof_song->track[EOF_TRACK_DRUM]->tracknum;
+
+	if(eof_five_lane_drums_enabled())
+	{	//Turn off five lane drums
+		eof_song->track[EOF_TRACK_DRUM]->flags &= ~(EOF_TRACK_FLAG_FIVE_LANE_DRUM);	//Clear the flag
+		eof_song->legacy_track[tracknum]->numlanes = 5;
+	}
+	else
+	{	//Turn on five lane drums
+		eof_song->track[EOF_TRACK_DRUM]->flags |= EOF_TRACK_FLAG_FIVE_LANE_DRUM;	//Set the flag
+		eof_song->legacy_track[tracknum]->numlanes = 6;
+	}
+
+	eof_set_3D_lane_positions(0);	//Update xchart[] by force
+	eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
 	return 1;
 }
