@@ -588,7 +588,7 @@ void EOF_DEBUG_OUTPUT_CHORD_VARIATION_ARRAYS(void)
 							}
 							played_note = tp->eof_chord_variations[ctr2][ctr3][ctr4].bassnote;
 							assert((played_note >= 0) && (played_note < 12));
-							fprintf(fp, "\tRoot note is %s\n", eof_note_names[played_note]);
+							fprintf(fp, "\tBass note is %s\n", eof_note_names[played_note]);
 						}
 					}
 				}

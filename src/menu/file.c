@@ -1979,7 +1979,7 @@ int eof_new_chart(char * filename)
 	ustrcpy(eof_song->tags->year, year);	//The year tag that was read from an MP3 (if applicable)
 	if(tempalbum[0] != '\0')
 	{	//If an album ID3/OGG tag was read
-		if(eof_song->tags->ini_settings < EOF_MAX_INI_SETTINGS)	//If the maximum number of INI settings is already defined
+		if(eof_song->tags->ini_settings < EOF_MAX_INI_SETTINGS)	//If the maximum number of INI settings isn't already defined
 		{	//Add the album tag as an INI setting
 			snprintf(album,sizeof(album)/sizeof(char),"album = %s",tempalbum);	//Create the appropriate INI setting entry
 			album[1023] = '\0';	//Guarantee it is NULL terminated
