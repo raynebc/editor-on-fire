@@ -365,9 +365,9 @@ EOF_SONG * eof_import_midi(const char * fn)
 
 	/* first pass, build events list for each track */
 
-#ifdef EOF_DEBUG_MIDI_IMPORT
+//#ifdef EOF_DEBUG_MIDI_IMPORT
 	eof_log("\tFirst pass, building events lists", 1);
-#endif
+//#endif
 
 	eof_import_bpm_events = eof_import_create_events_list();
 	if(!eof_import_bpm_events)
@@ -745,11 +745,11 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 	char midbeatchange;
 	double beatlength, beatreallength;;
 
-#ifdef EOF_DEBUG_MIDI_IMPORT
-char debugtext[400];
-allegro_message("Pass two, adding beats.  last_delta_time = %lu",last_delta_time);
-	eof_log("Pass two, adding beats", 1);
-#endif
+//#ifdef EOF_DEBUG_MIDI_IMPORT
+//char debugtext[400];
+//allegro_message("Pass two, adding beats.  last_delta_time = %lu",last_delta_time);
+	eof_log("\tPass two, adding beats", 1);
+//#endif
 
 	while(deltapos <= last_delta_time)
 	{//Add new beats until enough have been added to encompass the last MIDI event
@@ -903,9 +903,9 @@ set_window_title(debugtext);
 		lastden = curden;
 	}//Add new beats until enough have been added to encompass the last MIDI event
 
-#ifdef EOF_DEBUG_MIDI_IMPORT
-allegro_message("Pass two, configuring beat timings");
-#endif
+//#ifdef EOF_DEBUG_MIDI_IMPORT
+eof_log("\tPass two, configuring beat timings", 1);
+//#endif
 
 	double BPM=120.0;	//Assume a default tempo of 120BPM and TS of 4/4 at 0 deltas
 	realtimepos=0.0;
@@ -931,9 +931,9 @@ allegro_message("Pass two, configuring beat timings");
 		lastden=curden;
 	}
 
-#ifdef EOF_DEBUG_MIDI_IMPORT
-allegro_message("Second pass complete");
-#endif
+//#ifdef EOF_DEBUG_MIDI_IMPORT
+eof_log("\tSecond pass complete", 1);
+//#endif
 
 	/* third pass, create EOF notes */
 	int picked_track;
@@ -1873,9 +1873,9 @@ allegro_message("Second pass complete");
 		}//If this is a valid track to process
 	}//For each imported track
 
-#ifdef EOF_DEBUG_MIDI_IMPORT
-allegro_message("Third pass complete");
-#endif
+//#ifdef EOF_DEBUG_MIDI_IMPORT
+eof_log("\tThird pass complete", 1);
+//#endif
 
 	/* delete empty lyric lines */
 	int lc;
@@ -2063,9 +2063,9 @@ allegro_message("Third pass complete");
 		memset(sp->pro_guitar_track[tracknum]->tuning, 0, EOF_TUNING_LENGTH);
 	}
 
-#ifdef EOF_DEBUG_MIDI_IMPORT
-allegro_message("MIDI import complete");
-#endif
+//#ifdef EOF_DEBUG_MIDI_IMPORT
+eof_log("\tMIDI import complete", 1);
+//#endif
 
 	eof_log_level |= 2;	//Enable verbose logging
 	return sp;

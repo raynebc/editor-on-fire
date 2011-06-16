@@ -450,11 +450,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 		if(j == EOF_TRACK_DANCE)
 		{	//Phase Shift's dance track specification is for dance notes to use a velocity of 127
-			vel=127;
+			vel = 127;
 		}
 		else
 		{	//For other tracks, the generic velocity is 100
-			vel=100;
+			vel = 100;
 		}
 
 		notetrackspopulated[j] = 1;	//Remember that this track is populated
@@ -1716,14 +1716,11 @@ struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp)
 		}
 		if(sp->beat[ctr]->ppqn != lastppqn)
 		{	//If this beat has a different tempo than the last, add it to the list
-			if((list == NULL) && (sp->beat[ctr]->fpos != 0.0))	//If the first anchor isn't at position 0
-				temp=eof_add_to_tempo_list(0,0.0,(double)120.0,list);	//Add a default 120BPM anchor
-
 			lastppqn=sp->beat[ctr]->ppqn;	//Remember this ppqn
 			temp=eof_add_to_tempo_list(deltactr,sp->beat[ctr]->fpos,(double)60000000.0/lastppqn,list);
 
 			if(temp == NULL)
-			{
+			{	//Test the return value of eof_add_to_tempo_list()
 				eof_destroy_tempo_list(list);	//Destroy list
 				return NULL;			//Return error
 			}

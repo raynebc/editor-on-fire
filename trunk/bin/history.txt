@@ -3,6 +3,8 @@ EOF Version History
 
 1.8:
 
+Adds the ability to author 5 lane (5 pads and one pedal) drums.
+
 Fixed various bugs in the lyric import.
 
 Adds the ability to define band and track-specific difficulties.
