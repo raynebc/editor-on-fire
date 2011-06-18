@@ -1134,7 +1134,8 @@ int eof_menu_track_selected_10(void)
 
 int eof_menu_track_selected_track_number(int tracknum)
 {
-	eof_log("\tChanging active track\neof_menu_track_selected_track_number() entered", 1);
+	eof_log("\tChanging active track", 1);
+	eof_log("eof_menu_track_selected_track_number() entered", 1);
 
 	unsigned long i;
 

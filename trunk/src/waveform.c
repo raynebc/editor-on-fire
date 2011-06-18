@@ -266,7 +266,8 @@ void eof_render_waveform_line(struct wavestruct *waveform,struct waveformchannel
 #define EOF_DEBUG_WAVEFORM
 struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long slicelength)
 {
- 	eof_log("\tGenerating waveform\neof_create_waveform() entered", 1);
+ 	eof_log("\tGenerating waveform", 1);
+ 	eof_log("eof_create_waveform() entered", 1);
 
 	ALOGG_OGG *oggstruct=NULL;
 	SAMPLE *audio=NULL;

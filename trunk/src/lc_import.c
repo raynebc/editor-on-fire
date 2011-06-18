@@ -202,7 +202,8 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 
 int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 {
-	eof_log("\tImporting lyrics\nEOF_TRANSFER_FROM_LC() entered", 1);
+	eof_log("\tImporting lyrics", 1);
+	eof_log("EOF_TRANSFER_FROM_LC() entered", 1);
 
 	struct Lyric_Line *curline;	//Conductor of the lyric line linked list
 	struct Lyric_Piece *curpiece;	//Conductor of the lyric piece linked list
