@@ -65,7 +65,8 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 
 EOF_SONG * eof_import_chart(const char * fn)
 {
-	eof_log("\tImporting Feedback chart\neof_import_chart() entered", 1);
+	eof_log("\tImporting Feedback chart", 1);
+	eof_log("eof_import_chart() entered", 1);
 
 	struct FeedbackChart * chart = NULL;
 	EOF_SONG * sp = NULL;
@@ -357,6 +358,19 @@ EOF_SONG * eof_import_chart(const char * fn)
 		DestroyFeedbackChart(chart, 1);	//Free memory used by Feedback chart before exiting function
 	}
 	eof_selected_ogg = 0;
+
+	/* check if there were lane 5 drums imported */
+	unsigned long ctr, tracknum;
+	tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
+	for(ctr = 0; ctr < sp->legacy_track[tracknum]->notes; ctr++)
+	{	//For each note in the drum track
+		if(sp->legacy_track[tracknum]->note[ctr]->note & 32)
+		{	//If this note uses lane 6
+			eof_log("\t\"5 lane drums\" detected, enabling lane 6 for PART DRUMS", 1);
+			sp->legacy_track[tracknum]->numlanes = 6;	//Enable lane 6 for the drum track
+			break;
+		}
+	}
 
 	eof_log("\tFeedback import completed", 1);
 

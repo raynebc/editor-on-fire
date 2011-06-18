@@ -426,5 +426,8 @@ void eof_log(const char *text, char level);
 	//Verbose logging should be disabled during chart creation/deletion due to the large amount of note creations/deletions
 	//The logging verbosity can be altered by toggling bit 1, as bit 0 must be also set in order to log
 extern char eof_log_string[1024];	//A string reserved for use with eof_log()
+extern unsigned int eof_log_id;
+	//This will be set to a random value when logging is started, so if multiple instances of EOF are writing to the same
+	//log file (Windows does not prevent this), each instance's log entries can be identified separately from each other.
 
 #endif

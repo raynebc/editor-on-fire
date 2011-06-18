@@ -182,7 +182,8 @@ EOF_SONG * eof_create_song(void)
 
 void eof_destroy_song(EOF_SONG * sp)
 {
- 	eof_log("\tClosing project\neof_destroy_song() entered", 1);
+ 	eof_log("\tClosing project", 1);
+ 	eof_log("eof_destroy_song() entered", 1);
 
 	unsigned long ctr;
 
@@ -216,7 +217,8 @@ void eof_destroy_song(EOF_SONG * sp)
 
 EOF_SONG * eof_load_song(const char * fn)
 {
- 	eof_log("\tLoading project\neof_load_song() entered", 1);
+ 	eof_log("\tLoading project", 1);
+ 	eof_log("eof_load_song() entered", 1);
 
 	PACKFILE * fp = NULL;
 	EOF_SONG * sp = NULL;
@@ -2019,7 +2021,8 @@ int eof_save_song_string_pf(char *buffer, PACKFILE *fp)
 
 int eof_save_song(EOF_SONG * sp, const char * fn)
 {
- 	eof_log("\tSaving project\neof_save_song() entered", 1);
+ 	eof_log("\tSaving project", 1);
+ 	eof_log("eof_save_song() entered", 1);
 
 	PACKFILE * fp = NULL;
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};
@@ -4197,7 +4200,8 @@ EOF_PHRASE_SECTION *eof_get_arpeggio(EOF_SONG *sp, unsigned long track, unsigned
 //#define EOF_CREATE_IMAGE_SEQUENCE_SHOW_FPS_ONLY
 int eof_create_image_sequence(void)
 {
- 	eof_log("\tCreating image sequence\neof_create_image_sequence() entered", 1);
+ 	eof_log("\tCreating image sequence", 1);
+ 	eof_log("eof_create_image_sequence() entered", 1);
 
 	unsigned long framectr = 0, refreshctr = 0, lastpollctr = 0;
 	unsigned long remainder = 0;

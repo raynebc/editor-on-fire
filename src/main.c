@@ -6,6 +6,7 @@
 #endif
 #include <math.h>
 #include <sys/stat.h>
+#include <time.h>
 #include "alogg/include/alogg.h"
 #include "agup/agup.h"
 #include "modules/wfsel.h"
@@ -3489,7 +3490,8 @@ void eof_stop_midi(void)
 
 void eof_init_after_load(void)
 {
-	eof_log("\tInitializing after load\neof_init_after_load() entered", 1);
+	eof_log("\tInitializing after load", 1);
+	eof_log("eof_init_after_load() entered", 1);
 
 	eof_changes = 0;
 	eof_music_pos = eof_av_delay;
@@ -3637,12 +3639,15 @@ void eof_set_2D_lane_positions(unsigned long track)
 	}
 }
 
+unsigned int eof_log_id = 0;
 void eof_start_logging(void)
 {
 	char log_filename[1024] = {0};
 
 	if(eof_log_fp == NULL)
 	{
+		srand(time(NULL));	//Seed the random number generator with the current time
+		eof_log_id = ((unsigned int) rand()) % 1000;	//Create a 3 digit random number to represent this EOF instance
 		get_executable_name(log_filename, 1024);	//Get the path of the EOF binary that is running
 		replace_filename(log_filename, log_filename, "eof_log.txt", 1024);
 		eof_log_fp = fopen(log_filename, "w");
@@ -3670,7 +3675,7 @@ void eof_log(const char *text, char level)
 {
 	if(eof_log_fp && (eof_log_level & 1) && (eof_log_level >= level))
 	{	//If the log file is open, logging is enabled and the current logging level is high enough
-		fprintf(eof_log_fp, "%s\n", text);
+		fprintf(eof_log_fp, "%u: %s\n", eof_log_id, text);	//Prefix the log text with this EOF instance's logging ID
 		fflush(eof_log_fp);
 	}
 }
