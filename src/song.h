@@ -200,10 +200,8 @@ typedef struct
 #define EOF_PREVIEW_SECTION				13
 #define EOF_TREMOLO_SECTION				14
 
-#define EOF_TRACK_FLAG_OPEN_STRUM		1
-	//Specifies if the track has open strumming enabled (ie. PART BASS)
-#define EOF_TRACK_FLAG_FIVE_LANE_DRUM	2
-	//Specifies if the track has the fifth lane (gem 6) enabled in PART DRUMS
+#define EOF_TRACK_FLAG_SIX_LANES		1
+	//Specifies if the track has open strumming enabled (PART BASS) or a fifth drum lane enabled (PART DRUMS)
 
 #define EOF_TRACK_NAME_SIZE		31
 typedef struct
