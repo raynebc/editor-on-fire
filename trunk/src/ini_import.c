@@ -171,7 +171,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 			{
 				if(!ustricmp(&(eof_import_ini_setting[i].value[j]), "True"))
 				{
-					sp->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_OPEN_STRUM;	//Set the open bass strum flag
+					sp->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the sixth lane flag
 				}
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "real_guitar_tuning"))

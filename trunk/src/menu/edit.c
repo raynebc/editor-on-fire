@@ -1223,6 +1223,13 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		{	//If the copied note indicated that this overrides the original bitmask (pasting pro guitar into a legacy track)
 			temp_note.note = legacymask;
 		}
+		if((eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT) && (temp_note.note & 32))
+		{	//If the note being pasted uses lane 6 and the destination track is a legacy track
+			if((eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_SIX_LANES) == 0)
+			{	//If the sixth lane isn't currently enabled in the destination track
+				temp_note.note &= ~32;	//Clear lane 6 from the pasted note
+			}
+		}
 		eof_sanitize_note_flags(&temp_note.flags,eof_selected_track);	//Ensure the note flags are validated for the track being pasted into
 
 		/* create the note */

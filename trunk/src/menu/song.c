@@ -1894,7 +1894,7 @@ int eof_menu_song_open_bass(void)
 
 	if(eof_open_bass_enabled())
 	{	//Turn off open bass notes
-		eof_song->track[EOF_TRACK_BASS]->flags &= ~(EOF_TRACK_FLAG_OPEN_STRUM);	//Clear the flag
+		eof_song->track[EOF_TRACK_BASS]->flags &= ~(EOF_TRACK_FLAG_SIX_LANES);	//Clear the flag
 		eof_song->legacy_track[tracknum]->numlanes = 5;
 	}
 	else
@@ -1959,7 +1959,7 @@ int eof_menu_song_open_bass(void)
 				eof_song->legacy_track[tracknum]->note[ctr]->note = 32;	//Clear all lanes for this note except for lane 6 (open bass)
 			}
 		}
-		eof_song->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_OPEN_STRUM;	//Set the flag
+		eof_song->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the flag
 		eof_song->legacy_track[tracknum]->numlanes = 6;
 	}
 	eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
@@ -2478,12 +2478,12 @@ int eof_menu_song_five_lane_drums(void)
 
 	if(eof_five_lane_drums_enabled())
 	{	//Turn off five lane drums
-		eof_song->track[EOF_TRACK_DRUM]->flags &= ~(EOF_TRACK_FLAG_FIVE_LANE_DRUM);	//Clear the flag
+		eof_song->track[EOF_TRACK_DRUM]->flags &= ~(EOF_TRACK_FLAG_SIX_LANES);	//Clear the flag
 		eof_song->legacy_track[tracknum]->numlanes = 5;
 	}
 	else
 	{	//Turn on five lane drums
-		eof_song->track[EOF_TRACK_DRUM]->flags |= EOF_TRACK_FLAG_FIVE_LANE_DRUM;	//Set the flag
+		eof_song->track[EOF_TRACK_DRUM]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the flag
 		eof_song->legacy_track[tracknum]->numlanes = 6;
 	}
 

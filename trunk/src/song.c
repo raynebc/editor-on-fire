@@ -369,6 +369,10 @@ void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 		{	//For each lane
 			if((tp->note[i-1]->note & mask) && (ctr >= tp->numlanes))
 			{	//If this lane is populated and is above the highest valid lane number for this track
+				if((mask == 32) && ((tp->parent->track_type == EOF_TRACK_DRUM) || (tp->parent->track_type == EOF_TRACK_BASS)))
+				{	//If lane 6 is populated in the drum or bass track, and the sixth lane is being hidden (not active), allow the gem to remain
+					continue;
+				}
 				tp->note[i-1]->note &= (~mask);	//Clear the lane
 			}
 		}
@@ -1288,8 +1292,8 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 				ptr->star_power_paths = 0;
 				ptr->trills = 0;
 				ptr->tremolos = 0;
-				if(trackdetails->flags & EOF_TRACK_FLAG_OPEN_STRUM)
-				{	//Open strum is tracked as a sixth lane
+				if(trackdetails->flags & EOF_TRACK_FLAG_SIX_LANES)
+				{	//Open strum and fifth drum lane are tracked as a sixth lane
 					ptr->numlanes = 6;
 				}
 				else if(trackdetails->track_type == EOF_TRACK_DANCE)
@@ -2548,7 +2552,7 @@ unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track)
 
 inline int eof_open_bass_enabled(void)
 {
-	return (eof_song->track[EOF_TRACK_BASS]->flags & EOF_TRACK_FLAG_OPEN_STRUM);
+	return (eof_song->track[EOF_TRACK_BASS]->flags & EOF_TRACK_FLAG_SIX_LANES);
 }
 
 EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_note(EOF_PRO_GUITAR_TRACK *tp)
@@ -4564,5 +4568,5 @@ int eof_get_pro_guitar_note_fret_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 
 inline int eof_five_lane_drums_enabled(void)
 {
-	return (eof_song->track[EOF_TRACK_DRUM]->flags & EOF_TRACK_FLAG_FIVE_LANE_DRUM);
+	return (eof_song->track[EOF_TRACK_DRUM]->flags & EOF_TRACK_FLAG_SIX_LANES);
 }

@@ -1189,7 +1189,7 @@ eof_log("\tSecond pass complete", 1);
 						{	//If this is a drum track, lane 6 is used for the fifth drum lane and not a HOPO marker
 							if(diff == 5)
 							{	//A lane 6 gem encountered for a drum track will cause the track to be marked as being a "five lane" drum track
-								sp->track[picked_track]->flags |= EOF_TRACK_FLAG_FIVE_LANE_DRUM;	//Set the five lane drum flag
+								sp->track[picked_track]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the six lane flag
 								sp->legacy_track[tracknum]->numlanes = 6;
 							}
 						}
@@ -1936,10 +1936,10 @@ eof_log("\tThird pass complete", 1);
 			eof_cursor_visible = 0;
 			eof_pen_visible = 0;
 			eof_show_mouse(screen);
-			if((sp->track[EOF_TRACK_BASS]->flags & EOF_TRACK_FLAG_OPEN_STRUM) || (alert(NULL, "Import lane 1 forced HOPO bass notes as open strums?", NULL, "&Yes", "&No", 'y', 'n') == 1))
+			if((sp->track[EOF_TRACK_BASS]->flags & EOF_TRACK_FLAG_SIX_LANES) || (alert(NULL, "Import lane 1 forced HOPO bass notes as open strums?", NULL, "&Yes", "&No", 'y', 'n') == 1))
 			{	//If the open bass strum flag was set during INI import or if the user opts to import lane 1 HOPO bass notes as open strums
 				sp->legacy_track[tracknum]->numlanes = 6;						//Set this track to have 6 lanes instead of 5
-				sp->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_OPEN_STRUM;	//Set this flag
+				sp->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
 				for(k = 0; k < sp->legacy_track[tracknum]->notes; k++)
 				{	//For each note in the bass track
 					if((sp->legacy_track[tracknum]->note[k]->note & 1) && (sp->legacy_track[tracknum]->note[k]->flags & EOF_NOTE_FLAG_F_HOPO))

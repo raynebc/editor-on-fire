@@ -2447,8 +2447,9 @@ void eof_render_3d_window(void)
 	unsigned long i;
 	short numsolos = 0;					//Used to abstract the solo sections
 	unsigned long numnotes;				//Used to abstract the notes
-	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
+	unsigned long numlanes,numlanes2;	//The number of fretboard lanes that will be rendered
 	unsigned long tracknum;
+	unsigned char coloroffset = 0;		//Used to increase the color used to render drum roll phrases higher than normal since lane 1's color is not rendered for drum phrases
 
 	//Used to draw trill and tremolo sections:
 	unsigned long j, ctr, usedlanes, bitmask, numsections;
@@ -2456,21 +2457,28 @@ void eof_render_3d_window(void)
 	int colors[EOF_MAX_FRETS] = {makecol(170,255,170), makecol(255,156,156), makecol(255,255,224), makecol(156,156,255), makecol(255,156,255), makecol(255,170,128)};	//Lightened versions of the standard fret colors
 
 	clear_to_color(eof_window_3d->screen, eof_color_gray);
-	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
+	numlanes2 = numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	eof_set_3D_lane_positions(eof_selected_track);	//Update the xchart[] array
 	if(eof_selected_track == EOF_TRACK_BASS)
 	{	//Special case:  The bass track can use a sixth lane but its 3D representation still only draws 5 lanes
-		numlanes = 5;
+		numlanes2 = numlanes = 5;
+	}
+	if(eof_selected_track == EOF_TRACK_DRUM)
+	{
+		coloroffset = 1;	//The drum roll phrase will render starting with lane 2's color instead of lane 1's color, since lane 1 (bass drum) doesn't use a lane
+		numlanes2 = numlanes - 1;	//A drum track's 3D rendering uses 1 lane less because bass drum doesn't use a lane
 	}
 
 	point[0] = ocd3d_project_x(20, 600);
 	point[1] = ocd3d_project_y(200, 600);
 	point[2] = ocd3d_project_x(300, 600);
-	point[3] = ocd3d_project_y(200, 600);
+//	point[3] = ocd3d_project_y(200, 600);
+	point[3] = point[1];
 	point[4] = ocd3d_project_x(300, -100);
 	point[5] = ocd3d_project_y(200, -100);
 	point[6] = ocd3d_project_x(20, -100);
-	point[7] = ocd3d_project_y(200, -100);
+//	point[7] = ocd3d_project_y(200, -100);
+	point[7] = point[5];
 	polygon(eof_window_3d->screen, 4, point, eof_color_black);
 
 	/* render solo sections */
@@ -2491,20 +2499,22 @@ void eof_render_3d_window(void)
 				point[0] = ocd3d_project_x(20, spez);
 				point[1] = ocd3d_project_y(200, spez);
 				point[2] = ocd3d_project_x(300, spez);
-				point[3] = ocd3d_project_y(200, spez);
+//				point[3] = ocd3d_project_y(200, spez);
+				point[3] = point[1];
 				point[4] = ocd3d_project_x(300, spz);
 				point[5] = ocd3d_project_y(200, spz);
 				point[6] = ocd3d_project_x(20, spz);
-				point[7] = ocd3d_project_y(200, spz);
+//				point[7] = ocd3d_project_y(200, spz);
+				point[7] = point[5];
 				polygon(eof_window_3d->screen, 4, point, makecol(0, 0, 64));
 			}
 		}
 	}
 
 	/* render arpeggio sections */
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{
-		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		for(i = 0; i < eof_song->pro_guitar_track[tracknum]->arpeggios; i++)
 		{	//For each arpeggio section in the track
 			sz = (long)(eof_song->pro_guitar_track[tracknum]->arpeggio[i].start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
@@ -2516,11 +2526,13 @@ void eof_render_3d_window(void)
 				point[0] = ocd3d_project_x(20, spez);
 				point[1] = ocd3d_project_y(200, spez);
 				point[2] = ocd3d_project_x(300, spez);
-				point[3] = ocd3d_project_y(200, spez);
+//				point[3] = ocd3d_project_y(200, spez);
+				point[3] = point[1];
 				point[4] = ocd3d_project_x(300, spz);
 				point[5] = ocd3d_project_y(200, spz);
 				point[6] = ocd3d_project_x(20, spz);
-				point[7] = ocd3d_project_y(200, spz);
+//				point[7] = ocd3d_project_y(200, spz);
+				point[7] = point[5];
 				polygon(eof_window_3d->screen, 4, point, makecol(51,166,153));	//Fill with a turquoise color (use (68,221,204) for light turquoise)
 			}
 		}
@@ -2530,6 +2542,11 @@ void eof_render_3d_window(void)
 	if(eof_get_num_trills(eof_song, eof_selected_track) || eof_get_num_tremolos(eof_song, eof_selected_track))
 	{	//If this track has any trill or tremolo sections
 		unsigned long halflanewidth = (56.0 * (4.0 / (numlanes-1))) / 2;
+		unsigned long xoffset = 0;	//This will be used to offset the trill/tremolo lane fill as necessary to center the fill over that lane's gem
+		if(eof_selected_track == EOF_TRACK_DRUM)
+		{
+			xoffset = halflanewidth;	//Drum gems render half a lane width further right (in between fret lines instead of centered over the lines)
+		}
 
 		//Build the lane X coordinate array
 		for(j = 0; j < 2; j++)
@@ -2557,23 +2574,25 @@ void eof_render_3d_window(void)
 					sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
 					sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
 					if((-100 <= sez) && (600 >= sz))
-					{
+					{	//If the section would render to the visible portion of the screen
 						usedlanes = eof_get_used_lanes(eof_selected_track, sectionptr->start_pos, sectionptr->end_pos, eof_note_type);	//Determine which lane(s) use this phrase
 						for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
 						{	//For each of the usable lanes
-							if(usedlanes & bitmask)
-							{	//If this lane is used in the phrase
+							if((usedlanes & bitmask) && (ctr < numlanes2))
+							{	//If this lane is used in the phrase and the lane is active
 								spz = sz < -100 ? -100 : sz;
 								spez = sez > 600 ? 600 : sez;
-								point[0] = ocd3d_project_x(xchart[ctr] - halflanewidth, spez);
+								point[0] = ocd3d_project_x(xchart[ctr] - halflanewidth + xoffset, spez);
 								point[1] = ocd3d_project_y(200, spez);
-								point[2] = ocd3d_project_x(xchart[ctr] + halflanewidth, spez);
-								point[3] = ocd3d_project_y(200, spez);
-								point[4] = ocd3d_project_x(xchart[ctr] + halflanewidth, spz);
+								point[2] = ocd3d_project_x(xchart[ctr] + halflanewidth + xoffset, spez);
+//								point[3] = ocd3d_project_y(200, spez);
+								point[3] = point[1];
+								point[4] = ocd3d_project_x(xchart[ctr] + halflanewidth + xoffset, spz);
 								point[5] = ocd3d_project_y(200, spz);
-								point[6] = ocd3d_project_x(xchart[ctr] - halflanewidth, spz);
-								point[7] = ocd3d_project_y(200, spz);
-								polygon(eof_window_3d->screen, 4, point, colors[ctr]);
+								point[6] = ocd3d_project_x(xchart[ctr] - halflanewidth + xoffset, spz);
+//								point[7] = ocd3d_project_y(200, spz);
+								point[7] = point[5];
+								polygon(eof_window_3d->screen, 4, point, colors[ctr + coloroffset]);
 							}
 						}
 					}
@@ -3675,7 +3694,7 @@ void eof_log(const char *text, char level)
 {
 	if(eof_log_fp && (eof_log_level & 1) && (eof_log_level >= level))
 	{	//If the log file is open, logging is enabled and the current logging level is high enough
-		fprintf(eof_log_fp, "%u: %s\n", eof_log_id, text);	//Prefix the log text with this EOF instance's logging ID
+		fprintf(eof_log_fp, "%03u: %s\n", eof_log_id, text);	//Prefix the log text with this EOF instance's logging ID
 		fflush(eof_log_fp);
 	}
 }

@@ -368,6 +368,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		{	//If this note uses lane 6
 			eof_log("\t\"5 lane drums\" detected, enabling lane 6 for PART DRUMS", 1);
 			sp->legacy_track[tracknum]->numlanes = 6;	//Enable lane 6 for the drum track
+			sp->track[EOF_TRACK_DRUM]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the sixth lane flag
 			break;
 		}
 	}
