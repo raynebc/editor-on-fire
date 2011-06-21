@@ -78,6 +78,7 @@ int eof_song_qsort_legacy_notes(const void * e1, const void * e2)
     EOF_NOTE ** thing2 = (EOF_NOTE **)e2;
 
 //	allegro_message("%d\n%d", (*thing1)->pos, (*thing2)->pos);
+	//Sort first by chronological order
     if((*thing1)->pos < (*thing2)->pos)
 	{
         return -1;
@@ -86,6 +87,15 @@ int eof_song_qsort_legacy_notes(const void * e1, const void * e2)
     {
         return 1;
     }
+    //Sort second by difficulty
+    if((*thing1)->type < (*thing2)->type)
+	{
+		return -1;
+	}
+    if((*thing1)->type > (*thing2)->type)
+	{
+		return 1;
+	}
 
     // they are equal...
     return 0;
@@ -428,10 +438,10 @@ void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 				tp->note[i]->flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Clear the forced HOPO off flag
 				tp->note[i]->flags &= (~EOF_NOTE_FLAG_CRAZY);	//Clear the crazy status
 			}
-			else if((tp->note[i]->note & 1) && (tp->note[i]->flags & EOF_NOTE_FLAG_F_HOPO))
-			{	//If this note contains a gem on lane 1 and the note has the forced HOPO on status
-				tp->note[i]->flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Clear the forced HOPO on flag
-			}
+//			else if((tp->note[i]->note & 1) && (tp->note[i]->flags & EOF_NOTE_FLAG_F_HOPO))
+//			{	//If this note contains a gem on lane 1 and the note has the forced HOPO on status
+//				tp->note[i]->flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Clear the forced HOPO on flag
+//			}
 		}
 	}
 	if(!sel)
@@ -3208,6 +3218,7 @@ int eof_song_qsort_pro_guitar_notes(const void * e1, const void * e2)
     EOF_PRO_GUITAR_NOTE ** thing1 = (EOF_PRO_GUITAR_NOTE **)e1;
     EOF_PRO_GUITAR_NOTE ** thing2 = (EOF_PRO_GUITAR_NOTE **)e2;
 
+	//Sort first by chronological order
     if((*thing1)->pos < (*thing2)->pos)
 	{
         return -1;
@@ -3216,6 +3227,15 @@ int eof_song_qsort_pro_guitar_notes(const void * e1, const void * e2)
     {
         return 1;
     }
+    //Sort second by difficulty
+    if((*thing1)->type < (*thing2)->type)
+	{
+		return -1;
+	}
+    if((*thing1)->type > (*thing2)->type)
+	{
+		return 1;
+	}
 
     // they are equal...
     return 0;

@@ -2039,7 +2039,7 @@ int eof_save_helper(char *destfilename)
 	char newfolderpath[1024] = {0};
 	char oggfn[1024] = {0};
 	char function;		//Will be set to 1 for "Save" or 2 for "Save as"
-	unsigned long tracknum;
+//	unsigned long tracknum;
 	int jumpcode = 0;
 
 	if(!eof_song_loaded || !eof_song)
@@ -2068,7 +2068,7 @@ int eof_save_helper(char *destfilename)
 	eof_fixup_notes(eof_song);
 
 	/* check to make sure open bass guitar and forced HOPO on don't conflict */
-	if(eof_open_bass_enabled())
+/*	if(eof_open_bass_enabled())
 	{
 		tracknum = eof_song->track[EOF_TRACK_BASS]->tracknum;
 		for(ctr = 0; ctr < eof_song->legacy_track[tracknum]->notes; ctr++)
@@ -2089,7 +2089,7 @@ int eof_save_helper(char *destfilename)
 			}
 		}
 	}
-
+*/
 	/* prepare lyrics if applicable */
 	if(eof_song->vocal_track[0]->lyrics > 0)
 	{

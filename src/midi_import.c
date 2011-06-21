@@ -21,6 +21,7 @@ typedef struct
 	int d1, d2, d3, d4;
 	unsigned long track;	//The track number this event is from
 	char text[EOF_MAX_MIDI_TEXT_SIZE+1];
+	char *dp;	//Stores pointer to data (ie. Sysex messages)
 
 } EOF_IMPORT_MIDI_EVENT;
 
@@ -80,7 +81,7 @@ static void eof_import_destroy_events_list(EOF_IMPORT_MIDI_EVENT_LIST * lp)
  *  bytes it used.
  */
 static unsigned long eof_parse_var_len(unsigned char * data, unsigned long pos, unsigned long * bytes_used)
-{
+{	//bytes_used is set to the number of bytes long the variable length value is, the value itself is returned
 //	eof_log("eof_parse_var_len() entered");
 
 	if(!data || !bytes_used)
@@ -166,19 +167,20 @@ static long eof_import_closest_beat(EOF_SONG * sp, unsigned long pos)
 static void eof_midi_import_add_event(EOF_IMPORT_MIDI_EVENT_LIST * events, unsigned long pos, unsigned char event, unsigned long d1, unsigned long d2, unsigned long track)
 {
 //	eof_log("eof_midi_import_add_event() entered");
-	EOF_IMPORT_MIDI_EVENT *ptr = malloc(sizeof(EOF_IMPORT_MIDI_EVENT));
+//	EOF_IMPORT_MIDI_EVENT *ptr = malloc(sizeof(EOF_IMPORT_MIDI_EVENT));
 
 	if(events && (events->events < EOF_IMPORT_MAX_EVENTS))
 	{
-		if(ptr != NULL)
+		events->event[events->events] = malloc(sizeof(EOF_IMPORT_MIDI_EVENT));
+		if(events->event[events->events])
 		{
-			events->event[events->events] = ptr;
 			events->event[events->events]->pos = pos;
 			events->event[events->events]->type = event & 0xF0;		//The event type
 			events->event[events->events]->channel = event & 0xF;	//The channel number
 			events->event[events->events]->d1 = d1;
 			events->event[events->events]->d2 = d2;
 			events->event[events->events]->track = track;	//Store the event's track number
+			events->event[events->events]->dp = NULL;
 
 			events->events++;
 		}
@@ -206,8 +208,39 @@ static void eof_midi_import_add_text_event(EOF_IMPORT_MIDI_EVENT_LIST * events, 
 			memcpy(events->event[events->events]->text, text, size);
 			events->event[events->events]->text[size] = '\0';
 			events->event[events->events]->track = track;	//Store the event's track number
+			events->event[events->events]->dp = NULL;
 
 			events->events++;
+		}
+	}
+	else
+	{
+//		allegro_message("too many events!");
+	}
+}
+
+static void eof_midi_import_add_sysex_event(EOF_IMPORT_MIDI_EVENT_LIST * events, unsigned long pos, char * data, unsigned long size, unsigned long track)
+{
+//	eof_log("eof_midi_import_add_sysex_event() entered");
+	char *datacopy = NULL;
+
+	if(events && (events->events < EOF_IMPORT_MAX_EVENTS) && data && (size > 0))
+	{
+		events->event[events->events] = malloc(sizeof(EOF_IMPORT_MIDI_EVENT));
+		if(events->event[events->events])
+		{
+			datacopy = malloc(size);
+			if(datacopy)
+			{
+				memcpy(datacopy, data, size);			//Copy the input data into the new buffer
+				events->event[events->events]->pos = pos;
+				events->event[events->events]->type = 0xF0;	//The Sysex event type
+				events->event[events->events]->d1 = size;	//Store the size of the Sysex message
+				events->event[events->events]->dp = datacopy;	//Store the newly buffered data
+				events->event[events->events]->track = track;	//Store the event's track number
+
+				events->events++;
+			}
 		}
 	}
 	else
@@ -506,6 +539,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 						bytes_used = 0;
 						d3 = eof_parse_var_len(eof_work_midi->track[track[i]].data, track_pos, &bytes_used);
 						track_pos += bytes_used;
+						eof_midi_import_add_sysex_event(eof_import_events[i], absolute_pos, (char *)&eof_work_midi->track[track[i]].data[track_pos], d3, i);	//Store a copy of the Sysex data
 						track_pos += d3;
 					}
 					else if(current_event == 0xFF)
@@ -955,6 +989,8 @@ eof_log("\tSecond pass complete", 1);
 	char prodrums = 0;					//Tracks whether the drum track being written includes Pro drum notation
 	unsigned long tracknum;				//Used to de-obfuscate the legacy track number
 	EOF_PRO_GUITAR_NOTE *currentsupaeasy, *currenteasy, *currentmedium, *currentamazing, **lastaddednotedifficulty;	//Used to import pro guitar slides, stores the pointer to the active note for each difficulty and set back to NULL when the note's first note off is reached
+	int phrasediff;						//Used for parsing Sysex phrase markers
+	unsigned long openstrumpos[4];		//Used for parsing Sysex phrase markers
 
 	for(i = 0; i < tracks; i++)
 	{	//For each imported track
@@ -1180,7 +1216,7 @@ eof_log("\tSecond pass complete", 1);
 						{
 							eof_set_note_type(sp, picked_track, note_count[picked_track], -1);
 						}
-					}
+					}//Note on or note off
 
 					/* note on */
 					if(eof_import_events[i]->event[j]->type == 0x90)
@@ -1323,7 +1359,7 @@ eof_log("\tSecond pass complete", 1);
 								}
 							}
 						}
-					}
+					}//Note on event
 
 					/* note off so get length of note */
 					else if(eof_import_events[i]->event[j]->type == 0x80)
@@ -1464,6 +1500,46 @@ eof_log("\tSecond pass complete", 1);
 								}
 							}
 						}
+					}//Note off event
+
+					if((eof_import_events[i]->event[j]->type == 0xF0) && eof_import_events[i]->event[j]->dp)
+					{	//Sysex event
+						if((eof_import_events[i]->event[j]->d1 == 8) && (!strncmp(eof_import_events[i]->event[j]->dp, "PS", 3)))
+						{	//If this is a custom Sysex Phase Shift marker (8 bytes long, beginning with the NULL terminated string "PS")
+							switch(eof_import_events[i]->event[j]->dp[3])
+							{	//Check the value of the message ID
+								case 0:	//Phrase marker
+									phrasediff = eof_import_events[i]->event[j]->dp[4];	//Store the difficulty ID
+									switch(eof_import_events[i]->event[j]->dp[5])
+									{	//Check the value of the phrase ID
+										case 1:	//Open strum bass
+											if(picked_track == EOF_TRACK_BASS)
+											{	//Only parse open strum bass phrases for the bass track
+												if(eof_import_events[i]->event[j]->dp[6] == 1)
+												{	//Start of open strum bass phrase
+													openstrumpos[phrasediff] = event_realtime;
+												}
+												else if(eof_import_events[i]->event[j]->dp[6] == 0)
+												{	//End of open strum bass phrase
+													for(k = note_count[picked_track] - 1; k >= first_note; k--)
+													{	//Check for each note that has been imported
+														if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= openstrumpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+														{	//If the note is in the same difficulty as the open strum bass phrase, and its timestamp falls between the phrase on and phrase off marker
+															eof_set_note_note(sp, picked_track, k, 32);	//Change this note's to just a gem on lane 6 (EOF's in-editor notation for open strum bass)
+															sp->track[picked_track]->flags = EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
+															tracknum = sp->track[EOF_TRACK_BASS]->tracknum;
+															sp->legacy_track[tracknum]->numlanes = 6;	//Set this track to have 6 lanes instead of 5
+														}
+													}
+												}
+											}
+										break;
+									}
+								break;
+							}
+						}
+						free(eof_import_events[i]->event[j]->dp);	//The the memory allocated to store this Sysex message's data
+						eof_import_events[i]->event[j]->dp = NULL;
 					}
 				}//If parsing a legacy track
 				else if(eof_midi_tracks[picked_track].track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -1927,7 +2003,7 @@ eof_log("\tThird pass complete", 1);
 		sp->legacy_track[tracknum]->note[k]->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy status flag
 	}
 
-//Check for forced HOPO on lane 1 in PART BASS and prompt for whether to treat as open bass strumming
+//Check for forced HOPO on lane 1 in PART BASS and prompt for whether to treat as open bass strumming (this is how GH MIDIs mark open bass)
 	tracknum = sp->track[EOF_TRACK_BASS]->tracknum;
 	for(i = 0; i < sp->legacy_track[tracknum]->notes; i++)
 	{	//For each note in the bass track
