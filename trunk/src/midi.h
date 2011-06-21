@@ -90,5 +90,7 @@ int eof_dump_midi_track(const char *inputfile,PACKFILE *outf);
 	//Writes a MIDI track header to the output file, followed by the size of the input file, followed by the contents of the input file
 void eof_write_text_event(unsigned long deltas, const char *str, PACKFILE *fp);
 	//Writes a text event to the given file stream
+void eof_add_sysex_event(unsigned long pos, int size, void *data);
+	//Stores a copy of the Sysex message data (used for custom phrase markers in Phase Shift) to eof_midi_event[]
 
 #endif

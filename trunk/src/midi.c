@@ -148,6 +148,24 @@ int qsort_helper3(const void * e1, const void * e2)
         return 1;
     }
 
+	/* Logical order of custom Sysex markers:  Phrase on, note on, note off, Phrase off */
+	if(((*thing1)->type == 0xF0) && ((*thing2)->type == 0x90))
+	{
+		return -1;
+	}
+	if(((*thing1)->type == 0x90) && ((*thing2)->type == 0xF0))
+	{
+		return 1;
+	}
+	if(((*thing1)->type == 0x80) && ((*thing2)->type == 0xF0))
+	{
+		return -1;
+	}
+	if(((*thing1)->type == 0xF0) && ((*thing2)->type == 0x80))
+	{
+		return 1;
+	}
+
 	/* Logical order of lyric markings:  Overdrive on, solo on, lyric on, lyric, lyric pitch, ..., lyric off, solo off, overdrive off */
 	if(((*thing1)->type == 0x90) && ((*thing2)->type == 0x90))
 	{	//If both things are Note On events
@@ -408,6 +426,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	EOF_PHRASE_SECTION *sectionptr;
 	char *lastname = NULL, *currentname = NULL, nochord[]="NC", chordname[100]="";
 	char match = 0;
+	char phase_shift_sysex_phrase[8] = {'P','S','\0',0,0,0,0,0xF7};	//This is used to write Sysex messages for features supported in Phase Shift (ie. open strum bass)
 
 	if(!sp | !fn)
 	{
@@ -488,9 +507,15 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			use size of the file as the MTrk header length */
 			for(i = 0; i < eof_get_track_size(sp, j); i++)
 			{	//For each note in the track
+				noteflags = eof_get_note_flags(sp, j, i);	//Store the note flags for easier use
+				note = eof_get_note_note(sp, j, i);			//Store the note bitflag for easier use
+				notepos = eof_get_note_pos(sp, j, i);		//Store the note position for easier use
+				length = eof_get_note_length(sp, j, i);		//Store the note length for easier use
+				type = eof_get_note_type(sp, j, i);			//Store the note type for easier use
+
 				if(j != EOF_TRACK_DANCE)
 				{	//All legacy style tracks besides the dance track use the same offsets
-					switch(eof_get_note_type(sp, j, i))
+					switch(type)
 					{
 						case EOF_NOTE_AMAZING:	//notes 96-100
 						{
@@ -521,7 +546,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				}
 				else
 				{	//This is the dance track
-					switch(eof_get_note_type(sp, j, i))
+					switch(type)
 					{
 						case EOF_NOTE_CHALLENGE:	//notes 96-107
 						{
@@ -551,12 +576,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					}
 				}
 
-				noteflags = eof_get_note_flags(sp, j, i);	//Store the note flags for easier use
-				note = eof_get_note_note(sp, j, i);			//Store the note bitflag for easier use
-				notepos = eof_get_note_pos(sp, j, i);		//Store the note position for easier use
-				length = eof_get_note_length(sp, j, i);		//Store the note length for easier use
-				type = eof_get_note_type(sp, j, i);			//Store the note type for easier use
-
 				deltapos = eof_ConvertToDeltaTime(notepos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);	//Store the tick position of the note
 				deltalength = eof_ConvertToDeltaTime(notepos + length,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION) - deltapos;	//Store the number of delta ticks representing the note's length
 				if(deltalength < 1)
@@ -569,10 +588,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				}
 
 				if(eof_open_bass_enabled() && (j == EOF_TRACK_BASS))
-				{	//Ensure that for PART BASS, green gems and open bass notes don't exist at the same location
-					if((note & 1) && (note & 32))
-					{	//If this bass guitar note has lane 1 and 6 gems
-						note &= ~(1);	//Clear lane 1
+				{	//Ensure that for PART BASS, open bass notes don't have any gems except for lane 6
+					if((note & ~32) && (note & 32))
+					{	//If this bass guitar note has a gem on lane 6 (open strum bass) and any other lane
+						note = 32;	//Clear all lanes except lane 6
 					}
 				}
 
@@ -647,9 +666,16 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				/* write open bass note, if the feature was enabled during save */
 				if(eof_open_bass_enabled() && (j == EOF_TRACK_BASS) && (note & 32))
 				{	//If this is an open bass note
-					noteflags |= EOF_NOTE_FLAG_F_HOPO;	//Set the forced HOPO on flag, which is used to denote open bass
+//					noteflags |= EOF_NOTE_FLAG_F_HOPO;	//Set the forced HOPO on flag, which is used to denote open bass
 					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 0, vel, 0);	//Write a gem for lane 1
 					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 0, vel, 0);
+					phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+					phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
+					phase_shift_sysex_phrase[5] = 1;	//Store the phrase ID (1 = Open Strum Bass)
+					phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+					eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom open bass phrase start marker
+					phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+					eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom open bass phrase stop marker
 				}
 
 				/* write fifth lane drum note, if the feature was enabled during save */
@@ -790,11 +816,21 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 						continue;	//Filter out all non Expert drum notes for the Expert+ track
 
 					delta = eof_midi_event[i]->pos;
-					WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
+					WriteVarLen(delta - lastdelta, fp);	//Write this event's relative delta time
 					lastdelta = delta;					//Store this event's absolute delta time
-					pack_putc(eof_midi_event[i]->type, fp);
-					pack_putc(eof_midi_event[i]->note, fp);
-					pack_putc(vel, fp);
+					if(eof_midi_event[i]->type == 0xF0)
+					{	//If this is a Sysex message
+						pack_putc(0xF0, fp);						//Sysex event
+						WriteVarLen(eof_midi_event[i]->note, fp);	//Write the Sysex message's size
+						pack_fwrite(eof_midi_event[i]->dp, eof_midi_event[i]->note, fp);	//Write the Sysex data
+						free(eof_midi_event[i]->dp);				//Free the copied array from memory
+					}
+					else
+					{	//Note on/off
+						pack_putc(eof_midi_event[i]->type, fp);
+						pack_putc(eof_midi_event[i]->note, fp);
+						pack_putc(vel, fp);
+					}
 				}
 
 				/* end of track */
@@ -2168,6 +2204,30 @@ void eof_write_text_event(unsigned long deltas, const char *str, PACKFILE *fp)
 			pack_putc(0x01, fp);
 			pack_putc(length, fp);
 			pack_fwrite(str, length, fp);
+		}
+	}
+}
+
+void eof_add_sysex_event(unsigned long pos, int size, void *data)
+{	//To avoid rounding issues during timing conversion, this should be called with the MIDI tick position of the event being stored
+	eof_log("eof_add_sysex_event() entered", 2);	//Only log this if verbose logging is on
+	void *datacopy = NULL;
+
+	if((size > 0) && data)
+	{
+		eof_midi_event[eof_midi_events] = malloc(sizeof(EOF_MIDI_EVENT));
+		if(eof_midi_event[eof_midi_events])
+		{
+			datacopy = malloc(size);
+			if(datacopy)
+			{
+				memcpy(datacopy, data, size);	//Copy the input data into the new buffer
+				eof_midi_event[eof_midi_events]->pos = pos;
+				eof_midi_event[eof_midi_events]->type = 0xF0;
+				eof_midi_event[eof_midi_events]->note = size;	//Store the size of the Sysex message in the note variable
+				eof_midi_event[eof_midi_events]->dp = (char *)datacopy;	//Store the newly buffered data
+				eof_midi_events++;
+			}
 		}
 	}
 }

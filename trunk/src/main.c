@@ -2930,7 +2930,7 @@ int eof_initialize(int argc, char * argv[])
 {
 	eof_log("eof_initialize() entered", 1);
 
-	int i;
+	int i, eof_zoom_backup;
 	char temp_filename[1024] = {0};
 
 	if(!argv)
@@ -2997,6 +2997,11 @@ int eof_initialize(int argc, char * argv[])
 	replace_filename(eof_songs_path, eof_songs_path, "", 1024);
 
 	eof_load_config("eof.cfg");
+	eof_zoom_backup = eof_zoom;	//Save this because it will be over-written in eof_set_display_mode()
+	if((eof_zoom_backup <= 0) || (eof_zoom_backup > EOF_NUM_ZOOM_LEVELS))
+	{	//Validate eof_zoom_backup, to ensure a valid zoom level was loaded from the config file
+		eof_zoom_backup = 10;
+	}
 	if(eof_desktop)
 	{
 		set_color_depth(desktop_color_depth() != 0 ? desktop_color_depth() : 8);
@@ -3006,6 +3011,7 @@ int eof_initialize(int argc, char * argv[])
 		allegro_message("Unable to set display mode!");
 		return 0;
 	}
+	eof_menu_edit_zoom_level(eof_zoom_backup);	//Apply the zoom level loaded from the config file
 
 	if(!eof_load_data())
 	{
@@ -3515,7 +3521,12 @@ void eof_init_after_load(void)
 	eof_changes = 0;
 	eof_music_pos = eof_av_delay;
 	eof_music_paused = 1;
-	eof_menu_track_selected_track_number(EOF_TRACK_GUITAR);
+	if((eof_selected_track <= 0) || (eof_selected_track >= eof_song->tracks))
+	{	//Validate eof_selected_track, to ensure a valid track was loaded from the config file
+		eof_selected_track = EOF_TRACK_GUITAR;
+	}
+	eof_menu_track_selected_track_number(eof_selected_track);
+	eof_menu_edit_zoom_level(eof_zoom);
 	eof_vocals_selected = 0;
 	eof_undo_last_type = 0;
 	eof_change_count = 0;

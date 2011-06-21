@@ -763,7 +763,8 @@ int eof_menu_note_transpose_up(void)
 int eof_menu_note_transpose_down(void)
 {
 	unsigned long i, j;
-	unsigned long flags, note, tracknum;
+	unsigned long note, tracknum;
+//	unsigned long flags;
 
 	if(!eof_transpose_possible(1))
 	{
@@ -807,12 +808,12 @@ int eof_menu_note_transpose_down(void)
 				{	//Otherwise set the note's normal bitmask
 					eof_set_note_note(eof_song, eof_selected_track, i, note);
 				}
-				if((eof_selected_track == EOF_TRACK_BASS) && eof_open_bass_enabled() && (note & 1))
-				{	//If open bass is enabled, and this tranpose operation resulted in a bass guitar gem in lane 1
-					flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-					flags &= ~(EOF_NOTE_FLAG_F_HOPO);	//Clear the forced HOPO on flag, which conflicts with open bass strum notation
-					eof_set_note_flags(eof_song, eof_selected_track, i, flags);
-				}
+//				if((eof_selected_track == EOF_TRACK_BASS) && eof_open_bass_enabled() && (note & 1))
+//				{	//If open bass is enabled, and this tranpose operation resulted in a bass guitar gem in lane 1
+//					flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+//					flags &= ~(EOF_NOTE_FLAG_F_HOPO);	//Clear the forced HOPO on flag, which conflicts with open bass strum notation
+//					eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+//				}
 				if(!eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 				{	//If a pro guitar note was tranposed, move the fret values accordingly (only if legacy view isn't in effect)
 					for(j = 0; j < 15; j++)
@@ -1960,10 +1961,10 @@ int eof_menu_hopo_cycle(void)
 			{	//If the note is selected
 				if(!((eof_selected_track == EOF_TRACK_BASS) && (eof_get_note_note(eof_song, eof_selected_track, i) & 32)))
 				{	//If the note is not an open bass strum note
-					if((eof_selected_track == EOF_TRACK_BASS) && eof_open_bass_enabled() && (eof_get_note_note(eof_song, eof_selected_track, i) & 1))
-					{	//If open bass strumming is enabled and this is a bass guitar note that uses lane 1
-						continue;	//Skip this note, as open bass and forced HOPO on lane 1 conflict
-					}
+//					if((eof_selected_track == EOF_TRACK_BASS) && eof_open_bass_enabled() && (eof_get_note_note(eof_song, eof_selected_track, i) & 1))
+//					{	//If open bass strumming is enabled and this is a bass guitar note that uses lane 1
+//						continue;	//Skip this note, as open bass and forced HOPO on lane 1 conflict
+//					}
 					if(!undo_made)
 					{	//If an undo state hasn't been made yet
 						eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
@@ -2026,10 +2027,10 @@ int eof_menu_hopo_force_on(void)
 		{
 			if(!((eof_selected_track == EOF_TRACK_BASS) && (eof_get_note_note(eof_song, eof_selected_track, i) & 32)))
 			{	//If the note is not an open bass strum note
-				if((eof_selected_track == EOF_TRACK_BASS) && eof_open_bass_enabled() && (eof_get_note_note(eof_song, eof_selected_track, i) & 1))
-				{	//If open bass strumming is enabled and this is a bass guitar note that uses lane 1
-					continue;	//Skip this note, as open bass and forced HOPO on lane 1 conflict
-				}
+//				if((eof_selected_track == EOF_TRACK_BASS) && eof_open_bass_enabled() && (eof_get_note_note(eof_song, eof_selected_track, i) & 1))
+//				{	//If open bass strumming is enabled and this is a bass guitar note that uses lane 1
+//					continue;	//Skip this note, as open bass and forced HOPO on lane 1 conflict
+//				}
 				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 				oldflags = flags;					//Save another copy of the original flags
 				flags |= EOF_NOTE_FLAG_F_HOPO;		//Set the HOPO on flag
