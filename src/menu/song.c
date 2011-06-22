@@ -1159,7 +1159,9 @@ int eof_menu_track_selected_track_number(int tracknum)
 		eof_selected_track = tracknum;
 		eof_detect_difficulties(eof_song);
 		eof_fix_window_title();
-		eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
+		eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
+		eof_set_3D_lane_positions(0);
+		eof_set_2D_lane_positions(0);
 		eof_determine_phrase_status();
 	}
 	return 1;

@@ -348,8 +348,10 @@ long eof_fixup_next_legacy_note(EOF_LEGACY_TRACK * tp, unsigned long note)
 
 void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 {
-	unsigned long i, ctr, mask;
+	unsigned long i;
+//	unsigned long ctr, mask;
 	long next;
+	unsigned long maxbitmask,maxlane;	//Used to find the highest usable bitmask for the track (based on numlanes).  The drum and bass tracks will be allowed to keep lane 6 automatically
 
 	if(!tp)
 	{
@@ -363,8 +365,14 @@ void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 		}
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
+	maxlane = tp->numlanes;
+	if((maxlane < 6) && ((tp->parent->track_type == EOF_TRACK_DRUM) || (tp->parent->track_type == EOF_TRACK_BASS)))
+	{	//If this is the drum or bass track, ensure that at least 6 lanes are allowed to be kept
+		maxlane = 6;
+	}
+	maxbitmask = (1 << maxlane) - 1;
 	for(i = tp->notes; i > 0; i--)
-	{
+	{	//For each note (in reverse order)
 		/* fix selections */
 		if((tp->note[i-1]->type == eof_note_type) && (tp->note[i-1]->pos == eof_selection.current_pos))
 		{
@@ -375,16 +383,9 @@ void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 			eof_selection.last = i-1;
 		}
 
-		for(ctr=0,mask=1;ctr<8;ctr++,mask=mask<<1)
-		{	//For each lane
-			if((tp->note[i-1]->note & mask) && (ctr >= tp->numlanes))
-			{	//If this lane is populated and is above the highest valid lane number for this track
-				if((mask == 32) && ((tp->parent->track_type == EOF_TRACK_DRUM) || (tp->parent->track_type == EOF_TRACK_BASS)))
-				{	//If lane 6 is populated in the drum or bass track, and the sixth lane is being hidden (not active), allow the gem to remain
-					continue;
-				}
-				tp->note[i-1]->note &= (~mask);	//Clear the lane
-			}
+		if(tp->note[i-1]->note > maxbitmask)
+		{	//If this note uses lanes that are higher than it can use
+			tp->note[i-1]->note &= maxbitmask;	//Clear the invalid lanes
 		}
 
 		/* delete certain notes */
@@ -426,7 +427,7 @@ void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 				}
 			}
 		}
-	}
+	}//For each note (in reverse order)
 	if(eof_open_bass_enabled() && (tp == eof_song->legacy_track[eof_song->track[EOF_TRACK_BASS]->tracknum]))
 	{	//If open bass strumming is enabled, and this is the bass guitar track, check to ensure that open bass doesn't conflict with other notes/HOPOs/statuses
 		for(i = 0; i < tp->notes; i++)
@@ -438,10 +439,6 @@ void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 				tp->note[i]->flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Clear the forced HOPO off flag
 				tp->note[i]->flags &= (~EOF_NOTE_FLAG_CRAZY);	//Clear the crazy status
 			}
-//			else if((tp->note[i]->note & 1) && (tp->note[i]->flags & EOF_NOTE_FLAG_F_HOPO))
-//			{	//If this note contains a gem on lane 1 and the note has the forced HOPO on status
-//				tp->note[i]->flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Clear the forced HOPO on flag
-//			}
 		}
 	}
 	if(!sel)
@@ -455,32 +452,46 @@ void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 //Cleanup for pro drum notation
 	if(eof_song && (tp->parent->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
 	{	//If the track being cleaned is a drum track
+		unsigned lastcheckedpos = 0;	//This will be used to prevent cymbal cleanup from operating on the same notes multiple times
 		for(i = 0; i < tp->notes; i++)
 		{	//For each note in the drum track
-			if(eof_check_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_G_CYMBAL))
-			{	//If any notes at this position are marked as a green cymbal
-				eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_G_CYMBAL,1);	//Mark all notes at this position as green cymbal
-			}
-			else
-			{
-				eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_G_CYMBAL,0);	//Mark all notes at this position as green drum
-			}
-			if(eof_check_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_Y_CYMBAL))
-			{	//If any notes at this position are marked as a yellow cymbal
-				eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_Y_CYMBAL,1);	//Mark all notes at this position as yellow cymbal
-			}
-			else
-			{
-				eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_Y_CYMBAL,0);	//Mark all notes at this position as yellow drum
-			}
-			if(eof_check_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_B_CYMBAL))
-			{	//If any notes at this position are marked as a blue cymbal
-				eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_B_CYMBAL,1);	//Mark all notes at this position as blue cymbal
-			}
-			else
-			{
-				eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_B_CYMBAL,0);	//Mark all notes at this position as blue drum
-			}
+			if(!lastcheckedpos || (tp->note[i]->pos != lastcheckedpos))
+			{	//If this note isn't at a position that had all drum notes' cymbals fixed
+				if(tp->note[i]->note & 16)
+				{	//If this note contains a lane 5 gem, perform green cymbal cleanup
+					if(eof_check_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_G_CYMBAL))
+					{	//If any notes at this position are marked as a green cymbal
+						eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_G_CYMBAL,1);	//Mark all notes at this position as green cymbal
+					}
+					else
+					{
+						eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_G_CYMBAL,0);	//Mark all notes at this position as green drum
+					}
+				}
+				if(tp->note[i]->note & 8)
+				{	//If this note contains a lane 4 gem, perform blue cymbal cleanup
+					if(eof_check_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_B_CYMBAL))
+					{	//If any notes at this position are marked as a blue cymbal
+						eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_B_CYMBAL,1);	//Mark all notes at this position as blue cymbal
+					}
+					else
+					{
+						eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_B_CYMBAL,0);	//Mark all notes at this position as blue drum
+					}
+				}
+				if(tp->note[i]->note & 4)
+				{	//If this note contains a lane 3 gem, perform yellow cymbal cleanup
+					if(eof_check_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_Y_CYMBAL))
+					{	//If any notes at this position are marked as a yellow cymbal
+						eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_Y_CYMBAL,1);	//Mark all notes at this position as yellow cymbal
+					}
+					else
+					{
+						eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_Y_CYMBAL,0);	//Mark all notes at this position as yellow drum
+					}
+				}
+				lastcheckedpos = tp->note[i]->pos;	//Remember that notes at this position were already checked and fixed if applicable
+			}//If this note isn't at a position that had all drum notes' cymbals fixed
 		}
 	}
 }
@@ -1162,80 +1173,48 @@ char eof_check_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,un
 {
 // 	eof_log("eof_check_flags_at_legacy_note_pos() entered");
 
-	unsigned long ctr,ctr2;
-	char match = 0;
+	unsigned long ctr;
 
 	if((tp == NULL) || (notenum >= tp->notes))
 		return 0;
 
-//Find the first note at the specified note's position
-	for(ctr = 0; ctr < tp->notes; ctr++)
-	{	//For each note in the track
-		if(tp->note[ctr]->pos == tp->note[notenum]->pos)
-		{	//If the note is after the specified note's position
-			match = 1;
-			break;
+	for(ctr = notenum; ctr < tp->notes; ctr++)
+	{	//For each note starting with the one specified
+		if(tp->note[ctr]->pos != tp->note[notenum]->pos)
+			break;	//If there are no more notes at the specified note's position, stop looking
+		if(tp->note[ctr]->flags & flag)
+		{	//If the note has the specified flag
+			return 1;	//Return match
 		}
 	}
 
-//Check all notes at its position for the presence of the specified flag
-	if(match)
-	{
-		match = 0;
-		for(ctr2 = ctr; ctr2 < tp->notes; ctr2++)
-		{	//For each note starting with the one found above
-			if(tp->note[ctr2]->pos > tp->note[notenum]->pos)
-				break;	//If there are no more notes at that position, stop looking
-			if(tp->note[ctr2]->flags & flag)
-			{	//If the note has the specified flag
-				match = 1;
-				break;
-			}
-		}
-	}
-
-	return match;
+	return 0;	//Return no match
 }
 
 void eof_set_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,unsigned long flag,char operation)
 {
 // 	eof_log("eof_set_flags_at_legacy_note_pos() entered");
 
-	unsigned long ctr,ctr2;
-	char match = 0;
+	unsigned long ctr;
 
 	if((tp == NULL) || (notenum >= tp->notes))
 		return;
 
-//Find the first note at the specified note's position
-	for(ctr = 0; ctr < tp->notes; ctr++)
-	{	//For each note in the track
-		if(tp->note[ctr]->pos == tp->note[notenum]->pos)
-		{	//If the note is after the specified note's position
-			match = 1;
-			break;
+	for(ctr = notenum; ctr < tp->notes; ctr++)
+	{	//For each note starting with the one specified
+		if(tp->note[ctr]->pos != tp->note[notenum]->pos)
+			break;	//If there are no more notes at the specified note's position, stop looking
+		if(operation == 0)
+		{	//If the calling function indicated to clear the flag
+			tp->note[ctr]->flags &= (~flag);
 		}
-	}
-
-//Check all notes at its position for the presence of the specified flag
-	if(match)
-	{
-		for(ctr2 = ctr; ctr2 < tp->notes; ctr2++)
-		{	//For each note starting with the one found above
-			if(tp->note[ctr2]->pos > tp->note[notenum]->pos)
-				break;	//If there are no more notes at that position, stop looking
-			if(operation == 0)
-			{	//If the calling function indicated to clear the flag
-				tp->note[ctr2]->flags &= (~flag);
-			}
-			else if(operation == 1)
-			{	//If the calling function indicated to set the flag
-				tp->note[ctr2]->flags |= flag;
-			}
-			else if(operation == 2)
-			{	//If the calling function indicated to toggle the flag
-				tp->note[ctr2]->flags ^= flag;
-			}
+		else if(operation == 1)
+		{	//If the calling function indicated to set the flag
+			tp->note[ctr]->flags |= flag;
+		}
+		else if(operation == 2)
+		{	//If the calling function indicated to toggle the flag
+			tp->note[ctr]->flags ^= flag;
 		}
 	}
 }

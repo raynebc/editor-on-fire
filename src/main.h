@@ -408,7 +408,6 @@ void eof_scale_fretboard(unsigned long numlanes);
 	//Prepares screen layout offsets, etc. based on EOF's window display size and a given number of lanes (depending on the passed numlanes parameter)
 	//If numlanes is 0, the number of lanes of the active track is used, otherwise the parameter itself is used
 	//If the number of lanes is less than 5, the original 5 lane spacing will be used
-
 void eof_set_3D_lane_positions(unsigned long track);
 	//Sets the 3D coordinate values in the global xchart[] array based on the needs of the specified track
 	//If the array doesn't need to be changed, the function returns without recalculating the array's values

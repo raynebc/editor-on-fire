@@ -581,12 +581,12 @@ long eof_song_tick_to_msec(EOF_SONG * sp, unsigned long tick); // convert tick v
 long eof_song_msec_to_tick(EOF_SONG * sp, unsigned long msec); // convert real time value to tick, or -1 on error
 
 char eof_check_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,unsigned long flag);
-	//Checks all notes in the track at the specified note's timestamp (numbered starting at number 0)
+	//Checks all notes in the track, from #notenum to the last, that are at the specified note's timestamp
 	//for the specified flag.  If any of the notes have the flag set, nonzero is returned
 	//This is used for writing RB3 style pro drum phrases during MIDI export
 	//The track's notes array is expected to be sorted
 void eof_set_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,unsigned long flag,char operation);
-	//Sets or clears the specified flag on all notes at the specified note's timestamp (numbered starting at 0)
+	//Sets or clears the specified flag on all notes at the specified note's timestamp, starting at note #notenum
 	//If operation is 0, the specified flag is cleared on applicable notes
 	//If operation is 1, the specified flag is set on applicable notes
 	//If operation is 2, the specified flag is toggled on applicable notes

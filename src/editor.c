@@ -1882,7 +1882,7 @@ void eof_read_editor_keys(void)
 							}
 							if(eof_mark_drums_as_double_bass)
 							{	//If the user opted to make all new expert bass drum notes as double bass automatically
-								eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+								eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,eof_hover_note);
 							}
 							eof_selection.current = eof_hover_note;
 							if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
@@ -1903,10 +1903,10 @@ void eof_read_editor_keys(void)
 									eof_detect_difficulties(eof_song);
 								}
 							}
-							if(note != 0)
-							{	//Run cleanup to prevent open bass<->lane 1 conflicts
-								eof_track_fixup_notes(eof_song, eof_selected_track, 0);
-							}
+//							if(note != 0)
+//							{	//Run cleanup to prevent open bass<->lane 1 conflicts
+//								eof_track_fixup_notes(eof_song, eof_selected_track, 0);
+//							}
 
 							if(eof_selection.current != EOF_MAX_NOTES - 1)
 							{
