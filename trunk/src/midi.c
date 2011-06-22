@@ -663,7 +663,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 4, vel, 0);
 				}
 
-				/* write open bass note, if the feature was enabled during save */
+				/* write open bass note marker, if the feature was enabled during save */
 				if(eof_open_bass_enabled() && (j == EOF_TRACK_BASS) && (note & 32))
 				{	//If this is an open bass note
 //					noteflags |= EOF_NOTE_FLAG_F_HOPO;	//Set the forced HOPO on flag, which is used to denote open bass
@@ -1116,8 +1116,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 //For now, prefer RB3's system, where "NC" isn't automatically written for un-named chords
 //				if((currentname == NULL) || (currentname[0] == '\0'))		//If this note has no name
 //					currentname = nochord;	//Refer to its name as "NC"
-				if(((lastname == nochord) && (currentname != nochord)) || ((lastname != nochord) && (currentname == nochord)) || (ustrcmp(lastname, currentname) != 0))
-				{	//If the previous note wasn't named and this one is, or the previous note was named and this one isn't, or the previous and current notes have different names
+//				if(((lastname == nochord) && (currentname != nochord)) || ((lastname != nochord) && (currentname == nochord)) || (ustrcmp(lastname, currentname) != 0))
+//				{	//If the previous note wasn't named and this one is, or the previous note was named and this one isn't, or the previous and current notes have different names
+				if(currentname && (currentname[0] != '\0'))
+				{	//If this note has a name
 					if((type >= EOF_NOTE_SUPAEASY) && (type <= EOF_NOTE_AMAZING))
 					{	//only write names for the 4 difficulties, don't for BRE notes
 						snprintf(chordname, sizeof(chordname), "[chrd%d %s]", type, currentname);	//Build the chord name text event as per RB3's convention
@@ -1132,15 +1134,22 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				}
 
 				/* write slide sections */
-				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
-				{	//If this note slides down
-					eof_add_midi_event(deltapos, 0x90, slidenote, 104, 0);	//Velocity 104 denotes slide down
-					eof_add_midi_event(deltapos + deltalength, 0x80, slidenote, 104, 0);
-				}
-				else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-				{	//If this note slides up
-					eof_add_midi_event(deltapos, 0x90, slidenote, 102, 0);	//Velocity 102 denotes slide up
-					eof_add_midi_event(deltapos + deltalength, 0x80, slidenote, 102, 0);
+				if((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+				{	//If this note slides up or down
+					phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+					phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
+					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+					{	//If this note slides up
+						phase_shift_sysex_phrase[5] = 2;	//Store the phrase ID (2 = Pro guitar slide up)
+					}
+					else
+					{	//If this note slides down
+						phase_shift_sysex_phrase[5] = 3;	//Store the phrase ID (3 = Pro guitar slide down)
+					}
+					phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+					eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide start marker
+					phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+					eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide stop marker
 				}
 
 				/* write note gems */
@@ -1337,6 +1346,14 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				{	//Write a note name text event
 					eof_write_text_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
 					free(eof_midi_event[i]->dp);	//Free the copied string from memory
+				}
+				else if(eof_midi_event[i]->type == 0xF0)
+				{	//If this is a Sysex message
+					WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
+					pack_putc(0xF0, fp);						//Sysex event
+					WriteVarLen(eof_midi_event[i]->note, fp);	//Write the Sysex message's size
+					pack_fwrite(eof_midi_event[i]->dp, eof_midi_event[i]->note, fp);	//Write the Sysex data
+					free(eof_midi_event[i]->dp);				//Free the copied array from memory
 				}
 				else
 				{	//Write a non meta MIDI event

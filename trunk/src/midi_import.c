@@ -988,10 +988,9 @@ eof_log("\tSecond pass complete", 1);
 	unsigned long event_realtime;		//Store the delta time converted to realtime to avoid having to convert multiple times per note
 	char prodrums = 0;					//Tracks whether the drum track being written includes Pro drum notation
 	unsigned long tracknum;				//Used to de-obfuscate the legacy track number
-	EOF_PRO_GUITAR_NOTE *currentsupaeasy, *currenteasy, *currentmedium, *currentamazing, **lastaddednotedifficulty;	//Used to import pro guitar slides, stores the pointer to the active note for each difficulty and set back to NULL when the note's first note off is reached
+//	EOF_PRO_GUITAR_NOTE *currentsupaeasy, *currenteasy, *currentmedium, *currentamazing, **lastaddednotedifficulty;	//Used to import pro guitar slides, stores the pointer to the active note for each difficulty and set back to NULL when the note's first note off is reached
 	int phrasediff;						//Used for parsing Sysex phrase markers
-	unsigned long openstrumpos[4];		//Used for parsing Sysex phrase markers
-
+	unsigned long openstrumpos[4], slideuppos[4], slidedownpos[4];	//Used for parsing Sysex phrase markers
 	for(i = 0; i < tracks; i++)
 	{	//For each imported track
 		if(eof_import_events[i]->type < 0)
@@ -1034,8 +1033,8 @@ eof_log("\tSecond pass complete", 1);
 				}
 			}
 
-			currentsupaeasy = currenteasy = currentmedium = currentamazing = NULL;	//These point to nothing at the start of each track
-			lastaddednotedifficulty = NULL;
+//			currentsupaeasy = currenteasy = currentmedium = currentamazing = NULL;	//These point to nothing at the start of each track
+//			lastaddednotedifficulty = NULL;
 			for(j = 0; j < eof_import_events[i]->events; j++)
 			{	//For each event in this track
 				if(key[KEY_ESC])
@@ -1502,6 +1501,7 @@ eof_log("\tSecond pass complete", 1);
 						}
 					}//Note off event
 
+					/* Sysex event (custom phrase markers for Phase Shift) */
 					if((eof_import_events[i]->event[j]->type == 0xF0) && eof_import_events[i]->event[j]->dp)
 					{	//Sysex event
 						if((eof_import_events[i]->event[j]->d1 == 8) && (!strncmp(eof_import_events[i]->event[j]->dp, "PS", 3)))
@@ -1540,7 +1540,7 @@ eof_log("\tSecond pass complete", 1);
 						}
 						free(eof_import_events[i]->event[j]->dp);	//The the memory allocated to store this Sysex message's data
 						eof_import_events[i]->event[j]->dp = NULL;
-					}
+					}//Sysex event
 				}//If parsing a legacy track
 				else if(eof_midi_tracks[picked_track].track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 				{	//If parsing a pro guitar track
@@ -1551,28 +1551,28 @@ eof_log("\tSecond pass complete", 1);
 							eof_set_note_type(sp, picked_track, note_count[picked_track], EOF_NOTE_SUPAEASY);
 							diff = eof_import_events[i]->event[j]->d1 - 24;
 							chordname = chord0name;		//Have this pointer reference the supaeasy note name array
-							lastaddednotedifficulty = &currentsupaeasy;	//Remember that this is the note that will be added
+//							lastaddednotedifficulty = &currentsupaeasy;	//Remember that this is the note that will be added
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= 48) && (eof_import_events[i]->event[j]->d1 <= 53))
 						{	//Notes 48 through 53 represent easy pro guitar
 							eof_set_note_type(sp, picked_track, note_count[picked_track], EOF_NOTE_EASY);
 							diff = eof_import_events[i]->event[j]->d1 - 48;
 							chordname = chord1name;		//Have this pointer reference the easy note name array
-							lastaddednotedifficulty = &currenteasy;	//Remember that this is the note that will be added
+//							lastaddednotedifficulty = &currenteasy;	//Remember that this is the note that will be added
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= 72) && (eof_import_events[i]->event[j]->d1 <= 77))
 						{	//Notes 72 through 77 represent medium pro guitar
 							eof_set_note_type(sp, picked_track, note_count[picked_track], EOF_NOTE_MEDIUM);
 							diff = eof_import_events[i]->event[j]->d1 - 72;
 							chordname = chord2name;		//Have this pointer reference the medium note name array
-							lastaddednotedifficulty = &currentmedium;	//Remember that this is the note that will be added
+//							lastaddednotedifficulty = &currentmedium;	//Remember that this is the note that will be added
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= 96) && (eof_import_events[i]->event[j]->d1 <= 101))
 						{	//Notes 96 through 101 represent amazing pro guitar
 							eof_set_note_type(sp, picked_track, note_count[picked_track], EOF_NOTE_AMAZING);
 							diff = eof_import_events[i]->event[j]->d1 - 96;
 							chordname = chord3name;		//Have this pointer reference the amazing note name array
-							lastaddednotedifficulty = &currentamazing;	//Remember that this is the note that will be added
+//							lastaddednotedifficulty = &currentamazing;	//Remember that this is the note that will be added
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= 120) && (eof_import_events[i]->event[j]->d1 <= 124))
 						{
@@ -1588,7 +1588,7 @@ eof_log("\tSecond pass complete", 1);
 
 					/* note on */
 					if(eof_import_events[i]->event[j]->type == 0x90)
-					{
+					{	//Note on event
 						/* store strum direction marker, when the note off for this marker occurs, search for notes with same position and apply it to them */
 						if((eof_import_events[i]->event[j]->d2 == 96) && (eof_import_events[i]->event[j]->channel == 13))
 						{	//Lane (1+9), Velocity 96 and channel 13 are used in up strum markers
@@ -1695,8 +1695,8 @@ eof_log("\tSecond pass complete", 1);
 								{	//Otherwise ensure the note has an empty name string
 									eof_set_note_name(sp, picked_track, notenum, "");
 								}
-								assert(lastaddednotedifficulty != NULL);	//lastaddednotedifficulty should be correctly set from above
-								*lastaddednotedifficulty = sp->pro_guitar_track[tracknum]->note[notenum];	//Store a pointer to this new note into the appropriate "current" pro note pointer
+//								assert(lastaddednotedifficulty != NULL);	//lastaddednotedifficulty should be correctly set from above
+//								*lastaddednotedifficulty = sp->pro_guitar_track[tracknum]->note[notenum];	//Store a pointer to this new note into the appropriate "current" pro note pointer
 								note_count[picked_track]++;
 							}
 							else
@@ -1723,7 +1723,7 @@ eof_log("\tSecond pass complete", 1);
 								sp->pro_guitar_track[tracknum]->note[notenum]->frets[diff] = 0xFF;
 							}
 						}
-						else
+/*						else
 						{	//Apply other markers
 							if((eof_import_events[i]->event[j]->d2 == 104) || (eof_import_events[i]->event[j]->d2 == 105) || (eof_import_events[i]->event[j]->d2 == 106) || (eof_import_events[i]->event[j]->d2 == 107) || (eof_import_events[i]->event[j]->d2 == 108) || (eof_import_events[i]->event[j]->d2 == 109) || (eof_import_events[i]->event[j]->d2 == 112) || (eof_import_events[i]->event[j]->d2 == 115) || (eof_import_events[i]->event[j]->d2 == 116) || (eof_import_events[i]->event[j]->d2 == 117))
 							{	//If this note uses any of the velocities representing a slide down section
@@ -1764,11 +1764,12 @@ eof_log("\tSecond pass complete", 1);
 								}
 							}
 						}
-					}
+*/
+					}//Note on event
 
 					/* note off so get length of note */
 					else if(eof_import_events[i]->event[j]->type == 0x80)
-					{
+					{	//Note off event
 						strumdiff = -1;
 						/* detect strum direction markers */
 						if(eof_import_events[i]->event[j]->channel == 13)
@@ -1864,7 +1865,7 @@ eof_log("\tSecond pass complete", 1);
 							{
 								if((eof_get_note_type(sp, picked_track, k) == eof_get_note_type(sp, picked_track, note_count[picked_track])) && (eof_get_note_note(sp, picked_track, k) & diff_chart[diff]))
 								{
-									switch(eof_get_note_type(sp, picked_track, k))
+/*									switch(eof_get_note_type(sp, picked_track, k))
 									{
 										case EOF_NOTE_AMAZING:
 											currentamazing = NULL;	//The end of this note has been reached
@@ -1879,7 +1880,8 @@ eof_log("\tSecond pass complete", 1);
 											currentsupaeasy = NULL;	//The end of this note has been reached
 										break;
 									}
-	//								allegro_message("break %d, %d, %d", k, sp->legacy_track[picked_track]->note[k]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);
+*/
+//									allegro_message("break %d, %d, %d", k, sp->legacy_track[picked_track]->note[k]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);
 									eof_set_note_length(sp, picked_track, k, event_realtime - eof_get_note_pos(sp, picked_track, k));
 									if(eof_get_note_length(sp, picked_track, k ) <= 0)
 									{
@@ -1889,7 +1891,7 @@ eof_log("\tSecond pass complete", 1);
 								}
 							}
 						}
-					}
+					}//Note off event
 
 					else if((eof_import_events[i]->event[j]->type == 0x01) && (ustrstr(eof_import_events[i]->event[j]->text, "[chrd") == eof_import_events[i]->event[j]->text))
 					{	//If this is a text event that begins with RB3's note name notation "[chrd"
@@ -1935,7 +1937,58 @@ eof_log("\tSecond pass complete", 1);
 								}
 							}
 						}
-					}
+					}//If this is a text event that begins with RB3's note name notation "[chrd"
+
+					/* Sysex event (custom phrase markers for Phase Shift) */
+					if((eof_import_events[i]->event[j]->type == 0xF0) && eof_import_events[i]->event[j]->dp)
+					{	//Sysex event
+						if((eof_import_events[i]->event[j]->d1 == 8) && (!strncmp(eof_import_events[i]->event[j]->dp, "PS", 3)))
+						{	//If this is a custom Sysex Phase Shift marker (8 bytes long, beginning with the NULL terminated string "PS")
+							switch(eof_import_events[i]->event[j]->dp[3])
+							{	//Check the value of the message ID
+								case 0:	//Phrase marker
+									phrasediff = eof_import_events[i]->event[j]->dp[4];	//Store the difficulty ID
+									switch(eof_import_events[i]->event[j]->dp[5])
+									{	//Check the value of the phrase ID
+										case 2:	//Pro guitar slide up
+											if(eof_import_events[i]->event[j]->dp[6] == 1)
+											{	//Start of pro guitar slide up phrase
+												slideuppos[phrasediff] = event_realtime;
+											}
+											else if(eof_import_events[i]->event[j]->dp[6] == 0)
+											{	//End of pro guitar slide up phrase
+												for(k = note_count[picked_track] - 1; k >= first_note; k--)
+												{	//Check for each note that has been imported
+													if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= slideuppos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+													{	//If the note is in the same difficulty as the pro guitar slide up phrase, and its timestamp falls between the phrase on and phrase off marker
+														eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);	//Set the slide up flag
+													}
+												}
+											}
+										break;
+										case 3:	//Pro guitar slide down
+											if(eof_import_events[i]->event[j]->dp[6] == 1)
+											{	//Start of pro guitar slide down phrase
+												slidedownpos[phrasediff] = event_realtime;
+											}
+											else if(eof_import_events[i]->event[j]->dp[6] == 0)
+											{	//End of pro guitar slide down phrase
+												for(k = note_count[picked_track] - 1; k >= first_note; k--)
+												{	//Check for each note that has been imported
+													if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= slidedownpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+													{	//If the note is in the same difficulty as the pro guitar slide down phrase, and its timestamp falls between the phrase on and phrase off marker
+														eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Set the slide up flag
+													}
+												}
+											}
+										break;
+									}
+								break;
+							}
+						}
+						free(eof_import_events[i]->event[j]->dp);	//The the memory allocated to store this Sysex message's data
+						eof_import_events[i]->event[j]->dp = NULL;
+					}//Sysex event
 				}//If parsing a pro guitar track
 				pticker++;
 			}//For each event in this track
