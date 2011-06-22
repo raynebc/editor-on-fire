@@ -169,7 +169,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "open_strum"))
 			{
-				if(!ustricmp(&(eof_import_ini_setting[i].value[j]), "True"))
+				if(!ustricmp(value_index, "True"))
 				{
 					sp->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the sixth lane flag
 				}
