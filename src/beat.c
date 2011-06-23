@@ -95,8 +95,6 @@ void eof_calculate_beats(EOF_SONG * sp)
 		{
 			beat_length = (double)60000 / ((double)60000000.0 / (double)sp->beat[i]->ppqn);
 		}
-//		curpos += beat_length;
-//		cbeat = i;	//If this for loop is reached, sp->beats is at least 1, allowing this to be set once outside the loop
 	}
 	cbeat = sp->beats - 1;	//The index of the last beat in the beat[] array
 	curpos += beat_length;

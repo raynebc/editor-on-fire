@@ -96,7 +96,6 @@ static unsigned long eof_parse_var_len(unsigned char * data, unsigned long pos, 
 	{
 		cpos++;
 		(*bytes_used)++;
-//		(*data)++;
 		val <<= 7;
 		val += (data[cpos] & 0x7F);
 	}
@@ -167,7 +166,6 @@ static long eof_import_closest_beat(EOF_SONG * sp, unsigned long pos)
 static void eof_midi_import_add_event(EOF_IMPORT_MIDI_EVENT_LIST * events, unsigned long pos, unsigned char event, unsigned long d1, unsigned long d2, unsigned long track)
 {
 //	eof_log("eof_midi_import_add_event() entered");
-//	EOF_IMPORT_MIDI_EVENT *ptr = malloc(sizeof(EOF_IMPORT_MIDI_EVENT));
 
 	if(events && (events->events < EOF_IMPORT_MAX_EVENTS))
 	{
@@ -340,13 +338,9 @@ EOF_SONG * eof_import_midi(const char * fn)
 	char backup_filename[1024] = {0};
 	char ttit[256] = {0};
 	EOF_PHRASE_SECTION *phraseptr = NULL, *phraseptr2 = NULL;
-//	EOF_PHRASE_SECTION *starpowerptr = NULL;
 	unsigned long bitmask;
 	char chord0name[100] = "", chord1name[100] = "", chord2name[100] = "", chord3name[100] = "", *chordname = NULL;	//Used for chord name import
-
-//#ifdef EOF_DEBUG_MIDI_IMPORT
 	char debugstring[100];
-//#endif
 
 	/* load MIDI */
 	if(!fn)
@@ -478,7 +472,6 @@ EOF_SONG * eof_import_midi(const char * fn)
 				/* note off */
 				case 0x80:
 				{
-//					eof_midi_import_add_event(eof_import_events[i], absolute_pos, 0x80, d1, d2, i);
 					eof_midi_import_add_event(eof_import_events[i], absolute_pos, current_event, d1, d2, i);
 					break;
 				}
@@ -488,12 +481,10 @@ EOF_SONG * eof_import_midi(const char * fn)
 				{
 					if(d2 <= 0)
 					{	//Any Note On event with a velocity of 0 is to be treated as a Note Off event
-//						eof_midi_import_add_event(eof_import_events[i], absolute_pos, 0x80, d1, d2, i);
 						eof_midi_import_add_event(eof_import_events[i], absolute_pos, 0x80 + (current_event & 0xF), d1, d2, i);	//Retain the original channel number for this event
 					}
 					else
 					{
-//						eof_midi_import_add_event(eof_import_events[i], absolute_pos, 0x90, d1, d2, i);
 						eof_midi_import_add_event(eof_import_events[i], absolute_pos, current_event, d1, d2, i);
 					}
 					break;
@@ -700,7 +691,6 @@ EOF_SONG * eof_import_midi(const char * fn)
 
 								if((eof_import_bpm_events->events <= 0) && (absolute_pos > sp->tags->ogg[0].midi_offset))
 								{	//If the first explicit Set Tempo event is not at the beginning of the track
-//									eof_midi_import_add_event(eof_import_bpm_events, sp->tags->ogg[0].midi_offset, 0x51, 500000, 0);	//Insert the default tempo of 120BPM at the beginning of the tempo list
 									eof_midi_import_add_event(eof_import_bpm_events, 0, 0x51, 500000, 0, i);	//Insert the default tempo of 120BPM at the beginning of the tempo list
 								}
 								eof_midi_import_add_event(eof_import_bpm_events, absolute_pos, 0x51, d4, 0, i);
@@ -713,7 +703,6 @@ EOF_SONG * eof_import_midi(const char * fn)
 							{
 								unsigned long ctr,realden;
 
-//								track_pos += 5;
 								track_pos++;
 								d1 = (eof_work_midi->track[track[i]].data[track_pos++]);	//Numerator
 								d2 = (eof_work_midi->track[track[i]].data[track_pos++]);	//Denominator
@@ -988,7 +977,6 @@ eof_log("\tSecond pass complete", 1);
 	unsigned long event_realtime;		//Store the delta time converted to realtime to avoid having to convert multiple times per note
 	char prodrums = 0;					//Tracks whether the drum track being written includes Pro drum notation
 	unsigned long tracknum;				//Used to de-obfuscate the legacy track number
-//	EOF_PRO_GUITAR_NOTE *currentsupaeasy, *currenteasy, *currentmedium, *currentamazing, **lastaddednotedifficulty;	//Used to import pro guitar slides, stores the pointer to the active note for each difficulty and set back to NULL when the note's first note off is reached
 	int phrasediff;						//Used for parsing Sysex phrase markers
 	unsigned long openstrumpos[4], slideuppos[4], slidedownpos[4];	//Used for parsing Sysex phrase markers
 	for(i = 0; i < tracks; i++)
@@ -1033,8 +1021,6 @@ eof_log("\tSecond pass complete", 1);
 				}
 			}
 
-//			currentsupaeasy = currenteasy = currentmedium = currentamazing = NULL;	//These point to nothing at the start of each track
-//			lastaddednotedifficulty = NULL;
 			for(j = 0; j < eof_import_events[i]->events; j++)
 			{	//For each event in this track
 				if(key[KEY_ESC])
@@ -1489,7 +1475,7 @@ eof_log("\tSecond pass complete", 1);
 							{
 								if((eof_get_note_type(sp, picked_track, k) == eof_get_note_type(sp, picked_track, note_count[picked_track])) && (eof_get_note_note(sp, picked_track, k) & diff_chart[diff]))
 								{
-	//								allegro_message("break %d, %d, %d", k, sp->legacy_track[picked_track]->note[k]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);
+//									allegro_message("break %d, %d, %d", k, sp->legacy_track[picked_track]->note[k]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);
 									eof_set_note_length(sp, picked_track, k, event_realtime - eof_get_note_pos(sp, picked_track, k));
 									if(eof_get_note_length(sp, picked_track, k ) <= 0)
 									{
@@ -1551,28 +1537,24 @@ eof_log("\tSecond pass complete", 1);
 							eof_set_note_type(sp, picked_track, note_count[picked_track], EOF_NOTE_SUPAEASY);
 							diff = eof_import_events[i]->event[j]->d1 - 24;
 							chordname = chord0name;		//Have this pointer reference the supaeasy note name array
-//							lastaddednotedifficulty = &currentsupaeasy;	//Remember that this is the note that will be added
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= 48) && (eof_import_events[i]->event[j]->d1 <= 53))
 						{	//Notes 48 through 53 represent easy pro guitar
 							eof_set_note_type(sp, picked_track, note_count[picked_track], EOF_NOTE_EASY);
 							diff = eof_import_events[i]->event[j]->d1 - 48;
 							chordname = chord1name;		//Have this pointer reference the easy note name array
-//							lastaddednotedifficulty = &currenteasy;	//Remember that this is the note that will be added
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= 72) && (eof_import_events[i]->event[j]->d1 <= 77))
 						{	//Notes 72 through 77 represent medium pro guitar
 							eof_set_note_type(sp, picked_track, note_count[picked_track], EOF_NOTE_MEDIUM);
 							diff = eof_import_events[i]->event[j]->d1 - 72;
 							chordname = chord2name;		//Have this pointer reference the medium note name array
-//							lastaddednotedifficulty = &currentmedium;	//Remember that this is the note that will be added
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= 96) && (eof_import_events[i]->event[j]->d1 <= 101))
 						{	//Notes 96 through 101 represent amazing pro guitar
 							eof_set_note_type(sp, picked_track, note_count[picked_track], EOF_NOTE_AMAZING);
 							diff = eof_import_events[i]->event[j]->d1 - 96;
 							chordname = chord3name;		//Have this pointer reference the amazing note name array
-//							lastaddednotedifficulty = &currentamazing;	//Remember that this is the note that will be added
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= 120) && (eof_import_events[i]->event[j]->d1 <= 124))
 						{
@@ -1695,8 +1677,6 @@ eof_log("\tSecond pass complete", 1);
 								{	//Otherwise ensure the note has an empty name string
 									eof_set_note_name(sp, picked_track, notenum, "");
 								}
-//								assert(lastaddednotedifficulty != NULL);	//lastaddednotedifficulty should be correctly set from above
-//								*lastaddednotedifficulty = sp->pro_guitar_track[tracknum]->note[notenum];	//Store a pointer to this new note into the appropriate "current" pro note pointer
 								note_count[picked_track]++;
 							}
 							else
@@ -1723,48 +1703,6 @@ eof_log("\tSecond pass complete", 1);
 								sp->pro_guitar_track[tracknum]->note[notenum]->frets[diff] = 0xFF;
 							}
 						}
-/*						else
-						{	//Apply other markers
-							if((eof_import_events[i]->event[j]->d2 == 104) || (eof_import_events[i]->event[j]->d2 == 105) || (eof_import_events[i]->event[j]->d2 == 106) || (eof_import_events[i]->event[j]->d2 == 107) || (eof_import_events[i]->event[j]->d2 == 108) || (eof_import_events[i]->event[j]->d2 == 109) || (eof_import_events[i]->event[j]->d2 == 112) || (eof_import_events[i]->event[j]->d2 == 115) || (eof_import_events[i]->event[j]->d2 == 116) || (eof_import_events[i]->event[j]->d2 == 117))
-							{	//If this note uses any of the velocities representing a slide down section
-								if((eof_import_events[i]->event[j]->d1 == 31) && currentsupaeasy)
-								{	//If this is a supaeasy slide down and a supaeasy difficulty note is in progess
-									currentsupaeasy->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
-								}
-								else if((eof_import_events[i]->event[j]->d1 == 55) && currenteasy)
-								{	//If this is an easy slide down and an easy difficulty note is in progess
-									currenteasy->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
-								}
-								else if((eof_import_events[i]->event[j]->d1 == 79) && currentmedium)
-								{	//If this is a medium slide down and a medium difficulty note is in progess
-									currentmedium->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
-								}
-								else if((eof_import_events[i]->event[j]->d1 == 103) && currentamazing)
-								{	//If this is an expert slide down and an amazing difficulty note is in progess
-									currentamazing->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
-								}
-							}
-							else if((eof_import_events[i]->event[j]->d2 == 102) || (eof_import_events[i]->event[j]->d2 == 103) || (eof_import_events[i]->event[j]->d2 == 110))
-							{	//If this note uses any of the velocities representing a slide up section
-								if((eof_import_events[i]->event[j]->d1 == 31) && currentsupaeasy)
-								{	//If this is a supaeasy slide up and a supaeasy difficulty note is in progess
-									currentsupaeasy->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
-								}
-								else if((eof_import_events[i]->event[j]->d1 == 55) && currenteasy)
-								{	//If this is an easy slide up and an easy difficulty note is in progess
-									currenteasy->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
-								}
-								else if((eof_import_events[i]->event[j]->d1 == 79) && currentmedium)
-								{	//If this is a medium slide up and a medium difficulty note is in progess
-									currentmedium->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
-								}
-								else if((eof_import_events[i]->event[j]->d1 == 103) && currentamazing)
-								{	//If this is an expert slide up and an amazing difficulty note is in progess
-									currentamazing->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
-								}
-							}
-						}
-*/
 					}//Note on event
 
 					/* note off so get length of note */

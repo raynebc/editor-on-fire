@@ -197,8 +197,6 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 	static char scales_created = 0;	//This will be set to one after the major_scales[] array has been created
 	char chord_intervals[30];		//This stores the referred note's interval makeup for the current scale being checked against
 	char *chord_intervals_index;	//This is an index into chord_intervals[] for added string processing efficiency
-//	char interval_name[5];
-//	char *interval_name_index;		//This is an index into interval_name[] for added string processing efficiency
 	unsigned long ctr, ctr2, ctr3, ctr4, halfstep, halfstep2, skipaccidental;
 	int retval;
 	char *name, **notename = eof_note_names_sharp;
@@ -421,7 +419,6 @@ void eof_pro_guitar_track_build_chord_variations(EOF_SONG *sp, unsigned long tra
 	dummy_track.eof_chord_variations_array_ready = 0;
 	memset(real_track->eof_chord_variations, 0, sizeof(EOF_CHORD_VARIATION));	//Initialize the chord variations array to undefined
 	memset(real_track->eof_chord_num_variations, 0, sizeof(EOF_CHORD_NUM_VARIATION_ARRAY));
-//	dummy_track.numfrets = real_track->numfrets;
 	dummy_track.numfrets = real_track->numfrets;
 	dummy_track.numstrings = real_track->numstrings;
 	memcpy(dummy_track.tuning, real_track->tuning, sizeof(dummy_track.tuning));

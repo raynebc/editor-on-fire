@@ -274,7 +274,6 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	{
 		numlanes = eof_count_track_lanes(eof_song, eof_selected_track);	//Count the number of lanes in the active track
 	}
-//	eof_set_2D_lane_positions(track);	//Update the ychart[] array (this call should be unnecessary since eof_render_editor_window_common() and eof_render_note_window() update the ychart[] array)
 	if(noteflags & EOF_NOTE_FLAG_F_HOPO)				//If this note is forced as HOPO on
 	{
 		radius=eof_screen_layout.hopo_note_size;		//Draw the note in the defined HOPO on size
@@ -784,7 +783,6 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 		numlanes = 5;
 	}
 
-//	eof_set_3D_lane_positions(track);	//Update the xchart[] array (should be unnecessary since eof_render_3d_window() updates the xchart[] array)
 	if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 	{	//If this is a drum track
 		if(notenote & 1)
@@ -1006,7 +1004,6 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	{	//Special case:  The bass track can use a sixth lane but its 3D representation still only draws 5 lanes
 		numlanes = 5;
 	}
-//	eof_set_3D_lane_positions(track);	//Update the xchart[] array (should be unnecessary since eof_render_3d_window() updates the xchart[] array)
 	rz = npos < -100 ? -100 : npos + 10;
 	ez = npos + notelength / eof_zoom_3d > 600 ? 600 : npos + notelength / eof_zoom_3d + 6;
 	for(ctr=0,mask=1; ctr < eof_count_track_lanes(eof_song, track); ctr++,mask=mask<<1)

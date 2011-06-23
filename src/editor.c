@@ -1903,10 +1903,6 @@ void eof_read_editor_keys(void)
 									eof_detect_difficulties(eof_song);
 								}
 							}
-//							if(note != 0)
-//							{	//Run cleanup to prevent open bass<->lane 1 conflicts
-//								eof_track_fixup_notes(eof_song, eof_selected_track, 0);
-//							}
 
 							if(eof_selection.current != EOF_MAX_NOTES - 1)
 							{
@@ -2559,7 +2555,6 @@ void eof_editor_logic(void)
 				}
 				if((eof_mickeys_x != 0) && !eof_mouse_drug)
 				{
-//					eof_mouse_drug = 1;
 					eof_mouse_drug++;
 				}
 				if(pos < 300)
@@ -2631,7 +2626,6 @@ void eof_editor_logic(void)
 						}
 					}
 				}
-//				eof_song->legacy_track[tracknum]->note[eof_pegged_note].pos = eof_peg_x + (mouse_x - eof_click_x) * eof_zoom;
 			}
 			if(((mouse_b & 2) || key[KEY_INSERT]) && eof_rclick_released && eof_pen_note.note && (eof_pen_note.pos < eof_music_length))
 			{
@@ -3301,7 +3295,6 @@ void eof_vocal_editor_logic(void)
 				}
 				if((eof_mickeys_x != 0) && !eof_mouse_drug)
 				{
-//					eof_mouse_drug = 1;
 					eof_mouse_drug++;
 				}
 				if(pos < 300)
@@ -3609,7 +3602,6 @@ void eof_vocal_editor_logic(void)
 		if((mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4) && (mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18))
 		{
 			int pos = eof_music_pos / eof_zoom;
-//			int lpos = pos < 300 ? (mouse_x - 20) * eof_zoom : ((pos - 300) + mouse_x - 20) * eof_zoom;
 			int lpos = pos < 300 ? (eof_song->beat[eof_selected_beat]->pos / eof_zoom + 20) : 300;
 			eof_prepare_menus();
 			do_menu(eof_beat_menu, lpos, mouse_y);

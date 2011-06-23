@@ -726,7 +726,6 @@ void eof_prepare_undo(int type)
 	if(eof_change_count % 10 == 0)
 	{
 		replace_extension(eof_temp_filename, eof_filename, "backup.eof", 1024);
-//		append_filename(eof_temp_filename, eof_song_path, "notes.backup.eof", 1024);
 		if(!eof_save_song(eof_song, eof_temp_filename))
 		{
 			allegro_message("Undo state error!");
@@ -1598,7 +1597,6 @@ void eof_lyric_logic(void)
 						break;
 					}
 				}
-//				eof_hover_key = (((mouse_x - eof_window_3d->x) / 11) / 7) * 12 + note[((mouse_x - eof_window_3d->x) / 11) % 7] + 36;
 			}
 			if(eof_hover_key >= 0)
 			{
@@ -2472,12 +2470,10 @@ void eof_render_3d_window(void)
 	point[0] = ocd3d_project_x(20, 600);
 	point[1] = ocd3d_project_y(200, 600);
 	point[2] = ocd3d_project_x(300, 600);
-//	point[3] = ocd3d_project_y(200, 600);
 	point[3] = point[1];
 	point[4] = ocd3d_project_x(300, -100);
 	point[5] = ocd3d_project_y(200, -100);
 	point[6] = ocd3d_project_x(20, -100);
-//	point[7] = ocd3d_project_y(200, -100);
 	point[7] = point[5];
 	polygon(eof_window_3d->screen, 4, point, eof_color_black);
 
@@ -2499,12 +2495,10 @@ void eof_render_3d_window(void)
 				point[0] = ocd3d_project_x(20, spez);
 				point[1] = ocd3d_project_y(200, spez);
 				point[2] = ocd3d_project_x(300, spez);
-//				point[3] = ocd3d_project_y(200, spez);
 				point[3] = point[1];
 				point[4] = ocd3d_project_x(300, spz);
 				point[5] = ocd3d_project_y(200, spz);
 				point[6] = ocd3d_project_x(20, spz);
-//				point[7] = ocd3d_project_y(200, spz);
 				point[7] = point[5];
 				polygon(eof_window_3d->screen, 4, point, makecol(0, 0, 64));
 			}
@@ -2526,12 +2520,10 @@ void eof_render_3d_window(void)
 				point[0] = ocd3d_project_x(20, spez);
 				point[1] = ocd3d_project_y(200, spez);
 				point[2] = ocd3d_project_x(300, spez);
-//				point[3] = ocd3d_project_y(200, spez);
 				point[3] = point[1];
 				point[4] = ocd3d_project_x(300, spz);
 				point[5] = ocd3d_project_y(200, spz);
 				point[6] = ocd3d_project_x(20, spz);
-//				point[7] = ocd3d_project_y(200, spz);
 				point[7] = point[5];
 				polygon(eof_window_3d->screen, 4, point, makecol(51,166,153));	//Fill with a turquoise color (use (68,221,204) for light turquoise)
 			}
@@ -2585,12 +2577,10 @@ void eof_render_3d_window(void)
 								point[0] = ocd3d_project_x(xchart[ctr] - halflanewidth + xoffset, spez);
 								point[1] = ocd3d_project_y(200, spez);
 								point[2] = ocd3d_project_x(xchart[ctr] + halflanewidth + xoffset, spez);
-//								point[3] = ocd3d_project_y(200, spez);
 								point[3] = point[1];
 								point[4] = ocd3d_project_x(xchart[ctr] + halflanewidth + xoffset, spz);
 								point[5] = ocd3d_project_y(200, spz);
 								point[6] = ocd3d_project_x(xchart[ctr] - halflanewidth + xoffset, spz);
-//								point[7] = ocd3d_project_y(200, spz);
 								point[7] = point[5];
 								polygon(eof_window_3d->screen, 4, point, colors[ctr + coloroffset]);
 							}
@@ -3214,7 +3204,6 @@ int eof_initialize(int argc, char * argv[])
 				}
 				eof_song_loaded = 1;
 				eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
-//				break;
 			}
 			else if(!ustricmp(get_extension(argv[i]), "mid"))
 			{
@@ -3233,7 +3222,6 @@ int eof_initialize(int argc, char * argv[])
 				{	//!This will need to be updated to scan for lyric tracks and fix them
 					eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
 				}
-//				break;
 			}
 			else if(!ustricmp(get_extension(argv[i]), "rba"))
 			{

@@ -803,7 +803,6 @@ int eof_is_number(char * buffer)
 
 int eof_menu_song_properties(void)
 {
-//	double bpm = (double)60000000 / (double)eof_song->beat[0]->ppqn;
 	int old_offset = 0;
 	int i, invalid = 0;
 	unsigned long difficulty, undo_made = 0;
@@ -825,7 +824,6 @@ int eof_menu_song_properties(void)
 	ustrcpy(eof_etext, eof_song->tags->title);
 	ustrcpy(eof_etext2, eof_song->tags->artist);
 	ustrcpy(eof_etext3, eof_song->tags->frettist);
-//	sprintf(eof_etext4, "%f", bpm);
 	sprintf(eof_etext4, "%ld", eof_song->tags->ogg[eof_selected_ogg].midi_offset);
 	ustrcpy(eof_etext5, eof_song->tags->year);
 	ustrcpy(eof_etext6, eof_song->tags->loading_text);
@@ -1942,15 +1940,6 @@ int eof_menu_song_open_bass(void)
 
 		for(ctr = 0; ctr < eof_song->legacy_track[tracknum]->notes; ctr++)
 		{	//For each note in PART BASS
-//			if((eof_song->legacy_track[tracknum]->note[ctr]->note & 1) && (eof_song->legacy_track[tracknum]->note[ctr]->flags & EOF_NOTE_FLAG_F_HOPO))
-//			{	//If forced HOPO on status would have to be removed from this note to enable open bass
-//				if(!undo_made)
-//				{
-//					eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Create an undo state before making the first change
-//					undo_made = 1;
-//				}
-//				eof_song->legacy_track[tracknum]->note[ctr]->flags &= ~(EOF_NOTE_FLAG_F_HOPO);	//Clear the forced HOPO on flag
-//			}
 			if((eof_song->legacy_track[tracknum]->note[ctr]->note & 32) && (eof_song->legacy_track[tracknum]->note[ctr]->note & ~32))
 			{	//If this note uses lane 6 (open bass) and at least one other lane
 				if(!undo_made)

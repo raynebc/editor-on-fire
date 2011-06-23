@@ -126,7 +126,6 @@ int eof_check_string(char * tp)
 	if(tp == NULL)
 		return 0;
 
-//	for(i = 0; i < ustrlen(tp); i++)
 	for(i = 0; tp[i] != '\0'; i++)
 	{	//For each character in the string until the NULL terminator is reached
 		if(tp[i] != ' ')

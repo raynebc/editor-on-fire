@@ -87,7 +87,6 @@ EOF_SONG * eof_import_chart(const char * fn)
 	chart = ImportFeedback((char *)fn, &err);
 	if(chart == NULL)
 	{
-	//	itoa(err,&errorcode[7],10);	//Convert error number to string and place in the errorcode array
 		snprintf(&errorcode[23],50,"%d",err);	//Perform a bounds checked conversion of Allegro's error code to string format
 		alert(errorcode, NULL, errorcode, "OK", NULL, 0, KEY_ENTER);
 	}

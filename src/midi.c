@@ -292,7 +292,6 @@ int eof_check_bpm_change(unsigned long start, unsigned long end)
 
 	long startbeat = eof_figure_beat(start);
 	long endbeat = eof_figure_beat(end);
-//	unsigned long startbpm = sp->beat[startbeat].ppqn;
 	long i;
 
 	/* same beat, no brainer */
@@ -666,7 +665,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				/* write open bass note marker, if the feature was enabled during save */
 				if(eof_open_bass_enabled() && (j == EOF_TRACK_BASS) && (note & 32))
 				{	//If this is an open bass note
-//					noteflags |= EOF_NOTE_FLAG_F_HOPO;	//Set the forced HOPO on flag, which is used to denote open bass
 					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 0, vel, 0);	//Write a gem for lane 1
 					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 0, vel, 0);
 					phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
