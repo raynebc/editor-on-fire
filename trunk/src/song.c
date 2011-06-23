@@ -349,7 +349,6 @@ long eof_fixup_next_legacy_note(EOF_LEGACY_TRACK * tp, unsigned long note)
 void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 {
 	unsigned long i;
-//	unsigned long ctr, mask;
 	long next;
 	unsigned long maxbitmask,maxlane;	//Used to find the highest usable bitmask for the track (based on numlanes).  The drum and bass tracks will be allowed to keep lane 6 automatically
 

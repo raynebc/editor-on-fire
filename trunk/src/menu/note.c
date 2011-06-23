@@ -764,7 +764,6 @@ int eof_menu_note_transpose_down(void)
 {
 	unsigned long i, j;
 	unsigned long note, tracknum;
-//	unsigned long flags;
 
 	if(!eof_transpose_possible(1))
 	{
@@ -808,12 +807,6 @@ int eof_menu_note_transpose_down(void)
 				{	//Otherwise set the note's normal bitmask
 					eof_set_note_note(eof_song, eof_selected_track, i, note);
 				}
-//				if((eof_selected_track == EOF_TRACK_BASS) && eof_open_bass_enabled() && (note & 1))
-//				{	//If open bass is enabled, and this tranpose operation resulted in a bass guitar gem in lane 1
-//					flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-//					flags &= ~(EOF_NOTE_FLAG_F_HOPO);	//Clear the forced HOPO on flag, which conflicts with open bass strum notation
-//					eof_set_note_flags(eof_song, eof_selected_track, i, flags);
-//				}
 				if(!eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 				{	//If a pro guitar note was tranposed, move the fret values accordingly (only if legacy view isn't in effect)
 					for(j = 0; j < 15; j++)
@@ -1506,7 +1499,7 @@ static void eof_split_lyric(int lyric)
 {
 	unsigned long i, l, c = 0, lastc;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	int first = 1;
+//	int first = 1;
 	int piece = 1;
 	int pieces = 1;
 	char * token = NULL;
@@ -1553,7 +1546,7 @@ static void eof_split_lyric(int lyric)
 				new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, eof_song->vocal_track[tracknum]->lyric[lyric]->note, eof_song->vocal_track[tracknum]->lyric[lyric]->pos + (l / pieces) * piece, l / pieces - 20, 0, token);
 				piece++;
 			}
-			first = 0;
+//			first = 0;
 		}
 	} while(token != NULL);
 	eof_track_sort_notes(eof_song, eof_selected_track);
@@ -1961,10 +1954,6 @@ int eof_menu_hopo_cycle(void)
 			{	//If the note is selected
 				if(!((eof_selected_track == EOF_TRACK_BASS) && (eof_get_note_note(eof_song, eof_selected_track, i) & 32)))
 				{	//If the note is not an open bass strum note
-//					if((eof_selected_track == EOF_TRACK_BASS) && eof_open_bass_enabled() && (eof_get_note_note(eof_song, eof_selected_track, i) & 1))
-//					{	//If open bass strumming is enabled and this is a bass guitar note that uses lane 1
-//						continue;	//Skip this note, as open bass and forced HOPO on lane 1 conflict
-//					}
 					if(!undo_made)
 					{	//If an undo state hasn't been made yet
 						eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
@@ -2027,10 +2016,6 @@ int eof_menu_hopo_force_on(void)
 		{
 			if(!((eof_selected_track == EOF_TRACK_BASS) && (eof_get_note_note(eof_song, eof_selected_track, i) & 32)))
 			{	//If the note is not an open bass strum note
-//				if((eof_selected_track == EOF_TRACK_BASS) && eof_open_bass_enabled() && (eof_get_note_note(eof_song, eof_selected_track, i) & 1))
-//				{	//If open bass strumming is enabled and this is a bass guitar note that uses lane 1
-//					continue;	//Skip this note, as open bass and forced HOPO on lane 1 conflict
-//				}
 				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 				oldflags = flags;					//Save another copy of the original flags
 				flags |= EOF_NOTE_FLAG_F_HOPO;		//Set the HOPO on flag

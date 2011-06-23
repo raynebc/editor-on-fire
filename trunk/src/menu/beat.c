@@ -113,7 +113,6 @@ DIALOG eof_anchor_dialog[] =
 void eof_prepare_beat_menu(void)
 {
 	int i;
-//	int selected = 0;	//This variable is not being used for anything meaningful
 
 	if(eof_song && eof_song_loaded)
 	{
@@ -261,7 +260,6 @@ int eof_menu_beat_bpm_change(void)
 	eof_color_dialog(eof_bpm_change_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_bpm_change_dialog);
 	sprintf(eof_etext, "%3.2f", (double)60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn);
-//	sprintf(eof_etext2, "%02lu:%02lu:%02lu", (eof_song->beat[eof_selected_beat]->pos / 1000) / 60, (eof_song->beat[eof_selected_beat]->pos / 1000) % 60, (eof_song->beat[eof_selected_beat]->pos / 10) % 100);
 	eof_bpm_change_dialog[3].flags = 0;
 	eof_bpm_change_dialog[4].flags = 0;
 	if(eof_popup_dialog(eof_bpm_change_dialog, 2) == 5)
@@ -468,7 +466,6 @@ int eof_menu_beat_push_offset_back(void)
 			{
 				memcpy(eof_song->beat[i], eof_song->beat[i - 1], sizeof(EOF_BEAT_MARKER));
 			}
-//			eof_song->beats++;
 			eof_song->beat[0]->pos = eof_song->beat[1]->pos - backamount;
 			eof_song->beat[0]->fpos = eof_song->beat[0]->pos;
 			eof_song->beat[1]->flags = 0;
@@ -491,7 +488,6 @@ int eof_menu_beat_push_offset_up(void)
 		memcpy(eof_song->beat[i], eof_song->beat[i + 1], sizeof(EOF_BEAT_MARKER));
 	}
 	eof_song_delete_beat(eof_song, eof_song->beats - 1);
-//	eof_song->beats--;
 	eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
 	eof_move_text_events(eof_song, 0, 1, -1);
 	eof_fixup_notes(eof_song);
@@ -631,9 +627,6 @@ int eof_menu_beat_delete_anchor(void)
 {
 	int i;
 	unsigned long cppqn = eof_song->beat[eof_selected_beat]->ppqn;
-//	double blength = 0;
-//	double bpos = 0;
-//	int bbeat = 0;
 
 	if((eof_selected_beat > 0) && eof_beat_is_anchor(eof_song, eof_selected_beat))
 	{

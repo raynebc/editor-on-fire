@@ -128,13 +128,11 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 		break;
 
 		case VRHYTHM_FORMAT:	//Load vocal rhythm (MIDI) and pitched lyrics
-//			Lyrics.inputtrack=string2;
 			inf=fopen_err(returnedfn,"rb");	//Vrhythm is a binary format
 			VRhythm_Load(inputfilename,returnedfn,inf);
 		break;
 
 		case PITCHED_LYRIC_FORMAT:
-//			Lyrics.inputtrack=string2;
 			inf=fopen_err(returnedfn,"rb");	//Vrhythm is a binary format
 			VRhythm_Load(eof_filename,returnedfn,inf);
 		break;
@@ -333,7 +331,6 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 			AddLyricPiece((tp->lyric[lyrctr])->text,(tp->lyric[lyrctr])->pos,(tp->lyric[lyrctr])->pos+(tp->lyric[lyrctr])->length,pitch,0);
 				//Add the lyric to the Lyrics structure
 
-//			assert_wrapper(Lyrics.lastpiece != NULL);	//If an empty string was not added, allow export to continue
 			if((Lyrics.lastpiece != NULL) && (Lyrics.lastpiece->lyric[strlen(Lyrics.lastpiece->lyric)-1] == '-'))	//If the piece that was just added ended in a hyphen
 				Lyrics.lastpiece->groupswithnext=1;	//Set its grouping status
 
@@ -443,7 +440,6 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 
 //Cleanup
 	fclose_err(outf);
-//	fflush_err(stdout);	//For Allegro programs, fflush(stdout) seems to fail, so this function calls exit()
 
 	ReleaseMemory(1);
 	return 1;	//Return success

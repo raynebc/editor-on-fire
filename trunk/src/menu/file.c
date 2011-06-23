@@ -689,7 +689,6 @@ int eof_menu_file_lyrics_import(void)
 	int selectedformat=0;
 	char *selectedtrack;
 	int returncode = 1;	//Stores the return value of EOF_IMPORT_VIA_LC() to check for error
-//	struct Lyric_Format *detectionlist;	//This is the list populated by EOF_IMPORT_VIA_LC() in the event of multiple possible imports
 
 	if(eof_song == NULL)	//Do not import lyrics if no chart is open
 		return 0;
@@ -2039,7 +2038,6 @@ int eof_save_helper(char *destfilename)
 	char newfolderpath[1024] = {0};
 	char oggfn[1024] = {0};
 	char function;		//Will be set to 1 for "Save" or 2 for "Save as"
-//	unsigned long tracknum;
 	int jumpcode = 0;
 
 	if(!eof_song_loaded || !eof_song)
