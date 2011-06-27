@@ -1555,7 +1555,7 @@ void eof_lyric_logic(void)
 	int note[7] = {0, 2, 4, 5, 7, 9, 11};
 	int bnote[7] = {1, 3, 0, 6, 8, 10, 0};
 	unsigned long i, k;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	unsigned long tracknum;
 	eof_hover_key = -1;
 
 	if(eof_song == NULL)	//Do not allow lyric processing to occur if no song is loaded
@@ -1564,6 +1564,7 @@ void eof_lyric_logic(void)
 	if(!eof_vocals_selected)
 		return;
 
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if(eof_music_paused)
 	{
 		if((mouse_x >= eof_window_3d->x) && (mouse_x < eof_window_3d->x + eof_window_3d->w) && (mouse_y >= eof_window_3d->y + eof_window_3d->h - eof_screen_layout.lyric_view_key_height))
@@ -3269,7 +3270,7 @@ int eof_initialize(int argc, char * argv[])
 
 			if(eof_song_loaded)
 			{	//The command line load succeeded, perform some common initialization
-				eof_init_after_load();	//Initialize variables
+				eof_init_after_load(0);	//Initialize variables
 				eof_cursor_visible = 1;
 				eof_pen_visible = 1;
 				show_mouse(NULL);
@@ -3501,36 +3502,43 @@ void eof_stop_midi(void)
 	}
 }
 
-void eof_init_after_load(void)
+void eof_init_after_load(char initaftersavestate)
 {
 	eof_log("\tInitializing after load", 1);
 	eof_log("eof_init_after_load() entered", 1);
 
-	eof_changes = 0;
-	eof_music_pos = eof_av_delay;
 	eof_music_paused = 1;
 	if((eof_selected_track <= 0) || (eof_selected_track >= eof_song->tracks))
 	{	//Validate eof_selected_track, to ensure a valid track was loaded from the config file
 		eof_selected_track = EOF_TRACK_GUITAR;
 	}
 	eof_menu_track_selected_track_number(eof_selected_track);
+	if((eof_zoom <= 0) || (eof_zoom > EOF_NUM_ZOOM_LEVELS))
+	{	//Validate eof_zoom, to ensure a valid zoom level was loaded from the config file
+		eof_zoom = 10;
+	}
 	eof_menu_edit_zoom_level(eof_zoom);
-	eof_vocals_selected = 0;
-	eof_undo_last_type = 0;
-	eof_change_count = 0;
-	eof_selected_catalog_entry = 0;
+	if(!initaftersavestate)
+	{	//If this wasn't cleanup after an undo/redo state, reset more variables
+		eof_music_pos = eof_av_delay;
+		eof_changes = 0;
+		eof_undo_last_type = 0;
+		eof_change_count = 0;
+		eof_selected_catalog_entry = 0;
+		eof_display_waveform = 0;
+		eof_catalog_menu[0].flags = 0;	//Hide the fret catalog by default
+		eof_select_beat(0);
+		eof_undo_reset();
+	}
 	eof_calculate_beats(eof_song);
 	eof_detect_difficulties(eof_song);
 	eof_reset_lyric_preview_lines();
-	eof_select_beat(0);
 	eof_prepare_menus();
-	eof_undo_reset();
 	eof_sort_notes(eof_song);
 	eof_fixup_notes(eof_song);
 	eof_fix_window_title();
-	eof_display_waveform = 0;
-	eof_catalog_menu[0].flags = 0;	//Hide the fret catalog by default
 	eof_cleanup_beat_flags(eof_song);	//Make corrections to beat statuses if necessary
+	eof_sort_events(eof_song);
 //DEBUG:  Re-enable this when slash chord detection is ready
 //	eof_pro_guitar_track_build_chord_variations(eof_song, EOF_TRACK_PRO_BASS);		//Build chord variations for the track's tuning
 //	eof_pro_guitar_track_build_chord_variations(eof_song, EOF_TRACK_PRO_GUITAR);	//Build chord variations for the track's tuning
@@ -3860,6 +3868,12 @@ void eof_cleanup_beat_flags(EOF_SONG *sp)
 
 	if(sp == NULL)
 		return;
+
+	for(ctr = 0; ctr < sp->beats; ctr++)
+	{	//For each beat
+		sp->beat[ctr]->flags &= ~(EOF_BEAT_FLAG_ANCHOR);	//Clear the anchor flag
+		sp->beat[ctr]->flags &= ~(EOF_BEAT_FLAG_EVENTS);	//Clear the events flag
+	}
 
 	for(ctr = 0; ctr < sp->text_events; ctr++)
 	{	//For each text event

@@ -34,6 +34,8 @@ void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int
 		eof_midi_event[eof_midi_events]->note = note;
 		eof_midi_event[eof_midi_events]->velocity = velocity;
 		eof_midi_event[eof_midi_events]->channel = channel;
+		eof_midi_event[eof_midi_events]->allocation = 0;
+		eof_midi_event[eof_midi_events]->dp = NULL;
 		eof_midi_events++;
 
 		if((note >= 0) && (note <= 127))
@@ -58,6 +60,25 @@ void eof_add_midi_lyric_event(unsigned long pos, char * text)
 			eof_midi_event[eof_midi_events]->pos = pos;
 			eof_midi_event[eof_midi_events]->type = 0x05;
 			eof_midi_event[eof_midi_events]->dp = text;
+			eof_midi_event[eof_midi_events]->allocation = 0;	//At this time, all lyrics are being stored in static memory structures
+			eof_midi_events++;
+		}
+	}
+}
+
+void eof_add_midi_text_event(unsigned long pos, char * text, char allocation)
+{	//To avoid rounding issues during timing conversion, this should be called with the MIDI tick position of the event being stored
+	eof_log("eof_add_midi_lyric_event() entered", 2);	//Only log this if verbose logging is on
+
+	if(text)
+	{
+		eof_midi_event[eof_midi_events] = malloc(sizeof(EOF_MIDI_EVENT));
+		if(eof_midi_event[eof_midi_events])
+		{
+			eof_midi_event[eof_midi_events]->pos = pos;
+			eof_midi_event[eof_midi_events]->type = 0x01;
+			eof_midi_event[eof_midi_events]->dp = text;
+			eof_midi_event[eof_midi_events]->allocation = allocation;
 			eof_midi_events++;
 		}
 	}
@@ -424,7 +445,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	int channel, velocity, bitmask, slidenote = 0, scale, chord, isslash, bassnote;	//Used for pro guitar export
 	EOF_PHRASE_SECTION *sectionptr;
 	char *lastname = NULL, *currentname = NULL, nochord[]="NC", chordname[100]="";
-	char match = 0;
+//	char match = 0;
 	char phase_shift_sysex_phrase[8] = {'P','S','\0',0,0,0,0,0xF7};	//This is used to write Sysex messages for features supported in Phase Shift (ie. open strum bass)
 
 	if(!sp | !fn)
@@ -460,6 +481,38 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 	eof_sort_notes(sp);	//Writing efficient on-the-fly HOPO phrasing relies on all notes being sorted
 
+	#ifdef EOF_RBN_COMPATIBILITY
+	//Magma requires some default track events to be written
+	if(sp->beats > 3)
+	{	//Only add these if there are at least 4 beats
+		if(!eof_song_contains_event(sp, "[music_start]"))
+		{	//If the user did not define the music_start event
+			eof_song_add_text_event(sp, 2, "[music_start]", 0, 1);	//Add it as a temporary event two beats into the song (at the third beat)
+		}
+		if(!eof_song_contains_event(sp, "[music_end]"))
+		{	//If the user did not define the music_end event
+			eof_song_add_text_event(sp, sp->beats-1, "[music_end]", 0, 1);	//Add it as a temporary event on the last beat
+		}
+		if(!eof_song_contains_event(sp, "[mix 0 drums0]"))
+		{	//If the user did not define this drum mix event
+			eof_song_add_text_event(sp, 0, "[mix 0 drums0]", EOF_TRACK_DRUM, 1);	//Add it as a temporary event on the first beat of the drum track
+		}
+		if(!eof_song_contains_event(sp, "[mix 1 drums0]"))
+		{	//If the user did not define this drum mix event
+			eof_song_add_text_event(sp, 0, "[mix 1 drums0]", EOF_TRACK_DRUM, 1);	//Add it as a temporary event on the first beat of the drum track
+		}
+		if(!eof_song_contains_event(sp, "[mix 2 drums0]"))
+		{	//If the user did not define this drum mix event
+			eof_song_add_text_event(sp, 0, "[mix 2 drums0]", EOF_TRACK_DRUM, 1);	//Add it as a temporary event on the first beat of the drum track
+		}
+		if(!eof_song_contains_event(sp, "[mix 3 drums0]"))
+		{	//If the user did not define this drum mix event
+			eof_song_add_text_event(sp, 0, "[mix 3 drums0]", EOF_TRACK_DRUM, 1);	//Add it as a temporary event on the first beat of the drum track
+		}
+	}
+	#endif
+	eof_sort_events(sp);
+
 	//Write tracks
 	for(j = 1; j < sp->tracks; j++)
 	{	//For each track in the project
@@ -479,16 +532,31 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		eof_clear_midi_events();
 		tracknum = sp->track[j]->tracknum;
 		memset(eof_midi_note_status,0,sizeof(eof_midi_note_status));	//Clear note status array
+
+		//Write track specific text events
+		for(i = 0; i < sp->text_events; i++)
+		{	//For each event in the song
+			if(sp->text_event[i]->track == j)
+			{	//If this event is specific to this track
+				if(sp->text_event[i]->beat >= sp->beats)
+				{	//If the text event's beat number is invalid
+					sp->text_event[i]->beat = sp->beats - 1;	//Repair it by assigning it to the last beat marker
+				}
+				deltapos = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);	//Store the tick position of the note
+				eof_add_midi_text_event(deltapos, sp->text_event[i]->text, 0);	//Send 0 for the allocation flag, because the text string is being stored in static memory
+			}
+		}
+
 		if(sp->track[j]->track_format == EOF_LEGACY_TRACK_FORMAT)
 		{	//If this is a legacy track
 			/* fill in notes */
 //Detect whether Pro drum notation is being used
 //Pro drum notation is that if a green, yellow or blue drum note is NOT to be marked as a cymbal,
 //it must be marked with the appropriate MIDI note, otherwise the note defaults as a cymbal
-			prodrums = 0;
+/*			prodrums = 0;
 			if(sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 			{	//If this is a drum track
-				for(i = 0, prodrums = 0; i < eof_get_track_size(sp, j); i++)
+				for(i = 0; i < eof_get_track_size(sp, j); i++)
 				{	//For each note in the track
 					note = eof_get_note_note(sp, j, i);
 					noteflags = eof_get_note_flags(sp, j, i);
@@ -501,6 +569,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					}
 				}
 			}
+*/
+			prodrums = eof_track_has_cymbals(sp, j);
 
 			/* write the MTrk MIDI data to a temp file
 			use size of the file as the MTrk header length */
@@ -795,7 +865,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				WriteVarLen(ustrlen(sp->track[j]->name), fp);
 				pack_fwrite(sp->track[j]->name, ustrlen(sp->track[j]->name), fp);
 
-				#ifdef EOF_RBN_COMPATIBILITY
+/*				#ifdef EOF_RBN_COMPATIBILITY	//Added before track loop
 				//RBN requires that drum mix events have been defined
 				if(j == EOF_TRACK_DRUM)
 				{
@@ -805,7 +875,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					eof_write_text_event(0, "[mix 3 drums0]", fp);
 				}
 				#endif
-
+*/
 				/* add MIDI events */
 				lastdelta = 0;
 				for(i = 0; i < eof_midi_events; i++)
@@ -814,21 +884,30 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 						continue;	//Filter out all non Expert drum notes for the Expert+ track
 
 					delta = eof_midi_event[i]->pos;
-					WriteVarLen(delta - lastdelta, fp);	//Write this event's relative delta time
-					lastdelta = delta;					//Store this event's absolute delta time
-					if(eof_midi_event[i]->type == 0xF0)
-					{	//If this is a Sysex message
+					if(eof_midi_event[i]->type == 0x01)
+					{	//Text event
+						eof_write_text_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
+					}
+					else if(eof_midi_event[i]->type == 0xF0)
+					{	//Sysex message
+						WriteVarLen(delta - lastdelta, fp);	//Write this event's relative delta time
 						pack_putc(0xF0, fp);						//Sysex event
 						WriteVarLen(eof_midi_event[i]->note, fp);	//Write the Sysex message's size
 						pack_fwrite(eof_midi_event[i]->dp, eof_midi_event[i]->note, fp);	//Write the Sysex data
-						free(eof_midi_event[i]->dp);				//Free the copied array from memory
 					}
 					else
 					{	//Note on/off
+						WriteVarLen(delta - lastdelta, fp);	//Write this event's relative delta time
 						pack_putc(eof_midi_event[i]->type, fp);
 						pack_putc(eof_midi_event[i]->note, fp);
 						pack_putc(vel, fp);
 					}
+					if(eof_midi_event[i]->allocation && eof_midi_event[i]->dp)
+					{	//If this event has allocated memory to release
+						free(eof_midi_event[i]->dp);	//Free it now
+						eof_midi_event[i]->dp = NULL;
+					}
+					lastdelta = delta;					//Store this event's absolute delta time
 				}
 
 				/* end of track */
@@ -1031,22 +1110,31 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			for(i = 0; i < eof_midi_events; i++)
 			{
 				delta = eof_midi_event[i]->pos;
-				WriteVarLen(delta - lastdelta, fp);	//Write this lyric's relative delta time
-				lastdelta=delta;					//Store this lyric's absolute delta time
-				if(eof_midi_event[i]->type == 0x05)
-				{
+				if(eof_midi_event[i]->type == 0x01)
+				{	//Text event
+					eof_write_text_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
+				}
+				else if(eof_midi_event[i]->type == 0x05)
+				{	//Lyric event
+					WriteVarLen(delta - lastdelta, fp);	//Write this lyric's relative delta time
 					pack_putc(0xFF, fp);
 					pack_putc(0x05, fp);
 					pack_putc(ustrlen(eof_midi_event[i]->dp), fp);
 					pack_fwrite(eof_midi_event[i]->dp, ustrlen(eof_midi_event[i]->dp), fp);
-					free(eof_midi_event[i]->dp);	//Free the copied string from memory
 				}
 				else
 				{
+					WriteVarLen(delta - lastdelta, fp);	//Write this lyric's relative delta time
 					pack_putc(eof_midi_event[i]->type, fp);
 					pack_putc(eof_midi_event[i]->note, fp);
 					pack_putc(vel, fp);
 				}
+				if(eof_midi_event[i]->allocation && eof_midi_event[i]->dp)
+				{	//If this event has allocated memory to release
+					free(eof_midi_event[i]->dp);	//Free it now
+					eof_midi_event[i]->dp = NULL;
+				}
+				lastdelta=delta;					//Store this lyric's absolute delta time
 			}
 
 			/* end of track */
@@ -1125,7 +1213,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 						if(tempstring != NULL)
 						{	//If allocation was successful
 							memcpy(tempstring, chordname, ustrsizez(chordname));	//Copy the string to the newly allocated memory
-							eof_add_midi_lyric_event(deltapos, tempstring);			//Store the new string in a text event
+							eof_add_midi_text_event(deltapos, tempstring, 1);			//Store the new string in a text event, send 1 for the allocation flag, because the text string is being stored in dynamic memory
 						}
 						lastname = currentname;
 					}
@@ -1340,10 +1428,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			for(i = 0; i < eof_midi_events; i++)
 			{
 				delta = eof_midi_event[i]->pos;
-				if(eof_midi_event[i]->type == 0x05)
+				if(eof_midi_event[i]->type == 0x01)
 				{	//Write a note name text event
 					eof_write_text_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
-					free(eof_midi_event[i]->dp);	//Free the copied string from memory
 				}
 				else if(eof_midi_event[i]->type == 0xF0)
 				{	//If this is a Sysex message
@@ -1351,7 +1438,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					pack_putc(0xF0, fp);						//Sysex event
 					WriteVarLen(eof_midi_event[i]->note, fp);	//Write the Sysex message's size
 					pack_fwrite(eof_midi_event[i]->dp, eof_midi_event[i]->note, fp);	//Write the Sysex data
-					free(eof_midi_event[i]->dp);				//Free the copied array from memory
 				}
 				else
 				{	//Write a non meta MIDI event
@@ -1359,6 +1445,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					pack_putc(eof_midi_event[i]->type + eof_midi_event[i]->channel, fp);
 					pack_putc(eof_midi_event[i]->note, fp);
 					pack_putc(eof_midi_event[i]->velocity, fp);
+				}
+				if(eof_midi_event[i]->allocation && eof_midi_event[i]->dp)
+				{	//If this event has allocated memory to release
+					free(eof_midi_event[i]->dp);	//Free it now
+					eof_midi_event[i]->dp = NULL;
 				}
 				lastdelta = delta;					//Store this event's absolute delta time
 			}
@@ -1466,8 +1557,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 
 /* make events track */
-	#ifdef EOF_RBN_COMPATIBILITY
+/*	#ifdef EOF_RBN_COMPATIBILITY
 	//Magma requires some default track events to be written, even if there are no text events defined
+	EOF_TEXT_EVENT *temp_event1 = NULL, *temp_event2 = NULL;	//Store the pointers to the temporary music_start and music_end events so they can be easily deleted after being written to MIDI
+
 	if(sp->beats > 3)
 	{	//Only add these if there are at least 4 beats
 		//Check the existing events to see if a [music_start] event is defined
@@ -1481,7 +1574,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		}
 		if(!match)
 		{	//If there wasn't one, add one
-			eof_add_text_event(sp, 2, "[music_start]");				//Add the [music_start] event two beats into the song (at the third beat)
+			temp_event1 = eof_song_add_text_event(sp, 2, "[music_start]", 0, 1);				//Add the [music_start] temporary event two beats into the song (at the third beat)
 		}
 
 		//Check the existing events to see if a [music_end] event is defined
@@ -1495,7 +1588,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		}
 		if(!match)
 		{	//If there wasn't one, add one
-			eof_add_text_event(sp, sp->beats-1, "[music_end]");		//Add the [music_end] event on the last beat
+			temp_event2 = eof_song_add_text_event(sp, sp->beats-1, "[music_end]", 0, 1);		//Add the [music_end] temporary event on the last beat
 		}
 	}
 	#else
@@ -1503,8 +1596,13 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	if(sp->text_events)
 	{
 	#endif
-		eof_sort_events();
+//		eof_sort_events();	//Sorted earlier
+*/
 
+	#ifndef EOF_RBN_COMPATIBILITY
+	if(sp->text_events)
+	{
+	#endif
 		/* open the file */
 		fp = pack_fopen(eventtempname, "w");
 		if(!fp)
@@ -1525,19 +1623,22 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		lastdelta = 0;
 		for(i = 0; i < sp->text_events; i++)
 		{
-			if(sp->text_event[i]->beat >= sp->beats)
-			{	//If the text event is corrupted
-				sp->text_event[i]->beat = sp->beats - 1;	//Repair it by assigning it to the last beat marker
+			if(sp->text_event[i]->track == 0)
+			{	//If the text event is global (not specific to any single track)
+				if(sp->text_event[i]->beat >= sp->beats)
+				{	//If the text event is corrupted
+					sp->text_event[i]->beat = sp->beats - 1;	//Repair it by assigning it to the last beat marker
+				}
+				delta = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
+				eof_write_text_event(delta - lastdelta, sp->text_event[i]->text, fp);
+				lastdelta = delta;					//Store this event's absolute delta time
 			}
-			delta = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
-			eof_write_text_event(delta - lastdelta, sp->text_event[i]->text, fp);
-			lastdelta = delta;					//Store this event's absolute delta time
 		}
 
 		#ifdef EOF_RBN_COMPATIBILITY
 		//Magma requires that the [end] event is the last MIDI event in the track, so it will be written 1ms after the end of the audio
 		//Check the existing events to see if a [music_end] event is defined
-		match = 0;
+/*		match = 0;
 		for(i = 0; i < sp->text_events; i++)
 		{
 			if(!ustrcmp(sp->text_event[i]->text, "[end]"))
@@ -1551,6 +1652,29 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			eof_write_text_event(delta - lastdelta, "[end]", fp);
 			lastdelta = delta;					//Store this event's absolute delta time
 		}
+
+		//Delete the temporary music_start and music_end events
+		eof_song_delete_text_event_p(sp, temp_event1);
+		eof_song_delete_text_event_p(sp, temp_event2);
+*/
+
+		if(!eof_song_contains_event(sp, "[end]"))
+		{	//If the user did not define the end event, manually write it
+			delta = eof_ConvertToDeltaTime(eof_music_length+1,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
+			eof_write_text_event(delta - lastdelta, "[end]", fp);
+			lastdelta = delta;					//Store this event's absolute delta time
+		}
+
+		//Remove all temporary text events that were added for the sake of RBN compatibility
+		for(i = sp->text_events; i > 0; i--)
+		{	//For each text event (in reverse order)
+			if(sp->text_event[i-1]->is_temporary)
+			{	//If this text event has been marked as temporary
+				eof_song_delete_text_event(sp, i-1);	//Delete it
+			}
+		}
+		eof_sort_events(sp);	//Re-sort
+
 		#endif
 
 		/* end of track */
@@ -2241,6 +2365,7 @@ void eof_add_sysex_event(unsigned long pos, int size, void *data)
 				eof_midi_event[eof_midi_events]->type = 0xF0;
 				eof_midi_event[eof_midi_events]->note = size;	//Store the size of the Sysex message in the note variable
 				eof_midi_event[eof_midi_events]->dp = (char *)datacopy;	//Store the newly buffered data
+				eof_midi_event[eof_midi_events]->allocation = 1;	//At this time, all Sysex data chunks are stored in dynamically allocated memory
 				eof_midi_events++;
 			}
 		}

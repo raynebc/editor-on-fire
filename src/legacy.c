@@ -1,7 +1,8 @@
 #include <allegro.h>
-#include "song.h"
 #include "event.h"
 #include "main.h"	//For logging
+#include "song.h"	//Include before beat.h for EOF_SONG struct definition
+#include "beat.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -283,7 +284,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				pack_fread(buffer, 256, fp);
 				b = pack_igetl(fp);
-				eof_add_text_event(sp, b, buffer);
+				eof_song_add_text_event(sp, b, buffer, 0, 0);
 			}
 
 			/* read tracks */
@@ -338,7 +339,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				pack_fread(buffer, 256, fp);
 				b = pack_igetl(fp);
-				eof_add_text_event(sp, b, buffer);
+				eof_song_add_text_event(sp, b, buffer, 0, 0);
 			}
 
 			/* read tracks */
@@ -414,7 +415,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				pack_fread(buffer, 256, fp);
 				b = pack_igetl(fp);
-				eof_add_text_event(sp, b, buffer);
+				eof_song_add_text_event(sp, b, buffer, 0, 0);
 			}
 
 			/* read tracks */
@@ -490,7 +491,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				pack_fread(buffer, 256, fp);
 				b = pack_igetl(fp);
-				eof_add_text_event(sp, b, buffer);
+				eof_song_add_text_event(sp, b, buffer, 0, 0);
 			}
 
 			/* read tracks */

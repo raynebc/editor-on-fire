@@ -3,28 +3,28 @@ EOF Version History
 
 1.8:
 
-Adds the ability to author 5 lane (5 pads and one pedal) drums.
+Used cppcheck and added the Memwatch source package, helping various
+memory leaks to be corrected.
+
+Added the ability to author 5 lane (5 pads and one pedal) drums.
 
 Fixed various bugs in the lyric import.
 
-Adds the ability to define band and track-specific difficulties.
+Added the ability to define band and track-specific difficulties.
 
-Adds initial support for pro guitar/bass and 4 lane dance authoring.
+Added initial support for pro guitar/bass and 4 lane dance authoring.
 
-Adds some logging functionality to help identify points of malfunction.
+Added some logging functionality to help identify points of malfunction.
 
-Adds a "Reset Offset to Zero" function to assist with preparing charts
+Added a "Reset Offset to Zero" function to assist with preparing charts
 for use as Rock Band customs.
 
 Updated FoFLC to the latest version (2.36).
 
-Adds the Memwatch source package, helping various memory leaks to be
-corrected.
+Made Various MIDI import improvements, including handling for mid-beat
+tempo and time signature changes and fixing an INI import related crash.
 
-Various MIDI import improvements, including handling for mid-beat tempo
-and time signature changes and fixing an INI import related crash.
-
-Various MIDI export improvements, including better Rock Band Network
+Made various MIDI export improvements, including better Rock Band Network
 compliance, resolving many errors that would occur when trying to build
 EOF's MIDI files in Harmonix's Magma utility, corrected tom phrasing.
 

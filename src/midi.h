@@ -21,6 +21,7 @@ typedef struct
 	int velocity;
 	int channel;
 	char * dp;
+	char allocation;	//This tracks whether dp points to allocated that should be freed after it is written to file
 
 } EOF_MIDI_EVENT;
 

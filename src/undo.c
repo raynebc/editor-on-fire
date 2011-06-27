@@ -158,6 +158,7 @@ int eof_undo_apply(void)
 		}
 		eof_undo_last_type = 0;
 
+		eof_init_after_load(1);	//Perform various cleanup
 		eof_detect_difficulties(eof_song);
 		eof_select_beat(eof_selected_beat);
 		eof_fix_catalog_selection();
@@ -203,6 +204,7 @@ void eof_redo_apply(void)
 			eof_changes = 1;
 		}
 
+		eof_init_after_load(1);	//Perform various cleanup
 		eof_detect_difficulties(eof_song);
 		eof_select_beat(eof_selected_beat);
 		eof_fix_catalog_selection();

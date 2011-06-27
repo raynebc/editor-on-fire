@@ -11,21 +11,29 @@
 char eof_event_list_text[EOF_MAX_TEXT_EVENTS][256] = {{0}};
 //int eof_text_events = 0;
 
-void eof_add_text_event(EOF_SONG * sp, int beat, char * text)
+EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, unsigned long beat, char * text, unsigned long track, char is_temporary)
 {
-	eof_log("eof_add_text_event() entered", 1);
+// 	eof_log("eof_song_add_text_event() entered");
 
-	if(sp && text && (sp->text_events < EOF_MAX_TEXT_EVENTS))
-	{	//If the maximum number of text events hasn't been defined already
+	if(sp && text && (sp->text_events < EOF_MAX_TEXT_EVENTS) && (beat < sp->beats))
+	{	//If the maximum number of text events hasn't already been defined, and the specified beat number is valid
 		sp->text_event[sp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
-		if(!sp->text_event[sp->text_events])
+		if(sp->text_event[sp->text_events])
 		{
-			return;
+			ustrcpy(sp->text_event[sp->text_events]->text, text);
+			sp->text_event[sp->text_events]->beat = beat;
+			if(track >= sp->tracks)
+			{	//If this is an invalid track
+				track = 0;	//Make this a global text event
+			}
+			sp->text_event[sp->text_events]->track = track;
+			sp->text_event[sp->text_events]->is_temporary = is_temporary;
+			sp->beat[beat]->flags |= EOF_BEAT_FLAG_EVENTS;	//Set the events flag for the beat
+			sp->text_events++;
+			return sp->text_event[sp->text_events-1];	//Return successfully created text event
 		}
-		ustrcpy(sp->text_event[sp->text_events]->text, text);
-		sp->text_event[sp->text_events]->beat = beat;
-		sp->text_events++;
 	}
+	return NULL;	//Return failure
 }
 
 void eof_move_text_events(EOF_SONG * sp, unsigned long beat, unsigned long offset, int dir)
@@ -60,4 +68,119 @@ void eof_move_text_events(EOF_SONG * sp, unsigned long beat, unsigned long offse
 			sp->beat[sp->text_event[i]->beat]->flags |= EOF_BEAT_FLAG_EVENTS;	//Set the event flag
 		}
 	}
+}
+
+void eof_song_delete_text_event(EOF_SONG * sp, unsigned long event)
+{
+ 	eof_log("eof_song_delete_text_event() entered", 1);
+
+	unsigned long i;
+	if(sp)
+	{
+		free(sp->text_event[event]);
+		for(i = event; i < sp->text_events - 1; i++)
+		{
+			sp->text_event[i] = sp->text_event[i + 1];
+		}
+		sp->text_events--;
+		eof_cleanup_beat_flags(sp);	//Rebuild event flags for all beats to ensure they're valid
+	}
+}
+
+/*	//Logic that was discontinued
+void eof_song_delete_text_event_p(EOF_SONG *sp, EOF_TEXT_EVENT *ptr)
+{
+ 	eof_log("eof_song_delete_text_event_p() entered", 1);
+
+	unsigned long ctr;
+
+	if(sp && ptr)
+	{
+		for(ctr = 0; ctr < sp->text_events; ctr++)
+		{	//For each event
+			if(ptr == sp->text_event[ctr])
+			{	//If this is the event that was specified for deletion
+				eof_song_delete_text_event(sp, ctr);	//Delete it and return
+				return;
+			}
+		}
+	}
+}
+*/
+
+int eof_song_resize_text_events(EOF_SONG * sp, unsigned long events)
+{
+	unsigned long i;
+	unsigned long oldevents;
+
+	if(!sp)
+	{
+		return 0;
+	}
+	oldevents = sp->text_events;
+	if(events > oldevents)
+	{
+		for(i = oldevents; i < events; i++)
+		{
+			if(!eof_song_add_text_event(sp, 0, "", 0, 0))
+			{
+				return 0;	//Return failure
+			}
+		}
+	}
+	else if(events < oldevents)
+	{
+		for(i = events; i < oldevents; i++)
+		{
+			free(sp->text_event[i]);
+			sp->text_events--;
+		}
+	}
+	return 1;	//Return succes
+}
+
+void eof_sort_events(EOF_SONG * sp)
+{
+ 	eof_log("eof_sort_events() entered", 1);
+
+	if(sp)
+	{
+		qsort(sp->text_event, sp->text_events, sizeof(EOF_TEXT_EVENT *), eof_song_qsort_events);
+	}
+}
+
+int eof_song_qsort_events(const void * e1, const void * e2)
+{
+	EOF_TEXT_EVENT ** thing1 = (EOF_TEXT_EVENT **)e1;
+	EOF_TEXT_EVENT ** thing2 = (EOF_TEXT_EVENT **)e2;
+
+	if((*thing1)->beat < (*thing2)->beat)
+	{
+		return -1;
+	}
+	else if((*thing1)->beat == (*thing2)->beat)
+	{
+		return 0;
+	}
+	else
+	{
+		return 1;
+	}
+}
+
+char eof_song_contains_event(EOF_SONG *sp, const char *text)
+{
+	unsigned long i;
+
+	if(sp && text)
+	{
+		for(i = 0; i < sp->text_events; i++)
+		{
+			if(!ustrcmp(sp->text_event[i]->text, text))
+			{
+				return 1;	//Return match found
+			}
+		}
+	}
+	return 0;	//Return no match found
 }

@@ -413,7 +413,7 @@ int eof_menu_file_load(void)
 		}
 		eof_song_loaded = 1;
 		eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
-		eof_init_after_load();
+		eof_init_after_load(0);
 		eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
 	}
 	eof_show_mouse(NULL);
@@ -818,7 +818,7 @@ int eof_menu_file_midi_import(void)
 		if(eof_song)
 		{
 			eof_song_loaded = 1;
-			eof_init_after_load();
+			eof_init_after_load(0);
 			eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
 		}
 		else
@@ -1640,7 +1640,7 @@ int eof_menu_file_feedback_import(void)
 			if(eof_song)
 			{
 				eof_song_loaded = 1;
-				eof_init_after_load();
+				eof_init_after_load(0);
 			}
 			else
 			{
@@ -2022,7 +2022,7 @@ int eof_new_chart(char * filename)
 	eof_song_loaded = 1;
 
 	/* get ready to edit */
-	eof_init_after_load();	//Initialize variables
+	eof_init_after_load(0);	//Initialize variables
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(NULL);

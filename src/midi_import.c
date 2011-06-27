@@ -1,12 +1,14 @@
 #include <allegro.h>
 #include <assert.h>
-#include "main.h"
-#include "utility.h"
-#include "song.h"
-#include "midi_import.h"
-#include "ini_import.h"
-#include "menu/note.h"
+#include "event.h"
 #include "foflc/Lyric_storage.h"
+#include "ini_import.h"
+#include "main.h"
+#include "midi_import.h"
+#include "menu/note.h"
+#include "song.h"	//Include before beat.h for EOF_SONG struct definition
+#include "utility.h"
+#include "beat.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -341,6 +343,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	unsigned long bitmask;
 	char chord0name[100] = "", chord1name[100] = "", chord2name[100] = "", chord3name[100] = "", *chordname = NULL;	//Used for chord name import
 	char debugstring[100];
+	char is_event_track;	//This will be set to nonzero if the current track's name is EVENTS (for sorting text events into global event list instead of track specific list)
 
 	/* load MIDI */
 	if(!fn)
@@ -416,6 +419,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 		eof_log(debugstring, 1);
 //#endif
 		last_event = 0;	//Running status resets at beginning of each track
+		is_event_track = 0;	//This remains zero unless a track name event naming the track as "EVENTS" is encountered
 		current_event = current_event_hi = 0;
 		eof_import_events[i] = eof_import_create_events_list();
 		eof_import_ts_changes[i] = eof_create_ts_list();
@@ -555,16 +559,32 @@ EOF_SONG * eof_import_midi(const char * fn)
 							{
 								for(j = 0; j < eof_work_midi->track[track[i]].data[track_pos]; j++)
 								{
-									if(j < EOF_MAX_MIDI_TEXT_SIZE)			//If this wouldn't overflow the buffer
+									if(j < EOF_MAX_MIDI_TEXT_SIZE)
+									{	//If this wouldn't overflow the buffer
 										text[j] = eof_work_midi->track[track[i]].data[track_pos + 1 + j];
+									}
 									else
+									{
 										break;
+									}
 								}
-								if(j >= EOF_MAX_MIDI_TEXT_SIZE)	//If the string needs to be truncated
+								if(j >= EOF_MAX_MIDI_TEXT_SIZE)
+								{	//If the string needs to be truncated
 									text[EOF_MAX_MIDI_TEXT_SIZE] = '\0';
+								}
 								else
-									text[j] = '\0';	//Truncate the string normally
-								if(ustrstr(text, "[chrd") != NULL)
+								{
+									text[j] = '\0';	//Terminate the string normally
+								}
+								if(is_event_track)
+								{	//If the EVENTS track is being parsed, add it to the regular text event list
+									eof_midi_import_add_text_event(eof_import_text_events, absolute_pos, 0x01, text, eof_work_midi->track[track[i]].data[track_pos], i);
+								}
+								else
+								{	//Otherwise add it to the track specific events list
+									eof_midi_import_add_text_event(eof_import_events[i], absolute_pos, 0x01, text, eof_work_midi->track[track[i]].data[track_pos], i);
+								}
+/*								if(ustrstr(text, "[chrd") != NULL)
 								{	//If this is a chord name text event
 									eof_midi_import_add_text_event(eof_import_events[i], absolute_pos, 0x01, text, eof_work_midi->track[track[i]].data[track_pos], i);
 								}
@@ -572,6 +592,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 								{	//Otherwise add it to the regular text event list
 									eof_midi_import_add_text_event(eof_import_text_events, absolute_pos, 0x01, text, eof_work_midi->track[track[i]].data[track_pos], i);
 								}
+*/
 								track_pos += eof_work_midi->track[track[i]].data[track_pos] + 1;
 								break;
 							}
@@ -617,10 +638,17 @@ EOF_SONG * eof_import_midi(const char * fn)
 										}
 									}
 								}
-								if((eof_import_events[i]->type == 0) && ustrstr(text,"PART"))
+								if(eof_import_events[i]->type == 0)
 								{
-									allegro_message("Unidentified track \"%s\"",text);
-									eof_import_events[i]->type = -1;	//Flag this as being a track that gets skipped
+									if(ustrstr(text,"PART"))
+									{	//If this is a track that wasn't identified above, yet contains the word "PART" in the name
+										allegro_message("Unidentified track \"%s\"",text);
+										eof_import_events[i]->type = -1;	//Flag this as being a track that gets skipped
+									}
+									else if(!ustricmp(text, "EVENTS"))
+									{	//This track is the EVENTS track
+										is_event_track = 1;	//Store any encountered text events into the global events array
+									}
 								}
 								break;
 							}
@@ -943,6 +971,7 @@ eof_log("\tPass two, configuring beat timings", 1);
 			{	//If this beat is at or before the target TS change
 				BPM = 60000000.0 / sp->beat[ctr2]->ppqn;	//Store the tempo
 				realtimepos = sp->beat[ctr2]->fpos;			//Store the realtime position
+				realtimepos -= sp->tags->ogg[0].midi_offset;	//Subtract the MIDI delay, so that both the TS and BPM change list are native timings without the offset
 				deltapos = sp->beat[ctr2]->midi_pos;		//Store the delta time position
 				eof_get_ts(sp,NULL,&curden,ctr2);			//Find the TS denominator of this beat
 			}
@@ -1046,6 +1075,19 @@ eof_log("\tSecond pass complete", 1);
 
 				event_realtime = eof_ConvertToRealTimeInt(eof_import_events[i]->event[j]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
 				eof_track_resize(sp, picked_track, note_count[picked_track] + 1);
+
+				if((eof_import_events[i]->event[j]->type == 0x01) && (ustrstr(eof_import_events[i]->event[j]->text, "[chrd") != eof_import_events[i]->event[j]->text))
+				{	//If this is a track specific text event (chord names excluded, that will be handled by track specific logic)
+					for(k = 0; k + 1 < sp->beats; k++)
+					{	//For each beat
+						if(event_realtime < sp->beat[k + 1]->pos)
+						{	//If the text event is earlier than the next beat
+							break;	//Stop parsing beats
+						}
+					}	//k now refers to the appropriate beat this event is assigned to
+					eof_song_add_text_event(sp, k, eof_import_events[i]->event[j]->text, picked_track, 0);	//Store this as a text event specific to the track being parsed
+				}
+
 				if(eof_midi_tracks[picked_track].track_format == EOF_VOCAL_TRACK_FORMAT)
 				{	//If parsing a vocal track
 					/* note on */
@@ -2071,8 +2113,8 @@ eof_log("\tThird pass complete", 1);
 			if(b >= 0)
 			{
 //				allegro_message("%s", eof_import_text_events->event[i]->text);
-				eof_song_add_text_event(sp, b, eof_import_text_events->event[i]->text);
-				sp->beat[b]->flags |= EOF_BEAT_FLAG_EVENTS;
+				eof_song_add_text_event(sp, b, eof_import_text_events->event[i]->text, 0, 0);
+//				sp->beat[b]->flags |= EOF_BEAT_FLAG_EVENTS;	//This is now set in eof_song_add_text_event()
 			}
 		}
 	}

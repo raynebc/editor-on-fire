@@ -1,4 +1,5 @@
 #include <allegro.h>
+#include <errno.h>
 #include <time.h>
 #include "main.h"
 #include "editor.h"
@@ -101,26 +102,6 @@ int eof_song_qsort_legacy_notes(const void * e1, const void * e2)
     return 0;
 }
 
-
-int eof_song_qsort_events(const void * e1, const void * e2)
-{
-	EOF_TEXT_EVENT ** thing1 = (EOF_TEXT_EVENT **)e1;
-	EOF_TEXT_EVENT ** thing2 = (EOF_TEXT_EVENT **)e2;
-
-	if((*thing1)->beat < (*thing2)->beat)
-	{
-		return -1;
-	}
-	else if((*thing1)->beat == (*thing2)->beat)
-	{
-		return 0;
-	}
-	else
-	{
-		return 1;
-	}
-}
-
 int eof_song_qsort_lyrics(const void * e1, const void * e2)
 {
     EOF_LYRIC ** thing1 = (EOF_LYRIC **)e1;
@@ -180,6 +161,7 @@ EOF_SONG * eof_create_song(void)
 	sp->catalog = malloc(sizeof(EOF_CATALOG));
 	if(!sp->catalog)
 	{
+		free(sp->tags);
 		return NULL;
 	}
 	sp->catalog->entries = 0;
@@ -733,181 +715,6 @@ void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, unsigned long index)
 	tp->lines--;
 }
 
-EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp)
-{
-	if((sp == NULL) || (sp->beat == NULL))
-		return NULL;
-
-	if(sp->beats < EOF_MAX_BEATS)
-	{	//If the maximum number of beats hasn't already been defined
-		sp->beat[sp->beats] = malloc(sizeof(EOF_BEAT_MARKER));
-		if(sp->beat[sp->beats] != NULL)
-		{
-			sp->beat[sp->beats]->pos = 0;
-			sp->beat[sp->beats]->ppqn = 500000;
-			sp->beat[sp->beats]->flags = 0;
-			sp->beat[sp->beats]->midi_pos = 0;
-			sp->beat[sp->beats]->fpos = 0.0;
-			sp->beats++;
-			return sp->beat[sp->beats - 1];
-		}
-	}
-
-	return NULL;
-}
-
-void eof_song_delete_beat(EOF_SONG * sp, unsigned long beat)
-{
- 	eof_log("eof_song_delete_beat() entered", 1);
-
-	unsigned long i;
-
-	if(sp)
-	{
-		free(sp->beat[beat]);
-		for(i = beat; i < sp->beats - 1; i++)
-		{
-			sp->beat[i] = sp->beat[i + 1];
-		}
-		sp->beats--;
-	}
-}
-
-int eof_song_resize_beats(EOF_SONG * sp, unsigned long beats)
-{
-	unsigned long i;
-	unsigned long oldbeats;
-
-	if(!sp)
-	{
-		return 0;
-	}
-
-	oldbeats = sp->beats;
-	if(beats > oldbeats)
-	{
-		for(i = oldbeats; i < beats; i++)
-		{
-			if(!eof_song_add_beat(sp))
-			{
-				return 0;	//Return failure
-			}
-		}
-	}
-	else if(beats < oldbeats)
-	{
-		for(i = beats; i < oldbeats; i++)
-		{
-			free(sp->beat[i]);
-			sp->beats--;
-		}
-	}
-
-	return 1;	//Return success
-}
-
-EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, unsigned long beat, char * text)
-{
-// 	eof_log("eof_song_add_text_event() entered");
-
-	if(!sp || !text)
-	{
-		return NULL;
-	}
-	if(sp->text_events < EOF_MAX_TEXT_EVENTS)
-	{	//If the maximum number of text events hasn't already been defined
-		sp->text_event[sp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
-		if(sp->text_event[sp->text_events])
-		{
-			ustrcpy(sp->text_event[sp->text_events]->text, text);
-			sp->text_event[sp->text_events]->beat = beat;
-			sp->text_events++;
-		}
-		else
-		{
-			return NULL;	//Return failure
-		}
-	}
-	return sp->text_event[sp->text_events-1];	//Return successfully created text event
-}
-
-void eof_song_delete_text_event(EOF_SONG * sp, unsigned long event)
-{
- 	eof_log("eof_song_delete_text_event() entered", 1);
-
-	unsigned long i;
-	if(sp)
-	{
-		free(sp->text_event[event]);
-		for(i = event; i < sp->text_events - 1; i++)
-		{
-			sp->text_event[i] = sp->text_event[i + 1];
-		}
-		sp->text_events--;
-	}
-}
-
-void eof_song_move_text_events(EOF_SONG * sp, unsigned long beat, int offset)
-{
- 	eof_log("eof_song_move_text_events() entered", 1);
-
-	unsigned long i;
-
-	if(sp)
-	{
-		for(i = 0; i < sp->text_events; i++)
-		{
-			if(sp->text_event[i]->beat >= beat)
-			{
-				sp->beat[sp->text_event[i]->beat]->flags = sp->beat[sp->text_event[i]->beat]->flags & EOF_BEAT_FLAG_ANCHOR;
-				sp->text_event[i]->beat += offset;
-				sp->beat[sp->text_event[i]->beat]->flags |= EOF_BEAT_FLAG_EVENTS;
-			}
-		}
-	}
-}
-
-int eof_song_resize_text_events(EOF_SONG * sp, unsigned long events)
-{
-	unsigned long i;
-	unsigned long oldevents;
-
-	if(!sp)
-	{
-		return 0;
-	}
-	oldevents = sp->text_events;
-	if(events > oldevents)
-	{
-		for(i = oldevents; i < events; i++)
-		{
-			if(!eof_song_add_text_event(sp, 0, ""))
-			{
-				return 0;	//Return failure
-			}
-		}
-	}
-	else if(events < oldevents)
-	{
-		for(i = events; i < oldevents; i++)
-		{
-			free(sp->text_event[i]);
-			sp->text_events--;
-		}
-	}
-	return 1;	//Return succes
-}
-
-void eof_sort_events(void)
-{
- 	eof_log("eof_sort_events() entered", 1);
-
-	if(eof_song)
-	{
-		qsort(eof_song->text_event, eof_song->text_events, sizeof(EOF_TEXT_EVENT *), eof_song_qsort_events);
-	}
-}
-
 /* make sure notes don't overlap */
 void eof_fixup_notes(EOF_SONG *sp)
 {
@@ -1324,7 +1131,10 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 					ptr4->numstrings = 6;	//Otherwise, assume a 6 string guitar
 				}
 				if(ptr4->numstrings > EOF_TUNING_LENGTH)	//Ensure that the tuning array is large enough
+				{
+					free(ptr4);
 					return 0;	//Return error
+				}
 				memset(ptr4->tuning, 0, EOF_TUNING_LENGTH);	//Initialize the tuning for all strings to "standard" (zero)
 				memset(ptr4->eof_chord_variations, 0, sizeof(EOF_CHORD_VARIATION));	//Initialize the chord variations array to undefined
 				memset(ptr4->eof_chord_num_variations, 0, sizeof(EOF_CHORD_NUM_VARIATION_ARRAY));
@@ -1543,8 +1353,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	for(ctr=0; ctr<count; ctr++)
 	{	//For each text event in the project
 		eof_load_song_string_pf(sp->text_event[ctr]->text,fp,256);	//Read the text event string
-		sp->text_event[ctr]->beat = pack_igetl(fp);	//Read the text event's beat number
-		pack_igetl(fp);	//Read the text event's associated track number (not supported yet)
+		sp->text_event[ctr]->beat = pack_igetl(fp);		//Read the text event's beat number
+		sp->text_event[ctr]->track = pack_igetl(fp);	//Read the text event's associated track number
 	}
 
 	custom_data_count = pack_igetl(fp);		//Read the number of custom data blocks
@@ -2024,6 +1834,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 
 	if((sp == NULL) || (fn == NULL))
 	{
+		eof_log("\tError saving:  Invalid parameters", 1);
 		return 0;	//Return error
 	}
 
@@ -2044,6 +1855,8 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	fp = pack_fopen(fn, "w");
 	if(!fp)
 	{
+		snprintf(eof_log_string, sizeof(eof_log_string), "\tError saving:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		eof_log(eof_log_string, 1);
 		return 0;	//Return error
 	}
 	pack_fwrite(header, 16, fp);
@@ -2136,7 +1949,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	{	//For each text event in the project
 		eof_save_song_string_pf(sp->text_event[ctr]->text, fp);	//Write the text event string
 		pack_iputl(sp->text_event[ctr]->beat, fp);	//Write the text event's associated beat number
-		pack_iputl(0, fp);	//Write the text event's associated track number (not supported yet)
+		pack_iputl(sp->text_event[ctr]->track, fp);	//Write the text event's associated track number
 	}
 
 
@@ -4567,4 +4380,29 @@ int eof_get_pro_guitar_note_fret_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 inline int eof_five_lane_drums_enabled(void)
 {
 	return (eof_song->track[EOF_TRACK_DRUM]->flags & EOF_TRACK_FLAG_SIX_LANES);
+}
+
+char eof_track_has_cymbals(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long i, note, noteflags;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return 0;
+
+	if(sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+	{	//If this is a drum track
+		for(i = 0; i < eof_get_track_size(sp, track); i++)
+		{	//For each note in the track
+			note = eof_get_note_note(sp, track, i);
+			noteflags = eof_get_note_flags(sp, track, i);
+			if(	((note & 4) && ((noteflags & EOF_NOTE_FLAG_Y_CYMBAL))) ||
+				((note & 8) && ((noteflags & EOF_NOTE_FLAG_B_CYMBAL))) ||
+				((note & 16) && ((noteflags & EOF_NOTE_FLAG_G_CYMBAL))))
+			{	//If this note contains a yellow, blue or purple (green in Rock Band) drum marked with pro drum notation
+				return 1;	//Track has cymbals
+			}
+		}
+	}
+
+	return 0;	//Track has no cymbals
 }

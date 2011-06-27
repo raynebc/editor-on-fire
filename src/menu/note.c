@@ -1,4 +1,5 @@
 #include <allegro.h>
+#include <ctype.h>
 #include "../agup/agup.h"
 #include "../undo.h"
 #include "../dialog.h"
@@ -8,7 +9,6 @@
 #include "../foflc/Lyric_storage.h"
 #include "../main.h"
 #include "note.h"
-#include "ctype.h"
 
 #ifdef USEMEMWATCH
 #include "../memwatch.h"

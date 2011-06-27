@@ -1447,7 +1447,7 @@ int eof_menu_edit_zoom_1(void)
 int eof_menu_edit_zoom_level(int zoom)
 {
 	int i;
-	if((zoom > 0) && zoom <= EOF_NUM_ZOOM_LEVELS)
+	if((zoom > 0) && (zoom <= EOF_NUM_ZOOM_LEVELS))
 	{
 		eof_zoom = zoom;
 		for(i = 0; i < EOF_NUM_ZOOM_LEVELS; i++)
