@@ -584,15 +584,6 @@ EOF_SONG * eof_import_midi(const char * fn)
 								{	//Otherwise add it to the track specific events list
 									eof_midi_import_add_text_event(eof_import_events[i], absolute_pos, 0x01, text, eof_work_midi->track[track[i]].data[track_pos], i);
 								}
-/*								if(ustrstr(text, "[chrd") != NULL)
-								{	//If this is a chord name text event
-									eof_midi_import_add_text_event(eof_import_events[i], absolute_pos, 0x01, text, eof_work_midi->track[track[i]].data[track_pos], i);
-								}
-								else
-								{	//Otherwise add it to the regular text event list
-									eof_midi_import_add_text_event(eof_import_text_events, absolute_pos, 0x01, text, eof_work_midi->track[track[i]].data[track_pos], i);
-								}
-*/
 								track_pos += eof_work_midi->track[track[i]].data[track_pos] + 1;
 								break;
 							}
@@ -1741,7 +1732,6 @@ eof_log("\tSecond pass complete", 1);
 							}
 							else if(eof_import_events[i]->event[j]->channel == 3)
 							{	//If this note was sent over channel 3, the gem is muted
-//								sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;	//Set the string mute flag
 								sp->pro_guitar_track[tracknum]->note[notenum]->frets[diff] = 0xFF;
 							}
 						}
@@ -1845,22 +1835,6 @@ eof_log("\tSecond pass complete", 1);
 							{
 								if((eof_get_note_type(sp, picked_track, k) == eof_get_note_type(sp, picked_track, note_count[picked_track])) && (eof_get_note_note(sp, picked_track, k) & diff_chart[diff]))
 								{
-/*									switch(eof_get_note_type(sp, picked_track, k))
-									{
-										case EOF_NOTE_AMAZING:
-											currentamazing = NULL;	//The end of this note has been reached
-										break;
-										case EOF_NOTE_MEDIUM:
-											currentmedium = NULL;	//The end of this note has been reached
-										break;
-										case EOF_NOTE_EASY:
-											currenteasy = NULL;		//The end of this note has been reached
-										break;
-										case EOF_NOTE_SUPAEASY:
-											currentsupaeasy = NULL;	//The end of this note has been reached
-										break;
-									}
-*/
 //									allegro_message("break %d, %d, %d", k, sp->legacy_track[picked_track]->note[k]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);
 									eof_set_note_length(sp, picked_track, k, event_realtime - eof_get_note_pos(sp, picked_track, k));
 									if(eof_get_note_length(sp, picked_track, k ) <= 0)
@@ -1909,11 +1883,6 @@ eof_log("\tSecond pass complete", 1);
 										ptr2++;	//Advance to the next character
 									}
 									ptr[index]='\0';	//Terminate the string
-//For now, prefer RB3's system, where "NC" isn't automatically written for un-named chords
-//							if(ustrcmp(chordname, "NC") == 0)
-//							{	//If the name is a "No Chord" marker
-//								chordname[0] = '\0';	//Empty the string
-//							}
 								}
 							}
 						}
@@ -2114,7 +2083,6 @@ eof_log("\tThird pass complete", 1);
 			{
 //				allegro_message("%s", eof_import_text_events->event[i]->text);
 				eof_song_add_text_event(sp, b, eof_import_text_events->event[i]->text, 0, 0);
-//				sp->beat[b]->flags |= EOF_BEAT_FLAG_EVENTS;	//This is now set in eof_song_add_text_event()
 			}
 		}
 	}

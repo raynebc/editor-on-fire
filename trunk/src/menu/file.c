@@ -2065,29 +2065,6 @@ int eof_save_helper(char *destfilename)
 	eof_sort_notes(eof_song);
 	eof_fixup_notes(eof_song);
 
-	/* check to make sure open bass guitar and forced HOPO on don't conflict */
-/*	if(eof_open_bass_enabled())
-	{
-		tracknum = eof_song->track[EOF_TRACK_BASS]->tracknum;
-		for(ctr = 0; ctr < eof_song->legacy_track[tracknum]->notes; ctr++)
-		{	//For each note in the bass guitar track
-			if((eof_song->legacy_track[tracknum]->note[ctr]->note & 1) && (eof_song->legacy_track[tracknum]->note[ctr]->flags & EOF_NOTE_FLAG_F_HOPO))
-			{	//If this note has a gem in lane one and is forced as a HOPO
-				eof_cursor_visible = 0;
-				eof_pen_visible = 0;
-				eof_show_mouse(screen);
-				if(alert(NULL, "Warning: One or more forced HOPOs for bass guitar notes/chords on lane 1 will be omitted when open bass strums are enabled.  Continue?", NULL, "&Yes", "&No", 'y', 'n') == 2)
-				{	//If user opts cancel the save
-					eof_show_mouse(NULL);
-					eof_cursor_visible = 1;
-					eof_pen_visible = 1;
-					return 2;	//Return cancellation
-				}
-				break;
-			}
-		}
-	}
-*/
 	/* prepare lyrics if applicable */
 	if(eof_song->vocal_track[0]->lyrics > 0)
 	{

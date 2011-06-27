@@ -66,7 +66,6 @@ void eof_editor_logic_feedback(void)
 
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	long fbeat = 0;
-//	int fcstep;
 	int fcpos[32];
 	int fppos[32];
 	int fsnap_divider[32] = {1, 2, 3, 4, 6, 8, 12}; // divide beat into this many portions
@@ -624,7 +623,6 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 	chart=(struct FeedbackChart *)malloc_err(sizeof(struct FeedbackChart));	//Allocate memory
 	*chart=emptychart;		//Reliably set all member variables to 0/NULL
 	chart->resolution=192;	//Default this to 192
-//	chart->linesprocessed=chart->tracksloaded=0;
 
 //Allocate memory buffers large enough to hold any line in this file
 	maxlinelength=FindLongestLineLength(inf,1);
@@ -1437,7 +1435,6 @@ struct dbTrack *Validate_dB_instrument(char *buffer)
 //Create a new string containing the instrument name, minus the brackets
 	retstring=DuplicateString(&buffer[1]);
 	retstring[strlen(retstring)-1]='\0';	//Truncate the trailing bracket
-//	return retstring;
 
 //Create and initialize the instrument structure
 	chart=malloc_err(sizeof(struct dbTrack));	//Allocate memory

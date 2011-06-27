@@ -333,7 +333,6 @@ EOF_SONG * eof_import_chart(const char * fn)
 				b = sp->beats - 1;
 			}
 			eof_song_add_text_event(sp, b, current_event->text, 0, 0);
-//			sp->beat[b]->flags |= EOF_BEAT_FLAG_EVENTS;	//This is now set in eof_song_add_text_event()
 			current_event = current_event->next;
 		}
 

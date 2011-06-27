@@ -283,12 +283,6 @@ void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 	if(next_anchor >= 0)
 	{
 		beats = 0;
-		/* count beats */
-/*		for(i = cbeat; i < next_anchor; i++)
-		{
-			beats++;
-		}
-*/
 		if(cbeat < next_anchor)
 			beats=next_anchor - cbeat;	//The number of beats between the specified beat and the next anchor
 
