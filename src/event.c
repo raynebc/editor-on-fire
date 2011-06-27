@@ -87,27 +87,6 @@ void eof_song_delete_text_event(EOF_SONG * sp, unsigned long event)
 	}
 }
 
-/*	//Logic that was discontinued
-void eof_song_delete_text_event_p(EOF_SONG *sp, EOF_TEXT_EVENT *ptr)
-{
- 	eof_log("eof_song_delete_text_event_p() entered", 1);
-
-	unsigned long ctr;
-
-	if(sp && ptr)
-	{
-		for(ctr = 0; ctr < sp->text_events; ctr++)
-		{	//For each event
-			if(ptr == sp->text_event[ctr])
-			{	//If this is the event that was specified for deletion
-				eof_song_delete_text_event(sp, ctr);	//Delete it and return
-				return;
-			}
-		}
-	}
-}
-*/
-
 int eof_song_resize_text_events(EOF_SONG * sp, unsigned long events)
 {
 	unsigned long i;

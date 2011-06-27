@@ -445,7 +445,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	int channel, velocity, bitmask, slidenote = 0, scale, chord, isslash, bassnote;	//Used for pro guitar export
 	EOF_PHRASE_SECTION *sectionptr;
 	char *lastname = NULL, *currentname = NULL, nochord[]="NC", chordname[100]="";
-//	char match = 0;
 	char phase_shift_sysex_phrase[8] = {'P','S','\0',0,0,0,0,0xF7};	//This is used to write Sysex messages for features supported in Phase Shift (ie. open strum bass)
 
 	if(!sp | !fn)
@@ -553,23 +552,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 //Detect whether Pro drum notation is being used
 //Pro drum notation is that if a green, yellow or blue drum note is NOT to be marked as a cymbal,
 //it must be marked with the appropriate MIDI note, otherwise the note defaults as a cymbal
-/*			prodrums = 0;
-			if(sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-			{	//If this is a drum track
-				for(i = 0; i < eof_get_track_size(sp, j); i++)
-				{	//For each note in the track
-					note = eof_get_note_note(sp, j, i);
-					noteflags = eof_get_note_flags(sp, j, i);
-					if(	((note & 4) && ((noteflags & EOF_NOTE_FLAG_Y_CYMBAL))) ||
-						((note & 8) && ((noteflags & EOF_NOTE_FLAG_B_CYMBAL))) ||
-						((note & 16) && ((noteflags & EOF_NOTE_FLAG_G_CYMBAL))))
-					{	//If this note contains a yellow, blue or purple (green in Rock Band) drum marked with pro drum notation
-						prodrums = 1;
-						break;
-					}
-				}
-			}
-*/
 			prodrums = eof_track_has_cymbals(sp, j);
 
 			/* write the MTrk MIDI data to a temp file
@@ -865,17 +847,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				WriteVarLen(ustrlen(sp->track[j]->name), fp);
 				pack_fwrite(sp->track[j]->name, ustrlen(sp->track[j]->name), fp);
 
-/*				#ifdef EOF_RBN_COMPATIBILITY	//Added before track loop
-				//RBN requires that drum mix events have been defined
-				if(j == EOF_TRACK_DRUM)
-				{
-					eof_write_text_event(0, "[mix 0 drums0]", fp);
-					eof_write_text_event(0, "[mix 1 drums0]", fp);
-					eof_write_text_event(0, "[mix 2 drums0]", fp);
-					eof_write_text_event(0, "[mix 3 drums0]", fp);
-				}
-				#endif
-*/
 				/* add MIDI events */
 				lastdelta = 0;
 				for(i = 0; i < eof_midi_events; i++)
@@ -1199,11 +1170,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 					deltalength = 1;
 				}
-//For now, prefer RB3's system, where "NC" isn't automatically written for un-named chords
-//				if((currentname == NULL) || (currentname[0] == '\0'))		//If this note has no name
-//					currentname = nochord;	//Refer to its name as "NC"
-//				if(((lastname == nochord) && (currentname != nochord)) || ((lastname != nochord) && (currentname == nochord)) || (ustrcmp(lastname, currentname) != 0))
-//				{	//If the previous note wasn't named and this one is, or the previous note was named and this one isn't, or the previous and current notes have different names
 				if(currentname && (currentname[0] != '\0'))
 				{	//If this note has a name
 					if((type >= EOF_NOTE_SUPAEASY) && (type <= EOF_NOTE_AMAZING))
@@ -1557,48 +1523,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 
 /* make events track */
-/*	#ifdef EOF_RBN_COMPATIBILITY
-	//Magma requires some default track events to be written, even if there are no text events defined
-	EOF_TEXT_EVENT *temp_event1 = NULL, *temp_event2 = NULL;	//Store the pointers to the temporary music_start and music_end events so they can be easily deleted after being written to MIDI
-
-	if(sp->beats > 3)
-	{	//Only add these if there are at least 4 beats
-		//Check the existing events to see if a [music_start] event is defined
-		match = 0;
-		for(i = 0; i < sp->text_events; i++)
-		{
-			if(!ustrcmp(sp->text_event[i]->text, "[music_start]"))
-			{
-				match = 1;
-			}
-		}
-		if(!match)
-		{	//If there wasn't one, add one
-			temp_event1 = eof_song_add_text_event(sp, 2, "[music_start]", 0, 1);				//Add the [music_start] temporary event two beats into the song (at the third beat)
-		}
-
-		//Check the existing events to see if a [music_end] event is defined
-		match = 0;
-		for(i = 0; i < sp->text_events; i++)
-		{
-			if(!ustrcmp(sp->text_event[i]->text, "[music_end]"))
-			{
-				match = 1;
-			}
-		}
-		if(!match)
-		{	//If there wasn't one, add one
-			temp_event2 = eof_song_add_text_event(sp, sp->beats-1, "[music_end]", 0, 1);		//Add the [music_end] temporary event on the last beat
-		}
-	}
-	#else
-	//Otherwise only write an EVENTS track if the user manually defined text events
-	if(sp->text_events)
-	{
-	#endif
-//		eof_sort_events();	//Sorted earlier
-*/
-
 	#ifndef EOF_RBN_COMPATIBILITY
 	if(sp->text_events)
 	{
@@ -1637,27 +1561,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 		#ifdef EOF_RBN_COMPATIBILITY
 		//Magma requires that the [end] event is the last MIDI event in the track, so it will be written 1ms after the end of the audio
-		//Check the existing events to see if a [music_end] event is defined
-/*		match = 0;
-		for(i = 0; i < sp->text_events; i++)
-		{
-			if(!ustrcmp(sp->text_event[i]->text, "[end]"))
-			{
-				match = 1;
-			}
-		}
-		if(!match)
-		{	//If there wasn't one, add one
-			delta = eof_ConvertToDeltaTime(eof_music_length+1,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
-			eof_write_text_event(delta - lastdelta, "[end]", fp);
-			lastdelta = delta;					//Store this event's absolute delta time
-		}
-
-		//Delete the temporary music_start and music_end events
-		eof_song_delete_text_event_p(sp, temp_event1);
-		eof_song_delete_text_event_p(sp, temp_event2);
-*/
-
+		//Check the existing events to see if such an event is already defined
 		if(!eof_song_contains_event(sp, "[end]"))
 		{	//If the user did not define the end event, manually write it
 			delta = eof_ConvertToDeltaTime(eof_music_length+1,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);

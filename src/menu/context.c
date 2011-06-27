@@ -86,18 +86,6 @@ void eof_prepare_context_menu(void)
 			eof_right_click_menu_note[7].flags = D_DISABLED;
 		}
 
-//The menu items in question below are NULL rows, so they should never be available to be activated
-/*		if(selected)
-		{
-			eof_right_click_menu_normal[6].flags = 0;
-			eof_right_click_menu_note[8].flags = 0;
-		}
-		else
-		{
-			eof_right_click_menu_normal[6].flags = D_DISABLED;
-			eof_right_click_menu_note[8].flags = D_DISABLED;
-		}
-*/
 		eof_right_click_menu_normal[6].flags = D_DISABLED;
 		eof_right_click_menu_note[8].flags = D_DISABLED;
 	}

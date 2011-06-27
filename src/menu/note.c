@@ -1499,7 +1499,6 @@ static void eof_split_lyric(int lyric)
 {
 	unsigned long i, l, c = 0, lastc;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-//	int first = 1;
 	int piece = 1;
 	int pieces = 1;
 	char * token = NULL;
@@ -1541,12 +1540,8 @@ static void eof_split_lyric(int lyric)
 		token = strtok(NULL, " ");
 		if(token)
 		{
-//			if(!first)
-			{
-				new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, eof_song->vocal_track[tracknum]->lyric[lyric]->note, eof_song->vocal_track[tracknum]->lyric[lyric]->pos + (l / pieces) * piece, l / pieces - 20, 0, token);
-				piece++;
-			}
-//			first = 0;
+			new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, eof_song->vocal_track[tracknum]->lyric[lyric]->note, eof_song->vocal_track[tracknum]->lyric[lyric]->pos + (l / pieces) * piece, l / pieces - 20, 0, token);
+			piece++;
 		}
 	} while(token != NULL);
 	eof_track_sort_notes(eof_song, eof_selected_track);

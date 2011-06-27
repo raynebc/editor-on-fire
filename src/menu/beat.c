@@ -813,7 +813,6 @@ char * eof_events_list(int index, int * size)
 	int i;
 	int ecount = 0;
 	char trackname[20];
-//	char * etextpointer[32] = {NULL};
 
 	for(i = 0; i < eof_song->text_events; i++)
 	{
@@ -821,7 +820,6 @@ char * eof_events_list(int index, int * size)
 		{
 			if(ecount < EOF_MAX_TEXT_EVENTS)
 			{
-//				etextpointer[ecount] = eof_song->text_event[i]->text;
 				if((eof_song->text_event[i]->track != 0) && (eof_song->text_event[i]->track < eof_song->tracks))
 				{	//If this is a track specific event
 					snprintf(trackname, 20, "(%s) ", eof_song->track[eof_song->text_event[i]->track]->name);
@@ -854,7 +852,6 @@ char * eof_events_list(int index, int * size)
 		}
 		default:
 		{
-//			return etextpointer[index];
 			return eof_event_list_text[index];
 		}
 	}
@@ -915,7 +912,6 @@ int eof_events_dialog_add(DIALOG * d)
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			eof_song_add_text_event(eof_song, eof_selected_beat, eof_etext, track, 0);
 			eof_sort_events(eof_song);
-//			eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_EVENTS;	//This is now set in eof_song_add_text_event()
 		}
 	}
 	dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
@@ -1034,10 +1030,6 @@ int eof_events_dialog_delete(DIALOG * d)
 
 				/* remove flag if no more events tied to this beat */
 				c = eof_events_dialog_delete_events_count();
-//				if(c <= 0)	//eof_song_delete_text_event() now rebuilds the event flags
-//				{
-//					eof_song->beat[eof_selected_beat]->flags &= (~EOF_BEAT_FLAG_EVENTS);	//Clear the event flag
-//				}
 				if((eof_events_dialog[1].d1 >= c) && (c > 0))
 				{
 					eof_events_dialog[1].d1--;
