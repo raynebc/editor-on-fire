@@ -10,6 +10,7 @@
 #include "../midi.h"
 #include "../dialog/proc.h"
 #include "beat.h"
+#include "song.h"
 
 #ifdef USEMEMWATCH
 #include "../memwatch.h"
@@ -75,14 +76,16 @@ DIALOG eof_all_events_dialog[] =
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
+char eof_events_add_dialog_string[100] = {0};
 DIALOG eof_events_add_dialog[] =
 {
-   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc,    0,  48,  204 + 110, 106, 2,   23,  0,    0,      0,   0,   "Event Name",               NULL, NULL },
-   { d_agup_text_proc,   12,  84,  64,  8,  2,   23,  0,    0,      0,   0,   "Text:",         NULL, NULL },
-   { d_agup_edit_proc,   48, 80,  144 + 110,  20,  2,   23,  0,    0,      255,   0,   eof_etext,           NULL, NULL },
-   { d_agup_button_proc, 12 + 55,  112, 84,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "OK",               NULL, NULL },
-   { d_agup_button_proc, 108 + 55, 112, 78,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+   /* (proc)            (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
+   { d_agup_window_proc,0,  48,  314, 126, 2,   23,  0,    0,      0,   0,   "Event Name",  NULL, NULL },
+   { d_agup_text_proc,  12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",       NULL, NULL },
+   { d_agup_edit_proc,  48, 80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,     NULL, NULL },
+   { d_agup_check_proc, 12, 108, 225, 16,  0,   0,   0,    0,      1,   0,   eof_events_add_dialog_string, NULL, NULL },
+   { d_agup_button_proc,67, 132, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",          NULL, NULL },
+   { d_agup_button_proc,163,132, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",      NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -739,13 +742,15 @@ int eof_menu_beat_calculate_bpm(void)
 
 int eof_menu_beat_all_events(void)
 {
+	unsigned long track;
+
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_all_events_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_all_events_dialog);
 	eof_all_events_dialog[1].d1 = 0;
 	if(eof_popup_dialog(eof_all_events_dialog, 0) == 2)
-	{
+	{	//User clicked Find
 		if(eof_all_events_dialog[1].d1 < eof_song->text_events)
 		{
 			alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->beat[eof_song->text_event[eof_all_events_dialog[1].d1]->beat]->pos + eof_av_delay);
@@ -753,6 +758,11 @@ int eof_menu_beat_all_events(void)
 			eof_music_actual_pos = eof_music_pos;
 			eof_mix_seek(eof_music_pos);
 			eof_selected_beat = eof_song->text_event[eof_all_events_dialog[1].d1]->beat;
+			track = eof_song->text_event[eof_all_events_dialog[1].d1]->track;
+			if((track != 0) && (track < eof_song->tracks))
+			{	//If this is a track-specific event
+				eof_menu_track_selected_track_number(track);	//Change to that track
+			}
 			eof_reset_lyric_preview_lines();
 		}
 	}
@@ -802,15 +812,25 @@ char * eof_events_list(int index, int * size)
 {
 	int i;
 	int ecount = 0;
-	char * etextpointer[32] = {NULL};
+	char trackname[20];
+//	char * etextpointer[32] = {NULL};
 
 	for(i = 0; i < eof_song->text_events; i++)
 	{
 		if(eof_song->text_event[i]->beat == eof_selected_beat)
 		{
-			if(ecount < 32)
+			if(ecount < EOF_MAX_TEXT_EVENTS)
 			{
-				etextpointer[ecount] = eof_song->text_event[i]->text;
+//				etextpointer[ecount] = eof_song->text_event[i]->text;
+				if((eof_song->text_event[i]->track != 0) && (eof_song->text_event[i]->track < eof_song->tracks))
+				{	//If this is a track specific event
+					snprintf(trackname, 20, "(%s) ", eof_song->track[eof_song->text_event[i]->track]->name);
+				}
+				else
+				{
+					trackname[0] = '\0';	//Empty the string
+				}
+				snprintf(eof_event_list_text[ecount], 256, "%s%s", trackname, eof_song->text_event[i]->text);
 				ecount++;
 			}
 		}
@@ -821,9 +841,9 @@ char * eof_events_list(int index, int * size)
 		{
 			*size = ecount;
 			if(ecount > 0)
-			{
-				eof_events_dialog[3].flags = 0;
-				eof_events_dialog[4].flags = 0;
+			{	//If there is at least one event at this beat
+				eof_events_dialog[3].flags = 0;	//Enable the Edit button
+				eof_events_dialog[4].flags = 0;	//Enable the Delete button
 			}
 			else
 			{
@@ -834,7 +854,8 @@ char * eof_events_list(int index, int * size)
 		}
 		default:
 		{
-			return etextpointer[index];
+//			return etextpointer[index];
+			return eof_event_list_text[index];
 		}
 	}
 	return NULL;
@@ -842,6 +863,7 @@ char * eof_events_list(int index, int * size)
 
 char * eof_events_list_all(int index, int * size)
 {
+	char trackname[20];
 	switch(index)
 	{
 		case -1:
@@ -855,7 +877,15 @@ char * eof_events_list_all(int index, int * size)
 			{	//Something bad happened, repair the event
 				eof_song->text_event[index]->beat = eof_song->beats - 1;	//Reset the text event to be at the last beat marker
 			}
-			sprintf(eof_event_list_text[index], "(%02lu:%02lu.%02lu) %s", eof_song->beat[eof_song->text_event[index]->beat]->pos / 60000, (eof_song->beat[eof_song->text_event[index]->beat]->pos / 1000) % 60, (eof_song->beat[eof_song->text_event[index]->beat]->pos / 10) % 100, eof_song->text_event[index]->text);
+			if((eof_song->text_event[index]->track != 0) && (eof_song->text_event[index]->track < eof_song->tracks))
+			{	//If this is a track specific event
+				snprintf(trackname, 20, " %s", eof_song->track[eof_song->text_event[index]->track]->name);
+			}
+			else
+			{
+				trackname[0] = '\0';	//Empty the string
+			}
+			snprintf(eof_event_list_text[index], 256, "(%02lu:%02lu.%02lu%s) %s", eof_song->beat[eof_song->text_event[index]->beat]->pos / 60000, (eof_song->beat[eof_song->text_event[index]->beat]->pos / 1000) % 60, (eof_song->beat[eof_song->text_event[index]->beat]->pos / 10) % 100, trackname, eof_song->text_event[index]->text);
 			return eof_event_list_text[index];
 		}
 	}
@@ -865,20 +895,27 @@ char * eof_events_list_all(int index, int * size)
 int eof_events_dialog_add(DIALOG * d)
 {
 	int i;
+	unsigned long track = 0;
 
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_events_add_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_events_add_dialog);
 	ustrcpy(eof_etext, "");
-	if(eof_popup_dialog(eof_events_add_dialog, 2) == 3)
-	{
+	snprintf(eof_events_add_dialog_string, sizeof(eof_events_add_dialog_string), "Specific to %s", eof_song->track[eof_selected_track]->name);
+	eof_events_add_dialog[3].flags = 0;	//By default, this is not a track specific event
+	if(eof_popup_dialog(eof_events_add_dialog, 2) == 4)
+	{	//User clicked OK
 		if((ustrlen(eof_etext) > 0) && eof_check_string(eof_etext))
-		{
+		{	//User entered text that isn't all space characters
+			if(eof_events_add_dialog[3].flags & D_SELECTED)
+			{	//User opted to make this a track specific event
+				track = eof_selected_track;
+			}
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			eof_add_text_event(eof_song, eof_selected_beat, eof_etext);
-			eof_sort_events();
-			eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_EVENTS;
+			eof_song_add_text_event(eof_song, eof_selected_beat, eof_etext, track, 0);
+			eof_sort_events(eof_song);
+//			eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_EVENTS;	//This is now set in eof_song_add_text_event()
 		}
 	}
 	dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
@@ -893,6 +930,7 @@ int eof_events_dialog_edit(DIALOG * d)
 	int i;
 	short ecount = 0;
 	short event = -1;
+	unsigned long track = 0;
 
 	eof_cursor_visible = 0;
 	eof_render();
@@ -904,7 +942,6 @@ int eof_events_dialog_edit(DIALOG * d)
 	{
 		if(eof_song->text_event[i]->beat == eof_selected_beat)
 		{
-
 			/* if we've reached the item that is selected, delete it */
 			if(eof_events_dialog[1].d1 == ecount)
 			{
@@ -920,14 +957,36 @@ int eof_events_dialog_edit(DIALOG * d)
 		}
 	}
 
+	if((eof_song->text_event[event]->track != 0) && (eof_song->text_event[event]->track != eof_selected_track))
+	{	//If this is a track specific event, and it doesn't belong to the active track
+		dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
+		eof_cursor_visible = 1;
+		eof_pen_visible = 1;
+		eof_show_mouse(screen);
+		return D_O_K;	//Don't allow it to be edited here
+	}
+	snprintf(eof_events_add_dialog_string, sizeof(eof_events_add_dialog_string), "Specific to %s", eof_song->track[eof_selected_track]->name);
+	if(eof_song->text_event[event]->track == eof_selected_track)
+	{	//If this event is specific to this track
+		eof_events_add_dialog[3].flags = D_SELECTED;	//Set the checkbox specifying the event is track specific
+	}
+	else
+	{	//Otherwise clear the checkbox
+		eof_events_add_dialog[3].flags = 0;
+	}
 
 	ustrcpy(eof_etext, eof_song->text_event[event]->text);
-	if(eof_popup_dialog(eof_events_add_dialog, 2) == 3)
-	{
+	if(eof_popup_dialog(eof_events_add_dialog, 2) == 4)
+	{	//User clicked OK
 		if((ustrlen(eof_etext) > 0) && eof_check_string(eof_etext))
-		{
+		{	//User entered text that isn't all space characters
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			ustrcpy(eof_song->text_event[event]->text, eof_etext);
+			if(eof_events_add_dialog[3].flags & D_SELECTED)
+			{	//User opted to make this a track specific event
+				track = eof_selected_track;
+			}
+			eof_song->text_event[event]->track = track;
 		}
 	}
 	dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
@@ -966,21 +1025,19 @@ int eof_events_dialog_delete(DIALOG * d)
 	{
 		if(eof_song->text_event[i]->beat == eof_selected_beat)
 		{
-
 			/* if we've reached the item that is selected, delete it */
 			if(eof_events_dialog[1].d1 == ecount)
 			{
-
 				/* remove the text event and exit */
 				eof_song_delete_text_event(eof_song, i);
-				eof_sort_events();
+				eof_sort_events(eof_song);
 
 				/* remove flag if no more events tied to this beat */
 				c = eof_events_dialog_delete_events_count();
-				if(c <= 0)
-				{
-					eof_song->beat[eof_selected_beat]->flags &= (~EOF_BEAT_FLAG_EVENTS);	//Clear the event flag
-				}
+//				if(c <= 0)	//eof_song_delete_text_event() now rebuilds the event flags
+//				{
+//					eof_song->beat[eof_selected_beat]->flags &= (~EOF_BEAT_FLAG_EVENTS);	//Clear the event flag
+//				}
 				if((eof_events_dialog[1].d1 >= c) && (c > 0))
 				{
 					eof_events_dialog[1].d1--;

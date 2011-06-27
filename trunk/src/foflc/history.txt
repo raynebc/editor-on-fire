@@ -1,3 +1,11 @@
+Changelog: 2.36 to 2.37
+	Corrected memory leaks in the EOF integration.
+	Corrected Vrhythm import for EOF integration.
+	Corrected a crash that could occur during KAR import.
+	Fixed a memory leak that would occur when using the id3tag parameter to display a file's ID3 tag.
+	Fixed a memory leak that would occur if using the Track Event Parser to break upon reaching a meta event.
+	Fixed a memory leak that would occur if only using the program to detect a file's lyric type.
+
 Changelog: 2.35 to 2.36
 	Improved debug logging for MIDI import
 	Corrected the handling of Time Signature changes that weren't at the start of the imported MIDI

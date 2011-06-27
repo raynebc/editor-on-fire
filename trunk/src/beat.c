@@ -317,3 +317,76 @@ void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 		}
 	}
 }
+
+EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp)
+{
+	if((sp == NULL) || (sp->beat == NULL))
+		return NULL;
+
+	if(sp->beats < EOF_MAX_BEATS)
+	{	//If the maximum number of beats hasn't already been defined
+		sp->beat[sp->beats] = malloc(sizeof(EOF_BEAT_MARKER));
+		if(sp->beat[sp->beats] != NULL)
+		{
+			sp->beat[sp->beats]->pos = 0;
+			sp->beat[sp->beats]->ppqn = 500000;
+			sp->beat[sp->beats]->flags = 0;
+			sp->beat[sp->beats]->midi_pos = 0;
+			sp->beat[sp->beats]->fpos = 0.0;
+			sp->beats++;
+			return sp->beat[sp->beats - 1];
+		}
+	}
+
+	return NULL;
+}
+
+void eof_song_delete_beat(EOF_SONG * sp, unsigned long beat)
+{
+ 	eof_log("eof_song_delete_beat() entered", 1);
+
+	unsigned long i;
+
+	if(sp)
+	{
+		free(sp->beat[beat]);
+		for(i = beat; i < sp->beats - 1; i++)
+		{
+			sp->beat[i] = sp->beat[i + 1];
+		}
+		sp->beats--;
+	}
+}
+
+int eof_song_resize_beats(EOF_SONG * sp, unsigned long beats)
+{
+	unsigned long i;
+	unsigned long oldbeats;
+
+	if(!sp)
+	{
+		return 0;
+	}
+
+	oldbeats = sp->beats;
+	if(beats > oldbeats)
+	{
+		for(i = oldbeats; i < beats; i++)
+		{
+			if(!eof_song_add_beat(sp))
+			{
+				return 0;	//Return failure
+			}
+		}
+	}
+	else if(beats < oldbeats)
+	{
+		for(i = beats; i < oldbeats; i++)
+		{
+			free(sp->beat[i]);
+			sp->beats--;
+		}
+	}
+
+	return 1;	//Return success
+}

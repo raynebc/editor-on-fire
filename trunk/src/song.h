@@ -364,6 +364,8 @@ typedef struct
 {
 	char text[256];
 	unsigned long beat;
+	unsigned long track;	//The track this event is tied to, or 0 if it goes into the EVENTS track (such as a generic section marker)
+	char is_temporary;		//This is nonzero if the event is considered temporary (doesn't trigger undo/redo when added/deleted), required RBN events are added this way during save
 
 } EOF_TEXT_EVENT;
 
@@ -542,17 +544,6 @@ int eof_detect_string_gem_conflicts(EOF_PRO_GUITAR_TRACK *tp, unsigned long newn
 	//0 is returned if there are no conflicts
 	//-1 is returned on error
 
-EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp);	//Allocates, initializes and stores a new EOF_BEAT_MARKER structure into the beats array.  Returns the newly allocated structure or NULL upon error
-void eof_song_delete_beat(EOF_SONG * sp, unsigned long beat);	//Removes and frees the specified beat from the beats array.  All beats after the deleted beat are moved back in the array one position
-int eof_song_resize_beats(EOF_SONG * sp, unsigned long beats);	//Grows or shrinks the beats array to fit the specified number of beats by allocating/freeing EOF_BEAT_MARKER structures.  Returns zero on error
-
-EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, unsigned long beat, char * text);	//Allocates, initializes and stores a new EOF_TEXT_EVENT structure into the text_event array.  Returns the newly allocated structure or NULL upon error
-void eof_song_delete_text_event(EOF_SONG * sp, unsigned long event);	//Removes and frees the specified text event from the text_events array.  All text events after the deleted text event are moved back in the array one position
-void eof_song_move_text_events(EOF_SONG * sp, unsigned long beat, int offset);	//Displaces all beats starting with the specified beat by the given additive offset.  Each affected beat's flags are cleared except for the anchor and text event(s) present flags
-int eof_song_resize_text_events(EOF_SONG * sp, unsigned long events);	//Grows or shrinks the text events array to fit the specified number of notes by allocating/freeing EOF_LYRIC structures.  Return zero on error
-void eof_sort_events(void);	//Performs a quicksort of the events array
-int eof_song_qsort_events(const void * e1, const void * e2);	//The comparitor function used to quicksort the events array
-
 void eof_sort_notes(EOF_SONG *sp);	//Sorts the notes in all tracks
 void eof_fixup_notes(EOF_SONG *sp);	//Performs cleanup of the note selection, beats and all tracks
 void eof_detect_difficulties(EOF_SONG * sp);	//Sets the populated status by prefixing each populated difficulty name in the current track (stored in eof_note_type_name[] and eof_vocal_tab_name[]) with an asterisk
@@ -620,6 +611,10 @@ int eof_get_pro_guitar_note_fret_string(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 	//Writes a string representation of the specified pro guitar/bass note from lowest to highest gauge string into pro_guitar_string[] which must be at least
 	//3 * # of strings number of bytes long in order to store the maximum length string
 	//Returns 0 on error or 1 on success
-inline int eof_five_lane_drums_enabled(void);	//A simple function returning nonzero if PART DRUM has the fifth lane enabled
+inline int eof_five_lane_drums_enabled(void);
+	//A simple function returning nonzero if PART DRUM has the fifth lane enabled
+
+char eof_track_has_cymbals(EOF_SONG *sp, unsigned long track);
+	//Returns nonzero if the specified track is a drum track that contains notes marked as cymbals
 
 #endif

@@ -401,7 +401,9 @@ void eof_all_midi_notes_off(void);	//Sends a channel mode message to turn off al
 void eof_stop_midi(void);	//To be called whenever playback stops, turning of all playing MIDI notes and destroying the MIDI queue
 void eof_exit(void);		//Formally exits the program, releasing all data structures allocated
 
-void eof_init_after_load(void);	//Initializes variables and cleans up notes, should be used after loading or creating a chart
+void eof_init_after_load(char initaftersavestate);
+	//Initializes variables and cleans up notes, should be used after loading or creating a chart
+	//If initaftersavestate is zero (as should be used when loading/importing a chart/MIDI/etc), more variables are forcibly initialized
 void eof_cleanup_beat_flags(EOF_SONG *sp);	//Repairs the text event and anchor statuses for beats in the specified chart
 
 void eof_scale_fretboard(unsigned long numlanes);

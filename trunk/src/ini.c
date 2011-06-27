@@ -135,6 +135,12 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 		}
 	}
 
+	/* check for use of cymbal notation */
+	if(eof_track_has_cymbals(sp, EOF_TRACK_DRUM))
+	{	//If the drum track has any notes marked as cymbals
+		ustrcat(ini_string, "\r\npro_drums = True");	//Write the pro drum tag, which indicates notes default as cymbals unless marked as toms (used in Phase Shift)
+	}
+
 	/* write tuning tags */
 	if(eof_get_track_size(sp, EOF_TRACK_PRO_GUITAR))
 	{	//If there is one or more notes in the pro guitar track

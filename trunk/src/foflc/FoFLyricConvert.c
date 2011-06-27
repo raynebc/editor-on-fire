@@ -666,6 +666,7 @@ int main(int argc, char *argv[])
 				Input_failed(0xFF,NULL);
 
 			DisplayID3Tag(argv[ctr+1]);
+			free(backuplyric);
 			return 0;
 		}
 
@@ -736,6 +737,7 @@ int main(int argc, char *argv[])
 		printf("\nDetected lyric format(s) of file \"%s\":\n",detectfile);
 		EnumerateFormatDetectionList(detectionlist);
 		DestroyLyricFormatList(detectionlist);
+		free(backuplyric);
 		return 0;	//Return successful program completion
 	}
 
@@ -1261,6 +1263,8 @@ void DisplayHelp(void)
 	puts(" omits the Attached Picture and Date ID3 frames, if they exist in the source");
 	puts(" MP3.  The artist, title and/or album frames are omitted from the source MP3 if");
 	puts(" defined in the input file.  The SYLT frame is always omitted for ID3 export.");
+	puts("-The nofstyle parameter prevents the addition of the pound character (#)");
+	puts(" freestyle indicator when exporting freestyle/pitchless lyrics to MIDI format.");
 	puts("\n\tNOTES:");
 	puts("* Input (including the source midi) and output files may not be the same");
 	puts("* Filenames may not begin with a hyphen (ie. \"-notes.mid\" is not accepted)");

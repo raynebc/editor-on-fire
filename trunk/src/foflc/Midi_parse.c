@@ -682,7 +682,11 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 				{	//This is a SysEx event
 //If this is the meta event we intend to return from function upon reading, do so now
 					if((vars.m_eventtype == break_on) && (ismeta == 1))
+					{
+						if(vars.buffer != NULL)		//If we allocated memory to hold data
+							free(vars.buffer);		//release it before moving to the next event
 						return 0;	//Return with found status
+					}
 
 //Read the variable length "length" parameter
 					if(ReadVarLength(inf,&vars.length) == 0)

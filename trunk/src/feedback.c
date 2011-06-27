@@ -607,12 +607,6 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 	static struct dbText emptytext;
 	static struct dbNote emptynote;
 
-//Initialize chart structure
-	chart=(struct FeedbackChart *)malloc_err(sizeof(struct FeedbackChart));	//Allocate memory
-	*chart=emptychart;		//Reliably set all member variables to 0/NULL
-	chart->resolution=192;	//Default this to 192
-//	chart->linesprocessed=chart->tracksloaded=0;
-
 //Open file in text mode
 	if(!filename)
 	{
@@ -621,11 +615,16 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 	inf=fopen(filename,"rt");
 	if(inf == NULL)
 	{
-		DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 		if(error)
 			*error=1;
 		return NULL;
 	}
+
+//Initialize chart structure
+	chart=(struct FeedbackChart *)malloc_err(sizeof(struct FeedbackChart));	//Allocate memory
+	*chart=emptychart;		//Reliably set all member variables to 0/NULL
+	chart->resolution=192;	//Default this to 192
+//	chart->linesprocessed=chart->tracksloaded=0;
 
 //Allocate memory buffers large enough to hold any line in this file
 	maxlinelength=FindLongestLineLength(inf,1);

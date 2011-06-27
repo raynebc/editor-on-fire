@@ -2,6 +2,7 @@
 #include "song.h"
 #include "beat.h"
 #include "chart_import.h"
+#include "event.h"
 #include "feedback.h"
 #include "midi.h"	//For eof_apply_ts()
 #include "menu/beat.h"
@@ -331,8 +332,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 			{
 				b = sp->beats - 1;
 			}
-			eof_song_add_text_event(sp, b, current_event->text);
-			sp->beat[b]->flags |= EOF_BEAT_FLAG_EVENTS;
+			eof_song_add_text_event(sp, b, current_event->text, 0, 0);
+//			sp->beat[b]->flags |= EOF_BEAT_FLAG_EVENTS;	//This is now set in eof_song_add_text_event()
 			current_event = current_event->next;
 		}
 
