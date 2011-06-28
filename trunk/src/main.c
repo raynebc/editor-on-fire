@@ -87,6 +87,7 @@ int         eof_inverted_notes = 0;
 int         eof_lefty_mode = 0;
 int         eof_note_auto_adjust = 1;
 int         eof_use_ts = 0;	//By default, do not import/export TS events in MIDI/Feedback files
+int			eof_hide_drum_tails = 0;
 int         eof_smooth_pos = 1;
 int         eof_input_mode = EOF_INPUT_PIANO_ROLL;
 int         eof_windowed = 1;
@@ -2444,9 +2445,10 @@ void eof_render_3d_window(void)
 	unsigned long i;
 	short numsolos = 0;					//Used to abstract the solo sections
 	unsigned long numnotes;				//Used to abstract the notes
-	unsigned long numlanes,numlanes2;	//The number of fretboard lanes that will be rendered
+	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
 	unsigned long tracknum;
 	unsigned char coloroffset = 0;		//Used to increase the color used to render drum roll phrases higher than normal since lane 1's color is not rendered for drum phrases
+	unsigned long firstlane = 0, lastlane;	//Used to track the first and last lanes that get track specific rendering (ie. drums don't render markers for lane 1, bass doesn't render markers for lane 6)
 
 	//Used to draw trill and tremolo sections:
 	unsigned long j, ctr, usedlanes, bitmask, numsections;
@@ -2454,16 +2456,17 @@ void eof_render_3d_window(void)
 	int colors[EOF_MAX_FRETS] = {makecol(170,255,170), makecol(255,156,156), makecol(255,255,224), makecol(156,156,255), makecol(255,156,255), makecol(255,170,128)};	//Lightened versions of the standard fret colors
 
 	clear_to_color(eof_window_3d->screen, eof_color_gray);
-	numlanes2 = numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
+	lastlane = numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	eof_set_3D_lane_positions(eof_selected_track);	//Update the xchart[] array
 	if(eof_selected_track == EOF_TRACK_BASS)
 	{	//Special case:  The bass track can use a sixth lane but its 3D representation still only draws 5 lanes
-		numlanes2 = numlanes = 5;
+		numlanes = 5;
+		lastlane = 4;	//Don't render trill/tremolo markers for the 6th lane (render for lanes 0 through 4)
 	}
 	if(eof_selected_track == EOF_TRACK_DRUM)
 	{
 		coloroffset = 1;	//The drum roll phrase will render starting with lane 2's color instead of lane 1's color, since lane 1 (bass drum) doesn't use a lane
-		numlanes2 = numlanes - 1;	//A drum track's 3D rendering uses 1 lane less because bass drum doesn't use a lane
+		firstlane = 1;		//Don't render drum roll/special drum roll markers for the first lane (0)
 	}
 
 	point[0] = ocd3d_project_x(20, 600);
@@ -2532,8 +2535,8 @@ void eof_render_3d_window(void)
 	/* render trill and tremolo sections */
 	if(eof_get_num_trills(eof_song, eof_selected_track) || eof_get_num_tremolos(eof_song, eof_selected_track))
 	{	//If this track has any trill or tremolo sections
-		unsigned long halflanewidth = (56.0 * (4.0 / (numlanes-1))) / 2;
-		unsigned long xoffset = 0;	//This will be used to offset the trill/tremolo lane fill as necessary to center the fill over that lane's gem
+		long halflanewidth = (56.0 * (4.0 / (numlanes-1))) / 2;
+		long xoffset = 0;	//This will be used to offset the trill/tremolo lane fill as necessary to center the fill over that lane's gem
 		if(eof_selected_track == EOF_TRACK_DRUM)
 		{
 			xoffset = halflanewidth;	//Drum gems render half a lane width further right (in between fret lines instead of centered over the lines)
@@ -2564,24 +2567,24 @@ void eof_render_3d_window(void)
 				{	//If the section exists
 					sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
 					sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
+					spz = sz < -100 ? -100 : sz;
+					spez = sez > 600 ? 600 : sez;
 					if((-100 <= sez) && (600 >= sz))
 					{	//If the section would render to the visible portion of the screen
 						usedlanes = eof_get_used_lanes(eof_selected_track, sectionptr->start_pos, sectionptr->end_pos, eof_note_type);	//Determine which lane(s) use this phrase
-						for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
-						{	//For each of the usable lanes
-							if((usedlanes & bitmask) && (ctr < numlanes2))
+						for(ctr = firstlane, bitmask = (1 << firstlane); ctr <= lastlane; ctr++, bitmask <<= 1)
+						{	//For each of the usable lanes (that are allowed to have lane specific marker rendering)
+							if(usedlanes & bitmask)
 							{	//If this lane is used in the phrase and the lane is active
-								spz = sz < -100 ? -100 : sz;
-								spez = sez > 600 ? 600 : sez;
-								point[0] = ocd3d_project_x(xchart[ctr] - halflanewidth + xoffset, spez);
+								point[0] = ocd3d_project_x(xchart[ctr] - halflanewidth - xoffset, spez);//	//Offset drum lanes by drawing them one lane further left than other tracks
 								point[1] = ocd3d_project_y(200, spez);
-								point[2] = ocd3d_project_x(xchart[ctr] + halflanewidth + xoffset, spez);
+								point[2] = ocd3d_project_x(xchart[ctr] + halflanewidth - xoffset, spez);
 								point[3] = point[1];
-								point[4] = ocd3d_project_x(xchart[ctr] + halflanewidth + xoffset, spz);
+								point[4] = ocd3d_project_x(xchart[ctr] + halflanewidth - xoffset, spz);
 								point[5] = ocd3d_project_y(200, spz);
-								point[6] = ocd3d_project_x(xchart[ctr] - halflanewidth + xoffset, spz);
+								point[6] = ocd3d_project_x(xchart[ctr] - halflanewidth - xoffset, spz);
 								point[7] = point[5];
-								polygon(eof_window_3d->screen, 4, point, colors[ctr + coloroffset]);
+								polygon(eof_window_3d->screen, 4, point, colors[ctr]);	///?
 							}
 						}
 					}

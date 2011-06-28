@@ -82,6 +82,11 @@ void eof_load_config(char * fn)
 	eof_input_mode = get_config_int("preferences", "input_mode", EOF_INPUT_PIANO_ROLL);
 	eof_ogg_setting = get_config_int("preferences", "ogg_quality", 1);
 	eof_use_ts = get_config_int("preferences", "use_ts", 0);
+	eof_hide_drum_tails = get_config_int("preferences", "hide_drum_tails", 0);
+	if(!eof_use_ts)
+	{
+		eof_log("\tTS import/export is currently disabled", 1);
+	}
 	eof_zoom = get_config_int("preferences", "eof_zoom", 10);
 	eof_selected_track = get_config_int("preferences", "eof_selected_track", EOF_TRACK_GUITAR);
 
@@ -169,6 +174,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "use_ts", eof_use_ts);
 	set_config_int("preferences", "eof_zoom", eof_zoom);
 	set_config_int("preferences", "eof_selected_track", eof_selected_track);
+	set_config_int("preferences", "hide_drum_tails", eof_hide_drum_tails);
 
 	/* write display settings */
 	set_config_int("display", "display_mode", eof_screen_layout.mode);

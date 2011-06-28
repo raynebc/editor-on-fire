@@ -323,10 +323,13 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 			else
 				dcol2 = dcol;			//Otherwise render with the expected dot color
 
-			rectfill(window->screen, x, y - eof_screen_layout.note_tail_size, x + notelength / eof_zoom, y + eof_screen_layout.note_tail_size, ncol);	//Draw the note tail
-			if(p)
-			{	//If this note is moused over
-				rect(window->screen, x, y - eof_screen_layout.note_tail_size, x + notelength / eof_zoom, y + eof_screen_layout.note_tail_size, pcol);	//Draw a border around the rectangle
+			if(!((eof_selected_track == EOF_TRACK_DRUM) && eof_hide_drum_tails))
+			{	//If this is not a drum track that will have tails hidden due to the "Hide drum note tails" user option,
+				rectfill(window->screen, x, y - eof_screen_layout.note_tail_size, x + notelength / eof_zoom, y + eof_screen_layout.note_tail_size, ncol);	//Draw the note tail
+				if(p)
+				{	//If this note is moused over
+					rect(window->screen, x, y - eof_screen_layout.note_tail_size, x + notelength / eof_zoom, y + eof_screen_layout.note_tail_size, pcol);	//Draw a border around the rectangle
+				}
 			}
 
 			//Render pro guitar note slide if applicable

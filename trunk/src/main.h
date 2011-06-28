@@ -226,6 +226,7 @@ extern int         eof_inverted_notes;
 extern int         eof_lefty_mode;
 extern int         eof_note_auto_adjust;
 extern int         eof_use_ts;	//Determines whether Time Signature events will be handled for MIDI/Feedback import/export
+extern int         eof_hide_drum_tails;
 extern int         eof_smooth_pos;
 extern int         eof_windowed;
 extern int         eof_anchor_all_beats;

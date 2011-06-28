@@ -530,11 +530,14 @@ void EOF_DEBUG_OUTPUT_CHORD_VARIATION_ARRAYS(void)
 	EOF_PRO_GUITAR_TRACK *tp;
 	int played_note;
 
+	if(!eof_song)
+		return;
+
 	get_executable_name(output_filename, 1024);	//Get the path of the EOF binary that is running
 	replace_filename(output_filename, output_filename, "eof_chords.txt", 1024);
 	fp = fopen(output_filename, "w");
 
-	if(eof_song && fp)
+	if(fp)
 	{
 		for(ctr = 0; ctr < 2; ctr++)
 		{	//For each of the pro guitar tracks
