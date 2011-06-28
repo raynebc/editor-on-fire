@@ -449,11 +449,13 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 	if(!sp | !fn)
 	{
+		eof_log("\tError saving:  Invalid parameters", 1);
 		return 0;	//Return failure
 	}
 	anchorlist=eof_build_tempo_list(sp);	//Create a linked list of all tempo changes in eof_song->beat[]
 	if(anchorlist == NULL)	//If the anchor list could not be created
 	{
+		eof_log("\tError saving:  Cannot build anchor list", 1);
 		return 0;	//Return failure
 	}
 
@@ -468,6 +470,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		tslist=eof_build_ts_list(anchorlist);	//Create a list of all TS changes in eof_song->beat[]
 		if(tslist == NULL)
 		{
+			eof_log("\tError saving:  Cannot build TS list", 1);
 			eof_destroy_tempo_list(anchorlist);
 			return 0;	//Return failure
 		}
@@ -492,21 +495,21 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		{	//If the user did not define the music_end event
 			eof_song_add_text_event(sp, sp->beats-1, "[music_end]", 0, 1);	//Add it as a temporary event on the last beat
 		}
-		if(!eof_song_contains_event(sp, "[mix 0 drums0]"))
-		{	//If the user did not define this drum mix event
-			eof_song_add_text_event(sp, 0, "[mix 0 drums0]", EOF_TRACK_DRUM, 1);	//Add it as a temporary event on the first beat of the drum track
+		if(!eof_song_contains_event_beginning_with(sp, "[mix 0"))
+		{	//If the user did not define an easy difficulty drum mix event
+			eof_song_add_text_event(sp, 0, "[mix 0 drums0]", EOF_TRACK_DRUM, 1);	//Add one as a temporary event on the first beat of the drum track
 		}
-		if(!eof_song_contains_event(sp, "[mix 1 drums0]"))
-		{	//If the user did not define this drum mix event
-			eof_song_add_text_event(sp, 0, "[mix 1 drums0]", EOF_TRACK_DRUM, 1);	//Add it as a temporary event on the first beat of the drum track
+		if(!eof_song_contains_event_beginning_with(sp, "[mix 1"))
+		{	//If the user did not define a medium difficulty drum mix event
+			eof_song_add_text_event(sp, 0, "[mix 1 drums0]", EOF_TRACK_DRUM, 1);	//Add one as a temporary event on the first beat of the drum track
 		}
-		if(!eof_song_contains_event(sp, "[mix 2 drums0]"))
-		{	//If the user did not define this drum mix event
-			eof_song_add_text_event(sp, 0, "[mix 2 drums0]", EOF_TRACK_DRUM, 1);	//Add it as a temporary event on the first beat of the drum track
+		if(!eof_song_contains_event_beginning_with(sp, "[mix 2"))
+		{	//If the user did not define a hard difficulty drum mix event
+			eof_song_add_text_event(sp, 0, "[mix 2 drums0]", EOF_TRACK_DRUM, 1);	//Add one as a temporary event on the first beat of the drum track
 		}
-		if(!eof_song_contains_event(sp, "[mix 3 drums0]"))
-		{	//If the user did not define this drum mix event
-			eof_song_add_text_event(sp, 0, "[mix 3 drums0]", EOF_TRACK_DRUM, 1);	//Add it as a temporary event on the first beat of the drum track
+		if(!eof_song_contains_event_beginning_with(sp, "[mix 3"))
+		{	//If the user did not define an expert difficulty drum mix event
+			eof_song_add_text_event(sp, 0, "[mix 3 drums0]", EOF_TRACK_DRUM, 1);	//Add one as a temporary event on the first beat of the drum track
 		}
 	}
 	#endif
@@ -837,6 +840,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				{
 					eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 					eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
+					eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
 					return 0;
 				}
 
@@ -978,6 +982,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				{
 					eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 					eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
+					eof_log("\tError saving:  Cannot allocate memory", 1);
 					return 0;			//Return failure
 				}
 				sp->vocal_track[tracknum]->lyric[i]->text[EOF_MAX_LYRIC_LENGTH] = '\0';	//Guarantee that the lyric string is terminated
@@ -1066,6 +1071,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			{
 				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 				eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
+				eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
 				return 0;
 			}
 
@@ -1379,6 +1385,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			{
 				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 				eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
+				eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
 				return 0;
 			}
 
@@ -1435,6 +1442,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	{
 		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 		eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
+		eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
 		return 0;
 	}
 
@@ -1533,6 +1541,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		{
 			eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 			eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
+			eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
 			return 0;
 		}
 
@@ -1602,6 +1611,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	{
 		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 		eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
+		eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
 		return 0;
 	}
 
@@ -1679,6 +1689,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	{
 		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 		eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
+		snprintf(eof_log_string, sizeof(eof_log_string), "\tError saving:  Cannot open ouput MIDI file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		eof_log(eof_log_string, 1);
 		return 0;
 	}
 

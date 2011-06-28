@@ -24,5 +24,7 @@ int eof_song_qsort_events(const void * e1, const void * e2);
 	//The comparitor function used to quicksort the events array
 char eof_song_contains_event(EOF_SONG *sp, const char *text);
 	//Returns nonzero if there is one or more text events that matches the specified string exactly (case sensitive)
+char eof_song_contains_event_beginning_with(EOF_SONG *sp, const char *text);
+	//Returns nonzero if there is one or more text events that begins with the specified string exactly (case sensitive substring)
 
 #endif

@@ -163,3 +163,20 @@ char eof_song_contains_event(EOF_SONG *sp, const char *text)
 	}
 	return 0;	//Return no match found
 }
+
+char eof_song_contains_event_beginning_with(EOF_SONG *sp, const char *text)
+{
+	unsigned long i;
+
+	if(sp && text)
+	{
+		for(i = 0; i < sp->text_events; i++)
+		{
+			if(ustrstr(sp->text_event[i]->text, text) == sp->text_event[i]->text)
+			{	//If a substring search returns the beginning of an existing text event as a match
+				return 1;	//Return match found
+			}
+		}
+	}
+	return 0;	//Return no match found
+}
