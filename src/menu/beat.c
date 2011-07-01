@@ -56,13 +56,13 @@ MENU eof_beat_menu[] =
 
 DIALOG eof_events_dialog[] =
 {
-   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc,    0,  48,  216 + 110 + 20, 160 + 72, 2,   23,  0,    0,      0,   0,   "Events",               NULL, NULL },
-   { d_agup_list_proc,   12, 84,  110 * 2 + 20,  69 * 2,  2,   23,  0,    0,      0,   0,   eof_events_list, NULL, NULL },
-   { d_agup_push_proc, 134 + 130,  84, 68,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Add",               NULL, eof_events_dialog_add },
-   { d_agup_push_proc, 134 + 130,  124, 68,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Edit",               NULL, eof_events_dialog_edit },
-   { d_agup_push_proc, 134 + 130,  164, 68,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Delete",               NULL, eof_events_dialog_delete },
-   { d_agup_button_proc, 12,  166 + 69, 190 + 30 + 20,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Done",               NULL, NULL },
+   /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
+   { d_agup_window_proc,0,   48,  406, 232, 2,   23,  0,    0,      0,   0,   "Events",       NULL, NULL },
+   { d_agup_list_proc,  12,  84,  300, 138, 2,   23,  0,    0,      0,   0,   eof_events_list,NULL, NULL },
+   { d_agup_push_proc,  324, 84,  68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Add",          NULL, eof_events_dialog_add },
+   { d_agup_push_proc,  324, 124, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Edit",         NULL, eof_events_dialog_edit },
+   { d_agup_push_proc,  324, 164, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete",       NULL, eof_events_dialog_delete },
+   { d_agup_button_proc,12,  235, 240, 28,  2,   23,  0,    D_EXIT, 0,   0,   "Done",         NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
