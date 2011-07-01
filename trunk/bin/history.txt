@@ -3,6 +3,9 @@ EOF Version History
 
 1.8:
 
+Added the option to hide drum note tails from the editor window
+(File>Preferences>Hide drum note tails).
+
 Added the ability to make text events track specific, which is useful
 for RBN authoring or adding features that require this capability
 (ie. disco flip events).
@@ -36,6 +39,9 @@ tempo and time signature changes and fixing an INI import related crash.
 Made various MIDI export improvements, including better Rock Band Network
 compliance, resolving many errors that would occur when trying to build
 EOF's MIDI files in Harmonix's Magma utility, corrected tom phrasing.
+EOF will add drum mix events required by Magma to the output MIDI if you
+haven't already manually added them ([mix 0...], [mix 1...], [mix 2...]
+or [mix 3...]).
 
 Fixed a crash that could occur when using Beat>Push Offset Back or Up.
 
