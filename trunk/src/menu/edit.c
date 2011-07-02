@@ -1145,16 +1145,18 @@ int eof_menu_edit_copy(void)
 			pack_iputl(eof_get_note_length(eof_song, eof_selected_track, i), fp);	//Write the note's length
 			pack_iputl(eof_get_note_flags(eof_song, eof_selected_track, i), fp);	//Write the note's flags
 
-			/* write fret values to disk, or NULL data */
+			/* Write pro guitar specific data to disk, or zeroed data */
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If this is a pro guitar note
 				pack_iputl(eof_song->pro_guitar_track[tracknum]->note[i]->legacymask, fp);				//Write the pro guitar note's legacy bitmask
 				pack_fwrite(eof_song->pro_guitar_track[tracknum]->note[i]->frets, sizeof(frets), fp);	//Write the note's fret array
+				pack_iputl(eof_song->pro_guitar_track[tracknum]->note[i]->ghost, fp);					//Write the note's ghost bitmask
 			}
 			else
 			{
 				pack_iputl(0, fp);	//Write a legacy bitmask indicating that the original note bitmask is to be used
 				pack_fwrite(frets, sizeof(frets), fp);	//Write 0 data for the note's fret array (legacy notes pasted into a pro guitar track will be played open by default)
+				pack_iputl(0, fp);	//Write a blank ghost bitmask (no strings are ghosted by default)
 			}
 		}
 	}
@@ -1180,7 +1182,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	unsigned long sourcetrack = 0;	//Will store the track that this clipboard data was from
 	unsigned char frets[16] = {0};	//Used to store fret data to support copying to a pro guitar track
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	unsigned long legacymask;
+	unsigned long legacymask, ghostmask;
 	char name[EOF_NAME_LENGTH+1] = {0};
 
 	/* open the file */
@@ -1253,10 +1255,12 @@ int eof_menu_edit_paste_logic(int oldpaste)
 
 		/* read fret values */
 		pack_fread(frets, sizeof(frets), fp);	//Read the note's fret array
+		ghostmask = pack_igetl(fp);				//Read the note's ghost bitmask
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If this is a pro guitar track
 			eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->legacymask = legacymask;				//Copy the legacy bitmask to the last created pro guitar note
 			memcpy(eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->frets, frets, sizeof(frets));	//Copy the fret array to the last created pro guitar note
+			eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->ghost = ghostmask;						//Copy the ghost bitmask to the last created pro guitar note
 		}
 	}
 	pack_fclose(fp);

@@ -1458,10 +1458,10 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				for(ctr=0; ctr<count; ctr++)
 				{	//For each note in this track
 					eof_load_song_string_pf(sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->name,fp,EOF_NAME_LENGTH);	//Read the note's name
-					pack_getc(fp);																	//Read the chord's number (not supported yet)
-					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->type = pack_getc(fp);	//Read the note's difficulty
-					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->note = pack_getc(fp);	//Read note bitflags
-					pack_getc(fp);	//Read ghost bitflags (not supported yet)
+					pack_getc(fp);																		//Read the chord's number (not supported yet)
+					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->type = pack_getc(fp);		//Read the note's difficulty
+					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->note = pack_getc(fp);		//Read note bitflags
+					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->ghost =  pack_getc(fp);	//Read ghost bitflags
 					for(ctr2=0, bitmask=1; ctr2 < 16; ctr2++, bitmask <<= 1)
 					{	//For each of the 16 bits in the note bitflag
 						if(sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->note & bitmask)
@@ -2182,7 +2182,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 						pack_putc(0, fp);													//Write the chord's number (not supported yet)
 						pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->type, fp);		//Write the note's difficulty
 						pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->note, fp);		//Write the note's bitflags
-						pack_putc(0, fp);	//Write the note's ghost bitflags (not supported yet)
+						pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->ghost, fp);	//Write the note's ghost bitflags
 						for(ctr2=0, bitmask=1; ctr2 < 16; ctr2++, bitmask <<= 1)
 						{	//For each of the 16 bits in the note bitflag
 							if(sp->pro_guitar_track[tracknum]->note[ctr]->note & bitmask)

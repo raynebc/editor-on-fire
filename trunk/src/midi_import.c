@@ -2014,7 +2014,7 @@ eof_log("\tThird pass complete", 1);
 			eof_cursor_visible = 0;
 			eof_pen_visible = 0;
 			eof_show_mouse(screen);
-			if((sp->track[EOF_TRACK_BASS]->flags & EOF_TRACK_FLAG_SIX_LANES) || (alert(NULL, "Import lane 1 forced HOPO bass notes as open strums?", NULL, "&Yes", "&No", 'y', 'n') == 1))
+			if((sp->track[EOF_TRACK_BASS]->flags & EOF_TRACK_FLAG_SIX_LANES) || (alert(NULL, "Import lane 1 forced HOPO bass notes as open strums (ie. this is a Guitar Hero chart)?", NULL, "&Yes", "&No", 'y', 'n') == 1))
 			{	//If the open bass strum flag was set during INI import or if the user opts to import lane 1 HOPO bass notes as open strums
 				sp->legacy_track[tracknum]->numlanes = 6;						//Set this track to have 6 lanes instead of 5
 				sp->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
