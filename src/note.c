@@ -168,10 +168,9 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	unsigned long numlanes, tracknum=0, numlanes2;
 	char notation[11];	//Used to store tab style notation for pro guitar notes
 	char *nameptr = NULL;		//This points to the display name string for the note
-	char *nameptrprev = NULL;	//This points to the display name string for the previous note (if applicable)
 	char samename[] = "/";		//This is what a repeated note name will display as
-	char autoname[EOF_NAME_LENGTH+1];	//This is used with the chord lookup logic
-	int scale, scale2, chord, chord2, isslash, isslash2, bassnote, bassnote2;	//Also used with the chord lookup logic
+	char samenameauto[] = "[/]";	//This is what a repeated note for an non manually-named note will display as
+	char notename[EOF_NAME_LENGTH+1], prevnotename[EOF_NAME_LENGTH+1], namefound;	//Used for name display
 
 	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
 	unsigned long notepos = 0;
@@ -434,46 +433,46 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		textprintf_centre_ex(window->screen, eof_mono_font, x, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 3, eof_color_red, -1, notation);
 
 		//Render note names
-		nameptr = eof_get_note_name(eof_song, track, notenum);
-		if((nameptr != NULL) && (nameptr[0] != '\0'))
-		{	//If this note has a defined name
-			nameptrprev = eof_get_note_name(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum));	//Get the previous note's (in the same difficulty's) name
-			if(nameptrprev && (!ustricmp(nameptr, nameptrprev)))
-			{	//If there was a previous note, and it has the same name as this note's name
-				nameptr = samename;	//Display this note's name as "/" to indicate a repeat of the last note
-			}
-		}
-		else if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_lookup_chord(eof_song->pro_guitar_track[tracknum], track, notenum, &scale, &chord, &isslash, &bassnote)))
-		{	//If the note has no manually defined name, but is in a pro guitar/bass track, perform the chord lookup logic.  If there's a match found,
-			if(eof_lookup_chord(eof_song->pro_guitar_track[tracknum], track, eof_get_prev_note_type_num(eof_song, track, notenum),&scale2,&chord2,&isslash2,&bassnote2) && (scale == scale2) && (chord == chord2) && (isslash == isslash2) && (bassnote == bassnote2))
-			{	//Compare with the previous note in the difficulty.  If it is the same chord,
-				snprintf(autoname, sizeof(autoname), "[/]");	//Write the auto-name version of "same chord"
-			}
-			else
-			{	//Otherwise construct the chord name
-				if(!isslash)
-				{	//If it's a normal chord
-					snprintf(autoname, sizeof(autoname), "[%s%s]", eof_note_names[scale], eof_chord_names[chord].chordname);
+		if(!eof_hide_note_names)
+		{	//If the user hasn't opted to hide note names
+			notename[0] = prevnotename[0] = '\0';	//Empty these strings
+			namefound = eof_build_note_name(eof_song, track, notenum, notename);
+			if(namefound)
+			{	//If this note has a name, prepare it for rendering
+				eof_build_note_name(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum), prevnotename);	//Get the previous note's name
+				if(!ustricmp(notename, prevnotename))
+				{	//If this note and the previous one have the same name
+					if(namefound == 1)
+					{	//If the name for this note was manually assigned
+						nameptr = samename;	//Display this note's name as "/" to indicate a repeat of the last note
+					}
+					else
+					{	//The name for this note was detected
+						nameptr = samenameauto;	//Display this note's name as "[/]" to indicate a repeat of the last note
+					}
 				}
 				else
-				{	//If it's a slash chord
-					snprintf(autoname, sizeof(autoname), "[%s%s%s]", eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote]);
+				{	//This note doesn't have the same name as the previous note
+					if(namefound == 1)
+					{	//If the name for this note was manually assigned
+						nameptr = notename;	//Display the note name as-is
+					}
+					else
+					{	//The name for this note was detected
+						snprintf(prevnotename, sizeof(notename), "[%s]", notename);	//Rebuild the note name to be enclosed in brackets
+						nameptr = prevnotename;
+					}
+				}
+				if(window == eof_window_editor)
+				{	//If rendering to the editor window
+					textprintf_centre_ex(window->screen, font, x, 25 + 5, eof_color_white, -1, nameptr);
+				}
+				else
+				{	//If rendering to the note window
+					textprintf_centre_ex(window->screen, font, x, EOF_EDITOR_RENDER_OFFSET + 10, eof_color_white, -1, nameptr);
 				}
 			}
-			nameptr = autoname;
-		}
-
-		if((nameptr != NULL) && (nameptr[0] != '\0'))
-		{	//If a manual or automatic chord name was found, render the name
-			if(window == eof_window_editor)
-			{	//If rendering to the editor window
-				textprintf_centre_ex(window->screen, font, x, 25 + 5, eof_color_white, -1, nameptr);
-			}
-			else
-			{	//If rendering to the note window
-				textprintf_centre_ex(window->screen, font, x, EOF_EDITOR_RENDER_OFFSET + 10, eof_color_white, -1, nameptr);
-			}
-		}
+		}//If the user hasn't opted to hide note names
 	}
 
 	return 0;	//Return status:  Note was not clipped in its entirety
@@ -732,12 +731,11 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	unsigned long numlanes, tracknum;
 
 	//These variables are used for the name rendering logic
-	char *nameptr = NULL;		//This points to the display name string for the note
-	char *nameptrprev = NULL;	//This points to the display name string for the previous note (if applicable)
-	char samename[] = "/";		//This is what a repeated note name will display as
-	char autoname[EOF_NAME_LENGTH+1];	//This is used with the chord lookup logic
-	int scale, scale2, chord, chord2, isslash, isslash2, bassnote, bassnote2;	//Also used with the chord lookup logic
 	long x3d, y3d, z3d;			//The coordinate at which to draw the name string (right aligned)
+	char *nameptr = NULL;		//This points to the display name string for the note
+	char samename[] = "/";		//This is what a repeated note name will display as
+	char samenameauto[] = "[/]";	//This is what a repeated note for an non manually-named note will display as
+	char notename[EOF_NAME_LENGTH+1], prevnotename[EOF_NAME_LENGTH+1], namefound;	//Used for name display
 
 	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
 	unsigned long notepos = 0;
@@ -908,43 +906,43 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	}//This is a non drum track
 
 	//Render note names
-	nameptr = eof_get_note_name(eof_song, track, notenum);
-	if((nameptr != NULL) && (nameptr[0] != '\0'))
-	{	//If this note has a defined name
-		nameptrprev = eof_get_note_name(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum));	//Get the previous note's (in the same difficulty's) name
-		if(nameptrprev && (!ustricmp(nameptr, nameptrprev)))
-		{	//If there was a previous note, and it has the same name as this note's name
-			nameptr = samename;	//Display this note's name as "/" to indicate a repeat of the last note
-		}
-	}
-	else if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_lookup_chord(eof_song->pro_guitar_track[tracknum], track, notenum, &scale, &chord, &isslash, &bassnote)))
-	{	//If the note has no manually defined name, but is in a pro guitar/bass track, perform the chord lookup logic.  If there's a match found,
-		if(eof_lookup_chord(eof_song->pro_guitar_track[tracknum], track, eof_get_prev_note_type_num(eof_song,track,notenum),&scale2,&chord2,&isslash2,&bassnote2) && (scale == scale2) && (chord == chord2) && (isslash == isslash2) && (bassnote == bassnote2))
-		{	//Compare with the previous note in the difficulty.  If it is the same chord,
-			snprintf(autoname, sizeof(autoname), "[/]");	//Write the auto-name version of "same chord"
-		}
-		else
-		{	//Otherwise construct the chord name
-			if(!isslash)
-			{	//If it's a normal chord
-				snprintf(autoname, sizeof(autoname), "[%s%s]", eof_note_names[scale], eof_chord_names[chord].chordname);
+	if(!eof_hide_note_names)
+	{	//If the user hasn't opted to hide note names
+		notename[0] = prevnotename[0] = '\0';	//Empty these strings
+		namefound = eof_build_note_name(eof_song, track, notenum, notename);
+		if(namefound)
+		{	//If this note has a name, prepare it for rendering
+			eof_build_note_name(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum), prevnotename);	//Get the previous note's name
+			if(!ustricmp(notename, prevnotename))
+			{	//If this note and the previous one have the same name
+				if(namefound == 1)
+				{	//If the name for this note was manually assigned
+					nameptr = samename;	//Display this note's name as "/" to indicate a repeat of the last note
+				}
+				else
+				{	//The name for this note was detected
+					nameptr = samenameauto;	//Display this note's name as "[/]" to indicate a repeat of the last note
+				}
 			}
 			else
-			{	//If it's a slash chord
-				snprintf(autoname, sizeof(autoname), "[%s%s%s]", eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote]);
+			{	//This note doesn't have the same name as the previous note
+				if(namefound == 1)
+				{	//If the name for this note was manually assigned
+					nameptr = notename;	//Display the note name as-is
+				}
+				else
+				{	//The name for this note was detected
+					snprintf(prevnotename, sizeof(notename), "[%s]", notename);	//Rebuild the note name to be enclosed in brackets
+					nameptr = prevnotename;
+				}
 			}
+			z3d = npos + 6 + text_height(font);	//Restore the 6 that was subtracted earlier when finding npos, and add the font's height to have the text line up with the note's z position
+			z3d = z3d < -100 ? -100 : z3d;
+			x3d = ocd3d_project_x(20 - 4, z3d);
+			y3d = ocd3d_project_y(200, z3d);
+			textprintf_right_ex(eof_window_3d->screen, font, x3d, y3d, eof_color_white, -1, nameptr);
 		}
-		nameptr = autoname;
-	}
-
-	if((nameptr != NULL) && (nameptr[0] != '\0'))
-	{	//If a manual or automatic chord name was found, render the name
-		z3d = npos + 6 + text_height(font);	//Restore the 6 that was subtracted earlier when finding npos, and add the font's height to have the text line up with the note's z position
-		z3d = z3d < -100 ? -100 : z3d;
-		x3d = ocd3d_project_x(20 - 4, z3d);
-		y3d = ocd3d_project_y(200, z3d);
-		textprintf_right_ex(eof_window_3d->screen, font, x3d, y3d, eof_color_white, -1, nameptr);
-	}
+	}//If the user hasn't opted to hide note names
 
 	return 0;	//Return status:  Note was not clipped in its entirety
 }
@@ -1326,4 +1324,40 @@ int eof_note_compare(unsigned long track, unsigned long note1, unsigned long not
 	}
 
 	return 1;	//Return not equal
+}
+
+char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, char *buffer)
+{
+	char *name;
+	int scale, chord, isslash, bassnote;
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks) || (buffer == NULL))
+		return 0;	//Return error
+
+	name = eof_get_note_name(sp, track, note);	//Check if the note was manually assigned a name
+	if(name && (name[0] != '\0'))
+	{	//If it has a name
+		ustrcpy(buffer, name);	//Copy the name
+		return 1;
+	}
+
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If this is a pro guitar/bass track, perform chord detection
+		tracknum = sp->track[track]->tracknum;
+		if(eof_lookup_chord(eof_song->pro_guitar_track[tracknum], track, note, &scale, &chord, &isslash, &bassnote))
+		{	//If the chord lookup found a match
+			if(!isslash)
+			{	//If it's a normal chord
+				sprintf(buffer, "%s%s", eof_note_names[scale], eof_chord_names[chord].chordname);
+			}
+			else
+			{	//If it's a slash chord
+				sprintf(buffer, "%s%s%s", eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote]);
+			}
+			return 2;
+		}
+	}
+
+	return 0;	//Return no name found/detected
 }

@@ -88,6 +88,7 @@ int         eof_lefty_mode = 0;
 int         eof_note_auto_adjust = 1;
 int         eof_use_ts = 0;	//By default, do not import/export TS events in MIDI/Feedback files
 int			eof_hide_drum_tails = 0;
+int         eof_hide_note_names = 0;
 int         eof_smooth_pos = 1;
 int         eof_input_mode = EOF_INPUT_PIANO_ROLL;
 int         eof_windowed = 1;
@@ -237,13 +238,20 @@ char ** eof_windows_argv;
 #endif
 
 /* fret/tuning editing arrays */
-char eof_string1[4] = {0};	//Use a fourth byte to guarantee proper truncation
-char eof_string2[4] = {0};
-char eof_string3[4] = {0};
-char eof_string4[4] = {0};
-char eof_string5[4] = {0};
-char eof_string6[4] = {0};
-char *eof_fret_strings[6] = {eof_string1, eof_string2, eof_string3, eof_string4, eof_string5, eof_string6};
+char eof_string_lane_1[4] = {0};	//Use a fourth byte to guarantee proper truncation
+char eof_string_lane_2[4] = {0};
+char eof_string_lane_3[4] = {0};
+char eof_string_lane_4[4] = {0};
+char eof_string_lane_5[4] = {0};
+char eof_string_lane_6[4] = {0};
+char *eof_fret_strings[6] = {eof_string_lane_1, eof_string_lane_2, eof_string_lane_3, eof_string_lane_4, eof_string_lane_5, eof_string_lane_6};
+char eof_string_lane_1_number[] = "String 6:";
+char eof_string_lane_2_number[] = "String 5:";
+char eof_string_lane_3_number[] = "String 4:";
+char eof_string_lane_4_number[] = "String 3:";
+char eof_string_lane_5_number[] = "String 2:";
+char eof_string_lane_6_number[] = "String 1:";
+char *eof_fret_string_numbers[6] = {eof_string_lane_1_number, eof_string_lane_2_number, eof_string_lane_3_number, eof_string_lane_4_number, eof_string_lane_5_number ,eof_string_lane_6_number};
 
 struct MIDIentry *MIDIqueue=NULL;		//Linked list of queued MIDI notes
 struct MIDIentry *MIDIqueuetail=NULL;	//Points to the tail of the list
@@ -2934,6 +2942,7 @@ int eof_initialize(int argc, char * argv[])
 	//Start the logging system
 	eof_start_logging();
 	eof_log("Logging started during program initialization", 1);
+	eof_log(EOF_VERSION_STRING, 1);
 
 	set_window_title("EOF - No Song");
 	if(install_sound(DIGI_AUTODETECT, MIDI_AUTODETECT, NULL))
@@ -3518,6 +3527,10 @@ void eof_init_after_load(char initaftersavestate)
 	{	//Validate eof_zoom, to ensure a valid zoom level was loaded from the config file
 		eof_zoom = 10;
 	}
+	if((eof_note_type < EOF_NOTE_SUPAEASY) || (eof_note_type > EOF_NOTE_SPECIAL))
+	{	//Validate eof_note_type, to ensure a valid active difficulty was loaded from the config file
+		eof_note_type = EOF_NOTE_AMAZING;
+	}
 	eof_menu_edit_zoom_level(eof_zoom);
 	if(!initaftersavestate)
 	{	//If this wasn't cleanup after an undo/redo state, reset more variables
@@ -3647,7 +3660,11 @@ void eof_set_2D_lane_positions(unsigned long track)
 		return;			//Return immediately
 
 	numlanes = newnumlanes;		//Permanently store this as the number of lanes the xchart[] array represents
-	if(eof_inverted_notes || (track && (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)))
+	if(!track)
+	{	//If track is 0, force a rebuild of the current track
+		track = eof_selected_track;
+	}
+	if(eof_inverted_notes || (eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 	{	//If the user selected the inverted notes option OR a pro guitar track is active (force inverted notes display)
 		for(ctr = 0, ctr2 = 0; ctr < EOF_MAX_FRETS; ctr++)
 		{	//Store the fretboard lane positions in reverse order, with respect to the number of lanes in use

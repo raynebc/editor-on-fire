@@ -261,7 +261,7 @@ typedef struct
 	//There will be a 3D array of chord variation structs in each pro guitar/bas track, this macro defines the size of the third dimension
 #define EOF_PRO_GUITAR_TRACKS_MAX	2
 #define EOF_TUNING_LENGTH 6	//For now, the tuning array will only track 6 strings
-#define EOF_NUM_DEFINED_CHORDS 27
+#define EOF_NUM_DEFINED_CHORDS 28
 typedef struct
 {
 	unsigned char frets[EOF_TUNING_LENGTH];	//The fretted position of each string

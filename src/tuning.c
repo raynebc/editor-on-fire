@@ -60,6 +60,7 @@ EOF_CHORD_DEFINITION eof_chord_names[EOF_NUM_DEFINED_CHORDS] =
 	{"min7", "1,b3,5,b7"},
 	{"m/Maj7", "1,b3,5,7"},
 	{"m#7aug5", "1,b3,#5,7"},
+	{"3", "1,3"},
 	{"add4", "1,3,4,5"},
 	{"majb5", "1,3,b5"},
 	{"7b5", "1,3,b5,b7"},
