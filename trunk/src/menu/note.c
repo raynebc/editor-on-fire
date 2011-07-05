@@ -2328,18 +2328,18 @@ DIALOG eof_pro_guitar_note_dialog[] =
 	{d_agup_edit_proc,		74,  76,  134, 20, 2,   23,  0,    0, EOF_NAME_LENGTH,0,eof_note_edit_name,       NULL, NULL },
 
 	//Note:  In guitar theory, string 1 refers to high e
-	{d_agup_text_proc,      16,  128, 64,  8,  2,   23,  0,    0,      0,         0,   "String 6:",  NULL,          NULL },
-	{eof_verified_edit_proc,74,  124, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string6,  "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  152, 64,  8,  2,   23,  0,    0,      0,         0,   "String 5:",  NULL,          NULL },
-	{eof_verified_edit_proc,74,  148, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string5,  "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  176, 64,  8,  2,   23,  0,    0,      0,         0,   "String 4:",  NULL,          NULL },
-	{eof_verified_edit_proc,74,  172, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string4,  "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  200, 64,  8,  2,   23,  0,    0,      0,         0,   "String 3:",  NULL,          NULL },
-	{eof_verified_edit_proc,74,  196, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string3,  "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  224, 64,  8,  2,   23,  0,    0,      0,         0,   "String 2:",  NULL,          NULL },
-	{eof_verified_edit_proc,74,  220, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string2,  "0123456789Xx",NULL },
-	{d_agup_text_proc,      16,  248, 64,  8,  2,   23,  0,    0,      0,         0,   "String 1:",  NULL,          NULL },
-	{eof_verified_edit_proc,74,  244, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string1,  "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  128, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_6_number, NULL, NULL },
+	{eof_verified_edit_proc,74,  124, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string_lane_6,  "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  152, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_5_number, NULL, NULL },
+	{eof_verified_edit_proc,74,  148, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string_lane_5,  "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  176, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_4_number, NULL, NULL },
+	{eof_verified_edit_proc,74,  172, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string_lane_4,  "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  200, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_3_number, NULL, NULL },
+	{eof_verified_edit_proc,74,  196, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string_lane_3,  "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  224, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_2_number, NULL, NULL },
+	{eof_verified_edit_proc,74,  220, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string_lane_2,  "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  248, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_1_number, NULL, NULL },
+	{eof_verified_edit_proc,74,  244, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string_lane_1,  "0123456789Xx",NULL },
 
 	{d_agup_text_proc,      16,  108, 64,  8,  2,   23,  0,    0,      0,         0,   "Pro",        NULL,          NULL },
 	{d_agup_text_proc,      160, 108, 64,  8,  2,   23,  0,    0,      0,         0,   "Legacy",     NULL,          NULL },
@@ -2350,12 +2350,12 @@ DIALOG eof_pro_guitar_note_dialog[] =
 	{d_agup_check_proc,		158, 247, 64,  16, 2,   23,  0,    0,      0,         0,   "Lane 1",     NULL,          NULL },
 
 	{d_agup_text_proc,      102, 108, 64,  8,  2,   23,  0,    0,      0,         0,   "Ghost",      NULL,          NULL },
-	{d_agup_check_proc,		100, 127, 14,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,		100, 151, 14,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,		100, 175, 14,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,		100, 199, 14,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,		100, 223, 14,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
-	{d_agup_check_proc,		100, 247, 14,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,		100, 127, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,		100, 151, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,		100, 175, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,		100, 199, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,		100, 223, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
+	{d_agup_check_proc,		100, 247, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
 
 	{d_agup_text_proc,      10,  292, 64,  8,  2,   23,  0,    0,      0,         0,   "Slide:",     NULL,          NULL },
 	{d_agup_text_proc,      10,  312, 64,  8,  2,   23,  0,    0,      0,         0,   "Mute:",      NULL,          NULL },
@@ -2382,7 +2382,7 @@ DIALOG eof_pro_guitar_note_dialog[] =
 int eof_menu_note_edit_pro_guitar_note(void)
 {
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	unsigned long ctr, ctr2, fretcount, i;
+	unsigned long ctr, ctr2, stringcount, i;
 	char undo_made = 0;	//Set to nonzero when an undo state is created
 	long fretvalue;
 	char allmuted;					//Used to track whether all used strings are string muted
@@ -2420,16 +2420,20 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	memcpy(eof_note_edit_name, eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name, sizeof(eof_note_edit_name));
 
 //Update the fret text boxes (listed from top to bottom as string 1 through string 6)
-	fretcount = eof_count_track_lanes(eof_song, eof_selected_track);
+	stringcount = eof_count_track_lanes(eof_song, eof_selected_track);
 	if(eof_legacy_view)
-	{	//Special case:  If legacy view is enabled, correct fretcount
-		fretcount = eof_song->pro_guitar_track[tracknum]->numstrings;
+	{	//Special case:  If legacy view is enabled, correct stringcount
+		stringcount = eof_song->pro_guitar_track[tracknum]->numstrings;
 	}
+	ghostmask = eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->ghost;
 	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
 	{	//For each of the 6 supported strings
-		if(ctr < fretcount)
+		if(ctr < stringcount)
 		{	//If this track uses this string, copy the fret value to the appropriate string
+			eof_pro_guitar_note_dialog[13 - (2 * ctr)].flags = 0;	//Ensure this text boxes' label is enabled
+			eof_fret_string_numbers[ctr][7] = '0' + (stringcount - ctr);	//Correct the string number for this label
 			eof_pro_guitar_note_dialog[14 - (2 * ctr)].flags = 0;	//Ensure this text box is enabled
+			eof_pro_guitar_note_dialog[28 - ctr].flags = (ghostmask & bitmask) ? D_SELECTED : 0;	//Ensure the ghost check box is enabled and cleared/checked appropriately
 			if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->note & bitmask)
 			{	//If this string is already defined as being in use, copy its fret value to the string
 				if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] == 0xFF)
@@ -2448,7 +2452,9 @@ int eof_menu_note_edit_pro_guitar_note(void)
 		}
 		else
 		{	//Otherwise disable the text box for this fret and empty the string
-			eof_pro_guitar_note_dialog[14 - (2 * ctr)].flags = D_DISABLED;	//Ensure this text box is disabled
+			eof_pro_guitar_note_dialog[13 - (2 * ctr)].flags = D_HIDDEN;	//Ensure this text boxes' label is hidden
+			eof_pro_guitar_note_dialog[14 - (2 * ctr)].flags = D_HIDDEN;	//Ensure this text box is hidden
+			eof_pro_guitar_note_dialog[28 - ctr].flags = D_HIDDEN;			//Ensure this ghost check box is hidden
 			eof_fret_strings[ctr][0] = '\0';
 		}
 	}
@@ -2462,13 +2468,14 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	eof_pro_guitar_note_dialog[21].flags = (legacymask & 1) ? D_SELECTED : 0;
 
 //Update the ghost bitmask checkboxes
-	ghostmask = eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->ghost;
+/*	ghostmask = eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->ghost;
 	eof_pro_guitar_note_dialog[23].flags = (ghostmask & 32) ? D_SELECTED : 0;
 	eof_pro_guitar_note_dialog[24].flags = (ghostmask & 16) ? D_SELECTED : 0;
 	eof_pro_guitar_note_dialog[25].flags = (ghostmask & 8) ? D_SELECTED : 0;
 	eof_pro_guitar_note_dialog[26].flags = (ghostmask & 4) ? D_SELECTED : 0;
 	eof_pro_guitar_note_dialog[27].flags = (ghostmask & 2) ? D_SELECTED : 0;
 	eof_pro_guitar_note_dialog[28].flags = (ghostmask & 1) ? D_SELECTED : 0;
+*/
 
 //Update the note flag radio buttons
 	for(ctr = 0; ctr < 13; ctr++)

@@ -89,6 +89,8 @@ void eof_load_config(char * fn)
 	}
 	eof_zoom = get_config_int("preferences", "eof_zoom", 10);
 	eof_selected_track = get_config_int("preferences", "eof_selected_track", EOF_TRACK_GUITAR);
+	eof_note_type = get_config_int("preferences", "eof_note_type", EOF_NOTE_AMAZING);
+	eof_hide_note_names = get_config_int("preferences", "eof_hide_note_names", 0);
 
 	/* read display settings */
 	eof_screen_layout.mode = get_config_int("display", "display_mode", 0);
@@ -174,7 +176,9 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "use_ts", eof_use_ts);
 	set_config_int("preferences", "eof_zoom", eof_zoom);
 	set_config_int("preferences", "eof_selected_track", eof_selected_track);
+	set_config_int("preferences", "eof_note_type", eof_note_type);
 	set_config_int("preferences", "hide_drum_tails", eof_hide_drum_tails);
+	set_config_int("preferences", "eof_hide_note_names", eof_hide_note_names);
 
 	/* write display settings */
 	set_config_int("display", "display_mode", eof_screen_layout.mode);

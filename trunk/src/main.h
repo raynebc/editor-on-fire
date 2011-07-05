@@ -227,6 +227,7 @@ extern int         eof_lefty_mode;
 extern int         eof_note_auto_adjust;
 extern int         eof_use_ts;	//Determines whether Time Signature events will be handled for MIDI/Feedback import/export
 extern int         eof_hide_drum_tails;
+extern int         eof_hide_note_names;
 extern int         eof_smooth_pos;
 extern int         eof_windowed;
 extern int         eof_anchor_all_beats;
@@ -330,13 +331,20 @@ extern int eof_color_orange;
 extern int eof_color_silver;
 extern int eof_info_color;
 
-extern char eof_string1[4];
-extern char eof_string2[4];
-extern char eof_string3[4];
-extern char eof_string4[4];
-extern char eof_string5[4];
-extern char eof_string6[4];
+extern char eof_string_lane_1[4];
+extern char eof_string_lane_2[4];
+extern char eof_string_lane_3[4];
+extern char eof_string_lane_4[4];
+extern char eof_string_lane_5[4];
+extern char eof_string_lane_6[4];
 extern char *eof_fret_strings[6];
+extern char eof_string_lane_1_number[];
+extern char eof_string_lane_2_number[];
+extern char eof_string_lane_3_number[];
+extern char eof_string_lane_4_number[];
+extern char eof_string_lane_5_number[];
+extern char eof_string_lane_6_number[];
+extern char *eof_fret_string_numbers[6];
 
 extern PALETTE     eof_palette;
 extern BITMAP *    eof_image[EOF_MAX_IMAGES];
