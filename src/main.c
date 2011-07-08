@@ -487,7 +487,10 @@ void eof_switch_out_callback(void)
 
 	eof_emergency_stop_music();
 	key[KEY_TAB] = 0;
-	eof_has_focus = 0;
+	
+	#ifndef ALLEGRO_MACOSX
+		eof_has_focus = 0;
+	#endif
 }
 
 void eof_switch_in_callback(void)
