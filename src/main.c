@@ -492,7 +492,7 @@ void eof_switch_out_callback(void)
 
 	eof_emergency_stop_music();
 	key[KEY_TAB] = 0;
-	
+
 	#ifndef ALLEGRO_MACOSX
 		eof_has_focus = 0;
 	#endif
@@ -3328,6 +3328,7 @@ int eof_initialize(int argc, char * argv[])
 void eof_exit(void)
 {
 	unsigned long i;
+	char fn[1024] = {0};
 
 	eof_log("eof_exit() entered", 1);
 
@@ -3335,25 +3336,24 @@ void eof_exit(void)
 
 	//Delete the undo/redo related files
 	eof_save_config("eof.cfg");
-	delete_file("eof.redo");
-	delete_file("eof.undo0");
-	delete_file("eof.undo1");
-	delete_file("eof.undo2");
-	delete_file("eof.undo3");
-	delete_file("eof.undo4");
-	delete_file("eof.undo5");
-	delete_file("eof.undo6");
-	delete_file("eof.undo7");
-	delete_file("eof.redo.ogg");
-	delete_file("eof.undo0.ogg");
-	delete_file("eof.undo1.ogg");
-	delete_file("eof.undo2.ogg");
-	delete_file("eof.undo3.ogg");
-	delete_file("eof.undo4.ogg");
-	delete_file("eof.undo5.ogg");
-	delete_file("eof.undo6.ogg");
-	delete_file("eof.undo7.ogg");
+	snprintf(fn, sizeof(fn), "eof%03u.redo", eof_log_id);	//Get the name of this EOF instance's redo file
+	delete_file(fn);	//And delete it if it exists
+	snprintf(fn, sizeof(fn), "eof%03u.redo.ogg", eof_log_id);	//Get the name of this EOF instance's redo OGG
+	delete_file(fn);	//And delete it if it exists
+	if(eof_undo_states_initialized > 0)
+	{
+		for(i = 0; i < EOF_MAX_UNDO; i++)
+		{	//For each undo slot
+			if(eof_undo_filename[i])
+			{
+				delete_file(eof_undo_filename[i]);	//Delete the undo file
+				snprintf(fn, sizeof(fn), "%s.ogg", eof_undo_filename[i]);	//Get the filename of any associated undo OGG
+				delete_file(fn);	//And delete it if it exists
+			}
+		}
+	}
 	delete_file("eof.autoadjust");
+	eof_destroy_undo();
 
 	//Free the file filters
 	free(eof_filter_music_files);

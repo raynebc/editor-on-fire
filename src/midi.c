@@ -60,7 +60,7 @@ void eof_add_midi_lyric_event(unsigned long pos, char * text)
 			eof_midi_event[eof_midi_events]->pos = pos;
 			eof_midi_event[eof_midi_events]->type = 0x05;
 			eof_midi_event[eof_midi_events]->dp = text;
-			eof_midi_event[eof_midi_events]->allocation = 0;	//At this time, all lyrics are being stored in static memory structures
+			eof_midi_event[eof_midi_events]->allocation = 1;	//At this time, all lyrics are being copied into new arrays in case they need to be altered
 			eof_midi_events++;
 		}
 	}
