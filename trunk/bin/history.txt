@@ -3,6 +3,22 @@ EOF Version History
 
 1.8:
 
+*Improved the undo/redo system by adding a random 3 digit number
+(created during launch of EOF) to the filenames, making it extremely
+unlikely that two instances of EOF will overwrite each others files.
+The number of undo states has been increased from 8 to 100.
+
+*Added a performance option to disable sound processing (ie. volumes
+and sound cues are not handled).
+
+*Added performance options to not render the editor window,
+3d preview or info panel.
+
+*Fixed an issue where the Mac version of EOF wouldn't behave properly
+when EOF leaves and re-enters the foreground.
+
+Updated EOF to remember the last active track, zoom and difficulty.
+
 Added the option to hide drum note tails from the editor window
 (File>Preferences>Hide drum note tails).
 
