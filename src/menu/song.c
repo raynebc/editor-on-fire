@@ -192,7 +192,7 @@ DIALOG eof_song_properties_dialog[] =
    { d_agup_check_proc,   160, 188, 136, 16,  0,   0,   0,    0,      1,   0,   "Lyrics",               NULL, NULL },
    { d_agup_check_proc,   160, 208, 136, 16,  0,   0,   0,    0,      1,   0,   "8th Note HO/PO",       NULL, NULL },
    { d_agup_button_proc,  340, 200, 84,  24,  0,   0,   '\r', D_EXIT, 0,   0,   "OK",                   NULL, NULL },
-   { d_agup_text_proc,    124, 188, 60,  12,  0,   0,   0,    0,      0,   0,   "Diff.",                 NULL, NULL },
+   { d_agup_text_proc,    124, 188, 60,  12,  0,   0,   0,    0,      0,   0,   "Diff.",                NULL, NULL },
    { eof_verified_edit_proc,124,204,26,  20,  0,   0,   0,    0,      1,   0,   eof_etext7,        "0123456", NULL },
    { NULL,                0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                   NULL, NULL }
 };

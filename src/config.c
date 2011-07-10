@@ -82,15 +82,20 @@ void eof_load_config(char * fn)
 	eof_input_mode = get_config_int("preferences", "input_mode", EOF_INPUT_PIANO_ROLL);
 	eof_ogg_setting = get_config_int("preferences", "ogg_quality", 1);
 	eof_use_ts = get_config_int("preferences", "use_ts", 0);
-	eof_hide_drum_tails = get_config_int("preferences", "hide_drum_tails", 0);
 	if(!eof_use_ts)
 	{
-		eof_log("\tTS import/export is currently disabled", 1);
+		eof_log("\t! TS import/export is currently disabled", 1);
 	}
 	eof_zoom = get_config_int("preferences", "eof_zoom", 10);
 	eof_selected_track = get_config_int("preferences", "eof_selected_track", EOF_TRACK_GUITAR);
 	eof_note_type = get_config_int("preferences", "eof_note_type", EOF_NOTE_AMAZING);
+	eof_hide_drum_tails = get_config_int("preferences", "hide_drum_tails", 0);
 	eof_hide_note_names = get_config_int("preferences", "eof_hide_note_names", 0);
+	eof_fret_hand_pos_0 = get_config_int("preferences", "eof_fret_hand_pos_0", 0);
+	eof_disable_sound_processing = get_config_int("preferences", "eof_disable_sound_processing", 0);
+	eof_disable_3d_rendering = get_config_int("preferences", "eof_disable_3d_rendering", 0);
+	eof_disable_2d_rendering = get_config_int("preferences", "eof_disable_2d_rendering", 0);
+	eof_disable_info_panel = get_config_int("preferences", "eof_disable_info_panel", 0);
 
 	/* read display settings */
 	eof_screen_layout.mode = get_config_int("display", "display_mode", 0);
@@ -179,6 +184,11 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_note_type", eof_note_type);
 	set_config_int("preferences", "hide_drum_tails", eof_hide_drum_tails);
 	set_config_int("preferences", "eof_hide_note_names", eof_hide_note_names);
+	set_config_int("preferences", "eof_fret_hand_pos_0", eof_fret_hand_pos_0);
+	set_config_int("preferences", "eof_disable_sound_processing", eof_disable_sound_processing);
+	set_config_int("preferences", "eof_disable_3d_rendering", eof_disable_3d_rendering);
+	set_config_int("preferences", "eof_disable_2d_rendering", eof_disable_2d_rendering);
+	set_config_int("preferences", "eof_disable_info_panel", eof_disable_info_panel);
 
 	/* write display settings */
 	set_config_int("display", "display_mode", eof_screen_layout.mode);

@@ -1537,7 +1537,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 
 int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, char difficulty, unsigned long start, unsigned long end, unsigned long flags, char *name)
 {
- 	eof_log("eof_track_add_section() entered", 1);
+ 	eof_log("eof_track_add_section() entered", 2);
 
 	unsigned long count,tracknum;	//Used to de-obfuscate the track handling
 
@@ -2945,7 +2945,7 @@ void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, un
 
 void eof_track_sort_notes(EOF_SONG *sp, unsigned long track)
 {
- 	eof_log("eof_track_sort_notes() entered", 1);
+ 	eof_log("eof_track_sort_notes() entered", 2);
 
 	unsigned long tracknum;
 
@@ -2971,7 +2971,7 @@ void eof_track_sort_notes(EOF_SONG *sp, unsigned long track)
 
 void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 {
- 	eof_log("eof_track_fixup_notes() entered", 1);
+ 	eof_log("eof_track_fixup_notes() entered", 2);
 
 	unsigned long tracknum;
 

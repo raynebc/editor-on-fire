@@ -89,6 +89,11 @@ int         eof_note_auto_adjust = 1;
 int         eof_use_ts = 0;	//By default, do not import/export TS events in MIDI/Feedback files
 int			eof_hide_drum_tails = 0;
 int         eof_hide_note_names = 0;
+int         eof_fret_hand_pos_0 = 0;
+int         eof_disable_sound_processing = 0;
+int         eof_disable_3d_rendering = 0;
+int         eof_disable_2d_rendering = 0;
+int         eof_disable_info_panel = 0;
 int         eof_smooth_pos = 1;
 int         eof_input_mode = EOF_INPUT_PIANO_ROLL;
 int         eof_windowed = 1;
@@ -1902,6 +1907,9 @@ void eof_render_note_window(void)
 	char difficulty1[20], difficulty2[50];
 	int scale, chord, isslash, bassnote;	//Used when looking up the chord name (if the last selected note is not already named)
 
+	if(eof_disable_info_panel)	//If the user wanted to disable the rendering of the info panel to improve performance
+		return;					//Return immediately
+
 	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	clear_to_color(eof_window_note->screen, eof_color_gray);
 
@@ -2125,7 +2133,14 @@ void eof_render_note_window(void)
 		}
 
 		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Metronome: %s Claps: %s Vocal Tones: %s", eof_mix_metronome_enabled ? "On" : "Off", eof_mix_claps_enabled ? "On" : "Off", eof_mix_vocal_tones_enabled ? "On" : "Off");
+		if(!eof_disable_sound_processing)
+		{	//If the user didn't disable sound processing, display the sound cue statuses
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Metronome: %s Claps: %s Vocal Tones: %s", eof_mix_metronome_enabled ? "On" : "Off", eof_mix_claps_enabled ? "On" : "Off", eof_mix_vocal_tones_enabled ? "On" : "Off");
+		}
+		else
+		{	//Otherwise indicate they are disabled
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "(Sound cues are currently disabled)");
+		}
 		ypos += 12;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Playback Speed: %d%%", eof_playback_speed / 10);
 		ypos += 12;
@@ -2465,6 +2480,9 @@ void eof_render_3d_window(void)
 	unsigned long j, ctr, usedlanes, bitmask, numsections;
 	EOF_PHRASE_SECTION *sectionptr = NULL;	//Used to abstract sections
 	int colors[EOF_MAX_FRETS] = {makecol(170,255,170), makecol(255,156,156), makecol(255,255,224), makecol(156,156,255), makecol(255,156,255), makecol(255,170,128)};	//Lightened versions of the standard fret colors
+
+	if(eof_disable_3d_rendering)	//If the user wanted to disable the rendering of the 3D window to improve performance
+		return;						//Return immediately
 
 	clear_to_color(eof_window_3d->screen, eof_color_gray);
 	lastlane = numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
