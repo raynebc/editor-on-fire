@@ -10,7 +10,7 @@
 
 unsigned long eof_note_count_colors(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
-	eof_log("eof_note_count_colors() entered", 1);
+	eof_log("eof_note_count_colors() entered", 2);
 
 	if(!sp)
 	{
@@ -101,9 +101,7 @@ int eof_adjust_notes(int offset)
 	eof_log("eof_adjust_notes() entered", 1);
 
 	unsigned long i, j;
-	EOF_PHRASE_SECTION *soloptr = NULL;
-	EOF_PHRASE_SECTION *starpowerptr= NULL;
-	unsigned long tracknum;
+	EOF_PHRASE_SECTION *phraseptr = NULL;
 
 	for(i = 1; i < eof_song->tracks; i++)
 	{	//For each track
@@ -113,24 +111,39 @@ int eof_adjust_notes(int offset)
 		}
 		for(j = 0; j < eof_get_num_solos(eof_song, i); j++)
 		{	//For each solo section in the track
-			soloptr = eof_get_solo(eof_song, i, j);
-			soloptr->start_pos += offset;
-			soloptr->end_pos += offset;
+			phraseptr = eof_get_solo(eof_song, i, j);
+			phraseptr->start_pos += offset;
+			phraseptr->end_pos += offset;
 		}
 		for(j = 0; j < eof_get_num_star_power_paths(eof_song, i); j++)
 		{	//For each star power path in the track
-			starpowerptr = eof_get_star_power_path(eof_song, i, j);
-			starpowerptr->start_pos += offset;
-			starpowerptr->end_pos += offset;
+			phraseptr = eof_get_star_power_path(eof_song, i, j);
+			phraseptr->start_pos += offset;
+			phraseptr->end_pos += offset;
 		}
-		if(eof_song->track[i]->track_format == EOF_VOCAL_TRACK_FORMAT)
-		{	//If this is a vocal track
-			tracknum = eof_song->track[i]->tracknum;
-			for(j = 0; j < eof_song->vocal_track[tracknum]->lines; j++)
-			{	//For each lyric phrase in the track
-				eof_song->vocal_track[tracknum]->line[j].start_pos += offset;
-				eof_song->vocal_track[tracknum]->line[j].end_pos += offset;
-			}
+		for(j = 0; j < eof_get_num_trills(eof_song, i); j++)
+		{	//For each trill phrase in the track
+			phraseptr = eof_get_trill(eof_song, i, j);
+			phraseptr->start_pos += offset;
+			phraseptr->end_pos += offset;
+		}
+		for(j = 0; j < eof_get_num_tremolos(eof_song, i); j++)
+		{	//For each tremolo phrase in the track
+			phraseptr = eof_get_tremolo(eof_song, i, j);
+			phraseptr->start_pos += offset;
+			phraseptr->end_pos += offset;
+		}
+		for(j = 0; j < eof_get_num_arpeggios(eof_song, i); j++)
+		{	//For each arpeggio phrase in the track
+			phraseptr = eof_get_arpeggio(eof_song, i, j);
+			phraseptr->start_pos += offset;
+			phraseptr->end_pos += offset;
+		}
+		for(j = 0; j < eof_get_num_lyric_sections(eof_song, i); j++)
+		{	//For each lyric phrase in the track
+			phraseptr = eof_get_lyric_section(eof_song, i, j);
+			phraseptr->start_pos += offset;
+			phraseptr->end_pos += offset;
 		}
 	}
 	for(i = 0; i < eof_song->catalog->entries; i++)

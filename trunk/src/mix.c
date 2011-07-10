@@ -79,6 +79,7 @@ int eof_mix_current_note = 0;
 unsigned long eof_mix_metronome_pos[EOF_MAX_BEATS] = {0};
 int eof_mix_metronomes = 0;
 int eof_mix_current_metronome = 0;
+int eof_mix_increment = 0;
 
 unsigned long eof_mix_percussion_pos[EOF_MAX_NOTES] = {0};
 int eof_mix_percussions = 0;
@@ -86,19 +87,24 @@ int eof_mix_current_percussion = 0;
 
 void eof_mix_callback(void * buf, int length)
 {
-	unsigned long bytes_left = length / 2;
-	unsigned short * buffer = (unsigned short *)buf;
+	unsigned long bytes_left;
+	unsigned short * buffer;
 	long sum=0,sum2=0;	//Use a signed long integer to allow the clipping logic to be more efficient
 	long cuesample;		//Used to apply a volume to cues, where the appropriate amplitude multiplier for changing the cue's loudness to X% is to multiply its amplitudes by sqrt(X/100)
 	int i, j;
-	int increment = alogg_get_wave_is_stereo_ogg(eof_music_track) ? 2 : 1;
+
+	if(eof_disable_sound_processing)	//If the user wanted to disable all sound effect mixing to improve performance
+		return;							//Return immediately without altering the audio
+
+	bytes_left = length / 2;
+	buffer = (unsigned short *)buf;
 
 	/* add audio data to the buffer */
-	for(i = 0; i < bytes_left; i += increment)
+	for(i = 0; i < bytes_left; i += eof_mix_increment)
 	{
 		/* store original sample values */
 		sum = buffer[i] - 32768;	//Convert to signed sample
-		if(increment > 1)
+		if(eof_mix_increment > 1)
 		{
 			sum2 = buffer[i+1] - 32768;		//Convert to signed sample
 		}
@@ -107,7 +113,7 @@ void eof_mix_callback(void * buf, int length)
 		if(eof_chart_volume != 100)		//If the chart volume is to be less than 100%
 		{
 			sum *= eof_chart_volume_multiplier;
-			if(increment > 1)
+			if(eof_mix_increment > 1)
 			{	//If this is a stereo audio file, apply the volume to the other channel as well
 				sum2 *= eof_chart_volume_multiplier;
 			}
@@ -124,7 +130,7 @@ void eof_mix_callback(void * buf, int length)
 
 				sum += cuesample;
 
-				if(increment > 1)
+				if(eof_mix_increment > 1)
 				{
 					sum2 += cuesample;
 				}
@@ -143,7 +149,7 @@ void eof_mix_callback(void * buf, int length)
 			sum = 32767;
 		buffer[i] = sum + 32768;		//Convert the summed PCM samples to unsigned and store into buffer
 
-		if(increment > 1)
+		if(eof_mix_increment > 1)
 		{
 			if(sum2 < -32768)
 				sum2 = -32768;
@@ -463,6 +469,7 @@ void eof_mix_start_helper(void)
 			break;
 		}
 	}
+	eof_mix_increment =  alogg_get_wave_is_stereo_ogg(eof_music_track) ? 2 : 1;	//Cache the number of audio channels
 }
 
 void eof_mix_start(unsigned long start, int speed)

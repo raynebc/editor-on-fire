@@ -446,7 +446,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	EOF_PHRASE_SECTION *sectionptr;
 	char *lastname = NULL, *currentname = NULL, nochord[]="NC", chordname[100]="";
 	char phase_shift_sysex_phrase[8] = {'P','S','\0',0,0,0,0,0xF7};	//This is used to write Sysex messages for features supported in Phase Shift (ie. open strum bass)
+	char fret_hand_pos_written;				//This is used to track whether the single fret hand position was written (if the "Fret hand pos is 0" option is enabled)
 
+	eof_log_level &= ~2;	//Disable verbose logging
 	if(!sp | !fn)
 	{
 		eof_log("\tError saving:  Invalid parameters", 1);
@@ -485,30 +487,40 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 	#ifdef EOF_RBN_COMPATIBILITY
 	//Magma requires some default track events to be written
+	if(sp->tags->ogg[eof_selected_ogg].midi_offset != 0)
+	{	//Rock Band songs are have a MIDI offset of 0
+		eof_log("\t! Warning:  MIDI offset is not zero, this song may play out of sync in Rock Band", 1);
+	}
 	if(sp->beats > 3)
 	{	//Only add these if there are at least 4 beats
 		if(!eof_song_contains_event(sp, "[music_start]"))
 		{	//If the user did not define the music_start event
+			eof_log("\t! Adding missing [music_start] event", 1);
 			eof_song_add_text_event(sp, 2, "[music_start]", 0, 1);	//Add it as a temporary event two beats into the song (at the third beat)
 		}
 		if(!eof_song_contains_event(sp, "[music_end]"))
 		{	//If the user did not define the music_end event
+			eof_log("\t! Adding missing [music_end] event", 1);
 			eof_song_add_text_event(sp, sp->beats-1, "[music_end]", 0, 1);	//Add it as a temporary event on the last beat
 		}
 		if(!eof_song_contains_event_beginning_with(sp, "[mix 0"))
 		{	//If the user did not define an easy difficulty drum mix event
+			eof_log("\t! Adding missing easy drum mix event", 1);
 			eof_song_add_text_event(sp, 0, "[mix 0 drums0]", EOF_TRACK_DRUM, 1);	//Add one as a temporary event on the first beat of the drum track
 		}
 		if(!eof_song_contains_event_beginning_with(sp, "[mix 1"))
 		{	//If the user did not define a medium difficulty drum mix event
+			eof_log("\t! Adding missing medium drum mix event", 1);
 			eof_song_add_text_event(sp, 0, "[mix 1 drums0]", EOF_TRACK_DRUM, 1);	//Add one as a temporary event on the first beat of the drum track
 		}
 		if(!eof_song_contains_event_beginning_with(sp, "[mix 2"))
 		{	//If the user did not define a hard difficulty drum mix event
+			eof_log("\t! Adding missing hard drum mix event", 1);
 			eof_song_add_text_event(sp, 0, "[mix 2 drums0]", EOF_TRACK_DRUM, 1);	//Add one as a temporary event on the first beat of the drum track
 		}
 		if(!eof_song_contains_event_beginning_with(sp, "[mix 3"))
 		{	//If the user did not define an expert difficulty drum mix event
+			eof_log("\t! Adding missing expert drum mix event", 1);
 			eof_song_add_text_event(sp, 0, "[mix 3 drums0]", EOF_TRACK_DRUM, 1);	//Add one as a temporary event on the first beat of the drum track
 		}
 	}
@@ -534,6 +546,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		eof_clear_midi_events();
 		tracknum = sp->track[j]->tracknum;
 		memset(eof_midi_note_status,0,sizeof(eof_midi_note_status));	//Clear note status array
+		fret_hand_pos_written = 0;	//Reset this status
 
 		//Write track specific text events
 		for(i = 0; i < sp->text_events; i++)
@@ -547,6 +560,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				deltapos = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);	//Store the tick position of the note
 				eof_add_midi_text_event(deltapos, sp->text_event[i]->text, 0);	//Send 0 for the allocation flag, because the text string is being stored in static memory
 			}
+		}
+
+		if(eof_get_note_pos(sp, j, 0) < 2450)
+		{	//Magma will not allow any note/lyric to be before 2.45s
+			eof_log("\t! A note or lyric appears before 2450ms, Magma will probably not accept this MIDI file", 1);
 		}
 
 		if(sp->track[j]->track_format == EOF_LEGACY_TRACK_FORMAT)
@@ -1192,7 +1210,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				}
 
 				/* write slide sections */
-				if((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+				if((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 				{	//If this note slides up or down
 					phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
 					phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
@@ -1208,6 +1226,20 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide start marker
 					phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
 					eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide stop marker
+
+					//This isn't the correct RB3 slide logic, but Bigjoe5 has indicated he can control this type of
+					//slide marker artificially by using a ghost note with a higher/lower fret value than that of the
+					//note that should slide
+					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+					{	//If this note slides down
+						eof_add_midi_event(deltapos, 0x90, slidenote, 104, 0);	//Velocity 104 denotes slide down
+						eof_add_midi_event(deltapos + deltalength, 0x80, slidenote, 104, 0);
+					}
+					else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+					{	//If this note slides up
+						eof_add_midi_event(deltapos, 0x90, slidenote, 102, 0);	//Velocity 102 denotes slide up
+						eof_add_midi_event(deltapos + deltalength, 0x80, slidenote, 102, 0);
+					}
 				}
 
 				/* write note gems */
@@ -1257,28 +1289,41 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 9, velocity, 13);
 				}
 
-				if(eof_get_note_type(sp, j, i) == EOF_NOTE_AMAZING)
-				{	//For the Expert difficulty, write required specialty notes
-				/* write left hand position note, which is a note 108 with the same velocity of the lowest fret used in the pro guitar note */
-					rootvel = 0xFF;
-					for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
-					{	//For each of the 6 usable strings, from lowest to highest gauge
-						if(note & bitmask)
-						{	//If this string is used
-							if(rootvel == 0xFF)
-							{	//If no velocity has been recorded so far
-								rootvel = sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] + 100;	//Store the velocity used for this gem
-							}
-							else if(sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] + 100 < rootvel)
-							{	//Otherwise store this gem's velocity if it is lower than the others checked for this note
-								rootvel = sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] + 100;
+				if(!eof_fret_hand_pos_0)
+				{	//If the user did not enable the "Fret hand pos is 0" option, write the left hand position based on notes in the expert difficulty
+					if(eof_get_note_type(sp, j, i) == EOF_NOTE_AMAZING)
+					{	//For the Expert difficulty, write left hand position notes
+					/* write left hand position note, which is a note 108 with the same velocity of the lowest fret used in the pro guitar note */
+						rootvel = 0xFF;
+						for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+						{	//For each of the 6 usable strings, from lowest to highest gauge
+							if(note & bitmask)
+							{	//If this string is used
+								if(rootvel == 0xFF)
+								{	//If no velocity has been recorded so far
+									rootvel = sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] + 100;	//Store the velocity used for this gem
+								}
+								else if(sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] + 100 < rootvel)
+								{	//Otherwise store this gem's velocity if it is lower than the others checked for this note
+									rootvel = sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] + 100;
+								}
 							}
 						}
+						eof_add_midi_event(deltapos, 0x90, 108, rootvel, 0);			//Note 108 denotes left hand position
+						eof_add_midi_event(deltapos + deltalength, 0x80, 108, 64, 0);	//Write the note off event (using the same velocity that RB3 MIDIs use)
 					}
-					eof_add_midi_event(deltapos, 0x90, 108, rootvel, 0);	//Note 108 denotes a root note
+				}
+				else if(!fret_hand_pos_written)
+				{	//Otherwise, write the hand position to be 0 (open) at the first note position in any difficulty
+					rootvel = 100;	//Velocity 100 represents the string played open
+					eof_add_midi_event(deltapos, 0x90, 108, rootvel, 0);			//Note 108 denotes left hand position
 					eof_add_midi_event(deltapos + deltalength, 0x80, 108, 64, 0);	//Write the note off event (using the same velocity that RB3 MIDIs use)
+					fret_hand_pos_written = 1;
+				}
 
 				/* write root note, which is a note from 4 to 15, to represent the chord's major scale (where any E scale chord is 4, F is 5, Gb is 6, ..., Eb is 15) */
+				if(eof_get_note_type(sp, j, i) == EOF_NOTE_AMAZING)
+				{	//For the Expert difficulty, write root notes
 					if(eof_note_count_colors(sp, j, i) > 1)
 					{	//If this is a chord
 						scale = 17;	//Unless a chord name is found, write a root note of 17 (no name)
@@ -1452,8 +1497,16 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	WriteVarLen(0, fp);
 	pack_putc(0xFF, fp);
 	pack_putc(0x03, fp);
-	WriteVarLen(ustrlen(sp->tags->title), fp);
-	snprintf(chordname, sizeof(chordname), "%s", sp->tags->title);	//Borrow this array to store the chart title
+	if(sp->tags->title[0] != '\0')
+	{	//If a song title has been defined
+		snprintf(chordname, sizeof(chordname), "%s", sp->tags->title);	//Borrow this array to store the chart title
+	}
+	else
+	{	//Make up a track name so it will build in Magma
+		snprintf(chordname, sizeof(chordname), "Tempo map");
+		eof_log("\t! Song title is not defined, a fake song title was used as the name for track 0 so the song will build in Magma", 1);
+	}
+	WriteVarLen(ustrlen(chordname), fp);
 	pack_fwrite(chordname, ustrlen(chordname), fp);
 	#endif
 
@@ -1573,6 +1626,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		//Check the existing events to see if such an event is already defined
 		if(!eof_song_contains_event(sp, "[end]"))
 		{	//If the user did not define the end event, manually write it
+			eof_log("\t! Adding missing [end] event", 1);
 			delta = eof_ConvertToDeltaTime(eof_music_length+1,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
 			eof_write_text_event(delta - lastdelta, "[end]", fp);
 			lastdelta = delta;					//Store this event's absolute delta time
@@ -1781,6 +1835,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 	eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 
+	eof_log_level |= 2;	//Enable verbose logging
 	return 1;
 }
 

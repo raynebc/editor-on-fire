@@ -3709,6 +3709,9 @@ void eof_render_editor_window(void)
 	if(!eof_song_loaded)
 		return;
 
+	if(eof_disable_2d_rendering)	//If the user wanted to disable the rendering of the 2D window to improve performance
+		return;						//Return immediately
+
 	eof_render_editor_window_common();	//Perform rendering that is common to the note and the vocal editor displays
 
 	numnotes = eof_get_track_size(eof_song, eof_selected_track);	//Get the number of notes in this legacy/pro guitar track
@@ -3760,6 +3763,9 @@ void eof_render_vocal_editor_window(void)
 		return;
 	if(!eof_vocals_selected)
 		return;
+
+	if(eof_disable_2d_rendering)	//If the user wanted to disable the rendering of the 2D window to improve performance
+		return;						//Return immediately
 
 	eof_render_editor_window_common();
 
