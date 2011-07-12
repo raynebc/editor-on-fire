@@ -228,7 +228,8 @@ extern int         eof_note_auto_adjust;
 extern int         eof_use_ts;	//Determines whether Time Signature events will be handled for MIDI/Feedback import/export
 extern int         eof_hide_drum_tails;
 extern int         eof_hide_note_names;
-extern int         eof_fret_hand_pos_0;
+extern int         eof_fret_hand_pos_0_pg;
+extern int         eof_fret_hand_pos_0_pb;
 extern int         eof_disable_sound_processing;
 extern int         eof_disable_3d_rendering;
 extern int         eof_disable_2d_rendering;

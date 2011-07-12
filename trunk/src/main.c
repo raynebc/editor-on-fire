@@ -89,7 +89,8 @@ int         eof_note_auto_adjust = 1;
 int         eof_use_ts = 0;	//By default, do not import/export TS events in MIDI/Feedback files
 int			eof_hide_drum_tails = 0;
 int         eof_hide_note_names = 0;
-int         eof_fret_hand_pos_0 = 0;
+int         eof_fret_hand_pos_0_pg = 0;
+int         eof_fret_hand_pos_0_pb = 0;
 int         eof_disable_sound_processing = 0;
 int         eof_disable_3d_rendering = 0;
 int         eof_disable_2d_rendering = 0;
@@ -3618,6 +3619,9 @@ void eof_set_3D_lane_positions(unsigned long track)
 	unsigned long ctr;
 	float lanewidth = 0.0;
 
+	if(!eof_song)	//If a song isn't loaded, ie. the user changed the lefty mode option with no song loaded
+		return;		//Return immediately
+
 	if(eof_selected_track == EOF_TRACK_BASS)
 	{	//Special case:  The bass track can use a sixth lane but its 3D representation still only draws 5 lanes
 		newnumlanes = 5;
@@ -3669,6 +3673,9 @@ void eof_set_2D_lane_positions(unsigned long track)
 	static unsigned long numlanes = 0;		//This remembers the number of lanes handled by the previous call
 	unsigned long newnumlanes, newnumlanes2;
 	unsigned long ctr, ctr2;
+
+	if(!eof_song)	//If a song isn't loaded, ie. the user changed the inverted notes option with no song loaded
+		return;		//Return immediately
 
 	newnumlanes = eof_count_track_lanes(eof_song, eof_selected_track);	//Count the number of lanes in the active track
 	newnumlanes2 = eof_count_track_lanes(eof_song, track);	//Count the number of lanes in that note's track
