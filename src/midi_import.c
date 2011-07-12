@@ -2090,8 +2090,8 @@ eof_log("\tThird pass complete", 1);
 	/* convert solos to star power for GH charts using FoFiX's method */
 	for(i = 1; i < sp->tracks; i++)
 	{	//For each track
-		if(sp->track[i]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
-		{	//Only perform this conversion for non pro guitar tracks, since they use different markers
+		if(sp->track[i]->track_format == EOF_LEGACY_TRACK_FORMAT)
+		{	//Only perform this conversion for legacy tracks
 			if(eof_get_num_star_power_paths(sp, i) < 2)
 			{	//If this track has less than two star power sections
 				for(j = 0; j < eof_get_num_solos(sp, i); j++)

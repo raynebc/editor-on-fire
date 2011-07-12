@@ -845,7 +845,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				if(trackctr == 0)	//Writing the normal temp file
 					fp = pack_fopen(notetempname[j], "w");
 				else
-				{			//Write the Expert+ temp file
+				{	//Write the Expert+ temp file
 					fp = pack_fopen(expertplustempname, "w");
 					for(i = 0; i < eof_midi_events; i++)
 					{	//Change all the double bass note events (note 95) to regular bass for the Expert+ track
@@ -1249,10 +1249,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					{	//Mute gems are written on channel 3
 						channel = 3;
 					}
+/*					//I have been told that this marking isn't working, so I'll used the note 102 marker which reportedly works
 					else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
 					{	//Forced hammer on gems are written on channel 2
 						channel = 2;
 					}
+*/
 					else if(sp->pro_guitar_track[tracknum]->note[i]->ghost & bitmask)
 					{	//Ghost note gems are written on channel 1
 						channel = 1;
@@ -1289,8 +1291,25 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 9, velocity, 13);
 				}
 
-				if(!eof_fret_hand_pos_0)
-				{	//If the user did not enable the "Fret hand pos is 0" option, write the left hand position based on notes in the expert difficulty
+				/* write forced HOPO */
+				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
+				{	//If this note strums up
+					eof_add_midi_event(deltapos, 0x90, 102, 96, channel);	//Note 102 seems to be RB3's marker for forced HOPO
+					eof_add_midi_event(deltapos + deltalength, 0x80, 102, velocity, channel);
+				}
+
+				if(((eof_fret_hand_pos_0_pg && (sp->track[j]->track_type == EOF_TRACK_PRO_GUITAR)) || (eof_fret_hand_pos_0_pb && (sp->track[j]->track_type == EOF_TRACK_PRO_BASS))))
+				{	//If the user opted to write a single fret hand position of 0 for this pro guitar/bass track
+					if(!fret_hand_pos_written)
+					{	//and that position hasn't been written yet
+						rootvel = 100;	//Velocity 100 represents the string played open
+						eof_add_midi_event(deltapos, 0x90, 108, rootvel, 0);			//Note 108 denotes left hand position
+						eof_add_midi_event(deltapos + deltalength, 0x80, 108, 64, 0);	//Write the note off event (using the same velocity that RB3 MIDIs use)
+						fret_hand_pos_written = 1;
+					}
+				}
+				else
+				{	//Otherwise write the left hand positions based on notes in the expert difficulty
 					if(eof_get_note_type(sp, j, i) == EOF_NOTE_AMAZING)
 					{	//For the Expert difficulty, write left hand position notes
 					/* write left hand position note, which is a note 108 with the same velocity of the lowest fret used in the pro guitar note */
@@ -1312,13 +1331,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 						eof_add_midi_event(deltapos, 0x90, 108, rootvel, 0);			//Note 108 denotes left hand position
 						eof_add_midi_event(deltapos + deltalength, 0x80, 108, 64, 0);	//Write the note off event (using the same velocity that RB3 MIDIs use)
 					}
-				}
-				else if(!fret_hand_pos_written)
-				{	//Otherwise, write the hand position to be 0 (open) at the first note position in any difficulty
-					rootvel = 100;	//Velocity 100 represents the string played open
-					eof_add_midi_event(deltapos, 0x90, 108, rootvel, 0);			//Note 108 denotes left hand position
-					eof_add_midi_event(deltapos + deltalength, 0x80, 108, 64, 0);	//Write the note off event (using the same velocity that RB3 MIDIs use)
-					fret_hand_pos_written = 1;
 				}
 
 				/* write root note, which is a note from 4 to 15, to represent the chord's major scale (where any E scale chord is 4, F is 5, Gb is 6, ..., Eb is 15) */

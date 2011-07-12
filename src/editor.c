@@ -4390,8 +4390,8 @@ unsigned char eof_find_pen_note_mask(void)
 	}
 
 	/* see if we are inverting the lanes */
-	if(eof_inverted_notes)
-	{	//If the user opted to invert the notes in the piano roll
+	if(eof_inverted_notes || (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+	{	//If the user opted to invert the notes in the piano roll, or if the current track is a pro guitar/bass track, return the appropriate inverted pen mask
 		return ((1 << (lanecount - 1)) >> eof_hover_piece);	//This finds the appropriate invert mask, where mousing over the bottom most lane activates lane 1 for the pen mask
 	}
 

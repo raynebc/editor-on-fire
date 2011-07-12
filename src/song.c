@@ -1678,19 +1678,19 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				return 1;
 			}
 		break;
-		case EOF_YELLOW_TOM_SECTION:	//Yellow Tom section (not supported yet)
+		case EOF_YELLOW_CYMBAL_SECTION:	//Yellow cymbal section (not supported yet)
 			if(sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-			{	//Tom sections are only valid for drum tracks
+			{	//Cymbal sections are only valid for drum tracks
 			}
 		break;
-		case EOF_BLUE_TOM_SECTION:	//Blue Tom section (not supported yet)
+		case EOF_BLUE_CYMBAL_SECTION:	//Blue cymbal section (not supported yet)
 			if(sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-			{	//Tom sections are only valid for drum tracks
+			{	//Cymbal sections are only valid for drum tracks
 			}
 		break;
-		case EOF_GREEN_TOM_SECTION:	//Green Tom section (not supported yet)
+		case EOF_GREEN_CYMBAL_SECTION:	//Green cymbal section (not supported yet)
 			if(sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-			{	//Tom sections are only valid for drum tracks
+			{	//Cymbal sections are only valid for drum tracks
 			}
 		break;
 		case EOF_TRILL_SECTION:
