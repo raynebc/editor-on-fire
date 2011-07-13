@@ -1294,8 +1294,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				/* write forced HOPO */
 				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
 				{	//If this note strums up
-					eof_add_midi_event(deltapos, 0x90, 102, 96, channel);	//Note 102 seems to be RB3's marker for forced HOPO
-					eof_add_midi_event(deltapos + deltalength, 0x80, 102, velocity, channel);
+					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 6, 96, channel);	//Forced HOPO markers are note # (lane 1 + 6)
+					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 6, velocity, channel);
 				}
 
 				if(((eof_fret_hand_pos_0_pg && (sp->track[j]->track_type == EOF_TRACK_PRO_GUITAR)) || (eof_fret_hand_pos_0_pb && (sp->track[j]->track_type == EOF_TRACK_PRO_BASS))))
