@@ -66,6 +66,9 @@ void eof_select_beat(int beat)
 	eof_beat_in_measure = 0;
 	eof_beats_in_measure = 1;
 
+	if(!eof_song || (beat >= eof_song->beats))
+		return;
+
 	for(i = 0; i <= beat; i++)
 	{
 		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_4_4)
