@@ -1209,39 +1209,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					}
 				}
 
-				/* write slide sections */
-				if((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
-				{	//If this note slides up or down
-					phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
-					phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
-					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-					{	//If this note slides up
-						phase_shift_sysex_phrase[5] = 2;	//Store the phrase ID (2 = Pro guitar slide up)
-					}
-					else
-					{	//If this note slides down
-						phase_shift_sysex_phrase[5] = 3;	//Store the phrase ID (3 = Pro guitar slide down)
-					}
-					phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-					eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide start marker
-					phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-					eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide stop marker
-
-					//This isn't the correct RB3 slide logic, but Bigjoe5 has indicated he can control this type of
-					//slide marker artificially by using a ghost note with a higher/lower fret value than that of the
-					//note that should slide
-					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
-					{	//If this note slides down
-						eof_add_midi_event(deltapos, 0x90, slidenote, 104, 0);	//Velocity 104 denotes slide down
-						eof_add_midi_event(deltapos + deltalength, 0x80, slidenote, 104, 0);
-					}
-					else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-					{	//If this note slides up
-						eof_add_midi_event(deltapos, 0x90, slidenote, 102, 0);	//Velocity 102 denotes slide up
-						eof_add_midi_event(deltapos + deltalength, 0x80, slidenote, 102, 0);
-					}
-				}
-
 				/* write note gems */
 				for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
 				{	//For each of the 6 usable strings
@@ -1279,6 +1246,46 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					}
 				}
 
+				/* write hammer on/pull off */
+				if((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HO) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_PO))
+				{	//If this note is marked as a hammer on or pull off
+					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 6, 96, channel);	//Forced HO or PO markers are note # (lane 1 + 6)
+					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 6, velocity, channel);
+				}
+
+				/* write slide sections */
+				if((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+				{	//If this note slides up or down
+					phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+					phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
+					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+					{	//If this note slides up
+						phase_shift_sysex_phrase[5] = 2;	//Store the phrase ID (2 = Pro guitar slide up)
+					}
+					else
+					{	//If this note slides down
+						phase_shift_sysex_phrase[5] = 3;	//Store the phrase ID (3 = Pro guitar slide down)
+					}
+					phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+					eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide start marker
+					phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+					eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide stop marker
+
+					//This isn't the correct RB3 slide logic, but Bigjoe5 has indicated he can control this type of
+					//slide marker artificially by using a ghost note with a higher/lower fret value than that of the
+					//note that should slide
+					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+					{	//If this note slides down
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 7, 104, 0);	//Slide markers are note # (lane 1 + 7)
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 7, 104, 0);
+					}
+					else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+					{	//If this note slides up
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 7, 102, 0);
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 7, 102, 0);
+					}
+				}
+
 				/* write strum direction markers */
 				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM)
 				{	//If this note strums down
@@ -1289,13 +1296,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				{	//If this note strums up
 					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 9, 96, 13);	//Down strum markers are note # (lane 1 + 9), velocity 96, channel 13
 					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 9, velocity, 13);
-				}
-
-				/* write forced HOPO */
-				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
-				{	//If this note strums up
-					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 6, 96, channel);	//Forced HOPO markers are note # (lane 1 + 6)
-					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 6, velocity, channel);
 				}
 
 				if(((eof_fret_hand_pos_0_pg && (sp->track[j]->track_type == EOF_TRACK_PRO_GUITAR)) || (eof_fret_hand_pos_0_pb && (sp->track[j]->track_type == EOF_TRACK_PRO_BASS))))
