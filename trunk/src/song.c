@@ -1747,6 +1747,11 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				{
 					ustrcpy(sp->pro_guitar_track[tracknum]->arpeggio[count].name, name);
 				}
+				if(difficulty == 0xFF)
+				{	//Beta versions of EOF 1.8 (up to beta 15) stored arpeggios without a specified difficulty, re-assign them to Expert
+					difficulty = EOF_NOTE_AMAZING;
+				}
+				sp->pro_guitar_track[tracknum]->arpeggio[count].difficulty = difficulty;
 				sp->pro_guitar_track[tracknum]->arpeggios++;
 				return 1;
 			}
@@ -2250,7 +2255,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 						for(ctr=0; ctr < sp->pro_guitar_track[tracknum]->arpeggios; ctr++)
 						{	//For each arpegio section in the track
 							eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
-							pack_putc(0xFF, fp);					//Write an associated difficulty of "all difficulties"
+							pack_putc(sp->pro_guitar_track[tracknum]->arpeggio[ctr].difficulty, fp);	//Write the arpeggio phrase's associated difficulty
 							pack_iputl(sp->pro_guitar_track[tracknum]->arpeggio[ctr].start_pos, fp);	//Write the arpeggio phrase's position
 							pack_iputl(sp->pro_guitar_track[tracknum]->arpeggio[ctr].end_pos, fp);		//Write the arpeggio phrase's end position
 							pack_iputl(0, fp);						//Write section flags (not used)

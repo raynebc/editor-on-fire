@@ -797,6 +797,15 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 		numlanes = 5;
 	}
 
+	long halflanewidth = (56.0 * (4.0 / (numlanes-1))) / 2;
+	long xoffset = 0;	//This will be used to offset the trill/tremolo lane fill as necessary to center the fill over that lane's gem
+	if(eof_selected_track == EOF_TRACK_DRUM)
+	{
+		xoffset = halflanewidth;	//Drum gems render half a lane width further right (in between fret lines instead of centered over the lines)
+	}
+	#define EOF_HALF_3D_IMAGE_WIDTH 24
+	#define EOF_3D_IMAGE_HEIGHT 48
+
 	if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 	{	//If this is a drum track
 		if(notenote & 1)
@@ -827,22 +836,22 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 				{	//If this is a cymbal note, render with the cymbal image
 					if(noteflags & EOF_NOTE_FLAG_SP)
 					{	//If this cymbal note is star power, render it in silver
-						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_WHITE_CYMBAL_HIT] : eof_image[EOF_IMAGE_NOTE_WHITE_CYMBAL], xchart[ctr-1] - 24 + 28, 200 - 48, npos);
+						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_WHITE_CYMBAL_HIT] : eof_image[EOF_IMAGE_NOTE_WHITE_CYMBAL], xchart[ctr-1] - EOF_HALF_3D_IMAGE_WIDTH + halflanewidth, 200 - EOF_3D_IMAGE_HEIGHT, npos);
 					}
 					else
 					{	//Otherwise render in the appropriate color
-						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[cymbals_hit[ctr]] : eof_image[cymbals[ctr]], xchart[ctr-1] - 24 + 28, 200 - 48, npos);
+						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[cymbals_hit[ctr]] : eof_image[cymbals[ctr]], xchart[ctr-1] - EOF_HALF_3D_IMAGE_WIDTH + halflanewidth, 200 - EOF_3D_IMAGE_HEIGHT, npos);
 					}
 				}
 				else
 				{	//Otherwise render with the standard note image
 					if(noteflags & EOF_NOTE_FLAG_SP)
 					{	//If this drum note is star power, render it in silver
-						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_WHITE_HIT] : eof_image[EOF_IMAGE_NOTE_WHITE], xchart[ctr-1] - 24 + 28, 200 - 48, npos);
+						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_WHITE_HIT] : eof_image[EOF_IMAGE_NOTE_WHITE], xchart[ctr-1] - EOF_HALF_3D_IMAGE_WIDTH + halflanewidth, 200 - EOF_3D_IMAGE_HEIGHT, npos);
 					}
 					else
 					{	//Otherwise render in the appropriate color
-						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[notes_hit[ctr]] : eof_image[notes[ctr]], xchart[ctr-1] - 24 + 28, 200 - 48, npos);
+						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[notes_hit[ctr]] : eof_image[notes[ctr]], xchart[ctr-1] - EOF_HALF_3D_IMAGE_WIDTH + halflanewidth, 200 - EOF_3D_IMAGE_HEIGHT, npos);
 					}
 				}
 			}
@@ -880,22 +889,22 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 						{	//If this is a HOPO note
 							if(noteflags & EOF_NOTE_FLAG_SP)
 							{	//If this is also a SP note
-								ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_HWHITE_HIT] : eof_image[EOF_IMAGE_NOTE_HWHITE], xchart[ctr] - 24, 200 - 48, npos);
+								ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_HWHITE_HIT] : eof_image[EOF_IMAGE_NOTE_HWHITE], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
 							}
 							else
 							{
-								ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[hopo_notes_hit[ctr]] : eof_image[hopo_notes[ctr]], xchart[ctr] - 24, 200 - 48, npos);
+								ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[hopo_notes_hit[ctr]] : eof_image[hopo_notes[ctr]], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
 							}
 						}
 						else
 						{
 							if(noteflags & EOF_NOTE_FLAG_SP)
 							{	//If this is an SP note
-								ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_WHITE_HIT] : eof_image[EOF_IMAGE_NOTE_WHITE], xchart[ctr] - 24, 200 - 48, npos);
+								ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[EOF_IMAGE_NOTE_WHITE_HIT] : eof_image[EOF_IMAGE_NOTE_WHITE], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
 							}
 							else
 							{
-								ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[notes_hit[ctr]] : eof_image[notes[ctr]], xchart[ctr] - 24, 200 - 48, npos);
+								ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[notes_hit[ctr]] : eof_image[notes[ctr]], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
 							}
 						}
 
@@ -904,14 +913,14 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 							BITMAP *fretbmp = eof_create_fret_number_bitmap(eof_song->pro_guitar_track[tracknum]->note[notenum], ctr, 8, eof_color_white, eof_color_black);	//Allow one extra character's width for padding
 							if(fretbmp != NULL)
 							{	//Render the bitmap on top of the 3D note and then destroy the bitmap
-								ocd3d_draw_bitmap(eof_window_3d->screen, fretbmp, xchart[ctr] - 8, 200 - 24, npos);
+								ocd3d_draw_bitmap(eof_window_3d->screen, fretbmp, xchart[ctr] - 8, 200 - (EOF_3D_IMAGE_HEIGHT / 2), npos);
 								destroy_bitmap(fretbmp);
 							}
 						}
 					}//If this is not a dance track
 					else
 					{	//This is a dance track
-						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[arrows_hit[ctr]] : eof_image[arrows[ctr]], xchart[ctr] - 24, 200 - 48, npos);
+						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[arrows_hit[ctr]] : eof_image[arrows[ctr]], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
 					}
 				}
 			}//If this lane is used

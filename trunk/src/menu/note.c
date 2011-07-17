@@ -3155,7 +3155,7 @@ int eof_menu_arpeggio_mark(void)
 			if(firstnote == 0)
 			{	//This is the first encountered selected note
 				sel_start = eof_get_note_pos(eof_song, eof_selected_track, i);
-				sel_end = sel_start;
+				sel_end = sel_start + eof_get_note_length(eof_song, eof_selected_track, i);
 				firstnote = 1;
 			}
 			else
@@ -3182,8 +3182,8 @@ int eof_menu_arpeggio_mark(void)
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(!existingphrase)
-	{	//If the selected notes are not within an existing arpeggio phrase, create one
-		eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, 0, sel_start, sel_end, 0, NULL);
+	{	//If the selected notes are not within an existing arpeggio phrase, create one applying to the active difficulty
+		eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, sel_start, sel_end, 0, NULL);
 	}
 	else
 	{	//Otherwise edit the existing phrase
