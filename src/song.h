@@ -43,6 +43,12 @@
 #define EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM		262144	//This flag will represent a chord that is played by strumming up
 #define EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM		524288	//This flag will represent a chord that is played by strumming down
 
+//The following flags pertain to dance notes
+#define EOF_DANCE_FLAG_LANE_1_MINE		512		//This flag will represent a mine note for lane 1
+#define EOF_DANCE_FLAG_LANE_2_MINE		1024	//This flag will represent a mine note for lane 2
+#define EOF_DANCE_FLAG_LANE_3_MINE		2048	//This flag will represent a mine note for lane 3
+#define EOF_DANCE_FLAG_LANE_4_MINE		4096	//This flag will represent a mine note for lane 4
+
 //The following flags pertain to legacy and pro guitar notes
 #define EOF_NOTE_FLAG_IS_TRILL		            65536	//This flag will be set by eof_determine_phrase_status() if the note is in a trill section
 #define EOF_NOTE_FLAG_IS_TREMOLO		        131072	//This flag will be set by eof_determine_phrase_status() if the note is in a tremolo section
@@ -155,6 +161,7 @@ typedef struct
 	unsigned long end_pos;
 	unsigned long flags;
     char name[EOF_NAME_LENGTH+1];
+    char difficulty;	//The difficulty this phrase applies to (ie. arpeggios)
 
 } EOF_PHRASE_SECTION;
 

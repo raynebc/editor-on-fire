@@ -994,6 +994,9 @@ eof_log("\tSecond pass complete", 1);
 	unsigned long strumpos[4];			//Used for pro guitar strum direction parsing
 	char strumtype[4];					//Used for pro guitar strum direction parsing
 	int strumdiff;						//Used for pro guitar strum direction parsing
+	unsigned long arpegpos[4];			//Used for pro guitar arpeggio parsing
+	char arpegtype[4];					//Used for pro guitar arpeggio parsing
+	int arpegdiff;						//Used for pro guitar arpeggio parsing
 	unsigned long event_realtime;		//Store the delta time converted to realtime to avoid having to convert multiple times per note
 	char prodrums = 0;					//Tracks whether the drum track being written includes Pro drum notation
 	unsigned long tracknum;				//Used to de-obfuscate the legacy track number
@@ -1249,42 +1252,44 @@ eof_log("\tSecond pass complete", 1);
 						}
 						else
 						{	/* store forced HOPO marker, when the note off for this marker occurs, search for note with same position and apply it to that note */
-							if(eof_import_events[i]->event[j]->d1 == 0x3C + 5)
+							//Forced HOPO on are marked as lane 1 + 5
+							if(eof_import_events[i]->event[j]->d1 == 60 + 5)
 							{
 								hopopos[0] = event_realtime;
 								hopotype[0] = 0;
 							}
-							else if(eof_import_events[i]->event[j]->d1 == 0x48 + 5)
+							else if(eof_import_events[i]->event[j]->d1 == 72 + 5)
 							{
 								hopopos[1] = event_realtime;
 								hopotype[1] = 0;
 							}
-							else if(eof_import_events[i]->event[j]->d1 == 0x54 + 5)
+							else if(eof_import_events[i]->event[j]->d1 == 84 + 5)
 							{
 								hopopos[2] = event_realtime;
 								hopotype[2] = 0;
 							}
-							else if(eof_import_events[i]->event[j]->d1 == 0x60 + 5)
+							else if(eof_import_events[i]->event[j]->d1 == 96 + 5)
 							{
 								hopopos[3] = event_realtime;
 								hopotype[3] = 0;
 							}
-							else if(eof_import_events[i]->event[j]->d1 == 0x3C + 6)
+							//Forced HOPO off are marked as lane 1 + 6
+							else if(eof_import_events[i]->event[j]->d1 == 60 + 6)
 							{
 								hopopos[0] = event_realtime;
 								hopotype[0] = 1;
 							}
-							else if(eof_import_events[i]->event[j]->d1 == 0x48 + 6)
+							else if(eof_import_events[i]->event[j]->d1 == 72 + 6)
 							{
 								hopopos[1] = event_realtime;
 								hopotype[1] = 1;
 							}
-							else if(eof_import_events[i]->event[j]->d1 == 0x54 + 6)
+							else if(eof_import_events[i]->event[j]->d1 == 84 + 6)
 							{
 								hopopos[2] = event_realtime;
 								hopotype[2] = 1;
 							}
-							else if(eof_import_events[i]->event[j]->d1 == 0x60 + 6)
+							else if(eof_import_events[i]->event[j]->d1 == 96 + 6)
 							{
 								hopopos[3] = event_realtime;
 								hopotype[3] = 1;
@@ -1388,35 +1393,35 @@ eof_log("\tSecond pass complete", 1);
 						else
 						{	/* detect forced HOPO */
 							hopodiff = -1;
-							if(eof_import_events[i]->event[j]->d1 == 0x3C + 5)
+							if(eof_import_events[i]->event[j]->d1 == 60 + 5)
 							{
 								hopodiff = 0;
 							}
-							else if(eof_import_events[i]->event[j]->d1 == 0x48 + 5)
+							else if(eof_import_events[i]->event[j]->d1 == 72 + 5)
 							{
 								hopodiff = 1;
 							}
-							else if(eof_import_events[i]->event[j]->d1 == 0x54 + 5)
+							else if(eof_import_events[i]->event[j]->d1 == 84 + 5)
 							{
 								hopodiff = 2;
 							}
-							else if(eof_import_events[i]->event[j]->d1 == 0x60 + 5)
+							else if(eof_import_events[i]->event[j]->d1 == 96 + 5)
 							{
 								hopodiff = 3;
 							}
-							else if(eof_import_events[i]->event[j]->d1 == 0x3C + 6)
+							else if(eof_import_events[i]->event[j]->d1 == 60 + 6)
 							{
 								hopodiff = 0;
 							}
-							else if(eof_import_events[i]->event[j]->d1 == 0x48 + 6)
+							else if(eof_import_events[i]->event[j]->d1 == 72 + 6)
 							{
 								hopodiff = 1;
 							}
-							else if(eof_import_events[i]->event[j]->d1 == 0x54 + 6)
+							else if(eof_import_events[i]->event[j]->d1 == 84 + 6)
 							{
 								hopodiff = 2;
 							}
-							else if(eof_import_events[i]->event[j]->d1 == 0x60 + 6)
+							else if(eof_import_events[i]->event[j]->d1 == 96 + 6)
 							{
 								hopodiff = 3;
 							}
@@ -1604,9 +1609,55 @@ eof_log("\tSecond pass complete", 1);
 					/* note on */
 					if(eof_import_events[i]->event[j]->type == 0x90)
 					{	//Note on event
+						/* store forced Ho/Po markers, when the note off for this marker occurs, search for note with same position and apply it to that note */
+						//Pro guitar forced Ho/Po are both marked as lane 1 + 6
+						if(eof_import_events[i]->event[j]->d1 == 24 + 6)
+						{
+							hopopos[0] = event_realtime;
+							hopotype[0] = 1;
+						}
+						else if(eof_import_events[i]->event[j]->d1 == 48 + 6)
+						{
+							hopopos[1] = event_realtime;
+							hopotype[1] = 1;
+						}
+						else if(eof_import_events[i]->event[j]->d1 == 72 + 6)
+						{
+							hopopos[2] = event_realtime;
+							hopotype[2] = 1;
+						}
+						else if(eof_import_events[i]->event[j]->d1 == 96 + 6)
+						{
+							hopopos[3] = event_realtime;
+							hopotype[3] = 1;
+						}
+
+						/* store arpeggio marker, when the note off for this marker occurs, search for notes with same position and apply it to them */
+						//Arpeggio phrases on are marked as lane (1 + 8)
+						if(eof_import_events[i]->event[j]->d1 == 24 + 8)
+						{
+							arpegpos[0] = event_realtime;
+							arpegtype[0] = 0;
+						}
+						else if(eof_import_events[i]->event[j]->d1 == 48 + 8)
+						{
+							arpegpos[1] = event_realtime;
+							arpegtype[1] = 0;
+						}
+						else if(eof_import_events[i]->event[j]->d1 == 72 + 8)
+						{
+							arpegpos[2] = event_realtime;
+							arpegtype[2] = 0;
+						}
+						else if(eof_import_events[i]->event[j]->d1 == 96 + 8)
+						{
+							arpegpos[3] = event_realtime;
+							arpegtype[3] = 0;
+						}
+
 						/* store strum direction marker, when the note off for this marker occurs, search for notes with same position and apply it to them */
 						if((eof_import_events[i]->event[j]->d2 == 96) && (eof_import_events[i]->event[j]->channel == 13))
-						{	//Lane (1+9), Velocity 96 and channel 13 are used in up strum markers
+						{	//Lane (1 + 9), Velocity 96 and channel 13 are used in up strum markers
 							if(eof_import_events[i]->event[j]->d1 == 24 + 9)
 							{
 								strumpos[0] = event_realtime;
@@ -1629,7 +1680,7 @@ eof_log("\tSecond pass complete", 1);
 							}
 						}
 						if((eof_import_events[i]->event[j]->d2 == 114) && (eof_import_events[i]->event[j]->channel == 15))
-						{	//Lane (1+9), Velocity 114 and channel 15 are used in down strum markers
+						{	//Lane (1 + 9), Velocity 114 and channel 15 are used in down strum markers
 							if(eof_import_events[i]->event[j]->d1 == 24 + 9)
 							{
 								strumpos[0] = event_realtime;
@@ -1654,12 +1705,12 @@ eof_log("\tSecond pass complete", 1);
 
 						/* arpeggios, solos, star power, tremolos and trills */
 						phraseptr = NULL;
-						if((eof_import_events[i]->event[j]->d1 == 104) && (eof_get_num_arpeggios(sp, picked_track) < EOF_MAX_PHRASES))
-						{	//Arpeggios are marked with note 104
-							phraseptr = eof_get_arpeggio(sp, picked_track, eof_get_num_arpeggios(sp, picked_track));
-							phraseptr->start_pos = event_realtime;
-						}
-						else if((eof_import_events[i]->event[j]->d1 == 115) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
+//						if((eof_import_events[i]->event[j]->d1 == 104) && (eof_get_num_arpeggios(sp, picked_track) < EOF_MAX_PHRASES))
+//						{	//Arpeggios are marked with note 104
+//							phraseptr = eof_get_arpeggio(sp, picked_track, eof_get_num_arpeggios(sp, picked_track));
+//							phraseptr->start_pos = event_realtime;
+//						}
+						if((eof_import_events[i]->event[j]->d1 == 115) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
 						{	//Pro guitar solos are marked with note 115
 							phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
 							phraseptr->start_pos = event_realtime;
@@ -1740,10 +1791,66 @@ eof_log("\tSecond pass complete", 1);
 					/* note off so get length of note */
 					else if(eof_import_events[i]->event[j]->type == 0x80)
 					{	//Note off event
-						strumdiff = -1;
+						/* detect forced HOPO */
+						hopodiff = -1;
+						if(eof_import_events[i]->event[j]->d1 == 24 + 6)
+						{
+							hopodiff = 0;
+						}
+						else if(eof_import_events[i]->event[j]->d1 == 48 + 6)
+						{
+							hopodiff = 1;
+						}
+						else if(eof_import_events[i]->event[j]->d1 == 72 + 6)
+						{
+							hopodiff = 2;
+						}
+						else if(eof_import_events[i]->event[j]->d1 == 96 + 6)
+						{
+							hopodiff = 3;
+						}
+						if(hopodiff >= 0)
+						{
+							for(k = note_count[picked_track] - 1; k >= first_note; k--)
+							{	//Check for each note that has been imported
+								if((eof_get_note_type(sp, picked_track, k) == hopodiff) && (eof_get_note_pos(sp, picked_track, k) >= hopopos[hopodiff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+								{	//If the note is in the same difficulty as the HOPO phrase, and its timestamp falls within the Ho/Po marker
+									eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_HO);	//RB3 marks forced hammer ons the same as forced pull offs
+								}
+							}
+						}/* detect forced HOPO */
+
+						/* detect arpeggio markers */
+						arpegdiff = -1;	//Don't process an arpeggio marker unless one was found
+						if(eof_import_events[i]->event[j]->d1 == 24 + 8)
+						{
+							arpegdiff = 0;
+						}
+						else if(eof_import_events[i]->event[j]->d1 == 48 + 8)
+						{
+							arpegdiff = 1;
+						}
+						else if(eof_import_events[i]->event[j]->d1 == 72 + 8)
+						{
+							arpegdiff = 2;
+						}
+						else if(eof_import_events[i]->event[j]->d1 == 96 + 8)
+						{
+							arpegdiff = 3;
+						}
+						if((arpegdiff >= 0) && (eof_get_num_arpeggios(sp, picked_track) < EOF_MAX_PHRASES))
+						{	//If an arpeggio marker was found, and the max number of arpeggio phrases haven't already been added
+							phraseptr = eof_get_arpeggio(sp, picked_track, eof_get_num_arpeggios(sp, picked_track));
+							phraseptr->start_pos = arpegpos[arpegdiff];
+							phraseptr->end_pos = event_realtime - 1;
+							phraseptr->difficulty = arpegdiff;	//Set the difficulty for this arpeggio
+							eof_set_num_arpeggios(sp, picked_track, eof_get_num_arpeggios(sp, picked_track) + 1);
+						}
+
 						/* detect strum direction markers */
+						strumdiff = -1;	//Don't process a strum marker unless one was found
 						if(eof_import_events[i]->event[j]->channel == 13)
-						{	//Lane (1+9), Velocity 96 and channel 13 are used in up strum markers
+						{	//Lane (1 + 9), Velocity 96 and channel 13 are used in up strum markers
 							if(eof_import_events[i]->event[j]->d1 == 24 + 9)
 							{
 								strumdiff = 0;
@@ -1762,7 +1869,7 @@ eof_log("\tSecond pass complete", 1);
 							}
 						}
 						if(eof_import_events[i]->event[j]->channel == 15)
-						{	//Lane (1+9), Velocity 114 and channel 15 are used in down strum markers
+						{	//Lane (1 + 9), Velocity 114 and channel 15 are used in down strum markers
 							if(eof_import_events[i]->event[j]->d1 == 24 + 9)
 							{
 								strumdiff = 0;
@@ -1781,7 +1888,7 @@ eof_log("\tSecond pass complete", 1);
 							}
 						}
 						if(strumdiff >= 0)
-						{
+						{	//If a strum marker was found
 							for(k = note_count[picked_track] - 1; k >= first_note; k--)
 							{	//Check for each note that has been imported
 								if((eof_get_note_type(sp, picked_track, k) == strumdiff) && (eof_get_note_pos(sp, picked_track, k) >= strumpos[strumdiff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
@@ -1798,13 +1905,13 @@ eof_log("\tSecond pass complete", 1);
 							}
 						}
 
-						if((eof_import_events[i]->event[j]->d1 == 104) && (eof_get_num_arpeggios(sp, picked_track) < EOF_MAX_PHRASES))
-						{	//End of an arpeggio phrase
-							phraseptr = eof_get_arpeggio(sp, picked_track, eof_get_num_arpeggios(sp, picked_track));
-							phraseptr->end_pos = event_realtime - 1;
-							eof_set_num_arpeggios(sp, picked_track, eof_get_num_arpeggios(sp, picked_track) + 1);
-						}
-						else if((eof_import_events[i]->event[j]->d1 == 115) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
+//						if((eof_import_events[i]->event[j]->d1 == 104) && (eof_get_num_arpeggios(sp, picked_track) < EOF_MAX_PHRASES))
+//						{	//End of an arpeggio phrase
+//							phraseptr = eof_get_arpeggio(sp, picked_track, eof_get_num_arpeggios(sp, picked_track));
+//							phraseptr->end_pos = event_realtime - 1;
+//							eof_set_num_arpeggios(sp, picked_track, eof_get_num_arpeggios(sp, picked_track) + 1);
+//						}
+						if((eof_import_events[i]->event[j]->d1 == 115) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
 						{	//End of a solo phrase
 							phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
 							phraseptr->end_pos = event_realtime - 1;

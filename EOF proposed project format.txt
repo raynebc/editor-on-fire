@@ -132,7 +132,7 @@ TRACK CHUNK, for each track:
 
 
 	TRACK FORMAT DEFINITIONS
-["LEGACY" (GUITAR/BASS/DRUM/PRO DRUM/KEYS) TRACK FORMAT]
+["LEGACY" (GUITAR/BASS/DRUM/PRO DRUM/KEYS/DANCE) TRACK FORMAT]
 *	1 byte:		The number of lanes, keys, etc. used in this track (5 for a standard legacy track, 6 for legacy bass with open strum, etc.)
 	4 bytes:	Number of notes
 	NOTE CHUNK, for each note

@@ -151,7 +151,7 @@ char        eof_loaded_song_name[1024] = {0};
 char        eof_loaded_ogg_name[1024] = {0};
 char        eof_window_title[4096] = {0};
 int         eof_quit = 0;
-int         eof_note_type = EOF_NOTE_AMAZING;
+int         eof_note_type = EOF_NOTE_AMAZING;	//The active difficulty
 int         eof_note_difficulties[5] = {0};
 int         eof_note_types = 0;
 int         eof_selected_track = EOF_TRACK_GUITAR;
@@ -2486,7 +2486,8 @@ void eof_render_3d_window(void)
 		return;						//Return immediately
 
 	clear_to_color(eof_window_3d->screen, eof_color_gray);
-	lastlane = numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
+	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
+	lastlane = numlanes - 1;	//This variable begins lane numbering at 0 instead of 1
 	eof_set_3D_lane_positions(eof_selected_track);	//Update the xchart[] array
 	if(eof_selected_track == EOF_TRACK_BASS)
 	{	//Special case:  The bass track can use a sixth lane but its 3D representation still only draws 5 lanes
@@ -2543,21 +2544,25 @@ void eof_render_3d_window(void)
 	{
 		for(i = 0; i < eof_song->pro_guitar_track[tracknum]->arpeggios; i++)
 		{	//For each arpeggio section in the track
-			sz = (long)(eof_song->pro_guitar_track[tracknum]->arpeggio[i].start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
-			sez = (long)(eof_song->pro_guitar_track[tracknum]->arpeggio[i].end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
-			if((-100 <= sez) && (600 >= sz))
-			{	//If the arpeggio section would render at or after the left edge of the piano roll, fill the topmost lane with turquoise
-				spz = sz < -100 ? -100 : sz;
-				spez = sez > 600 ? 600 : sez;
-				point[0] = ocd3d_project_x(20, spez);
-				point[1] = ocd3d_project_y(200, spez);
-				point[2] = ocd3d_project_x(300, spez);
-				point[3] = point[1];
-				point[4] = ocd3d_project_x(300, spz);
-				point[5] = ocd3d_project_y(200, spz);
-				point[6] = ocd3d_project_x(20, spz);
-				point[7] = point[5];
-				polygon(eof_window_3d->screen, 4, point, makecol(51,166,153));	//Fill with a turquoise color (use (68,221,204) for light turquoise)
+			sectionptr = &eof_song->pro_guitar_track[tracknum]->arpeggio[i];
+			if(sectionptr->difficulty == eof_note_type)
+			{	//If this arpeggio is assigned to the active difficulty
+				sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
+				sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
+				if((-100 <= sez) && (600 >= sz))
+				{	//If the arpeggio section would render at or after the left edge of the piano roll, fill the topmost lane with turquoise
+					spz = sz < -100 ? -100 : sz;
+					spez = sez > 600 ? 600 : sez;
+					point[0] = ocd3d_project_x(20, spez);
+					point[1] = ocd3d_project_y(200, spez);
+					point[2] = ocd3d_project_x(300, spez);
+					point[3] = point[1];
+					point[4] = ocd3d_project_x(300, spz);
+					point[5] = ocd3d_project_y(200, spz);
+					point[6] = ocd3d_project_x(20, spz);
+					point[7] = point[5];
+					polygon(eof_window_3d->screen, 4, point, makecol(51,166,153));	//Fill with a turquoise color (use (68,221,204) for light turquoise)
+				}
 			}
 		}
 	}

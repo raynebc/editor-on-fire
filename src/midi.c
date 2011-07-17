@@ -1175,7 +1175,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 						slidenote = 31;		//The note used to mark a supaeasy slide
 						break;
 					}
-					case EOF_NOTE_SPECIAL:	//BRE/drum fill: notes 120-124
+					case EOF_NOTE_SPECIAL:	//BRE fill: notes 120-125
 					{
 						midi_note_offset = 120;
 						break;
@@ -1248,7 +1248,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 				/* write hammer on/pull off */
 				if((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HO) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_PO))
-				{	//If this note is marked as a hammer on or pull off
+				{	//If this note is marked as a hammer on or pull off (RB3 marks them both the same way)
 					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 6, 96, channel);	//Forced HO or PO markers are note # (lane 1 + 6)
 					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 6, velocity, channel);
 				}
@@ -1364,8 +1364,36 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 					deltalength = 1;
 				}
-				eof_add_midi_event(deltapos, 0x90, 104, vel, 0);	//Note 104 denotes an arpeggio marker
-				eof_add_midi_event(deltapos + deltalength, 0x80, 104, vel, 0);
+				switch(sectionptr->difficulty)
+				{
+					case EOF_NOTE_AMAZING:	//notes 96-101
+					{
+						midi_note_offset = 96;
+						break;
+					}
+					case EOF_NOTE_MEDIUM:	//notes 72-77
+					{
+						midi_note_offset = 72;
+						break;
+					}
+					case EOF_NOTE_EASY:		//notes 48-58
+					{
+						midi_note_offset = 48;
+						break;
+					}
+					case EOF_NOTE_SUPAEASY:	//notes 24-29
+					{
+						midi_note_offset = 24;
+						break;
+					}
+					default:	//Invalid difficulty for an arpeggio phrase
+					{
+						continue;
+						break;
+					}
+				}
+				eof_add_midi_event(deltapos, 0x90, midi_note_offset + 8, vel, 0);	//Arpeggio markers are note # (lane 1 + 8)
+				eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 8, vel, 0);
 			}
 
 			/* fill in solos */
