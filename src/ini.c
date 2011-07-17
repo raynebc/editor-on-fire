@@ -20,7 +20,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	PACKFILE * fp;
 	char buffer[256] = {0};
 	char ini_string[4096] = {0};
-	unsigned long i, tracknum;
+	unsigned long i, j, tracknum;
 	char *tuning_name = NULL;
 
 	if(!sp || !fn)
@@ -129,11 +129,35 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 		{	//For each note in the bass guitar track
 			if(sp->legacy_track[tracknum]->note[i]->note & 32)
 			{	//If lane 6 (open bass) is populated
-				ustrcat(ini_string, "\r\nopen_strum = True");	//Write the open strum tag (used in Phase Shift)
+				ustrcat(ini_string, "\r\nsysex_open_bass = True");	//Write the open strum Sysex presence tag (used in Phase Shift) to identify that this Sysex phrase will be written to MIDI
 				break;	//Exit loop
 			}
 		}
 	}
+
+	/* check for use of pro guitar slides and write a tag if necessary */
+	char slidesfound = 0;
+	for(i = 1; i < sp->tracks; i++)
+	{	//For each track in the chart (skipping track 0)
+		if(sp->track[i]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+			continue;	//If this isn't a pro guitar/bass track
+
+		tracknum = sp->track[i]->tracknum;
+		for(j = 0; j < sp->pro_guitar_track[tracknum]->notes; j++)
+		{	//For each note in the pro guitar/bass track
+			if((sp->pro_guitar_track[tracknum]->note[j]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (sp->pro_guitar_track[tracknum]->note[j]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+			{	//If this note slides up or down
+				slidesfound = 1;
+				break;
+			}
+		}
+	}
+	if(slidesfound)
+	{	//If this chart has at least one pro guitar slide
+		ustrcat(ini_string, "\r\nsysex_pro_slide = True");	//Write the pro guitar slide Sysex presence tag (used in Phase Shift) to identify that up/down slide Sysex phrases will be written to MIDI
+	}
+
+	ustrcat(ini_string, "\r\nstar_power_note = 116");	//Write this tag to indicate to Phase Shift that EOF is using Rock Band's notation for star power
 
 	/* check for use of cymbal notation */
 	if(eof_track_has_cymbals(sp, EOF_TRACK_DRUM))
