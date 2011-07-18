@@ -305,7 +305,7 @@ void eof_mix_init(void)
 	}
 	eof_sound_cowbell = eof_mix_load_ogg_sample("percussion.dat#cowbell.ogg");
 	eof_sound_chosen_percussion = eof_sound_cowbell;	//Until the user specifies otherwise, make cowbell the default percussion
-	eof_selected_percussion_cue = 17;
+//	eof_selected_percussion_cue = 17;	//This is now set during config load
 	eof_sound_tambourine1 = eof_mix_load_ogg_sample("percussion.dat#tambourine1.ogg");
 	eof_sound_tambourine2 = eof_mix_load_ogg_sample("percussion.dat#tambourine2.ogg");
 	eof_sound_tambourine3 = eof_mix_load_ogg_sample("percussion.dat#tambourine3.ogg");

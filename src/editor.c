@@ -4146,8 +4146,8 @@ void eof_render_editor_window_common(void)
 	unsigned beats_per_measure = 0;
 	char buffer[16] = {0};
 	unsigned long measure_counter=0;
-	unsigned long beat_in_measure=0;
-	char first_measure = 0;
+//	unsigned long beat_in_measure=0;
+	char first_measure = 0;	//Set to nonzero when the first measure marker is reached
 	char notvisible;
 
 	bcol = makecol(128, 128, 128);
@@ -4159,13 +4159,13 @@ void eof_render_editor_window_common(void)
 	for(i = 0; i < eof_song->beats; i++)
 	{
 		if(eof_get_ts(eof_song,&beats_per_measure,NULL,i) == 1)
-		{	//If this beat is a time signature
-			first_measure = 1;
+		{	//If this beat has a time signature change
+			first_measure = 1;	//Note that a time signature change has been found
 			beat_counter = 0;
 		}
-		beat_in_measure = beat_counter;
-		if(first_measure && beat_in_measure == 0)
-		{
+//		beat_in_measure = beat_counter;
+		if(first_measure && (beat_counter == 0))
+		{	//If there was a TS change or the beat markers incremented enough to reach the next measure
 			measure_counter++;
 		}
 		xcoord = lpos + eof_song->beat[i]->pos / eof_zoom;
@@ -4219,11 +4219,6 @@ void eof_render_editor_window_common(void)
 				textprintf_centre_ex(eof_window_editor->screen, eof_mono_font, xcoord - 20 + 3 + 16, EOF_EDITOR_RENDER_OFFSET + 6 - (i % 2 == 0 ? 0 : 10) - 12, i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "(%s)", buffer);
 			}
 		}
-		beat_counter++;
-		if(beat_counter >= beats_per_measure)
-		{
-			beat_counter = 0;
-		}
 
 		if(notvisible > 0)
 		{	//If this beat marker would render further right than the right edge of the screen
@@ -4251,14 +4246,19 @@ void eof_render_editor_window_common(void)
 		{	//Draw event marker
 			line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
 		}
-		if(first_measure && beat_counter == 0)
+		if(first_measure && (beat_counter == 0))
 		{	//If this is a measure marker, draw the measure number to the right of the beat line
-			textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord + 2, EOF_EDITOR_RENDER_OFFSET + 22, eof_color_yellow, -1, "%lu", measure_counter);
+			textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord + 2, EOF_EDITOR_RENDER_OFFSET + 22 - 7, eof_color_yellow, -1, "%lu", measure_counter);
 		}
 		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_ANCHOR)
 		{	//Draw anchor marker
 			line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 21, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_red);
 			line(eof_window_editor->screen, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 21, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_red);
+		}
+		beat_counter++;
+		if(beat_counter >= beats_per_measure)
+		{
+			beat_counter = 0;
 		}
 	}
 
