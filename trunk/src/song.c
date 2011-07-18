@@ -777,6 +777,11 @@ void eof_detect_difficulties(EOF_SONG * sp)
 		eof_note_type_name[3][0] = ' ';
 		eof_note_type_name[4][0] = ' ';
 		eof_vocal_tab_name[0][0] = ' ';
+		eof_dance_tab_name[0][0] = ' ';
+		eof_dance_tab_name[1][0] = ' ';
+		eof_dance_tab_name[2][0] = ' ';
+		eof_dance_tab_name[3][0] = ' ';
+		eof_dance_tab_name[4][0] = ' ';
 
 		for(i = 0; i < eof_get_track_size(sp, eof_selected_track); i++)
 		{

@@ -1,7 +1,9 @@
 #include <allegro.h>
-#include "main.h"
+#include <math.h>
 #include "config.h"
+#include "main.h"
 #include "mix.h"
+#include "menu/song.h"	//For eof_set_percussion_cue()
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -97,6 +99,34 @@ void eof_load_config(char * fn)
 	eof_disable_3d_rendering = get_config_int("preferences", "eof_disable_3d_rendering", 0);
 	eof_disable_2d_rendering = get_config_int("preferences", "eof_disable_2d_rendering", 0);
 	eof_disable_info_panel = get_config_int("preferences", "eof_disable_info_panel", 0);
+	eof_chart_volume = get_config_int("preferences", "eof_chart_volume", 100);
+	if((eof_chart_volume < 0) || (eof_chart_volume > 100))
+	{	//Correct the value if it is out of bounds
+		eof_chart_volume = 100;
+	}
+	eof_chart_volume_multiplier = sqrt(eof_chart_volume/100.0);	//Store this math so it only needs to be performed once
+	eof_clap_volume = get_config_int("preferences", "eof_clap_volume", 100);
+	if((eof_clap_volume < 0) || (eof_clap_volume > 100))
+	{	//Correct the value if it is out of bounds
+		eof_clap_volume = 100;
+	}
+	eof_tick_volume = get_config_int("preferences", "eof_tick_volume", 100);
+	if((eof_tick_volume < 0) || (eof_tick_volume > 100))
+	{	//Correct the value if it is out of bounds
+		eof_tick_volume = 100;
+	}
+	eof_tone_volume = get_config_int("preferences", "eof_tone_volume", 100);
+	if((eof_tone_volume < 0) || (eof_tone_volume > 100))
+	{	//Correct the value if it is out of bounds
+		eof_tone_volume = 100;
+	}
+	eof_percussion_volume = get_config_int("preferences", "eof_percussion_volume", 100);
+	if((eof_percussion_volume < 0) || (eof_percussion_volume > 100))
+	{	//Correct the value if it is out of bounds
+		eof_percussion_volume = 100;
+	}
+	eof_selected_percussion_cue = get_config_int("preferences", "eof_selected_percussion_cue", 17);
+	eof_set_percussion_cue(eof_selected_percussion_cue);
 
 	/* read display settings */
 	eof_screen_layout.mode = get_config_int("display", "display_mode", 0);
@@ -191,6 +221,12 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_disable_3d_rendering", eof_disable_3d_rendering);
 	set_config_int("preferences", "eof_disable_2d_rendering", eof_disable_2d_rendering);
 	set_config_int("preferences", "eof_disable_info_panel", eof_disable_info_panel);
+	set_config_int("preferences", "eof_chart_volume", eof_chart_volume);
+	set_config_int("preferences", "eof_clap_volume", eof_clap_volume);
+	set_config_int("preferences", "eof_tick_volume", eof_tick_volume);
+	set_config_int("preferences", "eof_tone_volume", eof_tone_volume);
+	set_config_int("preferences", "eof_percussion_volume", eof_percussion_volume);
+	set_config_int("preferences", "eof_selected_percussion_cue", eof_selected_percussion_cue);
 
 	/* write display settings */
 	set_config_int("display", "display_mode", eof_screen_layout.mode);

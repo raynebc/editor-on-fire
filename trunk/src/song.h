@@ -553,7 +553,7 @@ int eof_detect_string_gem_conflicts(EOF_PRO_GUITAR_TRACK *tp, unsigned long newn
 
 void eof_sort_notes(EOF_SONG *sp);	//Sorts the notes in all tracks
 void eof_fixup_notes(EOF_SONG *sp);	//Performs cleanup of the note selection, beats and all tracks
-void eof_detect_difficulties(EOF_SONG * sp);	//Sets the populated status by prefixing each populated difficulty name in the current track (stored in eof_note_type_name[] and eof_vocal_tab_name[]) with an asterisk
+void eof_detect_difficulties(EOF_SONG * sp);	//Sets the populated status by prefixing each populated difficulty name in the current track (stored in eof_note_type_name[], eof_vocal_tab_name[] and eof_dance_tab_name[]) with an asterisk
 
 int eof_is_freestyle(char *ptr);
 	//Returns 1 if the specified lyric contains a freestyle character (# or ^)

@@ -1694,6 +1694,13 @@ int eof_menu_audio_cues(void)
 	}
 	eof_audio_cues_dialog[eof_selected_percussion_cue].flags = D_SELECTED;	//Activate the radio button for the current vocal percussion cue
 
+	//Rebuild the volume slider strings, as they are not guaranteed to be all 100% on launch of EOF since EOF stores the user's last-configured volumes in the config file
+	eof_set_cue_volume(eof_chart_volume_string, eof_chart_volume);
+	eof_set_cue_volume(eof_clap_volume_string, eof_clap_volume);
+	eof_set_cue_volume(eof_metronome_volume_string, eof_tick_volume);
+	eof_set_cue_volume(eof_tone_volume_string, eof_tone_volume);
+	eof_set_cue_volume(eof_percussion_volume_string, eof_percussion_volume);
+
 	if(eof_popup_dialog(eof_audio_cues_dialog, 0) == 37)			//User clicked OK
 	{
 		eof_chart_volume = eof_audio_cues_dialog[2].d2;				//Store the volume set by the chart volume slider
@@ -1703,105 +1710,13 @@ int eof_menu_audio_cues(void)
 		eof_tone_volume = eof_audio_cues_dialog[11].d2;				//Store the volume set by the tone cue volume slider
 		eof_percussion_volume = eof_audio_cues_dialog[14].d2;		//Store the volume set by the vocal percussion cue volume slider
 
-		if(eof_audio_cues_dialog[17].flags == D_SELECTED)		//User selected cowbell
-		{
-			eof_sound_chosen_percussion = eof_sound_cowbell;
-			eof_selected_percussion_cue = 17;
-		}
-		else if(eof_audio_cues_dialog[18].flags == D_SELECTED)	//User selected triangle 1
-		{
-			eof_sound_chosen_percussion = eof_sound_triangle1;
-			eof_selected_percussion_cue = 18;
-		}
-		else if(eof_audio_cues_dialog[19].flags == D_SELECTED)	//User selected triangle 2
-		{
-			eof_sound_chosen_percussion = eof_sound_triangle2;
-			eof_selected_percussion_cue = 19;
-		}
-		else if(eof_audio_cues_dialog[20].flags == D_SELECTED)	//User selected tambourine 1
-		{
-			eof_sound_chosen_percussion = eof_sound_tambourine1;
-			eof_selected_percussion_cue = 20;
-		}
-		else if(eof_audio_cues_dialog[21].flags == D_SELECTED)	//User selected tambourine 2
-		{
-			eof_sound_chosen_percussion = eof_sound_tambourine2;
-			eof_selected_percussion_cue = 21;
-		}
-		else if(eof_audio_cues_dialog[22].flags == D_SELECTED)	//User selected tambourine 3
-		{
-			eof_sound_chosen_percussion = eof_sound_tambourine3;
-			eof_selected_percussion_cue = 22;
-		}
-		else if(eof_audio_cues_dialog[23].flags == D_SELECTED)	//User selected wood block 1
-		{
-			eof_sound_chosen_percussion = eof_sound_woodblock1;
-			eof_selected_percussion_cue = 23;
-		}
-		else if(eof_audio_cues_dialog[24].flags == D_SELECTED)	//User selected wood block 2
-		{
-			eof_sound_chosen_percussion = eof_sound_woodblock2;
-			eof_selected_percussion_cue = 24;
-		}
-		else if(eof_audio_cues_dialog[25].flags == D_SELECTED)	//User selected wood block 3
-		{
-			eof_sound_chosen_percussion = eof_sound_woodblock3;
-			eof_selected_percussion_cue = 25;
-		}
-		else if(eof_audio_cues_dialog[26].flags == D_SELECTED)	//User selected wood block 4
-		{
-			eof_sound_chosen_percussion = eof_sound_woodblock4;
-			eof_selected_percussion_cue = 26;
-		}
-		else if(eof_audio_cues_dialog[27].flags == D_SELECTED)	//User selected wood block 5
-		{
-			eof_sound_chosen_percussion = eof_sound_woodblock5;
-			eof_selected_percussion_cue = 27;
-		}
-		else if(eof_audio_cues_dialog[28].flags == D_SELECTED)	//User selected wood block 6
-		{
-			eof_sound_chosen_percussion = eof_sound_woodblock6;
-			eof_selected_percussion_cue = 28;
-		}
-		else if(eof_audio_cues_dialog[29].flags == D_SELECTED)	//User selected wood block 7
-		{
-			eof_sound_chosen_percussion = eof_sound_woodblock7;
-			eof_selected_percussion_cue = 29;
-		}
-		else if(eof_audio_cues_dialog[30].flags == D_SELECTED)	//User selected wood block 8
-		{
-			eof_sound_chosen_percussion = eof_sound_woodblock8;
-			eof_selected_percussion_cue = 30;
-		}
-		else if(eof_audio_cues_dialog[31].flags == D_SELECTED)	//User selected wood block 9
-		{
-			eof_sound_chosen_percussion = eof_sound_woodblock9;
-			eof_selected_percussion_cue = 31;
-		}
-		else if(eof_audio_cues_dialog[32].flags == D_SELECTED)	//User selected wood block 10
-		{
-			eof_sound_chosen_percussion = eof_sound_woodblock10;
-			eof_selected_percussion_cue = 32;
-		}
-		else if(eof_audio_cues_dialog[33].flags == D_SELECTED)	//User selected clap 1
-		{
-			eof_sound_chosen_percussion = eof_sound_clap1;
-			eof_selected_percussion_cue = 33;
-		}
-		else if(eof_audio_cues_dialog[34].flags == D_SELECTED)	//User selected clap 2
-		{
-			eof_sound_chosen_percussion = eof_sound_clap2;
-			eof_selected_percussion_cue = 34;
-		}
-		else if(eof_audio_cues_dialog[35].flags == D_SELECTED)	//User selected clap 3
-		{
-			eof_sound_chosen_percussion = eof_sound_clap3;
-			eof_selected_percussion_cue = 35;
-		}
-		else if(eof_audio_cues_dialog[36].flags == D_SELECTED)	//User selected clap 4
-		{
-			eof_sound_chosen_percussion = eof_sound_clap4;
-			eof_selected_percussion_cue = 36;
+		for(x = 17; x <= 36; x++)
+		{	//Search for the selected vocal percussion cue
+			if(eof_audio_cues_dialog[x].flags == D_SELECTED)
+			{
+				eof_set_percussion_cue(x);
+				break;
+			}
 		}
 	}
 	eof_show_mouse(NULL);
@@ -2457,4 +2372,77 @@ int eof_menu_song_five_lane_drums(void)
 	eof_set_3D_lane_positions(0);	//Update xchart[] by force
 	eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
 	return 1;
+}
+
+void eof_set_percussion_cue(int cue_number)
+{
+	if((cue_number < 17) || (cue_number > 36))
+	{	//If the cue number is out of bounds
+		cue_number = 17;	//Reset to cowbell
+	}
+
+	switch(cue_number)
+	{
+		case 17:
+			eof_sound_chosen_percussion = eof_sound_cowbell;
+		break;
+		case 18:
+			eof_sound_chosen_percussion = eof_sound_triangle1;
+		break;
+		case 19:
+			eof_sound_chosen_percussion = eof_sound_triangle2;
+		break;
+		case 20:
+			eof_sound_chosen_percussion = eof_sound_tambourine1;
+		break;
+		case 21:
+			eof_sound_chosen_percussion = eof_sound_tambourine2;
+		break;
+		case 22:
+			eof_sound_chosen_percussion = eof_sound_tambourine3;
+		break;
+		case 23:
+			eof_sound_chosen_percussion = eof_sound_woodblock1;
+		break;
+		case 24:
+			eof_sound_chosen_percussion = eof_sound_woodblock2;
+		break;
+		case 25:
+			eof_sound_chosen_percussion = eof_sound_woodblock3;
+		break;
+		case 26:
+			eof_sound_chosen_percussion = eof_sound_woodblock4;
+		break;
+		case 27:
+			eof_sound_chosen_percussion = eof_sound_woodblock5;
+		break;
+		case 28:
+			eof_sound_chosen_percussion = eof_sound_woodblock6;
+		break;
+		case 29:
+			eof_sound_chosen_percussion = eof_sound_woodblock7;
+		break;
+		case 30:
+			eof_sound_chosen_percussion = eof_sound_woodblock8;
+		break;
+		case 31:
+			eof_sound_chosen_percussion = eof_sound_woodblock9;
+		break;
+		case 32:
+			eof_sound_chosen_percussion = eof_sound_woodblock10;
+		break;
+		case 33:
+			eof_sound_chosen_percussion = eof_sound_clap1;
+		break;
+		case 34:
+			eof_sound_chosen_percussion = eof_sound_clap2;
+		break;
+		case 35:
+			eof_sound_chosen_percussion = eof_sound_clap3;
+		break;
+		case 36:
+			eof_sound_chosen_percussion = eof_sound_clap4;
+		break;
+	}
+	eof_selected_percussion_cue = cue_number;
 }
