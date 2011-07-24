@@ -90,7 +90,7 @@ char *eof_lookup_tuning_name(EOF_SONG *sp, unsigned long track, char *tuning)
 	if(sp->pro_guitar_track[tracknum]->numstrings > EOF_TUNING_LENGTH)
 		return eof_tuning_unknown;	//Unsupported number of strings
 
-	if(track == EOF_TRACK_PRO_BASS)
+	if((track == EOF_TRACK_PRO_BASS) || (track == EOF_TRACK_PRO_BASS_22))
 	{
 		isbass = 1;
 	}
@@ -129,11 +129,11 @@ int eof_lookup_default_string_tuning(EOF_PRO_GUITAR_TRACK *tp, unsigned long tra
 		return -1;	//Invalid track pointer
 	if(stringnum >= tp->numstrings)
 		return -1;	//Invalid string number
-	if(track == EOF_TRACK_PRO_GUITAR)
+	if((track == EOF_TRACK_PRO_GUITAR) || (track == EOF_TRACK_PRO_GUITAR_22))
 	{	//Standard tuning is EADGBe
 		return default_tuning_6_string[stringnum];	//Return this string's default tuning
 	}
-	else if(track == EOF_TRACK_PRO_BASS)
+	else if((track == EOF_TRACK_PRO_BASS) || (track == EOF_TRACK_PRO_BASS_22))
 	{
 		if(tp->numstrings == 4)
 		{	//Standard tuning for 4 string bass is EADG

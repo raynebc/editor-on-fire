@@ -196,6 +196,10 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 					sp->pro_guitar_track[tracknum]->numstrings = 6;
 					memset(sp->pro_guitar_track[tracknum]->tuning, 0, EOF_TUNING_LENGTH);
 				}
+				//Copy the parsed tuning data to the 22 fret pro guitar track
+				unsigned long tracknum2 = sp->track[EOF_TRACK_PRO_GUITAR_22]->tracknum;
+				memcpy(sp->pro_guitar_track[tracknum2]->tuning, sp->pro_guitar_track[tracknum], EOF_TUNING_LENGTH);	//Copy the tuning array
+				sp->pro_guitar_track[tracknum2]->numstrings = sp->pro_guitar_track[tracknum]->numstrings;	//Copy the string count
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "real_bass_tuning"))
 			{
@@ -219,6 +223,10 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 					sp->pro_guitar_track[tracknum]->numstrings = 6;
 					memset(sp->pro_guitar_track[tracknum]->tuning, 0, EOF_TUNING_LENGTH);
 				}
+				//Copy the parsed tuning data to the 22 fret pro bass track
+				unsigned long tracknum2 = sp->track[EOF_TRACK_PRO_BASS_22]->tracknum;
+				memcpy(sp->pro_guitar_track[tracknum2]->tuning, sp->pro_guitar_track[tracknum], EOF_TUNING_LENGTH);	//Copy the tuning array
+				sp->pro_guitar_track[tracknum2]->numstrings = sp->pro_guitar_track[tracknum]->numstrings;	//Copy the string count
 			}
 
 			/* for custom settings or difficulty strings */

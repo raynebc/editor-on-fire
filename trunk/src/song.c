@@ -31,6 +31,8 @@ EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 1] =
 	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_BASS, 0, "PART REAL_BASS", 0xFF, 0},
 	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR, 0, "PART REAL_GUITAR", 0xFF, 0},
 	{EOF_LEGACY_TRACK_FORMAT, EOF_DANCE_TRACK_BEHAVIOR, EOF_TRACK_DANCE, 0, "PART DANCE", 0xFF, 0},
+	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_BASS_22, 0, "PART REAL_BASS_22", 0xFF, 0},
+	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR_22, 0, "PART REAL_GUITAR_22", 0xFF, 0},
 
 	//This pro format is not supported yet, but the entry describes the track's details
 	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS", 0xFF, 0}
@@ -50,14 +52,14 @@ EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 12] =
 	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_BASS, 0, "PART REAL_BASS", 0, 0},
 	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR, 0, "PART REAL_GUITAR", 0, 0},
 	{EOF_LEGACY_TRACK_FORMAT, EOF_DANCE_TRACK_BEHAVIOR, EOF_TRACK_DANCE, 0, "PART DANCE", 0, 0},
+	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_BASS_22, 0, "PART REAL_BASS_22", 0, 0},
+	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR_22, 0, "PART REAL_GUITAR_22", 0, 0},
 
 	//These tracks are not supported for import yet, but these entries describe the tracks' details
 	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS_X", 0, 0},
 	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS_H", 0, 0},
 	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS_M", 0, 0},
 	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS_E", 0, 0},
-	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR, 0, "PART REAL_GUITAR_22", 0, 0},
-	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_BASS, 0, "PART REAL_BASS_22", 0, 0},
 	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "HARM1", 0, 0},
 	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "HARM2", 0, 0},
 	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "HARM3", 0, 0},
@@ -243,6 +245,22 @@ EOF_SONG * eof_load_song(const char * fn)
 		if(EOF_TRACK_DANCE >= sp->tracks)
 		{	//If the chart loaded does not contain a dance track (a 1.8beta revision chart)
 			if(eof_song_add_track(sp,&eof_default_tracks[EOF_TRACK_DANCE]) == 0)	//Add a blank dance track
+			{	//If the track failed to be added
+				eof_destroy_song(sp);	//Destroy the song and return on error
+				return NULL;
+			}
+		}
+		if(EOF_TRACK_PRO_BASS_22 >= sp->tracks)
+		{	//If the chart loaded does not contain a 22 fret pro bass track (a 1.8beta revision chart)
+			if(eof_song_add_track(sp,&eof_default_tracks[EOF_TRACK_PRO_BASS_22]) == 0)	//Add a blank 22 fret pro bass track
+			{	//If the track failed to be added
+				eof_destroy_song(sp);	//Destroy the song and return on error
+				return NULL;
+			}
+		}
+		if(EOF_TRACK_PRO_GUITAR_22 >= sp->tracks)
+		{	//If the chart loaded does not contain a 22 fret pro guitar track (a 1.8beta revision chart)
+			if(eof_song_add_track(sp,&eof_default_tracks[EOF_TRACK_PRO_GUITAR_22]) == 0)	//Add a blank 22 fret pro guitar track
 			{	//If the track failed to be added
 				eof_destroy_song(sp);	//Destroy the song and return on error
 				return NULL;
@@ -1126,8 +1144,15 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 				ptr4 = malloc(sizeof(EOF_PRO_GUITAR_TRACK));
 				if(ptr4 == NULL)
 					return 0;	//Return error
-				ptr4->numfrets = 17;	//By default, assume a 17 fret guitar (ie. Mustang controller)
-				if(trackdetails->track_type == EOF_TRACK_PRO_BASS)
+				if((trackdetails->track_type == EOF_TRACK_PRO_BASS_22) || (trackdetails->track_type == EOF_TRACK_PRO_GUITAR_22))
+				{	//If this is a 22 fret track
+					ptr4->numfrets = 22;	//Set 22 as the default max fret (ie. Squier guitar)
+				}
+				else
+				{	//Otherwise assume a default max fret of 17 (ie. Mustang controller)
+					ptr4->numfrets = 17;
+				}
+				if((trackdetails->track_type == EOF_TRACK_PRO_BASS) || (trackdetails->track_type == EOF_TRACK_PRO_BASS_22))
 				{	//By default, set a pro bass track to 4 strings
 					ptr4->numstrings = 4;
 				}
