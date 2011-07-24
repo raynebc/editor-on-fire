@@ -2235,14 +2235,28 @@ eof_log("\tThird pass complete", 1);
 	tracknum = sp->track[EOF_TRACK_PRO_GUITAR]->tracknum;
 	if(eof_detect_string_gem_conflicts(sp->pro_guitar_track[tracknum], sp->pro_guitar_track[tracknum]->numstrings))
 	{
-		allegro_message("Warning:  Pro guitar tuning tag defines too few strings.  Reverting to 6 string standard tuning.");
+		allegro_message("Warning:  17 fret pro guitar tuning tag defines too few strings.  Reverting to 6 string standard tuning.");
+		sp->pro_guitar_track[tracknum]->numstrings = 6;
+		memset(sp->pro_guitar_track[tracknum]->tuning, 0, EOF_TUNING_LENGTH);
+	}
+	tracknum = sp->track[EOF_TRACK_PRO_GUITAR_22]->tracknum;
+	if(eof_detect_string_gem_conflicts(sp->pro_guitar_track[tracknum], sp->pro_guitar_track[tracknum]->numstrings))
+	{
+		allegro_message("Warning:  22 fret pro guitar tuning tag defines too few strings.  Reverting to 6 string standard tuning.");
 		sp->pro_guitar_track[tracknum]->numstrings = 6;
 		memset(sp->pro_guitar_track[tracknum]->tuning, 0, EOF_TUNING_LENGTH);
 	}
 	tracknum = sp->track[EOF_TRACK_PRO_BASS]->tracknum;
 	if(eof_detect_string_gem_conflicts(sp->pro_guitar_track[tracknum], sp->pro_guitar_track[tracknum]->numstrings))
 	{
-		allegro_message("Warning:  Pro bass tuning tag defines too few strings.  Reverting to 6 string standard tuning.");
+		allegro_message("Warning:  17 fret pro bass tuning tag defines too few strings.  Reverting to 6 string standard tuning.");
+		sp->pro_guitar_track[tracknum]->numstrings = 6;
+		memset(sp->pro_guitar_track[tracknum]->tuning, 0, EOF_TUNING_LENGTH);
+	}
+	tracknum = sp->track[EOF_TRACK_PRO_BASS_22]->tracknum;
+	if(eof_detect_string_gem_conflicts(sp->pro_guitar_track[tracknum], sp->pro_guitar_track[tracknum]->numstrings))
+	{
+		allegro_message("Warning:  22 fret pro bass tuning tag defines too few strings.  Reverting to 6 string standard tuning.");
 		sp->pro_guitar_track[tracknum]->numstrings = 6;
 		memset(sp->pro_guitar_track[tracknum]->tuning, 0, EOF_TUNING_LENGTH);
 	}

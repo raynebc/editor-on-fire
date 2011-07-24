@@ -3580,7 +3580,7 @@ void eof_init_after_load(char initaftersavestate)
 	eof_fix_window_title();
 	eof_cleanup_beat_flags(eof_song);	//Make corrections to beat statuses if necessary
 	eof_sort_events(eof_song);
-//DEBUG:  Re-enable this when slash chord detection is ready
+//DEBUG:
 //	eof_pro_guitar_track_build_chord_variations(eof_song, EOF_TRACK_PRO_BASS);		//Build chord variations for the track's tuning
 //	eof_pro_guitar_track_build_chord_variations(eof_song, EOF_TRACK_PRO_GUITAR);	//Build chord variations for the track's tuning
 //	EOF_DEBUG_OUTPUT_CHORD_VARIATION_ARRAYS();
