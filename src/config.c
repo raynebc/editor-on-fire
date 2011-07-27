@@ -93,8 +93,6 @@ void eof_load_config(char * fn)
 	eof_note_type = get_config_int("preferences", "eof_note_type", EOF_NOTE_AMAZING);
 	eof_hide_drum_tails = get_config_int("preferences", "hide_drum_tails", 0);
 	eof_hide_note_names = get_config_int("preferences", "eof_hide_note_names", 0);
-	eof_fret_hand_pos_0_pg = get_config_int("preferences", "eof_fret_hand_pos_0_pg", 0);
-	eof_fret_hand_pos_0_pb = get_config_int("preferences", "eof_fret_hand_pos_0_pb", 0);
 	eof_disable_sound_processing = get_config_int("preferences", "eof_disable_sound_processing", 0);
 	eof_disable_3d_rendering = get_config_int("preferences", "eof_disable_3d_rendering", 0);
 	eof_disable_2d_rendering = get_config_int("preferences", "eof_disable_2d_rendering", 0);
@@ -215,8 +213,6 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_note_type", eof_note_type);
 	set_config_int("preferences", "hide_drum_tails", eof_hide_drum_tails);
 	set_config_int("preferences", "eof_hide_note_names", eof_hide_note_names);
-	set_config_int("preferences", "eof_fret_hand_pos_0_pg", eof_fret_hand_pos_0_pg);
-	set_config_int("preferences", "eof_fret_hand_pos_0_pb", eof_fret_hand_pos_0_pb);
 	set_config_int("preferences", "eof_disable_sound_processing", eof_disable_sound_processing);
 	set_config_int("preferences", "eof_disable_3d_rendering", eof_disable_3d_rendering);
 	set_config_int("preferences", "eof_disable_2d_rendering", eof_disable_2d_rendering);

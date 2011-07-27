@@ -59,10 +59,10 @@ DIALOG eof_events_dialog[] =
    /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
    { d_agup_window_proc,0,   48,  455, 232, 2,   23,  0,    0,      0,   0,   "Events",       NULL, NULL },
    { d_agup_list_proc,  12,  84,  350, 138, 2,   23,  0,    0,      0,   0,   eof_events_list,NULL, NULL },
-   { d_agup_push_proc,  375, 84,  68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Add",          NULL, eof_events_dialog_add },
-   { d_agup_push_proc,  375, 124, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Edit",         NULL, eof_events_dialog_edit },
-   { d_agup_push_proc,  375, 164, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete",       NULL, eof_events_dialog_delete },
-   { d_agup_button_proc,12,  235, 240, 28,  2,   23,  0,    D_EXIT, 0,   0,   "Done",         NULL, NULL },
+   { d_agup_push_proc,  375, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",         NULL, eof_events_dialog_add },
+   { d_agup_push_proc,  375, 124, 68,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",        NULL, eof_events_dialog_edit },
+   { d_agup_push_proc,  375, 164, 68,  28,  2,   23,  'd',  D_EXIT, 0,   0,   "&Delete",      NULL, eof_events_dialog_delete },
+   { d_agup_button_proc,12,  235, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -71,8 +71,8 @@ DIALOG eof_all_events_dialog[] =
    /* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
    { d_agup_window_proc, 0,   48,  450, 234, 2,   23,  0,    0,      0,   0,   "All Events",               NULL, NULL },
    { d_agup_list_proc,   12,  84,  425, 140, 2,   23,  0,    0,      0,   0,   eof_events_list_all, NULL, NULL },
-   { d_agup_button_proc, 12,  237, 154, 28,  2,   23,  0,    D_EXIT, 0,   0,   "Find",               NULL, NULL },
-   { d_agup_button_proc, 178, 237, 154, 28,  2,   23,  0,    D_EXIT, 0,   0,   "Done",               NULL, NULL },
+   { d_agup_button_proc, 12,  237, 154, 28,  2,   23,  'f',  D_EXIT, 0,   0,   "&Find",              NULL, NULL },
+   { d_agup_button_proc, 178, 237, 154, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",               NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 

@@ -4224,6 +4224,11 @@ void eof_render_editor_window_common(void)
 		{	//If this beat marker would render further right than the right edge of the screen
 			break;	//Skip rendering this and all other beat markers, which would continue to render off screen
 		}
+		beat_counter++;
+		if(beat_counter >= beats_per_measure)
+		{
+			beat_counter = 0;
+		}
 		if(notvisible < 0)
 		{	//If this beat marker would render further left than the left edge of the screen
 			continue;	//Skip rendering this beat
@@ -4254,11 +4259,6 @@ void eof_render_editor_window_common(void)
 		{	//Draw anchor marker
 			line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 21, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_red);
 			line(eof_window_editor->screen, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 21, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_red);
-		}
-		beat_counter++;
-		if(beat_counter >= beats_per_measure)
-		{
-			beat_counter = 0;
 		}
 	}
 

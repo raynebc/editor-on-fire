@@ -90,6 +90,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	{
 		snprintf(&errorcode[23],50,"%d",err);	//Perform a bounds checked conversion of Allegro's error code to string format
 		alert(errorcode, NULL, errorcode, "OK", NULL, 0, KEY_ENTER);
+		return NULL;
 	}
 	else
 	{
