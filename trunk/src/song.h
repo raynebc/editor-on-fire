@@ -340,19 +340,21 @@ typedef struct
 
 typedef struct
 {
-	char          artist[256];
-	char          title[256];
-	char          frettist[256];
-	char          year[32];
-	char          loading_text[512];
-	char          lyrics;
-	char          eighth_note_hopo;
+	char artist[256];
+	char title[256];
+	char frettist[256];
+	char year[32];
+	char loading_text[512];
+	char lyrics;
+	char eighth_note_hopo;
+	char eof_fret_hand_pos_0_pg;
+	char eof_fret_hand_pos_0_pb;
 
-	EOF_OGG_INFO  ogg[EOF_MAX_OGGS];
-	short         oggs;
+	EOF_OGG_INFO ogg[EOF_MAX_OGGS];
+	short oggs;
 
-	char          ini_setting[EOF_MAX_INI_SETTINGS][512];
-	short         ini_settings;
+	char ini_setting[EOF_MAX_INI_SETTINGS][512];
+	short ini_settings;
 
 	unsigned long revision;
 	unsigned long difficulty;		//Specifies the difficulty level from 0-5 (standard 0-5 scale), or 6 for devil heads (extreme difficulty)

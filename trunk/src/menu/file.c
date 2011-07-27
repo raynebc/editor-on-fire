@@ -79,12 +79,10 @@ DIALOG eof_preferences_dialog[] =
    { d_agup_check_proc, 16,  125, 160, 16,  2,   23,  0,    0,      1,   0,   "Import/Export TS",    NULL, NULL },
    { d_agup_check_proc, 16,  140, 160, 16,  2,   23,  0,    0,      1,   0,   "Hide drum note tails",NULL, NULL },
    { d_agup_check_proc, 16,  155, 160, 16,  2,   23,  0,    0,      1,   0,   "Hide note names",     NULL, NULL },
-   { d_agup_check_proc, 16,  170, 215, 16,  2,   23,  0,    0,      1,   0,   "Use fret hand pos of 0 (pro g)",NULL, NULL },
-   { d_agup_check_proc, 16,  185, 215, 16,  2,   23,  0,    0,      1,   0,   "Use fret hand pos of 0 (pro b)",NULL, NULL },
-   { d_agup_check_proc, 16,  200, 165, 16,  2,   23,  0,    0,      1,   0,   "Disable sound effects",NULL, NULL },
-   { d_agup_check_proc, 16,  215, 165, 16,  2,   23,  0,    0,      1,   0,   "Disable 3D rendering",NULL, NULL },
-   { d_agup_check_proc, 16,  230, 165, 16,  2,   23,  0,    0,      1,   0,   "Disable 2D rendering",NULL, NULL },
-   { d_agup_check_proc, 16,  245, 165, 16,  2,   23,  0,    0,      1,   0,   "Disable info panel",NULL, NULL },
+   { d_agup_check_proc, 16,  170, 165, 16,  2,   23,  0,    0,      1,   0,   "Disable sound effects",NULL, NULL },
+   { d_agup_check_proc, 16,  185, 165, 16,  2,   23,  0,    0,      1,   0,   "Disable 3D rendering",NULL, NULL },
+   { d_agup_check_proc, 16,  200, 165, 16,  2,   23,  0,    0,      1,   0,   "Disable 2D rendering",NULL, NULL },
+   { d_agup_check_proc, 16,  215, 165, 16,  2,   23,  0,    0,      1,   0,   "Disable info panel",NULL, NULL },
 
    { d_agup_text_proc,   56, 264, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
    { d_agup_list_proc,   43, 280, 110, 94,  2,   23,  0,    0,      0,   0,   eof_input_list,        NULL, NULL },
@@ -915,14 +913,12 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[4].flags = eof_use_ts ? D_SELECTED : 0;			//Import/Export TS
 	eof_preferences_dialog[5].flags = eof_hide_drum_tails ? D_SELECTED : 0;	//Hide drum note tails
 	eof_preferences_dialog[6].flags = eof_hide_note_names ? D_SELECTED : 0;	//Hide note names
-	eof_preferences_dialog[7].flags = eof_fret_hand_pos_0_pg ? D_SELECTED : 0;	//Fret hand pos is 0 (pro guitar)
-	eof_preferences_dialog[8].flags = eof_fret_hand_pos_0_pb ? D_SELECTED : 0;	//Fret hand pos is 0 (pro bass)
-	eof_preferences_dialog[9].flags = eof_disable_sound_processing ? D_SELECTED : 0;	//Disable sound effects
-	eof_preferences_dialog[10].flags = eof_disable_3d_rendering ? D_SELECTED : 0;	//Disable 3D rendering
-	eof_preferences_dialog[11].flags = eof_disable_2d_rendering ? D_SELECTED : 0;	//Disable 2D rendering
-	eof_preferences_dialog[12].flags = eof_disable_info_panel ? D_SELECTED : 0;		//Disable info panel
-	eof_preferences_dialog[14].d1 = eof_input_mode;							//Input method
-	if(eof_popup_dialog(eof_preferences_dialog, 0) == 15)
+	eof_preferences_dialog[7].flags = eof_disable_sound_processing ? D_SELECTED : 0;	//Disable sound effects
+	eof_preferences_dialog[8].flags = eof_disable_3d_rendering ? D_SELECTED : 0;	//Disable 3D rendering
+	eof_preferences_dialog[9].flags = eof_disable_2d_rendering ? D_SELECTED : 0;	//Disable 2D rendering
+	eof_preferences_dialog[10].flags = eof_disable_info_panel ? D_SELECTED : 0;		//Disable info panel
+	eof_preferences_dialog[12].d1 = eof_input_mode;							//Input method
+	if(eof_popup_dialog(eof_preferences_dialog, 0) == 13)
 	{	//If the user clicked OK
 		eof_inverted_notes = (eof_preferences_dialog[1].flags == D_SELECTED ? 1 : 0);
 		eof_lefty_mode = (eof_preferences_dialog[2].flags == D_SELECTED ? 1 : 0);
@@ -930,13 +926,11 @@ int eof_menu_file_preferences(void)
 		eof_use_ts = (eof_preferences_dialog[4].flags == D_SELECTED ? 1 : 0);
 		eof_hide_drum_tails = (eof_preferences_dialog[5].flags == D_SELECTED ? 1 : 0);
 		eof_hide_note_names = (eof_preferences_dialog[6].flags == D_SELECTED ? 1 : 0);
-		eof_fret_hand_pos_0_pg = (eof_preferences_dialog[7].flags == D_SELECTED ? 1 : 0);
-		eof_fret_hand_pos_0_pb = (eof_preferences_dialog[8].flags == D_SELECTED ? 1 : 0);
-		eof_disable_sound_processing = (eof_preferences_dialog[9].flags == D_SELECTED ? 1 : 0);
-		eof_disable_3d_rendering = (eof_preferences_dialog[10].flags == D_SELECTED ? 1 : 0);
-		eof_disable_2d_rendering = (eof_preferences_dialog[11].flags == D_SELECTED ? 1 : 0);
-		eof_disable_info_panel = (eof_preferences_dialog[12].flags == D_SELECTED ? 1 : 0);
-		eof_input_mode = eof_preferences_dialog[14].d1;
+		eof_disable_sound_processing = (eof_preferences_dialog[7].flags == D_SELECTED ? 1 : 0);
+		eof_disable_3d_rendering = (eof_preferences_dialog[8].flags == D_SELECTED ? 1 : 0);
+		eof_disable_2d_rendering = (eof_preferences_dialog[9].flags == D_SELECTED ? 1 : 0);
+		eof_disable_info_panel = (eof_preferences_dialog[10].flags == D_SELECTED ? 1 : 0);
+		eof_input_mode = eof_preferences_dialog[12].d1;
 		eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case eof_inverted_notes was changed
 		eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case eof_lefty_mode was changed
 	}

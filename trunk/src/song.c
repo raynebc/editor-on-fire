@@ -146,6 +146,8 @@ EOF_SONG * eof_create_song(void)
 	ustrcpy(sp->tags->loading_text, "");
 	sp->tags->lyrics = 0;
 	sp->tags->eighth_note_hopo = 0;
+	sp->tags->eof_fret_hand_pos_0_pg = 0;
+	sp->tags->eof_fret_hand_pos_0_pb = 0;
 	sp->tags->ini_settings = 0;
 	sp->tags->ogg[0].midi_offset = 0;
 	sp->tags->ogg[0].modified = 0;
@@ -227,6 +229,8 @@ EOF_SONG * eof_load_song(const char * fn)
 	fp = pack_fopen(fn, "r");
 	if(!fp)
 	{
+		snprintf(eof_log_string, sizeof(eof_log_string), "\tError loading:  Cannot open input .eof file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		eof_log(eof_log_string, 1);
 		return 0;
 	}
 	eof_log_level &= ~2;	//Disable verbose logging
@@ -1288,7 +1292,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
 
 	#define EOFNUMINIBOOLEANTYPES 6
-	char *const inibooleanbuffer[EOFNUMINIBOOLEANTYPES]={NULL,&sp->tags->lyrics,&sp->tags->eighth_note_hopo,NULL,NULL,NULL};
+	char *const inibooleanbuffer[EOFNUMINIBOOLEANTYPES]={NULL,&sp->tags->lyrics,&sp->tags->eighth_note_hopo,&sp->tags->eof_fret_hand_pos_0_pg,&sp->tags->eof_fret_hand_pos_0_pb,NULL};
 		//Store the pointers to each of the 5 boolean type INI settings (number 0 is reserved) to simplify the loading code
 
 	#define EOFNUMININUMBERTYPES 5
@@ -1879,7 +1883,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
 
 	#define EOFNUMINIBOOLEANTYPES 6
-	char *const inibooleanbuffer[EOFNUMINIBOOLEANTYPES]={NULL,&sp->tags->lyrics,&sp->tags->eighth_note_hopo,NULL,NULL,NULL};
+	char *const inibooleanbuffer[EOFNUMINIBOOLEANTYPES]={NULL,&sp->tags->lyrics,&sp->tags->eighth_note_hopo,&sp->tags->eof_fret_hand_pos_0_pg,&sp->tags->eof_fret_hand_pos_0_pb,NULL};
 		//Store the pointers to each of the 5 boolean type INI settings (number 0 is reserved) to simplify the loading code
 
 	#define EOFNUMININUMBERTYPES 5
@@ -1890,7 +1894,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	fp = pack_fopen(fn, "w");
 	if(!fp)
 	{
-		snprintf(eof_log_string, sizeof(eof_log_string), "\tError saving:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		snprintf(eof_log_string, sizeof(eof_log_string), "\tError saving:  Cannot open output .eof file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
 		eof_log(eof_log_string, 1);
 		return 0;	//Return error
 	}

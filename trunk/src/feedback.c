@@ -616,6 +616,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 	{
 		if(error)
 			*error=1;
+		snprintf(eof_log_string, sizeof(eof_log_string), "\tError loading:  Cannot open input .chart file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		eof_log(eof_log_string, 1);
 		return NULL;
 	}
 
