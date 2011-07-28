@@ -347,8 +347,8 @@ typedef struct
 	char loading_text[512];
 	char lyrics;
 	char eighth_note_hopo;
-	char eof_fret_hand_pos_0_pg;
-	char eof_fret_hand_pos_0_pb;
+	char eof_fret_hand_pos_1_pg;
+	char eof_fret_hand_pos_1_pb;
 
 	EOF_OGG_INFO ogg[EOF_MAX_OGGS];
 	short oggs;
