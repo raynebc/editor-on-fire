@@ -61,7 +61,7 @@ DIALOG eof_events_dialog[] =
    { d_agup_list_proc,  12,  84,  350, 138, 2,   23,  0,    0,      0,   0,   eof_events_list,NULL, NULL },
    { d_agup_push_proc,  375, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",         NULL, eof_events_dialog_add },
    { d_agup_push_proc,  375, 124, 68,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",        NULL, eof_events_dialog_edit },
-   { d_agup_push_proc,  375, 164, 68,  28,  2,   23,  'd',  D_EXIT, 0,   0,   "&Delete",      NULL, eof_events_dialog_delete },
+   { d_agup_push_proc,  375, 164, 68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, eof_events_dialog_delete },
    { d_agup_button_proc,12,  235, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
