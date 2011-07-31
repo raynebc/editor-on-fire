@@ -3,28 +3,36 @@ EOF Version History
 
 1.8:
 
+*Added the option (Preferences>Erase overlapped pasted notes) to
+delete notes that would be overlapped during a paste operation,
+similar to the behavior of the Feedback editor.
+
+*Fixed a crash that could occur during a failed Feedback import.
+
 *Improved the undo/redo system by adding a random 3 digit number
 (created during launch of EOF) to the filenames, making it extremely
 unlikely that two instances of EOF will overwrite each others files.
 The number of undo states has been increased from 8 to 100.
 
-*Added a performance option to disable sound processing (ie. volumes
-and sound cues are not handled).
+*Added a playback performance option to disable sound processing (ie.
+volumes and sound cues are not handled).
 
-*Added performance options to not render the editor window,
+*Added playback performance options to not render the editor window,
 3d preview or info panel.
 
 *Fixed an issue where the Mac version of EOF wouldn't behave properly
-when EOF leaves and re-enters the foreground.
+when EOF leaves and re-enters the foreground in newer versions of
+Mac OS.
 
 Updated EOF to remember the last active track, zoom and difficulty.
+The settings in the Audio Cues dialog are also remembered.
 
 Added the option to hide drum note tails from the editor window
 (File>Preferences>Hide drum note tails).
 
 Added the ability to make text events track specific, which is useful
 for RBN authoring or adding features that require this capability
-(ie. disco flip events).
+(ie. disco flip events, pro guitar trainer sections, Drum mix events).
 
 Added a "pro_drum = True" tag that is written if any cymbal notes exist
 in the drum track during save, allowing games to be able to determine if
@@ -40,7 +48,7 @@ Fixed various bugs in the lyric import.
 
 Added the ability to define band and track-specific difficulties.
 
-Added initial support for pro guitar/bass and 4 lane dance authoring.
+Added support for pro guitar/bass and 4 lane dance authoring.
 
 Added some logging functionality to help identify points of malfunction.
 
@@ -98,6 +106,8 @@ that is longer than the loaded audio.
 
 Removed duplicated rendering code, allowing HOPO on/off notes, percussion
 notes, vocal slides and cymbals to be shown correctly in the fret catalog.
+The 2D rendering code has also been improved to skip rendering phrases and
+beat markers that are off-screen.
 
 
 1.71:
@@ -130,8 +140,7 @@ Corrects the tracking of star power phrases during lyric import.
 
 Fixed HOPO display in the 3D panel to respect the selected HOPO preview mode.
 
-Added the ability to mark pro drum notation, used by Rock Band 2 (for drummer
-animations) and Rock Band 3 (for pro drum mode).
+Added the ability to mark pro drum notation, used by Rock Band 3.
 
 Fixed an issue where forced HOPO on/off notes were saved to MIDI incorrectly.
 
@@ -152,7 +161,7 @@ Fixed the "clean" target operation in FoFLC's makefiles.
 The Album tag information is automatically added as an INI setting if it exists
 in the MP3 or OGG file chosen when creating a new chart.
 
-Raised the maximum grid snap interval to 64.
+Raised the maximum grid snap interval count to 64.
 
 Added support for marking Expert bass drum notes as Expert+ notes, which will
 appear in Phase Shift as Expert+ bass notes instead of Expert bass notes.  An
