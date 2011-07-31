@@ -552,6 +552,7 @@ int eof_menu_edit_copy_vocal(void)
 }
 
 /* delete lyrics which overlap the specified range */
+/*
 static void eof_menu_edit_paste_clear_range_vocal(unsigned long start, unsigned long end)
 {
 	unsigned long i;
@@ -572,6 +573,7 @@ static void eof_menu_edit_paste_clear_range_vocal(unsigned long start, unsigned 
 		}
 	}
 }
+*/
 
 int eof_menu_edit_paste_vocal_logic(int oldpaste)
 {
@@ -648,7 +650,9 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 			{
 				last_pos = new_pos;
 			}
-			eof_menu_edit_paste_clear_range_vocal(last_pos, new_end_pos);
+//			eof_menu_edit_paste_clear_range_vocal(last_pos, new_end_pos);
+			eof_menu_edit_paste_clear_range(eof_selected_track, eof_note_type, last_pos, new_end_pos);
+
 			if(!oldpaste)
 			{	//If new paste logic is being used, this lyric pastes into a position relative to the start and end of a beat marker
 				new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, temp_lyric.note, new_pos, new_end_pos - new_pos, 0, temp_lyric.text);
@@ -1069,7 +1073,8 @@ int eof_menu_edit_copy(void)
 		return eof_menu_edit_copy_vocal();
 	}
 	unsigned long i;
-	unsigned long first_pos = 0;
+	unsigned long first_pos = 0, note_pos;
+	long note_len;
 	char first_pos_read = 0;
 	long first_beat = 0;
 	char first_beat_read = 0;
@@ -1086,9 +1091,11 @@ int eof_menu_edit_copy(void)
 		if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the active difficulty, is in the active track and is selected
 			copy_notes++;
-			if(!first_pos_read || (eof_get_note_pos(eof_song, eof_selected_track, i) < first_pos))
-			{
-				first_pos = eof_get_note_pos(eof_song, eof_selected_track, i);
+			note_pos = eof_get_note_pos(eof_song, eof_selected_track, i);
+			note_len = eof_get_note_length(eof_song, eof_selected_track, i);
+			if(!first_pos_read || (note_pos < first_pos))
+			{	//Track the position of the first note in the selection
+				first_pos = note_pos;
 				first_pos_read = 1;
 			}
 			if(!first_beat_read)
@@ -1111,8 +1118,8 @@ int eof_menu_edit_copy(void)
 		return 1;
 	}
 	pack_iputl(eof_selected_track, fp);	//Store the source track number
-	pack_iputl(copy_notes, fp);
-	pack_iputl(first_beat, fp);
+	pack_iputl(copy_notes, fp);			//Store the number of notes that will be stored to clipboard
+	pack_iputl(first_beat, fp);			//Store the beat number of the first note that will be stored to clipboard
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -1134,7 +1141,7 @@ int eof_menu_edit_copy(void)
 
 			/* write note data to disk */
 			eof_save_song_string_pf(eof_get_note_name(eof_song, eof_selected_track, i), fp);	//Write the note's name
-			pack_iputl(eof_get_note_note(eof_song, eof_selected_track, i), fp);					//Write the note fret values
+			pack_iputl(eof_get_note_note(eof_song, eof_selected_track, i), fp);					//Write the note bitmask value
 			pack_iputl(eof_get_note_pos(eof_song, eof_selected_track, i) - first_pos, fp);		//Write the note's position relative to within the selection
 			tfloat = eof_get_porpos(eof_get_note_pos(eof_song, eof_selected_track, i));
 			pack_fwrite(&tfloat, sizeof(float), fp);	//Write the percent representing the note's start position within a beat
@@ -1177,13 +1184,10 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	long this_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 	unsigned long copy_notes;
 	PACKFILE * fp;
-	EOF_EXTENDED_NOTE temp_note;
+	EOF_EXTENDED_NOTE temp_note, first_note, last_note;
 	EOF_NOTE * new_note = NULL;
 	unsigned long sourcetrack = 0;	//Will store the track that this clipboard data was from
-	unsigned char frets[16] = {0};	//Used to store fret data to support copying to a pro guitar track
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	unsigned long legacymask, ghostmask;
-	char name[EOF_NAME_LENGTH+1] = {0};
 
 	/* open the file */
 	fp = pack_fopen("eof.clipboard", "r");
@@ -1196,34 +1200,77 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	{	//If new paste logic is being used, return from function if the first note would paste after the last beat
 		return 1;
 	}
+	sourcetrack = pack_igetl(fp);		//Read the source track of the clipboard data
+	copy_notes = pack_igetl(fp);		//Read the number of notes on the clipboard
+	first_beat = pack_igetl(fp);		//Read the original beat number of the first note that was copied
+	if(!copy_notes)
+	{	//If there are 0 notes on the clipboard, return without making an undo
+		return 1;
+	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-	sourcetrack = pack_igetl(fp);	//Read the source track of the clipboard data
-	copy_notes = pack_igetl(fp);
-	first_beat = pack_igetl(fp);
 
 	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 	eof_selection.current = EOF_MAX_NOTES - 1;
 	eof_selection.current_pos = 0;
+
+	if(eof_paste_erase_overlap)
+	{	//If the user decided to delete existing notes that are between the start and end of the pasted notes
+		unsigned long clear_start, clear_end;
+
+		eof_menu_paste_read_clipboard_note(fp, &first_note);	//Read the first note on the clipboard
+		for(i = 1; i < copy_notes; i++)
+		{	//Parse the other notes on the clipboard
+			eof_menu_paste_read_clipboard_note(fp, &last_note);
+		}
+		//At this point, last_note contains the data for the last note on the clipboard.  Determine the time span of notes that would need to be cleared
+		if(!oldpaste)
+		{	//If new paste logic is being used, this note pastes into a position relative to the start and end of a beat marker
+			clear_start = eof_put_porpos(first_note.beat - first_beat + this_beat, first_note.porpos, 0.0);		//The position that "new paste" would paste the first note at
+			clear_end = eof_put_porpos(last_note.endbeat - first_beat + this_beat, last_note.porendpos, 0.0);	//The position to which "new paste" would extend the last pasted note
+		}
+		else
+		{	//If old paste logic is being used, this note pastes into a position relative to the previous pasted note
+			clear_start = eof_music_pos + first_note.pos - eof_av_delay;	//The position that "old paste" would paste the first note at
+			clear_end = eof_music_pos + last_note.pos - eof_av_delay + last_note.length;	//The position to which "old paste" would extend the last pasted note
+		}
+		eof_menu_edit_paste_clear_range(eof_selected_track, eof_note_type, clear_start, clear_end);
+		//The packfile functions have no seek routine, so the file has to be closed, re-opened and repositioned to the first clipboard note for the actual paste logic
+		pack_fclose(fp);
+		fp = pack_fopen("eof.clipboard", "r");
+		if(!fp)
+		{
+			allegro_message("Error re-opening clipboard");
+			return 1;
+		}
+		sourcetrack = pack_igetl(fp);		//Read the source track of the clipboard data
+		copy_notes = pack_igetl(fp);		//Read the number of notes on the clipboard
+		first_beat = pack_igetl(fp);		//Read the original beat number of the first note that was copied
+	}
+
 	for(i = 0; i < copy_notes; i++)
 	{	//For each note in the clipboard file
 		/* read the note */
-		eof_load_song_string_pf(name, fp, sizeof(name));	//Read the note's name
+/*		eof_load_song_string_pf(temp_note.name, fp, sizeof(temp_note.name));	//Read the note's name
 		temp_note.note = pack_igetl(fp);	//Read the note fret values
 		temp_note.pos = pack_igetl(fp);		//Read the note's position relative to within the selection
 		pack_fread(&temp_note.porpos, sizeof(float), fp);	//Read the percent representing the note's start position within a beat
 		pack_fread(&temp_note.porendpos, sizeof(float), fp);	//Read the percent representing the note's end position within a beat
 		temp_note.beat = pack_igetl(fp);	//Read the beat the note starts in
 		temp_note.endbeat = pack_igetl(fp);	//Read the beat the note ends in
+		temp_note.length = pack_igetl(fp);	//Read the note's length
+		temp_note.flags = pack_igetl(fp);	//Read the note's flags
+		temp_note.legacymask = pack_igetl(fp);		//Read the note's legacy bitmask
+		pack_fread(temp_note.frets, sizeof(temp_note.frets), fp);	//Read the note's fret array
+		temp_note.ghostmask = pack_igetl(fp);				//Read the note's ghost bitmask
+*/
+		eof_menu_paste_read_clipboard_note(fp, &temp_note);
 		if(!oldpaste && ((temp_note.beat - first_beat + this_beat >= eof_song->beats - 1) || (temp_note.endbeat - first_beat + this_beat >= eof_song->beats - 1)))
 		{	//If new paste logic is being used, return from function if this note (and the subsequent notes) would paste after the last beat
 			break;
 		}
-		temp_note.length = pack_igetl(fp);	//Read the note's length
-		temp_note.flags = pack_igetl(fp);	//Read the note's flags
-		legacymask = pack_igetl(fp);		//Read the note's legacy bitmask
-		if((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (legacymask != 0))
+		if((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (temp_note.legacymask != 0))
 		{	//If the copied note indicated that this overrides the original bitmask (pasting pro guitar into a legacy track)
-			temp_note.note = legacymask;
+			temp_note.note = temp_note.legacymask;
 		}
 		if((eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT) && (temp_note.note & 32))
 		{	//If the note being pasted uses lane 6 and the destination track is a legacy track
@@ -1239,11 +1286,11 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		{
 			if(!oldpaste)
 			{	//If new paste logic is being used, this note pastes into a position relative to the start and end of a beat marker
-				new_note = eof_track_add_create_note(eof_song, eof_selected_track, temp_note.note, eof_put_porpos(temp_note.beat - first_beat + this_beat, temp_note.porpos, 0.0), eof_put_porpos(temp_note.endbeat - first_beat + this_beat, temp_note.porendpos, 0.0) - eof_put_porpos(temp_note.beat - first_beat + this_beat, temp_note.porpos, 0.0), eof_note_type, name);
+				new_note = eof_track_add_create_note(eof_song, eof_selected_track, temp_note.note, eof_put_porpos(temp_note.beat - first_beat + this_beat, temp_note.porpos, 0.0), eof_put_porpos(temp_note.endbeat - first_beat + this_beat, temp_note.porendpos, 0.0) - eof_put_porpos(temp_note.beat - first_beat + this_beat, temp_note.porpos, 0.0), eof_note_type, temp_note.name);
 			}
 			else
 			{	//If old paste logic is being used, this note pastes into a position relative to the previous pasted note
-				new_note = eof_track_add_create_note(eof_song, eof_selected_track, temp_note.note, eof_music_pos + temp_note.pos - eof_av_delay, temp_note.length, eof_note_type, name);
+				new_note = eof_track_add_create_note(eof_song, eof_selected_track, temp_note.note, eof_music_pos + temp_note.pos - eof_av_delay, temp_note.length, eof_note_type, temp_note.name);
 			}
 			if(new_note)
 			{
@@ -1253,14 +1300,12 @@ int eof_menu_edit_paste_logic(int oldpaste)
 			}
 		}
 
-		/* read fret values */
-		pack_fread(frets, sizeof(frets), fp);	//Read the note's fret array
-		ghostmask = pack_igetl(fp);				//Read the note's ghost bitmask
+		/* process fret values */
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If this is a pro guitar track
-			eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->legacymask = legacymask;				//Copy the legacy bitmask to the last created pro guitar note
-			memcpy(eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->frets, frets, sizeof(frets));	//Copy the fret array to the last created pro guitar note
-			eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->ghost = ghostmask;						//Copy the ghost bitmask to the last created pro guitar note
+			eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->legacymask = temp_note.legacymask;							//Copy the legacy bitmask to the last created pro guitar note
+			memcpy(eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->frets, temp_note.frets, sizeof(temp_note.frets));	//Copy the fret array to the last created pro guitar note
+			eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->ghost = temp_note.ghostmask;								//Copy the ghost bitmask to the last created pro guitar note
 		}
 	}
 	pack_fclose(fp);
@@ -2276,4 +2321,41 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long desttrack)
 	{	//For a note in any keys track, force the crazy flag to be set
 		*flags |= EOF_NOTE_FLAG_CRAZY;
 	}
+}
+
+void eof_menu_edit_paste_clear_range(unsigned long track, int note_type, unsigned long start, unsigned long end)
+{
+	unsigned long i, notepos, notelen;
+
+
+	for(i = eof_get_track_size(eof_song, track); i > 0; i--)
+	{	//For each note in the specified track
+		notepos = eof_get_note_pos(eof_song, track, i - 1);
+		notelen = eof_get_note_length(eof_song, track, i);
+
+		if((notepos <= end) && (notepos + notelen >= start))
+		{	//If the note begins at or before the specified end position and the note ends at or after the specified start position
+			eof_track_delete_note(eof_song, track, i - 1);
+		}
+	}
+}
+
+void eof_menu_paste_read_clipboard_note(PACKFILE * fp, EOF_EXTENDED_NOTE *temp_note)
+{
+	if(!fp || !temp_note)
+		return;
+
+	/* read the note */
+	eof_load_song_string_pf(temp_note->name, fp, sizeof(temp_note->name));	//Read the note's name
+	temp_note->note = pack_igetl(fp);	//Read the note fret values
+	temp_note->pos = pack_igetl(fp);		//Read the note's position relative to within the selection
+	pack_fread(&temp_note->porpos, sizeof(float), fp);	//Read the percent representing the note's start position within a beat
+	pack_fread(&temp_note->porendpos, sizeof(float), fp);	//Read the percent representing the note's end position within a beat
+	temp_note->beat = pack_igetl(fp);	//Read the beat the note starts in
+	temp_note->endbeat = pack_igetl(fp);	//Read the beat the note ends in
+	temp_note->length = pack_igetl(fp);	//Read the note's length
+	temp_note->flags = pack_igetl(fp);	//Read the note's flags
+	temp_note->legacymask = pack_igetl(fp);		//Read the note's legacy bitmask
+	pack_fread(temp_note->frets, sizeof(temp_note->frets), fp);	//Read the note's fret array
+	temp_note->ghostmask = pack_igetl(fp);				//Read the note's ghost bitmask
 }

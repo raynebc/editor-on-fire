@@ -83,7 +83,7 @@ DIALOG eof_preferences_dialog[] =
    { d_agup_check_proc, 16,  185, 165, 16,  2,   23,  0,    0,      1,   0,   "Disable 3D rendering",NULL, NULL },
    { d_agup_check_proc, 16,  200, 165, 16,  2,   23,  0,    0,      1,   0,   "Disable 2D rendering",NULL, NULL },
    { d_agup_check_proc, 16,  215, 165, 16,  2,   23,  0,    0,      1,   0,   "Disable info panel",NULL, NULL },
-
+   { d_agup_check_proc, 16,  230, 220, 16,  2,   23,  0,    0,      1,   0,   "Erase overlapped pasted notes",NULL, NULL },
    { d_agup_text_proc,   56, 264, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
    { d_agup_list_proc,   43, 280, 110, 94,  2,   23,  0,    0,      0,   0,   eof_input_list,        NULL, NULL },
    { d_agup_button_proc, 16, 384, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
@@ -917,8 +917,9 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[8].flags = eof_disable_3d_rendering ? D_SELECTED : 0;	//Disable 3D rendering
 	eof_preferences_dialog[9].flags = eof_disable_2d_rendering ? D_SELECTED : 0;	//Disable 2D rendering
 	eof_preferences_dialog[10].flags = eof_disable_info_panel ? D_SELECTED : 0;		//Disable info panel
-	eof_preferences_dialog[12].d1 = eof_input_mode;							//Input method
-	if(eof_popup_dialog(eof_preferences_dialog, 0) == 13)
+	eof_preferences_dialog[11].flags = eof_paste_erase_overlap ? D_SELECTED : 0;	//Erase overlapped pasted notes
+	eof_preferences_dialog[13].d1 = eof_input_mode;							//Input method
+	if(eof_popup_dialog(eof_preferences_dialog, 0) == 14)
 	{	//If the user clicked OK
 		eof_inverted_notes = (eof_preferences_dialog[1].flags == D_SELECTED ? 1 : 0);
 		eof_lefty_mode = (eof_preferences_dialog[2].flags == D_SELECTED ? 1 : 0);
@@ -930,7 +931,8 @@ int eof_menu_file_preferences(void)
 		eof_disable_3d_rendering = (eof_preferences_dialog[8].flags == D_SELECTED ? 1 : 0);
 		eof_disable_2d_rendering = (eof_preferences_dialog[9].flags == D_SELECTED ? 1 : 0);
 		eof_disable_info_panel = (eof_preferences_dialog[10].flags == D_SELECTED ? 1 : 0);
-		eof_input_mode = eof_preferences_dialog[12].d1;
+		eof_paste_erase_overlap = (eof_preferences_dialog[11].flags == D_SELECTED ? 1 : 0);
+		eof_input_mode = eof_preferences_dialog[13].d1;
 		eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case eof_inverted_notes was changed
 		eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case eof_lefty_mode was changed
 	}

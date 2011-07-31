@@ -121,6 +121,9 @@ typedef struct
 	float         porendpos;
 	char          active;
 	unsigned long flags;
+	unsigned long legacymask;
+	unsigned char frets[16];
+	unsigned long ghostmask;
 
 } EOF_EXTENDED_NOTE;
 

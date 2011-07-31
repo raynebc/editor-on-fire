@@ -99,5 +99,9 @@ int eof_menu_edit_paste_from_catalog(void);
 
 void eof_sanitize_note_flags(unsigned long *flags,unsigned long desttrack);
 	//Clears flag bits that are invalid for the specified track and resolves status conflicts (ie. a note cannot slide up and down at the same time)
+void eof_menu_edit_paste_clear_range(unsigned long track, int note_type, unsigned long start, unsigned long end);
+	//Deletes all notes in the specified track difficulty that fall within the given start and end positions
+void eof_menu_paste_read_clipboard_note(PACKFILE * fp, EOF_EXTENDED_NOTE *temp_note);
+	//Reads the next note's (for tracks except PART VOCALS) worth of data from the open clipboard file
 
 #endif
