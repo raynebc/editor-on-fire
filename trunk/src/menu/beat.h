@@ -11,6 +11,7 @@ extern DIALOG eof_all_events_dialog[];
 extern DIALOG eof_events_add_dialog[];
 extern DIALOG eof_bpm_change_dialog[];
 extern DIALOG eof_anchor_dialog[];
+extern DIALOG eof_place_trainer_dialog[];
 
 void eof_prepare_beat_menu(void);			//Enable/disable Beat menu items prior to drawing the menu
 int eof_menu_beat_add(void);
@@ -34,5 +35,7 @@ int eof_menu_beat_all_events(void);
 int eof_menu_beat_events(void);
 int eof_menu_beat_clear_events(void);
 int eof_menu_beat_reset_offset(void);	//Similar to eof_menu_beat_push_offset_back(), but uses anchoring to change the MIDI offset to 0 without moving any existing beats, notes, text events, etc.
+int eof_menu_beat_trainer_event(void);
+int eof_edit_trainer_proc(int msg, DIALOG *d, int c);	//This is a modification of eof_verified_edit_proc() allowing the trainer strings to be redrawn when the input field is altered
 
 #endif

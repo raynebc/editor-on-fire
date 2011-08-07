@@ -51,6 +51,7 @@ MENU eof_beat_menu[] =
     {"All E&vents", eof_menu_beat_all_events, NULL, 0, NULL},
     {"&Events", eof_menu_beat_events, NULL, 0, NULL},
     {"Clear Events", eof_menu_beat_clear_events, NULL, 0, NULL},
+    {"Place Trainer Event", eof_menu_beat_trainer_event, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -110,6 +111,23 @@ DIALOG eof_anchor_dialog[] =
    { eof_verified_edit_proc,   112, 80,  66,  20,  2,   23,  0,    0,      8,   0,   eof_etext2,           "0123456789:", NULL },
    { d_agup_button_proc, 42,  108, 68,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "OK",               NULL, NULL },
    { d_agup_button_proc, 120, 108, 68,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+DIALOG eof_place_trainer_dialog[] =
+{
+   /* (proc)                (x) (y) (w)  (h)   (fg) (bg) (key) (flags)    (d1) (d2) (dp)                  (dp2) (dp3) */
+   { d_agup_window_proc,    0,  20, 260, 160,  2,   23,  0,    0,         0,   0,   "Place Trainer Event",NULL, NULL },
+   { d_agup_text_proc,      12, 56, 64,  8,    2,   23,  0,    0,         0,   0,   "Trainer #:",         NULL, NULL },
+   { eof_edit_trainer_proc, 80, 52, 40,  20,   2,   23,  0,    0,         3,   0,   eof_etext,            "1234567890", NULL },
+   { d_agup_check_proc,     12, 78, 12,  16,   2,   23,  0,    D_DISABLED,0,   0,   "",                   NULL, NULL },
+   { d_agup_radio_proc,     34, 78, 220, 16,   2,   23,  0,    0,         1,   0,   eof_etext2,           NULL, NULL },
+   { d_agup_check_proc,     12, 98, 12,  16,   2,   23,  0,    D_DISABLED,0,   0,   "",                   NULL, NULL },
+   { d_agup_radio_proc,     34, 98, 220, 16,   2,   23,  0,    0,         1,   0,   eof_etext3,           NULL, NULL },
+   { d_agup_check_proc,     12, 118,12,  16,   2,   23,  0,    D_DISABLED,0,   0,   "",                   NULL, NULL },
+   { d_agup_radio_proc,     34, 118,220, 16,   2,   23,  0,    0,         1,   0,   eof_etext4,           NULL, NULL },
+   { d_agup_button_proc,    10, 144, 68, 28,   2,   23,  '\r', D_EXIT,    0,   0,   "OK",                 NULL, NULL },
+   { d_agup_button_proc,    88, 144, 68, 28,   2,   23,  0,    D_EXIT,    0,   0,   "Cancel",             NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -206,6 +224,15 @@ void eof_prepare_beat_menu(void)
 		{
 			eof_beat_menu[17].flags = D_DISABLED;
 			eof_beat_menu[19].flags = D_DISABLED;
+		}
+//Beat>Place Trainer Event
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If a pro guitar/bass track is active
+			eof_beat_menu[20].flags = 0;
+		}
+		else
+		{
+			eof_beat_menu[20].flags = D_DISABLED;
 		}
 //Re-flag the active Time Signature for the selected beat
 		for(i = 0; i < 6; i++)
@@ -1066,4 +1093,165 @@ int eof_menu_beat_add(void)
 	}
 	else
 		return -1;	//Otherwise return error
+}
+
+void eof_rebuild_trainer_strings(void)
+{
+	if(!eof_song)
+		return;	//Return without rebuilding string tunings if there is an error
+
+	//Build the trainer strings
+	if((eof_selected_track == EOF_TRACK_PRO_GUITAR) || (eof_selected_track == EOF_TRACK_PRO_GUITAR_22))
+	{	//A pro guitar track is active
+		sprintf(eof_etext2, "[begin_pg song_trainer_pg_%s]", eof_etext);
+		sprintf(eof_etext3, "[pg_norm song_trainer_pg_%s]", eof_etext);
+		sprintf(eof_etext4, "[end_pg song_trainer_pg_%s]", eof_etext);
+	}
+	else if((eof_selected_track == EOF_TRACK_PRO_BASS) || (eof_selected_track == EOF_TRACK_PRO_BASS_22))
+	{	//A pro bass track is active
+		sprintf(eof_etext2, "[begin_pb song_trainer_pb_%s]", eof_etext);
+		sprintf(eof_etext3, "[pb_norm song_trainer_pb_%s]", eof_etext);
+		sprintf(eof_etext4, "[end_pb song_trainer_pb_%s]", eof_etext);
+	}
+}
+
+int eof_menu_beat_trainer_event(void)
+{
+	char *selected_string = NULL;
+
+	eof_color_dialog(eof_place_trainer_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_place_trainer_dialog);
+	ustrcpy(eof_etext, "");			//Empty this string
+	eof_place_trainer_dialog[3].flags = D_DISABLED;	//Clear and disable the checkboxes
+	eof_place_trainer_dialog[5].flags = D_DISABLED;
+	eof_place_trainer_dialog[7].flags = D_DISABLED;
+	eof_place_trainer_dialog[9].flags = D_DISABLED;	//The OK button is disabled until the user enters a valid trainer number
+	eof_place_trainer_dialog[4].flags = D_SELECTED;	//Set the first radio button and clear the others
+	eof_place_trainer_dialog[6].flags = 0;
+	eof_place_trainer_dialog[8].flags = 0;
+
+	eof_rebuild_trainer_strings();
+	if(eof_popup_dialog(eof_place_trainer_dialog, 2) == 9)
+	{	//If user clicked OK button
+		if(eof_place_trainer_dialog[4].flags == D_SELECTED)
+		{	//User selected the begin song trainer string
+			selected_string = eof_etext2;
+		}
+		else if(eof_place_trainer_dialog[6].flags == D_SELECTED)
+		{	//User selected the norm song trainer string
+			selected_string = eof_etext3;
+		}
+		else
+		{	//User selected the end song trainer string
+			selected_string = eof_etext4;
+		}
+
+		if(eof_song_contains_event(eof_song, selected_string, eof_selected_track))
+		{	//If this training event is already defined in the active track
+			if(alert(NULL, "Warning:  This text event already exists in this track.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+			{	//If the user does not opt to place the duplicate text event
+				return 0;
+			}
+		}
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		eof_song_add_text_event(eof_song, eof_selected_beat, selected_string, eof_selected_track, 0);	//Add the chosen text event to the selected beat
+		eof_sort_events(eof_song);
+	}
+	return 1;
+}
+
+int eof_edit_trainer_proc(int msg, DIALOG *d, int c)
+{
+	int i;
+	char * string = NULL;
+	int key_list[32] = {KEY_BACKSPACE, KEY_DEL, KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_ESC};
+	int match = 0;
+	int retval;
+
+	if((msg == MSG_CHAR) || (msg == MSG_UCHAR))
+	{	//ASCII is not handled until the MSG_UCHAR event is sent
+		for(i = 0; i < 7; i++)
+		{	//See if any default accepted input characters were given
+			if((msg == MSG_UCHAR) && (c == 27))
+			{	//If the Escape ASCII character was trapped
+				return d_agup_edit_proc(msg, d, c);	//Immediately allow the input character to be returned (so the user can escape to cancel the dialog)
+			}
+			if((msg == MSG_CHAR) && ((c >> 8 == KEY_BACKSPACE) || (c >> 8 == KEY_DEL)))
+			{	//If the backspace or delete keys are trapped
+				match = 1;	//Ensure the full function runs, so that the strings are rebuilt
+				break;
+			}
+			if(c >> 8 == key_list[i])			//If the input is permanently allowed
+			{
+				return d_agup_edit_proc(msg, d, c);	//Immediately allow the input character to be returned
+			}
+		}
+
+		/* see if key is an allowed key */
+		if(!match)
+		{
+			string = (char *)(d->dp2);
+			if(string == NULL)	//If the accepted characters list is NULL for some reason
+				match = 1;	//Implicitly accept the input character instead of allowing a crash
+			else
+			{
+				for(i = 0; string[i] != '\0'; i++)	//Search all characters of the accepted characters list
+				{
+					if(string[i] == (c & 0xff))
+					{
+						match = 1;
+						break;
+					}
+				}
+			}
+		}
+
+		if(!match)			//If there was no match
+			return D_USED_CHAR;	//Drop the character
+
+		retval = d_agup_edit_proc(msg, d, c);	//Allow the input character to be processed
+		if(!eof_song || (eof_selected_track >= eof_song->tracks))
+			return retval;	//Return without redrawing string tunings if there is an error
+
+		//Update various dialog objects
+		eof_rebuild_trainer_strings();
+
+		if(eof_song_contains_event(eof_song, eof_etext2, eof_selected_track))
+		{	//If this training event is already defined in the active track
+			eof_place_trainer_dialog[3].flags = D_SELECTED | D_DISABLED;	//Check this box
+		}
+		else
+		{
+			eof_place_trainer_dialog[3].flags = 0 | D_DISABLED;		//Otherwise clear this box
+		}
+		if(eof_song_contains_event(eof_song, eof_etext3, eof_selected_track))
+		{	//If this training event is already defined in the active track
+			eof_place_trainer_dialog[5].flags = D_SELECTED | D_DISABLED;	//Check this box
+		}
+		else
+		{
+			eof_place_trainer_dialog[5].flags = 0 | D_DISABLED;		//Otherwise clear this box
+		}
+		if(eof_song_contains_event(eof_song, eof_etext4, eof_selected_track))
+		{	//If this training event is already defined in the active track
+			eof_place_trainer_dialog[7].flags = D_SELECTED | D_DISABLED;	//Check this box
+		}
+		else
+		{
+			eof_place_trainer_dialog[7].flags = 0 | D_DISABLED;		//Otherwise clear this box
+		}
+
+		if(eof_etext[0] == '\0')
+		{	//If the trainer number field is empty
+			eof_place_trainer_dialog[9].flags = D_DISABLED;	//Disable the OK button
+		}
+		else
+		{
+			eof_place_trainer_dialog[9].flags = D_EXIT;	//Enable the OK button and allow it to close the dialog menu
+		}
+
+		return D_REDRAW;	//Have Allegro redraw the entire dialog menu, because it won't update the radio button strings as needed otherwise
+	}
+
+	return d_agup_edit_proc(msg, d, c);	//Allow the input character to be returned
 }

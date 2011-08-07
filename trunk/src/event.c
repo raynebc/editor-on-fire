@@ -147,7 +147,7 @@ int eof_song_qsort_events(const void * e1, const void * e2)
 	}
 }
 
-char eof_song_contains_event(EOF_SONG *sp, const char *text)
+char eof_song_contains_event(EOF_SONG *sp, const char *text, unsigned long track)
 {
 	unsigned long i;
 
@@ -155,6 +155,10 @@ char eof_song_contains_event(EOF_SONG *sp, const char *text)
 	{
 		for(i = 0; i < sp->text_events; i++)
 		{
+			if(track && (sp->text_event[i]->track != track))
+			{	//If searching for events in a specific track, and this event isn't in that track
+				continue;	//Skip this event
+			}
 			if(!ustrcmp(sp->text_event[i]->text, text))
 			{
 				return 1;	//Return match found
@@ -164,7 +168,7 @@ char eof_song_contains_event(EOF_SONG *sp, const char *text)
 	return 0;	//Return no match found
 }
 
-char eof_song_contains_event_beginning_with(EOF_SONG *sp, const char *text)
+char eof_song_contains_event_beginning_with(EOF_SONG *sp, const char *text, unsigned long track)
 {
 	unsigned long i;
 
@@ -172,6 +176,10 @@ char eof_song_contains_event_beginning_with(EOF_SONG *sp, const char *text)
 	{
 		for(i = 0; i < sp->text_events; i++)
 		{
+			if(track && (sp->text_event[i]->track != track))
+			{	//If searching for events in a specific track, and this event isn't in that track
+				continue;	//Skip this event
+			}
 			if(ustrstr(sp->text_event[i]->text, text) == sp->text_event[i]->text)
 			{	//If a substring search returns the beginning of an existing text event as a match
 				return 1;	//Return match found

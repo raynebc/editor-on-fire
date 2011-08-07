@@ -493,32 +493,32 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	}
 	if(sp->beats > 3)
 	{	//Only add these if there are at least 4 beats
-		if(!eof_song_contains_event(sp, "[music_start]"))
+		if(!eof_song_contains_event(sp, "[music_start]", 0))
 		{	//If the user did not define the music_start event
 			eof_log("\t! Adding missing [music_start] event", 1);
 			eof_song_add_text_event(sp, 2, "[music_start]", 0, 1);	//Add it as a temporary event two beats into the song (at the third beat)
 		}
-		if(!eof_song_contains_event(sp, "[music_end]"))
+		if(!eof_song_contains_event(sp, "[music_end]", 0))
 		{	//If the user did not define the music_end event
 			eof_log("\t! Adding missing [music_end] event", 1);
 			eof_song_add_text_event(sp, sp->beats-1, "[music_end]", 0, 1);	//Add it as a temporary event on the last beat
 		}
-		if(!eof_song_contains_event_beginning_with(sp, "[mix 0"))
+		if(!eof_song_contains_event_beginning_with(sp, "[mix 0", EOF_TRACK_DRUM))
 		{	//If the user did not define an easy difficulty drum mix event
 			eof_log("\t! Adding missing easy drum mix event", 1);
 			eof_song_add_text_event(sp, 0, "[mix 0 drums0]", EOF_TRACK_DRUM, 1);	//Add one as a temporary event on the first beat of the drum track
 		}
-		if(!eof_song_contains_event_beginning_with(sp, "[mix 1"))
+		if(!eof_song_contains_event_beginning_with(sp, "[mix 1", EOF_TRACK_DRUM))
 		{	//If the user did not define a medium difficulty drum mix event
 			eof_log("\t! Adding missing medium drum mix event", 1);
 			eof_song_add_text_event(sp, 0, "[mix 1 drums0]", EOF_TRACK_DRUM, 1);	//Add one as a temporary event on the first beat of the drum track
 		}
-		if(!eof_song_contains_event_beginning_with(sp, "[mix 2"))
+		if(!eof_song_contains_event_beginning_with(sp, "[mix 2", EOF_TRACK_DRUM))
 		{	//If the user did not define a hard difficulty drum mix event
 			eof_log("\t! Adding missing hard drum mix event", 1);
 			eof_song_add_text_event(sp, 0, "[mix 2 drums0]", EOF_TRACK_DRUM, 1);	//Add one as a temporary event on the first beat of the drum track
 		}
-		if(!eof_song_contains_event_beginning_with(sp, "[mix 3"))
+		if(!eof_song_contains_event_beginning_with(sp, "[mix 3", EOF_TRACK_DRUM))
 		{	//If the user did not define an expert difficulty drum mix event
 			eof_log("\t! Adding missing expert drum mix event", 1);
 			eof_song_add_text_event(sp, 0, "[mix 3 drums0]", EOF_TRACK_DRUM, 1);	//Add one as a temporary event on the first beat of the drum track
@@ -1665,7 +1665,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		#ifdef EOF_RBN_COMPATIBILITY
 		//Magma requires that the [end] event is the last MIDI event in the track, so it will be written 1ms after the end of the audio
 		//Check the existing events to see if such an event is already defined
-		if(!eof_song_contains_event(sp, "[end]"))
+		if(!eof_song_contains_event(sp, "[end]", 0))
 		{	//If the user did not define the end event, manually write it
 			eof_log("\t! Adding missing [end] event", 1);
 			delta = eof_ConvertToDeltaTime(eof_music_length+1,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
