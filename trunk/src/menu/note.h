@@ -88,4 +88,49 @@ int eof_menu_note_toggle_orange(void);
 int eof_menu_split_lyric(void);
 int eof_menu_note_edit_name(void);				//Enables the name for selected notes to be altered
 
+int eof_menu_copy_solos_track_1(void);
+int eof_menu_copy_solos_track_2(void);
+int eof_menu_copy_solos_track_3(void);
+int eof_menu_copy_solos_track_4(void);
+int eof_menu_copy_solos_track_5(void);
+int eof_menu_copy_solos_track_6(void);
+int eof_menu_copy_solos_track_7(void);
+int eof_menu_copy_solos_track_8(void);
+int eof_menu_copy_solos_track_9(void);
+int eof_menu_copy_solos_track_10(void);
+int eof_menu_copy_solos_track_11(void);
+int eof_menu_copy_solos_track_12(void);
+int eof_menu_copy_solos_track_number(EOF_SONG *sp, int sourcetrack, int desttrack);
+	//Copies the solo phrases from the specified source track to the destination track
+
+int eof_menu_copy_sp_track_1(void);
+int eof_menu_copy_sp_track_2(void);
+int eof_menu_copy_sp_track_3(void);
+int eof_menu_copy_sp_track_4(void);
+int eof_menu_copy_sp_track_5(void);
+int eof_menu_copy_sp_track_6(void);
+int eof_menu_copy_sp_track_7(void);
+int eof_menu_copy_sp_track_8(void);
+int eof_menu_copy_sp_track_9(void);
+int eof_menu_copy_sp_track_10(void);
+int eof_menu_copy_sp_track_11(void);
+int eof_menu_copy_sp_track_12(void);
+int eof_menu_copy_sp_track_number(EOF_SONG *sp, int sourcetrack, int desttrack);
+	//Copies the star power phrases from the specified source track to the destination track
+
+int eof_menu_copy_arpeggio_track_1(void);
+int eof_menu_copy_arpeggio_track_2(void);
+int eof_menu_copy_arpeggio_track_3(void);
+int eof_menu_copy_arpeggio_track_4(void);
+int eof_menu_copy_arpeggio_track_5(void);
+int eof_menu_copy_arpeggio_track_6(void);
+int eof_menu_copy_arpeggio_track_7(void);
+int eof_menu_copy_arpeggio_track_8(void);
+int eof_menu_copy_arpeggio_track_9(void);
+int eof_menu_copy_arpeggio_track_10(void);
+int eof_menu_copy_arpeggio_track_11(void);
+int eof_menu_copy_arpeggio_track_12(void);
+int eof_menu_copy_arpeggio_track_number(EOF_SONG *sp, int sourcetrack, int desttrack);
+	//Copies the arpeggio phrases from the specified source track to the destination track
+
 #endif

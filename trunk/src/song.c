@@ -4308,6 +4308,33 @@ void eof_set_num_arpeggios(EOF_SONG *sp, unsigned long track, unsigned long numb
 	}
 }
 
+void eof_track_delete_arpeggio(EOF_SONG *sp, unsigned long track, unsigned long index)
+{
+ 	eof_log("eof_track_delete_arpeggio() entered", 1);
+
+	unsigned long ctr;
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(index < sp->pro_guitar_track[tracknum]->arpeggios)
+			{
+				sp->pro_guitar_track[tracknum]->arpeggio[index].name[0] = '\0';	//Empty the name string
+				for(ctr = index; ctr < sp->pro_guitar_track[tracknum]->arpeggios; ctr++)
+				{
+					memcpy(&sp->pro_guitar_track[tracknum]->arpeggio[ctr], &sp->pro_guitar_track[tracknum]->arpeggio[ctr + 1], sizeof(EOF_PHRASE_SECTION));
+				}
+				sp->pro_guitar_track[tracknum]->arpeggios--;
+			}
+		break;
+	}
+}
+
 void eof_set_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, char *name)
 {
 // 	eof_log("eof_set_note_name() entered");
