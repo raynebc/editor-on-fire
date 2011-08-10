@@ -1151,7 +1151,7 @@ int eof_load_ogg_quick(char * filename)
 		return 0;
 	}
 	eof_destroy_ogg();
-	eof_music_data = (void *)eof_buffer_file(filename);
+	eof_music_data = (void *)eof_buffer_file(filename, 0);
 	eof_music_data_size = file_size_ex(filename);
 	if(eof_music_data)
 	{
@@ -1198,7 +1198,7 @@ int eof_load_ogg(char * filename)
 		return 0;
 	}
 	eof_destroy_ogg();
-	eof_music_data = (void *)eof_buffer_file(filename);
+	eof_music_data = (void *)eof_buffer_file(filename, 0);
 	eof_music_data_size = file_size_ex(filename);
 	if(eof_music_data)
 	{
@@ -1230,7 +1230,7 @@ int eof_load_ogg(char * filename)
 			if(!eof_mp3_to_ogg(returnedfn,directory))				//Create guitar.ogg in the folder
 			{	//If the copy or conversion to create guitar.ogg succeeded
 				replace_filename(returnedfn, filename, "guitar.ogg", 1024);	//guitar.ogg is the expected file
-				eof_music_data = (void *)eof_buffer_file(returnedfn);
+				eof_music_data = (void *)eof_buffer_file(returnedfn, 0);
 				eof_music_data_size = file_size_ex(returnedfn);
 				if(eof_music_data)
 				{

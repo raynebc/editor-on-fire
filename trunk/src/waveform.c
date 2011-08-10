@@ -288,7 +288,7 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 	}
 
 //Load OGG file into memory
-	oggbuffer = eof_buffer_file(oggfilename);
+	oggbuffer = eof_buffer_file(oggfilename, 0);
 	if(!oggbuffer)
 	{
 		#ifdef EOF_DEBUG_WAVEFORM

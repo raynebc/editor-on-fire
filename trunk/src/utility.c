@@ -49,12 +49,13 @@ int eof_system(const char * command)
 	return -1;
 }
 
-void * eof_buffer_file(char * fn)
+void * eof_buffer_file(char * fn, char appendnull)
 {
 // 	eof_log("eof_buffer_file() entered");
 
 	void * data = NULL;
 	PACKFILE * fp = NULL;
+	size_t filesize, buffersize;
 
 	if(fn == NULL)
 		return NULL;
@@ -63,11 +64,20 @@ void * eof_buffer_file(char * fn)
 	{
 		return NULL;
 	}
-	data = (char *)malloc(file_size_ex(fn));
+	filesize = buffersize = file_size_ex(fn);
+	if(appendnull)
+	{	//If adding an extra NULL byte of padding to the end of the buffer
+		buffersize++;	//Allocate an extra byte for the padding
+	}
+	data = (char *)malloc(buffersize);
 	if(data == NULL)
 		return NULL;
 
-	pack_fread(data, file_size_ex(fn), fp);
+	pack_fread(data, filesize, fp);
+	if(appendnull)
+	{	//If adding an extra NULL byte of padding to the end of the buffer
+		((char *)data)[buffersize - 1] = 0;	//Write a 0 byte at the end of the buffer
+	}
 	pack_fclose(fp);
 	return data;
 }

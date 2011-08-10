@@ -44,7 +44,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 	}
 	eof_log("\tBuffering INI file into memory", 1);
 	eof_import_ini_settings = 0;
-	textbuffer = (char *)eof_buffer_file(fn);	//Buffer the INI file into memory
+	textbuffer = (char *)eof_buffer_file(fn, 1);	//Buffer the INI file into memory, adding a NULL terminator at the end of the buffer
 	if(!textbuffer)
 	{
 		eof_log("\tCannot open INI file, skipping", 1);
@@ -52,7 +52,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 	}
 	textlength = ustrlen(textbuffer);
 	eof_log("\tTokenizing INI file buffer", 1);
-	ustrtok(textbuffer, "\r\n");
+	ustrtok(textbuffer, "\r\n[]");
 	eof_log("\tParsing INI file buffer", 1);
 	while(1)
 	{
@@ -162,6 +162,9 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 				}
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "score"))
+			{
+			}
+			else if(!ustricmp(eof_import_ini_setting[i].type, "scores"))
 			{
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "scores_ext"))
