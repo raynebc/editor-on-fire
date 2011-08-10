@@ -341,7 +341,7 @@ SAMPLE *eof_mix_load_ogg_sample(char *fn)
 	{
 		return NULL;
 	}
-	buffer = eof_buffer_file(fn);
+	buffer = eof_buffer_file(fn, 0);
 	if(buffer)
 	{
 		temp_ogg = alogg_create_ogg_from_buffer(buffer, file_size_ex(fn));

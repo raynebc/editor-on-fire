@@ -1855,7 +1855,7 @@ int eof_new_chart(char * filename)
 	eof_render();
 	if(!ustricmp("ogg", get_extension(oggfilename)))
 	{
-		temp_buffer = eof_buffer_file(oggfilename);
+		temp_buffer = eof_buffer_file(oggfilename, 0);
 		temp_buffer_size = file_size_ex(oggfilename);
 		if(temp_buffer)
 		{
