@@ -523,11 +523,7 @@ int eof_menu_song_seek_start(void)
 			eof_music_play();	//stop it
 			wasplaying = 1;
 		}
-		alogg_seek_abs_msecs_ogg(eof_music_track, 0);
-		eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
-		eof_music_pos = eof_av_delay;
-		eof_mix_seek(eof_music_pos);
-		eof_reset_lyric_preview_lines();
+		eof_set_seek_position(0);
 		if(wasplaying)
 		{	//If the playback was stopped to rewind the seek position
 			eof_music_play();	//Resume playing
@@ -540,11 +536,7 @@ int eof_menu_song_seek_end(void)
 {
 	if(!eof_music_catalog_playback)
 	{
-		alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_actual_length - 1);
-		eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
-		eof_music_pos = eof_music_actual_length - 1;
-		eof_mix_seek(eof_music_pos);
-		eof_reset_lyric_preview_lines();
+		eof_set_seek_position(eof_music_actual_length - 1);
 	}
 	return 1;
 }
@@ -553,11 +545,7 @@ int eof_menu_song_seek_rewind(void)
 {
 	if(!eof_music_catalog_playback)
 	{
-		alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_rewind_pos);
-		eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
-		eof_music_pos = eof_music_rewind_pos;
-		eof_mix_seek(eof_music_pos);
-		eof_reset_lyric_preview_lines();
+		eof_set_seek_position(eof_music_rewind_pos);
 	}
 	return 1;
 }
@@ -581,11 +569,7 @@ int eof_menu_song_seek_first_note(void)
 				}
 			}
 		}
-		alogg_seek_abs_msecs_ogg(eof_music_track, first_pos + eof_av_delay);
-		eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
-		eof_music_pos = first_pos + eof_av_delay;
-		eof_mix_seek(eof_music_pos);
-		eof_reset_lyric_preview_lines();
+		eof_set_seek_position(first_pos + eof_av_delay);
 	}
 	return 1;
 }
@@ -609,11 +593,7 @@ int eof_menu_song_seek_last_note(void)
 				}
 			}
 		}
-		alogg_seek_abs_msecs_ogg(eof_music_track, last_pos + eof_av_delay);
-		eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
-		eof_music_pos = last_pos + eof_av_delay;
-		eof_mix_seek(eof_music_pos);
-		eof_reset_lyric_preview_lines();
+		eof_set_seek_position(last_pos + eof_av_delay);
 	}
 	return 1;
 }
@@ -626,11 +606,7 @@ int eof_menu_song_seek_previous_note(void)
 	{	//For each note in the active track
 		if((eof_get_note_type(eof_song, eof_selected_track, i-1) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i-1) < ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
 		{
-			alogg_seek_abs_msecs_ogg(eof_music_track, eof_get_note_pos(eof_song, eof_selected_track, i-1) + eof_av_delay);
-			eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
-			eof_music_pos = eof_get_note_pos(eof_song, eof_selected_track, i-1) + eof_av_delay;
-			eof_mix_seek(eof_music_pos);
-			eof_reset_lyric_preview_lines();
+			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, i-1) + eof_av_delay);
 			break;
 		}
 	}
@@ -645,11 +621,7 @@ int eof_menu_song_seek_next_note(void)
 	{	//For each note in the active track
 		if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < eof_music_length) && (eof_get_note_pos(eof_song, eof_selected_track, i) > ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
 		{
-			alogg_seek_abs_msecs_ogg(eof_music_track, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay);
-			eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
-			eof_music_pos = eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay;
-			eof_mix_seek(eof_music_pos);
-			eof_reset_lyric_preview_lines();
+			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay);
 			break;
 		}
 	}
@@ -666,11 +638,7 @@ int eof_menu_song_seek_previous_screen(void)
 		}
 		else
 		{
-			alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_pos - SCREEN_W * eof_zoom);
-			eof_music_pos = alogg_get_pos_msecs_ogg(eof_music_track);
-			eof_music_actual_pos = eof_music_pos;
-			eof_mix_seek(eof_music_pos);
-			eof_reset_lyric_preview_lines();
+			eof_set_seek_position(eof_music_pos - SCREEN_W * eof_zoom);
 		}
 	}
 	return 1;
@@ -686,11 +654,7 @@ int eof_menu_song_seek_next_screen(void)
 		}
 		else
 		{
-			alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_pos + SCREEN_W * eof_zoom);
-			eof_music_pos = alogg_get_pos_msecs_ogg(eof_music_track);
-			eof_music_actual_pos = eof_music_pos;
-			eof_mix_seek(eof_music_pos);
-			eof_reset_lyric_preview_lines();
+			eof_set_seek_position(eof_music_pos + SCREEN_W * eof_zoom);
 		}
 	}
 	return 1;
@@ -700,11 +664,7 @@ int eof_menu_song_seek_bookmark_help(int b)
 {
 	if(!eof_music_catalog_playback && (eof_song->bookmark_pos[b] != 0))
 	{
-		alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->bookmark_pos[b] + eof_av_delay);
-		eof_music_pos = eof_song->bookmark_pos[b] + eof_av_delay;
-		eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
-		eof_mix_seek(eof_music_pos);
-		eof_reset_lyric_preview_lines();
+		eof_set_seek_position(eof_song->bookmark_pos[b] + eof_av_delay);
 		return 1;
 	}
 	return 0;
@@ -2477,4 +2437,55 @@ void eof_set_percussion_cue(int cue_number)
 		break;
 	}
 	eof_selected_percussion_cue = cue_number;
+}
+
+void eof_seek_by_grid_snap(int dir)
+{
+	long beat;
+	unsigned long adjustedpos = eof_music_pos - eof_av_delay;	//Find the actual chart position
+
+	if(!eof_song || (eof_snap_mode == EOF_SNAP_OFF))
+		return;
+
+	beat = eof_get_beat(eof_song, adjustedpos);	//Find which beat the current seek position is in
+
+	if(dir < 0)
+	{	//If seeking backward
+		if(adjustedpos <= eof_song->beat[0]->pos)
+			return;	//Do not allow this operation to seek before the first beat marker
+		if(adjustedpos == eof_song->beat[beat]->pos)
+			beat--;	//If the current position is on a beat marker, seeking back will take the previous beat into account instead
+	}
+	else
+	{	//If seeking forward
+		if(adjustedpos >= eof_song->beat[eof_song->beats - 1]->pos)
+			return;	//Do not allow this operation to seek after the last beat marker
+	}
+
+	eof_snap_logic(&eof_tail_snap, eof_song->beat[beat]->pos);	//Find beat/measure length
+	eof_snap_length_logic(&eof_tail_snap);	//Find length of one grid snap in the target beat
+
+	if(dir < 0)
+	{	//If seeking backward
+		eof_snap_logic(&eof_tail_snap, adjustedpos - eof_tail_snap.length);	//Find the grid snapped position of the new seek position
+//		eof_set_seek_position(eof_music_pos - eof_tail_snap.length);
+	}
+	else
+	{	//If seeking forward
+		eof_snap_logic(&eof_tail_snap, adjustedpos + eof_tail_snap.length);	//Find the grid snapped position of the new seek position
+//		eof_set_seek_position(eof_music_pos + eof_tail_snap.length);
+	}
+	eof_set_seek_position(eof_tail_snap.pos + eof_av_delay);	//Seek to the new seek position
+}
+
+int eof_menu_song_seek_previous_grid_snap(void)
+{
+	eof_seek_by_grid_snap(-1);
+	return 1;
+}
+
+int eof_menu_song_seek_next_grid_snap(void)
+{
+	eof_seek_by_grid_snap(1);
+	return 1;
 }

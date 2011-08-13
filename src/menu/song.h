@@ -47,6 +47,11 @@ int eof_menu_song_seek_bookmark_6(void);
 int eof_menu_song_seek_bookmark_7(void);
 int eof_menu_song_seek_bookmark_8(void);
 int eof_menu_song_seek_bookmark_9(void);
+void eof_seek_by_grid_snap(int dir);
+	//Seeks the current position back by the current grid snap value if dir < 0, or forward if dir is >= 0
+	//If grid snap is disabled, the seek position is not changed
+int eof_menu_song_seek_previous_grid_snap(void);	//Seeks to the previous grid snap position
+int eof_menu_song_seek_next_grid_snap(void);		//Seeks to the next grid snap position
 
 int eof_menu_song_file_info(void);
 int eof_menu_song_ini_settings(void);

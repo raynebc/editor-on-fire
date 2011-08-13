@@ -1513,7 +1513,7 @@ eof_log("\tSecond pass complete", 1);
 							{
 								if((eof_get_note_type(sp, picked_track, k) == eof_get_note_type(sp, picked_track, note_count[picked_track])) && (eof_get_note_note(sp, picked_track, k) & diff_chart[diff]))
 								{
-//									allegro_message("break %d, %d, %d", k, sp->legacy_track[picked_track]->note[k]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);
+//									allegro_message("break %d, %d, %d", k, sp->legacy_track[picked_track]->note[k]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);	//Debug
 									eof_set_note_length(sp, picked_track, k, event_realtime - eof_get_note_pos(sp, picked_track, k));
 									if(eof_get_note_length(sp, picked_track, k ) <= 0)
 									{
@@ -1705,11 +1705,6 @@ eof_log("\tSecond pass complete", 1);
 
 						/* arpeggios, solos, star power, tremolos and trills */
 						phraseptr = NULL;
-//						if((eof_import_events[i]->event[j]->d1 == 104) && (eof_get_num_arpeggios(sp, picked_track) < EOF_MAX_PHRASES))
-//						{	//Arpeggios are marked with note 104
-//							phraseptr = eof_get_arpeggio(sp, picked_track, eof_get_num_arpeggios(sp, picked_track));
-//							phraseptr->start_pos = event_realtime;
-//						}
 						if((eof_import_events[i]->event[j]->d1 == 115) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
 						{	//Pro guitar solos are marked with note 115
 							phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
@@ -1905,12 +1900,6 @@ eof_log("\tSecond pass complete", 1);
 							}
 						}
 
-//						if((eof_import_events[i]->event[j]->d1 == 104) && (eof_get_num_arpeggios(sp, picked_track) < EOF_MAX_PHRASES))
-//						{	//End of an arpeggio phrase
-//							phraseptr = eof_get_arpeggio(sp, picked_track, eof_get_num_arpeggios(sp, picked_track));
-//							phraseptr->end_pos = event_realtime - 1;
-//							eof_set_num_arpeggios(sp, picked_track, eof_get_num_arpeggios(sp, picked_track) + 1);
-//						}
 						if((eof_import_events[i]->event[j]->d1 == 115) && (eof_get_num_solos(sp, picked_track) < EOF_MAX_PHRASES))
 						{	//End of a solo phrase
 							phraseptr = eof_get_solo(sp, picked_track, eof_get_num_solos(sp, picked_track));
@@ -1942,7 +1931,7 @@ eof_log("\tSecond pass complete", 1);
 							{
 								if((eof_get_note_type(sp, picked_track, k) == eof_get_note_type(sp, picked_track, note_count[picked_track])) && (eof_get_note_note(sp, picked_track, k) & diff_chart[diff]))
 								{
-//									allegro_message("break %d, %d, %d", k, sp->legacy_track[picked_track]->note[k]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);
+//									allegro_message("break %d, %d, %d", k, sp->legacy_track[picked_track]->note[k]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);	//Debug
 									eof_set_note_length(sp, picked_track, k, event_realtime - eof_get_note_pos(sp, picked_track, k));
 									if(eof_get_note_length(sp, picked_track, k ) <= 0)
 									{
@@ -2188,7 +2177,7 @@ eof_log("\tThird pass complete", 1);
 			b = eof_import_closest_beat(sp, tp);
 			if(b >= 0)
 			{
-//				allegro_message("%s", eof_import_text_events->event[i]->text);
+//				allegro_message("%s", eof_import_text_events->event[i]->text);	//Debug
 				eof_song_add_text_event(sp, b, eof_import_text_events->event[i]->text, 0, 0);
 			}
 		}

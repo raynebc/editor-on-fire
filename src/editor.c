@@ -779,12 +779,20 @@ void eof_read_editor_keys(void)
 	if(key[KEY_LEFT])
 	{
 		eof_music_rewind();
+		if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
+		{	//If user is trying to seek at the slowest speed,
+			key[KEY_LEFT] = 0;	//Clear this key state to allow seeking in accurate 1ms intervals
+		}
 	}
 
 	/* fast forward (Right) */
 	if(key[KEY_RIGHT])
 	{
 		eof_music_forward();
+		if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
+		{	//If user is trying to seek at the slowest speed,
+			key[KEY_RIGHT] = 0;	//Clear this key state to allow seeking in accurate 1ms intervals
+		}
 	}
 
 	/* seek back one screen (CTRL+Pg Up) */
@@ -796,7 +804,14 @@ void eof_read_editor_keys(void)
 		{
 			if(KEY_EITHER_CTRL)
 			{
-				eof_menu_song_seek_previous_screen();
+				if(KEY_EITHER_SHIFT)
+				{	//If both SHIFT and CTRL are being held
+					eof_menu_song_seek_previous_grid_snap();
+				}
+				else
+				{
+					eof_menu_song_seek_previous_screen();
+				}
 			}
 			else if(KEY_EITHER_SHIFT)
 			{
@@ -810,23 +825,16 @@ void eof_read_editor_keys(void)
 				{
 					if(eof_song->beat[b]->pos == eof_music_pos - eof_av_delay)
 					{
-						alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->beat[b - 1]->pos + eof_av_delay);
-						eof_music_pos = eof_song->beat[b - 1]->pos + eof_av_delay;
+						eof_set_seek_position(eof_song->beat[b - 1]->pos + eof_av_delay);
 					}
 					else
 					{
-						alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->beat[b]->pos + eof_av_delay);
-						eof_music_pos = eof_song->beat[b]->pos + eof_av_delay;
+						eof_set_seek_position(eof_song->beat[b]->pos + eof_av_delay);
 					}
-					eof_music_actual_pos = eof_music_pos;
-					eof_mix_seek(eof_music_actual_pos);
 				}
 				else
 				{
-					alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->beat[0]->pos + eof_av_delay);
-					eof_music_pos = eof_song->beat[0]->pos + eof_av_delay;
-					eof_music_actual_pos = eof_music_pos;
-					eof_mix_seek(eof_music_actual_pos);
+					eof_set_seek_position(eof_song->beat[0]->pos + eof_av_delay);
 				}
 			}
 		}
@@ -842,7 +850,14 @@ void eof_read_editor_keys(void)
 		{
 			if(KEY_EITHER_CTRL)
 			{
-				eof_menu_song_seek_next_screen();
+				if(KEY_EITHER_SHIFT)
+				{	//If both SHIFT and CTRL are being held
+					eof_menu_song_seek_next_grid_snap();
+				}
+				else
+				{
+					eof_menu_song_seek_next_screen();
+				}
 			}
 			else if(KEY_EITHER_SHIFT)
 			{
@@ -858,10 +873,7 @@ void eof_read_editor_keys(void)
 
 				if(((b < 0) || (b < eof_song->beats - 1)) && (eof_song->beat[b + 1]->pos < eof_music_actual_length))
 				{
-					alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->beat[b + 1]->pos + eof_av_delay);
-					eof_music_pos = eof_song->beat[b + 1]->pos + eof_av_delay;
-					eof_music_actual_pos = eof_music_pos;
-					eof_mix_seek(eof_music_actual_pos);
+					eof_set_seek_position(eof_song->beat[b + 1]->pos + eof_av_delay);
 				}
 			}
 		}
@@ -2417,7 +2429,7 @@ void eof_editor_logic(void)
 						{
 							if(!eof_selection.multi[eof_selection.current])
 							{
-//								printf("notes %d\n", eof_notes_selected());
+//								printf("notes %d\n", eof_notes_selected());	//Debugging
 								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
 							}
 							if(eof_selection.multi[eof_selection.current] == 1)
@@ -3502,7 +3514,7 @@ void eof_vocal_editor_logic(void)
 								eof_snap_logic(&eof_tail_snap, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length - 1);
 							}
 							eof_snap_length_logic(&eof_tail_snap);
-//							allegro_message("%d, %d\n%lu, %lu", eof_tail_snap.length, eof_tail_snap.beat, eof_get_note_pos(eof_selected_track, i) + eof_get_note_length(eof_selected_track, i), eof_song->beat[eof_tail_snap.beat]->pos);
+//							allegro_message("%d, %d\n%lu, %lu", eof_tail_snap.length, eof_tail_snap.beat, eof_get_note_pos(eof_selected_track, i) + eof_get_note_length(eof_selected_track, i), eof_song->beat[eof_tail_snap.beat]->pos);	//Debugging
 							eof_song->vocal_track[tracknum]->lyric[i]->length -= eof_tail_snap.length;
 							if(eof_song->vocal_track[tracknum]->lyric[i]->length > 1)
 							{
@@ -4005,7 +4017,6 @@ void eof_render_editor_window_common(void)
 			sectionptr = &eof_song->pro_guitar_track[tracknum]->arpeggio[i];
 			if((sectionptr->end_pos >= start) && (sectionptr->start_pos <= stop) && (sectionptr->difficulty == eof_note_type))
 			{	//If the arpeggio section would render between the left and right edges of the piano roll, and the section applies to the active difficulty, fill the bottom lane with turquoise
-//				rectfill(eof_window_editor->screen, lpos + sectionptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[4], lpos + sectionptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[5], col);
 				rectfill(eof_window_editor->screen, lpos + sectionptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 2], lpos + sectionptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 1], col);
 			}
 		}
@@ -4146,7 +4157,6 @@ void eof_render_editor_window_common(void)
 	unsigned beats_per_measure = 0;
 	char buffer[16] = {0};
 	unsigned long measure_counter=0;
-//	unsigned long beat_in_measure=0;
 	char first_measure = 0;	//Set to nonzero when the first measure marker is reached
 	char notvisible;
 
@@ -4163,7 +4173,6 @@ void eof_render_editor_window_common(void)
 			first_measure = 1;	//Note that a time signature change has been found
 			beat_counter = 0;
 		}
-//		beat_in_measure = beat_counter;
 		if(first_measure && (beat_counter == 0))
 		{	//If there was a TS change or the beat markers incremented enough to reach the next measure
 			measure_counter++;
@@ -4224,17 +4233,8 @@ void eof_render_editor_window_common(void)
 		{	//If this beat marker would render further right than the right edge of the screen
 			break;	//Skip rendering this and all other beat markers, which would continue to render off screen
 		}
-		beat_counter++;
-		if(beat_counter >= beats_per_measure)
-		{
-			beat_counter = 0;
-		}
-		if(notvisible < 0)
-		{	//If this beat marker would render further left than the left edge of the screen
-			continue;	//Skip rendering this beat
-		}
-//		if(xcoord >= 0)
-//		{	//If this beat marker would render at or right of the left edge of the screen (and left of the right edge of the screen as per the check above)
+		if(notvisible >= 0)
+		{	//If this beat marker would not render further left than the left edge of the screen
 			vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35 + 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10 - 1, (first_measure && beat_counter == 0) ? eof_color_white : col);
 			vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + 34, eof_color_gray);
 			if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_ANCHOR)
@@ -4245,20 +4245,25 @@ void eof_render_editor_window_common(void)
 			{
 				vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + (i % 2 == 0 ? 19 : 9), EOF_EDITOR_RENDER_OFFSET + 24, beat_counter == 0 ? eof_color_white : col2);
 			}
-//		}
 
-		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_EVENTS)
-		{	//Draw event marker
-			line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
+			if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_EVENTS)
+			{	//Draw event marker
+				line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
+			}
+			if(first_measure && (beat_counter == 0))
+			{	//If this is a measure marker, draw the measure number to the right of the beat line
+				textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord + 2, EOF_EDITOR_RENDER_OFFSET + 22 - 7, eof_color_yellow, -1, "%lu", measure_counter);
+			}
+			if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_ANCHOR)
+			{	//Draw anchor marker
+				line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 21, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_red);
+				line(eof_window_editor->screen, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 21, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_red);
+			}
 		}
-		if(first_measure && (beat_counter == 0))
-		{	//If this is a measure marker, draw the measure number to the right of the beat line
-			textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord + 2, EOF_EDITOR_RENDER_OFFSET + 22 - 7, eof_color_yellow, -1, "%lu", measure_counter);
-		}
-		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_ANCHOR)
-		{	//Draw anchor marker
-			line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 21, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_red);
-			line(eof_window_editor->screen, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 21, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_red);
+		beat_counter++;
+		if(beat_counter >= beats_per_measure)
+		{
+			beat_counter = 0;
 		}
 	}
 

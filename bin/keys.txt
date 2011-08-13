@@ -24,6 +24,8 @@ Playback and Seek controls:
         Hold Ctrl while pressing to move slowly
     
         Hold Shift while pressing to move quickly
+
+        Hold both Ctrl and Shift while pressing to move very slowly
     
 
     Page Up/Page Down:
@@ -33,6 +35,9 @@ Playback and Seek controls:
         Hold Ctrl while pressing to seek to previous/next screen
     
         Hold Shift while pressing to seek to previous/next note
+
+        Hold both Ctrl and Shift while pressing to seek to the previous/next grid snap
+        position.
         
         
     Numpad 0-9:

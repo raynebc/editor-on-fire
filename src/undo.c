@@ -65,12 +65,6 @@ void eof_undo_reset(void)
 {
  	eof_log("eof_undo_reset() entered", 1);
 
-//	int i;
-
-//	for(i = 0; i < EOF_MAX_UNDO; i++)
-//	{
-//		eof_undo_index[i] = 0;
-//	}
 	eof_undo_current_index = 0;
 	eof_undo_count = 0;
 	eof_redo_count = 0;

@@ -219,8 +219,6 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 				for(ctr = 0; (name[ctr] != '\0') && isspace(name[ctr]); ctr++);	//Use ctr to index past any leading whitespace
 				if(toupper(name[ctr++]) != notename[ctr3][0])	//If the first character (note) doesn't match the note name
 					continue;	//Skip to next note
-//				if((name[ctr] == '\0') && (notename[ctr3][1] != '\0'))	//If the note name doesn't have a second character
-//					continue;	//Skip to next note
 				if((notename[ctr3][1] != '\0') && (tolower(name[ctr++]) != notename[ctr3][1]))	//If the second character (accidental) doesn't match the note name's second character (if it has one)
 					continue;	//Skip to next note
 				//At this point, a viable match has been found and name[ctr] points to the character after the note name and accidental (if any)

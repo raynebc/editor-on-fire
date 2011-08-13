@@ -80,7 +80,7 @@ int eof_song_qsort_legacy_notes(const void * e1, const void * e2)
     EOF_NOTE ** thing1 = (EOF_NOTE **)e1;
     EOF_NOTE ** thing2 = (EOF_NOTE **)e2;
 
-//	allegro_message("%d\n%d", (*thing1)->pos, (*thing2)->pos);
+//	allegro_message("%d\n%d", (*thing1)->pos, (*thing2)->pos);	//Debug
 	//Sort first by chronological order
     if((*thing1)->pos < (*thing2)->pos)
 	{
@@ -1992,7 +1992,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	}
 
 
-//	pack_iputl(0, fp);	//Write an empty custom data block (not currently in use)
+//	pack_iputl(0, fp);	//Write an empty custom data block
 	pack_iputl(1, fp);			//Write a debug custom data block
 	pack_iputl(4, fp);
 	pack_iputl(0xFFFFFFFF, fp);
@@ -2330,7 +2330,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				return 0;
 			}
 		}
-//		pack_iputl(0, fp);	//Write an empty custom data block (not currently in use)
+//		pack_iputl(0, fp);	//Write an empty custom data block
 		pack_iputl(1, fp);			//Write a debug custom data block
 		pack_iputl(4, fp);
 		pack_iputl(0xFFFFFFFF, fp);
