@@ -650,7 +650,6 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 			{
 				last_pos = new_pos;
 			}
-//			eof_menu_edit_paste_clear_range_vocal(last_pos, new_end_pos);
 			eof_menu_edit_paste_clear_range(eof_selected_track, eof_note_type, last_pos, new_end_pos);
 
 			if(!oldpaste)
@@ -1249,21 +1248,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 
 	for(i = 0; i < copy_notes; i++)
 	{	//For each note in the clipboard file
-		/* read the note */
-/*		eof_load_song_string_pf(temp_note.name, fp, sizeof(temp_note.name));	//Read the note's name
-		temp_note.note = pack_igetl(fp);	//Read the note fret values
-		temp_note.pos = pack_igetl(fp);		//Read the note's position relative to within the selection
-		pack_fread(&temp_note.porpos, sizeof(float), fp);	//Read the percent representing the note's start position within a beat
-		pack_fread(&temp_note.porendpos, sizeof(float), fp);	//Read the percent representing the note's end position within a beat
-		temp_note.beat = pack_igetl(fp);	//Read the beat the note starts in
-		temp_note.endbeat = pack_igetl(fp);	//Read the beat the note ends in
-		temp_note.length = pack_igetl(fp);	//Read the note's length
-		temp_note.flags = pack_igetl(fp);	//Read the note's flags
-		temp_note.legacymask = pack_igetl(fp);		//Read the note's legacy bitmask
-		pack_fread(temp_note.frets, sizeof(temp_note.frets), fp);	//Read the note's fret array
-		temp_note.ghostmask = pack_igetl(fp);				//Read the note's ghost bitmask
-*/
-		eof_menu_paste_read_clipboard_note(fp, &temp_note);
+		eof_menu_paste_read_clipboard_note(fp, &temp_note);	//Read the note
 		if(!oldpaste && ((temp_note.beat - first_beat + this_beat >= eof_song->beats - 1) || (temp_note.endbeat - first_beat + this_beat >= eof_song->beats - 1)))
 		{	//If new paste logic is being used, return from function if this note (and the subsequent notes) would paste after the last beat
 			break;

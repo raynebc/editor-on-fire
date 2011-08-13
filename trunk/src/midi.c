@@ -1216,12 +1216,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					{	//Mute gems are written on channel 3
 						channel = 3;
 					}
-/*					//I have been told that this marking isn't working, so I'll used the note 102 marker which reportedly works
-					else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
-					{	//Forced hammer on gems are written on channel 2
-						channel = 2;
-					}
-*/
 					else if(sp->pro_guitar_track[tracknum]->note[i]->ghost & bitmask)
 					{	//Ghost note gems are written on channel 1
 						channel = 1;

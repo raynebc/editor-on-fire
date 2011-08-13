@@ -170,7 +170,14 @@ void eof_music_rewind(void)
 	{
 		if(KEY_EITHER_SHIFT)
 		{
-			amount = 1000;
+			if(KEY_EITHER_CTRL)
+			{	//If both SHIFT and CTRL are being held
+				amount = 1;
+			}
+			else
+			{	//Only SHIFT is being held
+				amount = 1000;
+			}
 		}
 		else if(KEY_EITHER_CTRL)
 		{
@@ -203,7 +210,14 @@ void eof_music_forward(void)
 	{
 		if(KEY_EITHER_SHIFT)
 		{
-			alogg_seek_rel_msecs_ogg(eof_music_track, 1000);
+			if(KEY_EITHER_CTRL)
+			{	//If both SHIFT and CTRL are being held
+				alogg_seek_rel_msecs_ogg(eof_music_track, 1);
+			}
+			else
+			{	//Only SHIFT is being held
+				alogg_seek_rel_msecs_ogg(eof_music_track, 1000);
+			}
 		}
 		else if(KEY_EITHER_CTRL)
 		{

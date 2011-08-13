@@ -321,7 +321,7 @@ long eof_put_porpos(unsigned long beat, float porpos, float offset)
 	unsigned long cbeat = beat;
 	if(fporpos <= -1.0)
 	{
-//		allegro_message("a - %f", fporpos);
+//		allegro_message("a - %f", fporpos);	//Debug
 		while(fporpos < 0.0)
 		{
 			fporpos += 100.0;
@@ -335,7 +335,7 @@ long eof_put_porpos(unsigned long beat, float porpos, float offset)
 	}
 	else if(fporpos >= 100.0)
 	{
-//		allegro_message("b - %f", fporpos);
+//		allegro_message("b - %f", fporpos);	//Debug
 		while(fporpos >= 1.0)
 		{
 			fporpos -= 100.0;
@@ -347,7 +347,7 @@ long eof_put_porpos(unsigned long beat, float porpos, float offset)
 		}
 		return -1;
 	}
-//	allegro_message("c - %f", fporpos);
+//	allegro_message("c - %f", fporpos);	//Debug
 
 	if(cbeat < eof_song->beats)
 	{	//If cbeat is valid
@@ -830,7 +830,7 @@ int eof_note_is_hopo(unsigned long cnote)
 				return 1;
 			}
 		}
-//		allegro_message("bpm = %f\nscale = %f\ndelta = %f\npnote = %d(%d), cnote = %d(%d)", bpm, scale, delta, pnote, eof_song->legacy_track[tracknum]->note[pnote].pos, cnote, eof_song->legacy_track[tracknum]->note[cnote].pos);
+//		allegro_message("bpm = %f\nscale = %f\ndelta = %f\npnote = %d(%d), cnote = %d(%d)", bpm, scale, delta, pnote, eof_song->legacy_track[tracknum]->note[pnote].pos, cnote, eof_song->legacy_track[tracknum]->note[cnote].pos);	//Debug
 	}
 	return 0;
 }
@@ -2610,7 +2610,7 @@ void eof_render_3d_window(void)
 						{	//For each of the usable lanes (that are allowed to have lane specific marker rendering)
 							if(usedlanes & bitmask)
 							{	//If this lane is used in the phrase and the lane is active
-								point[0] = ocd3d_project_x(xchart[ctr] - halflanewidth - xoffset, spez);//	//Offset drum lanes by drawing them one lane further left than other tracks
+								point[0] = ocd3d_project_x(xchart[ctr] - halflanewidth - xoffset, spez);	//Offset drum lanes by drawing them one lane further left than other tracks
 								point[1] = ocd3d_project_y(200, spez);
 								point[2] = ocd3d_project_x(xchart[ctr] + halflanewidth - xoffset, spez);
 								point[3] = point[1];
@@ -2725,7 +2725,7 @@ void eof_render_3d_window(void)
 */
 		}
 	}
-//	allegro_message("first = %d\nlast = %d", first_note, last_note);
+//	allegro_message("first = %d\nlast = %d", first_note, last_note);	//Debug
 
 	eof_render_lyric_preview(eof_window_3d->screen);
 

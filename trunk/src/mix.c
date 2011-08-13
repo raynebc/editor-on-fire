@@ -305,7 +305,6 @@ void eof_mix_init(void)
 	}
 	eof_sound_cowbell = eof_mix_load_ogg_sample("percussion.dat#cowbell.ogg");
 	eof_sound_chosen_percussion = eof_sound_cowbell;	//Until the user specifies otherwise, make cowbell the default percussion
-//	eof_selected_percussion_cue = 17;	//This is now set during config load
 	eof_sound_tambourine1 = eof_mix_load_ogg_sample("percussion.dat#tambourine1.ogg");
 	eof_sound_tambourine2 = eof_mix_load_ogg_sample("percussion.dat#tambourine2.ogg");
 	eof_sound_tambourine3 = eof_mix_load_ogg_sample("percussion.dat#tambourine3.ogg");
@@ -634,4 +633,13 @@ int eof_read_pcm_samples(ALOGG_OGG *ogg,void *data,unsigned bytenum)
 	}
 
 	return 0;	//Success
+}
+
+void eof_set_seek_position(int pos)
+{
+	alogg_seek_abs_msecs_ogg(eof_music_track, pos);
+	eof_music_pos = pos;
+	eof_music_actual_pos = eof_music_pos;
+	eof_mix_seek(eof_music_actual_pos);
+	eof_reset_lyric_preview_lines();
 }

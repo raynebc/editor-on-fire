@@ -2581,16 +2581,6 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	eof_pro_guitar_note_dialog[20].flags = (legacymask & 2) ? D_SELECTED : 0;
 	eof_pro_guitar_note_dialog[21].flags = (legacymask & 1) ? D_SELECTED : 0;
 
-//Update the ghost bitmask checkboxes
-/*	ghostmask = eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->ghost;
-	eof_pro_guitar_note_dialog[23].flags = (ghostmask & 32) ? D_SELECTED : 0;
-	eof_pro_guitar_note_dialog[24].flags = (ghostmask & 16) ? D_SELECTED : 0;
-	eof_pro_guitar_note_dialog[25].flags = (ghostmask & 8) ? D_SELECTED : 0;
-	eof_pro_guitar_note_dialog[26].flags = (ghostmask & 4) ? D_SELECTED : 0;
-	eof_pro_guitar_note_dialog[27].flags = (ghostmask & 2) ? D_SELECTED : 0;
-	eof_pro_guitar_note_dialog[28].flags = (ghostmask & 1) ? D_SELECTED : 0;
-*/
-
 //Update the note flag radio buttons
 	for(ctr = 0; ctr < 13; ctr++)
 	{	//Clear each of the 13 status radio buttons

@@ -330,7 +330,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				sp->beat[i]->ppqn = pack_igetl(fp);
 				sp->beat[i]->pos = pack_igetl(fp);
 				sp->beat[i]->flags = pack_igetl(fp);
-//				allegro_message("beat[%d]\nppqn = %d\npos = %d", i, sp->beat[i]->ppqn, sp->beat[i]->pos);
+//				allegro_message("beat[%d]\nppqn = %d\npos = %d", i, sp->beat[i]->ppqn, sp->beat[i]->pos);	//Debug
 			}
 
 			/* read events info */
