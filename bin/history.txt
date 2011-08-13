@@ -3,24 +3,36 @@ EOF Version History
 
 1.8:
 
-*Added the option (Preferences>Erase overlapped pasted notes) to
+Added a keyboard shortcut (CTRL+M) for mark/remark lyric line.
+
+Added the ability to copy the solo, star power or arpeggio phrases
+into the active track from another track.
+
+Added the ability to seek forward or backward 1ms at a time by
+holding both CTRL and SHIFT when using the left or right arrow key.
+
+Added the ability to seek forward or backward one grid snap
+interval by holding both CTRL and SHIFT when using the Pg Up or
+Pg Dn key.
+
+Added the option (Preferences>Erase overlapped pasted notes) to
 delete notes that would be overlapped during a paste operation,
 similar to the behavior of the Feedback editor.
 
-*Fixed a crash that could occur during a failed Feedback import.
+Fixed a crash that could occur during a failed Feedback import.
 
-*Improved the undo/redo system by adding a random 3 digit number
+Improved the undo/redo system by adding a random 3 digit number
 (created during launch of EOF) to the filenames, making it extremely
 unlikely that two instances of EOF will overwrite each others files.
 The number of undo states has been increased from 8 to 100.
 
-*Added a playback performance option to disable sound processing (ie.
+Added a playback performance option to disable sound processing (ie.
 volumes and sound cues are not handled).
 
-*Added playback performance options to not render the editor window,
+Added playback performance options to not render the editor window,
 3d preview or info panel.
 
-*Fixed an issue where the Mac version of EOF wouldn't behave properly
+Fixed an issue where the Mac version of EOF wouldn't behave properly
 when EOF leaves and re-enters the foreground in newer versions of
 Mac OS.
 

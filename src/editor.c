@@ -1015,13 +1015,21 @@ void eof_read_editor_keys(void)
 		key[KEY_STOP] = 0;
 	}
 
-	/* toggle palm muting (CTRL+M) */
+	/* toggle palm muting (CTRL+M in a non vocal track) */
+	/* mark/remark lyric phrase (CTRL+M in a vocal track) */
 	/* toggle metronome (M) */
 	if(key[KEY_M])
 	{
 		if(KEY_EITHER_CTRL)
 		{
-			eof_menu_note_toggle_palm_muting();
+			if(eof_vocals_selected)
+			{
+				eof_menu_lyric_line_mark();
+			}
+			else
+			{
+				eof_menu_note_toggle_palm_muting();
+			}
 		}
 		else
 		{
