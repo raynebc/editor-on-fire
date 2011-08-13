@@ -2347,7 +2347,7 @@ void eof_editor_logic(void)
 				}
 			}//If piano roll or rex mundi input modes are in use
 
-			/* handle initial click */
+			/* handle initial left click */
 			if((mouse_b & 1) && eof_lclick_released)
 			{
 				int ignore_range = 0;
@@ -2506,7 +2506,7 @@ void eof_editor_logic(void)
 			{	//If the left mouse button is NOT pressed
 				if(!eof_lclick_released)
 				{
-					eof_lclick_released++;
+					eof_lclick_released = 1;	//Set the "just released" status
 				}
 
 				/* mouse button just released, check to see what needs doing */
@@ -2553,7 +2553,7 @@ void eof_editor_logic(void)
 							}
 						}
 					}
-					eof_lclick_released++;
+					eof_lclick_released = 2;	//Set the "left click release handled" status
 				}
 				else
 				{
@@ -3080,7 +3080,7 @@ void eof_vocal_editor_logic(void)
 				}
 			}
 
-			/* handle initial click */
+			/* handle initial left click */
 			if((mouse_b & 1) && eof_lclick_released)
 			{
 				int ignore_range = 0;
@@ -3243,10 +3243,10 @@ void eof_vocal_editor_logic(void)
 				}
 			}
 			if(!(mouse_b & 1))
-			{
+			{	//If the left mouse button is NOT being held
 				if(!eof_lclick_released)
 				{
-					eof_lclick_released++;
+					eof_lclick_released = 1;	//Set the "just released" status
 				}
 
 				/* mouse button just released, check to see what needs doing */
@@ -3293,7 +3293,7 @@ void eof_vocal_editor_logic(void)
 							}
 						}
 					}
-					eof_lclick_released++;
+					eof_lclick_released = 2;	//Set the "left click release handled" status
 				}
 				else
 				{
@@ -3384,9 +3384,8 @@ void eof_vocal_editor_logic(void)
 			{
 				eof_selection.range_pos_1 = 0;
 				eof_selection.range_pos_2 = 0;
-				eof_rclick_released = 0;
 				if(eof_hover_note >= 0)
-				{
+				{	//If clicking on an existing lyric
 					if(!eof_undo_toggle)
 					{
 						eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
@@ -3409,7 +3408,7 @@ void eof_vocal_editor_logic(void)
 							eof_selection.current = EOF_MAX_NOTES - 1;
 							eof_track_sort_notes(eof_song, eof_selected_track);
 						}
-						else	//Just remove the pitch
+						else if(eof_rclick_released)	//Just remove the pitch, but only if the right mouse button was just clicked
 						{
 							eof_song->vocal_track[tracknum]->lyric[eof_hover_note]->note = 0;
 							eof_selection.current = eof_hover_note;
@@ -3438,11 +3437,13 @@ void eof_vocal_editor_logic(void)
 							eof_mix_play_note(eof_pen_lyric.note);
 						}
 					}
+					eof_rclick_released = 0;	//Track that the right mouse button is being held
 				}
 
 				/* create new note */
 				else
 				{
+					eof_rclick_released = 0;	//Track that the right mouse button is being held
 					if(key[KEY_BACKSPACE])
 					{	//Map the percussion note here
 						eof_pen_lyric.note = EOF_LYRIC_PERCUSSION;
@@ -3618,7 +3619,7 @@ void eof_vocal_editor_logic(void)
 	}//If the chart is not paused
 
 	if(((mouse_b & 2) || key[KEY_INSERT]) && (eof_input_mode == EOF_INPUT_REX))
-	{
+	{	//Open context menu if right click or Insert is used in Rex Mundi input mode
 		eof_emergency_stop_music();
 		eof_render();
 		eof_show_mouse(screen);
