@@ -500,13 +500,13 @@ void eof_prepare_note_menu(void)
 		{
 			eof_lyric_line_menu[1].flags = 0;	//Note>Lyrics>Lyric Lines>Remove
 			eof_lyric_line_menu[4].flags = 0; 	//Note>Lyrics>Lyric Lines>Toggle Overdrive
-			ustrcpy(eof_lyric_line_menu_mark_text, "Re-&Mark");
+			ustrcpy(eof_lyric_line_menu_mark_text, "Re-&Mark\tCtrl+M");
 		}
 		else
 		{
 			eof_lyric_line_menu[1].flags = D_DISABLED;
 			eof_lyric_line_menu[4].flags = D_DISABLED;
-			ustrcpy(eof_lyric_line_menu_mark_text, "&Mark");
+			ustrcpy(eof_lyric_line_menu_mark_text, "&Mark\tCtrl+M");
 		}
 
 		/* arpeggio */
@@ -1878,14 +1878,15 @@ int eof_menu_star_power_erase_all(void)
 int eof_menu_lyric_line_mark(void)
 {
 	unsigned long i, j;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	unsigned long tracknum;
 	long sel_start = -1;
 	long sel_end = 0;
 	int originalflags = 0; //Used to apply the line's original flags after the line is recreated
 
-	if(!eof_vocals_selected)
+	if(!eof_song || !eof_vocals_selected)
 		return 1;
 
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{
 		if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
@@ -2341,7 +2342,7 @@ int eof_edit_lyric_dialog(void)
 		if(eof_is_freestyle(eof_etext))		//If the text entered had one or more freestyle characters
 			eof_set_freestyle(eof_etext,1);	//Perform any necessary corrections
 
-		if(ustricmp(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text, eof_etext))	//If the updated string (eof_etext) is different
+		if(ustrcmp(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text, eof_etext))	//If the updated string (eof_etext) is different
 		{
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			if(!eof_check_string(eof_etext))
