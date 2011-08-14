@@ -1662,7 +1662,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		if(!eof_song_contains_event(sp, "[end]", 0))
 		{	//If the user did not define the end event, manually write it
 			eof_log("\t! Adding missing [end] event", 1);
-			delta = eof_ConvertToDeltaTime(eof_music_length+1,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
+			delta = eof_music_length + 1;	//Prepare to write the end event after the audio ends
+			if(sp->beat[sp->beats - 1]->pos > delta)
+			{	//If the last beat ends after the audio,
+				delta = sp->beat[sp->beats - 1]->pos + 1;	//Prepare to write the end event after it instead
+			}
+			delta = eof_ConvertToDeltaTime(delta,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
 			eof_write_text_event(delta - lastdelta, "[end]", fp);
 			lastdelta = delta;					//Store this event's absolute delta time
 		}
