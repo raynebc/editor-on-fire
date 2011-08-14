@@ -114,12 +114,13 @@ DIALOG eof_anchor_dialog[] =
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
+char eof_trainer_string[5] = "";
 DIALOG eof_place_trainer_dialog[] =
 {
    /* (proc)                (x) (y) (w)  (h)   (fg) (bg) (key) (flags)    (d1) (d2) (dp)                  (dp2) (dp3) */
    { d_agup_window_proc,    0,  20, 260, 160,  2,   23,  0,    0,         0,   0,   "Place Trainer Event",NULL, NULL },
    { d_agup_text_proc,      12, 56, 64,  8,    2,   23,  0,    0,         0,   0,   "Trainer #:",         NULL, NULL },
-   { eof_edit_trainer_proc, 80, 52, 40,  20,   2,   23,  0,    0,         3,   0,   eof_etext,            "1234567890", NULL },
+   { eof_edit_trainer_proc, 80, 52, 40,  20,   2,   23,  0,    0,         3,   0,   eof_trainer_string,   "1234567890", NULL },
    { d_agup_check_proc,     12, 78, 12,  16,   2,   23,  0,    D_DISABLED,0,   0,   "",                   NULL, NULL },
    { d_agup_radio_proc,     34, 78, 220, 16,   2,   23,  0,    0,         1,   0,   eof_etext2,           NULL, NULL },
    { d_agup_check_proc,     12, 98, 12,  16,   2,   23,  0,    D_DISABLED,0,   0,   "",                   NULL, NULL },
@@ -1103,15 +1104,41 @@ void eof_rebuild_trainer_strings(void)
 	//Build the trainer strings
 	if((eof_selected_track == EOF_TRACK_PRO_GUITAR) || (eof_selected_track == EOF_TRACK_PRO_GUITAR_22))
 	{	//A pro guitar track is active
-		sprintf(eof_etext2, "[begin_pg song_trainer_pg_%s]", eof_etext);
-		sprintf(eof_etext3, "[pg_norm song_trainer_pg_%s]", eof_etext);
-		sprintf(eof_etext4, "[end_pg song_trainer_pg_%s]", eof_etext);
+		sprintf(eof_etext2, "[begin_pg song_trainer_pg_%s]", eof_trainer_string);
+		sprintf(eof_etext3, "[pg_norm song_trainer_pg_%s]", eof_trainer_string);
+		sprintf(eof_etext4, "[end_pg song_trainer_pg_%s]", eof_trainer_string);
 	}
 	else if((eof_selected_track == EOF_TRACK_PRO_BASS) || (eof_selected_track == EOF_TRACK_PRO_BASS_22))
 	{	//A pro bass track is active
-		sprintf(eof_etext2, "[begin_pb song_trainer_pb_%s]", eof_etext);
-		sprintf(eof_etext3, "[pb_norm song_trainer_pb_%s]", eof_etext);
-		sprintf(eof_etext4, "[end_pb song_trainer_pb_%s]", eof_etext);
+		sprintf(eof_etext2, "[begin_pb song_trainer_pb_%s]", eof_trainer_string);
+		sprintf(eof_etext3, "[pb_norm song_trainer_pb_%s]", eof_trainer_string);
+		sprintf(eof_etext4, "[end_pb song_trainer_pb_%s]", eof_trainer_string);
+	}
+
+	//Update the checkboxes to indicate which trainer strings are already defined
+	if(eof_song_contains_event(eof_song, eof_etext2, eof_selected_track))
+	{	//If this training event is already defined in the active track
+		eof_place_trainer_dialog[3].flags = D_SELECTED | D_DISABLED;	//Check this box
+	}
+	else
+	{
+		eof_place_trainer_dialog[3].flags = 0 | D_DISABLED;		//Otherwise clear this box
+	}
+	if(eof_song_contains_event(eof_song, eof_etext3, eof_selected_track))
+	{	//If this training event is already defined in the active track
+		eof_place_trainer_dialog[5].flags = D_SELECTED | D_DISABLED;	//Check this box
+	}
+	else
+	{
+		eof_place_trainer_dialog[5].flags = 0 | D_DISABLED;		//Otherwise clear this box
+	}
+	if(eof_song_contains_event(eof_song, eof_etext4, eof_selected_track))
+	{	//If this training event is already defined in the active track
+		eof_place_trainer_dialog[7].flags = D_SELECTED | D_DISABLED;	//Check this box
+	}
+	else
+	{
+		eof_place_trainer_dialog[7].flags = 0 | D_DISABLED;		//Otherwise clear this box
 	}
 }
 
@@ -1121,11 +1148,13 @@ int eof_menu_beat_trainer_event(void)
 
 	eof_color_dialog(eof_place_trainer_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_place_trainer_dialog);
-	ustrcpy(eof_etext, "");			//Empty this string
 	eof_place_trainer_dialog[3].flags = D_DISABLED;	//Clear and disable the checkboxes
 	eof_place_trainer_dialog[5].flags = D_DISABLED;
 	eof_place_trainer_dialog[7].flags = D_DISABLED;
-	eof_place_trainer_dialog[9].flags = D_DISABLED;	//The OK button is disabled until the user enters a valid trainer number
+	if(eof_trainer_string[0] == '\0')
+	{	//If the trainer number field is empty
+		eof_place_trainer_dialog[9].flags = D_DISABLED;	//Disabled the OK button
+	}
 	eof_place_trainer_dialog[4].flags = D_SELECTED;	//Set the first radio button and clear the others
 	eof_place_trainer_dialog[6].flags = 0;
 	eof_place_trainer_dialog[8].flags = 0;
@@ -1216,32 +1245,7 @@ int eof_edit_trainer_proc(int msg, DIALOG *d, int c)
 		//Update various dialog objects
 		eof_rebuild_trainer_strings();
 
-		if(eof_song_contains_event(eof_song, eof_etext2, eof_selected_track))
-		{	//If this training event is already defined in the active track
-			eof_place_trainer_dialog[3].flags = D_SELECTED | D_DISABLED;	//Check this box
-		}
-		else
-		{
-			eof_place_trainer_dialog[3].flags = 0 | D_DISABLED;		//Otherwise clear this box
-		}
-		if(eof_song_contains_event(eof_song, eof_etext3, eof_selected_track))
-		{	//If this training event is already defined in the active track
-			eof_place_trainer_dialog[5].flags = D_SELECTED | D_DISABLED;	//Check this box
-		}
-		else
-		{
-			eof_place_trainer_dialog[5].flags = 0 | D_DISABLED;		//Otherwise clear this box
-		}
-		if(eof_song_contains_event(eof_song, eof_etext4, eof_selected_track))
-		{	//If this training event is already defined in the active track
-			eof_place_trainer_dialog[7].flags = D_SELECTED | D_DISABLED;	//Check this box
-		}
-		else
-		{
-			eof_place_trainer_dialog[7].flags = 0 | D_DISABLED;		//Otherwise clear this box
-		}
-
-		if(eof_etext[0] == '\0')
+		if(eof_trainer_string[0] == '\0')
 		{	//If the trainer number field is empty
 			eof_place_trainer_dialog[9].flags = D_DISABLED;	//Disable the OK button
 		}

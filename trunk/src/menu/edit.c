@@ -2260,6 +2260,11 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long desttrack)
 	}
 	else
 	{	//Resolve pro guitar flag conflicts
+		if(*flags & EOF_NOTE_FLAG_F_HOPO)
+		{	//If the forced HOPO flag is set (note is from a legacy track)
+			*flags &= (!EOF_NOTE_FLAG_F_HOPO);	//Clear that flag
+			*flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;	//Set the pro guitar hammer on flag
+		}
 		if((*flags & EOF_PRO_GUITAR_NOTE_FLAG_HO) && (*flags & EOF_PRO_GUITAR_NOTE_FLAG_PO))
 		{	//If both the hammer on AND the pull off flags are set, clear both
 			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_HO);
@@ -2311,16 +2316,17 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long desttrack)
 void eof_menu_edit_paste_clear_range(unsigned long track, int note_type, unsigned long start, unsigned long end)
 {
 	unsigned long i, notepos, notelen;
-
+	int type;
 
 	for(i = eof_get_track_size(eof_song, track); i > 0; i--)
 	{	//For each note in the specified track
 		notepos = eof_get_note_pos(eof_song, track, i - 1);
-		notelen = eof_get_note_length(eof_song, track, i);
+		notelen = eof_get_note_length(eof_song, track, i - 1);
+		type = eof_get_note_type(eof_song, track, i - 1);
 
-		if((notepos <= end) && (notepos + notelen >= start))
-		{	//If the note begins at or before the specified end position and the note ends at or after the specified start position
-			eof_track_delete_note(eof_song, track, i - 1);
+		if((type == note_type) && ((notepos <= end) && (notepos + notelen >= start)))
+		{	//If the note is in the target difficulty, begins at or before the specified end position and the note ends at or after the specified start position
+			eof_track_delete_note(eof_song, track, i - 1);	//Delete the note
 		}
 	}
 }
