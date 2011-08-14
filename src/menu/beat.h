@@ -5,6 +5,7 @@ extern MENU eof_beat_time_signature_menu[];
 extern MENU eof_beat_menu[];
 
 extern char eof_ts_menu_off_text[32];
+extern char eof_trainer_string[5];
 
 extern DIALOG eof_events_dialog[];
 extern DIALOG eof_all_events_dialog[];
