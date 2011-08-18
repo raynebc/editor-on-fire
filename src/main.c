@@ -323,15 +323,15 @@ long eof_put_porpos(unsigned long beat, float porpos, float offset)
 	{
 //		allegro_message("a - %f", fporpos);	//Debug
 		while(fporpos < 0.0)
-		{
+		{	//If the position within the beat to find is negative, scale up to a positive number
 			fporpos += 100.0;
+			if(cbeat == 0)
+			{	//If this position couldn't be found
+				return -1;	//Return error instead of decrementing below 0
+			}
 			cbeat--;
 		}
-		if(cbeat >= 0)
-		{
-			return ((eof_song->beat[cbeat]->fpos + ((float)eof_get_beat_length(eof_song, cbeat) * fporpos) / 100.0) + 0.5);	//Round up to nearest millisecond
-		}
-		return -1;
+		return ((eof_song->beat[cbeat]->fpos + ((float)eof_get_beat_length(eof_song, cbeat) * fporpos) / 100.0) + 0.5);	//Round up to nearest millisecond
 	}
 	else if(fporpos >= 100.0)
 	{

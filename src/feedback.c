@@ -1096,8 +1096,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 
 				case 'E':		//Text event, skip it
 					fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
-					continue;
-				break;
+				continue;
 
 				case 'N':		//Note indicator, and increment index
 					index++; 	//Increment index past N or S identifier
