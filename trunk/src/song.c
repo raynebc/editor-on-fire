@@ -1852,9 +1852,12 @@ int eof_save_song_string_pf(char *buffer, PACKFILE *fp)
 	}
 
 	pack_iputw(length, fp);	//Write string length
-	for(ctr=0; ctr < length; ctr++)
-	{
-		pack_putc(buffer[ctr], fp);
+	if(buffer != NULL)
+	{	//Redundant check, but should make cppcheck happy
+		for(ctr=0; ctr < length; ctr++)
+		{
+			pack_putc(buffer[ctr], fp);
+		}
 	}
 
 	return 0;	//Return success

@@ -1384,7 +1384,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					default:	//Invalid difficulty for an arpeggio phrase
 					{
 						continue;
-						break;
 					}
 				}
 				eof_add_midi_event(deltapos, 0x90, midi_note_offset + 8, vel, 0);	//Arpeggio markers are note # (lane 1 + 8)
