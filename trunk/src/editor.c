@@ -602,7 +602,7 @@ void eof_read_editor_keys(void)
 	}
 
 	/* rewind (R) */
-	if(key[KEY_R] && !KEY_EITHER_CTRL)
+	if(key[KEY_R] && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 	{
 		eof_menu_song_seek_rewind();
 		key[KEY_R] = 0;
@@ -1559,17 +1559,24 @@ void eof_read_editor_keys(void)
 		}
 
 	/* toggle open hi hat (O) */
-		if(key[KEY_O] && !KEY_EITHER_CTRL)
+		if(key[KEY_O] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{
 			eof_menu_note_toggle_hi_hat_open();
 			key[KEY_O] = 0;
 		}
 
 	/* toggle pedal controlled hi hat (P) */
-		if(key[KEY_P] && !KEY_EITHER_CTRL)
+		if(key[KEY_P] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{
 			eof_menu_note_toggle_hi_hat_pedal();
 			key[KEY_P] = 0;
+		}
+
+	/* toggle rim shot (R) */
+		if(key[KEY_R] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+		{
+			eof_menu_note_toggle_rimshot();
+			key[KEY_R] = 0;
 		}
 
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)

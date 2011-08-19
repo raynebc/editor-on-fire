@@ -442,7 +442,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	if(track != 0)
 	{	//If rendering an existing note instead of the pen note
 		//Render tab notations
-		eof_get_note_tab_notation(notation, track, notenum);	//Get the tab playing notation for this note
+		eof_get_note_notation(notation, track, notenum);	//Get the tab playing notation for this note
 		textprintf_centre_ex(window->screen, eof_mono_font, x, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 3, eof_color_red, -1, notation);
 
 		//Render note names
@@ -1182,7 +1182,7 @@ BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, unsigned char s
 	return fretbmp;
 }
 
-void eof_get_note_tab_notation(char *buffer, unsigned long track, unsigned long note)
+void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note)
 {
 	unsigned long index = 0, tracknum, flags = 0, prevnoteflags = 0;
 	long prevnotenum;
@@ -1260,6 +1260,10 @@ void eof_get_note_tab_notation(char *buffer, unsigned long track, unsigned long 
 		else if(flags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL)
 		{
 			buffer[index++] = 'P';
+		}
+		if(flags & EOF_DRUM_NOTE_FLAG_R_RIMSHOT)
+		{
+			buffer[index++] = 'R';
 		}
 	}
 
