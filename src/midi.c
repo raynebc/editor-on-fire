@@ -688,6 +688,19 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				{
 					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 1, vel, 0);
 					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 1, vel, 0);
+					if(j == EOF_TRACK_DRUM)
+					{	//If this is the drum track, prepare to write drum specific Sysex phrases if necessary
+						if(noteflags & EOF_DRUM_NOTE_FLAG_R_RIMSHOT)
+						{	//If this note is marked as a rim shot
+							phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+							phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
+							phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+							phase_shift_sysex_phrase[5] = 7;	//Store the phrase ID (7 = Snare rim shot)
+							eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom rim shot start marker
+							phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+							eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom rim shot phrase stop marker
+						}
+					}
 				}
 
 				/* write yellow note */
@@ -704,23 +717,23 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 2, vel, 0);
 					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 2, vel, 0);
 					if(j == EOF_TRACK_DRUM)
-					{	//If this is the drum track, prepare to write hi hat Sysex phrases if necessary
+					{	//If this is the drum track, prepare to write drum specific Sysex phrases if necessary
 						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
 						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
 						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
 						if(noteflags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN)
 						{	//If this note is marked as an open hi hat note
 							phase_shift_sysex_phrase[5] = 5;	//Store the phrase ID (5 = Open Hi Hat)
-							eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom open bass phrase start marker
+							eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom open hi hat start marker
 							phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-							eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom open bass phrase stop marker
+							eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom open hi hat stop marker
 						}
 						else if(noteflags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL)
 						{	//If this note is marked as a pedal controlled hi hat note
 							phase_shift_sysex_phrase[5] = 6;	//Store the phrase ID (6 = Pedal Controlled Hi Hat)
-							eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom open bass phrase start marker
+							eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pedal controlled hi hat start marker
 							phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-							eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom open bass phrase stop marker
+							eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pedal controlled hi hat phrase stop marker
 						}
 					}
 				}

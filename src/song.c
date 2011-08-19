@@ -391,10 +391,17 @@ void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 			tp->note[i-1]->note &= maxbitmask;	//Clear the invalid lanes
 		}
 
-		if((tp->parent->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (((tp->note[i-1]->note & 4) == 0) || ((tp->note[i-1]->flags & EOF_NOTE_FLAG_Y_CYMBAL) == 0)))
-		{	//If this is a drum track and the note does have a yellow cymbal, clear flags that are specific to yellow cymbals
-			tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;
-			tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;
+		if(tp->parent->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//If this is a drum track
+			if(((tp->note[i-1]->note & 4) == 0) || ((tp->note[i-1]->flags & EOF_NOTE_FLAG_Y_CYMBAL) == 0))
+			{	//If this note does have a yellow cymbal, clear flags that are specific to yellow cymbals
+				tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;
+				tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;
+			}
+			if((tp->note[i-1]->note & 2) == 0)
+			{	//If this note does not have a red tom, clear flags that are specific to that lane
+				tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_R_RIMSHOT;
+			}
 		}
 
 		/* delete certain notes */

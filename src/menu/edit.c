@@ -2312,6 +2312,7 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 		{	//If the note is copying from a drum track, erase conflicting flags
 			*flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;	//Erase the open hi hat flag
 			*flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;	//Erase the pedal controlled hi hat flag
+			*flags &= ~EOF_DRUM_NOTE_FLAG_R_RIMSHOT;		//Erase the rim shot flag
 		}
 		*flags &= (~EOF_NOTE_FLAG_Y_CYMBAL);				//Erase the yellow cymbal flag
 		*flags &= (~EOF_NOTE_FLAG_B_CYMBAL);				//Erase the blue cymbal flag

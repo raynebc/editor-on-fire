@@ -157,8 +157,9 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 		ustrcat(ini_string, "\r\nsysex_pro_slide = True");	//Write the pro guitar slide Sysex presence tag (used in Phase Shift) to identify that up/down slide Sysex phrases will be written to MIDI
 	}
 
-	/* check for use of open or pedal controlled hi hat and write a tag if necessary */
+	/* check for use of open or pedal controlled hi hat or rim shot and write tags if necessary */
 	char hihatmarkersfound = 0;
+	char rimshotmarkersfound = 0;
 	tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
 	for(i = 0; i < sp->legacy_track[tracknum]->notes; i++)
 	{	//For each note in the drum track
@@ -166,10 +167,18 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 		{	//If the note is marked for open or pedal controlled hi hat
 			hihatmarkersfound = 1;
 		}
+		if(sp->legacy_track[tracknum]->note[i]->flags & EOF_DRUM_NOTE_FLAG_R_RIMSHOT)
+		{	//If the note is marked for rim shot
+			rimshotmarkersfound = 1;
+		}
 	}
 	if(hihatmarkersfound)
 	{	//If this chart has at least one yellow cymbal marked as open hi hat or pedal controlled hi hat
 		ustrcat(ini_string, "\r\nsysex_high_hat_ctrl = True");	//Write the high hat control Sysex presence tag (used in Phase Shift) to identify that hi hat Sysex phrases will be written to MIDI
+	}
+	if(rimshotmarkersfound)
+	{	//If this chart has at least one note marked as a rim shot
+		ustrcat(ini_string, "\r\nsysex_rimshot = True");	//Write the rim shot Sysex presence tag (used in Phase Shift) to identify that rim shot Sysex phrases will be written to MIDI
 	}
 
 	ustrcat(ini_string, "\r\nstar_power_note = 116");	//Write this tag to indicate to Phase Shift that EOF is using Rock Band's notation for star power

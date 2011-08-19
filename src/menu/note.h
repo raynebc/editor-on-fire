@@ -79,6 +79,7 @@ int eof_pro_guitar_cycle_strum_direction(void);	//Cycles the strum direction for
 int eof_menu_note_remove_strum_direction(void);	//Removes the strum direction status of all selected notes
 int eof_menu_note_toggle_hi_hat_open(void);		//Toggles the open hi hat status for selected yellow cymbal notes
 int eof_menu_note_toggle_hi_hat_pedal(void);	//Toggles the pedal controlled hi hat status for selected yellow cymbal notes
+int eof_menu_note_toggle_rimshot(void);			//Toggles the rimshot status for selected red notes
 
 int eof_menu_note_toggle_green(void);
 int eof_menu_note_toggle_red(void);
