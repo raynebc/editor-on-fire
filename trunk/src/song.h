@@ -43,6 +43,10 @@
 #define EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM		262144	//This flag will represent a chord that is played by strumming up
 #define EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM		524288	//This flag will represent a chord that is played by strumming down
 
+//The following flags pertain to drum notes
+#define EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN	512		//This flag means the yellow cymbal will be displayed in Phase Shift as an open hi hat
+#define EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL	1024	//This flag means the yellow cymbal will be displayed in Phase Shift as a pedal controlled hi hat
+
 //The following flags pertain to dance notes
 #define EOF_DANCE_FLAG_LANE_1_MINE		512		//This flag will represent a mine note for lane 1
 #define EOF_DANCE_FLAG_LANE_2_MINE		1024	//This flag will represent a mine note for lane 2

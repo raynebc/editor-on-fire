@@ -1264,7 +1264,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 				temp_note.note &= ~32;	//Clear lane 6 from the pasted note
 			}
 		}
-		eof_sanitize_note_flags(&temp_note.flags,eof_selected_track);	//Ensure the note flags are validated for the track being pasted into
+		eof_sanitize_note_flags(&temp_note.flags,sourcetrack, eof_selected_track);	//Ensure the note flags are validated for the track being pasted into
 
 		/* create the note */
 		if(eof_music_pos + temp_note.pos + temp_note.length - eof_av_delay < eof_music_length)
@@ -2235,81 +2235,97 @@ int eof_menu_edit_select_previous(void)
 	return 1;
 }
 
-void eof_sanitize_note_flags(unsigned long *flags,unsigned long desttrack)
+void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, unsigned long desttrack)
 {
-	if((flags == NULL) || (desttrack >= eof_song->tracks))
+	if((flags == NULL) || (desttrack >= eof_song->tracks) || (sourcetrack >= eof_song->tracks))
 		return;
 
-	if(eof_song->track[desttrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
-	{	//Erase all pro guitar flags from a non pro guitar note
-		*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_HO);			//Erase the pro hammer on flag
-		*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_PO);			//Erase the pro hammer off flag
-		*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);		//Erase the pro slide up flag
-		*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Erase the pro slide down flag
-		*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE);	//Erase the pro string mute flag
-		*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE);	//Erase the pro palm mute flag
-		*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM);	//Erase the pro strum down flag
-		*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM);		//Erase the pro strum up flag
-
-		if(eof_song->track[desttrack]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR)
-		{	//If this isn't a 5 lane guitar track either
-			*flags &= (~EOF_NOTE_FLAG_HOPO);	//Erase the temporary HOPO flag
-			*flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Erase the forced HOPO ON flag
-			*flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Erase the forced HOPO OFF flag
+	if(eof_song->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If the note is copying from a pro guitar track
+		if(eof_song->track[desttrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If it is pasting into a non pro guitar track, erase all pro guitar flags as they are invalid
+			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_HO);			//Erase the pro hammer on flag
+			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_PO);			//Erase the pro hammer off flag
+			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);		//Erase the pro slide up flag
+			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Erase the pro slide down flag
+			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE);	//Erase the pro string mute flag
+			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE);	//Erase the pro palm mute flag
+			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM);	//Erase the pro strum down flag
+			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM);		//Erase the pro strum up flag
 		}
-	}
-	else
-	{	//Resolve pro guitar flag conflicts
-		if(*flags & EOF_NOTE_FLAG_F_HOPO)
-		{	//If the forced HOPO flag is set (note is from a legacy track)
-			*flags &= (!EOF_NOTE_FLAG_F_HOPO);	//Clear that flag
-			*flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;	//Set the pro guitar hammer on flag
-		}
-		if((*flags & EOF_PRO_GUITAR_NOTE_FLAG_HO) && (*flags & EOF_PRO_GUITAR_NOTE_FLAG_PO))
-		{	//If both the hammer on AND the pull off flags are set, clear both
-			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_HO);
-			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_PO);
-		}
-		if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
-		{	//If the tap flag is set
-			if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
-			{	//If the hammer on flag is also set, clear both
-				*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_TAP);
-				*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_HO);
+		else
+		{	//If it is pasting into a pro guitar track
+			if(*flags & EOF_NOTE_FLAG_F_HOPO)
+			{	//If the forced HOPO flag is set (ie. note is from a legacy track)
+				*flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Clear that flag
+				*flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;	//Set the pro guitar hammer on flag
 			}
-			if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_PO)
-			{	//If the pull off flag is also set, clear both
-				*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_TAP);
+			if((*flags & EOF_PRO_GUITAR_NOTE_FLAG_HO) && (*flags & EOF_PRO_GUITAR_NOTE_FLAG_PO))
+			{	//If both the hammer on AND the pull off flags are set, clear both
+				*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_HO);
 				*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_PO);
 			}
-		}
-		if((*flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && (*flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
-		{	//If both the slide up AND the slide down flags are set, clear both
-			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);
-			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);
-		}
-		if((*flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) && (*flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
-		{	//If both the string mute AND the palm mute flags are set, clear both
-			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE);
-			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE);
-		}
+			if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
+			{	//If the tap flag is set
+				if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
+				{	//If the hammer on flag is also set, clear both
+					*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_TAP);
+					*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_HO);
+				}
+				if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_PO)
+				{	//If the pull off flag is also set, clear both
+					*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_TAP);
+					*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_PO);
+				}
+			}
+			if((*flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && (*flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+			{	//If both the slide up AND the slide down flags are set, clear both
+				*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);
+				*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);
+			}
+			if((*flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) && (*flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
+			{	//If both the string mute AND the palm mute flags are set, clear both
+				*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE);
+				*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE);
+			}
+		}//If it is pasting into a pro guitar track
+	}//If the note is copying from a pro guitar track
+
+	if((eof_song->track[sourcetrack]->track_behavior == EOF_DANCE_TRACK_BEHAVIOR) && (eof_song->track[sourcetrack]->track_behavior == EOF_DANCE_TRACK_BEHAVIOR))
+	{	//If the note is copying from a dance track to a non dance track, erase conflicting flags
+		*flags &= ~EOF_DANCE_FLAG_LANE_1_MINE;	//Erase the lane 1 mine flag
+		*flags &= ~EOF_DANCE_FLAG_LANE_2_MINE;	//Erase the lane 2 mine flag
+		*flags &= ~EOF_DANCE_FLAG_LANE_3_MINE;	//Erase the lane 3 mine flag
+		*flags &= ~EOF_DANCE_FLAG_LANE_4_MINE;	//Erase the lane 4 mine flag
 	}
 
-	if(desttrack != EOF_TRACK_DRUM)
-	{	//Erase all drum flags from a non PART DRUMS note
+	if(eof_song->track[desttrack]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR)
+	{	//If the note is pasting into a non 5 lane guitar track, erase legacy HOPO flags
+		*flags &= (~EOF_NOTE_FLAG_HOPO);	//Erase the temporary HOPO flag
+		*flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Erase the forced HOPO ON flag
+		*flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Erase the forced HOPO OFF flag
+	}
+
+	if(eof_song->track[desttrack]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+	{	//If the note is pasting into a non drum track, erase drum flags
+		if(eof_song->track[sourcetrack]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//If the note is copying from a drum track, erase conflicting flags
+			*flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;	//Erase the open hi hat flag
+			*flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;	//Erase the pedal controlled hi hat flag
+		}
 		*flags &= (~EOF_NOTE_FLAG_Y_CYMBAL);				//Erase the yellow cymbal flag
 		*flags &= (~EOF_NOTE_FLAG_B_CYMBAL);				//Erase the blue cymbal flag
 		*flags &= (~EOF_NOTE_FLAG_G_CYMBAL);				//Erase the green cymbal flag
 		*flags &= (~EOF_NOTE_FLAG_DBASS);					//Erase the double bass flag
 	}
 	else
-	{	//Erase all non drum flags from a PART DRUMS note
+	{	//If it pasting into a drum track, erase flags that are invalid for drum notes
 		*flags &= (~EOF_NOTE_FLAG_CRAZY);	//Erase the "crazy" note flag
 	}
 
 	if(eof_song->track[desttrack]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR)
-	{	//For a note in any keys track, force the crazy flag to be set
-		*flags |= EOF_NOTE_FLAG_CRAZY;
+	{	//If pasting into a keys behavior track,
+		*flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag
 	}
 }
 

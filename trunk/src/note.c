@@ -695,22 +695,24 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 			circlefill(window->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.string_space / 2, eof_screen_layout.note_size, eof_color_white);
 			circlefill(window->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.string_space / 2, eof_screen_layout.note_size-2, eof_color_black);
 		}
-
-		if(p)
-		{
-			if(np->note == EOF_LYRIC_PERCUSSION)
-			{	//Render a vocal percussion note as a fret note in the middle lane
-				circlefill(window->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.string_space / 2, eof_screen_layout.note_size, eof_color_white);
-				circlefill(window->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.string_space / 2, eof_screen_layout.note_size-2, eof_color_black);
-			}
-			else
-			{	//Render a regular vocal note
-				rect(window->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, pcol);
-			}
-		}
 	}//If this lyric is not pitchless/freestyle
-	else	//If the lyric is pitchless or freestyle, render with gray
+	else
+	{	//If the lyric is pitchless or freestyle, render with gray
 		rectfill(window->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, makecol(128, 128, 128));
+	}
+
+	if(p)
+	{	//If the lyric should be highlighted (ie. is selected or is being moused over)
+		if(np->note == EOF_LYRIC_PERCUSSION)
+		{	//Highlight a vocal percussion note
+			circlefill(window->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.string_space / 2, eof_screen_layout.note_size, eof_color_white);
+			circlefill(window->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.string_space / 2, eof_screen_layout.note_size-2, eof_color_gray);
+		}
+		else
+		{	//Render a regular vocal note
+			rect(window->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, pcol);
+		}
+	}
 
 //Rewritten logic checks the next lyric to set an appropriate clipping rectangle for truncation purposes, and use the determined background color (so phrase marking rectangle isn't erased by text)
 	set_clip_rect(window->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, X2-2, window->screen->h);	//Alteration: Provide at least two pixels of clearance for the edge of the clip rectangle
@@ -1202,43 +1204,63 @@ void eof_get_note_tab_notation(char *buffer, unsigned long track, unsigned long 
 		prevnoteflags = eof_get_note_flags(eof_song, track, prevnotenum);	//Store its flags
 	}
 
-	if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
-	{
-		buffer[index++] = 'H';
-	}
-	else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PO)
-	{
-		buffer[index++] = 'P';
-	}
-	else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
-	{
-		buffer[index++] = 'T';
-	}
-
-	if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-	{
-		buffer[index++] = '/';
-	}
-	else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
-	{
-		buffer[index++] = '\\';
-	}
-
-	if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
-	{
-		if((prevnotenum >= 0) && (prevnoteflags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
-		{	//If there is a previous note that was also a palm mute
-			buffer[index++] = '-';	//Write a palm mute continuation character
+	if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//Check pro guitar statuses
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
+		{
+			buffer[index++] = 'H';
 		}
-		else
+		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PO)
 		{
 			buffer[index++] = 'P';
-			buffer[index++] = 'M';
 		}
-	}
-	else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE)
-	{
-		buffer[index++] = 'X';
+		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
+		{
+			buffer[index++] = 'T';
+		}
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+		{
+			buffer[index++] = '/';
+		}
+		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+		{
+			buffer[index++] = '\\';
+		}
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
+		{
+			if((prevnotenum >= 0) && (prevnoteflags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
+			{	//If there is a previous note that was also a palm mute
+				buffer[index++] = '-';	//Write a palm mute continuation character
+			}
+			else
+			{
+				buffer[index++] = 'P';
+				buffer[index++] = 'M';
+			}
+		}
+		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE)
+		{
+			buffer[index++] = 'X';
+		}
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM)
+		{
+			buffer[index++] = 'D';
+		}
+		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
+		{
+			buffer[index++] = 'U';
+		}
+	}//Check pro guitar statuses
+	else if(track == EOF_TRACK_DRUM)
+	{	//Check drum statuses
+		if(flags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN)
+		{
+			buffer[index++] = 'O';
+		}
+		else if(flags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL)
+		{
+			buffer[index++] = 'P';
+		}
 	}
 
 	if(flags & EOF_NOTE_FLAG_IS_TRILL)
@@ -1282,15 +1304,6 @@ void eof_get_note_tab_notation(char *buffer, unsigned long track, unsigned long 
 				buffer[index++] = 'P';
 			}
 		}
-	}
-
-	if(flags & EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM)
-	{
-		buffer[index++] = 'D';
-	}
-	else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
-	{
-		buffer[index++] = 'U';
 	}
 
 	buffer[index] = '\0';
