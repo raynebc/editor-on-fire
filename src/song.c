@@ -391,6 +391,12 @@ void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 			tp->note[i-1]->note &= maxbitmask;	//Clear the invalid lanes
 		}
 
+		if((tp->parent->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (((tp->note[i-1]->note & 4) == 0) || ((tp->note[i-1]->flags & EOF_NOTE_FLAG_Y_CYMBAL) == 0)))
+		{	//If this is a drum track and the note does have a yellow cymbal, clear flags that are specific to yellow cymbals
+			tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;
+			tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;
+		}
+
 		/* delete certain notes */
 		if((tp->note[i-1]->note == 0) || ((tp->note[i-1]->type < 0) || (tp->note[i-1]->type > 4)) || (tp->note[i-1]->pos < eof_song->tags->ogg[eof_selected_ogg].midi_offset) || (tp->note[i-1]->pos >= eof_music_length))
 		{	//Delete the note if all lanes are clear, if it is an invalid type, if the position is before the first beat marker or if it is after the last beat marker
@@ -398,7 +404,7 @@ void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 		}
 
 		else
-		{
+		{	//The note has valid gems, type and position
 			/* make sure there are no 0-length notes */
 			if(tp->note[i-1]->length <= 0)
 			{
@@ -429,7 +435,7 @@ void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 					}
 				}
 			}
-		}
+		}//The note has valid gems, type and position
 	}//For each note (in reverse order)
 	if(eof_open_bass_enabled() && (tp == eof_song->legacy_track[eof_song->track[EOF_TRACK_BASS]->tracknum]))
 	{	//If open bass strumming is enabled, and this is the bass guitar track, check to ensure that open bass doesn't conflict with other notes/HOPOs/statuses
@@ -496,7 +502,7 @@ void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 				lastcheckedpos = tp->note[i]->pos;	//Remember that notes at this position were already checked and fixed if applicable
 			}//If this note isn't at a position that had all drum notes' cymbals fixed
 		}
-	}
+	}//If the track being cleaned is a drum track
 }
 
 void eof_legacy_track_add_star_power(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos)

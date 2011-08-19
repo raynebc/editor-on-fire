@@ -157,6 +157,21 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 		ustrcat(ini_string, "\r\nsysex_pro_slide = True");	//Write the pro guitar slide Sysex presence tag (used in Phase Shift) to identify that up/down slide Sysex phrases will be written to MIDI
 	}
 
+	/* check for use of open or pedal controlled hi hat and write a tag if necessary */
+	char hihatmarkersfound = 0;
+	tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
+	for(i = 0; i < sp->legacy_track[tracknum]->notes; i++)
+	{	//For each note in the drum track
+		if((sp->legacy_track[tracknum]->note[i]->flags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN) || (sp->legacy_track[tracknum]->note[i]->flags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL))
+		{	//If the note is marked for open or pedal controlled hi hat
+			hihatmarkersfound = 1;
+		}
+	}
+	if(hihatmarkersfound)
+	{	//If this chart has at least one yellow cymbal marked as open hi hat or pedal controlled hi hat
+		ustrcat(ini_string, "\r\nsysex_high_hat_ctrl = True");	//Write the high hat control Sysex presence tag (used in Phase Shift) to identify that hi hat Sysex phrases will be written to MIDI
+	}
+
 	ustrcat(ini_string, "\r\nstar_power_note = 116");	//Write this tag to indicate to Phase Shift that EOF is using Rock Band's notation for star power
 
 	/* check for use of cymbal notation */

@@ -1558,6 +1558,20 @@ void eof_read_editor_keys(void)
 			key[KEY_H] = 0;
 		}
 
+	/* toggle open hi hat (O) */
+		if(key[KEY_O] && !KEY_EITHER_CTRL)
+		{
+			eof_menu_note_toggle_hi_hat_open();
+			key[KEY_O] = 0;
+		}
+
+	/* toggle pedal controlled hi hat (P) */
+		if(key[KEY_P] && !KEY_EITHER_CTRL)
+		{
+			eof_menu_note_toggle_hi_hat_pedal();
+			key[KEY_P] = 0;
+		}
+
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If the active track is a pro guitar track
 	/* edit pro guitar note (N in a pro guitar track) */
