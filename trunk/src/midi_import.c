@@ -1001,7 +1001,7 @@ eof_log("\tSecond pass complete", 1);
 	char prodrums = 0;					//Tracks whether the drum track being written includes Pro drum notation
 	unsigned long tracknum;				//Used to de-obfuscate the legacy track number
 	int phrasediff;						//Used for parsing Sysex phrase markers
-	unsigned long openstrumpos[4], slideuppos[4], slidedownpos[4];	//Used for parsing Sysex phrase markers
+	unsigned long openstrumpos[4], slideuppos[4], slidedownpos[4], openhihatpos[4], pedalhihatpos[4], rimshotpos[4];	//Used for parsing Sysex phrase markers
 	for(i = 0; i < tracks; i++)
 	{	//For each imported track
 		if(eof_import_events[i]->type < 0)
@@ -1553,6 +1553,63 @@ eof_log("\tSecond pass complete", 1);
 															sp->track[picked_track]->flags = EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
 															tracknum = sp->track[EOF_TRACK_BASS]->tracknum;
 															sp->legacy_track[tracknum]->numlanes = 6;	//Set this track to have 6 lanes instead of 5
+														}
+													}
+												}
+											}
+										break;
+										case 5:	//Open hi hat
+											if(picked_track == EOF_TRACK_DRUM)
+											{	//Only parse hi hat phrases for the drum track
+												if(eof_import_events[i]->event[j]->dp[6] == 1)
+												{	//Start of phrase
+													openhihatpos[phrasediff] = event_realtime;
+												}
+												else if(eof_import_events[i]->event[j]->dp[6] == 0)
+												{	//End of phrase
+													for(k = note_count[picked_track] - 1; k >= first_note; k--)
+													{	//Check for each note that has been imported
+														if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= openhihatpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+														{	//If the note is in the same difficulty as the phrase, and its timestamp falls between the phrase on and phrase off marker
+															eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN);	//Set the open hi hat flag
+														}
+													}
+												}
+											}
+										break;
+										case 6:	//Pedal controlled hi hat
+											if(picked_track == EOF_TRACK_DRUM)
+											{	//Only parse hi hat phrases for the drum track
+												if(eof_import_events[i]->event[j]->dp[6] == 1)
+												{	//Start of phrase
+													pedalhihatpos[phrasediff] = event_realtime;
+												}
+												else if(eof_import_events[i]->event[j]->dp[6] == 0)
+												{	//End of phrase
+													for(k = note_count[picked_track] - 1; k >= first_note; k--)
+													{	//Check for each note that has been imported
+														if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= pedalhihatpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+														{	//If the note is in the same difficulty as the phrase, and its timestamp falls between the phrase on and phrase off marker
+															eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL);	//Set the pedal controlled hi hat flag
+														}
+													}
+												}
+											}
+										break;
+										case 7:	//Snare rim shot
+											if(picked_track == EOF_TRACK_DRUM)
+											{	//Only parse rim shot phrases for the drum track
+												if(eof_import_events[i]->event[j]->dp[6] == 1)
+												{	//Start of phrase
+													rimshotpos[phrasediff] = event_realtime;
+												}
+												else if(eof_import_events[i]->event[j]->dp[6] == 0)
+												{	//End of phrase
+													for(k = note_count[picked_track] - 1; k >= first_note; k--)
+													{	//Check for each note that has been imported
+														if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= rimshotpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+														{	//If the note is in the same difficulty as the phrase, and its timestamp falls between the phrase on and phrase off marker
+															eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_DRUM_NOTE_FLAG_R_RIMSHOT);	//Set the rim shot flag
 														}
 													}
 												}
