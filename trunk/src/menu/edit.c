@@ -882,6 +882,19 @@ int eof_menu_edit_cut(unsigned long anchor, int option, float offset)
 			tfloat = eof_get_porpos(sectionptr->end_pos);
 			pack_fwrite(&tfloat, sizeof(float), fp);
 		}
+
+		/* sliders */
+		for(i = 0; i < eof_get_num_sliders(eof_song, j); i++)
+		{	//For each slider section in the track
+			/* which beat */
+			sectionptr = eof_get_slider(eof_song, j, i);
+			pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
+			tfloat = eof_get_porpos(sectionptr->start_pos);
+			pack_fwrite(&tfloat, sizeof(float), fp);
+			pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
+			tfloat = eof_get_porpos(sectionptr->end_pos);
+			pack_fwrite(&tfloat, sizeof(float), fp);
+		}
 	}//For each track
 	pack_fclose(fp);
 	return 1;
@@ -1053,6 +1066,19 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option, float offset)
 			b = pack_igetl(fp);
 			pack_fread(&tfloat, sizeof(float), fp);
 			sectionptr = eof_get_arpeggio(eof_song, j, i);
+			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
+			b = pack_igetl(fp);
+			pack_fread(&tfloat, sizeof(float), fp);
+			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
+		}
+
+		/* sliders */
+		for(i = 0; i < eof_get_num_sliders(eof_song, j); i++)
+		{	//For each slider section in the active track
+			/* which beat */
+			b = pack_igetl(fp);
+			pack_fread(&tfloat, sizeof(float), fp);
+			sectionptr = eof_get_slider(eof_song, j, i);
 			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
 			b = pack_igetl(fp);
 			pack_fread(&tfloat, sizeof(float), fp);
@@ -2290,6 +2316,12 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 			}
 		}//If it is pasting into a pro guitar track
 	}//If the note is copying from a pro guitar track
+
+	if(	((eof_song->track[sourcetrack]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[sourcetrack]->track_format == EOF_LEGACY_TRACK_FORMAT)) &&
+		((eof_song->track[desttrack]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[desttrack]->track_format != EOF_LEGACY_TRACK_FORMAT)))
+	{	//If copying from a legacy guitar track to a non legacy guitar track, erase conflicting flags
+		*flags &= ~EOF_GUITAR_NOTE_FLAG_IS_SLIDER;
+	}
 
 	if((eof_song->track[sourcetrack]->track_behavior == EOF_DANCE_TRACK_BEHAVIOR) && (eof_song->track[sourcetrack]->track_behavior == EOF_DANCE_TRACK_BEHAVIOR))
 	{	//If the note is copying from a dance track to a non dance track, erase conflicting flags

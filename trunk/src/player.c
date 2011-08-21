@@ -158,6 +158,7 @@ void eof_music_seek(unsigned long pos)
 	eof_music_pos = pos + eof_av_delay;
 	eof_music_actual_pos = eof_music_pos;
 	eof_mix_seek(eof_music_actual_pos);
+	eof_reset_lyric_preview_lines();
 }
 
 void eof_music_rewind(void)

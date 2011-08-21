@@ -54,6 +54,9 @@
 #define EOF_DANCE_FLAG_LANE_3_MINE		2048	//This flag will represent a mine note for lane 3
 #define EOF_DANCE_FLAG_LANE_4_MINE		4096	//This flag will represent a mine note for lane 4
 
+//The following flags pertain to legacy guitar notes
+#define EOF_GUITAR_NOTE_FLAG_IS_SLIDER	512		//This flag will be set by eof_determine_phrase_status() if the note is in a slider section
+
 //The following flags pertain to legacy and pro guitar notes
 #define EOF_NOTE_FLAG_IS_TRILL		            65536	//This flag will be set by eof_determine_phrase_status() if the note is in a trill section
 #define EOF_NOTE_FLAG_IS_TREMOLO		        131072	//This flag will be set by eof_determine_phrase_status() if the note is in a tremolo section
@@ -216,6 +219,7 @@ typedef struct
 #define EOF_CUSTOM_MIDI_NOTE_SECTION	12
 #define EOF_PREVIEW_SECTION				13
 #define EOF_TREMOLO_SECTION				14
+#define EOF_SLIDER_SECTION				15
 
 #define EOF_TRACK_FLAG_SIX_LANES		1
 	//Specifies if the track has open strumming enabled (PART BASS) or a fifth drum lane enabled (PART DRUMS)
@@ -256,6 +260,10 @@ typedef struct
 	/* tremolo sections */
 	EOF_PHRASE_SECTION tremolo[EOF_MAX_PHRASES];
 	unsigned long tremolos;
+
+	/* slider sections */
+	EOF_PHRASE_SECTION slider[EOF_MAX_PHRASES];
+	unsigned long sliders;
 
 } EOF_LEGACY_TRACK;
 
@@ -503,12 +511,16 @@ void eof_set_num_trills(EOF_SONG *sp, unsigned long track, unsigned long number)
 unsigned long eof_get_num_tremolos(EOF_SONG *sp, unsigned long track);		//Returns the number of tremolo phrases in the specified track, or 0 on error
 EOF_PHRASE_SECTION *eof_get_tremolo(EOF_SONG *sp, unsigned long track, unsigned long index);	//Returns a pointer to the specified tremolo phrase, or NULL on error
 void eof_set_num_tremolos(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of tremolo phrases in the specified track
+unsigned long eof_get_num_sliders(EOF_SONG *sp, unsigned long track);		//Returns the number of slider phrases in the specified track, or 0 on error
+EOF_PHRASE_SECTION *eof_get_slider(EOF_SONG *sp, unsigned long track, unsigned long index);	//Returns a pointer to the specified slider phrase, or NULL on error
+void eof_set_num_sliders(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of slider phrases in the specified track
 unsigned long eof_get_num_arpeggios(EOF_SONG *sp, unsigned long track);		//Returns the number of arpeggio phrases in the specified track, or 0 on error
 EOF_PHRASE_SECTION *eof_get_arpeggio(EOF_SONG *sp, unsigned long track, unsigned long index);	//Returns a pointer to the specified arpeggio phrase, or NULL on error
 void eof_set_num_arpeggios(EOF_SONG *sp, unsigned long track, unsigned long number);	//Sets the number of arpeggio phrases in the specified track
 void eof_track_delete_trill(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified trill phrase and moves all phrases that follow back in the array one position
 void eof_track_delete_tremolo(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified tremolo phrase and moves all phrases that follow back in the array one position
 void eof_track_delete_arpeggio(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified arpeggio phrase and moves all phrases that follow back in the array one position
+void eof_track_delete_slider(EOF_SONG *sp, unsigned long track, unsigned long index);	//Deletes the specified slider phrase and moves all phrases that follow back in the array one position
 unsigned long eof_get_num_lyric_sections(EOF_SONG *sp, unsigned long track);	//Returns the number of lyric sections in the specified track, or 0 on error
 EOF_PHRASE_SECTION *eof_get_lyric_section(EOF_SONG *sp, unsigned long track, unsigned long sectionnum);	//Returns a pointer to the specified lyric section, or NULL on error
 void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourcenote, unsigned long desttrack, unsigned long pos, long length, char type);

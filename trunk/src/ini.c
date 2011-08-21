@@ -181,6 +181,16 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 		ustrcat(ini_string, "\r\nsysex_rimshot = True");	//Write the rim shot Sysex presence tag (used in Phase Shift) to identify that rim shot Sysex phrases will be written to MIDI
 	}
 
+	/* check for use of slider sections and write a tag if necessary */
+	for(i = 1; i < sp->tracks; i++)
+	{	//For each track in the chart (skipping track 0)
+		if(eof_get_num_sliders(sp, i))
+		{	//If the track has a slider section
+			ustrcat(ini_string, "\r\nsysex_slider = True");	//Write the slider Sysex presence tag (used in Phase Shift) to identify that slider Sysex phrases will be written to MIDI
+			break;
+		}
+	}
+
 	ustrcat(ini_string, "\r\nstar_power_note = 116");	//Write this tag to indicate to Phase Shift that EOF is using Rock Band's notation for star power
 
 	/* check for use of cymbal notation */

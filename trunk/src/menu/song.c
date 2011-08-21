@@ -123,6 +123,7 @@ MENU eof_song_proguitar_menu[] =
 {
     {"Set track &Tuning", eof_menu_song_track_tuning, NULL, 0, NULL},
     {"Set &Number of frets/strings", eof_menu_set_num_frets_strings, NULL, 0, NULL},
+    {"Enable &Legacy view\tShift+L", eof_menu_song_legacy_view, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -144,7 +145,6 @@ MENU eof_song_menu[] =
     {"Enable open strum bass", eof_menu_song_open_bass, NULL, 0, NULL},
     {"Enable five lane drums", eof_menu_song_five_lane_drums, NULL, 0, NULL},
     {"Pro &Guitar", NULL, eof_song_proguitar_menu, 0, NULL},
-    {"Enable legacy view\tShift+L", eof_menu_song_legacy_view, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"T&est In FOF\tF12", eof_menu_song_test_fof, NULL, EOF_LINUX_DISABLE, NULL},
     {"Test I&n Phase Shift", eof_menu_song_test_ps, NULL, EOF_LINUX_DISABLE, NULL},
@@ -498,17 +498,14 @@ void eof_prepare_song_menu(void)
 			eof_song_menu[14].flags = 0;
 		}
 
-		/* enable legacy view */
 		/* enable pro guitar submenu */
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar track is active
 			eof_song_menu[15].flags = 0;			//Song>Pro Guitar> submenu
-			eof_song_menu[16].flags = eof_song_menu[15].flags & D_SELECTED;	//Enable Song>Enable legacy view (retaining its checked/unchecked status)
 		}
 		else
-		{	//Otherwise disable this menu item, but keep it checked if it's already checked
+		{	//Otherwise disable this menu item
 			eof_song_menu[15].flags = D_DISABLED;
-			eof_song_menu[16].flags = D_DISABLED | (eof_song_menu[15].flags & D_SELECTED);	//Disable legacy view (retaining its checked/unchecked status)
 		}
 	}//If a chart is loaded
 }
@@ -523,7 +520,7 @@ int eof_menu_song_seek_start(void)
 			eof_music_play();	//stop it
 			wasplaying = 1;
 		}
-		eof_set_seek_position(0);
+		eof_set_seek_position(eof_av_delay);
 		if(wasplaying)
 		{	//If the playback was stopped to rewind the seek position
 			eof_music_play();	//Resume playing
@@ -1889,13 +1886,13 @@ int eof_menu_song_legacy_view(void)
 	if(eof_legacy_view)
 	{
 		eof_legacy_view = 0;
-		eof_song_menu[16].flags = 0;	//Song>Enable legacy view
+		eof_song_proguitar_menu[2].flags = 0;	//Song>Pro Guitar>Enable legacy view
 		eof_scale_fretboard(0);	//Recalculate the 2D screen positioning based on the current track
 	}
 	else
 	{
 		eof_legacy_view = 1;
-		eof_song_menu[16].flags = D_SELECTED;
+		eof_song_proguitar_menu[2].flags = D_SELECTED;
 		eof_scale_fretboard(5);	//Recalculate the 2D screen positioning based on a 5 lane track
 	}
 	eof_fix_window_title();

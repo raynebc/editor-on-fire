@@ -139,6 +139,12 @@ int eof_adjust_notes(int offset)
 			phraseptr->start_pos += offset;
 			phraseptr->end_pos += offset;
 		}
+		for(j = 0; j < eof_get_num_sliders(eof_song, i); j++)
+		{	//For each slider phrase in the track
+			phraseptr = eof_get_slider(eof_song, i, j);
+			phraseptr->start_pos += offset;
+			phraseptr->end_pos += offset;
+		}
 		for(j = 0; j < eof_get_num_lyric_sections(eof_song, i); j++)
 		{	//For each lyric phrase in the track
 			phraseptr = eof_get_lyric_section(eof_song, i, j);
@@ -388,7 +394,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 
 				if((sliderect[0] < window->w) && (sliderect[2] >= 0))
 				{	//If the left end of the polygon doesn't render off the right edge of the editor window and the right end of the polygon doesn't render off the left edge
-					polygon(window->screen, 4, sliderect, makecol(128, 0, 128));		//Render the 4 point polygon in purple
+					polygon(window->screen, 4, sliderect, eof_color_dark_purple);		//Render the 4 point polygon in dark purple
 				}
 			}//If rendering an existing pro guitar track that slides up or down
 
@@ -686,7 +692,7 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 
 				if((sliderect[0] < window->w) && (sliderect[2] >= 0))
 				{	//If the left end of the polygon doesn't render off the right edge of the editor window and the right end of the polygon doesn't render off the left edge
-					polygon(window->screen, 4, sliderect, makecol(128, 0, 128));	//Render the 4 point polygon in purple
+					polygon(window->screen, 4, sliderect, eof_color_dark_purple);	//Render the 4 point polygon in dark purple
 				}
 			}
 		}
@@ -1098,8 +1104,49 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 				point[5] = point[3];	//Y3 (Y coordinate of the back end of the slide)
 				point[6] = point[0] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X4 (the specified number of pixels right of X1)
 				point[7] = point[1];	//Y4 (Y coordinate of the front end of the slide)
-				polygon(eof_window_3d->screen, 4, point, makecol(128, 0, 128));	//Render the 4 point polygon in purple
+				polygon(eof_window_3d->screen, 4, point, eof_color_dark_purple);	//Render the 4 point polygon in dark purple
 			}//If rendering an existing pro guitar track that slides up or down
+
+			//Render slider note slide if applicable
+			if(noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
+			{
+				unsigned long nextnotenum;
+				if(eof_track_fixup_next_note(eof_song, track, notenum) >= 0)
+				{	//If there is another note in this difficulty
+					nextnotenum = eof_track_fixup_next_note(eof_song, track, notenum);
+					if(eof_get_note_flags(eof_song, track, nextnotenum) & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
+					{	//If that next note is also a slider note, draw a dark purple line between this note and the next
+						long npos2, rz2;
+						unsigned long notepos2, nextnotenote, ctr2, mask2;		//Used for slide note rendering
+
+						nextnotenote = eof_get_note_note(eof_song, track, nextnotenum);
+						for(ctr2=0,mask2=1; ctr2 < eof_count_track_lanes(eof_song, track); ctr2++,mask2=mask2<<1)
+						{
+							if(nextnotenote & mask2)
+							{	//If this lane is populated for the next note
+								break;
+							}
+						}
+
+						notepos2 = eof_get_note_pos(eof_song, track, nextnotenum);	//Find the position of the next note
+						npos2 = (long)(notepos2 + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
+						rz2 = npos2 < -100 ? -100 : npos2 + 10;
+
+						//Define the slide rectangle coordinates in clockwise order
+						#define EOF_SLIDER_LINE_THICKNESS_3D 4
+						point[0] = ocd3d_project_x(xchart[ctr], rz);	//X1 (X coordinate of the front end of the slide): The X position of this note
+						point[1] = ocd3d_project_y(200, rz);			//Y1 (Y coordinate of the front end of the slide): The Y position of this note
+						point[2] = ocd3d_project_x(xchart[ctr2], rz2);	//X2 (X coordinate of the back end of the slide): The X position of the next note
+						point[3] = ocd3d_project_y(200, rz2);			//Y2 (Y coordinate of the back end of the slide): The Y position of the next note
+
+						point[4] = point[2] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X3 (the specified number of pixels right of X2)
+						point[5] = point[3];							//Y3 (Y coordinate of the back end of the slide)
+						point[6] = point[0] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X4 (the specified number of pixels right of X1)
+						point[7] = point[1];							//Y4 (Y coordinate of the front end of the slide)
+						polygon(eof_window_3d->screen, 4, point, eof_color_dark_purple);	//Render the 4 point polygon in dark purple
+					}
+				}
+			}
 		}//If this lane has a gem to render
 	}//For each of the lanes in this track
 	return 0;

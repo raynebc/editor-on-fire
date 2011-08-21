@@ -219,8 +219,10 @@ int eof_color_gray;
 int eof_color_red;
 int eof_color_green;
 int eof_color_blue;
+int eof_color_dark_blue;
 int eof_color_yellow;
 int eof_color_purple;
+int eof_color_dark_purple;
 int eof_color_orange;
 int eof_color_silver;
 int eof_info_color;
@@ -845,6 +847,7 @@ void eof_determine_phrase_status(void)
 	char trills[EOF_MAX_PHRASES] = {0};
 	char tremolos[EOF_MAX_PHRASES] = {0};
 	char arpeggios[EOF_MAX_PHRASES] = {0};
+	char sliders[EOF_MAX_PHRASES] = {0};
 	unsigned long notepos, flags;
 	EOF_PHRASE_SECTION *sectionptr = NULL;
 
@@ -858,6 +861,7 @@ void eof_determine_phrase_status(void)
 		flags &= (~EOF_NOTE_FLAG_SP);
 		flags &= (~EOF_NOTE_FLAG_IS_TRILL);
 		flags &= (~EOF_NOTE_FLAG_IS_TREMOLO);
+		flags &= (~EOF_GUITAR_NOTE_FLAG_IS_SLIDER);
 
 		/* mark HOPO */
 		if((eof_hopo_view == EOF_HOPO_MANUAL) && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_note_is_hopo(i)))
@@ -920,6 +924,17 @@ void eof_determine_phrase_status(void)
 			}
 		}
 
+		/* mark and check sliders */
+		for(j = 0; j < eof_get_num_sliders(eof_song, eof_selected_track); j++)
+		{	//For each slider section in the active track
+			sectionptr = eof_get_slider(eof_song, eof_selected_track, j);
+			if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
+			{	//If the note is in this slider section
+				flags |= EOF_GUITAR_NOTE_FLAG_IS_SLIDER;
+				sliders[j] = 1;
+			}
+		}
+
 		eof_set_note_flags(eof_song, eof_selected_track, i, flags);	//Update the note's flags variable
 	}//For each note in the active track
 
@@ -968,6 +983,15 @@ void eof_determine_phrase_status(void)
 			{	//If the section's note count taken above was 0
 				eof_pro_guitar_track_delete_arpeggio(eof_song->pro_guitar_track[tracknum], j);
 			}
+		}
+	}
+
+	/* delete sliders with no notes */
+	for(j = 0; j < eof_get_num_sliders(eof_song, eof_selected_track); j++)
+	{	//For each slider section in the active track
+		if(!sliders[j])
+		{	//If the section's note count taken above was 0
+			eof_track_delete_slider(eof_song, eof_selected_track, j);
 		}
 	}
 }
@@ -1463,7 +1487,7 @@ void eof_read_global_keys(void)
 	}
 
 	/* save (F2 or CTRL+S) */
-	if((key[KEY_F2] && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT) || (KEY_EITHER_CTRL && key[KEY_S]))
+	if((key[KEY_F2] && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT) || (KEY_EITHER_CTRL && key[KEY_S] && !KEY_EITHER_SHIFT))
 	{
 		eof_menu_file_save();
 		key[KEY_F2] = 0;
@@ -2532,7 +2556,7 @@ void eof_render_3d_window(void)
 				point[5] = ocd3d_project_y(200, spz);
 				point[6] = ocd3d_project_x(20, spz);
 				point[7] = point[5];
-				polygon(eof_window_3d->screen, 4, point, makecol(0, 0, 64));
+				polygon(eof_window_3d->screen, 4, point, eof_color_dark_blue);
 			}
 		}
 	}
@@ -2918,8 +2942,10 @@ int eof_load_data(void)
 	eof_color_red = makecol(255, 0, 0);
 	eof_color_green = makecol(0, 255, 0);
 	eof_color_blue = makecol(0, 0, 255);
+	eof_color_dark_blue = makecol(0, 0, 96);
 	eof_color_yellow = makecol(255, 255, 0);
 	eof_color_purple = makecol(255, 0, 255);
+	eof_color_dark_purple = makecol(128, 0, 128);
 	eof_color_orange = makecol(255, 127, 0);
 	eof_color_silver = makecol(192, 192, 192);
 

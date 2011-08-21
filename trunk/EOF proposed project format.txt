@@ -102,7 +102,7 @@ TRACK CHUNK, for each track:
 *	2 bytes:	Number of section types stored for this track
 *	SECTION TYPE CHUNK, for each section type
 *	{
-*		2 bytes:	Type of section (1=solo,2=star power,3=bookmark,4=fret catalog entry,5=lyric phrase,6=yellow cymbal,7=blue cymbal,8=green cymbal,9=trill,10=arpeggio,11=trainer,12=custom MIDI note,13=preview section,14=tremolo section...)
+*		2 bytes:	Type of section (1=solo,2=star power,3=bookmark,4=fret catalog entry,5=lyric phrase,6=yellow cymbal,7=blue cymbal,8=green cymbal,9=trill,10=arpeggio,11=trainer,12=custom MIDI note,13=preview section,14=tremolo section,15=slider section...)
 
 *		4 bytes:	Number of the specified sections stored
 *		SECTION CHUNK, for each of the specified type of sections

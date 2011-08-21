@@ -1127,6 +1127,7 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 				ptr->star_power_paths = 0;
 				ptr->trills = 0;
 				ptr->tremolos = 0;
+				ptr->sliders = 0;
 				if(trackdetails->flags & EOF_TRACK_FLAG_SIX_LANES)
 				{	//Open strum and fifth drum lane are tracked as a sixth lane
 					ptr->numlanes = 6;
@@ -1848,6 +1849,25 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				}
 			}
 		break;
+		case EOF_SLIDER_SECTION:
+			if((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT))
+			{	//Only legacy guitar tracks are able to use this type of section
+				count = sp->legacy_track[tracknum]->sliders;
+				sp->legacy_track[tracknum]->slider[count].start_pos = start;
+				sp->legacy_track[tracknum]->slider[count].end_pos = end;
+				sp->legacy_track[tracknum]->slider[count].flags = 0;
+				if(name == NULL)
+				{
+					sp->legacy_track[tracknum]->slider[count].name[0] = '\0';
+				}
+				else
+				{
+					ustrcpy(sp->legacy_track[tracknum]->slider[count].name, name);
+				}
+				sp->legacy_track[tracknum]->sliders++;
+				return 1;
+			}
+		break;
 	}
 	return 0;	//Return error
 }
@@ -1885,7 +1905,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};
 	unsigned long count,ctr,ctr2,tracknum;
 	unsigned long track_count,track_ctr,bookmark_count,bitmask;
-	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos;
+	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders;
 
 	if((sp == NULL) || (fn == NULL))
 	{
@@ -2102,7 +2122,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			pack_iputw(0, fp);	//Write track compliance flags (not supported yet)
 
 			tracknum = sp->track[track_ctr]->tracknum;
-			has_solos = has_star_power = has_lyric_phrases = has_arpeggios = has_trills = has_tremolos = 0;
+			has_solos = has_star_power = has_lyric_phrases = has_arpeggios = has_trills = has_tremolos = has_sliders = 0;
 			switch(sp->track[track_ctr]->track_format)
 			{	//Perform the appropriate logic to write this format of track
 				case EOF_LEGACY_TRACK_FORMAT:	//Legacy (non pro guitar, non pro bass, non pro keys, pro or non pro drums)
@@ -2134,7 +2154,11 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					{
 						has_tremolos = 1;
 					}
-					pack_iputw(has_solos + has_star_power + has_trills + has_tremolos, fp);	//Write number of section types
+					if(sp->legacy_track[tracknum]->sliders)
+					{
+						has_sliders = 1;
+					}
+					pack_iputw(has_solos + has_star_power + has_trills + has_tremolos + has_sliders, fp);	//Write number of section types
 					if(has_solos)
 					{	//Write solo sections
 						pack_iputw(EOF_SOLO_SECTION, fp);	//Write solo section type
@@ -2184,6 +2208,19 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 							pack_putc(0xFF, fp);					//Write an associated difficulty of "all difficulties"
 							pack_iputl(sp->legacy_track[tracknum]->tremolo[ctr].start_pos, fp);	//Write the tremolo phrase's position
 							pack_iputl(sp->legacy_track[tracknum]->tremolo[ctr].end_pos, fp);		//Write the tremolo phrase's end position
+							pack_iputl(0, fp);						//Write section flags (not used)
+						}
+					}
+					if(has_sliders)
+					{	//Write slider sections
+						pack_iputw(EOF_SLIDER_SECTION, fp);			//Write slider section type
+						pack_iputl(sp->legacy_track[tracknum]->sliders, fp);	//Write number of slider sections for this track
+						for(ctr=0; ctr < sp->legacy_track[tracknum]->sliders; ctr++)
+						{	//For each slider section in the track
+							eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
+							pack_putc(0xFF, fp);					//Write an associated difficulty of "all difficulties"
+							pack_iputl(sp->legacy_track[tracknum]->slider[ctr].start_pos, fp);	//Write the slider phrase's position
+							pack_iputl(sp->legacy_track[tracknum]->slider[ctr].end_pos, fp);	//Write the slider phrase's end position
 							pack_iputl(0, fp);						//Write section flags (not used)
 						}
 					}
@@ -3708,6 +3745,23 @@ unsigned long eof_get_num_tremolos(EOF_SONG *sp, unsigned long track)
 	return 0;	//Return error
 }
 
+unsigned long eof_get_num_sliders(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+		return sp->legacy_track[tracknum]->sliders;
+	}
+
+	return 0;	//Return error
+}
+
 EOF_PHRASE_SECTION *eof_get_trill(EOF_SONG *sp, unsigned long track, unsigned long index)
 {
 	unsigned long tracknum;
@@ -3724,7 +3778,6 @@ EOF_PHRASE_SECTION *eof_get_trill(EOF_SONG *sp, unsigned long track, unsigned lo
 				return &sp->legacy_track[tracknum]->trill[index];
 			}
 		break;
-
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			if(index < EOF_MAX_PHRASES)
@@ -3754,7 +3807,6 @@ EOF_PHRASE_SECTION *eof_get_tremolo(EOF_SONG *sp, unsigned long track, unsigned 
 			}
 		break;
 
-
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			if(index < EOF_MAX_PHRASES)
 			{
@@ -3763,6 +3815,26 @@ EOF_PHRASE_SECTION *eof_get_tremolo(EOF_SONG *sp, unsigned long track, unsigned 
 		break;
 	}
 
+	return NULL;	//Return error
+}
+
+EOF_PHRASE_SECTION *eof_get_slider(EOF_SONG *sp, unsigned long track, unsigned long index)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return NULL;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(index < EOF_MAX_PHRASES)
+			{
+				return &sp->legacy_track[tracknum]->slider[index];
+			}
+		break;
+	}
 	return NULL;	//Return error
 }
 
@@ -3844,6 +3916,33 @@ void eof_track_delete_tremolo(EOF_SONG *sp, unsigned long track, unsigned long i
 	}
 }
 
+void eof_track_delete_slider(EOF_SONG *sp, unsigned long track, unsigned long index)
+{
+ 	eof_log("eof_track_delete_slider() entered", 1);
+
+	unsigned long ctr;
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(index < sp->legacy_track[tracknum]->sliders)
+			{
+				sp->legacy_track[tracknum]->slider[index].name[0] = '\0';	//Empty the name string
+				for(ctr = index; ctr < sp->legacy_track[tracknum]->sliders; ctr++)
+				{
+					memcpy(&sp->legacy_track[tracknum]->slider[ctr], &sp->legacy_track[tracknum]->slider[ctr + 1], sizeof(EOF_PHRASE_SECTION));
+				}
+				sp->legacy_track[tracknum]->sliders--;
+			}
+		break;
+	}
+}
+
 void eof_set_num_trills(EOF_SONG *sp, unsigned long track, unsigned long number)
 {
  	eof_log("eof_set_num_trills() entered", 1);
@@ -3884,6 +3983,24 @@ void eof_set_num_tremolos(EOF_SONG *sp, unsigned long track, unsigned long numbe
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			sp->pro_guitar_track[tracknum]->tremolos = number;
+		break;
+	}
+}
+
+void eof_set_num_sliders(EOF_SONG *sp, unsigned long track, unsigned long number)
+{
+ 	eof_log("eof_set_num_sliders() entered", 1);
+
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			sp->legacy_track[tracknum]->sliders = number;
 		break;
 	}
 }
