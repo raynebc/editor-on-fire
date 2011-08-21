@@ -871,7 +871,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					deltalength = 1;
 				}
 				phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
-				phase_shift_sysex_phrase[4] = 4;	//Store the difficulty ID (4 = all difficulties)
+				phase_shift_sysex_phrase[4] = 0xFF;	//Store the difficulty ID (0xFF = all difficulties)
 				phase_shift_sysex_phrase[5] = 4;	//Store the phrase ID (4 = slider)
 				phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
 				eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide start marker

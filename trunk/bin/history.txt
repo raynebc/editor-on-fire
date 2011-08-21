@@ -3,6 +3,22 @@ EOF Version History
 
 1.8:
 
+Added support for slider sections, for use in Phase Shift.
+
+Fixed a bug that wouldn't reliably allow various phrases to be
+deleted by selecting the last note in the phrase and using the
+Note menu function to remove the phrase.
+
+Added support for open hi hat and foot pedal controlled hi hat
+marking for yellow cymbal notes and rim shot marking for red
+drum notes (in the Note>Drum> menu), for use in Phase Shift.
+
+Fixed a bug where pitchless/freestyle vocals didn't render with a
+white border when they were selected or moused over.
+
+Added logic to ensure that the [end] text event is written after
+both the end of audio position and the last beat marker notes.
+
 Fixed a bug where using the right mouse button to change a lyric's
 pitch would cause the lyric to rapidly toggle between pitched and
 pitchless states.
