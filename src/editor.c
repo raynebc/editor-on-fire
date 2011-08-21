@@ -1558,25 +1558,32 @@ void eof_read_editor_keys(void)
 			key[KEY_H] = 0;
 		}
 
-	/* toggle open hi hat (O) */
+	/* toggle open hi hat (SHIFT+O) */
 		if(key[KEY_O] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{
 			eof_menu_note_toggle_hi_hat_open();
 			key[KEY_O] = 0;
 		}
 
-	/* toggle pedal controlled hi hat (P) */
+	/* toggle pedal controlled hi hat (SHIFT+P) */
 		if(key[KEY_P] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{
 			eof_menu_note_toggle_hi_hat_pedal();
 			key[KEY_P] = 0;
 		}
 
-	/* toggle rim shot (R) */
+	/* toggle rim shot (SHIFT+R) */
 		if(key[KEY_R] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{
 			eof_menu_note_toggle_rimshot();
 			key[KEY_R] = 0;
+		}
+
+	/* mark/remark slider (SHIFT+S) */
+		if(key[KEY_S] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+		{
+			eof_menu_slider_mark();
+			key[KEY_S] = 0;
 		}
 
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -4009,7 +4016,6 @@ void eof_render_editor_window_common(void)
 	/* draw solo sections */
 	if(eof_selected_track != EOF_TRACK_VOCALS)
 	{
-		col = makecol(0, 0, 64);	//Store dark blue color
 		numsections = eof_get_num_solos(eof_song, eof_selected_track);
 		for(i = 0; i < numsections; i++)
 		{	//For each solo section in the track
@@ -4017,7 +4023,7 @@ void eof_render_editor_window_common(void)
 			if(sectionptr != NULL)
 			{
 				if((sectionptr->end_pos >= start) && (sectionptr->start_pos <= stop))	//If the solo section would render between the left and right edges of the piano roll
-					rectfill(eof_window_editor->screen, lpos + sectionptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, lpos + sectionptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, col);
+					rectfill(eof_window_editor->screen, lpos + sectionptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, lpos + sectionptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_dark_blue);
 			}
 		}
 	}
@@ -4104,6 +4110,21 @@ void eof_render_editor_window_common(void)
 			}
 		}
 	}//If this track has any trill or tremolo sections
+
+	/* draw slider sections */
+	if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
+	{	//If this is a legacy guitar track
+		numsections = eof_get_num_sliders(eof_song, eof_selected_track);
+		for(i = 0; i < numsections; i++)
+		{	//For each slider section in the track
+			sectionptr = eof_get_slider(eof_song, eof_selected_track, i);	//Obtain the information for this slider section
+			if(sectionptr != NULL)
+			{
+				if((sectionptr->end_pos >= start) && (sectionptr->start_pos <= stop))	//If the slider section would render between the left and right edges of the piano roll, render a dark purple rectangle above the fretboard area
+					rectfill(eof_window_editor->screen, lpos + sectionptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15, lpos + sectionptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 5 + eof_screen_layout.note_y[0], eof_color_dark_purple);
+			}
+		}
+	}
 
 	/* draw undefined legacy mask markers */
 	if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))

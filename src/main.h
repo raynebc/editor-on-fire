@@ -9,7 +9,7 @@
 #include "control.h"
 #include "editor.h"
 
-#define EOF_VERSION_STRING "EOF v1.8beta18"
+#define EOF_VERSION_STRING "EOF v1.8beta19"
 #define EOF_COPYRIGHT_STRING "(c)2008-2010 T^3 Software."
 
 #define KEY_EITHER_ALT (key[KEY_ALT] || key[KEY_ALTGR])
@@ -330,8 +330,10 @@ extern int eof_color_gray;
 extern int eof_color_red;
 extern int eof_color_green;
 extern int eof_color_blue;
+extern int eof_color_dark_blue;
 extern int eof_color_yellow;
 extern int eof_color_purple;
+extern int eof_color_dark_purple;
 extern int eof_color_orange;
 extern int eof_color_silver;
 extern int eof_info_color;

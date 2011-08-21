@@ -860,6 +860,25 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				eof_add_midi_event(deltapos + deltalength, 0x80, 127, vel, 0);
 			}
 
+			/* fill in sliders */
+			for(i = 0; i < eof_get_num_sliders(sp, j); i++)
+			{	//For each slider in the track
+				sectionptr = eof_get_slider(sp, j, i);
+				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);	//Store the tick position of the phrase
+				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION) - deltapos;	//Store the number of delta ticks representing the phrase's length
+				if(deltalength < 1)
+				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
+					deltalength = 1;
+				}
+				phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+				phase_shift_sysex_phrase[4] = 4;	//Store the difficulty ID (4 = all difficulties)
+				phase_shift_sysex_phrase[5] = 4;	//Store the phrase ID (4 = slider)
+				phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+				eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide start marker
+				phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+				eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide stop marker
+			}
+
 			for(i=0;i < 128;i++)
 			{	//Ensure that any notes that are still on are terminated
 				if(eof_midi_note_status[i] != 0)	//If this note was left on, send an alert message, as this is abnormal

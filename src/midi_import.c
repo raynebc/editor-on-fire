@@ -1001,7 +1001,7 @@ eof_log("\tSecond pass complete", 1);
 	char prodrums = 0;					//Tracks whether the drum track being written includes Pro drum notation
 	unsigned long tracknum;				//Used to de-obfuscate the legacy track number
 	int phrasediff;						//Used for parsing Sysex phrase markers
-	unsigned long openstrumpos[4], slideuppos[4], slidedownpos[4], openhihatpos[4], pedalhihatpos[4], rimshotpos[4];	//Used for parsing Sysex phrase markers
+	unsigned long openstrumpos[4] = {0}, slideuppos[4] = {0}, slidedownpos[4] = {0}, openhihatpos[4] = {0}, pedalhihatpos[4] = {0}, rimshotpos[4] = {0}, sliderpos[4] = {0};	//Used for parsing Sysex phrase markers
 	for(i = 0; i < tracks; i++)
 	{	//For each imported track
 		if(eof_import_events[i]->type < 0)
@@ -1555,6 +1555,22 @@ eof_log("\tSecond pass complete", 1);
 															sp->legacy_track[tracknum]->numlanes = 6;	//Set this track to have 6 lanes instead of 5
 														}
 													}
+												}
+											}
+										break;
+										case 4:	//Slider
+											if((sp->track[picked_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[picked_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
+											{	//Only parse slider phrases for legacy guitar tracks
+												if(eof_import_events[i]->event[j]->dp[6] == 1)
+												{	//Start of phrase
+													sliderpos[0] = event_realtime;
+												}
+												else if(eof_import_events[i]->event[j]->dp[6] == 0)
+												{	//End of phrase
+													phraseptr = eof_get_slider(sp, picked_track, eof_get_num_sliders(sp, picked_track));
+													phraseptr->start_pos = sliderpos[0];
+													phraseptr->end_pos = event_realtime - 1;
+													eof_set_num_sliders(sp, picked_track, eof_get_num_sliders(sp, picked_track) + 1);
 												}
 											}
 										break;

@@ -20,6 +20,7 @@ char eof_lyric_line_menu_mark_text[32] = "&Mark";
 char eof_arpeggio_menu_mark_text[32] = "&Mark";
 char eof_trill_menu_mark_text[32] = "&Mark";
 char eof_tremolo_menu_mark_text[32] = "&Mark";
+char eof_slider_menu_mark_text[32] = "&Mark";
 char eof_trill_menu_text[32] = "Trill";
 char eof_tremolo_menu_text[32] = "Tremolo";
 
@@ -130,6 +131,14 @@ MENU eof_tremolo_menu[] =
     {NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_slider_menu[] =
+{
+    {eof_slider_menu_mark_text, eof_menu_slider_mark, NULL, 0, NULL},
+    {"&Remove", eof_menu_slider_unmark, NULL, 0, NULL},
+    {"&Erase All", eof_menu_slider_erase_all, NULL, 0, NULL},
+    {NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_hopo_menu[] =
 {
     {"&Auto", eof_menu_hopo_auto, NULL, 0, NULL},
@@ -214,6 +223,7 @@ MENU eof_note_menu[] =
     {"&HOPO", NULL, eof_hopo_menu, 0, NULL},
     {eof_trill_menu_text, NULL, eof_trill_menu, 0, NULL},
     {eof_tremolo_menu_text, NULL, eof_tremolo_menu, 0, NULL},
+    {"Slider", NULL, eof_slider_menu, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"&Drum", NULL, eof_note_drum_menu, 0, NULL},
     {"Pro &Guitar", NULL, eof_note_proguitar_menu, 0, NULL},
@@ -257,10 +267,10 @@ DIALOG eof_note_name_dialog[] =
 void eof_prepare_note_menu(void)
 {
 	int vselected;
-	int insp = 0, insolo = 0, inll = 0, inarpeggio = 0, intrill = 0, intremolo = 0;
-	int spstart = -1, ssstart = -1, llstart = -1, arpeggiostart = -1, trillstart = -1, tremolostart = -1;
-	int spend = -1, ssend = -1, llend = -1, arpeggioend = -1, trillend = -1, tremoloend = -1;
-	int spp = 0, ssp = 0, llp = 0, arpeggiop = 0, trillp = 0, tremolop = 0;
+	int insp = 0, insolo = 0, inll = 0, inarpeggio = 0, intrill = 0, intremolo = 0, inslider = 0;
+	int spstart = -1, ssstart = -1, llstart = -1, arpeggiostart = -1, trillstart = -1, tremolostart = -1, sliderstart = -1;
+	int spend = -1, ssend = -1, llend = -1, arpeggioend = -1, trillend = -1, tremoloend = -1, sliderend = -1;
+	int spp = 0, ssp = 0, llp = 0, arpeggiop = 0, trillp = 0, tremolop = 0, sliderp = 0;
 	unsigned long i, j;
 	unsigned long tracknum;
 	int sel_start = eof_music_length, sel_end = 0;
@@ -387,6 +397,17 @@ void eof_prepare_note_menu(void)
 						tremolop = j;
 					}
 				}
+				for(j = 0; j < eof_get_num_sliders(eof_song, eof_selected_track); j++)
+				{	//For each slider phrase in the active track
+					sectionptr = eof_get_slider(eof_song, eof_selected_track, j);
+					if((sel_end >= sectionptr->start_pos) && (sel_start <= sectionptr->end_pos))
+					{
+						inslider = 1;
+						sliderstart = sel_start;
+						sliderend = sel_end;
+						sliderp = j;
+					}
+				}
 			}
 		}//PART VOCALS NOT SELECTED
 		vselected = eof_count_selected_notes(NULL, 1);
@@ -426,6 +447,14 @@ void eof_prepare_note_menu(void)
 
 			eof_note_menu[4].flags = 0;	//Note>Solos> submenu
 			eof_note_menu[5].flags = 0; //Note>Star Power> submenu
+			if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
+			{	//If a legacy guitar note is selected
+				eof_note_menu[13].flags = 0;		//Note>Slider> submenu
+			}
+			else
+			{
+				eof_note_menu[13].flags = D_DISABLED;
+			}
 		}
 		else
 		{	//NO NOTES/LYRICS SELECTED
@@ -434,6 +463,7 @@ void eof_prepare_note_menu(void)
 			eof_lyric_line_menu[0].flags = D_DISABLED;	//Note>Lyrics>Lyric Lines>Mark/Remark
 			eof_note_menu[4].flags = D_DISABLED; 		//Note>Solos> submenu
 			eof_note_menu[5].flags = D_DISABLED; 		//Note>Star Power> submenu
+			eof_note_menu[13].flags = D_DISABLED;		//Note>Slider> submenu
 		}
 
 		/* star power mark/remark */
@@ -583,6 +613,16 @@ void eof_prepare_note_menu(void)
 			eof_tremolo_menu[2].flags = D_DISABLED;
 		}
 
+		/* slider erase all */
+		if(eof_get_num_sliders(eof_song, eof_selected_track) > 0)
+		{	//If there are one or more slider phrases in the active track
+			eof_slider_menu[2].flags = 0;	//Note>Slider>Erase All
+		}
+		else
+		{
+			eof_slider_menu[2].flags = D_DISABLED;
+		}
+
 		/* resnap */
 		if(eof_snap_mode == EOF_SNAP_OFF)
 		{
@@ -605,10 +645,10 @@ void eof_prepare_note_menu(void)
 			eof_note_menu[10].flags = D_DISABLED;	//Note>HOPO
 			eof_note_menu[11].flags = D_DISABLED;	//Note>Trill> submenu
 			eof_note_menu[12].flags = D_DISABLED;	//Note>Tremolo> submenu
-			eof_note_menu[14].flags = D_DISABLED;	//Note>Drum> submenu
-			eof_note_menu[15].flags = D_DISABLED;	//Note>Pro Guitar> submenu
+			eof_note_menu[15].flags = D_DISABLED;	//Note>Drum> submenu
+			eof_note_menu[16].flags = D_DISABLED;	//Note>Pro Guitar> submenu
 
-			eof_note_menu[16].flags = 0;	//Note>Lyrics> submenu
+			eof_note_menu[17].flags = 0;	//Note>Lyrics> submenu
 			if((eof_selection.current < eof_song->vocal_track[tracknum]->lyrics) && (vselected == 1))
 			{	//Only enable edit and split lyric if only one lyric is selected
 				eof_note_lyrics_menu[0].flags = 0;	//Note>Lyrics>Edit Lyric
@@ -655,7 +695,7 @@ void eof_prepare_note_menu(void)
 			eof_note_menu[7].flags = 0;				//Note>Edit Name
 			eof_note_menu[11].flags = 0;			//Note>Trill> submenu
 			eof_note_menu[12].flags = 0;			//Note>Tremolo> submenu
-			eof_note_menu[16].flags = D_DISABLED;	//Note>Lyrics> submenu
+			eof_note_menu[17].flags = D_DISABLED;	//Note>Lyrics> submenu
 
 			/* transpose up */
 			if(eof_transpose_possible(-1))
@@ -689,11 +729,11 @@ void eof_prepare_note_menu(void)
 
 			if(eof_selected_track != EOF_TRACK_DRUM)
 			{	//When PART DRUMS is not active
-				eof_note_menu[14].flags = D_DISABLED;	//Note>Drum> submenu
+				eof_note_menu[15].flags = D_DISABLED;	//Note>Drum> submenu
 			}
 			else
 			{	//When PART DRUMS is active
-				eof_note_menu[14].flags = 0;
+				eof_note_menu[15].flags = 0;
 			}
 
 			/* toggle Expert+ bass drum */
@@ -719,7 +759,7 @@ void eof_prepare_note_menu(void)
 			/* Pro Guitar mode notation> */
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If the active track is a pro guitar track
-				eof_note_menu[15].flags = 0;			//Note>Pro Guitar> submenu
+				eof_note_menu[16].flags = 0;			//Note>Pro Guitar> submenu
 
 				/* Arpeggio>Erase all */
 				if(eof_song->pro_guitar_track[tracknum]->arpeggios)
@@ -733,7 +773,7 @@ void eof_prepare_note_menu(void)
 			}
 			else
 			{
-				eof_note_menu[15].flags = D_DISABLED;
+				eof_note_menu[16].flags = D_DISABLED;
 			}
 
 			/* Trill */
@@ -773,6 +813,18 @@ void eof_prepare_note_menu(void)
 			{	//Disable these submenus unless a track that can use them is active
 				eof_note_menu[11].flags = D_DISABLED;	//Note>Trill> submenu
 				eof_note_menu[12].flags = D_DISABLED;	//Note>Tremolo> submenu
+			}
+
+			/* Slider */
+			if(inslider)
+			{
+				eof_slider_menu[1].flags = 0;	//Note>Slider>Remove
+				ustrcpy(eof_slider_menu_mark_text, "Re-&Mark\tShift+S");
+			}
+			else
+			{
+				eof_slider_menu[1].flags = D_DISABLED;
+				ustrcpy(eof_slider_menu_mark_text, "&Mark\tShift+S");
 			}
 
 			/* Toggle>Purple */
@@ -1743,7 +1795,6 @@ int eof_menu_solo_unmark(void)
 	unsigned long i, j;
 	EOF_PHRASE_SECTION *soloptr = NULL;
 
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
@@ -1751,8 +1802,9 @@ int eof_menu_solo_unmark(void)
 			for(j = 0; j < eof_get_num_solos(eof_song, eof_selected_track); j++)
 			{	//For each solo section in the track
 				soloptr = eof_get_solo(eof_song, eof_selected_track, j);
-				if((eof_get_note_pos(eof_song, eof_selected_track, i) >= soloptr->start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) <= soloptr->end_pos))
+				if((eof_get_note_pos(eof_song, eof_selected_track, i) >= soloptr->start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= soloptr->end_pos))
 				{
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					eof_track_delete_solo(eof_song, eof_selected_track, j);
 					break;
 				}
@@ -1836,7 +1888,6 @@ int eof_menu_star_power_unmark(void)
 	unsigned long i, j;
 	EOF_PHRASE_SECTION *starpowerptr = NULL;
 
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
@@ -1846,6 +1897,7 @@ int eof_menu_star_power_unmark(void)
 				starpowerptr = eof_get_star_power_path(eof_song, eof_selected_track, j);
 				if((eof_get_note_pos(eof_song, eof_selected_track, i) >= starpowerptr->start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= starpowerptr->end_pos))
 				{
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					eof_track_delete_star_power_path(eof_song, eof_selected_track, j);
 					break;
 				}
@@ -1949,7 +2001,6 @@ int eof_menu_lyric_line_unmark(void)
 	if(!eof_vocals_selected)
 		return 1;
 
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{
 		if((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i])
@@ -1958,6 +2009,7 @@ int eof_menu_lyric_line_unmark(void)
 			{
 				if((eof_song->vocal_track[tracknum]->lyric[i]->pos >= eof_song->vocal_track[tracknum]->line[j].start_pos) && (eof_song->vocal_track[tracknum]->lyric[i]->pos <= eof_song->vocal_track[tracknum]->line[j].end_pos))
 				{
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					eof_vocal_track_delete_line(eof_song->vocal_track[tracknum], j);
 					break;
 				}
@@ -3318,7 +3370,6 @@ int eof_menu_arpeggio_unmark(void)
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Don't allow this function to run unless a pro guitar track is active
 
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -3326,8 +3377,9 @@ int eof_menu_arpeggio_unmark(void)
 		{	//If the note is selected and is in the active track difficulty
 			for(j = 0; j < eof_song->pro_guitar_track[tracknum]->arpeggios; j++)
 			{	//For each arpeggio section in the track
-				if((eof_get_note_pos(eof_song, eof_selected_track, i) >= eof_song->pro_guitar_track[tracknum]->arpeggio[j].start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) <= eof_song->pro_guitar_track[tracknum]->arpeggio[j].end_pos))
+				if((eof_get_note_pos(eof_song, eof_selected_track, i) >= eof_song->pro_guitar_track[tracknum]->arpeggio[j].start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= eof_song->pro_guitar_track[tracknum]->arpeggio[j].end_pos))
 				{	//If the note is encompassed within this arpeggio section
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					eof_pro_guitar_track_delete_arpeggio(eof_song->pro_guitar_track[tracknum], j);	//Delete the arpeggio section
 					break;
 				}
@@ -3394,7 +3446,7 @@ int eof_menu_trill_mark(void)
 			if(firstnote == 0)
 			{	//This is the first encountered selected note
 				sel_start = eof_get_note_pos(eof_song, eof_selected_track, i);
-				sel_end = sel_start;
+				sel_end = sel_start + eof_get_note_length(eof_song, eof_selected_track, i);
 				firstnote = 1;
 			}
 			else
@@ -3457,7 +3509,7 @@ int eof_menu_tremolo_mark(void)
 			if(firstnote == 0)
 			{	//This is the first encountered selected note
 				sel_start = eof_get_note_pos(eof_song, eof_selected_track, i);
-				sel_end = sel_start;
+				sel_end = sel_start + eof_get_note_length(eof_song, eof_selected_track, i);
 				firstnote = 1;
 			}
 			else
@@ -3498,6 +3550,69 @@ int eof_menu_tremolo_mark(void)
 	return 1;
 }
 
+int eof_menu_slider_mark(void)
+{
+	unsigned long i, j;
+	unsigned long sel_start = 0;
+	unsigned long sel_end = 0;
+	char firstnote = 0;						//Is set to nonzero when the first selected note in the active track difficulty is found
+	char existingphrase = 0;				//Is set to nonzero if any selected notes are within an existing phrase
+	unsigned long existingphrasenum = 0;	//Is set to the last slider phrase number that encompasses existing notes
+	unsigned long tracknum;
+	EOF_PHRASE_SECTION *sectionptr;
+
+	if((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT))
+		return 1;	//Do not allow this function to run unless a legacy guitar track is active
+
+	//Find the start and end position of the collection of selected notes in the active difficulty
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If the note is selected and is in the active track and difficulty
+			if(firstnote == 0)
+			{	//This is the first encountered selected note
+				sel_start = eof_get_note_pos(eof_song, eof_selected_track, i);
+				sel_end = sel_start + eof_get_note_length(eof_song, eof_selected_track, i);
+				firstnote = 1;
+			}
+			else
+			{
+				if(eof_get_note_pos(eof_song, eof_selected_track, i) < sel_start)
+				{
+					sel_start = eof_get_note_pos(eof_song, eof_selected_track, i);
+				}
+				if(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) > sel_end)
+				{
+					sel_end = eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i);
+				}
+			}
+		}
+	}
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	for(j = 0; j < eof_get_num_sliders(eof_song, eof_selected_track); j++)
+	{	//For each slider section in the track
+		sectionptr = eof_get_slider(eof_song, eof_selected_track, j);
+		if((sel_end >= sectionptr->start_pos) && (sel_start <= sectionptr->end_pos))
+		{	//If the selection of notes is within this slider section's start and end position
+			existingphrase = 1;	//Note it
+			existingphrasenum = j;
+		}
+	}
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	if(!existingphrase)
+	{	//If the selected notes are not within an existing slider phrase, create one
+		eof_track_add_section(eof_song, eof_selected_track, EOF_SLIDER_SECTION, 0, sel_start, sel_end, 0, NULL);
+	}
+	else
+	{	//Otherwise edit the existing phrase
+		sectionptr = eof_get_slider(eof_song, eof_selected_track, existingphrasenum);
+		sectionptr->start_pos = sel_start;
+		sectionptr->end_pos = sel_end;
+	}
+	eof_determine_phrase_status();
+	return 1;
+}
+
 int eof_menu_trill_unmark(void)
 {
 	unsigned long i, j;
@@ -3507,7 +3622,6 @@ int eof_menu_trill_unmark(void)
 	if((eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR))
 		return 1;	//Do not allow this function to run unless a pro/legacy guitar/bass/drum track is active
 
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -3516,8 +3630,9 @@ int eof_menu_trill_unmark(void)
 			for(j = 0; j < eof_get_num_trills(eof_song, eof_selected_track); j++)
 			{	//For each trill section in the track
 				sectionptr = eof_get_trill(eof_song, eof_selected_track, j);
-				if((eof_get_note_pos(eof_song, eof_selected_track, i) >= sectionptr->start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) <= sectionptr->end_pos))
+				if((eof_get_note_pos(eof_song, eof_selected_track, i) >= sectionptr->start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= sectionptr->end_pos))
 				{	//If the note is encompassed within this trill section
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					eof_track_delete_trill(eof_song, eof_selected_track, j);	//Delete the trill section
 					break;
 				}
@@ -3537,7 +3652,6 @@ int eof_menu_tremolo_unmark(void)
 	if((eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR))
 		return 1;	//Do not allow this function to run unless a pro/legacy guitar/bass/drum track is active
 
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -3546,9 +3660,40 @@ int eof_menu_tremolo_unmark(void)
 			for(j = 0; j < eof_get_num_tremolos(eof_song, eof_selected_track); j++)
 			{	//For each tremolo section in the track
 				sectionptr = eof_get_tremolo(eof_song, eof_selected_track, j);
-				if((eof_get_note_pos(eof_song, eof_selected_track, i) >= sectionptr->start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) <= sectionptr->end_pos))
+				if((eof_get_note_pos(eof_song, eof_selected_track, i) >= sectionptr->start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= sectionptr->end_pos))
 				{	//If the note is encompassed within this tremolo section
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					eof_track_delete_tremolo(eof_song, eof_selected_track, j);	//Delete the tremolo section
+					break;
+				}
+			}
+		}
+	}
+	eof_determine_phrase_status();
+	return 1;
+}
+
+int eof_menu_slider_unmark(void)
+{
+	unsigned long i, j;
+	unsigned long tracknum;
+	EOF_PHRASE_SECTION *sectionptr;
+
+	if((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT))
+		return 1;	//Do not allow this function to run unless a legacy guitar track is active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		{	//If the note is selected and is in the active track difficulty
+			for(j = 0; j < eof_get_num_sliders(eof_song, eof_selected_track); j++)
+			{	//For each slider section in the track
+				sectionptr = eof_get_slider(eof_song, eof_selected_track, j);
+				if((eof_get_note_pos(eof_song, eof_selected_track, i) >= sectionptr->start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= sectionptr->end_pos))
+				{	//If the note is encompassed within this slider section
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					eof_track_delete_slider(eof_song, eof_selected_track, j);	//Delete the slider section
 					break;
 				}
 			}
@@ -3595,6 +3740,20 @@ int eof_menu_tremolo_erase_all(void)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		eof_set_num_tremolos(eof_song, eof_selected_track, 0);
+	}
+	eof_determine_phrase_status();
+	return 1;
+}
+
+int eof_menu_slider_erase_all(void)
+{
+	if((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_format != EOF_LEGACY_TRACK_FORMAT))
+		return 1;	//Do not allow this function to run unless a legacy guitar track is active
+
+	if(alert(NULL, "Erase all slider sections from this track?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+	{
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		eof_set_num_sliders(eof_song, eof_selected_track, 0);
 	}
 	eof_determine_phrase_status();
 	return 1;
