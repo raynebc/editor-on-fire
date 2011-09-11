@@ -2164,6 +2164,53 @@ int eof_menu_edit_paste_from_catalog(void)
 		}
 
 		eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
+		if(eof_paste_erase_overlap)
+		{	//If the user decided to delete existing notes that are between the start and end of the pasted notes
+			unsigned long clear_start, clear_end;
+			for(i = 0; i < eof_get_track_size(eof_song, sourcetrack); i++)
+			{	//For each note in the active catalog entry's track
+				/* this note needs to be copied */
+				if((eof_get_note_type(eof_song, sourcetrack, i) == eof_song->catalog->entry[eof_selected_catalog_entry].type) && (eof_get_note_pos(eof_song, sourcetrack, i) >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_get_note_pos(eof_song, sourcetrack, i) + eof_get_note_length(eof_song, sourcetrack, i) <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos))
+				{
+					if(first == -1)
+					{
+						first_beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, sourcetrack, i));
+					}
+					this_beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, sourcetrack, i));
+					if(this_beat < 0)
+					{
+						break;
+					}
+					last_current_beat = current_beat;
+					current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay) + (this_beat - first_beat);
+					if(current_beat >= eof_song->beats - 1)
+					{
+						break;
+					}
+
+					nporpos = eof_get_porpos(eof_get_note_pos(eof_song, sourcetrack, i));
+					nporendpos = eof_get_porpos(eof_get_note_pos(eof_song, sourcetrack, i) + eof_get_note_length(eof_song, sourcetrack, i));
+					end_beat = eof_get_beat(eof_song, eof_get_note_pos(eof_song, sourcetrack, i) + eof_get_note_length(eof_song, sourcetrack, i));
+					if(end_beat < 0)
+					{
+						break;
+					}
+
+					if(first == -1)
+					{	//Track the start of the range of notes to clear
+						clear_start = eof_put_porpos(current_beat, nporpos, 0.0);
+						first = 1;
+					}
+					clear_end = eof_put_porpos(end_beat - first_beat + start_beat, nporendpos, 0.0);	//Track the end of each note so the end of the pasted notes can be tracked
+				}
+			}//For each note in the active catalog entry's track
+			eof_menu_edit_paste_clear_range(eof_selected_track, eof_note_type, clear_start, clear_end);	//Erase the notes that would get in the way of the pasted catalog entry
+
+			//Re-initialize some variables for the regular paste from catalog logic
+			first = first_beat = this_beat = end_beat = -1;
+			current_beat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+			last_current_beat = current_beat;
+		}
 		for(i = 0; i < eof_get_track_size(eof_song, sourcetrack); i++)
 		{	//For each note in the active catalog entry's track
 			/* this note needs to be copied */
@@ -2187,13 +2234,16 @@ int eof_menu_edit_paste_from_catalog(void)
 				}
 
 				/* if we run into notes, abort */
-				if((eof_vocals_selected) && (lyrics_in_beat(current_beat) && (last_current_beat != current_beat)))
-				{
-					break;
-				}
-				else if(notes_in_beat(current_beat) && (last_current_beat != current_beat))
-				{
-					break;
+				if(!eof_paste_erase_overlap)
+				{	//But only if the user hasn't already allowed any notes that would have been in the way to be deleted
+					if((eof_vocals_selected) && (lyrics_in_beat(current_beat) && (last_current_beat != current_beat)))
+					{
+						break;
+					}
+					else if(notes_in_beat(current_beat) && (last_current_beat != current_beat))
+					{
+						break;
+					}
 				}
 				nporpos = eof_get_porpos(eof_get_note_pos(eof_song, sourcetrack, i));
 				nporendpos = eof_get_porpos(eof_get_note_pos(eof_song, sourcetrack, i) + eof_get_note_length(eof_song, sourcetrack, i));
