@@ -2832,7 +2832,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 				}
 
 //Save the updated note flag bitmask
-				flags = 0;
+				flags = flags & (EOF_NOTE_FLAG_HOPO | EOF_NOTE_FLAG_SP);	//Clear the flags variable, except retain the note's existing SP and HOPO flag statuses
 				if(eof_pro_guitar_note_dialog[32].flags == D_SELECTED)
 				{	//HO is selected
 					flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;	//Set the hammer on flag
