@@ -16,7 +16,6 @@
 #endif
 
 #define EOF_MIDI_TIMER_FREQUENCY  40
-#define EOF_RBN_COMPATIBILITY		//Alters MIDI export logic to create a MIDI more suitable for use with the "Magma" RBN tool
 
 static EOF_MIDI_EVENT * eof_midi_event[EOF_MAX_MIDI_EVENTS];
 static unsigned long eof_midi_events = 0;
@@ -402,7 +401,7 @@ unsigned long eof_count_tracks(void)
    write MThd data and copy MTrk data from the temp file using the size of the temp file as the track length
    delete the temp file
    voila, correctly formatted MIDI file */
-int eof_export_midi(EOF_SONG * sp, char * fn)
+int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 {
 	eof_log("eof_export_midi() entered", 1);
 
@@ -437,6 +436,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	char expertpluswritten = 0;				//Tracks whether an expert+.mid track has been written
 	char eventstrackwritten = 0;			//Tracks whether an events track has been written
 	char beattrackwritten = 0;				//Tracks whether a beat track has been written
+	unsigned long trackcounter = 0;			//Tracks the number of tracks to write to file
 	char trackctr;							//Used in the temp data creation to handle Expert+
 	EOF_MIDI_TS_LIST *tslist=NULL;			//List containing TS changes
 	unsigned char rootvel;					//Used to write root notes for pro guitar tracks
@@ -485,46 +485,47 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 	eof_sort_notes(sp);	//Writing efficient on-the-fly HOPO phrasing relies on all notes being sorted
 
-	#ifdef EOF_RBN_COMPATIBILITY
-	//Magma requires some default track events to be written
-	if(sp->tags->ogg[eof_selected_ogg].midi_offset != 0)
-	{	//Rock Band songs are have a MIDI offset of 0
-		eof_log("\t! Warning:  MIDI offset is not zero, this song may play out of sync in Rock Band", 1);
-	}
-	if(sp->beats > 3)
-	{	//Only add these if there are at least 4 beats
-		if(!eof_song_contains_event(sp, "[music_start]", 0))
-		{	//If the user did not define the music_start event
-			eof_log("\t! Adding missing [music_start] event", 1);
-			eof_song_add_text_event(sp, 2, "[music_start]", 0, 1);	//Add it as a temporary event two beats into the song (at the third beat)
+	if(featurerestriction)
+	{	//If writing a Rock Band compliant MIDI
+		//Magma requires some default track events to be written
+		if(sp->tags->ogg[eof_selected_ogg].midi_offset != 0)
+		{	//Rock Band songs are have a MIDI offset of 0
+			eof_log("\t! Warning:  MIDI offset is not zero, this song may play out of sync in Rock Band", 1);
 		}
-		if(!eof_song_contains_event(sp, "[music_end]", 0))
-		{	//If the user did not define the music_end event
-			eof_log("\t! Adding missing [music_end] event", 1);
-			eof_song_add_text_event(sp, sp->beats-1, "[music_end]", 0, 1);	//Add it as a temporary event on the last beat
+		if(sp->beats > 3)
+		{	//Only add these if there are at least 4 beats
+			if(!eof_song_contains_event(sp, "[music_start]", 0))
+			{	//If the user did not define the music_start event
+				eof_log("\t! Adding missing [music_start] event", 1);
+				eof_song_add_text_event(sp, 2, "[music_start]", 0, 1);	//Add it as a temporary event two beats into the song (at the third beat)
+			}
+			if(!eof_song_contains_event(sp, "[music_end]", 0))
+			{	//If the user did not define the music_end event
+				eof_log("\t! Adding missing [music_end] event", 1);
+				eof_song_add_text_event(sp, sp->beats-1, "[music_end]", 0, 1);	//Add it as a temporary event on the last beat
+			}
+			if(!eof_song_contains_event_beginning_with(sp, "[mix 0", EOF_TRACK_DRUM))
+			{	//If the user did not define an easy difficulty drum mix event
+				eof_log("\t! Adding missing easy drum mix event", 1);
+				eof_song_add_text_event(sp, 0, "[mix 0 drums0]", EOF_TRACK_DRUM, 1);	//Add one as a temporary event on the first beat of the drum track
+			}
+			if(!eof_song_contains_event_beginning_with(sp, "[mix 1", EOF_TRACK_DRUM))
+			{	//If the user did not define a medium difficulty drum mix event
+				eof_log("\t! Adding missing medium drum mix event", 1);
+				eof_song_add_text_event(sp, 0, "[mix 1 drums0]", EOF_TRACK_DRUM, 1);	//Add one as a temporary event on the first beat of the drum track
+			}
+			if(!eof_song_contains_event_beginning_with(sp, "[mix 2", EOF_TRACK_DRUM))
+			{	//If the user did not define a hard difficulty drum mix event
+				eof_log("\t! Adding missing hard drum mix event", 1);
+				eof_song_add_text_event(sp, 0, "[mix 2 drums0]", EOF_TRACK_DRUM, 1);	//Add one as a temporary event on the first beat of the drum track
+			}
+			if(!eof_song_contains_event_beginning_with(sp, "[mix 3", EOF_TRACK_DRUM))
+			{	//If the user did not define an expert difficulty drum mix event
+				eof_log("\t! Adding missing expert drum mix event", 1);
+				eof_song_add_text_event(sp, 0, "[mix 3 drums0]", EOF_TRACK_DRUM, 1);	//Add one as a temporary event on the first beat of the drum track
+			}
 		}
-		if(!eof_song_contains_event_beginning_with(sp, "[mix 0", EOF_TRACK_DRUM))
-		{	//If the user did not define an easy difficulty drum mix event
-			eof_log("\t! Adding missing easy drum mix event", 1);
-			eof_song_add_text_event(sp, 0, "[mix 0 drums0]", EOF_TRACK_DRUM, 1);	//Add one as a temporary event on the first beat of the drum track
-		}
-		if(!eof_song_contains_event_beginning_with(sp, "[mix 1", EOF_TRACK_DRUM))
-		{	//If the user did not define a medium difficulty drum mix event
-			eof_log("\t! Adding missing medium drum mix event", 1);
-			eof_song_add_text_event(sp, 0, "[mix 1 drums0]", EOF_TRACK_DRUM, 1);	//Add one as a temporary event on the first beat of the drum track
-		}
-		if(!eof_song_contains_event_beginning_with(sp, "[mix 2", EOF_TRACK_DRUM))
-		{	//If the user did not define a hard difficulty drum mix event
-			eof_log("\t! Adding missing hard drum mix event", 1);
-			eof_song_add_text_event(sp, 0, "[mix 2 drums0]", EOF_TRACK_DRUM, 1);	//Add one as a temporary event on the first beat of the drum track
-		}
-		if(!eof_song_contains_event_beginning_with(sp, "[mix 3", EOF_TRACK_DRUM))
-		{	//If the user did not define an expert difficulty drum mix event
-			eof_log("\t! Adding missing expert drum mix event", 1);
-			eof_song_add_text_event(sp, 0, "[mix 3 drums0]", EOF_TRACK_DRUM, 1);	//Add one as a temporary event on the first beat of the drum track
-		}
-	}
-	#endif
+	}//If writing a Rock Band compliant MIDI
 	eof_sort_events(sp);
 
 	//Write tracks
@@ -532,6 +533,22 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	{	//For each track in the project
 		if(eof_get_track_size(sp, j) == 0)	//If this track has no notes
 			continue;	//Skip the track
+
+		if(featurerestriction == 1)
+		{	//If writing a RBN2 compliant MIDI
+			if((j != EOF_TRACK_GUITAR) && (j != EOF_TRACK_BASS) && (j != EOF_TRACK_DRUM) && (j != EOF_TRACK_VOCALS) && (j != EOF_TRACK_KEYS) && (j != EOF_TRACK_PRO_KEYS))
+			{	//If this track is not valid for RBN2
+				continue;	//Skip the track
+			}
+		}
+		else if(featurerestriction == 2)
+		{	//If writing a RB3 compliant pro guitar upgrade MIDI
+			if((j != EOF_TRACK_PRO_BASS) && (j != EOF_TRACK_PRO_GUITAR) && (j != EOF_TRACK_PRO_BASS_22) && (j != EOF_TRACK_PRO_GUITAR_22))
+			{	//If this track is not valid for a RB3 pro guitar upgrade
+				continue;	//SKip the track
+			}
+		}
+		trackcounter++;	//Count this track towards the number of tracks to write to the completed MIDI
 
 		if(j == EOF_TRACK_DANCE)
 		{	//Phase Shift's dance track specification is for dance notes to use a velocity of 127
@@ -670,8 +687,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				/* write green note */
 				if(note & 1)
 				{
-					if((j == EOF_TRACK_DRUM) && (noteflags & EOF_NOTE_FLAG_DBASS))
-					{	//If the track being written is PART DRUMS, and this note is marked for Expert+ double bass
+					if((j == EOF_TRACK_DRUM) && (noteflags & EOF_NOTE_FLAG_DBASS) && !featurerestriction)
+					{	//If the track being written is PART DRUMS, this note is marked for Expert+ double bass, and not writing a RB3 compliant MIDI
 						eof_add_midi_event(deltapos, 0x90, 95, vel, 0);
 						eof_add_midi_event(deltapos + deltalength, 0x80, 95, vel, 0);
 						expertplus = 1;
@@ -692,13 +709,16 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					{	//If this is the drum track, prepare to write drum specific Sysex phrases if necessary
 						if(noteflags & EOF_DRUM_NOTE_FLAG_R_RIMSHOT)
 						{	//If this note is marked as a rim shot
-							phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
-							phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
-							phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-							phase_shift_sysex_phrase[5] = 7;	//Store the phrase ID (7 = Snare rim shot)
-							eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom rim shot start marker
-							phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-							eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom rim shot phrase stop marker
+							if(featurerestriction == 0)
+							{	//Only write this notation if not writing a Rock Band compliant MIDI
+								phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+								phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
+								phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+								phase_shift_sysex_phrase[5] = 7;	//Store the phrase ID (7 = Snare rim shot)
+								eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom rim shot start marker
+								phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+								eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom rim shot phrase stop marker
+							}
 						}
 					}
 				}
@@ -718,23 +738,26 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 2, vel, 0);
 					if(j == EOF_TRACK_DRUM)
 					{	//If this is the drum track, prepare to write drum specific Sysex phrases if necessary
-						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
-						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
-						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-						if(noteflags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN)
-						{	//If this note is marked as an open hi hat note
-							phase_shift_sysex_phrase[5] = 5;	//Store the phrase ID (5 = Open Hi Hat)
-							eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom open hi hat start marker
-							phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-							eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom open hi hat stop marker
-						}
-						else if(noteflags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL)
-						{	//If this note is marked as a pedal controlled hi hat note
-							phase_shift_sysex_phrase[5] = 6;	//Store the phrase ID (6 = Pedal Controlled Hi Hat)
-							eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pedal controlled hi hat start marker
-							phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-							eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pedal controlled hi hat phrase stop marker
-						}
+						if(featurerestriction == 0)
+						{	//Only write these notations if not writing a Rock Band compliant MIDI
+							phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+							phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
+							phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+							if(noteflags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN)
+							{	//If this note is marked as an open hi hat note
+								phase_shift_sysex_phrase[5] = 5;	//Store the phrase ID (5 = Open Hi Hat)
+								eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom open hi hat start marker
+								phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+								eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom open hi hat stop marker
+							}
+							else if(noteflags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL)
+							{	//If this note is marked as a pedal controlled hi hat note
+								phase_shift_sysex_phrase[5] = 6;	//Store the phrase ID (6 = Pedal Controlled Hi Hat)
+								eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pedal controlled hi hat start marker
+								phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+								eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pedal controlled hi hat phrase stop marker
+							}
+						}//Only write these notations if not writing a Rock Band compliant MIDI
 					}
 				}
 
@@ -771,22 +794,28 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				/* write open bass note marker, if the feature was enabled during save */
 				if(eof_open_bass_enabled() && (j == EOF_TRACK_BASS) && (note & 32))
 				{	//If this is an open bass note
-					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 0, vel, 0);	//Write a gem for lane 1
-					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 0, vel, 0);
-					phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
-					phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
-					phase_shift_sysex_phrase[5] = 1;	//Store the phrase ID (1 = Open Strum Bass)
-					phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-					eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom open bass phrase start marker
-					phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-					eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom open bass phrase stop marker
+					if(featurerestriction == 0)
+					{	//Only write this notation if not writing a Rock Band compliant MIDI
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 0, vel, 0);	//Write a gem for lane 1
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 0, vel, 0);
+						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
+						phase_shift_sysex_phrase[5] = 1;	//Store the phrase ID (1 = Open Strum Bass)
+						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom open bass phrase start marker
+						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom open bass phrase stop marker
+					}
 				}
 
 				/* write fifth lane drum note, if the feature was enabled during save */
 				if(eof_five_lane_drums_enabled() && (j == EOF_TRACK_DRUM) && (note & 32))
 				{	//If this is a lane 6 gem (referred to as lane 5 for drums, seeing as bass drum doesn't use a lane)
-					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 5, vel, 0);
-					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 5, vel, 0);
+					if(featurerestriction == 0)
+					{	//Only write this notation if not writing a Rock Band compliant MIDI
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 5, vel, 0);
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 5, vel, 0);
+					}
 				}
 
 				/* write forced HOPO */
@@ -861,22 +890,25 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 			}
 
 			/* fill in sliders */
-			for(i = 0; i < eof_get_num_sliders(sp, j); i++)
-			{	//For each slider in the track
-				sectionptr = eof_get_slider(sp, j, i);
-				deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);	//Store the tick position of the phrase
-				deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION) - deltapos;	//Store the number of delta ticks representing the phrase's length
-				if(deltalength < 1)
-				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
-					deltalength = 1;
+			if(featurerestriction == 0)
+			{	//Only write slider notation if not writing a Rock Band compliant MIDI
+				for(i = 0; i < eof_get_num_sliders(sp, j); i++)
+				{	//For each slider in the track
+					sectionptr = eof_get_slider(sp, j, i);
+					deltapos = eof_ConvertToDeltaTime(sectionptr->start_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);	//Store the tick position of the phrase
+					deltalength = eof_ConvertToDeltaTime(sectionptr->end_pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION) - deltapos;	//Store the number of delta ticks representing the phrase's length
+					if(deltalength < 1)
+					{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
+						deltalength = 1;
+					}
+					phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+					phase_shift_sysex_phrase[4] = 0xFF;	//Store the difficulty ID (0xFF = all difficulties)
+					phase_shift_sysex_phrase[5] = 4;	//Store the phrase ID (4 = slider)
+					phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+					eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide start marker
+					phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+					eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide stop marker
 				}
-				phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
-				phase_shift_sysex_phrase[4] = 0xFF;	//Store the difficulty ID (0xFF = all difficulties)
-				phase_shift_sysex_phrase[5] = 4;	//Store the phrase ID (4 = slider)
-				phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-				eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide start marker
-				phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-				eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide stop marker
 			}
 
 			for(i=0;i < 128;i++)
@@ -901,8 +933,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 					fp = pack_fopen(expertplustempname, "w");
 					for(i = 0; i < eof_midi_events; i++)
 					{	//Change all the double bass note events (note 95) to regular bass for the Expert+ track
-					if(eof_midi_event[i]->note == 95)
-						eof_midi_event[i]->note = 96;
+						if(eof_midi_event[i]->note == 95)
+							eof_midi_event[i]->note = 96;
 					}
 				}
 
@@ -1302,20 +1334,23 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 				/* write slide sections */
 				if((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 				{	//If this note slides up or down
-					phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
-					phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
-					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-					{	//If this note slides up
-						phase_shift_sysex_phrase[5] = 2;	//Store the phrase ID (2 = Pro guitar slide up)
+					if(featurerestriction == 0)
+					{	//Only write the slide Sysex notation if not writing a Rock Band compliant MIDI
+						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
+						if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+						{	//If this note slides up
+							phase_shift_sysex_phrase[5] = 2;	//Store the phrase ID (2 = Pro guitar slide up)
+						}
+						else
+						{	//If this note slides down
+							phase_shift_sysex_phrase[5] = 3;	//Store the phrase ID (3 = Pro guitar slide down)
+						}
+						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide start marker
+						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide stop marker
 					}
-					else
-					{	//If this note slides down
-						phase_shift_sysex_phrase[5] = 3;	//Store the phrase ID (3 = Pro guitar slide down)
-					}
-					phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-					eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide start marker
-					phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-					eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide stop marker
 
 					//This isn't the correct RB3 slide logic, but Bigjoe5 has indicated he can control this type of
 					//slide marker artificially by using a ghost note with a higher/lower fret value than that of the
@@ -1577,24 +1612,25 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		return 0;
 	}
 
-	#ifdef EOF_RBN_COMPATIBILITY
-	//I've found that Magma will not recognize tracks correctly unless track 0 has a name defined
-	/* write the track name */
-	WriteVarLen(0, fp);
-	pack_putc(0xFF, fp);
-	pack_putc(0x03, fp);
-	if(sp->tags->title[0] != '\0')
-	{	//If a song title has been defined
-		snprintf(chordname, sizeof(chordname), "%s", sp->tags->title);	//Borrow this array to store the chart title
+	if(featurerestriction != 0)
+	{	//If writing a RB3 compliant MIDI
+		//I've found that Magma will not recognize tracks correctly unless track 0 has a name defined
+		/* write the track name */
+		WriteVarLen(0, fp);
+		pack_putc(0xFF, fp);
+		pack_putc(0x03, fp);
+		if(sp->tags->title[0] != '\0')
+		{	//If a song title has been defined
+			snprintf(chordname, sizeof(chordname), "%s", sp->tags->title);	//Borrow this array to store the chart title
+		}
+		else
+		{	//Make up a track name so it will build in Magma
+			snprintf(chordname, sizeof(chordname), "Tempo map");
+			eof_log("\t! Song title is not defined, a fake song title was used as the name for track 0 so the song will build in Magma", 1);
+		}
+		WriteVarLen(ustrlen(chordname), fp);
+		pack_fwrite(chordname, ustrlen(chordname), fp);
 	}
-	else
-	{	//Make up a track name so it will build in Magma
-		snprintf(chordname, sizeof(chordname), "Tempo map");
-		eof_log("\t! Song title is not defined, a fake song title was used as the name for track 0 so the song will build in Magma", 1);
-	}
-	WriteVarLen(ustrlen(chordname), fp);
-	pack_fwrite(chordname, ustrlen(chordname), fp);
-	#endif
 
 	lastdelta=0;
 	unsigned long current_ts=0;
@@ -1670,12 +1706,87 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 
 
 /* make events track */
-	#ifndef EOF_RBN_COMPATIBILITY
-	if(sp->text_events)
-	{
-	#endif
+	if(featurerestriction != 2)
+	{	//Do not write an events track in a pro guitar upgrade MIDI
+		if((sp->text_events) || (featurerestriction == 1))
+		{	//If there are manually defined text events, or if writing a RBN2 compliant MIDI (which requires certain events)
+			/* open the file */
+			fp = pack_fopen(eventtempname, "w");
+			if(!fp)
+			{
+				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+				eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
+				eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
+				return 0;
+			}
+
+			/* write the track name */
+			WriteVarLen(0, fp);
+			pack_putc(0xFF, fp);
+			pack_putc(0x03, fp);
+			WriteVarLen(ustrlen("EVENTS"), fp);
+			pack_fwrite("EVENTS", ustrlen("EVENTS"), fp);
+
+			/* add MIDI events */
+			lastdelta = 0;
+			for(i = 0; i < sp->text_events; i++)
+			{
+				if(sp->text_event[i]->track == 0)
+				{	//If the text event is global (not specific to any single track)
+					if(sp->text_event[i]->beat >= sp->beats)
+					{	//If the text event is corrupted
+						sp->text_event[i]->beat = sp->beats - 1;	//Repair it by assigning it to the last beat marker
+					}
+					delta = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
+					eof_write_text_event(delta - lastdelta, sp->text_event[i]->text, fp);
+					lastdelta = delta;					//Store this event's absolute delta time
+				}
+			}
+
+			if(featurerestriction == 1)
+			{	//If writing a RBN2 compliant MIDI
+				//Magma requires that the [end] event is the last MIDI event in the track, so it will be written 1ms after the end of the audio
+				//Check the existing events to see if such an event is already defined
+				if(!eof_song_contains_event(sp, "[end]", 0))
+				{	//If the user did not define the end event, manually write it
+					eof_log("\t! Adding missing [end] event", 1);
+					delta = eof_music_length + 1;	//Prepare to write the end event after the audio ends
+					if(sp->beat[sp->beats - 1]->pos > delta)
+					{	//If the last beat ends after the audio,
+						delta = sp->beat[sp->beats - 1]->pos + 1;	//Prepare to write the end event after it instead
+					}
+					delta = eof_ConvertToDeltaTime(delta,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
+					eof_write_text_event(delta - lastdelta, "[end]", fp);
+					lastdelta = delta;					//Store this event's absolute delta time
+				}
+			}
+			//Remove all temporary text events that were added for the sake of RBN compatibility
+			for(i = sp->text_events; i > 0; i--)
+			{	//For each text event (in reverse order)
+				if(sp->text_event[i-1]->is_temporary)
+				{	//If this text event has been marked as temporary
+					eof_song_delete_text_event(sp, i-1);	//Delete it
+				}
+			}
+			eof_sort_events(sp);	//Re-sort
+
+			/* end of track */
+			WriteVarLen(0, fp);
+			pack_putc(0xFF, fp);
+			pack_putc(0x2F, fp);
+			pack_putc(0x00, fp);
+
+			pack_fclose(fp);
+			eventstrackwritten = 1;
+		}//If there are manually defined text events, or if writing a RBN2 compliant MIDI (which requires certain events)
+	}//Do not write an events track in a pro guitar upgrade MIDI
+
+
+/* make beat track */
+	if(featurerestriction == 1)
+	{	//If writing a RBN2 compliant MIDI, make the beat track, which is required
 		/* open the file */
-		fp = pack_fopen(eventtempname, "w");
+		fp = pack_fopen(beattempname, "w");
 		if(!fp)
 		{
 			eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
@@ -1688,52 +1799,59 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		WriteVarLen(0, fp);
 		pack_putc(0xFF, fp);
 		pack_putc(0x03, fp);
-		WriteVarLen(ustrlen("EVENTS"), fp);
-		pack_fwrite("EVENTS", ustrlen("EVENTS"), fp);
+		WriteVarLen(ustrlen("BEAT"), fp);
+		pack_fwrite("BEAT", ustrlen("BEAT"), fp);
 
-		/* add MIDI events */
+		/* parse the beat array, writing a note #12 at the first beat of every measure, and a note #13 at every other beat */
+		unsigned long beat_counter = 0;
+		unsigned beats_per_measure = 4;		//By default, a 4/4 time signature is assumed until a TS event is reached
+		unsigned note_to_write = 0;
+		unsigned length_to_write = 0;
+
 		lastdelta = 0;
-		for(i = 0; i < sp->text_events; i++)
+		for(i = 0; i < sp->beats; i++)
 		{
-			if(sp->text_event[i]->track == 0)
-			{	//If the text event is global (not specific to any single track)
-				if(sp->text_event[i]->beat >= sp->beats)
-				{	//If the text event is corrupted
-					sp->text_event[i]->beat = sp->beats - 1;	//Repair it by assigning it to the last beat marker
-				}
-				delta = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->fpos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
-				eof_write_text_event(delta - lastdelta, sp->text_event[i]->text, fp);
-				lastdelta = delta;					//Store this event's absolute delta time
+			//Determine if this is the first beat in a measure and which note number to write
+			if(eof_get_ts(sp,&beats_per_measure,NULL,i) == 1)
+			{	//If this beat is a time signature
+				beat_counter = 0;
+			}
+			if(beat_counter == 0)
+			{	//If this is the first beat in a measure (the downbeat), write a note #12
+				note_to_write = 12;
+			}
+			else
+			{	//Otherwise write a note #13 for all non downbeats
+				note_to_write = 13;
+			}
+
+			//Determine the length of 1/4 of the current beat, which will be the length of the beat notes written
+			//Based on the formula "length of beat = 60000 ms / BPM", the formula "length of beat = ppqn / 1000" can be derived
+			length_to_write = (double)sp->beat[i]->ppqn / 1000.0 / 4.0 + 0.5;	//Round up to nearest millisecond
+
+			//Write the note on event
+			delta = eof_ConvertToDeltaTime(sp->beat[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
+			WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
+			lastdelta = delta;			//Store this event's absolute delta time
+			pack_putc(0x90, fp);			//MIDI event 0x9 (note on), channel 0
+			pack_putc(note_to_write, fp);		//Note 12 or 13
+			pack_putc(100, fp);			//Pre-determined velocity
+
+			//Write the note off event
+			delta = eof_ConvertToDeltaTime(sp->beat[i]->pos + length_to_write,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
+			WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
+			lastdelta = delta;			//Store this event's absolute delta time
+			pack_putc(0x80, fp);			//MIDI event 0x8 (note off), channel 0
+			pack_putc(note_to_write, fp);		//Note 12 or 13
+			pack_putc(100, fp);			//Pre-determined velocity
+
+			//Increment to the next beat
+			beat_counter++;
+			if(beat_counter >= beats_per_measure)
+			{
+				beat_counter = 0;
 			}
 		}
-
-		#ifdef EOF_RBN_COMPATIBILITY
-		//Magma requires that the [end] event is the last MIDI event in the track, so it will be written 1ms after the end of the audio
-		//Check the existing events to see if such an event is already defined
-		if(!eof_song_contains_event(sp, "[end]", 0))
-		{	//If the user did not define the end event, manually write it
-			eof_log("\t! Adding missing [end] event", 1);
-			delta = eof_music_length + 1;	//Prepare to write the end event after the audio ends
-			if(sp->beat[sp->beats - 1]->pos > delta)
-			{	//If the last beat ends after the audio,
-				delta = sp->beat[sp->beats - 1]->pos + 1;	//Prepare to write the end event after it instead
-			}
-			delta = eof_ConvertToDeltaTime(delta,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
-			eof_write_text_event(delta - lastdelta, "[end]", fp);
-			lastdelta = delta;					//Store this event's absolute delta time
-		}
-
-		//Remove all temporary text events that were added for the sake of RBN compatibility
-		for(i = sp->text_events; i > 0; i--)
-		{	//For each text event (in reverse order)
-			if(sp->text_event[i-1]->is_temporary)
-			{	//If this text event has been marked as temporary
-				eof_song_delete_text_event(sp, i-1);	//Delete it
-			}
-		}
-		eof_sort_events(sp);	//Re-sort
-
-		#endif
 
 		/* end of track */
 		WriteVarLen(0, fp);
@@ -1742,91 +1860,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 		pack_putc(0x00, fp);
 
 		pack_fclose(fp);
-		eventstrackwritten = 1;
-	#ifndef EOF_RBN_COMPATIBILITY
-	}
-	#endif
-
-
-/* make beat track */
-	#ifdef EOF_RBN_COMPATIBILITY
-		/* open the file */
-	fp = pack_fopen(beattempname, "w");
-	if(!fp)
-	{
-		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
-		eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
-		eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
-		return 0;
-	}
-
-	/* write the track name */
-	WriteVarLen(0, fp);
-	pack_putc(0xFF, fp);
-	pack_putc(0x03, fp);
-	WriteVarLen(ustrlen("BEAT"), fp);
-	pack_fwrite("BEAT", ustrlen("BEAT"), fp);
-
-	/* parse the beat array, writing a note #12 at the first beat of every measure, and a note #13 at every other beat */
-	unsigned long beat_counter = 0;
-	unsigned beats_per_measure = 4;		//By default, a 4/4 time signature is assumed until a TS event is reached
-	unsigned note_to_write = 0;
-	unsigned length_to_write = 0;
-
-	lastdelta = 0;
-	for(i = 0; i < sp->beats; i++)
-	{
-		//Determine if this is the first beat in a measure and which note number to write
-		if(eof_get_ts(sp,&beats_per_measure,NULL,i) == 1)
-		{	//If this beat is a time signature
-			beat_counter = 0;
-		}
-		if(beat_counter == 0)
-		{	//If this is the first beat in a measure (the downbeat), write a note #12
-			note_to_write = 12;
-		}
-		else
-		{	//Otherwise write a note #13 for all non downbeats
-			note_to_write = 13;
-		}
-
-		//Determine the length of 1/4 of the current beat, which will be the length of the beat notes written
-		//Based on the formula "length of beat = 60000 ms / BPM", the formula "length of beat = ppqn / 1000" can be derived
-		length_to_write = (double)sp->beat[i]->ppqn / 1000.0 / 4.0 + 0.5;	//Round up to nearest millisecond
-
-		//Write the note on event
-		delta = eof_ConvertToDeltaTime(sp->beat[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
-		WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
-		lastdelta = delta;			//Store this event's absolute delta time
-		pack_putc(0x90, fp);			//MIDI event 0x9 (note on), channel 0
-		pack_putc(note_to_write, fp);		//Note 12 or 13
-		pack_putc(100, fp);			//Pre-determined velocity
-
-		//Write the note off event
-		delta = eof_ConvertToDeltaTime(sp->beat[i]->pos + length_to_write,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
-		WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
-		lastdelta = delta;			//Store this event's absolute delta time
-		pack_putc(0x80, fp);			//MIDI event 0x8 (note off), channel 0
-		pack_putc(note_to_write, fp);		//Note 12 or 13
-		pack_putc(100, fp);			//Pre-determined velocity
-
-		//Increment to the next beat
-		beat_counter++;
-		if(beat_counter >= beats_per_measure)
-		{
-			beat_counter = 0;
-		}
-	}
-
-	/* end of track */
-	WriteVarLen(0, fp);
-	pack_putc(0xFF, fp);
-	pack_putc(0x2F, fp);
-	pack_putc(0x00, fp);
-
-	pack_fclose(fp);
-	beattrackwritten = 1;
-	#endif
+		beattrackwritten = 1;
+	}	//If writing a RBN2 compliant MIDI, write the beat track, which is required
 
 
 	fp = pack_fopen(fn, "w");
@@ -1840,7 +1875,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	}
 
 	/* write header data */
-	header[11] = eof_count_tracks() + 1 + eventstrackwritten + beattrackwritten;	//Add 1 for track 0 and one each for the events and beat tracks if applicable
+	trackcounter += 1 + eventstrackwritten + beattrackwritten;	//Add 1 for track 0 and one each for the events and beat tracks if applicable
+	header[11] = trackcounter;	//Write the number of tracks present into the MIDI header
 	pack_fwrite(header, 14, fp);
 
 	if(expertpluswritten)
@@ -1862,28 +1898,24 @@ int eof_export_midi(EOF_SONG * sp, char * fn)
 	}
 
 /* write text event track if there are any events */
-	#ifndef EOF_RBN_COMPATIBILITY
 	//If RBN compatibility is in effect, the events track will be populated by force with at least the required events
-	if(sp->text_events)
-	{
-	#endif
+	if((sp->text_events) || (featurerestriction == 1))
+	{	//If there are manually defined text events, or if writing a RBN2 compliant MIDI (which requires certain events)
 		eof_dump_midi_track(eventtempname,fp);
 		if(expertpluswritten)
 		{
 			eof_dump_midi_track(eventtempname,fp3);
 		}
-	#ifndef EOF_RBN_COMPATIBILITY
 	}
-	#endif
 
-	#ifdef EOF_RBN_COMPATIBILITY
-/* If RBN compatibility is in effect, write a beat track */
-	eof_dump_midi_track(beattempname,fp);
-	if(expertpluswritten)
-	{	//If writing an expert+ MIDI as well
-		eof_dump_midi_track(tempotempname,fp3);
+	if(featurerestriction == 1)
+	{	//If writing a RBN2 compliant MIDI, write the beat track, which is required
+		eof_dump_midi_track(beattempname,fp);
+		if(expertpluswritten)
+		{	//If writing an expert+ MIDI as well
+			eof_dump_midi_track(tempotempname,fp3);
+		}
 	}
-	#endif
 
 /* write tracks */
 	for(k = 0; k <= expertpluswritten; k++)
