@@ -194,7 +194,8 @@ MENU eof_note_proguitar_menu[] =
     {"Mark as non palm &Muting", eof_menu_note_remove_palm_muting, NULL, 0, NULL},
     {"&Arpeggio", NULL, eof_arpeggio_menu, 0, NULL},
     {"&Clear legacy bitmask", eof_menu_note_clear_legacy_values, NULL, 0, NULL},
-    {"Cycle strum direction\tCtrl+U", eof_pro_guitar_cycle_strum_direction, NULL, 0, NULL},
+	{"Toggle Strum Up\tShift+Up", eof_pro_guitar_toggle_strum_up, NULL, 0, NULL},
+	{"Toggle Strum Down\tShift+Down", eof_pro_guitar_toggle_strum_down, NULL, 0, NULL},
     {"Remove strum direction", eof_menu_note_remove_strum_direction, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
@@ -3835,7 +3836,41 @@ int eof_menu_note_edit_name(void)
 	return D_O_K;
 }
 
-int eof_pro_guitar_cycle_strum_direction(void)
+int eof_pro_guitar_toggle_strum_up(void)
+{
+	unsigned long i;
+	char undo_made = 0;	//Set to nonzero if an undo state was saved
+	unsigned long flags;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			if(!undo_made)
+			{	//If an undo state hasn't been made yet
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+				undo_made = 1;
+			}
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
+			{	//If the note was already set to strum up, set it to strum either
+				flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM);		//Clear the strum up flag
+			}
+			else
+			{	//Otherwise, set it to strum up
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;		//Set the strum up flag
+			}
+			flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM);	//Clear the strum down flag
+			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		}
+	}
+	return 1;
+}
+
+int eof_pro_guitar_toggle_strum_down(void)
 {
 	unsigned long i;
 	char undo_made = 0;	//Set to nonzero if an undo state was saved
@@ -3855,19 +3890,14 @@ int eof_pro_guitar_cycle_strum_direction(void)
 			}
 			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM)
-			{	//If the note was already set to strum down, set it to strum up
+			{	//If the note was already set to strum down, set it to strum either
 				flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM);	//Clear the strum down flag
-				flags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;		//Set the strum up flag
-			}
-			else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
-			{	//If the note was already set to strum up, set it to strum either
-				flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM);		//Clear the strum up flag
 			}
 			else
-			{	//If the note wasn't set to strum up or down, set it to strum down
-				flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Clear the slide down flag
+			{	//Otherwise, set it to strum down
 				flags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;		//Set the strum down flag
 			}
+			flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM);		//Clear the strum up flag
 			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 		}
 	}

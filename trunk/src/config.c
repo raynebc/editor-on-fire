@@ -126,6 +126,7 @@ void eof_load_config(char * fn)
 	eof_selected_percussion_cue = get_config_int("preferences", "eof_selected_percussion_cue", 17);
 	eof_set_percussion_cue(eof_selected_percussion_cue);
 	eof_paste_erase_overlap = get_config_int("preferences", "eof_paste_erase_overlap", 0);
+	eof_write_rbn_midis = get_config_int("preferences", "eof_write_rbn_midis", 0);
 
 	/* read display settings */
 	eof_screen_layout.mode = get_config_int("display", "display_mode", 0);
@@ -225,6 +226,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_percussion_volume", eof_percussion_volume);
 	set_config_int("preferences", "eof_selected_percussion_cue", eof_selected_percussion_cue);
 	set_config_int("preferences", "eof_paste_erase_overlap", eof_paste_erase_overlap);
+	set_config_int("preferences", "eof_write_rbn_midis", eof_write_rbn_midis);
 
 	/* write display settings */
 	set_config_int("display", "display_mode", eof_screen_layout.mode);

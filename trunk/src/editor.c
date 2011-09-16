@@ -881,10 +881,11 @@ void eof_read_editor_keys(void)
 	}
 
 	/* transpose mini piano visible area up one octave (CTRL+SHIFT+Up) */
-	/* transpose mini piano visible area up one (SHIFT+Up) */
+	/* transpose mini piano visible area up one (SHIFT+Up in a vocal track) */
 	/* transpose lyric up one octave (CTRL+Up in a vocal track) */
-	/* toggle pro guitar slide up (CTRL+Up in a non vocal track) */
+	/* toggle pro guitar slide up (CTRL+Up in a pro guitar track) */
 	/* transpose note up (Up) */
+	/* toggle pro guitar strum up (SHIFT+Up in a pro guitar track) */
 	if(key[KEY_UP])
 	{
 		if(KEY_EITHER_SHIFT)
@@ -892,17 +893,21 @@ void eof_read_editor_keys(void)
 			if(eof_vocals_selected)
 			{
 				if(KEY_EITHER_CTRL)
-				{
+				{	//CTRL and SHIFT held
 					eof_vocals_offset += 12;
 				}
 				else
-				{
+				{	//Only SHIFT held
 					eof_vocals_offset++;
 				}
 				if(eof_vocals_offset > MAXPITCH)
 				{
 					eof_vocals_offset = MAXPITCH;
 				}
+			}
+			else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{
+				eof_pro_guitar_toggle_strum_up();
 			}
 		}
 		else if(eof_music_paused && !eof_music_catalog_playback)
@@ -930,24 +935,12 @@ void eof_read_editor_keys(void)
 		key[KEY_UP] = 0;
 	}
 
-	/* cycle strum direction (CTRL+U in a pro guitar track) */
-	if(key[KEY_U])
-	{
-		if(KEY_EITHER_CTRL)
-		{
-			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-			{
-				eof_pro_guitar_cycle_strum_direction();
-			}
-		}
-		key[KEY_U] = 0;
-	}
-
 	/* transpose mini piano visible area down one octave (CTRL+SHIFT+Down) */
 	/* transpose mini piano visible area down one (SHIFT+Down) */
 	/* transpose lyric down one octave (CTRL+Down in a vocal track) */
-	/* toggle pro guitar slide down (CTRL+Down in a non vocal track) */
+	/* toggle pro guitar slide down (CTRL+Down in a pro guitar track) */
 	/* transpose note down (Down) */
+	/* toggle pro guitar strum down (SHIFT+Down in a pro guitar track) */
 	if(key[KEY_DOWN])
 	{
 		if(KEY_EITHER_SHIFT)
@@ -955,17 +948,21 @@ void eof_read_editor_keys(void)
 			if(eof_vocals_selected)
 			{
 				if(KEY_EITHER_CTRL)
-				{
+				{	//CTRL and SHIFT held
 					eof_vocals_offset -= 12;
 				}
 				else
-				{
+				{	//Only SHIFT held
 					eof_vocals_offset--;
 				}
 				if(eof_vocals_offset < MINPITCH)
 				{
 					eof_vocals_offset = MINPITCH;
 				}
+			}
+			else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{
+				eof_pro_guitar_toggle_strum_down();
 			}
 		}
 		else if(eof_music_paused && !eof_music_catalog_playback)

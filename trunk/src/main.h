@@ -233,6 +233,7 @@ extern int         eof_disable_3d_rendering;
 extern int         eof_disable_2d_rendering;
 extern int         eof_disable_info_panel;
 extern int         eof_paste_erase_overlap;
+extern int         eof_write_rbn_midis;
 extern int         eof_smooth_pos;
 extern int         eof_windowed;
 extern int         eof_anchor_all_beats;

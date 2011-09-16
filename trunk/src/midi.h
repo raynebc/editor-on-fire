@@ -46,7 +46,11 @@ double eof_calculate_bpm_absolute(double pos);	//Returns the tempo defined by th
 double eof_calculate_delta(double start, double end);	//Finds the number of delta ticks within the specified time span?
 	//Warning: This function does not take the time signature into account
 
-int eof_export_midi(EOF_SONG * sp, char * fn);	//Writes the specified chart's contents to the specified file
+int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction);
+	//Writes the specified chart's contents to the specified file
+	//If featurerestriction is 0, all chart features are written to MIDI, and expert+.mid is written if double bass drum is charted
+	//If featurerestriction is 1, only RBN2 features are written to MIDI
+	//If featurerestriction is 2, only pro guitar upgrade features are written to MIDI
 
 struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp);
 	//Parses the chart, returning a linked list of anchors (tempo changes), or NULL on error

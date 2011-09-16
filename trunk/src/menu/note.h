@@ -78,7 +78,8 @@ int eof_menu_trill_erase_all(void);				//Removes all trill phrases, freeing phra
 int eof_menu_tremolo_erase_all(void);			//Removes all tremolo phrases, freeing phrase names as necessary
 int eof_menu_slider_erase_all(void);			//Removes all slider phrases, freeing phrase names as necessary
 int eof_menu_note_clear_legacy_values(void);	//Resets the legacy bitmasks of all selected notes
-int eof_pro_guitar_cycle_strum_direction(void);	//Cycles the strum direction for all selected pro guitar/bass notes in the following order: (no direction specified) -> strum down -> strum up -> (no direction specified)
+int eof_pro_guitar_toggle_strum_up(void);		//Toggles the strum up status for all selected pro guitar/bass notes, clearing strum down statuses where appropriate
+int eof_pro_guitar_toggle_strum_down(void);		//Toggles the strum down status for all selected pro guitar/bass notes, clearing strum up statuses where appropriate
 int eof_menu_note_remove_strum_direction(void);	//Removes the strum direction status of all selected notes
 int eof_menu_note_toggle_hi_hat_open(void);		//Toggles the open hi hat status for selected yellow cymbal notes
 int eof_menu_note_toggle_hi_hat_pedal(void);	//Toggles the pedal controlled hi hat status for selected yellow cymbal notes
