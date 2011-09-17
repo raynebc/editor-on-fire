@@ -115,11 +115,48 @@ MENU eof_arpeggio_menu[] =
     {NULL, NULL, NULL, 0, NULL}
 };
 
+char eof_menu_trill_copy_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
+MENU eof_menu_trill_copy_menu[EOF_TRACKS_MAX] =
+{
+    {eof_menu_trill_copy_menu_text[0], eof_menu_copy_trill_track_1, NULL, D_SELECTED, NULL},
+    {eof_menu_trill_copy_menu_text[1], eof_menu_copy_trill_track_2, NULL, 0, NULL},
+    {eof_menu_trill_copy_menu_text[2], eof_menu_copy_trill_track_3, NULL, 0, NULL},
+    {eof_menu_trill_copy_menu_text[3], eof_menu_copy_trill_track_4, NULL, 0, NULL},
+    {eof_menu_trill_copy_menu_text[4], eof_menu_copy_trill_track_5, NULL, 0, NULL},
+    {eof_menu_trill_copy_menu_text[5], eof_menu_copy_trill_track_6, NULL, 0, NULL},
+    {eof_menu_trill_copy_menu_text[6], eof_menu_copy_trill_track_7, NULL, 0, NULL},
+    {eof_menu_trill_copy_menu_text[7], eof_menu_copy_trill_track_8, NULL, 0, NULL},
+    {eof_menu_trill_copy_menu_text[8], eof_menu_copy_trill_track_9, NULL, 0, NULL},
+    {eof_menu_trill_copy_menu_text[9], eof_menu_copy_trill_track_10, NULL, 0, NULL},
+    {eof_menu_trill_copy_menu_text[10], eof_menu_copy_trill_track_11, NULL, 0, NULL},
+    {eof_menu_trill_copy_menu_text[11], eof_menu_copy_trill_track_12, NULL, 0, NULL},
+    {NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_trill_menu[] =
 {
     {eof_trill_menu_mark_text, eof_menu_trill_mark, NULL, 0, NULL},
     {"&Remove", eof_menu_trill_unmark, NULL, 0, NULL},
     {"&Erase All", eof_menu_trill_erase_all, NULL, 0, NULL},
+    {"&Copy From", NULL, eof_menu_trill_copy_menu, 0, NULL},
+    {NULL, NULL, NULL, 0, NULL}
+};
+
+char eof_menu_tremolo_copy_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
+MENU eof_menu_tremolo_copy_menu[EOF_TRACKS_MAX] =
+{
+    {eof_menu_tremolo_copy_menu_text[0], eof_menu_copy_tremolo_track_1, NULL, D_SELECTED, NULL},
+    {eof_menu_tremolo_copy_menu_text[1], eof_menu_copy_tremolo_track_2, NULL, 0, NULL},
+    {eof_menu_tremolo_copy_menu_text[2], eof_menu_copy_tremolo_track_3, NULL, 0, NULL},
+    {eof_menu_tremolo_copy_menu_text[3], eof_menu_copy_tremolo_track_4, NULL, 0, NULL},
+    {eof_menu_tremolo_copy_menu_text[4], eof_menu_copy_tremolo_track_5, NULL, 0, NULL},
+    {eof_menu_tremolo_copy_menu_text[5], eof_menu_copy_tremolo_track_6, NULL, 0, NULL},
+    {eof_menu_tremolo_copy_menu_text[6], eof_menu_copy_tremolo_track_7, NULL, 0, NULL},
+    {eof_menu_tremolo_copy_menu_text[7], eof_menu_copy_tremolo_track_8, NULL, 0, NULL},
+    {eof_menu_tremolo_copy_menu_text[8], eof_menu_copy_tremolo_track_9, NULL, 0, NULL},
+    {eof_menu_tremolo_copy_menu_text[9], eof_menu_copy_tremolo_track_10, NULL, 0, NULL},
+    {eof_menu_tremolo_copy_menu_text[10], eof_menu_copy_tremolo_track_11, NULL, 0, NULL},
+    {eof_menu_tremolo_copy_menu_text[11], eof_menu_copy_tremolo_track_12, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -128,6 +165,7 @@ MENU eof_tremolo_menu[] =
     {eof_tremolo_menu_mark_text, eof_menu_tremolo_mark, NULL, 0, NULL},
     {"&Remove", eof_menu_tremolo_unmark, NULL, 0, NULL},
     {"&Erase All", eof_menu_tremolo_erase_all, NULL, 0, NULL},
+    {"&Copy From", NULL, eof_menu_tremolo_copy_menu, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -543,7 +581,7 @@ void eof_prepare_note_menu(void)
 			ustrcpy(eof_lyric_line_menu_mark_text, "&Mark\tCtrl+M");
 		}
 
-		/* arpeggio */
+		/* arpeggio mark/remark */
 		if(inarpeggio)
 		{
 			eof_arpeggio_menu[1].flags = 0;				//Note>Pro Guitar>Arpeggio>Remove
@@ -777,7 +815,7 @@ void eof_prepare_note_menu(void)
 				eof_note_menu[16].flags = D_DISABLED;
 			}
 
-			/* Trill */
+			/* Trill mark/remark*/
 			if(intrill)
 			{
 				eof_trill_menu[1].flags = 0;	//Note>Trill>Remove
@@ -789,7 +827,26 @@ void eof_prepare_note_menu(void)
 				ustrcpy(eof_trill_menu_mark_text, "&Mark");
 			}
 
-			/* Tremolo */
+			/* Trill copy from */
+			for(i = 0; i < EOF_TRACKS_MAX; i++)
+			{	//For each track supported by EOF
+				eof_menu_trill_copy_menu[i].flags = 0;
+				if((i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
+				{	//If the track exists, copy its name into the string used by the track menu
+					ustrncpy(eof_menu_trill_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE);
+						//Copy the track name to the menu string
+				}
+				else
+				{	//Otherwise write a blank string for the track name
+					ustrcpy(eof_menu_trill_copy_menu_text[i],"");
+				}
+				if(!eof_get_num_trills(eof_song, i + 1) || (i + 1 == eof_selected_track))
+				{	//If the track has no trill phrases or is the active track
+					eof_menu_trill_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
+				}
+			}
+
+			/* Tremolo mark/remark */
 			if(intremolo)
 			{
 				eof_tremolo_menu[1].flags = 0;	//Note>Tremolo>Remove
@@ -800,6 +857,27 @@ void eof_prepare_note_menu(void)
 				eof_tremolo_menu[1].flags = D_DISABLED;
 				ustrcpy(eof_tremolo_menu_mark_text, "&Mark");
 			}
+
+			/* Tremolo copy from */
+			for(i = 0; i < EOF_TRACKS_MAX; i++)
+			{	//For each track supported by EOF
+				eof_menu_tremolo_copy_menu[i].flags = 0;
+				if((i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
+				{	//If the track exists, copy its name into the string used by the track menu
+					ustrncpy(eof_menu_tremolo_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE);
+						//Copy the track name to the menu string
+				}
+				else
+				{	//Otherwise write a blank string for the track name
+					ustrcpy(eof_menu_tremolo_copy_menu_text[i],"");
+				}
+				if(!eof_get_num_tremolos(eof_song, i + 1) || (i + 1 == eof_selected_track))
+				{	//If the track has no tremolo phrases or is the active track
+					eof_menu_tremolo_copy_menu[i].flags = D_DISABLED;	//Disable the track from the submenu
+				}
+			}
+
+			/* Rename Trill and Tremolo menus as necessary for the drum track */
 			if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR))
 			{	//If a legacy/pro guitar/bass track is active, set the guitar terminology for trill and tremolo sections
 				ustrcpy(eof_trill_menu_text, "Trill");
@@ -4023,6 +4101,7 @@ int eof_menu_copy_solos_track_number(EOF_SONG *sp, int sourcetrack, int desttrac
 			eof_track_add_solo(sp, desttrack, ptr->start_pos, ptr->end_pos);	//Copy it to the destination track
 		}
 	}
+	eof_determine_phrase_status();
 	return 1;	//Return completion
 }
 
@@ -4117,6 +4196,7 @@ int eof_menu_copy_sp_track_number(EOF_SONG *sp, int sourcetrack, int desttrack)
 			eof_track_add_star_power_path(sp, desttrack, ptr->start_pos, ptr->end_pos);	//Copy it to the destination track
 		}
 	}
+	eof_determine_phrase_status();
 	return 1;	//Return completion
 }
 
@@ -4204,13 +4284,204 @@ int eof_menu_copy_arpeggio_track_number(EOF_SONG *sp, int sourcetrack, int destt
 	}
 
 	for(ctr = 0; ctr < eof_get_num_arpeggios(sp, sourcetrack); ctr++)
-	{	//For each star power phrase in the source track
+	{	//For each arpeggio phrase in the source track
 		ptr = eof_get_arpeggio(sp, sourcetrack, ctr);
 		if(ptr)
 		{	//If this phrase could be found
 			eof_track_add_section(sp, desttrack, EOF_ARPEGGIO_SECTION, ptr->difficulty, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the destination track
 		}
 	}
+	eof_determine_phrase_status();
+	return 1;	//Return completion
+}
+
+int eof_menu_copy_trill_track_1(void)
+{
+	return eof_menu_copy_trill_track_number(eof_song, 1, eof_selected_track);
+}
+
+int eof_menu_copy_trill_track_2(void)
+{
+	return eof_menu_copy_trill_track_number(eof_song, 2, eof_selected_track);
+}
+
+int eof_menu_copy_trill_track_3(void)
+{
+	return eof_menu_copy_trill_track_number(eof_song, 3, eof_selected_track);
+}
+
+int eof_menu_copy_trill_track_4(void)
+{
+	return eof_menu_copy_trill_track_number(eof_song, 4, eof_selected_track);
+}
+
+int eof_menu_copy_trill_track_5(void)
+{
+	return eof_menu_copy_trill_track_number(eof_song, 5, eof_selected_track);
+}
+
+int eof_menu_copy_trill_track_6(void)
+{
+	return eof_menu_copy_trill_track_number(eof_song, 6, eof_selected_track);
+}
+
+int eof_menu_copy_trill_track_7(void)
+{
+	return eof_menu_copy_trill_track_number(eof_song, 7, eof_selected_track);
+}
+
+int eof_menu_copy_trill_track_8(void)
+{
+	return eof_menu_copy_trill_track_number(eof_song, 8, eof_selected_track);
+}
+
+int eof_menu_copy_trill_track_9(void)
+{
+	return eof_menu_copy_trill_track_number(eof_song, 9, eof_selected_track);
+}
+
+int eof_menu_copy_trill_track_10(void)
+{
+	return eof_menu_copy_trill_track_number(eof_song, 10, eof_selected_track);
+}
+
+int eof_menu_copy_trill_track_11(void)
+{
+	return eof_menu_copy_trill_track_number(eof_song, 11, eof_selected_track);
+}
+
+int eof_menu_copy_trill_track_12(void)
+{
+	return eof_menu_copy_trill_track_number(eof_song, 12, eof_selected_track);
+}
+
+int eof_menu_copy_trill_track_number(EOF_SONG *sp, int sourcetrack, int desttrack)
+{
+	unsigned long ctr;
+	EOF_PHRASE_SECTION *ptr;
+
+	if(!sp || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcetrack == desttrack))
+		return 0;	//Invalid parameters
+	if(!eof_get_num_trills(sp, sourcetrack))
+		return 0;	//Source track has no trill phrases
+	if(eof_get_num_trills(sp, desttrack))
+	{	//If there are already trill phrases in the destination track
+		if(alert(NULL, "Warning:  Existing trill phrases in this track will be lost.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+		{	//If the user does not opt to continue
+			return 0;
+		}
+	}
+
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	while(eof_get_num_trills(sp, desttrack))
+	{	//While there are trill phrases in the destination track
+		eof_track_delete_trill(sp, desttrack, 0);	//Delete the first one
+	}
+
+	for(ctr = 0; ctr < eof_get_num_trills(sp, sourcetrack); ctr++)
+	{	//For each trill phrase in the source track
+		ptr = eof_get_trill(sp, sourcetrack, ctr);
+		if(ptr)
+		{	//If this phrase could be found
+			eof_track_add_section(sp, desttrack, EOF_TRILL_SECTION, ptr->difficulty, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the destination track
+		}
+	}
+	eof_determine_phrase_status();
+	return 1;	//Return completion
+}
+
+int eof_menu_copy_tremolo_track_1(void)
+{
+	return eof_menu_copy_tremolo_track_number(eof_song, 1, eof_selected_track);
+}
+
+int eof_menu_copy_tremolo_track_2(void)
+{
+	return eof_menu_copy_tremolo_track_number(eof_song, 2, eof_selected_track);
+}
+
+int eof_menu_copy_tremolo_track_3(void)
+{
+	return eof_menu_copy_tremolo_track_number(eof_song, 3, eof_selected_track);
+}
+
+int eof_menu_copy_tremolo_track_4(void)
+{
+	return eof_menu_copy_tremolo_track_number(eof_song, 4, eof_selected_track);
+}
+
+int eof_menu_copy_tremolo_track_5(void)
+{
+	return eof_menu_copy_tremolo_track_number(eof_song, 5, eof_selected_track);
+}
+
+int eof_menu_copy_tremolo_track_6(void)
+{
+	return eof_menu_copy_tremolo_track_number(eof_song, 6, eof_selected_track);
+}
+
+int eof_menu_copy_tremolo_track_7(void)
+{
+	return eof_menu_copy_tremolo_track_number(eof_song, 7, eof_selected_track);
+}
+
+int eof_menu_copy_tremolo_track_8(void)
+{
+	return eof_menu_copy_tremolo_track_number(eof_song, 8, eof_selected_track);
+}
+
+int eof_menu_copy_tremolo_track_9(void)
+{
+	return eof_menu_copy_tremolo_track_number(eof_song, 9, eof_selected_track);
+}
+
+int eof_menu_copy_tremolo_track_10(void)
+{
+	return eof_menu_copy_tremolo_track_number(eof_song, 10, eof_selected_track);
+}
+
+int eof_menu_copy_tremolo_track_11(void)
+{
+	return eof_menu_copy_tremolo_track_number(eof_song, 11, eof_selected_track);
+}
+
+int eof_menu_copy_tremolo_track_12(void)
+{
+	return eof_menu_copy_tremolo_track_number(eof_song, 12, eof_selected_track);
+}
+
+int eof_menu_copy_tremolo_track_number(EOF_SONG *sp, int sourcetrack, int desttrack)
+{
+	unsigned long ctr;
+	EOF_PHRASE_SECTION *ptr;
+
+	if(!sp || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcetrack == desttrack))
+		return 0;	//Invalid parameters
+	if(!eof_get_num_tremolos(sp, sourcetrack))
+		return 0;	//Source track has no tremolo phrases
+	if(eof_get_num_tremolos(sp, desttrack))
+	{	//If there are already tremolo phrases in the destination track
+		if(alert(NULL, "Warning:  Existing tremolo phrases in this track will be lost.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+		{	//If the user does not opt to continue
+			return 0;
+		}
+	}
+
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	while(eof_get_num_tremolos(sp, desttrack))
+	{	//While there are tremolo phrases in the destination track
+		eof_track_delete_tremolo(sp, desttrack, 0);	//Delete the first one
+	}
+
+	for(ctr = 0; ctr < eof_get_num_tremolos(sp, sourcetrack); ctr++)
+	{	//For each tremolo phrase in the source track
+		ptr = eof_get_tremolo(sp, sourcetrack, ctr);
+		if(ptr)
+		{	//If this phrase could be found
+			eof_track_add_section(sp, desttrack, EOF_TREMOLO_SECTION, ptr->difficulty, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the destination track
+		}
+	}
+	eof_determine_phrase_status();
 	return 1;	//Return completion
 }
 

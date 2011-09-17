@@ -1760,15 +1760,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 					lastdelta = delta;					//Store this event's absolute delta time
 				}
 			}
-			//Remove all temporary text events that were added for the sake of RBN compatibility
-			for(i = sp->text_events; i > 0; i--)
-			{	//For each text event (in reverse order)
-				if(sp->text_event[i-1]->is_temporary)
-				{	//If this text event has been marked as temporary
-					eof_song_delete_text_event(sp, i-1);	//Delete it
-				}
-			}
-			eof_sort_events(sp);	//Re-sort
 
 			/* end of track */
 			WriteVarLen(0, fp);
@@ -1780,6 +1771,15 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 			eventstrackwritten = 1;
 		}//If there are manually defined text events, or if writing a RBN2 compliant MIDI (which requires certain events)
 	}//Do not write an events track in a pro guitar upgrade MIDI
+	//Remove all temporary text events that were added for the sake of RBN compatibility
+	for(i = sp->text_events; i > 0; i--)
+	{	//For each text event (in reverse order)
+		if(sp->text_event[i-1]->is_temporary)
+		{	//If this text event has been marked as temporary
+			eof_song_delete_text_event(sp, i-1);	//Delete it
+		}
+	}
+	eof_sort_events(sp);	//Re-sort
 
 
 /* make beat track */
