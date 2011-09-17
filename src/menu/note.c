@@ -223,18 +223,22 @@ MENU eof_note_drum_menu[] =
 MENU eof_note_proguitar_menu[] =
 {
     {"Edit pro guitar &Note\tN", eof_menu_note_edit_pro_guitar_note, NULL, 0, NULL},
-    {"Toggle tapping\tCtrl+T", eof_menu_note_toggle_tapping, NULL, 0, NULL},
-    {"Mark as non &Tapping", eof_menu_note_remove_tapping, NULL, 0, NULL},
     {"Toggle Slide &Up\tCtrl+Up", eof_menu_note_toggle_slide_up, NULL, 0, NULL},
     {"Toggle Slide &Down\tCtrl+Down", eof_menu_note_toggle_slide_down, NULL, 0, NULL},
     {"Mark as non &Slide", eof_menu_note_remove_slide, NULL, 0, NULL},
-    {"Toggle &Palm muting\tCtrl+M", eof_menu_note_toggle_palm_muting, NULL, 0, NULL},
-    {"Mark as non palm &Muting", eof_menu_note_remove_palm_muting, NULL, 0, NULL},
     {"&Arpeggio", NULL, eof_arpeggio_menu, 0, NULL},
     {"&Clear legacy bitmask", eof_menu_note_clear_legacy_values, NULL, 0, NULL},
 	{"Toggle Strum Up\tShift+Up", eof_pro_guitar_toggle_strum_up, NULL, 0, NULL},
 	{"Toggle Strum Down\tShift+Down", eof_pro_guitar_toggle_strum_down, NULL, 0, NULL},
     {"Remove strum direction", eof_menu_note_remove_strum_direction, NULL, 0, NULL},
+    {"Toggle hammer on\tH", eof_menu_pro_guitar_toggle_hammer_on, NULL, 0, NULL},
+    {"Mark as non &Hammer on", eof_menu_pro_guitar_remove_hammer_on, NULL, 0, NULL},
+    {"Toggle pull off\tP", eof_menu_pro_guitar_toggle_pull_off, NULL, 0, NULL},
+    {"Mark as non &Pull off", eof_menu_pro_guitar_remove_pull_off, NULL, 0, NULL},
+    {"Toggle tapping\tCtrl+T", eof_menu_note_toggle_tapping, NULL, 0, NULL},
+    {"Mark as non &Tapping", eof_menu_note_remove_tapping, NULL, 0, NULL},
+    {"Toggle palm muting\tCtrl+M", eof_menu_note_toggle_palm_muting, NULL, 0, NULL},
+    {"Mark as non palm &Muting", eof_menu_note_remove_palm_muting, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -3210,7 +3214,7 @@ int eof_menu_note_remove_tapping(void)
 {
 	unsigned long i;
 	long u = 0;
-	unsigned long flags, oldflags;
+	unsigned long flags;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
@@ -3220,15 +3224,17 @@ int eof_menu_note_remove_tapping(void)
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
 			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-			oldflags = flags;							//Save an extra copy of the original flags
-			flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_TAP);	//Clear the tap flag
-			flags &= ~(EOF_NOTE_FLAG_F_HOPO);			//Clear the legacy HOPO on flag
-			if(!u && (oldflags != flags))
-			{	//Make a back up before changing the first note
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				u = 1;
+			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
+			{	//If this note has tap status
+				if(!u)
+				{	//Make a back up before changing the first note
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					u = 1;
+				}
+				flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_TAP);	//Clear the tap flag
+				flags &= ~(EOF_NOTE_FLAG_F_HOPO);			//Clear the legacy HOPO on flag
+				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 			}
-			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 		}
 	}
 	return 1;
@@ -4568,5 +4574,149 @@ int eof_menu_note_toggle_rimshot(void)
 			}
 		}
 	}
+	return 1;
+}
+
+int eof_menu_pro_guitar_toggle_hammer_on(void)
+{
+	unsigned long i;
+	char undo_made = 0;	//Set to nonzero if an undo state was saved
+	unsigned long flags;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run unless a pro guitar track is active
+
+	if((eof_count_selected_notes(NULL, 0) > 0))
+	{
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+		{	//For each note in the active track
+			if(eof_selection.multi[i])
+			{	//If the note is selected
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+					undo_made = 1;
+				}
+				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
+				{	//If the note was already a hammer on, remove the status
+					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;	//Clear the hammer on flag
+					flags &= ~EOF_NOTE_FLAG_F_HOPO;			//Clear the legacy HOPO flag
+				}
+				else
+				{	//Otherwise set the hammer on flag
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;	//Set the hammer on flag
+					flags |= EOF_NOTE_FLAG_F_HOPO;			//Set the legacy HOPO flag
+				}
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;	//Clear the pull off flag
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;	//Clear the tap flag
+				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+			}
+		}
+		eof_determine_phrase_status();
+	}
+	return 1;
+}
+
+int eof_menu_pro_guitar_remove_hammer_on(void)
+{
+	unsigned long i;
+	long u = 0;
+	unsigned long flags;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
+			{	//If this note has hammer on status
+				if(!u)
+				{	//Make a back up before changing the first note
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					u = 1;
+				}
+				flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_HO);	//Clear the hammer on flag
+				flags &= ~(EOF_NOTE_FLAG_F_HOPO);			//Clear the legacy HOPO on flag
+				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+			}
+		}
+	}
+	eof_determine_phrase_status();
+	return 1;
+}
+
+int eof_menu_pro_guitar_toggle_pull_off(void)
+{
+	unsigned long i;
+	char undo_made = 0;	//Set to nonzero if an undo state was saved
+	unsigned long flags;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run unless a pro guitar track is active
+
+	if((eof_count_selected_notes(NULL, 0) > 0))
+	{
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+		{	//For each note in the active track
+			if(eof_selection.multi[i])
+			{	//If the note is selected
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+					undo_made = 1;
+				}
+				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PO)
+				{	//If the note was already a pull off, remove the status
+					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;	//Clear the pull off flag
+					flags &= ~EOF_NOTE_FLAG_F_HOPO;			//Clear the legacy HOPO flag
+				}
+				else
+				{	//Otherwise set the pull off flag
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;	//Set the pull off flag
+					flags |= EOF_NOTE_FLAG_F_HOPO;			//Set the legacy HOPO flag
+				}
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;	//Clear the hammer on flag
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;	//Clear the tap flag
+				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+			}
+		}
+		eof_determine_phrase_status();
+	}
+	return 1;
+}
+
+int eof_menu_pro_guitar_remove_pull_off(void)
+{
+	unsigned long i;
+	long u = 0;
+	unsigned long flags;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PO)
+			{	//If this note has pull off status
+				if(!u)
+				{	//Make a back up before changing the first note
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					u = 1;
+				}
+				flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_PO);	//Clear the pull off flag
+				flags &= ~(EOF_NOTE_FLAG_F_HOPO);			//Clear the legacy HOPO on flag
+				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+			}
+		}
+	}
+	eof_determine_phrase_status();
 	return 1;
 }

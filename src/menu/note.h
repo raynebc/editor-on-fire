@@ -57,8 +57,6 @@ int eof_menu_set_freestyle_off(void);		//Removes freestyle for all selected lyri
 int eof_menu_toggle_freestyle(void);		//Toggles the freestyle status of all selected lyrics
 
 int eof_menu_note_edit_pro_guitar_note(void);	//Allows a pro guitar's fret values to be defined
-int eof_menu_note_toggle_tapping(void);			//Toggles the tapping status of all selected notes
-int eof_menu_note_remove_tapping(void);			//Removes the tapping status of all selected notes
 int eof_menu_note_toggle_slide_up(void);		//Toggles the slide up status of all selected notes
 int eof_menu_note_toggle_slide_down(void);		//Toggles the slide down status of all selected notes
 int eof_menu_note_remove_slide(void);			//Removes the slide status of all selected notes
@@ -84,6 +82,12 @@ int eof_menu_note_remove_strum_direction(void);	//Removes the strum direction st
 int eof_menu_note_toggle_hi_hat_open(void);		//Toggles the open hi hat status for selected yellow cymbal notes
 int eof_menu_note_toggle_hi_hat_pedal(void);	//Toggles the pedal controlled hi hat status for selected yellow cymbal notes
 int eof_menu_note_toggle_rimshot(void);			//Toggles the rimshot status for selected red notes
+int eof_menu_note_toggle_tapping(void);			//Toggles the tapping status of all selected notes
+int eof_menu_note_remove_tapping(void);			//Removes the tapping status of all selected notes
+int eof_menu_pro_guitar_toggle_hammer_on(void);	//Toggles the hammer on status of all selected notes
+int eof_menu_pro_guitar_remove_hammer_on(void);	//Removes the hammer on status of all selected notes
+int eof_menu_pro_guitar_toggle_pull_off(void);	//Toggles the pull off status of all selected notes
+int eof_menu_pro_guitar_remove_pull_off(void);	//Removes the pull off status of all selected notes
 
 int eof_menu_note_toggle_green(void);
 int eof_menu_note_toggle_red(void);
