@@ -862,7 +862,10 @@ void eof_determine_phrase_status(void)
 		flags &= (~EOF_NOTE_FLAG_SP);
 		flags &= (~EOF_NOTE_FLAG_IS_TRILL);
 		flags &= (~EOF_NOTE_FLAG_IS_TREMOLO);
-		flags &= (~EOF_GUITAR_NOTE_FLAG_IS_SLIDER);
+		if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+		{	//Only clear the is slider flag if this is a legacy track
+			flags &= (~EOF_GUITAR_NOTE_FLAG_IS_SLIDER);
+		}
 
 		/* mark HOPO */
 		if((eof_hopo_view == EOF_HOPO_MANUAL) && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_note_is_hopo(i)))
@@ -926,13 +929,16 @@ void eof_determine_phrase_status(void)
 		}
 
 		/* mark and check sliders */
-		for(j = 0; j < eof_get_num_sliders(eof_song, eof_selected_track); j++)
-		{	//For each slider section in the active track
-			sectionptr = eof_get_slider(eof_song, eof_selected_track, j);
-			if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
-			{	//If the note is in this slider section
-				flags |= EOF_GUITAR_NOTE_FLAG_IS_SLIDER;
-				sliders[j] = 1;
+		if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+		{
+			for(j = 0; j < eof_get_num_sliders(eof_song, eof_selected_track); j++)
+			{	//For each slider section in the active track
+				sectionptr = eof_get_slider(eof_song, eof_selected_track, j);
+				if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
+				{	//If the note is in this slider section
+					flags |= EOF_GUITAR_NOTE_FLAG_IS_SLIDER;
+					sliders[j] = 1;
+				}
 			}
 		}
 
