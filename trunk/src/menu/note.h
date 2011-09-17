@@ -140,4 +140,34 @@ int eof_menu_copy_arpeggio_track_12(void);
 int eof_menu_copy_arpeggio_track_number(EOF_SONG *sp, int sourcetrack, int desttrack);
 	//Copies the arpeggio phrases from the specified source track to the destination track
 
+int eof_menu_copy_trill_track_1(void);
+int eof_menu_copy_trill_track_2(void);
+int eof_menu_copy_trill_track_3(void);
+int eof_menu_copy_trill_track_4(void);
+int eof_menu_copy_trill_track_5(void);
+int eof_menu_copy_trill_track_6(void);
+int eof_menu_copy_trill_track_7(void);
+int eof_menu_copy_trill_track_8(void);
+int eof_menu_copy_trill_track_9(void);
+int eof_menu_copy_trill_track_10(void);
+int eof_menu_copy_trill_track_11(void);
+int eof_menu_copy_trill_track_12(void);
+int eof_menu_copy_trill_track_number(EOF_SONG *sp, int sourcetrack, int desttrack);
+	//Copies the trill phrases from the specified source track to the destination track
+
+int eof_menu_copy_tremolo_track_1(void);
+int eof_menu_copy_tremolo_track_2(void);
+int eof_menu_copy_tremolo_track_3(void);
+int eof_menu_copy_tremolo_track_4(void);
+int eof_menu_copy_tremolo_track_5(void);
+int eof_menu_copy_tremolo_track_6(void);
+int eof_menu_copy_tremolo_track_7(void);
+int eof_menu_copy_tremolo_track_8(void);
+int eof_menu_copy_tremolo_track_9(void);
+int eof_menu_copy_tremolo_track_10(void);
+int eof_menu_copy_tremolo_track_11(void);
+int eof_menu_copy_tremolo_track_12(void);
+int eof_menu_copy_tremolo_track_number(EOF_SONG *sp, int sourcetrack, int desttrack);
+	//Copies the tremolo phrases from the specified source track to the destination track
+
 #endif
