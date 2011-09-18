@@ -20,6 +20,8 @@ typedef struct
 EOF_IMPORT_INI_SETTING eof_import_ini_setting[EOF_MAX_INI_SETTINGS];
 int eof_import_ini_settings = 0;
 
+char eof_ini_pro_drum_tag_present;	//Is set to nonzero if eof_import_ini() finds the "pro_drums = True" tag (to influence MIDI import)
+
 /* it would probably be easier to use Allegro's configuration routines to read
  * the ini files since it looks like they are formatted correctly */
 int eof_import_ini(EOF_SONG * sp, char * fn)
@@ -37,6 +39,8 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 	char setting_stored;
 	unsigned ctr;	//Used to count the number of strings defined in pro guitar/bass tuning tag
 	char *value_index;
+
+	eof_ini_pro_drum_tag_present = 0;	//Reset this condition to false
 
 	if(!sp || !fn)
 	{
@@ -171,7 +175,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 			{
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "open_strum"))
-			{
+			{	//The deprecated open strum INI tag
 				if(!ustricmp(value_index, "True"))
 				{
 					sp->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the sixth lane flag
@@ -230,6 +234,13 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 				unsigned long tracknum2 = sp->track[EOF_TRACK_PRO_BASS_22]->tracknum;
 				memcpy(sp->pro_guitar_track[tracknum2]->tuning, sp->pro_guitar_track[tracknum], EOF_TUNING_LENGTH);	//Copy the tuning array
 				sp->pro_guitar_track[tracknum2]->numstrings = sp->pro_guitar_track[tracknum]->numstrings;	//Copy the string count
+			}
+			else if(!ustricmp(eof_import_ini_setting[i].type, "pro_drums"))
+			{
+				if(!ustricmp(value_index, "True"))
+				{
+					eof_ini_pro_drum_tag_present = 1;
+				}
 			}
 
 			/* for custom settings or difficulty strings */

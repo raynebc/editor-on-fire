@@ -2166,7 +2166,7 @@ int eof_menu_edit_paste_from_catalog(void)
 		eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 		if(eof_paste_erase_overlap)
 		{	//If the user decided to delete existing notes that are between the start and end of the pasted notes
-			unsigned long clear_start, clear_end;
+			unsigned long clear_start = 0, clear_end = 0;
 			for(i = 0; i < eof_get_track_size(eof_song, sourcetrack); i++)
 			{	//For each note in the active catalog entry's track
 				/* this note needs to be copied */

@@ -177,12 +177,21 @@ MENU eof_slider_menu[] =
     {NULL, NULL, NULL, 0, NULL}
 };
 
-MENU eof_hopo_menu[] =
+MENU eof_legacy_hopo_menu[] =
 {
     {"&Auto", eof_menu_hopo_auto, NULL, 0, NULL},
     {"&Force On", eof_menu_hopo_force_on, NULL, 0, NULL},
     {"Force &Off", eof_menu_hopo_force_off, NULL, 0, NULL},
     {"&Cycle On/Off/Auto\tH", eof_menu_hopo_cycle, NULL, 0, NULL},
+    {NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_pro_guitar_hopo_menu[] =
+{
+    {"Toggle hammer on\tH", eof_menu_pro_guitar_toggle_hammer_on, NULL, 0, NULL},
+    {"Mark as non &Hammer on", eof_menu_pro_guitar_remove_hammer_on, NULL, 0, NULL},
+    {"Toggle pull off\tP", eof_menu_pro_guitar_toggle_pull_off, NULL, 0, NULL},
+    {"Mark as non &Pull off", eof_menu_pro_guitar_remove_pull_off, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -212,7 +221,8 @@ MENU eof_note_drum_menu[] =
     {"Toggle &Green cymbal\tCtrl+G", eof_menu_note_toggle_rb3_cymbal_green, NULL, 0, NULL},
     {"Mark as &Non cymbal", eof_menu_note_remove_cymbal, NULL, 0, NULL},
     {"Mark new notes as &Cymbals", eof_menu_note_default_cymbal, NULL, 0, NULL},
-    {"Toggle &Expert+ bass drum\tCtrl+E", eof_menu_note_toggle_double_bass, NULL, 0, NULL},
+    {"Toggle expert+ bass drum\tCtrl+E", eof_menu_note_toggle_double_bass, NULL, 0, NULL},
+    {"Mark as non &Expert+ bass drum", eof_menu_note_remove_double_bass, NULL, 0, NULL},
     {"&Mark new notes as Expert+", eof_menu_note_default_double_bass, NULL, 0, NULL},
     {"Toggle Y cymbal as &Open hi hat\tShift+O", eof_menu_note_toggle_hi_hat_open, NULL, 0, NULL},
     {"Toggle Y cymbal as &Pedal hi hat\tShift+P",eof_menu_note_toggle_hi_hat_pedal, NULL, 0, NULL},
@@ -228,13 +238,9 @@ MENU eof_note_proguitar_menu[] =
     {"Mark as non &Slide", eof_menu_note_remove_slide, NULL, 0, NULL},
     {"&Arpeggio", NULL, eof_arpeggio_menu, 0, NULL},
     {"&Clear legacy bitmask", eof_menu_note_clear_legacy_values, NULL, 0, NULL},
-	{"Toggle Strum Up\tShift+Up", eof_pro_guitar_toggle_strum_up, NULL, 0, NULL},
-	{"Toggle Strum Down\tShift+Down", eof_pro_guitar_toggle_strum_down, NULL, 0, NULL},
+    {"Toggle Strum Up\tShift+Up", eof_pro_guitar_toggle_strum_up, NULL, 0, NULL},
+    {"Toggle Strum Down\tShift+Down", eof_pro_guitar_toggle_strum_down, NULL, 0, NULL},
     {"Remove strum direction", eof_menu_note_remove_strum_direction, NULL, 0, NULL},
-    {"Toggle hammer on\tH", eof_menu_pro_guitar_toggle_hammer_on, NULL, 0, NULL},
-    {"Mark as non &Hammer on", eof_menu_pro_guitar_remove_hammer_on, NULL, 0, NULL},
-    {"Toggle pull off\tP", eof_menu_pro_guitar_toggle_pull_off, NULL, 0, NULL},
-    {"Mark as non &Pull off", eof_menu_pro_guitar_remove_pull_off, NULL, 0, NULL},
     {"Toggle tapping\tCtrl+T", eof_menu_note_toggle_tapping, NULL, 0, NULL},
     {"Mark as non &Tapping", eof_menu_note_remove_tapping, NULL, 0, NULL},
     {"Toggle palm muting\tCtrl+M", eof_menu_note_toggle_palm_muting, NULL, 0, NULL},
@@ -263,7 +269,7 @@ MENU eof_note_menu[] =
     {"Edit &Name", eof_menu_note_edit_name, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"Toggle &Crazy\tT", eof_menu_note_toggle_crazy, NULL, 0, NULL},
-    {"&HOPO", NULL, eof_hopo_menu, 0, NULL},
+    {"&HOPO", NULL, eof_legacy_hopo_menu, 0, NULL},
     {eof_trill_menu_text, NULL, eof_trill_menu, 0, NULL},
     {eof_tremolo_menu_text, NULL, eof_tremolo_menu, 0, NULL},
     {"Slider", NULL, eof_slider_menu, 0, NULL},
@@ -790,9 +796,15 @@ void eof_prepare_note_menu(void)
 			}
 
 			/* HOPO */
-			if((track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR))
+			if(track_behavior == EOF_GUITAR_TRACK_BEHAVIOR)
 			{	//When a guitar track is active
-				eof_note_menu[10].flags = 0;	//Note>HOPO> submenu
+				eof_note_menu[10].flags = 0;	//Enable Note>HOPO> submenu
+				eof_note_menu[10].child = eof_legacy_hopo_menu;	//Set it to the legacy guitar HOPO menu
+			}
+			else if(track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR)
+			{
+				eof_note_menu[10].flags = 0;	//Enable Note>HOPO> submenu
+				eof_note_menu[10].child = eof_pro_guitar_hopo_menu;	//Set it to the pro guitar HOPO menu
 			}
 			else
 			{
@@ -1464,6 +1476,35 @@ int eof_menu_note_toggle_double_bass(void)
 	return 1;
 }
 
+int eof_menu_note_remove_double_bass(void)
+{
+	unsigned long i;
+	long u = 0;
+	unsigned long flags;
+
+	if(eof_selected_track != EOF_TRACK_DRUM)
+		return 1;	//Do not allow this function to run when PART DRUMS is not active
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == EOF_NOTE_AMAZING) && (eof_get_note_note(eof_song, eof_selected_track, i) & 1))
+		{	//If this note is in the currently active track, is selected, is in the Expert difficulty and has a green gem
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			if(flags & EOF_NOTE_FLAG_DBASS)
+			{	//If this note has double bass status
+				if(!u)
+				{
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					u = 1;
+				}
+				flags &= ~EOF_NOTE_FLAG_DBASS;	//Remove double bass status
+				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+			}
+		}
+	}
+	return 1;
+}
+
 int eof_menu_note_toggle_rb3_cymbal_green(void)
 {
 	unsigned long i;
@@ -1600,12 +1641,12 @@ int eof_menu_note_default_double_bass(void)
 	if(eof_mark_drums_as_double_bass)
 	{
 		eof_mark_drums_as_double_bass = 0;
-		eof_note_drum_menu[6].flags = 0;
+		eof_note_drum_menu[7].flags = 0;
 	}
 	else
 	{
 		eof_mark_drums_as_double_bass = 1;
-		eof_note_drum_menu[6].flags = D_SELECTED;
+		eof_note_drum_menu[7].flags = D_SELECTED;
 	}
 	return 1;
 }

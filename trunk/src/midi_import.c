@@ -1027,8 +1027,12 @@ eof_log("\tSecond pass complete", 1);
 //Detect whether Pro drum notation is being used
 //Pro drum notation is that if a green, yellow or blue drum note is NOT to be marked as a cymbal,
 //it must be marked with the appropriate MIDI note, otherwise the note defaults as a cymbal
-			if(eof_midi_tracks[picked_track].track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-			{	//If the track being imported is a drum track
+			if(eof_ini_pro_drum_tag_present)
+			{	//If the "pro_drums = True" ini tag was present
+				prodrums = 1;	//Assume pro drum markers are present in the MIDI
+			}
+			else if(eof_midi_tracks[picked_track].track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+			{	//Otherwise determine by scanning the notes.  If the track being imported is a drum track,
 				for(j = 0; j < eof_import_events[i]->events; j++)
 				{	//For each event in the track
 					if(eof_import_events[i]->event[j]->type == 0x90)

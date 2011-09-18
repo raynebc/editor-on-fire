@@ -1549,7 +1549,7 @@ void eof_read_editor_keys(void)
 		}
 
 	/* cycle HOPO status (H in a legacy track) */
-	/* cycle hammer on status (H in a pro guitar track) */
+	/* toggle hammer on status (H in a pro guitar track) */
 		if(key[KEY_H] && !KEY_EITHER_ALT)
 		{
 			if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
@@ -1563,7 +1563,7 @@ void eof_read_editor_keys(void)
 			key[KEY_H] = 0;
 		}
 
-	/* cycle pull off status (P in a pro guitar track) */
+	/* toggle pull off status (P in a pro guitar track) */
 		if(key[KEY_P] && !KEY_EITHER_CTRL && !KEY_EITHER_ALT && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 		{
 			eof_menu_pro_guitar_toggle_pull_off();
