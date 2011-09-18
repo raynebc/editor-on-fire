@@ -3,6 +3,25 @@ EOF Version History
 
 1.8:
 
+Added a "Mark as non Expert+ bass drum" function to the
+Note>Drum menu.
+
+Updated MIDI import to check for the "pro_drums = True" tag to
+make it possible for chart MIDIs where all yellow, blue and
+green drum gems are cymbals to be imported correctly.  For this
+to work, the chart must have been created in 1.8b14 or newer.
+
+Added a new preference (Save separate RBN MIDI files) that
+automatically will save a RBN specific and a pro guitar specific
+MIDI file during save, each of which omitting any necessary
+unsupported notation.  For example, when creating a pro guitar
+upgrade, you no longer have to remove the legacy notes and
+existing text events, the "notes_pro.mid" file will provide the
+MIDI with the correct contents for building the pro guitar
+upgrade package.  "notes_rbn.mid" will have the correct contents
+for building a package in Magma, even removing unsupported
+tracks such as the dance and pro guitar/bass tracks.
+
 Added support for slider sections, for use in Phase Shift.
 
 Fixed a bug that wouldn't reliably allow various phrases to be
@@ -25,8 +44,8 @@ pitchless states.
 
 Added a keyboard shortcut (CTRL+M) for mark/remark lyric line.
 
-Added the ability to copy the solo, star power or arpeggio phrases
-into the active track from another track.
+Added the ability to copy the solo, star power, arpeggio, trill or
+tremolo phrases into the active track from another track.
 
 Added the ability to seek forward or backward 1ms at a time by
 holding both CTRL and SHIFT when using the left or right arrow key.
