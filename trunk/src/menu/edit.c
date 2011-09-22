@@ -1268,22 +1268,99 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		}
 		eof_sanitize_note_flags(&temp_note.flags,sourcetrack, eof_selected_track);	//Ensure the note flags are validated for the track being pasted into
 
-		/* create the note */
+		/* create/merge the note */
 		if(eof_music_pos + temp_note.pos + temp_note.length - eof_av_delay < eof_music_length)
-		{
+		{	//If the note fits within the chart
+			unsigned long newnotepos, match, flags;
+			long newnotelength;
+
 			if(!oldpaste)
 			{	//If new paste logic is being used, this note pastes into a position relative to the start and end of a beat marker
-				new_note = eof_track_add_create_note(eof_song, eof_selected_track, temp_note.note, eof_put_porpos(temp_note.beat - first_beat + this_beat, temp_note.porpos, 0.0), eof_put_porpos(temp_note.endbeat - first_beat + this_beat, temp_note.porendpos, 0.0) - eof_put_porpos(temp_note.beat - first_beat + this_beat, temp_note.porpos, 0.0), eof_note_type, temp_note.name);
+				newnotepos = eof_put_porpos(temp_note.beat - first_beat + this_beat, temp_note.porpos, 0.0);
+				newnotelength = eof_put_porpos(temp_note.endbeat - first_beat + this_beat, temp_note.porendpos, 0.0) - newnotepos;
 			}
 			else
 			{	//If old paste logic is being used, this note pastes into a position relative to the previous pasted note
-				new_note = eof_track_add_create_note(eof_song, eof_selected_track, temp_note.note, eof_music_pos + temp_note.pos - eof_av_delay, temp_note.length, eof_note_type, temp_note.name);
+				newnotepos = eof_music_pos + temp_note.pos - eof_av_delay;
+				newnotelength = temp_note.length;
 			}
-			if(new_note)
-			{
-				eof_set_note_flags(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.flags);
-				paste_pos[paste_count] = eof_get_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1);
-				paste_count++;
+			if(!eof_paste_erase_overlap && eof_search_for_note_near(eof_song, eof_selected_track, newnotepos, 2, eof_note_type, &match))
+			{	//If using the default paste behavior (a note merges with a note that it overlaps), and this pasted note would overlap another
+				//Erase any lane specific flags in the matching note that correspond with used lanes in the note being pasted
+				flags = eof_get_note_flags(eof_song, eof_selected_track, match);	//Get the flags of the overlapped note
+				if(temp_note.note & 1)
+				{	//If the note being pasted uses lane 1, erase lane 1 flags from the overlapped note
+					if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+					{	//Erase drum specific flags
+						flags &= ~EOF_NOTE_FLAG_DBASS;
+					}
+					else if(eof_song->track[eof_selected_track]->track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
+					{
+						flags &= ~EOF_DANCE_FLAG_LANE_1_MINE;
+					}
+				}
+				if(temp_note.note & 2)
+				{	//If the note being pasted uses lane 2, erase lane 2 flags from the overlapped note
+					if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+					{	//Erase drum specific flags
+						flags &= ~EOF_DRUM_NOTE_FLAG_R_RIMSHOT;
+					}
+					else if(eof_song->track[eof_selected_track]->track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
+					{
+						flags &= ~EOF_DANCE_FLAG_LANE_2_MINE;
+					}
+				}
+				if(temp_note.note & 4)
+				{	//If the note being pasted uses lane 3, erase lane 3 flags from the overlapped note
+					if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+					{	//Erase drum specific flags
+						flags &= ~EOF_NOTE_FLAG_Y_CYMBAL;
+						flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;
+						flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;
+					}
+					else if(eof_song->track[eof_selected_track]->track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
+					{
+						flags &= ~EOF_DANCE_FLAG_LANE_3_MINE;
+					}
+				}
+				if(temp_note.note & 8)
+				{	//If the note being pasted uses lane 4, erase lane 4 flags from the overlapped note
+					if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+					{	//Erase drum specific flags
+						flags &= ~EOF_NOTE_FLAG_B_CYMBAL;
+					}
+					else if(eof_song->track[eof_selected_track]->track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
+					{
+						flags &= ~EOF_DANCE_FLAG_LANE_4_MINE;
+					}
+				}
+				if(temp_note.note & 16)
+				{	//If the note being pasted uses lane 5, erase lane 5 flags from the overlapped note
+					if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+					{	//Erase drum specific flags
+						flags &= ~EOF_NOTE_FLAG_G_CYMBAL;
+					}
+				}
+				flags |= temp_note.flags;	//Merge the pasted note's flags
+				eof_set_note_flags(eof_song, eof_selected_track, match, flags);	//Apply the updated flags to the overlapped note
+				eof_set_note_note(eof_song, eof_selected_track, match, eof_get_note_note(eof_song, eof_selected_track, match) | temp_note.note);	//Merge the note bitmask
+				//Erase ghost and legacy flags
+				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{
+					unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+					eof_song->pro_guitar_track[tracknum]->note[match]->legacymask = 0;	//Clear the legacy bit mask
+					eof_song->pro_guitar_track[tracknum]->note[match]->ghost = 0;	//Clear the ghost bit mask
+				}
+			}
+			else
+			{	//This will paste as a new note
+				new_note = eof_track_add_create_note(eof_song, eof_selected_track, temp_note.note, newnotepos, newnotelength, eof_note_type, temp_note.name);
+				if(new_note)
+				{
+					eof_set_note_flags(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, temp_note.flags);
+					paste_pos[paste_count] = eof_get_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1);
+					paste_count++;
+				}
 			}
 		}
 
