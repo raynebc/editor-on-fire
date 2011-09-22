@@ -230,6 +230,24 @@ MENU eof_note_drum_menu[] =
     {NULL, NULL, NULL, 0, NULL}
 };
 
+char eof_menu_thin_notes_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
+MENU eof_menu_thin_notes_menu[EOF_TRACKS_MAX] =
+{
+    {eof_menu_thin_notes_menu_text[0], eof_menu_thin_notes_track_1, NULL, D_SELECTED, NULL},
+    {eof_menu_thin_notes_menu_text[1], eof_menu_thin_notes_track_2, NULL, 0, NULL},
+    {eof_menu_thin_notes_menu_text[2], eof_menu_thin_notes_track_3, NULL, 0, NULL},
+    {eof_menu_thin_notes_menu_text[3], eof_menu_thin_notes_track_4, NULL, 0, NULL},
+    {eof_menu_thin_notes_menu_text[4], eof_menu_thin_notes_track_5, NULL, 0, NULL},
+    {eof_menu_thin_notes_menu_text[5], eof_menu_thin_notes_track_6, NULL, 0, NULL},
+    {eof_menu_thin_notes_menu_text[6], eof_menu_thin_notes_track_7, NULL, 0, NULL},
+    {eof_menu_thin_notes_menu_text[7], eof_menu_thin_notes_track_8, NULL, 0, NULL},
+    {eof_menu_thin_notes_menu_text[8], eof_menu_thin_notes_track_9, NULL, 0, NULL},
+    {eof_menu_thin_notes_menu_text[9], eof_menu_thin_notes_track_10, NULL, 0, NULL},
+    {eof_menu_thin_notes_menu_text[10], eof_menu_thin_notes_track_11, NULL, 0, NULL},
+    {eof_menu_thin_notes_menu_text[11], eof_menu_thin_notes_track_12, NULL, 0, NULL},
+    {NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_note_proguitar_menu[] =
 {
     {"Edit pro guitar &Note\tN", eof_menu_note_edit_pro_guitar_note, NULL, 0, NULL},
@@ -245,6 +263,7 @@ MENU eof_note_proguitar_menu[] =
     {"Mark as non &Tapping", eof_menu_note_remove_tapping, NULL, 0, NULL},
     {"Toggle palm muting\tCtrl+M", eof_menu_note_toggle_palm_muting, NULL, 0, NULL},
     {"Mark as non palm &Muting", eof_menu_note_remove_palm_muting, NULL, 0, NULL},
+    {"Thin difficulty to match", NULL, eof_menu_thin_notes_menu, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -824,6 +843,29 @@ void eof_prepare_note_menu(void)
 				else
 				{
 					eof_arpeggio_menu[2].flags = D_DISABLED;
+				}
+
+				/* Thin difficulty to match */
+				for(i = 0; i < EOF_TRACKS_MAX; i++)
+				{	//For each track supported by EOF
+					eof_menu_thin_notes_menu[i].flags = D_DISABLED;
+					if((i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
+					{	//If the track exists, copy its name into the string used by the track menu
+						ustrncpy(eof_menu_thin_notes_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE);
+							//Copy the track name to the menu string
+					}
+					else
+					{	//Write a blank string for the track name
+						ustrcpy(eof_menu_thin_notes_menu_text[i],"");
+					}
+					for(j = 0; j < eof_get_track_size(eof_song, i + 1); j++)
+					{	//For each note in the track
+						if(eof_get_note_type(eof_song,i + 1, j) == eof_note_type)
+						{	//If the note is in the active track's difficulty
+							eof_menu_thin_notes_menu[i].flags = 0;	//Enable the track from the submenu
+							break;
+						}
+					}
 				}
 			}
 			else
@@ -4760,4 +4802,64 @@ int eof_menu_pro_guitar_remove_pull_off(void)
 	}
 	eof_determine_phrase_status();
 	return 1;
+}
+
+int eof_menu_thin_notes_track_1(void)
+{
+	return eof_thin_notes_to_match__target_difficulty(eof_song, 1, eof_selected_track, 2, eof_note_type);
+}
+
+int eof_menu_thin_notes_track_2(void)
+{
+	return eof_thin_notes_to_match__target_difficulty(eof_song, 2, eof_selected_track, 2, eof_note_type);
+}
+
+int eof_menu_thin_notes_track_3(void)
+{
+	return eof_thin_notes_to_match__target_difficulty(eof_song, 3, eof_selected_track, 2, eof_note_type);
+}
+
+int eof_menu_thin_notes_track_4(void)
+{
+	return eof_thin_notes_to_match__target_difficulty(eof_song, 4, eof_selected_track, 2, eof_note_type);
+}
+
+int eof_menu_thin_notes_track_5(void)
+{
+	return eof_thin_notes_to_match__target_difficulty(eof_song, 5, eof_selected_track, 2, eof_note_type);
+}
+
+int eof_menu_thin_notes_track_6(void)
+{
+	return eof_thin_notes_to_match__target_difficulty(eof_song, 6, eof_selected_track, 2, eof_note_type);
+}
+
+int eof_menu_thin_notes_track_7(void)
+{
+	return eof_thin_notes_to_match__target_difficulty(eof_song, 7, eof_selected_track, 2, eof_note_type);
+}
+
+int eof_menu_thin_notes_track_8(void)
+{
+	return eof_thin_notes_to_match__target_difficulty(eof_song, 8, eof_selected_track, 2, eof_note_type);
+}
+
+int eof_menu_thin_notes_track_9(void)
+{
+	return eof_thin_notes_to_match__target_difficulty(eof_song, 9, eof_selected_track, 2, eof_note_type);
+}
+
+int eof_menu_thin_notes_track_10(void)
+{
+	return eof_thin_notes_to_match__target_difficulty(eof_song, 10, eof_selected_track, 2, eof_note_type);
+}
+
+int eof_menu_thin_notes_track_11(void)
+{
+	return eof_thin_notes_to_match__target_difficulty(eof_song, 11, eof_selected_track, 2, eof_note_type);
+}
+
+int eof_menu_thin_notes_track_12(void)
+{
+	return eof_thin_notes_to_match__target_difficulty(eof_song, 12, eof_selected_track, 2, eof_note_type);
 }

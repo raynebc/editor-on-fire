@@ -1350,6 +1350,7 @@ int eof_save_ogg(char * fn)
 	return 0;
 }
 
+/* used for debugging */
 int eof_notes_selected(void)
 {
 	eof_log("eof_notes_selected() entered", 1);

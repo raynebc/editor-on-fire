@@ -551,30 +551,6 @@ int eof_menu_edit_copy_vocal(void)
 	return 1;
 }
 
-/* delete lyrics which overlap the specified range */
-/*
-static void eof_menu_edit_paste_clear_range_vocal(unsigned long start, unsigned long end)
-{
-	unsigned long i;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-
-	if(!eof_vocals_selected)
-		return;
-
-	for(i = eof_song->vocal_track[tracknum]->lyrics; i > 0; i--)
-	{
-		if((eof_song->vocal_track[tracknum]->lyric[i-1]->pos >= start) && (eof_song->vocal_track[tracknum]->lyric[i-1]->pos <= end))
-		{
-			eof_track_delete_note(eof_song, eof_selected_track, i-1);
-		}
-		else if((eof_song->vocal_track[tracknum]->lyric[i-1]->pos + eof_song->vocal_track[tracknum]->lyric[i-1]->length >= start) && (eof_song->vocal_track[tracknum]->lyric[i-1]->pos + eof_song->vocal_track[tracknum]->lyric[i-1]->length <= end))
-		{
-			eof_track_delete_note(eof_song, eof_selected_track, i-1);
-		}
-	}
-}
-*/
-
 int eof_menu_edit_paste_vocal_logic(int oldpaste)
 {
 	unsigned long i, j, t;
