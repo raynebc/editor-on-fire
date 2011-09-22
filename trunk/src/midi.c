@@ -127,29 +127,6 @@ void WriteVarLen(unsigned long value, PACKFILE * fp)
    }
 }
 
-unsigned long ReadVarLen(PACKFILE * fp)
-{
-	eof_log("ReadVarLen() entered", 1);
-
-	unsigned long value;
-	unsigned char c;
-
-	if(!fp)
-	{
-		return 0;
-	}
-	if((value = pack_getc(fp)) & 0x80)
-	{
-		value &= 0x7F;
-		do
-		{
-			value = (value << 7) + ((c = pack_getc(fp)) & 0x7F);
-		} while (c & 0x80);
-	}
-
-	return value;
-}
-
 /* sorter for MIDI events so I can ouput proper MTrk data */
 int qsort_helper3(const void * e1, const void * e2)
 {
@@ -246,28 +223,6 @@ int qsort_helper3(const void * e1, const void * e2)
 	{
 		return -1;
 	}
-
-    // they are equal...
-    return 0;
-}
-
-/* sorter for MIDI events so I can ouput proper MTrk data */
-/* This function isn't currently used anywhere */
-int qsort_helper4(const void * e1, const void * e2)
-{
-	eof_log("qsort_helper4() entered", 1);
-
-    EOF_MIDI_EVENT ** thing1 = (EOF_MIDI_EVENT **)e1;
-    EOF_MIDI_EVENT ** thing2 = (EOF_MIDI_EVENT **)e2;
-
-    if((*thing1)->pos < (*thing2)->pos)
-	{
-        return -1;
-    }
-    if((*thing1)->pos > (*thing2)->pos)
-    {
-        return 1;
-    }
 
     // they are equal...
     return 0;
@@ -377,24 +332,6 @@ double eof_calculate_delta(double start, double end)
 	total_time += end - eof_song->beat[endbeat]->fpos;
 
 	return total_delta;
-}
-
-unsigned long eof_count_tracks(void)
-{
-	eof_log("eof_count_tracks() entered", 1);
-
-	unsigned long i;
-	unsigned long count = 0;
-
-	for(i = 1; i < eof_song->tracks; i++)
-	{
-		if(eof_get_track_size(eof_song, i))
-		{
-			count++;
-		}
-	}
-
-	return count;
 }
 
 /* write MTrk data to a temp file so we can calculate the length in bytes of the track

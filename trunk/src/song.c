@@ -2467,7 +2467,7 @@ unsigned long eof_get_track_size(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long tracknum;
 
-	if((sp == NULL) || (track >= sp->tracks))
+	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track] == NULL))
 		return 0;
 	tracknum = sp->track[track]->tracknum;
 
@@ -4604,4 +4604,63 @@ char eof_track_has_cymbals(EOF_SONG *sp, unsigned long track)
 	}
 
 	return 0;	//Track has no cymbals
+}
+
+char eof_search_for_note_near(EOF_SONG *sp, unsigned long track, unsigned long targetpos, unsigned long delta, char type, unsigned long *match)
+{
+	unsigned long i, notepos, distance = 0;
+	char matchfound = 0;
+
+	if((sp == NULL) || (track >= sp->tracks) || (match == NULL))
+		return 0;
+
+	for(i = 0; i < eof_get_track_size(sp, track); i++)
+	{	//For each note in the specified track
+		if(eof_get_note_type(sp, track, i) == type)
+		{	//If this note is in the specified difficulty
+			notepos = eof_get_note_pos(sp, track, i);
+			if((notepos < targetpos) && (targetpos - notepos <= delta))
+			{	//If this note is before the target but in range
+				if(!matchfound || (targetpos - notepos < distance))
+				{	//If this note is the first match or is closer than the previous match
+					distance = targetpos - notepos;
+					*match = i;
+					matchfound = 1;
+				}
+			}
+			else if(notepos - targetpos <= delta)
+			{	//If this note is after the target but in range
+				if(!matchfound || (notepos - targetpos < distance))
+				{	//If this note is the first match or is closer than the previous match
+					distance = notepos - targetpos;
+					*match = i;
+					matchfound = 1;
+				}
+			}
+		}
+	}
+
+	return matchfound;	//Return the match status
+}
+
+int eof_thin_notes_to_match__target_difficulty(EOF_SONG *sp, unsigned long sourcetrack, unsigned long targettrack, unsigned long delta, char type)
+{
+	unsigned long i, match;
+
+	if((sp == NULL) || (sourcetrack >= sp->tracks) || (targettrack >= sp->tracks))
+		return 0;
+
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	for(i = eof_get_track_size(sp, targettrack); i > 0; i--)
+	{	//For each note in the target track (in reverse order)
+		if(eof_get_note_type(sp, targettrack, i - 1) == type)
+		{	//If this note is in the specified difficulty
+			if(!eof_search_for_note_near(sp, sourcetrack, eof_get_note_pos(sp, targettrack, i - 1), delta, type, &match))
+			{	//If this note is not within the specified range of any note in the source track difficulty
+				eof_track_delete_note(sp, targettrack, i - 1);	//Delete the note
+			}
+		}
+	}
+
+	return 1;
 }
