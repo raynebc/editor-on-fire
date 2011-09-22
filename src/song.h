@@ -27,10 +27,10 @@
 #define EOF_NOTE_FLAG_CRAZY      4	//This flag will represent overlap allowed for guitar/dance/keys tracks
 #define EOF_NOTE_FLAG_F_HOPO     8
 #define EOF_NOTE_FLAG_NO_HOPO   16
-#define EOF_NOTE_FLAG_Y_CYMBAL  32	//This flag represents a yellow note charted as a RB3 Pro style cymbal
-#define EOF_NOTE_FLAG_B_CYMBAL  64	//This flag represents a blue note charted as a RB3 Pro style cymbal
+#define EOF_NOTE_FLAG_Y_CYMBAL  32	//This flag represents a yellow note charted as a RB3 Pro style cymbal (lane 3)
+#define EOF_NOTE_FLAG_B_CYMBAL  64	//This flag represents a blue note charted as a RB3 Pro style cymbal (lane 4)
 #define EOF_NOTE_FLAG_G_CYMBAL 128	//This flag represents a note charted as a RB3 Pro style green cymbal (lane 5)
-#define EOF_NOTE_FLAG_DBASS    256	//This flag will represent Expert+ bass drum for the drum track
+#define EOF_NOTE_FLAG_DBASS    256	//This flag will represent Expert+ bass drum for the drum track (lane 1)
 
 //The following flags pertain to pro guitar notes
 #define EOF_PRO_GUITAR_NOTE_FLAG_HO				512		//This flag will represent a hammer on
@@ -44,9 +44,9 @@
 #define EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM		524288	//This flag will represent a chord that is played by strumming down
 
 //The following flags pertain to drum notes
-#define EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN	512		//This flag means the yellow cymbal will be displayed in Phase Shift as an open hi hat
-#define EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL	1024	//This flag means the yellow cymbal will be displayed in Phase Shift as a pedal controlled hi hat
-#define EOF_DRUM_NOTE_FLAG_R_RIMSHOT		2048	//This flag means the red drum note will be displayed in Phase Shift as a rim shot
+#define EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN	512		//This flag means the yellow cymbal will be displayed in Phase Shift as an open hi hat (lane 3)
+#define EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL	1024	//This flag means the yellow cymbal will be displayed in Phase Shift as a pedal controlled hi hat (lane 3)
+#define EOF_DRUM_NOTE_FLAG_R_RIMSHOT		2048	//This flag means the red drum note will be displayed in Phase Shift as a rim shot (lane 2)
 
 //The following flags pertain to dance notes
 #define EOF_DANCE_FLAG_LANE_1_MINE		512		//This flag will represent a mine note for lane 1
