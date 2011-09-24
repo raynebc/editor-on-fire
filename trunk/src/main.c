@@ -862,8 +862,8 @@ void eof_determine_phrase_status(void)
 		flags &= (~EOF_NOTE_FLAG_SP);
 		flags &= (~EOF_NOTE_FLAG_IS_TRILL);
 		flags &= (~EOF_NOTE_FLAG_IS_TREMOLO);
-		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
-		{	//Only clear the is slider flag if this is a legacy track
+		if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
+		{	//Only clear the is slider flag if this is a legacy guitar track
 			flags &= (~EOF_GUITAR_NOTE_FLAG_IS_SLIDER);
 		}
 

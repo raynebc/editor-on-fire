@@ -263,7 +263,6 @@ MENU eof_note_proguitar_menu[] =
     {"Mark as non &Tapping", eof_menu_note_remove_tapping, NULL, 0, NULL},
     {"Toggle palm muting\tCtrl+M", eof_menu_note_toggle_palm_muting, NULL, 0, NULL},
     {"Mark as non palm &Muting", eof_menu_note_remove_palm_muting, NULL, 0, NULL},
-    {"Thin difficulty to match", NULL, eof_menu_thin_notes_menu, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -292,6 +291,7 @@ MENU eof_note_menu[] =
     {eof_trill_menu_text, NULL, eof_trill_menu, 0, NULL},
     {eof_tremolo_menu_text, NULL, eof_tremolo_menu, 0, NULL},
     {"Slider", NULL, eof_slider_menu, 0, NULL},
+    {"Thin difficulty to match", NULL, eof_menu_thin_notes_menu, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"&Drum", NULL, eof_note_drum_menu, 0, NULL},
     {"Pro &Guitar", NULL, eof_note_proguitar_menu, 0, NULL},
@@ -713,10 +713,10 @@ void eof_prepare_note_menu(void)
 			eof_note_menu[10].flags = D_DISABLED;	//Note>HOPO
 			eof_note_menu[11].flags = D_DISABLED;	//Note>Trill> submenu
 			eof_note_menu[12].flags = D_DISABLED;	//Note>Tremolo> submenu
-			eof_note_menu[15].flags = D_DISABLED;	//Note>Drum> submenu
-			eof_note_menu[16].flags = D_DISABLED;	//Note>Pro Guitar> submenu
+			eof_note_menu[16].flags = D_DISABLED;	//Note>Drum> submenu
+			eof_note_menu[17].flags = D_DISABLED;	//Note>Pro Guitar> submenu
 
-			eof_note_menu[17].flags = 0;	//Note>Lyrics> submenu
+			eof_note_menu[18].flags = 0;	//Note>Lyrics> submenu
 			if((eof_selection.current < eof_song->vocal_track[tracknum]->lyrics) && (vselected == 1))
 			{	//Only enable edit and split lyric if only one lyric is selected
 				eof_note_lyrics_menu[0].flags = 0;	//Note>Lyrics>Edit Lyric
@@ -763,7 +763,7 @@ void eof_prepare_note_menu(void)
 			eof_note_menu[7].flags = 0;				//Note>Edit Name
 			eof_note_menu[11].flags = 0;			//Note>Trill> submenu
 			eof_note_menu[12].flags = 0;			//Note>Tremolo> submenu
-			eof_note_menu[17].flags = D_DISABLED;	//Note>Lyrics> submenu
+			eof_note_menu[18].flags = D_DISABLED;	//Note>Lyrics> submenu
 
 			/* transpose up */
 			if(eof_transpose_possible(-1))
@@ -797,11 +797,11 @@ void eof_prepare_note_menu(void)
 
 			if(eof_selected_track != EOF_TRACK_DRUM)
 			{	//When PART DRUMS is not active
-				eof_note_menu[15].flags = D_DISABLED;	//Note>Drum> submenu
+				eof_note_menu[16].flags = D_DISABLED;	//Note>Drum> submenu
 			}
 			else
 			{	//When PART DRUMS is active
-				eof_note_menu[15].flags = 0;
+				eof_note_menu[16].flags = 0;
 			}
 
 			/* toggle Expert+ bass drum */
@@ -833,7 +833,7 @@ void eof_prepare_note_menu(void)
 			/* Pro Guitar mode notation> */
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If the active track is a pro guitar track
-				eof_note_menu[16].flags = 0;			//Note>Pro Guitar> submenu
+				eof_note_menu[17].flags = 0;			//Note>Pro Guitar> submenu
 
 				/* Arpeggio>Erase all */
 				if(eof_song->pro_guitar_track[tracknum]->arpeggios)
@@ -870,7 +870,7 @@ void eof_prepare_note_menu(void)
 			}
 			else
 			{
-				eof_note_menu[16].flags = D_DISABLED;
+				eof_note_menu[17].flags = D_DISABLED;
 			}
 
 			/* Trill mark/remark*/
