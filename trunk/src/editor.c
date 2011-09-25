@@ -3712,16 +3712,6 @@ void eof_vocal_editor_logic(void)
 		{
 			eof_pen_lyric.note = 0;
 		}
-		for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-		{
-			npos = eof_song->vocal_track[tracknum]->lyric[i]->pos;
-			if((eof_music_pos - eof_av_delay > npos) && (eof_music_pos - eof_av_delay < npos + (eof_song->vocal_track[tracknum]->lyric[i]->length > 100 ? eof_song->vocal_track[tracknum]->lyric[i]->length : 100)))
-			{
-				eof_hover_note_2 = i;
-				eof_hover_lyric = i;
-				break;
-			}
-		}
 	}//If the chart is not paused
 
 	if(((mouse_b & 2) || key[KEY_INSERT]) && (eof_input_mode == EOF_INPUT_REX))
@@ -4758,6 +4748,19 @@ void eof_editor_logic_common(void)
 			}
 		}
 	}//If the chart is paused
+	else
+	{	//If the chart is not paused
+		for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
+		{	//Find the hover lyric if there is one
+			npos = eof_song->vocal_track[0]->lyric[i]->pos;
+			if((eof_music_pos - eof_av_delay > npos) && (eof_music_pos - eof_av_delay < npos + (eof_song->vocal_track[0]->lyric[i]->length > 100 ? eof_song->vocal_track[0]->lyric[i]->length : 100)))
+			{
+				eof_hover_note_2 = i;
+				eof_hover_lyric = i;
+				break;
+			}
+		}
+	}
 
 	/* handle playback controls */
 	if((mouse_x >= eof_screen_layout.controls_x) && (mouse_x < eof_screen_layout.controls_x + 139) && (mouse_y >= 22 + 8) && (mouse_y < 22 + 17 + 8))
