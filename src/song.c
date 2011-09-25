@@ -3000,6 +3000,62 @@ void eof_set_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note, uns
 	}
 }
 
+void eof_move_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long amount, char dir)
+{
+// 	eof_log("eof_move_note_pos() entered");
+
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+			if(note < sp->legacy_track[tracknum]->notes)
+			{
+				if(dir > 0)
+				{	//If moving a note forward
+					sp->legacy_track[tracknum]->note[note]->pos += amount;
+				}
+				else if(sp->legacy_track[tracknum]->note[note]->pos - sp->beat[0]->pos >= amount)
+				{	//Only move the note earlier if it won't go before the first beat marker
+					sp->legacy_track[tracknum]->note[note]->pos -= amount;
+				}
+			}
+		break;
+
+		case EOF_VOCAL_TRACK_FORMAT:
+			if(note < sp->vocal_track[tracknum]->lyrics)
+			{
+				if(dir > 0)
+				{	//If moving a note forward
+					sp->vocal_track[tracknum]->lyric[note]->pos += amount;
+				}
+				else if(sp->vocal_track[tracknum]->lyric[note]->pos - sp->beat[0]->pos >= amount)
+				{	//Only move the note earlier if it won't go before the first beat marker
+					sp->vocal_track[tracknum]->lyric[note]->pos -= amount;
+				}
+			}
+		break;
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+			if(note < sp->pro_guitar_track[tracknum]->notes)
+			{
+				if(dir > 0)
+				{	//If moving a note forward
+					sp->pro_guitar_track[tracknum]->note[note]->pos += amount;
+				}
+				else if(sp->pro_guitar_track[tracknum]->note[note]->pos - sp->beat[0]->pos >= amount)
+				{	//Only move the note earlier if it won't go before the first beat marker
+					sp->pro_guitar_track[tracknum]->note[note]->pos -= amount;
+				}
+			}
+		break;
+	}
+}
+
 void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long value)
 {
 // 	eof_log("eof_set_note_note() entered");

@@ -929,8 +929,8 @@ void eof_determine_phrase_status(void)
 		}
 
 		/* mark and check sliders */
-		if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
-		{
+		if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
+		{	//Only check the is slider flag if this is a legacy guitar track
 			for(j = 0; j < eof_get_num_sliders(eof_song, eof_selected_track); j++)
 			{	//For each slider section in the active track
 				sectionptr = eof_get_slider(eof_song, eof_selected_track, j);
