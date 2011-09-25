@@ -2604,10 +2604,12 @@ void eof_editor_logic(void)
 				}
 			}//If the left mouse button is NOT pressed
 			unsigned long move_offset = 0;
+			char move_direction = 1;	//Assume right mouse movement by default
 			int revert = 0;
 			int revert_amount = 0;
-			if((mouse_b & 1) && !eof_lclick_released)
-			{
+			char undo_made = 0;
+			if((mouse_b & 1) && !eof_lclick_released && (lpos >= 0))
+			{	//If the left mouse button is being held and the mouse is right of the left edge of the piano roll
 				if(eof_mouse_drug && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 				{
 					eof_mouse_drug++;
@@ -2631,36 +2633,66 @@ void eof_editor_logic(void)
 				if((eof_mouse_drug > 10) && (eof_selection.current != EOF_MAX_NOTES - 1))
 				{
 					if((eof_snap_mode != EOF_SNAP_OFF) && !KEY_EITHER_CTRL)
-					{
-						move_offset = eof_pen_note.pos - eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current);
+					{	//Move notes by grid snap
+						if(eof_pen_note.pos < eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current))
+						{	//Left mouse movement
+							move_direction = -1;
+							move_offset = eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current) - eof_pen_note.pos;
+						}
+						else
+						{	//Right mouse movement
+							move_direction = 1;
+							move_offset = eof_pen_note.pos - eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current);
+						}
 					}
-					if(!eof_undo_toggle && ((move_offset != 0) || (eof_snap_mode == EOF_SNAP_OFF) || KEY_EITHER_CTRL))
+					else
 					{
-						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						if(eof_mickeys_x < 0)
+						{	//Left mouse movement
+							move_direction = -1;
+							move_offset = -eof_mickeys_x * eof_zoom;
+						}
+						else
+						{	//Right mouse movement
+							move_direction = 1;
+							move_offset = eof_mickeys_x * eof_zoom;
+						}
 					}
-					eof_notes_moved = 1;
 					for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 					{	//For each note in the active track
 						if(eof_selection.multi[i])
 						{	//If the note is selected
 							notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
-							if((eof_snap_mode == EOF_SNAP_OFF) || KEY_EITHER_CTRL)
+							if(notepos == eof_selection.current_pos)
 							{
-								if(notepos == eof_selection.current_pos)
-								{
-									eof_selection.current_pos += eof_mickeys_x * eof_zoom;
+								if(move_direction < 0)
+								{	//Left mouse movement
+									eof_selection.current_pos -= move_offset;
 								}
-								eof_set_note_pos(eof_song, eof_selected_track, i, notepos + eof_mickeys_x * eof_zoom);
-							}
-							else
-							{
-								if(notepos == eof_selection.current_pos)
-								{
+								else
+								{	//Right mouse movement
 									eof_selection.current_pos += move_offset;
 								}
-								eof_set_note_pos(eof_song, eof_selected_track, i, notepos + move_offset);
 							}
-							notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
+							if(move_direction < 0)
+							{	//If the user is moving notes left
+								if((move_offset > notepos) || (notepos - move_offset < eof_song->beat[0]->pos))
+								{	//If the move would make the note position negative or otherwise earlier than the first beat
+									move_offset = notepos - eof_song->beat[0]->pos;	//Adjust the move offset to line it up with the first beat marker
+								}
+							}
+							if(move_offset == 0)
+							{	//If the offset has become 0
+								break;	//Don't move the notes
+							}
+							if(!undo_made)
+							{	//Only create the undo state before moving the first note
+								eof_notes_moved = 1;
+								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+								undo_made = 1;
+							}
+							eof_move_note_pos(eof_song, eof_selected_track, i, move_offset, move_direction);
+							notepos = eof_get_note_pos(eof_song, eof_selected_track, i);	//Get the updated note position
 							notelength = eof_get_note_length(eof_song, eof_selected_track, i);
 							if(notepos + notelength >= eof_music_length)
 							{	//If the moved note is at or after the end of the chart
@@ -2689,7 +2721,7 @@ void eof_editor_logic(void)
 						}
 					}
 				}
-			}
+			}//If the left mouse button is being held
 			if(((mouse_b & 2) || key[KEY_INSERT]) && eof_rclick_released && eof_pen_note.note && (eof_pen_note.pos < eof_music_length))
 			{
 				eof_selection.range_pos_1 = 0;
@@ -3009,7 +3041,7 @@ void eof_vocal_editor_logic(void)
 {
 //	eof_log("eof_vocal_editor_logic() entered");
 
-	unsigned long i;
+	unsigned long i, notepos;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int use_this_x = mouse_x;
 	int next_note_pos = 0;
@@ -3343,11 +3375,13 @@ void eof_vocal_editor_logic(void)
 					}
 				}
 			}
-			int move_offset = 0;
+			unsigned long move_offset = 0;
+			char move_direction = 1;	//Assume right mouse movement by default
 			int revert = 0;
 			int revert_amount = 0;
-			if((mouse_b & 1) && !eof_lclick_released)
-			{
+			char undo_made = 0;
+			if((mouse_b & 1) && !eof_lclick_released && (lpos >= eof_peg_x))
+			{	//If the left mouse button is being held and the mouse is right of the left edge of the piano roll
 				if(eof_mouse_drug)
 				{
 					eof_mouse_drug++;
@@ -3371,40 +3405,72 @@ void eof_vocal_editor_logic(void)
 				if((eof_mouse_drug > 10) && (eof_selection.current != EOF_MAX_NOTES - 1))
 				{
 					if((eof_snap_mode != EOF_SNAP_OFF) && !KEY_EITHER_CTRL)
-					{
+					{	//Move notes by grid snap
 						eof_snap_logic(&drag_snap, lpos - eof_peg_x);
-						move_offset = (int)drag_snap.pos - (int)eof_song->vocal_track[tracknum]->lyric[eof_pegged_note]->pos;
+						if(drag_snap.pos < eof_song->vocal_track[tracknum]->lyric[eof_pegged_note]->pos)
+						{	//Left mouse movement
+							move_direction = -1;
+							move_offset = eof_song->vocal_track[tracknum]->lyric[eof_pegged_note]->pos - drag_snap.pos;
+						}
+						else
+						{	//Right mouse movement
+							move_direction = 1;
+							move_offset = drag_snap.pos - eof_song->vocal_track[tracknum]->lyric[eof_pegged_note]->pos;
+						}
 						eof_last_pen_pos = rpos;
 					}
-					if(!eof_undo_toggle && ((move_offset != 0) || (eof_snap_mode == EOF_SNAP_OFF) || KEY_EITHER_CTRL))
+					else
 					{
-						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						if(eof_mickeys_x < 0)
+						{	//Left mouse movement
+							move_direction = -1;
+							move_offset = -eof_mickeys_x * eof_zoom;
+						}
+						else
+						{	//Right mouse movement
+							move_direction = 1;
+							move_offset = eof_mickeys_x * eof_zoom;
+						}
 					}
-					eof_notes_moved = 1;
 					for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-					{
+					{	//For each lyric in the track
+						notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
 						if(eof_selection.multi[i])
 						{
-							if((eof_snap_mode == EOF_SNAP_OFF) || KEY_EITHER_CTRL)
+							if(notepos == eof_selection.current_pos)
 							{
-								if(eof_song->vocal_track[tracknum]->lyric[i]->pos == eof_selection.current_pos)
-								{
-									eof_selection.current_pos += eof_mickeys_x * eof_zoom;
+								if(move_direction < 0)
+								{	//Left mouse movement
+									eof_selection.current_pos -= move_offset;
 								}
-								eof_song->vocal_track[tracknum]->lyric[i]->pos += eof_mickeys_x * eof_zoom;
-							}
-							else
-							{
-								if(eof_song->vocal_track[tracknum]->lyric[i]->pos == eof_selection.current_pos)
-								{
+								else
+								{	//Right mouse movement
 									eof_selection.current_pos += move_offset;
 								}
-								eof_song->vocal_track[tracknum]->lyric[i]->pos += move_offset;
 							}
-							if(eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length >= eof_music_length)
+							if(move_direction < 0)
+							{	//If the user is moving lyrics left
+								if((move_offset > notepos) || (notepos - move_offset < eof_song->beat[0]->pos))
+								{	//If the move would make the lyric position negative or otherwise earlier than the first beat
+									move_offset = notepos - eof_song->beat[0]->pos;	//Adjust the move offset to line it up with the first beat marker
+								}
+							}
+							if(move_offset == 0)
+							{	//If the offset has become 0
+								break;	//Don't move the notes
+							}
+							if(!undo_made)
+							{	//Only create the undo state before moving the first note
+								eof_notes_moved = 1;
+								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+								undo_made = 1;
+							}
+							eof_move_note_pos(eof_song, eof_selected_track, i, move_offset, move_direction);
+							notepos = eof_get_note_pos(eof_song, eof_selected_track, i);	//Get the updated lyric position
+							if(notepos + eof_song->vocal_track[tracknum]->lyric[i]->length >= eof_music_length)
 							{
 								revert = 1;
-								revert_amount = eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length - eof_music_length;
+								revert_amount = notepos + eof_song->vocal_track[tracknum]->lyric[i]->length - eof_music_length;
 							}
 						}
 					}

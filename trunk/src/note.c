@@ -1003,7 +1003,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	notenote = eof_get_note_note(eof_song, track, notenum);
 	notetype = eof_get_note_type(eof_song, track, notenum);
 
-	if((eof_selected_track == EOF_TRACK_DRUM) || (notelength <= 10))
+	if(eof_selected_track == EOF_TRACK_DRUM)
 		return 0;	//Don't render tails for drum notes or notes that aren't over 10ms long
 
 	tracknum = eof_song->track[track]->tracknum;
