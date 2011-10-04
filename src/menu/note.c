@@ -1853,22 +1853,22 @@ static void eof_split_lyric(int lyric)
 		c = eof_song->vocal_track[tracknum]->lyric[lyric]->text[i];
 		if((c == ' ') && (lastc != ' '))
 		{
-			pieces++;
+			if((i + 1 < strlen(eof_song->vocal_track[tracknum]->lyric[lyric]->text)) && (eof_song->vocal_track[tracknum]->lyric[lyric]->text[i+1] != ' '))
+			{	//Only count this as a piece if there is a non space character after this space
+				pieces++;
+			}
 		}
 	}
 
 	/* shorten the original note */
-	if((eof_song->vocal_track[tracknum]->lyric[lyric]->note >= MINPITCH) && (eof_song->vocal_track[tracknum]->lyric[lyric]->note <= MAXPITCH))
-	{
-		l = eof_song->vocal_track[tracknum]->lyric[lyric]->length > 100 ? eof_song->vocal_track[tracknum]->lyric[lyric]->length : 250 * pieces;
-	}
-	else
-	{
-		l = 250 * pieces;
+	l = eof_song->vocal_track[tracknum]->lyric[lyric]->length;
+	if(l < pieces * 20)
+	{	//Ensure that the original lyric is long enough to encompass a gap of 20ms between each split (pieces - 1) * 20 plus a minimum duration of 1ms each (pieces)
+		return;	//Cancel the operation if it's not long enough
 	}
 	eof_song->vocal_track[tracknum]->lyric[lyric]->length = l / pieces - 20;
 	if(eof_song->vocal_track[tracknum]->lyric[lyric]->length < 1)
-	{
+	{	//Enforce a minimum lyric duration of 1
 		eof_song->vocal_track[tracknum]->lyric[lyric]->length = 1;
 	}
 
@@ -1879,7 +1879,7 @@ static void eof_split_lyric(int lyric)
 		token = strtok(NULL, " ");
 		if(token)
 		{
-			new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, eof_song->vocal_track[tracknum]->lyric[lyric]->note, eof_song->vocal_track[tracknum]->lyric[lyric]->pos + (l / pieces) * piece, l / pieces - 20, 0, token);
+			new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, eof_song->vocal_track[tracknum]->lyric[lyric]->note, eof_song->vocal_track[tracknum]->lyric[lyric]->pos + ((double)l / pieces) * piece, (double)l / pieces - 20.0, 0, token);
 			piece++;
 		}
 	} while(token != NULL);
