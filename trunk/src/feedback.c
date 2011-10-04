@@ -580,7 +580,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 {
 	eof_log("ImportFeedback() entered", 1);
 
-	FILE *inf=NULL;
+	PACKFILE *inf=NULL;
 	char songparsed=0,syncparsed=0,eventsparsed=0;
 		//Flags to indicate whether each of the mentioned sections had already been parsed
 	char currentsection=0;					//Will be set to 1 for [Song], 2 for [SyncTrack], 3 for [Events] or 4 for an instrument section
@@ -611,7 +611,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 	{
 		return NULL;
 	}
-	inf=fopen(filename,"rt");
+	inf=pack_fopen(filename,"rt");
 	if(inf == NULL)
 	{
 		if(error)
@@ -627,15 +627,23 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 	chart->resolution=192;	//Default this to 192
 
 //Allocate memory buffers large enough to hold any line in this file
-	maxlinelength=FindLongestLineLength(inf,1);
+	maxlinelength=FindLongestLineLength_ALLEGRO(filename,1);
 	buffer=(char *)malloc_err(maxlinelength);
 	buffer2=(char *)malloc_err(maxlinelength);
 
 //Read first line of text, capping it to prevent buffer overflow
-	fgets_err(buffer,maxlinelength,inf);
+	if(!pack_fgets(buffer,maxlinelength,inf))
+	{	//I/O error
+		if(error)
+			*error=2;
+		pack_fclose(inf);
+		free(buffer);
+		free(buffer2);
+		return NULL;
+	}
 
 //Parse the contents of the file
-	while(!feof(inf))		//Until end of file is reached
+	while(!pack_feof(inf))		//Until end of file is reached
 	{
 		chart->linesprocessed++;	//Track which line number is being parsed
 
@@ -651,7 +659,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 
 		if((buffer[index] == '\n') || (buffer[index] == '\r') || (buffer[index] == '\0') || (buffer[index] == '{'))
 		{	//If this line was empty, or contained characters we're ignoring
-			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			pack_fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 			continue;							//Skip ahead to the next line
 		}
 
@@ -749,7 +757,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				}
 			}
 
-			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			pack_fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 			continue;				//Skip ahead to the next line
 		}//If the line begins an open bracket...
 
@@ -764,7 +772,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				return NULL;					//Malformed file, return error
 			}
 			currentsection=0;
-			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			pack_fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 			continue;							//Skip ahead to the next line
 		}
 
@@ -1095,7 +1103,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				break;
 
 				case 'E':		//Text event, skip it
-					fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+					pack_fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 				continue;
 
 				case 'N':		//Note indicator, and increment index
@@ -1179,7 +1187,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 			return NULL;					//Malformed file, return error
 		}
 
-		fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+		pack_fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 	}//Until end of file is reached
 
 	if(error)
@@ -1187,6 +1195,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 
 	free(buffer);
 	free(buffer2);
+	pack_fclose(inf);
 
 	return chart;
 }
@@ -1522,4 +1531,46 @@ void DestroyFeedbackChart(struct FeedbackChart *ptr, char freestruct)
 //Optionally free the passed Feedback chart structure itself
 	if(freestruct)
 		free(ptr);
+}
+
+unsigned long FindLongestLineLength_ALLEGRO(char *filename,char exit_on_empty)
+{
+	unsigned long maxlinelength=0;
+	unsigned long ctr=0;
+	int inputchar=0;
+	PACKFILE *inf=NULL;
+
+	assert_wrapper(filename != NULL);	//This must not be NULL
+	inf = pack_fopen(filename, "rt");
+	if(inf == NULL)
+		exit_wrapper(1);	//File open failed
+
+	do{
+		ctr=0;			//Reset line length counter
+		do{
+			inputchar=pack_getc(inf);	//get a character, do not exit on EOF
+			ctr++;					//increment line length counter
+		}while((inputchar != EOF) && (inputchar != '\n'));//Repeat until end of file or newline character is read
+
+		if(ctr > maxlinelength)		//If this line was the longest yet,
+			maxlinelength=ctr;	//Store its length
+	}while(inputchar != EOF);	//Repeat until end of file is reached
+
+	if(maxlinelength < 2)		//If the input file contained nothing but empty lines or no text at all
+	{
+		if(!exit_on_empty)
+		{
+			pack_fclose(inf);
+			return 0;
+		}
+		else
+		{
+			puts("Error: File is empty\nAborting");
+			exit_wrapper(2);
+		}
+	}
+	maxlinelength++;		//Must increment this to account for newline character
+
+	pack_fclose(inf);
+	return maxlinelength;
 }
