@@ -9,7 +9,7 @@
 #include "control.h"
 #include "editor.h"
 
-#define EOF_VERSION_STRING "EOF v1.8beta20"
+#define EOF_VERSION_STRING "EOF v1.8beta21"
 #define EOF_COPYRIGHT_STRING "(c)2008-2010 T^3 Software."
 
 #define KEY_EITHER_ALT (key[KEY_ALT] || key[KEY_ALTGR])
@@ -234,6 +234,7 @@ extern int         eof_disable_2d_rendering;
 extern int         eof_disable_info_panel;
 extern int         eof_paste_erase_overlap;
 extern int         eof_write_rbn_midis;
+extern int         eof_inverted_chords_slash;
 extern int         eof_smooth_pos;
 extern int         eof_windowed;
 extern int         eof_anchor_all_beats;
@@ -287,7 +288,7 @@ extern int         eof_beats_in_measure;
 //extern int         eof_last_selected_note_pos;
 extern int         eof_pegged_note;
 extern int         eof_hover_note;
-extern int         eof_hover_note_2;
+extern int         eof_hover_note_2;	//The hover note that is tracked for fret catalog playback
 extern int         eof_hover_beat;
 extern int         eof_hover_beat_2;
 extern int         eof_hover_piece;

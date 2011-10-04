@@ -12,6 +12,7 @@
 #include "LRC_parse.h"
 #include "ID3_parse.h"
 #include "SRT_parse.h"
+#include "XML_parse.h"
 
 #ifdef USEMEMWATCH
 #ifdef EOF_BUILD	//In the EOF code base, memwatch.h is at the root
@@ -154,6 +155,8 @@ int main(int argc, char *argv[])
 					Lyrics.in_format=ID3_FORMAT;
 				else if(strcasecmp(argv[ctr+1],"srt") == 0)
 					Lyrics.in_format=SRT_FORMAT;
+				else if(strcasecmp(argv[ctr+1],"xml") == 0)
+					Lyrics.in_format=XML_FORMAT;
 				else
 					Input_failed(ctr+1,NULL);
 
@@ -911,6 +914,11 @@ int main(int argc, char *argv[])
 		case SRT_FORMAT:	//Load SRT file
 			inf=fopen_err(Lyrics.infilename,"rt");	//SRT is a text format
 			SRT_Load(inf);
+		break;
+
+		case XML_FORMAT:	//Load XML file
+			inf=fopen_err(Lyrics.infilename,"rt");	//XML is a text format
+			XML_Load(inf);
 		break;
 
 		default:

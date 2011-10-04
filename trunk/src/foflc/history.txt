@@ -1,4 +1,5 @@
 Changelog: 2.36 to 2.37
+	Added support for detecting and importing Guitar Praise format XML lyrics.
 	Corrected memory leaks in the EOF integration.
 	Corrected Vrhythm import for EOF integration.
 	Corrected a crash that could occur during KAR import.

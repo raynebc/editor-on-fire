@@ -73,8 +73,9 @@ Export functions are expected to:
 #define SKAR_FORMAT 10
 #define ID3_FORMAT 11
 #define SRT_FORMAT 12
+#define XML_FORMAT 13
 
-#define NUMBEROFLYRICFORMATS 12
+#define NUMBEROFLYRICFORMATS 13
 	//This defined number should be equal to the number of defined lyric macros above, for use with the LYRICFORMATNAMES[] array
 
 //#define NDEBUG		//This will disable the assert macros in the source file if defined

@@ -95,6 +95,7 @@ int         eof_disable_2d_rendering = 0;
 int         eof_disable_info_panel = 0;
 int         eof_paste_erase_overlap = 0;
 int         eof_write_rbn_midis = 0;
+int         eof_inverted_chords_slash = 0;
 int         eof_smooth_pos = 1;
 int         eof_input_mode = EOF_INPUT_PIANO_ROLL;
 int         eof_windowed = 1;
@@ -2266,25 +2267,37 @@ void eof_render_note_window(void)
 				if(eof_get_pro_guitar_note_fret_string(eof_song->pro_guitar_track[tracknum], eof_selection.current, pro_guitar_string))
 				{	//If the note's frets can be represented in string format
 					if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name[0] != '\0')
-					{	//If this note was given a name, display it in addition to the fretting
+					{	//If this note was manually given a name, display it in addition to the fretting
 						textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: %s", pro_guitar_string, eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name);
 					}
-					else if(eof_lookup_chord(eof_song->pro_guitar_track[tracknum], eof_selected_track, eof_selection.current, &scale, &chord, &isslash, &bassnote))
-					{	//Perform a chord name lookup, and if a match is found, display it in addition to the fretting
-						scale %= 12;	//Ensure this is a value from 0 to 11
-						bassnote %= 12;
-						if(!isslash)
-						{	//If it's a normal chord
-							textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: [%s%s]", pro_guitar_string, eof_note_names[scale], eof_chord_names[chord].chordname);
+					else
+					{
+						unsigned long matchcount = 0;
+						char chord_match_string[30] = {0};
+
+						matchcount = eof_count_chord_lookup_matches(eof_song->pro_guitar_track[tracknum], eof_selected_track, eof_selection.current);
+						if(matchcount)
+						{	//If there's at least one chord lookup match, obtain the first match
+							eof_lookup_chord(eof_song->pro_guitar_track[tracknum], eof_selected_track, eof_selection.current, &scale, &chord, &isslash, &bassnote, 0);
+							scale %= 12;	//Ensure this is a value from 0 to 11
+							bassnote %= 12;
+							if(matchcount > 1)
+							{	//If there's more than one match
+								snprintf(chord_match_string, sizeof(chord_match_string), " (match 1/%lu)", matchcount);
+							}
+							if(!isslash)
+							{	//If it's a normal chord
+								textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: [%s%s]%s", pro_guitar_string, eof_note_names[scale], eof_chord_names[chord].chordname, chord_match_string);
+							}
+							else
+							{	//If it's a slash chord
+								textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: [%s%s%s]%s", pro_guitar_string, eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote], chord_match_string);
+							}
 						}
 						else
-						{	//If it's a slash chord
-							textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: [%s%s%s]", pro_guitar_string, eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote]);
+						{	//Otherwise just display the fretting
+							textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s", pro_guitar_string);
 						}
-					}
-					else
-					{	//Otherwise just display the fretting
-						textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s", pro_guitar_string);
 					}
 				}
 			}//If a note in the active track is selected, display a line with its information
@@ -3215,10 +3228,10 @@ int eof_initialize(int argc, char * argv[])
 	eof_filter_lyrics_files = ncdfs_filter_list_create();
 	if(!eof_filter_lyrics_files)
 	{
-		allegro_message("Could not create file list filter (*.txt, *.mid, *.rmi, *.rba, *.lrc, *.vl, *.kar, *.mp3, *.srt)!");
+		allegro_message("Could not create file list filter (*.txt, *.mid, *.rmi, *.rba, *.lrc, *.vl, *.kar, *.mp3, *.srt, *.xml)!");
 		return 0;
 	}
-	ncdfs_filter_list_add(eof_filter_lyrics_files, "txt;mid;rmi;rba;lrc;vl;kar;mp3;srt", "Lyrics (.txt,.mid,.rmi,.rba,.lrc,.vl,.kar,.mp3,.srt)", 1);
+	ncdfs_filter_list_add(eof_filter_lyrics_files, "txt;mid;rmi;rba;lrc;vl;kar;mp3;srt;xml", "Lyrics (txt,mid,rmi,rba,lrc,vl,kar,mp3,srt,xml)", 1);
 
 	eof_filter_exe_files = ncdfs_filter_list_create();
 	#ifdef ALLEGRO_WINDOWS
