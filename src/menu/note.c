@@ -441,8 +441,8 @@ void eof_prepare_note_menu(void)
 					}
 				}
 			}
-			if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
-			{	//If a legacy/pro guitar/bass or drum track is active
+			if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_KEYS_TRACK_BEHAVIOR))
+			{	//If a legacy/pro guitar/bass/keys or drum track is active
 				for(j = 0; j < eof_get_num_trills(eof_song, eof_selected_track); j++)
 				{	//For each trill phrase in the active track
 					sectionptr = eof_get_trill(eof_song, eof_selected_track, j);
@@ -936,8 +936,8 @@ void eof_prepare_note_menu(void)
 			}
 
 			/* Rename Trill and Tremolo menus as necessary for the drum track */
-			if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR))
-			{	//If a legacy/pro guitar/bass track is active, set the guitar terminology for trill and tremolo sections
+			if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_KEYS_TRACK_BEHAVIOR))
+			{	//If a legacy/pro guitar/bass/keys track is active, set the guitar terminology for trill and tremolo sections
 				ustrcpy(eof_trill_menu_text, "Trill");
 				ustrcpy(eof_tremolo_menu_text, "Tremolo");
 			}
@@ -949,6 +949,10 @@ void eof_prepare_note_menu(void)
 			else
 			{	//Disable these submenus unless a track that can use them is active
 				eof_note_menu[11].flags = D_DISABLED;	//Note>Trill> submenu
+				eof_note_menu[12].flags = D_DISABLED;	//Note>Tremolo> submenu
+			}
+			if((eof_song->track[eof_selected_track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_KEYS_TRACK_BEHAVIOR))
+			{	//If this is a keys track, ensure the tremolo menu still gets disabled
 				eof_note_menu[12].flags = D_DISABLED;	//Note>Tremolo> submenu
 			}
 
@@ -3603,8 +3607,8 @@ int eof_menu_trill_mark(void)
 	unsigned long tracknum;
 	EOF_PHRASE_SECTION *sectionptr;
 
-	if((eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR))
-		return 1;	//Do not allow this function to run unless a pro/legacy guitar/bass/drum track is active
+	if((eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_KEYS_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_KEYS_TRACK_BEHAVIOR))
+		return 1;	//Do not allow this function to run unless a pro/legacy guitar/bass/drum/keys track is active
 
 	//Find the start and end position of the collection of selected notes in the active difficulty
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)

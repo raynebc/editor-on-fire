@@ -10,6 +10,7 @@
 #include "LRC_parse.h"
 #include "ID3_parse.h"
 #include "SRT_parse.h"
+#include "XML_parse.h"
 
 #ifdef USEMEMWATCH
 #ifdef EOF_BUILD	//In the EOF code base, memwatch.h is at the root
@@ -27,7 +28,7 @@ jmp_buf jumpbuffer;			//Used in the conditional compiling code to allow this pro
 							//in the event of an exception that would normally terminate the program
 jmp_buf FLjumpbuffer;		//This is used by FLC's internal logic to provide for exception handling (ie. in validating MIDI files with DetectLyricFormat())
 char useFLjumpbuffer=0;		//Boolean:  If nonzero, FLC's logic intercepts in exit_wrapper() regardless of whether EOF_BUILD is defined
-const char *LYRICFORMATNAMES[NUMBEROFLYRICFORMATS+1]={"UNKNOWN LYRIC TYPE","SCRIPT","VL","RB MIDI","UltraStar","LRC","Vocal Rhythm","ELRC","KAR","Pitched Lyrics","Soft Karaoke","ID3 Lyrics","SRT Subtitle"};
+const char *LYRICFORMATNAMES[NUMBEROFLYRICFORMATS+1]={"UNKNOWN LYRIC TYPE","SCRIPT","VL","RB MIDI","UltraStar","LRC","Vocal Rhythm","ELRC","KAR","Pitched Lyrics","Soft Karaoke","ID3 Lyrics","SRT Subtitle","XML"};
 
 
 
@@ -1918,6 +1919,15 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 		return detectionlist;
 	}
 
+	temp=strstr(buffer,"<?xml");	//Search for indication of XML comment tag
+	if(temp)
+	{
+		free(buffer);
+		fclose_err(inf);
+		detectionlist->format=XML_FORMAT;
+		return detectionlist;
+	}
+
 //Continue reading lines until one begins with something other than #, then test for the text based formats (Script, UltraStar, LRC/ELRC)
 	while(!feof(inf))		//Until end of file is reached
 	{
@@ -2304,6 +2314,7 @@ void EnumerateFormatDetectionList(struct Lyric_Format *detectionlist)
 			case PITCHED_LYRIC_FORMAT:
 			case ID3_FORMAT:
 			case SRT_FORMAT:
+			case XML_FORMAT:
 				if(lasttype == 1)
 				{
 					puts("Logic error:  A file cannot be both a MIDI format and a non MIDI format");

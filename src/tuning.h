@@ -56,7 +56,7 @@ int eof_lookup_played_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsign
 	//If fretnum is 0xFF (muted), it should cause a -1 to be returned, as the guitar track will not have been set to use that many strings
 	//-1 is returned upon error
 
-int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long note, int *scale, int *chord, int *isslash, int *bassnote);
+int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long note, int *scale, int *chord, int *isslash, int *bassnote, unsigned long skipctr);
 	//Examines the specified note and returns nonzero if a chord match is found, in which case the chord name is returned through scale and chord
 	//scale is set to the index into eof_note_names[] that names the matching chord's major scale
 	//chord is set to the index into eof_chord_names[] that names the matching chord
@@ -64,8 +64,12 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 	//If isslash is zero, combining the index into the eof_note_names[] and eof_chord_names[] arrays will provide a full chord name, such as "Amin6"
 	//If isslash is nonzero, combining the index into the eof_note_names[], eof_chord_names[] and eof_slash_note_names[] arrays will provide a full chord name, such as "Dmaj/F#"
 	//For manually-named notes, 2 is returned (and isslash is set to nonzero) if the scale is identified and the name contains a forward or backward slash but the bass note cannot be identified
-	//	3 is returned (and isslash is set to nonzero) if both the scale and bass note are identified, in which cass bassnote will have the appropriate note
+	//3 is returned (and isslash is set to nonzero) if both the scale and bass note are identified, in which case bassnote will have the appropriate note
 	//Zero is returned on error or if no match is found
+	//If skipctr is nonzero, then the first [skipctr] number of matches are ignored during the lookup process, allowing alternate forms of chords to be returned
+
+unsigned long eof_count_chord_lookup_matches(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long note);
+	//Returns the number of chord lookup matches found for the specified note
 
 void eof_pro_guitar_track_build_chord_variations(EOF_SONG *sp, unsigned long track);
 	//Builds the eof_chord_variations[][][] array for the specified track so that the first EOF_MAX_CHORD_VARIATIONS number of each chord scale and type are enumerated
