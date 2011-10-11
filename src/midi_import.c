@@ -483,7 +483,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 				/* note on */
 				case 0x90:
 				{
-					if(d2 <= 0)
+					if(d2 == 0)
 					{	//Any Note On event with a velocity of 0 is to be treated as a Note Off event
 						eof_midi_import_add_event(eof_import_events[i], absolute_pos, 0x80 + (current_event & 0xF), d1, d2, i);	//Retain the original channel number for this event
 					}
@@ -1855,7 +1855,7 @@ eof_log("\tSecond pass complete", 1);
 							}
 							else if(eof_import_events[i]->event[j]->channel == 3)
 							{	//If this note was sent over channel 3, the gem is muted
-								sp->pro_guitar_track[tracknum]->note[notenum]->frets[diff] = 0xFF;
+								sp->pro_guitar_track[tracknum]->note[notenum]->frets[diff] |= 0x80;	//Set the MSB to indicate the string is muted
 							}
 						}
 					}//Note on event
@@ -2219,7 +2219,7 @@ eof_log("\tThird pass complete", 1);
 				{	//For each of the 6 usable strings
 					if(sp->pro_guitar_track[i]->note[j]->note & bitmask)
 					{	//If the string is used in this note
-						sp->pro_guitar_track[i]->note[j]->frets[k] = 0xFF;	//Set this string to be muted
+						sp->pro_guitar_track[i]->note[j]->frets[k] |= 0x80;	//Set this string to be muted
 					}
 				}
 			}

@@ -3333,8 +3333,8 @@ void eof_pro_guitar_track_fixup_notes(EOF_PRO_GUITAR_TRACK * tp, int sel)
 					{	//If this string is used in the note
 						allmuted = 0;
 					}
-					if(fretvalue > tp->numfrets)
-					{	//If this fret value is invalid
+					if((fretvalue & 0x7F) > tp->numfrets)
+					{	//If this fret value (all bits except the MSB) is invalid
 						tp->note[i-1]->frets[ctr] = 0;	//Revert to default fret value of 0
 					}
 				}

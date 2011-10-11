@@ -1108,7 +1108,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 			}//If rendering an existing pro guitar track that slides up or down
 
 			//Render slider note slide if applicable
-			if(noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER)
+			if((eof_song->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (noteflags & EOF_GUITAR_NOTE_FLAG_IS_SLIDER))
 			{
 				unsigned long nextnotenum;
 				if(eof_track_fixup_next_note(eof_song, track, notenum) >= 0)
@@ -1199,7 +1199,7 @@ BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, unsigned char s
 
 	if(note != NULL)
 	{
-		if(note->frets[stringnum] == 0xFF)
+		if(note->frets[stringnum] & 0x80)
 		{	//This is a muted fret
 			snprintf(fretstring,sizeof(fretstring),"X");
 		}

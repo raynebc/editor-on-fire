@@ -42,7 +42,7 @@ MENU eof_beat_menu[] =
     {"Reset Offset to Zero", eof_menu_beat_reset_offset, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"&Anchor Beat\tShift+A", eof_menu_beat_anchor, NULL, 0, NULL},
-    {"&Toggle Anchor\tA", eof_menu_beat_toggle_anchor, NULL, 0, NULL},
+    {"Toggle Anchor\tA", eof_menu_beat_toggle_anchor, NULL, 0, NULL},
     {"&Delete Anchor", eof_menu_beat_delete_anchor, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"&Reset BPM", eof_menu_beat_reset_bpm, NULL, 0, NULL},
@@ -51,7 +51,7 @@ MENU eof_beat_menu[] =
     {"All E&vents", eof_menu_beat_all_events, NULL, 0, NULL},
     {"&Events", eof_menu_beat_events, NULL, 0, NULL},
     {"Clear Events", eof_menu_beat_clear_events, NULL, 0, NULL},
-    {"Place Trainer Event", eof_menu_beat_trainer_event, NULL, 0, NULL},
+    {"Place &Trainer Event", eof_menu_beat_trainer_event, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 

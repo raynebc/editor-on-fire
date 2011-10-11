@@ -386,7 +386,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 	char fret_hand_pos_written;				//This is used to track whether the single fret hand position was written (if the "Fret hand pos is 0" option is enabled)
 
 	eof_log_level &= ~2;	//Disable verbose logging
-	if(!sp | !fn)
+	if(!sp || !fn)
 	{
 		eof_log("\tError saving:  Invalid parameters", 1);
 		return 0;	//Return failure
@@ -1233,7 +1233,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 				/* write note gems */
 				for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
 				{	//For each of the 6 usable strings
-					if((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) || (sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] == 0xFF))
+					if((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) || (sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] & 0x80))
 					{	//Mute gems are written on channel 3
 						channel = 3;
 					}
@@ -1247,12 +1247,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 					}
 
 					if(sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] == 0xFF)
-					{	//If this is a muted gem
+					{	//If this is a muted gem with no fret specified
 						velocity = 100;	//Write it as a muted note at fret 0
 					}
 					else
 					{	//Otherwise write it normally
-						velocity = sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] + 100;	//Velocity (100 + X) represents fret # X
+						velocity = (sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] & 0x7F) + 100;	//Velocity (100 + X) represents fret # X (mask out the MSB, which is the mute status)
 					}
 					if(note & bitmask)
 					{	//If the note uses this string

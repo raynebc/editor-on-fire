@@ -1745,7 +1745,7 @@ void eof_note_logic(void)
 		{
 			eof_blclick_released = 0;
 		}
-		if(!mouse_b & 1)
+		if(!(mouse_b & 1))
 		{
 			if(!eof_blclick_released)
 			{
