@@ -185,7 +185,7 @@ TRACK CHUNK, for each track:
 !		1 byte:		Ghost bitflag (specifies which lanes in the note are treated as "ghost" notes, ie. for Arpeggio phrases)
 *		FRET CHUNK, for each set bit in the guitar note bitflag
 *		{
-*			1 byte:		Fret # tab (0=Open strum, #=Fret # pressed, 0xFF=Muted)
+*			1 byte:		Fret # tab (0=Open strum, #=Fret # pressed, 0xFF=Muted (no fret specified), if MSB is set, the string is considered muted)
 *		}
 *		1 byte:		Legacy bitflags (the 5 least significant bits represent the lanes that would be set when pasting this note into a legacy track)
 !			If the MSB is set, this bitmask was user-defined, otherwise it will be dynamically defined during the paste operation (basically just keep lanes 1-5 set/clear based on the pro guitar note's lanes)

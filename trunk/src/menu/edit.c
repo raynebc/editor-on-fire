@@ -1287,60 +1287,9 @@ int eof_menu_edit_paste_logic(int oldpaste)
 			if(!eof_paste_erase_overlap && eof_search_for_note_near(eof_song, eof_selected_track, newnotepos, 2, eof_note_type, &match))
 			{	//If using the default paste behavior (a note merges with a note that it overlaps), and this pasted note would overlap another
 				//Erase any lane specific flags in the matching note that correspond with used lanes in the note being pasted
-				flags = eof_get_note_flags(eof_song, eof_selected_track, match);	//Get the flags of the overlapped note
-				if(temp_note.note & 1)
-				{	//If the note being pasted uses lane 1, erase lane 1 flags from the overlapped note
-					if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-					{	//Erase drum specific flags
-						flags &= ~EOF_NOTE_FLAG_DBASS;
-					}
-					else if(eof_song->track[eof_selected_track]->track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
-					{
-						flags &= ~EOF_DANCE_FLAG_LANE_1_MINE;
-					}
-				}
-				if(temp_note.note & 2)
-				{	//If the note being pasted uses lane 2, erase lane 2 flags from the overlapped note
-					if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-					{	//Erase drum specific flags
-						flags &= ~EOF_DRUM_NOTE_FLAG_R_RIMSHOT;
-					}
-					else if(eof_song->track[eof_selected_track]->track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
-					{
-						flags &= ~EOF_DANCE_FLAG_LANE_2_MINE;
-					}
-				}
-				if(temp_note.note & 4)
-				{	//If the note being pasted uses lane 3, erase lane 3 flags from the overlapped note
-					if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-					{	//Erase drum specific flags
-						flags &= ~EOF_NOTE_FLAG_Y_CYMBAL;
-						flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;
-						flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;
-					}
-					else if(eof_song->track[eof_selected_track]->track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
-					{
-						flags &= ~EOF_DANCE_FLAG_LANE_3_MINE;
-					}
-				}
-				if(temp_note.note & 8)
-				{	//If the note being pasted uses lane 4, erase lane 4 flags from the overlapped note
-					if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-					{	//Erase drum specific flags
-						flags &= ~EOF_NOTE_FLAG_B_CYMBAL;
-					}
-					else if(eof_song->track[eof_selected_track]->track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
-					{
-						flags &= ~EOF_DANCE_FLAG_LANE_4_MINE;
-					}
-				}
-				if(temp_note.note & 16)
-				{	//If the note being pasted uses lane 5, erase lane 5 flags from the overlapped note
-					if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-					{	//Erase drum specific flags
-						flags &= ~EOF_NOTE_FLAG_G_CYMBAL;
-					}
-				}
+				flags = eof_prepare_note_flag_merge(eof_get_note_flags(eof_song, eof_selected_track, match), eof_song->track[eof_selected_track]->track_behavior, temp_note.note);
+					//Get the flags of the overlapped note as they would be if all applicable lane-specific flags are cleared to inherit the flags of the note to merge
+
 				flags |= temp_note.flags;	//Merge the pasted note's flags
 				eof_set_note_flags(eof_song, eof_selected_track, match, flags);	//Apply the updated flags to the overlapped note
 				eof_set_note_note(eof_song, eof_selected_track, match, eof_get_note_note(eof_song, eof_selected_track, match) | temp_note.note);	//Merge the note bitmask
@@ -2501,4 +2450,62 @@ void eof_menu_paste_read_clipboard_note(PACKFILE * fp, EOF_EXTENDED_NOTE *temp_n
 	temp_note->legacymask = pack_igetl(fp);		//Read the note's legacy bitmask
 	pack_fread(temp_note->frets, sizeof(temp_note->frets), fp);	//Read the note's fret array
 	temp_note->ghostmask = pack_igetl(fp);				//Read the note's ghost bitmask
+}
+
+unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long track_behavior, unsigned long note)
+{
+	if(note & 1)
+	{	//If the note being pasted uses lane 1, erase lane 1 flags from the overlapped note
+		if(track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//Erase drum specific flags
+			flags &= ~EOF_NOTE_FLAG_DBASS;
+		}
+		else if(track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
+		{
+			flags &= ~EOF_DANCE_FLAG_LANE_1_MINE;
+		}
+	}
+	if(note & 2)
+	{	//If the note being pasted uses lane 2, erase lane 2 flags from the overlapped note
+		if(track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//Erase drum specific flags
+			flags &= ~EOF_DRUM_NOTE_FLAG_R_RIMSHOT;
+		}
+		else if(track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
+		{
+			flags &= ~EOF_DANCE_FLAG_LANE_2_MINE;
+		}
+	}
+	if(note & 4)
+	{	//If the note being pasted uses lane 3, erase lane 3 flags from the overlapped note
+		if(track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//Erase drum specific flags
+			flags &= ~EOF_NOTE_FLAG_Y_CYMBAL;
+			flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;
+			flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;
+		}
+		else if(track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
+		{
+			flags &= ~EOF_DANCE_FLAG_LANE_3_MINE;
+		}
+	}
+	if(note & 8)
+	{	//If the note being pasted uses lane 4, erase lane 4 flags from the overlapped note
+		if(track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//Erase drum specific flags
+			flags &= ~EOF_NOTE_FLAG_B_CYMBAL;
+		}
+		else if(track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
+		{
+			flags &= ~EOF_DANCE_FLAG_LANE_4_MINE;
+		}
+	}
+	if(note & 16)
+	{	//If the note being pasted uses lane 5, erase lane 5 flags from the overlapped note
+		if(track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//Erase drum specific flags
+			flags &= ~EOF_NOTE_FLAG_G_CYMBAL;
+		}
+	}
+	return flags;
 }
