@@ -4003,7 +4003,7 @@ unsigned long eof_determine_piano_roll_left_edge(void)
 
 unsigned long eof_determine_piano_roll_right_edge(void)
 {
-	eof_log("eof_determine_piano_roll_right_edge() entered", 1);
+//	eof_log("eof_determine_piano_roll_right_edge() entered", 1);
 
 	unsigned long pos = eof_music_pos / eof_zoom;
 
