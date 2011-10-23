@@ -268,3 +268,104 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	pack_fclose(fp);
 	return 1;
 }
+
+int eof_save_upgrades_dta(EOF_SONG * sp, char * fn)
+{
+	eof_log("eof_save_upgrades_dta() entered", 1);
+
+	char buffer[256] = {0};
+	char buffer2[256] = {0};
+	char buffer3[5] = {0};
+	unsigned long i, tracknum;
+
+	PACKFILE * fp;
+	if(!sp || !fn)
+	{
+		return 0;
+	}
+	fp = pack_fopen(fn, "r");	//Try to open the file for reading
+	if(fp)
+	{	//If the file exists already
+		pack_fclose(fp);
+		return 0;
+	}
+	fp = pack_fopen(fn, "w");	//Try to open the file for writing
+	if(!fp)
+	{
+		return 0;
+	}
+
+	if(ustrlen(sp->tags->title) > 0)
+	{	//If there is a defined song title
+		snprintf(buffer, sizeof(buffer), "(%s\n", sp->tags->title);
+		pack_fputs(buffer, fp);
+	}
+	else
+	{	//Use a placeholder
+		pack_fputs("(SONGNAME\n", fp);
+	}
+	pack_fputs("   (upgrade_version 1)\n", fp);
+
+	if(ustrlen(sp->tags->title) > 0)
+	{	//If there is a defined song title
+		snprintf(buffer, sizeof(buffer), "   (midi_file \"songs_upgrades/%s_plus.mid\")\n", sp->tags->title);
+		pack_fputs(buffer, fp);
+	}
+	else
+	{	//Use a placeholder
+		pack_fputs("   (midi_file \"songs_upgrades/SONGNAME_plus.mid\")\n", fp);
+	}
+	pack_fputs("   (song_id ###)\n", fp);
+	pack_fputs("   (rank\n", fp);
+
+	if(eof_get_track_size(sp, EOF_TRACK_PRO_GUITAR))
+	{	//If the pro guitar track is populated
+		pack_fputs("      (real_guitar ###)\n", fp);
+	}
+	else
+	{	//Write data for a blank pro guitar track
+		pack_fputs("      (real_guitar 0)\n", fp);
+	}
+
+	if(eof_get_track_size(sp, EOF_TRACK_PRO_BASS))
+	{	//If the pro bass track is populated
+		pack_fputs("      (real_bass ###)\n", fp);
+	}
+	else
+	{	//Write data for a blank pro bass track
+		pack_fputs("      (real_bass 0)\n", fp);
+	}
+	pack_fputs("   )\n", fp);
+
+	tracknum = sp->track[EOF_TRACK_PRO_GUITAR]->tracknum;
+	buffer2[0] = '\0';	//Ensure this string is empty
+	for(i = 0; i < sp->pro_guitar_track[tracknum]->numstrings; i++)
+	{	//For each string used in the track
+		if(i != 0)
+		{	//If this isn't the first past, append a space after the last tuning that was written
+			ustrcat(buffer2, " ");
+		}
+		snprintf(buffer3, sizeof(buffer3), "%d", sp->pro_guitar_track[tracknum]->tuning[i]);	//Write the string's tuning value (signed integer)
+		ustrcat(buffer2, buffer3);	//Append the string's tuning value to the ongoing tuning string
+	}
+	snprintf(buffer, sizeof(buffer), "   (real_guitar_tuning (%s))\n", buffer2);	//Build the complete pro guitar tuning string line
+	pack_fputs(buffer, fp);
+
+	tracknum = sp->track[EOF_TRACK_PRO_BASS]->tracknum;
+	buffer2[0] = '\0';	//Ensure this string is empty
+	for(i = 0; i < sp->pro_guitar_track[tracknum]->numstrings; i++)
+	{	//For each string used in the track
+		if(i != 0)
+		{	//If this isn't the first past, append a space after the last tuning that was written
+			ustrcat(buffer2, " ");
+		}
+		snprintf(buffer3, sizeof(buffer3), "%d", sp->pro_guitar_track[tracknum]->tuning[i]);	//Write the string's tuning value (signed integer)
+		ustrcat(buffer2, buffer3);	//Append the string's tuning value to the ongoing tuning string
+	}
+	snprintf(buffer, sizeof(buffer), "   (real_bass_tuning (%s))\n", buffer2);	//Build the complete pro bass tuning string line
+	pack_fputs(buffer, fp);
+
+	pack_fputs(")", fp);
+	pack_fclose(fp);
+	return 1;
+}
