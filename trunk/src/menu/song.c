@@ -2260,6 +2260,7 @@ int eof_menu_set_num_frets_strings(void)
 {
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	unsigned char newnumfrets = 0, newnumstrings = 0;
+	unsigned long highestfret = 0;
 	char undo_made = 0, cancel = 0;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -2291,6 +2292,16 @@ int eof_menu_set_num_frets_strings(void)
 		newnumfrets = atol(eof_etext2);
 		if(newnumfrets && (newnumfrets != eof_song->pro_guitar_track[tracknum]->numfrets))
 		{	//If the specified number of frets was changed
+			highestfret = eof_get_highest_fret(eof_selected_track, 0);	//Get the highest used fret value in this track
+			if(highestfret > newnumfrets)
+			{	//If any notes in this track use fret values that would exceed the new fret limit
+				char message[120];
+				snprintf(message, sizeof(message), "Warning:  This track uses frets as high as %lu, exceeding the proposed limit.  Continue?", highestfret);
+				if(alert(NULL, message, NULL, "&Yes", "&No", 'y', 'n') != 1)
+				{	//If user does not opt to continue after being alerted of this fret limit issue
+					return 1;
+				}
+			}
 			if(!undo_made)
 			{
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);

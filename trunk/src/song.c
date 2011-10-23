@@ -10,6 +10,7 @@
 #include "undo.h"
 #include "tuning.h"
 #include "utility.h"
+#include "menu/edit.h"
 #include "menu/file.h"
 #include "menu/song.h"
 #include "agup/agup.h"
@@ -4719,4 +4720,107 @@ int eof_thin_notes_to_match__target_difficulty(EOF_SONG *sp, unsigned long sourc
 	}
 
 	return 1;
+}
+
+unsigned long eof_get_highest_fret(unsigned long track, char scope)
+{
+	unsigned long highestfret = 0, currentfret, ctr, ctr2, tracknum, bitmask;
+
+	if(!eof_song || (track >= eof_song->tracks))
+		return 0;	//Invalid parameters
+	if(eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 0;	//Only run this when a pro guitar/bass track is active
+
+	tracknum = eof_song->track[track]->tracknum;
+	for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->notes; ctr++)
+	{	//For each note in the active pro guitar track
+		if(!scope || ((eof_selection.track == track) && eof_selection.multi[ctr]))
+		{	//If this note is within the scope of this search (in the track or selected)
+			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask<<=1)
+			{	//For each of the 6 usable strings
+				if(eof_song->pro_guitar_track[tracknum]->note[ctr]->note & bitmask)
+				{	//If this string is in use
+					currentfret = eof_song->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2];
+					if((currentfret != 0xFF) && ((currentfret & 0x7F) > highestfret))
+					{	//If this fret value (masking out the MSB, which is used for muting status) is higher than the previous
+						highestfret = currentfret & 0x7F;
+					}
+				}
+			}
+		}
+	}
+
+	return highestfret;
+}
+
+unsigned long eof_get_highest_clipboard_fret(char *clipboardfile)
+{
+	PACKFILE * fp;
+	unsigned long sourcetrack = 0, copy_notes = 0, first_beat = 0;
+	unsigned long i, j, bitmask;
+	unsigned long highestfret = 0, currentfret;	//Used to find if any pasted notes would use a higher fret than the active track supports
+	EOF_EXTENDED_NOTE temp_note;
+
+	if(!clipboardfile)
+	{	//If the passed clipboard filename is invalid
+		return 0;
+	}
+	fp = pack_fopen(clipboardfile, "r");
+	if(!fp)
+	{	//If the clipboard couldn't be opened
+		return 0;
+	}
+	sourcetrack = pack_igetl(fp);		//Read the source track of the clipboard data
+	copy_notes = pack_igetl(fp);		//Read the number of notes on the clipboard
+	first_beat = pack_igetl(fp);		//Read the original beat number of the first note that was copied
+	if(!copy_notes)
+	{	//If there are 0 notes on the clipboard
+		return 0;
+	}
+	if(eof_song->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If the clipboard notes are from a pro guitar/bass track
+		for(i = 0; i < copy_notes; i++)
+		{	//For each note in the clipboard file
+			eof_menu_paste_read_clipboard_note(fp, &temp_note);	//Read the note
+			for(j= 0, bitmask = 1; j < 6; j++, bitmask<<=1)
+			{	//For each of the 6 usable strings
+				if(temp_note.note & bitmask)
+				{	//If this string is in use
+					currentfret = temp_note.frets[j];
+					if((currentfret != 0xFF) && ((currentfret & 0x7F) > highestfret))
+					{	//If this fret value (masking out the MSB, which is used for muting status) is higher than the previous
+						highestfret = currentfret & 0x7F;
+					}
+				}
+			}
+		}
+	}
+	pack_fclose(fp);
+
+	return highestfret;
+}
+
+unsigned long eof_get_highest_fret_value(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long highestfret = 0, currentfret, ctr, tracknum, bitmask;
+
+	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return 0;	//Return error
+	tracknum = sp->track[track]->tracknum;
+	if(note >= sp->pro_guitar_track[tracknum]->notes)
+		return 0;	//Return error
+
+	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
+	{	//For each of the 6 usable strings
+		if(eof_song->pro_guitar_track[tracknum]->note[note]->note & bitmask)
+		{	//If this string is in use
+			currentfret = eof_song->pro_guitar_track[tracknum]->note[note]->frets[ctr];
+			if((currentfret != 0xFF) && ((currentfret & 0x7F) > highestfret))
+			{	//If this fret value (masking out the MSB, which is used for muting status) is higher than the previous
+				highestfret = currentfret & 0x7F;
+			}
+		}
+	}
+
+	return highestfret;
 }
