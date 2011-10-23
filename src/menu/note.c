@@ -224,8 +224,8 @@ MENU eof_note_drum_menu[] =
     {"Toggle expert+ bass drum\tCtrl+E", eof_menu_note_toggle_double_bass, NULL, 0, NULL},
     {"Mark as non &Expert+ bass drum", eof_menu_note_remove_double_bass, NULL, 0, NULL},
     {"&Mark new notes as Expert+", eof_menu_note_default_double_bass, NULL, 0, NULL},
-    {"Toggle Y cymbal as &Open hi hat\tShift+O", eof_menu_note_toggle_hi_hat_open, NULL, 0, NULL},
-    {"Toggle Y cymbal as &Pedal hi hat\tShift+P",eof_menu_note_toggle_hi_hat_pedal, NULL, 0, NULL},
+    {"Toggle Y note as &Open hi hat\tShift+O", eof_menu_note_toggle_hi_hat_open, NULL, 0, NULL},
+    {"Toggle Y note as &Pedal hi hat\tShift+P",eof_menu_note_toggle_hi_hat_pedal, NULL, 0, NULL},
     {"Toggle R note as &Rim shot\tShift+R",eof_menu_note_toggle_rimshot, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
@@ -4620,8 +4620,10 @@ int eof_menu_note_toggle_hi_hat_open(void)
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
 			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-			if((eof_get_note_note(eof_song, eof_selected_track, i) & 4) && (flags & EOF_NOTE_FLAG_Y_CYMBAL))
-			{	//If this drum note contains a yellow cymbal
+//			if((eof_get_note_note(eof_song, eof_selected_track, i) & 4) && (flags & EOF_NOTE_FLAG_Y_CYMBAL))
+			if(eof_get_note_note(eof_song, eof_selected_track, i) & 4)
+			{	//If this drum note contains a yellow gem
+				flags |= EOF_NOTE_FLAG_Y_CYMBAL;	//Automatically mark as a cymbal
 				if(!u)
 				{	//Make a back up before changing the first note
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -4649,8 +4651,10 @@ int eof_menu_note_toggle_hi_hat_pedal(void)
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
 			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-			if((eof_get_note_note(eof_song, eof_selected_track, i) & 4) && (flags & EOF_NOTE_FLAG_Y_CYMBAL))
-			{	//If this drum note contains a yellow cymbal
+//			if((eof_get_note_note(eof_song, eof_selected_track, i) & 4) && (flags & EOF_NOTE_FLAG_Y_CYMBAL))
+			if(eof_get_note_note(eof_song, eof_selected_track, i) & 4)
+			{	//If this drum note contains a yellow gem
+				flags |= EOF_NOTE_FLAG_Y_CYMBAL;	//Automatically mark as a cymbal
 				if(!u)
 				{	//Make a back up before changing the first note
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);

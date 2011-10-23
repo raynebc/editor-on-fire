@@ -660,5 +660,13 @@ int eof_thin_notes_to_match__target_difficulty(EOF_SONG *sp, unsigned long sourc
 	//Checks all notes in the target track difficulty
 	//For each note, if it isn't within [delta] number of milliseconds of a note in the source track difficulty, it is deleted
 	//Returns zero on error
+unsigned long eof_get_highest_fret(unsigned long track, char scope);
+	//Examines notes in the specified track based on the scope value (0 = all notes, nonzero = selected notes)
+	//Returns the highest used fret value of notes in scope, or 0 if all such notes are muted with no fret specified
+unsigned long eof_get_highest_clipboard_fret(char *clipboardfile);
+	//Parses the notes in the clipboard file, returning the highest used fret among them (or 0 if all such notes are muted with no fret specified)
+unsigned long eof_get_highest_fret_value(EOF_SONG *sp, unsigned long track, unsigned long note);
+	//Returns the highest used fret in the specified pro guitar note
+	//If the parameters are invalid or the specific pro guitar note's gems are all muted with no fret specified, 0 is returned
 
 #endif

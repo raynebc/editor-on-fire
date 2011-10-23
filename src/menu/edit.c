@@ -1189,6 +1189,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	EOF_NOTE * new_note = NULL;
 	unsigned long sourcetrack = 0;	//Will store the track that this clipboard data was from
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	unsigned long highestfret;
 
 	/* open the file */
 	fp = pack_fopen("eof.clipboard", "r");
@@ -1208,6 +1209,21 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	{	//If there are 0 notes on the clipboard, return without making an undo
 		return 1;
 	}
+	if((eof_song->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+	{	//If the source and destination track are both pro guitar format, pre-check to ensure that the pasted notes won't go above the current track's fret limit
+		highestfret = eof_get_highest_clipboard_fret("eof.clipboard");
+		if(highestfret > eof_song->pro_guitar_track[tracknum]->numfrets)
+		{	//If any notes on the clipboard would exceed the active track's fret limit
+			char message[120];
+			snprintf(message, sizeof(message), "Warning:  This track's fret limit is exceeded by a pasted note's fret value of %lu.  Continue?", highestfret);
+			if(alert(NULL, message, NULL, "&Yes", "&No", 'y', 'n') != 1)
+			{	//If user does not opt to continue after being alerted of this fret limit issue
+				pack_fclose(fp);
+				return 0;
+			}
+		}
+	}
+
 	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 
 	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
@@ -2131,7 +2147,7 @@ int eof_menu_edit_paste_from_catalog(void)
 	long end_beat = -1;
 	float nporpos, nporendpos;
 	EOF_NOTE * new_note = NULL;
-	unsigned long newnotenum, sourcetrack;
+	unsigned long newnotenum, sourcetrack, highestfret = 0, currentfret;
 
 	if((eof_selected_catalog_entry < eof_song->catalog->entries) && eof_song->catalog->entries)
 	{	//If a valid catalog entry is selected
@@ -2158,11 +2174,29 @@ int eof_menu_edit_paste_from_catalog(void)
 			if((eof_get_note_type(eof_song, sourcetrack, i) == eof_song->catalog->entry[eof_selected_catalog_entry].type) && (eof_get_note_pos(eof_song, sourcetrack, i) >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_get_note_pos(eof_song, sourcetrack, i) + eof_get_note_length(eof_song, sourcetrack, i) <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos))
 			{
 				note_count++;
+				currentfret = eof_get_highest_fret_value(eof_song, sourcetrack, i);	//Get the highest used fret value in this note if applicable
+				if(currentfret > highestfret)
+				{	//Track the highest used fret value
+					highestfret = currentfret;
+				}
 			}
 		}
 		if(note_count == 0)
 		{
 			return 1;
+		}
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If the current track is pro guitar format, warn if pasted notes go above the current track's fret limit
+			unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+			if(highestfret > eof_song->pro_guitar_track[tracknum]->numfrets)
+			{	//If any notes in the catalog entry would exceed the active track's fret limit
+				char message[120];
+				snprintf(message, sizeof(message), "Warning:  This track's fret limit is exceeded by a pasted note's fret value of %lu.  Continue?", highestfret);
+				if(alert(NULL, message, NULL, "&Yes", "&No", 'y', 'n') != 1)
+				{	//If user does not opt to continue after being alerted of this fret limit issue
+					return 0;
+				}
+			}
 		}
 
 		eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);

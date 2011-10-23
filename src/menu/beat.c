@@ -58,11 +58,11 @@ MENU eof_beat_menu[] =
 DIALOG eof_events_dialog[] =
 {
    /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-   { d_agup_window_proc,0,   48,  455, 232, 2,   23,  0,    0,      0,   0,   "Events",       NULL, NULL },
-   { d_agup_list_proc,  12,  84,  350, 138, 2,   23,  0,    0,      0,   0,   eof_events_list,NULL, NULL },
-   { d_agup_push_proc,  375, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",         NULL, eof_events_dialog_add },
-   { d_agup_push_proc,  375, 124, 68,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",        NULL, eof_events_dialog_edit },
-   { d_agup_push_proc,  375, 164, 68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, eof_events_dialog_delete },
+   { d_agup_window_proc,0,   48,  500, 232, 2,   23,  0,    0,      0,   0,   "Events",       NULL, NULL },
+   { d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   eof_events_list,NULL, NULL },
+   { d_agup_push_proc,  425, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",         NULL, eof_events_dialog_add },
+   { d_agup_push_proc,  425, 124, 68,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",        NULL, eof_events_dialog_edit },
+   { d_agup_push_proc,  425, 164, 68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, eof_events_dialog_delete },
    { d_agup_button_proc,12,  235, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
@@ -70,8 +70,8 @@ DIALOG eof_events_dialog[] =
 DIALOG eof_all_events_dialog[] =
 {
    /* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc, 0,   48,  450, 234, 2,   23,  0,    0,      0,   0,   "All Events",               NULL, NULL },
-   { d_agup_list_proc,   12,  84,  425, 140, 2,   23,  0,    0,      0,   0,   eof_events_list_all, NULL, NULL },
+   { d_agup_window_proc, 0,   48,  500, 234, 2,   23,  0,    0,      0,   0,   "All Events",               NULL, NULL },
+   { d_agup_list_proc,   12,  84,  475, 140, 2,   23,  0,    0,      0,   0,   eof_events_list_all, NULL, NULL },
    { d_agup_button_proc, 12,  237, 154, 28,  2,   23,  'f',  D_EXIT, 0,   0,   "&Find",              NULL, NULL },
    { d_agup_button_proc, 178, 237, 154, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",               NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
@@ -840,7 +840,7 @@ char * eof_events_list(int index, int * size)
 {
 	int i;
 	int ecount = 0;
-	char trackname[20];
+	char trackname[22];
 
 	for(i = 0; i < eof_song->text_events; i++)
 	{
@@ -850,7 +850,7 @@ char * eof_events_list(int index, int * size)
 			{
 				if((eof_song->text_event[i]->track != 0) && (eof_song->text_event[i]->track < eof_song->tracks))
 				{	//If this is a track specific event
-					snprintf(trackname, 20, "(%s) ", eof_song->track[eof_song->text_event[i]->track]->name);
+					snprintf(trackname, sizeof(trackname), "(%s) ", eof_song->track[eof_song->text_event[i]->track]->name);
 				}
 				else
 				{
@@ -888,7 +888,7 @@ char * eof_events_list(int index, int * size)
 
 char * eof_events_list_all(int index, int * size)
 {
-	char trackname[20];
+	char trackname[22];
 	switch(index)
 	{
 		case -1:
@@ -904,7 +904,7 @@ char * eof_events_list_all(int index, int * size)
 			}
 			if((eof_song->text_event[index]->track != 0) && (eof_song->text_event[index]->track < eof_song->tracks))
 			{	//If this is a track specific event
-				snprintf(trackname, 20, " %s", eof_song->track[eof_song->text_event[index]->track]->name);
+				snprintf(trackname, sizeof(trackname), " %s", eof_song->track[eof_song->text_event[index]->track]->name);
 			}
 			else
 			{
@@ -1098,9 +1098,19 @@ int eof_menu_beat_add(void)
 
 void eof_rebuild_trainer_strings(void)
 {
+	int relevant_track = eof_selected_track;	//In RB3, pro guitar/bass training events are only stored in the 17 fret track
+
 	if(!eof_song)
 		return;	//Return without rebuilding string tunings if there is an error
 
+	if(eof_selected_track == EOF_TRACK_PRO_GUITAR_22)
+	{	//Ensure that training events get written to the 17 fret version track
+		relevant_track = EOF_TRACK_PRO_GUITAR;
+	}
+	else if(eof_selected_track == EOF_TRACK_PRO_BASS_22)
+	{
+		relevant_track = EOF_TRACK_PRO_BASS;
+	}
 	//Build the trainer strings
 	if((eof_selected_track == EOF_TRACK_PRO_GUITAR) || (eof_selected_track == EOF_TRACK_PRO_GUITAR_22))
 	{	//A pro guitar track is active
@@ -1116,7 +1126,7 @@ void eof_rebuild_trainer_strings(void)
 	}
 
 	//Update the checkboxes to indicate which trainer strings are already defined
-	if(eof_song_contains_event(eof_song, eof_etext2, eof_selected_track))
+	if(eof_song_contains_event(eof_song, eof_etext2, relevant_track))
 	{	//If this training event is already defined in the active track
 		eof_place_trainer_dialog[3].flags = D_SELECTED | D_DISABLED;	//Check this box
 	}
@@ -1124,7 +1134,7 @@ void eof_rebuild_trainer_strings(void)
 	{
 		eof_place_trainer_dialog[3].flags = 0 | D_DISABLED;		//Otherwise clear this box
 	}
-	if(eof_song_contains_event(eof_song, eof_etext3, eof_selected_track))
+	if(eof_song_contains_event(eof_song, eof_etext3, relevant_track))
 	{	//If this training event is already defined in the active track
 		eof_place_trainer_dialog[5].flags = D_SELECTED | D_DISABLED;	//Check this box
 	}
@@ -1132,7 +1142,7 @@ void eof_rebuild_trainer_strings(void)
 	{
 		eof_place_trainer_dialog[5].flags = 0 | D_DISABLED;		//Otherwise clear this box
 	}
-	if(eof_song_contains_event(eof_song, eof_etext4, eof_selected_track))
+	if(eof_song_contains_event(eof_song, eof_etext4, relevant_track))
 	{	//If this training event is already defined in the active track
 		eof_place_trainer_dialog[7].flags = D_SELECTED | D_DISABLED;	//Check this box
 	}
@@ -1144,6 +1154,7 @@ void eof_rebuild_trainer_strings(void)
 
 int eof_menu_beat_trainer_event(void)
 {
+	int relevant_track = eof_selected_track;	//In RB3, pro guitar/bass training events are only stored in the 17 fret track
 	char *selected_string = NULL;
 
 	eof_color_dialog(eof_place_trainer_dialog, gui_fg_color, gui_bg_color);
@@ -1159,6 +1170,14 @@ int eof_menu_beat_trainer_event(void)
 	eof_place_trainer_dialog[6].flags = 0;
 	eof_place_trainer_dialog[8].flags = 0;
 
+	if(eof_selected_track == EOF_TRACK_PRO_GUITAR_22)
+	{	//Ensure that training events get written to the 17 fret version track
+		relevant_track = EOF_TRACK_PRO_GUITAR;
+	}
+	else if(eof_selected_track == EOF_TRACK_PRO_BASS_22)
+	{
+		relevant_track = EOF_TRACK_PRO_BASS;
+	}
 	eof_rebuild_trainer_strings();
 	if(eof_popup_dialog(eof_place_trainer_dialog, 2) == 9)
 	{	//If user clicked OK button
@@ -1175,7 +1194,7 @@ int eof_menu_beat_trainer_event(void)
 			selected_string = eof_etext4;
 		}
 
-		if(eof_song_contains_event(eof_song, selected_string, eof_selected_track))
+		if(eof_song_contains_event(eof_song, selected_string, relevant_track))
 		{	//If this training event is already defined in the active track
 			if(alert(NULL, "Warning:  This text event already exists in this track.  Continue?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 			{	//If the user does not opt to place the duplicate text event
@@ -1183,7 +1202,7 @@ int eof_menu_beat_trainer_event(void)
 			}
 		}
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		eof_song_add_text_event(eof_song, eof_selected_beat, selected_string, eof_selected_track, 0);	//Add the chosen text event to the selected beat
+		eof_song_add_text_event(eof_song, eof_selected_beat, selected_string, relevant_track, 0);	//Add the chosen text event to the selected beat
 		eof_sort_events(eof_song);
 	}
 	return 1;
