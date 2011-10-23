@@ -2140,8 +2140,13 @@ int eof_save_helper(char *destfilename)
 	{	//If the user opted to also save RBN2 and RB3 pro guitar upgrade compliant MIDIs
 		append_filename(eof_temp_filename, newfolderpath, "notes_rbn.mid", 1024);
 		eof_export_midi(eof_song, eof_temp_filename, 1);	//Write a RBN2 compliant MIDI
-		append_filename(eof_temp_filename, newfolderpath, "notes_pro.mid", 1024);
-		eof_export_midi(eof_song, eof_temp_filename, 2);	//Write a RB3 pro guitar upgrade compliant MIDI
+		if(eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS) || eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS_22) || eof_get_track_size(eof_song, EOF_TRACK_PRO_GUITAR) || eof_get_track_size(eof_song, EOF_TRACK_PRO_GUITAR_22))
+		{	//If any of the pro guitar tracks are populated
+			append_filename(eof_temp_filename, newfolderpath, "notes_pro.mid", 1024);
+			eof_export_midi(eof_song, eof_temp_filename, 2);	//Write a RB3 pro guitar upgrade compliant MIDI
+			append_filename(eof_temp_filename, newfolderpath, "upgrades.dta", 1024);
+			eof_save_upgrades_dta(eof_song, eof_temp_filename);	//Create the upgrades.dta file if it does not already exist
+		}
 	}
 	append_filename(eof_temp_filename, newfolderpath, "song.ini", 1024);
 	eof_save_ini(eof_song, eof_temp_filename);
