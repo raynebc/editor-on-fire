@@ -53,7 +53,8 @@ extern SAMPLE *eof_sound_clap2;
 extern SAMPLE *eof_sound_clap3;
 extern SAMPLE *eof_sound_clap4;
 
-void eof_mix_callback(void * buf, int length);	//Buffer callback function for alogg
+void eof_mix_callback_stereo(void * buf, int length);	//Buffer callback function for alogg, optimized for stereo samples
+void eof_mix_callback_mono(void * buf, int length);	//Buffer callback function for alogg, optimized for mono samples
 unsigned long eof_mix_msec_to_sample(unsigned long msec, int freq);
 
 void eof_mix_init(void);	//Inits variables and loads cues (clap, metronome tick, vocal tones)

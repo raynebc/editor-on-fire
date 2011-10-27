@@ -79,13 +79,12 @@ int eof_mix_current_note = 0;
 unsigned long eof_mix_metronome_pos[EOF_MAX_BEATS] = {0};
 int eof_mix_metronomes = 0;
 int eof_mix_current_metronome = 0;
-int eof_mix_increment = 0;
 
 unsigned long eof_mix_percussion_pos[EOF_MAX_NOTES] = {0};
 int eof_mix_percussions = 0;
 int eof_mix_current_percussion = 0;
 
-void eof_mix_callback(void * buf, int length)
+void eof_mix_callback_stereo(void * buf, int length)
 {
 	unsigned long bytes_left;
 	unsigned short * buffer;
@@ -93,30 +92,21 @@ void eof_mix_callback(void * buf, int length)
 	long cuesample;		//Used to apply a volume to cues, where the appropriate amplitude multiplier for changing the cue's loudness to X% is to multiply its amplitudes by sqrt(X/100)
 	int i, j;
 
-	if(eof_disable_sound_processing)	//If the user wanted to disable all sound effect mixing to improve performance
-		return;							//Return immediately without altering the audio
-
-	bytes_left = length / 2;
+	bytes_left = length >> 1;	//Divide by two
 	buffer = (unsigned short *)buf;
 
 	/* add audio data to the buffer */
-	for(i = 0; i < bytes_left; i += eof_mix_increment)
+	for(i = 0; i < bytes_left; i += 2)
 	{
 		/* store original sample values */
 		sum = buffer[i] - 32768;	//Convert to signed sample
-		if(eof_mix_increment > 1)
-		{
-			sum2 = buffer[i+1] - 32768;		//Convert to signed sample
-		}
+		sum2 = buffer[i+1] - 32768;		//Repeat for the other channel of a stereo sample
 
 		/* apply volume multiplier */
 		if(eof_chart_volume != 100)		//If the chart volume is to be less than 100%
 		{
 			sum *= eof_chart_volume_multiplier;
-			if(eof_mix_increment > 1)
-			{	//If this is a stereo audio file, apply the volume to the other channel as well
-				sum2 *= eof_chart_volume_multiplier;
-			}
+			sum2 *= eof_chart_volume_multiplier;	//If this is a stereo audio file, apply the volume to the other channel as well
 		}
 
 		/* mix voices */
@@ -129,11 +119,8 @@ void eof_mix_callback(void * buf, int length)
 					cuesample *= eof_voice[j].multiplier;	//Change the cue to the specified loudness
 
 				sum += cuesample;
+				sum2 += cuesample;	//If this is a stereo audio file, mix the voice into the other channel as well
 
-				if(eof_mix_increment > 1)
-				{
-					sum2 += cuesample;
-				}
 				eof_voice[j].pos += eof_mix_sample_increment;
 				if(eof_voice[j].pos >= eof_voice[j].sp->len)
 				{
@@ -149,14 +136,113 @@ void eof_mix_callback(void * buf, int length)
 			sum = 32767;
 		buffer[i] = sum + 32768;		//Convert the summed PCM samples to unsigned and store into buffer
 
-		if(eof_mix_increment > 1)
+		if(sum2 < -32768)
+			sum2 = -32768;
+		else if(sum2 > 32767)
+			sum2 = 32767;
+		buffer[i+1] = sum2 + 32768;	//Convert the summed PCM samples to unsigned and store into buffer
+
+		/* increment the sample and check sound triggers */
+		eof_mix_sample_count++;
+		if((eof_mix_sample_count >= eof_mix_next_clap) && (eof_mix_current_clap < eof_mix_claps))
 		{
-			if(sum2 < -32768)
-				sum2 = -32768;
-			else if(sum2 > 32767)
-				sum2 = 32767;
-			buffer[i+1] = sum2 + 32768;	//Convert the summed PCM samples to unsigned and store into buffer
+			if(eof_mix_claps_enabled)
+			{
+				eof_voice[0].sp = eof_sound_clap;
+				eof_voice[0].pos = 0.0;
+				eof_voice[0].playing = 1;
+			}
+			eof_mix_current_clap++;
+			eof_mix_next_clap = eof_mix_clap_pos[eof_mix_current_clap];
 		}
+		if((eof_mix_sample_count >= eof_mix_next_metronome) && (eof_mix_current_metronome < eof_mix_metronomes))
+		{
+			if(eof_mix_metronome_enabled)
+			{
+				eof_voice[1].sp = eof_sound_metronome;
+				eof_voice[1].pos = 0.0;
+				eof_voice[1].playing = 1;
+			}
+			eof_mix_current_metronome++;
+			eof_mix_next_metronome = eof_mix_metronome_pos[eof_mix_current_metronome];
+		}
+		if((eof_mix_sample_count >= eof_mix_next_note) && (eof_mix_current_note < eof_mix_notes))
+		{
+			if(eof_mix_midi_tones_enabled)
+			{	//Queue the start and end time (in milliseconds) of this MIDI note
+//				eof_midi_play_note(eof_mix_note_note[eof_mix_current_note]);	//Play the MIDI note
+				eof_midi_queue_add(eof_mix_note_note[eof_mix_current_note],eof_mix_note_ms_pos[eof_mix_current_note],eof_mix_note_ms_end[eof_mix_current_note]);
+			}
+			else if(eof_mix_vocal_tones_enabled && eof_sound_note[eof_mix_note_note[eof_mix_current_note]])
+			{
+				eof_voice[2].sp = eof_sound_note[eof_mix_note_note[eof_mix_current_note]];
+				eof_voice[2].pos = 0.0;
+				eof_voice[2].playing = 1;
+			}
+			eof_mix_current_note++;
+			eof_mix_next_note = eof_mix_note_pos[eof_mix_current_note];
+		}
+		if((eof_mix_sample_count >= eof_mix_next_percussion) && (eof_mix_current_percussion < eof_mix_notes))
+		{
+			if(eof_mix_percussion_enabled)
+			{
+				eof_voice[3].sp = eof_sound_chosen_percussion;
+				eof_voice[3].pos = 0.0;
+				eof_voice[3].playing = 1;
+			}
+			eof_mix_current_percussion++;
+			eof_mix_next_percussion = eof_mix_percussion_pos[eof_mix_current_percussion];
+		}
+	}
+	eof_just_played = 1;
+}
+
+void eof_mix_callback_mono(void * buf, int length)
+{
+	unsigned short * buffer;
+	long sum=0;			//Use a signed long integer to allow the clipping logic to be more efficient
+	long cuesample;		//Used to apply a volume to cues, where the appropriate amplitude multiplier for changing the cue's loudness to X% is to multiply its amplitudes by sqrt(X/100)
+	int i, j;
+
+	buffer = (unsigned short *)buf;
+
+	/* add audio data to the buffer */
+	for(i = 0; i < length; i++)
+	{
+		/* store original sample values */
+		sum = buffer[i] - 32768;	//Convert to signed sample
+
+		/* apply volume multiplier */
+		if(eof_chart_volume != 100)		//If the chart volume is to be less than 100%
+		{
+			sum *= eof_chart_volume_multiplier;
+		}
+
+		/* mix voices */
+		for(j = 0; j < EOF_MIX_MAX_CHANNELS; j++)
+		{
+			if(eof_voice[j].playing)
+			{
+				cuesample = ((unsigned short *)(eof_voice[j].sp->data))[(unsigned long)eof_voice[j].pos] - 32768;
+				if(eof_voice[j].volume != 100)
+					cuesample *= eof_voice[j].multiplier;	//Change the cue to the specified loudness
+
+				sum += cuesample;
+
+				eof_voice[j].pos += eof_mix_sample_increment;
+				if(eof_voice[j].pos >= eof_voice[j].sp->len)
+				{
+					eof_voice[j].playing = 0;
+				}
+			}
+		}
+
+		/* Apply the floor and ceiling for 16 bit sample data as necessary */
+		if(sum < -32768)
+			sum = -32768;
+		else if(sum > 32767)
+			sum = 32767;
+		buffer[i] = sum + 32768;		//Convert the summed PCM samples to unsigned and store into buffer
 
 		/* increment the sample and check sound triggers */
 		eof_mix_sample_count++;
@@ -324,8 +410,6 @@ void eof_mix_init(void)
 	eof_sound_clap2 = eof_mix_load_ogg_sample("percussion.dat#clap2.ogg");
 	eof_sound_clap3 = eof_mix_load_ogg_sample("percussion.dat#clap3.ogg");
 	eof_sound_clap4 = eof_mix_load_ogg_sample("percussion.dat#clap4.ogg");
-
-	alogg_set_buffer_callback(eof_mix_callback);
 }
 
 SAMPLE *eof_mix_load_ogg_sample(char *fn)
@@ -468,7 +552,19 @@ void eof_mix_start_helper(void)
 			break;
 		}
 	}
-	eof_mix_increment =  alogg_get_wave_is_stereo_ogg(eof_music_track) ? 2 : 1;	//Cache the number of audio channels
+
+	if(eof_disable_sound_processing)
+	{	//If callback processing is disabled
+		alogg_set_buffer_callback(NULL);	//Alogg will not invoke a callback if it is NULL
+	}
+	else if(alogg_get_wave_is_stereo_ogg(eof_music_track))
+	{	//If the chart audio is in stereo, use the stereo callback function
+		alogg_set_buffer_callback(eof_mix_callback_stereo);
+	}
+	else
+	{	//Otherwise use the mono callback function
+		alogg_set_buffer_callback(eof_mix_callback_mono);
+	}
 }
 
 void eof_mix_start(unsigned long start, int speed)
