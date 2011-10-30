@@ -2269,6 +2269,7 @@ void eof_render_note_window(void)
 					if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name[0] != '\0')
 					{	//If this note was manually given a name, display it in addition to the fretting
 						textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s: %s", pro_guitar_string, eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name);
+						eof_enable_chord_cache = 0;	//When a manually-named note is selected, reset this variable so that previous/next chord name cannot be used
 					}
 					else
 					{
@@ -2277,13 +2278,13 @@ void eof_render_note_window(void)
 
 						matchcount = eof_count_chord_lookup_matches(eof_song->pro_guitar_track[tracknum], eof_selected_track, eof_selection.current);
 						if(matchcount)
-						{	//If there's at least one chord lookup match, obtain the first match
-							eof_lookup_chord(eof_song->pro_guitar_track[tracknum], eof_selected_track, eof_selection.current, &scale, &chord, &isslash, &bassnote, 0);
+						{	//If there's at least one chord lookup match, obtain the user's selected match
+							eof_lookup_chord(eof_song->pro_guitar_track[tracknum], eof_selected_track, eof_selection.current, &scale, &chord, &isslash, &bassnote, eof_selected_chord_lookup, 1);	//Run a cache-able lookup
 							scale %= 12;	//Ensure this is a value from 0 to 11
 							bassnote %= 12;
 							if(matchcount > 1)
 							{	//If there's more than one match
-								snprintf(chord_match_string, sizeof(chord_match_string), " (match 1/%lu)", matchcount);
+								snprintf(chord_match_string, sizeof(chord_match_string), " (match %lu/%lu)", eof_selected_chord_lookup + 1, matchcount);
 							}
 							if(!isslash)
 							{	//If it's a normal chord
@@ -2297,6 +2298,9 @@ void eof_render_note_window(void)
 						else
 						{	//Otherwise just display the fretting
 							textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s", pro_guitar_string);
+							eof_chord_lookup_note = eof_get_pro_guitar_note_note(eof_song->pro_guitar_track[tracknum], eof_selection.current);		//Cache the failed, looked up note's details
+							memcpy(eof_chord_lookup_frets, eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets, 6);
+							eof_cached_chord_lookup_retval = 0;	//Cache a failed lookup result
 						}
 					}
 				}

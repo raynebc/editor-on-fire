@@ -1358,7 +1358,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 					if(eof_note_count_colors(sp, j, i) > 1)
 					{	//If this is a chord
 						scale = 17;	//Unless a chord name is found, write a root note of 17 (no name)
-						if(eof_lookup_chord(sp->pro_guitar_track[tracknum], j, i, &scale, &chord, &isslash, &bassnote, 0))
+						if(eof_lookup_chord(sp->pro_guitar_track[tracknum], j, i, &scale, &chord, &isslash, &bassnote, 0, 0))
 						{	//If the chord lookup logic found a match
 							if(isslash)
 							{	//If it was found to be a slash chord

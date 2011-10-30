@@ -26,6 +26,18 @@ char string_5_name[5] = {0};
 char string_6_name[5] = {0};
 char *tuning_list[EOF_TUNING_LENGTH] = {string_1_name,string_2_name,string_3_name,string_4_name,string_5_name,string_6_name};
 
+unsigned long eof_chord_lookup_note = 0;
+unsigned long eof_chord_lookup_count = 0;
+unsigned char eof_chord_lookup_frets[6] = {0};
+unsigned long eof_selected_chord_lookup = 0;
+unsigned long eof_cached_chord_lookup_variation = 0;
+int eof_cached_chord_lookup_scale = 0;
+int eof_cached_chord_lookup_chord = 0;
+int eof_cached_chord_lookup_isslash = 0;
+int eof_cached_chord_lookup_bassnote = 0;
+int eof_cached_chord_lookup_retval = 0;
+int eof_enable_chord_cache = 0;
+
 EOF_TUNING_DEFINITION eof_tuning_definitions[EOF_NUM_TUNING_DEFINITIONS] =
 {
  {"Standard tuning", 1, 4, {0,0,0,0}},
@@ -190,7 +202,7 @@ int eof_lookup_played_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsign
 	return (notenum % 12);	//Return the note value in terms of half steps above note A
 }
 
-int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long note, int *scale, int *chord, int *isslash, int *bassnote, unsigned long skipctr)
+int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long note, int *scale, int *chord, int *isslash, int *bassnote, unsigned long skipctr, int cache)
 {
 	unsigned long bitmask, stringctr = 0;
 	static char major_scales[12][7];
@@ -201,6 +213,7 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 	unsigned long ctr, ctr2, ctr3, ctr4, halfstep, halfstep2, skipaccidental, pass;
 	int retval, bass = -1;			//bass will track the bass note (for now, the note played on the lowest used string) of the chord
 	char *name, **notename = eof_note_names_sharp;
+	unsigned long originalskipctr = skipctr;	//Save this for caching purposes
 
 	if((tp == NULL) || (note >= tp->notes) || !scale || !chord || !isslash || !bassnote)
 		return 0;	//Return error if any of the parameters are not valid
@@ -258,6 +271,19 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 	}
 	else
 	{	//Otherwise perform chord lookup based on notes played
+		if(eof_check_against_chord_lookup_cache(tp, note))
+		{	//If this note is the same as that of the cached lookup
+			if((cache && (eof_cached_chord_lookup_variation == skipctr)) || !cache)
+			{	//If running caching logic, return the cached result only if it's the cached variation number
+				//Otherwise if not caching (ie. running a normal name lookup in the editor pane or export logic, return the cached name variation
+				*scale = eof_cached_chord_lookup_scale;
+				*chord = eof_cached_chord_lookup_chord;
+				*isslash = eof_cached_chord_lookup_isslash;
+				*bassnote = eof_cached_chord_lookup_bassnote;
+				return eof_cached_chord_lookup_retval;
+			}
+		}
+
 		//If the major scales table hasn't been created yet, do so now
 		if(!scales_created)
 		{
@@ -294,7 +320,9 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 		}
 
 		if(stringctr < 2)	//If there aren't at least two strings used
+		{
 			return 0;		//Return no matches
+		}
 
 		for(pass = 0; pass < 2; pass++)
 		{	//On the first pass, perform normal lookup.  On the second pass, perform (hybrid) slash chord lookup (disregarding the bass note)
@@ -388,26 +416,48 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 					{	//A match was found
 						if(!skipctr)
 						{	//If this match is not supposed to be skipped
+							if(cache)
+							{	//If a successful lookup is to be cached to global variables
+								eof_cached_chord_lookup_scale = ctr;
+								eof_cached_chord_lookup_chord = ctr2;
+								eof_cached_chord_lookup_variation = originalskipctr;
+								eof_chord_lookup_note = eof_get_pro_guitar_note_note(tp, note);		//Cache the looked up note's details
+								memcpy(eof_chord_lookup_frets, tp->note[note]->frets, 6);
+								eof_enable_chord_cache = 1;
+							}
+							*scale = ctr;	//Pass the scale back through the pointer
+							*chord = ctr2;	//Pass the chord name back through the pointer
 							if(!pass)
 							{	//This is the first pass (normal chord)
 								if((bass != ctr) && eof_inverted_chords_slash)
 								{	//If this is an inverted chord and the user opted to have such chords detect as slash chords
+									if(cache)
+									{	//If a successful lookup is to be cached to global variables
+										eof_cached_chord_lookup_isslash = 1;
+										eof_cached_chord_lookup_bassnote = bass;
+										eof_cached_chord_lookup_retval = 3;
+									}
 									*isslash = 1;		//This was detected as a slash chord
-									*scale = ctr;		//Pass the scale back through the pointer
-									*chord = ctr2;		//Pass the chord name back through the pointer
 									*bassnote = bass;	//Pass the bass note back through the pointer
 									return 3;			//Return slash chord match found
 								}
+								if(cache)
+								{	//If a successful lookup is to be cached to global variables
+									eof_cached_chord_lookup_isslash = 0;
+									eof_cached_chord_lookup_retval = 1;
+								}
 								*isslash = 0;	//This was detected as a normal chord, not a slash chord
-								*scale = ctr;	//Pass the scale back through the pointer
-								*chord = ctr2;	//Pass the chord name back through the pointer
 								return 1;		//Return match found
 							}
 							else
 							{	//This is the second pass (hybrid slash chord)
+								if(cache)
+								{	//If a successful lookup is to be cached to global variables
+									eof_cached_chord_lookup_isslash = 1;
+									eof_cached_chord_lookup_bassnote = bass;
+									eof_cached_chord_lookup_retval = 3;
+								}
 								*isslash = 1;		//This was detected as a slash chord
-								*scale = ctr;		//Pass the scale back through the pointer
-								*chord = ctr2;		//Pass the chord name back through the pointer
 								*bassnote = bass;	//Pass the bass note back through the pointer
 								return 3;			//Return slash chord match found
 							}
@@ -512,7 +562,7 @@ void eof_pro_guitar_track_build_chord_variations(EOF_SONG *sp, unsigned long tra
 		}
 
 		//Perform lookup and handle match
-		if(eof_lookup_chord(&dummy_track, track, 0, &scale, &chord, &isslash, &bassnote, 0))
+		if(eof_lookup_chord(&dummy_track, track, 0, &scale, &chord, &isslash, &bassnote, 0, 0))
 		{	//If this fret permutation matches a chord
 			scale %= 12;	//Ensure this is between 0 and 11
 			array_depth = real_track->eof_chord_num_variations[scale][chord];	//Get the depth of the third dimension of this chord
@@ -642,16 +692,48 @@ void EOF_DEBUG_OUTPUT_CHORD_VARIATION_ARRAYS(void)
 	}
 }
 
+unsigned long eof_check_against_chord_lookup_cache(EOF_PRO_GUITAR_TRACK *tp, unsigned long note)
+{
+	unsigned long thisnote, ctr, bitmask, match = 0;
+
+	//Check to see if the specified note matches that of the previously cached lookup
+	thisnote = eof_get_pro_guitar_note_note(tp, note);
+	if(eof_chord_lookup_note == thisnote)
+	{	//If this note has the same note bitmask as the previous lookup
+		match = 1;	//Assume it's a match unless one of the fret values isn't equal
+		for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+		{	//For each of the 6 usable strings
+			if(eof_chord_lookup_note & bitmask)
+			{	//If this string is in use
+				if(eof_chord_lookup_frets[ctr] != tp->note[note]->frets[ctr])
+				{	//If this string's fret value doesn't match that of the previous lookup
+					match = 0;
+					break;
+				}
+			}
+		}
+	}
+	return match;
+}
+
 unsigned long eof_count_chord_lookup_matches(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long note)
 {
 	unsigned long ctr = 0, matchcount = 0;
 	int scale, chord, isslash, bassnote;
 
-	while(eof_lookup_chord(tp, track, note, &scale, &chord, &isslash, &bassnote, ctr))
-	{	//As long as a chord variation is found
-		matchcount++;	//Increment the number of matches found
-		ctr++;		//Increment the number of matches skipped
+	//Check to see if the specified note matches that of the previous lookup
+	if(eof_check_against_chord_lookup_cache(tp, note))
+	{	//If eof_chord_lookup_count wasn't reset by selecting another note, and this note is the same as that of the previous lookup
+		return eof_chord_lookup_count;	//Return the previous lookup's result
 	}
 
+	eof_selected_chord_lookup = 0;	//Revert to using the first chord lookup result whenever a different note is selected
+	while(eof_lookup_chord(tp, track, note, &scale, &chord, &isslash, &bassnote, ctr, 0))
+	{	//As long as a chord variation is found
+		matchcount++;	//Increment the number of matches found
+		ctr++;			//Increment the number of matches skipped
+	}
+
+	eof_chord_lookup_count = matchcount;	//Cache the result
 	return matchcount;
 }

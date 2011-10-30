@@ -1060,7 +1060,7 @@ int eof_menu_note_transpose_up(void)
 				{	//If a pro guitar note was tranposed, move the fret values accordingly (only if legacy view isn't in effect)
 					for(j = 15; j > 0; j--)
 					{	//For the upper 15 frets
-					eof_song->pro_guitar_track[tracknum]->note[i]->frets[j] = eof_song->pro_guitar_track[tracknum]->note[i]->frets[j-1];	//Cycle fret values up from lower lane
+						eof_song->pro_guitar_track[tracknum]->note[i]->frets[j] = eof_song->pro_guitar_track[tracknum]->note[i]->frets[j-1];	//Cycle fret values up from lower lane
 					}
 					eof_song->pro_guitar_track[tracknum]->note[i]->frets[0] = 0xFF;	//Re-initialize lane 1 to the default of (muted)
 				}

@@ -95,4 +95,7 @@ int eof_menu_song_five_lane_drums(void);		//Toggle the ability to use a fifth la
 
 void eof_set_percussion_cue(int cue_number);	//Sets eof_sound_chosen_percussion to the cue referred by eof_audio_cues_dialog[cue_number]
 
+int eof_menu_previous_chord_result(void);
+int eof_menu_next_chord_result(void);
+
 #endif

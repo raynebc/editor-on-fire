@@ -578,6 +578,7 @@ int eof_detect_string_gem_conflicts(EOF_PRO_GUITAR_TRACK *tp, unsigned long newn
 	//If there are any gems on a string higher than the specified number of strings for the specified track, the highest used string number is returned
 	//0 is returned if there are no conflicts
 	//-1 is returned on error
+unsigned long eof_get_pro_guitar_note_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);		//Returns the note bitflag of the specified pro guitar note, or 0 on error
 
 void eof_sort_notes(EOF_SONG *sp);	//Sorts the notes in all tracks
 void eof_fixup_notes(EOF_SONG *sp);	//Performs cleanup of the note selection, beats and all tracks
