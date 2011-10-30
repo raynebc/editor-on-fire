@@ -668,13 +668,17 @@ void eof_read_editor_keys(void)
 		key[KEY_E] = 0;
 	}
 
-	/* toggle green cymbal (CTRL+G) */
+	/* toggle green cymbal (CTRL+G in the drum track) */
 	/* toggle grid snap (G) */
 	if(key[KEY_G])
 	{
 		if(KEY_EITHER_CTRL)
-		{	//CTRL+G will toggle Pro green cymbal notation
-			eof_menu_note_toggle_rb3_cymbal_green();
+		{	//CTRL+G in the drum track will toggle Pro green cymbal notation
+			if(eof_selected_track == EOF_TRACK_DRUM)
+			{
+				eof_menu_note_toggle_rb3_cymbal_green();
+				key[KEY_G] = 0;
+			}
 		}
 		else
 		{	//Otherwise G will toggle grid snap
@@ -687,8 +691,8 @@ void eof_read_editor_keys(void)
 				eof_last_snap_mode = eof_snap_mode;
 				eof_snap_mode = EOF_SNAP_OFF;
 			}
+			key[KEY_G] = 0;
 		}
-		key[KEY_G] = 0;
 	}
 
 	/* toggle yellow cymbal (CTRL+Y) */
@@ -1625,142 +1629,145 @@ void eof_read_editor_keys(void)
 			}
 
 	/* set pro guitar fret values (CTRL+#, CTRL+Fn #, CTRL+X, CTRL+~, CTRL++, CTRL+-) */
+	/* toggle pro guitar ghost status (CTRL+G) */
 			if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 			{	//If CTRL is held but SHIFT is not
 				//CTRL+# or CTRL+Fn # in a pro guitar track sets the fret values of selected notes
 				//CTRL+~ sets fret values to 0 and CTRL+X sets fret values to (muted)
-				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				if(key[KEY_TILDE])
 				{
-					if(key[KEY_TILDE])
-					{
-						eof_set_pro_guitar_fret_number(0,0);
-						key[KEY_TILDE] = 0;
-					}
-					if(key[KEY_1])
-					{
-						eof_set_pro_guitar_fret_number(0,1);
-						key[KEY_1] = 0;
-					}
-					else if(key[KEY_2])
-					{
-						eof_set_pro_guitar_fret_number(0,2);
-						key[KEY_2] = 0;
-					}
-					else if(key[KEY_3])
-					{
-						eof_set_pro_guitar_fret_number(0,3);
-						key[KEY_3] = 0;
-					}
-					else if(key[KEY_4])
-					{
-						eof_set_pro_guitar_fret_number(0,4);
-						key[KEY_4] = 0;
-					}
-					else if(key[KEY_5])
-					{
-						eof_set_pro_guitar_fret_number(0,5);
-						key[KEY_5] = 0;
-					}
-					else if(key[KEY_6])
-					{
-						eof_set_pro_guitar_fret_number(0,6);
-						key[KEY_6] = 0;
-					}
-					else if(key[KEY_7])
-					{
-						eof_set_pro_guitar_fret_number(0,7);
-						key[KEY_7] = 0;
-					}
-					else if(key[KEY_8])
-					{
-						eof_set_pro_guitar_fret_number(0,8);
-						key[KEY_8] = 0;
-					}
-					else if(key[KEY_9])
-					{
-						eof_set_pro_guitar_fret_number(0,9);
-						key[KEY_9] = 0;
-					}
-					else if(key[KEY_0])
-					{
-						eof_set_pro_guitar_fret_number(0,10);
-						key[KEY_0] = 0;
-					}
-					else if(key[KEY_F1])
-					{
-						eof_set_pro_guitar_fret_number(0,11);
-						key[KEY_F1] = 0;
-					}
-					else if(key[KEY_F2])
-					{
-						eof_set_pro_guitar_fret_number(0,12);
-						key[KEY_F2] = 0;
-					}
-					else if(key[KEY_F3])
-					{
-						eof_set_pro_guitar_fret_number(0,13);
-						key[KEY_F3] = 0;
-					}
-					else if(key[KEY_F4])
-					{
-						eof_set_pro_guitar_fret_number(0,14);
-						key[KEY_F4] = 0;
-					}
-					else if(key[KEY_F5])
-					{
-						eof_set_pro_guitar_fret_number(0,15);
-						key[KEY_F5] = 0;
-					}
-					else if(key[KEY_F6])
-					{
-						eof_set_pro_guitar_fret_number(0,16);
-						key[KEY_F6] = 0;
-					}
-					else if(key[KEY_F7])
-					{
-						eof_set_pro_guitar_fret_number(0,17);
-						key[KEY_F7] = 0;
-					}
-					else if(key[KEY_F8])
-					{
-						eof_set_pro_guitar_fret_number(0,18);
-						key[KEY_F8] = 0;
-					}
-					else if(key[KEY_F9])
-					{
-						eof_set_pro_guitar_fret_number(0,19);
-						key[KEY_F9] = 0;
-					}
-					else if(key[KEY_F10])
-					{
-						eof_set_pro_guitar_fret_number(0,20);
-						key[KEY_F10] = 0;
-					}
-					else if(key[KEY_F11])
-					{
-						eof_set_pro_guitar_fret_number(0,21);
-						key[KEY_F11] = 0;
-					}
-					else if(key[KEY_F12])
-					{
-						eof_set_pro_guitar_fret_number(0,22);
-						key[KEY_F12] = 0;
-					}
-					else if(key[KEY_X])
-					{
-						eof_set_pro_guitar_fret_number(0,255);	//CTRL+X sets frets to (muted)
-						key[KEY_X] = 0;
-					}
-					else if(key[KEY_MINUS])
-					{
-						eof_set_pro_guitar_fret_number(2,0);	//Decrement fret value
-						key[KEY_MINUS] = 0;
-					}
-					else if(key[KEY_EQUALS])
-					{
-						eof_set_pro_guitar_fret_number(1,0);	//Increment fret value
-						key[KEY_EQUALS] = 0;
-					}
+					eof_set_pro_guitar_fret_number(0,0);
+					key[KEY_TILDE] = 0;
+				}
+				if(key[KEY_1])
+				{
+					eof_set_pro_guitar_fret_number(0,1);
+					key[KEY_1] = 0;
+				}
+				else if(key[KEY_2])
+				{
+					eof_set_pro_guitar_fret_number(0,2);
+					key[KEY_2] = 0;
+				}
+				else if(key[KEY_3])
+				{
+					eof_set_pro_guitar_fret_number(0,3);
+					key[KEY_3] = 0;
+				}
+				else if(key[KEY_4])
+				{
+					eof_set_pro_guitar_fret_number(0,4);
+					key[KEY_4] = 0;
+				}
+				else if(key[KEY_5])
+				{
+					eof_set_pro_guitar_fret_number(0,5);
+					key[KEY_5] = 0;
+				}
+				else if(key[KEY_6])
+				{
+					eof_set_pro_guitar_fret_number(0,6);
+					key[KEY_6] = 0;
+				}
+				else if(key[KEY_7])
+				{
+					eof_set_pro_guitar_fret_number(0,7);
+					key[KEY_7] = 0;
+				}
+				else if(key[KEY_8])
+				{
+					eof_set_pro_guitar_fret_number(0,8);
+					key[KEY_8] = 0;
+				}
+				else if(key[KEY_9])
+				{
+					eof_set_pro_guitar_fret_number(0,9);
+					key[KEY_9] = 0;
+				}
+				else if(key[KEY_0])
+				{
+					eof_set_pro_guitar_fret_number(0,10);
+					key[KEY_0] = 0;
+				}
+				else if(key[KEY_F1])
+				{
+					eof_set_pro_guitar_fret_number(0,11);
+					key[KEY_F1] = 0;
+				}
+				else if(key[KEY_F2])
+				{
+					eof_set_pro_guitar_fret_number(0,12);
+					key[KEY_F2] = 0;
+				}
+				else if(key[KEY_F3])
+				{
+					eof_set_pro_guitar_fret_number(0,13);
+					key[KEY_F3] = 0;
+				}
+				else if(key[KEY_F4])
+				{
+					eof_set_pro_guitar_fret_number(0,14);
+					key[KEY_F4] = 0;
+				}
+				else if(key[KEY_F5])
+				{
+					eof_set_pro_guitar_fret_number(0,15);
+					key[KEY_F5] = 0;
+				}
+				else if(key[KEY_F6])
+				{
+					eof_set_pro_guitar_fret_number(0,16);
+					key[KEY_F6] = 0;
+				}
+				else if(key[KEY_F7])
+				{
+					eof_set_pro_guitar_fret_number(0,17);
+					key[KEY_F7] = 0;
+				}
+				else if(key[KEY_F8])
+				{
+					eof_set_pro_guitar_fret_number(0,18);
+					key[KEY_F8] = 0;
+				}
+				else if(key[KEY_F9])
+				{
+					eof_set_pro_guitar_fret_number(0,19);
+					key[KEY_F9] = 0;
+				}
+				else if(key[KEY_F10])
+				{
+					eof_set_pro_guitar_fret_number(0,20);
+					key[KEY_F10] = 0;
+				}
+				else if(key[KEY_F11])
+				{
+					eof_set_pro_guitar_fret_number(0,21);
+					key[KEY_F11] = 0;
+				}
+				else if(key[KEY_F12])
+				{
+					eof_set_pro_guitar_fret_number(0,22);
+					key[KEY_F12] = 0;
+				}
+				else if(key[KEY_X])
+				{
+					eof_set_pro_guitar_fret_number(0,255);	//CTRL+X sets frets to (muted)
+					key[KEY_X] = 0;
+				}
+				else if(key[KEY_MINUS])
+				{
+					eof_set_pro_guitar_fret_number(2,0);	//Decrement fret value
+					key[KEY_MINUS] = 0;
+				}
+				else if(key[KEY_EQUALS])
+				{
+					eof_set_pro_guitar_fret_number(1,0);	//Increment fret value
+					key[KEY_EQUALS] = 0;
+				}
+				else if(key[KEY_G])
+				{
+					eof_menu_note_toggle_ghost();
+					key[KEY_G] = 0;
 				}
 			}//If CTRL is held but SHIFT is not
 			else if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
@@ -1773,32 +1780,32 @@ void eof_read_editor_keys(void)
 				}
 				else if(key[KEY_F1])
 				{
-					eof_pro_guitar_fret_bitmask ^= 1;	//Toggle string 6 (low E)
+					eof_pro_guitar_fret_bitmask ^= 32;	//Toggle string 1 (high E)
 					key[KEY_F1] = 0;
 				}
 				else if(key[KEY_F2])
 				{
-					eof_pro_guitar_fret_bitmask ^= 2;	//Toggle string 5
+					eof_pro_guitar_fret_bitmask ^= 16;	//Toggle string 2
 					key[KEY_F2] = 0;
 				}
 				else if(key[KEY_F3])
 				{
-					eof_pro_guitar_fret_bitmask ^= 4;	//Toggle string 4
+					eof_pro_guitar_fret_bitmask ^= 8;	//Toggle string 3
 					key[KEY_F3] = 0;
 				}
 				else if(key[KEY_F4])
 				{
-					eof_pro_guitar_fret_bitmask ^= 8;	//Toggle string 3
+					eof_pro_guitar_fret_bitmask ^= 4;	//Toggle string 4
 					key[KEY_F4] = 0;
 				}
 				else if(key[KEY_F5])
 				{
-					eof_pro_guitar_fret_bitmask ^= 16;	//Toggle string 2
+					eof_pro_guitar_fret_bitmask ^= 2;	//Toggle string 5
 					key[KEY_F5] = 0;
 				}
 				else if(key[KEY_F6])
 				{
-					eof_pro_guitar_fret_bitmask ^= 32;	//Toggle string 1 (high e)
+					eof_pro_guitar_fret_bitmask ^= 1;	//Toggle string 6 (low e)
 					key[KEY_F6] = 0;
 				}
 				else if(key[KEY_F7])

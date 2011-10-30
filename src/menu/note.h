@@ -190,4 +190,7 @@ int eof_menu_thin_notes_track_12(void);
 	//Thins out the notes in the active track difficulty to match those in the active difficulty in the specified track
 	//If a note in the active track isn't within a threshold distance of any note in the specified track, it is deleted
 
+int eof_menu_note_toggle_ghost(void);
+	//Toggles the ghost flag for each populated string on each selected note
+
 #endif
