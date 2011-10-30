@@ -122,8 +122,10 @@ DIALOG eof_note_set_num_frets_strings_dialog[] =
 MENU eof_song_proguitar_menu[] =
 {
     {"Set track &Tuning", eof_menu_song_track_tuning, NULL, 0, NULL},
-    {"Set &Number of frets/strings", eof_menu_set_num_frets_strings, NULL, 0, NULL},
+    {"Set number of &Frets/strings", eof_menu_set_num_frets_strings, NULL, 0, NULL},
     {"Enable &Legacy view\tShift+L", eof_menu_song_legacy_view, NULL, 0, NULL},
+    {"&Previous chord name\tShift+W", eof_menu_previous_chord_result, NULL, 0, NULL},
+    {"&Next chord name\tShift+E", eof_menu_next_chord_result, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -502,6 +504,17 @@ void eof_prepare_song_menu(void)
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar track is active
 			eof_song_menu[15].flags = 0;			//Song>Pro Guitar> submenu
+
+			if(eof_enable_chord_cache && (eof_chord_lookup_count > 1))
+			{	//If an un-named note is selected and it has at least two chord matches
+				eof_song_proguitar_menu[3].flags = 0;	//Previous chord name
+				eof_song_proguitar_menu[4].flags = 0;	//Next chord name
+			}
+			else
+			{
+				eof_song_proguitar_menu[3].flags = D_DISABLED;
+				eof_song_proguitar_menu[4].flags = D_DISABLED;
+			}
 		}
 		else
 		{	//Otherwise disable this menu item
@@ -1150,6 +1163,7 @@ int eof_menu_track_selected_track_number(int tracknum)
 		eof_set_3D_lane_positions(0);
 		eof_set_2D_lane_positions(0);
 		eof_determine_phrase_status();
+		eof_chord_lookup_note = 0;	//Reset the cached chord lookup count
 	}
 	return 1;
 }
@@ -2245,6 +2259,7 @@ int eof_menu_song_track_tuning(void)
 			{	//If a tuning was changed
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				undo_made = 1;
+				eof_chord_lookup_note = 0;	//Reset the cached chord lookup count
 			}
 			eof_song->pro_guitar_track[tracknum]->tuning[ctr] = atol(eof_fret_strings[ctr]) % 12;
 		}
@@ -2495,5 +2510,34 @@ int eof_menu_song_seek_previous_grid_snap(void)
 int eof_menu_song_seek_next_grid_snap(void)
 {
 	eof_seek_by_grid_snap(1);
+	return 1;
+}
+
+int eof_menu_previous_chord_result(void)
+{
+	if(eof_enable_chord_cache && (eof_chord_lookup_count > 1))
+	{	//If an un-named note is selected and it has at least two chord matches
+		if(eof_selected_chord_lookup)
+		{	//If any except the first lookup is selected for display
+			eof_selected_chord_lookup--;
+		}
+		else
+		{	//Otherwise cycle to the last lookup
+			eof_selected_chord_lookup = eof_chord_lookup_count - 1;
+		}
+	}
+	return 1;
+}
+
+int eof_menu_next_chord_result(void)
+{
+	if(eof_enable_chord_cache && (eof_chord_lookup_count > 1))
+	{	//If an un-named note is selected and it has at least two chord matches
+		eof_selected_chord_lookup++;
+		if(eof_selected_chord_lookup >= eof_chord_lookup_count)
+		{	//If the selected chord number exceeded the number of chord matches
+			eof_selected_chord_lookup = 0;	//Revert to showing the first match
+		}
+	}
 	return 1;
 }

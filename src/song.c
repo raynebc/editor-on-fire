@@ -2804,6 +2804,14 @@ unsigned long eof_get_note_note(EOF_SONG *sp, unsigned long track, unsigned long
 	return 0;	//Return error
 }
 
+unsigned long eof_get_pro_guitar_note_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note)
+{
+	if((tp == NULL) || (note >= tp->notes))
+		return 0;	//Return error
+
+	return tp->note[note]->note;
+}
+
 void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos, long length, char type, char *text)
 {
  	eof_log("eof_track_add_create_note() entered", 1);

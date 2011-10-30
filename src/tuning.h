@@ -19,6 +19,18 @@ extern char string_5_name[5];
 extern char string_6_name[5];
 extern char *tuning_list[EOF_TUNING_LENGTH];
 
+extern unsigned long eof_chord_lookup_note;		//These will be used by eof_count_chord_lookup_matches() to cache its result to avoid unnecessary repeat lookups
+extern unsigned long eof_chord_lookup_count;
+extern unsigned char eof_chord_lookup_frets[6];
+extern unsigned long eof_selected_chord_lookup;	//Will be used to cache the user-selected chord name variation to display (starts at #0)
+extern unsigned long eof_cached_chord_lookup_variation;	//These will be used by eof_lookup_chord() to cache the result of a chord variation lookup
+extern int eof_cached_chord_lookup_scale;
+extern int eof_cached_chord_lookup_chord;
+extern int eof_cached_chord_lookup_isslash;
+extern int eof_cached_chord_lookup_bassnote;
+extern int eof_cached_chord_lookup_retval;
+extern int eof_enable_chord_cache;	//Will be set to nonzero when an un-named note is selected and a chord match is found and cached
+
 typedef struct
 {
 	char *name;
@@ -56,7 +68,7 @@ int eof_lookup_played_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsign
 	//If fretnum is 0xFF (muted), it should cause a -1 to be returned, as the guitar track will not have been set to use that many strings
 	//-1 is returned upon error
 
-int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long note, int *scale, int *chord, int *isslash, int *bassnote, unsigned long skipctr);
+int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long note, int *scale, int *chord, int *isslash, int *bassnote, unsigned long skipctr, int cache);
 	//Examines the specified note and returns nonzero if a chord match is found, in which case the chord name is returned through scale and chord
 	//scale is set to the index into eof_note_names[] that names the matching chord's major scale
 	//chord is set to the index into eof_chord_names[] that names the matching chord
@@ -67,6 +79,7 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 	//3 is returned (and isslash is set to nonzero) if both the scale and bass note are identified, in which case bassnote will have the appropriate note
 	//Zero is returned on error or if no match is found
 	//If skipctr is nonzero, then the first [skipctr] number of matches are ignored during the lookup process, allowing alternate forms of chords to be returned
+	//If cache is nonzero, then a successful match is cached through global variables (for use with the note window's functionality for displaying multiple names for a chord)
 
 unsigned long eof_count_chord_lookup_matches(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long note);
 	//Returns the number of chord lookup matches found for the specified note
@@ -78,5 +91,7 @@ void eof_pro_guitar_track_build_chord_variations(EOF_SONG *sp, unsigned long tra
 	//This function should be called to rebuild a pro guitar/bass track's chord variations array whenever that track's string count or tuning has changed
 void EOF_DEBUG_OUTPUT_CHORD_VARIATION_ARRAYS(void);
 	//Dumps the eof_chord_variations array contents for pro guitar and pro bass to "eof_chords.txt"
+unsigned long eof_check_against_chord_lookup_cache(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);
+	//Returns nonzero if the specified note matches the note cached from the previously executed chord name lookup logic
 
 #endif

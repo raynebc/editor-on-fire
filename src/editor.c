@@ -18,6 +18,7 @@
 #include "note.h"		//For EOF_LYRIC_PERCUSSION definition
 #include "midi.h"
 #include "waveform.h"
+#include "tuning.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -629,14 +630,23 @@ void eof_read_editor_keys(void)
 		key[KEY_Q] = 0;
 	}
 
+	/* previous chord name match (SHIFT+W)  */
 	/* previous catalog entry (W) */
 	if(key[KEY_W])
 	{
-		eof_menu_catalog_previous();
+		if(KEY_EITHER_SHIFT)
+		{	//SHIFT+W will cycle to the previous chord name match
+			eof_menu_previous_chord_result();
+		}
+		else
+		{	//Otherwise W will cycle to the previous catalog entry
+			eof_menu_catalog_previous();
+		}
 		key[KEY_W] = 0;
 	}
 
 	/* toggle expert+ bass drum (CTRL+E) */
+	/* next chord name match (SHIFT+E) */
 	/* next catalog entry (E) */
 	if(key[KEY_E])
 	{
@@ -645,8 +655,15 @@ void eof_read_editor_keys(void)
 			eof_menu_note_toggle_double_bass();
 		}
 		else
-		{	//Otherwise E will cycle to the next catalog entry
-			eof_menu_catalog_next();
+		{
+			if(KEY_EITHER_SHIFT)
+			{	//SHIFT+E will cycle to the next chord name match
+				eof_menu_next_chord_result();
+			}
+			else
+			{	//Otherwise E will cycle to the next catalog entry
+				eof_menu_catalog_next();
+			}
 		}
 		key[KEY_E] = 0;
 	}

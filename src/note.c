@@ -1431,7 +1431,7 @@ char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, 
 	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//If this is a pro guitar/bass track, perform chord detection
 		tracknum = sp->track[track]->tracknum;
-		if(eof_lookup_chord(eof_song->pro_guitar_track[tracknum], track, note, &scale, &chord, &isslash, &bassnote, 0))
+		if(eof_lookup_chord(eof_song->pro_guitar_track[tracknum], track, note, &scale, &chord, &isslash, &bassnote, 0, 0))
 		{	//If the chord lookup found a match
 			if(!isslash)
 			{	//If it's a normal chord

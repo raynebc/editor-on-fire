@@ -14,30 +14,34 @@ p {text-indent: 1cm}
 <h1><a name="tutorial">Common Problems</a></h1>
 
 <b>Problem:</b><br>
-I placed some notes in my song and when I try to play the song in FOF the notes are out of sync.<br><br>
+I placed some notes in my song and when I try to play the song in FOF the notes are out of sync.<br>
 <b>Solution:</b><br>
-Make sure you have set up the AV delay properly. To do so, open the “AV Delay” song and start the song (press Space). If the on-screen notes light up before the sound plays you need to adjust the AV delay down (press minus [-]). If the on-screen notes light up after the sound plays you need to adjust the AV delay up (press plus/equal [+/=]). You can adjust while the song is playing also.<br><br>
-Also ensure that you have configured your AV delay in "Frets On Fire" properly. To test your AV delay, try playing a song which is reported/accepted as perfectly synced and see if the notes are synced to the audio. If they are not, adjust the AV delay setting and test the song again. Repeat until you find the correct AV delay setting.<br><br>
+Make sure you have set up the AV delay properly. To do so, open the “AV Delay” song and start the song (press Space). If the on-screen notes light up before the sound plays you need to adjust the AV delay down (press minus [-]). If the on-screen notes light up after the sound plays you need to adjust the AV delay up (press plus/equal [+/=]). You can adjust while the song is playing also.  Also ensure that you have configured your AV delay in "Frets On Fire" properly. To test your AV delay, try playing a song which is reported/accepted as perfectly synced and see if the notes are synced to the audio. If they are not, adjust the AV delay setting and test the song again. Repeat until you find the correct AV delay setting.<br><br>
 
 
 <b>Problem:</b><br>
-I get stuttering or cracking during music playback.<br><br>
+I get stuttering or cracking during music playback.<br>
 <b>Solution:</b><br>
 Try adjusting the buffer size. Go to “File->Settings” in the menu. The default value is 4096. Try doubling the value and see if the problem persists. If it is better but not completely fixed, increase the size some more. Note: when adjusting the buffer size, the AV delay will have to be set up again.<br><br>
 
 <b>Problem:</b><br>
-When I play the song back the position marker moves faster initially before slowing to normal speed.<br><br>
+When I play the song back the position marker moves faster initially before slowing to normal speed.<br>
 <b>Solution:</b><br>
 There is no way to prevent this from happening as it has to do with the way the OGG file is being played. You will just have to rewind slightly further so that the position marker is moving at the right speed when it hits the note or beat you are trying to sync.<br><br>
 
 <b>Problem:</b><br>
-A certain key press doesn't seem to work in EOF, even though it does in other programs.<br><br>
+A certain key press doesn't seem to work in EOF, even though it does in other programs.<br>
 <b>Solution:</b><br>
 We usually find that the key input is being intercepted by another program at a low enough level in the operating system that Allegro (which provides the input functionality for EOF) cannot read the key press.  For example, if your computer has the "Microsoft eHome Infrared Transceiver" driver installed, it could prevent EOF from reacting to the apostrophe (') or other keys.  The only real solution is to disable/terminate the conflicting software, or if you would prefer to do without it, uninstall it.<br><br>
 
 <b>Problem:</b><br>
-Notes are grid snapped at a small enough interval that they should play as HOPO notes in FoF/Phase Shift, but some of them do not register as HOPOs.<br><br>
+Notes are grid snapped at a small enough interval that they should play as HOPO notes in FoF/Phase Shift, but some of them do not register as HOPOs.<br>
 <b>Solution:</b><br>
 For notes that are not marked as forced HOPOs (forced HOPO phrases are presently only supported in Phase Shift), they must be close enough to each other.  If you place grid snapped notes and then later move a beat marker, the note will be allowed to move with the auto adjust feature, but the note's position may get rounded to the nearest millisecond, which could cause the note to be just barely too far away from the previous note to count as a HOPO when played in-game.  Most of the time, this timing difference is too small to see in the editor.  The best way to fix this is to select the notes, select a high grid snap value (such as 1/48, or use a high custom grid snap value) and use "Resnap" from the Note menu.  This will re-align the selected notes to the specified grid snap level positions and in normal cases should allow the notes to detect as HOPO if they are close enough (ie. 1/12 notes).  If your chart has notes that are not meant to be grid snapped, ie. a sloppily played guitar solo, make sure to not resnap those or they may lose their desired timing.<br><br>
+
+<b>Problem:</b><br>
+FoF/FoFiX/Magma does not work with the notes.mid file created by EOF.<br>
+<b>Solution:</b><br>
+FoF and FoFiX (all versions up to and including FoFiX 4.0 alpha 2, possibly future releases as well) have a bug where they do not correctly read MIDI files that have Sysex events.  These events are used to mark some specialized charting features such as pro guitar slides, open strum bass notes, slider notes, open or pedal controlled hi hat.  If your chart uses any of these features, the notes.mid is likely going to not work in Frets on Fire until its developers make corrections to the game.  The workaround for this is to leave such features out of the chart if it will be used for FoF/FoFiX, or enable the "Save Separate RBN MIDI files" preference and use notes_rbn.mid (which you will need to rename to notes.mid) for FoF/FoFiX.  Likewise, Harmonix's Magma utility (used to create content for Rock Band Network) doesn't seem to accept Sysex events either.  However, the features that are being marked with Sysex are not compatible with Rock Band anyways, so the workaround is the same:  Use the notes_rbn.mid file for use with Rock Band.
 </BODY>
 </HTML>
