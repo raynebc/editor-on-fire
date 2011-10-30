@@ -268,6 +268,7 @@ char eof_midi_initialized=0;			//Specifies whether Allegro was able to set up a 
 
 FILE *eof_log_fp = NULL;	//Is set to NULL if logging is disabled
 char eof_log_level = 0;		//Is set to 0 if logging is disabled
+char enable_logging = 1;	//Is set to 0 if logging is disabled
 
 void eof_debug_message(char * text)
 {
@@ -2237,8 +2238,8 @@ void eof_render_note_window(void)
 			}
 			else
 			{	//Build a string to indicate which strings the bitmask pertains to
-				for(i = 0, bitmask = 1, index = 0; i < 6; i++, bitmask<<=1)
-				{	//For each of the 6 usable strings
+				for(i = 6, bitmask = 32, index = 0; i > 0; i--, bitmask>>=1)
+				{	//For each of the 6 usable strings, starting with the highest pitch string
 					if(eof_pro_guitar_fret_bitmask & bitmask)
 					{	//If the bitmask applies to this string
 						if(index != 0)
@@ -2246,7 +2247,7 @@ void eof_render_note_window(void)
 							pro_guitar_string[index++] = ',';	//Insert a comma
 							pro_guitar_string[index++] = ' ';	//And a space
 						}
-						pro_guitar_string[index++] = '1' + i;	//'0' + # is converts a number of value # to a text character representation
+						pro_guitar_string[index++] = '7' - i;	//'0' + # is converts a number of value # to a text character representation
 					}
 				}
 				pro_guitar_string[index] = '\0';	//Terminate the string
@@ -3016,11 +3017,6 @@ int eof_initialize(int argc, char * argv[])
 	}
 	allegro_init();
 
-	//Start the logging system
-	eof_start_logging();
-	eof_log("Logging started during program initialization", 1);
-	eof_log(EOF_VERSION_STRING, 1);
-
 	set_window_title("EOF - No Song");
 	if(install_sound(DIGI_AUTODETECT, MIDI_AUTODETECT, NULL))
 	{	//If Allegro failed to initialize the sound AND midi
@@ -3052,8 +3048,13 @@ int eof_initialize(int argc, char * argv[])
 	alogg_detect_endianess(); // make sure OGG player works for PPC
 
 	InitIdleSystem();
-
 	show_mouse(NULL);
+	eof_load_config("eof.cfg");
+
+	//Start the logging system (unless the user disabled it via preferences)
+	eof_start_logging();
+	eof_log("Logging started during program initialization", 1);
+	eof_log(EOF_VERSION_STRING, 1);
 
 	/* make sure we are in the proper directory before loading external data */
 	if(argc > 1)
@@ -3074,7 +3075,6 @@ int eof_initialize(int argc, char * argv[])
 	get_executable_name(eof_songs_path, 1024);
 	replace_filename(eof_songs_path, eof_songs_path, "", 1024);
 
-	eof_load_config("eof.cfg");
 	eof_zoom_backup = eof_zoom;	//Save this because it will be over-written in eof_set_display_mode()
 	if((eof_zoom_backup <= 0) || (eof_zoom_backup > EOF_NUM_ZOOM_LEVELS))
 	{	//Validate eof_zoom_backup, to ensure a valid zoom level was loaded from the config file
@@ -3771,8 +3771,8 @@ void eof_start_logging(void)
 {
 	char log_filename[1024] = {0};
 
-	if(eof_log_fp == NULL)
-	{
+	if((eof_log_fp == NULL) && enable_logging)
+	{	//If logging isn't alredy running, and logging isn't disabled
 		srand(time(NULL));	//Seed the random number generator with the current time
 		eof_log_id = ((unsigned int) rand()) % 1000;	//Create a 3 digit random number to represent this EOF instance
 		get_executable_name(log_filename, 1024);	//Get the path of the EOF binary that is running

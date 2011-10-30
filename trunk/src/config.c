@@ -128,6 +128,7 @@ void eof_load_config(char * fn)
 	eof_paste_erase_overlap = get_config_int("preferences", "eof_paste_erase_overlap", 0);
 	eof_write_rbn_midis = get_config_int("preferences", "eof_write_rbn_midis", 0);
 	eof_inverted_chords_slash = get_config_int("preferences", "eof_inverted_chords_slash", 0);
+	enable_logging = get_config_int("preferences", "enable_logging", 1);
 
 	/* read display settings */
 	eof_screen_layout.mode = get_config_int("display", "display_mode", 0);
@@ -229,6 +230,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_paste_erase_overlap", eof_paste_erase_overlap);
 	set_config_int("preferences", "eof_write_rbn_midis", eof_write_rbn_midis);
 	set_config_int("preferences", "eof_inverted_chords_slash", eof_inverted_chords_slash);
+	set_config_int("preferences", "enable_logging", enable_logging);
 
 	/* write display settings */
 	set_config_int("display", "display_mode", eof_screen_layout.mode);

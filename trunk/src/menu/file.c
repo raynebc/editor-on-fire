@@ -72,7 +72,7 @@ DIALOG eof_settings_dialog[] =
 DIALOG eof_preferences_dialog[] =
 {
    /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-   { d_agup_window_proc,0,   48,  240, 390, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
+   { d_agup_window_proc,0,   48,  240, 405, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
    { d_agup_check_proc, 16,  80,  128, 16,  2,   23,  0,    0,      1,   0,   "Inverted Notes",      NULL, NULL },
    { d_agup_check_proc, 16,  95,  128, 16,  2,   23,  0,    0,      1,   0,   "Lefty Mode",          NULL, NULL },
    { d_agup_check_proc, 16,  110, 128, 16,  2,   23,  0,    0,      1,   0,   "Note Auto-Adjust",    NULL, NULL },
@@ -86,10 +86,11 @@ DIALOG eof_preferences_dialog[] =
    { d_agup_check_proc, 16,  230, 220, 16,  2,   23,  0,    0,      1,   0,   "Erase overlapped pasted notes",NULL, NULL },
    { d_agup_check_proc, 16,  245, 220, 16,  2,   23,  0,    0,      1,   0,   "Save separate RBN MIDI files",NULL, NULL },
    { d_agup_check_proc, 16,  260, 220, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
-   { d_agup_text_proc,   56, 280, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
-   { d_agup_list_proc,   43, 295, 110, 94,  2,   23,  0,    0,      0,   0,   eof_input_list,        NULL, NULL },
-   { d_agup_button_proc, 16, 400, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-   { d_agup_button_proc, 116, 400,68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+   { d_agup_check_proc, 16,  275, 220, 16,  2,   23,  0,    0,      1,   0,   "Enable logging on launch",NULL, NULL },
+   { d_agup_text_proc,  56,  295, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
+   { d_agup_list_proc,  43,  310, 110, 94,  2,   23,  0,    0,      0,   0,   eof_input_list,        NULL, NULL },
+   { d_agup_button_proc,16,  415, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+   { d_agup_button_proc,116, 415, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -922,8 +923,9 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[11].flags = eof_paste_erase_overlap ? D_SELECTED : 0;	//Erase overlapped pasted notes
 	eof_preferences_dialog[12].flags = eof_write_rbn_midis ? D_SELECTED : 0;		//Save separate RBN MIDI files
 	eof_preferences_dialog[13].flags = eof_inverted_chords_slash ? D_SELECTED : 0;	//Treat inverted chords as slash
-	eof_preferences_dialog[15].d1 = eof_input_mode;							//Input method
-	if(eof_popup_dialog(eof_preferences_dialog, 0) == 16)
+	eof_preferences_dialog[14].flags = enable_logging ? D_SELECTED : 0;			//Enable logging on launch
+	eof_preferences_dialog[16].d1 = eof_input_mode;							//Input method
+	if(eof_popup_dialog(eof_preferences_dialog, 0) == 17)
 	{	//If the user clicked OK
 		eof_inverted_notes = (eof_preferences_dialog[1].flags == D_SELECTED ? 1 : 0);
 		eof_lefty_mode = (eof_preferences_dialog[2].flags == D_SELECTED ? 1 : 0);
@@ -938,7 +940,8 @@ int eof_menu_file_preferences(void)
 		eof_paste_erase_overlap = (eof_preferences_dialog[11].flags == D_SELECTED ? 1 : 0);
 		eof_write_rbn_midis = (eof_preferences_dialog[12].flags == D_SELECTED ? 1 : 0);
 		eof_inverted_chords_slash = (eof_preferences_dialog[13].flags == D_SELECTED ? 1 : 0);
-		eof_input_mode = eof_preferences_dialog[15].d1;
+		enable_logging = (eof_preferences_dialog[14].flags == D_SELECTED ? 1 : 0);
+		eof_input_mode = eof_preferences_dialog[16].d1;
 		eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case eof_inverted_notes was changed
 		eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case eof_lefty_mode was changed
 	}

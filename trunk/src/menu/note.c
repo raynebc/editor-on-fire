@@ -4900,3 +4900,35 @@ int eof_menu_thin_notes_track_12(void)
 {
 	return eof_thin_notes_to_match__target_difficulty(eof_song, 12, eof_selected_track, 2, eof_note_type);
 }
+
+int eof_menu_note_toggle_ghost(void)
+{
+ 	eof_log("eof_menu_note_toggle_ghost() entered", 1);
+
+	unsigned long ctr, ctr2, bitmask, tracknum;
+	char undo_made = 0;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run unless a pro guitar/bass track is active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->notes; ctr++)
+	{	//For each note in the active pro guitar track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (eof_song->pro_guitar_track[tracknum]->note[ctr]->type == eof_note_type))
+		{	//If the note is selected and is in the active difficulty
+			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask<<=1)
+			{	//For each of the 6 usable strings
+				if((eof_song->pro_guitar_track[tracknum]->note[ctr]->note & bitmask) && (eof_pro_guitar_fret_bitmask & bitmask))
+				{	//If this string is in use, and this string is enabled for fret shortcut manipulation
+					if(!undo_made)
+					{	//Make an undo state before making the first change
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						undo_made = 1;
+					}
+					eof_song->pro_guitar_track[tracknum]->note[ctr]->ghost ^= bitmask;	//Toggle this string's ghost flag
+				}
+			}
+		}
+	}
+	return 1;
+}
