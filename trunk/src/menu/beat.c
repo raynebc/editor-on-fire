@@ -69,11 +69,14 @@ DIALOG eof_events_dialog[] =
 
 DIALOG eof_all_events_dialog[] =
 {
-   /* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc, 0,   48,  500, 234, 2,   23,  0,    0,      0,   0,   "All Events",               NULL, NULL },
-   { d_agup_list_proc,   12,  84,  475, 140, 2,   23,  0,    0,      0,   0,   eof_events_list_all, NULL, NULL },
-   { d_agup_button_proc, 12,  237, 154, 28,  2,   23,  'f',  D_EXIT, 0,   0,   "&Find",              NULL, NULL },
-   { d_agup_button_proc, 178, 237, 154, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",               NULL, NULL },
+   /* (proc)                    (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
+   { d_agup_window_proc,         0,   48,  500, 234, 2,   23,  0,    0,      0,   0,   "All Events",         NULL, NULL },
+   { d_agup_list_proc,           12,  84,  475, 140, 2,   23,  0,    0,      0,   0,   eof_events_list_all,  NULL, NULL },
+   { d_agup_button_proc,         12,  237, 154, 28,  2,   23,  'f',  D_EXIT, 0,   0,   "&Find",              NULL, NULL },
+   { d_agup_button_proc,         178, 237, 154, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",               NULL, NULL },
+   { eof_all_events_radio_proc,	 344, 228, 100, 15,  2,   23,  0, D_SELECTED,4,   0,   "All Events",         NULL, NULL },
+   { eof_all_events_radio_proc,	 344, 244, 150, 15,  2,   23,  0,    0,      5,   0,   "This Track's Events",NULL, NULL },
+   { eof_all_events_radio_proc,	 344, 260, 140, 15,  2,   23,  0,    0,      6,   0,   "Section Events",     NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -770,7 +773,7 @@ int eof_menu_beat_calculate_bpm(void)
 
 int eof_menu_beat_all_events(void)
 {
-	unsigned long track;
+	unsigned long track, realindex;
 
 	eof_cursor_visible = 0;
 	eof_render();
@@ -779,14 +782,15 @@ int eof_menu_beat_all_events(void)
 	eof_all_events_dialog[1].d1 = 0;
 	if(eof_popup_dialog(eof_all_events_dialog, 0) == 2)
 	{	//User clicked Find
-		if(eof_all_events_dialog[1].d1 < eof_song->text_events)
+		realindex = eof_retrieve_text_event(eof_all_events_dialog[1].d1);	//Find the actual event, taking the display filter into account
+		if(realindex < eof_song->text_events)
 		{
-			alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->beat[eof_song->text_event[eof_all_events_dialog[1].d1]->beat]->pos + eof_av_delay);
+			alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->beat[eof_song->text_event[realindex]->beat]->pos + eof_av_delay);
 			eof_music_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 			eof_music_actual_pos = eof_music_pos;
 			eof_mix_seek(eof_music_pos);
-			eof_selected_beat = eof_song->text_event[eof_all_events_dialog[1].d1]->beat;
-			track = eof_song->text_event[eof_all_events_dialog[1].d1]->track;
+			eof_selected_beat = eof_song->text_event[realindex]->beat;
+			track = eof_song->text_event[realindex]->track;
 			if((track != 0) && (track < eof_song->tracks))
 			{	//If this is a track-specific event
 				eof_menu_track_selected_track_number(track);	//Change to that track
@@ -889,29 +893,57 @@ char * eof_events_list(int index, int * size)
 char * eof_events_list_all(int index, int * size)
 {
 	char trackname[22];
+	unsigned long x, count = 0, realindex;
+
 	switch(index)
 	{
 		case -1:
 		{
-			*size = eof_song->text_events;
+			if(eof_all_events_dialog[4].flags == D_SELECTED)
+			{	//Display all events
+				count = eof_song->text_events;
+			}
+			else if(eof_all_events_dialog[5].flags == D_SELECTED)
+			{	//Display this track's events
+				for(x = 0; x < eof_song->text_events; x++)
+				{	//For each event
+					if(eof_song->text_event[x]->track == eof_selected_track)
+					{	//If the event is specific to the currently active track
+						count++;
+					}
+				}
+			}
+			else
+			{	//Display section events
+				for(x = 0; x < eof_song->text_events; x++)
+				{	//For each event
+					if((ustrstr(eof_song->text_event[x]->text, "[section") == eof_song->text_event[x]->text) ||
+						(ustrstr(eof_song->text_event[x]->text, "section") == eof_song->text_event[x]->text))
+					{	//If the string begins with "[section" or "section"
+						count++;
+					}
+				}
+			}
+			*size = count;
 			break;
 		}
 		default:
 		{
-			if(eof_song->text_event[index]->beat >= eof_song->beats)
+			realindex = eof_retrieve_text_event(index);	//Get the actual event based on the current filter
+			if(eof_song->text_event[realindex]->beat >= eof_song->beats)
 			{	//Something bad happened, repair the event
-				eof_song->text_event[index]->beat = eof_song->beats - 1;	//Reset the text event to be at the last beat marker
+				eof_song->text_event[realindex]->beat = eof_song->beats - 1;	//Reset the text event to be at the last beat marker
 			}
-			if((eof_song->text_event[index]->track != 0) && (eof_song->text_event[index]->track < eof_song->tracks))
+			if((eof_song->text_event[realindex]->track != 0) && (eof_song->text_event[realindex]->track < eof_song->tracks))
 			{	//If this is a track specific event
-				snprintf(trackname, sizeof(trackname), " %s", eof_song->track[eof_song->text_event[index]->track]->name);
+				snprintf(trackname, sizeof(trackname), " %s", eof_song->track[eof_song->text_event[realindex]->track]->name);
 			}
 			else
 			{
 				trackname[0] = '\0';	//Empty the string
 			}
-			snprintf(eof_event_list_text[index], 256, "(%02lu:%02lu.%02lu%s) %s", eof_song->beat[eof_song->text_event[index]->beat]->pos / 60000, (eof_song->beat[eof_song->text_event[index]->beat]->pos / 1000) % 60, (eof_song->beat[eof_song->text_event[index]->beat]->pos / 10) % 100, trackname, eof_song->text_event[index]->text);
-			return eof_event_list_text[index];
+			snprintf(eof_event_list_text[realindex], 256, "(%02lu:%02lu.%02lu%s) %s", eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 60000, (eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 1000) % 60, (eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 10) % 100, trackname, eof_song->text_event[realindex]->text);
+			return eof_event_list_text[realindex];
 		}
 	}
 	return NULL;
@@ -951,7 +983,7 @@ int eof_events_dialog_add(DIALOG * d)
 
 int eof_events_dialog_edit(DIALOG * d)
 {
-	int i;
+	int i, trackflag;
 	short ecount = 0;
 	short event = -1;
 	unsigned long track = 0;
@@ -966,7 +998,7 @@ int eof_events_dialog_edit(DIALOG * d)
 	{
 		if(eof_song->text_event[i]->beat == eof_selected_beat)
 		{
-			/* if we've reached the item that is selected, delete it */
+			/* if we've reached the item that is selected, edit it */
 			if(eof_events_dialog[1].d1 == ecount)
 			{
 				event = i;
@@ -999,11 +1031,12 @@ int eof_events_dialog_edit(DIALOG * d)
 		eof_events_add_dialog[3].flags = 0;
 	}
 
-	ustrcpy(eof_etext, eof_song->text_event[event]->text);
+	ustrcpy(eof_etext, eof_song->text_event[event]->text);	//Save the original event text
+	trackflag = eof_events_add_dialog[3].flags;				//Save the track specifier flag
 	if(eof_popup_dialog(eof_events_add_dialog, 2) == 4)
 	{	//User clicked OK
-		if((ustrlen(eof_etext) > 0) && eof_check_string(eof_etext))
-		{	//User entered text that isn't all space characters
+		if((ustrlen(eof_etext) > 0) && eof_check_string(eof_etext) && (ustrcmp(eof_song->text_event[event]->text, eof_etext) || (eof_events_add_dialog[3].flags != trackflag)))
+		{	//User entered text that isn't all space characters, and either the event's text was changed or it's track specifier was
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			ustrcpy(eof_song->text_event[event]->text, eof_etext);
 			if(eof_events_add_dialog[3].flags & D_SELECTED)
@@ -1277,4 +1310,68 @@ int eof_edit_trainer_proc(int msg, DIALOG *d, int c)
 	}
 
 	return d_agup_edit_proc(msg, d, c);	//Allow the input character to be returned
+}
+
+int eof_all_events_radio_proc(int msg, DIALOG *d, int c)
+{
+	static int previous_option = 4;	//By default, eof_all_events_dialog[4] (all events) is selected
+	int selected_option;
+
+	if(msg == MSG_CLICK)
+	{
+		selected_option = d->d1;	//Find out which radio button was clicked on
+
+		if(selected_option != previous_option)
+		{	//If the event display filter changed, have the event list redrawn
+			eof_all_events_dialog[4].flags = eof_all_events_dialog[5].flags = eof_all_events_dialog[6].flags = 0;	//Clear all radio buttons
+			eof_all_events_dialog[selected_option].flags = D_SELECTED;	//Reselect the radio button that was just clicked on
+			object_message(&eof_all_events_dialog[1], MSG_DRAW, 0);		//Have Allegro redraw the list of events
+			object_message(&eof_all_events_dialog[4], MSG_DRAW, 0);		//Have Allegro redraw the radio buttons
+			object_message(&eof_all_events_dialog[5], MSG_DRAW, 0);
+			object_message(&eof_all_events_dialog[6], MSG_DRAW, 0);
+			previous_option = selected_option;
+		}
+	}
+
+	return d_agup_radio_proc(msg, d, c);	//Allow the input to be processed
+}
+
+unsigned long eof_retrieve_text_event(unsigned long index)
+{
+	unsigned long x, count = 0;
+	if(eof_all_events_dialog[4].flags == D_SELECTED)
+	{	//Display all events
+		return index;
+	}
+	else if(eof_all_events_dialog[5].flags == D_SELECTED)
+	{	//Display this track's events
+		for(x = 0; x < eof_song->text_events; x++)
+		{	//For each event
+			if(eof_song->text_event[x]->track == eof_selected_track)
+			{	//If the event is specific to the currently active track
+				if(count == index)
+				{	//If the requested event was found
+					return x;
+				}
+				count++;
+			}
+		}
+	}
+	else
+	{	//Display section events
+		for(x = 0; x < eof_song->text_events; x++)
+		{	//For each event
+			if((ustrstr(eof_song->text_event[x]->text, "[section") == eof_song->text_event[x]->text) ||
+				(ustrstr(eof_song->text_event[x]->text, "section") == eof_song->text_event[x]->text))
+			{	//If the string begins with "[section" or "section"
+				if(count == index)
+				{	//If the requested event was found
+					return x;
+				}
+				count++;
+			}
+		}
+	}
+
+	return 0;	//If for some reason the requested event was not retrievable, return 0
 }
