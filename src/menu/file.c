@@ -89,8 +89,9 @@ DIALOG eof_preferences_dialog[] =
    { d_agup_check_proc, 16,  275, 220, 16,  2,   23,  0,    0,      1,   0,   "Enable logging on launch",NULL, NULL },
    { d_agup_text_proc,  56,  295, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
    { d_agup_list_proc,  43,  310, 110, 94,  2,   23,  0,    0,      0,   0,   eof_input_list,        NULL, NULL },
-   { d_agup_button_proc,16,  415, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-   { d_agup_button_proc,116, 415, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+   { d_agup_button_proc,12,  415, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+   { d_agup_button_proc,86,  415, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+   { d_agup_button_proc,160, 415, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -898,6 +899,8 @@ int eof_menu_file_settings(void)
 
 int eof_menu_file_preferences(void)
 {
+	int retval;
+
 	if(eof_song_loaded)
 	{
 		if(!eof_music_paused)
@@ -910,41 +913,65 @@ int eof_menu_file_preferences(void)
 	eof_render();
 	eof_color_dialog(eof_preferences_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_preferences_dialog);
-	eof_preferences_dialog[1].flags = eof_inverted_notes ? D_SELECTED : 0;	//Inverted notes
-	eof_preferences_dialog[2].flags = eof_lefty_mode ? D_SELECTED : 0;		//Lefty mode
-	eof_preferences_dialog[3].flags = eof_note_auto_adjust ? D_SELECTED : 0;//Note auto adjust
-	eof_preferences_dialog[4].flags = eof_use_ts ? D_SELECTED : 0;			//Import/Export TS
-	eof_preferences_dialog[5].flags = eof_hide_drum_tails ? D_SELECTED : 0;	//Hide drum note tails
-	eof_preferences_dialog[6].flags = eof_hide_note_names ? D_SELECTED : 0;	//Hide note names
-	eof_preferences_dialog[7].flags = eof_disable_sound_processing ? D_SELECTED : 0;	//Disable sound effects
+	//Use the currently configured settings to populate the dialog selections
+	eof_preferences_dialog[1].flags = eof_inverted_notes ? D_SELECTED : 0;			//Inverted notes
+	eof_preferences_dialog[2].flags = eof_lefty_mode ? D_SELECTED : 0;				//Lefty mode
+	eof_preferences_dialog[3].flags = eof_note_auto_adjust ? D_SELECTED : 0;		//Note auto adjust
+	eof_preferences_dialog[4].flags = eof_use_ts ? D_SELECTED : 0;					//Import/Export TS
+	eof_preferences_dialog[5].flags = eof_hide_drum_tails ? D_SELECTED : 0;			//Hide drum note tails
+	eof_preferences_dialog[6].flags = eof_hide_note_names ? D_SELECTED : 0;			//Hide note names
+	eof_preferences_dialog[7].flags = eof_disable_sound_processing ? D_SELECTED : 0;//Disable sound effects
 	eof_preferences_dialog[8].flags = eof_disable_3d_rendering ? D_SELECTED : 0;	//Disable 3D rendering
 	eof_preferences_dialog[9].flags = eof_disable_2d_rendering ? D_SELECTED : 0;	//Disable 2D rendering
 	eof_preferences_dialog[10].flags = eof_disable_info_panel ? D_SELECTED : 0;		//Disable info panel
 	eof_preferences_dialog[11].flags = eof_paste_erase_overlap ? D_SELECTED : 0;	//Erase overlapped pasted notes
 	eof_preferences_dialog[12].flags = eof_write_rbn_midis ? D_SELECTED : 0;		//Save separate RBN MIDI files
 	eof_preferences_dialog[13].flags = eof_inverted_chords_slash ? D_SELECTED : 0;	//Treat inverted chords as slash
-	eof_preferences_dialog[14].flags = enable_logging ? D_SELECTED : 0;			//Enable logging on launch
-	eof_preferences_dialog[16].d1 = eof_input_mode;							//Input method
-	if(eof_popup_dialog(eof_preferences_dialog, 0) == 17)
-	{	//If the user clicked OK
-		eof_inverted_notes = (eof_preferences_dialog[1].flags == D_SELECTED ? 1 : 0);
-		eof_lefty_mode = (eof_preferences_dialog[2].flags == D_SELECTED ? 1 : 0);
-		eof_note_auto_adjust = (eof_preferences_dialog[3].flags == D_SELECTED ? 1 : 0);
-		eof_use_ts = (eof_preferences_dialog[4].flags == D_SELECTED ? 1 : 0);
-		eof_hide_drum_tails = (eof_preferences_dialog[5].flags == D_SELECTED ? 1 : 0);
-		eof_hide_note_names = (eof_preferences_dialog[6].flags == D_SELECTED ? 1 : 0);
-		eof_disable_sound_processing = (eof_preferences_dialog[7].flags == D_SELECTED ? 1 : 0);
-		eof_disable_3d_rendering = (eof_preferences_dialog[8].flags == D_SELECTED ? 1 : 0);
-		eof_disable_2d_rendering = (eof_preferences_dialog[9].flags == D_SELECTED ? 1 : 0);
-		eof_disable_info_panel = (eof_preferences_dialog[10].flags == D_SELECTED ? 1 : 0);
-		eof_paste_erase_overlap = (eof_preferences_dialog[11].flags == D_SELECTED ? 1 : 0);
-		eof_write_rbn_midis = (eof_preferences_dialog[12].flags == D_SELECTED ? 1 : 0);
-		eof_inverted_chords_slash = (eof_preferences_dialog[13].flags == D_SELECTED ? 1 : 0);
-		enable_logging = (eof_preferences_dialog[14].flags == D_SELECTED ? 1 : 0);
-		eof_input_mode = eof_preferences_dialog[16].d1;
-		eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case eof_inverted_notes was changed
-		eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case eof_lefty_mode was changed
-	}
+	eof_preferences_dialog[14].flags = enable_logging ? D_SELECTED : 0;				//Enable logging on launch
+	eof_preferences_dialog[16].d1 = eof_input_mode;									//Input method
+
+	do
+	{	//Run the dialog
+		retval = eof_popup_dialog(eof_preferences_dialog, 0);	//Run the dialog
+		if(retval == 17)
+		{	//If the user clicked OK, update EOF's configured settings from the dialog selections
+			eof_inverted_notes = (eof_preferences_dialog[1].flags == D_SELECTED ? 1 : 0);
+			eof_lefty_mode = (eof_preferences_dialog[2].flags == D_SELECTED ? 1 : 0);
+			eof_note_auto_adjust = (eof_preferences_dialog[3].flags == D_SELECTED ? 1 : 0);
+			eof_use_ts = (eof_preferences_dialog[4].flags == D_SELECTED ? 1 : 0);
+			eof_hide_drum_tails = (eof_preferences_dialog[5].flags == D_SELECTED ? 1 : 0);
+			eof_hide_note_names = (eof_preferences_dialog[6].flags == D_SELECTED ? 1 : 0);
+			eof_disable_sound_processing = (eof_preferences_dialog[7].flags == D_SELECTED ? 1 : 0);
+			eof_disable_3d_rendering = (eof_preferences_dialog[8].flags == D_SELECTED ? 1 : 0);
+			eof_disable_2d_rendering = (eof_preferences_dialog[9].flags == D_SELECTED ? 1 : 0);
+			eof_disable_info_panel = (eof_preferences_dialog[10].flags == D_SELECTED ? 1 : 0);
+			eof_paste_erase_overlap = (eof_preferences_dialog[11].flags == D_SELECTED ? 1 : 0);
+			eof_write_rbn_midis = (eof_preferences_dialog[12].flags == D_SELECTED ? 1 : 0);
+			eof_inverted_chords_slash = (eof_preferences_dialog[13].flags == D_SELECTED ? 1 : 0);
+			enable_logging = (eof_preferences_dialog[14].flags == D_SELECTED ? 1 : 0);
+			eof_input_mode = eof_preferences_dialog[16].d1;
+			eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case eof_inverted_notes was changed
+			eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case eof_lefty_mode was changed
+		}
+		else if(retval == 18)
+		{	//If the user clicked "Default, change all selections to EOF's default settings
+			eof_preferences_dialog[1].flags = 0;					//Inverted notes
+			eof_preferences_dialog[2].flags = 0;					//Lefty mode
+			eof_preferences_dialog[3].flags = D_SELECTED;			//Note auto adjust
+			eof_preferences_dialog[4].flags = 0;					//Import/Export TS
+			eof_preferences_dialog[5].flags = 0;					//Hide drum note tails
+			eof_preferences_dialog[6].flags = 0;					//Hide note names
+			eof_preferences_dialog[7].flags = 0;					//Disable sound effects
+			eof_preferences_dialog[8].flags = 0;					//Disable 3D rendering
+			eof_preferences_dialog[9].flags = 0;					//Disable 2D rendering
+			eof_preferences_dialog[10].flags = 0;					//Disable info panel
+			eof_preferences_dialog[11].flags = 0;					//Erase overlapped pasted notes
+			eof_preferences_dialog[12].flags = 0;					//Save separate RBN MIDI files
+			eof_preferences_dialog[13].flags = 0;					//Treat inverted chords as slash
+			eof_preferences_dialog[14].flags = D_SELECTED;			//Enable logging on launch
+			eof_preferences_dialog[16].d1 = EOF_INPUT_PIANO_ROLL;	//Input method
+		}
+	}while(retval == 18);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;

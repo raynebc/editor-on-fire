@@ -880,7 +880,7 @@ int eof_menu_song_properties(void)
 			for(i = 0; i < eof_song->beats; i++)
 			{
 				eof_song->beat[i]->fpos += (double)(eof_song->tags->ogg[eof_selected_ogg].midi_offset - old_offset);
-				eof_song->beat[i]->pos = eof_song->beat[i]->fpos;
+				eof_song->beat[i]->pos = eof_song->beat[i]->fpos + 0.5;	//Round up
 			}
 		}
 		if((eof_song->tags->ogg[eof_selected_ogg].midi_offset != old_offset) && (eof_get_chart_size(eof_song) > 0))
@@ -1594,7 +1594,7 @@ int eof_menu_song_add_silence(void)
 				for(i = 0; i < eof_song->beats; i++)
 				{
 					eof_song->beat[i]->fpos += (double)adjust;
-					eof_song->beat[i]->pos = eof_song->beat[i]->fpos;
+					eof_song->beat[i]->pos = eof_song->beat[i]->fpos + 0.5;	//Round up
 				}
 			}
 			eof_adjust_notes(adjust);
