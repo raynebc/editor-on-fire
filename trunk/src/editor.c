@@ -4697,8 +4697,8 @@ void eof_editor_logic_common(void)
 					}
 					eof_song->beat[eof_selected_beat]->fpos += eof_mickeys_x * eof_zoom;
 					eof_song->beat[eof_selected_beat]->pos = eof_song->beat[eof_selected_beat]->fpos + 0.5;	//Round up to nearest ms
-					if((eof_song->beat[eof_selected_beat]->pos <= eof_song->beat[eof_selected_beat - 1]->pos + 100) || ((eof_selected_beat + 1 < eof_song->beats) && (eof_song->beat[eof_selected_beat]->pos >= eof_song->beat[eof_selected_beat + 1]->pos - 10)))
-					{
+					if(((eof_selected_beat > 0) && (eof_song->beat[eof_selected_beat]->pos <= eof_song->beat[eof_selected_beat - 1]->pos + 50)) || ((eof_selected_beat + 1 < eof_song->beats) && (eof_song->beat[eof_selected_beat]->pos >= eof_song->beat[eof_selected_beat + 1]->pos - 50)))
+					{	//If the beat being drug was moved to within within 50ms of the previous/next beat marker, undo the move
 						eof_song->beat[eof_selected_beat]->fpos -= eof_mickeys_x * eof_zoom;
 						eof_song->beat[eof_selected_beat]->pos = eof_song->beat[eof_selected_beat]->fpos + 0.5;	//Round up to nearest ms
 					}

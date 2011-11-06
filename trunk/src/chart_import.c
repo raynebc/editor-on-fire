@@ -303,7 +303,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 							if(new_note)
 							{
 								new_note->pos = chartpos_to_msec(chart, current_note->chartpos);
-								new_note->length = chartpos_to_msec(chart, current_note->chartpos + current_note->duration) - new_note->pos;
+								new_note->length = chartpos_to_msec(chart, current_note->chartpos + current_note->duration) - (double)new_note->pos + 0.5;	//Round up
 								new_note->note = 1 << current_note->gemcolor;
 								new_note->type = difficulty;
 							}
@@ -324,7 +324,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 
 		/* load text events */
-		int b;
+		long b;
 		current_event = chart->events;
 		while(current_event)
 		{
