@@ -1117,7 +1117,7 @@ int eof_menu_beat_add(void)
 	if(eof_song_add_beat(eof_song) != NULL)
 	{	//Only if the new beat structure was successfully created
 		for(i = eof_song->beats - 1; i > eof_selected_beat; i--)
-		{
+		{	//For each beat after the selected beat, in reverse order
 			memcpy(eof_song->beat[i], eof_song->beat[i - 1], sizeof(EOF_BEAT_MARKER));
 		}
 		eof_song->beat[eof_selected_beat + 1]->flags = 0;

@@ -231,7 +231,8 @@ void eof_realign_beats(EOF_SONG * sp, int cbeat)
 	/* replace beat markers */
 	for(i = last_anchor; i < next_anchor - 1; i++)
 	{
-		sp->beat[i + 1]->pos = sp->beat[last_anchor]->pos + (beats_length / (double)beats) * (double)count;
+		sp->beat[i + 1]->fpos = sp->beat[last_anchor]->fpos + (beats_length / (double)beats) * (double)count;
+		sp->beat[i + 1]->pos = sp->beat[i + 1]->fpos + 0.5;	//Round up to nearest ms
 		sp->beat[i + 1]->ppqn = sp->beat[last_anchor]->ppqn;
 		count++;
 	}
