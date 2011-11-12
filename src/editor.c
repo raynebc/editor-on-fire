@@ -816,6 +816,7 @@ void eof_read_editor_keys(void)
 		}
 	}
 
+	/* seek back one grid snap (CTRL+SHIFT+Pg Up) */
 	/* seek back one screen (CTRL+Pg Up) */
 	/* seek back one note (SHIFT+Pg Up) */
 	/* seek back one beat (Pg Up) */
@@ -862,6 +863,7 @@ void eof_read_editor_keys(void)
 		key[KEY_PGUP] = 0;
 	}
 
+	/* seek forward one grid snap (CTRL+SHIFT+Pg Dn) */
 	/* seek forward one screen (CTRL+Pg Dn) */
 	/* seek forward one note (SHIFT+Pg Dn) */
 	/* seek forward one beat (Pg Dn) */
