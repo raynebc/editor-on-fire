@@ -3,6 +3,55 @@ EOF Version History
 
 1.8:
 
+Added a button in the Preferences dialog to automatically
+configure the options back to their defaults by then pressing
+OK.
+
+Resolves a bug regarding beat marker positions after adding a
+beat or deleting a beat/anchor.
+
+Added filters to the "All Events" dialog, providing the option
+to only show events specific to the current track or events
+that are section markers.
+
+Improved the text event edit dialog so that it won't mark the
+chart as modified when you click OK unless the event's text or
+track specific status was changed.
+
+Made some optimizations to the audio playback code.
+
+Updated Feedback import to support filenames with special
+characters (ie. umlauts).
+
+Made improvements to the split lyric function, which will now
+split pitchless lyrics with the correct lengths for each piece.
+
+Updated FoFLC to the latest version (2.37), adding support for
+importing Guitar Praise format XML lyrics.
+
+Fixed a bug with the click and drag note logic that would
+allow notes/lyrics to be drug off the left end of the piano
+roll.
+
+Added paste logic so that if the "Erase overlapped pasted
+notes" preference isn't in effect, a pasted note is allowed
+to merge with a note that is overlapped (is within 2ms of the
+pasted note), properly merging note statuses.
+
+Fixed a bug that would cause open hi hat status to be lost.
+
+Added a menu function to automate the thinning of notes in a
+difficulty based on the notes in another track
+(Note>Thin difficulty to match).  When the function is used,
+EOF checks each note in the active track difficulty against
+the notes in the active difficulty of the specified track. If
+a note in the active track is not close enough to a note in
+the specified track (within 2 ms), it is removed.  This will
+make it extremely easy to thin the number of notes in the lower
+difficulties of a pro guitar track to be similar to the note
+thinning that was done for lower difficulties of a five lane
+instrument track or vice versa.
+
 Added a "Mark as non Expert+ bass drum" function to the
 Note>Drum menu.
 
@@ -102,11 +151,10 @@ Added the ability to define band and track-specific difficulties.
 Added support for pro guitar/bass and 4 lane dance authoring.
 
 Added some logging functionality to help identify points of malfunction.
+Logging can be disabled in Preferences.
 
 Added a "Reset Offset to Zero" function to assist with preparing charts
 for use as Rock Band customs.
-
-Updated FoFLC to the latest version (2.36).
 
 Made Various MIDI import improvements, including handling for mid-beat
 tempo and time signature changes and fixing an INI import related crash.

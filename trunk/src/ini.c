@@ -191,7 +191,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 		}
 	}
 
-	ustrcat(ini_string, "\r\nstar_power_note = 116");	//Write this tag to indicate to Phase Shift that EOF is using Rock Band's notation for star power
+	ustrcat(ini_string, "\r\nmultiplier_note = 116");	//Write this tag to indicate to Phase Shift that EOF is using Rock Band's notation for star power
 
 	/* check for use of cymbal notation */
 	if(eof_track_has_cymbals(sp, EOF_TRACK_DRUM))
