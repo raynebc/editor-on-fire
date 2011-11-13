@@ -1696,10 +1696,11 @@ void eof_lyric_logic(void)
 			}
 		}
 	}
-	else
-	{
+
+	if(eof_music_catalog_playback || !eof_music_paused)
+	{	//If the chart or fret catalog is playing
 		if(eof_hover_note >= 0)
-		{
+		{	//If there is a hover note, define the hover key
 			eof_hover_key = eof_song->vocal_track[tracknum]->lyric[eof_hover_note]->note;
 		}
 	}

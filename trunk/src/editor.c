@@ -2902,77 +2902,11 @@ void eof_editor_logic(void)
 				break;
 			}
 		}
-		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-		{
-			if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
-			{
-				npos = eof_get_note_pos(eof_song, eof_selected_track, i) / eof_zoom;
-				if((pos - eof_av_delay / eof_zoom > npos) && (pos - eof_av_delay / eof_zoom < npos + (eof_get_note_length(eof_song, eof_selected_track, i) > 100 ? eof_get_note_length(eof_song, eof_selected_track, i) : 100) / eof_zoom))
-				{
-					eof_hover_note = i;
-					break;
-				}
-			}
-		}
-		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-		{
-			if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
-			{
-				npos = eof_get_note_pos(eof_song, eof_selected_track, i);
-				if((eof_music_pos > npos) && (eof_music_pos < npos + (eof_get_note_length(eof_song, eof_selected_track, i) > 100 ? eof_get_note_length(eof_song, eof_selected_track, i) : 100)))
-				{
-					if(eof_hover_note_2 != i)
-					{
-						eof_hover_note_2 = i;
-					}
-					break;
-				}
-			}
-		}
 		if(eof_selected_track == EOF_TRACK_DRUM)
 		{
 			eof_editor_drum_logic();
 		}
 	}//If the chart is not paused
-
-	if(eof_music_catalog_playback)
-	{	//If a fret catalog entry is playing
-		tracknum = eof_song->catalog->entry[eof_selected_catalog_entry].track;	//The track this catalog entry pertains to
-		eof_hover_note_2 = -1;
-		if(eof_song->catalog->entry[eof_selected_catalog_entry].track != EOF_TRACK_VOCALS)
-		{	//Perform fret catalog playback logic for legacy format tracks
-			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-			{
-				if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_song->catalog->entry[eof_selected_catalog_entry].type)
-				{
-					npos = eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay;
-					if((eof_music_catalog_pos > npos) && (eof_music_catalog_pos < npos + (eof_get_note_length(eof_song, eof_selected_track, i) > 100 ? eof_get_note_length(eof_song, eof_selected_track, i) : 100)))
-					{
-						if(eof_hover_note_2 != i)
-						{
-							eof_hover_note_2 = i;
-						}
-						break;
-					}
-				}
-			}
-		}
-		else
-		{
-			for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
-			{
-				npos = eof_song->vocal_track[0]->lyric[i]->pos + eof_av_delay;
-				if((eof_music_catalog_pos > npos) && (eof_music_catalog_pos < npos + (eof_song->vocal_track[0]->lyric[i]->length > 100 ? eof_song->vocal_track[0]->lyric[i]->length : 100)))
-				{
-					if(eof_hover_note_2 != i)
-					{
-						eof_hover_note_2 = i;
-					}
-					break;
-				}
-			}
-		}
-	}//If a fret catalog entry is playing
 
 	/* select difficulty */
 	if((mouse_y >= eof_window_editor->y + 7) && (mouse_y < eof_window_editor->y + 20 + 8) && (mouse_x > 12) && (mouse_x < 12 + 5 * 80 + 12 - 1))
@@ -3711,8 +3645,6 @@ void eof_vocal_editor_logic(void)
 	}//If the chart is paused
 	else
 	{	//If the chart is not paused
-		int pos = eof_music_pos / eof_zoom;
-		int npos;
 		for(i = 0; i < eof_song->beats - 1; i++)
 		{
 			if((eof_music_pos >= eof_song->beat[i]->pos) && (eof_music_pos < eof_song->beat[i + 1]->pos))
@@ -3721,16 +3653,6 @@ void eof_vocal_editor_logic(void)
 				{
 					eof_hover_beat_2 = i;
 				}
-				break;
-			}
-		}
-		for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-		{
-			npos = eof_song->vocal_track[tracknum]->lyric[i]->pos / eof_zoom;
-			if((pos - eof_av_delay / eof_zoom > npos) && (pos - eof_av_delay / eof_zoom < npos + (eof_song->vocal_track[tracknum]->lyric[i]->length > 100 ? eof_song->vocal_track[tracknum]->lyric[i]->length : 100) / eof_zoom))
-			{
-				eof_hover_note = i;
-				eof_pen_lyric.note = eof_song->vocal_track[tracknum]->lyric[i]->note;
 				break;
 			}
 		}
@@ -4774,14 +4696,61 @@ void eof_editor_logic_common(void)
 			}
 		}
 	}//If the chart is paused
-	else
-	{	//If the chart is not paused
+
+	//Find hover notes/lyrics for chart and fret catalog playback
+	if(eof_music_catalog_playback || !eof_music_paused)
+	{	//If the chart or fret catalog is playing
+		int examined_music_pos = eof_music_pos;		//By default, assume the chart position is to be used to find hover notes/etc.
+		int examined_track = eof_selected_track;	//By default, assume the active track is to be used to find hover notes/etc.
+		int examined_type = eof_note_type;			//By default, assume the active difficulty is to be used to find hover notes/etc.
+
+		if(eof_music_catalog_playback)
+		{	//If the fret catalog is playing
+			examined_music_pos = eof_music_catalog_pos;	//Use the fret catalog position instead
+			examined_track = eof_song->catalog->entry[eof_selected_catalog_entry].track;	//Use the fret catalog entry's track instead
+			examined_type = eof_song->catalog->entry[eof_selected_catalog_entry].type;	//Use the fret catalog entry's difficulty instead
+		}
+
+		//Find the hover note
+		int examined_pos = examined_music_pos / eof_zoom;
+		int zoomed_delay = eof_av_delay / eof_zoom;	//Cache this value
+		for(i = 0; i < eof_get_track_size(eof_song, examined_track); i++)
+		{
+			if(eof_get_note_type(eof_song, examined_track, i) == examined_type)
+			{
+				npos = eof_get_note_pos(eof_song, examined_track, i) / eof_zoom;
+				if((examined_pos - zoomed_delay > npos) && (examined_pos - zoomed_delay < npos + (eof_get_note_length(eof_song, examined_track, i) > 100 ? eof_get_note_length(eof_song, examined_track, i) : 100) / eof_zoom))
+				{
+					eof_hover_note = i;
+					if(eof_vocals_selected)
+					{	//If the lyric track is active, set the lyric pen note
+						eof_pen_lyric.note = eof_get_note_note(eof_song, examined_track, i);
+					}
+					break;
+				}
+			}
+		}
+
+		//Find the hover 2 note
+		for(i = 0; i < eof_get_track_size(eof_song, examined_track); i++)
+		{
+			if(eof_get_note_type(eof_song, examined_track, i) == examined_type)
+			{
+				npos = eof_get_note_pos(eof_song, examined_track, i) + eof_av_delay;
+				if((examined_music_pos > npos) && (examined_music_pos < npos + (eof_get_note_length(eof_song, examined_track, i) > 100 ? eof_get_note_length(eof_song, examined_track, i) : 100)))
+				{
+					eof_hover_note_2 = i;
+					break;
+				}
+			}
+		}
+
+		//Find the hover lyric, if there is one
 		for(i = 0; i < eof_song->vocal_track[0]->lyrics; i++)
 		{	//Find the hover lyric if there is one
 			npos = eof_song->vocal_track[0]->lyric[i]->pos;
-			if((eof_music_pos - eof_av_delay > npos) && (eof_music_pos - eof_av_delay < npos + (eof_song->vocal_track[0]->lyric[i]->length > 100 ? eof_song->vocal_track[0]->lyric[i]->length : 100)))
+			if((examined_music_pos - eof_av_delay > npos) && (examined_music_pos - eof_av_delay < npos + (eof_song->vocal_track[0]->lyric[i]->length > 100 ? eof_song->vocal_track[0]->lyric[i]->length : 100)))
 			{
-				eof_hover_note_2 = i;
 				eof_hover_lyric = i;
 				break;
 			}
