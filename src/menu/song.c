@@ -2091,14 +2091,14 @@ int eof_edit_tuning_proc(int msg, DIALOG *d, int c)
 {
 	int i;
 	char * string = NULL;
-	int key_list[32] = {KEY_BACKSPACE, KEY_DEL, KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_ESC};
+	int key_list[32] = {KEY_BACKSPACE, KEY_DEL, KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_ESC, KEY_ENTER};
 	int match = 0;
 	int retval;
 	char tuning[EOF_TUNING_LENGTH];
 
 	if((msg == MSG_CHAR) || (msg == MSG_UCHAR))
 	{	//ASCII is not handled until the MSG_UCHAR event is sent
-		for(i = 0; i < 7; i++)
+		for(i = 0; i < 8; i++)
 		{
 			if((msg == MSG_UCHAR) && (c == 27))
 			{	//If the Escape ASCII character was trapped
