@@ -10,12 +10,12 @@ int eof_verified_edit_proc(int msg, DIALOG *d, int c)
 {
 	int i;
 	char * string = NULL;
-	int key_list[32] = {KEY_BACKSPACE, KEY_DEL, KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_ESC};
+	int key_list[32] = {KEY_BACKSPACE, KEY_DEL, KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_ESC, KEY_ENTER};
 	int match = 0;
 
 	if(msg == MSG_CHAR)
 	{
-		for(i = 0; i < 7; i++)
+		for(i = 0; i < 8; i++)
 		{
 			if(c >> 8 == key_list[i])			//If the input is permanently allowed
 			{
