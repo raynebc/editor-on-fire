@@ -74,9 +74,9 @@ DIALOG eof_all_events_dialog[] =
    { d_agup_list_proc,           12,  84,  475, 140, 2,   23,  0,    0,      0,   0,   eof_events_list_all,  NULL, NULL },
    { d_agup_button_proc,         12,  237, 154, 28,  2,   23,  'f',  D_EXIT, 0,   0,   "&Find",              NULL, NULL },
    { d_agup_button_proc,         178, 237, 154, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",               NULL, NULL },
-   { eof_all_events_radio_proc,	 344, 228, 100, 15,  2,   23,  0, D_SELECTED,4,   0,   "All Events",         NULL, NULL },
-   { eof_all_events_radio_proc,	 344, 244, 150, 15,  2,   23,  0,    0,      5,   0,   "This Track's Events",NULL, NULL },
-   { eof_all_events_radio_proc,	 344, 260, 140, 15,  2,   23,  0,    0,      6,   0,   "Section Events",     NULL, NULL },
+   { eof_all_events_radio_proc,	 344, 228, 100, 15,  2,   23,  0, D_SELECTED,0,   0,   "All Events",         (void *)4,    NULL },
+   { eof_all_events_radio_proc,	 344, 244, 150, 15,  2,   23,  0,    0,      0,   0,   "This Track's Events",(void *)5,    NULL },
+   { eof_all_events_radio_proc,	 344, 260, 140, 15,  2,   23,  0,    0,      0,   0,   "Section Events",     (void *)6,    NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -895,56 +895,52 @@ char * eof_events_list_all(int index, int * size)
 	char trackname[22];
 	unsigned long x, count = 0, realindex;
 
-	switch(index)
-	{
-		case -1:
-		{
-			if(eof_all_events_dialog[4].flags == D_SELECTED)
-			{	//Display all events
-				count = eof_song->text_events;
-			}
-			else if(eof_all_events_dialog[5].flags == D_SELECTED)
-			{	//Display this track's events
-				for(x = 0; x < eof_song->text_events; x++)
-				{	//For each event
-					if(eof_song->text_event[x]->track == eof_selected_track)
-					{	//If the event is specific to the currently active track
-						count++;
-					}
+	if(index < 0)
+	{	//Signal to return the list count
+		if(eof_all_events_dialog[4].flags && D_SELECTED)
+		{	//Display all events
+			count = eof_song->text_events;
+		}
+		else if(eof_all_events_dialog[5].flags && D_SELECTED)
+		{	//Display this track's events
+			for(x = 0; x < eof_song->text_events; x++)
+			{	//For each event
+				if(eof_song->text_event[x]->track == eof_selected_track)
+				{	//If the event is specific to the currently active track
+					count++;
 				}
 			}
-			else
-			{	//Display section events
-				for(x = 0; x < eof_song->text_events; x++)
-				{	//For each event
-					if((ustrstr(eof_song->text_event[x]->text, "[section") == eof_song->text_event[x]->text) ||
-						(ustrstr(eof_song->text_event[x]->text, "section") == eof_song->text_event[x]->text))
-					{	//If the string begins with "[section" or "section"
-						count++;
-					}
+		}
+		else
+		{	//Display section events
+			for(x = 0; x < eof_song->text_events; x++)
+			{	//For each event
+				if((ustrstr(eof_song->text_event[x]->text, "[section") == eof_song->text_event[x]->text) ||
+					(ustrstr(eof_song->text_event[x]->text, "section") == eof_song->text_event[x]->text))
+				{	//If the string begins with "[section" or "section"
+					count++;
 				}
 			}
-			*size = count;
-			break;
 		}
-		default:
+		*size = count;
+	}
+	else
+	{	//Return the specified list item
+		realindex = eof_retrieve_text_event(index);	//Get the actual event based on the current filter
+		if(eof_song->text_event[realindex]->beat >= eof_song->beats)
+		{	//Something bad happened, repair the event
+			eof_song->text_event[realindex]->beat = eof_song->beats - 1;	//Reset the text event to be at the last beat marker
+		}
+		if((eof_song->text_event[realindex]->track != 0) && (eof_song->text_event[realindex]->track < eof_song->tracks))
+		{	//If this is a track specific event
+			snprintf(trackname, sizeof(trackname), " %s", eof_song->track[eof_song->text_event[realindex]->track]->name);
+		}
+		else
 		{
-			realindex = eof_retrieve_text_event(index);	//Get the actual event based on the current filter
-			if(eof_song->text_event[realindex]->beat >= eof_song->beats)
-			{	//Something bad happened, repair the event
-				eof_song->text_event[realindex]->beat = eof_song->beats - 1;	//Reset the text event to be at the last beat marker
-			}
-			if((eof_song->text_event[realindex]->track != 0) && (eof_song->text_event[realindex]->track < eof_song->tracks))
-			{	//If this is a track specific event
-				snprintf(trackname, sizeof(trackname), " %s", eof_song->track[eof_song->text_event[realindex]->track]->name);
-			}
-			else
-			{
-				trackname[0] = '\0';	//Empty the string
-			}
-			snprintf(eof_event_list_text[realindex], 256, "(%02lu:%02lu.%02lu%s) %s", eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 60000, (eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 1000) % 60, (eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 10) % 100, trackname, eof_song->text_event[realindex]->text);
-			return eof_event_list_text[realindex];
+			trackname[0] = '\0';	//Empty the string
 		}
+		snprintf(eof_event_list_text[index], 256, "(%02lu:%02lu.%02lu%s) %s", eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 60000, (eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 1000) % 60, (eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 10) % 100, trackname, eof_song->text_event[realindex]->text);
+		return eof_event_list_text[index];
 	}
 	return NULL;
 }
@@ -1319,7 +1315,7 @@ int eof_all_events_radio_proc(int msg, DIALOG *d, int c)
 
 	if(msg == MSG_CLICK)
 	{
-		selected_option = d->d1;	//Find out which radio button was clicked on
+		selected_option = (int)d->dp2;	//Find out which radio button was clicked on
 
 		if(selected_option != previous_option)
 		{	//If the event display filter changed, have the event list redrawn
@@ -1339,11 +1335,11 @@ int eof_all_events_radio_proc(int msg, DIALOG *d, int c)
 unsigned long eof_retrieve_text_event(unsigned long index)
 {
 	unsigned long x, count = 0;
-	if(eof_all_events_dialog[4].flags == D_SELECTED)
+	if(eof_all_events_dialog[4].flags && D_SELECTED)
 	{	//Display all events
 		return index;
 	}
-	else if(eof_all_events_dialog[5].flags == D_SELECTED)
+	else if(eof_all_events_dialog[5].flags && D_SELECTED)
 	{	//Display this track's events
 		for(x = 0; x < eof_song->text_events; x++)
 		{	//For each event
