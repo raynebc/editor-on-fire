@@ -1002,6 +1002,13 @@ eof_log("\tSecond pass complete", 1);
 	unsigned long tracknum;				//Used to de-obfuscate the legacy track number
 	int phrasediff;						//Used for parsing Sysex phrase markers
 	unsigned long openstrumpos[4] = {0}, slideuppos[4] = {0}, slidedownpos[4] = {0}, openhihatpos[4] = {0}, pedalhihatpos[4] = {0}, rimshotpos[4] = {0}, sliderpos[4] = {0};	//Used for parsing Sysex phrase markers
+
+	//Special case:  Very old charts created in Freetar Editor may only contain one track that includes all the tempo and note events
+	if((tracks == 1) && (eof_import_events[0]->type < 0))
+	{	//If there was only one unidentified track
+		eof_import_events[0]->type = 0;	//Ensure it isn't marked to be skipped, the logic below will cause it to import as a guitar track
+	}
+
 	for(i = 0; i < tracks; i++)
 	{	//For each imported track
 		if(eof_import_events[i]->type < 0)
