@@ -1163,8 +1163,8 @@ void eof_read_editor_keys(void)
 
 	if((eof_input_mode == EOF_INPUT_CLASSIC) || (eof_input_mode == EOF_INPUT_HOLD))
 	{	//If the input method is classic or hold
-		if(key[KEY_ENTER])
-		{
+		if(key[KEY_ENTER] && (eof_music_pos - eof_av_delay >= eof_song->beat[0]->pos))
+		{	//If the user pressed enter and the current seek position is not left of the first beat marker
 			/* place note with default length if song is paused */
 			if(eof_music_paused)
 			{
@@ -2753,18 +2753,25 @@ void eof_editor_logic(void)
 				eof_selection.range_pos_1 = 0;
 				eof_selection.range_pos_2 = 0;
 				eof_rclick_released = 0;
-				if(eof_input_mode == EOF_INPUT_PIANO_ROLL)
-				{
+				if((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_CLASSIC) || (eof_input_mode == EOF_INPUT_HOLD))
+				{	//All three of these input methods toggle gems when clicking on the right mouse button
 					if(!eof_undo_toggle)
 					{
 						eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 					}
 					if(eof_hover_note >= 0)
 					{
-						bitmask = eof_find_pen_note_mask();	//Set the appropriate bits
+						if(eof_input_mode == EOF_INPUT_PIANO_ROLL)
+						{	//Piano roll input method must use special logic to determine the lane ordering for the pen note
+							bitmask = eof_find_pen_note_mask();	//Set the appropriate bits
+						}
+						else
+						{	//The other two use the pen note bitmask normally
+							bitmask = eof_pen_note.note;
+						}
 
 						if(bitmask)
-						{
+						{	//If a valid pen bitmask was obtained
 							eof_selection.current = eof_hover_note;
 							eof_selection.track = eof_selected_track;
 							memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
@@ -2776,9 +2783,8 @@ void eof_editor_logic(void)
 							}
 							else
 							{	//Otherwise alter the note's normal bitmask and delete the note if necessary
-								note = eof_get_note_note(eof_song, eof_selected_track, eof_hover_note);
-								note ^= bitmask;
-								eof_set_note_note(eof_song, eof_selected_track, eof_hover_note, note);
+								note = eof_get_note_note(eof_song, eof_selected_track, eof_hover_note);	//Examine the hover note...
+								note ^= bitmask;	//as it would look by toggling the pen note's gem
 								if(note == 0)
 								{	//If the note just had all lanes cleared, delete the note
 									eof_track_delete_note(eof_song, eof_selected_track, eof_hover_note);
@@ -2787,6 +2793,28 @@ void eof_editor_logic(void)
 									eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 									eof_determine_phrase_status();
 									eof_detect_difficulties(eof_song);
+								}
+								else if(note & bitmask)
+								{	//If toggling this lane on, create a new note
+									void *new_note = NULL;
+									new_note = eof_track_add_create_note(eof_song, eof_selected_track, bitmask, eof_get_note_pos(eof_song, eof_selected_track, eof_hover_note), eof_get_note_length(eof_song, eof_selected_track, eof_hover_note), eof_note_type, NULL);
+										//Create a new note at the hover note's position, with the same length and type as the hover note
+									if(new_note)
+									{	//If the new note was created successfully
+										if(eof_mark_drums_as_cymbal)
+										{	//If the user opted to make all new drum notes cymbals automatically
+											eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+										}
+										if(eof_mark_drums_as_double_bass)
+										{	//If the user opted to make all new expert bass drum notes as double bass automatically
+											eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
+										}
+										eof_track_sort_notes(eof_song, eof_selected_track);
+									}
+								}
+								else
+								{	//Otherwise a gem is being toggled off
+									eof_set_note_note(eof_song, eof_selected_track, eof_hover_note, note);
 								}
 							}
 							if(note != 0)
@@ -2825,7 +2853,7 @@ void eof_editor_logic(void)
 						}
 					}
 				}
-				else if(eof_input_mode != EOF_INPUT_REX)
+/*				else if(eof_input_mode != EOF_INPUT_REX)
 				{
 					if(!eof_undo_toggle)
 					{
@@ -2853,6 +2881,7 @@ void eof_editor_logic(void)
 						eof_detect_difficulties(eof_song);
 					}
 				}
+*/
 			}
 			if(!(mouse_b & 2) && !key[KEY_INSERT])
 			{
