@@ -4349,21 +4349,22 @@ void eof_render_editor_window_common2(void)
 //	eof_log("eof_render_editor_window_common2() entered");
 
 	int i;
-	int pos = eof_music_pos / eof_zoom;	//Current seek position
+	int pos = eof_music_pos / eof_zoom;	//Current seek position compensated for zoom level
+	int zoom = eof_av_delay / eof_zoom;	//AV delay compensated for zoom level
 
 	if(!eof_song_loaded)
 		return;
 
 	/* draw the current position */
-	if(pos > eof_av_delay / eof_zoom)
+	if(pos > zoom)
 	{
 		if(pos < 300)
 		{
-			vline(eof_window_editor->screen, 20 + pos - eof_av_delay / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
+			vline(eof_window_editor->screen, 20 + pos - zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
 		}
 		else
 		{
-			vline(eof_window_editor->screen, 320 - eof_av_delay / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
+			vline(eof_window_editor->screen, 320 - zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
 		}
 	}
 
@@ -4713,13 +4714,13 @@ void eof_editor_logic_common(void)
 
 		//Find the hover note
 		int examined_pos = examined_music_pos / eof_zoom;
-		int zoomed_delay = eof_av_delay / eof_zoom;	//Cache this value
+		int zoom = eof_av_delay / eof_zoom;	//Cache this value
 		for(i = 0; i < eof_get_track_size(eof_song, examined_track); i++)
 		{
 			if(eof_get_note_type(eof_song, examined_track, i) == examined_type)
 			{
 				npos = eof_get_note_pos(eof_song, examined_track, i) / eof_zoom;
-				if((examined_pos - zoomed_delay > npos) && (examined_pos - zoomed_delay < npos + (eof_get_note_length(eof_song, examined_track, i) > 100 ? eof_get_note_length(eof_song, examined_track, i) : 100) / eof_zoom))
+				if((examined_pos - zoom > npos) && (examined_pos - zoom < npos + (eof_get_note_length(eof_song, examined_track, i) > 100 ? eof_get_note_length(eof_song, examined_track, i) : 100) / eof_zoom))
 				{
 					eof_hover_note = i;
 					if(eof_vocals_selected)

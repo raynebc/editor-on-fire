@@ -1005,7 +1005,7 @@ eof_log("\tSecond pass complete", 1);
 
 	//Special case:  Very old charts created in Freetar Editor may only contain one track that includes all the tempo and note events
 	if((tracks == 1) && (eof_import_events[0]->type < 0))
-	{	//If there was only one unidentified track
+	{	//If there was only one track and it was not identified
 		eof_import_events[0]->type = 0;	//Ensure it isn't marked to be skipped, the logic below will cause it to import as a guitar track
 	}
 

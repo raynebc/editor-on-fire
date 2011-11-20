@@ -1722,7 +1722,7 @@ int eof_menu_edit_hopo_off(void)
 
 int eof_menu_edit_hopo_manual(void)
 {
-	return eof_menu_edit_hopo_helper(EOF_NUM_HOPO_MODES);
+	return eof_menu_edit_hopo_helper(EOF_HOPO_MANUAL);
 }
 
 int eof_menu_edit_hopo_helper(int hopo_view)

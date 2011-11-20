@@ -9,7 +9,7 @@
 #include "control.h"
 #include "editor.h"
 
-#define EOF_VERSION_STRING "EOF v1.8beta23"
+#define EOF_VERSION_STRING "EOF v1.8beta24"
 #define EOF_COPYRIGHT_STRING "(c)2008-2010 T^3 Software."
 
 #define KEY_EITHER_ALT (key[KEY_ALT] || key[KEY_ALTGR])
@@ -40,7 +40,7 @@
 #define EOF_INPUT_GUITAR_STRUM 5
 #define EOF_INPUT_FEEDBACK     6
 
-#define EOF_MAX_IMAGES 76
+#define EOF_MAX_IMAGES 78
 
 #define EOF_IMAGE_WAVE                    0
 #define EOF_IMAGE_TAB0                    1
@@ -110,6 +110,8 @@
 #define EOF_IMAGE_NOTE_RED_ARROW_HIT     65
 #define EOF_IMAGE_NOTE_YELLOW_ARROW_HIT  66
 #define EOF_IMAGE_NOTE_BLUE_ARROW_HIT    67
+#define EOF_IMAGE_NOTE_GREEN_CYMBAL      68
+#define EOF_IMAGE_NOTE_GREEN_CYMBAL_HIT  69
 
 #define EOF_DISPLAY_640             0
 #define EOF_DISPLAY_800             1
@@ -154,6 +156,31 @@ typedef struct
 } EOF_SCREEN_LAYOUT;
 
 #define EOF_EDITOR_RENDER_OFFSET  56
+
+typedef struct
+{
+	int color;					//RGB color for the normal note
+	int hit;					//RGB color for when the note is highlighted (3D tail rendering)
+	int border;					//Contrasting RGB color for when the note is highlighted (2D rendering)
+	unsigned int note3d;		//The index into eof_image[] storing the 3D note image for this color
+	unsigned int notehit3d;		//The index into eof_image[] storing the hit 3D note image for this color
+	unsigned int hoponote3d;	//The index into eof_image[] storing the hopo 3D note image for this color
+	unsigned int hoponotehit3d;	//The index into eof_image[] storing the hopo hit 3D note image for this color
+	unsigned int cymbal3d;		//The index into eof_image[] storing the 3D cymbal image for this color
+	unsigned int cymbalhit3d;	//The index into eof_image[] storing the hit 3D cymbal image for this color
+	unsigned int arrow3d;		//The index into eof_image[] storing the 3D arrow image for this color (dance track)
+	unsigned int arrowhit3d;	//The index into eof_image[] storing the hit 3D arrow image for this color (dance track)
+	char *colorname;			//The display name of this color, ie "red"
+}eof_color;
+
+extern int eof_use_rb_colors;
+extern char eof_note_toggle_menu_string_1[20];
+extern char eof_note_toggle_menu_string_2[20];
+extern char eof_note_toggle_menu_string_3[20];
+extern char eof_note_toggle_menu_string_4[20];
+extern char eof_note_toggle_menu_string_5[20];
+extern char eof_note_toggle_menu_string_6[20];
+extern eof_color eof_colors[6];
 
 struct MIDIentry
 {
@@ -449,5 +476,8 @@ extern char eof_log_string[1024];	//A string reserved for use with eof_log()
 extern unsigned int eof_log_id;
 	//This will be set to a random value when logging is started, so if multiple instances of EOF are writing to the same
 	//log file (Windows does not prevent this), each instance's log entries can be identified separately from each other.
+
+void eof_init_colors(void);		//Initializes the color structures, to be called after eof_load_data()
+void eof_set_color_set(void);	//Updates the eof_colors[] array with color data based on the current track and the user color set preference
 
 #endif

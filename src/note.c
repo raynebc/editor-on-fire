@@ -173,11 +173,10 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	long leftcoord;	//This is the position of the left end of the piano roll
 	long pos;		//This is the position of the specified window's piano roll, scaled by the current zoom level
 	long npos;
-	int pcol = p == 1 ? eof_color_white : p == 2 ? makecol(224, 255, 224) : 0;
+	int pcol = p == 2 ? makecol(224, 255, 224) : 0;
 	int dcol = eof_color_white;
 	int tcol = eof_color_black;	//This color is used as the fret text color (for pro guitar notes)
 	int dcol2 = dcol;
-	int colors[EOF_MAX_FRETS] = {eof_color_green,eof_color_red,eof_color_yellow,eof_color_blue,eof_color_purple,eof_color_orange};	//Each of the fret colors
 	int ncol = eof_color_silver;	//Note color defaults to silver unless the note is not star power
 	unsigned long ctr;
 	unsigned long mask;	//Used to mask out colors in the for loop
@@ -238,7 +237,11 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		notelength = eof_pen_note.length;
 		noteflags = eof_pen_note.flags;
 		notenote = eof_pen_note.note;
-		notetype = eof_pen_note.type;
+		notetype = eof_note_type;	//The pen note should reflect the active difficulty, ie. so the pen note can show an expert+ bass drum note's red center dot
+		if(eof_hover_note >= 0)
+		{
+			noteflags = eof_get_note_flags(eof_song, eof_selected_track, eof_hover_note);	//The pen note should reflect the hover note's flags, ie. so the pen note can show an expert+ bass drum note's red center dot
+		}
 	}
 
 	if(window == eof_window_note)
@@ -289,7 +292,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		}
 	}
 	else
-	{
+	{	//If rendering the pen note
 		numlanes = eof_count_track_lanes(eof_song, eof_selected_track);	//Count the number of lanes in the active track
 	}
 	if(noteflags & EOF_NOTE_FLAG_F_HOPO)				//If this note is forced as HOPO on
@@ -311,7 +314,6 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	vline(window->screen, npos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] - eof_screen_layout.note_marker_size, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[2] + eof_screen_layout.note_marker_size, makecol(128, 128, 128));
 	if(p == 3)
 	{
-		pcol = eof_color_white;
 		dcol = eof_color_white;
 	}
 
@@ -324,7 +326,11 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		{	//If this lane is populated
 			if(!(noteflags & EOF_NOTE_FLAG_SP))
 			{	//If the note is not star power
-				ncol = colors[ctr];	//Assign the appropriate fret color
+				ncol = eof_colors[ctr].color;	//Assign the appropriate fret color
+			}
+			if(p)
+			{	//For mouse over/highlight lyrics, render with note with its defined contrasting border color
+				pcol = eof_colors[ctr].border;
 			}
 
 			if((eof_selected_track == EOF_TRACK_DRUM))
@@ -741,14 +747,6 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	long rz, ez;
 	unsigned long ctr;
 	unsigned long mask;	//Used to mask out colors in the for loop
-	unsigned int notes[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN, EOF_IMAGE_NOTE_RED, EOF_IMAGE_NOTE_YELLOW, EOF_IMAGE_NOTE_BLUE, EOF_IMAGE_NOTE_PURPLE, EOF_IMAGE_NOTE_ORANGE};
-	unsigned int notes_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN_HIT, EOF_IMAGE_NOTE_RED_HIT, EOF_IMAGE_NOTE_YELLOW_HIT, EOF_IMAGE_NOTE_BLUE_HIT, EOF_IMAGE_NOTE_PURPLE_HIT, EOF_IMAGE_NOTE_ORANGE_HIT};
-	unsigned int hopo_notes[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_HGREEN, EOF_IMAGE_NOTE_HRED, EOF_IMAGE_NOTE_HYELLOW, EOF_IMAGE_NOTE_HBLUE, EOF_IMAGE_NOTE_HPURPLE, EOF_IMAGE_NOTE_HORANGE};
-	unsigned int hopo_notes_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_HGREEN_HIT, EOF_IMAGE_NOTE_HRED_HIT, EOF_IMAGE_NOTE_HYELLOW_HIT, EOF_IMAGE_NOTE_HBLUE_HIT, EOF_IMAGE_NOTE_HPURPLE_HIT, EOF_IMAGE_NOTE_HORANGE_HIT};
-	unsigned int cymbals[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN, EOF_IMAGE_NOTE_RED, EOF_IMAGE_NOTE_YELLOW_CYMBAL, EOF_IMAGE_NOTE_BLUE_CYMBAL, EOF_IMAGE_NOTE_PURPLE_CYMBAL, EOF_IMAGE_NOTE_ORANGE};
-	unsigned int cymbals_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN_HIT, EOF_IMAGE_NOTE_RED_HIT, EOF_IMAGE_NOTE_YELLOW_CYMBAL_HIT, EOF_IMAGE_NOTE_BLUE_CYMBAL_HIT, EOF_IMAGE_NOTE_PURPLE_CYMBAL_HIT, EOF_IMAGE_NOTE_ORANGE_HIT};
-	unsigned int arrows[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN_ARROW, EOF_IMAGE_NOTE_RED_ARROW, EOF_IMAGE_NOTE_YELLOW_ARROW, EOF_IMAGE_NOTE_BLUE_ARROW, EOF_IMAGE_NOTE_PURPLE, EOF_IMAGE_NOTE_ORANGE};
-	unsigned int arrows_hit[EOF_MAX_FRETS] = {EOF_IMAGE_NOTE_GREEN_ARROW_HIT, EOF_IMAGE_NOTE_RED_ARROW_HIT, EOF_IMAGE_NOTE_YELLOW_ARROW_HIT, EOF_IMAGE_NOTE_BLUE_ARROW_HIT, EOF_IMAGE_NOTE_PURPLE_HIT, EOF_IMAGE_NOTE_ORANGE_HIT};
 	unsigned long numlanes, tracknum;
 
 	//These variables are used for the name rendering logic
@@ -833,8 +831,8 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 				polygon(eof_window_3d->screen, 4, point, p ? eof_color_white : eof_color_silver);
 			else if(noteflags & EOF_NOTE_FLAG_DBASS)	//Or if it is double bass, render it in red
 				polygon(eof_window_3d->screen, 4, point, p ? makecol(255, 192, 192) : eof_color_red);
-			else										//Otherwise render it in green
-				polygon(eof_window_3d->screen, 4, point, p ? makecol(192, 255, 192) : eof_color_green);
+			else										//Otherwise render it in the standard lane one color for the current color set
+				polygon(eof_window_3d->screen, 4, point, p ? eof_colors[0].hit : eof_colors[0].color);
 		}
 		for(ctr=1,mask=2;ctr<numlanes;ctr++,mask=mask<<1)
 		{	//Render for each of the available fret colors after 1 (bass drum)
@@ -848,7 +846,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 					}
 					else
 					{	//Otherwise render in the appropriate color
-						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[cymbals_hit[ctr]] : eof_image[cymbals[ctr]], xchart[ctr-1] - EOF_HALF_3D_IMAGE_WIDTH + halflanewidth, 200 - EOF_3D_IMAGE_HEIGHT, npos);
+						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[eof_colors[ctr].cymbalhit3d] : eof_image[eof_colors[ctr].cymbal3d], xchart[ctr-1] - EOF_HALF_3D_IMAGE_WIDTH + halflanewidth, 200 - EOF_3D_IMAGE_HEIGHT, npos);
 					}
 				}
 				else
@@ -859,7 +857,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 					}
 					else
 					{	//Otherwise render in the appropriate color
-						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[notes_hit[ctr]] : eof_image[notes[ctr]], xchart[ctr-1] - EOF_HALF_3D_IMAGE_WIDTH + halflanewidth, 200 - EOF_3D_IMAGE_HEIGHT, npos);
+						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[eof_colors[ctr].notehit3d] : eof_image[eof_colors[ctr].note3d], xchart[ctr-1] - EOF_HALF_3D_IMAGE_WIDTH + halflanewidth, 200 - EOF_3D_IMAGE_HEIGHT, npos);
 					}
 				}
 			}
@@ -886,8 +884,8 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 					if(noteflags & EOF_NOTE_FLAG_SP)			//If this open bass note is star power, render it in silver
 						polygon(eof_window_3d->screen, 4, point, p ? eof_color_white : eof_color_silver);
-					else										//Otherwise render it in orange
-						polygon(eof_window_3d->screen, 4, point, p ? makecol(255, 192, 0) : eof_color_orange);
+					else										//Otherwise render it in the standard lane six color for the current color set
+						polygon(eof_window_3d->screen, 4, point, p ? eof_colors[5].hit : eof_colors[5].color);
 				}
 				else
 				{
@@ -901,7 +899,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 							}
 							else
 							{
-								ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[hopo_notes_hit[ctr]] : eof_image[hopo_notes[ctr]], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
+								ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[eof_colors[ctr].hoponotehit3d] : eof_image[eof_colors[ctr].hoponote3d], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
 							}
 						}
 						else
@@ -912,7 +910,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 							}
 							else
 							{
-								ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[notes_hit[ctr]] : eof_image[notes[ctr]], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
+								ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[eof_colors[ctr].notehit3d] : eof_image[eof_colors[ctr].note3d], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
 							}
 						}
 
@@ -928,7 +926,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 					}//If this is not a dance track
 					else
 					{	//This is a dance track
-						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[arrows_hit[ctr]] : eof_image[arrows[ctr]], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
+						ocd3d_draw_bitmap(eof_window_3d->screen, p ? eof_image[eof_colors[ctr].arrowhit3d] : eof_image[eof_colors[ctr].arrow3d], xchart[ctr] - EOF_HALF_3D_IMAGE_WIDTH, 200 - EOF_3D_IMAGE_HEIGHT, npos);
 					}
 				}
 			}//If this lane is used
@@ -983,7 +981,6 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	int point[8];
 	int rz, ez;
 	unsigned long numlanes, ctr, mask, tracknum;
-	int colortable[EOF_MAX_FRETS][2] = {{makecol(192, 255, 192), eof_color_green}, {makecol(255, 192, 192), eof_color_red}, {makecol(255, 255, 192), eof_color_yellow}, {makecol(192, 192, 255), eof_color_blue}, {makecol(255, 192, 255), eof_color_purple}, {makecol(255, 192, 0), eof_color_orange}};
 
 	//These variables are used to store the common note data, regardless of whether the note is legacy or pro guitar format
 	unsigned long notepos = 0;
@@ -1051,7 +1048,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 				point[5] = ocd3d_project_y(200, ez);
 				point[6] = ocd3d_project_x(xchart[3] + 10, rz);
 				point[7] = ocd3d_project_y(200, rz);
-				polygon(eof_window_3d->screen, 4, point, noteflags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : eof_color_silver) : (p ? colortable[ctr][0] : colortable[ctr][1]));
+				polygon(eof_window_3d->screen, 4, point, noteflags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : eof_color_silver) : (p ? eof_colors[ctr].hit : eof_colors[ctr].color));
 			}
 			else
 			{	//Logic to render lanes 1 through 6
@@ -1065,7 +1062,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 					point[5] = ocd3d_project_y(200, ez);
 					point[6] = ocd3d_project_x(xchart[ctr] + 10, rz);
 					point[7] = ocd3d_project_y(200, rz);
-					polygon(eof_window_3d->screen, 4, point, noteflags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : eof_color_silver) : (p ? colortable[ctr][0] : colortable[ctr][1]));
+					polygon(eof_window_3d->screen, 4, point, noteflags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : eof_color_silver) : (p ? eof_colors[ctr].hit : eof_colors[ctr].color));
 				}
 			}
 

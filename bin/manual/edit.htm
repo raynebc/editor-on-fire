@@ -35,13 +35,13 @@ Before I describe the individual edit modes there are a few things that all edit
 
 <blockquote>
 <h1><a name="eclassic">Classic Edit Mode</a></h1>
-Classic edit mode is the original edit mode used by early versions of EOF. In this mode the "pen" has note toggles corresponding to the five note colors. To toggle them use the keys 1-5. Right-click to place a note at the position of the pen.
+Classic edit mode is the original edit mode used by early versions of EOF. In this mode the "pen" has note toggles corresponding to each lane. To toggle them use the keys 1-6. Right-click to place a note at the position of the pen.
 
 <h1><a name="epiano">Piano Roll Edit Mode</a></h1>
 Piano Roll edit mode works similarly to MIDI sequencer programs. The note colors are selected by positioning the mouse where that note color would be on the fret board. To add a note, right-click the position you want to add a note. If there is already a note at the position you right-click the color you click will be toggled within the note that is already there.
 
 <h1><a name="ehold">Hold Edit Mode</a></h1>
-Hold edit mode is exactly the same as Classic mode except you don't toggle the note colors. Instead you hold the corresponding number (1-5) and right-click to add the note at the position of the pen.
+Hold edit mode is exactly the same as Classic mode except you don't toggle the note colors. Instead you hold the corresponding number (1-6) and right-click to add the note at the position of the pen.
 
 <h1><a name="erex">RexMundi Edit Mode</a></h1>
 RexMundi edit mode is exactly like Piano Roll mode except you use the keys 1-5 to toggle notes at the current pen position instead of right-clicking them.
@@ -67,7 +67,7 @@ EOF allows you to define buttons for and use a keyboard/game controller/etc. to 
 <li>With Grid Snap still turned OFF, play the chart again, placing notes in time with the music.  If the notes are still not being placed on the beats even though you know you are tapping in the correct rhythm and that the chart is beat synced, increase or decrease the controller delay slightly and repeat this step again.  If several of the notes you place are landing on beat lines, then you are finished configuring the controller delay.  Controller delay may change from one controller/keyboard to the next, so make sure to check each time you use a different input device to place notes during chart playback.  If you use the same set of controllers, you can make a note of which delay each uses and just edit the delay to the correct value each time you change controllers without having to test for the correct delay each time.
 </ol>
 
-Note:  PART DRUMS uses the defined "Kick Pedal", "Red Drum", "Yellow Drum", "Blue Drum" and "Purple Drum" keys (defined in File>Controllers>Drums) to place notes when the chart is playing and the drum track is being displayed, even if you aren't using the Guitar Strum or Guitar Tap input methods.  This "Drum Record" input method is designed to react like a drum instead of a guitar, such as by not placing sustained notes, allowing you to hold the bass pedal down and only placing a bass drum note when you press the defined button down from a released state.  If you are using the same controller (ie. keyboard) for recording drum notes as you are for guitar notes, you can enter the delay you set for the guitar controller delay into the drum controller delay (File>Controller>Drums).  Otherwise, mapping the keys to a connected controller and testing to find the correct delay is done the same way as with the guitar controller delay.<br><br>
+Note:  PART DRUMS uses the defined keys (defined in File>Controllers>Drums) to place notes when the chart is playing and the drum track is being displayed, even if you aren't using the Guitar Strum or Guitar Tap input methods.  This "Drum Record" input method is designed to react like a drum instead of a guitar, such as by not placing sustained notes, allowing you to hold the bass pedal down and only placing a bass drum note when you press the defined button down from a released state.  If you are using the same controller (ie. keyboard) for recording drum notes as you are for guitar notes, you can enter the delay you set for the guitar controller delay into the drum controller delay (File>Controller>Drums).  Otherwise, mapping the keys to a connected controller and testing to find the correct delay is done the same way as with the guitar controller delay.<br><br>
 
 When your controllers and their delays are set up, you are ready to use the Guitar Strum, Guitar Tap and "Drum Record" input methods to place notes in your charts.  If you are placing notes on a beat synced chart, make sure that you have Grid Snap enabled to your preferred setting.  If you have a hard time playing in a really accurate timing, you can use a larger Grid Snap value such as 1/4 or 1/8 and EOF will round your recorded notes up or down to the nearest grid snap position as they are placed.  If you have not beat synced the chart, make sure Grid Snap is turned off before having EOF record notes onto the chart during playback, or else the Grid Snap logic will cause the notes to NOT be placed accurately to reflet your input.<br><br>
 
@@ -81,14 +81,14 @@ In order to effectively use EOF you will need to familiarize yourself with the c
 <b>Left-Click (notes):</b><br>Select the highlighted note for editing. Hold Control while clicking to select multiple notes. Hold Shift while clicking to select a range of notes.<br><br>
 <b>Left-Click+Drag (notes):</b><br>Move selected note(s).<br><br>
 <b>Mouse Wheel:</b><br>Scroll the mouse wheel up/down to change the length of the currently selected notes. Alternately, you can use the '[' and ']' keys to do the same.<br><br>
-<b>1-5:</b><br>Does different things with the note colors depending on the current edit mode.<br><br>
+<b>1-6:</b><br>Does different things with the note colors depending on the current edit mode.<br><br>
 <b>Left-Click (beats):</b><br>Select the highlighted beat.<br><br>
 <b>Left-Click+Drag (beats):</b><br>Move the beat marker. An anchor is automatically created when you move a beat marker. Surrounding BPMs will be adjusted automatically. An anchor will not move unless dragged (unless a <a href="functions.htm#bpmchange">manual BPM Change is added</a>), non-anchored beats will adjust to fit. Hold Shift when dragging a beat to prevent the notes within from being adjusted with the beat markers. Useful if you are beat syncing someone else's songs, for instance.<br><br>
 <b>Right-Click (beats):</b><br>Seek to the highlighted beat line.<br><br>
 For another listing of available controls visit "<a href=functions.htm#keys>Help->Keys</a>" in the EOF menu.
 
 <h1><a name="notes">Notes</a></h1>
-In EOF songs are made up of Notes and Beat Markers. Each note can contain up to five colors allowing you to place chords as well as single notes. Note positions are stored in absolute time and are accurate to the millisecond. The length of the note is also stored as a duration in milliseconds.
+In EOF songs are made up of Notes and Beat Markers. Each note can contain up to six colors allowing you to place chords as well as single notes. Note positions are stored in absolute time and are accurate to the millisecond. The length of the note is also stored as a duration in milliseconds.
 
 <h1><a name="beats">Beat Markers</a></h1>
 Beat markers appear on each beat throughout the entire song. You don't have to mind the beat markers in order to create a synchronized song but most people find it desirable to do so. EOF takes a different approach to beat markers compared to the other editors as it doesn't force your notes to line up with the beat markers. Instead, you are free to place your notes in sync with the audio and synchronize the beat markers later on. This allows you to quickly make a playable song and leaves it up to you whether or not you want to spend the extra time making the beat lines line up with the notes.

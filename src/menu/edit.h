@@ -8,6 +8,7 @@ extern MENU eof_edit_selection_menu[];
 extern MENU eof_edit_hopo_menu[];
 extern MENU eof_edit_speed_menu[];
 extern MENU eof_edit_menu[];
+extern MENU eof_edit_claps_menu[];
 
 extern DIALOG eof_custom_snap_dialog[];
 
