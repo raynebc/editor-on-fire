@@ -198,12 +198,12 @@ MENU eof_pro_guitar_hopo_menu[] =
 
 MENU eof_note_toggle_menu[] =
 {
-    {"&Green\tShift+1", eof_menu_note_toggle_green, NULL, 0, NULL},
-    {"&Red\tShift+2", eof_menu_note_toggle_red, NULL, 0, NULL},
-    {"&Yellow\tShift+3", eof_menu_note_toggle_yellow, NULL, 0, NULL},
-    {"&Blue\tShift+4", eof_menu_note_toggle_blue, NULL, 0, NULL},
-    {"&Purple\tShift+5", eof_menu_note_toggle_purple, NULL, 0, NULL},
-    {"&Orange\tShift+6", eof_menu_note_toggle_orange, NULL, 0, NULL},
+    {eof_note_toggle_menu_string_1, eof_menu_note_toggle_green, NULL, 0, NULL},
+    {eof_note_toggle_menu_string_2, eof_menu_note_toggle_red, NULL, 0, NULL},
+    {eof_note_toggle_menu_string_3, eof_menu_note_toggle_yellow, NULL, 0, NULL},
+    {eof_note_toggle_menu_string_4, eof_menu_note_toggle_blue, NULL, 0, NULL},
+    {eof_note_toggle_menu_string_5, eof_menu_note_toggle_purple, NULL, 0, NULL},
+    {eof_note_toggle_menu_string_6, eof_menu_note_toggle_orange, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -1662,6 +1662,8 @@ int eof_menu_note_remove_cymbal(void)
 				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,0);	//Clear the yellow cymbal flag on all drum notes at this position
 				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_B_CYMBAL,0);	//Clear the blue cymbal flag on all drum notes at this position
 				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_G_CYMBAL,0);	//Clear the green cymbal flag on all drum notes at this position
+				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN,0);	//Clear the open hi hat cymbal flag on all drum notes at this position
+				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL,0);	//Clear the pedal hi hat cymbal flag on all drum notes at this position
 			}
 		}
 	}

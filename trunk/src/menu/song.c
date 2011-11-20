@@ -1165,6 +1165,7 @@ int eof_menu_track_selected_track_number(int tracknum)
 		eof_determine_phrase_status();
 		eof_chord_lookup_note = 0;	//Reset the cached chord lookup count
 	}
+	eof_set_color_set();
 	return 1;
 }
 
@@ -1832,6 +1833,7 @@ int eof_menu_song_open_bass(void)
 					eof_pen_visible = 1;
 					return 1;	//Return cancellation
 				}
+				break;
 			}
 		}
 		eof_show_mouse(NULL);

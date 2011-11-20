@@ -72,7 +72,7 @@ DIALOG eof_settings_dialog[] =
 DIALOG eof_preferences_dialog[] =
 {
    /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-   { d_agup_window_proc,0,   48,  240, 405, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
+   { d_agup_window_proc,0,   48,  240, 420, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
    { d_agup_check_proc, 16,  80,  128, 16,  2,   23,  0,    0,      1,   0,   "Inverted Notes",      NULL, NULL },
    { d_agup_check_proc, 16,  95,  128, 16,  2,   23,  0,    0,      1,   0,   "Lefty Mode",          NULL, NULL },
    { d_agup_check_proc, 16,  110, 128, 16,  2,   23,  0,    0,      1,   0,   "Note Auto-Adjust",    NULL, NULL },
@@ -87,11 +87,12 @@ DIALOG eof_preferences_dialog[] =
    { d_agup_check_proc, 16,  245, 220, 16,  2,   23,  0,    0,      1,   0,   "Save separate RBN MIDI files",NULL, NULL },
    { d_agup_check_proc, 16,  260, 220, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
    { d_agup_check_proc, 16,  275, 220, 16,  2,   23,  0,    0,      1,   0,   "Enable logging on launch",NULL, NULL },
-   { d_agup_text_proc,  56,  295, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
-   { d_agup_list_proc,  43,  310, 110, 94,  2,   23,  0,    0,      0,   0,   eof_input_list,        NULL, NULL },
-   { d_agup_button_proc,12,  415, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-   { d_agup_button_proc,86,  415, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-   { d_agup_button_proc,160, 415, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+   { d_agup_check_proc, 16,  290, 220, 16,  2,   23,  0,    0,      1,   0,   "Use Rock Band color set",NULL, NULL },
+   { d_agup_text_proc,  56,  310, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
+   { d_agup_list_proc,  43,  325, 110, 95,  2,   23,  0,    0,      0,   0,   eof_input_list,        NULL, NULL },
+   { d_agup_button_proc,12,  425, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+   { d_agup_button_proc,86,  425, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+   { d_agup_button_proc,160, 425, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -928,12 +929,13 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[12].flags = eof_write_rbn_midis ? D_SELECTED : 0;		//Save separate RBN MIDI files
 	eof_preferences_dialog[13].flags = eof_inverted_chords_slash ? D_SELECTED : 0;	//Treat inverted chords as slash
 	eof_preferences_dialog[14].flags = enable_logging ? D_SELECTED : 0;				//Enable logging on launch
-	eof_preferences_dialog[16].d1 = eof_input_mode;									//Input method
+	eof_preferences_dialog[15].flags = eof_use_rb_colors ? D_SELECTED : 0;			//Use Rock Band color set
+	eof_preferences_dialog[17].d1 = eof_input_mode;									//Input method
 
 	do
 	{	//Run the dialog
 		retval = eof_popup_dialog(eof_preferences_dialog, 0);	//Run the dialog
-		if(retval == 17)
+		if(retval == 18)
 		{	//If the user clicked OK, update EOF's configured settings from the dialog selections
 			eof_inverted_notes = (eof_preferences_dialog[1].flags == D_SELECTED ? 1 : 0);
 			eof_lefty_mode = (eof_preferences_dialog[2].flags == D_SELECTED ? 1 : 0);
@@ -949,11 +951,12 @@ int eof_menu_file_preferences(void)
 			eof_write_rbn_midis = (eof_preferences_dialog[12].flags == D_SELECTED ? 1 : 0);
 			eof_inverted_chords_slash = (eof_preferences_dialog[13].flags == D_SELECTED ? 1 : 0);
 			enable_logging = (eof_preferences_dialog[14].flags == D_SELECTED ? 1 : 0);
-			eof_input_mode = eof_preferences_dialog[16].d1;
+			eof_use_rb_colors = (eof_preferences_dialog[15].flags == D_SELECTED ? 1 : 0);
+			eof_input_mode = eof_preferences_dialog[17].d1;
 			eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case eof_inverted_notes was changed
 			eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case eof_lefty_mode was changed
 		}
-		else if(retval == 18)
+		else if(retval == 19)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
 			eof_preferences_dialog[1].flags = 0;					//Inverted notes
 			eof_preferences_dialog[2].flags = 0;					//Lefty mode
@@ -969,12 +972,14 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[12].flags = 0;					//Save separate RBN MIDI files
 			eof_preferences_dialog[13].flags = 0;					//Treat inverted chords as slash
 			eof_preferences_dialog[14].flags = D_SELECTED;			//Enable logging on launch
-			eof_preferences_dialog[16].d1 = EOF_INPUT_PIANO_ROLL;	//Input method
+			eof_preferences_dialog[15].flags = D_SELECTED;			//Use Rock Band color set
+			eof_preferences_dialog[17].d1 = EOF_INPUT_PIANO_ROLL;	//Input method
 		}
-	}while(retval == 18);	//Keep re-running the dialog until the user closes it with anything besides "Default"
+	}while(retval == 19);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
+	eof_set_color_set();
 	return 1;
 }
 
@@ -1311,11 +1316,11 @@ char * eof_guitar_list(int index, int * size)
 {
 	sprintf(eof_ctext[0], "Strum 1 (%s)", redefine_index == 0 ? "Press new key" : eof_guitar.button[0].name);
 	sprintf(eof_ctext[1], "Strum 2 (%s)", redefine_index == 1 ? "Press new key" : eof_guitar.button[1].name);
-	sprintf(eof_ctext[2], "Green Fret (%s)", redefine_index == 2 ? "Press new key" : eof_guitar.button[2].name);
-	sprintf(eof_ctext[3], "Red Fret (%s)", redefine_index == 3 ? "Press new key" : eof_guitar.button[3].name);
-	sprintf(eof_ctext[4], "Yellow Fret (%s)", redefine_index == 4 ? "Press new key" : eof_guitar.button[4].name);
-	sprintf(eof_ctext[5], "Blue Fret (%s)", redefine_index == 5 ? "Press new key" : eof_guitar.button[5].name);
-	sprintf(eof_ctext[6], "Purple Fret (%s)", redefine_index == 6 ? "Press new key" : eof_guitar.button[6].name);
+	sprintf(eof_ctext[2], "Fret 1 (%s)", redefine_index == 2 ? "Press new key" : eof_guitar.button[2].name);
+	sprintf(eof_ctext[3], "Fret 2 (%s)", redefine_index == 3 ? "Press new key" : eof_guitar.button[3].name);
+	sprintf(eof_ctext[4], "Fret 3 (%s)", redefine_index == 4 ? "Press new key" : eof_guitar.button[4].name);
+	sprintf(eof_ctext[5], "Fret 4 (%s)", redefine_index == 5 ? "Press new key" : eof_guitar.button[5].name);
+	sprintf(eof_ctext[6], "Fret 5 (%s)", redefine_index == 6 ? "Press new key" : eof_guitar.button[6].name);
 	switch(index)
 	{
 		case -1:
@@ -1364,11 +1369,11 @@ char * eof_guitar_list(int index, int * size)
 
 char * eof_drum_list(int index, int * size)
 {
-	sprintf(eof_ctext[0], "Kick Pedal (%s)", redefine_index == 0 ? "Press new key" : eof_drums.button[0].name);
-	sprintf(eof_ctext[1], "Red Drum (%s)", redefine_index == 1 ? "Press new key" : eof_drums.button[1].name);
-	sprintf(eof_ctext[2], "Yellow Drum (%s)", redefine_index == 2 ? "Press new key" : eof_drums.button[2].name);
-	sprintf(eof_ctext[3], "Blue Drum (%s)", redefine_index == 3 ? "Press new key" : eof_drums.button[3].name);
-	sprintf(eof_ctext[4], "Purple Drum (%s)", redefine_index == 4 ? "Press new key" : eof_drums.button[4].name);
+	sprintf(eof_ctext[0], "Lane 1 (%s)", redefine_index == 0 ? "Press new key" : eof_drums.button[0].name);
+	sprintf(eof_ctext[1], "Lane 2 (%s)", redefine_index == 1 ? "Press new key" : eof_drums.button[1].name);
+	sprintf(eof_ctext[2], "Lane 3 (%s)", redefine_index == 2 ? "Press new key" : eof_drums.button[2].name);
+	sprintf(eof_ctext[3], "Lane 4 (%s)", redefine_index == 3 ? "Press new key" : eof_drums.button[3].name);
+	sprintf(eof_ctext[4], "Lane 5 (%s)", redefine_index == 4 ? "Press new key" : eof_drums.button[4].name);
 	switch(index)
 	{
 		case -1:

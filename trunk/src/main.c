@@ -229,6 +229,11 @@ int eof_color_orange;
 int eof_color_silver;
 int eof_info_color;
 
+int eof_use_rb_colors = 1;	//If nonzero, use track-specific Rock Band coloring instead of the old static EOF color set
+eof_color eof_colors[6];	//Contain the color definitions for each lane
+eof_color eof_color_green_struct, eof_color_red_struct, eof_color_yellow_struct, eof_color_blue_struct, eof_color_orange_struct, eof_color_purple_struct;
+	//Color data
+
 EOF_SCREEN_LAYOUT eof_screen_layout;
 BITMAP * eof_screen = NULL;
 
@@ -870,7 +875,7 @@ void eof_determine_phrase_status(void)
 		}
 
 		/* mark HOPO */
-		if((eof_hopo_view == EOF_HOPO_MANUAL) && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_note_is_hopo(i)))
+		if(eof_note_is_hopo(i))
 		{
 			flags |= EOF_NOTE_FLAG_HOPO;
 		}
@@ -2064,15 +2069,16 @@ void eof_render_note_window(void)
 				}
 			}//If drawing a non vocal catalog entry
 			/* draw the current position */
-			if(pos > eof_av_delay / eof_zoom)
+			int zoom = eof_av_delay / eof_zoom;	//AV delay compensated for zoom level
+			if(pos > zoom)
 			{
 				if(pos < 140)
 				{
-					vline(eof_window_note->screen, 20 + pos - eof_av_delay / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
+					vline(eof_window_note->screen, 20 + pos - zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
 				}
 				else
 				{
-					vline(eof_window_note->screen, 20 + 140 - eof_av_delay / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
+					vline(eof_window_note->screen, 20 + 140 - zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
 				}
 			}
 		}//if(eof_song->catalog->entries > 0)
@@ -2936,6 +2942,8 @@ int eof_load_data(void)
 	eof_image[EOF_IMAGE_NOTE_RED_ARROW_HIT] = load_pcx("eof.dat#note_red_hit_arrow.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_YELLOW_ARROW_HIT] = load_pcx("eof.dat#note_yellow_hit_arrow.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_BLUE_ARROW_HIT] = load_pcx("eof.dat#note_blue_hit_arrow.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GREEN_CYMBAL] = load_pcx("eof.dat#note_green_cymbal.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_GREEN_CYMBAL_HIT] = load_pcx("eof.dat#note_green_hit_cymbal.pcx", NULL);
 
 	eof_font = load_bitmap_font("eof.dat#font_times_new_roman.pcx", NULL, NULL);
 	if(!eof_font)
@@ -3096,6 +3104,7 @@ int eof_initialize(int argc, char * argv[])
 	{
 		return 0;
 	}
+	eof_init_colors();
     gui_shadow_box_proc = d_agup_shadow_box_proc;
     gui_button_proc = d_agup_button_proc;
     gui_ctext_proc = d_agup_ctext_proc;
@@ -3991,6 +4000,167 @@ void eof_cleanup_beat_flags(EOF_SONG *sp)
 		{	//If the beat has a different tempo than the previous beat
 			sp->beat[ctr]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Ensure the anchor status flag is set
 		}
+	}
+}
+
+char eof_color_green_name[] = "&Green";
+char eof_color_red_name[] = "&Red";
+char eof_color_yellow_name[] = "&Yellow";
+char eof_color_blue_name[] = "&Blue";
+char eof_color_orange_name[] = "&Orange";
+char eof_color_purple_name[] = "&Purple";
+
+char eof_note_toggle_menu_string_1[20] = "";	//These strings are used in the eof_note_toggle_menu[] array
+char eof_note_toggle_menu_string_2[20] = "";
+char eof_note_toggle_menu_string_3[20] = "";
+char eof_note_toggle_menu_string_4[20] = "";
+char eof_note_toggle_menu_string_5[20] = "";
+char eof_note_toggle_menu_string_6[20] = "";
+char *eof_note_toggle_menu_strings[] = {eof_note_toggle_menu_string_1, eof_note_toggle_menu_string_2, eof_note_toggle_menu_string_3, eof_note_toggle_menu_string_4, eof_note_toggle_menu_string_5, eof_note_toggle_menu_string_6};
+
+void eof_init_colors(void)
+{
+	eof_log("eof_init_colors() entered", 1);
+
+	//Init green
+	eof_color_green_struct.color = eof_color_green;
+	eof_color_green_struct.hit = makecol(192, 255, 192);
+	eof_color_green_struct.border = eof_color_red;
+	eof_color_green_struct.note3d = EOF_IMAGE_NOTE_GREEN;
+	eof_color_green_struct.notehit3d = EOF_IMAGE_NOTE_GREEN_HIT;
+	eof_color_green_struct.hoponote3d = EOF_IMAGE_NOTE_HGREEN;
+	eof_color_green_struct.hoponotehit3d = EOF_IMAGE_NOTE_HGREEN_HIT;
+	eof_color_green_struct.cymbal3d = EOF_IMAGE_NOTE_GREEN_CYMBAL;
+	eof_color_green_struct.cymbalhit3d = EOF_IMAGE_NOTE_GREEN_CYMBAL_HIT;
+	eof_color_green_struct.arrow3d = EOF_IMAGE_NOTE_GREEN_ARROW;
+	eof_color_green_struct.arrowhit3d = EOF_IMAGE_NOTE_GREEN_ARROW_HIT;
+	eof_color_green_struct.colorname = eof_color_green_name;
+	//Init red
+	eof_color_red_struct.color = eof_color_red;
+	eof_color_red_struct.hit = makecol(255, 192, 192);
+	eof_color_red_struct.border = eof_color_white;
+	eof_color_red_struct.note3d = EOF_IMAGE_NOTE_RED;
+	eof_color_red_struct.notehit3d = EOF_IMAGE_NOTE_RED_HIT;
+	eof_color_red_struct.hoponote3d = EOF_IMAGE_NOTE_HRED;
+	eof_color_red_struct.hoponotehit3d = EOF_IMAGE_NOTE_HRED_HIT;
+	eof_color_red_struct.cymbal3d = EOF_IMAGE_NOTE_RED;
+	eof_color_red_struct.cymbalhit3d = EOF_IMAGE_NOTE_RED_HIT;
+	eof_color_red_struct.arrow3d = EOF_IMAGE_NOTE_RED_ARROW;
+	eof_color_red_struct.arrowhit3d = EOF_IMAGE_NOTE_RED_ARROW_HIT;
+	eof_color_red_struct.colorname = eof_color_red_name;
+	//Init yellow
+	eof_color_yellow_struct.color = eof_color_yellow;
+	eof_color_yellow_struct.hit = makecol(255, 255, 192);
+	eof_color_yellow_struct.border = eof_color_red;
+	eof_color_yellow_struct.note3d = EOF_IMAGE_NOTE_YELLOW;
+	eof_color_yellow_struct.notehit3d = EOF_IMAGE_NOTE_YELLOW_HIT;
+	eof_color_yellow_struct.hoponote3d = EOF_IMAGE_NOTE_HYELLOW;
+	eof_color_yellow_struct.hoponotehit3d = EOF_IMAGE_NOTE_HYELLOW_HIT;
+	eof_color_yellow_struct.cymbal3d = EOF_IMAGE_NOTE_YELLOW_CYMBAL;
+	eof_color_yellow_struct.cymbalhit3d = EOF_IMAGE_NOTE_YELLOW_CYMBAL_HIT;
+	eof_color_yellow_struct.arrow3d = EOF_IMAGE_NOTE_YELLOW_ARROW;
+	eof_color_yellow_struct.arrowhit3d = EOF_IMAGE_NOTE_YELLOW_ARROW_HIT;
+	eof_color_yellow_struct.colorname = eof_color_yellow_name;
+	//Init blue
+	eof_color_blue_struct.color = eof_color_blue;
+	eof_color_blue_struct.hit = makecol(192, 192, 255);
+	eof_color_blue_struct.border = eof_color_white;
+	eof_color_blue_struct.note3d = EOF_IMAGE_NOTE_BLUE;
+	eof_color_blue_struct.notehit3d = EOF_IMAGE_NOTE_BLUE_HIT;
+	eof_color_blue_struct.hoponote3d = EOF_IMAGE_NOTE_HBLUE;
+	eof_color_blue_struct.hoponotehit3d = EOF_IMAGE_NOTE_HBLUE_HIT;
+	eof_color_blue_struct.cymbal3d = EOF_IMAGE_NOTE_BLUE_CYMBAL;
+	eof_color_blue_struct.cymbalhit3d = EOF_IMAGE_NOTE_BLUE_CYMBAL_HIT;
+	eof_color_blue_struct.arrow3d = EOF_IMAGE_NOTE_BLUE_ARROW;
+	eof_color_blue_struct.arrowhit3d = EOF_IMAGE_NOTE_BLUE_ARROW_HIT;
+	eof_color_blue_struct.colorname = eof_color_blue_name;
+	//Init orange
+	eof_color_orange_struct.color = eof_color_orange;
+	eof_color_orange_struct.hit = makecol(255, 192, 0);
+	eof_color_orange_struct.border = eof_color_white;
+	eof_color_orange_struct.note3d = EOF_IMAGE_NOTE_ORANGE;
+	eof_color_orange_struct.notehit3d = EOF_IMAGE_NOTE_ORANGE_HIT;
+	eof_color_orange_struct.hoponote3d = EOF_IMAGE_NOTE_HORANGE;
+	eof_color_orange_struct.hoponotehit3d = EOF_IMAGE_NOTE_HORANGE_HIT;
+	eof_color_orange_struct.cymbal3d = EOF_IMAGE_NOTE_ORANGE;
+	eof_color_orange_struct.cymbalhit3d = EOF_IMAGE_NOTE_ORANGE_HIT;
+	eof_color_orange_struct.arrow3d = EOF_IMAGE_NOTE_ORANGE;
+	eof_color_orange_struct.arrowhit3d = EOF_IMAGE_NOTE_ORANGE_HIT;
+	eof_color_orange_struct.colorname = eof_color_orange_name;
+	//Init purple
+	eof_color_purple_struct.color = eof_color_purple;
+	eof_color_purple_struct.hit = makecol(255, 192, 255);
+	eof_color_purple_struct.border = eof_color_white;
+	eof_color_purple_struct.note3d = EOF_IMAGE_NOTE_PURPLE;
+	eof_color_purple_struct.notehit3d = EOF_IMAGE_NOTE_PURPLE_HIT;
+	eof_color_purple_struct.hoponote3d = EOF_IMAGE_NOTE_HPURPLE;
+	eof_color_purple_struct.hoponotehit3d = EOF_IMAGE_NOTE_HPURPLE_HIT;
+	eof_color_purple_struct.cymbal3d = EOF_IMAGE_NOTE_PURPLE_CYMBAL;
+	eof_color_purple_struct.cymbalhit3d = EOF_IMAGE_NOTE_PURPLE_CYMBAL_HIT;
+	eof_color_purple_struct.arrow3d = EOF_IMAGE_NOTE_PURPLE;
+	eof_color_purple_struct.arrowhit3d = EOF_IMAGE_NOTE_PURPLE_HIT;
+	eof_color_purple_struct.colorname = eof_color_purple_name;
+}
+
+void eof_set_color_set(void)
+{
+	eof_log("eof_set_color_set() entered", 1);
+
+	int x;
+
+	if(!eof_song)
+		return;
+
+	if(!eof_use_rb_colors)
+	{	//If user is using the original EOF color set
+		eof_colors[0] = eof_color_green_struct;
+		eof_colors[1] = eof_color_red_struct;
+		eof_colors[2] = eof_color_yellow_struct;
+		eof_colors[3] = eof_color_blue_struct;
+		eof_colors[4] = eof_color_purple_struct;
+		eof_colors[5] = eof_color_orange_struct;
+	}
+	else
+	{
+		if(eof_selected_track == EOF_TRACK_DRUM)
+		{	//If the drum track is active
+			eof_colors[0] = eof_color_orange_struct;
+			eof_colors[1] = eof_color_red_struct;
+			eof_colors[2] = eof_color_yellow_struct;
+			eof_colors[3] = eof_color_blue_struct;
+			eof_colors[4] = eof_color_green_struct;
+			eof_colors[5] = eof_color_purple_struct;
+		}
+		else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If a pro guitar/bass track is active
+			eof_colors[0] = eof_color_red_struct;
+			eof_colors[1] = eof_color_green_struct;
+			eof_colors[2] = eof_color_orange_struct;
+			eof_colors[3] = eof_color_blue_struct;
+			eof_colors[4] = eof_color_yellow_struct;
+			eof_colors[5] = eof_color_purple_struct;
+		}
+		else
+		{	//All other tracks use the generic Rock Band color set
+			eof_colors[0] = eof_color_green_struct;
+			eof_colors[1] = eof_color_red_struct;
+			eof_colors[2] = eof_color_yellow_struct;
+			eof_colors[3] = eof_color_blue_struct;
+			eof_colors[4] = eof_color_orange_struct;
+			eof_colors[5] = eof_color_purple_struct;
+		}
+	}
+
+	//Update the strings for the Note>Toggle menu
+	for(x = 0; x < 6; x++)
+	{
+		 snprintf(eof_note_toggle_menu_strings[x], sizeof(eof_note_toggle_menu_string_1), "%s\tShift+%d", eof_colors[x].colorname, x+1);
+	}
+
+	//Update the strings for the Edit>Clap Notes menu
+	for(x = 0; x < 6; x++)
+	{
+		eof_edit_claps_menu[x + 1].text = eof_colors[x].colorname;
 	}
 }
 
