@@ -3,6 +3,26 @@ EOF Version History
 
 1.8:
 
+*Fixed various bugs that were specific to the Classic, Piano
+Roll and Hold input methods.
+
+*Changed the note hit/highlight color for green and yellow
+notes in the editor window to be red instead of white, which
+should contrast much better and make it easier to see the
+notes when selected, moused over or reached during playback.
+
+*Added a new preference (Use Rock Band color set) that is now
+enabled by default. This will allow the gem colors to match
+how they are used in Rock Band, even the drum and pro
+guitar/bass tracks, which have different color schemes. If
+disabled, EOF's original colors are used. Green 3D cymbal
+images have been added to accommodate this feature.
+
+*Added some special handling in the MIDI import logic so that
+old, single-track MIDI files that were created by converting
+a Freetar Editor chart can be imported and resaved to make
+them compatible with various rhythm games such as Phase Shift.
+
 Added a button in the Preferences dialog to automatically
 configure the options back to their defaults by then pressing
 OK.
