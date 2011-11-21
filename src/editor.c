@@ -2853,63 +2853,49 @@ void eof_editor_logic(void)
 						}
 					}
 				}
-/*				else if(eof_input_mode != EOF_INPUT_REX)
-				{
-					if(!eof_undo_toggle)
-					{
-						eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-					}
-					new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, eof_pen_note.pos, (KEY_EITHER_SHIFT ? 1 : eof_snap.length), eof_note_type, NULL);
-					if(new_note)
-					{
-						if(eof_mark_drums_as_cymbal)
-						{	//If the user opted to make all new drum notes cymbals automatically
-							eof_mark_new_note_as_cymbal(eof_song,eof_selected_track,eof_get_track_size(eof_song,eof_selected_track)-1);
-						}
-						if(eof_mark_drums_as_double_bass)
-						{	//If the user opted to make all new expert bass drum notes as double bass automatically
-							eof_mark_new_note_as_double_bass(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
-						}
-						eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1);
-						eof_selection.range_pos_1 = eof_selection.current_pos;
-						eof_selection.range_pos_2 = eof_selection.current_pos;
-						eof_selection.track = eof_selected_track;
-						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
-						eof_track_sort_notes(eof_song, eof_selected_track);
-						eof_track_fixup_notes(eof_song, eof_selected_track, 0);
-						eof_determine_phrase_status();
-						eof_detect_difficulties(eof_song);
-					}
-				}
-*/
 			}
 			if(!(mouse_b & 2) && !key[KEY_INSERT])
 			{
 				eof_rclick_released = 1;
 			}
 
-			/* increase/decrease note length ( scroll wheel or CTRL+scroll wheel ) */
+			/* increment/decrement fret value (CTRL+scroll wheel) */
+			/* increase/decrease note length ( scroll wheel or SHIFT+scroll wheel ) */
 			if(eof_mickey_z != 0)
 			{	//If there was scroll wheel activity
-				unsigned long adjust = abs(eof_mickey_z) * 100;	//Default adjustment length when grid snap is disabled
-				if(eof_snap_mode == EOF_SNAP_OFF)
-				{
-					if(KEY_EITHER_CTRL)
-					{
-						adjust = abs(eof_mickey_z) * 10;
+				if(KEY_EITHER_CTRL)
+				{	//increment/decrement fret value
+					if(eof_mickey_z > 0)
+					{	//Decrement fret value
+						eof_set_pro_guitar_fret_number(2,0);	//Decrement fret value
+					}
+					else if(eof_mickey_z < 0)
+					{	//Increment fret value
+						eof_set_pro_guitar_fret_number(1,0);	//Increment fret value
 					}
 				}
 				else
-				{
-					adjust = 0;	//Will indicate to eof_adjust_note_length() to use the grid snap value
-				}
-				if(eof_mickey_z > 0)
-				{	//Decrease note length
-					eof_adjust_note_length(eof_song, eof_selected_track, adjust, -1);	//Decrease selected notes by the appropriate length
-				}
-				else if(eof_mickey_z < 0)
-				{	//Increase note length
-					eof_adjust_note_length(eof_song, eof_selected_track, adjust, 1);	//Increase selected notes by the appropriate length
+				{	//increase/decrease note length
+					unsigned long adjust = abs(eof_mickey_z) * 100;	//Default adjustment length when grid snap is disabled
+					if(eof_snap_mode == EOF_SNAP_OFF)
+					{
+						if(KEY_EITHER_SHIFT)
+						{
+							adjust = abs(eof_mickey_z) * 10;
+						}
+					}
+					else
+					{
+						adjust = 0;	//Will indicate to eof_adjust_note_length() to use the grid snap value
+					}
+					if(eof_mickey_z > 0)
+					{	//Decrease note length
+						eof_adjust_note_length(eof_song, eof_selected_track, adjust, -1);	//Decrease selected notes by the appropriate length
+					}
+					else if(eof_mickey_z < 0)
+					{	//Increase note length
+						eof_adjust_note_length(eof_song, eof_selected_track, adjust, 1);	//Increase selected notes by the appropriate length
+					}
 				}
 			}//If there was scroll wheel activity
 		}//mouse is in the fretboard area
