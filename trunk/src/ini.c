@@ -163,8 +163,8 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
 	for(i = 0; i < sp->legacy_track[tracknum]->notes; i++)
 	{	//For each note in the drum track
-		if((sp->legacy_track[tracknum]->note[i]->flags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN) || (sp->legacy_track[tracknum]->note[i]->flags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL))
-		{	//If the note is marked for open or pedal controlled hi hat
+		if((sp->legacy_track[tracknum]->note[i]->flags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN) || (sp->legacy_track[tracknum]->note[i]->flags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL) || (sp->legacy_track[tracknum]->note[i]->flags & EOF_DRUM_NOTE_FLAG_Y_SIZZLE))
+		{	//If the note is marked for open, pedal controlled or sizzle hi hat
 			hihatmarkersfound = 1;
 		}
 		if(sp->legacy_track[tracknum]->note[i]->flags & EOF_DRUM_NOTE_FLAG_R_RIMSHOT)
@@ -173,7 +173,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 		}
 	}
 	if(hihatmarkersfound)
-	{	//If this chart has at least one yellow cymbal marked as open hi hat or pedal controlled hi hat
+	{	//If this chart has at least one yellow cymbal marked as open, pedal controlled or sizzle hi hat
 		ustrcat(ini_string, "\r\nsysex_high_hat_ctrl = True");	//Write the high hat control Sysex presence tag (used in Phase Shift) to identify that hi hat Sysex phrases will be written to MIDI
 	}
 	if(rimshotmarkersfound)

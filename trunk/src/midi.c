@@ -694,6 +694,13 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 								phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
 								eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pedal controlled hi hat phrase stop marker
 							}
+							else if(noteflags & EOF_DRUM_NOTE_FLAG_Y_SIZZLE)
+							{	//If this note is marked as a sizzle hi hat note
+								phase_shift_sysex_phrase[5] = 8;	//Store the phrase ID (8 = Sizzle Hi Hat)
+								eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom sizzle hi hat start marker
+								phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+								eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom sizzle hi hat phrase stop marker
+							}
 						}//Only write these notations if not writing a Rock Band compliant MIDI
 					}
 				}

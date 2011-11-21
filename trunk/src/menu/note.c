@@ -227,6 +227,7 @@ MENU eof_note_drum_menu[] =
     {"&Mark new notes as Expert+", eof_menu_note_default_double_bass, NULL, 0, NULL},
     {"Toggle Y note as &Open hi hat\tShift+O", eof_menu_note_toggle_hi_hat_open, NULL, 0, NULL},
     {"Toggle Y note as &Pedal hi hat\tShift+P",eof_menu_note_toggle_hi_hat_pedal, NULL, 0, NULL},
+    {"Toggle Y note as &Sizzle hi hat\tShift+S", eof_menu_note_toggle_hi_hat_sizzle, NULL, 0, NULL},
     {"Toggle R note as &Rim shot\tShift+R",eof_menu_note_toggle_rimshot, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
@@ -1664,6 +1665,7 @@ int eof_menu_note_remove_cymbal(void)
 				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_G_CYMBAL,0);	//Clear the green cymbal flag on all drum notes at this position
 				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN,0);	//Clear the open hi hat cymbal flag on all drum notes at this position
 				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL,0);	//Clear the pedal hi hat cymbal flag on all drum notes at this position
+				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_SIZZLE,0);			//Clear the sizzle hi hat cymbal flag on all drum notes at this position
 			}
 		}
 	}
@@ -4673,7 +4675,6 @@ int eof_menu_note_toggle_hi_hat_open(void)
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
 			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-//			if((eof_get_note_note(eof_song, eof_selected_track, i) & 4) && (flags & EOF_NOTE_FLAG_Y_CYMBAL))
 			if(eof_get_note_note(eof_song, eof_selected_track, i) & 4)
 			{	//If this drum note contains a yellow gem
 				flags |= EOF_NOTE_FLAG_Y_CYMBAL;	//Automatically mark as a cymbal
@@ -4683,7 +4684,8 @@ int eof_menu_note_toggle_hi_hat_open(void)
 					u = 1;
 				}
 				flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;	//Clear the pedal controlled hi hat status
-				flags ^= EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;	//Toggle the open hi hat status
+				flags &= ~EOF_DRUM_NOTE_FLAG_Y_SIZZLE;			//Clear the sizzle hi hat status
+				flags ^= EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;		//Toggle the open hi hat status
 				eof_set_note_flags(eof_song, eof_selected_track, i, flags);	//Apply the flag changes
 			}
 		}
@@ -4704,7 +4706,6 @@ int eof_menu_note_toggle_hi_hat_pedal(void)
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
 			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-//			if((eof_get_note_note(eof_song, eof_selected_track, i) & 4) && (flags & EOF_NOTE_FLAG_Y_CYMBAL))
 			if(eof_get_note_note(eof_song, eof_selected_track, i) & 4)
 			{	//If this drum note contains a yellow gem
 				flags |= EOF_NOTE_FLAG_Y_CYMBAL;	//Automatically mark as a cymbal
@@ -4714,7 +4715,39 @@ int eof_menu_note_toggle_hi_hat_pedal(void)
 					u = 1;
 				}
 				flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;	//Clear the open hi hat status
+				flags &= ~EOF_DRUM_NOTE_FLAG_Y_SIZZLE;		//Clear the sizzle hi hat status
 				flags ^= EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;	//Toggle the pedal controlled hi hat status
+				eof_set_note_flags(eof_song, eof_selected_track, i, flags);	//Apply the flag changes
+			}
+		}
+	}
+	return 1;
+}
+
+int eof_menu_note_toggle_hi_hat_sizzle(void)
+{
+	unsigned long i, flags;
+	long u = 0;
+
+	if(eof_selected_track != EOF_TRACK_DRUM)
+		return 1;	//Do not allow this function to run when PART DRUMS is not active
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			if(eof_get_note_note(eof_song, eof_selected_track, i) & 4)
+			{	//If this drum note contains a yellow gem
+				flags |= EOF_NOTE_FLAG_Y_CYMBAL;	//Automatically mark as a cymbal
+				if(!u)
+				{	//Make a back up before changing the first note
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					u = 1;
+				}
+				flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;		//Clear the open hi hat status
+				flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;	//Clear the pedal controlled hi hat status
+				flags ^= EOF_DRUM_NOTE_FLAG_Y_SIZZLE;			//Toggle the sizzle hi hat status
 				eof_set_note_flags(eof_song, eof_selected_track, i, flags);	//Apply the flag changes
 			}
 		}
