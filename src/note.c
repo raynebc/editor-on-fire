@@ -1305,6 +1305,10 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		{
 			buffer[index++] = 'P';
 		}
+		else if(flags & EOF_DRUM_NOTE_FLAG_Y_SIZZLE)
+		{
+			buffer[index++] = 'S';
+		}
 		if(flags & EOF_DRUM_NOTE_FLAG_R_RIMSHOT)
 		{
 			buffer[index++] = 'R';

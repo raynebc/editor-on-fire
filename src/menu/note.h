@@ -80,8 +80,9 @@ int eof_menu_note_clear_legacy_values(void);	//Resets the legacy bitmasks of all
 int eof_pro_guitar_toggle_strum_up(void);		//Toggles the strum up status for all selected pro guitar/bass notes, clearing strum down statuses where appropriate
 int eof_pro_guitar_toggle_strum_down(void);		//Toggles the strum down status for all selected pro guitar/bass notes, clearing strum up statuses where appropriate
 int eof_menu_note_remove_strum_direction(void);	//Removes the strum direction status of all selected notes
-int eof_menu_note_toggle_hi_hat_open(void);		//Toggles the open hi hat status for selected yellow cymbal notes
-int eof_menu_note_toggle_hi_hat_pedal(void);	//Toggles the pedal controlled hi hat status for selected yellow cymbal notes
+int eof_menu_note_toggle_hi_hat_open(void);		//Toggles the open hi hat status for selected yellow drum notes
+int eof_menu_note_toggle_hi_hat_pedal(void);	//Toggles the pedal controlled hi hat status for selected yellow drum notes
+int eof_menu_note_toggle_hi_hat_sizzle(void);	//Toggles the sizzle hi hat status for selected yellow drum notes
 int eof_menu_note_toggle_rimshot(void);			//Toggles the rimshot status for selected red notes
 int eof_menu_note_toggle_tapping(void);			//Toggles the tapping status of all selected notes
 int eof_menu_note_remove_tapping(void);			//Removes the tapping status of all selected notes

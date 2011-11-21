@@ -1642,6 +1642,25 @@ eof_log("\tSecond pass complete", 1);
 												}
 											}
 										break;
+										case 8:	//Sizzle hi hat
+											if(picked_track == EOF_TRACK_DRUM)
+											{	//Only parse hi hat phrases for the drum track
+												if(eof_import_events[i]->event[j]->dp[6] == 1)
+												{	//Start of phrase
+													openhihatpos[phrasediff] = event_realtime;
+												}
+												else if(eof_import_events[i]->event[j]->dp[6] == 0)
+												{	//End of phrase
+													for(k = note_count[picked_track] - 1; k >= first_note; k--)
+													{	//Check for each note that has been imported
+														if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= openhihatpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+														{	//If the note is in the same difficulty as the phrase, and its timestamp falls between the phrase on and phrase off marker
+															eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_DRUM_NOTE_FLAG_Y_SIZZLE);	//Set the sizzle hi hat flag
+														}
+													}
+												}
+											}
+										break;
 									}
 								break;
 							}

@@ -2431,6 +2431,7 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 			*flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;	//Erase the open hi hat flag
 			*flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;	//Erase the pedal controlled hi hat flag
 			*flags &= ~EOF_DRUM_NOTE_FLAG_R_RIMSHOT;		//Erase the rim shot flag
+			*flags &= ~EOF_DRUM_NOTE_FLAG_Y_SIZZLE;			//Erase the sizzle hi hat flag
 		}
 		*flags &= (~EOF_NOTE_FLAG_Y_CYMBAL);				//Erase the yellow cymbal flag
 		*flags &= (~EOF_NOTE_FLAG_B_CYMBAL);				//Erase the blue cymbal flag
@@ -2517,6 +2518,7 @@ unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long tra
 			flags &= ~EOF_NOTE_FLAG_Y_CYMBAL;
 			flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;
 			flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;
+			flags &= ~EOF_DRUM_NOTE_FLAG_Y_SIZZLE;
 		}
 		else if(track_behavior == EOF_DANCE_TRACK_BEHAVIOR)
 		{

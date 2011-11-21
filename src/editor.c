@@ -1607,6 +1607,13 @@ void eof_read_editor_keys(void)
 			key[KEY_P] = 0;
 		}
 
+	/* toggle sizzle hi hat (SHIFT+S) */
+		if(key[KEY_S] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+		{
+			eof_menu_note_toggle_hi_hat_sizzle();
+			key[KEY_S] = 0;
+		}
+
 	/* toggle rim shot (SHIFT+R) */
 		if(key[KEY_R] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{
