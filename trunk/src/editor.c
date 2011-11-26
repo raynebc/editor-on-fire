@@ -2867,10 +2867,10 @@ void eof_editor_logic(void)
 			}
 
 			/* increment/decrement fret value (CTRL+scroll wheel) */
-			/* increase/decrease note length ( scroll wheel or SHIFT+scroll wheel ) */
+			/* increase/decrease note length (scroll wheel or SHIFT+scroll wheel) */
 			if(eof_mickey_z != 0)
 			{	//If there was scroll wheel activity
-				if(KEY_EITHER_CTRL)
+				if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 				{	//increment/decrement fret value
 					if(eof_mickey_z > 0)
 					{	//Decrement fret value
@@ -2888,7 +2888,14 @@ void eof_editor_logic(void)
 					{
 						if(KEY_EITHER_SHIFT)
 						{
-							adjust = abs(eof_mickey_z) * 10;
+							if(KEY_EITHER_CTRL)
+							{	//CTRL+SHIFT+scroll wheel
+								adjust = abs(eof_mickey_z);	//1 ms length change
+							}
+							else
+							{	//SHIFT+scroll wheel
+								adjust = abs(eof_mickey_z) * 10;	//10ms length change
+							}
 						}
 					}
 					else
