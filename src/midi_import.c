@@ -2291,8 +2291,8 @@ eof_log("\tThird pass complete", 1);
 	{	//For each track
 		if(sp->track[i]->track_format == EOF_LEGACY_TRACK_FORMAT)
 		{	//Only perform this conversion for legacy tracks
-			if(eof_get_num_star_power_paths(sp, i) < 2)
-			{	//If this track has less than two star power sections
+			if(!eof_ini_star_power_tag_present && (eof_get_num_star_power_paths(sp, i) < 2))
+			{	//If EOF's star power INI tag wasn't read, and this track has less than two star power sections
 				for(j = 0; j < eof_get_num_solos(sp, i); j++)
 				{	//For each solo, convert to a star power section
 					phraseptr = eof_get_solo(sp, i, j);

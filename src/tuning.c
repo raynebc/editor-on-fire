@@ -85,7 +85,7 @@ EOF_CHORD_DEFINITION eof_chord_names[EOF_NUM_DEFINED_CHORDS] =
 	{"aug7", "1,3,#5,b7"},
 	{"majAug7", "1,3,#5,7"},
 	{"sus4", "1,4,5"},
-	{"7sus", "1,4,5,b7"},
+	{"7sus4", "1,4,5,b7"},
 	{"b5", "1,b5"},
 	{"5", "1,5"}
 };
