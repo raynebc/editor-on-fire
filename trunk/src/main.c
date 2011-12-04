@@ -230,6 +230,7 @@ int eof_color_silver;
 int eof_info_color;
 
 int eof_use_rb_colors = 1;	//If nonzero, use track-specific Rock Band coloring instead of the old static EOF color set
+int eof_add_new_notes_to_selection = 0;	//If nonzero, newly added gems cause notes to be added to the selection instead of the selection being cleared first
 eof_color eof_colors[6];	//Contain the color definitions for each lane
 eof_color eof_color_green_struct, eof_color_red_struct, eof_color_yellow_struct, eof_color_blue_struct, eof_color_orange_struct, eof_color_purple_struct;
 	//Color data
@@ -2675,7 +2676,7 @@ void eof_render_3d_window(void)
 								point[5] = ocd3d_project_y(200, spz);
 								point[6] = ocd3d_project_x(xchart[ctr] - halflanewidth - xoffset, spz);
 								point[7] = point[5];
-								polygon(eof_window_3d->screen, 4, point, colors[ctr]);	///?
+								polygon(eof_window_3d->screen, 4, point, colors[ctr]);
 							}
 						}
 					}

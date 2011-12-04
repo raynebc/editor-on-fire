@@ -94,6 +94,9 @@ int eof_copy_file(char * src, char * dest)
 
 	if((src == NULL) || (dest == NULL))
 		return 0;
+	if(!ustricmp(src,dest))		//Special case:  The input and output file are the same
+		return 0;				//Return success without copying any files
+
 	src_size = file_size_ex(src);
 	src_fp = pack_fopen(src, "r");
 	if(!src_fp)

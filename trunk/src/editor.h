@@ -10,7 +10,7 @@ typedef struct
 	unsigned long track;
 
 	/* the current selection */
-	long current;	//-1 is used to represent no notes selected?
+	long current;	//EOF_MAX_NOTES - 1 is used to represent no notes selected
 	unsigned long current_pos;
 
 	/* the previous selection */

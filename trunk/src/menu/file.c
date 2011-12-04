@@ -72,7 +72,7 @@ DIALOG eof_settings_dialog[] =
 DIALOG eof_preferences_dialog[] =
 {
    /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-   { d_agup_window_proc,0,   48,  240, 420, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
+   { d_agup_window_proc,0,   48,  240, 435, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
    { d_agup_check_proc, 16,  80,  128, 16,  2,   23,  0,    0,      1,   0,   "Inverted Notes",      NULL, NULL },
    { d_agup_check_proc, 16,  95,  128, 16,  2,   23,  0,    0,      1,   0,   "Lefty Mode",          NULL, NULL },
    { d_agup_check_proc, 16,  110, 128, 16,  2,   23,  0,    0,      1,   0,   "Note Auto-Adjust",    NULL, NULL },
@@ -88,11 +88,12 @@ DIALOG eof_preferences_dialog[] =
    { d_agup_check_proc, 16,  260, 220, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
    { d_agup_check_proc, 16,  275, 220, 16,  2,   23,  0,    0,      1,   0,   "Enable logging on launch",NULL, NULL },
    { d_agup_check_proc, 16,  290, 220, 16,  2,   23,  0,    0,      1,   0,   "Use Rock Band color set",NULL, NULL },
-   { d_agup_text_proc,  56,  310, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
-   { d_agup_list_proc,  43,  325, 110, 95,  2,   23,  0,    0,      0,   0,   eof_input_list,        NULL, NULL },
-   { d_agup_button_proc,12,  425, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-   { d_agup_button_proc,86,  425, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-   { d_agup_button_proc,160, 425, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+   { d_agup_check_proc, 16,  305, 220, 16,  2,   23,  0,    0,      1,   0,   "Add new notes to selection",NULL, NULL },
+   { d_agup_text_proc,  56,  325, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
+   { d_agup_list_proc,  43,  340, 110, 95,  2,   23,  0,    0,      0,   0,   eof_input_list,        NULL, NULL },
+   { d_agup_button_proc,12,  440, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+   { d_agup_button_proc,86,  440, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+   { d_agup_button_proc,160, 440, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -217,7 +218,7 @@ void eof_prepare_file_menu(void)
 	}
 }
 
-int eof_menu_file_new_supplement(char *directory)
+int eof_menu_file_new_supplement(char *directory, char check)
 {
 	char syscommand[1024] = {0};
 	int err;
@@ -230,26 +231,54 @@ int eof_menu_file_new_supplement(char *directory)
 		syscommand[uoffset(syscommand, ustrlen(syscommand) - 1)] = '\0';
 	}
 	if(!file_exists(syscommand, FA_DIREC | FA_HIDDEN, NULL))
-	{
-		err = eof_mkdir(syscommand);
+	{	//If the folder doesn't exist,
+		err = eof_mkdir(syscommand);	//Try to create it
 		if(err)
-		{
+		{	//If it couldn't be created
 			eof_render();
 			allegro_message("Could not create folder!\n%s\nEnsure that the specified folder name is valid and\nthe Song Folder is configured to a non write-restricted area.\n(File->Song Folder)", syscommand);
 			return 0;
 		}
 	}
+
+	eof_render();
+	err = 0;
+	put_backslash(directory);
+	if(check == 1)
+	{	//If checking for the presence of guitar.ogg
+		replace_filename(eof_temp_filename, directory, "guitar.ogg", 1024);
+		if(exists(eof_temp_filename))
+		{
+			if(alert(NULL, "Existing guitar.ogg will be overwritten. Proceed?", NULL, "&Yes", "&No", 'y', 'n') == 2)
+			{
+				return 0;
+			}
+		}
+	}
+	else if(check == 2)
+	{	//If checking for the presence of original.mp3
+		replace_filename(eof_temp_filename, directory, "original.mp3", 1024);
+		if(exists(eof_temp_filename))
+		{
+			if(alert(NULL, "Existing original.mp3 will be overwritten. Proceed?", NULL, "&Yes", "&No", 'y', 'n') == 2)
+			{
+				return 0;
+			}
+		}
+	}
 	else
-	{
-		eof_render();
-		err = 0;
-		put_backslash(directory);
-		replace_filename(eof_temp_filename, directory, "notes.eof", 1024);
+	{	//If checking for the presence of any of the default chart file names
+		replace_filename(eof_temp_filename, directory, "guitar.ogg", 1024);
 		if(exists(eof_temp_filename))
 		{
 			err = 1;
 		}
-		replace_filename(eof_temp_filename, directory, "guitar.ogg", 1024);
+		replace_filename(eof_temp_filename, directory, "original.mp3", 1024);
+		if(exists(eof_temp_filename))
+		{
+			err = 1;
+		}
+		replace_filename(eof_temp_filename, directory, "notes.eof", 1024);
 		if(exists(eof_temp_filename))
 		{
 			err = 1;
@@ -264,17 +293,12 @@ int eof_menu_file_new_supplement(char *directory)
 		{
 			err = 1;
 		}
-		replace_filename(eof_temp_filename, directory, "original.mp3", 1024);
-		if(exists(eof_temp_filename))
+	}
+	if(err)
+	{
+		if(alert(NULL, "Some existing chart files will be overwritten. Proceed?", NULL, "&Yes", "&No", 'y', 'n') == 2)
 		{
-			err = 1;
-		}
-		if(err)
-		{
-			if(alert(NULL, "Some files may be overwritten. Proceed?", NULL, "&Yes", "&No", 'y', 'n') == 2)
-			{
-				return 0;
-			}
+			return 0;
 		}
 	}
 	return 1;
@@ -459,8 +483,8 @@ int eof_menu_file_save_as(void)
 	{
 		eof_log("\tPerforming \"Save as\"", 1);
 
-		replace_filename(new_foldername, returnedfn, "", 1024);	//Obtain the chosen destination folder path
-		if(eof_menu_file_new_supplement(new_foldername) == 0)	//If the folder doesn't exist, or the user has decline to overwrite existing files
+		replace_filename(new_foldername, returnedfn, "", 1024);		//Obtain the chosen destination folder path
+		if(eof_menu_file_new_supplement(new_foldername, 3) == 0)	//If the folder doesn't exist, or the user has declined to overwrite any existing files
 			return 1;	//Return failure
 
 		append_filename(eof_temp_filename, new_foldername, "guitar.ogg", 1024);
@@ -915,27 +939,28 @@ int eof_menu_file_preferences(void)
 	eof_color_dialog(eof_preferences_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_preferences_dialog);
 	//Use the currently configured settings to populate the dialog selections
-	eof_preferences_dialog[1].flags = eof_inverted_notes ? D_SELECTED : 0;			//Inverted notes
-	eof_preferences_dialog[2].flags = eof_lefty_mode ? D_SELECTED : 0;				//Lefty mode
-	eof_preferences_dialog[3].flags = eof_note_auto_adjust ? D_SELECTED : 0;		//Note auto adjust
-	eof_preferences_dialog[4].flags = eof_use_ts ? D_SELECTED : 0;					//Import/Export TS
-	eof_preferences_dialog[5].flags = eof_hide_drum_tails ? D_SELECTED : 0;			//Hide drum note tails
-	eof_preferences_dialog[6].flags = eof_hide_note_names ? D_SELECTED : 0;			//Hide note names
-	eof_preferences_dialog[7].flags = eof_disable_sound_processing ? D_SELECTED : 0;//Disable sound effects
-	eof_preferences_dialog[8].flags = eof_disable_3d_rendering ? D_SELECTED : 0;	//Disable 3D rendering
-	eof_preferences_dialog[9].flags = eof_disable_2d_rendering ? D_SELECTED : 0;	//Disable 2D rendering
-	eof_preferences_dialog[10].flags = eof_disable_info_panel ? D_SELECTED : 0;		//Disable info panel
-	eof_preferences_dialog[11].flags = eof_paste_erase_overlap ? D_SELECTED : 0;	//Erase overlapped pasted notes
-	eof_preferences_dialog[12].flags = eof_write_rbn_midis ? D_SELECTED : 0;		//Save separate RBN MIDI files
-	eof_preferences_dialog[13].flags = eof_inverted_chords_slash ? D_SELECTED : 0;	//Treat inverted chords as slash
-	eof_preferences_dialog[14].flags = enable_logging ? D_SELECTED : 0;				//Enable logging on launch
-	eof_preferences_dialog[15].flags = eof_use_rb_colors ? D_SELECTED : 0;			//Use Rock Band color set
-	eof_preferences_dialog[17].d1 = eof_input_mode;									//Input method
+	eof_preferences_dialog[1].flags = eof_inverted_notes ? D_SELECTED : 0;				//Inverted notes
+	eof_preferences_dialog[2].flags = eof_lefty_mode ? D_SELECTED : 0;					//Lefty mode
+	eof_preferences_dialog[3].flags = eof_note_auto_adjust ? D_SELECTED : 0;			//Note auto adjust
+	eof_preferences_dialog[4].flags = eof_use_ts ? D_SELECTED : 0;						//Import/Export TS
+	eof_preferences_dialog[5].flags = eof_hide_drum_tails ? D_SELECTED : 0;				//Hide drum note tails
+	eof_preferences_dialog[6].flags = eof_hide_note_names ? D_SELECTED : 0;				//Hide note names
+	eof_preferences_dialog[7].flags = eof_disable_sound_processing ? D_SELECTED : 0;	//Disable sound effects
+	eof_preferences_dialog[8].flags = eof_disable_3d_rendering ? D_SELECTED : 0;		//Disable 3D rendering
+	eof_preferences_dialog[9].flags = eof_disable_2d_rendering ? D_SELECTED : 0;		//Disable 2D rendering
+	eof_preferences_dialog[10].flags = eof_disable_info_panel ? D_SELECTED : 0;			//Disable info panel
+	eof_preferences_dialog[11].flags = eof_paste_erase_overlap ? D_SELECTED : 0;		//Erase overlapped pasted notes
+	eof_preferences_dialog[12].flags = eof_write_rbn_midis ? D_SELECTED : 0;			//Save separate RBN MIDI files
+	eof_preferences_dialog[13].flags = eof_inverted_chords_slash ? D_SELECTED : 0;		//Treat inverted chords as slash
+	eof_preferences_dialog[14].flags = enable_logging ? D_SELECTED : 0;					//Enable logging on launch
+	eof_preferences_dialog[15].flags = eof_use_rb_colors ? D_SELECTED : 0;				//Use Rock Band color set
+	eof_preferences_dialog[16].flags = eof_add_new_notes_to_selection ? D_SELECTED : 0;	//Add new notes to selection
+	eof_preferences_dialog[18].d1 = eof_input_mode;										//Input method
 
 	do
 	{	//Run the dialog
 		retval = eof_popup_dialog(eof_preferences_dialog, 0);	//Run the dialog
-		if(retval == 18)
+		if(retval == 19)
 		{	//If the user clicked OK, update EOF's configured settings from the dialog selections
 			eof_inverted_notes = (eof_preferences_dialog[1].flags == D_SELECTED ? 1 : 0);
 			eof_lefty_mode = (eof_preferences_dialog[2].flags == D_SELECTED ? 1 : 0);
@@ -952,11 +977,12 @@ int eof_menu_file_preferences(void)
 			eof_inverted_chords_slash = (eof_preferences_dialog[13].flags == D_SELECTED ? 1 : 0);
 			enable_logging = (eof_preferences_dialog[14].flags == D_SELECTED ? 1 : 0);
 			eof_use_rb_colors = (eof_preferences_dialog[15].flags == D_SELECTED ? 1 : 0);
-			eof_input_mode = eof_preferences_dialog[17].d1;
+			eof_add_new_notes_to_selection = (eof_preferences_dialog[16].flags == D_SELECTED ? 1 : 0);
+			eof_input_mode = eof_preferences_dialog[18].d1;
 			eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case eof_inverted_notes was changed
 			eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case eof_lefty_mode was changed
 		}
-		else if(retval == 19)
+		else if(retval == 20)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
 			eof_preferences_dialog[1].flags = 0;					//Inverted notes
 			eof_preferences_dialog[2].flags = 0;					//Lefty mode
@@ -973,9 +999,10 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[13].flags = 0;					//Treat inverted chords as slash
 			eof_preferences_dialog[14].flags = D_SELECTED;			//Enable logging on launch
 			eof_preferences_dialog[15].flags = D_SELECTED;			//Use Rock Band color set
-			eof_preferences_dialog[17].d1 = EOF_INPUT_PIANO_ROLL;	//Input method
+			eof_preferences_dialog[16].flags = 0;					//Add new notes to selection
+			eof_preferences_dialog[18].d1 = EOF_INPUT_PIANO_ROLL;	//Input method
 		}
-	}while(retval == 19);	//Keep re-running the dialog until the user closes it with anything besides "Default"
+	}while(retval == 20);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
@@ -1792,13 +1819,18 @@ int eof_mp3_to_ogg(char *file,char *directory)
 
 	if(!ustricmp(get_extension(file), "mp3"))
 	{
+		sprintf(cfn, "%soriginal.mp3", directory);		//Get the destination path of the original.mp3 to be created
+
 		//If an MP3 is to be encoded to OGG, store a copy of the MP3 as "original.mp3"
-		if(!eof_menu_file_new_supplement(directory))
-		{
-			eof_cursor_visible = 1;
-			eof_pen_visible = 1;
-			eof_show_mouse(NULL);
-			return 1;	//Return user declined to overwrite existing files
+		if(ustricmp(syscommand,directory))
+		{	//If the user did not select a file named original.mp3 in the chart's folder, check to see if a such-named file will be overwritten
+			if(!eof_menu_file_new_supplement(directory, 2))
+			{	//If the user declined to overwrite an existing "original.mp3" file at the destination path
+				eof_cursor_visible = 1;
+				eof_pen_visible = 1;
+				eof_show_mouse(NULL);
+				return 1;	//Return user declined to overwrite existing files
+			}
 		}
 
 		if(!eof_soft_cursor)
@@ -1824,8 +1856,7 @@ int eof_mp3_to_ogg(char *file,char *directory)
 			#ifdef ALLEGRO_WINDOWS
 				delete_file("eoftemp.mp3");
 			#endif
-			sprintf(cfn, "%soriginal.mp3", directory);
-			eof_copy_file(file, cfn);
+			eof_copy_file(file, cfn);	//Copy the selected MP3 file to a file named original.mp3 in the chart folder
 		}
 		else
 		{
@@ -1836,11 +1867,11 @@ int eof_mp3_to_ogg(char *file,char *directory)
 		}
 	}
 
-	/* otherwise copy it */
+	/* otherwise copy it as-is (assume OGG file) */
 	else
 	{
-		if(!eof_menu_file_new_supplement(directory))
-		{
+		if(!eof_menu_file_new_supplement(directory, 1))
+		{	//If the user declined to overwrite an existing "guitar.ogg" file at the destination path
 			eof_cursor_visible = 1;
 			eof_pen_visible = 1;
 			eof_changes = 0;

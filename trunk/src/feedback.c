@@ -352,7 +352,7 @@ void eof_editor_logic_feedback(void)
 		}
 		key[KEY_UP] = 0;
 	}
-	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 	for(i = 0; i < eof_song->legacy_track[tracknum]->notes; i++)
 	{
 		if((eof_song->legacy_track[tracknum]->note[i]->type == eof_note_type) && (eof_song->legacy_track[tracknum]->note[i]->pos >= eof_feedback_selecting_start_pos) && (eof_song->legacy_track[tracknum]->note[i]->pos <= eof_feedback_selecting_end_pos))
@@ -419,7 +419,7 @@ void eof_editor_logic_feedback(void)
 				eof_feedback_new_note->type = eof_note_type;
 				eof_selection.current_pos = eof_feedback_new_note->pos;
 				eof_selection.track = eof_selected_track;
-				memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+				memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 				eof_sort_notes(eof_song);
 				eof_fixup_notes(eof_song);
 				eof_determine_phrase_status();
@@ -449,7 +449,7 @@ void eof_editor_logic_feedback(void)
 				eof_feedback_new_note->type = eof_note_type;
 				eof_selection.current_pos = eof_feedback_new_note->pos;
 				eof_selection.track = eof_selected_track;
-				memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+				memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 				eof_sort_notes(eof_song);
 				eof_fixup_notes(eof_song);
 				eof_determine_phrase_status();
@@ -479,7 +479,7 @@ void eof_editor_logic_feedback(void)
 				eof_feedback_new_note->type = eof_note_type;
 				eof_selection.current_pos = eof_feedback_new_note->pos;
 				eof_selection.track = eof_selected_track;
-				memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+				memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 				eof_sort_notes(eof_song);
 				eof_fixup_notes(eof_song);
 				eof_determine_phrase_status();
@@ -509,7 +509,7 @@ void eof_editor_logic_feedback(void)
 				eof_feedback_new_note->type = eof_note_type;
 				eof_selection.current_pos = eof_feedback_new_note->pos;
 				eof_selection.track = eof_selected_track;
-				memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+				memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 				eof_sort_notes(eof_song);
 				eof_fixup_notes(eof_song);
 				eof_determine_phrase_status();
@@ -539,7 +539,7 @@ void eof_editor_logic_feedback(void)
 				eof_feedback_new_note->type = eof_note_type;
 				eof_selection.current_pos = eof_feedback_new_note->pos;
 				eof_selection.track = eof_selected_track;
-				memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+				memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 				eof_sort_notes(eof_song);
 				eof_fixup_notes(eof_song);
 				eof_determine_phrase_status();

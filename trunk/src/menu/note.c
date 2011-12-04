@@ -2539,7 +2539,7 @@ int eof_new_lyric_dialog(void)
 		eof_selection.current_pos = new_lyric->pos;
 		eof_selection.range_pos_1 = eof_selection.current_pos;
 		eof_selection.range_pos_2 = eof_selection.current_pos;
-		memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+		memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 		eof_track_sort_notes(eof_song, eof_selected_track);
 		eof_track_fixup_notes(eof_song, eof_selected_track, 0);
 		eof_detect_difficulties(eof_song);
@@ -3322,7 +3322,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 		}//If user clicked OK or Apply
 		else if(retval == 52)
 		{	//If user clicked previous
-			memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Deselect all notes
+			memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 			eof_selection.current = previous_note;	//Set the previous note as the currently selected note
 			eof_selection.multi[previous_note] = 1;	//Ensure the note selection includes the previous note
 			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, previous_note) + eof_av_delay);	//Seek to previous note
@@ -3330,7 +3330,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 		}
 		else if(retval == 56)
 		{	//If user clicked next
-			memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Deselect all notes
+			memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 			eof_selection.current = next_note;	//Set the next note as the currently selected note
 			eof_selection.multi[next_note] = 1;	//Ensure the note selection includes the next note
 			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, next_note) + eof_av_delay);	//Seek to next note
