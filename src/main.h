@@ -9,7 +9,7 @@
 #include "control.h"
 #include "editor.h"
 
-#define EOF_VERSION_STRING "EOF v1.8beta24"
+#define EOF_VERSION_STRING "EOF v1.8beta25"
 #define EOF_COPYRIGHT_STRING "(c)2008-2010 T^3 Software."
 
 #define KEY_EITHER_ALT (key[KEY_ALT] || key[KEY_ALTGR])
@@ -404,6 +404,7 @@ extern EOF_SELECTION_DATA eof_selection;
 extern FILE *eof_log_fp;
 extern char eof_log_level;
 extern char enable_logging;
+extern int eof_add_new_notes_to_selection;
 
 extern long xchart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D rendering, updated by eof_set_3D_lane_positions()
 extern long ychart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D rendering, updated by eof_set_2D_lane_positions()

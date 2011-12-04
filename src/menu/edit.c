@@ -584,7 +584,7 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 	copy_notes = pack_igetl(fp);
 	first_beat = pack_igetl(fp);
-	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 	eof_selection.current = EOF_MAX_NOTES - 1;
 	eof_selection.current_pos = 0;
 
@@ -649,7 +649,7 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 	if((paste_count > 0) && (eof_selection.track != EOF_TRACK_VOCALS))
 	{
 		eof_selection.track = EOF_TRACK_VOCALS;
-		memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+		memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 	}
 	for(i = 0; i < paste_count; i++)
 	{
@@ -929,7 +929,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option, float offset)
 		}
 	}
 
-	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 	for(j = 1; j < eof_song->tracks; j++)
 	{	//For each track
 		copy_notes[j] = pack_igetl(fp);
@@ -1226,7 +1226,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 
 	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 
-	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 	eof_selection.current = EOF_MAX_NOTES - 1;
 	eof_selection.current_pos = 0;
 
@@ -1345,7 +1345,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	if((paste_count > 0) && (eof_selection.track != eof_selected_track))
 	{
 		eof_selection.track = eof_selected_track;
-		memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+		memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 	}
 	for(i = 0; i < paste_count; i++)
 	{
@@ -1988,7 +1988,7 @@ int eof_menu_edit_select_like(void)
 
 int eof_menu_edit_deselect_all(void)
 {
-	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 	eof_selection.current = EOF_MAX_NOTES - 1;
 	eof_selection.current_pos = 0;
 	return 1;
@@ -2308,7 +2308,7 @@ int eof_menu_edit_paste_from_catalog(void)
 		eof_determine_phrase_status();
 		eof_detect_difficulties(eof_song);
 		eof_selection.current_pos = 0;
-		memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+		memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 		for(i = 0; i < paste_count; i++)
 		{	//For each of the pasted notes
 			for(j = 0; j < eof_get_track_size(eof_song, eof_selected_track); j++)

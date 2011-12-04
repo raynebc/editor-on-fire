@@ -545,7 +545,7 @@ void eof_legacy_track_delete_note(EOF_LEGACY_TRACK * tp, unsigned long note);	//
 void eof_legacy_track_sort_notes(EOF_LEGACY_TRACK * tp);	//Performs a quicksort of the notes array
 int eof_song_qsort_legacy_notes(const void * e1, const void * e2);	//The comparitor function used to quicksort the legacy notes array
 long eof_fixup_next_legacy_note(EOF_LEGACY_TRACK * tp, unsigned long note);	//Returns the note one after the specified note number that is in the same difficulty, or -1 if there is none
-void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel);	//Performs cleanup of the specified instrument track
+void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel);	//Performs cleanup of the specified instrument track.  If sel is zero, the currently selected note is deselected automatically
 void eof_legacy_track_add_star_power(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a star power phrase at the specified start and stop timestamp for the specified track
 void eof_legacy_track_delete_star_power(EOF_LEGACY_TRACK * tp, unsigned long index);	//Deletes the specified star power phrase and moves all phrases that follow back in the array one position
 void eof_legacy_track_add_solo(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track

@@ -2001,8 +2001,11 @@ void eof_read_editor_keys(void)
 							}
 
 							if(eof_selection.current != EOF_MAX_NOTES - 1)
-							{
-								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+							{	//If a new gem was placed (toggle gem didn't delete the affected note)
+								if(!eof_add_new_notes_to_selection)
+								{	//If the user didn't opt to prevent clearing the note selection when adding gems
+									memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
+								}
 								eof_selection.track = eof_selected_track;
 								eof_selection.multi[eof_selection.current] = 1;
 								eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current);
@@ -2028,9 +2031,12 @@ void eof_read_editor_keys(void)
 								eof_selection.range_pos_1 = eof_selection.current_pos;
 								eof_selection.range_pos_2 = eof_selection.current_pos;
 								eof_selection.track = eof_selected_track;
-								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+								if(!eof_add_new_notes_to_selection)
+								{	//If the user didn't opt to prevent clearing the note selection when adding gems
+									memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
+								}
 								eof_track_sort_notes(eof_song, eof_selected_track);
-								eof_track_fixup_notes(eof_song, eof_selected_track, 0);
+								eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes and retain note selection
 								eof_determine_phrase_status();
 								eof_selection.multi[eof_selection.current] = 1;
 								eof_detect_difficulties(eof_song);
@@ -2482,7 +2488,7 @@ void eof_editor_logic(void)
 										if(eof_selection.track != eof_selected_track)
 										{
 											eof_selection.track = eof_selected_track;
-											memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+											memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 										}
 										eof_selection.multi[i] = 1;
 										eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -2498,7 +2504,7 @@ void eof_editor_logic(void)
 										if(eof_selection.track != eof_selected_track)
 										{
 											eof_selection.track = eof_selected_track;
-											memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+											memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 										}
 										eof_selection.multi[i] = 1;
 										eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -2511,14 +2517,14 @@ void eof_editor_logic(void)
 							if(!eof_selection.multi[eof_selection.current])
 							{
 //								printf("notes %d\n", eof_notes_selected());	//Debugging
-								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 							}
 							if(eof_selection.multi[eof_selection.current] == 1)
 							{
 								if(eof_selection.track != eof_selected_track)
 								{
 									eof_selection.track = eof_selected_track;
-									memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+									memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 								}
 								eof_selection.multi[eof_selection.current] = 2;
 								eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -2528,7 +2534,7 @@ void eof_editor_logic(void)
 								if(eof_selection.track != eof_selected_track)
 								{
 									eof_selection.track = eof_selected_track;
-									memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+									memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 								}
 								eof_selection.multi[eof_selection.current] = 1;
 								eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -2544,7 +2550,7 @@ void eof_editor_logic(void)
 							if(eof_selection.track != eof_selected_track)
 							{
 								eof_selection.track = eof_selected_track;
-								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 							}
 							eof_selection.multi[eof_selection.current] = 2;
 							eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -2554,7 +2560,7 @@ void eof_editor_logic(void)
 							if(eof_selection.track != eof_selected_track)
 							{
 								eof_selection.track = eof_selected_track;
-								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 							}
 							eof_selection.multi[eof_selection.current] = 1;
 							eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -2567,14 +2573,14 @@ void eof_editor_logic(void)
 				{
 					if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 					{
-						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 						eof_selection.current = EOF_MAX_NOTES - 1;
 						eof_selection.current_pos = 0;
 						eof_selection.range_pos_1 = 0;
 						eof_selection.range_pos_2 = 0;
 					}
 				}
-			}// handle initial click
+			}// handle initial left click
 			if(!(mouse_b & 1))
 			{	//If the left mouse button is NOT pressed
 				if(!eof_lclick_released)
@@ -2594,7 +2600,7 @@ void eof_editor_logic(void)
 							}
 							else
 							{
-								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 								if(eof_selection.multi[eof_selection.current])
 								{
 									eof_selection.multi[eof_selection.current] = 0;
@@ -2619,7 +2625,7 @@ void eof_editor_logic(void)
 								if(eof_selection.track != eof_selected_track)
 								{
 									eof_selection.track = eof_selected_track;
-									memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+									memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 								}
 								eof_selection.multi[eof_selection.current] = 1;
 								eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -2756,7 +2762,7 @@ void eof_editor_logic(void)
 				}
 			}//If the left mouse button is being held
 			if(((mouse_b & 2) || key[KEY_INSERT]) && eof_rclick_released && eof_pen_note.note && (eof_pen_note.pos < eof_music_length))
-			{
+			{	//Right mouse click or Insert key pressed, and the pen note is valid
 				eof_selection.range_pos_1 = 0;
 				eof_selection.range_pos_2 = 0;
 				eof_rclick_released = 0;
@@ -2767,7 +2773,7 @@ void eof_editor_logic(void)
 						eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 					}
 					if(eof_hover_note >= 0)
-					{
+					{	//If altering an existing note
 						if(eof_input_mode == EOF_INPUT_PIANO_ROLL)
 						{	//Piano roll input method must use special logic to determine the lane ordering for the pen note
 							bitmask = eof_find_pen_note_mask();	//Set the appropriate bits
@@ -2781,7 +2787,10 @@ void eof_editor_logic(void)
 						{	//If a valid pen bitmask was obtained
 							eof_selection.current = eof_hover_note;
 							eof_selection.track = eof_selected_track;
-							memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+							if(!eof_add_new_notes_to_selection)
+							{	//If the user didn't opt to prevent clearing the note selection when adding gems
+								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
+							}
 							if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 							{	//If legacy view is in effect, alter the note's legacy bitmask
 								note = eof_song->pro_guitar_track[tracknum]->note[eof_hover_note]->legacymask;
@@ -2797,7 +2806,7 @@ void eof_editor_logic(void)
 									eof_track_delete_note(eof_song, eof_selected_track, eof_hover_note);
 									eof_selection.current = EOF_MAX_NOTES - 1;
 									eof_track_sort_notes(eof_song, eof_selected_track);
-									eof_track_fixup_notes(eof_song, eof_selected_track, 1);
+									eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes and retain note selection
 									eof_determine_phrase_status();
 									eof_detect_difficulties(eof_song);
 								}
@@ -2834,9 +2843,9 @@ void eof_editor_logic(void)
 								eof_track_fixup_notes(eof_song, eof_selected_track, 0);	//Run cleanup to prevent open bass<->lane 1 conflicts
 							}
 						}
-					}
+					}//If altering an existing note
 					else
-					{
+					{	//If creating a new note
 						new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, eof_pen_note.pos, (KEY_EITHER_SHIFT ? 1 : eof_snap.length), eof_note_type, NULL);
 						if(new_note)
 						{
@@ -2852,15 +2861,18 @@ void eof_editor_logic(void)
 							eof_selection.range_pos_1 = eof_selection.current_pos;
 							eof_selection.range_pos_2 = eof_selection.current_pos;
 							eof_selection.track = eof_selected_track;
-							memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+							if(!eof_add_new_notes_to_selection)
+							{	//If the user didn't opt to prevent clearing the note selection when adding gems
+								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
+							}
 							eof_track_sort_notes(eof_song, eof_selected_track);
-							eof_track_fixup_notes(eof_song, eof_selected_track, 0);
+							eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes and retain note selection
 							eof_determine_phrase_status();
 							eof_detect_difficulties(eof_song);
 						}
 					}
 				}
-			}
+			}//Right mouse click or Insert key pressed, and the pen note is valid
 			if(!(mouse_b & 2) && !key[KEY_INSERT])
 			{
 				eof_rclick_released = 1;
@@ -2978,7 +2990,7 @@ void eof_editor_logic(void)
 			eof_clear_input();
 		}
 		else if((mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
-		{
+		{	//mouse is in the fretboard area
 			if(eof_hover_note >= 0)
 			{
 				if(eof_count_selected_notes(NULL, 0) <= 0)
@@ -2988,7 +3000,7 @@ void eof_editor_logic(void)
 					if(eof_selection.track != eof_selected_track)
 					{
 						eof_selection.track = eof_selected_track;
-						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 					}
 					eof_selection.multi[eof_selection.current] = 1;
 					eof_render();
@@ -2999,7 +3011,7 @@ void eof_editor_logic(void)
 					{
 						eof_selection.current = eof_hover_note;
 						eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current);
-						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 						eof_selection.multi[eof_selection.current] = 1;
 						eof_render();
 					}
@@ -3211,7 +3223,7 @@ void eof_vocal_editor_logic(void)
 										if(eof_selection.track != EOF_TRACK_VOCALS)
 										{
 											eof_selection.track = EOF_TRACK_VOCALS;
-											memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+											memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 										}
 										eof_selection.multi[i] = 1;
 										eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -3227,7 +3239,7 @@ void eof_vocal_editor_logic(void)
 										if(eof_selection.track != EOF_TRACK_VOCALS)
 										{
 											eof_selection.track = EOF_TRACK_VOCALS;
-											memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+											memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 										}
 										eof_selection.multi[i] = 1;
 										eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -3239,14 +3251,14 @@ void eof_vocal_editor_logic(void)
 						{
 							if(!eof_selection.multi[eof_selection.current])
 							{
-								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 							}
 							if(eof_selection.multi[eof_selection.current] == 1)
 							{
 								if(eof_selection.track != EOF_TRACK_VOCALS)
 								{
 									eof_selection.track = EOF_TRACK_VOCALS;
-									memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+									memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 								}
 								eof_selection.multi[eof_selection.current] = 2;
 								eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -3256,7 +3268,7 @@ void eof_vocal_editor_logic(void)
 								if(eof_selection.track != EOF_TRACK_VOCALS)
 								{
 									eof_selection.track = EOF_TRACK_VOCALS;
-									memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+									memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 								}
 								eof_selection.multi[eof_selection.current] = 1;
 								eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -3272,7 +3284,7 @@ void eof_vocal_editor_logic(void)
 							if(eof_selection.track != EOF_TRACK_VOCALS)
 							{
 								eof_selection.track = EOF_TRACK_VOCALS;
-								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 							}
 							eof_selection.multi[eof_selection.current] = 2;
 							eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -3282,7 +3294,7 @@ void eof_vocal_editor_logic(void)
 							if(eof_selection.track != EOF_TRACK_VOCALS)
 							{
 								eof_selection.track = EOF_TRACK_VOCALS;
-								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 							}
 							eof_selection.multi[eof_selection.current] = 1;
 							eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -3295,14 +3307,14 @@ void eof_vocal_editor_logic(void)
 				{
 					if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 					{
-						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 						eof_selection.current = EOF_MAX_NOTES - 1;
 						eof_selection.current_pos = 0;
 						eof_selection.range_pos_1 = 0;
 						eof_selection.range_pos_2 = 0;
 					}
 				}
-			}
+			}//handle initial left click
 			if(!(mouse_b & 1))
 			{	//If the left mouse button is NOT being held
 				if(!eof_lclick_released)
@@ -3322,7 +3334,7 @@ void eof_vocal_editor_logic(void)
 							}
 							else
 							{
-								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 								if(eof_selection.multi[eof_selection.current])
 								{
 									eof_selection.multi[eof_selection.current] = 0;
@@ -3347,7 +3359,7 @@ void eof_vocal_editor_logic(void)
 								if(eof_selection.track != EOF_TRACK_VOCALS)
 								{
 									eof_selection.track = EOF_TRACK_VOCALS;
-									memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+									memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 								}
 								eof_selection.multi[eof_selection.current] = 1;
 								eof_undo_last_type = EOF_UNDO_TYPE_NONE;
@@ -3508,7 +3520,7 @@ void eof_vocal_editor_logic(void)
 							eof_song->vocal_track[tracknum]->lyric[eof_hover_note]->note = 0;
 							eof_selection.current = eof_hover_note;
 							eof_selection.track = eof_selected_track;
-							memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+							memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 							eof_selection.multi[eof_selection.current] = 1;
 							eof_selection.current_pos = eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->pos;
 							eof_selection.range_pos_1 = eof_selection.current_pos;
@@ -3522,7 +3534,7 @@ void eof_vocal_editor_logic(void)
 						eof_song->vocal_track[tracknum]->lyric[eof_hover_note]->note = eof_pen_lyric.note;
 						eof_selection.current = eof_hover_note;
 						eof_selection.track = EOF_TRACK_VOCALS;
-						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 						eof_selection.multi[eof_selection.current] = 1;
 						eof_selection.current_pos = eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->pos;
 						eof_selection.range_pos_1 = eof_selection.current_pos;
@@ -3705,7 +3717,7 @@ void eof_vocal_editor_logic(void)
 			eof_clear_input();
 		}
 		else if((mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
-		{
+		{	//mouse is in the fretboard area
 			if(eof_hover_note >= 0)
 			{
 				if(eof_count_selected_notes(NULL, 0) <= 0)
@@ -3715,7 +3727,7 @@ void eof_vocal_editor_logic(void)
 					if(eof_selection.track != EOF_TRACK_VOCALS)
 					{
 						eof_selection.track = EOF_TRACK_VOCALS;
-						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 					}
 					eof_selection.multi[eof_selection.current] = 1;
 					eof_render();
@@ -3726,7 +3738,7 @@ void eof_vocal_editor_logic(void)
 					{
 						eof_selection.current = eof_hover_note;
 						eof_selection.current_pos = eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->pos;
-						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));
+						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 						eof_selection.multi[eof_selection.current] = 1;
 						eof_render();
 					}

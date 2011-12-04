@@ -9,7 +9,7 @@
 #include "memwatch.h"
 #endif
 
-static void set_default_config(void);	//Applies the default settings, and overwrites settings from a loaded configuration where applicable
+static void set_default_config(void);	//Applies the default controller settings, and overwrites settings from a loaded configuration where applicable
 
 void set_default_config(void)
 {
@@ -130,6 +130,7 @@ void eof_load_config(char * fn)
 	eof_inverted_chords_slash = get_config_int("preferences", "eof_inverted_chords_slash", 0);
 	enable_logging = get_config_int("preferences", "enable_logging", 1);
 	eof_use_rb_colors = get_config_int("preferences", "eof_use_rb_colors", 1);
+	eof_add_new_notes_to_selection = get_config_int("preferences", "eof_add_new_notes_to_selection", 0);
 
 	/* read display settings */
 	eof_screen_layout.mode = get_config_int("display", "display_mode", 0);
@@ -233,6 +234,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_inverted_chords_slash", eof_inverted_chords_slash);
 	set_config_int("preferences", "enable_logging", enable_logging);
 	set_config_int("preferences", "eof_use_rb_colors", eof_use_rb_colors);
+	set_config_int("preferences", "eof_add_new_notes_to_selection", eof_add_new_notes_to_selection);
 
 	/* write display settings */
 	set_config_int("display", "display_mode", eof_screen_layout.mode);
