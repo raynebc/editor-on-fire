@@ -3,6 +3,21 @@ EOF Version History
 
 1.8:
 
+*Added an "Add new notes to selection" preference which
+causes newly added gems cause notes to be added to the
+currently selected notes instead of the selection being
+cleared and only the newly created/edited note remaining
+selected.
+
+*Added support for "sizzle" (half open) hi hat (yellow
+cymbal) notation, for use in Phase Shift.
+
+*Added a super fine tuning function (CTRL+SHIFT+Scroll wheel)
+when grid snap is disabled that changes note lengths in 1ms
+increments.
+
+*Fixed some bugs regarding the placement of cymbal notes.
+
 *Fixed various bugs that were specific to the Classic, Piano
 Roll and Hold input methods.
 
