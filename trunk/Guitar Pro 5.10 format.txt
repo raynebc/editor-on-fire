@@ -43,6 +43,7 @@ NOTICE CHUNK, for each notice entry:
 	1 byte:		Notice string length
 	[varies]:	Notice string
 }
+...(variably repeated data)...
 !Shuffle rhythm feel (only if the major file version is  <= 4):
 	[1 byte]:		Shuffle rhythm feel
 !LYRICS DATA (only if the major file version is >= 4):
@@ -153,7 +154,7 @@ TRACK DATA
 4 bytes:	Number of tracks
 BAR CHUNK, for each bar (measure):
 {
-	1 byte:		Bar (measure) bitmask (defined in notes section)
+1243	1 byte:		Bar (measure) bitmask (defined in notes section)
 	!TS NUMERATOR (if the bitmask declares this)
 		[1 byte]:	TS numerator
 	!TS DENOMINATOR (if the bitmask declares this)
@@ -179,16 +180,17 @@ BAR CHUNK, for each bar (measure):
 	!PADDING (if the major file version is >= 5):
 		[3 bytes]:	Padding bytes (set to 0x0)
 }
+...(variably repeated data)...
 TRACK CHUNK, for each track:
 {
-	1 byte:		Track bitmask (defined in notes section)
+1259	1 byte:		Track bitmask (defined in notes section)
 	TRACK NAME (41 bytes):
 	{
 		1 byte:		Length of track name
 		[varies]:	Track name string
 		[varies]:	Padding (pad track name string to 40 bytes with bytes set to 0x0)
 	}
-	4 bytes:	Number of strings used in this track
+1301	4 bytes:	Number of strings used in this track
 	STRING TUNING CHUNK, definitions for 7 strings (starting with the lowest numbered string, ie. high e), or padded if there are less than 7 strings (28 bytes):
 	{
 		4 bytes:	The MIDI note this string plays open (Values between 0 through 127, where a value of 0 refers to note C0)
@@ -197,51 +199,52 @@ TRACK CHUNK, for each track:
 	4 bytes:	MIDI port used
 	4 bytes:	MIDI channel used (must be 10 if this is a drum track)
 	4 bytes:	MIDI channel used for effects
-	4 bytes:	Number of frets used for this instrument
+1345	4 bytes:	Number of frets used for this instrument
 	4 bytes:	The fret number at which a capo is placed (0 for no capo)
 	4 bytes:	Track color (RGB intensities, with the most significant byte set padded with a value of 0)
 	!TRACK SETTINGS (if the file version is > 5.0)
 	{
-		[1 byte]:	Track properties 1 bitmask (defined in notes section)
+1357		[1 byte]:	Track properties 1 bitmask (defined in notes section)
 		[1 byte]:	Track properties 2 bitmask (defined in notes section)
 		[1 byte]:	Unknown
 		[1 byte]:	MIDI bank (if "Use MIDI" is enabled in track instrument options)
 		[1 byte]:	Human playing (Track instrument options)
 		[1 byte]:	Auto-Accentuation on the Beat (Track instrument options)
 		[31 bytes]:	Unknown
-1575		[4 bytes]:	Selected sound bank option (Track instrument options)
+		[4 bytes]:	Selected sound bank option (Track instrument options)
 		[4 bytes]:	Unknown
-1583 		[1 byte]:	Number of increments of .1dB the volume for the low frequency band is lowered
-1584 		[1 byte]:	Number of increments of .1dB the volume for the mid frequency band is lowered
-1585 		[1 byte]:	Number of increments of .1dB the volume for the high frequency band is lowered
-1586 		[1 byte]:	Number of increments of .1dB the volume for all frequencies is lowered (gain)
-1587		[4 bytes]:	Track instrument effect 1 field length (including string length byte that follows this value)
+ 		[1 byte]:	Number of increments of .1dB the volume for the low frequency band is lowered
+ 		[1 byte]:	Number of increments of .1dB the volume for the mid frequency band is lowered
+ 		[1 byte]:	Number of increments of .1dB the volume for the high frequency band is lowered
+ 		[1 byte]:	Number of increments of .1dB the volume for all frequencies is lowered (gain)
+		[4 bytes]:	Track instrument effect 1 field length (including string length byte that follows this value)
 		[1 byte]:	Track instrument effect 1 string length
 		[varies]:	Track instrument effect 1 string
 		[4 bytes]:	Track instrument effect 2 field length (including string length byte that follows this value)
 		[1 byte]:	Track instrument effect 2 string length
-		[varies]:	Track instrument effect 2 string
+1434		[varies]:	Track instrument effect 2 string
 	}
 	!UNKNOWN DATA/PADDING (if the file version is 5.0)
 		[41 bytes]:	Unknown
 }
+...(variably repeated data)...
 !PADDING (if the major file version is >= 5):
-	[1 byte:]	Padding
+1448	[1 byte:]	Padding
 !
 BEAT CHUNK, for each measure:
 {
 	for each track (if the file major version is >= 5, this data is given twice, once for each "voice"):
 	{
-		4 bytes:	Number of beats in this track
+1449		4 bytes:	Number of beats in this track
 		BEAT SUB CHUNK, for each beat
 		{
-			1 byte:		Beat bitmask (defined in notes section)
+1453			1 byte:		Beat bitmask (defined in notes section)
 			!REST TYPE (if the beat bitmask declares the beat to be a rest)
 				[1 byte]:	Rest type (0 = empty beat, 2 = rest)
-			1 byte:		Beat duration (-2 = whole note, -1 = half note, 0 = quarter note, 1 = eighth note, 2 = sixteenth note, 3 = thirty-second note, etc.)
+1454			1 byte:		Beat duration (-2 = whole note, -1 = half note, 0 = quarter note, 1 = eighth note, 2 = sixteenth note, 3 = thirty-second note, etc.)
 			!N-TUPLET TYPE (if the beat bitmask declares the beat to be an N-tuplet)
 				[4 bytes]:	The number of notes played within the "tuplet" (ie. 3 = triplet)
-			!CHORD DIAGRAM (if the beat bitmask declares that a chord diagram is present)
+			!CHORD DIAGRAM (if the beat bitmask declares that a chord diagram is present) (106 bytes):
 			{
 				[1 byte]:	Chord diagram format (1 = GP4 format)
 				[1 byte]:	Display as sharp instead of flat
@@ -258,23 +261,27 @@ BEAT CHUNK, for each measure:
 				[1 byte]:	Tonality of the ninth (0 = perfect, 1 = augmented, 2 = diminished)
 				[1 byte]:	Tonality of the eleventh (0 = perfect, 1 = augmented, 2 = diminished)
 				[4 bytes]:	Base fret
-				FRET CHUNK, definitions for 7 strings (starting with the highest numbered string), or padded if there are less than 7 strings (-1 = not played, 0 = played open):
+				FRET CHUNK, definitions for 7 strings (starting with the lowest numbered string, ie. high e), or padded if there are less than 7 strings (-1 = not played, 0 = played open):
 				{	For each of the 7 strings
 					[4 bytes]:	The fret number at which this string is being pressed
 				}
+				...(repeated data)...
 				[1 byte]:	Number of barres in the chord (up to 5)
 				BARRE POSITION CHUNK, definitions for 5 barre positions
 				{	For each of the 5 possible barres
 					[1 byte]:	The fret number this barre is at
 				}
+				...(repeated data)...
 				BARRE START CHUNK, definitions for 5 barre starting strings
 				{	For each of the 5 possible barres
 					[1 byte]:	The first string of the barre (1 is the highest)
 				}
+				...(repeated data)...
 				BARRE END CHUNK, definitions for 5 barre ending strings
 				{	For each of the 5 possible barres
 					[1 byte]:	The last string of the barre (1 is the highest)
 				}
+				...(repeated data)...
 				[1 byte]:	Whether the chord includes the first interval (boolean)
 				[1 byte]:	Whether the chord includes the third interval (boolean)
 				[1 byte]:	Whether the chord includes the fifth interval (boolean)
@@ -283,10 +290,11 @@ BEAT CHUNK, for each measure:
 				[1 byte]:	Whether the chord includes the eleventh interval (boolean)
 				[1 byte]:	Whether the chord includes the thirteenth interval (boolean)
 				[1 byte]:	Padding (set to 0)
-				FINGERING CHUNK, definitions for 7 strings (starting with the highest numbered string), or padded if there are less than 7 strings
+				FINGERING CHUNK, definitions for 7 strings (starting with the lowest numbered string, ie. high e), or padded if there are less than 7 strings:
 				{	For each of the 7 strings
 					[1 byte]:	Which finger plays the string (-2 = unknown, -1 = open or muted, 0 = thumb, 1 = index, 2 = middle, 3 = ring, 4 = pinky)
 				}
+				...(repeated data)...
 				[1 byte]:	Whether the chord fingering is displayed (boolean)
 			}
 			!BEAT TEXT (if the beat bitmask declares there is text present)
@@ -302,19 +310,7 @@ BEAT CHUNK, for each measure:
 				!TAPPING/POPPING/SLAPPING STATUS (if the effect bitmask declares this effect):
 					[1 byte]:	Which playing method is used (0 = None, 1 = Tapping, 2 = Slapping, 3 = Popping (bass guitar)
 				!TREMOLO STATUS (if the effect bitmask declares this effect):
-					BEND CHUNK
-					{
-						[1 byte]:	The type of bend (0 = none, 1 = bend, 2 = bend and release, 3 = bend->release->bend, 4 = prebend, 5 = prebend and release,
-								6 = tremolo dip, 7 = tremolo dive, 8 = tremolo release [up], 9 = tremolo inverted ip, 10 = tremolo return, 11 = tremolo release [down])
-						[4 bytes]:	Bend height, measured in how much the pitch changes in cents (where the distance between two semi tones is 100 cents)
-						[4 bytes]:	Number of points to display the bend with
-						BEND POINT CHUNK, for each bend point
-						{
-							[4 bytes]:	Absolute time position relative to previous bend point (Valued 0 through 60, in sixtieths of the note's duration)
-							[4 bytes]:	Vertical position (Pitch alteration from normal note, in intervals of 25 cents)
-							[1 byte]:	Vibrato type (0 = none, 1 = fast, 2 = average, 3 = slow)
-						}
-					}
+					[varies]:	BEND CHUNK (defined in notes section)
 				!STROKE EFFECT (if the effect bitmask declares this effect):
 				{
 					[1 byte]:	Up stroke speed (0 = none, 1 = 128th note, 2 = 64th note, 3 = 32nd note, 4 = 16th note, 5 = 8th note, 4 = quarter note)
@@ -323,7 +319,7 @@ BEAT CHUNK, for each measure:
 				!PICKSTROKE EFFECT (if the effect bitmask declares this effect):
 					[1 byte]:	Stroke direction? (0 = none, 1 = up, 2 = down)
 			}
-			!MIX TABLE CHANGE (if the beat bit bitmask declares this effect):
+			!MIX TABLE CHANGE (if the beat bit bitmask declares this effect) (19 bytes):
 			{
 				[1 byte]:	The number of the new instrument (-1 = no change)
 				[1 byte]:	The new volume (-1 = no change)
@@ -342,10 +338,64 @@ BEAT CHUNK, for each measure:
 				[1 byte]:	Tempo change duration in beats
 				[1 byte]:	Whether this change applies to all tracks (applies to this track only if zero)
 			}
-1636			...note values...
+1455			1 byte:		Used strings mask (Bit 1 represents the highest numbered string, ie low E.  Bit 7 represents the 7th string if it is in use.  Bit 0 is unused)
+			!STRING CHUNK, for each populated string (starting with the lowest numbered string, ie. high e):
+			{
+1456				[1 byte]:	Note bitmask (defined in notes section)
+				!NOTE TYPE (if the note bitmask declares this)
+1457					[1 byte]:	Note type (1 = normal, 2 = tie, 3 = dead)
+				!TIME INDEPENDENT DURATION (if the note bitmask declares this)
+				{
+					[1 byte]:	Duration (-2 = whole note, -1 = half note, 0 = quarter note, 1 = eighth note, 2 = sixteenth note, 3 = thirty-second note, etc.)
+					[1 byte]:	N-tuplet (ie. 3 for a triplet)
+				}
+				!NOTE DYNAMIC (if the note bitmask declares this)
+1458					[1 byte]:	How soft/strong the note is played ranging from pianissimo possibile (ppp, value of 1) to fortissimo possibile (fff, value of 8): ppp, pp, p, mp, mf, f, ff, fff
+							(If the note dynamic is not defined, a value of 6, forte, is assumed)
+1459				[1 byte]:	Fret number
+				!RIGHT/LEFT HAND FINGERING (if the note bitmask declares this)
+				{
+					[1 byte]:	Left hand fingering associated with this note (-1 = nothing, 0 = thumb, 1 = index, 2 = middle, 3 = ring, 4 = pinky)
+					[1 byte]:	Right hand fingering associated with this note (-1 = nothing, 0 = thumb, 1 = index, 2 = middle, 3 = ring, 4 = pinky)
+				}
+				!NOTE EFFECT (if the note bitmask declares this)
+				{
+					[1 byte]:	Note effect 1 bitmask (defined in notes section)
+					!NOTE EFFECT 2 BITMASK (if the file version is >= 4.0)
+						[1 byte]:	Note effect 2 bitmask (defined in notes section)
+					!BEND (if the note effect 1 bitmask defines this)
+						[varies]:	BEND CHUNK
+					!GRACE NOTE (if the note effect 1 bitmask defines this)
+					{
+						[1 byte]:	The grace note's fret number
+						[1 byte]:	The dynamic of the grace note ranging from pianissimo possibile (ppp, value of 1) to fortissimo possibile (fff, value of 8): ppp, pp, p, mp, mf, f, ff, fff
+								(If the dynamic is not defined, a value of 6, forte, is assumed)
+						[1 byte]:	The grace note's transition type (0 = none, 1 = slide, 2 = bend, 3 = hammer)
+						[1 byte]:	Duration of the grace note (3 = 16th note, 2 = 24th note, 1 = 32nd note)
+					}
+					!TREMOLO PICKING (if the note effect 2 bitmask defines this)
+						[1 byte]:	Picking speed (3 = 32nd note, 2 = 16th note, 1 = 8th note)
+					!SLIDE (if the note effect 2 bitmask defines this)
+						[1 byte]:	Slide type (-2 = slide into from above, -1 = slide into from below, 0 = no slide, 1 = shift slide, 2 = legato slide, 3 = slide out of downwards, 4 = slide out of upwards)
+					!HARMONIC (if the note effect 2 bitmask defines this)
+						[1 byte]:	Harmonic type (0 = none, 1 = Natural, 15 = Artificial+5, 17 = Artificial+7, 22 = Artificial+12, 3 = Tapped, 4 = Pitch, 5 = Semi)
+					!TRILL (if the note effect 2 bitmask defines this)
+					{
+						[1 byte]:	The fret being trilled with
+						[1 byte]:	The period between each of the two trilled notes (0 = 4th note, 1 = 8th note, 2 = 16th note)
+					}
+				}
+1460				[1 byte]:	Unknown/padding	
+			}
+			...(variably repeated data)...
+			!PADDING (if the file version is >= 5.0)
+1477				[2 bytes]:	Padding
 		}
+		...(variably repeated data)...
 	}
+	...(variably repeated data)...
 }
+...(variably repeated data)...
 
 
 ---------------------------------------------------
@@ -411,7 +461,8 @@ Bit 7 (MSB):	"Diagrams in the score"
 
 The track properties 2 bitmask declares various options in track properties/instrument:
 Bit 0 (LSB):	Unknown
-Bits 1-2:	Unknown
+Bit 1:		"Auto-Let Ring"
+Bit 2:		"Auto Brush"
 Bit 3:		"Extend rhythmic inside the tab"
 Bits 4-7:	Unknown
 
@@ -419,13 +470,13 @@ The beat bitmask declares which parameters are defined for the beat:
 Bit 0 (LSB):	Dotted notes?
 Bit 1:		Chord diagram present
 Bit 2:		Text present
-Bit 3:		Effects present
+Bit 3:		Beat effects present
 Bit 4:		Mix table change present
 Bit 5:		This beat is an N-tuplet
 Bit 6:		Is a rest beat
 Bit 7 (MSB):	Unused (set to 0)
 
-The effect bitmasks declare which parameters are defined for the beat:
+The beat effect bitmasks declare which parameters are defined for the beat:
 Byte 1
  Bits 0 (LSB) - 4:	Unused (set to 0)
  Bit 5:			Tapping, popping or slapping effect
@@ -436,6 +487,50 @@ Byte 2 (only if the major file version is >= 4):
  Bit 1:			Pickstroke
  Bit 2:			Tremolo bar
  Bits 3 - 7:		Unused (set to 0)
+
+The note bitmask declares which parameters are defined for the note:
+Bit 0 (LSB):	Time-independent duration
+Bit 1:		Dotted note
+Bit 2:		Ghost note
+Bit 3:		Note effects present
+Bit 4:		Note dynamic
+Bit 5:		Note type
+Bit 6:		Accentuated note
+Bit 7:		Right/Left hand fingering
+
+The note effect 1 bitmask declares which effects are defined for the note:
+Bit 0 (LSB):	Bend present
+Bit 1:		Hammer on/Pull off from the current note
+Bit 2:		Slide from the current note (GP3 format version)
+Bit 3:		Let ring
+Bit 4:		Grace note
+Bits 5-7:	Unused (set to 0)
+
+The note effect 2 bitmask declares more effects for the note:
+Bit 0 (LSB):	Note played staccato
+Bit 1:		Palm Mute
+Bit 2:		Tremolo Picking
+Bit 3:		Slide from the current note
+Bit 4:		Harmonic note
+Bit 5:		Trill
+Bit 6:		Vibrato
+Bit 7 (MSB):	Unused (set to 0)
+
+Bends are defined in this format:
+	BEND CHUNK
+	{
+		[1 byte]:	The type of bend (0 = none, 1 = bend, 2 = bend and release, 3 = bend->release->bend, 4 = prebend, 5 = prebend and release,
+				6 = tremolo dip, 7 = tremolo dive, 8 = tremolo release [up], 9 = tremolo inverted ip, 10 = tremolo return, 11 = tremolo release [down])
+		[4 bytes]:	Bend height, measured in how much the pitch changes in cents (where the distance between two semi tones is 100 cents)
+		[4 bytes]:	Number of points to display the bend with
+		BEND POINT CHUNK, for each bend point
+		{
+			[4 bytes]:	Absolute time position relative to previous bend point (Valued 0 through 60, in sixtieths of the note's duration)
+			[4 bytes]:	Vertical position (Pitch alteration from normal note, in intervals of 25 cents)
+			[1 byte]:	Vibrato type (0 = none, 1 = fast, 2 = average, 3 = slow)
+		}
+		...(variably repeated data)...
+	}
 
 Key signatures are encoded as follows:
 If the number is negative, the value defines the number of flats present (ie. -2 is Bb)
