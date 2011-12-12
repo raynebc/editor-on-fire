@@ -1,4 +1,4 @@
-OFILES = modules/ocd3d.o modules/wfsel.o modules/gametime.o modules/g-idle.o dialog/main.o dialog/proc.o main.o player.o config.o window.o dialog.o legacy.o midi.o ini.o song.o note.o beat.o event.o gui.o undo.o mix.o control.o editor.o utility.o feedback.o chart_import.o midi_import.o ini_import.o waveform.o silence.o tuning.o
+OFILES = modules/ocd3d.o modules/wfsel.o modules/gametime.o modules/g-idle.o dialog/main.o dialog/proc.o main.o player.o config.o window.o dialog.o legacy.o midi.o ini.o song.o note.o beat.o event.o gui.o undo.o mix.o control.o editor.o utility.o feedback.o chart_import.o midi_import.o ini_import.o waveform.o silence.o tuning.o gp_import.o
 MENUOFILES = menu/file.o menu/edit.o menu/song.o menu/note.o menu/beat.o menu/help.o menu/main.o menu/context.o
 ALOGGOFILES = alogg/src/alogg.o
 AGUPOFILES = agup/aalg.o agup/aase.o agup/abeos.o  agup/abitmap.o  agup/agtk.o  agup/agup.o  agup/ans.o  agup/aphoton.o  agup/awin95.o
