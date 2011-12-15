@@ -265,6 +265,20 @@ EOF_SONG * eof_import_chart(const char * fn)
 					break;
 				}
 
+				/* PART VOCALS */
+				case 5:
+				{
+					track = EOF_TRACK_VOCALS;
+					break;
+				}
+
+				/* PART RHYTHM */
+				case 6:
+				{
+					track = EOF_TRACK_RHYTHM;
+					break;
+				}
+
 				default:
 				{
 					track = -1;
@@ -291,6 +305,11 @@ EOF_SONG * eof_import_chart(const char * fn)
 
 					/* skip face-off sections for now */
 					else if((current_note->gemcolor == '0') || (current_note->gemcolor == '1'))
+					{
+					}
+
+					/* skip unknown section marker */
+					else if(current_note->gemcolor == '3')
 					{
 					}
 

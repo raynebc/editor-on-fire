@@ -557,8 +557,8 @@ EOF_SONG *eof_import_gp(const char * fn)
 			byte = pack_getc(inf);	//Read the major/minor byte
 			printf("%s)\n", !byte ? "major" : "minor");
 		}
-		if((bytemask & 1) || (bytemask & 2))
-		{	//If either a new TS numerator or denominator was set, read the beam by eight notes values
+		if((fileversion >= 500) && ((bytemask & 1) || (bytemask & 2)))
+		{	//If either a new TS numerator or denominator was set, read the beam by eight notes values (only for version 5.x and higher of the format.  3.x/4.x are known to not have this info)
 			char byte1, byte2, byte3, byte4;
 			eof_gp_debug_log(inf, "\tBeam eight notes by:  ");
 			byte1 = pack_getc(inf);
@@ -781,152 +781,212 @@ EOF_SONG *eof_import_gp(const char * fn)
 						eof_gp_debug_log(inf, "\t(Chord diagram, ");
 						word = pack_getc(inf);	//Read chord diagram format
 						printf("format %u)\n", word);
-						eof_gp_debug_log(inf, "\tDisplay as ");
-						word = pack_getc(inf);	//Read sharp/flat indicator
-						printf("%s\n", !word ? "flat" : "sharp");
-						eof_gp_debug_log(inf, "\t(skipping 3 bytes of unknown data)\n");
-						pack_fseek(inf, 3);		//Unknown data
-						eof_gp_debug_log(inf, "\tChord root:  ");
-						word = pack_getc(inf);	//Read chord root
-						printf("%u\n", word);
-						eof_gp_debug_log(inf, "\tChord type:  ");
-						word = pack_getc(inf);	//Read chord type
-						printf("%u\n", word);
-						eof_gp_debug_log(inf, "\t9th/10th/11th?  ");
-						word = pack_getc(inf);
-						printf("%u\n", word);
-						eof_gp_debug_log(inf, "\tLowest note played in string:  ");
-						pack_ReadDWORDLE(inf, &dword);	//Read lowest note played in string
-						printf("%lu (%s)\n", dword, eof_note_names[(dword + 3) % 12]);
-						eof_gp_debug_log(inf, "\tTonality of 9th/10th/11th?  ");
-						pack_ReadDWORDLE(inf, &dword);
-						printf("%s\n", !dword ? "perfect" : ((dword == 1) ? "augmented" : "diminished"));
-						eof_gp_debug_log(inf, "\tAdded note:  ");
-						word = pack_getc(inf);			//Read added note status
-						printf("%u\n", word);
-						eof_gp_debug_log(inf, "\tChord name:  ");
-						pack_fread(buffer, 20, inf);	//Read chord name
-						buffer[20] = '\0';	//Ensure string is terminated
-						puts(buffer);
-						eof_gp_debug_log(inf, "\t(skipping 2 bytes of unknown data)\n");
-						pack_fseek(inf, 2);		//Unknown data
-						eof_gp_debug_log(inf, "\tTonality of the fifth:  ");
-						byte = pack_getc(inf);
-						printf("%s\n", !byte ? "perfect" : ((byte == 1) ? "augmented" : "diminished"));
-						eof_gp_debug_log(inf, "\tTonality of the ninth:  ");
-						byte = pack_getc(inf);
-						printf("%s\n", !byte ? "perfect" : ((byte == 1) ? "augmented" : "diminished"));
-						eof_gp_debug_log(inf, "\tTonality of the eleventh:  ");
-						byte = pack_getc(inf);
-						printf("%s\n", !byte ? "perfect" : ((byte == 1) ? "augmented" : "diminished"));
-						eof_gp_debug_log(inf, "\tBase fret:  ");
-						pack_ReadDWORDLE(inf, &dword);
-						printf("%lu\n", dword);
-						for(ctr4 = 0; ctr4 < 7; ctr4++)
-						{	//For each of the 7 possible usable strings
-							if(ctr4 < strings)
-							{	//If this string is used in the track
-								eof_gp_debug_log(inf, "\tString #");
-								pack_ReadDWORDLE(inf, &dword);
-								printf("%lu:  Fret #%lu\n", ctr4 + 1, dword);
+						if(word == 0)
+						{	//Chord diagram format 0, ie. GP3
+							eof_gp_debug_log(inf, "\t\tChord name:  ");
+							eof_read_gp_string(inf, NULL, buffer, 1);	//Read chord name
+							puts(buffer);
+							eof_gp_debug_log(inf, "\t\tDiagram begins at fret #");
+							pack_ReadDWORDLE(inf, &dword);	//Read the diagram fret position
+							printf("%lu\n", dword);
+							for(ctr4 = 0; ctr4 < strings; ctr4++)
+							{	//For each string defined in the track
+								eof_gp_debug_log(inf, "\t\tString #");
+								pack_ReadDWORDLE(inf, &dword);	//Read the fret played on this string
+								if((long)dword == -1)
+								{	//String not played
+									printf("%lu:  X\n", ctr4 + 1);
+								}
+								else
+								{
+									printf("%lu:  %lu\n", ctr4 + 1, dword);
+								}
 							}
-							else
-							{
-								eof_gp_debug_log(inf, "\t(skipping definition for unused string)\n");
-								pack_ReadDWORDLE(inf, NULL);	//Skip this padding
+						}//Chord diagram format 0, ie. GP3
+						else if(word == 1)
+						{	//Chord diagram format 1, ie. GP4
+							eof_gp_debug_log(inf, "\t\tDisplay as ");
+							word = pack_getc(inf);	//Read sharp/flat indicator
+							printf("%s\n", !word ? "flat" : "sharp");
+							eof_gp_debug_log(inf, "\t\t(skipping 3 bytes of unknown data)\n");
+							pack_fseek(inf, 3);		//Unknown data
+							eof_gp_debug_log(inf, "\t\tChord root:  ");
+							word = pack_getc(inf);	//Read chord root
+							printf("%u\n", word);
+							if(fileversion / 100 == 3)
+							{	//If it is a GP 3.x file
+								eof_gp_debug_log(inf, "\t\t(skipping 3 bytes of unknown data)\n");
+								pack_fseek(inf, 3);		//Unknown data
 							}
-						}
-						barres = pack_getc(inf);	//Read the number of barres in this chord
-						for(ctr4 = 0; ctr4 < 5; ctr4++)
-						{	//For each of the 5 possible barres
-							if(ctr4 < barres)
-							{	//If this barre is defined
-								eof_gp_debug_log(inf, "\tBarre #");
-								word = pack_getc(inf);	//Read the barre position
-								printf("%lu:  Fret #%u\n", ctr4 + 1, word);
+							eof_gp_debug_log(inf, "\t\tChord type:  ");
+							word = pack_getc(inf);	//Read chord type
+							printf("%u\n", word);
+							if(fileversion / 100 == 3)
+							{	//If it is a GP 3.x file
+								eof_gp_debug_log(inf, "\t\t(skipping 3 bytes of unknown data)\n");
+								pack_fseek(inf, 3);		//Unknown data
 							}
-							else
-							{
-								eof_gp_debug_log(inf, "\t(skipping definition for undefined barre)\n");
-								pack_getc(inf);
+							eof_gp_debug_log(inf, "\t\t9th/11th/13th option:  ");
+							word = pack_getc(inf);
+							printf("%u\n", word);
+							if(fileversion / 100 == 3)
+							{	//If it is a GP 3.x file
+								eof_gp_debug_log(inf, "\t\t(skipping 3 bytes of unknown data)\n");
+								pack_fseek(inf, 3);		//Unknown data
 							}
-						}
-						for(ctr4 = 0; ctr4 < 5; ctr4++)
-						{	//For each of the 5 possible barres
-							if(ctr4 < barres)
-							{	//If this barre is defined
-								eof_gp_debug_log(inf, "\tBarre #");
-								word = pack_getc(inf);	//Read the barre position
-								printf("%lu starts at string #%u\n", ctr4 + 1, word);
-							}
-							else
-							{
-								eof_gp_debug_log(inf, "\t(skipping definition for undefined barre)\n");
-								pack_getc(inf);
-							}
-						}
-						for(ctr4 = 0; ctr4 < 5; ctr4++)
-						{	//For each of the 5 possible barres
-							if(ctr4 < barres)
-							{	//If this barre is defined
-								eof_gp_debug_log(inf, "\tBarre #");
-								word = pack_getc(inf);	//Read the barre position
-								printf("%lu ends at string #%u\n", ctr4 + 1, word);
-							}
-							else
-							{
-								eof_gp_debug_log(inf, "\t(skipping definition for undefined barre)\n");
-								pack_getc(inf);
-							}
-						}
-						eof_gp_debug_log(inf, "\tChord includes first interval:  ");
-						byte = pack_getc(inf);
-						printf("%s\n", !byte ? "no" : "yes");
-						eof_gp_debug_log(inf, "\tChord includes third interval:  ");
-						byte = pack_getc(inf);
-						printf("%s\n", !byte ? "no" : "yes");
-						eof_gp_debug_log(inf, "\tChord includes fifth interval:  ");
-						byte = pack_getc(inf);
-						printf("%s\n", !byte ? "no" : "yes");
-						eof_gp_debug_log(inf, "\tChord includes seventh interval:  ");
-						byte = pack_getc(inf);
-						printf("%s\n", !byte ? "no" : "yes");
-						eof_gp_debug_log(inf, "\tChord includes ninth interval:  ");
-						byte = pack_getc(inf);
-						printf("%s\n", !byte ? "no" : "yes");
-						eof_gp_debug_log(inf, "\tChord includes eleventh interval:  ");
-						byte = pack_getc(inf);
-						printf("%s\n", !byte ? "no" : "yes");
-						eof_gp_debug_log(inf, "\tChord includes thirteenth interval:  ");
-						byte = pack_getc(inf);
-						printf("%s\n", !byte ? "no" : "yes");
-						eof_gp_debug_log(inf, "\t(skipping 1 byte of unknown data)\n");
-						pack_getc(inf);	//Unknown data
-						for(ctr4 = 0; ctr4 < 7; ctr4++)
-						{	//For each of the 7 possible usable strings
-							eof_gp_debug_log(inf, "\tString #");
+							eof_gp_debug_log(inf, "\t\tBass note:  ");
+							pack_ReadDWORDLE(inf, &dword);	//Read lowest note played in string
+							printf("%lu (%s)\n", dword, eof_note_names[(dword + 3) % 12]);
+							eof_gp_debug_log(inf, "\t\t+/- option:  ");
+							word = pack_getc(inf);
+							printf("%u\n", word);
+							eof_gp_debug_log(inf, "\t\t(skipping 4 bytes of unknown data)\n");
+							pack_fseek(inf, 4);		//Unknown data
+							eof_gp_debug_log(inf, "\t\tChord name:  ");
+							word = pack_getc(inf);	//Read chord name string length
+							pack_fread(buffer, 20, inf);	//Read chord name (which is padded to 20 bytes)
+							buffer[word] = '\0';	//Ensure string is terminated to be the right length
+							puts(buffer);
+							eof_gp_debug_log(inf, "\t\t(skipping 2 bytes of unknown data)\n");
+							pack_fseek(inf, 2);		//Unknown data
+							eof_gp_debug_log(inf, "\t\tTonality of the fifth:  ");
 							byte = pack_getc(inf);
-							printf("%lu is played with finger %d\n", ctr4 + 1, byte);
-						}
-						eof_gp_debug_log(inf, "\tChord fingering displayed:  ");
-						byte = pack_getc(inf);
-						printf("%s\n", !byte ? "no" : "yes");
+							printf("%s\n", !byte ? "perfect" : ((byte == 1) ? "augmented" : "diminished"));
+							if(fileversion / 100 == 3)
+							{	//If it is a GP 3.x file
+								eof_gp_debug_log(inf, "\t\t(skipping 3 bytes of unknown data)\n");
+								pack_fseek(inf, 3);		//Unknown data
+							}
+							eof_gp_debug_log(inf, "\t\tTonality of the ninth:  ");
+							byte = pack_getc(inf);
+							printf("%s\n", !byte ? "perfect" : ((byte == 1) ? "augmented" : "diminished"));
+							if(fileversion / 100 == 3)
+							{	//If it is a GP 3.x file
+								eof_gp_debug_log(inf, "\t\t(skipping 3 bytes of unknown data)\n");
+								pack_fseek(inf, 3);		//Unknown data
+							}
+							eof_gp_debug_log(inf, "\t\tTonality of the eleventh:  ");
+							byte = pack_getc(inf);
+							printf("%s\n", !byte ? "perfect" : ((byte == 1) ? "augmented" : "diminished"));
+							if(fileversion / 100 == 3)
+							{	//If it is a GP 3.x file
+								eof_gp_debug_log(inf, "\t\t(skipping 3 bytes of unknown data)\n");
+								pack_fseek(inf, 3);		//Unknown data
+							}
+							eof_gp_debug_log(inf, "\t\tBase fret for diagram:  ");
+							pack_ReadDWORDLE(inf, &dword);
+							printf("%lu\n", dword);
+							for(ctr4 = 0; ctr4 < 7; ctr4++)
+							{	//For each of the 7 possible usable strings
+								if(ctr4 < strings)
+								{	//If this string is used in the track
+									eof_gp_debug_log(inf, "\t\tString #");
+									pack_ReadDWORDLE(inf, &dword);
+									if((long)dword == -1)
+									{	//String not used in diagram
+										printf("%lu:  (String unused)\n", ctr4 + 1);
+									}
+									else
+									{
+										printf("%lu:  Fret #%lu\n", ctr4 + 1, dword);
+									}
+								}
+								else
+								{
+									eof_gp_debug_log(inf, "\t\t(skipping definition for unused string)\n");
+									pack_ReadDWORDLE(inf, NULL);	//Skip this padding
+								}
+							}
+							barres = pack_getc(inf);	//Read the number of barres in this chord
+							for(ctr4 = 0; ctr4 < 5; ctr4++)
+							{	//For each of the 5 possible barres
+								if(ctr4 < barres)
+								{	//If this barre is defined
+									eof_gp_debug_log(inf, "\t\tBarre #");
+									word = pack_getc(inf);	//Read the barre position
+									printf("%lu:  Fret #%u\n", ctr4 + 1, word);
+								}
+								else
+								{
+									eof_gp_debug_log(inf, "\t\t(skipping fret definition for undefined barre)\n");
+									pack_getc(inf);
+								}
+							}
+							for(ctr4 = 0; ctr4 < 5; ctr4++)
+							{	//For each of the 5 possible barres
+								if(ctr4 < barres)
+								{		//If this barre is defined
+									eof_gp_debug_log(inf, "\t\tBarre #");
+									word = pack_getc(inf);	//Read the barre start string
+									printf("%lu starts at string #%u\n", ctr4 + 1, word);
+								}
+								else
+								{
+									eof_gp_debug_log(inf, "\t\t(skipping start definition for undefined barre)\n");
+									pack_getc(inf);
+								}
+							}
+							for(ctr4 = 0; ctr4 < 5; ctr4++)
+							{	//For each of the 5 possible barres
+								if(ctr4 < barres)
+								{	//If this barre is defined
+									eof_gp_debug_log(inf, "\t\tBarre #");
+									word = pack_getc(inf);	//Read the barre stop string
+									printf("%lu ends at string #%u\n", ctr4 + 1, word);
+								}
+								else
+								{
+									eof_gp_debug_log(inf, "\t\t(skipping stop definition for undefined barre)\n");
+									pack_getc(inf);
+								}
+							}
+							eof_gp_debug_log(inf, "\t\tChord includes first interval:  ");
+							byte = pack_getc(inf);
+							printf("%s\n", byte ? "no" : "yes");	//These booleans define whether the interval is EXCLUDED
+							eof_gp_debug_log(inf, "\t\tChord includes third interval:  ");
+							byte = pack_getc(inf);
+							printf("%s\n", byte ? "no" : "yes");
+							eof_gp_debug_log(inf, "\t\tChord includes fifth interval:  ");
+							byte = pack_getc(inf);
+							printf("%s\n", byte ? "no" : "yes");
+							eof_gp_debug_log(inf, "\t\tChord includes seventh interval:  ");
+							byte = pack_getc(inf);
+							printf("%s\n", byte ? "no" : "yes");
+							eof_gp_debug_log(inf, "\t\tChord includes ninth interval:  ");
+							byte = pack_getc(inf);
+							printf("%s\n", byte ? "no" : "yes");
+							eof_gp_debug_log(inf, "\t\tChord includes eleventh interval:  ");
+							byte = pack_getc(inf);
+							printf("%s\n", byte ? "no" : "yes");
+							eof_gp_debug_log(inf, "\t\tChord includes thirteenth interval:  ");
+							byte = pack_getc(inf);
+							printf("%s\n", byte ? "no" : "yes");
+							eof_gp_debug_log(inf, "\t\t(skipping 1 byte of unknown data)\n");
+							pack_getc(inf);	//Unknown data
+							for(ctr4 = 0; ctr4 < 7; ctr4++)
+							{	//For each of the 7 possible usable strings
+								if(ctr4 < strings)
+								{	//If this string is used in the track
+									eof_gp_debug_log(inf, "\t\tString #");
+									byte = pack_getc(inf);
+									printf("%lu is played with finger %d\n", ctr4 + 1, byte);
+								}
+								else
+								{
+									eof_gp_debug_log(inf, "\t\t(skipping definition for unused string)\n");
+									pack_getc(inf);		//Skip this padding
+								}
+							}
+							eof_gp_debug_log(inf, "\t\tChord fingering displayed:  ");
+							byte = pack_getc(inf);
+							printf("%s\n", !byte ? "no" : "yes");
+						}//Chord diagram format 1, ie. GP4
 					}//Beat has a chord diagram
 					if(bytemask & 4)
 					{	//Beat has text
-						char *buffer2;
 						eof_gp_debug_log(inf, "\tBeat text:  ");
-						pack_ReadDWORDLE(inf, &dword);	//Read string length
-						buffer2 = malloc(dword + 1);	//Allocate a buffer to store the string
-						if(!buffer2)
-						{
-							puts("Error allocating memory");
-							return NULL;
-						}
-						pack_fread(buffer2, dword, inf);
-						buffer2[dword] = '\0';	//Terminate string
-						puts(buffer2);
-						free(buffer2);
+						eof_read_gp_string(inf, NULL, buffer, 1);	//Read beat text string
+						puts(buffer);
 					}
 					if(bytemask & 8)
 					{	//Beat has effects
@@ -967,10 +1027,10 @@ EOF_SONG *eof_import_gp(const char * fn)
 						}
 						if(byte1 & 64)
 						{	//Stroke effect
-							eof_gp_debug_log(inf, "\tStroke up speed:  ");
+							eof_gp_debug_log(inf, "\tDownstroke speed:  ");
 							byte = pack_getc(inf);
 							printf("%u\n", (byte & 0xFF));
-							eof_gp_debug_log(inf, "\tStroke down speed:  ");
+							eof_gp_debug_log(inf, "\tUpstroke speed:  ");
 							byte = pack_getc(inf);
 							printf("%u\n", (byte & 0xFF));
 						}
@@ -986,7 +1046,7 @@ EOF_SONG *eof_import_gp(const char * fn)
 						char volume_change = 0, pan_change = 0, chorus_change = 0, reverb_change = 0, phaser_change = 0, tremolo_change = 0, tempo_change = 0;
 
 						puts("\t\tBeat mix table change:");
-						eof_gp_debug_log(inf, "\tNew instrument number:  ");
+						eof_gp_debug_log(inf, "\t\tNew instrument number:  ");
 							byte = pack_getc(inf);
 						if(byte == -1)
 						{
@@ -996,18 +1056,21 @@ EOF_SONG *eof_import_gp(const char * fn)
 						{
 							printf("%d\n", byte);
 						}
-						eof_gp_debug_log(inf, "\tRSE related number:  ");
-						pack_ReadDWORDLE(inf, &dword);
-						printf("%lu\n", dword);
-						eof_gp_debug_log(inf, "\tRSE related number:  ");
-						pack_ReadDWORDLE(inf, &dword);
-						printf("%lu\n", dword);
-						eof_gp_debug_log(inf, "\tRSE related number:  ");
-						pack_ReadDWORDLE(inf, &dword);
-						printf("%lu\n", dword);
-						eof_gp_debug_log(inf, "\t(skipping 4 bytes of unknown data)\n");
-						pack_fseek(inf, 4);		//Unknown data
-						eof_gp_debug_log(inf, "\tNew volume:  ");
+						if(fileversion >= 500)
+						{	//These fields are only in version 5.x files
+							eof_gp_debug_log(inf, "\t\tRSE related number:  ");
+							pack_ReadDWORDLE(inf, &dword);
+							printf("%lu\n", dword);
+							eof_gp_debug_log(inf, "\t\tRSE related number:  ");
+							pack_ReadDWORDLE(inf, &dword);
+							printf("%lu\n", dword);
+							eof_gp_debug_log(inf, "\t\tRSE related number:  ");
+							pack_ReadDWORDLE(inf, &dword);
+							printf("%lu\n", dword);
+							eof_gp_debug_log(inf, "\t\t(skipping 4 bytes of unknown data)\n");
+							pack_fseek(inf, 4);		//Unknown data
+						}
+						eof_gp_debug_log(inf, "\t\tNew volume:  ");
 						byte = pack_getc(inf);
 						if(byte == -1)
 						{
@@ -1018,7 +1081,7 @@ EOF_SONG *eof_import_gp(const char * fn)
 							volume_change = 1;
 							printf("%d\n", byte);
 						}
-						eof_gp_debug_log(inf, "\tNew pan value:  ");
+						eof_gp_debug_log(inf, "\t\tNew pan value:  ");
 						byte = pack_getc(inf);
 						if(byte == -1)
 						{
@@ -1029,7 +1092,7 @@ EOF_SONG *eof_import_gp(const char * fn)
 							pan_change = 1;
 							printf("%d\n", byte);
 						}
-						eof_gp_debug_log(inf, "\tNew chorus value:  ");
+						eof_gp_debug_log(inf, "\t\tNew chorus value:  ");
 						byte = pack_getc(inf);
 						if(byte == -1)
 						{
@@ -1040,7 +1103,7 @@ EOF_SONG *eof_import_gp(const char * fn)
 							chorus_change = 1;
 							printf("%d\n", byte);
 						}
-						eof_gp_debug_log(inf, "\tNew reverb value:  ");
+						eof_gp_debug_log(inf, "\t\tNew reverb value:  ");
 						byte = pack_getc(inf);
 						if(byte == -1)
 						{
@@ -1051,7 +1114,7 @@ EOF_SONG *eof_import_gp(const char * fn)
 							reverb_change = 1;
 							printf("%d\n", byte);
 						}
-						eof_gp_debug_log(inf, "\tNew phaser value:  ");
+						eof_gp_debug_log(inf, "\t\tNew phaser value:  ");
 						byte = pack_getc(inf);
 						if(byte == -1)
 						{
@@ -1062,7 +1125,7 @@ EOF_SONG *eof_import_gp(const char * fn)
 							phaser_change = 1;
 							printf("%d\n", byte);
 						}
-						eof_gp_debug_log(inf, "\tNew tremolo value:  ");
+						eof_gp_debug_log(inf, "\t\tNew tremolo value:  ");
 						byte = pack_getc(inf);
 						if(byte == -1)
 						{
@@ -1073,10 +1136,13 @@ EOF_SONG *eof_import_gp(const char * fn)
 							tremolo_change = 1;
 							printf("%d\n", byte);
 						}
-						eof_gp_debug_log(inf, "\tTempo text string:  ");
-						eof_read_gp_string(inf, NULL, buffer, 1);	//Read the tempo text string
-						puts(buffer);
-						eof_gp_debug_log(inf, "\tNew tempo:  ");
+						if(fileversion >= 500)
+						{	//These fields are only in version 5.x files
+							eof_gp_debug_log(inf, "\t\tTempo text string:  ");
+							eof_read_gp_string(inf, NULL, buffer, 1);	//Read the tempo text string
+							puts(buffer);
+						}
+						eof_gp_debug_log(inf, "\t\tNew tempo:  ");
 						pack_ReadDWORDLE(inf, &dword);
 						if((long)dword == -1)
 						{
@@ -1089,60 +1155,66 @@ EOF_SONG *eof_import_gp(const char * fn)
 						}
 						if(volume_change)
 						{	//This field only exists if a new volume was defined
-							eof_gp_debug_log(inf, "\tNew volume change transition:  ");
+							eof_gp_debug_log(inf, "\t\tNew volume change transition:  ");
 							byte = pack_getc(inf);
 							printf("%d bars\n", byte);
 						}
 						if(pan_change)
 						{	//This field only exists if a new pan value was defined
-							eof_gp_debug_log(inf, "\tNew pan change transition:  ");
+							eof_gp_debug_log(inf, "\t\tNew pan change transition:  ");
 							byte = pack_getc(inf);
 							printf("%d bars\n", byte);
 						}
 						if(chorus_change)
 						{	//This field only exists if a new  chorus value was defined
-							eof_gp_debug_log(inf, "\tNew chorus change transition:  ");
+							eof_gp_debug_log(inf, "\t\tNew chorus change transition:  ");
 							byte = pack_getc(inf);
 							printf("%d bars\n", byte);
 						}
 						if(reverb_change)
 						{	//This field only exists if a new reverb value was defined
-							eof_gp_debug_log(inf, "\tNew reverb change transition:  ");
+							eof_gp_debug_log(inf, "\t\tNew reverb change transition:  ");
 							byte = pack_getc(inf);
 							printf("%d bars\n", byte);
 						}
 						if(phaser_change)
 						{	//This field only exists if a new phaser value was defined
-							eof_gp_debug_log(inf, "\tNew phaser change transition:  ");
+							eof_gp_debug_log(inf, "\t\tNew phaser change transition:  ");
 							byte = pack_getc(inf);
 							printf("%d bars\n", byte);
 						}
 						if(tremolo_change)
 						{	//This field only exists if a new tremolo value was defined
-							eof_gp_debug_log(inf, "\tNew tremolo change transition:  ");
+							eof_gp_debug_log(inf, "\t\tNew tremolo change transition:  ");
 							byte = pack_getc(inf);
 							printf("%d bars\n", byte);
 						}
 						if(tempo_change)
 						{	//These fields only exists if a new tempo was defined
-							eof_gp_debug_log(inf, "\tNew tempo change transition:  ");
+							eof_gp_debug_log(inf, "\t\tNew tempo change transition:  ");
 							byte = pack_getc(inf);
 							printf("%d bars\n", byte);
-							eof_gp_debug_log(inf, "\tTempo text string hidden:  ");
+							eof_gp_debug_log(inf, "\t\tTempo text string hidden:  ");
 							byte = pack_getc(inf);
 							printf("%s\n", !byte ? "no" : "yes");
 						}
-						eof_gp_debug_log(inf, "\tMix table change applied tracks bitmask:  ");
-						byte = pack_getc(inf);
-						printf("%u\n", (byte & 0xFF));
-						eof_gp_debug_log(inf, "\t(skipping 1 byte of unknown data)\n");
-						pack_fseek(inf, 1);		//Unknown data
-						eof_gp_debug_log(inf, "\tEffect 2 string:  ");
-						eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Effect 2 string
-						puts(buffer);
-						eof_gp_debug_log(inf, "\tEffect 1 string:  ");
-						eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Effect 1 string
-						puts(buffer);
+						if(fileversion >= 400)
+						{	//This field is not in version 3.0 files, assume 4.x or higher
+							eof_gp_debug_log(inf, "\t\tMix table change applied tracks bitmask:  ");
+							byte = pack_getc(inf);
+							printf("%u\n", (byte & 0xFF));
+						}
+						if(fileversion >= 500)
+						{	//These fields are only in version 5.x files
+							eof_gp_debug_log(inf, "\t\t(skipping 1 byte of unknown data)\n");
+							pack_fseek(inf, 1);		//Unknown data
+							eof_gp_debug_log(inf, "\t\tEffect 2 string:  ");
+							eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Effect 2 string
+							puts(buffer);
+							eof_gp_debug_log(inf, "\t\tEffect 1 string:  ");
+							eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Effect 1 string
+							puts(buffer);
+						}
 					}//Beat has mix table change
 					eof_gp_debug_log(inf, "\tUsed strings:  ");
 					usedstrings = pack_getc(inf);
@@ -1191,8 +1263,11 @@ EOF_SONG *eof_import_gp(const char * fn)
 								byte = pack_getc(inf);
 								printf("%d\n", byte);
 							}
-							eof_gp_debug_log(inf, "\t\t(skipping 1 byte of unknown data)\n");
-							pack_fseek(inf, 1);		//Unknown data
+							if(fileversion >= 500)
+							{	//This padding isn't in version 3.x and 4.x files
+								eof_gp_debug_log(inf, "\t\t(skipping 1 byte of unknown data)\n");
+								pack_fseek(inf, 1);		//Unknown data
+							}
 							if(bytemask & 8)
 							{	//Note effects
 								char byte1 = 0, byte2 = 0;
@@ -1302,8 +1377,11 @@ EOF_SONG *eof_import_gp(const char * fn)
 					}
 				}//For each beat
 			}//For each voice
-			eof_gp_debug_log(inf, "\t(skipping 1 byte of unknown data)\n");
-			pack_fseek(inf, 1);		//Unknown data
+			if(fileversion >= 500)
+			{
+				eof_gp_debug_log(inf, "\t(skipping 1 byte of unknown data)\n");
+				pack_fseek(inf, 1);		//Unknown data
+			}
 		}//For each track
 	}//For each measure
 
