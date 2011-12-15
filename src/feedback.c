@@ -1166,14 +1166,14 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				curnote->gemcolor=B;	//The second number read is the gem color
 			else						//This was a player section marker
 			{
-				if(B > 2)							//Only values of 0, 1 or 2 are valid for player section markers
+				if(B > 3)							//Only values of 0, 1 or 2 are valid for player section markers, 3 is unknown but will be kept and ignored for now during transfer to EOF
 				{
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 					if(error)
 						*error=29;
 					return NULL;					//Invalid player section marker, return error
 				}
-				curnote->gemcolor='0'+B;	//Store 0 as '0', 1 as '1' or 2 as '2'
+				curnote->gemcolor='0'+B;	//Store 0 as '0', 1 as '1' or 2 as '2', ...
 			}
 			curnote->duration=C;			//The third number read is the note duration
 		}
@@ -1352,49 +1352,81 @@ struct dbTrack *Validate_dB_instrument(char *buffer)
 
 //At this point, diffstring points to the character AFTER the matching difficulty string.  Verify that a valid instrument is specified
 	//Test for Single (Guitar)
-		inststring=strcasestr_spec(diffstring,"Single");
+		inststring=strcasestr_spec(diffstring,"Single]");
 		if(inststring == NULL)
 		{
 	//Test for DoubleGuitar (Lead Guitar)
-			inststring=strcasestr_spec(diffstring,"DoubleGuitar");
+			inststring=strcasestr_spec(diffstring,"DoubleGuitar]");
 			if(inststring == NULL)
 			{
 	//Test for DoubleBass (Bass)
-				inststring=strcasestr_spec(diffstring,"DoubleBass");
+				inststring=strcasestr_spec(diffstring,"DoubleBass]");
 				if(inststring == NULL)
 				{
 	//Test for EnhancedGuitar
-					inststring=strcasestr_spec(diffstring,"EnhancedGuitar");
+					inststring=strcasestr_spec(diffstring,"EnhancedGuitar]");
 					if(inststring == NULL)
 					{
 	//Test for CoopLead
-						inststring=strcasestr_spec(diffstring,"CoopLead");
+						inststring=strcasestr_spec(diffstring,"CoopLead]");
 						if(inststring == NULL)
 						{
 	//Test for CoopBass
-							inststring=strcasestr_spec(diffstring,"CoopBass");
+							inststring=strcasestr_spec(diffstring,"CoopBass]");
 							if(inststring == NULL)
 							{
 	//Test for 10KeyGuitar
-								inststring=strcasestr_spec(diffstring,"10KeyGuitar");
+								inststring=strcasestr_spec(diffstring,"10KeyGuitar]");
 								if(inststring == NULL)
 								{
 	//Test for Drums
-									inststring=strcasestr_spec(diffstring,"Drums");
+									inststring=strcasestr_spec(diffstring,"Drums]");
 									if(inststring == NULL)
 									{
 	//Test for DoubleDrums (Expert+ drums)
-										inststring=strcasestr_spec(diffstring,"DoubleDrums");
+										inststring=strcasestr_spec(diffstring,"DoubleDrums]");
 										if(inststring == NULL)
 										{
 	//Test for Vocals (Vocal Rhythm)
-											inststring=strcasestr_spec(diffstring,"Vocals");
+											inststring=strcasestr_spec(diffstring,"Vocals]");
 											if(inststring == NULL)
 											{
 	//Test for Keyboard
-												inststring=strcasestr_spec(diffstring,"Keyboard");
+												inststring=strcasestr_spec(diffstring,"Keyboard]");
 												if(inststring == NULL)	//If none of the valid instrument names were found
-													return NULL;	//Return error
+												{
+	//Test for SingleGuitar (Guitar)
+													inststring=strcasestr_spec(diffstring,"SingleGuitar]");	//This is another track name that can represent "Single"
+													if(inststring == NULL)
+													{
+	//Test for SingleRhythm (Bass)
+														inststring=strcasestr_spec(diffstring,"SingleRhythm]");	//This is another track name that can represent "DoubleBass"
+														if(inststring == NULL)
+														{
+	//Test for DoubleRhythm (Rhythm)
+															inststring=strcasestr_spec(diffstring,"DoubleRhythm]");
+															if(inststring == NULL)
+															{		//If none of the valid instrument names were found
+																return NULL;	//Return error
+															}
+															else
+															{
+																tracktype=6;	//Track that this is a "Rhythm" track
+																isguitar=1;
+															}
+														}
+														else
+														{
+															tracktype=3;	//Track that this is a "Bass" track
+															isguitar=1;
+														}
+													}
+													else
+													{
+														tracktype=1;	//Track that this is a "Guitar" track
+														isguitar=1;
+													}
+												}
 											}
 											else
 												tracktype=5;	//Track that this is a "Vocals" track
@@ -1438,8 +1470,8 @@ struct dbTrack *Validate_dB_instrument(char *buffer)
 			isguitar=1;
 		}
 
-//Validate that the character immediately after the instrument substring is the closing bracket
-	if(inststring[0] != ']')
+//Validate that the character immediately after the instrument substring is the NULL terminator
+	if(inststring[0] != '\0')
 		return NULL;
 
 //Create a new string containing the instrument name, minus the brackets
