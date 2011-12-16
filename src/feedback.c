@@ -1166,7 +1166,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				curnote->gemcolor=B;	//The second number read is the gem color
 			else						//This was a player section marker
 			{
-				if(B > 3)							//Only values of 0, 1 or 2 are valid for player section markers, 3 is unknown but will be kept and ignored for now during transfer to EOF
+				if(B > 4)							//Only values of 0, 1 or 2 are valid for player section markers, 3 and 4 are unknown but will be kept and ignored for now during transfer to EOF
 				{
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 					if(error)

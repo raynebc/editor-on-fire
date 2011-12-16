@@ -308,8 +308,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 					{
 					}
 
-					/* skip unknown section marker */
-					else if(current_note->gemcolor == '3')
+					/* skip unknown section markers */
+					else if((current_note->gemcolor == '3') || (current_note->gemcolor == '4'))
 					{
 					}
 

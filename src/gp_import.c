@@ -523,7 +523,7 @@ EOF_SONG *eof_import_gp(const char * fn)
 		printf("\tStart of definition for measure #%lu\n", ctr + 1);
 		eof_gp_debug_log(inf, "\tMeasure bitmask:  ");
 		bytemask = pack_getc(inf);	//Read the measure bitmask
-		printf("%u\n", bytemask);
+		printf("%u\n", (bytemask & 0xFF));
 		if(bytemask & 1)
 		{	//Time signature change (numerator)
 			eof_gp_debug_log(inf, "\tTS numerator:  ");
@@ -573,17 +573,24 @@ EOF_SONG *eof_import_gp(const char * fn)
 			word = pack_getc(inf);	//Read number of repeats
 			printf("%u repeats\n", word);
 		}
-		if(bytemask & 16)
-		{	//Number of alternate ending
-			eof_gp_debug_log(inf, "\tNumber of alternate ending:  ");
-			word = pack_getc(inf);	//Read alternate ending number
-			printf("%u\n", word);
+		if(bytemask & 128)
+		{	//Double bar
+			puts("\t\t(Double bar)");
 		}
 
 		if(fileversion >= 500)
 		{	//Versions 5.0 and newer of the format store unknown data/padding here
-			eof_gp_debug_log(inf, "\t(skipping 1 byte of unknown data)\n");
-			pack_getc(inf);			//Unknown data
+			if(bytemask & 16)
+			{	//Number of alternate ending
+				eof_gp_debug_log(inf, "\tNumber of alternate ending:  ");
+				word = pack_getc(inf);	//Read alternate ending number
+				printf("%u\n", word);
+			}
+			else
+			{
+				eof_gp_debug_log(inf, "\t(skipping 1 byte of unused alternate ending data)\n");
+				pack_getc(inf);			//Unknown data
+			}
 			eof_gp_debug_log(inf, "\tTriplet feel:  ");
 			byte = pack_getc(inf);	//Read triplet feel value
 			printf("%s\n", !byte ? "none" : ((byte == 1) ? "Triplet 8th" : "Triplet 16th"));
@@ -1007,18 +1014,33 @@ EOF_SONG *eof_import_gp(const char * fn)
 						}
 						if(byte1 & 32)
 						{	//Tapping/popping/slapping
+							eof_gp_debug_log(inf, "\tString effect:  ");
 							byte = pack_getc(inf);	//Read tapping/popping/slapping indicator
-							if(byte == 1)
+							if(byte == 0)
 							{
-								puts("\t\tTapping");
+								puts("Tremolo");
+							}
+							else if(byte == 1)
+							{
+								puts("Tapping");
 							}
 							else if(byte == 2)
 							{
-								puts("\t\tSlapping");
+								puts("Slapping");
 							}
 							else if(byte == 3)
 							{
-								puts("\t\tPopping");
+								puts("Popping");
+							}
+							else
+							{
+								puts("Unknown");
+							}
+							if(fileversion < 400)
+							{
+								eof_gp_debug_log(inf, "\t\tString effect value:  ");
+								pack_ReadDWORDLE(inf, &dword);
+								printf("%lu\n", dword);
 							}
 						}
 						if(byte2 & 4)
@@ -1251,9 +1273,12 @@ EOF_SONG *eof_import_gp(const char * fn)
 								word = (pack_getc(inf) - 1) % 8;	//Get the dynamic value and remap its values from 0 to 7
 								printf("%s\n", note_dynamics[word]);
 							}
-							eof_gp_debug_log(inf, "\t\tFret number:  ");
-							byte = pack_getc(inf);
-							printf("%u\n", (byte & 0xFF));
+							if(bytemask & 32)
+							{	//Note type is defined
+								eof_gp_debug_log(inf, "\t\tFret number:  ");
+								byte = pack_getc(inf);
+								printf("%u\n", (byte & 0xFF));
+							}
 							if(bytemask & 128)
 							{	//Right/left hand fingering
 								eof_gp_debug_log(inf, "\t\tLeft hand fingering:  ");
@@ -1298,33 +1323,53 @@ EOF_SONG *eof_import_gp(const char * fn)
 								}
 								if(byte1 & 16)
 								{	//Grace note
+									puts("\t\t\t\t(Grace note)");
 									eof_gp_debug_log(inf, "\t\t\tGrace note fret number:  ");
 									byte = pack_getc(inf);
 									printf("%u\n", (byte & 0xFF));
 									eof_gp_debug_log(inf, "\t\t\tGrace note dynamic:  ");
 									word = (pack_getc(inf) - 1) % 8;	//Get the dynamic value and remap its values from 0 to 7
 									printf("%s\n", note_dynamics[word]);
-									eof_gp_debug_log(inf, "\t\t\tGrace note transition type:  ");
-									byte = pack_getc(inf);
-									if(!byte)
-									{
-										puts("none");
+									if(fileversion >= 500)
+									{	//If the file version is 5.x or higher (this byte verified not to be in 3.0 and 4.06 files)
+										eof_gp_debug_log(inf, "\t\t\tGrace note transition type:  ");
+										byte = pack_getc(inf);
+										if(!byte)
+										{
+											puts("none");
+										}
+										else if(byte == 1)
+										{
+											puts("slide");
+										}
+										else if(byte == 2)
+										{
+											puts("bend");
+										}
+										else if(byte == 3)
+										{
+											puts("hammer");
+										}
 									}
-									else if(byte == 1)
-									{
-										puts("slide");
-									}
-									else if(byte == 2)
-									{
-										puts("bend");
-									}
-									else if(byte == 3)
-									{
-										puts("hammer");
+									else
+									{	//The purpose of this field in 4.x or older files is unknown
+										eof_gp_debug_log(inf, "\t\t(skipping 1 byte of unknown data)\n");
+										pack_fseek(inf, 1);		//Unknown data
 									}
 									eof_gp_debug_log(inf, "\t\t\tGrace note duration:  ");
 									byte = pack_getc(inf);
 									printf("%u\n", (byte & 0xFF));
+									if(fileversion >= 500)
+									{	//If the file version is 5.x or higher (this byte verified not to be in 3.0 and 4.06 files)
+										eof_gp_debug_log(inf, "\t\t\tGrace note position:  ");
+										byte = pack_getc(inf);
+										printf("%u\n", (byte & 0xFF));
+										if(byte & 1)
+										{
+											puts("\t\t\t\t\t(dead note)");
+										}
+										printf("\t\t\t\t\t%s\n", (byte & 2) ? "(on the beat)" : "(before the beat)");
+									}
 								}
 								if(byte2 & 1)
 								{
@@ -1518,12 +1563,17 @@ void eof_gp_parse_bend(PACKFILE *inf)
 	printf("%lu points\n", points);
 	for(ctr = 0; ctr < points; ctr++)
 	{	//For each point in the bend
+		if(pack_feof(inf))
+		{	//If the end of file was reached unexpectedly
+			puts("\aEnd of file reached unexpectedly");
+			abort();
+		}
 		eof_gp_debug_log(inf, "\t\t\tTime relative to previous point:  ");
 		pack_ReadDWORDLE(inf, &dword);
 		printf("%lu sixtieths\n", dword);
 		eof_gp_debug_log(inf, "\t\t\tVertical position:  ");
 		pack_ReadDWORDLE(inf, &dword);
-		printf("%lu * 25 cents\n", dword);
+		printf("%ld * 25 cents\n", (long)dword);
 		eof_gp_debug_log(inf, "\t\t\tVibrato type:  ");
 		word = pack_getc(inf);
 		if(!word)

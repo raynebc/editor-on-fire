@@ -198,10 +198,8 @@ BAR CHUNK, for each bar (measure):
 		[4 bytes]:	Beam eight notes by values
 	!END OF REPEAT (if the bitmask declares this)
 		[1 byte]:	Number of repeats?
-	!NUMBER OF ALTERNATE ENDING (if the bitmask declares this)
-		[1 byte]:	Alternate ending number?
-	!PADDING (if the major file version is >= 5):
-		[1 byte]:	Unknown data/padding (set to 0x0)
+	!NUMBER OF ALTERNATE ENDING (if the major file version is >= 5):
+		[1 byte]:	The number of the alternate ending (ignored if the bitmask didn't declare this)
 	!TRIPLET FEEL (if the major file version is >= 5):
 		[1 byte]:	(0 = no triplet feel, 1 = Triplet 8th, 2 = Triplet 16th)
 	!PADDING (if the major file version is >= 5):
@@ -364,8 +362,12 @@ TRACK CHUNK, for each track:
 					[1 byte]:	Beat effects bitmask (defined in notes section)
 					!EXTENDED BEAT EFFECTS BITMASK (only if the major file version is >= 4):
 						[1 byte]:	Extended beat effects bitmask (byte 2 of the bitmask)
-					!TAPPING/POPPING/SLAPPING STATUS (if the beat effects bitmask declares this effect):
-						[1 byte]:	Which playing method is used (0 = None, 1 = Tapping, 2 = Slapping, 3 = Popping (bass guitar)
+					!STRING EFFECT (if the beat effects bitmask declares this effect):
+					{
+						[1 byte]:	Which string effect is used (0 = Tremolo, 1 = Tapping, 2 = Slapping, 3 = Popping (bass guitar))
+						!STRING EFFECT VALUE (only if the major file version is < 4):
+							[4 bytes]:	A value applied to the string effect, ie. how much the tremolo bar dives in cents
+					}						
 					!TREMOLO STATUS (if the beat effects bitmask declares this effect):
 						[varies]:	BEND CHUNK (defined in notes section)
 					!STROKE EFFECT (if the beat effects bitmask declares this effect):
@@ -435,7 +437,8 @@ TRACK CHUNK, for each track:
 					!NOTE DYNAMIC (if the note bitmask declares this)
 						[1 byte]:	How soft/strong the note is played ranging from pianissimo possibile (ppp, value of 1) to fortissimo possibile (fff, value of 8): ppp, pp, p, mp, mf, f, ff, fff
 								(If the note dynamic is not defined, a value of 6, forte, is assumed)
-					[1 byte]:	Fret number
+					!FRET NUMBER (if the note bitmask declares a note type)
+						[1 byte]:	Fret number
 					!RIGHT/LEFT HAND FINGERING (if the note bitmask declares this)
 					{
 						[1 byte]:	Left hand fingering associated with this note (-1 = nothing, 0 = thumb, 1 = index, 2 = middle, 3 = ring, 4 = pinky)
@@ -455,8 +458,13 @@ TRACK CHUNK, for each track:
 							[1 byte]:	The grace note's fret number
 							[1 byte]:	The dynamic of the grace note ranging from pianissimo possibile (ppp, value of 1) to fortissimo possibile (fff, value of 8): ppp, pp, p, mp, mf, f, ff, fff
 									(If the dynamic is not defined, a value of 6, forte, is assumed)
-							[1 byte]:	The grace note's transition type (0 = none, 1 = slide, 2 = bend, 3 = hammer)
-							[1 byte]:	Duration of the grace note (3 = 16th note, 2 = 24th note, 1 = 32nd note)
+?							!GRACE NOTE TRANSITION (if the file version is >= 5.0) (this is verified not to be in GP 4.06 files)
+								[1 byte]:	The grace note's transition type (0 = none, 1 = slide, 2 = bend, 3 = hammer)
+							!UNKNOWN DATA (if the file version is < 5.0)
+								[1 byte]:	This doesn't seem to represent the same thing that the grace note transition field does
+							[1 byte]:	Duration of the grace note (3 = 16th note, 2 = 32nd note, 1 = 64th note)
+?							!GRACE NOTE POSITION (if the file version is >= 5.0) (this is verified not to be in GP 3.0 and 4.06 files)
+								[1 byte]:	Grace note bitmask (Bit 0:  Is a dead note, Bit 1:  Is "On the beat" instead of "Before the beat")
 						}
 						!TREMOLO PICKING (if the note effect 2 bitmask defines this)
 							[1 byte]:	Picking speed (3 = 32nd note, 2 = 16th note, 1 = 8th note)
@@ -568,7 +576,7 @@ Bit 7 (MSB):	Unused (set to 0)
 The beat effects bitmasks declare which parameters are defined for the beat:
 Byte 1
  Bits 0 (LSB) - 4:	Unknown
- Bit 5:			Tapping, popping or slapping effect
+ Bit 5:			String effect
  Bit 6:			Stroke effect
  Bit 7 (MSB):		Unused (set to 0)
 Byte 2 (extended beat effects, only if the major file version is >= 4):
@@ -633,7 +641,7 @@ Bends are defined in this format:
 		BEND POINT CHUNK, for each bend point
 		{
 			[4 bytes]:	Absolute time position relative to previous bend point (Valued 0 through 60, in sixtieths of the note's duration)
-			[4 bytes]:	Vertical position (Pitch alteration from normal note, in intervals of 25 cents)
+			[4 bytes]:	Vertical position (Pitch alteration from normal note, signed value in intervals of 25 cents)
 			[1 byte]:	Vibrato type (0 = none, 1 = fast, 2 = average, 3 = slow)
 		}
 		...(variably repeated data)...
