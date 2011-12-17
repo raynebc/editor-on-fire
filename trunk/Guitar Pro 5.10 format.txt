@@ -250,7 +250,7 @@ TRACK CHUNK, for each track:
 		[varies]:	Track instrument effect 2 string
 	}
 	!UNKNOWN DATA/PADDING (if the file version is 5.0)
-		[41 bytes]:	Unknown
+		[45 bytes]:	Unknown
 }
 ...(variably repeated data)...
 !PADDING (if the major file version is >= 5):
@@ -401,19 +401,29 @@ TRACK CHUNK, for each track:
 						[varies]:	Tempo text string (including NULL byte)
 					}
 					[4 byte]:	The new tempo (-1 = no change, otherwise a value from 0 - 16)
-					[1 byte]:	Volume change transition period in bars
-					[1 byte]:	Pan change transition period in bars
-					[1 byte]:	Chorus change transition period in bars
-					[1 byte]:	Reverb change transition period in bars
-					[1 byte]:	Phaser change transition period in bars
-					[1 byte]:	Tremolo change transition period in bars
-					[1 byte]:	Tempo change transition period in bars
-					[varies]:	If there was a tempo change, this one byte field indicates whether the tempo text string is hidden (1 = yes)
+					VOLUME CHANGE TRANSITION (if the volume changed):
+						[1 byte]:	Volume change transition period in bars
+					PAN CHANGE TRANSITION (if the pan changed):
+						[1 byte]:	Pan change transition period in bars
+					CHORUS CHANGE TRANSITION (if the chorus changed):
+						[1 byte]:	Chorus change transition period in bars
+					REVERB CHANGE TRANSITION (if the reverb changed):
+						[1 byte]:	Reverb change transition period in bars
+					PHASER CHANGE TRANSITION (if the phaser changed):
+						[1 byte]:	Phaser change transition period in bars
+					TREMOLO CHANGE TRANSITION (if the tremolo changed):
+						[1 byte]:	Tremolo change transition period in bars
+					TEMPO CHANGE TRANSITION (if the tempo changed):
+					{
+						[1 byte]:	Tempo change transition period in bars
+						TEMPO TEXT HIDDEN (if the file version is > 5.0)
+							[1 byte]:	If there was a tempo change, this one byte field indicates whether the tempo text string is hidden (1 = yes)
+					}
 ?					MIX TABLE APPLIED TRACKS BITMASK (Version 4.x and newer) (This field doesn't appear to be included in version 3.0 files)
 ?						[1 byte]:	Mix table change applied tracks bitmask (defined in notes section)
 					UNKNOWN DATA/PADDING (Version 5.x)
 						[1 byte]:	Unknown data/padding
-					RSE EFFECTS STRINGS (Version 5.x)
+					RSE EFFECTS STRINGS (if the file version is > 5.0)
 					{
 						[4 bytes]:	Effect 2 string field length (including string length byte that follows this value)
 						[1 byte]:	Effect 2 string length
@@ -423,30 +433,33 @@ TRACK CHUNK, for each track:
 						[varies]:	Effect 1 string (including NULL byte)
 					}
 				}
-				1 byte:		Used strings mask (Bit 1 represents the highest numbered string, ie low E.  Bit 7 represents the 7th string if it is in use.  Bit 0 is unused)
+				1 byte:		Used strings mask (Bit 1 represents string 6.  Bit 6 represents string 1.  Bit 0 represents string 7 if that string if it is in use.  Bit 0 is unused)
 				!STRING CHUNK, for each populated string (starting with the lowest numbered string, ie. high e):
 				{
 					[1 byte]:	Note bitmask (defined in notes section)
-					!NOTE TYPE (if the note bitmask declares this)
+					!NOTE TYPE (if the note bitmask declares this:  Bit 5, AKA 0x20, AKA 32 decimal)
 						[1 byte]:	Note type (1 = normal, 2 = tie, 3 = dead)
-					!TIME INDEPENDENT DURATION (if the note bitmask declares this)
+					!TIME INDEPENDENT DURATION (if the file version is < 5.0, and the note bitmask declares this:  Bit 1, AKA 1 decimal)
 					{
-						[1 byte]:	Duration (-2 = whole note, -1 = half note, 0 = quarter note, 1 = eighth note, 2 = sixteenth note, 3 = thirty-second note, etc.)
-						[1 byte]:	N-tuplet (ie. 3 for a triplet)
+						[2 bytes]:	Time independent duration data, it may be that the first number is the denominator and the second is the numerator (ie. values of 2, 1 seem to represent 50% duration)
 					}
-					!NOTE DYNAMIC (if the note bitmask declares this)
+					!NOTE DYNAMIC (if the note bitmask declares this:  Bit 4, AKA 0x10, AKA 16 decimal)
 						[1 byte]:	How soft/strong the note is played ranging from pianissimo possibile (ppp, value of 1) to fortissimo possibile (fff, value of 8): ppp, pp, p, mp, mf, f, ff, fff
 								(If the note dynamic is not defined, a value of 6, forte, is assumed)
-					!FRET NUMBER (if the note bitmask declares a note type)
+					!FRET NUMBER (if the note bitmask declares a note type:  Bit 5, AKA 0x20, AKA 32 decimal)
 						[1 byte]:	Fret number
-					!RIGHT/LEFT HAND FINGERING (if the note bitmask declares this)
+					!RIGHT/LEFT HAND FINGERING (if the note bitmask declares this:  Bit 7, AKA 0x80, AKA 128 decimal)
 					{
 						[1 byte]:	Left hand fingering associated with this note (-1 = nothing, 0 = thumb, 1 = index, 2 = middle, 3 = ring, 4 = pinky)
 						[1 byte]:	Right hand fingering associated with this note (-1 = nothing, 0 = thumb, 1 = index, 2 = middle, 3 = ring, 4 = pinky)
 					}
+					!TIME INDEPENDENT DURATION (if the file version is >= 5.0, and the note bitmask declares this:  Bit 1, AKA 1 decimal)
+					{	!Note:  The real contents of this data is not known
+						[8 bytes]:	Unknown data/padding
+					}
 ?					!UNKNOWN DATA/PADDING (if the file version is >= 5.0) (note:  This byte is verified to not be in 3.x/4.x version GP files)
 						[1 byte]:	Unknown/padding	
-					!NOTE EFFECT (if the note bitmask declares this)
+					!NOTE EFFECT (if the note bitmask declares this:  Bit 3, AKA 8 decimal)
 					{
 						[1 byte]:	Note effect 1 bitmask (defined in notes section)
 						!NOTE EFFECT 2 BITMASK (if the file version is >= 4.0)
@@ -470,9 +483,18 @@ TRACK CHUNK, for each track:
 							[1 byte]:	Picking speed (3 = 32nd note, 2 = 16th note, 1 = 8th note)
 						!SLIDE (if the note effect 2 bitmask defines this)
 							[1 byte]:	Slide type (-2 = slide into from above, -1 = slide into from below, 0 = no slide, 1 = shift slide, 2 = legato slide, 3 = slide out of downwards, 4 = slide out of upwards)
-
 						!HARMONIC (if the note effect 2 bitmask defines this)
-							[1 byte]:	Harmonic type (0 = none, 1 = Natural, 15 = Artificial+5, 17 = Artificial+7, 22 = Artificial+12, 3 = Tapped, 4 = Pitch, 5 = Semi)
+						{
+							[1 byte]:	Harmonic type (0 = none, 1 = Natural, 2 = Artificial, 3 = Tapped, 4 = Pinch, 5 = Semi)
+							ARTIFICIAL HARMONIC DATA (if it is an artificial harmonic note):
+							{
+								[1 byte]:	Harmonic note (0 = C, 2 = D, 4 = E, 5 = F, 7 = G, 9 = A, 11 = B)
+								[1 byte]:	Sharp/Flat field (-1 = flat, 1 = sharp, 0 = neither)
+								[1 byte]:	Harmonic octave field (0 = loco, 1 = 8va, 2 = 15ma)
+							}
+							TAPPED HARMONIC RIGHT HAND FRET (if it is a tapped harmonic note):
+								[1 byte]:	The fret played with the right hand
+						}
 						!TRILL (if the note effect 2 bitmask defines this)
 						{
 							[1 byte]:	The fret being trilled with
@@ -481,8 +503,12 @@ TRACK CHUNK, for each track:
 					}
 				}
 				...(variably repeated string data)...
-				!TRANSPOSE (if the file version is >= 5.0)
+				!TRANSPOSE DATA (if the file version is >= 5.0)
+				{
 					[2 bytes]:	Note transpose bitmask (defined in notes section)
+					ADDITIONAL UNKNOWN DATA BYTE (if the note transpose bitmask declares this)
+						[1 byte]:	Unknown data
+				}
 			}
 			...(variably repeated beat data)...
 		}
@@ -564,7 +590,7 @@ Bit 3:		"Extend rhythmic inside the tab"
 Bits 4-7:	Unknown
 
 The beat bitmask declares which parameters are defined for the beat:
-Bit 0 (LSB):	Dotted notes?
+Bit 0 (LSB):	Dotted note
 Bit 1:		Chord diagram present
 Bit 2:		Text present
 Bit 3:		Beat effects present
@@ -575,7 +601,10 @@ Bit 7 (MSB):	Unused (set to 0)
 
 The beat effects bitmasks declare which parameters are defined for the beat:
 Byte 1
- Bits 0 (LSB) - 4:	Unknown
+ Bits 0 - 1:		Unknown
+ Bit 2:			Natural harmonic
+ Bit 3:			Artificial harmonic
+ Bit 4:			Unknown
  Bit 5:			String effect
  Bit 6:			Stroke effect
  Bit 7 (MSB):		Unused (set to 0)
@@ -596,7 +625,7 @@ Bits 6-7:	Unused
 
 The note bitmask declares which parameters are defined for the note:
 Bit 0 (LSB):	Time-independent duration
-Bit 1:		Dotted note
+Bit 1:		Heavy Accentuated note
 Bit 2:		Ghost note
 Bit 3:		Note effects present
 Bit 4:		Note dynamic
@@ -629,7 +658,9 @@ Bit 5:		8vb (down one octave)
 Bit 6:		15ma (up two octaves)
 Bit 7:		Unknown/unused
 Bit 8:		15mb (down two octaves)
-Bits 9-15	Unknown/unused
+Bits 9-10:	Unknown/unused
+Bit 11:		An extra unknown data byte follows this bitmask
+Bits 12-15:	Unknown/unused
 
 Bends are defined in this format:
 	BEND CHUNK

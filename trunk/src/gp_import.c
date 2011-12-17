@@ -18,7 +18,7 @@ EOF_SONG *eof_import_gp(const char * fn)
 {
 	char buffer[256], byte, *buffer2, bytemask, bytemask2, usedstrings;
 	unsigned word, fileversion;
-	unsigned long dword, ctr, ctr2, ctr3, ctr4, tracks, measures, strings, beats, barres;
+	unsigned long dword, ctr, ctr2, ctr3, ctr4, tracks, measures, *strings, beats, barres;
 	char *note_dynamics[8] = {"ppp", "pp", "p", "mp", "mf", "f", "ff", "fff"};
 	PACKFILE *inf;
 
@@ -89,6 +89,7 @@ EOF_SONG *eof_import_gp(const char * fn)
 	else
 	{
 		puts("File format version not supported");
+		pack_fclose(inf);
 		return NULL;
 	}
 
@@ -155,6 +156,7 @@ EOF_SONG *eof_import_gp(const char * fn)
 			if(!buffer2)
 			{
 				puts("Error allocating memory");
+				pack_fclose(inf);
 				return 0;
 			}
 			pack_fread(buffer2, dword, inf);	//Read the lyric string
@@ -518,6 +520,16 @@ EOF_SONG *eof_import_gp(const char * fn)
 	eof_gp_debug_log(inf, "Number of tracks:  ");
 	pack_ReadDWORDLE(inf, &tracks);	//Read the number of tracks
 	printf("%ld\n", tracks);
+
+	//Allocate memory for an array to track the number of strings for each track
+	strings = malloc(sizeof(unsigned long) * tracks);
+	if(!strings)
+	{
+		puts("Error allocating memory");
+		pack_fclose(inf);
+		return NULL;
+	}
+
 	for(ctr = 0; ctr < measures; ctr++)
 	{	//For each measure
 		printf("\tStart of definition for measure #%lu\n", ctr + 1);
@@ -640,11 +652,11 @@ EOF_SONG *eof_import_gp(const char * fn)
 		printf("%d bytes of padding)\n", 40 - word);
 		pack_fseek(inf, 40 - word);			//Skip the padding that follows the track name string
 		eof_gp_debug_log(inf, "\tNumber of strings:  ");
-		pack_ReadDWORDLE(inf, &strings);	//Read the number of strings in this track
-		printf("%lu\n", strings);
+		pack_ReadDWORDLE(inf, &strings[ctr]);	//Read the number of strings in this track
+		printf("%lu\n", strings[ctr]);
 		for(ctr2 = 0; ctr2 < 7; ctr2++)
 		{	//For each of the 7 possible usable strings
-			if(ctr2 < strings)
+			if(ctr2 < strings[ctr])
 			{	//If this string is used
 				eof_gp_debug_log(inf, "\tTuning for string #");
 				pack_ReadDWORDLE(inf, &dword);	//Read the tuning for this string
@@ -734,8 +746,8 @@ EOF_SONG *eof_import_gp(const char * fn)
 		}
 		else if(fileversion == 500)
 		{
-			eof_gp_debug_log(inf, "\t(skipping 41 bytes of unknown data)");
-			pack_fseek(inf, 41);		//Unknown data
+			eof_gp_debug_log(inf, "\t(skipping 45 bytes of unknown data)\n");
+			pack_fseek(inf, 45);		//Unknown data
 		}
 	}//For each track
 
@@ -758,13 +770,13 @@ EOF_SONG *eof_import_gp(const char * fn)
 			}
 			for(voice = 0; voice < maxvoices; voice++)
 			{	//For each voice
-				printf("\t->-> Track # %lu (voice %u)\n", ctr2 + 1, voice + 1);
+				printf("\t-> M#%lu -> Track # %lu (voice %u)\n", ctr + 1, ctr2 + 1, voice + 1);
 				eof_gp_debug_log(inf, "\tNumber of beats:  ");
 				pack_ReadDWORDLE(inf, &beats);
 				printf("%lu\n", beats);
 				for(ctr3 = 0; ctr3 < beats; ctr3++)
 				{	//For each beat
-					printf("\t->->-> Beat # %lu\n", ctr3 + 1);
+					printf("\t-> M#%lu -> T#%lu -> Beat # %lu\n", ctr + 1, ctr2 + 1, ctr3 + 1);
 					eof_gp_debug_log(inf, "\tBeat bitmask:  ");
 					bytemask = pack_getc(inf);	//Read beat bitmask
 					printf("%u\n", (bytemask & 0xFF));
@@ -777,11 +789,15 @@ EOF_SONG *eof_import_gp(const char * fn)
 					eof_gp_debug_log(inf, "\tBeat duration:  ");
 					byte = pack_getc(inf);	//Read beat duration
 					printf("%d\n", byte);
+					if(bytemask & 1)
+					{	//Dotted note
+						puts("\t\t(Dotted note)");
+					}
 					if(bytemask & 32)
 					{	//Beat is an N-tuplet
 						eof_gp_debug_log(inf, "\t(N-tuplet:  ");
 						pack_ReadDWORDLE(inf, &dword);
-						printf("%lu\n", dword);
+						printf("%lu)\n", dword);
 					}
 					if(bytemask & 2)
 					{	//Beat has a chord diagram
@@ -796,7 +812,7 @@ EOF_SONG *eof_import_gp(const char * fn)
 							eof_gp_debug_log(inf, "\t\tDiagram begins at fret #");
 							pack_ReadDWORDLE(inf, &dword);	//Read the diagram fret position
 							printf("%lu\n", dword);
-							for(ctr4 = 0; ctr4 < strings; ctr4++)
+							for(ctr4 = 0; ctr4 < strings[ctr2]; ctr4++)
 							{	//For each string defined in the track
 								eof_gp_debug_log(inf, "\t\tString #");
 								pack_ReadDWORDLE(inf, &dword);	//Read the fret played on this string
@@ -885,7 +901,7 @@ EOF_SONG *eof_import_gp(const char * fn)
 							printf("%lu\n", dword);
 							for(ctr4 = 0; ctr4 < 7; ctr4++)
 							{	//For each of the 7 possible usable strings
-								if(ctr4 < strings)
+								if(ctr4 < strings[ctr2])
 								{	//If this string is used in the track
 									eof_gp_debug_log(inf, "\t\tString #");
 									pack_ReadDWORDLE(inf, &dword);
@@ -972,7 +988,7 @@ EOF_SONG *eof_import_gp(const char * fn)
 							pack_getc(inf);	//Unknown data
 							for(ctr4 = 0; ctr4 < 7; ctr4++)
 							{	//For each of the 7 possible usable strings
-								if(ctr4 < strings)
+								if(ctr4 < strings[ctr2])
 								{	//If this string is used in the track
 									eof_gp_debug_log(inf, "\t\tString #");
 									byte = pack_getc(inf);
@@ -1011,6 +1027,14 @@ EOF_SONG *eof_import_gp(const char * fn)
 							{
 								puts("\t\tRasguedo");
 							}
+						}
+						if(byte1 & 4)
+						{
+							puts("\t\t(Natural harmonic)");
+						}
+						if(byte1 & 8)
+						{
+							puts("\t\t(Artificial harmonic)");
 						}
 						if(byte1 & 32)
 						{	//Tapping/popping/slapping
@@ -1216,9 +1240,12 @@ EOF_SONG *eof_import_gp(const char * fn)
 							eof_gp_debug_log(inf, "\t\tNew tempo change transition:  ");
 							byte = pack_getc(inf);
 							printf("%d bars\n", byte);
-							eof_gp_debug_log(inf, "\t\tTempo text string hidden:  ");
-							byte = pack_getc(inf);
-							printf("%s\n", !byte ? "no" : "yes");
+							if(fileversion > 500)
+							{	//This field only exists in versions newer than 5.0 of the format
+								eof_gp_debug_log(inf, "\t\tTempo text string hidden:  ");
+								byte = pack_getc(inf);
+								printf("%s\n", !byte ? "no" : "yes");
+							}
 						}
 						if(fileversion >= 400)
 						{	//This field is not in version 3.0 files, assume 4.x or higher
@@ -1227,9 +1254,12 @@ EOF_SONG *eof_import_gp(const char * fn)
 							printf("%u\n", (byte & 0xFF));
 						}
 						if(fileversion >= 500)
-						{	//These fields are only in version 5.x files
+						{	//This unknown byte is only in version 5.x files
 							eof_gp_debug_log(inf, "\t\t(skipping 1 byte of unknown data)\n");
 							pack_fseek(inf, 1);		//Unknown data
+						}
+						if(fileversion > 500)
+						{	//These strings are only in versions newer than 5.0 of the format
 							eof_gp_debug_log(inf, "\t\tEffect 2 string:  ");
 							eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Effect 2 string
 							puts(buffer);
@@ -1238,18 +1268,15 @@ EOF_SONG *eof_import_gp(const char * fn)
 							puts(buffer);
 						}
 					}//Beat has mix table change
-					eof_gp_debug_log(inf, "\tUsed strings:  ");
+					eof_gp_debug_log(inf, "\tUsed strings bitmask:  ");
 					usedstrings = pack_getc(inf);
 					printf("%u\n", (usedstrings & 0xFF));
-					unsigned stringnum;
-					for(ctr4 = 0, stringnum = 1; ctr4 < 7; ctr4++)
+					unsigned bitmask;
+					for(ctr4 = 0, bitmask = 64; ctr4 < 7; ctr4++, bitmask>>=1)
 					{	//For each of the 7 possible usable strings
-						if(!ctr4 && (strings < 7))
-							continue;	//The MSB is not used unless the track uses 7 strings, don't increment the string number variable
-
-						if((128 >> ctr4) & usedstrings)
+						if(bitmask & usedstrings)
 						{	//If this string is used
-							printf("\t\t\tString %u:\n", stringnum);
+							printf("\t\t\tString %lu:\n", ctr4 + 1);
 							eof_gp_debug_log(inf, "\t\tNote bitmask:  ");
 							bytemask = pack_getc(inf);
 							printf("%u\n", (bytemask & 0xFF));
@@ -1259,19 +1286,19 @@ EOF_SONG *eof_import_gp(const char * fn)
 								byte = pack_getc(inf);
 								printf("%s\n", (byte == 1) ? "normal" : ((byte == 2) ? "tie" : "dead"));
 							}
-							if(bytemask & 1)
-							{	//Time independent duration
-								eof_gp_debug_log(inf, "\t\tTime independent duration:  ");
+							if((bytemask & 1) && (fileversion < 500))
+							{	//Time independent duration (for versions of the format older than 5.x)
+								eof_gp_debug_log(inf, "\t\tTime independent duration values:  ");
 								byte = pack_getc(inf);
-								printf("%d ", byte);
+								printf("%u ", (byte & 0xFF));
 								byte = pack_getc(inf);
-								printf("(%d tuplet)\n", byte);
+								printf("%u\n", (byte & 0xFF));
 							}
 							if(bytemask & 16)
 							{	//Note dynamic
 								eof_gp_debug_log(inf, "\t\tNote dynamic:  ");
-								word = (pack_getc(inf) - 1) % 8;	//Get the dynamic value and remap its values from 0 to 7
-								printf("%s\n", note_dynamics[word]);
+								word = pack_getc(inf) - 1;	//Get the dynamic value and remap its values from 0 to 7
+								printf("%s\n", note_dynamics[word % 8]);
 							}
 							if(bytemask & 32)
 							{	//Note type is defined
@@ -1287,6 +1314,11 @@ EOF_SONG *eof_import_gp(const char * fn)
 								eof_gp_debug_log(inf, "\t\tRight hand fingering:  ");
 								byte = pack_getc(inf);
 								printf("%d\n", byte);
+							}
+							if((bytemask & 1) && (fileversion >= 500))
+							{	//Time independent duration (for versions of the format 5.x or newer)
+								eof_gp_debug_log(inf, "\t\t(skipping 8 bytes of unknown time independent duration data)\n");
+								pack_fseek(inf, 8);		//Unknown data
 							}
 							if(fileversion >= 500)
 							{	//This padding isn't in version 3.x and 4.x files
@@ -1396,6 +1428,43 @@ EOF_SONG *eof_import_gp(const char * fn)
 									eof_gp_debug_log(inf, "\t\t\tHarmonic type:  ");
 									byte = pack_getc(inf);
 									printf("%u\n", (byte & 0xFF));
+									if(byte == 2)
+									{	//Artificial harmonic
+										puts("\t\t\t\t\t(Artificial harmonic)");
+										eof_gp_debug_log(inf, "\t\t\t\tHarmonic note:  ");
+										byte = pack_getc(inf);	//Read harmonic note
+										printf("%s", eof_note_names[(byte + 3) % 12]);
+										byte = pack_getc(inf);	//Read sharp/flat status
+										if(byte == -1)
+										{
+											putchar('b');
+										}
+										else if(byte == 1)
+										{
+											putchar('#');
+										}
+										byte = pack_getc(inf);	//Read octave status
+										if(byte == 0)
+										{
+											printf(" loco");
+										}
+										else if(byte == 1)
+										{
+											printf(" 8va");
+										}
+										else if(byte == 2)
+										{
+											printf(" 15ma");
+										}
+										putchar('\n');
+									}
+									else if(byte == 3)
+									{	//Tapped harmonic
+										puts("\t\t\t\t\t(Tapped harmonic)");
+										eof_gp_debug_log(inf, "\t\t\t\tRight hand fret:  ");
+										byte = pack_getc(inf);
+										printf("%u\n", (byte & 0xFF));
+									}
 								}
 								if(byte2 & 32)
 								{	//Trill
@@ -1412,13 +1481,17 @@ EOF_SONG *eof_import_gp(const char * fn)
 								}
 							}//Note effects
 						}//If this string is used
-						stringnum++;
 					}//For each of the 7 possible usable strings
 					if(fileversion >= 500)
 					{	//Version 5.0 and higher of the file format stores a note transpose mask and unknown data here
 						eof_gp_debug_log(inf, "\tTranspose bitmask:  ");
 						pack_ReadWORDLE(inf, &word);
 						printf("%u\n", word);
+						if(word & 0x800)
+						{	//If bit 11 of the transpose bitmask was set, there is an additional byte of unknown data
+							eof_gp_debug_log(inf, "\t\t(skipping 1 byte of unknown transpose data)\n");
+							pack_fseek(inf, 1);	//Unknown data
+						}
 					}
 				}//For each beat
 			}//For each voice
@@ -1433,8 +1506,9 @@ EOF_SONG *eof_import_gp(const char * fn)
 
 
 	pack_fclose(inf);
+	free(strings);
 	puts("\nSuccess");
-	return NULL;
+	return (EOF_SONG *)1;
 }
 
 void pack_ReadWORDLE(PACKFILE *inf,unsigned *data)
@@ -1599,14 +1673,20 @@ void eof_gp_parse_bend(PACKFILE *inf)
 	//Standalone parse utility
 int main(int argc, char *argv[])
 {
+	EOF_SONG *ptr = NULL;
+
 	if(argc < 2)
 	{
 		puts("Must pass the GP file as a parameter");
-		return 0;
+		return 1;
 	}
 
-	eof_import_gp(argv[1]);
+	ptr = eof_import_gp(argv[1]);
+	if(ptr == NULL)
+	{	//Failed to reach end of parsing
+		return 2;
+	}
 
-	return 0;
+	return 0;	//Return success
 }
 #endif
