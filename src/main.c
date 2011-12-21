@@ -3057,16 +3057,15 @@ int eof_initialize(int argc, char * argv[])
 	install_joystick(JOY_TYPE_AUTODETECT);
 	alogg_detect_endianess(); // make sure OGG player works for PPC
 
-	InitIdleSystem();
-	show_mouse(NULL);
-	eof_load_config("eof.cfg");
-
-	//Start the logging system (unless the user disabled it via preferences)
-	eof_start_logging();
-	eof_log("Logging started during program initialization", 1);
-	eof_log(EOF_VERSION_STRING, 1);
-
 	/* make sure we are in the proper directory before loading external data */
+	get_executable_name(temp_filename, 1024);
+	replace_filename(temp_filename, temp_filename, "", 1024);
+	if(eof_chdir(temp_filename))
+	{
+		allegro_message("Could not change directory to EOF's program folder!\n%s", temp_filename);
+		return 1;
+	}
+
 	if(argc > 1)
 	{
 		if(!file_exists("eof.dat", 0, NULL))
@@ -3080,6 +3079,15 @@ int eof_initialize(int argc, char * argv[])
 			}
 		}
 	}
+
+	//Start the logging system (unless the user disabled it via preferences)
+	eof_start_logging();
+	eof_log("Logging started during program initialization", 1);
+	eof_log(EOF_VERSION_STRING, 1);
+
+	InitIdleSystem();
+	show_mouse(NULL);
+	eof_load_config("eof.cfg");
 
 	/* reset songs path */
 	get_executable_name(eof_songs_path, 1024);
