@@ -7,6 +7,7 @@
 #include "midi.h"	//For eof_apply_ts()
 #include "menu/beat.h"
 #include "menu/file.h"
+#include "utility.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -75,6 +76,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	int i=0;
 	char oggfn[1024] = {0};
 	char searchpath[1024] = {0};
+	char backup_filename[1024] = {0};
 	char oldoggpath[1024] = {0};
 	char errorcode[100] = "Import failed.  Error #";
 	struct al_ffblk info; // for file search
@@ -87,13 +89,27 @@ EOF_SONG * eof_import_chart(const char * fn)
 	eof_log_level &= ~2;	//Disable verbose logging
 	chart = ImportFeedback((char *)fn, &err);
 	if(chart == NULL)
-	{
+	{	//Import failed
 		snprintf(&errorcode[23],50,"%d",err);	//Perform a bounds checked conversion of Allegro's error code to string format
 		alert(errorcode, NULL, errorcode, "OK", NULL, 0, KEY_ENTER);
 		return NULL;
 	}
 	else
 	{
+		/* backup "song.ini" if it exists in the folder with the imported MIDI
+		as it will be overwritten upon save */
+		replace_filename(oggfn, fn, "song.ini", 1024);
+		if(exists(eof_temp_filename))
+		{
+			/* do not overwrite an existing backup, this prevents the original backed up song.ini from
+			being overwritten if the user imports the MIDI again */
+			replace_filename(backup_filename, fn, "song.ini.backup", 1024);
+			if(!exists(backup_filename))
+			{
+				eof_copy_file(oggfn, backup_filename);
+			}
+		}
+
 		/* load audio */
 		replace_filename(oggfn, fn, "guitar.ogg", 1024);	//Look for guitar.ogg by default
 		if((chart->audiofile != NULL) && !exists(oggfn))
