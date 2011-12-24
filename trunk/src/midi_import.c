@@ -371,6 +371,20 @@ EOF_SONG * eof_import_midi(const char * fn)
 		}
 	}
 
+	/* backup "song.ini" if it exists in the folder with the imported MIDI
+	   as it will be overwritten upon save */
+	replace_filename(eof_temp_filename, fn, "song.ini", 1024);
+	if(exists(eof_temp_filename))
+	{
+		/* do not overwrite an existing backup, this prevents the original backed up song.ini from
+		   being overwritten if the user imports the MIDI again */
+		replace_filename(backup_filename, fn, "song.ini.backup", 1024);
+		if(!exists(backup_filename))
+		{
+			eof_copy_file(eof_temp_filename, backup_filename);
+		}
+	}
+
 	sp = eof_create_song_populated();
 	if(!sp)
 	{
