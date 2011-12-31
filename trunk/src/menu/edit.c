@@ -2356,49 +2356,69 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 	{	//If the note is copying from a pro guitar track
 		if(eof_song->track[desttrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If it is pasting into a non pro guitar track, erase all pro guitar flags as they are invalid
-			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_HO);			//Erase the pro hammer on flag
-			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_PO);			//Erase the pro hammer off flag
-			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);		//Erase the pro slide up flag
-			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Erase the pro slide down flag
-			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE);	//Erase the pro string mute flag
-			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE);	//Erase the pro palm mute flag
-			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM);	//Erase the pro strum down flag
-			*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM);		//Erase the pro strum up flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;				//Erase the pro hammer on flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;				//Erase the pro hammer off flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;		//Erase the pro slide up flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;		//Erase the pro slide down flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;	//Erase the pro string mute flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;		//Erase the pro palm mute flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;		//Erase the pro strum down flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM;		//Erase the pro strum mid flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;		//Erase the pro strum up flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;			//Erase the pro bend flag
 		}
 		else
 		{	//If it is pasting into a pro guitar track
 			if(*flags & EOF_NOTE_FLAG_F_HOPO)
 			{	//If the forced HOPO flag is set (ie. note is from a legacy track)
-				*flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Clear that flag
+				*flags &= ~EOF_NOTE_FLAG_F_HOPO;	//Clear that flag
 				*flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;	//Set the pro guitar hammer on flag
 			}
 			if((*flags & EOF_PRO_GUITAR_NOTE_FLAG_HO) && (*flags & EOF_PRO_GUITAR_NOTE_FLAG_PO))
 			{	//If both the hammer on AND the pull off flags are set, clear both
-				*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_HO);
-				*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_PO);
+				*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;
+				*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;
 			}
 			if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
 			{	//If the tap flag is set
 				if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
 				{	//If the hammer on flag is also set, clear both
-					*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_TAP);
-					*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_HO);
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;
 				}
 				if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_PO)
 				{	//If the pull off flag is also set, clear both
-					*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_TAP);
-					*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_PO);
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;
+				}
+				if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+				{	//If the bend flag is also set, clear both
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+				}
+			}
+			if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+			{	//If the bend flag is set
+				if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
+				{	//If the hammer on flag is also set, clear both
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;
+				}
+				if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_PO)
+				{	//If the pull off flag is also set, clear both
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;
 				}
 			}
 			if((*flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && (*flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 			{	//If both the slide up AND the slide down flags are set, clear both
-				*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);
-				*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);
+				*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
+				*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
 			}
 			if((*flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) && (*flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
 			{	//If both the string mute AND the palm mute flags are set, clear both
-				*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE);
-				*flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE);
+				*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;
+				*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
 			}
 		}//If it is pasting into a pro guitar track
 	}//If the note is copying from a pro guitar track

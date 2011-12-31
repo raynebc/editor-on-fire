@@ -1262,6 +1262,10 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		{
 			buffer[index++] = 'T';
 		}
+		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+		{
+			buffer[index++] = '^';
+		}
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
 		{
 			buffer[index++] = '/';
@@ -1293,6 +1297,10 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
 		{
 			buffer[index++] = 'U';
+		}
+		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM)
+		{
+			buffer[index++] = 'M';
 		}
 	}//Check pro guitar statuses
 	else if(track == EOF_TRACK_DRUM)

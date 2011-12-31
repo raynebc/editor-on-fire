@@ -79,6 +79,7 @@ int eof_menu_slider_erase_all(void);			//Removes all slider phrases, freeing phr
 int eof_menu_note_clear_legacy_values(void);	//Resets the legacy bitmasks of all selected notes
 int eof_pro_guitar_toggle_strum_up(void);		//Toggles the strum up status for all selected pro guitar/bass notes, clearing strum down statuses where appropriate
 int eof_pro_guitar_toggle_strum_down(void);		//Toggles the strum down status for all selected pro guitar/bass notes, clearing strum up statuses where appropriate
+int eof_pro_guitar_toggle_strum_mid(void);		//Toggles the strum mid status for all selected pro guitar/bass notes, clearing strum up statuses where appropriate
 int eof_menu_note_remove_strum_direction(void);	//Removes the strum direction status of all selected notes
 int eof_menu_note_toggle_hi_hat_open(void);		//Toggles the open hi hat status for selected yellow drum notes
 int eof_menu_note_toggle_hi_hat_pedal(void);	//Toggles the pedal controlled hi hat status for selected yellow drum notes
@@ -86,6 +87,8 @@ int eof_menu_note_toggle_hi_hat_sizzle(void);	//Toggles the sizzle hi hat status
 int eof_menu_note_toggle_rimshot(void);			//Toggles the rimshot status for selected red notes
 int eof_menu_note_toggle_tapping(void);			//Toggles the tapping status of all selected notes
 int eof_menu_note_remove_tapping(void);			//Removes the tapping status of all selected notes
+int eof_menu_note_toggle_bend(void);			//Toggles the bend status of all selected notes
+int eof_menu_note_remove_bend(void);			//Removes the bend status of all selected notes
 int eof_menu_pro_guitar_toggle_hammer_on(void);	//Toggles the hammer on status of all selected notes
 int eof_menu_pro_guitar_remove_hammer_on(void);	//Removes the hammer on status of all selected notes
 int eof_menu_pro_guitar_toggle_pull_off(void);	//Toggles the pull off status of all selected notes

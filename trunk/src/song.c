@@ -439,9 +439,9 @@ void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 					eof_legacy_track_delete_note(tp, next);			//Delete the next note, as it has been merged with this note
 				}
 				else if(tp->note[i-1]->pos + tp->note[i-1]->length > tp->note[next]->pos - 1)
-				{
+				{	//Otherwise if it would overlap the next note
 					if(!(tp->note[i-1]->flags & EOF_NOTE_FLAG_CRAZY) || (tp->note[i-1]->note & tp->note[next]->note))
-					{
+					{	//Truncate the tail if the note is not marked as "crazy" and the note doesn't try to overlap a gem in the same lane
 						tp->note[i-1]->length = tp->note[next]->pos - tp->note[i-1]->pos - 1;
 					}
 				}

@@ -1009,12 +1009,13 @@ eof_log("\tSecond pass complete", 1);
 	char strumtype[4];					//Used for pro guitar strum direction parsing
 	int strumdiff;						//Used for pro guitar strum direction parsing
 	unsigned long arpegpos[4];			//Used for pro guitar arpeggio parsing
-	char arpegtype[4];					//Used for pro guitar arpeggio parsing
 	int arpegdiff;						//Used for pro guitar arpeggio parsing
 	unsigned long event_realtime;		//Store the delta time converted to realtime to avoid having to convert multiple times per note
 	char prodrums = 0;					//Tracks whether the drum track being written includes Pro drum notation
 	unsigned long tracknum;				//Used to de-obfuscate the legacy track number
 	int phrasediff;						//Used for parsing Sysex phrase markers
+	int slidediff;						//Used for parsing slide markers
+	unsigned char slidevelocity[4];		//Used for parsing slide markers
 	unsigned long openstrumpos[4] = {0}, slideuppos[4] = {0}, slidedownpos[4] = {0}, openhihatpos[4] = {0}, pedalhihatpos[4] = {0}, rimshotpos[4] = {0}, sliderpos[4] = {0};	//Used for parsing Sysex phrase markers
 
 	//Special case:  Very old charts created in Freetar Editor may only contain one track that includes all the tempo and note events
@@ -1457,11 +1458,11 @@ eof_log("\tSecond pass complete", 1);
 									if((eof_get_note_type(sp, picked_track, k) == hopodiff) && (eof_get_note_pos(sp, picked_track, k) >= hopopos[hopodiff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
 									{	//If the note is in the same difficulty as the HOPO phrase, and its timestamp falls between the HOPO On and HOPO Off marker
 										if(hopotype[hopodiff] == 0)
-										{
+										{	//Forced HOPO on
 											eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_NOTE_FLAG_F_HOPO);
 										}
 										else
-										{
+										{	//Forced HOPO off
 											eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_NOTE_FLAG_NO_HOPO);
 										}
 									}
@@ -1749,75 +1750,105 @@ eof_log("\tSecond pass complete", 1);
 							hopotype[3] = 1;
 						}
 
+						/* store slide marker, when the note off for this marker occurs, search for notes within the phrase and apply the status to them */
+						//Slide phrases are marked as lane (1 + 7)
+						unsigned long *slideptr;	//This will point to either the up or down slide position array as appropriate, so the velocity can be checked just once
+						if(eof_import_events[i]->event[j]->d2 >= 108)
+						{	//For slide markers, velocity 108 or higher represents a down slide
+							if(eof_import_events[i]->event[j]->channel == 11)
+							{	//Unless the channel for the marker is 11, in which case it's reversed
+								slideptr = slideuppos;		//Channel 11 reverses the slide direction into an up slide
+							}
+							else
+							{
+								slideptr = slidedownpos;	//The slide marker (if present) would be a down slide
+							}
+						}
+						else
+						{	//Other velocities represent an up slide
+							if(eof_import_events[i]->event[j]->channel == 11)
+							{	//Unless the channel for the marker is 11, in which case it's reversed
+								slideptr = slidedownpos;	//Channel 11 reverses the slide direction into a down slide
+							}
+							else
+							{
+								slideptr = slideuppos;		//The slide marker (if present) would be an up slide
+							}
+						}
+						if(eof_import_events[i]->event[j]->d1 == 24 + 7)
+						{
+							slideptr[0] = event_realtime;
+							slidevelocity[0] = eof_import_events[i]->event[j]->d2;	//Cache the velocity of the slide, because the slide end marker won't use it
+						}
+						else if(eof_import_events[i]->event[j]->d1 == 48 + 7)
+						{
+							slideptr[1] = event_realtime;
+							slidevelocity[1] = eof_import_events[i]->event[j]->d2;	//Cache the velocity of the slide, because the slide end marker won't use it
+						}
+						else if(eof_import_events[i]->event[j]->d1 == 72 + 7)
+						{
+							slideptr[2] = event_realtime;
+							slidevelocity[2] = eof_import_events[i]->event[j]->d2;	//Cache the velocity of the slide, because the slide end marker won't use it
+						}
+						else if(eof_import_events[i]->event[j]->d1 == 96 + 7)
+						{
+							slideptr[3] = event_realtime;
+							slidevelocity[3] = eof_import_events[i]->event[j]->d2;	//Cache the velocity of the slide, because the slide end marker won't use it
+						}
+
 						/* store arpeggio marker, when the note off for this marker occurs, search for notes with same position and apply it to them */
 						//Arpeggio phrases on are marked as lane (1 + 8)
 						if(eof_import_events[i]->event[j]->d1 == 24 + 8)
 						{
 							arpegpos[0] = event_realtime;
-							arpegtype[0] = 0;
 						}
 						else if(eof_import_events[i]->event[j]->d1 == 48 + 8)
 						{
 							arpegpos[1] = event_realtime;
-							arpegtype[1] = 0;
 						}
 						else if(eof_import_events[i]->event[j]->d1 == 72 + 8)
 						{
 							arpegpos[2] = event_realtime;
-							arpegtype[2] = 0;
 						}
 						else if(eof_import_events[i]->event[j]->d1 == 96 + 8)
 						{
 							arpegpos[3] = event_realtime;
-							arpegtype[3] = 0;
 						}
 
 						/* store strum direction marker, when the note off for this marker occurs, search for notes with same position and apply it to them */
-						if((eof_import_events[i]->event[j]->d2 == 96) && (eof_import_events[i]->event[j]->channel == 13))
-						{	//Lane (1 + 9), Velocity 96 and channel 13 are used in up strum markers
-							if(eof_import_events[i]->event[j]->d1 == 24 + 9)
-							{
-								strumpos[0] = event_realtime;
-								strumtype[0] = 0;
-							}
-							else if(eof_import_events[i]->event[j]->d1 == 48 + 9)
-							{
-								strumpos[1] = event_realtime;
-								strumtype[1] = 0;
-							}
-							else if(eof_import_events[i]->event[j]->d1 == 72 + 9)
-							{
-								strumpos[2] = event_realtime;
-								strumtype[2] = 0;
-							}
-							else if(eof_import_events[i]->event[j]->d1 == 96 + 9)
-							{
-								strumpos[3] = event_realtime;
-								strumtype[3] = 0;
-							}
+						//Lane (1 + 9), channel 13 is used in up strum markers
+						char strum;	//Will store the strum type, to reduce duplicated logic below
+						if(eof_import_events[i]->event[j]->channel == 13)
+						{	//Channel 13 is used in up strum markers
+							strum = 0;
 						}
-						if((eof_import_events[i]->event[j]->d2 == 114) && (eof_import_events[i]->event[j]->channel == 15))
-						{	//Lane (1 + 9), Velocity 114 and channel 15 are used in down strum markers
-							if(eof_import_events[i]->event[j]->d1 == 24 + 9)
-							{
-								strumpos[0] = event_realtime;
-								strumtype[0] = 1;
-							}
-							else if(eof_import_events[i]->event[j]->d1 == 48 + 9)
-							{
-								strumpos[1] = event_realtime;
-								strumtype[1] = 1;
-							}
-							else if(eof_import_events[i]->event[j]->d1 == 72 + 9)
-							{
-								strumpos[2] = event_realtime;
-								strumtype[2] = 1;
-							}
-							else if(eof_import_events[i]->event[j]->d1 == 96 + 9)
-							{
-								strumpos[3] = event_realtime;
-								strumtype[3] = 1;
-							}
+						else if(eof_import_events[i]->event[j]->channel == 14)
+						{	//Channel 14 is used in mid strum markers
+							strum = 1;
+						}
+						else if(eof_import_events[i]->event[j]->channel == 15)
+						{	//Channel 15 is used in down strum markers
+							strum = 2;
+						}
+						if(eof_import_events[i]->event[j]->d1 == 24 + 9)
+						{
+							strumpos[0] = event_realtime;
+							strumtype[0] = strum;
+						}
+						else if(eof_import_events[i]->event[j]->d1 == 48 + 9)
+						{
+							strumpos[1] = event_realtime;
+							strumtype[1] = strum;
+						}
+						else if(eof_import_events[i]->event[j]->d1 == 72 + 9)
+						{
+							strumpos[2] = event_realtime;
+							strumtype[2] = strum;
+						}
+						else if(eof_import_events[i]->event[j]->d1 == 96 + 9)
+						{
+							strumpos[3] = event_realtime;
+							strumtype[3] = strum;
 						}
 
 						/* arpeggios, solos, star power, tremolos and trills */
@@ -1890,12 +1921,16 @@ eof_log("\tSecond pass complete", 1);
 								sp->pro_guitar_track[tracknum]->note[notenum]->ghost |= diff_chart[diff];	//Set the ghost flag for this gem's string
 							}
 							else if(eof_import_events[i]->event[j]->channel == 2)
-							{	//If this note was sent over channel 2, it is a forced hammer on
-								sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;	//Set the forced HO flag
+							{	//If this note was sent over channel 2, it is a bend
+								sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;	//Set the bend flag
 							}
 							else if(eof_import_events[i]->event[j]->channel == 3)
 							{	//If this note was sent over channel 3, the gem is muted
 								sp->pro_guitar_track[tracknum]->note[notenum]->frets[diff] |= 0x80;	//Set the MSB to indicate the string is muted
+							}
+							else if(eof_import_events[i]->event[j]->channel == 4)
+							{	//If this note was sent over channel 4, it is tapped
+								sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_TAP;	//Set the tap flag
 							}
 						}
 					}//Note on event
@@ -1932,6 +1967,63 @@ eof_log("\tSecond pass complete", 1);
 							}
 						}/* detect forced HOPO */
 
+						/* detect slide markers */
+						slidediff = -1;	//Don't process a slide marker unless one was found
+						if(eof_import_events[i]->event[j]->d1 == 24 + 7)
+						{
+							slidediff = 0;
+						}
+						else if(eof_import_events[i]->event[j]->d1 == 48 + 7)
+						{
+							slidediff = 1;
+						}
+						else if(eof_import_events[i]->event[j]->d1 == 72 + 7)
+						{
+							slidediff = 2;
+						}
+						else if(eof_import_events[i]->event[j]->d1 == 96 + 7)
+						{
+							slidediff = 3;
+						}
+						if(slidediff >= 0)
+						{	//If a slide marker was found
+							unsigned long *slideptr;	//This will point to either the up or down slide position array as appropriate, so the velocity can be checked just once
+							unsigned long slideflag;	//Cache the slide flag to avoid having to do redundant checks
+							if(slidevelocity[slidediff] >= 108)
+							{	//For slide markers, velocity 108 or higher represents a down slide.  Read the slide velocity that was cached at the start of the slide
+								if(eof_import_events[i]->event[j]->channel == 11)
+								{	//Unless the channel for the marker is 11, in which case it's reversed
+									slideptr = slideuppos;		//Channel 11 reverses the slide direction into an up slide
+									slideflag = EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
+								}
+								else
+								{
+									slideptr = slidedownpos;	//The slide marker is a down slide
+									slideflag = EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+								}
+							}
+							else
+							{	//Other velocities represent an up slide
+								if(eof_import_events[i]->event[j]->channel == 11)
+								{	//Unless the channel for the marker is 11, in which case it's reversed
+									slideptr = slidedownpos;	//Channel 11 reverses the slide direction into a down slide
+									slideflag = EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+								}
+								else
+								{
+									slideptr = slideuppos;		//The slide marker is an up slide
+									slideflag = EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
+								}
+							}
+							for(k = note_count[picked_track] - 1; k >= first_note; k--)
+							{	//Check for each note that has been imported
+								if((eof_get_note_type(sp, picked_track, k) == slidediff) && (eof_get_note_pos(sp, picked_track, k) >= slideptr[slidediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+								{	//If the note is in the same difficulty as the slide marker, and its timestamp falls between the start and stop of the marker
+									eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | slideflag);	//Set the appropriate slide flag for the note
+								}
+							}
+						}
+
 						/* detect arpeggio markers */
 						arpegdiff = -1;	//Don't process an arpeggio marker unless one was found
 						if(eof_import_events[i]->event[j]->d1 == 24 + 8)
@@ -1961,27 +2053,8 @@ eof_log("\tSecond pass complete", 1);
 
 						/* detect strum direction markers */
 						strumdiff = -1;	//Don't process a strum marker unless one was found
-						if(eof_import_events[i]->event[j]->channel == 13)
-						{	//Lane (1 + 9), Velocity 96 and channel 13 are used in up strum markers
-							if(eof_import_events[i]->event[j]->d1 == 24 + 9)
-							{
-								strumdiff = 0;
-							}
-							else if(eof_import_events[i]->event[j]->d1 == 48 + 9)
-							{
-								strumdiff = 1;
-							}
-							else if(eof_import_events[i]->event[j]->d1 == 72 + 9)
-							{
-								strumdiff = 2;
-							}
-							else if(eof_import_events[i]->event[j]->d1 == 96 + 9)
-							{
-								strumdiff = 3;
-							}
-						}
-						if(eof_import_events[i]->event[j]->channel == 15)
-						{	//Lane (1 + 9), Velocity 114 and channel 15 are used in down strum markers
+						if((eof_import_events[i]->event[j]->channel >= 13) && (eof_import_events[i]->event[j]->channel <= 15))
+						{	//Lane (1 + 9), channel 13, 14 and 15 are used in up, mid and down strum markers
 							if(eof_import_events[i]->event[j]->d1 == 24 + 9)
 							{
 								strumdiff = 0;
@@ -2008,6 +2081,10 @@ eof_log("\tSecond pass complete", 1);
 									if(strumtype[strumdiff] == 0)
 									{	//This was an up strum marker
 										eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM);
+									}
+									else if(strumtype[strumdiff] == 1)
+									{	//This was a mid strum marker
+										eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM);
 									}
 									else
 									{	//This was a down strum marker
