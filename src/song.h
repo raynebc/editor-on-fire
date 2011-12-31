@@ -42,6 +42,8 @@
 #define EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE		32768	//This flag will represent a note whose strings are muted by the strumming hand
 #define EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM		262144	//This flag will represent a chord that is played by strumming up
 #define EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM		524288	//This flag will represent a chord that is played by strumming down
+#define EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM		1048576	//This flag will represent a chord that is played by strumming in the middle of the strings (ie. barely playing or not playing strings 1 and 6)
+#define EOF_PRO_GUITAR_NOTE_FLAG_BEND			2097152	//This flag will represent a note that is bent after it is picked
 
 //The following flags pertain to drum notes
 #define EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN	512		//This flag means the yellow cymbal will be displayed in Phase Shift as an open hi hat (lane 3)

@@ -702,10 +702,18 @@ void eof_read_editor_keys(void)
 		key[KEY_Y] = 0;
 	}
 
-	/* toggle blue cymbal (CTRL+B) */
+	/* toggle blue cymbal (CTRL+B in the drum track) */
+	/* toggle bend (CTRL+B in a pro guitar track) */
 	if(key[KEY_B] && KEY_EITHER_CTRL)
 	{	//CTRL+B will toggle Pro blue cymbal notation
-		eof_menu_note_toggle_rb3_cymbal_blue();
+		if(eof_selected_track == EOF_TRACK_DRUM)
+		{	//If the drum track is active
+			eof_menu_note_toggle_rb3_cymbal_blue();
+		}
+		else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{
+			eof_menu_note_toggle_bend();
+		}
 		key[KEY_B] = 0;
 	}
 
@@ -1035,8 +1043,9 @@ void eof_read_editor_keys(void)
 		key[KEY_STOP] = 0;
 	}
 
-	/* toggle palm muting (CTRL+M in a non vocal track) */
+	/* toggle palm muting (CTRL+M in a pro guitar track) */
 	/* mark/remark lyric phrase (CTRL+M in a vocal track) */
+	/* toggle strum mid (SHIFT+M in a pro guitar track) */
 	/* toggle metronome (M) */
 	if(key[KEY_M])
 	{
@@ -1053,7 +1062,14 @@ void eof_read_editor_keys(void)
 		}
 		else
 		{
-			eof_menu_edit_metronome();
+			if(KEY_EITHER_SHIFT)
+			{	//SHIFT+M toggles mid strum direction
+				eof_pro_guitar_toggle_strum_mid();
+			}
+			else
+			{	//M without SHIFT or CTRL toggles metronome
+				eof_menu_edit_metronome();
+			}
 		}
 		key[KEY_M] = 0;
 	}

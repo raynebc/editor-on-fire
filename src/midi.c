@@ -1240,9 +1240,17 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 				/* write note gems */
 				for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
 				{	//For each of the 6 usable strings
-					if((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) || (sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] & 0x80))
+					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
+					{	//Tapped notes are written on channel 4
+						channel = 4;
+					}
+					else if((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) || (sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] & 0x80))
 					{	//Mute gems are written on channel 3
 						channel = 3;
+					}
+					else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+					{	//Bent notes are written on channel 2
+						channel = 2;
 					}
 					else if(sp->pro_guitar_track[tracknum]->note[i]->ghost & bitmask)
 					{	//Ghost note gems are written on channel 1
@@ -1278,6 +1286,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 				/* write slide sections */
 				if((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 				{	//If this note slides up or down
+//	The correct method to mark slides in RB3 has been found, the sysex method is deprecated and will remain exported for the time being
 					if(featurerestriction == 0)
 					{	//Only write the slide Sysex notation if not writing a Rock Band compliant MIDI
 						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
@@ -1296,30 +1305,32 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide stop marker
 					}
 
-					//This isn't the correct RB3 slide logic, but Bigjoe5 has indicated he can control this type of
-					//slide marker artificially by using a ghost note with a higher/lower fret value than that of the
-					//note that should slide
 					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
 					{	//If this note slides down
-						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 7, 104, 0);	//Slide markers are note # (lane 1 + 7)
-						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 7, 104, 0);
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 7, 108, 0);	//Slide markers are note # (lane 1 + 7).  Fret 8 or higher triggers a down slide in RB3
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 7, 108, 0);
 					}
 					else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
 					{	//If this note slides up
-						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 7, 102, 0);
-						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 7, 102, 0);
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 7, 107, 0);	//Fret 7 or lower triggers an up slide in RB3
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 7, 107, 0);
 					}
 				}
 
 				/* write strum direction markers */
 				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM)
 				{	//If this note strums down
-					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 9, 114, 15);	//Down strum markers are note # (lane 1 + 9), velocity 114, channel 15
+					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 9, 114, 15);	//Down strum markers are note # (lane 1 + 9), channel 15 (velocity 114 is typical)
 					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 9, velocity, 15);
+				}
+				else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM)
+				{	//If this note strums in the middle
+					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 9, 109, 14);	//Down strum markers are note # (lane 1 + 9), channel 14 (velocity 109 is typical)
+					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 9, velocity, 14);
 				}
 				else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
 				{	//If this note strums up
-					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 9, 96, 13);	//Down strum markers are note # (lane 1 + 9), velocity 96, channel 13
+					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 9, 96, 13);	//Down strum markers are note # (lane 1 + 9), channel 13 (velocity 96 is typical)
 					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 9, velocity, 13);
 				}
 
