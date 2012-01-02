@@ -1266,6 +1266,10 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		{
 			buffer[index++] = '^';
 		}
+		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC)
+		{
+			buffer[index++] = '*';
+		}
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
 		{
 			buffer[index++] = '/';

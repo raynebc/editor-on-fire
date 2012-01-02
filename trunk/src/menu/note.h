@@ -89,17 +89,26 @@ int eof_menu_note_toggle_tapping(void);			//Toggles the tapping status of all se
 int eof_menu_note_remove_tapping(void);			//Removes the tapping status of all selected notes
 int eof_menu_note_toggle_bend(void);			//Toggles the bend status of all selected notes
 int eof_menu_note_remove_bend(void);			//Removes the bend status of all selected notes
+int eof_menu_note_toggle_harmonic(void);		//Toggles the harmonic status of all selected notes
+int eof_menu_note_remove_harmonic(void);		//Removes the harmonic status of all selected notes
 int eof_menu_pro_guitar_toggle_hammer_on(void);	//Toggles the hammer on status of all selected notes
 int eof_menu_pro_guitar_remove_hammer_on(void);	//Removes the hammer on status of all selected notes
 int eof_menu_pro_guitar_toggle_pull_off(void);	//Toggles the pull off status of all selected notes
 int eof_menu_pro_guitar_remove_pull_off(void);	//Removes the pull off status of all selected notes
 
-int eof_menu_note_toggle_green(void);
-int eof_menu_note_toggle_red(void);
-int eof_menu_note_toggle_yellow(void);
-int eof_menu_note_toggle_blue(void);
-int eof_menu_note_toggle_purple(void);
-int eof_menu_note_toggle_orange(void);
+int eof_menu_note_toggle_green(void);	//Toggles the gem on lane 1 (originally colored green)
+int eof_menu_note_toggle_red(void);		//Toggles the gem on lane 2 (originally colored red)
+int eof_menu_note_toggle_yellow(void);	//Toggles the gem on lane 3 (originally colored yellow)
+int eof_menu_note_toggle_blue(void);	//Toggles the gem on lane 4 (originally colored blue)
+int eof_menu_note_toggle_purple(void);	//Toggles the gem on lane 5 (originally colored purple)
+int eof_menu_note_toggle_orange(void);	//Toggles the gem on lane 6 (originally colored orange)
+
+int eof_menu_note_clear_green(void);	//Clears the gem on lane 1 (originally colored green)
+int eof_menu_note_clear_red(void);		//Clears the gem on lane 2 (originally colored red)
+int eof_menu_note_clear_yellow(void);	//Clears the gem on lane 3 (originally colored yellow)
+int eof_menu_note_clear_blue(void);		//Clears the gem on lane 4 (originally colored blue)
+int eof_menu_note_clear_purple(void);	//Clears the gem on lane 5 (originally colored purple)
+int eof_menu_note_clear_orange(void);	//Clears the gem on lane 6 (originally colored orange)
 
 int eof_menu_split_lyric(void);
 int eof_menu_note_edit_name(void);				//Enables the name for selected notes to be altered

@@ -2366,6 +2366,7 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM;		//Erase the pro strum mid flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;		//Erase the pro strum up flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;			//Erase the pro bend flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;		//Erase the pro harmonic flag
 		}
 		else
 		{	//If it is pasting into a pro guitar track
@@ -2396,6 +2397,11 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;
 					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;
 				}
+				if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC)
+				{	//If the harmonic flag is also set, clear both
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
+				}
 			}
 			if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
 			{	//If the bend flag is set
@@ -2408,6 +2414,11 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 				{	//If the pull off flag is also set, clear both
 					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;
 					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;
+				}
+				if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC)
+				{	//If the harmonic flag is also set, clear both
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
 				}
 			}
 			if((*flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && (*flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))

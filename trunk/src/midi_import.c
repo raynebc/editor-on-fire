@@ -1817,7 +1817,7 @@ eof_log("\tSecond pass complete", 1);
 
 						/* store strum direction marker, when the note off for this marker occurs, search for notes with same position and apply it to them */
 						//Lane (1 + 9), channel 13 is used in up strum markers
-						char strum;	//Will store the strum type, to reduce duplicated logic below
+						char strum = 0;	//Will store the strum type, to reduce duplicated logic below
 						if(eof_import_events[i]->event[j]->channel == 13)
 						{	//Channel 13 is used in up strum markers
 							strum = 0;
@@ -1931,6 +1931,10 @@ eof_log("\tSecond pass complete", 1);
 							else if(eof_import_events[i]->event[j]->channel == 4)
 							{	//If this note was sent over channel 4, it is tapped
 								sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_TAP;	//Set the tap flag
+							}
+							else if(eof_import_events[i]->event[j]->channel == 5)
+							{	//If this note was sent over channel 5, it is a harmonic
+								sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;	//Set the harmonic flag
 							}
 						}
 					}//Note on event
@@ -2274,15 +2278,15 @@ eof_log("\tThird pass complete", 1);
 			{	//Only process not BRE notes
 				if((sp->legacy_track[tracknum]->note[k]->note & 4) && ((sp->legacy_track[tracknum]->note[k]->flags & EOF_NOTE_FLAG_Y_CYMBAL) == 0))
 				{	//If this note has a yellow gem with the cymbal marker cleared
-					eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],k,EOF_NOTE_FLAG_Y_CYMBAL,0);	//Ensure all drum notes at this position have the flag cleared
+					eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],k,EOF_NOTE_FLAG_Y_CYMBAL,0,1);	//Ensure all drum notes at this position have the flag cleared
 				}
 				if((sp->legacy_track[tracknum]->note[k]->note & 8) && ((sp->legacy_track[tracknum]->note[k]->flags & EOF_NOTE_FLAG_B_CYMBAL) == 0))
 				{	//If this note has a blue gem with the cymbal marker cleared
-					eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],k,EOF_NOTE_FLAG_B_CYMBAL,0);	//Ensure all drum notes at this position have the flag cleared
+					eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],k,EOF_NOTE_FLAG_B_CYMBAL,0,1);	//Ensure all drum notes at this position have the flag cleared
 				}
 				if((sp->legacy_track[tracknum]->note[k]->note & 16) && ((sp->legacy_track[tracknum]->note[k]->flags & EOF_NOTE_FLAG_G_CYMBAL) == 0))
 				{	//If this note has a green gem with the cymbal marker cleared
-					eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],k,EOF_NOTE_FLAG_G_CYMBAL,0);	//Ensure all drum notes at this position have the flag cleared
+					eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],k,EOF_NOTE_FLAG_G_CYMBAL,0,1);	//Ensure all drum notes at this position have the flag cleared
 				}
 			}
 		}
