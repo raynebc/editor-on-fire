@@ -1240,7 +1240,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 				/* write note gems */
 				for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
 				{	//For each of the 6 usable strings
-					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
+					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC)
+					{	//Harmonic notes are written on channel 5
+						channel = 5;
+					}
+					else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
 					{	//Tapped notes are written on channel 4
 						channel = 4;
 					}

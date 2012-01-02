@@ -1589,15 +1589,26 @@ void eof_read_editor_keys(void)
 
 	/* cycle HOPO status (H in a legacy track) */
 	/* toggle hammer on status (H in a pro guitar track) */
+	/* toggle harmonic (CTRL+H in a pro guitar track) */
 		if(key[KEY_H] && !KEY_EITHER_ALT)
 		{
-			if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+			if(KEY_EITHER_CTRL)
 			{
-				eof_menu_hopo_cycle();
+				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{	//Toggle harmonic
+					eof_menu_note_toggle_harmonic();
+				}
 			}
-			else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			else
 			{
-				eof_menu_pro_guitar_toggle_hammer_on();
+				if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
+				{	//Cycle HO/PO
+					eof_menu_hopo_cycle();
+				}
+				else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+				{	//Toggle HO
+					eof_menu_pro_guitar_toggle_hammer_on();
+				}
 			}
 			key[KEY_H] = 0;
 		}
@@ -4505,15 +4516,15 @@ void eof_mark_edited_note_as_cymbal(EOF_SONG *sp, unsigned long track, unsigned 
 
 		if((sp->legacy_track[tracknum]->note[notenum]->note & 4) && (bitmask & 4))
 		{	//If the note was changed to include a yellow note
-			eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,EOF_NOTE_FLAG_Y_CYMBAL,1);	//Set the yellow cymbal flag on all drum notes at this position
+			eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,EOF_NOTE_FLAG_Y_CYMBAL,1,0);	//Set the yellow cymbal flag on all drum notes at this position
 		}
 		if((sp->legacy_track[tracknum]->note[notenum]->note & 8) && (bitmask & 8))
 		{	//If the note was changed to include a blue note
-			eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,EOF_NOTE_FLAG_B_CYMBAL,1);	//Set the blue cymbal flag on all drum notes at this position
+			eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,EOF_NOTE_FLAG_B_CYMBAL,1,0);	//Set the blue cymbal flag on all drum notes at this position
 		}
 		if((sp->legacy_track[tracknum]->note[notenum]->note & 16) && (bitmask & 16))
 		{	//If the note was changed to include a green note
-			eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,EOF_NOTE_FLAG_G_CYMBAL,1);	//Set the green cymbal flag on all drum notes at this position
+			eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,EOF_NOTE_FLAG_G_CYMBAL,1,0);	//Set the green cymbal flag on all drum notes at this position
 		}
 	}
 }

@@ -481,11 +481,11 @@ void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 			{	//If this note contains a lane 5 gem, perform green cymbal cleanup
 				if(eof_check_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_G_CYMBAL))
 				{	//If any notes at this position are marked as a green cymbal
-					eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_G_CYMBAL,1);	//Mark all notes at this position as green cymbal
+					eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_G_CYMBAL,1,1);	//Mark all notes at this position as green cymbal
 				}
 				else
 				{
-					eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_G_CYMBAL,0);	//Mark all notes at this position as green drum
+					eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_G_CYMBAL,0,1);	//Mark all notes at this position as green drum
 				}
 				lastcheckedgreenpos = tp->note[i]->pos;	//Remember that green notes at this position were already checked and fixed if applicable
 			}
@@ -493,11 +493,11 @@ void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 			{	//If this note contains a lane 4 gem, perform blue cymbal cleanup
 				if(eof_check_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_B_CYMBAL))
 				{	//If any notes at this position are marked as a blue cymbal
-					eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_B_CYMBAL,1);	//Mark all notes at this position as blue cymbal
+					eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_B_CYMBAL,1,1);	//Mark all notes at this position as blue cymbal
 				}
 				else
 				{
-					eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_B_CYMBAL,0);	//Mark all notes at this position as blue drum
+					eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_B_CYMBAL,0,1);	//Mark all notes at this position as blue drum
 				}
 				lastcheckedbluepos = tp->note[i]->pos;	//Remember that blue notes at this position were already checked and fixed if applicable
 			}
@@ -505,15 +505,15 @@ void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 			{	//If this note contains a lane 3 gem, perform yellow cymbal cleanup
 				if(eof_check_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_Y_CYMBAL))
 				{	//If any notes at this position are marked as a yellow cymbal
-					eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_Y_CYMBAL,1);	//Mark all notes at this position as yellow cymbal
+					eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_Y_CYMBAL,1,1);	//Mark all notes at this position as yellow cymbal
 				}
 				else
 				{
-					eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_Y_CYMBAL,0);	//Mark all notes at this position as yellow drum
+					eof_set_flags_at_legacy_note_pos(tp,i,EOF_NOTE_FLAG_Y_CYMBAL,0,1);	//Mark all notes at this position as yellow drum
 				}
 				lastcheckedyellowpos = tp->note[i]->pos;	//Remember that yellow notes at this position were already checked and fixed if applicable
 			}
-		}
+		}//For each note in the drum track
 	}//If the track being cleaned is a drum track
 }
 
@@ -1042,7 +1042,7 @@ char eof_check_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,un
 	return 0;	//Return no match
 }
 
-void eof_set_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,unsigned long flag,char operation)
+void eof_set_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,unsigned long flag,char operation,char startpoint)
 {
 // 	eof_log("eof_set_flags_at_legacy_note_pos() entered");
 
@@ -1050,6 +1050,14 @@ void eof_set_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,unsi
 
 	if((tp == NULL) || (notenum >= tp->notes))
 		return;
+
+	if(!startpoint)
+	{	//If the calling function wanted to start at the first note with the referenced note's position
+		while((notenum > 0) && (tp->note[notenum]->pos == tp->note[notenum - 1]->pos))
+		{	//If there is a prior note and it is at the same timestamp
+			notenum--;	//Re-focus the start of this procedure to that note
+		}
+	}
 
 	for(ctr = notenum; ctr < tp->notes; ctr++)
 	{	//For each note starting with the one specified

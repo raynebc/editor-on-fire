@@ -231,6 +231,7 @@ int eof_info_color;
 
 int eof_use_rb_colors = 1;	//If nonzero, use track-specific Rock Band coloring instead of the old static EOF color set
 int eof_add_new_notes_to_selection = 0;	//If nonzero, newly added gems cause notes to be added to the selection instead of the selection being cleared first
+int eof_drum_modifiers_affect_all_difficulties = 1;	//If nonzero, a drum modifier (ie. open/pedal hi hat or rim shot apply to any notes at the same position in non active difficulties)
 eof_color eof_colors[6];	//Contain the color definitions for each lane
 eof_color eof_color_green_struct, eof_color_red_struct, eof_color_yellow_struct, eof_color_blue_struct, eof_color_orange_struct, eof_color_purple_struct;
 	//Color data
@@ -4019,7 +4020,7 @@ char eof_color_blue_name[] = "&Blue";
 char eof_color_orange_name[] = "&Orange";
 char eof_color_purple_name[] = "&Purple";
 
-char eof_note_toggle_menu_string_1[20] = "";	//These strings are used in the eof_note_toggle_menu[] array
+char eof_note_toggle_menu_string_1[20] = "";	//These strings are used in the eof_note_toggle_menu[] and eof_note_clear_menu[] arrays
 char eof_note_toggle_menu_string_2[20] = "";
 char eof_note_toggle_menu_string_3[20] = "";
 char eof_note_toggle_menu_string_4[20] = "";
@@ -4160,7 +4161,7 @@ void eof_set_color_set(void)
 		}
 	}
 
-	//Update the strings for the Note>Toggle menu
+	//Update the strings for the Note>Toggle and Note>Clear menus
 	for(x = 0; x < 6; x++)
 	{
 		 snprintf(eof_note_toggle_menu_strings[x], sizeof(eof_note_toggle_menu_string_1), "%s\tShift+%d", eof_colors[x].colorname, x+1);

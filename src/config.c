@@ -131,6 +131,7 @@ void eof_load_config(char * fn)
 	enable_logging = get_config_int("preferences", "enable_logging", 1);
 	eof_use_rb_colors = get_config_int("preferences", "eof_use_rb_colors", 1);
 	eof_add_new_notes_to_selection = get_config_int("preferences", "eof_add_new_notes_to_selection", 0);
+	eof_drum_modifiers_affect_all_difficulties = get_config_int("preferences", "eof_drum_modifiers_affect_all_difficulties", 1);
 
 	/* read display settings */
 	eof_screen_layout.mode = get_config_int("display", "display_mode", 0);
@@ -235,6 +236,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "enable_logging", enable_logging);
 	set_config_int("preferences", "eof_use_rb_colors", eof_use_rb_colors);
 	set_config_int("preferences", "eof_add_new_notes_to_selection", eof_add_new_notes_to_selection);
+	set_config_int("preferences", "eof_drum_modifiers_affect_all_difficulties", eof_drum_modifiers_affect_all_difficulties);
 
 	/* write display settings */
 	set_config_int("display", "display_mode", eof_screen_layout.mode);

@@ -44,6 +44,7 @@
 #define EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM		524288	//This flag will represent a chord that is played by strumming down
 #define EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM		1048576	//This flag will represent a chord that is played by strumming in the middle of the strings (ie. barely playing or not playing strings 1 and 6)
 #define EOF_PRO_GUITAR_NOTE_FLAG_BEND			2097152	//This flag will represent a note that is bent after it is picked
+#define EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC		4194304	//This flag will represent a note that is played as a harmonic
 
 //The following flags pertain to drum notes
 #define EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN	512		//This flag means the yellow cymbal will be displayed in Phase Shift as an open hi hat (lane 3)
@@ -496,7 +497,7 @@ void *eof_track_add_create_note2(EOF_SONG *sp, unsigned long track, EOF_NOTE *no
 	//If track refers to a pro guitar track, a pro guitar note is partially initialized and the rest of the data is set to default values, ie. fret values set to 0xFF (muted)
 void eof_track_sort_notes(EOF_SONG *sp, unsigned long track);		//Calls the appropriate sort function for the specified track
 long eof_track_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the note/lyric one after the specified note/lyric number that is in the same difficulty, or -1 if there is none
-void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel);	//Calls the appropriate fixup function for the specified track
+void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel);	//Calls the appropriate fixup function for the specified track.  If sel is zero, the currently selected note is deselected automatically.
 void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track);	//Used during MIDI import to mark a note as "crazy" if it overlaps with the next note in the same difficulty
 void eof_track_add_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a star power phrase at the specified start and stop timestamp for the specified track
 void eof_track_delete_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long pathnum);	//Deletes the specified star power phrase and moves all phrases that follow back in the array one position
@@ -558,7 +559,7 @@ void eof_vocal_track_delete_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric);	//
 void eof_vocal_track_sort_lyrics(EOF_VOCAL_TRACK * tp);		//Performs a quicksort of the lyrics array
 int eof_song_qsort_lyrics(const void * e1, const void * e2);	//The comparitor function used to quicksort the lyrics array
 long eof_fixup_next_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric);	//Returns the next lyric, or -1 if there is none
-void eof_vocal_track_fixup_lyrics(EOF_VOCAL_TRACK * tp, int sel);	//Performs cleanup of the specified lyric track
+void eof_vocal_track_fixup_lyrics(EOF_VOCAL_TRACK * tp, int sel);	//Performs cleanup of the specified lyric track.  If sel is zero, the currently selected note is deselected automatically.
 void eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a lyric phrase at the specified start and stop timestamp for the specified track
 void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, unsigned long index);	//Deletes the specified lyric phrase and moves all phrases that follow back in the array one position
 
@@ -567,7 +568,7 @@ void eof_pro_guitar_track_sort_notes(EOF_PRO_GUITAR_TRACK * tp);	//Performs a qu
 int eof_song_qsort_pro_guitar_notes(const void * e1, const void * e2);	//The comparitor function used to quicksort the pro guitar notes array
 void eof_pro_guitar_track_delete_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position
 long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Returns the note one after the specified note number that is in the same difficulty, or -1 if there is none
-void eof_pro_guitar_track_fixup_notes(EOF_PRO_GUITAR_TRACK * tp, int sel);	//Performs cleanup of the specified instrument track
+void eof_pro_guitar_track_fixup_notes(EOF_PRO_GUITAR_TRACK * tp, int sel);	//Performs cleanup of the specified instrument track.  If sel is zero, the currently selected note is deselected automatically.
 void eof_pro_guitar_track_add_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a star power phrase at the specified start and stop timestamp for the specified track
 void eof_pro_guitar_track_delete_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned long index);	//Deletes the specified star power phrase and moves all phrases that follow back in the array one position
 void eof_pro_guitar_track_add_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track
@@ -615,8 +616,11 @@ char eof_check_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,un
 	//for the specified flag.  If any of the notes have the flag set, nonzero is returned
 	//This is used for writing RB3 style pro drum phrases during MIDI export
 	//The track's notes array is expected to be sorted
-void eof_set_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,unsigned long flag,char operation);
-	//Sets or clears the specified flag on all notes at the specified note's timestamp, starting at note #notenum
+void eof_set_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,unsigned long flag,char operation,char startpoint);
+	//Sets or clears the specified flag on all notes at the specified note's timestamp
+	//If startpoint is 0, the process will start from the first note in the track with note #notenum's position
+	//	otherwise the process will start from note #notenum
+	//If the calling function is processing sorted notes in ascending order without filtering by difficulty or selected status, startpoint can be set to nonzero to save needless processing
 	//If operation is 0, the specified flag is cleared on applicable notes
 	//If operation is 1, the specified flag is set on applicable notes
 	//If operation is 2, the specified flag is toggled on applicable notes
