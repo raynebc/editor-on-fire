@@ -957,7 +957,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[15].flags = eof_use_rb_colors ? D_SELECTED : 0;				//Use Rock Band color set
 	eof_preferences_dialog[16].flags = eof_add_new_notes_to_selection ? D_SELECTED : 0;	//Add new notes to selection
 	eof_preferences_dialog[17].flags = eof_drum_modifiers_affect_all_difficulties ? D_SELECTED : 0;	//Drum modifiers affect all diff's
-	eof_preferences_dialog[18].d1 = eof_input_mode;										//Input method
+	eof_preferences_dialog[19].d1 = eof_input_mode;										//Input method
 
 	do
 	{	//Run the dialog
@@ -981,7 +981,7 @@ int eof_menu_file_preferences(void)
 			eof_use_rb_colors = (eof_preferences_dialog[15].flags == D_SELECTED ? 1 : 0);
 			eof_add_new_notes_to_selection = (eof_preferences_dialog[16].flags == D_SELECTED ? 1 : 0);
 			eof_drum_modifiers_affect_all_difficulties = (eof_preferences_dialog[17].flags == D_SELECTED ? 1 : 0);
-			eof_input_mode = eof_preferences_dialog[18].d1;
+			eof_input_mode = eof_preferences_dialog[19].d1;
 			eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case eof_inverted_notes was changed
 			eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case eof_lefty_mode was changed
 		}
