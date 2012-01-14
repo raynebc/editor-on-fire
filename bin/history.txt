@@ -3,6 +3,21 @@ EOF Version History
 
 1.8:
 
+*Fixed a minor bug where using Note>Toggle to remove the
+last gem for a note wouldn't cause it to be deleted
+immediately.
+
+*Added a Note>Clear menu allowing gems for specific lanes
+to be removed.
+
+*Improved Feedback import by having it back up song.ini
+before it is overwritten, recognizing more instrument
+track names and tolerating more player section types.
+
+*Fixed a bug where user settings weren't read if EOF was
+launched from outside its program directory (ie. when
+loading a file via command line).
+
 *Added an "Add new notes to selection" preference which
 causes newly added gems cause notes to be added to the
 currently selected notes instead of the selection being
