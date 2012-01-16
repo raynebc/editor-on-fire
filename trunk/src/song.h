@@ -673,6 +673,8 @@ unsigned long eof_get_highest_fret(unsigned long track, char scope);
 	//Returns the highest used fret value of notes in scope, or 0 if all such notes are muted with no fret specified
 unsigned long eof_get_highest_clipboard_fret(char *clipboardfile);
 	//Parses the notes in the clipboard file, returning the highest used fret among them (or 0 if all such notes are muted with no fret specified)
+unsigned long eof_get_highest_clipboard_lane(char *clipboardfile);
+	//Parses the notes in the clipboard file, returning the highest used lane among them (or 0 if all such notes have no gems, ie. corrupted clipboard)
 unsigned long eof_get_highest_fret_value(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//Returns the highest used fret in the specified pro guitar note
 	//If the parameters are invalid or the specific pro guitar note's gems are all muted with no fret specified, 0 is returned

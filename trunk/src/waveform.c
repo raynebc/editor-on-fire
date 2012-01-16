@@ -20,7 +20,7 @@ int eof_waveform_slice_mean(struct waveformslice *left,struct waveformslice *rig
 // 	eof_log("eof_waveform_slice_mean() entered");
 
 	unsigned long ctr,ctr2;
-	struct waveformslice results;
+	struct waveformslice *results;
 	struct waveformslice *channel=NULL;
 
 //Validate parameters
@@ -33,43 +33,43 @@ int eof_waveform_slice_mean(struct waveformslice *left,struct waveformslice *rig
 //Calculate mean data
 	for(ctr=0;ctr < 2;ctr++)
 	{	//For each possible channel
-		if((ctr == 0) && (left == NULL))	//If not processing for the left channel
-			continue;	//Skip it
-		if((ctr == 1) && ((right == NULL) || (waveform->is_stereo == 0)))	//If not processing for the right channel, or the right channel doesn't exist
-			continue;	//Skip it
-		results.min=results.peak=results.rms=0;
-
-		if(ctr == 0)
+		if((ctr == 0) && (left != NULL))
+		{	//If this is the left channel and its processing is enabled
 			channel = waveform->left.slices;	//Point to left channel data
-		else
+			results = left;
+		}
+		else if((ctr == 1) && (left != NULL))
+		{	//Or if this is the right channel and its processing is enabled
 			channel = waveform->right.slices;	//Point to right channel data
+			results = right;
+		}
+		else
+		{	//Otherwise skip this channel
+			continue;
+		}
+		results->min = results->peak = results->rms = 0;	//Reset this channel's result data
 
-		for(ctr2=0;ctr2 < num;ctr2++)
+		for(ctr2 = 0; ctr2 < num; ctr2++)
 		{	//For each requested waveform slice, add the data
 			if(slicestart + ctr2 + 1 > waveform->numslices)	//If the next slice to process doesn't exist
 			{
 				if(ctr2 == 0)	//If the first amplitude is unavailable,
-					results.min=results.peak=results.rms=waveform->zeroamp;	//Set it to a 0dB amplitude
+					results->min = results ->peak = results->rms = waveform->zeroamp;	//Set it to a 0dB amplitude
 
 				break;					//exit this loop
 			}
 
-			results.min += channel[slicestart + ctr2].min;
-			results.peak += channel[slicestart + ctr2].peak;
-			results.rms += channel[slicestart + ctr2].rms;
+			results->min += channel[slicestart + ctr2].min;
+			results->peak += channel[slicestart + ctr2].peak;
+			results->rms += channel[slicestart + ctr2].rms;
 		}
 
 		if(ctr2 > 1)
 		{	//If at least two slices' data was added, calculate the mean, round up
-			results.min = ((float)results.min / ctr2 + 0.5);
-			results.peak = ((float)results.peak / ctr2 + 0.5);
-			results.rms = ((double)results.rms / ctr2 );
+			results->min = ((float)results->min / ctr2 + 0.5);
+			results->peak = ((float)results->peak / ctr2 + 0.5);
+			results->rms = ((double)results->rms / ctr2 );
 		}
-
-		if((ctr == 0) && (left != NULL))
-			*left = results;
-		else if((ctr == 1) && (right != NULL))
-			*right = results;
 	}
 
 	return 0;	//Return success
@@ -118,7 +118,7 @@ int eof_render_waveform(struct wavestruct *waveform)
 	}
 	else
 	{	//Take only the first channel into account
-		numgraphs = eof_waveform_renderrightchannel;
+		numgraphs = eof_waveform_renderleftchannel;
 	}
 	if(numgraphs == 0)	//If user specified not to render either channel, or to render the right channel on a mono audio file
 		return 0;
@@ -168,11 +168,13 @@ int eof_render_waveform(struct wavestruct *waveform)
 		if(eof_waveform_renderleftchannel)
 		{	//If only rendering the left channel
 			waveform->left.height = height;
+			waveform->left.halfheight = height / 2;
 			waveform->left.yaxis = ycoord1;
 		}
 		else
 		{	//If only rendering the right channel
 			waveform->right.height = height;
+			waveform->right.halfheight = height / 2;
 			waveform->right.yaxis = ycoord1;
 		}
 	}
@@ -184,6 +186,7 @@ int eof_render_waveform(struct wavestruct *waveform)
 		waveform->left.yaxis = ycoord1;
 		waveform->right.height = height;
 		waveform->right.yaxis = ycoord2;
+		waveform->left.halfheight = waveform->right.halfheight = height / 2;
 	}
 	else
 	{	//Do not render anything unless it's the graph for 1 or 2 channels
@@ -191,44 +194,56 @@ int eof_render_waveform(struct wavestruct *waveform)
 	}
 
 //render graph from left to right, one pixel at a time (each pixel represents eof_zoom number of milliseconds of audio)
+	int darkgreen = makecol(0, 124, 0);
+	int red = makecol(190, 0, 0);
+	int green = makecol(0, 190, 0);
+	int render_right_channel = 0;	//This caches the condition of the user having enabled the right channel to render AND the audio is stereo
+	unsigned int zeroamp = waveform->zeroamp;			//Cache this for each channel so it doesn't have to be dereferenced more often than necessary
+	struct waveformchanneldata *leftchannel = &waveform->left;	//Cache this so waveform doesn't have to be dereferenced more often than necessary
+	struct waveformchanneldata *rightchannel = NULL;
+	if(eof_waveform_renderrightchannel && waveform->is_stereo)
+	{
+		render_right_channel = 1;
+		rightchannel = &waveform->right;
+	}
 	for(x=startpixel,ctr=0;x < eof_window_editor->w;x++,ctr+=eof_zoom)
 	{	//for each pixel in the piano roll's visible width
 		if(eof_waveform_slice_mean(&left,&right,waveform,startslice+ctr,eof_zoom) == 0)
 		{	//processing was successful
 			if(eof_waveform_renderleftchannel)
 			{	//If the left channel rendering is enabled
-				if(left.peak != waveform->zeroamp)	//If there was a nonzero left peak amplitude, scale it to the channel's maximum amplitude and scale again to half the fretboard's height and render it in green
+				if(left.peak != zeroamp)	//If there was a nonzero left peak amplitude, scale it to the channel's maximum amplitude and scale again to half the fretboard's height and render it in green
 				{
-					if(left.peak < waveform->zeroamp)	//If the peak is a negative amplitude
+					if(left.peak < zeroamp)	//If the peak is a negative amplitude
 					{	//Render it after the minimum amplitude to ensure it is visible
-						eof_render_waveform_line(waveform,&waveform->left,left.min,x,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
-						eof_render_waveform_line(waveform,&waveform->left,left.rms,x,makecol(190, 0, 0));	//Render the root mean square amplitude in red
-						eof_render_waveform_line(waveform,&waveform->left,left.peak,x,makecol(0, 190, 0));	//Render the peak amplitude in green
+						eof_render_waveform_line(zeroamp,leftchannel,left.min,x,darkgreen);	//Render the minimum amplitude in dark green
+						eof_render_waveform_line(zeroamp,leftchannel,left.rms,x,red);		//Render the root mean square amplitude in red
+						eof_render_waveform_line(zeroamp,leftchannel,left.peak,x,green);	//Render the peak amplitude in green
 					}
 					else
 					{	//Otherwise render it first
-						eof_render_waveform_line(waveform,&waveform->left,left.peak,x,makecol(0, 190, 0));	//Render the peak amplitude in green
-						eof_render_waveform_line(waveform,&waveform->left,left.rms,x,makecol(190, 0, 0));	//Render the root mean square amplitude in red
-						eof_render_waveform_line(waveform,&waveform->left,left.min,x,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
+						eof_render_waveform_line(zeroamp,leftchannel,left.peak,x,green);	//Render the peak amplitude in green
+						eof_render_waveform_line(zeroamp,leftchannel,left.rms,x,red);		//Render the root mean square amplitude in red
+						eof_render_waveform_line(zeroamp,leftchannel,left.min,x,darkgreen);	//Render the minimum amplitude in dark green
 					}
 				}
 			}
 
-			if(eof_waveform_renderrightchannel)
-			{	//If the right channel rendering is enabled
-				if(waveform->is_stereo && (right.peak != waveform->zeroamp))	//If there was a nonzero right peak amplitude, scale it to the channel's maximum amplitude and scale again to half the fretboard's height and render it in green
+			if(render_right_channel)
+			{	//If the right channel rendering is enabled and the audio file is in stereo
+				if(right.peak != zeroamp)	//If there was a nonzero right peak amplitude, scale it to the channel's maximum amplitude and scale again to half the fretboard's height and render it in green
 				{
-					if(right.peak < waveform->zeroamp)	//If the peak is a negative amplitude
+					if(right.peak < zeroamp)	//If the peak is a negative amplitude
 					{	//Render it after the minimum amplitude to ensure it is visible
-						eof_render_waveform_line(waveform,&waveform->right,right.min,x,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
-						eof_render_waveform_line(waveform,&waveform->right,right.rms,x,makecol(190, 0, 0));	//Render the root mean square amplitude in red
-						eof_render_waveform_line(waveform,&waveform->right,right.peak,x,makecol(0, 190, 0));	//Render the peak amplitude in green
+						eof_render_waveform_line(zeroamp,rightchannel,right.min,x,darkgreen);	//Render the minimum amplitude in dark green
+						eof_render_waveform_line(zeroamp,rightchannel,right.rms,x,red);			//Render the root mean square amplitude in red
+						eof_render_waveform_line(zeroamp,rightchannel,right.peak,x,green);		//Render the peak amplitude in green
 					}
 					else
 					{	//Otherwise render it first
-						eof_render_waveform_line(waveform,&waveform->right,right.peak,x,makecol(0, 190, 0));	//Render the peak amplitude in green
-						eof_render_waveform_line(waveform,&waveform->right,right.rms,x,makecol(190, 0, 0));	//Render the root mean square amplitude in red
-						eof_render_waveform_line(waveform,&waveform->right,right.min,x,makecol(0, 124, 0));	//Render the minimum amplitude in dark green
+						eof_render_waveform_line(zeroamp,rightchannel,right.peak,x,green);		//Render the peak amplitude in green
+						eof_render_waveform_line(zeroamp,rightchannel,right.rms,x,red);			//Render the root mean square amplitude in red
+						eof_render_waveform_line(zeroamp,rightchannel,right.min,x,darkgreen);	//Render the minimum amplitude in dark green
 					}
 				}
 			}
@@ -238,28 +253,19 @@ int eof_render_waveform(struct wavestruct *waveform)
 	return 0;
 }
 
-void eof_render_waveform_line(struct wavestruct *waveform,struct waveformchanneldata *channel,unsigned amp,unsigned long x,int color)
+void eof_render_waveform_line(unsigned int zeroamp,struct waveformchanneldata *channel,unsigned amp,unsigned long x,int color)
 {
-	unsigned long maxampoffset;	//The difference between the zero amplitude and the channel's maximum amplitude
 	unsigned long yoffset;	//The offset from the y axis coordinate to render the line to
 
-	if(waveform != NULL)
-	{
-		if(channel->maxamp > waveform->zeroamp)
-			maxampoffset = channel->maxamp - waveform->zeroamp;
-		else
-			maxampoffset = waveform->zeroamp - channel->maxamp;
-
-		if(amp > waveform->zeroamp)	//Render positive amplitude
-		{	//Transform y to fit between 0 and zeroamp, then scale to fit the graph
-			yoffset=(amp - waveform->zeroamp) * (channel->height / 2) / maxampoffset;
-			vline(eof_window_editor->screen, x, channel->yaxis, channel->yaxis - yoffset, color);
-		}
-		else
-		{	//Correct the negative amplitude, then scale it to fit the graph
-			yoffset=(waveform->zeroamp - amp) * (channel->height / 2) / maxampoffset;
-			vline(eof_window_editor->screen, x, channel->yaxis, channel->yaxis + yoffset, color);
-		}
+	if(amp > zeroamp)	//Render positive amplitude
+	{	//Transform y to fit between 0 and zeroamp, then scale to fit the graph
+		yoffset=(amp - zeroamp) * channel->halfheight / channel->maxampoffset;
+		vline(eof_window_editor->screen, x, channel->yaxis, channel->yaxis - yoffset, color);
+	}
+	else
+	{	//Correct the negative amplitude, then scale it to fit the graph
+		yoffset=(zeroamp - amp) * channel->halfheight / channel->maxampoffset;
+		vline(eof_window_editor->screen, x, channel->yaxis, channel->yaxis + yoffset, color);
 	}
 }
 
@@ -415,8 +421,20 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 		return NULL;	//Return error
 	}
 
-	eof_log("\tWaveform generated", 1);
+	//Cache the difference between each channel's zero amplitude and its maximum amplitude for optimized rendering
+	if(waveform->left.maxamp > waveform->zeroamp)
+		waveform->left.maxampoffset = waveform->left.maxamp - waveform->zeroamp;
+	else
+		waveform->left.maxampoffset = waveform->zeroamp - waveform->left.maxamp;
+	if(waveform->is_stereo)
+	{	//If there is right channel waveform data
+		if(waveform->right.maxamp > waveform->zeroamp)
+			waveform->right.maxampoffset = waveform->right.maxamp - waveform->zeroamp;
+		else
+			waveform->right.maxampoffset = waveform->zeroamp - waveform->right.maxamp;
+	}
 
+	eof_log("\tWaveform generated", 1);
 	return waveform;	//Return waveform data
 }
 

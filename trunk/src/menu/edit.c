@@ -1189,7 +1189,8 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	EOF_NOTE * new_note = NULL;
 	unsigned long sourcetrack = 0;	//Will store the track that this clipboard data was from
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	unsigned long highestfret;
+	unsigned long highestfret, highestlane;
+	unsigned long numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 
 	/* open the file */
 	fp = pack_fopen("eof.clipboard", "r");
@@ -1223,7 +1224,17 @@ int eof_menu_edit_paste_logic(int oldpaste)
 			}
 		}
 	}
-
+	highestlane = eof_get_highest_clipboard_lane("eof.clipboard");
+	if(highestlane > numlanes)
+	{	//If any notes on the clipboard exceed the active track's lane limit
+		char message[120];
+		snprintf(message, sizeof(message), "Warning:  This track's highest lane number is exceeded by a pasted note with a gem on lane %lu.", highestlane);
+		if(alert(NULL, message, "Such notes will be omitted.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
+		{	//If user does not opt to continue after being alerted of this lane limit issue
+			pack_fclose(fp);
+			return 0;
+		}
+	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
 
 	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
@@ -2134,7 +2145,7 @@ static int lyrics_in_beat(int beat)
 
 int eof_menu_edit_paste_from_catalog(void)
 {
-	unsigned long i, j;
+	unsigned long i, j, bitmask;
 	unsigned long paste_pos[EOF_MAX_NOTES] = {0};
 	long paste_count = 0;
 	unsigned long note_count = 0;
@@ -2147,7 +2158,8 @@ int eof_menu_edit_paste_from_catalog(void)
 	long end_beat = -1;
 	float nporpos, nporendpos;
 	EOF_NOTE * new_note = NULL;
-	unsigned long newnotenum, sourcetrack, highestfret = 0, currentfret;
+	unsigned long newnotenum, sourcetrack, highestfret = 0, highestlane = 0, currentfret;
+	unsigned long numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 
 	if((eof_selected_catalog_entry < eof_song->catalog->entries) && eof_song->catalog->entries)
 	{	//If a valid catalog entry is selected
@@ -2179,6 +2191,16 @@ int eof_menu_edit_paste_from_catalog(void)
 				{	//Track the highest used fret value
 					highestfret = currentfret;
 				}
+				for(j = 1, bitmask = 1; j < 9; j++, bitmask<<=1)
+				{	//For each of the 8 bits in the bitmask
+					if(bitmask & eof_get_note_note(eof_song, sourcetrack, i))
+					{	//If this bit is in use
+						if(j > highestlane)
+						{	//If this lane is higher than the previously tracked highest lane
+							highestlane = j;
+						}
+					}
+				}
 			}
 		}
 		if(note_count == 0)
@@ -2196,6 +2218,15 @@ int eof_menu_edit_paste_from_catalog(void)
 				{	//If user does not opt to continue after being alerted of this fret limit issue
 					return 0;
 				}
+			}
+		}
+		if(highestlane > numlanes)
+		{	//Warn if pasted notes go above the current track's lane limit
+			char message[120];
+			snprintf(message, sizeof(message), "Warning:  This track's highest lane number is exceeded by a pasted note with a gem on lane %lu.", highestlane);
+			if(alert(NULL, message, "Such notes will be omitted.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
+			{	//If user does not opt to continue after being alerted of this lane limit issue
+				return 0;
 			}
 		}
 

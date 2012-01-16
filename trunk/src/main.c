@@ -115,6 +115,7 @@ int         eof_new_idle_system = 0;
 char        eof_just_played = 0;
 char        eof_mark_drums_as_cymbal = 0;		//Allows the user to specify whether Y/B/G drum notes will be placed with cymbal notation by default
 char        eof_mark_drums_as_double_bass = 0;	//Allows the user to specify whether expert bass drum notes will be placed with expert+ notation by default
+unsigned long eof_mark_drums_as_hi_hat = 0;		//Allows the user to specify whether Y drum notes will be placed with one of the hi hat statuses by default (this variable holds the note flag of the desired status)
 unsigned long eof_pro_guitar_fret_bitmask = 63;	//Defines which lanes are affected by CTRL+Fn fret setting shortcuts
 char		eof_legacy_view = 0;				//Specifies whether pro guitar notes will render as legacy notes
 
