@@ -11,9 +11,11 @@ struct waveformslice
 struct waveformchanneldata
 {
 	struct waveformslice *slices;	//The waveform data for this channel
-	unsigned maxamp;			//The highest amplitude of samples in this channel
+	unsigned maxamp;				//The highest amplitude of samples in this channel
+	unsigned long maxampoffset;		//The difference between the zero amplitude and the channel's maximum amplitude (cached to optimize rendering)
 	unsigned long yaxis;			//The y coordinate representing the y axis the channel's graph will render to
 	unsigned long height;			//The height of this channel's graph
+	unsigned long halfheight;		//One half of the channel's graph height (cached in eof_render_waveform() to avoid recalculating for each line)
 };
 
 struct wavestruct
@@ -44,8 +46,9 @@ int eof_waveform_slice_mean(struct waveformslice *left,struct waveformslice *rig
 int eof_render_waveform(struct wavestruct *waveform);
 	//Renders the left channel waveform into the editor window, taking the zoom level into account
 	//Returns nonzero on failure
-void eof_render_waveform_line(struct wavestruct *waveform,struct waveformchanneldata *channel,unsigned amp,unsigned long x,int color);
-	//Given the amplitude and the channel and waveform to process, draws the vertical line for the channel's waveform originating from point x and the channel's defined y axis coordinate
+void eof_render_waveform_line(unsigned int zeroamp,struct waveformchanneldata *channel,unsigned amp,unsigned long x,int color);
+	//Given the amplitude and the channel and zero amplitude of the waveform to process, draws the vertical line for the channel's waveform originating from point x and the channel's defined y axis coordinate
+	//waveform and channel are assumed to not be NULL, so it's the calling function's responsibility to ensure the pointers are valid
 
 struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long slicelength);
 	//Decompresses the specified OGG file into memory and creates waveform data

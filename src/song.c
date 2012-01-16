@@ -4820,6 +4820,49 @@ unsigned long eof_get_highest_clipboard_fret(char *clipboardfile)
 	return highestfret;
 }
 
+unsigned long eof_get_highest_clipboard_lane(char *clipboardfile)
+{
+	PACKFILE * fp;
+	unsigned long sourcetrack = 0, copy_notes = 0, first_beat = 0;
+	unsigned long i, j, bitmask;
+	unsigned long highestlane = 0;	//Used to find if any pasted notes would use a higher lane than the active track supports
+	EOF_EXTENDED_NOTE temp_note;
+
+	if(!clipboardfile)
+	{	//If the passed clipboard filename is invalid
+		return 0;
+	}
+	fp = pack_fopen(clipboardfile, "r");
+	if(!fp)
+	{	//If the clipboard couldn't be opened
+		return 0;
+	}
+	sourcetrack = pack_igetl(fp);		//Read the source track of the clipboard data
+	copy_notes = pack_igetl(fp);		//Read the number of notes on the clipboard
+	first_beat = pack_igetl(fp);		//Read the original beat number of the first note that was copied
+	if(!copy_notes)
+	{	//If there are 0 notes on the clipboard
+		return 0;
+	}
+	for(i = 0; i < copy_notes; i++)
+	{	//For each note in the clipboard file
+		eof_menu_paste_read_clipboard_note(fp, &temp_note);	//Read the note
+		for(j = 1, bitmask = 1; j < 9; j++, bitmask<<=1)
+		{	//For each of the 8 bits in the bitmask
+			if(temp_note.note & bitmask)
+			{	//If this bit is in use
+				if(j > highestlane)
+				{	//If this lane is higher than the previously tracked highest lane
+					highestlane = j;
+				}
+			}
+		}
+	}
+	pack_fclose(fp);
+
+	return highestlane;
+}
+
 unsigned long eof_get_highest_fret_value(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	unsigned long highestfret = 0, currentfret, ctr, tracknum, bitmask;

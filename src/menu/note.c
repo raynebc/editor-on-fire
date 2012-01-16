@@ -226,11 +226,20 @@ MENU eof_note_freestyle_menu[] =
     {NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_note_drum_hi_hat_menu[] =
+{
+    {"&Open hi hat",eof_menu_note_default_open_hi_hat, NULL, 0, NULL},
+    {"&Pedal hi hat",eof_menu_note_default_pedal_hi_hat, NULL, 0, NULL},
+    {"&Sizzle hi hat",eof_menu_note_default_sizzle_hi_hat, NULL, 0, NULL},
+    {"&Non hi hat",eof_menu_note_default_no_hi_hat, NULL, 0, NULL},
+    {NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_note_drum_menu[] =
 {
-    {"Toggle &Yellow cymbal\tCtrl+Y", eof_menu_note_toggle_rb3_cymbal_yellow, NULL, 0, NULL},
-    {"Toggle &Blue cymbal\tCtrl+B", eof_menu_note_toggle_rb3_cymbal_blue, NULL, 0, NULL},
-    {"Toggle &Green cymbal\tCtrl+G", eof_menu_note_toggle_rb3_cymbal_green, NULL, 0, NULL},
+    {"Toggle Yellow cymbal\tCtrl+Y", eof_menu_note_toggle_rb3_cymbal_yellow, NULL, 0, NULL},
+    {"Toggle Blue cymbal\tCtrl+B", eof_menu_note_toggle_rb3_cymbal_blue, NULL, 0, NULL},
+    {"Toggle Green cymbal\tCtrl+G", eof_menu_note_toggle_rb3_cymbal_green, NULL, 0, NULL},
     {"Mark as &Non cymbal", eof_menu_note_remove_cymbal, NULL, 0, NULL},
     {"Mark new notes as &Cymbals", eof_menu_note_default_cymbal, NULL, 0, NULL},
     {"Toggle expert+ bass drum\tCtrl+E", eof_menu_note_toggle_double_bass, NULL, 0, NULL},
@@ -239,6 +248,7 @@ MENU eof_note_drum_menu[] =
     {"Toggle Y note as &Open hi hat\tShift+O", eof_menu_note_toggle_hi_hat_open, NULL, 0, NULL},
     {"Toggle Y note as &Pedal hi hat\tShift+P",eof_menu_note_toggle_hi_hat_pedal, NULL, 0, NULL},
     {"Toggle Y note as &Sizzle hi hat\tShift+S", eof_menu_note_toggle_hi_hat_sizzle, NULL, 0, NULL},
+    {"Mark new &Y notes as", NULL, eof_note_drum_hi_hat_menu, 0, NULL},
     {"Toggle R note as &Rim shot\tShift+R",eof_menu_note_toggle_rimshot, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
@@ -2014,6 +2024,46 @@ int eof_menu_note_default_double_bass(void)
 		eof_mark_drums_as_double_bass = 1;
 		eof_note_drum_menu[7].flags = D_SELECTED;
 	}
+	return 1;
+}
+
+int eof_menu_note_default_open_hi_hat(void)
+{
+	eof_note_drum_hi_hat_menu[0].flags = D_SELECTED;
+	eof_note_drum_hi_hat_menu[1].flags = 0;
+	eof_note_drum_hi_hat_menu[2].flags = 0;
+	eof_note_drum_hi_hat_menu[3].flags = 0;
+	eof_mark_drums_as_hi_hat = EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;
+	return 1;
+}
+
+int eof_menu_note_default_pedal_hi_hat(void)
+{
+	eof_note_drum_hi_hat_menu[0].flags = 0;
+	eof_note_drum_hi_hat_menu[1].flags = D_SELECTED;
+	eof_note_drum_hi_hat_menu[2].flags = 0;
+	eof_note_drum_hi_hat_menu[3].flags = 0;
+	eof_mark_drums_as_hi_hat = EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;
+	return 1;
+}
+
+int eof_menu_note_default_sizzle_hi_hat(void)
+{
+	eof_note_drum_hi_hat_menu[0].flags = 0;
+	eof_note_drum_hi_hat_menu[1].flags = 0;
+	eof_note_drum_hi_hat_menu[2].flags = D_SELECTED;
+	eof_note_drum_hi_hat_menu[3].flags = 0;
+	eof_mark_drums_as_hi_hat = EOF_DRUM_NOTE_FLAG_Y_SIZZLE;
+	return 1;
+}
+
+int eof_menu_note_default_no_hi_hat(void)
+{
+	eof_note_drum_hi_hat_menu[0].flags = 0;
+	eof_note_drum_hi_hat_menu[1].flags = 0;
+	eof_note_drum_hi_hat_menu[2].flags = 0;
+	eof_note_drum_hi_hat_menu[3].flags = D_SELECTED;
+	eof_mark_drums_as_hi_hat = 0;
 	return 1;
 }
 

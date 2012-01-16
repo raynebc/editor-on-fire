@@ -1768,7 +1768,7 @@ int eof_menu_song_waveform_settings(void)
 		eof_waveform_settings_dialog[5].flags = D_SELECTED;
 	}
 	if(eof_waveform_renderrightchannel)
-	{	//If the left channel is selected to be rendered
+	{	//If the right channel is selected to be rendered
 		eof_waveform_settings_dialog[6].flags = D_SELECTED;
 	}
 

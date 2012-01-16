@@ -75,6 +75,19 @@ void eof_mark_edited_note_as_cymbal(EOF_SONG *sp, unsigned long track, unsigned 
 void eof_mark_new_note_as_double_bass(EOF_SONG *sp, unsigned long track, unsigned long notenum);
 	//Checks if the newly-created note is in PART DRUMS, if so, and the new note is an expert
 	//bass note, expert+ status is applied to this note
+void eof_mark_edited_note_as_double_bass(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long bitmask);
+	//Performs similar logic to eof_mark_new_note_as_double_bass(), but only applies double bass status
+	//to the frets based on the specified bitmask, ie. only applying the status to a bass drum note
+	//that was added to an existing drum note
+void eof_mark_new_note_as_special_hi_hat(EOF_SONG *sp, unsigned long track, unsigned long notenum);
+	//Checks if the newly-created note is in PART DRUMS, if so, and the new note contains
+	//yellow, the status stored in eof_mark_drums_as_hi_hat is applied to this note
+	//if eof_drum_modifiers_affect_all_difficulties is true, existing yellow gems at identical positions
+	//in lower difficulties are likewise turned into the specified hi hat type
+void eof_mark_edited_note_as_special_hi_hat(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long bitmask);
+	//Performs similar logic to eof_mark_new_note_as_special_hi_hat(), but only applies the hi hat status
+	//to the frets based on the specified bitmask, ie. only applying the status to a yellow gem
+	//that was added to an existing drum note
 
 unsigned char eof_find_pen_note_mask(void);
 	//For the current track, sets eof_hover_piece appropriately and returns the pen note mask,

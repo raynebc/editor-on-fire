@@ -49,6 +49,10 @@ int eof_menu_note_toggle_rb3_cymbal_blue(void);		//Toggles the RB3 Pro blue cymb
 int eof_menu_note_remove_cymbal(void);				//Removes cymbal notation from selected drum notes
 int eof_menu_note_default_cymbal(void);				//Toggles whether newly-placed blue, yellow or green drum notes are marked as cymbals automatically
 int eof_menu_note_default_double_bass(void);		//Toggles whether newly-placed expert bass drum notes are marked as expert+ automatically
+int eof_menu_note_default_open_hi_hat(void);		//Specifies whether newly-placed yellow drum notes are marked as open hi hat automatically
+int eof_menu_note_default_pedal_hi_hat(void);		//Specifies whether newly-placed yellow drum notes are marked as pedal hi hat automatically
+int eof_menu_note_default_sizzle_hi_hat(void);		//Specifies whether newly-placed yellow drum notes are marked as sizzle hi hat automatically
+int eof_menu_note_default_no_hi_hat(void);			//Specifies that newly-placed yellow drum notes are NOT marked as one of the hi hat statuses automatically
 int eof_menu_note_push_back(void);					//A currently unused Feedback input mode function
 int eof_menu_note_push_up(void);
 int eof_menu_note_delete(void);
