@@ -1313,14 +1313,6 @@ int eof_load_ogg(char * filename)
 			free(eof_music_data);
 		}
 		eof_music_data = NULL;
-
-///Allow the calling function to reload the original audio instead of destroy the open chart immediately
-//		if(eof_song)
-//		{
-//			eof_destroy_song(eof_song);
-//			eof_song = NULL;
-//			eof_song_loaded = 0;
-//		}
 	}
 
 	return loaded;

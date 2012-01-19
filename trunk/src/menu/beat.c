@@ -915,9 +915,7 @@ char * eof_events_list_all(int index, int * size)
 		{	//Display section events
 			for(x = 0; x < eof_song->text_events; x++)
 			{	//For each event
-				if((ustrstr(eof_song->text_event[x]->text, "[section") == eof_song->text_event[x]->text) ||
-					(ustrstr(eof_song->text_event[x]->text, "section") == eof_song->text_event[x]->text) ||
-					(ustrstr(eof_song->text_event[x]->text, "[prc_") == eof_song->text_event[x]->text))
+				if(eof_is_section_marker(eof_song->text_event[x]->text))
 				{	//If the string begins with "[section", "section" or "[prc_"
 					count++;
 				}
@@ -1358,9 +1356,7 @@ unsigned long eof_retrieve_text_event(unsigned long index)
 	{	//Display section events
 		for(x = 0; x < eof_song->text_events; x++)
 		{	//For each event
-			if((ustrstr(eof_song->text_event[x]->text, "[section") == eof_song->text_event[x]->text) ||
-				(ustrstr(eof_song->text_event[x]->text, "section") == eof_song->text_event[x]->text) ||
-				(ustrstr(eof_song->text_event[x]->text, "[prc_") == eof_song->text_event[x]->text))
+			if(eof_is_section_marker(eof_song->text_event[x]->text))
 			{	//If the string begins with "[section", "section" or "[prc_"
 				if(count == index)
 				{	//If the requested event was found
