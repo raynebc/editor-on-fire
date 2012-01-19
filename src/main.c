@@ -1242,7 +1242,7 @@ int eof_load_ogg(char * filename)
 	eof_music_data = (void *)eof_buffer_file(filename, 0);
 	eof_music_data_size = file_size_ex(filename);
 	if(eof_music_data)
-	{
+	{	//If the OGG file was able to buffer to memory
 		eof_music_track = alogg_create_ogg_from_buffer(eof_music_data, eof_music_data_size);
 		if(eof_music_track)
 		{
@@ -1262,7 +1262,7 @@ int eof_load_ogg(char * filename)
 		}
 	}
 	else
-	{
+	{	//If the OGG file couldn't buffer to memory
 		returnedfn = ncd_file_select(0, eof_last_ogg_path, "Select Music File", eof_filter_music_files);
 		eof_clear_input();
 		if(returnedfn)
@@ -1303,6 +1303,8 @@ int eof_load_ogg(char * filename)
 	if(loaded)
 	{
 		eof_music_actual_length = alogg_get_length_msecs_ogg(eof_music_track);
+		ustrncpy(eof_loaded_ogg_name,filename,1024);	//Store the loaded OGG filename
+		eof_loaded_ogg_name[1023] = '\0';
 	}
 	else
 	{
@@ -1310,17 +1312,17 @@ int eof_load_ogg(char * filename)
 		{
 			free(eof_music_data);
 		}
+		eof_music_data = NULL;
 
-		if(eof_song)
-		{
-			eof_destroy_song(eof_song);
-			eof_song = NULL;
-			eof_song_loaded = 0;
-		}
+///Allow the calling function to reload the original audio instead of destroy the open chart immediately
+//		if(eof_song)
+//		{
+//			eof_destroy_song(eof_song);
+//			eof_song = NULL;
+//			eof_song_loaded = 0;
+//		}
 	}
 
-	ustrncpy(eof_loaded_ogg_name,filename,1024);	//Store the loaded OGG filename
-	eof_loaded_ogg_name[1023] = '\0';
 	return loaded;
 }
 
