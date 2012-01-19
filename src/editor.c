@@ -4396,7 +4396,7 @@ void eof_render_editor_window_common(void)
 		{	//Draw time signature
 			if(notvisible == 0)
 			{	//Only render the time signature if the beat is visible
-				textprintf_centre_ex(eof_window_editor->screen, eof_mono_font, xcoord - 20 + 3 + 16, EOF_EDITOR_RENDER_OFFSET + 6 - (i % 2 == 0 ? 0 : 10) - 12, i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "(%s)", buffer);
+				textprintf_centre_ex(eof_window_editor->screen, eof_mono_font, xcoord - 20 + 19, EOF_EDITOR_RENDER_OFFSET + 7 - (i % 2 == 0 ? 0 : 10) - 12, i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "(%s)", buffer);
 			}
 		}
 
@@ -4419,7 +4419,20 @@ void eof_render_editor_window_common(void)
 
 			if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_EVENTS)
 			{	//Draw event marker
+				unsigned long ctr;
+
 				line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
+				for(ctr = 0; ctr < eof_song->text_events; ctr++)
+				{	//For each text event
+					if(eof_song->text_event[ctr]->beat == i)
+					{	//If the event is assigned to this beat
+						if(eof_is_section_marker(eof_song->text_event[ctr]->text))
+						{	//If this event is a section marker
+							textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 25 + 4, eof_color_yellow, -1, "%s", eof_song->text_event[ctr]->text);	//Display it
+							break;	//And break from the loop
+						}
+					}
+				}
 			}
 			if(first_measure && (beat_counter == 0))
 			{	//If this is a measure marker, draw the measure number to the right of the beat line

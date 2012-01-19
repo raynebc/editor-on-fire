@@ -28,5 +28,7 @@ char eof_song_contains_event(EOF_SONG *sp, const char *text, unsigned long track
 char eof_song_contains_event_beginning_with(EOF_SONG *sp, const char *text, unsigned long track);
 	//Returns nonzero if there is one or more text events that begins with the specified string exactly (case sensitive substring)
 	//If track is nonzero, only events in that track are checked for comparison, otherwise all events are checked
+int eof_is_section_marker(const char *text);
+	//Returns nonzero if the specified string is recognized as a section marker event (begins with "[section", "section" or "[prc_"
 
 #endif

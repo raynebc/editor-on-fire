@@ -360,6 +360,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 
 		/* load text events */
 		long b;
+		double solo_on, solo_off;
+		char solo_status = 0;	//0 = Off and awaiting a solo on marker, 1 = On and awaiting a solo off marker
 		current_event = chart->events;
 		while(current_event)
 		{
@@ -368,8 +370,41 @@ EOF_SONG * eof_import_chart(const char * fn)
 			{
 				b = sp->beats - 1;
 			}
-			eof_song_add_text_event(sp, b, current_event->text, 0, 0);
-			current_event = current_event->next;
+			if(!ustricmp(current_event->text, "[solo_on]") && !solo_status)
+			{	//If this is a solo on event (and a solo_off event isn't expected)
+				solo_on = chartpos_to_msec(chart, current_event->chartpos);	//Store the real timestamp associated with the start of the phrase
+				solo_status = 1;
+			}
+			else if(!ustricmp(current_event->text, "[solo_off]") && solo_status)
+			{	//If this is a solo off event (and a solo_off event is expected), add it to the guitar and lead guitar tracks (FoF's original behavior for these events)
+				solo_off = chartpos_to_msec(chart, current_event->chartpos);	//Store the real timestamp associated with the end of the phrase
+				solo_status = 0;
+				eof_track_add_solo(sp, EOF_TRACK_GUITAR, solo_on + 0.5, solo_off + 0.5);	//Add the solo to the guitar track
+				eof_track_add_solo(sp, EOF_TRACK_GUITAR_COOP, solo_on + 0.5, solo_off + 0.5);	//Add the solo to the lead guitar track
+			}
+			else if(eof_is_section_marker(current_event->text))
+			{	//If this is a section event, rebuild the string to ensure it's in the proper format
+				char buffer[256];
+				int index = 0, index2 = 0;	//index1 will index into the rebuilt buffer[] string, index2 will index into the original current_event->text[] string
+
+				buffer[index++] = '[';	//Begin with an open bracket
+				while(current_event->text[index2] != '\0' && (index < 254))
+				{	//While the end of the string hasn't been reached (with an additional overflow check)
+					if((current_event->text[index2] != '[') && (current_event->text[index2] != ']'))
+					{	//If this character isn't a bracket
+							buffer[index++] = current_event->text[index2];	//Copy it into the rebuilt string
+					}
+					index2++;	//Iterate to the next character
+				}
+				buffer[index++] = ']';	//End with a closing bracket
+				buffer[index++] = '\0';	//Terminate the string
+				eof_song_add_text_event(sp, b, buffer, 0, 0);
+			}
+			else
+			{	//Otherwise copy the string as-is
+				eof_song_add_text_event(sp, b, current_event->text, 0, 0);
+			}
+			current_event = current_event->next;	//Iterate to the next text event
 		}
 
 		/* load time signatures */

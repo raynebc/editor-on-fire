@@ -188,3 +188,15 @@ char eof_song_contains_event_beginning_with(EOF_SONG *sp, const char *text, unsi
 	}
 	return 0;	//Return no match found
 }
+
+int eof_is_section_marker(const char *text)
+{
+	if(text)
+	{
+		if((ustrstr(text, "[section") == text) ||
+			(ustrstr(text, "section") == text) ||
+			(ustrstr(text, "[prc_") == text))
+			return 1;
+	}
+	return 0;
+}
