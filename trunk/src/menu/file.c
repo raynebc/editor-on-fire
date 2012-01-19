@@ -549,10 +549,9 @@ int eof_menu_file_load_ogg(void)
 
 		/* failed to load new OGG so reload old one */
 		if(!eof_load_ogg(returnedfn))
-		{
-			append_filename(eof_temp_filename, eof_song_path, "guitar.ogg", 1024);
-			returnedfn = eof_temp_filename;
-			if(!eof_load_ogg(eof_temp_filename))
+		{	//If eof_load_ogg() failed, eof_loaded_ogg_name contains the name of the file that was loaded before
+			returnedfn = eof_loaded_ogg_name;
+			if(!eof_load_ogg(eof_loaded_ogg_name))
 			{
 				eof_show_mouse(NULL);
 				eof_cursor_visible = 1;

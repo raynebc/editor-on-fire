@@ -432,7 +432,7 @@ void eof_debug_message(char * text);
 void eof_determine_phrase_status(void);		//Re-applies the HOPO, SP, trill and tremolo status of each note in the selected track, as well as deleting empty SP, Solo, trill, tremolo and arpeggio phrases
 void eof_fix_window_title(void);
 int eof_load_ogg_quick(char * filename);
-int eof_load_ogg(char * filename);
+int eof_load_ogg(char * filename);	//Loads the specified OGG file.  Upon success, eof_loaded_ogg_name is updated and nonzero is returned.
 int eof_load_complete_song(char * filename);
 int eof_destroy_ogg(void);	//Frees chart audio
 int eof_save_ogg(char * fn);
