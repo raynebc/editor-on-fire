@@ -26,5 +26,14 @@ void eof_song_delete_beat(EOF_SONG * sp, unsigned long beat);
 	//Removes and frees the specified beat from the beats array.  All beats after the deleted beat are moved back in the array one position
 int eof_song_resize_beats(EOF_SONG * sp, unsigned long beats);
 	//Grows or shrinks the beats array to fit the specified number of beats by allocating/freeing EOF_BEAT_MARKER structures.  Returns zero on error
+void eof_double_tempo(EOF_SONG * sp, unsigned long beat, char make_undo);
+	//Doubles the tempo on the specified beat, effectively doubling the number of beats up to the next anchor
+	//If make_undo is nonzero, this function will create an undo state before modifying the chart
+int eof_halve_tempo(EOF_SONG * sp, unsigned long beat, char make_undo);
+	//Halves the tempo on the specified beat, effectively halving the number of beats up to the next anchor.
+	//If the number of beats until the next anchor is odd, the beat preceding the anchor will be anchored and
+	//will keep its existing tempo in order to keep the tempo map accurate, and -1 will be returned.  If only
+	//an even number of beats is altered, 0 is returned
+	//If make_undo is nonzero, this function will create an undo state before modifying the chart
 
 #endif

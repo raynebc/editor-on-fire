@@ -1,5 +1,6 @@
 #include "main.h"
 #include "beat.h"
+#include "undo.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -384,4 +385,105 @@ int eof_song_resize_beats(EOF_SONG * sp, unsigned long beats)
 	}
 
 	return 1;	//Return success
+}
+
+void eof_double_tempo(EOF_SONG * sp, unsigned long beat, char make_undo)
+{
+	unsigned long i, ppqn;
+
+ 	eof_log("eof_double_tempo() entered", 1);
+
+	if(!sp || (beat >= sp->beats))
+		return;	//Invalid parameters
+
+	if(make_undo)
+	{	//If the calling function wants this function to save an undo state
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	}
+	sp->beat[beat]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Ensure this beat is an anchor
+	ppqn = sp->beat[beat]->ppqn;	//Store this beat's tempo for reference
+	do
+	{
+		sp->beat[beat]->ppqn /= 2;	//Double the tempo on this beat
+		if(eof_song_add_beat(sp) == NULL)
+		{	//If a new beat couldn't be created
+			eof_undo_apply();	//Undo this failed operation
+			allegro_message("Failed to double tempo.  Operation canceled.");
+			return;
+		}
+		for(i = sp->beats - 1; i > beat; i--)
+		{	//For each beat after the selected beat, in reverse order
+			memcpy(sp->beat[i], sp->beat[i - 1], sizeof(EOF_BEAT_MARKER));
+		}
+		sp->beat[beat + 1]->flags = 0;				//Clear the flags of the new beat
+		sp->beat[beat + 1]->ppqn = sp->beat[beat]->ppqn;	//Copy the current beat's tempo to the new beat
+		for(i = 0; i < sp->text_events; i++)
+		{	//For each text event
+			if(sp->text_event[i]->beat >= beat + 1)	//If the event is at the added beat or after
+			{
+				sp->text_event[i]->beat++;			//Move it forward one beat
+				sp->beat[sp->text_event[i]->beat]->flags |= EOF_BEAT_FLAG_EVENTS;	//Ensure that beat is marked as having a text event
+			}
+		}
+
+		beat++;	//Skip past the next beat, which was just created
+		beat++;	//Iterate to the next beat
+	}while((beat < sp->beats) && (sp->beat[beat]->ppqn == ppqn));	//Continue until all beats have been processed or a tempo change is reached
+
+	eof_calculate_beats(sp);	//Rebuild tempos and beat lengths using the updated ppqn values
+}
+
+int eof_halve_tempo(EOF_SONG * sp, unsigned long beat, char make_undo)
+{
+	unsigned long ctr, ppqn, i;
+	char changefound = 0;	//This will be set to nonzero if during beat counting, a tempo change is reached
+	int retval = 0;	//This will be -1 if an odd number of beats were affected, indicating the user may need to manually alter a tempo
+
+ 	eof_log("eof_halve_tempo() entered", 1);
+
+	if(!sp || (beat >= sp->beats))
+		return 0;	//Invalid parameters
+
+	ppqn = sp->beat[beat]->ppqn;	//Store this beat's tempo for reference
+	for(ctr = 1; beat + ctr < sp->beats; ctr++)
+	{	//Count the number of beats until the end of chart is reached
+		if(sp->beat[beat + ctr]->ppqn != ppqn)
+		{	//If a tempo change is found, break from counting
+			changefound = 1;
+			break;
+		}
+	}
+
+	if(ctr < 2)
+		return 0;	//If no beats can be modified without destroying the tempo map, return
+
+	if(make_undo)
+	{	//If the calling function wants this function to save an undo state
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	}
+	if(changefound && (ctr & 1))
+	{	//If the tempo changes an odd number beats away from the starting beat
+		sp->beat[beat + ctr - 1]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Make the last beat before the change an anchor
+		retval = -1;
+		ctr--;	//And remove it from the set of beats to be processed
+	}
+
+	do{
+		sp->beat[beat]->ppqn *= 2;	//Halve the tempo on this beat
+		eof_song_delete_beat(sp, beat + 1);	//Delete the next beat
+		for(i = 0; i < sp->text_events; i++)
+		{	//For each text event
+			if(sp->text_event[i]->beat >= beat + 1)	//If the event is at the deleted beat or after
+			{
+				sp->text_event[i]->beat--;			//Move it back one beat
+				sp->beat[sp->text_event[i]->beat]->flags |= EOF_BEAT_FLAG_EVENTS;	//Ensure that beat is marked as having a text event
+			}
+		}
+
+		ctr -= 2;	//Two beats have been processed
+		beat++;		//Iterate to the next beat to alter
+	}while((beat < sp->beats) && (ctr > 0));	//Continue until all applicable beats have been processed
+
+	eof_calculate_beats(sp);	//Rebuild tempos and beat lengths using the updated ppqn values
+	return retval;
 }
