@@ -47,6 +47,9 @@ MENU eof_beat_menu[] =
     {"", NULL, NULL, 0, NULL},
     {"&Reset BPM", eof_menu_beat_reset_bpm, NULL, 0, NULL},
     {"&Calculate BPM", eof_menu_beat_calculate_bpm, NULL, 0, NULL},
+    {"Double BPM", eof_menu_beat_double_tempo, NULL, 0, NULL},
+    {"Halve BPM", eof_menu_beat_halve_tempo, NULL, 0, NULL},
+    {"Adjust tempo for RBN", eof_menu_beat_set_RBN_tempos, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"All E&vents", eof_menu_beat_all_events, NULL, 0, NULL},
     {"&Events", eof_menu_beat_events, NULL, 0, NULL},
@@ -137,7 +140,7 @@ DIALOG eof_place_trainer_dialog[] =
 
 void eof_prepare_beat_menu(void)
 {
-	int i;
+	unsigned long i;
 
 	if(eof_song && eof_song_loaded)
 	{
@@ -221,22 +224,22 @@ void eof_prepare_beat_menu(void)
 //Beat>All Events and Clear Events validation
 		if(eof_song->text_events > 0)
 		{	//If there is at least one defined text event, enable Beat>All Events and Clear Events
-			eof_beat_menu[17].flags = 0;
-			eof_beat_menu[19].flags = 0;
-		}
-		else
-		{
-			eof_beat_menu[17].flags = D_DISABLED;
-			eof_beat_menu[19].flags = D_DISABLED;
-		}
-//Beat>Place Trainer Event
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-		{	//If a pro guitar/bass track is active
 			eof_beat_menu[20].flags = 0;
+			eof_beat_menu[22].flags = 0;
 		}
 		else
 		{
 			eof_beat_menu[20].flags = D_DISABLED;
+			eof_beat_menu[22].flags = D_DISABLED;
+		}
+//Beat>Place Trainer Event
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If a pro guitar/bass track is active
+			eof_beat_menu[23].flags = 0;
+		}
+		else
+		{
+			eof_beat_menu[23].flags = D_DISABLED;
 		}
 //Re-flag the active Time Signature for the selected beat
 		for(i = 0; i < 6; i++)
@@ -279,6 +282,14 @@ void eof_prepare_beat_menu(void)
 		if(i == eof_selected_beat)
 		{
 			ustrcpy(eof_ts_menu_off_text, "Off");
+		}
+		if((eof_selected_beat + 1 < eof_song->beats) && (eof_song->beat[eof_selected_beat + 1]->ppqn != eof_song->beat[eof_selected_beat]->ppqn))
+		{	//If there is a beat after the current beat, and it has a different tempo
+			eof_beat_menu[17].flags = D_DISABLED;	//Disable Beat>Halve BPM
+		}
+		else
+		{
+			eof_beat_menu[17].flags = 0;
 		}
 	}
 }
@@ -1368,4 +1379,81 @@ unsigned long eof_retrieve_text_event(unsigned long index)
 	}
 
 	return 0;	//If for some reason the requested event was not retrievable, return 0
+}
+
+int eof_menu_beat_double_tempo(void)
+{
+	eof_double_tempo(eof_song, eof_selected_beat, 1);
+	return 1;
+}
+
+int eof_menu_beat_halve_tempo(void)
+{
+	eof_halve_tempo(eof_song, eof_selected_beat, 1);
+	return 1;
+}
+
+int eof_menu_beat_set_RBN_tempos(void)
+{
+	char undo_made = 0, first_change = 1, changed;
+	unsigned long loop_ctr = 0;
+	eof_log("eof_move_text_events() entered", 1);
+
+	unsigned long i;
+
+	if(!eof_song)
+	{
+		return 1;
+	}
+	for(loop_ctr = 0; loop_ctr < 25; loop_ctr++)
+	{	//Only allow this loop to run 25 times in a row
+		changed = 0;	//Reset this condition
+		for(i = 0; i < eof_song->beats; i++)
+		{	//For each beat
+			if(eof_song->beat[i]->ppqn < 200000)
+			{	//If this beat is > 300BPM
+				if(!undo_made)
+				{
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				if(eof_halve_tempo(eof_song, i, 0) < 0)
+				{	//If the function had to omit one beat from processing
+					alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->beat[i + 2]->pos + eof_av_delay);	//Seek to the offending beat (two beats ahead)
+					eof_music_pos = alogg_get_pos_msecs_ogg(eof_music_track);
+					eof_music_actual_pos = eof_music_pos;
+					eof_mix_seek(eof_music_pos);
+					eof_selected_beat = i + 2;
+					allegro_message("Warning:  This beat has a tempo that must be manually corrected.");
+					return 1;
+				}
+				changed = 1;		//Track that a change was made during this loop
+				first_change = 0;	//Track the first successful alteration of the tempo map
+			}
+			else if(eof_song->beat[i]->ppqn > 1500000)
+			{	//If this beat's tempo is < 40BPM
+				if(!undo_made)
+				{
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				eof_double_tempo(eof_song, i, 0);
+				changed = 1;		//Track that a change was made during this loop
+				first_change = 0;	//Track the first successful alteration of the tempo map
+			}
+		}
+		if(changed == 0)
+		{	//If there were no changes made during this loop
+			break;
+		}
+	}
+	if(!loop_ctr)
+	{	//If no changes were made
+		allegro_message("No tempo adjustments necessary");
+	}
+	else
+	{
+		allegro_message("Tempos successfully adjusted");
+	}
+	return 1;
 }

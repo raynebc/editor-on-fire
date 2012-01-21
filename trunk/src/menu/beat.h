@@ -42,4 +42,10 @@ int eof_edit_trainer_proc(int msg, DIALOG *d, int c);	//This is a modification o
 int eof_all_events_radio_proc(int msg, DIALOG *d, int c);	//A radio button procedure that checks to see if the filter in the "All Events" dialog was changed.  If it was, it has Allegro redraw the list of events
 unsigned long eof_retrieve_text_event(unsigned long index);	//Returns the actual event number of the specified filtered event number (for use with the "All Events" dialog)
 
+int eof_menu_beat_double_tempo(void);		//Performs eof_double_tempo() on the currently selected beat
+int eof_menu_beat_halve_tempo(void);		//Performs eof_halve_tempo() on the currently selected beat
+int eof_menu_beat_set_RBN_tempos(void);
+	//Uses eof_double_tempo() and eof_halve_tempo() to attempt to get all tempos within RBN's requirements of 40BPM to 300BPM
+	//If this is not possible, the chart seeks to the problematic tempo and warns the user that it must be corrected manually
+
 #endif
