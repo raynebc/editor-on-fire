@@ -634,6 +634,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 //Read first line of text, capping it to prevent buffer overflow
 	if(!pack_fgets(buffer,maxlinelength,inf))
 	{	//I/O error
+		snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Unable to read from file:  \"%s\"", chart->linesprocessed, strerror(errno));
+		eof_log(eof_log_string, 1);
 		if(error)
 			*error=2;
 		pack_fclose(inf);
@@ -669,17 +671,21 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 			substring2=strchr(buffer,']');		//Find first closing bracket
 			if(substring2 == NULL)
 			{
+				snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Malformed section header (no closing bracket)", chart->linesprocessed);
+				eof_log(eof_log_string, 1);
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
-					*error=2;
+					*error=3;
 				return NULL;					//Malformed section header, return error
 			}
 
 			if(currentsection != 0)				//If a section is already being parsed
 			{
+				snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Malformed file (section not closed before another begins)", chart->linesprocessed);
+				eof_log(eof_log_string, 1);
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
-					*error=3;
+					*error=4;
 				return NULL;					//Malformed file, return error
 			}
 
@@ -688,9 +694,11 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 			{
 				if(songparsed != 0)					//If a section with this name was already parsed
 				{
+					snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Malformed file ([Song] section defined more than once)", chart->linesprocessed);
+					eof_log(eof_log_string, 1);
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 					if(error)
-						*error=4;
+						*error=5;
 					return NULL;					//Multiple [song] sections, return error
 				}
 				songparsed=1;
@@ -703,9 +711,11 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				{
 					if(syncparsed != 0)					//If a section with this name was already parsed
 					{
+						snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Malformed file ([SyncTrack] section defined more than once)", chart->linesprocessed);
+						eof_log(eof_log_string, 1);
 						DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 						if(error)
-							*error=5;
+							*error=6;
 						return NULL;					//Multiple [SyncTrack] sections, return error
 					}
 					syncparsed=1;
@@ -718,9 +728,11 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 					{
 						if(eventsparsed != 0)				//If a section with this name was already parsed
 						{
+							snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Malformed file ([Events] section defined more than once)", chart->linesprocessed);
+							eof_log(eof_log_string, 1);
 							DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 							if(error)
-								*error=6;
+								*error=7;
 							return NULL;					//Multiple [Events] sections, return error
 						}
 						eventsparsed=1;
@@ -731,9 +743,11 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 						temp=(void *)Validate_dB_instrument(buffer);
 						if(temp == NULL)					//Not a valid Feedback instrument section name
 						{
+							snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Invalid instrument section \"%s\"", chart->linesprocessed, buffer);
+							eof_log(eof_log_string, 1);
 							DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 							if(error)
-								*error=7;
+								*error=8;
 							return NULL;					//Invalid instrument section, return error
 						}
 						currentsection=4;
@@ -766,9 +780,11 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 		{
 			if(currentsection == 0)				//If no section is being parsed
 			{
+				snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Malformed file (unexpected closing curly brace)", chart->linesprocessed);
+				eof_log(eof_log_string, 1);
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
-					*error=8;
+					*error=9;
 				return NULL;					//Malformed file, return error
 			}
 			currentsection=0;
@@ -777,12 +793,14 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 		}
 
 //Process normal line input
-		substring=strchr(buffer,'=');		//Any line within the a section is expected to contain an equal sign
+		substring=strchr(buffer,'=');		//Any line within the section is expected to contain an equal sign
 		if(substring == NULL)
 		{
+			snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Malformed item (missing equal sign)", chart->linesprocessed);
+			eof_log(eof_log_string, 1);
 			DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 			if(error)
-				*error=9;
+				*error=10;
 			return NULL;					//Invalid section entry, return error
 		}
 
@@ -809,6 +827,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 					chart->resolution=(unsigned long)ParseLongInt(string2,&index2,chart->linesprocessed,&errorstatus);	//Parse string2 as a number
 					if(errorstatus)						//If ParseLongInt() failed
 					{
+						snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Invalid chart resolution", chart->linesprocessed);
+						eof_log(eof_log_string, 1);
 						DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 						if(error)
 							*error=11;
@@ -836,6 +856,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 			A=(unsigned long)ParseLongInt(buffer,&index,chart->linesprocessed,&errorstatus);
 			if(errorstatus)						//If ParseLongInt() failed
 			{
+				snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Invalid sync item position", chart->linesprocessed);
+				eof_log(eof_log_string, 1);
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=12;
@@ -855,6 +877,9 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 		//Skip equal sign
 			if(substring[index++] != '=')	//Check the character and increment index
 			{
+				snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Malformed sync item (missing equal sign)", chart->linesprocessed);
+				eof_log(eof_log_string, 1);
+				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=13;
 				return NULL;				//Invalid SyncTrack entry, return error
@@ -876,6 +901,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 			{
 				if(substring[index+1] != 'S')		//If the next character doesn't complete the anchor type
 				{
+					snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Invalid sync item type \"T%c\"", chart->linesprocessed, substring[index+1]);
+					eof_log(eof_log_string, 1);
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 					if(error)
 						*error=14;
@@ -885,6 +912,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 			}
 			else
 			{
+				snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Invalid sync item type \"%c\"", chart->linesprocessed, anchortype);
+				eof_log(eof_log_string, 1);
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=15;
@@ -895,6 +924,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 			B=(unsigned long)ParseLongInt(substring,&index,chart->linesprocessed,&errorstatus);
 			if(errorstatus)						//If ParseLongInt() failed
 			{
+				snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Invalid sync item parameter", chart->linesprocessed);
+				eof_log(eof_log_string, 1);
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=16;
@@ -912,6 +943,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 					curanchor->TS=B;		//Store the Time Signature
 				else
 				{
+					snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Invalid sync item type \"%c\"", chart->linesprocessed, anchortype);
+					eof_log(eof_log_string, 1);
 					DestroyFeedbackChart(chart,1);
 					if(error)
 						*error=17;
@@ -951,6 +984,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 					break;
 
 					default:
+						snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Invalid sync item type \"%c\"", chart->linesprocessed, anchortype);
+						eof_log(eof_log_string, 1);
 						DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 						if(error)
 							*error=17;
@@ -966,6 +1001,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 			A=ParseLongInt(buffer,&index,chart->linesprocessed,&errorstatus);
 			if(errorstatus)						//If ParseLongInt() failed
 			{
+				snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Invalid event time position", chart->linesprocessed);
+				eof_log(eof_log_string, 1);
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=18;
@@ -985,6 +1022,9 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 		//Skip equal sign
 			if(substring[index++] != '=')	//Check the character and increment index
 			{
+				snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Malformed event item (missing equal sign)", chart->linesprocessed);
+				eof_log(eof_log_string, 1);
+				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=19;
 				return NULL;				//Invalid Event entry, return error
@@ -1001,6 +1041,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 
 			if(substring[index++] != 'E')		//Check if this isn't a "text event" indicator (and increment index)
 			{
+				snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Invalid event item type \"%c\"", chart->linesprocessed, substring[index - 1]);
+				eof_log(eof_log_string, 1);
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=20;
@@ -1013,6 +1055,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 
 			if(substring[index++] != '"')		//Check if this was a null character instead of quotation mark (and increment index)
 			{
+				snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Malformed event item (missing open quotation mark)", chart->linesprocessed);
+				eof_log(eof_log_string, 1);
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=21;
@@ -1026,6 +1070,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 			{
 				if(substring[index] == '\0')		//If a null character is reached unexpectedly
 				{
+					snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Malformed event item (missing close quotation mark)", chart->linesprocessed);
+					eof_log(eof_log_string, 1);
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 					if(error)
 						*error=22;
@@ -1061,6 +1107,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 			A=ParseLongInt(buffer,&index,chart->linesprocessed,&errorstatus);
 			if(errorstatus)						//If ParseLongInt() failed
 			{
+				snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Invalid gem item position", chart->linesprocessed);
+				eof_log(eof_log_string, 1);
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=23;
@@ -1080,6 +1128,9 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 		//Skip equal sign
 			if(substring[index++] != '=')	//Check the character and increment index
 			{
+				snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Malformed gem item (missing equal sign)", chart->linesprocessed);
+				eof_log(eof_log_string, 1);
+				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=24;
 				return NULL;				//Invalid instrument entry, return error
@@ -1111,6 +1162,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 				break;
 
 				default:
+					snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Invalid gem item type \"%c\"", chart->linesprocessed, substring[index]);
+					eof_log(eof_log_string, 1);
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 					if(error)
 						*error=25;
@@ -1121,6 +1174,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 			B=ParseLongInt(substring,&index,chart->linesprocessed,&errorstatus);
 			if(errorstatus)						//If ParseLongInt() failed
 			{
+				snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Invalid gem item parameter 1", chart->linesprocessed);
+				eof_log(eof_log_string, 1);
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=26;
@@ -1131,6 +1186,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 			C=ParseLongInt(substring,&index,chart->linesprocessed,&errorstatus);
 			if(errorstatus)						//If ParseLongInt() failed
 			{
+				snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Invalid gem item parameter 2", chart->linesprocessed);
+				eof_log(eof_log_string, 1);
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=27;
@@ -1140,6 +1197,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 		//Create a note link and add it to the current Note list
 			if(curtrack == NULL)				//If the instrument track linked list is not initialized
 			{
+				snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Malformed file (gem defined outside instrument track)", chart->linesprocessed);
+				eof_log(eof_log_string, 1);
 				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 				if(error)
 					*error=28;
@@ -1168,6 +1227,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 			{
 				if(B > 4)							//Only values of 0, 1 or 2 are valid for player section markers, 3 and 4 are unknown but will be kept and ignored for now during transfer to EOF
 				{
+					snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Invalid section marker #%lu", chart->linesprocessed, B);
+					eof_log(eof_log_string, 1);
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 					if(error)
 						*error=29;
@@ -1181,9 +1242,11 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 	//Error: Content in file outside of a defined section
 		else
 		{
+			snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Malformed file (item defined outside of track)", chart->linesprocessed);
+			eof_log(eof_log_string, 1);
 			DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 			if(error)
-				*error=29;
+				*error=30;
 			return NULL;					//Malformed file, return error
 		}
 

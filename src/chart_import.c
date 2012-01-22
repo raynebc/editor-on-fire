@@ -13,6 +13,40 @@
 #include "memwatch.h"
 #endif
 
+char *eof_chart_import_return_code_list[] = {
+	"Success",														//Return code 0
+	"Unable to open file",											//1
+	"Unable to read file",											//2
+	"Malformed section header",										//3
+	"Malformed file (non terminated section)",						//4
+	"Malformed file (extraneous [Song] section definition)",		//5
+	"Malformed file (extraneous [SyncTrack] section definition)",	//6
+	"Malformed file (extraneous [Events] section definition)",		//7
+	"Invalid instrument section",									//8
+	"Malformed file (extraneous closing curly brace)",				//9
+	"Malformed item (missing equal sign)",							//10
+	"Invalid chart resolution",										//11
+	"Invalid sync item position",									//12
+	"Malformed sync item (missing equal sign)",						//13
+	"Invalid sync item type",										//14
+	"Invalid sync item type",										//15
+	"Invalid sync item parameter",									//16
+	"Invalid sync item type",										//17
+	"Invalid event time position",									//18
+	"Malformed event item (missing equal sign)",					//19
+	"Invalid event item type",										//20
+	"Malformed event item (missing open quotation mark)",			//21
+	"Malformed event item (missing close quotation mark)",			//22
+	"Invalid gem item position",									//23
+	"Malformed gem item (missing equal sign)",						//24
+	"Invalid gem item type",										//25
+	"Invalid gem item parameter 1",									//26
+	"Invalid gem item parameter 2",									//27
+	"Malformed file (gem defined outside instrument track)",		//28
+	"Invalid section marker",										//29
+	"Malformed file (item defined outside of track)"				//30
+};
+
 /* convert Feedback chart time to milliseconds for use with EOF */
 static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chartpos)
 {
@@ -78,7 +112,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 	char searchpath[1024] = {0};
 	char backup_filename[1024] = {0};
 	char oldoggpath[1024] = {0};
-	char errorcode[100] = "Import failed.  Error #";
+//	char errorcode[100] = "Import failed.  Error #";
 	struct al_ffblk info; // for file search
 	int ret=0;
 
@@ -90,8 +124,9 @@ EOF_SONG * eof_import_chart(const char * fn)
 	chart = ImportFeedback((char *)fn, &err);
 	if(chart == NULL)
 	{	//Import failed
-		snprintf(&errorcode[23],50,"%d",err);	//Perform a bounds checked conversion of Allegro's error code to string format
-		alert(errorcode, NULL, errorcode, "OK", NULL, 0, KEY_ENTER);
+		snprintf(oggfn, sizeof(oggfn), "Error:  %s", eof_chart_import_return_code_list[err % 31]);	//Display the appropriate error
+//		snprintf(&errorcode[23],50,"%d",err);	//Perform a bounds checked conversion of Allegro's error code to string format
+		alert("Error:", NULL, eof_chart_import_return_code_list[err % 31], "OK", NULL, 0, KEY_ENTER);
 		return NULL;
 	}
 	else
