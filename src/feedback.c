@@ -1456,7 +1456,7 @@ struct dbTrack *Validate_dB_instrument(char *buffer)
 											{
 	//Test for Keyboard
 												inststring=strcasestr_spec(diffstring,"Keyboard]");
-												if(inststring == NULL)	//If none of the valid instrument names were found
+												if(inststring == NULL)
 												{
 	//Test for SingleGuitar (Guitar)
 													inststring=strcasestr_spec(diffstring,"SingleGuitar]");	//This is another track name that can represent "Single"
@@ -1490,6 +1490,8 @@ struct dbTrack *Validate_dB_instrument(char *buffer)
 														isguitar=1;
 													}
 												}
+												else
+													tracktype=7;
 											}
 											else
 												tracktype=5;	//Track that this is a "Vocals" track

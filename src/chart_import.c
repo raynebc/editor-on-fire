@@ -330,6 +330,13 @@ EOF_SONG * eof_import_chart(const char * fn)
 					break;
 				}
 
+				/* PART KEYS */
+				case 7:
+				{
+					track = EOF_TRACK_KEYS;
+					break;
+				}
+
 				default:
 				{
 					track = -1;
@@ -394,8 +401,8 @@ EOF_SONG * eof_import_chart(const char * fn)
 		}
 
 		/* load text events */
-		long b;
-		double solo_on, solo_off;
+		long b = 0;
+		double solo_on = 0.0, solo_off = 0.0;
 		char solo_status = 0;	//0 = Off and awaiting a solo on marker, 1 = On and awaiting a solo off marker
 		current_event = chart->events;
 		while(current_event)

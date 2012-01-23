@@ -3,9 +3,9 @@
 
 struct waveformslice
 {
-	unsigned min;	//The lowest amplitude for the samples
+	unsigned min;	//The trough (lowest) amplitude for the samples
 	unsigned peak;	//The peak amplitude for the samples
-	double rms;	//The root mean square for the samples
+	double rms;		//The root mean square for the samples
 };
 
 struct waveformchanneldata

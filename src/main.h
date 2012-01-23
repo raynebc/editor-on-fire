@@ -9,7 +9,7 @@
 #include "control.h"
 #include "editor.h"
 
-#define EOF_VERSION_STRING "EOF v1.8beta26"
+#define EOF_VERSION_STRING "EOF v1.8beta27"
 #define EOF_COPYRIGHT_STRING "(c)2008-2010 T^3 Software."
 
 #define KEY_EITHER_ALT (key[KEY_ALT] || key[KEY_ALTGR])
@@ -366,6 +366,9 @@ extern int eof_color_dark_purple;
 extern int eof_color_orange;
 extern int eof_color_silver;
 extern int eof_info_color;
+extern int eof_color_waveform_trough;
+extern int eof_color_waveform_peak;
+extern int eof_color_waveform_rms;
 
 extern char eof_string_lane_1[4];
 extern char eof_string_lane_2[4];

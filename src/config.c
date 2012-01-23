@@ -178,6 +178,11 @@ void eof_load_config(char * fn)
 		eof_hopo_view = EOF_HOPO_RF;
 	}
 
+	/* read waveform graph colors */
+	eof_color_waveform_trough = get_config_hex("colors", "eof_color_waveform_trough", 0x007C00);	//The RGB equivalent of makecol(0, 124, 0)
+	eof_color_waveform_peak = get_config_hex("colors", "eof_color_waveform_peak", 0x00BE00);		//The RGB equivalent of makecol(0, 190, 0)
+	eof_color_waveform_rms = get_config_hex("colors", "eof_color_waveform_rms", 0xBE0000);			//The RGB equivalent of makecol(190, 0, 0)
+
 	if(exists(fn))
 	{	//Only try to load the controller buttons if the config file exists, otherwise the defaults will be erased
 		eof_controller_load_config(&eof_guitar, "guitar");
@@ -253,13 +258,18 @@ void eof_save_config(char * fn)
 	set_config_string("paths", "eof_path", eof_last_eof_path);
 	set_config_string("paths", "ogg_path", eof_last_ogg_path);
 
-	/* read editor settings */
+	/* write editor settings */
 	set_config_string("editor", "frettist", eof_last_frettist);
 	set_config_int("editor", "snap_mode", eof_snap_mode);
 	set_config_int("editor", "snap_interval", eof_snap_interval);
 	set_config_int("editor", "snap_measure", eof_custom_snap_measure);
 	set_config_int("editor", "preview_speed", eof_zoom_3d);
 	set_config_int("editor", "hopo_view", eof_hopo_view);
+
+	/* write waveform graph colors */
+	set_config_hex("colors", "eof_color_waveform_trough", eof_color_waveform_trough);
+	set_config_hex("colors", "eof_color_waveform_peak", eof_color_waveform_peak);
+	set_config_hex("colors", "eof_color_waveform_rms", eof_color_waveform_rms);
 
 	eof_controller_save_config(&eof_guitar, "guitar");
 	eof_controller_save_config(&eof_drums, "drums");

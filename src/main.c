@@ -229,6 +229,9 @@ int eof_color_dark_purple;
 int eof_color_orange;
 int eof_color_silver;
 int eof_info_color;
+int eof_color_waveform_trough;
+int eof_color_waveform_peak;
+int eof_color_waveform_rms;
 
 int eof_use_rb_colors = 1;	//If nonzero, use track-specific Rock Band coloring instead of the old static EOF color set
 int eof_add_new_notes_to_selection = 0;	//If nonzero, newly added gems cause notes to be added to the selection instead of the selection being cleared first
