@@ -3,6 +3,43 @@ EOF Version History
 
 1.8:
 
+*Added functions to the Beat menu to double or halve the
+tempo at the selected beat, allowing for the tempo to be
+manipulated in a way that does not destroy a chart's
+sync.  These are utilized by the "Adjust tempo for RBN"
+feature that will automatically halve or double tempos
+where possible in order to comply with Magma's
+requirements that all tempos are between 40 and 300 BPM.
+
+*Fixed a bug where anchors were automatically removed
+if they were the same tempo as the previous anchor.
+
+*Made improvements to Feedback import:  Section names
+are altered to conform to the "[section SECTION_NAME]"
+format, [solo_on] and [solo_off] events into guitar and
+lead guitar solos, fixed memory leaks that could occur if
+the import fails, improved error reporting/logging that
+occurs when import fails and updated the import to allow
+the keyboard tracks to be loaded if present.
+
+*Added the display of section markers to the editor
+window.
+
+*Fixed a crash that would occur when "Load OGG" was used
+to try to open a file that wasn't recognized as an OGG
+file.
+
+*Added the option to mark new yellow drum gems as open,
+pedal or sizzle hi hat notes.
+
+*Made improvements to the waveform graph by improving its
+rendering performance and allowing the 3 colors used to
+be altered in song.ini.
+
+*Added a check during paste that will provide a warning
+if pasted notes have a gem on a lane higher than the
+active track supports.
+
 *Fixed a minor bug where using Note>Toggle to remove the
 last gem for a note wouldn't cause it to be deleted
 immediately.

@@ -194,9 +194,6 @@ int eof_render_waveform(struct wavestruct *waveform)
 	}
 
 //render graph from left to right, one pixel at a time (each pixel represents eof_zoom number of milliseconds of audio)
-	int darkgreen = makecol(0, 124, 0);
-	int red = makecol(190, 0, 0);
-	int green = makecol(0, 190, 0);
 	int render_right_channel = 0;	//This caches the condition of the user having enabled the right channel to render AND the audio is stereo
 	unsigned int zeroamp = waveform->zeroamp;			//Cache this for each channel so it doesn't have to be dereferenced more often than necessary
 	struct waveformchanneldata *leftchannel = &waveform->left;	//Cache this so waveform doesn't have to be dereferenced more often than necessary
@@ -216,15 +213,15 @@ int eof_render_waveform(struct wavestruct *waveform)
 				{
 					if(left.peak < zeroamp)	//If the peak is a negative amplitude
 					{	//Render it after the minimum amplitude to ensure it is visible
-						eof_render_waveform_line(zeroamp,leftchannel,left.min,x,darkgreen);	//Render the minimum amplitude in dark green
-						eof_render_waveform_line(zeroamp,leftchannel,left.rms,x,red);		//Render the root mean square amplitude in red
-						eof_render_waveform_line(zeroamp,leftchannel,left.peak,x,green);	//Render the peak amplitude in green
+						eof_render_waveform_line(zeroamp,leftchannel,left.min,x,eof_color_waveform_trough);	//Render the minimum amplitude (default color is dark green)
+						eof_render_waveform_line(zeroamp,leftchannel,left.rms,x,eof_color_waveform_rms);	//Render the root mean square amplitude (default color is red)
+						eof_render_waveform_line(zeroamp,leftchannel,left.peak,x,eof_color_waveform_peak);	//Render the peak amplitude (default color is green)
 					}
 					else
 					{	//Otherwise render it first
-						eof_render_waveform_line(zeroamp,leftchannel,left.peak,x,green);	//Render the peak amplitude in green
-						eof_render_waveform_line(zeroamp,leftchannel,left.rms,x,red);		//Render the root mean square amplitude in red
-						eof_render_waveform_line(zeroamp,leftchannel,left.min,x,darkgreen);	//Render the minimum amplitude in dark green
+						eof_render_waveform_line(zeroamp,leftchannel,left.peak,x,eof_color_waveform_peak);	//Render the peak amplitude
+						eof_render_waveform_line(zeroamp,leftchannel,left.rms,x,eof_color_waveform_rms);	//Render the root mean square
+						eof_render_waveform_line(zeroamp,leftchannel,left.min,x,eof_color_waveform_trough);	//Render the minimum amplitude
 					}
 				}
 			}
@@ -235,15 +232,15 @@ int eof_render_waveform(struct wavestruct *waveform)
 				{
 					if(right.peak < zeroamp)	//If the peak is a negative amplitude
 					{	//Render it after the minimum amplitude to ensure it is visible
-						eof_render_waveform_line(zeroamp,rightchannel,right.min,x,darkgreen);	//Render the minimum amplitude in dark green
-						eof_render_waveform_line(zeroamp,rightchannel,right.rms,x,red);			//Render the root mean square amplitude in red
-						eof_render_waveform_line(zeroamp,rightchannel,right.peak,x,green);		//Render the peak amplitude in green
+						eof_render_waveform_line(zeroamp,rightchannel,right.min,x,eof_color_waveform_trough);	//Render the minimum amplitude
+						eof_render_waveform_line(zeroamp,rightchannel,right.rms,x,eof_color_waveform_rms);		//Render the root mean square
+						eof_render_waveform_line(zeroamp,rightchannel,right.peak,x,eof_color_waveform_peak);	//Render the peak amplitude
 					}
 					else
 					{	//Otherwise render it first
-						eof_render_waveform_line(zeroamp,rightchannel,right.peak,x,green);		//Render the peak amplitude in green
-						eof_render_waveform_line(zeroamp,rightchannel,right.rms,x,red);			//Render the root mean square amplitude in red
-						eof_render_waveform_line(zeroamp,rightchannel,right.min,x,darkgreen);	//Render the minimum amplitude in dark green
+						eof_render_waveform_line(zeroamp,rightchannel,right.peak,x,eof_color_waveform_peak);	//Render the peak amplitude
+						eof_render_waveform_line(zeroamp,rightchannel,right.rms,x,eof_color_waveform_rms);		//Render the root mean square
+						eof_render_waveform_line(zeroamp,rightchannel,right.min,x,eof_color_waveform_trough);	//Render the minimum amplitude
 					}
 				}
 			}

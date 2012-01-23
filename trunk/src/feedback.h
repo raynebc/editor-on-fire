@@ -81,7 +81,7 @@ struct dbTrack *Validate_dB_instrument(char *buffer);
 	//buffer is expected to point to the opening bracket
 	//If it is valid, a dbTrack structure is allocated and initialized:
 	//(track name is allocated, tracktype and difftype are set and the linked lists are set to NULL)
-	//The track strcture is returned, otherwise NULL is returned if the string did not contain a valid
+	//The track structure is returned, otherwise NULL is returned if the string did not contain a valid
 	//track name.  buffer[] is modified to remove any whitespace after the closing bracket
 
 void DestroyFeedbackChart(struct FeedbackChart *ptr, char freestruct);
