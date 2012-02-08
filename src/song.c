@@ -433,7 +433,7 @@ void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 			{	//If there is a note after this note
 				if(tp->note[i-1]->pos == tp->note[next]->pos)
 				{	//And it is at the same position as this note, merge them both
-					unsigned long flags = eof_prepare_note_flag_merge(tp->note[i-1]->flags, tp->parent->track_behavior, next);	//Get a flag bitmask where all lane specific flags for lanes that the next (merging) note uses have been cleared
+					unsigned long flags = eof_prepare_note_flag_merge(tp->note[i-1]->flags, tp->parent->track_behavior, tp->note[next]->note);	//Get a flag bitmask where all lane specific flags for lanes that the next (merging) note uses have been cleared
 					tp->note[i-1]->note |= tp->note[next]->note;	//Merge the note bitmasks
 					tp->note[i-1]->flags = flags |= tp->note[next]->flags;	//Merge the flags
 					eof_legacy_track_delete_note(tp, next);			//Delete the next note, as it has been merged with this note

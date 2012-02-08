@@ -5,6 +5,7 @@
 #include "event.h"
 #include "feedback.h"
 #include "midi.h"	//For eof_apply_ts()
+#include "ini_import.h"	//For eof_import_ini()
 #include "menu/beat.h"
 #include "menu/file.h"
 #include "utility.h"
@@ -210,6 +211,10 @@ EOF_SONG * eof_import_chart(const char * fn)
 		{
 			strcpy(sp->tags->frettist, chart->charter);
 		}
+
+		/* read INI file */
+		replace_filename(oggfn, fn, "song.ini", 1024);
+		eof_import_ini(sp, oggfn);
 
 		/* set up beat markers */
 		sp->tags->ogg[0].midi_offset = chart->offset * 1000.0;
