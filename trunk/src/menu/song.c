@@ -142,7 +142,7 @@ MENU eof_song_menu[] =
     {"&Catalog", NULL, eof_catalog_menu, 0, NULL},
     {"&INI Settings", eof_menu_song_ini_settings, NULL, 0, NULL},
     {"&Properties\tF9", eof_menu_song_properties, NULL, 0, NULL},
-    {"Set track difficulty", eof_song_track_difficulty_dialog, NULL, 0, NULL},
+    {"Set track &Difficulty", eof_song_track_difficulty_dialog, NULL, 0, NULL},
     {"&Leading Silence", eof_menu_song_add_silence, NULL, 0, NULL},
     {"Enable open strum bass", eof_menu_song_open_bass, NULL, 0, NULL},
     {"Enable five lane drums", eof_menu_song_five_lane_drums, NULL, 0, NULL},

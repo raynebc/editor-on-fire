@@ -11,7 +11,7 @@
 #include "memwatch.h"
 #endif
 
-char *eof_difficulty_ini_tags[EOF_TRACKS_MAX + 1] = {"", "diff_guitar", "diff_bass", "", "", "diff_drums", "diff_vocals", "diff_keys", "diff_bass_real", "diff_guitar_real", "", "diff_bass_real_22", "diff_guitar_real_22", "diff_keys_real"};
+char *eof_difficulty_ini_tags[EOF_TRACKS_MAX + 1] = {"", "diff_guitar", "diff_bass", "diff_guitar_coop", "diff_rhythm", "diff_drums", "diff_vocals", "diff_keys", "diff_bass_real", "diff_guitar_real", "diff_dance", "diff_bass_real_22", "diff_guitar_real_22", "diff_keys_real"};
 
 int eof_save_ini(EOF_SONG * sp, char * fn)
 {
@@ -89,10 +89,21 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 		if(i == 0)
 			continue;	//Until the band difficulty is implemented, skip this iteration
 
-		if((eof_difficulty_ini_tags[i][0] != '\0') && (sp->track[i]->difficulty != 0xFF))
-		{	//If this track has a supported difficulty tag and the difficulty is defined
-			sprintf(buffer, "\r\n%s = %d", eof_difficulty_ini_tags[i], sp->track[i]->difficulty);
-			ustrcat(ini_string, buffer);
+		if(eof_difficulty_ini_tags[i][0] != '\0')
+		{	//If this track has a supported difficulty tag
+			if(!eof_get_track_size(sp, i))
+			{	//If this track is empty
+				sprintf(buffer, "\r\n%s = -1", eof_difficulty_ini_tags[i]);	//Write an "empty track" difficulty tag
+				ustrcat(ini_string, buffer);
+			}
+			else
+			{
+				if(sp->track[i]->difficulty != 0xFF)
+				{	//If the track's difficulty is defined
+					sprintf(buffer, "\r\n%s = %d", eof_difficulty_ini_tags[i], sp->track[i]->difficulty);
+					ustrcat(ini_string, buffer);
+				}
+			}
 		}
 	}
 	if(((eof_song->track[EOF_TRACK_DRUM]->flags & 0xFF000000) >> 24) != 0xFF)

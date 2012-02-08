@@ -2549,9 +2549,9 @@ void eof_menu_paste_read_clipboard_note(PACKFILE * fp, EOF_EXTENDED_NOTE *temp_n
 	temp_note->ghostmask = pack_igetl(fp);				//Read the note's ghost bitmask
 }
 
-unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long track_behavior, unsigned long note)
+unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long track_behavior, unsigned long notemask)
 {
-	if(note & 1)
+	if(notemask & 1)
 	{	//If the note being pasted uses lane 1, erase lane 1 flags from the overlapped note
 		if(track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//Erase drum specific flags
@@ -2562,7 +2562,7 @@ unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long tra
 			flags &= ~EOF_DANCE_FLAG_LANE_1_MINE;
 		}
 	}
-	if(note & 2)
+	if(notemask & 2)
 	{	//If the note being pasted uses lane 2, erase lane 2 flags from the overlapped note
 		if(track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//Erase drum specific flags
@@ -2573,7 +2573,7 @@ unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long tra
 			flags &= ~EOF_DANCE_FLAG_LANE_2_MINE;
 		}
 	}
-	if(note & 4)
+	if(notemask & 4)
 	{	//If the note being pasted uses lane 3, erase lane 3 flags from the overlapped note
 		if(track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//Erase drum specific flags
@@ -2587,7 +2587,7 @@ unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long tra
 			flags &= ~EOF_DANCE_FLAG_LANE_3_MINE;
 		}
 	}
-	if(note & 8)
+	if(notemask & 8)
 	{	//If the note being pasted uses lane 4, erase lane 4 flags from the overlapped note
 		if(track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//Erase drum specific flags
@@ -2598,7 +2598,7 @@ unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long tra
 			flags &= ~EOF_DANCE_FLAG_LANE_4_MINE;
 		}
 	}
-	if(note & 16)
+	if(notemask & 16)
 	{	//If the note being pasted uses lane 5, erase lane 5 flags from the overlapped note
 		if(track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//Erase drum specific flags

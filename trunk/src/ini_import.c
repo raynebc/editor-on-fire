@@ -89,8 +89,8 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 
 					equals[0] = '\0';
 					token = equals + 1;
-					ustrcpy(eof_import_ini_setting[eof_import_ini_settings].type, line_token);
-					ustrcpy(eof_import_ini_setting[eof_import_ini_settings].value, token);
+					ustrncpy(eof_import_ini_setting[eof_import_ini_settings].type, line_token, 256-1);
+					ustrncpy(eof_import_ini_setting[eof_import_ini_settings].value, token, 1024-1);
 					while(1)
 					{	//Drop all trailing space characters from the tag type string
 						stringlen = ustrlen(eof_import_ini_setting[eof_import_ini_settings].type);
@@ -127,23 +127,23 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 		{	//If the value portion of the entry has content
 			if(!ustricmp(eof_import_ini_setting[i].type, "artist"))
 			{
-				ustrcpy(sp->tags->artist, value_index);
+				ustrncpy(sp->tags->artist, value_index, 256-1);
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "name"))
 			{
-				ustrcpy(sp->tags->title, value_index);
+				ustrncpy(sp->tags->title, value_index, 256-1);
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "frets"))
 			{
-				ustrcpy(sp->tags->frettist, value_index);
+				ustrncpy(sp->tags->frettist, value_index, 256-1);
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "year"))
 			{
-				ustrcpy(sp->tags->year, value_index);
+				ustrncpy(sp->tags->year, value_index, 32-1);
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "loading_phrase"))
 			{
-				ustrcpy(sp->tags->loading_text, value_index);
+				ustrncpy(sp->tags->loading_text, value_index, 512-1);
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "lyrics"))
 			{
@@ -260,8 +260,12 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 				{	//For each string in the eof_difficulty_ini_tags[] array (for each currently supported track number)
 					if(eof_difficulty_ini_tags[j] && !ustricmp(eof_import_ini_setting[i].type, eof_difficulty_ini_tags[j]))
 					{	//If this INI setting matches the difficulty tag, store the difficulty value into the appropriate track structure
-						sp->track[j]->difficulty = atoi(value_index);
-						setting_stored = 1;
+						int value = atoi(value_index);
+						if(value >= 0)
+						{	//Only store the difficulty if it isn't negative (-1 means empty track)
+							sp->track[j]->difficulty = value;
+							setting_stored = 1;
+						}
 						break;
 					}
 				}

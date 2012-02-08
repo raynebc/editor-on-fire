@@ -105,7 +105,7 @@ void eof_menu_edit_paste_clear_range(unsigned long track, int note_type, unsigne
 	//Deletes all notes in the specified track difficulty that fall within the given start and end positions
 void eof_menu_paste_read_clipboard_note(PACKFILE * fp, EOF_EXTENDED_NOTE *temp_note);
 	//Reads the next note's (for tracks except PART VOCALS) worth of data from the open clipboard file
-unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long track_behavior, unsigned long note);
+unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long track_behavior, unsigned long notemask);
 	//Accepts an existing note's flags, the note's track behavior, and the bitmask of a note that will
 	//merge with the existing note.  Any lane-specific flag for a lane that is populated in the
 	//specified note bitmask will be cleared from the specified flags variable.  The updated flags
