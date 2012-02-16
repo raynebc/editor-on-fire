@@ -51,7 +51,7 @@ char eof_etext4[1024] = {0};
 char eof_etext5[1024] = {0};
 char eof_etext6[1024] = {0};
 char eof_etext7[1024] = {0};
-char eof_help_text[4096] = {0};
+char *eof_help_text = NULL;
 char eof_ctext[13][1024] = {{0}};
 
 static int eof_keyboard_shortcut = 0;

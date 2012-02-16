@@ -31,7 +31,7 @@ int eof_menu_file_load(void);
 int eof_menu_file_save(void);
 int eof_menu_file_quick_save(void);
 int eof_menu_file_lyrics_import(void);
-int eof_menu_file_feedback_import(void);	//Prompt for a .chart file and test importing it
+int eof_menu_file_feedback_import(void);	//Prompt for a .chart file and import it
 int eof_menu_file_save_as(void);
 int eof_menu_file_load_ogg(void);
 int eof_menu_file_midi_import(void);
@@ -44,6 +44,7 @@ int eof_menu_file_link(char application);	//Prompts the user for an executable a
 int eof_menu_file_link_fof(void);	//Calls eof_menu_file_link() to link to FoF
 int eof_menu_file_link_ps(void);	//Calls eof_menu_file_link() to link to Phase Shift
 int eof_menu_file_exit(void);
+int eof_menu_file_gh_import(void);	//Prompt for a Guitar Hero chart file and import it
 
 char * eof_ogg_list(int index, int * size);
 char * eof_guitar_list(int index, int * size);
@@ -97,5 +98,10 @@ int eof_menu_file_new_supplement(char *directory, char check);
 	//If check equals 1, guitar.ogg is checked for
 	//If check equals 2, original.mp3 is checked for
 	//If check is neither 1 nor 2, guitar.ogg, original.mp3, notes.eof, song.ini and notes.mid are checked for
+
+int eof_menu_prompt_save_changes(void);
+	//Stops playback and if the chart is modified, prompt whether to save changes (Save/Discard/Cancel)
+	//If Save is selected, the chart is saved, otherwise modified chart audio is restored if necessary
+	//The user's answer to the prompt is returned (1=save, 2=discard, 3=cancel), otherwise 0 is returned if the chart isn't loaded/modified
 
 #endif

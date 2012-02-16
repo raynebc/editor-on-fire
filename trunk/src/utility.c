@@ -49,7 +49,7 @@ int eof_system(const char * command)
 	return -1;
 }
 
-void * eof_buffer_file(char * fn, char appendnull)
+void * eof_buffer_file(const char * fn, char appendnull)
 {
 // 	eof_log("eof_buffer_file() entered");
 

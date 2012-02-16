@@ -6,6 +6,7 @@
 #include "../lc_import.h"
 #include "../midi_import.h"
 #include "../chart_import.h"
+#include "../gh_import.h"
 #include "../main.h"
 #include "../player.h"
 #include "../dialog.h"
@@ -35,6 +36,7 @@ MENU eof_file_menu[] =
     {"", NULL, NULL, 0, NULL},
     {"MIDI Import\tF6", eof_menu_file_midi_import, NULL, 0, NULL},
     {"Feedback Import\tF7", eof_menu_file_feedback_import, NULL, 0, NULL},
+    {"&GH Import", eof_menu_file_gh_import, NULL, 0, NULL},
     {"Lyric Import\tF8", eof_menu_file_lyrics_import, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"Settings\tF10", eof_menu_file_settings, NULL, 0, NULL},
@@ -208,14 +210,14 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[2].flags = 0; // Save
 		eof_file_menu[3].flags = 0; // Save As
 		eof_file_menu[5].flags = 0; // Load OGG
-		eof_file_menu[9].flags = 0; // Lyric Import
+		eof_file_menu[10].flags = 0; // Lyric Import
 	}
 	else
 	{
 		eof_file_menu[2].flags = D_DISABLED; // Save
 		eof_file_menu[3].flags = D_DISABLED; // Save As
 		eof_file_menu[5].flags = D_DISABLED; // Load OGG
-		eof_file_menu[9].flags = D_DISABLED; // Lyric Import
+		eof_file_menu[10].flags = D_DISABLED; // Lyric Import
 	}
 }
 
@@ -308,38 +310,14 @@ int eof_menu_file_new_supplement(char *directory, char check)
 int eof_menu_file_new_wizard(void)
 {
 	char * returnedfn = NULL;
-	int ret = 0;
 
-	if(eof_changes)
-	{
-		ret = alert3(NULL, "You have unsaved changes.", NULL, "Save", "Discard", "Cancel", 0, 0, 0);
-		if(ret == 1)
-		{
-			eof_menu_file_save();
-		}
-		else
-		{
-			eof_restore_oggs_helper();
-		}
-		eof_clear_input();
-	}
-	if(ret == 3)
-	{
+	if(eof_menu_prompt_save_changes() == 3)
+	{	//If user canceled closing the current, modified chart
 		return 1;
 	}
-
-	/* stop the music and get ready */
 	eof_cursor_visible = 0;
-	if(eof_song_loaded)
-	{
-		if(!eof_music_paused)
-		{
-			eof_music_play();
-		}
-	}
+	eof_pen_visible = 0;
 	eof_render();
-
-	/* select a music file */
 	returnedfn = ncd_file_select(0, eof_last_ogg_path, "Select Music File", eof_filter_music_files);
 	eof_clear_input();
 	if(!returnedfn)
@@ -355,32 +333,11 @@ int eof_menu_file_new_wizard(void)
 
 int eof_menu_file_load(void)
 {
-	int ret = 0;
 	char temp_filename[1024] = {0};
 	char * returnedfn = NULL;
 
-	if(eof_song_loaded)
-	{
-		if(!eof_music_paused)
-		{
-			eof_music_play();
-		}
-	}
-	if(eof_changes)
-	{
-		ret = alert3(NULL, "You have unsaved changes.", NULL, "Save", "Discard", "Cancel", 0, 0, 0);
-		if(ret == 1)
-		{
-			eof_menu_file_save();
-		}
-		else
-		{
-			eof_restore_oggs_helper();
-		}
-		eof_clear_input();
-	}
-	if(ret == 3)
-	{
+	if(eof_menu_prompt_save_changes() == 3)
+	{	//If user canceled closing the current, modified chart
 		return 1;
 	}
 	eof_cursor_visible = 0;
@@ -790,31 +747,11 @@ int eof_menu_file_lyrics_import(void)
 
 int eof_menu_file_midi_import(void)
 {
-	int ret = 0;
 	char * returnedfn = NULL;
 	char tempfilename[1024] = {0};
 
-	if(eof_song_loaded)
-	{
-		eof_music_paused = 1;
-		eof_stop_midi();
-		alogg_stop_ogg(eof_music_track);
-	}
-	if(eof_changes)
-	{
-		ret = alert3(NULL, "You have unsaved changes.", NULL, "Save", "Discard", "Cancel", 0, 0, 0);
-		if(ret == 1)
-		{
-			eof_menu_file_save();
-		}
-		else
-		{
-			eof_restore_oggs_helper();
-		}
-		eof_clear_input();
-	}
-	if(ret == 3)
-	{
+	if(eof_menu_prompt_save_changes() == 3)
+	{	//If user canceled closing the current, modified chart
 		return 1;
 	}
 	eof_cursor_visible = 0;
@@ -1667,32 +1604,11 @@ int eof_menu_file_feedback_import(void)
 {
 	char * returnedfn = NULL;
 	int jumpcode = 0;
-	int ret = 0;
 
-	if(eof_song_loaded)
-	{
-		eof_music_paused = 1;
-		eof_stop_midi();
-		alogg_stop_ogg(eof_music_track);
-	}
-	if(eof_changes)
-	{
-		ret = alert3(NULL, "You have unsaved changes.", NULL, "Save", "Discard", "Cancel", 0, 0, 0);
-		if(ret == 1)
-		{
-			eof_menu_file_save();
-		}
-		else
-		{
-			eof_restore_oggs_helper();
-		}
-		eof_clear_input();
-	}
-	if(ret == 3)
-	{
+	if(eof_menu_prompt_save_changes() == 3)
+	{	//If user canceled closing the current, modified chart
 		return 1;
 	}
-
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
@@ -2315,4 +2231,80 @@ void eof_restore_oggs_helper(void)
 			}
 		}
 	}
+}
+
+int eof_menu_prompt_save_changes(void)
+{
+	int ret = 0;
+
+	if(!eof_song_loaded || !eof_changes)
+	{	//There are no changes or a song isn't loaded
+		return 0;
+	}
+
+	if(!eof_music_paused)
+	{
+		eof_music_play();
+	}
+	ret = alert3(NULL, "You have unsaved changes.", NULL, "Save", "Discard", "Cancel", 0, 0, 0);
+	if(ret == 1)
+	{
+		eof_menu_file_save();
+	}
+	else
+	{
+		eof_restore_oggs_helper();
+	}
+	eof_clear_input();
+
+	return ret;
+}
+
+int eof_menu_file_gh_import(void)
+{
+	char * returnedfn = NULL;
+
+	if(eof_menu_prompt_save_changes() == 3)
+	{	//If user canceled closing the current, modified chart
+		return 1;
+	}
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	returnedfn = ncd_file_select(0, eof_last_eof_path, "Import GH Chart", eof_filter_gh_files);
+	eof_clear_input();
+	if(returnedfn)
+	{
+		ustrcpy(eof_filename, returnedfn);
+		/* destroy loaded song */
+		if(eof_song)
+		{
+			eof_destroy_song(eof_song);
+			eof_song = NULL;
+			eof_song_loaded = 0;
+		}
+		eof_destroy_ogg();
+		ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+		replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
+		replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+		ustrcpy(eof_song_path, eof_last_eof_path);
+
+		/* import chart */
+		eof_song = eof_import_gh(returnedfn);
+		if(eof_song)
+		{
+			eof_song_loaded = 1;
+			eof_init_after_load(0);
+		}
+		else
+		{
+			eof_song_loaded = 0;
+			eof_changes = 0;
+			eof_fix_window_title();
+		}
+	}
+	eof_show_mouse(NULL);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	return 1;
 }

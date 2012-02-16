@@ -16,7 +16,7 @@ extern char eof_etext4[1024];
 extern char eof_etext5[1024];
 extern char eof_etext6[1024];
 extern char eof_etext7[1024];
-extern char eof_help_text[4096];
+extern char *eof_help_text;
 extern char eof_ctext[13][1024];
 extern char eof_display_flats;
 

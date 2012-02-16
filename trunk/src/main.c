@@ -58,6 +58,7 @@ NCDFS_FILTER_LIST * eof_filter_eof_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_exe_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_lyrics_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_dB_files = NULL;
+NCDFS_FILTER_LIST * eof_filter_gh_files = NULL;
 
 PALETTE     eof_palette;
 BITMAP *    eof_image[EOF_MAX_IMAGES] = {NULL};
@@ -785,7 +786,7 @@ long eof_get_previous_note(long cnote)
 
 int eof_note_is_hopo(unsigned long cnote)
 {
-	eof_log("eof_note_is_hopo() entered", 1);
+	eof_log("eof_note_is_hopo() entered", 2);
 
 	double delta;
 	float hopo_delta = eof_song->tags->eighth_note_hopo ? 250.0 : 170.0;
@@ -3146,6 +3147,14 @@ int eof_initialize(int argc, char * argv[])
 	}
 	ncdfs_filter_list_add(eof_filter_dB_files, "chart", "dB Chart Files (*.chart)", 1);
 
+	eof_filter_gh_files = ncdfs_filter_list_create();
+	if(!eof_filter_gh_files)
+	{
+		allegro_message("Could not create file list filter (*.*)!");
+		return 0;
+	}
+	ncdfs_filter_list_add(eof_filter_gh_files, "*", "GH Chart Files (*.*)", 1);
+
 	/* check availability of MP3 conversion tools */
 	if(!eof_supports_mp3)
 	{
@@ -3446,7 +3455,8 @@ void eof_exit(void)
 	eof_filter_lyrics_files = NULL;
 	free(eof_filter_dB_files);
 	eof_filter_dB_files = NULL;
-
+	free(eof_filter_gh_files);
+	eof_filter_gh_files = NULL;
 	//Free command line storage variables (for Windows build)
 	#ifdef ALLEGRO_WINDOWS
 	for(i = 0; i < eof_windows_argc; i++)

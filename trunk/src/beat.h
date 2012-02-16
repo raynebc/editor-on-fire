@@ -1,6 +1,8 @@
 #ifndef EOF_BEAT_H
 #define EOF_BEAT_H
 
+#include "song.h"
+
 //extern EOF_BEAT_MARKER eof_beat[EOF_MAX_BEATS];
 //extern int eof_beats;
 

@@ -490,7 +490,7 @@ void eof_set_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, ch
 void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos, long length, char type, char *text);
 	//Adds and initializes the appropriate note for the specified track, returning the newly created note structure, or NULL on error
 	//Automatic flags will be applied appropriately (ie. crazy status for all notes in PART KEYS)
-	//text is used to initialize the note name or lyric text
+	//text is used to initialize the note name or lyric text, and may be NULL
 void *eof_track_add_create_note2(EOF_SONG *sp, unsigned long track, EOF_NOTE *note);
 	//Adds and initializes the appropriate note for the specified track, returning the newly created note structure, or NULL on error
 	//If track refers to a legacy track, it is created and initialized using the passed structure

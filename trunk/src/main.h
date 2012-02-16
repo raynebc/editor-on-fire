@@ -201,6 +201,7 @@ extern NCDFS_FILTER_LIST * eof_filter_eof_files;
 extern NCDFS_FILTER_LIST * eof_filter_exe_files;
 extern NCDFS_FILTER_LIST * eof_filter_lyrics_files;
 extern NCDFS_FILTER_LIST * eof_filter_dB_files;
+extern NCDFS_FILTER_LIST * eof_filter_gh_files;
 
 extern int         eof_global_volume;
 
