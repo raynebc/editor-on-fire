@@ -492,7 +492,6 @@ void eof_pro_guitar_track_build_chord_variations(EOF_SONG *sp, unsigned long tra
 	int scale, chord, isslash, bassnote;
 	unsigned long array_depth;
 	unsigned long debug_ctr = 0, debug_total_ctr = 0;	//Every 1000 loookups, the title bar will be updated and a line outputted to the EOF log
-	long double power;
 
 	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return;	//Invalid song pointer or track number
@@ -523,8 +522,8 @@ void eof_pro_guitar_track_build_chord_variations(EOF_SONG *sp, unsigned long tra
 	{
 		dummy_track.numfrets = 11;	//Note values repeat every 12 half steps, so it's not necessary to go higher
 	}
-	power = pow(dummy_track.numfrets + 2, dummy_track.numstrings);	//Add 2 because 0xFF (string not played) and 0 (string played open) are valid will be checked as well
-	sprintf(eof_log_string, "\tBuilding chord list for \"%s\" (%d strings with %d frets = %lu permutations)", sp->track[track]->name, dummy_track.numstrings, dummy_track.numfrets, (unsigned long)power);
+	sprintf(eof_log_string, "\tBuilding chord list for \"%s\" (%d strings with %d frets )", sp->track[track]->name, dummy_track.numstrings, dummy_track.numfrets);
+	set_window_title(eof_log_string);
 	eof_log(eof_log_string, 1);
 
 	memset(frets, 0xFF, EOF_TUNING_LENGTH);	//Initialize the frets array to all muted
@@ -535,8 +534,6 @@ void eof_pro_guitar_track_build_chord_variations(EOF_SONG *sp, unsigned long tra
 		if(debug_ctr >= 1000)
 		{	//Every 1000 lookups
 			debug_ctr = 0;
-			sprintf(eof_log_string, "Building chords for \"%s\" %.2f%%", sp->track[track]->name, (double)(100.0*debug_total_ctr/power));
-			set_window_title(eof_log_string);
 
 			#ifdef EOF_CHORD_BUILD_DEBUG
 			char string[10];
