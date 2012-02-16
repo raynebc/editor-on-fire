@@ -417,6 +417,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	if(!eof_import_bpm_events)
 	{
 		destroy_midi(eof_work_midi);
+		eof_destroy_song(sp);
 		return NULL;
 	}
 	eof_import_text_events = eof_import_create_events_list();
@@ -424,6 +425,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	{
 		eof_import_destroy_events_list(eof_import_bpm_events);
 		destroy_midi(eof_work_midi);
+		eof_destroy_song(sp);
 		return NULL;
 	}
 	for(i = 0; i < tracks; i++)
@@ -442,6 +444,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 			eof_import_destroy_events_list(eof_import_bpm_events);
 			eof_import_destroy_events_list(eof_import_text_events);
 			destroy_midi(eof_work_midi);
+			eof_destroy_song(sp);
 			return NULL;
 		}
 		track_pos = 0;
@@ -824,6 +827,7 @@ allegro_message("Fail point 1");
 			eof_import_destroy_events_list(eof_import_text_events);
 			destroy_midi(eof_work_midi);
 			eof_destroy_tempo_list(anchorlist);
+			eof_destroy_song(sp);
 			return NULL;
 		}
 

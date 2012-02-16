@@ -2437,7 +2437,7 @@ unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track)
 
 	if(sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT)
 	{	//If this is a legacy track, return the number of lanes it uses
-		return sp->legacy_track[eof_song->track[track]->tracknum]->numlanes;
+		return sp->legacy_track[sp->track[track]->tracknum]->numlanes;
 	}
 	else if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{
@@ -2447,7 +2447,7 @@ unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track)
 		}
 		else
 		{
-			return sp->pro_guitar_track[eof_song->track[track]->tracknum]->numstrings;
+			return sp->pro_guitar_track[sp->track[track]->tracknum]->numstrings;
 		}
 	}
 	else
@@ -2826,7 +2826,7 @@ unsigned long eof_get_pro_guitar_note_note(EOF_PRO_GUITAR_TRACK *tp, unsigned lo
 
 void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos, long length, char type, char *text)
 {
- 	eof_log("eof_track_add_create_note() entered", 1);
+ 	eof_log("eof_track_add_create_note() entered", 2);
 
 	void *new_note = NULL;
 	EOF_NOTE *ptr = NULL;

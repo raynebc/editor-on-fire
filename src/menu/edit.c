@@ -2471,7 +2471,7 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 		*flags &= ~EOF_GUITAR_NOTE_FLAG_IS_SLIDER;
 	}
 
-	if((eof_song->track[sourcetrack]->track_behavior == EOF_DANCE_TRACK_BEHAVIOR) && (eof_song->track[sourcetrack]->track_behavior == EOF_DANCE_TRACK_BEHAVIOR))
+	if((eof_song->track[sourcetrack]->track_behavior == EOF_DANCE_TRACK_BEHAVIOR) && (eof_song->track[desttrack]->track_behavior != EOF_DANCE_TRACK_BEHAVIOR))
 	{	//If the note is copying from a dance track to a non dance track, erase conflicting flags
 		*flags &= ~EOF_DANCE_FLAG_LANE_1_MINE;	//Erase the lane 1 mine flag
 		*flags &= ~EOF_DANCE_FLAG_LANE_2_MINE;	//Erase the lane 2 mine flag

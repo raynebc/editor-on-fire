@@ -266,7 +266,6 @@ void eof_render_waveform_line(unsigned int zeroamp,struct waveformchanneldata *c
 	}
 }
 
-#define EOF_DEBUG_WAVEFORM
 struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long slicelength)
 {
  	eof_log("\tGenerating waveform", 1);
@@ -284,9 +283,7 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 
 	if((oggfilename == NULL) || !slicelength)
 	{
-		#ifdef EOF_DEBUG_WAVEFORM
-		allegro_message("Waveform: Invalid parameters");
-		#endif
+		eof_log("Waveform: Invalid parameters", 1);
 		return NULL;
 	}
 
@@ -294,17 +291,14 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 	oggbuffer = eof_buffer_file(oggfilename, 0);
 	if(!oggbuffer)
 	{
-		#ifdef EOF_DEBUG_WAVEFORM
-		allegro_message("Waveform: Failed to open input audio file: %s",strerror(errno));
-		#endif
+		snprintf(eof_log_string, sizeof(eof_log_string), "Waveform: Failed to open input audio file: %s",strerror(errno));
+		eof_log(eof_log_string, 1);
 		return NULL;
 	}
 	oggstruct=alogg_create_ogg_from_buffer(oggbuffer, file_size_ex(oggfilename));
 	if(oggstruct == NULL)
 	{
-		#ifdef EOF_DEBUG_WAVEFORM
-		allegro_message("Waveform: ALOGG failed to open input audio file");
-		#endif
+		eof_log("Waveform: ALOGG failed to open input audio file", 1);
 		free(oggbuffer);
 		return NULL;
 	}
@@ -313,16 +307,12 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 	audio=alogg_create_sample_from_ogg(oggstruct);
 	if(audio == NULL)
 	{
-		#ifdef EOF_DEBUG_WAVEFORM
-		allegro_message("Waveform: ALOGG failed to decode input audio file");
-		#endif
+		eof_log("Waveform: ALOGG failed to decode input audio file", 1);
 		done=-1;
 	}
 	else if((audio->bits != 8) && (audio->bits != 16))	//This logic currently only supports 8 and 16 bit audio
 	{
-		#ifdef EOF_DEBUG_WAVEFORM
-		allegro_message("Waveform: Invalid sample size");
-		#endif
+		eof_log("Waveform: Invalid sample size", 1);
 		done=-1;
 	}
 	else
@@ -331,9 +321,7 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 		waveform=(struct wavestruct *)malloc(sizeof(struct wavestruct));
 		if(waveform == NULL)
 		{
-			#ifdef EOF_DEBUG_WAVEFORM
-			allegro_message("Waveform: Unable to allocate memory for the waveform structure");
-			#endif
+			eof_log("Waveform: Unable to allocate memory for the waveform structure", 1);
 			done=-1;
 		}
 		else
@@ -353,9 +341,7 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 			waveform->oggfilename=(char *)malloc(strlen(oggfilename)+1);
 			if(waveform->oggfilename == NULL)
 			{
-				#ifdef EOF_DEBUG_WAVEFORM
-				allegro_message("Waveform: Unable to allocate memory for the audio filename string");
-				#endif
+				eof_log("Waveform: Unable to allocate memory for the audio filename string", 1);
 				done=-1;
 			}
 			else
@@ -372,9 +358,7 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 				waveform->left.slices=(struct waveformslice *)malloc(sizeof(struct waveformslice) * waveform->numslices);
 				if(waveform->left.slices == NULL)
 				{
-					#ifdef EOF_DEBUG_WAVEFORM
-					allegro_message("Waveform: Unable to allocate memory for the left channel waveform data");
-					#endif
+					eof_log("Waveform: Unable to allocate memory for the left channel waveform data", 1);
 					done=-1;
 				}
 				else if(waveform->is_stereo)	//If this OGG is stereo
@@ -382,9 +366,7 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 					waveform->right.slices=(struct waveformslice *)malloc(sizeof(struct waveformslice) * waveform->numslices);
 					if(waveform->right.slices == NULL)
 					{
-						#ifdef EOF_DEBUG_WAVEFORM
-						allegro_message("Waveform: Unable to allocate memory for the right channel waveform data");
-						#endif
+						eof_log("Waveform: Unable to allocate memory for the right channel waveform data", 1);
 						done=-1;
 					}
 				}
@@ -412,9 +394,7 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 				free(waveform->oggfilename);
 			free(waveform);
 		}
-		#ifdef EOF_DEBUG_WAVEFORM
-		allegro_message("Waveform: Failed to generate waveform");
-		#endif
+		allegro_message("Failed to generate waveform.  See log for details");
 		return NULL;	//Return error
 	}
 

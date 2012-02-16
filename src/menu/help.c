@@ -26,19 +26,21 @@ DIALOG eof_help_dialog[] =
    /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
    { d_agup_window_proc,    0,  0,  640, 480, 2,   23,  0,    0,      0,   0,   "EOF Help",               NULL, NULL },
    { d_agup_text_proc,   288,  8,  128, 8,  2,   23,  0,    0,      0,   0,   "", NULL, NULL },
-   { d_agup_textbox_proc,   8,  32,  624, 412 - 8,  2,   23,  0,    0,      0,   0,   eof_help_text, NULL, NULL },
+   { d_agup_textbox_proc,   8,  32,  624, 412 - 8,  2,   23,  0,    0,      0,   0,   "", NULL, NULL },
    { d_agup_button_proc, 8,  444, 624,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "Okay",               NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 int eof_menu_help_keys(void)
 {
-	PACKFILE * fp;
+	eof_help_text = eof_buffer_file("keys.txt", 1);	//Buffer the help file into memory, appending a NULL terminator
+	if(eof_help_text == NULL)
+	{	//Could not buffer file
+		allegro_message("Error reading keys.txt");
+		return 1;
+	}
 
-	fp = pack_fopen("keys.txt", "r");
-	pack_fread(eof_help_text, file_size_ex("keys.txt"), fp);
-	pack_fclose(fp);
-
+	eof_help_dialog[2].dp = eof_help_text;	//Use the buffered file for the text box
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
@@ -50,6 +52,8 @@ int eof_menu_help_keys(void)
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
+	free(eof_help_text);
+	eof_help_text = NULL;
 	return 1;
 }
 
