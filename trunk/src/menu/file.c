@@ -2298,6 +2298,7 @@ int eof_menu_file_gh_import(void)
 		}
 		else
 		{
+			allegro_message("Could not import file!");
 			eof_song_loaded = 0;
 			eof_changes = 0;
 			eof_fix_window_title();
