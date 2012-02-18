@@ -507,9 +507,10 @@ void eof_note_set_tail_pos(EOF_SONG *sp, unsigned long track, unsigned long note
 int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, char difficulty, unsigned long start, unsigned long end, unsigned long flags, char *name);
 	//Adds the specified section to the specified track if it's valid for the track
 	//For bookmark sections, the end variable represents which bookmark number is being set
-	//For fret catalog sections, the flags variable represents which track the catalog entry belongs to
+	//For fret catalog sections, the flags variable represents which track the catalog entry belongs to, otherwise it's only used for lyric sections
 	//For lyric phrases, the difficulty field indicates which lyric set number (ie. PART VOCALS) the phrase applies to
 	//For applicable section types, name may point to a section name string in which case it will be copied to the section's name array, or NULL in which case it will be ignored
+	//The difficulty field is used for catalog and arpeggio sections
 	//Returns zero on error
 unsigned long eof_count_track_lanes(EOF_SONG *sp, unsigned long track);		//Returns the number of lanes in the specified track, or the default of 5
 unsigned long eof_get_num_trills(EOF_SONG *sp, unsigned long track);		//Returns the number of trill phrases in the specified track, or 0 on error

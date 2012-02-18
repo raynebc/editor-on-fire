@@ -7,6 +7,8 @@
 unsigned long crc32_lookup[256] = {0};	//A lookup table to improve checksum calculation performance
 char crc32_lookup_initialized = 0;	//Is set to nonzero when the lookup table is created
 
+#define GH_IMPORT_DEBUG
+
 #define EOF_NUM_GH_INSTRUMENT_SECTIONS 12
 gh_section eof_gh_instrument_sections[EOF_NUM_GH_INSTRUMENT_SECTIONS] =
 {
@@ -22,6 +24,21 @@ gh_section eof_gh_instrument_sections[EOF_NUM_GH_INSTRUMENT_SECTIONS] =
 	{"drumsmediuminstrument", EOF_TRACK_DRUM, EOF_NOTE_EASY},
 	{"drumshardinstrument", EOF_TRACK_DRUM, EOF_NOTE_MEDIUM},
 	{"drumsexpertinstrument", EOF_TRACK_DRUM, EOF_NOTE_AMAZING}
+};
+
+#define EOF_NUM_GH_SP_SECTIONS 3
+gh_section eof_gh_sp_sections[EOF_NUM_GH_SP_SECTIONS] =
+{
+	{"guitarexpertstarpower", EOF_TRACK_GUITAR, 0},
+	{"bassexpertstarpower", EOF_TRACK_BASS, 0},
+	{"drumsexpertstarpower", EOF_TRACK_DRUM, 0}
+};
+
+#define EOF_NUM_GH_TAP_SECTIONS 2
+gh_section eof_gh_tap_sections[EOF_NUM_GH_TAP_SECTIONS] =
+{
+	{"guitarexperttapping", EOF_TRACK_GUITAR, 0},
+	{"bassexperttapping", EOF_TRACK_BASS, 0}
 };
 
 filebuffer *eof_filebuffer_load(const char * fn)
@@ -271,7 +288,121 @@ int eof_gh_read_instrument_section(filebuffer *fb, EOF_SONG *sp, gh_section *tar
 	return 1;
 }
 
-#define GH_IMPORT_DEBUG
+int eof_gh_read_sp_section(filebuffer *fb, EOF_SONG *sp, gh_section *target)
+{
+	unsigned long numphrases, phrasesize, dword, ctr;
+	unsigned int length;
+
+	if(!fb || !sp || !target)
+		return 0;
+
+#ifdef GH_IMPORT_DEBUG
+	snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Looking for section \"%s\"", target->name);
+	eof_log(eof_log_string, 1);
+#endif
+	if(eof_filebuffer_find_checksum(fb, EOF_GH_CRC32(target->name)))	//Seek one byte past the target header
+	{	//If the target section couldn't be found
+		eof_log("\t\tCould not find section", 1);
+		return 0;
+	}
+	if(eof_filebuffer_get_dword(fb, &numphrases))	//Read the number of sp phrases in the section
+	{	//If there was an error reading the next 4 byte value
+		eof_log("\t\tError:  Could not read number of phrases", 1);
+		return -1;
+	}
+#ifdef GH_IMPORT_DEBUG
+	snprintf(eof_log_string, sizeof(eof_log_string), "\t\tNumber of phrases = %lu", numphrases);
+	eof_log(eof_log_string, 1);
+#endif
+	fb->index += 4;	//Seek past the next 4 bytes, which is a checksum for the game-specific sp section subheader
+	if(eof_filebuffer_get_dword(fb, &phrasesize))	//Read the size of the star power entry
+	{	//If there was an error reading the next 4 byte value
+		eof_log("\t\tError:  Could not read note size", 1);
+		return -1;
+	}
+	if(phrasesize != 6)
+	{	//Each star power phrase is expected to be 6 bytes long
+		eof_log("\t\tError:  Phrase size is not 6", 1);
+		return -1;
+	}
+	for(ctr = 0; ctr < numphrases; ctr++)
+	{	//For each star power phrase in the section
+		if(eof_filebuffer_get_dword(fb, &dword))	//Read the phrase position
+		{	//If there was an error reading the next 4 byte value
+			eof_log("\t\tError:  Could not read phrase position", 1);
+			return -1;
+		}
+		if(eof_filebuffer_get_word(fb, &length))	//Read the phrase length
+		{	//If there was an error reading the next 2 byte value
+			eof_log("\t\tError:  Could not read phrase length", 1);
+			return -1;
+		}
+		if(!eof_track_add_section(sp, target->tracknum, EOF_SP_SECTION, 0, dword, dword + length, 0, NULL))
+		{	//If there was an error adding the section
+			eof_log("\t\tError:  Could not add sp section", 1);
+			return -1;
+		}
+	}
+	return 1;
+}
+
+int eof_gh_read_tap_section(filebuffer *fb, EOF_SONG *sp, gh_section *target)
+{
+	unsigned long numphrases, phrasesize, dword, ctr, length;
+
+	if(!fb || !sp || !target)
+		return 0;
+
+#ifdef GH_IMPORT_DEBUG
+	snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Looking for section \"%s\"", target->name);
+	eof_log(eof_log_string, 1);
+#endif
+	if(eof_filebuffer_find_checksum(fb, EOF_GH_CRC32(target->name)))	//Seek one byte past the target header
+	{	//If the target section couldn't be found
+		eof_log("\t\tCould not find section", 1);
+		return 0;
+	}
+	if(eof_filebuffer_get_dword(fb, &numphrases))	//Read the number of sp phrases in the section
+	{	//If there was an error reading the next 4 byte value
+		eof_log("\t\tError:  Could not read number of phrases", 1);
+		return -1;
+	}
+#ifdef GH_IMPORT_DEBUG
+	snprintf(eof_log_string, sizeof(eof_log_string), "\t\tNumber of phrases = %lu", numphrases);
+	eof_log(eof_log_string, 1);
+#endif
+	fb->index += 4;	//Seek past the next 4 bytes, which is a checksum for the game-specific sp section subheader
+	if(eof_filebuffer_get_dword(fb, &phrasesize))	//Read the size of the star power entry
+	{	//If there was an error reading the next 4 byte value
+		eof_log("\t\tError:  Could not read note size", 1);
+		return -1;
+	}
+	if(phrasesize != 8)
+	{	//Each tap phrase is expected to be 8 bytes long
+		eof_log("\t\tError:  Phrase size is not 8", 1);
+		return -1;
+	}
+	for(ctr = 0; ctr < numphrases; ctr++)
+	{	//For each tap phrase in the section
+		if(eof_filebuffer_get_dword(fb, &dword))	//Read the phrase position
+		{	//If there was an error reading the next 4 byte value
+			eof_log("\t\tError:  Could not read phrase position", 1);
+			return -1;
+		}
+		if(eof_filebuffer_get_dword(fb, &length))	//Read the phrase length
+		{	//If there was an error reading the next 4 byte value
+			eof_log("\t\tError:  Could not read phrase length", 1);
+			return -1;
+		}
+		if(!eof_track_add_section(sp, target->tracknum, EOF_SLIDER_SECTION, 0, dword, dword + length, 0, NULL))
+		{	//If there was an error adding the section
+			eof_log("\t\tError:  Could not add tap section", 1);
+			return -1;
+		}
+	}
+	return 1;
+}
+
 EOF_SONG * eof_import_gh(const char * fn)
 {
 	EOF_SONG * sp;
@@ -467,6 +598,19 @@ EOF_SONG * eof_import_gh(const char * fn)
 		eof_gh_read_instrument_section(fb, sp, &eof_gh_instrument_sections[ctr]);	//Import notes from the section
 	}
 
+//Read star power sections
+	for(ctr = 0; ctr < EOF_NUM_GH_SP_SECTIONS; ctr++)
+	{	//For each known guitar hero star power section
+		fb->index = 0;	//Rewind to beginning of file buffer
+		eof_gh_read_sp_section(fb, sp, &eof_gh_sp_sections[ctr]);	//Import star power section
+	}
+
+//Read tap (slider) sections
+	for(ctr = 0; ctr < EOF_NUM_GH_TAP_SECTIONS; ctr++)
+	{	//For each known guitar hero tap section
+		fb->index = 0;	//Rewind to beginning of file buffer
+		eof_gh_read_tap_section(fb, sp, &eof_gh_tap_sections[ctr]);	//Import tap section
+	}
 	eof_filebuffer_close(fb);	//Close the file buffer
 
 //Load an audio file

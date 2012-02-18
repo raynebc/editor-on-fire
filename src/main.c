@@ -770,7 +770,7 @@ void eof_prepare_undo(int type)
 
 long eof_get_previous_note(long cnote)
 {
-	eof_log("eof_get_previous_note() entered", 1);
+	eof_log("eof_get_previous_note() entered", 2);
 
 	long i;
 

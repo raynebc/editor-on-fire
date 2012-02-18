@@ -53,5 +53,16 @@ int eof_gh_read_instrument_section(filebuffer *buffer, EOF_SONG *sp, gh_section 
 	//If the section is not found, 0 is returned
 	//If an error is detected, -1 is returned
 	//If it is found, it is parsed and notes are added accordingly to the passed EOF_SONG structure
+int eof_gh_read_sp_section(filebuffer *fb, EOF_SONG *sp, gh_section *target);
+	//Searches for the target section in the buffered file
+	//If the section is not found, 0 is returned
+	//If an error is detected, -1 is returned
+	//If it is found, it is parsed and the star power sections are added accordingly to the passed EOF_SONG structure
+
+int eof_gh_read_tap_section(filebuffer *fb, EOF_SONG *sp, gh_section *target);
+	//Searches for the target section in the buffered file
+	//If the section is not found, 0 is returned
+	//If an error is detected, -1 is returned
+	//If it is found, it is parsed and the tap sections are added accordingly to the passed EOF_SONG structure as slider sections
 
 #endif

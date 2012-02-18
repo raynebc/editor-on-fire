@@ -1,6 +1,5 @@
 #include <assert.h>
 #include <ctype.h>
-#include <math.h>
 #include <stdio.h>
 #include "main.h"
 #include "tuning.h"
