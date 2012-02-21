@@ -1508,7 +1508,7 @@ EOF_SONG *eof_import_gp(const char * fn)
 	pack_fclose(inf);
 	free(strings);
 	puts("\nSuccess");
-	return (EOF_SONG *)1;
+	return (EOF_SONG *)1;	///This is just a placeholder value until this logic is fully implemented
 }
 
 void pack_ReadWORDLE(PACKFILE *inf,unsigned *data)

@@ -1020,7 +1020,7 @@ eof_log("\tSecond pass complete", 1);
 	int phrasediff;						//Used for parsing Sysex phrase markers
 	int slidediff;						//Used for parsing slide markers
 	unsigned char slidevelocity[4];		//Used for parsing slide markers
-	unsigned long openstrumpos[4] = {0}, slideuppos[4] = {0}, slidedownpos[4] = {0}, openhihatpos[4] = {0}, pedalhihatpos[4] = {0}, rimshotpos[4] = {0}, sliderpos[4] = {0};	//Used for parsing Sysex phrase markers
+	unsigned long openstrumpos[4] = {0}, slideuppos[4] = {0}, slidedownpos[4] = {0}, openhihatpos[4] = {0}, pedalhihatpos[4] = {0}, rimshotpos[4] = {0}, sliderpos[4] = {0}, palmmutepos[4] = {0};	//Used for parsing Sysex phrase markers
 
 	//Special case:  Very old charts created in Freetar Editor may only contain one track that includes all the tempo and note events
 	if((tracks == 1) && (eof_import_events[0]->type < 0))
@@ -2229,10 +2229,26 @@ eof_log("\tSecond pass complete", 1);
 												}
 											}
 										break;
+										case 9:	//Pro guitar palm mute
+											if(eof_import_events[i]->event[j]->dp[6] == 1)
+											{	//Start of pro guitar palm mute phrase
+												palmmutepos[phrasediff] = event_realtime;
+											}
+											else if(eof_import_events[i]->event[j]->dp[6] == 0)
+											{	//End of pro guitar palm mute phrase
+												for(k = note_count[picked_track] - 1; k >= first_note; k--)
+												{	//Check for each note that has been imported
+													if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= palmmutepos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+													{	//If the note is in the same difficulty as the pro guitar palm mute phrase, and its timestamp falls between the phrase on and phrase off marker
+														eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE);	//Set the palm mute flag
+													}
+												}
+											}
+										break;
 									}
 								break;
 							}
-						}
+						}//If this is a custom Sysex Phase Shift marker (8 bytes long, beginning with the NULL terminated string "PS")
 						free(eof_import_events[i]->event[j]->dp);	//The the memory allocated to store this Sysex message's data
 						eof_import_events[i]->event[j]->dp = NULL;
 					}//Sysex event
