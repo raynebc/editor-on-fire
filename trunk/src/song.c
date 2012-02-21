@@ -351,16 +351,20 @@ long eof_fixup_next_legacy_note(EOF_LEGACY_TRACK * tp, unsigned long note)
 	return -1;
 }
 
-void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
+void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 {
 	unsigned long i;
 	long next;
 	unsigned long maxbitmask,maxlane;	//Used to find the highest usable bitmask for the track (based on numlanes).  The drum and bass tracks will be allowed to keep lane 6 automatically
+	unsigned long tracknum;
+	EOF_LEGACY_TRACK * tp;
 
-	if(!tp)
+	if(!sp)
 	{
 		return;
 	}
+	tracknum = sp->track[track]->tracknum;
+	tp = sp->legacy_track[tracknum];
 	if(!sel)
 	{
 		if(eof_selection.current < tp->notes)
@@ -407,7 +411,7 @@ void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 		}
 
 		/* delete certain notes */
-		if((tp->note[i-1]->note == 0) || ((tp->note[i-1]->type < 0) || (tp->note[i-1]->type > 4)) || (tp->note[i-1]->pos < eof_song->tags->ogg[eof_selected_ogg].midi_offset) || (tp->note[i-1]->pos >= eof_music_length))
+		if((tp->note[i-1]->note == 0) || ((tp->note[i-1]->type < 0) || (tp->note[i-1]->type > 4)) || (tp->note[i-1]->pos < sp->tags->ogg[eof_selected_ogg].midi_offset) || (tp->note[i-1]->pos >= eof_music_length))
 		{	//Delete the note if all lanes are clear, if it is an invalid type, if the position is before the first beat marker or if it is after the last beat marker
 			eof_legacy_track_delete_note(tp, i-1);
 		}
@@ -448,7 +452,7 @@ void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 			}
 		}//The note has valid gems, type and position
 	}//For each note (in reverse order)
-	if(eof_open_bass_enabled() && (tp == eof_song->legacy_track[eof_song->track[EOF_TRACK_BASS]->tracknum]))
+	if(eof_open_bass_enabled() && (tp == sp->legacy_track[sp->track[EOF_TRACK_BASS]->tracknum]))
 	{	//If open bass strumming is enabled, and this is the bass guitar track, check to ensure that open bass doesn't conflict with other notes/HOPOs/statuses
 		for(i = 0; i < tp->notes; i++)
 		{	//For each note in the track
@@ -470,7 +474,7 @@ void eof_legacy_track_fixup_notes(EOF_LEGACY_TRACK * tp, int sel)
 	}
 
 //Cleanup for pro drum notation
-	if(eof_song && (tp->parent->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
+	if(sp && (tp->parent->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
 	{	//If the track being cleaned is a drum track
 		unsigned lastcheckedgreenpos = 0;	//This will be used to prevent cymbal cleanup from operating on the same notes multiple times
 		unsigned lastcheckedbluepos = 0;
@@ -619,16 +623,19 @@ long eof_fixup_next_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric)
 	return -1;
 }
 
-void eof_vocal_track_fixup_lyrics(EOF_VOCAL_TRACK * tp, int sel)
+void eof_vocal_track_fixup_lyrics(EOF_SONG *sp, unsigned long track, int sel)
 {
-	unsigned long i, j;
+	unsigned long i, j, tracknum;
 	int lc;
 	long next;
+	EOF_VOCAL_TRACK * tp;
 
-	if(!tp)
+	if(!sp)
 	{
 		return;
 	}
+	tracknum = sp->track[track]->tracknum;
+	tp = sp->vocal_track[tracknum];
 	if(!sel)
 	{
 		if(eof_selection.current < tp->lyrics)
@@ -650,7 +657,7 @@ void eof_vocal_track_fixup_lyrics(EOF_VOCAL_TRACK * tp, int sel)
 		}
 
 		/* delete certain notes */
-		if((tp->lyric[i-1]->pos < eof_song->tags->ogg[eof_selected_ogg].midi_offset) || (tp->lyric[i-1]->pos >= eof_music_length))
+		if((tp->lyric[i-1]->pos < sp->tags->ogg[eof_selected_ogg].midi_offset) || (tp->lyric[i-1]->pos >= eof_music_length))
 		{
 			eof_vocal_track_delete_lyric(tp, i-1);
 		}
@@ -1755,7 +1762,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 			}
 		break;
 		case EOF_TRILL_SECTION:
-			if((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (sp->track[track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR) || (sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_KEYS_TRACK_BEHAVIOR))
+			if((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (sp->track[track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR) || (sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) || (sp->track[eof_selected_track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR) || (sp->track[eof_selected_track]->track_behavior == EOF_PRO_KEYS_TRACK_BEHAVIOR))
 			{	//Only legacy/pro guitar/bass/drum/keys type tracks are able to use this type of section
 				switch(sp->track[track]->track_format)
 				{
@@ -3151,15 +3158,15 @@ void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 	switch(sp->track[track]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
-			eof_legacy_track_fixup_notes(sp->legacy_track[tracknum], sel);
+			eof_legacy_track_fixup_notes(sp, track, sel);
 		break;
 
 		case EOF_VOCAL_TRACK_FORMAT:
-			eof_vocal_track_fixup_lyrics(sp->vocal_track[tracknum], sel);
+			eof_vocal_track_fixup_lyrics(sp, track, sel);
 		break;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			eof_pro_guitar_track_fixup_notes(sp->pro_guitar_track[tracknum], sel);
+			eof_pro_guitar_track_fixup_notes(sp, track, sel);
 		break;
 	}
 }
@@ -3250,17 +3257,20 @@ long eof_get_prev_note_type_num(EOF_SONG *sp, unsigned long track, unsigned long
 	return -1;	//Return note not found
 }
 
-void eof_pro_guitar_track_fixup_notes(EOF_PRO_GUITAR_TRACK * tp, int sel)
+void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 {
-	unsigned long i, ctr, bitmask;
+	unsigned long i, ctr, bitmask, tracknum;
 	unsigned char fretvalue;
 	long next;
 	char allmuted;	//Used to track whether all used strings are string muted
+	EOF_PRO_GUITAR_TRACK * tp;
 
-	if(!tp)
+	if(!sp)
 	{
 		return;
 	}
+	tracknum = sp->track[track]->tracknum;
+	tp = sp->pro_guitar_track[tracknum];
 	if(!sel)
 	{
 		if(eof_selection.current < tp->notes)
@@ -3300,7 +3310,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_PRO_GUITAR_TRACK * tp, int sel)
 		}
 
 		/* delete certain notes */
-		if((tp->note[i-1]->note == 0) || ((tp->note[i-1]->type < 0) || (tp->note[i-1]->type > 4)) || (tp->note[i-1]->pos < eof_song->tags->ogg[eof_selected_ogg].midi_offset) || (tp->note[i-1]->pos >= eof_music_length))
+		if((tp->note[i-1]->note == 0) || ((tp->note[i-1]->type < 0) || (tp->note[i-1]->type > 4)) || (tp->note[i-1]->pos < sp->tags->ogg[eof_selected_ogg].midi_offset) || (tp->note[i-1]->pos >= eof_music_length))
 		{	//If the note is not valid
 			eof_pro_guitar_track_delete_note(tp, i-1);
 		}
@@ -4202,9 +4212,9 @@ void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourc
 	{	//If copying from a non vocal track
 		if((sp->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (sp->track[desttrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		{	//If copying from a pro guitar track to a non pro guitar track
-			if(eof_song->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask != 0)
+			if(sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask != 0)
 			{	//If the user defined how this pro guitar note would transcribe to a legacy track
-				note = eof_song->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask;	//Use that bitmask
+				note = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask;	//Use that bitmask
 			}
 		}
 
@@ -4215,7 +4225,7 @@ void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourc
 			eof_set_note_flags(sp, desttrack, newnotenum, flags);	//Copy the souce note's flags to the newly created note
 			if((sp->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (sp->track[desttrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If the note was copied from a pro guitar track and pasted to a pro guitar track
-				memcpy(sp->pro_guitar_track[desttracknum]->note[newnotenum]->frets, eof_song->pro_guitar_track[sourcetracknum]->note[sourcenote]->frets, 6);	//Copy the six usable string fret values from the source note to the newly created note
+				memcpy(sp->pro_guitar_track[desttracknum]->note[newnotenum]->frets, sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->frets, 6);	//Copy the six usable string fret values from the source note to the newly created note
 			}
 		}
 	}//If copying from a non vocal track
@@ -4427,19 +4437,19 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 		return;
 
 	adjustment = amount;	//This would be the amount to adjust the note by
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	for(i = 0; i < eof_get_track_size(sp, eof_selected_track); i++)
 	{	//For each note in the track
 		notepos = eof_get_note_pos(sp, track, i);
-		notelength = eof_get_note_length(eof_song, track, i);
+		notelength = eof_get_note_length(sp, track, i);
 
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(sp, eof_selected_track, i) == eof_note_type))
 		{	//If the note is selected and in the active instrument difficulty
 			if(amount == 0)
 			{	//If adjusting the note's length by the grid snap value, find the grid snap length for the note
-				b = eof_get_beat(eof_song, notepos + notelength - 1);
+				b = eof_get_beat(sp, notepos + notelength - 1);
 				if(b >= 0)
 				{
-					eof_snap_logic(&eof_tail_snap, eof_song->beat[b]->pos);
+					eof_snap_logic(&eof_tail_snap, sp->beat[b]->pos);
 				}
 				else
 				{
@@ -4459,7 +4469,7 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 					eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
 					undo_made = 1;
 				}
-				eof_set_note_length(eof_song, eof_selected_track, i, notelength - adjustment);
+				eof_set_note_length(sp, eof_selected_track, i, notelength - adjustment);
 			}
 			else
 			{	//If the note length is to be increased
@@ -4476,28 +4486,28 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 					eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
 					undo_made = 1;
 				}
-				eof_set_note_length(eof_song, eof_selected_track, i, notelength + adjustment);
+				eof_set_note_length(sp, eof_selected_track, i, notelength + adjustment);
 			}
 			if(amount == 0)
 			{	//If adjusting the note's length by the grid snap value, snap the tail's end position
-				newnotelength = eof_get_note_length(eof_song, eof_selected_track, i);
+				newnotelength = eof_get_note_length(sp, eof_selected_track, i);
 				if(newnotelength > 1)
 				{	//If the note's length, after the adjustment, is over 1
 					eof_snap_logic(&eof_tail_snap, notepos + newnotelength);
-					eof_note_set_tail_pos(eof_song, eof_selected_track, i, eof_tail_snap.pos);
+					eof_note_set_tail_pos(sp, eof_selected_track, i, eof_tail_snap.pos);
 
-					newnotelength2 = eof_get_note_length(eof_song, eof_selected_track, i);
+					newnotelength2 = eof_get_note_length(sp, eof_selected_track, i);
 					if((dir > 0) && (amount == 0) && (notelength == newnotelength2))
 					{	//Special case:  If the grid snap length increase was nullified by the snap logic, force the tail to increase one snap interval higher
 						float difference = eof_tail_snap.grid_pos[1] - eof_tail_snap.grid_pos[0];	//This is the length of one grid snap in the target beat
 
-						eof_note_set_tail_pos(eof_song, eof_selected_track, i, notepos + notelength + difference);	//Resnap the tail one grid snap higher
+						eof_note_set_tail_pos(sp, eof_selected_track, i, notepos + notelength + difference);	//Resnap the tail one grid snap higher
 					}
 				}
 			}
 		}
 	}//For each note in the track
-	eof_track_fixup_notes(eof_song, eof_selected_track, 1);
+	eof_track_fixup_notes(sp, eof_selected_track, 1);
 }
 
 void eof_set_num_arpeggios(EOF_SONG *sp, unsigned long track, unsigned long number)
@@ -4875,9 +4885,9 @@ unsigned long eof_get_highest_fret_value(EOF_SONG *sp, unsigned long track, unsi
 
 	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
 	{	//For each of the 6 usable strings
-		if(eof_song->pro_guitar_track[tracknum]->note[note]->note & bitmask)
+		if(sp->pro_guitar_track[tracknum]->note[note]->note & bitmask)
 		{	//If this string is in use
-			currentfret = eof_song->pro_guitar_track[tracknum]->note[note]->frets[ctr];
+			currentfret = sp->pro_guitar_track[tracknum]->note[note]->frets[ctr];
 			if((currentfret != 0xFF) && ((currentfret & 0x7F) > highestfret))
 			{	//If this fret value (masking out the MSB, which is used for muting status) is higher than the previous
 				highestfret = currentfret & 0x7F;

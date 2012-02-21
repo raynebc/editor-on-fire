@@ -106,19 +106,19 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 			}
 		}
 	}
-	if(((eof_song->track[EOF_TRACK_DRUM]->flags & 0xFF000000) >> 24) != 0xFF)
+	if(((sp->track[EOF_TRACK_DRUM]->flags & 0xFF000000) >> 24) != 0xFF)
 	{	//If there is a defined pro drum difficulty
-		sprintf(buffer, "\r\ndiff_drums_real = %lu", (eof_song->track[EOF_TRACK_DRUM]->flags & 0xFF000000) >> 24);
+		sprintf(buffer, "\r\ndiff_drums_real = %lu", (sp->track[EOF_TRACK_DRUM]->flags & 0xFF000000) >> 24);
 		ustrcat(ini_string, buffer);
 	}
-	if(((eof_song->track[EOF_TRACK_VOCALS]->flags & 0xFF000000) >> 24) != 0xFF)
+	if(((sp->track[EOF_TRACK_VOCALS]->flags & 0xFF000000) >> 24) != 0xFF)
 	{	//If there is a defined harmony difficulty
-		sprintf(buffer, "\r\ndiff_vocals_harm = %lu", (eof_song->track[EOF_TRACK_VOCALS]->flags & 0xFF000000) >> 24);
+		sprintf(buffer, "\r\ndiff_vocals_harm = %lu", (sp->track[EOF_TRACK_VOCALS]->flags & 0xFF000000) >> 24);
 		ustrcat(ini_string, buffer);
 	}
-	if(eof_song->tags->difficulty != 0xFF)
+	if(sp->tags->difficulty != 0xFF)
 	{	//If there is a defined band difficulty
-		sprintf(buffer, "\r\ndiff_band = %lu", eof_song->tags->difficulty);
+		sprintf(buffer, "\r\ndiff_band = %lu", sp->tags->difficulty);
 		ustrcat(ini_string, buffer);
 	}
 

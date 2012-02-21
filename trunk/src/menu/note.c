@@ -320,7 +320,7 @@ MENU eof_note_menu[] =
     {eof_trill_menu_text, NULL, eof_trill_menu, 0, NULL},
     {eof_tremolo_menu_text, NULL, eof_tremolo_menu, 0, NULL},
     {"Slider", NULL, eof_slider_menu, 0, NULL},
-    {"Thin difficulty to match", NULL, eof_menu_thin_notes_menu, 0, NULL},
+    {"Thin diff. to match", NULL, eof_menu_thin_notes_menu, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"&Drum", NULL, eof_note_drum_menu, 0, NULL},
     {"Pro &Guitar", NULL, eof_note_proguitar_menu, 0, NULL},

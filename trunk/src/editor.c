@@ -4591,7 +4591,7 @@ void eof_mark_edited_note_as_double_bass(EOF_SONG *sp, unsigned long track, unsi
 		return;
 	tracknum = sp->track[track]->tracknum;
 
-	if((sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (eof_get_note_type(eof_song, eof_selected_track, notenum) == EOF_NOTE_AMAZING))
+	if((sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (eof_get_note_type(sp, eof_selected_track, notenum) == EOF_NOTE_AMAZING))
 	{	//If the note is an Expert drum note
 		if((notenum >= sp->legacy_track[tracknum]->notes) || (sp->legacy_track[tracknum]->note[notenum] == NULL))
 			return;

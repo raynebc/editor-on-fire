@@ -417,7 +417,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 	else
 	{	//Otherwise build a TS list containing just the default 4/4 time signature
 		tslist = eof_create_ts_list();
-		eof_midi_add_ts_realtime(tslist, eof_song->beat[0]->fpos, 4, 4, 0);	//use an implied TS of 4/4 on the first beat marker
+		eof_midi_add_ts_realtime(tslist, sp->beat[0]->fpos, 4, 4, 0);	//use an implied TS of 4/4 on the first beat marker
 	}
 
 	eof_sort_notes(sp);	//Writing efficient on-the-fly HOPO phrasing relies on all notes being sorted
@@ -1318,6 +1318,21 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 					{	//If this note slides up
 						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 7, 107, 0);	//Fret 7 or lower triggers an up slide in RB3
 						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 7, 107, 0);
+					}
+				}
+
+				/* write palm mute marker */
+				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
+				{	//If this note has palm mute status
+					if(featurerestriction == 0)
+					{	//Only write the slide Sysex notation if not writing a Rock Band compliant MIDI
+						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
+						phase_shift_sysex_phrase[5] = 9;	//Store the phrase ID (9 = Pro guitar palm mute)
+						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide start marker
+						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide stop marker
 					}
 				}
 
