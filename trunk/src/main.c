@@ -1895,22 +1895,22 @@ void eof_logic(void)
 			alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_pos);
 		}
 	}
-	if(eof_input_mode == EOF_INPUT_FEEDBACK)
+	if(eof_song_loaded)
 	{
-		if(eof_song_loaded)
+		if(eof_input_mode == EOF_INPUT_FEEDBACK)
 		{
 //			eof_editor_logic_feedback();
 		}
-	}
-	else
-	{
-		if(eof_vocals_selected)
-		{
-			eof_vocal_editor_logic();
-		}
 		else
 		{
-			eof_editor_logic();
+			if(eof_vocals_selected)
+			{
+				eof_vocal_editor_logic();
+			}
+			else
+			{
+				eof_editor_logic();
+			}
 		}
 	}
 	eof_note_logic();
@@ -2384,15 +2384,15 @@ void eof_render_lyric_preview(BITMAP * bp)
 					else
 						break;				//Stop building this line's preview
 				}
+			}
 
-				if(ustrchr(eof_song->vocal_track[0]->lyric[i]->text,'-'))
-				{	//If the lyric contains a hyphen
-					space = 0;	//The next syllable will group with this one
-				}
-				else
-				{
-					space = 1;	//The next syllable will not group with this one, and will be separated by space
-				}
+			if(ustrchr(eof_song->vocal_track[0]->lyric[i]->text,'-') || ustrchr(eof_song->vocal_track[0]->lyric[i]->text,'='))
+			{	//If the lyric contains a hyphen or an equal sign
+				space = 0;	//The next syllable will group with this one
+			}
+			else
+			{
+				space = 1;	//The next syllable will not group with this one, and will be separated by space
 			}
 
 			if(!x && !eof_music_paused)	//Only perform this logic for the first lyric preview line

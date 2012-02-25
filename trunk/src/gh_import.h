@@ -5,6 +5,7 @@
 #include "song.h"
 
 #define EOF_GH_CRC32(x) (eof_crc32(x) ^ 0xFFFFFFFF)
+	//GH checksums take a 32 bit CRC of the string text, and XOR the result by 0xFFFFFFFF
 
 typedef struct
 {
@@ -40,6 +41,9 @@ int eof_filebuffer_get_word(filebuffer *fb, unsigned int *ptr);
 int eof_filebuffer_get_dword(filebuffer *fb, unsigned long *ptr);
 	//Returns the next 4 byte value into ptr, in big endian fashion
 	//Returns EOF on error, otherwise returns 0
+int eof_filebuffer_memcpy(filebuffer *fb, void *ptr, size_t num);
+	//Copies num bytes from the buffered file into ptr
+	//Returns EOF on error, otherwise returns 0
 unsigned long eof_crc32_reflect(unsigned long value, int numbits);
 	//Returns the passed value with the (numbits) number of low order bits reflected (swapped)
 unsigned long eof_crc32(char *string);
@@ -58,6 +62,10 @@ int eof_gh_read_sp_section(filebuffer *fb, EOF_SONG *sp, gh_section *target);
 	//If the section is not found, 0 is returned
 	//If an error is detected, -1 is returned
 	//If it is found, it is parsed and the star power sections are added accordingly to the passed EOF_SONG structure
+int eof_gh_read_vocals(filebuffer *fb, EOF_SONG *sp);
+	//Searches the buffered file for vocal data and loads them into the specified EOF_SONG structure
+	//If vocals are not found, 0 is returned
+	//If an error is detected, -1 is returned
 
 int eof_gh_read_tap_section(filebuffer *fb, EOF_SONG *sp, gh_section *target);
 	//Searches for the target section in the buffered file

@@ -64,7 +64,7 @@ void eof_editor_logic_feedback(void)
 {
 	eof_log("eof_editor_logic_feedback() entered", 1);
 
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	unsigned long tracknum;
 	long fbeat = 0;
 	int fcpos[32];
 	int fppos[32];
@@ -74,6 +74,10 @@ void eof_editor_logic_feedback(void)
 	double bpm = 120.0;
 	unsigned long cppqn = eof_song->beat[fbeat]->ppqn;
 
+	if(!eof_song_loaded)
+		return;
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	fbeat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 	if(fbeat >= 0)
 	{
