@@ -547,7 +547,7 @@ void eof_read_editor_keys(void)
 {
 //	eof_log("eof_read_editor_keys() entered");
 
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	unsigned long tracknum;
 	unsigned long bitmask = 0;	//Used for simplifying note placement logic
 	EOF_NOTE * new_note = NULL;
 	EOF_LYRIC * new_lyric = NULL;
@@ -557,6 +557,7 @@ void eof_read_editor_keys(void)
 	if(!eof_song_loaded)
 		return;	//Don't handle these keyboard shortcuts unless a chart is loaded
 
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	eof_read_controller(&eof_guitar);
 	eof_read_controller(&eof_drums);
 
@@ -3107,7 +3108,7 @@ void eof_vocal_editor_logic(void)
 //	eof_log("eof_vocal_editor_logic() entered");
 
 	unsigned long i, notepos;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	unsigned long tracknum;
 	int use_this_x = mouse_x;
 	int next_note_pos = 0;
 	EOF_SNAP_DATA drag_snap; // help with dragging across snap locations
@@ -3117,6 +3118,7 @@ void eof_vocal_editor_logic(void)
 	if(!eof_vocals_selected)
 		return;
 
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	eof_editor_logic_common();
 
 	if(eof_music_paused)
@@ -3927,7 +3929,7 @@ void eof_render_vocal_editor_window(void)
 //	eof_log("eof_render_vocal_editor_window() entered");
 
 	unsigned long i;
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	unsigned long tracknum;
 	int pos = eof_music_pos / eof_zoom;	//Current seek position
 	int lpos;							//The position of the first beat marker
 	unsigned long start;	//Will store the timestamp of the left visible edge of the piano roll
@@ -3940,6 +3942,7 @@ void eof_render_vocal_editor_window(void)
 	if(eof_disable_2d_rendering)	//If the user wanted to disable the rendering of the 2D window to improve performance
 		return;						//Return immediately
 
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	eof_render_editor_window_common();
 
 	if(pos < 300)

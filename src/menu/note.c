@@ -2208,8 +2208,7 @@ static void eof_split_lyric(int lyric)
 {
 	unsigned long i, l, c = 0, lastc;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	int piece = 1;
-	int pieces = 1;
+	unsigned long piece = 1, pieces = 1;
 	char * token = NULL;
 	EOF_LYRIC * new_lyric = NULL;
 

@@ -3,6 +3,25 @@ EOF Version History
 
 1.8:
 
+*Fixed some crashes that could occur if a file
+import/load fails when a chart is already open.
+
+*Minor corrections to the lyric preview regarding how
+lyrics are grouped together by equal signs and hyphens.
+
+*Added Guitar Hero import functionality.
+
+*Fixed a bug where newly created notes wouldn't be
+selected automatically in Piano Roll, Classic and
+Hold input methods.
+
+*Dance, lead guitar and rhythm tracks now have difficulty
+tags written to song.ini, for use in Phase Shift.  Empty
+tracks will have a difficulty value of -1 written.
+
+*Fixed a bug with the note merge logic that could cause
+statuses such as expert+ bass to be lost unexpectedly.
+
 *Added functions to the Beat menu to double or halve the
 tempo at the selected beat, allowing for the tempo to be
 manipulated in a way that does not destroy a chart's
@@ -20,7 +39,8 @@ format, [solo_on] and [solo_off] events into guitar and
 lead guitar solos, fixed memory leaks that could occur if
 the import fails, improved error reporting/logging that
 occurs when import fails and updated the import to allow
-the keyboard tracks to be loaded if present.
+the keyboard tracks to be loaded if present, song.ini is
+now imported with the Feedback chart.
 
 *Added the display of section markers to the editor
 window.
