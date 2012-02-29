@@ -13,8 +13,18 @@
 #define EOF_COPYRIGHT_STRING "(c)2008-2010 T^3 Software."
 
 #define KEY_EITHER_ALT (key[KEY_ALT] || key[KEY_ALTGR])
-#define KEY_EITHER_CTRL (key[KEY_LCONTROL] || key[KEY_RCONTROL])
+#ifdef ALLEGRO_MACOSX
+	#define KEY_EITHER_CTRL (key[106])
+#else
+	#define KEY_EITHER_CTRL (key[KEY_LCONTROL] || key[KEY_RCONTROL])
+#endif
 #define KEY_EITHER_SHIFT (key[KEY_LSHIFT] || key[KEY_RSHIFT])
+
+#ifdef ALLEGRO_MACOSX
+	#define CTRL_NAME "Cmd"
+#else
+	#define CTRL_NAME "Ctrl"
+#endif
 
 #define EOF_SNAP_OFF           0
 #define EOF_SNAP_QUARTER       1

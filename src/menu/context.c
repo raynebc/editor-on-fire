@@ -10,8 +10,8 @@
 
 MENU eof_right_click_menu_normal[] =
 {
-    {"&Copy\tCtrl+C", eof_menu_edit_copy, NULL, 0, NULL},
-    {"&Paste\tCtrl+V", eof_menu_edit_paste, NULL, 0, NULL},
+    {"&Copy\t" CTRL_NAME "+C", eof_menu_edit_copy, NULL, 0, NULL},
+    {"&Paste\t" CTRL_NAME "+V", eof_menu_edit_paste, NULL, 0, NULL},
     {"&Grid Snap", NULL, eof_edit_snap_menu, 0, NULL},
     {"&Zoom", NULL, eof_edit_zoom_menu, 0, NULL},
     {"", NULL, NULL, 0, NULL},
@@ -23,8 +23,8 @@ MENU eof_right_click_menu_note[] =
 {
     {"&Note", NULL, eof_note_menu, 0, NULL},
     {"", NULL, NULL, 0, NULL},
-    {"&Copy\tCtrl+C", eof_menu_edit_copy, NULL, 0, NULL},
-    {"&Paste\tCtrl+V", eof_menu_edit_paste, NULL, 0, NULL},
+    {"&Copy\t" CTRL_NAME "+C", eof_menu_edit_copy, NULL, 0, NULL},
+    {"&Paste\t" CTRL_NAME "+V", eof_menu_edit_paste, NULL, 0, NULL},
     {"&Grid Snap", NULL, eof_edit_snap_menu, 0, NULL},
     {"&Zoom", NULL, eof_edit_zoom_menu, 0, NULL},
     {"", NULL, NULL, 0, NULL},

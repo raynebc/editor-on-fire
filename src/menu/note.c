@@ -237,12 +237,12 @@ MENU eof_note_drum_hi_hat_menu[] =
 
 MENU eof_note_drum_menu[] =
 {
-    {"Toggle Yellow cymbal\tCtrl+Y", eof_menu_note_toggle_rb3_cymbal_yellow, NULL, 0, NULL},
-    {"Toggle Blue cymbal\tCtrl+B", eof_menu_note_toggle_rb3_cymbal_blue, NULL, 0, NULL},
-    {"Toggle Green cymbal\tCtrl+G", eof_menu_note_toggle_rb3_cymbal_green, NULL, 0, NULL},
+    {"Toggle Yellow cymbal\t" CTRL_NAME "+Y", eof_menu_note_toggle_rb3_cymbal_yellow, NULL, 0, NULL},
+    {"Toggle Blue cymbal\t" CTRL_NAME "+B", eof_menu_note_toggle_rb3_cymbal_blue, NULL, 0, NULL},
+    {"Toggle Green cymbal\t" CTRL_NAME "+G", eof_menu_note_toggle_rb3_cymbal_green, NULL, 0, NULL},
     {"Mark as &Non cymbal", eof_menu_note_remove_cymbal, NULL, 0, NULL},
     {"Mark new notes as &Cymbals", eof_menu_note_default_cymbal, NULL, 0, NULL},
-    {"Toggle expert+ bass drum\tCtrl+E", eof_menu_note_toggle_double_bass, NULL, 0, NULL},
+    {"Toggle expert+ bass drum\t" CTRL_NAME "+E", eof_menu_note_toggle_double_bass, NULL, 0, NULL},
     {"Remove &Expert+ bass drum", eof_menu_note_remove_double_bass, NULL, 0, NULL},
     {"&Mark new notes as Expert+", eof_menu_note_default_double_bass, NULL, 0, NULL},
     {"Toggle Y note as &Open hi hat\tShift+O", eof_menu_note_toggle_hi_hat_open, NULL, 0, NULL},
@@ -274,8 +274,8 @@ MENU eof_menu_thin_notes_menu[EOF_TRACKS_MAX] =
 MENU eof_note_proguitar_menu[] =
 {
     {"Edit pro guitar &Note\tN", eof_menu_note_edit_pro_guitar_note, NULL, 0, NULL},
-    {"Toggle Slide Up\tCtrl+Up", eof_menu_note_toggle_slide_up, NULL, 0, NULL},
-    {"Toggle Slide Down\tCtrl+Down", eof_menu_note_toggle_slide_down, NULL, 0, NULL},
+    {"Toggle Slide Up\t" CTRL_NAME "+Up", eof_menu_note_toggle_slide_up, NULL, 0, NULL},
+    {"Toggle Slide Down\t" CTRL_NAME "+Down", eof_menu_note_toggle_slide_down, NULL, 0, NULL},
     {"Remove &Slide", eof_menu_note_remove_slide, NULL, 0, NULL},
     {"&Arpeggio", NULL, eof_arpeggio_menu, 0, NULL},
     {"&Clear legacy bitmask", eof_menu_note_clear_legacy_values, NULL, 0, NULL},
@@ -283,13 +283,13 @@ MENU eof_note_proguitar_menu[] =
     {"Toggle Strum Mid\tShift+M", eof_pro_guitar_toggle_strum_mid, NULL, 0, NULL},
     {"Toggle Strum Down\tShift+Down", eof_pro_guitar_toggle_strum_down, NULL, 0, NULL},
     {"Remove strum &Direction", eof_menu_note_remove_strum_direction, NULL, 0, NULL},
-    {"Toggle tapping\tCtrl+T", eof_menu_note_toggle_tapping, NULL, 0, NULL},
+    {"Toggle tapping\t" CTRL_NAME "+T", eof_menu_note_toggle_tapping, NULL, 0, NULL},
     {"Remove &Tapping", eof_menu_note_remove_tapping, NULL, 0, NULL},
-    {"Toggle bend\tCtrl+B", eof_menu_note_toggle_bend, NULL, 0, NULL},
+    {"Toggle bend\t" CTRL_NAME "+B", eof_menu_note_toggle_bend, NULL, 0, NULL},
     {"Remove &Bend", eof_menu_note_remove_bend, NULL, 0, NULL},
-    {"Toggle palm muting\tCtrl+M", eof_menu_note_toggle_palm_muting, NULL, 0, NULL},
+    {"Toggle palm muting\t" CTRL_NAME "+M", eof_menu_note_toggle_palm_muting, NULL, 0, NULL},
     {"Remove palm &Muting", eof_menu_note_remove_palm_muting, NULL, 0, NULL},
-    {"Toggle harmonic\tCtrl+H", eof_menu_note_toggle_harmonic, NULL, 0, NULL},
+    {"Toggle harmonic\t" CTRL_NAME "+H", eof_menu_note_toggle_harmonic, NULL, 0, NULL},
     {"Remove &Harmonic", eof_menu_note_remove_harmonic, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
@@ -630,13 +630,13 @@ void eof_prepare_note_menu(void)
 		{
 			eof_lyric_line_menu[1].flags = 0;	//Note>Lyrics>Lyric Lines>Remove
 			eof_lyric_line_menu[4].flags = 0; 	//Note>Lyrics>Lyric Lines>Toggle Overdrive
-			ustrcpy(eof_lyric_line_menu_mark_text, "Re-&Mark\tCtrl+M");
+			ustrcpy(eof_lyric_line_menu_mark_text, "Re-&Mark\t" CTRL_NAME "+M");
 		}
 		else
 		{
 			eof_lyric_line_menu[1].flags = D_DISABLED;
 			eof_lyric_line_menu[4].flags = D_DISABLED;
-			ustrcpy(eof_lyric_line_menu_mark_text, "&Mark\tCtrl+M");
+			ustrcpy(eof_lyric_line_menu_mark_text, "&Mark\t" CTRL_NAME "+M");
 		}
 
 		/* arpeggio mark/remark */
