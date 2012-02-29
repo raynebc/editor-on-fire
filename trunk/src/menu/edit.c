@@ -96,37 +96,37 @@ MENU eof_edit_speed_menu[] =
 
 MENU eof_edit_bookmark_menu[] =
 {
-    {"&0\tCtrl+Num 0", eof_menu_edit_bookmark_0, NULL, 0, NULL},
-    {"&1\tCtrl+Num 1", eof_menu_edit_bookmark_1, NULL, 0, NULL},
-    {"&2\tCtrl+Num 2", eof_menu_edit_bookmark_2, NULL, 0, NULL},
-    {"&3\tCtrl+Num 3", eof_menu_edit_bookmark_3, NULL, 0, NULL},
-    {"&4\tCtrl+Num 4", eof_menu_edit_bookmark_4, NULL, 0, NULL},
-    {"&5\tCtrl+Num 5", eof_menu_edit_bookmark_5, NULL, 0, NULL},
-    {"&6\tCtrl+Num 6", eof_menu_edit_bookmark_6, NULL, 0, NULL},
-    {"&7\tCtrl+Num 7", eof_menu_edit_bookmark_7, NULL, 0, NULL},
-    {"&8\tCtrl+Num 8", eof_menu_edit_bookmark_8, NULL, 0, NULL},
-    {"&9\tCtrl+Num 9", eof_menu_edit_bookmark_9, NULL, 0, NULL},
+    {"&0\t" CTRL_NAME "+Num 0", eof_menu_edit_bookmark_0, NULL, 0, NULL},
+    {"&1\t" CTRL_NAME "+Num 1", eof_menu_edit_bookmark_1, NULL, 0, NULL},
+    {"&2\t" CTRL_NAME "+Num 2", eof_menu_edit_bookmark_2, NULL, 0, NULL},
+    {"&3\t" CTRL_NAME "+Num 3", eof_menu_edit_bookmark_3, NULL, 0, NULL},
+    {"&4\t" CTRL_NAME "+Num 4", eof_menu_edit_bookmark_4, NULL, 0, NULL},
+    {"&5\t" CTRL_NAME "+Num 5", eof_menu_edit_bookmark_5, NULL, 0, NULL},
+    {"&6\t" CTRL_NAME "+Num 6", eof_menu_edit_bookmark_6, NULL, 0, NULL},
+    {"&7\t" CTRL_NAME "+Num 7", eof_menu_edit_bookmark_7, NULL, 0, NULL},
+    {"&8\t" CTRL_NAME "+Num 8", eof_menu_edit_bookmark_8, NULL, 0, NULL},
+    {"&9\t" CTRL_NAME "+Num 9", eof_menu_edit_bookmark_9, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_edit_selection_menu[] =
 {
-    {"&Select All\tCtrl+A", eof_menu_edit_select_all, NULL, 0, NULL},
-    {"Select &Like\tCtrl+L", eof_menu_edit_select_like, NULL, 0, NULL},
+    {"&Select All\t" CTRL_NAME "+A", eof_menu_edit_select_all, NULL, 0, NULL},
+    {"Select &Like\t" CTRL_NAME "+L", eof_menu_edit_select_like, NULL, 0, NULL},
     {"Select &Rest\tShift+End", eof_menu_edit_select_rest, NULL, 0, NULL},
-    {"&Deselect All\tCtrl+D", eof_menu_edit_deselect_all, NULL, 0, NULL},
+    {"&Deselect All\t" CTRL_NAME "+D", eof_menu_edit_deselect_all, NULL, 0, NULL},
     {"Select &Previous\tShift+Home", eof_menu_edit_select_previous, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_edit_menu[] =
 {
-    {"&Undo\tCtrl+Z", eof_menu_edit_undo, NULL, D_DISABLED, NULL},
-    {"&Redo\tCtrl+R", eof_menu_edit_redo, NULL, D_DISABLED, NULL},
+    {"&Undo\t" CTRL_NAME "+Z", eof_menu_edit_undo, NULL, D_DISABLED, NULL},
+    {"&Redo\t" CTRL_NAME "+R", eof_menu_edit_redo, NULL, D_DISABLED, NULL},
     {"", NULL, NULL, 0, NULL},
-    {"&Copy\tCtrl+C", eof_menu_edit_copy, NULL, 0, NULL},
-    {"&Paste\tCtrl+V", eof_menu_edit_paste, NULL, 0, NULL},
-    {"Old Paste\tCtrl+P", eof_menu_edit_old_paste, NULL, 0, NULL},
+    {"&Copy\t" CTRL_NAME "+C", eof_menu_edit_copy, NULL, 0, NULL},
+    {"&Paste\t" CTRL_NAME "+V", eof_menu_edit_paste, NULL, 0, NULL},
+    {"Old Paste\t" CTRL_NAME "+P", eof_menu_edit_old_paste, NULL, 0, NULL},
     {"Paste &From", NULL, eof_edit_paste_from_menu, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"&Grid Snap", NULL, eof_edit_snap_menu, 0, NULL},
