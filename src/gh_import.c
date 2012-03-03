@@ -10,6 +10,7 @@
 
 unsigned long crc32_lookup[256] = {0};	//A lookup table to improve checksum calculation performance
 char crc32_lookup_initialized = 0;	//Is set to nonzero when the lookup table is created
+char eof_gh_skip_size_def = 0;	//Is set to nonzero if it's determined that the size field in GH headers is omitted
 
 #define GH_IMPORT_DEBUG
 
@@ -129,6 +130,32 @@ int eof_filebuffer_get_dword(filebuffer *fb, unsigned long *ptr)
 	return 0;
 }
 
+int eof_filebuffer_read_unicode_chars(filebuffer *fb, char *ptr, unsigned long num)
+{
+	char byte1, byte2;
+	unsigned long index = 0, ctr;
+
+	if(!fb || !ptr)
+		return EOF;
+
+	for(ctr = 0; ctr < num; ctr++)
+	{	//For each of the requested Unicode characters
+		if(fb->index + 2 >= fb->size)	//Reading the next Unicode character would run outside the buffer
+			return EOF;
+
+		byte1 = fb->buffer[fb->index++];
+		byte2 = fb->buffer[fb->index++];
+
+		if(byte1 != 0)
+		{	//For the English character set, the high byte of the Unicode character is 0
+			return EOF;	//Unsupported Unicode language
+		}
+		ptr[index++] = byte2;
+	}
+
+	return 0;
+}
+
 unsigned long eof_crc32_reflect(unsigned long value, int numbits)
 {
 	unsigned long retval = 0, bitmask = 1, reflected_bitmask, x;
@@ -216,7 +243,7 @@ int eof_gh_read_instrument_section(filebuffer *fb, EOF_SONG *sp, gh_section *tar
 {
 	unsigned long numnotes, dword, ctr, notesize;
 	unsigned int length;
-	unsigned char notemask, accentmask;
+	unsigned char notemask, accentmask, fixednotemask;
 	EOF_NOTE *newnote = NULL;
 
 	if(!fb || !sp || !target)
@@ -241,15 +268,22 @@ int eof_gh_read_instrument_section(filebuffer *fb, EOF_SONG *sp, gh_section *tar
 	eof_log(eof_log_string, 1);
 #endif
 	fb->index += 4;	//Seek past the next 4 bytes, which is a checksum for the game-specific note section subheader
-	if(eof_filebuffer_get_dword(fb, &notesize))	//Read the size of the note entry
-	{	//If there was an error reading the next 4 byte value
-		eof_log("\t\tError:  Could not read note size", 1);
-		return -1;
+	if(!eof_gh_skip_size_def)
+	{	//If the size field is expected
+		if(eof_filebuffer_get_dword(fb, &notesize))	//Read the size of the note entry
+		{	//If there was an error reading the next 4 byte value
+			eof_log("\t\tError:  Could not read note size", 1);
+			return -1;
+		}
+		if((notesize != 8) && (notesize != 9))
+		{	//Each note is expected to be 8 or 9 bytes long
+			eof_log("\t\tError:  Note size is not 8 or 9", 1);
+			return -1;
+		}
 	}
-	if((notesize != 8) && (notesize != 9))
-	{	//Each note is expected to be 8 or 9 bytes long
-		eof_log("\t\tError:  Note size is not 8 or 9", 1);
-		return -1;
+	else
+	{
+		eof_log("\t\tSkipping field size", 1);
 	}
 
 	for(ctr = 0; ctr < numnotes; ctr++)
@@ -268,6 +302,25 @@ int eof_gh_read_instrument_section(filebuffer *fb, EOF_SONG *sp, gh_section *tar
 		{	//If there was an error reading the next 1 byte value
 			eof_log("\t\tError:  Could not read note bitmask", 1);
 			return -1;
+		}
+		if(target->tracknum == EOF_TRACK_DRUM)
+		{	//In Guitar Hero, lane 6 is bass drum, lane 1 is the right-most lane (ie. 6)
+			unsigned long tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
+
+			fixednotemask = notemask;
+			fixednotemask &= ~1;	//Clear this gem
+			fixednotemask &= ~32;	//Clear this gem
+			if(notemask & 32)
+			{	//If lane 6 is populated, convert it to RB's bass drum gem
+				fixednotemask |= 1;		//Set the lane 1 (bass drum) gem
+			}
+			if(notemask & 1)
+			{	//If lane 1 is populated, convert it to lane 6
+				fixednotemask |= 32;	//Set the lane 6 gem
+				sp->track[EOF_TRACK_DRUM]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Ensure "five lane" drums is enabled for the track
+				sp->legacy_track[tracknum]->numlanes = 6;
+			}
+			notemask = fixednotemask;
 		}
 		if(eof_filebuffer_get_byte(fb, &accentmask))	//Read the note accent bitmask
 		{	//If there was an error reading the next 1 byte value
@@ -296,6 +349,7 @@ int eof_gh_read_instrument_section(filebuffer *fb, EOF_SONG *sp, gh_section *tar
 				newnote->flags |= EOF_NOTE_FLAG_NO_HOPO;
 			}
 		}
+///If the size field is omitted, it's not yet known whether the expected size is 8 or 9 bytes
 		if(notesize == 9)
 		{	//A variation of the note section is one that contains an extra byte of unknown data
 			if(eof_filebuffer_get_byte(fb, &notemask))	//Read the extra data byte
@@ -335,15 +389,22 @@ int eof_gh_read_sp_section(filebuffer *fb, EOF_SONG *sp, gh_section *target)
 	eof_log(eof_log_string, 1);
 #endif
 	fb->index += 4;	//Seek past the next 4 bytes, which is a checksum for the game-specific sp section subheader
-	if(eof_filebuffer_get_dword(fb, &phrasesize))	//Read the size of the star power entry
-	{	//If there was an error reading the next 4 byte value
-		eof_log("\t\tError:  Could not read note size", 1);
-		return -1;
+	if(!eof_gh_skip_size_def)
+	{	//If the size field is expected
+		if(eof_filebuffer_get_dword(fb, &phrasesize))	//Read the size of the star power entry
+		{	//If there was an error reading the next 4 byte value
+			eof_log("\t\tError:  Could not read note size", 1);
+			return -1;
+		}
+		if(phrasesize != 6)
+		{	//Each star power phrase is expected to be 6 bytes long
+			eof_log("\t\tError:  Phrase size is not 6", 1);
+			return -1;
+		}
 	}
-	if(phrasesize != 6)
-	{	//Each star power phrase is expected to be 6 bytes long
-		eof_log("\t\tError:  Phrase size is not 6", 1);
-		return -1;
+	else
+	{
+		eof_log("\t\tSkipping field size", 1);
 	}
 	for(ctr = 0; ctr < numphrases; ctr++)
 	{	//For each star power phrase in the section
@@ -392,15 +453,22 @@ int eof_gh_read_tap_section(filebuffer *fb, EOF_SONG *sp, gh_section *target)
 	eof_log(eof_log_string, 1);
 #endif
 	fb->index += 4;	//Seek past the next 4 bytes, which is a checksum for the game-specific sp section subheader
-	if(eof_filebuffer_get_dword(fb, &phrasesize))	//Read the size of the star power entry
-	{	//If there was an error reading the next 4 byte value
-		eof_log("\t\tError:  Could not read note size", 1);
-		return -1;
+	if(!eof_gh_skip_size_def)
+	{	//If the size field is expected
+		if(eof_filebuffer_get_dword(fb, &phrasesize))	//Read the size of the star power entry
+		{	//If there was an error reading the next 4 byte value
+			eof_log("\t\tError:  Could not read note size", 1);
+			return -1;
+		}
+		if(phrasesize != 8)
+		{	//Each tap phrase is expected to be 8 bytes long
+			eof_log("\t\tError:  Phrase size is not 8", 1);
+			return -1;
+		}
 	}
-	if(phrasesize != 8)
-	{	//Each tap phrase is expected to be 8 bytes long
-		eof_log("\t\tError:  Phrase size is not 8", 1);
-		return -1;
+	else
+	{
+		eof_log("\t\tSkipping field size", 1);
 	}
 	for(ctr = 0; ctr < numphrases; ctr++)
 	{	//For each tap phrase in the section
@@ -430,6 +498,7 @@ int eof_gh_read_vocals(filebuffer *fb, EOF_SONG *sp)
 	char *lyricbuffer = NULL, *lyricptr = NULL, *prevlyricptr = NULL;
 	unsigned int voxlength;
 	unsigned char voxpitch;
+	unsigned char unicode_encoding = 0;	//Is set to nonzero if determined that the lyric text is in Unicode format
 	EOF_LYRIC *ptr = NULL;
 	EOF_VOCAL_TRACK * tp = NULL;
 
@@ -456,15 +525,22 @@ int eof_gh_read_vocals(filebuffer *fb, EOF_SONG *sp)
 	eof_log(eof_log_string, 1);
 #endif
 	fb->index += 4;	//Seek past the next 4 bytes, which is a checksum for the game-specific vox note section subheader
-	if(eof_filebuffer_get_dword(fb, &voxsize))	//Read the size of the vox note entry
-	{	//If there was an error reading the next 4 byte value
-		eof_log("\t\tError:  Could not read vox note size", 1);
-		return -1;
+	if(!eof_gh_skip_size_def)
+	{	//If the size field is expected
+		if(eof_filebuffer_get_dword(fb, &voxsize))	//Read the size of the vox note entry
+		{	//If there was an error reading the next 4 byte value
+			eof_log("\t\tError:  Could not read vox note size", 1);
+			return -1;
+		}
+		if(voxsize != 7)
+		{	//Each vox note entry is expected to be 7 bytes long
+			eof_log("\t\tError:  Vox note size is not 7", 1);
+			return -1;
+		}
 	}
-	if(voxsize != 7)
-	{	//Each vox note entry is expected to be 7 bytes long
-		eof_log("\t\tError:  Vox note size is not 7", 1);
-		return -1;
+	else
+	{
+		eof_log("\t\tSkipping field size", 1);
 	}
 	for(ctr = 0; ctr < numvox; ctr++)
 	{	//For each vox note in the section
@@ -528,15 +604,37 @@ int eof_gh_read_vocals(filebuffer *fb, EOF_SONG *sp)
 	eof_log(eof_log_string, 1);
 #endif
 	fb->index += 4;	//Seek past the next 4 bytes, which is a checksum for the game-specific lyric section subheader
-	if(eof_filebuffer_get_dword(fb, &lyricsize))	//Read the size of the lyric entry
-	{	//If there was an error reading the next 4 byte value
-		eof_log("\t\tError:  Could not read lyric size", 1);
-		return -1;
+	if(!eof_gh_skip_size_def)
+	{	//If the size field is expected
+		if(eof_filebuffer_get_dword(fb, &lyricsize))	//Read the size of the lyric entry
+		{	//If there was an error reading the next 4 byte value
+			eof_log("\t\tError:  Could not read lyric size", 1);
+			return -1;
+		}
+		if(lyricsize != 36)
+		{	//Each lyric entry is expected to be 36 bytes long
+			eof_log("\t\tError:  Lyric size is not 36", 1);
+			return -1;
+		}
 	}
-	if(lyricsize != 36)
-	{	//Each lyric entry is expected to be 36 bytes long
-		eof_log("\t\tError:  Lyric size is not 36", 1);
-		return -1;
+	else
+	{
+		if(fb->index + 5 >= fb->size)
+		{	//Corrupted file
+			eof_log("\t\tError:  Unexpected end of file", 1);
+			return -1;
+		}
+		if((fb->buffer[fb->index + 4] == 0) && (fb->buffer[fb->index + 5] != 0))
+		{	//Looking beyond the first timestamp, if the first two bytes of lyric text appear to be Unicode
+			unicode_encoding = 1;
+			lyricsize = 68;	//The Unicode version of GH strings entriesare 68 bytes each (32 Unicode characters plus one 4 byte timestamp)
+			eof_log("\t\tUnicode text detected", 1);
+		}
+		else
+		{	//Otherwise assume a size of 36 bytes
+			lyricsize = 36;
+			eof_log("\t\tSkipping field size", 1);
+		}
 	}
 	lyricbuffer = (char *)malloc(lyricsize + 2);
 	if(!lyricbuffer)
@@ -551,10 +649,21 @@ int eof_gh_read_vocals(filebuffer *fb, EOF_SONG *sp)
 			eof_log("\t\tError:  Could not read lyric position", 1);
 			return -1;
 		}
-		if(eof_filebuffer_memcpy(fb, lyricbuffer, lyricsize - 4))	//Read 4 bytes less to account for the entry's position
-		{	//If there was an error reading the lyric entry
-			eof_log("\t\tError:  Could not read lyric text", 1);
-			return -1;
+		if(!unicode_encoding)
+		{	//If these are not Unicode strings, just do a normal memory copy
+			if(eof_filebuffer_memcpy(fb, lyricbuffer, lyricsize - 4))	//Read 4 bytes less to account for the entry's position
+			{	//If there was an error reading the lyric entry
+				eof_log("\t\tError:  Could not read lyric text", 1);
+				return -1;
+			}
+		}
+		else
+		{
+			if(eof_filebuffer_read_unicode_chars(fb, lyricbuffer, 32))
+			{	//If there was an error reading 32 Unicode characters (68 bytes)
+				eof_log("\t\tError:  Could not read lyric text", 1);
+				return -1;
+			}
 		}
 		lyricbuffer[lyricsize] = '\0';
 		lyricbuffer[lyricsize + 1] = '\0';	//Ensure the last two bytes are NULL characters, in case this string is treated as Unicode
@@ -628,15 +737,22 @@ int eof_gh_read_vocals(filebuffer *fb, EOF_SONG *sp)
 	eof_log(eof_log_string, 1);
 #endif
 	fb->index += 4;	//Seek past the next 4 bytes, which is a checksum for the game-specific lyric phrase section subheader
-	if(eof_filebuffer_get_dword(fb, &phrasesize))	//Read the size of the lyric phrase entry
-	{	//If there was an error reading the next 4 byte value
-		eof_log("\t\tError:  Could not read lyric phrase size", 1);
-		return -1;
+	if(!eof_gh_skip_size_def)
+	{	//If the size field is expected
+		if(eof_filebuffer_get_dword(fb, &phrasesize))	//Read the size of the lyric phrase entry
+		{	//If there was an error reading the next 4 byte value
+			eof_log("\t\tError:  Could not read lyric phrase size", 1);
+			return -1;
+		}
+		if(phrasesize != 4)
+		{	//Each lyric entry is expected to be 4 bytes long
+			eof_log("\t\tError:  Lyric phrase size is not 4", 1);
+			return -1;
+		}
 	}
-	if(phrasesize != 4)
-	{	//Each lyric entry is expected to be 4 bytes long
-		eof_log("\t\tError:  Lyric phrase size is not 4", 1);
-		return -1;
+	else
+	{
+		eof_log("\t\tSkipping field size", 1);
 	}
 	tp = sp->vocal_track[tracknum];		//Store the pointer to the vocal track to simplify things
 	for(ctr = 0; ctr < numphrases; ctr++)
@@ -734,6 +850,7 @@ EOF_SONG * eof_import_gh(const char * fn)
 	}
 
 //Process the fretbar section to create the tempo map
+	eof_gh_skip_size_def = 0;	//Reset this condition
 	if(eof_filebuffer_find_checksum(fb, EOF_GH_CRC32("fretbar")))	//Seek one byte past the "fretbar" header
 	{	//If the "fretbar" section couldn't be found
 		eof_log("Error:  Failed to locate \"fretbar\" header", 1);
@@ -763,8 +880,14 @@ EOF_SONG * eof_import_gh(const char * fn)
 		eof_filebuffer_close(fb);
 		return NULL;
 	}
-	if(dword != 4)
-	{	//Each fretbar is expected to be 4 bytes long
+	if(dword == 0)
+	{	//I've noticed that some files skip defining the size and go immediately to defining the first fretbar position
+		eof_gh_skip_size_def = 1;	//Note that the size field in the header is omitted
+		eof_log("\t\tThe size fields for this file appear to be omitted", 1);
+		fb->index -= 4;	//Rewind 4 bytes so that the fretbar loop below reads the first position correctly
+	}
+	else if(dword != 4)
+	{	//Otherwise each fretbar is expected to be 4 bytes long
 		eof_log("Error:  Fretbar size is not 4", 1);
 		eof_filebuffer_close(fb);
 		return NULL;
@@ -792,19 +915,26 @@ EOF_SONG * eof_import_gh(const char * fn)
 			eof_filebuffer_close(fb);
 			return NULL;
 		}
-		if(ctr && (dword <= lastfretbar))
-		{	//If this beat doesn't come after the previous beat
-			eof_log("Error:  Corrupted fretbar", 1);
-			eof_destroy_song(sp);
-			eof_filebuffer_close(fb);
-			return NULL;
-		}
 #ifdef GH_IMPORT_DEBUG
 		snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Fretbar at %lums", dword);
 		eof_log(eof_log_string, 1);
 #endif
-		sp->beat[ctr]->pos = sp->beat[ctr]->fpos = dword;	//Set the timestamp position of this beat
-		lastfretbar = dword;
+		if(ctr && (dword <= lastfretbar))
+		{	//If this beat doesn't come after the previous beat
+			allegro_message("Warning:  Corrupt fretbar position");
+			numbeats = ctr;	//Update the number of beats
+			if(numbeats < 3)
+			{	//If too few beats were usable
+				eof_destroy_song(sp);
+				eof_filebuffer_close(fb);
+				return NULL;
+			}
+		}
+		else
+		{
+			sp->beat[ctr]->pos = sp->beat[ctr]->fpos = dword;	//Set the timestamp position of this beat
+			lastfretbar = dword;
+		}
 	}
 	for(ctr = 0; ctr < numbeats - 1; ctr++)
 	{	//For each beat in the chart
@@ -844,19 +974,32 @@ EOF_SONG * eof_import_gh(const char * fn)
 			eof_log(eof_log_string, 1);
 #endif
 		fb->index += 4;	//Seek past the next 4 bytes, which is a checksum for the game-specific timesig subheader
-		if(eof_filebuffer_get_dword(fb, &dword))	//Read the size of the time signature value
-		{	//If there was an error reading the next 4 byte value
-			eof_log("Error:  Could not read time signature size", 1);
-			eof_destroy_song(sp);
-			eof_filebuffer_close(fb);
-			return NULL;
+		if(!eof_gh_skip_size_def)
+		{	//If the size field is expected
+			if(eof_filebuffer_get_dword(fb, &dword))	//Read the size of the time signature value
+			{	//If there was an error reading the next 4 byte value
+				eof_log("Error:  Could not read time signature size", 1);
+				eof_destroy_song(sp);
+				eof_filebuffer_close(fb);
+				return NULL;
+			}
+			if(dword == 0)
+			{	//I've noticed that some files skip defining the size and go immediately to defining the first timesig position
+				eof_gh_skip_size_def = 1;	//Note that the size field in the header is omitted
+				eof_log("\t\tThe size fields for this file appear to be omitted", 1);
+				fb->index -= 4;	//Rewind 4 bytes so that the timesig loop below reads the first position correctly
+			}
+			else if(dword != 6)
+			{	//Otherwise each time signature is expected to be 6 bytes long
+				eof_log("Error:  Time signature size is not 6", 1);
+				eof_destroy_song(sp);
+				eof_filebuffer_close(fb);
+				return NULL;
+			}
 		}
-		if(dword != 6)
-		{	//Each time signature is expected to be 6 bytes long
-			eof_log("Error:  Time signature size is not 6", 1);
-			eof_destroy_song(sp);
-			eof_filebuffer_close(fb);
-			return NULL;
+		else
+		{
+			eof_log("\t\tSkipping field size", 1);
 		}
 		for(ctr = 0; ctr < numsigs; ctr++)
 		{	//For each time signature in the chart file

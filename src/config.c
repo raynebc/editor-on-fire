@@ -172,7 +172,7 @@ void eof_load_config(char * fn)
 	{
 		eof_zoom_3d = 5;
 	}
-	eof_hopo_view = get_config_int("editor", "hopo_view", EOF_HOPO_RF);
+	eof_hopo_view = get_config_int("editor", "hopo_view", EOF_HOPO_MANUAL);
 	if((eof_hopo_view < 0) || (eof_hopo_view >= EOF_NUM_HOPO_MODES))
 	{
 		eof_hopo_view = EOF_HOPO_RF;

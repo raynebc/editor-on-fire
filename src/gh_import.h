@@ -44,6 +44,9 @@ int eof_filebuffer_get_dword(filebuffer *fb, unsigned long *ptr);
 int eof_filebuffer_memcpy(filebuffer *fb, void *ptr, size_t num);
 	//Copies num bytes from the buffered file into ptr
 	//Returns EOF on error, otherwise returns 0
+int eof_filebuffer_read_unicode_chars(filebuffer *fb, char *ptr, unsigned long num);
+	//Reads the specified number of Unicode characters from the buffered file, storing as ASCII characters into ptr
+	//Returns EOF on error, otherwise returns 0
 unsigned long eof_crc32_reflect(unsigned long value, int numbits);
 	//Returns the passed value with the (numbits) number of low order bits reflected (swapped)
 unsigned long eof_crc32(char *string);
