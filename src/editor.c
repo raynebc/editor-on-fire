@@ -2043,7 +2043,7 @@ void eof_read_editor_keys(void)
 									eof_selection.current = EOF_MAX_NOTES - 1;
 									eof_track_sort_notes(eof_song, eof_selected_track);
 									eof_track_fixup_notes(eof_song, eof_selected_track, 1);
-									eof_determine_phrase_status();
+									eof_determine_phrase_status(eof_selected_track);
 									eof_detect_difficulties(eof_song);
 								}
 							}
@@ -2089,7 +2089,7 @@ void eof_read_editor_keys(void)
 								}
 								eof_track_sort_notes(eof_song, eof_selected_track);
 								eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes and retain note selection
-								eof_determine_phrase_status();
+								eof_determine_phrase_status(eof_selected_track);
 								eof_selection.multi[eof_selection.current] = 1;	//Add new note to the selection
 								eof_detect_difficulties(eof_song);
 							}
@@ -2402,7 +2402,7 @@ void eof_editor_logic(void)
 			{
 				eof_track_sort_notes(eof_song, eof_selected_track);
 				eof_track_fixup_notes(eof_song, eof_selected_track, 1);
-				eof_determine_phrase_status();
+				eof_determine_phrase_status(eof_selected_track);
 				eof_notes_moved = 0;
 			}
 		}
@@ -2863,7 +2863,7 @@ void eof_editor_logic(void)
 									eof_selection.current = EOF_MAX_NOTES - 1;
 									eof_track_sort_notes(eof_song, eof_selected_track);
 									eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes and retain note selection
-									eof_determine_phrase_status();
+									eof_determine_phrase_status(eof_selected_track);
 									eof_detect_difficulties(eof_song);
 								}
 								else if(note & bitmask)
@@ -2931,7 +2931,7 @@ void eof_editor_logic(void)
 							}
 							eof_track_sort_notes(eof_song, eof_selected_track);
 							eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes and retain note selection
-							eof_determine_phrase_status();
+							eof_determine_phrase_status(eof_selected_track);
 							eof_selection.multi[eof_selection.current] = 1;	//Add new note to the selection
 							eof_detect_difficulties(eof_song);
 						}
