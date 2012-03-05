@@ -789,12 +789,12 @@ int eof_note_is_hopo(unsigned long cnote)
 	eof_log("eof_note_is_hopo() entered", 2);
 
 	double delta;
-	float hopo_delta = eof_song->tags->eighth_note_hopo ? 250.0 : 170.0;
+	float hopo_delta = eof_song->tags->eighth_note_hopo ? 250.0 : 170.0;	//The proximity threshold to determine HOPO eligibility, when the tempo is 120BPM (within 1/3 beat, or 1/2 beat if 8th note HOPO option is enabled)
 	unsigned long i, cnotepos;
 	long pnote;
 	long beat = -1;
 	double bpm;
-	double scale;
+	double scale;	//Scales the proximity threshold for the given beat's tempo
 
 	if((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR))
 		return 0;	//Only guitar/bass tracks can have HOPO notes
@@ -850,9 +850,9 @@ int eof_note_is_hopo(unsigned long cnote)
 	return 0;
 }
 
-void eof_determine_phrase_status(void)
+void eof_determine_phrase_status(unsigned long track)
 {
-	eof_log("eof_determine_phrase_status() entered", 1);
+	eof_log("eof_determine_phrase_status(eof_selected_track) entered", 1);
 
 	unsigned long i, j, tracknum;
 	char sp[EOF_MAX_PHRASES] = {0};
@@ -864,18 +864,21 @@ void eof_determine_phrase_status(void)
 	unsigned long notepos, flags, numphrases, numnotes;
 	EOF_PHRASE_SECTION *sectionptr = NULL;
 
-	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	numnotes = eof_get_track_size(eof_song, eof_selected_track);
+	if(!eof_music_paused)
+		return;	//Do not allow this to run during playback because it causes too much lag when switching to a track with a large number of notes
+
+	tracknum = eof_song->track[track]->tracknum;
+	numnotes = eof_get_track_size(eof_song, track);
 	for(i = 0; i < numnotes; i++)
 	{	//For each note in the active track
 		/* clear the flags */
-		notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
-		flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+		notepos = eof_get_note_pos(eof_song, track, i);
+		flags = eof_get_note_flags(eof_song, track, i);
 		flags &= (~EOF_NOTE_FLAG_HOPO);
 		flags &= (~EOF_NOTE_FLAG_SP);
 		flags &= (~EOF_NOTE_FLAG_IS_TRILL);
 		flags &= (~EOF_NOTE_FLAG_IS_TREMOLO);
-		if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
+		if((eof_song->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT))
 		{	//Only clear the is slider flag if this is a legacy guitar track
 			flags &= (~EOF_GUITAR_NOTE_FLAG_IS_SLIDER);
 		}
@@ -887,10 +890,10 @@ void eof_determine_phrase_status(void)
 		}
 
 		/* mark and check star power notes */
-		numphrases = eof_get_num_star_power_paths(eof_song, eof_selected_track);
+		numphrases = eof_get_num_star_power_paths(eof_song, track);
 		for(j = 0; j < numphrases; j++)
 		{	//For each star power path in the active track
-			sectionptr = eof_get_star_power_path(eof_song, eof_selected_track, j);
+			sectionptr = eof_get_star_power_path(eof_song, track, j);
 			if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
 			{	//If the note is in this star power section
 				flags |= EOF_NOTE_FLAG_SP;
@@ -899,10 +902,10 @@ void eof_determine_phrase_status(void)
 		}
 
 		/* check solos */
-		numphrases = eof_get_num_solos(eof_song, eof_selected_track);
+		numphrases = eof_get_num_solos(eof_song, track);
 		for(j = 0; j < numphrases; j++)
 		{	//For each solo section in the active track
-			sectionptr = eof_get_solo(eof_song, eof_selected_track, j);
+			sectionptr = eof_get_solo(eof_song, track, j);
 			if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
 			{	//If the note is in this solo section
 				so[j] = 1;
@@ -910,10 +913,10 @@ void eof_determine_phrase_status(void)
 		}
 
 		/* mark and check trills */
-		numphrases = eof_get_num_trills(eof_song, eof_selected_track);
+		numphrases = eof_get_num_trills(eof_song, track);
 		for(j = 0; j < numphrases; j++)
 		{	//For each trill section in the active track
-			sectionptr = eof_get_trill(eof_song, eof_selected_track, j);
+			sectionptr = eof_get_trill(eof_song, track, j);
 			if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
 			{	//If the note is in this trill section
 				flags |= EOF_NOTE_FLAG_IS_TRILL;
@@ -922,10 +925,10 @@ void eof_determine_phrase_status(void)
 		}
 
 		/* mark and check tremolos */
-		numphrases = eof_get_num_tremolos(eof_song, eof_selected_track);
+		numphrases = eof_get_num_tremolos(eof_song, track);
 		for(j = 0; j < numphrases; j++)
 		{	//For each tremolo section in the active track
-			sectionptr = eof_get_tremolo(eof_song, eof_selected_track, j);
+			sectionptr = eof_get_tremolo(eof_song, track, j);
 			if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
 			{	//If the note is in this tremolo section
 				flags |= EOF_NOTE_FLAG_IS_TREMOLO;
@@ -934,7 +937,7 @@ void eof_determine_phrase_status(void)
 		}
 
 		/* check arpeggios */
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If this is a pro guitar track
 			for(j = 0; j < eof_song->pro_guitar_track[tracknum]->arpeggios; j++)
 			{	//For each arpeggio section in the active track
@@ -946,12 +949,12 @@ void eof_determine_phrase_status(void)
 		}
 
 		/* mark and check sliders */
-		if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
+		if((eof_song->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT))
 		{	//Only check the is slider flag if this is a legacy guitar track
-			numphrases = eof_get_num_sliders(eof_song, eof_selected_track);
+			numphrases = eof_get_num_sliders(eof_song, track);
 			for(j = 0; j < numphrases; j++)
 			{	//For each slider section in the active track
-				sectionptr = eof_get_slider(eof_song, eof_selected_track, j);
+				sectionptr = eof_get_slider(eof_song, track, j);
 				if((notepos >= sectionptr->start_pos) && (notepos <= sectionptr->end_pos))
 				{	//If the note is in this slider section
 					flags |= EOF_GUITAR_NOTE_FLAG_IS_SLIDER;
@@ -960,51 +963,51 @@ void eof_determine_phrase_status(void)
 			}
 		}
 
-		eof_set_note_flags(eof_song, eof_selected_track, i, flags);	//Update the note's flags variable
+		eof_set_note_flags(eof_song, track, i, flags);	//Update the note's flags variable
 	}//For each note in the active track
 
 	/* delete star power phrases with no notes */
-	numphrases = eof_get_num_star_power_paths(eof_song, eof_selected_track);
+	numphrases = eof_get_num_star_power_paths(eof_song, track);
 	for(j = 0; j < numphrases; j++)
 	{	//For each star power section in the active track
 		if(!sp[j])
 		{	//If the section's note count taken above was 0
-			eof_track_delete_star_power_path(eof_song, eof_selected_track, j);
+			eof_track_delete_star_power_path(eof_song, track, j);
 		}
 	}
 
 	/* delete solos with no notes */
-	numphrases = eof_get_num_solos(eof_song, eof_selected_track);
+	numphrases = eof_get_num_solos(eof_song, track);
 	for(j = 0; j < numphrases; j++)
 	{	//For each solo section in the active track
 		if(!so[j])
 		{	//If the section's note count taken above was 0
-			eof_track_delete_solo(eof_song, eof_selected_track, j);
+			eof_track_delete_solo(eof_song, track, j);
 		}
 	}
 
 	/* delete trills with no notes */
-	numphrases = eof_get_num_trills(eof_song, eof_selected_track);
+	numphrases = eof_get_num_trills(eof_song, track);
 	for(j = 0; j < numphrases; j++)
 	{	//For each trill section in the active track
 		if(!trills[j])
 		{	//If the section's note count taken above was 0
-			eof_track_delete_trill(eof_song, eof_selected_track, j);
+			eof_track_delete_trill(eof_song, track, j);
 		}
 	}
 
 	/* delete tremolos with no notes */
-	numphrases = eof_get_num_tremolos(eof_song, eof_selected_track);
+	numphrases = eof_get_num_tremolos(eof_song, track);
 	for(j = 0; j < numphrases; j++)
 	{	//For each tremolo section in the active track
 		if(!tremolos[j])
 		{	//If the section's note count taken above was 0
-			eof_track_delete_tremolo(eof_song, eof_selected_track, j);
+			eof_track_delete_tremolo(eof_song, track, j);
 		}
 	}
 
 	/* delete arpeggios with no notes */
-	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{	//If this is a pro guitar track
 		for(j = 0; j < eof_song->pro_guitar_track[tracknum]->arpeggios; j++)
 		{	//For each arpeggio section in the active track
@@ -1016,12 +1019,12 @@ void eof_determine_phrase_status(void)
 	}
 
 	/* delete sliders with no notes */
-	numphrases = eof_get_num_sliders(eof_song, eof_selected_track);
+	numphrases = eof_get_num_sliders(eof_song, track);
 	for(j = 0; j < numphrases; j++)
 	{	//For each slider section in the active track
 		if(!sliders[j])
 		{	//If the section's note count taken above was 0
-			eof_track_delete_slider(eof_song, eof_selected_track, j);
+			eof_track_delete_slider(eof_song, track, j);
 		}
 	}
 }

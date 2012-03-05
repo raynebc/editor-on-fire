@@ -426,7 +426,7 @@ void eof_editor_logic_feedback(void)
 				memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 				eof_sort_notes(eof_song);
 				eof_fixup_notes(eof_song);
-				eof_determine_phrase_status();
+				eof_determine_phrase_status(eof_selected_track);
 				eof_selection.multi[eof_selection.current] = 1;
 			}
 			eof_feedback_note[0] = 1;
@@ -456,7 +456,7 @@ void eof_editor_logic_feedback(void)
 				memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 				eof_sort_notes(eof_song);
 				eof_fixup_notes(eof_song);
-				eof_determine_phrase_status();
+				eof_determine_phrase_status(eof_selected_track);
 				eof_selection.multi[eof_selection.current] = 1;
 			}
 			eof_feedback_note[1] = 1;
@@ -486,7 +486,7 @@ void eof_editor_logic_feedback(void)
 				memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 				eof_sort_notes(eof_song);
 				eof_fixup_notes(eof_song);
-				eof_determine_phrase_status();
+				eof_determine_phrase_status(eof_selected_track);
 				eof_selection.multi[eof_selection.current] = 1;
 			}
 			eof_feedback_note[2] = 1;
@@ -516,7 +516,7 @@ void eof_editor_logic_feedback(void)
 				memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 				eof_sort_notes(eof_song);
 				eof_fixup_notes(eof_song);
-				eof_determine_phrase_status();
+				eof_determine_phrase_status(eof_selected_track);
 				eof_selection.multi[eof_selection.current] = 1;
 			}
 			eof_feedback_note[3] = 1;
@@ -546,7 +546,7 @@ void eof_editor_logic_feedback(void)
 				memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 				eof_sort_notes(eof_song);
 				eof_fixup_notes(eof_song);
-				eof_determine_phrase_status();
+				eof_determine_phrase_status(eof_selected_track);
 				eof_selection.multi[eof_selection.current] = 1;
 			}
 			eof_feedback_note[4] = 1;
@@ -574,7 +574,7 @@ void eof_editor_logic_feedback(void)
 		eof_track_delete_note(eof_song, eof_selected_track, eof_hover_note);
 		eof_sort_notes(eof_song);
 		eof_fixup_notes(eof_song);
-		eof_determine_phrase_status();
+		eof_determine_phrase_status(eof_selected_track);
 		eof_selection.current = EOF_MAX_NOTES - 1;
 		eof_selection.multi[eof_hover_note] = 0;
 	}

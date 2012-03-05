@@ -1238,7 +1238,7 @@ int eof_menu_note_resnap(void)
 	{
 		allegro_message("Warning! Some %s snapped to the same position and were automatically combined.", (eof_song->track[eof_selected_track]->track_format == EOF_VOCAL_TRACK_FORMAT) ? "lyrics" : "notes");
 	}
-	eof_determine_phrase_status();
+	eof_determine_phrase_status(eof_selected_track);
 	return 1;
 }
 
@@ -1268,7 +1268,7 @@ int eof_menu_note_delete(void)
 		eof_track_fixup_notes(eof_song, eof_selected_track, 0);
 		eof_reset_lyric_preview_lines();
 		eof_detect_difficulties(eof_song);
-		eof_determine_phrase_status();
+		eof_determine_phrase_status(eof_selected_track);
 	}
 	return 1;
 }
@@ -2418,7 +2418,7 @@ int eof_menu_star_power_mark(void)
 			starpowerptr->end_pos = sel_end;
 		}
 	}
-	eof_determine_phrase_status();
+	eof_determine_phrase_status(eof_selected_track);
 	return 1;
 }
 
@@ -2443,7 +2443,7 @@ int eof_menu_star_power_unmark(void)
 			}
 		}
 	}
-	eof_determine_phrase_status();
+	eof_determine_phrase_status(eof_selected_track);
 	return 1;
 }
 
@@ -2465,7 +2465,7 @@ int eof_menu_star_power_erase_all(void)
 		}
 		eof_set_num_star_power_paths(eof_song, eof_selected_track, 0);
 	}
-	eof_determine_phrase_status();
+	eof_determine_phrase_status(eof_selected_track);
 	return 1;
 }
 
@@ -2638,7 +2638,7 @@ int eof_menu_hopo_auto(void)
 			}
 		}
 	}
-	eof_determine_phrase_status();
+	eof_determine_phrase_status(eof_selected_track);
 	return 1;
 }
 
@@ -2708,7 +2708,7 @@ int eof_menu_hopo_cycle(void)
 				}
 			}
 		}
-		eof_determine_phrase_status();
+		eof_determine_phrase_status(eof_selected_track);
 	}
 	return 1;
 }
@@ -2749,7 +2749,7 @@ int eof_menu_hopo_force_on(void)
 			}
 		}
 	}
-	eof_determine_phrase_status();
+	eof_determine_phrase_status(eof_selected_track);
 	return 1;
 }
 
@@ -2789,7 +2789,7 @@ int eof_menu_hopo_force_off(void)
 			}
 		}
 	}
-	eof_determine_phrase_status();
+	eof_determine_phrase_status(eof_selected_track);
 	return 1;
 }
 
@@ -4285,7 +4285,7 @@ int eof_menu_trill_mark(void)
 		sectionptr->start_pos = sel_start;
 		sectionptr->end_pos = sel_end;
 	}
-	eof_determine_phrase_status();
+	eof_determine_phrase_status(eof_selected_track);
 	return 1;
 }
 
@@ -4348,7 +4348,7 @@ int eof_menu_tremolo_mark(void)
 		sectionptr->start_pos = sel_start;
 		sectionptr->end_pos = sel_end;
 	}
-	eof_determine_phrase_status();
+	eof_determine_phrase_status(eof_selected_track);
 	return 1;
 }
 
@@ -4411,7 +4411,7 @@ int eof_menu_slider_mark(void)
 		sectionptr->start_pos = sel_start;
 		sectionptr->end_pos = sel_end;
 	}
-	eof_determine_phrase_status();
+	eof_determine_phrase_status(eof_selected_track);
 	return 1;
 }
 
@@ -4441,7 +4441,7 @@ int eof_menu_trill_unmark(void)
 			}
 		}
 	}
-	eof_determine_phrase_status();
+	eof_determine_phrase_status(eof_selected_track);
 	return 1;
 }
 
@@ -4471,7 +4471,7 @@ int eof_menu_tremolo_unmark(void)
 			}
 		}
 	}
-	eof_determine_phrase_status();
+	eof_determine_phrase_status(eof_selected_track);
 	return 1;
 }
 
@@ -4501,7 +4501,7 @@ int eof_menu_slider_unmark(void)
 			}
 		}
 	}
-	eof_determine_phrase_status();
+	eof_determine_phrase_status(eof_selected_track);
 	return 1;
 }
 
@@ -4522,7 +4522,7 @@ int eof_menu_trill_erase_all(void)
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		eof_set_num_trills(eof_song, eof_selected_track, 0);
 	}
-	eof_determine_phrase_status();
+	eof_determine_phrase_status(eof_selected_track);
 	return 1;
 }
 
@@ -4543,7 +4543,7 @@ int eof_menu_tremolo_erase_all(void)
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		eof_set_num_tremolos(eof_song, eof_selected_track, 0);
 	}
-	eof_determine_phrase_status();
+	eof_determine_phrase_status(eof_selected_track);
 	return 1;
 }
 
@@ -4557,7 +4557,7 @@ int eof_menu_slider_erase_all(void)
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		eof_set_num_sliders(eof_song, eof_selected_track, 0);
 	}
-	eof_determine_phrase_status();
+	eof_determine_phrase_status(eof_selected_track);
 	return 1;
 }
 
@@ -4862,7 +4862,7 @@ int eof_menu_copy_solos_track_number(EOF_SONG *sp, int sourcetrack, int desttrac
 			eof_track_add_solo(sp, desttrack, ptr->start_pos, ptr->end_pos);	//Copy it to the destination track
 		}
 	}
-	eof_determine_phrase_status();
+	eof_determine_phrase_status(eof_selected_track);
 	return 1;	//Return completion
 }
 
@@ -4957,7 +4957,7 @@ int eof_menu_copy_sp_track_number(EOF_SONG *sp, int sourcetrack, int desttrack)
 			eof_track_add_star_power_path(sp, desttrack, ptr->start_pos, ptr->end_pos);	//Copy it to the destination track
 		}
 	}
-	eof_determine_phrase_status();
+	eof_determine_phrase_status(eof_selected_track);
 	return 1;	//Return completion
 }
 
@@ -5052,7 +5052,7 @@ int eof_menu_copy_arpeggio_track_number(EOF_SONG *sp, int sourcetrack, int destt
 			eof_track_add_section(sp, desttrack, EOF_ARPEGGIO_SECTION, ptr->difficulty, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the destination track
 		}
 	}
-	eof_determine_phrase_status();
+	eof_determine_phrase_status(eof_selected_track);
 	return 1;	//Return completion
 }
 
@@ -5147,7 +5147,7 @@ int eof_menu_copy_trill_track_number(EOF_SONG *sp, int sourcetrack, int desttrac
 			eof_track_add_section(sp, desttrack, EOF_TRILL_SECTION, ptr->difficulty, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the destination track
 		}
 	}
-	eof_determine_phrase_status();
+	eof_determine_phrase_status(eof_selected_track);
 	return 1;	//Return completion
 }
 
@@ -5242,7 +5242,7 @@ int eof_menu_copy_tremolo_track_number(EOF_SONG *sp, int sourcetrack, int desttr
 			eof_track_add_section(sp, desttrack, EOF_TREMOLO_SECTION, ptr->difficulty, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the destination track
 		}
 	}
-	eof_determine_phrase_status();
+	eof_determine_phrase_status(eof_selected_track);
 	return 1;	//Return completion
 }
 
@@ -5446,7 +5446,7 @@ int eof_menu_pro_guitar_toggle_hammer_on(void)
 				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 			}
 		}
-		eof_determine_phrase_status();
+		eof_determine_phrase_status(eof_selected_track);
 	}
 	return 1;
 }
@@ -5480,7 +5480,7 @@ int eof_menu_pro_guitar_remove_hammer_on(void)
 			}
 		}
 	}
-	eof_determine_phrase_status();
+	eof_determine_phrase_status(eof_selected_track);
 	return 1;
 }
 
@@ -5522,7 +5522,7 @@ int eof_menu_pro_guitar_toggle_pull_off(void)
 				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 			}
 		}
-		eof_determine_phrase_status();
+		eof_determine_phrase_status(eof_selected_track);
 	}
 	return 1;
 }
@@ -5554,7 +5554,7 @@ int eof_menu_pro_guitar_remove_pull_off(void)
 			}
 		}
 	}
-	eof_determine_phrase_status();
+	eof_determine_phrase_status(eof_selected_track);
 	return 1;
 }
 

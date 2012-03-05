@@ -571,7 +571,7 @@ void eof_mix_start(unsigned long start, int speed)
 {
 	eof_log("eof_mix_start() entered", 1);
 
-	int i;
+	unsigned long i;
 
 	eof_mix_next_clap = -1;
 	eof_mix_next_metronome = -1;
@@ -600,6 +600,11 @@ void eof_mix_start(unsigned long start, int speed)
 	eof_mix_sample_count = start;
 	eof_mix_sample_increment = (1000.0 / (double)eof_mix_speed) * (44100.0 / (double)alogg_get_wave_freq_ogg(eof_music_track));
 	eof_mix_start_helper();
+
+	for(i = 1; i < eof_song->tracks; i++)
+	{	//Pre-process all tracks so that switching tracks during playback doesn't cause the playback to lag
+		eof_determine_phrase_status(i);
+	}
 }
 
 void eof_mix_seek(int pos)

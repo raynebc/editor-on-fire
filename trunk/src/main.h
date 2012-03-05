@@ -443,7 +443,8 @@ int eof_figure_part(void);	//Returns the active track number in terms of FoF's c
 int d_hackish_edit_proc (int msg, DIALOG *d, int c);
 int eof_set_display_mode(int mode);
 void eof_debug_message(char * text);
-void eof_determine_phrase_status(void);		//Re-applies the HOPO, SP, trill and tremolo status of each note in the selected track, as well as deleting empty SP, Solo, trill, tremolo and arpeggio phrases
+void eof_determine_phrase_status(unsigned long track);
+	//Re-applies the HOPO, SP, trill and tremolo status of each note in the specified track, as well as deleting empty SP, Solo, trill, tremolo and arpeggio phrases
 void eof_fix_window_title(void);
 int eof_load_ogg_quick(char * filename);
 int eof_load_ogg(char * filename);	//Loads the specified OGG file.  Upon success, eof_loaded_ogg_name is updated and nonzero is returned.
