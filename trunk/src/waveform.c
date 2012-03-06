@@ -33,13 +33,13 @@ int eof_waveform_slice_mean(struct waveformslice *left,struct waveformslice *rig
 //Calculate mean data
 	for(ctr=0;ctr < 2;ctr++)
 	{	//For each possible channel
-		if((ctr == 0) && (left != NULL))
-		{	//If this is the left channel and its processing is enabled
+		if((ctr == 0) && (left != NULL) && (waveform->left.slices))
+		{	//If this is the left channel, its processing is enabled and there is waveform data for this channel
 			channel = waveform->left.slices;	//Point to left channel data
 			results = left;
 		}
-		else if((ctr == 1) && (left != NULL))
-		{	//Or if this is the right channel and its processing is enabled
+		else if((ctr == 1) && (right != NULL) && (waveform->right.slices))
+		{	//Or if this is the right channel, its processing is enabled and there is waveform data for this channel
 			channel = waveform->right.slices;	//Point to right channel data
 			results = right;
 		}
