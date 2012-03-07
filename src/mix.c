@@ -92,7 +92,7 @@ void eof_mix_callback_stereo(void * buf, int length)
 	long cuesample;		//Used to apply a volume to cues, where the appropriate amplitude multiplier for changing the cue's loudness to X% is to multiply its amplitudes by sqrt(X/100)
 	int i, j;
 
-	bytes_left = length >> 1;	//Divide by two
+	bytes_left = length >> 1;	//Divide by two (length refers to the number of bytes to process, but buffer will be accessed as an array of 16 bit integer values)
 	buffer = (unsigned short *)buf;
 
 	/* add audio data to the buffer */
@@ -199,15 +199,17 @@ void eof_mix_callback_stereo(void * buf, int length)
 
 void eof_mix_callback_mono(void * buf, int length)
 {
+	unsigned long bytes_left;
 	unsigned short * buffer;
 	long sum=0;			//Use a signed long integer to allow the clipping logic to be more efficient
 	long cuesample;		//Used to apply a volume to cues, where the appropriate amplitude multiplier for changing the cue's loudness to X% is to multiply its amplitudes by sqrt(X/100)
 	int i, j;
 
+	bytes_left = length >> 1;	//Divide by two (length refers to the number of bytes to process, but buffer will be accessed as an array of 16 bit integer values)
 	buffer = (unsigned short *)buf;
 
 	/* add audio data to the buffer */
-	for(i = 0; i < length; i++)
+	for(i = 0; i < bytes_left; i++)
 	{
 		/* store original sample values */
 		sum = buffer[i] - 32768;	//Convert to signed sample
