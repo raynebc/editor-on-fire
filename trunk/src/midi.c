@@ -849,9 +849,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 					phase_shift_sysex_phrase[4] = 0xFF;	//Store the difficulty ID (0xFF = all difficulties)
 					phase_shift_sysex_phrase[5] = 4;	//Store the phrase ID (4 = slider)
 					phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
-					eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide start marker
+					eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom slider start marker
 					phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
-					eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide stop marker
+					eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom slider stop marker
 				}
 			}
 

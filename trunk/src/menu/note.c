@@ -4589,7 +4589,7 @@ int eof_menu_note_clear_legacy_values(void)
 int eof_menu_note_edit_name(void)
 {
 	unsigned long i;
-	char *notename = NULL, undo_made = 0;
+	char *notename = NULL, undo_made = 0, auto_apply = 0;
 
 	if(!eof_music_catalog_playback)
 	{
@@ -4610,6 +4610,13 @@ int eof_menu_note_edit_name(void)
 
 		if(eof_popup_dialog(eof_note_name_dialog, 2) == 3)	//User hit OK
 		{
+			if((eof_etext[0] == '\0') && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+			{	//If the user kept the name field empty and this is a pro guitar track, offer to apply auto-detected names
+				if(alert(NULL, "Apply automatically-detected chord names?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+				{	//If the user opts to apply auto-detected names
+					auto_apply = 1;
+				}
+			}
 			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 			{	//For each note in the track
 				if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
@@ -4617,6 +4624,11 @@ int eof_menu_note_edit_name(void)
 					notename = eof_get_note_name(eof_song, eof_selected_track, i);	//Get the note's name
 					if(notename)
 					{	//As long as there wasn't an error accessing the note name
+						if(auto_apply)
+						{	//If applying automatically detected names, get the name of this note
+							eof_etext[0] = '\0';	//Empty the string, so that it won't assign a name unless it is detected
+							eof_build_note_name(eof_song, eof_selected_track, i, eof_etext);	//Detect the name of this chord
+						}
 						if(ustricmp(notename, eof_etext))
 						{	//If the updated string (eof_etext) is different from the note's existing name
 							if(!undo_made)

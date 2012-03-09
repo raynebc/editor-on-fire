@@ -4167,8 +4167,25 @@ void eof_render_editor_window_common(void)
 		}
 	}
 
-	/* draw arpeggio sections */
+	/* draw track tuning */
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	if((pos <= 320) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+	{
+		EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+		int notenum;
+
+		for(i = 0; i < EOF_TUNING_LENGTH; i++)
+		{	//For each usable string in the track
+			if(i < tp->numstrings)
+			{	//If this string is used by the track
+				notenum = eof_lookup_tuned_note(tp, eof_selected_track, i, tp->tuning[i]);	//Look up the open note this string plays
+				notenum %= 12;	//Ensure the value is in the range of [0,11]
+				textprintf_ex(eof_window_editor->screen, eof_font, lpos - 17, EOF_EDITOR_RENDER_OFFSET + 8 + ychart[i], eof_color_white, -1, "%s", eof_note_names[notenum]);	//Draw the tuning
+			}
+		}
+	}
+
+	/* draw arpeggio sections */
 	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{
 		col = makecol(51,166,153);	//Store turquoise color (use (68,221,204) for light turquoise)
