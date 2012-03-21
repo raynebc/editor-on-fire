@@ -1,4 +1,4 @@
-#summary Instructions for building EOF from source in a Windows environment.
+#summary Instructions for building FOFLC from source in a Windows environment.
 
 = Introduction =
 
