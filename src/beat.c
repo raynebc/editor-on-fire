@@ -10,7 +10,7 @@ long eof_get_beat(EOF_SONG * sp, unsigned long pos)
 {
 	long i;
 
-	eof_log("eof_get_beat() entered", 1);
+	eof_log("eof_get_beat() entered", 2);
 
 	if(!sp)
 	{
@@ -118,6 +118,25 @@ void eof_calculate_beats(EOF_SONG * sp)
 			eof_song_delete_beat(sp, i-1);
 		}
 	}
+}
+
+void eof_calculate_tempo_map(EOF_SONG * sp)
+{
+	unsigned long ctr, lastppqn = 0;
+
+	if(!sp || (sp->beats < 3))
+		return;
+
+	for(ctr = 0; ctr < sp->beats - 1; ctr++)
+	{	//For each beat in the chart
+		sp->beat[ctr]->ppqn = 1000 * (sp->beat[ctr + 1]->pos - sp->beat[ctr]->pos);	//Calculate the tempo of the beat by getting its length
+		if(!lastppqn || (lastppqn != sp->beat[ctr]->ppqn))
+		{	//If the tempo is being changed at this beat, or this is the first beat
+			sp->beat[ctr]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Set the anchor flag
+			lastppqn = sp->beat[ctr]->ppqn;
+		}
+	}
+	sp->beat[sp->beats - 1]->ppqn = sp->beat[sp->beats - 2]->ppqn;	//The last beat's tempo is the same as the previous beat's
 }
 
 int eof_beat_is_anchor(EOF_SONG * sp, int cbeat)

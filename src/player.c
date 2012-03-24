@@ -204,7 +204,7 @@ void eof_music_rewind(void)
 
 void eof_music_forward(void)
 {
-	eof_log("eof_music_forward() entered", 1);
+	eof_log("eof_music_forward() entered", 2);
 
 	eof_stop_midi();
 	if(!eof_music_catalog_playback)

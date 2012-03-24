@@ -611,7 +611,7 @@ void eof_mix_start(unsigned long start, int speed)
 
 void eof_mix_seek(int pos)
 {
-	eof_log("eof_mix_seek() entered", 1);
+	eof_log("eof_mix_seek() entered", 2);
 
 	int i;
 

@@ -375,7 +375,7 @@ long eof_put_porpos(unsigned long beat, float porpos, float offset)
 
 void eof_reset_lyric_preview_lines(void)
 {
-	eof_log("eof_reset_lyric_preview_lines() entered", 1);
+	eof_log("eof_reset_lyric_preview_lines() entered", 2);
 
 	eof_preview_line[0] = 0;
 	eof_preview_line[1] = 0;
@@ -852,7 +852,7 @@ int eof_note_is_hopo(unsigned long cnote)
 
 void eof_determine_phrase_status(unsigned long track)
 {
-	eof_log("eof_determine_phrase_status(eof_selected_track) entered", 1);
+	eof_log("eof_determine_phrase_status(eof_selected_track) entered", 2);
 
 	unsigned long i, j, tracknum;
 	char sp[EOF_MAX_PHRASES] = {0};
@@ -2117,7 +2117,7 @@ void eof_render_note_window(void)
 		}
 		else
 		{
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Measure = N/A");
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Measure = (Time Sig. not defined)");
 		}
 		ypos += 12;
 		if(eof_vocals_selected)
@@ -3592,7 +3592,7 @@ int eof_midi_queue_add(unsigned char note,int startpos,int endpos)
 
 void eof_midi_queue_destroy(void)
 {
-	eof_log("eof_midi_queue_destroy() entered", 1);
+	eof_log("eof_midi_queue_destroy() entered", 2);
 
 	struct MIDIentry *ptr=MIDIqueue,*temp=NULL;
 
@@ -3608,12 +3608,12 @@ void eof_midi_queue_destroy(void)
 
 void eof_all_midi_notes_off(void)
 {
-	eof_log("eof_all_midi_notes_off() entered", 1);
-
-	unsigned char ALL_NOTES_OFF[3]={0xB1,123,0};	//Data sequence for a Control Change, controller 123, value 0 (All notes off)
+	eof_log("eof_all_midi_notes_off() entered", 2);
 
 	if(midi_driver)
 	{
+		unsigned char ALL_NOTES_OFF[3]={0xB1,123,0};	//Data sequence for a Control Change, controller 123, value 0 (All notes off)
+
 		midi_driver->raw_midi(ALL_NOTES_OFF[0]);
 		midi_driver->raw_midi(ALL_NOTES_OFF[1]);
 		midi_driver->raw_midi(ALL_NOTES_OFF[2]);
@@ -3622,10 +3622,10 @@ void eof_all_midi_notes_off(void)
 
 void eof_stop_midi(void)
 {
-	eof_log("eof_stop_midi() entered", 1);
-
 	if(eof_midi_initialized)
 	{
+		eof_log("eof_stop_midi() entered", 2);
+
 		eof_all_midi_notes_off();
 		eof_midi_queue_destroy();
 	}

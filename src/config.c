@@ -58,12 +58,12 @@ void eof_load_config(char * fn)
 	set_config_file(fn);
 
 	/* read configuration */
-	eof_av_delay = get_config_int("config", "av_delay", 250);
-	eof_buffer_size = get_config_int("config", "buffer_size", 4096);
+	eof_av_delay = get_config_int("config", "av_delay", 300);
+	eof_buffer_size = get_config_int("config", "buffer_size", 6144);
 	eof_smooth_pos = get_config_int("config", "smooth_playback", 1);
 	eof_disable_windows = get_config_int("config", "disable_windows_fs", 0);
 	ncdfs_use_allegro = eof_disable_windows;
-	eof_disable_vsync = get_config_int("config", "disable_vsync", 0);
+	eof_disable_vsync = get_config_int("config", "disable_vsync", 1);
 	eof_cpu_saver = get_config_int("config", "cpu_saver", 0);;
 	if((eof_cpu_saver < 0) || (eof_cpu_saver > 10))
 	{
