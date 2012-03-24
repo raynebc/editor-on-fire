@@ -221,7 +221,6 @@ EOF_SONG * eof_import_chart(const char * fn)
 		struct dBAnchor * current_anchor = chart->anchors;
 		struct dbText * current_event = chart->events;
 		unsigned long max_chartpos = 0;
-		unsigned long final_bpm = 120000;
 
 		/* find the highest chartpos for beat markers */
 		while(current_anchor)
@@ -229,11 +228,6 @@ EOF_SONG * eof_import_chart(const char * fn)
 			if(current_anchor->chartpos > max_chartpos)
 			{
 				max_chartpos = current_anchor->chartpos;
-			}
-
-			if(current_anchor->BPM > 0)
-			{	//If this is a valid tempo
-				final_bpm = current_anchor->BPM;	//store it so that the final tempo can be remembered
 			}
 
 			current_anchor = current_anchor->next;
@@ -263,14 +257,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			}
 		}
 
-		/* nudge beat markers so we get the correct BPM calculations */
-		for(i = 1; i < sp->beats; i++)
-		{
-			eof_mickeys_x = 1;
-			eof_recalculate_beats(sp, i);
-			eof_mickeys_x = -1;
-			eof_recalculate_beats(sp, i);
-		}
+		eof_calculate_tempo_map(sp);	//Build the tempo map based on the beat time stamps
 
 		/* unanchor non-anchor beat markers */
 		for(i = 1; i < sp->beats; i++)
@@ -280,7 +267,6 @@ EOF_SONG * eof_import_chart(const char * fn)
 				sp->beat[i]->flags ^= EOF_BEAT_FLAG_ANCHOR;
 			}
 		}
-		sp->beat[sp->beats - 1]->ppqn = (double)60000000.0 / ((double)final_bpm / (double)1000.0);
 
 		/* fill in notes */
 		struct dbTrack * current_track = chart->tracks;

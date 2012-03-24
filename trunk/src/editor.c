@@ -2265,7 +2265,7 @@ void eof_read_editor_keys(void)
 
 void eof_editor_drum_logic(void)
 {
-	eof_log("eof_editor_drum_logic() entered", 1);
+	eof_log("eof_editor_drum_logic() entered", 2);
 
 	int bitmask;	//Used for simplifying note placement logic
 	EOF_NOTE * new_note = NULL;

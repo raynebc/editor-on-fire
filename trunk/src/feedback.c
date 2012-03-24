@@ -1043,65 +1043,63 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 					break;
 			}
 
-			if(substring[index++] != 'E')		//Check if this isn't a "text event" indicator (and increment index)
+			if(substring[index++] == 'E')	//Check if this is a text event indicator (and increment index)
 			{
-				snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Invalid event item type \"%c\"", chart->linesprocessed, substring[index - 1]);
-				eof_log(eof_log_string, 1);
-				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
-				if(error)
-					*error=20;
-				return NULL;					//Invalid Event entry, return error
-			}
+			//Seek to opening quotation mark
+				while((substring[index] != '\0') && (substring[index] != '"'))
+					index++;
 
-		//Seek to opening quotation mark
-			while((substring[index] != '\0') && (substring[index] != '"'))
-				index++;
-
-			if(substring[index++] != '"')		//Check if this was a null character instead of quotation mark (and increment index)
-			{
-				snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Malformed event item (missing open quotation mark)", chart->linesprocessed);
-				eof_log(eof_log_string, 1);
-				DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
-				if(error)
-					*error=21;
-				return NULL;					//Invalid Event entry, return error
-			}
-
-		//Load string by copying all characters to the second buffer (up to the next quotation mark)
-			buffer2[0]='\0';	//Truncate string
-			index2=0;			//Reset buffer2's index
-			while(substring[index] != '"')			//For all characters up to the next quotation mark
-			{
-				if(substring[index] == '\0')		//If a null character is reached unexpectedly
+				if(substring[index++] != '"')		//Check if this was a null character instead of quotation mark (and increment index)
 				{
-					snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Malformed event item (missing close quotation mark)", chart->linesprocessed);
+					snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Malformed event item (missing open quotation mark)", chart->linesprocessed);
 					eof_log(eof_log_string, 1);
 					DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
 					if(error)
-						*error=22;
+						*error=21;
 					return NULL;					//Invalid Event entry, return error
 				}
-				buffer2[index2++]=substring[index++];	//Copy the character to the second buffer, incrementing both indexes
-			}
-			buffer2[index2]='\0';	//Truncate the second buffer to form a complete string
 
-		//Create and insert event link into event list
-			temp=malloc_err(sizeof(struct dbText));		//Allocate memory
-			*((struct dbText *)temp)=emptytext;			//Reliably set all member variables to 0/NULL
-			if(chart->events == NULL)					//If the list is empty
-			{
-				chart->events=(struct dbText *)temp;	//Point head of list to this link
-				curevent=chart->events;					//Point conductor to this link
+			//Load string by copying all characters to the second buffer (up to the next quotation mark)
+				buffer2[0]='\0';	//Truncate string
+				index2=0;			//Reset buffer2's index
+				while(substring[index] != '"')			//For all characters up to the next quotation mark
+				{
+					if(substring[index] == '\0')		//If a null character is reached unexpectedly
+					{
+						snprintf(eof_log_string, sizeof(eof_log_string), "Feedback import failed on line #%lu:  Malformed event item (missing close quotation mark)", chart->linesprocessed);
+						eof_log(eof_log_string, 1);
+						DestroyFeedbackChart(chart,1);	//Destroy the chart and its contents
+						if(error)
+							*error=22;
+						return NULL;					//Invalid Event entry, return error
+					}
+					buffer2[index2++]=substring[index++];	//Copy the character to the second buffer, incrementing both indexes
+				}
+				buffer2[index2]='\0';	//Truncate the second buffer to form a complete string
+
+			//Create and insert event link into event list
+				temp=malloc_err(sizeof(struct dbText));		//Allocate memory
+				*((struct dbText *)temp)=emptytext;			//Reliably set all member variables to 0/NULL
+				if(chart->events == NULL)					//If the list is empty
+				{
+					chart->events=(struct dbText *)temp;	//Point head of list to this link
+					curevent=chart->events;					//Point conductor to this link
+				}
+				else
+				{
+					curevent->next=(struct dbText *)temp;	//Conductor points forward to this link
+					curevent=curevent->next;				//Point conductor to this link
+				}
+
+			//Initialize event link- Duplicate buffer2 into a newly created dbText link, adding it to the list
+				curevent->chartpos=A;						//The first number read is the chart position
+				curevent->text=DuplicateString(buffer2);	//Copy buffer2 to new string and store in list
 			}
 			else
-			{
-				curevent->next=(struct dbText *)temp;	//Conductor points forward to this link
-				curevent=curevent->next;				//Point conductor to this link
+			{	//This is not a recognized event entry
+				snprintf(eof_log_string, sizeof(eof_log_string), "Ignoring unrecognized event on line #%lu:  \"%s\"", chart->linesprocessed, buffer);
+				eof_log(eof_log_string, 1);
 			}
-
-		//Initialize event link- Duplicate buffer2 into a newly created dbText link, adding it to the list
-			curevent->chartpos=A;						//The first number read is the chart position
-			curevent->text=DuplicateString(buffer2);	//Copy buffer2 to new string and store in list
 		}
 
 	//Process instrument tracks
