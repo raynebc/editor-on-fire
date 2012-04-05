@@ -96,6 +96,14 @@ gh_section eof_gh_tap_sections_qb[EOF_NUM_GH_TAP_SECTIONS_QB] =
 	{"_rhythmcoop_expert_tapping", EOF_TRACK_RHYTHM, 0}
 };
 
+struct QBlyric
+{
+	unsigned long checksum;
+	char *text;
+	struct QBlyric *next;
+};	//QB format Guitar Hero files store lyric information in different sections.  One contains timestamps paired with lyric checksums,
+	//another contains the actual lyrics with their respective checksums.  A linked list will be built to store the latter section's entries
+
 filebuffer *eof_filebuffer_load(const char * fn)
 {
 	filebuffer *buffer = NULL;
@@ -585,11 +593,123 @@ int eof_gh_read_tap_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *targe
 	return 1;
 }
 
+void eof_process_gh_lyric_text(EOF_SONG *sp)
+{
+	unsigned long ctr, ctr2, length, prevlength, index;
+	char *string, *prevstring, buffer[EOF_MAX_LYRIC_LENGTH+1];
+
+	for(ctr = 0; ctr < eof_get_track_size(sp, EOF_TRACK_VOCALS); ctr++)
+	{	//For each lyric
+		index = 0;	//Reset the index into the buffer
+		string = eof_get_note_name(sp, EOF_TRACK_VOCALS, ctr);
+		if(string == NULL)
+			return;	//If there is some kind of error
+		length = ustrlen(string);
+
+		for(ctr2 = 0; ctr2 < length; ctr2++)
+		{	//For each character in the the lyric's text
+			if((string[ctr2] == '=') && (ctr > 0))
+			{	//If this character is an equal sign, and there's a previous lyric, drop the character and append a hyphen to the previous lyric
+				prevstring = eof_get_note_name(sp, EOF_TRACK_VOCALS, ctr - 1);	//Get the string for the previous lyric
+				if(prevstring != NULL)
+				{	//If there wasn't an error getting that string
+					prevlength = ustrlen(prevstring);
+					if((prevstring[prevlength - 1] != '-') && (prevstring[prevlength - 1] != '='))
+					{	//If the previous lyric doesn't already end in a hyphen or equal sign
+						if(prevlength + 1 < EOF_MAX_LYRIC_LENGTH)
+						{	//Bounds check
+							prevstring[prevlength] = '-';		//Append a hyphen
+							prevstring[prevlength + 1] = '\0';	//Re-terminate the string
+						}
+					}
+				}
+			}
+			else if((string[ctr2] == '-') && (ctr2 + 1 == length))
+			{	//If this is the last character in the string and it is a hyphen
+				buffer[index++] = '=';	//Convert it to the equivalent RB notation
+			}
+			else
+			{	//This character isn't an equal sign or a hyphen at the end of the string
+				buffer[index++] = string[ctr2];	//Copy it as-is
+			}
+		}
+		buffer[index] = '\0';				//Terminate the finalized string
+		buffer[EOF_MAX_LYRIC_LENGTH - 1] = '\0';	//Ensure the last two bytes of the lyric text are NULL (Unicode terminator)
+		buffer[EOF_MAX_LYRIC_LENGTH] = '\0';
+		eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr, buffer);	//Update the string on the lyric
+	}
+}
+
+void eof_process_gh_lyric_phrases(EOF_SONG *sp)
+{
+	unsigned long ctr, ctr2, tracknum, phrasestart, phraseend, voxstart, prevphrase = 0;
+	EOF_VOCAL_TRACK * tp = NULL;
+
+	if(sp == NULL)
+		return;
+
+	tracknum = sp->track[EOF_TRACK_VOCALS]->tracknum;
+	tp = sp->vocal_track[tracknum];		//Store the pointer to the vocal track to simplify things
+
+	for(ctr = 0; ctr < tp->lines; ctr++)
+	{	//For each lyric phrase that was added
+#ifdef GH_IMPORT_DEBUG
+		if((ctr > 0) && (tp->line[ctr].start_pos <= prevphrase))
+		{	//If this phrase doesn't come after the previous phrase
+			allegro_message("Error:  GH lyric phrases are not in order!");
+		}
+#endif
+		prevphrase = tp->line[ctr].start_pos;
+		phrasestart = phraseend = 0;
+		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, EOF_TRACK_VOCALS); ctr2++)
+		{	//For each lyric
+			voxstart = eof_get_note_pos(sp, EOF_TRACK_VOCALS, ctr2);	//Store this position
+			if(voxstart >= tp->line[ctr].start_pos)
+			{	//If this lyric is at or after this line
+				if(ctr + 1 < tp->lines)
+				{	//If there is another line of lyrics
+					if(voxstart < tp->line[ctr + 1].start_pos)
+					{	//If this lyric is before the next lyric line
+#ifdef GH_IMPORT_DEBUG
+						if(tp->line[ctr].start_pos >= tp->line[ctr + 1].start_pos)
+						{
+							allegro_message("Error:  GH lyric phrases are not in order!");
+						}
+#endif
+						phraseend = voxstart + eof_get_note_length(sp, EOF_TRACK_VOCALS, ctr2);		//Set the phrase end to the end of this lyric
+
+						if(!phrasestart)
+						{	//If this is the first lyric that is positioned at or after the start of this phrase
+							phrasestart = voxstart;
+						}
+					}
+					else
+					{	//This lyric is in the next line
+						break;
+					}
+				}
+				else
+				{	//This is the final line of lyrics
+					phraseend = voxstart + eof_get_note_length(sp, EOF_TRACK_VOCALS, ctr2);		//Set the phrase end to the end of this lyric
+				}
+			}
+		}
+		if(phrasestart || phraseend)
+		{	//If any lyrics fell within the phrase, adjust the phrase's timing
+#ifdef GH_IMPORT_DEBUG
+			snprintf(eof_log_string, sizeof(eof_log_string), "\t\tAltering lyric phrase at %lu ms to be %lu ms - %lu ms", tp->line[ctr].start_pos, phrasestart, phraseend);
+			eof_log(eof_log_string, 1);
+#endif
+			tp->line[ctr].start_pos = phrasestart;	//Update the starting position of the lyric phrase
+			tp->line[ctr].end_pos = phraseend;		//Update the ending position of the lyric phrase
+		}
+	}
+}
+
 int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 {
-	unsigned long ctr, ctr2, numvox, voxsize, voxstart, numlyrics, lyricsize, lyricstart, tracknum, phrasesize, numphrases, phrasestart, phraseend, prevphrase;
-	unsigned long index1, index2;
-	char *lyricbuffer = NULL, *lyricptr = NULL, *prevlyricptr = NULL;
+	unsigned long ctr, ctr2, numvox, voxsize, voxstart, numlyrics, lyricsize, lyricstart, tracknum, phrasesize, numphrases, phrasestart;
+	char *lyricbuffer = NULL;
 	unsigned int voxlength;
 	unsigned char voxpitch;
 	unsigned char unicode_encoding = 0;	//Is set to nonzero if determined that the lyric text is in Unicode format
@@ -773,37 +893,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 #ifdef GH_IMPORT_DEBUG
 				eof_log("\t\t\tFound matching vocal data", 1);
 #endif
-				lyricptr = sp->vocal_track[tracknum]->lyric[ctr2]->text;	//Get the string address for this lyric
-				index1 = index2 = 0;	//Prepare to filter the equal sign out of the lyric text
-				while(lyricbuffer[index1] != '\0')
-				{	//For each character in the lyric
-					if((lyricbuffer[index1] == '=') && (ctr2 > 0))
-					{	//If this character is an equal sign, remove it and append a hyphen to the previous lyric (the equivalent RB notation)
-						unsigned long length;
-						prevlyricptr = sp->vocal_track[tracknum]->lyric[ctr2 - 1]->text;	//Get the string address for the previous lyric
-						length = ustrlen(prevlyricptr);
-						if((prevlyricptr[length - 1] != '-') && (prevlyricptr[length - 1] != '='))
-						{	//If the previous lyric doesn't already end in a hyphen or equal sign
-							if(length + 1 < EOF_MAX_LYRIC_LENGTH)
-							{	//Bounds check
-								prevlyricptr[length] = '-';			//Append a hyphen
-								prevlyricptr[length + 1] = '\0';	//Re-terminate the string
-							}
-						}
-					}
-					else if((lyricbuffer[index1] == '-') && (lyricbuffer[index1 + 1] == '\0'))
-					{	//If this is the last character in the string and it is a hyphen,
-						lyricptr[index2++] = '=';	//Convert it to the equivalent RB notation
-					}
-					else
-					{	//If this character isn't an equal sign
-						lyricptr[index2++] = lyricbuffer[index1];	//Copy it into the final lyric string
-					}
-					index1++;	//Point to next character in the lyric
-				}
-				lyricptr[index2] = '\0';	//Ensure the string is terminated
-				lyricptr[EOF_MAX_LYRIC_LENGTH - 1] = '\0';	//Ensure the last two bytes of the lyric text are NULL (Unicode terminator)
-				lyricptr[EOF_MAX_LYRIC_LENGTH] = '\0';
+				eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, lyricbuffer);	//Apply the lyric text
 				break;
 			}
 		}
@@ -814,6 +904,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 		}
 #endif
 	}//For each lyric in the section
+	eof_process_gh_lyric_text(sp);	//Filter and convert hyphenating characters where appropriate
 
 	fb->index = 0;	//Seek to the beginning of the file buffer
 	if(eof_filebuffer_find_checksum(fb, eof_gh_checksum("vocalphrase")))	//Seek one byte past the target header
@@ -862,63 +953,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 #endif
 		eof_vocal_track_add_line(tp, phrasestart, phrasestart);	//Add the phrase with a temporary end position
 	}
-
-	///Note:  This logic assumes the lyric lines are sorted in ascending order by timestamp
-	///The lyrics themselves were previously sorted and can be expected to still be so
-	prevphrase = 0;
-	for(ctr = 0; ctr < tp->lines; ctr++)
-	{	//For each lyric phrase that was added
-#ifdef GH_IMPORT_DEBUG
-		if((ctr > 0) && (tp->line[ctr].start_pos <= prevphrase))
-		{	//If this phrase doesn't come after the previous phrase
-			allegro_message("Error:  GH lyric phrases are not in order!");
-		}
-#endif
-		prevphrase = tp->line[ctr].start_pos;
-		phrasestart = phraseend = 0;
-		for(ctr2 = 0; ctr2 < numvox; ctr2++)
-		{	//For each vox note that was loaded earlier
-			voxstart = eof_get_note_pos(sp, EOF_TRACK_VOCALS, ctr2);	//Store this position
-			if(voxstart >= tp->line[ctr].start_pos)
-			{	//If this lyric is at or after this line
-				if(ctr + 1 < tp->lines)
-				{	//If there is another line of lyrics
-					if(voxstart < tp->line[ctr + 1].start_pos)
-					{	//If this lyric is before the next lyric line
-#ifdef GH_IMPORT_DEBUG
-						if(tp->line[ctr].start_pos >= tp->line[ctr + 1].start_pos)
-						{
-							allegro_message("Error:  GH lyric phrases are not in order!");
-						}
-#endif
-						phraseend = voxstart + eof_get_note_length(sp, EOF_TRACK_VOCALS, ctr2);		//Set the phrase end to the end of this lyric
-
-						if(!phrasestart)
-						{	//If this is the first lyric that is positioned at or after the start of this phrase
-							phrasestart = voxstart;
-						}
-					}
-					else
-					{	//This lyric is in the next line
-						break;
-					}
-				}
-				else
-				{	//This is the final line of lyrics
-					phraseend = voxstart + eof_get_note_length(sp, EOF_TRACK_VOCALS, ctr2);		//Set the phrase end to the end of this lyric
-				}
-			}
-		}
-		if(phrasestart || phraseend)
-		{	//If any lyrics fell within the phrase, adjust the phrase's timing
-#ifdef GH_IMPORT_DEBUG
-			snprintf(eof_log_string, sizeof(eof_log_string), "\t\tAltering lyric phrase at %lu ms to be %lu ms - %lu ms", tp->line[ctr].start_pos, phrasestart, phraseend);
-			eof_log(eof_log_string, 1);
-#endif
-			tp->line[ctr].start_pos = phrasestart;	//Update the starting position of the lyric phrase
-			tp->line[ctr].end_pos = phraseend;		//Update the ending position of the lyric phrase
-		}
-	}
+	eof_process_gh_lyric_phrases(sp);	//Create proper end positions for each lyric phrase
 
 	free(lyricbuffer);
 	return 1;
@@ -1228,7 +1263,7 @@ unsigned long eof_gh_process_section_header(filebuffer *fb, const char *sectionn
 	{	//Empty section
 		arraysize = 0;
 	}
-	else if((dword == 0x00010c00) || (dword == 0x00010100))
+	else if((dword == 0x00010A00) || (dword == 0x00010c00) || (dword == 0x00010100))
 	{
 //Allocate array to store 1D array offsets
 		if(dword == 0x00010100)
@@ -1281,7 +1316,14 @@ unsigned long eof_gh_process_section_header(filebuffer *fb, const char *sectionn
 					return 0;
 				}
 #ifdef GH_IMPORT_DEBUG
-				snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \t\t1D array at QB index 0x%08lX (file position 0x%lX)", (*arrayptr)[ctr], (*arrayptr)[ctr] + qbindex);
+				if(dword == 0x00010c00)
+				{	//2D array
+					snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \t\t1D array at QB index 0x%08lX (file position 0x%lX)", (*arrayptr)[ctr], (*arrayptr)[ctr] + qbindex);
+				}
+				else
+				{	//Alternate 2D array
+					snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \t\tData at QB index 0x%08lX (file position 0x%lX)", (*arrayptr)[ctr], (*arrayptr)[ctr] + qbindex);
+				}
 				eof_log(eof_log_string, 1);
 #endif
 			}
@@ -1289,7 +1331,7 @@ unsigned long eof_gh_process_section_header(filebuffer *fb, const char *sectionn
 	}
 	else
 	{	//Unsupported type
-		eof_log("Error:  Unsupported section storage chunk type", 1);
+		eof_log("\t\tError:  Unsupported section storage chunk type", 1);
 		free(*arrayptr);
 		return 0;
 	}
@@ -1339,7 +1381,7 @@ unsigned long eof_char_to_binary(unsigned char input)
 int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, gh_section *target, unsigned long qbindex)
 {
 	unsigned long numnotes, dword, ctr, ctr2, arraysize, *arrayptr;
-	unsigned int length, notemask, fixednotemask;
+	unsigned int length, notemask, fixednotemask, isexpertplus;
 	EOF_NOTE *newnote = NULL;
 	char buffer[101];
 
@@ -1391,6 +1433,7 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 			snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \t\tNote %lu position = %lu  length = %u  bitmask = %u (%08lu %08lu)", ctr2+1, dword, length, notemask, eof_char_to_binary(notemask >> 8), eof_char_to_binary(notemask & 0xFF));
 			eof_log(eof_log_string, 1);
 #endif
+			isexpertplus = 0;	//Reset this condition
 			if(target->tracknum == EOF_TRACK_DRUM)
 			{	//In Guitar Hero, lane 6 is bass drum, lane 1 is the right-most lane (ie. 6)
 				unsigned long tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
@@ -1401,6 +1444,10 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 				if(notemask & 32)
 				{	//If lane 6 is populated, convert it to RB's bass drum gem
 					fixednotemask |= 1;		//Set the lane 1 (bass drum) gem
+///					if(notemask & 8192)
+///					{	//Bit 13 denotes expert+ bass?
+///						isexpertplus = 1;
+///					}
 				}
 				if(notemask & 1)
 				{	//If lane 1 is populated, convert it to lane 6
@@ -1428,6 +1475,14 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 				{	//If the note is not a HOPO, mark it as a forced non HOPO (strum required)
 					newnote->flags |= EOF_NOTE_FLAG_NO_HOPO;
 				}
+				if((notemask >> 8) != 0xF)
+				{	//"Crazy" guitar/bass notes have a high order note bitmask that isn't 0xF
+					newnote->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag bit
+				}
+			}
+			if(isexpertplus)
+			{	//If this note was determined to be an expert+ drum note
+				newnote->flags |= EOF_NOTE_FLAG_DBASS;	//Set the double bass flag bit
 			}
 		}
 	}
@@ -1557,17 +1612,18 @@ int eof_gh_read_tap_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songnam
 
 int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, unsigned long qbindex)
 {
-	unsigned long ctr, ctr2, numvox, voxstart, voxlength, voxpitch, arraysize, *arrayptr;
-//	unsigned long index1, index2, dword, numlyrics, lyricsize, lyricstart, tracknum, phrasesize, numphrases, phrasestart, phraseend, prevphrase, voxsize;
+	unsigned long ctr, ctr2, numvox, voxstart, voxlength, voxpitch, numphrases, phrasestart, arraysize, *arrayptr, dword, tracknum;
+//	unsigned long index1, index2, dword, numlyrics, lyricsize, lyricstart, tracknum, phrasesize, , phraseend, prevphrase, voxsize;
 //	char *lyricbuffer = NULL, *lyricptr = NULL, *prevlyricptr = NULL;
 //	unsigned char unicode_encoding = 0;	//Is set to nonzero if determined that the lyric text is in Unicode format
 	EOF_LYRIC *ptr = NULL;
-//	EOF_VOCAL_TRACK * tp = NULL;
-	char buffer[101];
+	EOF_VOCAL_TRACK * tp = NULL;
+	char buffer[101], matched;
 
 	if(!fb || !sp || !songname)
 		return 0;
 
+//Read vocal note positions and pitches
 	snprintf(buffer, sizeof(buffer), "%s_song_vocals", songname);
 #ifdef GH_IMPORT_DEBUG
 	snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Looking for section \"%s\"", buffer);
@@ -1594,16 +1650,19 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 			if(eof_filebuffer_get_dword(fb, &voxstart))	//Read the vox note position
 			{	//If there was an error reading the next 4 byte value
 				eof_log("\t\tError:  Could not vox note position", 1);
+				free(arrayptr);
 				return -1;
 			}
 			if(eof_filebuffer_get_dword(fb, &voxlength))	//Read the vox note length
 			{	//If there was an error reading the next 4 byte value
 				eof_log("\t\tError:  Could not vox note length", 1);
+				free(arrayptr);
 				return -1;
 			}
 			if(eof_filebuffer_get_dword(fb, &voxpitch))	//Read the vox note pitch
 			{	//If there was an error reading the next 4 byte value
 				eof_log("\t\tError:  Could not vox note pitch", 1);
+				free(arrayptr);
 				return -1;
 			}
 #ifdef GH_IMPORT_DEBUG
@@ -1625,48 +1684,186 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 					voxpitch -= 12;
 				}
 			}
-///			ptr = eof_track_add_create_note(sp, EOF_TRACK_VOCALS, voxpitch, voxstart, voxlength, 0, "+");	//Use "+" as a place holder because if the text is not defined, it should be considered a pitch shift
-///Until I can figure out how to parse QB GH lyrics, use * as a place holder to avoid everything becoming pitch shifts
-			ptr = eof_track_add_create_note(sp, EOF_TRACK_VOCALS, voxpitch, voxstart, voxlength, 0, "*");
+			ptr = eof_track_add_create_note(sp, EOF_TRACK_VOCALS, voxpitch, voxstart, voxlength, 0, "+");
 
 			if(!ptr)
 			{	//If there was an error adding the lyric
 				eof_log("\t\tError:  Could not add lyric", 1);
+				free(arrayptr);
 				return -1;
 			}
 		}//For each vox note in the section
 	}//For each 1D array of star power data
-
 	free(arrayptr);
 	eof_track_sort_notes(sp, EOF_TRACK_VOCALS);
-	fb->index = 0;	//Seek to the beginning of the file buffer
 
+//Read lyric text
+	struct QBlyric *head = NULL, *tail = NULL, *linkptr = NULL;	//Used to maintain the linked list matching lyric text with checksums
+	unsigned char lyricid[] = {0x20, 0x22, 0x5C, 0x4C};	//This hex sequence is within each lyric entry between the lyric text and its checksum
+	char *newtext = NULL;
+	unsigned long checksum, length;
+
+	fb->index = 0;	//Seek to the beginning of the file buffer
+	while((eof_filebuffer_find_bytes(fb, lyricid, sizeof(lyricid), 1) > 0) && (fb->index > 8) && (fb->index + 5 < fb->size))
+	{	//While there are lyric entries
+		fb->index -= 8;	//Rewind 8 bytes, where the ASCII format 32 bit checksum is expected
+		if(eof_filebuffer_memcpy(fb, buffer, 8) == EOF)	//Read the checksum into a buffer
+		{
+			eof_log("\t\tError:  Could not read lyric text checksum", 1);
+			return -1;
+		}
+		buffer[8] = '\0';	//Null terminate the buffer
+		sscanf(buffer, "%lX", &checksum);	//Convert the hex string to unsigned decimal format
+		fb->index += 4;	//Skip ahead 5 bytes, where the lyric text is expected
+		for(length = 0; fb->index + length < fb->size; length++)	//Count the length of the lyric text
+		{	//Until end of buffer is reached
+			if(fb->buffer[fb->index + length] == '\"')
+			{	//If this is the end of the text string
+				break;	//Exit the loop
+			}
+		}
+		if(fb->index + length >= fb->size)
+		{
+			eof_log("\t\tError:  Malformed lyric text", 1);
+			return -1;
+		}
+		if(eof_filebuffer_memcpy(fb, buffer, length) == EOF)	//Read the lyric string into a buffer
+		{
+			eof_log("\t\tError:  Could not read lyric text", 1);
+			return -1;
+		}
+		buffer[length] = '\0';	//Null terminate the buffer
+#ifdef GH_IMPORT_DEBUG
+		snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Found lyric:  Checksum = 0x%08lX\tText = \"%s\"", checksum, buffer);
+		eof_log(eof_log_string, 1);
+#endif
+		linkptr = malloc(sizeof(struct QBlyric));	//Allocate a new link, initialize it and insert it into the linked list
+		newtext = malloc(strlen(buffer) + 1);
+		if(!linkptr || !newtext)
+		{
+			eof_log("\t\tError:  Cannot allocate memory", 1);
+			return -1;
+		}
+		linkptr->checksum = checksum;
+		strcpy(newtext, buffer);
+		linkptr->text = newtext;
+		linkptr->next = NULL;
+		if(head == NULL)
+		{	//If the list is empty
+			head = linkptr;	//The new link is now the first link in the list
+		}
+		else if(tail != NULL)
+		{	//If there is already a link at the end of the list
+			tail->next = linkptr;	//Point it forward to the new link
+		}
+		tail = linkptr;	//The new link is the new tail of the list
+	}
+
+//Read lyric text positions
+	fb->index = 0;	//Seek to the beginning of the file buffer
 	snprintf(buffer, sizeof(buffer), "%s_lyrics", songname);
 #ifdef GH_IMPORT_DEBUG
 	snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Looking for section \"%s\"", buffer);
 	eof_log(eof_log_string, 1);
 #endif
-/*	arraysize = eof_gh_process_section_header(fb, buffer, &arrayptr, qbindex);	//Parse the location of the 1D arrays of section data
+	arraysize = eof_gh_process_section_header(fb, buffer, &arrayptr, qbindex);	//Parse the location of the 1D arrays of section data
 	for(ctr = 0; ctr < arraysize; ctr++)
-	{	//For each 1D array of lyric data
-		numlyrics = eof_gh_read_array_header(fb, arrayptr[ctr], qbindex);	//Process the array header (get size and seek to first data value)
-		if(numlyrics % ?)
-		{	//The value in numlyrics is the number of dwords used to define this lyric array (each lyric should be ? dwords in size)
-			snprintf(eof_log_string, sizeof(eof_log_string), "Error:  Invalid lyric array size (%lu)", numlyrics);
+	{	//For each block of lyric text data
+		fb->index = arrayptr[ctr] + qbindex + 4;	//Seek four bytes past the beginning of this block
+		if(eof_filebuffer_get_dword(fb, &dword))	//Read the offset of the start of data
+		{	//If there was an error reading the next 4 byte value
+			eof_log("Error:  Could not read timestamp data offset", 1);
+			return -1;
+		}
+		fb->index = qbindex + dword + 8;	//Seek to the specified buffer position and four bytes further (past a header and an uninteresting checksum)
+		if(eof_filebuffer_get_dword(fb, &voxstart))	//Read the timestamp of this lyric
+		{	//If there was an error reading the next 4 byte value
+			eof_log("Error:  Could not read lyric timestamp", 1);
+			return -1;
+		}
+		if(eof_filebuffer_get_dword(fb, &dword))	//Read the offset of the lyric checksum
+		{	//If there was an error reading the next 4 byte value
+			eof_log("Error:  Could not read checksum data offset", 1);
+			return -1;
+		}
+		fb->index = qbindex + dword + 8;	//Seek to the specified buffer position and four bytes further (past a header and an uninteresting checksum)
+		if(eof_filebuffer_get_dword(fb, &checksum))	//Read the checksum of this lyric
+		{	//If there was an error reading the next 4 byte value
+			eof_log("Error:  Could not read lyric checksum", 1);
+			return -1;
+		}
+		matched = 0;
+		for(linkptr = head; (linkptr != NULL) && !matched; linkptr = linkptr->next)
+		{	//For each link in the lyric checksum list (until a match has been made)
+			if(linkptr->checksum == checksum)
+			{	//If this checksum matches the one in the list
+				for(ctr2 = 0; ctr2 < eof_get_track_size(sp, EOF_TRACK_VOCALS); ctr2++)
+				{	//For each lyric in the EOF_SONG structure
+					if(eof_get_note_pos(sp, EOF_TRACK_VOCALS, ctr2) == voxstart)
+					{	//If this lyric has a matching timestamp
+						eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, linkptr->text);	//Update the text on this lyric
+						matched = 1;
+						break;
+					}
+				}
+			}
+		}
+	}
+	free(arrayptr);
+	eof_process_gh_lyric_text(sp);	//Filter and convert hyphenating characters where appropriate
+
+//Read lyric phrases
+	fb->index = 0;	//Seek to the beginning of the file buffer
+	tracknum = sp->track[EOF_TRACK_VOCALS]->tracknum;
+	tp = sp->vocal_track[tracknum];		//Store the pointer to the vocal track to simplify things
+	snprintf(buffer, sizeof(buffer), "%s_vocals_phrases", songname);
+#ifdef GH_IMPORT_DEBUG
+	snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Looking for section \"%s\"", buffer);
+	eof_log(eof_log_string, 1);
+#endif
+	arraysize = eof_gh_process_section_header(fb, buffer, &arrayptr, qbindex);	//Parse the location of the 1D arrays of section data
+	for(ctr = 0; ctr < arraysize; ctr++)
+	{	//For each 1D array of voxnote data
+		numphrases = eof_gh_read_array_header(fb, arrayptr[ctr], qbindex);	//Process the array header (get size and seek to first data value)
+		if(numphrases % 2)
+		{	//The value in numphrases is the number of dwords used to define this vocal phrases array (each phrase should be 2 dwords in size)
+			snprintf(eof_log_string, sizeof(eof_log_string), "Error:  Invalid vocal phrase note array size (%lu)", numvox);
 			eof_log(eof_log_string, 1);
 			free(arrayptr);
 			return -1;
 		}
-		numlyrics /= ?;	//Determine the number of lyrics that are defined
+		numphrases /= 2;	//Determine the number of vocal phrases that are defined
 #ifdef GH_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \tNumber of lyrics = %lu", numlyrics);
+		snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \tNumber of vocal phrases = %lu", numphrases);
 		eof_log(eof_log_string, 1);
 #endif
-		for(ctr2 = 0; ctr2 < numlyrics; ctr2++)
-		{	//For each lyric in the section
+		for(ctr2 = 0; ctr2 < numphrases; ctr2++)
+		{	//For each vocal phrase in the section
+			if(eof_filebuffer_get_dword(fb, &phrasestart))	//Read the phrase position
+			{	//If there was an error reading the next 4 byte value
+				eof_log("\t\tError:  Could not vocal phrase position", 1);
+				free(arrayptr);
+				return -1;
+			}
+			fb->index += 4;	//Skip 4 bytes of uninteresting data
+#ifdef GH_IMPORT_DEBUG
+			snprintf(eof_log_string, sizeof(eof_log_string), "\t\tLyric phrase at %lu ms", phrasestart);
+			eof_log(eof_log_string, 1);
+#endif
+			eof_vocal_track_add_line(tp, phrasestart, phrasestart);	//Add the phrase with a temporary end position
+		}
+	}
+	eof_process_gh_lyric_phrases(sp);	//Create proper end positions for each lyric phrase
 
-	free(arrayptr);
-*/
+//Cleanup
+	for(linkptr = head; linkptr != NULL; linkptr = linkptr->next)
+	{	//For each link in the lyric checksum list
+		free(linkptr->text);
+		head = linkptr->next;	//The new head link will be the next link
+		free(linkptr);			//Free the head link
+		linkptr = head;			//Advance to the new head link
+	}
+
 	return 1;
 }
 
@@ -1675,7 +1872,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 {
 	EOF_SONG * sp;
 	filebuffer *fb;
-	char filename[101], songname[21], *temp, buffer[101];
+	char filename[101], songname[21], buffer[101];
 	char magicnumber[] = {0x1C,0x08,0x02,0x04,0x10,0x04,0x08,0x0C,0x0C,0x08,0x02,0x04,0x14,0x02,0x04,0x0C,0x10,0x10,0x0C,0x00};	//The magic number is expected 8 bytes into the QB header
 	unsigned char byte;
 	unsigned long index, ctr, ctr2, ctr3, arraysize, *arrayptr, numbeats, numsigs, tsnum, tsden, dword, lastfretbar = 0, lastsig = 0;
@@ -1695,11 +1892,23 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 //Find the file name (stored within the PAK header)
 	while(1)
 	{	//Until the file name has been found or end of file was reached
-		if(eof_filebuffer_find_bytes(fb, "data/songs/", strlen("data/songs/"), 1) < 1)	//Try to find the string "data/songs/"
+		if(eof_filebuffer_find_bytes(fb, "songs/", strlen("songs/"), 2) < 1)	//Try to find the string "songs/"
 		{	//If the string couldn't be found in the file
-			eof_log("Error:  Failed to locate internal file name", 1);
-			eof_filebuffer_close(fb);
-			return NULL;
+			fb->index = 0;	//Rewind and try to find it with a backslash instead of a forward slash
+			if(eof_filebuffer_find_bytes(fb, "songs\\", strlen("songs\\"), 2) < 1)	//Try to find the string "songs\"
+			{
+				fb->index = 0;	//Rewind and try to find the DLC based file name
+				if(eof_filebuffer_find_bytes(fb, "dlc/output/", strlen("dlc/output/"), 2) < 1)	//Try to find the string "dlc/output/"
+				{
+					fb->index = 0;	//Rewind and try to find it with backslashes instead of forward slashes
+					if(eof_filebuffer_find_bytes(fb, "dlc\\output\\", strlen("dlc\\output\\"), 2) < 1)	//Try to find the string "dlc\output\"
+					{
+						eof_log("Error:  Failed to locate internal file name", 1);
+						eof_filebuffer_close(fb);
+						return NULL;
+					}
+				}
+			}
 		}
 //Parse the file name into a buffer
 		index = 0;
@@ -1735,15 +1944,9 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 		}
 	}
 //Parse the song name
-	temp = strcasestr_spec(filename, "data/songs/");	//Get the address of the first character in the file name (follows the folder path)
-	if(!temp)
-	{
-		eof_log("Error:  File name logic failed", 1);
-		return NULL;
-	}
-	for(index = 0; (temp[index] != '\0') && (temp[index] != '.'); index++)
+	for(index = 0; (filename[index] != '\0') && (filename[index] != '.'); index++)
 	{	//For each character in the file name until the end of the string or a period is reached
-		songname[index] = temp[index];	//Copy the character
+		songname[index] = filename[index];	//Copy the character
 	}
 	songname[index] = '\0';	//Terminate the string
 #ifdef GH_IMPORT_DEBUG

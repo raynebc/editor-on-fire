@@ -3,6 +3,30 @@ EOF Version History
 
 1.8:
 
+*Fixed a bug where EOF would crash when trying to
+draw the waveform graph for an OGG that is not stereo.
+
+*Fixed a bug where EOF would crash when trying to play
+back an OGG that is not stereo.
+
+*Updated setting defaults based on my findings on
+multiple computers:  Buffer size is 6KB,
+"disable vsync" is in effect and AV delay is 300ms.
+
+*Updated Feedback import to ignore unrecognized
+entries in the events section.
+
+*Moved note/phrase processing to the start of playback
+to reduce lag that can occur when switching between
+tracks during playback.
+
+*Changed EOF to default to using the "Manual" HOPO
+preview setting.
+
+*The Mac release now uses the Cmd+key shortcuts instead
+of CTRL+key shortcuts, to avoid a crash that is either
+a bug in Allegro or a behavior of Mac OS.
+
 *Fixed some crashes that could occur if a file
 import/load fails when a chart is already open.
 
