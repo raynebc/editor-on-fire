@@ -1614,9 +1614,6 @@ int eof_gh_read_tap_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songnam
 int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, unsigned long qbindex)
 {
 	unsigned long ctr, ctr2, numvox, voxstart, voxlength, voxpitch, numphrases, phrasestart, arraysize, *arrayptr, dword, tracknum;
-//	unsigned long index1, index2, dword, numlyrics, lyricsize, lyricstart, tracknum, phrasesize, , phraseend, prevphrase, voxsize;
-//	char *lyricbuffer = NULL, *lyricptr = NULL, *prevlyricptr = NULL;
-//	unsigned char unicode_encoding = 0;	//Is set to nonzero if determined that the lyric text is in Unicode format
 	EOF_LYRIC *ptr = NULL;
 	EOF_VOCAL_TRACK * tp = NULL;
 	char buffer[101], matched;
@@ -1828,7 +1825,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 		numphrases = eof_gh_read_array_header(fb, arrayptr[ctr], qbindex);	//Process the array header (get size and seek to first data value)
 		if(numphrases % 2)
 		{	//The value in numphrases is the number of dwords used to define this vocal phrases array (each phrase should be 2 dwords in size)
-			snprintf(eof_log_string, sizeof(eof_log_string), "Error:  Invalid vocal phrase note array size (%lu)", numvox);
+			snprintf(eof_log_string, sizeof(eof_log_string), "Error:  Invalid vocal phrase note array size (%lu)", numphrases);
 			eof_log(eof_log_string, 1);
 			free(arrayptr);
 			return -1;

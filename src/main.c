@@ -229,6 +229,7 @@ int eof_color_purple;
 int eof_color_dark_purple;
 int eof_color_orange;
 int eof_color_silver;
+int eof_color_dark_silver;
 int eof_info_color;
 int eof_color_waveform_trough;
 int eof_color_waveform_peak;
@@ -2329,7 +2330,7 @@ void eof_render_note_window(void)
 		}//Display information specific to pro guitar tracks
 	}//If show catalog is disabled
 
-	rect(eof_window_note->screen, 0, 0, eof_window_note->w - 1, eof_window_note->h - 1, makecol(160, 160, 160));
+	rect(eof_window_note->screen, 0, 0, eof_window_note->w - 1, eof_window_note->h - 1, eof_color_dark_silver);
 	rect(eof_window_note->screen, 1, 1, eof_window_note->w - 2, eof_window_note->h - 2, eof_color_black);
 	hline(eof_window_note->screen, 1, eof_window_note->h - 2, eof_window_note->w - 2, eof_color_white);
 	vline(eof_window_note->screen, eof_window_note->w - 2, 1, eof_window_note->h - 2, eof_color_white);
@@ -2479,7 +2480,7 @@ void eof_render_lyric_window(void)
 			}
 			else
 			{
-				kcol = makecol(160, 160, 160);
+				kcol = eof_color_dark_silver;
 				kcol2 = makecol(96, 96, 96);
 			}
 		}
@@ -2527,7 +2528,7 @@ void eof_render_lyric_window(void)
 	}
 	eof_render_lyric_preview(eof_window_3d->screen);
 
-	rect(eof_window_3d->screen, 0, 0, eof_window_3d->w - 1, eof_window_3d->h - 1, makecol(160, 160, 160));
+	rect(eof_window_3d->screen, 0, 0, eof_window_3d->w - 1, eof_window_3d->h - 1, eof_color_dark_silver);
 	rect(eof_window_3d->screen, 1, 1, eof_window_3d->w - 2, eof_window_3d->h - 2, eof_color_black);
 	hline(eof_window_3d->screen, 1, eof_window_3d->h - 2, eof_window_3d->w - 2, eof_color_white);
 	vline(eof_window_3d->screen, eof_window_3d->w - 2, 1, eof_window_3d->h - 2, eof_color_white);
@@ -2549,7 +2550,6 @@ void eof_render_3d_window(void)
 	//Used to draw trill and tremolo sections:
 	unsigned long j, ctr, usedlanes, bitmask, numsections;
 	EOF_PHRASE_SECTION *sectionptr = NULL;	//Used to abstract sections
-	int colors[EOF_MAX_FRETS] = {makecol(170,255,170), makecol(255,156,156), makecol(255,255,224), makecol(156,156,255), makecol(255,156,255), makecol(255,170,128)};	//Lightened versions of the standard fret colors
 
 	if(eof_disable_3d_rendering)	//If the user wanted to disable the rendering of the 3D window to improve performance
 		return;						//Return immediately
@@ -2688,7 +2688,7 @@ void eof_render_3d_window(void)
 								point[5] = ocd3d_project_y(200, spz);
 								point[6] = ocd3d_project_x(xchart[ctr] - halflanewidth - xoffset, spz);
 								point[7] = point[5];
-								polygon(eof_window_3d->screen, 4, point, colors[ctr]);
+								polygon(eof_window_3d->screen, 4, point, eof_colors[ctr].lightcolor);
 							}
 						}
 					}
@@ -2709,8 +2709,9 @@ void eof_render_3d_window(void)
 	long bz;
 	long beat_counter = 0;
 	long beats_per_measure = 0;
+	float y_projection;
 	for(i = 0; i < eof_song->beats; i++)
-	{
+	{	//For each beat
 		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_4_4)
 		{
 			beats_per_measure = 4;
@@ -2739,14 +2740,15 @@ void eof_render_3d_window(void)
 		bz = (long)(eof_song->beat[i]->pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
 		if((bz >= -100) && (bz <= 600))
 		{
-			line(eof_window_3d->screen, ocd3d_project_x(48, bz), ocd3d_project_y(200, bz), ocd3d_project_x(48 + 4 * 56, bz), ocd3d_project_y(200, bz), beat_counter == 0 ? eof_color_white : makecol(160, 160, 160));
+			y_projection = ocd3d_project_y(200, bz);
+			line(eof_window_3d->screen, ocd3d_project_x(48, bz), y_projection, ocd3d_project_x(48 + 4 * 56, bz), y_projection, beat_counter == 0 ? eof_color_white : eof_color_dark_silver);
 		}
 		beat_counter++;
 		if(beat_counter >= beats_per_measure)
 		{
 			beat_counter = 0;
 		}
-	}
+	}//For each beat
 
 	//Draw fret lanes
 	for(i = 0; i < numlanes; i++)
@@ -2760,7 +2762,8 @@ void eof_render_3d_window(void)
 	}
 
 	/* draw the position marker */
-	line(eof_window_3d->screen, ocd3d_project_x(48, 0), ocd3d_project_y(200, 0), ocd3d_project_x(48 + 4 * 56, 0), ocd3d_project_y(200, 0), eof_color_green);
+	y_projection = ocd3d_project_y(200, 0);
+	line(eof_window_3d->screen, ocd3d_project_x(48, 0), y_projection, ocd3d_project_x(48 + 4 * 56, 0), y_projection, eof_color_green);
 
 //	int first_note = -1;	//Used for debugging
 //	int last_note = 0;
@@ -2799,7 +2802,7 @@ void eof_render_3d_window(void)
 
 	eof_render_lyric_preview(eof_window_3d->screen);
 
-	rect(eof_window_3d->screen, 0, 0, eof_window_3d->w - 1, eof_window_3d->h - 1, makecol(160, 160, 160));
+	rect(eof_window_3d->screen, 0, 0, eof_window_3d->w - 1, eof_window_3d->h - 1, eof_color_dark_silver);
 	rect(eof_window_3d->screen, 1, 1, eof_window_3d->w - 2, eof_window_3d->h - 2, eof_color_black);
 	hline(eof_window_3d->screen, 1, eof_window_3d->h - 2, eof_window_3d->w - 2, eof_color_white);
 	vline(eof_window_3d->screen, eof_window_3d->w - 2, 1, eof_window_3d->h - 2, eof_color_white);
@@ -2996,6 +2999,7 @@ int eof_load_data(void)
 	eof_color_dark_purple = makecol(128, 0, 128);
 	eof_color_orange = makecol(255, 127, 0);
 	eof_color_silver = makecol(192, 192, 192);
+	eof_color_dark_silver = makecol(160, 160, 160);
 
     gui_fg_color = agup_fg_color;
     gui_bg_color = agup_bg_color;
@@ -4057,6 +4061,7 @@ void eof_init_colors(void)
 	//Init green
 	eof_color_green_struct.color = eof_color_green;
 	eof_color_green_struct.hit = makecol(192, 255, 192);
+	eof_color_green_struct.lightcolor = makecol(170,255,170);
 	eof_color_green_struct.border = eof_color_red;
 	eof_color_green_struct.note3d = EOF_IMAGE_NOTE_GREEN;
 	eof_color_green_struct.notehit3d = EOF_IMAGE_NOTE_GREEN_HIT;
@@ -4070,6 +4075,7 @@ void eof_init_colors(void)
 	//Init red
 	eof_color_red_struct.color = eof_color_red;
 	eof_color_red_struct.hit = makecol(255, 192, 192);
+	eof_color_red_struct.lightcolor = makecol(255,156,156);
 	eof_color_red_struct.border = eof_color_white;
 	eof_color_red_struct.note3d = EOF_IMAGE_NOTE_RED;
 	eof_color_red_struct.notehit3d = EOF_IMAGE_NOTE_RED_HIT;
@@ -4083,6 +4089,7 @@ void eof_init_colors(void)
 	//Init yellow
 	eof_color_yellow_struct.color = eof_color_yellow;
 	eof_color_yellow_struct.hit = makecol(255, 255, 192);
+	eof_color_yellow_struct.lightcolor = makecol(255,255,224);
 	eof_color_yellow_struct.border = eof_color_red;
 	eof_color_yellow_struct.note3d = EOF_IMAGE_NOTE_YELLOW;
 	eof_color_yellow_struct.notehit3d = EOF_IMAGE_NOTE_YELLOW_HIT;
@@ -4096,6 +4103,7 @@ void eof_init_colors(void)
 	//Init blue
 	eof_color_blue_struct.color = eof_color_blue;
 	eof_color_blue_struct.hit = makecol(192, 192, 255);
+	eof_color_blue_struct.lightcolor = makecol(156,156,255);
 	eof_color_blue_struct.border = eof_color_white;
 	eof_color_blue_struct.note3d = EOF_IMAGE_NOTE_BLUE;
 	eof_color_blue_struct.notehit3d = EOF_IMAGE_NOTE_BLUE_HIT;
@@ -4109,6 +4117,7 @@ void eof_init_colors(void)
 	//Init orange
 	eof_color_orange_struct.color = eof_color_orange;
 	eof_color_orange_struct.hit = makecol(255, 192, 0);
+	eof_color_orange_struct.lightcolor = makecol(255,170,128);
 	eof_color_orange_struct.border = eof_color_white;
 	eof_color_orange_struct.note3d = EOF_IMAGE_NOTE_ORANGE;
 	eof_color_orange_struct.notehit3d = EOF_IMAGE_NOTE_ORANGE_HIT;
@@ -4122,6 +4131,7 @@ void eof_init_colors(void)
 	//Init purple
 	eof_color_purple_struct.color = eof_color_purple;
 	eof_color_purple_struct.hit = makecol(255, 192, 255);
+	eof_color_purple_struct.lightcolor = makecol(255,156,255);
 	eof_color_purple_struct.border = eof_color_white;
 	eof_color_purple_struct.note3d = EOF_IMAGE_NOTE_PURPLE;
 	eof_color_purple_struct.notehit3d = EOF_IMAGE_NOTE_PURPLE_HIT;

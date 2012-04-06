@@ -4093,8 +4093,6 @@ void eof_render_editor_window_common(void)
 	unsigned long bitmask, usedlanes;
 	long notelength;
 
-	int colors[EOF_MAX_FRETS] = {makecol(170,255,170), makecol(255,156,156), makecol(255,255,224), makecol(156,156,255), makecol(255,156,255), makecol(255,170,128)};	//Lightened versions of the standard fret colors
-
 	if(!eof_song_loaded)
 		return;
 
@@ -4168,11 +4166,11 @@ void eof_render_editor_window_common(void)
 	}
 
 	/* draw track tuning */
-	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if((pos <= 320) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 	{
-		EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 		int notenum;
+		tracknum = eof_song->track[eof_selected_track]->tracknum;
+		EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 
 		for(i = 0; i < EOF_TUNING_LENGTH; i++)
 		{	//For each usable string in the track
@@ -4243,7 +4241,7 @@ void eof_render_editor_window_common(void)
 									y1 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0];	//Ensure that the phrase cannot render above the top most lane
 								if(y2 > EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes-1])
 									y2 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes-1];	//Ensure that the phrase cannot render below the bottom most lane
-								rectfill(eof_window_editor->screen, x1, y1, x2, y2, colors[ctr]);	//Draw a rectangle one lane high centered over that lane's fret line
+								rectfill(eof_window_editor->screen, x1, y1, x2, y2, eof_colors[ctr].lightcolor);	//Draw a rectangle one lane high centered over that lane's fret line
 							}
 						}
 					}
@@ -4343,7 +4341,7 @@ void eof_render_editor_window_common(void)
 	/* draw beat lines */
 	unsigned long current_ppqn = eof_song->beat[0]->ppqn;
 	int current_ppqn_used = 0;
-	double current_bpm = (double)60000000.0 / (double)eof_song->beat[0]->ppqn;
+	double current_bpm;
 	int bcol, bscol, bhcol;
 	unsigned long beat_counter = 0;
 	unsigned beats_per_measure = 0;
@@ -4356,7 +4354,7 @@ void eof_render_editor_window_common(void)
 	bscol = eof_color_white;
 	bhcol = eof_color_green;
 	col = makecol(112, 112, 112);	//Cache this color
-	col2 = makecol(160, 160, 160);	//Cache this color
+	col2 = eof_color_dark_silver;	//Cache this color
 
 	for(i = 0; i < eof_song->beats; i++)
 	{
@@ -4388,12 +4386,12 @@ void eof_render_editor_window_common(void)
 		{
 			current_ppqn = eof_song->beat[i]->ppqn;
 			current_ppqn_used = 0;
-			current_bpm = (double)60000000.0 / (double)eof_song->beat[i]->ppqn;
 		}
 		if(i == eof_selected_beat)
 		{	//Draw selected beat's tempo
 			if(notvisible == 0)
 			{	//Only render the tempo if the beat is visible
+				current_bpm = (double)60000000.0 / (double)eof_song->beat[i]->ppqn;
 				textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord - 28, EOF_EDITOR_RENDER_OFFSET + 6 - (i % 2 == 0 ? 0 : 10), i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "<%03.2f>", current_bpm);
 			}
 			current_ppqn_used = 1;
@@ -4402,6 +4400,7 @@ void eof_render_editor_window_common(void)
 		{	//Draw tempo
 			if(notvisible == 0)
 			{	//Only render the tempo if the beat is visible
+				current_bpm = (double)60000000.0 / (double)eof_song->beat[i]->ppqn;
 				textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord - 20, EOF_EDITOR_RENDER_OFFSET + 6 - (i % 2 == 0 ? 0 : 10), i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "%03.2f", current_bpm);
 			}
 			current_ppqn_used = 1;
@@ -4553,7 +4552,7 @@ void eof_render_editor_window_common2(void)
 	draw_sprite(eof_window_editor->screen, eof_image[EOF_IMAGE_SCROLL_BAR], 0, eof_screen_layout.scrollbar_y);
 	draw_sprite(eof_window_editor->screen, eof_image[EOF_IMAGE_SCROLL_HANDLE], scroll_pos + 2, eof_screen_layout.scrollbar_y);
 
-	vline(eof_window_editor->screen, 0, 24 + 8, eof_window_editor->h + 4, makecol(160, 160, 160));
+	vline(eof_window_editor->screen, 0, 24 + 8, eof_window_editor->h + 4, eof_color_dark_silver);
 	vline(eof_window_editor->screen, 1, 25 + 8, eof_window_editor->h + 4, eof_color_black);
 	hline(eof_window_editor->screen, 1, eof_window_editor->h - 2, eof_window_editor->w - 1, makecol(224, 224, 224));
 	hline(eof_window_editor->screen, 0, eof_window_editor->h - 1, eof_window_editor->w - 1, eof_color_white);

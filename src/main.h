@@ -172,6 +172,7 @@ typedef struct
 	int color;					//RGB color for the normal note
 	int hit;					//RGB color for when the note is highlighted (3D tail rendering)
 	int border;					//Contrasting RGB color for when the note is highlighted (2D rendering)
+	int lightcolor;				//RGB color for a lighter version of the note (for rendering trill/tremolo markers)
 	unsigned int note3d;		//The index into eof_image[] storing the 3D note image for this color
 	unsigned int notehit3d;		//The index into eof_image[] storing the hit 3D note image for this color
 	unsigned int hoponote3d;	//The index into eof_image[] storing the hopo 3D note image for this color
@@ -376,6 +377,7 @@ extern int eof_color_purple;
 extern int eof_color_dark_purple;
 extern int eof_color_orange;
 extern int eof_color_silver;
+extern int eof_color_dark_silver;
 extern int eof_info_color;
 extern int eof_color_waveform_trough;
 extern int eof_color_waveform_peak;
