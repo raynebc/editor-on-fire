@@ -196,7 +196,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	unsigned long noteflags = 0;
 	unsigned long notenote = 0;
 	char notetype = 0;
-
+	long length;
 
 //Validate parameters
 	if(window == NULL)
@@ -257,7 +257,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	pos = position / eof_zoom;
 	if(pos < leftcoord)
 	{	//Scroll the left edge of the piano roll based on the roll's position
-		npos = 20 + (notepos) / eof_zoom;
+		npos = 20 + notepos / eof_zoom;
 	}
 	else
 	{
@@ -269,7 +269,8 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	if(npos - eof_screen_layout.note_size > window->screen->w)	//If the note would render entirely to the right of the visible area
 		return 1;	//Return status:  Clipping to the right of the viewing window
 
-	if((npos < 0) && (npos + notelength / eof_zoom < 0))	//If the note and its tail would render entirely to the left of the visible area
+	length = notelength / eof_zoom;
+	if((npos < 0) && (npos + length < 0))	//If the note and its tail would render entirely to the left of the visible area
 		return -1;	//Return status:  Clipping to the left of the viewing window
 
 	if(noteflags & EOF_NOTE_FLAG_CRAZY)
@@ -349,10 +350,10 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 
 			if((notetype == EOF_NOTE_SPECIAL) || !((eof_selected_track == EOF_TRACK_DRUM) && eof_hide_drum_tails))
 			{	//If this is not a BRE note or it is otherwise not drum note that will have tails hidden due to the "Hide drum note tails" user option,
-				rectfill(window->screen, x, y - eof_screen_layout.note_tail_size, x + notelength / eof_zoom, y + eof_screen_layout.note_tail_size, ncol);	//Draw the note tail
+				rectfill(window->screen, x, y - eof_screen_layout.note_tail_size, x + length, y + eof_screen_layout.note_tail_size, ncol);	//Draw the note tail
 				if(p)
 				{	//If this note is moused over
-					rect(window->screen, x, y - eof_screen_layout.note_tail_size, x + notelength / eof_zoom, y + eof_screen_layout.note_tail_size, pcol);	//Draw a border around the rectangle
+					rect(window->screen, x, y - eof_screen_layout.note_tail_size, x + length, y + eof_screen_layout.note_tail_size, pcol);	//Draw a border around the rectangle
 				}
 			}
 
@@ -366,7 +367,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 				notepos2 = notepos + notelength;	//Find the position of the end of the note
 				if(pos < leftcoord)
 				{
-					x2 = 20 + (notepos2) / eof_zoom;
+					x2 = 20 + notepos2 / eof_zoom;
 				}
 				else
 				{
@@ -437,7 +438,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		}//If this lane is populated
 		else if((eof_hover_note >= 0) && (p == 3))
 		{
-			rect(window->screen, x, y - eof_screen_layout.note_tail_size, x + notelength / eof_zoom, y + eof_screen_layout.note_tail_size, eof_color_gray);
+			rect(window->screen, x, y - eof_screen_layout.note_tail_size, x + length, y + eof_screen_layout.note_tail_size, eof_color_gray);
 			if(!iscymbal)
 			{	//If this note is not a cymbal, draw a non filled circle over the note
 				circle(window->screen, x, y, radius, eof_color_gray);
@@ -823,9 +824,9 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			point[2] = ocd3d_project_x(bx - 10, ez);
 			point[3] = ocd3d_project_y(200, ez);
 			point[4] = ocd3d_project_x(bx + 232, ez);
-			point[5] = ocd3d_project_y(200, ez);
+			point[5] = point[3];
 			point[6] = ocd3d_project_x(bx + 232, rz);
-			point[7] = ocd3d_project_y(200, rz);
+			point[7] = point[1];
 
 			if(noteflags & EOF_NOTE_FLAG_SP)			//If this bass drum note is star power, render it in silver
 				polygon(eof_window_3d->screen, 4, point, p ? eof_color_white : eof_color_silver);
@@ -878,9 +879,9 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 					point[2] = ocd3d_project_x(bx - 10, ez);
 					point[3] = ocd3d_project_y(200, ez);
 					point[4] = ocd3d_project_x(bx + 232, ez);
-					point[5] = ocd3d_project_y(200, ez);
+					point[5] = point[3];
 					point[6] = ocd3d_project_x(bx + 232, rz);
-					point[7] = ocd3d_project_y(200, rz);
+					point[7] = point[1];
 
 					if(noteflags & EOF_NOTE_FLAG_SP)			//If this open bass note is star power, render it in silver
 						polygon(eof_window_3d->screen, 4, point, p ? eof_color_white : eof_color_silver);
@@ -1045,9 +1046,9 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 				point[2] = ocd3d_project_x(xchart[1] - 10, ez);
 				point[3] = ocd3d_project_y(200, ez);
 				point[4] = ocd3d_project_x(xchart[3] + 10, ez);
-				point[5] = ocd3d_project_y(200, ez);
+				point[5] = point[3];
 				point[6] = ocd3d_project_x(xchart[3] + 10, rz);
-				point[7] = ocd3d_project_y(200, rz);
+				point[7] = point[1];
 				polygon(eof_window_3d->screen, 4, point, noteflags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : eof_color_silver) : (p ? eof_colors[ctr].hit : eof_colors[ctr].color));
 			}
 			else
@@ -1059,9 +1060,9 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 					point[2] = ocd3d_project_x(xchart[ctr] - 10, ez);
 					point[3] = ocd3d_project_y(200, ez);
 					point[4] = ocd3d_project_x(xchart[ctr] + 10, ez);
-					point[5] = ocd3d_project_y(200, ez);
+					point[5] = point[3];
 					point[6] = ocd3d_project_x(xchart[ctr] + 10, rz);
-					point[7] = ocd3d_project_y(200, rz);
+					point[7] = point[1];
 					polygon(eof_window_3d->screen, 4, point, noteflags & EOF_NOTE_FLAG_SP ? (p ? eof_color_white : eof_color_silver) : (p ? eof_colors[ctr].hit : eof_colors[ctr].color));
 				}
 			}
