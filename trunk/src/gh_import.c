@@ -1444,16 +1444,17 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 				if(notemask & 32)
 				{	//If lane 6 is populated, convert it to RB's bass drum gem
 					fixednotemask |= 1;		//Set the lane 1 (bass drum) gem
-///					if(notemask & 8192)
-///					{	//Bit 13 denotes expert+ bass?
-///						isexpertplus = 1;
-///					}
 				}
 				if(notemask & 1)
 				{	//If lane 1 is populated, convert it to lane 6
 					fixednotemask |= 32;	//Set the lane 6 gem
 					sp->track[EOF_TRACK_DRUM]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Ensure "five lane" drums is enabled for the track
 					sp->legacy_track[tracknum]->numlanes = 6;
+				}
+				if((notemask & 8192) && !(notemask & 32))
+				{	//If bit 13 is set, but bit 5 is not
+					isexpertplus = 1;		//Consider this to be double bass
+					fixednotemask |= 1;	//Set the lane 1 (bass drum gem)
 				}
 				notemask = fixednotemask;
 			}
@@ -1856,8 +1857,9 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 	eof_process_gh_lyric_phrases(sp);	//Create proper end positions for each lyric phrase
 
 //Cleanup
-	for(linkptr = head; linkptr != NULL; linkptr = linkptr->next)
-	{	//For each link in the lyric checksum list
+	linkptr = head;
+	while(linkptr != NULL)
+	{	//While there are links remaining in the list
 		free(linkptr->text);
 		head = linkptr->next;	//The new head link will be the next link
 		free(linkptr);			//Free the head link
