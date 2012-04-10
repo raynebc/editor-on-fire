@@ -344,7 +344,7 @@ int eof_filebuffer_find_bytes(filebuffer *fb, const void *bytes, unsigned long s
 int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *target)
 {
 	unsigned long numnotes, dword, ctr, notesize;
-	unsigned int length;
+	unsigned int length, isexpertplus;
 	unsigned char notemask, accentmask, fixednotemask;
 	EOF_NOTE *newnote = NULL;
 
@@ -405,6 +405,11 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 			eof_log("\t\tError:  Could not read note bitmask", 1);
 			return -1;
 		}
+#ifdef GH_IMPORT_DEBUG
+		snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \t\tNote %lu position = %lu  length = %u  bitmask = %u (%08lu %08lu)", ctr, dword, length, notemask, eof_char_to_binary(notemask >> 8), eof_char_to_binary(notemask & 0xFF));
+		eof_log(eof_log_string, 1);
+#endif
+		isexpertplus = 0;	//Reset this condition
 		if(target->tracknum == EOF_TRACK_DRUM)
 		{	//In Guitar Hero, lane 6 is bass drum, lane 1 is the right-most lane (ie. 6)
 			unsigned long tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
@@ -421,6 +426,11 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 				fixednotemask |= 32;	//Set the lane 6 gem
 				sp->track[EOF_TRACK_DRUM]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Ensure "five lane" drums is enabled for the track
 				sp->legacy_track[tracknum]->numlanes = 6;
+			}
+			if((notemask & 64) && !(notemask & 32))
+			{	//If bit 6 is set, but bit 5 is not
+				isexpertplus = 1;		//Consider this to be double bass
+				fixednotemask |= 1;		//Set the lane 1 (bass drum gem)
 			}
 			notemask = fixednotemask;
 		}
@@ -450,6 +460,10 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 			{	//If the note is not a HOPO, mark it as a forced non HOPO (strum required)
 				newnote->flags |= EOF_NOTE_FLAG_NO_HOPO;
 			}
+		}
+		if(isexpertplus)
+		{	//If this note was determined to be an expert+ drum note
+			newnote->flags |= EOF_NOTE_FLAG_DBASS;	//Set the double bass flag bit
 		}
 ///If the size field is omitted, it's not yet known whether the expected size is 8 or 9 bytes
 		if(notesize == 9)
