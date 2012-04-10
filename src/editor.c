@@ -4166,10 +4166,10 @@ void eof_render_editor_window_common(void)
 	}
 
 	/* draw track tuning */
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if((pos <= 320) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 	{
 		int notenum;
-		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
 
 		for(i = 0; i < EOF_TUNING_LENGTH; i++)

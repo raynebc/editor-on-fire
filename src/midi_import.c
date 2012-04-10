@@ -4,6 +4,7 @@
 #include "foflc/Lyric_storage.h"
 #include "ini_import.h"
 #include "main.h"
+#include "midi_data_import.h"
 #include "midi_import.h"
 #include "menu/note.h"
 #include "song.h"	//Include before beat.h for EOF_SONG struct definition
@@ -82,7 +83,7 @@ static void eof_import_destroy_events_list(EOF_IMPORT_MIDI_EVENT_LIST * lp)
  *  number read, and alters the data pointer according to the number of
  *  bytes it used.
  */
-static unsigned long eof_parse_var_len(unsigned char * data, unsigned long pos, unsigned long * bytes_used)
+unsigned long eof_parse_var_len(unsigned char * data, unsigned long pos, unsigned long * bytes_used)
 {	//bytes_used is set to the number of bytes long the variable length value is, the value itself is returned
 //	eof_log("eof_parse_var_len() entered");
 
@@ -635,7 +636,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 
 								/* detect what kind of track this is */
 								eof_import_events[i]->type = 0;
-								for(j = 1; j < EOF_TRACKS_MAX + 1; j++)
+								for(j = 1; j < EOF_TRACKS_MAX; j++)
 								{	//Compare the track name against the tracks in eof_midi_tracks[]
 									if(!ustricmp(text, eof_midi_tracks[j].name))
 									{	//If this track name matches an expected name
@@ -650,7 +651,12 @@ EOF_SONG * eof_import_midi(const char * fn)
 								{
 									if(ustrstr(text,"PART"))
 									{	//If this is a track that wasn't identified above, yet contains the word "PART" in the name
-										allegro_message("Unidentified track \"%s\"",text);
+										snprintf(eof_log_string, sizeof(eof_log_string), "Unidentified track \"%s\"", text);
+										if(alert("Unsupported track:", text, "Import raw data?", "&Yes", "&No", 'y', 'n') == 1)
+										{	//If the user opts to import the raw track data
+											struct eof_MIDI_data_track *ptr = eof_get_raw_MIDI_data(eof_work_midi, track[i]);
+											eof_MIDI_empty_track_list(ptr);
+										}
 										eof_import_events[i]->type = -1;	//Flag this as being a track that gets skipped
 									}
 									else if(!ustricmp(text, "EVENTS"))
