@@ -129,7 +129,7 @@ void eof_load_config(char * fn)
 	eof_write_rbn_midis = get_config_int("preferences", "eof_write_rbn_midis", 0);
 	eof_inverted_chords_slash = get_config_int("preferences", "eof_inverted_chords_slash", 0);
 	enable_logging = get_config_int("preferences", "enable_logging", 1);
-	eof_use_rb_colors = get_config_int("preferences", "eof_use_rb_colors", 1);
+	eof_color_set = get_config_int("preferences", "eof_color_set", 0);
 	eof_add_new_notes_to_selection = get_config_int("preferences", "eof_add_new_notes_to_selection", 0);
 	eof_drum_modifiers_affect_all_difficulties = get_config_int("preferences", "eof_drum_modifiers_affect_all_difficulties", 1);
 
@@ -239,7 +239,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_write_rbn_midis", eof_write_rbn_midis);
 	set_config_int("preferences", "eof_inverted_chords_slash", eof_inverted_chords_slash);
 	set_config_int("preferences", "enable_logging", enable_logging);
-	set_config_int("preferences", "eof_use_rb_colors", eof_use_rb_colors);
+	set_config_int("preferences", "eof_color_set", eof_color_set);
 	set_config_int("preferences", "eof_add_new_notes_to_selection", eof_add_new_notes_to_selection);
 	set_config_int("preferences", "eof_drum_modifiers_affect_all_difficulties", eof_drum_modifiers_affect_all_difficulties);
 

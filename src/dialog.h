@@ -26,6 +26,7 @@ char * eof_input_list(int index, int * size);		//Dialog logic to display the usa
 char * eof_ini_list(int index, int * size);			//Dialog logic to display the chart's INI definitions in a list box
 char * eof_events_list(int index, int * size);		//Dialog logic to display the chart's text events in the "Events" list box
 char * eof_events_list_all(int index, int * size);	//Dialog logic to display the chart's text events in the "All Events" list box
+char * eof_colors_list(int index, int * size);		//Dialog logic to display the usable color sets in the Preferences dialog
 int eof_ogg_settings(void);		//Launches the MP3->OGG conversion dialog window
 int eof_menu_edit_cut(unsigned long anchor, int option, float offset);		//Stores "Auto adjust" data to "eof.autoadjust"
 int eof_menu_edit_cut_paste(unsigned long anchor, int option, float offset);	//Performs "Auto adjust" logic (ie. when anchors are manipulated)

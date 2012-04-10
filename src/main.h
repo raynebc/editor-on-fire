@@ -50,6 +50,10 @@
 #define EOF_INPUT_GUITAR_STRUM 5
 #define EOF_INPUT_FEEDBACK     6
 
+#define EOF_COLORS_DEFAULT     0
+#define EOF_COLORS_RB          1
+#define EOF_COLORS_GH          2
+
 #define EOF_MAX_IMAGES 78
 
 #define EOF_IMAGE_WAVE                    0
@@ -184,7 +188,7 @@ typedef struct
 	char *colorname;			//The display name of this color, ie "red"
 }eof_color;
 
-extern int eof_use_rb_colors;
+extern int eof_color_set;
 extern char eof_note_toggle_menu_string_1[20];
 extern char eof_note_toggle_menu_string_2[20];
 extern char eof_note_toggle_menu_string_3[20];

@@ -1,10 +1,13 @@
 #include <allegro.h>
+#include "main.h"
 #include "midi_data_import.h"
 #include "midi_import.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
 #endif
+
+#define MIDI_DATA_IMPORT_DEBUG
 
 double eof_MIDI_delta_to_realtime(struct eof_MIDI_tempo_change *tempolist, unsigned long absdelta, unsigned timedivision)
 {
@@ -87,6 +90,8 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 	double currentbpm = 120.0;	//As per the MIDI specification, until a tempo change is reached, 120BPM is assumed
 	double realtime = 0.0;
 	char *trackname = NULL;
+
+	eof_log("eof_get_raw_MIDI_data() entered", 1);
 
 	trackptr = malloc(sizeof(struct eof_MIDI_data_track));
 	if(!trackptr)
@@ -188,7 +193,7 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 							unsigned char mpqn_array[3];
 							unsigned long mpqn;
 
-							memcpy(mpqn_array, &midiptr->track[curtrack].data[event_pos], 3);
+							memcpy(mpqn_array, &midiptr->track[curtrack].data[track_pos], 3);
 							mpqn = (mpqn_array[0]<<16) | (mpqn_array[1]<<8) | mpqn_array[2];	//Convert MPQN data to a usable value
 							realtime += (double)reldelta / midiptr->divisions * ((double)60000.0 / currentbpm);	//Convert the relative delta time to real time and add it to the time counter
 							currentbpm = (double)60000000.0 / mpqn;	//Obtain the BPM value of this tempo change
@@ -209,11 +214,12 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 							{	//If the list is empty
 								tempohead = tempoptr;	//The new link is now the first link in the list
 							}
-							else if(tempotail == NULL)
+							else if(tempotail != NULL)
 							{	//If there is already a link at the end of the list
 								tempotail->next = tempoptr;	//Point it forward to the new link
 							}
 							tempotail = tempoptr;	//The new link is the new tail of the list
+							reldelta = 0;	//Reset the number of delta ticks since the last tempo change
 						}
 					}
 					else if( ((eventtype & 0xF) == 0) || ((eventtype & 0xF) == 0x7) )
@@ -267,8 +273,19 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 				tail = linkptr;	//The new link is the new tail of the list
 				memcpy(dataptr, &midiptr->track[curtrack].data[event_pos], 1 + size);	//Copy the MIDI event type and data
 				linkptr->realtime = eof_MIDI_delta_to_realtime(tempohead, absdelta, midiptr->divisions);
+#ifdef MIDI_DATA_IMPORT_DEBUG
+				if((eventtype & 0xF) == 0xF)
+				{	//If this was a meta event
+					snprintf(eof_log_string, sizeof(eof_log_string), "\tStoring event:  Delta = %lu  Time = %fms  Event = 0x%X  Meta event = 0x%X",absdelta, linkptr->realtime, (eventtype >> 4), meventtype);
+				}
+				else
+				{	//This was a normal MIDI event
+					snprintf(eof_log_string, sizeof(eof_log_string), "\tStoring event:  Delta = %lu  Time = %fms  Event = 0x%X",absdelta, linkptr->realtime, (eventtype >> 4));
+				}
+				eof_log(eof_log_string, 1);
+#endif
 			}
-			track_pos = event_pos + size + 1;	//Advance beyond this event
+			track_pos = event_pos + size + 1 - runningstatus;	//Advance beyond this event
 		}//while(!endreached)
 	}//Two tracks will be parsed
 
@@ -276,5 +293,8 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 	trackptr->events = head;
 	trackptr->next = NULL;
 	eof_MIDI_empty_tempo_list(tempohead);
+#ifdef MIDI_DATA_IMPORT_DEBUG
+	eof_log("\tStorage of MIDI data complete", 1);
+#endif
 	return trackptr;
 }
