@@ -235,7 +235,7 @@ int eof_color_waveform_trough;
 int eof_color_waveform_peak;
 int eof_color_waveform_rms;
 
-int eof_use_rb_colors = 1;	//If nonzero, use track-specific Rock Band coloring instead of the old static EOF color set
+int eof_color_set = EOF_COLORS_DEFAULT;
 int eof_add_new_notes_to_selection = 0;	//If nonzero, newly added gems cause notes to be added to the selection instead of the selection being cleared first
 int eof_drum_modifiers_affect_all_difficulties = 1;	//If nonzero, a drum modifier (ie. open/pedal hi hat or rim shot apply to any notes at the same position in non active difficulties)
 eof_color eof_colors[6];	//Contain the color definitions for each lane
@@ -4153,7 +4153,7 @@ void eof_set_color_set(void)
 	if(!eof_song)
 		return;
 
-	if(!eof_use_rb_colors)
+	if(eof_color_set == EOF_COLORS_DEFAULT)
 	{	//If user is using the original EOF color set
 		eof_colors[0] = eof_color_green_struct;
 		eof_colors[1] = eof_color_red_struct;
@@ -4162,8 +4162,8 @@ void eof_set_color_set(void)
 		eof_colors[4] = eof_color_purple_struct;
 		eof_colors[5] = eof_color_orange_struct;
 	}
-	else
-	{
+	else if(eof_color_set == EOF_COLORS_RB)
+	{	//If user is using the Rock Band color set
 		if(eof_selected_track == EOF_TRACK_DRUM)
 		{	//If the drum track is active
 			eof_colors[0] = eof_color_orange_struct;
@@ -4192,7 +4192,27 @@ void eof_set_color_set(void)
 			eof_colors[5] = eof_color_purple_struct;
 		}
 	}
-
+	else if(eof_color_set == EOF_COLORS_GH)
+	{	//If user is using the Guitar Hero color set
+		if(eof_selected_track == EOF_TRACK_DRUM)
+		{	//If the drum track is active
+			eof_colors[0] = eof_color_purple_struct;
+			eof_colors[1] = eof_color_red_struct;
+			eof_colors[2] = eof_color_yellow_struct;
+			eof_colors[3] = eof_color_blue_struct;
+			eof_colors[4] = eof_color_orange_struct;
+			eof_colors[5] = eof_color_green_struct;
+		}
+		else
+		{	//All other tracks use the generic Guitar Hero color set
+			eof_colors[0] = eof_color_green_struct;
+			eof_colors[1] = eof_color_red_struct;
+			eof_colors[2] = eof_color_yellow_struct;
+			eof_colors[3] = eof_color_blue_struct;
+			eof_colors[4] = eof_color_orange_struct;
+			eof_colors[5] = eof_color_purple_struct;
+		}
+	}
 	//Update the strings for the Note>Toggle and Note>Clear menus
 	for(x = 0; x < 6; x++)
 	{

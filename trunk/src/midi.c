@@ -25,6 +25,11 @@ void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int
 {	//To avoid rounding issues during timing conversion, this should be called with the MIDI tick position of the event being stored
 	eof_log("eof_add_midi_event() entered", 2);	//Only log this if verbose logging is on
 
+	if((type == 0x80) && (eof_midi_note_status[note] == 0))
+		return;	//If attempting to write a note off for a note that is not even on, don't do it
+	if((type == 0x90) && (eof_midi_note_status[note] == 1))
+		return;	//If attempting to write a note on for a note that is already on, don't do it
+
 	eof_midi_event[eof_midi_events] = malloc(sizeof(EOF_MIDI_EVENT));
 	if(eof_midi_event[eof_midi_events])
 	{

@@ -74,7 +74,7 @@ DIALOG eof_settings_dialog[] =
 DIALOG eof_preferences_dialog[] =
 {
    /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-   { d_agup_window_proc,0,   48,  240, 450, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
+   { d_agup_window_proc,0,   48,  245, 450, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
    { d_agup_check_proc, 16,  80,  128, 16,  2,   23,  0,    0,      1,   0,   "Inverted Notes",      NULL, NULL },
    { d_agup_check_proc, 16,  95,  128, 16,  2,   23,  0,    0,      1,   0,   "Lefty Mode",          NULL, NULL },
    { d_agup_check_proc, 16,  110, 128, 16,  2,   23,  0,    0,      1,   0,   "Note Auto-Adjust",    NULL, NULL },
@@ -89,11 +89,12 @@ DIALOG eof_preferences_dialog[] =
    { d_agup_check_proc, 16,  245, 220, 16,  2,   23,  0,    0,      1,   0,   "Save separate RBN MIDI files",NULL, NULL },
    { d_agup_check_proc, 16,  260, 220, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
    { d_agup_check_proc, 16,  275, 220, 16,  2,   23,  0,    0,      1,   0,   "Enable logging on launch",NULL, NULL },
-   { d_agup_check_proc, 16,  290, 220, 16,  2,   23,  0,    0,      1,   0,   "Use Rock Band color set",NULL, NULL },
-   { d_agup_check_proc, 16,  305, 220, 16,  2,   23,  0,    0,      1,   0,   "Add new notes to selection",NULL, NULL },
-   { d_agup_check_proc, 16,  320, 220, 16,  2,   23,  0,    0,      1,   0,   "Drum modifiers affect all diff's",NULL, NULL },
-   { d_agup_text_proc,  56,  340, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
-   { d_agup_list_proc,  43,  355, 110, 95,  2,   23,  0,    0,      0,   0,   eof_input_list,        NULL, NULL },
+   { d_agup_check_proc, 16,  290, 220, 16,  2,   23,  0,    0,      1,   0,   "Add new notes to selection",NULL, NULL },
+   { d_agup_check_proc, 16,  305, 220, 16,  2,   23,  0,    0,      1,   0,   "Drum modifiers affect all diff's",NULL, NULL },
+   { d_agup_text_proc,  24,  340, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
+   { d_agup_list_proc,  16,  355, 100, 95,  2,   23,  0,    0,      0,   0,   eof_input_list,        NULL, NULL },
+   { d_agup_text_proc,  150, 340, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
+   { d_agup_list_proc,  129, 355, 100, 95,  2,   23,  0,    0,      0,   0,   eof_colors_list,        NULL, NULL },
    { d_agup_button_proc,12,  455, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
    { d_agup_button_proc,86,  455, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
    { d_agup_button_proc,160, 455, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
@@ -890,15 +891,15 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[12].flags = eof_write_rbn_midis ? D_SELECTED : 0;			//Save separate RBN MIDI files
 	eof_preferences_dialog[13].flags = eof_inverted_chords_slash ? D_SELECTED : 0;		//Treat inverted chords as slash
 	eof_preferences_dialog[14].flags = enable_logging ? D_SELECTED : 0;					//Enable logging on launch
-	eof_preferences_dialog[15].flags = eof_use_rb_colors ? D_SELECTED : 0;				//Use Rock Band color set
-	eof_preferences_dialog[16].flags = eof_add_new_notes_to_selection ? D_SELECTED : 0;	//Add new notes to selection
-	eof_preferences_dialog[17].flags = eof_drum_modifiers_affect_all_difficulties ? D_SELECTED : 0;	//Drum modifiers affect all diff's
-	eof_preferences_dialog[19].d1 = eof_input_mode;										//Input method
+	eof_preferences_dialog[15].flags = eof_add_new_notes_to_selection ? D_SELECTED : 0;	//Add new notes to selection
+	eof_preferences_dialog[16].flags = eof_drum_modifiers_affect_all_difficulties ? D_SELECTED : 0;	//Drum modifiers affect all diff's
+	eof_preferences_dialog[18].d1 = eof_input_mode;										//Input method
+	eof_preferences_dialog[20].d1 = eof_color_set;										//Color set
 
 	do
 	{	//Run the dialog
 		retval = eof_popup_dialog(eof_preferences_dialog, 0);	//Run the dialog
-		if(retval == 20)
+		if(retval == 21)
 		{	//If the user clicked OK, update EOF's configured settings from the dialog selections
 			eof_inverted_notes = (eof_preferences_dialog[1].flags == D_SELECTED ? 1 : 0);
 			eof_lefty_mode = (eof_preferences_dialog[2].flags == D_SELECTED ? 1 : 0);
@@ -914,14 +915,14 @@ int eof_menu_file_preferences(void)
 			eof_write_rbn_midis = (eof_preferences_dialog[12].flags == D_SELECTED ? 1 : 0);
 			eof_inverted_chords_slash = (eof_preferences_dialog[13].flags == D_SELECTED ? 1 : 0);
 			enable_logging = (eof_preferences_dialog[14].flags == D_SELECTED ? 1 : 0);
-			eof_use_rb_colors = (eof_preferences_dialog[15].flags == D_SELECTED ? 1 : 0);
-			eof_add_new_notes_to_selection = (eof_preferences_dialog[16].flags == D_SELECTED ? 1 : 0);
-			eof_drum_modifiers_affect_all_difficulties = (eof_preferences_dialog[17].flags == D_SELECTED ? 1 : 0);
-			eof_input_mode = eof_preferences_dialog[19].d1;
+			eof_add_new_notes_to_selection = (eof_preferences_dialog[15].flags == D_SELECTED ? 1 : 0);
+			eof_drum_modifiers_affect_all_difficulties = (eof_preferences_dialog[16].flags == D_SELECTED ? 1 : 0);
+			eof_input_mode = eof_preferences_dialog[18].d1;
 			eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case eof_inverted_notes was changed
 			eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case eof_lefty_mode was changed
+			eof_color_set = eof_preferences_dialog[20].d1;
 		}
-		else if(retval == 21)
+		else if(retval == 22)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
 			eof_preferences_dialog[1].flags = 0;					//Inverted notes
 			eof_preferences_dialog[2].flags = 0;					//Lefty mode
@@ -937,12 +938,12 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[12].flags = 0;					//Save separate RBN MIDI files
 			eof_preferences_dialog[13].flags = 0;					//Treat inverted chords as slash
 			eof_preferences_dialog[14].flags = D_SELECTED;			//Enable logging on launch
-			eof_preferences_dialog[15].flags = D_SELECTED;			//Use Rock Band color set
-			eof_preferences_dialog[16].flags = 0;					//Add new notes to selection
-			eof_preferences_dialog[17].flags = D_SELECTED;			//Drum modifiers affect all diff's
-			eof_preferences_dialog[19].d1 = EOF_INPUT_PIANO_ROLL;	//Input method
+			eof_preferences_dialog[15].flags = 0;					//Add new notes to selection
+			eof_preferences_dialog[16].flags = D_SELECTED;			//Drum modifiers affect all diff's
+			eof_preferences_dialog[18].d1 = EOF_INPUT_PIANO_ROLL;	//Input method
+			eof_preferences_dialog[20].d1 = EOF_COLORS_DEFAULT;		//Color set
 		}
-	}while(retval == 21);	//Keep re-running the dialog until the user closes it with anything besides "Default"
+	}while(retval == 22);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
@@ -2308,4 +2309,33 @@ int eof_menu_file_gh_import(void)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	return 1;
+}
+
+char * eof_colors_list(int index, int * size)
+{
+	switch(index)
+	{
+		case -1:
+		{
+			*size = 3;
+			break;
+		}
+		case 0:
+		{
+			return "Default";
+			break;
+		}
+		case 1:
+		{
+			return "Rock Band";
+			break;
+		}
+		case 2:
+		{
+			return "Guitar Hero";
+			break;
+		}
+
+	}
+	return NULL;
 }
