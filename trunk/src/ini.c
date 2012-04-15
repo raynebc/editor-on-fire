@@ -210,6 +210,12 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 		ustrcat(ini_string, "\r\npro_drums = True");	//Write the pro drum tag, which indicates notes default as cymbals unless marked as toms (used in Phase Shift)
 	}
 
+	/* check for five lane drums */
+	if(eof_five_lane_drums_enabled())
+	{	//If the drum track's fifth lane is enabled
+		ustrcat(ini_string, "\r\nfive_lane_drums = True");	//Write the five lane drum tag, which allows the game to decide how to present the chart during playback (used in Phase Shift)
+	}
+
 	/* write tuning tags */
 	int populated_track = 0;
 	if(eof_get_track_size(sp, EOF_TRACK_PRO_GUITAR))

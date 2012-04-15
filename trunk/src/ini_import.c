@@ -244,6 +244,15 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 					eof_ini_pro_drum_tag_present = 1;
 				}
 			}
+			else if(!ustricmp(eof_import_ini_setting[i].type, "five_lane_drums"))
+			{
+				if(!ustricmp(value_index, "True"))
+				{
+					unsigned long tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
+					sp->track[EOF_TRACK_DRUM]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the five lane drum flag
+					sp->legacy_track[tracknum]->numlanes = 6;						//Set the lane count
+				}
+			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "multiplier_note"))
 			{
 				if(!ustricmp(value_index, "116"))

@@ -73,10 +73,28 @@ TEXT EVENT CHUNK, for each text event:
 *4 bytes:	Number of custom data blocks
 CUSTOM DATA BLOCK CHUNK, for each custom data block
 {
-*	4 bytes:	The number of bytes this custom data block consumes
+*	4 bytes:	The number of bytes this custom data block consumes (including the block ID and the custom data itself)
+*	4 bytes:	Custom data block ID (1 = Raw MIDI data, 0xFFFFFFFF = Empty debugging block)
 *	[varies:]	(Custom data, can store anything)
 }
 !This will allow the storage of any data not specifically accounted for in this format, helping to future proof the format
+Custom data block type 1:  Raw MIDI data:
+	4 bytes:  Number of MIDI tracks
+	For each track:
+	{
+		2 bytes:  Length of MIDI track name
+		[varies]:  MIDI track name (no NULL terminator)
+		2 bytes:  Length of track description string
+		[varies]:  Track description string
+		4 bytes:  Number of events in the track
+		For each event:
+		{
+			2 bytes:  The size of the realtime position string
+			[varies]:  Realtime position of event (as written by fprintf("%f"...) with no NULL terminator, this is for cross platform compatibility)
+			2 bytes:  The size of the event
+			[varies]:  Event data
+		}
+	}
 
 
 	TRACK DATA:

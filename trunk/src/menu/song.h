@@ -19,6 +19,7 @@ extern DIALOG eof_song_properties_dialog[];
 extern DIALOG eof_catalog_entry_name_dialog[];
 extern DIALOG eof_pro_guitar_tuning_dialog[];
 extern DIALOG eof_note_set_num_frets_strings_dialog[];
+extern DIALOG eof_raw_midi_tracks_dialog[];
 
 void eof_prepare_song_menu(void);
 
@@ -97,5 +98,10 @@ void eof_set_percussion_cue(int cue_number);	//Sets eof_sound_chosen_percussion 
 
 int eof_menu_previous_chord_result(void);
 int eof_menu_next_chord_result(void);
+
+int eof_menu_song_raw_MIDI_tracks(void);
+char * eof_raw_midi_tracks_list(int index, int * size);
+int eof_raw_midi_dialog_delete(DIALOG * d);
+	//Functions used in the dialog for managing the raw MIDI data tracks stored in the project
 
 #endif

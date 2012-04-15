@@ -67,6 +67,7 @@ void eof_destroy_tempo_list(struct Tempo_change *ptr);
 unsigned long eof_ConvertToDeltaTime(double realtime,struct Tempo_change *anchorlist,EOF_MIDI_TS_LIST *tslist,unsigned long timedivision);
 	//An adaptation of the ConvertToDeltaTime() function from the FoFLC source
 	//Parses a linked list of anchors and returns the delta time of the specified realtime
+	//tslist is allowed to be NULL, but anchorlist must contain at least one tempo change
 
 int eof_extract_rba_midi(const char * source, const char * dest);
 	//Extracts the MIDI file embedded in the source RBA file and writes it to a regular MIDI file called dest
@@ -97,5 +98,7 @@ void eof_write_text_event(unsigned long deltas, const char *str, PACKFILE *fp);
 	//Writes a text event to the given file stream
 void eof_add_sysex_event(unsigned long pos, int size, void *data);
 	//Stores a copy of the Sysex message data (used for custom phrase markers in Phase Shift) to eof_midi_event[]
+void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist);
+	//Write all stored MIDI track data from sp->midi_data_head to the output file
 
 #endif

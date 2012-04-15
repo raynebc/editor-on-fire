@@ -306,7 +306,7 @@ void eof_show_mouse(BITMAP * bp)
 
 float eof_get_porpos(unsigned long pos)
 {
-	eof_log("eof_get_porpos() entered", 1);
+	eof_log("eof_get_porpos() entered", 2);
 
 	float porpos = 0.0;
 	long beat = 0;
