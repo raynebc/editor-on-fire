@@ -356,7 +356,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	{
 		return 0;
 	}
-	eof_log_level &= ~2;	//Disable verbose logging
+//	eof_log_level &= ~2;	//Disable verbose logging
 
 	/* backup "notes.mid" if it exists in the folder with the imported MIDI
 	   as it will be overwritten upon save */
@@ -654,8 +654,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 										snprintf(eof_log_string, sizeof(eof_log_string), "Unidentified track \"%s\"", text);
 										if(alert("Unsupported track:", text, "Import raw data?", "&Yes", "&No", 'y', 'n') == 1)
 										{	//If the user opts to import the raw track data
-											struct eof_MIDI_data_track *ptr = eof_get_raw_MIDI_data(eof_work_midi, track[i]);
-											eof_MIDI_empty_track_list(ptr);
+											eof_MIDI_add_track(sp, eof_get_raw_MIDI_data(eof_work_midi, track[i]));	//Add this to the linked list of raw MIDI track data
 										}
 										eof_import_events[i]->type = -1;	//Flag this as being a track that gets skipped
 									}
@@ -2478,6 +2477,6 @@ eof_log("\tThird pass complete", 1);
 eof_log("\tMIDI import complete", 1);
 //#endif
 
-	eof_log_level |= 2;	//Enable verbose logging
+//	eof_log_level |= 2;	//Enable verbose logging
 	return sp;
 }

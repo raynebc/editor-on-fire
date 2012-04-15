@@ -341,7 +341,7 @@ int eof_filebuffer_find_bytes(filebuffer *fb, const void *bytes, unsigned long s
 	return 0;	//Return no match
 }
 
-int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *target)
+int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *target, char forcestrum)
 {
 	unsigned long numnotes, dword, ctr, notesize;
 	unsigned int length, isexpertplus;
@@ -456,10 +456,21 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 				newnote->flags |= EOF_NOTE_FLAG_F_HOPO;
 				newnote->flags |= EOF_NOTE_FLAG_HOPO;
 			}
-			else
-			{	//If the note is not a HOPO, mark it as a forced non HOPO (strum required)
+			else if(forcestrum)
+			{	//If the note is not a HOPO, mark it as a forced non HOPO (strum required), but only if the user opted to do so
 				newnote->flags |= EOF_NOTE_FLAG_NO_HOPO;
 			}
+		}
+		else if((target->tracknum == EOF_TRACK_DRUM) && (target->diffnum == EOF_NOTE_AMAZING) && (length >= 100))
+		{	//If this is the expert drum track, check for long drum notes, which indicate that it should be treated as a drum roll
+			int phrasetype = EOF_TREMOLO_SECTION;	//Assume a normal drum roll (one lane)
+			unsigned long lastnote = eof_get_track_size(sp, EOF_TRACK_DRUM) - 1;
+
+			if(eof_note_count_colors(sp, EOF_TRACK_DRUM, lastnote) > 1)
+			{	//If the new drum note contains gems on more than one lane
+				phrasetype = EOF_TRILL_SECTION;		//Consider it a special drum roll (multiple lanes)
+			}
+			eof_track_add_section(sp, EOF_TRACK_DRUM, phrasetype, 0, dword, dword + length, 0, NULL);
 		}
 		if(isexpertplus)
 		{	//If this note was determined to be an expert+ drum note
@@ -985,9 +996,24 @@ EOF_SONG * eof_import_gh(const char * fn)
 	if(!sp)
 	{	//If that failed
 		sp = eof_import_gh_qb(fn);	//Attempt to load as a "QB" format GH file
+		if(sp && eof_get_track_size(sp, EOF_TRACK_DRUM))
+		{	//If there were any drum gems imported from this QB format GH file, add a "drum_fallback_blue = True" INI tag so Phase Shift knows how to downchart to 4 lanes
+			if(sp->tags->ini_settings < EOF_MAX_INI_SETTINGS)
+			{	//If this INI setting can be stored
+				ustrncpy(sp->tags->ini_setting[sp->tags->ini_settings],"drum_fallback_blue = True",sizeof(sp->tags->ini_setting[0]));
+				sp->tags->ini_settings++;
+			}
+		}
 	}
 	if(sp)
 	{	//If a GH file was loaded
+		if(eof_get_track_size(sp, EOF_TRACK_DRUM))
+		{	//If there were any drum gems imported, ensure the fifth drum lane is enabled, as all GH drum charts are this style of track
+			unsigned long tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
+			sp->track[EOF_TRACK_DRUM]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the five lane drum track flag
+			sp->legacy_track[tracknum]->numlanes = 6;						//Set the lane count
+		}
+
 //Load an audio file
 		replace_filename(oggfn, fn, "guitar.ogg", 1024);	//Try to load guitar.ogg in the GH file's folder by default
 		if(!eof_load_ogg(oggfn))
@@ -1009,6 +1035,7 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 	filebuffer *fb;
 	unsigned long dword, ctr, ctr2, numbeats, numsigs, lastfretbar = 0, lastsig = 0;
 	unsigned char tsnum, tsden;
+	char forcestrum = 0;
 
 //Load the GH file into memory
 	fb = eof_filebuffer_load(fn);
@@ -1201,11 +1228,16 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 		}
 	}//If the user opted to import TS changes
 
+	if(alert(NULL, "Import the chart's original HOPO OFF notation?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+	{	//If user opts to have all non HOPO notes marked for forced strumming
+		forcestrum = 1;
+	}
+
 //Read instrument tracks
 	for(ctr = 0; ctr < EOF_NUM_GH_INSTRUMENT_SECTIONS_NOTE; ctr++)
 	{	//For each known guitar hero instrument difficulty section
 		fb->index = 0;	//Rewind to beginning of file buffer
-		eof_gh_read_instrument_section_note(fb, sp, &eof_gh_instrument_sections_note[ctr]);	//Import notes from the section
+		eof_gh_read_instrument_section_note(fb, sp, &eof_gh_instrument_sections_note[ctr], forcestrum);	//Import notes from the section
 	}
 
 //Read star power sections
@@ -1392,7 +1424,7 @@ unsigned long eof_char_to_binary(unsigned char input)
 	return retval;
 }
 
-int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, gh_section *target, unsigned long qbindex)
+int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, gh_section *target, unsigned long qbindex, char forcestrum)
 {
 	unsigned long numnotes, dword, ctr, ctr2, arraysize, *arrayptr;
 	unsigned int length, notemask, fixednotemask, isexpertplus;
@@ -1486,14 +1518,25 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 					newnote->flags |= EOF_NOTE_FLAG_F_HOPO;
 					newnote->flags |= EOF_NOTE_FLAG_HOPO;
 				}
-				else
-				{	//If the note is not a HOPO, mark it as a forced non HOPO (strum required)
+				else if(forcestrum)
+				{	//If the note is not a HOPO, mark it as a forced non HOPO (strum required), but only if the user opted to do so
 					newnote->flags |= EOF_NOTE_FLAG_NO_HOPO;
 				}
 				if((notemask >> 8) != 0xF)
 				{	//"Crazy" guitar/bass notes have a high order note bitmask that isn't 0xF
 					newnote->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag bit
 				}
+			}
+			else if((target->tracknum == EOF_TRACK_DRUM) && (length >= 100))
+			{	//If this is a drum track, check for long drum notes, which indicate that it should be treated as a drum roll
+				int phrasetype = EOF_TREMOLO_SECTION;	//Assume a normal drum roll (one lane)
+				unsigned long lastnote = eof_get_track_size(sp, EOF_TRACK_DRUM) - 1;
+
+				if(eof_note_count_colors(sp, EOF_TRACK_DRUM, lastnote) > 1)
+				{	//If the new drum note contains gems on more than one lane
+					phrasetype = EOF_TRILL_SECTION;		//Consider it a special drum roll (multiple lanes)
+				}
+				eof_track_add_section(eof_song, EOF_TRACK_DRUM, EOF_TREMOLO_SECTION, 0, dword, dword + length, 0, NULL);
 			}
 			if(isexpertplus)
 			{	//If this note was determined to be an expert+ drum note
@@ -1725,7 +1768,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 			return -1;
 		}
 		buffer[8] = '\0';	//Null terminate the buffer
-		sscanf(buffer, "%lX", &checksum);	//Convert the hex string to unsigned decimal format
+		sscanf(buffer, "%8lX", &checksum);	//Convert the hex string to unsigned decimal format
 		fb->index += 4;	//Skip ahead 5 bytes, where the lyric text is expected
 		for(length = 0; fb->index + length < fb->size; length++)	//Count the length of the lyric text
 		{	//Until end of buffer is reached
@@ -1885,7 +1928,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 {
 	EOF_SONG * sp;
 	filebuffer *fb;
-	char filename[101], songname[21], buffer[101];
+	char filename[101], songname[21], buffer[101], forcestrum = 0;
 	char magicnumber[] = {0x1C,0x08,0x02,0x04,0x10,0x04,0x08,0x0C,0x0C,0x08,0x02,0x04,0x14,0x02,0x04,0x0C,0x10,0x10,0x0C,0x00};	//The magic number is expected 8 bytes into the QB header
 	unsigned char byte;
 	unsigned long index, ctr, ctr2, ctr3, arraysize, *arrayptr, numbeats, numsigs, tsnum, tsden, dword, lastfretbar = 0, lastsig = 0;
@@ -2121,11 +2164,16 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 	free(arrayptr);	//Free the memory used to store the 1D arrays of section data
 	eof_calculate_tempo_map(sp);	//Build the tempo map based on the beat time stamps
 
+	if(alert(NULL, "Import the chart's original HOPO OFF notation?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+	{	//If user opts to have all non HOPO notes marked for forced strumming
+		forcestrum = 1;
+	}
+
 //Read instrument tracks
 	for(ctr = 0; ctr < EOF_NUM_GH_INSTRUMENT_SECTIONS_QB; ctr++)
 	{	//For each known guitar hero instrument difficulty section
 		fb->index = 0;	//Rewind to beginning of file buffer
-		eof_gh_read_instrument_section_qb(fb, sp, songname, &eof_gh_instrument_sections_qb[ctr], qbindex);	//Import notes from the section
+		eof_gh_read_instrument_section_qb(fb, sp, songname, &eof_gh_instrument_sections_qb[ctr], qbindex, forcestrum);	//Import notes from the section
 	}
 
 //Read star power sections

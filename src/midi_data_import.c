@@ -53,6 +53,8 @@ void eof_MIDI_empty_event_list(struct eof_MIDI_data_event *ptr)
 
 void eof_MIDI_empty_track_list(struct eof_MIDI_data_track *ptr)
 {
+	eof_log("eof_MIDI_empty_track_list() entered", 1);
+
 	struct eof_MIDI_data_track *temp;
 
 	while(ptr != NULL)
@@ -60,6 +62,8 @@ void eof_MIDI_empty_track_list(struct eof_MIDI_data_track *ptr)
 		temp = ptr->next;
 		if(ptr->trackname)
 			free(ptr->trackname);
+		if(ptr->description)
+			free(ptr->description);
 		eof_MIDI_empty_event_list(ptr->events);
 		free(ptr);
 		ptr = temp;
@@ -83,7 +87,7 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 	unsigned long delta, absdelta, reldelta, length, bytes_used;
 	unsigned int size, curtrack, ctr;
 	int track_pos, event_pos;
-	unsigned char runningstatus, eventtype, lasteventtype, meventtype, endreached, *dataptr;
+	unsigned char runningstatus, eventtype, lasteventtype, meventtype = 0, endreached, *dataptr;
 	struct eof_MIDI_data_event *head = NULL, *tail = NULL, *linkptr = NULL;
 	struct eof_MIDI_tempo_change *tempohead = NULL, *tempotail = NULL, *tempoptr = NULL;
 	struct eof_MIDI_data_track *trackptr = NULL;
@@ -99,6 +103,7 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 		return NULL;
 	}
 
+	trackptr->description = NULL;
 	for(ctr = 0; ctr < 2; ctr++)
 	{	//Two tracks will be parsed
 		endreached = 0;	//Reset this condition
@@ -297,4 +302,20 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 	eof_log("\tStorage of MIDI data complete", 1);
 #endif
 	return trackptr;
+}
+
+void eof_MIDI_add_track(EOF_SONG *sp, struct eof_MIDI_data_track *ptr)
+{
+	if(!sp || !ptr)
+		return;
+
+	if(sp->midi_data_head == NULL)
+	{	//If the list is empty
+		sp->midi_data_head = ptr;	//The new link is now the first link in the list
+	}
+	else if(sp->midi_data_tail != NULL)
+	{	//If there is already a link at the end of the list
+		sp->midi_data_tail->next = ptr;	//Point it forward to the new link
+	}
+	sp->midi_data_tail = ptr;	//The new link is the new tail of the list
 }

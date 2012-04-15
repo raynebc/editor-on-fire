@@ -4,6 +4,7 @@
 #include "note.h"
 #include "beat.h"
 #include "midi.h"
+#include "midi_data_import.h"
 #include "undo.h"
 #include "utility.h"
 #include "tuning.h"
@@ -389,8 +390,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 	char *lastname = NULL, *currentname = NULL, nochord[]="NC", chordname[100]="";
 	char phase_shift_sysex_phrase[8] = {'P','S','\0',0,0,0,0,0xF7};	//This is used to write Sysex messages for features supported in Phase Shift (ie. open strum bass)
 	char fret_hand_pos_written;				//This is used to track whether the single fret hand position was written (if the "Fret hand pos is 0" option is enabled)
+	struct eof_MIDI_data_track *trackptr;	//Used to count the number of raw MIDI tracks to export
 
-	eof_log_level &= ~2;	//Disable verbose logging
+//	eof_log_level &= ~2;	//Disable verbose logging
 	if(!sp || !fn)
 	{
 		eof_log("\tError saving:  Invalid parameters", 1);
@@ -1855,6 +1857,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 
 	/* write header data */
 	trackcounter += 1 + eventstrackwritten + beattrackwritten;	//Add 1 for track 0 and one each for the events and beat tracks if applicable
+
+	if(featurerestriction != 2)
+	{	//If writing a RB3 compliant pro guitar upgrade MIDI, do NOT include stored MIDI tracks
+		for(trackptr = sp->midi_data_head; trackptr != NULL; trackcounter++, trackptr = trackptr->next);	//Add the number of raw MIDI tracks to export to the track counter
+	}
 	header[11] = trackcounter;	//Write the number of tracks present into the MIDI header
 	pack_fwrite(header, 14, fp);
 
@@ -1918,6 +1925,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 				}
 			}
 		}
+		if(featurerestriction != 2)
+		{	//If writing a RB3 compliant pro guitar upgrade MIDI, do NOT include stored MIDI tracks
+			eof_MIDI_data_track_export(sp, fp, anchorlist, tslist);	//Write any stored raw MIDI tracks to the output file
+		}
 		pack_fclose(fp);	//Close the output file
 		fp = NULL;
 	}
@@ -1937,7 +1948,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 	eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 	eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 
-	eof_log_level |= 2;	//Enable verbose logging
+//	eof_log_level |= 2;	//Enable verbose logging
 	return 1;
 }
 
@@ -2443,4 +2454,49 @@ void eof_add_sysex_event(unsigned long pos, int size, void *data)
 			}
 		}
 	}
+}
+
+void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist)
+{
+	struct eof_MIDI_data_track *trackptr;
+	struct eof_MIDI_data_event *eventptr;
+	char trackheader[4] = {'M', 'T', 'r', 'k'};
+	PACKFILE *tempf;
+	unsigned long lastdelta, deltapos, track_length, ctr;
+
+	if(!sp || !outf || !anchorlist || !sp->midi_data_head)
+		return;
+
+	eof_log("eof_MIDI_data_track_export() entered", 1);
+
+	for(trackptr = sp->midi_data_head; trackptr != NULL; trackptr = trackptr->next)
+	{	//For each raw MIDI track
+//Write the track's MIDI data to a temporary file so its size can be obtained easily
+		tempf = pack_fopen("mididatatemp.tmp", "w");	//Open temporary file for writing
+		if(!tempf)
+			return;
+		lastdelta = 0;
+		for(eventptr = trackptr->events; eventptr != NULL; eventptr = eventptr->next)
+		{	//For each event in the track
+			deltapos = eof_ConvertToDeltaTime(eventptr->realtime,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);	//Store the tick position of the event
+			WriteVarLen(deltapos - lastdelta, tempf);		//Write this event's relative delta time
+			pack_fwrite(eventptr->data, eventptr->size, tempf);	//Write this event's data
+			lastdelta = deltapos;
+		}
+		pack_fclose(tempf);					//Close the temporary file
+
+//Get the track's size and write it to the output MIDI file
+		track_length = file_size_ex("mididatatemp.tmp");	//Get the temporary file's size
+		tempf = pack_fopen("mididatatemp.tmp", "r");		//Open temporary file for reading
+		if(!tempf)
+			return;
+		pack_fwrite(trackheader, 4, outf);	//Write the output track header
+		pack_mputl(track_length, outf);		//Write the output track length
+		for(ctr = 0; ctr < track_length; ctr++)
+		{	//For each byte of the temporary file
+			pack_putc(pack_getc(tempf), outf);	//Copy the byte to the output MIDI file
+		}
+		pack_fclose(tempf);	//Close the temporary file
+	}
+	delete_file("mididatatemp.tmp");
 }

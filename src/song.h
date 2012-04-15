@@ -2,7 +2,6 @@
 #define EOF_SONG_H
 
 #include <allegro.h>
-//#include "tuning.h"	//For tuning struct definitions
 
 #define EOF_OLD_MAX_NOTES     65536
 #define EOF_MAX_NOTES         32768
@@ -415,6 +414,16 @@ extern EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 1];
 extern EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 12];
 	//The list of MIDI track names pertaining to each instrument and harmony track
 
+struct eof_MIDI_data_track
+{
+	char *trackname;
+	char *description;
+	struct eof_MIDI_data_event *events;
+	struct eof_MIDI_data_track *next;
+};
+	//This structure will be used in a linked list defining the tracks in a MIDI file
+	//Each will contain a linked list of the track's events
+
 typedef struct
 {
 	/* song info */
@@ -444,6 +453,8 @@ typedef struct
 
 	EOF_TEXT_EVENT * text_event[EOF_MAX_TEXT_EVENTS];
 	unsigned long text_events;
+
+	struct eof_MIDI_data_track * midi_data_head, * midi_data_tail;	//Used to maintain a linked list of MIDI events that have been imported and that will be exported on save
 
 	/* miscellaneous */
 	unsigned long bookmark_pos[EOF_MAX_BOOKMARK_ENTRIES];

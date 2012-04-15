@@ -2055,7 +2055,7 @@ int eof_save_helper(char *destfilename)
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Return failure
 
-	eof_log_level &= ~2;	//Disable verbose logging
+//	eof_log_level &= ~2;	//Disable verbose logging
 
 	if(destfilename == NULL)	//Perform save instead of save as
 	{
@@ -2183,7 +2183,7 @@ int eof_save_helper(char *destfilename)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 
-	eof_log_level |= 2;	//Enable verbose logging
+//	eof_log_level |= 2;	//Enable verbose logging
 	eof_log("\tSave completed", 1);
 
 	return 0;	//Return success

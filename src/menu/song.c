@@ -8,6 +8,7 @@
 #include "../beat.h"
 #include "../utility.h"
 #include "../midi.h"
+#include "../midi_data_import.h"
 #include "../ini.h"
 #include "../dialog/proc.h"
 #include "../undo.h"
@@ -24,6 +25,8 @@
 
 char eof_track_selected_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE+1] = {{0}};
 	//Allow an extra leading space due to the checkmark erasing the first character in each string
+char eof_no_raw_midi_track_name[] = "(unnamed)";
+char eof_raw_midi_track_error[] = "(error)";
 
 MENU eof_song_seek_bookmark_menu[] =
 {
@@ -147,6 +150,7 @@ MENU eof_song_menu[] =
     {"Enable open strum bass", eof_menu_song_open_bass, NULL, 0, NULL},
     {"Enable five lane drums", eof_menu_song_five_lane_drums, NULL, 0, NULL},
     {"Pro &Guitar", NULL, eof_song_proguitar_menu, 0, NULL},
+    {"Manage raw MIDI tracks", eof_menu_song_raw_MIDI_tracks, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"T&est In FOF\tF12", eof_menu_song_test_fof, NULL, EOF_LINUX_DISABLE, NULL},
     {"Test I&n Phase Shift", eof_menu_song_test_ps, NULL, EOF_LINUX_DISABLE, NULL},
@@ -2542,4 +2546,109 @@ int eof_menu_next_chord_result(void)
 		}
 	}
 	return 1;
+}
+
+int eof_menu_song_raw_MIDI_tracks(void)
+{
+	eof_cursor_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_raw_midi_tracks_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_raw_midi_tracks_dialog);
+	if(eof_popup_dialog(eof_raw_midi_tracks_dialog, 0) == 4)
+	{
+	}
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(NULL);
+	return 1;
+}
+
+DIALOG eof_raw_midi_tracks_dialog[] =
+{
+   /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
+   { d_agup_window_proc,0,   48,  500, 232, 2,   23,  0,    0,      0,   0,   "Stored MIDI tracks",    NULL, NULL },
+   { d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   eof_raw_midi_tracks_list,NULL, NULL },
+//   { d_agup_push_proc,  425, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",         NULL, eof_raw_midi_dialog_add },
+//   { d_agup_push_proc,  425, 124, 68,  28,  2,   23,  'd',  D_EXIT, 0,   0,   "&Desc",        NULL, eof_raw_midi_dialog_desc },
+   { d_agup_push_proc,  425, 164, 68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, eof_raw_midi_dialog_delete },
+   { d_agup_button_proc,12,  235, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+char * eof_raw_midi_tracks_list(int index, int * size)
+{
+	struct eof_MIDI_data_track *trackptr;
+	unsigned long ctr;
+
+	switch(index)
+	{
+		case -1:
+		{	//Return a count of the number of tracks
+			if(!eof_song || !eof_song->midi_data_head)
+				return 0;
+
+			for(ctr = 0, trackptr = eof_song->midi_data_head; trackptr != NULL; ctr++, trackptr = trackptr->next);	//Count the number of tracks in this list
+			if(ctr > 0)
+			{	//If there is at least stored MIDI track
+//				eof_raw_midi_tracks_dialog[2].flags = 0;	//Enable the Description button
+				eof_raw_midi_tracks_dialog[2].flags = 0;	//Enable the Delete button
+			}
+			else
+			{
+//				eof_raw_midi_tracks_dialog[2].flags = D_DISABLED;
+				eof_raw_midi_tracks_dialog[2].flags = D_DISABLED;
+			}
+			*size = ctr;
+			break;
+		}
+		default:
+		{
+			if(!eof_song || !eof_song->midi_data_head)
+				return eof_raw_midi_track_error;
+
+			for(ctr = 0, trackptr = eof_song->midi_data_head; (trackptr != NULL) && (ctr < index); ctr++, trackptr = trackptr->next);	//Seek to the appropriate track link
+			if(!trackptr)
+				return eof_raw_midi_track_error;
+
+			return trackptr->trackname;
+		}
+	}
+	return NULL;
+}
+
+int eof_raw_midi_dialog_delete(DIALOG * d)
+{
+	struct eof_MIDI_data_track *trackptr, *prevptr = NULL, *tempptr;
+	unsigned long ctr;
+
+	if(!eof_song->midi_data_head)
+	{	//If there are no stored MIDI tracks
+		return D_O_K;
+	}
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	for(ctr = 0, trackptr = eof_song->midi_data_head; trackptr != NULL; ctr++, trackptr = trackptr->next)
+	{	//For each stored MIDI track
+		if(eof_raw_midi_tracks_dialog[1].d1 == ctr)
+		{	//If this is the track to be removed
+			tempptr = trackptr->next;
+			if(trackptr->trackname)
+				free(trackptr->trackname);
+			if(trackptr->description)
+				free(trackptr->description);
+			eof_MIDI_empty_event_list(trackptr->events);
+			free(trackptr);
+
+			if(prevptr)
+			{	//If there was a previous pointer
+				prevptr->next = tempptr;	//It will point to the next link
+			}
+			else
+			{	//The head link was just deleted
+				eof_song->midi_data_head = tempptr;	//The new head link is the one that follows the deleted link
+			}
+			return D_O_K;
+		}
+		prevptr = trackptr;	//Keep track of this so the next link's previous link is known
+	}
+	return D_O_K;
 }

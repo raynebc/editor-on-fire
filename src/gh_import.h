@@ -71,11 +71,12 @@ int eof_filebuffer_find_checksum(filebuffer *fb, unsigned long checksum);
 	//Looks for the 4 byte checksum in the buffered file starting at the current position
 	//If the checksum is found, the position is set to the byte that follows it and zero is returned
 	//If the checksum is not found, the position is left unchanged and nonzero is returned
-int eof_gh_read_instrument_section_note(filebuffer *buffer, EOF_SONG *sp, gh_section *target);
+int eof_gh_read_instrument_section_note(filebuffer *buffer, EOF_SONG *sp, gh_section *target, char forcestrum);
 	//Searches for the target instrument section in the buffered file (NOTE format GH file)
 	//If the section is not found, 0 is returned
 	//If an error is detected, -1 is returned
 	//If it is found, it is parsed and notes are added accordingly to the passed EOF_SONG structure
+	//If forcestrum is nonzero, all non HOPO gems for guitar tracks are marked as explicit HOPO OFF notes (as they are played in GH)
 int eof_gh_read_sp_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *target);
 	//Searches for the target section in the buffered file (NOTE format GH file)
 	//If the section is not found, 0 is returned
@@ -96,12 +97,13 @@ int eof_gh_read_tap_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *targe
 	//If an error is detected, -1 is returned
 	//If it is found, it is parsed and the tap sections are added accordingly to the passed EOF_SONG structure as slider sections
 
-int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, gh_section *target, unsigned long qbindex);
+int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, gh_section *target, unsigned long qbindex, char forcestrum);
 	//Searches for the target instrument section in the buffered file (QB format GH file)
 	//songname is a string representing the song's name, which is a prefix for each section name
 	//If the section is not found, 0 is returned
 	//If an error is detected, -1 is returned
 	//If it is found, it is parsed and notes are added accordingly to the passed EOF_SONG structure
+	//If forcestrum is nonzero, all non HOPO gems for guitar tracks are marked as explicit HOPO OFF notes (as they are played in GH)
 int eof_gh_read_sp_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, gh_section *target, unsigned long qbindex);
 	//Searches for the target section in the buffered file (QB format GH file)
 	//songname is a string representing the song's name, which is a prefix for each section name

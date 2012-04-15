@@ -6,6 +6,7 @@
 #include "beat.h"
 #include "song.h"
 #include "legacy.h"
+#include "midi_data_import.h"
 #include "mix.h"
 #include "undo.h"
 #include "tuning.h"
@@ -174,6 +175,7 @@ EOF_SONG * eof_create_song(void)
 	{
 		sp->bookmark_pos[i] = 0;
 	}
+	sp->midi_data_head = sp->midi_data_tail = NULL;
 	return sp;
 }
 
@@ -187,7 +189,7 @@ void eof_destroy_song(EOF_SONG * sp)
 	if(sp == NULL)
 		return;
 
- 	eof_log_level &= ~2;	//Disable verbose logging
+// 	eof_log_level &= ~2;	//Disable verbose logging
 	for(ctr = sp->tracks - 1; ctr > 0; ctr--)
 	{	//For each entry in the track array, empty and then free it
 		eof_song_empty_track(sp, ctr);
@@ -204,12 +206,14 @@ void eof_destroy_song(EOF_SONG * sp)
 		free(sp->text_event[ctr]);
 	}
 
+	eof_MIDI_empty_track_list(sp->midi_data_head);
+
 	free(sp->tags);
 	free(sp->catalog);
 	free(sp);
 
 	eof_log("\tProject closed", 1);
-	eof_log_level |= 2;	//Enable verbose logging
+//	eof_log_level |= 2;	//Enable verbose logging
 }
 
 EOF_SONG * eof_load_song(const char * fn)
@@ -234,7 +238,7 @@ EOF_SONG * eof_load_song(const char * fn)
 		eof_log(eof_log_string, 1);
 		return 0;
 	}
-	eof_log_level &= ~2;	//Disable verbose logging
+//	eof_log_level &= ~2;	//Disable verbose logging
 	pack_fread(rheader, 16, fp);
 	if(!ustricmp(rheader, header))
 	{
@@ -292,7 +296,7 @@ EOF_SONG * eof_load_song(const char * fn)
 	}
 
 	eof_log("\tProject loaded", 1);
-	eof_log_level |= 2;	//Enable verbose logging
+//	eof_log_level |= 2;	//Enable verbose logging
 	return sp;
 }
 
@@ -1425,13 +1429,83 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		sp->text_event[ctr]->track = pack_igetl(fp);	//Read the text event's associated track number
 	}
 
+	unsigned long data_block_type, num_midi_tracks, numevents;
+	char buffer[100];
+	struct eof_MIDI_data_track *trackptr;
+	struct eof_MIDI_data_event *eventptr, *eventhead, *eventtail;
 	custom_data_count = pack_igetl(fp);		//Read the number of custom data blocks
 	for(custom_data_ctr=0; custom_data_ctr<custom_data_count; custom_data_ctr++)
 	{	//For each custom data block in the project
 		custom_data_size = pack_igetl(fp);	//Read the size of the custom data block
-		for(ctr=0; ctr<custom_data_size; ctr++)
-		{	//For each byte in the custom data block
-			pack_getc(fp);	//Read the data (not supported yet)
+		data_block_type = pack_igetl(fp);	//Read the data block type
+		if(data_block_type == 1)
+		{	//If this is a linked list of raw MIDI track data
+			num_midi_tracks = pack_igetl(fp);	//Read the number of tracks to read
+			for(ctr = 0; ctr < num_midi_tracks; ctr++)
+			{	//For each of the tracks to read
+				eventhead = eventtail = NULL;	//The event linked list begins empty
+				trackptr = malloc(sizeof(struct eof_MIDI_data_track));
+				if(!trackptr)
+					return 0;	//Memory allocation error
+				eof_load_song_string_pf(buffer, fp, sizeof(buffer));	//Read the MIDI track name
+				if(buffer[0] == '\0')
+				{	//If there is no track name
+					trackptr->trackname = NULL;
+				}
+				else
+				{	//If there is a track name
+					trackptr->trackname = malloc(strlen(buffer) + 1);	//Allocate enough memory to duplicate this string
+					if(!trackptr->trackname)
+						return 0;	//Memory allocation error
+					strcpy(trackptr->trackname, buffer);
+				}
+				eof_load_song_string_pf(buffer, fp, sizeof(buffer));	//Read the description string
+				if(buffer[0] == '\0')
+				{	//If there is no description
+					trackptr->description = NULL;
+				}
+				else
+				{	//If there is a description
+					trackptr->description = malloc(strlen(buffer) + 1);	//Allocate enough memory to duplicate this string
+					if(!trackptr->description)
+						return 0;	//Memory allocation error
+					strcpy(trackptr->description, buffer);
+				}
+				numevents = pack_igetl(fp);	//Read the number of events for this track
+				for(ctr2 = 0; ctr2 < numevents; ctr2++)
+				{	//For each of the events to read
+					eventptr = malloc(sizeof(struct eof_MIDI_data_event));
+					if(!eventptr)
+						return 0;	//Memory allocation error
+					eof_load_song_string_pf(buffer, fp, sizeof(buffer));	//Read the timestamp string
+					sscanf(buffer, "%lf", &eventptr->realtime);	//Convert to double floating point
+					eventptr->size = pack_igetw(fp);	//Get the size of this event's data
+					eventptr->data = malloc(eventptr->size);	//Allocate enough memory to store the event data
+					if(!eventptr->data)
+						return 0;	//Memory allocation error
+					pack_fread(eventptr->data, eventptr->size, fp);	//Read the event's data
+					eventptr->next = NULL;
+					if(eventhead == NULL)
+					{	//If the list is empty
+						eventhead = eventptr;	//The new link is now the first link in the list
+					}
+					else if(eventtail != NULL)
+					{	//If there is already a link at the end of the list
+						eventtail->next = eventptr;	//Point it forward to the new link
+					}
+					eventtail = eventptr;	//The new link is the new tail of the list
+				}
+				trackptr->events = eventhead;	//Store the events linked list in the track link
+				trackptr->next = NULL;
+				eof_MIDI_add_track(sp, trackptr);	//Store the track link in the EOF_SONG structure
+			}
+		}
+		else
+		{	//Otherwise, skip over the unknown data block
+			for(ctr=0; ctr<custom_data_size; ctr++)
+			{	//For each byte in the custom data block
+				pack_getc(fp);	//Read the data (not supported yet)
+			}
 		}
 	}
 
@@ -2047,12 +2121,73 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		pack_iputl(sp->text_event[ctr]->track, fp);	//Write the text event's associated track number
 	}
 
-
+	/* write custom data blocks */
 //	pack_iputl(0, fp);	//Write an empty custom data block
-	pack_iputl(1, fp);			//Write a debug custom data block
-	pack_iputl(4, fp);
-	pack_iputl(0xFFFFFFFF, fp);
+	if(sp->midi_data_head)
+	{	//If there is raw MIDI data being stored, write it as a custom data block
+	//Parse the linked list to determine the number of bytes that will be written
+		struct eof_MIDI_data_track *trackptr = sp->midi_data_head;	//Point to the beginning of the track linked list
+		struct eof_MIDI_data_event *eventptr;
+		unsigned long numbytes = 8;	//Start the counter to reflect 4 bytes for the custom data block ID and 4 bytes for the number of tracks to be written
+		unsigned long ctr;
+		char buffer[100];	//Will be used to store an ASCII representation of the event timestamps
+		while(trackptr != NULL)
+		{	//For each track of event data
+			numbytes += 2;	//Add 2 bytes for the size of the track name string
+			if(trackptr->trackname)
+			{	//If this track has a name
+				numbytes += ustrlen(trackptr->trackname);	//Add the length of the string
+			}
+			numbytes += 2;	//Add 2 bytes for the size of the description string
+			if(trackptr->description)
+			{	//If this track has a description
+				numbytes += ustrlen(trackptr->description);	//Add the length of the string
+			}
+			numbytes += 4;	//Add 4 bytes for the number of events in the track
+			eventptr = trackptr->events;	//Point to the beginning of this track's event linked list
+			while(eventptr != NULL)
+			{	//For each event
+				numbytes += 2;				//Add 2 bytes for the length of the timestamp string
+				snprintf(buffer, sizeof(buffer), "%f", eventptr->realtime);
+				numbytes += strlen(buffer);	//Add the length of the timestamp string
+				numbytes += 2;				//Add 2 bytes for the size of this event's data
+				numbytes += eventptr->size;	//Add the size of this event's data
+				eventptr = eventptr->next;	//Point to the next event
+			}
+			trackptr = trackptr->next;	//Point to the next track
+		}
+		pack_iputl(1, fp);			//Write one data block
+		pack_iputl(numbytes, fp);	//Write the size of this data block
+		pack_iputl(1, fp);			//Write the data block ID (1 = Raw MIDI data)
 
+	//Parse the linked list again to write the MIDI data
+		for(ctr = 0, trackptr = sp->midi_data_head; trackptr != NULL; ctr++, trackptr = trackptr->next);	//Count the number of tracks in this list
+		pack_iputl(ctr, fp);		//Write the number of tracks that will be stored in this data block
+		trackptr = sp->midi_data_head;	//Point to the beginning of the track linked list
+		while(trackptr != NULL)
+		{	//For each track of event data
+			eof_save_song_string_pf(trackptr->trackname, fp);	//Write the track name (this function allows for a NULL pointer)
+			eof_save_song_string_pf(trackptr->description, fp);	//Write the description
+			for(ctr = 0, eventptr = trackptr->events; eventptr != NULL; ctr++, eventptr = eventptr->next);	//Count the number of events in this track
+			pack_iputl(ctr, fp);	//Write the number of events for this track
+			eventptr = trackptr->events;	//Point to the beginning of this track's event linked list
+			while(eventptr != NULL)
+			{	//For each event
+				snprintf(buffer, sizeof(buffer), "%f", eventptr->realtime);	//Create an ASCII string representation of this event's timestamp
+				eof_save_song_string_pf(buffer, fp);	//Write the timestamp
+				pack_iputw(eventptr->size, fp);	//Write the size of this event's data
+				pack_fwrite(eventptr->data, eventptr->size, fp);	//Write this event's data
+				eventptr = eventptr->next;	//Point to the next event
+			}
+			trackptr = trackptr->next;	//Point to the next track
+		}
+	}
+	else
+	{	//Otherwise write a debug custom data block
+		pack_iputl(1, fp);			//Write one data block
+		pack_iputl(4, fp);			//Write the size of this data block
+		pack_iputl(0xFFFFFFFF, fp);	//Write the data block ID (0xFFFFFFFF = Debug block)
+	}
 
 	/* write track data */
 	//Count the number of bookmarks
