@@ -99,9 +99,12 @@ void eof_set_percussion_cue(int cue_number);	//Sets eof_sound_chosen_percussion 
 int eof_menu_previous_chord_result(void);
 int eof_menu_next_chord_result(void);
 
+extern struct eof_MIDI_data_track * eof_MIDI_track_list_to_enumerate;
 int eof_menu_song_raw_MIDI_tracks(void);
 char * eof_raw_midi_tracks_list(int index, int * size);
 int eof_raw_midi_dialog_delete(DIALOG * d);
+int eof_raw_midi_dialog_add(DIALOG * d);
 	//Functions used in the dialog for managing the raw MIDI data tracks stored in the project
+	//eof_raw_midi_tracks_list() is used in multiple functions, so it enumerates the contents of eof_MIDI_track_list_to_enumerate
 
 #endif

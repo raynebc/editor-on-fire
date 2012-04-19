@@ -82,7 +82,7 @@ void eof_MIDI_empty_tempo_list(struct eof_MIDI_tempo_change *ptr)
 	}
 }
 
-struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned tracknum)
+struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned tracknum, int offset)
 {
 	unsigned long delta, absdelta, reldelta, length, bytes_used;
 	unsigned int size, curtrack, ctr;
@@ -92,10 +92,15 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 	struct eof_MIDI_tempo_change *tempohead = NULL, *tempotail = NULL, *tempoptr = NULL;
 	struct eof_MIDI_data_track *trackptr = NULL;
 	double currentbpm = 120.0;	//As per the MIDI specification, until a tempo change is reached, 120BPM is assumed
-	double realtime = 0.0;
+	double realtime = 0.0, preoffseted;
 	char *trackname = NULL;
 
 	eof_log("eof_get_raw_MIDI_data() entered", 1);
+
+#ifdef MIDI_DATA_IMPORT_DEBUG
+	snprintf(eof_log_string, sizeof(eof_log_string), "\tEvents will be offset by %d ms", offset);
+	eof_log(eof_log_string, 1);
+#endif
 
 	trackptr = malloc(sizeof(struct eof_MIDI_data_track));
 	if(!trackptr)
@@ -277,15 +282,26 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 				}
 				tail = linkptr;	//The new link is the new tail of the list
 				memcpy(dataptr, &midiptr->track[curtrack].data[event_pos], 1 + size);	//Copy the MIDI event type and data
-				linkptr->realtime = eof_MIDI_delta_to_realtime(tempohead, absdelta, midiptr->divisions);
+				preoffseted = eof_MIDI_delta_to_realtime(tempohead, absdelta, midiptr->divisions);	//Get the timestamp as it is before applying the offset
+				if(offset < 0)
+				{	//If the offset is negative
+					if(-offset > preoffseted)
+					{	//If the offset is large enough to give an event a negative timestamp
+						allegro_message("Error:  Invalid negative MIDI delay");
+						eof_MIDI_empty_tempo_list(tempohead);
+						eof_MIDI_empty_event_list(head);
+						return NULL;
+					}
+				}
+				linkptr->realtime = preoffseted + offset;	//Apply the offset and use the result for this event's timestamp
 #ifdef MIDI_DATA_IMPORT_DEBUG
 				if((eventtype & 0xF) == 0xF)
 				{	//If this was a meta event
-					snprintf(eof_log_string, sizeof(eof_log_string), "\tStoring event:  Delta = %lu  Time = %fms  Event = 0x%X  Meta event = 0x%X",absdelta, linkptr->realtime, (eventtype >> 4), meventtype);
+					snprintf(eof_log_string, sizeof(eof_log_string), "\tStoring event:  Delta = %lu  Time = %fms  (Offseted = %fms) Event = 0x%X  Meta event = 0x%X",absdelta, preoffseted, linkptr->realtime, (eventtype >> 4), meventtype);
 				}
 				else
 				{	//This was a normal MIDI event
-					snprintf(eof_log_string, sizeof(eof_log_string), "\tStoring event:  Delta = %lu  Time = %fms  Event = 0x%X",absdelta, linkptr->realtime, (eventtype >> 4));
+					snprintf(eof_log_string, sizeof(eof_log_string), "\tStoring event:  Delta = %lu  Time = %fms  (Offseted = %fms) Event = 0x%X",absdelta, preoffseted, linkptr->realtime, (eventtype >> 4));
 				}
 				eof_log(eof_log_string, 1);
 #endif

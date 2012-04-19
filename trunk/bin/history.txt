@@ -3,6 +3,36 @@ EOF Version History
 
 1.8:
 
+*Added logic so that EOF will write a
+"five_lane_drums = True" INI tag if the fifth drum
+lane is enabled during save.  This tag forces the
+chart to be treated as a 5 lane drum track (ie.
+Guitar Hero) even if there are no gems on the fifth
+lane, for use in future versions of Phase Shift.
+
+*Added logic so that EOF will write a
+"drum_fallback_blue = True" INI tag if drum gems are
+imported from a QB format (ie. pre-GH5) Guitar Hero
+file.  This tag will be used in future versions of
+Phase Shift to decide how to down-chart a 5 lane drum
+chart to play on a 4 lane drum kit.
+
+*Added logic to store unsupported MIDI tracks (ie.
+for pro keys, harmonies) during MIDI import by
+prompting for each that is encountered.  Each event in
+the stored MIDI tracks is stored in high precision
+millisecond timing, and is saved to the output MIDI
+during project save conforming to the chart's tempo
+map.
+
+*Added a Guitar Hero color set option in Preferences.
+
+*Added logic to the MIDI export code to prevent writing
+overlapping forced HOPO markers, which violates the
+MIDI standard.  These generally occurred when saving a
+GH imported chart that contained extended sustain
+chords.
+
 *Fixed a bug where EOF would crash when trying to
 draw the waveform graph for an OGG that is not stereo.
 
