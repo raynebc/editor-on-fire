@@ -31,14 +31,17 @@ void eof_MIDI_empty_track_list(struct eof_MIDI_data_track *ptr);
 void eof_MIDI_empty_tempo_list(struct eof_MIDI_tempo_change *ptr);
 	//Empties the tempo map created by eof_get_raw_MIDI_data()
 
-struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned tracknum);
+struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned tracknum, int offset);
 	//Parses the given track of the specified MIDI, returning a linked list containing the track's name and a linked list of the track's events
 	//Track 0 of the MIDI is first parsed to build a tempo map
 	//Then the specified track is parsed to find the real time of each MIDI is read
+	//Offset is an value in milliseconds added to the timestamp of each stored event
+	//If offset is negative and would cause the timestamp of an event to be negative, an invalid offset warning is given and the function aborts
 	//The raw MIDI data itself is stored in dynamically allocated memory
 	//The returned MIDI event linked list's data is essentially the MIDI track in millisecond timing
 	//NULL is returned on error
 void eof_MIDI_add_track(EOF_SONG *sp, struct eof_MIDI_data_track *ptr);
 	//Adds the track to the linked list of raw MIDI track data maintained within the EOF_SONG structure
+	//The link is appended as-is, so it must point forward to NULL if appropriate
 
 #endif

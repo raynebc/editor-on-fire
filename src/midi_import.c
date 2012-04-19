@@ -649,12 +649,11 @@ EOF_SONG * eof_import_midi(const char * fn)
 								}
 								if(eof_import_events[i]->type == 0)
 								{
-									if(ustrstr(text,"PART"))
-									{	//If this is a track that wasn't identified above, yet contains the word "PART" in the name
-										snprintf(eof_log_string, sizeof(eof_log_string), "Unidentified track \"%s\"", text);
+									if(ustrstr(text,"PART") || (ustrstr(text,"HARM") == text))
+									{	//If this is a track that wasn't identified above, yet contains the word "PART" in the name (or begins with "HARM")
 										if(alert("Unsupported track:", text, "Import raw data?", "&Yes", "&No", 'y', 'n') == 1)
 										{	//If the user opts to import the raw track data
-											eof_MIDI_add_track(sp, eof_get_raw_MIDI_data(eof_work_midi, track[i]));	//Add this to the linked list of raw MIDI track data
+											eof_MIDI_add_track(sp, eof_get_raw_MIDI_data(eof_work_midi, track[i], sp->tags->ogg[0].midi_offset));	//Add this to the linked list of raw MIDI track data (use the MIDI delay read from song.ini)
 										}
 										eof_import_events[i]->type = -1;	//Flag this as being a track that gets skipped
 									}

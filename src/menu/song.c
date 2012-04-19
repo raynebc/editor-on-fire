@@ -18,6 +18,7 @@
 #include "../song.h"
 #include "../tuning.h"
 #include "song.h"
+#include "file.h"	//For eof_menu_prompt_save_changes()
 
 #ifdef USEMEMWATCH
 #include "../memwatch.h"
@@ -2554,8 +2555,9 @@ int eof_menu_song_raw_MIDI_tracks(void)
 	eof_render();
 	eof_color_dialog(eof_raw_midi_tracks_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_raw_midi_tracks_dialog);
-	if(eof_popup_dialog(eof_raw_midi_tracks_dialog, 0) == 4)
-	{
+	eof_MIDI_track_list_to_enumerate = eof_song->midi_data_head;	//This is the list that the dialog should enumerate
+	if(eof_popup_dialog(eof_raw_midi_tracks_dialog, 0) == 5)
+	{	//User clicked done
 	}
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
@@ -2568,13 +2570,14 @@ DIALOG eof_raw_midi_tracks_dialog[] =
    /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
    { d_agup_window_proc,0,   48,  500, 232, 2,   23,  0,    0,      0,   0,   "Stored MIDI tracks",    NULL, NULL },
    { d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   eof_raw_midi_tracks_list,NULL, NULL },
-//   { d_agup_push_proc,  425, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",         NULL, eof_raw_midi_dialog_add },
+   { d_agup_push_proc,  425, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",         NULL, eof_raw_midi_dialog_add },
 //   { d_agup_push_proc,  425, 124, 68,  28,  2,   23,  'd',  D_EXIT, 0,   0,   "&Desc",        NULL, eof_raw_midi_dialog_desc },
    { d_agup_push_proc,  425, 164, 68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, eof_raw_midi_dialog_delete },
    { d_agup_button_proc,12,  235, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
+struct eof_MIDI_data_track * eof_MIDI_track_list_to_enumerate;
 char * eof_raw_midi_tracks_list(int index, int * size)
 {
 	struct eof_MIDI_data_track *trackptr;
@@ -2584,29 +2587,32 @@ char * eof_raw_midi_tracks_list(int index, int * size)
 	{
 		case -1:
 		{	//Return a count of the number of tracks
-			if(!eof_song || !eof_song->midi_data_head)
-				return 0;
+			if(!eof_MIDI_track_list_to_enumerate)
+			{
+				*size = 0;
+				return NULL;
+			}
 
-			for(ctr = 0, trackptr = eof_song->midi_data_head; trackptr != NULL; ctr++, trackptr = trackptr->next);	//Count the number of tracks in this list
+			for(ctr = 0, trackptr = eof_MIDI_track_list_to_enumerate; trackptr != NULL; ctr++, trackptr = trackptr->next);	//Count the number of tracks in this list
 			if(ctr > 0)
 			{	//If there is at least stored MIDI track
 //				eof_raw_midi_tracks_dialog[2].flags = 0;	//Enable the Description button
-				eof_raw_midi_tracks_dialog[2].flags = 0;	//Enable the Delete button
+				eof_raw_midi_tracks_dialog[3].flags = 0;	//Enable the Delete button
 			}
 			else
 			{
 //				eof_raw_midi_tracks_dialog[2].flags = D_DISABLED;
-				eof_raw_midi_tracks_dialog[2].flags = D_DISABLED;
+				eof_raw_midi_tracks_dialog[3].flags = D_DISABLED;
 			}
 			*size = ctr;
 			break;
 		}
 		default:
 		{
-			if(!eof_song || !eof_song->midi_data_head)
+			if(!eof_MIDI_track_list_to_enumerate)
 				return eof_raw_midi_track_error;
 
-			for(ctr = 0, trackptr = eof_song->midi_data_head; (trackptr != NULL) && (ctr < index); ctr++, trackptr = trackptr->next);	//Seek to the appropriate track link
+			for(ctr = 0, trackptr = eof_MIDI_track_list_to_enumerate; (trackptr != NULL) && (ctr < index); ctr++, trackptr = trackptr->next);	//Seek to the appropriate track link
 			if(!trackptr)
 				return eof_raw_midi_track_error;
 
@@ -2625,11 +2631,11 @@ int eof_raw_midi_dialog_delete(DIALOG * d)
 	{	//If there are no stored MIDI tracks
 		return D_O_K;
 	}
-	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	for(ctr = 0, trackptr = eof_song->midi_data_head; trackptr != NULL; ctr++, trackptr = trackptr->next)
 	{	//For each stored MIDI track
 		if(eof_raw_midi_tracks_dialog[1].d1 == ctr)
 		{	//If this is the track to be removed
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			tempptr = trackptr->next;
 			if(trackptr->trackname)
 				free(trackptr->trackname);
@@ -2645,10 +2651,226 @@ int eof_raw_midi_dialog_delete(DIALOG * d)
 			else
 			{	//The head link was just deleted
 				eof_song->midi_data_head = tempptr;	//The new head link is the one that follows the deleted link
+				eof_MIDI_track_list_to_enumerate = tempptr;	//Update the head pointer used by eof_raw_midi_tracks_list()
 			}
+			if(!tempptr)
+			{	//If the last list entry was deleted
+				eof_raw_midi_tracks_dialog[1].d1--;	//Re-select the new last entry in the list
+			}
+			object_message(&eof_raw_midi_tracks_dialog[1], MSG_DRAW, 0);	//Redraw the tracks list
 			return D_O_K;
 		}
 		prevptr = trackptr;	//Keep track of this so the next link's previous link is known
 	}
 	return D_O_K;
+}
+
+DIALOG eof_raw_midi_add_track_dialog[] =
+{
+   /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
+   { d_agup_window_proc,0,   48,  500, 232, 2,   23,  0,    0,      0,   0,   "Select MIDI track to import",    NULL, NULL },
+   { d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   eof_raw_midi_tracks_list,NULL, NULL },
+   { d_agup_button_proc, 42,  235, 68,  28, 2,   23,  '\r', D_EXIT, 0,   0,   "OK",               NULL, NULL },
+   { d_agup_button_proc, 120, 235, 68,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_raw_midi_dialog_add(DIALOG * d)
+{
+	char * returnedfn = NULL;
+	char tempfilename[1024] = {0};
+	MIDI * eof_work_midi = NULL;
+	struct eof_MIDI_data_track *head = NULL, *tail = NULL, *ptr, *selected = NULL, *prev = NULL, *next, *prevenumeration;
+	unsigned long ctr;
+	char undo_made = 0, canceled = 0;
+	int junk;
+
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	returnedfn = ncd_file_select(0, eof_last_eof_path, "Import raw MIDI track", eof_filter_midi_files);
+	eof_clear_input();
+	if(returnedfn)
+	{	//If the user selected a file
+		eof_log("\tImporting raw MIDI track", 1);
+
+//Have user browse for a MIDI/RBA file
+		if(!ustricmp(get_extension(returnedfn), "rba"))
+		{	//If the selected file has a .rba extension, extract the MIDI file
+			replace_filename(tempfilename, returnedfn, "eof_rba_import.tmp", 1024);
+			if(eof_extract_rba_midi(returnedfn,tempfilename) == 0)
+			{	//If this was an RBA file and the MIDI was extracted successfully
+				eof_work_midi = load_midi(tempfilename);	//Buffer extracted MIDI file
+				delete_file(tempfilename);	//Delete temporary file
+			}
+		}
+		else
+		{	//Buffer MIDI file
+			eof_work_midi = load_midi(returnedfn);
+		}
+		if(!eof_work_midi)
+		{
+			return 0;
+		}
+
+//Parse the MIDI delay from song.ini if it exists in the same folder as the MIDI
+		int delay = 0;
+		replace_filename(tempfilename, returnedfn, "song.ini", 1024);
+		set_config_file(tempfilename);
+		delay = get_config_int("song", "delay", 0);
+		if(delay)
+		{	//If a nonzero delay was read from song.ini
+			snprintf(tempfilename, sizeof(tempfilename), "%d", delay);
+			if(alert("Import this MIDI delay from song.ini?", tempfilename, NULL, "&Yes", "&No", 'y', 'n') != 1)
+			{	//If the user declined using the MIDI delay from the MIDI's song.ini file
+				delay = 0;	//Set the delay back to 0
+			}
+		}
+
+//Build a linked list of track information
+		for(ctr = 0; ctr < MIDI_TRACKS; ctr++)
+		{
+			if(eof_work_midi->track[ctr].data)
+			{	//For each populated track in the buffered MIDI
+				ptr = eof_get_raw_MIDI_data(eof_work_midi, ctr, delay);
+				if(!ptr)
+				{	//If the track was not read
+					dialog_message(eof_raw_midi_tracks_dialog, MSG_DRAW, 0, &junk);	//Redraw the Manage raw MIDI tracks dialog
+					return 0;
+				}
+				if(!ptr->trackname)
+				{	//If the track has no name
+					eof_MIDI_empty_track_list(ptr);	//Delete it
+				}
+				else
+				{	//Add the track to the list
+					if(head == NULL)
+					{	//If the list is empty
+						head = ptr;	//The new link is now the first link in the list
+					}
+					else if(tail != NULL)
+					{	//If there is already a link at the end of the list
+						tail->next = ptr;	//Point it forward to the new link
+					}
+					tail = ptr;	//The new link is the new tail of the list
+				}
+			}
+		}
+
+//Have the user select a track to import
+		prevenumeration = eof_MIDI_track_list_to_enumerate;	//Keep track of this for when the function returns
+		eof_MIDI_track_list_to_enumerate = head;	//eof_raw_midi_tracks_list() will enumerate this list
+		eof_color_dialog(eof_raw_midi_add_track_dialog, gui_fg_color, gui_bg_color);
+		centre_dialog(eof_raw_midi_add_track_dialog);
+		if(eof_popup_dialog(eof_raw_midi_add_track_dialog, 0) == 2)
+		{	//If the user selected a track to import and clicked OK
+			for(ctr = 0, ptr = head; ptr != NULL; ctr++, ptr = ptr->next)
+			{	//For each track in the user-selected MIDI
+				if(eof_raw_midi_add_track_dialog[1].d1 == ctr)
+				{	//If this is the track to import
+					selected = ptr;	//Keep track of the link that is to be kept
+					break;
+				}
+			}
+
+//Validate the user's selection
+			if(!selected->trackname)
+			{
+				selected = NULL;
+				canceled = 1;
+			}
+			else if((selected == head) || !ustricmp(selected->trackname, "BEAT") || !ustricmp(selected->trackname, "EVENTS"))
+			{	//If the user selected track 0 or the beat or events tracks
+				allegro_message("Import of this track is not allowed because it is written during save");
+				selected = NULL;
+				canceled = 1;
+			}
+			else
+			{
+				for(ctr = 0; ctr < EOF_TRACKS_MAX; ctr++)
+				{	//For each of EOF's supported tracks
+					if(!ustricmp(selected->trackname, eof_midi_tracks[ctr].name))
+					{	//If the user selected a track with a name that EOF natively supports
+						allegro_message("\"%s\" is a track supported by EOF.  To load it into the current project, please import it in another EOF instance and copy+paste it into this project.", selected->trackname);
+						selected = NULL;
+						canceled = 1;
+						break;
+					}
+				}
+			}
+			if(!canceled)
+			{
+				for(ptr = eof_song->midi_data_head; ptr != NULL; ptr = ptr->next)
+				{	//For each MIDI track already being stored in the project
+					next = ptr->next;
+					if(!ustricmp(selected->trackname, ptr->trackname))
+					{	//If the user selected a track with a name matching a track already being stored in the project
+						if(alert("A track with this name is already being stored:", selected->trackname, "Replace it?", "&Yes", "&No", 'y', 'n') != 1)
+						{	//If the user declined to replace the previously-stored track with the newly-selected track
+							selected = NULL;
+							canceled = 1;
+						}
+						else
+						{	//Remove the existing track
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+							undo_made = 1;
+							if(ptr->trackname)
+								free(ptr->trackname);
+							if(ptr->description)
+								free(ptr->description);
+							eof_MIDI_empty_event_list(ptr->events);
+								free(ptr);
+							if(prev)
+							{	//If there was a previous pointer
+								prev->next = next;	//It will point to the next link
+							}
+							else
+							{	//The head link was just deleted
+								if(eof_song->midi_data_head == prevenumeration)
+								{	//If the calling dialog was enumerating the list in the loaded project
+									prevenumeration = next;	//Update this as well so the updated list is enumerated
+								}
+								eof_song->midi_data_head = next;	//The new head link is the one that follows the deleted link
+							}
+						}
+						break;
+					}
+					prev = ptr;	//Keep track of this so the next link's previous link is known
+				}
+			}
+
+//Add the selected track, remove the others from memory
+			if(!canceled)
+			{
+				if(!undo_made)
+				{	//If any undo state wasn't already made
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				eof_MIDI_add_track(eof_song, selected);
+			}
+		}//If the user selected a track to import and clicked OK
+
+//Remove all tracks (that weren't stored) from memory
+		for(ptr = head; ptr != NULL; ptr = next)
+		{	//For each track stored from the user-selected MIDI
+			next = ptr->next;
+			if(ptr != selected)
+			{	//If this isn't the track that is being kept
+				if(ptr->trackname)
+					free(ptr->trackname);
+				if(ptr->description)
+					free(ptr->description);
+				eof_MIDI_empty_event_list(ptr->events);
+				free(ptr);
+			}
+		}
+		if(!canceled)
+		{
+			selected->next = NULL;	//This is the new tail of the list
+		}
+	}//If the user selected a file
+	eof_MIDI_track_list_to_enumerate = prevenumeration;
+	dialog_message(eof_raw_midi_tracks_dialog, MSG_DRAW, 0, &junk);	//Redraw the Manage raw MIDI tracks dialog
+	return 0;
 }
