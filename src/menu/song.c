@@ -2680,9 +2680,9 @@ int eof_raw_midi_dialog_add(DIALOG * d)
 	char * returnedfn = NULL;
 	char tempfilename[1024] = {0};
 	MIDI * eof_work_midi = NULL;
-	struct eof_MIDI_data_track *head = NULL, *tail = NULL, *ptr, *selected = NULL, *prev = NULL, *next, *prevenumeration;
+	struct eof_MIDI_data_track *head = NULL, *tail = NULL, *ptr, *selected = NULL, *prev = NULL, *next, *prevenumeration = eof_MIDI_track_list_to_enumerate;
 	unsigned long ctr;
-	char undo_made = 0, canceled = 0;
+	char undo_made = 0, canceled = 0, updateenumlist = 0;
 	int junk;
 
 	eof_cursor_visible = 0;
@@ -2758,7 +2758,6 @@ int eof_raw_midi_dialog_add(DIALOG * d)
 		}
 
 //Have the user select a track to import
-		prevenumeration = eof_MIDI_track_list_to_enumerate;	//Keep track of this for when the function returns
 		eof_MIDI_track_list_to_enumerate = head;	//eof_raw_midi_tracks_list() will enumerate this list
 		eof_color_dialog(eof_raw_midi_add_track_dialog, gui_fg_color, gui_bg_color);
 		centre_dialog(eof_raw_midi_add_track_dialog);
@@ -2826,10 +2825,6 @@ int eof_raw_midi_dialog_add(DIALOG * d)
 							}
 							else
 							{	//The head link was just deleted
-								if(eof_song->midi_data_head == prevenumeration)
-								{	//If the calling dialog was enumerating the list in the loaded project
-									prevenumeration = next;	//Update this as well so the updated list is enumerated
-								}
 								eof_song->midi_data_head = next;	//The new head link is the one that follows the deleted link
 							}
 						}
@@ -2847,9 +2842,21 @@ int eof_raw_midi_dialog_add(DIALOG * d)
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					undo_made = 1;
 				}
+				if(eof_song->midi_data_head == prevenumeration)
+				{	//If the calling dialog was enumerating the list in the loaded project
+					updateenumlist = 1;	//Remember to update the pointer just in case the head link is replaced
+				}
 				eof_MIDI_add_track(eof_song, selected);
+				if(updateenumlist)
+				{	//If the calling dialog was enumerating the list in the loaded project
+					prevenumeration = eof_song->midi_data_head;	//Update this as well so the updated list is enumerated
+				}
 			}
 		}//If the user selected a track to import and clicked OK
+		else
+		{
+			canceled = 1;
+		}
 
 //Remove all tracks (that weren't stored) from memory
 		for(ptr = head; ptr != NULL; ptr = next)
@@ -2866,7 +2873,7 @@ int eof_raw_midi_dialog_add(DIALOG * d)
 			}
 		}
 		if(!canceled)
-		{
+		{	//Perform this at the end so that the unused portion of the list is able to be destroyed via the loop above
 			selected->next = NULL;	//This is the new tail of the list
 		}
 	}//If the user selected a file
