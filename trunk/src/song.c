@@ -1502,8 +1502,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		}
 		else
 		{	//Otherwise, skip over the unknown data block
-			for(ctr=0; ctr<custom_data_size; ctr++)
-			{	//For each byte in the custom data block
+			for(ctr=4; ctr<custom_data_size; ctr++)
+			{	//For each byte in the custom data block (accounting for the four byte data block type that was read)
 				pack_getc(fp);	//Read the data (not supported yet)
 			}
 		}
