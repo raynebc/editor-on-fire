@@ -1,5 +1,6 @@
 #include "beat.h"
 #include "gh_import.h"
+#include "ini_import.h"	//For eof_import_ini()
 #include "main.h"
 #include "midi.h"	//For eof_apply_ts()
 #include "utility.h"
@@ -405,8 +406,13 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 			eof_log("\t\tError:  Could not read note bitmask", 1);
 			return -1;
 		}
+		if(eof_filebuffer_get_byte(fb, &accentmask))	//Read the note accent bitmask
+		{	//If there was an error reading the next 1 byte value
+			eof_log("\t\tError:  Could not read note accent bitmask", 1);
+			return -1;
+		}
 #ifdef GH_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \t\tNote %lu position = %lu  length = %u  bitmask = %u (%08lu %08lu)", ctr, dword, length, notemask, eof_char_to_binary(notemask >> 8), eof_char_to_binary(notemask & 0xFF));
+		snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \t\tNote %lu position = %lu  length = %u  bitmask = %u (%08lu %08lu) accent = %08lu", ctr, dword, length, notemask, eof_char_to_binary(notemask >> 8), eof_char_to_binary(notemask & 0xFF), eof_char_to_binary(accentmask));
 		eof_log(eof_log_string, 1);
 #endif
 		isexpertplus = 0;	//Reset this condition
@@ -433,11 +439,6 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 				fixednotemask |= 1;		//Set the lane 1 (bass drum gem)
 			}
 			notemask = fixednotemask;
-		}
-		if(eof_filebuffer_get_byte(fb, &accentmask))	//Read the note accent bitmask
-		{	//If there was an error reading the next 1 byte value
-			eof_log("\t\tError:  Could not read note accent bitmask", 1);
-			return -1;
 		}
 		newnote = (EOF_NOTE *)eof_track_add_create_note(sp, target->tracknum, (notemask & 0x3F), dword, length, target->diffnum, NULL);
 		if(newnote == NULL)
@@ -987,7 +988,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 EOF_SONG * eof_import_gh(const char * fn)
 {
 	EOF_SONG * sp;
-	char oggfn[1024] = {0};
+	char oggfn[1024] = {0}, backup_filename[1024] = {0};
 
 	eof_log("\tImporting Guitar Hero chart", 1);
 	eof_log("eof_import_gh() entered", 1);
@@ -1005,13 +1006,45 @@ EOF_SONG * eof_import_gh(const char * fn)
 			}
 		}
 	}
+
 	if(sp)
 	{	//If a GH file was loaded
+		/* backup "song.ini" if it exists in the folder with the imported file
+		as it will be overwritten upon save */
+		replace_filename(eof_temp_filename, fn, "song.ini", 1024);
+		if(exists(eof_temp_filename))
+		{
+			/* do not overwrite an existing backup, this prevents the original backed up song.ini from
+			being overwritten if the user imports the MIDI again */
+			replace_filename(backup_filename, fn, "song.ini.backup", 1024);
+			if(!exists(backup_filename))
+			{
+				eof_copy_file(eof_temp_filename, backup_filename);
+			}
+		}
+
+		/* read INI file */
+		replace_filename(oggfn, fn, "song.ini", 1024);
+		eof_import_ini(sp, oggfn);
+
+		unsigned long tracknum;
 		if(eof_get_track_size(sp, EOF_TRACK_DRUM))
 		{	//If there were any drum gems imported, ensure the fifth drum lane is enabled, as all GH drum charts are this style of track
-			unsigned long tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
+			tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
 			sp->track[EOF_TRACK_DRUM]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the five lane drum track flag
 			sp->legacy_track[tracknum]->numlanes = 6;						//Set the lane count
+		}
+
+		unsigned long ctr;
+		for(ctr = 0; ctr < eof_get_track_size(sp, EOF_TRACK_BASS); ctr++)
+		{	//For each bass guitar note
+			if(eof_get_note_note(sp, EOF_TRACK_BASS, ctr) & 32)
+			{	//If the the note has a gem in lane six
+				tracknum = sp->track[EOF_TRACK_BASS]->tracknum;
+				sp->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the flag for six lane bass
+				sp->legacy_track[tracknum]->numlanes = 6;	//Set the number of lanes
+				break;
+			}
 		}
 
 //Load an audio file
