@@ -260,6 +260,9 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 					eof_ini_star_power_tag_present = 1;	//MIDI import won't have to convert solos phrases to star power, EOF's notation for star power style phrases was found
 				}
 			}
+			else if(!ustricmp(eof_import_ini_setting[i].type, "sysex_open_bass") || !ustricmp(eof_import_ini_setting[i].type, "sysex_pro_slide") || !ustricmp(eof_import_ini_setting[i].type, "sysex_high_hat_ctrl") || !ustricmp(eof_import_ini_setting[i].type, "sysex_rimshot") || !ustricmp(eof_import_ini_setting[i].type, "sysex_slider"))
+			{	//These Sysex indicators are only used by Phase Shift
+			}
 
 			/* for custom settings or difficulty strings */
 			else
@@ -273,8 +276,8 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 						if(value >= 0)
 						{	//Only store the difficulty if it isn't negative (-1 means empty track)
 							sp->track[j]->difficulty = value;
-							setting_stored = 1;
 						}
+						setting_stored = 1;	//Consider this INI tag handled (if it was -1, it will be dropped instead of being stored as a custom INI tag)
 						break;
 					}
 				}

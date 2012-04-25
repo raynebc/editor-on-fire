@@ -23,7 +23,8 @@ prompting for each that is encountered.  Each event in
 the stored MIDI tracks is stored in high precision
 millisecond timing, and is saved to the output MIDI
 during project save conforming to the chart's tempo
-map.
+map.  Stored tracks can be added and deleted from the
+"Song>Manage raw MIDI tracks" dialog menu.
 
 *Added a Guitar Hero color set option in Preferences.
 

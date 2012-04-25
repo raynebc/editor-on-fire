@@ -18,7 +18,6 @@ int eof_chdir(const char * dir)
 	#else
 		return chdir(dir);
 	#endif
-	return -1;
 }
 
 int eof_mkdir(const char * dir)
@@ -32,7 +31,6 @@ int eof_mkdir(const char * dir)
 	#else
 		return mkdir(dir, 0777);
 	#endif
-	return -1;
 }
 
 int eof_system(const char * command)
@@ -46,7 +44,6 @@ int eof_system(const char * command)
 	#else
 		return system(command);
 	#endif
-	return -1;
 }
 
 void * eof_buffer_file(const char * fn, char appendnull)
