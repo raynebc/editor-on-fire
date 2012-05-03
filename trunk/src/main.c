@@ -3108,8 +3108,11 @@ int eof_initialize(int argc, char * argv[])
 	eof_load_config("eof.cfg");
 
 	/* reset songs path */
-	get_executable_name(eof_songs_path, 1024);
-	replace_filename(eof_songs_path, eof_songs_path, "", 1024);
+	if(eof_songs_path[0] == '\0')
+	{	//If the user-specified song folder couldn't be loaded from the config file above
+		get_executable_name(eof_songs_path, 1024);	//Set it to EOF's program file folder
+		replace_filename(eof_songs_path, eof_songs_path, "", 1024);
+	}
 
 	eof_zoom_backup = eof_zoom;	//Save this because it will be over-written in eof_set_display_mode()
 	if((eof_zoom_backup <= 0) || (eof_zoom_backup > EOF_NUM_ZOOM_LEVELS))

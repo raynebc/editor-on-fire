@@ -5272,14 +5272,17 @@ int eof_menu_note_toggle_hi_hat_open(void)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
-			if(eof_get_note_note(eof_song, eof_selected_track, i) & 4)
-			{	//If this drum note contains a yellow gem
+			if(eof_get_note_note(eof_song, eof_selected_track, i) & 6)
+			{	//If this drum note contains a yellow gem (or red gem, to allow for notation during disco flips)
 				if(!u)
 				{	//Make a back up before changing the first note
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					u = 1;
 				}
-				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,1,0);	//Automatically mark as a cymbal
+				if(eof_get_note_note(eof_song, eof_selected_track, i) & 4)
+				{	//If this is a yellow gem
+					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,1,0);	//Automatically mark as a cymbal
+				}
 				if(eof_drum_modifiers_affect_all_difficulties)
 				{	//If the user wants to apply this change to notes at this position among all difficulties
 					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL,0,0);	//Clear the pedal controlled hi hat status
@@ -5314,14 +5317,17 @@ int eof_menu_note_toggle_hi_hat_pedal(void)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
-			if(eof_get_note_note(eof_song, eof_selected_track, i) & 4)
-			{	//If this drum note contains a yellow gem
+			if(eof_get_note_note(eof_song, eof_selected_track, i) & 6)
+			{	//If this drum note contains a yellow gem (or red gem, to allow for notation during disco flips)
 				if(!u)
 				{	//Make a back up before changing the first note
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					u = 1;
 				}
-				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,1,0);	//Automatically mark as a cymbal
+				if(eof_get_note_note(eof_song, eof_selected_track, i) & 4)
+				{	//If this is a yellow gem
+					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,1,0);	//Automatically mark as a cymbal
+				}
 				if(eof_drum_modifiers_affect_all_difficulties)
 				{	//If the user wants to apply this change to notes at this position among all difficulties
 					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN,0,0);	//Clear the open hi hat status
@@ -5356,14 +5362,17 @@ int eof_menu_note_toggle_hi_hat_sizzle(void)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
 		{	//If this note is in the currently active track and is selected
-			if(eof_get_note_note(eof_song, eof_selected_track, i) & 4)
-			{	//If this drum note contains a yellow gem
+			if(eof_get_note_note(eof_song, eof_selected_track, i) & 6)
+			{	//If this drum note contains a yellow gem (or red gem, to allow for notation during disco flips)
 				if(!u)
 				{	//Make a back up before changing the first note
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					u = 1;
 				}
-				eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,1,0);	//Automatically mark as a cymbal
+				if(eof_get_note_note(eof_song, eof_selected_track, i) & 4)
+				{	//If this is a yellow gem
+					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL,1,0);	//Automatically mark as a cymbal
+				}
 				if(eof_drum_modifiers_affect_all_difficulties)
 				{	//If the user wants to apply this change to notes at this position among all difficulties
 					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL,0,0);	//Clear the pedal controlled hi hat status

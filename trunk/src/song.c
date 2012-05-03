@@ -404,9 +404,12 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 		{	//If this is a drum track
 			if(((tp->note[i-1]->note & 4) == 0) || ((tp->note[i-1]->flags & EOF_NOTE_FLAG_Y_CYMBAL) == 0))
 			{	//If this note does not have a yellow cymbal, clear flags that are specific to yellow cymbals
-				tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;
-				tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;
-				tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_SIZZLE;
+				if((tp->note[i-1]->note & 2) == 0)
+				{	//If this note also doesn't have a red note (allowing for hi hat notation during disco flip)
+					tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;
+					tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;
+					tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_SIZZLE;
+				}
 			}
 			if((tp->note[i-1]->note & 2) == 0)
 			{	//If this note does not have a red tom, clear flags that are specific to that lane
@@ -4819,7 +4822,7 @@ char eof_track_has_cymbals(EOF_SONG *sp, unsigned long track)
 			if(	((note & 4) && ((noteflags & EOF_NOTE_FLAG_Y_CYMBAL))) ||
 				((note & 8) && ((noteflags & EOF_NOTE_FLAG_B_CYMBAL))) ||
 				((note & 16) && ((noteflags & EOF_NOTE_FLAG_G_CYMBAL))))
-			{	//If this note contains a yellow, blue or purple (green in Rock Band) drum marked with pro drum notation
+			{	//If this note contains a yellow, blue or green drum marked with pro drum notation
 				return 1;	//Track has cymbals
 			}
 		}

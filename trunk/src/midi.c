@@ -670,6 +670,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 				/* write yellow note */
 				if(note & 4)
 				{
+					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 2, vel, 0);
+					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 2, vel, 0);
 					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL))
 					{	//If pro drum notation is in effect and no more yellow drum notes at this note's position are marked as cymbals
 						if(type != EOF_NOTE_SPECIAL)
@@ -678,8 +680,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 							eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_YELLOW_FORCE, vel, 0);
 						}
 					}
-					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 2, vel, 0);
-					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 2, vel, 0);
+				}
+
+				/* write hi hat notation for either red or yellow gems (to allow for notation during disco flips) */
+				if(note & 6)
+				{
 					if(j == EOF_TRACK_DRUM)
 					{	//If this is the drum track, prepare to write drum specific Sysex phrases if necessary
 						if(featurerestriction == 0)

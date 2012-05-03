@@ -97,6 +97,18 @@ int eof_gh_read_tap_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *targe
 	//If an error is detected, -1 is returned
 	//If it is found, it is parsed and the tap sections are added accordingly to the passed EOF_SONG structure as slider sections
 
+struct QBlyric *eof_gh_read_section_names(filebuffer *fb);
+	//Searches the buffered file for section markers, returning a linked list of section name and checksum pairs, to be used for QB or NOTE GH import
+	//NULL is returned on error
+int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp);
+	//Searches the buffered file for section markers and loads them into the specified EOF_SONG structure (NOTE format GH file)
+	//If sections are not found, 0 is returned
+	//If an error is detected, -1 is returned
+int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp);
+	//Searches the buffered file for section markers and loads them into the specified EOF_SONG structure (QB format GH file)
+	//If sections are not found, 0 is returned
+	//If an error is detected, -1 is returned
+
 int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, gh_section *target, unsigned long qbindex, char forcestrum);
 	//Searches for the target instrument section in the buffered file (QB format GH file)
 	//songname is a string representing the song's name, which is a prefix for each section name

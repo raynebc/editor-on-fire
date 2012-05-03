@@ -925,6 +925,8 @@ set_window_title(debugtext);
 			{	//If this tempo change is ahead of the current delta position
 				if(eof_import_bpm_events->event[ctr]->pos < nextanchor)
 				{	//If this tempo change occurs before the next beat marker
+					snprintf(eof_log_string, sizeof(eof_log_string), "\tMid beat tempo change at delta position %lu", eof_import_bpm_events->event[ctr]->pos);
+					eof_log(eof_log_string, 1);
 					nextanchor = eof_import_bpm_events->event[ctr]->pos;	//Store its delta time
 					midbeatchange = 1;
 				}
@@ -937,6 +939,8 @@ set_window_title(debugtext);
 			{	//If this TS change is ahead of the current delta position
 				if(eof_import_ts_changes[0]->change[ctr]->pos < nextanchor)
 				{	//If this TS change occurs before the next beat marker or mid-beat tempo change
+					snprintf(eof_log_string, sizeof(eof_log_string), "\tMid beat TS change at delta position %lu", eof_import_ts_changes[0]->change[ctr]->pos);
+					eof_log(eof_log_string, 1);
 					nextanchor = eof_import_ts_changes[0]->change[ctr]->pos;	//store its delta time
 					midbeatchange = 1;
 				}
@@ -2299,7 +2303,7 @@ eof_log("\tThird pass complete", 1);
 		for(k = 0; k < sp->legacy_track[tracknum]->notes; k++)
 		{	//For each note in the drum track
 			if(sp->legacy_track[tracknum]->note[k]->type != EOF_NOTE_SPECIAL)
-			{	//Only process not BRE notes
+			{	//Only process non BRE notes
 				if((sp->legacy_track[tracknum]->note[k]->note & 4) && ((sp->legacy_track[tracknum]->note[k]->flags & EOF_NOTE_FLAG_Y_CYMBAL) == 0))
 				{	//If this note has a yellow gem with the cymbal marker cleared
 					eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],k,EOF_NOTE_FLAG_Y_CYMBAL,0,1);	//Ensure all drum notes at this position have the flag cleared

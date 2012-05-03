@@ -1914,8 +1914,16 @@ int eof_new_chart(char * filename)
 	}
 
 	if((ustrlen(eof_etext) > 0) && (ustrlen(eof_etext2) > 0))
-	{
+	{	//If both the artist and song name are provided, use both in the suggested folder name
 		sprintf(eof_etext4, "%s - %s", eof_etext, eof_etext2);
+	}
+	else if(ustrlen(eof_etext) > 0)
+	{
+		sprintf(eof_etext4, "%s", eof_etext);
+	}
+	else if(ustrlen(eof_etext2) > 0)
+	{
+		sprintf(eof_etext4, "%s", eof_etext2);
 	}
 
 	/* user selects location for new song */
@@ -1925,9 +1933,9 @@ int eof_new_chart(char * filename)
 	eof_file_new_windows_dialog[2].flags = 0;
 	eof_file_new_windows_dialog[3].flags = D_SELECTED;
 	if(eof_popup_dialog(eof_file_new_windows_dialog, 4) == 5)
-	{
+	{	//If the user clicked OK
 		if(eof_file_new_windows_dialog[1].flags & D_SELECTED)
-		{
+		{	//Use Existing Folder
 			eof_render();
 			returnedfolder = ncd_folder_select("Select Folder for Song");
 			if(!returnedfolder)
@@ -1940,12 +1948,12 @@ int eof_new_chart(char * filename)
 			ustrcpy(eof_etext3, returnedfolder);
 		}
 		else if(eof_file_new_windows_dialog[2].flags & D_SELECTED)
-		{
+		{	//Use Source Audio's Folder
 			eof_render();
 			replace_filename(eof_etext3, filename, "", 1024);
 		}
 		else
-		{
+		{	//Create New Folder
 			ustrcpy(eof_etext3, eof_songs_path);
 			ustrcat(eof_etext3, eof_etext4);
 		}
