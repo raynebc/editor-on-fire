@@ -1,4 +1,5 @@
 #include "beat.h"
+#include "event.h"	//For eof_song_add_text_event()
 #include "gh_import.h"
 #include "ini_import.h"	//For eof_import_ini()
 #include "main.h"
@@ -350,7 +351,7 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 	EOF_NOTE *newnote = NULL;
 
 	if(!fb || !sp || !target)
-		return 0;
+		return -1;
 
 #ifdef GH_IMPORT_DEBUG
 	snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Looking for section \"%s\"", target->name);
@@ -496,7 +497,7 @@ int eof_gh_read_sp_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *target
 	unsigned int length;
 
 	if(!fb || !sp || !target)
-		return 0;
+		return -1;
 
 #ifdef GH_IMPORT_DEBUG
 	snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Looking for section \"%s\"", target->name);
@@ -560,7 +561,7 @@ int eof_gh_read_tap_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *targe
 	unsigned long numphrases, phrasesize, dword, ctr, length;
 
 	if(!fb || !sp || !target)
-		return 0;
+		return -1;
 
 #ifdef GH_IMPORT_DEBUG
 	snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Looking for section \"%s\"", target->name);
@@ -1287,6 +1288,9 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 		eof_gh_read_tap_section_note(fb, sp, &eof_gh_tap_sections_note[ctr]);	//Import tap section
 	}
 
+//Read sections
+	eof_gh_read_sections_note(fb, sp);
+
 //Read vocal track
 	eof_gh_read_vocals_note(fb, sp);
 	eof_filebuffer_close(fb);	//Close the file buffer
@@ -1465,7 +1469,7 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 	char buffer[101];
 
 	if(!fb || !sp || !target || !songname)
-		return 0;
+		return -1;
 
 	snprintf(buffer, sizeof(buffer), "%s%s", songname, target->name);
 #ifdef GH_IMPORT_DEBUG
@@ -1587,7 +1591,7 @@ int eof_gh_read_sp_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname
 	char buffer[101];
 
 	if(!fb || !sp || !target || !songname)
-		return 0;
+		return -1;
 
 	snprintf(buffer, sizeof(buffer), "%s%s", songname, target->name);
 #ifdef GH_IMPORT_DEBUG
@@ -1647,7 +1651,7 @@ int eof_gh_read_tap_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songnam
 	char buffer[101];
 
 	if(!fb || !sp || !target || !songname)
-		return 0;
+		return -1;
 
 	snprintf(buffer, sizeof(buffer), "%s%s", songname, target->name);
 #ifdef GH_IMPORT_DEBUG
@@ -1709,7 +1713,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 	char buffer[101], matched;
 
 	if(!fb || !sp || !songname)
-		return 0;
+		return -1;
 
 //Read vocal note positions and pitches
 	snprintf(buffer, sizeof(buffer), "%s_song_vocals", songname);
@@ -1802,7 +1806,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 		}
 		buffer[8] = '\0';	//Null terminate the buffer
 		sscanf(buffer, "%8lX", &checksum);	//Convert the hex string to unsigned decimal format
-		fb->index += 4;	//Skip ahead 5 bytes, where the lyric text is expected
+		fb->index += 4;	//Skip ahead 4 bytes, where the lyric text is expected
 		for(length = 0; fb->index + length < fb->size; length++)	//Count the length of the lyric text
 		{	//Until end of buffer is reached
 			if(fb->buffer[fb->index + length] == '\"')
@@ -2223,9 +2227,263 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 		eof_gh_read_tap_section_qb(fb, sp, songname, &eof_gh_tap_sections_qb[ctr], qbindex);	//Import tap section
 	}
 
+//Read sections
+	eof_gh_read_sections_qb(fb, sp);
+
 //Read vocal track
 	eof_gh_read_vocals_qb(fb, sp, songname, qbindex);
 	eof_filebuffer_close(fb);	//Close the file buffer
 
 	return sp;
+}
+
+struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
+{
+	unsigned long checksum, index2, nameindex;
+	unsigned char sectionid[] = {0x22, 0x0D, 0x0A};	//This hex sequence is between each section name entry
+	char *buffer, checksumbuff[9], *name;
+	struct QBlyric *head = NULL, *tail = NULL, *linkptr = NULL;	//Used to maintain the linked list matching section names with checksums
+
+	eof_log("eof_gh_read_section_names() entered", 1);
+
+	if(!fb)
+		return NULL;
+
+//Find the section names and checksums
+	fb->index = 0;	//Rewind to beginning of file buffer
+	while(eof_filebuffer_find_bytes(fb, sectionid, sizeof(sectionid), 1) > 0)
+	{	//While there are section name entries
+		for(index2 = 1; (index2 <= fb->index) && (fb->buffer[fb->index - index2] != '\"'); index2++);	//Find the opening quotation mark for this string
+		if(index2 > fb->index)
+		{	//If the opening quotation mark wasn't found
+			return NULL;
+		}
+		if(fb->index - index2 >= 9)
+		{	//If there is enough buffered data before this position to allow for an 8 character checksum and a space character
+			//Find and parse the checksum for this section name
+			fb->index = fb->index - index2 - 9;	//Seek to the position of the section name checksum
+			if(eof_filebuffer_memcpy(fb, checksumbuff, 8) == EOF)	//Read the checksum into a buffer
+			{
+				eof_log("\t\tError:  Could not read section name checksum", 1);
+				return NULL;
+			}
+			checksumbuff[8] = '\0';	//Null terminate the buffer
+			sscanf(checksumbuff, "%8lX", &checksum);	//Convert the hex string to unsigned decimal format
+			if(fb->buffer[fb->index] != ' ')
+			{	//If the expected space character is not found at this position
+				eof_log("\t\tError:  Malformed section name checksum", 1);
+				return NULL;
+			}
+			fb->index += 2;	//Seek past the space character and opening quotation mark
+
+			//Parse the section name string
+			buffer = malloc(index2);		//This buffer will be large enough to contain the string
+			if(buffer == NULL)
+			{	//If the memory couldn't be allocated
+				eof_log("\t\tError:  Cannot allocate memory", 1);
+				return NULL;
+			}
+			if(eof_filebuffer_memcpy(fb, buffer, index2 - 1) == EOF)	//Read the section name string into a buffer
+			{
+				eof_log("\t\tError:  Could not read section name text", 1);
+				return NULL;
+			}
+			buffer[index2 - 1] = '\0';	//Terminate the string
+			nameindex = 0;	//This is the index into the buffer that will point ahead of any leading gibberish the section name string may contain
+			if(strlen(buffer) >= 2)
+			{	//If this string is at least two characters long
+				if(buffer[nameindex] == '\\')
+				{	//If this string begins with a backslash
+					nameindex++;
+					if(buffer[nameindex] == 'L')
+					{	//If it follows with an 'L' character, this is a lyric entry string
+						free(buffer);
+						fb->index++;	//Seek past the closing quotation mark in this section name to allow the next loop iteration to look for the next section name
+						continue;	//Skip it
+					}
+					nameindex++;	//Otherwise skip the character that follows the backslash (expected to be the 'u' character)
+				}
+				if(buffer[nameindex] == '[')
+				{	//If there is an open bracket
+					nameindex++;	//Skip past it
+					while(buffer[nameindex] != ']')
+					{	//Until the closing bracket is found
+						if(buffer[nameindex] == '\0')
+						{	//If the end of the string is reached unexpectedly
+							eof_log("\t\tError:  Malformed section name string", 1);
+							return NULL;
+						}
+						nameindex++;
+					}
+					nameindex++;	//Skip past the closing bracket
+				}
+				name = malloc(strlen(&buffer[nameindex]) + 1);	//Allocate a new buffer large enough to store the important part of the section name string
+				if(!name)
+				{	//If the memory couldn't be allocated
+					eof_log("\t\tError:  Cannot allocate memory", 1);
+					free(buffer);
+					return NULL;
+				}
+				strcpy(name, &buffer[nameindex]);	//Copy the clean section name into the new buffer
+			}
+			free(buffer);	//Free the temporary buffer that stored the raw section name string
+			buffer = NULL;
+
+#ifdef GH_IMPORT_DEBUG
+			snprintf(eof_log_string, sizeof(eof_log_string), "\t\tFound section name = \"%s\"\tchecksum = 0x%08lX", name, checksum);
+			eof_log(eof_log_string, 1);
+#endif
+
+			//Store the section name and checksum pair in the linked list
+			linkptr = malloc(sizeof(struct QBlyric));	//Allocate a new link, initialize it and insert it into the linked list
+			if(!linkptr)
+			{
+				eof_log("\t\tError:  Cannot allocate memory", 1);
+				return NULL;
+			}
+			linkptr->checksum = checksum;
+			linkptr->text = name;
+			linkptr->next = NULL;
+			if(head == NULL)
+			{	//If the list is empty
+				head = linkptr;	//The new link is now the first link in the list
+			}
+			else if(tail != NULL)
+			{	//If there is already a link at the end of the list
+				tail->next = linkptr;	//Point it forward to the new link
+			}
+			tail = linkptr;	//The new link is the new tail of the list
+
+			fb->index++;	//Seek past the closing quotation mark in this section name to allow the next loop iteration to look for the next section name
+			if(fb->index + 4 < fb->size)
+			{	//If there are at least four more bytes in the buffer
+				if((fb->buffer[fb->index] == 0x0D) && (fb->buffer[fb->index + 1] == 0x0A) && (fb->buffer[fb->index + 2] == 0x0D) && (fb->buffer[fb->index + 3] == 0x0A))
+				{	//If those bytes are 0x0D, 0x0A, 0x0D, 0x0A
+					break;	//This marks the end of the section names
+				}
+			}
+		}//If there is enough buffered data before this position to allow for an 8 character checksum and a space character
+	}//While there are section name entries
+
+	return head;
+}
+
+int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
+{
+	unsigned long numsections, checksum, dword, ctr, ctr2;
+	char matched;
+	struct QBlyric *head = NULL, *linkptr = NULL;	//Used to maintain the linked list matching section names with checksums
+
+	if(!fb || !sp)
+		return -1;
+
+	head = eof_gh_read_section_names(fb);	//Read the section names and their checksums into a linked list
+	if(head == NULL)
+	{	//If there were no valid section names found
+		return -1;
+	}
+
+//Find the section positions
+	fb->index = 0;	//Rewind to beginning of file buffer
+	if(eof_filebuffer_find_checksum(fb, eof_gh_checksum("guitarmarkers")))	//Seek one byte past the "guitarmarkers" header
+	{	//If the "guitarmarkers" section couldn't be found
+		eof_log("Error:  Failed to locate \"guitarmarkers\" header", 1);
+		return 0;
+	}
+	if(eof_filebuffer_get_dword(fb, &numsections))	//Read the number of sections
+	{	//If there was an error reading the next 4 byte value
+		eof_log("Error:  Could not read number of sections", 1);
+		return -1;
+	}
+#ifdef GH_IMPORT_DEBUG
+		snprintf(eof_log_string, sizeof(eof_log_string), "\t\tNumber of sections = %lu", numsections);
+		eof_log(eof_log_string, 1);
+#endif
+	fb->index += 4;	//Seek past the next 4 bytes, which is a checksum for the game-specific guitarmarkers subheader
+	if(eof_filebuffer_get_dword(fb, &dword))	//Read the size of the section
+	{	//If there was an error reading the next 4 byte value
+		eof_log("Error:  Could not read section size", 1);
+		return -1;
+	}
+	if(dword != 8)
+	{	//Each section is expected to be 8 bytes long
+		eof_log("Error:  Section size is not 8", 1);
+		return -1;
+	}
+	for(ctr = 0; ctr < numsections; ctr++)
+	{	//For each section in the chart file
+		if(eof_filebuffer_get_dword(fb, &dword))
+		{	//If there was an error reading the next 4 byte value
+			eof_log("Error:  Could not read section timestamp", 1);
+			return -1;
+		}
+		if(eof_filebuffer_get_dword(fb, &checksum))
+		{	//If there was an error reading the next 4 byte value
+			eof_log("Error:  Could not read section checksum", 1);
+			return -1;
+		}
+
+//Match this section position with a name
+		matched = 0;
+		for(linkptr = head; (linkptr != NULL) && !matched; linkptr = linkptr->next)
+		{	//For each link in the lyric checksum list (until a match has been made)
+			if(linkptr->checksum == checksum)
+			{	//If this checksum matches the one in the list
+				for(ctr2 = 0; ctr2 < sp->beats; ctr2++)
+				{	//For each beat in the chart
+					if(sp->beat[ctr2]->pos == dword)
+					{	//If the section name's position matches that of this beat
+#ifdef GH_IMPORT_DEBUG
+						snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\tSection:  Position = %lums, checksum = 0x%08lX: %s", dword, checksum, linkptr->text);
+						eof_log(eof_log_string, 1);
+#endif
+						char buffer2[256];
+						snprintf(buffer2, sizeof(buffer2), "[section %s]", linkptr->text);	//Alter the section name formatting
+						eof_song_add_text_event(sp, ctr2, buffer2, 0, 0);	//Add the text event
+						break;
+					}
+				}
+			}
+		}
+	}//For each section in the chart file
+
+//Cleanup
+	linkptr = head;
+	while(linkptr != NULL)
+	{	//While there are links remaining in the list
+		free(linkptr->text);
+		head = linkptr->next;	//The new head link will be the next link
+		free(linkptr);			//Free the head link
+		linkptr = head;			//Advance to the new head link
+	}
+
+	return 1;
+}
+
+int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
+{
+	unsigned long numsections, checksum, dword, ctr, ctr2;
+	char matched;
+	struct QBlyric *head = NULL, *linkptr = NULL;	//Used to maintain the linked list matching section names with checksums
+
+	if(!fb || !sp)
+		return -1;
+
+	head = eof_gh_read_section_names(fb);	//Read the section names and their checksums into a linked list
+	if(head == NULL)
+	{	//If there were no valid section names found
+		return -1;
+	}
+
+//Cleanup
+	linkptr = head;
+	while(linkptr != NULL)
+	{	//While there are links remaining in the list
+		free(linkptr->text);
+		head = linkptr->next;	//The new head link will be the next link
+		free(linkptr);			//Free the head link
+		linkptr = head;			//Advance to the new head link
+	}
+
+	return 1;
 }

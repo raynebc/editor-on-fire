@@ -4653,7 +4653,7 @@ void eof_mark_edited_note_as_special_hi_hat(EOF_SONG *sp, unsigned long track, u
 				eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN,0,0);	//Clear open hi hat status on all drum notes at this position
 				eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL,0,0);	//Clear pedal hi hat status on all drum notes at this position
 				eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,EOF_DRUM_NOTE_FLAG_Y_SIZZLE,0,0);		//Clear sizzle hi hat status on all drum notes at this position
-				eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,eof_mark_drums_as_hi_hat,1,0);	//Set the selected hi hat status on all drum notes at this position
+				eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,eof_mark_drums_as_hi_hat,1,0);			//Set the selected hi hat status on all drum notes at this position
 			}
 			else
 			{	//Just apply it to the new note
