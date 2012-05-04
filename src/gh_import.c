@@ -2299,7 +2299,7 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 					{	//If it follows with an 'L' character, this is a lyric entry string
 						free(buffer);
 						fb->index++;	//Seek past the closing quotation mark in this section name to allow the next loop iteration to look for the next section name
-						continue;	//Skip it
+						continue;		//Skip it
 					}
 					nameindex++;	//Otherwise skip the character that follows the backslash (expected to be the 'u' character)
 				}
@@ -2311,6 +2311,7 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 						if(buffer[nameindex] == '\0')
 						{	//If the end of the string is reached unexpectedly
 							eof_log("\t\tError:  Malformed section name string", 1);
+							free(buffer);
 							return NULL;
 						}
 						nameindex++;
@@ -2325,36 +2326,38 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 					return NULL;
 				}
 				strcpy(name, &buffer[nameindex]);	//Copy the clean section name into the new buffer
-			}
-			free(buffer);	//Free the temporary buffer that stored the raw section name string
-			buffer = NULL;
 
 #ifdef GH_IMPORT_DEBUG
-			snprintf(eof_log_string, sizeof(eof_log_string), "\t\tFound section name = \"%s\"\tchecksum = 0x%08lX", name, checksum);
-			eof_log(eof_log_string, 1);
+				snprintf(eof_log_string, sizeof(eof_log_string), "\t\tFound section name = \"%s\"\tchecksum = 0x%08lX", name, checksum);
+				eof_log(eof_log_string, 1);
 #endif
 
-			//Store the section name and checksum pair in the linked list
-			linkptr = malloc(sizeof(struct QBlyric));	//Allocate a new link, initialize it and insert it into the linked list
-			if(!linkptr)
-			{
-				eof_log("\t\tError:  Cannot allocate memory", 1);
-				return NULL;
-			}
-			linkptr->checksum = checksum;
-			linkptr->text = name;
-			linkptr->next = NULL;
-			if(head == NULL)
-			{	//If the list is empty
-				head = linkptr;	//The new link is now the first link in the list
-			}
-			else if(tail != NULL)
-			{	//If there is already a link at the end of the list
-				tail->next = linkptr;	//Point it forward to the new link
-			}
-			tail = linkptr;	//The new link is the new tail of the list
+				//Store the section name and checksum pair in the linked list
+				linkptr = malloc(sizeof(struct QBlyric));	//Allocate a new link, initialize it and insert it into the linked list
+				if(!linkptr)
+				{
+					eof_log("\t\tError:  Cannot allocate memory", 1);
+					free(buffer);
+					free(name);
+					return NULL;
+				}
+				linkptr->checksum = checksum;
+				linkptr->text = name;
+				linkptr->next = NULL;
+				if(head == NULL)
+				{	//If the list is empty
+					head = linkptr;	//The new link is now the first link in the list
+				}
+				else if(tail != NULL)
+				{	//If there is already a link at the end of the list
+					tail->next = linkptr;	//Point it forward to the new link
+				}
+				tail = linkptr;	//The new link is the new tail of the list
+			}//If this string is at least two characters long
 
 			fb->index++;	//Seek past the closing quotation mark in this section name to allow the next loop iteration to look for the next section name
+			free(buffer);	//Free the temporary buffer that stored the raw section name string
+			buffer = NULL;
 			if(fb->index + 4 < fb->size)
 			{	//If there are at least four more bytes in the buffer
 				if((fb->buffer[fb->index] == 0x0D) && (fb->buffer[fb->index + 1] == 0x0A) && (fb->buffer[fb->index + 2] == 0x0D) && (fb->buffer[fb->index + 3] == 0x0A))
@@ -2462,8 +2465,8 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 
 int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 {
-	unsigned long numsections, checksum, dword, ctr, ctr2;
-	char matched;
+///	unsigned long numsections, checksum, dword, ctr, ctr2;
+///	char matched;
 	struct QBlyric *head = NULL, *linkptr = NULL;	//Used to maintain the linked list matching section names with checksums
 
 	if(!fb || !sp)
