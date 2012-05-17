@@ -105,7 +105,11 @@ to try to open a file that wasn't recognized as an OGG
 file.
 
 *Added the option to mark new yellow drum gems as open,
-pedal or sizzle hi hat notes.
+pedal or sizzle hi hat notes, for use in Phase Shift.
+Red drum gems can also be marked with these notations,
+but this should only be done when authoring hi hat notes
+during a disco flip (snare and hi hat lanes are swapped
+for playability reasons).
 
 *Made improvements to the waveform graph by improving its
 rendering performance and allowing the 3 colors used to
