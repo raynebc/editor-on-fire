@@ -21,6 +21,7 @@
 static EOF_MIDI_EVENT * eof_midi_event[EOF_MAX_MIDI_EVENTS];
 static unsigned long eof_midi_events = 0;
 static char eof_midi_note_status[128] = {0};	//Tracks the on/off status of notes 0 through 127, maintained by eof_add_midi_event()
+unsigned long enddelta = 0;	//If this becomes nonzero, it defines the delta position of a user-defined end event
 
 void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int channel)
 {	//To avoid rounding issues during timing conversion, this should be called with the MIDI tick position of the event being stored
@@ -30,6 +31,9 @@ void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int
 		return;	//If attempting to write a note off for a note that is not even on, don't do it
 	if((type == 0x90) && (eof_midi_note_status[note] == 1))
 		return;	//If attempting to write a note on for a note that is already on, don't do it
+
+	if(enddelta && (pos > enddelta))
+		return;	//If attempting to write an event that exceeds a user-defined end event, don't do it
 
 	eof_midi_event[eof_midi_events] = malloc(sizeof(EOF_MIDI_EVENT));
 	if(eof_midi_event[eof_midi_events])
@@ -57,6 +61,9 @@ void eof_add_midi_lyric_event(unsigned long pos, char * text)
 {	//To avoid rounding issues during timing conversion, this should be called with the MIDI tick position of the event being stored
 	eof_log("eof_add_midi_lyric_event() entered", 2);	//Only log this if verbose logging is on
 
+	if(enddelta && (pos > enddelta))
+		return;	//If attempting to write an event that exceeds a user-defined end event, don't do it
+
 	if(text)
 	{
 		eof_midi_event[eof_midi_events] = malloc(sizeof(EOF_MIDI_EVENT));
@@ -74,6 +81,9 @@ void eof_add_midi_lyric_event(unsigned long pos, char * text)
 void eof_add_midi_text_event(unsigned long pos, char * text, char allocation)
 {	//To avoid rounding issues during timing conversion, this should be called with the MIDI tick position of the event being stored
 	eof_log("eof_add_midi_lyric_event() entered", 2);	//Only log this if verbose logging is on
+
+	if(enddelta && (pos > enddelta))
+		return;	//If attempting to write an event that exceeds a user-defined end event, don't do it
 
 	if(text)
 	{
@@ -361,7 +371,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 	PACKFILE * fp3 = NULL;					//File pointer for the Expert+ file
 	unsigned long i, j, k;
 	unsigned long ctr;
-	unsigned long delta = 0;
+	unsigned long delta = 0, delta2 = 0;
 	int midi_note_offset = 0;
 	int vel;
 	unsigned long tracknum=0;				//Used to de-obfuscate the track number
@@ -428,6 +438,17 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 	}
 
 	eof_sort_notes(sp);	//Writing efficient on-the-fly HOPO phrasing relies on all notes being sorted
+
+	//Search for a user-defined end event
+	enddelta = 0;	//Assume there is no user-defined end event until one is found
+	for(i = 0; i < sp->text_events; i++)
+	{
+		if(!ustrcmp(sp->text_event[i]->text, "[end]"))
+		{	//If there is an end event defined here
+			enddelta = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);	//Get the delta time of this event
+			break;
+		}
+	}
 
 	if(featurerestriction)
 	{	//If writing a Rock Band compliant MIDI
@@ -674,8 +695,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 2, vel, 0);
 					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL))
 					{	//If pro drum notation is in effect and no more yellow drum notes at this note's position are marked as cymbals
-						if(type != EOF_NOTE_SPECIAL)
-						{	//Write a pro yellow tom marker only if this isn't a BRE note
+						if((type != EOF_NOTE_SPECIAL) && (type == EOF_NOTE_AMAZING))
+						{	//Write a pro yellow tom marker only if this isn't a BRE note, and is an Expert difficulty note
 							eof_add_midi_event(deltapos, 0x90, RB3_DRUM_YELLOW_FORCE, vel, 0);
 							eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_YELLOW_FORCE, vel, 0);
 						}
@@ -722,8 +743,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 				{
 					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_B_CYMBAL))
 					{	//If pro drum notation is in effect and no more blue drum notes at this note's position are marked as cymbals
-						if(type != EOF_NOTE_SPECIAL)
-						{	//Write a pro blue tom marker only if this isn't a BRE note
+						if((type != EOF_NOTE_SPECIAL) && (type == EOF_NOTE_AMAZING))
+						{	//Write a pro blue tom marker only if this isn't a BRE note, and is an Expert difficulty note
 							eof_add_midi_event(deltapos, 0x90, RB3_DRUM_BLUE_FORCE, vel, 0);
 							eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_BLUE_FORCE, vel, 0);
 						}
@@ -737,8 +758,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 				{	//Note: EOF/FoF refer to this note color as purple/orange whereas Rock Band displays it as green
 					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_G_CYMBAL))
 					{	//If pro drum notation is in effect and no more green drum notes at this note's position are marked as cymbals
-						if(type != EOF_NOTE_SPECIAL)
-						{	//Write a pro green tom marker if one isn't already in effect, but only if this isn't a BRE note
+						if((type != EOF_NOTE_SPECIAL) && (type == EOF_NOTE_AMAZING))
+						{	//Write a pro green tom marker only if this isn't a BRE note, and is an Expert difficulty note
 							eof_add_midi_event(deltapos, 0x90, RB3_DRUM_GREEN_FORCE, vel, 0);
 							eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_GREEN_FORCE, vel, 0);
 						}
@@ -1053,7 +1074,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 					deltalength = 1;
 				}
 				if(sp->vocal_track[tracknum]->lyric[i]->note > 0)
-				{	//For the vocal track, store the converted delta times, to allow for artificial padding for lyric phrase markers
+				{
 					eof_add_midi_event(deltapos, 0x90, sp->vocal_track[tracknum]->lyric[i]->note, vel, 0);
 					eof_add_midi_event(deltapos + deltalength, 0x80, sp->vocal_track[tracknum]->lyric[i]->note, vel, 0);
 				}
@@ -1647,40 +1668,46 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 
 		if(whattowrite == 1)
 		{	//If writing a tempo change
-			WriteVarLen(ptr->delta - lastdelta, fp);	//Write this anchor's relative delta time
-			lastdelta=ptr->delta;						//Store this anchor's absolute delta time
+			if(!enddelta || (ptr->delta <= enddelta))
+			{	//Only process this if it occurs at or before the end event
+				WriteVarLen(ptr->delta - lastdelta, fp);	//Write this anchor's relative delta time
+				lastdelta=ptr->delta;						//Store this anchor's absolute delta time
 
-			ppqn = ((double) 60000000.0 / ptr->BPM) + 0.5;	//Convert BPM to ppqn, rounding up
-			pack_putc(0xFF, fp);					//Write Meta Event 0x51 (Set Tempo)
-			pack_putc(0x51, fp);
-			pack_putc(0x03, fp);					//Write event length of 3
-			pack_putc((ppqn & 0xFF0000) >> 16, fp);	//Write high order byte of ppqn
-			pack_putc((ppqn & 0xFF00) >> 8, fp);	//Write middle byte of ppqn
-			pack_putc((ppqn & 0xFF), fp);			//Write low order byte of ppqn
+				ppqn = ((double) 60000000.0 / ptr->BPM) + 0.5;	//Convert BPM to ppqn, rounding up
+				pack_putc(0xFF, fp);					//Write Meta Event 0x51 (Set Tempo)
+				pack_putc(0x51, fp);
+				pack_putc(0x03, fp);					//Write event length of 3
+				pack_putc((ppqn & 0xFF0000) >> 16, fp);	//Write high order byte of ppqn
+				pack_putc((ppqn & 0xFF00) >> 8, fp);	//Write middle byte of ppqn
+				pack_putc((ppqn & 0xFF), fp);			//Write low order byte of ppqn
+			}
 			ptr=ptr->next;							//Iterate to next anchor
 		}
 		else if(eof_use_ts)
 		{	//If writing a TS change
-			WriteVarLen(tslist->change[current_ts]->pos - lastdelta, fp);	//Write this time signature's relative delta time
-			lastdelta=tslist->change[current_ts]->pos;						//Store this time signature's absolute delta time
+			if(!enddelta || (tslist->change[current_ts]->pos <= enddelta))
+			{	//Only process this if it occurs at or before the end event
+				WriteVarLen(tslist->change[current_ts]->pos - lastdelta, fp);	//Write this time signature's relative delta time
+				lastdelta=tslist->change[current_ts]->pos;						//Store this time signature's absolute delta time
 
-			for(i=0;i<=8;i++)
-			{	//Convert the denominator into the power of two required to write into the MIDI event
-				if(tslist->change[current_ts]->den >> i == 1)	//if 2 to the power of i is the denominator
-					break;
-			}
-			if(tslist->change[current_ts]->den >> i != 1)
-			{	//If the loop ended before the appropriate value was found
-				i = 2;	//An unsupported time signature was somehow set, change the denominator to 4
-			}
+				for(i=0;i<=8;i++)
+				{	//Convert the denominator into the power of two required to write into the MIDI event
+					if(tslist->change[current_ts]->den >> i == 1)	//if 2 to the power of i is the denominator
+						break;
+				}
+				if(tslist->change[current_ts]->den >> i != 1)
+				{	//If the loop ended before the appropriate value was found
+					i = 2;	//An unsupported time signature was somehow set, change the denominator to 4
+				}
 
-			pack_putc(0xFF, fp);							//Write Meta Event 0x58 (Time Signature)
-			pack_putc(0x58, fp);
-			pack_putc(0x04, fp);							//Write event length of 4
-			pack_putc(tslist->change[current_ts]->num, fp);	//Write the numerator
-			pack_putc(i, fp);								//Write the denominator
-			pack_putc(24, fp);								//Write the metronome interval (not used by EOF)
-			pack_putc(8, fp);								//Write the number of 32nd notes per 24 ticks (not used by EOF)
+				pack_putc(0xFF, fp);							//Write Meta Event 0x58 (Time Signature)
+				pack_putc(0x58, fp);
+				pack_putc(0x04, fp);							//Write event length of 4
+				pack_putc(tslist->change[current_ts]->num, fp);	//Write the numerator
+				pack_putc(i, fp);								//Write the denominator
+				pack_putc(24, fp);								//Write the metronome interval (not used by EOF)
+				pack_putc(8, fp);								//Write the number of 32nd notes per 24 ticks (not used by EOF)
+			}
 			current_ts++;									//Iterate to next TS change
 		}
 	}
@@ -1817,19 +1844,22 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 
 			//Write the note on event
 			delta = eof_ConvertToDeltaTime(sp->beat[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
-			WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
-			lastdelta = delta;			//Store this event's absolute delta time
-			pack_putc(0x90, fp);			//MIDI event 0x9 (note on), channel 0
-			pack_putc(note_to_write, fp);		//Note 12 or 13
-			pack_putc(100, fp);			//Pre-determined velocity
+			delta2 = eof_ConvertToDeltaTime(sp->beat[i]->pos + length_to_write,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
+			if(!enddelta || ((delta <= enddelta) && (delta2 <= enddelta)))
+			{	//Only write this beat marker if it starts and stops before the end event
+				WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
+				lastdelta = delta;					//Store this event's absolute delta time
+				pack_putc(0x90, fp);				//MIDI event 0x9 (note on), channel 0
+				pack_putc(note_to_write, fp);		//Note 12 or 13
+				pack_putc(100, fp);			//Pre-determined velocity
 
-			//Write the note off event
-			delta = eof_ConvertToDeltaTime(sp->beat[i]->pos + length_to_write,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION);
-			WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
-			lastdelta = delta;			//Store this event's absolute delta time
-			pack_putc(0x80, fp);			//MIDI event 0x8 (note off), channel 0
-			pack_putc(note_to_write, fp);		//Note 12 or 13
-			pack_putc(100, fp);			//Pre-determined velocity
+				//Write the note off event
+				WriteVarLen(delta2-lastdelta, fp);	//Write this event's relative delta time
+				lastdelta = delta2;					//Store this event's absolute delta time
+				pack_putc(0x80, fp);				//MIDI event 0x8 (note off), channel 0
+				pack_putc(note_to_write, fp);		//Note 12 or 13
+				pack_putc(100, fp);					//Pre-determined velocity
+			}
 
 			//Increment to the next beat
 			beat_counter++;
@@ -2100,6 +2130,16 @@ unsigned long eof_ConvertToDeltaTime(double realtime,struct Tempo_change *anchor
 //By using NewCreature's formula:	realtime = (delta / divisions) * (60000.0 / bpm)
 //The formula for delta is:		delta = realtime * divisions * bpm / 60000
 //	delta+=(unsigned long)((temptime * (double)timedivision * temp->BPM / (double)60000.0 + (double)0.5));			//Add .5 so that the delta counter is rounded to the nearest 1
+
+//Add logic so that if the calculated delta time is 1 delta away from lining up with a beat marker (based on time division), adjust to match
+	if((delta % EOF_DEFAULT_TIME_DIVISION) == (EOF_DEFAULT_TIME_DIVISION - 1))
+	{	//If the delta time is 1 tick before a beat marker
+		delta++;
+	}
+	else if((delta % EOF_DEFAULT_TIME_DIVISION) == 1)
+	{	//If the delta time is 1 tick after a beat marker
+		delta--;
+	}
 
 	return delta;
 }
