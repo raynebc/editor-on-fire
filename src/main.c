@@ -165,6 +165,7 @@ int         eof_song_loaded = 0;	//The boolean condition that a chart and its au
 //int         eof_first_note = 0;
 int         eof_last_note = 0;
 int         eof_last_midi_offset = 0;
+PACKFILE *  eof_recovery = NULL;
 
 /* mouse control data */
 int         eof_selected_control = -1;
@@ -3035,7 +3036,7 @@ int eof_initialize(int argc, char * argv[])
 	eof_log("eof_initialize() entered", 1);
 
 	int i, eof_zoom_backup;
-	char temp_filename[1024] = {0};
+	char temp_filename[1024] = {0}, recovered = 0;
 
 	if(!argv)
 	{
@@ -3306,6 +3307,74 @@ int eof_initialize(int argc, char * argv[])
 	memset(&eof_selection, 0, sizeof(EOF_SELECTION_DATA));
 	eof_selection.current = EOF_MAX_NOTES - 1;
 
+	eof_log("\tInitializing audio", 1);
+	eof_mix_init();
+	if(!eof_soft_cursor)
+	{
+		if(show_os_cursor(2) < 0)
+		{
+			eof_soft_cursor = 1;
+		}
+	}
+	gametime_init(100); // 100hz timer
+
+	MIDIqueue=MIDIqueuetail=NULL;	//Initialize the MIDI queue as empty
+	set_volume(eof_global_volume, eof_global_volume);
+
+	/* check for a previous crash condition of EOF */
+	eof_log("\tChecking for crash recovery files", 1);
+	if(exists("eof.recover.on"))
+	{	//If the recovery status file is present
+		delete_file("eof.recover.on");	//Try to delete the file
+		if(!exists("eof.recover.on"))
+		{	//If the file no longer exists, it is not open by another EOF instance
+			if(exists("eof.recover"))
+			{	//If the recovery file exists
+				char *buffer = eof_buffer_file("eof.recover", 1);	//Read its contents into a NULL terminated string buffer
+				char *ptr = NULL;
+				if(buffer)
+				{	//If the file could buffer
+					ustrtok(buffer, "\r\n");	//Split each line into NULL separated strings
+					if(exists(buffer))
+					{	//If the recovery file contained the name of an undo file that exists
+						if(alert(NULL, "Recover crashed project from last undo state?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+						{	//If user opts to recover from a crashed EOF instance
+							eof_log("\t\tLoading last undo state", 1);
+							eof_song = eof_load_song(buffer);
+							if(!eof_song)
+							{
+								allegro_message("Unable to load last undo state. File could be corrupt!");
+								return 0;
+							}
+							ptr = ustrtok(NULL, "\r\n[]");	//Get the second line (the project file path)
+							ustrcpy(eof_filename, ptr);		//Set the full project path
+							replace_filename(eof_last_eof_path, eof_filename, "", 1024);	//Set the last loaded song path
+							ustrcpy(eof_loaded_song_name, get_filename(eof_filename));	//Set the project filename
+							replace_filename(eof_song_path, eof_filename, "", 1024);	//Set the project folder path
+							append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);	//Construct the full OGG path
+							if(!eof_load_ogg(temp_filename))
+							{
+								allegro_message("Failed to load OGG!");
+								return 0;
+							}
+							eof_song_loaded = 1;
+							eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
+							recovered = 1;	//Remember that a file was recovered so an undo state can be made after the call to eof_init_after_load()
+						}
+
+						delete_file("eof.recover");
+					}
+					free(buffer);
+				}
+			}
+			eof_recovery = pack_fopen("eof.recover.on", "w");	//Open the recovery active file for writing
+		}
+	}
+	else
+	{
+		eof_recovery = pack_fopen("eof.recover.on", "w");	//Open the recovery active file for writing
+	}
+
 	/* see if we are opening a file on launch */
 	for(i = 1; i < argc; i++)
 	{
@@ -3402,29 +3471,20 @@ int eof_initialize(int argc, char * argv[])
 			{	//Launch new chart wizard via command line
 				eof_new_chart(argv[i]);
 			}
-
-			if(eof_song_loaded)
-			{	//The command line load succeeded, perform some common initialization
-				eof_init_after_load(0);	//Initialize variables
-				eof_cursor_visible = 1;
-				eof_pen_visible = 1;
-				show_mouse(NULL);
-			}
 		}
 	}
-	eof_log("\tInitializing audio", 1);
-	eof_mix_init();
-	if(!eof_soft_cursor)
-	{
-		if(show_os_cursor(2) < 0)
-		{
-			eof_soft_cursor = 1;
+
+	if(eof_song_loaded)
+	{	//The command line load succeeded (or a project was recovered), perform some common initialization
+		eof_init_after_load(0);	//Initialize variables
+		eof_cursor_visible = 1;
+		eof_pen_visible = 1;
+		show_mouse(NULL);
+		if(recovered)
+		{	//If a project was recovered
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
 		}
 	}
-	gametime_init(100); // 100hz timer
-
-	MIDIqueue=MIDIqueuetail=NULL;	//Initialize the MIDI queue as empty
-	set_volume(eof_global_volume, eof_global_volume);
 
 	return 1;
 }
@@ -3501,6 +3561,13 @@ void eof_exit(void)
 	//Stop the logging system
 	eof_log("Logging stopped during program completion", 1);
 	eof_stop_logging();
+
+	//Close the autorecover file if it is open, and delete the auto-recovery status file
+	if(eof_recovery)
+	{	//If this EOF instance is maintaining auto-recovery files
+		pack_fclose(eof_recovery);
+		delete_file("eof.recover.on");
+	}
 }
 
 void eof_process_midi_queue(int pos)
