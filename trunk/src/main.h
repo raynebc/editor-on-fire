@@ -316,6 +316,7 @@ extern EOF_NOTE *  eof_entering_note_note;
 extern EOF_LYRIC *  eof_entering_note_lyric;
 extern int         eof_entering_note;
 extern int         eof_snote;
+extern PACKFILE *  eof_recovery;
 
 /* mouse control data */
 extern int         eof_selected_control;

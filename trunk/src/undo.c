@@ -1,3 +1,4 @@
+#include <allegro.h>
 #include "main.h"
 #include "menu/edit.h"
 #include "dialog.h"
@@ -119,6 +120,18 @@ int eof_undo_add(int type)
 	eof_undo_last_type = type;
 	eof_save_song(eof_song, eof_undo_filename[eof_undo_current_index]);
 	eof_undo_type[eof_undo_current_index] = type;
+	if(eof_recovery)
+	{	//If this EOF instance is maintaining auto-recovery files
+		PACKFILE *fp = pack_fopen("eof.recover", "w");	//Open the recovery definition file for writing
+		if(fp)
+		{	//If the file opened
+			append_filename(eof_temp_filename, eof_song_path, eof_loaded_song_name, 1024);	//Construct the full path to the project file
+			pack_fputs(eof_undo_filename[eof_undo_current_index], fp);						//Write the undo file path
+			pack_fputs("\n", fp);															//Write a newline character
+			pack_fputs(eof_temp_filename, fp);												//Write the project path
+			pack_fclose(fp);
+		}
+	}
 	eof_undo_current_index++;
 	if(eof_undo_current_index >= EOF_MAX_UNDO)
 	{

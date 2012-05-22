@@ -213,6 +213,10 @@ void eof_destroy_song(EOF_SONG * sp)
 	free(sp);
 
 	eof_log("\tProject closed", 1);
+	if(eof_recovery && (sp == eof_song))
+	{	//If this EOF instance is maintaining an auto-recovery file
+		delete_file("eof.recover");	//Delete it when the active project is cleanly closed
+	}
 //	eof_log_level |= 2;	//Enable verbose logging
 }
 
