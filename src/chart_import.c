@@ -108,12 +108,10 @@ EOF_SONG * eof_import_chart(const char * fn)
 	struct FeedbackChart * chart = NULL;
 	EOF_SONG * sp = NULL;
 	int err=0;
-	int i=0;
 	char oggfn[1024] = {0};
 	char searchpath[1024] = {0};
 	char backup_filename[1024] = {0};
 	char oldoggpath[1024] = {0};
-//	char errorcode[100] = "Import failed.  Error #";
 	struct al_ffblk info; // for file search
 	int ret=0;
 
@@ -243,30 +241,28 @@ EOF_SONG * eof_import_chart(const char * fn)
 
 		/* create beat markers */
 		EOF_BEAT_MARKER * new_beat = NULL;
-		unsigned long maxbeat = max_chartpos / chart->resolution;	//Determine how many beats must be created to encompass all tempo changes/text events
+		unsigned long beat, maxbeat = max_chartpos / chart->resolution;	//Determine how many beats must be created to encompass all tempo changes/text events
+		struct dBAnchor *ptr;
+		double curbpm = 120.0;
 		if(max_chartpos % chart->resolution)
 			maxbeat++;
-		for(i = 0; i <= maxbeat; i++)
-		{
+		for(beat = 0; beat <= maxbeat; beat++)
+		{	//For each beat that needs to be created
 			new_beat = eof_song_add_beat(sp);
 			if(new_beat)
-			{
-				new_beat->fpos = chartpos_to_msec(chart, chart->resolution * i);
-				new_beat->pos = new_beat->fpos + 0.5;
-				new_beat->flags |= EOF_BEAT_FLAG_ANCHOR;
+			{	//If the beat was created successfully
+				for(ptr = chart->anchors; ptr != NULL; ptr = ptr->next)
+				{	//For each anchor in the chart
+					if(ptr->chartpos <= chart->resolution * beat)
+					{	//If the anchor is at or before this new beat's position
+						curbpm = ptr->BPM / 1000.0;	//Store this anchor's tempo (which Feedback stores as BPM * 1000)
+					}
+				}
+				new_beat->ppqn = (60000000.0 / curbpm) + 0.5;	//Convert tempo to mpqn
 			}
 		}
 
-		eof_calculate_tempo_map(sp);	//Build the tempo map based on the beat time stamps
-
-		/* unanchor non-anchor beat markers */
-		for(i = 1; i < sp->beats; i++)
-		{
-			if(sp->beat[i]->ppqn == sp->beat[i - 1]->ppqn)
-			{
-				sp->beat[i]->flags ^= EOF_BEAT_FLAG_ANCHOR;
-			}
-		}
+		eof_calculate_beats(sp);		//Build the tempo map based on the tempo changes
 
 		/* fill in notes */
 		struct dbTrack * current_track = chart->tracks;

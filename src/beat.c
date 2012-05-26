@@ -85,6 +85,7 @@ void eof_calculate_beats(EOF_SONG * sp)
 
 	/* calculate the beat length */
 	beat_length = (double)60000 / ((double)60000000.0 / (double)sp->beat[0]->ppqn);
+	sp->beat[0]->flags |= EOF_BEAT_FLAG_ANCHOR;	//The first beat is always an anchor
 	for(i = 1; i < sp->beats; i++)
 	{
 		curpos += beat_length;
@@ -94,6 +95,7 @@ void eof_calculate_beats(EOF_SONG * sp)
 		/* bpm changed */
 		if(sp->beat[i]->ppqn != sp->beat[i - 1]->ppqn)
 		{
+			sp->beat[i]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Set the anchor flag
 			beat_length = (double)60000 / ((double)60000000.0 / (double)sp->beat[i]->ppqn);
 		}
 	}

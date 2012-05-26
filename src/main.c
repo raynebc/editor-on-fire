@@ -297,7 +297,7 @@ void eof_debug_message(char * text)
 
 void eof_show_mouse(BITMAP * bp)
 {
-	eof_log("eof_show_mouse() entered", 1);
+	eof_log("eof_show_mouse() entered", 2);
 
 	if(bp && eof_soft_cursor)
 	{
@@ -732,7 +732,7 @@ void eof_fix_window_title(void)
 
 void eof_clear_input(void)
 {
-	eof_log("eof_clear_input() entered", 1);
+	eof_log("eof_clear_input() entered", 2);
 
 	int i;
 
@@ -3335,8 +3335,9 @@ int eof_initialize(int argc, char * argv[])
 				if(buffer)
 				{	//If the file could buffer
 					ustrtok(buffer, "\r\n");	//Split each line into NULL separated strings
-					if(exists(buffer))
-					{	//If the recovery file contained the name of an undo file that exists
+					ptr = ustrtok(NULL, "\r\n[]");	//Get the second line (the project file path)
+					if(exists(buffer) && ptr && exists(ptr))
+					{	//If the recovery file contained the names of an undo file and a project file that each exist
 						if(alert(NULL, "Recover crashed project from last undo state?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 						{	//If user opts to recover from a crashed EOF instance
 							eof_log("\t\tLoading last undo state", 1);
@@ -3346,7 +3347,6 @@ int eof_initialize(int argc, char * argv[])
 								allegro_message("Unable to load last undo state. File could be corrupt!");
 								return 0;
 							}
-							ptr = ustrtok(NULL, "\r\n[]");	//Get the second line (the project file path)
 							ustrcpy(eof_filename, ptr);		//Set the full project path
 							replace_filename(eof_last_eof_path, eof_filename, "", 1024);	//Set the last loaded song path
 							ustrcpy(eof_loaded_song_name, get_filename(eof_filename));	//Set the project filename
