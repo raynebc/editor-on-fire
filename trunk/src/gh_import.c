@@ -2373,7 +2373,7 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 
 int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 {
-	unsigned long numsections, checksum, dword, ctr, ctr2;
+	unsigned long numsections, checksum, dword, ctr;
 	char matched;
 	struct QBlyric *head = NULL, *linkptr = NULL;	//Used to maintain the linked list matching section names with checksums
 
@@ -2432,20 +2432,19 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 		{	//For each link in the lyric checksum list (until a match has been made)
 			if(linkptr->checksum == checksum)
 			{	//If this checksum matches the one in the list
-				for(ctr2 = 0; ctr2 < sp->beats; ctr2++)
-				{	//For each beat in the chart
-					if(sp->beat[ctr2]->pos == dword)
-					{	//If the section name's position matches that of this beat
+				eof_music_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
+				long beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
+				if(beatnum >= 0)
+				{	//If there is such a beat
 #ifdef GH_IMPORT_DEBUG
-						snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\tSection:  Position = %lums, checksum = 0x%08lX: %s", dword, checksum, linkptr->text);
-						eof_log(eof_log_string, 1);
+					snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\tSection:  Position = %lums, checksum = 0x%08lX: %s", dword, checksum, linkptr->text);
+					eof_log(eof_log_string, 1);
 #endif
-						char buffer2[256];
-						snprintf(buffer2, sizeof(buffer2), "[section %s]", linkptr->text);	//Alter the section name formatting
-						eof_song_add_text_event(sp, ctr2, buffer2, 0, 0);	//Add the text event
-						break;
-					}
+					char buffer2[256];
+					snprintf(buffer2, sizeof(buffer2), "[section %s]", linkptr->text);	//Alter the section name formatting
+					eof_song_add_text_event(sp, beatnum, buffer2, 0, 0);	//Add the text event
 				}
+				break;
 			}
 		}
 	}//For each section in the chart file

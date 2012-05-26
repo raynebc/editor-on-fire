@@ -796,17 +796,13 @@ int eof_menu_beat_all_events(void)
 		realindex = eof_retrieve_text_event(eof_all_events_dialog[1].d1);	//Find the actual event, taking the display filter into account
 		if(realindex < eof_song->text_events)
 		{
-			alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->beat[eof_song->text_event[realindex]->beat]->pos + eof_av_delay);
-			eof_music_pos = alogg_get_pos_msecs_ogg(eof_music_track);
-			eof_music_actual_pos = eof_music_pos;
-			eof_mix_seek(eof_music_pos);
+			eof_set_seek_position(eof_song->beat[eof_song->text_event[realindex]->beat]->pos + eof_av_delay);
 			eof_selected_beat = eof_song->text_event[realindex]->beat;
 			track = eof_song->text_event[realindex]->track;
 			if((track != 0) && (track < eof_song->tracks))
 			{	//If this is a track-specific event
 				eof_menu_track_selected_track_number(track);	//Change to that track
 			}
-			eof_reset_lyric_preview_lines();
 		}
 	}
 	eof_cursor_visible = 1;
@@ -949,7 +945,7 @@ char * eof_events_list_all(int index, int * size)
 		{
 			trackname[0] = '\0';	//Empty the string
 		}
-		snprintf(eof_event_list_text[index], 256, "(%02lu:%02lu.%02lu%s) %s", eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 60000, (eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 1000) % 60, (eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 10) % 100, trackname, eof_song->text_event[realindex]->text);
+		snprintf(eof_event_list_text[index], 256, "(%02lu:%02lu.%03lu%s) %s", eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 60000, (eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 1000) % 60, eof_song->beat[eof_song->text_event[realindex]->beat]->pos % 1000, trackname, eof_song->text_event[realindex]->text);
 		return eof_event_list_text[index];
 	}
 	return NULL;
