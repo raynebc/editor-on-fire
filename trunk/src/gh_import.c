@@ -1581,7 +1581,10 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 			}
 		}
 	}
-	free(arrayptr);
+	if(arraysize)
+	{	//If memory was allocated by eof_gh_process_section_header()
+		free(arrayptr);
+	}
 	return 1;
 }
 
@@ -1641,7 +1644,10 @@ int eof_gh_read_sp_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname
 			}
 		}
 	}
-	free(arrayptr);
+	if(arraysize)
+	{	//If memory was allocated by eof_gh_process_section_header()
+		free(arrayptr);
+	}
 	return 1;
 }
 
@@ -1701,7 +1707,10 @@ int eof_gh_read_tap_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songnam
 			}
 		}
 	}
-	free(arrayptr);
+	if(arraysize)
+	{	//If memory was allocated by eof_gh_process_section_header()
+		free(arrayptr);
+	}
 	return 1;
 }
 
@@ -1786,7 +1795,10 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 			}
 		}//For each vox note in the section
 	}//For each 1D array of star power data
-	free(arrayptr);
+	if(arraysize)
+	{	//If memory was allocated by eof_gh_process_section_header()
+		free(arrayptr);
+	}
 	eof_track_sort_notes(sp, EOF_TRACK_VOCALS);
 
 //Read lyric text
@@ -1901,7 +1913,10 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 			}
 		}
 	}
-	free(arrayptr);
+	if(arraysize)
+	{	//If memory was allocated by eof_gh_process_section_header()
+		free(arrayptr);
+	}
 	eof_process_gh_lyric_text(sp);	//Filter and convert hyphenating characters where appropriate
 
 //Read lyric phrases
@@ -1948,6 +1963,10 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 	eof_process_gh_lyric_phrases(sp);	//Create proper end positions for each lyric phrase
 
 //Cleanup
+	if(arraysize)
+	{	//If memory was allocated by eof_gh_process_section_header()
+		free(arrayptr);
+	}
 	linkptr = head;
 	while(linkptr != NULL)
 	{	//While there are links remaining in the list
@@ -2127,7 +2146,10 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 			}
 		}//For each beat in the array
 	}//For each 1D array of fretbar data
-	free(arrayptr);	//Free the memory used to store the 1D arrays of section data
+	if(arraysize)
+	{	//If memory was allocated by eof_gh_process_section_header()
+		free(arrayptr);	//Free the memory used to store the 1D arrays of section data
+	}
 
 	if(eof_use_ts)
 	{	//If the user opted to import TS changes
@@ -2197,8 +2219,11 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 				lastsig = dword;
 			}//For each time signature in the array
 		}//For each 1D array of timesig data
+		if(arraysize)
+		{	//If memory was allocated by eof_gh_process_section_header()
+			free(arrayptr);	//Free the memory used to store the 1D arrays of section data
+		}
 	}//If the user opted to import TS changes
-	free(arrayptr);	//Free the memory used to store the 1D arrays of section data
 	eof_calculate_tempo_map(sp);	//Build the tempo map based on the beat time stamps
 
 	if(alert(NULL, "Import the chart's original HOPO OFF notation?", NULL, "&Yes", "&No", 'y', 'n') == 1)

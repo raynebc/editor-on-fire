@@ -218,7 +218,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 		sp->tags->ogg[0].midi_offset = chart->offset * 1000.0;
 		struct dBAnchor * current_anchor = chart->anchors;
 		struct dbText * current_event = chart->events;
-		unsigned long max_chartpos = 0;
+		unsigned long chartpos = 0, max_chartpos = 0;
 
 		/* find the highest chartpos for beat markers */
 		while(current_anchor)
@@ -241,26 +241,74 @@ EOF_SONG * eof_import_chart(const char * fn)
 
 		/* create beat markers */
 		EOF_BEAT_MARKER * new_beat = NULL;
-		unsigned long beat, maxbeat = max_chartpos / chart->resolution;	//Determine how many beats must be created to encompass all tempo changes/text events
-		struct dBAnchor *ptr;
-		double curbpm = 120.0;
-		if(max_chartpos % chart->resolution)
-			maxbeat++;
-		for(beat = 0; beat <= maxbeat; beat++)
-		{	//For each beat that needs to be created
+		struct dBAnchor *ptr, *ptr2;
+		unsigned curnum=4,curden=4;		//Stores the current time signature details (default is 4/4)
+		char midbeatchange;
+		unsigned long nextbeat;
+		unsigned long curppqn = 500000;	//Stores the current tempo (default is 120BPM)
+		double beatlength = chart->resolution, chartfpos = 0;
+		char tschange;
+		while(chartpos <= max_chartpos)
+		{	//Add new beats until enough have been added to encompass the last item in the chart
 			new_beat = eof_song_add_beat(sp);
 			if(new_beat)
 			{	//If the beat was created successfully
-				for(ptr = chart->anchors; ptr != NULL; ptr = ptr->next)
+				//Find the relevant tempo and time signature for the beat
+				for(ptr = chart->anchors, tschange = 0; ptr != NULL; ptr = ptr->next)
 				{	//For each anchor in the chart
-					if(ptr->chartpos <= chart->resolution * beat)
-					{	//If the anchor is at or before this new beat's position
-						curbpm = ptr->BPM / 1000.0;	//Store this anchor's tempo (which Feedback stores as BPM * 1000)
+					if(ptr->chartpos <= chartpos)
+					{	//If the anchor is at or before the current position
+						if(ptr->BPM)
+						{	//If this anchor defines a tempo change (is nonzero)
+							curppqn = (60000000.0 / (ptr->BPM / 1000.0)) + 0.5;	//Convert tempo
+						}
+						if(ptr->TS)
+						{	//If this anchor defines a tempo change (is nonzero)
+							curnum = ptr->TS;	//Store this anchor's time signature (which Feedback stores as #/4)
+							if(ptr->chartpos == chartpos)
+							{	//If this change is at the current position
+								tschange = 1;	//Keep note
+							}
+						}
 					}
 				}
-				new_beat->ppqn = (60000000.0 / curbpm) + 0.5;	//Convert tempo to mpqn
-			}
-		}
+				if(eof_use_ts && (tschange || (sp->beats == 1)))
+				{	//If the user opted to import TS changes, and this anchor has a TS change (or this is the first beat)
+					eof_apply_ts(curnum,curden,sp->beats - 1,sp,0);	//Set the TS flags for this beat
+				}
+				new_beat->ppqn = curppqn;
+				new_beat->midi_pos = chartpos;
+
+				//Scan ahead to look for mid beat tempo or TS changes
+				midbeatchange = 0;
+				beatlength = chart->resolution;		//Determine the length of one full beat in delta ticks
+				nextbeat = chartpos + beatlength + 0.5;	//By default, the delta position of the next beat will be the standard length of delta ticks
+				for(ptr2 = chart->anchors; ptr2 != NULL; ptr2 = ptr2->next)
+				{	//For each anchor in the chart
+					if(ptr2->chartpos  > chartpos)
+					{	//If this anchor is ahead of the current delta position
+						if(ptr2->chartpos < nextbeat)
+						{	//If this anchor occurs before the next beat marker
+							snprintf(eof_log_string, sizeof(eof_log_string), "\tMid beat tempo change at chart position %lu", ptr2->chartpos);
+							eof_log(eof_log_string, 1);
+							nextbeat = ptr2->chartpos;	//Store its delta time
+							midbeatchange = 1;
+						}
+						break;
+					}
+				}
+				if(midbeatchange)
+				{	//If there is a mid-beat tempo/TS change, this beat needs to be anchored and its tempo (and the current tempo) altered
+					//Also update beatlength to reflect that less than a full beat's worth of deltas will be used to advance to the next beat marker
+					sp->beat[sp->beats - 1]->flags |= EOF_BEAT_FLAG_ANCHOR;
+					curppqn = (double)curppqn * (((double)nextbeat - chartpos) / beatlength) + 0.5;	//Scale the current beat's tempo based on the adjusted delta length (rounded to nearest whole number)
+					sp->beat[sp->beats - 1]->ppqn = curppqn;		//Update the beat's (now an anchor) tempo
+					beatlength = (double)nextbeat - chartpos;	//This is the distance between the current beat, and the upcoming mid-beat change
+				}
+			}//If the beat was created successfully
+			chartfpos += beatlength;	//Add the delta length of this beat to the delta counter
+			chartpos = chartfpos + 0.5;	//Get the current chart position, rounded up to an integer value
+		}//Add new beats until enough have been added to encompass the last item in the chart
 
 		eof_calculate_beats(sp);		//Build the tempo map based on the tempo changes
 
