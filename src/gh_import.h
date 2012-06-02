@@ -23,6 +23,7 @@ typedef struct
 
 extern unsigned long crc32_lookup[256];
 extern char crc32_lookup_initialized;
+extern EOF_SONG *eof_sections_list_all_ptr;	//eof_sections_list_all() lists the text events in this chart
 
 EOF_SONG * eof_import_gh(const char * fn);
 	//Imports the specified Guitar Hero file
@@ -98,11 +99,13 @@ int eof_gh_read_tap_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *targe
 	//If it is found, it is parsed and the tap sections are added accordingly to the passed EOF_SONG structure as slider sections
 
 struct QBlyric *eof_gh_read_section_names(filebuffer *fb);
-	//Searches the buffered file for section markers, returning a linked list of section name and checksum pairs, to be used for QB or NOTE GH import
+	//Searches the buffered file for the next set of section markers (from current buffer position),
+	//returning a linked list of section name and checksum pairs, to be used for QB or NOTE GH import
 	//NULL is returned on error
 int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp);
 	//Searches the buffered file for section markers and loads them into the specified EOF_SONG structure (NOTE format GH file)
-	//If sections are not found, 0 is returned
+	//Each language of sections are loaded individually and presented to the user so that the user can select which language to import
+	//If sections are not found, or the user cancels loading sections, 0 is returned
 	//If an error is detected, -1 is returned
 int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp);
 	//Searches the buffered file for section markers and loads them into the specified EOF_SONG structure (QB format GH file)
@@ -148,5 +151,7 @@ unsigned long eof_gh_read_array_header(filebuffer *fb, unsigned long qbpos, unsi
 
 unsigned long eof_char_to_binary(unsigned char input);
 	//A function for debugging purposes that accepts a 1 byte value and returns a binary representation in decimal format (ie. 0xFF is returned as 11111111)
+char *eof_sections_list_all(int index, int * size);
+	//A list box function to display the text events in the EOF_SONG structure pointed at by eof_sections_list_all_ptr
 
 #endif

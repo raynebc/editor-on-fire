@@ -1,4 +1,7 @@
+#include <allegro.h>
+#include "agup/agup.h"
 #include "beat.h"
+#include "dialog.h"
 #include "event.h"	//For eof_song_add_text_event()
 #include "gh_import.h"
 #include "ini_import.h"	//For eof_import_ini()
@@ -105,6 +108,17 @@ struct QBlyric
 	struct QBlyric *next;
 };	//QB format Guitar Hero files store lyric information in different sections.  One contains timestamps paired with lyric checksums,
 	//another contains the actual lyrics with their respective checksums.  A linked list will be built to store the latter section's entries
+
+DIALOG eof_all_sections_dialog[] =
+{
+   /* (proc)                    (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                            (dp2) (dp3) */
+   { d_agup_window_proc,         0,   48,  500, 234, 2,   23,  0,    0,      0,   0,   "Is this the right language?", NULL, NULL },
+   { d_agup_list_proc,           12,  84,  475, 140, 2,   23,  0,    0,      0,   0,   eof_sections_list_all,         NULL, NULL },
+   { d_agup_button_proc,         12,  237, 50, 28,  2,   23,  'Y',  D_EXIT, 0,   0,    "&Yes",                        NULL, NULL },
+   { d_agup_button_proc,         95,  237, 50, 28,  2,   23,  'N',  D_EXIT, 0,   0,    "&No",                         NULL, NULL },
+   { d_agup_button_proc,         178, 237, 50, 28,  2,   23,  'S',  D_EXIT, 0,   0,    "&Skip",                       NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
 
 filebuffer *eof_filebuffer_load(const char * fn)
 {
@@ -2275,7 +2289,6 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 		return NULL;
 
 //Find the section names and checksums
-	fb->index = 0;	//Rewind to beginning of file buffer
 	while(eof_filebuffer_find_bytes(fb, sectionid, sizeof(sectionid), 1) > 0)
 	{	//While there are section name entries
 		for(index2 = 1; (index2 <= fb->index) && (fb->buffer[fb->index - index2] != '\"'); index2++);	//Find the opening quotation mark for this string
@@ -2396,95 +2409,157 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 	return head;
 }
 
+EOF_SONG *eof_sections_list_all_ptr;
+char *eof_sections_list_all(int index, int * size)
+{
+	if(index < 0)
+	{	//Signal to return the list count
+		if(!eof_sections_list_all_ptr)
+		{
+			*size = 0;
+		}
+		else
+		{
+			*size = eof_sections_list_all_ptr->text_events;
+		}
+	}
+	else
+	{	//Return the specified list item
+		return eof_sections_list_all_ptr->text_event[index]->text;
+	}
+	return NULL;
+}
+
 int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 {
-	unsigned long numsections, checksum, dword, ctr;
-	char matched;
+	unsigned long numsections, checksum, dword, ctr, lastsectionpos = 0;
+	char matched, sectionsfound = 0;
+	int prompt;
 	struct QBlyric *head = NULL, *linkptr = NULL;	//Used to maintain the linked list matching section names with checksums
 
 	if(!fb || !sp)
 		return -1;
 
-	head = eof_gh_read_section_names(fb);	//Read the section names and their checksums into a linked list
-	if(head == NULL)
-	{	//If there were no valid section names found
-		return -1;
-	}
-
-//Find the section positions
 	fb->index = 0;	//Rewind to beginning of file buffer
-	if(eof_filebuffer_find_checksum(fb, eof_gh_checksum("guitarmarkers")))	//Seek one byte past the "guitarmarkers" header
-	{	//If the "guitarmarkers" section couldn't be found
-		eof_log("Error:  Failed to locate \"guitarmarkers\" header", 1);
-		return 0;
-	}
-	if(eof_filebuffer_get_dword(fb, &numsections))	//Read the number of sections
-	{	//If there was an error reading the next 4 byte value
-		eof_log("Error:  Could not read number of sections", 1);
-		return -1;
-	}
-#ifdef GH_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string), "\t\tNumber of sections = %lu", numsections);
-		eof_log(eof_log_string, 1);
-#endif
-	fb->index += 4;	//Seek past the next 4 bytes, which is a checksum for the game-specific guitarmarkers subheader
-	if(eof_filebuffer_get_dword(fb, &dword))	//Read the size of the section
-	{	//If there was an error reading the next 4 byte value
-		eof_log("Error:  Could not read section size", 1);
-		return -1;
-	}
-	if(dword != 8)
-	{	//Each section is expected to be 8 bytes long
-		eof_log("Error:  Section size is not 8", 1);
-		return -1;
-	}
-	for(ctr = 0; ctr < numsections; ctr++)
-	{	//For each section in the chart file
-		if(eof_filebuffer_get_dword(fb, &dword))
-		{	//If there was an error reading the next 4 byte value
-			eof_log("Error:  Could not read section timestamp", 1);
-			return -1;
-		}
-		if(eof_filebuffer_get_dword(fb, &checksum))
-		{	//If there was an error reading the next 4 byte value
-			eof_log("Error:  Could not read section checksum", 1);
-			return -1;
-		}
 
-//Match this section position with a name
-		matched = 0;
-		for(linkptr = head; (linkptr != NULL) && !matched; linkptr = linkptr->next)
-		{	//For each link in the lyric checksum list (until a match has been made)
-			if(linkptr->checksum == checksum)
-			{	//If this checksum matches the one in the list
-				eof_music_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
-				long beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
-				if(beatnum >= 0)
-				{	//If there is such a beat
-#ifdef GH_IMPORT_DEBUG
-					snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\tSection:  Position = %lums, checksum = 0x%08lX: %s", dword, checksum, linkptr->text);
-					eof_log(eof_log_string, 1);
-#endif
-					char buffer2[256];
-					snprintf(buffer2, sizeof(buffer2), "[section %s]", linkptr->text);	//Alter the section name formatting
-					eof_song_add_text_event(sp, beatnum, buffer2, 0, 0);	//Add the text event
+	while(1)
+	{	//Until the user accepts a language of section names
+		fb->index = lastsectionpos;	//Seek back to the position that was reached by the last search for section names
+		head = eof_gh_read_section_names(fb);	//Read the section names and their checksums into a linked list
+		if(head)
+		{	//Section names were found
+			lastsectionpos = fb->index;	//Store the current buffer position, which will be lost when seeking to the section positions below
+
+		//Find the section positions
+			fb->index = 0;  //Rewind to beginning of file buffer
+			if(eof_filebuffer_find_checksum(fb, eof_gh_checksum("guitarmarkers")))	//Seek one byte past the "guitarmarkers" header
+			{	//If the "guitarmarkers" section couldn't be found
+				eof_log("Error:  Failed to locate \"guitarmarkers\" header", 1);
+				return -1;
+			}
+			if(eof_filebuffer_get_dword(fb, &numsections))	//Read the number of sections
+			{	//If there was an error reading the next 4 byte value
+				eof_log("Error:  Could not read number of sections", 1);
+				return -1;
+			}
+		#ifdef GH_IMPORT_DEBUG
+				snprintf(eof_log_string, sizeof(eof_log_string), "\t\tNumber of sections = %lu", numsections);
+				eof_log(eof_log_string, 1);
+		#endif
+			fb->index += 4;	//Seek past the next 4 bytes, which is a checksum for the game-specific guitarmarkers subheader
+			if(eof_filebuffer_get_dword(fb, &dword))	//Read the size of the section
+			{	//If there was an error reading the next 4 byte value
+				eof_log("Error:  Could not read section size", 1);
+				return -1;
+			}
+			if(dword != 8)
+			{	//Each section is expected to be 8 bytes long
+				eof_log("Error:  Section size is not 8", 1);
+				return -1;
+			}
+			for(ctr = 0; ctr < numsections; ctr++)
+			{	//For each section in the chart file
+				if(eof_filebuffer_get_dword(fb, &dword))
+				{	//If there was an error reading the next 4 byte value
+					eof_log("Error:  Could not read section timestamp", 1);
+					return -1;
 				}
-				break;
+				if(eof_filebuffer_get_dword(fb, &checksum))
+				{	//If there was an error reading the next 4 byte value
+					eof_log("Error:  Could not read section checksum", 1);
+					return -1;
+				}
+
+		//Match this section position with a name
+				matched = 0;
+				for(linkptr = head; (linkptr != NULL) && !matched; linkptr = linkptr->next)
+				{	//For each link in the lyric checksum list (until a match has been made)
+					if(linkptr->checksum == checksum)
+					{	//If this checksum matches the one in the list
+						eof_music_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
+						long beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
+						if(beatnum >= 0)
+						{	//If there is such a beat
+		#ifdef GH_IMPORT_DEBUG
+							snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\tSection:  Position = %lums, checksum = 0x%08lX: %s", dword, checksum, linkptr->text);
+							eof_log(eof_log_string, 1);
+		#endif
+							char buffer2[256];
+							snprintf(buffer2, sizeof(buffer2), "[section %s]", linkptr->text);	//Alter the section name formatting
+							eof_song_add_text_event(sp, beatnum, buffer2, 0, 0);	//Add the text event
+						}
+						break;
+					}
+				}
+			}//For each section in the chart file
+
+		//Cleanup
+			linkptr = head;
+			while(linkptr != NULL)
+			{	//While there are links remaining in the list
+				free(linkptr->text);
+				head = linkptr->next;	//The new head link will be the next link
+				free(linkptr);			//Free the head link
+				linkptr = head;			//Advance to the new head link
+			}
+		}//Section names were found
+
+	//Prompt user
+		if(sp->text_events)
+		{	//If there were practice sections loaded
+			sectionsfound = 1;	//At least one practice section was found in this file
+			eof_sections_list_all_ptr = sp;	//eof_sections_list_all() will list the events from this temporary chart
+			eof_color_dialog(eof_all_sections_dialog, gui_fg_color, gui_bg_color);
+			centre_dialog(eof_all_sections_dialog);
+			prompt = eof_popup_dialog(eof_all_sections_dialog, 0);
+			if(prompt == 2)
+			{	//User opted to keep the loaded practice sections
+				return 1;	//Return success
+			}
+			for(ctr = sp->text_events; ctr > 0; ctr--)
+			{	//For each text event (in reverse order)
+				eof_song_delete_text_event(sp, ctr-1);	//Delete it
+			}
+			if(prompt == 4)
+			{	//User opted to skip the loading of practice sections
+				return 0;	//Return cancellation
 			}
 		}
-	}//For each section in the chart file
+		else
+		{	//There were no sections loaded during this loop iteration
+			if(sectionsfound)
+			{	//If a different iteration found sections, alert the user and seek to beginning of buffer
+				allegro_message("There are no other languages detected");
+				lastsectionpos = 0;	//The next loop iteration will rewind to beginning of file buffer (so the next pass can load the first language of sections again)
+			}
+			else
+			{	//There are no sections found in this file
+				return 0;	//Return no sections
+			}
+		}
+	}//Until the user accepts a language of section names
 
-//Cleanup
-	linkptr = head;
-	while(linkptr != NULL)
-	{	//While there are links remaining in the list
-		free(linkptr->text);
-		head = linkptr->next;	//The new head link will be the next link
-		free(linkptr);			//Free the head link
-		linkptr = head;			//Advance to the new head link
-	}
-
-	return 1;
+	return 0;	//Return cancellation
 }
 
 int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
