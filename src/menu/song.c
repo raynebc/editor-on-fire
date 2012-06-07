@@ -998,7 +998,7 @@ int eof_menu_song_test(char application)
 		return 1;
 	}
 	append_filename(temppath2, temppath, "notes.mid", 1024);
-	eof_export_midi(eof_song, temppath2, 0);
+	eof_export_midi(eof_song, temppath2, 0, 1, 1);	//Export the temporary MIDI, make pitchless/phraseless lyric corrections automatically
 	append_filename(temppath2, temppath, "song.ini", 1024);
 	eof_save_ini(eof_song, temppath2);
 	sprintf(syscommand, "%sguitar.ogg", eof_song_path);

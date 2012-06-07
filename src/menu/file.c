@@ -2059,6 +2059,7 @@ int eof_save_helper(char *destfilename)
 	char oggfn[1024] = {0};
 	char function;		//Will be set to 1 for "Save" or 2 for "Save as"
 	int jumpcode = 0;
+	char fixvoxpitches, fixvoxphrases;
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Return failure
@@ -2128,16 +2129,17 @@ int eof_save_helper(char *destfilename)
 	ustrcpy(eof_loaded_song_name, get_filename(eof_temp_filename));
 
 	/* save the MIDI and INI files*/
+	eof_check_vocals(eof_song, &fixvoxpitches, &fixvoxphrases);
 	append_filename(eof_temp_filename, newfolderpath, "notes.mid", 1024);
-	eof_export_midi(eof_song, eof_temp_filename, 0);
+	eof_export_midi(eof_song, eof_temp_filename, 0, fixvoxpitches, fixvoxphrases);
 	if(eof_write_rbn_midis)
 	{	//If the user opted to also save RBN2 and RB3 pro guitar upgrade compliant MIDIs
 		append_filename(eof_temp_filename, newfolderpath, "notes_rbn.mid", 1024);
-		eof_export_midi(eof_song, eof_temp_filename, 1);	//Write a RBN2 compliant MIDI
+		eof_export_midi(eof_song, eof_temp_filename, 1, fixvoxpitches, fixvoxphrases);	//Write a RBN2 compliant MIDI
 		if(eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS) || eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS_22) || eof_get_track_size(eof_song, EOF_TRACK_PRO_GUITAR) || eof_get_track_size(eof_song, EOF_TRACK_PRO_GUITAR_22))
 		{	//If any of the pro guitar tracks are populated
 			append_filename(eof_temp_filename, newfolderpath, "notes_pro.mid", 1024);
-			eof_export_midi(eof_song, eof_temp_filename, 2);	//Write a RB3 pro guitar upgrade compliant MIDI
+			eof_export_midi(eof_song, eof_temp_filename, 2, fixvoxpitches, fixvoxphrases);	//Write a RB3 pro guitar upgrade compliant MIDI
 			append_filename(eof_temp_filename, newfolderpath, "upgrades.dta", 1024);
 			eof_save_upgrades_dta(eof_song, eof_temp_filename);	//Create the upgrades.dta file if it does not already exist
 		}

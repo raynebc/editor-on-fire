@@ -354,7 +354,7 @@ double eof_calculate_delta(double start, double end)
    write MThd data and copy MTrk data from the temp file using the size of the temp file as the track length
    delete the temp file
    voila, correctly formatted MIDI file */
-int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
+int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixvoxpitches, char fixvoxphrases)
 {
 	eof_log("eof_export_midi() entered", 1);
 
@@ -381,8 +381,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 	struct Tempo_change *ptr=NULL;			//Conductor for the anchor linked list
 	unsigned long lastdelta=0;				//Keeps track of the last anchor's absolute delta time
 	char * tempstring = NULL;				//Used to store a copy of the lyric string into eof_midi_event[], so the string can be modified from the original
-	char correctlyrics = 0;					//If nonzero, logic will be performed to correct the pitchless lyrics to have a pound character and have a generic pitch note
-	char correctphrases = 0;				//If nonzero, logic will be performed to add missing lyric phrases to ensure all lyrics (except vocal percussion notes) are encompassed within a lyric phrase
 	long length, deltalength;				//Used to cap drum notes
 	char prodrums = 0;						//Tracks whether the drum track being written includes Pro drum notation
 	char expertplus = 0;					//Tracks whether an expert+.mid track should be created to hold the Expert+ drum track
@@ -982,48 +980,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 		else if(sp->track[j]->track_format == EOF_VOCAL_TRACK_FORMAT)
 		{	//If this is a vocal track
 			/* make vocals track */
-			/* pre-parse the lyrics to determine if any pitchless lyrics are present */
-			correctlyrics = 0;	//By default, pitchless lyrics will not be changed to freestyle during export
-			for(ctr = 0; ctr < sp->vocal_track[tracknum]->lyrics; ctr++)
-			{
-				if(sp->vocal_track[tracknum]->lyric[ctr]->note == 0)
-				{	//If any of the lyrics are missing the pitch, prompt for whether they should be corrected
-					eof_cursor_visible = 0;
-					eof_pen_visible = 0;
-					eof_show_mouse(screen);
-					if(alert(NULL, "Write pitchless lyrics as playable freestyle?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-					{	//If user opts to have the lyrics corrected, update the correctlyrics variable
-						correctlyrics = 1;
-					}
-					eof_show_mouse(NULL);
-					eof_cursor_visible = 1;
-					eof_pen_visible = 1;
-					break;
-				}
-			}
-
-			/* pre-parse the lyrics to see if any exist outside of lyric phrases */
-			correctphrases = 0;	//By default, missing lyric phrases won't be inserted
-			for(ctr = 0; ctr < sp->vocal_track[tracknum]->lyrics; ctr++)
-			{
-				if(eof_find_lyric_line(ctr) == NULL)
-				{	//If this lyric is not in a line and is not a vocal percussion note
-					eof_cursor_visible = 0;
-					eof_pen_visible = 0;
-					eof_show_mouse(screen);
-					if(alert(NULL, "Add phrases for lyrics/percussions not in lyric phrases?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-					{	//If user opts to have missing lyric phrases inserted
-						correctphrases = 1;
-					}
-					eof_show_mouse(NULL);
-					eof_cursor_visible = 1;
-					eof_pen_visible = 1;
-					break;
-				}
-			}
-
 			/* insert the missing lyric phrases if the user opted to do so */
-			if(correctphrases)
+			if(fixvoxphrases)
 			{
 				char phrase_in_progress = 0;	//This will be used to track the open/closed status of the automatic phrases, so adjacent lyrics/percussions can be added to the same auto-generated phrase
 				unsigned long phrase_start = 0;	//This will store the delta time of the last opened lyric phrase
@@ -1074,17 +1032,17 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction)
 					deltalength = 1;
 				}
 				if(sp->vocal_track[tracknum]->lyric[i]->note > 0)
-				{
+				{	//If this lyric has a pitch definition (or is explicitly pitchless)
 					eof_add_midi_event(deltapos, 0x90, sp->vocal_track[tracknum]->lyric[i]->note, vel, 0);
 					eof_add_midi_event(deltapos + deltalength, 0x80, sp->vocal_track[tracknum]->lyric[i]->note, vel, 0);
 				}
-				else if(correctlyrics)
+				else if(fixvoxpitches)
 				{	//If performing pitchless lyric correction, write pitch 50 instead to guarantee it is usable as a freestyle lyric
 					eof_add_midi_event(deltapos, 0x90, 50, vel, 0);
 					eof_add_midi_event(deltapos + deltalength, 0x80, 50, vel, 0);
 					eof_set_freestyle(tempstring,1);		//Ensure the lyric properly ends with a freestyle character
 				}
-				//Write the string, which was only corrected if correctlyrics was nonzero and the pitch was not defined
+				//Write the string, which was only corrected if fixvoxpitches was nonzero and the pitch was not defined
 				if(sp->vocal_track[tracknum]->lyric[i]->note != VOCALPERCUSSION)
 				{	//Do not write a lyric string for vocal percussion notes
 					eof_add_midi_lyric_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), tempstring);
@@ -2544,4 +2502,61 @@ void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_chang
 		pack_fclose(tempf);	//Close the temporary file
 	}
 	delete_file("mididatatemp.tmp");
+}
+
+void eof_check_vocals(EOF_SONG* sp, char *fixvoxpitches, char *fixvoxphrases)
+{
+	unsigned long j, ctr, tracknum;
+	char pitchesprompt = 0, phrasesprompt = 0;
+
+	if(!sp || !fixvoxpitches || !fixvoxphrases)
+		return;
+
+	*fixvoxpitches = *fixvoxphrases = 0;	//By default, don't make changes
+	for(j = 1; j < sp->tracks; j++)
+	{	//For each track
+		if(sp->track[j]->track_format == EOF_VOCAL_TRACK_FORMAT)
+		{	//If this is a vocal track
+			//Pre-parse the lyrics to determine if any pitchless lyrics are present
+			tracknum = sp->track[j]->tracknum;
+			for(ctr = 0; !pitchesprompt && (ctr < sp->vocal_track[tracknum]->lyrics); ctr++)
+			{	//Check each lyric (for pitches, but only if the user hasn't been prompted yet for this check)
+				if(sp->vocal_track[tracknum]->lyric[ctr]->note == 0)
+				{	//If any of the lyrics are missing the pitch, prompt for whether they should be corrected
+					eof_cursor_visible = 0;
+					eof_pen_visible = 0;
+					eof_show_mouse(screen);
+					if(alert(NULL, "Write pitchless lyrics as playable freestyle?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+					{	//If user opts to have the lyrics corrected, update the fixvoxpitches variable
+						*fixvoxpitches = 1;
+					}
+					pitchesprompt = 1;
+					eof_show_mouse(NULL);
+					eof_cursor_visible = 1;
+					eof_pen_visible = 1;
+					break;
+				}
+			}
+
+			//Pre-parse the lyrics to see if any exist outside of lyric phrases
+			for(ctr = 0; !phrasesprompt && (ctr < sp->vocal_track[tracknum]->lyrics); ctr++)
+			{	//Check each lyric (for phrase containment, but only if the user hasn't been prompted yet for this check)
+				if(eof_find_lyric_line(ctr) == NULL)
+				{	//If this lyric is not in a line and is not a vocal percussion note
+					eof_cursor_visible = 0;
+					eof_pen_visible = 0;
+					eof_show_mouse(screen);
+					if(alert(NULL, "Add phrases for lyrics/percussions not in lyric phrases?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+					{	//If user opts to have missing lyric phrases inserted
+						*fixvoxphrases = 1;
+					}
+					phrasesprompt = 1;
+					eof_show_mouse(NULL);
+					eof_cursor_visible = 1;
+					eof_pen_visible = 1;
+					break;
+				}
+			}
+		}
+	}
 }

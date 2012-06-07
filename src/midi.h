@@ -46,11 +46,13 @@ double eof_calculate_bpm_absolute(double pos);	//Returns the tempo defined by th
 double eof_calculate_delta(double start, double end);	//Finds the number of delta ticks within the specified time span?
 	//Warning: This function does not take the time signature into account
 
-int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction);
+int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixvoxpitches, char fixvoxphrases);
 	//Writes the specified chart's contents to the specified file
 	//If featurerestriction is 0, all chart features are written to MIDI, and expert+.mid is written if double bass drum is charted
 	//If featurerestriction is 1, only RBN2 features are written to MIDI
 	//If featurerestriction is 2, only pro guitar upgrade features are written to MIDI
+	//If fixvoxpitches is nonzero, any lyric that has a pitch of 0 (undefined) will be written with a generic pitch and a freestyle # marker
+	//If fixvoxphrases is nonzero, any lyric that is not within a lyric phrase will have a phrase written to contain it
 
 struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp);
 	//Parses the chart, returning a linked list of anchors (tempo changes), or NULL on error
@@ -100,5 +102,12 @@ void eof_add_sysex_event(unsigned long pos, int size, void *data);
 	//Stores a copy of the Sysex message data (used for custom phrase markers in Phase Shift) to eof_midi_event[]
 void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist);
 	//Write all stored MIDI track data from sp->midi_data_head to the output file
+
+void eof_check_vocals(EOF_SONG* sp, char *fixvoxpitches, char *fixvoxphrases);
+	//Scans the vocal tracks contained in the chart for missing pitches or vocal phrases
+	//If either are found, the user is prompted about whether to correct those problems
+	//Nonzero is stored into either variable if the user opts for the correction
+	//Zero is stored into either if the problem is not detected or the user declines
+	//These user decisions will be passed to eof_export_midi()
 
 #endif
