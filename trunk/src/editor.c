@@ -825,7 +825,8 @@ void eof_read_editor_keys(void)
 		}
 	}
 
-	/* seek back one grid snap (CTRL+SHIFT+Pg Up) */
+	/* seek back one grid snap (CTRL+SHIFT+Pg Up when grid snap is enabled) */
+	/* seek back one anchor (CTRL+SHIFT+Pg Up when grid snap is disabled) */
 	/* seek back one screen (CTRL+Pg Up) */
 	/* seek back one note (SHIFT+Pg Up) */
 	/* seek back one beat (Pg Up) */
@@ -837,7 +838,14 @@ void eof_read_editor_keys(void)
 			{
 				if(KEY_EITHER_SHIFT)
 				{	//If both SHIFT and CTRL are being held
-					eof_menu_song_seek_previous_grid_snap();
+					if(eof_snap_mode != EOF_SNAP_OFF)
+					{	//If grid snap is enabled
+						eof_menu_song_seek_previous_grid_snap();
+					}
+					else
+					{
+						eof_menu_song_seek_previous_anchor();
+					}
 				}
 				else
 				{
@@ -850,29 +858,14 @@ void eof_read_editor_keys(void)
 			}
 			else
 			{
-				long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
-
-				if(b > 0)
-				{
-					if(eof_song->beat[b]->pos == eof_music_pos - eof_av_delay)
-					{
-						eof_set_seek_position(eof_song->beat[b - 1]->pos + eof_av_delay);
-					}
-					else
-					{
-						eof_set_seek_position(eof_song->beat[b]->pos + eof_av_delay);
-					}
-				}
-				else
-				{
-					eof_set_seek_position(eof_song->beat[0]->pos + eof_av_delay);
-				}
+				eof_menu_song_seek_previous_beat();
 			}
 		}
 		key[KEY_PGUP] = 0;
 	}
 
-	/* seek forward one grid snap (CTRL+SHIFT+Pg Dn) */
+	/* seek forward one grid snap (CTRL+SHIFT+Pg Dn when grid snap is enabled) */
+	/* seek forward one anchor (CTRL+SHIFT+Pg Dn when grid snap is disabled) */
 	/* seek forward one screen (CTRL+Pg Dn) */
 	/* seek forward one note (SHIFT+Pg Dn) */
 	/* seek forward one beat (Pg Dn) */
@@ -884,7 +877,14 @@ void eof_read_editor_keys(void)
 			{
 				if(KEY_EITHER_SHIFT)
 				{	//If both SHIFT and CTRL are being held
-					eof_menu_song_seek_next_grid_snap();
+					if(eof_snap_mode != EOF_SNAP_OFF)
+					{	//If grid snap is enabled
+						eof_menu_song_seek_next_grid_snap();
+					}
+					else
+					{
+						eof_menu_song_seek_next_anchor();
+					}
 				}
 				else
 				{
@@ -897,16 +897,7 @@ void eof_read_editor_keys(void)
 			}
 			else
 			{
-				long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
-				if(eof_music_pos - eof_av_delay < 0)
-				{
-					b = -1;
-				}
-
-				if(((b < 0) || (b < eof_song->beats - 1)) && (eof_song->beat[b + 1]->pos < eof_music_actual_length))
-				{
-					eof_set_seek_position(eof_song->beat[b + 1]->pos + eof_av_delay);
-				}
+				eof_menu_song_seek_next_beat();
 			}
 		}
 		key[KEY_PGDN] = 0;

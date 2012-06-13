@@ -124,7 +124,6 @@ EOF_SONG * eof_import_chart(const char * fn)
 	if(chart == NULL)
 	{	//Import failed
 		snprintf(oggfn, sizeof(oggfn), "Error:  %s", eof_chart_import_return_code_list[err % 31]);	//Display the appropriate error
-//		snprintf(&errorcode[23],50,"%d",err);	//Perform a bounds checked conversion of Allegro's error code to string format
 		alert("Error:", NULL, eof_chart_import_return_code_list[err % 31], "OK", NULL, 0, KEY_ENTER);
 		return NULL;
 	}

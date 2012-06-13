@@ -53,6 +53,10 @@ void eof_seek_by_grid_snap(int dir);
 	//If grid snap is disabled, the seek position is not changed
 int eof_menu_song_seek_previous_grid_snap(void);	//Seeks to the previous grid snap position
 int eof_menu_song_seek_next_grid_snap(void);		//Seeks to the next grid snap position
+int eof_menu_song_seek_previous_anchor(void);		//Seeks to the previous anchor
+int eof_menu_song_seek_next_anchor(void);			//Seeks to the next anchor
+int eof_menu_song_seek_previous_beat(void);			//Seeks to the previous beat
+int eof_menu_song_seek_next_beat(void);				//Seeks to the next beat
 
 int eof_menu_song_file_info(void);
 int eof_menu_song_ini_settings(void);
