@@ -57,6 +57,13 @@ MENU eof_song_seek_menu[] =
     {"", NULL, NULL, 0, NULL},
     {"Previous Screen\t" CTRL_NAME "+PGUP", eof_menu_song_seek_previous_screen, NULL, 0, NULL},
     {"Next Screen\t" CTRL_NAME "+PGDN", eof_menu_song_seek_next_screen, NULL, 0, NULL},
+    {"Previous Grid Snap\tCtrl+Shift+PGUP", eof_menu_song_seek_previous_grid_snap, NULL, 0, NULL},
+    {"Next Grid Snap\tCtrl+Shift+PGDN", eof_menu_song_seek_next_grid_snap, NULL, 0, NULL},
+    {"", NULL, NULL, 0, NULL},
+    {"Previous Beat\tPGUP", eof_menu_song_seek_previous_beat, NULL, 0, NULL},
+    {"Next Beat\tPGUP", eof_menu_song_seek_next_beat, NULL, 0, NULL},
+    {"Previous Anchor\tCtrl+Shift+PGUP", eof_menu_song_seek_previous_anchor, NULL, 0, NULL},
+    {"Next Anchor\tCtrl+Shift+PGDN", eof_menu_song_seek_next_anchor, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"&Bookmark", NULL, eof_song_seek_bookmark_menu, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
@@ -265,27 +272,31 @@ void eof_prepare_song_menu(void)
 		/* seek start */
 		if(eof_music_pos == eof_av_delay)
 		{	//If the seek position is already at the start of the chart
-			eof_song_seek_menu[0].flags = D_DISABLED;
+			eof_song_seek_menu[0].flags = D_DISABLED;	//Seek start
+			eof_song_seek_menu[14].flags = D_DISABLED;	//Previous beat
 		}
 		else
 		{
 			eof_song_seek_menu[0].flags = 0;
+			eof_song_seek_menu[14].flags = 0;
 		}
 
 		/* seek end */
 		if(eof_music_pos >= eof_music_actual_length - 1)
-		{
-			eof_song_seek_menu[1].flags = D_DISABLED;
+		{	//If the seek position is already at the end of the chart
+			eof_song_seek_menu[1].flags = D_DISABLED;	//Seek end
+			eof_song_seek_menu[15].flags = D_DISABLED;	//Next beat
 		}
 		else
 		{
 			eof_song_seek_menu[1].flags = 0;
+			eof_song_seek_menu[15].flags = 0;
 		}
 
 		/* rewind */
 		if(eof_music_pos == eof_music_rewind_pos)
 		{
-			eof_song_seek_menu[2].flags = D_DISABLED;
+			eof_song_seek_menu[2].flags = D_DISABLED;	//Rewind
 		}
 		else
 		{
@@ -298,7 +309,7 @@ void eof_prepare_song_menu(void)
 				/* seek first note */
 				if(eof_song->vocal_track[tracknum]->lyric[0]->pos == eof_music_pos - eof_av_delay)
 				{
-					eof_song_seek_menu[4].flags = D_DISABLED;
+					eof_song_seek_menu[4].flags = D_DISABLED;	//First note
 				}
 				else
 				{
@@ -308,7 +319,7 @@ void eof_prepare_song_menu(void)
 				/* seek last note */
 				if(eof_song->vocal_track[tracknum]->lyric[eof_song->vocal_track[tracknum]->lyrics - 1]->pos == eof_music_pos - eof_av_delay)
 				{
-					eof_song_seek_menu[5].flags = D_DISABLED;
+					eof_song_seek_menu[5].flags = D_DISABLED;	//Last note
 				}
 				else
 				{
@@ -317,8 +328,8 @@ void eof_prepare_song_menu(void)
 			}
 			else
 			{
-				eof_song_seek_menu[4].flags = D_DISABLED; // seek first note
-				eof_song_seek_menu[5].flags = D_DISABLED; // seek last note
+				eof_song_seek_menu[4].flags = D_DISABLED;
+				eof_song_seek_menu[5].flags = D_DISABLED;
 			}
 		}
 		else
@@ -328,7 +339,7 @@ void eof_prepare_song_menu(void)
 				/* seek first note */
 				if((firstnote >= 0) && (eof_get_note_pos(eof_song, eof_selected_track, firstnote) == eof_music_pos - eof_av_delay))
 				{
-					eof_song_seek_menu[4].flags = D_DISABLED;
+					eof_song_seek_menu[4].flags = D_DISABLED;	//First note
 				}
 				else
 				{
@@ -338,7 +349,7 @@ void eof_prepare_song_menu(void)
 				/* seek last note */
 				if((lastnote >= 0) && (eof_get_note_pos(eof_song, eof_selected_track, lastnote) == eof_music_pos - eof_av_delay))
 				{
-					eof_song_seek_menu[5].flags = D_DISABLED;
+					eof_song_seek_menu[5].flags = D_DISABLED;	//Last note
 				}
 				else
 				{
@@ -347,15 +358,15 @@ void eof_prepare_song_menu(void)
 			}
 			else
 			{
-				eof_song_seek_menu[4].flags = D_DISABLED; // seek first note
-				eof_song_seek_menu[5].flags = D_DISABLED; // seek last note
+				eof_song_seek_menu[4].flags = D_DISABLED;
+				eof_song_seek_menu[5].flags = D_DISABLED;
 			}
 		}
 
 		/* seek previous note */
 		if(seekp)
 		{
-			eof_song_seek_menu[6].flags = 0;
+			eof_song_seek_menu[6].flags = 0;	//Previous note
 		}
 		else
 		{
@@ -365,31 +376,47 @@ void eof_prepare_song_menu(void)
 		/* seek next note */
 		if(seekn)
 		{
-			eof_song_seek_menu[7].flags = 0;
+			eof_song_seek_menu[7].flags = 0;	//Next note
 		}
 		else
 		{
 			eof_song_seek_menu[7].flags = D_DISABLED;
 		}
 
-		/* seek next screen */
+		/* seek previous screen */
 		if(eof_music_pos <= eof_av_delay)
 		{
-			eof_song_seek_menu[9].flags = D_DISABLED;
+			eof_song_seek_menu[9].flags = D_DISABLED;	//Previous screen
 		}
 		else
 		{
 			eof_song_seek_menu[9].flags = 0;
 		}
 
-		/* seek previous screen */
+		/* seek next screen */
 		if(eof_music_pos >= eof_music_actual_length - 1)
 		{
-			eof_song_seek_menu[10].flags = D_DISABLED;
+			eof_song_seek_menu[10].flags = D_DISABLED;	//Next screen
 		}
 		else
 		{
 			eof_song_seek_menu[10].flags = 0;
+		}
+
+		/* previous/next grid snap/anchor */
+		if(eof_snap_mode == EOF_SNAP_OFF)
+		{	//If grid snap is disabled
+			eof_song_seek_menu[11].flags = D_DISABLED;	//Previous grid snap
+			eof_song_seek_menu[12].flags = D_DISABLED;	//Next grid snap
+			eof_song_seek_menu[16].flags = 0;			//Previous anchor
+			eof_song_seek_menu[17].flags = 0;			//Next anchor
+		}
+		else
+		{
+			eof_song_seek_menu[11].flags = 0;			//Previous grid snap
+			eof_song_seek_menu[12].flags = 0;			//Next grid snap
+			eof_song_seek_menu[16].flags = D_DISABLED;	//Previous anchor
+			eof_song_seek_menu[17].flags = D_DISABLED;	//Next anchor
 		}
 
 		/* seek bookmark # */
@@ -410,11 +437,11 @@ void eof_prepare_song_menu(void)
 		/* seek bookmark */
 		if(bmcount == 0)
 		{
-			eof_song_seek_menu[12].flags = D_DISABLED;
+			eof_song_seek_menu[19].flags = D_DISABLED;	//Bookmark
 		}
 		else
 		{
-			eof_song_seek_menu[12].flags = 0;
+			eof_song_seek_menu[19].flags = 0;
 		}
 
 		/* show catalog */
@@ -2497,13 +2524,16 @@ void eof_seek_by_grid_snap(int dir)
 
 	if(dir < 0)
 	{	//If seeking backward
+		if(eof_tail_snap.length > adjustedpos)
+		{	//Special case:  Current position is less than one grid snap from the beginning of the chart
+			eof_set_seek_position(eof_av_delay);	//Seek to the beginning of the chart
+			return;
+		}
 		eof_snap_logic(&eof_tail_snap, adjustedpos - eof_tail_snap.length);	//Find the grid snapped position of the new seek position
-//		eof_set_seek_position(eof_music_pos - eof_tail_snap.length);
 	}
 	else
 	{	//If seeking forward
 		eof_snap_logic(&eof_tail_snap, adjustedpos + eof_tail_snap.length);	//Find the grid snapped position of the new seek position
-//		eof_set_seek_position(eof_music_pos + eof_tail_snap.length);
 	}
 	eof_set_seek_position(eof_tail_snap.pos + eof_av_delay);	//Seek to the new seek position
 }
@@ -2517,6 +2547,103 @@ int eof_menu_song_seek_previous_grid_snap(void)
 int eof_menu_song_seek_next_grid_snap(void)
 {
 	eof_seek_by_grid_snap(1);
+	return 1;
+}
+
+int eof_menu_song_seek_previous_anchor(void)
+{
+	if(!eof_song)
+		return 1;
+
+      	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+
+      	if(eof_song->beat[b]->pos == eof_music_pos - eof_av_delay)
+      	{	//If the seek position was on the beat marker
+      		b--;	//Go to the previous beat
+      	}
+      	while((b > 0) && ((eof_song->beat[b]->flags & EOF_BEAT_FLAG_ANCHOR) == 0))
+      	{	//Starting at/before the beat at the current seek position, until an anchor is found,
+      		b--;	//Go back one beat
+      	}
+      	if(b < 0)
+      	{	//If no other suitable anchor was found
+      		b = 0;	//Seek to the first beat marker
+      	}
+      	eof_set_seek_position(eof_song->beat[b]->pos + eof_av_delay);	//Seek to the anchor
+
+	return 1;
+}
+
+int eof_menu_song_seek_next_anchor(void)
+{
+	if(!eof_song)
+		return 1;
+
+      	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+      	long b2 = b;
+
+      	if(eof_song->beat[b]->pos == eof_music_pos - eof_av_delay)
+      	{	//If the seek position was on the beat marker
+      		b++;	//Go to the next beat
+      	}
+      	while((b > 0) && (b < eof_song->beats) && ((eof_song->beat[b]->flags & EOF_BEAT_FLAG_ANCHOR) == 0))
+      	{	//Starting at/before the beat at the current seek position, until an anchor is found,
+      		b++;	//Go forward one beat
+      	}
+      	if((b < eof_song->beats) && (b != b2))
+      	{	//Don't perform a seek if there was no anchor ahead of the current seek position
+      		if(b < 0)
+      		{	//If no other suitable anchor was found
+      			b = 0;	//Seek to the first beat marker
+      		}
+      		eof_set_seek_position(eof_song->beat[b]->pos + eof_av_delay);	//Seek to the anchor
+      	}
+
+	return 1;
+}
+
+int eof_menu_song_seek_previous_beat(void)
+{
+	if(!eof_song)
+		return 1;
+
+      	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+
+      	if(b > 0)
+      	{
+      		if(eof_song->beat[b]->pos == eof_music_pos - eof_av_delay)
+      		{
+      			eof_set_seek_position(eof_song->beat[b - 1]->pos + eof_av_delay);
+      		}
+      		else
+      		{
+      			eof_set_seek_position(eof_song->beat[b]->pos + eof_av_delay);
+      		}
+      	}
+      	else
+      	{
+      		eof_set_seek_position(eof_song->beat[0]->pos + eof_av_delay);
+      	}
+
+	return 1;
+}
+
+int eof_menu_song_seek_next_beat(void)
+{
+	if(!eof_song)
+		return 1;
+
+      	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+      	if(eof_music_pos - eof_av_delay < 0)
+      	{
+      		b = -1;
+      	}
+
+      	if(((b < 0) || (b < eof_song->beats - 1)) && (eof_song->beat[b + 1]->pos < eof_music_actual_length))
+      	{
+      		eof_set_seek_position(eof_song->beat[b + 1]->pos + eof_av_delay);
+      	}
+
 	return 1;
 }
 

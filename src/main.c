@@ -4083,7 +4083,6 @@ void eof_cleanup_beat_flags(EOF_SONG *sp)
 
 	for(ctr = 0; ctr < sp->beats; ctr++)
 	{	//For each beat
-//		sp->beat[ctr]->flags &= ~(EOF_BEAT_FLAG_ANCHOR);	//Clear the anchor flag
 		sp->beat[ctr]->flags &= ~(EOF_BEAT_FLAG_EVENTS);	//Clear the events flag
 	}
 

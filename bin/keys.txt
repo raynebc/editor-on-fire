@@ -37,7 +37,10 @@ Playback and Seek controls:
         Hold Shift while pressing to seek to previous/next note
 
         Hold both Ctrl and Shift while pressing to seek to the previous/next grid snap
-        position.
+        position (when grid snap is enabled).
+
+        Hold both Ctrl and Shift while pressing to seek to the previous/next anchor
+        position (when grid snap is disabled).
         
         
     Numpad 0-9:
