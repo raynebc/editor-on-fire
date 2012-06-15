@@ -39,5 +39,8 @@ int eof_halve_tempo(EOF_SONG * sp, unsigned long beat, char make_undo);
 	//will keep its existing tempo in order to keep the tempo map accurate, and -1 will be returned.  If only
 	//an even number of beats is altered, 0 is returned
 	//If make_undo is nonzero, this function will create an undo state before modifying the chart
+unsigned long eof_get_measure(unsigned long measure, unsigned char count_only);
+	//If count_only is nonzero, the number of measures present in the currently open chart is returned (0 if no time signatures are defined)
+	//If count_only is zero, the beat number that is at the start of the specified measure is returned (or 0 if no such measure is present)
 
 #endif

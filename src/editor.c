@@ -4337,7 +4337,7 @@ void eof_render_editor_window_common(void)
 	unsigned long beat_counter = 0;
 	unsigned beats_per_measure = 0;
 	char buffer[16] = {0};
-	unsigned long measure_counter=0;
+	unsigned long measure_counter = 0;
 	char first_measure = 0;	//Set to nonzero when the first measure marker is reached
 	char notvisible;
 

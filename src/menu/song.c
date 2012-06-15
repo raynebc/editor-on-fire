@@ -64,6 +64,7 @@ MENU eof_song_seek_menu[] =
     {"Next Beat\tPGUP", eof_menu_song_seek_next_beat, NULL, 0, NULL},
     {"Previous Anchor\tCtrl+Shift+PGUP", eof_menu_song_seek_previous_anchor, NULL, 0, NULL},
     {"Next Anchor\tCtrl+Shift+PGDN", eof_menu_song_seek_next_anchor, NULL, 0, NULL},
+    {"Beat/&Measure", eof_menu_song_seek_beat_measure, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"&Bookmark", NULL, eof_song_seek_bookmark_menu, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
@@ -437,11 +438,11 @@ void eof_prepare_song_menu(void)
 		/* seek bookmark */
 		if(bmcount == 0)
 		{
-			eof_song_seek_menu[19].flags = D_DISABLED;	//Bookmark
+			eof_song_seek_menu[20].flags = D_DISABLED;	//Bookmark
 		}
 		else
 		{
-			eof_song_seek_menu[19].flags = 0;
+			eof_song_seek_menu[20].flags = 0;
 		}
 
 		/* show catalog */
@@ -3007,4 +3008,92 @@ int eof_raw_midi_dialog_add(DIALOG * d)
 	eof_MIDI_track_list_to_enumerate = prevenumeration;
 	dialog_message(eof_raw_midi_tracks_dialog, MSG_DRAW, 0, &junk);	//Redraw the Manage raw MIDI tracks dialog
 	return 0;
+}
+
+DIALOG eof_seek_beat_measure_dialog[] =
+{
+   /* (proc) 		        (x)	(y)	(w)	(h)	(fg) (bg) (key) (flags)	(d1)(d2)(dp)						(dp2) (dp3) */
+   { d_agup_window_proc,  	0,	48,	180,157,2,   23,  0,    0,      0,	0,	"Seek to beat/measure",	NULL, NULL },
+   { d_agup_text_proc,		16,	80,	64,	8,	2,   23,  0,    0,      0,	0,	"Seek to:",				NULL, NULL },
+   { d_agup_radio_proc,		16,	100,110,15,	2,   23,  0,    0,      0,	0,	eof_etext,				NULL, NULL },
+   { d_agup_radio_proc,		16,	120,160,15,	2,   23,  0,    0,      0,	0,	eof_etext2,				NULL, NULL },
+   { d_agup_text_proc,		16,	140,80,16,	2,   23,  0,    0,		1,	0,	"Number:",				NULL, NULL },
+   { eof_verified_edit_proc,70, 140,66,20,  2,   23,  0,    0,      4,  0,  eof_etext3,           	"1234567890", NULL },
+   { d_agup_button_proc,	16,	164,68,	28,	2,   23,  '\r',	D_EXIT, 0,	0,	"OK",             		NULL, NULL },
+   { d_agup_button_proc,	96, 164,68,	28,	2,   23,  0,	D_EXIT, 0,	0,	"Cancel",         		NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_menu_song_seek_beat_measure(void)
+{
+	unsigned long measurecount;
+	int retval, done = 0;
+	static unsigned long lastselected = 2;
+
+	if(!eof_song)
+		return 1;
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_seek_beat_measure_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_seek_beat_measure_dialog);
+
+	//Create the beat and measure strings
+	measurecount = eof_get_measure(0, 1);	//Count the number of measures
+	snprintf(eof_etext, sizeof(eof_etext), "Beat [0 - %lu]", eof_song->beats - 1);
+	if(measurecount)
+	{	//If there is at least one measure
+		snprintf(eof_etext2, sizeof(eof_etext2), "Measure [1 - %lu]", measurecount);
+		eof_seek_beat_measure_dialog[3].flags = 0;	//Enable the measure radio button
+	}
+	else
+	{
+		snprintf(eof_etext2, sizeof(eof_etext2), "Measure (no TS)");
+		eof_seek_beat_measure_dialog[3].flags = D_DISABLED;	//Disable the measure radio button
+	}
+	if(lastselected == 2)
+	{	//If the "beat" radio button was selected last time the menu was open
+		eof_seek_beat_measure_dialog[2].flags = D_SELECTED;	//Ensure it's selected now
+		eof_seek_beat_measure_dialog[3].flags = 0;
+	}
+	else
+	{	//If the "measure" radio button was selected last time the menu was open
+		eof_seek_beat_measure_dialog[2].flags = 0;
+		eof_seek_beat_measure_dialog[3].flags = D_SELECTED;	//Ensure it's selected now
+	}
+	while(!done)
+	{
+		retval = eof_popup_dialog(eof_seek_beat_measure_dialog, 2);
+		if(retval == 6)
+		{	//User clicked OK
+			unsigned long input = atol(eof_etext3);
+			if(eof_seek_beat_measure_dialog[2].flags & D_SELECTED)
+			{	//User opted to seek to a beat
+				lastselected = 2;
+				if(input < eof_song->beats)
+				{	//The specified beat is valid
+					eof_set_seek_position(eof_song->beat[input]->pos + eof_av_delay);
+					done = 1;
+				}
+			}
+			else
+			{	//User opted to seek to a measure
+				lastselected = 3;
+				if(input && (input <= measurecount))
+				{	//The specified measure is valid
+					measurecount = eof_get_measure(input, 0);	//Get the beat number for the start of this measure
+					eof_set_seek_position(eof_song->beat[measurecount]->pos + eof_av_delay);
+					done = 1;
+				}
+			}
+		}
+		else if((retval == 7) || (retval == -1))
+		{	//User clicked cancel (or pressed escape)
+			done = 1;
+		}
+	}
+	eof_show_mouse(NULL);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	return 1;
 }
