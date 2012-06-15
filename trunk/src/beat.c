@@ -1,5 +1,6 @@
-#include "main.h"
 #include "beat.h"
+#include "main.h"
+#include "midi.h"
 #include "undo.h"
 
 #ifdef USEMEMWATCH
@@ -507,4 +508,42 @@ int eof_halve_tempo(EOF_SONG * sp, unsigned long beat, char make_undo)
 
 	eof_calculate_beats(sp);	//Rebuild tempos and beat lengths using the updated ppqn values
 	return retval;
+}
+
+unsigned long eof_get_measure(unsigned long measure, unsigned char count_only)
+{
+	unsigned long i, beat_counter = 0, measure_counter = 0;
+	unsigned beats_per_measure = 0;
+	char first_measure = 0;	//Set to nonzero when the first measure marker is reached
+
+	if(!eof_song)
+		return 0;
+
+	for(i = 0; i < eof_song->beats; i++)
+	{
+		if(eof_get_ts(eof_song,&beats_per_measure,NULL,i) == 1)
+		{	//If this beat has a time signature change
+			first_measure = 1;	//Note that a time signature change has been found
+			beat_counter = 0;
+		}
+		if(first_measure && (beat_counter == 0))
+		{	//If there was a TS change or the beat markers incremented enough to reach the next measure
+			measure_counter++;
+			if(!count_only && (measure_counter == measure))
+			{	//If this function was asked to find a measure, and it has been found
+				return i;
+			}
+		}
+		beat_counter++;
+		if(beat_counter >= beats_per_measure)
+		{
+			beat_counter = 0;
+		}
+	}
+	if(count_only)
+	{	//If this function was asked to count the number of measures
+		return measure_counter;
+	}
+
+	return 0;	//The measure was not found
 }
