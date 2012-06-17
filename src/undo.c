@@ -10,9 +10,7 @@
 #include "memwatch.h"
 #endif
 
-	//char * eof_undo_filename[EOF_MAX_UNDO] = {"eof.undo0", "eof.undo1", "eof.undo2", "eof.undo3", "eof.undo4", "eof.undo5", "eof.undo6", "eof.undo7"};
 char * eof_undo_filename[EOF_MAX_UNDO] = {0};
-//int eof_undo_index[EOF_MAX_UNDO] = {0};	//UNUSED
 int eof_undo_type[EOF_MAX_UNDO] = {0};
 int eof_undo_last_type = 0;
 int eof_undo_current_index = 0;

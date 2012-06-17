@@ -210,13 +210,13 @@ void eof_destroy_song(EOF_SONG * sp)
 
 	free(sp->tags);
 	free(sp->catalog);
-	free(sp);
 
 	eof_log("\tProject closed", 1);
 	if(eof_recovery && (sp == eof_song))
-	{	//If this EOF instance is maintaining an auto-recovery file
+	{	//If this EOF instance is maintaining an auto-recovery file, and the currently-open song is being destroyed
 		delete_file("eof.recover");	//Delete it when the active project is cleanly closed
 	}
+	free(sp);
 //	eof_log_level |= 2;	//Enable verbose logging
 }
 
@@ -1463,7 +1463,10 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				{	//If there is a track name
 					trackptr->trackname = malloc(strlen(buffer) + 1);	//Allocate enough memory to duplicate this string
 					if(!trackptr->trackname)
+					{
+						free(trackptr);
 						return 0;	//Memory allocation error
+					}
 					strcpy(trackptr->trackname, buffer);
 				}
 				eof_load_song_string_pf(buffer, fp, sizeof(buffer));	//Read the description string
@@ -1475,7 +1478,11 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				{	//If there is a description
 					trackptr->description = malloc(strlen(buffer) + 1);	//Allocate enough memory to duplicate this string
 					if(!trackptr->description)
+					{
+						free(trackptr);
+						free(trackptr->trackname);
 						return 0;	//Memory allocation error
+					}
 					strcpy(trackptr->description, buffer);
 				}
 				numevents = pack_igetl(fp);	//Read the number of events for this track
@@ -1483,13 +1490,24 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				{	//For each of the events to read
 					eventptr = malloc(sizeof(struct eof_MIDI_data_event));
 					if(!eventptr)
+					{
+						free(trackptr);
+						free(trackptr->trackname);
+						free(trackptr->description);
 						return 0;	//Memory allocation error
+					}
 					eof_load_song_string_pf(buffer, fp, sizeof(buffer));	//Read the timestamp string
 					sscanf(buffer, "%lf", &eventptr->realtime);	//Convert to double floating point
 					eventptr->size = pack_igetw(fp);	//Get the size of this event's data
 					eventptr->data = malloc(eventptr->size);	//Allocate enough memory to store the event data
 					if(!eventptr->data)
+					{
+						free(trackptr);
+						free(trackptr->trackname);
+						free(trackptr->description);
+						free(eventptr);
 						return 0;	//Memory allocation error
+					}
 					pack_fread(eventptr->data, eventptr->size, fp);	//Read the event's data
 					eventptr->next = NULL;
 					if(eventhead == NULL)
@@ -1514,7 +1532,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				pack_getc(fp);	//Read the data (not supported yet)
 			}
 		}
-	}
+	}//For each custom data block in the project
 
 	/* read track data */
 	track_count = pack_igetl(fp);		//Read the number of tracks

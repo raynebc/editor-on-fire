@@ -645,6 +645,7 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 		pack_fclose(inf);
 		free(buffer);
 		free(buffer2);
+		free(chart);
 		return NULL;
 	}
 

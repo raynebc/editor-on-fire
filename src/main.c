@@ -162,7 +162,6 @@ int         eof_vocals_selected = 0;	//Is set to nonzero if the active track is 
 int         eof_vocals_tab = 0;
 int         eof_vocals_offset = 60; // Start at "middle C"
 int         eof_song_loaded = 0;	//The boolean condition that a chart and its audio are successfully loaded
-//int         eof_first_note = 0;
 int         eof_last_note = 0;
 int         eof_last_midi_offset = 0;
 PACKFILE *  eof_recovery = NULL;
@@ -3566,6 +3565,7 @@ void eof_exit(void)
 	if(eof_recovery)
 	{	//If this EOF instance is maintaining auto-recovery files
 		pack_fclose(eof_recovery);
+		eof_recovery = NULL;
 		delete_file("eof.recover.on");
 	}
 }

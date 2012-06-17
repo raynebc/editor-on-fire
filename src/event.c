@@ -7,9 +7,7 @@
 #include "memwatch.h"
 #endif
 
-//EOF_TEXT_EVENT eof_text_event[EOF_MAX_TEXT_EVENTS];
 char eof_event_list_text[EOF_MAX_TEXT_EVENTS][256] = {{0}};
-//int eof_text_events = 0;
 
 EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, unsigned long beat, char * text, unsigned long track, char is_temporary)
 {

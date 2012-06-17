@@ -38,8 +38,6 @@ SAMPLE *    eof_sound_clap2 = NULL;
 SAMPLE *    eof_sound_clap3 = NULL;
 SAMPLE *    eof_sound_clap4 = NULL;
 EOF_MIX_VOICE eof_voice[EOF_MIX_MAX_CHANNELS];	//eof_voice[0] is "clap", eof_voice[1] is "metronome", eof_voice[2] is "vocal tone", eof_voice[3] is "vocal percussion"
-//int eof_mix_freq = 44100;
-//int eof_mix_buffer_size = 4096;
 char eof_mix_claps_enabled = 0;
 char eof_mix_metronome_enabled = 0;
 char eof_mix_claps_note = 63; /* enable all by default */
@@ -57,7 +55,6 @@ int eof_percussion_volume = 100;	//Stores the volume level for the vocal percuss
 
 int           eof_mix_speed = 1000;
 char          eof_mix_speed_ticker;
-//double        eof_mix_sample_count = 0.0;		//This was only being used with integer math, so I'm making it an integer type to improve speed
 unsigned long eof_mix_sample_count = 0;
 double        eof_mix_sample_increment = 1.0;
 unsigned long eof_mix_next_clap;

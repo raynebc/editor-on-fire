@@ -3049,6 +3049,7 @@ int eof_menu_song_seek_beat_measure(void)
 	else
 	{
 		snprintf(eof_etext2, sizeof(eof_etext2), "Measure (no TS)");
+		lastselected = 2;	//Have the beat option selected instead
 		eof_seek_beat_measure_dialog[3].flags = D_DISABLED;	//Disable the measure radio button
 	}
 	if(lastselected == 2)
@@ -3063,7 +3064,7 @@ int eof_menu_song_seek_beat_measure(void)
 	}
 	while(!done)
 	{
-		retval = eof_popup_dialog(eof_seek_beat_measure_dialog, 2);
+		retval = eof_popup_dialog(eof_seek_beat_measure_dialog, 0);
 		if(retval == 6)
 		{	//User clicked OK
 			unsigned long input = atol(eof_etext3);
