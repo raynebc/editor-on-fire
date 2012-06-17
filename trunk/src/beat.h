@@ -3,9 +3,6 @@
 
 #include "song.h"
 
-//extern EOF_BEAT_MARKER eof_beat[EOF_MAX_BEATS];
-//extern int eof_beats;
-
 long eof_get_beat(EOF_SONG * sp, unsigned long pos);
 	//Returns the beat number at or immediately before the specified position, or -1 if the timestamp does not occur within the chart
 long eof_get_beat_length(EOF_SONG * sp, int beat);

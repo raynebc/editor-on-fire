@@ -15,7 +15,6 @@ typedef struct
 
 } EOF_MIX_VOICE;
 
-//extern int  eof_mix_buffer_size;
 extern int  eof_mix_speed;
 extern char eof_mix_claps_enabled;
 extern char eof_mix_metronome_enabled;
@@ -63,11 +62,8 @@ void eof_mix_start_helper(void);	//Finds the next clap, tick and vocal tone time
 void eof_mix_start(unsigned long start, int speed);	//Prepares variables for chart playback
 void eof_mix_seek(int pos);	//Performs a seek and updates the position of the next of each audio cue
 SAMPLE *eof_mix_load_ogg_sample(char *fn);	//Loads the specified OGG sample from a dat file, returning it in SAMPLE format
-//void eof_mix_poll(void);
-//void eof_mix_stop(void);
 
 void eof_mix_find_claps(void);	//Populates clap, metronome, note_pos and note_note arrays based on the chart's contents
-//void eof_mix_find_vocal_claps(void);	//Undefined function
 void eof_mix_play_note(int note);	//Plays the vocal tone for the specified note, if available
 void eof_midi_play_note(int note);	//Sends a Note On MIDI command
 

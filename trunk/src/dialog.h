@@ -41,11 +41,8 @@ int eof_edit_lyric_dialog(void);	//Performs the Edit Lyric action presented in t
 
 void eof_prepare_menus(void);	//Configures menus based on conditions within EOF, such as to enable/disable menu items
 int eof_popup_dialog(DIALOG * dp, int n);	//Opens the dialog menu and returns the activated item number
-//void eof_setup_menus(void);	//Unused
 void eof_color_dialog(DIALOG * dp, int fg, int bg);	//Applies the global foreground and background colors to the dialog
 int eof_display_flats_menu(void);	//Display the menu item to allow the user to toggle between displaying flat notes and sharp notes
-//void eof_fix_menu_undo(void);
-//int eof_menu_cancel(void);	//Unused
 
 
 #endif
