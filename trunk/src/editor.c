@@ -4754,7 +4754,7 @@ void eof_editor_logic_common(void)
 				}
 
 				if((eof_mouse_drug > 10) && !eof_blclick_released && (eof_selected_beat == 0) && (eof_mickeys_x != 0) && (eof_hover_beat == eof_selected_beat) && !((eof_mickeys_x * eof_zoom < 0) && (eof_song->beat[0]->pos == 0)))
-				{
+				{	//If moving the first beat marker
 					if(!eof_undo_toggle)
 					{
 						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -4783,30 +4783,33 @@ void eof_editor_logic_common(void)
 					eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
 				}
 				else if((eof_mouse_drug > 10) && !eof_blclick_released && (eof_selected_beat > 0) && (eof_mickeys_x != 0) && ((eof_beat_is_anchor(eof_song, eof_hover_beat) || eof_anchor_all_beats || (eof_moving_anchor && (eof_hover_beat == eof_selected_beat)))))
-				{
-					if(!eof_undo_toggle)
-					{
-						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-						eof_moving_anchor = 1;
-						eof_last_midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
-						eof_adjusted_anchor = 1;
-						if((eof_note_auto_adjust && !KEY_EITHER_SHIFT) || (!eof_note_auto_adjust && KEY_EITHER_SHIFT))
+				{	//If moving a beat marker other than the first
+					if(!eof_song->tags->tempo_map_locked)
+					{	//If the tempo map is not locked, allow the marker to be moved
+						if(!eof_undo_toggle)
 						{
-							eof_menu_edit_cut(eof_selected_beat, 0, 0.0);
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+							eof_moving_anchor = 1;
+							eof_last_midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
+							eof_adjusted_anchor = 1;
+							if((eof_note_auto_adjust && !KEY_EITHER_SHIFT) || (!eof_note_auto_adjust && KEY_EITHER_SHIFT))
+							{
+								eof_menu_edit_cut(eof_selected_beat, 0, 0.0);
+							}
 						}
-					}
-					eof_song->beat[eof_selected_beat]->fpos += eof_mickeys_x * eof_zoom;
-					eof_song->beat[eof_selected_beat]->pos = eof_song->beat[eof_selected_beat]->fpos + 0.5;	//Round up to nearest ms
-					if(((eof_selected_beat > 0) && (eof_song->beat[eof_selected_beat]->pos <= eof_song->beat[eof_selected_beat - 1]->pos + 50)) || ((eof_selected_beat + 1 < eof_song->beats) && (eof_song->beat[eof_selected_beat]->pos >= eof_song->beat[eof_selected_beat + 1]->pos - 50)))
-					{	//If the beat being drug was moved to within within 50ms of the previous/next beat marker, undo the move
-						eof_song->beat[eof_selected_beat]->fpos -= eof_mickeys_x * eof_zoom;
+						eof_song->beat[eof_selected_beat]->fpos += eof_mickeys_x * eof_zoom;
 						eof_song->beat[eof_selected_beat]->pos = eof_song->beat[eof_selected_beat]->fpos + 0.5;	//Round up to nearest ms
+						if(((eof_selected_beat > 0) && (eof_song->beat[eof_selected_beat]->pos <= eof_song->beat[eof_selected_beat - 1]->pos + 50)) || ((eof_selected_beat + 1 < eof_song->beats) && (eof_song->beat[eof_selected_beat]->pos >= eof_song->beat[eof_selected_beat + 1]->pos - 50)))
+						{	//If the beat being drug was moved to within within 50ms of the previous/next beat marker, undo the move
+							eof_song->beat[eof_selected_beat]->fpos -= eof_mickeys_x * eof_zoom;
+							eof_song->beat[eof_selected_beat]->pos = eof_song->beat[eof_selected_beat]->fpos + 0.5;	//Round up to nearest ms
+						}
+						else
+						{
+							eof_recalculate_beats(eof_song, eof_selected_beat);
+						}
+						eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;
 					}
-					else
-					{
-						eof_recalculate_beats(eof_song, eof_selected_beat);
-					}
-					eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;
 				}
 			}
 			if(!(mouse_b & 1))

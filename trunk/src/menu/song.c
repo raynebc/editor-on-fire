@@ -158,6 +158,7 @@ MENU eof_song_menu[] =
     {"&Leading Silence", eof_menu_song_add_silence, NULL, 0, NULL},
     {"Enable open strum bass", eof_menu_song_open_bass, NULL, 0, NULL},
     {"Enable five lane drums", eof_menu_song_five_lane_drums, NULL, 0, NULL},
+    {"Lock tempo map", eof_menu_song_lock_tempo_map, NULL, 0, NULL},
     {"Pro &Guitar", NULL, eof_song_proguitar_menu, 0, NULL},
     {"Manage raw MIDI tracks", eof_menu_song_raw_MIDI_tracks, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
@@ -533,10 +534,20 @@ void eof_prepare_song_menu(void)
 			eof_song_menu[14].flags = 0;
 		}
 
+		/* lock tempo map */
+		if(eof_song->tags->tempo_map_locked)
+		{
+			eof_song_menu[15].flags = D_SELECTED;	//Song>Lock tempo map
+		}
+		else
+		{
+			eof_song_menu[15].flags = 0;
+		}
+
 		/* enable pro guitar submenu */
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar track is active
-			eof_song_menu[15].flags = 0;			//Song>Pro Guitar> submenu
+			eof_song_menu[16].flags = 0;			//Song>Pro Guitar> submenu
 
 			if(eof_enable_chord_cache && (eof_chord_lookup_count > 1))
 			{	//If an un-named note is selected and it has at least two chord matches
@@ -551,7 +562,7 @@ void eof_prepare_song_menu(void)
 		}
 		else
 		{	//Otherwise disable this menu item
-			eof_song_menu[15].flags = D_DISABLED;
+			eof_song_menu[16].flags = D_DISABLED;
 		}
 	}//If a chart is loaded
 }
@@ -3039,6 +3050,8 @@ int eof_menu_song_seek_beat_measure(void)
 	centre_dialog(eof_seek_beat_measure_dialog);
 
 	//Create the beat and measure strings
+	eof_seek_beat_measure_dialog[2].flags = 0;	//Clear these so they can be selected/disabled below as applicable
+	eof_seek_beat_measure_dialog[3].flags = 0;
 	measurecount = eof_get_measure(0, 1);	//Count the number of measures
 	snprintf(eof_etext, sizeof(eof_etext), "Beat [0 - %lu]", eof_song->beats - 1);
 	if(measurecount)
@@ -3055,11 +3068,9 @@ int eof_menu_song_seek_beat_measure(void)
 	if(lastselected == 2)
 	{	//If the "beat" radio button was selected last time the menu was open
 		eof_seek_beat_measure_dialog[2].flags = D_SELECTED;	//Ensure it's selected now
-		eof_seek_beat_measure_dialog[3].flags = 0;
 	}
 	else
 	{	//If the "measure" radio button was selected last time the menu was open
-		eof_seek_beat_measure_dialog[2].flags = 0;
 		eof_seek_beat_measure_dialog[3].flags = D_SELECTED;	//Ensure it's selected now
 	}
 	while(!done)
@@ -3096,5 +3107,13 @@ int eof_menu_song_seek_beat_measure(void)
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
+	return 1;
+}
+
+int eof_menu_song_lock_tempo_map(void)
+{
+	if(eof_song)
+		eof_song->tags->tempo_map_locked ^= 1;	//Toggle this boolean variable
+	eof_fix_window_title();
 	return 1;
 }

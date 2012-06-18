@@ -98,6 +98,7 @@ int eof_edit_tuning_proc(int msg, DIALOG *d, int c);	//This is a modification of
 int eof_menu_set_num_frets_strings(void);		//Allows the track's number of frets (pro guitar/bass) and strings (pro bass only) to be defined
 
 int eof_menu_song_five_lane_drums(void);		//Toggle the ability to use a fifth lane in PART DRUM on/off
+int eof_menu_song_lock_tempo_map(void);			//Toggle the setting to lock the tempo map on/off
 
 void eof_set_percussion_cue(int cue_number);	//Sets eof_sound_chosen_percussion to the cue referred by eof_audio_cues_dialog[cue_number]
 

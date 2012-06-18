@@ -150,6 +150,7 @@ EOF_SONG * eof_create_song(void)
 	sp->tags->eighth_note_hopo = 0;
 	sp->tags->eof_fret_hand_pos_1_pg = 0;
 	sp->tags->eof_fret_hand_pos_1_pb = 0;
+	sp->tags->tempo_map_locked = 0;
 	sp->tags->ini_settings = 0;
 	sp->tags->ogg[0].midi_offset = 0;
 	sp->tags->ogg[0].modified = 0;
@@ -1337,7 +1338,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
 
 	#define EOFNUMINIBOOLEANTYPES 6
-	char *const inibooleanbuffer[EOFNUMINIBOOLEANTYPES]={NULL,&sp->tags->lyrics,&sp->tags->eighth_note_hopo,&sp->tags->eof_fret_hand_pos_1_pg,&sp->tags->eof_fret_hand_pos_1_pb,NULL};
+	char *const inibooleanbuffer[EOFNUMINIBOOLEANTYPES]={NULL,&sp->tags->lyrics,&sp->tags->eighth_note_hopo,&sp->tags->eof_fret_hand_pos_1_pg,&sp->tags->eof_fret_hand_pos_1_pb,&sp->tags->tempo_map_locked};
 		//Store the pointers to each of the 5 boolean type INI settings (number 0 is reserved) to simplify the loading code
 
 	#define EOFNUMININUMBERTYPES 5
@@ -1379,7 +1380,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		inputc = pack_getc(fp);		//Read the type of INI boolean
 		if(((inputc & 0x7F) < EOFNUMINIBOOLEANTYPES) && (inibooleanbuffer[(inputc & 0x7F)] != NULL))
 		{	//Mask out the true/false bit to determine if it is a supported boolean setting
-			*inibooleanbuffer[(inputc & 0x7F)] = (inputc & 0xF0);	//Store the true/false status into the appropriate project variable
+			*inibooleanbuffer[(inputc & 0x7F)] = ((inputc & 0xF0) != 0);	//Store the true/false status into the appropriate project variable
 		}
 	}
 
@@ -2038,7 +2039,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
 
 	#define EOFNUMINIBOOLEANTYPES 6
-	char *const inibooleanbuffer[EOFNUMINIBOOLEANTYPES]={NULL,&sp->tags->lyrics,&sp->tags->eighth_note_hopo,&sp->tags->eof_fret_hand_pos_1_pg,&sp->tags->eof_fret_hand_pos_1_pb,NULL};
+	char *const inibooleanbuffer[EOFNUMINIBOOLEANTYPES]={NULL,&sp->tags->lyrics,&sp->tags->eighth_note_hopo,&sp->tags->eof_fret_hand_pos_1_pg,&sp->tags->eof_fret_hand_pos_1_pb,&sp->tags->tempo_map_locked};
 		//Store the pointers to each of the 5 boolean type INI settings (number 0 is reserved) to simplify the loading code
 
 	#define EOFNUMININUMBERTYPES 5
