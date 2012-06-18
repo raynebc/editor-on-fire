@@ -721,6 +721,11 @@ void eof_fix_window_title(void)
 		{	//If this is a pro guitar track being displayed with the legacy view enabled
 			ustrcat(eof_window_title, "(Legacy view)");
 		}
+
+		if(eof_song->tags->tempo_map_locked)
+		{	//If the tempo map is locked
+			ustrcat(eof_window_title, "(Tempo map locked)");
+		}
 	}
 	else
 	{

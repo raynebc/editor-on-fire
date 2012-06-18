@@ -368,6 +368,7 @@ typedef struct
 	char eighth_note_hopo;
 	char eof_fret_hand_pos_1_pg;
 	char eof_fret_hand_pos_1_pb;
+	char tempo_map_locked;
 
 	EOF_OGG_INFO ogg[EOF_MAX_OGGS];
 	short oggs;
