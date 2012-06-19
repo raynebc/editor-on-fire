@@ -825,12 +825,31 @@ void eof_read_editor_keys(void)
 		}
 	}
 
+	/* The "Swap Pg Up/Dn seek controls" user preference will control which direction the page up/down keys will seek */
+	unsigned char do_pg_up = 0, do_pg_dn = 0;
+	if(key[KEY_PGUP])
+	{
+		if(eof_swap_pg_seek_keys)
+			do_pg_dn = 1;
+		else
+			do_pg_up = 1;
+		key[KEY_PGUP] = 0;
+	}
+	if(key[KEY_PGDN])
+	{
+		if(eof_swap_pg_seek_keys)
+			do_pg_up = 1;
+		else
+			do_pg_dn = 1;
+		key[KEY_PGDN] = 0;
+	}
+
 	/* seek back one grid snap (CTRL+SHIFT+Pg Up when grid snap is enabled) */
 	/* seek back one anchor (CTRL+SHIFT+Pg Up when grid snap is disabled) */
 	/* seek back one screen (CTRL+Pg Up) */
 	/* seek back one note (SHIFT+Pg Up) */
 	/* seek back one beat (Pg Up) */
-	if(key[KEY_PGUP])
+	if(do_pg_up)
 	{
 		if(!eof_music_catalog_playback)
 		{
@@ -861,7 +880,6 @@ void eof_read_editor_keys(void)
 				eof_menu_song_seek_previous_beat();
 			}
 		}
-		key[KEY_PGUP] = 0;
 	}
 
 	/* seek forward one grid snap (CTRL+SHIFT+Pg Dn when grid snap is enabled) */
@@ -869,7 +887,7 @@ void eof_read_editor_keys(void)
 	/* seek forward one screen (CTRL+Pg Dn) */
 	/* seek forward one note (SHIFT+Pg Dn) */
 	/* seek forward one beat (Pg Dn) */
-	if(key[KEY_PGDN])
+	if(do_pg_dn)
 	{
 		if(!eof_music_catalog_playback)
 		{
@@ -900,7 +918,6 @@ void eof_read_editor_keys(void)
 				eof_menu_song_seek_next_beat();
 			}
 		}
-		key[KEY_PGDN] = 0;
 	}
 
 	/* transpose mini piano visible area up one octave (CTRL+SHIFT+Up) */

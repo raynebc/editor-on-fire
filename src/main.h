@@ -413,6 +413,7 @@ extern char eof_log_level;
 extern char enable_logging;
 extern int eof_add_new_notes_to_selection;
 extern int eof_drum_modifiers_affect_all_difficulties;
+extern int eof_swap_pg_seek_keys;
 
 extern long xchart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D rendering, updated by eof_set_3D_lane_positions()
 extern long ychart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D rendering, updated by eof_set_2D_lane_positions()
