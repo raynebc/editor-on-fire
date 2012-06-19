@@ -238,6 +238,7 @@ int eof_color_waveform_rms;
 int eof_color_set = EOF_COLORS_DEFAULT;
 int eof_add_new_notes_to_selection = 0;	//If nonzero, newly added gems cause notes to be added to the selection instead of the selection being cleared first
 int eof_drum_modifiers_affect_all_difficulties = 1;	//If nonzero, a drum modifier (ie. open/pedal hi hat or rim shot apply to any notes at the same position in non active difficulties)
+int eof_swap_pg_seek_keys = 0;	//If nonzero, the page up and page down keys have their functionality reversed in regards to the seek function keyboard shortcuts
 eof_color eof_colors[6];	//Contain the color definitions for each lane
 eof_color eof_color_green_struct, eof_color_red_struct, eof_color_yellow_struct, eof_color_blue_struct, eof_color_orange_struct, eof_color_purple_struct;
 	//Color data
