@@ -2440,6 +2440,7 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 	if(!fb || !sp)
 		return -1;
 
+	eof_log("eof_gh_read_sections_note() entered", 1);
 	fb->index = 0;	//Rewind to beginning of file buffer
 
 	while(1)
@@ -2493,7 +2494,7 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 		//Match this section position with a name
 				matched = 0;
 				for(linkptr = head; (linkptr != NULL) && !matched; linkptr = linkptr->next)
-				{	//For each link in the lyric checksum list (until a match has been made)
+				{	//For each link in the sections checksum list (until a match has been made)
 					if(linkptr->checksum == checksum)
 					{	//If this checksum matches the one in the list
 						eof_music_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
@@ -2564,28 +2565,149 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 
 int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 {
-///	unsigned long numsections, checksum, dword, ctr, ctr2;
-///	char matched;
+	unsigned long checksum, dword, ctr, findpos, findpos2, lastsectionpos = 0;
+	char sectionsfound = 0, validated, found;
+	int prompt;
 	struct QBlyric *head = NULL, *linkptr = NULL;	//Used to maintain the linked list matching section names with checksums
 
 	if(!fb || !sp)
 		return -1;
 
-	head = eof_gh_read_section_names(fb);	//Read the section names and their checksums into a linked list
-	if(head == NULL)
-	{	//If there were no valid section names found
-		return -1;
-	}
+	eof_log("eof_gh_read_sections_qb() entered", 1);
+	fb->index = 0;	//Rewind to beginning of file buffer
 
-//Cleanup
-	linkptr = head;
-	while(linkptr != NULL)
-	{	//While there are links remaining in the list
-		free(linkptr->text);
-		head = linkptr->next;	//The new head link will be the next link
-		free(linkptr);			//Free the head link
-		linkptr = head;			//Advance to the new head link
-	}
+	while(1)
+	{	//Until the user accepts a language of section names
+		fb->index = lastsectionpos;	//Seek back to the position that was reached by the last search for section names
+		head = eof_gh_read_section_names(fb);	//Read the section names and their checksums into a linked list
+		if(head)
+		{	//Section names were found
+			lastsectionpos = fb->index;	//Store the current buffer position, which will be lost when seeking to the section positions below
 
-	return 1;
+		//Find the section timestamps
+			for(linkptr = head; linkptr != NULL; linkptr = linkptr->next)
+			{	//For each link in the sections checksum list
+				snprintf(eof_log_string, sizeof(eof_log_string), "\tGH: \tSearching for position of section \"%s\"", linkptr->text);
+				eof_log(eof_log_string, 1);
+				fb->index = 0;	//Rewind to beginning of file buffer
+				found = 0;	//Reset this boolean condition
+				while(1)
+				{	//Search for each instance of the section string checksum
+					if(eof_filebuffer_find_checksum(fb, linkptr->checksum))	//Find the section string checksum in the buffer
+					{	//If the checksum wasn't found
+						snprintf(eof_log_string, sizeof(eof_log_string), "Failed to locate position data for section \"%s\"", linkptr->text);
+						eof_log(eof_log_string, 1);
+						break;	//Skip looking for this section's timestamp
+					}
+					findpos = fb->index;	//Store the section string checksum match position
+					validated = 0;		//Reset this boolean condition
+					if(!eof_filebuffer_get_dword(fb, &dword) && (dword == 0) && (fb->index >= 20))
+					{	//If the dword following the string checksum was successfully read, the value was 0, and the buffer can be rewound at least 20 bytes
+						fb->index -= 20;	//Rewind 5 dwords
+						if(!eof_filebuffer_get_dword(fb, &dword) && (dword == 0x00201C00))
+						{	//If the 3rd dword before the string checksum was succesfully read and the value was 0x00201C00 (new section header)
+							validated = 1;	//Consider this to be the appropriate entry matching the section string checksum with its section checksum
+						}
+					}
+					if(validated)
+					{
+						if(!eof_filebuffer_get_dword(fb, &checksum))
+						{	//If the checksum for the practice section could be read
+							fb->index = 0;	//Rewind to beginning of file buffer
+							while(1)
+							{	//Search for each instance of the practice section checksum
+								findpos2 = fb->index;	//Store the practice section checksum match position
+								if(eof_filebuffer_find_checksum(fb, checksum))	//Find the practice section checksum in the buffer
+								{	//If the practice section checksum was not found
+									break;	//Exit to next outer loop to continue looking for other instances of the section string checksum
+								}
+								validated = 0;	//Reset this boolean condition
+								if(!eof_filebuffer_get_dword(fb, &dword) && (dword == 0) && (fb->index >= 16))
+								{	//If the dword following the string checksum was successfully read, the value was 0, and the buffer can be rewound at least 16 bytes
+									fb->index -= 16;	//Rewind 4 dwords
+									if(!eof_filebuffer_get_dword(fb, &dword) && (dword == 0x00011A00) && (fb->index >= 12))
+									{	//If the 3rd dword before the string checksum was succesfully read, the value was 0x00011A00 (alternate 2D array section header) and the buffer can be rewound at least 24 bytes
+										fb->index -= 12;	//Rewind 3 dwords
+										validated = 1;
+									}
+								}
+								if(validated)
+								{
+									if(!eof_filebuffer_get_dword(fb, &dword))	//Read the timestamp
+									{	//If the timestamp was successfully read
+										eof_music_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
+										long beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
+										if(beatnum >= 0)
+										{	//If there is such a beat
+#ifdef GH_IMPORT_DEBUG
+											snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\tSection:  Position = %lums, checksum = 0x%08lX: %s", dword, checksum, linkptr->text);
+											eof_log(eof_log_string, 1);
+#endif
+											char buffer2[256];
+											snprintf(buffer2, sizeof(buffer2), "[section %s]", linkptr->text);	//Alter the section name formatting
+											eof_song_add_text_event(sp, beatnum, buffer2, 0, 0);	//Add the text event
+										}
+										found = 1;
+										break;	//Break from practice section search loop
+									}
+								}
+								fb->index = findpos2;	//Restore the buffer position for the next iteration of this loop
+							}
+						}//If the checksum for the practice section could be read
+					}
+					if(found)
+					{	//If the practice section's timestamp was imported
+						break;	//Break from section string search loop
+					}
+					fb->index = findpos;	//Restore the buffer position for the next iteration of this loop
+				}//Search for each instance of the section string checksum
+			}//For each link in the sections checksum list
+
+		//Cleanup
+			linkptr = head;
+			while(linkptr != NULL)
+			{	//While there are links remaining in the list
+				free(linkptr->text);
+				head = linkptr->next;	//The new head link will be the next link
+				free(linkptr);			//Free the head link
+				linkptr = head;			//Advance to the new head link
+			}
+		}//Section names were found
+
+	//Prompt user
+		if(sp->text_events)
+		{	//If there were practice sections loaded
+			sectionsfound = 1;	//At least one practice section was found in this file
+			eof_sections_list_all_ptr = sp;	//eof_sections_list_all() will list the events from this temporary chart
+			eof_color_dialog(eof_all_sections_dialog, gui_fg_color, gui_bg_color);
+			centre_dialog(eof_all_sections_dialog);
+			prompt = eof_popup_dialog(eof_all_sections_dialog, 0);
+			if(prompt == 2)
+			{	//User opted to keep the loaded practice sections
+				return 1;	//Return success
+			}
+			for(ctr = sp->text_events; ctr > 0; ctr--)
+			{	//For each text event (in reverse order)
+				eof_song_delete_text_event(sp, ctr-1);	//Delete it
+			}
+			if(prompt == 4)
+			{	//User opted to skip the loading of practice sections
+				return 0;	//Return cancellation
+			}
+		}
+		else
+		{	//There were no sections loaded during this loop iteration
+			if(sectionsfound)
+			{	//If a different iteration found sections, alert the user and seek to beginning of buffer
+				allegro_message("There are no other languages detected");
+				lastsectionpos = 0;	//The next loop iteration will rewind to beginning of file buffer (so the next pass can load the first language of sections again)
+			}
+			else
+			{	//There are no sections found in this file
+				return 0;	//Return no sections
+			}
+		}
+	}//Until the user accepts a language of section names
+
+	return 0;	//Return cancellation
 }
