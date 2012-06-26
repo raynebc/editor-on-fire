@@ -27,15 +27,17 @@ void eof_song_delete_beat(EOF_SONG * sp, unsigned long beat);
 	//Removes and frees the specified beat from the beats array.  All beats after the deleted beat are moved back in the array one position
 int eof_song_resize_beats(EOF_SONG * sp, unsigned long beats);
 	//Grows or shrinks the beats array to fit the specified number of beats by allocating/freeing EOF_BEAT_MARKER structures.  Returns zero on error
-void eof_double_tempo(EOF_SONG * sp, unsigned long beat, char make_undo);
+void eof_double_tempo(EOF_SONG * sp, unsigned long beat, char *undo_made);
 	//Doubles the tempo on the specified beat, effectively doubling the number of beats up to the next anchor
-	//If make_undo is nonzero, this function will create an undo state before modifying the chart
-int eof_halve_tempo(EOF_SONG * sp, unsigned long beat, char make_undo);
+	//If *undo_made is zero, this function will create an undo state before modifying the chart and will set the referenced variable to nonzero
+	//If undo_made is NULL, the undo state will be made
+int eof_halve_tempo(EOF_SONG * sp, unsigned long beat, char *undo_made);
 	//Halves the tempo on the specified beat, effectively halving the number of beats up to the next anchor.
 	//If the number of beats until the next anchor is odd, the beat preceding the anchor will be anchored and
 	//will keep its existing tempo in order to keep the tempo map accurate, and -1 will be returned.  If only
 	//an even number of beats is altered, 0 is returned
-	//If make_undo is nonzero, this function will create an undo state before modifying the chart
+	//If *undo_made is zero, this function will create an undo state before modifying the chart and will set the referenced variable to nonzero
+	//If undo_made is NULL, the undo state will be made
 unsigned long eof_get_measure(unsigned long measure, unsigned char count_only);
 	//If count_only is nonzero, the number of measures present in the currently open chart is returned (0 if no time signatures are defined)
 	//If count_only is zero, the beat number that is at the start of the specified measure is returned (or 0 if no such measure is present)

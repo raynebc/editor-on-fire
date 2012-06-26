@@ -285,19 +285,19 @@ typedef struct
 
 } EOF_VOCAL_TRACK;
 
-#define EOF_MAX_CHORD_VARIATIONS 500
+//#define EOF_MAX_CHORD_VARIATIONS 500
 	//There will be a 3D array of chord variation structs in each pro guitar/bas track, this macro defines the size of the third dimension
 #define EOF_PRO_GUITAR_TRACKS_MAX	4
 #define EOF_TUNING_LENGTH 6	//For now, the tuning array will only track 6 strings
 #define EOF_NUM_DEFINED_CHORDS 28
-typedef struct
-{
-	unsigned char frets[EOF_TUNING_LENGTH];	//The fretted position of each string
-	unsigned char bassnote;			//The bass note of the chord
-} EOF_CHORD_VARIATION;
+//typedef struct
+//{
+//	unsigned char frets[EOF_TUNING_LENGTH];	//The fretted position of each string
+//	unsigned char bassnote;			//The bass note of the chord
+//}// EOF_CHORD_VARIATION;
 
-typedef EOF_CHORD_VARIATION EOF_CHORD_VARIATION_ARRAY[12][EOF_NUM_DEFINED_CHORDS][EOF_MAX_CHORD_VARIATIONS];
-typedef unsigned char EOF_CHORD_NUM_VARIATION_ARRAY[12][EOF_NUM_DEFINED_CHORDS];
+//typedef EOF_CHORD_VARIATION EOF_CHORD_VARIATION_ARRAY[12][EOF_NUM_DEFINED_CHORDS][EOF_MAX_CHORD_VARIATIONS];
+//typedef unsigned char EOF_CHORD_NUM_VARIATION_ARRAY[12][EOF_NUM_DEFINED_CHORDS];
 
 typedef struct
 {
@@ -330,9 +330,9 @@ typedef struct
 	unsigned long tremolos;
 
 	/* chord array variables */
-	EOF_CHORD_VARIATION_ARRAY eof_chord_variations;			//This will track each detected match for chord variations for the track based on its tuning
-	EOF_CHORD_NUM_VARIATION_ARRAY eof_chord_num_variations;	//This will track the number of chord variations for each chord in the above 3D array
-	char eof_chord_variations_array_ready;	//This will track if the chord variation array is ready to use
+//	EOF_CHORD_VARIATION_ARRAY eof_chord_variations;			//This will track each detected match for chord variations for the track based on its tuning
+//	EOF_CHORD_NUM_VARIATION_ARRAY eof_chord_num_variations;	//This will track the number of chord variations for each chord in the above 3D array
+//	char eof_chord_variations_array_ready;	//This will track if the chord variation array is ready to use
 
 } EOF_PRO_GUITAR_TRACK;
 
@@ -369,6 +369,7 @@ typedef struct
 	char eof_fret_hand_pos_1_pg;
 	char eof_fret_hand_pos_1_pb;
 	char tempo_map_locked;
+	char double_bass_drum_disabled;
 
 	EOF_OGG_INFO ogg[EOF_MAX_OGGS];
 	short oggs;

@@ -409,7 +409,7 @@ int eof_song_resize_beats(EOF_SONG * sp, unsigned long beats)
 	return 1;	//Return success
 }
 
-void eof_double_tempo(EOF_SONG * sp, unsigned long beat, char make_undo)
+void eof_double_tempo(EOF_SONG * sp, unsigned long beat, char *undo_made)
 {
 	unsigned long i, ppqn;
 
@@ -418,9 +418,11 @@ void eof_double_tempo(EOF_SONG * sp, unsigned long beat, char make_undo)
 	if(!sp || (beat >= sp->beats))
 		return;	//Invalid parameters
 
-	if(make_undo)
-	{	//If the calling function wants this function to save an undo state
+	if(!(undo_made && (*undo_made != 0)))
+	{	//If the calling function didn't explicitly opt to skip making an undo state
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		if(undo_made)
+			*undo_made = 1;
 	}
 	sp->beat[beat]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Ensure this beat is an anchor
 	ppqn = sp->beat[beat]->ppqn;	//Store this beat's tempo for reference
@@ -455,7 +457,7 @@ void eof_double_tempo(EOF_SONG * sp, unsigned long beat, char make_undo)
 	eof_calculate_beats(sp);	//Rebuild tempos and beat lengths using the updated ppqn values
 }
 
-int eof_halve_tempo(EOF_SONG * sp, unsigned long beat, char make_undo)
+int eof_halve_tempo(EOF_SONG * sp, unsigned long beat, char *undo_made)
 {
 	unsigned long ctr, ppqn, i;
 	char changefound = 0;	//This will be set to nonzero if during beat counting, a tempo change is reached
@@ -477,11 +479,13 @@ int eof_halve_tempo(EOF_SONG * sp, unsigned long beat, char make_undo)
 	}
 
 	if(ctr < 2)
-		return 0;	//If no beats can be modified without destroying the tempo map, return
+		return -1;	//If no beats can be modified without destroying the tempo map, return
 
-	if(make_undo)
-	{	//If the calling function wants this function to save an undo state
+	if(!(undo_made && (*undo_made != 0)))
+	{	//If the calling function didn't explicitly opt to skip making an undo state
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		if(undo_made)
+			*undo_made = 1;
 	}
 	if(changefound && (ctr & 1))
 	{	//If the tempo changes an odd number beats away from the starting beat

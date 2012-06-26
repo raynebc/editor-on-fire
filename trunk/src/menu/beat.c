@@ -1452,7 +1452,7 @@ int eof_menu_beat_double_tempo(void)
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
 
-	eof_double_tempo(eof_song, eof_selected_beat, 1);
+	eof_double_tempo(eof_song, eof_selected_beat, NULL);
 	return 1;
 }
 
@@ -1461,7 +1461,7 @@ int eof_menu_beat_halve_tempo(void)
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
 
-	eof_halve_tempo(eof_song, eof_selected_beat, 1);
+	eof_halve_tempo(eof_song, eof_selected_beat, NULL);
 	return 1;
 }
 
@@ -1470,7 +1470,7 @@ int eof_menu_beat_set_RBN_tempos(void)
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
 
-	char undo_made = 0, first_change = 1, changed;
+	char undo_made = 0, changed;
 	unsigned long loop_ctr = 0;
 	eof_log("eof_move_text_events() entered", 1);
 
@@ -1480,55 +1480,47 @@ int eof_menu_beat_set_RBN_tempos(void)
 	{
 		return 1;
 	}
-	for(loop_ctr = 0; loop_ctr < 25; loop_ctr++)
-	{	//Only allow this loop to run 25 times in a row
+	for(loop_ctr = 0; loop_ctr < 5; loop_ctr++)
+	{	//Only allow this loop to run 5 times in a row, to ensure it cannot run endlessly
 		changed = 0;	//Reset this condition
 		for(i = 0; i < eof_song->beats; i++)
 		{	//For each beat
 			if(eof_song->beat[i]->ppqn < 200000)
 			{	//If this beat is > 300BPM
-				if(!undo_made)
-				{
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					undo_made = 1;
-				}
-				if(eof_halve_tempo(eof_song, i, 0) < 0)
-				{	//If the function had to omit one beat from processing
-					alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->beat[i + 2]->pos + eof_av_delay);	//Seek to the offending beat (two beats ahead)
-					eof_music_pos = alogg_get_pos_msecs_ogg(eof_music_track);
-					eof_music_actual_pos = eof_music_pos;
-					eof_mix_seek(eof_music_pos);
-					eof_selected_beat = i + 2;
-					allegro_message("Warning:  This beat has a tempo that must be manually corrected.");
-					return 1;
-				}
+				eof_halve_tempo(eof_song, i, &undo_made);
 				changed = 1;		//Track that a change was made during this loop
-				first_change = 0;	//Track the first successful alteration of the tempo map
 			}
 			else if(eof_song->beat[i]->ppqn > 1500000)
 			{	//If this beat's tempo is < 40BPM
-				if(!undo_made)
-				{
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					undo_made = 1;
-				}
-				eof_double_tempo(eof_song, i, 0);
+				eof_double_tempo(eof_song, i, &undo_made);
 				changed = 1;		//Track that a change was made during this loop
-				first_change = 0;	//Track the first successful alteration of the tempo map
 			}
 		}
 		if(changed == 0)
-		{	//If there were no changes made during this loop
+		{	//If there were no changes necessary during this loop
 			break;
 		}
 	}
-	if(!loop_ctr)
+	if(undo_made)
+	{	//If any changes were made
+		allegro_message("Tempos adjusted");
+	}
+	for(i = 0; i < eof_song->beats; i++)
+	{	//For each beat
+		if((eof_song->beat[i]->ppqn < 200000) || (eof_song->beat[i]->ppqn > 1500000))
+		{	//If this beat's tempo is > 300BPM or < 40BPM
+			alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->beat[i]->pos + eof_av_delay);	//Seek to the offending beat
+			eof_music_pos = alogg_get_pos_msecs_ogg(eof_music_track);
+			eof_music_actual_pos = eof_music_pos;
+			eof_mix_seek(eof_music_pos);
+			eof_selected_beat = i;
+			allegro_message("Warning:  This beat has a tempo that must be manually corrected.");
+			return 1;
+		}
+	}
+	if(!undo_made)
 	{	//If no changes were made
 		allegro_message("No tempo adjustments necessary");
-	}
-	else
-	{
-		allegro_message("Tempos successfully adjusted");
 	}
 	return 1;
 }
