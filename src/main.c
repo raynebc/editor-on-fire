@@ -727,6 +727,10 @@ void eof_fix_window_title(void)
 		{	//If the tempo map is locked
 			ustrcat(eof_window_title, "(Tempo map locked)");
 		}
+		if(eof_song->tags->double_bass_drum_disabled)
+		{	//If expert+ bass drum is disabled
+			ustrcat(eof_window_title, "(expert+ drums off)");
+		}
 	}
 	else
 	{

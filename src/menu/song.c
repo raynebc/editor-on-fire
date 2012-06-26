@@ -159,6 +159,7 @@ MENU eof_song_menu[] =
     {"Enable open strum bass", eof_menu_song_open_bass, NULL, 0, NULL},
     {"Enable five lane drums", eof_menu_song_five_lane_drums, NULL, 0, NULL},
     {"Lock tempo map", eof_menu_song_lock_tempo_map, NULL, 0, NULL},
+    {"Disable expert+ bass drum", eof_menu_song_disable_double_bass_drums, NULL, 0, NULL},
     {"Pro &Guitar", NULL, eof_song_proguitar_menu, 0, NULL},
     {"Manage raw MIDI tracks", eof_menu_song_raw_MIDI_tracks, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
@@ -544,10 +545,20 @@ void eof_prepare_song_menu(void)
 			eof_song_menu[15].flags = 0;
 		}
 
+		/* Disable expert+ bass drum */
+		if(eof_song->tags->double_bass_drum_disabled)
+		{
+			eof_song_menu[16].flags = D_SELECTED;	//Song>Disable expert+ bass drum
+		}
+		else
+		{
+			eof_song_menu[16].flags = 0;
+		}
+
 		/* enable pro guitar submenu */
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar track is active
-			eof_song_menu[16].flags = 0;			//Song>Pro Guitar> submenu
+			eof_song_menu[17].flags = 0;			//Song>Pro Guitar> submenu
 
 			if(eof_enable_chord_cache && (eof_chord_lookup_count > 1))
 			{	//If an un-named note is selected and it has at least two chord matches
@@ -562,7 +573,7 @@ void eof_prepare_song_menu(void)
 		}
 		else
 		{	//Otherwise disable this menu item
-			eof_song_menu[16].flags = D_DISABLED;
+			eof_song_menu[17].flags = D_DISABLED;
 		}
 	}//If a chart is loaded
 }
@@ -3114,6 +3125,14 @@ int eof_menu_song_lock_tempo_map(void)
 {
 	if(eof_song)
 		eof_song->tags->tempo_map_locked ^= 1;	//Toggle this boolean variable
+	eof_fix_window_title();
+	return 1;
+}
+
+int eof_menu_song_disable_double_bass_drums(void)
+{
+	if(eof_song)
+		eof_song->tags->double_bass_drum_disabled ^= 1;	//Toggle this boolean variable
 	eof_fix_window_title();
 	return 1;
 }

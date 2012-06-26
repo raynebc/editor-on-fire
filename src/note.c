@@ -337,7 +337,12 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 			if((eof_selected_track == EOF_TRACK_DRUM))
 			{	//Drum track specific dot color logic
 				if((notetype == EOF_NOTE_AMAZING) && (noteflags & EOF_NOTE_FLAG_DBASS) && (mask == 1))
-					dcol2 = eof_color_red;	//If this is an Expert+ bass drum note, render it with a red dot
+				{	//If this is an Expert+ bass drum note
+					if(!eof_song->tags->double_bass_drum_disabled)	//And the user hasn't disabled expert+ bass drum notes
+						dcol2 = eof_color_red;	//render it with a red dot
+					else
+						dcol2 = eof_color_blue;	//render it with a blue dot
+				}
 				else if(((noteflags & EOF_NOTE_FLAG_Y_CYMBAL) && (mask == 4)) || ((noteflags & EOF_NOTE_FLAG_B_CYMBAL) && (mask == 8)) || ((noteflags & EOF_NOTE_FLAG_G_CYMBAL) && (mask == 16)))
 				{	//If this drum note is marked as a yellow, blue or green cymbal
 					iscymbal = 1;
@@ -830,8 +835,13 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 
 			if(noteflags & EOF_NOTE_FLAG_SP)			//If this bass drum note is star power, render it in silver
 				polygon(eof_window_3d->screen, 4, point, p ? eof_color_white : eof_color_silver);
-			else if(noteflags & EOF_NOTE_FLAG_DBASS)	//Or if it is double bass, render it in red
-				polygon(eof_window_3d->screen, 4, point, p ? makecol(255, 192, 192) : eof_color_red);
+			else if(noteflags & EOF_NOTE_FLAG_DBASS)
+			{	//Or if it is double bass
+				if(!eof_song->tags->double_bass_drum_disabled)	//If the user has not disabled expert+ bass drum notes
+					polygon(eof_window_3d->screen, 4, point, p ? makecol(255, 192, 192) : eof_color_red);	//Render it in red
+				else
+					polygon(eof_window_3d->screen, 4, point, p ? makecol(192, 192, 255) : eof_color_blue);	//Render it in blue
+			}
 			else										//Otherwise render it in the standard lane one color for the current color set
 				polygon(eof_window_3d->screen, 4, point, p ? eof_colors[0].hit : eof_colors[0].color);
 		}

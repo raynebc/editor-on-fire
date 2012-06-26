@@ -151,6 +151,7 @@ EOF_SONG * eof_create_song(void)
 	sp->tags->eof_fret_hand_pos_1_pg = 0;
 	sp->tags->eof_fret_hand_pos_1_pb = 0;
 	sp->tags->tempo_map_locked = 0;
+	sp->tags->double_bass_drum_disabled = 0;
 	sp->tags->ini_settings = 0;
 	sp->tags->ogg[0].midi_offset = 0;
 	sp->tags->ogg[0].modified = 0;
@@ -1216,9 +1217,9 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 					return 0;	//Return error
 				}
 				memset(ptr4->tuning, 0, EOF_TUNING_LENGTH);	//Initialize the tuning for all strings to "standard" (zero)
-				memset(ptr4->eof_chord_variations, 0, sizeof(EOF_CHORD_VARIATION));	//Initialize the chord variations array to undefined
-				memset(ptr4->eof_chord_num_variations, 0, sizeof(EOF_CHORD_NUM_VARIATION_ARRAY));
-				ptr4->eof_chord_variations_array_ready = 0;
+//				memset(ptr4->eof_chord_variations, 0, sizeof(EOF_CHORD_VARIATION));	//Initialize the chord variations array to undefined
+//				memset(ptr4->eof_chord_num_variations, 0, sizeof(EOF_CHORD_NUM_VARIATION_ARRAY));
+//				ptr4->eof_chord_variations_array_ready = 0;
 				ptr4->notes = 0;
 				ptr4->solos = 0;
 				ptr4->star_power_paths = 0;
@@ -1337,8 +1338,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		//Store the buffer information of each of the 12 INI strings to simplify the loading code
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
 
-	#define EOFNUMINIBOOLEANTYPES 6
-	char *const inibooleanbuffer[EOFNUMINIBOOLEANTYPES]={NULL,&sp->tags->lyrics,&sp->tags->eighth_note_hopo,&sp->tags->eof_fret_hand_pos_1_pg,&sp->tags->eof_fret_hand_pos_1_pb,&sp->tags->tempo_map_locked};
+	#define EOFNUMINIBOOLEANTYPES 7
+	char *const inibooleanbuffer[EOFNUMINIBOOLEANTYPES]={NULL,&sp->tags->lyrics,&sp->tags->eighth_note_hopo,&sp->tags->eof_fret_hand_pos_1_pg,&sp->tags->eof_fret_hand_pos_1_pb,&sp->tags->tempo_map_locked,&sp->tags->double_bass_drum_disabled};
 		//Store the pointers to each of the 5 boolean type INI settings (number 0 is reserved) to simplify the loading code
 
 	#define EOFNUMININUMBERTYPES 5
@@ -2038,8 +2039,8 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		//Store the buffer information of each of the 12 INI strings to simplify the loading code
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
 
-	#define EOFNUMINIBOOLEANTYPES 6
-	char *const inibooleanbuffer[EOFNUMINIBOOLEANTYPES]={NULL,&sp->tags->lyrics,&sp->tags->eighth_note_hopo,&sp->tags->eof_fret_hand_pos_1_pg,&sp->tags->eof_fret_hand_pos_1_pb,&sp->tags->tempo_map_locked};
+	#define EOFNUMINIBOOLEANTYPES 7
+	char *const inibooleanbuffer[EOFNUMINIBOOLEANTYPES]={NULL,&sp->tags->lyrics,&sp->tags->eighth_note_hopo,&sp->tags->eof_fret_hand_pos_1_pg,&sp->tags->eof_fret_hand_pos_1_pb,&sp->tags->tempo_map_locked,&sp->tags->double_bass_drum_disabled};
 		//Store the pointers to each of the 5 boolean type INI settings (number 0 is reserved) to simplify the loading code
 
 	#define EOFNUMININUMBERTYPES 5

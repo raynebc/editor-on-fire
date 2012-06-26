@@ -650,16 +650,19 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				/* write green note */
 				if(note & 1)
 				{
-					if((j == EOF_TRACK_DRUM) && (noteflags & EOF_NOTE_FLAG_DBASS) && !featurerestriction)
-					{	//If the track being written is PART DRUMS, this note is marked for Expert+ double bass, and not writing a RB3 compliant MIDI
-						eof_add_midi_event(deltapos, 0x90, 95, vel, 0);
-						eof_add_midi_event(deltapos + deltalength, 0x80, 95, vel, 0);
-						expertplus = 1;
-					}
-					else	//Otherwise write a normal green gem
-					{
-						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 0, vel, 0);
-						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 0, vel, 0);
+					if(!((noteflags & EOF_NOTE_FLAG_DBASS) && sp->tags->double_bass_drum_disabled))
+					{	//If this is not an expert+ bass drum note that would be skipped due to such notes being disabled
+						if((j == EOF_TRACK_DRUM) && (noteflags & EOF_NOTE_FLAG_DBASS) && !featurerestriction)
+						{	//If the track being written is PART DRUMS, this note is marked for Expert+ double bass, and not writing a RB3 compliant MIDI
+							eof_add_midi_event(deltapos, 0x90, 95, vel, 0);
+							eof_add_midi_event(deltapos + deltalength, 0x80, 95, vel, 0);
+							expertplus = 1;
+						}
+						else	//Otherwise write a normal green gem
+						{
+							eof_add_midi_event(deltapos, 0x90, midi_note_offset + 0, vel, 0);
+							eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 0, vel, 0);
+						}
 					}
 				}
 

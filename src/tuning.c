@@ -472,16 +472,16 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 		}//On the first pass, perform normal lookup.  On the second pass, perform (hybrid) slash chord lookup (disregarding the bass note)
 
 		//If no match has been found with standard chords, check for slash chords if the track's chord variations array is usable
-		if(tp->eof_chord_variations_array_ready)
-		{	//If the array is marked as usable
-		}
+//		if(tp->eof_chord_variations_array_ready)
+//		{	//If the array is marked as usable
+//		}
 	}//Otherwise perform chord lookup based on notes played
 
 	return 0;	//Return no match found
 }
 
 //#define EOF_CHORD_BUILD_DEBUG
-void eof_pro_guitar_track_build_chord_variations(EOF_SONG *sp, unsigned long track)
+/*void eof_pro_guitar_track_build_chord_variations(EOF_SONG *sp, unsigned long track)
 {
 	unsigned long tracknum, ctr, bitmask;
 	EOF_PRO_GUITAR_TRACK dummy_track = {0};		//Passed to tuning logic, note 0 will be updated with each possible string/fret permutation and tested
@@ -604,7 +604,9 @@ void eof_pro_guitar_track_build_chord_variations(EOF_SONG *sp, unsigned long tra
 	real_track->eof_chord_variations_array_ready = 1;	//Mark the chord variations array as ready to use
 	eof_fix_window_title();
 }
+*/
 
+/*
 void EOF_DEBUG_OUTPUT_CHORD_VARIATION_ARRAYS(void)
 {
 	char output_filename[1024] = {0};
@@ -687,6 +689,7 @@ void EOF_DEBUG_OUTPUT_CHORD_VARIATION_ARRAYS(void)
 		fclose(fp);
 	}
 }
+*/
 
 unsigned long eof_check_against_chord_lookup_cache(EOF_PRO_GUITAR_TRACK *tp, unsigned long note)
 {
