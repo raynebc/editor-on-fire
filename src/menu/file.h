@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include "../song.h"
 #include "../control.h"
-#include "../feedback.h"
+#include "../chart_import.h"
 
 extern MENU eof_file_menu[];
 
