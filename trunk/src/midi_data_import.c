@@ -44,6 +44,8 @@ void eof_MIDI_empty_event_list(struct eof_MIDI_data_event *ptr)
 	while(ptr != NULL)
 	{
 		temp = ptr->next;
+		if(ptr->stringtime)
+			free(ptr->stringtime);
 		if(ptr->data)
 			free(ptr->data);
 		free(ptr);
@@ -94,6 +96,7 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 	double currentbpm = 120.0;	//As per the MIDI specification, until a tempo change is reached, 120BPM is assumed
 	double realtime = 0.0, preoffseted;
 	char *trackname = NULL;
+	char buffer[100];	//Will be used to store an ASCII representation of the event timestamps
 
 	eof_log("eof_get_raw_MIDI_data() entered", 1);
 
@@ -294,6 +297,16 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 					}
 				}
 				linkptr->realtime = preoffseted + offset;	//Apply the offset and use the result for this event's timestamp
+				snprintf(buffer, sizeof(buffer), "%f", linkptr->realtime);	//Create a string representation of this timestamp
+				linkptr->stringtime = malloc(strlen(buffer) + 1);	//Allocate enough memory to store the timestamp string
+				if(!linkptr->stringtime)
+				{	//Error allocating memory
+					eof_MIDI_empty_event_list(head);
+					eof_MIDI_empty_tempo_list(tempohead);
+					free(trackptr);
+					return NULL;
+				}
+				strcpy(linkptr->stringtime, buffer);	//Store the timestamp string
 #ifdef MIDI_DATA_IMPORT_DEBUG
 				if((eventtype & 0xF) == 0xF)
 				{	//If this was a meta event

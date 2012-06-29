@@ -79,7 +79,9 @@ CUSTOM DATA BLOCK CHUNK, for each custom data block
 }
 !This will allow the storage of any data not specifically accounted for in this format, helping to future proof the format
 Custom data block type 1:  Raw MIDI data:
-	4 bytes:  Number of MIDI tracks
+	2 bytes:  Number of MIDI tracks
+	1 byte:  (Flags:  Bit 0= Delta timings allowed)
+	1 byte:  (Unused)
 	For each track:
 	{
 		2 bytes:  Length of MIDI track name
@@ -87,10 +89,12 @@ Custom data block type 1:  Raw MIDI data:
 		2 bytes:  Length of track description string
 		[varies]:  Track description string
 		4 bytes:  Number of events in the track
+		[1 byte]:  Track includes delta timings (If the delta timings allowed flag is set, this byte is present.  If this byte is nonzero, each event entry includes a 4 byte delta time.)
 		For each event:
 		{
 			2 bytes:  The size of the realtime position string
 			[varies]:  Realtime position of event (as written by fprintf("%f"...) with no NULL terminator, this is for cross platform compatibility)
+			[4 bytes]:  If the track includes delta timings (as per the byte above), this field contains the absolute delta time of the event
 			2 bytes:  The size of the event
 			[varies]:  Event data
 		}

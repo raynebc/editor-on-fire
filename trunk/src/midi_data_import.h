@@ -7,6 +7,7 @@
 struct eof_MIDI_data_event
 {
 	double realtime;	//The timing of this event in milliseconds
+	char *stringtime;	//A string representation of the event's realtime position (used to save to project because the conversion between string and double is lossy)
 	unsigned int size;	//The size of the buffered MIDI event
 	void *data;			//The MIDI event data
 	struct eof_MIDI_data_event *next;
