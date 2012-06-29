@@ -1449,7 +1449,9 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		data_block_type = pack_igetl(fp);	//Read the data block type
 		if(data_block_type == 1)
 		{	//If this is a linked list of raw MIDI track data
-			num_midi_tracks = pack_igetl(fp);	//Read the number of tracks to read
+			num_midi_tracks = pack_igetw(fp);	//Read the number of tracks to read
+			pack_getc(fp);	//Read the raw MIDI data block flags (not supported yet)
+			pack_getc(fp);	//Read the reserved byte (not used yet)
 			for(ctr = 0; ctr < num_midi_tracks; ctr++)
 			{	//For each of the tracks to read
 				eventhead = eventtail = NULL;	//The event linked list begins empty
@@ -1500,6 +1502,16 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					}
 					eof_load_song_string_pf(buffer, fp, sizeof(buffer));	//Read the timestamp string
 					sscanf(buffer, "%lf", &eventptr->realtime);	//Convert to double floating point
+					eventptr->stringtime = malloc(strlen(buffer) + 1);	//Allocate enough memory to store the timestamp string
+					if(!eventptr->stringtime)
+					{
+						free(trackptr);
+						free(trackptr->trackname);
+						free(trackptr->description);
+						free(eventptr);
+						return 0;	//Memory allocation error
+					}
+					strcpy(eventptr->stringtime, buffer);	//Store the timestamp string
 					eventptr->size = pack_igetw(fp);	//Get the size of this event's data
 					eventptr->data = malloc(eventptr->size);	//Allocate enough memory to store the event data
 					if(!eventptr->data)
@@ -1507,6 +1519,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 						free(trackptr);
 						free(trackptr->trackname);
 						free(trackptr->description);
+						free(eventptr->stringtime);
 						free(eventptr);
 						return 0;	//Memory allocation error
 					}
@@ -2157,7 +2170,6 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		struct eof_MIDI_data_event *eventptr;
 		unsigned long numbytes = 8;	//Start the counter to reflect 4 bytes for the custom data block ID and 4 bytes for the number of tracks to be written
 		unsigned long ctr;
-		char buffer[100];	//Will be used to store an ASCII representation of the event timestamps
 		while(trackptr != NULL)
 		{	//For each track of event data
 			numbytes += 2;	//Add 2 bytes for the size of the track name string
@@ -2175,8 +2187,13 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			while(eventptr != NULL)
 			{	//For each event
 				numbytes += 2;				//Add 2 bytes for the length of the timestamp string
-				snprintf(buffer, sizeof(buffer), "%f", eventptr->realtime);
-				numbytes += strlen(buffer);	//Add the length of the timestamp string
+				if(!eventptr->stringtime)
+				{	//If the string representation of this event's realtime isn't present
+					eof_log("\tError saving:  Corrupt raw MIDI data", 1);
+					pack_fclose(fp);
+					return 0;	//Return error
+				}
+				numbytes += strlen(eventptr->stringtime);	//Add the length of the timestamp string
 				numbytes += 2;				//Add 2 bytes for the size of this event's data
 				numbytes += eventptr->size;	//Add the size of this event's data
 				eventptr = eventptr->next;	//Point to the next event
@@ -2189,7 +2206,9 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 
 	//Parse the linked list again to write the MIDI data
 		for(ctr = 0, trackptr = sp->midi_data_head; trackptr != NULL; ctr++, trackptr = trackptr->next);	//Count the number of tracks in this list
-		pack_iputl(ctr, fp);		//Write the number of tracks that will be stored in this data block
+		pack_iputw(ctr, fp);		//Write the number of tracks that will be stored in this data block
+		pack_putc(0, fp);			//Write the raw MIDI data block flags (not supported yet)
+		pack_putc(0, fp);			//Write the reserved byte (not used yet)
 		trackptr = sp->midi_data_head;	//Point to the beginning of the track linked list
 		while(trackptr != NULL)
 		{	//For each track of event data
@@ -2200,8 +2219,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			eventptr = trackptr->events;	//Point to the beginning of this track's event linked list
 			while(eventptr != NULL)
 			{	//For each event
-				snprintf(buffer, sizeof(buffer), "%f", eventptr->realtime);	//Create an ASCII string representation of this event's timestamp
-				eof_save_song_string_pf(buffer, fp);	//Write the timestamp
+				eof_save_song_string_pf(eventptr->stringtime, fp);	//Write the timestamp string
 				pack_iputw(eventptr->size, fp);	//Write the size of this event's data
 				pack_fwrite(eventptr->data, eventptr->size, fp);	//Write this event's data
 				eventptr = eventptr->next;	//Point to the next event

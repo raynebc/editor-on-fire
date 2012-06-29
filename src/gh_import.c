@@ -335,7 +335,11 @@ int eof_filebuffer_find_bytes(filebuffer *fb, const void *bytes, unsigned long s
 		}
 		else
 		{	//The byte did not match
-			index = 0;	//Reset the index to look for a match to the target's first byte
+			if(index != 0)
+			{	//If a partial match had been found
+				fb->index = matchpos;	//return the buffer index to the start of that match, the index will increment to the next byte at the end of the loop
+			}
+			index = 0;	//Reset the search index to look for a match to the target's first byte
 		}
 		fb->index++;	//Increment to next byte in the buffer
 	}
@@ -1495,7 +1499,7 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 	{	//For each 1D array of note data
 		numnotes = eof_gh_read_array_header(fb, arrayptr[ctr], qbindex);	//Process the array header (get size and seek to first data value)
 		if(numnotes % 2)
-		{	//The value in numnotes is the number of dwords used to define this star power array (each note should be 2 dwords in size)
+		{	//The value in numnotes is the number of dwords used to define this note array (each note should be 2 dwords in size)
 			snprintf(eof_log_string, sizeof(eof_log_string), "Error:  Invalid note array size (%lu)", numnotes);
 			eof_log(eof_log_string, 1);
 			return -1;
@@ -1910,6 +1914,10 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 			eof_log("Error:  Could not read lyric checksum", 1);
 			return -1;
 		}
+#ifdef GH_IMPORT_DEBUG
+		snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Found lyric checksum position:  Checksum = 0x%08lX\tPosition = %lu", checksum, voxstart);
+		eof_log(eof_log_string, 1);
+#endif
 		matched = 0;
 		for(linkptr = head; (linkptr != NULL) && !matched; linkptr = linkptr->next)
 		{	//For each link in the lyric checksum list (until a match has been made)
@@ -1919,6 +1927,10 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 				{	//For each lyric in the EOF_SONG structure
 					if(eof_get_note_pos(sp, EOF_TRACK_VOCALS, ctr2) == voxstart)
 					{	//If this lyric has a matching timestamp
+#ifdef GH_IMPORT_DEBUG
+						snprintf(eof_log_string, sizeof(eof_log_string), "\t\tMatched lyric position:  Text = \"%s\"\tPosition = %lu", linkptr->text, voxstart);
+						eof_log(eof_log_string, 1);
+#endif
 						eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, linkptr->text);	//Update the text on this lyric
 						matched = 1;
 						break;

@@ -67,6 +67,7 @@ MENU eof_song_seek_menu[] =
     {"Beat/&Measure", eof_menu_song_seek_beat_measure, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"&Bookmark", NULL, eof_song_seek_bookmark_menu, 0, NULL},
+    {"&Catalog entry", eof_menu_song_seek_catalog_entry, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -449,15 +450,18 @@ void eof_prepare_song_menu(void)
 
 		/* show catalog */
 		/* edit name */
+		/* seek catalog entry */
 		if(eof_song->catalog->entries > 0)
 		{
 			eof_catalog_menu[0].flags = eof_catalog_menu[0].flags & D_SELECTED;	//Enable "Show Catalog" and check it if it's already checked
 			eof_catalog_menu[1].flags = 0;	//Enable "Edit name"
+			eof_catalog_menu[21].flags = 0;	//Enable Seek>Catalog entry
 		}
 		else
 		{
 			eof_catalog_menu[0].flags = D_DISABLED;	//Disable "Show catalog"
 			eof_catalog_menu[1].flags = D_DISABLED;	//Disable "Edit name"
+			eof_catalog_menu[21].flags = D_DISABLED;	//Disable Seek>Catalog entry
 		}
 
 		/* add catalog entry */
@@ -1936,7 +1940,7 @@ int eof_menu_catalog_edit_name(void)
 		ustrcpy(eof_etext, eof_song->catalog->entry[eof_selected_catalog_entry].name);
 		if(eof_popup_dialog(eof_catalog_entry_name_dialog, 2) == 3)	//User hit OK
 		{
-			if(ustricmp(eof_song->catalog->entry[eof_selected_catalog_entry].name, eof_etext))	//If the updated string (eof_etext) is different
+			if(ustrcmp(eof_song->catalog->entry[eof_selected_catalog_entry].name, eof_etext))	//If the updated string (eof_etext) is different
 			{
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				ustrcpy(eof_song->catalog->entry[eof_selected_catalog_entry].name, eof_etext);
@@ -3134,5 +3138,14 @@ int eof_menu_song_disable_double_bass_drums(void)
 	if(eof_song)
 		eof_song->tags->double_bass_drum_disabled ^= 1;	//Toggle this boolean variable
 	eof_fix_window_title();
+	return 1;
+}
+
+int eof_menu_song_seek_catalog_entry(void)
+{
+	if(eof_song && eof_song->catalog->entries && (eof_selected_catalog_entry < eof_song->catalog->entries))
+	{	//If a catalog entry is selected
+		eof_set_seek_position(eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay);
+	}
 	return 1;
 }
