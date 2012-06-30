@@ -805,7 +805,7 @@ struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 	unsigned long curppqn=500000;	//Stores the current tempo in PPQN (default is 120BPM)
 
 	unsigned long ctr,ctr2,nextanchor;
-	char midbeatchange;
+	char midbeatchange, midbeatchangefound = 0;
 	double beatlength, beatreallength;;
 
 //#ifdef EOF_DEBUG_MIDI_IMPORT
@@ -954,6 +954,7 @@ set_window_title(debugtext);
 			curppqn = (double)curppqn * (((double)nextanchor - deltafpos) / beatlength) + 0.5;	//Scale the current beat's tempo based on the adjusted delta length (rounded to nearest whole number)
 			sp->beat[sp->beats - 1]->ppqn = curppqn;		//Update the beat's (now an anchor) tempo
 			beatlength = (double)nextanchor - deltafpos;	//This is the distance between the current beat, and the upcoming mid-beat change
+			midbeatchangefound = 1;
 		}
 
 	//Update delta and realtime counters (the TS affects a beat's length in deltas, the tempo affects a beat's length in milliseconds)
@@ -970,6 +971,9 @@ set_window_title(debugtext);
 		lastnum = curnum;
 		lastden = curden;
 	}//Add new beats until enough have been added to encompass the last MIDI event
+
+if(midbeatchangefound)
+allegro_message("Warning:  There were one or more mid beat tempo/TS changes.\nTracks created to upgrade a Rock Band chart will need to be re-synced to that chart in another MIDI editor.");
 
 //#ifdef EOF_DEBUG_MIDI_IMPORT
 eof_log("\tPass two, configuring beat timings", 1);
