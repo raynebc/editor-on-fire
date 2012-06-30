@@ -1416,10 +1416,11 @@ unsigned long eof_gh_process_section_header(filebuffer *fb, const char *sectionn
 					free(*arrayptr);
 					return 0;
 				}
+/*
 #ifdef GH_IMPORT_DEBUG
 				if(dword == 0x00010c00)
 				{	//2D array
-					snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \t\t1D array at QB index 0x%08lX (file position 0x%lX)", (*arrayptr)[ctr], (*arrayptr)[ctr] + qbindex);
+					snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \t\t2D array at QB index 0x%08lX (file position 0x%lX)", (*arrayptr)[ctr], (*arrayptr)[ctr] + qbindex);
 				}
 				else
 				{	//Alternate 2D array
@@ -1427,6 +1428,7 @@ unsigned long eof_gh_process_section_header(filebuffer *fb, const char *sectionn
 				}
 				eof_log(eof_log_string, 1);
 #endif
+*/
 			}
 		}
 	}
@@ -1924,7 +1926,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 			if(linkptr->checksum == checksum)
 			{	//If this checksum matches the one in the list
 				for(ctr2 = 0; ctr2 < eof_get_track_size(sp, EOF_TRACK_VOCALS); ctr2++)
-				{	//For each lyric in the EOF_SONG structure
+				{	//For each lyric pitch in the EOF_SONG structure
 					if(eof_get_note_pos(sp, EOF_TRACK_VOCALS, ctr2) == voxstart)
 					{	//If this lyric has a matching timestamp
 #ifdef GH_IMPORT_DEBUG
@@ -1936,9 +1938,60 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 						break;
 					}
 				}
-			}
-		}
-	}
+				if(!matched)
+				{	//If there was not a lyric position that matched, one will have to be guessed
+					unsigned long thispos = 0, nextpos;
+					eof_log("\t\tThere is a bug in this QB file (no defined vocal pitch has a matching position).  Estimating the appropriate pitch to match with.", 1);
+					for(ctr2 = 0; ctr2 < eof_get_track_size(sp, EOF_TRACK_VOCALS); ctr2++)
+					{	//For each lyric pitch in the EOF_SONG structure
+						if(eof_get_note_name(sp, EOF_TRACK_VOCALS, ctr2) && (eof_get_note_name(sp, EOF_TRACK_VOCALS, ctr2)[0] == '+'))
+						{	//If this lyric pitch has no text assigned to it yet
+							thispos = eof_get_note_pos(sp, EOF_TRACK_VOCALS, ctr2);
+							if(thispos > voxstart)
+							{	//If this lyric pitch is defined before the lyric text
+								eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, linkptr->text);	//Update the text on this lyric
+								break;
+							}
+							if(ctr2 + 1 < eof_get_track_size(sp, EOF_TRACK_VOCALS))
+							{	//If there is another lyric pitch that follows this one
+								nextpos = eof_get_note_pos(sp, EOF_TRACK_VOCALS, ctr2 + 1);
+								if(nextpos <= voxstart)
+								{	//If that lyric pitch is closer to this unmatched lyric text
+									continue;	//Skip this lyric pitch becauase it's not a suitable match
+								}
+								else
+								{	//That next lyric pitch is after this unmatched lyric text, find which pitch is closer
+									if((voxstart - thispos < nextpos - voxstart))
+									{	//If the earlier pitch is closer to the unmatched lyric text then the later pitch
+										eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, linkptr->text);	//Update the text on this lyric
+										break;
+									}
+									else
+									{	//The later pitch is closer to the unmatched lyric text
+										eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2 + 1, linkptr->text);	//Update the text on this lyric
+										thispos = nextpos;
+										break;
+									}
+								}
+							}
+							else
+							{	//There is not another lyric pitch that follows this one
+								eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, linkptr->text);	//Update the text on this lyric
+								break;
+							}
+						}//If this lyric pitch has no text assigned to it yet
+					}//For each lyric pitch in the EOF_SONG structure
+#ifdef GH_IMPORT_DEBUG
+					if(thispos)
+					{	//If a match was determined
+						snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\tDecided match:  Text = \"%s\"\tPosition = %lu", linkptr->text, thispos);
+						eof_log(eof_log_string, 1);
+					}
+#endif
+				}//If there was not a lyric position that matched
+			}//If this checksum matches the one in the list
+		}//For each link in the lyric checksum list (until a match has been made)
+	}//For each block of lyric text data
 	if(arraysize)
 	{	//If memory was allocated by eof_gh_process_section_header()
 		free(arrayptr);

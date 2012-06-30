@@ -455,13 +455,13 @@ void eof_prepare_song_menu(void)
 		{
 			eof_catalog_menu[0].flags = eof_catalog_menu[0].flags & D_SELECTED;	//Enable "Show Catalog" and check it if it's already checked
 			eof_catalog_menu[1].flags = 0;	//Enable "Edit name"
-			eof_catalog_menu[21].flags = 0;	//Enable Seek>Catalog entry
+			eof_song_seek_menu[21].flags = 0;	//Enable Seek>Catalog entry
 		}
 		else
 		{
 			eof_catalog_menu[0].flags = D_DISABLED;	//Disable "Show catalog"
 			eof_catalog_menu[1].flags = D_DISABLED;	//Disable "Edit name"
-			eof_catalog_menu[21].flags = D_DISABLED;	//Disable Seek>Catalog entry
+			eof_song_seek_menu[21].flags = D_DISABLED;	//Disable Seek>Catalog entry
 		}
 
 		/* add catalog entry */
