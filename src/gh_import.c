@@ -17,6 +17,7 @@
 unsigned long crc32_lookup[256] = {0};	//A lookup table to improve checksum calculation performance
 char crc32_lookup_initialized = 0;	//Is set to nonzero when the lookup table is created
 char eof_gh_skip_size_def = 0;	//Is set to nonzero if it's determined that the size field in GH headers is omitted
+char magicnumber[] = {0x1C,0x08,0x02,0x04,0x10,0x04,0x08,0x0C,0x0C,0x08,0x02,0x04,0x14,0x02,0x04,0x0C,0x10,0x10,0x0C,0x00};	//The magic number is expected 8 bytes into the QB header
 
 #define GH_IMPORT_DEBUG
 
@@ -2063,8 +2064,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 {
 	EOF_SONG * sp;
 	filebuffer *fb;
-	char filename[101], songname[21], buffer[101], forcestrum = 0;
-	char magicnumber[] = {0x1C,0x08,0x02,0x04,0x10,0x04,0x08,0x0C,0x0C,0x08,0x02,0x04,0x14,0x02,0x04,0x0C,0x10,0x10,0x0C,0x00};	//The magic number is expected 8 bytes into the QB header
+	char filename[101], songname[41], buffer[101], forcestrum = 0;
 	unsigned char byte;
 	unsigned long index, ctr, ctr2, ctr3, arraysize, *arrayptr, numbeats, numsigs, tsnum, tsden, dword, lastfretbar = 0, lastsig = 0;
 	unsigned long qbindex;	//Will store the file index of the QB header
@@ -2135,8 +2135,8 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 		}
 	}
 //Parse the song name
-	for(index = 0; (filename[index] != '\0') && (filename[index] != '.'); index++)
-	{	//For each character in the file name until the end of the string or a period is reached
+	for(index = 0; (filename[index] != '\0') && (filename[index] != '.') && (index < sizeof(filename) - 1); index++)
+	{	//For each character in the file name until the end of the string or a period is reached (and while a buffer overflow won't occur)
 		songname[index] = filename[index];	//Copy the character
 	}
 	songname[index] = '\0';	//Terminate the string
