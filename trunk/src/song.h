@@ -422,6 +422,7 @@ struct eof_MIDI_data_track
 	char *description;
 	struct eof_MIDI_data_event *events;
 	struct eof_MIDI_data_track *next;
+	unsigned long timedivision;	//Is set to nonzero when the track being stored is a tempo track
 };
 	//This structure will be used in a linked list defining the tracks in a MIDI file
 	//Each will contain a linked list of the track's events

@@ -261,7 +261,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	}
 	else
 	{
-		npos = 20 - ((pos - leftcoord)) + notepos / eof_zoom;
+		npos = 20 - ((pos - leftcoord)) + notepos / (unsigned)eof_zoom;
 	}
 	x = npos;	//Store this to make the code more readable
 

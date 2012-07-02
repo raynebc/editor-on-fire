@@ -2927,6 +2927,7 @@ int eof_raw_midi_dialog_add(DIALOG * d)
 			}
 
 //Validate the user's selection
+///This is where the storage of track 0 will need to be allowed.
 			if(!selected->trackname)
 			{
 				selected = NULL;
