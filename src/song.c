@@ -139,6 +139,7 @@ EOF_SONG * eof_create_song(void)
 	sp->tags = malloc(sizeof(EOF_SONG_TAGS));
 	if(!sp->tags)
 	{
+		free(sp);
 		return NULL;
 	}
 	ustrcpy(sp->tags->artist, "");
@@ -170,6 +171,7 @@ EOF_SONG * eof_create_song(void)
 	if(!sp->catalog)
 	{
 		free(sp->tags);
+		free(sp);
 		return NULL;
 	}
 	sp->catalog->entries = 0;
@@ -1501,8 +1503,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 						return 0;	//Memory allocation error
 					}
 					eof_load_song_string_pf(buffer, fp, sizeof(buffer));	//Read the timestamp string
-					sscanf(buffer, "%lf", &eventptr->realtime);	//Convert to double floating point
-					eventptr->stringtime = malloc(strlen(buffer) + 1);	//Allocate enough memory to store the timestamp string
+					sscanf(buffer, "%99lf", &eventptr->realtime);			//Convert to double floating point (limit to reading sizeof(buffer)-1 characters to eliminate possibility of buffer overflow)
+					eventptr->stringtime = malloc(strlen(buffer) + 1);		//Allocate enough memory to store the timestamp string
 					if(!eventptr->stringtime)
 					{
 						free(trackptr);

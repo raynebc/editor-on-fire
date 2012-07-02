@@ -132,7 +132,10 @@ filebuffer *eof_filebuffer_load(const char * fn)
 		return NULL;	//Could not allocate memory
 	buffer->size = file_size_ex(fn);
 	if(buffer->size == 0)
+	{
+		free(buffer);
 		return NULL;	//Could not get size of file
+	}
 	buffer->buffer = eof_buffer_file(fn, 0);
 	if(buffer->buffer == NULL)
 	{

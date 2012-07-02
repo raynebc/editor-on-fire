@@ -111,6 +111,14 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 		return NULL;
 	}
 
+	if(tracknum == 0)
+	{	//If the tempo track is being imported
+		trackptr->timedivision = midiptr->divisions;	//Store the MIDI's time division
+	}
+	else
+	{
+		trackptr->timedivision = 0;	//Otherwise store 0 to indicate that only the realtime positions of the stored data will be relevant
+	}
 	trackptr->description = NULL;
 	for(ctr = 0; ctr < 2; ctr++)
 	{	//Two tracks will be parsed
@@ -296,6 +304,7 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 						return NULL;
 					}
 				}
+				linkptr->deltatime = absdelta;				//Store the event's original delta time
 				linkptr->realtime = preoffseted + offset;	//Apply the offset and use the result for this event's timestamp
 				snprintf(buffer, sizeof(buffer), "%f", linkptr->realtime);	//Create a string representation of this timestamp
 				linkptr->stringtime = malloc(strlen(buffer) + 1);	//Allocate enough memory to store the timestamp string

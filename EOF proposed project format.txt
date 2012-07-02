@@ -90,6 +90,7 @@ Custom data block type 1:  Raw MIDI data:
 		[varies]:  Track description string
 		4 bytes:  Number of events in the track
 		[1 byte]:  Track includes delta timings (If the delta timings allowed flag is set, this byte is present.  If this byte is nonzero, each event entry includes a 4 byte delta time.)
+		[4 bytes]:  Time division (If the delta timings present flag above is nonzero, the original time division is required to convert to real time so it will be stored here)
 		For each event:
 		{
 			2 bytes:  The size of the realtime position string
