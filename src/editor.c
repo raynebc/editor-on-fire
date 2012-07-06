@@ -1193,6 +1193,7 @@ void eof_read_editor_keys(void)
 			/* place note with default length if song is paused */
 			if(eof_music_paused)
 			{
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, eof_music_pos - eof_av_delay, eof_snap.length, eof_note_type, NULL);
 				if(new_note)
 				{
@@ -1209,6 +1210,7 @@ void eof_read_editor_keys(void)
 						eof_mark_new_note_as_special_hi_hat(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
 					}
 					eof_detect_difficulties(eof_song);
+					eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 				}
 				key[KEY_ENTER] = 0;
 			}
@@ -4728,20 +4730,27 @@ void eof_editor_logic_common(void)
 		/* mouse is in beat marker area */
 		if((mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4) && (mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18))
 		{
-			for(i = 0; i < eof_song->beats; i++)
-			{
-				if(pos < 300)
+			if(eof_blclick_released)
+			{	//If the left mouse button is released
+				for(i = 0; i < eof_song->beats; i++)
 				{
-					npos = (20 + (eof_song->beat[i]->pos / eof_zoom));
-				}
-				else
-				{
-					npos = (20 - (pos - 300) + (eof_song->beat[i]->pos / eof_zoom));
-				}
-				if((mouse_x > npos - 16) && (mouse_x < npos + 16) && eof_blclick_released)
-				{
-					eof_hover_beat = i;
-					break;
+					if(pos < 300)
+					{
+						npos = (20 + (eof_song->beat[i]->pos / eof_zoom));
+					}
+					else
+					{
+						npos = (20 - (pos - 300) + (eof_song->beat[i]->pos / eof_zoom));
+					}
+					if(mouse_x <= npos - 16)
+					{	//If the mouse is too far to the left of this (and all subsequent) beat markers
+						break;	//Stop checking the beats because none of them could have been clicked on
+					}
+					else if(mouse_x < npos + 16)
+					{	//Otherwise if the mouse is within the left and right boundaries of this beat's click window
+						eof_hover_beat = i;
+						break;
+					}
 				}
 			}
 			if(mouse_b & 1)
@@ -4830,9 +4839,9 @@ void eof_editor_logic_common(void)
 				}
 			}
 			if(!(mouse_b & 1))
-			{
+			{	//If the left mouse button is not held
 				if(!eof_blclick_released)
-				{
+				{	//If the release of the left mouse button has not been processed
 					eof_blclick_released = 1;
 					if(eof_mouse_drug && (eof_song->tags->ogg[eof_selected_ogg].midi_offset != eof_last_midi_offset))
 					{
