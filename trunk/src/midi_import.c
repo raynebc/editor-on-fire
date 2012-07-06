@@ -345,6 +345,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	char chord0name[100] = "", chord1name[100] = "", chord2name[100] = "", chord3name[100] = "", *chordname = NULL;	//Used for chord name import
 	char debugstring[100];
 	char is_event_track;	//This will be set to nonzero if the current track's name is EVENTS (for sorting text events into global event list instead of track specific list)
+	unsigned long beat_track = 0;	//Will identify the "BEAT" track if it is found during import
 
 	/* load MIDI */
 	if(!fn)
@@ -634,6 +635,11 @@ EOF_SONG * eof_import_midi(const char * fn)
 									ustrcpy(text, "PART DRUMS");	//Correct the name
 								}
 
+								if(!ustricmp(text, "BEAT"))
+								{	//If this is the BEAT track
+									beat_track = track[i];	//Note the track number
+								}
+
 								/* detect what kind of track this is */
 								eof_import_events[i]->type = 0;
 								for(j = 1; j < EOF_TRACKS_MAX; j++)
@@ -653,7 +659,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 									{	//If this is a track that wasn't identified above, yet contains the word "PART" in the name (or begins with "HARM")
 										if(alert("Unsupported track:", text, "Import raw data?", "&Yes", "&No", 'y', 'n') == 1)
 										{	//If the user opts to import the raw track data
-											eof_MIDI_add_track(sp, eof_get_raw_MIDI_data(eof_work_midi, track[i], sp->tags->ogg[0].midi_offset));	//Add this to the linked list of raw MIDI track data (use the MIDI delay read from song.ini)
+											eof_MIDI_add_track(sp, eof_get_raw_MIDI_data(eof_work_midi, track[i], 0));	//Add this to the linked list of raw MIDI track data
 										}
 										eof_import_events[i]->type = -1;	//Flag this as being a track that gets skipped
 									}
@@ -972,8 +978,64 @@ set_window_title(debugtext);
 		lastden = curden;
 	}//Add new beats until enough have been added to encompass the last MIDI event
 
-if(midbeatchangefound)
-allegro_message("Warning:  There were one or more mid beat tempo/TS changes.\nTracks created to upgrade a Rock Band chart will need to be re-synced to that chart in another MIDI editor.");
+	/* If a mid beat tempo or TS change was found, offer to store the tempo map and the BEAT track into the project */
+	if(midbeatchangefound)
+	{
+		if(alert("Warning:  There were one or more mid beat tempo/TS changes.", "Store the tempo track into the project?", "(Recommended if creating RB3 upgrades)", "&Yes", "&No", 'y', 'n') == 1)
+		{	//If the user opts to import the tempo track
+			struct eof_MIDI_data_track *ptr;
+			char *tempotrackname = "(TEMPO)";
+			ptr = eof_get_raw_MIDI_data(eof_work_midi, 0, 0);	//Parse the tempo track out of the file
+			if(ptr->trackname)
+			{	//If the track had a name
+				free(ptr->trackname);	//release it as it will be replaced
+			}
+			ptr->trackname = malloc(strlen(tempotrackname) + 1);
+			if(!ptr->trackname)
+			{	//Allocation error
+				eof_import_destroy_events_list(eof_import_bpm_events);
+				eof_import_destroy_events_list(eof_import_text_events);
+				destroy_midi(eof_work_midi);
+				eof_destroy_tempo_list(anchorlist);
+				eof_destroy_song(sp);
+				eof_MIDI_empty_event_list(ptr->events);
+				free(ptr);
+				return 0;	//Return error
+			}
+			strcpy(ptr->trackname, tempotrackname);	//Update the tempo track name
+			eof_MIDI_add_track(sp, ptr);	//Add this to the linked list of raw MIDI track data
+			if(beat_track)
+			{	//If there was a beat track found
+				char *beattrackname = "(BEAT)";
+				if(alert("Store the BEAT track as well?", "(Recommended)", NULL, "&Yes", "&No", 'y', 'n') == 1)
+				{	//If the user opts to store the beat track
+					ptr = eof_get_raw_MIDI_data(eof_work_midi, beat_track, 0);
+					if(ptr->trackname)
+					{	//If the track had a name (it should have)
+						free(ptr->trackname);
+					}
+					ptr->trackname = malloc(strlen(beattrackname) + 1);
+					if(!ptr->trackname)
+					{	//Allocation error
+						eof_import_destroy_events_list(eof_import_bpm_events);
+						eof_import_destroy_events_list(eof_import_text_events);
+						destroy_midi(eof_work_midi);
+						eof_destroy_tempo_list(anchorlist);
+						eof_destroy_song(sp);
+						eof_MIDI_empty_event_list(ptr->events);
+						free(ptr);
+						return 0;	//Return error
+					}
+					strcpy(ptr->trackname, beattrackname);	//Update the beat track name
+					eof_MIDI_add_track(sp, ptr);	//Add this to the linked list of raw MIDI track data
+				}
+			}
+			if(alert("Lock the tempo map to preserve sync?", "(Recommended)", NULL, "&Yes", "&No", 'y', 'n') == 1)
+			{	//If the user opts to lock the tempo map
+				sp->tags->tempo_map_locked |= 1;
+			}
+		}
+	}
 
 //#ifdef EOF_DEBUG_MIDI_IMPORT
 eof_log("\tPass two, configuring beat timings", 1);

@@ -406,22 +406,17 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		eof_log("\tError saving:  Invalid parameters", 1);
 		return 0;	//Return failure
 	}
+
+	//Build tempo and TS lists
 	anchorlist=eof_build_tempo_list(sp);	//Create a linked list of all tempo changes in eof_song->beat[]
 	if(anchorlist == NULL)	//If the anchor list could not be created
 	{
 		eof_log("\tError saving:  Cannot build anchor list", 1);
 		return 0;	//Return failure
 	}
-
-	//Initialize the temporary filename array
-	for(i = 0; i < EOF_TRACKS_MAX+1; i++)
-	{
-		snprintf(notetempname[i],15,"eof%lu.tmp",i);
-	}
-
 	if(eof_use_ts)
 	{	//If the user opted to use the time signatures during export
-		tslist=eof_build_ts_list(anchorlist);	//Create a list of all TS changes in eof_song->beat[]
+		tslist=eof_build_ts_list(sp);	//Create a list of all TS changes in eof_song->beat[]
 		if(tslist == NULL)
 		{
 			eof_log("\tError saving:  Cannot build TS list", 1);
@@ -433,6 +428,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	{	//Otherwise build a TS list containing just the default 4/4 time signature
 		tslist = eof_create_ts_list();
 		eof_midi_add_ts_realtime(tslist, sp->beat[0]->fpos, 4, 4, 0);	//use an implied TS of 4/4 on the first beat marker
+	}
+
+	//Initialize the temporary filename array
+	for(i = 0; i < EOF_TRACKS_MAX+1; i++)
+	{
+		snprintf(notetempname[i],15,"eof%lu.tmp",i);
 	}
 
 	eof_sort_notes(sp);	//Writing efficient on-the-fly HOPO phrasing relies on all notes being sorted
@@ -1049,6 +1050,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				if(sp->vocal_track[tracknum]->lyric[i]->note != VOCALPERCUSSION)
 				{	//Do not write a lyric string for vocal percussion notes
 					eof_add_midi_lyric_event(eof_ConvertToDeltaTime(sp->vocal_track[tracknum]->lyric[i]->pos,anchorlist,tslist,EOF_DEFAULT_TIME_DIVISION), tempstring);
+				}
+				else
+				{
+					free(tempstring);
 				}
 			}
 			/* fill in lyric lines */
@@ -1957,7 +1962,7 @@ struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp)
 	struct Tempo_change *temp=NULL;
 	unsigned long lastppqn=0;	//Tracks the last anchor's PPQN value
 	unsigned long deltactr=0;	//Counts the number of deltas between anchors
-	unsigned den=4;				//Stores the most recent TS change's denominator (default to 4)
+//	unsigned den=4;				//Stores the most recent TS change's denominator (default to 4)
 
 	if((sp == NULL) || (sp->beats < 1))
 	{
@@ -1965,12 +1970,12 @@ struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp)
 	}
 	for(ctr=0;ctr < sp->beats;ctr++)
 	{	//For each beat
-		if(eof_use_ts)
-		{	//If the user opted to use time signatures during MIDI export
-			eof_get_ts(sp,NULL,&den,ctr);	//Update the TS denominator if applicable
-		}
+//		if(eof_use_ts)
+//		{	//If the user opted to use time signatures during MIDI export
+//			eof_get_ts(sp,NULL,&den,ctr);	//Update the TS denominator if applicable
+//		}
 		if(sp->beat[ctr]->ppqn != lastppqn)
-		{	//If this beat has a different tempo than the last, add it to the list
+		{	//If this beat has a different tempo than the last, or it is the first beat, add it to the list
 			lastppqn=sp->beat[ctr]->ppqn;	//Remember this ppqn
 			temp=eof_add_to_tempo_list(deltactr,sp->beat[ctr]->fpos,(double)60000000.0/lastppqn,list);
 
@@ -2261,7 +2266,7 @@ void eof_destroy_ts_list(EOF_MIDI_TS_LIST *ptr)
 	}
 }
 
-EOF_MIDI_TS_LIST *eof_build_ts_list(struct Tempo_change *anchorlist)
+EOF_MIDI_TS_LIST *eof_build_ts_list(EOF_SONG *sp)
 {
 	eof_log("eof_build_ts_list() entered", 1);
 
@@ -2272,17 +2277,17 @@ EOF_MIDI_TS_LIST *eof_build_ts_list(struct Tempo_change *anchorlist)
 	double deltafpos = 0.0;			//Stores the ongoing delta time (with double floating precision)
 	double beatlength = 0.0;		//Stores the current beat's length in deltas
 
-	if((eof_song == NULL) || (eof_song->beats <= 0))
+	if((sp == NULL) || (sp->beats <= 0))
 		return NULL;
 	tslist = eof_create_ts_list();
 	if(tslist == NULL)
 		return NULL;
 
-	for(ctr=0;ctr < eof_song->beats;ctr++)
+	for(ctr=0;ctr < sp->beats;ctr++)
 	{	//For each beat, create a list of Time Signature changes and store the appropriate delta position of each
-		if(eof_get_ts(eof_song,&num,&den,ctr) == 1)
+		if(eof_get_ts(sp,&num,&den,ctr) == 1)
 		{	//If a time signature exists on this beat
-			eof_midi_add_ts_realtime(tslist, eof_song->beat[ctr]->fpos, num, den, 0);	//Store the beat marker's time signature
+			eof_midi_add_ts_realtime(tslist, sp->beat[ctr]->fpos, num, den, 0);	//Store the beat marker's time signature
 			tslist->change[tslist->changes-1]->pos = deltapos;	//Store the time signature's position in deltas
 		}
 
