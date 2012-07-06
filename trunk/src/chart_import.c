@@ -156,7 +156,6 @@ EOF_SONG * eof_import_chart(const char * fn)
 		/* if the audio file doesn't exist, look for any OGG file in the chart directory */
 		if(!exists(oggfn))
 		{
-
 			/* no OGG file found, start file selector at chart directory */
 			replace_filename(searchpath, fn, "*.ogg", 1024);
 			if(al_findfirst(searchpath, &info, FA_ALL))

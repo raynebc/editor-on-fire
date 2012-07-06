@@ -333,6 +333,7 @@ int eof_menu_beat_bpm_change(void)
 	int i;
 	unsigned long cppqn = eof_song->beat[eof_selected_beat]->ppqn;
 	int old_flags = eof_song->beat[eof_selected_beat]->flags;
+	double newppqn;
 
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
@@ -374,9 +375,10 @@ int eof_menu_beat_bpm_change(void)
 			eof_menu_edit_cut(eof_selected_beat + 1, 1, 0.0);
 			eof_song->beat[eof_selected_beat]->flags = old_flags;
 		}
+		newppqn = (double)60000000.0 / bpm;
 		if(eof_bpm_change_dialog[3].flags == D_SELECTED)
 		{
-			eof_song->beat[eof_selected_beat]->ppqn = (double)60000000.0 / bpm;
+			eof_song->beat[eof_selected_beat]->ppqn = newppqn;
 			eof_song->beat[eof_selected_beat + 1]->flags |= EOF_BEAT_FLAG_ANCHOR;
 		}
 		else
@@ -385,7 +387,7 @@ int eof_menu_beat_bpm_change(void)
 			{
 				if(eof_song->beat[i]->ppqn == cppqn)
 				{
-					eof_song->beat[i]->ppqn = (double)60000000.0 / bpm;
+					eof_song->beat[i]->ppqn = newppqn;
 				}
 
 				/* break when we reach the end of the portion to change */
@@ -775,6 +777,7 @@ int eof_menu_beat_reset_bpm(void)
 		if(eof_song->beat[i]->ppqn != eof_song->beat[0]->ppqn)
 		{
 			reset = 1;
+			break;
 		}
 	}
 	if(reset)
