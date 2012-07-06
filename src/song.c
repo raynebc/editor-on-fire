@@ -1451,9 +1451,11 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		data_block_type = pack_igetl(fp);	//Read the data block type
 		if(data_block_type == 1)
 		{	//If this is a linked list of raw MIDI track data
+			unsigned char mididataflags, deltatimings = 0;
+			unsigned long timedivision = 0;
 			num_midi_tracks = pack_igetw(fp);	//Read the number of tracks to read
-			pack_getc(fp);	//Read the raw MIDI data block flags (not supported yet)
-			pack_getc(fp);	//Read the reserved byte (not used yet)
+			mididataflags = pack_getc(fp);		//Read the raw MIDI data block flags
+			pack_getc(fp);	//Read the reserved byte (not used)
 			for(ctr = 0; ctr < num_midi_tracks; ctr++)
 			{	//For each of the tracks to read
 				eventhead = eventtail = NULL;	//The event linked list begins empty
@@ -1492,6 +1494,14 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					strcpy(trackptr->description, buffer);
 				}
 				numevents = pack_igetl(fp);	//Read the number of events for this track
+				if(mididataflags & 1)
+				{	//If the MIDI data block's flags indicated that delta timings are allowed
+					deltatimings = pack_getc(fp);	//Read the byte indicating whether delta timings are present for this track
+					if(deltatimings)
+					{	//If this track is storing a delta time for each stored event
+						timedivision = pack_igetl(fp);	//Read the time division associated with the timings
+					}
+				}
 				for(ctr2 = 0; ctr2 < numevents; ctr2++)
 				{	//For each of the events to read
 					eventptr = malloc(sizeof(struct eof_MIDI_data_event));
@@ -1514,6 +1524,11 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 						return 0;	//Memory allocation error
 					}
 					strcpy(eventptr->stringtime, buffer);	//Store the timestamp string
+					eventptr->deltatime = 0;
+					if(deltatimings)
+					{	//If this track is storing a delta time for each stored event
+						eventptr->deltatime = pack_igetl(fp);	//Read the event's delta time
+					}
 					eventptr->size = pack_igetw(fp);	//Get the size of this event's data
 					eventptr->data = malloc(eventptr->size);	//Allocate enough memory to store the event data
 					if(!eventptr->data)
@@ -2167,68 +2182,74 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 //	pack_iputl(0, fp);	//Write an empty custom data block
 	if(sp->midi_data_head)
 	{	//If there is raw MIDI data being stored, write it as a custom data block
-	//Parse the linked list to determine the number of bytes that will be written
+		PACKFILE *tfp;	//Used to create a temp file containing the MIDI data block, so its size can easily be determined before dumping into the output project file
 		struct eof_MIDI_data_track *trackptr = sp->midi_data_head;	//Point to the beginning of the track linked list
 		struct eof_MIDI_data_event *eventptr;
-		unsigned long numbytes = 8;	//Start the counter to reflect 4 bytes for the custom data block ID and 4 bytes for the number of tracks to be written
-		unsigned long ctr;
-		while(trackptr != NULL)
-		{	//For each track of event data
-			numbytes += 2;	//Add 2 bytes for the size of the track name string
-			if(trackptr->trackname)
-			{	//If this track has a name
-				numbytes += ustrlen(trackptr->trackname);	//Add the length of the string
-			}
-			numbytes += 2;	//Add 2 bytes for the size of the description string
-			if(trackptr->description)
-			{	//If this track has a description
-				numbytes += ustrlen(trackptr->description);	//Add the length of the string
-			}
-			numbytes += 4;	//Add 4 bytes for the number of events in the track
-			eventptr = trackptr->events;	//Point to the beginning of this track's event linked list
-			while(eventptr != NULL)
-			{	//For each event
-				numbytes += 2;				//Add 2 bytes for the length of the timestamp string
-				if(!eventptr->stringtime)
-				{	//If the string representation of this event's realtime isn't present
-					eof_log("\tError saving:  Corrupt raw MIDI data", 1);
-					pack_fclose(fp);
-					return 0;	//Return error
-				}
-				numbytes += strlen(eventptr->stringtime);	//Add the length of the timestamp string
-				numbytes += 2;				//Add 2 bytes for the size of this event's data
-				numbytes += eventptr->size;	//Add the size of this event's data
-				eventptr = eventptr->next;	//Point to the next event
-			}
-			trackptr = trackptr->next;	//Point to the next track
-		}
-		pack_iputl(1, fp);			//Write one data block
-		pack_iputl(numbytes, fp);	//Write the size of this data block
-		pack_iputl(1, fp);			//Write the data block ID (1 = Raw MIDI data)
+		unsigned long ctr, filesize;
 
-	//Parse the linked list again to write the MIDI data
+	//Parse the linked list to write the MIDI data to a temp file
+		tfp = pack_fopen("rawmididata.tmp", "w");
+		if(!tfp)
+		{	//If the temp file couldn't be opened for writing
+			eof_log("\tError creating temp file for raw MIDI data block", 1);
+			pack_fclose(fp);
+			return 0;	//return error
+		}
 		for(ctr = 0, trackptr = sp->midi_data_head; trackptr != NULL; ctr++, trackptr = trackptr->next);	//Count the number of tracks in this list
-		pack_iputw(ctr, fp);		//Write the number of tracks that will be stored in this data block
-		pack_putc(0, fp);			//Write the raw MIDI data block flags (not supported yet)
-		pack_putc(0, fp);			//Write the reserved byte (not used yet)
+		pack_iputl(1, tfp);			//Write the data block ID (1 = Raw MIDI data)
+		pack_iputw(ctr, tfp);		//Write the number of tracks that will be stored in this data block
+		pack_putc(1, tfp);			//Write the raw MIDI data block flags (delta timings allowed)
+		pack_putc(0, tfp);			//Write the reserved byte (not used)
 		trackptr = sp->midi_data_head;	//Point to the beginning of the track linked list
 		while(trackptr != NULL)
 		{	//For each track of event data
-			eof_save_song_string_pf(trackptr->trackname, fp);	//Write the track name (this function allows for a NULL pointer)
-			eof_save_song_string_pf(trackptr->description, fp);	//Write the description
+			eof_save_song_string_pf(trackptr->trackname, tfp);		//Write the track name (this function allows for a NULL pointer)
+			eof_save_song_string_pf(trackptr->description, tfp);	//Write the description
 			for(ctr = 0, eventptr = trackptr->events; eventptr != NULL; ctr++, eventptr = eventptr->next);	//Count the number of events in this track
-			pack_iputl(ctr, fp);	//Write the number of events for this track
+			pack_iputl(ctr, tfp);	//Write the number of events for this track
+			if(trackptr->timedivision)
+			{	//If this stored MIDI track has a time division defined
+				pack_putc(1, tfp);	//Write the delta timings present field to indicate each event will also have a delta time written
+				pack_iputl(trackptr->timedivision, tfp);	//And write the track's time division
+			}
+			else
+			{
+				pack_putc(0, tfp);	//Write the delta timings present field to indicate that events will not include delta times
+			}
 			eventptr = trackptr->events;	//Point to the beginning of this track's event linked list
 			while(eventptr != NULL)
 			{	//For each event
-				eof_save_song_string_pf(eventptr->stringtime, fp);	//Write the timestamp string
-				pack_iputw(eventptr->size, fp);	//Write the size of this event's data
-				pack_fwrite(eventptr->data, eventptr->size, fp);	//Write this event's data
+				eof_save_song_string_pf(eventptr->stringtime, tfp);	//Write the timestamp string
+				if(trackptr->timedivision)
+				{	//If this stored MIDI track has a time division defined
+					pack_iputl(eventptr->deltatime, tfp);	//Write the event's delta time
+				}
+				pack_iputw(eventptr->size, tfp);	//Write the size of this event's data
+				pack_fwrite(eventptr->data, eventptr->size, tfp);	//Write this event's data
 				eventptr = eventptr->next;	//Point to the next event
 			}
 			trackptr = trackptr->next;	//Point to the next track
 		}
-	}
+		pack_fclose(tfp);	//Close temp file
+
+	//Write the custom data block
+		pack_iputl(1, fp);	//Write one data block
+		filesize = file_size_ex("rawmididata.tmp");
+		pack_iputl(filesize, fp);	//Write the size of this data block
+		tfp = pack_fopen("rawmididata.tmp", "r");
+		if(!tfp)
+		{	//If the temp file couldn't be opened for writing
+			eof_log("\tError reading temp file for raw MIDI data block", 1);
+			pack_fclose(fp);
+			return 0;	//return error
+		}
+		for(ctr = 0; ctr < filesize; ctr++)
+		{	//For each byte in the temp file
+			pack_putc(pack_getc(tfp), fp);	//Copy the byte to the output project file
+		}
+		pack_fclose(tfp);
+		delete_file("rawmididata.tmp");	//Delete the temp file
+	}//If there is raw MIDI data being stored, write it as a custom data block
 	else
 	{	//Otherwise write a debug custom data block
 		pack_iputl(1, fp);			//Write one data block
