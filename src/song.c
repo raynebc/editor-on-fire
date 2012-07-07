@@ -1502,6 +1502,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 						timedivision = pack_igetl(fp);	//Read the time division associated with the timings
 					}
 				}
+				trackptr->timedivision = timedivision;
 				for(ctr2 = 0; ctr2 < numevents; ctr2++)
 				{	//For each of the events to read
 					eventptr = malloc(sizeof(struct eof_MIDI_data_event));

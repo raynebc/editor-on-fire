@@ -15,7 +15,7 @@ double eof_ConvertToRealTime(unsigned long absolutedelta,struct Tempo_change *an
 inline unsigned long eof_ConvertToRealTimeInt(unsigned long absolutedelta,struct Tempo_change *anchorlist,EOF_MIDI_TS_LIST *tslist,unsigned long timedivision,unsigned long offset);
 	//Returns the value as if eof_ConvertToRealTime() was called, and the result was rounded up to the nearest unsigned long
 unsigned long eof_parse_var_len(unsigned char * data, unsigned long pos, unsigned long * bytes_used);
-	//Parses a variable length value, returning it and returning the size (in bytes) of the variable length value via bytes_used
+	//Parses a variable length value from data[pos], returning it and adding the size (in bytes) of the variable length value to bytes_used
 	//bytes_used is NOT initialized to zero within this function, the calling function must set it appropriately
 
 #endif
