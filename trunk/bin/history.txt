@@ -3,6 +3,25 @@ EOF Version History
 
 1.8:
 
+Fixed a minor bug where an undo state wasn't made if
+Enter was used to place gems at the current seek
+position (Classic and Hold input methods).
+
+Added a function to seek to the current fret catalog
+entry (Song>Seek>Catalog entry).
+
+Created a "Song>Disable expert+ bass drum" chart
+option that will omit any drum gems marked as double
+bass from the MIDIs during save.  For RBN authors,
+this will make it easy to author the drum track once
+and create both a single and a double bass chart
+from it.
+
+Added a user preference (Swap Pg Up/Dn seek controls)
+that reverses the roles of the page up and down keys
+(ie. allowing the Pg Up keyboard shortcuts to seek
+forward).
+
 Added the ability to lock the tempo map to avoid
 accidental changes to the beat markers
 (Song>Lock tempo map).
@@ -34,8 +53,15 @@ prompting for each that is encountered.  Each event in
 the stored MIDI tracks is stored in high precision
 millisecond timing, and is saved to the output MIDI
 during project save conforming to the chart's tempo
-map.  Stored tracks can be added and deleted from the
-"Song>Manage raw MIDI tracks" dialog menu.
+map.  During MIDI import, EOF will offer to store the
+MIDI's tempo map and beat track if mid beat tempo or
+time signature changes are found.  This works around
+EOF's designed behavior of adding beats so mid beat
+changes can exist on beat markers, since for Rock Band
+upgrades, the upgrade's tempo map has to match that of
+the original chart to work correctly.Stored tracks can
+be added and deleted from the "Song>Manage raw MIDI
+tracks" dialog menu.
 
 Added a Guitar Hero color set option in Preferences.
 

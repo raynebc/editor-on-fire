@@ -43,7 +43,8 @@ typedef struct
 
 long eof_figure_beat(double pos);				//Returns the beat marker immediately before the specified timestamp, or -1 on failure
 double eof_calculate_bpm_absolute(double pos);	//Returns the tempo defined by the beat marker immediately before the specified timestamp, or 0.0 on failure
-double eof_calculate_delta(double start, double end);	//Finds the number of delta ticks within the specified time span?
+///Unused function
+//double eof_calculate_delta(double start, double end);	//Finds the number of delta ticks within the specified time span?
 	//Warning: This function does not take the time signature into account
 
 int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixvoxpitches, char fixvoxphrases);
@@ -100,8 +101,14 @@ void eof_write_text_event(unsigned long deltas, const char *str, PACKFILE *fp);
 	//Writes a text event to the given file stream
 void eof_add_sysex_event(unsigned long pos, int size, void *data);
 	//Stores a copy of the Sysex message data (used for custom phrase markers in Phase Shift) to eof_midi_event[]
-void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist);
+void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, unsigned long timedivision);
 	//Write all stored MIDI track data from sp->midi_data_head to the output file
+int eof_built_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistptr, EOF_MIDI_TS_LIST **tslistptr, unsigned long *timedivision);
+	//Accepts an EOF_SONG pointer, and builds the anchor and TS change lists, returning them through the pointers
+	//If the passed chart contains a stored tempo track, that track is used to build the lists
+	//Otherwise the chart's native tempo map is used to build them
+	//If the passed chart contains a stored tempo track, that track's time division is returned via reference, otherwise EOF's default is returned via reference
+	//Nonzero is returned upon success
 
 void eof_check_vocals(EOF_SONG* sp, char *fixvoxpitches, char *fixvoxphrases);
 	//Scans the vocal tracks contained in the chart for missing pitches or vocal phrases
