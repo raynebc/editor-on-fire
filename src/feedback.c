@@ -204,7 +204,7 @@ void eof_editor_logic_feedback(void)
 	if(key[KEY_MINUS])
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		eof_menu_edit_cut(fbeat + 1, 1, 0.0);
+		eof_menu_edit_cut(fbeat + 1, 1);
 		if(KEY_EITHER_SHIFT)
 		{
 			bpm -= 0.1;
@@ -228,13 +228,13 @@ void eof_editor_logic_feedback(void)
 		}
 		eof_song->beat[fbeat]->flags = EOF_BEAT_FLAG_ANCHOR;
 		eof_calculate_beats(eof_song);
-		eof_menu_edit_cut_paste(fbeat + 1, 1, 0.0);
+		eof_menu_edit_cut_paste(fbeat + 1, 1);
 		key[KEY_MINUS] = 0;
 	}
 	if(key[KEY_EQUALS])
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		eof_menu_edit_cut(fbeat + 1, 1, 0.0);
+		eof_menu_edit_cut(fbeat + 1, 1);
 		if(KEY_EITHER_SHIFT)
 		{
 			bpm += 0.1;
@@ -258,7 +258,7 @@ void eof_editor_logic_feedback(void)
 		}
 		eof_song->beat[fbeat]->flags = EOF_BEAT_FLAG_ANCHOR;
 		eof_calculate_beats(eof_song);
-		eof_menu_edit_cut_paste(fbeat + 1, 1, 0.0);
+		eof_menu_edit_cut_paste(fbeat + 1, 1);
 		key[KEY_EQUALS] = 0;
 	}
 

@@ -13,6 +13,7 @@
 #include "ID3_parse.h"
 #include "SRT_parse.h"
 #include "XML_parse.h"
+#include "JB_parse.h"
 
 #ifdef USEMEMWATCH
 #ifdef EOF_BUILD	//In the EOF code base, memwatch.h is at the root
@@ -157,6 +158,8 @@ int main(int argc, char *argv[])
 					Lyrics.in_format=SRT_FORMAT;
 				else if(strcasecmp(argv[ctr+1],"xml") == 0)
 					Lyrics.in_format=XML_FORMAT;
+				else if(strcasecmp(argv[ctr+1],"c9c") == 0)
+					Lyrics.in_format=C9C_FORMAT;
 				else
 					Input_failed(ctr+1,NULL);
 
@@ -757,7 +760,7 @@ int main(int argc, char *argv[])
 		if(detectionlist == NULL)
 		{
 			puts("No valid lyrics were detected\nExiting");
-			DestroyLyricFormatList(detectionlist);
+//			DestroyLyricFormatList(detectionlist);
 			exit_wrapper(1);
 		}
 
@@ -919,6 +922,11 @@ int main(int argc, char *argv[])
 		case XML_FORMAT:	//Load XML file
 			inf=fopen_err(Lyrics.infilename,"rt");	//XML is a text format
 			XML_Load(inf);
+		break;
+
+		case C9C_FORMAT:	//Load JamBand file
+			inf=fopen_err(Lyrics.infilename,"rt");	//JamBand is a text format
+			JB_Load(inf);
 		break;
 
 		default:
@@ -1217,7 +1225,7 @@ void DisplayHelp(void)
 //Describe general syntax and required parameters
 	DisplaySyntax();
 	puts("-The use of detect will halt a conversion specified by the other parameters");
-	puts("-Valid FORMATs are script,vl,midi,ustar,lrc,elrc,vrhythm,kar,skar,id3 or srt");
+	puts("-Valid FORMATs: script,vl,midi,ustar,lrc,elrc,vrhythm,kar,skar,id3,srt,xml,jb");
 	puts("-infile is the name of the input file, whose FORMAT is optional");
 	puts("-outfile is the name of the file to create in the FORMAT preceding it");
 	puts("-If the input format is vrhythm, a source rhythm MIDI file (infile)");

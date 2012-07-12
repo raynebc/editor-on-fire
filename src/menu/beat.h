@@ -48,4 +48,8 @@ int eof_menu_beat_set_RBN_tempos(void);
 	//Uses eof_double_tempo() and eof_halve_tempo() to attempt to get all tempos within RBN's requirements of 40BPM to 300BPM
 	//If this is not possible, the chart seeks to the problematic tempo and warns the user that it must be corrected manually
 
+int eof_menu_beat_adjust_bpm(double amount);
+	//Alters the tempo of the beat/anchor at/before the seek position by adding the specified amount
+	//If the Feedback input method is in effect, the beat at/before the seek position is altered, otherwise the anchor at/before the seek position is altered
+
 #endif

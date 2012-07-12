@@ -611,16 +611,35 @@ void eof_read_editor_keys(void)
 	}
 
 	/* zoom in (+ on numpad) */
+	/* increment AV delay (CTRL+(plus) on numpad) */
 	if(key[KEY_PLUS_PAD])
 	{
-		eof_menu_edit_zoom_helper_in();
+		if(!KEY_EITHER_CTRL)
+		{	//If CTRL is not being held
+			eof_menu_edit_zoom_helper_in();
+		}
+		else
+		{
+			eof_av_delay++;
+		}
 		key[KEY_PLUS_PAD] = 0;
 	}
 
 	/* zoom out (- on numpad) */
+	/* decrement AV delay (CTRL+- on numpad) */
 	if(key[KEY_MINUS_PAD])
 	{
-		eof_menu_edit_zoom_helper_out();
+		if(!KEY_EITHER_CTRL)
+		{	//If CTRL is not being held
+			eof_menu_edit_zoom_helper_out();
+		}
+		else
+		{
+			if(eof_av_delay > 0)
+			{
+				eof_av_delay--;
+			}
+		}
 		key[KEY_MINUS_PAD] = 0;
 	}
 
@@ -2421,7 +2440,14 @@ void eof_editor_logic(void)
 		if((mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
 		{
 			int x_tolerance = 6 * eof_zoom;	//This is how far left or right of a note the mouse is allowed to be to still be considered to hover over that note
-			lpos = pos < 300 ? (mouse_x - 20) * eof_zoom : ((pos - 300) + mouse_x - 20) * eof_zoom;
+///			if(eof_input_mode != EOF_INPUT_FEEDBACK)
+//			{	//Non Feedback input methods use the mouse position to place/edit notes
+				lpos = pos < 300 ? (mouse_x - 20) * eof_zoom : ((pos - 300) + mouse_x - 20) * eof_zoom;
+//			}
+//			else
+//			{	//The Feedback input method uses the seek position instead
+//				lpos = pos < 300 ? (-20) * eof_zoom : (-320) * eof_zoom;
+//			}
 			eof_snap_logic(&eof_snap, lpos);
 			eof_snap_length_logic(&eof_snap);
 			eof_pen_note.pos = eof_snap.pos;
@@ -4820,7 +4846,7 @@ void eof_editor_logic_common(void)
 							eof_adjusted_anchor = 1;
 							if((eof_note_auto_adjust && !KEY_EITHER_SHIFT) || (!eof_note_auto_adjust && KEY_EITHER_SHIFT))
 							{
-								eof_menu_edit_cut(eof_selected_beat, 0, 0.0);
+								eof_menu_edit_cut(eof_selected_beat, 0);
 							}
 						}
 						eof_song->beat[eof_selected_beat]->fpos += eof_mickeys_x * eof_zoom;
@@ -4856,7 +4882,7 @@ void eof_editor_logic_common(void)
 				{
 					if((eof_note_auto_adjust && !KEY_EITHER_SHIFT) || (!eof_note_auto_adjust && KEY_EITHER_SHIFT))
 					{
-						eof_menu_edit_cut_paste(eof_selected_beat, 0, 0.0);
+						eof_menu_edit_cut_paste(eof_selected_beat, 0);
 						eof_calculate_beats(eof_song);
 					}
 				}

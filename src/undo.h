@@ -13,6 +13,7 @@
 #define EOF_UNDO_TYPE_LYRIC_NOTE   3
 #define EOF_UNDO_TYPE_RECORD       4
 #define EOF_UNDO_TYPE_SILENCE      5
+#define EOF_UNDO_TYPE_TEMPO_ADJUST 6
 
 /*typedef struct
 {

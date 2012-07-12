@@ -331,24 +331,27 @@ void eof_prepare_beat_menu(void)
 int eof_menu_beat_bpm_change(void)
 {
 	int i;
-	unsigned long cppqn = eof_song->beat[eof_selected_beat]->ppqn;
-	int old_flags = eof_song->beat[eof_selected_beat]->flags;
-	double newppqn;
+	unsigned long cppqn, newppqn;
+	int old_flags;
+	double oldbpm;
 
-	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
+	if(eof_song->tags->tempo_map_locked || (eof_selected_beat < 0))	//If the chart's tempo map is locked, or an invalid beat is selected
 		return 1;							//Return without making changes
 
+	cppqn = eof_song->beat[eof_selected_beat]->ppqn;
+	old_flags = eof_song->beat[eof_selected_beat]->flags;
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_bpm_change_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_bpm_change_dialog);
-	sprintf(eof_etext, "%3.2f", (double)60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn);
+	oldbpm = 60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn;
+	sprintf(eof_etext, "%3.2f", oldbpm);
 	eof_bpm_change_dialog[3].flags = 0;
 	eof_bpm_change_dialog[4].flags = 0;
 	if(eof_popup_dialog(eof_bpm_change_dialog, 2) == 5)
 	{	//If the user activated the "OK" button
 		double bpm = atof(eof_etext);
-		sprintf(eof_etext2, "%3.2f", (double)60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn);
+		sprintf(eof_etext2, "%3.2f", oldbpm);
 		if(!ustricmp(eof_etext, eof_etext2))
 		{
 			eof_cursor_visible = 1;
@@ -367,44 +370,38 @@ int eof_menu_beat_bpm_change(void)
 		}
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		if(eof_bpm_change_dialog[4].flags == D_SELECTED)
-		{
-			if(eof_selected_beat > 0)
-			{
-				eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;
-			}
-			eof_menu_edit_cut(eof_selected_beat + 1, 1, 0.0);
+		{	//If the "Adjust Notes" option was selected
+			eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Ensure the selected beat is anchored before calling the auto-adjust logic
+			eof_menu_edit_cut(eof_selected_beat + 1, 1);
 			eof_song->beat[eof_selected_beat]->flags = old_flags;
 		}
-		newppqn = (double)60000000.0 / bpm;
+		newppqn = 60000000.0 / bpm;
 		if(eof_bpm_change_dialog[3].flags == D_SELECTED)
-		{
-			eof_song->beat[eof_selected_beat]->ppqn = newppqn;
-			eof_song->beat[eof_selected_beat + 1]->flags |= EOF_BEAT_FLAG_ANCHOR;
+		{	//If the "This Beat Only" option was selected
+			eof_song->beat[eof_selected_beat]->ppqn = newppqn;	//Update this beat's tempo
+			eof_song->beat[eof_selected_beat + 1]->flags |= EOF_BEAT_FLAG_ANCHOR;	//And anchor the next beat
 		}
 		else
-		{
+		{	//Otherwise update the tempo on all beats up to the next anchor
 			for(i = eof_selected_beat; i < eof_song->beats; i++)
-			{
+			{	//For each beat from the selected beat onward
 				if(eof_song->beat[i]->ppqn == cppqn)
-				{
-					eof_song->beat[i]->ppqn = newppqn;
+				{	//If this beat isn't a tempo change
+					eof_song->beat[i]->ppqn = newppqn;	//Update its tempo
 				}
 
 				/* break when we reach the end of the portion to change */
 				else
 				{
-					break;
+					break;	//Otherwise exit the loop
 				}
 			}
 		}
-		if(eof_selected_beat > 0)
-		{
-			eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;
-		}
+		eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;
 		eof_calculate_beats(eof_song);
 		if(eof_bpm_change_dialog[4].flags == D_SELECTED)
-		{
-			eof_menu_edit_cut_paste(eof_selected_beat + 1, 1, 0.0);
+		{	//If the "Adjust Notes" option was selected
+			eof_menu_edit_cut_paste(eof_selected_beat + 1, 1);
 		}
 	}
 	eof_cursor_visible = 1;
@@ -1524,6 +1521,61 @@ int eof_menu_beat_set_RBN_tempos(void)
 	if(!undo_made)
 	{	//If no changes were made
 		allegro_message("No tempo adjustments necessary");
+	}
+	return 1;
+}
+
+int eof_menu_beat_adjust_bpm(double amount)
+{
+	long targetbeat;
+	double newbpm;
+	unsigned long newppqn, oldppqn, ctr;
+
+	if(!eof_song)
+		return 1;
+	if(eof_song->tags->tempo_map_locked)
+		return 1;	//Return without changing anything if the chart's tempo map is locked
+
+	targetbeat = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);	//Identify the beat at or before the seek position
+	if(targetbeat < 0)
+	{	//If the seek position is outside the scope of the chart
+		targetbeat = 0;	//Identify the first beat as the target
+	}
+	oldppqn = eof_song->beat[targetbeat]->ppqn;
+	if(eof_input_mode != EOF_INPUT_FEEDBACK)
+	{	//If Feedback input method is not in effect, identify the anchor at or before the seek position
+		while((targetbeat > 0) && (eof_song->beat[targetbeat - 1]->ppqn == oldppqn))
+		{	//While the target is not a tempo change
+			targetbeat--;	//Move the target back one beat
+		}
+	}
+	newbpm = (60000000.0 / eof_song->beat[targetbeat]->ppqn) + amount;	//Determine the new tempo for the target
+	newppqn = (60000000.0 / newbpm) + 0.5;	//Determine the new ppqn for the tempo, rounded to nearest integer value
+	if(newbpm < 0.1)
+		return 1;	//A tempo < 0.1BPM is not allowed
+	eof_prepare_undo(EOF_UNDO_TYPE_TEMPO_ADJUST);
+	if(eof_note_auto_adjust)
+	{	//If the user has enabled the Note Auto-Adjust preference
+		eof_menu_edit_cut(targetbeat + 1, 1);	//Save auto-adjust data
+	}
+	for(ctr = targetbeat; ctr < eof_song->beats; ctr++)
+	{	//For each beat from the target beat onward
+		if(eof_song->beat[ctr]->ppqn == oldppqn)
+		{	//If this beat isn't a tempo change
+			eof_song->beat[ctr]->ppqn = newppqn;	//Update its tempo
+		}
+
+		/* break when we reach the end of the portion to change */
+		else
+		{
+			break;	//Otherwise exit the loop
+		}
+	}
+	eof_song->beat[targetbeat]->flags |= EOF_BEAT_FLAG_ANCHOR;
+	eof_calculate_beats(eof_song);
+	if(eof_note_auto_adjust)
+	{	//If the user has enabled the Note Auto-Adjust preference
+		eof_menu_edit_cut_paste(targetbeat + 1, 1);
 	}
 	return 1;
 }

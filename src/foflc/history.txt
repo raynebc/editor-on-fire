@@ -1,3 +1,8 @@
+Changelog: 2.37 to 2.38
+	Added support for detecting and importing JamBand format lyrics.
+	Improved memory handling, including correcting a crash in the ID3v2 tag parsing that could occur during a parsing failure.
+	Fixed a bug where export would fail if the input lyrics contained pitches but the first lyric was pitchless/freestyle.
+
 Changelog: 2.36 to 2.37
 	Added support for detecting and importing Guitar Praise format XML lyrics.
 	Corrected memory leaks in the EOF integration.

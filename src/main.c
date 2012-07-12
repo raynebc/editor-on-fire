@@ -14,6 +14,7 @@
 #include "modules/gametime.h"
 #include "modules/g-idle.h"
 #include "dialog/main.h"
+#include "menu/beat.h"
 #include "menu/main.h"
 #include "menu/file.h"
 #include "menu/edit.h"
@@ -49,7 +50,7 @@ char        eof_note_type_name[5][32] = {" Supaeasy", " Easy", " Medium", " Amaz
 char        eof_vocal_tab_name[5][32] = {" Lyrics", " ", " ", " ", " "};
 char        eof_dance_tab_name[5][32] = {" Beginner", " Easy", " Medium", " Hard", " Challenge"};
 char      * eof_snap_name[9] = {"Off", "1/4", "1/8", "1/12", "1/16", "1/24", "1/32", "1/48", "Custom"};
-char      * eof_input_name[EOF_INPUT_NAME_NUM] = {"Classic", "Piano Roll", "Hold", "RexMundi", "Guitar Tap", "Guitar Strum", "Feedback"};
+char      * eof_input_name[EOF_INPUT_NAME_NUM + 1] = {"Classic", "Piano Roll", "Hold", "RexMundi", "Guitar Tap", "Guitar Strum", "Feedback"};
 
 NCDFS_FILTER_LIST * eof_filter_music_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_ogg_files = NULL;
@@ -1477,26 +1478,45 @@ void eof_read_global_keys(void)
 			key[KEY_I] = 0;
 		}
 
-		if(!KEY_EITHER_CTRL)
-		{	//Ensure these do not get used for the pro guitar keyboard shortcuts
-		/* decrement AV delay (-) */
-			if(key[KEY_MINUS])
+		/* decrease tempo by 1BPM (-) */
+		/* decrease tempo by .1BPM (SHIFT+-) */
+		/* decrease tempo by .01BPM (SHIFT+CTRL+-) */
+		/* increase tempo by 1BPM (+) */
+		/* increase tempo by .1BPM (SHIFT+(plus)) */
+		/* increase tempo by .01BPM (SHIFT+CTRL+(plus)) */
+		double tempochange;
+		if(key[KEY_MINUS])
+		{
+			if(KEY_EITHER_SHIFT)
 			{
-				if(eof_av_delay > 0)
-				{
-					eof_av_delay--;
-				}
-				key[KEY_MINUS] = 0;
+				if(KEY_EITHER_CTRL)
+					tempochange = -0.01;
+				else
+					tempochange = -0.1;
 			}
+			else
+				tempochange = -1.0;
 
-		/* increment AV delay (+) */
-			if(key[KEY_EQUALS])
-			{
-				eof_av_delay++;
-				key[KEY_EQUALS] = 0;
-			}
+			eof_menu_beat_adjust_bpm(tempochange);
+			key[KEY_MINUS] = 0;
 		}
-	}
+
+		if(key[KEY_EQUALS])
+		{
+			if(KEY_EITHER_SHIFT)
+			{
+				if(KEY_EITHER_CTRL)
+					tempochange = 0.01;
+				else
+					tempochange = 0.1;
+			}
+			else
+				tempochange = 1.0;
+
+			eof_menu_beat_adjust_bpm(tempochange);
+			key[KEY_EQUALS] = 0;
+		}
+	}//If a song is loaded
 
 	/* save (F2 or CTRL+S) */
 	if((key[KEY_F2] && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT) || (KEY_EITHER_CTRL && key[KEY_S] && !KEY_EITHER_SHIFT))
@@ -1884,12 +1904,12 @@ void eof_logic(void)
 	}
 	if(eof_song_loaded)
 	{
-		if(eof_input_mode == EOF_INPUT_FEEDBACK)
-		{
+//		if(eof_input_mode == EOF_INPUT_FEEDBACK)
+//		{
 //			eof_editor_logic_feedback();
-		}
-		else
-		{
+//		}
+//		else
+//		{
 			if(eof_vocals_selected)
 			{
 				eof_vocal_editor_logic();
@@ -1898,7 +1918,7 @@ void eof_logic(void)
 			{
 				eof_editor_logic();
 			}
-		}
+//		}
 	}
 	eof_note_logic();
 	if(eof_vocals_selected)
@@ -3266,7 +3286,7 @@ int eof_initialize(int argc, char * argv[])
 		allegro_message("Could not create file list filter (*.txt, *.mid, *.rmi, *.rba, *.lrc, *.vl, *.kar, *.mp3, *.srt, *.xml)!");
 		return 0;
 	}
-	ncdfs_filter_list_add(eof_filter_lyrics_files, "txt;mid;rmi;rba;lrc;vl;kar;mp3;srt;xml", "Lyrics (txt,mid,rmi,rba,lrc,vl,kar,mp3,srt,xml)", 1);
+	ncdfs_filter_list_add(eof_filter_lyrics_files, "txt;mid;rmi;rba;lrc;vl;kar;mp3;srt;xml;c9c", "Lyrics (txt,mid,rmi,rba,lrc,vl,kar,mp3,srt,xml,c9c)", 1);
 
 	eof_filter_exe_files = ncdfs_filter_list_create();
 	#ifdef ALLEGRO_WINDOWS

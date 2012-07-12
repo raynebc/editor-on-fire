@@ -9,6 +9,7 @@
 #include "foflc/ID3_parse.h"
 #include "foflc/SRT_parse.h"
 #include "foflc/XML_parse.h"
+#include "foflc/JB_parse.h"
 #include "song.h"
 #include "main.h"
 #include "lc_import.h"
@@ -163,6 +164,11 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 		case XML_FORMAT:	//Load XML file
 			inf=fopen_err(Lyrics.infilename,"rt");	//XML is a text format
 			XML_Load(inf);
+		break;
+
+		case C9C_FORMAT:	//Load JamBand file
+			inf=fopen_err(Lyrics.infilename,"rt");	//JamBand is a text format
+			JB_Load(inf);
 		break;
 
 		default:

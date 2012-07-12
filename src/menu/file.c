@@ -74,7 +74,7 @@ DIALOG eof_settings_dialog[] =
 DIALOG eof_preferences_dialog[] =
 {
    /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-   { d_agup_window_proc,0,   48,  245, 450, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
+   { d_agup_window_proc,0,   48,  245, 465, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
    { d_agup_check_proc, 16,  80,  128, 16,  2,   23,  0,    0,      1,   0,   "Inverted Notes",      NULL, NULL },
    { d_agup_check_proc, 16,  95,  128, 16,  2,   23,  0,    0,      1,   0,   "Lefty Mode",          NULL, NULL },
    { d_agup_check_proc, 16,  110, 128, 16,  2,   23,  0,    0,      1,   0,   "Note Auto-Adjust",    NULL, NULL },
@@ -93,12 +93,12 @@ DIALOG eof_preferences_dialog[] =
    { d_agup_check_proc, 16,  305, 220, 16,  2,   23,  0,    0,      1,   0,   "Drum modifiers affect all diff's",NULL, NULL },
    { d_agup_check_proc, 16,  320, 220, 16,  2,   23,  0,    0,      1,   0,   "Swap Pg Up/Dn seek controls",NULL, NULL },
    { d_agup_text_proc,  24,  340, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
-   { d_agup_list_proc,  16,  355, 100, 95,  2,   23,  0,    0,      0,   0,   eof_input_list,        NULL, NULL },
-   { d_agup_text_proc,  150, 340, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
-   { d_agup_list_proc,  129, 355, 100, 95,  2,   23,  0,    0,      0,   0,   eof_colors_list,        NULL, NULL },
-   { d_agup_button_proc,12,  455, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-   { d_agup_button_proc,86,  455, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-   { d_agup_button_proc,160, 455, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+   { d_agup_list_proc,  16,  355, 100, 110, 2,   23,  0,    0,      0,   0,   eof_input_list,        NULL, NULL },
+   { d_agup_text_proc,  150, 355, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
+   { d_agup_list_proc,  129, 370, 100, 95,  2,   23,  0,    0,      0,   0,   eof_colors_list,        NULL, NULL },
+   { d_agup_button_proc,12,  470, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+   { d_agup_button_proc,86,  470, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+   { d_agup_button_proc,160, 470, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1199,7 +1199,7 @@ char * eof_input_list(int index, int * size)
 	{
 		case -1:
 		{
-			*size = EOF_INPUT_NAME_NUM-1;
+			*size = EOF_INPUT_NAME_NUM;
 			break;
 		}
 		case 0:
@@ -1232,11 +1232,11 @@ char * eof_input_list(int index, int * size)
 			return "Guitar Strum";
 			break;
 		}
-//		case 6:
-//		{
-//			return "Feedback";
-//			break;
-//		}
+		case 6:
+		{
+			return "Feedback";
+			break;
+		}
 	}
 	return NULL;
 }

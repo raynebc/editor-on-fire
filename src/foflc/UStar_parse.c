@@ -878,14 +878,12 @@ void RemapPitches(void)
 int CheckPitches(unsigned char *pitchmin,unsigned char *pitchmax)
 {
 	unsigned char pitchmin_local=0,pitchmax_local=0;
+	char firstpitchfound = 0;	//This will be set to 1 when the first pitched lyric is found
 	struct Lyric_Piece *temp=NULL;
 	struct Lyric_Line *templine=NULL;
 
 //Find the minimum and maximum pitch in the input lyrics
 	assert_wrapper((Lyrics.lines != NULL) && (Lyrics.lines->pieces != NULL));
-
-//Init these values with the pitches of the first lyric piece
-	pitchmin_local=pitchmax_local=Lyrics.lines->pieces->pitch;
 
 	for(templine=Lyrics.lines;templine!=NULL;templine=templine->next)	//For each line of lyrics
 	{
@@ -899,11 +897,19 @@ int CheckPitches(unsigned char *pitchmin,unsigned char *pitchmax)
 				continue;						//Disregard it
 			#endif
 
-			if(temp->pitch < pitchmin_local)	//Track the lowest pitch
-				pitchmin_local=temp->pitch;
+			if(!firstpitchfound)
+			{	//If this is the first pitched lyric
+				pitchmin_local=pitchmax_local=temp->pitch;	//Initialize the min and max pitch variables
+				firstpitchfound = 1;
+			}
+			else
+			{
+				if(temp->pitch < pitchmin_local)	//Track the lowest pitch
+					pitchmin_local=temp->pitch;
 
-			if(temp->pitch > pitchmax_local)	//Track the highest pitch
-				pitchmax_local=temp->pitch;
+				if(temp->pitch > pitchmax_local)	//Track the highest pitch
+					pitchmax_local=temp->pitch;
+			}
 		}
 	}
 
