@@ -2634,23 +2634,23 @@ int eof_menu_song_seek_previous_beat(void)
 	if(!eof_song)
 		return 1;
 
-      	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 
-      	if(b > 0)
-      	{
-      		if(eof_song->beat[b]->pos == eof_music_pos - eof_av_delay)
-      		{
-      			eof_set_seek_position(eof_song->beat[b - 1]->pos + eof_av_delay);
-      		}
-      		else
-      		{
-      			eof_set_seek_position(eof_song->beat[b]->pos + eof_av_delay);
-      		}
-      	}
-      	else
-      	{
-      		eof_set_seek_position(eof_song->beat[0]->pos + eof_av_delay);
-      	}
+	if(b > 0)
+	{
+		if(eof_song->beat[b]->pos == eof_music_pos - eof_av_delay)
+		{
+			eof_set_seek_position(eof_song->beat[b - 1]->pos + eof_av_delay);
+		}
+		else
+		{
+			eof_set_seek_position(eof_song->beat[b]->pos + eof_av_delay);
+		}
+	}
+	else
+	{
+		eof_set_seek_position(eof_song->beat[0]->pos + eof_av_delay);
+	}
 
 	return 1;
 }
@@ -2671,6 +2671,50 @@ int eof_menu_song_seek_next_beat(void)
       		eof_set_seek_position(eof_song->beat[b + 1]->pos + eof_av_delay);
       	}
 
+	return 1;
+}
+
+int eof_menu_song_seek_previous_measure(void)
+{
+	if(!eof_song)
+		return 1;
+
+	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	unsigned num, ctr;
+	while(b >= 0)
+	{	//For each beat at or before the current seek position
+		if(eof_get_ts(eof_song, &num, NULL, b) == 1)
+		{	//If this beat is a time signature
+			for(ctr = 0; ctr < num; ctr++)
+			{	//Seek backward by a number of beats equal to the TS numerator
+				eof_menu_song_seek_previous_beat();
+			}
+			return 1;
+		}
+		b--;
+	}
+	return 1;
+}
+
+int eof_menu_song_seek_next_measure(void)
+{
+	if(!eof_song)
+		return 1;
+
+	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	unsigned num, ctr;
+	while(b >= 0)
+	{	//For each beat at or before the current seek position
+		if(eof_get_ts(eof_song, &num, NULL, b) == 1)
+		{	//If this beat is a time signature
+			for(ctr = 0; ctr < num; ctr++)
+			{	//Seek backward by a number of beats equal to the TS numerator
+				eof_menu_song_seek_next_beat();
+			}
+			return 1;
+		}
+		b--;
+	}
 	return 1;
 }
 

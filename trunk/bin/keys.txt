@@ -19,22 +19,26 @@ Playback and Seek controls:
 
     Left/Right Arrow:
 
-        Rewind or Fast Forward song
+        Rewind or Fast Forward song.
     
-        Hold Ctrl while pressing to move slowly
+        Hold Ctrl while pressing to move slowly.
     
-        Hold Shift while pressing to move quickly
+        Hold Shift while pressing to move quickly.
 
-        Hold both Ctrl and Shift while pressing to move very slowly
+        Hold both Ctrl and Shift while pressing to move very slowly.
+
+        (If Feedback input method is active, each left/right press seeks one grid
+        snap backward/forward.)
     
 
     Page Up/Page Down:
 
-        Move to the previous/next beat marker
+        Move to the previous/next beat marker (moves to previous/next measure
+        when Feedback input method is active).
     
-        Hold Ctrl while pressing to seek to previous/next screen
+        Hold Ctrl while pressing to seek to previous/next screen.
     
-        Hold Shift while pressing to seek to previous/next note
+        Hold Shift while pressing to seek to previous/next note.
 
         Hold both Ctrl and Shift while pressing to seek to the previous/next grid snap
         position (when grid snap is enabled).
@@ -210,7 +214,10 @@ Miscellaneous Controls:
 
     +/-:
 
-        Increase/decrease the tempo of the beat (if Feedback input method is in use) or anchor (if any other input method is in use) immediately at or before the current seek position by 1BPM. Hold Shift to adjust in .1BPM increments.  Hold both Ctrl and Shift to adjust in .01BPM increments.
+        Increase/decrease the tempo of the beat (if Feedback input method is in use) or anchor
+        (if any other input method is in use) immediately at or before the current seek
+        position by 1BPM. Hold Shift to adjust in .1BPM increments.  Hold both Ctrl and Shift
+        to adjust in .01BPM increments.
     
 
     +/- (Numpad):

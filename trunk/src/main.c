@@ -1807,7 +1807,7 @@ void eof_logic(void)
 	eof_last_note = EOF_MAX_NOTES;
 
 	get_mouse_mickeys(&eof_mickeys_x, &eof_mickeys_y);
-	if(eof_song_loaded && (eof_input_mode != EOF_INPUT_FEEDBACK))
+	if(eof_song_loaded)
 	{
 		eof_read_editor_keys();
 	}

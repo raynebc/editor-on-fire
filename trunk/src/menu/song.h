@@ -57,6 +57,8 @@ int eof_menu_song_seek_previous_anchor(void);		//Seeks to the previous anchor
 int eof_menu_song_seek_next_anchor(void);			//Seeks to the next anchor
 int eof_menu_song_seek_previous_beat(void);			//Seeks to the previous beat
 int eof_menu_song_seek_next_beat(void);				//Seeks to the next beat
+int eof_menu_song_seek_previous_measure(void);		//Seeks to the previous measure
+int eof_menu_song_seek_next_measure(void);			//Seeks to the next measure
 int eof_menu_song_seek_beat_measure(void);			//Seeks to the specified beat or measure
 int eof_menu_song_seek_catalog_entry(void);			//Seeks to the current fret catalog entry
 

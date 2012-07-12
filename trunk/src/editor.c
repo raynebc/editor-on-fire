@@ -824,23 +824,41 @@ void eof_read_editor_keys(void)
 		key[KEY_SPACE] = 0;
 	}
 
-	/* rewind (Left) */
+	/* rewind (Left, non Feedback input methods) */
+	/* seek backward one grid snap (Left, Feedback input method)*/
 	if(key[KEY_LEFT])
 	{
-		eof_music_rewind();
-		if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
-		{	//If user is trying to seek at the slowest speed,
-			key[KEY_LEFT] = 0;	//Clear this key state to allow seeking in accurate 1ms intervals
+		if(eof_input_mode == EOF_INPUT_FEEDBACK)
+		{
+			eof_menu_song_seek_previous_grid_snap();
+			key[KEY_LEFT] = 0;
+		}
+		else
+		{
+			eof_music_rewind();
+			if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
+			{	//If user is trying to seek at the slowest speed,
+				key[KEY_LEFT] = 0;	//Clear this key state to allow seeking in accurate 1ms intervals
+			}
 		}
 	}
 
-	/* fast forward (Right) */
+	/* fast forward (Right, non Feedback input methods) */
+	/* seek forward one grid snap (Right, Feedback input method)*/
 	if(key[KEY_RIGHT])
 	{
-		eof_music_forward();
-		if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
-		{	//If user is trying to seek at the slowest speed,
-			key[KEY_RIGHT] = 0;	//Clear this key state to allow seeking in accurate 1ms intervals
+		if(eof_input_mode == EOF_INPUT_FEEDBACK)
+		{
+			eof_menu_song_seek_next_grid_snap();
+			key[KEY_RIGHT] = 0;
+		}
+		else
+		{
+			eof_music_forward();
+			if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
+			{	//If user is trying to seek at the slowest speed,
+				key[KEY_RIGHT] = 0;	//Clear this key state to allow seeking in accurate 1ms intervals
+			}
 		}
 	}
 
@@ -867,7 +885,8 @@ void eof_read_editor_keys(void)
 	/* seek back one anchor (CTRL+SHIFT+Pg Up when grid snap is disabled) */
 	/* seek back one screen (CTRL+Pg Up) */
 	/* seek back one note (SHIFT+Pg Up) */
-	/* seek back one beat (Pg Up) */
+	/* seek back one measure (Pg Up, Feedback input mode) */
+	/* seek back one beat (Pg Up, non Feedback input modes) */
 	if(do_pg_up)
 	{
 		if(!eof_music_catalog_playback)
@@ -896,7 +915,14 @@ void eof_read_editor_keys(void)
 			}
 			else
 			{
-				eof_menu_song_seek_previous_beat();
+				if(eof_input_mode == EOF_INPUT_FEEDBACK)
+				{
+					eof_menu_song_seek_previous_measure();
+				}
+				else
+				{
+					eof_menu_song_seek_previous_beat();
+				}
 			}
 		}
 	}
@@ -905,7 +931,8 @@ void eof_read_editor_keys(void)
 	/* seek forward one anchor (CTRL+SHIFT+Pg Dn when grid snap is disabled) */
 	/* seek forward one screen (CTRL+Pg Dn) */
 	/* seek forward one note (SHIFT+Pg Dn) */
-	/* seek forward one beat (Pg Dn) */
+	/* seek forward one measure (Pg Up, Feedback input mode) */
+	/* seek forward one beat (Pg Dn, non Feedback input modes) */
 	if(do_pg_dn)
 	{
 		if(!eof_music_catalog_playback)
@@ -934,7 +961,14 @@ void eof_read_editor_keys(void)
 			}
 			else
 			{
-				eof_menu_song_seek_next_beat();
+				if(eof_input_mode == EOF_INPUT_FEEDBACK)
+				{
+					eof_menu_song_seek_next_measure();
+				}
+				else
+				{
+					eof_menu_song_seek_next_beat();
+				}
 			}
 		}
 	}
@@ -1985,11 +2019,11 @@ void eof_read_editor_keys(void)
 			}
 		}//If SHIFT is held down and CTRL is not
 
-		if((!KEY_EITHER_CTRL) && (eof_input_mode == EOF_INPUT_REX))
-		{	//If CTRL is not held down and the input method is rex mundi
+		if(!KEY_EITHER_CTRL && ((eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK)))
+		{	//If CTRL is not held down and the input method is rex mundi or Feedback
 			eof_hover_piece = -1;
-			if((mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
-			{	//If the mouse is in the fretboard area
+			if((eof_input_mode == EOF_INPUT_FEEDBACK) || ((mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET)))
+			{	//If the mouse is in the fretboard area (or Feedback input method is in use)
 				if(KEY_EITHER_SHIFT)
 				{
 					eof_snap.length = 1;
@@ -2092,8 +2126,17 @@ void eof_read_editor_keys(void)
 						}
 						else
 						{	//If the user created a new note
+							unsigned long targetpos;
 							eof_pen_note.note ^= bitmask;
-							new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, eof_pen_note.pos, eof_snap.length, eof_note_type, NULL);
+							if(eof_input_mode == EOF_INPUT_FEEDBACK)
+							{	//If Feedback input mode is in use, insert a note at the seek position
+								targetpos = eof_music_pos - eof_av_delay;
+							}
+							else
+							{	//Otherwise insert a note at the mouse's position
+								targetpos = eof_pen_note.pos;
+							}
+							new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, targetpos, eof_snap.length, eof_note_type, NULL);
 							if(new_note)
 							{
 								if(eof_mark_drums_as_cymbal)
@@ -2407,7 +2450,7 @@ void eof_editor_logic(void)
 	unsigned long i, note, notepos;
 	unsigned long tracknum;
 	unsigned long bitmask = 0;	//Used to reduce duplicated logic
-	int use_this_x = mouse_x;
+	int targetpos;
 	int next_note_pos = 0;
 	EOF_NOTE * new_note = NULL;
 	int pos = eof_music_pos / eof_zoom;
@@ -2436,29 +2479,29 @@ void eof_editor_logic(void)
 			}
 		}
 
-		/* mouse is in the fretboard area */
-		if((mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
+		/* mouse is in the fretboard area (or Feedback input method is in use)*/
+		if((eof_input_mode == EOF_INPUT_FEEDBACK) || ((mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET)))
 		{
 			int x_tolerance = 6 * eof_zoom;	//This is how far left or right of a note the mouse is allowed to be to still be considered to hover over that note
-///			if(eof_input_mode != EOF_INPUT_FEEDBACK)
-//			{	//Non Feedback input methods use the mouse position to place/edit notes
-				lpos = pos < 300 ? (mouse_x - 20) * eof_zoom : ((pos - 300) + mouse_x - 20) * eof_zoom;
-//			}
-//			else
-//			{	//The Feedback input method uses the seek position instead
-//				lpos = pos < 300 ? (-20) * eof_zoom : (-320) * eof_zoom;
-//			}
+			lpos = pos < 300 ? (mouse_x - 20) * eof_zoom : ((pos - 300) + mouse_x - 20) * eof_zoom;
+			if(eof_input_mode != EOF_INPUT_FEEDBACK)
+			{	//Non Feedback input methods use the mouse position to place/edit notes
+				targetpos = lpos;
+			}
+			else
+			{	//The Feedback input method uses the seek position instead
+				targetpos = eof_music_pos - eof_av_delay;
+			}
 			eof_snap_logic(&eof_snap, lpos);
 			eof_snap_length_logic(&eof_snap);
 			eof_pen_note.pos = eof_snap.pos;
-			use_this_x = lpos;
 			eof_pen_visible = 1;
 			for(i = 0; (i < eof_get_track_size(eof_song, eof_selected_track)) && (eof_hover_note < 0); i++)
 			{	//For each note in the active track, until a hover note is found
 				if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
 				{	//If the note is in the active difficulty
 					npos = eof_get_note_pos(eof_song, eof_selected_track, i);
-					if((use_this_x > npos - x_tolerance) && (use_this_x < npos + x_tolerance))
+					if((targetpos > npos - x_tolerance) && (targetpos < npos + x_tolerance))
 					{
 						eof_hover_note = i;
 					}
@@ -2472,8 +2515,8 @@ void eof_editor_logic(void)
 					}
 				}
 			}
-			if((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX))
-			{	//If piano roll or rex mundi input modes are in use
+			if((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK))
+			{	//If piano roll, rex mundi or feedback input modes are in use
 				if(eof_hover_note >= 0)
 				{	//If a note is being moused over
 					if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
@@ -2493,7 +2536,7 @@ void eof_editor_logic(void)
 				}
 				else
 				{
-					if(eof_input_mode == EOF_INPUT_REX)
+					if((eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK))
 					{
 						eof_pen_note.note = 0;
 					}
@@ -2516,7 +2559,7 @@ void eof_editor_logic(void)
 						}
 					}
 				}
-			}//If piano roll or rex mundi input modes are in use
+			}//If piano roll, rex mundi or feedback input modes are in use
 
 			/* handle initial left click */
 			if((mouse_b & 1) && eof_lclick_released)
@@ -3078,7 +3121,7 @@ void eof_editor_logic(void)
 		eof_hover_type = -1;
 	}
 
-	if(((mouse_b & 2) || key[KEY_INSERT]) && (eof_input_mode == EOF_INPUT_REX))
+	if(((mouse_b & 2) || key[KEY_INSERT]) && ((eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK)))
 	{	//If the right mouse button or Insert key is pressed, a song is loaded and Rex Mundi input mode is in use
 		eof_emergency_stop_music();
 		eof_render();
@@ -3145,7 +3188,7 @@ void eof_vocal_editor_logic(void)
 
 	unsigned long i, notepos;
 	unsigned long tracknum;
-	int use_this_x = mouse_x;
+	int targetpos;
 	int next_note_pos = 0;
 	EOF_SNAP_DATA drag_snap; // help with dragging across snap locations
 
@@ -3220,13 +3263,13 @@ void eof_vocal_editor_logic(void)
 			{
 				eof_pen_lyric.note = 0;
 			}
-			use_this_x = lpos;
+			targetpos = lpos;
 			eof_pen_visible = 1;
 			for(i = 0; (i < eof_song->vocal_track[tracknum]->lyrics) && (eof_hover_note < 0); i++)
 			{
 				int x_tolerance = 6 * eof_zoom;	//This is how far left or right of a lyric the mouse is allowed to be to still be considered to hover over that lyric
 				npos = eof_song->vocal_track[tracknum]->lyric[i]->pos;
-				if((use_this_x > npos) && (use_this_x < npos + eof_song->vocal_track[tracknum]->lyric[i]->length))
+				if((targetpos > npos) && (targetpos < npos + eof_song->vocal_track[tracknum]->lyric[i]->length))
 				{
 					eof_hover_note = i;
 				}
@@ -3916,6 +3959,7 @@ void eof_render_editor_window(void)
 
 	unsigned long start;	//Will store the timestamp of the left visible edge of the piano roll
 	unsigned long i,numnotes;
+	char drawhighlight = 0;
 
 	if(!eof_song_loaded)
 		return;
@@ -3927,12 +3971,16 @@ void eof_render_editor_window(void)
 
 	numnotes = eof_get_track_size(eof_song, eof_selected_track);	//Get the number of notes in this legacy/pro guitar track
 	start = eof_determine_piano_roll_left_edge();
+	if(((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK)) && eof_music_paused)
+	{	//Cache the results of the check for whether the hover note should be drawn highlighted
+		drawhighlight = 1;
+	}
 	for(i = 0; i < numnotes; i++)
 	{	//Render all visible notes in the list
 		if((eof_note_type == eof_get_note_type(eof_song, eof_selected_track, i)) && (eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) >= start))
 		{	//If this note is in the selected instrument difficulty and would render at or after the left edge of the piano roll
-			if(((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX)) && eof_music_paused && (eof_hover_note == i))
-			{	//If the input mode is piano roll or rex mundi and the chart is paused, and the note is being moused over
+			if(drawhighlight && (eof_hover_note == i))
+			{	//If the input mode is piano roll, rex mundi or Feedback and the chart is paused, and the note is being moused over
 				eof_note_draw(eof_selected_track, i, ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 3, eof_window_editor);
 			}
 			else
@@ -3946,7 +3994,7 @@ void eof_render_editor_window(void)
 	{
 		if(!eof_mouse_drug)
 		{
-			if((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX))
+			if((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK))
 			{
 				eof_note_draw(0, 0, 3, eof_window_editor);	//Render the pen note
 			}
