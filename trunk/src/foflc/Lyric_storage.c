@@ -28,7 +28,7 @@ jmp_buf jumpbuffer;			//Used in the conditional compiling code to allow this pro
 							//in the event of an exception that would normally terminate the program
 jmp_buf FLjumpbuffer;		//This is used by FLC's internal logic to provide for exception handling (ie. in validating MIDI files with DetectLyricFormat())
 char useFLjumpbuffer=0;		//Boolean:  If nonzero, FLC's logic intercepts in exit_wrapper() regardless of whether EOF_BUILD is defined
-const char *LYRICFORMATNAMES[NUMBEROFLYRICFORMATS+1]={"UNKNOWN LYRIC TYPE","SCRIPT","VL","RB MIDI","UltraStar","LRC","Vocal Rhythm","ELRC","KAR","Pitched Lyrics","Soft Karaoke","ID3 Lyrics","SRT Subtitle","XML"};
+const char *LYRICFORMATNAMES[NUMBEROFLYRICFORMATS+1]={"UNKNOWN LYRIC TYPE","SCRIPT","VL","RB MIDI","UltraStar","LRC","Vocal Rhythm","ELRC","KAR","Pitched Lyrics","Soft Karaoke","ID3 Lyrics","SRT Subtitle","XML","JamBand"};
 
 
 
@@ -2060,6 +2060,15 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 			continue;
 		}
 
+//Test for C9C
+		if(strstr(&(buffer[index]),"ENDFILE") != NULL)
+		{	//BandJam files end in a line beginning with this string
+			free(buffer);
+			fclose_err(inf);
+			detectionlist->format=C9C_FORMAT;
+			return detectionlist;
+		}
+
 	//At this point, the line wasn't identified to be any particular format, process next line
 		fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 	}//while(!feof(inf))
@@ -2315,6 +2324,7 @@ void EnumerateFormatDetectionList(struct Lyric_Format *detectionlist)
 			case ID3_FORMAT:
 			case SRT_FORMAT:
 			case XML_FORMAT:
+			case C9C_FORMAT:
 				if(lasttype == 1)
 				{
 					puts("Logic error:  A file cannot be both a MIDI format and a non MIDI format");

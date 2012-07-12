@@ -675,7 +675,7 @@ int eof_menu_edit_old_paste_vocal(void)
 	return eof_menu_edit_paste_vocal_logic(1);	//Use old paste logic
 }
 
-int eof_menu_edit_cut(unsigned long anchor, int option, float offset)
+int eof_menu_edit_cut(unsigned long anchor, int option)
 {
 	unsigned long i, j, tracknum;
 	char first_pos_found[EOF_TRACKS_MAX] = {0};
@@ -876,7 +876,7 @@ int eof_menu_edit_cut(unsigned long anchor, int option, float offset)
 	return 1;
 }
 
-int eof_menu_edit_cut_paste(unsigned long anchor, int option, float offset)
+int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 {
 	unsigned long i, j, b, tracknum, notenum;
 	unsigned long first_beat[EOF_TRACKS_MAX] = {0};

@@ -110,6 +110,10 @@ int eof_undo_add(int type)
 	{
 		return 0;
 	}
+	if((type == EOF_UNDO_TYPE_TEMPO_ADJUST) && (eof_undo_last_type == EOF_UNDO_TYPE_TEMPO_ADJUST))
+	{
+		return 0;
+	}
 	if(type == EOF_UNDO_TYPE_SILENCE)
 	{
 		sprintf(fn, "%s.ogg", eof_undo_filename[eof_undo_current_index]);

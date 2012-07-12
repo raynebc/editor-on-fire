@@ -1790,7 +1790,7 @@ eof_log("\tSecond pass complete", 1);
 							diff = eof_import_events[i]->event[j]->d1 - 96;
 							chordname = chord3name;		//Have this pointer reference the amazing note name array
 						}
-						else if((eof_import_events[i]->event[j]->d1 >= 120) && (eof_import_events[i]->event[j]->d1 <= 124))
+						else if((eof_import_events[i]->event[j]->d1 >= 120) && (eof_import_events[i]->event[j]->d1 <= 125))
 						{
 							eof_set_note_type(sp, picked_track, note_count[picked_track], EOF_NOTE_SPECIAL);
 							diff = eof_import_events[i]->event[j]->d1 - 120;

@@ -49,7 +49,7 @@ Export functions are expected to:
 //
 //Global Macros- All relevant source/header files will include this header file to obtain these declarations
 //
-#define PROGVERSION "foflc2.37b"
+#define PROGVERSION "foflc2.38"
 #define LYRIC_NOTE_ON 50
 	//Previously, if note #s 60-100 were used for Note On events for lyrics, FoF interpreted
 	//those notes to indicate playable instrument difficulties.  This was fixed, but I will
@@ -74,8 +74,9 @@ Export functions are expected to:
 #define ID3_FORMAT 11
 #define SRT_FORMAT 12
 #define XML_FORMAT 13
+#define C9C_FORMAT 14
 
-#define NUMBEROFLYRICFORMATS 13
+#define NUMBEROFLYRICFORMATS 14
 	//This defined number should be equal to the number of defined lyric macros above, for use with the LYRICFORMATNAMES[] array
 
 //#define NDEBUG		//This will disable the assert macros in the source file if defined
@@ -180,7 +181,7 @@ struct _LYRICSSTRUCT_{
 	char quick;					//If nonzero, skips all possible MIDI processing (only processing for PART VOCALS)
 	char pitch_tracking;		//Boolean:  Specifies whether the input lyrics were a format that includes
 								//			pitch detection (MIDI, UltraStar).  If false, generic pitch
-								//			notes will be written where applicable (pitch #LYRIC_NOTE_ON
+								//			notes will be exported where applicable (pitch #LYRIC_NOTE_ON
 								//			for MIDI or pitch #0 for UltraStar)
 	char startstampspecified;	//Is nonzero if a custom first timestamp was specified via command line
 								//AddLyricPiece sets this to 2 when the appropriate offset is stored in realoffset
@@ -456,7 +457,7 @@ extern jmp_buf jumpbuffer;
 extern jmp_buf FLjumpbuffer;	//This is used by FLC's internal logic to provide for exception handling (ie. in validating MIDI files with DetectLyricFormat())
 extern char useFLjumpbuffer;	//Boolean:  If nonzero, FLC's logic intercepts in exit_wrapper() regardless of whether EOF_BUILD is defined
 								//this must be zero in order for exit_wrapper to return control to EOF
-extern const char *LYRICFORMATNAMES[];	//This is a list of strings pertaining to the 10 lyric file types #defined near the beginning of Lyric_storage.c
+extern const char *LYRICFORMATNAMES[];	//This is a list of strings pertaining to the lyric file types #defined near the beginning of Lyric_storage.c
 
 void DEBUG_QUERY_LAST_PIECE(void);	//Debugging to query the info for the last lyric piece
 void DEBUG_DUMP_LYRICS(void);		//Debugging to display all lyrics

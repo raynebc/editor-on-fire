@@ -210,13 +210,17 @@ Miscellaneous Controls:
 
     +/-:
 
-        Increase/decrease the AV delay
+        Increase/decrease the tempo of the beat (if Feedback input method is in use) or anchor (if any other input method is in use) immediately at or before the current seek position by 1BPM. Hold Shift to adjust in .1BPM increments.  Hold both Ctrl and Shift to adjust in .01BPM increments.
     
 
     +/- (Numpad):
 
         Zoom in/out.
     
+
+    CTRL + +/- (Numpad):
+
+        Increase/decrease the AV delay.
 
     Ctrl+I:
 
