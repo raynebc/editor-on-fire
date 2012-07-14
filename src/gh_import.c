@@ -485,7 +485,7 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 				newnote->flags |= EOF_NOTE_FLAG_NO_HOPO;
 			}
 		}
-		else if((target->tracknum == EOF_TRACK_DRUM) && (target->diffnum == EOF_NOTE_AMAZING) && (length >= 100))
+		else if((target->tracknum == EOF_TRACK_DRUM) && (target->diffnum == EOF_NOTE_AMAZING) && (length >= 110))
 		{	//If this is the expert drum track, check for long drum notes, which indicate that it should be treated as a drum roll
 			int phrasetype = EOF_TREMOLO_SECTION;	//Assume a normal drum roll (one lane)
 			unsigned long lastnote = eof_get_track_size(sp, EOF_TRACK_DRUM) - 1;
@@ -758,7 +758,7 @@ void eof_process_gh_lyric_phrases(EOF_SONG *sp)
 int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 {
 	unsigned long ctr, ctr2, numvox, voxsize, voxstart, numlyrics, lyricsize, lyricstart, tracknum, phrasesize, numphrases, phrasestart;
-	char *lyricbuffer = NULL;
+	char *lyricbuffer = NULL, matched;
 	unsigned int voxlength;
 	unsigned char voxpitch;
 	unsigned char unicode_encoding = 0;	//Is set to nonzero if determined that the lyric text is in Unicode format
@@ -935,6 +935,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 		eof_log(eof_log_string, 1);
 #endif
 
+		matched = 0;
 		for(ctr2 = 0; ctr2 < numvox; ctr2++)
 		{	//For each vox note that was loaded earlier
 			if(eof_get_note_pos(sp, EOF_TRACK_VOCALS, ctr2) == lyricstart)
@@ -943,9 +944,61 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 				eof_log("\t\t\tFound matching vocal data", 1);
 #endif
 				eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, lyricbuffer);	//Apply the lyric text
+				matched = 1;
 				break;
 			}
 		}
+		if(!matched)
+		{	//If there was not a lyric position that matched, one will have to be guessed
+			unsigned long thispos = 0, nextpos;
+			eof_log("\t\tThere is a bug in this NOTE file (no defined vocal pitch has a matching position).  Estimating the appropriate pitch to match with.", 1);
+			for(ctr2 = 0; ctr2 < eof_get_track_size(sp, EOF_TRACK_VOCALS); ctr2++)
+			{	//For each lyric pitch in the EOF_SONG structure
+				if(eof_get_note_name(sp, EOF_TRACK_VOCALS, ctr2) && (eof_get_note_name(sp, EOF_TRACK_VOCALS, ctr2)[0] == '+'))
+				{	//If this lyric pitch has no text assigned to it yet
+					thispos = eof_get_note_pos(sp, EOF_TRACK_VOCALS, ctr2);
+					if(thispos > lyricstart)
+					{	//If this lyric pitch is defined before the lyric text
+						eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, lyricbuffer);	//Update the text on this lyric
+						break;
+					}
+					if(ctr2 + 1 < eof_get_track_size(sp, EOF_TRACK_VOCALS))
+					{	//If there is another lyric pitch that follows this one
+						nextpos = eof_get_note_pos(sp, EOF_TRACK_VOCALS, ctr2 + 1);
+						if(nextpos <= lyricstart)
+						{	//If that lyric pitch is closer to this unmatched lyric text
+							continue;	//Skip this lyric pitch because it's not a suitable match
+						}
+						else
+						{	//That next lyric pitch is after this unmatched lyric text, find which pitch is closer
+							if((lyricstart - thispos < nextpos - lyricstart))
+							{	//If the earlier pitch is closer to the unmatched lyric text then the later pitch
+								eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, lyricbuffer);	//Update the text on this lyric
+								break;
+							}
+							else
+							{	//The later pitch is closer to the unmatched lyric text
+								eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2 + 1, lyricbuffer);	//Update the text on this lyric
+								thispos = nextpos;
+								break;
+							}
+						}
+					}
+					else
+					{	//There is not another lyric pitch that follows this one
+						eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, lyricbuffer);	//Update the text on this lyric
+						break;
+					}
+				}//If this lyric pitch has no text assigned to it yet
+			}//For each lyric pitch in the EOF_SONG structure
+#ifdef GH_IMPORT_DEBUG
+			if(thispos)
+			{	//If a match was determined
+				snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\tDecided match:  Text = \"%s\"\tPosition = %lu", lyricbuffer, thispos);
+				eof_log(eof_log_string, 1);
+			}
+#endif
+		}//If there was not a lyric position that matched
 #ifdef GH_IMPORT_DEBUG
 		if(ctr2 >= numvox)
 		{	//If the lyric entry didn't match the position of any vocal note
@@ -1588,7 +1641,7 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 					newnote->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag bit
 				}
 			}
-			else if((target->tracknum == EOF_TRACK_DRUM) && (length >= 100))
+			else if((target->tracknum == EOF_TRACK_DRUM) && (length >= 110))
 			{	//If this is a drum track, check for long drum notes, which indicate that it should be treated as a drum roll
 				int phrasetype = EOF_TREMOLO_SECTION;	//Assume a normal drum roll (one lane)
 				unsigned long lastnote = eof_get_track_size(sp, EOF_TRACK_DRUM) - 1;
