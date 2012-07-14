@@ -1900,34 +1900,40 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				{
 					case EOF_LEGACY_TRACK_FORMAT:
 						count = sp->legacy_track[tracknum]->trills;
-						sp->legacy_track[tracknum]->trill[count].start_pos = start;
-						sp->legacy_track[tracknum]->trill[count].end_pos = end;
-						sp->legacy_track[tracknum]->trill[count].flags = 0;
-						if(name == NULL)
-						{
-							sp->legacy_track[tracknum]->trill[count].name[0] = '\0';
+						if(count < EOF_MAX_PHRASES)
+						{	//If EOF can store the trill section
+							sp->legacy_track[tracknum]->trill[count].start_pos = start;
+							sp->legacy_track[tracknum]->trill[count].end_pos = end;
+							sp->legacy_track[tracknum]->trill[count].flags = 0;
+							if(name == NULL)
+							{
+								sp->legacy_track[tracknum]->trill[count].name[0] = '\0';
+							}
+							else
+							{
+								ustrcpy(sp->legacy_track[tracknum]->trill[count].name, name);
+							}
+							sp->legacy_track[tracknum]->trills++;
 						}
-						else
-						{
-							ustrcpy(sp->legacy_track[tracknum]->trill[count].name, name);
-						}
-						sp->legacy_track[tracknum]->trills++;
 					return 1;
 
 					case EOF_PRO_GUITAR_TRACK_FORMAT:
 						count = sp->pro_guitar_track[tracknum]->trills;
-						sp->pro_guitar_track[tracknum]->trill[count].start_pos = start;
-						sp->pro_guitar_track[tracknum]->trill[count].end_pos = end;
-						sp->pro_guitar_track[tracknum]->trill[count].flags = 0;
-						if(name == NULL)
-						{
-							sp->pro_guitar_track[tracknum]->trill[count].name[0] = '\0';
+						if(count < EOF_MAX_PHRASES)
+						{	//If EOF can store the trill section
+							sp->pro_guitar_track[tracknum]->trill[count].start_pos = start;
+							sp->pro_guitar_track[tracknum]->trill[count].end_pos = end;
+							sp->pro_guitar_track[tracknum]->trill[count].flags = 0;
+							if(name == NULL)
+							{
+								sp->pro_guitar_track[tracknum]->trill[count].name[0] = '\0';
+							}
+							else
+							{
+								ustrcpy(sp->pro_guitar_track[tracknum]->trill[count].name, name);
+							}
+							sp->pro_guitar_track[tracknum]->trills++;
 						}
-						else
-						{
-							ustrcpy(sp->pro_guitar_track[tracknum]->trill[count].name, name);
-						}
-						sp->pro_guitar_track[tracknum]->trills++;
 					return 1;
 				}
 			}
@@ -1936,23 +1942,26 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 			if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{
 				count = sp->pro_guitar_track[tracknum]->arpeggios;
-				sp->pro_guitar_track[tracknum]->arpeggio[count].start_pos = start;
-				sp->pro_guitar_track[tracknum]->arpeggio[count].end_pos = end;
-				sp->pro_guitar_track[tracknum]->arpeggio[count].flags = 0;
-				if(name == NULL)
-				{
-					sp->pro_guitar_track[tracknum]->arpeggio[count].name[0] = '\0';
+				if(count < EOF_MAX_PHRASES)
+				{	//If EOF can store the arpeggio section
+					sp->pro_guitar_track[tracknum]->arpeggio[count].start_pos = start;
+					sp->pro_guitar_track[tracknum]->arpeggio[count].end_pos = end;
+					sp->pro_guitar_track[tracknum]->arpeggio[count].flags = 0;
+					if(name == NULL)
+					{
+						sp->pro_guitar_track[tracknum]->arpeggio[count].name[0] = '\0';
+					}
+					else
+					{
+						ustrcpy(sp->pro_guitar_track[tracknum]->arpeggio[count].name, name);
+					}
+					if(difficulty == 0xFF)
+					{	//Beta versions of EOF 1.8 (up to beta 15) stored arpeggios without a specified difficulty, re-assign them to Expert
+						difficulty = EOF_NOTE_AMAZING;
+					}
+					sp->pro_guitar_track[tracknum]->arpeggio[count].difficulty = difficulty;
+					sp->pro_guitar_track[tracknum]->arpeggios++;
 				}
-				else
-				{
-					ustrcpy(sp->pro_guitar_track[tracknum]->arpeggio[count].name, name);
-				}
-				if(difficulty == 0xFF)
-				{	//Beta versions of EOF 1.8 (up to beta 15) stored arpeggios without a specified difficulty, re-assign them to Expert
-					difficulty = EOF_NOTE_AMAZING;
-				}
-				sp->pro_guitar_track[tracknum]->arpeggio[count].difficulty = difficulty;
-				sp->pro_guitar_track[tracknum]->arpeggios++;
 				return 1;
 			}
 		break;
@@ -1969,34 +1978,40 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				{
 					case EOF_LEGACY_TRACK_FORMAT:
 						count = sp->legacy_track[tracknum]->tremolos;
-						sp->legacy_track[tracknum]->tremolo[count].start_pos = start;
-						sp->legacy_track[tracknum]->tremolo[count].end_pos = end;
-						sp->legacy_track[tracknum]->tremolo[count].flags = 0;
-						if(name == NULL)
-						{
-							sp->legacy_track[tracknum]->tremolo[count].name[0] = '\0';
+						if(count < EOF_MAX_PHRASES)
+						{	//If EOF can store the tremolo section
+							sp->legacy_track[tracknum]->tremolo[count].start_pos = start;
+							sp->legacy_track[tracknum]->tremolo[count].end_pos = end;
+							sp->legacy_track[tracknum]->tremolo[count].flags = 0;
+							if(name == NULL)
+							{
+								sp->legacy_track[tracknum]->tremolo[count].name[0] = '\0';
+							}
+							else
+							{
+								ustrcpy(sp->legacy_track[tracknum]->tremolo[count].name, name);
+							}
+							sp->legacy_track[tracknum]->tremolos++;
 						}
-						else
-						{
-							ustrcpy(sp->legacy_track[tracknum]->tremolo[count].name, name);
-						}
-						sp->legacy_track[tracknum]->tremolos++;
 					return 1;
 
 					case EOF_PRO_GUITAR_TRACK_FORMAT:
 						count = sp->pro_guitar_track[tracknum]->tremolos;
-						sp->pro_guitar_track[tracknum]->tremolo[count].start_pos = start;
-						sp->pro_guitar_track[tracknum]->tremolo[count].end_pos = end;
-						sp->pro_guitar_track[tracknum]->tremolo[count].flags = 0;
-						if(name == NULL)
-						{
-							sp->pro_guitar_track[tracknum]->tremolo[count].name[0] = '\0';
+						if(count < EOF_MAX_PHRASES)
+						{	//If EOF can store the trill section
+							sp->pro_guitar_track[tracknum]->tremolo[count].start_pos = start;
+							sp->pro_guitar_track[tracknum]->tremolo[count].end_pos = end;
+							sp->pro_guitar_track[tracknum]->tremolo[count].flags = 0;
+							if(name == NULL)
+							{
+								sp->pro_guitar_track[tracknum]->tremolo[count].name[0] = '\0';
+							}
+							else
+							{
+								ustrcpy(sp->pro_guitar_track[tracknum]->tremolo[count].name, name);
+							}
+							sp->pro_guitar_track[tracknum]->tremolos++;
 						}
-						else
-						{
-							ustrcpy(sp->pro_guitar_track[tracknum]->tremolo[count].name, name);
-						}
-						sp->pro_guitar_track[tracknum]->tremolos++;
 					return 1;
 				}
 			}
@@ -2005,18 +2020,21 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 			if((sp->track[track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[track]->track_format == EOF_LEGACY_TRACK_FORMAT))
 			{	//Only legacy guitar tracks are able to use this type of section
 				count = sp->legacy_track[tracknum]->sliders;
-				sp->legacy_track[tracknum]->slider[count].start_pos = start;
-				sp->legacy_track[tracknum]->slider[count].end_pos = end;
-				sp->legacy_track[tracknum]->slider[count].flags = 0;
-				if(name == NULL)
-				{
-					sp->legacy_track[tracknum]->slider[count].name[0] = '\0';
+				if(count < EOF_MAX_PHRASES)
+				{	//If EOF can store the slider section
+					sp->legacy_track[tracknum]->slider[count].start_pos = start;
+					sp->legacy_track[tracknum]->slider[count].end_pos = end;
+					sp->legacy_track[tracknum]->slider[count].flags = 0;
+					if(name == NULL)
+					{
+						sp->legacy_track[tracknum]->slider[count].name[0] = '\0';
+					}
+					else
+					{
+						ustrcpy(sp->legacy_track[tracknum]->slider[count].name, name);
+					}
+					sp->legacy_track[tracknum]->sliders++;
 				}
-				else
-				{
-					ustrcpy(sp->legacy_track[tracknum]->slider[count].name, name);
-				}
-				sp->legacy_track[tracknum]->sliders++;
 				return 1;
 			}
 		break;
