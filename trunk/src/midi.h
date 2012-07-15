@@ -103,7 +103,7 @@ void eof_add_sysex_event(unsigned long pos, int size, void *data);
 	//Stores a copy of the Sysex message data (used for custom phrase markers in Phase Shift) to eof_midi_event[]
 void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_change *anchorlist, EOF_MIDI_TS_LIST *tslist, unsigned long timedivision);
 	//Write all stored MIDI track data from sp->midi_data_head to the output file
-int eof_built_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistptr, EOF_MIDI_TS_LIST **tslistptr, unsigned long *timedivision);
+int eof_build_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistptr, EOF_MIDI_TS_LIST **tslistptr, unsigned long *timedivision);
 	//Accepts an EOF_SONG pointer, and builds the anchor and TS change lists, returning them through the pointers
 	//If the passed chart contains a stored tempo track, that track is used to build the lists
 	//Otherwise the chart's native tempo map is used to build them
