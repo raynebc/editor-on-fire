@@ -412,7 +412,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	}
 
 	//Build tempo and TS lists
-	if(!eof_built_tempo_and_ts_lists(sp, &anchorlist, &tslist, &timedivision))
+	if(!eof_build_tempo_and_ts_lists(sp, &anchorlist, &tslist, &timedivision))
 	{
 		eof_log("\tError saving:  Cannot build tempo or TS list", 1);
 		return 0;	//Return failure
@@ -2574,7 +2574,7 @@ void eof_check_vocals(EOF_SONG* sp, char *fixvoxpitches, char *fixvoxphrases)
 	}
 }
 
-int eof_built_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistptr, EOF_MIDI_TS_LIST **tslistptr, unsigned long *timedivision)
+int eof_build_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistptr, EOF_MIDI_TS_LIST **tslistptr, unsigned long *timedivision)
 {
 	struct eof_MIDI_data_track *trackptr;
 	struct Tempo_change *anchorlist = NULL, *temp = NULL;
@@ -2587,7 +2587,7 @@ int eof_built_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistp
 	char runningstatus, tsstored = 0;
 	unsigned char *dataptr;
 
-	eof_log("eof_built_tempo_and_ts_lists() entered", 1);
+	eof_log("eof_build_tempo_and_ts_lists() entered", 1);
 
 	if(!sp || !anchorlistptr || !tslistptr || !timedivision)
 		return 0;	//Return error
@@ -2668,6 +2668,7 @@ int eof_built_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistp
 								if(!temp)
 								{	//Error creating link in tempo list
 									eof_destroy_tempo_list(anchorlist);	//Destroy list
+									eof_destroy_ts_list(tslist);
 									return 0;			//Return failure
 								}
 								anchorlist = temp;	//Update list pointer
@@ -2679,6 +2680,7 @@ int eof_built_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistp
 							if(temp == NULL)
 							{	//Test the return value of eof_add_to_tempo_list()
 								eof_destroy_tempo_list(anchorlist);	//Destroy list
+								eof_destroy_ts_list(tslist);
 								return 0;			//Return failure
 							}
 							anchorlist = temp;	//Update list pointer

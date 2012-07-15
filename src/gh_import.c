@@ -1796,7 +1796,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 	unsigned long ctr, ctr2, numvox, voxstart, voxlength, voxpitch, numphrases, phrasestart, arraysize, *arrayptr, dword, tracknum;
 	EOF_LYRIC *ptr = NULL;
 	EOF_VOCAL_TRACK * tp = NULL;
-	char buffer[101], matched;
+	char buffer[201], matched;
 
 	if(!fb || !sp || !songname)
 		return -1;
@@ -1908,6 +1908,11 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 			eof_log("\t\tError:  Malformed lyric text", 1);
 			return -1;
 		}
+		if(length + 1 > sizeof(buffer))
+		{	//If the buffer isn't large enough to store this string and its NULL terminator
+			allegro_message("Error:  QB lyric buffer too small, aborting");
+			return -1;
+		}
 		if(eof_filebuffer_memcpy(fb, buffer, length) == EOF)	//Read the lyric string into a buffer
 		{
 			eof_log("\t\tError:  Could not read lyric text", 1);
@@ -1938,7 +1943,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 			tail->next = linkptr;	//Point it forward to the new link
 		}
 		tail = linkptr;	//The new link is the new tail of the list
-	}
+	}//While there are lyric entries
 
 //Read lyric text positions
 	fb->index = 0;	//Seek to the beginning of the file buffer
@@ -1981,7 +1986,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 		for(linkptr = head; (linkptr != NULL) && !matched; linkptr = linkptr->next)
 		{	//For each link in the lyric checksum list (until a match has been made)
 			if(linkptr->checksum == checksum)
-			{	//If this checksum matches the one in the list
+			{	//If this checksum matches the one in the list (until a match has been made)
 				for(ctr2 = 0; ctr2 < eof_get_track_size(sp, EOF_TRACK_VOCALS); ctr2++)
 				{	//For each lyric pitch in the EOF_SONG structure
 					if(eof_get_note_pos(sp, EOF_TRACK_VOCALS, ctr2) == voxstart)
@@ -2007,6 +2012,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 							if(thispos > voxstart)
 							{	//If this lyric pitch is defined before the lyric text
 								eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, linkptr->text);	//Update the text on this lyric
+								matched = 1;
 								break;
 							}
 							if(ctr2 + 1 < eof_get_track_size(sp, EOF_TRACK_VOCALS))
@@ -2021,12 +2027,13 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 									if((voxstart - thispos < nextpos - voxstart))
 									{	//If the earlier pitch is closer to the unmatched lyric text then the later pitch
 										eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, linkptr->text);	//Update the text on this lyric
+										matched = 1;
 										break;
 									}
 									else
 									{	//The later pitch is closer to the unmatched lyric text
 										eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2 + 1, linkptr->text);	//Update the text on this lyric
-										thispos = nextpos;
+										matched = 1;
 										break;
 									}
 								}
@@ -2034,6 +2041,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 							else
 							{	//There is not another lyric pitch that follows this one
 								eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, linkptr->text);	//Update the text on this lyric
+								matched = 1;
 								break;
 							}
 						}//If this lyric pitch has no text assigned to it yet
