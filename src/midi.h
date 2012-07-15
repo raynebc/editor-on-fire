@@ -67,10 +67,11 @@ struct Tempo_change *eof_add_to_tempo_list(unsigned long delta,double realtime,d
 void eof_destroy_tempo_list(struct Tempo_change *ptr);
 	//If ptr is not NULL, de-allocates all memory consumed by the tempo linked list
 
-unsigned long eof_ConvertToDeltaTime(double realtime,struct Tempo_change *anchorlist,EOF_MIDI_TS_LIST *tslist,unsigned long timedivision);
+unsigned long eof_ConvertToDeltaTime(double realtime,struct Tempo_change *anchorlist,EOF_MIDI_TS_LIST *tslist,unsigned long timedivision,char snaptobeat);
 	//An adaptation of the ConvertToDeltaTime() function from the FoFLC source
 	//Parses a linked list of anchors and returns the delta time of the specified realtime
 	//tslist is allowed to be NULL, but anchorlist must contain at least one tempo change
+	//If snaptobeat is nonzero, the converted delta time is allowed to be adjusted +/- 1 delta to line up with a beat marker (use for start times, but not lengths or end times)
 
 int eof_extract_rba_midi(const char * source, const char * dest);
 	//Extracts the MIDI file embedded in the source RBA file and writes it to a regular MIDI file called dest

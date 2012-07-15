@@ -1884,6 +1884,9 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 	char *newtext = NULL;
 	unsigned long checksum, length;
 
+#ifdef GH_IMPORT_DEBUG
+	eof_log("\tGH:  Looking for lyrics", 1);
+#endif
 	fb->index = 0;	//Seek to the beginning of the file buffer
 	while((eof_filebuffer_find_bytes(fb, lyricid, sizeof(lyricid), 1) > 0) && (fb->index > 8) && (fb->index + 5 < fb->size))
 	{	//While there are lyric entries
