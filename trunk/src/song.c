@@ -457,8 +457,8 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 					tp->note[i-1]->flags = flags |= tp->note[next]->flags;	//Merge the flags
 					eof_legacy_track_delete_note(tp, next);			//Delete the next note, as it has been merged with this note
 				}
-				else if(tp->note[i-1]->pos + tp->note[i-1]->length > tp->note[next]->pos - 1)
-				{	//Otherwise if it would overlap the next note
+				else if(tp->note[i-1]->pos + tp->note[i-1]->length >= tp->note[next]->pos - 1)
+				{	//Otherwise if it does not end at least 1ms before the next note starts
 					if(!(tp->note[i-1]->flags & EOF_NOTE_FLAG_CRAZY) || (tp->note[i-1]->note & tp->note[next]->note))
 					{	//Truncate the tail if the note is not marked as "crazy" and the note doesn't try to overlap a gem in the same lane
 						tp->note[i-1]->length = tp->note[next]->pos - tp->note[i-1]->pos - 1;
@@ -467,6 +467,31 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 			}
 		}//The note has valid gems, type and position
 	}//For each note (in reverse order)
+	//Run another pass to check crazy notes overlapping with gems on their same lanes more than 1 note ahead
+	for(i = 0; i < tp->notes; i++)
+	{	//For each note
+		if(tp->note[i]->flags & EOF_NOTE_FLAG_CRAZY)
+		{	//If this note is crazy, find the next gem that occupies any of the same lanes
+			next = i;
+			while(1)
+			{
+				next = eof_fixup_next_legacy_note(tp, next);
+				if(next >= 0)
+				{	//If there's a note in this difficulty after this note
+					if(tp->note[i]->note & tp->note[next]->note)
+					{	//And it uses at least one of the same lanes as the crazy note being checked
+						if(tp->note[i]->pos + tp->note[i]->length >= tp->note[next]->pos - 1)
+						{	//If it does not end at least 1ms before the next note starts
+							tp->note[i]->length = tp->note[next]->pos - tp->note[i]->pos - 1;	//Truncate the crazy note so it does not overlap the next gem on its lane(s)
+						}
+						break;
+					}
+				}
+				else
+					break;
+			}
+		}
+	}
 	if(eof_open_bass_enabled() && (tp == sp->legacy_track[sp->track[EOF_TRACK_BASS]->tracknum]))
 	{	//If open bass strumming is enabled, and this is the bass guitar track, check to ensure that open bass doesn't conflict with other notes/HOPOs/statuses
 		for(i = 0; i < tp->notes; i++)
@@ -702,7 +727,7 @@ void eof_vocal_track_fixup_lyrics(EOF_SONG *sp, unsigned long track, int sel)
 				}
 				else if(tp->lyric[i-1]->pos + tp->lyric[i-1]->length >= tp->lyric[next]->pos - 1)
 				{	//If this lyric does not end at least 1ms before the next lyric starts
-					tp->lyric[i-1]->length = tp->lyric[next]->pos - tp->lyric[i-1]->pos - 1 - 1;	//Subtract one more to ensure padding
+					tp->lyric[i-1]->length = tp->lyric[next]->pos - tp->lyric[i-1]->pos - 1;	//Alter the length to extend to 1ms before the next note
 					if(tp->lyric[i-1]->length <= 0)
 						tp->lyric[i-1]->length = 1;	//Ensure that this doesn't cause the length to be invalid
 				}
@@ -3567,11 +3592,11 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 					}
 					eof_pro_guitar_track_delete_note(tp, next);
 				}
-				else if(tp->note[i-1]->pos + tp->note[i-1]->length > tp->note[next]->pos - 1)
-				{	//If this note overlaps the next note
+				else if(tp->note[i-1]->pos + tp->note[i-1]->length >= tp->note[next]->pos - 1)
+				{	//If this note does not end at least 1ms before the next note starts
 					if(!(tp->note[i-1]->flags & EOF_NOTE_FLAG_CRAZY) || (tp->note[i-1]->note & tp->note[next]->note))
 					{	//If this note isn't a "crazy" note or is overlapping the next note on the same lanes it uses
-						tp->note[i-1]->length = tp->note[next]->pos - tp->note[i-1]->pos - 1;	//Alter the length to reach the next note
+						tp->note[i-1]->length = tp->note[next]->pos - tp->note[i-1]->pos - 1;	//Alter the length to extend to 1ms before the next note
 					}
 				}
 			}
@@ -3610,6 +3635,31 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 			}
 		}//If the note is valid, perform other cleanup
 	}//For each note in the track
+	//Run another pass to check crazy notes overlapping with gems on their same lanes more than 1 note ahead
+	for(i = 0; i < tp->notes; i++)
+	{	//For each note
+		if(tp->note[i]->flags & EOF_NOTE_FLAG_CRAZY)
+		{	//If this note is crazy, find the next gem that occupies any of the same lanes
+			next = i;
+			while(1)
+			{
+				next = eof_fixup_next_pro_guitar_note(tp, next);
+				if(next >= 0)
+				{	//If there's a note in this difficulty after this note
+					if(tp->note[i]->note & tp->note[next]->note)
+					{	//And it uses at least one of the same lanes as the crazy note being checked
+						if(tp->note[i]->pos + tp->note[i]->length >= tp->note[next]->pos - 1)
+						{	//If it does not end at least 1ms before the next note starts
+							tp->note[i]->length = tp->note[next]->pos - tp->note[i]->pos - 1;	//Truncate the crazy note so it does not overlap the next gem on its lane(s)
+						}
+						break;
+					}
+				}
+				else
+					break;
+			}
+		}
+	}
 
 	for(i = 0; i < tp->tremolos; i++)
 	{	//For each tremolo section in the track
