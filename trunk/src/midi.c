@@ -111,6 +111,10 @@ void eof_clear_midi_events(void)
 	unsigned long i;
 	for(i = 0; i < eof_midi_events; i++)
 	{
+		if(eof_midi_event[i]->allocation && eof_midi_event[i]->dp)
+		{	//If this event has memory allocated for data
+			free(eof_midi_event[i]->dp);	//Free it now
+		}
 		free(eof_midi_event[i]);
 	}
 	eof_midi_events = 0;
@@ -899,6 +903,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 							eof_selected_beat = endbeatnum;
 						}
 					}
+					eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+					eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
+					eof_clear_midi_events();
 					return 0;	//Return failure
 //					notenum = eof_get_track_size(sp, j) - 1;	//The index of the last note in this track
 //					eof_add_midi_event(eof_get_note_pos(sp, j, notenum) + eof_get_note_length(sp, j, notenum),0x80,i, vel, 0);
@@ -970,6 +977,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						{	//If this event has allocated memory to release
 							free(eof_midi_event[i]->dp);	//Free it now
 							eof_midi_event[i]->dp = NULL;
+							eof_midi_event[i]->allocation = 0;
 						}
 						lastdelta = delta;					//Store this event's absolute delta time
 					}
@@ -1169,6 +1177,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					{	//If this event has allocated memory to release
 						free(eof_midi_event[i]->dp);	//Free it now
 						eof_midi_event[i]->dp = NULL;
+						eof_midi_event[i]->allocation = 0;
 					}
 					lastdelta=delta;					//Store this lyric's absolute delta time
 				}
@@ -1534,6 +1543,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 							eof_selected_beat = endbeatnum;
 						}
 					}
+					eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
+					eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
+					eof_clear_midi_events();
 					return 0;	//Return failure
 //					notenum = eof_get_track_size(sp, j) - 1;	//The index of the last note in this track
 //					eof_add_midi_event(eof_get_note_pos(sp, j, notenum) + eof_get_note_length(sp, j, notenum), 0x80, i, vel, 0);
@@ -1589,6 +1601,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					{	//If this event has allocated memory to release
 						free(eof_midi_event[i]->dp);	//Free it now
 						eof_midi_event[i]->dp = NULL;
+						eof_midi_event[i]->allocation = 0;
 					}
 					lastdelta = delta;					//Store this event's absolute delta time
 				}
@@ -2657,7 +2670,8 @@ int eof_build_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistp
 		}
 		if(eof_use_ts)
 		{	//If the user opted to use the time signatures during export
-			tslist=eof_build_ts_list(sp);	//Create a list of all TS changes in eof_song->beat[]
+			free(tslist);					//Drop the previously created TS list
+			tslist=eof_build_ts_list(sp);	//And recreate it with a list of all TS changes in eof_song->beat[]
 			if(tslist == NULL)
 			{
 				eof_log("\tError saving:  Cannot build TS list", 1);
