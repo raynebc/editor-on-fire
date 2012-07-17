@@ -14,7 +14,6 @@
 
 typedef struct
 {
-
 	unsigned long pos;
 	int type;
 	int note;
@@ -22,7 +21,7 @@ typedef struct
 	int channel;
 	char * dp;
 	char allocation;	//This tracks whether dp points to allocated that should be freed after it is written to file
-
+	char filtered;	//This is set to nonzero if the event should be dropped instead of being written to MIDI
 } EOF_MIDI_EVENT;
 
 
@@ -110,12 +109,15 @@ int eof_build_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistp
 	//Otherwise the chart's native tempo map is used to build them
 	//If the passed chart contains a stored tempo track, that track's time division is returned via reference, otherwise EOF's default is returned via reference
 	//Nonzero is returned upon success
-
 void eof_check_vocals(EOF_SONG* sp, char *fixvoxpitches, char *fixvoxphrases);
 	//Scans the vocal tracks contained in the chart for missing pitches or vocal phrases
 	//If either are found, the user is prompted about whether to correct those problems
 	//Nonzero is stored into either variable if the user opts for the correction
 	//Zero is stored into either if the problem is not detected or the user declines
 	//These user decisions will be passed to eof_export_midi()
+void eof_check_for_note_overlap(void);
+	//Checks the eof_midi_event[] array for overlapping note on/off events and filters them out as necessary
+	//When two note on/off event pairs overlap, the innermost on and off events are filtered, allowing phrases to appropriately mark notes without overlapping
+	//The events are expected to be sorted in chronological order
 
 #endif

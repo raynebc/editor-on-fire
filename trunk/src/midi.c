@@ -6,6 +6,7 @@
 #include "midi.h"
 #include "midi_data_import.h"
 #include "midi_import.h"	//For eof_parse_var_len()
+#include "mix.h"	//For eof_set_seek_position()
 #include "undo.h"
 #include "utility.h"
 #include "tuning.h"
@@ -21,8 +22,8 @@
 
 static EOF_MIDI_EVENT * eof_midi_event[EOF_MAX_MIDI_EVENTS];
 static unsigned long eof_midi_events = 0;
-static char eof_midi_note_status[128] = {0};	//Tracks the on/off status of notes 0 through 127, maintained by eof_add_midi_event()
-unsigned long enddelta = 0;	//If this becomes nonzero, it defines the delta position of a user-defined end event
+static char eof_midi_note_status[128] = {0};	//Used by some functions to track the on/off status of notes 0 through 127
+unsigned long enddelta = 0, endbeatnum = 0;		//If these becomes nonzero, they define the position of a user-defined end event
 
 void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int channel)
 {	//To avoid rounding issues during timing conversion, this should be called with the MIDI tick position of the event being stored
@@ -45,6 +46,7 @@ void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int
 		eof_midi_event[eof_midi_events]->velocity = velocity;
 		eof_midi_event[eof_midi_events]->channel = channel;
 		eof_midi_event[eof_midi_events]->allocation = 0;
+		eof_midi_event[eof_midi_events]->filtered = 0;
 		eof_midi_event[eof_midi_events]->dp = NULL;
 		eof_midi_events++;
 
@@ -74,6 +76,7 @@ void eof_add_midi_lyric_event(unsigned long pos, char * text)
 			eof_midi_event[eof_midi_events]->type = 0x05;
 			eof_midi_event[eof_midi_events]->dp = text;
 			eof_midi_event[eof_midi_events]->allocation = 1;	//At this time, all lyrics are being copied into new arrays in case they need to be altered
+			eof_midi_event[eof_midi_events]->filtered = 0;
 			eof_midi_events++;
 		}
 	}
@@ -95,6 +98,7 @@ void eof_add_midi_text_event(unsigned long pos, char * text, char allocation)
 			eof_midi_event[eof_midi_events]->type = 0x01;
 			eof_midi_event[eof_midi_events]->dp = text;
 			eof_midi_event[eof_midi_events]->allocation = allocation;
+			eof_midi_event[eof_midi_events]->filtered = 0;
 			eof_midi_events++;
 		}
 	}
@@ -429,14 +433,15 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	eof_sort_notes(sp);	//Writing efficient on-the-fly HOPO phrasing relies on all notes being sorted
 
 	//Search for a user-defined end event
-	enddelta = 0;	//Assume there is no user-defined end event until one is found
+	enddelta = endbeatnum = 0;	//Assume there is no user-defined end event until one is found
 	for(i = 0; i < sp->text_events; i++)
 	{
 		if(!ustrcmp(sp->text_event[i]->text, "[end]"))
 		{	//If there is an end event defined here
 			snprintf(eof_log_string, sizeof(eof_log_string), "End position located at %lums", sp->beat[sp->text_event[i]->beat]->pos);
 			eof_log(eof_log_string, 1);
-			enddelta = eof_ConvertToDeltaTime(sp->beat[sp->text_event[i]->beat]->pos,anchorlist,tslist,timedivision,0);	//Get the delta time of this event
+			endbeatnum = sp->text_event[i]->beat;
+			enddelta = eof_ConvertToDeltaTime(sp->beat[endbeatnum]->pos,anchorlist,tslist,timedivision,0);	//Get the delta time of this event
 			break;
 		}
 	}
@@ -886,11 +891,21 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				if(eof_midi_note_status[i] != 0)	//If this note was left on, send an alert message, as this is abnormal
 				{
 					allegro_message("MIDI export error:  Note %lu was not turned off", i);
+					if(endbeatnum)
+					{	//If the chart has a manually defined end event, that's probably the cause
+						if(alert("It appears this is due to an [end] event that cuts out a note early", "Would you like to seek to the beat containing this [end] event?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+						{	//If user opts to seek to the offending event
+							eof_set_seek_position(sp->beat[endbeatnum]->pos + eof_av_delay);
+							eof_selected_beat = endbeatnum;
+						}
+					}
+					return 0;	//Return failure
 //					notenum = eof_get_track_size(sp, j) - 1;	//The index of the last note in this track
 //					eof_add_midi_event(eof_get_note_pos(sp, j, notenum) + eof_get_note_length(sp, j, notenum),0x80,i, vel, 0);
 				}
 			}
 			qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
+			eof_check_for_note_overlap();	//Filter out any improperly overlapping note on/off events
 //			allegro_message("break1");
 
 			for(trackctr=0;trackctr<=expertplus;trackctr++)
@@ -913,7 +928,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 					eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 					eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
-					return 0;
+					return 0;	//Return failure
 				}
 
 				/* write the track name */
@@ -930,31 +945,34 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					if((trackctr == 1) && (eof_midi_event[i]->note < 96))
 						continue;	//Filter out all non Expert drum notes for the Expert+ track
 
-					delta = eof_midi_event[i]->pos;
-					if(eof_midi_event[i]->type == 0x01)
-					{	//Text event
-						eof_write_text_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
+					if(!eof_midi_event[i]->filtered)
+					{	//If this event isn't being filtered
+						delta = eof_midi_event[i]->pos;
+						if(eof_midi_event[i]->type == 0x01)
+						{	//Text event
+							eof_write_text_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
+						}
+						else if(eof_midi_event[i]->type == 0xF0)
+						{	//Sysex message
+							WriteVarLen(delta - lastdelta, fp);	//Write this event's relative delta time
+							pack_putc(0xF0, fp);						//Sysex event
+							WriteVarLen(eof_midi_event[i]->note, fp);	//Write the Sysex message's size
+							pack_fwrite(eof_midi_event[i]->dp, eof_midi_event[i]->note, fp);	//Write the Sysex data
+						}
+						else
+						{	//Note on/off
+							WriteVarLen(delta - lastdelta, fp);	//Write this event's relative delta time
+							pack_putc(eof_midi_event[i]->type, fp);
+							pack_putc(eof_midi_event[i]->note, fp);
+							pack_putc(vel, fp);
+						}
+						if(eof_midi_event[i]->allocation && eof_midi_event[i]->dp)
+						{	//If this event has allocated memory to release
+							free(eof_midi_event[i]->dp);	//Free it now
+							eof_midi_event[i]->dp = NULL;
+						}
+						lastdelta = delta;					//Store this event's absolute delta time
 					}
-					else if(eof_midi_event[i]->type == 0xF0)
-					{	//Sysex message
-						WriteVarLen(delta - lastdelta, fp);	//Write this event's relative delta time
-						pack_putc(0xF0, fp);						//Sysex event
-						WriteVarLen(eof_midi_event[i]->note, fp);	//Write the Sysex message's size
-						pack_fwrite(eof_midi_event[i]->dp, eof_midi_event[i]->note, fp);	//Write the Sysex data
-					}
-					else
-					{	//Note on/off
-						WriteVarLen(delta - lastdelta, fp);	//Write this event's relative delta time
-						pack_putc(eof_midi_event[i]->type, fp);
-						pack_putc(eof_midi_event[i]->note, fp);
-						pack_putc(vel, fp);
-					}
-					if(eof_midi_event[i]->allocation && eof_midi_event[i]->dp)
-					{	//If this event has allocated memory to release
-						free(eof_midi_event[i]->dp);	//Free it now
-						eof_midi_event[i]->dp = NULL;
-					}
-					lastdelta = delta;					//Store this event's absolute delta time
 				}
 
 				/* end of track */
@@ -1072,35 +1090,38 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);	//Lyric events must be sorted for padding logic to work
 			for(i = 0; i < eof_midi_events; i++)
 			{
-				if((eof_midi_event[i]->type == 0x90) && (eof_midi_event[i]->note == 105))
-				{	//If this is a lyric on phrase marker
-					last_phrase = eof_midi_event[i]->pos;		//Store its position
-				}
-				else if((i + 2 < eof_midi_events) && (eof_midi_event[i]->type == 0x05) && (eof_midi_event[i+1]->type == 0x90) && (eof_midi_event[i+1]->note < 105) && (eof_midi_event[i+2]->type == 0x80) && (eof_midi_event[i+2]->note < 105))
-				{	//If this is a lyric event followed by a lyric pitch on and off
-					if((eof_midi_event[i]->pos == eof_midi_event[i+1]->pos) && (eof_midi_event[i]->pos < last_phrase + EOF_LYRIC_PHRASE_PADDING))
-					{	//If the lyric event and pitch are not at least EOF_LYRIC_PHRASE_PADDING deltas away from the lyric phrase on marker
-						if(last_phrase + EOF_LYRIC_PHRASE_PADDING < eof_midi_event[i+2]->pos)
-						{	//If the lyric event and pitch can be padded without overlapping the pitch off note, do it
-							eof_midi_event[i]->pos = last_phrase + EOF_LYRIC_PHRASE_PADDING;	//Change the delta time of the lyric event
-							eof_midi_event[i+1]->pos = last_phrase + EOF_LYRIC_PHRASE_PADDING;	//Change the delta time of the note on event
+				if(!eof_midi_event[i]->filtered)
+				{	//If this event isn't being filtered
+					if((eof_midi_event[i]->type == 0x90) && (eof_midi_event[i]->note == 105))
+					{	//If this is a lyric on phrase marker
+						last_phrase = eof_midi_event[i]->pos;		//Store its position
+					}
+					else if((i + 2 < eof_midi_events) && (eof_midi_event[i]->type == 0x05) && (eof_midi_event[i+1]->type == 0x90) && (eof_midi_event[i+1]->note < 105) && (eof_midi_event[i+2]->type == 0x80) && (eof_midi_event[i+2]->note < 105))
+					{	//If this is a lyric event followed by a lyric pitch on and off
+						if((eof_midi_event[i]->pos == eof_midi_event[i+1]->pos) && (eof_midi_event[i]->pos < last_phrase + EOF_LYRIC_PHRASE_PADDING))
+						{	//If the lyric event and pitch are not at least EOF_LYRIC_PHRASE_PADDING deltas away from the lyric phrase on marker
+							if(last_phrase + EOF_LYRIC_PHRASE_PADDING < eof_midi_event[i+2]->pos)
+							{	//If the lyric event and pitch can be padded without overlapping the pitch off note, do it
+								eof_midi_event[i]->pos = last_phrase + EOF_LYRIC_PHRASE_PADDING;	//Change the delta time of the lyric event
+								eof_midi_event[i+1]->pos = last_phrase + EOF_LYRIC_PHRASE_PADDING;	//Change the delta time of the note on event
+							}
 						}
 					}
-				}
-				else if((i + 1 < eof_midi_events) && (eof_midi_event[i]->type == 0x90) && (eof_midi_event[i]->note == VOCALPERCUSSION) && (eof_midi_event[i+1]->type == 0x80) && (eof_midi_event[i+1]->note == VOCALPERCUSSION))
-				{	//If this is a vocal percussion note on followed by a vocal percussion off
-					if(eof_midi_event[i]->pos < last_phrase + EOF_LYRIC_PHRASE_PADDING)
-					{	//If the vocal percussion on is not at least EOF_LYRIC_PHRASE_PADDING deltas away from the lyric phrase on marker
-						if(last_phrase + EOF_LYRIC_PHRASE_PADDING < eof_midi_event[i+1]->pos)
-						{	//If the vocal percussion on can be padded without overlapping the vocal percussion off note, do it
-							eof_midi_event[i]->pos = last_phrase + EOF_LYRIC_PHRASE_PADDING;	//Change the delta time of the vocal percussion event
+					else if((i + 1 < eof_midi_events) && (eof_midi_event[i]->type == 0x90) && (eof_midi_event[i]->note == VOCALPERCUSSION) && (eof_midi_event[i+1]->type == 0x80) && (eof_midi_event[i+1]->note == VOCALPERCUSSION))
+					{	//If this is a vocal percussion note on followed by a vocal percussion off
+						if(eof_midi_event[i]->pos < last_phrase + EOF_LYRIC_PHRASE_PADDING)
+						{	//If the vocal percussion on is not at least EOF_LYRIC_PHRASE_PADDING deltas away from the lyric phrase on marker
+							if(last_phrase + EOF_LYRIC_PHRASE_PADDING < eof_midi_event[i+1]->pos)
+							{	//If the vocal percussion on can be padded without overlapping the vocal percussion off note, do it
+								eof_midi_event[i]->pos = last_phrase + EOF_LYRIC_PHRASE_PADDING;	//Change the delta time of the vocal percussion event
+							}
 						}
 					}
 				}
 			}
 
 			qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
-
+			eof_check_for_note_overlap();	//Filter out any improperly overlapping note on/off events
 			/* open the file */
 			fp = pack_fopen(notetempname[j], "w");
 			if(!fp)
@@ -1108,7 +1129,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 				eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 				eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
-				return 0;
+				return 0;	//Return failure
 			}
 
 			/* write the track name */
@@ -1122,32 +1143,35 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			lastdelta=0;
 			for(i = 0; i < eof_midi_events; i++)
 			{
-				delta = eof_midi_event[i]->pos;
-				if(eof_midi_event[i]->type == 0x01)
-				{	//Text event
-					eof_write_text_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
+				if(!eof_midi_event[i]->filtered)
+				{	//If this event isn't being filtered
+					delta = eof_midi_event[i]->pos;
+					if(eof_midi_event[i]->type == 0x01)
+					{	//Text event
+						eof_write_text_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
+					}
+					else if(eof_midi_event[i]->type == 0x05)
+					{	//Lyric event
+						WriteVarLen(delta - lastdelta, fp);	//Write this lyric's relative delta time
+						pack_putc(0xFF, fp);
+						pack_putc(0x05, fp);
+						pack_putc(ustrlen(eof_midi_event[i]->dp), fp);
+						pack_fwrite(eof_midi_event[i]->dp, ustrlen(eof_midi_event[i]->dp), fp);
+					}
+					else
+					{
+						WriteVarLen(delta - lastdelta, fp);	//Write this lyric's relative delta time
+						pack_putc(eof_midi_event[i]->type, fp);
+						pack_putc(eof_midi_event[i]->note, fp);
+						pack_putc(vel, fp);
+					}
+					if(eof_midi_event[i]->allocation && eof_midi_event[i]->dp)
+					{	//If this event has allocated memory to release
+						free(eof_midi_event[i]->dp);	//Free it now
+						eof_midi_event[i]->dp = NULL;
+					}
+					lastdelta=delta;					//Store this lyric's absolute delta time
 				}
-				else if(eof_midi_event[i]->type == 0x05)
-				{	//Lyric event
-					WriteVarLen(delta - lastdelta, fp);	//Write this lyric's relative delta time
-					pack_putc(0xFF, fp);
-					pack_putc(0x05, fp);
-					pack_putc(ustrlen(eof_midi_event[i]->dp), fp);
-					pack_fwrite(eof_midi_event[i]->dp, ustrlen(eof_midi_event[i]->dp), fp);
-				}
-				else
-				{
-					WriteVarLen(delta - lastdelta, fp);	//Write this lyric's relative delta time
-					pack_putc(eof_midi_event[i]->type, fp);
-					pack_putc(eof_midi_event[i]->note, fp);
-					pack_putc(vel, fp);
-				}
-				if(eof_midi_event[i]->allocation && eof_midi_event[i]->dp)
-				{	//If this event has allocated memory to release
-					free(eof_midi_event[i]->dp);	//Free it now
-					eof_midi_event[i]->dp = NULL;
-				}
-				lastdelta=delta;					//Store this lyric's absolute delta time
 			}
 
 			/* end of track */
@@ -1502,11 +1526,21 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				if(eof_midi_note_status[i] != 0)	//If this note was left on, send an alert message, as this is abnormal
 				{
 					allegro_message("MIDI export error:  Note %lu was not turned off", i);
+					if(endbeatnum)
+					{	//If the chart has a manually defined end event, that's probably the cause
+						if(alert("It appears this is due to an [end] event that cuts out a note early", "Would you like to seek to the beat containing this [end] event?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+						{	//If user opts to seek to the offending event
+							eof_set_seek_position(sp->beat[endbeatnum]->pos + eof_av_delay);
+							eof_selected_beat = endbeatnum;
+						}
+					}
+					return 0;	//Return failure
 //					notenum = eof_get_track_size(sp, j) - 1;	//The index of the last note in this track
 //					eof_add_midi_event(eof_get_note_pos(sp, j, notenum) + eof_get_note_length(sp, j, notenum), 0x80, i, vel, 0);
 				}
 			}
 			qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
+			eof_check_for_note_overlap();	//Filter out any improperly overlapping note on/off events
 //			allegro_message("break1");
 
 			/* open the file */
@@ -1516,7 +1550,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 				eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 				eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
-				return 0;
+				return 0;	//Return failure
 			}
 
 			/* write the track name */
@@ -1530,31 +1564,34 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			lastdelta = 0;
 			for(i = 0; i < eof_midi_events; i++)
 			{
-				delta = eof_midi_event[i]->pos;
-				if(eof_midi_event[i]->type == 0x01)
-				{	//Write a note name text event
-					eof_write_text_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
+				if(!eof_midi_event[i]->filtered)
+				{	//If this event isn't being filtered
+					delta = eof_midi_event[i]->pos;
+					if(eof_midi_event[i]->type == 0x01)
+					{	//Write a note name text event
+						eof_write_text_event(delta-lastdelta, eof_midi_event[i]->dp, fp);
+					}
+					else if(eof_midi_event[i]->type == 0xF0)
+					{	//If this is a Sysex message
+						WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
+						pack_putc(0xF0, fp);						//Sysex event
+						WriteVarLen(eof_midi_event[i]->note, fp);	//Write the Sysex message's size
+						pack_fwrite(eof_midi_event[i]->dp, eof_midi_event[i]->note, fp);	//Write the Sysex data
+					}
+					else
+					{	//Write a non meta MIDI event
+						WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
+						pack_putc(eof_midi_event[i]->type + eof_midi_event[i]->channel, fp);
+						pack_putc(eof_midi_event[i]->note, fp);
+						pack_putc(eof_midi_event[i]->velocity, fp);
+					}
+					if(eof_midi_event[i]->allocation && eof_midi_event[i]->dp)
+					{	//If this event has allocated memory to release
+						free(eof_midi_event[i]->dp);	//Free it now
+						eof_midi_event[i]->dp = NULL;
+					}
+					lastdelta = delta;					//Store this event's absolute delta time
 				}
-				else if(eof_midi_event[i]->type == 0xF0)
-				{	//If this is a Sysex message
-					WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
-					pack_putc(0xF0, fp);						//Sysex event
-					WriteVarLen(eof_midi_event[i]->note, fp);	//Write the Sysex message's size
-					pack_fwrite(eof_midi_event[i]->dp, eof_midi_event[i]->note, fp);	//Write the Sysex data
-				}
-				else
-				{	//Write a non meta MIDI event
-					WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
-					pack_putc(eof_midi_event[i]->type + eof_midi_event[i]->channel, fp);
-					pack_putc(eof_midi_event[i]->note, fp);
-					pack_putc(eof_midi_event[i]->velocity, fp);
-				}
-				if(eof_midi_event[i]->allocation && eof_midi_event[i]->dp)
-				{	//If this event has allocated memory to release
-					free(eof_midi_event[i]->dp);	//Free it now
-					eof_midi_event[i]->dp = NULL;
-				}
-				lastdelta = delta;					//Store this event's absolute delta time
 			}
 
 			/* end of track */
@@ -1573,7 +1610,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 		eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 		eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
-		return 0;
+		return 0;	//Return failure
 	}
 
 	if(featurerestriction != 0)
@@ -1686,7 +1723,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 				eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 				eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
-				return 0;
+				return 0;	//Return failure
 			}
 
 			/* write the track name */
@@ -1770,7 +1807,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 			eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 			eof_log("\tError saving:  Cannot open temporary MIDI track", 1);
-			return 0;
+			return 0;	//Return failure
 		}
 
 		/* write the track name */
@@ -1851,7 +1888,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 		snprintf(eof_log_string, sizeof(eof_log_string), "\tError saving:  Cannot open ouput MIDI file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
 		eof_log(eof_log_string, 1);
-		return 0;
+		return 0;	//Return failure
 	}
 
 	/* write header data */
@@ -1952,7 +1989,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 
 //	eof_log_level |= 2;	//Enable verbose logging
-	return 1;
+	return 1;	//Return success
 }
 
 struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp)
@@ -2466,6 +2503,7 @@ void eof_add_sysex_event(unsigned long pos, int size, void *data)
 				eof_midi_event[eof_midi_events]->note = size;	//Store the size of the Sysex message in the note variable
 				eof_midi_event[eof_midi_events]->dp = (char *)datacopy;	//Store the newly buffered data
 				eof_midi_event[eof_midi_events]->allocation = 1;	//At this time, all Sysex data chunks are stored in dynamically allocated memory
+				eof_midi_event[eof_midi_events]->filtered = 0;
 				eof_midi_events++;
 			}
 		}
@@ -2715,4 +2753,48 @@ int eof_build_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistp
 	*anchorlistptr = anchorlist;	//Return the tempo list through the pointer
 	*tslistptr = tslist;		//Return the TS list through the pointer
 	return 1;
+}
+
+void eof_check_for_note_overlap(void)
+{
+	unsigned long ctr, ctr2;
+
+	eof_log("eof_check_for_note_overlap() entered", 1);
+	memset(eof_midi_note_status,0,sizeof(eof_midi_note_status));	//Clear note status array
+	for(ctr = 0; ctr < eof_midi_events; ctr++)
+	{	//For each cached MIDI event
+		if(!eof_midi_event[ctr]->filtered)
+		{	//If this event isn't already filtered out
+			if(eof_midi_event[ctr]->type == 0x90)
+			{	//If this is a note on event
+				if(eof_midi_note_status[eof_midi_event[ctr]->note] == 1)
+				{	//If this note was already on
+					eof_midi_event[ctr]->filtered = 1;	//Filter this event from being written to MIDI
+					for(ctr2 = ctr + 1; ctr2 < eof_midi_events; ctr2++)
+					{	//Examine the rest of the events to filter the next note off for this note #
+						if((eof_midi_event[ctr]->note == eof_midi_event[ctr2]->note) && (eof_midi_event[ctr2]->type == 0x80) && (!eof_midi_event[ctr2]->filtered))
+						{	//If this event is a note off for the target note #, and it isn't already filtered out
+							eof_midi_event[ctr2]->filtered = 1;	//Filter this event from being written to MIDI
+							break;
+						}
+					}
+				}
+				else
+				{
+					eof_midi_note_status[eof_midi_event[ctr]->note] = 1;	//Track that it is now on
+				}
+			}
+			else if(eof_midi_event[ctr]->type == 0x80)
+			{	//If this is a note off event
+				if(eof_midi_note_status[eof_midi_event[ctr]->note] == 0)
+				{	//If this note was already off
+					eof_midi_event[ctr]->filtered = 1;	//Filter this event from being written to MIDI
+				}
+				else
+				{
+					eof_midi_note_status[eof_midi_event[ctr]->note] = 0;	//Track that it is now off
+				}
+			}
+		}
+	}
 }

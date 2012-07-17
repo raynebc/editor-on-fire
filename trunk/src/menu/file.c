@@ -2135,35 +2135,37 @@ int eof_save_helper(char *destfilename)
 	/* save the MIDI and INI files*/
 	eof_check_vocals(eof_song, &fixvoxpitches, &fixvoxphrases);
 	append_filename(eof_temp_filename, newfolderpath, "notes.mid", 1024);
-	eof_export_midi(eof_song, eof_temp_filename, 0, fixvoxpitches, fixvoxphrases);
-	if(eof_write_rbn_midis)
-	{	//If the user opted to also save RBN2 and RB3 pro guitar upgrade compliant MIDIs
-		append_filename(eof_temp_filename, newfolderpath, "notes_rbn.mid", 1024);
-		eof_export_midi(eof_song, eof_temp_filename, 1, fixvoxpitches, fixvoxphrases);	//Write a RBN2 compliant MIDI
-		if(eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS) || eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS_22) || eof_get_track_size(eof_song, EOF_TRACK_PRO_GUITAR) || eof_get_track_size(eof_song, EOF_TRACK_PRO_GUITAR_22))
-		{	//If any of the pro guitar tracks are populated
-			append_filename(eof_temp_filename, newfolderpath, "notes_pro.mid", 1024);
-			eof_export_midi(eof_song, eof_temp_filename, 2, fixvoxpitches, fixvoxphrases);	//Write a RB3 pro guitar upgrade compliant MIDI
-			append_filename(eof_temp_filename, newfolderpath, "upgrades.dta", 1024);
-			eof_save_upgrades_dta(eof_song, eof_temp_filename);	//Create the upgrades.dta file if it does not already exist
+	if(eof_export_midi(eof_song, eof_temp_filename, 0, fixvoxpitches, fixvoxphrases))
+	{	//If saving the normal MIDI succeeded, proceed with saving song.ini and additional MIDIs if applicable
+		if(eof_write_rbn_midis)
+		{	//If the user opted to also save RBN2 and RB3 pro guitar upgrade compliant MIDIs
+			append_filename(eof_temp_filename, newfolderpath, "notes_rbn.mid", 1024);
+			eof_export_midi(eof_song, eof_temp_filename, 1, fixvoxpitches, fixvoxphrases);	//Write a RBN2 compliant MIDI
+			if(eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS) || eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS_22) || eof_get_track_size(eof_song, EOF_TRACK_PRO_GUITAR) || eof_get_track_size(eof_song, EOF_TRACK_PRO_GUITAR_22))
+			{	//If any of the pro guitar tracks are populated
+				append_filename(eof_temp_filename, newfolderpath, "notes_pro.mid", 1024);
+				eof_export_midi(eof_song, eof_temp_filename, 2, fixvoxpitches, fixvoxphrases);	//Write a RB3 pro guitar upgrade compliant MIDI
+				append_filename(eof_temp_filename, newfolderpath, "upgrades.dta", 1024);
+				eof_save_upgrades_dta(eof_song, eof_temp_filename);	//Create the upgrades.dta file if it does not already exist
+			}
 		}
-	}
-	append_filename(eof_temp_filename, newfolderpath, "song.ini", 1024);
-	eof_save_ini(eof_song, eof_temp_filename);
+		append_filename(eof_temp_filename, newfolderpath, "song.ini", 1024);
+		eof_save_ini(eof_song, eof_temp_filename);
 
-	/* save script lyrics if applicable) */
-	if(eof_song->tags->lyrics && eof_song->vocal_track[0]->lyrics)							//If user enabled the Lyrics checkbox in song properties and there are lyrics defined
-	{
-		append_filename(eof_temp_filename, newfolderpath, "script.txt", 1024);
-		jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
-		if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
-		{	//Lyric export failed
-			puts("Assert() handled sucessfully!");
-			allegro_message("Lyric export failed");
-		}
-		else
+		/* save script lyrics if applicable) */
+		if(eof_song->tags->lyrics && eof_song->vocal_track[0]->lyrics)							//If user enabled the Lyrics checkbox in song properties and there are lyrics defined
 		{
-			EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,SCRIPT_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
+			append_filename(eof_temp_filename, newfolderpath, "script.txt", 1024);
+			jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
+			if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
+			{	//Lyric export failed
+				puts("Assert() handled sucessfully!");
+				allegro_message("Lyric export failed");
+			}
+			else
+			{
+				EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,SCRIPT_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
+			}
 		}
 	}
 

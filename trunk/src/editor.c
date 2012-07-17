@@ -4535,6 +4535,11 @@ void eof_render_editor_window_common(void)
 							textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 25 + 4, eof_color_yellow, -1, "%s", eof_song->text_event[ctr]->text);	//Display it
 							break;	//And break from the loop
 						}
+						else if(!ustrcmp(eof_song->text_event[ctr]->text, "[end]"))
+						{	//If this is the [end] event
+							textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 25 + 4, eof_color_red, -1, "%s", eof_song->text_event[ctr]->text);	//Display it
+							break;
+						}
 					}
 				}
 			}
