@@ -1554,6 +1554,7 @@ int eof_menu_beat_adjust_bpm(double amount)
 	if(newbpm < 0.1)
 		return 1;	//A tempo < 0.1BPM is not allowed
 	eof_prepare_undo(EOF_UNDO_TYPE_TEMPO_ADJUST);
+	eof_song->beat[targetbeat]->flags |= EOF_BEAT_FLAG_ANCHOR;
 	if(eof_note_auto_adjust)
 	{	//If the user has enabled the Note Auto-Adjust preference
 		eof_menu_edit_cut(targetbeat + 1, 1);	//Save auto-adjust data
@@ -1571,7 +1572,6 @@ int eof_menu_beat_adjust_bpm(double amount)
 			break;	//Otherwise exit the loop
 		}
 	}
-	eof_song->beat[targetbeat]->flags |= EOF_BEAT_FLAG_ANCHOR;
 	eof_calculate_beats(eof_song);
 	if(eof_note_auto_adjust)
 	{	//If the user has enabled the Note Auto-Adjust preference

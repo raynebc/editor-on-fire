@@ -960,6 +960,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 					if(thispos > lyricstart)
 					{	//If this lyric pitch is defined before the lyric text
 						eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, lyricbuffer);	//Update the text on this lyric
+						matched = 1;
 						break;
 					}
 					if(ctr2 + 1 < eof_get_track_size(sp, EOF_TRACK_VOCALS))
@@ -974,12 +975,14 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 							if((lyricstart - thispos < nextpos - lyricstart))
 							{	//If the earlier pitch is closer to the unmatched lyric text then the later pitch
 								eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, lyricbuffer);	//Update the text on this lyric
+								matched = 1;
 								break;
 							}
 							else
 							{	//The later pitch is closer to the unmatched lyric text
 								eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2 + 1, lyricbuffer);	//Update the text on this lyric
 								thispos = nextpos;
+								matched = 1;
 								break;
 							}
 						}
@@ -987,24 +990,23 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 					else
 					{	//There is not another lyric pitch that follows this one
 						eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, lyricbuffer);	//Update the text on this lyric
+						matched = 1;
 						break;
 					}
 				}//If this lyric pitch has no text assigned to it yet
 			}//For each lyric pitch in the EOF_SONG structure
 #ifdef GH_IMPORT_DEBUG
-			if(thispos)
+			if(matched)
 			{	//If a match was determined
 				snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\tDecided match:  Text = \"%s\"\tPosition = %lu", lyricbuffer, thispos);
 				eof_log(eof_log_string, 1);
 			}
 #endif
 		}//If there was not a lyric position that matched
-#ifdef GH_IMPORT_DEBUG
-		if(ctr2 >= numvox)
-		{	//If the lyric entry didn't match the position of any vocal note
-			eof_log("\t\t\t!Did not find matching vocal data", 1);
+		if(!matched)
+		{	//If there was still no match found, add it as a pitchless lyric
+			eof_track_add_create_note(sp, EOF_TRACK_VOCALS, 0, lyricstart, 10, 0, lyricbuffer);
 		}
-#endif
 	}//For each lyric in the section
 	eof_process_gh_lyric_text(sp);	//Filter and convert hyphenating characters where appropriate
 
@@ -1807,6 +1809,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 	snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Looking for section \"%s\"", buffer);
 	eof_log(eof_log_string, 1);
 #endif
+	fb->index = 0;	//Seek to the beginning of the file buffer
 	arraysize = eof_gh_process_section_header(fb, buffer, &arrayptr, qbindex);	//Parse the location of the 1D arrays of section data
 	for(ctr = 0; ctr < arraysize; ctr++)
 	{	//For each 1D array of voxnote data
@@ -2057,6 +2060,12 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 					}
 #endif
 				}//If there was not a lyric position that matched
+				if(!matched)
+				{	//If there was still no match found, add it as a pitchless lyric
+					eof_track_add_create_note(sp, EOF_TRACK_VOCALS, 0, voxstart, 10, 0, linkptr->text);
+					matched = 1;
+					break;
+				}
 			}//If this checksum matches the one in the list
 		}//For each link in the lyric checksum list (until a match has been made)
 	}//For each block of lyric text data
