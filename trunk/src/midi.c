@@ -29,11 +29,6 @@ void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int
 {	//To avoid rounding issues during timing conversion, this should be called with the MIDI tick position of the event being stored
 	eof_log("eof_add_midi_event() entered", 2);	//Only log this if verbose logging is on
 
-	if((type == 0x80) && (eof_midi_note_status[note] == 0))
-		return;	//If attempting to write a note off for a note that is not even on, don't do it
-	if((type == 0x90) && (eof_midi_note_status[note] == 1))
-		return;	//If attempting to write a note on for a note that is already on, don't do it
-
 	if(enddelta && (pos > enddelta))
 		return;	//If attempting to write an event that exceeds a user-defined end event, don't do it
 
@@ -51,7 +46,7 @@ void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int
 		eof_midi_events++;
 
 		if((note >= 0) && (note <= 127))
-		{	//If the note is in bounds of a legal MIDI note, track its on/off status
+		{	//If the note is in bounds of a legal MIDI note, track the writing of each on/off status
 			if(type == 0x80)	//Note Off
 				eof_midi_note_status[note] = 0;
 			else if(type == 0x90)	//Note On
@@ -800,6 +795,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				/* write forced HOPO */
 				if(noteflags & EOF_NOTE_FLAG_F_HOPO)
 				{	//thekiwimaddog indicated that Rock Band uses HOPO phrases per note/chord
+					if(deltapos > 0)
+					{	//Don't allow a number underflow
+						eof_add_midi_event(deltapos - 1, 0x80, midi_note_offset + 6, vel, 0);	//Place a HOPO off end marker 1 delta before this just in case a HOPO off phrase is in effect (the overlap logic will filter this if it isn't necessary)
+					}
 					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 5, vel, 0);
 					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 5, vel, 0);
 				}
@@ -807,6 +806,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				/* write forced non-HOPO */
 				else if(noteflags & EOF_NOTE_FLAG_NO_HOPO)
 				{	//thekiwimaddog indicated that Rock Band uses HOPO phrases per note/chord
+					if(deltapos > 0)
+					{	//Don't allow a number underflow
+						eof_add_midi_event(deltapos - 1, 0x80, midi_note_offset + 5, vel, 0);	//Place a HOPO on end marker 1 delta before this just in case a HOPO on phrase is in effect (the overlap logic will filter this if it isn't necessary)
+					}
 					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 6, vel, 0);
 					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 6, vel, 0);
 				}
