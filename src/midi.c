@@ -1402,11 +1402,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 							{	//If this string is used
 								if(rootvel == 0xFF)
 								{	//If no velocity has been recorded so far
-									rootvel = sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] + 100;	//Store the velocity used for this gem
+									rootvel = (sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] & 0x7F) + 100;	//Store the velocity used for this gem (mask out the MSB, used for mute status)
 								}
 								else if(sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] + 100 < rootvel)
 								{	//Otherwise store this gem's velocity if it is lower than the others checked for this note
-									rootvel = sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] + 100;
+									rootvel = (sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] & 0x7F) + 100;
 								}
 							}
 						}

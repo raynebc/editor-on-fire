@@ -155,7 +155,7 @@ void JB_Load(FILE *inf)
 		}
 
 //Read timestamp
-		if(sscanf(&(buffer[index]), "%lf", &timestamp) != 1)
+		if(sscanf(&(buffer[index]), "%20lf", &timestamp) != 1)
 		{	//Double floating point value didn't parse
 			printf("Error: Invalid lyric entry in line %lu during C9C lyric import (error parsing timestamp)\nAborting\n",processedctr);
 			exit_wrapper(6);
