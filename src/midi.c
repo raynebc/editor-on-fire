@@ -2839,7 +2839,7 @@ void eof_check_for_hopo_phrase_overlap(void)
 					{	//If the event is a HOPO phrase end marker
 						for(ctr3 = ctr; (ctr3 > 0) && (eof_midi_event[ctr3 - 1]->pos == eof_midi_event[ctr]->pos); ctr3--);	//Rewind to the first MIDI event at this delta position
 
-						for(;eof_midi_event[ctr3]->pos == eof_midi_event[ctr]->pos; ctr3++)
+						for(;(ctr3 < eof_midi_events) && (eof_midi_event[ctr3]->pos == eof_midi_event[ctr]->pos); ctr3++)
 						{	//For each MIDI event at this position
 							if(eof_midi_event[ctr3]->note == HOPO_notes_off[ctr2])
 							{	//If this is a marker for the opposite HOPO phrase type
