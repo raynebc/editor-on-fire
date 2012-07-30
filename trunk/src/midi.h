@@ -119,5 +119,9 @@ void eof_check_for_note_overlap(void);
 	//Checks the eof_midi_event[] array for overlapping note on/off events and filters them out as necessary
 	//When two note on/off event pairs overlap, the innermost on and off events are filtered, allowing phrases to appropriately mark notes without overlapping
 	//The events are expected to be sorted in chronological order
+void eof_check_for_hopo_phrase_overlap(void);
+	//Checks for any HOPO phrase that ends at the same delta position as a HOPO phrase of the opposite type (ie. a HOPO off phrase ending when a HOPO on phrase starts)
+	//Any such phrase is altered to end one delta tick earlier, so that the two phrases are one delta apart from each other
+	//This can happen in very special circumstances (ie. A hopo off note that overlaps a hopo on note and a hopo off note at the same time)
 
 #endif

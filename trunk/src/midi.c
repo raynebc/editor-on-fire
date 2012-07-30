@@ -916,6 +916,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			}
 			qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
 			eof_check_for_note_overlap();	//Filter out any improperly overlapping note on/off events
+			eof_check_for_hopo_phrase_overlap();	//Ensure that no HOPO on/off phrases start/end at the same delta position as each other
+			qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);	//Re-sort, since the previous function may have changed the events' order
 //			allegro_message("break1");
 
 			for(trackctr=0;trackctr<=expertplus;trackctr++)
@@ -2814,4 +2816,42 @@ void eof_check_for_note_overlap(void)
 			}
 		}
 	}
+}
+
+void eof_check_for_hopo_phrase_overlap(void)
+{
+	int HOPO_notes[] = {65, 66, 77, 78, 89, 90, 101, 102};	//A list of each of the HOPO on/off phrase markers
+	int HOPO_notes_off[] = {66, 65, 78, 77, 90, 89, 102, 101};	//A list of the opposite markers from each index in HOPO_notes[], ie. the phrase that should end before a corresponding HOPO phrase starts
+	unsigned long ctr, ctr2, ctr3;
+	char phrasealtered;
+
+	eof_log("eof_check_for_hopo_phrase_overlap() entered", 1);
+	for(ctr = 0; ctr < eof_midi_events; ctr++)
+	{	//For each cached MIDI event
+		if(!eof_midi_event[ctr]->filtered)
+		{	//If this event isn't already filtered out
+			if(eof_midi_event[ctr]->type == 0x80)
+			{	//If this is a note off event
+				phrasealtered = 0;
+				for(ctr2 = 0; (ctr2 < sizeof(HOPO_notes)) && !phrasealtered; ctr2++)
+				{	//For each of the note numbers in the HOPO marker list (or until the HOPO phrase's end position has been altered)
+					if(eof_midi_event[ctr]->note == HOPO_notes[ctr2])
+					{	//If the event is a HOPO phrase end marker
+						for(ctr3 = ctr; (ctr3 > 0) && (eof_midi_event[ctr3 - 1]->pos == eof_midi_event[ctr]->pos); ctr3--);	//Rewind to the first MIDI event at this delta position
+
+						for(;eof_midi_event[ctr3]->pos == eof_midi_event[ctr]->pos; ctr3++)
+						{	//For each MIDI event at this position
+							if(eof_midi_event[ctr3]->note == HOPO_notes_off[ctr2])
+							{	//If this is a marker for the opposite HOPO phrase type
+								if(eof_midi_event[ctr]->pos > 0)	//Don't allow an underflow
+									eof_midi_event[ctr]->pos--;		//Decrement the HOPO marker's off event to be one delta earlier
+								phrasealtered = 1;
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+	}//For each cached MIDI event
 }
