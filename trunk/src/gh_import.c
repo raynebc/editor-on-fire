@@ -2423,6 +2423,7 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 	unsigned char sectionid[] = {0x22, 0x0D, 0x0A};	//This hex sequence is between each section name entry
 	char *buffer, checksumbuff[9], *name;
 	struct QBlyric *head = NULL, *tail = NULL, *linkptr = NULL;	//Used to maintain the linked list matching section names with checksums
+	char abnormal_markers = 0;	//Normally, section names don't begin with "\L", but some files have them with this prefix
 
 	eof_log("eof_gh_read_section_names() entered", 1);
 
@@ -2475,10 +2476,16 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 				{	//If this string begins with a backslash
 					nameindex++;
 					if(buffer[nameindex] == 'L')
-					{	//If it follows with an 'L' character, this is a lyric entry string
-						free(buffer);
-						fb->index++;	//Seek past the closing quotation mark in this section name to allow the next loop iteration to look for the next section name
-						continue;		//Skip it
+					{	//If it follows with an 'L' character, this is probably a lyric entry string
+						abnormal_markers = 1;	//A few QB files prefix section names with "\L", requiring all such strings to be parsed in case they are sections
+						nameindex++;
+						if(buffer[nameindex] == '=')
+						{	//If it follows with a '=' character, this is definitely a lyric entry string
+							free(buffer);
+							fb->index++;	//Seek past the closing quotation mark in this section name to allow the next loop iteration to look for the next section name
+							continue;		//Skip it
+						}
+						nameindex--;	//Rewind one character
 					}
 					nameindex++;	//Otherwise skip the character that follows the backslash (expected to be the 'u' character)
 				}
@@ -2507,7 +2514,7 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 				strcpy(name, &buffer[nameindex]);	//Copy the clean section name into the new buffer
 
 #ifdef GH_IMPORT_DEBUG
-				snprintf(eof_log_string, sizeof(eof_log_string), "\t\tFound section name = \"%s\"\tchecksum = 0x%08lX", name, checksum);
+				snprintf(eof_log_string, sizeof(eof_log_string), "\t\tPotential section name = \"%s\"\tchecksum = 0x%08lX", name, checksum);
 				eof_log(eof_log_string, 1);
 #endif
 
@@ -2537,11 +2544,11 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 			fb->index++;	//Seek past the closing quotation mark in this section name to allow the next loop iteration to look for the next section name
 			free(buffer);	//Free the temporary buffer that stored the raw section name string
 			buffer = NULL;
-			if(fb->index + 4 < fb->size)
-			{	//If there are at least four more bytes in the buffer
+			if(!abnormal_markers && (fb->index + 4 < fb->size))
+			{	//If there are at least four more bytes in the buffer (and no strings beginning with "\L" were parsed)
 				if((fb->buffer[fb->index] == 0x0D) && (fb->buffer[fb->index + 1] == 0x0A) && (fb->buffer[fb->index + 2] == 0x0D) && (fb->buffer[fb->index + 3] == 0x0A))
 				{	//If those bytes are 0x0D, 0x0A, 0x0D, 0x0A
-					break;	//This marks the end of the section names
+					break;	//This marks the formal end of the section names
 				}
 			}
 		}//If there is enough buffered data before this position to allow for an 8 character checksum and a space character
@@ -2736,7 +2743,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 				{	//Search for each instance of the section string checksum
 					if(eof_filebuffer_find_checksum(fb, linkptr->checksum))	//Find the section string checksum in the buffer
 					{	//If the checksum wasn't found
-						snprintf(eof_log_string, sizeof(eof_log_string), "Failed to locate position data for section \"%s\"", linkptr->text);
+						snprintf(eof_log_string, sizeof(eof_log_string), "\t\tCouldn't find position data for section \"%s\", it is probably a lyric", linkptr->text);
 						eof_log(eof_log_string, 1);
 						break;	//Skip looking for this section's timestamp
 					}
