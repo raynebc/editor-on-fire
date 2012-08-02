@@ -133,6 +133,7 @@ void eof_load_config(char * fn)
 	eof_add_new_notes_to_selection = get_config_int("preferences", "eof_add_new_notes_to_selection", 0);
 	eof_drum_modifiers_affect_all_difficulties = get_config_int("preferences", "eof_drum_modifiers_affect_all_difficulties", 1);
 	eof_swap_pg_seek_keys = get_config_int("preferences", "eof_swap_pg_seek_keys", 0);
+	eof_min_note_length = get_config_int("preferences", "eof_min_note_length", 0);
 
 	/* read display settings */
 	eof_screen_layout.mode = get_config_int("display", "display_mode", 0);
@@ -244,6 +245,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_add_new_notes_to_selection", eof_add_new_notes_to_selection);
 	set_config_int("preferences", "eof_drum_modifiers_affect_all_difficulties", eof_drum_modifiers_affect_all_difficulties);
 	set_config_int("preferences", "eof_swap_pg_seek_keys", eof_swap_pg_seek_keys);
+	set_config_int("preferences", "eof_min_note_length", eof_min_note_length);
 
 	/* write display settings */
 	set_config_int("display", "display_mode", eof_screen_layout.mode);
