@@ -120,6 +120,7 @@ char        eof_mark_drums_as_double_bass = 0;	//Allows the user to specify whet
 unsigned long eof_mark_drums_as_hi_hat = 0;		//Allows the user to specify whether Y drum notes will be placed with one of the hi hat statuses by default (this variable holds the note flag of the desired status)
 unsigned long eof_pro_guitar_fret_bitmask = 63;	//Defines which lanes are affected by CTRL+Fn fret setting shortcuts
 char		eof_legacy_view = 0;				//Specifies whether pro guitar notes will render as legacy notes
+int         eof_min_note_length = 0;			//Specifies the user-configured minimum length for all non-drum notes (for making Guitar Hero customs, is set to 0 if undefined)
 
 int         eof_undo_toggle = 0;
 int         eof_redo_toggle = 0;

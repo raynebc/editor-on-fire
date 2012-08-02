@@ -425,6 +425,14 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 			}
 		}
 
+		if(eof_min_note_length && (tp->parent->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (tp->parent->track_format == EOF_LEGACY_TRACK_FORMAT))
+		{	//If the user has specified a minimum length for 5 lane guitar notes, and this is a 5 lane guitar track
+			if(tp->note[i-1]->length < eof_min_note_length)
+			{	//If this note's length is shorter than the minimum length
+				tp->note[i-1]->length = eof_min_note_length;	//Alter the length
+			}
+		}
+
 		/* delete certain notes */
 		if((tp->note[i-1]->note == 0) || ((tp->note[i-1]->type < 0) || (tp->note[i-1]->type > 4)) || (tp->note[i-1]->pos < sp->tags->ogg[eof_selected_ogg].midi_offset) || (tp->note[i-1]->pos >= eof_music_length))
 		{	//Delete the note if all lanes are clear, if it is an invalid type, if the position is before the first beat marker or if it is after the last beat marker
@@ -467,6 +475,7 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 			}
 		}//The note has valid gems, type and position
 	}//For each note (in reverse order)
+
 	//Run another pass to check crazy notes overlapping with gems on their same lanes more than 1 note ahead
 	for(i = 0; i < tp->notes; i++)
 	{	//For each note
@@ -492,6 +501,7 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 			}
 		}
 	}
+
 	if(eof_open_bass_enabled() && (tp == sp->legacy_track[sp->track[EOF_TRACK_BASS]->tracknum]))
 	{	//If open bass strumming is enabled, and this is the bass guitar track, check to ensure that open bass doesn't conflict with other notes/HOPOs/statuses
 		for(i = 0; i < tp->notes; i++)
