@@ -16,9 +16,9 @@
 #define EOF_NOTE_EASY        1
 #define EOF_NOTE_MEDIUM      2
 #define EOF_NOTE_AMAZING     3
-#define EOF_MAX_DIFFICULTIES 4
 #define EOF_NOTE_SPECIAL     4
 #define EOF_NOTE_CHALLENGE   4
+#define EOF_MAX_DIFFICULTIES 5
 	//Note: EOF_NOTE_SPECIAL references the same difficulty that the dance track uses for "Challenge" difficulty
 
 #define EOF_NOTE_FLAG_HOPO       1	//This flag will be set by eof_determine_phrase_status() if the note displays as a HOPO
@@ -601,7 +601,10 @@ unsigned long eof_get_pro_guitar_note_note(EOF_PRO_GUITAR_TRACK *tp, unsigned lo
 
 void eof_sort_notes(EOF_SONG *sp);	//Sorts the notes in all tracks
 void eof_fixup_notes(EOF_SONG *sp);	//Performs cleanup of the note selection, beats and all tracks
-void eof_detect_difficulties(EOF_SONG * sp);	//Sets the populated status by prefixing each populated difficulty name in the current track (stored in eof_note_type_name[], eof_vocal_tab_name[] and eof_dance_tab_name[]) with an asterisk
+void eof_detect_difficulties(EOF_SONG * sp);
+	//Sets the populated status by prefixing each populated difficulty name in the current track (stored in eof_note_type_name[], eof_vocal_tab_name[] and eof_dance_tab_name[]) with an asterisk
+int eof_check_track_difficulty_populated_status(unsigned long difficulty);
+	//Checks the appropriate difficulty tab string array for the active track's specified difficulty and returns nonzero if it begins with an asterisk
 
 int eof_is_freestyle(char *ptr);
 	//Returns 1 if the specified lyric contains a freestyle character (# or ^)

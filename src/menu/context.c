@@ -75,7 +75,7 @@ void eof_prepare_context_menu(void)
 				eof_right_click_menu_note[3].flags = D_DISABLED;
 			}
 		}
-		if(eof_note_type_name[eof_note_type][0] == '*')
+		if(eof_check_track_difficulty_populated_status(eof_note_type))
 		{	//If the active instrument difficulty is populated, enable the Selection submenu
 			eof_right_click_menu_normal[5].flags = 0;
 			eof_right_click_menu_note[7].flags = 0;

@@ -893,7 +893,7 @@ void eof_detect_difficulties(EOF_SONG * sp)
 			else
 			{
 				note_type = eof_get_note_type(sp, eof_selected_track, i);
-				if((note_type >= 0) && (note_type < 5))
+				if((note_type >= 0) && (note_type < EOF_MAX_DIFFICULTIES))
 				{	//If this note has a valid type (difficulty)
 					eof_note_difficulties[note_type] = 1;
 
@@ -908,6 +908,25 @@ void eof_detect_difficulties(EOF_SONG * sp)
 				}
 			}
 		}
+	}
+}
+
+int eof_check_track_difficulty_populated_status(unsigned long difficulty)
+{
+	if(!eof_song || (difficulty >= EOF_MAX_DIFFICULTIES))
+		return 0;	//Return error
+
+	if(eof_selected_track == EOF_TRACK_DANCE)
+	{
+		return (eof_dance_tab_name[difficulty][0] == '*');	//Return true if eof_detect_difficulties() found this track difficulty to be populated
+	}
+	else if(eof_selected_track == EOF_TRACK_VOCALS)
+	{
+		return (eof_vocal_tab_name[0][0] == '*');
+	}
+	else
+	{
+		return (eof_note_type_name[difficulty][0] == '*');
 	}
 }
 
