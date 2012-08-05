@@ -95,6 +95,7 @@ int eof_menu_edit_paste_from_supaeasy(void);
 int eof_menu_edit_paste_from_easy(void);
 int eof_menu_edit_paste_from_medium(void);
 int eof_menu_edit_paste_from_amazing(void);
+int eof_menu_edit_paste_from_challenge(void);
 int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty);	//Copies instrument notes from the specified difficulty into the currently selected difficulty
 int eof_menu_edit_paste_from_catalog(void);
 

@@ -23,6 +23,19 @@ MENU eof_edit_paste_from_menu[] =
     {NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_edit_paste_from_menu_dance[] =
+{
+    {"&Beginner", eof_menu_edit_paste_from_supaeasy, NULL, 0, NULL},
+    {"&Easy", eof_menu_edit_paste_from_easy, NULL, 0, NULL},
+    {"&Medium", eof_menu_edit_paste_from_medium, NULL, 0, NULL},
+    {"H&ard", eof_menu_edit_paste_from_amazing, NULL, 0, NULL},
+    {"C&hallenge", eof_menu_edit_paste_from_challenge, NULL, 0, NULL},
+    {"&Catalog", eof_menu_edit_paste_from_catalog, NULL, 0, NULL},
+    {NULL, NULL, NULL, 0, NULL}
+};
+
+MENU * eof_active_edit_paste_from_menu;
+
 MENU eof_edit_snap_menu[] =
 {
     {"1/4", eof_menu_edit_snap_quarter, NULL, 0, NULL},
@@ -283,7 +296,7 @@ void eof_prepare_edit_menu(void)
 		}
 		else
 		{
-			if(eof_note_type_name[eof_note_type][0] == '*')
+			if(eof_check_track_difficulty_populated_status(eof_note_type))
 			{
 				eof_edit_selection_menu[0].flags = 0;
 				eof_edit_menu[22].flags = 0;
@@ -333,16 +346,32 @@ void eof_prepare_edit_menu(void)
 			}
 		}
 
+		if(eof_selected_track == EOF_TRACK_DANCE)
+		{	//If this is the dance track, insert the dance specific paste from menu
+			eof_edit_menu[6].child = eof_edit_paste_from_menu_dance;
+			eof_active_edit_paste_from_menu = eof_edit_paste_from_menu_dance;
+		}
+		else
+		{	//Otherwise insert the generic paste from menu
+			eof_edit_menu[6].child = eof_edit_paste_from_menu;
+			eof_active_edit_paste_from_menu = eof_edit_paste_from_menu;
+		}
+
 		/* paste from difficulty */
-		for(i = 0; i < 4; i++)	//For each of the four difficulties
+		eof_edit_menu[6].flags = D_DISABLED;
+		for(i = 0; i < EOF_MAX_DIFFICULTIES; i++)	//For each of the difficulties
 		{
-			if((eof_note_type_name[i][0] == '*') && (i != eof_note_type) && !eof_vocals_selected)	//If the difficulty is populated, isn't the active difficulty and PART VOCALS isn't active
-			{
-				eof_edit_paste_from_menu[i].flags = 0;		//Enable paste from the difficulty
+			if((i == EOF_NOTE_CHALLENGE) && (eof_selected_track != EOF_TRACK_DANCE))
+				break;	//Don't check the BRE difficulty of non dance tracks
+
+			if((i != eof_note_type) && eof_check_track_difficulty_populated_status(i) && !eof_vocals_selected)
+			{		//If the difficulty is populated, isn't the active difficulty and PART VOCALS isn't active
+				eof_active_edit_paste_from_menu[i].flags = 0;		//Enable paste from the difficulty
+				eof_edit_menu[6].flags = 0;					//Enable the Paste from menu
 			}
 			else
 			{
-				eof_edit_paste_from_menu[i].flags = D_DISABLED;	//(Paste from difficulty isn't supposed to be usable in PART VOCALS)
+				eof_active_edit_paste_from_menu[i].flags = D_DISABLED;	//(Paste from difficulty isn't supposed to be usable in PART VOCALS)
 			}
 		}
 
@@ -351,40 +380,24 @@ void eof_prepare_edit_menu(void)
 		{
 			if((eof_music_pos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos) && (eof_music_pos <= eof_song->catalog->entry[eof_selected_catalog_entry].end_pos) && (eof_song->catalog->entry[eof_selected_catalog_entry].track == eof_selected_track) && (eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_note_type))
 			{
-				eof_edit_paste_from_menu[5].flags = D_DISABLED;
+				eof_active_edit_paste_from_menu[5].flags = D_DISABLED;
 			}
 			else if((eof_song->catalog->entry[eof_selected_catalog_entry].track == EOF_TRACK_VOCALS) && !eof_vocals_selected)
 			{
-				eof_edit_paste_from_menu[5].flags = D_DISABLED;
+				eof_active_edit_paste_from_menu[5].flags = D_DISABLED;
 			}
 			else if((eof_song->catalog->entry[eof_selected_catalog_entry].track != EOF_TRACK_VOCALS) && eof_vocals_selected)
 			{
-				eof_edit_paste_from_menu[5].flags = D_DISABLED;
+				eof_active_edit_paste_from_menu[5].flags = D_DISABLED;
 			}
-/*cnotes was never set to anything besides 0, so this can be removed
-			else if(cnotes > 0)
-			{
-				eof_edit_paste_from_menu[5].flags = D_DISABLED;
-			}
-*/
 			else
 			{
-				eof_edit_paste_from_menu[5].flags = 0;
+				eof_active_edit_paste_from_menu[5].flags = 0;
 			}
 		}
 		else
 		{
-			eof_edit_paste_from_menu[5].flags = D_DISABLED;
-		}
-
-		/* paste from */
-		eof_edit_menu[6].flags = D_DISABLED;
-		for(i = 0; i < 6; i++)
-		{
-			if((i != 4) && (eof_edit_paste_from_menu[i].flags == 0))
-			{
-				eof_edit_menu[6].flags = 0;
-			}
+			eof_active_edit_paste_from_menu[5].flags = D_DISABLED;
 		}
 
 		/* selection */
@@ -2047,6 +2060,11 @@ int eof_menu_edit_paste_from_amazing(void)
 	return eof_menu_edit_paste_from_difficulty(EOF_NOTE_AMAZING);
 }
 
+int eof_menu_edit_paste_from_challenge(void)
+{
+	return eof_menu_edit_paste_from_difficulty(EOF_NOTE_CHALLENGE);
+}
+
 int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty)
 {
 	unsigned long i;
@@ -2056,7 +2074,7 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty)
 
 	if((eof_note_type != source_difficulty) && (source_difficulty < EOF_MAX_DIFFICULTIES))
 	{	//If the current difficulty is different than the source difficulty
-		if(eof_note_type_name[eof_note_type][0] == '*')
+		if(eof_check_track_difficulty_populated_status(eof_note_type))
 		{	//If the current difficulty is populated
 			if(alert(NULL, "Overwrite notes in this difficulty?", NULL, "&Yes", "&No", 'y', 'n') == 2)
 			{

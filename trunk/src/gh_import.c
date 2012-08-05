@@ -8,7 +8,6 @@
 #include "main.h"
 #include "midi.h"	//For eof_apply_ts()
 #include "utility.h"
-#include "foflc/Lyric_storage.h"	//For strcasestr_spec()
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
