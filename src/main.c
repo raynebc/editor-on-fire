@@ -1527,12 +1527,26 @@ void eof_read_global_keys(void)
 		key[KEY_S] = 0;
 	}
 
-	/* load chart (F3 or CTRL+O) */
-	if((key[KEY_F3] && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT) || (KEY_EITHER_CTRL && key[KEY_O]))
+	/* find next (F3) */
+	/* find previous (CTRL+SHIFT+F3) */
+	if(key[KEY_F3])
+	{
+		if(!KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
+		{	//Neither CTRL nor SHIFT held
+			eof_menu_catalog_find_next();
+		}
+		else if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+		{	//Both CTRL and SHIFT held
+			eof_menu_catalog_find_prev();
+		}
+		key[KEY_F3] = 0;
+	}
+
+	/* load chart (CTRL+O) */
+	if(KEY_EITHER_CTRL && key[KEY_O])
 	{	//File>Load
 		clear_keybuf();
 		eof_menu_file_load();
-		key[KEY_F3] = 0;
 		key[KEY_O] = 0;
 	}
 

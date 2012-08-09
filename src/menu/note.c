@@ -3552,13 +3552,13 @@ int eof_menu_note_edit_pro_guitar_note(void)
 			{	//If the user entered a name
 				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 				{	//For each note in the active track
-					if((eof_note_compare(eof_selected_track, eof_selection.current, ctr) == 0) && ustrcmp(eof_note_edit_name, eof_get_note_name(eof_song, eof_selected_track, ctr)))
+					if((eof_note_compare_simple(eof_selected_track, eof_selection.current, ctr) == 0) && ustrcmp(eof_note_edit_name, eof_get_note_name(eof_song, eof_selected_track, ctr)))
 					{	//If this note matches the one that was edited but the name is different
 						if(alert(NULL, "Update other matching notes in this track to have the same name?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 						{	//If the user opts to use the updated note name on matching notes in this track
 							for(; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 							{	//For each note in the active track, starting from the one that just matched the comparison
-								if((eof_note_compare(eof_selected_track, eof_selection.current, ctr) == 0) && (eof_selection.current != ctr))
+								if((eof_note_compare_simple(eof_selected_track, eof_selection.current, ctr) == 0) && (eof_selection.current != ctr))
 								{	//If this note matches the note that was edited, and we're not comparing the note to itself, copy the edited note's name to this note
 									if(!undo_made)
 									{	//If an undo state hasn't been made yet
@@ -3580,7 +3580,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 				memset(declined_list, 0, sizeof(declined_list));	//Clear the declined list
 				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 				{	//For each note in the active track
-					if((ctr != eof_selection.current) && (eof_note_compare(eof_selected_track, eof_selection.current, ctr) == 0))
+					if((ctr != eof_selection.current) && (eof_note_compare_simple(eof_selected_track, eof_selection.current, ctr) == 0))
 					{	//If this note isn't the one that was just edited, but it matches it
 						newname = eof_get_note_name(eof_song, eof_selected_track, ctr);
 						if(newname && (newname[0] != '\0'))
@@ -3640,7 +3640,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 			{	//If the user entered a legacy bitmask
 				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 				{	//For each note in the active track
-					if((ctr != eof_selection.current) && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type) && (eof_note_compare(eof_selected_track, eof_selection.current, ctr) == 0))
+					if((ctr != eof_selection.current) && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type) && (eof_note_compare_simple(eof_selected_track, eof_selection.current, ctr) == 0))
 					{	//If this note isn't the one that was just edited, but it matches it and is in the active track difficulty
 						if(legacymask != eof_song->pro_guitar_track[tracknum]->note[ctr]->legacymask)
 						{	//If the two notes have different legacy bitmasks
@@ -3648,7 +3648,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 							{	//If the user opts to use the updated note legacy bitmask on matching notes in this track difficulty
 								for(; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 								{	//For each note in the active track, starting from the one that just matched the comparison
-									if((ctr != eof_selection.current) && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type) && (eof_note_compare(eof_selected_track, eof_selection.current, ctr) == 0))
+									if((ctr != eof_selection.current) && (eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type) && (eof_note_compare_simple(eof_selected_track, eof_selection.current, ctr) == 0))
 									{	//If this note isn't the one that was just edited, but it matches it and is in the active track difficulty, copy the edited note's legacy bitmask to this note
 										if(!undo_made)
 										{	//If an undo state hasn't been made yet
@@ -3671,7 +3671,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 				memset(declined_list, 0, sizeof(declined_list));	//Clear the declined list
 				for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
 				{	//For each note in the active track
-					if((ctr != eof_selection.current) && (eof_note_compare(eof_selected_track, eof_selection.current, ctr) == 0))
+					if((ctr != eof_selection.current) && (eof_note_compare_simple(eof_selected_track, eof_selection.current, ctr) == 0))
 					{	//If this note isn't the one that was just edited, but it matches it
 						legacymask = eof_song->pro_guitar_track[tracknum]->note[ctr]->legacymask;
 						if(legacymask)
