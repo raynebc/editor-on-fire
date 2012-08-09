@@ -346,6 +346,23 @@ void eof_legacy_track_sort_notes(EOF_LEGACY_TRACK * tp)
 	}
 }
 
+long eof_fixup_previous_legacy_note(EOF_LEGACY_TRACK * tp, unsigned long note)
+{
+	long i;
+
+	if(tp)
+	{
+		for(i = note; i > 0; i--)
+		{
+			if(tp->note[i - 1]->type == tp->note[note]->type)
+			{
+				return i - 1;
+			}
+		}
+	}
+	return -1;
+}
+
 long eof_fixup_next_legacy_note(EOF_LEGACY_TRACK * tp, unsigned long note)
 {
 	long i;
@@ -657,6 +674,20 @@ void eof_vocal_track_sort_lyrics(EOF_VOCAL_TRACK * tp)
 	{
 		qsort(tp->lyric, tp->lyrics, sizeof(EOF_LYRIC *), eof_song_qsort_lyrics);
 	}
+}
+
+long eof_fixup_previous_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric)
+{
+	long i;
+
+	if(tp)
+	{
+		for(i = lyric; i > 0; i--)
+		{
+			return i - 1;
+		}
+	}
+	return -1;
 }
 
 long eof_fixup_next_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric)
@@ -3499,6 +3530,23 @@ void eof_pro_guitar_track_delete_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long n
 	}
 }
 
+long eof_fixup_previous_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note)
+{
+	long i;
+
+	if(tp)
+	{
+		for(i = note; i > 0; i--)
+		{
+			if(tp->note[i - 1]->type == tp->note[note]->type)
+			{
+				return i - 1;
+			}
+		}
+	}
+	return -1;
+}
+
 long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note)
 {
 	long i;
@@ -3803,6 +3851,29 @@ void eof_set_num_star_power_paths(EOF_SONG *sp, unsigned long track, unsigned lo
 			sp->pro_guitar_track[tracknum]->star_power_paths = number;
 		break;
 	}
+}
+
+long eof_track_fixup_previous_note(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return -1;
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+		return eof_fixup_previous_legacy_note(sp->legacy_track[tracknum], note);
+
+		case EOF_VOCAL_TRACK_FORMAT:
+		return eof_fixup_previous_lyric(sp->vocal_track[tracknum], note);
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+		return eof_fixup_previous_pro_guitar_note(sp->pro_guitar_track[tracknum], note);
+	}
+
+	return -1;
 }
 
 long eof_track_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long note)

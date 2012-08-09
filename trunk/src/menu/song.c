@@ -57,13 +57,13 @@ MENU eof_song_seek_menu[] =
     {"", NULL, NULL, 0, NULL},
     {"Previous Screen\t" CTRL_NAME "+PGUP", eof_menu_song_seek_previous_screen, NULL, 0, NULL},
     {"Next Screen\t" CTRL_NAME "+PGDN", eof_menu_song_seek_next_screen, NULL, 0, NULL},
-    {"Previous Grid Snap\tCtrl+Shift+PGUP", eof_menu_song_seek_previous_grid_snap, NULL, 0, NULL},
-    {"Next Grid Snap\tCtrl+Shift+PGDN", eof_menu_song_seek_next_grid_snap, NULL, 0, NULL},
+    {"Previous Grid Snap\t" CTRL_NAME "+Shift+PGUP", eof_menu_song_seek_previous_grid_snap, NULL, 0, NULL},
+    {"Next Grid Snap\t" CTRL_NAME "+Shift+PGDN", eof_menu_song_seek_next_grid_snap, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"Previous Beat\tPGUP", eof_menu_song_seek_previous_beat, NULL, 0, NULL},
     {"Next Beat\tPGDN", eof_menu_song_seek_next_beat, NULL, 0, NULL},
-    {"Previous Anchor\tCtrl+Shift+PGUP", eof_menu_song_seek_previous_anchor, NULL, 0, NULL},
-    {"Next Anchor\tCtrl+Shift+PGDN", eof_menu_song_seek_next_anchor, NULL, 0, NULL},
+    {"Previous Anchor\t" CTRL_NAME "+Shift+PGUP", eof_menu_song_seek_previous_anchor, NULL, 0, NULL},
+    {"Next Anchor\t" CTRL_NAME "+Shift+PGDN", eof_menu_song_seek_next_anchor, NULL, 0, NULL},
     {"Beat/&Measure", eof_menu_song_seek_beat_measure, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"&Bookmark", NULL, eof_song_seek_bookmark_menu, 0, NULL},
@@ -106,6 +106,9 @@ MENU eof_catalog_menu[] =
     {"", NULL, NULL, 0, NULL},
     {"&Previous\tW", eof_menu_catalog_previous, NULL, 0, NULL},
     {"&Next\tE", eof_menu_catalog_next, NULL, 0, NULL},
+    {"", NULL, NULL, 0, NULL},
+    {"Find Previous\t" CTRL_NAME "+SHIFT+F3", eof_menu_catalog_find_prev, NULL, 0, NULL},
+    {"Find Next\tF3", eof_menu_catalog_find_next, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -475,13 +478,19 @@ void eof_prepare_song_menu(void)
 		}
 
 		/* remove catalog entry */
+		/* find previous */
+		/* find next */
 		if(eof_selected_catalog_entry < eof_song->catalog->entries)
 		{
 			eof_catalog_menu[4].flags = 0;
+			eof_catalog_menu[9].flags = 0;
+			eof_catalog_menu[10].flags = 0;
 		}
 		else
 		{
 			eof_catalog_menu[4].flags = D_DISABLED;
+			eof_catalog_menu[9].flags = D_DISABLED;
+			eof_catalog_menu[10].flags = D_DISABLED;
 		}
 
 		/* previous/next catalog entry */
@@ -3192,4 +3201,148 @@ int eof_menu_song_seek_catalog_entry(void)
 		eof_set_seek_position(eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay);
 	}
 	return 1;
+}
+
+int eof_find_note_sequence(EOF_SONG *sp, unsigned long target_track, unsigned long target_diff, unsigned long target_start, unsigned long target_size, unsigned long input_track, unsigned long input_diff, unsigned long start_pos, char direction, unsigned long *hit_pos)
+{
+	long input_note, next_note, match_count = 0, next_target_note = target_start, match_pos;
+	char start_found = 0, match;
+
+	if(!sp || !hit_pos || (target_track >= sp->tracks) || (input_track >= sp->tracks))
+		return 0;	//Return error
+
+	//Find the first input note before/after the starting timestamp, depending on the search direction
+	for(input_note = 0; input_note < eof_get_track_size(sp, input_track); input_note++)
+	{	//For each note in the input track
+		if(eof_get_note_type(sp, input_track, input_note) == input_diff)
+		{	//If the note is in the target difficulty
+			if(direction < 0)
+			{	//If searching for the previous match
+				if(eof_get_note_pos(sp, input_track, input_note) < start_pos)
+				{	//And this note is before the starting timestamp
+					next_note = eof_track_fixup_next_note(sp, input_track, input_note);
+					if((next_note < 0) || (eof_get_note_pos(sp, input_track, next_note) >= start_pos))
+					{	//And there is no next note, or the next note is at or after the starting timestamp, this is the first note before the timestamp
+						start_found = 1;
+						break;
+					}
+				}
+			}
+			else
+			{	//If searching for the next match
+				if(eof_get_note_pos(sp, input_track, input_note) > start_pos)
+				{	//And this is the first note after the starting timestamp
+					start_found = 1;
+					break;
+				}
+			}
+		}
+	}
+
+	//Search until the first/last note for a match, depending on the search direction
+	while(start_found && (input_note < eof_get_track_size(sp, input_track)))
+	{
+		match = 0;
+		if(!eof_note_compare(input_track, input_note, target_track, next_target_note))
+		{	//If the next note of the target has been found, next pass of the loop will look for the next note in the target
+			match = 1;
+			if(!match_count)
+			{	//The match was the first note in the target
+				match_pos = input_note;	//Store the note number of the match
+			}
+			match_count++;	//Track the number of notes matched
+			if(match_count == target_size)
+			{	//If all notes in the target have been matched
+				*hit_pos = eof_get_note_pos(sp, input_track, match_pos);	//Store the timestamp of the first note in the match
+				return 1;	//Return match found
+			}
+			input_note = eof_track_fixup_next_note(sp, input_track, input_note);	//Next pass of the loop will examine the next note in the input
+			next_target_note = eof_track_fixup_next_note(sp, target_track, next_target_note);	//Next pass of the loop will examine the next note in the target
+			if((input_note < 0) || (next_target_note < 0))
+			{	//If the input/target notes were exhausted during a partial match
+				match = 0;	//This is not a match
+			}
+		}
+
+		if(!match)
+		{	//The note did not match, resume search starting from where the partial match began
+			if(match_count != 0)
+			{	//If a partial match had been found
+				input_note = match_pos;	//Reset the input position to the start of the partial match
+			}
+			match_count = 0;
+			if(direction < 0)
+			{	//If searching for the previous match
+				input_note = eof_track_fixup_previous_note(sp, input_track, input_note);	//Adjust the input position to the previous note
+			}
+			else
+			{	//If searching for the next match
+				input_note = eof_track_fixup_next_note(sp, input_track, input_note);		//Adjust the input position to the next note
+			}
+			next_target_note = target_start;	//Next pass of the loop will look for the first note in the target
+		}
+		if(input_note < 0)
+		{	//If the input notes were exhausted
+			return 0;	//Return no match found
+		}
+	}
+	return 0;	//Return no match found
+}
+
+int eof_find_note_sequence_time_range(EOF_SONG *sp, unsigned long target_track, unsigned long target_diff, unsigned long target_start_pos, unsigned long target_end_pos, unsigned long input_track, unsigned long input_diff, unsigned long start_pos, char direction, unsigned long *hit_pos)
+{
+	unsigned long ctr, target_start, target_size = 0, notepos;
+
+	if(!sp || !hit_pos || (target_track >= sp->tracks))
+		return 0;	//Return error
+
+	//Find the first note and count the total number of notes within the specified time span
+	for(ctr = 0; ctr < eof_get_track_size(sp, target_track); ctr++)
+	{	//For each note in the target track
+		if(eof_get_note_type(sp, target_track, ctr) == target_diff)
+		{	//If the note is in the target difficulty
+			notepos = eof_get_note_pos(sp, target_track, ctr);
+			if((notepos >= target_start_pos) && (notepos <= target_end_pos))
+			{	//If the note is within the target time span
+				if(!target_size)
+				{	//If this is the first note found in the time span
+					target_start = ctr;	//Remember which note it was
+				}
+				target_size++;	//Count the number of notes found within the time span
+			}
+		}
+	}
+
+	if(!target_size)	//If there were no notes within the target time span
+		return 0;	//Return no match found
+
+	//Perform the search
+	return eof_find_note_sequence(sp, target_track, target_diff, target_start, target_size, input_track, input_diff, start_pos, direction, hit_pos);
+}
+
+int eof_menu_catalog_find(char direction)
+{
+	EOF_CATALOG_ENTRY *entry;
+	unsigned long hit_pos;
+
+	if(!eof_song || !eof_song->catalog->entries || (eof_selected_catalog_entry >= eof_song->catalog->entries))
+		return 1;
+
+	entry = &eof_song->catalog->entry[eof_selected_catalog_entry];	//Simplify the code below
+	if(eof_find_note_sequence_time_range(eof_song, entry->track, entry->type, entry->start_pos, entry->end_pos, eof_selected_track, eof_note_type, eof_music_pos - eof_av_delay, direction, &hit_pos))
+	{	//If a match was found
+		eof_set_seek_position(hit_pos + eof_av_delay);	//Seek to the match position
+	}
+	return 1;
+}
+
+
+int eof_menu_catalog_find_prev(void)
+{
+	return eof_menu_catalog_find(-1);
+}
+
+int eof_menu_catalog_find_next(void)
+{
+	return eof_menu_catalog_find(1);
 }

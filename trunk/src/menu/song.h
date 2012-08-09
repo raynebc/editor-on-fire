@@ -1,6 +1,8 @@
 #ifndef EOF_MENU_SONG_H
 #define EOF_MENU_SONG_H
 
+#include "../song.h"
+
 extern MENU eof_track_selected_menu[];
 extern MENU eof_track_menu[];
 extern MENU eof_catalog_menu[];
@@ -116,5 +118,19 @@ int eof_raw_midi_dialog_delete(DIALOG * d);
 int eof_raw_midi_dialog_add(DIALOG * d);
 	//Functions used in the dialog for managing the raw MIDI data tracks stored in the project
 	//eof_raw_midi_tracks_list() is used in multiple functions, so it enumerates the contents of eof_MIDI_track_list_to_enumerate
+
+int eof_find_note_sequence(EOF_SONG *sp, unsigned long target_track, unsigned long target_diff, unsigned long target_start, unsigned long target_size, unsigned long input_track, unsigned long input_diff, unsigned long start_pos, char direction, unsigned long *hit_pos);
+	//Searches for the previous/next match of the target sequence of notes relative to a given position of the specified track difficulty
+	//If direction is negative, the first match BEFORE the given position is searched for
+	//If direction is not negative, the first match AFTER the given position is searched for
+	//If a match is found, this function returns nonzero, and the position of the match is returned through hit_pos
+int eof_find_note_sequence_time_range(EOF_SONG *sp, unsigned long target_track, unsigned long target_diff, unsigned long target_start_pos, unsigned long target_end_pos, unsigned long input_track, unsigned long input_diff, unsigned long start_pos, char direction, unsigned long *hit_pos);
+	//Identifies the target notes for a search based on a start and stop position (ie. a catalog entry) and performs the search with eof_find_note_sequence()
+int eof_menu_catalog_find(char direction);
+	//Performs a find previous or find next on the current catalog entry, depending on the direction variable (find previous if it is negative, otherwise find next)
+int eof_menu_catalog_find_prev(void);
+	//Performs a find previous operation on the current catalog entry
+int eof_menu_catalog_find_next(void);
+	//Performs a find next operation on the current catalog entry
 
 #endif

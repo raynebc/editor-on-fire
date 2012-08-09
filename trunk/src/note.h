@@ -47,13 +47,15 @@ BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, unsigned char s
 	//Used to create a bordered rectangle bitmap with the specified string number, for use in the editor or 3D window, returns NULL on error
 void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note);
 	//Used to store notations (ie. "PM" for palm mute) for the specified note into the buffer, which should be able to hold at least 9 characters
-int eof_note_compare(unsigned long track, unsigned long note1, unsigned long note2);
+int eof_note_compare(unsigned long track1, unsigned long note1, unsigned long track2, unsigned long note2);
 	//Compares the two notes and returns 0 under the following conditions:
 	//1. The track is a legacy format track and both notes have the same bitmask
 	//2. The track is a vocal format track and both lyrics have the same pitch
 	//3. The track is a pro guitar format track and both notes have the same bitmask (legacy bitmasks are not compared) and active frets have matching values
-	//If the notes do not match, 1 is returned
+	//If the notes do not match, or are from differently formatted tracks, 1 is returned
 	//-1 is returned on error
+int eof_note_compare_simple(unsigned long track, unsigned long note1, unsigned long note2);
+	//Compares two notes in the same track by invoking eof_note_compare
 char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, char *buffer);
 	//Copies the note name into the buffer, which is assumed to be large enough to store the name
 	//If the note is named manually, that name is used, otherwise chord detection is used to build the name

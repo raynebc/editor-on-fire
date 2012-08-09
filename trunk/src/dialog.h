@@ -46,5 +46,4 @@ int eof_popup_dialog(DIALOG * dp, int n);	//Opens the dialog menu and returns th
 void eof_color_dialog(DIALOG * dp, int fg, int bg);	//Applies the global foreground and background colors to the dialog
 int eof_display_flats_menu(void);	//Display the menu item to allow the user to toggle between displaying flat notes and sharp notes
 
-
 #endif

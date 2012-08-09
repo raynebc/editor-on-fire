@@ -3,6 +3,42 @@ EOF Version History
 
 1.8:
 
+Updated the render logic so that the [end] event
+is displayed above the beat marker that contains
+it.
+
+Added a check during save so that if an [end]
+event is placed on a note's tail (causing an
+error), it will alert the user and offer to seek
+to the beat containing the offending event.
+
+Improved the cleanup and save logic to be more
+thorough about checking for note overlapping,
+especially for "crazy" notes.
+
+Fixed a bug where if a chart had too many of
+certain phrases, EOF could crash.
+
+Implemented a Feedback input method. Left/Right
+seeks by the current grid snap, Pg Up/Dn seeks one
+measure back/forward, keys 1 through 6 place/toggle
+gems at the current seek position (not the mouse
+position). In this input method, the +/- tempo
+controls alter the tempo of the beat (instead of
+the anchor) at/before the seek position. Other
+Feedback controls will be added in the future.
+
+Implemented new keyboard shortcuts for altering
+tempos, based on the Feedback chart editor. +/-
+increases/decreases the tempo of the anchor
+at/before current seek position by 1BPM (or .1BPM
+if SHIFT is held, or .01BPM if CTRL+SHIFT is held).
+The shorcuts for increment/decrement AV delay have
+been changed to use CTRL++ and CTRL+- on the numpad.
+
+Fixed a bug where the 6th lane was dropped from pro
+guitar BRE notes during MIDI import.
+
 Fixed a minor bug where an undo state wasn't made if
 Enter was used to place gems at the current seek
 position (Classic and Hold input methods).
@@ -229,8 +265,9 @@ characters (ie. umlauts).
 Made improvements to the split lyric function, which will now
 split pitchless lyrics with the correct lengths for each piece.
 
-Updated FoFLC to the latest version (2.37), adding support for
-importing Guitar Praise format XML lyrics.
+Updated FoFLC to the latest version (2.38), adding support for
+importing Guitar Praise format XML lyrics and importing
+JamBand format lyrics.
 
 Fixed a bug with the click and drag note logic that would
 allow notes/lyrics to be drug off the left end of the piano
