@@ -99,6 +99,7 @@ MENU eof_track_menu[] =
 MENU eof_catalog_menu[] =
 {
     {"&Show\tQ", eof_menu_catalog_show, NULL, 0, NULL},
+    {"Double &Width\tSHIFT+Q", eof_menu_catalog_toggle_full_width, NULL, 0, NULL},
     {"&Edit Name", eof_menu_catalog_edit_name, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"&Add", eof_menu_catalog_add, NULL, 0, NULL},
@@ -457,24 +458,24 @@ void eof_prepare_song_menu(void)
 		if(eof_song->catalog->entries > 0)
 		{
 			eof_catalog_menu[0].flags = eof_catalog_menu[0].flags & D_SELECTED;	//Enable "Show Catalog" and check it if it's already checked
-			eof_catalog_menu[1].flags = 0;	//Enable "Edit name"
+			eof_catalog_menu[2].flags = 0;		//Enable "Edit name"
 			eof_song_seek_menu[21].flags = 0;	//Enable Seek>Catalog entry
 		}
 		else
 		{
 			eof_catalog_menu[0].flags = D_DISABLED;	//Disable "Show catalog"
-			eof_catalog_menu[1].flags = D_DISABLED;	//Disable "Edit name"
+			eof_catalog_menu[2].flags = D_DISABLED;	//Disable "Edit name"
 			eof_song_seek_menu[21].flags = D_DISABLED;	//Disable Seek>Catalog entry
 		}
 
 		/* add catalog entry */
 		if(eof_count_selected_notes(NULL,0))	//If there are notes selected
 		{
-			eof_catalog_menu[3].flags = 0;
+			eof_catalog_menu[4].flags = 0;
 		}
 		else
 		{
-			eof_catalog_menu[3].flags = D_DISABLED;
+			eof_catalog_menu[4].flags = D_DISABLED;
 		}
 
 		/* remove catalog entry */
@@ -482,31 +483,31 @@ void eof_prepare_song_menu(void)
 		/* find next */
 		if(eof_selected_catalog_entry < eof_song->catalog->entries)
 		{
-			eof_catalog_menu[4].flags = 0;
-			eof_catalog_menu[9].flags = 0;
+			eof_catalog_menu[5].flags = 0;
 			eof_catalog_menu[10].flags = 0;
+			eof_catalog_menu[11].flags = 0;
 		}
 		else
 		{
-			eof_catalog_menu[4].flags = D_DISABLED;
-			eof_catalog_menu[9].flags = D_DISABLED;
+			eof_catalog_menu[5].flags = D_DISABLED;
 			eof_catalog_menu[10].flags = D_DISABLED;
+			eof_catalog_menu[11].flags = D_DISABLED;
 		}
 
 		/* previous/next catalog entry */
 		if(eof_song->catalog->entries > 1)
 		{
-			eof_catalog_menu[6].flags = 0;
 			eof_catalog_menu[7].flags = 0;
+			eof_catalog_menu[8].flags = 0;
 		}
 		else
 		{
-			eof_catalog_menu[6].flags = D_DISABLED;
 			eof_catalog_menu[7].flags = D_DISABLED;
+			eof_catalog_menu[8].flags = D_DISABLED;
 		}
 
 		/* catalog */
-		if(!eof_song->catalog->entries && (eof_catalog_menu[3].flags == D_DISABLED))
+		if(!eof_song->catalog->entries && (eof_catalog_menu[4].flags == D_DISABLED))
 		{	//If there are no catalog entries and no notes selected (in which case Song>Catalog>Add would have been disabled earlier)
 			eof_song_menu[8].flags = D_DISABLED;	//Song>Catalog> submenu
 		}
@@ -3336,7 +3337,6 @@ int eof_menu_catalog_find(char direction)
 	return 1;
 }
 
-
 int eof_menu_catalog_find_prev(void)
 {
 	return eof_menu_catalog_find(-1);
@@ -3345,4 +3345,17 @@ int eof_menu_catalog_find_prev(void)
 int eof_menu_catalog_find_next(void)
 {
 	return eof_menu_catalog_find(1);
+}
+
+int eof_menu_catalog_toggle_full_width(void)
+{
+	if(eof_catalog_menu[1].flags == D_SELECTED)
+	{	//If it was already enabled
+		eof_catalog_menu[1].flags = 0;
+	}
+	else
+	{
+		eof_catalog_menu[1].flags = D_SELECTED;
+	}
+	return 1;
 }

@@ -644,9 +644,17 @@ void eof_read_editor_keys(void)
 	}
 
 	/* show/hide catalog (Q) */
+	/* double catalog width (SHIFT+Q) */
 	if(key[KEY_Q])
 	{
-		eof_menu_catalog_show();
+		if(!KEY_EITHER_SHIFT)
+		{
+			eof_menu_catalog_show();
+		}
+		else
+		{
+			eof_menu_catalog_toggle_full_width();
+		}
 		key[KEY_Q] = 0;
 	}
 
@@ -1137,9 +1145,17 @@ void eof_read_editor_keys(void)
 	}
 
 	/* toggle claps (C) */
-	if(key[KEY_C] && !KEY_EITHER_CTRL)
+	/* paste from catalog (CTRL+SHIFT+C) */
+	if(key[KEY_C])
 	{
-		eof_menu_edit_claps();
+		if(!KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
+		{	//Neither CTRL nor SHIFT held
+			eof_menu_edit_claps();
+		}
+		else if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+		{	//Both CTRL and SHIFT held
+			eof_menu_edit_paste_from_catalog();
+		}
 		key[KEY_C] = 0;
 	}
 
@@ -2313,7 +2329,7 @@ void eof_read_editor_keys(void)
 		}//If SHIFT is not held
 
 	/* copy (CTRL+C) */
-		if(KEY_EITHER_CTRL && key[KEY_C])
+		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && key[KEY_C])
 		{
 			eof_menu_edit_copy();
 			key[KEY_C] = 0;

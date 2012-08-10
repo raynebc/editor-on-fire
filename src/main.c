@@ -662,7 +662,7 @@ int eof_set_display_mode(int mode)
 		allegro_message("Unable to create editor window!");
 		return 0;
 	}
-	eof_window_note = eof_window_create(0, screen_height / 2, screen_width / 2, screen_height / 2, eof_screen);
+	eof_window_note = eof_window_create(0, screen_height / 2, screen_width, screen_height / 2, eof_screen);	//Make the window full width
 	if(!eof_window_note)
 	{
 		allegro_message("Unable to create information window!");
@@ -2469,6 +2469,11 @@ void eof_render_lyric_window(void)
 	int note[7] = {0, 2, 4, 5, 7, 9, 11};
 	int bnote[7] = {1, 3, 0, 6, 8, 10, 0};
 
+	if((eof_catalog_menu[0].flags & D_SELECTED) && (eof_catalog_menu[1].flags == D_SELECTED))
+	{	//If the fret catalog is visible and it's configured to display at full width
+		return;	//Don't draw the lyric window
+	}
+
 	clear_to_color(eof_window_3d->screen, eof_color_gray);
 
 	/* render the 29 white keys */
@@ -2571,6 +2576,11 @@ void eof_render_3d_window(void)
 
 	if(eof_disable_3d_rendering)	//If the user wanted to disable the rendering of the 3D window to improve performance
 		return;						//Return immediately
+
+	if((eof_catalog_menu[0].flags & D_SELECTED) && (eof_catalog_menu[1].flags == D_SELECTED))
+	{	//If the fret catalog is visible and it's configured to display at full width
+		return;	//Don't draw the 3D window
+	}
 
 	clear_to_color(eof_window_3d->screen, eof_color_gray);
 	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
@@ -2846,6 +2856,7 @@ void eof_render(void)
 		{
 			blit(eof_image[EOF_IMAGE_MENU_NO_NOTE], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
 		}
+		eof_render_note_window();	//Render the note window first, so if the user didn't opt to display its full width, it won't draw over the 3D window
 		if(eof_vocals_selected)
 		{
  			eof_render_vocal_editor_window();
@@ -2856,7 +2867,6 @@ void eof_render(void)
  			eof_render_editor_window();
 			eof_render_3d_window();
 		}
-		eof_render_note_window();
 	}
 	else
 	{
