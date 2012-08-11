@@ -3,6 +3,29 @@ EOF Version History
 
 1.8:
 
+Added a keyboard shortcut for paste from catalog
+(CTRL+SHIFT+C).
+
+Added an option (Song>Catalog>Double width) to
+display the fret catalog with the full width of
+EOF's window, to better display long fret catalog
+entries.
+
+Added functions to seek to the next (F3) or
+previous (CTRL+SHIFT+F3) instance of the current
+fret catalog entry.  It will be considered a match
+as long as the gem/fret pattern matches, the notes
+don't have to have the same length of spacing.
+This will make it easier to chart lower
+difficulties for a riff by finding each instance in
+the current instrument difficulty so it can be
+manually simplified.
+
+Added a user preference for a minimum length to
+apply to all 5 lane guitar gems, since custom songs
+will not play correctly in Guitar Hero if they are
+too short (such as 1ms).
+
 Updated the render logic so that the [end] event
 is displayed above the beat marker that contains
 it.
@@ -19,14 +42,18 @@ especially for "crazy" notes.
 Fixed a bug where if a chart had too many of
 certain phrases, EOF could crash.
 
-Implemented a Feedback input method. Left/Right
+Implemented a Feedback input method. Up/Down
 seeks by the current grid snap, Pg Up/Dn seeks one
-measure back/forward, keys 1 through 6 place/toggle
+measure foward/back, keys 1 through 6 place/toggle
 gems at the current seek position (not the mouse
-position). In this input method, the +/- tempo
-controls alter the tempo of the beat (instead of
-the anchor) at/before the seek position. Other
-Feedback controls will be added in the future.
+position). Left/Right increases/descreases the grid
+snap interval's size. The 'A' key toggles anchor for
+the beat at the current position.  The 'del' key
+deletes the note at the current position if no notes
+are formally selected. In this input method, the
++/- tempo controls alter the tempo of the beat
+(instead of the anchor) at/before the seek position.
+Other Feedback controls will be added in the future.
 
 Implemented new keyboard shortcuts for altering
 tempos, based on the Feedback chart editor. +/-
@@ -53,10 +80,11 @@ this will make it easy to author the drum track once
 and create both a single and a double bass chart
 from it.
 
-Added a user preference (Swap Pg Up/Dn seek controls)
+Added a user preference (Use dB style seek controls)
 that reverses the roles of the page up and down keys
 (ie. allowing the Pg Up keyboard shortcuts to seek
-forward).
+forward) and makes the up and down keys seek foward
+or backward instead of transposing notes.
 
 Added the ability to lock the tempo map to avoid
 accidental changes to the beat markers

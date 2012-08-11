@@ -1249,8 +1249,20 @@ int eof_menu_note_delete(void)
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-		{
+		{	//If this note is in the active track, is selected and is in the active difficulty
 			d++;
+		}
+	}
+	if(!d && (eof_input_mode == EOF_INPUT_FEEDBACK))
+	{	//If no notes are explicitly selected, and Feedback input method is in effect, allow a note at the seek position to be deleted instead
+		unsigned long adjustedpos = eof_music_pos - eof_av_delay;	//Find the actual chart position
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+		{
+			if((eof_selection.track == eof_selected_track) && (adjustedpos == eof_get_note_pos(eof_song, eof_selected_track, i)) && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+			{	//If this note is in the active track, is at the current seek position and is in the active difficulty
+				eof_selection.multi[i] = 1;	//Mark this note for deletion
+				d++;
+			}
 		}
 	}
 	if(d)

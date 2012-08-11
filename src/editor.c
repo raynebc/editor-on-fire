@@ -833,12 +833,16 @@ void eof_read_editor_keys(void)
 	}
 
 	/* rewind (Left, non Feedback input methods) */
-	/* seek backward one grid snap (Left, Feedback input method)*/
+	/* Decrease grid snap (Left, Feedback input method)*/
 	if(key[KEY_LEFT])
 	{
 		if(eof_input_mode == EOF_INPUT_FEEDBACK)
 		{
-			eof_menu_song_seek_previous_grid_snap();
+			eof_snap_mode--;
+			if(eof_snap_mode < 0)
+			{
+				eof_snap_mode = EOF_SNAP_FORTY_EIGHTH;
+			}
 			key[KEY_LEFT] = 0;
 		}
 		else
@@ -852,12 +856,16 @@ void eof_read_editor_keys(void)
 	}
 
 	/* fast forward (Right, non Feedback input methods) */
-	/* seek forward one grid snap (Right, Feedback input method)*/
+	/* Increase grid snap (Right, Feedback input method)*/
 	if(key[KEY_RIGHT])
 	{
 		if(eof_input_mode == EOF_INPUT_FEEDBACK)
 		{
-			eof_menu_song_seek_next_grid_snap();
+			eof_snap_mode++;
+			if(eof_snap_mode > EOF_SNAP_FORTY_EIGHTH)
+			{
+				eof_snap_mode = 0;
+			}
 			key[KEY_RIGHT] = 0;
 		}
 		else
@@ -870,11 +878,11 @@ void eof_read_editor_keys(void)
 		}
 	}
 
-	/* The "Swap Pg Up/Dn seek controls" user preference will control which direction the page up/down keys will seek */
+	/* The "Use dB style seek controls" user preference will control which direction the page up/down keys will seek */
 	unsigned char do_pg_up = 0, do_pg_dn = 0;
 	if(key[KEY_PGUP])
 	{
-		if(eof_swap_pg_seek_keys)
+		if(eof_fb_seek_controls || (eof_input_mode == EOF_INPUT_FEEDBACK))
 			do_pg_dn = 1;
 		else
 			do_pg_up = 1;
@@ -882,7 +890,7 @@ void eof_read_editor_keys(void)
 	}
 	if(key[KEY_PGDN])
 	{
-		if(eof_swap_pg_seek_keys)
+		if(eof_fb_seek_controls || (eof_input_mode == EOF_INPUT_FEEDBACK))
 			do_pg_up = 1;
 		else
 			do_pg_dn = 1;
@@ -985,10 +993,13 @@ void eof_read_editor_keys(void)
 	/* transpose mini piano visible area up one (SHIFT+Up in a vocal track) */
 	/* transpose lyric up one octave (CTRL+Up in a vocal track) */
 	/* toggle pro guitar slide up (CTRL+Up in a pro guitar track) */
-	/* transpose note up (Up) */
+	/* transpose note up (Up, non Feedback input methods, normal seek controls) */
+	/* seek forward (Up, Feedback style seek direction controls) */
+	/* seek forward one grid snap (Up, Feedback input method) */
 	/* toggle pro guitar strum up (SHIFT+Up in a pro guitar track) */
 	if(key[KEY_UP])
 	{
+		char do_seek = 0;	//Is set to nonzero if a seek is performed
 		if(KEY_EITHER_SHIFT)
 		{
 			if(eof_vocals_selected)
@@ -1025,25 +1036,46 @@ void eof_read_editor_keys(void)
 				}
 			}
 			else
-			{
-				eof_menu_note_transpose_up();
+			{	//Neither SHIFT nor CTRL is held
+				if(eof_input_mode == EOF_INPUT_FEEDBACK)
+				{
+					eof_menu_song_seek_next_grid_snap();
+				}
+				else
+				{
+					if(eof_fb_seek_controls)
+					{
+						do_seek = 1;
+						eof_music_forward();
+					}
+					else
+					{
+						eof_menu_note_transpose_up();
+					}
+				}
 			}
 			if(eof_vocals_selected && eof_mix_vocal_tones_enabled && (eof_selection.current < eof_song->vocal_track[tracknum]->lyrics) && (eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note != EOF_LYRIC_PERCUSSION))
 			{
 				eof_mix_play_note(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note);
 			}
 		}
-		key[KEY_UP] = 0;
+		if(!do_seek)
+		{	//Don't break a held seek operation
+			key[KEY_UP] = 0;
+		}
 	}
 
 	/* transpose mini piano visible area down one octave (CTRL+SHIFT+Down) */
 	/* transpose mini piano visible area down one (SHIFT+Down) */
 	/* transpose lyric down one octave (CTRL+Down in a vocal track) */
 	/* toggle pro guitar slide down (CTRL+Down in a pro guitar track) */
-	/* transpose note down (Down) */
+	/* transpose note down (Down, non Feedback input methods) */
+	/* seek backward one grid snap (Down, Feedback input method, normal seek controls) */
+	/* seek backward (Down, Feedback style seek direction controls) */
 	/* toggle pro guitar strum down (SHIFT+Down in a pro guitar track) */
 	if(key[KEY_DOWN])
 	{
+		char do_seek = 0;	//Is set to nonzero if a seek is performed
 		if(KEY_EITHER_SHIFT)
 		{
 			if(eof_vocals_selected)
@@ -1080,15 +1112,33 @@ void eof_read_editor_keys(void)
 				}
 			}
 			else
-			{
-				eof_menu_note_transpose_down();
+			{	//Neither SHIFT nor CTRL is held
+				if(eof_input_mode == EOF_INPUT_FEEDBACK)
+				{
+					eof_menu_song_seek_previous_grid_snap();
+				}
+				else
+				{
+					if(eof_fb_seek_controls)
+					{
+						do_seek = 1;
+						eof_music_rewind();
+					}
+					else
+					{
+						eof_menu_note_transpose_down();
+					}
+				}
 			}
 			if(eof_vocals_selected && eof_mix_vocal_tones_enabled && (eof_selection.current < eof_song->vocal_track[tracknum]->lyrics) && (eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note != EOF_LYRIC_PERCUSSION))
 			{
 				eof_mix_play_note(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note);
 			}
 		}
-		key[KEY_DOWN] = 0;
+		if(!do_seek)
+		{	//Don't break a held seek operation
+			key[KEY_DOWN] = 0;
+		}
 	}
 
 	/* decrease grid snap (,) */
@@ -1569,6 +1619,16 @@ void eof_read_editor_keys(void)
 				}
 				else
 				{
+					if(eof_input_mode == EOF_INPUT_FEEDBACK)
+					{
+						unsigned long adjustedpos = eof_music_pos - eof_av_delay;	//Find the actual chart position
+						long beat = eof_get_beat(eof_song, adjustedpos);
+
+						if((beat >= 0) && (adjustedpos == eof_song->beat[beat]->pos))
+						{	//If the seek position is on a beat marker
+							eof_selected_beat = beat;	//Make the beat at this position the selected beat so the toggle anchor function operates on it
+						}
+					}
 					eof_menu_beat_toggle_anchor();
 				}
 			}

@@ -2542,6 +2542,8 @@ void eof_seek_by_grid_snap(int dir)
 		return;
 
 	beat = eof_get_beat(eof_song, adjustedpos);	//Find which beat the current seek position is in
+	if(beat < 0)	//If the seek position is outside the chart
+		return;
 
 	if(dir < 0)
 	{	//If seeking backward
@@ -3206,7 +3208,7 @@ int eof_menu_song_seek_catalog_entry(void)
 
 int eof_find_note_sequence(EOF_SONG *sp, unsigned long target_track, unsigned long target_diff, unsigned long target_start, unsigned long target_size, unsigned long input_track, unsigned long input_diff, unsigned long start_pos, char direction, unsigned long *hit_pos)
 {
-	long input_note, next_note, match_count = 0, next_target_note = target_start, match_pos;
+	long input_note, next_note, match_count = 0, next_target_note = target_start, match_pos = 0;
 	char start_found = 0, match;
 
 	if(!sp || !hit_pos || (target_track >= sp->tracks) || (input_track >= sp->tracks))
@@ -3292,7 +3294,7 @@ int eof_find_note_sequence(EOF_SONG *sp, unsigned long target_track, unsigned lo
 
 int eof_find_note_sequence_time_range(EOF_SONG *sp, unsigned long target_track, unsigned long target_diff, unsigned long target_start_pos, unsigned long target_end_pos, unsigned long input_track, unsigned long input_diff, unsigned long start_pos, char direction, unsigned long *hit_pos)
 {
-	unsigned long ctr, target_start, target_size = 0, notepos;
+	unsigned long ctr, target_start = 0, target_size = 0, notepos;
 
 	if(!sp || !hit_pos || (target_track >= sp->tracks))
 		return 0;	//Return error

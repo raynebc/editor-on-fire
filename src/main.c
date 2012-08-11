@@ -240,7 +240,7 @@ int eof_color_waveform_rms;
 int eof_color_set = EOF_COLORS_DEFAULT;
 int eof_add_new_notes_to_selection = 0;	//If nonzero, newly added gems cause notes to be added to the selection instead of the selection being cleared first
 int eof_drum_modifiers_affect_all_difficulties = 1;	//If nonzero, a drum modifier (ie. open/pedal hi hat or rim shot apply to any notes at the same position in non active difficulties)
-int eof_swap_pg_seek_keys = 0;	//If nonzero, the page up and page down keys have their functionality reversed in regards to the seek function keyboard shortcuts
+int eof_fb_seek_controls = 0;	//If nonzero, the page up/dn keys have their seek directions reversed, and up/down seek forward/backward
 eof_color eof_colors[6];	//Contain the color definitions for each lane
 eof_color eof_color_green_struct, eof_color_red_struct, eof_color_yellow_struct, eof_color_blue_struct, eof_color_orange_struct, eof_color_purple_struct;
 	//Color data
@@ -3764,6 +3764,7 @@ void eof_init_after_load(char initaftersavestate)
 		eof_catalog_menu[0].flags = 0;	//Hide the fret catalog by default
 		eof_select_beat(0);
 		eof_undo_reset();
+		eof_set_seek_position(eof_song->beat[0]->pos + eof_av_delay);	//Seek to the first beat marker
 	}
 	eof_calculate_beats(eof_song);
 	eof_detect_difficulties(eof_song);
@@ -3774,10 +3775,6 @@ void eof_init_after_load(char initaftersavestate)
 	eof_fix_window_title();
 	eof_cleanup_beat_flags(eof_song);	//Make corrections to beat statuses if necessary
 	eof_sort_events(eof_song);
-//DEBUG:
-//	eof_pro_guitar_track_build_chord_variations(eof_song, EOF_TRACK_PRO_BASS);		//Build chord variations for the track's tuning
-//	eof_pro_guitar_track_build_chord_variations(eof_song, EOF_TRACK_PRO_GUITAR);	//Build chord variations for the track's tuning
-//	EOF_DEBUG_OUTPUT_CHORD_VARIATION_ARRAYS();
 
 	eof_log("\tInitialization after load complete", 1);
 }

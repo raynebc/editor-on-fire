@@ -132,7 +132,7 @@ void eof_load_config(char * fn)
 	eof_color_set = get_config_int("preferences", "eof_color_set", 0);
 	eof_add_new_notes_to_selection = get_config_int("preferences", "eof_add_new_notes_to_selection", 0);
 	eof_drum_modifiers_affect_all_difficulties = get_config_int("preferences", "eof_drum_modifiers_affect_all_difficulties", 1);
-	eof_swap_pg_seek_keys = get_config_int("preferences", "eof_swap_pg_seek_keys", 0);
+	eof_fb_seek_controls = get_config_int("preferences", "eof_fb_seek_controls", 0);
 	eof_min_note_length = get_config_int("preferences", "eof_min_note_length", 0);
 
 	/* read display settings */
@@ -244,7 +244,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_color_set", eof_color_set);
 	set_config_int("preferences", "eof_add_new_notes_to_selection", eof_add_new_notes_to_selection);
 	set_config_int("preferences", "eof_drum_modifiers_affect_all_difficulties", eof_drum_modifiers_affect_all_difficulties);
-	set_config_int("preferences", "eof_swap_pg_seek_keys", eof_swap_pg_seek_keys);
+	set_config_int("preferences", "eof_fb_seek_controls", eof_fb_seek_controls);
 	set_config_int("preferences", "eof_min_note_length", eof_min_note_length);
 
 	/* write display settings */
