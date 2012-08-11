@@ -91,7 +91,7 @@ DIALOG eof_preferences_dialog[] =
    { d_agup_check_proc, 16,  275, 220, 16,  2,   23,  0,    0,      1,   0,   "Enable logging on launch",NULL, NULL },
    { d_agup_check_proc, 16,  290, 220, 16,  2,   23,  0,    0,      1,   0,   "Add new notes to selection",NULL, NULL },
    { d_agup_check_proc, 16,  305, 220, 16,  2,   23,  0,    0,      1,   0,   "Drum modifiers affect all diff's",NULL, NULL },
-   { d_agup_check_proc, 16,  320, 220, 16,  2,   23,  0,    0,      1,   0,   "Swap Pg Up/Dn seek controls",NULL, NULL },
+   { d_agup_check_proc, 16,  320, 220, 16,  2,   23,  0,    0,      1,   0,   "Use dB style seek controls",NULL, NULL },
    { d_agup_text_proc,  16,  340, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note length (ms):",NULL,NULL },
    { eof_verified_edit_proc,160,340,50,20,  0,   0,   0,    0,      3,   0,   eof_etext,     "0123456789", NULL },
    { d_agup_text_proc,  24,  360, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
@@ -896,7 +896,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[14].flags = enable_logging ? D_SELECTED : 0;					//Enable logging on launch
 	eof_preferences_dialog[15].flags = eof_add_new_notes_to_selection ? D_SELECTED : 0;	//Add new notes to selection
 	eof_preferences_dialog[16].flags = eof_drum_modifiers_affect_all_difficulties ? D_SELECTED : 0;	//Drum modifiers affect all diff's
-	eof_preferences_dialog[17].flags = eof_swap_pg_seek_keys ? D_SELECTED : 0;			//Swap Pg Up/Dn seek controls
+	eof_preferences_dialog[17].flags = eof_fb_seek_controls ? D_SELECTED : 0;			//Use dB style seek controls
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		sprintf(eof_etext, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -929,7 +929,7 @@ int eof_menu_file_preferences(void)
 			enable_logging = (eof_preferences_dialog[14].flags == D_SELECTED ? 1 : 0);
 			eof_add_new_notes_to_selection = (eof_preferences_dialog[15].flags == D_SELECTED ? 1 : 0);
 			eof_drum_modifiers_affect_all_difficulties = (eof_preferences_dialog[16].flags == D_SELECTED ? 1 : 0);
-			eof_swap_pg_seek_keys = (eof_preferences_dialog[17].flags == D_SELECTED ? 1 : 0);
+			eof_fb_seek_controls = (eof_preferences_dialog[17].flags == D_SELECTED ? 1 : 0);
 			if(eof_etext[0] != '\0')
 			{	//If the minimum note length field is populated
 				eof_min_note_length = atol(eof_etext);
@@ -961,7 +961,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[14].flags = D_SELECTED;			//Enable logging on launch
 			eof_preferences_dialog[15].flags = 0;					//Add new notes to selection
 			eof_preferences_dialog[16].flags = D_SELECTED;			//Drum modifiers affect all diff's
-			eof_preferences_dialog[17].flags = 0;					//Swap Pg Up/Dn seek controls
+			eof_preferences_dialog[17].flags = 0;					//Use dB style seek controls
 			eof_etext[0] = '\0';									//Min. note length
 			eof_preferences_dialog[21].d1 = EOF_INPUT_PIANO_ROLL;	//Input method
 			eof_preferences_dialog[23].d1 = EOF_COLORS_DEFAULT;		//Color set
