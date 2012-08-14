@@ -15,11 +15,7 @@ Added functions to seek to the next (F3) or
 previous (CTRL+SHIFT+F3) instance of the current
 fret catalog entry.  It will be considered a match
 as long as the gem/fret pattern matches, the notes
-don't have to have the same length of spacing.
-This will make it easier to chart lower
-difficulties for a riff by finding each instance in
-the current instrument difficulty so it can be
-manually simplified.
+don't have to have the same length or spacing.
 
 Added a user preference for a minimum length to
 apply to all 5 lane guitar gems, since custom songs
