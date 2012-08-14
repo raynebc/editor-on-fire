@@ -1201,12 +1201,13 @@ void eof_read_editor_keys(void)
 		if(!KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 		{	//Neither CTRL nor SHIFT held
 			eof_menu_edit_claps();
+			key[KEY_C] = 0;
 		}
 		else if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{	//Both CTRL and SHIFT held
 			eof_menu_edit_paste_from_catalog();
+			key[KEY_C] = 0;
 		}
-		key[KEY_C] = 0;
 	}
 
 	/* toggle vocal tones (V) */
