@@ -3753,6 +3753,7 @@ void eof_init_after_load(char initaftersavestate)
 		eof_note_type = EOF_NOTE_AMAZING;
 	}
 	eof_menu_edit_zoom_level(eof_zoom);
+	eof_calculate_beats(eof_song);
 	if(!initaftersavestate)
 	{	//If this wasn't cleanup after an undo/redo state, reset more variables
 		eof_music_pos = eof_av_delay;
@@ -3764,9 +3765,9 @@ void eof_init_after_load(char initaftersavestate)
 		eof_catalog_menu[0].flags = 0;	//Hide the fret catalog by default
 		eof_select_beat(0);
 		eof_undo_reset();
-		eof_set_seek_position(eof_song->beat[0]->pos + eof_av_delay);	//Seek to the first beat marker
+		if(eof_song->beats > 0)
+			eof_set_seek_position(eof_song->beat[0]->pos + eof_av_delay);	//Seek to the first beat marker
 	}
-	eof_calculate_beats(eof_song);
 	eof_detect_difficulties(eof_song);
 	eof_reset_lyric_preview_lines();
 	eof_prepare_menus();
