@@ -66,12 +66,13 @@ gh_section eof_gh_instrument_sections_qb[EOF_NUM_GH_INSTRUMENT_SECTIONS_QB] =
 	{"_song_aux_expert", EOF_TRACK_KEYS, EOF_NOTE_AMAZING}
 };	//QB format GH files prefix each section name with the song name, so these will be treated as section name suffixes
 
-#define EOF_NUM_GH_SP_SECTIONS_NOTE 3
+#define EOF_NUM_GH_SP_SECTIONS_NOTE 4
 gh_section eof_gh_sp_sections_note[EOF_NUM_GH_SP_SECTIONS_NOTE] =
 {
 	{"guitarexpertstarpower", EOF_TRACK_GUITAR, 0},
 	{"bassexpertstarpower", EOF_TRACK_BASS, 0},
-	{"drumsexpertstarpower", EOF_TRACK_DRUM, 0}
+	{"drumsexpertstarpower", EOF_TRACK_DRUM, 0},
+	{"vocalstarpower", EOF_TRACK_VOCALS, 0}
 };
 
 #define EOF_NUM_GH_SP_SECTIONS_QB 6
@@ -593,7 +594,7 @@ int eof_gh_read_tap_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *targe
 		eof_log("\t\tCould not find section", 1);
 		return 0;
 	}
-	if(eof_filebuffer_get_dword(fb, &numphrases))	//Read the number of sp phrases in the section
+	if(eof_filebuffer_get_dword(fb, &numphrases))	//Read the number of tap phrases in the section
 	{	//If there was an error reading the next 4 byte value
 		eof_log("\t\tError:  Could not read number of phrases", 1);
 		return -1;
@@ -605,7 +606,7 @@ int eof_gh_read_tap_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *targe
 	fb->index += 4;	//Seek past the next 4 bytes, which is a checksum for the game-specific sp section subheader
 	if(!eof_gh_skip_size_def)
 	{	//If the size field is expected
-		if(eof_filebuffer_get_dword(fb, &phrasesize))	//Read the size of the star power entry
+		if(eof_filebuffer_get_dword(fb, &phrasesize))	//Read the size of the tap entry
 		{	//If there was an error reading the next 4 byte value
 			eof_log("\t\tError:  Could not read note size", 1);
 			return -1;
@@ -1350,6 +1351,9 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 		eof_gh_read_instrument_section_note(fb, sp, &eof_gh_instrument_sections_note[ctr], forcestrum);	//Import notes from the section
 	}
 
+//Read vocal track
+	eof_gh_read_vocals_note(fb, sp);
+
 //Read star power sections
 	for(ctr = 0; ctr < EOF_NUM_GH_SP_SECTIONS_NOTE; ctr++)
 	{	//For each known guitar hero star power section
@@ -1366,9 +1370,6 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 
 //Read sections
 	eof_gh_read_sections_note(fb, sp);
-
-//Read vocal track
-	eof_gh_read_vocals_note(fb, sp);
 	eof_filebuffer_close(fb);	//Close the file buffer
 
 	return sp;
