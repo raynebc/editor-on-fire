@@ -514,9 +514,9 @@ long eof_track_fixup_previous_note(EOF_SONG *sp, unsigned long track, unsigned l
 long eof_track_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the note/lyric one after the specified note/lyric number that is in the same difficulty, or -1 if there is none
 void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel);	//Calls the appropriate fixup function for the specified track.  If sel is zero, the currently selected note is deselected automatically.
 void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track);	//Used during MIDI import to mark a note as "crazy" if it overlaps with the next note in the same difficulty
-void eof_track_add_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a star power phrase at the specified start and stop timestamp for the specified track
+int eof_track_add_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a star power phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 void eof_track_delete_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long pathnum);	//Deletes the specified star power phrase and moves all phrases that follow back in the array one position
-void eof_track_add_solo(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track
+int eof_track_add_solo(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 void eof_track_delete_solo(EOF_SONG *sp, unsigned long track, unsigned long pathnum);	//Deletes the specified solo phrase and moves all phrases that follow back in the array one position
 void eof_note_set_tail_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos);	//Sets the note's length value to (pos - [note]->pos)
 int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, char difficulty, unsigned long start, unsigned long end, unsigned long flags, char *name);
@@ -566,9 +566,9 @@ int eof_song_qsort_legacy_notes(const void * e1, const void * e2);	//The compari
 long eof_fixup_previous_legacy_note(EOF_LEGACY_TRACK * tp, unsigned long note);	//Returns the note one before the specified note number that is in the same difficulty, or -1 if there is none
 long eof_fixup_next_legacy_note(EOF_LEGACY_TRACK * tp, unsigned long note);	//Returns the note one after the specified note number that is in the same difficulty, or -1 if there is none
 void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel);	//Performs cleanup of the specified instrument track.  If sel is zero, the currently selected note is deselected automatically
-void eof_legacy_track_add_star_power(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a star power phrase at the specified start and stop timestamp for the specified track
+int eof_legacy_track_add_star_power(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a star power phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 void eof_legacy_track_delete_star_power(EOF_LEGACY_TRACK * tp, unsigned long index);	//Deletes the specified star power phrase and moves all phrases that follow back in the array one position
-void eof_legacy_track_add_solo(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track
+int eof_legacy_track_add_solo(EOF_LEGACY_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 void eof_legacy_track_delete_solo(EOF_LEGACY_TRACK * tp, unsigned long index);	//Deletes the specified solo phrase and moves all phrases that follow back in the array one position
 
 EOF_LYRIC * eof_vocal_track_add_lyric(EOF_VOCAL_TRACK * tp);	//Allocates, initializes and stores a new EOF_LYRIC structure into the lyrics array.  Returns the newly allocated structure or NULL upon error
@@ -578,7 +578,8 @@ int eof_song_qsort_lyrics(const void * e1, const void * e2);	//The comparitor fu
 long eof_fixup_previous_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric);	//Returns the previous lyric, or -1 if there is none
 long eof_fixup_next_lyric(EOF_VOCAL_TRACK * tp, unsigned long lyric);	//Returns the next lyric, or -1 if there is none
 void eof_vocal_track_fixup_lyrics(EOF_SONG *sp, unsigned long track, int sel);	//Performs cleanup of the specified lyric track (based on the currently loaded audio and chart).  If sel is zero, the currently selected note is deselected automatically.
-void eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a lyric phrase at the specified start and stop timestamp for the specified track
+int eof_vocal_track_add_star_power(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Marks all lyric phrases within the specified time span for overdrive.  Returns nonzero on success
+int eof_vocal_track_add_line(EOF_VOCAL_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a lyric phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, unsigned long index);	//Deletes the specified lyric phrase and moves all phrases that follow back in the array one position
 
 EOF_PRO_GUITAR_NOTE *eof_pro_guitar_track_add_note(EOF_PRO_GUITAR_TRACK *tp);	//Allocates, initializes and stores a new EOF_PRO_GUITAR_NOTE structure into the notes array.  Returns the newly allocated structure or NULL upon error
@@ -588,9 +589,9 @@ void eof_pro_guitar_track_delete_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long n
 long eof_fixup_previous_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Returns the note one before the specified note number that is in the same difficulty, or -1 if there is none
 long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long note);	//Returns the note one after the specified note number that is in the same difficulty, or -1 if there is none
 void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel);	//Performs cleanup of the specified instrument track.  If sel is zero, the currently selected note is deselected automatically.
-void eof_pro_guitar_track_add_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a star power phrase at the specified start and stop timestamp for the specified track
+int eof_pro_guitar_track_add_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a star power phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 void eof_pro_guitar_track_delete_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned long index);	//Deletes the specified star power phrase and moves all phrases that follow back in the array one position
-void eof_pro_guitar_track_add_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track
+int eof_pro_guitar_track_add_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long start_pos, unsigned long end_pos);	//Adds a solo phrase at the specified start and stop timestamp for the specified track.  Returns nonzero on success
 void eof_pro_guitar_track_delete_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long index);	//Deletes the specified solo phrase and moves all phrases that follow back in the array one position
 void eof_set_pro_guitar_fret_number(char function, unsigned long fretvalue);
 	//Alters each selected pro guitar note's fret values on used strings (that match the eof_pro_guitar_fret_bitmask bitmask) based on the parameters:
