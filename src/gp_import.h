@@ -12,7 +12,7 @@
 	#define EOF_SONG char
 	#define pack_feof feof
 	void eof_gp_debug_log(FILE *inf, char *text);		//Prints the current file position and the specified string to the console
-	char *eof_note_names[12] =	{"A","Bb","B","C","Db","D","Eb","E","F","Gb","G","Ab"};		//The name of musical note 0 (0 semitones above A) to 11 (11 semitones above A)
+	extern char *eof_note_names[12];
 #else
 	void eof_gp_debug_log(PACKFILE *inf, char *text);	//Does nothing in the EOF build
 #endif

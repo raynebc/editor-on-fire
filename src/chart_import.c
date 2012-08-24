@@ -1497,6 +1497,8 @@ struct dbTrack *Validate_dB_instrument(char *buffer)
 	chart->trackname=retstring;					//Store the instrument track name
 	chart->tracktype=tracktype;
 	chart->difftype=difftype;
+	chart->isguitar=isguitar;
+	chart->isdrums=isdrums;
 	return chart;
 }
 

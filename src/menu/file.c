@@ -1224,37 +1224,30 @@ char * eof_input_list(int index, int * size)
 		case 0:
 		{
 			return "Classic";
-			break;
 		}
 		case 1:
 		{
 			return "Piano Roll";
-			break;
 		}
 		case 2:
 		{
 			return "Hold";
-			break;
 		}
 		case 3:
 		{
 			return "RexMundi";
-			break;
 		}
 		case 4:
 		{
 			return "Guitar Tap";
-			break;
 		}
 		case 5:
 		{
 			return "Guitar Strum";
-			break;
 		}
 		case 6:
 		{
 			return "Feedback";
-			break;
 		}
 	}
 	return NULL;
@@ -1272,32 +1265,26 @@ char * eof_ogg_list(int index, int * size)
 		case 0:
 		{
 			return "80kbps";
-			break;
 		}
 		case 1:
 		{
 			return "96kbps";
-			break;
 		}
 		case 2:
 		{
 			return "128kbps";
-			break;
 		}
 		case 3:
 		{
 			return "160kbps";
-			break;
 		}
 		case 4:
 		{
 			return "192kbps";
-			break;
 		}
 		case 5:
 		{
 			return "256kbps";
-			break;
 		}
 	}
 	return NULL;
@@ -1322,37 +1309,30 @@ char * eof_guitar_list(int index, int * size)
 		case 0:
 		{
 			return eof_ctext[0];
-			break;
 		}
 		case 1:
 		{
 			return eof_ctext[1];
-			break;
 		}
 		case 2:
 		{
 			return eof_ctext[2];
-			break;
 		}
 		case 3:
 		{
 			return eof_ctext[3];
-			break;
 		}
 		case 4:
 		{
 			return eof_ctext[4];
-			break;
 		}
 		case 5:
 		{
 			return eof_ctext[5];
-			break;
 		}
 		case 6:
 		{
 			return eof_ctext[6];
-			break;
 		}
 	}
 	return NULL;
@@ -1375,27 +1355,22 @@ char * eof_drum_list(int index, int * size)
 		case 0:
 		{
 			return eof_ctext[0];
-			break;
 		}
 		case 1:
 		{
 			return eof_ctext[1];
-			break;
 		}
 		case 2:
 		{
 			return eof_ctext[2];
-			break;
 		}
 		case 3:
 		{
 			return eof_ctext[3];
-			break;
 		}
 		case 4:
 		{
 			return eof_ctext[4];
-			break;
 		}
 	}
 	return NULL;
@@ -1413,17 +1388,14 @@ char * eof_display_list(int index, int * size)
 		case EOF_DISPLAY_640:
 		{
 			return "640x480";
-			break;
 		}
 		case EOF_DISPLAY_800:
 		{
 			return "800x600";
-			break;
 		}
 		case EOF_DISPLAY_1024:
 		{
 			return "1024x768";
-			break;
 		}
 	}
 	return NULL;
@@ -2382,17 +2354,14 @@ char * eof_colors_list(int index, int * size)
 		case 0:
 		{
 			return "Default";
-			break;
 		}
 		case 1:
 		{
 			return "Rock Band";
-			break;
 		}
 		case 2:
 		{
 			return "Guitar Hero";
-			break;
 		}
 
 	}

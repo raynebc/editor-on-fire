@@ -269,6 +269,7 @@ long eof_figure_beat(double pos)
 	return -1;
 }
 
+/*	//Unused
 double eof_calculate_bpm_absolute(double pos)
 {
 	eof_log("eof_calculate_bpm_absolute() entered", 1);
@@ -280,7 +281,9 @@ double eof_calculate_bpm_absolute(double pos)
 	}
 	return 0.0;
 }
+*/
 
+/*	//Unused
 int eof_check_bpm_change(unsigned long start, unsigned long end)
 {
 	eof_log("eof_check_bpm_change() entered", 1);
@@ -289,13 +292,13 @@ int eof_check_bpm_change(unsigned long start, unsigned long end)
 	long endbeat = eof_figure_beat(end);
 	long i;
 
-	/* same beat, no brainer */
+	// same beat, no brainer *
 	if(startbeat == endbeat)
 	{
 		return 0;
 	}
 
-	/* different starting and ending bpm, uh huh */
+	// different starting and ending bpm, uh huh *
 	else if(eof_song->beat[startbeat]->ppqn != eof_song->beat[endbeat]->ppqn)
 	{
 		return 1;
@@ -313,6 +316,7 @@ int eof_check_bpm_change(unsigned long start, unsigned long end)
 	}
 	return 0;
 }
+*/
 
 ///Unused function
 /* takes a segment of time and calculates it's actual delta,

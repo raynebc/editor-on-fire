@@ -70,6 +70,7 @@ void eof_midi_play_note(int note);	//Sends a Note On MIDI command
 int eof_read_pcm_samples(ALOGG_OGG *ogg,void *data,unsigned bytenum);
 	//Reads the next one or more audio samples from the ogg file (bytenum number of bytes) into the given data buffer
 	//Returns -1 on error, 0 on success and 1 upon EOF (no more samples)
+	///This function is currently broken
 
 void eof_set_seek_position(int pos);
 	//Updates variables to set the audio and seek position to the specified timestamp in ms

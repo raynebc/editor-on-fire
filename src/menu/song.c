@@ -26,7 +26,7 @@
 
 char eof_track_selected_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE+1] = {{0}};
 	//Allow an extra leading space due to the checkmark erasing the first character in each string
-char eof_no_raw_midi_track_name[] = "(unnamed)";
+//char eof_no_raw_midi_track_name[] = "(unnamed)";	//Unused
 char eof_raw_midi_track_error[] = "(error)";
 
 MENU eof_song_seek_bookmark_menu[] =
@@ -88,6 +88,7 @@ MENU eof_track_selected_menu[EOF_TRACKS_MAX] =
     {NULL, NULL, NULL, 0, NULL}
 };
 
+/*	//Unused
 MENU eof_track_menu[] =
 {
     {"&Selected", NULL, eof_track_selected_menu, 0, NULL},
@@ -95,6 +96,7 @@ MENU eof_track_menu[] =
     {"&Properties", NULL, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
+*/
 
 MENU eof_catalog_menu[] =
 {
@@ -1270,6 +1272,7 @@ char * eof_ini_list(int index, int * size)
 			{
 				eof_ini_dialog[3].flags = D_DISABLED;	//Disable the "Delete" Song INI dialog button if there are no settings
 			}
+			break;
 		}
 		default:
 		{

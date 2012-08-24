@@ -189,9 +189,6 @@ struct _LYRICSSTRUCT_{
 								//			the most accuracy
 	char marklines;				//Boolean:  For script output, #newline entries will be written to keep track of line
 								//			demarcation
-	char forcemidipitch;		//Boolean:  Pitch output is normally restricted to a generic pitch for MIDI output due to
-								//			an outstanding bug in FoFiX.  If the forcemidipitch parameter is specified,
-								//			this behavior can be overridden so that the pitches are exported appropriately
 	char nolyrics;				//Boolean:	The lyrics are not required to be present in the input file (such as a lyricless MIDI)
 								//			The lyrics will be created as asterisks
 								//			Set to 1 if defined explicitly via command line

@@ -241,7 +241,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 	//If callbefore is nonzero, the handler is called before the event is parsed further than its status byte,
 	//otherwise it is called after the event is parsed and read into the TEPstruct.  If the function pointer is
 	//NULL, no handler is called.
-	struct TEPstruct vars={0,0,0,0,0,NULL,NULL,0,0,0,0,0,0,{0},NULL,NULL,0,0,0};		//Storage unit for all event processor variables
+	struct TEPstruct vars={0,0,0,0,0,NULL,NULL,0,0,0,0,0,{0},NULL,NULL,0,0,0};		//Storage unit for all event processor variables
 	long int deltalength=0;
 	static unsigned char buffered=0;	//Stores the condition that one extra byte was read from file (ie. Running status)
 										//So that instead of performing a costly fseek to rewind one byte, this status
@@ -556,8 +556,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 							if(vars.trackname != NULL)	//If there's a track name being remembered
 								vars.trackname=NULL;	//forget it now that the end of the track has been reached
 
-							return vars.processed;
-						break;
+						return vars.processed;
 
 						case 0x51:	//Set Tempo
 							if(vars.length != 3)
@@ -2706,8 +2705,7 @@ char *AnalyzeVrhythmID(const char *buffer)
 		break;
 
 		default:
-			return NULL;
-		break;
+		return NULL;
 	}
 
 	assert_wrapper(trackname != NULL);
@@ -2736,8 +2734,7 @@ char *AnalyzeVrhythmID(const char *buffer)
 
 		default:
 			free(trackname);
-			return NULL;
-		break;
+		return NULL;
 	}
 
 	return trackname;

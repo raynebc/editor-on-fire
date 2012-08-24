@@ -262,8 +262,7 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 					eof_MIDI_empty_event_list(head);
 					eof_MIDI_empty_tempo_list(tempohead);
 					free(trackptr);
-					return NULL;	//Invalid event
-				break;
+				return NULL;	//Invalid event
 			}
 			if((eventtype >> 4) != 0xF)		//If this event wasn't a Meta/Sysex event
 				lasteventtype=eventtype;	//Remember this in case Running Status is encountered

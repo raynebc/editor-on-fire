@@ -129,8 +129,8 @@ int         eof_zoom = 10;			//The width of one pixel in the editor window in ms
 int         eof_zoom_3d = 5;
 char        eof_changes = 0;
 ALOGG_OGG * eof_music_track = NULL;
-SAMPLE    * eof_music_wave = NULL;
-BITMAP    * eof_music_image = NULL;
+//SAMPLE    * eof_music_wave = NULL;	//Unused
+//BITMAP    * eof_music_image = NULL;	//Unused
 void      * eof_music_data = NULL;
 int         eof_music_data_size = 0;
 int         eof_music_length = 0;
@@ -158,7 +158,7 @@ char        eof_window_title[4096] = {0};
 int         eof_quit = 0;
 int         eof_note_type = EOF_NOTE_AMAZING;	//The active difficulty
 int         eof_note_difficulties[5] = {0};
-int         eof_note_types = 0;
+//int         eof_note_types = 0;	//Unused
 int         eof_selected_track = EOF_TRACK_GUITAR;
 int         eof_vocals_selected = 0;	//Is set to nonzero if the active track is a vocal track
 int         eof_vocals_tab = 0;
@@ -195,16 +195,16 @@ int         eof_rclick_released = 1;
 int         eof_click_x;
 int         eof_click_y;
 int         eof_peg_x;
-int         eof_peg_y;
+//int         eof_peg_y;	//Unused
 int         eof_last_pen_pos = 0;
 int         eof_cursor_visible = 1;
 int         eof_pen_visible = 1;
 int         eof_hover_type = -1;
 int         eof_mouse_drug = 0;
-int         eof_mouse_drug_mickeys = 0;
+//int         eof_mouse_drug_mickeys = 0;	//Unused
 int         eof_notes_moved = 0;
 
-int         eof_menu_key_waiting = 0;
+//int         eof_menu_key_waiting = 0;	//Unused
 
 /* grid snap data */
 char          eof_snap_mode = EOF_SNAP_OFF;
@@ -2354,11 +2354,11 @@ void eof_render_note_window(void)
 	vline(eof_window_note->screen, eof_window_note->w - 2, 1, eof_window_note->h - 2, eof_color_white);
 }
 
+#define MAX_LYRIC_PREVIEW_LENGTH 255
 void eof_render_lyric_preview(BITMAP * bp)
 {
 //	eof_log("eof_render_lyric_preview() entered");
 
-	#define MAX_LYRIC_PREVIEW_LENGTH 255
 	unsigned long currentlength=0;		//Used to track the length of the preview line being built
 	unsigned long lyriclength=0;		//The length of the lyric being added
 	char *tempstring=NULL;				//The code to render in green needs special handling to suppress the / character

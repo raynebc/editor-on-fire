@@ -41,7 +41,6 @@ typedef struct
 
 } EOF_SNAP_DATA;
 
-extern EOF_SELECTION_DATA eof_selection;
 extern EOF_SNAP_DATA eof_snap;
 extern EOF_SNAP_DATA eof_tail_snap;
 
