@@ -14,6 +14,10 @@
 #include "memwatch.h"
 #endif
 
+#ifndef EOF_BUILD
+char *eof_note_names[12] =	{"A","Bb","B","C","Db","D","Eb","E","F","Gb","G","Ab"};		//The name of musical note 0 (0 semitones above A) to 11 (11 semitones above A)
+#endif
+
 EOF_SONG *eof_import_gp(const char * fn)
 {
 	char buffer[256], byte, *buffer2, bytemask, bytemask2, usedstrings;

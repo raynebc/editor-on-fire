@@ -21,7 +21,8 @@ typedef struct
 	unsigned long pos;
 	unsigned char type;
 	unsigned char channel;
-	int d1, d2, d3, d4;
+	int d1, d2;
+//	int d3, d4;	//Unused
 	unsigned long track;	//The track number this event is from
 	char text[EOF_MAX_MIDI_TEXT_SIZE+1];
 	char *dp;	//Stores pointer to data (ie. Sysex messages)
@@ -42,7 +43,7 @@ static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_events[EOF_MAX_IMPORT_MIDI_TRACKS
 static EOF_MIDI_TS_LIST * eof_import_ts_changes[EOF_MAX_IMPORT_MIDI_TRACKS];
 static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_bpm_events;
 static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_text_events;
-double eof_import_bpm_pos[1024] = {0.0};
+//double eof_import_bpm_pos[1024] = {0.0};	//Unused
 int eof_import_bpm_count = 0;
 
 static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_create_events_list(void)

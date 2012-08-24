@@ -117,8 +117,7 @@ struct TEPstruct	//This is structure containing all variables utilized within th
 	char *buffer;					//Used to store pointers to temporary strings when reading events (lyric/text event string)
 	unsigned long tracknum;			//The track number being processed
 	unsigned long delta;			//Stores the variable length delta value of the current event
-	unsigned long varlen;			//unencoded variable length value (ie. for meta event length)
-	unsigned long length;			//stores the length of a meta event
+	unsigned long length;			//stores the length of a meta/sysex event
 	unsigned long current_MPQN;		//stores the current MPQN value
 	unsigned long processed;		//Counter for the number of processed events
 	unsigned char parameters[4];	//Used to read in the parameters for MIDI events

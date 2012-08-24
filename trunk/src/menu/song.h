@@ -4,7 +4,7 @@
 #include "../song.h"
 
 extern MENU eof_track_selected_menu[];
-extern MENU eof_track_menu[];
+//extern MENU eof_track_menu[];	//Unused
 extern MENU eof_catalog_menu[];
 extern MENU eof_star_power_menu[];
 extern MENU eof_solo_menu[];

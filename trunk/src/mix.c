@@ -1,5 +1,4 @@
 #include <allegro.h>
-//#include <alogg.h>
 #include "vorbis/vorbisfile.h"
 #include "vorbis/codec.h"
 #include <math.h>	//For sqrt()

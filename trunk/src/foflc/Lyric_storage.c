@@ -479,6 +479,7 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 	temp->overdrive=overdrive;				//Assign the overdrive status found
 	temp->groupswithnext=groupswithnext;	//Assign the grouping status based on the determined status
 	temp->hasequal=hasequal;				//Assign the hyphen status
+	temp->leadspace=leadspace;				//Assign the leadspace status
 	temp->trailspace=trailspace;			//Assign the trailspace status
 
 	Lyrics.curline->piececount++;			//This line of lyrics is holding another lyric piece
