@@ -43,7 +43,7 @@ EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 1] =
 
 EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 12] =
 {
-	{0},
+	{0, 0, 0, 0, "", 0, 0},
 	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_GUITAR, 0, "PART GUITAR", 0, 0},
 	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_BASS, 0, "PART BASS", 0, 0},
 	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_GUITAR_COOP, 0, "PART GUITAR COOP", 0, 0},
@@ -1442,7 +1442,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	unsigned long track_count,track_ctr;
 	unsigned long section_type_count,section_type_ctr,section_type,section_count,section_ctr,section_start,section_end;
 	unsigned long custom_data_count,custom_data_ctr,custom_data_size;
-	EOF_TRACK_ENTRY temp={0};
+	EOF_TRACK_ENTRY temp={0, 0, 0, 0, "", 0, 0};
 	char name[EOF_NAME_LENGTH+1];	//Used to load note/section names
 
 	if((sp == NULL) || (fp == NULL))
@@ -1984,7 +1984,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 					{
 						ustrcpy(sp->pro_guitar_track[tracknum]->arpeggio[count].name, name);
 					}
-					if(difficulty == 0xFF)
+					if((unsigned char)difficulty == 0xFF)
 					{	//Beta versions of EOF 1.8 (up to beta 15) stored arpeggios without a specified difficulty, re-assign them to Expert
 						difficulty = EOF_NOTE_AMAZING;
 					}

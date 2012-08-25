@@ -2,6 +2,7 @@
 #include "menu/song.h"
 #include "main.h"
 #include "waveform.h"
+#include "silence.h"
 #include "utility.h"
 
 #ifdef USEMEMWATCH
@@ -140,9 +141,6 @@ static int save_wav_fp(SAMPLE * sp, PACKFILE * fp)
 	return 1;
 }
 
-
-/* fill this in with a WAV saving routine (Allegro does not supply one for some
- * reason */
 int save_wav(const char * fn, SAMPLE * sp)
 {
  	eof_log("save_wav() entered", 1);

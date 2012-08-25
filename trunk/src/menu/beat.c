@@ -544,10 +544,10 @@ int eof_menu_beat_push_offset_back(void)
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
 
-	int i;
-	int backamount = eof_song->beat[1]->pos - eof_song->beat[0]->pos;
+	unsigned long i;
+	unsigned long backamount = eof_song->beat[1]->pos - eof_song->beat[0]->pos;
 
-	if(eof_song->beat[0]->pos - backamount >= 0)
+	if(eof_song->beat[0]->pos >= backamount)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		if(eof_song_resize_beats(eof_song, eof_song->beats + 1))

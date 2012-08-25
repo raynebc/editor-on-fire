@@ -491,5 +491,19 @@ extern unsigned int eof_log_id;
 
 void eof_init_colors(void);		//Initializes the color structures, to be called after eof_load_data()
 void eof_set_color_set(void);	//Updates the eof_colors[] array with color data based on the current track and the user color set preference
+void eof_switch_out_callback(void);	//Performs some logic that needs to occur when EOF loses foreground focus
+void eof_switch_in_callback(void);	//Performs some logic that needs to occur when EOF gains foreground focus
+long eof_get_previous_note(long cnote);	//Returns the note that exists immediately before the specified note in the active track difficulty, or -1 if no such note exists
+int eof_note_is_hopo(unsigned long cnote);	//Returns nonzero if the specified note in the active track difficulty should be rendered as a HOPO, based on the current HOPO preview setting
+int eof_notes_selected(void);	//Debugging:  Returns the number of notes that are selected by scanning the eof_selection.multi[] array (is deprecated by eof_count_selected_notes())
+void eof_read_global_keys(void);	//Reads and acts on various keyboard combinations
+void eof_lyric_logic(void);	//Performs various vocal editor logic
+void eof_note_logic(void);	//Performs various note catalog logic
+void eof_logic(void);		//Performs various editor logic
+void eof_render_lyric_preview(BITMAP * bp);	//Renders lyric preview lines (found by eof_find_lyric_preview_lines()) to the specified bitmap
+int eof_initialize(int argc, char * argv[]);	//Initializes various values, checks for crash recovery, parses command line parameters, etc.
+#ifdef ALLEGRO_WINDOWS
+	int eof_initialize_windows(void);	//Performs additional initialization for the Windows platform
+#endif
 
 #endif

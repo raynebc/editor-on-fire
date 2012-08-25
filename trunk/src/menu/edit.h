@@ -112,5 +112,12 @@ unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long tra
 	//specified note bitmask will be cleared from the specified flags variable.  The updated flags
 	//will be returned so that the calling function can process them as necessary.  This will allow
 	//the existing note to inherit the flags of the merging note.
+int eof_menu_edit_copy_vocal(void);
+	//Copies selected lyrics to the vocal clipboard file
+int eof_menu_edit_paste_vocal_logic(int oldpaste);
+	//Using the vocal clipboard file as the source, if oldpaste is nonzero, uses old paste logic (notes paste to positions relative to each other), otherwise uses new paste logic (notes paste into positions relative to the copied notes positions within their beats)
+int eof_menu_edit_paste_vocal(void);	//Uses eof_menu_edit_paste_vocal_logic() to perform a "new" style paste
+int eof_menu_edit_old_paste_vocal(void);	//Uses eof_menu_edit_paste_vocal_logic() to perform an "old" style paste
+int eof_menu_edit_bookmark_helper(int b);	//Sets the specified bookmark number to the current seek position
 
 #endif

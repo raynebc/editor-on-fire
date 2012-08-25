@@ -124,4 +124,19 @@ void eof_check_for_hopo_phrase_overlap(void);
 	//Any such phrase is altered to end one delta tick earlier, so that the two phrases are one delta apart from each other
 	//This can happen in very special circumstances (ie. A hopo off note that overlaps a hopo on note and a hopo off note at the same time)
 
+void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int channel);
+	//Creates a new structure to store the specified values and appends it to eof_midi_event[]
+	//Note on/off events are also tracked in the eof_midi_note_status[] array
+void eof_add_midi_lyric_event(unsigned long pos, char * text);
+	//Creates a new structure to store the specified lyric event and appends it to eof_midi_event[]
+void eof_add_midi_text_event(unsigned long pos, char * text, char allocation);
+	//Creates a new structure to store the specified text event and appends it to eof_midi_event[]
+	//The allocation boolean value specifies whether the string is using dynamically allocated memory and should be freed when the array is emptied
+void eof_clear_midi_events(void);
+	//Frees the memory for all structures in eof_midi_event[], including any dynamically allocated strings
+void WriteVarLen(unsigned long value, PACKFILE * fp);
+	//Writes the specified value in variable length format to the specified file handle
+int qsort_helper3(const void * e1, const void * e2);
+	//A sort algorithm used when quick sorting the eof_midi_event[] array
+
 #endif
