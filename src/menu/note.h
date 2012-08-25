@@ -209,5 +209,7 @@ int eof_menu_thin_notes_track_12(void);
 
 int eof_menu_note_toggle_ghost(void);
 	//Toggles the ghost flag for each populated string on each selected note
+float eof_menu_note_push_get_offset(void);
+	//Returns a value representing the currently-set grid snap interval as a percentage of the duration of one beat
 
 #endif

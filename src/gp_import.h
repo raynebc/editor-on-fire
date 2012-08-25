@@ -15,6 +15,7 @@
 	extern char *eof_note_names[12];
 #else
 	void eof_gp_debug_log(PACKFILE *inf, char *text);	//Does nothing in the EOF build
+	EOF_SONG *eof_import_gp(const char * fn);	//Currently parses through the specified GP file and outputs its details to stdout
 #endif
 
 void pack_ReadWORDLE(PACKFILE *inf, unsigned *data);

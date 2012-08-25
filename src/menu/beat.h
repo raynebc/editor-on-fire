@@ -51,5 +51,9 @@ int eof_menu_beat_set_RBN_tempos(void);
 int eof_menu_beat_adjust_bpm(double amount);
 	//Alters the tempo of the beat/anchor at/before the seek position by adding the specified amount
 	//If the Feedback input method is in effect, the beat at/before the seek position is altered, otherwise the anchor at/before the seek position is altered
+int eof_events_dialog_delete_events_count(void);
+	//Counts the number of text events defined at the currently selected beat
+void eof_rebuild_trainer_strings(void);
+	//Recreates the trainer section strings appropriate for the currently pro guitar/bass track into eof_etext2, eof_etext3 and eof_etext4
 
 #endif

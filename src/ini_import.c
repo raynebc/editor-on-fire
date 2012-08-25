@@ -4,6 +4,7 @@
 #include "utility.h"	//For eof_buffer_file()
 #include "ini.h"		//For eof_difficulty_ini_tags[]
 #include "main.h"		//For logging
+#include "ini_import.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"

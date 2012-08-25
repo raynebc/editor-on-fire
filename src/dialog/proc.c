@@ -1,6 +1,7 @@
 #include <allegro.h>
 #include <stdio.h>
 #include "../agup/agup.h"
+#include "proc.h"
 
 #ifdef USEMEMWATCH
 #include "../memwatch.h"
