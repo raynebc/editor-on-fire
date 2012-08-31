@@ -1322,10 +1322,10 @@ eof_log("\tSecond pass complete", 1);
 							eof_set_note_type(sp, picked_track, note_count[picked_track], EOF_NOTE_MEDIUM);
 							diff = eof_import_events[i]->event[j]->d1 - 0x54;
 						}
-						else if((eof_import_events[i]->event[j]->d1 >= 0x60) && (eof_import_events[i]->event[j]->d1 < 0x60 + 6))
+						else if((eof_import_events[i]->event[j]->d1 >= 96) && (eof_import_events[i]->event[j]->d1 < 102))
 						{
 							eof_set_note_type(sp, picked_track, note_count[picked_track], EOF_NOTE_AMAZING);
-							diff = eof_import_events[i]->event[j]->d1 - 0x60;
+							diff = eof_import_events[i]->event[j]->d1 - 96;
 						}
 						else if((eof_import_events[i]->event[j]->d1 >= 120) && (eof_import_events[i]->event[j]->d1 <= 124))
 						{
@@ -2415,6 +2415,13 @@ eof_log("\tThird pass complete", 1);
 						sp->legacy_track[tracknum]->note[k]->note |= 32;		//Set lane 6
 						sp->legacy_track[tracknum]->note[k]->flags &= ~(EOF_NOTE_FLAG_F_HOPO);	//Clear the forced HOPO on flag
 					}
+				}
+			}
+			else
+			{	//Otherwise ensure that no open bass notation is present in the bass track
+				for(k = 0; k < sp->legacy_track[tracknum]->notes; k++)
+				{	//For each note in the bass track
+					sp->legacy_track[tracknum]->note[k]->note &= ~32;	//Clear lane 6
 				}
 			}
 			eof_show_mouse(NULL);

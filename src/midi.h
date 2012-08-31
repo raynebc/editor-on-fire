@@ -5,6 +5,7 @@
 #include "foflc/Midi_parse.h"
 
 #define EOF_MAX_TS 100
+#define EOF_MAX_KS 100
 #define EOF_MAX_MIDI_EVENTS 65536
 
 //Rock Band 3 Pro drum markers (force as drum instead of cymbal)
@@ -39,6 +40,19 @@ typedef struct
 	EOF_MIDI_TS_CHANGE * change[EOF_MAX_TS];	//The list of time signatures changes
 	unsigned long changes;					//The number of time signatures changes found in this list
 } EOF_MIDI_TS_LIST;
+
+typedef struct
+{
+	unsigned long pos;		//Absolute delta time of this TS change
+	double realtime;		//Realtime of this TS change
+	char key;			//Key signature
+} EOF_MIDI_KS_CHANGE;
+
+typedef struct
+{
+	EOF_MIDI_KS_CHANGE * change[EOF_MAX_KS];	//The list of key signatures changes
+	unsigned long changes;					//The number of key signatures changes found in this list
+} EOF_MIDI_KS_LIST;
 
 long eof_figure_beat(double pos);				//Returns the beat marker immediately before the specified timestamp, or -1 on failure
 ///Unused functions
@@ -85,7 +99,7 @@ void eof_midi_add_ts_deltas(EOF_MIDI_TS_LIST * changes, unsigned long pos, unsig
 void eof_midi_add_ts_realtime(EOF_MIDI_TS_LIST * changes, double pos, unsigned long num, unsigned long den, unsigned long track);
 	//Adds the time signature information to the specified list of time signature changes, providing the absolute real time of the TS change
 EOF_MIDI_TS_LIST *eof_build_ts_list(EOF_SONG *sp);
-	//Parses sp->beat[], returning a linked list of time signature changes, or NULL on error
+	//Parses sp->beat[], returning a list of time signature changes, or NULL on error
 int eof_get_ts(EOF_SONG *sp,unsigned *num,unsigned *den,int beatnum);
 	//If the specified beat number has a defined TS, return the num and den through the passed pointers if they are not NULL
 	//Returns 1 if a time signature was returned
@@ -94,6 +108,13 @@ int eof_get_ts(EOF_SONG *sp,unsigned *num,unsigned *den,int beatnum);
 int eof_apply_ts(unsigned num,unsigned den,int beatnum,EOF_SONG *sp,char undo);
 	//Validates and applies the specified time signature to the specified beat
 	//If undo is nonzero, then an undo state is made before any changes are made
+
+EOF_MIDI_KS_LIST * eof_create_ks_list(void);
+	//Allocates and returns a KS change list
+EOF_MIDI_KS_LIST *eof_build_ks_list(EOF_SONG *sp);
+	//Parses sp->beat[], returning a list of key signature changes, or NULL on error
+void eof_destroy_ks_list(EOF_MIDI_KS_LIST *ptr);
+	//Deallocates the specified KS change list
 
 int eof_dump_midi_track(const char *inputfile,PACKFILE *outf);
 	//Writes a MIDI track header to the output file, followed by the size of the input file, followed by the contents of the input file

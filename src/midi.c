@@ -410,6 +410,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	char phase_shift_sysex_phrase[8] = {'P','S','\0',0,0,0,0,0xF7};	//This is used to write Sysex messages for features supported in Phase Shift (ie. open strum bass)
 	char fret_hand_pos_written;				//This is used to track whether the single fret hand position was written (if the "Fret hand pos is 0" option is enabled)
 	struct eof_MIDI_data_track *trackptr;	//Used to count the number of raw MIDI tracks to export
+	EOF_MIDI_KS_LIST *kslist;
 
 //	eof_log_level &= ~2;	//Disable verbose logging
 	if(!sp || !fn)
@@ -422,6 +423,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	if(!eof_build_tempo_and_ts_lists(sp, &anchorlist, &tslist, &timedivision))
 	{
 		eof_log("\tError saving:  Cannot build tempo or TS list", 1);
+		return 0;	//Return failure
+	}
+	kslist = eof_build_ks_list(sp);		//Build a list of key signature changes
+	if(!kslist)
+	{
+		eof_log("\tError saving:  Cannot build key signature list", 1);
 		return 0;	//Return failure
 	}
 	header[12] = timedivision >> 8;		//Update the MIDI header to reflect the time division (which may have changed if a stored tempo track is present)
@@ -1656,30 +1663,36 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	}
 
 	lastdelta=0;
-	unsigned long current_ts=0;
-	unsigned long nextanchorpos=0,next_tspos=0;
+	unsigned long current_ts = 0;
+	unsigned long current_ks = 0;
+//	unsigned long nextanchorpos = 0, next_tspos = 0, next_kspos = 0;
+	unsigned long nexteventpos = 0;
 	char whattowrite;	//Bitflag: bit 0=write tempo change, bit 1=write TS change
 	ptr = anchorlist;
-	while((ptr != NULL) || (eof_use_ts && (current_ts < tslist->changes)))
-	{	//While there are tempo changes or TS changes (if the user specified to write TS changes) to write
+	while((ptr != NULL) || (eof_use_ts && (current_ts < tslist->changes)) || (current_ks < kslist->changes))
+	{	//While there are tempo changes, TS changes (if the user specified to write TS changes) or KS changes to write
 		whattowrite = 0;
 		if(ptr != NULL)
-		{
-			nextanchorpos=ptr->delta;
-			whattowrite |= 1;
+		{	//If there are any tempo changes left
+			nexteventpos = ptr->delta;
+			whattowrite = 1;
 		}
 		if(eof_use_ts && (current_ts < tslist->changes))
-		{	//Only process TS changes if the user opted to do so
-			next_tspos=tslist->change[current_ts]->pos;
-			whattowrite |= 2;
+		{	//If there are any Ts changes left (only if the user opted to do export TS changes)
+//			next_tspos = tslist->change[current_ts]->pos;
+			if(!whattowrite || (nexteventpos > tslist->change[current_ts]->pos))
+			{	//If no tempo changes were left, or this TS change is earlier than any such changes
+				nexteventpos = tslist->change[current_ts]->pos;
+				whattowrite = 2;	//Write the TS change first
+			}
 		}
-
-		if(whattowrite > 2)
-		{	//If both a TS change and a tempo change remain to be written
-			if(nextanchorpos < next_tspos)	//If the tempo change is earlier
-				whattowrite = 1;			//write it first
-			else if(eof_use_ts)
-				whattowrite = 2;			//otherwise write the TS change first
+		if(current_ks < kslist->changes)
+		{
+			if(!whattowrite || (nexteventpos > kslist->change[current_ks]->pos))
+			{	//If no tempo/TS changes were left, or this KS change is earlier than any such changes
+				nexteventpos = kslist->change[current_ks]->pos;
+				whattowrite = 3;	//Write the KS change first
+			}
 		}
 
 		if(whattowrite == 1)
@@ -1699,7 +1712,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			}
 			ptr=ptr->next;							//Iterate to next anchor
 		}
-		else if(eof_use_ts)
+		else if(eof_use_ts && (whattowrite == 2))
 		{	//If writing a TS change
 			if(!enddelta || (tslist->change[current_ts]->pos <= enddelta))
 			{	//Only process this if it occurs at or before the end event
@@ -1724,9 +1737,24 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				pack_putc(24, fp);								//Write the metronome interval (not used by EOF)
 				pack_putc(8, fp);								//Write the number of 32nd notes per 24 ticks (not used by EOF)
 			}
-			current_ts++;									//Iterate to next TS change
+			current_ts++;										//Iterate to next TS change
 		}
-	}
+		else if(whattowrite == 3)
+		{	//If writing a KS change
+			if(!enddelta || (kslist->change[current_ks]->pos <= enddelta))
+			{	//Only process this if it occurs at or before the end event
+				WriteVarLen(kslist->change[current_ks]->pos - lastdelta, fp);	//Write this key signature's relative delta time
+				lastdelta=kslist->change[current_ks]->pos;						//Store this key signature's absolute delta time
+
+				pack_putc(0xFF, fp);							//Write Meta Event 0x59 (key signature)
+				pack_putc(0x59, fp);
+				pack_putc(0x02, fp);							//Write event length of 2
+				pack_putc(kslist->change[current_ks]->key, fp);	//Write the key (value from -7 to 7)
+				pack_putc(0, fp);								//For now, only major keys are handled (1 would pertain to minor keys)
+			}
+			current_ks++;										//Iterate to next KS change
+		}
+	}//While there are tempo changes, TS changes (if the user specified to write TS changes) or KS changes to write
 	WriteVarLen(0, fp);		//Write delta time
 	pack_putc(0xFF, fp);	//Write Meta Event 0x2F (End Track)
 	pack_putc(0x2F, fp);
@@ -2008,7 +2036,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	delete_file(beattempname);
 
 	eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
-	eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
+	eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
+	eof_destroy_ks_list(kslist);		//Free memory used by the KS change list
 
 //	eof_log_level |= 2;	//Enable verbose logging
 	return 1;	//Return success
@@ -2422,36 +2451,40 @@ int eof_apply_ts(unsigned num,unsigned den,int beatnum,EOF_SONG *sp,char undo)
 	}
 	if((num > 0) && (num <= 256) && ((den == 1) || (den == 2) || (den == 4) || (den == 8) || (den == 16) || (den == 32) || (den == 64) || (den == 128) || (den == 256)))
 	{	//If this is a valid time signature
-		//Clear the beat's status except for its anchor and event flags
+		//Clear the beat's status except for its anchor, event and key signature flags
 		flags = sp->beat[beatnum]->flags & EOF_BEAT_FLAG_ANCHOR;
 		flags |= sp->beat[beatnum]->flags & EOF_BEAT_FLAG_EVENTS;
-
-		if(undo)	//If calling function specified to make an undo state
-			eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
+		flags |= sp->beat[beatnum]->flags & EOF_BEAT_FLAG_KEY_SIG;
 
 		if((num == 3) && (den == 4))
 		{
-			sp->beat[beatnum]->flags = flags | EOF_BEAT_FLAG_START_3_4;
+			flags = flags | EOF_BEAT_FLAG_START_3_4;
 		}
 		else if((num == 4) && (den == 4))
 		{
-			sp->beat[beatnum]->flags = flags | EOF_BEAT_FLAG_START_4_4;
+			flags = flags | EOF_BEAT_FLAG_START_4_4;
 		}
 		else if((num == 5) && (den == 4))
 		{
-			sp->beat[beatnum]->flags = flags | EOF_BEAT_FLAG_START_5_4;
+			flags = flags | EOF_BEAT_FLAG_START_5_4;
 		}
 		else if((num == 6) && (den == 4))
 		{
-			sp->beat[beatnum]->flags = flags | EOF_BEAT_FLAG_START_6_4;
+			flags = flags | EOF_BEAT_FLAG_START_6_4;
 		}
 		else
 		{
 			num--;	//Convert these numbers to a system where all bits zero represents 1 and all bits set represents 256
 			den--;
-			sp->beat[beatnum]->flags = flags | EOF_BEAT_FLAG_CUSTOM_TS;
-			sp->beat[beatnum]->flags |= (num << 24);
-			sp->beat[beatnum]->flags |= (den << 16);
+			flags = flags | EOF_BEAT_FLAG_CUSTOM_TS;
+			flags |= (num << 24);
+			flags |= (den << 16);
+		}
+		if(flags != sp->beat[beatnum]->flags)
+		{	//If the application of this time signature really changes the beat's flags
+			if(undo)	//If calling function specified to make an undo state
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
+			sp->beat[beatnum]->flags = flags;	//Apply the flag changes
 		}
 	}
 
@@ -2858,4 +2891,72 @@ void eof_check_for_hopo_phrase_overlap(void)
 			}
 		}
 	}//For each cached MIDI event
+}
+
+EOF_MIDI_KS_LIST * eof_create_ks_list(void)
+{
+	eof_log("eof_create_ks_list() entered", 1);
+
+	unsigned long ctr;
+
+	EOF_MIDI_KS_LIST * lp;
+	lp = malloc(sizeof(EOF_MIDI_KS_LIST));
+	if(!lp)
+	{
+		return NULL;
+	}
+
+	for(ctr=0;ctr<EOF_MAX_KS;ctr++)
+	{	//Init all pointers in the array as NULL
+		lp->change[ctr]=NULL;
+	}
+	lp->changes = 0;
+	return lp;
+}
+
+EOF_MIDI_KS_LIST *eof_build_ks_list(EOF_SONG *sp)
+{
+	eof_log("eof_build_ks_list() entered", 1);
+
+	unsigned long ctr;
+	EOF_MIDI_KS_LIST * kslist=NULL;
+
+	if((sp == NULL) || (sp->beats <= 0))
+		return NULL;
+	kslist = eof_create_ks_list();
+	if(kslist == NULL)
+		return NULL;
+
+	for(ctr=0;ctr < sp->beats;ctr++)
+	{	//For each beat, create a list of Time Signature changes and store the appropriate delta position of each
+		if((sp->beat[ctr]->flags & EOF_BEAT_FLAG_KEY_SIG) && (kslist->changes < EOF_MAX_KS))
+		{	//If a key signature exists on this beat, and the maximum number of key signatures hasn't been reached
+			kslist->change[kslist->changes] = malloc(sizeof(EOF_MIDI_KS_CHANGE));	//Allocate memory
+			if(kslist->change[kslist->changes])
+			{	//If the memory was allocated
+				kslist->change[kslist->changes]->pos = ctr * EOF_DEFAULT_TIME_DIVISION;	//All beat markers are on multiples of the time division
+				kslist->change[kslist->changes]->realtime = sp->beat[ctr]->fpos;
+				kslist->change[kslist->changes]->key = sp->beat[ctr]->key;
+				kslist->changes++;	//Increment counter
+			}
+		}
+	}
+
+	return kslist;
+}
+
+void eof_destroy_ks_list(EOF_MIDI_KS_LIST *ptr)
+{
+	eof_log("eof_destroy_ks_list() entered", 1);
+
+	unsigned long i;
+
+	if(ptr != NULL)
+	{
+		for(i = 0; i < ptr->changes; i++)
+		{
+			free(ptr->change[i]);
+		}
+		free(ptr);
+	}
 }

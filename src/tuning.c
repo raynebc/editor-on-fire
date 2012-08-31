@@ -15,6 +15,9 @@ char *eof_slash_note_names_flat[12] =	{"/A","/Bb","/B","/C","/Db","/D","/Eb","/E
 char *eof_slash_note_names_sharp[12] =	{"/A","/A#","/B","/C","/C#","/D","/D#","/E","/F","/F#","/G","/G#"};
 char **eof_slash_note_names = eof_slash_note_names_sharp;	//By default, display slash chords with sharp accidentals
 char eof_tuning_unknown[] = {"Unknown"};
+char *eof_key_names_major[15] = {"B", "Gb", "Db", "Ab", "Eb", "Bb", "F", "C", "G", "D", "A", "E", "B", "Gb", "Db"};	//In MIDI, -7 represents 7 flats, 7 represents 7 sharps.  This array is that system transposed up by 7 to avoid using negative indexes
+char *eof_key_names_minor[15] = {"g#", "eb", "bb", "f", "c", "g", "d", "a", "e", "b", "f#", "c#", "g#", "eb", "bb"};
+char **eof_key_names = eof_key_names_major;
 
 char eof_tuning_name[EOF_NAME_LENGTH+1] = {"Unknown"};
 char string_1_name[5] = {0};
@@ -735,4 +738,20 @@ unsigned long eof_count_chord_lookup_matches(EOF_PRO_GUITAR_TRACK *tp, unsigned 
 
 	eof_chord_lookup_count = matchcount;	//Cache the result
 	return matchcount;
+}
+
+char *eof_get_key_signature(EOF_SONG *sp, unsigned long beatnum, char failureoption)
+{
+	if(sp && (beatnum < sp->beats) && (sp->beat[beatnum]->flags & EOF_BEAT_FLAG_KEY_SIG))
+	{	//If this is a valid beat and it has a key signature defined
+		if((sp->beat[beatnum]->key >= -7) && (sp->beat[beatnum]->key <= 7))
+		{	//If the key signature is valid
+			return eof_key_names[sp->beat[beatnum]->key + 7];	//Return the appropriate key name from the array
+		}
+	}
+
+	if(failureoption)
+		return "None";
+	else
+		return NULL;
 }
