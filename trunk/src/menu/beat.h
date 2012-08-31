@@ -1,10 +1,17 @@
 #ifndef EOF_MENU_BEAT_H
 #define EOF_MENU_BEAT_H
 
+#include "../song.h"
+
 extern MENU eof_beat_time_signature_menu[];
 extern MENU eof_beat_menu[];
-
 extern char eof_ts_menu_off_text[32];
+
+extern MENU eof_beat_key_signature_menu_major[];
+extern MENU eof_beat_key_signature_menu_minor[];
+extern struct MENU *eof_beat_key_signature_menu;	//This will point to either the major or minor key signature menu, depending on user preference
+extern char eof_ks_menu_off_text[32];
+
 extern char eof_trainer_string[5];
 
 extern DIALOG eof_events_dialog[];
@@ -22,8 +29,26 @@ int eof_menu_beat_ts_3_4(void);
 int eof_menu_beat_ts_5_4(void);
 int eof_menu_beat_ts_6_4(void);
 int eof_menu_beat_ts_custom(void);
-
 int eof_menu_beat_ts_off(void);
+
+int eof_apply_key_signature(int signature, unsigned long beatnum, EOF_SONG *sp);	//Applies the specified key signature to the specified beat
+int eof_menu_beat_ks_7_flats(void);
+int eof_menu_beat_ks_6_flats(void);
+int eof_menu_beat_ks_5_flats(void);
+int eof_menu_beat_ks_4_flats(void);
+int eof_menu_beat_ks_3_flats(void);
+int eof_menu_beat_ks_2_flats(void);
+int eof_menu_beat_ks_1_flat(void);
+int eof_menu_beat_ks_0_flats(void);
+int eof_menu_beat_ks_1_sharp(void);
+int eof_menu_beat_ks_2_sharps(void);
+int eof_menu_beat_ks_3_sharps(void);
+int eof_menu_beat_ks_4_sharps(void);
+int eof_menu_beat_ks_5_sharps(void);
+int eof_menu_beat_ks_6_sharps(void);
+int eof_menu_beat_ks_7_sharps(void);
+int eof_menu_beat_ks_off(void);
+
 int eof_menu_beat_delete(void);
 int eof_menu_beat_anchor(void);
 int eof_menu_beat_push_offset_back(void);	//Appends a new beat structure and moves all beats one forward, with their timestamps adjusted to compensate for the duration of the first beat.  Returns nonzero on success.

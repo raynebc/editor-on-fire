@@ -2121,6 +2121,7 @@ void eof_render_note_window(void)
 		textprintf_ex(eof_window_note->screen, font, 2, 0, eof_info_color, -1, "Information Panel");
 		textprintf_ex(eof_window_note->screen, font, 2, 12, eof_color_white, -1, "----------------------------");
 		ypos = 24;
+		char *ksname = eof_get_key_signature(eof_song, eof_selected_beat, 1);
 		if(eof_hover_beat >= 0)
 		{
 			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Beat = %d : BPM = %f : Hover = %d", eof_selected_beat, (double)60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn, eof_hover_beat);
@@ -2129,6 +2130,8 @@ void eof_render_note_window(void)
 		{
 			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Beat = %d : BPM = %f", eof_selected_beat, (double)60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn);
 		}
+		ypos += 12;
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Key : %s", ksname);
 		ypos += 12;
 		if(eof_selected_measure >= 0)
 		{
@@ -2165,20 +2168,20 @@ void eof_render_note_window(void)
 		{
 			if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, 48, eof_color_white, -1, "Note = %ld : Pos = %lu : Length = %lu", eof_selection.current, eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current), eof_get_note_length(eof_song, eof_selected_track, eof_selection.current));
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Note = %ld : Pos = %lu : Length = %lu", eof_selection.current, eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current), eof_get_note_length(eof_song, eof_selected_track, eof_selection.current));
 			}
 			else
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, 48, eof_color_white, -1, "Note = None");
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Note = None");
 			}
 			ypos += 12;
 			if(eof_hover_note >= 0)
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, 60, eof_color_white, -1, "Hover Note = %d", eof_hover_note);
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Note = %d", eof_hover_note);
 			}
 			else
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, 60, eof_color_white, -1, "Hover Note = None");
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Note = None");
 			}
 		}
 		int ism = ((eof_music_pos - eof_av_delay) / 1000) / 60;
@@ -2191,7 +2194,7 @@ void eof_render_note_window(void)
 		ypos += 12;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s Selected = %d/%lu", eof_vocals_selected ? "Lyrics" : "Notes", isn, itn);
 
-		ypos += 24;
+		ypos += 20;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Input Mode: %s", eof_input_name[eof_input_mode]);
 		ypos += 12;
 
@@ -2269,8 +2272,7 @@ void eof_render_note_window(void)
 
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//Display information specific to pro guitar tracks
-			ypos += 12;
-			ypos += 12;
+			ypos += 20;
 			if(!eof_pro_guitar_fret_bitmask || (eof_pro_guitar_fret_bitmask == 63))
 			{	//If the fret shortcut bitmask is set to no strings or all 6 strings
 				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Fret value shortcuts apply to %s strings", (eof_pro_guitar_fret_bitmask == 0) ? "no" : "all");

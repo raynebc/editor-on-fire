@@ -17,6 +17,7 @@
 #endif
 
 char eof_ts_menu_off_text[32] = {0};
+char eof_ks_menu_off_text[32] = {0};
 
 MENU eof_beat_time_signature_menu[] =
 {
@@ -29,14 +30,58 @@ MENU eof_beat_time_signature_menu[] =
     {NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_beat_key_signature_menu_major[] =
+{
+    {eof_ks_menu_off_text, eof_menu_beat_ks_off, NULL, 0, NULL},
+    {"B (7 flats)", eof_menu_beat_ks_7_flats, NULL, 0, NULL},
+    {"Gb (6 flats)", eof_menu_beat_ks_6_flats, NULL, 0, NULL},
+    {"Db (5 flats)", eof_menu_beat_ks_5_flats, NULL, 0, NULL},
+    {"Ab (4 flats)", eof_menu_beat_ks_4_flats, NULL, 0, NULL},
+    {"Eb (3 flats)", eof_menu_beat_ks_3_flats, NULL, 0, NULL},
+    {"Bb (2 flats)", eof_menu_beat_ks_2_flats, NULL, 0, NULL},
+    {"F (1 flat)", eof_menu_beat_ks_1_flat, NULL, 0, NULL},
+    {"C (0 flats/sharps)", eof_menu_beat_ks_0_flats, NULL, 0, NULL},
+    {"G (1 sharp)", eof_menu_beat_ks_1_sharp, NULL, 0, NULL},
+    {"D (2 sharps)", eof_menu_beat_ks_2_sharps, NULL, 0, NULL},
+    {"A (3 sharps)", eof_menu_beat_ks_3_sharps, NULL, 0, NULL},
+    {"E (4 sharps)", eof_menu_beat_ks_4_sharps, NULL, 0, NULL},
+    {"B (5 sharps)", eof_menu_beat_ks_5_sharps, NULL, 0, NULL},
+    {"Gb (6 sharps)", eof_menu_beat_ks_6_sharps, NULL, 0, NULL},
+    {"Db (7 sharps)", eof_menu_beat_ks_7_sharps, NULL, 0, NULL},
+    {NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_beat_key_signature_menu_minor[] =
+{
+    {eof_ks_menu_off_text, eof_menu_beat_ks_off, NULL, 0, NULL},
+    {"g# (7 flats)", eof_menu_beat_ks_7_flats, NULL, 0, NULL},
+    {"eb (6 flats)", eof_menu_beat_ks_6_flats, NULL, 0, NULL},
+    {"bb (5 flats)", eof_menu_beat_ks_5_flats, NULL, 0, NULL},
+    {"f (4 flats)", eof_menu_beat_ks_4_flats, NULL, 0, NULL},
+    {"c (3 flats)", eof_menu_beat_ks_3_flats, NULL, 0, NULL},
+    {"g (2 flats)", eof_menu_beat_ks_2_flats, NULL, 0, NULL},
+    {"d (1 flat)", eof_menu_beat_ks_1_flat, NULL, 0, NULL},
+    {"a (0 flats/sharps)", eof_menu_beat_ks_0_flats, NULL, 0, NULL},
+    {"e (1 sharp)", eof_menu_beat_ks_1_sharp, NULL, 0, NULL},
+    {"b (2 sharps)", eof_menu_beat_ks_2_sharps, NULL, 0, NULL},
+    {"f# (3 sharps)", eof_menu_beat_ks_3_sharps, NULL, 0, NULL},
+    {"c# (4 sharps)", eof_menu_beat_ks_4_sharps, NULL, 0, NULL},
+    {"g# (5 sharps)", eof_menu_beat_ks_5_sharps, NULL, 0, NULL},
+    {"eb (6 sharps)", eof_menu_beat_ks_6_sharps, NULL, 0, NULL},
+    {"bb (7 sharps)", eof_menu_beat_ks_7_sharps, NULL, 0, NULL},
+    {NULL, NULL, NULL, 0, NULL}
+};
+
+struct MENU *eof_beat_key_signature_menu = eof_beat_key_signature_menu_major;
+
 MENU eof_beat_menu[] =
 {
     {"&BPM Change", eof_menu_beat_bpm_change, NULL, 0, NULL},
     {"Time &Signature", NULL, eof_beat_time_signature_menu, 0, NULL},
+    {"&Key Signature", NULL, eof_beat_key_signature_menu_major, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"Add", eof_menu_beat_add, NULL, 0, NULL},
     {"Delete\t" CTRL_NAME "+Del", eof_menu_beat_delete, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
     {"Push Offset Back", eof_menu_beat_push_offset_back, NULL, 0, NULL},
     {"Push Offset Up", eof_menu_beat_push_offset_up, NULL, 0, NULL},
     {"Reset Offset to Zero", eof_menu_beat_reset_offset, NULL, 0, NULL},
@@ -146,8 +191,8 @@ void eof_prepare_beat_menu(void)
 	{	//If a song is loaded
 		//Several beat menu items are disabled below if the tempo map is locked.  Clear those items' flags in case the lock was removed
 		eof_beat_menu[0].flags = 0;	//BPM change
-		eof_beat_menu[3].flags = 0;	//Add
-		eof_beat_menu[4].flags = 0;	//Delete
+		eof_beat_menu[4].flags = 0;	//Add
+		eof_beat_menu[5].flags = 0;	//Delete
 		eof_beat_menu[6].flags = 0;	//Push offset back
 		eof_beat_menu[7].flags = 0;	//Push offset up
 		eof_beat_menu[8].flags = 0;	//Reset offset to zero
@@ -163,17 +208,17 @@ void eof_prepare_beat_menu(void)
 //Beat>Add and Delete validation
 		if(eof_find_next_anchor(eof_song, eof_selected_beat) < 0)
 		{	//If there are no anchors after the selected beat, disable Beat>Add and Delete, as they'd have no effect
-			eof_beat_menu[3].flags = D_DISABLED;
 			eof_beat_menu[4].flags = D_DISABLED;
+			eof_beat_menu[5].flags = D_DISABLED;
 		}
 		else
 		{
-			eof_beat_menu[3].flags = 0;
 			eof_beat_menu[4].flags = 0;
+			eof_beat_menu[5].flags = 0;
 		}
 		if(eof_selected_beat == 0)
 		{	//If the first beat marker is selected, disable Beat>Delete, as this beat is not allowed to be deleted
-			eof_beat_menu[4].flags = D_DISABLED;
+			eof_beat_menu[5].flags = D_DISABLED;
 		}
 //Beat>Push Offset Up and Push Offset Back validation
 		if(eof_song->beat[0]->pos >= eof_song->beat[1]->pos - eof_song->beat[0]->pos)
@@ -299,6 +344,41 @@ void eof_prepare_beat_menu(void)
 		{
 			ustrcpy(eof_ts_menu_off_text, "&Off");
 		}
+//Re-flag the active Key Signature for the selected beat
+		eof_beat_menu[2].child = eof_beat_key_signature_menu;	//Set the active key signature menu (major or minor)
+		for(i = 0; i < 16; i++)
+		{
+			eof_beat_key_signature_menu[i].flags = 0;
+		}
+		if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_KEY_SIG)
+		{	//If the selected beat has a key signature defined
+			if((eof_song->beat[eof_selected_beat]->key >= -7) && (eof_song->beat[eof_selected_beat]->key <= 7))
+			{	//If this beat has a valid key
+				eof_beat_key_signature_menu[eof_song->beat[eof_selected_beat]->key + 8].flags = D_SELECTED;	//Map the key to the appropriate menu item (-7 is menu index 1)
+			}
+			else
+			{	//Otherwise remove the key signature
+				eof_song->beat[eof_selected_beat]->flags &= ~EOF_BEAT_FLAG_KEY_SIG;	//Clear this flag
+			}
+		}
+		if(!(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_KEY_SIG))
+		{	//If the selected beat has no key signature defined (or if it had an invalid signature removed above)
+			eof_beat_key_signature_menu[0].flags = D_SELECTED;
+		}
+//If any beat before the selected beat has a defined Key Signature, change the menu's "Off" option to "No Change"
+		for(i = 0; i < eof_selected_beat; i++)
+		{
+			if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_KEY_SIG)
+			{
+				ustrcpy(eof_ks_menu_off_text, "No Change");
+				break;
+			}
+		}
+		if(i == eof_selected_beat)
+		{
+			ustrcpy(eof_ks_menu_off_text, "&Off");
+		}
+
 		if((eof_selected_beat + 1 < eof_song->beats) && (eof_song->beat[eof_selected_beat + 1]->ppqn != eof_song->beat[eof_selected_beat]->ppqn))
 		{	//If there is a beat after the current beat, and it has a different tempo
 			eof_beat_menu[17].flags = D_DISABLED;	//Disable Beat>Halve BPM
@@ -311,8 +391,8 @@ void eof_prepare_beat_menu(void)
 		if(eof_song->tags->tempo_map_locked)
 		{	//If the chart's tempo map is locked, disable various beat operations
 			eof_beat_menu[0].flags = D_DISABLED;	//BPM change
-			eof_beat_menu[3].flags = D_DISABLED;	//Add
-			eof_beat_menu[4].flags = D_DISABLED;	//Delete
+			eof_beat_menu[4].flags = D_DISABLED;	//Add
+			eof_beat_menu[5].flags = D_DISABLED;	//Delete
 			eof_beat_menu[6].flags = D_DISABLED;	//Push offset back
 			eof_beat_menu[7].flags = D_DISABLED;	//Push offset up
 			eof_beat_menu[8].flags = D_DISABLED;	//Reset offset to zero
@@ -1576,6 +1656,109 @@ int eof_menu_beat_adjust_bpm(double amount)
 	if(eof_note_auto_adjust)
 	{	//If the user has enabled the Note Auto-Adjust preference
 		eof_menu_edit_cut_paste(targetbeat + 1, 1);
+	}
+	return 1;
+}
+
+int eof_apply_key_signature(int signature, unsigned long beatnum, EOF_SONG *sp)
+{
+	if((signature < -7) || (signature > 7) || !sp || (beatnum >= sp->beats))
+		return 0;	//Return error;
+
+	if((sp->beat[beatnum]->flags & EOF_BEAT_FLAG_KEY_SIG) && (sp->beat[beatnum]->key == signature))
+		return 0;	//Don't apply a key signature if the selected beat already has that specific key signature
+
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
+	sp->beat[beatnum]->flags |= EOF_BEAT_FLAG_KEY_SIG;	//Set this flag
+	sp->beat[beatnum]->key = signature;
+	return 1;
+}
+
+int eof_menu_beat_ks_7_flats(void)
+{
+	return eof_apply_key_signature(-7, eof_selected_beat, eof_song);
+}
+
+int eof_menu_beat_ks_6_flats(void)
+{
+	return eof_apply_key_signature(-6, eof_selected_beat, eof_song);
+}
+
+int eof_menu_beat_ks_5_flats(void)
+{
+	return eof_apply_key_signature(-5, eof_selected_beat, eof_song);
+}
+
+int eof_menu_beat_ks_4_flats(void)
+{
+	return eof_apply_key_signature(-4, eof_selected_beat, eof_song);
+}
+
+int eof_menu_beat_ks_3_flats(void)
+{
+	return eof_apply_key_signature(-3, eof_selected_beat, eof_song);
+}
+
+int eof_menu_beat_ks_2_flats(void)
+{
+	return eof_apply_key_signature(-2, eof_selected_beat, eof_song);
+}
+
+int eof_menu_beat_ks_1_flat(void)
+{
+	return eof_apply_key_signature(-1, eof_selected_beat, eof_song);
+}
+
+int eof_menu_beat_ks_0_flats(void)
+{
+	return eof_apply_key_signature(0, eof_selected_beat, eof_song);
+}
+
+int eof_menu_beat_ks_1_sharp(void)
+{
+	return eof_apply_key_signature(1, eof_selected_beat, eof_song);
+}
+
+int eof_menu_beat_ks_2_sharps(void)
+{
+	return eof_apply_key_signature(2, eof_selected_beat, eof_song);
+}
+
+int eof_menu_beat_ks_3_sharps(void)
+{
+	return eof_apply_key_signature(3, eof_selected_beat, eof_song);
+}
+
+int eof_menu_beat_ks_4_sharps(void)
+{
+	return eof_apply_key_signature(4, eof_selected_beat, eof_song);
+}
+
+int eof_menu_beat_ks_5_sharps(void)
+{
+	return eof_apply_key_signature(5, eof_selected_beat, eof_song);
+}
+
+int eof_menu_beat_ks_6_sharps(void)
+{
+	return eof_apply_key_signature(6, eof_selected_beat, eof_song);
+}
+
+int eof_menu_beat_ks_7_sharps(void)
+{
+	return eof_apply_key_signature(7, eof_selected_beat, eof_song);
+}
+
+int eof_menu_beat_ks_off(void)
+{
+	if(eof_song && (eof_selected_beat < eof_song->beats))
+	{	//If a valid beat is selected
+		if(eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_KEY_SIG)
+		{	//If the selected beat has a key signature defined
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
+			eof_song->beat[eof_selected_beat]->flags &= ~EOF_BEAT_FLAG_KEY_SIG;	//Clear this flag
+			eof_song->beat[eof_selected_beat]->key = 0;
+		}
 	}
 	return 1;
 }

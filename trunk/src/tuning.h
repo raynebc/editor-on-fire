@@ -9,6 +9,9 @@ extern char **eof_note_names;
 extern char *eof_slash_note_names_flat[12];
 extern char *eof_slash_note_names_sharp[12];
 extern char **eof_slash_note_names;
+extern char *eof_key_names_major[15];
+extern char *eof_key_names_minor[15];
+extern char **eof_key_names;
 
 extern char eof_tuning_name[EOF_NAME_LENGTH+1];
 extern char string_1_name[5];
@@ -93,5 +96,10 @@ unsigned long eof_count_chord_lookup_matches(EOF_PRO_GUITAR_TRACK *tp, unsigned 
 	//Dumps the eof_chord_variations array contents for pro guitar and pro bass to "eof_chords.txt"
 unsigned long eof_check_against_chord_lookup_cache(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);
 	//Returns nonzero if the specified note matches the note cached from the previously executed chord name lookup logic
+
+char *eof_get_key_signature(EOF_SONG *sp, unsigned long beatnum, char failureoption);
+	//Returns a string representing the key signature change at the specified beat
+	//If the beat contains a KS change, the appropriate index into eof_key_names[] is returned
+	//If the beat does not have a KS change, then the string "None" is returned if failureoption is nonzero, otherwise NULL is returned
 
 #endif

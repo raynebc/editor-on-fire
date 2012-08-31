@@ -350,6 +350,7 @@ EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp)
 			sp->beat[sp->beats]->ppqn = 500000;
 			sp->beat[sp->beats]->flags = 0;
 			sp->beat[sp->beats]->midi_pos = 0;
+			sp->beat[sp->beats]->key = 0;
 			sp->beat[sp->beats]->fpos = 0.0;
 			sp->beats++;
 			return sp->beat[sp->beats - 1];

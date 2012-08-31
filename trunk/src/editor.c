@@ -4510,6 +4510,7 @@ void eof_render_editor_window_common(void)
 	unsigned long measure_counter = 0;
 	char first_measure = 0;	//Set to nonzero when the first measure marker is reached
 	char notvisible;
+	char *ksname;
 
 	bcol = makecol(128, 128, 128);
 	bscol = eof_color_white;
@@ -4628,6 +4629,11 @@ void eof_render_editor_window_common(void)
 			{	//Draw anchor marker
 				line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 21, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_red);
 				line(eof_window_editor->screen, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 21, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_red);
+			}
+			ksname = eof_get_key_signature(eof_song, i, 0);
+			if(ksname)
+			{	//If this beat has a key signature defined, draw the key signature above the timestamp
+				textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord + 2, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 2, eof_color_yellow, -1, "%s", ksname);
 			}
 		}
 		beat_counter++;

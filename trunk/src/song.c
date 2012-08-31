@@ -1539,7 +1539,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		sp->beat[ctr]->pos = pack_igetl(fp);		//Read the beat's position (milliseconds or delta ticks)
 		sp->beat[ctr]->fpos = sp->beat[ctr]->pos;	//For now, assume the position is in milliseconds and copy to the fpos variable as-is
 		sp->beat[ctr]->flags = pack_igetl(fp);		//Read the beat's flags
-		pack_getc(fp);								//Read the beat's key signature (not supported yet)
+		sp->beat[ctr]->key = pack_getc(fp);			//Read the beat's key signature
 	}
 
 	count = pack_igetl(fp);				//Read the number of text events
@@ -2216,7 +2216,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		pack_iputl(sp->beat[ctr]->ppqn, fp);	//Write the beat's tempo
 		pack_iputl(sp->beat[ctr]->pos, fp);		//Write the beat's position (milliseconds or delta ticks)
 		pack_iputl(sp->beat[ctr]->flags, fp);	//Write the beat's flags
-		pack_putc(0xFF, fp);	//Write the beat's key signature (not supported yet)
+		pack_putc(sp->beat[ctr]->key, fp);		//Write the beat's key signature
 	}
 	pack_iputl(sp->text_events, fp);	//Write the number of text events
 	for(ctr=0; ctr < sp->text_events; ctr++)
