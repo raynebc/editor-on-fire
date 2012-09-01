@@ -456,8 +456,8 @@ EOF_SONG * eof_import_midi(const char * fn)
 		{	//While the byte index of this MIDI track hasn't reached the end of the track data
 			/* read delta */
 #ifdef EOF_DEBUG_MIDI_IMPORT
-		sprintf(debugstring, "\t\t\tParsing byte #%d of %d",track_pos,eof_work_midi->track[track[i]].len);
-		eof_log(debugstring, 1);
+			sprintf(debugstring, "\t\t\tParsing byte #%d of %d",track_pos,eof_work_midi->track[track[i]].len);
+			eof_log(debugstring, 1);
 #endif
 
 			bytes_used = 0;
@@ -2074,28 +2074,20 @@ eof_log("\tSecond pass complete", 1);
 							unsigned long slideflag;	//Cache the slide flag to avoid having to do redundant checks
 							if(slidevelocity[slidediff] >= 108)
 							{	//For slide markers, velocity 108 or higher represents a down slide.  Read the slide velocity that was cached at the start of the slide
+								slideptr = slidedownpos;	//The slide marker is a down slide
+								slideflag = EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
 								if(eof_import_events[i]->event[j]->channel == 11)
 								{	//Unless the channel for the marker is 11, in which case it's reversed
-									slideptr = slideuppos;		//Channel 11 reverses the slide direction into an up slide
-									slideflag = EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
-								}
-								else
-								{
-									slideptr = slidedownpos;	//The slide marker is a down slide
-									slideflag = EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+									slideflag |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;
 								}
 							}
 							else
 							{	//Other velocities represent an up slide
+								slideptr = slideuppos;		//The slide marker is an up slide
+								slideflag = EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
 								if(eof_import_events[i]->event[j]->channel == 11)
 								{	//Unless the channel for the marker is 11, in which case it's reversed
-									slideptr = slidedownpos;	//Channel 11 reverses the slide direction into a down slide
-									slideflag = EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
-								}
-								else
-								{
-									slideptr = slideuppos;		//The slide marker is an up slide
-									slideflag = EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
+									slideflag |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;
 								}
 							}
 							for(k = note_count[picked_track] - 1; k >= first_note; k--)

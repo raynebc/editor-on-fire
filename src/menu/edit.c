@@ -2417,6 +2417,7 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;		//Erase the pro strum up flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;			//Erase the pro bend flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;		//Erase the pro harmonic flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;	//Erase the pro guitar slide reverse flag
 		}
 		else
 		{	//If it is pasting into a pro guitar track
@@ -2475,6 +2476,11 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 			{	//If both the slide up AND the slide down flags are set, clear both
 				*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
 				*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+				*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;
+			}
+			else if(!(*flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(*flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+			{	//If neither the slide up nor the slide down flags are set
+				*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;	//Clear the slide reverse flag
 			}
 			if((*flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) && (*flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
 			{	//If both the string mute AND the palm mute flags are set, clear both

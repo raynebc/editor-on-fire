@@ -370,6 +370,10 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 				long x2;			//Used for slide note rendering
 				unsigned long notepos2;		//Used for slide note rendering
 				int sliderect[8];		//An array of 4 vertices, used to draw a diagonal rectangle
+				int slidecolor = eof_color_dark_purple;	//By default, pro guitar slides are drawn in purple
+
+				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE)
+					slidecolor = eof_color_white;	//If it's a reverse slide though, draw in white
 
 				notepos2 = notepos + notelength;	//Find the position of the end of the note
 				if(pos < leftcoord)
@@ -408,7 +412,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 
 				if((sliderect[0] < window->w) && (sliderect[2] >= 0))
 				{	//If the left end of the polygon doesn't render off the right edge of the editor window and the right end of the polygon doesn't render off the left edge
-					polygon(window->screen, 4, sliderect, eof_color_dark_purple);		//Render the 4 point polygon in dark purple
+					polygon(window->screen, 4, sliderect, slidecolor);		//Render the 4 point polygon in the appropriate color
 				}
 			}//If rendering an existing pro guitar track that slides up or down
 
@@ -1014,7 +1018,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	notetype = eof_get_note_type(eof_song, track, notenum);
 
 	if(eof_selected_track == EOF_TRACK_DRUM)
-		return 0;	//Don't render tails for drum notes or notes that aren't over 10ms long
+		return 0;	//Don't render tails for drum notes
 
 	tracknum = eof_song->track[track]->tracknum;
 	if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && ((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || eof_legacy_view))
@@ -1085,6 +1089,10 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 				long npos2, rz2;
 				unsigned long notepos2;		//Used for slide note rendering
 				unsigned long halflanewidth = (56.0 * (4.0 / (numlanes-1))) / 2;
+				int slidecolor = eof_color_dark_purple;	//By default, pro guitar slides are drawn in purple
+
+				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE)
+					slidecolor = eof_color_white;	//If it's a reverse slide though, draw in white
 
 				notepos2 = notepos + notelength;	//Find the position of the end of the note
 				npos2 = (long)(notepos2 + eof_av_delay - eof_music_pos) / eof_zoom_3d  - 6;
@@ -1114,7 +1122,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 				point[5] = point[3];	//Y3 (Y coordinate of the back end of the slide)
 				point[6] = point[0] + (2 * EOF_PRO_GUITAR_SLIDE_LINE_THICKNESS_3D);	//X4 (the specified number of pixels right of X1)
 				point[7] = point[1];	//Y4 (Y coordinate of the front end of the slide)
-				polygon(eof_window_3d->screen, 4, point, eof_color_dark_purple);	//Render the 4 point polygon in dark purple
+				polygon(eof_window_3d->screen, 4, point, slidecolor);	//Render the 4 point polygon in the appropriate color
 			}//If rendering an existing pro guitar track that slides up or down
 
 			//Render slider note slide if applicable
@@ -1286,10 +1294,14 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
 		{
 			buffer[index++] = '/';
+			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE)	//If the slide is reversed
+				buffer[index++] = '/';							//Double the slide indicator
 		}
 		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
 		{
 			buffer[index++] = '\\';
+			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE)	//If the slide is reversed
+				buffer[index++] = '\\';							//Double the slide indicator
 		}
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
 		{
