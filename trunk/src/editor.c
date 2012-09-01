@@ -2568,6 +2568,7 @@ void eof_editor_logic(void)
 			else
 			{	//The Feedback input method uses the seek position instead
 				targetpos = eof_music_pos - eof_av_delay;
+				x_tolerance = 2;	//And the hover note tracking is much tighter since keyboard seek commands are more precise than mouse controls
 			}
 			eof_snap_logic(&eof_snap, lpos);
 			eof_snap_length_logic(&eof_snap);

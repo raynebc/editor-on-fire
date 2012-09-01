@@ -404,7 +404,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	unsigned char rootvel;					//Used to write root notes for pro guitar tracks
 	unsigned long note, noteflags, notepos, deltapos;
 	char type;
-	int channel, velocity, bitmask, slidenote = 0, scale, chord, isslash, bassnote;	//Used for pro guitar export
+	int channel, velocity, bitmask, scale, chord, isslash, bassnote;	//Used for pro guitar export
 	EOF_PHRASE_SECTION *sectionptr;
 	char *lastname = NULL, *currentname = NULL, nochord[]="NC", chordname[100]="";
 	char phase_shift_sysex_phrase[8] = {'P','S','\0',0,0,0,0,0xF7};	//This is used to write Sysex messages for features supported in Phase Shift (ie. open strum bass)
@@ -1221,25 +1221,21 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					case EOF_NOTE_AMAZING:	//notes 96-101
 					{
 						midi_note_offset = 96;
-						slidenote = 103;	//The note used to mark an Amazing slide
 						break;
 					}
 					case EOF_NOTE_MEDIUM:	//notes 72-77
 					{
 						midi_note_offset = 72;
-						slidenote = 79;		//The note used to mark a Medium slide
 						break;
 					}
 					case EOF_NOTE_EASY:		//notes 48-58
 					{
 						midi_note_offset = 48;
-						slidenote = 55;		//The note used to mark an easy slide
 						break;
 					}
 					case EOF_NOTE_SUPAEASY:	//notes 24-29
 					{
 						midi_note_offset = 24;
-						slidenote = 31;		//The note used to mark a supaeasy slide
 						break;
 					}
 					case EOF_NOTE_SPECIAL:	//BRE fill: notes 120-125
@@ -1348,15 +1344,20 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide stop marker
 					}
 
+					int slidechannel = 0;	//By default, slides are written over channel 0
+					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE)
+					{	//If this slide is to be written to indicate it is reversed
+						slidechannel = 11;	//It must be written over channel 11
+					}
 					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
 					{	//If this note slides down
-						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 7, 108, 0);	//Slide markers are note # (lane 1 + 7).  Fret 8 or higher triggers a down slide in RB3
-						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 7, 108, 0);
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 7, 108, slidechannel);	//Slide markers are note # (lane 1 + 7).  Fret 8 or higher triggers a down slide in RB3
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 7, 108, slidechannel);
 					}
 					else if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
 					{	//If this note slides up
-						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 7, 107, 0);	//Fret 7 or lower triggers an up slide in RB3
-						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 7, 107, 0);
+						eof_add_midi_event(deltapos, 0x90, midi_note_offset + 7, 107, slidechannel);	//Fret 7 or lower triggers an up slide in RB3
+						eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 7, 107, slidechannel);
 					}
 				}
 
@@ -2589,7 +2590,7 @@ void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_chang
 			lastdelta = 0;
 			for(eventptr = trackptr->events; eventptr != NULL; eventptr = eventptr->next)
 			{	//For each event in the track
-				deltapos = eof_ConvertToDeltaTime(eventptr->realtime,anchorlist,tslist,timedivision,0);	//Store the tick position of the event
+				deltapos = eof_ConvertToDeltaTime(eventptr->realtime + anchorlist->realtime,anchorlist,tslist,timedivision,0);	//Store the tick position of the event (accounting for the MIDI delay of the active beat map)
 				WriteVarLen(deltapos - lastdelta, tempf);		//Write this event's relative delta time
 				pack_fwrite(eventptr->data, eventptr->size, tempf);	//Write this event's data
 				lastdelta = deltapos;

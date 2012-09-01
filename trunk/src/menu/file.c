@@ -624,8 +624,8 @@ int eof_menu_file_save(void)
 	/* check to see if song folder still exists */
 	ustrcpy(eof_temp_filename, eof_song_path);
 	if((eof_temp_filename[uoffset(eof_temp_filename, ustrlen(eof_temp_filename) - 1)] == '\\') || (eof_temp_filename[uoffset(eof_temp_filename, ustrlen(eof_temp_filename) - 1)] == '/'))
-	{
-		eof_temp_filename[uoffset(eof_temp_filename, ustrlen(eof_temp_filename) - 1)] = '\0';
+	{	//If the path ends in a separator
+		eof_temp_filename[uoffset(eof_temp_filename, ustrlen(eof_temp_filename) - 1)] = '\0';	//Remove it
 	}
 	if(!file_exists(eof_temp_filename, FA_DIREC | FA_HIDDEN, NULL))
 	{
@@ -2160,8 +2160,20 @@ int eof_save_helper(char *destfilename)
 			{	//If any of the pro guitar tracks are populated
 				append_filename(eof_temp_filename, newfolderpath, "notes_pro.mid", 1024);
 				eof_export_midi(eof_song, eof_temp_filename, 2, fixvoxpitches, fixvoxphrases);	//Write a RB3 pro guitar upgrade compliant MIDI
-				append_filename(eof_temp_filename, newfolderpath, "upgrades.dta", 1024);
-				eof_save_upgrades_dta(eof_song, eof_temp_filename);	//Create the upgrades.dta file if it does not already exist
+				ustrcpy(eof_temp_filename, newfolderpath);
+				put_backslash(eof_temp_filename);
+				ustrcat(eof_temp_filename, "songs_upgrades");
+				if(!file_exists(eof_temp_filename, FA_DIREC | FA_HIDDEN, NULL))
+				{	//If the songs_upgrades folder doesn't already exist
+					if(eof_mkdir(eof_temp_filename))
+					{	//And it couldn't be created
+						allegro_message("Could not create folder!\n%s", eof_temp_filename);
+						return 1;	//Return failure
+					}
+				}
+				put_backslash(eof_temp_filename);
+				replace_filename(eof_temp_filename, eof_temp_filename, "upgrades.dta", 1024);
+				eof_save_upgrades_dta(eof_song, eof_temp_filename);		//Create the upgrades.dta file in the songs_upgrades folder if it does not already exist
 			}
 		}
 		append_filename(eof_temp_filename, newfolderpath, "song.ini", 1024);
