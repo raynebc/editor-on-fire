@@ -2089,7 +2089,7 @@ void Write_MIDI_Note(unsigned int notenum,unsigned int channelnum,unsigned int n
 	if(skipstatusbyte == 0)	//If not specified to skip writing this status byte
 		fputc_err((notestatus<<4)|channelnum,outf);
 
-	if(Lyrics.verbose >= 2)	printf("\t\tWriting MIDI Note %d %s%s",notenum,velocity ? "On" : "Off",skipstatusbyte ? " (Running status)\n" : "\n");
+	if(Lyrics.verbose >= 2)	printf("\t\tWriting MIDI Note %u %s%s",notenum,velocity ? "On" : "Off",skipstatusbyte ? " (Running status)\n" : "\n");
 
 	fputc_err(notenum,outf);
 	fputc_err(velocity,outf);

@@ -1696,8 +1696,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			}
 		}
 
-		if(whattowrite == 1)
-		{	//If writing a tempo change
+		if((whattowrite == 1) && ptr)
+		{	//If writing a tempo change (again, checking to ensure ptr is not NULL to satisfy cppcheck's warnings)
 			if(!enddelta || (ptr->delta <= enddelta))
 			{	//Only process this if it occurs at or before the end event
 				WriteVarLen(ptr->delta - lastdelta, fp);	//Write this anchor's relative delta time

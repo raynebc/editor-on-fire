@@ -559,7 +559,8 @@ void Export_LRC(FILE *outf)
 		temp=curline->pieces;	//Starting with the first piece of lyric in this line
 
 	//Write the line's initial timestamp
-		WriteLRCTimestamp(outf,'[',']',temp->start);	//Write timestamp of first lyric (using brackets)
+		if(temp != NULL)	//Check for NULL again to satisfy cppcheck
+			WriteLRCTimestamp(outf,'[',']',temp->start);	//Write timestamp of first lyric (using brackets)
 
 		while(temp != NULL)	//For each piece of lyric in this line
 		{
