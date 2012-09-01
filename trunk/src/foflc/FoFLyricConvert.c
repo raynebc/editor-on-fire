@@ -763,28 +763,30 @@ int main(int argc, char *argv[])
 //			DestroyLyricFormatList(detectionlist);
 			exit_wrapper(1);
 		}
-
-		if(detectionlist->next != NULL)
+		else
 		{
-			puts("Multiple detected lyric format(s):");
-			EnumerateFormatDetectionList(detectionlist);
-			DestroyLyricFormatList(detectionlist);
-			puts("\nCall the program again, specifying the desired format to import\nExiting");
-			exit_wrapper(1);
-		}
+			if(detectionlist->next != NULL)
+			{
+				puts("Multiple detected lyric format(s):");
+				EnumerateFormatDetectionList(detectionlist);
+				DestroyLyricFormatList(detectionlist);
+				puts("\nCall the program again, specifying the desired format to import\nExiting");
+				exit_wrapper(1);
+			}
 
-		if(detectionlist->format == PITCHED_LYRIC_FORMAT)
-		{
-			puts("Pitched lyric file detected.  Call the program again, specifying parameters vrhythm import\nExiting");
-			DestroyLyricFormatList(detectionlist);
-			exit_wrapper(1);
-		}
+			if(detectionlist->format == PITCHED_LYRIC_FORMAT)
+			{
+				puts("Pitched lyric file detected.  Call the program again, specifying parameters vrhythm import\nExiting");
+				DestroyLyricFormatList(detectionlist);
+				exit_wrapper(1);
+			}
 
-	//Apply the detected format as the import format
-		if(Lyrics.verbose)	printf("Selecting \"%s\" format for import\n",LYRICFORMATNAMES[detectionlist->format]);
-		Lyrics.in_format=detectionlist->format;
-		DestroyLyricFormatList(detectionlist);
-		detectionlist=NULL;
+		//Apply the detected format as the import format
+			if(Lyrics.verbose)	printf("Selecting \"%s\" format for import\n",LYRICFORMATNAMES[detectionlist->format]);
+			Lyrics.in_format=detectionlist->format;
+			DestroyLyricFormatList(detectionlist);
+			detectionlist=NULL;
+		}
 	}
 
 //Verify that the required parameters were defined

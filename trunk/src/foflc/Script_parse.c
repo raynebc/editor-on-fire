@@ -103,32 +103,35 @@ void Script_Load(FILE *inf)
 			printf("Error in line %lu: The \"text\" parameter is missing in the input file\nAborting\n",processedctr);
 			exit_wrapper(1);
 		}
-		index=0;
+		else
+		{
+			index=0;
 
 //Find the next non whitespace after that
-		while(substring[index] != '\0')
-		{
-			if(isspace((unsigned char)substring[index]) == 0)
-				break;
+			while(substring[index] != '\0')
+			{
+				if(isspace((unsigned char)substring[index]) == 0)
+					break;
 
-			index++;
-		}
+				index++;
+			}
 
 //Add lyric.  At this point, substring[index] points to text string to add.  If there was nothing but whitespace after
 //"text", AddLyricPiece() will receive a string of 0 characters, and it will ignore it
 		//Verify that the last character of the string is a null terminator and not newline
-		if(substring[strlen(substring)-1]=='\n')
-			substring[strlen(substring)-1]='\0';
+			if(substring[strlen(substring)-1]=='\n')
+				substring[strlen(substring)-1]='\0';
 
-		if(Lyrics.line_on == 0)	//If a line isn't in progress
-			CreateLyricLine();	//Initialize new line of lyrics
+			if(Lyrics.line_on == 0)	//If a line isn't in progress
+				CreateLyricLine();	//Initialize new line of lyrics
 
-		AddLyricPiece(&(substring[index]),starttime,starttime+duration,PITCHLESS,0);	//Add lyric, no defined pitch
+			AddLyricPiece(&(substring[index]),starttime,starttime+duration,PITCHLESS,0);	//Add lyric, no defined pitch
 
-		if(endlines == 0)		//If newline recognition is not enabled
-			EndLyricLine();		//End line of lyrics after each line entry in input file
+			if(endlines == 0)		//If newline recognition is not enabled
+				EndLyricLine();		//End line of lyrics after each line entry in input file
 
-		fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+		}
 	}//end while(!feof())
 
 	free(buffer);	//No longer needed, release the memory before exiting function

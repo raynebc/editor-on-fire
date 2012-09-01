@@ -298,7 +298,7 @@ EOF_SONG *eof_import_gp(const char * fn)
 		eof_gp_debug_log(inf, "Transpose:  ");
 		word = pack_getc(inf);
 //		pack_ReadDWORDLE(inf, &dword);	//Read the transpose field
-		printf("%d\n", word);
+		printf("%u\n", word);
 	}
 	else
 	{	//Older versions stored only key information here

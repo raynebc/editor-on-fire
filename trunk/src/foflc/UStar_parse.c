@@ -204,18 +204,21 @@ void Export_UStar(FILE *outf)
 	fputs_err("#MP3:\n",outf);
 	incomplete=1;	//There is no checking for MP3 yet
 
+	if(Lyrics.relative)						//If relative UltraStar export was specified
+		fputs_err("#RELATIVE:yes\n",outf);	//Write the relative timing indicator
+
 	tempostring=ConvertTempoToString(tempo);
 	if(tempostring==NULL)
 	{
 		puts("Error parsing tempo during UltraStar export\nAborting");
 		exit_wrapper(2);
 	}
-	if(Lyrics.relative)						//If relative UltraStar export was specified
-		fputs_err("#RELATIVE:yes\n",outf);	//Write the relative timing indicator
-
-	if(fprintf(outf,"#BPM:%s\n",tempostring) < 0)
-		errornumber=1;
-	free(tempostring);	//We don't need this string anymore
+	else
+	{
+		if(fprintf(outf,"#BPM:%s\n",tempostring) < 0)
+			errornumber=1;
+		free(tempostring);	//We don't need this string anymore
+	}
 
 	if(fprintf(outf,"#GAP:%lu\n",gap) < 0)
 		errornumber=1;
@@ -238,6 +241,7 @@ void Export_UStar(FILE *outf)
 		{
 			puts("Error: Unexpected end of lyrics during export\nAborting.");
 			exit_wrapper(4);
+			return;	//Redundant return statement to satisfy cppcheck about checking current for NULL
 		}
 
 	//Set the appropriate pitch character
