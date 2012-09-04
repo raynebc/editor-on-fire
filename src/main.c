@@ -2169,6 +2169,10 @@ void eof_render_note_window(void)
 			if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
 			{
 				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Note = %ld : Pos = %lu : Length = %lu", eof_selection.current, eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current), eof_get_note_length(eof_song, eof_selected_track, eof_selection.current));
+#ifdef EOF_DEBUG
+				ypos += 12;
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Mask = %ld : Flags = %lu", eof_get_note_note(eof_song, eof_selected_track, eof_selection.current), eof_get_note_flags(eof_song, eof_selected_track, eof_selection.current));
+#endif
 			}
 			else
 			{

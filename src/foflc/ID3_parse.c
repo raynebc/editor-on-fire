@@ -472,7 +472,7 @@ void SYLT_Parse(struct ID3Tag *tag)
 			timestamp=((double)timestamp * tag->frameduration + 0.5);	//Convert to milliseconds, rounding up
 
 	//Perform line break logic
-		if(string && (string[0] == '\r') || (string[0] == '\n'))	//If this lyric begins with a newline or carriage return (check string for NULL again to satisfy cppcheck)
+		if(string && ((string[0] == '\r') || (string[0] == '\n')))	//If this lyric begins with a newline or carriage return (check string for NULL again to satisfy cppcheck)
 		{
 			EndLyricLine();		//End the lyric line before the lyric is added
 			linebreaks=1;		//Track that line break character(s) were found in the lyrics

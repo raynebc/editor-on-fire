@@ -2144,8 +2144,8 @@ void eof_read_editor_keys(void)
 						eof_selection.range_pos_1 = 0;
 						eof_selection.range_pos_2 = 0;
 						eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-						if(eof_hover_note >= 0)
-						{	//If the user edited an existing note
+						if((eof_hover_note >= 0) && (eof_input_mode != EOF_INPUT_FEEDBACK))
+						{	//If the user edited an existing note (editing hover note not allowed in Feedback input mode)
 							if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 							{	//If legacy view is in effect, alter the note's legacy bitmask
 								eof_song->pro_guitar_track[tracknum]->note[eof_hover_note]->legacymask ^= bitmask;
@@ -2204,14 +2204,15 @@ void eof_read_editor_keys(void)
 						else
 						{	//If the user created a new note
 							unsigned long targetpos;
-							eof_pen_note.note ^= bitmask;
 							if(eof_input_mode == EOF_INPUT_FEEDBACK)
-							{	//If Feedback input mode is in use, insert a note at the seek position
+							{	//If Feedback input mode is in use, insert a single gem at the seek position
 								targetpos = eof_music_pos - eof_av_delay;
+								eof_pen_note.note = bitmask;
 							}
 							else
-							{	//Otherwise insert a note at the mouse's position
+							{	//Otherwise insert a note (based on the pen note) at the mouse's position
 								targetpos = eof_pen_note.pos;
+								eof_pen_note.note ^= bitmask;
 							}
 							new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, targetpos, eof_snap.length, eof_note_type, NULL);
 							if(new_note)
@@ -3200,7 +3201,7 @@ void eof_editor_logic(void)
 	}
 
 	if(((mouse_b & 2) || key[KEY_INSERT]) && ((eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK)))
-	{	//If the right mouse button or Insert key is pressed, a song is loaded and Rex Mundi input mode is in use
+	{	//If the right mouse button or Insert key is pressed, a song is loaded and Rex Mundi or Feedback input mode is in use
 		eof_emergency_stop_music();
 		eof_render();
 		eof_show_mouse(screen);
@@ -3321,9 +3322,19 @@ void eof_vocal_editor_logic(void)
 		/* mouse is in the fretboard area */
 		else if((mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
 		{
+			int x_tolerance = 6 * eof_zoom;	//This is how far left or right of a lyric the mouse is allowed to be to still be considered to hover over that lyric
 			int pos = eof_music_pos / eof_zoom;
 			int lpos = pos < 300 ? (mouse_x - 20) * eof_zoom : ((pos - 300) + mouse_x - 20) * eof_zoom;
 			int rpos = 0; // place to store pen_lyric.pos in case we are hovering over a note and need the original position before it was changed to the note location
+			if(eof_input_mode != EOF_INPUT_FEEDBACK)
+			{	//Non Feedback input methods use the mouse position to place/edit notes
+				targetpos = lpos;
+			}
+			else
+			{	//The Feedback input method uses the seek position instead
+				targetpos = eof_music_pos - eof_av_delay;
+				x_tolerance = 2;	//And the hover note tracking is much tighter since keyboard seek commands are more precise than mouse controls
+			}
 			eof_snap_logic(&eof_snap, lpos);
 			eof_snap_length_logic(&eof_snap);
 			eof_pen_lyric.pos = eof_snap.pos;
@@ -3341,11 +3352,9 @@ void eof_vocal_editor_logic(void)
 			{
 				eof_pen_lyric.note = 0;
 			}
-			targetpos = lpos;
 			eof_pen_visible = 1;
 			for(i = 0; (i < eof_song->vocal_track[tracknum]->lyrics) && (eof_hover_note < 0); i++)
-			{
-				int x_tolerance = 6 * eof_zoom;	//This is how far left or right of a lyric the mouse is allowed to be to still be considered to hover over that lyric
+			{	//For each note in the active track, until a hover note is found
 				npos = eof_song->vocal_track[tracknum]->lyric[i]->pos;
 				if((targetpos > npos) && (targetpos < npos + eof_song->vocal_track[tracknum]->lyric[i]->length))
 				{

@@ -23,6 +23,7 @@ int eof_import_ini_settings = 0;
 
 char eof_ini_pro_drum_tag_present;		//Is set to nonzero if eof_import_ini() finds the "pro_drums = True" tag (to influence MIDI import)
 char eof_ini_star_power_tag_present;	//Is set to nonzero if eof_import_ini() finds the "multiplier_note = 116" tag (to influence MIDI import)
+char eof_ini_sysex_open_bass_present;	//Is set to nonzero if eof_import_ini() finds the "sysex_open_bass = True" tag (to influence MIDI import)
 
 /* it would probably be easier to use Allegro's configuration routines to read
  * the ini files since it looks like they are formatted correctly */
@@ -44,6 +45,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 
 	eof_ini_pro_drum_tag_present = 0;	//Reset this condition to false
 	eof_ini_star_power_tag_present = 0;	//Reset this condition to false
+	eof_ini_sysex_open_bass_present = 0;//Reset this condition to false
 
 	if(!sp || !fn)
 	{
@@ -177,13 +179,14 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 			else if(!ustricmp(eof_import_ini_setting[i].type, "scores_ext"))
 			{
 			}
-			else if(!ustricmp(eof_import_ini_setting[i].type, "open_strum"))
-			{	//The deprecated open strum INI tag
-				if(!ustricmp(value_index, "True"))
-				{
-					sp->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the sixth lane flag
-				}
-			}
+///This handling is obsolete due to the sysex_open_bass INI tag
+//			else if(!ustricmp(eof_import_ini_setting[i].type, "open_strum"))
+//			{	//The deprecated open strum INI tag
+//				if(!ustricmp(value_index, "True"))
+//				{
+//					sp->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the sixth lane flag
+//				}
+//			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "real_guitar_tuning"))
 			{
 				ctr = 0;	//Reset counter
@@ -261,7 +264,14 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 					eof_ini_star_power_tag_present = 1;	//MIDI import won't have to convert solos phrases to star power, EOF's notation for star power style phrases was found
 				}
 			}
-			else if(!ustricmp(eof_import_ini_setting[i].type, "sysex_open_bass") || !ustricmp(eof_import_ini_setting[i].type, "sysex_pro_slide") || !ustricmp(eof_import_ini_setting[i].type, "sysex_high_hat_ctrl") || !ustricmp(eof_import_ini_setting[i].type, "sysex_rimshot") || !ustricmp(eof_import_ini_setting[i].type, "sysex_slider"))
+			else if(!ustricmp(eof_import_ini_setting[i].type, "sysex_open_bass"))
+			{
+				if(!ustricmp(value_index, "True"))
+				{
+					eof_ini_sysex_open_bass_present = 1;	//MIDI import will interpret forced HOPO lane 1 bass to be a HOPO bass gem and not an open strum
+				}
+			}
+			else if(!ustricmp(eof_import_ini_setting[i].type, "sysex_pro_slide") || !ustricmp(eof_import_ini_setting[i].type, "sysex_high_hat_ctrl") || !ustricmp(eof_import_ini_setting[i].type, "sysex_rimshot") || !ustricmp(eof_import_ini_setting[i].type, "sysex_slider"))
 			{	//These Sysex indicators are only used by Phase Shift
 			}
 
