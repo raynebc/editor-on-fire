@@ -1344,6 +1344,12 @@ eof_log("\tSecond pass complete", 1);
 						}
 					}//Note on or note off
 
+///DEBUG
+if((picked_track == 2) && (eof_import_events[i]->event[j]->pos == 422160))
+puts("Blarg");
+if((picked_track == 2) && (eof_import_events[i]->event[j]->pos == 422219))
+puts("Blarg");
+
 					/* note on */
 					if(eof_import_events[i]->event[j]->type == 0x90)
 					{
@@ -1613,12 +1619,17 @@ eof_log("\tSecond pass complete", 1);
 						}
 
 						if((note_count[picked_track] > 0) && (eof_get_note_type(sp, picked_track, note_count[picked_track] - 1) != -1))
-						{
+						{	//If there's at least one note created for this track, and the most recently added one is initialized
 							for(k = note_count[picked_track] - 1; k >= first_note; k--)
-							{
+							{	//Check for each note that has been imported
 								if((eof_get_note_type(sp, picked_track, k) == eof_get_note_type(sp, picked_track, note_count[picked_track])) && (eof_get_note_note(sp, picked_track, k) & diff_chart[diff]))
-								{
+								{	//If the note is in the same difficulty as this note off and it contains one of the same gems
 //									allegro_message("break %d, %d, %d", k, sp->legacy_track[picked_track]->note[k]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);	//Debug
+
+///DEBUG
+if((picked_track == 2) && ((k == 3999) || (k == 4000)))
+puts("BLARG");
+
 									eof_set_note_length(sp, picked_track, k, event_realtime - eof_get_note_pos(sp, picked_track, k));
 									if(eof_get_note_length(sp, picked_track, k ) <= 0)
 									{
@@ -2390,13 +2401,13 @@ eof_log("\tThird pass complete", 1);
 	tracknum = sp->track[EOF_TRACK_BASS]->tracknum;
 	for(i = 0; i < sp->legacy_track[tracknum]->notes; i++)
 	{	//For each note in the bass track
-		if((sp->legacy_track[tracknum]->note[i]->note & 1) && (sp->legacy_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO))
-		{	//If this note has a gem in lane one that is forced as a HOPO, prompt the user how to handle them
+		if(!eof_ini_sysex_open_bass_present && (sp->legacy_track[tracknum]->note[i]->note & 1) && (sp->legacy_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO))
+		{	//If Sysex open strum notation isn't present, and this note has a gem in lane one that is forced as a HOPO, prompt the user how to handle them
 			eof_cursor_visible = 0;
 			eof_pen_visible = 0;
 			eof_show_mouse(screen);
-			if(!eof_ini_sysex_open_bass_present && (alert(NULL, "Import lane 1 forced HOPO bass notes as open strums (ie. this is a Guitar Hero chart)?", NULL, "&Yes", "&No", 'y', 'n') == 1))
-			{	//If the open strum sysex INI tag is not defined, and the user opts to import lane 1 HOPO bass notes as open strums
+			if(alert(NULL, "Import lane 1 forced HOPO bass notes as open strums (ie. this is a Guitar Hero chart)?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+			{	//If the user opts to import lane 1 HOPO bass notes as open strums
 				sp->legacy_track[tracknum]->numlanes = 6;						//Set this track to have 6 lanes instead of 5
 				sp->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
 				for(k = 0; k < sp->legacy_track[tracknum]->notes; k++)
