@@ -1332,6 +1332,7 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 				else if(dword < sp->beat[ctr2]->pos)
 				{	//Otherwise if this time signature's position has been surpassed by a beat
 					allegro_message("Error:  Mid beat time signature detected.  Skipping");
+					break;
 				}
 			}
 

@@ -2391,12 +2391,12 @@ eof_log("\tThird pass complete", 1);
 	for(i = 0; i < sp->legacy_track[tracknum]->notes; i++)
 	{	//For each note in the bass track
 		if((sp->legacy_track[tracknum]->note[i]->note & 1) && (sp->legacy_track[tracknum]->note[i]->flags & EOF_NOTE_FLAG_F_HOPO))
-		{	//If this note has a gem in lane one and is forced as a HOPO, prompt the user how to handle them
+		{	//If this note has a gem in lane one that is forced as a HOPO, prompt the user how to handle them
 			eof_cursor_visible = 0;
 			eof_pen_visible = 0;
 			eof_show_mouse(screen);
-			if((sp->track[EOF_TRACK_BASS]->flags & EOF_TRACK_FLAG_SIX_LANES) || (alert(NULL, "Import lane 1 forced HOPO bass notes as open strums (ie. this is a Guitar Hero chart)?", NULL, "&Yes", "&No", 'y', 'n') == 1))
-			{	//If the open bass strum flag was set during INI import or if the user opts to import lane 1 HOPO bass notes as open strums
+			if(!eof_ini_sysex_open_bass_present && (alert(NULL, "Import lane 1 forced HOPO bass notes as open strums (ie. this is a Guitar Hero chart)?", NULL, "&Yes", "&No", 'y', 'n') == 1))
+			{	//If the open strum sysex INI tag is not defined, and the user opts to import lane 1 HOPO bass notes as open strums
 				sp->legacy_track[tracknum]->numlanes = 6;						//Set this track to have 6 lanes instead of 5
 				sp->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set this flag
 				for(k = 0; k < sp->legacy_track[tracknum]->notes; k++)
@@ -2413,7 +2413,10 @@ eof_log("\tThird pass complete", 1);
 			{	//Otherwise ensure that no open bass notation is present in the bass track
 				for(k = 0; k < sp->legacy_track[tracknum]->notes; k++)
 				{	//For each note in the bass track
-					sp->legacy_track[tracknum]->note[k]->note &= ~32;	//Clear lane 6
+					if(sp->legacy_track[tracknum]->note[k]->note & 32)
+					{	//If this note has a gem in lane 6 (used as the HOPO on marker if not as a lane 6 gem)
+						sp->legacy_track[tracknum]->note[k]->note &= ~32;	//Clear lane 6
+					}
 				}
 			}
 			eof_show_mouse(NULL);
