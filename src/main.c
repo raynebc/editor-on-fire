@@ -129,8 +129,6 @@ int         eof_zoom = 10;			//The width of one pixel in the editor window in ms
 int         eof_zoom_3d = 5;
 char        eof_changes = 0;
 ALOGG_OGG * eof_music_track = NULL;
-//SAMPLE    * eof_music_wave = NULL;	//Unused
-//BITMAP    * eof_music_image = NULL;	//Unused
 void      * eof_music_data = NULL;
 int         eof_music_data_size = 0;
 int         eof_music_length = 0;
@@ -158,7 +156,6 @@ char        eof_window_title[4096] = {0};
 int         eof_quit = 0;
 int         eof_note_type = EOF_NOTE_AMAZING;	//The active difficulty
 int         eof_note_difficulties[5] = {0};
-//int         eof_note_types = 0;	//Unused
 int         eof_selected_track = EOF_TRACK_GUITAR;
 int         eof_vocals_selected = 0;	//Is set to nonzero if the active track is a vocal track
 int         eof_vocals_tab = 0;
@@ -195,16 +192,12 @@ int         eof_rclick_released = 1;
 int         eof_click_x;
 int         eof_click_y;
 int         eof_peg_x;
-//int         eof_peg_y;	//Unused
 int         eof_last_pen_pos = 0;
 int         eof_cursor_visible = 1;
 int         eof_pen_visible = 1;
 int         eof_hover_type = -1;
 int         eof_mouse_drug = 0;
-//int         eof_mouse_drug_mickeys = 0;	//Unused
 int         eof_notes_moved = 0;
-
-//int         eof_menu_key_waiting = 0;	//Unused
 
 /* grid snap data */
 char          eof_snap_mode = EOF_SNAP_OFF;
@@ -1919,21 +1912,14 @@ void eof_logic(void)
 	}
 	if(eof_song_loaded)
 	{
-//		if(eof_input_mode == EOF_INPUT_FEEDBACK)
-//		{
-//			eof_editor_logic_feedback();
-//		}
-//		else
-//		{
-			if(eof_vocals_selected)
-			{
-				eof_vocal_editor_logic();
-			}
-			else
-			{
-				eof_editor_logic();
-			}
-//		}
+		if(eof_vocals_selected)
+		{
+			eof_vocal_editor_logic();
+		}
+		else
+		{
+			eof_editor_logic();
+		}
 	}
 	eof_note_logic();
 	if(eof_vocals_selected)
@@ -2800,7 +2786,7 @@ void eof_render_3d_window(void)
 	line(eof_window_3d->screen, ocd3d_project_x(48, 0), y_projection, ocd3d_project_x(48 + 4 * 56, 0), y_projection, eof_color_green);
 
 //	int first_note = -1;	//Used for debugging
-//	int last_note = 0;
+//	int last_note = 0;		//Used for debugging
 	long tr;
 	/* draw the note tails and notes */
 	numnotes = eof_get_track_size(eof_song, eof_selected_track);	//Get the number of notes in this legacy/pro guitar track

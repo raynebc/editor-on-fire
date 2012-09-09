@@ -674,8 +674,6 @@ struct _VLSTRUCT_ *VL_PreWrite(void)
 //Allocate the Export_VL structure
 	OutVL=malloc_err(sizeof(struct _VLSTRUCT_));
 	*OutVL=empty_VLSTRUCT_;	//Reliably initialize all values to 0/NULL
-//	cursync=NULL;
-//	curtext=NULL;
 
 //Initialize the Export_VL structure
 	OutVL->numlines=Lyrics.linecount;

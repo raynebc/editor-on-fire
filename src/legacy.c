@@ -850,10 +850,6 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 					sp->legacy_track[i]->solo[j].start_pos = pack_igetl(fp);
 					sp->legacy_track[i]->solo[j].end_pos = pack_igetl(fp);
 				}
-//				if(sp->legacy_track[i]->solos < 0)	//solos is unsigned and so is always >= 0
-//				{
-//					sp->legacy_track[i]->solos = 0;
-//				}
 
 				/* read star power sections */
 				sp->legacy_track[i]->star_power_paths = pack_igetw(fp);
@@ -862,10 +858,6 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 					sp->legacy_track[i]->star_power_path[j].start_pos = pack_igetl(fp);
 					sp->legacy_track[i]->star_power_path[j].end_pos = pack_igetl(fp);
 				}
-//				if(sp->legacy_track[i]->star_power_paths < 0)	//star_power_paths is unsigned and so is always >= 0
-//				{
-//					sp->legacy_track[i]->star_power_paths = 0;
-//				}
 
 				/* read notes */
 				b = pack_igetl(fp);
@@ -972,10 +964,6 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 					sp->legacy_track[i]->solo[j].start_pos = pack_igetl(fp);
 					sp->legacy_track[i]->solo[j].end_pos = pack_igetl(fp);
 				}
-//				if(sp->legacy_track[i]->solos < 0)	//solos is unsigned and so is always >= 0
-//				{
-//					sp->legacy_track[i]->solos = 0;
-//				}
 
 				/* read star power sections */
 				sp->legacy_track[i]->star_power_paths = pack_igetw(fp);
@@ -984,10 +972,6 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 					sp->legacy_track[i]->star_power_path[j].start_pos = pack_igetl(fp);
 					sp->legacy_track[i]->star_power_path[j].end_pos = pack_igetl(fp);
 				}
-//				if(sp->legacy_track[i]->star_power_paths < 0)	//star_power_paths is unsigned and so is always >= 0
-//				{
-//					sp->legacy_track[i]->star_power_paths = 0;
-//				}
 
 				/* read notes */
 				b = pack_igetl(fp);
@@ -1112,10 +1096,6 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 					sp->legacy_track[i]->solo[j].start_pos = pack_igetl(fp);
 					sp->legacy_track[i]->solo[j].end_pos = pack_igetl(fp);
 				}
-//				if(sp->legacy_track[i]->solos < 0)	//solos is unsigned and so is always >= 0
-//				{
-//					sp->legacy_track[i]->solos = 0;
-//				}
 
 				/* read star power sections */
 				sp->legacy_track[i]->star_power_paths = pack_igetw(fp);
@@ -1124,10 +1104,6 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 					sp->legacy_track[i]->star_power_path[j].start_pos = pack_igetl(fp);
 					sp->legacy_track[i]->star_power_path[j].end_pos = pack_igetl(fp);
 				}
-//				if(sp->legacy_track[i]->star_power_paths < 0)	//star_power_paths is unsigned and so is always >= 0
-//				{
-//					sp->legacy_track[i]->star_power_paths = 0;
-//				}
 
 				/* read notes */
 				b = pack_igetl(fp);
@@ -1255,10 +1231,6 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 					sp->legacy_track[i]->solo[j].start_pos = pack_igetl(fp);
 					sp->legacy_track[i]->solo[j].end_pos = pack_igetl(fp);
 				}
-//				if(sp->legacy_track[i]->solos < 0)	//solos is unsigned and so is always >= 0
-//				{
-//					sp->legacy_track[i]->solos = 0;
-//				}
 
 				/* read star power sections */
 				sp->legacy_track[i]->star_power_paths = pack_igetw(fp);
@@ -1267,10 +1239,6 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 					sp->legacy_track[i]->star_power_path[j].start_pos = pack_igetl(fp);
 					sp->legacy_track[i]->star_power_path[j].end_pos = pack_igetl(fp);
 				}
-//				if(sp->legacy_track[i]->star_power_paths < 0)	//star_power_paths is unsigned and so is always >= 0
-//				{
-//					sp->legacy_track[i]->star_power_paths = 0;
-//				}
 
 				/* read notes */
 				b = pack_igetl(fp);

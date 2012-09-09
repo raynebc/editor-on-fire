@@ -84,20 +84,6 @@ void eof_legacy_track_note_create(EOF_NOTE * np, char g, char y, char r, char b,
 	np->length = length;
 }
 
-/*	//Unused
-void eof_legacy_track_note_create2(EOF_NOTE * np, unsigned long bitmask, unsigned long pos, long length)
-{
-	eof_log("eof_legacy_track_note_create2() entered", 1);
-
-	if(np)
-	{
-		np->note = bitmask;
-		np->pos = pos;
-		np->length = length;
-	}
-}
-*/
-
 int eof_adjust_notes(int offset)
 {
 	eof_log("eof_adjust_notes() entered", 1);

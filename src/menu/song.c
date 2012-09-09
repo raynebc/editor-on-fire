@@ -26,7 +26,6 @@
 
 char eof_track_selected_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE+1] = {{0}};
 	//Allow an extra leading space due to the checkmark erasing the first character in each string
-//char eof_no_raw_midi_track_name[] = "(unnamed)";	//Unused
 char eof_raw_midi_track_error[] = "(error)";
 
 MENU eof_song_seek_bookmark_menu[] =
@@ -87,16 +86,6 @@ MENU eof_track_selected_menu[EOF_TRACKS_MAX] =
     {eof_track_selected_menu_text[11], eof_menu_track_selected_12, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
-
-/*	//Unused
-MENU eof_track_menu[] =
-{
-    {"&Selected", NULL, eof_track_selected_menu, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
-    {"&Properties", NULL, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
-};
-*/
 
 MENU eof_catalog_menu[] =
 {
@@ -2809,12 +2798,10 @@ char * eof_raw_midi_tracks_list(int index, int * size)
 			for(ctr = 0, trackptr = eof_MIDI_track_list_to_enumerate; trackptr != NULL; ctr++, trackptr = trackptr->next);	//Count the number of tracks in this list
 			if(ctr > 0)
 			{	//If there is at least stored MIDI track
-//				eof_raw_midi_tracks_dialog[2].flags = 0;	//Enable the Description button
 				eof_raw_midi_tracks_dialog[3].flags = 0;	//Enable the Delete button
 			}
 			else
 			{
-//				eof_raw_midi_tracks_dialog[2].flags = D_DISABLED;
 				eof_raw_midi_tracks_dialog[3].flags = D_DISABLED;
 			}
 			*size = ctr;
