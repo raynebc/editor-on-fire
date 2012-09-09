@@ -51,10 +51,3 @@ void eof_prepare_main_menu(void)
 		eof_main_menu[4].flags = D_DISABLED; // Beat
 	}
 }
-
-/*
-int eof_menu_cancel(void)
-{
-	return 1;
-}
-*/

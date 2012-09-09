@@ -9,7 +9,7 @@
 #include "control.h"
 #include "editor.h"
 
-#define EOF_VERSION_STRING "EOF v1.8beta37"
+#define EOF_VERSION_STRING "EOF v1.8beta38"
 #define EOF_COPYRIGHT_STRING "(c)2008-2010 T^3 Software."
 
 #define KEY_EITHER_ALT (key[KEY_ALT] || key[KEY_ALTGR])
@@ -338,13 +338,11 @@ extern int         eof_rclick_released;
 extern int         eof_click_x;
 extern int         eof_click_y;
 extern int         eof_peg_x;
-//extern int         eof_peg_y;	//Unused
 extern int         eof_last_pen_pos;
 extern int         eof_cursor_visible;
 extern int         eof_pen_visible;
 extern int         eof_hover_type;
 extern int         eof_mouse_drug;
-//extern int         eof_menu_key_waiting;	//Unused
 
 extern char          eof_snap_mode;
 extern char          eof_last_snap_mode;

@@ -55,10 +55,6 @@ typedef struct
 } EOF_MIDI_KS_LIST;
 
 long eof_figure_beat(double pos);				//Returns the beat marker immediately before the specified timestamp, or -1 on failure
-///Unused functions
-//double eof_calculate_bpm_absolute(double pos);	//Returns the tempo defined by the beat marker immediately before the specified timestamp, or 0.0 on failure
-//double eof_calculate_delta(double start, double end);	//Finds the number of delta ticks within the specified time span?
-	//Warning: This function does not take the time signature into account
 
 int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixvoxpitches, char fixvoxphrases);
 	//Writes the specified chart's contents to the specified file

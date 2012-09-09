@@ -133,7 +133,6 @@ typedef struct
 	unsigned long midi_length;
 	float         porpos;     // position of note within the beat (100.0 = full beat)
 	float         porendpos;
-//	char          active;	//Unused
 	unsigned long flags;
 	unsigned long legacymask;
 	unsigned char frets[16];
@@ -356,7 +355,6 @@ typedef struct
 	char filename[256];
 	long  midi_offset;	//Leave signed just in case this is eventually used to allow for insertion of leading silence via specifying a negative midi offset
 	char modified;
-//	unsigned long flags;	//Unused
 	char description[EOF_NAME_LENGTH+1];
 
 } EOF_OGG_INFO;

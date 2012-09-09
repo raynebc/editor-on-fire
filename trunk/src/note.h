@@ -12,9 +12,6 @@ void eof_legacy_track_note_create(EOF_NOTE * np, char g, char y, char r, char b,
 	//Initializes a note by by storing the specified on/off status of the green, yellow, red, blue and purple gem colors
 	//as well as the position and length into the given EOF_NOTE structure, whose contents are overwritten
 	//The note type and flags are not altered
-///Unused
-//void eof_legacy_track_note_create2(EOF_NOTE * np, unsigned long bitmask, unsigned long pos, long length);
-	//A simplified version of eof_note_create that accepts the fret status as a bitflag instead of individual characters
 int eof_adjust_notes(int offset);	//Applies the given additive offset to all notes, lyrics, bookmarks, catalog entries and solo/star power/lyric phrases
 int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW *window);
 	//Renders the note to the specified window, unless it would be outside the viewable area

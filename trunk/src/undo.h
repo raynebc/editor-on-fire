@@ -15,18 +15,6 @@
 #define EOF_UNDO_TYPE_SILENCE      5
 #define EOF_UNDO_TYPE_TEMPO_ADJUST 6
 
-/*typedef struct
-{
-
-	EOF_SONG_TAGS tags;
-	EOF_TRACK     track;
-	EOF_BEAT_MARKER beat[EOF_MAX_BEATS];
-	EOF_TEXT_EVENT event[EOF_MAX_TEXT_EVENTS];
-	int events;
-	char utrack;
-
-} EOF_UNDO_STATE; */
-
 extern int eof_undo_count;
 extern int eof_redo_count;
 extern int eof_undo_last_type;

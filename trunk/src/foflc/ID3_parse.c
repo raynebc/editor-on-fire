@@ -754,7 +754,6 @@ unsigned long BuildID3Tag(struct ID3Tag *ptr,FILE *outf)
 	unsigned long tagpos=0;		//Records the position of the ID3 tag in the output file
 	unsigned long tagend=0;		//Records the position of one byte past the end of the written ID3 tag
 	unsigned long framepos=0;	//Records the position of the SYLT frame in the output file
-//	int c=0;
 	unsigned long ctr=0;
 	struct ID3Frame *temp=NULL;
 	struct Lyric_Line *curline=NULL;	//Conductor of the lyric line linked list
@@ -793,25 +792,11 @@ unsigned long BuildID3Tag(struct ID3Tag *ptr,FILE *outf)
 		rewind_err(ptr->fp);
 
 //If the ID3v2 header isn't at the start of the source file, copy all data that precedes it to the output file
-/*v2.33	Use BlockCopy()
-		while((unsigned long)ftell_err(ptr->fp) < ptr->tagstart)
-		{	//For each byte that preceeded the ID3 tag
-			c=fgetc_err(ptr->fp);	//Read it from input file
-			fputc_err(c,outf);	//Write it to the output file
-		}
-*/
 		BlockCopy(ptr->fp,outf,ptr->tagstart - ftell_err(ptr->fp));
 
 //Copy the original ID3v2 header from source file to output file (record the file position)
 		if(Lyrics.verbose)	puts("Copying ID3v2 tag header");
 		tagpos=ftell_err(outf);	//Record this file position so the tag size can be rewritten later
-/*v2.33	Use BlockCopy()
-		while((unsigned long)ftell_err(ptr->fp) < ptr->framestart)
-		{	//For each byte that preceeded the first ID3 frame (header information)
-			c=fgetc_err(ptr->fp);	//Read it from input file
-			fputc_err(c,outf);		//Write it to the output file
-		}
-*/
 		BlockCopy(ptr->fp,outf,ptr->framestart - ftell_err(ptr->fp));
 
 //Write tag information from input file if applicable, and ensure that equivalent ID3v2 frames from the source file are omitted
@@ -848,13 +833,6 @@ unsigned long BuildID3Tag(struct ID3Tag *ptr,FILE *outf)
 
 				if((unsigned long)ftell_err(ptr->fp) != temp->pos)	//If the input file isn't already positioned at the frame
 					fseek_err(ptr->fp,temp->pos,SEEK_SET);			//Seek to it now
-/*v2.33	Use BlockCopy()
-				while((unsigned long)ftell_err(ptr->fp) < temp->pos + temp->length + 10)
-				{	//For each byte that is before the next frame's header
-					c=fgetc_err(ptr->fp);	//Read it from input file
-					fputc_err(c,outf);	//Write it to the output file
-				}
-*/
 				BlockCopy(ptr->fp,outf,temp->length + 10);	//Copy frame body size + header size number of bytes
 				ctr++;	//Increment counter
 			}
@@ -919,13 +897,6 @@ unsigned long BuildID3Tag(struct ID3Tag *ptr,FILE *outf)
 //Copy any unidentified data (ie. padding) that occurs between the end of the last ID3 frame in the list and the defined end of the ID3 tag
 		for(temp=ptr->frames;temp->next!=NULL;temp=temp->next);		//Seek to last frame link
 		fseek_err(ptr->fp,temp->pos + temp->length + 10,SEEK_SET);	//Seek to one byte past the end of the frame
-/*v2.33	Use BlockCopy()
-		while((unsigned long)ftell_err(ptr->fp) < ptr->tagend)
-		{	//For each byte until the outside of the ID3 tag is reached
-			c=fgetc_err(ptr->fp);	//Read it from input file
-			fputc_err(c,outf);		//Write it to the output file
-		}
-*/
 		BlockCopy(ptr->fp,outf,ptr->tagend - ftell_err(ptr->fp));
 		tagend=ftell_err(ptr->fp);	//Record the file position of the end of the tag
 	}
@@ -934,29 +905,7 @@ unsigned long BuildID3Tag(struct ID3Tag *ptr,FILE *outf)
 
 	if(Lyrics.verbose)	puts("Copying audio data");
 	fileendpos=GetFileEndPos(ptr->fp);	//Find the position of the last byte in the input MP3 file (the filesize)
-/*v2.33	Updated BlockCopy() logic to automatically fail over to the per-byte method
-	switch(BlockCopy(ptr->fp,outf,fileendpos-ftell_err(ptr->fp)))
-	{
-		case -1:	//If BlockCopy() couldn't allocate enough memory to block read+write the remaining data
-		//Manually copy all bytes one at a time from input file to output file until EOF is encountered
-			puts("Block copy failed, performing slow copy");
-			while(!feof(ptr->fp))
-			{	//Until end of input file is reached
-				c=fgetc(ptr->fp);	//Read one byte from input file
-				if(c != EOF)		//If the read was successful
-					fputc_err(c,outf);	//Write it to the output file
-			}
-			break;
 
-		case -2:	//File I/O error
-			puts("Error copying data from input to output file\nAborting");
-			exit_wrapper(1);
-			break;
-
-		default:	//Success
-		break;
-	}
-*/
 	if(ptr->id3v1present && SearchOmitID3framelist(Lyrics.nosrctag,"*"))	//If the user specified to leave off the ID3v1 tag, and the source MP3 has an ID3 tag
 	{
 		BlockCopy(ptr->fp,outf,fileendpos-ftell_err(ptr->fp)-128);			//Copy rest of source file to output file (minus 128 bytes, the size of the ID3v1 tag)
@@ -1125,25 +1074,11 @@ struct OmitID3frame *AddOmitID3framelist(struct OmitID3frame *ptr,const char *fr
 //Allocate and init new link
 	temp=malloc_err(sizeof(struct OmitID3frame));
 	temp->frameid=DuplicateString(frameid);
-//	temp->next=NULL;
 
 //Append link to existing list if applicable
-/*v2.33	Minor optimization by inserting to front of list
-	if(ptr != NULL)
-	{
-		while(ptr->next != NULL)	//Seek to last link in the list
-			ptr=ptr->next;
-
-		ptr->next=temp;	//Last link points forward to new link
-	}
-*/
 	temp->next=ptr;		//The new link becomes the head and points forward to whatever the head was
 
-//v2.33	The new insertion logic means the new link is always the head and will be returned to the calling function
-//	if(head != NULL)	//If this linked list already had a head
-//		return head;	//return it
-//	else
-		return temp;	//Otherwise return the new linked list head
+	return temp;	//Otherwise return the new linked list head
 }
 
 int SearchOmitID3framelist(struct OmitID3frame *ptr,const char *frameid)

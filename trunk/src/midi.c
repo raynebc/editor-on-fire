@@ -269,97 +269,6 @@ long eof_figure_beat(double pos)
 	return -1;
 }
 
-/*	//Unused
-double eof_calculate_bpm_absolute(double pos)
-{
-	eof_log("eof_calculate_bpm_absolute() entered", 1);
-
-	long beat = eof_figure_beat(pos);
-	if(beat >= 0)
-	{
-		return (double)60000000.0 / (double)eof_song->beat[beat]->ppqn;
-	}
-	return 0.0;
-}
-*/
-
-/*	//Unused
-int eof_check_bpm_change(unsigned long start, unsigned long end)
-{
-	eof_log("eof_check_bpm_change() entered", 1);
-
-	long startbeat = eof_figure_beat(start);
-	long endbeat = eof_figure_beat(end);
-	long i;
-
-	// same beat, no brainer *
-	if(startbeat == endbeat)
-	{
-		return 0;
-	}
-
-	// different starting and ending bpm, uh huh *
-	else if(eof_song->beat[startbeat]->ppqn != eof_song->beat[endbeat]->ppqn)
-	{
-		return 1;
-	}
-
-	else
-	{
-		for(i = startbeat; (i < endbeat) && (i < eof_song->beats); i++)
-		{
-			if(eof_song->beat[i]->ppqn != eof_song->beat[startbeat]->ppqn)
-			{
-				return 1;
-			}
-		}
-	}
-	return 0;
-}
-*/
-
-///Unused function
-/* takes a segment of time and calculates it's actual delta,
-   taking into account the BPM changes */
-//The conversion of realtime to deltas is deltas=realtime * timedivision * BPM / (millis per minute)
-//The term "BPM / (millis per minute)" can be mathematically simplified to "1000 / ppqn"
-//The simplified formula is deltas=realtime * timedivision * 1000 / ppqn
-/*double eof_calculate_delta(double start, double end)
-{
-	eof_log("eof_calculate_delta() entered", 1);
-
-	long i;
-	long startbeat = eof_figure_beat(start);
-	long endbeat = eof_figure_beat(end);
-	double total_delta = 0.0;	//Delta counter
-	double total_time = 0.0;	//Count the segments of time that were converted, for debugging
-
-	/ if no BPM change, calculate delta the easy way :)
-	if(!eof_check_bpm_change(start, end))
-	{
-		total_time = end - start;
-		return (end - start) * EOF_DEFAULT_TIME_DIVISION * 1000 / eof_song->beat[0]->ppqn;
-	}
-
-	/ get first_portion
-	total_delta += (eof_song->beat[startbeat + 1]->fpos - start) * EOF_DEFAULT_TIME_DIVISION * 1000 / eof_song->beat[startbeat]->ppqn;
-	total_time += eof_song->beat[startbeat + 1]->fpos - start;
-
-	/ get rest of the portions
-	for(i = startbeat + 1; i < endbeat; i++)
-	{
-		total_delta += (eof_song->beat[i + 1]->fpos - eof_song->beat[i]->fpos) * EOF_DEFAULT_TIME_DIVISION * 1000 / eof_song->beat[i]->ppqn;
-		total_time += eof_song->beat[i + 1]->fpos - eof_song->beat[i]->fpos;
-	}
-
-	/ get last portion
-	total_delta += (end - eof_song->beat[endbeat]->fpos) * EOF_DEFAULT_TIME_DIVISION * 1000 / eof_song->beat[endbeat]->ppqn;
-	total_time += end - eof_song->beat[endbeat]->fpos;
-
-	return total_delta;
-}
-*/
-
 /* write MTrk data to a temp file so we can calculate the length in bytes of the track
    write MThd data and copy MTrk data from the temp file using the size of the temp file as the track length
    delete the temp file
@@ -661,7 +570,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					{	//If this is not an expert+ bass drum note that would be skipped due to such notes being disabled
 						if((j == EOF_TRACK_DRUM) && (noteflags & EOF_NOTE_FLAG_DBASS) && !featurerestriction)
 						{	//If the track being written is PART DRUMS, this note is marked for Expert+ double bass, and not writing a RB3 compliant MIDI
-							eof_add_midi_event(deltapos, 0x90, 95, vel, 0);
+							eof_add_midi_event(deltapos, 0x90, 95, vel, 0);		//Note 95 is used for Expert+ bass notes
 							eof_add_midi_event(deltapos + deltalength, 0x80, 95, vel, 0);
 							expertplus = 1;
 						}
@@ -921,8 +830,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 					eof_clear_midi_events();
 					return 0;	//Return failure
-//					notenum = eof_get_track_size(sp, j) - 1;	//The index of the last note in this track
-//					eof_add_midi_event(eof_get_note_pos(sp, j, notenum) + eof_get_note_length(sp, j, notenum),0x80,i, vel, 0);
 				}
 			}
 			qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
@@ -1564,8 +1471,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
 					eof_clear_midi_events();
 					return 0;	//Return failure
-//					notenum = eof_get_track_size(sp, j) - 1;	//The index of the last note in this track
-//					eof_add_midi_event(eof_get_note_pos(sp, j, notenum) + eof_get_note_length(sp, j, notenum), 0x80, i, vel, 0);
 				}
 			}
 			qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
@@ -1666,7 +1571,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	lastdelta=0;
 	unsigned long current_ts = 0;
 	unsigned long current_ks = 0;
-//	unsigned long nextanchorpos = 0, next_tspos = 0, next_kspos = 0;
 	unsigned long nexteventpos = 0;
 	char whattowrite;	//Bitflag: bit 0=write tempo change, bit 1=write TS change
 	ptr = anchorlist;
@@ -1680,7 +1584,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		}
 		if(eof_use_ts && (current_ts < tslist->changes))
 		{	//If there are any Ts changes left (only if the user opted to do export TS changes)
-//			next_tspos = tslist->change[current_ts]->pos;
 			if(!whattowrite || (nexteventpos > tslist->change[current_ts]->pos))
 			{	//If no tempo changes were left, or this TS change is earlier than any such changes
 				nexteventpos = tslist->change[current_ts]->pos;
@@ -2053,7 +1956,6 @@ struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp)
 	struct Tempo_change *temp=NULL;
 	unsigned long lastppqn=0;	//Tracks the last anchor's PPQN value
 	unsigned long deltactr=0;	//Counts the number of deltas between anchors
-//	unsigned den=4;				//Stores the most recent TS change's denominator (default to 4)
 
 	if((sp == NULL) || (sp->beats < 1))
 	{
@@ -2061,10 +1963,6 @@ struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp)
 	}
 	for(ctr=0;ctr < sp->beats;ctr++)
 	{	//For each beat
-//		if(eof_use_ts)
-//		{	//If the user opted to use time signatures during MIDI export
-//			eof_get_ts(sp,NULL,&den,ctr);	//Update the TS denominator if applicable
-//		}
 		if(sp->beat[ctr]->ppqn != lastppqn)
 		{	//If this beat has a different tempo than the last, or it is the first beat, add it to the list
 			lastppqn=sp->beat[ctr]->ppqn;	//Remember this ppqn
@@ -2078,8 +1976,6 @@ struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp)
 			list=temp;	//Update list pointer
 		}
 
-//This commented out line was causing timing errors when importing a RB MIDI that used #/8 TS
-//		deltactr+=((double)EOF_DEFAULT_TIME_DIVISION * den / 4.0) + 0.5;	//Add the number of deltas of one beat (scale to convert from deltas per quarternote) to the counter
 		deltactr+=(double)EOF_DEFAULT_TIME_DIVISION + 0.5;	//Add the number of deltas of one beat to the counter
 	}
 
@@ -2178,15 +2074,7 @@ unsigned long eof_ConvertToDeltaTime(double realtime,struct Tempo_change *anchor
 //reltime is the amount of time we need to find a relative delta for, and add to the absolute delta time of the nearest preceding tempo/TS change
 //By using the updated formula respecting time signature:	realtime = (delta / divisions) * (60000.0 / BPM) * TS_den/4;
 //The formula for delta is:		delta = realtime * divisions * BPM / 60000 * TS_den / 4
-
-//This commented out line was causing timing errors when importing a RB MIDI that used #/8 TS
-//	delta+=(unsigned long)((reltime * (double)timedivision * temp->BPM / 240000.0 * (double)den) + 0.5);
 	delta+=(unsigned long)((reltime * (double)timedivision * temp->BPM / 60000.0) + 0.5);
-
-//The old conversion formula that doesn't take time signature into account
-//By using NewCreature's formula:	realtime = (delta / divisions) * (60000.0 / bpm)
-//The formula for delta is:		delta = realtime * divisions * bpm / 60000
-//	delta+=(unsigned long)((temptime * (double)timedivision * temp->BPM / (double)60000.0 + (double)0.5));			//Add .5 so that the delta counter is rounded to the nearest 1
 
 //Add logic so that if the calculated delta time is 1 delta away from lining up with a beat marker (based on time division), adjust to match
 	if(snaptobeat)
@@ -2385,8 +2273,6 @@ EOF_MIDI_TS_LIST *eof_build_ts_list(EOF_SONG *sp)
 			tslist->change[tslist->changes-1]->pos = deltapos;	//Store the time signature's position in deltas
 		}
 
-//This commented out line was causing timing errors when importing a RB MIDI that used #/8 TS
-//		beatlength = ((double)EOF_DEFAULT_TIME_DIVISION * den / 4.0);		//Determine the length of this beat in deltas
 		beatlength = (double)EOF_DEFAULT_TIME_DIVISION;		//Determine the length of this beat in deltas
 		deltafpos += beatlength;	//Add the delta length of this beat to the delta counter
 		deltapos = deltafpos + 0.5;	//Round up to nearest delta

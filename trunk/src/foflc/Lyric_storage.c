@@ -428,8 +428,6 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 
 //If this lyric piece is just a + (or a plus with a grouping hyphen), ensure it is marked in the Lyric structure to append to the previous lyric
 //Check Lyrics.curline->piececount to verify that this is only done if the + is not the first lyric piece in the line
-//v2.34	Corrected pitch shift grouping logic
-//	if((!strcmp(str,"+") || !strcmp(str,"+-")) && (Lyrics.curline->piececount != 0))
 	if(!strcmp(str,"+") && (Lyrics.curline->piececount != 0))
 	{
 		assert_wrapper(temp->prev != NULL);
@@ -968,8 +966,6 @@ void PostProcessLyrics(void)
 				{
 					assert_wrapper(pieceptr->next != NULL);	//If there is no next piece, but this piece was marked for grouping, abort program
 					assert_wrapper(pieceptr->next->lyric != NULL);	//The next lyric needs to have a string defined
-//v2.34	Corrected pitch shift grouping logic
-//					if((pieceptr->next->lyric)[0] != '+')	//Only append a hyphen if the next lyric isn't the + pitch shift character
 					if(((pieceptr->lyric)[0] != '+') && ((pieceptr->next->lyric)[0] != '+'))
 					{	//Only append an inserted hyphen if this lyric and the next lyric aren'pitch shifts
 						pieceptr->lyric=ResizedAppend(pieceptr->lyric,"-",1);//Resize the string to include an appended hyphen
@@ -1067,8 +1063,6 @@ void PostProcessLyrics(void)
 				}
 
 				//Grouping was performed, amend the lyric line accordingly
-//				pieceptr->duration+=temp->duration;	//Add duration
-//v2.35	Correct duration calculation for grouping
 				pieceptr->duration=temp->start+temp->duration-pieceptr->start;	//The new duration is the duration from the start of the current lyric to the end of the appended lyric
 
 				//Inherit these values
@@ -2447,7 +2441,6 @@ unsigned long GetFileEndPos(FILE *fp)
 void BlockCopy(FILE *inf,FILE *outf,unsigned long num)
 {
 	unsigned char *buffer=NULL;
-//	int status=0;
 	int c=0;
 	unsigned long ctr=0;
 

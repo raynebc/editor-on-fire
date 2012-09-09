@@ -1333,9 +1333,6 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 					return 0;	//Return error
 				}
 				memset(ptr4->tuning, 0, EOF_TUNING_LENGTH);	//Initialize the tuning for all strings to "standard" (zero)
-//				memset(ptr4->eof_chord_variations, 0, sizeof(EOF_CHORD_VARIATION));	//Initialize the chord variations array to undefined
-//				memset(ptr4->eof_chord_num_variations, 0, sizeof(EOF_CHORD_NUM_VARIATION_ARRAY));
-//				ptr4->eof_chord_variations_array_ready = 0;
 				ptr4->notes = 0;
 				ptr4->solos = 0;
 				ptr4->star_power_paths = 0;

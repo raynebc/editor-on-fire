@@ -179,14 +179,6 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 			else if(!ustricmp(eof_import_ini_setting[i].type, "scores_ext"))
 			{
 			}
-///This handling is obsolete due to the sysex_open_bass INI tag
-//			else if(!ustricmp(eof_import_ini_setting[i].type, "open_strum"))
-//			{	//The deprecated open strum INI tag
-//				if(!ustricmp(value_index, "True"))
-//				{
-//					sp->track[EOF_TRACK_BASS]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the sixth lane flag
-//				}
-//			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "real_guitar_tuning"))
 			{
 				ctr = 0;	//Reset counter
