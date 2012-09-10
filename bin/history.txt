@@ -3,6 +3,12 @@ EOF Version History
 
 1.8:
 
+*Added the ability to export key signatures, which
+can be defined on the selected beat marker via the
+Beat>Key Signature menu.  The current key of the
+song will be used by Phase Shift to select
+appropriately pitched notes for freestyle.
+
 Added a keyboard shortcut for paste from catalog
 (CTRL+SHIFT+C).
 
