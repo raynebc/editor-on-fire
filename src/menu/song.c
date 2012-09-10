@@ -3203,7 +3203,7 @@ int eof_menu_song_seek_catalog_entry(void)
 	return 1;
 }
 
-int eof_find_note_sequence(EOF_SONG *sp, unsigned long target_track, unsigned long target_diff, unsigned long target_start, unsigned long target_size, unsigned long input_track, unsigned long input_diff, unsigned long start_pos, char direction, unsigned long *hit_pos)
+int eof_find_note_sequence(EOF_SONG *sp, unsigned long target_track, unsigned long target_start, unsigned long target_size, unsigned long input_track, unsigned long input_diff, unsigned long start_pos, char direction, unsigned long *hit_pos)
 {
 	long input_note, next_note, match_count = 0, next_target_note = target_start, match_pos = 0;
 	char start_found = 0, match;
@@ -3317,7 +3317,7 @@ int eof_find_note_sequence_time_range(EOF_SONG *sp, unsigned long target_track, 
 		return 0;	//Return no match found
 
 	//Perform the search
-	return eof_find_note_sequence(sp, target_track, target_diff, target_start, target_size, input_track, input_diff, start_pos, direction, hit_pos);
+	return eof_find_note_sequence(sp, target_track, target_start, target_size, input_track, input_diff, start_pos, direction, hit_pos);
 }
 
 int eof_menu_catalog_find(char direction)

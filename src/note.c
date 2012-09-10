@@ -516,7 +516,7 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 	long note_y;
 	long native = 0;
 	int pcol = p == 1 ? eof_color_white : p == 2 ? makecol(224, 255, 224) : 0;
-	int dcol = eof_color_white;
+///	int dcol = eof_color_white;	//Unused
 	int ncol = 0;
 	EOF_PHRASE_SECTION *lyricline;	//The line that this lyric is found to be in (if any) so the correct background color can be determined
 	int bgcol = eof_color_black;	//Unless the text is found to be in a lyric phrase, it will render with a black background
@@ -601,7 +601,7 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 	if(p == 3)
 	{
 		pcol = eof_color_white;
-		dcol = eof_color_white;
+///		dcol = eof_color_white;
 	}
 
 	nplace = np->note - eof_vocals_offset;
@@ -759,7 +759,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	long notelength = 0;
 	unsigned long noteflags = 0;
 	unsigned long notenote = 0;
-	char notetype = 0;
+///	char notetype = 0;	//Unused
 
 //Validate parameters
 	tracknum = eof_song->track[track]->tracknum;
@@ -771,7 +771,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	notelength = eof_get_note_length(eof_song, track, notenum);
 	noteflags = eof_get_note_flags(eof_song, track, notenum);
 	notenote = eof_get_note_note(eof_song, track, notenum);
-	notetype = eof_get_note_type(eof_song, track, notenum);
+///	notetype = eof_get_note_type(eof_song, track, notenum);
 
 	if((eof_song->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && ((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || eof_legacy_view))
 	{	//If the catalog entry is a pro guitar note and the active track is not, or the user specified to display pro guitar notes as legacy notes
@@ -802,11 +802,11 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	}
 
 	long halflanewidth = (56.0 * (4.0 / (numlanes-1))) / 2;
-	long xoffset = 0;	//This will be used to offset the trill/tremolo lane fill as necessary to center the fill over that lane's gem
-	if(eof_selected_track == EOF_TRACK_DRUM)
-	{
-		xoffset = halflanewidth;	//Drum gems render half a lane width further right (in between fret lines instead of centered over the lines)
-	}
+///	long xoffset = 0;	//This will be used to offset the trill/tremolo lane fill as necessary to center the fill over that lane's gem	//Unused
+///	if(eof_selected_track == EOF_TRACK_DRUM)
+///	{
+///		xoffset = halflanewidth;	//Drum gems render half a lane width further right (in between fret lines instead of centered over the lines)
+///	}
 	#define EOF_HALF_3D_IMAGE_WIDTH 24
 	#define EOF_3D_IMAGE_HEIGHT 48
 
@@ -990,7 +990,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	long notelength = 0;
 	unsigned long noteflags = 0;
 	unsigned long notenote = 0;
-	char notetype = 0;
+///	char notetype = 0;	//Unused
 
 //Validate parameters
 	if((track == 0) || (track >= eof_song->tracks) || ((eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)) || (notenum >= eof_get_track_size(eof_song, track)))
@@ -1001,7 +1001,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	notelength = eof_get_note_length(eof_song, track, notenum);
 	noteflags = eof_get_note_flags(eof_song, track, notenum);
 	notenote = eof_get_note_note(eof_song, track, notenum);
-	notetype = eof_get_note_type(eof_song, track, notenum);
+///	notetype = eof_get_note_type(eof_song, track, notenum);
 
 	if(eof_selected_track == EOF_TRACK_DRUM)
 		return 0;	//Don't render tails for drum notes
@@ -1235,14 +1235,15 @@ BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, unsigned char s
 
 void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note)
 {
-	unsigned long index = 0, tracknum, flags = 0, prevnoteflags = 0;
+	unsigned long index = 0, flags = 0, prevnoteflags = 0;
+///	unsigned long tracknum;	//Unused
 	long prevnotenum;
 
 	if((track >= eof_song->tracks) || (buffer == NULL) || ((eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[track]->track_format != EOF_LEGACY_TRACK_FORMAT)))
 	{
 		return;	//If this is an invalid track number, the buffer is NULL or the specified track isn't a pro guitar or legacy track, return
 	}
-	tracknum = eof_song->track[track]->tracknum;
+///	tracknum = eof_song->track[track]->tracknum;
 	if(note >= eof_get_track_size(eof_song, track))
 	{
 		return;

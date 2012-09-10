@@ -33,7 +33,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 
 	char * textbuffer = NULL;
 	char * line_token = NULL;
-	int textlength = 0;
+///	int textlength = 0;	//Unused
 	char * token;
 	char * equals = NULL;
 	int i;
@@ -59,7 +59,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 		eof_log("\tCannot open INI file, skipping", 1);
 		return 0;
 	}
-	textlength = ustrlen(textbuffer);
+///	textlength = ustrlen(textbuffer);
 	eof_log("\tTokenizing INI file buffer", 1);
 	ustrtok(textbuffer, "\r\n[]");
 	eof_log("\tParsing INI file buffer", 1);

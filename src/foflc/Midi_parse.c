@@ -1550,7 +1550,8 @@ void VRhythm_Load(char *srclyrname,char *srcmidiname,FILE *inf)
 	char diffID=0;
 	unsigned ctr=0;
 	unsigned long ctr2=0;
-	unsigned char note1=0,note2=0,splitlogic=0;	//Used to add line breaks during lyricless vrhythm import
+	unsigned char note1=0,note2=0;
+///	unsigned char splitlogic=0;	//Used to add line breaks during lyricless vrhythm import	//Unused
 
 //Validate parameters
 	if(((!Lyrics.nolyrics && (srclyrname == NULL))) || (inf == NULL) || (srcmidiname == NULL))
@@ -1679,10 +1680,10 @@ void VRhythm_Load(char *srclyrname,char *srcmidiname,FILE *inf)
 			note2=Lyrics.curline->curpiece->pitch;						//Store the note number of the second entry in this line
 			if(Lyrics.verbose)	printf("\t\tSecond fret in line is #%u\n",note2-MIDIstruct.diff_lo+1);
 
-			if(note1 != note2)											//If the two vrhythm notes were different fret numbers
-				splitlogic=1;											//enable line splitting logic
-			else
-				splitlogic=0;											//otherwise turn it off
+///			if(note1 != note2)											//If the two vrhythm notes were different fret numbers
+///				splitlogic=1;											//enable line splitting logic
+///			else
+///				splitlogic=0;											//otherwise turn it off
 
 			Lyrics.curline->curpiece=Lyrics.curline->curpiece->next;	//Point to next lyric
 			while(Lyrics.curline->curpiece != NULL)

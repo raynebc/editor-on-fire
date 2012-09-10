@@ -1858,11 +1858,12 @@ int FindNextNumber(char *buffer,unsigned long *startindex)
 
 struct Lyric_Format *DetectLyricFormat(char *file)
 {
-	unsigned long maxlinelength=0,index=0,convertednum2=0,ctr=0;
+	unsigned long maxlinelength=0,index=0,ctr=0;
+///	unsigned long convertednum2=0;	//Unused
 	char *temp=NULL,*temp2=NULL,temp3=0;
 	char *buffer=NULL;			//Used for text file testing
 	int errorcode=0,jumpcode=0;
-	long int convertednum=0;
+///	long int convertednum=0;	//Unused
 	unsigned long processedctr=0;	//The current line number being processed in the text file
 	char timestampchar[]="[<";		//Accept any of these characters as valid characters to begin an LRC timestamp
 	char quicktemp=0;				//Used to store the original user setting of the quick processing flag (Lyrics.quick)
@@ -1950,7 +1951,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 		if((temp3=='*') || (temp3==':') || (temp3=='-') || (toupper(temp3)=='F'))
 		{	//A character that implies UltraStar format, validate
 			index++;	//Seek past line style
-			convertednum=ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected timestamp, return error in errorcode upon failure
+			ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected timestamp, return error in errorcode upon failure
 			if(!errorcode && (temp3=='-'))	//If this is a line break followed by a timestamp (valid UltraStar syntax)
 			{
 				free(buffer);
@@ -1961,9 +1962,9 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 
 			//Otherwise, for all other UltraStar line styles, 2 more valid numbers are expected
 			if(!errorcode)
-				convertednum=ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected duration, return error in errorcode upon failure
+				ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected duration, return error in errorcode upon failure
 			if(!errorcode)
-				convertednum=ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected pitch, return error in errorcode upon failure
+				ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected pitch, return error in errorcode upon failure
 
 			if(errorcode)	//If the timestamp, duration or the pitch failed to parse
 			{
@@ -1982,9 +1983,9 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 //Test for Script
 		if(isdigit(temp3))
 		{	//A numerical character implies Script format, validate
-			convertednum=ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected timestamp, return error in errorcode upon failure
+			ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected timestamp, return error in errorcode upon failure
 			if(!errorcode)
-				convertednum=ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected duration, return error in errorcode upon failure
+				ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected duration, return error in errorcode upon failure
 
 			if(!errorcode && (strstr(&(buffer[index]),"text") != NULL))	//If the timestamp and duration parsed, and the string "text" was found after the two numbers (valid Script format)
 			{
@@ -2001,13 +2002,13 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 			temp=SeekNextLRCTimestamp(&(buffer[index]));	//Find first timestamp if one exists on this line
 			if(temp != NULL)	//If a timestamp is found
 			{
-				convertednum2=ConvertLRCTimestamp(&temp,&errorcode);
+				ConvertLRCTimestamp(&temp,&errorcode);
 				if(!errorcode)	//If the timestamp parsed correctly (valid LRC format)
 				{
 					temp2=SeekNextLRCTimestamp(temp);	//Look for a second timestamp on the same line (Extended LRC)
 					if(temp2 != NULL)	//If a second timestamp is found
 					{
-						convertednum2=ConvertLRCTimestamp(&temp2,&errorcode);
+						ConvertLRCTimestamp(&temp2,&errorcode);
 						if(!errorcode)	//If the timestamp parsed correctly (valid ELRC format)
 						{
 							free(buffer);
@@ -2032,13 +2033,13 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 			temp=SeekNextSRTTimestamp(&(buffer[index]));	//Find first timestamp if one exists on this line
 			if(temp != NULL)	//If a timestamp is found
 			{
-				convertednum2=ConvertSRTTimestamp(&temp,&errorcode);
+				ConvertSRTTimestamp(&temp,&errorcode);
 				if(!errorcode)	//If the timestamp parsed correctly (valid SRT format)
 				{
 					temp2=SeekNextSRTTimestamp(temp);	//Look for a second timestamp on the same line
 					if(temp2 != NULL)	//If a second timestamp is found
 					{
-						convertednum2=ConvertSRTTimestamp(&temp2,&errorcode);
+						ConvertSRTTimestamp(&temp2,&errorcode);
 						if(!errorcode)	//If the timestamp parsed correctly (valid ELRC format)
 						{
 							free(buffer);

@@ -118,8 +118,8 @@ int eof_raw_midi_dialog_add(DIALOG * d);
 	//Functions used in the dialog for managing the raw MIDI data tracks stored in the project
 	//eof_raw_midi_tracks_list() is used in multiple functions, so it enumerates the contents of eof_MIDI_track_list_to_enumerate
 
-int eof_find_note_sequence(EOF_SONG *sp, unsigned long target_track, unsigned long target_diff, unsigned long target_start, unsigned long target_size, unsigned long input_track, unsigned long input_diff, unsigned long start_pos, char direction, unsigned long *hit_pos);
-	//Searches for the previous/next match of the target sequence of notes relative to a given position of the specified track difficulty
+int eof_find_note_sequence(EOF_SONG *sp, unsigned long target_track, unsigned long target_start, unsigned long target_size, unsigned long input_track, unsigned long input_diff, unsigned long start_pos, char direction, unsigned long *hit_pos);
+	//Searches for the previous/next match of the target sequence of notes (within the specified input of notes) relative to a given position of the specified track difficulty
 	//If direction is negative, the first match BEFORE the given position is searched for
 	//If direction is not negative, the first match AFTER the given position is searched for
 	//If a match is found, this function returns nonzero, and the position of the match is returned through hit_pos

@@ -1653,7 +1653,7 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 				{	//If the new drum note contains gems on more than one lane
 					phrasetype = EOF_TRILL_SECTION;		//Consider it a special drum roll (multiple lanes)
 				}
-				eof_track_add_section(eof_song, EOF_TRACK_DRUM, EOF_TREMOLO_SECTION, 0, dword, dword + length, 0, NULL);
+				eof_track_add_section(eof_song, EOF_TRACK_DRUM, phrasetype, 0, dword, dword + length, 0, NULL);
 			}
 			if(isexpertplus)
 			{	//If this note was determined to be an expert+ drum note

@@ -258,7 +258,7 @@ double eof_ConvertToRealTime(unsigned long absolutedelta,struct Tempo_change *an
 	unsigned long reldelta=0;
 	double tstime=0.0;			//Stores the realtime position of the closest TS change before the specified realtime
 	unsigned long tsdelta=0;	//Stores the delta time position of the closest TS change before the specified realtime
-	unsigned int den=4;			//Stores the denominator of the closest TS change before the specified delta time (defaults to 4 as per MIDI specification)
+///	unsigned int den=4;			//Stores the denominator of the closest TS change before the specified delta time (defaults to 4 as per MIDI specification) //Unused
 	unsigned long ctr=0;
 
 //Find the last time signature change at or before the target delta time
@@ -268,7 +268,7 @@ double eof_ConvertToRealTime(unsigned long absolutedelta,struct Tempo_change *an
 		{
 			if(absolutedelta >= tslist->change[ctr]->pos)
 			{	//If the TS change is at or before the target delta time
-				den = tslist->change[ctr]->den;		//Store this time signature's denominator for use in the conversion
+///				den = tslist->change[ctr]->den;		//Store this time signature's denominator for use in the conversion
 				tstime = tslist->change[ctr]->realtime;		//Store the realtime position
 				tsdelta = tslist->change[ctr]->pos;			//Store the delta time position
 			}
@@ -295,7 +295,6 @@ double eof_ConvertToRealTime(unsigned long absolutedelta,struct Tempo_change *an
 
 //reldelta is the amount of deltas we need to find a relative time for, and add to the absolute real time of the nearest preceding tempo/TS change
 //At this point, we have reached the tempo change that absolutedelta resides within, find the realtime
-//The updated theoretical conversion formula that takes the time signature into account is: deltas / (time division) * (60000.0 / (BPM * (TS denominator) / 4))
 	time+=(double)reldelta / (double)timedivision * ((double)60000.0 / (temp->BPM));
 
 	return time+offset;
