@@ -752,7 +752,7 @@ void DestroyID3(struct ID3Tag *ptr)
 unsigned long BuildID3Tag(struct ID3Tag *ptr,FILE *outf)
 {
 	unsigned long tagpos=0;		//Records the position of the ID3 tag in the output file
-	unsigned long tagend=0;		//Records the position of one byte past the end of the written ID3 tag
+///	unsigned long tagend=0;		//Records the position of one byte past the end of the written ID3 tag	//Unused
 	unsigned long framepos=0;	//Records the position of the SYLT frame in the output file
 	unsigned long ctr=0;
 	struct ID3Frame *temp=NULL;
@@ -898,7 +898,7 @@ unsigned long BuildID3Tag(struct ID3Tag *ptr,FILE *outf)
 		for(temp=ptr->frames;temp->next!=NULL;temp=temp->next);		//Seek to last frame link
 		fseek_err(ptr->fp,temp->pos + temp->length + 10,SEEK_SET);	//Seek to one byte past the end of the frame
 		BlockCopy(ptr->fp,outf,ptr->tagend - ftell_err(ptr->fp));
-		tagend=ftell_err(ptr->fp);	//Record the file position of the end of the tag
+///		tagend=ftell_err(ptr->fp);	//Record the file position of the end of the tag
 	}
 
 	tagsize=ftell_err(outf)-tagpos-10;	//Find the length of the ID3 tag that has been written (minus tag header size)
@@ -1065,11 +1065,11 @@ char *GrabID3TextFrame(struct ID3Tag *tag,const char *frameid,char *buffer,unsig
 
 struct OmitID3frame *AddOmitID3framelist(struct OmitID3frame *ptr,const char *frameid)
 {
-	struct OmitID3frame *head=NULL;
+///	struct OmitID3frame *head=NULL;	//Unused
 	struct OmitID3frame *temp=NULL;
 
 	assert_wrapper(frameid != NULL);
-	head=ptr;	//Save this address
+///	head=ptr;	//Save this address
 
 //Allocate and init new link
 	temp=malloc_err(sizeof(struct OmitID3frame));

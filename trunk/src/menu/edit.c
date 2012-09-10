@@ -1107,7 +1107,7 @@ int eof_menu_edit_copy(void)
 		{	//If this note is in the active difficulty, is in the active track and is selected
 			copy_notes++;
 			note_pos = eof_get_note_pos(eof_song, eof_selected_track, i);
-			note_len = eof_get_note_length(eof_song, eof_selected_track, i);
+///			note_len = eof_get_note_length(eof_song, eof_selected_track, i);
 			if(!first_pos_read || (note_pos < first_pos))
 			{	//Track the position of the first note in the selection
 				first_pos = note_pos;
@@ -1160,11 +1160,12 @@ int eof_menu_edit_copy(void)
 			pack_iputl(eof_get_note_pos(eof_song, eof_selected_track, i) - first_pos, fp);		//Write the note's position relative to within the selection
 			tfloat = eof_get_porpos(eof_get_note_pos(eof_song, eof_selected_track, i));
 			pack_fwrite(&tfloat, sizeof(float), fp);	//Write the percent representing the note's start position within a beat
-			tfloat = eof_get_porpos(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i));
+			note_len = eof_get_note_length(eof_song, eof_selected_track, i);
+			tfloat = eof_get_porpos(eof_get_note_pos(eof_song, eof_selected_track, i) + note_len);
 			pack_fwrite(&tfloat, sizeof(float), fp);	//Write the percent representing the note's end position within a beat
 			pack_iputl(eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i)), fp);	//Write the beat the note starts in
-			pack_iputl(eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i)), fp);	//Write the beat the note ends in
-			pack_iputl(eof_get_note_length(eof_song, eof_selected_track, i), fp);	//Write the note's length
+			pack_iputl(eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i) + note_len), fp);	//Write the beat the note ends in
+			pack_iputl(note_len, fp);	//Write the note's length
 			pack_iputl(eof_get_note_flags(eof_song, eof_selected_track, i), fp);	//Write the note's flags
 
 			/* Write pro guitar specific data to disk, or zeroed data */
@@ -2069,8 +2070,9 @@ int eof_menu_edit_paste_from_challenge(void)
 int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty)
 {
 	unsigned long i;
-	EOF_NOTE * new_note = NULL;
-	unsigned long pos, flags;
+///	EOF_NOTE * new_note = NULL;	//Unused
+	unsigned long pos;
+///	unsigned long flags;	//Unused
 	long length;
 
 	if((eof_note_type != source_difficulty) && (source_difficulty < EOF_MAX_DIFFICULTIES))
@@ -2097,8 +2099,8 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty)
 			{	//If this note is in the source difficulty
 				pos = eof_get_note_pos(eof_song, eof_selected_track, i);
 				length = eof_get_note_length(eof_song, eof_selected_track, i);
-				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
-				new_note = eof_copy_note(eof_song, eof_selected_track, i, eof_selected_track, pos, length, eof_note_type);
+///				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+				eof_copy_note(eof_song, eof_selected_track, i, eof_selected_track, pos, length, eof_note_type);
 			}
 		}
 		eof_detect_difficulties(eof_song);

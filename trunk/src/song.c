@@ -2825,11 +2825,12 @@ void eof_track_delete_note(EOF_SONG *sp, unsigned long track, unsigned long note
 
 void eof_song_empty_track(EOF_SONG * sp, unsigned long track)
 {
-	unsigned long tracknum, i;
+	unsigned long i;
+///	unsigned long tracknum;	//Unused
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
-	tracknum = sp->track[track]->tracknum;
+///	tracknum = sp->track[track]->tracknum;
 
 	for(i = eof_get_track_size(sp, track); i > 0; i--)
 	{	//Delete all notes in reverse order, which will avoid having to re-arrange the note array after each
@@ -3397,11 +3398,11 @@ void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 {
  	eof_log("eof_track_fixup_notes() entered", 2);
 
-	unsigned long tracknum;
+///	unsigned long tracknum;	//Unused
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
-	tracknum = sp->track[track]->tracknum;
+///	tracknum = sp->track[track]->tracknum;
 
 	switch(sp->track[track]->track_format)
 	{
@@ -4603,10 +4604,11 @@ int eof_create_image_sequence(void)
 	unsigned long remainder = 0;
 	char windowtitle[101] = {0};
 	float fps = 0.0;
-	clock_t starttime, curtime, endtime, lastpolltime = 0;
+	clock_t curtime, lastpolltime = 0;
 	char original_eof_desktop = eof_desktop;
 
 	#ifndef EOF_CREATE_IMAGE_SEQUENCE_SHOW_FPS_ONLY
+	clock_t starttime, endtime;
 	int err;
 	char filename[20] = {0};
 
@@ -5108,7 +5110,8 @@ unsigned long eof_get_highest_fret(unsigned long track, char scope)
 unsigned long eof_get_highest_clipboard_fret(char *clipboardfile)
 {
 	PACKFILE * fp;
-	unsigned long sourcetrack = 0, copy_notes = 0, first_beat = 0;
+	unsigned long sourcetrack = 0, copy_notes = 0;
+///	unsigned long first_beat = 0;	//Unused
 	unsigned long i, j, bitmask;
 	unsigned long highestfret = 0, currentfret;	//Used to find if any pasted notes would use a higher fret than the active track supports
 	EOF_EXTENDED_NOTE temp_note;
@@ -5122,9 +5125,9 @@ unsigned long eof_get_highest_clipboard_fret(char *clipboardfile)
 	{	//If the clipboard couldn't be opened
 		return 0;
 	}
-	sourcetrack = pack_igetl(fp);		//Read the source track of the clipboard data
-	copy_notes = pack_igetl(fp);		//Read the number of notes on the clipboard
-	first_beat = pack_igetl(fp);		//Read the original beat number of the first note that was copied
+	sourcetrack = pack_igetl(fp);	//Read the source track of the clipboard data
+	copy_notes = pack_igetl(fp);	//Read the number of notes on the clipboard
+	pack_igetl(fp);					//Read the original beat number of the first note that was copied
 	if(!copy_notes)
 	{	//If there are 0 notes on the clipboard
 		return 0;
@@ -5155,7 +5158,8 @@ unsigned long eof_get_highest_clipboard_fret(char *clipboardfile)
 unsigned long eof_get_highest_clipboard_lane(char *clipboardfile)
 {
 	PACKFILE * fp;
-	unsigned long sourcetrack = 0, copy_notes = 0, first_beat = 0;
+	unsigned long copy_notes = 0;
+///	unsigned long sourcetrack = 0, first_beat = 0;	//Unused
 	unsigned long i, j, bitmask;
 	unsigned long highestlane = 0;	//Used to find if any pasted notes would use a higher lane than the active track supports
 	EOF_EXTENDED_NOTE temp_note;
@@ -5169,9 +5173,9 @@ unsigned long eof_get_highest_clipboard_lane(char *clipboardfile)
 	{	//If the clipboard couldn't be opened
 		return 0;
 	}
-	sourcetrack = pack_igetl(fp);		//Read the source track of the clipboard data
-	copy_notes = pack_igetl(fp);		//Read the number of notes on the clipboard
-	first_beat = pack_igetl(fp);		//Read the original beat number of the first note that was copied
+	pack_igetl(fp);					//Read the source track of the clipboard data
+	copy_notes = pack_igetl(fp);	//Read the number of notes on the clipboard
+	pack_igetl(fp);					//Read the original beat number of the first note that was copied
 	if(!copy_notes)
 	{	//If there are 0 notes on the clipboard
 		return 0;

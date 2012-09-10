@@ -1,5 +1,6 @@
 #ifdef EOF_BUILD
 #include <allegro.h>
+#include "main.h"
 #include "song.h"
 #include "tuning.h"
 #endif

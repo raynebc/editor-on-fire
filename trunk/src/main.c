@@ -2559,7 +2559,7 @@ void eof_render_3d_window(void)
 	unsigned long numnotes;				//Used to abstract the notes
 	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
 	unsigned long tracknum;
-	unsigned char coloroffset = 0;		//Used to increase the color used to render drum roll phrases higher than normal since lane 1's color is not rendered for drum phrases
+///	unsigned char coloroffset = 0;		//Used to increase the color used to render drum roll phrases higher than normal since lane 1's color is not rendered for drum phrases	//Unused
 	unsigned long firstlane = 0, lastlane;	//Used to track the first and last lanes that get track specific rendering (ie. drums don't render markers for lane 1, bass doesn't render markers for lane 6)
 
 	//Used to draw trill and tremolo sections:
@@ -2585,7 +2585,7 @@ void eof_render_3d_window(void)
 	}
 	if(eof_selected_track == EOF_TRACK_DRUM)
 	{
-		coloroffset = 1;	//The drum roll phrase will render starting with lane 2's color instead of lane 1's color, since lane 1 (bass drum) doesn't use a lane
+///		coloroffset = 1;	//The drum roll phrase will render starting with lane 2's color instead of lane 1's color, since lane 1 (bass drum) doesn't use a lane
 		firstlane = 1;		//Don't render drum roll/special drum roll markers for the first lane (0)
 	}
 
@@ -2719,11 +2719,11 @@ void eof_render_3d_window(void)
 
 	/* draw the 'strings' */
 	long obx, oby, oex, oey;
-	long px, py, pw;
+///	long px, py, pw;	//Unused
 
-	px = eof_window_3d->w / 2;
-	py = 0;
-	pw = 320;
+///	px = eof_window_3d->w / 2;
+///	py = 0;
+///	pw = 320;
 
 	/* draw the beat markers */
 	long bz;
