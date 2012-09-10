@@ -832,6 +832,12 @@ void eof_read_editor_keys(void)
 		key[KEY_SPACE] = 0;
 	}
 
+	/* Ensure the seek position is no further left than the first beat marker if Feedback input method is in effect */
+	if((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_music_pos < eof_song->beat[0]->pos + eof_av_delay))
+	{
+		eof_set_seek_position(eof_song->beat[0]->pos + eof_av_delay);
+	}
+
 	/* rewind (Left, non Feedback input methods) */
 	/* Decrease grid snap (Left, Feedback input method)*/
 	if(key[KEY_LEFT])

@@ -1299,40 +1299,76 @@ set_window_title(debugtext);
 					if((eof_import_events[i]->event[j]->type == 0x80) || (eof_import_events[i]->event[j]->type == 0x90))
 					{	//For note on/off events, determine the type (difficulty) of the event
 						diff = -1;	//No difficulty is assumed until the note number is examined
-						if((eof_import_events[i]->event[j]->d1 >= 60) && (eof_import_events[i]->event[j]->d1 < 60 + 6))
-						{	//Lane 5 + 1 is used for a lane 5 drum gem, so include it in the difficulty checks here
-							lane = eof_import_events[i]->event[j]->d1 - 60;
-							diff = EOF_NOTE_SUPAEASY;
-						}
-						else if((eof_import_events[i]->event[j]->d1 >= 72) && (eof_import_events[i]->event[j]->d1 < 72 + 6))
-						{
-							lane = eof_import_events[i]->event[j]->d1 - 72;
-							diff = EOF_NOTE_EASY;
-						}
-						else if((eof_import_events[i]->event[j]->d1 >= 84) && (eof_import_events[i]->event[j]->d1 < 84 + 6))
-						{
-							lane = eof_import_events[i]->event[j]->d1 - 84;
-							diff = EOF_NOTE_MEDIUM;
-						}
-						else if((eof_import_events[i]->event[j]->d1 >= 96) && (eof_import_events[i]->event[j]->d1 < 102))
-						{
-							lane = eof_import_events[i]->event[j]->d1 - 96;
-							diff = EOF_NOTE_AMAZING;
-						}
-						else if((eof_import_events[i]->event[j]->d1 >= 120) && (eof_import_events[i]->event[j]->d1 <= 124))
-						{
-							lane = eof_import_events[i]->event[j]->d1 - 120;
-							diff = EOF_NOTE_SPECIAL;
-						}
-						else if((picked_track == EOF_TRACK_DRUM) && (eof_import_events[i]->event[j]->d1 == 95))
-						{	//If the track being read is PART DRUMS, and this note is marked for Expert+ double bass
-							lane = eof_import_events[i]->event[j]->d1 - 96 + 1;	//Treat as gem 1 (bass drum)
-							diff = EOF_NOTE_AMAZING;
+						if(picked_track != EOF_TRACK_DANCE)
+						{	//All legacy style tracks besides the dance track use the same offsets
+							if((eof_import_events[i]->event[j]->d1 >= 60) && (eof_import_events[i]->event[j]->d1 < 60 + 6))
+							{	//Lane 5 + 1 is used for a lane 5 drum gem, so include it in the difficulty checks here
+								lane = eof_import_events[i]->event[j]->d1 - 60;
+								diff = EOF_NOTE_SUPAEASY;
+							}
+							else if((eof_import_events[i]->event[j]->d1 >= 72) && (eof_import_events[i]->event[j]->d1 < 72 + 6))
+							{
+								lane = eof_import_events[i]->event[j]->d1 - 72;
+								diff = EOF_NOTE_EASY;
+							}
+							else if((eof_import_events[i]->event[j]->d1 >= 84) && (eof_import_events[i]->event[j]->d1 < 84 + 6))
+							{
+								lane = eof_import_events[i]->event[j]->d1 - 84;
+								diff = EOF_NOTE_MEDIUM;
+							}
+							else if((eof_import_events[i]->event[j]->d1 >= 96) && (eof_import_events[i]->event[j]->d1 < 102))
+							{
+								lane = eof_import_events[i]->event[j]->d1 - 96;
+								diff = EOF_NOTE_AMAZING;
+							}
+							else if((eof_import_events[i]->event[j]->d1 >= 120) && (eof_import_events[i]->event[j]->d1 <= 124))
+							{
+								lane = eof_import_events[i]->event[j]->d1 - 120;
+								diff = EOF_NOTE_SPECIAL;
+							}
+							else if((picked_track == EOF_TRACK_DRUM) && (eof_import_events[i]->event[j]->d1 == 95))
+							{	//If the track being read is PART DRUMS, and this note is marked for Expert+ double bass
+								lane = eof_import_events[i]->event[j]->d1 - 96 + 1;	//Treat as gem 1 (bass drum)
+								diff = EOF_NOTE_AMAZING;
+							}
+							else
+							{
+								lane = 0;	//No defined lane
+								diff = -1;	//No defined difficulty
+							}
 						}
 						else
-						{
-							lane = 0;	//No defined lane
-							diff = -1;	//No defined difficulty
+						{	//This is the dance track
+							if((eof_import_events[i]->event[j]->d1 >= 48) && (eof_import_events[i]->event[j]->d1 < 60))
+							{	//Notes 48-59
+								lane = eof_import_events[i]->event[j]->d1 - 48;
+								diff = EOF_NOTE_SUPAEASY;
+							}
+							else if((eof_import_events[i]->event[j]->d1 >= 60) && (eof_import_events[i]->event[j]->d1 < 72))
+							{	//notes 60-71
+								lane = eof_import_events[i]->event[j]->d1 - 60;
+								diff = EOF_NOTE_EASY;
+							}
+							else if((eof_import_events[i]->event[j]->d1 >= 72) && (eof_import_events[i]->event[j]->d1 < 84))
+							{	//notes 72-83
+								lane = eof_import_events[i]->event[j]->d1 - 72;
+								diff = EOF_NOTE_MEDIUM;
+							}
+							else if((eof_import_events[i]->event[j]->d1 >= 84) && (eof_import_events[i]->event[j]->d1 < 96))
+							{	//notes 84-95
+								lane = eof_import_events[i]->event[j]->d1 - 84;
+								diff = EOF_NOTE_AMAZING;
+							}
+							else if((eof_import_events[i]->event[j]->d1 >= 96) && (eof_import_events[i]->event[j]->d1 < 108))
+							{	//notes 96-107
+								lane = eof_import_events[i]->event[j]->d1 - 96;
+								diff = EOF_NOTE_CHALLENGE;
+							}
+							else
+							{
+								lane = 0;	//No defined lane
+								diff = -1;	//No defined difficulty
+							}
 						}
 					}//Note on or note off
 

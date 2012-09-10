@@ -593,7 +593,14 @@ int eof_menu_song_seek_start(void)
 			eof_music_play();	//stop it
 			wasplaying = 1;
 		}
-		eof_set_seek_position(eof_av_delay);
+		if(eof_input_mode == EOF_INPUT_FEEDBACK)
+		{	//If the feedback input method is in effect
+			eof_set_seek_position(eof_song->beat[0]->pos + eof_av_delay);	//Seek to the first beat marker, because the Feedback seek controls aren't designed to work if the seek position is earlier than this
+		}
+		else
+		{
+			eof_set_seek_position(eof_av_delay);	//Seek to beginning of piano roll (adjusted for AV delay)
+		}
 		if(wasplaying)
 		{	//If the playback was stopped to rewind the seek position
 			eof_music_play();	//Resume playing
