@@ -1962,7 +1962,7 @@ void eof_render_note_window(void)
 	char temp[1024] = {0};
 	unsigned long notepos;
 	char pro_guitar_string[30] = {0};
-	char difficulty1[20], difficulty2[50];
+	char difficulty1[20], difficulty2[50], difficulty3[50];
 	int scale, chord, isslash, bassnote;	//Used when looking up the chord name (if the last selected note is not already named)
 
 	if(eof_disable_info_panel)	//If the user wanted to disable the rendering of the info panel to improve performance
@@ -2231,34 +2231,45 @@ void eof_render_note_window(void)
 			sprintf(difficulty1, "(undefined)");
 		}
 		difficulty2[0] = '\0';
+		difficulty3[0] = '\0';
 		if(eof_selected_track == EOF_TRACK_DRUM)
 		{	//Write the difficulty string to display for pro drums
-			if(((eof_song->track[EOF_TRACK_DRUM]->flags & 0xFF000000) >> 24) != 0xFF)
+			if(((eof_song->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24) != 0x0F)
 			{	//If the pro drum difficulty is defined
-				sprintf(difficulty2, "(Pro drums: %lu)", (eof_song->track[EOF_TRACK_DRUM]->flags & 0xFF000000) >> 24);	//Mask out the high order byte of the drum track's flags (pro drum difficulty)
+				sprintf(difficulty2, "(Pro: %lu)", (eof_song->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24);	//Mask out the low nibble of the high order byte of the drum track's flags (pro drum difficulty)
 			}
 			else
 			{
-				sprintf(difficulty2, "(Pro drums: Undefined)");
+				sprintf(difficulty2, "(Pro: Undefined)");
+			}
+			if(((eof_song->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 24) != 0xF0)
+			{	//If the PS deal drums difficulty is defined
+				sprintf(difficulty3, "(PS: %lu)", (eof_song->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 28);	//Mask out the high nibble of the high order byte of the drum track's flags (pro drum difficulty)
+			}
+			else
+			{
+				sprintf(difficulty3, "(PS: Undefined)");
 			}
 		}
 		else if(eof_selected_track == EOF_TRACK_VOCALS)
 		{	//Write the difficulty string to display for vocal harmony
-			if(((eof_song->track[EOF_TRACK_VOCALS]->flags & 0xFF000000) >> 24) != 0xFF)
+			if(((eof_song->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24) != 0x0F)
 			{	//If the harmony difficulty is defined
-				sprintf(difficulty2, "(Harmony: %lu)", (eof_song->track[EOF_TRACK_VOCALS]->flags & 0xFF000000) >> 24);	//Mask out the high order byte of the vocal track's flags (harmony difficulty)
+				sprintf(difficulty2, "(Harmony: %lu)", (eof_song->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24);	//Mask out the high order byte of the vocal track's flags (harmony difficulty)
 			}
 			else
 			{
 				sprintf(difficulty2, "(Harmony: Undefined)");
 			}
+			difficulty3[0] = '\0';	//Unused for vocals
 		}
 		else
-		{	//Otherwise truncate the string
+		{	//Otherwise truncate the extra difficulty strings
 			difficulty2[0] = '\0';
+			difficulty3[0] = '\0';
 		}
 		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Difficulty: %s %s", difficulty1, difficulty2);
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Difficulty: %s %s %s", difficulty1, difficulty2, difficulty3);
 
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//Display information specific to pro guitar tracks
@@ -2559,7 +2570,6 @@ void eof_render_3d_window(void)
 	unsigned long numnotes;				//Used to abstract the notes
 	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
 	unsigned long tracknum;
-///	unsigned char coloroffset = 0;		//Used to increase the color used to render drum roll phrases higher than normal since lane 1's color is not rendered for drum phrases	//Unused
 	unsigned long firstlane = 0, lastlane;	//Used to track the first and last lanes that get track specific rendering (ie. drums don't render markers for lane 1, bass doesn't render markers for lane 6)
 
 	//Used to draw trill and tremolo sections:
@@ -2585,7 +2595,6 @@ void eof_render_3d_window(void)
 	}
 	if(eof_selected_track == EOF_TRACK_DRUM)
 	{
-///		coloroffset = 1;	//The drum roll phrase will render starting with lane 2's color instead of lane 1's color, since lane 1 (bass drum) doesn't use a lane
 		firstlane = 1;		//Don't render drum roll/special drum roll markers for the first lane (0)
 	}
 
@@ -2719,11 +2728,6 @@ void eof_render_3d_window(void)
 
 	/* draw the 'strings' */
 	long obx, oby, oex, oey;
-///	long px, py, pw;	//Unused
-
-///	px = eof_window_3d->w / 2;
-///	py = 0;
-///	pw = 320;
 
 	/* draw the beat markers */
 	long bz;

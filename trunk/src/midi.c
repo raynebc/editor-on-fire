@@ -316,7 +316,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	int channel, velocity, bitmask, scale, chord, isslash, bassnote;	//Used for pro guitar export
 	EOF_PHRASE_SECTION *sectionptr;
 	char *currentname = NULL, chordname[100]="";
-///	char *lastname = NULL, nochord[]="NC";	//Unused
 	char phase_shift_sysex_phrase[8] = {'P','S','\0',0,0,0,0,0xF7};	//This is used to write Sysex messages for features supported in Phase Shift (ie. open strum bass)
 	char fret_hand_pos_written;				//This is used to track whether the single fret hand position was written (if the "Fret hand pos is 0" option is enabled)
 	struct eof_MIDI_data_track *trackptr;	//Used to count the number of raw MIDI tracks to export
@@ -1120,7 +1119,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			/* fill in notes */
 			/* write the MTrk MIDI data to a temp file
 			use size of the file as the MTrk header length */
-///			lastname = nochord;
 			for(i = 0; i < eof_get_track_size(sp, j); i++)
 			{	//For each note in the track
 				type = eof_get_note_type(sp, j, i);
@@ -1176,7 +1174,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 							memcpy(tempstring, chordname, ustrsizez(chordname));	//Copy the string to the newly allocated memory
 							eof_add_midi_text_event(deltapos, tempstring, 1);			//Store the new string in a text event, send 1 for the allocation flag, because the text string is being stored in dynamic memory
 						}
-///						lastname = currentname;
 					}
 				}
 
@@ -2033,7 +2030,6 @@ unsigned long eof_ConvertToDeltaTime(double realtime,struct Tempo_change *anchor
 	struct Tempo_change *temp=anchorlist;	//Stores the closest tempo change before the specified realtime
 	double tstime=0.0;						//Stores the realtime position of the closest TS change before the specified realtime
 	unsigned long tsdelta=0;				//Stores the delta time position of the closest TS change before the specified realtime
-///	unsigned int den=4;						//Stores the denominator of the closest TS change before the specified realtime (defaults to 4 as per MIDI specification)	//Unused
 	unsigned long delta=0;
 	double reltime=0.0;
 	unsigned long ctr=0;
@@ -2047,7 +2043,6 @@ unsigned long eof_ConvertToDeltaTime(double realtime,struct Tempo_change *anchor
 		{
 			if(realtime >= tslist->change[ctr]->realtime)
 			{	//If the TS change is at or before the target realtime
-///				den = tslist->change[ctr]->den;				//Store this time signature's denominator for use in the conversion
 				tstime = tslist->change[ctr]->realtime;		//Store the realtime position
 				tsdelta = tslist->change[ctr]->pos;			//Store the delta time position
 			}
@@ -2564,11 +2559,9 @@ int eof_build_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistp
 	EOF_MIDI_TS_LIST *tslist;
 	char stored_tempo_map = 0;	//Will be set to nonzero if the tempo and TS lists will be built from a stored tempo map
 	unsigned long eventindex, num, den, realden, bytes_used, ctr;
-///	unsigned long length;	//Unused
 	unsigned long lastppqn=0;	//Tracks the last anchor's PPQN value
 	unsigned char eventtype, lasteventtype = 0, meventtype;
 	char tsstored = 0;
-///	char runningstatus;	//Unused
 	unsigned char *dataptr;
 
 	eof_log("eof_build_tempo_and_ts_lists() entered", 1);
@@ -2622,13 +2615,11 @@ int eof_build_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistp
 		for(eventptr = trackptr->events; eventptr != NULL; eventptr = eventptr->next)
 		{	//For each event in the stored track
 			dataptr = eventptr->data;
-///			runningstatus = 0;	//Running status is not considered in effect until it is found
 			eventindex = 0;
 			eventtype = dataptr[eventindex];	//Read the MIDI event type
 			if(eventtype < 0x80)		//All events have to have bit 7 set, if not, it's running status
 			{
 				eventtype = lasteventtype;	//As per running status, this event is the same as the last non meta/sysex event
-///				runningstatus = 1;
 			}
 			else
 			{

@@ -258,7 +258,6 @@ double eof_ConvertToRealTime(unsigned long absolutedelta,struct Tempo_change *an
 	unsigned long reldelta=0;
 	double tstime=0.0;			//Stores the realtime position of the closest TS change before the specified realtime
 	unsigned long tsdelta=0;	//Stores the delta time position of the closest TS change before the specified realtime
-///	unsigned int den=4;			//Stores the denominator of the closest TS change before the specified delta time (defaults to 4 as per MIDI specification) //Unused
 	unsigned long ctr=0;
 
 //Find the last time signature change at or before the target delta time
@@ -268,7 +267,6 @@ double eof_ConvertToRealTime(unsigned long absolutedelta,struct Tempo_change *an
 		{
 			if(absolutedelta >= tslist->change[ctr]->pos)
 			{	//If the TS change is at or before the target delta time
-///				den = tslist->change[ctr]->den;		//Store this time signature's denominator for use in the conversion
 				tstime = tslist->change[ctr]->realtime;		//Store the realtime position
 				tsdelta = tslist->change[ctr]->pos;			//Store the delta time position
 			}

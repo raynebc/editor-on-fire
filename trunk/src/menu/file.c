@@ -424,7 +424,6 @@ int eof_menu_file_save_as(void)
 	char new_foldername[1024] = {0};
 	char * returnedfn = NULL;
 	EOF_OGG_INFO  temp_ogg[8];
-///	short         temp_oggs;	//Unused
 	int i;
 	int swap = 0;
 
@@ -463,7 +462,6 @@ int eof_menu_file_save_as(void)
 				{
 					memcpy(&temp_ogg[i], &eof_song->tags->ogg[i], sizeof(EOF_OGG_INFO));
 				}
-///				temp_oggs = eof_song->tags->oggs;
 				memcpy(&eof_song->tags->ogg[0], &eof_song->tags->ogg[eof_selected_ogg], sizeof(EOF_OGG_INFO));
 				ustrcpy(eof_song->tags->ogg[0].filename, "guitar.ogg");
 				eof_song->tags->oggs = 1;

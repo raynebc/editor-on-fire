@@ -1859,11 +1859,9 @@ int FindNextNumber(char *buffer,unsigned long *startindex)
 struct Lyric_Format *DetectLyricFormat(char *file)
 {
 	unsigned long maxlinelength=0,index=0,ctr=0;
-///	unsigned long convertednum2=0;	//Unused
 	char *temp=NULL,*temp2=NULL,temp3=0;
 	char *buffer=NULL;			//Used for text file testing
 	int errorcode=0,jumpcode=0;
-///	long int convertednum=0;	//Unused
 	unsigned long processedctr=0;	//The current line number being processed in the text file
 	char timestampchar[]="[<";		//Accept any of these characters as valid characters to begin an LRC timestamp
 	char quicktemp=0;				//Used to store the original user setting of the quick processing flag (Lyrics.quick)

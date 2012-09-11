@@ -106,18 +106,27 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 			}
 		}
 	}
-	if(((sp->track[EOF_TRACK_DRUM]->flags & 0xFF000000) >> 24) != 0xFF)
+	if(((sp->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24) != 0x0F)
 	{	//If there is a defined pro drum difficulty
-		sprintf(buffer, "\r\ndiff_drums_real = %lu", (sp->track[EOF_TRACK_DRUM]->flags & 0xFF000000) >> 24);
+		sprintf(buffer, "\r\ndiff_drums_real = %lu", (sp->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24);
 		ustrcat(ini_string, buffer);
 	}
 	else if(!eof_track_has_cymbals(sp, EOF_TRACK_DRUM))
 	{	//Otherwise if there are also no cymbals defined
 		ustrcat(ini_string, "\r\ndiff_drums_real = -1");	//Write a pro drum not present tag
 	}
-	if(((sp->track[EOF_TRACK_VOCALS]->flags & 0xFF000000) >> 24) != 0xFF)
+	if(((sp->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 24) != 0xF0)
+	{	//If there is a defined PS real drum difficulty
+		sprintf(buffer, "\r\ndiff_drums_real_ps = %lu", (sp->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 28);
+		ustrcat(ini_string, buffer);
+	}
+	else if(!eof_track_has_cymbals(sp, EOF_TRACK_DRUM))
+	{	//Otherwise if there are also no cymbals defined
+		ustrcat(ini_string, "\r\ndiff_drums_real_ps = -1");	//Write a PS real drum not present tag
+	}
+	if(((sp->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24) != 0x0F)
 	{	//If there is a defined harmony difficulty
-		sprintf(buffer, "\r\ndiff_vocals_harm = %lu", (sp->track[EOF_TRACK_VOCALS]->flags & 0xFF000000) >> 24);
+		sprintf(buffer, "\r\ndiff_vocals_harm = %lu", (sp->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24);
 		ustrcat(ini_string, buffer);
 	}
 	else
