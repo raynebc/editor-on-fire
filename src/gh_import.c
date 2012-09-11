@@ -826,27 +826,43 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 		snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\tVocal note:  Position = %lu, Length = %u, Pitch = %u", voxstart, voxlength, voxpitch);
 		eof_log(eof_log_string, 1);
 #endif
-		if((voxpitch == 26) || (voxpitch == 2))
-		{	//If this vox note is pitchless
-			voxpitch = 0;	//Remap to EOF's pitchless value
+		if(voxpitch == 2)
+		{	//This pitch indicates a pitch shift bridging the previous and next lyrics
+			char *name = eof_get_note_name(sp, EOF_TRACK_VOCALS, eof_get_track_size(sp, EOF_TRACK_VOCALS) - 1);
+			if(name)
+			{
+				unsigned long length = ustrlen(name);
+				if((name[length - 1] != '+') && (length < EOF_MAX_LYRIC_LENGTH))
+				{	//If the previous lyric doesn't already end in a pitch shift character, and there's enough space to add a character
+					name[length] = '+';			//Append a + character
+					name[length + 1] = '\0';	//Re-terminate the string
+				}
+			}
 		}
 		else
-		{	//Otherwise ensure it's within range
-			while(voxpitch < 36)
-			{	//Ensure the pitch isn't less than the RB minimum of 36
-				voxpitch += 12;
+		{
+			if(voxpitch == 26)
+			{	//If this vox note is pitchless
+				voxpitch = 0;	//Remap to EOF's pitchless value
 			}
-			while(voxpitch > 84)
-			{	//Ensure the pitch isn't greater than the RB maximum of 84
-				voxpitch -= 12;
+			else
+			{	//Otherwise ensure it's within range
+				while(voxpitch < 36)
+				{	//Ensure the pitch isn't less than the RB minimum of 36
+					voxpitch += 12;
+				}
+				while(voxpitch > 84)
+				{	//Ensure the pitch isn't greater than the RB maximum of 84
+					voxpitch -= 12;
+				}
 			}
-		}
-		ptr = eof_track_add_create_note(sp, EOF_TRACK_VOCALS, voxpitch, voxstart, voxlength, 0, "+");	//Use "+" as a place holder because if the text is not defined, it should be considered a pitch shift
+			ptr = eof_track_add_create_note(sp, EOF_TRACK_VOCALS, voxpitch, voxstart, voxlength, 0, "+");	//Use "+" as a place holder because if the text is not defined, it should be considered a pitch shift
 
-		if(!ptr)
-		{	//If there was an error adding the lyric
-			eof_log("\t\tError:  Could not add lyric section", 1);
-			return -1;
+			if(!ptr)
+			{	//If there was an error adding the lyric
+				eof_log("\t\tError:  Could not add lyric section", 1);
+				return -1;
+			}
 		}
 	}
 
@@ -1851,28 +1867,44 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 			snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\tVocal note %lu:  Position = %lu, Length = %lu, Pitch = %lu", ctr2+1, voxstart, voxlength, voxpitch);
 			eof_log(eof_log_string, 1);
 #endif
-			if((voxpitch == 26) || (voxpitch == 2))
-			{	//If this vox note is pitchless
-				voxpitch = 0;	//Remap to EOF's pitchless value
+			if(voxpitch == 2)
+			{	//This pitch indicates a pitch shift bridging the previous and next lyrics
+				char *name = eof_get_note_name(sp, EOF_TRACK_VOCALS, eof_get_track_size(sp, EOF_TRACK_VOCALS) - 1);
+				if(name)
+				{
+					unsigned long length = ustrlen(name);
+					if((name[length - 1] != '+') && (length < EOF_MAX_LYRIC_LENGTH))
+					{	//If the previous lyric doesn't already end in a pitch shift character, and there's enough space to add a character
+						name[length] = '+';			//Append a + character
+						name[length + 1] = '\0';	//Re-terminate the string
+					}
+				}
 			}
 			else
-			{	//Otherwise ensure it's within range
-				while(voxpitch < 36)
-				{	//Ensure the pitch isn't less than the RB minimum of 36
-					voxpitch += 12;
+			{
+				if(voxpitch == 26)
+				{	//If this vox note is pitchless
+					voxpitch = 0;	//Remap to EOF's pitchless value
 				}
-				while(voxpitch > 84)
-				{	//Ensure the pitch isn't greater than the RB maximum of 84
-					voxpitch -= 12;
+				else
+				{	//Otherwise ensure it's within range
+					while(voxpitch < 36)
+					{	//Ensure the pitch isn't less than the RB minimum of 36
+						voxpitch += 12;
+					}
+					while(voxpitch > 84)
+					{	//Ensure the pitch isn't greater than the RB maximum of 84
+						voxpitch -= 12;
+					}
 				}
-			}
-			ptr = eof_track_add_create_note(sp, EOF_TRACK_VOCALS, voxpitch, voxstart, voxlength, 0, "+");
+				ptr = eof_track_add_create_note(sp, EOF_TRACK_VOCALS, voxpitch, voxstart, voxlength, 0, "+");
 
-			if(!ptr)
-			{	//If there was an error adding the lyric
-				eof_log("\t\tError:  Could not add lyric", 1);
-				free(arrayptr);
-				return -1;
+				if(!ptr)
+				{	//If there was an error adding the lyric
+					eof_log("\t\tError:  Could not add lyric", 1);
+					free(arrayptr);
+					return -1;
+				}
 			}
 		}//For each vox note in the section
 	}//For each 1D array of star power data

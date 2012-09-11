@@ -628,7 +628,8 @@ int d_awin95_list_proc(int msg, DIALOG *d, int c)
     if (msg == MSG_DRAW) {
 	BITMAP *bmp = gui_get_screen();
 	int height, listsize, i, len, bar, x, y, w;
-	int fg_color, fg, bg;
+	int fg, bg;
+//	int fg_color;	//Unused
 	char *sel = (char *)d->dp2;
 	char s[1024];
 
@@ -636,7 +637,7 @@ int d_awin95_list_proc(int msg, DIALOG *d, int c)
 	height = (d->h-4) / text_height(font);
 	bar = (listsize > height);
 	w = (bar ? d->w-14 : d->w-3);
-	fg_color = (d->flags & D_DISABLED) ? awin95_mg_color : d->fg;
+//	fg_color = (d->flags & D_DISABLED) ? awin95_mg_color : d->fg;
 
 	/* draw box contents */
 	for (i=0; i<height; i++) {

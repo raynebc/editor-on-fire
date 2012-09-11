@@ -111,10 +111,32 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 		sprintf(buffer, "\r\ndiff_drums_real = %lu", (sp->track[EOF_TRACK_DRUM]->flags & 0xFF000000) >> 24);
 		ustrcat(ini_string, buffer);
 	}
+	else if(!eof_track_has_cymbals(sp, EOF_TRACK_DRUM))
+	{	//Otherwise if there are also no cymbals defined
+		ustrcat(ini_string, "\r\ndiff_drums_real = -1");	//Write a pro drum not present tag
+	}
 	if(((sp->track[EOF_TRACK_VOCALS]->flags & 0xFF000000) >> 24) != 0xFF)
 	{	//If there is a defined harmony difficulty
 		sprintf(buffer, "\r\ndiff_vocals_harm = %lu", (sp->track[EOF_TRACK_VOCALS]->flags & 0xFF000000) >> 24);
 		ustrcat(ini_string, buffer);
+	}
+	else
+	{
+		char harmoniesfound = 0;
+		struct eof_MIDI_data_track *trackptr;
+
+		for(trackptr = sp->midi_data_head; trackptr != NULL; trackptr = trackptr->next)
+		{	//For each raw MIDI track
+			if(trackptr->trackname && (ustrstr(trackptr->trackname,"HARM") == trackptr->trackname))
+			{	//If this track has a name, and it begins with the substring "HARM"
+				harmoniesfound = 1;
+				break;
+			}
+		}
+		if(!harmoniesfound)
+		{	//If none of the stored MIDI tracks appeared to have harmonies
+			ustrcat(ini_string, "\r\ndiff_vocals_harm = -1");	//Write a vocal harmonies not present tag
+		}
 	}
 	if(sp->tags->difficulty != 0xFF)
 	{	//If there is a defined band difficulty

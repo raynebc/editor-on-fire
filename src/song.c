@@ -4608,7 +4608,6 @@ int eof_create_image_sequence(void)
 	char original_eof_desktop = eof_desktop;
 
 	#ifndef EOF_CREATE_IMAGE_SEQUENCE_SHOW_FPS_ONLY
-	clock_t starttime, endtime;
 	int err;
 	char filename[20] = {0};
 
@@ -4631,6 +4630,9 @@ int eof_create_image_sequence(void)
 		return 1;
 	}
 	put_backslash(eof_temp_filename);	//eof_temp_filename is now the path of the \sequence folder
+	#else
+		clock_t starttime, endtime;
+		starttime = clock();	//Get the start time of the image sequence export
 	#endif
 
 //Change to 8 bit color mode
@@ -4642,7 +4644,6 @@ int eof_create_image_sequence(void)
 	eof_music_pos = eof_music_actual_pos + eof_av_delay;
 	clear_to_color(eof_screen, makecol(224, 224, 224));
 	blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
-	starttime = clock();	//Get the start time of the image sequence export
 	while(eof_music_pos <  eof_music_actual_length)
 	{
 		if(key[KEY_ESC])
@@ -4693,9 +4694,9 @@ int eof_create_image_sequence(void)
 			remainder -= EOF_IMAGE_SEQUENCE_FPS;
 		}
 	}
-	endtime = clock();	//Get the start time of the image sequence export
 
 	#ifdef EOF_CREATE_IMAGE_SEQUENCE_SHOW_FPS_ONLY
+	endtime = clock();	//Get the start time of the image sequence export
 	fps = (float)framectr / ((float)(endtime - starttime) / (float)CLOCKS_PER_SEC);	//Find the average FPS
 	snprintf(windowtitle, sizeof(windowtitle)-1, "Average render rate was %.2fFPS",fps);
 	allegro_message("%s", windowtitle);

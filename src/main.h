@@ -315,15 +315,15 @@ extern PACKFILE *  eof_recovery;
 extern int         eof_selected_control;
 extern int         eof_cselected_control;
 extern unsigned long eof_selected_catalog_entry;
-extern int         eof_selected_beat;
+extern unsigned long eof_selected_beat;
 extern int         eof_selected_measure;
 extern int         eof_beat_in_measure;
 extern int         eof_beats_in_measure;
 extern int         eof_pegged_note;
 extern int         eof_hover_note;
 extern int         eof_hover_note_2;	//The hover note that is tracked for fret catalog playback
-extern int         eof_hover_beat;
-extern int         eof_hover_beat_2;
+extern long        eof_hover_beat;
+extern long        eof_hover_beat_2;
 extern int         eof_hover_piece;
 extern int         eof_hover_key;
 extern int         eof_hover_lyric;

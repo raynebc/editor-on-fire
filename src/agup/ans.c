@@ -422,7 +422,8 @@ typedef char *(*getfuncptr) (int, int *);
 static void ns_draw_scrollable_frame(DIALOG *d, int listsize, int offset, int height)
 {
 	BITMAP *bmp = gui_get_screen();
-    int i, len, c;
+    int i, len;
+//    int c;	//Unused
     int xx, yy;
 
     /* draw frame */
@@ -439,12 +440,12 @@ static void ns_draw_scrollable_frame(DIALOG *d, int listsize, int offset, int he
 
     /* possibly draw scrollbar */
     if (listsize > height) {
-	if (d->flags & D_GOTFOCUS)
-	    c = 1;
-	else if (d->flags & D_SELECTED)
-	    c = 2;
-	else
-	    c = 0;
+//	if (d->flags & D_GOTFOCUS)
+//	    c = 1;
+//	else if (d->flags & D_SELECTED)
+//	    c = 2;
+//	else
+//	    c = 0;
 
 	xx = d->x + d->w - 11;
 	yy = d->y;
@@ -483,7 +484,8 @@ int d_ans_list_proc(int msg, DIALOG *d, int c)
     if (msg == MSG_DRAW) {
 	BITMAP *bmp = gui_get_screen();
 	int height, listsize, i, len, bar, x, y, w;
-	int fg_color, fg, bg;
+	int fg, bg;
+//	int fg_color;	//Unused
 	char *sel = (char *)d->dp2;
 	char s[1024];
 
@@ -493,7 +495,7 @@ int d_ans_list_proc(int msg, DIALOG *d, int c)
 	height = (d->h - 4) / text_height(font);
 	bar = (listsize > height);
 	w = (bar ? d->w - 14 : d->w - 3);
-	fg_color = (d->flags & D_DISABLED) ? disabled : d->fg;
+//	fg_color = (d->flags & D_DISABLED) ? disabled : d->fg;
 
 	/* draw box contents */
 	for (i = 0; i < height; i++) {
@@ -599,7 +601,8 @@ int d_ans_slider_proc(int msg, DIALOG *d, int c)
 	BITMAP *bmp = gui_get_screen();
 	int vert = TRUE;	/* flag: is slider vertical? */
 	int slp;		/* slider position */
-	int irange, inmark = 1, ismark;
+	int irange;
+//	int ismark, inmark = 1;	//Unused
 	fixed slratio, slmax, slpos;
 
 	/* check for slider direction */
@@ -607,7 +610,7 @@ int d_ans_slider_proc(int msg, DIALOG *d, int c)
 	    vert = FALSE;
 
 	irange = (vert ? d->h - 2 : d->w - 2);
-	ismark = irange / inmark;
+//	ismark = irange / inmark;
 	slmax = itofix(irange - 19);
 	slratio = slmax / (d->d1);
 	slpos = slratio * d->d2;

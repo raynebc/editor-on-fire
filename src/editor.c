@@ -55,11 +55,11 @@ float eof_pos_distance(float p1, float p2)
 	}
 }
 
-void eof_select_beat(int beat)
+void eof_select_beat(unsigned long beat)
 {
 	eof_log("eof_select_beat() entered", 1);
 
-	int i;
+	unsigned long i;
 	int beat_counter = 0;
 	char first_measure = 0;
 	eof_selected_beat = beat;
