@@ -1107,7 +1107,6 @@ int eof_menu_edit_copy(void)
 		{	//If this note is in the active difficulty, is in the active track and is selected
 			copy_notes++;
 			note_pos = eof_get_note_pos(eof_song, eof_selected_track, i);
-///			note_len = eof_get_note_length(eof_song, eof_selected_track, i);
 			if(!first_pos_read || (note_pos < first_pos))
 			{	//Track the position of the first note in the selection
 				first_pos = note_pos;
@@ -2070,9 +2069,7 @@ int eof_menu_edit_paste_from_challenge(void)
 int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty)
 {
 	unsigned long i;
-///	EOF_NOTE * new_note = NULL;	//Unused
 	unsigned long pos;
-///	unsigned long flags;	//Unused
 	long length;
 
 	if((eof_note_type != source_difficulty) && (source_difficulty < EOF_MAX_DIFFICULTIES))
@@ -2099,7 +2096,6 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty)
 			{	//If this note is in the source difficulty
 				pos = eof_get_note_pos(eof_song, eof_selected_track, i);
 				length = eof_get_note_length(eof_song, eof_selected_track, i);
-///				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 				eof_copy_note(eof_song, eof_selected_track, i, eof_selected_track, pos, length, eof_note_type);
 			}
 		}

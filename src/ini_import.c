@@ -33,7 +33,6 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 
 	char * textbuffer = NULL;
 	char * line_token = NULL;
-///	int textlength = 0;	//Unused
 	char * token;
 	char * equals = NULL;
 	int i;
@@ -59,7 +58,6 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 		eof_log("\tCannot open INI file, skipping", 1);
 		return 0;
 	}
-///	textlength = ustrlen(textbuffer);
 	eof_log("\tTokenizing INI file buffer", 1);
 	ustrtok(textbuffer, "\r\n[]");
 	eof_log("\tParsing INI file buffer", 1);
@@ -286,15 +284,30 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 				}
 				if(!setting_stored)
 				{
+					int diff;
 					if(!ustricmp(eof_import_ini_setting[i].type, "diff_drums_real"))
 					{	//If this is a pro drum difficulty tag
-						sp->track[EOF_TRACK_DRUM]->flags &= ~(0xFF << 24);		//Clear the drum track's flag's most significant byte
-						sp->track[EOF_TRACK_DRUM]->flags |= (atoi(value_index) << 24);	//Store the pro drum difficulty in the drum track's flag's most significant byte
+						diff = atoi(value_index);
+						if((diff < 0) || (diff > 6))	//If the difficulty is invalid
+							diff = 0xF;					//Reset to undefined
+						sp->track[EOF_TRACK_DRUM]->flags &= ~(0x0F << 24);	//Clear the lower nibble of the drum track's flag's most significant byte
+						sp->track[EOF_TRACK_DRUM]->flags |= (diff << 24);	//Store the pro drum difficulty in the drum track's flag's most significant byte
+					}
+					else if(!ustricmp(eof_import_ini_setting[i].type, "diff_drums_real_ps"))
+					{	//If this is a PS real drum difficulty tag
+						diff = atoi(value_index);
+						if((diff < 0) || (diff > 6))	//If the difficulty is invalid
+							diff = 0xF;					//Reset to undefined
+						sp->track[EOF_TRACK_DRUM]->flags &= ~(0xF0 << 24);	//Clear the high nibble of the drum track's flag's most significant byte
+						sp->track[EOF_TRACK_DRUM]->flags |= (diff << 28);	//Store the pro drum difficulty in the high nibble of the drum track's flag's most significant byte
 					}
 					else if(!ustricmp(eof_import_ini_setting[i].type, "diff_vocals_harm"))
 					{	//If this is a harmony difficulty tag
-						sp->track[EOF_TRACK_VOCALS]->flags &= ~(0xFF << 24);	//Clear the vocal track's flag's most significant byte
-						sp->track[EOF_TRACK_VOCALS]->flags |= (atoi(value_index) << 24);	//Store the harmony difficulty in the vocal track's flag's most significant byte
+						diff = atoi(value_index);
+						if((diff < 0) || (diff > 6))	//If the difficulty is invalid
+							diff = 0xF;					//Reset to undefined
+						sp->track[EOF_TRACK_VOCALS]->flags &= ~(0x0F << 24);	//Clear the lower nibble of the vocal track's flag's most significant byte
+						sp->track[EOF_TRACK_VOCALS]->flags |= (diff << 24);		//Store the harmony difficulty in the vocal track's flag's most significant byte
 					}
 					else if(!ustricmp(eof_import_ini_setting[i].type, "diff_band"))
 					{	//If this is a band difficulty tag

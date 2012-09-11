@@ -2826,11 +2826,9 @@ void eof_track_delete_note(EOF_SONG *sp, unsigned long track, unsigned long note
 void eof_song_empty_track(EOF_SONG * sp, unsigned long track)
 {
 	unsigned long i;
-///	unsigned long tracknum;	//Unused
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
-///	tracknum = sp->track[track]->tracknum;
 
 	for(i = eof_get_track_size(sp, track); i > 0; i--)
 	{	//Delete all notes in reverse order, which will avoid having to re-arrange the note array after each
@@ -3398,11 +3396,8 @@ void eof_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 {
  	eof_log("eof_track_fixup_notes() entered", 2);
 
-///	unsigned long tracknum;	//Unused
-
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
-///	tracknum = sp->track[track]->tracknum;
 
 	switch(sp->track[track]->track_format)
 	{
@@ -5112,7 +5107,6 @@ unsigned long eof_get_highest_clipboard_fret(char *clipboardfile)
 {
 	PACKFILE * fp;
 	unsigned long sourcetrack = 0, copy_notes = 0;
-///	unsigned long first_beat = 0;	//Unused
 	unsigned long i, j, bitmask;
 	unsigned long highestfret = 0, currentfret;	//Used to find if any pasted notes would use a higher fret than the active track supports
 	EOF_EXTENDED_NOTE temp_note;
@@ -5160,7 +5154,6 @@ unsigned long eof_get_highest_clipboard_lane(char *clipboardfile)
 {
 	PACKFILE * fp;
 	unsigned long copy_notes = 0;
-///	unsigned long sourcetrack = 0, first_beat = 0;	//Unused
 	unsigned long i, j, bitmask;
 	unsigned long highestlane = 0;	//Used to find if any pasted notes would use a higher lane than the active track supports
 	EOF_EXTENDED_NOTE temp_note;

@@ -1988,11 +1988,13 @@ int eof_menu_song_legacy_view(void)
 DIALOG eof_song_track_difficulty_menu[] =
 {
    /* (proc)                (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2)    (dp3) */
-   { d_agup_window_proc,    EOF_SONG_TRACK_DIFFICULTY_MENU_X,  EOF_SONG_TRACK_DIFFICULTY_MENU_Y,  206, 126, 2,   23,  0,    0,      0,   0,   "Set track difficulty", NULL, NULL },
+   { d_agup_window_proc,    EOF_SONG_TRACK_DIFFICULTY_MENU_X,  EOF_SONG_TRACK_DIFFICULTY_MENU_Y,  232, 146, 2,   23,  0,    0,      0,   0,   "Set track difficulty", NULL, NULL },
    { d_agup_text_proc,      12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "Difficulty (0-6):",    NULL, NULL },
    { eof_verified_edit_proc,111,80,  20,  20,  2,   23,  0,    0,      1,   0,   eof_etext,              "0123456", NULL },
-   { d_agup_button_proc,    8,  132, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                   NULL, NULL },
-   { d_agup_button_proc,    111,132, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",               NULL, NULL },
+   { d_agup_button_proc,    8,  152, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                   NULL, NULL },
+   { d_agup_button_proc,    111,152, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",               NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
@@ -2002,6 +2004,8 @@ DIALOG eof_song_track_difficulty_menu_pro_drum[] =
 {
    { d_agup_text_proc,      12, 104, 114,   8,   2,   23,  0,    0,      0,   0,   "Pro Drum Difficulty (0-6):",    NULL, NULL },
    { eof_verified_edit_proc,174,100,  20,   20,  2,   23,  0,    0,      1,   0,   eof_etext2,              "0123456", NULL },
+   { d_agup_text_proc,      12, 124, 144,   8,   2,   23,  0,    0,      0,   0,   "PS Real Drum Difficulty (0-6):",    NULL, NULL },
+   { eof_verified_edit_proc,200,120,  20,   20,  2,   23,  0,    0,      1,   0,   eof_etext3,              "0123456", NULL },
 };
 
 DIALOG eof_song_track_difficulty_menu_harmony[] =
@@ -2017,12 +2021,16 @@ DIALOG eof_song_track_difficulty_menu_normal[] =
 
 int eof_song_track_difficulty_dialog(void)
 {
-	int difficulty, difficulty2 = 0xFF, difficulty3, undo_made = 0;
+	int difficulty, undo_made = 0;
+	int difficulty2 = 0xF, newdifficulty2;	//For pro drums and harmony vocals, a half byte (instead of a full byte) is used to store each's difficulty
+	int difficulty3 = 0xF0, newdifficulty3;	//The PS Real Drums difficulty is also stored in a half byte
 
 	if(!eof_song || !eof_song_loaded)
 		return 1;
 	eof_song_track_difficulty_menu[5] = eof_song_track_difficulty_menu_normal[0];
 	eof_song_track_difficulty_menu[6] = eof_song_track_difficulty_menu_normal[0];
+	eof_song_track_difficulty_menu[7] = eof_song_track_difficulty_menu_normal[0];
+	eof_song_track_difficulty_menu[8] = eof_song_track_difficulty_menu_normal[0];
 
 	eof_cursor_visible = 0;
 	eof_render();
@@ -2033,15 +2041,18 @@ int eof_song_track_difficulty_dialog(void)
 	{	//Insert the pro drum dialog menu items
 		eof_song_track_difficulty_menu[5] = eof_song_track_difficulty_menu_pro_drum[0];
 		eof_song_track_difficulty_menu[6] = eof_song_track_difficulty_menu_pro_drum[1];
-		difficulty2 = (eof_song->track[EOF_TRACK_DRUM]->flags & 0xFF000000) >> 24;		//Mask out the high order byte of the drum track's flags (pro drum difficulty)
+		difficulty2 = (eof_song->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24;		//Mask out the low nibble of the high order byte of the drum track's flags (pro drum difficulty)
+		eof_song_track_difficulty_menu[7] = eof_song_track_difficulty_menu_pro_drum[2];
+		eof_song_track_difficulty_menu[8] = eof_song_track_difficulty_menu_pro_drum[3];
+		difficulty3 = (eof_song->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 24;		//Mask out the high nibble of the high order byte of the drum track's flags (PS Real Drums difficulty)
 	}
 	else if(eof_selected_track == EOF_TRACK_VOCALS)
 	{	//Insert the harmony dialog menu items
 		eof_song_track_difficulty_menu[5] = eof_song_track_difficulty_menu_harmony[0];
 		eof_song_track_difficulty_menu[6] = eof_song_track_difficulty_menu_harmony[1];
-		difficulty2 = (eof_song->track[EOF_TRACK_VOCALS]->flags & 0xFF000000) >> 24;	//Mask out the high order byte of the vocal track's flags (harmony difficulty)
+		difficulty2 = (eof_song->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24;	//Mask out the low nibble of the high order byte of the vocal track's flags (harmony difficulty)
 	}
-	if(difficulty2 != 0xFF)
+	if(difficulty2 != 0x0F)
 	{	//If the secondary difficulty (pro drum or vocal harmony) is to be displayed
 		sprintf(eof_etext2, "%d", difficulty2);
 	}
@@ -2049,11 +2060,24 @@ int eof_song_track_difficulty_dialog(void)
 	{
 		eof_etext2[0] = '\0';
 	}
+	if(difficulty3 != 0xF0)
+	{	//If the tertiary difficulty (PS Real Drums) is to be displayed
+		sprintf(eof_etext3, "%d", difficulty3 >> 4);	//Shift down from the high nibble
+	}
+	else
+	{
+		eof_etext3[0] = '\0';
+	}
+
 	//Manually re-center these elements, because they are not altered by centre_dialog()
 	eof_song_track_difficulty_menu[5].x += eof_song_track_difficulty_menu[0].x - EOF_SONG_TRACK_DIFFICULTY_MENU_X;	//Add the X amount offset by centre_dialog()
 	eof_song_track_difficulty_menu[5].y += eof_song_track_difficulty_menu[0].y - EOF_SONG_TRACK_DIFFICULTY_MENU_Y;	//Add the Y amount offset by centre_dialog()
 	eof_song_track_difficulty_menu[6].x += eof_song_track_difficulty_menu[0].x - EOF_SONG_TRACK_DIFFICULTY_MENU_X;	//Add the X amount offset by centre_dialog()
 	eof_song_track_difficulty_menu[6].y += eof_song_track_difficulty_menu[0].y - EOF_SONG_TRACK_DIFFICULTY_MENU_Y;	//Add the Y amount offset by centre_dialog()
+	eof_song_track_difficulty_menu[7].x += eof_song_track_difficulty_menu[0].x - EOF_SONG_TRACK_DIFFICULTY_MENU_X;	//Add the X amount offset by centre_dialog()
+	eof_song_track_difficulty_menu[7].y += eof_song_track_difficulty_menu[0].y - EOF_SONG_TRACK_DIFFICULTY_MENU_Y;	//Add the Y amount offset by centre_dialog()
+	eof_song_track_difficulty_menu[8].x += eof_song_track_difficulty_menu[0].x - EOF_SONG_TRACK_DIFFICULTY_MENU_X;	//Add the X amount offset by centre_dialog()
+	eof_song_track_difficulty_menu[8].y += eof_song_track_difficulty_menu[0].y - EOF_SONG_TRACK_DIFFICULTY_MENU_Y;	//Add the Y amount offset by centre_dialog()
 
 	if(eof_song->track[eof_selected_track]->difficulty != 0xFF)
 	{	//If the track difficulty is defined, write it in text format
@@ -2083,26 +2107,40 @@ int eof_song_track_difficulty_dialog(void)
 		{	//If a secondary difficulty needs to be checked
 			if(eof_etext2[0] != '\0')
 			{	//If a secondary track difficulty was specified
-				difficulty3 = atol(eof_etext2);
+				newdifficulty2 = atol(eof_etext2);
 			}
 			else
 			{
-				difficulty3 = 0xFF;
+				newdifficulty2 = 0x0F;
 			}
-			if((difficulty3 != difficulty2) && !undo_made)
-			{	//If the difficulty has changed, make an undo state if one hasn't been made already
+
+			if(eof_selected_track == EOF_TRACK_DRUM)
+			{	//If a tertiary difficulty needs to be checked
+				if(eof_etext3[0] != '\0')
+				{	//If a secondary track difficulty was specified
+					newdifficulty3 = atol(eof_etext3) << 4;	//Shift up into the high nibble of the byte
+				}
+				else
+				{
+					newdifficulty3 = 0xF0;
+				}
+			}
+
+			if(((newdifficulty2 != difficulty2) || (newdifficulty3 != difficulty3)) && !undo_made)
+			{	//If a secondary/tertiary difficulty has changed, make an undo state if one hasn't been made already
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			}
 
 			if(eof_selected_track == EOF_TRACK_DRUM)
 			{
-				eof_song->track[EOF_TRACK_DRUM]->flags &= ~(0xFF << 24);		//Clear the drum track's flag's most significant byte
-				eof_song->track[EOF_TRACK_DRUM]->flags |= (difficulty3 << 24);	//Store the pro drum difficulty in the drum track's flag's most significant byte
+				eof_song->track[EOF_TRACK_DRUM]->flags &= ~(0xFF << 24);			//Clear the drum track's flag's most significant byte
+				eof_song->track[EOF_TRACK_DRUM]->flags |= (newdifficulty2 << 24);	//Store the pro drum difficulty in the drum track's flag's most significant byte
+				eof_song->track[EOF_TRACK_DRUM]->flags |= (newdifficulty3 << 24);	//Store the PS Real Drums difficulty in the drum track's flag's MSB
 			}
 			else if(eof_selected_track == EOF_TRACK_VOCALS)
 			{
 				eof_song->track[EOF_TRACK_VOCALS]->flags &= ~(0xFF << 24);			//Clear the vocal track's flag's most significant byte
-				eof_song->track[EOF_TRACK_VOCALS]->flags |= (difficulty3 << 24);	//Store the harmony difficulty in the vocal track's flag's most significant byte
+				eof_song->track[EOF_TRACK_VOCALS]->flags |= (newdifficulty2 << 24);	//Store the harmony difficulty in the vocal track's flag's most significant byte
 			}
 		}
 	}

@@ -171,8 +171,9 @@ TRACK CHUNK, for each track:
 *		4 bytes:	Note flags
 	}
 !This track format could be referred to as "legacy" format, because it is Harmonix's old format used prior to RB3
-!The most significant byte of PART DRUMS' flags variable stores the pro drum difficulty
-!The most significant byte of PART VOCALS' flags variable stores the harmony difficulty
+!The most significant byte of PART DRUMS' flags variable stores additional drum difficulties (the high nibble stores the "PS Real Drums" difficulty, the low nibble stores the Pro Drums difficulty)
+!The low nibble of the most significant byte of PART VOCALS' flags variable stores the harmony difficulty
+!For the next variation of the format, store additional difficulties outside the track flags (ie. as INI numbers)
 
 [VOCAL TRACK FORMAT]
 *	1 byte:		Tone set number assigned to this track (ie. 0=Grand Piano, 1=MIDI device, ...)
