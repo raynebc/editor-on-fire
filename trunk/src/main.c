@@ -169,15 +169,15 @@ PACKFILE *  eof_recovery = NULL;
 int         eof_selected_control = -1;
 int         eof_cselected_control = -1;
 unsigned long eof_selected_catalog_entry = 0;
-int         eof_selected_beat = 0;
+unsigned long eof_selected_beat = 0;
 int         eof_selected_measure = 0;
 int         eof_beat_in_measure = 0;
 int         eof_beats_in_measure = 1;
 int         eof_pegged_note = -1;
 int         eof_hover_note = -1;
 int         eof_hover_note_2 = -1;
-int         eof_hover_beat = -1;
-int         eof_hover_beat_2 = -1;
+long        eof_hover_beat = -1;
+long        eof_hover_beat_2 = -1;
 int         eof_hover_piece = -1;
 int         eof_hover_key = -1;
 int         eof_hover_lyric = -1;
@@ -2110,11 +2110,11 @@ void eof_render_note_window(void)
 		char *ksname = eof_get_key_signature(eof_song, eof_selected_beat, 1);
 		if(eof_hover_beat >= 0)
 		{
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Beat = %d : BPM = %f : Hover = %d", eof_selected_beat, (double)60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn, eof_hover_beat);
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Beat = %lu : BPM = %f : Hover = %ld", eof_selected_beat, (double)60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn, eof_hover_beat);
 		}
 		else
 		{
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Beat = %d : BPM = %f", eof_selected_beat, (double)60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn);
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Beat = %lu : BPM = %f", eof_selected_beat, (double)60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn);
 		}
 		ypos += 12;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Key : %s", ksname);

@@ -44,7 +44,7 @@ typedef struct
 extern EOF_SNAP_DATA eof_snap;
 extern EOF_SNAP_DATA eof_tail_snap;
 
-void eof_select_beat(int beat);
+void eof_select_beat(unsigned long beat);
 void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p);
 void eof_snap_length_logic(EOF_SNAP_DATA * sp);	//Calculates the grid snap interval length for sp->beat
 void eof_read_editor_keys(void);
