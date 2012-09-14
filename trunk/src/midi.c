@@ -1270,10 +1270,25 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
 				{	//If this note has palm mute status
 					if(featurerestriction == 0)
-					{	//Only write the slide Sysex notation if not writing a Rock Band compliant MIDI
+					{	//Only write the palm mute Sysex notation if not writing a Rock Band compliant MIDI
 						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
 						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
 						phase_shift_sysex_phrase[5] = 9;	//Store the phrase ID (9 = Pro guitar palm mute)
+						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
+						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide start marker
+						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)
+						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide stop marker
+					}
+				}
+
+				/* write vibrato marker */
+				if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
+				{	//If this note has vibrato status
+					if(featurerestriction == 0)
+					{	//Only write the vibrato Sysex notation if not writing a Rock Band compliant MIDI
+						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
+						phase_shift_sysex_phrase[4] = type;	//Store the difficulty ID (0 = Easy, 1 = Medium, 2 = Hard, 3 = Expert)
+						phase_shift_sysex_phrase[5] = 10;	//Store the phrase ID (10 = Pro guitar vibrato)
 						phase_shift_sysex_phrase[6] = 1;	//Store the phrase status (1 = Phrase start)
 						eof_add_sysex_event(deltapos, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide start marker
 						phase_shift_sysex_phrase[6] = 0;	//Store the phrase status (0 = Phrase stop)

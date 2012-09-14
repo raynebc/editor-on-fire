@@ -74,33 +74,34 @@ DIALOG eof_settings_dialog[] =
 DIALOG eof_preferences_dialog[] =
 {
    /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-   { d_agup_window_proc,0,   48,  245, 485, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
-   { d_agup_check_proc, 16,  80,  128, 16,  2,   23,  0,    0,      1,   0,   "Inverted Notes",      NULL, NULL },
-   { d_agup_check_proc, 16,  95,  128, 16,  2,   23,  0,    0,      1,   0,   "Lefty Mode",          NULL, NULL },
-   { d_agup_check_proc, 16,  110, 128, 16,  2,   23,  0,    0,      1,   0,   "Note Auto-Adjust",    NULL, NULL },
-   { d_agup_check_proc, 16,  125, 160, 16,  2,   23,  0,    0,      1,   0,   "Import/Export TS",    NULL, NULL },
-   { d_agup_check_proc, 16,  140, 160, 16,  2,   23,  0,    0,      1,   0,   "Hide drum note tails",NULL, NULL },
-   { d_agup_check_proc, 16,  155, 160, 16,  2,   23,  0,    0,      1,   0,   "Hide note names",     NULL, NULL },
-   { d_agup_check_proc, 16,  170, 165, 16,  2,   23,  0,    0,      1,   0,   "Disable sound effects",NULL, NULL },
-   { d_agup_check_proc, 16,  185, 165, 16,  2,   23,  0,    0,      1,   0,   "Disable 3D rendering",NULL, NULL },
-   { d_agup_check_proc, 16,  200, 165, 16,  2,   23,  0,    0,      1,   0,   "Disable 2D rendering",NULL, NULL },
-   { d_agup_check_proc, 16,  215, 165, 16,  2,   23,  0,    0,      1,   0,   "Disable info panel",NULL, NULL },
-   { d_agup_check_proc, 16,  230, 220, 16,  2,   23,  0,    0,      1,   0,   "Erase overlapped pasted notes",NULL, NULL },
-   { d_agup_check_proc, 16,  245, 220, 16,  2,   23,  0,    0,      1,   0,   "Save separate RBN MIDI files",NULL, NULL },
-   { d_agup_check_proc, 16,  260, 220, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
-   { d_agup_check_proc, 16,  275, 220, 16,  2,   23,  0,    0,      1,   0,   "Enable logging on launch",NULL, NULL },
-   { d_agup_check_proc, 16,  290, 220, 16,  2,   23,  0,    0,      1,   0,   "Add new notes to selection",NULL, NULL },
-   { d_agup_check_proc, 16,  305, 220, 16,  2,   23,  0,    0,      1,   0,   "Drum modifiers affect all diff's",NULL, NULL },
-   { d_agup_check_proc, 16,  320, 220, 16,  2,   23,  0,    0,      1,   0,   "Use dB style seek controls",NULL, NULL },
-   { d_agup_text_proc,  16,  340, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note length (ms):",NULL,NULL },
-   { eof_verified_edit_proc,160,340,50,20,  0,   0,   0,    0,      3,   0,   eof_etext,     "0123456789", NULL },
-   { d_agup_text_proc,  24,  360, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
-   { d_agup_list_proc,  16,  375, 100, 110, 2,   23,  0,    0,      0,   0,   eof_input_list,        NULL, NULL },
-   { d_agup_text_proc,  150, 375, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
-   { d_agup_list_proc,  129, 390, 100, 95,  2,   23,  0,    0,      0,   0,   eof_colors_list,        NULL, NULL },
-   { d_agup_button_proc,12,  490, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-   { d_agup_button_proc,86,  490, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-   { d_agup_button_proc,160, 490, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+   { d_agup_window_proc,0,   48,  245, 495, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
+   { d_agup_check_proc, 16,  75,  128, 16,  2,   23,  0,    0,      1,   0,   "Inverted Notes",      NULL, NULL },
+   { d_agup_check_proc, 16,  90,  128, 16,  2,   23,  0,    0,      1,   0,   "Lefty Mode",          NULL, NULL },
+   { d_agup_check_proc, 16,  105, 128, 16,  2,   23,  0,    0,      1,   0,   "Note Auto-Adjust",    NULL, NULL },
+   { d_agup_check_proc, 16,  120, 160, 16,  2,   23,  0,    0,      1,   0,   "Import/Export TS",    NULL, NULL },
+   { d_agup_check_proc, 16,  135, 160, 16,  2,   23,  0,    0,      1,   0,   "Hide drum note tails",NULL, NULL },
+   { d_agup_check_proc, 16,  150, 160, 16,  2,   23,  0,    0,      1,   0,   "Hide note names",     NULL, NULL },
+   { d_agup_check_proc, 16,  165, 165, 16,  2,   23,  0,    0,      1,   0,   "Disable sound effects",NULL, NULL },
+   { d_agup_check_proc, 16,  180, 165, 16,  2,   23,  0,    0,      1,   0,   "Disable 3D rendering",NULL, NULL },
+   { d_agup_check_proc, 16,  195, 165, 16,  2,   23,  0,    0,      1,   0,   "Disable 2D rendering",NULL, NULL },
+   { d_agup_check_proc, 16,  210, 165, 16,  2,   23,  0,    0,      1,   0,   "Disable info panel",NULL, NULL },
+   { d_agup_check_proc, 16,  225, 220, 16,  2,   23,  0,    0,      1,   0,   "Erase overlapped pasted notes",NULL, NULL },
+   { d_agup_check_proc, 16,  240, 220, 16,  2,   23,  0,    0,      1,   0,   "Save separate RBN MIDI files",NULL, NULL },
+   { d_agup_check_proc, 16,  255, 220, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
+   { d_agup_check_proc, 16,  270, 220, 16,  2,   23,  0,    0,      1,   0,   "Enable logging on launch",NULL, NULL },
+   { d_agup_check_proc, 16,  285, 220, 16,  2,   23,  0,    0,      1,   0,   "Add new notes to selection",NULL, NULL },
+   { d_agup_check_proc, 16,  300, 220, 16,  2,   23,  0,    0,      1,   0,   "Drum modifiers affect all diff's",NULL, NULL },
+   { d_agup_check_proc, 16,  315, 220, 16,  2,   23,  0,    0,      1,   0,   "Use dB style seek controls",NULL, NULL },
+   { d_agup_text_proc,  16,  335, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note length (ms):",NULL,NULL },
+   { eof_verified_edit_proc,160,332,50,20,  0,   0,   0,    0,      3,   0,   eof_etext,     "0123456789", NULL },
+   { d_agup_check_proc, 16,  352, 220, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
+   { d_agup_text_proc,  24,  370, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
+   { d_agup_list_proc,  16,  390, 100, 110, 2,   23,  0,    0,      0,   0,   eof_input_list,        NULL, NULL },
+   { d_agup_text_proc,  150, 390, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
+   { d_agup_list_proc,  129, 405, 100, 95,  2,   23,  0,    0,      0,   0,   eof_colors_list,        NULL, NULL },
+   { d_agup_button_proc,12,  505, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+   { d_agup_button_proc,86,  505, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+   { d_agup_button_proc,160, 505, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -903,13 +904,14 @@ int eof_menu_file_preferences(void)
 	{
 		eof_etext[0] = '\0';	//Otherwise empty the string
 	}
-	eof_preferences_dialog[21].d1 = eof_input_mode;										//Input method
-	eof_preferences_dialog[23].d1 = eof_color_set;										//Color set
+	eof_preferences_dialog[20].flags = eof_render_bass_drum_in_lane ? D_SELECTED : 0;	//3D render bass drum in a lane
+	eof_preferences_dialog[22].d1 = eof_input_mode;										//Input method
+	eof_preferences_dialog[24].d1 = eof_color_set;										//Color set
 
 	do
 	{	//Run the dialog
 		retval = eof_popup_dialog(eof_preferences_dialog, 0);	//Run the dialog
-		if(retval == 24)
+		if(retval == 25)
 		{	//If the user clicked OK, update EOF's configured settings from the dialog selections
 			eof_inverted_notes = (eof_preferences_dialog[1].flags == D_SELECTED ? 1 : 0);
 			eof_lefty_mode = (eof_preferences_dialog[2].flags == D_SELECTED ? 1 : 0);
@@ -936,12 +938,13 @@ int eof_menu_file_preferences(void)
 			{
 				eof_min_note_length = 0;
 			}
-			eof_input_mode = eof_preferences_dialog[21].d1;
+			eof_render_bass_drum_in_lane = (eof_preferences_dialog[20].flags == D_SELECTED ? 1 : 0);
+			eof_input_mode = eof_preferences_dialog[22].d1;
 			eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case eof_inverted_notes was changed
 			eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case eof_lefty_mode was changed
-			eof_color_set = eof_preferences_dialog[23].d1;
+			eof_color_set = eof_preferences_dialog[24].d1;
 		}
-		else if(retval == 25)
+		else if(retval == 26)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
 			eof_preferences_dialog[1].flags = 0;					//Inverted notes
 			eof_preferences_dialog[2].flags = 0;					//Lefty mode
@@ -961,10 +964,11 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[16].flags = D_SELECTED;			//Drum modifiers affect all diff's
 			eof_preferences_dialog[17].flags = 0;					//Use dB style seek controls
 			eof_etext[0] = '\0';									//Min. note length
-			eof_preferences_dialog[21].d1 = EOF_INPUT_PIANO_ROLL;	//Input method
-			eof_preferences_dialog[23].d1 = EOF_COLORS_DEFAULT;		//Color set
+			eof_preferences_dialog[20].flags = 0;					//3D render bass drum in a lane
+			eof_preferences_dialog[22].d1 = EOF_INPUT_PIANO_ROLL;	//Input method
+			eof_preferences_dialog[24].d1 = EOF_COLORS_DEFAULT;		//Color set
 		}
-	}while(retval == 25);	//Keep re-running the dialog until the user closes it with anything besides "Default"
+	}while(retval == 26);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;

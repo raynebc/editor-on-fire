@@ -1082,7 +1082,7 @@ set_window_title(debugtext);
 	int phrasediff;						//Used for parsing Sysex phrase markers
 	int slidediff;						//Used for parsing slide markers
 	unsigned char slidevelocity[4];		//Used for parsing slide markers
-	unsigned long openstrumpos[4] = {0}, slideuppos[4] = {0}, slidedownpos[4] = {0}, openhihatpos[4] = {0}, pedalhihatpos[4] = {0}, rimshotpos[4] = {0}, sliderpos[4] = {0}, palmmutepos[4] = {0};	//Used for parsing Sysex phrase markers
+	unsigned long openstrumpos[4] = {0}, slideuppos[4] = {0}, slidedownpos[4] = {0}, openhihatpos[4] = {0}, pedalhihatpos[4] = {0}, rimshotpos[4] = {0}, sliderpos[4] = {0}, palmmutepos[4] = {0}, vibratopos[4] = {0};	//Used for parsing Sysex phrase markers
 
 	//Special case:  Very old charts created in Freetar Editor may only contain one track that includes all the tempo and note events
 	if((tracks == 1) && (eof_import_events[0]->type < 0))
@@ -2435,6 +2435,26 @@ set_window_title(debugtext);
 													if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= palmmutepos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
 													{	//If the note is in the same difficulty as the pro guitar palm mute phrase, and its timestamp falls between the phrase on and phrase off marker
 														eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE);	//Set the palm mute flag
+													}
+												}
+											}
+										break;
+										case 10:	//Pro guitar vibrato
+#ifdef EOF_DEBUG
+											snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\tSysex marker:  Pro guitar vibrato (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
+											eof_log(eof_log_string, 1);
+#endif
+											if(eof_import_events[i]->event[j]->dp[6] == 1)
+											{	//Start of pro guitar vibrato phrase
+												vibratopos[phrasediff] = event_realtime;
+											}
+											else if(eof_import_events[i]->event[j]->dp[6] == 0)
+											{	//End of pro guitar vibrato phrase
+												for(k = note_count[picked_track] - 1; k >= first_note; k--)
+												{	//Check for each note that has been imported
+													if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= vibratopos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
+													{	//If the note is in the same difficulty as the pro guitar vibrato phrase, and its timestamp falls between the phrase on and phrase off marker
+														eof_set_note_flags(sp, picked_track, k, eof_get_note_flags(sp, picked_track, k) | EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO);	//Set the vibrato flag
 													}
 												}
 											}

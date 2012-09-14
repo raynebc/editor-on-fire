@@ -33,19 +33,20 @@
 #define EOF_NOTE_FLAG_EXTENDED 2147483648	//The MSB will be reserved for use to indicate an additional flag variable is present
 
 //The following flags pertain to pro guitar notes
-#define EOF_PRO_GUITAR_NOTE_FLAG_HO				512		//This flag will represent a hammer on
-#define EOF_PRO_GUITAR_NOTE_FLAG_PO				1024	//This flag will represent a pull off
-#define EOF_PRO_GUITAR_NOTE_FLAG_TAP			2048	//This flag will represent a tapped note
-#define EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP		4096	//This flag will represent a note that slides up to the next note
-#define EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN		8192	//This flag will represent a note that slides down to the next note
-#define EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE	16384	//This flag will represent a note whose strings are muted by the fretting hand
-#define EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE		32768	//This flag will represent a note whose strings are muted by the strumming hand
-#define EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM		262144	//This flag will represent a chord that is played by strumming up
-#define EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM		524288	//This flag will represent a chord that is played by strumming down
-#define EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM		1048576	//This flag will represent a chord that is played by strumming in the middle of the strings (ie. barely playing or not playing strings 1 and 6)
-#define EOF_PRO_GUITAR_NOTE_FLAG_BEND			2097152	//This flag will represent a note that is bent after it is picked
-#define EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC		4194304	//This flag will represent a note that is played as a harmonic
-#define EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE  8388608	//This flag will represent a note whose slide will be written as reversed (channel 11)
+#define EOF_PRO_GUITAR_NOTE_FLAG_HO				512			//This flag will represent a hammer on
+#define EOF_PRO_GUITAR_NOTE_FLAG_PO				1024		//This flag will represent a pull off
+#define EOF_PRO_GUITAR_NOTE_FLAG_TAP			2048		//This flag will represent a tapped note
+#define EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP		4096		//This flag will represent a note that slides up to the next note
+#define EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN		8192		//This flag will represent a note that slides down to the next note
+#define EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE	16384		//This flag will represent a note whose strings are muted by the fretting hand
+#define EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE		32768		//This flag will represent a note whose strings are muted by the strumming hand
+#define EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM		262144		//This flag will represent a chord that is played by strumming up
+#define EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM		524288		//This flag will represent a chord that is played by strumming down
+#define EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM		1048576		//This flag will represent a chord that is played by strumming in the middle of the strings (ie. barely playing or not playing strings 1 and 6)
+#define EOF_PRO_GUITAR_NOTE_FLAG_BEND			2097152		//This flag will represent a note that is bent after it is picked
+#define EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC		4194304		//This flag will represent a note that is played as a harmonic
+#define EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE  8388608		//This flag will represent a note whose slide will be written as reversed (channel 11)
+#define EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO        16777216	//This flag will represent a note that is played with vibrato
 
 //The following flags pertain to drum notes
 #define EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN	512		//This flag means the yellow cymbal will be displayed in Phase Shift as an open hi hat (lane 3)
@@ -287,19 +288,9 @@ typedef struct
 
 } EOF_VOCAL_TRACK;
 
-//#define EOF_MAX_CHORD_VARIATIONS 500
-	//There will be a 3D array of chord variation structs in each pro guitar/bas track, this macro defines the size of the third dimension
 #define EOF_PRO_GUITAR_TRACKS_MAX	4
 #define EOF_TUNING_LENGTH 6	//For now, the tuning array will only track 6 strings
 #define EOF_NUM_DEFINED_CHORDS 28
-//typedef struct
-//{
-//	unsigned char frets[EOF_TUNING_LENGTH];	//The fretted position of each string
-//	unsigned char bassnote;			//The bass note of the chord
-//}// EOF_CHORD_VARIATION;
-
-//typedef EOF_CHORD_VARIATION EOF_CHORD_VARIATION_ARRAY[12][EOF_NUM_DEFINED_CHORDS][EOF_MAX_CHORD_VARIATIONS];
-//typedef unsigned char EOF_CHORD_NUM_VARIATION_ARRAY[12][EOF_NUM_DEFINED_CHORDS];
 
 typedef struct
 {

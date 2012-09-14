@@ -80,7 +80,8 @@ CUSTOM DATA BLOCK CHUNK, for each custom data block
 *	[varies:]	(Custom data, can store anything)
 }
 !This will allow the storage of any data not specifically accounted for in this format, helping to future proof the format
-Custom data block type 1:  Raw MIDI data:
+=========================================
+Custom data block ID 1:  Raw MIDI data:
 	2 bytes:  Number of MIDI tracks
 	1 byte:  (Flags:  Bit 0= Delta timings allowed)
 	1 byte:  (Unused)
@@ -111,7 +112,7 @@ TRACK CHUNK, for each track:
 *	2 bytes:	Track name string length
 *	[varies:]	Track name string
 *	1 byte:		Track format (0=Global,1=Legacy,2=Vocal,3=Pro Keys,4=Pro Guitar/Bass,5=Variable Lane Legacy,...)
-*	1 byte:		Track behavior (1=Guitar/Bass,2=Drum/Pro Drum,3=Vocal,4=Keys,5=Pro Guitar/Bass,6=Pro Keys,...)
+*	1 byte:		Track behavior (1=Guitar/Bass,2=Drum/Pro Drum,3=Vocal,4=Keys,5=Pro Guitar/Bass,6=Pro Keys,7=Dance...)
 *	1 byte:		Track type (1=Guitar,2=Bass,3=Lead Guitar,4=Rhythm Guitar,5=Drum/Pro Drum,6=Vocal,7=Keys,8=17 Fret Pro Bass,9=17 Fret Pro Guitar,10=Pro Keys,11=22 Fret Pro Guitar,12=22 Fret Pro Bass,13=Custom,...)
 !	Rock Band 3 charts have separate tracks for the full 22 fret chart (PART REAL_GUITAR_22) usable on the Squier guiter, and a version transposed to be accurate on 17 frets (PART REAL_GUITAR)
 !	Both EOF and Rock Band allow for the existence of one of each of the usual tracks, so the first of each will be assigned a unique number as the track type.  Any secondary tracks (ie. a second PART KEYS) will be marked as a custom track
@@ -120,6 +121,7 @@ TRACK CHUNK, for each track:
 !	Until track number comparison is completely removed for this purpose, the track type can serve as a replacement
 *	1 byte:		Track difficulty level (0-6), 0xFF represents an undefined track difficulty
 *	4 bytes:	Track flags (ie. which difficulties are locked for editing)
+	[varies:]	Extended note flags (if the MSB of the note flags field is set, another 4 byte flag field follows, and if its MSB is set, another 4 byte flag field, etc)
 *	2 bytes:	Track compliance flags (ie. if it is valid as per constraints of Rock Band, etc)
 
 *	[varies:]	Track data (depending on the format type as defined below)
@@ -147,11 +149,16 @@ TRACK CHUNK, for each track:
 !		For lyric phrases, the difficulty field indicates which lyric set number (ie. PART VOCALS) the phrase applies to
 
 *	4 bytes:	Number of custom data blocks
-*	CUSTOM DATA BLOCK CHUNK, for each custom data block
+*	TRACK CUSTOM DATA BLOCK CHUNK, for each custom data block
 *	{
-*		4 bytes:	The number of bytes this custom data block consumes
+*		4 bytes:	The number of bytes this custom data block consumes  (including the block ID and the custom data itself)
+*		4 bytes:	Custom data block ID (1 = Extra note data, 0xFFFFFFFF = Empty debugging block)
 *		[varies:]	(Custom data, can store anything)
 *	}
+=========================================
+	Custom data block ID 1:  Extra note data:
+		1 byte:		Number of additional data bytes per note
+		[varies]:	Number of data bytes * number of notes (defined above in the track data) bytes
 }
 (End of file)
 
@@ -169,6 +176,7 @@ TRACK CHUNK, for each track:
 		4 bytes:	Note position (in milliseconds or delta ticks)
 		4 bytes:	Note length (in milliseconds or delta ticks)
 *		4 bytes:	Note flags
+		[varies:]	Extended note flags (if the MSB of the note flags field is set, another 4 byte flag field follows, and if its MSB is set, another 4 byte flag field, etc)
 	}
 !This track format could be referred to as "legacy" format, because it is Harmonix's old format used prior to RB3
 !The most significant byte of PART DRUMS' flags variable stores additional drum difficulties (the high nibble stores the "PS Real Drums" difficulty, the low nibble stores the Pro Drums difficulty)
@@ -218,6 +226,7 @@ TRACK CHUNK, for each track:
 *		4 bytes:	Note position (in milliseconds or delta ticks)
 *		4 bytes:	Note length (in milliseconds or delta ticks)
 *		4 bytes:	Note flags (allow 32 flags for an unforsee-able number of techniques such as tapping, bending, etc)
+		[varies:]	Extended note flags (if the MSB of the note flags field is set, another 4 byte flag field follows, and if its MSB is set, another 4 byte flag field, etc)
 *	}
 !	It has been said that 21 pre-defined chord numbers (0-20, ie. note 9 for A5) are used in the Rock Band 3 MIDIs, this is currently unverified
 

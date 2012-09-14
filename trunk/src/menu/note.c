@@ -291,6 +291,8 @@ MENU eof_note_proguitar_menu[] =
     {"Remove palm &Muting", eof_menu_note_remove_palm_muting, NULL, 0, NULL},
     {"Toggle harmonic\t" CTRL_NAME "+H", eof_menu_note_toggle_harmonic, NULL, 0, NULL},
     {"Remove &Harmonic", eof_menu_note_remove_harmonic, NULL, 0, NULL},
+    {"Toggle vibrato\tShift+V", eof_menu_note_toggle_vibrato, NULL, 0, NULL},
+    {"Remove &Vibrato", eof_menu_note_remove_vibrato, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -2606,12 +2608,13 @@ int eof_menu_hopo_auto(void)
 				flags &= (~EOF_NOTE_FLAG_F_HOPO);	//Clear the HOPO on flag
 				flags &= (~EOF_NOTE_FLAG_NO_HOPO);	//Clear the HOPO off flag
 				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-				{	//If this is a pro guitar note, ensure that Hammer on, Pull of and Tap statuses are cleared
+				{	//If this is a pro guitar note, ensure that various statuses are cleared (they would be invalid if this note was a HO/PO)
 					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Clear the hammer on flag
 					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
 					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
 					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;		//Clear the bend flag
 					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;	//Clear the harmonic flag
+					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;		//Clear the vibrato flag
 				}
 				if(!undo_made && (flags != oldflags))
 				{	//If an undo state hasn't been made yet
@@ -2661,6 +2664,7 @@ int eof_menu_hopo_cycle(void)
 							flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
 							flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;		//Clear the bend flag
 							flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;	//Clear the harmonic flag
+							flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;		//Clear the vibrato flag
 						}
 					}
 					else if(flags & EOF_NOTE_FLAG_NO_HOPO)
@@ -2674,6 +2678,7 @@ int eof_menu_hopo_cycle(void)
 							flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
 							flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;		//Clear the bend flag
 							flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;	//Clear the harmonic flag
+							flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;		//Clear the vibrato flag
 						}
 					}
 					else
@@ -2686,6 +2691,7 @@ int eof_menu_hopo_cycle(void)
 							flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
 							flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;		//Clear the bend flag
 							flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;	//Clear the harmonic flag
+							flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;		//Clear the vibrato flag
 						}
 					}
 					eof_set_note_flags(eof_song, eof_selected_track, i, flags);
@@ -2723,6 +2729,7 @@ int eof_menu_hopo_force_on(void)
 					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
 					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;		//Clear the bend flag
 					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;	//Clear the harmonic flag
+					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;		//Clear the vibrato flag
 				}
 				if(!undo_made && (flags != oldflags))
 				{	//If an undo state hasn't been made yet
@@ -2763,6 +2770,7 @@ int eof_menu_hopo_force_off(void)
 					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
 					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;		//Clear the bend flag
 					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;	//Clear the harmonic flag
+					flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;		//Clear the vibrato flag
 				}
 				if(!undo_made && (flags != oldflags))
 				{	//If an undo state hasn't been made yet
@@ -3071,15 +3079,16 @@ DIALOG eof_pro_guitar_note_dialog[] =
 	{d_agup_check_proc,		140, 247, 20,  16, 2,   23,  0,    0,      0,         0,   "",           NULL,          NULL },
 
 	{d_agup_text_proc,      10,  312, 64,  8,  2,   23,  0,    0,      0,         0,   "Slide:",     NULL,          NULL },
-	{d_agup_check_proc,		58,  332, 150, 16, 2,   23,  0,    0,      0,         0,   "Reverse slide:",NULL,       NULL },
+	{d_agup_check_proc,		58,  332, 150, 16, 2,   23,  0,    0,      0,         0,   "Reverse slide",NULL,       NULL },
 	{d_agup_text_proc,      10,  352, 64,  8,  2,   23,  0,    0,      0,         0,   "Mute:",      NULL,          NULL },
 	{d_agup_text_proc,      10,  372, 64,  8,  2,   23,  0,    0,      0,         0,   "Strum:",     NULL,          NULL },
 	{d_agup_radio_proc,		6,   272, 38,  16, 2,   23,  0,    0,      1,         0,   "HO",         NULL,          NULL },
 	{d_agup_radio_proc,		43,  272, 38,  16, 2,   23,  0,    0,      1,         0,   "PO",         NULL,          NULL },
 	{d_agup_radio_proc,		78,  272, 45,  16, 2,   23,  0,    0,      1,         0,   "Tap",        NULL,          NULL },
 	{d_agup_radio_proc,		120, 272, 50,  16, 2,   23,  0,    0,      1,         0,   "Bend",       NULL,          NULL },
-	{d_agup_radio_proc,		43,  292, 80,  16, 2,   23,  0,    0,      1,         0,   "Harmonic",   NULL,          NULL },
-	{d_agup_radio_proc,		120, 292, 50,  16, 2,   23,  0,    0,      1,         0,   "None",       NULL,          NULL },
+	{d_agup_radio_proc,		6,   292, 80,  16, 2,   23,  0,    0,      1,         0,   "Harmonic",   NULL,          NULL },
+	{d_agup_radio_proc,		85,  292, 64,  16, 2,   23,  0,    0,      1,         0,   "Vibrato",    NULL,          NULL },
+	{d_agup_radio_proc,		154, 292, 50,  16, 2,   23,  0,    0,      1,         0,   "None",       NULL,          NULL },
 	{d_agup_radio_proc,		58,  312, 38,  16, 2,   23,  0,    0,      2,         0,   "Up",         NULL,          NULL },
 	{d_agup_radio_proc,		102, 312, 54,  16, 2,   23,  0,    0,      2,         0,   "Down",       NULL,          NULL },
 	{d_agup_radio_proc,		154, 312, 64,  16, 2,   23,  0,    0,      2,         0,   "Neither",    NULL,          NULL },
@@ -3087,7 +3096,7 @@ DIALOG eof_pro_guitar_note_dialog[] =
 	{d_agup_radio_proc,		102, 352, 52,  16, 2,   23,  0,    0,      3,         0,   "Palm",       NULL,          NULL },
 	{d_agup_radio_proc,		154, 352, 64,  16, 2,   23,  0,    0,      3,         0,   "Neither",    NULL,          NULL },
 	{d_agup_radio_proc,		49,  372, 38,  16, 2,   23,  0,    0,      4,         0,   "Up",         NULL,          NULL },
-	{d_agup_radio_proc,		85,  372, 46,  16, 2,   23,  0,    0,      4,         0,   "Mid",         NULL,          NULL },
+	{d_agup_radio_proc,		85,  372, 46,  16, 2,   23,  0,    0,      4,         0,   "Mid",        NULL,          NULL },
 	{d_agup_radio_proc,		128, 372, 54,  16, 2,   23,  0,    0,      4,         0,   "Down",       NULL,          NULL },
 	{d_agup_radio_proc,		180, 372, 46,  16, 2,   23,  0,    0,      4,         0,   "Any",        NULL,          NULL },
 
@@ -3118,7 +3127,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 	char autobitmask[10] = {0};
 	unsigned long index = 0;
 	char pro_guitar_string[30] = {0};
-	unsigned long previous_note = 0, next_note = 0;
+	long previous_note = 0, next_note = 0;
 	int retval;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -3145,25 +3154,23 @@ int eof_menu_note_edit_pro_guitar_note(void)
 		memcpy(eof_note_edit_name, eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name, sizeof(eof_note_edit_name));
 
 	//Find the next/previous notes if applicable
-		eof_pro_guitar_note_dialog[56].flags = D_HIDDEN;	//Until a previous note is found, assume there isn't one and hide the <- button
-		for(ctr = eof_selection.current; ctr > 0; ctr--)
-		{	//For each note before the selected note in the active track, in reverse
-			if(eof_get_note_type(eof_song, eof_selected_track, ctr - 1) == eof_note_type)
-			{	//If a valid previous note was found
-				previous_note = ctr - 1;
-				eof_pro_guitar_note_dialog[56].flags = D_EXIT;	//Make the previous note button clickable again
-				break;
-			}
+		previous_note = eof_track_fixup_previous_note(eof_song, eof_selected_track, eof_selection.current);
+		if(previous_note >= 0)
+		{	//If there is a previous note
+			eof_pro_guitar_note_dialog[57].flags = D_EXIT;		//Make the previous note button clickable
 		}
-		eof_pro_guitar_note_dialog[60].flags = D_HIDDEN;	//Until a next note is found, assume there isn't one and hide the -> button
-		for(ctr = eof_selection.current + 1; ctr <eof_get_track_size(eof_song, eof_selected_track); ctr++)
-		{	//For each note after the selected note in the active track
-			if(eof_get_note_type(eof_song, eof_selected_track, ctr) == eof_note_type)
-			{	//If a valid next note was found
-				next_note = ctr;
-				eof_pro_guitar_note_dialog[60].flags = D_EXIT;	//Make the next note button clickable again
-				break;
-			}
+		else
+		{
+			eof_pro_guitar_note_dialog[57].flags = D_HIDDEN;	//Otherwise hide it
+		}
+		next_note = eof_track_fixup_next_note(eof_song, eof_selected_track, eof_selection.current);
+		if(next_note >= 0)
+		{	//If there is a next note
+			eof_pro_guitar_note_dialog[61].flags = D_EXIT;		//Make the next note button clickable
+		}
+		else
+		{
+			eof_pro_guitar_note_dialog[61].flags = D_HIDDEN;	//Otherwise hide it
 		}
 
 	//Update the fret text boxes (listed from top to bottom as string 1 through string 6)
@@ -3248,58 +3255,62 @@ int eof_menu_note_edit_pro_guitar_note(void)
 		{	//Select "Harmonic"
 			eof_pro_guitar_note_dialog[44].flags = D_SELECTED;
 		}
+		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
+		{	//Select "Vibrato"
+			eof_pro_guitar_note_dialog[45].flags = D_SELECTED;
+		}
 		else
 		{	//Select "None"
-			eof_pro_guitar_note_dialog[45].flags = D_SELECTED;
+			eof_pro_guitar_note_dialog[46].flags = D_SELECTED;
 		}
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
 		{	//Select Slide "Up"
-			eof_pro_guitar_note_dialog[46].flags = D_SELECTED;
+			eof_pro_guitar_note_dialog[47].flags = D_SELECTED;
 			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE)
 				eof_pro_guitar_note_dialog[37].flags = D_SELECTED;	//Reverse slide
 		}
 		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
 		{	//Select Slide "Down"
-			eof_pro_guitar_note_dialog[47].flags = D_SELECTED;
+			eof_pro_guitar_note_dialog[48].flags = D_SELECTED;
 			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE)
 				eof_pro_guitar_note_dialog[37].flags = D_SELECTED;
 		}
 		else
 		{	//Select Slide "Neither"
-			eof_pro_guitar_note_dialog[48].flags = D_SELECTED;
+			eof_pro_guitar_note_dialog[49].flags = D_SELECTED;
 		}
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE)
 		{	//Select Mute "String"
-			eof_pro_guitar_note_dialog[49].flags = D_SELECTED;
+			eof_pro_guitar_note_dialog[50].flags = D_SELECTED;
 		}
 		else if(flags &EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
 		{	//Select Mute "Palm"
-			eof_pro_guitar_note_dialog[50].flags = D_SELECTED;
+			eof_pro_guitar_note_dialog[51].flags = D_SELECTED;
 		}
 		else
 		{	//Select Mute "Neither"
-			eof_pro_guitar_note_dialog[51].flags = D_SELECTED;
+			eof_pro_guitar_note_dialog[52].flags = D_SELECTED;
 		}
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
 		{	//Select Strum "Up"
-			eof_pro_guitar_note_dialog[52].flags = D_SELECTED;
+			eof_pro_guitar_note_dialog[53].flags = D_SELECTED;
 		}
 		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM)
 		{	//Select Strum "Mid"
-			eof_pro_guitar_note_dialog[53].flags = D_SELECTED;
+			eof_pro_guitar_note_dialog[54].flags = D_SELECTED;
 		}
 		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM)
 		{	//Select Strum "Down"
-			eof_pro_guitar_note_dialog[54].flags = D_SELECTED;
+			eof_pro_guitar_note_dialog[55].flags = D_SELECTED;
 		}
 		else
 		{	//Select Strum "Any"
-			eof_pro_guitar_note_dialog[55].flags = D_SELECTED;
+			eof_pro_guitar_note_dialog[56].flags = D_SELECTED;
 		}
 
 		bitmask = 0;
 		retval = eof_popup_dialog(eof_pro_guitar_note_dialog, 0);	//Run the dialog
-		if((retval == 57) || (retval == 58))
+		if((retval == 58) || (retval == 59))
 		{	//If user clicked OK or Apply
 			//Validate and store the input
 			if(eof_count_selected_notes(NULL, 0) > 1)
@@ -3453,72 +3464,59 @@ int eof_menu_note_edit_pro_guitar_note(void)
 					if(eof_pro_guitar_note_dialog[40].flags == D_SELECTED)
 					{	//HO is selected
 						flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;			//Set the hammer on flag
-						flags &= ~EOF_NOTE_FLAG_NO_HOPO;				//Clear the forced HOPO off flag
-						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;		//Clear the bend flag
-						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;	//Clear the harmonic flag
 						flags |= EOF_NOTE_FLAG_F_HOPO;					//Set the legacy HOPO flag
 					}
 					else if(eof_pro_guitar_note_dialog[41].flags == D_SELECTED)
 					{	//PO is selected
 						flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Set the pull off flag
-						flags &= ~EOF_NOTE_FLAG_NO_HOPO;				//Clear the forced HOPO off flag
-						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;		//Clear the bend flag
-						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;	//Clear the harmonic flag
 						flags |= EOF_NOTE_FLAG_F_HOPO;					//Set the legacy HOPO flag
 					}
 					else if(eof_pro_guitar_note_dialog[42].flags == D_SELECTED)
 					{	//Tap is selected
 						flags |= EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Set the tap flag
-						flags &= ~EOF_NOTE_FLAG_NO_HOPO;				//Clear the forced HOPO off flag
-						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;		//Clear the bend flag
-						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;	//Clear the harmonic flag
 						flags |= EOF_NOTE_FLAG_F_HOPO;					//Set the legacy HOPO flag
 					}
 					else if(eof_pro_guitar_note_dialog[43].flags == D_SELECTED)
 					{	//Bend is selected
 						flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;			//Set the bend flag
-						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
-						flags &= ~EOF_NOTE_FLAG_NO_HOPO;				//Clear the forced HOPO off flag
-						flags &= ~EOF_NOTE_FLAG_F_HOPO;					//Clear the legacy HOPO flag
-						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;	//Clear the harmonic flag
 					}
 					else if(eof_pro_guitar_note_dialog[44].flags == D_SELECTED)
 					{	//Harmonic is selected
 						flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;		//Set the harmonic flag
-						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;		//Clear the bend flag
-						flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
-						flags &= ~EOF_NOTE_FLAG_NO_HOPO;				//Clear the forced HOPO off flag
-						flags &= ~EOF_NOTE_FLAG_F_HOPO;					//Clear the legacy HOPO flag
 					}
-					if(eof_pro_guitar_note_dialog[46].flags == D_SELECTED)
+					else if(eof_pro_guitar_note_dialog[45].flags == D_SELECTED)
+					{	//Vibrato is selected
+						flags |= EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;		//Set the vibrato flag
+					}
+					if(eof_pro_guitar_note_dialog[47].flags == D_SELECTED)
 					{	//Slide Up is selected
 						flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
 						if(eof_pro_guitar_note_dialog[37].flags == D_SELECTED)	//Reverse slide is selected
 							flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;
 					}
-					else if(eof_pro_guitar_note_dialog[47].flags == D_SELECTED)
+					else if(eof_pro_guitar_note_dialog[48].flags == D_SELECTED)
 					{	//Slide Down is selected
 						flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
 						if(eof_pro_guitar_note_dialog[37].flags == D_SELECTED)	//Reverse slide is selected
 							flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;
 					}
-					if(eof_pro_guitar_note_dialog[49].flags == D_SELECTED)
+					if(eof_pro_guitar_note_dialog[50].flags == D_SELECTED)
 					{	//Mute String is selected
-					flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;
+						flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;
 					}
-					else if(eof_pro_guitar_note_dialog[50].flags == D_SELECTED)
+					else if(eof_pro_guitar_note_dialog[51].flags == D_SELECTED)
 					{	//Mute Palm is selected
 						flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
 					}
-					if(eof_pro_guitar_note_dialog[52].flags == D_SELECTED)
+					if(eof_pro_guitar_note_dialog[53].flags == D_SELECTED)
 					{	//Strum Up is selected
 						flags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;
 					}
-					else if(eof_pro_guitar_note_dialog[53].flags == D_SELECTED)
+					else if(eof_pro_guitar_note_dialog[54].flags == D_SELECTED)
 					{	//Strum Mid is selected
 						flags |= EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM;
 					}
-					else if(eof_pro_guitar_note_dialog[54].flags == D_SELECTED)
+					else if(eof_pro_guitar_note_dialog[55].flags == D_SELECTED)
 					{	//Strum Down is selected
 						flags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;
 					}
@@ -3728,12 +3726,12 @@ int eof_menu_note_edit_pro_guitar_note(void)
 					}//If this note isn't the one that was just edited, but it matches it
 				}//For each note in the active track
 			}//The user did not enter a legacy bitmask
-			if(retval == 58)
+			if(retval == 59)
 			{	//If the user clicked Apply, re-render the screen to reflect any changes made
 				eof_render();
 			}
 		}//If user clicked OK or Apply
-		else if(retval == 56)
+		else if(retval == 57)
 		{	//If user clicked <- (previous note)
 			memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 			eof_selection.current = previous_note;	//Set the previous note as the currently selected note
@@ -3741,7 +3739,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, previous_note) + eof_av_delay);	//Seek to previous note
 			eof_render();	//Redraw the screen
 		}
-		else if(retval == 60)
+		else if(retval == 61)
 		{	//If user clicked -> (next note)
 			memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 			eof_selection.current = next_note;	//Set the next note as the currently selected note
@@ -3749,7 +3747,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, next_note) + eof_av_delay);	//Seek to next note
 			eof_render();	//Redraw the screen
 		}
-	}while((retval == 56) || (retval == 58) || (retval == 60));	//Re-run this dialog if the user clicked previous, apply or next
+	}while((retval == 57) || (retval == 59) || (retval == 61));	//Re-run this dialog if the user clicked previous, apply or next
 
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
@@ -3848,6 +3846,7 @@ int eof_menu_note_toggle_bend(void)
 				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;			//Clear the pull off flag
 				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
 				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;	//Clear the harmonic flag
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;		//Clear the vibrato flag
 			}
 			if(!u)
 			{	//Make a back up before changing the first note
@@ -3912,6 +3911,7 @@ int eof_menu_note_toggle_harmonic(void)
 				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;		//Clear the pull off flag
 				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;		//Clear the tap flag
 				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;	//Clear the bend flag
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;	//Clear the vibrato flag
 			}
 			if(!u)
 			{	//Make a back up before changing the first note
@@ -5448,6 +5448,7 @@ int eof_menu_pro_guitar_toggle_hammer_on(void)
 				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
 				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;		//Clear the bend flag
 				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;	//Clear the harmonic flag
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;		//Clear the vibrato flag
 				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 			}
 		}
@@ -5481,6 +5482,7 @@ int eof_menu_pro_guitar_remove_hammer_on(void)
 				flags &= ~EOF_NOTE_FLAG_F_HOPO;					//Clear the legacy HOPO on flag
 				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;		//Clear the bend flag
 				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;	//Clear the harmonic flag
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;		//Clear the vibrato flag
 				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 			}
 		}
@@ -5524,6 +5526,7 @@ int eof_menu_pro_guitar_toggle_pull_off(void)
 				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
 				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;		//Clear the bend flag
 				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;	//Clear the harmonic flag
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;		//Clear the vibrato flag
 				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 			}
 		}
@@ -5650,6 +5653,71 @@ int eof_menu_note_toggle_ghost(void)
 					eof_song->pro_guitar_track[tracknum]->note[ctr]->ghost ^= bitmask;	//Toggle this string's ghost flag
 				}
 			}
+		}
+	}
+	return 1;
+}
+
+int eof_menu_note_remove_vibrato(void)
+{
+	unsigned long i;
+	long u = 0;
+	unsigned long flags;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
+			{	//If this note has vibrato status
+				if(!u)
+				{	//Make a back up before changing the first note
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					u = 1;
+				}
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;	//Clear the vibrato flag
+				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+			}
+		}
+	}
+	return 1;
+}
+
+int eof_menu_note_toggle_vibrato(void)
+{
+	unsigned long i;
+	long u = 0;
+	unsigned long flags;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			flags ^= EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;	//Toggle the vibrato flag
+			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC)
+			{	//If harmonic status was just enabled
+				flags &= ~EOF_NOTE_FLAG_F_HOPO;				//Clear the legacy HOPO on flag
+				flags &= ~EOF_NOTE_FLAG_NO_HOPO;			//Clear the HOPO off flag
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;		//Clear the hammer on flag
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;		//Clear the pull off flag
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;		//Clear the tap flag
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;	//Clear the bend flag
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;	//Clear the vibrato flag
+			}
+			if(!u)
+			{	//Make a back up before changing the first note
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				u = 1;
+			}
+			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
 		}
 	}
 	return 1;

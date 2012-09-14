@@ -1217,9 +1217,17 @@ void eof_read_editor_keys(void)
 	}
 
 	/* toggle vocal tones (V) */
+	/* toggle vibrato (SHIFT+V in a pro guitar track) */
 	if(key[KEY_V] && !KEY_EITHER_CTRL)
 	{
-		eof_menu_edit_vocal_tones();
+		if(!KEY_EITHER_SHIFT)
+		{
+			eof_menu_edit_vocal_tones();
+		}
+		else
+		{
+			eof_menu_note_toggle_vibrato();
+		}
 		key[KEY_V] = 0;
 	}
 
@@ -2404,7 +2412,7 @@ void eof_read_editor_keys(void)
 		}
 
 	/* paste (CTRL+V) */
-		if(KEY_EITHER_CTRL && key[KEY_V])
+		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && key[KEY_V])
 		{
 			eof_menu_edit_paste();
 			key[KEY_V] = 0;
