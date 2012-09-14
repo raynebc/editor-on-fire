@@ -97,6 +97,11 @@ int         eof_disable_2d_rendering = 0;
 int         eof_disable_info_panel = 0;
 int         eof_paste_erase_overlap = 0;
 int         eof_write_rbn_midis = 0;
+int         eof_add_new_notes_to_selection = 0;	//If nonzero, newly added gems cause notes to be added to the selection instead of the selection being cleared first
+int         eof_drum_modifiers_affect_all_difficulties = 1;	//If nonzero, a drum modifier (ie. open/pedal hi hat or rim shot apply to any notes at the same position in non active difficulties)
+int         eof_fb_seek_controls = 0;			//If nonzero, the page up/dn keys have their seek directions reversed, and up/down seek forward/backward
+int         eof_min_note_length = 0;			//Specifies the user-configured minimum length for all non-drum notes (for making Guitar Hero customs, is set to 0 if undefined)
+int         eof_render_bass_drum_in_lane = 0;	//If nonzero, the 3D rendering will draw bass drum gems in a lane instead of as a bar spanning all lanes
 int         eof_inverted_chords_slash = 0;
 int         eof_smooth_pos = 1;
 int         eof_input_mode = EOF_INPUT_PIANO_ROLL;
@@ -120,7 +125,6 @@ char        eof_mark_drums_as_double_bass = 0;	//Allows the user to specify whet
 unsigned long eof_mark_drums_as_hi_hat = 0;		//Allows the user to specify whether Y drum notes will be placed with one of the hi hat statuses by default (this variable holds the note flag of the desired status)
 unsigned long eof_pro_guitar_fret_bitmask = 63;	//Defines which lanes are affected by CTRL+Fn fret setting shortcuts
 char		eof_legacy_view = 0;				//Specifies whether pro guitar notes will render as legacy notes
-int         eof_min_note_length = 0;			//Specifies the user-configured minimum length for all non-drum notes (for making Guitar Hero customs, is set to 0 if undefined)
 
 int         eof_undo_toggle = 0;
 int         eof_redo_toggle = 0;
@@ -231,9 +235,6 @@ int eof_color_waveform_peak;
 int eof_color_waveform_rms;
 
 int eof_color_set = EOF_COLORS_DEFAULT;
-int eof_add_new_notes_to_selection = 0;	//If nonzero, newly added gems cause notes to be added to the selection instead of the selection being cleared first
-int eof_drum_modifiers_affect_all_difficulties = 1;	//If nonzero, a drum modifier (ie. open/pedal hi hat or rim shot apply to any notes at the same position in non active difficulties)
-int eof_fb_seek_controls = 0;	//If nonzero, the page up/dn keys have their seek directions reversed, and up/down seek forward/backward
 eof_color eof_colors[6];	//Contain the color definitions for each lane
 eof_color eof_color_green_struct, eof_color_red_struct, eof_color_yellow_struct, eof_color_blue_struct, eof_color_orange_struct, eof_color_purple_struct;
 	//Color data
@@ -2593,9 +2594,9 @@ void eof_render_3d_window(void)
 		numlanes = 5;
 		lastlane = 4;	//Don't render trill/tremolo markers for the 6th lane (render for lanes 0 through 4)
 	}
-	if(eof_selected_track == EOF_TRACK_DRUM)
+	if((eof_selected_track == EOF_TRACK_DRUM) & !eof_render_bass_drum_in_lane)
 	{
-		firstlane = 1;		//Don't render drum roll/special drum roll markers for the first lane (0)
+		firstlane = 1;		//Don't render drum roll/special drum roll markers for the first lane, 0 (unless user enabled the preference to render bass drum in its own lane)
 	}
 
 	point[0] = ocd3d_project_x(20, 600);
@@ -3819,8 +3820,8 @@ void eof_set_3D_lane_positions(unsigned long track)
 	{	//Special case:  The bass track can use a sixth lane but its 3D representation still only draws 5 lanes
 		newnumlanes = 5;
 	}
-	else if(track && (eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
-	{	//Special case:  The drum track renders with only 4 lanes
+	else if(track && (eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && !eof_render_bass_drum_in_lane)
+	{	//Special case:  The drum track renders with only 4 lanes (unless the user enabled the preference to render the bass drum in a dedicated lane)
 		if(eof_five_lane_drums_enabled())
 		{	//The exception is if the fifth drum lane has been enabled
 			newnumlanes = 6;

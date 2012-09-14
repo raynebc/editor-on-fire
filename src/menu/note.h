@@ -95,6 +95,8 @@ int eof_menu_note_toggle_bend(void);			//Toggles the bend status of all selected
 int eof_menu_note_remove_bend(void);			//Removes the bend status of all selected notes
 int eof_menu_note_toggle_harmonic(void);		//Toggles the harmonic status of all selected notes
 int eof_menu_note_remove_harmonic(void);		//Removes the harmonic status of all selected notes
+int eof_menu_note_toggle_vibrato(void);			//Toggles the vibrato status of all selected notes
+int eof_menu_note_remove_vibrato(void);			//Removes the vibrato status of all selected notes
 int eof_menu_pro_guitar_toggle_hammer_on(void);	//Toggles the hammer on status of all selected notes
 int eof_menu_pro_guitar_remove_hammer_on(void);	//Removes the hammer on status of all selected notes
 int eof_menu_pro_guitar_toggle_pull_off(void);	//Toggles the pull off status of all selected notes

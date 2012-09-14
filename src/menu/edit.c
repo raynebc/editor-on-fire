@@ -2416,6 +2416,7 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;			//Erase the pro bend flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;		//Erase the pro harmonic flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;	//Erase the pro guitar slide reverse flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;		//Erase the pro guitar vibrato flag
 		}
 		else
 		{	//If it is pasting into a pro guitar track
@@ -2451,6 +2452,11 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;
 					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
 				}
+				if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
+				{	//If the vibrato flag is also set, clear both
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
+				}
 			}
 			if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
 			{	//If the bend flag is set
@@ -2469,14 +2475,36 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;
 					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
 				}
+				if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
+				{	//If the vibrato flag is also set, clear both
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
+				}
+			}
+			if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
+			{	//If the vibrato flag is set
+				if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
+				{	//If the hammer on flag is also set, clear both
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HO;
+				}
+				if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_PO)
+				{	//If the pull off flag is also set, clear both
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_PO;
+				}
+				if(*flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC)
+				{	//If the harmonic flag is also set, clear both
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
+					*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
+				}
 			}
 			if((*flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && (*flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 			{	//If both the slide up AND the slide down flags are set, clear both
 				*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
 				*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
-				*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;
 			}
-			else if(!(*flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(*flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+			if(!(*flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(*flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 			{	//If neither the slide up nor the slide down flags are set
 				*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;	//Clear the slide reverse flag
 			}

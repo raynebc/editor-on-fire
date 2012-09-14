@@ -2655,7 +2655,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		pack_iputl(1, fp);			//Write a debug custom data block
 		pack_iputl(4, fp);
 		pack_iputl(0xFFFFFFFF, fp);
-	}
+	}//For each track in the project
 
 	pack_fclose(fp);
 	eof_log("\tProject saved", 1);

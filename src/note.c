@@ -801,8 +801,8 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	#define EOF_HALF_3D_IMAGE_WIDTH 24
 	#define EOF_3D_IMAGE_HEIGHT 48
 
-	if(eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-	{	//If this is a drum track
+	if((eof_song->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && !eof_render_bass_drum_in_lane)
+	{	//If this is a drum track and the bass drum isn't being rendered in its own lane
 		if(notenote & 1)
 		{
 			rz = npos;
@@ -858,7 +858,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 		}
 	}//If this is a drum track
 	else
-	{	//This is a non drum track
+	{	//This is a non drum track (or a drum track where bass is rendered in its own lane)
 		for(ctr=0,mask=1;ctr<eof_count_track_lanes(eof_song, track);ctr++,mask=mask<<1)
 		{	//Render for each of the available fret lanes (count the active track's lanes to work around numlanes not being equal to 6 for open bass)
 			if(notenote & mask)
@@ -925,7 +925,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 				}
 			}//If this lane is used
 		}//Render for each of the available fret lanes
-	}//This is a non drum track
+	}//This is a non drum track (or a drum track where bass is rendered in its own lane)
 
 	//Render note names
 	if(!eof_hide_note_names)
@@ -1265,6 +1265,10 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		{
 			buffer[index++] = '*';
 		}
+		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
+		{
+			buffer[index++] = 'V';
+		}
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
 		{
 			buffer[index++] = '/';
@@ -1352,7 +1356,7 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 	{
 		if((prevnotenum >= 0) && (prevnoteflags & EOF_NOTE_FLAG_IS_TREMOLO))
 		{	//If there is a previous note that was also in a tremolo
-			buffer[index++] = '-';	//Write a tremolo continuation character
+			buffer[index++] = '/';	//Write a tremolo continuation character
 		}
 		else
 		{

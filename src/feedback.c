@@ -107,7 +107,7 @@ void eof_editor_logic_feedback(void)
 		eof_menu_edit_copy();
 		key[KEY_C] = 0;
 	}
-	if(KEY_EITHER_CTRL && key[KEY_V])
+	if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && key[KEY_V])
 	{
 		eof_menu_edit_paste();
 		key[KEY_V] = 0;

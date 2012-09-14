@@ -271,6 +271,11 @@ extern int         eof_disable_2d_rendering;
 extern int         eof_disable_info_panel;
 extern int         eof_paste_erase_overlap;
 extern int         eof_write_rbn_midis;
+extern int         eof_add_new_notes_to_selection;
+extern int         eof_drum_modifiers_affect_all_difficulties;
+extern int         eof_fb_seek_controls;
+extern int         eof_min_note_length;
+extern int         eof_render_bass_drum_in_lane;
 extern int         eof_inverted_chords_slash;
 extern int         eof_smooth_pos;
 extern int         eof_windowed;
@@ -402,7 +407,6 @@ extern char        eof_mark_drums_as_double_bass;
 extern unsigned long eof_mark_drums_as_hi_hat;
 extern unsigned long eof_pro_guitar_fret_bitmask;
 extern char        eof_legacy_view;
-extern int         eof_min_note_length;
 
 extern char eof_midi_initialized;			//Specifies whether Allegro was able to set up a MIDI device
 extern EOF_SELECTION_DATA eof_selection;
@@ -410,9 +414,6 @@ extern EOF_SELECTION_DATA eof_selection;
 extern FILE *eof_log_fp;
 extern char eof_log_level;
 extern char enable_logging;
-extern int eof_add_new_notes_to_selection;
-extern int eof_drum_modifiers_affect_all_difficulties;
-extern int eof_fb_seek_controls;
 
 extern long xchart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D rendering, updated by eof_set_3D_lane_positions()
 extern long ychart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D rendering, updated by eof_set_2D_lane_positions()
