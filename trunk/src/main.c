@@ -241,6 +241,8 @@ eof_color eof_color_green_struct, eof_color_red_struct, eof_color_yellow_struct,
 
 EOF_SCREEN_LAYOUT eof_screen_layout;
 BITMAP * eof_screen = NULL;
+unsigned long eof_screen_width, eof_screen_height;	//Used to track the EOF window size, for when the 3D projection is altered
+int eof_vanish_x, eof_vanish_y;				//Used to allow the user to control the vanishing point for the 3D preview
 
 EOF_SELECTION_DATA eof_selection;
 
@@ -543,7 +545,7 @@ int eof_set_display_mode(int mode)
 {
 	eof_log("eof_set_display_mode() entered", 1);
 
-	unsigned long screen_width, screen_height, default_zoom_level;
+	unsigned long default_zoom_level;
 
 	/* destroy windows first */
 	if(eof_window_editor)
@@ -570,8 +572,8 @@ int eof_set_display_mode(int mode)
 	switch(mode)
 	{
 		case EOF_DISPLAY_640:
-			screen_width = 640;
-			screen_height = 480;
+			eof_screen_width = 640;
+			eof_screen_height = 480;
 			default_zoom_level = 10;
 			eof_screen_layout.string_space_unscaled = 20;
 			eof_screen_layout.vocal_y = 96;
@@ -589,8 +591,8 @@ int eof_set_display_mode(int mode)
 		break;
 
 		case EOF_DISPLAY_800:
-			screen_width = 800;
-			screen_height = 600;
+			eof_screen_width = 800;
+			eof_screen_height = 600;
 			default_zoom_level = 8;
 			eof_screen_layout.string_space_unscaled = 30;
 			eof_screen_layout.vocal_y = 128;
@@ -608,8 +610,8 @@ int eof_set_display_mode(int mode)
 		break;
 
 		case EOF_DISPLAY_1024:
-			screen_width = 1024;
-			screen_height = 768;
+			eof_screen_width = 1024;
+			eof_screen_height = 768;
 			default_zoom_level = 5;
 			eof_screen_layout.string_space_unscaled = 48;
 			eof_screen_layout.vocal_y = 197;
@@ -630,11 +632,11 @@ int eof_set_display_mode(int mode)
 		return 0;	//Invalid display mode
 	}
 
-	if(set_gfx_mode(GFX_AUTODETECT_WINDOWED, screen_width, screen_height, 0, 0))
+	if(set_gfx_mode(GFX_AUTODETECT_WINDOWED, eof_screen_width, eof_screen_height, 0, 0))
 	{
-		if(set_gfx_mode(GFX_AUTODETECT, screen_width, screen_height, 0, 0))
+		if(set_gfx_mode(GFX_AUTODETECT, eof_screen_width, eof_screen_height, 0, 0))
 		{
-			if(set_gfx_mode(GFX_SAFE, screen_width, screen_height, 0, 0))
+			if(set_gfx_mode(GFX_SAFE, eof_screen_width, eof_screen_height, 0, 0))
 			{
 				allegro_message("Can't set up screen!  Error: %s",allegro_error);
 				return 0;
@@ -645,30 +647,30 @@ int eof_set_display_mode(int mode)
 			}
 		}
 	}
-	eof_screen = create_bitmap(screen_width, screen_height);
+	eof_screen = create_bitmap(eof_screen_width, eof_screen_height);
 	if(!eof_screen)
 	{
 		return 0;
 	}
-	eof_window_editor = eof_window_create(0, 20, screen_width, (screen_height / 2) - 20, eof_screen);
+	eof_window_editor = eof_window_create(0, 20, eof_screen_width, (eof_screen_height / 2) - 20, eof_screen);
 	if(!eof_window_editor)
 	{
 		allegro_message("Unable to create editor window!");
 		return 0;
 	}
-	eof_window_note = eof_window_create(0, screen_height / 2, screen_width, screen_height / 2, eof_screen);	//Make the window full width
+	eof_window_note = eof_window_create(0, eof_screen_height / 2, eof_screen_width, eof_screen_height / 2, eof_screen);	//Make the window full width
 	if(!eof_window_note)
 	{
 		allegro_message("Unable to create information window!");
 		return 0;
 	}
-	eof_window_3d = eof_window_create(screen_width / 2, screen_height / 2, screen_width / 2, screen_height / 2, eof_screen);
+	eof_window_3d = eof_window_create(eof_screen_width / 2, eof_screen_height / 2, eof_screen_width / 2, eof_screen_height / 2, eof_screen);
 	if(!eof_window_3d)
 	{
 		allegro_message("Unable to create 3D preview window!");
 		return 0;
 	}
-	eof_screen_layout.scrollbar_y = (screen_height / 2) - 37;
+	eof_screen_layout.scrollbar_y = (eof_screen_height / 2) - 37;
 	eof_scale_fretboard(5);	//Set the eof_screen_layout.note_y[] array based on a 5 lane track, for setting the fretboard height below
 	eof_screen_layout.lyric_y = 20;
 	eof_screen_layout.vocal_view_size = 13;
@@ -677,10 +679,12 @@ int eof_set_display_mode(int mode)
 	eof_screen_layout.lyric_view_bkey_height = eof_screen_layout.lyric_view_key_width * 3;
 	eof_screen_layout.fretboard_h = eof_screen_layout.note_y[4] + 25;
 	eof_screen_layout.buffered_preview = 0;
-	eof_screen_layout.controls_x = screen_width - 197;
+	eof_screen_layout.controls_x = eof_screen_width - 197;
 	eof_screen_layout.mode = mode;
 	eof_menu_edit_zoom_level(default_zoom_level);
-	ocd3d_set_projection((float)screen_width / 640.0, (float)screen_height / 480.0, 160.0, 0.0, 320.0, 320.0);
+	eof_vanish_x = 160;
+	eof_vanish_y = 0;
+	ocd3d_set_projection((float)eof_screen_width / 640.0, (float)eof_screen_height / 480.0, (float)eof_vanish_x, (float)eof_vanish_y, 320.0, 320.0);
 	set_display_switch_mode(SWITCH_BACKGROUND);
 	set_display_switch_callback(SWITCH_OUT, eof_switch_out_callback);
 	set_display_switch_callback(SWITCH_IN, eof_switch_in_callback);
@@ -2106,8 +2110,13 @@ void eof_render_note_window(void)
 	{	//If show catalog is disabled
 		tracknum = eof_song->track[eof_selected_track]->tracknum;	//Information about the active track is going to be displayed
 		textprintf_ex(eof_window_note->screen, font, 2, 0, eof_info_color, -1, "Information Panel");
-		textprintf_ex(eof_window_note->screen, font, 2, 12, eof_color_white, -1, "----------------------------");
-		ypos = 24;
+		textprintf_ex(eof_window_note->screen, font, 2, 6, eof_color_white, -1, "----------------------------");
+		ypos = 16;
+
+///DEBUG
+textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "vx = %d : vy = %d", eof_vanish_x, eof_vanish_y);
+ypos += 12;
+
 		char *ksname = eof_get_key_signature(eof_song, eof_selected_beat, 1);
 		if(eof_hover_beat >= 0)
 		{

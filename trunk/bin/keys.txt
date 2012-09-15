@@ -221,13 +221,19 @@ Miscellaneous Controls:
         position by 1BPM. Hold Shift to adjust in .1BPM increments.  Hold both Ctrl and Shift
         to adjust in .01BPM increments.
     
-
     +/- (Numpad):
 
         Zoom in/out.
-    
 
-    CTRL + +/- (Numpad):
+    SHIFT + +/- (Numpad):
+
+        Lower/raise the 3D preview's camera angle.
+
+    SHIFT + Enter (Numpad):
+
+        Reset the 3D preview's camera angle.
+    
+    CTRL + SHIFT + +/- (Numpad):
 
         Increase/decrease the AV delay.
 

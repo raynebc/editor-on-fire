@@ -256,6 +256,8 @@ extern char        eof_loaded_ogg_name[1024];
 extern int         eof_quit;
 extern EOF_SCREEN_LAYOUT eof_screen_layout;
 extern BITMAP *    eof_screen;
+extern unsigned long eof_screen_width, eof_screen_height;
+extern int         eof_vanish_x, eof_vanish_y;
 extern int         eof_av_delay;
 extern int         eof_buffer_size;
 extern int         eof_audio_fine_tune;

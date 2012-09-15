@@ -37,7 +37,8 @@ typedef struct
 	int numerator, denominator;
 	float grid_pos[EOF_MAX_GRID_SNAP_INTERVALS];
 	float grid_distance[EOF_MAX_GRID_SNAP_INTERVALS];
-	unsigned long pos;
+	unsigned long pos, previous_snap, next_snap;
+	int intervals;	//The number of grid snaps defined in the above arrays
 
 } EOF_SNAP_DATA;
 
@@ -46,6 +47,9 @@ extern EOF_SNAP_DATA eof_tail_snap;
 
 void eof_select_beat(unsigned long beat);
 void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p);
+	//Accepts a timestamp, and updates sp->grid_pos[] with the positions of each grid snap immediately at/before the timestamp and all remaining grid snaps for the beat/measure (depending on which of the two the grid snap setting is set to use)
+	//The position of the grid snap nearest to the given timestamp is stored in sp->pos
+	//sp->previous_snap and sp->next_snap are populated with the grid snap positions before/after sp->pos, with the limitation that previous_snap is no earlier than the beat's position itself (it won't go into the previous beat)
 void eof_snap_length_logic(EOF_SNAP_DATA * sp);	//Calculates the grid snap interval length for sp->beat
 void eof_read_editor_keys(void);
 void eof_editor_logic(void);
@@ -100,5 +104,8 @@ void eof_get_snap_ts(EOF_SNAP_DATA * sp, int beat);
 	//Finds the time signature in effect for the specified beat and stores the numerator and denominator into sp
 int eof_get_ts_text(int beat, char * buffer);
 	//Writes a string into the provided buffer that represents the time signature on the specified beat (string will be empty if the beat has no time signature defined explicitly on it)
+
+void eof_seek_to_nearest_grid_snap(void);
+	//Used in Feedback input method to seek to the nearest grid snap position when playback is stopped, provided there's a grid snap selected and the current seek position is valid.
 
 #endif

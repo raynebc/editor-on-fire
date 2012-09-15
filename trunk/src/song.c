@@ -4751,7 +4751,7 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
  	eof_log("eof_adjust_note_length() entered", 1);
 
 	unsigned long i, undo_made = 0, adjustment, notepos, notelength, newnotelength, newnotelength2;
-	long b, next_note;
+	long next_note;
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
@@ -4764,64 +4764,72 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(sp, eof_selected_track, i) == eof_note_type))
 		{	//If the note is selected and in the active instrument difficulty
-			if(amount == 0)
-			{	//If adjusting the note's length by the grid snap value, find the grid snap length for the note
-				b = eof_get_beat(sp, notepos + notelength - 1);
-				if(b >= 0)
-				{
-					eof_snap_logic(&eof_tail_snap, sp->beat[b]->pos);
-				}
-				else
-				{
-					eof_snap_logic(&eof_tail_snap, notepos + notelength - 1);
-				}
-				eof_snap_length_logic(&eof_tail_snap);
-				adjustment = eof_tail_snap.length;
-			}
-			if(dir < 0)
-			{	//If the note length is to be decreased
-				if(notelength < 2)
-				{	//If the note cannot have its length decreased
-					continue;	//Skip adjusting this note
-				}
-				if(!undo_made)
-				{	//Ensure an undo state was made before decreasing the length
-					eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
-					undo_made = 1;
-				}
-				eof_set_note_length(sp, eof_selected_track, i, notelength - adjustment);
-			}
-			else
-			{	//If the note length is to be increased
-				next_note = eof_track_fixup_next_note(sp, track, i);	//Get the index of the next note in the active instrument difficulty
-				if(next_note > 0)
-				{	//Check if the increase would be canceled due to being unable to overlap the next note
-					if((notepos + notelength + 1 >= eof_get_note_pos(sp, track, next_note)) && !(eof_get_note_flags(sp, track, i) & EOF_NOTE_FLAG_CRAZY))
-					{	//If this note cannot increase its length because it would overlap the next and the note isn't "crazy"
+			if(amount)
+			{	//If adjusted the note length by the specified number of ms
+				if(dir < 0)
+				{	//If the note length is to be decreased
+					if(notelength < 2)
+					{	//If the note cannot have its length decreased
 						continue;	//Skip adjusting this note
 					}
+					if(!undo_made)
+					{	//Ensure an undo state was made before decreasing the length
+						eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
+						undo_made = 1;
+					}
+					eof_set_note_length(sp, eof_selected_track, i, notelength - adjustment);
 				}
+				else
+				{	//If the note length is to be increased
+					next_note = eof_track_fixup_next_note(sp, track, i);	//Get the index of the next note in the active instrument difficulty
+					if(next_note > 0)
+					{	//Check if the increase would be canceled due to being unable to overlap the next note
+						if((notepos + notelength + 1 >= eof_get_note_pos(sp, track, next_note)) && !(eof_get_note_flags(sp, track, i) & EOF_NOTE_FLAG_CRAZY))
+						{	//If this note cannot increase its length because it would overlap the next and the note isn't "crazy"
+							continue;	//Skip adjusting this note
+						}
+					}
+					if(!undo_made)
+					{	//Ensure an undo state was made before increasing the length
+						eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
+						undo_made = 1;
+					}
+					eof_set_note_length(sp, eof_selected_track, i, notelength + adjustment);
+				}
+			}
+			else
+			{	//If adjusting by the current grid snap value
+				eof_snap_logic(&eof_tail_snap, notepos + notelength);	//Find grid snap positions before and after the tail's current ending position
 				if(!undo_made)
 				{	//Ensure an undo state was made before increasing the length
 					eof_prepare_undo(EOF_UNDO_TYPE_NOTE_LENGTH);
 					undo_made = 1;
 				}
-				eof_set_note_length(sp, eof_selected_track, i, notelength + adjustment);
-			}
-			if(amount == 0)
-			{	//If adjusting the note's length by the grid snap value, snap the tail's end position
+				if(dir < 0)
+				{	//If the tail is being shortened by one grid snap
+					eof_note_set_tail_pos(sp, eof_selected_track, i, eof_tail_snap.previous_snap);
+				}
+				else
+				{	//If the tail is being lengthened by one grid snap
+					eof_note_set_tail_pos(sp, eof_selected_track, i, eof_tail_snap.next_snap);
+				}
 				newnotelength = eof_get_note_length(sp, eof_selected_track, i);
 				if(newnotelength > 1)
 				{	//If the note's length, after the adjustment, is over 1
 					eof_snap_logic(&eof_tail_snap, notepos + newnotelength);
-					eof_note_set_tail_pos(sp, eof_selected_track, i, eof_tail_snap.pos);
+					eof_note_set_tail_pos(sp, eof_selected_track, i, eof_tail_snap.pos);	//Clean up the grid snap increase/decrease by re-snapping the tail
 
 					newnotelength2 = eof_get_note_length(sp, eof_selected_track, i);
-					if((dir > 0) && (amount == 0) && (notelength == newnotelength2))
+					if((dir > 0) && (notelength == newnotelength2))
 					{	//Special case:  If the grid snap length increase was nullified by the snap logic, force the tail to increase one snap interval higher
 						float difference = eof_tail_snap.grid_pos[1] - eof_tail_snap.grid_pos[0];	//This is the length of one grid snap in the target beat
 
-						eof_note_set_tail_pos(sp, eof_selected_track, i, notepos + notelength + difference);	//Resnap the tail one grid snap higher
+						eof_note_set_tail_pos(sp, eof_selected_track, i, notepos + notelength + difference + 0.5);	//Resnap the tail one grid snap higher
+					}
+					else if((dir < 0) && (notelength == newnotelength2))
+					{	//Special case:  If a grid snap decrease did not shorten the note (ie. it began on a grid snap position)
+						eof_snap_logic(&eof_tail_snap, notepos + notelength - 1);	//Find grid snap positions in the previous grid snap
+						eof_note_set_tail_pos(sp, eof_selected_track, i, eof_tail_snap.previous_snap);
 					}
 				}
 			}

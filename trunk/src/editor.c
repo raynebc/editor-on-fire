@@ -7,6 +7,7 @@
 #include "menu/beat.h"
 #include "menu/help.h"
 #include "menu/context.h"
+#include "modules/ocd3d.h"
 #include "foflc/Lyric_storage.h"
 #include "player.h"
 #include "mix.h"
@@ -182,13 +183,14 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 	int interval = 0;
 	char measure_snap = 0;
 	int note = 4;
+	float snaplength;
 
 	if(!sp)
 	{
 		return;
 	}
 	/* place pen at "real" location and adjust from there */
-	sp->pos = p;
+	sp->pos = sp->previous_snap = sp->next_snap = p;
 
 	/* ensure pen is within the song boundaries */
 	if(sp->pos < eof_song->tags->ogg[eof_selected_ogg].midi_offset)
@@ -201,8 +203,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 	}
 
 	if(eof_snap_mode != EOF_SNAP_OFF)
-	{
-
+	{	//If grid snap is enabled
 		/* find the snap beat */
 		sp->beat = -1;
 		if(sp->pos < eof_song->beat[eof_song->beats - 1]->pos)
@@ -320,7 +321,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			}
 		}
 		if(measure_snap)
-		{
+		{	//If performing snap by measure logic
 			int ts = 1;
 
 			/* find the measure we are currently in */
@@ -390,19 +391,37 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			}
 
 			/* find the snap positions */
+			snaplength = (float)sp->measure_length / (float)eof_snap_interval;
 			for(i = 0; i < eof_snap_interval; i++)
 			{
-				sp->grid_pos[i] = eof_song->beat[sp->measure_beat]->pos + (((float)sp->measure_length / (float)eof_snap_interval) * (float)i);
+				sp->grid_pos[i] = eof_song->beat[sp->measure_beat]->pos + (snaplength * (float)i);
 			}
-			sp->grid_pos[eof_snap_interval] = eof_song->beat[sp->measure_beat]->pos + sp->measure_length;
+			sp->grid_pos[eof_snap_interval] = eof_song->beat[sp->measure_beat]->fpos + sp->measure_length;
 
 			/* see which one we snap to */
 			for(i = 0; i < eof_snap_interval + 1; i++)
 			{
 				sp->grid_distance[i] = eof_pos_distance(sp->grid_pos[i], sp->pos);
 			}
+			sp->previous_snap = sp->grid_pos[0] + 0.5;		//Initialize these values
+			sp->next_snap = sp->grid_pos[1] + 0.5;
 			for(i = 0; i < eof_snap_interval + 1; i++)
-			{
+			{	//For each calculated grid snap position
+				if((unsigned long)(sp->grid_pos[i] + 0.5) < p)
+				{	//If this grid snap position (rounded to nearest ms) is before the input timestamp
+					sp->previous_snap = sp->grid_pos[i] + 0.5;	//Round to nearest ms
+					if(i < interval)
+					{	//As long as the next interval is defined in the snap data
+						sp->next_snap = sp->grid_pos[i + 1] + 0.5;	//Round to nearest ms
+					}
+				}
+				else if((unsigned long)(sp->grid_pos[i] + 0.5) == p)
+				{	//If this grid snap position (rounded to nearest ms) is at the input timestamp
+					if(i < interval)
+					{	//As long as the next interval is defined in the snap data
+						sp->next_snap = sp->grid_pos[i + 1] + 0.5;	//Round to nearest ms
+					}
+				}
 				if(sp->grid_distance[i] < least_amount)
 				{
 					least = i;
@@ -411,25 +430,43 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			}
 			if(least >= 0)
 			{
-				sp->pos = sp->grid_pos[least];
+				sp->pos = sp->grid_pos[least] + 0.5;	//Round to nearest ms
 			}
-		}
+		}//If performing snap by measure logic
 		else
-		{
+		{	//If performing snap by beat logic
 			/* find the snap positions */
+			snaplength = (float)sp->beat_length / (float)interval;
 			for(i = 0; i < interval; i++)
 			{
-				sp->grid_pos[i] = eof_song->beat[sp->beat]->pos + (((float)sp->beat_length / (float)interval) * (float)i);
+				sp->grid_pos[i] = eof_song->beat[sp->beat]->pos + (snaplength * (float)i);
 			}
-			sp->grid_pos[interval] = eof_song->beat[sp->beat + 1]->pos;
+			sp->grid_pos[interval] = eof_song->beat[sp->beat + 1]->fpos;	//Record the position of the last grid snap, which is the next beat
 
 			/* see which one we snap to */
 			for(i = 0; i < interval + 1; i++)
 			{
 				sp->grid_distance[i] = eof_pos_distance(sp->grid_pos[i], sp->pos);
 			}
+			sp->previous_snap = sp->grid_pos[0] + 0.5;		//Initialize these values
+			sp->next_snap = sp->grid_pos[1] + 0.5;
 			for(i = 0; i < interval + 1; i++)
-			{
+			{	//For each calculated grid snap position
+				if((unsigned long)(sp->grid_pos[i] + 0.5) < p)
+				{	//If this grid snap position (rounded to nearest ms) is before the input timestamp
+					sp->previous_snap = sp->grid_pos[i] + 0.5;	//Round to nearest ms
+					if(i < interval)
+					{	//As long as the next interval is defined in the snap data
+						sp->next_snap = sp->grid_pos[i + 1] + 0.5;	//Round to nearest ms
+					}
+				}
+				else if((unsigned long)(sp->grid_pos[i] + 0.5) == p)
+				{	//If this grid snap position (rounded to nearest ms) is at the input timestamp
+					if(i < interval)
+					{	//As long as the next interval is defined in the snap data
+						sp->next_snap = sp->grid_pos[i + 1] + 0.5;	//Round to nearest ms
+					}
+				}
 				if(sp->grid_distance[i] < least_amount)
 				{
 					least = i;
@@ -438,10 +475,11 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			}
 			if(least >= 0)
 			{
-				sp->pos = sp->grid_pos[least];
+				sp->pos = sp->grid_pos[least] + 0.5;	//Round to nearest ms
 			}
-		}
-	}
+		}//If performing snap by beat logic
+		sp->intervals = interval + 1;	//Record the number of entries that are stored in the grid_pos[] and grid_distance[] arrays
+	}//If grid snap is enabled
 }
 
 void eof_snap_length_logic(EOF_SNAP_DATA * sp)
@@ -561,6 +599,13 @@ void eof_read_editor_keys(void)
 	eof_read_controller(&eof_guitar);
 	eof_read_controller(&eof_drums);
 
+///DEBUG
+if(key[KEY_PRTSCR])
+{
+	//Debug action here
+	key[KEY_PRTSCR] = 0;
+}
+
 /* keyboard shortcuts that may or may not be used when the chart/catalog is playing */
 
 	/* seek to first note (CTRL+Home) */
@@ -611,36 +656,73 @@ void eof_read_editor_keys(void)
 	}
 
 	/* zoom in (+ on numpad) */
-	/* increment AV delay (CTRL+(plus) on numpad) */
+	/* increment AV delay (CTRL+SHIFT+(plus) on numpad) */
+	/* lower 3D camera angle (SHIFT+(plus) on numpad) */
 	if(key[KEY_PLUS_PAD])
 	{
 		if(!KEY_EITHER_CTRL)
 		{	//If CTRL is not being held
-			eof_menu_edit_zoom_helper_in();
+			if(!KEY_EITHER_SHIFT)
+			{	//If SHIFT is not being held either
+				eof_menu_edit_zoom_helper_in();
+			}
+			else
+			{	//SHIFT is being held, CTRL is not
+				eof_vanish_y += 10;
+				if(eof_vanish_y > 260)
+				{	//Do not allow it to go higher than this, otherwise the view-able portion of the chart goes partly off-screen
+					eof_vanish_y = 260;
+				}
+				ocd3d_set_projection((float)eof_screen_width / 640.0, (float)eof_screen_height / 480.0, (float)eof_vanish_x, (float)eof_vanish_y, 320.0, 320.0);
+			}
 		}
-		else
-		{
+		else if(KEY_EITHER_SHIFT)
+		{	//CTRL and SHIFT are both being held
 			eof_av_delay++;
 		}
 		key[KEY_PLUS_PAD] = 0;
 	}
 
 	/* zoom out (- on numpad) */
-	/* decrement AV delay (CTRL+- on numpad) */
+	/* decrement AV delay (CTRL+SHIFT+(minus) on numpad) */
+	/* raise 3D camera angle (SHIFT+(minus) on numpad) */
 	if(key[KEY_MINUS_PAD])
 	{
 		if(!KEY_EITHER_CTRL)
 		{	//If CTRL is not being held
-			eof_menu_edit_zoom_helper_out();
+			if(!KEY_EITHER_SHIFT)
+			{	//If SHIFT is not being held either
+				eof_menu_edit_zoom_helper_out();
+			}
+			else
+			{	//SHIFT is being held, CTRL is not
+				eof_vanish_y -= 10;
+				if(eof_vanish_y < -500)
+				{	//Do not allow it to go too negative, things start to look weird
+					eof_vanish_y = -500;
+				}
+				ocd3d_set_projection((float)eof_screen_width / 640.0, (float)eof_screen_height / 480.0, (float)eof_vanish_x, (float)eof_vanish_y, 320.0, 320.0);
+			}
 		}
-		else
-		{
+		else if(KEY_EITHER_SHIFT)
+		{	//CTRL and SHIFT are both being held
 			if(eof_av_delay > 0)
 			{
 				eof_av_delay--;
 			}
 		}
 		key[KEY_MINUS_PAD] = 0;
+	}
+
+	/* reset 3D camera angle (SHIFT+Enter on numpad) */
+	if(key[KEY_ENTER_PAD])
+	{
+		if(KEY_EITHER_SHIFT)
+		{
+			eof_vanish_y = 0;
+			ocd3d_set_projection((float)eof_screen_width / 640.0, (float)eof_screen_height / 480.0, (float)eof_vanish_x, (float)eof_vanish_y, 320.0, 320.0);
+		}
+		key[KEY_ENTER_PAD] = 0;
 	}
 
 	/* show/hide catalog (Q) */
@@ -825,6 +907,10 @@ void eof_read_editor_keys(void)
 					if(eof_undo_last_type == EOF_UNDO_TYPE_RECORD)
 					{
 						eof_undo_last_type = 0;
+					}
+					if(eof_input_mode == EOF_INPUT_FEEDBACK)
+					{	//If Feedback input method is in effect
+						eof_seek_to_nearest_grid_snap();	//Seek to the nearest grid snap position when playback is stopped
 					}
 				}
 			}
@@ -5189,4 +5275,23 @@ void eof_editor_logic_common(void)
 	{
 		eof_selected_control = -1;
 	}
+}
+
+void eof_seek_to_nearest_grid_snap(void)
+{
+	long beat;
+
+	if(!eof_song || (eof_snap_mode == EOF_SNAP_OFF) || (eof_music_pos <= eof_song->beat[0]->pos) || (eof_music_pos >= eof_song->beat[eof_song->beats - 1]->pos))
+		return;	//Return if there's no song loaded, grid snap is off, or the seek position is outside the range of beats in the chart
+
+	beat = eof_get_beat(eof_song, eof_music_pos);	//Find which beat the current seek position is in
+	if(beat < 0)	//If the seek position is outside the chart
+		return;
+
+	if(eof_music_pos == eof_song->beat[beat]->pos)
+		return;	//If the current position is on a beat marker, do not seek anywhere
+
+	//Find the distance to the previous grid snap
+	eof_snap_logic(&eof_tail_snap, eof_music_pos - eof_av_delay);
+	eof_set_seek_position(eof_tail_snap.pos + eof_av_delay);	//Seek to the nearest grid snap
 }
