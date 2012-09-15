@@ -2595,23 +2595,23 @@ void eof_seek_by_grid_snap(int dir)
 			return;	//Do not allow this operation to seek after the last beat marker
 	}
 
-	eof_snap_logic(&eof_tail_snap, eof_song->beat[beat]->pos);	//Find beat/measure length
-	eof_snap_length_logic(&eof_tail_snap);	//Find length of one grid snap in the target beat
-
 	if(dir < 0)
 	{	//If seeking backward
+		eof_snap_logic(&eof_tail_snap, eof_song->beat[beat]->pos);	//Find beat/measure length
+		eof_snap_length_logic(&eof_tail_snap);	//Find length of one grid snap in the target beat
 		if(eof_tail_snap.length > adjustedpos)
 		{	//Special case:  Current position is less than one grid snap from the beginning of the chart
 			eof_set_seek_position(eof_av_delay);	//Seek to the beginning of the chart
 			return;
 		}
 		eof_snap_logic(&eof_tail_snap, adjustedpos - eof_tail_snap.length);	//Find the grid snapped position of the new seek position
+		eof_set_seek_position(eof_tail_snap.pos + eof_av_delay);	//Seek to the new seek position
 	}
 	else
 	{	//If seeking forward
-		eof_snap_logic(&eof_tail_snap, adjustedpos + eof_tail_snap.length);	//Find the grid snapped position of the new seek position
+		eof_snap_logic(&eof_tail_snap, adjustedpos);					//Find the grid snapped position of the new seek position
+		eof_set_seek_position(eof_tail_snap.next_snap + eof_av_delay);	//Seek to the next calculated grid snap position
 	}
-	eof_set_seek_position(eof_tail_snap.pos + eof_av_delay);	//Seek to the new seek position
 }
 
 int eof_menu_song_seek_previous_grid_snap(void)

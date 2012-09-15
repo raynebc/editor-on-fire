@@ -194,10 +194,7 @@ void eof_music_rewind(void)
 		}
 		else
 		{
-			alogg_seek_rel_msecs_ogg(eof_music_track, -amount);
-			eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
-			eof_music_pos = eof_music_actual_pos;
-			eof_mix_seek(eof_music_actual_pos);
+			eof_set_seek_position(eof_music_pos - amount);
 		}
 	}
 }
@@ -205,6 +202,7 @@ void eof_music_rewind(void)
 void eof_music_forward(void)
 {
 	eof_log("eof_music_forward() entered", 2);
+	int amount = 0;
 
 	eof_stop_midi();
 	if(!eof_music_catalog_playback)
@@ -213,23 +211,21 @@ void eof_music_forward(void)
 		{
 			if(KEY_EITHER_CTRL)
 			{	//If both SHIFT and CTRL are being held
-				alogg_seek_rel_msecs_ogg(eof_music_track, 1);
+				amount = 1;
 			}
 			else
 			{	//Only SHIFT is being held
-				alogg_seek_rel_msecs_ogg(eof_music_track, 1000);
+				amount = 1000;
 			}
 		}
 		else if(KEY_EITHER_CTRL)
 		{
-			alogg_seek_rel_msecs_ogg(eof_music_track, 10);
+			amount = 10;
 		}
 		else
 		{
-			alogg_seek_rel_msecs_ogg(eof_music_track, 100);
+			amount = 100;
 		}
-		eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
-		eof_music_pos = eof_music_actual_pos;
-		eof_mix_seek(eof_music_actual_pos);
+		eof_set_seek_position(eof_music_pos + amount);
 	}
 }
