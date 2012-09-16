@@ -2244,41 +2244,46 @@ if(key[KEY_PRTSCR])
 						eof_selection.range_pos_1 = 0;
 						eof_selection.range_pos_2 = 0;
 						eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-						if((eof_hover_note >= 0) && (eof_input_mode != EOF_INPUT_FEEDBACK))
+						int effective_hover_note = eof_hover_note;	//By default, the effective hover note is based on the mouse position
+						if(eof_input_mode == EOF_INPUT_FEEDBACK)
+						{	//If Feedback input mode is in effect, it is based on the seek position instead
+							effective_hover_note = eof_seek_hover_note;
+						}
+						if(effective_hover_note >= 0)
 						{	//If the user edited an existing note (editing hover note not allowed in Feedback input mode)
 							if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 							{	//If legacy view is in effect, alter the note's legacy bitmask
-								eof_song->pro_guitar_track[tracknum]->note[eof_hover_note]->legacymask ^= bitmask;
+								eof_song->pro_guitar_track[tracknum]->note[effective_hover_note]->legacymask ^= bitmask;
 							}
 							else
 							{	//Otherwise alter the note's normal bitmask
-								note = eof_get_note_note(eof_song, eof_selected_track, eof_hover_note);
+								note = eof_get_note_note(eof_song, eof_selected_track, effective_hover_note);
 								note ^= bitmask;
-								eof_set_note_note(eof_song, eof_selected_track, eof_hover_note, note);
+								eof_set_note_note(eof_song, eof_selected_track, effective_hover_note, note);
 							}
 							if(eof_mark_drums_as_cymbal)
 							{	//If the user opted to make all new drum notes cymbals automatically
-								eof_mark_edited_note_as_cymbal(eof_song,eof_selected_track,eof_hover_note,bitmask);	//Only apply this status to a new drum gem that was added
+								eof_mark_edited_note_as_cymbal(eof_song,eof_selected_track,effective_hover_note,bitmask);	//Only apply this status to a new drum gem that was added
 							}
 							if(eof_mark_drums_as_double_bass)
 							{	//If the user opted to make all new expert bass drum notes as double bass automatically
-								eof_mark_edited_note_as_double_bass(eof_song,eof_selected_track,eof_hover_note,bitmask);	//Only apply this status to a new drum gem that was added
+								eof_mark_edited_note_as_double_bass(eof_song,eof_selected_track,effective_hover_note,bitmask);	//Only apply this status to a new drum gem that was added
 							}
 							if(eof_mark_drums_as_hi_hat)
 							{	//If the user opted to make all new yellow drum notes as one of the specialized hi hat types automatically
-								eof_mark_edited_note_as_special_hi_hat(eof_song,eof_selected_track,eof_hover_note,bitmask);	//Only apply this status to a new drum gem that was added
+								eof_mark_edited_note_as_special_hi_hat(eof_song,eof_selected_track,effective_hover_note,bitmask);	//Only apply this status to a new drum gem that was added
 							}
-							eof_selection.current = eof_hover_note;
+							eof_selection.current = effective_hover_note;
 							if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 							{	//If legacy view is in effect, check the note's legacy bitmask
-								note = eof_song->pro_guitar_track[tracknum]->note[eof_hover_note]->legacymask;
+								note = eof_song->pro_guitar_track[tracknum]->note[effective_hover_note]->legacymask;
 							}
 							else
 							{	//Otherwise check the note's normal bitmask and delete the note if necessary
-								note = eof_get_note_note(eof_song, eof_selected_track, eof_hover_note);
+								note = eof_get_note_note(eof_song, eof_selected_track, effective_hover_note);
 								if(note == 0)
 								{	//If the note just had all lanes cleared, delete the note
-									eof_track_delete_note(eof_song, eof_selected_track, eof_hover_note);
+									eof_track_delete_note(eof_song, eof_selected_track, effective_hover_note);
 									eof_selection.multi[eof_selection.current] = 0;
 									eof_selection.current = EOF_MAX_NOTES - 1;
 									eof_track_sort_notes(eof_song, eof_selected_track);
@@ -2628,11 +2633,9 @@ void eof_editor_logic(void)
 	unsigned long i, note, notepos;
 	unsigned long tracknum;
 	unsigned long bitmask = 0;	//Used to reduce duplicated logic
-	int targetpos;
-	int next_note_pos = 0;
 	EOF_NOTE * new_note = NULL;
 	int pos = eof_music_pos / eof_zoom;
-	int npos, lpos;
+	int lpos;
 	long notelength;
 
 	if(!eof_song_loaded)
@@ -2661,39 +2664,14 @@ void eof_editor_logic(void)
 		if((eof_input_mode == EOF_INPUT_FEEDBACK) || ((mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET)))
 		{
 			int x_tolerance = 6 * eof_zoom;	//This is how far left or right of a note the mouse is allowed to be to still be considered to hover over that note
-			lpos = pos < 300 ? (mouse_x - 20) * eof_zoom : ((pos - 300) + mouse_x - 20) * eof_zoom;
-			if(eof_input_mode != EOF_INPUT_FEEDBACK)
-			{	//Non Feedback input methods use the mouse position to place/edit notes
-				targetpos = lpos;
+			lpos = pos < 300 ? (mouse_x - 20) * eof_zoom : ((pos - 300) + mouse_x - 20) * eof_zoom;	//Translate mouse position to a time position
+			eof_hover_note = eof_find_hover_note(lpos, x_tolerance, 1);	//Find the mouse hover note
+			if(eof_input_mode == EOF_INPUT_FEEDBACK)
+			{	//If Feedback input method is in effect
+				x_tolerance = 2;	//The hover note tracking is much tighter since keyboard seek commands are more precise than mouse controls
+				eof_seek_hover_note = eof_find_hover_note(eof_music_pos - eof_av_delay, x_tolerance, 0);	//Find the seek hover note
 			}
-			else
-			{	//The Feedback input method uses the seek position instead
-				targetpos = eof_music_pos - eof_av_delay;
-				x_tolerance = 2;	//And the hover note tracking is much tighter since keyboard seek commands are more precise than mouse controls
-			}
-			eof_snap_logic(&eof_snap, lpos);
-			eof_snap_length_logic(&eof_snap);
-			eof_pen_note.pos = eof_snap.pos;
-			eof_pen_visible = 1;
-			for(i = 0; (i < eof_get_track_size(eof_song, eof_selected_track)) && (eof_hover_note < 0); i++)
-			{	//For each note in the active track, until a hover note is found
-				if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
-				{	//If the note is in the active difficulty
-					npos = eof_get_note_pos(eof_song, eof_selected_track, i);
-					if((targetpos > npos - x_tolerance) && (targetpos < npos + x_tolerance))
-					{
-						eof_hover_note = i;
-					}
-					else if((eof_pen_note.pos > npos - x_tolerance) && (eof_pen_note.pos < npos + x_tolerance))
-					{
-						eof_hover_note = i;
-					}
-					if((npos > eof_pen_note.pos) && (next_note_pos == 0))
-					{
-						next_note_pos = npos;
-					}
-				}
-			}
+
 			if((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK))
 			{	//If piano roll, rex mundi or feedback input modes are in use
 				if(eof_hover_note >= 0)
@@ -2732,10 +2710,6 @@ void eof_editor_logic(void)
 					else
 					{	//Otherwise it will be as long as the current grid snap value (or 100ms if grid snap is off)
 						eof_pen_note.length = eof_snap.length;
-						if((eof_hover_note < 0) && (next_note_pos > 0) && (eof_pen_note.pos + eof_pen_note.length >= next_note_pos))
-						{
-							eof_pen_note.length = next_note_pos - eof_pen_note.pos - 1;
-						}
 					}
 				}
 			}//If piano roll, rex mundi or feedback input modes are in use
@@ -2974,14 +2948,6 @@ void eof_editor_logic(void)
 				if((eof_mickeys_x != 0) && !eof_mouse_drug)
 				{
 					eof_mouse_drug++;
-				}
-				if(pos < 300)
-				{
-					npos = 20;
-				}
-				else
-				{
-					npos = 20 - (pos - 300);
 				}
 				if((eof_mouse_drug > 10) && (eof_selection.current != EOF_MAX_NOTES - 1))
 				{
@@ -3367,8 +3333,6 @@ void eof_vocal_editor_logic(void)
 
 	unsigned long i, notepos;
 	unsigned long tracknum;
-	int targetpos;
-	int next_note_pos = 0;
 	EOF_SNAP_DATA drag_snap; // help with dragging across snap locations
 
 	if(!eof_song_loaded)
@@ -3381,8 +3345,6 @@ void eof_vocal_editor_logic(void)
 
 	if(eof_music_paused)
 	{	//If the chart is paused
-		int npos;
-
 		if(!(mouse_b & 1) && !(mouse_b & 2) && !key[KEY_INSERT])
 		{
 			eof_undo_toggle = 0;
@@ -3426,15 +3388,6 @@ void eof_vocal_editor_logic(void)
 			int pos = eof_music_pos / eof_zoom;
 			int lpos = pos < 300 ? (mouse_x - 20) * eof_zoom : ((pos - 300) + mouse_x - 20) * eof_zoom;
 			int rpos = 0; // place to store pen_lyric.pos in case we are hovering over a note and need the original position before it was changed to the note location
-			if(eof_input_mode != EOF_INPUT_FEEDBACK)
-			{	//Non Feedback input methods use the mouse position to place/edit notes
-				targetpos = lpos;
-			}
-			else
-			{	//The Feedback input method uses the seek position instead
-				targetpos = eof_music_pos - eof_av_delay;
-				x_tolerance = 2;	//And the hover note tracking is much tighter since keyboard seek commands are more precise than mouse controls
-			}
 			eof_snap_logic(&eof_snap, lpos);
 			eof_snap_length_logic(&eof_snap);
 			eof_pen_lyric.pos = eof_snap.pos;
@@ -3453,22 +3406,14 @@ void eof_vocal_editor_logic(void)
 				eof_pen_lyric.note = 0;
 			}
 			eof_pen_visible = 1;
-			for(i = 0; (i < eof_song->vocal_track[tracknum]->lyrics) && (eof_hover_note < 0); i++)
-			{	//For each note in the active track, until a hover note is found
-				npos = eof_song->vocal_track[tracknum]->lyric[i]->pos;
-				if((targetpos > npos) && (targetpos < npos + eof_song->vocal_track[tracknum]->lyric[i]->length))
-				{
-					eof_hover_note = i;
-				}
-				else if((eof_pen_lyric.pos > npos - x_tolerance) && (eof_pen_lyric.pos < npos + x_tolerance))
-				{
-					eof_hover_note = i;
-				}
-				if((npos > eof_pen_lyric.pos) && (next_note_pos == 0))
-				{
-					next_note_pos = npos;
-				}
+
+			eof_hover_note = eof_find_hover_note(lpos, x_tolerance, 1);	//Find the mouse hover note
+			if(eof_input_mode == EOF_INPUT_FEEDBACK)
+			{	//If Feedback input method is in effect
+				x_tolerance = 2;	//The hover note tracking is much tighter since keyboard seek commands are more precise than mouse controls
+				eof_seek_hover_note = eof_find_hover_note(eof_music_pos - eof_av_delay, x_tolerance, 0);	//Find the seek hover note
 			}
+
 			if((eof_hover_note >= 0) && !(mouse_b & 1))
 			{
 				eof_pen_lyric.pos = eof_song->vocal_track[tracknum]->lyric[eof_hover_note]->pos;
@@ -3726,14 +3671,6 @@ void eof_vocal_editor_logic(void)
 				if((eof_mickeys_x != 0) && !eof_mouse_drug)
 				{
 					eof_mouse_drug++;
-				}
-				if(pos < 300)
-				{
-					npos = 20;
-				}
-				else
-				{
-					npos = 20 - (pos - 300);
 				}
 				if((eof_mouse_drug > 10) && (eof_selection.current != EOF_MAX_NOTES - 1))
 				{
@@ -4991,6 +4928,7 @@ void eof_editor_logic_common(void)
 		return;
 
 	eof_hover_note = -1;
+	eof_seek_hover_note = -1;
 	eof_hover_note_2 = -1;
 	eof_hover_lyric = -1;
 
@@ -5294,4 +5232,44 @@ void eof_seek_to_nearest_grid_snap(void)
 	//Find the distance to the previous grid snap
 	eof_snap_logic(&eof_tail_snap, eof_music_pos - eof_av_delay);
 	eof_set_seek_position(eof_tail_snap.pos + eof_av_delay);	//Seek to the nearest grid snap
+}
+
+int eof_find_hover_note(int targetpos, int x_tolerance, char snaplogic)
+{
+	unsigned long i, npos, leftboundary;
+	if(targetpos < 0)
+	{
+		targetpos = 0;
+	}
+	if(snaplogic)
+	{
+		eof_snap_logic(&eof_snap, targetpos);
+		eof_snap_length_logic(&eof_snap);
+		eof_pen_note.pos = eof_snap.pos;
+		eof_pen_visible = 1;
+	}
+	for(i = 0; (i < eof_get_track_size(eof_song, eof_selected_track)); i++)
+	{	//For each note in the active track, until a hover note is found
+		if(eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type)
+		{	//If the note is in the active difficulty
+			npos = eof_get_note_pos(eof_song, eof_selected_track, i);
+			if(npos < x_tolerance)
+			{	//Avoid an underflow here
+				leftboundary = 0;
+			}
+			else
+			{
+				leftboundary = npos - x_tolerance;
+			}
+			if((targetpos >= leftboundary) && (targetpos <= npos + x_tolerance))
+			{
+				return i;
+			}
+			else if(snaplogic && ((eof_pen_note.pos >= npos - x_tolerance) && (eof_pen_note.pos <= npos + x_tolerance)))
+			{	//If the position wasn't close enough to a note, but snaplogic is enabled, check the position's closest grid snap
+				return i;
+			}
+		}
+	}
+	return -1;	//No appropriate hover note found
 }

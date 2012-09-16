@@ -327,7 +327,8 @@ extern int         eof_selected_measure;
 extern int         eof_beat_in_measure;
 extern int         eof_beats_in_measure;
 extern int         eof_pegged_note;
-extern int         eof_hover_note;
+extern int         eof_hover_note;		//The hover note that is tracked using the mouse position
+extern int         eof_seek_hover_note;	//The hover note that is tracked using the seek position (for Feedback input method)
 extern int         eof_hover_note_2;	//The hover note that is tracked for fret catalog playback
 extern long        eof_hover_beat;
 extern long        eof_hover_beat_2;
