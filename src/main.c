@@ -179,6 +179,7 @@ int         eof_beat_in_measure = 0;
 int         eof_beats_in_measure = 1;
 int         eof_pegged_note = -1;
 int         eof_hover_note = -1;
+int         eof_seek_hover_note = -1;
 int         eof_hover_note_2 = -1;
 long        eof_hover_beat = -1;
 long        eof_hover_beat_2 = -1;
@@ -2113,10 +2114,6 @@ void eof_render_note_window(void)
 		textprintf_ex(eof_window_note->screen, font, 2, 6, eof_color_white, -1, "----------------------------");
 		ypos = 16;
 
-///DEBUG
-textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "vx = %d : vy = %d", eof_vanish_x, eof_vanish_y);
-ypos += 12;
-
 		char *ksname = eof_get_key_signature(eof_song, eof_selected_beat, 1);
 		if(eof_hover_beat >= 0)
 		{
@@ -2153,11 +2150,25 @@ ypos += 12;
 			ypos += 12;
 			if(eof_hover_note >= 0)
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Lyric = %d", eof_hover_note);
+				if(eof_seek_hover_note >= 0)
+				{
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Lyric = %d : Seek Lyric = %d", eof_hover_note, eof_seek_hover_note);
+				}
+				else
+				{
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Lyric = %d : Seek Lyric = None", eof_hover_note);
+				}
 			}
 			else
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Lyric = None");
+				if(eof_seek_hover_note >= 0)
+				{
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Lyric = None : Seek Lyric = %d", eof_seek_hover_note);
+				}
+				else
+				{
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Lyric = None : Seek Lyric = None");
+				}
 			}
 		}
 		else
@@ -2177,11 +2188,25 @@ ypos += 12;
 			ypos += 12;
 			if(eof_hover_note >= 0)
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Note = %d", eof_hover_note);
+				if(eof_seek_hover_note >= 0)
+				{
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Note = %d : Seek Note = %d", eof_hover_note, eof_seek_hover_note);
+				}
+				else
+				{
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Note = %d : Seek Note = None", eof_hover_note);
+				}
 			}
 			else
 			{
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Note = None");
+				if(eof_seek_hover_note >= 0)
+				{
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Note = None : Seek Note = %d", eof_seek_hover_note);
+				}
+				else
+				{
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Note = None : Seek Note = None");
+				}
 			}
 		}
 		int ism = ((eof_music_pos - eof_av_delay) / 1000) / 60;

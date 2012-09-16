@@ -107,5 +107,10 @@ int eof_get_ts_text(int beat, char * buffer);
 
 void eof_seek_to_nearest_grid_snap(void);
 	//Used in Feedback input method to seek to the nearest grid snap position when playback is stopped, provided there's a grid snap selected and the current seek position is valid.
+int eof_find_hover_note(int targetpos, int x_tolerance, char snaplogic);
+	//Finds and returns an appropriate hover note based on the specified position and the given x_tolerance
+	//If snaplogic is nonzero, also checks snap position data (should only be needed for tracking by mouse position)
+	//Returns -1 if no note was close enough to the specified position in the current instrument difficulty
+
 
 #endif

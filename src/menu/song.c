@@ -2022,8 +2022,8 @@ DIALOG eof_song_track_difficulty_menu_normal[] =
 int eof_song_track_difficulty_dialog(void)
 {
 	int difficulty, undo_made = 0;
-	int difficulty2 = 0xF, newdifficulty2;	//For pro drums and harmony vocals, a half byte (instead of a full byte) is used to store each's difficulty
-	int difficulty3 = 0xF0, newdifficulty3;	//The PS Real Drums difficulty is also stored in a half byte
+	int difficulty2 = 0xF, newdifficulty2 = 0xF;	//For pro drums and harmony vocals, a half byte (instead of a full byte) is used to store each's difficulty
+	int difficulty3 = 0xF0, newdifficulty3 = 0xF0;	//The PS Real Drums difficulty is also stored in a half byte
 
 	if(!eof_song || !eof_song_loaded)
 		return 1;
