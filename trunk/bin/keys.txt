@@ -229,6 +229,10 @@ Miscellaneous Controls:
 
         Lower/raise the 3D preview's camera angle.
 
+    BACKSLASH / SHIFT+BACKSLASH
+
+        Lower/raise the 3D preview's camera angle.
+
     SHIFT + Enter (Numpad):
 
         Reset the 3D preview's camera angle.
