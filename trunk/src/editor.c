@@ -658,12 +658,12 @@ if(key[KEY_PRTSCR])
 	/* zoom in (+ on numpad) */
 	/* increment AV delay (CTRL+SHIFT+(plus) on numpad) */
 	/* lower 3D camera angle (SHIFT+(plus) on numpad) or BACKSLASH */
-	if(key[KEY_PLUS_PAD] || key[KEY_BACKSLASH])
+	if(key[KEY_PLUS_PAD] || (key[KEY_BACKSLASH] && !KEY_EITHER_SHIFT))
 	{
 		if(!KEY_EITHER_CTRL)
 		{	//If CTRL is not being held
-			if(!KEY_EITHER_SHIFT)
-			{	//If SHIFT is not being held either
+			if(!KEY_EITHER_SHIFT && !key[KEY_BACKSLASH])
+			{	//If neither SHIFT nor backslash are being held either
 				eof_menu_edit_zoom_helper_in();
 			}
 			else
@@ -713,6 +713,7 @@ if(key[KEY_PRTSCR])
 			}
 		}
 		key[KEY_MINUS_PAD] = 0;
+		key[KEY_BACKSLASH] = 0;
 	}
 
 	/* reset 3D camera angle (SHIFT+Enter on numpad) */
