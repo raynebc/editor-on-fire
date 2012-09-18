@@ -600,10 +600,10 @@ void eof_read_editor_keys(void)
 	eof_read_controller(&eof_drums);
 
 ///DEBUG
-if(key[KEY_PRTSCR])
+if(key[KEY_PAUSE])
 {
 	//Debug action here
-	key[KEY_PRTSCR] = 0;
+	key[KEY_PAUSE] = 0;
 }
 
 /* keyboard shortcuts that may or may not be used when the chart/catalog is playing */
@@ -1830,11 +1830,19 @@ if(key[KEY_PRTSCR])
 		}
 
 	/* toggle freestyle (F in a vocal track) */
+	/* toggle full screen 3D view (CTRL+F)*/
 		if(key[KEY_F])
 		{
-			if(eof_vocals_selected)
-			{	//Toggle freestyle
-				eof_menu_toggle_freestyle();
+			if(!KEY_EITHER_CTRL)
+			{	//CTRL is not held
+				if(eof_vocals_selected)
+				{	//Toggle freestyle
+					eof_menu_toggle_freestyle();
+				}
+			}
+			else
+			{
+				eof_full_screen_3d ^= 1;	//Toggle this setting on/off
 			}
 			key[KEY_F] = 0;
 		}
@@ -2662,7 +2670,7 @@ void eof_editor_logic(void)
 			}
 		}
 
-		/* mouse is in the fretboard area (or Feedback input method is in use)*/
+		/* mouse is in the fretboard area (or Feedback input method is in use) */
 		if((eof_input_mode == EOF_INPUT_FEEDBACK) || ((mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET)))
 		{
 			int x_tolerance = 6 * eof_zoom;	//This is how far left or right of a note the mouse is allowed to be to still be considered to hover over that note
@@ -2716,8 +2724,8 @@ void eof_editor_logic(void)
 				}
 			}//If piano roll, rex mundi or feedback input modes are in use
 
-			/* handle initial left click */
-			if((mouse_b & 1) && eof_lclick_released)
+			/* handle initial left click (only if full screen 3D view is not in effect) */
+			if(!eof_full_screen_3d && (mouse_b & 1) && eof_lclick_released)
 			{
 				int ignore_range = 0;
 				eof_click_x = mouse_x;
@@ -2937,8 +2945,8 @@ void eof_editor_logic(void)
 			int revert = 0;
 			int revert_amount = 0;
 			char undo_made = 0;
-			if((mouse_b & 1) && !eof_lclick_released && (lpos >= 0))
-			{	//If the left mouse button is being held and the mouse is right of the left edge of the piano roll
+			if(!eof_full_screen_3d && (mouse_b & 1) && !eof_lclick_released && (lpos >= 0))
+			{	//If full screen 3D view is not in effect, the left mouse button is being held and the mouse is right of the left edge of the piano roll
 				if(eof_mouse_drug && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 				{
 					eof_mouse_drug++;
@@ -3043,8 +3051,8 @@ void eof_editor_logic(void)
 					}
 				}
 			}//If the left mouse button is being held
-			if(((mouse_b & 2) || key[KEY_INSERT]) && eof_rclick_released && eof_pen_note.note && (eof_pen_note.pos < eof_music_length))
-			{	//Right mouse click or Insert key pressed, and the pen note is valid
+			if(!eof_full_screen_3d && ((mouse_b & 2) || key[KEY_INSERT]) && eof_rclick_released && eof_pen_note.note && (eof_pen_note.pos < eof_music_length))
+			{	//Full screen 3D view is not in effect, right mouse click or Insert key pressed, and the pen note is valid
 				eof_selection.range_pos_1 = 0;
 				eof_selection.range_pos_2 = 0;
 				eof_rclick_released = 0;
@@ -3163,7 +3171,7 @@ void eof_editor_logic(void)
 						}
 					}
 				}
-			}//Right mouse click or Insert key pressed, and the pen note is valid
+			}//Full screen 3D view is not in effect, right mouse click or Insert key pressed, and the pen note is valid
 			if(!(mouse_b & 2) && !key[KEY_INSERT])
 			{
 				eof_rclick_released = 1;
@@ -3252,7 +3260,7 @@ void eof_editor_logic(void)
 		{
 			eof_hover_type = 4;
 		}
-		if(mouse_b & 1)
+		if(!eof_full_screen_3d && (mouse_b & 1))
 		{
 			if(eof_note_type != eof_hover_type)
 			{
@@ -3273,60 +3281,68 @@ void eof_editor_logic(void)
 		eof_emergency_stop_music();
 		eof_render();
 		eof_show_mouse(screen);
-		if((mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4) && (mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18))
-		{
-			lpos = pos < 300 ? (eof_song->beat[eof_selected_beat]->pos / eof_zoom + 20) : 300;
-			eof_prepare_menus();
-			do_menu(eof_beat_menu, lpos, mouse_y);
+		if(eof_full_screen_3d)
+		{	//If full screen 3D view is in effect
+			do_menu(eof_right_click_menu_full_screen_3d_view, mouse_x, mouse_y);
 			eof_clear_input();
 		}
-		else if((mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
-		{	//mouse is in the fretboard area
-			if(eof_hover_note >= 0)
+		else
+		{	//Full screen 3D view is not in effect
+			if((mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4) && (mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18))
 			{
-				if(eof_count_selected_notes(NULL, 0) <= 0)
+				lpos = pos < 300 ? (eof_song->beat[eof_selected_beat]->pos / eof_zoom + 20) : 300;
+				eof_prepare_menus();
+				do_menu(eof_beat_menu, lpos, mouse_y);
+				eof_clear_input();
+			}
+			else if((mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
+			{	//mouse is in the fretboard area
+				if(eof_hover_note >= 0)
 				{
-					eof_selection.current = eof_hover_note;
-					eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current);
-					if(eof_selection.track != eof_selected_track)
-					{
-						eof_selection.track = eof_selected_track;
-						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
-					}
-					eof_selection.multi[eof_selection.current] = 1;
-					eof_render();
-				}
-				else
-				{
-					if(!eof_selection.multi[eof_hover_note])
+					if(eof_count_selected_notes(NULL, 0) <= 0)
 					{
 						eof_selection.current = eof_hover_note;
 						eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current);
-						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
+						if(eof_selection.track != eof_selected_track)
+						{
+							eof_selection.track = eof_selected_track;
+							memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
+						}
 						eof_selection.multi[eof_selection.current] = 1;
 						eof_render();
 					}
+					else
+					{
+						if(!eof_selection.multi[eof_hover_note])
+						{
+							eof_selection.current = eof_hover_note;
+							eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current);
+							memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
+							eof_selection.multi[eof_selection.current] = 1;
+							eof_render();
+						}
+					}
 				}
+				eof_prepare_menus();
+				if(eof_count_selected_notes(NULL, 0) > 0)
+				{
+					do_menu(eof_right_click_menu_note, mouse_x, mouse_y);
+				}
+				else
+				{
+					do_menu(eof_right_click_menu_normal, mouse_x, mouse_y);
+				}
+				eof_clear_input();
 			}
-			eof_prepare_menus();
-			if(eof_count_selected_notes(NULL, 0) > 0)
+			else if(mouse_y < eof_window_3d->y)
 			{
-				do_menu(eof_right_click_menu_note, mouse_x, mouse_y);
-			}
-			else
-			{
+				eof_prepare_menus();
 				do_menu(eof_right_click_menu_normal, mouse_x, mouse_y);
+				eof_clear_input();
 			}
-			eof_clear_input();
-		}
-		else if(mouse_y < eof_window_3d->y)
-		{
-			eof_prepare_menus();
-			do_menu(eof_right_click_menu_normal, mouse_x, mouse_y);
-			eof_clear_input();
-		}
+		}//Full screen 3D view is not in effect
 		eof_show_mouse(NULL);
-	}
+	}//If the right mouse button or Insert key is pressed, a song is loaded and Rex Mundi or Feedback input mode is in use
 }
 
 void eof_vocal_editor_logic(void)
@@ -3372,7 +3388,7 @@ void eof_vocal_editor_logic(void)
 			{
 				eof_last_tone = 0;
 			}
-			if(mouse_b & 1)
+			if(!eof_full_screen_3d && (mouse_b & 1))
 			{
 				int n = eof_vocals_offset + (EOF_EDITOR_RENDER_OFFSET + 35 + eof_screen_layout.vocal_y - mouse_y) / eof_screen_layout.vocal_tail_size;
 				if((n >= eof_vocals_offset) && (n < eof_vocals_offset + eof_screen_layout.vocal_view_size) && (n != eof_last_tone))
@@ -3433,7 +3449,7 @@ void eof_vocal_editor_logic(void)
 			}
 
 			/* handle initial left click */
-			if((mouse_b & 1) && eof_lclick_released)
+			if(!eof_full_screen_3d && (mouse_b & 1) && eof_lclick_released)
 			{
 				int ignore_range = 0;
 				eof_click_x = mouse_x;
@@ -3660,8 +3676,8 @@ void eof_vocal_editor_logic(void)
 			int revert = 0;
 			int revert_amount = 0;
 			char undo_made = 0;
-			if((mouse_b & 1) && !eof_lclick_released && (lpos >= eof_peg_x))
-			{	//If the left mouse button is being held and the mouse is right of the left edge of the piano roll
+			if(!eof_full_screen_3d && (mouse_b & 1) && !eof_lclick_released && (lpos >= eof_peg_x))
+			{	//If full screen 3D view is not in effect, the left mouse button is being held and the mouse is right of the left edge of the piano roll
 				if(eof_mouse_drug)
 				{
 					eof_mouse_drug++;
@@ -3757,9 +3773,9 @@ void eof_vocal_editor_logic(void)
 						}
 					}
 				}
-			}
-			if((((eof_input_mode != EOF_INPUT_REX) && ((mouse_b & 2) || key[KEY_INSERT])) || (((eof_input_mode == EOF_INPUT_REX) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL && (key[KEY_1] || key[KEY_2] || key[KEY_3] || key[KEY_4] || key[KEY_5] || key[KEY_6])) && eof_rclick_released && (eof_pen_lyric.pos < eof_music_length))) || key[KEY_BACKSPACE])
-			{
+			}//If full screen 3D view is not in effect, the left mouse button is being held and the mouse is right of the left edge of the piano roll
+			if(!eof_full_screen_3d && ((((eof_input_mode != EOF_INPUT_REX) && ((mouse_b & 2) || key[KEY_INSERT])) || (((eof_input_mode == EOF_INPUT_REX) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL && (key[KEY_1] || key[KEY_2] || key[KEY_3] || key[KEY_4] || key[KEY_5] || key[KEY_6])) && eof_rclick_released && (eof_pen_lyric.pos < eof_music_length))) || key[KEY_BACKSPACE]))
+			{	//If full screen 3D view is not in effect and input to add a note is provided
 				eof_selection.range_pos_1 = 0;
 				eof_selection.range_pos_2 = 0;
 				if(eof_hover_note >= 0)
@@ -3974,67 +3990,75 @@ void eof_vocal_editor_logic(void)
 		}
 	}//If the chart is not paused
 
-	if(((mouse_b & 2) || key[KEY_INSERT]) && (eof_input_mode == EOF_INPUT_REX))
-	{	//Open context menu if right click or Insert is used in Rex Mundi input mode
+	if(((mouse_b & 2) || key[KEY_INSERT]) && ((eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK)))
+	{	//If the right mouse button or Insert key is pressed, a song is loaded and Rex Mundi or Feedback input mode is in use
 		eof_emergency_stop_music();
 		eof_render();
 		eof_show_mouse(screen);
-		if((mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4) && (mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18))
-		{
-			int pos = eof_music_pos / eof_zoom;
-			int lpos = pos < 300 ? (eof_song->beat[eof_selected_beat]->pos / eof_zoom + 20) : 300;
-			eof_prepare_menus();
-			do_menu(eof_beat_menu, lpos, mouse_y);
+		if(eof_full_screen_3d)
+		{	//If full screen 3D view is in effect
+			do_menu(eof_right_click_menu_full_screen_3d_view, mouse_x, mouse_y);
 			eof_clear_input();
 		}
-		else if((mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
-		{	//mouse is in the fretboard area
-			if(eof_hover_note >= 0)
+		else
+		{	//Full screen 3D view is not in effect
+			if((mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4) && (mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18))
 			{
-				if(eof_count_selected_notes(NULL, 0) <= 0)
+				int pos = eof_music_pos / eof_zoom;
+				int lpos = pos < 300 ? (eof_song->beat[eof_selected_beat]->pos / eof_zoom + 20) : 300;
+				eof_prepare_menus();
+				do_menu(eof_beat_menu, lpos, mouse_y);
+				eof_clear_input();
+			}
+			else if((mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
+			{	//mouse is in the fretboard area
+				if(eof_hover_note >= 0)
 				{
-					eof_selection.current = eof_hover_note;
-					eof_selection.current_pos = eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->pos;
-					if(eof_selection.track != EOF_TRACK_VOCALS)
-					{
-						eof_selection.track = EOF_TRACK_VOCALS;
-						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
-					}
-					eof_selection.multi[eof_selection.current] = 1;
-					eof_render();
-				}
-				else
-				{
-					if(!eof_selection.multi[eof_hover_note])
+					if(eof_count_selected_notes(NULL, 0) <= 0)
 					{
 						eof_selection.current = eof_hover_note;
 						eof_selection.current_pos = eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->pos;
-						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
+						if(eof_selection.track != EOF_TRACK_VOCALS)
+						{
+							eof_selection.track = EOF_TRACK_VOCALS;
+							memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
+						}
 						eof_selection.multi[eof_selection.current] = 1;
 						eof_render();
 					}
+					else
+					{
+						if(!eof_selection.multi[eof_hover_note])
+						{
+							eof_selection.current = eof_hover_note;
+							eof_selection.current_pos = eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->pos;
+							memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
+							eof_selection.multi[eof_selection.current] = 1;
+							eof_render();
+						}
+					}
+				}
+				eof_prepare_menus();
+				if(eof_count_selected_notes(NULL, 0) > 0)
+				{
+					do_menu(eof_right_click_menu_note, mouse_x, mouse_y);
+					eof_clear_input();
+				}
+				else
+				{
+					do_menu(eof_right_click_menu_normal, mouse_x, mouse_y);
+					eof_clear_input();
 				}
 			}
-			eof_prepare_menus();
-			if(eof_count_selected_notes(NULL, 0) > 0)
+			else if(mouse_y < eof_window_3d->y)
 			{
-				do_menu(eof_right_click_menu_note, mouse_x, mouse_y);
-				eof_clear_input();
-			}
-			else
-			{
+				eof_prepare_menus();
 				do_menu(eof_right_click_menu_normal, mouse_x, mouse_y);
 				eof_clear_input();
 			}
-		}
-		else if(mouse_y < eof_window_3d->y)
-		{
-			eof_prepare_menus();
-			do_menu(eof_right_click_menu_normal, mouse_x, mouse_y);
-			eof_clear_input();
-		}
+		}//Full screen 3D view is not in effect
 		eof_show_mouse(NULL);
-	}
+	}//If the right mouse button or Insert key is pressed, a song is loaded and Rex Mundi or Feedback input mode is in use
 }
 
 int eof_get_ts_text(int beat, char * buffer)
@@ -4090,8 +4114,8 @@ void eof_render_editor_window(void)
 	if(!eof_song_loaded)
 		return;
 
-	if(eof_disable_2d_rendering)	//If the user wanted to disable the rendering of the 2D window to improve performance
-		return;						//Return immediately
+	if(eof_disable_2d_rendering || eof_full_screen_3d)	//If the disabled the 2D window's rendering (or enabled full screen 3D view)
+		return;											//Return immediately
 
 	eof_render_editor_window_common();	//Perform rendering that is common to the note and the vocal editor displays
 
@@ -4144,13 +4168,10 @@ void eof_render_vocal_editor_window(void)
 	int lpos;							//The position of the first beat marker
 	unsigned long start;	//Will store the timestamp of the left visible edge of the piano roll
 
-	if(!eof_song_loaded)
+	if(!eof_song_loaded || !eof_vocals_selected)
 		return;
-	if(!eof_vocals_selected)
-		return;
-
-	if(eof_disable_2d_rendering)	//If the user wanted to disable the rendering of the 2D window to improve performance
-		return;						//Return immediately
+	if(eof_disable_2d_rendering || eof_full_screen_3d)	//If the disabled the 2D window's rendering (or enabled full screen 3D view)
+		return;											//Return immediately
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	eof_render_editor_window_common();
@@ -4965,7 +4986,7 @@ void eof_editor_logic_common(void)
 					}
 				}
 			}
-			if(mouse_b & 1)
+			if(!eof_full_screen_3d && (mouse_b & 1))
 			{
 				if(eof_mouse_drug)
 				{
@@ -5076,7 +5097,7 @@ void eof_editor_logic_common(void)
 				eof_mouse_drug = 0;
 				eof_adjusted_anchor = 0;
 			}
-			if(((mouse_b & 2) || key[KEY_INSERT]) && eof_rclick_released && (eof_hover_beat >= 0))
+			if(!eof_full_screen_3d && ((mouse_b & 2) || key[KEY_INSERT]) && eof_rclick_released && (eof_hover_beat >= 0))
 			{
 				eof_select_beat(eof_hover_beat);
 				alogg_seek_abs_msecs_ogg(eof_music_track, eof_song->beat[eof_hover_beat]->pos + eof_av_delay);
@@ -5089,7 +5110,7 @@ void eof_editor_logic_common(void)
 			{
 				eof_rclick_released = 1;
 			}
-		}
+		}//mouse is in beat marker area
 		else
 		{
 			eof_hover_beat = -1;
@@ -5099,7 +5120,7 @@ void eof_editor_logic_common(void)
 		/* handle scrollbar click */
 		if((mouse_y >= eof_window_editor->y + eof_window_editor->h - 17) && (mouse_y < eof_window_editor->y + eof_window_editor->h))
 		{
-			if(mouse_b & 1)
+			if(!eof_full_screen_3d && (mouse_b & 1))
 			{
 				eof_music_actual_pos = ((float)eof_music_length / (float)(eof_screen->w - 8)) * (float)(mouse_x - 4);
 				alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_actual_pos);
@@ -5177,7 +5198,7 @@ void eof_editor_logic_common(void)
 	/* handle playback controls */
 	if((mouse_x >= eof_screen_layout.controls_x) && (mouse_x < eof_screen_layout.controls_x + 139) && (mouse_y >= 22 + 8) && (mouse_y < 22 + 17 + 8))
 	{
-		if(mouse_b & 1)
+		if(!eof_full_screen_3d && (mouse_b & 1))
 		{
 			eof_selected_control = (mouse_x - eof_screen_layout.controls_x) / 30;
 			eof_blclick_released = 0;

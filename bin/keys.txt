@@ -225,25 +225,29 @@ Miscellaneous Controls:
 
         Zoom in/out.
 
-    SHIFT + +/- (Numpad):
+    Shift + +/- (Numpad):
 
         Lower/raise the 3D preview's camera angle.
 
-    BACKSLASH / SHIFT+BACKSLASH
+    Backslash / Shift+Backslash
 
         Lower/raise the 3D preview's camera angle.
 
-    SHIFT + Enter (Numpad):
+    Shift + Enter (Numpad):
 
         Reset the 3D preview's camera angle.
     
-    CTRL + SHIFT + +/- (Numpad):
+    Ctrl + Shift + +/- (Numpad):
 
         Increase/decrease the AV delay.
 
     Ctrl+I:
 
         Invert the fretboard display.
+
+    Ctrl+F:
+
+        Toggle full screen 3D view on/off
 
 
 EOF provides many useful functions which can be accessed through various menus and dialogs. Shortcuts keys are provided to access some of the more frequently used functions. This screen is not an exhaustive list of keyboard shortcuts. All menu functions with shortcuts will display that shortcut next to the name of the function in the menu.

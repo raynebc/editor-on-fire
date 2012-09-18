@@ -14,6 +14,7 @@ MENU eof_right_click_menu_normal[] =
     {"&Paste\t" CTRL_NAME "+V", eof_menu_edit_paste, NULL, 0, NULL},
     {"&Grid Snap", NULL, eof_edit_snap_menu, 0, NULL},
     {"&Zoom", NULL, eof_edit_zoom_menu, 0, NULL},
+    {"&Full screen 3D view\t" CTRL_NAME "+F", eof_enable_full_screen_3d, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"Selection", NULL, eof_edit_selection_menu, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
@@ -27,10 +28,29 @@ MENU eof_right_click_menu_note[] =
     {"&Paste\t" CTRL_NAME "+V", eof_menu_edit_paste, NULL, 0, NULL},
     {"&Grid Snap", NULL, eof_edit_snap_menu, 0, NULL},
     {"&Zoom", NULL, eof_edit_zoom_menu, 0, NULL},
+    {"&Full screen 3D view\t" CTRL_NAME "+F", eof_enable_full_screen_3d, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"Selection", NULL, eof_edit_selection_menu, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
+
+MENU eof_right_click_menu_full_screen_3d_view[] =
+{
+    {"Exit full screen 3D preview", eof_disable_full_screen_3d, NULL, 0, NULL},
+    {NULL, NULL, NULL, 0, NULL}
+};
+
+int eof_disable_full_screen_3d(void)
+{
+	eof_full_screen_3d = 0;
+	return 0;
+}
+
+int eof_enable_full_screen_3d(void)
+{
+	eof_full_screen_3d = 1;
+	return 0;
+}
 
 void eof_prepare_context_menu(void)
 {
@@ -77,16 +97,13 @@ void eof_prepare_context_menu(void)
 		}
 		if(eof_check_track_difficulty_populated_status(eof_note_type))
 		{	//If the active instrument difficulty is populated, enable the Selection submenu
-			eof_right_click_menu_normal[5].flags = 0;
-			eof_right_click_menu_note[7].flags = 0;
+			eof_right_click_menu_normal[6].flags = 0;
+			eof_right_click_menu_note[8].flags = 0;
 		}
 		else
 		{
-			eof_right_click_menu_normal[5].flags = D_DISABLED;
+			eof_right_click_menu_normal[6].flags = D_DISABLED;
 			eof_right_click_menu_note[7].flags = D_DISABLED;
 		}
-
-		eof_right_click_menu_normal[6].flags = D_DISABLED;
-		eof_right_click_menu_note[8].flags = D_DISABLED;
 	}
 }

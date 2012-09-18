@@ -244,6 +244,7 @@ EOF_SCREEN_LAYOUT eof_screen_layout;
 BITMAP * eof_screen = NULL;
 unsigned long eof_screen_width, eof_screen_height;	//Used to track the EOF window size, for when the 3D projection is altered
 int eof_vanish_x, eof_vanish_y;				//Used to allow the user to control the vanishing point for the 3D preview
+char eof_full_screen_3d = 0;	//If nonzero, directs the render logic to scale the 3D window to fit the entire program window
 
 EOF_SELECTION_DATA eof_selection;
 
@@ -1425,7 +1426,7 @@ void eof_read_global_keys(void)
 	}
 
 	/* switch between window and full screen mode */
-	if(KEY_EITHER_ALT && key[KEY_ENTER])
+/*	if(KEY_EITHER_ALT && key[KEY_ENTER])
 	{
 		if(eof_windowed == 1)
 		{
@@ -1450,6 +1451,7 @@ void eof_read_global_keys(void)
 			ncdfs_use_allegro = 0;
 		}
 	}
+*/
 
 	/* stuff you can only do when a chart is loaded */
 	if(eof_song_loaded && eof_song)
@@ -1686,7 +1688,7 @@ void eof_lyric_logic(void)
 			}
 			if(eof_hover_key >= 0)
 			{
-				if(mouse_b & 1)
+				if(!eof_full_screen_3d && (mouse_b & 1))
 				{
 					if(KEY_EITHER_CTRL && (eof_selection.current < eof_song->vocal_track[tracknum]->lyrics))
 					{
@@ -1706,7 +1708,7 @@ void eof_lyric_logic(void)
 				{
 					eof_last_tone = -1;
 				}
-				if((mouse_b & 2) || key[KEY_INSERT])
+				if(!eof_full_screen_3d && ((mouse_b & 2) || key[KEY_INSERT]))
 				{
 					eof_vocals_offset = eof_hover_key - eof_screen_layout.vocal_view_size / 2;
 					if(KEY_EITHER_CTRL)
@@ -1749,7 +1751,7 @@ void eof_note_logic(void)
 	if((eof_catalog_menu[0].flags & D_SELECTED) && (mouse_x >= 0) && (mouse_x < 90) && (mouse_y > 40 + eof_window_note->y) && (mouse_y < 40 + 18 + eof_window_note->y))
 	{
 		eof_cselected_control = mouse_x / 30;
-		if(mouse_b & 1)
+		if(!eof_full_screen_3d && (mouse_b & 1))
 		{
 			eof_blclick_released = 0;
 		}
@@ -1779,7 +1781,7 @@ void eof_note_logic(void)
 	}
 	if((mouse_y >= eof_window_note->y) && (mouse_y < eof_window_note->y + 12) && (mouse_x >= 0) && (mouse_x < ((eof_catalog_menu[0].flags & D_SELECTED) ? text_length(font, "Fret Catalog") : text_length(font, "Information Panel"))))
 	{
-		if(mouse_b & 1)
+		if(!eof_full_screen_3d && (mouse_b & 1))
 		{
 			eof_blclick_released = 0;
 		}
@@ -1971,8 +1973,8 @@ void eof_render_note_window(void)
 	char difficulty1[20], difficulty2[50], difficulty3[50];
 	int scale, chord, isslash, bassnote;	//Used when looking up the chord name (if the last selected note is not already named)
 
-	if(eof_disable_info_panel)	//If the user wanted to disable the rendering of the info panel to improve performance
-		return;					//Return immediately
+	if(eof_disable_info_panel || eof_full_screen_3d)	//If the user disabled the info panel's rendering (or enabled full screen 3D view)
+		return;											//Return immediately without rendering anything
 
 	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	clear_to_color(eof_window_note->screen, eof_color_gray);
@@ -2878,13 +2880,16 @@ void eof_render(void)
 	if(eof_song_loaded)
 	{
 		clear_to_color(eof_screen, makecol(224, 224, 224));
-		if(eof_count_selected_notes(NULL, 0) > 0)
-		{
-			blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
-		}
-		else
-		{
-			blit(eof_image[EOF_IMAGE_MENU_NO_NOTE], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+		if(!eof_full_screen_3d)
+		{	//Only blit the menu bar now if full screen 3D view isn't in effect, as it will otherwise be blitted later
+			if(eof_count_selected_notes(NULL, 0) > 0)
+			{
+				blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+			}
+			else
+			{
+				blit(eof_image[EOF_IMAGE_MENU_NO_NOTE], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+			}
 		}
 		eof_render_note_window();	//Render the note window first, so if the user didn't opt to display its full width, it won't draw over the 3D window
 		if(eof_vocals_selected)
@@ -2915,7 +2920,13 @@ void eof_render(void)
 		vsync();
 		DoneVSync();
 	}
-	blit(eof_screen, screen, 0, 0, 0, 0, SCREEN_W, SCREEN_H);
+	if(eof_full_screen_3d && eof_song_loaded)
+	{	//If the user enabled full screen 3D view, scale it to fill the program window
+		stretch_blit(eof_window_3d->screen, eof_screen, 0, 0, eof_screen_width / 2, eof_screen_height / 2, 0, 0, SCREEN_W, SCREEN_H);
+		blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+	}
+
+	blit(eof_screen, screen, 0, 0, 0, 0, SCREEN_W, SCREEN_H);	//Render the screen
 }
 
 static int work_around_fsel_bug = 0;
