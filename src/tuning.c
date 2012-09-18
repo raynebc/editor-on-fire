@@ -524,13 +524,16 @@ unsigned long eof_count_chord_lookup_matches(EOF_PRO_GUITAR_TRACK *tp, unsigned 
 	return matchcount;
 }
 
-char *eof_get_key_signature(EOF_SONG *sp, unsigned long beatnum, char failureoption)
+char *eof_get_key_signature(EOF_SONG *sp, unsigned long beatnum, char failureoption, char scale)
 {
 	if(sp && (beatnum < sp->beats) && (sp->beat[beatnum]->flags & EOF_BEAT_FLAG_KEY_SIG))
 	{	//If this is a valid beat and it has a key signature defined
 		if((sp->beat[beatnum]->key >= -7) && (sp->beat[beatnum]->key <= 7))
 		{	//If the key signature is valid
-			return eof_key_names[sp->beat[beatnum]->key + 7];	//Return the appropriate key name from the array
+			if(!scale)
+				return eof_key_names_major[sp->beat[beatnum]->key + 7];	//Return the appropriate key name from the array
+			else
+				return eof_key_names_minor[sp->beat[beatnum]->key + 7];	//Return the appropriate key name from the array
 		}
 	}
 

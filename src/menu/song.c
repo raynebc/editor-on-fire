@@ -2595,6 +2595,12 @@ void eof_seek_by_grid_snap(int dir)
 			return;	//Do not allow this operation to seek after the last beat marker
 	}
 
+	if(eof_input_mode == EOF_INPUT_FEEDBACK)
+	{	//If Feedback input method is in effect
+		stop_sample(eof_sound_seek);
+		play_sample(eof_sound_seek, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip
+	}
+
 	if(dir < 0)
 	{	//If seeking backward
 		eof_snap_logic(&eof_tail_snap, eof_song->beat[beat]->pos);	//Find beat/measure length
@@ -2631,21 +2637,21 @@ int eof_menu_song_seek_previous_anchor(void)
 	if(!eof_song)
 		return 1;
 
-      	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 
-      	if(eof_song->beat[b]->pos == eof_music_pos - eof_av_delay)
-      	{	//If the seek position was on the beat marker
-      		b--;	//Go to the previous beat
-      	}
-      	while((b > 0) && ((eof_song->beat[b]->flags & EOF_BEAT_FLAG_ANCHOR) == 0))
-      	{	//Starting at/before the beat at the current seek position, until an anchor is found,
-      		b--;	//Go back one beat
-      	}
-      	if(b < 0)
-      	{	//If no other suitable anchor was found
-      		b = 0;	//Seek to the first beat marker
-      	}
-      	eof_set_seek_position(eof_song->beat[b]->pos + eof_av_delay);	//Seek to the anchor
+	if(eof_song->beat[b]->pos == eof_music_pos - eof_av_delay)
+	{	//If the seek position was on the beat marker
+		b--;	//Go to the previous beat
+	}
+	while((b > 0) && ((eof_song->beat[b]->flags & EOF_BEAT_FLAG_ANCHOR) == 0))
+	{	//Starting at/before the beat at the current seek position, until an anchor is found,
+		b--;	//Go back one beat
+	}
+	if(b < 0)
+	{	//If no other suitable anchor was found
+		b = 0;	//Seek to the first beat marker
+	}
+	eof_set_seek_position(eof_song->beat[b]->pos + eof_av_delay);	//Seek to the anchor
 
 	return 1;
 }
@@ -2738,6 +2744,11 @@ int eof_menu_song_seek_previous_measure(void)
 			{	//Seek backward by a number of beats equal to the TS numerator
 				eof_menu_song_seek_previous_beat();
 			}
+			if(eof_input_mode == EOF_INPUT_FEEDBACK)
+			{	//If Feedback input method is in effect
+				stop_sample(eof_sound_seek);
+				play_sample(eof_sound_seek, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip
+			}
 			return 1;
 		}
 		b--;
@@ -2759,6 +2770,11 @@ int eof_menu_song_seek_next_measure(void)
 			for(ctr = 0; ctr < num; ctr++)
 			{	//Seek backward by a number of beats equal to the TS numerator
 				eof_menu_song_seek_next_beat();
+			}
+			if(eof_input_mode == EOF_INPUT_FEEDBACK)
+			{	//If Feedback input method is in effect
+				stop_sample(eof_sound_seek);
+				play_sample(eof_sound_seek, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip
 			}
 			return 1;
 		}

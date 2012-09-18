@@ -2114,7 +2114,6 @@ void eof_render_note_window(void)
 		textprintf_ex(eof_window_note->screen, font, 2, 6, eof_color_white, -1, "----------------------------");
 		ypos = 16;
 
-		char *ksname = eof_get_key_signature(eof_song, eof_selected_beat, 1);
 		if(eof_hover_beat >= 0)
 		{
 			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Beat = %lu : BPM = %f : Hover = %ld", eof_selected_beat, (double)60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn, eof_hover_beat);
@@ -2124,7 +2123,7 @@ void eof_render_note_window(void)
 			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Beat = %lu : BPM = %f", eof_selected_beat, (double)60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn);
 		}
 		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Key : %s", ksname);
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Key : %s maj (%s min)", eof_get_key_signature(eof_song, eof_selected_beat, 1, 0), eof_get_key_signature(eof_song, eof_selected_beat, 1, 1));
 		ypos += 12;
 		if(eof_selected_measure >= 0)
 		{
@@ -3019,6 +3018,8 @@ int eof_load_data(void)
 	eof_image[EOF_IMAGE_NOTE_BLUE_ARROW_HIT] = load_pcx("eof.dat#note_blue_hit_arrow.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_GREEN_CYMBAL] = load_pcx("eof.dat#note_green_cymbal.pcx", NULL);
 	eof_image[EOF_IMAGE_NOTE_GREEN_CYMBAL_HIT] = load_pcx("eof.dat#note_green_hit_cymbal.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_ORANGE_CYMBAL] = load_pcx("eof.dat#note_orange_cymbal.pcx", NULL);
+	eof_image[EOF_IMAGE_NOTE_ORANGE_CYMBAL_HIT] = load_pcx("eof.dat#note_orange_hit_cymbal.pcx", NULL);
 
 	eof_font = load_bitmap_font("eof.dat#font_times_new_roman.pcx", NULL, NULL);
 	if(!eof_font)
@@ -3037,7 +3038,7 @@ int eof_load_data(void)
 	set_palette(eof_palette);
 	set_mouse_sprite(NULL);
 
-	for(i = 1; i <= EOF_IMAGE_NOTE_BLUE_ARROW_HIT; i++)
+	for(i = 1; i <= EOF_IMAGE_NOTE_ORANGE_CYMBAL_HIT; i++)
 	{
 		if(!eof_image[i])
 		{
@@ -4249,8 +4250,8 @@ void eof_init_colors(void)
 	eof_color_orange_struct.notehit3d = EOF_IMAGE_NOTE_ORANGE_HIT;
 	eof_color_orange_struct.hoponote3d = EOF_IMAGE_NOTE_HORANGE;
 	eof_color_orange_struct.hoponotehit3d = EOF_IMAGE_NOTE_HORANGE_HIT;
-	eof_color_orange_struct.cymbal3d = EOF_IMAGE_NOTE_ORANGE;
-	eof_color_orange_struct.cymbalhit3d = EOF_IMAGE_NOTE_ORANGE_HIT;
+	eof_color_orange_struct.cymbal3d = EOF_IMAGE_NOTE_ORANGE_CYMBAL;
+	eof_color_orange_struct.cymbalhit3d = EOF_IMAGE_NOTE_ORANGE_CYMBAL_HIT;
 	eof_color_orange_struct.arrow3d = EOF_IMAGE_NOTE_ORANGE;
 	eof_color_orange_struct.arrowhit3d = EOF_IMAGE_NOTE_ORANGE_HIT;
 	eof_color_orange_struct.colorname = eof_color_orange_name;

@@ -7,9 +7,7 @@ extern MENU eof_beat_time_signature_menu[];
 extern MENU eof_beat_menu[];
 extern char eof_ts_menu_off_text[32];
 
-extern MENU eof_beat_key_signature_menu_major[];
-extern MENU eof_beat_key_signature_menu_minor[];
-extern struct MENU *eof_beat_key_signature_menu;	//This will point to either the major or minor key signature menu, depending on user preference
+extern MENU eof_beat_key_signature_menu[];
 extern char eof_ks_menu_off_text[32];
 
 extern char eof_trainer_string[5];

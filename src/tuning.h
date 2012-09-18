@@ -97,9 +97,10 @@ unsigned long eof_count_chord_lookup_matches(EOF_PRO_GUITAR_TRACK *tp, unsigned 
 unsigned long eof_check_against_chord_lookup_cache(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);
 	//Returns nonzero if the specified note matches the note cached from the previously executed chord name lookup logic
 
-char *eof_get_key_signature(EOF_SONG *sp, unsigned long beatnum, char failureoption);
+char *eof_get_key_signature(EOF_SONG *sp, unsigned long beatnum, char failureoption, char scale);
 	//Returns a string representing the key signature change at the specified beat
-	//If the beat contains a KS change, the appropriate index into eof_key_names[] is returned
+	//If scale is 0, the key from the major scale is returned, otherwise the key from the minor scale is
+	//If the beat contains a KS change, the appropriate index into either eof_key_names_major[] or eof_key_names_minor[] is returned
 	//If the beat does not have a KS change, then the string "None" is returned if failureoption is nonzero, otherwise NULL is returned
 
 #endif
