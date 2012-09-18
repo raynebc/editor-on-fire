@@ -6,6 +6,7 @@
 #include "main.h"
 #include "midi_data_import.h"
 #include "midi_import.h"
+#include "menu/beat.h"
 #include "menu/note.h"
 #include "song.h"	//Include before beat.h for EOF_SONG struct definition
 #include "utility.h"
@@ -41,6 +42,7 @@ static MIDI * eof_work_midi = NULL;
 static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_events[EOF_MAX_IMPORT_MIDI_TRACKS];
 static EOF_MIDI_TS_LIST * eof_import_ts_changes[EOF_MAX_IMPORT_MIDI_TRACKS];
 static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_bpm_events;
+static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_ks_events;
 static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_text_events;
 int eof_import_bpm_count = 0;
 
@@ -422,6 +424,15 @@ EOF_SONG * eof_import_midi(const char * fn)
 		eof_destroy_song(sp);
 		return NULL;
 	}
+	eof_import_ks_events = eof_import_create_events_list();
+	if(!eof_import_text_events)
+	{
+		eof_import_destroy_events_list(eof_import_bpm_events);
+		eof_import_destroy_events_list(eof_import_text_events);
+		destroy_midi(eof_work_midi);
+		eof_destroy_song(sp);
+		return NULL;
+	}
 	for(i = 0; i < tracks; i++)
 	{	//For each imported track
 //#ifdef EOF_DEBUG_MIDI_IMPORT
@@ -437,6 +448,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 		{
 			eof_import_destroy_events_list(eof_import_bpm_events);
 			eof_import_destroy_events_list(eof_import_text_events);
+			eof_import_destroy_events_list(eof_import_ks_events);
 			destroy_midi(eof_work_midi);
 			eof_destroy_song(sp);
 			return NULL;
@@ -719,12 +731,10 @@ EOF_SONG * eof_import_midi(const char * fn)
 							/* set tempo */
 							case 0x51:
 							{
-								track_pos += 1;
-								d1 = (eof_work_midi->track[track[i]].data[track_pos]);
 								track_pos++;
-								d2 = (eof_work_midi->track[track[i]].data[track_pos]);
-								track_pos++;
-								d3 = (eof_work_midi->track[track[i]].data[track_pos]);
+								d1 = (eof_work_midi->track[track[i]].data[track_pos++]);	//MPQN byte 1
+								d2 = (eof_work_midi->track[track[i]].data[track_pos++]);	//MPQN byte 2
+								d3 = (eof_work_midi->track[track[i]].data[track_pos++]);	//MPQN byte 3
 								d4 = (d1 << 16) | (d2 << 8) | (d3);
 
 								if((eof_import_bpm_events->events <= 0) && (absolute_pos > sp->tags->ogg[0].midi_offset))
@@ -732,7 +742,6 @@ EOF_SONG * eof_import_midi(const char * fn)
 									eof_midi_import_add_event(eof_import_bpm_events, 0, 0x51, 500000, 0, i);	//Insert the default tempo of 120BPM at the beginning of the tempo list
 								}
 								eof_midi_import_add_event(eof_import_bpm_events, absolute_pos, 0x51, d4, 0, i);
-								track_pos++;
 								break;
 							}
 
@@ -759,7 +768,11 @@ EOF_SONG * eof_import_midi(const char * fn)
 							/* key signature */
 							case 0x59:
 							{
-								track_pos += 3;
+								char key;
+								track_pos++;
+								key = (eof_work_midi->track[track[i]].data[track_pos++]);	//Key
+								d2 = (eof_work_midi->track[track[i]].data[track_pos++]);	//Scale
+								eof_midi_import_add_event(eof_import_ks_events, absolute_pos, 0x59, key, d2, i);
 								break;
 							}
 
@@ -827,6 +840,7 @@ allegro_message("Fail point 1");
 
 			eof_import_destroy_events_list(eof_import_bpm_events);
 			eof_import_destroy_events_list(eof_import_text_events);
+			eof_import_destroy_events_list(eof_import_ks_events);
 			destroy_midi(eof_work_midi);
 			eof_destroy_tempo_list(anchorlist);
 			eof_destroy_song(sp);
@@ -985,6 +999,7 @@ set_window_title(debugtext);
 			{	//Allocation error
 				eof_import_destroy_events_list(eof_import_bpm_events);
 				eof_import_destroy_events_list(eof_import_text_events);
+				eof_import_destroy_events_list(eof_import_ks_events);
 				destroy_midi(eof_work_midi);
 				eof_destroy_tempo_list(anchorlist);
 				eof_destroy_song(sp);
@@ -1009,6 +1024,7 @@ set_window_title(debugtext);
 					{	//Allocation error
 						eof_import_destroy_events_list(eof_import_bpm_events);
 						eof_import_destroy_events_list(eof_import_text_events);
+						eof_import_destroy_events_list(eof_import_ks_events);
 						destroy_midi(eof_work_midi);
 						eof_destroy_tempo_list(anchorlist);
 						eof_destroy_song(sp);
@@ -1054,6 +1070,19 @@ set_window_title(debugtext);
 		lastden=curden;
 	}
 
+	/* apply any key signatures parsed in the MIDI */
+	unsigned long event_realtime;		//Store the delta time converted to realtime to avoid having to convert multiple times per note
+	long beat;
+	for(ctr = 0; ctr < eof_import_ks_events->events; ctr++)
+	{	//For each key signature parsed
+		event_realtime = eof_ConvertToRealTimeInt(eof_import_ks_events->event[ctr]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
+		eof_music_length = event_realtime;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
+		beat = eof_get_beat(sp, event_realtime);
+		if(beat >= 0)
+		{	//If the key signature is placed at a valid timestamp
+			eof_apply_key_signature(eof_import_ks_events->event[ctr]->d1, beat, sp);	//Apply it to the beat
+		}
+	}
 
 	eof_log("\tPass three, creating notes", 1);
 
@@ -1076,7 +1105,6 @@ set_window_title(debugtext);
 	int strumdiff;						//Used for pro guitar strum direction parsing
 	unsigned long arpegpos[4];			//Used for pro guitar arpeggio parsing
 	int arpegdiff;						//Used for pro guitar arpeggio parsing
-	unsigned long event_realtime;		//Store the delta time converted to realtime to avoid having to convert multiple times per note
 	char prodrums = 0;					//Tracks whether the drum track being written includes Pro drum notation
 	unsigned long tracknum;				//Used to de-obfuscate the legacy track number
 	int phrasediff;						//Used for parsing Sysex phrase markers
@@ -1147,6 +1175,7 @@ set_window_title(debugtext);
 				{	/* clean up and return */
 					eof_import_destroy_events_list(eof_import_bpm_events);
 					eof_import_destroy_events_list(eof_import_text_events);
+					eof_import_destroy_events_list(eof_import_ks_events);
 					eof_destroy_tempo_list(anchorlist);
 					for(i = 0; i < tracks; i++)
 					{
@@ -2597,6 +2626,7 @@ eof_log("\tThird pass complete", 1);
 		eof_destroy_song(sp);
 		eof_import_destroy_events_list(eof_import_bpm_events);
 		eof_import_destroy_events_list(eof_import_text_events);
+		eof_import_destroy_events_list(eof_import_ks_events);
 		for(i = 0; i < tracks; i++)
 		{
 			eof_import_destroy_events_list(eof_import_events[i]);
@@ -2647,6 +2677,7 @@ eof_log("\tThird pass complete", 1);
 
 	eof_import_destroy_events_list(eof_import_bpm_events);
 	eof_import_destroy_events_list(eof_import_text_events);
+	eof_import_destroy_events_list(eof_import_ks_events);
 	for(i = 0; i < tracks; i++)
 	{
 		eof_import_destroy_events_list(eof_import_events[i]);

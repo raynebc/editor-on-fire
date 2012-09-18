@@ -14,6 +14,7 @@
 //AUDIOSTREAM * eof_mix_stream = NULL;
 SAMPLE *    eof_sound_clap = NULL;
 SAMPLE *    eof_sound_metronome = NULL;
+SAMPLE *    eof_sound_seek = NULL;
 SAMPLE *    eof_sound_note[EOF_MAX_VOCAL_TONES] = {NULL};
 SAMPLE *    eof_sound_chosen_percussion = NULL;	//The user-selected percussion sound
 SAMPLE *    eof_sound_cowbell = NULL;
@@ -382,6 +383,11 @@ void eof_mix_init(void)
 	{
 		allegro_message("Couldn't load metronome sound!");
 	}
+	eof_sound_seek = load_wav("eof.dat#seek.wav");
+	if(!eof_sound_seek)
+	{
+		allegro_message("Couldn't load seek sound!");
+	}
 	for(i = 0; i < EOF_MAX_VOCAL_TONES; i++)
 	{	//Load piano tones
 		sprintf(fbuffer, "eof.dat#piano.esp/NOTE_%02d_OGG", i);
@@ -449,6 +455,8 @@ void eof_mix_exit(void)
 	eof_sound_clap=NULL;
 	destroy_sample(eof_sound_metronome);
 	eof_sound_metronome=NULL;
+	destroy_sample(eof_sound_seek);
+	eof_sound_seek=NULL;
 	destroy_sample(eof_sound_cowbell);
 	eof_sound_cowbell=NULL;
 	destroy_sample(eof_sound_tambourine1);

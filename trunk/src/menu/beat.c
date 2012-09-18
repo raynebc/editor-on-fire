@@ -30,55 +30,32 @@ MENU eof_beat_time_signature_menu[] =
     {NULL, NULL, NULL, 0, NULL}
 };
 
-MENU eof_beat_key_signature_menu_major[] =
+MENU eof_beat_key_signature_menu[] =
 {
     {eof_ks_menu_off_text, eof_menu_beat_ks_off, NULL, 0, NULL},
-    {"B (7 flats)", eof_menu_beat_ks_7_flats, NULL, 0, NULL},
-    {"Gb (6 flats)", eof_menu_beat_ks_6_flats, NULL, 0, NULL},
-    {"Db (5 flats)", eof_menu_beat_ks_5_flats, NULL, 0, NULL},
-    {"Ab (4 flats)", eof_menu_beat_ks_4_flats, NULL, 0, NULL},
-    {"Eb (3 flats)", eof_menu_beat_ks_3_flats, NULL, 0, NULL},
-    {"Bb (2 flats)", eof_menu_beat_ks_2_flats, NULL, 0, NULL},
-    {"F (1 flat)", eof_menu_beat_ks_1_flat, NULL, 0, NULL},
-    {"C (0 flats/sharps)", eof_menu_beat_ks_0_flats, NULL, 0, NULL},
-    {"G (1 sharp)", eof_menu_beat_ks_1_sharp, NULL, 0, NULL},
-    {"D (2 sharps)", eof_menu_beat_ks_2_sharps, NULL, 0, NULL},
-    {"A (3 sharps)", eof_menu_beat_ks_3_sharps, NULL, 0, NULL},
-    {"E (4 sharps)", eof_menu_beat_ks_4_sharps, NULL, 0, NULL},
-    {"B (5 sharps)", eof_menu_beat_ks_5_sharps, NULL, 0, NULL},
-    {"Gb (6 sharps)", eof_menu_beat_ks_6_sharps, NULL, 0, NULL},
-    {"Db (7 sharps)", eof_menu_beat_ks_7_sharps, NULL, 0, NULL},
+    {"B , g# (7 flats)", eof_menu_beat_ks_7_flats, NULL, 0, NULL},
+    {"Gb , eb (6 flats)", eof_menu_beat_ks_6_flats, NULL, 0, NULL},
+    {"Db , bb (5 flats)", eof_menu_beat_ks_5_flats, NULL, 0, NULL},
+    {"Ab , f (4 flats)", eof_menu_beat_ks_4_flats, NULL, 0, NULL},
+    {"Eb , c (3 flats)", eof_menu_beat_ks_3_flats, NULL, 0, NULL},
+    {"Bb , g (2 flats)", eof_menu_beat_ks_2_flats, NULL, 0, NULL},
+    {"F , d (1 flat)", eof_menu_beat_ks_1_flat, NULL, 0, NULL},
+    {"C , a (0 flats/sharps)", eof_menu_beat_ks_0_flats, NULL, 0, NULL},
+    {"G , e (1 sharp)", eof_menu_beat_ks_1_sharp, NULL, 0, NULL},
+    {"D , b (2 sharps)", eof_menu_beat_ks_2_sharps, NULL, 0, NULL},
+    {"A , f# (3 sharps)", eof_menu_beat_ks_3_sharps, NULL, 0, NULL},
+    {"E , c# (4 sharps)", eof_menu_beat_ks_4_sharps, NULL, 0, NULL},
+    {"B , g# (5 sharps)", eof_menu_beat_ks_5_sharps, NULL, 0, NULL},
+    {"Gb , eb (6 sharps)", eof_menu_beat_ks_6_sharps, NULL, 0, NULL},
+    {"Db , bb (7 sharps)", eof_menu_beat_ks_7_sharps, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
-
-MENU eof_beat_key_signature_menu_minor[] =
-{
-    {eof_ks_menu_off_text, eof_menu_beat_ks_off, NULL, 0, NULL},
-    {"g# (7 flats)", eof_menu_beat_ks_7_flats, NULL, 0, NULL},
-    {"eb (6 flats)", eof_menu_beat_ks_6_flats, NULL, 0, NULL},
-    {"bb (5 flats)", eof_menu_beat_ks_5_flats, NULL, 0, NULL},
-    {"f (4 flats)", eof_menu_beat_ks_4_flats, NULL, 0, NULL},
-    {"c (3 flats)", eof_menu_beat_ks_3_flats, NULL, 0, NULL},
-    {"g (2 flats)", eof_menu_beat_ks_2_flats, NULL, 0, NULL},
-    {"d (1 flat)", eof_menu_beat_ks_1_flat, NULL, 0, NULL},
-    {"a (0 flats/sharps)", eof_menu_beat_ks_0_flats, NULL, 0, NULL},
-    {"e (1 sharp)", eof_menu_beat_ks_1_sharp, NULL, 0, NULL},
-    {"b (2 sharps)", eof_menu_beat_ks_2_sharps, NULL, 0, NULL},
-    {"f# (3 sharps)", eof_menu_beat_ks_3_sharps, NULL, 0, NULL},
-    {"c# (4 sharps)", eof_menu_beat_ks_4_sharps, NULL, 0, NULL},
-    {"g# (5 sharps)", eof_menu_beat_ks_5_sharps, NULL, 0, NULL},
-    {"eb (6 sharps)", eof_menu_beat_ks_6_sharps, NULL, 0, NULL},
-    {"bb (7 sharps)", eof_menu_beat_ks_7_sharps, NULL, 0, NULL},
-    {NULL, NULL, NULL, 0, NULL}
-};
-
-struct MENU *eof_beat_key_signature_menu = eof_beat_key_signature_menu_major;
 
 MENU eof_beat_menu[] =
 {
     {"&BPM Change", eof_menu_beat_bpm_change, NULL, 0, NULL},
     {"Time &Signature", NULL, eof_beat_time_signature_menu, 0, NULL},
-    {"&Key Signature", NULL, eof_beat_key_signature_menu_major, 0, NULL},
+    {"&Key Signature", NULL, eof_beat_key_signature_menu, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"Add", eof_menu_beat_add, NULL, 0, NULL},
     {"Delete\t" CTRL_NAME "+Del", eof_menu_beat_delete, NULL, 0, NULL},
@@ -345,7 +322,6 @@ void eof_prepare_beat_menu(void)
 			ustrcpy(eof_ts_menu_off_text, "&Off");
 		}
 //Re-flag the active Key Signature for the selected beat
-		eof_beat_menu[2].child = eof_beat_key_signature_menu;	//Set the active key signature menu (major or minor)
 		for(i = 0; i < 16; i++)
 		{
 			eof_beat_key_signature_menu[i].flags = 0;
