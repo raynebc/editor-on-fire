@@ -246,7 +246,7 @@ eof_color eof_color_green_struct, eof_color_red_struct, eof_color_yellow_struct,
 EOF_SCREEN_LAYOUT eof_screen_layout;
 BITMAP * eof_screen = NULL;
 unsigned long eof_screen_width, eof_screen_height;	//Used to track the EOF window size, for when the 3D projection is altered
-int eof_vanish_x, eof_vanish_y;				//Used to allow the user to control the vanishing point for the 3D preview
+int eof_vanish_x = 0, eof_vanish_y = 0;				//Used to allow the user to control the vanishing point for the 3D preview
 char eof_full_screen_3d = 0;	//If nonzero, directs the render logic to scale the 3D window to fit the entire program window
 
 EOF_SELECTION_DATA eof_selection;
@@ -688,7 +688,6 @@ int eof_set_display_mode(int mode)
 	eof_screen_layout.mode = mode;
 	eof_menu_edit_zoom_level(default_zoom_level);
 	eof_vanish_x = 160;
-	eof_vanish_y = 0;
 	ocd3d_set_projection((float)eof_screen_width / 640.0, (float)eof_screen_height / 480.0, (float)eof_vanish_x, (float)eof_vanish_y, 320.0, 320.0);
 	set_display_switch_mode(SWITCH_BACKGROUND);
 	set_display_switch_callback(SWITCH_OUT, eof_switch_out_callback);

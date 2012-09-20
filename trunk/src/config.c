@@ -135,6 +135,11 @@ void eof_load_config(char * fn)
 	eof_fb_seek_controls = get_config_int("preferences", "eof_fb_seek_controls", 0);
 	eof_min_note_length = get_config_int("preferences", "eof_min_note_length", 0);
 	eof_render_bass_drum_in_lane = get_config_int("preferences", "eof_render_bass_drum_in_lane", 0);
+	eof_vanish_y = get_config_int("preferences", "eof_vanish_y", 0);
+	if((eof_vanish_y < -500) || (eof_vanish_y > 260))
+	{	//Correct the value if it is out of bounds
+		eof_vanish_y = 0;
+	}
 
 	/* read display settings */
 	eof_screen_layout.mode = get_config_int("display", "display_mode", 0);
@@ -248,6 +253,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_fb_seek_controls", eof_fb_seek_controls);
 	set_config_int("preferences", "eof_min_note_length", eof_min_note_length);
 	set_config_int("preferences", "eof_render_bass_drum_in_lane", eof_render_bass_drum_in_lane);
+	set_config_int("preferences", "eof_vanish_y", eof_vanish_y);
 
 	/* write display settings */
 	set_config_int("display", "display_mode", eof_screen_layout.mode);
