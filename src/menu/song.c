@@ -2574,6 +2574,7 @@ void eof_seek_by_grid_snap(int dir)
 {
 	long beat;
 	unsigned long adjustedpos = eof_music_pos - eof_av_delay;	//Find the actual chart position
+	unsigned long originalpos = adjustedpos;
 
 	if(!eof_song || (eof_snap_mode == EOF_SNAP_OFF))
 		return;
@@ -2608,15 +2609,30 @@ void eof_seek_by_grid_snap(int dir)
 		if(eof_tail_snap.length > adjustedpos)
 		{	//Special case:  Current position is less than one grid snap from the beginning of the chart
 			eof_set_seek_position(eof_av_delay);	//Seek to the beginning of the chart
-			return;
 		}
-		eof_snap_logic(&eof_tail_snap, adjustedpos - eof_tail_snap.length);	//Find the grid snapped position of the new seek position
-		eof_set_seek_position(eof_tail_snap.pos + eof_av_delay);	//Seek to the new seek position
+		else
+		{
+			eof_snap_logic(&eof_tail_snap, adjustedpos - eof_tail_snap.length);	//Find the grid snapped position of the new seek position
+			eof_set_seek_position(eof_tail_snap.pos + eof_av_delay);	//Seek to the new seek position
+		}
 	}
 	else
 	{	//If seeking forward
 		eof_snap_logic(&eof_tail_snap, adjustedpos);					//Find the grid snapped position of the new seek position
 		eof_set_seek_position(eof_tail_snap.next_snap + eof_av_delay);	//Seek to the next calculated grid snap position
+	}
+
+	if((eof_input_mode == EOF_INPUT_FEEDBACK) && (KEY_EITHER_SHIFT))
+	{
+		eof_shift_used = 1;	//Track that the SHIFT key was used
+		if(eof_seek_selection_start == eof_seek_selection_end)
+		{	//If this begins a seek selection
+			eof_update_seek_selection(originalpos, eof_music_pos - eof_av_delay);
+		}
+		else
+		{
+			eof_update_seek_selection(eof_seek_selection_start, eof_music_pos - eof_av_delay);
+		}
 	}
 }
 
@@ -2736,6 +2752,7 @@ int eof_menu_song_seek_previous_measure(void)
 
 	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 	unsigned num, ctr;
+	unsigned long originalpos = eof_music_pos - eof_av_delay;
 	while(b >= 0)
 	{	//For each beat at or before the current seek position
 		if(eof_get_ts(eof_song, &num, NULL, b) == 1)
@@ -2748,6 +2765,19 @@ int eof_menu_song_seek_previous_measure(void)
 			{	//If Feedback input method is in effect
 				stop_sample(eof_sound_seek);
 				play_sample(eof_sound_seek, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip
+
+				if(KEY_EITHER_SHIFT)
+				{	//If the user held the SHIFT key down, update the seek selection
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					if(eof_seek_selection_start == eof_seek_selection_end)
+					{	//If this begins a seek selection
+						eof_update_seek_selection(originalpos, eof_music_pos - eof_av_delay);
+					}
+					else
+					{
+						eof_update_seek_selection(eof_seek_selection_start, eof_music_pos - eof_av_delay);
+					}
+				}
 			}
 			return 1;
 		}
@@ -2763,6 +2793,7 @@ int eof_menu_song_seek_next_measure(void)
 
 	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 	unsigned num, ctr;
+	unsigned long originalpos = eof_music_pos;
 	while(b >= 0)
 	{	//For each beat at or before the current seek position
 		if(eof_get_ts(eof_song, &num, NULL, b) == 1)
@@ -2775,6 +2806,19 @@ int eof_menu_song_seek_next_measure(void)
 			{	//If Feedback input method is in effect
 				stop_sample(eof_sound_seek);
 				play_sample(eof_sound_seek, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip
+
+				if(KEY_EITHER_SHIFT)
+				{	//If the user held the SHIFT key down, update the seek selection
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					if(eof_seek_selection_start == eof_seek_selection_end)
+					{	//If this begins a seek selection
+						eof_update_seek_selection(originalpos, eof_music_pos);
+					}
+					else
+					{
+						eof_update_seek_selection(eof_seek_selection_start, eof_music_pos);
+					}
+				}
 			}
 			return 1;
 		}

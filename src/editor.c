@@ -619,6 +619,7 @@ if(key[KEY_PAUSE])
 		}
 		else if(KEY_EITHER_SHIFT)
 		{
+			eof_shift_used = 1;	//Track that the SHIFT key was used
 			eof_menu_edit_select_previous();
 		}
 		else
@@ -639,6 +640,7 @@ if(key[KEY_PAUSE])
 		}
 		else if(KEY_EITHER_SHIFT)
 		{
+			eof_shift_used = 1;	//Track that the SHIFT key was used
 			eof_menu_edit_select_rest();
 		}
 		else
@@ -678,6 +680,7 @@ if(key[KEY_PAUSE])
 		}
 		else if(KEY_EITHER_SHIFT)
 		{	//CTRL and SHIFT are both being held
+			eof_shift_used = 1;	//Track that the SHIFT key was used
 			eof_av_delay++;
 		}
 		key[KEY_PLUS_PAD] = 0;
@@ -697,6 +700,7 @@ if(key[KEY_PAUSE])
 			}
 			else
 			{	//SHIFT is being held, CTRL is not
+				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_vanish_y -= 10;
 				if(eof_vanish_y < -500)
 				{	//Do not allow it to go too negative, things start to look weird
@@ -707,6 +711,7 @@ if(key[KEY_PAUSE])
 		}
 		else if(KEY_EITHER_SHIFT)
 		{	//CTRL and SHIFT are both being held
+			eof_shift_used = 1;	//Track that the SHIFT key was used
 			if(eof_av_delay > 0)
 			{
 				eof_av_delay--;
@@ -721,6 +726,7 @@ if(key[KEY_PAUSE])
 	{
 		if(KEY_EITHER_SHIFT)
 		{
+			eof_shift_used = 1;	//Track that the SHIFT key was used
 			eof_vanish_y = 0;
 			ocd3d_set_projection((float)eof_screen_width / 640.0, (float)eof_screen_height / 480.0, (float)eof_vanish_x, (float)eof_vanish_y, 320.0, 320.0);
 		}
@@ -748,6 +754,7 @@ if(key[KEY_PAUSE])
 	{
 		if(KEY_EITHER_SHIFT)
 		{	//SHIFT+W will cycle to the previous chord name match
+			eof_shift_used = 1;	//Track that the SHIFT key was used
 			eof_menu_previous_chord_result();
 		}
 		else
@@ -770,6 +777,7 @@ if(key[KEY_PAUSE])
 		{
 			if(KEY_EITHER_SHIFT)
 			{	//SHIFT+E will cycle to the next chord name match
+				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_menu_next_chord_result();
 			}
 			else
@@ -839,6 +847,7 @@ if(key[KEY_PAUSE])
 		{	//Track numbering begins at 1 instead of 0
 			if(KEY_EITHER_SHIFT)	//Shift instrument back 1 number
 			{
+				eof_shift_used = 1;	//Track that the SHIFT key was used
 				if(eof_selected_track > EOF_TRACKS_MIN)
 					eof_menu_track_selected_track_number(eof_selected_track-1);
 				else
@@ -862,6 +871,7 @@ if(key[KEY_PAUSE])
 
 			if(KEY_EITHER_SHIFT)
 			{
+				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_note_type--;
 				if(eof_note_type < 0)
 				{
@@ -888,6 +898,7 @@ if(key[KEY_PAUSE])
 	{
 		if(KEY_EITHER_SHIFT)
 		{
+			eof_shift_used = 1;	//Track that the SHIFT key was used
 			eof_catalog_play();
 		}
 		else
@@ -944,6 +955,7 @@ if(key[KEY_PAUSE])
 			eof_music_rewind();
 			if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
 			{	//If user is trying to seek at the slowest speed,
+				eof_shift_used = 1;	//Track that the SHIFT key was used
 				key[KEY_LEFT] = 0;	//Clear this key state to allow seeking in accurate 1ms intervals
 			}
 		}
@@ -967,6 +979,7 @@ if(key[KEY_PAUSE])
 			eof_music_forward();
 			if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
 			{	//If user is trying to seek at the slowest speed,
+				eof_shift_used = 1;	//Track that the SHIFT key was used
 				key[KEY_RIGHT] = 0;	//Clear this key state to allow seeking in accurate 1ms intervals
 			}
 		}
@@ -994,7 +1007,7 @@ if(key[KEY_PAUSE])
 	/* seek back one grid snap (CTRL+SHIFT+Pg Up when grid snap is enabled) */
 	/* seek back one anchor (CTRL+SHIFT+Pg Up when grid snap is disabled) */
 	/* seek back one screen (CTRL+Pg Up) */
-	/* seek back one note (SHIFT+Pg Up) */
+	/* seek back one note (SHIFT+Pg Up, non Feedback input modes) */
 	/* seek back one measure (Pg Up, Feedback input mode) */
 	/* seek back one beat (Pg Up, non Feedback input modes) */
 	if(do_pg_up)
@@ -1005,6 +1018,7 @@ if(key[KEY_PAUSE])
 			{
 				if(KEY_EITHER_SHIFT)
 				{	//If both SHIFT and CTRL are being held
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					if(eof_snap_mode != EOF_SNAP_OFF)
 					{	//If grid snap is enabled
 						eof_menu_song_seek_previous_grid_snap();
@@ -1015,16 +1029,24 @@ if(key[KEY_PAUSE])
 					}
 				}
 				else
-				{
+				{	//If only CTRL is being held
 					eof_menu_song_seek_previous_screen();
 				}
 			}
 			else if(KEY_EITHER_SHIFT)
-			{
-				eof_menu_song_seek_previous_note();
+			{	//If only SHIFT is being held
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				if(eof_input_mode == EOF_INPUT_FEEDBACK)
+				{	//In Feedback input method, this changes the note selection
+					eof_menu_song_seek_previous_measure();
+				}
+				else
+				{	//Otherwise seek to previous note
+					eof_menu_song_seek_previous_note();
+				}
 			}
 			else
-			{
+			{	//If neither SHIFT nor CTRL are being held
 				if(eof_input_mode == EOF_INPUT_FEEDBACK)
 				{
 					eof_menu_song_seek_previous_measure();
@@ -1040,7 +1062,7 @@ if(key[KEY_PAUSE])
 	/* seek forward one grid snap (CTRL+SHIFT+Pg Dn when grid snap is enabled) */
 	/* seek forward one anchor (CTRL+SHIFT+Pg Dn when grid snap is disabled) */
 	/* seek forward one screen (CTRL+Pg Dn) */
-	/* seek forward one note (SHIFT+Pg Dn) */
+	/* seek forward one note (SHIFT+Pg Dn, non Feedback input modes) */
 	/* seek forward one measure (Pg Up, Feedback input mode) */
 	/* seek forward one beat (Pg Dn, non Feedback input modes) */
 	if(do_pg_dn)
@@ -1051,6 +1073,7 @@ if(key[KEY_PAUSE])
 			{
 				if(KEY_EITHER_SHIFT)
 				{	//If both SHIFT and CTRL are being held
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					if(eof_snap_mode != EOF_SNAP_OFF)
 					{	//If grid snap is enabled
 						eof_menu_song_seek_next_grid_snap();
@@ -1061,16 +1084,24 @@ if(key[KEY_PAUSE])
 					}
 				}
 				else
-				{
+				{	//If only CTRL is being held
 					eof_menu_song_seek_next_screen();
 				}
 			}
 			else if(KEY_EITHER_SHIFT)
-			{
-				eof_menu_song_seek_next_note();
+			{	//If only SHIFT is being held
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				if(eof_input_mode == EOF_INPUT_FEEDBACK)
+				{	//In Feedback input method, this changes the note selection
+					eof_menu_song_seek_next_measure();
+				}
+				else
+				{	//Otherwise seek to next note
+					eof_menu_song_seek_next_note();
+				}
 			}
 			else
-			{
+			{	//If neither SHIFT nor CTRL are being held
 				if(eof_input_mode == EOF_INPUT_FEEDBACK)
 				{
 					eof_menu_song_seek_next_measure();
@@ -1084,18 +1115,19 @@ if(key[KEY_PAUSE])
 	}
 
 	/* transpose mini piano visible area up one octave (CTRL+SHIFT+Up) */
-	/* transpose mini piano visible area up one (SHIFT+Up in a vocal track) */
+	/* transpose mini piano visible area up one (SHIFT+Up in a vocal track, non Feedback input modes) */
 	/* transpose lyric up one octave (CTRL+Up in a vocal track) */
 	/* toggle pro guitar slide up (CTRL+Up in a pro guitar track) */
 	/* transpose note up (Up, non Feedback input methods, normal seek controls) */
 	/* seek forward (Up, Feedback style seek direction controls) */
 	/* seek forward one grid snap (Up, Feedback input method) */
-	/* toggle pro guitar strum up (SHIFT+Up in a pro guitar track) */
+	/* toggle pro guitar strum up (SHIFT+Up in a pro guitar track, non Feedback input modes) */
 	if(key[KEY_UP])
 	{
 		char do_seek = 0;	//Is set to nonzero if a seek is performed
-		if(KEY_EITHER_SHIFT)
+		if((KEY_EITHER_SHIFT) && (eof_input_mode != EOF_INPUT_FEEDBACK))
 		{
+			eof_shift_used = 1;	//Track that the SHIFT key was used
 			if(eof_vocals_selected)
 			{
 				if(KEY_EITHER_CTRL)
@@ -1160,18 +1192,19 @@ if(key[KEY_PAUSE])
 	}
 
 	/* transpose mini piano visible area down one octave (CTRL+SHIFT+Down) */
-	/* transpose mini piano visible area down one (SHIFT+Down) */
+	/* transpose mini piano visible area down one (SHIFT+Down, non Feedback input modes) */
 	/* transpose lyric down one octave (CTRL+Down in a vocal track) */
 	/* toggle pro guitar slide down (CTRL+Down in a pro guitar track) */
 	/* transpose note down (Down, non Feedback input methods) */
 	/* seek backward one grid snap (Down, Feedback input method, normal seek controls) */
 	/* seek backward (Down, Feedback style seek direction controls) */
-	/* toggle pro guitar strum down (SHIFT+Down in a pro guitar track) */
+	/* toggle pro guitar strum down (SHIFT+Down in a pro guitar track, non Feedback input modes) */
 	if(key[KEY_DOWN])
 	{
 		char do_seek = 0;	//Is set to nonzero if a seek is performed
-		if(KEY_EITHER_SHIFT)
+		if((KEY_EITHER_SHIFT) && (eof_input_mode != EOF_INPUT_FEEDBACK))
 		{
+			eof_shift_used = 1;	//Track that the SHIFT key was used
 			if(eof_vocals_selected)
 			{
 				if(KEY_EITHER_CTRL)
@@ -1278,6 +1311,7 @@ if(key[KEY_PAUSE])
 		{
 			if(KEY_EITHER_SHIFT)
 			{	//SHIFT+M toggles mid strum direction
+				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_pro_guitar_toggle_strum_mid();
 			}
 			else
@@ -1299,6 +1333,7 @@ if(key[KEY_PAUSE])
 		}
 		else if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{	//Both CTRL and SHIFT held
+			eof_shift_used = 1;	//Track that the SHIFT key was used
 			eof_menu_edit_paste_from_catalog();
 			key[KEY_C] = 0;
 		}
@@ -1317,6 +1352,13 @@ if(key[KEY_PAUSE])
 			eof_menu_note_toggle_vibrato();
 		}
 		key[KEY_V] = 0;
+	}
+
+	/* toggle full screen 3D view (CTRL+F)*/
+	if(key[KEY_F] && KEY_EITHER_CTRL)
+	{
+		eof_full_screen_3d ^= 1;	//Toggle this setting on/off
+		key[KEY_F] = 0;
 	}
 
 	/* Hold and Classic input method logic */
@@ -1718,6 +1760,7 @@ if(key[KEY_PAUSE])
 			{
 				if(KEY_EITHER_SHIFT)
 				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_menu_beat_anchor();
 				}
 				else
@@ -1812,6 +1855,7 @@ if(key[KEY_PAUSE])
 			{	//If PART VOCALS is active, and one of its lyrics is the current selected lyric
 				if(KEY_EITHER_SHIFT)
 				{	//Split lyric
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_menu_split_lyric();
 				}
 				else
@@ -1823,6 +1867,7 @@ if(key[KEY_PAUSE])
 			{
 				if(KEY_EITHER_SHIFT)
 				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_menu_song_legacy_view();
 				}
 			}
@@ -1830,20 +1875,9 @@ if(key[KEY_PAUSE])
 		}
 
 	/* toggle freestyle (F in a vocal track) */
-	/* toggle full screen 3D view (CTRL+F)*/
-		if(key[KEY_F])
+		if(key[KEY_F] && !KEY_EITHER_CTRL && eof_vocals_selected)
 		{
-			if(!KEY_EITHER_CTRL)
-			{	//CTRL is not held
-				if(eof_vocals_selected)
-				{	//Toggle freestyle
-					eof_menu_toggle_freestyle();
-				}
-			}
-			else
-			{
-				eof_full_screen_3d ^= 1;	//Toggle this setting on/off
-			}
+			eof_menu_toggle_freestyle();
 			key[KEY_F] = 0;
 		}
 
@@ -1890,6 +1924,7 @@ if(key[KEY_PAUSE])
 	/* toggle open hi hat (SHIFT+O) */
 		if(key[KEY_O] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{
+			eof_shift_used = 1;	//Track that the SHIFT key was used
 			eof_menu_note_toggle_hi_hat_open();
 			key[KEY_O] = 0;
 		}
@@ -1897,6 +1932,7 @@ if(key[KEY_PAUSE])
 	/* toggle pedal controlled hi hat (SHIFT+P) */
 		if(key[KEY_P] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{
+			eof_shift_used = 1;	//Track that the SHIFT key was used
 			eof_menu_note_toggle_hi_hat_pedal();
 			key[KEY_P] = 0;
 		}
@@ -1904,6 +1940,7 @@ if(key[KEY_PAUSE])
 	/* toggle sizzle hi hat (SHIFT+S) */
 		if(key[KEY_S] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{
+			eof_shift_used = 1;	//Track that the SHIFT key was used
 			eof_menu_note_toggle_hi_hat_sizzle();
 			key[KEY_S] = 0;
 		}
@@ -1911,6 +1948,7 @@ if(key[KEY_PAUSE])
 	/* toggle rim shot (SHIFT+R) */
 		if(key[KEY_R] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{
+			eof_shift_used = 1;	//Track that the SHIFT key was used
 			eof_menu_note_toggle_rimshot();
 			key[KEY_R] = 0;
 		}
@@ -1918,6 +1956,7 @@ if(key[KEY_PAUSE])
 	/* mark/remark slider (SHIFT+S) */
 		if(key[KEY_S] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{
+			eof_shift_used = 1;	//Track that the SHIFT key was used
 			eof_menu_slider_mark();
 			key[KEY_S] = 0;
 		}
@@ -2078,41 +2117,49 @@ if(key[KEY_PAUSE])
 	/* set fret value shortcut bitmask (SHIFT+Esc, SHIFT+Fn #) */
 				if(key[KEY_ESC])
 				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_pro_guitar_fret_bitmask = 0;	//Disable all strings
 					key[KEY_ESC] = 0;
 				}
 				else if(key[KEY_F1])
 				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_pro_guitar_fret_bitmask ^= 32;	//Toggle string 1 (high E)
 					key[KEY_F1] = 0;
 				}
 				else if(key[KEY_F2])
 				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_pro_guitar_fret_bitmask ^= 16;	//Toggle string 2
 					key[KEY_F2] = 0;
 				}
 				else if(key[KEY_F3])
 				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_pro_guitar_fret_bitmask ^= 8;	//Toggle string 3
 					key[KEY_F3] = 0;
 				}
 				else if(key[KEY_F4])
 				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_pro_guitar_fret_bitmask ^= 4;	//Toggle string 4
 					key[KEY_F4] = 0;
 				}
 				else if(key[KEY_F5])
 				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_pro_guitar_fret_bitmask ^= 2;	//Toggle string 5
 					key[KEY_F5] = 0;
 				}
 				else if(key[KEY_F6])
 				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_pro_guitar_fret_bitmask ^= 1;	//Toggle string 6 (low e)
 					key[KEY_F6] = 0;
 				}
 				else if(key[KEY_F7])
 				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_pro_guitar_fret_bitmask = 63;	//Enable all strings
 					key[KEY_F7] = 0;
 				}
@@ -2123,21 +2170,25 @@ if(key[KEY_PAUSE])
 				}
 				else if(key[KEY_F9])
 				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_pro_guitar_fret_bitmask = 63;	//Enable all strings
 					key[KEY_F9] = 0;
 				}
 				else if(key[KEY_F10])
 				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_pro_guitar_fret_bitmask = 63;	//Enable all strings
 					key[KEY_F10] = 0;
 				}
 				else if(key[KEY_F11])
 				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_pro_guitar_fret_bitmask = 63;	//Enable all strings
 					key[KEY_F11] = 0;
 				}
 				else if(key[KEY_F12])
 				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_pro_guitar_fret_bitmask = 63;	//Enable all strings
 					key[KEY_F12] = 0;
 				}
@@ -2152,21 +2203,25 @@ if(key[KEY_PAUSE])
 			{	//SHIFT+# in a vocal track sets the octave view
 				if(key[KEY_1])	//Change mini piano focus to first usable octave
 				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_vocals_offset = MINPITCH;
 					key[KEY_1] = 0;
 				}
 				else if(key[KEY_2])	//Change mini piano focus to second usable octave
 				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_vocals_offset = MINPITCH+12;
 					key[KEY_2] = 0;
 				}
 				else if(key[KEY_3])	//Change mini piano focus to third usable octave
 				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_vocals_offset = MINPITCH+24;
 					key[KEY_3] = 0;
 				}
 				else if(key[KEY_4])	//Change mini piano focus to fourth usable octave
 				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_vocals_offset = MINPITCH+36;
 					key[KEY_4] = 0;
 				}
@@ -2175,31 +2230,37 @@ if(key[KEY_PAUSE])
 			{	//In other tracks, SHIFT+# toggles lanes on/off
 				if(key[KEY_1])
 				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_menu_note_toggle_green();
 					key[KEY_1] = 0;
 				}
 				else if(key[KEY_2])
 				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_menu_note_toggle_red();
 					key[KEY_2] = 0;
 					}
 				else if(key[KEY_3])
 				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_menu_note_toggle_yellow();
 					key[KEY_3] = 0;
 				}
 				else if(key[KEY_4])
 				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_menu_note_toggle_blue();
 					key[KEY_4] = 0;
 				}
 				else if(key[KEY_5] && (numlanes >= 5))
 				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_menu_note_toggle_purple();
 					key[KEY_5] = 0;
 				}
 				else if(key[KEY_6] && (numlanes >= 6))
 				{	//Only allow use of the 6 key if lane 6 is available
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_menu_note_toggle_orange();
 					key[KEY_6] = 0;
 				}
@@ -2700,9 +2761,9 @@ void eof_editor_logic(void)
 						eof_pen_note.pos = eof_get_note_pos(eof_song, eof_selected_track, eof_hover_note);
 						eof_pen_note.note |= eof_find_pen_note_mask();	//Set the appropriate bits
 					}
-				}
+				}//If a note is being moused over
 				else
-				{
+				{	//If a note is not being moused over
 					if((eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK))
 					{
 						eof_pen_note.note = 0;
@@ -2721,7 +2782,7 @@ void eof_editor_logic(void)
 					{	//Otherwise it will be as long as the current grid snap value (or 100ms if grid snap is off)
 						eof_pen_note.length = eof_snap.length;
 					}
-				}
+				}//If a note is not being moused over
 			}//If piano roll, rex mundi or feedback input modes are in use
 
 			/* handle initial left click (only if full screen 3D view is not in effect) */
@@ -2747,6 +2808,7 @@ void eof_editor_logic(void)
 					eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current);
 					if(KEY_EITHER_SHIFT)
 					{
+						eof_shift_used = 1;	//Track that the SHIFT key was used
 						if((eof_selection.range_pos_1 == 0) && (eof_selection.range_pos_2 == 0))
 						{
 							ignore_range = 1;
@@ -2777,6 +2839,7 @@ void eof_editor_logic(void)
 						/* Shift+Click selects range */
 						if(KEY_EITHER_SHIFT && !ignore_range)
 						{
+							eof_shift_used = 1;	//Track that the SHIFT key was used
 							if(eof_selection.range_pos_1 < eof_selection.range_pos_2)
 							{
 								for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
@@ -2871,11 +2934,7 @@ void eof_editor_logic(void)
 				{
 					if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 					{
-						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
-						eof_selection.current = EOF_MAX_NOTES - 1;
-						eof_selection.current_pos = 0;
-						eof_selection.range_pos_1 = 0;
-						eof_selection.range_pos_2 = 0;
+						eof_menu_edit_deselect_all();
 					}
 				}
 			}// handle initial left click
@@ -3141,6 +3200,10 @@ void eof_editor_logic(void)
 					else
 					{	//If creating a new note
 						new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, eof_pen_note.pos, (KEY_EITHER_SHIFT ? 1 : eof_snap.length), eof_note_type, NULL);
+						if(KEY_EITHER_SHIFT)
+						{
+							eof_shift_used = 1;	//Track that the SHIFT key was used
+						}
 						if(new_note)
 						{
 							if(eof_mark_drums_as_cymbal)
@@ -3199,6 +3262,7 @@ void eof_editor_logic(void)
 					{
 						if(KEY_EITHER_SHIFT)
 						{
+							eof_shift_used = 1;	//Track that the SHIFT key was used
 							if(KEY_EITHER_CTRL)
 							{	//CTRL+SHIFT+scroll wheel
 								adjust = abs(eof_mickey_z);	//1 ms length change
@@ -3478,6 +3542,7 @@ void eof_vocal_editor_logic(void)
 					eof_selection.current_pos = eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->pos;
 					if(KEY_EITHER_SHIFT)
 					{
+						eof_shift_used = 1;	//Track that the SHIFT key was used
 						if((eof_selection.range_pos_1 == 0) && (eof_selection.range_pos_2 == 0))
 						{
 							ignore_range = 1;
@@ -3509,6 +3574,7 @@ void eof_vocal_editor_logic(void)
 						/* Shift+Click selects range */
 						if(KEY_EITHER_SHIFT && !ignore_range)
 						{
+							eof_shift_used = 1;	//Track that the SHIFT key was used
 							if(eof_selection.range_pos_1 < eof_selection.range_pos_2)
 							{
 								for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
@@ -3602,11 +3668,7 @@ void eof_vocal_editor_logic(void)
 				{
 					if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 					{
-						memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
-						eof_selection.current = EOF_MAX_NOTES - 1;
-						eof_selection.current_pos = 0;
-						eof_selection.range_pos_1 = 0;
-						eof_selection.range_pos_2 = 0;
+						eof_menu_edit_deselect_all();
 					}
 				}
 			}//handle initial left click
@@ -4396,6 +4458,13 @@ void eof_render_editor_window_common(void)
 		}
 	}
 
+	/* draw seek selection */
+	if(eof_seek_selection_start != eof_seek_selection_end)
+	{	//If there is a seek selection
+		if((eof_seek_selection_start >= start) && (eof_seek_selection_end <= stop))	//If the star power section would render between the left and right edges of the piano roll, render a red rectangle from the top most lane to the bottom most lane
+			rectfill(eof_window_editor->screen, lpos + eof_seek_selection_start / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0], lpos + eof_seek_selection_end / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 1], eof_color_red);
+	}
+
 	/* draw track tuning */
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if((pos <= 320) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
@@ -5053,6 +5122,10 @@ void eof_editor_logic_common(void)
 							eof_adjusted_anchor = 1;
 							if((eof_note_auto_adjust && !KEY_EITHER_SHIFT) || (!eof_note_auto_adjust && KEY_EITHER_SHIFT))
 							{
+								if(KEY_EITHER_SHIFT)
+								{
+									eof_shift_used = 1;	//Track that the SHIFT key was used
+								}
 								eof_menu_edit_cut(eof_selected_beat, 0);
 							}
 						}
@@ -5080,6 +5153,10 @@ void eof_editor_logic_common(void)
 					{
 						if((eof_note_auto_adjust && !KEY_EITHER_SHIFT) || (!eof_note_auto_adjust && KEY_EITHER_SHIFT))
 						{
+							if(KEY_EITHER_SHIFT)
+							{
+								eof_shift_used = 1;	//Track that the SHIFT key was used
+							}
 							eof_adjust_notes(eof_song->tags->ogg[eof_selected_ogg].midi_offset - eof_last_midi_offset);
 						}
 						eof_fixup_notes(eof_song);
@@ -5089,6 +5166,10 @@ void eof_editor_logic_common(void)
 				{
 					if((eof_note_auto_adjust && !KEY_EITHER_SHIFT) || (!eof_note_auto_adjust && KEY_EITHER_SHIFT))
 					{
+						if(KEY_EITHER_SHIFT)
+						{
+							eof_shift_used = 1;	//Track that the SHIFT key was used
+						}
 						eof_menu_edit_cut_paste(eof_selected_beat, 0);
 						eof_calculate_beats(eof_song);
 					}
@@ -5096,7 +5177,7 @@ void eof_editor_logic_common(void)
 				eof_moving_anchor = 0;
 				eof_mouse_drug = 0;
 				eof_adjusted_anchor = 0;
-			}
+			}//If the left mouse button is not held
 			if(!eof_full_screen_3d && ((mouse_b & 2) || key[KEY_INSERT]) && eof_rclick_released && (eof_hover_beat >= 0))
 			{
 				eof_select_beat(eof_hover_beat);
@@ -5132,6 +5213,23 @@ void eof_editor_logic_common(void)
 				}
 				eof_mix_seek(eof_music_actual_pos);
 			}
+		}
+
+		/* handle initial SHIFT key press */
+		if(KEY_EITHER_SHIFT && eof_shift_released)
+		{	//If this is a new SHIFT keypress
+			eof_shift_used = 0;	//Track that a SHIFT keyboard command hasn't been used yet
+			eof_shift_released = 0;	//Track that SHIFT is now held down
+		}
+
+		/* handle initial SHIFT key release */
+		else if(!KEY_EITHER_SHIFT && !eof_shift_released)
+		{
+			if(!eof_shift_used)
+			{	//If the SHIFT key wasn't used for anything while it was held down
+				eof_update_seek_selection(0, 0);	//Clear the seek selection
+			}
+			eof_shift_released = 1;
 		}
 	}//If the chart is paused
 
@@ -5295,4 +5393,49 @@ int eof_find_hover_note(int targetpos, int x_tolerance, char snaplogic)
 		}
 	}
 	return -1;	//No appropriate hover note found
+}
+
+void eof_update_seek_selection(unsigned long start, unsigned long stop)
+{
+	unsigned long t1 = start, t2 = start, i, notepos;
+	char first = 1;
+
+//Sort the start and stop time in chronological order
+	eof_seek_selection_start = start;
+	eof_seek_selection_end = stop;
+	if(stop < start)
+	{	//If the stop time is earlier
+		t1 = stop;
+	}
+	else
+	{	//Otherwise the start time is earlier
+		t2 = stop;
+	}
+
+//Update the selection array
+	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
+	if(start == stop)
+	{	//If the seek selection is removed
+		eof_selection.current = EOF_MAX_NOTES - 1;
+		eof_selection.current_pos = 0;
+	}
+
+	eof_selection.track = eof_selected_track;
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{
+		notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
+		if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (notepos >= t1) && (notepos <= t2))
+		{	//If the note is within the seek selection
+			if(first)
+			{
+				eof_selection.range_pos_1 = notepos;
+				first = 0;
+			}
+			eof_selection.range_pos_2 = notepos;
+			eof_selection.current = i;
+			eof_selection.current_pos = notepos;
+			eof_selection.multi[i] = 1;
+			eof_undo_last_type = EOF_UNDO_TYPE_NONE;
+		}
+	}
 }

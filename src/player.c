@@ -171,6 +171,7 @@ void eof_music_rewind(void)
 	{
 		if(KEY_EITHER_SHIFT)
 		{
+			eof_shift_used = 1;	//Track that the SHIFT key was used
 			if(KEY_EITHER_CTRL)
 			{	//If both SHIFT and CTRL are being held
 				amount = 1;
@@ -209,6 +210,7 @@ void eof_music_forward(void)
 	{
 		if(KEY_EITHER_SHIFT)
 		{
+			eof_shift_used = 1;	//Track that the SHIFT key was used
 			if(KEY_EITHER_CTRL)
 			{	//If both SHIFT and CTRL are being held
 				amount = 1;

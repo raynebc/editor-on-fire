@@ -320,6 +320,9 @@ extern EOF_LYRIC *  eof_entering_note_lyric;
 extern int         eof_entering_note;
 extern int         eof_snote;
 extern PACKFILE *  eof_recovery;
+extern unsigned long eof_seek_selection_start, eof_seek_selection_end;
+extern int         eof_shift_released;
+extern int         eof_shift_used;
 
 /* mouse control data */
 extern int         eof_selected_control;
