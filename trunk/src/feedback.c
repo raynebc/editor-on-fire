@@ -118,6 +118,7 @@ void eof_editor_logic_feedback(void)
 	{
 		if(KEY_EITHER_SHIFT)
 		{
+			eof_shift_used = 1;	//Track that the SHIFT key was used
 			eof_catalog_play();
 		}
 		else
@@ -207,6 +208,7 @@ void eof_editor_logic_feedback(void)
 		eof_menu_edit_cut(fbeat + 1, 1);
 		if(KEY_EITHER_SHIFT)
 		{
+			eof_shift_used = 1;	//Track that the SHIFT key was used
 			bpm -= 0.1;
 		}
 		else
@@ -237,6 +239,7 @@ void eof_editor_logic_feedback(void)
 		eof_menu_edit_cut(fbeat + 1, 1);
 		if(KEY_EITHER_SHIFT)
 		{
+			eof_shift_used = 1;	//Track that the SHIFT key was used
 			bpm += 0.1;
 		}
 		else
@@ -311,6 +314,7 @@ void eof_editor_logic_feedback(void)
 		{
 			if(KEY_EITHER_SHIFT)
 			{
+				eof_shift_used = 1;	//Track that the SHIFT key was used
 				if(!eof_feedback_selecting)
 				{
 					eof_feedback_selecting = 1;
@@ -343,6 +347,7 @@ void eof_editor_logic_feedback(void)
 			}
 			if(KEY_EITHER_SHIFT)
 			{
+				eof_shift_used = 1;	//Track that the SHIFT key was used
 				if(eof_feedback_selecting)
 				{
 					eof_feedback_selecting = 1;

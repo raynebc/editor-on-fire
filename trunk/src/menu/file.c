@@ -864,7 +864,7 @@ int eof_menu_file_settings(void)
 
 int eof_menu_file_preferences(void)
 {
-	int retval;
+	int retval, original_input_mode;
 
 	if(eof_song_loaded)
 	{
@@ -906,6 +906,7 @@ int eof_menu_file_preferences(void)
 	}
 	eof_preferences_dialog[20].flags = eof_render_bass_drum_in_lane ? D_SELECTED : 0;	//3D render bass drum in a lane
 	eof_preferences_dialog[22].d1 = eof_input_mode;										//Input method
+	original_input_mode = eof_input_mode;												//Store this value
 	eof_preferences_dialog[24].d1 = eof_color_set;										//Color set
 
 	do
@@ -973,6 +974,10 @@ int eof_menu_file_preferences(void)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_set_color_set();
+	if(original_input_mode != eof_input_mode)
+	{	//If the input mode was changed
+		eof_seek_selection_start = eof_seek_selection_end = 0;	//Clear the seek selection
+	}
 	return 1;
 }
 

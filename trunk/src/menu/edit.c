@@ -2013,9 +2013,11 @@ int eof_menu_edit_select_like(void)
 
 int eof_menu_edit_deselect_all(void)
 {
-	memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
+	eof_update_seek_selection(0, 0);	//Clear the seek selection and the selected notes array
 	eof_selection.current = EOF_MAX_NOTES - 1;
 	eof_selection.current_pos = 0;
+	eof_selection.range_pos_1 = 0;
+	eof_selection.range_pos_2 = 0;
 	return 1;
 }
 
@@ -2356,7 +2358,7 @@ int eof_menu_edit_paste_from_catalog(void)
 		eof_determine_phrase_status(eof_selected_track);
 		eof_detect_difficulties(eof_song);
 		eof_selection.current_pos = 0;
-		memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
+		eof_menu_edit_deselect_all();	//Clear the seek selection and notes array
 		for(i = 0; i < paste_count; i++)
 		{	//For each of the pasted notes
 			for(j = 0; j < eof_get_track_size(eof_song, eof_selected_track); j++)

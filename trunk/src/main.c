@@ -168,6 +168,9 @@ int         eof_song_loaded = 0;	//The boolean condition that a chart and its au
 int         eof_last_note = 0;
 int         eof_last_midi_offset = 0;
 PACKFILE *  eof_recovery = NULL;
+unsigned long eof_seek_selection_start = 0, eof_seek_selection_end = 0;	//Used to track the keyboard driven note selection system in Feedback input mode
+int         eof_shift_released = 1;	//Tracks the press/release of the SHIFT keys for the Feedback input mode seek selection system
+int         eof_shift_used = 0;	//Tracks whether the SHIFT key was used for a keyboard shortcut while SHIFT was held
 
 /* mouse control data */
 int         eof_selected_control = -1;
@@ -208,7 +211,7 @@ int         eof_notes_moved = 0;
 char          eof_snap_mode = EOF_SNAP_OFF;
 char          eof_last_snap_mode = EOF_SNAP_OFF;
 int           eof_snap_interval = 1;
-char eof_custom_snap_measure = 0;	//Boolean: The user set a custom grid snap interval defined in measures instead of beats
+char          eof_custom_snap_measure = 0;	//Boolean: The user set a custom grid snap interval defined in measures instead of beats
 
 char          eof_hopo_view = EOF_HOPO_RF;
 
@@ -1491,6 +1494,7 @@ void eof_read_global_keys(void)
 		{
 			if(KEY_EITHER_SHIFT)
 			{
+				eof_shift_used = 1;	//Track that the SHIFT key was used
 				if(KEY_EITHER_CTRL)
 					tempochange = -0.01;
 				else
@@ -1507,6 +1511,7 @@ void eof_read_global_keys(void)
 		{
 			if(KEY_EITHER_SHIFT)
 			{
+				eof_shift_used = 1;	//Track that the SHIFT key was used
 				if(KEY_EITHER_CTRL)
 					tempochange = 0.01;
 				else
@@ -1538,6 +1543,7 @@ void eof_read_global_keys(void)
 		}
 		else if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{	//Both CTRL and SHIFT held
+			eof_shift_used = 1;	//Track that the SHIFT key was used
 			eof_menu_catalog_find_prev();
 		}
 		key[KEY_F3] = 0;
@@ -2137,7 +2143,7 @@ void eof_render_note_window(void)
 		}
 		ypos += 12;
 		if(eof_vocals_selected)
-		{
+		{	//If the vocal track is active
 			if(eof_selection.current < eof_song->vocal_track[tracknum]->lyrics)
 			{
 				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Lyric = %ld : Pos = %lu : Length = %lu", eof_selection.current, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->pos, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->length);
@@ -2171,15 +2177,15 @@ void eof_render_note_window(void)
 					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Lyric = None : Seek Lyric = None");
 				}
 			}
-		}
+		}//If the vocal track is active
 		else
-		{
+		{	//If a non vocal track is active
 			if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
-			{
+			{	//If a note is selected
 				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Note = %ld : Pos = %lu : Length = %lu", eof_selection.current, eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current), eof_get_note_length(eof_song, eof_selected_track, eof_selection.current));
 #ifdef EOF_DEBUG
 				ypos += 12;
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Mask = %ld : Flags = %lu", eof_get_note_note(eof_song, eof_selected_track, eof_selection.current), eof_get_note_flags(eof_song, eof_selected_track, eof_selection.current));
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "#Mask = %ld : Flags = %lu", eof_get_note_note(eof_song, eof_selected_track, eof_selection.current), eof_get_note_flags(eof_song, eof_selected_track, eof_selection.current));
 #endif
 			}
 			else
@@ -2187,6 +2193,13 @@ void eof_render_note_window(void)
 				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Note = None");
 			}
 			ypos += 12;
+#ifdef EOF_DEBUG
+			if(eof_seek_selection_start != eof_seek_selection_end)
+			{	//If there is a seek selection
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "#Seek selection start = %lu : stop = %lu", eof_seek_selection_start, eof_seek_selection_end);
+				ypos += 12;
+			}
+#endif
 			if(eof_hover_note >= 0)
 			{
 				if(eof_seek_hover_note >= 0)
@@ -2209,7 +2222,7 @@ void eof_render_note_window(void)
 					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Note = None : Seek Note = None");
 				}
 			}
-		}
+		}//If a non vocal track is active
 		int ism = ((eof_music_pos - eof_av_delay) / 1000) / 60;
 		int iss = ((eof_music_pos - eof_av_delay) / 1000) % 60;
 		int isms = ((eof_music_pos - eof_av_delay) % 1000);
@@ -2701,10 +2714,31 @@ void eof_render_3d_window(void)
 		}
 	}
 
+	/* render seek selection */
+	long halflanewidth = (56.0 * (4.0 / (numlanes-1))) / 2;
+	if(eof_seek_selection_start != eof_seek_selection_end)
+	{	//If there is a seek selection
+		sz = (long)(eof_seek_selection_start + eof_av_delay - eof_music_pos) / eof_zoom_3d;
+		sez = (long)(eof_seek_selection_end + eof_av_delay - eof_music_pos) / eof_zoom_3d;
+		if((-100 <= sez) && (600 >= sz))
+		{
+			spz = sz < -100 ? -100 : sz;
+			spez = sez > 600 ? 600 : sez;
+			point[0] = ocd3d_project_x(xchart[0], spez);
+			point[1] = ocd3d_project_y(200, spez);
+			point[2] = ocd3d_project_x(xchart[lastlane], spez);
+			point[3] = point[1];
+			point[4] = ocd3d_project_x(xchart[lastlane], spz);
+			point[5] = ocd3d_project_y(200, spz);
+			point[6] = ocd3d_project_x(xchart[0], spz);
+			point[7] = point[5];
+			polygon(eof_window_3d->screen, 4, point, eof_color_red);
+		}
+	}
+
 	/* render trill and tremolo sections */
 	if(eof_get_num_trills(eof_song, eof_selected_track) || eof_get_num_tremolos(eof_song, eof_selected_track))
 	{	//If this track has any trill or tremolo sections
-		long halflanewidth = (56.0 * (4.0 / (numlanes-1))) / 2;
 		long xoffset = 0;	//This will be used to offset the trill/tremolo lane fill as necessary to center the fill over that lane's gem
 		if(eof_selected_track == EOF_TRACK_DRUM)
 		{
@@ -3810,6 +3844,7 @@ void eof_init_after_load(char initaftersavestate)
 		eof_undo_reset();
 		if(eof_song->beats > 0)
 			eof_set_seek_position(eof_song->beat[0]->pos + eof_av_delay);	//Seek to the first beat marker
+		eof_seek_selection_start = eof_seek_selection_end = 0;	//Clear the seek selection
 	}
 	eof_detect_difficulties(eof_song);
 	eof_reset_lyric_preview_lines();

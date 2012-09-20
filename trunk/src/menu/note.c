@@ -9,6 +9,7 @@
 #include "../foflc/Lyric_storage.h"
 #include "../main.h"
 #include "../mix.h"
+#include "edit.h"
 #include "note.h"
 
 #ifdef USEMEMWATCH
