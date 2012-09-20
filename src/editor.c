@@ -943,6 +943,8 @@ if(key[KEY_PAUSE])
 	{
 		if(eof_input_mode == EOF_INPUT_FEEDBACK)
 		{
+			stop_sample(eof_sound_grid_snap);
+			play_sample(eof_sound_grid_snap, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip
 			eof_snap_mode--;
 			if(eof_snap_mode < 0)
 			{
@@ -967,6 +969,8 @@ if(key[KEY_PAUSE])
 	{
 		if(eof_input_mode == EOF_INPUT_FEEDBACK)
 		{
+			stop_sample(eof_sound_grid_snap);
+			play_sample(eof_sound_grid_snap, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip
 			eof_snap_mode++;
 			if(eof_snap_mode > EOF_SNAP_FORTY_EIGHTH)
 			{
@@ -1271,6 +1275,11 @@ if(key[KEY_PAUSE])
 	/* decrease grid snap (,) */
 	if(key[KEY_COMMA])
 	{
+		if(eof_input_mode == EOF_INPUT_FEEDBACK)
+		{	//If Feedback input method is in effect
+			stop_sample(eof_sound_grid_snap);
+			play_sample(eof_sound_grid_snap, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip
+		}
 		eof_snap_mode--;
 		if(eof_snap_mode < 0)
 		{
@@ -1282,6 +1291,11 @@ if(key[KEY_PAUSE])
 	/* increase grid snap (.) */
 	if(key[KEY_STOP])
 	{
+		if(eof_input_mode == EOF_INPUT_FEEDBACK)
+		{	//If Feedback input method is in effect
+			stop_sample(eof_sound_grid_snap);
+			play_sample(eof_sound_grid_snap, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip
+		}
 		eof_snap_mode++;
 		if(eof_snap_mode > EOF_SNAP_FORTY_EIGHTH)
 		{
@@ -2573,18 +2587,46 @@ if(key[KEY_PAUSE])
 			key[KEY_C] = 0;
 		}
 
-	/* paste (CTRL+V) */
+	/* Normally, CTRL+V and CTRL+P do paste and new paste, but these are swapped in Feedback input mode */
+		unsigned char do_new_paste = 0, do_old_paste = 0;
+
+	/* paste (CTRL+V, in non Feedback input modes) */
+	/* paste (CTRL+P, in Feedback input mode) */
 		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && key[KEY_V])
 		{
-			eof_menu_edit_paste();
+			if(eof_input_mode == EOF_INPUT_FEEDBACK)
+			{
+				do_old_paste = 1;
+			}
+			else
+			{
+				do_new_paste = 1;
+			}
 			key[KEY_V] = 0;
 		}
 
-	/* old paste (CTRL+P) */
+	/* old paste (CTRL+P, in non Feedback input modes) */
+	/* old paste (CTRL+V, in Feedback input mode */
 		if(KEY_EITHER_CTRL && key[KEY_P])
 		{	//CTRL+P is "Old Paste"
-			eof_menu_edit_old_paste();
+			if(eof_input_mode == EOF_INPUT_FEEDBACK)
+			{
+				do_new_paste = 1;
+			}
+			else
+			{
+				do_old_paste = 1;
+			}
 			key[KEY_P] = 0;
+		}
+
+		if(do_old_paste)
+		{
+			eof_menu_edit_old_paste();
+		}
+		else if(do_new_paste)
+		{
+			eof_menu_edit_paste();
 		}
 	}//If the chart is paused and no catalog entries are playing
 }
