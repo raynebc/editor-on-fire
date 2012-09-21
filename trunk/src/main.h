@@ -223,7 +223,9 @@ extern NCDFS_FILTER_LIST * eof_filter_gh_files;
 extern int         eof_global_volume;
 
 extern EOF_WINDOW * eof_window_editor;
-extern EOF_WINDOW * eof_window_note;
+extern EOF_WINDOW * eof_window_note;	//Will be set to either the lower left or upper left variants below depending on whether full screen 3D view is in effect
+extern EOF_WINDOW * eof_window_note_lower_left;
+extern EOF_WINDOW * eof_window_note_upper_left;
 extern EOF_WINDOW * eof_window_3d;
 
 extern char        eof_last_frettist[256];

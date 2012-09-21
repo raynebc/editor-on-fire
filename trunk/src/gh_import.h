@@ -111,6 +111,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp);
 	//Searches the buffered file for section markers and loads them into the specified EOF_SONG structure (QB format GH file)
 	//If sections are not found, 0 is returned
 	//If an error is detected, -1 is returned
+	//If the user cancels the loading of sections, -2 is returned
 
 int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, gh_section *target, unsigned long qbindex, char forcestrum);
 	//Searches for the target instrument section in the buffered file (QB format GH file)
