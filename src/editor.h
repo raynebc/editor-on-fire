@@ -114,5 +114,4 @@ int eof_find_hover_note(int targetpos, int x_tolerance, char snaplogic);
 void eof_update_seek_selection(unsigned long start, unsigned long stop);
 	//Updates the seek selection variables and the note selection array to reflect which range of notes are selected via keyboard seek controls
 
-
 #endif

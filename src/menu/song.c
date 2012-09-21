@@ -17,6 +17,7 @@
 #include "../silence.h"
 #include "../song.h"
 #include "../tuning.h"
+#include "note.h"	//For eof_feedback_mode_update_note_selection()
 #include "song.h"
 #include "file.h"	//For eof_menu_prompt_save_changes()
 
@@ -1309,6 +1310,8 @@ int eof_menu_catalog_add(void)
 	unsigned long i;
 	long next;
 
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
 		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
@@ -1342,6 +1345,11 @@ int eof_menu_catalog_add(void)
 		eof_music_catalog_pos = eof_song->catalog->entry[eof_selected_catalog_entry].start_pos + eof_av_delay;
 	}
 
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
 	return 1;
 }
 

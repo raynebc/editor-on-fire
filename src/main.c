@@ -69,6 +69,8 @@ int         eof_global_volume = 255;
 
 EOF_WINDOW * eof_window_editor = NULL;
 EOF_WINDOW * eof_window_note = NULL;
+EOF_WINDOW * eof_window_note_lower_left = NULL;
+EOF_WINDOW * eof_window_note_upper_left = NULL;
 EOF_WINDOW * eof_window_3d = NULL;
 
 /* configuration */
@@ -558,10 +560,15 @@ int eof_set_display_mode(int mode)
 		eof_window_destroy(eof_window_editor);
 		eof_window_editor = NULL;
 	}
-	if(eof_window_note)
+	if(eof_window_note_lower_left)
 	{
-		eof_window_destroy(eof_window_note);
-		eof_window_note = NULL;
+		eof_window_destroy(eof_window_note_lower_left);
+		eof_window_note_lower_left = NULL;
+	}
+	if(eof_window_note_upper_left)
+	{
+		eof_window_destroy(eof_window_note_upper_left);
+		eof_window_note_upper_left = NULL;
 	}
 	if(eof_window_3d)
 	{
@@ -663,10 +670,11 @@ int eof_set_display_mode(int mode)
 		allegro_message("Unable to create editor window!");
 		return 0;
 	}
-	eof_window_note = eof_window_create(0, eof_screen_height / 2, eof_screen_width, eof_screen_height / 2, eof_screen);	//Make the window full width
-	if(!eof_window_note)
+	eof_window_note_lower_left = eof_window_create(0, eof_screen_height / 2, eof_screen_width, eof_screen_height / 2, eof_screen);	//Make the window full width
+	eof_window_note_upper_left = eof_window_create(0, 20, eof_screen_width, eof_screen_height / 2, eof_screen);	//Make the window full width
+	if(!eof_window_note_lower_left || !eof_window_note_upper_left)
 	{
-		allegro_message("Unable to create information window!");
+		allegro_message("Unable to create information windows!");
 		return 0;
 	}
 	eof_window_3d = eof_window_create(eof_screen_width / 2, eof_screen_height / 2, eof_screen_width / 2, eof_screen_height / 2, eof_screen);
@@ -1474,11 +1482,10 @@ void eof_read_global_keys(void)
 			eof_reset_lyric_preview_lines();	//Rebuild the preview lines
 		}
 
-		/* switch between inverted and normal editor view (CTRL+I) */
+		/* toggle info panel rendering (CTRL+I) */
 		if(KEY_EITHER_CTRL && key[KEY_I])
 		{
-			eof_inverted_notes = 1 - eof_inverted_notes;
-			eof_set_2D_lane_positions(0);	//Update ychart[] by force since the lane positions have changed
+			eof_disable_info_panel = 1 - eof_disable_info_panel;
 			key[KEY_I] = 0;
 		}
 
@@ -1978,11 +1985,19 @@ void eof_render_note_window(void)
 	char difficulty1[20], difficulty2[50], difficulty3[50];
 	int scale, chord, isslash, bassnote;	//Used when looking up the chord name (if the last selected note is not already named)
 
-	if(eof_disable_info_panel || eof_full_screen_3d)	//If the user disabled the info panel's rendering (or enabled full screen 3D view)
-		return;											//Return immediately without rendering anything
+	if(eof_disable_info_panel)	//If the user disabled the info panel's rendering
+		return;					//Return immediately without rendering anything
 
 	numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
-	clear_to_color(eof_window_note->screen, eof_color_gray);
+	if(eof_full_screen_3d)
+	{	//If full screen 3D view is in effect
+		eof_window_note = eof_window_note_upper_left;	//Render info panel at the top left of EOF's program window
+	}
+	else
+	{
+		eof_window_note = eof_window_note_lower_left;	//Render info panel at the lower left of EOF's program window
+		clear_to_color(eof_window_note->screen, eof_color_gray);
+	}
 
 	if((eof_catalog_menu[0].flags & D_SELECTED) && eof_song->catalog->entries)
 	{//If show catalog is selected and there's at least one entry
@@ -2121,6 +2136,15 @@ void eof_render_note_window(void)
 		textprintf_ex(eof_window_note->screen, font, 2, 6, eof_color_white, -1, "----------------------------");
 		ypos = 16;
 
+		if(!eof_disable_sound_processing)
+		{	//If the user didn't disable sound processing, display the sound cue statuses
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Metronome: %s Claps: %s Tones: %s", eof_mix_metronome_enabled ? "On" : "Off", eof_mix_claps_enabled ? "On" : "Off", eof_mix_vocal_tones_enabled ? "On" : "Off");
+		}
+		else
+		{	//Otherwise indicate they are disabled
+			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "(Sound cues are currently disabled)");
+		}
+		ypos += 12;
 		if(eof_hover_beat >= 0)
 		{
 			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Beat = %lu : BPM = %f : Hover = %ld", eof_selected_beat, (double)60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn, eof_hover_beat);
@@ -2158,22 +2182,22 @@ void eof_render_note_window(void)
 			{
 				if(eof_seek_hover_note >= 0)
 				{
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Lyric = %d : Seek Lyric = %d", eof_hover_note, eof_seek_hover_note);
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Lyric: Hover = %d : Seek = %d", eof_hover_note, eof_seek_hover_note);
 				}
 				else
 				{
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Lyric = %d : Seek Lyric = None", eof_hover_note);
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Lyric Hover = %d : Seek = None", eof_hover_note);
 				}
 			}
 			else
 			{
 				if(eof_seek_hover_note >= 0)
 				{
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Lyric = None : Seek Lyric = %d", eof_seek_hover_note);
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Lyric: Hover = None : Seek = %d", eof_seek_hover_note);
 				}
 				else
 				{
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Lyric = None : Seek Lyric = None");
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Lyric: Hover = None : Seek = None");
 				}
 			}
 		}//If the vocal track is active
@@ -2203,22 +2227,22 @@ void eof_render_note_window(void)
 			{
 				if(eof_seek_hover_note >= 0)
 				{
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Note = %d : Seek Note = %d", eof_hover_note, eof_seek_hover_note);
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Note: Hover = %d : Seek = %d", eof_hover_note, eof_seek_hover_note);
 				}
 				else
 				{
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Note = %d : Seek Note = None", eof_hover_note);
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Note: Hover = %d : Seek = None", eof_hover_note);
 				}
 			}
 			else
 			{
 				if(eof_seek_hover_note >= 0)
 				{
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Note = None : Seek Note = %d", eof_seek_hover_note);
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Note: Hover = None : Seek = %d", eof_seek_hover_note);
 				}
 				else
 				{
-					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Hover Note = None : Seek Note = None");
+					textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Note: Hover = None : Seek = None");
 				}
 			}
 		}//If a non vocal track is active
@@ -2246,15 +2270,6 @@ void eof_render_note_window(void)
 				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Grid Snap: %s (1/%d measure)", eof_snap_name[(int)eof_snap_mode],eof_snap_interval);
 		}
 
-		ypos += 12;
-		if(!eof_disable_sound_processing)
-		{	//If the user didn't disable sound processing, display the sound cue statuses
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Metronome: %s Claps: %s Vocal Tones: %s", eof_mix_metronome_enabled ? "On" : "Off", eof_mix_claps_enabled ? "On" : "Off", eof_mix_vocal_tones_enabled ? "On" : "Off");
-		}
-		else
-		{	//Otherwise indicate they are disabled
-			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "(Sound cues are currently disabled)");
-		}
 		ypos += 12;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Playback Speed: %d%%", eof_playback_speed / 10);
 		ypos += 12;
@@ -2399,10 +2414,13 @@ void eof_render_note_window(void)
 		}//Display information specific to pro guitar tracks
 	}//If show catalog is disabled
 
-	rect(eof_window_note->screen, 0, 0, eof_window_note->w - 1, eof_window_note->h - 1, eof_color_dark_silver);
-	rect(eof_window_note->screen, 1, 1, eof_window_note->w - 2, eof_window_note->h - 2, eof_color_black);
-	hline(eof_window_note->screen, 1, eof_window_note->h - 2, eof_window_note->w - 2, eof_color_white);
-	vline(eof_window_note->screen, eof_window_note->w - 2, 1, eof_window_note->h - 2, eof_color_white);
+	if(!eof_full_screen_3d)
+	{	//If full screen 3D view is not in effect, render a border around the info panel
+		rect(eof_window_note->screen, 0, 0, eof_window_note->w - 1, eof_window_note->h - 1, eof_color_dark_silver);
+		rect(eof_window_note->screen, 1, 1, eof_window_note->w - 2, eof_window_note->h - 2, eof_color_black);
+		hline(eof_window_note->screen, 1, eof_window_note->h - 2, eof_window_note->w - 2, eof_color_white);
+		vline(eof_window_note->screen, eof_window_note->w - 2, 1, eof_window_note->h - 2, eof_color_white);
+	}
 }
 
 #define MAX_LYRIC_PREVIEW_LENGTH 255
@@ -2915,8 +2933,8 @@ void eof_render(void)
 		clear_to_color(eof_screen, makecol(224, 224, 224));
 		if(!eof_full_screen_3d)
 		{	//Only blit the menu bar now if full screen 3D view isn't in effect, as it will otherwise be blitted later
-			if(eof_count_selected_notes(NULL, 0) > 0)
-			{
+			if((eof_count_selected_notes(NULL, 0) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
+			{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
 				blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
 			}
 			else
@@ -2924,7 +2942,10 @@ void eof_render(void)
 				blit(eof_image[EOF_IMAGE_MENU_NO_NOTE], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
 			}
 		}
-		eof_render_note_window();	//Render the note window first, so if the user didn't opt to display its full width, it won't draw over the 3D window
+		if(!eof_full_screen_3d)
+		{	//In full screen 3D view, don't render the note window yet, it will just be overwritten by the 3D window
+			eof_render_note_window();	//Otherwise render the note window first, so if the user didn't opt to display its full width, it won't draw over the 3D window
+		}
 		if(eof_vocals_selected)
 		{
  			eof_render_vocal_editor_window();
@@ -2947,18 +2968,28 @@ void eof_render(void)
 		draw_sprite(eof_screen, mouse_sprite, mouse_x - 1, mouse_y - 1);
 	}
 
+	if(eof_full_screen_3d && eof_song_loaded)
+	{	//If the user enabled full screen 3D view, scale it to fill the program window
+		stretch_blit(eof_window_3d->screen, eof_screen, 0, 0, eof_screen_width / 2, eof_screen_height / 2, 0, 0, SCREEN_W, SCREEN_H);
+		eof_window_note->y = 0;	//Re-position the note window to the top left corner of EOF's program window
+		eof_render_note_window();
+		if((eof_count_selected_notes(NULL, 0) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
+		{	//If notes are selected, or the seek position is at a note position when Feedback input mode is in use
+			blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+		}
+		else
+		{
+			blit(eof_image[EOF_IMAGE_MENU_NO_NOTE], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
+		}
+		eof_window_note->y = eof_screen_height / 2;	//Re-position the note window to the bottom left corner of EOF's program window
+	}
+
 	if(!eof_disable_vsync)
-	{
+	{	//Wait for vsync unless this was disabled
 		IdleUntilVSync();
 		vsync();
 		DoneVSync();
 	}
-	if(eof_full_screen_3d && eof_song_loaded)
-	{	//If the user enabled full screen 3D view, scale it to fill the program window
-		stretch_blit(eof_window_3d->screen, eof_screen, 0, 0, eof_screen_width / 2, eof_screen_height / 2, 0, 0, SCREEN_W, SCREEN_H);
-		blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
-	}
-
 	blit(eof_screen, screen, 0, 0, 0, 0, SCREEN_W, SCREEN_H);	//Render the screen
 }
 
@@ -3232,6 +3263,7 @@ int eof_initialize(int argc, char * argv[])
 		allegro_message("Unable to set display mode!");
 		return 0;
 	}
+	eof_window_note = eof_window_note_lower_left;	//By default, the info panel is at the lower left corner
 	eof_menu_edit_zoom_level(eof_zoom_backup);	//Apply the zoom level loaded from the config file
 
 	if(!eof_load_data())
@@ -3658,7 +3690,8 @@ void eof_exit(void)
 	eof_destroy_waveform(eof_waveform);	//Frees memory used by any currently loaded waveform data
 	eof_waveform = NULL;
 	eof_window_destroy(eof_window_editor);
-	eof_window_destroy(eof_window_note);
+	eof_window_destroy(eof_window_note_lower_left);
+	eof_window_destroy(eof_window_note_upper_left);
 	eof_window_destroy(eof_window_3d);
 
 	//Stop the logging system

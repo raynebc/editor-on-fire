@@ -13,6 +13,7 @@
 #include "utility.h"
 #include "menu/edit.h"
 #include "menu/file.h"
+#include "menu/note.h"	//For eof_feedback_mode_update_note_selection()
 #include "menu/song.h"
 #include "agup/agup.h"
 
@@ -4421,6 +4422,8 @@ void eof_set_pro_guitar_fret_number(char function, unsigned long fretvalue)
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return;	//Do not allow this function to run unless a pro guitar/bass track is active
 
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->notes; ctr++)
 	{	//For each note in the active pro guitar track
@@ -4460,6 +4463,11 @@ void eof_set_pro_guitar_fret_number(char function, unsigned long fretvalue)
 				}
 			}
 		}
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
 }
 
@@ -4756,6 +4764,8 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
 
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
 	adjustment = amount;	//This would be the amount to adjust the note by
 	for(i = 0; i < eof_get_track_size(sp, eof_selected_track); i++)
 	{	//For each note in the track
@@ -4836,6 +4846,11 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 		}
 	}//For each note in the track
 	eof_track_fixup_notes(sp, eof_selected_track, 1);
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
 }
 
 void eof_set_num_arpeggios(EOF_SONG *sp, unsigned long track, unsigned long number)
@@ -5089,6 +5104,8 @@ unsigned long eof_get_highest_fret(unsigned long track, char scope)
 	if(eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 0;	//Only run this when a pro guitar/bass track is active
 
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
 	tracknum = eof_song->track[track]->tracknum;
 	for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->notes; ctr++)
 	{	//For each note in the active pro guitar track
@@ -5108,6 +5125,11 @@ unsigned long eof_get_highest_fret(unsigned long track, char scope)
 		}
 	}
 
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
 	return highestfret;
 }
 

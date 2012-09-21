@@ -243,7 +243,7 @@ Miscellaneous Controls:
 
     Ctrl+I:
 
-        Invert the fretboard display.
+        Toggle the rendering of the Info panel on/off.
 
     Ctrl+F:
 

@@ -6,6 +6,7 @@
 #include "../main.h"	//Inclusion for eof_custom_snap_measure
 #include "../dialog/proc.h"
 #include "edit.h"
+#include "note.h"	//For eof_feedback_mode_update_note_selection()
 #include "song.h"
 
 #ifdef USEMEMWATCH
@@ -497,6 +498,8 @@ int eof_menu_edit_copy_vocal(void)
 	if(!eof_vocals_selected)
 		return 1;	//Return error
 
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
 	/* first, scan for selected notes */
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{
@@ -562,6 +565,11 @@ int eof_menu_edit_copy_vocal(void)
 		}
 	}
 	pack_fclose(fp);
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
 	return 1;
 }
 
@@ -1100,6 +1108,8 @@ int eof_menu_edit_copy(void)
 	unsigned char frets[16] = {0};	//Used to store NULL fret data to support copying legacy notes to a pro guitar track
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
 	/* first, scan for selected notes */
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -1183,6 +1193,11 @@ int eof_menu_edit_copy(void)
 		}
 	}
 	pack_fclose(fp);
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
 	return 1;
 }
 
@@ -1565,44 +1580,81 @@ int eof_menu_edit_zoom_level(int zoom)
 
 int eof_menu_edit_playback_speed_helper_faster(void)
 {
-	int i;
+	int i, amount;
 
 	for(i = 0; i < 5; i++)
 	{
 		eof_edit_playback_menu[i].flags = 0;
 	}
-	eof_playback_speed = (eof_playback_speed /250)*250;	//Account for custom playback rate (force to round down to a multiple of 250)
-	eof_playback_speed += 250;
+	if(eof_input_mode == EOF_INPUT_FEEDBACK)
+	{	//In Feedback input mode, cycle playback speed in intervals of 10%
+		amount = 100;
+	}
+	else
+	{
+		amount = 250;	//Otherwise do so in intervals of 25%
+	}
+	eof_playback_speed = (eof_playback_speed /amount)*amount;	//Account for custom playback rate (force to round down to a multiple of the change interval)
+	eof_playback_speed += amount;
 	if(eof_playback_speed > 1000)
 	{
 		if(eof_input_mode == EOF_INPUT_FEEDBACK)
-		{
-			eof_playback_speed = 250;
+		{	//In Feedback input mode
+			eof_playback_speed = amount;	//Wrap around
 		}
 		else
 		{
 			eof_playback_speed = 1000;
 		}
 	}
-	eof_edit_playback_menu[(1000 - eof_playback_speed) / 250].flags = D_SELECTED;
+	if(eof_playback_speed % 250 == 0)
+	{	//If one of the 25% preset intervals is set
+		eof_edit_playback_menu[(1000 - eof_playback_speed) / 250].flags = D_SELECTED;	//Check the appropriate speed menu item
+	}
+	else
+	{
+		eof_edit_playback_menu[4].flags = D_SELECTED;	//Check the "custom" playback speed menu item
+	}
 	return 1;
 }
 
 int eof_menu_edit_playback_speed_helper_slower(void)
 {
-	int i;
+	int i, amount;
 
 	for(i = 0; i < 5; i++)
 	{
 		eof_edit_playback_menu[i].flags = 0;
 	}
-	eof_playback_speed = (eof_playback_speed /250)*250;	//Account for custom playback rate (force to round down to a multiple of 250)
-	eof_playback_speed -= 250;
-	if(eof_playback_speed < 250)
-	{
-		eof_playback_speed = 250;
+	if(eof_input_mode == EOF_INPUT_FEEDBACK)
+	{	//In Feedback input mode, cycle playback speed in intervals of 10%
+		amount = 100;
 	}
-	eof_edit_playback_menu[(1000 - eof_playback_speed) / 250].flags = D_SELECTED;
+	else
+	{
+		amount = 250;	//Otherwise do so in intervals of 25%
+	}
+	eof_playback_speed = (eof_playback_speed /amount)*amount;	//Account for custom playback rate (force to round down to a multiple of the change interval)
+	eof_playback_speed -= amount;
+	if(eof_playback_speed < amount)
+	{
+		if(eof_input_mode == EOF_INPUT_FEEDBACK)
+		{	//In Feedback input mode
+			eof_playback_speed = 1000;	//Wrap around
+		}
+		else
+		{
+			eof_playback_speed = 250;
+		}
+	}
+	if(eof_playback_speed % 250 == 0)
+	{	//If one of the 25% preset intervals is set
+		eof_edit_playback_menu[(1000 - eof_playback_speed) / 250].flags = D_SELECTED;	//Check the appropriate speed menu item
+	}
+	else
+	{
+		eof_edit_playback_menu[4].flags = D_SELECTED;	//Check the "custom" playback speed menu item
+	}
 	return 1;
 }
 
@@ -1966,6 +2018,8 @@ int eof_menu_edit_select_like(void)
 	unsigned long i, j, ntypes = 0;
 	unsigned long ntype[100];	//This tracks each unique selected note to allow multiple dislike notes to be selected during a "select like" operation
 
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
 	if(eof_selection.track != eof_selected_track)
 	{
 		return 1;
@@ -2007,6 +2061,11 @@ int eof_menu_edit_select_like(void)
 				eof_selection.multi[i] = 1;					//Mark the note as selected
 			}
 		}
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
 	return 1;
 }

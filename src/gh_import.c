@@ -2873,7 +2873,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 			}
 			if(prompt == 4)
 			{	//User opted to skip the loading of practice sections
-				return 0;	//Return cancellation
+				return -2;	//Return cancellation
 			}
 		}
 		else
@@ -2890,5 +2890,5 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 		}
 	}//Until the user accepts a language of section names
 
-	return 0;	//Return cancellation
+	return -2;	//Return cancellation
 }
