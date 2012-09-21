@@ -2796,7 +2796,7 @@ int eof_menu_song_seek_next_measure(void)
 
 	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 	unsigned num = 0, ctr;
-	unsigned long originalpos = eof_music_pos;
+	unsigned long originalpos = eof_music_pos - eof_av_delay;
 	while(b >= 0)
 	{	//For each beat at or before the current seek position
 		if(eof_get_ts(eof_song, &num, NULL, b) == 1)
@@ -2820,11 +2820,11 @@ int eof_menu_song_seek_next_measure(void)
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			if(eof_seek_selection_start == eof_seek_selection_end)
 			{	//If this begins a seek selection
-				eof_update_seek_selection(originalpos, eof_music_pos);
+				eof_update_seek_selection(originalpos, eof_music_pos - eof_av_delay);
 			}
 			else
 			{
-				eof_update_seek_selection(eof_seek_selection_start, eof_music_pos);
+				eof_update_seek_selection(eof_seek_selection_start, eof_music_pos - eof_av_delay);
 			}
 		}
 	}
