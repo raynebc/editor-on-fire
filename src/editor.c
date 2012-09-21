@@ -4503,7 +4503,7 @@ void eof_render_editor_window_common(void)
 	/* draw seek selection */
 	if(eof_seek_selection_start != eof_seek_selection_end)
 	{	//If there is a seek selection
-		if((eof_seek_selection_start >= start) && (eof_seek_selection_end <= stop))	//If the star power section would render between the left and right edges of the piano roll, render a red rectangle from the top most lane to the bottom most lane
+		if((eof_seek_selection_end >= start) && (eof_seek_selection_start <= stop))	//If the star power section would render between the left and right edges of the piano roll, render a red rectangle from the top most lane to the bottom most lane
 			rectfill(eof_window_editor->screen, lpos + eof_seek_selection_start / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0], lpos + eof_seek_selection_end / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 1], eof_color_red);
 	}
 
