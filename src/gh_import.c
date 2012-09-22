@@ -1082,11 +1082,14 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 EOF_SONG * eof_import_gh(const char * fn)
 {
 	EOF_SONG * sp;
-	char oggfn[1024] = {0}, backup_filename[1024] = {0};
+	char oggfn[1024] = {0}, backup_filename[1024] = {0}, inifn[1024] = {0};
 
 	eof_log("\tImporting Guitar Hero chart", 1);
 	eof_log("eof_import_gh() entered", 1);
 
+	//Build the paths to guitar.ogg and song.ini ahead of time, as fn can be clobbered by browsing for an external section names file during GH import below
+	replace_filename(oggfn, fn, "guitar.ogg", 1024);
+	replace_filename(inifn, fn, "song.ini", 1024);
 	sp = eof_import_gh_note(fn);	//Attempt to load as a "NOTE" format GH file
 	if(!sp)
 	{	//If that failed
@@ -1105,12 +1108,11 @@ EOF_SONG * eof_import_gh(const char * fn)
 	{	//If a GH file was loaded
 		/* backup "song.ini" if it exists in the folder with the imported file
 		as it will be overwritten upon save */
-		replace_filename(eof_temp_filename, fn, "song.ini", 1024);
-		if(exists(eof_temp_filename))
+		if(exists(inifn))
 		{
 			/* do not overwrite an existing backup, this prevents the original backed up song.ini from
 			being overwritten if the user imports the MIDI again */
-			replace_filename(backup_filename, fn, "song.ini.backup", 1024);
+			replace_filename(backup_filename, inifn, "song.ini.backup", 1024);
 			if(!exists(backup_filename))
 			{
 				eof_copy_file(eof_temp_filename, backup_filename);
@@ -1118,8 +1120,7 @@ EOF_SONG * eof_import_gh(const char * fn)
 		}
 
 		/* read INI file */
-		replace_filename(oggfn, fn, "song.ini", 1024);
-		eof_import_ini(sp, oggfn);
+		eof_import_ini(sp, inifn);
 
 		unsigned long tracknum;
 		if(eof_get_track_size(sp, EOF_TRACK_DRUM))
@@ -1142,7 +1143,6 @@ EOF_SONG * eof_import_gh(const char * fn)
 		}
 
 //Load an audio file
-		replace_filename(oggfn, fn, "guitar.ogg", 1024);	//Try to load guitar.ogg in the GH file's folder by default
 		if(!eof_load_ogg(oggfn))
 		{
 			eof_destroy_song(sp);
@@ -2750,6 +2750,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 	char sectionsfound = 0, validated, found;
 	int prompt;
 	struct QBlyric *head = NULL, *linkptr = NULL;	//Used to maintain the linked list matching section names with checksums
+	filebuffer *sections_file = fb;	//By default, check for sections in the main chart file
 
 	if(!fb || !sp)
 		return -1;
@@ -2759,18 +2760,18 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 
 	while(1)
 	{	//Until the user accepts a language of section names
-		fb->index = lastsectionpos;	//Seek back to the position that was reached by the last search for section names
-		head = eof_gh_read_section_names(fb);	//Read the section names and their checksums into a linked list
+		sections_file->index = lastsectionpos;				//Seek back to the position that was reached by the last search for section names
+		head = eof_gh_read_section_names(sections_file);	//Read the section names and their checksums into a linked list
 		if(head)
 		{	//Section names were found
-			lastsectionpos = fb->index;	//Store the current buffer position, which will be lost when seeking to the section positions below
+			lastsectionpos = sections_file->index;	//Store the current buffer position within the file being checked for section names, which will be lost when seeking to the section positions below
 
 		//Find the section timestamps
 			for(linkptr = head; linkptr != NULL; linkptr = linkptr->next)
 			{	//For each link in the sections checksum list
-				snprintf(eof_log_string, sizeof(eof_log_string), "\tGH: \tSearching for position of section \"%s\"", linkptr->text);
+				snprintf(eof_log_string, sizeof(eof_log_string), "\tGH: \tSearching for position of section \"%s\" (checksum 0x%08lX)", linkptr->text, linkptr->checksum);
 				eof_log(eof_log_string, 1);
-				fb->index = 0;	//Rewind to beginning of file buffer
+				fb->index = 0;	//Rewind to beginning of chart file buffer
 				found = 0;	//Reset this boolean condition
 				while(1)
 				{	//Search for each instance of the section string checksum
@@ -2865,6 +2866,10 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 			prompt = eof_popup_dialog(eof_all_sections_dialog, 0);
 			if(prompt == 2)
 			{	//User opted to keep the loaded practice sections
+				if(sections_file != fb)
+				{	//If an external section names file was buffered
+					eof_filebuffer_close(sections_file);	//Close that file buffer
+				}
 				return 1;	//Return success
 			}
 			for(ctr = sp->text_events; ctr > 0; ctr--)
@@ -2873,6 +2878,10 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 			}
 			if(prompt == 4)
 			{	//User opted to skip the loading of practice sections
+				if(sections_file != fb)
+				{	//If an external section names file was buffered
+					eof_filebuffer_close(sections_file);	//Close that file buffer
+				}
 				return -2;	//Return cancellation
 			}
 		}
@@ -2881,14 +2890,57 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 			if(sectionsfound)
 			{	//If a different iteration found sections, alert the user and seek to beginning of buffer
 				allegro_message("There are no other languages detected");
-				lastsectionpos = 0;	//The next loop iteration will rewind to beginning of file buffer (so the next pass can load the first language of sections again)
+				lastsectionpos = 0;	//The next loop iteration will rewind to beginning of section name file buffer (so the next pass can load the first language of sections again)
 			}
 			else
 			{	//There are no sections found in this file
-				return 0;	//Return no sections
-			}
-		}
+				eof_log("\tGH: No sections found in chart file", 1);
+				if(sections_file != fb)
+				{	//If an external section names file was buffered
+					eof_filebuffer_close(sections_file);	//Close that file buffer
+				}
+				while(1)
+				{	//Prompt user about browsing for an external file with section names until explicitly declined
+					if(alert("No section names were found.", "Specify another file PAK or TXT file to try?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+					{	//If user opts not to try looking for section names in another file
+						eof_show_mouse(NULL);
+						eof_cursor_visible = 1;
+						eof_pen_visible = 1;
+						return 0;	//Return no sections
+					}
+
+					char * sectionfn = NULL;
+					eof_cursor_visible = 0;
+					eof_pen_visible = 0;
+					eof_render();
+					eof_clear_input();
+					sectionfn = ncd_file_select(0, eof_last_eof_path, "Import GH section name file", eof_filter_gh_files);
+					eof_clear_input();
+					if(sectionfn)
+					{	//If the user selected a file
+						eof_show_mouse(NULL);
+						eof_cursor_visible = 1;
+						eof_pen_visible = 1;
+						sections_file = eof_filebuffer_load(sectionfn);
+						if(sections_file == NULL)
+						{	//Section names file failed to buffer
+							allegro_message("Error:  Failed to buffer section name file");
+						}
+						else
+						{	//Section names file buffered successfully
+							eof_log("\tGH: Searching for sections in user-specified external file", 1);
+							lastsectionpos = 0;	//The next loop iteration will rewind to beginning of section name file buffer (so the next pass can load the first language of sections again)
+							break;	//Break from while loop
+						}//Section names file buffered successfully
+					}
+				}//Prompt user about browsing for an external file with section names until explicitly declined
+			}//There are no sections found in this file
+		}//There were no sections loaded during this loop iteration
 	}//Until the user accepts a language of section names
 
+	if(sections_file != fb)
+	{	//If an external section names file was buffered
+		eof_filebuffer_close(sections_file);	//Close that file buffer
+	}
 	return -2;	//Return cancellation
 }
