@@ -18,7 +18,8 @@ typedef struct
 
 } EOF_IMPORT_INI_SETTING;
 
-EOF_IMPORT_INI_SETTING eof_import_ini_setting[EOF_MAX_INI_SETTINGS];
+#define EOF_MAX_INI_IMPORTED_LINES 100
+EOF_IMPORT_INI_SETTING eof_import_ini_setting[EOF_MAX_INI_IMPORTED_LINES];
 int eof_import_ini_settings = 0;
 
 char eof_ini_pro_drum_tag_present;		//Is set to nonzero if eof_import_ini() finds the "pro_drums = True" tag (to influence MIDI import)
@@ -85,7 +86,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn)
 				/* if this line has an '=', process line as a setting */
 				if(equals)
 				{
-					if(eof_import_ini_settings == EOF_MAX_INI_SETTINGS)
+					if(eof_import_ini_settings == EOF_MAX_INI_IMPORTED_LINES)
 						break;	//Break from while loop if the eof_import_ini_setting[] array is full
 
 					equals[0] = '\0';
