@@ -2756,7 +2756,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 		return -1;
 
 	eof_log("eof_gh_read_sections_qb() entered", 1);
-	fb->index = 0;	//Rewind to beginning of file buffer
+	sections_file->index = 0;	//Rewind to beginning of file buffer
 
 	while(1)
 	{	//Until the user accepts a language of section names
@@ -2771,38 +2771,38 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 			{	//For each link in the sections checksum list
 				snprintf(eof_log_string, sizeof(eof_log_string), "\tGH: \tSearching for position of section \"%s\" (checksum 0x%08lX)", linkptr->text, linkptr->checksum);
 				eof_log(eof_log_string, 1);
-				fb->index = 0;	//Rewind to beginning of chart file buffer
+				sections_file->index = 0;	//Rewind to beginning of chart file buffer
 				found = 0;	//Reset this boolean condition
 				while(1)
 				{	//Search for each instance of the section string checksum
-					if(eof_filebuffer_find_checksum(fb, linkptr->checksum))	//Find the section string checksum in the buffer
+					if(eof_filebuffer_find_checksum(sections_file, linkptr->checksum))	//Find the section string checksum in the buffer
 					{	//If the checksum wasn't found
 						snprintf(eof_log_string, sizeof(eof_log_string), "\t\tCouldn't find position data for section \"%s\", it is probably a lyric", linkptr->text);
 						eof_log(eof_log_string, 1);
 						break;	//Skip looking for this section's timestamp
 					}
-					findpos = fb->index;	//Store the section string checksum match position
+					findpos = sections_file->index;	//Store the section string checksum match position
 					validated = 0;		//Reset this boolean condition
-					if(!eof_filebuffer_get_dword(fb, &dword) && (dword == 0) && (fb->index >= 20))
+					if(!eof_filebuffer_get_dword(sections_file, &dword) && (dword == 0) && (sections_file->index >= 20))
 					{	//If the dword following the string checksum was successfully read, the value was 0, and the buffer can be rewound at least 20 bytes
-						fb->index -= 20;	//Rewind 5 dwords
-						if(!eof_filebuffer_get_dword(fb, &dword) && (dword == 0x00201C00))
+						sections_file->index -= 20;	//Rewind 5 dwords
+						if(!eof_filebuffer_get_dword(sections_file, &dword) && (dword == 0x00201C00))
 						{	//If the 3rd dword before the string checksum was succesfully read and the value was 0x00201C00 (new section header)
 							validated = 1;	//Consider this to be the appropriate entry matching the section string checksum with its section checksum
 						}
 					}
 					if(validated)
 					{
-						if(!eof_filebuffer_get_dword(fb, &checksum))
+						if(!eof_filebuffer_get_dword(sections_file, &checksum))
 						{	//If the checksum for the practice section could be read
-							fb->index = 0;	//Rewind to beginning of file buffer
+							fb->index = 0;	//Rewind to beginning of chart file buffer (the external file, if used, contains its own section name and checksum, and a referring checksum used in the main chart file)
 							while(1)
 							{	//Search for each instance of the practice section checksum
-								findpos2 = fb->index;	//Store the practice section checksum match position
 								if(eof_filebuffer_find_checksum(fb, checksum))	//Find the practice section checksum in the buffer
 								{	//If the practice section checksum was not found
 									break;	//Exit to next outer loop to continue looking for other instances of the section string checksum
 								}
+								findpos2 = fb->index;	//Store the practice section checksum match position
 								validated = 0;	//Reset this boolean condition
 								if(!eof_filebuffer_get_dword(fb, &dword) && (dword == 0) && (fb->index >= 16))
 								{	//If the dword following the string checksum was successfully read, the value was 0, and the buffer can be rewound at least 16 bytes
@@ -2901,6 +2901,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 				}
 				while(1)
 				{	//Prompt user about browsing for an external file with section names until explicitly declined
+					eof_clear_input();
 					if(alert("No section names were found.", "Specify another file PAK or TXT file to try?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 					{	//If user opts not to try looking for section names in another file
 						eof_show_mouse(NULL);
@@ -2908,6 +2909,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 						eof_pen_visible = 1;
 						return 0;	//Return no sections
 					}
+					eof_clear_input();
 
 					char * sectionfn = NULL;
 					eof_cursor_visible = 0;
