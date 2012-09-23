@@ -2636,6 +2636,7 @@ void eof_seek_by_grid_snap(int dir)
 			eof_update_seek_selection(eof_seek_selection_start, eof_music_pos - eof_av_delay);
 		}
 	}
+	eof_feedback_input_mode_update_selected_beat();	//Update the selected beat and measure if Feedback input mode is in use
 }
 
 int eof_menu_song_seek_previous_grid_snap(void)
@@ -2786,6 +2787,7 @@ int eof_menu_song_seek_previous_measure(void)
 			}
 		}
 	}
+	eof_feedback_input_mode_update_selected_beat();	//Update the selected beat and measure if Feedback input mode is in use
 	return 1;
 }
 
@@ -2828,6 +2830,7 @@ int eof_menu_song_seek_next_measure(void)
 			}
 		}
 	}
+	eof_feedback_input_mode_update_selected_beat();	//Update the selected beat and measure if Feedback input mode is in use
 	return 1;
 }
 

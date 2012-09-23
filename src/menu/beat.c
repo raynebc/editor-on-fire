@@ -691,7 +691,7 @@ int eof_menu_beat_anchor(void)
 		return 1;							//Return without making changes
 
 	if(eof_selected_beat == 0)
-	{
+	{	//This function is not allowed on the first beat marker
 		return 1;
 	}
 	eof_cursor_visible = 0;

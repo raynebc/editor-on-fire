@@ -727,6 +727,18 @@ void eof_fix_window_title(void)
 		else
 		{
 			ustrcat(eof_window_title, eof_song->track[eof_selected_track]->name);
+			ustrcat(eof_window_title, "  ");
+			char *ptr;
+			if(eof_selected_track == EOF_TRACK_DANCE)
+			{	//If the dance track is active
+				ptr = eof_dance_tab_name[eof_note_type];
+				ustrcat(eof_window_title, ptr);					//Append the active dance difficulty name
+			}
+			else
+			{
+				ptr = eof_note_type_name[eof_note_type];
+				ustrcat(eof_window_title, ptr);					//Append the active instrument difficulty name
+			}
 		}
 		ustrcat(eof_window_title, ")");
 
@@ -2136,6 +2148,56 @@ void eof_render_note_window(void)
 		textprintf_ex(eof_window_note->screen, font, 2, 6, eof_color_white, -1, "----------------------------");
 		ypos = 16;
 
+		//Display the difficulties associated with the active track
+		if(eof_song->track[eof_selected_track]->difficulty != 0xFF)
+		{	//If the active track has a defined difficulty
+			sprintf(difficulty1, "%d", eof_song->track[eof_selected_track]->difficulty);
+		}
+		else
+		{
+			sprintf(difficulty1, "(Undefined)");
+		}
+		difficulty2[0] = '\0';
+		difficulty3[0] = '\0';
+		if(eof_selected_track == EOF_TRACK_DRUM)
+		{	//Write the difficulty string to display for pro drums
+			if(((eof_song->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24) != 0x0F)
+			{	//If the pro drum difficulty is defined
+				sprintf(difficulty2, "(Pro: %lu)", (eof_song->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24);	//Mask out the low nibble of the high order byte of the drum track's flags (pro drum difficulty)
+			}
+			else
+			{
+				sprintf(difficulty2, "(Pro: Undefined)");
+			}
+			if(((eof_song->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 24) != 0xF0)
+			{	//If the PS deal drums difficulty is defined
+				sprintf(difficulty3, "(PS: %lu)", (eof_song->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 28);	//Mask out the high nibble of the high order byte of the drum track's flags (pro drum difficulty)
+			}
+			else
+			{
+				sprintf(difficulty3, "(PS: Undefined)");
+			}
+		}
+		else if(eof_selected_track == EOF_TRACK_VOCALS)
+		{	//Write the difficulty string to display for vocal harmony
+			if(((eof_song->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24) != 0x0F)
+			{	//If the harmony difficulty is defined
+				sprintf(difficulty2, "(Harmony: %lu)", (eof_song->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24);	//Mask out the high order byte of the vocal track's flags (harmony difficulty)
+			}
+			else
+			{
+				sprintf(difficulty2, "(Harmony: Undefined)");
+			}
+			difficulty3[0] = '\0';	//Unused for vocals
+		}
+		else
+		{	//Otherwise truncate the extra difficulty strings
+			difficulty2[0] = '\0';
+			difficulty3[0] = '\0';
+		}
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Difficulty: %s %s %s", difficulty1, difficulty2, difficulty3);
+		ypos += 12;
+
 		if(!eof_disable_sound_processing)
 		{	//If the user didn't disable sound processing, display the sound cue statuses
 			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Metronome: %s Claps: %s Tones: %s", eof_mix_metronome_enabled ? "On" : "Off", eof_mix_claps_enabled ? "On" : "Off", eof_mix_vocal_tones_enabled ? "On" : "Off");
@@ -2283,56 +2345,6 @@ void eof_render_note_window(void)
 		}
 		ypos += 12;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "OGG File: \"%s\"", eof_song->tags->ogg[eof_selected_ogg].filename);
-
-		//Display the difficulties associated with the active track
-		if(eof_song->track[eof_selected_track]->difficulty != 0xFF)
-		{	//If the active track has a defined difficulty
-			sprintf(difficulty1, "%d", eof_song->track[eof_selected_track]->difficulty);
-		}
-		else
-		{
-			sprintf(difficulty1, "(undefined)");
-		}
-		difficulty2[0] = '\0';
-		difficulty3[0] = '\0';
-		if(eof_selected_track == EOF_TRACK_DRUM)
-		{	//Write the difficulty string to display for pro drums
-			if(((eof_song->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24) != 0x0F)
-			{	//If the pro drum difficulty is defined
-				sprintf(difficulty2, "(Pro: %lu)", (eof_song->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24);	//Mask out the low nibble of the high order byte of the drum track's flags (pro drum difficulty)
-			}
-			else
-			{
-				sprintf(difficulty2, "(Pro: Undefined)");
-			}
-			if(((eof_song->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 24) != 0xF0)
-			{	//If the PS deal drums difficulty is defined
-				sprintf(difficulty3, "(PS: %lu)", (eof_song->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 28);	//Mask out the high nibble of the high order byte of the drum track's flags (pro drum difficulty)
-			}
-			else
-			{
-				sprintf(difficulty3, "(PS: Undefined)");
-			}
-		}
-		else if(eof_selected_track == EOF_TRACK_VOCALS)
-		{	//Write the difficulty string to display for vocal harmony
-			if(((eof_song->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24) != 0x0F)
-			{	//If the harmony difficulty is defined
-				sprintf(difficulty2, "(Harmony: %lu)", (eof_song->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24);	//Mask out the high order byte of the vocal track's flags (harmony difficulty)
-			}
-			else
-			{
-				sprintf(difficulty2, "(Harmony: Undefined)");
-			}
-			difficulty3[0] = '\0';	//Unused for vocals
-		}
-		else
-		{	//Otherwise truncate the extra difficulty strings
-			difficulty2[0] = '\0';
-			difficulty3[0] = '\0';
-		}
-		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Difficulty: %s %s %s", difficulty1, difficulty2, difficulty3);
 
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//Display information specific to pro guitar tracks
@@ -2821,8 +2833,12 @@ void eof_render_3d_window(void)
 	long beat_counter = 0;
 	long beats_per_measure = 0;
 	float y_projection;
+	unsigned long last_ppqn = 0;
+	char ts_change;
+	char ts_text[16] = {0}, tempo_text[16] = {0};
 	for(i = 0; i < eof_song->beats; i++)
 	{	//For each beat
+		ts_change = 1;	//Unless no time signature change is found at this beat, assume it has one
 		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_4_4)
 		{
 			beats_per_measure = 4;
@@ -2848,13 +2864,35 @@ void eof_render_3d_window(void)
 			beats_per_measure = ((eof_song->beat[i]->flags & 0xFF000000)>>24) + 1;
 			beat_counter = 0;
 		}
+		else
+		{	//This beat has no time signature change
+			ts_change = 0;
+		}
 		bz = (long)(eof_song->beat[i]->pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
 		if((bz >= -100) && (bz <= 600))
-		{
+		{	//If the beat is visible
 			y_projection = ocd3d_project_y(200, bz);
 			line(eof_window_3d->screen, ocd3d_project_x(48, bz), y_projection, ocd3d_project_x(48 + 4 * 56, bz), y_projection, beat_counter == 0 ? eof_color_white : eof_color_dark_silver);
+			if((eof_song->beat[i]->ppqn != last_ppqn) || ts_change)
+			{	//If this beat contains either a tempo or TS change
+				if(eof_song->beat[i]->ppqn != last_ppqn)
+				{	//If there is a tempo change
+					eof_get_tempo_text(i, tempo_text);
+				}
+				else
+				{
+					tempo_text[0] = '\0';	//Otherwise empty out this string
+				}
+				eof_get_ts_text(i, ts_text);
+				textprintf_ex(eof_window_3d->screen, eof_font, ocd3d_project_x(48 + 4 * 56 + 4, bz), y_projection - 12, eof_color_white, -1, "%s%s", tempo_text, ts_text);
+			}
+		}
+		else if(bz > 600)
+		{	//If this beat wasn't visible
+			break;	//None of the remaining ones will be either, so stop rendering them
 		}
 		beat_counter++;
+		last_ppqn = eof_song->beat[i]->ppqn;
 		if(beat_counter >= beats_per_measure)
 		{
 			beat_counter = 0;
