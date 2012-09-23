@@ -72,7 +72,7 @@ void eof_select_beat(unsigned long beat)
 		return;
 
 	for(i = 0; i <= beat; i++)
-	{
+	{	//For each beat
 		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_4_4)
 		{
 			eof_beats_in_measure = 4;
@@ -118,7 +118,7 @@ void eof_select_beat(unsigned long beat)
 		{
 			beat_counter = 0;
 		}
-	}
+	}//For each beat
 }
 
 void eof_get_snap_ts(EOF_SNAP_DATA * sp, int beat)
@@ -886,6 +886,7 @@ if(key[KEY_PAUSE])
 					eof_note_type = 0;
 				}
 			}
+			eof_fix_window_title();
 			eof_detect_difficulties(eof_song);
 		}
 		eof_mix_find_claps();
@@ -1779,16 +1780,6 @@ if(key[KEY_PAUSE])
 				}
 				else
 				{
-					if(eof_input_mode == EOF_INPUT_FEEDBACK)
-					{
-						unsigned long adjustedpos = eof_music_pos - eof_av_delay;	//Find the actual chart position
-						long beat = eof_get_beat(eof_song, adjustedpos);
-
-						if((beat >= 0) && (adjustedpos == eof_song->beat[beat]->pos))
-						{	//If the seek position is on a beat marker
-							eof_selected_beat = beat;	//Make the beat at this position the selected beat so the toggle anchor function operates on it
-						}
-					}
 					eof_menu_beat_toggle_anchor();
 				}
 			}
@@ -3373,6 +3364,7 @@ void eof_editor_logic(void)
 				eof_note_type = eof_hover_type;
 				eof_mix_find_claps();
 				eof_mix_start_helper();
+				eof_fix_window_title();
 				eof_detect_difficulties(eof_song);
 			}
 		}
@@ -4205,6 +4197,21 @@ int eof_get_ts_text(int beat, char * buffer)
 		ustrcpy(buffer, "");
 	}
 	return ret;
+}
+
+int eof_get_tempo_text(int beat, char * buffer)
+{
+	double current_bpm;
+
+	if(!buffer || !eof_song || (beat >= eof_song->beats))
+	{
+		return 0;
+	}
+
+	current_bpm = (double)60000000.0 / (double)eof_song->beat[beat]->ppqn;
+	uszprintf(buffer, 16, "%03.2f ", current_bpm);
+
+	return 1;
 }
 
 void eof_render_editor_window(void)
@@ -5274,6 +5281,10 @@ void eof_editor_logic_common(void)
 			eof_shift_released = 1;
 		}
 	}//If the chart is paused
+	else
+	{	//The chart is playing
+		eof_feedback_input_mode_update_selected_beat();	//Update the selected beat and measure if Feedback input mode is in use
+	}
 
 	//Find hover notes/lyrics for chart and fret catalog playback
 	if(eof_music_catalog_playback || !eof_music_paused)
@@ -5478,6 +5489,20 @@ void eof_update_seek_selection(unsigned long start, unsigned long stop)
 			eof_selection.current_pos = notepos;
 			eof_selection.multi[i] = 1;
 			eof_undo_last_type = EOF_UNDO_TYPE_NONE;
+		}
+	}
+}
+
+void eof_feedback_input_mode_update_selected_beat(void)
+{
+	if(eof_input_mode == EOF_INPUT_FEEDBACK)
+	{	//If feedback input mode is in use
+		long beat;
+		unsigned long adjustedpos = eof_music_pos - eof_av_delay;	//Find the actual chart position
+		beat = eof_get_beat(eof_song, adjustedpos);
+		if(beat >= 0)
+		{	//If the seek position is within the chart
+			eof_select_beat(beat);	//Set eof_selected_beat and eof_selected_measure
 		}
 	}
 }

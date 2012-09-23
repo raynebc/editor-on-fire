@@ -1405,9 +1405,10 @@ set_window_title(debugtext);
 						snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\tNote on:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
 						eof_log(eof_log_string, 1);
 #endif
+						char doublebass = 0;
 						if((picked_track == EOF_TRACK_DRUM) && (eof_import_events[i]->event[j]->d1 == 95))
 						{	//If the track being read is PART DRUMS, and this note is marked for Expert+ double bass
-							sp->legacy_track[tracknum]->note[note_count[picked_track]]->flags |= EOF_NOTE_FLAG_DBASS;	//Apply this status flag
+							doublebass = 1;	//Track that double bass was found for this note, and apply it after the note flag for a newly created note is initialized to zero
 						}
 						if(eof_midi_tracks[picked_track].track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 						{	//If this is a drum track, lane 6 is used for the fifth drum lane and not a HOPO marker
@@ -1557,19 +1558,26 @@ set_window_title(debugtext);
 #endif
 								eof_set_note_note(sp, picked_track, notenum, eof_get_note_note(sp, picked_track, notenum) | lane_chart[lane]);
 							}
-							if(prodrums && (picked_track == EOF_TRACK_DRUM) && (eof_get_note_type(sp, picked_track, notenum) != EOF_NOTE_SPECIAL))
-							{	//If pro drum notation is in effect and this was a non BRE drum note
-								if(eof_get_note_note(sp, picked_track, notenum) & 4)
-								{	//This is a yellow drum note, assume it is a cymbal unless a pro drum phrase indicates otherwise
-									eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_NOTE_FLAG_Y_CYMBAL);	//Ensure the cymbal flag is set
+							if(picked_track == EOF_TRACK_DRUM)
+							{
+								if(doublebass)
+								{	//If the note was found to be double bass
+									eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_NOTE_FLAG_DBASS);	//Set the double bass flag
 								}
-								if(eof_get_note_note(sp, picked_track, notenum) & 8)
-								{	//This is a blue drum note, assume it is a cymbal unless a pro drum phrase indicates otherwise
-									eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_NOTE_FLAG_B_CYMBAL);	//Ensure the cymbal flag is set
-								}
-								if(eof_get_note_note(sp, picked_track, notenum) & 16)
-								{	//This is a purle drum note (green in Rock Band), assume it is a cymbal unless a pro drum phrase indicates otherwise
-									eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_NOTE_FLAG_G_CYMBAL);	//Ensure the cymbal flag is set
+								if(prodrums && (eof_get_note_type(sp, picked_track, notenum) != EOF_NOTE_SPECIAL))
+								{	//If pro drum notation is in effect and this was a non BRE drum note, assume cymbal notation until a tom marker ending is found
+									if(eof_get_note_note(sp, picked_track, notenum) & 4)
+									{	//This is a yellow drum note, assume it is a cymbal unless a pro drum phrase indicates otherwise
+										eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_NOTE_FLAG_Y_CYMBAL);	//Ensure the cymbal flag is set
+									}
+									if(eof_get_note_note(sp, picked_track, notenum) & 8)
+									{	//This is a blue drum note, assume it is a cymbal unless a pro drum phrase indicates otherwise
+										eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_NOTE_FLAG_B_CYMBAL);	//Ensure the cymbal flag is set
+									}
+									if(eof_get_note_note(sp, picked_track, notenum) & 16)
+									{	//This is a purle drum note (green in Rock Band), assume it is a cymbal unless a pro drum phrase indicates otherwise
+										eof_set_note_flags(sp, picked_track, notenum, eof_get_note_flags(sp, picked_track, notenum) | EOF_NOTE_FLAG_G_CYMBAL);	//Ensure the cymbal flag is set
+									}
 								}
 							}
 						}//If a note difficulty was identified above

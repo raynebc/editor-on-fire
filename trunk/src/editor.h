@@ -104,6 +104,10 @@ void eof_get_snap_ts(EOF_SNAP_DATA * sp, int beat);
 	//Finds the time signature in effect for the specified beat and stores the numerator and denominator into sp
 int eof_get_ts_text(int beat, char * buffer);
 	//Writes a string into the provided buffer that represents the time signature on the specified beat (string will be empty if the beat has no time signature defined explicitly on it)
+	//Returns zero on error or if the beat does not contain a time signature change, otherwise nonzero is returned
+int eof_get_tempo_text(int beat, char * buffer);
+	//Writes a string into the provided buffer that represents the tempo of the specified beat, followed by a trailing space
+	//Returns 0 on error
 
 void eof_seek_to_nearest_grid_snap(void);
 	//Used in Feedback input method to seek to the nearest grid snap position when playback is stopped, provided there's a grid snap selected and the current seek position is valid.
@@ -113,5 +117,7 @@ int eof_find_hover_note(int targetpos, int x_tolerance, char snaplogic);
 	//Returns -1 if no note was close enough to the specified position in the current instrument difficulty
 void eof_update_seek_selection(unsigned long start, unsigned long stop);
 	//Updates the seek selection variables and the note selection array to reflect which range of notes are selected via keyboard seek controls
+void eof_feedback_input_mode_update_selected_beat(void);
+	//If Feedback input mode is in use, update eof_selected_beat and measure to correspond with the beat at or immediately before the current seek position
 
 #endif
