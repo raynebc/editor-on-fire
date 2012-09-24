@@ -2242,6 +2242,12 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 #endif
 			break;
 		}
+		else
+		{
+			eof_log("Error:  Failed to locate internal file name", 1);
+			eof_filebuffer_close(fb);
+			return NULL;
+		}
 	}
 //Parse the song name
 	for(index = 0; (filename[index] != '\0') && (filename[index] != '.') && (index < sizeof(filename) - 1); index++)

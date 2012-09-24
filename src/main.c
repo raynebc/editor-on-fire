@@ -1494,13 +1494,6 @@ void eof_read_global_keys(void)
 			eof_reset_lyric_preview_lines();	//Rebuild the preview lines
 		}
 
-		/* toggle info panel rendering (CTRL+I) */
-		if(KEY_EITHER_CTRL && key[KEY_I])
-		{
-			eof_disable_info_panel = 1 - eof_disable_info_panel;
-			key[KEY_I] = 0;
-		}
-
 		/* decrease tempo by 1BPM (-) */
 		/* decrease tempo by .1BPM (SHIFT+-) */
 		/* decrease tempo by .01BPM (SHIFT+CTRL+-) */

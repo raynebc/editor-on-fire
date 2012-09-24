@@ -3,11 +3,46 @@ EOF Version History
 
 1.8:
 
-*Added the ability to export key signatures, which
-can be defined on the selected beat marker via the
-Beat>Key Signature menu.  The current key of the
-song will be used by Phase Shift to select
-appropriately pitched notes for freestyle.
+Updated 3D rendering to display tempo and
+time signature changes.
+
+Increased the number of entries that can be
+read and stored during song.ini import.
+
+Added a "Full screen 3D view" feature that
+zooms the 3D preview to fill the entire program
+window.  This can be toggled on/off through the
+right click context menu (Feedback or RexMundi
+input mode) or by using CTRL+F.  In this mode,
+generally all of the mouse controls are disabled
+since you cannot see the editor window.  Feedback
+input mode can be used while this feature is
+active.  CTRL+I will toggle the display of the
+Info panel on/off (this shortcut previously
+toggled the inverted notes preference).
+
+Fixed an issue where if the mouse was left of
+the first beat marker, notes could be entered
+and would be placed at the end of the chart.
+
+Added the ability to lower/raise/reset the 3D
+preview's camera angle with SHIFT+(plus/minus/
+enter) on the Numpad (or alternatively, backslash
+or SHIFT+backslash will lower/raise the camera).
+The controls for increment/decrement AV delay
+have been changed to CTRL+SHIFT+(plus/minus) on
+the Numpad.
+
+Added a preference for rendering 3D bass drum
+gems in a lane instead of as a bar spanning all
+the lanes in the chart.
+
+Added the ability to import/export key
+signatures, from MIDI files, which can be defined
+on the selected beat marker via the Beat>Key
+Signature menu.  The current key of the song will
+be used by Phase Shift to select appropriately
+pitched notes for freestyle.
 
 Added a keyboard shortcut for paste from catalog
 (CTRL+SHIFT+C).
@@ -55,7 +90,16 @@ deletes the note at the current position if no notes
 are formally selected. In this input method, the
 +/- tempo controls alter the tempo of the beat
 (instead of the anchor) at/before the seek position.
-Other Feedback controls will be added in the future.
+Note operations apply to the note at the current
+position if no notes are selected.  Allows notes to
+be selected with the keyboard by holding SHIFT when
+seeking by grid snap/measure.  Pressing and releasing
+SHIFT without performing any operations clears this
+keyboard selection.  CTRL+V and CTRL+P are reversed
+to perform old paste and paste, respectively.  The
+chart seeks to the nearest grid snap when playback
+stops, and the selected beat updates during playback
+and after seeking by grid snap/measure.
 
 Implemented new keyboard shortcuts for altering
 tempos, based on the Feedback chart editor. +/-
@@ -128,8 +172,6 @@ upgrades, the upgrade's tempo map has to match that of
 the original chart to work correctly.Stored tracks can
 be added and deleted from the "Song>Manage raw MIDI
 tracks" dialog menu.
-
-Added a Guitar Hero color set option in Preferences.
 
 Added logic to the MIDI export code to prevent writing
 overlapping forced HOPO markers, which violates the
@@ -260,12 +302,9 @@ notes in the editor window to be red instead of white, which
 should contrast much better and make it easier to see the
 notes when selected, moused over or reached during playback.
 
-Added a new preference (Use Rock Band color set) that is now
-enabled by default. This will allow the gem colors to match
-how they are used in Rock Band, even the drum and pro
-guitar/bass tracks, which have different color schemes. If
-disabled, EOF's original colors are used. Green 3D cymbal
-images have been added to accommodate this feature.
+Added the ability to change the color set in the Preferences
+menu to that used by Rock Band or Guitar Hero, and changed
+the default color set to Rock Band.
 
 Added some special handling in the MIDI import logic so that
 old, single-track MIDI files that were created by converting

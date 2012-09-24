@@ -297,6 +297,10 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 		{
 			if(note < sp->denominator)
 			{
+				if(sp->beat + 1 < eof_song->beats)
+				{	//If nothing else, set the next snap position to the next beat so seek next grid snap will move the seek position
+					sp->next_snap = eof_song->beat[sp->beat + 1]->pos;
+				}
 				return;
 			}
 			if(sp->denominator == 2)
@@ -1374,6 +1378,13 @@ if(key[KEY_PAUSE])
 	{
 		eof_full_screen_3d ^= 1;	//Toggle this setting on/off
 		key[KEY_F] = 0;
+	}
+
+	/* toggle info panel rendering (CTRL+I) */
+	if(KEY_EITHER_CTRL && key[KEY_I])
+	{
+		eof_disable_info_panel = 1 - eof_disable_info_panel;
+		key[KEY_I] = 0;
 	}
 
 	/* Hold and Classic input method logic */
@@ -5495,14 +5506,19 @@ void eof_update_seek_selection(unsigned long start, unsigned long stop)
 
 void eof_feedback_input_mode_update_selected_beat(void)
 {
+	static long lastbeat = -1;
 	if(eof_input_mode == EOF_INPUT_FEEDBACK)
 	{	//If feedback input mode is in use
 		long beat;
 		unsigned long adjustedpos = eof_music_pos - eof_av_delay;	//Find the actual chart position
 		beat = eof_get_beat(eof_song, adjustedpos);
-		if(beat >= 0)
-		{	//If the seek position is within the chart
-			eof_select_beat(beat);	//Set eof_selected_beat and eof_selected_measure
+		if(beat != lastbeat)
+		{	//If the seek position is at a different beat than the last call
+			if(beat >= 0)
+			{	//If the seek position is within the chart
+				eof_select_beat(beat);	//Set eof_selected_beat and eof_selected_measure
+			}
+			lastbeat = beat;
 		}
 	}
 }
