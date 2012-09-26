@@ -2776,11 +2776,19 @@ void eof_editor_logic(void)
 		}
 
 		/* mouse is in the fretboard area (or Feedback input method is in use) */
-		if((eof_input_mode == EOF_INPUT_FEEDBACK) || ((mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET)))
+		char infretboard = 0;
+		if((mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
+		{	//If the mouse is in the fretboard area
+			infretboard = 1;
+		}
+		if((eof_input_mode == EOF_INPUT_FEEDBACK) || infretboard)
 		{
 			int x_tolerance = 6 * eof_zoom;	//This is how far left or right of a note the mouse is allowed to be to still be considered to hover over that note
 			lpos = pos < 300 ? (mouse_x - 20) * eof_zoom : ((pos - 300) + mouse_x - 20) * eof_zoom;	//Translate mouse position to a time position
-			eof_hover_note = eof_find_hover_note(lpos, x_tolerance, 1);	//Find the mouse hover note
+			if(infretboard)
+			{	//Only search for the mouse hover note if the mouse is actually in the fretboard area
+				eof_hover_note = eof_find_hover_note(lpos, x_tolerance, 1);	//Find the mouse hover note
+			}
 			if(eof_input_mode == EOF_INPUT_FEEDBACK)
 			{	//If Feedback input method is in effect
 				x_tolerance = 2;	//The hover note tracking is much tighter since keyboard seek commands are more precise than mouse controls
