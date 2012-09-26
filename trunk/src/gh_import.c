@@ -773,53 +773,67 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 	eof_log("\tGH:  Searching for vocals", 1);
 #endif
 	fb->index = 0;	//Seek to the beginning of the file buffer
-	if(eof_filebuffer_find_checksum(fb, eof_gh_checksum("vocals")))	//Seek one byte past the target header
-	{	//If the target section couldn't be found
-		eof_log("\t\tCould not find section", 1);
-		return 0;
-	}
-	if(eof_filebuffer_get_dword(fb, &numvox))	//Read the number of vox notes in the section
-	{	//If there was an error reading the next 4 byte value
-		eof_log("\t\tError:  Could not read number of vox notes", 1);
-		return -1;
-	}
-#ifdef GH_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string), "\t\tNumber of vox notes = %lu", numvox);
-	eof_log(eof_log_string, 1);
-#endif
-	fb->index += 4;	//Seek past the next 4 bytes, which is a checksum for the game-specific vox note section subheader
-	if(!eof_gh_skip_size_def)
-	{	//If the size field is expected
-		if(eof_filebuffer_get_dword(fb, &voxsize))	//Read the size of the vox note entry
+	char vocalsectionfound = 0;
+	while(!vocalsectionfound)
+	{	//For some files, there are multiple instances of the vocals section checksum, find the appropriate one
+		if(eof_filebuffer_find_checksum(fb, eof_gh_checksum("vocals")))	//Seek one byte past the target header
+		{	//If the target section couldn't be found
+			eof_log("\t\tCould not find section", 1);
+			return 0;
+		}
+	#ifdef GH_IMPORT_DEBUG
+		snprintf(eof_log_string, sizeof(eof_log_string), "\t\tChecking next vocal section at file position 0x%lX", fb->index - 4);
+		eof_log(eof_log_string, 1);
+	#endif
+		if(eof_filebuffer_get_dword(fb, &numvox))	//Read the number of vox notes in the section
 		{	//If there was an error reading the next 4 byte value
-			eof_log("\t\tError:  Could not read vox note size", 1);
+			eof_log("\t\tError:  Could not read number of vox notes", 1);
 			return -1;
 		}
-		if(voxsize != 7)
-		{	//Each vox note entry is expected to be 7 bytes long
-			eof_log("\t\tError:  Vox note size is not 7", 1);
-			return -1;
+	#ifdef GH_IMPORT_DEBUG
+		snprintf(eof_log_string, sizeof(eof_log_string), "\t\tNumber of vox notes = %lu", numvox);
+		eof_log(eof_log_string, 1);
+	#endif
+		fb->index += 4;	//Seek past the next 4 bytes, which is a checksum for the game-specific vox note section subheader
+		if(!eof_gh_skip_size_def)
+		{	//If the size field is expected
+			if(eof_filebuffer_get_dword(fb, &voxsize))	//Read the size of the vox note entry
+			{	//If there was an error reading the next 4 byte value
+				eof_log("\t\tError:  Could not read vox note size", 1);
+				return -1;
+			}
+			if(voxsize != 7)
+			{	//Each vox note entry is expected to be 7 bytes long
+				snprintf(eof_log_string, sizeof(eof_log_string), "\t\tError:  Vox note size is given as %lu, not 7", voxsize);
+				eof_log(eof_log_string, 1);
+				if(eof_filebuffer_get_dword(fb, &voxsize) || (voxsize != 7))	//Read the next dword, as at least on GH file put the value of 7 one dword later than expected
+				{	//If there was an error reading the next 4 byte value, or it wasn't 7
+					eof_log("\t\tError:  Could not determine vox note size", 1);
+					continue;
+				}
+			}
 		}
-	}
-	else
-	{
-		eof_log("\t\tSkipping field size", 1);
+		else
+		{
+			eof_log("\t\tSkipping field size", 1);
+		}
+		vocalsectionfound = 1;	//The expected values were parsed
 	}
 	for(ctr = 0; ctr < numvox; ctr++)
 	{	//For each vox note in the section
 		if(eof_filebuffer_get_dword(fb, &voxstart))	//Read the vox note position
 		{	//If there was an error reading the next 4 byte value
-			eof_log("\t\tError:  Could not vox note position", 1);
+			eof_log("\t\tError:  Could not read vox note position", 1);
 			return -1;
 		}
 		if(eof_filebuffer_get_word(fb, &voxlength))	//Read the vox note length
 		{	//If there was an error reading the next 2 byte value
-			eof_log("\t\tError:  Could not vox note length", 1);
+			eof_log("\t\tError:  Could not read vox note length", 1);
 			return -1;
 		}
 		if(eof_filebuffer_get_byte(fb, &voxpitch))	//Read the vox note pitch
 		{	//If there was an error reading the next 1 byte value
-			eof_log("\t\tError:  Could not vox note pitch", 1);
+			eof_log("\t\tError:  Could not read vox note pitch", 1);
 			return -1;
 		}
 #ifdef GH_IMPORT_DEBUG
