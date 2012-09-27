@@ -229,6 +229,8 @@ int eof_color_red;
 int eof_color_green;
 int eof_color_blue;
 int eof_color_dark_blue;
+int eof_color_light_blue;
+int eof_color_turquoise;
 int eof_color_yellow;
 int eof_color_purple;
 int eof_color_dark_purple;
@@ -249,7 +251,8 @@ EOF_SCREEN_LAYOUT eof_screen_layout;
 BITMAP * eof_screen = NULL;
 unsigned long eof_screen_width, eof_screen_height;	//Used to track the EOF window size, for when the 3D projection is altered
 int eof_vanish_x = 0, eof_vanish_y = 0;				//Used to allow the user to control the vanishing point for the 3D preview
-char eof_full_screen_3d = 0;	//If nonzero, directs the render logic to scale the 3D window to fit the entire program window
+char eof_full_screen_3d = 0;						//If nonzero, directs the render logic to scale the 3D window to fit the entire program window
+char eof_3d_fretboard_coordinates_cached = 0;		//Tracks the validity of the 3D window rendering's cache of the fretboard's 2D coordinates
 
 EOF_SELECTION_DATA eof_selection;
 
@@ -581,6 +584,7 @@ int eof_set_display_mode(int mode)
 		eof_screen = NULL;
 	}
 
+	eof_3d_fretboard_coordinates_cached = 0;	//The 3D rendering logic will need to rebuild the fretboard's 2D coordinate projections
 	switch(mode)
 	{
 		case EOF_DISPLAY_640:
@@ -2635,6 +2639,7 @@ void eof_render_3d_window(void)
 {
 //	eof_log("eof_render_3d_window() entered");
 
+	static int fretboardpoint[8];		//Used to cache the 3D->2D coordinate projections for the 3D fretboard
 	int point[8];
 	unsigned long i;
 	short numsolos = 0;					//Used to abstract the solo sections
@@ -2669,15 +2674,18 @@ void eof_render_3d_window(void)
 		firstlane = 1;		//Don't render drum roll/special drum roll markers for the first lane, 0 (unless user enabled the preference to render bass drum in its own lane)
 	}
 
-	point[0] = ocd3d_project_x(20, 600);
-	point[1] = ocd3d_project_y(200, 600);
-	point[2] = ocd3d_project_x(300, 600);
-	point[3] = point[1];
-	point[4] = ocd3d_project_x(300, -100);
-	point[5] = ocd3d_project_y(200, -100);
-	point[6] = ocd3d_project_x(20, -100);
-	point[7] = point[5];
-	polygon(eof_window_3d->screen, 4, point, eof_color_black);
+	if(!eof_3d_fretboard_coordinates_cached)
+	{	//If the appropriate 3D->2D coordinate projections for the 3D fretboard aren't cached yet
+		fretboardpoint[0] = ocd3d_project_x(20, 600);
+		fretboardpoint[1] = ocd3d_project_y(200, 600);
+		fretboardpoint[2] = ocd3d_project_x(300, 600);
+		fretboardpoint[3] = fretboardpoint[1];
+		fretboardpoint[4] = ocd3d_project_x(300, -100);
+		fretboardpoint[5] = ocd3d_project_y(200, -100);
+		fretboardpoint[6] = ocd3d_project_x(20, -100);
+		fretboardpoint[7] = fretboardpoint[5];
+	}
+	polygon(eof_window_3d->screen, 4, fretboardpoint, eof_color_black);
 
 	/* render solo sections */
 	long sz, sez;
@@ -2719,7 +2727,7 @@ void eof_render_3d_window(void)
 				sz = (long)(sectionptr->start_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
 				sez = (long)(sectionptr->end_pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
 				if((-100 <= sez) && (600 >= sz))
-				{	//If the arpeggio section would render at or after the left edge of the piano roll, fill the topmost lane with turquoise
+				{	//If the arpeggio section would render visibly, fill the topmost lane with turquoise
 					spz = sz < -100 ? -100 : sz;
 					spez = sez > 600 ? 600 : sez;
 					point[0] = ocd3d_project_x(20, spez);
@@ -2730,7 +2738,7 @@ void eof_render_3d_window(void)
 					point[5] = ocd3d_project_y(200, spz);
 					point[6] = ocd3d_project_x(20, spz);
 					point[7] = point[5];
-					polygon(eof_window_3d->screen, 4, point, makecol(51,166,153));	//Fill with a turquoise color (use (68,221,204) for light turquoise)
+					polygon(eof_window_3d->screen, 4, point, eof_color_turquoise);	//Fill with a turquoise color
 				}
 			}
 		}
@@ -2831,7 +2839,7 @@ void eof_render_3d_window(void)
 		if((bz >= -100) && (bz <= 600))
 		{	//If the beat is visible
 			y_projection = ocd3d_project_y(200, bz);
-			line(eof_window_3d->screen, ocd3d_project_x(48, bz), y_projection, ocd3d_project_x(48 + 4 * 56, bz), y_projection, eof_song->beat[i]->beat_within_measure == 0 ? eof_color_white : eof_color_dark_silver);
+			hline(eof_window_3d->screen, ocd3d_project_x(48, bz), y_projection, ocd3d_project_x(48 + 4 * 56, bz), eof_song->beat[i]->beat_within_measure == 0 ? eof_color_white : eof_color_dark_silver);
 			if(eof_song->beat[i]->contains_tempo_change || eof_song->beat[i]->contains_ts_change)
 			{	//If this beat contains either a tempo or TS change
 				if(eof_song->beat[i]->contains_tempo_change)
@@ -2843,7 +2851,7 @@ void eof_render_3d_window(void)
 					tempo_text[0] = '\0';	//Otherwise empty out this string
 				}
 				eof_get_ts_text(i, ts_text);
-				textprintf_ex(eof_window_3d->screen, eof_font, ocd3d_project_x(48 + 4 * 56 + 4, bz), y_projection - 12, eof_color_white, -1, "%s%s", tempo_text, ts_text);
+				textprintf_ex(eof_window_3d->screen, eof_font, ocd3d_project_x(48 + 4 * 56 + 4, bz), y_projection - 12, eof_color_white, -1, "%s%s", tempo_text, ts_text);	//Render the tempo and time signature to the right of the beat marker
 			}
 		}
 		else if(bz > 600)
@@ -3124,6 +3132,8 @@ int eof_load_data(void)
 	eof_color_green = makecol(0, 255, 0);
 	eof_color_blue = makecol(0, 0, 255);
 	eof_color_dark_blue = makecol(0, 0, 96);
+	eof_color_light_blue = makecol(96, 96, 255);
+	eof_color_turquoise = makecol(51,166,153);	//(use (68,221,204) for light turquoise)
 	eof_color_yellow = makecol(255, 255, 0);
 	eof_color_purple = makecol(255, 0, 255);
 	eof_color_dark_purple = makecol(128, 0, 128);

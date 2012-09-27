@@ -263,6 +263,7 @@ extern BITMAP *    eof_screen;
 extern unsigned long eof_screen_width, eof_screen_height;
 extern int         eof_vanish_x, eof_vanish_y;
 extern char        eof_full_screen_3d;
+extern char        eof_3d_fretboard_coordinates_cached;
 extern int         eof_av_delay;
 extern int         eof_buffer_size;
 extern int         eof_audio_fine_tune;
@@ -363,7 +364,7 @@ extern int         eof_mouse_drug;
 extern char          eof_snap_mode;
 extern char          eof_last_snap_mode;
 extern int           eof_snap_interval;
-extern char			eof_custom_snap_measure;
+extern char			 eof_custom_snap_measure;
 
 extern char          eof_hopo_view;
 
@@ -376,6 +377,8 @@ extern int eof_color_red;
 extern int eof_color_green;
 extern int eof_color_blue;
 extern int eof_color_dark_blue;
+extern int eof_color_light_blue;
+extern int eof_color_turquoise;
 extern int eof_color_yellow;
 extern int eof_color_purple;
 extern int eof_color_dark_purple;
