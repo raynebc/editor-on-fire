@@ -631,6 +631,7 @@ if(key[KEY_PAUSE])
 				{	//Do not allow it to go higher than this, otherwise the view-able portion of the chart goes partly off-screen
 					eof_vanish_y = 260;
 				}
+				eof_3d_fretboard_coordinates_cached = 0;	//The 3D rendering logic will need to rebuild the fretboard's 2D coordinate projections
 				ocd3d_set_projection((float)eof_screen_width / 640.0, (float)eof_screen_height / 480.0, (float)eof_vanish_x, (float)eof_vanish_y, 320.0, 320.0);
 			}
 		}
@@ -662,6 +663,7 @@ if(key[KEY_PAUSE])
 				{	//Do not allow it to go too negative, things start to look weird
 					eof_vanish_y = -500;
 				}
+				eof_3d_fretboard_coordinates_cached = 0;	//The 3D rendering logic will need to rebuild the fretboard's 2D coordinate projections
 				ocd3d_set_projection((float)eof_screen_width / 640.0, (float)eof_screen_height / 480.0, (float)eof_vanish_x, (float)eof_vanish_y, 320.0, 320.0);
 			}
 		}
@@ -684,6 +686,7 @@ if(key[KEY_PAUSE])
 		{
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			eof_vanish_y = 0;
+			eof_3d_fretboard_coordinates_cached = 0;	//The 3D rendering logic will need to rebuild the fretboard's 2D coordinate projections
 			ocd3d_set_projection((float)eof_screen_width / 640.0, (float)eof_screen_height / 480.0, (float)eof_vanish_x, (float)eof_vanish_y, 320.0, 320.0);
 		}
 		key[KEY_ENTER_PAD] = 0;
@@ -4279,7 +4282,7 @@ void eof_render_vocal_editor_window(void)
 
 	start = eof_determine_piano_roll_left_edge();
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
-	{
+	{	//For each lyric
 		if(eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length >= start)
 		{	//If the lyric would render at or after the left edge of the piano roll
 			if(((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX)) && eof_music_paused && (eof_hover_note == i))
@@ -4292,10 +4295,6 @@ void eof_render_vocal_editor_window(void)
 					break;	//Break if the function indicated that the lyric was rendered beyond the clip window
 			}
 		}
-	}
-	if(eof_hover_note >= 0)
-	{
-		eof_lyric_draw(eof_song->vocal_track[tracknum]->lyric[eof_hover_note], 2, eof_window_editor);
 	}
 	if(eof_music_paused && eof_pen_visible && (eof_pen_note.pos < eof_music_length))
 	{
@@ -4506,13 +4505,12 @@ void eof_render_editor_window_common(void)
 	/* draw arpeggio sections */
 	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 	{
-		col = makecol(51,166,153);	//Store turquoise color (use (68,221,204) for light turquoise)
 		for(i = 0; i < eof_song->pro_guitar_track[tracknum]->arpeggios; i++)
 		{	//For each arpeggio section in the track
 			sectionptr = &eof_song->pro_guitar_track[tracknum]->arpeggio[i];
 			if((sectionptr->end_pos >= start) && (sectionptr->start_pos <= stop) && (sectionptr->difficulty == eof_note_type))
 			{	//If the arpeggio section would render between the left and right edges of the piano roll, and the section applies to the active difficulty, fill the bottom lane with turquoise
-				rectfill(eof_window_editor->screen, lpos + sectionptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 2], lpos + sectionptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 1], col);
+				rectfill(eof_window_editor->screen, lpos + sectionptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 2], lpos + sectionptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 1], eof_color_turquoise);
 			}
 		}
 	}
@@ -4629,26 +4627,26 @@ void eof_render_editor_window_common(void)
 	unsigned long msec,roundedstart;
 	roundedstart = start / 1000;
 	roundedstart *= 1000;		//Roundedstart is start is rounded down to nearest second
-	for(msec = roundedstart; msec < start + 12000; msec += 1000)
-	{	//Draw up to 12 seconds of markers
+	for(msec = roundedstart; msec < stop + 1000; msec += 1000)
+	{	//Draw up to 1 second beyond the right edge of the screen's worth of second markers
 		pmin = msec / 60000;		//Find minute count of this second marker
 		psec = (msec % 60000)/1000;	//Find second count of this second marker
 		if(msec < eof_music_length)
 		{
-			for(j = 0; j < 10; j++)
-			{
-				xcoord = lpos + (msec + (j * 100)) / eof_zoom;
+			for(j = 0; j < 1000; j+=100)
+			{	//Draw markers every 100ms (1/10 second)
+				xcoord = lpos + (msec + j) / eof_zoom;
 				if(xcoord > eof_window_editor->screen->w)	//If this and all remaining second markers would render out of view
 					break;
 				if(xcoord >= 0)	//If this second marker would be visible
 				{
 					vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 9, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_gray);
 					if(j == 0)
-					{
+					{	//Each second marker is drawn taller
 						vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 5, eof_color_white);
 					}
 					else
-					{
+					{	//Each 1/10 second marker is drawn shorter
 						vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 1, eof_color_white);
 					}
 				}
@@ -4662,7 +4660,6 @@ void eof_render_editor_window_common(void)
 	double current_bpm;
 	int bcol, bscol, bhcol;
 	char buffer[16] = {0};
-	char notvisible;
 	char *ksname;
 
 	bcol = makecol(128, 128, 128);
@@ -4672,55 +4669,34 @@ void eof_render_editor_window_common(void)
 	col2 = eof_color_dark_silver;	//Cache this color
 
 	for(i = 0; i < eof_song->beats; i++)
-	{
+	{	//For each beat
 		xcoord = lpos + eof_song->beat[i]->pos / eof_zoom;
 		if(xcoord >= eof_window_editor->screen->w)
 		{	//If this beat would render further right than the right edge of the screen
-			notvisible = 1;
+			break;	//Skip rendering this and all other beat markers, which would continue to render off screen
 		}
-		else if(xcoord < 0)
-		{	//If the beat marker would render further left than the left edge of the screen
-			notvisible = -1;
-		}
-		else
+		else if(xcoord >= 0)
 		{	//The beat would render visibly
-			notvisible = 0;
-		}
-
-		if(i == eof_selected_beat)
-		{	//Draw selected beat's tempo
-			if(notvisible == 0)
-			{	//Only render the tempo if the beat is visible
+			if(i == eof_selected_beat)
+			{	//Draw selected beat's tempo
 				current_bpm = (double)60000000.0 / (double)eof_song->beat[i]->ppqn;
 				textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord - 28, EOF_EDITOR_RENDER_OFFSET + 6 - (i % 2 == 0 ? 0 : 10), i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "<%03.2f>", current_bpm);
 			}
-		}
-		else if(eof_song->beat[i]->contains_tempo_change)
-		{	//Draw tempo if this beat has a tempo change
-			if(notvisible == 0)
-			{	//Only render the tempo if the beat is visible
+			else if(eof_song->beat[i]->contains_tempo_change)
+			{	//Draw tempo if this beat has a tempo change
 				current_bpm = (double)60000000.0 / (double)eof_song->beat[i]->ppqn;
 				textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord - 20, EOF_EDITOR_RENDER_OFFSET + 6 - (i % 2 == 0 ? 0 : 10), i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "%03.2f", current_bpm);
 			}
-		}
-		else
-		{	//Draw beat arrow
-			if(notvisible == 0)
-			{	//Only render the beat arrow if the beat is visible
+			else
+			{	//Draw beat arrow
 				textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord - 20 + 9, EOF_EDITOR_RENDER_OFFSET + 6 - (i % 2 == 0 ? 0 : 10), i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "-->");
 			}
-		}
-		if(!notvisible && eof_song->beat[i]->contains_ts_change && eof_get_ts_text(i, buffer))
-		{	//If this beat is visible and it has a time signature
-			textprintf_centre_ex(eof_window_editor->screen, eof_mono_font, xcoord - 20 + 19, EOF_EDITOR_RENDER_OFFSET + 7 - (i % 2 == 0 ? 0 : 10) - 12, i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "(%s)", buffer);
-		}
+			if(eof_song->beat[i]->contains_ts_change && eof_get_ts_text(i, buffer))
+			{	//If this beat has a time signature
+				textprintf_centre_ex(eof_window_editor->screen, eof_mono_font, xcoord - 20 + 19, EOF_EDITOR_RENDER_OFFSET + 7 - (i % 2 == 0 ? 0 : 10) - 12, i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "(%s)", buffer);
+			}
 
-		if(notvisible > 0)
-		{	//If this beat marker would render further right than the right edge of the screen
-			break;	//Skip rendering this and all other beat markers, which would continue to render off screen
-		}
-		if(notvisible >= 0)
-		{	//If this beat marker would not render further left than the left edge of the screen
+			//Only render vertical lines if the x position is visible on-screen, otherwise the entire line will not be visible anyway
 			vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35 + 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10 - 1, (eof_song->beat[i]->beat_within_measure == 0) ? eof_color_white : col);
 			vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + 34, eof_color_gray);
 			if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_ANCHOR)
@@ -4731,42 +4707,42 @@ void eof_render_editor_window_common(void)
 			{
 				vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + (i % 2 == 0 ? 19 : 9), EOF_EDITOR_RENDER_OFFSET + 24, eof_song->beat[i]->beat_within_measure == 0 ? eof_color_white : col2);
 			}
+		}//The beat would render visibly
 
-			if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_EVENTS)
-			{	//Draw event marker
-				line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
-				if(eof_song->beat[i]->contained_section_event >= 0)
-				{	//If this beat has a section event
-					textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 25 + 4, eof_color_yellow, -1, "%s", eof_song->text_event[eof_song->beat[i]->contained_section_event]->text);	//Display it
-				}
-				else if(eof_song->beat[i]->contains_end_event)
-				{	//Or if this beat contains an end event
-					textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 25 + 4, eof_color_red, -1, "[end]");	//Display it
-				}
+		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_EVENTS)
+		{	//Draw event marker
+			line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
+			if(eof_song->beat[i]->contained_section_event >= 0)
+			{	//If this beat has a section event
+				textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 25 + 4, eof_color_yellow, -1, "%s", eof_song->text_event[eof_song->beat[i]->contained_section_event]->text);	//Display it
 			}
-			if((eof_song->beat[i]->measurenum != 0) && (eof_song->beat[i]->beat_within_measure == 0))
-			{	//If this is a measure marker, draw the measure number to the right of the beat line
-				textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord + 2, EOF_EDITOR_RENDER_OFFSET + 22 - 7, eof_color_yellow, -1, "%lu", eof_song->beat[i]->measurenum);
-			}
-			if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_ANCHOR)
-			{	//Draw anchor marker
-				line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 21, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_red);
-				line(eof_window_editor->screen, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 21, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_red);
-			}
-			ksname = eof_get_key_signature(eof_song, i, 0, 0);
-			if(ksname)
-			{	//If this beat has a key signature defined, draw the key signature above the timestamp
-				textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord + 2, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 2, eof_color_yellow, -1, "%s", ksname);
+			else if(eof_song->beat[i]->contains_end_event)
+			{	//Or if this beat contains an end event
+				textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 25 + 4, eof_color_red, -1, "[end]");	//Display it
 			}
 		}
-	}
+		if((eof_song->beat[i]->measurenum != 0) && (eof_song->beat[i]->beat_within_measure == 0))
+		{	//If this is a measure marker, draw the measure number to the right of the beat line
+			textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord + 2, EOF_EDITOR_RENDER_OFFSET + 22 - 7, eof_color_yellow, -1, "%lu", eof_song->beat[i]->measurenum);
+		}
+		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_ANCHOR)
+		{	//Draw anchor marker
+			line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 21, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_red);
+			line(eof_window_editor->screen, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 21, xcoord, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_red);
+		}
+		ksname = eof_get_key_signature(eof_song, i, 0, 0);
+		if(ksname)
+		{	//If this beat has a key signature defined, draw the key signature above the timestamp
+			textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord + 2, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 2, eof_color_yellow, -1, "%s", ksname);
+		}
+	}//For each beat
 
 	/* draw the bookmark position */
 	for(i = 0; i < EOF_MAX_BOOKMARK_ENTRIES; i++)
 	{
 		if(eof_song->bookmark_pos[i] > 0)	//If this bookmark exists
 		{
-			vline(eof_window_editor->screen, lpos + eof_song->bookmark_pos[i] / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 20, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 4, makecol(96, 96, 255));
+			vline(eof_window_editor->screen, lpos + eof_song->bookmark_pos[i] / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 20, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 4, eof_color_light_blue);
 		}
 	}
 }
@@ -4832,7 +4808,7 @@ void eof_render_editor_window_common2(void)
 			textprintf_centre_ex(eof_window_editor->screen, font, 50 + i * 80, 2 + 2 + 8, makecol(128, 128, 128), -1, "%s", tab_name);
 		}
 		if((eof_selected_track == EOF_TRACK_VOCALS) && (i == eof_vocals_tab))
-		{
+		{	//Break after  rendering the one difficulty tab name for the vocal track
 			break;
 		}
 	}

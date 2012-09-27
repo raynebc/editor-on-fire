@@ -560,7 +560,7 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 			if((lyricline->flags) & EOF_LYRIC_LINE_FLAG_OVERDRIVE)	//If the overdrive flag is set
 				bgcol=makecol(64, 128, 64);	//Make dark green the text's background color
 			else
-				bgcol=makecol(0, 0, 127);	//Make dark blue the text's background colo
+				bgcol=makecol(0, 0, 127);	//Make dark blue the text's background color
 		}
 
 		if(notenum < eof_song->vocal_track[0]->lyrics-1)		//If there is another lyric

@@ -391,7 +391,7 @@ int eof_menu_beat_bpm_change(void)
 	int old_flags;
 	double oldbpm;
 
-	if(eof_song->tags->tempo_map_locked || (eof_selected_beat < 0))	//If the chart's tempo map is locked, or an invalid beat is selected
+	if(eof_song->tags->tempo_map_locked || (eof_selected_beat >= eof_song->beats))	//If the chart's tempo map is locked, or an invalid beat is selected
 		return 1;							//Return without making changes
 
 	cppqn = eof_song->beat[eof_selected_beat]->ppqn;
