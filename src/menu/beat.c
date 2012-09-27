@@ -459,6 +459,7 @@ int eof_menu_beat_bpm_change(void)
 		{	//If the "Adjust Notes" option was selected
 			eof_menu_edit_cut_paste(eof_selected_beat + 1, 1);
 		}
+		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	}
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
@@ -559,6 +560,7 @@ int eof_menu_beat_ts_off(void)
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		eof_song->beat[eof_selected_beat]->flags = flags;
 		eof_select_beat(eof_selected_beat);
+		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	}
 	return 1;
 }
@@ -591,6 +593,7 @@ int eof_menu_beat_delete(void)
 		eof_move_text_events(eof_song, eof_selected_beat, 1, -1);
 		flags &= (~EOF_BEAT_FLAG_ANCHOR);	//Clear the anchor flag
 		eof_song->beat[eof_selected_beat - 1]->flags |= flags;
+		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	}
 	return 1;
 }
@@ -671,6 +674,7 @@ int eof_menu_beat_reset_offset(void)
 			{	//If this operation caused the first and second beat markers to have different tempos,
 				eof_song->beat[1]->flags = EOF_BEAT_FLAG_ANCHOR;		//Set the second beat marker's anchor flag
 			}
+			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 		}
 		else
 			return 0;	//Return failure
@@ -765,6 +769,7 @@ int eof_menu_beat_anchor(void)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(NULL);
+	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	return 1;
 }
 
@@ -814,6 +819,7 @@ int eof_menu_beat_delete_anchor(void)
 			eof_realign_beats(eof_song, eof_selected_beat);
 		}
 	}
+	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	return 1;
 }
 
@@ -844,6 +850,7 @@ int eof_menu_beat_reset_bpm(void)
 				eof_song->beat[i]->flags = eof_song->beat[i]->flags & EOF_BEAT_FLAG_EVENTS;
 			}
 			eof_calculate_beats(eof_song);
+			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 		}
 	}
 	else
@@ -902,6 +909,7 @@ int eof_menu_beat_calculate_bpm(void)
 		}
 	}
 	eof_calculate_beats(eof_song);
+	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	return 1;
 }
 
@@ -966,6 +974,7 @@ int eof_menu_beat_clear_events(void)
 			eof_song->beat[i]->flags &= (~EOF_BEAT_FLAG_EVENTS);	//Clear the event flag
 		}
 	}
+	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	eof_clear_input();
 	return 1;
 }
@@ -1097,6 +1106,7 @@ int eof_events_dialog_add(DIALOG * d)
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			eof_song_add_text_event(eof_song, eof_selected_beat, eof_etext, track, 0);
 			eof_sort_events(eof_song);
+			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 		}
 	}
 	dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
@@ -1169,6 +1179,7 @@ int eof_events_dialog_edit(DIALOG * d)
 				track = eof_selected_track;
 			}
 			eof_song->text_event[event]->track = track;
+			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 		}
 	}
 	dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
@@ -1221,6 +1232,7 @@ int eof_events_dialog_delete(DIALOG * d)
 					eof_events_dialog[1].d1--;
 				}
 				dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
+				eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 				return D_O_K;
 			}
 
@@ -1251,6 +1263,7 @@ int eof_menu_beat_add(void)
 		eof_song->beat[eof_selected_beat + 1]->flags = 0;
 		eof_realign_beats(eof_song, eof_selected_beat + 1);
 		eof_move_text_events(eof_song, eof_selected_beat + 1, 1, 1);
+		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 		return 1;
 	}
 	else
@@ -1633,6 +1646,7 @@ int eof_menu_beat_adjust_bpm(double amount)
 	{	//If the user has enabled the Note Auto-Adjust preference
 		eof_menu_edit_cut_paste(targetbeat + 1, 1);
 	}
+	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	return 1;
 }
 

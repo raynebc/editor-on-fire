@@ -231,6 +231,7 @@ void eof_editor_logic_feedback(void)
 		eof_song->beat[fbeat]->flags = EOF_BEAT_FLAG_ANCHOR;
 		eof_calculate_beats(eof_song);
 		eof_menu_edit_cut_paste(fbeat + 1, 1);
+		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 		key[KEY_MINUS] = 0;
 	}
 	if(key[KEY_EQUALS])
@@ -262,6 +263,7 @@ void eof_editor_logic_feedback(void)
 		eof_song->beat[fbeat]->flags = EOF_BEAT_FLAG_ANCHOR;
 		eof_calculate_beats(eof_song);
 		eof_menu_edit_cut_paste(fbeat + 1, 1);
+		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 		key[KEY_EQUALS] = 0;
 	}
 

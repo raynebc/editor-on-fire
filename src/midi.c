@@ -2378,8 +2378,11 @@ int eof_apply_ts(unsigned num,unsigned den,int beatnum,EOF_SONG *sp,char undo)
 		}
 		if(flags != sp->beat[beatnum]->flags)
 		{	//If the application of this time signature really changes the beat's flags
-			if(undo)	//If calling function specified to make an undo state
+			if(undo)	//If calling function specified to make an undo state (would be if applying the change to the active project)
+			{
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
+				eof_beat_stats_cached = 0;				//Mark the cached beat stats as not current
+			}
 			sp->beat[beatnum]->flags = flags;	//Apply the flag changes
 		}
 	}

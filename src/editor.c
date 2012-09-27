@@ -60,65 +60,17 @@ void eof_select_beat(unsigned long beat)
 {
 	eof_log("eof_select_beat() entered", 1);
 
-	unsigned long i;
-	int beat_counter = 0;
-	char first_measure = 0;
-	eof_selected_beat = beat;
-	eof_selected_measure = -1;
-	eof_beat_in_measure = 0;
-	eof_beats_in_measure = 1;
-
 	if(!eof_song || (beat >= eof_song->beats))
 		return;
 
-	for(i = 0; i <= beat; i++)
-	{	//For each beat
-		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_4_4)
-		{
-			eof_beats_in_measure = 4;
-			beat_counter = 0;
-			first_measure++;
-		}
-		else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_3_4)
-		{
-			eof_beats_in_measure = 3;
-			beat_counter = 0;
-			first_measure++;
-		}
-		else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_5_4)
-		{
-			eof_beats_in_measure = 5;
-			beat_counter = 0;
-			first_measure++;
-		}
-		else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_6_4)
-		{
-			eof_beats_in_measure = 6;
-			beat_counter = 0;
-			first_measure++;
-		}
-		else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_CUSTOM_TS)
-		{
-			eof_beats_in_measure = ((eof_song->beat[i]->flags & 0xFF000000)>>24) + 1;
-			beat_counter = 0;
-			first_measure++;
-		}
-		if(first_measure == 1)
-		{
-			eof_selected_measure = 0;
-			first_measure++;
-		}
-		eof_beat_in_measure = beat_counter;
-		if(first_measure && eof_beat_in_measure == 0)
-		{
-			eof_selected_measure++;
-		}
-		beat_counter++;
-		if(beat_counter >= eof_beats_in_measure)
-		{
-			beat_counter = 0;
-		}
-	}//For each beat
+	eof_selected_beat = beat;
+	if(!eof_beat_stats_cached)
+	{	//If the cached beat statistics are not current
+		eof_process_beat_statistics();	//Rebuild them
+	}
+	eof_selected_measure = eof_song->beat[beat]->measurenum;
+	eof_beat_in_measure = eof_song->beat[beat]->beat_within_measure;
+	eof_beats_in_measure = eof_song->beat[beat]->num_beats_in_measure;
 }
 
 void eof_get_snap_ts(EOF_SNAP_DATA * sp, int beat)
@@ -4707,15 +4659,9 @@ void eof_render_editor_window_common(void)
 	vline(eof_window_editor->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
 
 	/* draw beat lines */
-	unsigned long current_ppqn = eof_song->beat[0]->ppqn;
-	int current_ppqn_used = 0;
 	double current_bpm;
 	int bcol, bscol, bhcol;
-	unsigned long beat_counter = 0;
-	unsigned beats_per_measure = 0;
 	char buffer[16] = {0};
-	unsigned long measure_counter = 0;
-	char first_measure = 0;	//Set to nonzero when the first measure marker is reached
 	char notvisible;
 	char *ksname;
 
@@ -4727,15 +4673,6 @@ void eof_render_editor_window_common(void)
 
 	for(i = 0; i < eof_song->beats; i++)
 	{
-		if(eof_get_ts(eof_song,&beats_per_measure,NULL,i) == 1)
-		{	//If this beat has a time signature change
-			first_measure = 1;	//Note that a time signature change has been found
-			beat_counter = 0;
-		}
-		if(first_measure && (beat_counter == 0))
-		{	//If there was a TS change or the beat markers incremented enough to reach the next measure
-			measure_counter++;
-		}
 		xcoord = lpos + eof_song->beat[i]->pos / eof_zoom;
 		if(xcoord >= eof_window_editor->screen->w)
 		{	//If this beat would render further right than the right edge of the screen
@@ -4750,12 +4687,6 @@ void eof_render_editor_window_common(void)
 			notvisible = 0;
 		}
 
-		//Perform beat tracking logic even if the beat isn't going to be rendered (to track tempo changes, etc)
-		if(eof_song->beat[i]->ppqn != current_ppqn)
-		{
-			current_ppqn = eof_song->beat[i]->ppqn;
-			current_ppqn_used = 0;
-		}
 		if(i == eof_selected_beat)
 		{	//Draw selected beat's tempo
 			if(notvisible == 0)
@@ -4763,16 +4694,14 @@ void eof_render_editor_window_common(void)
 				current_bpm = (double)60000000.0 / (double)eof_song->beat[i]->ppqn;
 				textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord - 28, EOF_EDITOR_RENDER_OFFSET + 6 - (i % 2 == 0 ? 0 : 10), i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "<%03.2f>", current_bpm);
 			}
-			current_ppqn_used = 1;
 		}
-		else if(!current_ppqn_used)
-		{	//Draw tempo
+		else if(eof_song->beat[i]->contains_tempo_change)
+		{	//Draw tempo if this beat has a tempo change
 			if(notvisible == 0)
 			{	//Only render the tempo if the beat is visible
 				current_bpm = (double)60000000.0 / (double)eof_song->beat[i]->ppqn;
 				textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord - 20, EOF_EDITOR_RENDER_OFFSET + 6 - (i % 2 == 0 ? 0 : 10), i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "%03.2f", current_bpm);
 			}
-			current_ppqn_used = 1;
 		}
 		else
 		{	//Draw beat arrow
@@ -4781,12 +4710,9 @@ void eof_render_editor_window_common(void)
 				textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord - 20 + 9, EOF_EDITOR_RENDER_OFFSET + 6 - (i % 2 == 0 ? 0 : 10), i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "-->");
 			}
 		}
-		if(eof_get_ts_text(i, buffer))
-		{	//Draw time signature
-			if(notvisible == 0)
-			{	//Only render the time signature if the beat is visible
-				textprintf_centre_ex(eof_window_editor->screen, eof_mono_font, xcoord - 20 + 19, EOF_EDITOR_RENDER_OFFSET + 7 - (i % 2 == 0 ? 0 : 10) - 12, i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "(%s)", buffer);
-			}
+		if(!notvisible && eof_song->beat[i]->contains_ts_change && eof_get_ts_text(i, buffer))
+		{	//If this beat is visible and it has a time signature
+			textprintf_centre_ex(eof_window_editor->screen, eof_mono_font, xcoord - 20 + 19, EOF_EDITOR_RENDER_OFFSET + 7 - (i % 2 == 0 ? 0 : 10) - 12, i == eof_hover_beat ? bhcol : i == eof_selected_beat ? bscol : bcol, -1, "(%s)", buffer);
 		}
 
 		if(notvisible > 0)
@@ -4795,7 +4721,7 @@ void eof_render_editor_window_common(void)
 		}
 		if(notvisible >= 0)
 		{	//If this beat marker would not render further left than the left edge of the screen
-			vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35 + 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10 - 1, (first_measure && beat_counter == 0) ? eof_color_white : col);
+			vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35 + 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10 - 1, (eof_song->beat[i]->beat_within_measure == 0) ? eof_color_white : col);
 			vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + 34, eof_color_gray);
 			if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_ANCHOR)
 			{
@@ -4803,34 +4729,24 @@ void eof_render_editor_window_common(void)
 			}
 			else
 			{
-				vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + (i % 2 == 0 ? 19 : 9), EOF_EDITOR_RENDER_OFFSET + 24, beat_counter == 0 ? eof_color_white : col2);
+				vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + (i % 2 == 0 ? 19 : 9), EOF_EDITOR_RENDER_OFFSET + 24, eof_song->beat[i]->beat_within_measure == 0 ? eof_color_white : col2);
 			}
 
 			if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_EVENTS)
 			{	//Draw event marker
-				unsigned long ctr;
-
 				line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
-				for(ctr = 0; ctr < eof_song->text_events; ctr++)
-				{	//For each text event
-					if(eof_song->text_event[ctr]->beat == i)
-					{	//If the event is assigned to this beat
-						if(eof_is_section_marker(eof_song->text_event[ctr]->text))
-						{	//If this event is a section marker
-							textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 25 + 4, eof_color_yellow, -1, "%s", eof_song->text_event[ctr]->text);	//Display it
-							break;	//And break from the loop
-						}
-						else if(!ustrcmp(eof_song->text_event[ctr]->text, "[end]"))
-						{	//If this is the [end] event
-							textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 25 + 4, eof_color_red, -1, "%s", eof_song->text_event[ctr]->text);	//Display it
-							break;
-						}
-					}
+				if(eof_song->beat[i]->contained_section_event >= 0)
+				{	//If this beat has a section event
+					textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 25 + 4, eof_color_yellow, -1, "%s", eof_song->text_event[eof_song->beat[i]->contained_section_event]->text);	//Display it
+				}
+				else if(eof_song->beat[i]->contains_end_event)
+				{	//Or if this beat contains an end event
+					textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 25 + 4, eof_color_red, -1, "[end]");	//Display it
 				}
 			}
-			if(first_measure && (beat_counter == 0))
+			if((eof_song->beat[i]->measurenum != 0) && (eof_song->beat[i]->beat_within_measure == 0))
 			{	//If this is a measure marker, draw the measure number to the right of the beat line
-				textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord + 2, EOF_EDITOR_RENDER_OFFSET + 22 - 7, eof_color_yellow, -1, "%lu", measure_counter);
+				textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord + 2, EOF_EDITOR_RENDER_OFFSET + 22 - 7, eof_color_yellow, -1, "%lu", eof_song->beat[i]->measurenum);
 			}
 			if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_ANCHOR)
 			{	//Draw anchor marker
@@ -4842,11 +4758,6 @@ void eof_render_editor_window_common(void)
 			{	//If this beat has a key signature defined, draw the key signature above the timestamp
 				textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord + 2, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 2, eof_color_yellow, -1, "%s", ksname);
 			}
-		}
-		beat_counter++;
-		if(beat_counter >= beats_per_measure)
-		{
-			beat_counter = 0;
 		}
 	}
 
@@ -5209,6 +5120,7 @@ void eof_editor_logic_common(void)
 							eof_recalculate_beats(eof_song, eof_selected_beat);
 						}
 						eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;
+						eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 					}
 				}
 			}
@@ -5240,6 +5152,7 @@ void eof_editor_logic_common(void)
 						}
 						eof_menu_edit_cut_paste(eof_selected_beat, 0);
 						eof_calculate_beats(eof_song);
+						eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 					}
 				}
 				eof_moving_anchor = 0;

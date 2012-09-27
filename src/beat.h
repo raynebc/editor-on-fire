@@ -3,6 +3,8 @@
 
 #include "song.h"
 
+extern char eof_beat_stats_cached;
+
 long eof_get_beat(EOF_SONG * sp, unsigned long pos);
 	//Returns the beat number at or immediately before the specified position, or -1 if the timestamp does not occur within the chart
 long eof_get_beat_length(EOF_SONG * sp, int beat);
@@ -41,5 +43,10 @@ int eof_halve_tempo(EOF_SONG * sp, unsigned long beat, char *undo_made);
 unsigned long eof_get_measure(unsigned long measure, unsigned char count_only);
 	//If count_only is nonzero, the number of measures present in the currently open chart is returned (0 if no time signatures are defined)
 	//If count_only is zero, the beat number that is at the start of the specified measure is returned (or 0 if no such measure is present)
+void eof_process_beat_statistics(void);
+	//Parses the beat[] array of the active project and stores various information for each beat:
+	//The beat's measure number (or 0 if no TS is in effect), beat within measure, total number of beats in current measure are stored,
+	//The section text event assigned to the beat is stored (or -1 if no section event), a boolean status for whether the beat contains an "[end]" event
+	//And boolean statuses for whether the beat contains tempo or TS changes
 
 #endif
