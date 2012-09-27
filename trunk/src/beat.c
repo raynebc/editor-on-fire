@@ -7,6 +7,8 @@
 #include "memwatch.h"
 #endif
 
+char eof_beat_stats_cached = 0;	//Tracks whether the cached statistics for the projects beats is current (should be reset after each load, import, undo, redo or beat operation)
+
 long eof_get_beat(EOF_SONG * sp, unsigned long pos)
 {
 	long i;
@@ -352,6 +354,13 @@ EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp)
 			sp->beat[sp->beats]->midi_pos = 0;
 			sp->beat[sp->beats]->key = 0;
 			sp->beat[sp->beats]->fpos = 0.0;
+			sp->beat[sp->beats]->measurenum = 0;
+			sp->beat[sp->beats]->beat_within_measure = -1;
+			sp->beat[sp->beats]->num_beats_in_measure = 0;
+			sp->beat[sp->beats]->contained_section_event = -1;
+			sp->beat[sp->beats]->contains_tempo_change = 0;
+			sp->beat[sp->beats]->contains_ts_change = 0;
+			sp->beat[sp->beats]->contains_end_event = 0;
 			sp->beats++;
 			return sp->beat[sp->beats - 1];
 		}
@@ -456,6 +465,7 @@ void eof_double_tempo(EOF_SONG * sp, unsigned long beat, char *undo_made)
 	}while((beat < sp->beats) && (sp->beat[beat]->ppqn == ppqn));	//Continue until all beats have been processed or a tempo change is reached
 
 	eof_calculate_beats(sp);	//Rebuild tempos and beat lengths using the updated ppqn values
+	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 }
 
 int eof_halve_tempo(EOF_SONG * sp, unsigned long beat, char *undo_made)
@@ -512,6 +522,7 @@ int eof_halve_tempo(EOF_SONG * sp, unsigned long beat, char *undo_made)
 	}while((beat < sp->beats) && (ctr > 0));	//Continue until all applicable beats have been processed
 
 	eof_calculate_beats(sp);	//Rebuild tempos and beat lengths using the updated ppqn values
+	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	return retval;
 }
 
@@ -551,4 +562,83 @@ unsigned long eof_get_measure(unsigned long measure, unsigned char count_only)
 	}
 
 	return 0;	//The measure was not found
+}
+
+void eof_process_beat_statistics(void)
+{
+	eof_log("eof_process_beat_statistics() entered", 1);
+
+	unsigned long current_ppqn = 0;
+	int beat_counter = -1;
+	unsigned beats_per_measure = 0;
+	unsigned long measure_counter = 0;
+	char first_measure = 0;	//Set to nonzero when the first measure marker is reached
+	unsigned long i;
+
+	if(!eof_song)
+		return;
+
+	for(i = 0; i < eof_song->beats; i++)
+	{	//For each beat
+		if(eof_get_ts(eof_song,&beats_per_measure,NULL,i) == 1)
+		{	//If this beat has a time signature change
+			first_measure = 1;	//Note that a time signature change has been found
+			beat_counter = 0;
+			eof_song->beat[i]->contains_ts_change = 1;
+		}
+		else
+		{
+			eof_song->beat[i]->contains_ts_change = 0;
+		}
+		if(first_measure && (beat_counter == 0))
+		{	//If there was a TS change or the beat markers incremented enough to reach the next measure
+			measure_counter++;
+		}
+
+	//Cache beat statistics
+		eof_song->beat[i]->measurenum = measure_counter;
+		eof_song->beat[i]->beat_within_measure = beat_counter;
+		eof_song->beat[i]->num_beats_in_measure = beats_per_measure;
+		if(eof_song->beat[i]->ppqn != current_ppqn)
+		{	//If this beat contains a tempo change
+			current_ppqn = eof_song->beat[i]->ppqn;
+			eof_song->beat[i]->contains_tempo_change = 1;
+		}
+		else
+		{
+			eof_song->beat[i]->contains_tempo_change = 0;
+		}
+		eof_song->beat[i]->contained_section_event = -1;	//Reset this until the beat is found to contain a section event
+		eof_song->beat[i]->contains_end_event = 0;			//Reset this boolean status
+		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_EVENTS)
+		{	//If this beat has one or more text events
+			unsigned long ctr;
+
+			for(ctr = 0; ctr < eof_song->text_events; ctr++)
+			{	//For each text event
+				if(eof_song->text_event[ctr]->beat == i)
+				{	//If the event is assigned to this beat
+					if(eof_is_section_marker(eof_song->text_event[ctr]->text))
+					{	//If this event is a section marker
+						eof_song->beat[i]->contained_section_event = ctr;
+						break;	//And break from the loop
+					}
+					else if(!ustrcmp(eof_song->text_event[ctr]->text, "[end]"))
+					{	//If this is the [end] event
+						eof_song->beat[i]->contains_end_event = 1;
+						break;
+					}
+				}
+			}
+		}
+
+	//Update beat counter
+		beat_counter++;
+		if(beat_counter >= beats_per_measure)
+		{
+			beat_counter = 0;
+		}
+	}//For each beat
+
+	eof_beat_stats_cached = 1;
 }

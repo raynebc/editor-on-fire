@@ -45,7 +45,7 @@ typedef struct
 extern EOF_SNAP_DATA eof_snap;
 extern EOF_SNAP_DATA eof_tail_snap;
 
-void eof_select_beat(unsigned long beat);
+void eof_select_beat(unsigned long beat);	//Updates eof_selected_measure, eof_beat_in_measure, eof_beats_in_measure and eof_selected_beat to reflect the specified beat number
 void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p);
 	//Accepts a timestamp, and updates sp->grid_pos[] with the positions of each grid snap immediately at/before the timestamp and all remaining grid snaps for the beat/measure (depending on which of the two the grid snap setting is set to use)
 	//The position of the grid snap nearest to the given timestamp is stored in sp->pos

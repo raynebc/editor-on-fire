@@ -336,8 +336,12 @@ typedef struct
 	unsigned long pos;
 	unsigned long flags;	//If the EOF_BEAT_FLAG_CUSTOM_TS flag is set, this variable's MSB is the TS's numerator (value 1 is stored as all bits 0), the 2nd MSB is the TS's denominator (value 1 is stored as all bits 0)
 	char key;	//If negative, the value defines the number of flats present, ie. -2 is Bb.  If positive, the value defines the number of sharps present, ie. 4 is E
-
 	double fpos;
+
+	//These variables track various properties of the beat to relieve rendering functions of some processing
+	unsigned long measurenum;
+	int beat_within_measure, num_beats_in_measure, contained_section_event;
+	char contains_tempo_change, contains_ts_change, contains_end_event;
 
 } EOF_BEAT_MARKER;
 

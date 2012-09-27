@@ -2823,52 +2823,18 @@ void eof_render_3d_window(void)
 
 	/* draw the beat markers */
 	long bz;
-	long beat_counter = 0;
-	long beats_per_measure = 0;
 	float y_projection;
-	unsigned long last_ppqn = 0;
-	char ts_change;
 	char ts_text[16] = {0}, tempo_text[16] = {0};
 	for(i = 0; i < eof_song->beats; i++)
 	{	//For each beat
-		ts_change = 1;	//Unless no time signature change is found at this beat, assume it has one
-		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_4_4)
-		{
-			beats_per_measure = 4;
-			beat_counter = 0;
-		}
-		else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_3_4)
-		{
-			beats_per_measure = 3;
-			beat_counter = 0;
-		}
-		else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_5_4)
-		{
-			beats_per_measure = 5;
-			beat_counter = 0;
-		}
-		else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_6_4)
-		{
-			beats_per_measure = 6;
-			beat_counter = 0;
-		}
-		else if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_CUSTOM_TS)
-		{
-			beats_per_measure = ((eof_song->beat[i]->flags & 0xFF000000)>>24) + 1;
-			beat_counter = 0;
-		}
-		else
-		{	//This beat has no time signature change
-			ts_change = 0;
-		}
 		bz = (long)(eof_song->beat[i]->pos + eof_av_delay - eof_music_pos) / eof_zoom_3d;
 		if((bz >= -100) && (bz <= 600))
 		{	//If the beat is visible
 			y_projection = ocd3d_project_y(200, bz);
-			line(eof_window_3d->screen, ocd3d_project_x(48, bz), y_projection, ocd3d_project_x(48 + 4 * 56, bz), y_projection, beat_counter == 0 ? eof_color_white : eof_color_dark_silver);
-			if((eof_song->beat[i]->ppqn != last_ppqn) || ts_change)
+			line(eof_window_3d->screen, ocd3d_project_x(48, bz), y_projection, ocd3d_project_x(48 + 4 * 56, bz), y_projection, eof_song->beat[i]->beat_within_measure == 0 ? eof_color_white : eof_color_dark_silver);
+			if(eof_song->beat[i]->contains_tempo_change || eof_song->beat[i]->contains_ts_change)
 			{	//If this beat contains either a tempo or TS change
-				if(eof_song->beat[i]->ppqn != last_ppqn)
+				if(eof_song->beat[i]->contains_tempo_change)
 				{	//If there is a tempo change
 					eof_get_tempo_text(i, tempo_text);
 				}
@@ -2883,12 +2849,6 @@ void eof_render_3d_window(void)
 		else if(bz > 600)
 		{	//If this beat wasn't visible
 			break;	//None of the remaining ones will be either, so stop rendering them
-		}
-		beat_counter++;
-		last_ppqn = eof_song->beat[i]->ppqn;
-		if(beat_counter >= beats_per_measure)
-		{
-			beat_counter = 0;
 		}
 	}//For each beat
 
@@ -2972,6 +2932,10 @@ void eof_render(void)
 			{
 				blit(eof_image[EOF_IMAGE_MENU_NO_NOTE], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
 			}
+		}
+		if(!eof_beat_stats_cached)
+		{	//If the cached beat statistics are not current
+			eof_process_beat_statistics();	//Rebuild them
 		}
 		if(!eof_full_screen_3d)
 		{	//In full screen 3D view, don't render the note window yet, it will just be overwritten by the 3D window
@@ -3917,6 +3881,7 @@ void eof_init_after_load(char initaftersavestate)
 	eof_fix_window_title();
 	eof_cleanup_beat_flags(eof_song);	//Make corrections to beat statuses if necessary
 	eof_sort_events(eof_song);
+	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 
 	eof_log("\tInitialization after load complete", 1);
 }
