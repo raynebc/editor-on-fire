@@ -2025,7 +2025,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 					case EOF_PRO_GUITAR_TRACK_FORMAT:
 						count = sp->pro_guitar_track[tracknum]->tremolos;
 						if(count < EOF_MAX_PHRASES)
-						{	//If EOF can store the trill section
+						{	//If EOF can store the tremolo section
 							sp->pro_guitar_track[tracknum]->tremolo[count].start_pos = start;
 							sp->pro_guitar_track[tracknum]->tremolo[count].end_pos = end;
 							sp->pro_guitar_track[tracknum]->tremolo[count].flags = 0;

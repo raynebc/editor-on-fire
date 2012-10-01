@@ -267,7 +267,7 @@ TRACK CHUNK, for each track:
 				1 byte:		Beat bitmask (defined in notes section)
 				!REST TYPE (if the beat bitmask declares the beat to be a rest)
 					[1 byte]:	Rest type (0 = empty beat, 2 = rest)
-				1 byte:		Beat duration (-2 = whole note, -1 = half note, 0 = quarter note, 1 = eighth note, 2 = sixteenth note, 3 = thirty-second note, etc.)
+				1 byte:		Beat duration (-2 = whole note, -1 = half note, 0 = quarter note, 1 = eighth note, 2 = sixteenth note, 3 = thirty-second note, 4 = sixty-fourth note)
 				!N-TUPLET TYPE (if the beat bitmask declares the beat to be an N-tuplet)
 					[4 bytes]:	The number of notes played within the "tuplet" (ie. 3 = triplet)
 				!CHORD DIAGRAM (if the beat bitmask declares that a chord diagram is present):
@@ -438,7 +438,7 @@ TRACK CHUNK, for each track:
 				{
 					[1 byte]:	Note bitmask (defined in notes section)
 					!NOTE TYPE (if the note bitmask declares this:  Bit 5, AKA 0x20, AKA 32 decimal)
-						[1 byte]:	Note type (1 = normal, 2 = tie, 3 = dead)
+						[1 byte]:	Note type (1 = normal, 2 = tie, 3 = dead (muted))
 					!TIME INDEPENDENT DURATION (if the file version is < 5.0, and the note bitmask declares this:  Bit 1, AKA 1 decimal)
 					{
 						[2 bytes]:	Time independent duration data, it may be that the first number is the denominator and the second is the numerator (ie. values of 2, 1 seem to represent 50% duration)

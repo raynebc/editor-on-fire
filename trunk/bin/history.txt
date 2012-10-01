@@ -517,6 +517,14 @@ notes, vocal slides and cymbals to be shown correctly in the fret catalog.
 The 2D rendering code has also been improved to skip rendering phrases and
 beat markers that are off-screen.
 
+Added an export image sequence function in the Song menu, exporting a
+series of PCX format image files that represents 30fps playback of the
+chart during playback.  Various video editing programs can import image
+sequences (such as VirtualDubMod) and treat it as raw video, allow you to
+add the chart audio and encode it together to produce a video.  Since each
+frame of the video is encoded one frame at a time and not recorded during
+playback, the resulting video is 100% lag and stutter free.
+
 
 1.71:
 

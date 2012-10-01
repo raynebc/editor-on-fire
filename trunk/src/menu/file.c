@@ -7,6 +7,7 @@
 #include "../midi_import.h"
 #include "../chart_import.h"
 #include "../gh_import.h"
+#include "../gp_import.h"
 #include "../main.h"
 #include "../player.h"
 #include "../dialog.h"
@@ -17,6 +18,7 @@
 #include "../feedback.h"
 #include "../dialog/proc.h"
 #include "../mix.h"
+#include "../tuning.h"
 #include "file.h"
 #include "song.h"
 #include "edit.h"	//For eof_menu_edit_undo()
@@ -38,6 +40,7 @@ MENU eof_file_menu[] =
     {"&Feedback Import\tF7", eof_menu_file_feedback_import, NULL, 0, NULL},
     {"&GH Import", eof_menu_file_gh_import, NULL, 0, NULL},
     {"Lyric Import\tF8", eof_menu_file_lyrics_import, NULL, 0, NULL},
+    {"Guitar Pro Import", eof_menu_file_gp_import, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"Settings\tF10", eof_menu_file_settings, NULL, 0, NULL},
     {"&Preferences\tF11", eof_menu_file_preferences, NULL, 0, NULL},
@@ -211,11 +214,12 @@ static int redefine_index = -1;
 void eof_prepare_file_menu(void)
 {
 	if(eof_song && eof_song_loaded)
-	{
+	{	//If a chart is loaded
 		eof_file_menu[2].flags = 0; // Save
 		eof_file_menu[3].flags = 0; // Save As
 		eof_file_menu[5].flags = 0; // Load OGG
 		eof_file_menu[10].flags = 0; // Lyric Import
+		eof_file_menu[11].flags = 0; // Guitar Pro Import
 	}
 	else
 	{
@@ -223,6 +227,7 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[3].flags = D_DISABLED; // Save As
 		eof_file_menu[5].flags = D_DISABLED; // Load OGG
 		eof_file_menu[10].flags = D_DISABLED; // Lyric Import
+		eof_file_menu[11].flags = D_DISABLED; // Guitar Pro Import
 	}
 }
 
@@ -2383,6 +2388,155 @@ char * eof_colors_list(int index, int * size)
 			return "Guitar Hero";
 		}
 
+	}
+	return NULL;
+}
+
+struct eof_guitar_pro_struct *eof_parsed_gp_file;
+
+DIALOG eof_gp_import_dialog[] =
+{
+   /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
+   { d_agup_window_proc,0,   48,  500, 232, 2,   23,  0,    0,      0,   0,   "Import which GP track into the project's active track?",       NULL, NULL },
+   { d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   eof_gp_tracks_list, NULL, NULL },
+   { d_agup_push_proc,  425, 84,  68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Import",      NULL, eof_gp_import_track },
+   { d_agup_button_proc,12,  235, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",        NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_gp_import_track(DIALOG * d)
+{
+	unsigned long ctr, selected;
+	int junk;
+	if(!d || d->d1 >= eof_parsed_gp_file->numtracks)
+		return 0;
+
+	if(eof_song && eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//Only perform this action if a pro guitar/bass track is active
+		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+		selected = eof_gp_import_dialog[1].d1;
+
+		if(eof_get_track_size(eof_song, eof_selected_track) && alert("This track already has notes", "Importing this GP track will overwrite this track's contents", "Continue", "&Yes", "&No", 'y', 'n') != 1)
+		{	//If the active track is already populated the the user doesn't opt to overwrite it
+			return 0;
+		}
+
+		eof_prepare_undo(EOF_UNDO_TYPE_GP_IMPORT);
+		eof_parsed_gp_file->track[selected]->parent = eof_song->pro_guitar_track[tracknum]->parent;
+		for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->notes; ctr++)
+		{	//For each note in the active track
+			free(eof_song->pro_guitar_track[tracknum]->note[ctr]);	//Free its memory
+		}
+		free(eof_song->pro_guitar_track[tracknum]);	//Free the active track
+		eof_song->pro_guitar_track[tracknum] = eof_parsed_gp_file->track[selected];	//Replace it with the track imported from the Guitar Pro file
+		free(eof_parsed_gp_file->names[selected]);	//Free the imported track's name
+		for(ctr = selected + 1; ctr < eof_parsed_gp_file->numtracks; ctr++)
+		{	//For all remaining tracks imported from the Guitar Pro file
+			eof_parsed_gp_file->track[ctr - 1] = eof_parsed_gp_file->track[ctr];	//Save this track into the previous track's index
+			eof_parsed_gp_file->names[ctr - 1] = eof_parsed_gp_file->names[ctr];	//Save this track's name into the previous track name's index
+		}
+		eof_parsed_gp_file->numtracks--;
+		dialog_message(eof_gp_import_dialog, MSG_DRAW, 0, &junk);	//Redraw the dialog since the list's contents have changed
+
+		//Correct the track's tuning array from absolute to relative
+		for(ctr = 0; ctr < 6; ctr++)
+		{	//For each of the 6 supported strings
+			int default_tuning = eof_lookup_default_string_tuning(eof_song->pro_guitar_track[tracknum], eof_selected_track, ctr);	//Get the default tuning for this string
+			if(default_tuning >= 0)
+			{	//If the default tuning was found
+				eof_song->pro_guitar_track[tracknum]->tuning[ctr] -= default_tuning;	//Convert the tuning to relative
+			}
+		}
+	}
+
+	return D_O_K;
+}
+
+int eof_menu_file_gp_import(void)
+{
+	char * returnedfn = NULL;
+	unsigned long ctr, ctr2;
+	unsigned long original_beat_count = eof_song->beats;	//The process of loading a Guitar Pro file can cause beats to be appended to the project, store the original number of beats present
+	int original_change_count = eof_change_count;	//Store the undo system's change counter to track whether an undo state was made (track was imported)
+
+	if(!eof_song || !eof_song_loaded)
+		return 1;	//For now, don't do anything unless a project is active
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Don't do anything unless the active track is a pro guitar/bass track
+
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	returnedfn = ncd_file_select(0, eof_last_eof_path, "Import Guitar Pro", eof_filter_gp_files);
+	eof_clear_input();
+	if(returnedfn)
+	{
+		eof_parsed_gp_file = eof_load_gp(returnedfn, NULL);	//Don't make an undo state if beats are added
+
+		if(eof_parsed_gp_file)
+		{	//The file was successfully parsed, allow the user to import a track into the active project
+			eof_cursor_visible = 0;
+			eof_render();
+			eof_color_dialog(eof_gp_import_dialog, gui_fg_color, gui_bg_color);
+			centre_dialog(eof_gp_import_dialog);
+			eof_popup_dialog(eof_gp_import_dialog, 0);
+			eof_cursor_visible = 1;
+			eof_pen_visible = 1;
+			eof_show_mouse(NULL);
+
+//Release the Guitar Pro structure's memory
+			for(ctr = 0; ctr < eof_parsed_gp_file->numtracks; ctr++)
+			{	//For each track parsed from the Guitar Pro file
+				free(eof_parsed_gp_file->names[ctr]);	//Free the track name string
+				for(ctr2 = 0; ctr2 < eof_parsed_gp_file->track[ctr]->notes; ctr2++)
+				{	//For each note in the track
+					free(eof_parsed_gp_file->track[ctr]->note[ctr2]);	//Free its memory
+				}
+				free(eof_parsed_gp_file->track[ctr]);	//Free the pro guitar track
+			}
+			free(eof_parsed_gp_file->names);
+			free(eof_parsed_gp_file->track);
+			free(eof_parsed_gp_file);
+		}
+		else
+		{
+			allegro_message("Failure");
+		}
+
+		if(original_change_count == eof_change_count)
+		{	//If no Guitar Pro tracks were imported
+			eof_song->beats = original_beat_count;	//Ignore the beats that were appended to the project
+		}
+		else
+		{
+			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+			eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to clean up the track
+			eof_menu_track_selected_track_number(eof_selected_track);	//Re-select the active track to allow for a change in string count
+		}
+	}
+	return 1;
+}
+
+char * eof_gp_tracks_list(int index, int * size)
+{
+	if(index < 0)
+	{	//Signal to return the list count
+		if(eof_parsed_gp_file)
+		{
+			*size = eof_parsed_gp_file->numtracks;
+		}
+		else
+		{	//eof_parsed_gp_file pointer is not valid
+			*size = 0;
+		}
+	}
+	else
+	{	//Return the specified list item
+		if(eof_parsed_gp_file && index < eof_parsed_gp_file->numtracks)
+		{	//eof_parsed_gp_file and the referenced track index are valid
+			return eof_parsed_gp_file->names[index];
+		}
 	}
 	return NULL;
 }

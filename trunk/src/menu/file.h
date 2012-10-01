@@ -19,6 +19,10 @@ extern DIALOG eof_file_new_windows_dialog[];
 extern DIALOG eof_lyric_detections_dialog[];	//The dialog used to prompt the user to select a MIDI track to import from
 extern struct Lyric_Format *lyricdetectionlist;	//Dialog windows cannot be passed local variables, requiring the use of this global variable
 
+extern struct eof_guitar_pro_struct *eof_parsed_gp_file;	//Dialog windows cannot be passed local variables, requiring the use of this global variable
+extern DIALOG eof_gp_import_dialog[];	//The dialog used to display the tracks imported from a Guitar Pro file, allowing one to overwrite the active pro guitar track
+int eof_gp_import_track(DIALOG * d);	//The function performed when the user selects and imports a track from the above dialog
+
 void eof_prepare_file_menu(void);
 
 int eof_menu_file_new_wizard(void);
@@ -103,5 +107,9 @@ int eof_menu_prompt_save_changes(void);
 	//Stops playback and if the chart is modified, prompt whether to save changes (Save/Discard/Cancel)
 	//If Save is selected, the chart is saved, otherwise modified chart audio is restored if necessary
 	//The user's answer to the prompt is returned (1=save, 2=discard, 3=cancel), otherwise 0 is returned if the chart isn't loaded/modified
+int eof_menu_file_gp_import(void);
+	//Loads each track from a Guitar Pro file and prompts user which to import into the active project
+char * eof_gp_tracks_list(int index, int * size);
+	//Dialog logic to display the imported pro guitar tracks present in the eof_parsed_gp_file global pointer
 
 #endif
