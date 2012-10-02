@@ -1713,6 +1713,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	struct eof_guitar_pro_struct *gp;
 	struct eof_gp_time_signature *tsarray;	//Stores all time signatures defined in the file
 	EOF_PRO_GUITAR_NOTE **np;	//Will store the last created note for each track (for handling tie notes)
+	char *hopo;	//Will store the fret value of the previous note marked as HO/PO (in GP, if note #N is marked for this, note #N+1 is the one that is a HO or PO), otherwise -1, for each track
 
 	eof_log("\tImporting Guitar Pro file", 1);
 	eof_log("eof_import_gp() entered", 1);
@@ -1959,7 +1960,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	gp->numtracks = tracks;
 	gp->names = malloc(sizeof(char *) * tracks);	//Allocate memory for track name strings
 	np = malloc(sizeof(EOF_PRO_GUITAR_NOTE *) * tracks);	//Allocate memory for the array of last created notes
-	if(!gp->names || !np)
+	hopo = malloc(sizeof(char) * tracks);	//Allocate memory for storing HOPO information
+	if(!gp->names || !np || !hopo)
 	{
 		eof_log("Error allocating memory (4)", 1);
 		pack_fclose(inf);
@@ -1968,6 +1970,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		return NULL;
 	}
 	memset(np, 0, sizeof(EOF_PRO_GUITAR_NOTE *) * tracks);	//Set all last created note pointers to NULL
+	memset(hopo, -1, sizeof(char) * tracks);	//Set all tracks to have no HOPO status
 	gp->track = malloc(sizeof(EOF_PRO_GUITAR_TRACK *) * tracks);	//Allocate memory for pro guitar track pointers
 	if(!gp->track)
 	{
@@ -1975,6 +1978,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		pack_fclose(inf);
 		free(gp->names);
 		free(np);
+		free(hopo);
 		free(gp);
 		free(tsarray);
 		return NULL;
@@ -1994,6 +1998,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			}
 			free(gp->track);	//Free array of track pointers
 			free(np);
+			free(hopo);
 			free(gp);
 			free(tsarray);
 			return NULL;
@@ -2024,6 +2029,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(gp->track[ctr]);
 		}
 		free(np);
+		free(hopo);
 		free(gp);
 		free(tsarray);
 		return NULL;
@@ -2093,10 +2099,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		tsarray[ctr].den = curden;
 		totalbeats += curnum;		//Add the number of beats in this measure to the ongoing counter
 	}//For each measure
-	if(eof_song->beats < totalbeats + 1)
+	if(eof_song->beats < totalbeats + 2)
 	{	//If there will be beats appended to the project to encompass the guitar pro file's tracks
 #ifdef GP_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string), "\tAppending %lu beats to project so that guitar pro transcriptions will fit", totalbeats + 1 - eof_song->beats);
+		snprintf(eof_log_string, sizeof(eof_log_string), "\tAppending %lu beats to project so that guitar pro transcriptions will fit", totalbeats + 2 - eof_song->beats);
 		eof_log(eof_log_string, 1);
 #endif
 		if(undo_made)
@@ -2104,30 +2110,33 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			*undo_made = 1;
 		}
-	}
-	while(eof_song->beats < totalbeats + 1)
-	{	//Until the loaded project has enough beats to contain the Guitar Pro transcriptions, and one extra
-		if(!eof_song_add_beat(eof_song))
-		{
-			eof_log("Error allocating memory (8)", 1);
-			pack_fclose(inf);
-			free(gp->names);
-			for(ctr = 0; ctr < tracks; ctr++)
-			{	//Free all previously allocated track structures
-				free(gp->track[ctr]);
+		while(eof_song->beats < totalbeats + 2)
+		{	//Until the loaded project has enough beats to contain the Guitar Pro transcriptions, and two extra to allow room for processing beat lengths later
+			if(!eof_song_add_beat(eof_song))
+			{
+				eof_log("Error allocating memory (8)", 1);
+				pack_fclose(inf);
+				free(gp->names);
+				for(ctr = 0; ctr < tracks; ctr++)
+				{	//Free all previously allocated track structures
+					free(gp->track[ctr]);
+				}
+				free(np);
+				free(hopo);
+				free(gp);
+				free(tsarray);
+				return NULL;
 			}
-			free(np);
-			free(gp);
-			free(tsarray);
-			return NULL;
+			eof_song->beat[eof_song->beats - 1]->ppqn = eof_song->beat[eof_song->beats - 2]->ppqn;	//Match the tempo of the previously last beat
+			double beat_length = (double)60000.0 / ((double)60000000.0 / (double)eof_song->beat[eof_song->beats - 2]->ppqn);	//Get the length of the previously last beat
+			eof_song->beat[eof_song->beats - 1]->fpos = eof_song->beat[eof_song->beats - 2]->fpos + beat_length;
+			eof_song->beat[eof_song->beats - 1]->pos = eof_song->beat[eof_song->beats - 1]->fpos + 0.5;	//Round up
 		}
-		eof_song->beat[eof_song->beats - 1]->ppqn = eof_song->beat[eof_song->beats - 2]->ppqn;	//Match the tempo of the previously last beat
-		double beat_length = (double)60000.0 / ((double)60000000.0 / (double)eof_song->beat[eof_song->beats - 2]->ppqn);	//Get the length of the previously last beat
-		eof_song->beat[eof_song->beats - 1]->fpos = eof_song->beat[eof_song->beats - 2]->fpos + beat_length;
-		eof_song->beat[eof_song->beats - 1]->pos = eof_song->beat[eof_song->beats - 1]->fpos + 0.5;	//Round up
+		eof_music_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
 	}
 	if(!eof_song->tags->tempo_map_locked)
 	{	//If the active project's tempo map isn't locked
+		eof_clear_input();
 		if(alert(NULL, "Import Guitar Pro file's time signatures?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 		{	//If user opts to import the TS changes into the active project
 			curnum = curden = 0;
@@ -2200,6 +2209,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				free(gp->track[ctr]);
 			}
 			free(np);
+			free(hopo);
 			free(gp);
 			free(tsarray);
 			return NULL;
@@ -2293,7 +2303,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	double measure_position;		//Tracks the current position as a percentage within the current measure
 	unsigned long flags;			//Tracks the flags for the current note
 	char new_note;					//Tracks whether a new note is to be created
-///	EOF_PRO_GUITAR_NOTE *np = NULL;	//Stores the last created note (which will be updated if a tie note is encountered)
 	for(ctr = 0; ctr < measures; ctr++)
 	{	//For each measure
 		curnum = tsarray[ctr].num;	//Obtain the time signature for this measure
@@ -2329,6 +2338,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					if(bytemask & 32)
 					{	//Beat is an N-tuplet
 						pack_ReadDWORDLE(inf, &dword);	//Number of notes played within the "tuplet" (ie. 3 = triplet)
+						note_duration = 1.0 / (double)curnum / (double)dword;	//A tuplet is one beat divided into equally-long parts (ie. a triplet is 1/3 of one beat)
 					}
 					if(bytemask & 2)
 					{	//Beat has a chord diagram
@@ -2641,6 +2651,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						}
 					}//Beat has mix table change
 					usedstrings = pack_getc(inf);	//Used strings bitmask
+					char ghost = 0;	//Track the ghost status for notes
 					unsigned bitmask;
 					unsigned char frets[7];		//Store fret values for each string
 					for(ctr4 = 0, bitmask = 64; ctr4 < 7; ctr4++, bitmask>>=1)
@@ -2673,6 +2684,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									new_note = 1;
 								}
 							}
+							if(bytemask & 4)
+							{	//Ghost note
+								ghost |= bitmask;	//Mark this string as being ghosted
+							}
 							if((bytemask & 1) && (fileversion < 500))
 							{	//Time independent duration (for versions of the format older than 5.x)
 								byte = pack_getc(inf);	//Time independent duration value
@@ -2687,6 +2702,18 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								byte = pack_getc(inf);	//Fret number
 								frets[ctr4] |= byte;	//OR this value, so that the muted status can be kept if it is set
 							}
+							if(hopo[ctr2] >= 0)
+							{	//If the previous note was marked as leading into a hammer on or pull off with the next (this) note
+								if(byte < hopo[ctr2])
+								{	//If this note is a lower fret than the previous note
+									flags |= EOF_PRO_GUITAR_NOTE_FLAG_PO;	//This note is a pull off
+								}
+								else
+								{	//Otherwise this note is a hammer on
+									flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;
+								}
+							}
+							hopo[ctr2] = -1;	//Reset this status before it is checked if this note is marked (to signal the next note being HO/PO)
 							if(bytemask & 128)
 							{	//Right/left hand fingering
 								byte = pack_getc(inf);	//Left hand fingering
@@ -2714,8 +2741,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
 								}
 								if(byte1 & 2)
-								{	//Hammer on/pull off from current note
-									flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;
+								{	//Hammer on/pull off from current note (next note gets the HO/PO status)
+									hopo[ctr2] = frets[ctr4] & 0x8F;	//Store the fret value (masking out the MSB ghost bit) so that the next note can be determined as either a HO or a PO
 								}
 								if(byte1 & 4)
 								{	//Slide from current note (GP3 format indicator)
@@ -2761,6 +2788,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								}
 								if(byte2 & 16)
 								{	//Harmonic
+									flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
 									byte = pack_getc(inf);	//Harmonic type
 									if(byte == 2)
 									{	//Artificial harmonic
@@ -2813,6 +2841,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								free(gp->track[ctr]);
 							}
 							free(np);
+							free(hopo);
 							free(gp);
 							free(tsarray);
 							return NULL;
@@ -2827,6 +2856,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						np[ctr2]->midi_pos = 0;
 						np[ctr2]->name[0] = '\0';
 						np[ctr2]->note = usedstrings >> (7 - strings[ctr2]);	//Guitar pro's note bitmask reflects string 7 being the LSB
+						np[ctr2]->ghost = ghost >> (7 - strings[ctr2]);	//Likewise translate the ghost bit mask
 						np[ctr2]->type = EOF_NOTE_AMAZING;
 
 //Determine the correct timestamp position and duration
@@ -2961,6 +2991,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	free(strings);
 	free(tsarray);
 	free(np);
+	free(hopo);
 	puts("\nSuccess");
 	return gp;
 }

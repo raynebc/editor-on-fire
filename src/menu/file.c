@@ -2476,6 +2476,7 @@ int eof_menu_file_gp_import(void)
 
 		if(eof_parsed_gp_file)
 		{	//The file was successfully parsed, allow the user to import a track into the active project
+			eof_clear_input();
 			eof_cursor_visible = 0;
 			eof_render();
 			eof_color_dialog(eof_gp_import_dialog, gui_fg_color, gui_bg_color);
