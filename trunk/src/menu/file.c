@@ -2456,7 +2456,7 @@ int eof_menu_file_gp_import(void)
 {
 	char * returnedfn = NULL;
 	unsigned long ctr, ctr2;
-	unsigned long original_beat_count = eof_song->beats;	//The process of loading a Guitar Pro file can cause beats to be appended to the project, store the original number of beats present
+	unsigned long original_beat_count;				//The process of loading a Guitar Pro file can cause beats to be appended to the project, store the original number of beats present
 	int original_change_count = eof_change_count;	//Store the undo system's change counter to track whether an undo state was made (track was imported)
 
 	if(!eof_song || !eof_song_loaded)
@@ -2465,6 +2465,7 @@ int eof_menu_file_gp_import(void)
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Don't do anything unless the active track is a pro guitar/bass track
 
+	original_beat_count = eof_song->beats;
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();

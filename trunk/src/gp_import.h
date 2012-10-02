@@ -14,6 +14,18 @@
 	void eof_gp_debug_log(FILE *inf, char *text);		//Prints the current file position and the specified string to the console
 	extern char *eof_note_names[12];
 #else
+	struct eof_guitar_pro_struct
+	{
+		unsigned long numtracks;		//The number of tracks loaded from the guitar pro file
+		char **names;					//An array of strings, representing the native name of each loaded track
+		EOF_PRO_GUITAR_TRACK **track;	//An array of pro guitar track pointers, representing the imported note data of each loaded track
+	};
+
+	struct eof_gp_time_signature
+	{
+		unsigned char num, den;		//The 8 bit numerator and denominator defined in guitar pro time signatures
+	};
+
 	void eof_gp_debug_log(PACKFILE *inf, char *text);
 		//Does nothing in the EOF build
 	EOF_SONG *eof_import_gp(const char * fn);
@@ -24,18 +36,6 @@
 		//NOTE:  Beats are added to the current project if there aren't as many as defined in the GP file.
 		//For this reason, an undo state will be made if undo_made is not NULL, and the referenced memory will be set to nonzero if an undo state is made
 #endif
-
-struct eof_guitar_pro_struct
-{
-	unsigned long numtracks;		//The number of tracks loaded from the guitar pro file
-	char **names;					//An array of strings, representing the native name of each loaded track
-	EOF_PRO_GUITAR_TRACK **track;	//An array of pro guitar track pointers, representing the imported note data of each loaded track
-};
-
-struct eof_gp_time_signature
-{
-	unsigned char num, den;		//The 8 bit numerator and denominator defined in guitar pro time signatures
-};
 
 void pack_ReadWORDLE(PACKFILE *inf, unsigned *data);
 	//Read a little endian format 2 byte integer from the specified file.  If data isn't NULL, the value is stored into it.

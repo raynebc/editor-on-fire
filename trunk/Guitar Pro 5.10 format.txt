@@ -601,7 +601,8 @@ Bit 7 (MSB):	Unused (set to 0)
 
 The beat effects bitmasks declare which parameters are defined for the beat:
 Byte 1
- Bits 0 - 1:		Unknown
+ Bit 0:			Unknown
+ Bit 1:			Wide vibrato
  Bit 2:			Natural harmonic
  Bit 3:			Artificial harmonic
  Bit 4:			Unknown
