@@ -1198,6 +1198,10 @@ EOF_SONG *parse_gp(const char * fn)
 								puts("\t\tRasguedo");
 							}
 						}
+						if(byte1 & 2)
+						{
+							puts("\t\t(Wide vibrato)");
+						}
 						if(byte1 & 4)
 						{
 							puts("\t\t(Natural harmonic)");
@@ -1700,7 +1704,7 @@ int main(int argc, char *argv[])
 	return 0;	//Return success
 }
 
-#endif
+#else
 
 #define GP_IMPORT_DEBUG
 
@@ -1798,7 +1802,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		return NULL;
 	}
 #ifdef GP_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string), "\tParsing version %d guitar pro file", fileversion);
+	snprintf(eof_log_string, sizeof(eof_log_string), "\tParsing version %u guitar pro file", fileversion);
 	eof_log(eof_log_string, 1);
 #endif
 
@@ -2125,6 +2129,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				free(hopo);
 				free(gp);
 				free(tsarray);
+				free(strings);
 				return NULL;
 			}
 			eof_song->beat[eof_song->beats - 1]->ppqn = eof_song->beat[eof_song->beats - 2]->ppqn;	//Match the tempo of the previously last beat
@@ -2212,6 +2217,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(hopo);
 			free(gp);
 			free(tsarray);
+			free(strings);
 			return NULL;
 		}
 		strcpy(gp->names[ctr], buffer);
@@ -2476,6 +2482,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							if(byte2 & 1)
 							{	//Rasguedo
 							}
+						}
+						if(byte1 & 2)
+						{	//Wide vibrato
+							flags |= EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
 						}
 						if(byte1 & 4)
 						{	//Natural harmonic
@@ -2844,6 +2854,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							free(hopo);
 							free(gp);
 							free(tsarray);
+							free(strings);
 							return NULL;
 						}
 						np[ctr2]->flags = flags;
@@ -2995,3 +3006,5 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	puts("\nSuccess");
 	return gp;
 }
+
+#endif
