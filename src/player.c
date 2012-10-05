@@ -46,13 +46,13 @@ void eof_music_play(void)
 			eof_music_pos = eof_music_actual_pos;
 		}
 	}
-	else
-	{
+	else if(eof_music_pos - eof_av_delay < eof_music_length)
+	{	//Otherwise if the seek position is before the end of the audio, begin playback
 		eof_log("\tStarting playback", 1);
 		if(key[KEY_S] && (eof_count_selected_notes(NULL, 0) > 0))
 		{
 			eof_music_end_pos = 0;
-			eof_music_rewind_pos = eof_music_length;
+			eof_music_rewind_pos = eof_chart_length;
 			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 			{	//For each note in the current track
 				if(eof_selection.multi[i] && (eof_get_note_pos(eof_song, eof_selected_track, i) + eof_get_note_length(eof_song, eof_selected_track, i) > eof_music_end_pos))
@@ -110,6 +110,10 @@ void eof_music_play(void)
 			allegro_message("Can't play song!");
 			eof_music_paused = 1;
 		}
+	}
+	else
+	{	//Otherwise ensure chart stays paused
+		eof_music_paused = 1;
 	}
 }
 
@@ -203,7 +207,7 @@ void eof_music_rewind(void)
 void eof_music_forward(void)
 {
 	eof_log("eof_music_forward() entered", 2);
-	int amount = 0;
+	int amount = 0, target;
 
 	eof_stop_midi();
 	if(!eof_music_catalog_playback)
@@ -228,6 +232,11 @@ void eof_music_forward(void)
 		{
 			amount = 100;
 		}
-		eof_set_seek_position(eof_music_pos + amount);
+		target = eof_music_pos + amount;
+		if(target > eof_chart_length)
+		{	//If the seek would exceed the end of the chart
+			target = eof_chart_length;
+		}
+		eof_set_seek_position(target);
 	}
 }

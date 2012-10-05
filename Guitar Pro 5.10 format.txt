@@ -372,8 +372,8 @@ TRACK CHUNK, for each track:
 						[varies]:	BEND CHUNK (defined in notes section)
 					!STROKE EFFECT (if the beat effects bitmask declares this effect):
 					{
-						[1 byte]:	Downstroke speed (0 = none, 1 = 128th note, 2 = 64th note, 3 = 32nd note, 4 = 16th note, 5 = 8th note, 4 = quarter note)
 						[1 byte]:	Upstroke speed (0 = none, 1 = 128th note, 2 = 64th note, 3 = 32nd note, 4 = 16th note, 5 = 8th note, 4 = quarter note)
+						[1 byte]:	Downstroke speed (0 = none, 1 = 128th note, 2 = 64th note, 3 = 32nd note, 4 = 16th note, 5 = 8th note, 4 = quarter note)
 					}
 					!PICKSTROKE EFFECT (if the beat effects bitmask declares this effect):
 						[1 byte]:	Stroke direction? (0 = none, 1 = up, 2 = down)
@@ -482,7 +482,7 @@ TRACK CHUNK, for each track:
 						!TREMOLO PICKING (if the note effect 2 bitmask defines this)
 							[1 byte]:	Picking speed (3 = 32nd note, 2 = 16th note, 1 = 8th note)
 						!SLIDE (if the note effect 2 bitmask defines this)
-							[1 byte]:	Slide type (-2 = slide into from above, -1 = slide into from below, 0 = no slide, 1 = shift slide, 2 = legato slide, 3 = slide out of downwards, 4 = slide out of upwards)
+							[1 byte]:	Slide type bitmask (0 = no slide, 1 = shift slide, 2 = legato slide, 4 = slide out and downwards, 8 = slide out and upwards, 16 = slide in from below, 32 = slide in from above)
 						!HARMONIC (if the note effect 2 bitmask defines this)
 						{
 							[1 byte]:	Harmonic type (0 = none, 1 = Natural, 2 = Artificial, 3 = Tapped, 4 = Pinch, 5 = Semi)
@@ -601,7 +601,7 @@ Bit 7 (MSB):	Unused (set to 0)
 
 The beat effects bitmasks declare which parameters are defined for the beat:
 Byte 1
- Bit 0:			Unknown
+ Bit 0:			Vibrato
  Bit 1:			Wide vibrato
  Bit 2:			Natural harmonic
  Bit 3:			Artificial harmonic

@@ -236,8 +236,8 @@ extern char        eof_changes;
 extern ALOGG_OGG * eof_music_track;
 extern void      * eof_music_data;
 extern int         eof_music_data_size;
+extern int         eof_chart_length;
 extern int         eof_music_length;
-extern int         eof_music_actual_length;
 extern int         eof_music_pos;
 extern int         eof_music_actual_pos;
 extern int         eof_music_rewind_pos;
@@ -455,7 +455,7 @@ void eof_determine_phrase_status(unsigned long track);
 	//Re-applies the HOPO, SP, trill and tremolo status of each note in the specified track, as well as deleting empty SP, Solo, trill, tremolo and arpeggio phrases
 void eof_fix_window_title(void);
 int eof_load_ogg_quick(char * filename);
-int eof_load_ogg(char * filename);	//Loads the specified OGG file.  Upon success, eof_loaded_ogg_name is updated and nonzero is returned.
+int eof_load_ogg(char * filename);	//Loads the specified OGG file, or if it does not exist, have the user browse for an audio file.  Upon success, eof_loaded_ogg_name is updated and nonzero is returned.
 int eof_load_complete_song(char * filename);
 int eof_destroy_ogg(void);	//Frees chart audio
 int eof_save_ogg(char * fn);

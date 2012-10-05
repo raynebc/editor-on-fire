@@ -452,7 +452,7 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 		}
 
 		/* delete certain notes */
-		if((tp->note[i-1]->note == 0) || ((tp->note[i-1]->type < 0) || (tp->note[i-1]->type > 4)) || (tp->note[i-1]->pos < sp->tags->ogg[eof_selected_ogg].midi_offset) || (tp->note[i-1]->pos >= eof_music_length))
+		if((tp->note[i-1]->note == 0) || ((tp->note[i-1]->type < 0) || (tp->note[i-1]->type > 4)) || (tp->note[i-1]->pos < sp->tags->ogg[eof_selected_ogg].midi_offset) || (tp->note[i-1]->pos >= eof_chart_length))
 		{	//Delete the note if all lanes are clear, if it is an invalid type, if the position is before the first beat marker or if it is after the last beat marker
 			eof_legacy_track_delete_note(tp, i-1);
 		}
@@ -466,9 +466,9 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 			}
 
 			/* make sure note doesn't extend past end of song */
-			if(tp->note[i-1]->pos + tp->note[i-1]->length >= eof_music_length)
+			if(tp->note[i-1]->pos + tp->note[i-1]->length >= eof_chart_length)
 			{
-				tp->note[i-1]->length = eof_music_length - tp->note[i-1]->pos;
+				tp->note[i-1]->length = eof_chart_length - tp->note[i-1]->pos;
 			}
 
 			/* compare this note to the next one of the same type
@@ -747,7 +747,7 @@ void eof_vocal_track_fixup_lyrics(EOF_SONG *sp, unsigned long track, int sel)
 		}
 
 		/* delete certain notes */
-		if((tp->lyric[i-1]->pos < sp->tags->ogg[eof_selected_ogg].midi_offset) || (tp->lyric[i-1]->pos >= eof_music_length))
+		if((tp->lyric[i-1]->pos < sp->tags->ogg[eof_selected_ogg].midi_offset) || (tp->lyric[i-1]->pos >= eof_chart_length))
 		{
 			eof_vocal_track_delete_lyric(tp, i-1);
 		}
@@ -761,9 +761,9 @@ void eof_vocal_track_fixup_lyrics(EOF_SONG *sp, unsigned long track, int sel)
 			}
 
 			/* make sure note doesn't extend past end of song */
-			if(tp->lyric[i-1]->pos + tp->lyric[i-1]->length >= eof_music_length)
+			if(tp->lyric[i-1]->pos + tp->lyric[i-1]->length >= eof_chart_length)
 			{
-				tp->lyric[i-1]->length = eof_music_length - tp->lyric[i-1]->pos;
+				tp->lyric[i-1]->length = eof_chart_length - tp->lyric[i-1]->pos;
 			}
 
 			/* compare this note to the next one of the same type
@@ -3150,7 +3150,6 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long
 
 			case EOF_PRO_GUITAR_TRACK_FORMAT:
 				ptr3 = (EOF_PRO_GUITAR_NOTE *)new_note;
-				ptr3->number = 0;	//Not implemented yet
 				if(text != NULL)
 				{
 					ustrncpy(ptr3->name, text, EOF_NAME_LENGTH);
@@ -3572,7 +3571,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 		}
 
 		/* delete certain notes */
-		if((tp->note[i-1]->note == 0) || ((tp->note[i-1]->type < 0) || (tp->note[i-1]->type > 4)) || (tp->note[i-1]->pos < sp->tags->ogg[eof_selected_ogg].midi_offset) || (tp->note[i-1]->pos >= eof_music_length))
+		if((tp->note[i-1]->note == 0) || ((tp->note[i-1]->type < 0) || (tp->note[i-1]->type > 4)) || (tp->note[i-1]->pos < sp->tags->ogg[eof_selected_ogg].midi_offset) || (tp->note[i-1]->pos >= eof_chart_length))
 		{	//If the note is not valid
 			eof_pro_guitar_track_delete_note(tp, i-1);
 		}
@@ -3585,9 +3584,9 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 			}
 
 			/* make sure note doesn't extend past end of song */
-			if(tp->note[i-1]->pos + tp->note[i-1]->length >= eof_music_length)
+			if(tp->note[i-1]->pos + tp->note[i-1]->length >= eof_chart_length)
 			{
-				tp->note[i-1]->length = eof_music_length - tp->note[i-1]->pos;
+				tp->note[i-1]->length = eof_chart_length - tp->note[i-1]->pos;
 			}
 
 			/* compare this note to the next one of the same type
@@ -4647,7 +4646,7 @@ int eof_create_image_sequence(void)
 	eof_music_pos = eof_music_actual_pos + eof_av_delay;
 	clear_to_color(eof_screen, makecol(224, 224, 224));
 	blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
-	while(eof_music_pos <  eof_music_actual_length)
+	while(eof_music_pos <  eof_music_length)
 	{
 		if(key[KEY_ESC])
 			break;
@@ -4657,7 +4656,7 @@ int eof_create_image_sequence(void)
 		//Update EOF's window title to provide a status
 			curtime = clock();	//Get the current time
 			fps = (float)(framectr - lastpollctr) / ((float)(curtime - lastpolltime) / (float)CLOCKS_PER_SEC);	//Find the number of FPS rendered since the last poll
-			snprintf(windowtitle, sizeof(windowtitle)-1, "Exporting image sequence: %.2f%% (%.2fFPS) - Press Esc to cancel",(float)eof_music_pos/(float)eof_music_actual_length * 100.0, fps);
+			snprintf(windowtitle, sizeof(windowtitle)-1, "Exporting image sequence: %.2f%% (%.2fFPS) - Press Esc to cancel",(float)eof_music_pos/(float)eof_music_length * 100.0, fps);
 			set_window_title(windowtitle);
 			refreshctr -= 10;
 			lastpolltime = curtime;
@@ -5246,4 +5245,88 @@ unsigned long eof_get_highest_fret_value(EOF_SONG *sp, unsigned long track, unsi
 	}
 
 	return highestfret;
+}
+
+unsigned long eof_determine_chart_length(EOF_SONG *sp)
+{
+	unsigned long lastitempos = 0;	//This will track the position of the last text event, or the end of the last note/lyric, whichever is later
+	unsigned long ctr, ctr2, thisendpos, thiseventbeat;
+
+	if(!sp)
+		return 0;
+
+	//Check notes
+	for(ctr = 0; ctr < sp->tracks; ctr++)
+	{	//For each track in the project
+		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
+		{	//For each note/lyric in the track
+			thisendpos = eof_get_note_pos(sp, ctr, ctr2) + eof_get_note_length(sp, ctr, ctr2);	//The end position of this note/lyric
+			if(thisendpos > lastitempos)
+			{
+				lastitempos = thisendpos;	//Track the end position of the last note/lyric
+			}
+		}
+	}
+
+	//Check text events
+	for(ctr = 0; ctr < sp->text_events; ctr++)
+	{	//For each text event in the project
+		thiseventbeat = sp->text_event[ctr]->beat;
+		if(thiseventbeat < sp->beats)
+		{	//If this text event is on a valid beat marker
+			thisendpos = sp->beat[thiseventbeat]->pos;
+			if(thisendpos > lastitempos)
+			{	//If this text event is later than all of the notes/lyrics in the project
+				lastitempos = thisendpos;	//Track its position
+			}
+		}
+	}
+
+	//Check bookmarks
+	for(ctr = 0; ctr < EOF_MAX_BOOKMARK_ENTRIES; ctr++)
+	{	//For each bookmark
+		if(sp->bookmark_pos[ctr] && (sp->bookmark_pos[ctr] > lastitempos))
+		{	//If this bookmark is defined and it is later than the last note/lyric/text event
+			lastitempos = sp->bookmark_pos[ctr];	//Track its position
+		}
+	}
+
+	return lastitempos;
+}
+
+void eof_truncate_chart(EOF_SONG *sp)
+{
+	unsigned long ctr, targetpos, targetbeat;
+
+	if(!sp)
+		return;
+
+	targetpos = eof_determine_chart_length(sp);	//Find the chart native length
+
+	//Determine the larger of the last item position and the end of the loaded audio
+	if(eof_music_length > targetpos)
+	{
+		targetpos = eof_music_length;
+	}
+
+	//Find the beat that precedes the target position
+	for(targetbeat = 0; targetbeat < sp->beats; targetbeat++)
+	{	//For each beat
+		if((targetbeat + 1 >= sp->beats) || (sp->beat[targetbeat + 1]->pos > targetpos))
+		{	//If this is the last beat, or the next beat is after the target position
+			break;
+		}
+	}
+	double beat_length = (double)60000.0 / ((double)60000000.0 / (double)sp->beat[targetbeat]->ppqn);	//Get the length of the beat
+	targetpos = sp->beat[targetbeat]->pos + beat_length + beat_length + 0.5;	//The chart length will be resized to last to the end of the last beat that has contents/audio, and another beat further for padding
+	eof_chart_length = targetpos;	//Resize the chart length accordingly
+
+	//Truncate empty beats
+	for(ctr = sp->beats; ctr > 0; ctr--)
+	{	//For each beat (in reverse order)
+		if(sp->beat[ctr - 1]->pos > eof_chart_length)
+		{	//If this beat is beyond the end of the populated chart and the audio
+			eof_song_delete_beat(sp, ctr - 1);	//Remove it from the end of the chart
+		}
+	}
 }

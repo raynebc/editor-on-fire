@@ -149,9 +149,9 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 	{
 		sp->pos = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
 	}
-	else if(sp->pos >= eof_music_length)
+	else if(sp->pos >= eof_chart_length)
 	{
-		sp->pos = eof_music_length - 1;
+		sp->pos = eof_chart_length - 1;
 	}
 
 	if(eof_snap_mode != EOF_SNAP_OFF)
@@ -587,20 +587,28 @@ if(key[KEY_PAUSE])
 
 	/* seek to last note (CTRL+End) */
 	/* select rest (SHIFT+End) */
-	/* seek to end (End) */
+	/* seek to end of audio (End) */
+	/* seek to end of chart (CTRL+SHIFT+End) */
 	if(key[KEY_END])
 	{
 		if(KEY_EITHER_CTRL)
 		{
-			eof_menu_song_seek_last_note();
+			if(KEY_EITHER_SHIFT)
+			{	//If both SHIFT and CTRL are being held
+				eof_menu_song_seek_chart_end();
+			}
+			else
+			{	//If only CTRL is being held
+				eof_menu_song_seek_last_note();
+			}
 		}
 		else if(KEY_EITHER_SHIFT)
-		{
+		{	//If only SHIFT is being held
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			eof_menu_edit_select_rest();
 		}
 		else
-		{
+		{	//If neither SHIFT nor CTRL are being held
 			eof_menu_song_seek_end();
 		}
 		key[KEY_END] = 0;
@@ -3089,10 +3097,10 @@ void eof_editor_logic(void)
 							eof_move_note_pos(eof_song, eof_selected_track, i, move_offset, move_direction);
 							notepos = eof_get_note_pos(eof_song, eof_selected_track, i);	//Get the updated note position
 							notelength = eof_get_note_length(eof_song, eof_selected_track, i);
-							if(notepos + notelength >= eof_music_length)
+							if(notepos + notelength >= eof_chart_length)
 							{	//If the moved note is at or after the end of the chart
 								revert |= 1;
-								revert_amount = notepos + notelength - eof_music_length;	//This positive value will be subtracted from the note via the revert loop
+								revert_amount = notepos + notelength - eof_chart_length;	//This positive value will be subtracted from the note via the revert loop
 							}
 							else if(notepos <= eof_song->beat[0]->pos)
 							{	//If the moved note is at or before the first beat marker
@@ -3117,7 +3125,7 @@ void eof_editor_logic(void)
 					}
 				}
 			}//If the left mouse button is being held
-			if(!eof_full_screen_3d && ((mouse_b & 2) || key[KEY_INSERT]) && eof_rclick_released && eof_pen_note.note && (eof_pen_note.pos < eof_music_length))
+			if(!eof_full_screen_3d && ((mouse_b & 2) || key[KEY_INSERT]) && eof_rclick_released && eof_pen_note.note && (eof_pen_note.pos < eof_chart_length))
 			{	//Full screen 3D view is not in effect, right mouse click or Insert key pressed, and the pen note is valid
 				eof_selection.range_pos_1 = 0;
 				eof_selection.range_pos_2 = 0;
@@ -3825,10 +3833,10 @@ void eof_vocal_editor_logic(void)
 							}
 							eof_move_note_pos(eof_song, eof_selected_track, i, move_offset, move_direction);
 							notepos = eof_get_note_pos(eof_song, eof_selected_track, i);	//Get the updated lyric position
-							if(notepos + eof_song->vocal_track[tracknum]->lyric[i]->length >= eof_music_length)
+							if(notepos + eof_song->vocal_track[tracknum]->lyric[i]->length >= eof_chart_length)
 							{
 								revert = 1;
-								revert_amount = notepos + eof_song->vocal_track[tracknum]->lyric[i]->length - eof_music_length;
+								revert_amount = notepos + eof_song->vocal_track[tracknum]->lyric[i]->length - eof_chart_length;
 							}
 						}
 					}
@@ -3844,7 +3852,7 @@ void eof_vocal_editor_logic(void)
 					}
 				}
 			}//If full screen 3D view is not in effect, the left mouse button is being held and the mouse is right of the left edge of the piano roll
-			if(!eof_full_screen_3d && ((((eof_input_mode != EOF_INPUT_REX) && ((mouse_b & 2) || key[KEY_INSERT])) || (((eof_input_mode == EOF_INPUT_REX) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL && (key[KEY_1] || key[KEY_2] || key[KEY_3] || key[KEY_4] || key[KEY_5] || key[KEY_6])) && eof_rclick_released && (eof_pen_lyric.pos < eof_music_length))) || key[KEY_BACKSPACE]))
+			if(!eof_full_screen_3d && ((((eof_input_mode != EOF_INPUT_REX) && ((mouse_b & 2) || key[KEY_INSERT])) || (((eof_input_mode == EOF_INPUT_REX) && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL && (key[KEY_1] || key[KEY_2] || key[KEY_3] || key[KEY_4] || key[KEY_5] || key[KEY_6])) && eof_rclick_released && (eof_pen_lyric.pos < eof_chart_length))) || key[KEY_BACKSPACE]))
 			{	//If full screen 3D view is not in effect and input to add a note is provided
 				eof_selection.range_pos_1 = 0;
 				eof_selection.range_pos_2 = 0;
@@ -4225,7 +4233,7 @@ void eof_render_editor_window(void)
 			}
 		}
 	}
-	if(eof_music_paused && eof_pen_visible && (eof_pen_note.pos < eof_music_length))
+	if(eof_music_paused && eof_pen_visible && (eof_pen_note.pos < eof_chart_length))
 	{
 		if(!eof_mouse_drug)
 		{
@@ -4272,7 +4280,7 @@ void eof_render_vocal_editor_window(void)
 
 	/* clear lyric text area */
 	rectfill(eof_window_editor->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, eof_window_editor->w - 1, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, eof_color_black);
-	hline(eof_window_editor->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, lpos + (eof_music_length) / eof_zoom, eof_color_white);
+	hline(eof_window_editor->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, lpos + (eof_chart_length) / eof_zoom, eof_color_white);
 
 	/* draw lyric lines */
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lines; i++)
@@ -4296,7 +4304,7 @@ void eof_render_vocal_editor_window(void)
 			}
 		}
 	}
-	if(eof_music_paused && eof_pen_visible && (eof_pen_note.pos < eof_music_length))
+	if(eof_music_paused && eof_pen_visible && (eof_pen_note.pos < eof_chart_length))
 	{
 		if(!eof_mouse_drug)
 		{
@@ -4614,14 +4622,14 @@ void eof_render_editor_window_common(void)
 	{
 		if(!i || (i + 1 >= numlanes))
 		{	//Ensure the top and bottom lines extend to the left of the piano roll
-			hline(eof_window_editor->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_music_length) / eof_zoom, eof_color_white);
+			hline(eof_window_editor->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_chart_length) / eof_zoom, eof_color_white);
 		}
 		else if(eof_selected_track != EOF_TRACK_VOCALS)
 		{	//Otherwise, if not drawing the vocal editor, draw the other fret lines from the first beat marker to the end of the chart
-			hline(eof_window_editor->screen, lpos + eof_song->tags->ogg[eof_selected_ogg].midi_offset / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_music_length) / eof_zoom, eof_color_white);
+			hline(eof_window_editor->screen, lpos + eof_song->tags->ogg[eof_selected_ogg].midi_offset / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_chart_length) / eof_zoom, eof_color_white);
 		}
 	}
-	vline(eof_window_editor->screen, lpos + (eof_music_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
+	vline(eof_window_editor->screen, lpos + (eof_chart_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
 
 	/* draw second markers */
 	unsigned long msec,roundedstart;
@@ -4631,7 +4639,7 @@ void eof_render_editor_window_common(void)
 	{	//Draw up to 1 second beyond the right edge of the screen's worth of second markers
 		pmin = msec / 60000;		//Find minute count of this second marker
 		psec = (msec % 60000)/1000;	//Find second count of this second marker
-		if(msec < eof_music_length)
+		if(msec < eof_chart_length)
 		{
 			for(j = 0; j < 1000; j+=100)
 			{	//Draw markers every 100ms (1/10 second)
@@ -4758,6 +4766,19 @@ void eof_render_editor_window_common2(void)
 	if(!eof_song_loaded)
 		return;
 
+	/* draw the end of song position if necessary*/
+	if(eof_chart_length != eof_music_length)
+	{
+		if(pos < 300)
+		{
+			vline(eof_window_editor->screen, 20 + (eof_music_length / eof_zoom), EOF_EDITOR_RENDER_OFFSET + 20, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 4, eof_color_red);
+		}
+		else
+		{
+			vline(eof_window_editor->screen, 20 - ((pos - 300)) + (eof_music_length / eof_zoom), EOF_EDITOR_RENDER_OFFSET + 20, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 4, eof_color_red);
+		}
+	}
+
 	/* draw the current position */
 	if(pos > zoom)
 	{
@@ -4768,19 +4789,6 @@ void eof_render_editor_window_common2(void)
 		else
 		{
 			vline(eof_window_editor->screen, 320 - zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
-		}
-	}
-
-	/* draw the end of song position if necessary*/
-	if(eof_music_length != eof_music_actual_length)
-	{
-		if(pos < 300)
-		{
-			vline(eof_window_editor->screen, 20 + (eof_music_actual_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 20, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 4, eof_color_red);
-		}
-		else
-		{
-			vline(eof_window_editor->screen, 20 - ((pos - 300)) + (eof_music_actual_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 20, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 4, eof_color_red);
 		}
 	}
 
@@ -4814,7 +4822,7 @@ void eof_render_editor_window_common2(void)
 	}
 
 	/* render the scroll bar */
-	int scroll_pos = ((float)(eof_screen->w - 8) / (float)eof_music_length) * (float)eof_music_pos;
+	int scroll_pos = ((float)(eof_screen->w - 8) / (float)eof_chart_length) * (float)eof_music_pos;
 	draw_sprite(eof_window_editor->screen, eof_image[EOF_IMAGE_SCROLL_BAR], 0, eof_screen_layout.scrollbar_y);
 	draw_sprite(eof_window_editor->screen, eof_image[EOF_IMAGE_SCROLL_HANDLE], scroll_pos + 2, eof_screen_layout.scrollbar_y);
 
@@ -5160,7 +5168,7 @@ void eof_editor_logic_common(void)
 		{
 			if(!eof_full_screen_3d && (mouse_b & 1))
 			{
-				eof_music_actual_pos = ((float)eof_music_length / (float)(eof_screen->w - 8)) * (float)(mouse_x - 4);
+				eof_music_actual_pos = ((float)eof_chart_length / (float)(eof_screen->w - 8)) * (float)(mouse_x - 4);
 				alogg_seek_abs_msecs_ogg(eof_music_track, eof_music_actual_pos);
 				eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 				eof_music_pos = eof_music_actual_pos;

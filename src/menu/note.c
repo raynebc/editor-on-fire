@@ -373,7 +373,7 @@ void eof_prepare_note_menu(void)
 	int spp = 0, ssp = 0, llp = 0;
 	unsigned long i, j;
 	unsigned long tracknum;
-	int sel_start = eof_music_length, sel_end = 0;
+	int sel_start = eof_chart_length, sel_end = 0;
 	EOF_PHRASE_SECTION *sectionptr = NULL;
 	unsigned long track_behavior = 0;
 
@@ -2348,7 +2348,7 @@ int eof_menu_note_create_bre(void)
 {
 	unsigned long i;
 	long first_pos = 0;
-	long last_pos = eof_music_length;
+	long last_pos = eof_chart_length;
 
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
@@ -2368,7 +2368,7 @@ int eof_menu_note_create_bre(void)
 	}
 
 	/* create the BRE marking note */
-	if((first_pos != 0) && (last_pos != eof_music_length))
+	if((first_pos != 0) && (last_pos != eof_chart_length))
 	{
 		eof_track_add_create_note(eof_song, eof_selected_track, 31, first_pos, last_pos - first_pos, EOF_NOTE_SPECIAL, NULL);
 	}
@@ -2710,9 +2710,9 @@ int eof_menu_lyric_line_mark(void)
 			if(eof_song->vocal_track[tracknum]->lyric[i]->pos > sel_end)
 			{
 				sel_end = eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length;
-				if(sel_end >= eof_music_length)
+				if(sel_end >= eof_chart_length)
 				{
-					sel_end = eof_music_length - 1;
+					sel_end = eof_chart_length - 1;
 				}
 			}
 		}

@@ -219,7 +219,14 @@ void eof_prepare_file_menu(void)
 		eof_file_menu[3].flags = 0; // Save As
 		eof_file_menu[5].flags = 0; // Load OGG
 		eof_file_menu[10].flags = 0; // Lyric Import
-		eof_file_menu[11].flags = 0; // Guitar Pro Import
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{
+			eof_file_menu[11].flags = 0; // Guitar Pro Import
+		}
+		else
+		{
+			eof_file_menu[11].flags = D_DISABLED;
+		}
 	}
 	else
 	{
@@ -415,7 +422,7 @@ int eof_menu_file_load(void)
 			eof_selected_ogg = 0;
 		}
 		eof_song_loaded = 1;
-		eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
+		eof_chart_length = alogg_get_length_msecs_ogg(eof_music_track);
 		eof_init_after_load(0);
 		eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
 	}
@@ -582,12 +589,12 @@ int eof_menu_file_load_ogg(void)
 		}
 
 		new_length = alogg_get_length_msecs_ogg(eof_music_track);
-		if(new_length > eof_music_length)
+		if(new_length > eof_chart_length)
 		{
-			eof_music_length = new_length;
+			eof_chart_length = new_length;
 			eof_calculate_beats(eof_song);
 		}
-		if(eof_music_pos > eof_music_actual_length)
+		if(eof_music_pos > eof_music_length)
 		{
 			eof_menu_song_seek_end();
 		}
@@ -2043,7 +2050,6 @@ int eof_new_chart(char * filename)
 		}
 	}
 	eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
-	eof_music_actual_length = eof_music_length;
 	ustrcpy(eof_loaded_song_name, "notes.eof");
 
 	eof_song_loaded = 1;
@@ -2421,7 +2427,11 @@ int eof_gp_import_track(DIALOG * d)
 			return 0;
 		}
 
-		eof_prepare_undo(EOF_UNDO_TYPE_GP_IMPORT);
+		if(!gp_import_undo_made)
+		{	//If an undo state wasn't already made
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one now
+			gp_import_undo_made = 1;
+		}
 		eof_parsed_gp_file->track[selected]->parent = eof_song->pro_guitar_track[tracknum]->parent;
 		for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->notes; ctr++)
 		{	//For each note in the active track
@@ -2452,12 +2462,11 @@ int eof_gp_import_track(DIALOG * d)
 	return D_O_K;
 }
 
+char gp_import_undo_made;
 int eof_menu_file_gp_import(void)
 {
 	char * returnedfn = NULL;
 	unsigned long ctr, ctr2;
-	unsigned long original_beat_count;				//The process of loading a Guitar Pro file can cause beats to be appended to the project, store the original number of beats present
-	int original_change_count = eof_change_count;	//Store the undo system's change counter to track whether an undo state was made (track was imported)
 
 	if(!eof_song || !eof_song_loaded)
 		return 1;	//For now, don't do anything unless a project is active
@@ -2465,7 +2474,7 @@ int eof_menu_file_gp_import(void)
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Don't do anything unless the active track is a pro guitar/bass track
 
-	original_beat_count = eof_song->beats;
+	gp_import_undo_made = 0;	//Will ensure only one undo state is created during this import
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
@@ -2473,7 +2482,7 @@ int eof_menu_file_gp_import(void)
 	eof_clear_input();
 	if(returnedfn)
 	{
-		eof_parsed_gp_file = eof_load_gp(returnedfn, NULL);	//Don't make an undo state if beats are added
+		eof_parsed_gp_file = eof_load_gp(returnedfn, &gp_import_undo_made);	//Don't make an undo state if beats are added
 
 		if(eof_parsed_gp_file)
 		{	//The file was successfully parsed, allow the user to import a track into the active project
@@ -2506,16 +2515,10 @@ int eof_menu_file_gp_import(void)
 			allegro_message("Failure");
 		}
 
-		if(original_change_count == eof_change_count)
-		{	//If no Guitar Pro tracks were imported
-			eof_song->beats = original_beat_count;	//Ignore the beats that were appended to the project
-		}
-		else
-		{
-			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
-			eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to clean up the track
-			eof_menu_track_selected_track_number(eof_selected_track);	//Re-select the active track to allow for a change in string count
-		}
+		eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
+		eof_beat_stats_cached = 0;		//Mark the cached beat stats as not current
+		eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Run fixup logic to clean up the track
+		eof_menu_track_selected_track_number(eof_selected_track);	//Re-select the active track to allow for a change in string count
 	}
 	return 1;
 }

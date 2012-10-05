@@ -138,8 +138,8 @@ char        eof_changes = 0;
 ALOGG_OGG * eof_music_track = NULL;
 void      * eof_music_data = NULL;
 int         eof_music_data_size = 0;
+int         eof_chart_length = 0;
 int         eof_music_length = 0;
-int         eof_music_actual_length = 0;
 int         eof_music_pos;
 int         eof_music_actual_pos;
 int         eof_music_rewind_pos;
@@ -1268,7 +1268,8 @@ int eof_load_ogg_quick(char * filename)
 	}
 	if(loaded)
 	{
-		eof_music_actual_length = alogg_get_length_msecs_ogg(eof_music_track);
+		eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
+		eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
 	}
 	else
 	{
@@ -1329,7 +1330,8 @@ int eof_load_ogg(char * filename)
 			{
 				allegro_message("OGG is not stereo.\nSong may not play back\ncorrectly in FOF.");
 			}
-			eof_music_actual_length = alogg_get_length_msecs_ogg(eof_music_track);
+			eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
+			eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
 			ustrncpy(eof_loaded_ogg_name,filename,1024);	//Store the loaded OGG filename
 			eof_loaded_ogg_name[1023] = '\0';
 		}
@@ -2060,14 +2062,14 @@ void eof_render_note_window(void)
 			{
 				if(!i || (i + 1 >= numlanes))
 				{	//Ensure the top and bottom lines extend to the left of the piano roll
-					hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_music_length) / eof_zoom, eof_color_white);
+					hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_chart_length) / eof_zoom, eof_color_white);
 				}
 				else if(eof_song->catalog->entry[eof_selected_catalog_entry].track != EOF_TRACK_VOCALS)
 				{	//Otherwise, if not drawing the vocal editor, draw the other fret lines from the first beat marker to the end of the chart
-					hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_music_length) / eof_zoom, eof_color_white);
+					hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[i], lpos + (eof_chart_length) / eof_zoom, eof_color_white);
 				}
 			}
-			vline(eof_window_note->screen, lpos + (eof_music_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
+			vline(eof_window_note->screen, lpos + (eof_chart_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
 			/* draw beat lines */
 			if(pos < 140)
 			{
@@ -2093,7 +2095,7 @@ void eof_render_note_window(void)
 			{	//If drawing a vocal catalog entry
 				/* clear lyric text area */
 				rectfill(eof_window_note->screen, 0, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1, eof_window_editor->w - 1, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, eof_color_black);
-				hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, lpos + (eof_music_length) / eof_zoom, eof_color_white);
+				hline(eof_window_note->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.lyric_y + 1 + 16, lpos + (eof_chart_length) / eof_zoom, eof_color_white);
 
 				for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 				{	//For each lyric
@@ -3507,7 +3509,7 @@ int eof_initialize(int argc, char * argv[])
 								return 0;
 							}
 							eof_song_loaded = 1;
-							eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
+							eof_chart_length = alogg_get_length_msecs_ogg(eof_music_track);
 							recovered = 1;	//Remember that a file was recovered so an undo state can be made after the call to eof_init_after_load()
 						}
 
@@ -3557,7 +3559,7 @@ int eof_initialize(int argc, char * argv[])
 					return 0;
 				}
 				eof_song_loaded = 1;
-				eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
+				eof_chart_length = alogg_get_length_msecs_ogg(eof_music_track);
 			}
 			else if(!ustricmp(get_extension(argv[i]), "mid"))
 			{
@@ -3879,6 +3881,7 @@ void eof_init_after_load(char initaftersavestate)
 	}
 	eof_menu_edit_zoom_level(eof_zoom);
 	eof_calculate_beats(eof_song);
+	eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
 	if(!initaftersavestate)
 	{	//If this wasn't cleanup after an undo/redo state, reset more variables
 		eof_music_pos = eof_av_delay;

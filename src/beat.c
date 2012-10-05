@@ -19,7 +19,7 @@ long eof_get_beat(EOF_SONG * sp, unsigned long pos)
 	{
 		return -1;
 	}
-	if(pos > eof_music_length)
+	if(pos > eof_chart_length)
 	{
 		return -1;
 	}
@@ -61,6 +61,7 @@ void eof_calculate_beats(EOF_SONG * sp)
 	double curpos = 0.0;
 	double beat_length;
 	unsigned long cbeat = 0;
+	int target_length = eof_music_length;
 
 	eof_log("eof_calculate_beats() entered", 1);
 
@@ -68,12 +69,18 @@ void eof_calculate_beats(EOF_SONG * sp)
 	{
 		return;
 	}
+
+	if(eof_chart_length > eof_music_length)
+	{
+		target_length = eof_chart_length;
+	}
+
 	/* correct BPM if it hasn't been set at all */
 	if(sp->beats <= 0)
 	{
-		beat_length = (double)60000 / ((double)60000000.0 / (double)500000.0);	//Default beat length is 500ms, which reflects a tempo of 120BPM
-		while(curpos < eof_music_length)
-		{
+		beat_length = (double)60000.0 / ((double)60000000.0 / (double)500000.0);	//Default beat length is 500ms, which reflects a tempo of 120BPM
+		while(curpos < target_length + beat_length)
+		{	//While there aren't enough beats to cover the length of the chart, add beats
 			eof_song_add_beat(sp);
 			sp->beat[sp->beats - 1]->ppqn = 500000;
 			sp->beat[sp->beats - 1]->fpos = (double)sp->tags->ogg[eof_selected_ogg].midi_offset + curpos;
@@ -104,25 +111,27 @@ void eof_calculate_beats(EOF_SONG * sp)
 	}
 	cbeat = sp->beats - 1;	//The index of the last beat in the beat[] array
 	curpos += beat_length;
-	while(sp->tags->ogg[eof_selected_ogg].midi_offset + curpos < eof_music_length)
-	{
+	while(sp->tags->ogg[eof_selected_ogg].midi_offset + curpos < target_length + beat_length)
+	{	//While there aren't enough beats to cover the length of the chart, add beats
 		eof_song_add_beat(sp);
 		sp->beat[sp->beats - 1]->ppqn = sp->beat[cbeat]->ppqn;
 		sp->beat[sp->beats - 1]->fpos = (double)sp->tags->ogg[eof_selected_ogg].midi_offset + curpos;
 		sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos +0.5;	//Round up
 		curpos += beat_length;
 	}
-	for(i = sp->beats; i > 0; i--)
-	{
-		if(sp->beat[i-1]->pos <= (double)eof_music_length)
+///This logic shouldn't be needed anymore.  eof_truncate_chart() will remove beats that occur after both the chart's content and audio
+/*	for(i = sp->beats; i > 0; i--)
+	{	//For all beats (in reverse order)
+		if(sp->beat[i-1]->pos <= (double)target_length)
 		{
 			break;
 		}
 		else
-		{
-			eof_song_delete_beat(sp, i-1);
+		{	//If this beat is after the audio ends, and after the last element in the chart
+			eof_song_delete_beat(sp, i-1);	//Delete it
 		}
 	}
+*/
 }
 
 void eof_calculate_tempo_map(EOF_SONG * sp)

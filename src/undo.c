@@ -119,10 +119,6 @@ int eof_undo_add(int type)
 		sprintf(fn, "%s.ogg", eof_undo_filename[eof_undo_current_index]);
 		eof_copy_file(eof_loaded_ogg_name, fn);
 	}
-	if((type == EOF_UNDO_TYPE_GP_IMPORT) && (eof_undo_last_type == EOF_UNDO_TYPE_GP_IMPORT))
-	{	//Only create one undo for multiple subsequent imported Guitar Pro tracks
-		return 0;
-	}
 	eof_undo_last_type = type;
 	eof_save_song(eof_song, eof_undo_filename[eof_undo_current_index]);
 	eof_undo_type[eof_undo_current_index] = type;

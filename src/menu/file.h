@@ -17,11 +17,14 @@ extern DIALOG eof_file_new_dialog[];
 extern DIALOG eof_file_new_windows_dialog[];
 
 extern DIALOG eof_lyric_detections_dialog[];	//The dialog used to prompt the user to select a MIDI track to import from
-extern struct Lyric_Format *lyricdetectionlist;	//Dialog windows cannot be passed local variables, requiring the use of this global variable
+extern struct Lyric_Format *lyricdetectionlist;	//Dialog functions cannot be passed local variables, requiring the use of this global variable
+extern char gp_import_undo_made;				//Dialog functions cannot be passed local variables, requiring the use of this global variable
 
 extern struct eof_guitar_pro_struct *eof_parsed_gp_file;	//Dialog windows cannot be passed local variables, requiring the use of this global variable
 extern DIALOG eof_gp_import_dialog[];	//The dialog used to display the tracks imported from a Guitar Pro file, allowing one to overwrite the active pro guitar track
-int eof_gp_import_track(DIALOG * d);	//The function performed when the user selects and imports a track from the above dialog
+int eof_gp_import_track(DIALOG * d);
+	//The function performed when the user selects and imports a track from the above dialog
+	//If the gp_import_undo_made global variable is zero, an undo state is made and this variable is set to 1
 
 void eof_prepare_file_menu(void);
 

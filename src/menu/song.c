@@ -47,7 +47,8 @@ MENU eof_song_seek_bookmark_menu[] =
 MENU eof_song_seek_menu[] =
 {
     {"Start\tHome", eof_menu_song_seek_start, NULL, 0, NULL},
-    {"End\tEnd", eof_menu_song_seek_end, NULL, 0, NULL},
+    {"End of audio\tEnd", eof_menu_song_seek_end, NULL, 0, NULL},
+    {"End of chart\t" CTRL_NAME "Shift+End", eof_menu_song_seek_chart_end, NULL, 0, NULL},
     {"Rewind\tR", eof_menu_song_seek_rewind, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"First Note\t" CTRL_NAME "+Home", eof_menu_song_seek_first_note, NULL, 0, NULL},
@@ -273,34 +274,34 @@ void eof_prepare_song_menu(void)
 		if(eof_music_pos == eof_av_delay)
 		{	//If the seek position is already at the start of the chart
 			eof_song_seek_menu[0].flags = D_DISABLED;	//Seek start
-			eof_song_seek_menu[14].flags = D_DISABLED;	//Previous beat
+			eof_song_seek_menu[15].flags = D_DISABLED;	//Previous beat
 		}
 		else
 		{
 			eof_song_seek_menu[0].flags = 0;
-			eof_song_seek_menu[14].flags = 0;
+			eof_song_seek_menu[15].flags = 0;
 		}
 
 		/* seek end */
-		if(eof_music_pos >= eof_music_actual_length - 1)
+		if(eof_music_pos >= eof_music_length - 1)
 		{	//If the seek position is already at the end of the chart
 			eof_song_seek_menu[1].flags = D_DISABLED;	//Seek end
-			eof_song_seek_menu[15].flags = D_DISABLED;	//Next beat
+			eof_song_seek_menu[16].flags = D_DISABLED;	//Next beat
 		}
 		else
 		{
 			eof_song_seek_menu[1].flags = 0;
-			eof_song_seek_menu[15].flags = 0;
+			eof_song_seek_menu[16].flags = 0;
 		}
 
 		/* rewind */
 		if(eof_music_pos == eof_music_rewind_pos)
 		{
-			eof_song_seek_menu[2].flags = D_DISABLED;	//Rewind
+			eof_song_seek_menu[3].flags = D_DISABLED;	//Rewind
 		}
 		else
 		{
-			eof_song_seek_menu[2].flags = 0;
+			eof_song_seek_menu[3].flags = 0;
 		}
 		if(eof_vocals_selected)
 		{
@@ -309,27 +310,27 @@ void eof_prepare_song_menu(void)
 				/* seek first note */
 				if(eof_song->vocal_track[tracknum]->lyric[0]->pos == eof_music_pos - eof_av_delay)
 				{
-					eof_song_seek_menu[4].flags = D_DISABLED;	//First note
-				}
-				else
-				{
-					eof_song_seek_menu[4].flags = 0;
-				}
-
-				/* seek last note */
-				if(eof_song->vocal_track[tracknum]->lyric[eof_song->vocal_track[tracknum]->lyrics - 1]->pos == eof_music_pos - eof_av_delay)
-				{
-					eof_song_seek_menu[5].flags = D_DISABLED;	//Last note
+					eof_song_seek_menu[5].flags = D_DISABLED;	//First note
 				}
 				else
 				{
 					eof_song_seek_menu[5].flags = 0;
 				}
+
+				/* seek last note */
+				if(eof_song->vocal_track[tracknum]->lyric[eof_song->vocal_track[tracknum]->lyrics - 1]->pos == eof_music_pos - eof_av_delay)
+				{
+					eof_song_seek_menu[6].flags = D_DISABLED;	//Last note
+				}
+				else
+				{
+					eof_song_seek_menu[6].flags = 0;
+				}
 			}
 			else
 			{
-				eof_song_seek_menu[4].flags = D_DISABLED;
 				eof_song_seek_menu[5].flags = D_DISABLED;
+				eof_song_seek_menu[6].flags = D_DISABLED;
 			}
 		}
 		else
@@ -339,84 +340,84 @@ void eof_prepare_song_menu(void)
 				/* seek first note */
 				if((firstnote >= 0) && (eof_get_note_pos(eof_song, eof_selected_track, firstnote) == eof_music_pos - eof_av_delay))
 				{
-					eof_song_seek_menu[4].flags = D_DISABLED;	//First note
-				}
-				else
-				{
-					eof_song_seek_menu[4].flags = 0;
-				}
-
-				/* seek last note */
-				if((lastnote >= 0) && (eof_get_note_pos(eof_song, eof_selected_track, lastnote) == eof_music_pos - eof_av_delay))
-				{
-					eof_song_seek_menu[5].flags = D_DISABLED;	//Last note
+					eof_song_seek_menu[5].flags = D_DISABLED;	//First note
 				}
 				else
 				{
 					eof_song_seek_menu[5].flags = 0;
 				}
+
+				/* seek last note */
+				if((lastnote >= 0) && (eof_get_note_pos(eof_song, eof_selected_track, lastnote) == eof_music_pos - eof_av_delay))
+				{
+					eof_song_seek_menu[6].flags = D_DISABLED;	//Last note
+				}
+				else
+				{
+					eof_song_seek_menu[6].flags = 0;
+				}
 			}
 			else
 			{
-				eof_song_seek_menu[4].flags = D_DISABLED;
 				eof_song_seek_menu[5].flags = D_DISABLED;
+				eof_song_seek_menu[6].flags = D_DISABLED;
 			}
 		}
 
 		/* seek previous note */
 		if(seekp)
 		{
-			eof_song_seek_menu[6].flags = 0;	//Previous note
-		}
-		else
-		{
-			eof_song_seek_menu[6].flags = D_DISABLED;
-		}
-
-		/* seek next note */
-		if(seekn)
-		{
-			eof_song_seek_menu[7].flags = 0;	//Next note
+			eof_song_seek_menu[7].flags = 0;	//Previous note
 		}
 		else
 		{
 			eof_song_seek_menu[7].flags = D_DISABLED;
 		}
 
-		/* seek previous screen */
-		if(eof_music_pos <= eof_av_delay)
+		/* seek next note */
+		if(seekn)
 		{
-			eof_song_seek_menu[9].flags = D_DISABLED;	//Previous screen
+			eof_song_seek_menu[8].flags = 0;	//Next note
 		}
 		else
 		{
-			eof_song_seek_menu[9].flags = 0;
+			eof_song_seek_menu[8].flags = D_DISABLED;
 		}
 
-		/* seek next screen */
-		if(eof_music_pos >= eof_music_actual_length - 1)
+		/* seek previous screen */
+		if(eof_music_pos <= eof_av_delay)
 		{
-			eof_song_seek_menu[10].flags = D_DISABLED;	//Next screen
+			eof_song_seek_menu[10].flags = D_DISABLED;	//Previous screen
 		}
 		else
 		{
 			eof_song_seek_menu[10].flags = 0;
 		}
 
-		/* previous/next grid snap/anchor */
-		if(eof_snap_mode == EOF_SNAP_OFF)
-		{	//If grid snap is disabled
-			eof_song_seek_menu[11].flags = D_DISABLED;	//Previous grid snap
-			eof_song_seek_menu[12].flags = D_DISABLED;	//Next grid snap
-			eof_song_seek_menu[16].flags = 0;			//Previous anchor
-			eof_song_seek_menu[17].flags = 0;			//Next anchor
+		/* seek next screen */
+		if(eof_music_pos >= eof_music_length - 1)
+		{
+			eof_song_seek_menu[11].flags = D_DISABLED;	//Next screen
 		}
 		else
 		{
-			eof_song_seek_menu[11].flags = 0;			//Previous grid snap
-			eof_song_seek_menu[12].flags = 0;			//Next grid snap
-			eof_song_seek_menu[16].flags = D_DISABLED;	//Previous anchor
-			eof_song_seek_menu[17].flags = D_DISABLED;	//Next anchor
+			eof_song_seek_menu[11].flags = 0;
+		}
+
+		/* previous/next grid snap/anchor */
+		if(eof_snap_mode == EOF_SNAP_OFF)
+		{	//If grid snap is disabled
+			eof_song_seek_menu[12].flags = D_DISABLED;	//Previous grid snap
+			eof_song_seek_menu[13].flags = D_DISABLED;	//Next grid snap
+			eof_song_seek_menu[17].flags = 0;			//Previous anchor
+			eof_song_seek_menu[18].flags = 0;			//Next anchor
+		}
+		else
+		{
+			eof_song_seek_menu[12].flags = 0;			//Previous grid snap
+			eof_song_seek_menu[13].flags = 0;			//Next grid snap
+			eof_song_seek_menu[17].flags = D_DISABLED;	//Previous anchor
+			eof_song_seek_menu[18].flags = D_DISABLED;	//Next anchor
 		}
 
 		/* seek bookmark # */
@@ -437,11 +438,11 @@ void eof_prepare_song_menu(void)
 		/* seek bookmark */
 		if(bmcount == 0)
 		{
-			eof_song_seek_menu[20].flags = D_DISABLED;	//Bookmark
+			eof_song_seek_menu[21].flags = D_DISABLED;	//Bookmark
 		}
 		else
 		{
-			eof_song_seek_menu[20].flags = 0;
+			eof_song_seek_menu[21].flags = 0;
 		}
 
 		/* show catalog */
@@ -451,13 +452,13 @@ void eof_prepare_song_menu(void)
 		{
 			eof_catalog_menu[0].flags = eof_catalog_menu[0].flags & D_SELECTED;	//Enable "Show Catalog" and check it if it's already checked
 			eof_catalog_menu[2].flags = 0;		//Enable "Edit name"
-			eof_song_seek_menu[21].flags = 0;	//Enable Seek>Catalog entry
+			eof_song_seek_menu[22].flags = 0;	//Enable Seek>Catalog entry
 		}
 		else
 		{
 			eof_catalog_menu[0].flags = D_DISABLED;	//Disable "Show catalog"
 			eof_catalog_menu[2].flags = D_DISABLED;	//Disable "Edit name"
-			eof_song_seek_menu[21].flags = D_DISABLED;	//Disable Seek>Catalog entry
+			eof_song_seek_menu[22].flags = D_DISABLED;	//Disable Seek>Catalog entry
 		}
 
 		/* add catalog entry */
@@ -614,7 +615,16 @@ int eof_menu_song_seek_end(void)
 {
 	if(!eof_music_catalog_playback)
 	{
-		eof_set_seek_position(eof_music_actual_length - 1);
+		eof_set_seek_position(eof_music_length + eof_av_delay);
+	}
+	return 1;
+}
+
+int eof_menu_song_seek_chart_end(void)
+{
+	if(!eof_music_catalog_playback)
+	{
+		eof_set_seek_position(eof_chart_length + eof_av_delay);
 	}
 	return 1;
 }
@@ -662,7 +672,7 @@ int eof_menu_song_seek_last_note(void)
 	{
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in the active track
-			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < eof_music_length))
+			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < eof_chart_length))
 			{
 				if(!firstfound || (eof_get_note_pos(eof_song, eof_selected_track, i) > last_pos))
 				{
@@ -697,7 +707,7 @@ int eof_menu_song_seek_next_note(void)
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < eof_music_length) && (eof_get_note_pos(eof_song, eof_selected_track, i) > ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
+		if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_pos(eof_song, eof_selected_track, i) < eof_chart_length) && (eof_get_note_pos(eof_song, eof_selected_track, i) > ((eof_music_pos - eof_av_delay >= 0) ? eof_music_pos - eof_av_delay : 0)))
 		{
 			eof_set_seek_position(eof_get_note_pos(eof_song, eof_selected_track, i) + eof_av_delay);
 			break;
@@ -726,7 +736,7 @@ int eof_menu_song_seek_next_screen(void)
 {
 	if(!eof_music_catalog_playback)
 	{
-		if(eof_music_pos + SCREEN_W * eof_zoom > eof_music_length)
+		if(eof_music_pos + SCREEN_W * eof_zoom > eof_chart_length)
 		{
 			eof_menu_song_seek_end();
 		}
@@ -973,10 +983,11 @@ int eof_menu_song_properties(void)
 			undo_made = 1;
 		}
 		eof_song->tags->difficulty = difficulty;	//Save the value reflected by the band difficulty field
-		eof_fixup_notes(eof_song);
 		eof_calculate_beats(eof_song);
+		eof_truncate_chart(eof_song);
+		eof_fixup_notes(eof_song);
 		eof_fix_window_title();
-	}
+	}//User clicked OK
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(NULL);
@@ -2740,9 +2751,9 @@ int eof_menu_song_seek_next_beat(void)
       		b = -1;
       	}
 
-      	if(((b < 0) || (b < eof_song->beats - 1)) && (eof_song->beat[b + 1]->pos < eof_music_actual_length))
-      	{
-      		eof_set_seek_position(eof_song->beat[b + 1]->pos + eof_av_delay);
+		if((b < 0) || (b < eof_song->beats - 1))
+      	{	//If the seek position is before the first beat marker, or it is before the last beat marker
+      		eof_set_seek_position(eof_song->beat[b + 1]->pos + eof_av_delay);	//Seek to the next beat's position
       	}
 
 	return 1;
@@ -3212,7 +3223,7 @@ int eof_menu_song_seek_beat_measure(void)
 {
 	unsigned long measurecount;
 	int retval, done = 0;
-	static unsigned long lastselected = 2;
+	static unsigned long lastselected = 3;	//By default, select the seek to measure option, which is probably going to be used more when using musical composition as a charting aid
 
 	if(!eof_song)
 		return 1;
@@ -3246,6 +3257,7 @@ int eof_menu_song_seek_beat_measure(void)
 	{	//If the "measure" radio button was selected last time the menu was open
 		eof_seek_beat_measure_dialog[3].flags = D_SELECTED;	//Ensure it's selected now
 	}
+
 	while(!done)
 	{
 		retval = eof_popup_dialog(eof_seek_beat_measure_dialog, 0);
