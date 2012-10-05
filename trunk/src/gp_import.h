@@ -34,7 +34,7 @@
 		//Parses the specified guitar pro file, returning a structure of track information and a populated pro guitar track for each
 		//Returns NULL on error
 		//NOTE:  Beats are added to the current project if there aren't as many as defined in the GP file.
-		//For this reason, an undo state will be made if undo_made is not NULL, and the referenced memory will be set to nonzero if an undo state is made
+		//If the user opts to import the GP file's time signatures, an undo state will be made if undo_made is not NULL, and the referenced memory will be set to nonzero
 #endif
 
 void pack_ReadWORDLE(PACKFILE *inf, unsigned *data);

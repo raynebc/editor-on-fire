@@ -628,7 +628,7 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 		pack_fread(temp_lyric.text, t, fp);
 		temp_lyric.text[t] = '\0';
 
-		if(eof_music_pos + temp_lyric.pos - eof_av_delay < eof_music_length)
+		if(eof_music_pos + temp_lyric.pos - eof_av_delay < eof_chart_length)
 		{
 			if(last_pos >= 0)
 			{
@@ -970,7 +970,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 			temp_note.flags = pack_igetl(fp);	//Store the note flags
 			eof_load_song_string_pf(text, fp, sizeof(text));	//Store the note/lyric name/text
 
-			if(temp_note.pos + temp_note.length < eof_music_length)
+			if(temp_note.pos + temp_note.length < eof_chart_length)
 			{
 				notepos = eof_put_porpos(temp_note.beat - first_beat[j] + this_beat[j], temp_note.porpos, 0.0);
 				notelength = eof_put_porpos(temp_note.endbeat - first_beat[j] + this_beat[j], temp_note.porendpos, 0.0) - notepos;
@@ -1325,7 +1325,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		eof_sanitize_note_flags(&temp_note.flags,sourcetrack, eof_selected_track);	//Ensure the note flags are validated for the track being pasted into
 
 		/* create/merge the note */
-		if(eof_music_pos + temp_note.pos + temp_note.length - eof_av_delay < eof_music_length)
+		if(eof_music_pos + temp_note.pos + temp_note.length - eof_av_delay < eof_chart_length)
 		{	//If the note fits within the chart
 			unsigned long newnotepos, match, flags;
 			long newnotelength;

@@ -1198,6 +1198,10 @@ EOF_SONG *parse_gp(const char * fn)
 								puts("\t\tRasguedo");
 							}
 						}
+						if(byte1 & 1)
+						{	//Vibrato
+							puts("\t\t(Vibrato)");
+						}
 						if(byte1 & 2)
 						{
 							puts("\t\t(Wide vibrato)");
@@ -1247,10 +1251,10 @@ EOF_SONG *parse_gp(const char * fn)
 						}
 						if(byte1 & 64)
 						{	//Stroke effect
-							eof_gp_debug_log(inf, "\tDownstroke speed:  ");
+							eof_gp_debug_log(inf, "\tUpstroke speed:  ");
 							byte = pack_getc(inf);
 							printf("%u\n", (byte & 0xFF));
-							eof_gp_debug_log(inf, "\tUpstroke speed:  ");
+							eof_gp_debug_log(inf, "\tDownstroke speed:  ");
 							byte = pack_getc(inf);
 							printf("%u\n", (byte & 0xFF));
 						}
@@ -1678,11 +1682,10 @@ EOF_SONG *parse_gp(const char * fn)
 	}//For each measure
 
 
-
 	pack_fclose(inf);
 	free(strings);
 	puts("\nSuccess");
-	return (EOF_SONG *)1;	///This is just a placeholder value until this logic is fully implemented
+	return (EOF_SONG *)1;
 }
 
 int main(int argc, char *argv[])
@@ -2109,11 +2112,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		snprintf(eof_log_string, sizeof(eof_log_string), "\tAppending %lu beats to project so that guitar pro transcriptions will fit", totalbeats + 2 - eof_song->beats);
 		eof_log(eof_log_string, 1);
 #endif
-		if(undo_made)
-		{	//If calling function wants to track an undo state being made if beats are appended to the project
-			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			*undo_made = 1;
-		}
 		while(eof_song->beats < totalbeats + 2)
 		{	//Until the loaded project has enough beats to contain the Guitar Pro transcriptions, and two extra to allow room for processing beat lengths later
 			if(!eof_song_add_beat(eof_song))
@@ -2137,13 +2135,18 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			eof_song->beat[eof_song->beats - 1]->fpos = eof_song->beat[eof_song->beats - 2]->fpos + beat_length;
 			eof_song->beat[eof_song->beats - 1]->pos = eof_song->beat[eof_song->beats - 1]->fpos + 0.5;	//Round up
 		}
-		eof_music_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
+		eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
 	}
 	if(!eof_song->tags->tempo_map_locked)
 	{	//If the active project's tempo map isn't locked
 		eof_clear_input();
 		if(alert(NULL, "Import Guitar Pro file's time signatures?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 		{	//If user opts to import the TS changes into the active project
+			if(undo_made)
+			{	//If calling function wants to track an undo state being made if time signatures are imported into the project
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				*undo_made = 1;
+			}
 			curnum = curden = 0;
 			unsigned long beatctr = 0;
 			for(ctr = 0; ctr < measures; ctr++)
@@ -2309,6 +2312,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	double measure_position;		//Tracks the current position as a percentage within the current measure
 	unsigned long flags;			//Tracks the flags for the current note
 	char new_note;					//Tracks whether a new note is to be created
+	char tie_note;					//Tracks whether a note is a tie note
 	for(ctr = 0; ctr < measures; ctr++)
 	{	//For each measure
 		curnum = tsarray[ctr].num;	//Obtain the time signature for this measure
@@ -2327,6 +2331,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				for(ctr3 = 0; ctr3 < beats; ctr3++)
 				{	//For each "beat"
 					new_note = 0;	//Assume no new note is to be added unless a normal/muted note is parsed
+					tie_note = 0;	//Assume a note isn't a tie note unless found otherwise
 					flags = 0;
 					bytemask = pack_getc(inf);	//Read beat bitmask
 					if(bytemask & 64)
@@ -2483,6 +2488,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							{	//Rasguedo
 							}
 						}
+						if(byte1 & 1)
+						{	//Vibrato
+							flags |= EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
+						}
 						if(byte1 & 2)
 						{	//Wide vibrato
 							flags |= EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;
@@ -2525,19 +2534,28 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							eof_gp_parse_bend(inf);
 						}
 						if(byte1 & 64)
-						{	//Stroke effect
-							byte = pack_getc(inf);	//Downstroke speed
-							byte = pack_getc(inf);	//Upstroke speed
+						{	//Stroke (strum) effect
+							unsigned char upspeed;
+							upspeed = pack_getc(inf);	//Up strum speed
+							pack_getc(inf);				//Down strum speed
+							if(!upspeed)
+							{	//Strum down
+								flags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;
+							}
+							else
+							{	//Strum up
+								flags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;
+							}
 						}
 						if(byte2 & 2)
 						{	//Pickstroke effect
 							byte = pack_getc(inf);	//Pickstroke effect (up/down)
 							if(byte == 1)
-							{	//Up strum
+							{	//Upward pick
 								flags |= EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM;
 							}
 							else if(byte == 2)
-							{	//Down strum
+							{	//Downward pick
 								flags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;
 							}
 						}
@@ -2680,7 +2698,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								else if(byte == 2)
 								{	//If this string is playing a tied note (it is still ringing from a previously played note)
 									if(np[ctr2])
-									{	//If this track has had a note created, alter its length
+									{	//If there is a previously created note, alter its length
+										tie_note = 1;
 										unsigned long beat_position = (measure_position + note_duration) * curnum;
 										double partial_beat_position = (measure_position + note_duration) * curnum - beat_position;	//How far into this beat the note ends
 										beat_position += curbeat;	//Add the number of beats into the track the current measure is
@@ -2756,7 +2775,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								}
 								if(byte1 & 4)
 								{	//Slide from current note (GP3 format indicator)
-									flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;	//The slide direction will be corrected later
+									flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
 								}
 								if(byte1 & 8)
 								{	//Let ring
@@ -2794,7 +2813,18 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								if(byte2 & 8)
 								{	//Slide
 									byte = pack_getc(inf);	//Slide type
-									flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;	//The slide direction will be corrected later
+									if(byte & 4)
+									{	//This note slides out and downwards
+										flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;
+									}
+									else if(byte & 8)
+									{	//This note slides out and upwards
+										flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;
+									}
+									else
+									{
+										flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
+									}
 								}
 								if(byte2 & 16)
 								{	//Harmonic
@@ -2882,6 +2912,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						beat_position += curbeat;	//Add the number of beats into the track the current measure is
 						beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
 						np[ctr2]->length = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position) - np[ctr2]->pos + 0.5;	//Define the length of this note
+					}//If a new note is to be created
+					else if(np[ctr2] && tie_note)
+					{	//Otherwise if this was a tie note
+						np[ctr2]->flags |= flags;	//Apply this tie note's flags to the previous note
 					}
 					measure_position += note_duration;	//Update the measure position
 				}//For each beat
@@ -2971,8 +3005,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	{	//For each imported track
 		for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
 		{	//For each note in the track
-			if((gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && (ctr2 + 1 < gp->track[ctr]->notes))
-			{	//If this note is marked as being a slide, and there's a note that follows
+			if((gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && (gp->track[ctr]->note[ctr2]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) && (ctr2 + 1 < gp->track[ctr]->notes))
+			{	//If this note is marked as being an undetermined direction slide, and there's a note that follows
 				startfret = 0;
 				for(ctr3 = 0, bitmask = 1; ctr3 < 7; ctr3++, bitmask<<=1)
 				{	//For each of the 7 strings the GP format allows for
@@ -2987,7 +3021,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						if(startfret > endfret)
 						{	//This is a downward slide
 							gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;	//Clear the slide up flag
-							gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//Set the slide down flag
+						}
+						else
+						{	//This is an upward slide
+							gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//Clear the slide down flag
 						}
 						break;
 					}

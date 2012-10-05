@@ -1163,7 +1163,6 @@ EOF_SONG * eof_import_gh(const char * fn)
 			return NULL;
 		}
 		eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
-		eof_music_actual_length = eof_music_length;
 		eof_vocal_track_fixup_lyrics(sp, EOF_TRACK_VOCALS, 0);	//Clean up the lyrics
 		eof_log("\tGH import completed", 1);
 	}
@@ -2698,7 +2697,7 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 				{	//For each link in the sections checksum list (until a match has been made)
 					if(linkptr->checksum == checksum)
 					{	//If this checksum matches the one in the list
-						eof_music_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
+						eof_chart_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
 						long beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
 						if(beatnum >= 0)
 						{	//If there is such a beat
@@ -2837,7 +2836,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 								{
 									if(!eof_filebuffer_get_dword(fb, &dword))	//Read the timestamp
 									{	//If the timestamp was successfully read
-										eof_music_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
+										eof_chart_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
 										long beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
 										if(beatnum >= 0)
 										{	//If there is such a beat

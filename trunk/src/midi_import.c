@@ -1076,7 +1076,7 @@ set_window_title(debugtext);
 	for(ctr = 0; ctr < eof_import_ks_events->events; ctr++)
 	{	//For each key signature parsed
 		event_realtime = eof_ConvertToRealTimeInt(eof_import_ks_events->event[ctr]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
-		eof_music_length = event_realtime;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
+		eof_chart_length = event_realtime;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
 		beat = eof_get_beat(sp, event_realtime);
 		if(beat >= 0)
 		{	//If the key signature is placed at a valid timestamp
@@ -2627,6 +2627,8 @@ eof_log("\tThird pass complete", 1);
 			}
 		}
 	}
+
+//Load guitar.ogg automatically if it's present, otherwise
 	replace_filename(eof_song_path, fn, "", 1024);
 	append_filename(nfn, eof_song_path, "guitar.ogg", 1024);
 	if(!eof_load_ogg(nfn))
@@ -2644,7 +2646,7 @@ eof_log("\tThird pass complete", 1);
 		return NULL;
 	}
 	eof_song_loaded = 1;
-	eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
+	eof_chart_length = alogg_get_length_msecs_ogg(eof_music_track);
 
 	/* create text events */
 	long b = -1;

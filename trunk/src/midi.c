@@ -1723,7 +1723,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				if(!eof_song_contains_event(sp, "[end]", 0))
 				{	//If the user did not define the end event, manually write it
 					eof_log("\t! Adding missing [end] event", 1);
-					delta = eof_music_length + 1;	//Prepare to write the end event after the audio ends
+					delta = eof_chart_length + 1;	//Prepare to write the end event after the audio ends
 					if(sp->beat[sp->beats - 1]->pos > delta)
 					{	//If the last beat ends after the audio,
 						delta = sp->beat[sp->beats - 1]->pos + 1;	//Prepare to write the end event after it instead

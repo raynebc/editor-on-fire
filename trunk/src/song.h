@@ -106,7 +106,6 @@ typedef struct
 
 typedef struct
 {
-    unsigned char number;		//The chord's number (using RB3's chord number system)
     char name[EOF_NAME_LENGTH+1];
 	char          type;			//Stores the note's difficulty
 	unsigned char note;			//Stores the note's string statuses (set=played, reset=not played).  Bit 0 refers to string 6 (low E), bit 5 refers to string 1 (high e), etc.
@@ -457,7 +456,7 @@ typedef struct
 	struct eof_MIDI_data_track * midi_data_head, * midi_data_tail;	//Used to maintain a linked list of MIDI events that have been imported and that will be exported on save
 
 	/* miscellaneous */
-	unsigned long bookmark_pos[EOF_MAX_BOOKMARK_ENTRIES];
+	unsigned long bookmark_pos[EOF_MAX_BOOKMARK_ENTRIES];	//A bookmark is set if its position is set to nonzero
 	EOF_CATALOG * catalog;
 
 } EOF_SONG;
@@ -698,5 +697,12 @@ unsigned long eof_get_highest_clipboard_lane(char *clipboardfile);
 unsigned long eof_get_highest_fret_value(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//Returns the highest used fret in the specified pro guitar note
 	//If the parameters are invalid or the specific pro guitar note's gems are all muted with no fret specified, 0 is returned
+
+unsigned long eof_determine_chart_length(EOF_SONG *sp);
+	//Parses the project and returns the ending position of the last last note/lyric/text event/bookmark
+void eof_truncate_chart(EOF_SONG *sp);
+	//Uses eof_determine_chart() to set eof_chart_length to the larger of the last chart content and the loaded chart audio
+	//Any beats that are more than one beat after this position are deleted from the project, and eof_chart_length is updated to the position
+	//This should be called after Guitar Pro import (which adds beats even if no tracks are selected for import), after loading a project/file/undo/redo state and after loading an audio file
 
 #endif

@@ -185,7 +185,6 @@ EOF_SONG * eof_import_chart(const char * fn)
 			return NULL;
 		}
 		eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
-		eof_music_actual_length = eof_music_length;
 
 		/* create empty song */
 		sp = eof_create_song_populated();
@@ -309,7 +308,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			chartpos = chartfpos + 0.5;	//Get the current chart position, rounded up to an integer value
 		}//Add new beats until enough have been added to encompass the last item in the chart
 
-		eof_calculate_beats(sp);		//Build the tempo map based on the tempo changes
+		eof_calculate_beats(sp);		//Set the beats' timestamps based on their tempo changes
 
 		/* fill in notes */
 		struct dbTrack * current_track = chart->tracks;
@@ -520,7 +519,6 @@ EOF_SONG * eof_import_chart(const char * fn)
 	}
 
 	eof_log("\tFeedback import completed", 1);
-
 //	eof_log_level |= 2;	//Enable verbose logging
 	return sp;
 }

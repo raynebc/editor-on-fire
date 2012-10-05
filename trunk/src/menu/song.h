@@ -31,7 +31,8 @@ int eof_menu_catalog_previous(void);
 int eof_menu_catalog_next(void);
 
 int eof_menu_song_seek_start(void);
-int eof_menu_song_seek_end(void);
+int eof_menu_song_seek_end(void);	//Seeks to the end of the audio
+int eof_menu_song_seek_chart_end(void);	//Seeks to the end of the chart
 int eof_menu_song_seek_rewind(void);
 int eof_menu_song_seek_first_note(void);
 int eof_menu_song_seek_last_note(void);
