@@ -9,7 +9,7 @@
 #include "control.h"
 #include "editor.h"
 
-#define EOF_VERSION_STRING "EOF v1.8beta39"
+#define EOF_VERSION_STRING "EOF v1.8beta40"
 #define EOF_COPYRIGHT_STRING "(c)2008-2010 T^3 Software."
 
 #define KEY_EITHER_ALT (key[KEY_ALT] || key[KEY_ALTGR])
@@ -235,6 +235,7 @@ extern int         eof_zoom_3d;
 extern char        eof_changes;
 extern ALOGG_OGG * eof_music_track;
 extern void      * eof_music_data;
+extern int         eof_silence_loaded;	//Tracks whether "second_of_silence.ogg" was loaded from EOF's program folder instead of user-specified chart audio
 extern int         eof_music_data_size;
 extern int         eof_chart_length;
 extern int         eof_music_length;
@@ -455,7 +456,9 @@ void eof_determine_phrase_status(unsigned long track);
 	//Re-applies the HOPO, SP, trill and tremolo status of each note in the specified track, as well as deleting empty SP, Solo, trill, tremolo and arpeggio phrases
 void eof_fix_window_title(void);
 int eof_load_ogg_quick(char * filename);
-int eof_load_ogg(char * filename);	//Loads the specified OGG file, or if it does not exist, have the user browse for an audio file.  Upon success, eof_loaded_ogg_name is updated and nonzero is returned.
+int eof_load_ogg(char * filename, char silence_failover);
+	//Loads the specified OGG file, or if it does not exist, have the user browse for an audio file.  Upon success, eof_loaded_ogg_name is updated and nonzero is returned.
+	//If silence_failover is nonzero, if the user cancels loading audio, "second_of_silence.ogg" is loaded instead, and nonzero is returned.
 int eof_load_complete_song(char * filename);
 int eof_destroy_ogg(void);	//Frees chart audio
 int eof_save_ogg(char * fn);

@@ -180,7 +180,7 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	char backupfn[1024] = {0};
 	char wavfn[1024] = {0};
 	char soggfn[1024] = {0};
-	if(!oggfn || (ms == 0))
+	if(!oggfn || (ms == 0) || eof_silence_loaded)
 	{
 		return 0;
 	}
@@ -228,7 +228,7 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	/* clean up */
 	delete_file(wavfn);	//Delete silence.wav
 	delete_file(soggfn);	//Delete silence.ogg
-	if(eof_load_ogg((char *)oggfn))
+	if(eof_load_ogg((char *)oggfn, 0))
 	{
 		eof_fix_waveform_graph();
 		eof_fix_window_title();
@@ -257,7 +257,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	int channels;
 	unsigned long ctr,index;
 
-	if(!oggfn || (ms == 0))
+	if(!oggfn || (ms == 0) || eof_silence_loaded)
 	{
 		return 0;
 	}
@@ -361,7 +361,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	/* clean up */
 	delete_file(soggfn);	//Delete encode.ogg
 	delete_file(wavfn);		//Delete encode.wav
-	if(eof_load_ogg((char *)oggfn))
+	if(eof_load_ogg((char *)oggfn, 0))
 	{
 		eof_fix_waveform_graph();
 		eof_fix_window_title();
@@ -390,7 +390,7 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	int channels;
 	unsigned long ctr,index;
 
-	if(!oggfn || (ms == 0))
+	if(!oggfn || (ms == 0) || eof_silence_loaded)
 	{
 		return 0;
 	}
@@ -490,7 +490,7 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	replace_filename(wavfn, eof_song_path, "encode.wav", 1024);
 	delete_file(wavfn);		//Delete encode.wav
 	delete_file(soggfn);	//Delete encode.ogg
-	if(eof_load_ogg((char *)oggfn))
+	if(eof_load_ogg((char *)oggfn, 0))
 	{
 		eof_fix_waveform_graph();
 		eof_fix_window_title();

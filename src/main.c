@@ -137,6 +137,7 @@ int         eof_zoom_3d = 5;
 char        eof_changes = 0;
 ALOGG_OGG * eof_music_track = NULL;
 void      * eof_music_data = NULL;
+int         eof_silence_loaded = 0;
 int         eof_music_data_size = 0;
 int         eof_chart_length = 0;
 int         eof_music_length = 0;
@@ -758,7 +759,11 @@ void eof_fix_window_title(void)
 		}
 		if(eof_song->tags->double_bass_drum_disabled)
 		{	//If expert+ bass drum is disabled
-			ustrcat(eof_window_title, "(expert+ drums off)");
+			ustrcat(eof_window_title, "(Expert+ drums off)");
+		}
+		if(eof_silence_loaded)
+		{	//If no chart audio is actually loaded
+			ustrcat(eof_window_title, "(No audio loaded)");
 		}
 	}
 	else
@@ -1283,7 +1288,7 @@ int eof_load_ogg_quick(char * filename)
 	return loaded;
 }
 
-int eof_load_ogg(char * filename)
+int eof_load_ogg(char * filename, char silence_failover)
 {
 	eof_log("eof_load_ogg() entered", 1);
 
@@ -1291,6 +1296,8 @@ int eof_load_ogg(char * filename)
 	char * ptr = filename;	//Used to refer to the OGG file that was processed from memory buffer
 	char directory[1024] = {0};
 	int loaded = 0;
+	char load_silence = 0;
+	char * emptystring = "";
 
 	if(!filename)
 	{
@@ -1308,16 +1315,33 @@ int eof_load_ogg(char * filename)
 		{	//User selected an OGG or MP3 file, write guitar.ogg into the chart's destination folder accordingly
 			ptr = returnedfn;
 			replace_filename(directory, filename, "", 1024);	//Store the path of the file's parent folder
-			if(!eof_mp3_to_ogg(returnedfn,directory))				//Create guitar.ogg in the folder
+			if(!eof_mp3_to_ogg(returnedfn, directory))			//Create guitar.ogg in the folder
 			{	//If the copy or conversion to create guitar.ogg succeeded
 				replace_filename(returnedfn, filename, "guitar.ogg", 1024);	//guitar.ogg is the expected file
 				eof_music_data = (void *)eof_buffer_file(returnedfn, 0);
 				eof_music_data_size = file_size_ex(returnedfn);
 			}
 		}
+		else if(silence_failover)
+		{	//If the user canceled loading audio, and the calling function allows defaulting to second_of_silence.ogg
+			load_silence = 1;
+			ptr = emptystring;
+			get_executable_name(directory, 1024);	//Get EOF's executable path
+			replace_filename(directory, directory, "second_of_silence.ogg", 1024);
+			eof_music_data = (void *)eof_buffer_file(directory, 0);
+			eof_music_data_size = file_size_ex(directory);
+		}
 	}
 	if(eof_music_data)
 	{	//If the OGG file was able to buffer to memory
+		if(load_silence)
+		{	//If EOF failed over to silent audio
+			eof_silence_loaded = 1;	//Track this condition
+		}
+		else
+		{
+			eof_silence_loaded = 0;
+		}
 		eof_music_track = alogg_create_ogg_from_buffer(eof_music_data, eof_music_data_size);
 		if(eof_music_track)
 		{
@@ -1346,6 +1370,7 @@ int eof_load_ogg(char * filename)
 		eof_music_data = NULL;
 	}
 
+	eof_fix_window_title();
 	return loaded;
 }
 
@@ -3503,7 +3528,7 @@ int eof_initialize(int argc, char * argv[])
 							ustrcpy(eof_loaded_song_name, get_filename(eof_filename));	//Set the project filename
 							replace_filename(eof_song_path, eof_filename, "", 1024);	//Set the project folder path
 							append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);	//Construct the full OGG path
-							if(!eof_load_ogg(temp_filename))
+							if(!eof_load_ogg(temp_filename, 0))
 							{
 								allegro_message("Failed to load OGG!");
 								return 0;
@@ -3553,7 +3578,7 @@ int eof_initialize(int argc, char * argv[])
 				}
 				replace_filename(eof_song_path, eof_filename, "", 1024);
 				append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);
-				if(!eof_load_ogg(temp_filename))
+				if(!eof_load_ogg(temp_filename, 0))
 				{
 					allegro_message("Failed to load OGG!");
 					return 0;

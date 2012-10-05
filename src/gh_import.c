@@ -1157,7 +1157,7 @@ EOF_SONG * eof_import_gh(const char * fn)
 		}
 
 //Load an audio file
-		if(!eof_load_ogg(oggfn))
+		if(!eof_load_ogg(oggfn, 1))	//If user does not provide audio, fail over to using silent audio
 		{
 			eof_destroy_song(sp);
 			return NULL;

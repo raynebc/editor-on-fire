@@ -1555,6 +1555,12 @@ int eof_menu_song_add_silence(void)
 	char mp3fn[1024] = {0};
 	static int creationmethod = 9;	//Stores the user's last selected leading silence creation method (default to oggCat, which is menu item 9 in eof_leading_silence_dialog[])
 
+	if(eof_silence_loaded)
+	{
+		allegro_message("Cannot add silence when no audio is loaded");
+		return 1;
+	}
+
 	eof_leading_silence_dialog[9].flags = 0;
 	eof_leading_silence_dialog[10].flags = 0;
 	if(eof_supports_oggcat == 0)
@@ -1596,7 +1602,7 @@ int eof_menu_song_add_silence(void)
 			{	//Only attempt to restore the original audio if the backup exists
 				eof_prepare_undo(EOF_UNDO_TYPE_SILENCE);
 				eof_copy_file(fn, eof_loaded_ogg_name);
-				if(eof_load_ogg(eof_loaded_ogg_name))
+				if(eof_load_ogg(eof_loaded_ogg_name, 0))
 				{
 					eof_fix_waveform_graph();
 					eof_fix_window_title();

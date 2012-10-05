@@ -390,10 +390,9 @@ int eof_menu_file_load(void)
 		append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);
 		if(!eof_load_ogg_quick(temp_filename))
 		{
-
 			/* upon fail, fall back to "guitar.ogg" */
 			append_filename(temp_filename, eof_song_path, "guitar.ogg", 1024);
-			if(!eof_load_ogg(temp_filename))
+			if(!eof_load_ogg(temp_filename, 1))	//If user does not provide audio, fail over to using silent audio
 			{
 				eof_destroy_song(eof_song);
 				eof_song = NULL;
@@ -461,24 +460,27 @@ int eof_menu_file_save_as(void)
 		if(eof_menu_file_new_supplement(new_foldername, 3) == 0)	//If the folder doesn't exist, or the user has declined to overwrite any existing files
 			return 1;	//Return failure
 
-		append_filename(eof_temp_filename, new_foldername, "guitar.ogg", 1024);
-		swap = ustricmp(new_foldername, eof_song_path);
+		if(!eof_silence_loaded)
+		{	//Only do audio checking if chart audio is loaded
+			append_filename(eof_temp_filename, new_foldername, "guitar.ogg", 1024);
+			swap = ustricmp(new_foldername, eof_song_path);
 
-		if(!exists(eof_temp_filename) || swap)
-		{
-			/* if we are writing to a different folder and writing
-			   the currenty loaded OGG as "guitar.ogg," temporarily swap
-			   the OGG profiles to compensate */
-			if(eof_selected_ogg != 0)
+			if(!exists(eof_temp_filename) || swap)
 			{
-				for(i = 0; i < eof_song->tags->oggs; i++)
+				/* if we are writing to a different folder and writing
+				   the currenty loaded OGG as "guitar.ogg," temporarily swap
+				   the OGG profiles to compensate */
+				if(eof_selected_ogg != 0)
 				{
-					memcpy(&temp_ogg[i], &eof_song->tags->ogg[i], sizeof(EOF_OGG_INFO));
+					for(i = 0; i < eof_song->tags->oggs; i++)
+					{
+						memcpy(&temp_ogg[i], &eof_song->tags->ogg[i], sizeof(EOF_OGG_INFO));
+					}
+					memcpy(&eof_song->tags->ogg[0], &eof_song->tags->ogg[eof_selected_ogg], sizeof(EOF_OGG_INFO));
+					ustrcpy(eof_song->tags->ogg[0].filename, "guitar.ogg");
+					eof_song->tags->oggs = 1;
+					eof_selected_ogg = 0;
 				}
-				memcpy(&eof_song->tags->ogg[0], &eof_song->tags->ogg[eof_selected_ogg], sizeof(EOF_OGG_INFO));
-				ustrcpy(eof_song->tags->ogg[0].filename, "guitar.ogg");
-				eof_song->tags->oggs = 1;
-				eof_selected_ogg = 0;
 			}
 		}
 
@@ -520,10 +522,10 @@ int eof_menu_file_load_ogg(void)
 		}
 
 		/* failed to load new OGG so reload old one */
-		if(!eof_load_ogg(returnedfn))
+		if(!eof_load_ogg(returnedfn, 0))
 		{	//If eof_load_ogg() failed, eof_loaded_ogg_name contains the name of the file that was loaded before
 			returnedfn = eof_loaded_ogg_name;
-			if(!eof_load_ogg(eof_loaded_ogg_name))
+			if(!eof_load_ogg(eof_loaded_ogg_name, 0))
 			{
 				eof_show_mouse(NULL);
 				eof_cursor_visible = 1;
@@ -1736,7 +1738,7 @@ void EnumeratedBChartInfo(struct FeedbackChart *chart)
 	allegro_message("%s",chartinfo);
 }
 
-int eof_mp3_to_ogg(char *file,char *directory)
+int eof_mp3_to_ogg(char *file, char *directory)
 {
 	char syscommand[1024] = {0};
 	char cfn[1024] = {0};
@@ -2041,7 +2043,7 @@ int eof_new_chart(char * filename)
 		ustrcpy(oggfilename, eof_etext3);
 		put_backslash(oggfilename);
 		ustrcat(oggfilename, "guitar.ogg");
-		if(!eof_load_ogg(oggfilename))
+		if(!eof_load_ogg(oggfilename, 0))
 		{
 			eof_cursor_visible = 1;
 			eof_pen_visible = 1;
@@ -2215,14 +2217,17 @@ int eof_save_helper(char *destfilename)
 	}
 
 	/* save OGG file if necessary*/
-	append_filename(eof_temp_filename, newfolderpath, "guitar.ogg", 1024);
-	if(function == 1)
-	{	//If performing "Save" function, only write guitar.ogg if it is missing
-		if(!exists(eof_temp_filename))
+	if(!eof_silence_loaded)
+	{	//Only try to save an audio file if one is loaded
+		append_filename(eof_temp_filename, newfolderpath, "guitar.ogg", 1024);
+		if(function == 1)
+		{	//If performing "Save" function, only write guitar.ogg if it is missing
+			if(!exists(eof_temp_filename))
+				eof_save_ogg(eof_temp_filename);
+		}
+		else	//"Save as" requires the guitar.ogg to be overwritten to ensure it's the correct audio
 			eof_save_ogg(eof_temp_filename);
 	}
-	else	//"Save as" requires the guitar.ogg to be overwritten to ensure it's the correct audio
-		eof_save_ogg(eof_temp_filename);
 
 	/* finish up */
 	eof_changes = 0;
