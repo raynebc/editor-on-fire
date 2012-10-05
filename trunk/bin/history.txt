@@ -3,6 +3,14 @@ EOF Version History
 
 1.8:
 
+Added a seek to end of chart function.
+
+Added the ability to import files or load EOF
+projects with audio that is shorter than the
+chart's content, or even with no audio at all.
+
+Added Guitar Pro file import capability.
+
 Updated 3D rendering to display tempo and
 time signature changes.
 

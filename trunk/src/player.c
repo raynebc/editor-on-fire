@@ -16,7 +16,7 @@ void eof_music_play(void)
 	int speed = eof_playback_speed;
 	unsigned long i;
 
-	if(eof_music_catalog_playback)
+	if(eof_music_catalog_playback || eof_silence_loaded)
 	{
 		return;
 	}
@@ -121,8 +121,8 @@ void eof_catalog_play(void)
 {
 	eof_log("eof_catalog_play() entered", 1);
 
-	if(eof_song->catalog->entries > 0)
-	{
+	if((eof_song->catalog->entries > 0) && !eof_silence_loaded)
+	{	//Only play a catalog entry if there's at least one, and there is chart audio loaded
 		if(!eof_music_paused)
 		{
 			eof_music_play();

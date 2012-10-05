@@ -862,8 +862,9 @@ if(key[KEY_PAUSE])
 	}
 
 	/* play/pause music (Space) */
-	if(key[KEY_SPACE])
-	{
+	/* play catalog entry (SHIFT+Space) */
+	if(key[KEY_SPACE] && !eof_silence_loaded)
+	{	//Only allow playback controls when chart audio is loaded
 		if(KEY_EITHER_SHIFT)
 		{
 			eof_shift_used = 1;	//Track that the SHIFT key was used

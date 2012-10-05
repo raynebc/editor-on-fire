@@ -178,7 +178,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 			return NULL;
 		replace_filename(oggfn, oggfn, "guitar.ogg", 1024);	//guitar.ogg is the expected file
 
-		if(!eof_load_ogg(oggfn))
+		if(!eof_load_ogg(oggfn, 1))	//If user does not provide audio, fail over to using silent audio
 		{
 			DestroyFeedbackChart(chart, 1);
 			ustrcpy(eof_last_ogg_path, oldoggpath); // remember previous OGG directory if we fail

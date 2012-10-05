@@ -175,7 +175,7 @@ int eof_undo_apply(void)
 			eof_copy_file(eof_loaded_ogg_name, fn);
 			sprintf(fn, "%s.ogg", eof_undo_filename[eof_undo_current_index]);
 			eof_copy_file(fn, eof_loaded_ogg_name);
-			eof_load_ogg(eof_loaded_ogg_name);
+			eof_load_ogg(eof_loaded_ogg_name, 0);
 			eof_fix_waveform_graph();
 			eof_redo_type = EOF_UNDO_TYPE_SILENCE;
 		}
@@ -223,7 +223,7 @@ void eof_redo_apply(void)
 		{
 			snprintf(fn, sizeof(fn), "eof%03u.redo.ogg", eof_log_id);	//Get the name of this EOF instance's redo OGG
 			eof_copy_file(fn, eof_loaded_ogg_name);	//And save the current audio to that filename
-			eof_load_ogg(eof_loaded_ogg_name);
+			eof_load_ogg(eof_loaded_ogg_name, 0);
 			eof_fix_waveform_graph();
 		}
 		eof_undo_count++;
