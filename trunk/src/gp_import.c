@@ -2307,7 +2307,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 #endif
 #define TARGET_VOICE 0
 	unsigned long curbeat = 0;		//Tracks the current beat number for the current measure
-	double gp_durations[] = {1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625};	//The duration of each note type in terms of one measure (whole note, half, 4th, 8th, 12th, 32nd, 64th)
+	double gp_durations[] = {1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625};	//The duration of each note type in terms of one whole note (whole note, half, 4th, 8th, 12th, 32nd, 64th)
 	double note_duration;			//Tracks the note's duration as a percentage of the current measure
 	double measure_position;		//Tracks the current position as a percentage within the current measure
 	unsigned long flags;			//Tracks the flags for the current note
@@ -2341,7 +2341,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					}
 					byte = pack_getc(inf);		//Read beat duration
 					assert((byte >= -2) && (byte <= 4));	//These are the expected duration values
-					note_duration = gp_durations[byte + 2];	//Get this note's duration in measures
+					note_duration = gp_durations[byte + 2] * (double)curden / (double)curnum;	//Get this note's duration in measures (accounting for the time signature)
 					if(bytemask & 1)
 					{	//Dotted note
 						note_duration *= 1.5;	//A dotted note is one and a half times as long as normal
@@ -2901,7 +2901,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						np[ctr2]->type = EOF_NOTE_AMAZING;
 
 //Determine the correct timestamp position and duration
-						unsigned long beat_position = measure_position * curnum;			//How many whole beats into the current measure the position is
+						unsigned long beat_position = measure_position * curnum + 0.5;				//How many whole beats into the current measure the position is
 						double partial_beat_position = measure_position * curnum - beat_position;	//How far into this beat the note begins
 						beat_position += curbeat;	//Add the number of beats into the track the current measure is
 						double beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;

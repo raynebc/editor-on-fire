@@ -2487,7 +2487,7 @@ int eof_menu_file_gp_import(void)
 	eof_clear_input();
 	if(returnedfn)
 	{
-		eof_parsed_gp_file = eof_load_gp(returnedfn, &gp_import_undo_made);	//Don't make an undo state if beats are added
+		eof_parsed_gp_file = eof_load_gp(returnedfn, &gp_import_undo_made);	//Make an undo state if time signatures are imported
 
 		if(eof_parsed_gp_file)
 		{	//The file was successfully parsed, allow the user to import a track into the active project
