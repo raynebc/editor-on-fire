@@ -3528,7 +3528,7 @@ int eof_initialize(int argc, char * argv[])
 							ustrcpy(eof_loaded_song_name, get_filename(eof_filename));	//Set the project filename
 							replace_filename(eof_song_path, eof_filename, "", 1024);	//Set the project folder path
 							append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);	//Construct the full OGG path
-							if(!eof_load_ogg(temp_filename, 0))
+							if(!eof_load_ogg(temp_filename, 1))	//If user does not provide audio, fail over to using silent audio
 							{
 								allegro_message("Failed to load OGG!");
 								return 0;
@@ -3578,7 +3578,7 @@ int eof_initialize(int argc, char * argv[])
 				}
 				replace_filename(eof_song_path, eof_filename, "", 1024);
 				append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);
-				if(!eof_load_ogg(temp_filename, 0))
+				if(!eof_load_ogg(temp_filename, 1))	//If user does not provide audio, fail over to using silent audio
 				{
 					allegro_message("Failed to load OGG!");
 					return 0;

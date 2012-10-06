@@ -119,19 +119,6 @@ void eof_calculate_beats(EOF_SONG * sp)
 		sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos +0.5;	//Round up
 		curpos += beat_length;
 	}
-///This logic shouldn't be needed anymore.  eof_truncate_chart() will remove beats that occur after both the chart's content and audio
-/*	for(i = sp->beats; i > 0; i--)
-	{	//For all beats (in reverse order)
-		if(sp->beat[i-1]->pos <= (double)target_length)
-		{
-			break;
-		}
-		else
-		{	//If this beat is after the audio ends, and after the last element in the chart
-			eof_song_delete_beat(sp, i-1);	//Delete it
-		}
-	}
-*/
 }
 
 void eof_calculate_tempo_map(EOF_SONG * sp)
@@ -473,7 +460,7 @@ void eof_double_tempo(EOF_SONG * sp, unsigned long beat, char *undo_made)
 		beat++;	//Iterate to the next beat
 	}while((beat < sp->beats) && (sp->beat[beat]->ppqn == ppqn));	//Continue until all beats have been processed or a tempo change is reached
 
-	eof_calculate_beats(sp);	//Rebuild tempos and beat lengths using the updated ppqn values
+	eof_calculate_beats(sp);	//Set the beats' timestamps based on their tempo changes
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 }
 
@@ -530,7 +517,7 @@ int eof_halve_tempo(EOF_SONG * sp, unsigned long beat, char *undo_made)
 		beat++;		//Iterate to the next beat to alter
 	}while((beat < sp->beats) && (ctr > 0));	//Continue until all applicable beats have been processed
 
-	eof_calculate_beats(sp);	//Rebuild tempos and beat lengths using the updated ppqn values
+	eof_calculate_beats(sp);	//Set the beats' timestamps based on their tempo changes
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	return retval;
 }

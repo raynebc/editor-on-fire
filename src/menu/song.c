@@ -2751,16 +2751,16 @@ int eof_menu_song_seek_next_beat(void)
 	if(!eof_song)
 		return 1;
 
-      	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
-      	if(eof_music_pos - eof_av_delay < 0)
-      	{
-      		b = -1;
-      	}
+	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	if(eof_music_pos - eof_av_delay < 0)
+	{
+		b = -1;
+	}
 
-		if((b < 0) || (b < eof_song->beats - 1))
-      	{	//If the seek position is before the first beat marker, or it is before the last beat marker
-      		eof_set_seek_position(eof_song->beat[b + 1]->pos + eof_av_delay);	//Seek to the next beat's position
-      	}
+	if((b < 0) || (b < eof_song->beats - 1))
+	{	//If the seek position is before the first beat marker, or it is before the last beat marker
+		eof_set_seek_position(eof_song->beat[b + 1]->pos + eof_av_delay);	//Seek to the next beat's position
+	}
 
 	return 1;
 }
