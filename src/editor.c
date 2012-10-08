@@ -624,7 +624,7 @@ if(key[KEY_PAUSE])
 	/* zoom in (+ on numpad) */
 	/* increment AV delay (CTRL+SHIFT+(plus) on numpad) */
 	/* lower 3D camera angle (SHIFT+(plus) on numpad) or BACKSLASH */
-	if(key[KEY_PLUS_PAD] || (key[KEY_BACKSLASH] && !KEY_EITHER_SHIFT))
+	if(key[KEY_PLUS_PAD] || (key[KEY_BACKSLASH] && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL))
 	{
 		if(!KEY_EITHER_CTRL)
 		{	//If CTRL is not being held
@@ -655,7 +655,7 @@ if(key[KEY_PAUSE])
 	/* zoom out (- on numpad) */
 	/* decrement AV delay (CTRL+SHIFT+(minus) on numpad) */
 	/* raise 3D camera angle (SHIFT+(minus) on numpad) or SHIFT+BACKSLASH */
-	if(key[KEY_MINUS_PAD] || (key[KEY_BACKSLASH] && KEY_EITHER_SHIFT))
+	if(key[KEY_MINUS_PAD] || (key[KEY_BACKSLASH] && KEY_EITHER_SHIFT && !KEY_EITHER_CTRL))
 	{
 		if(!KEY_EITHER_CTRL)
 		{	//If CTRL is not being held
@@ -687,17 +687,18 @@ if(key[KEY_PAUSE])
 		key[KEY_BACKSLASH] = 0;
 	}
 
-	/* reset 3D camera angle (SHIFT+Enter on numpad) */
-	if(key[KEY_ENTER_PAD])
+	/* reset 3D camera angle (SHIFT+Enter on numpad or CTRL+BACKSLASH) */
+	if((key[KEY_ENTER_PAD] && KEY_EITHER_SHIFT) || (key[KEY_BACKSLASH] && KEY_EITHER_CTRL && !KEY_EITHER_SHIFT))
 	{
 		if(KEY_EITHER_SHIFT)
 		{
 			eof_shift_used = 1;	//Track that the SHIFT key was used
-			eof_vanish_y = 0;
-			eof_3d_fretboard_coordinates_cached = 0;	//The 3D rendering logic will need to rebuild the fretboard's 2D coordinate projections
-			ocd3d_set_projection((float)eof_screen_width / 640.0, (float)eof_screen_height / 480.0, (float)eof_vanish_x, (float)eof_vanish_y, 320.0, 320.0);
 		}
+		eof_vanish_y = 0;
+		eof_3d_fretboard_coordinates_cached = 0;	//The 3D rendering logic will need to rebuild the fretboard's 2D coordinate projections
+		ocd3d_set_projection((float)eof_screen_width / 640.0, (float)eof_screen_height / 480.0, (float)eof_vanish_x, (float)eof_vanish_y, 320.0, 320.0);
 		key[KEY_ENTER_PAD] = 0;
+		key[KEY_BACKSLASH] = 0;
 	}
 
 	/* show/hide catalog (Q) */
@@ -1917,8 +1918,8 @@ if(key[KEY_PAUSE])
 			key[KEY_P] = 0;
 		}
 
-	/* toggle sizzle hi hat (SHIFT+S) */
-		if(key[KEY_S] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+	/* toggle sizzle hi hat (SHIFT+S, in the drum track) */
+		if(key[KEY_S] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT && (eof_selected_track == EOF_TRACK_DRUM))
 		{
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			eof_menu_note_toggle_hi_hat_sizzle();
@@ -1933,8 +1934,8 @@ if(key[KEY_PAUSE])
 			key[KEY_R] = 0;
 		}
 
-	/* mark/remark slider (SHIFT+S) */
-		if(key[KEY_S] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+	/* mark/remark slider (SHIFT+S, in a five lane guitar/bass track) */
+		if(key[KEY_S] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT && (eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
 		{
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			eof_menu_slider_mark();
@@ -5191,7 +5192,7 @@ void eof_editor_logic_common(void)
 		/* handle initial SHIFT key release */
 		else if(!KEY_EITHER_SHIFT && !eof_shift_released)
 		{
-			if(!eof_shift_used)
+			if(!eof_shift_used && (eof_input_mode == EOF_INPUT_FEEDBACK))
 			{	//If the SHIFT key wasn't used for anything while it was held down
 				eof_update_seek_selection(0, 0);	//Clear the seek selection
 			}
