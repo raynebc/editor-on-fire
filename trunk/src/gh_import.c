@@ -1274,6 +1274,8 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 	}
 
 	eof_calculate_tempo_map(sp);	//Build the tempo map based on the beat time stamps
+	double beat_length = (double)60000.0 / ((double)60000000.0 / (double)sp->beat[sp->beats - 1]->ppqn);	//Get the length of the last beat
+	eof_chart_length = sp->beat[sp->beats - 1]->fpos + beat_length + 0.5;	//Set the chart's end position to the end of the last beat marker
 	if(eof_use_ts)
 	{	//If the user opted to import TS changes
 //Process the timesig section to load time signatures
@@ -2432,6 +2434,8 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 		}
 	}//If the user opted to import TS changes
 	eof_calculate_tempo_map(sp);	//Build the tempo map based on the beat time stamps
+	double beat_length = (double)60000.0 / ((double)60000000.0 / (double)sp->beat[sp->beats - 1]->ppqn);	//Get the length of the last beat
+	eof_chart_length = sp->beat[sp->beats - 1]->fpos + beat_length + 0.5;	//Set the chart's end position to the end of the last beat marker
 
 	if(alert(NULL, "Import the chart's original HOPO OFF notation?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{	//If user opts to have all non HOPO notes marked for forced strumming
@@ -2697,7 +2701,7 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 				{	//For each link in the sections checksum list (until a match has been made)
 					if(linkptr->checksum == checksum)
 					{	//If this checksum matches the one in the list
-						eof_chart_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
+///						eof_chart_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
 						long beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
 						if(beatnum >= 0)
 						{	//If there is such a beat
@@ -2836,7 +2840,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 								{
 									if(!eof_filebuffer_get_dword(fb, &dword))	//Read the timestamp
 									{	//If the timestamp was successfully read
-										eof_chart_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
+///										eof_chart_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
 										long beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
 										if(beatnum >= 0)
 										{	//If there is such a beat

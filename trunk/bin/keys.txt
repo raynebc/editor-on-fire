@@ -236,7 +236,11 @@ Miscellaneous Controls:
     Shift + Enter (Numpad):
 
         Reset the 3D preview's camera angle.
-    
+
+    Ctrl + Backslash:
+
+        Reset the 3D preview's camera angle.
+
     Ctrl + Shift + +/- (Numpad):
 
         Increase/decrease the AV delay.

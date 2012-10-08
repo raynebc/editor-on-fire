@@ -29,6 +29,7 @@
 #include "midi.h"
 #include "midi_import.h"
 #include "chart_import.h"
+#include "gh_import.h"
 #include "window.h"
 #include "note.h"
 #include "beat.h"
@@ -3553,7 +3554,7 @@ int eof_initialize(int argc, char * argv[])
 
 	/* see if we are opening a file on launch */
 	for(i = 1; i < argc; i++)
-	{
+	{	//For each command line argument
 		if(!ustricmp(argv[i], "-debug"))
 		{
 			eof_debug_mode = 1;
@@ -3563,7 +3564,7 @@ int eof_initialize(int argc, char * argv[])
 			eof_new_idle_system = 1;
 		}
 		else if(!eof_song_loaded)
-		{
+		{	//If the argument is not one of EOF's native command line parameters and no file is loaded yet
 			if(!ustricmp(get_extension(argv[i]), "eof"))
 			{
 				ustrcpy(eof_song_path, argv[i]);
@@ -3647,8 +3648,23 @@ int eof_initialize(int argc, char * argv[])
 			{	//Launch new chart wizard via command line
 				eof_new_chart(argv[i]);
 			}
-		}
-	}
+			else if(strcasestr_spec(argv[i], ".pak."))
+			{	//Import a Guitar Hero file via command line
+				ustrcpy(eof_song_path, argv[i]);
+				ustrcpy(eof_filename, argv[i]);
+				replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+				ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+				replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
+				eof_song = eof_import_gh(eof_filename);
+				if(!eof_song)
+				{
+					allegro_message("Could not import song!");
+					return 0;
+				}
+				eof_song_loaded = 1;
+			}
+		}//If the argument is not one of EOF's native command line parameters and no file is loaded yet
+	}//For each command line argument
 
 	if(eof_song_loaded)
 	{	//The command line load succeeded (or a project was recovered), perform some common initialization
