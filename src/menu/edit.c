@@ -1220,6 +1220,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	unsigned long highestfret, highestlane;
 	unsigned long numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
+	unsigned long maxbitmask = (1 << numlanes) - 1;	//A bitmask representing the highest valid note bitmask (a gem on all used lanes in the destination track)
 
 	/* open the file */
 	fp = pack_fopen("eof.clipboard", "r");
@@ -1258,7 +1259,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	{	//If any notes on the clipboard exceed the active track's lane limit
 		char message[120];
 		snprintf(message, sizeof(message), "Warning:  This track's highest lane number is exceeded by a pasted note with a gem on lane %lu.", highestlane);
-		if(alert(NULL, message, "Such notes will be omitted.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
+		if(alert(NULL, message, "Gems will either be dropped, or added to form all-lane chords for such notes.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If user does not opt to continue after being alerted of this lane limit issue
 			pack_fclose(fp);
 			return 0;
@@ -1321,6 +1322,10 @@ int eof_menu_edit_paste_logic(int oldpaste)
 			{	//If the sixth lane isn't currently enabled in the destination track
 				temp_note.note &= ~32;	//Clear lane 6 from the pasted note
 			}
+		}
+		else if((temp_note.note > maxbitmask) && ((temp_note.note & maxbitmask) == 0))
+		{	//If this note only uses lanes higher than the active track allows
+			temp_note.note = maxbitmask;	//Alter this note to be an all-lane chord
 		}
 		eof_sanitize_note_flags(&temp_note.flags,sourcetrack, eof_selected_track);	//Ensure the note flags are validated for the track being pasted into
 
