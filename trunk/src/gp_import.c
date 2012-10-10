@@ -2140,8 +2140,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	if(!eof_song->tags->tempo_map_locked)
 	{	//If the active project's tempo map isn't locked
 		eof_clear_input();
-		if(alert(NULL, "Import Guitar Pro file's time signatures?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-		{	//If user opts to import the TS changes into the active project
+		if(eof_use_ts && (alert(NULL, "Import Guitar Pro file's time signatures?", NULL, "&Yes", "&No", 'y', 'n') == 1))
+		{	//If user has enabled the preference to import time signatures, and opts to import those from this Guitar Pro file into the active project
 			if(undo_made)
 			{	//If calling function wants to track an undo state being made if time signatures are imported into the project
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -2697,14 +2697,17 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								}
 								else if(byte == 2)
 								{	//If this string is playing a tied note (it is still ringing from a previously played note)
-									if(np[ctr2])
-									{	//If there is a previously created note, alter its length
-										tie_note = 1;
-										unsigned long beat_position = (measure_position + note_duration) * curnum;
-										double partial_beat_position = (measure_position + note_duration) * curnum - beat_position;	//How far into this beat the note ends
-										beat_position += curbeat;	//Add the number of beats into the track the current measure is
-										double beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
-										np[ctr2]->length = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position) - np[ctr2]->pos + 0.5;	//Define the length of this note
+									if(voice == TARGET_VOICE)
+									{	//If this is the voice that is being imported
+										if(np[ctr2])
+										{	//If there is a previously created note, alter its length
+											tie_note = 1;
+											unsigned long beat_position = (measure_position + note_duration) * curnum;
+											double partial_beat_position = (measure_position + note_duration) * curnum - beat_position;	//How far into this beat the note ends
+											beat_position += curbeat;	//Add the number of beats into the track the current measure is
+											double beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
+											np[ctr2]->length = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position) - np[ctr2]->pos + 0.5;	//Define the length of this note
+										}
 									}
 								}
 								else if(byte == 3)
@@ -2863,60 +2866,63 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							pack_fseek(inf, 1);	//Unknown data
 						}
 					}
-					if(new_note)
-					{	//If a new note is to be created
-						np[ctr2] = eof_pro_guitar_track_add_note(gp->track[ctr2]);	//Add a new note to the current track
-						if(!np[ctr2])
-						{
-							eof_log("Error allocating memory (10)", 1);
-							pack_fclose(inf);
-							while(ctr > 0)
-							{	//Free the previous track name strings
-								free(gp->names[ctr - 1]);
-								ctr--;
+					if(voice == TARGET_VOICE)
+					{	//If this is the voice that is being imported
+						if(new_note)
+						{	//If a new note is to be created
+							np[ctr2] = eof_pro_guitar_track_add_note(gp->track[ctr2]);	//Add a new note to the current track
+							if(!np[ctr2])
+							{
+								eof_log("Error allocating memory (10)", 1);
+								pack_fclose(inf);
+								while(ctr > 0)
+								{	//Free the previous track name strings
+									free(gp->names[ctr - 1]);
+									ctr--;
+								}
+								free(gp->names);
+								for(ctr = 0; ctr < tracks; ctr++)
+								{	//Free all previously allocated track structures
+									free(gp->track[ctr]);
+								}
+								free(np);
+								free(hopo);
+								free(gp);
+								free(tsarray);
+								free(strings);
+								return NULL;
 							}
-							free(gp->names);
-							for(ctr = 0; ctr < tracks; ctr++)
-							{	//Free all previously allocated track structures
-								free(gp->track[ctr]);
+							np[ctr2]->flags = flags;
+							for(ctr4 = 0; ctr4 < gp->track[ctr2]->numstrings; ctr4++)
+							{	//For each of this track's supported strings
+								np[ctr2]->frets[ctr4] = frets[strings[ctr2] - 1 - ctr4];	//Re-map from GP's string numbering to EOF's
 							}
-							free(np);
-							free(hopo);
-							free(gp);
-							free(tsarray);
-							free(strings);
-							return NULL;
-						}
-						np[ctr2]->flags = flags;
-						for(ctr4 = 0; ctr4 < gp->track[ctr2]->numstrings; ctr4++)
-						{	//For each of this track's supported strings
-							np[ctr2]->frets[ctr4] = frets[strings[ctr2] - 1 - ctr4];	//Re-map from GP's string numbering to EOF's
-						}
-						np[ctr2]->legacymask = 0;
-						np[ctr2]->midi_length = 0;
-						np[ctr2]->midi_pos = 0;
-						np[ctr2]->name[0] = '\0';
-						np[ctr2]->note = usedstrings >> (7 - strings[ctr2]);	//Guitar pro's note bitmask reflects string 7 being the LSB
-						np[ctr2]->ghost = ghost >> (7 - strings[ctr2]);	//Likewise translate the ghost bit mask
-						np[ctr2]->type = EOF_NOTE_AMAZING;
+							np[ctr2]->legacymask = 0;
+							np[ctr2]->midi_length = 0;
+							np[ctr2]->midi_pos = 0;
+							np[ctr2]->name[0] = '\0';
+							np[ctr2]->note = usedstrings >> (7 - strings[ctr2]);	//Guitar pro's note bitmask reflects string 7 being the LSB
+							np[ctr2]->ghost = ghost >> (7 - strings[ctr2]);	//Likewise translate the ghost bit mask
+							np[ctr2]->type = EOF_NOTE_AMAZING;
 
-//Determine the correct timestamp position and duration
-						unsigned long beat_position = measure_position * curnum + 0.5;				//How many whole beats into the current measure the position is
-						double partial_beat_position = measure_position * curnum - beat_position;	//How far into this beat the note begins
-						beat_position += curbeat;	//Add the number of beats into the track the current measure is
-						double beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
-						np[ctr2]->pos = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position);	//Define the position of this note
+	//Determine the correct timestamp position and duration
+							unsigned long beat_position = measure_position * curnum + 0.5;				//How many whole beats into the current measure the position is
+							double partial_beat_position = measure_position * curnum - beat_position;	//How far into this beat the note begins
+							beat_position += curbeat;	//Add the number of beats into the track the current measure is
+							double beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
+							np[ctr2]->pos = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position);	//Define the position of this note
 
-						beat_position = (measure_position + note_duration) * curnum;
-						partial_beat_position = (measure_position + note_duration) * curnum - beat_position;	//How far into this beat the note ends
-						beat_position += curbeat;	//Add the number of beats into the track the current measure is
-						beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
-						np[ctr2]->length = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position) - np[ctr2]->pos + 0.5;	//Define the length of this note
-					}//If a new note is to be created
-					else if(np[ctr2] && tie_note)
-					{	//Otherwise if this was a tie note
-						np[ctr2]->flags |= flags;	//Apply this tie note's flags to the previous note
-					}
+							beat_position = (measure_position + note_duration) * curnum;
+							partial_beat_position = (measure_position + note_duration) * curnum - beat_position;	//How far into this beat the note ends
+							beat_position += curbeat;	//Add the number of beats into the track the current measure is
+							beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
+							np[ctr2]->length = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position) - np[ctr2]->pos + 0.5;	//Define the length of this note
+						}//If a new note is to be created
+						else if(np[ctr2] && tie_note)
+						{	//Otherwise if this was a tie note
+							np[ctr2]->flags |= flags;	//Apply this tie note's flags to the previous note
+						}
+					}//If this is the voice that is being imported
 					measure_position += note_duration;	//Update the measure position
 				}//For each beat
 			}//For each voice
