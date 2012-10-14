@@ -210,7 +210,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 
 		/* read INI file */
 		replace_filename(oggfn, fn, "song.ini", 1024);
-		eof_import_ini(sp, oggfn);
+		eof_import_ini(sp, oggfn, 0);
 
 		/* set up beat markers */
 		sp->tags->ogg[0].midi_offset = chart->offset * 1000.0;

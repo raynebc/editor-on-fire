@@ -4463,6 +4463,10 @@ void eof_set_pro_guitar_fret_number(char function, unsigned long fretvalue)
 			}
 		}
 	}
+	if(undo_made)
+	{	//If there were changes made, run the note cleanup to correct the string mute statuses, etc.
+		eof_track_fixup_notes(eof_song, eof_selected_track, 1);
+	}
 	if(note_selection_updated)
 	{	//If the only note modified was the seek hover note
 		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition

@@ -15,6 +15,7 @@
 #include "../utility.h"
 #include "../midi.h"
 #include "../ini.h"
+#include "../ini_import.h"
 #include "../feedback.h"
 #include "../dialog/proc.h"
 #include "../mix.h"
@@ -363,12 +364,12 @@ int eof_menu_file_load(void)
 	returnedfn = ncd_file_select(0, eof_last_eof_path, "Load Song", eof_filter_eof_files);
 	eof_clear_input();
 	if(returnedfn)
-	{
+	{	//If the user selected a file
 		ustrcpy(eof_filename, returnedfn);
 		replace_filename(eof_last_eof_path, eof_filename, "", 1024);
 		ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 
-		/* free the old song */
+		/* free the current project */
 		if(eof_song)
 		{
 			eof_destroy_song(eof_song);
@@ -376,6 +377,8 @@ int eof_menu_file_load(void)
 			eof_song_loaded = 0;
 		}
 		eof_destroy_ogg();
+
+		/* load the specified project */
 		eof_song = eof_load_song(eof_filename);
 		if(!eof_song)
 		{
@@ -386,8 +389,13 @@ int eof_menu_file_load(void)
 		}
 		replace_filename(eof_song_path, eof_filename, "", 1024);
 
+		/* check song.ini and prompt user to load any external edits */
+		replace_filename(temp_filename, eof_song_path, "song.ini", 1024);
+		eof_import_ini(eof_song, temp_filename, 1);	//Read song.ini and prompt to replace values of existing settings in the project if they are different
+
 		/* attempt to load the OGG profile OGG */
-		append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);
+///		append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);
+		replace_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);
 		if(!eof_load_ogg_quick(temp_filename))
 		{
 			/* upon fail, fall back to "guitar.ogg" */
@@ -424,7 +432,7 @@ int eof_menu_file_load(void)
 		eof_chart_length = alogg_get_length_msecs_ogg(eof_music_track);
 		eof_init_after_load(0);
 		eof_track_fixup_notes(eof_song, EOF_TRACK_VOCALS, 0);
-	}
+	}//If the user selected a file
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
@@ -2427,7 +2435,7 @@ int eof_gp_import_track(DIALOG * d)
 		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 		selected = eof_gp_import_dialog[1].d1;
 
-		if(eof_get_track_size(eof_song, eof_selected_track) && alert("This track already has notes", "Importing this GP track will overwrite this track's contents", "Continue", "&Yes", "&No", 'y', 'n') != 1)
+		if(eof_get_track_size(eof_song, eof_selected_track) && alert("This track already has notes", "Importing this GP track will overwrite this track's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the active track is already populated the the user doesn't opt to overwrite it
 			return 0;
 		}
