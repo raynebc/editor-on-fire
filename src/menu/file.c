@@ -394,7 +394,6 @@ int eof_menu_file_load(void)
 		eof_import_ini(eof_song, temp_filename, 1);	//Read song.ini and prompt to replace values of existing settings in the project if they are different
 
 		/* attempt to load the OGG profile OGG */
-///		append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);
 		replace_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);
 		if(!eof_load_ogg_quick(temp_filename))
 		{

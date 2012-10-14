@@ -1259,12 +1259,10 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		}
 		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
 		{
-///			buffer[index++] = '^';
 			buffer[index++] = '0';	//In the symbols font, 0 is the bend character
 		}
 		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC)
 		{
-///			buffer[index++] = '*';
 			buffer[index++] = '1';	//In the symbols font, 1 is the harmonic character
 		}
 		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
@@ -1301,12 +1299,10 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		}
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM)
 		{
-///			buffer[index++] = 'D';
 			buffer[index++] = '2';	//In the symbols font, 2 is the down strum character
 		}
 		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
 		{
-///			buffer[index++] = 'U';
 			buffer[index++] = '3';	//In the symbols font, 3 is the up strum character
 		}
 		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM)
@@ -1371,8 +1367,6 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 			}
 			else
 			{	//Otherwise assume a guitar track, write the notation for a tremolo
-///				buffer[index++] = 'T';
-///				buffer[index++] = 'P';
 				buffer[index++] = '4';	//In the symbols font, 4 is the tremolo character
 			}
 		}
