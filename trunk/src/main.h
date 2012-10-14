@@ -411,6 +411,7 @@ extern PALETTE     eof_palette;
 extern BITMAP *    eof_image[EOF_MAX_IMAGES];
 extern FONT *      eof_font;
 extern FONT *      eof_mono_font;
+extern FONT *      eof_symbol_font;	//A font where the 0, 1, 2, 3 and 4 glyphs have been replaced with guitar tab notation characters
 extern char        eof_note_type_name[5][32];
 extern char        eof_vocal_tab_name[5][32];
 extern char        eof_dance_tab_name[5][32];

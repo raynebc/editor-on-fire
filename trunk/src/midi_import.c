@@ -390,7 +390,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 
 	/* read INI file */
 	replace_filename(backup_filename, fn, "song.ini", 1024);
-	eof_import_ini(sp, backup_filename);
+	eof_import_ini(sp, backup_filename, 0);
 
 
 	/* parse MIDI data */

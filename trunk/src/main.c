@@ -42,6 +42,7 @@
 #include "waveform.h"
 #include "silence.h"
 #include "tuning.h"
+#include "ini_import.h"
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -67,6 +68,7 @@ PALETTE     eof_palette;
 BITMAP *    eof_image[EOF_MAX_IMAGES] = {NULL};
 FONT *      eof_font;
 FONT *      eof_mono_font;
+FONT *      eof_symbol_font;
 int         eof_global_volume = 255;
 
 EOF_WINDOW * eof_window_editor = NULL;
@@ -3140,6 +3142,12 @@ int eof_load_data(void)
 		allegro_message("Could not load mono font!");
 		return 0;
 	}
+	eof_symbol_font = load_bitmap_font("eof.dat#font_symbols.pcx", NULL, NULL);
+	if(!eof_symbol_font)
+	{
+		allegro_message("Could not load symbol font!");
+		return 0;
+	}
 	eof_image[EOF_IMAGE_LYRIC_SCRATCH] = create_bitmap(320, text_height(eof_font) - 1);
 	font = eof_font;
 	set_palette(eof_palette);
@@ -3197,6 +3205,8 @@ void eof_destroy_data(void)
 	eof_font = NULL;
 	destroy_font(eof_mono_font);
 	eof_mono_font = NULL;
+	destroy_font(eof_symbol_font);
+	eof_symbol_font = NULL;
 }
 
 int eof_initialize(int argc, char * argv[])
@@ -3567,6 +3577,7 @@ int eof_initialize(int argc, char * argv[])
 		{	//If the argument is not one of EOF's native command line parameters and no file is loaded yet
 			if(!ustricmp(get_extension(argv[i]), "eof"))
 			{
+				/* load the specified project */
 				ustrcpy(eof_song_path, argv[i]);
 				ustrcpy(eof_filename, argv[i]);
 				replace_filename(eof_last_eof_path, eof_filename, "", 1024);
@@ -3578,6 +3589,12 @@ int eof_initialize(int argc, char * argv[])
 					return 0;
 				}
 				replace_filename(eof_song_path, eof_filename, "", 1024);
+
+				/* check song.ini and prompt user to load any external edits */
+				replace_filename(temp_filename, eof_song_path, "song.ini", 1024);
+				eof_import_ini(eof_song, temp_filename, 1);	//Read song.ini and prompt to replace values of existing settings in the project if they are different
+
+				/* attempt to load the OGG profile OGG */
 				append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);
 				if(!eof_load_ogg(temp_filename, 1))	//If user does not provide audio, fail over to using silent audio
 				{
