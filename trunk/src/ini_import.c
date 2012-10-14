@@ -133,21 +133,27 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 		{	//If the value portion of the entry has content
 			if(!ustricmp(eof_import_ini_setting[i].type, "artist"))
 			{
-				if(eof_compare_set_ini_string_field(sp->tags->artist, value_index, 256-1, &function))
-				{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
-					return 0;
+				if(ustricmp(value_index, "Unknown Artist"))
+				{	//Ignore this tag if it contains the placeholder EOF previously used for an undefined artist field
+					if(eof_compare_set_ini_string_field(sp->tags->artist, value_index, 256-1, &function, eof_import_ini_setting[i].type))
+					{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
+						return 0;
+					}
 				}
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "name"))
 			{
-				if(eof_compare_set_ini_string_field(sp->tags->title, value_index, 256-1, &function))
-				{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
-					return 0;
+				if(ustricmp(value_index, "Untitled"))
+				{	//Ignore this tag if it contains the placeholder EOF previously used for an undefined song title field
+					if(eof_compare_set_ini_string_field(sp->tags->title, value_index, 256-1, &function, eof_import_ini_setting[i].type))
+					{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
+						return 0;
+					}
 				}
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "frets"))
 			{
-				if(eof_compare_set_ini_string_field(sp->tags->frettist, value_index, 256-1, &function))
+				if(eof_compare_set_ini_string_field(sp->tags->frettist, value_index, 256-1, &function, eof_import_ini_setting[i].type))
 				{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 					return 0;
 				}
@@ -158,14 +164,14 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 				if(eof_is_number(value_index))
 				{	//If the number is a valid year (all numerical characters)
 					value_index[4] = '\0';	//Ensure the number is truncated to 4 characters
-					if(eof_compare_set_ini_string_field(sp->tags->year, value_index, 32-1, &function))
+					if(eof_compare_set_ini_string_field(sp->tags->year, value_index, 32-1, &function, eof_import_ini_setting[i].type))
 					{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 						return 0;
 					}
 				}
 				else
 				{		//If there are non numerical characters
-					if(eof_compare_set_ini_string_setting(sp, "year", value_index, &function))	//Add the year as a custom INI setting
+					if(eof_compare_set_ini_string_setting(sp, "year", value_index, &function, eof_import_ini_setting[i].type))	//Add the year as a custom INI setting
 					{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 						return 0;
 					}
@@ -177,14 +183,14 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "loading_phrase"))
 			{
-				if(eof_compare_set_ini_string_field(sp->tags->year, value_index, 512-1, &function))
+				if(eof_compare_set_ini_string_field(sp->tags->year, value_index, 512-1, &function, eof_import_ini_setting[i].type))
 				{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 					return 0;
 				}
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "lyrics"))
 			{
-				if(eof_compare_set_ini_boolean(&status, sp->tags->lyrics, value_index, &function))
+				if(eof_compare_set_ini_boolean(&status, sp->tags->lyrics, value_index, &function, eof_import_ini_setting[i].type))
 				{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 					return 0;
 				}
@@ -192,7 +198,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "eighthnote_hopo"))
 			{
-				if(eof_compare_set_ini_boolean(&status, sp->tags->eighth_note_hopo, value_index, &function))
+				if(eof_compare_set_ini_boolean(&status, sp->tags->eighth_note_hopo, value_index, &function, eof_import_ini_setting[i].type))
 				{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 					return 0;
 				}
@@ -201,7 +207,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			else if(!ustricmp(eof_import_ini_setting[i].type, "delay"))
 			{
 				long value;
-				if(eof_compare_set_ini_integer(&value, sp->tags->ogg[0].midi_offset, value_index, &function))
+				if(eof_compare_set_ini_integer(&value, sp->tags->ogg[eof_selected_ogg].midi_offset, value_index, &function, eof_import_ini_setting[i].type))
 				{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 					return 0;
 				}
@@ -247,7 +253,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			else if(!ustricmp(eof_import_ini_setting[i].type, "pro_drums"))
 			{
 				int func = 0;
-				eof_compare_set_ini_boolean(&status, 0, value_index, &func);	//Check if this tag's value is "True" or "1"
+				eof_compare_set_ini_boolean(&status, 0, value_index, &func, eof_import_ini_setting[i].type);	//Check if this tag's value is "True" or "1"
 				if(status)
 				{
 					eof_ini_pro_drum_tag_present = 1;
@@ -256,7 +262,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			else if(!ustricmp(eof_import_ini_setting[i].type, "five_lane_drums"))
 			{
 				int func = 0;
-				eof_compare_set_ini_boolean(&status, 0, value_index, &func);	//Check if this tag's value is "True" or "1"
+				eof_compare_set_ini_boolean(&status, 0, value_index, &func, eof_import_ini_setting[i].type);	//Check if this tag's value is "True" or "1"
 				if(status)
 				{
 					tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
@@ -267,7 +273,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			else if(!ustricmp(eof_import_ini_setting[i].type, "multiplier_note"))
 			{
 				int func = 0;
-				eof_compare_set_ini_boolean(&status, 0, value_index, &func);	//Check if this tag's value is "True" or "1"
+				eof_compare_set_ini_boolean(&status, 0, value_index, &func, eof_import_ini_setting[i].type);	//Check if this tag's value is "True" or "1"
 				if(status)
 				{
 					eof_ini_star_power_tag_present = 1;	//MIDI import won't have to convert solos phrases to star power, EOF's notation for star power style phrases was found
@@ -276,7 +282,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			else if(!ustricmp(eof_import_ini_setting[i].type, "sysex_open_bass"))
 			{
 				int func = 0;
-				eof_compare_set_ini_boolean(&status, 0, value_index, &func);	//Check if this tag's value is "True" or "1"
+				eof_compare_set_ini_boolean(&status, 0, value_index, &func, eof_import_ini_setting[i].type);	//Check if this tag's value is "True" or "1"
 				if(status)
 				{
 					eof_ini_sysex_open_bass_present = 1;	//MIDI import will interpret forced HOPO lane 1 bass to be a HOPO bass gem and not an open strum
@@ -297,7 +303,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 						long value;
 						if(atoi(value_index) >= 0)
 						{	//Only store the difficulty if it isn't negative (-1 means empty track)
-							if(eof_compare_set_ini_integer(&value, sp->track[j]->difficulty, value_index, &function))
+							if(eof_compare_set_ini_integer(&value, sp->track[j]->difficulty, value_index, &function, eof_import_ini_setting[i].type))
 							{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 								return 0;
 							}
@@ -314,7 +320,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 					if(!ustricmp(eof_import_ini_setting[i].type, "diff_drums_real"))
 					{	//If this is a pro drum difficulty tag
 						long value;
-						if(eof_compare_set_ini_integer(&value, (sp->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24, value_index, &function))
+						if(eof_compare_set_ini_integer(&value, (sp->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24, value_index, &function, eof_import_ini_setting[i].type))
 						{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 							return 0;
 						}
@@ -326,7 +332,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 					else if(!ustricmp(eof_import_ini_setting[i].type, "diff_drums_real_ps"))
 					{	//If this is a PS real drum difficulty tag
 						long value;
-						if(eof_compare_set_ini_integer(&value, (sp->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 24, value_index, &function))
+						if(eof_compare_set_ini_integer(&value, (sp->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 24, value_index, &function, eof_import_ini_setting[i].type))
 						{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 							return 0;
 						}
@@ -338,7 +344,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 					else if(!ustricmp(eof_import_ini_setting[i].type, "diff_vocals_harm"))
 					{	//If this is a harmony difficulty tag
 						long value;
-						if(eof_compare_set_ini_integer(&value, (sp->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24, value_index, &function))
+						if(eof_compare_set_ini_integer(&value, (sp->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24, value_index, &function, eof_import_ini_setting[i].type))
 						{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 							return 0;
 						}
@@ -350,7 +356,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 					else if(!ustricmp(eof_import_ini_setting[i].type, "diff_band"))
 					{	//If this is a band difficulty tag
 						long value;
-						if(eof_compare_set_ini_integer(&value, sp->tags->difficulty, value_index, &function))
+						if(eof_compare_set_ini_integer(&value, sp->tags->difficulty, value_index, &function, eof_import_ini_setting[i].type))
 						{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 							return 0;
 						}
@@ -360,7 +366,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 					}
 					else
 					{	//Store it as a custom INI setting
-						if(eof_compare_set_ini_string_setting(sp, eof_import_ini_setting[i].type, value_index, &function))
+						if(eof_compare_set_ini_string_setting(sp, eof_import_ini_setting[i].type, value_index, &function, eof_import_ini_setting[i].type))
 						{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 							return 0;
 						}
@@ -374,15 +380,17 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 	return 1;
 }
 
-int eof_compare_set_ini_string_field(char *dest, char *src, unsigned long maxchars, int *function)
+int eof_compare_set_ini_string_field(char *dest, char *src, unsigned long maxchars, int *function, char *tag)
 {
-	if(!dest || !src || !function)
+	if(!dest || !src || !function || !tag)
 		return 1;	//Return error
 
 	if(ustricmp(dest, src))
 	{	//If the strings don't match
 		if(*function)
 		{	//If the calling function wanted to check for differences and prompt the user to overwrite
+			snprintf(eof_log_string, sizeof(eof_log_string), "Song property \"%s\" altered in INI file", tag);
+			eof_log(eof_log_string, 1);
 			if(alert("Warning:  The INI file has been externally edited.  Merge its changes with the active project?", NULL, NULL, "&Yes", "&No", 'y', 'n') != 1)
 			{	//If the user did not opt to merge the changes into the project
 				return 1;	//Return user cancellation
@@ -396,9 +404,9 @@ int eof_compare_set_ini_string_field(char *dest, char *src, unsigned long maxcha
 	return 0;
 }
 
-int eof_compare_set_ini_boolean(char *status, char original, char *string, int *function)
+int eof_compare_set_ini_boolean(char *status, char original, char *string, int *function, char *tag)
 {
-	if(!status || !string || !function)
+	if(!status || !string || !function || !tag)
 		return 1;	//Return error
 
 	if(!ustricmp(string, "True") || !ustricmp(string, "1"))
@@ -412,6 +420,8 @@ int eof_compare_set_ini_boolean(char *status, char original, char *string, int *
 
 	if(*function && (*status != original))
 	{	//If the determined boolean status does not match the supplied original value, and the calling function wanted to prompt the user in such a case
+		snprintf(eof_log_string, sizeof(eof_log_string), "Song boolean \"%s\" altered in INI file", tag);
+		eof_log(eof_log_string, 1);
 		if(alert("Warning:  The INI file has been externally edited.  Merge its changes with the active project?", NULL, NULL, "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user did not opt to merge the changes into the project
 			return 1;	//Return user cancellation
@@ -422,7 +432,7 @@ int eof_compare_set_ini_boolean(char *status, char original, char *string, int *
 	return 0;
 }
 
-int eof_compare_set_ini_string_setting(EOF_SONG *sp, char *tag, char *value, int *function)
+int eof_compare_set_ini_string_setting(EOF_SONG *sp, char *tag, char *value, int *function, char *logtag)
 {
 	unsigned long index;
 	char *ptr;
@@ -450,6 +460,15 @@ int eof_compare_set_ini_string_setting(EOF_SONG *sp, char *tag, char *value, int
 
 		if(alter || add)
 		{	//If any INI setting is being altered or added
+			if(alter)
+			{
+				snprintf(eof_log_string, sizeof(eof_log_string), "Song INI setting \"%s\" altered in INI file", logtag);
+			}
+			else
+			{
+				snprintf(eof_log_string, sizeof(eof_log_string), "Song INI setting \"%s\" added in INI file", logtag);
+			}
+			eof_log(eof_log_string, 1);
 			if(alert("Warning:  The INI file has been externally edited.  Merge its changes with the active project?", NULL, NULL, "&Yes", "&No", 'y', 'n') != 1)
 			{	//If the user did not opt to merge the changes into the project
 				return 1;	//Return user cancellation
@@ -511,6 +530,7 @@ int eof_compare_set_ini_pro_guitar_tuning(EOF_PRO_GUITAR_TRACK *tp, char *string
 		}
 		if(changes || (ctr != tp->numstrings))
 		{	//If the INI tag defined a different number of strings, or a different tuning for any of them
+			eof_log("Pro guitar/bass tuning tag altered in INI file", 1);
 			if(alert("Warning:  The INI file has been externally edited.  Merge its changes with the active project?", NULL, NULL, "&Yes", "&No", 'y', 'n') != 1)
 			{	//If the user did not opt to merge the changes into the project
 				return 1;	//Return user cancellation
@@ -525,7 +545,7 @@ int eof_compare_set_ini_pro_guitar_tuning(EOF_PRO_GUITAR_TRACK *tp, char *string
 	return 0;
 }
 
-int eof_compare_set_ini_integer(long *value, long original, char *string, int *function)
+int eof_compare_set_ini_integer(long *value, long original, char *string, int *function, char *tag)
 {
 	if(!value || !string || !function)
 		return 1;	//Return error
@@ -534,6 +554,8 @@ int eof_compare_set_ini_integer(long *value, long original, char *string, int *f
 
 	if(*function && (*value != original))
 	{	//If the converted number does not match the supplied original value, and the calling function wanted to prompt the user in such a case
+		snprintf(eof_log_string, sizeof(eof_log_string), "Song property \"%s\" altered in INI file", tag);
+		eof_log(eof_log_string, 1);
 		if(alert("Warning:  The INI file has been externally edited.  Merge its changes with the active project?", NULL, NULL, "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user did not opt to merge the changes into the project
 			return 1;	//Return user cancellation
