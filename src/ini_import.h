@@ -11,7 +11,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function);
 	//externally altered and prompted whether or not to merge the file's changes into the project.  If the user declines, this function
 	//returns without processing the remainder of the file.
 
-int eof_compare_set_ini_string_field(char *dest, char *src, unsigned long maxchars, int *function);
+int eof_compare_set_ini_string_field(char *dest, char *src, unsigned long maxchars, int *function, char *tag);
 	//If *function is nonzero, the destination string is compared against the source string (case insensitive)
 	//	and if not identical, prompts the user whether or not to replace the existing setting.  If user
 	//	allows, the source string is copied (bounded by maxchars) to the destination and zero is returned.  If
@@ -19,8 +19,9 @@ int eof_compare_set_ini_string_field(char *dest, char *src, unsigned long maxcha
 	//	the processing of song.ini.  If user allows, an undo state is made and *function is set to zero
 	//If *function is zero, the source string is copied to the destination without prompting and zero is returned
 	//If the strings are identical, zero is returned regardless of the value of function
+	//tag is the display name of the tag being checked, used for logging
 
-int eof_compare_set_ini_boolean(char *status, char original, char *string, int *function);
+int eof_compare_set_ini_boolean(char *status, char original, char *string, int *function, char *tag);
 	//The string is compared against "True" or "1" to determine a boolean status which is returned
 	//through the status pointer.  The "original" parameter should be the boolean value to compare the
 	//string against.  If the determined string boolean status does not match original, and *function is
@@ -29,8 +30,9 @@ int eof_compare_set_ini_boolean(char *status, char original, char *string, int *
 	//state is made and *function is set to zero.
 	//This function does not directly alter the project's contents, the calling function must determine what
 	//to do with the information returned through status
+	//tag is the display name of the tag being checked, used for logging
 
-int eof_compare_set_ini_string_setting(EOF_SONG *sp, char *tag, char *value, int *function);
+int eof_compare_set_ini_string_setting(EOF_SONG *sp, char *tag, char *value, int *function, char *logtag);
 	//If *function is nonzero, the specified tag value is compared against all custom INI settings stored in
 	//	the specified project.  If the specified value does not match (case insensitive) that of the
 	//	project's existing INI setting, or if the specified INI tag was not already in the project, the user
@@ -39,6 +41,7 @@ int eof_compare_set_ini_string_setting(EOF_SONG *sp, char *tag, char *value, int
 	//	If user allows, an undo state is made and *function is set to zero.
 	//If *function is zero, the specified tag value either replaces the existing tag value in the project, or
 	//	it is added to the project as a new INI setting.
+	//logtag is the display name of the tag being checked, used for logging
 
 int eof_compare_set_ini_pro_guitar_tuning(EOF_PRO_GUITAR_TRACK *tp, char *string, int *function);
 	//If *function is nonzero, and the tuning defined in the string does not match the existing tuning for
@@ -48,7 +51,7 @@ int eof_compare_set_ini_pro_guitar_tuning(EOF_PRO_GUITAR_TRACK *tp, char *string
 	//	*function is set to zero.
 	//Otherwise the tuning is updated in the specified pro guitar track
 
-int eof_compare_set_ini_integer(long *value, long original, char *string, int *function);
+int eof_compare_set_ini_integer(long *value, long original, char *string, int *function, char *tag);
 	//The string is converted into numerical format with atoi() and returned through the value pointer.
 	//The "original" parameter should be the value to compare the source string against.  If the converted
 	//numerical value does not match original, and *function is nonzero, the user is prompted whether or not
@@ -56,6 +59,7 @@ int eof_compare_set_ini_integer(long *value, long original, char *string, int *f
 	//cancel the processing of song.ini.  If user allows, an undo state is made and *function is set to zero.
 	//This function does not directly alter the project's contents, the calling function must determine what
 	//to do with the information returned through value
+	//tag is the display name of the tag being checked, used for logging
 
 char *eof_find_ini_setting_tag(EOF_SONG *sp, unsigned long *index, char *tag);
 	//Searches for the specified INI setting containing "[tag] ="
