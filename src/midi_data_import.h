@@ -45,5 +45,11 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 void eof_MIDI_add_track(EOF_SONG *sp, struct eof_MIDI_data_track *ptr);
 	//Adds the track to the linked list of raw MIDI track data maintained within the EOF_SONG structure
 	//The link is appended as-is, so it must point forward to NULL if appropriate
+int eof_track_overridden_by_stored_MIDI_track(EOF_SONG *sp, unsigned long tracknum);
+	//Returns nonzero if the project contains a stored MIDI track of the same name as the specified track
+	//This would indicate that during MIDI export, the stored track takes precedence
+int eof_events_overridden_by_stored_MIDI_track(EOF_SONG *sp);
+	//Returns nonzero if the project contains a stored EVENTS MIDI track
+	//This would indicate that during MIDI export, the stored track takes precedence
 
 #endif

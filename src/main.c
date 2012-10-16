@@ -43,6 +43,7 @@
 #include "silence.h"
 #include "tuning.h"
 #include "ini_import.h"
+#include "midi_data_import.h"	//For eof_track_overridden_by_stored_MIDI_track()
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -2483,6 +2484,15 @@ void eof_render_lyric_preview(BITMAP * bp)
 	{
 		return;
 	}
+
+//If the active track is being overridden by a stored MIDI track
+	if(eof_track_overridden_by_stored_MIDI_track(eof_song, eof_selected_track))
+	{
+		textout_centre_ex(bp, font, "A stored MIDI track overrides this track", bp->w / 2, 20, eof_color_red, bgcol1);
+		textout_centre_ex(bp, font, "View Song>Manage Stored MIDI tracks", bp->w / 2, 36, eof_color_red, bgcol2);
+		return;
+	}
+
 //Build both lyric preview lines
 	for(x = 0; x < 2; x++)
 	{	//For each of the two lyric preview lines to build

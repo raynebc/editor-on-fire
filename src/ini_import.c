@@ -133,22 +133,24 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 		{	//If the value portion of the entry has content
 			if(!ustricmp(eof_import_ini_setting[i].type, "artist"))
 			{
-				if(ustricmp(value_index, "Unknown Artist"))
-				{	//Ignore this tag if it contains the placeholder EOF previously used for an undefined artist field
-					if(eof_compare_set_ini_string_field(sp->tags->artist, value_index, 256-1, &function, eof_import_ini_setting[i].type))
-					{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
-						return 0;
-					}
+				if(!ustricmp(value_index, "Unknown Artist"))
+				{	//If this is EOF's placeholder for an undefined artist field
+					value_index[0] = '\0';	//Make it an empty string so it can be compared against the string already in the project
+				}
+				if(eof_compare_set_ini_string_field(sp->tags->artist, value_index, 256-1, &function, eof_import_ini_setting[i].type))
+				{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
+					return 0;
 				}
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "name"))
 			{
-				if(ustricmp(value_index, "Untitled"))
-				{	//Ignore this tag if it contains the placeholder EOF previously used for an undefined song title field
-					if(eof_compare_set_ini_string_field(sp->tags->title, value_index, 256-1, &function, eof_import_ini_setting[i].type))
-					{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
-						return 0;
-					}
+				if(!ustricmp(value_index, "Untitled"))
+				{	//If this is EOF's placeholder for an undefined song title field
+					value_index[0] = '\0';	//Make it an empty string so it can be compared against the string already in the project
+				}
+				if(eof_compare_set_ini_string_field(sp->tags->title, value_index, 256-1, &function, eof_import_ini_setting[i].type))
+				{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
+					return 0;
 				}
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "frets"))

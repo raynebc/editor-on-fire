@@ -9,6 +9,7 @@
 #include "../undo.h"
 #include "../midi.h"
 #include "../dialog/proc.h"
+#include "../midi_data_import.h"	//For eof_events_overridden_by_stored_MIDI_track()
 #include "beat.h"
 #include "song.h"
 
@@ -80,28 +81,32 @@ MENU eof_beat_menu[] =
     {NULL, NULL, NULL, 0, NULL}
 };
 
+char stored_event_track_notice[] = "Warning:  A stored MIDI track will override chart-wide text events";
+char no_notice[] = "";
 DIALOG eof_events_dialog[] =
 {
    /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-   { d_agup_window_proc,0,   48,  500, 232, 2,   23,  0,    0,      0,   0,   "Events",       NULL, NULL },
+   { d_agup_window_proc,0,   48,  500, 237, 2,   23,  0,    0,      0,   0,   "Events",       NULL, NULL },
    { d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   eof_events_list,NULL, NULL },
    { d_agup_push_proc,  425, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",         NULL, eof_events_dialog_add },
    { d_agup_push_proc,  425, 124, 68,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",        NULL, eof_events_dialog_edit },
    { d_agup_push_proc,  425, 164, 68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, eof_events_dialog_delete },
-   { d_agup_button_proc,12,  235, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
+   { d_agup_text_proc,  12,  225, 64,  8,   2,   23,  0,    0,      0,   0,   ""      ,       NULL, NULL },
+   { d_agup_button_proc,12,  245, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 DIALOG eof_all_events_dialog[] =
 {
    /* (proc)                    (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-   { d_agup_window_proc,         0,   48,  500, 234, 2,   23,  0,    0,      0,   0,   "All Events",         NULL, NULL },
+   { d_agup_window_proc,         0,   48,  500, 250, 2,   23,  0,    0,      0,   0,   "All Events",         NULL, NULL },
    { d_agup_list_proc,           12,  84,  475, 140, 2,   23,  0,    0,      0,   0,   eof_events_list_all,  NULL, NULL },
-   { d_agup_button_proc,         12,  237, 154, 28,  2,   23,  'f',  D_EXIT, 0,   0,   "&Find",              NULL, NULL },
-   { d_agup_button_proc,         178, 237, 154, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",               NULL, NULL },
-   { eof_all_events_radio_proc,	 344, 228, 100, 15,  2,   23,  0, D_SELECTED,0,   0,   "All Events",         (void *)4,    NULL },
-   { eof_all_events_radio_proc,	 344, 244, 150, 15,  2,   23,  0,    0,      0,   0,   "This Track's Events",(void *)5,    NULL },
-   { eof_all_events_radio_proc,	 344, 260, 140, 15,  2,   23,  0,    0,      0,   0,   "Section Events",     (void *)6,    NULL },
+   { d_agup_button_proc,         12,  257, 154, 28,  2,   23,  'f',  D_EXIT, 0,   0,   "&Find",              NULL, NULL },
+   { d_agup_button_proc,         178, 257, 154, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",               NULL, NULL },
+   { eof_all_events_radio_proc,	 344, 243, 100, 15,  2,   23,  0, D_SELECTED,0,   0,   "All Events",         (void *)4,    NULL },
+   { eof_all_events_radio_proc,	 344, 259, 150, 15,  2,   23,  0,    0,      0,   0,   "This Track's Events",(void *)5,    NULL },
+   { eof_all_events_radio_proc,	 344, 275, 140, 15,  2,   23,  0,    0,      0,   0,   "Section Events",     (void *)6,    NULL },
+   { d_agup_text_proc,           12,  228, 64,  8,   2,   23,  0,    0,      0,   0,   ""      ,             NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -922,6 +927,14 @@ int eof_menu_beat_all_events(void)
 	eof_color_dialog(eof_all_events_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_all_events_dialog);
 	eof_all_events_dialog[1].d1 = 0;
+	if(eof_events_overridden_by_stored_MIDI_track(eof_song))
+	{	//If there is a stored events track
+		eof_all_events_dialog[7].dp = stored_event_track_notice;	//Add a warning to the dialog
+	}
+	else
+	{
+		eof_all_events_dialog[7].dp = no_notice;	//Otherwise remove the warning
+	}
 	if(eof_popup_dialog(eof_all_events_dialog, 0) == 2)
 	{	//User clicked Find
 		realindex = eof_retrieve_text_event(eof_all_events_dialog[1].d1);	//Find the actual event, taking the display filter into account
@@ -948,6 +961,14 @@ int eof_menu_beat_events(void)
 	eof_render();
 	eof_color_dialog(eof_events_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_events_dialog);
+	if(eof_events_overridden_by_stored_MIDI_track(eof_song))
+	{	//If there is a stored events track
+		eof_events_dialog[5].dp = stored_event_track_notice;	//Add a warning to the dialog
+	}
+	else
+	{
+		eof_events_dialog[5].dp = no_notice;	//Otherwise remove the warning
+	}
 	if(eof_popup_dialog(eof_events_dialog, 0) == 4)
 	{
 	}
