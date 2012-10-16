@@ -112,12 +112,16 @@ int eof_menu_previous_chord_result(void);
 int eof_menu_next_chord_result(void);
 
 extern struct eof_MIDI_data_track * eof_MIDI_track_list_to_enumerate;
+extern struct eof_MIDI_data_track *eof_parsed_MIDI;
+extern char eof_raw_midi_track_undo_made;
 int eof_menu_song_raw_MIDI_tracks(void);
 char * eof_raw_midi_tracks_list(int index, int * size);
 int eof_raw_midi_dialog_delete(DIALOG * d);
 int eof_raw_midi_dialog_add(DIALOG * d);
 	//Functions used in the dialog for managing the raw MIDI data tracks stored in the project
 	//eof_raw_midi_tracks_list() is used in multiple functions, so it enumerates the contents of eof_MIDI_track_list_to_enumerate
+int eof_raw_midi_track_import(DIALOG * d);
+	//Finds the track that was selected in eof_raw_midi_add_track_dialog[], removes it from the eof_parsed_MIDI linked list and adds it to the active project
 
 int eof_find_note_sequence(EOF_SONG *sp, unsigned long target_track, unsigned long target_start, unsigned long target_size, unsigned long input_track, unsigned long input_diff, unsigned long start_pos, char direction, unsigned long *hit_pos);
 	//Searches for the previous/next match of the target sequence of notes (within the specified input of notes) relative to a given position of the specified track difficulty

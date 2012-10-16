@@ -414,6 +414,9 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		if(eof_get_track_size(sp, j) == 0)	//If this track has no notes
 			continue;	//Skip the track
 
+		if(eof_track_overridden_by_stored_MIDI_track(sp, j))	//If this track is overridden by a stored MIDI track
+			continue;	//Skip the track
+
 		if(featurerestriction == 1)
 		{	//If writing a RBN2 compliant MIDI
 			if((j != EOF_TRACK_GUITAR) && (j != EOF_TRACK_BASS) && (j != EOF_TRACK_DRUM) && (j != EOF_TRACK_VOCALS) && (j != EOF_TRACK_KEYS) && (j != EOF_TRACK_PRO_KEYS))
@@ -1679,8 +1682,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	pack_fclose(fp);
 
 /* make events track */
-	if(featurerestriction != 2)
-	{	//Do not write an events track in a pro guitar upgrade MIDI
+	if((featurerestriction != 2) && !eof_events_overridden_by_stored_MIDI_track(sp))
+	{	//Do not write an events track in a pro guitar upgrade MIDI, or if the project has an events track stored into it
 		if((sp->text_events) || (featurerestriction == 1))
 		{	//If there are manually defined text events, or if writing a RBN2 compliant MIDI (which requires certain events)
 			/* open the file */

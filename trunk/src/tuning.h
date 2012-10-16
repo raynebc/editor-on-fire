@@ -87,13 +87,6 @@ int eof_lookup_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned lon
 unsigned long eof_count_chord_lookup_matches(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long note);
 	//Returns the number of chord lookup matches found for the specified note
 
-//void eof_pro_guitar_track_build_chord_variations(EOF_SONG *sp, unsigned long track);
-	//Builds the eof_chord_variations[][][] array for the specified track so that the first EOF_MAX_CHORD_VARIATIONS number of each chord scale and type are enumerated
-	//The bass note of each chord variation (the note played on the lowest-pitched string that is used) is stored
-	//When the chord variations array is built, eof_lookup_chord() will attempt to look up a matching slash chord if the passed note data doesn't match a normal chord
-	//This function should be called to rebuild a pro guitar/bass track's chord variations array whenever that track's string count or tuning has changed
-//void EOF_DEBUG_OUTPUT_CHORD_VARIATION_ARRAYS(void);
-	//Dumps the eof_chord_variations array contents for pro guitar and pro bass to "eof_chords.txt"
 unsigned long eof_check_against_chord_lookup_cache(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);
 	//Returns nonzero if the specified note matches the note cached from the previously executed chord name lookup logic
 

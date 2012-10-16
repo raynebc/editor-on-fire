@@ -2417,8 +2417,8 @@ DIALOG eof_gp_import_dialog[] =
    /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
    { d_agup_window_proc,0,   48,  500, 232, 2,   23,  0,    0,      0,   0,   "Import which GP track into the project's active track?",       NULL, NULL },
    { d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   eof_gp_tracks_list, NULL, NULL },
-   { d_agup_push_proc,  425, 84,  68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Import",      NULL, eof_gp_import_track },
-   { d_agup_button_proc,12,  235, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",        NULL, NULL },
+   { d_agup_push_proc,  425, 84,  68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Import",       NULL, eof_gp_import_track },
+   { d_agup_button_proc,12,  235, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -2435,7 +2435,7 @@ int eof_gp_import_track(DIALOG * d)
 		selected = eof_gp_import_dialog[1].d1;
 
 		if(eof_get_track_size(eof_song, eof_selected_track) && alert("This track already has notes", "Importing this GP track will overwrite this track's contents", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
-		{	//If the active track is already populated the the user doesn't opt to overwrite it
+		{	//If the active track is already populated and the user doesn't opt to overwrite it
 			return 0;
 		}
 

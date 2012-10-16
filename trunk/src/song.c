@@ -1606,6 +1606,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					strcpy(trackptr->description, buffer);
 				}
 				numevents = pack_igetl(fp);	//Read the number of events for this track
+				timedivision = 0;	//This will be zero unless the stored track contains it
 				if(mididataflags & 1)
 				{	//If the MIDI data block's flags indicated that delta timings are allowed
 					deltatimings = pack_getc(fp);	//Read the byte indicating whether delta timings are present for this track

@@ -356,3 +356,37 @@ void eof_MIDI_add_track(EOF_SONG *sp, struct eof_MIDI_data_track *ptr)
 	}
 	sp->midi_data_tail = ptr;	//The new link is the new tail of the list
 }
+
+int eof_track_overridden_by_stored_MIDI_track(EOF_SONG *sp, unsigned long tracknum)
+{
+	struct eof_MIDI_data_track *trackptr;
+
+	if(!sp || (tracknum >= sp->tracks))
+		return 0;	//Return error
+
+	for(trackptr = sp->midi_data_head; trackptr != NULL; trackptr = trackptr->next)
+	{	//For each raw MIDI track
+		if(trackptr->trackname && !ustricmp(trackptr->trackname, sp->track[tracknum]->name))
+		{	//If this track has a name that matches that of the specified track in the project
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int eof_events_overridden_by_stored_MIDI_track(EOF_SONG *sp)
+{
+	struct eof_MIDI_data_track *trackptr;
+
+	if(!sp)
+		return 0;	//Return error
+
+	for(trackptr = sp->midi_data_head; trackptr != NULL; trackptr = trackptr->next)
+	{	//For each raw MIDI track
+		if(trackptr->trackname && !ustricmp(trackptr->trackname, "EVENTS"))
+		{	//If this track is the events track
+			return 1;
+		}
+	}
+	return 0;
+}
