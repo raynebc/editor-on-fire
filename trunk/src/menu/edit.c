@@ -1316,14 +1316,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		{	//If the copied note indicated that this overrides the original bitmask (pasting pro guitar into a legacy track)
 			temp_note.note = temp_note.legacymask;
 		}
-		if((eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT) && (temp_note.note & 32))
-		{	//If the note being pasted uses lane 6 and the destination track is a legacy track
-			if((eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_SIX_LANES) == 0)
-			{	//If the sixth lane isn't currently enabled in the destination track
-				temp_note.note &= ~32;	//Clear lane 6 from the pasted note
-			}
-		}
-		else if((temp_note.note > maxbitmask) && ((temp_note.note & maxbitmask) == 0))
+		if((temp_note.note > maxbitmask) && ((temp_note.note & maxbitmask) == 0))
 		{	//If this note only uses lanes higher than the active track allows
 			temp_note.note = maxbitmask;	//Alter this note to be an all-lane chord
 		}
@@ -1372,16 +1365,25 @@ int eof_menu_edit_paste_logic(int oldpaste)
 					paste_count++;
 				}
 			}
-		}
+		}//If the note fits within the chart
 
 		/* process fret values */
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-		{	//If this is a pro guitar track
+		{	//If the track being pasted into is a pro guitar track
 			eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->legacymask = temp_note.legacymask;							//Copy the legacy bitmask to the last created pro guitar note
 			memcpy(eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->frets, temp_note.frets, sizeof(temp_note.frets));	//Copy the fret array to the last created pro guitar note
 			eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->ghost = temp_note.ghostmask;								//Copy the ghost bitmask to the last created pro guitar note
+			if(eof_song->track[sourcetrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If a non pro guitar note is being pasted into a pro guitar track
+				unsigned char legacymask = temp_note.note & 31;	//Determine the appropriate legacy mask to apply (drop lane 6)
+				if(!legacymask)
+				{	//If the note only contained lane 6
+					legacymask = 31;	//Make it chord on all 5 lanes
+				}
+				eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->legacymask = legacymask;
+			}
 		}
-	}
+	}//For each note in the clipboard file
 	pack_fclose(fp);
 	eof_track_sort_notes(eof_song, eof_selected_track);
 	eof_fixup_notes(eof_song);

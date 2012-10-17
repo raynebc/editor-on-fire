@@ -2410,7 +2410,7 @@ void eof_render_note_window(void)
 			tracknum = eof_song->track[eof_selected_track]->tracknum;
 			if((eof_selection.current < eof_song->pro_guitar_track[tracknum]->notes) && (eof_selection.track == eof_selected_track))
 			{	//If a note in the active track is selected, display a line with its fretting information
-				ypos += 12;
+				ypos += 10;
 				if(eof_get_pro_guitar_note_fret_string(eof_song->pro_guitar_track[tracknum], eof_selection.current, pro_guitar_string))
 				{	//If the note's frets can be represented in string format
 					if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name[0] != '\0')
@@ -4339,13 +4339,21 @@ char eof_color_blue_name[] = "&Blue";
 char eof_color_orange_name[] = "&Orange";
 char eof_color_purple_name[] = "&Purple";
 
-char eof_note_toggle_menu_string_1[20] = "";	//These strings are used in the eof_note_toggle_menu[] and eof_note_clear_menu[] arrays
+char eof_note_toggle_menu_string_1[20] = "";	//These strings are used in the eof_note_toggle_menu[] array
 char eof_note_toggle_menu_string_2[20] = "";
 char eof_note_toggle_menu_string_3[20] = "";
 char eof_note_toggle_menu_string_4[20] = "";
 char eof_note_toggle_menu_string_5[20] = "";
 char eof_note_toggle_menu_string_6[20] = "";
 char *eof_note_toggle_menu_strings[] = {eof_note_toggle_menu_string_1, eof_note_toggle_menu_string_2, eof_note_toggle_menu_string_3, eof_note_toggle_menu_string_4, eof_note_toggle_menu_string_5, eof_note_toggle_menu_string_6};
+
+char eof_note_clear_menu_string_1[20] = "";	//These strings are used in the eof_note_clear_menu[] array
+char eof_note_clear_menu_string_2[20] = "";
+char eof_note_clear_menu_string_3[20] = "";
+char eof_note_clear_menu_string_4[20] = "";
+char eof_note_clear_menu_string_5[20] = "";
+char eof_note_clear_menu_string_6[20] = "";
+char *eof_note_clear_menu_strings[] = {eof_note_clear_menu_string_1, eof_note_clear_menu_string_2, eof_note_clear_menu_string_3, eof_note_clear_menu_string_4, eof_note_clear_menu_string_5, eof_note_clear_menu_string_6};
 
 void eof_init_colors(void)
 {
@@ -4510,6 +4518,7 @@ void eof_set_color_set(void)
 	for(x = 0; x < 6; x++)
 	{
 		 snprintf(eof_note_toggle_menu_strings[x], sizeof(eof_note_toggle_menu_string_1), "%s\tShift+%d", eof_colors[x].colorname, x+1);
+		 strncpy(eof_note_clear_menu_strings[x], eof_colors[x].colorname, sizeof(eof_note_clear_menu_string_1));
 	}
 
 	//Update the strings for the Edit>Clap Notes menu

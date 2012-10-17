@@ -216,6 +216,10 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 			else
 			{
 				notenote &= 31;	//Mask out lane 6 (this is how it would be treated when notes were created via a paste operation)
+				if(!notenote)
+				{	//Unless this clears the note entirely
+					notenote = 31;	//In which case it becomes a chord that uses all lanes
+				}
 			}
 		}
 	}

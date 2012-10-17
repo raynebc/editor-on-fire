@@ -210,12 +210,12 @@ MENU eof_note_toggle_menu[] =
 
 MENU eof_note_clear_menu[] =
 {
-    {eof_note_toggle_menu_string_1, eof_menu_note_clear_green, NULL, 0, NULL},
-    {eof_note_toggle_menu_string_2, eof_menu_note_clear_red, NULL, 0, NULL},
-    {eof_note_toggle_menu_string_3, eof_menu_note_clear_yellow, NULL, 0, NULL},
-    {eof_note_toggle_menu_string_4, eof_menu_note_clear_blue, NULL, 0, NULL},
-    {eof_note_toggle_menu_string_5, eof_menu_note_clear_purple, NULL, 0, NULL},
-    {eof_note_toggle_menu_string_6, eof_menu_note_clear_orange, NULL, 0, NULL},
+    {eof_note_clear_menu_string_1, eof_menu_note_clear_green, NULL, 0, NULL},
+    {eof_note_clear_menu_string_2, eof_menu_note_clear_red, NULL, 0, NULL},
+    {eof_note_clear_menu_string_3, eof_menu_note_clear_yellow, NULL, 0, NULL},
+    {eof_note_clear_menu_string_4, eof_menu_note_clear_blue, NULL, 0, NULL},
+    {eof_note_clear_menu_string_5, eof_menu_note_clear_purple, NULL, 0, NULL},
+    {eof_note_clear_menu_string_6, eof_menu_note_clear_orange, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
