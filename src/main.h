@@ -198,6 +198,13 @@ extern char eof_note_toggle_menu_string_4[20];
 extern char eof_note_toggle_menu_string_5[20];
 extern char eof_note_toggle_menu_string_6[20];
 extern eof_color eof_colors[6];
+extern char eof_note_clear_menu_string_1[20];
+extern char eof_note_clear_menu_string_2[20];
+extern char eof_note_clear_menu_string_3[20];
+extern char eof_note_clear_menu_string_4[20];
+extern char eof_note_clear_menu_string_5[20];
+extern char eof_note_clear_menu_string_6[20];
+extern char *eof_note_clear_menu_strings[6];
 
 struct MIDIentry
 {
