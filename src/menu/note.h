@@ -101,6 +101,8 @@ int eof_menu_pro_guitar_toggle_hammer_on(void);	//Toggles the hammer on status o
 int eof_menu_pro_guitar_remove_hammer_on(void);	//Removes the hammer on status of all selected notes
 int eof_menu_pro_guitar_toggle_pull_off(void);	//Toggles the pull off status of all selected notes
 int eof_menu_pro_guitar_remove_pull_off(void);	//Removes the pull off status of all selected notes
+int eof_menu_note_toggle_ghost(void);			//Toggles the ghost flag for each populated string (that has keyboard shortcuts enabled) on each selected note
+int eof_menu_note_remove_ghost(void);			//Clears the ghost flag for each populated string (that has keyboard shortcuts enabled) on each selected note
 
 int eof_menu_note_toggle_green(void);	//Toggles the gem on lane 1 (originally colored green)
 int eof_menu_note_toggle_red(void);		//Toggles the gem on lane 2 (originally colored red)
@@ -209,8 +211,6 @@ int eof_menu_thin_notes_track_12(void);
 	//Thins out the notes in the active track difficulty to match those in the active difficulty in the specified track
 	//If a note in the active track isn't within a threshold distance of any note in the specified track, it is deleted
 
-int eof_menu_note_toggle_ghost(void);
-	//Toggles the ghost flag for each populated string on each selected note
 float eof_menu_note_push_get_offset(void);
 	//Returns a value representing the currently-set grid snap interval as a percentage of the duration of one beat
 int eof_feedback_mode_update_note_selection(void);

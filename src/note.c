@@ -262,7 +262,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		return 1;	//Return status:  Clipping to the right of the viewing window
 
 	length = notelength / eof_zoom;
-	if((npos < 0) && (npos + length < 0))	//If the note and its tail would render entirely to the left of the visible area
+	if(npos + length < 0)	//If the note and its tail would render entirely to the left of the visible area
 		return -1;	//Return status:  Clipping to the left of the viewing window
 
 	if(noteflags & EOF_NOTE_FLAG_CRAZY)
