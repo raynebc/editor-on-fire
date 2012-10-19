@@ -836,6 +836,10 @@ if(key[KEY_PAUSE])
 			{
 				eof_note_type_max = EOF_NOTE_CHALLENGE;	//However, the dance track has 5 usable difficulties
 			}
+			else if(eof_selected_track == EOF_TRACK_VOCALS)
+			{	//The vocal track only has 1 usable difficulty
+				eof_note_type_max = EOF_NOTE_SUPAEASY;
+			}
 
 			if(KEY_EITHER_SHIFT)
 			{
@@ -4596,6 +4600,7 @@ void eof_render_editor_window_common(void)
 	/* draw undefined legacy mask markers */
 	if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 	{	//If legacy view is in effect
+		int markerpos;
 		col = makecol(176, 48, 96);	//Store maroon color
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{	//For each note in this track
@@ -4610,7 +4615,18 @@ void eof_render_editor_window_common(void)
 					{	//If this marker isn't at least as wide as a note gem
 						markerlength = eof_screen_layout.note_size;	//Make it longer
 					}
-					rectfill(eof_window_editor->screen, lpos + notepos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, lpos + (notepos / eof_zoom) + markerlength, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, col);
+					markerpos = lpos + (notepos / eof_zoom);
+					if(markerpos + markerlength >= 0)
+					{	//If the marker ends at or right of the left edge of the screen
+						if(markerpos <= eof_window_editor->screen->w)
+						{	//If the marker starts at or left of the right edge of the screen (is visible)
+							rectfill(eof_window_editor->screen, markerpos, EOF_EDITOR_RENDER_OFFSET + 25, markerpos + markerlength, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, col);
+						}
+						else
+						{	//Otherwise this and all remaining undefined legacy mask markers are not visible
+							break;	//Stop rendering them
+						}
+					}
 				}
 			}
 		}

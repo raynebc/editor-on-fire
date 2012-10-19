@@ -117,6 +117,21 @@ MENU eof_arpeggio_menu[] =
     {NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_pro_guitar_slide_menu[] =
+{
+    {"Toggle slide &Up\t" CTRL_NAME "+Up", eof_menu_note_toggle_slide_up, NULL, 0, NULL},
+    {"Toggle slide &Down\t" CTRL_NAME "+Down", eof_menu_note_toggle_slide_down, NULL, 0, NULL},
+    {"&Remove slide", eof_menu_note_remove_slide, NULL, 0, NULL}
+};
+
+MENU eof_pro_guitar_strum_menu[] =
+{
+    {"Toggle strum &Up\tShift+Up", eof_pro_guitar_toggle_strum_up, NULL, 0, NULL},
+    {"Toggle strum &Mid\tShift+M", eof_pro_guitar_toggle_strum_mid, NULL, 0, NULL},
+    {"Toggle strum &Down\tShift+Down", eof_pro_guitar_toggle_strum_down, NULL, 0, NULL},
+    {"&Remove strum direction", eof_menu_note_remove_strum_direction, NULL, 0, NULL}
+};
+
 char eof_menu_trill_copy_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
 MENU eof_menu_trill_copy_menu[EOF_TRACKS_MAX] =
 {
@@ -275,15 +290,10 @@ MENU eof_menu_thin_notes_menu[EOF_TRACKS_MAX] =
 MENU eof_note_proguitar_menu[] =
 {
     {"Edit pro guitar &Note\tN", eof_menu_note_edit_pro_guitar_note, NULL, 0, NULL},
-    {"Toggle Slide Up\t" CTRL_NAME "+Up", eof_menu_note_toggle_slide_up, NULL, 0, NULL},
-    {"Toggle Slide Down\t" CTRL_NAME "+Down", eof_menu_note_toggle_slide_down, NULL, 0, NULL},
-    {"Remove &Slide", eof_menu_note_remove_slide, NULL, 0, NULL},
     {"&Arpeggio", NULL, eof_arpeggio_menu, 0, NULL},
+    {"s&Lide", NULL, eof_pro_guitar_slide_menu, 0, NULL},
+    {"&Strum", NULL, eof_pro_guitar_strum_menu, 0, NULL},
     {"&Clear legacy bitmask", eof_menu_note_clear_legacy_values, NULL, 0, NULL},
-    {"Toggle Strum Up\tShift+Up", eof_pro_guitar_toggle_strum_up, NULL, 0, NULL},
-    {"Toggle Strum Mid\tShift+M", eof_pro_guitar_toggle_strum_mid, NULL, 0, NULL},
-    {"Toggle Strum Down\tShift+Down", eof_pro_guitar_toggle_strum_down, NULL, 0, NULL},
-    {"Remove strum &Direction", eof_menu_note_remove_strum_direction, NULL, 0, NULL},
     {"Toggle tapping\t" CTRL_NAME "+T", eof_menu_note_toggle_tapping, NULL, 0, NULL},
     {"Remove &Tapping", eof_menu_note_remove_tapping, NULL, 0, NULL},
     {"Toggle bend\t" CTRL_NAME "+B", eof_menu_note_toggle_bend, NULL, 0, NULL},
@@ -294,6 +304,8 @@ MENU eof_note_proguitar_menu[] =
     {"Remove &Harmonic", eof_menu_note_remove_harmonic, NULL, 0, NULL},
     {"Toggle vibrato\tShift+V", eof_menu_note_toggle_vibrato, NULL, 0, NULL},
     {"Remove &Vibrato", eof_menu_note_remove_vibrato, NULL, 0, NULL},
+    {"Toggle ghost\t"  CTRL_NAME "+G", eof_menu_note_toggle_ghost, NULL, 0, NULL},
+    {"Remove &Ghost", eof_menu_note_remove_ghost, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -6202,6 +6214,45 @@ int eof_menu_note_toggle_ghost(void)
 						undo_made = 1;
 					}
 					eof_song->pro_guitar_track[tracknum]->note[ctr]->ghost ^= bitmask;	//Toggle this string's ghost flag
+				}
+			}
+		}
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_menu_note_remove_ghost(void)
+{
+ 	eof_log("eof_menu_note_remove_ghost() entered", 1);
+
+	unsigned long ctr, ctr2, bitmask, tracknum;
+	char undo_made = 0;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run unless a pro guitar/bass track is active
+
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->notes; ctr++)
+	{	//For each note in the active pro guitar track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[ctr] && (eof_song->pro_guitar_track[tracknum]->note[ctr]->type == eof_note_type))
+		{	//If the note is selected and is in the active difficulty
+			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask<<=1)
+			{	//For each of the 6 usable strings
+				if((eof_song->pro_guitar_track[tracknum]->note[ctr]->note & bitmask) && (eof_pro_guitar_fret_bitmask & bitmask) && (eof_song->pro_guitar_track[tracknum]->note[ctr]->ghost & bitmask))
+				{	//If this string is in use, and this string is enabled for fret shortcut manipulation and the string is marked as ghosted
+					if(!undo_made)
+					{	//Make an undo state before making the first change
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						undo_made = 1;
+					}
+					eof_song->pro_guitar_track[tracknum]->note[ctr]->ghost &= ~bitmask;	//Clear this string's ghost flag
 				}
 			}
 		}
