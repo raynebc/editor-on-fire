@@ -264,6 +264,7 @@ MENU eof_note_drum_menu[] =
     {"Toggle Y note as &Open hi hat\tShift+O", eof_menu_note_toggle_hi_hat_open, NULL, 0, NULL},
     {"Toggle Y note as &Pedal hi hat\tShift+P",eof_menu_note_toggle_hi_hat_pedal, NULL, 0, NULL},
     {"Toggle Y note as &Sizzle hi hat\tShift+S", eof_menu_note_toggle_hi_hat_sizzle, NULL, 0, NULL},
+    {"Remove &Hi hat status", eof_menu_note_remove_hi_hat_status, NULL, 0, NULL},
     {"Mark new &Y notes as", NULL, eof_note_drum_hi_hat_menu, 0, NULL},
     {"Toggle R note as &Rim shot\tShift+R",eof_menu_note_toggle_rimshot, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
@@ -5890,6 +5891,54 @@ int eof_menu_note_toggle_hi_hat_sizzle(void)
 					flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;		//Clear the open hi hat status
 					flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;	//Clear the pedal controlled hi hat status
 					flags ^= EOF_DRUM_NOTE_FLAG_Y_SIZZLE;			//Toggle the sizzle hi hat status
+					eof_set_note_flags(eof_song, eof_selected_track, i, flags);	//Apply the flag changes
+				}
+			}
+		}
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_menu_note_remove_hi_hat_status(void)
+{
+	unsigned long i, flags, tracknum;
+	long u = 0;
+
+	if(eof_selected_track != EOF_TRACK_DRUM)
+		return 1;	//Do not allow this function to run when PART DRUMS is not active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			if(eof_get_note_note(eof_song, eof_selected_track, i) & 6)
+			{	//If this drum note contains a yellow gem (or red gem, to allow for notation during disco flips)
+				if(!u)
+				{	//Make a back up before changing the first note
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					u = 1;
+				}
+				if(eof_drum_modifiers_affect_all_difficulties)
+				{	//If the user wants to apply this change to notes at this position among all difficulties
+					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL,0,0);	//Clear the pedal controlled hi hat status
+					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_SIZZLE,0,0);		//Clear the sizzle hi hat status
+					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN,0,0);	//Clear the open hi hat status
+				}
+				else
+				{	//Otherwise just apply it to this difficulty's notes
+					flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+					flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;	//Clear the pedal controlled hi hat status
+					flags &= ~EOF_DRUM_NOTE_FLAG_Y_SIZZLE;			//Clear the sizzle hi hat status
+					flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;	//Clear the open hi hat status
 					eof_set_note_flags(eof_song, eof_selected_track, i, flags);	//Apply the flag changes
 				}
 			}

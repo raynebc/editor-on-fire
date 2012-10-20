@@ -1533,42 +1533,62 @@ void eof_read_global_keys(void)
 		/* decrease tempo by 1BPM (-) */
 		/* decrease tempo by .1BPM (SHIFT+-) */
 		/* decrease tempo by .01BPM (SHIFT+CTRL+-) */
-		/* increase tempo by 1BPM (+) */
-		/* increase tempo by .1BPM (SHIFT+(plus)) */
-		/* increase tempo by .01BPM (SHIFT+CTRL+(plus)) */
 		double tempochange;
 		if(key[KEY_MINUS])
 		{
 			if(KEY_EITHER_SHIFT)
-			{
+			{	//If SHIFT is held
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				if(KEY_EITHER_CTRL)
+				{	//If both SHIFT and CTRL are held
 					tempochange = -0.01;
+				}
 				else
+				{	//If only SHIFT is held
 					tempochange = -0.1;
+				}
+				eof_menu_beat_adjust_bpm(tempochange);
+				key[KEY_MINUS] = 0;
 			}
 			else
-				tempochange = -1.0;
-
-			eof_menu_beat_adjust_bpm(tempochange);
-			key[KEY_MINUS] = 0;
+			{	//If SHIFT is not held
+				if(!KEY_EITHER_CTRL)
+				{	//If the CTRL key is not held (CTRL+- is reserved for decrement pro guitar fret value
+					tempochange = -1.0;
+					eof_menu_beat_adjust_bpm(tempochange);
+					key[KEY_MINUS] = 0;
+				}
+			}
 		}
 
+		/* increase tempo by 1BPM (+) */
+		/* increase tempo by .1BPM (SHIFT+(plus)) */
+		/* increase tempo by .01BPM (SHIFT+CTRL+(plus)) */
 		if(key[KEY_EQUALS])
 		{
 			if(KEY_EITHER_SHIFT)
-			{
+			{	//If SHIFT is held
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				if(KEY_EITHER_CTRL)
+				{	//If both SHIFT and CTRL are held
 					tempochange = 0.01;
+				}
 				else
+				{	//If only the SHIFT key is held
 					tempochange = 0.1;
+				}
+				eof_menu_beat_adjust_bpm(tempochange);
+				key[KEY_EQUALS] = 0;
 			}
 			else
-				tempochange = 1.0;
-
-			eof_menu_beat_adjust_bpm(tempochange);
-			key[KEY_EQUALS] = 0;
+			{	//The SHIFT key is not held
+				if(!KEY_EITHER_CTRL)
+				{	//If the CTRL key is not held (CTRL++ is reserved for increment pro guitar fret value)
+					tempochange = 1.0;
+					eof_menu_beat_adjust_bpm(tempochange);
+					key[KEY_EQUALS] = 0;
+				}
+			}
 		}
 	}//If a song is loaded
 
