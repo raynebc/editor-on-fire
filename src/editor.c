@@ -4441,12 +4441,6 @@ void eof_render_editor_window_common(void)
 	/* fill in window background color */
 	rectfill(eof_window_editor->screen, 0, 25 + 8, eof_window_editor->w - 1, eof_window_editor->h - 1, eof_color_gray);
 
-	/* draw the difficulty tabs */
-	if(eof_selected_track == EOF_TRACK_VOCALS)
-		draw_sprite(eof_window_editor->screen, eof_image[EOF_IMAGE_VTAB0 + eof_vocals_tab], 0, 8);
-	else
-		draw_sprite(eof_window_editor->screen, eof_image[EOF_IMAGE_TAB0 + eof_note_type], 0, 8);
-
 	/* draw the playback controls */
 	if(eof_selected_control < 0)
 	{
@@ -4735,18 +4729,6 @@ void eof_render_editor_window_common(void)
 			}
 		}//The beat would render visibly
 
-		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_EVENTS)
-		{	//Draw event marker
-			line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
-			if(eof_song->beat[i]->contained_section_event >= 0)
-			{	//If this beat has a section event
-				textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 25 + 4, eof_color_yellow, -1, "%s", eof_song->text_event[eof_song->beat[i]->contained_section_event]->text);	//Display it
-			}
-			else if(eof_song->beat[i]->contains_end_event)
-			{	//Or if this beat contains an end event
-				textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 25 + 4, eof_color_red, -1, "[end]");	//Display it
-			}
-		}
 		if((eof_song->beat[i]->measurenum != 0) && (eof_song->beat[i]->beat_within_measure == 0))
 		{	//If this is a measure marker, draw the measure number to the right of the beat line
 			textprintf_ex(eof_window_editor->screen, eof_mono_font, xcoord + 2, EOF_EDITOR_RENDER_OFFSET + 22 - 7, eof_color_yellow, -1, "%lu", eof_song->beat[i]->measurenum);
@@ -4777,38 +4759,66 @@ void eof_render_editor_window_common2(void)
 {
 //	eof_log("eof_render_editor_window_common2() entered");
 
-	int i;
 	int pos = eof_music_pos / eof_zoom;	//Current seek position compensated for zoom level
 	int zoom = eof_av_delay / eof_zoom;	//AV delay compensated for zoom level
+	unsigned long i;
+	int lpos;							//The position of the first beatmarker
+	int xcoord;
 
 	if(!eof_song_loaded)
 		return;
 
+	if(pos < 300)
+	{
+		lpos = 20;
+	}
+	else
+	{
+		lpos = 20 - (pos - 300);
+	}
+
+	/* draw section names and event markers */
+	for(i = 0; i < eof_song->beats; i++)
+	{	//For each beat
+		xcoord = lpos + eof_song->beat[i]->pos / eof_zoom;
+		if(xcoord >= eof_window_editor->screen->w)
+		{	//If this beat would render further right than the right edge of the screen
+			break;	//Skip rendering this and all other beat markers, which would continue to render off screen
+		}
+		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_EVENTS)
+		{	//If this beat has any text events
+			line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
+			if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_EVENTS)
+			{	//Draw event marker on top of note names, to ensure the section names are readable
+				if(eof_song->beat[i]->contained_section_event >= 0)
+				{	//If this beat has a section event
+					textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 25 + 5, eof_color_yellow, eof_color_black, "%s", eof_song->text_event[eof_song->beat[i]->contained_section_event]->text);	//Display it
+				}
+				else if(eof_song->beat[i]->contains_end_event)
+				{	//Or if this beat contains an end event
+					textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 25 + 5, eof_color_red, eof_color_black, "[end]");	//Display it
+				}
+			}
+		}
+	}
+
 	/* draw the end of song position if necessary*/
 	if(eof_chart_length != eof_music_length)
 	{
-		if(pos < 300)
-		{
-			vline(eof_window_editor->screen, 20 + (eof_music_length / eof_zoom), EOF_EDITOR_RENDER_OFFSET + 20, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 4, eof_color_red);
-		}
-		else
-		{
-			vline(eof_window_editor->screen, 20 - ((pos - 300)) + (eof_music_length / eof_zoom), EOF_EDITOR_RENDER_OFFSET + 20, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 4, eof_color_red);
-		}
+		vline(eof_window_editor->screen, lpos + (eof_music_length / eof_zoom), EOF_EDITOR_RENDER_OFFSET + 20, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h + 4, eof_color_red);
 	}
 
 	/* draw the current position */
 	if(pos > zoom)
 	{
-		if(pos < 300)
-		{
-			vline(eof_window_editor->screen, 20 + pos - zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
-		}
-		else
-		{
-			vline(eof_window_editor->screen, 320 - zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
-		}
+		vline(eof_window_editor->screen, lpos + pos - zoom, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_green);
 	}
+
+	/* draw the difficulty tabs (after the section names, which otherwise render a couple pixels over the tabs) */
+	if(eof_selected_track == EOF_TRACK_VOCALS)
+		draw_sprite(eof_window_editor->screen, eof_image[EOF_IMAGE_VTAB0 + eof_vocals_tab], 0, 8);
+	else
+		draw_sprite(eof_window_editor->screen, eof_image[EOF_IMAGE_TAB0 + eof_note_type], 0, 8);
 
 	char *tab_name;
 	for(i = 0; i < 5; i++)

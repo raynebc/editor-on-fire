@@ -230,25 +230,37 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "real_guitar_tuning"))
 			{
-				tracknum = sp->track[EOF_TRACK_PRO_GUITAR]->tracknum;
+				unsigned long populated_track = EOF_TRACK_PRO_GUITAR;	//The 22 fret pro guitar track if it is populated, otherwise the 17 fret track if it is populated
+				unsigned long tracknum2 = EOF_TRACK_PRO_GUITAR_22;		//The other pro guitar track
+				if(eof_get_track_size(sp, EOF_TRACK_PRO_GUITAR_22))
+				{	//If the 22 fret pro guitar track is populated
+					populated_track = EOF_TRACK_PRO_GUITAR_22;
+					tracknum2 = EOF_TRACK_PRO_GUITAR;
+				}
+				tracknum = sp->track[populated_track]->tracknum;
 				if(eof_compare_set_ini_pro_guitar_tuning(sp->pro_guitar_track[tracknum], value_index, &function))
 				{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 					return 0;
 				}
-				//Copy the parsed tuning data to the 22 fret pro guitar track
-				unsigned long tracknum2 = sp->track[EOF_TRACK_PRO_GUITAR_22]->tracknum;
+				//Copy the parsed tuning data to the other pro guitar track
 				memcpy(sp->pro_guitar_track[tracknum2]->tuning, sp->pro_guitar_track[tracknum], EOF_TUNING_LENGTH);	//Copy the tuning array
 				sp->pro_guitar_track[tracknum2]->numstrings = sp->pro_guitar_track[tracknum]->numstrings;	//Copy the string count
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "real_bass_tuning"))
 			{
-				tracknum = sp->track[EOF_TRACK_PRO_BASS]->tracknum;
+				unsigned long populated_track = EOF_TRACK_PRO_BASS;
+				unsigned long tracknum2 = EOF_TRACK_PRO_BASS_22;
+				if(eof_get_track_size(sp, EOF_TRACK_PRO_BASS_22))
+				{	//If the 22 fret pro guitar track is populated
+					populated_track = EOF_TRACK_PRO_BASS_22;
+					tracknum2 = EOF_TRACK_PRO_BASS;
+				}
+				tracknum = sp->track[populated_track]->tracknum;
 				if(eof_compare_set_ini_pro_guitar_tuning(sp->pro_guitar_track[tracknum], value_index, &function))
 				{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 					return 0;
 				}
 				//Copy the parsed tuning data to the 22 fret pro bass track
-				unsigned long tracknum2 = sp->track[EOF_TRACK_PRO_BASS_22]->tracknum;
 				memcpy(sp->pro_guitar_track[tracknum2]->tuning, sp->pro_guitar_track[tracknum], EOF_TUNING_LENGTH);	//Copy the tuning array
 				sp->pro_guitar_track[tracknum2]->numstrings = sp->pro_guitar_track[tracknum]->numstrings;	//Copy the string count
 			}
@@ -303,9 +315,14 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 					if(eof_difficulty_ini_tags[j] && !ustricmp(eof_import_ini_setting[i].type, eof_difficulty_ini_tags[j]))
 					{	//If this INI setting matches the difficulty tag, store the difficulty value into the appropriate track structure
 						long value;
+						long original = sp->track[j]->difficulty;
+						if(original == 0xFF)
+						{	//If the project does not have this difficulty defined
+							original = -1;	//Convert it to -1 so it can be accurately compared to the value in the INI file
+						}
 						if(atoi(value_index) >= 0)
 						{	//Only store the difficulty if it isn't negative (-1 means empty track)
-							if(eof_compare_set_ini_integer(&value, sp->track[j]->difficulty, value_index, &function, eof_import_ini_setting[i].type))
+							if(eof_compare_set_ini_integer(&value, original, value_index, &function, eof_import_ini_setting[i].type))
 							{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 								return 0;
 							}
@@ -322,7 +339,12 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 					if(!ustricmp(eof_import_ini_setting[i].type, "diff_drums_real"))
 					{	//If this is a pro drum difficulty tag
 						long value;
-						if(eof_compare_set_ini_integer(&value, (sp->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24, value_index, &function, eof_import_ini_setting[i].type))
+						long original = (sp->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24;
+						if(original == 0xFF)
+						{	//If the project does not have this difficulty defined
+							original = -1;	//Convert it to -1 so it can be accurately compared to the value in the INI file
+						}
+						if(eof_compare_set_ini_integer(&value, original, value_index, &function, eof_import_ini_setting[i].type))
 						{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 							return 0;
 						}
@@ -334,7 +356,12 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 					else if(!ustricmp(eof_import_ini_setting[i].type, "diff_drums_real_ps"))
 					{	//If this is a PS real drum difficulty tag
 						long value;
-						if(eof_compare_set_ini_integer(&value, (sp->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 24, value_index, &function, eof_import_ini_setting[i].type))
+						long original = (sp->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 24;
+						if(original == 0xF)
+						{	//If the project does not have this difficulty defined
+							original = -1;	//Convert it to -1 so it can be accurately compared to the value in the INI file
+						}
+						if(eof_compare_set_ini_integer(&value, original, value_index, &function, eof_import_ini_setting[i].type))
 						{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 							return 0;
 						}
@@ -346,7 +373,12 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 					else if(!ustricmp(eof_import_ini_setting[i].type, "diff_vocals_harm"))
 					{	//If this is a harmony difficulty tag
 						long value;
-						if(eof_compare_set_ini_integer(&value, (sp->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24, value_index, &function, eof_import_ini_setting[i].type))
+						long original = (sp->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24;
+						if(original == 0xF)
+						{	//If the project does not have this difficulty defined
+							original = -1;	//Convert it to -1 so it can be accurately compared to the value in the INI file
+						}
+						if(eof_compare_set_ini_integer(&value, original, value_index, &function, eof_import_ini_setting[i].type))
 						{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 							return 0;
 						}
