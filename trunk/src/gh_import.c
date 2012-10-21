@@ -1192,7 +1192,7 @@ EOF_SONG * eof_import_gh(const char * fn)
 		}
 
 		/* read INI file */
-		eof_import_ini(sp, inifn);
+		eof_import_ini(sp, inifn, 0);
 
 		unsigned long tracknum;
 		if(eof_get_track_size(sp, EOF_TRACK_DRUM))
