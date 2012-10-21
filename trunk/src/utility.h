@@ -13,4 +13,9 @@ int eof_file_compare(char *file1, char *file2);	//Returns zero if the two files 
 
 int eof_check_string(char * tp);	//Returns nonzero if the string contains any non space ' ' characters and is at least one character long
 
+void eof_allocate_ucode_table(void);
+void eof_free_ucode_table(void);
+int eof_convert_extended_ascii(char * buffer, int size);
+
+
 #endif

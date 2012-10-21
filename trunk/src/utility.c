@@ -7,6 +7,8 @@
 #include "memwatch.h"
 #endif
 
+unsigned short * eof_ucode_table = NULL;
+
 int eof_chdir(const char * dir)
 {
 	if(dir == NULL)
@@ -196,4 +198,52 @@ int eof_file_compare(char *file1, char *file2)
 	pack_fclose(fp2);
 
 	return result;
+}
+
+/* allocate and set ucode table for 8-bit ASCII conversion */
+void eof_allocate_ucode_table(void)
+{
+	int i;
+	
+	if(!eof_ucode_table)
+	{
+		eof_ucode_table = malloc(sizeof(short) * 256);
+		if(eof_ucode_table)
+		{
+			for(i = 0; i < 256; i++)
+			{
+				eof_ucode_table[i] = i;
+			}
+			set_ucodepage(eof_ucode_table, NULL);
+		}
+	}
+}
+
+void eof_free_ucode_table(void)
+{
+	if(eof_ucode_table)
+	{
+		free(eof_ucode_table);
+		eof_ucode_table = NULL;
+	}
+}
+
+/* convert a string from 8-bit ASCII to the current format */
+int eof_convert_extended_ascii(char * buffer, int size)
+{
+	char * workbuffer = NULL;
+	
+	if(!eof_ucode_table)
+	{
+		return 0;
+	}
+	workbuffer = malloc(size);
+	if(!workbuffer)
+	{
+		return 0;
+	}
+	memcpy(workbuffer, buffer, size);
+	do_uconvert(workbuffer, U_ASCII_CP, buffer, U_CURRENT, size);
+	free(workbuffer);
+	return 1;
 }

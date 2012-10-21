@@ -689,6 +689,58 @@ void eof_process_gh_lyric_text(EOF_SONG *sp)
 	}
 }
 
+void eof_process_gh_lyric_text_u(EOF_SONG *sp)
+{
+	unsigned long ctr, ctr2, length, prevlength, index;
+	char *string, *prevstring, buffer[EOF_MAX_LYRIC_LENGTH+1];
+
+	for(ctr = 0; ctr < eof_get_track_size(sp, EOF_TRACK_VOCALS); ctr++)
+	{	//For each lyric
+		index = 0;	//Reset the index into the buffer
+		string = eof_get_note_name(sp, EOF_TRACK_VOCALS, ctr);
+		if(string == NULL)
+			return;	//If there is some kind of error
+		length = ustrlen(string);
+
+		for(ctr2 = 0; ctr2 < length; ctr2++)
+		{	//For each character in the the lyric's text
+			if((ugetat(string, ctr2) == '=') && (ctr > 0))
+			{	//If this character is an equal sign, and there's a previous lyric, drop the character and append a hyphen to the previous lyric
+				prevstring = eof_get_note_name(sp, EOF_TRACK_VOCALS, ctr - 1);	//Get the string for the previous lyric
+				if(prevstring != NULL)
+				{	//If there wasn't an error getting that string
+					prevlength = ustrlen(prevstring);
+					if((ugetat(prevstring, prevlength - 1) != '-') && (ugetat(prevstring, prevlength - 1) != '='))
+					{	//If the previous lyric doesn't already end in a hyphen or equal sign
+						if(prevlength + 1 < EOF_MAX_LYRIC_LENGTH)
+						{	//Bounds check
+							uinsert(prevstring, prevlength, '-'); // append a hyphen
+						}
+					}
+				}
+			}
+			else if((ugetat(string, ctr2) == '-') && (ctr2 + 1 == length))
+			{	//If this is the last character in the string and it is a hyphen
+				usetat(buffer, index, '='); //Convert it to the equivalent RB notation
+				index++;
+			}
+			else
+			{	//This character isn't an equal sign or a hyphen at the end of the string
+				usetat(buffer, index, ugetat(string, ctr2)); //Copy it as-is
+				index++;
+			}
+		}
+		usetat(buffer, index, '\0');
+		index++;
+		usetat(buffer, index, '\0');
+		index++;
+		buffer[index] = '\0';				//Terminate the finalized string
+		buffer[EOF_MAX_LYRIC_LENGTH - 1] = '\0';	//Ensure the last two bytes of the lyric text are NULL (Unicode terminator)
+		buffer[EOF_MAX_LYRIC_LENGTH] = '\0';
+		eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr, buffer);	//Update the string on the lyric
+	}
+}
+
 void eof_process_gh_lyric_phrases(EOF_SONG *sp)
 {
 	unsigned long ctr, ctr2, tracknum, phrasestart, phraseend, voxstart, prevphrase = 0;
@@ -929,7 +981,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 			eof_log("\t\tSkipping field size", 1);
 		}
 	}
-	lyricbuffer = (char *)malloc(lyricsize + 2);
+	lyricbuffer = (char *)malloc((lyricsize + 2) * 4); // leave enough room for unicode conversion (4x the memory)
 	if(!lyricbuffer)
 	{
 		eof_log("\t\tError:  Could not allocate memory for lyric buffer", 1);
@@ -948,6 +1000,11 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 			{	//If there was an error reading the lyric entry
 				eof_log("\t\tError:  Could not read lyric text", 1);
 				return -1;
+			}
+			//successfully read, convert to unicode for storage */
+			else
+			{
+				eof_convert_extended_ascii(lyricbuffer, (lyricsize + 2) * 4);
 			}
 		}
 		else
@@ -1038,7 +1095,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 			eof_track_add_create_note(sp, EOF_TRACK_VOCALS, 0, lyricstart, 10, 0, lyricbuffer);
 		}
 	}//For each lyric in the section
-	eof_process_gh_lyric_text(sp);	//Filter and convert hyphenating characters where appropriate
+	eof_process_gh_lyric_text_u(sp);	//Filter and convert hyphenating characters where appropriate
 
 	fb->index = 0;	//Seek to the beginning of the file buffer
 	if(eof_filebuffer_find_checksum(fb, eof_gh_checksum("vocalphrase")))	//Seek one byte past the target header
@@ -1104,6 +1161,7 @@ EOF_SONG * eof_import_gh(const char * fn)
 	//Build the paths to guitar.ogg and song.ini ahead of time, as fn can be clobbered by browsing for an external section names file during GH import below
 	replace_filename(oggfn, fn, "guitar.ogg", 1024);
 	replace_filename(inifn, fn, "song.ini", 1024);
+	eof_allocate_ucode_table();
 	sp = eof_import_gh_note(fn);	//Attempt to load as a "NOTE" format GH file
 	if(!sp)
 	{	//If that failed
@@ -1134,7 +1192,7 @@ EOF_SONG * eof_import_gh(const char * fn)
 		}
 
 		/* read INI file */
-		eof_import_ini(sp, inifn, 0);
+		eof_import_ini(sp, inifn);
 
 		unsigned long tracknum;
 		if(eof_get_track_size(sp, EOF_TRACK_DRUM))
@@ -1160,12 +1218,14 @@ EOF_SONG * eof_import_gh(const char * fn)
 		if(!eof_load_ogg(oggfn, 1))	//If user does not provide audio, fail over to using silent audio
 		{
 			eof_destroy_song(sp);
+			eof_free_ucode_table();
 			return NULL;
 		}
 		eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
 		eof_vocal_track_fixup_lyrics(sp, EOF_TRACK_VOCALS, 0);	//Clean up the lyrics
 		eof_log("\tGH import completed", 1);
 	}
+	eof_free_ucode_table();
 	return sp;
 }
 
@@ -1274,8 +1334,6 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 	}
 
 	eof_calculate_tempo_map(sp);	//Build the tempo map based on the beat time stamps
-	double beat_length = (double)60000.0 / ((double)60000000.0 / (double)sp->beat[sp->beats - 1]->ppqn);	//Get the length of the last beat
-	eof_chart_length = sp->beat[sp->beats - 1]->fpos + beat_length + 0.5;	//Set the chart's end position to the end of the last beat marker
 	if(eof_use_ts)
 	{	//If the user opted to import TS changes
 //Process the timesig section to load time signatures
@@ -2121,7 +2179,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 	{	//If memory was allocated by eof_gh_process_section_header()
 		free(arrayptr);
 	}
-	eof_process_gh_lyric_text(sp);	//Filter and convert hyphenating characters where appropriate
+	eof_process_gh_lyric_text_u(sp);	//Filter and convert hyphenating characters where appropriate
 
 //Read lyric phrases
 	fb->index = 0;	//Seek to the beginning of the file buffer
@@ -2434,8 +2492,6 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 		}
 	}//If the user opted to import TS changes
 	eof_calculate_tempo_map(sp);	//Build the tempo map based on the beat time stamps
-	double beat_length = (double)60000.0 / ((double)60000000.0 / (double)sp->beat[sp->beats - 1]->ppqn);	//Get the length of the last beat
-	eof_chart_length = sp->beat[sp->beats - 1]->fpos + beat_length + 0.5;	//Set the chart's end position to the end of the last beat marker
 
 	if(alert(NULL, "Import the chart's original HOPO OFF notation?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{	//If user opts to have all non HOPO notes marked for forced strumming
@@ -2701,6 +2757,7 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 				{	//For each link in the sections checksum list (until a match has been made)
 					if(linkptr->checksum == checksum)
 					{	//If this checksum matches the one in the list
+						eof_chart_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
 						long beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
 						if(beatnum >= 0)
 						{	//If there is such a beat
@@ -2839,6 +2896,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 								{
 									if(!eof_filebuffer_get_dword(fb, &dword))	//Read the timestamp
 									{	//If the timestamp was successfully read
+										eof_chart_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
 										long beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
 										if(beatnum >= 0)
 										{	//If there is such a beat
