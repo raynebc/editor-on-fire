@@ -1447,18 +1447,32 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		return 0;	//Return failure
 
 	#define EOFNUMINISTRINGTYPES 12
-	char *const inistringbuffer[EOFNUMINISTRINGTYPES]={NULL,NULL,sp->tags->artist,sp->tags->title,sp->tags->frettist,NULL,sp->tags->year,sp->tags->loading_text,NULL,NULL,NULL,NULL};
+	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
 	unsigned long const inistringbuffersize[12]={0,0,256,256,256,0,32,512,0,0,0,0};
 		//Store the buffer information of each of the 12 INI strings to simplify the loading code
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
 
 	#define EOFNUMINIBOOLEANTYPES 7
-	char *const inibooleanbuffer[EOFNUMINIBOOLEANTYPES]={NULL,&sp->tags->lyrics,&sp->tags->eighth_note_hopo,&sp->tags->eof_fret_hand_pos_1_pg,&sp->tags->eof_fret_hand_pos_1_pb,&sp->tags->tempo_map_locked,&sp->tags->double_bass_drum_disabled};
+	char *inibooleanbuffer[EOFNUMINIBOOLEANTYPES] = {NULL};
 		//Store the pointers to each of the 5 boolean type INI settings (number 0 is reserved) to simplify the loading code
 
 	#define EOFNUMININUMBERTYPES 5
-	unsigned long *const ininumberbuffer[EOFNUMININUMBERTYPES]={NULL,NULL,&sp->tags->difficulty,NULL,NULL};
+	unsigned long *ininumberbuffer[EOFNUMININUMBERTYPES] = {NULL};
 		//Store the pointers to each of the 5 number type INI settings (number 0 is reserved) to simplify the loading code
+
+	//Populate the arrays with addresses for variables here instead of during declaration to avoid compiler warnings
+	inistringbuffer[2] = sp->tags->artist;
+	inistringbuffer[3] = sp->tags->title;
+	inistringbuffer[4] = sp->tags->frettist;
+	inistringbuffer[6] = sp->tags->year;
+	inistringbuffer[7] = sp->tags->loading_text;
+	inibooleanbuffer[1] = &sp->tags->lyrics;
+	inibooleanbuffer[2] = &sp->tags->eighth_note_hopo;
+	inibooleanbuffer[3] = &sp->tags->eof_fret_hand_pos_1_pg;
+	inibooleanbuffer[4] = &sp->tags->eof_fret_hand_pos_1_pb;
+	inibooleanbuffer[5] = &sp->tags->tempo_map_locked;
+	inibooleanbuffer[6] = &sp->tags->double_bass_drum_disabled;
+	ininumberbuffer[2] = &sp->tags->difficulty;
 
 	/* read chart properties */
 	sp->tags->revision = pack_igetl(fp);	//Read project revision number
@@ -2112,17 +2126,31 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	}
 
 	#define EOFNUMINISTRINGTYPES 12
-	char *const inistringbuffer[EOFNUMINISTRINGTYPES]={NULL,NULL,sp->tags->artist,sp->tags->title,sp->tags->frettist,NULL,sp->tags->year,sp->tags->loading_text,NULL,NULL,NULL,NULL};
+	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
 		//Store the buffer information of each of the 12 INI strings to simplify the loading code
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
 
 	#define EOFNUMINIBOOLEANTYPES 7
-	char *const inibooleanbuffer[EOFNUMINIBOOLEANTYPES]={NULL,&sp->tags->lyrics,&sp->tags->eighth_note_hopo,&sp->tags->eof_fret_hand_pos_1_pg,&sp->tags->eof_fret_hand_pos_1_pb,&sp->tags->tempo_map_locked,&sp->tags->double_bass_drum_disabled};
+	char *inibooleanbuffer[EOFNUMINIBOOLEANTYPES] = {NULL};
 		//Store the pointers to each of the 5 boolean type INI settings (number 0 is reserved) to simplify the loading code
 
 	#define EOFNUMININUMBERTYPES 5
-	unsigned long *const ininumberbuffer[EOFNUMININUMBERTYPES]={NULL,NULL,&sp->tags->difficulty,NULL,NULL};
+	unsigned long *ininumberbuffer[EOFNUMININUMBERTYPES] = {NULL};
 		//Store the pointers to each of the 5 number type INI settings (number 0 is reserved) to simplify the loading code
+
+	//Populate the arrays with addresses for variables here instead of during declaration to avoid compiler warnings
+	inistringbuffer[2] = sp->tags->artist;
+	inistringbuffer[3] = sp->tags->title;
+	inistringbuffer[4] = sp->tags->frettist;
+	inistringbuffer[6] = sp->tags->year;
+	inistringbuffer[7] = sp->tags->loading_text;
+	inibooleanbuffer[1] = &sp->tags->lyrics;
+	inibooleanbuffer[2] = &sp->tags->eighth_note_hopo;
+	inibooleanbuffer[3] = &sp->tags->eof_fret_hand_pos_1_pg;
+	inibooleanbuffer[4] = &sp->tags->eof_fret_hand_pos_1_pb;
+	inibooleanbuffer[5] = &sp->tags->tempo_map_locked;
+	inibooleanbuffer[6] = &sp->tags->double_bass_drum_disabled;
+	ininumberbuffer[2] = &sp->tags->difficulty;
 
 	/* write file header */
 	fp = pack_fopen(fn, "w");

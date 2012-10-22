@@ -230,38 +230,36 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "real_guitar_tuning"))
 			{
-				unsigned long populated_track = EOF_TRACK_PRO_GUITAR;	//The 22 fret pro guitar track if it is populated, otherwise the 17 fret track if it is populated
-				unsigned long tracknum2 = EOF_TRACK_PRO_GUITAR_22;		//The other pro guitar track
+				unsigned long tracknum = sp->track[EOF_TRACK_PRO_GUITAR]->tracknum;			//The 22 fret pro guitar track if it is populated, otherwise the 17 fret track if it is populated
+				unsigned long tracknum2 = sp->track[EOF_TRACK_PRO_GUITAR_22]->tracknum;		//The other pro guitar track
 				if(eof_get_track_size(sp, EOF_TRACK_PRO_GUITAR_22))
 				{	//If the 22 fret pro guitar track is populated
-					populated_track = EOF_TRACK_PRO_GUITAR_22;
-					tracknum2 = EOF_TRACK_PRO_GUITAR;
+					tracknum = sp->track[EOF_TRACK_PRO_GUITAR_22]->tracknum;
+					tracknum2 = sp->track[EOF_TRACK_PRO_GUITAR]->tracknum;
 				}
-				tracknum = sp->track[populated_track]->tracknum;
 				if(eof_compare_set_ini_pro_guitar_tuning(sp->pro_guitar_track[tracknum], value_index, &function))
 				{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 					return 0;
 				}
 				//Copy the parsed tuning data to the other pro guitar track
-				memcpy(sp->pro_guitar_track[tracknum2]->tuning, sp->pro_guitar_track[tracknum], EOF_TUNING_LENGTH);	//Copy the tuning array
+				memcpy(sp->pro_guitar_track[tracknum2]->tuning, sp->pro_guitar_track[tracknum]->tuning, EOF_TUNING_LENGTH);	//Copy the tuning array
 				sp->pro_guitar_track[tracknum2]->numstrings = sp->pro_guitar_track[tracknum]->numstrings;	//Copy the string count
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "real_bass_tuning"))
 			{
-				unsigned long populated_track = EOF_TRACK_PRO_BASS;
-				unsigned long tracknum2 = EOF_TRACK_PRO_BASS_22;
+				unsigned long tracknum = sp->track[EOF_TRACK_PRO_BASS]->tracknum;
+				unsigned long tracknum2 = sp->track[EOF_TRACK_PRO_BASS_22]->tracknum;
 				if(eof_get_track_size(sp, EOF_TRACK_PRO_BASS_22))
 				{	//If the 22 fret pro guitar track is populated
-					populated_track = EOF_TRACK_PRO_BASS_22;
-					tracknum2 = EOF_TRACK_PRO_BASS;
+					tracknum = sp->track[EOF_TRACK_PRO_BASS_22]->tracknum;
+					tracknum2 = sp->track[EOF_TRACK_PRO_BASS]->tracknum;
 				}
-				tracknum = sp->track[populated_track]->tracknum;
 				if(eof_compare_set_ini_pro_guitar_tuning(sp->pro_guitar_track[tracknum], value_index, &function))
 				{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
 					return 0;
 				}
-				//Copy the parsed tuning data to the 22 fret pro bass track
-				memcpy(sp->pro_guitar_track[tracknum2]->tuning, sp->pro_guitar_track[tracknum], EOF_TUNING_LENGTH);	//Copy the tuning array
+				//Copy the parsed tuning data to the other pro bass track
+				memcpy(sp->pro_guitar_track[tracknum2]->tuning, sp->pro_guitar_track[tracknum]->tuning, EOF_TUNING_LENGTH);	//Copy the tuning array
 				sp->pro_guitar_track[tracknum2]->numstrings = sp->pro_guitar_track[tracknum]->numstrings;	//Copy the string count
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "pro_drums"))

@@ -84,6 +84,10 @@ void eof_gp_debug_log(FILE *inf, char *text)
 #else
 void eof_gp_debug_log(PACKFILE *inf, char *text)
 {
+	if(inf)
+	{	//Read inf to get rid of a warning about it being unused
+		eof_log(text, 1);
+	}
 }
 #endif
 
