@@ -4610,8 +4610,8 @@ void eof_render_editor_window_common(void)
 						markerlength = eof_screen_layout.note_size;	//Make it longer
 					}
 					markerpos = lpos + (notepos / eof_zoom);
-					if(markerpos + markerlength >= 0)
-					{	//If the marker ends at or right of the left edge of the screen
+					if(notepos + notelength >= start)
+					{	//If the notes ends at or right of the left edge of the screen
 						if(markerpos <= eof_window_editor->screen->w)
 						{	//If the marker starts at or left of the right edge of the screen (is visible)
 							rectfill(eof_window_editor->screen, markerpos, EOF_EDITOR_RENDER_OFFSET + 25, markerpos + markerlength, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, col);
