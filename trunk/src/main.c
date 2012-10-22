@@ -3390,7 +3390,7 @@ int eof_initialize(int argc, char * argv[])
 		allegro_message("Could not create file list filter (*.gp*)!");
 		return 0;
 	}
-	ncdfs_filter_list_add(eof_filter_gp_files, "gp?", "Guitar Pro files (*.gp?)", 1);
+	ncdfs_filter_list_add(eof_filter_gp_files, "gpx;gp5;gp4;gp3", "Guitar Pro files (*.gp?)", 1);
 
 	/* check availability of MP3 conversion tools */
 	if(!eof_supports_mp3)

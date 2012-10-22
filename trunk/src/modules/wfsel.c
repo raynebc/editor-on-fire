@@ -57,10 +57,25 @@ int ncdfs_filter_list_add(NCDFS_FILTER_LIST * lp, char * ext, char * desc, int d
 
 */
 
+static int ncd_file_select_allegro_want_all(NCDFS_FILTER_LIST * lp)
+{
+	int i;
+	
+	for(i = 0; i < lp->filters; i++)
+	{
+		if(!strcmp(lp->filter[i].extension, "*"))
+		{
+			return 1;
+		}
+	}
+	return 0;
+}
+
 char * ncd_file_select_allegro(int type, char * initial, const char * title, NCDFS_FILTER_LIST * lp)
 {
 	char realfilter[1024] = {0};
 	int i, j, epos;
+	char * filter;
 
 	if(!initial)
 	{
@@ -74,31 +89,40 @@ char * ncd_file_select_allegro(int type, char * initial, const char * title, NCD
 	/* build filter string */
 	if(!lp)
 	{
+		filter = NULL;
 	}
 	else
 	{
-		ustrcpy(realfilter, "");
-		epos = 0;
-		for(i = 0; i < lp->filters; i++)
+		if(ncd_file_select_allegro_want_all(lp))
 		{
-
-			for(j = 0; j < ustrlen(lp->filter[i].extension); j++)
+			filter = NULL;
+		}
+		else
+		{
+			ustrcpy(realfilter, "");
+			epos = 0;
+			for(i = 0; i < lp->filters; i++)
 			{
-				realfilter[epos] = lp->filter[i].extension[j];
+
+				for(j = 0; j < ustrlen(lp->filter[i].extension); j++)
+				{
+					realfilter[epos] = lp->filter[i].extension[j];
+					epos++;
+				}
+
+				if(i < lp->filters - 1)
+				{
+					realfilter[epos] = ';';
+					epos++;
+				}
+
+				realfilter[epos] = '\0';
 				epos++;
 			}
-
-			if(i < lp->filters - 1)
-			{
-				realfilter[epos] = ';';
-				epos++;
-			}
-
-			realfilter[epos] = '\0';
-			epos++;
+			filter = realfilter;
 		}
 	}
-	if(file_select_ex(title, ncdfs_internal_return_path, realfilter, 1024, 320, 240))
+	if(file_select_ex(title, ncdfs_internal_return_path, filter, 1024, 320, 240))
 	{
 		return ncdfs_internal_return_path;
 	}
