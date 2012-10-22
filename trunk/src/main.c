@@ -2080,7 +2080,7 @@ void eof_render_note_window(void)
 		if((eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		{	//If the catalog entry is a pro guitar note and the active track is a legacy track
 			snprintf(temp, 1023, "Would paste from \"%s\" as:",eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->name);
-			textprintf_ex(eof_window_note->screen, font, 2, 53, eof_color_white, -1, temp);
+			textprintf_ex(eof_window_note->screen, font, 2, 53, eof_color_white, -1, "%s", temp);
 		}
 
 		if(eof_cselected_control < 0)
