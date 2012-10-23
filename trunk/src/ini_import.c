@@ -135,7 +135,10 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			{
 				if(!ustricmp(value_index, "Unknown Artist"))
 				{	//If this is EOF's placeholder for an undefined artist field
-					value_index[0] = '\0';	//Make it an empty string so it can be compared against the string already in the project
+					if(ustricmp(sp->tags->artist, "Unknown Artist"))
+					{	//If the project doesn't explicitly list this as the artist field
+						value_index[0] = '\0';	//Make it an empty string so it can be compared against the string already in the project
+					}
 				}
 				if(eof_compare_set_ini_string_field(sp->tags->artist, value_index, 256-1, &function, eof_import_ini_setting[i].type))
 				{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
@@ -146,7 +149,10 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			{
 				if(!ustricmp(value_index, "Untitled"))
 				{	//If this is EOF's placeholder for an undefined song title field
-					value_index[0] = '\0';	//Make it an empty string so it can be compared against the string already in the project
+					if(ustricmp(sp->tags->title, "Untitled"))
+					{	//If the project doesn't explicitly list this as the song title field
+						value_index[0] = '\0';	//Make it an empty string so it can be compared against the string already in the project
+					}
 				}
 				if(eof_compare_set_ini_string_field(sp->tags->title, value_index, 256-1, &function, eof_import_ini_setting[i].type))
 				{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
@@ -302,6 +308,9 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "sysex_pro_slide") || !ustricmp(eof_import_ini_setting[i].type, "sysex_high_hat_ctrl") || !ustricmp(eof_import_ini_setting[i].type, "sysex_rimshot") || !ustricmp(eof_import_ini_setting[i].type, "sysex_slider"))
 			{	//These Sysex indicators are only used by Phase Shift
+			}
+			else if(!ustricmp(eof_import_ini_setting[i].type, "star_power_note"))
+			{	//Other tags ignored by INI import because they are only informational about EOF's exported MIDIs
 			}
 
 			/* for custom settings or difficulty strings */
