@@ -4584,6 +4584,8 @@ void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourc
 			if((sp->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (sp->track[desttrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If the note was copied from a pro guitar track and pasted to a pro guitar track
 				memcpy(sp->pro_guitar_track[desttracknum]->note[newnotenum]->frets, sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->frets, 6);	//Copy the six usable string fret values from the source note to the newly created note
+				sp->pro_guitar_track[desttracknum]->note[newnotenum]->ghost = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->ghost;			//Copy the ghost bitmask
+				sp->pro_guitar_track[desttracknum]->note[newnotenum]->legacymask = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask;	//Copy the legacy bitmask
 			}
 		}
 	}//If copying from a non vocal track

@@ -287,11 +287,10 @@ Fixed a bug where user settings weren't read if EOF was
 launched from outside its program directory (ie. when
 loading a file via command line).
 
-Added an "Add new notes to selection" preference which
-causes newly added gems cause notes to be added to the
-currently selected notes instead of the selection being
-cleared and only the newly created/edited note remaining
-selected.
+Added an "Add new notes to selection" preference where
+adding gems causes notes to be added to the currently
+selected notes instead of the selection being cleared and
+only the newly created/edited note remaining selected.
 
 Added support for "sizzle" (half open) hi hat (yellow
 cymbal) notation, for use in Phase Shift.
