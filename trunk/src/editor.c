@@ -1955,6 +1955,13 @@ if(key[KEY_PAUSE])
 				key[KEY_N] = 0;
 			}
 
+	/* edit pro guitar fret values (F in a pro guitar track) */
+			if((key[KEY_F] && !KEY_EITHER_CTRL))
+			{
+				eof_menu_note_edit_pro_guitar_note_frets();
+				key[KEY_F] = 0;
+			}
+
 	/* set pro guitar fret values (CTRL+#, CTRL+Fn #, CTRL+X, CTRL+~, CTRL++, CTRL+-) */
 	/* toggle pro guitar ghost status (CTRL+G) */
 			if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)

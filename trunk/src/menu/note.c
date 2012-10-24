@@ -291,6 +291,7 @@ MENU eof_menu_thin_notes_menu[EOF_TRACKS_MAX] =
 MENU eof_note_proguitar_menu[] =
 {
     {"Edit pro guitar &Note\tN", eof_menu_note_edit_pro_guitar_note, NULL, 0, NULL},
+    {"Edit pro guitar &Fret values\tF", eof_menu_note_edit_pro_guitar_note_frets, NULL, 0, NULL},
     {"&Arpeggio", NULL, eof_arpeggio_menu, 0, NULL},
     {"s&Lide", NULL, eof_pro_guitar_slide_menu, 0, NULL},
     {"&Strum", NULL, eof_pro_guitar_strum_menu, 0, NULL},
@@ -3643,6 +3644,9 @@ int eof_menu_note_edit_pro_guitar_note(void)
 						eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
 						eof_selection.current = EOF_MAX_NOTES - 1;
 					}
+					eof_show_mouse(NULL);
+					eof_cursor_visible = 1;
+					eof_pen_visible = 1;
 					return 1;
 				}
 			}
@@ -3726,6 +3730,9 @@ int eof_menu_note_edit_pro_guitar_note(void)
 					if(bitmask == 0)
 					{	//If edits results in selected notes having no played strings
 						eof_menu_note_delete();		//All selected notes must be deleted
+						eof_show_mouse(NULL);
+						eof_cursor_visible = 1;
+						eof_pen_visible = 1;
 						return 1;					//Return from function
 					}
 	//Save the updated note bitmask
@@ -4074,6 +4081,216 @@ int eof_menu_note_edit_pro_guitar_note(void)
 			eof_render();	//Redraw the screen
 		}
 	}while((retval == 57) || (retval == 59) || (retval == 61));	//Re-run this dialog if the user clicked previous, apply or next
+
+	eof_show_mouse(NULL);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+DIALOG eof_pro_guitar_note_frets_dialog[] =
+{
+/*	(proc)					(x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1)       (d2) (dp)          (dp2)          (dp3) */
+	{d_agup_window_proc,    0,   48,  132, 248,2,   23,  0,    0,      0,         0,   "Edit note frets",NULL, NULL },
+
+	//Note:  In guitar theory, string 1 refers to high e
+	{d_agup_text_proc,      60,  80,  64,  8,  2,   23,  0,    0,      0,         0,   "Fret #",     NULL,          NULL },
+	{d_agup_text_proc,      16,  108, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_6_number, NULL, NULL },
+	{eof_verified_edit_proc,74,  104, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string_lane_6,  "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  132, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_5_number, NULL, NULL },
+	{eof_verified_edit_proc,74,  128, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string_lane_5,  "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  156, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_4_number, NULL, NULL },
+	{eof_verified_edit_proc,74,  152, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string_lane_4,  "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  180, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_3_number, NULL, NULL },
+	{eof_verified_edit_proc,74,  176, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string_lane_3,  "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  204, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_2_number, NULL, NULL },
+	{eof_verified_edit_proc,74,  200, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string_lane_2,  "0123456789Xx",NULL },
+	{d_agup_text_proc,      16,  228, 64,  8,  2,   23,  0,    0,      0,         0,   eof_string_lane_1_number, NULL, NULL },
+	{eof_verified_edit_proc,74,  224, 22,  20, 2,   23,  0,    0,      2,         0,   eof_string_lane_1,  "0123456789Xx",NULL },
+
+	{d_agup_button_proc,    12,  256, 50,  28, 2,   23,  '\r', D_EXIT, 0,         0,   "OK",         NULL,          NULL },
+	{d_agup_button_proc,    70,  256, 50,  28, 2,   23,  0,    D_EXIT, 0,         0,   "Cancel",     NULL,          NULL },
+	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_menu_note_edit_pro_guitar_note_frets(void)
+{
+	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	unsigned long ctr, ctr2, stringcount, i;
+	char undo_made = 0;	//Set to nonzero when an undo state is created
+	long fretvalue;
+	unsigned long bitmask = 0;		//Used to build the updated pro guitar note bitmask
+	char allmuted;					//Used to track whether all used strings are string muted
+	unsigned long flags;			//Used to build the updated flag bitmask
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run unless the pro guitar track is active
+
+	if(eof_selection.current >= eof_get_track_size(eof_song, eof_selected_track))
+		return 1;	//Do not allow this function to run if a valid note isn't selected
+
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
+	if(!eof_music_paused)
+	{
+		eof_music_play();
+	}
+
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_pro_guitar_note_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_pro_guitar_note_dialog);
+
+	//Update the fret text boxes (listed from top to bottom as string 1 through string 6)
+	stringcount = eof_count_track_lanes(eof_song, eof_selected_track);
+	if(eof_legacy_view)
+	{	//Special case:  If legacy view is enabled, correct stringcount
+		stringcount = eof_song->pro_guitar_track[tracknum]->numstrings;
+	}
+	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
+	{	//For each of the 6 supported strings
+		if(ctr < stringcount)
+		{	//If this track uses this string, copy the fret value to the appropriate string
+			eof_pro_guitar_note_frets_dialog[12 - (2 * ctr)].flags = 0;	//Ensure this text boxes' label is enabled
+			eof_fret_string_numbers[ctr][7] = '0' + (stringcount - ctr);	//Correct the string number for this label
+			eof_pro_guitar_note_frets_dialog[13 - (2 * ctr)].flags = 0;	//Ensure this text box is enabled
+			if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->note & bitmask)
+			{	//If this string is already defined as being in use, copy its fret value to the string
+				if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] == 0xFF)
+				{	//If this string is muted with no fret value specified
+					snprintf(eof_fret_strings[ctr], 3, "X");
+				}
+				else
+				{
+					snprintf(eof_fret_strings[ctr], 3, "%d", eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] & 0x7F);	//Mask out the MSB to obtain the fret value
+				}
+			}
+			else
+			{	//Otherwise empty the string
+				eof_fret_strings[ctr][0] = '\0';
+			}
+		}
+		else
+		{	//Otherwise disable the text box for this fret and empty the string
+			eof_pro_guitar_note_frets_dialog[12 - (2 * ctr)].flags = D_HIDDEN;	//Ensure this text boxes' label is hidden
+			eof_pro_guitar_note_frets_dialog[13 - (2 * ctr)].flags = D_HIDDEN;	//Ensure this text box is hidden
+			eof_fret_strings[ctr][0] = '\0';
+		}
+	}
+
+	bitmask = 0;
+	if(eof_popup_dialog(eof_pro_guitar_note_frets_dialog, 0) == 14)
+	{	//If user clicked OK
+		//Validate and store the input
+		if(eof_count_selected_notes(NULL, 0) > 1)
+		{	//If multiple notes are selected, warn the user
+			if(alert(NULL, "Warning:  This information will be applied to all selected notes.", NULL, "&OK", "&Cancel", 0, 0) == 2)
+			{	//If user opts to cancel the operation
+				if(note_selection_updated)
+				{	//If the only note modified was the seek hover note
+					eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+					eof_selection.current = EOF_MAX_NOTES - 1;
+				}
+				eof_show_mouse(NULL);
+				eof_cursor_visible = 1;
+				eof_pen_visible = 1;
+				return 1;
+			}
+		}
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+		{	//For each note in the track
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
+			{	//If the note is in the active instrument difficulty and is selected
+				for(ctr = 0, allmuted = 1; ctr < 6; ctr++)
+				{	//For each of the 6 supported strings
+					if(eof_fret_strings[ctr][0] != '\0')
+					{	//If this string isn't empty
+						fretvalue = 0;
+						bitmask |= (1 << ctr);	//Set the appropriate bit for this lane
+						for(ctr2 = 0;eof_fret_strings[ctr][ctr2] != '\0';ctr2++)
+						{	//For each character in the fret string
+							if(toupper(eof_fret_strings[ctr][ctr2]) == 'X')
+							{	//If the character is an X
+								fretvalue = 0xFF;	//Consider this string muted
+								break;
+							}
+						}
+						if(!fretvalue)
+						{	//If the string didn't contain an X, convert it to an integer value
+							fretvalue = atol(eof_fret_strings[ctr]);
+							if((fretvalue < 0) || (fretvalue > eof_song->pro_guitar_track[tracknum]->numfrets))
+							{	//If the conversion to number failed, or an invalid fret number was entered, enter a value of (muted) for the string
+								fretvalue = 0xFF;
+							}
+						}
+						if(fretvalue != eof_song->pro_guitar_track[tracknum]->note[i]->frets[ctr])
+						{	//If this fret value changed
+							if(!undo_made)
+							{	//If an undo state hasn't been made yet
+								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+								undo_made = 1;
+							}
+							eof_song->pro_guitar_track[tracknum]->note[i]->frets[ctr] = fretvalue;
+						}
+						if(fretvalue != 0xFF)
+						{	//Track whether the all used strings in this note/chord are muted
+							allmuted = 0;
+						}
+					}
+					else
+					{	//Clear the fret value and return the fret back to its default of 0 (open)
+						bitmask &= ~(1 << ctr);	//Clear the appropriate bit for this lane
+						if(eof_song->pro_guitar_track[tracknum]->note[i]->frets[ctr] != 0)
+						{	//If this fret value changed
+							if(!undo_made)
+							{	//If an undo state hasn't been made yet
+								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+								undo_made = 1;
+							}
+							eof_song->pro_guitar_track[tracknum]->note[i]->frets[ctr] = 0;
+						}
+					}
+				}//For each of the 6 supported strings
+				if(bitmask == 0)
+				{	//If edits results in selected notes having no played strings
+					eof_menu_note_delete();		//All selected notes must be deleted
+					eof_show_mouse(NULL);
+					eof_cursor_visible = 1;
+					eof_pen_visible = 1;
+					return 1;					//Return from function
+				}
+
+	//Save the updated note bitmask
+				if(eof_song->pro_guitar_track[tracknum]->note[i]->note != bitmask)
+				{	//If the note bitmask changed
+					if(!undo_made)
+					{	//If an undo state hasn't been made yet
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						undo_made = 1;
+					}
+					eof_song->pro_guitar_track[tracknum]->note[i]->note = bitmask;
+				}
+
+	//Update the flags to reflect string muting
+				flags = eof_song->pro_guitar_track[tracknum]->note[i]->flags;
+				if(!allmuted)
+				{	//If any used strings in this note/chord weren't string muted
+					flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE);	//Clear the string mute flag
+				}
+				else if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE))
+				{	//If all strings are muted and the user didn't specify a palm mute
+					flags |= EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;		//Set the string mute flag
+				}
+				eof_song->pro_guitar_track[tracknum]->note[i]->flags = flags;
+			}//If the note is in the active instrument difficulty and is selected
+		}//For each note in the track
+	}//If user clicked OK
 
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
@@ -4592,8 +4809,8 @@ int eof_menu_arpeggio_unmark(void)
 		{	//If the note is selected and is in the active track difficulty
 			for(j = 0; j < eof_song->pro_guitar_track[tracknum]->arpeggios; j++)
 			{	//For each arpeggio section in the track
-				if((eof_get_note_pos(eof_song, eof_selected_track, i) >= eof_song->pro_guitar_track[tracknum]->arpeggio[j].start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= eof_song->pro_guitar_track[tracknum]->arpeggio[j].end_pos))
-				{	//If the note is encompassed within this arpeggio section
+				if((eof_get_note_pos(eof_song, eof_selected_track, i) >= eof_song->pro_guitar_track[tracknum]->arpeggio[j].start_pos) && (eof_get_note_pos(eof_song, eof_selected_track, i) <= eof_song->pro_guitar_track[tracknum]->arpeggio[j].end_pos) && (eof_song->pro_guitar_track[tracknum]->arpeggio[j].difficulty == eof_note_type))
+				{	//If the note is encompassed within this arpeggio section, and the arpeggio section exists in the active difficulty
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					eof_pro_guitar_track_delete_arpeggio(eof_song->pro_guitar_track[tracknum], j);	//Delete the arpeggio section
 					break;

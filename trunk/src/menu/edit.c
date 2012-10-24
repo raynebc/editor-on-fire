@@ -2139,6 +2139,8 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty)
 	unsigned long i;
 	unsigned long pos;
 	long length;
+	EOF_PHRASE_SECTION *ptr;
+	char has_arpeggios = 0;
 
 	if((eof_note_type != source_difficulty) && (source_difficulty < EOF_MAX_DIFFICULTIES))
 	{	//If the current difficulty is different than the source difficulty
@@ -2165,6 +2167,36 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty)
 				pos = eof_get_note_pos(eof_song, eof_selected_track, i);
 				length = eof_get_note_length(eof_song, eof_selected_track, i);
 				eof_copy_note(eof_song, eof_selected_track, i, eof_selected_track, pos, length, eof_note_type);
+			}
+		}
+		if((eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && eof_get_num_arpeggios(eof_song, eof_selected_track))
+		{	//If this is a pro guitar track with at least one arpeggio section, also offer to copy the arpeggio sections
+			for(i = 0; i < eof_get_num_arpeggios(eof_song, eof_selected_track); i++)
+			{	//For each arpeggio phrase in the source track, if any
+				ptr = eof_get_arpeggio(eof_song, eof_selected_track, i);
+				if(ptr)
+				{	//If this phrase could be found
+					if(ptr->difficulty == source_difficulty)
+					{	//If this is an arpeggio section defined in the source difficulty
+						has_arpeggios = 1;
+						break;
+					}
+				}
+			}
+
+			if(has_arpeggios && (alert(NULL, "Would you like to also copy the arpeggio sections?", NULL, "&Yes", "&No", 'y', 'n') == 1))
+			{	//If there are any arpeggio sections in the difficulty being copied, and the user opts to copy them to the active difficulty
+				for(i = 0; i < eof_get_num_arpeggios(eof_song, eof_selected_track); i++)
+				{	//For each arpeggio phrase in the source track
+					ptr = eof_get_arpeggio(eof_song, eof_selected_track, i);
+					if(ptr)
+					{	//If this phrase could be found
+						if(ptr->difficulty == source_difficulty)
+						{	//If this is an arpeggio section defined in the source difficulty
+							eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the active difficulty
+						}
+					}
+				}
 			}
 		}
 		eof_detect_difficulties(eof_song);

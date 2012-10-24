@@ -61,7 +61,9 @@ int eof_menu_set_freestyle_on(void);		//Applies freestyle for all selected lyric
 int eof_menu_set_freestyle_off(void);		//Removes freestyle for all selected lyrics
 int eof_menu_toggle_freestyle(void);		//Toggles the freestyle status of all selected lyrics
 
-int eof_menu_note_edit_pro_guitar_note(void);	//Allows a pro guitar's fret values to be defined
+int eof_menu_note_edit_pro_guitar_note(void);		//Allows a pro guitar note's properties to be defined
+int eof_menu_note_edit_pro_guitar_note_frets(void);	//Allows a pro guitar note's fret values only to be defined
+
 int eof_menu_note_toggle_slide_up(void);		//Toggles the slide up status of all selected notes
 int eof_menu_note_toggle_slide_down(void);		//Toggles the slide down status of all selected notes
 int eof_menu_note_remove_slide(void);			//Removes the slide status of all selected notes
