@@ -480,7 +480,7 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 				{	//And it is at the same position as this note, merge them both
 					unsigned long flags = eof_prepare_note_flag_merge(tp->note[i-1]->flags, tp->parent->track_behavior, tp->note[next]->note);	//Get a flag bitmask where all lane specific flags for lanes that the next (merging) note uses have been cleared
 					tp->note[i-1]->note |= tp->note[next]->note;	//Merge the note bitmasks
-					tp->note[i-1]->flags = flags |= tp->note[next]->flags;	//Merge the flags
+					tp->note[i-1]->flags = flags | tp->note[next]->flags;	//Merge the flags
 					eof_legacy_track_delete_note(tp, next);			//Delete the next note, as it has been merged with this note
 				}
 				else if(tp->note[i-1]->pos + tp->note[i-1]->length >= tp->note[next]->pos - 1)

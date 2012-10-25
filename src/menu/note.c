@@ -3635,6 +3635,21 @@ int eof_menu_note_edit_pro_guitar_note(void)
 		if((retval == 58) || (retval == 59))
 		{	//If user clicked OK or Apply
 			//Validate and store the input
+			if(eof_note_edit_name[0] != '\0')
+			{	//If the user specified a name, ensure it does not include brackets
+				for(i = 0; i < ustrlen(eof_note_edit_name); i++)
+				{	//For each character in the name field
+					if((eof_note_edit_name[i] == '[') || (eof_note_edit_name[i] == ']'))
+					{	//If the character is a bracket
+						allegro_message("You cannot use a bracket in the note's name");
+						eof_show_mouse(NULL);
+						eof_cursor_visible = 1;
+						eof_pen_visible = 1;
+						return 1;
+					}
+				}
+			}
+
 			if(eof_count_selected_notes(NULL, 0) > 1)
 			{	//If multiple notes are selected, warn the user
 				if(alert(NULL, "Warning:  This information will be applied to all selected notes.", NULL, "&OK", "&Cancel", 0, 0) == 2)
@@ -5289,6 +5304,20 @@ int eof_menu_note_edit_name(void)
 				if(alert(NULL, "Apply automatically-detected chord names?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 				{	//If the user opts to apply auto-detected names
 					auto_apply = 1;
+				}
+			}
+			else
+			{
+				for(i = 0; i < ustrlen(eof_etext); i++)
+				{	//For each character in the name field
+					if((eof_etext[i] == '[') || (eof_etext[i] == ']'))
+					{	//If the character is a bracket
+						allegro_message("You cannot use a bracket in the note's name");
+						eof_cursor_visible = 1;
+						eof_pen_visible = 1;
+						eof_show_mouse(screen);
+						return D_O_K;
+					}
 				}
 			}
 			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
