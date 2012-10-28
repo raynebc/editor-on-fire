@@ -2080,7 +2080,7 @@ void eof_render_note_window(void)
 		if((eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		{	//If the catalog entry is a pro guitar note and the active track is a legacy track
 			snprintf(temp, 1023, "Would paste from \"%s\" as:",eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->name);
-			textprintf_ex(eof_window_note->screen, font, 2, 53, eof_color_white, -1, "%s", temp);
+			textout_ex(eof_window_note->screen, font, temp, 2, 53, eof_color_white, -1);
 		}
 
 		if(eof_cselected_control < 0)
@@ -2464,7 +2464,7 @@ void eof_render_note_window(void)
 						}
 						else
 						{	//Otherwise just display the fretting
-							textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s", pro_guitar_string);
+							textout_ex(eof_window_note->screen, font, pro_guitar_string, 2, ypos, eof_color_white, -1);
 							eof_chord_lookup_note = eof_get_pro_guitar_note_note(eof_song->pro_guitar_track[tracknum], eof_selection.current);		//Cache the failed, looked up note's details
 							memcpy(eof_chord_lookup_frets, eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets, 6);
 							eof_cached_chord_lookup_retval = 0;	//Cache a failed lookup result
@@ -2631,7 +2631,7 @@ void eof_render_lyric_window(void)
 				kcol = makecol(0, 160, 0);
 				kcol2 = makecol(0, 96, 0);
 			}
-			textprintf_centre_ex(eof_window_3d->screen, font, i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2, eof_window_3d->h - eof_screen_layout.lyric_view_key_height - text_height(font), eof_color_white, eof_color_black, "%s", eof_get_tone_name(eof_hover_key));
+			textout_centre_ex(eof_window_3d->screen, font, eof_get_tone_name(eof_hover_key), i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2, eof_window_3d->h - eof_screen_layout.lyric_view_key_height - text_height(font), eof_color_white, eof_color_black);
 		}
 		else
 		{
@@ -2669,7 +2669,7 @@ void eof_render_lyric_window(void)
 					kcol = makecol(0, 160, 0);
 					kcol2 = makecol(0, 96, 0);
 				}
-				textprintf_centre_ex(eof_window_3d->screen, font, i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 + eof_screen_layout.lyric_view_bkey_width + eof_screen_layout.lyric_view_bkey_width / 2, eof_window_3d->h - eof_screen_layout.lyric_view_key_height - text_height(font), eof_color_white, eof_color_black, "%s", eof_get_tone_name(eof_hover_key));
+				textout_centre_ex(eof_window_3d->screen, font, eof_get_tone_name(eof_hover_key), i * eof_screen_layout.lyric_view_key_width + eof_screen_layout.lyric_view_key_width / 2 + eof_screen_layout.lyric_view_bkey_width + eof_screen_layout.lyric_view_bkey_width / 2, eof_window_3d->h - eof_screen_layout.lyric_view_key_height - text_height(font), eof_color_white, eof_color_black);
 			}
 			else
 			{
