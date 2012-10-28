@@ -457,7 +457,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	{	//If rendering an existing note instead of the pen note
 		//Render tab notations
 		eof_get_note_notation(notation, track, notenum);	//Get the tab playing notation for this note
-		textprintf_centre_ex(window->screen, eof_symbol_font, x, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 3, eof_color_red, -1, notation);
+		textout_centre_ex(window->screen, eof_symbol_font, notation, x, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 3, eof_color_red, -1);
 
 		//Render note names
 		if(!eof_hide_note_names)
@@ -492,11 +492,11 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 				}
 				if(window == eof_window_editor)
 				{	//If rendering to the editor window
-					textprintf_centre_ex(window->screen, font, x, 25 + 5, eof_color_white, -1, nameptr);
+					textout_centre_ex(window->screen, font, nameptr, x, 25 + 5, eof_color_white, -1);
 				}
 				else
 				{	//If rendering to the note window
-					textprintf_centre_ex(window->screen, font, x, EOF_EDITOR_RENDER_OFFSET + 10, eof_color_white, -1, nameptr);
+					textout_centre_ex(window->screen, font, nameptr, x, EOF_EDITOR_RENDER_OFFSET + 10, eof_color_white, -1);
 				}
 			}
 		}//If the user hasn't opted to hide note names
@@ -966,7 +966,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 			z3d = z3d < -100 ? -100 : z3d;
 			x3d = ocd3d_project_x(20 - 4, z3d);
 			y3d = ocd3d_project_y(200, z3d);
-			textprintf_right_ex(eof_window_3d->screen, font, x3d, y3d, eof_color_white, -1, nameptr);
+			textout_right_ex(eof_window_3d->screen, font, nameptr, x3d, y3d, eof_color_white, -1);
 		}
 	}//If the user hasn't opted to hide note names
 
