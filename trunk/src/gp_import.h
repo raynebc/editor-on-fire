@@ -46,8 +46,9 @@ int eof_read_gp_string(PACKFILE *inf, unsigned *length, char *buffer, char readf
 	//If readfieldlength is nonzero, a 4 byte field length that prefixes the string length is also read
 	//If length is not NULL, the string length is returned through it.
 	//Buffer must be able to store at least 256 bytes to avoid overflowing.
-void eof_gp_parse_bend(PACKFILE *inf);
+int eof_gp_parse_bend(PACKFILE *inf);
 	//Parses the bend at the current file position, outputting debug logging appropriately
+	//Returns nonzero if there is an error parsing, such as end of file being reached unexpectedly
 
 #endif
 

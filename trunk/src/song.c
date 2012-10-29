@@ -4679,7 +4679,7 @@ int eof_create_image_sequence(void)
 	alogg_seek_abs_msecs_ogg(eof_music_track, 0);
 	eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 	eof_music_pos = eof_music_actual_pos + eof_av_delay;
-	clear_to_color(eof_screen, makecol(224, 224, 224));
+	clear_to_color(eof_screen, eof_color_light_gray);
 	blit(eof_image[EOF_IMAGE_MENU_FULL], eof_screen, 0, 0, 0, 0, eof_screen->w, eof_screen->h);
 	while(eof_music_pos <  eof_music_length)
 	{

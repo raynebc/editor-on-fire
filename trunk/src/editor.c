@@ -4422,7 +4422,6 @@ void eof_render_editor_window_common(void)
 	unsigned long numlanes;				//The number of fretboard lanes that will be rendered
 	short numsections = 0;					//Used to abstract the solo sections
 	EOF_PHRASE_SECTION *sectionptr = NULL;	//Used to abstract sections
-	unsigned long tracknum;
 	unsigned long bitmask, usedlanes;
 	long notelength;
 
@@ -4464,7 +4463,7 @@ void eof_render_editor_window_common(void)
 
 	/* draw solo sections */
 	if(eof_selected_track != EOF_TRACK_VOCALS)
-	{
+	{	//If the vocal track is not active
 		numsections = eof_get_num_solos(eof_song, eof_selected_track);
 		for(i = 0; i < numsections; i++)
 		{	//For each solo section in the track
@@ -4475,11 +4474,8 @@ void eof_render_editor_window_common(void)
 					rectfill(eof_window_editor->screen, lpos + sectionptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, lpos + sectionptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_dark_blue);
 			}
 		}
-	}
 
 	/* draw SP sections */
-	if(eof_selected_track != EOF_TRACK_VOCALS)
-	{
 		numsections = eof_get_num_star_power_paths(eof_song, eof_selected_track);
 		for(i = 0; i < numsections; i++)
 		{	//For each solo section in the track
@@ -4490,7 +4486,90 @@ void eof_render_editor_window_common(void)
 					rectfill(eof_window_editor->screen, lpos + sectionptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 25, lpos + sectionptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0], eof_color_silver);
 			}
 		}
-	}
+
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If a pro guitar/bass track is active
+	/* draw track tuning */
+			unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+			if(pos <= 320)
+			{	//If the area left of the first beat marker is visible
+				int notenum;
+				EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+
+				for(i = 0; i < EOF_TUNING_LENGTH; i++)
+				{	//For each usable string in the track
+					if(i < tp->numstrings)
+					{	//If this string is used by the track
+						notenum = eof_lookup_tuned_note(tp, eof_selected_track, i, tp->tuning[i]);	//Look up the open note this string plays
+						notenum %= 12;	//Ensure the value is in the range of [0,11]
+						textprintf_ex(eof_window_editor->screen, eof_font, lpos - 17, EOF_EDITOR_RENDER_OFFSET + 8 + ychart[i], eof_color_white, -1, "%s", eof_note_names[notenum]);	//Draw the tuning
+					}
+				}
+			}
+
+	/* draw arpeggio sections */
+			for(i = 0; i < eof_song->pro_guitar_track[tracknum]->arpeggios; i++)
+			{	//For each arpeggio section in the track
+				sectionptr = &eof_song->pro_guitar_track[tracknum]->arpeggio[i];
+				if((sectionptr->end_pos >= start) && (sectionptr->start_pos <= stop) && (sectionptr->difficulty == eof_note_type))
+				{	//If the arpeggio section would render between the left and right edges of the piano roll, and the section applies to the active difficulty, fill the bottom lane with turquoise
+					rectfill(eof_window_editor->screen, lpos + sectionptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 2], lpos + sectionptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 1], eof_color_turquoise);
+				}
+			}
+
+	/* draw undefined legacy mask markers */
+			if(eof_legacy_view)
+			{	//If legacy view is in effect
+				int markerpos;
+				col = makecol(176, 48, 96);	//Store maroon color
+				for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+				{	//For each note in this track
+					notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
+					notelength = eof_get_note_length(eof_song, eof_selected_track, i);
+					if((eof_note_type == eof_get_note_type(eof_song, eof_selected_track, i)) && (notepos + notelength >= start) && (notepos <= stop))
+					{	//If this note is in the selected instrument difficulty and would render between the left and right edges of the piano roll
+						if(eof_song->pro_guitar_track[tracknum]->note[i]->legacymask == 0)
+						{	//If this note does not have a defined legacy mask, render a maroon colored section a minimum of eof_screen_layout.note_size pixels long
+							markerlength = notelength / eof_zoom;
+							if(markerlength < eof_screen_layout.note_size)
+							{	//If this marker isn't at least as wide as a note gem
+								markerlength = eof_screen_layout.note_size;	//Make it longer
+							}
+							markerpos = lpos + (notepos / eof_zoom);
+							if(notepos + notelength >= start)
+							{	//If the notes ends at or right of the left edge of the screen
+								if(markerpos <= eof_window_editor->screen->w)
+								{	//If the marker starts at or left of the right edge of the screen (is visible)
+									rectfill(eof_window_editor->screen, markerpos, EOF_EDITOR_RENDER_OFFSET + 25, markerpos + markerlength, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, col);
+								}
+								else
+								{	//Otherwise this and all remaining undefined legacy mask markers are not visible
+									break;	//Stop rendering them
+								}
+							}
+						}
+					}
+				}
+			}
+		}//If a pro guitar/bass track is active
+		else
+		{	//If a non pro guitar/bass track is active
+			/* draw slider sections */
+			if(eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR)
+			{	//If this is a legacy guitar track
+				numsections = eof_get_num_sliders(eof_song, eof_selected_track);
+				for(i = 0; i < numsections; i++)
+				{	//For each slider section in the track
+					sectionptr = eof_get_slider(eof_song, eof_selected_track, i);	//Obtain the information for this slider section
+					if(sectionptr != NULL)
+					{
+						if((sectionptr->end_pos >= start) && (sectionptr->start_pos <= stop))	//If the slider section would render between the left and right edges of the piano roll, render a dark purple rectangle above the fretboard area
+							rectfill(eof_window_editor->screen, lpos + sectionptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15, lpos + sectionptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 5 + eof_screen_layout.note_y[0], eof_color_dark_purple);
+					}
+				}
+			}
+		}//If a non pro guitar/bass track is active
+	}//If the vocal track is not active
 
 	/* draw seek selection */
 	if(eof_seek_selection_start != eof_seek_selection_end)
@@ -4499,40 +4578,10 @@ void eof_render_editor_window_common(void)
 			rectfill(eof_window_editor->screen, lpos + eof_seek_selection_start / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0], lpos + eof_seek_selection_end / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 1], eof_color_red);
 	}
 
-	/* draw track tuning */
-	tracknum = eof_song->track[eof_selected_track]->tracknum;
-	if((pos <= 320) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-	{
-		int notenum;
-		EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
-
-		for(i = 0; i < EOF_TUNING_LENGTH; i++)
-		{	//For each usable string in the track
-			if(i < tp->numstrings)
-			{	//If this string is used by the track
-				notenum = eof_lookup_tuned_note(tp, eof_selected_track, i, tp->tuning[i]);	//Look up the open note this string plays
-				notenum %= 12;	//Ensure the value is in the range of [0,11]
-				textprintf_ex(eof_window_editor->screen, eof_font, lpos - 17, EOF_EDITOR_RENDER_OFFSET + 8 + ychart[i], eof_color_white, -1, "%s", eof_note_names[notenum]);	//Draw the tuning
-			}
-		}
-	}
-
-	/* draw arpeggio sections */
-	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-	{
-		for(i = 0; i < eof_song->pro_guitar_track[tracknum]->arpeggios; i++)
-		{	//For each arpeggio section in the track
-			sectionptr = &eof_song->pro_guitar_track[tracknum]->arpeggio[i];
-			if((sectionptr->end_pos >= start) && (sectionptr->start_pos <= stop) && (sectionptr->difficulty == eof_note_type))
-			{	//If the arpeggio section would render between the left and right edges of the piano roll, and the section applies to the active difficulty, fill the bottom lane with turquoise
-				rectfill(eof_window_editor->screen, lpos + sectionptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 2], lpos + sectionptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes - 1], eof_color_turquoise);
-			}
-		}
-	}
-
 	/* draw trill and tremolo sections */
 	if(eof_get_num_trills(eof_song, eof_selected_track) || eof_get_num_tremolos(eof_song, eof_selected_track))
 	{	//If this track has any trill or tremolo sections
+		int half_string_space = eof_screen_layout.string_space / 2;
 		for(j = 0; j < 2; j++)
 		{	//For each of the two phrase types (trills and tremolos)
 			if(j == 0)
@@ -4562,14 +4611,14 @@ void eof_render_editor_window_common(void)
 						{	//If there are no notes in this marker, render the marker in all lanes
 							usedlanes = 0xFF;
 						}
-						for(ctr = 0, bitmask = 1; ctr < eof_count_track_lanes(eof_song, eof_selected_track); ctr++, bitmask <<= 1)
+						for(ctr = 0, bitmask = 1; ctr < numlanes; ctr++, bitmask <<= 1)
 						{	//For each of the track's usable lanes
 							if(usedlanes & bitmask)
 							{	//If this lane is used in the phrase
 								int x1 = lpos + sectionptr->start_pos / eof_zoom;
-								int y1 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - (eof_screen_layout.string_space / 2);
+								int y1 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - half_string_space;
 								int x2 = lpos + sectionptr->end_pos / eof_zoom;
-								int y2 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + (eof_screen_layout.string_space / 2);
+								int y2 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + half_string_space;
 								if(y1 < EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0])
 									y1 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0];	//Ensure that the phrase cannot render above the top most lane
 								if(y2 > EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes-1])
@@ -4582,56 +4631,6 @@ void eof_render_editor_window_common(void)
 			}
 		}
 	}//If this track has any trill or tremolo sections
-
-	/* draw slider sections */
-	if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
-	{	//If this is a legacy guitar track
-		numsections = eof_get_num_sliders(eof_song, eof_selected_track);
-		for(i = 0; i < numsections; i++)
-		{	//For each slider section in the track
-			sectionptr = eof_get_slider(eof_song, eof_selected_track, i);	//Obtain the information for this slider section
-			if(sectionptr != NULL)
-			{
-				if((sectionptr->end_pos >= start) && (sectionptr->start_pos <= stop))	//If the slider section would render between the left and right edges of the piano roll, render a dark purple rectangle above the fretboard area
-					rectfill(eof_window_editor->screen, lpos + sectionptr->start_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 15, lpos + sectionptr->end_pos / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 5 + eof_screen_layout.note_y[0], eof_color_dark_purple);
-			}
-		}
-	}
-
-	/* draw undefined legacy mask markers */
-	if(eof_legacy_view && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-	{	//If legacy view is in effect
-		int markerpos;
-		col = makecol(176, 48, 96);	//Store maroon color
-		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-		{	//For each note in this track
-			notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
-			notelength = eof_get_note_length(eof_song, eof_selected_track, i);
-			if((eof_note_type == eof_get_note_type(eof_song, eof_selected_track, i)) && (notepos + notelength >= start) && (notepos <= stop))
-			{	//If this note is in the selected instrument difficulty and would render between the left and right edges of the piano roll
-				if(eof_song->pro_guitar_track[tracknum]->note[i]->legacymask == 0)
-				{	//If this note does not have a defined legacy mask, render a maroon colored section a minimum of eof_screen_layout.note_size pixels long
-					markerlength = notelength / eof_zoom;
-					if(markerlength < eof_screen_layout.note_size)
-					{	//If this marker isn't at least as wide as a note gem
-						markerlength = eof_screen_layout.note_size;	//Make it longer
-					}
-					markerpos = lpos + (notepos / eof_zoom);
-					if(notepos + notelength >= start)
-					{	//If the notes ends at or right of the left edge of the screen
-						if(markerpos <= eof_window_editor->screen->w)
-						{	//If the marker starts at or left of the right edge of the screen (is visible)
-							rectfill(eof_window_editor->screen, markerpos, EOF_EDITOR_RENDER_OFFSET + 25, markerpos + markerlength, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, col);
-						}
-						else
-						{	//Otherwise this and all remaining undefined legacy mask markers are not visible
-							break;	//Stop rendering them
-						}
-					}
-				}
-			}
-		}
-	}
 
 	if(eof_display_waveform)
 		eof_render_waveform(eof_waveform);
@@ -4863,7 +4862,7 @@ void eof_render_editor_window_common2(void)
 
 	vline(eof_window_editor->screen, 0, 24 + 8, eof_window_editor->h + 4, eof_color_dark_silver);
 	vline(eof_window_editor->screen, 1, 25 + 8, eof_window_editor->h + 4, eof_color_black);
-	hline(eof_window_editor->screen, 1, eof_window_editor->h - 2, eof_window_editor->w - 1, makecol(224, 224, 224));
+	hline(eof_window_editor->screen, 1, eof_window_editor->h - 2, eof_window_editor->w - 1, eof_color_light_gray);
 	hline(eof_window_editor->screen, 0, eof_window_editor->h - 1, eof_window_editor->w - 1, eof_color_white);
 }
 
