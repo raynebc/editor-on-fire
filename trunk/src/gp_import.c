@@ -2247,11 +2247,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		pack_ReadDWORDLE(inf, &strings[ctr]);		//Read the number of strings in this track
 		gp->track[ctr]->numstrings = strings[ctr];
 		if(strings[ctr] > 6)
-		{	//EOF will cap it at 6 strings
+		{	//Warn that EOF will not import more than 6 strings
 			gp->track[ctr]->numstrings = 6;
 			if(!string_warning)
 			{
-				allegro_message("Warning:  At least one track uses more than 6 strings, a string will be dropped during import");
+				allegro_message("Warning:  At least one track uses more than 6 strings, string 7 will be dropped during import");
 				string_warning = 1;
 			}
 		}
@@ -2929,16 +2929,27 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								return NULL;
 							}
 							np[ctr2]->flags = flags;
-							for(ctr4 = 0; ctr4 < gp->track[ctr2]->numstrings; ctr4++)
-							{	//For each of this track's supported strings
+							for(ctr4 = 0; ctr4 < strings[ctr2]; ctr4++)
+							{	//For each of this track's natively supported strings
 								unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 16 fret values per note, it just only uses 6 by default)
+								if(strings[ctr2] > 6)
+								{	//If this is a 7 string Guitar Pro track
+									convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
+								}
 								np[ctr2]->frets[ctr4] = frets[convertednum];
 							}
 							np[ctr2]->legacymask = 0;
 							np[ctr2]->midi_length = 0;
 							np[ctr2]->midi_pos = 0;
 							np[ctr2]->name[0] = '\0';
-							np[ctr2]->note = usedstrings >> (7 - strings[ctr2]);	//Guitar pro's note bitmask reflects string 7 being the LSB
+							if(strings[ctr2] > 6)
+							{	//If this is a 7 string track
+								np[ctr2]->note = usedstrings >> 1;	//Shift out string 7 to leave the first 6 strings
+							}
+							else
+							{
+								np[ctr2]->note = usedstrings >> (7 - strings[ctr2]);	//Guitar pro's note bitmask reflects string 7 being the LSB
+							}
 							np[ctr2]->ghost = ghost >> (7 - strings[ctr2]);	//Likewise translate the ghost bit mask
 							np[ctr2]->type = EOF_NOTE_AMAZING;
 
