@@ -91,13 +91,13 @@ void eof_gp_debug_log(PACKFILE *inf, char *text)
 }
 #endif
 
-void eof_gp_parse_bend(PACKFILE *inf)
+int eof_gp_parse_bend(PACKFILE *inf)
 {
 	unsigned word;
 	unsigned long height, points, ctr, dword;
 
 	if(!inf)
-		return;
+		return 1;	//Return error
 
 	eof_gp_debug_log(inf, "\tBend:  ");
 	word = pack_getc(inf);	//Read bend type
@@ -156,7 +156,7 @@ void eof_gp_parse_bend(PACKFILE *inf)
 		if(pack_feof(inf))
 		{	//If the end of file was reached unexpectedly
 			puts("\aEnd of file reached unexpectedly");
-			abort();
+			return 1;	//Return error
 		}
 		eof_gp_debug_log(inf, "\t\t\tTime relative to previous point:  ");
 		pack_ReadDWORDLE(inf, &dword);
@@ -183,6 +183,7 @@ void eof_gp_parse_bend(PACKFILE *inf)
 			puts("slow");
 		}
 	}
+	return 0;	//Return success
 }
 
 #ifndef EOF_BUILD
@@ -1251,7 +1252,11 @@ EOF_SONG *parse_gp(const char * fn)
 						}
 						if(byte2 & 4)
 						{	//Tremolo bar
-							eof_gp_parse_bend(inf);
+							if(eof_gp_parse_bend(inf))
+							{	//If there was an error parsing the bend
+								puts("Error parsing bend");
+								return NULL;
+							}
 						}
 						if(byte1 & 64)
 						{	//Stroke effect
@@ -1521,7 +1526,11 @@ EOF_SONG *parse_gp(const char * fn)
 								}
 								if(byte1 & 1)
 								{	//Bend
-									eof_gp_parse_bend(inf);
+									if(eof_gp_parse_bend(inf))
+									{	//If there was an error parsing the bend
+										puts("Error parsing bend");
+										return NULL;
+									}
 								}
 								if(byte1 & 2)
 								{
@@ -1725,6 +1734,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	struct eof_gp_time_signature *tsarray;	//Stores all time signatures defined in the file
 	EOF_PRO_GUITAR_NOTE **np;	//Will store the last created note for each track (for handling tie notes)
 	char *hopo;	//Will store the fret value of the previous note marked as HO/PO (in GP, if note #N is marked for this, note #N+1 is the one that is a HO or PO), otherwise -1, for each track
+	char user_warned = 0;	//Used to track user warnings about the file being corrupt
+	char string_warning = 0;	//Used to track a user warning about the string count for a track being higher than what EOF supports
 
 	eof_log("\tImporting Guitar Pro file", 1);
 	eof_log("eof_import_gp() entered", 1);
@@ -2238,6 +2249,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		if(strings[ctr] > 6)
 		{	//EOF will cap it at 6 strings
 			gp->track[ctr]->numstrings = 6;
+			if(!string_warning)
+			{
+				allegro_message("Warning:  At least one track uses more than 6 strings, a string will be dropped during import");
+				string_warning = 1;
+			}
 		}
 #ifdef GP_IMPORT_DEBUG
 		snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\t%lu strings", strings[ctr]);
@@ -2344,7 +2360,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						new_note = 0;
 					}
 					byte = pack_getc(inf);		//Read beat duration
-					assert((byte >= -2) && (byte <= 4));	//These are the expected duration values
+					if((byte < -2) || (byte > 4))
+					{	//If it's an invalid note length
+						if(!user_warned)
+						{
+							allegro_message("Warning:  This file has an invalid note length of %d and is probably corrupt", byte);
+						}
+						user_warned = 1;
+						byte = 4;
+					}
 					note_duration = gp_durations[byte + 2] * (double)curden / (double)curnum;	//Get this note's duration in measures (accounting for the time signature)
 					if(bytemask & 1)
 					{	//Dotted note
@@ -2535,7 +2559,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						}
 						if(byte2 & 4)
 						{	//Tremolo bar
-							eof_gp_parse_bend(inf);
+							if(eof_gp_parse_bend(inf))
+							{	//If there was an error parsing the bend
+								allegro_message("Error parsing bend, file is corrupt");
+								return NULL;
+							}
 						}
 						if(byte1 & 64)
 						{	//Stroke (strum) effect
@@ -2773,7 +2801,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								}
 								if(byte1 & 1)
 								{	//Bend
-									eof_gp_parse_bend(inf);
+									if(eof_gp_parse_bend(inf))
+									{	//If there was an error parsing the bend
+										allegro_message("Error parsing bend, file is corrupt");
+										return NULL;
+									}
 									flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
 								}
 								if(byte1 & 2)
@@ -2899,7 +2931,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							np[ctr2]->flags = flags;
 							for(ctr4 = 0; ctr4 < gp->track[ctr2]->numstrings; ctr4++)
 							{	//For each of this track's supported strings
-								np[ctr2]->frets[ctr4] = frets[strings[ctr2] - 1 - ctr4];	//Re-map from GP's string numbering to EOF's
+								unsigned int convertednum = strings[ctr2] - 1 - ctr4;	//Re-map from GP's string numbering to EOF's (EOF stores 16 fret values per note, it just only uses 6 by default)
+								np[ctr2]->frets[ctr4] = frets[convertednum];
 							}
 							np[ctr2]->legacymask = 0;
 							np[ctr2]->midi_length = 0;

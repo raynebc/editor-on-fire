@@ -382,6 +382,7 @@ extern EOF_CONTROLLER eof_drums;
 extern int eof_color_black;
 extern int eof_color_white;
 extern int eof_color_gray;
+extern int eof_color_light_gray;
 extern int eof_color_red;
 extern int eof_color_green;
 extern int eof_color_blue;

@@ -3,6 +3,33 @@ EOF Version History
 
 1.8:
 
+Improved INI import so that for boolean tags
+(ie. "lyrics ="), having a value of the word
+"true" (case insensitive) or "1" are both
+accepted as true, and any other value is
+interpreted as false.
+
+Made improvements to project load so that
+song.ini is rechecked.  If it contains tags
+that are different from the existing song
+properties or INI settings in the project, it
+will prompt whether or not to load those
+changes.  If it does load them, an undo state
+is made and the chart is marked as modified.
+
+Added handling to INI import so that if a
+"year =" tag has non numerical characters, it
+will import as a custom INI setting since the
+normal year tag should be a 4 digit number.
+
+Changed paste logic so that if a pasted note
+uses only higher lanes than the destination
+track supports, the offending note is converted
+to a chord that uses all-lanes (instead of
+allowing the higher lane gems to be removed,
+causing the note to be deleted), allowing such
+notes to remain and be adjusted.
+
 Added a seek to end of chart function.
 
 Added the ability to import files or load EOF
@@ -35,8 +62,8 @@ and would be placed at the end of the chart.
 
 Added the ability to lower/raise/reset the 3D
 preview's camera angle with SHIFT+(plus/minus/
-enter) on the Numpad (or alternatively, backslash
-or SHIFT+backslash will lower/raise the camera).
+enter) on the Numpad (or alternatively,
+backslash/SHIFT+backslash/CTRL+backslash).
 The controls for increment/decrement AV delay
 have been changed to CTRL+SHIFT+(plus/minus) on
 the Numpad.
@@ -464,7 +491,8 @@ Fixed various bugs in the lyric import.
 
 Added the ability to define band and track-specific difficulties.
 
-Added support for pro guitar/bass and 4 lane dance authoring.
+Added support for pro guitar/bass and 4 lane dance authoring.  A
+tutorial for authoring pro guitar tracks has been added.
 
 Added some logging functionality to help identify points of malfunction.
 Logging can be disabled in Preferences.

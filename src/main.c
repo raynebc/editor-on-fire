@@ -231,6 +231,7 @@ EOF_CONTROLLER eof_drums;
 int eof_color_black;
 int eof_color_white;
 int eof_color_gray;
+int eof_color_light_gray;
 int eof_color_red;
 int eof_color_green;
 int eof_color_blue;
@@ -2990,7 +2991,7 @@ void eof_render(void)
 	}
 	if(eof_song_loaded)
 	{
-		clear_to_color(eof_screen, makecol(224, 224, 224));
+		clear_to_color(eof_screen, eof_color_light_gray);
 		if(!eof_full_screen_3d)
 		{	//Only blit the menu bar now if full screen 3D view isn't in effect, as it will otherwise be blitted later
 			if((eof_count_selected_notes(NULL, 0) > 0) || ((eof_input_mode == EOF_INPUT_FEEDBACK) && (eof_seek_hover_note >= 0)))
@@ -3195,6 +3196,7 @@ int eof_load_data(void)
 	eof_color_black = makecol(0, 0, 0);
 	eof_color_white = makecol(255, 255, 255);
 	eof_color_gray = makecol(64, 64, 64);
+	eof_color_light_gray = makecol(224, 224, 224);
 	eof_color_red = makecol(255, 0, 0);
 	eof_color_green = makecol(0, 255, 0);
 	eof_color_blue = makecol(0, 0, 255);
@@ -4270,7 +4272,6 @@ int main(int argc, char * argv[])
 		}
 		else
 		{
-
 			if(eof_new_idle_system)
 			{
 				/* rest to save CPU */
