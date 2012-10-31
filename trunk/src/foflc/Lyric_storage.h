@@ -101,7 +101,7 @@ struct Lyric_Piece
 {
 	unsigned long start;		//The start offset of the piece of lyric in real time (milliseconds)
 	unsigned long duration;		//Duration of the piece of lyric in milliseconds
-	unsigned char pitch;		//The pitch of the sung lyric, using Rock Band's mapping.  Valid range is 36-95, pitch 36 being mid C
+	unsigned char pitch;		//The pitch of the sung lyric, using Rock Band's mapping.  Valid range is 36-84, pitch 36 being mid C
 	char overdrive;				//Boolean:  If nonzero, this piece is overdrive
 	char freestyle;				//Boolean:  If nonzero, this piece is freestyle
 	char groupswithnext;		//Boolean:  If nonzero, this piece should group with the next piece (preserving grouping information if nohyphens is used)

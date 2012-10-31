@@ -22,7 +22,9 @@ typedef struct
 	int channel;
 	char * dp;
 	char allocation;	//This tracks whether dp points to allocated that should be freed after it is written to file
-	char filtered;	//This is set to nonzero if the event should be dropped instead of being written to MIDI
+	char filtered;		//This is set to nonzero if the event should be dropped instead of being written to MIDI
+	char on;			//Simplifies the use of running status by indicating if this is a note on event
+	char off;			//Simplifies the use of running status by indicating if this is a note off event
 } EOF_MIDI_EVENT;
 
 
