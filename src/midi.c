@@ -32,6 +32,19 @@ void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int
 	if(enddelta && (pos > enddelta))
 		return;	//If attempting to write an event that exceeds a user-defined end event, don't do it
 
+	char note_off = 0;	//Will be set to non zero if this is a note off event
+	char note_on = 0;	//Will be set to non zero if this is a note on event
+	if((type & 0xF0) == 0x80)
+	{	//If this is a note off event, convert it to a note on event with a velocity of 0 (equivalent to note off) to make use of running status
+		type = 0x90 | (type & 0x0F);	//Change the event status byte, keep the channel number
+		velocity = 0;
+		note_off = 1;
+	}
+	else if((type & 0xF0) == 0x90)
+	{	//If this is a note on event
+		note_on = 1;
+	}
+
 	eof_midi_event[eof_midi_events] = malloc(sizeof(EOF_MIDI_EVENT));
 	if(eof_midi_event[eof_midi_events])
 	{
@@ -43,13 +56,15 @@ void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int
 		eof_midi_event[eof_midi_events]->allocation = 0;
 		eof_midi_event[eof_midi_events]->filtered = 0;
 		eof_midi_event[eof_midi_events]->dp = NULL;
+		eof_midi_event[eof_midi_events]->on = note_on;
+		eof_midi_event[eof_midi_events]->off = note_off;
 		eof_midi_events++;
 
 		if((note >= 0) && (note <= 127))
 		{	//If the note is in bounds of a legal MIDI note, track the writing of each on/off status
-			if(type == 0x80)	//Note Off
+			if(note_off)	//Note Off
 				eof_midi_note_status[note] = 0;
-			else if(type == 0x90)	//Note On
+			else if(note_on)	//Note On
 				eof_midi_note_status[note] = 1;
 		}
 	}
@@ -72,6 +87,8 @@ void eof_add_midi_lyric_event(unsigned long pos, char * text)
 			eof_midi_event[eof_midi_events]->dp = text;
 			eof_midi_event[eof_midi_events]->allocation = 1;	//At this time, all lyrics are being copied into new arrays in case they need to be altered
 			eof_midi_event[eof_midi_events]->filtered = 0;
+			eof_midi_event[eof_midi_events]->on = 0;
+			eof_midi_event[eof_midi_events]->off = 0;
 			eof_midi_events++;
 		}
 	}
@@ -94,6 +111,8 @@ void eof_add_midi_text_event(unsigned long pos, char * text, char allocation)
 			eof_midi_event[eof_midi_events]->dp = text;
 			eof_midi_event[eof_midi_events]->allocation = allocation;
 			eof_midi_event[eof_midi_events]->filtered = 0;
+			eof_midi_event[eof_midi_events]->on = 0;
+			eof_midi_event[eof_midi_events]->off = 0;
 			eof_midi_events++;
 		}
 	}
@@ -873,6 +892,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 				/* add MIDI events */
 				lastdelta = 0;
+				int lastevent = 0;	//Track the last event written so running status can be utilized
 				for(i = 0; i < eof_midi_events; i++)
 				{
 					if((trackctr == 1) && (eof_midi_event[i]->note < 96))
@@ -895,9 +915,13 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						else
 						{	//Note on/off
 							WriteVarLen(delta - lastdelta, fp);	//Write this event's relative delta time
-							pack_putc(eof_midi_event[i]->type, fp);
+							if(eof_midi_event[i]->type != lastevent)
+							{	//With running status, the MIDI event type needn't be written if it's the same as the previous event
+								pack_putc(eof_midi_event[i]->type, fp);
+							}
 							pack_putc(eof_midi_event[i]->note, fp);
-							pack_putc(vel, fp);
+							pack_putc(eof_midi_event[i]->velocity, fp);
+							lastevent = eof_midi_event[i]->type;
 						}
 						if(eof_midi_event[i]->allocation && eof_midi_event[i]->dp)
 						{	//If this event has allocated memory to release
@@ -1026,11 +1050,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			{
 				if(!eof_midi_event[i]->filtered)
 				{	//If this event isn't being filtered
-					if((eof_midi_event[i]->type == 0x90) && (eof_midi_event[i]->note == 105))
+					if((eof_midi_event[i]->on) && (eof_midi_event[i]->note == 105))
 					{	//If this is a lyric on phrase marker
 						last_phrase = eof_midi_event[i]->pos;		//Store its position
 					}
-					else if((i + 2 < eof_midi_events) && (eof_midi_event[i]->type == 0x05) && (eof_midi_event[i+1]->type == 0x90) && (eof_midi_event[i+1]->note < 105) && (eof_midi_event[i+2]->type == 0x80) && (eof_midi_event[i+2]->note < 105))
+					else if((i + 2 < eof_midi_events) && (eof_midi_event[i]->type == 0x05) && (eof_midi_event[i+1]->on) && (eof_midi_event[i+1]->note < 105) && (eof_midi_event[i+2]->off) && (eof_midi_event[i+2]->note < 105))
 					{	//If this is a lyric event followed by a lyric pitch on and off
 						if((eof_midi_event[i]->pos == eof_midi_event[i+1]->pos) && (eof_midi_event[i]->pos < last_phrase + EOF_LYRIC_PHRASE_PADDING))
 						{	//If the lyric event and pitch are not at least EOF_LYRIC_PHRASE_PADDING deltas away from the lyric phrase on marker
@@ -1041,7 +1065,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 							}
 						}
 					}
-					else if((i + 1 < eof_midi_events) && (eof_midi_event[i]->type == 0x90) && (eof_midi_event[i]->note == VOCALPERCUSSION) && (eof_midi_event[i+1]->type == 0x80) && (eof_midi_event[i+1]->note == VOCALPERCUSSION))
+					else if((i + 1 < eof_midi_events) && (eof_midi_event[i]->on) && (eof_midi_event[i]->note == VOCALPERCUSSION) && (eof_midi_event[i+1]->off) && (eof_midi_event[i+1]->note == VOCALPERCUSSION))
 					{	//If this is a vocal percussion note on followed by a vocal percussion off
 						if(eof_midi_event[i]->pos < last_phrase + EOF_LYRIC_PHRASE_PADDING)
 						{	//If the vocal percussion on is not at least EOF_LYRIC_PHRASE_PADDING deltas away from the lyric phrase on marker
@@ -1075,6 +1099,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 			/* add MIDI events */
 			lastdelta=0;
+			int lastevent = 0;	//Track the last event written so running status can be utilized
 			for(i = 0; i < eof_midi_events; i++)
 			{
 				if(!eof_midi_event[i]->filtered)
@@ -1095,9 +1120,13 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					else
 					{
 						WriteVarLen(delta - lastdelta, fp);	//Write this lyric's relative delta time
-						pack_putc(eof_midi_event[i]->type, fp);
+						if(eof_midi_event[i]->type != lastevent)
+						{	//With running status, the MIDI event type needn't be written if it's the same as the previous event
+							pack_putc(eof_midi_event[i]->type, fp);
+						}
 						pack_putc(eof_midi_event[i]->note, fp);
-						pack_putc(vel, fp);
+						pack_putc(eof_midi_event[i]->velocity, fp);
+						lastevent = eof_midi_event[i]->type;
 					}
 					if(eof_midi_event[i]->allocation && eof_midi_event[i]->dp)
 					{	//If this event has allocated memory to release
@@ -1512,6 +1541,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 			/* add MIDI events */
 			lastdelta = 0;
+			int lastevent = 0;	//Track the last event written so running status can be utilized
 			for(i = 0; i < eof_midi_events; i++)
 			{
 				if(!eof_midi_event[i]->filtered)
@@ -1531,9 +1561,13 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					else
 					{	//Write a non meta MIDI event
 						WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
-						pack_putc(eof_midi_event[i]->type + eof_midi_event[i]->channel, fp);
+						if(eof_midi_event[i]->type + eof_midi_event[i]->channel != lastevent)
+						{	//With running status, the MIDI event type needn't be written if it's the same as the previous event
+							pack_putc(eof_midi_event[i]->type + eof_midi_event[i]->channel, fp);
+						}
 						pack_putc(eof_midi_event[i]->note, fp);
 						pack_putc(eof_midi_event[i]->velocity, fp);
+						lastevent = eof_midi_event[i]->type + eof_midi_event[i]->channel;
 					}
 					if(eof_midi_event[i]->allocation && eof_midi_event[i]->dp)
 					{	//If this event has allocated memory to release
@@ -1794,6 +1828,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		unsigned length_to_write = 0;
 
 		lastdelta = 0;
+		int lastevent = 0;	//Track the last event written so running status can be utilized
 		for(i = 0; i < sp->beats; i++)
 		{
 			//Determine if this is the first beat in a measure and which note number to write
@@ -1821,16 +1856,23 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			{	//Only write this beat marker if it starts and stops before the end event
 				WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
 				lastdelta = delta;					//Store this event's absolute delta time
-				pack_putc(0x90, fp);				//MIDI event 0x9 (note on), channel 0
+				if(lastevent != 0x90)
+				{	//If no MIDI notes have been written for the BEAT track yet
+					pack_putc(0x90, fp);				//MIDI event 0x9 (note on), channel 0
+				}
+				lastevent = 0x90;					//Track that a status byte has been written, so that no others need to be for this track (running status)
 				pack_putc(note_to_write, fp);		//Note 12 or 13
-				pack_putc(100, fp);			//Pre-determined velocity
+				pack_putc(100, fp);					//Pre-determined velocity
 
 				//Write the note off event
 				WriteVarLen(delta2-lastdelta, fp);	//Write this event's relative delta time
 				lastdelta = delta2;					//Store this event's absolute delta time
-				pack_putc(0x80, fp);				//MIDI event 0x8 (note off), channel 0
+				if(lastevent != 0x90)
+				{	//If no MIDI notes have been written for the BEAT track yet
+					pack_putc(0x90, fp);				//MIDI event 0x9 (note on, but will be equivalent to a note on if the velocity is 0), channel 0
+				}
 				pack_putc(note_to_write, fp);		//Note 12 or 13
-				pack_putc(100, fp);					//Pre-determined velocity
+				pack_putc(0, fp);					//A note on with a velocity of 0 is treated as a note off
 			}
 
 			//Increment to the next beat
@@ -2461,6 +2503,8 @@ void eof_add_sysex_event(unsigned long pos, int size, void *data)
 				eof_midi_event[eof_midi_events]->dp = (char *)datacopy;	//Store the newly buffered data
 				eof_midi_event[eof_midi_events]->allocation = 1;	//At this time, all Sysex data chunks are stored in dynamically allocated memory
 				eof_midi_event[eof_midi_events]->filtered = 0;
+				eof_midi_event[eof_midi_events]->on = 0;
+				eof_midi_event[eof_midi_events]->off = 0;
 				eof_midi_events++;
 			}
 		}
@@ -2721,14 +2765,14 @@ void eof_check_for_note_overlap(void)
 	{	//For each cached MIDI event
 		if(!eof_midi_event[ctr]->filtered)
 		{	//If this event isn't already filtered out
-			if(eof_midi_event[ctr]->type == 0x90)
+			if(eof_midi_event[ctr]->on)
 			{	//If this is a note on event
 				if(eof_midi_note_status[eof_midi_event[ctr]->note] == 1)
 				{	//If this note was already on
 					eof_midi_event[ctr]->filtered = 1;	//Filter this event from being written to MIDI
 					for(ctr2 = ctr + 1; ctr2 < eof_midi_events; ctr2++)
 					{	//Examine the rest of the events to filter the next note off for this note #
-						if((eof_midi_event[ctr]->note == eof_midi_event[ctr2]->note) && (eof_midi_event[ctr2]->type == 0x80) && (!eof_midi_event[ctr2]->filtered))
+						if((eof_midi_event[ctr]->note == eof_midi_event[ctr2]->note) && (eof_midi_event[ctr2]->off) && (!eof_midi_event[ctr2]->filtered))
 						{	//If this event is a note off for the target note #, and it isn't already filtered out
 							eof_midi_event[ctr2]->filtered = 1;	//Filter this event from being written to MIDI
 							break;
@@ -2740,7 +2784,7 @@ void eof_check_for_note_overlap(void)
 					eof_midi_note_status[eof_midi_event[ctr]->note] = 1;	//Track that it is now on
 				}
 			}
-			else if(eof_midi_event[ctr]->type == 0x80)
+			else if(eof_midi_event[ctr]->off)
 			{	//If this is a note off event
 				if(eof_midi_note_status[eof_midi_event[ctr]->note] == 0)
 				{	//If this note was already off
@@ -2767,7 +2811,7 @@ void eof_check_for_hopo_phrase_overlap(void)
 	{	//For each cached MIDI event
 		if(!eof_midi_event[ctr]->filtered)
 		{	//If this event isn't already filtered out
-			if(eof_midi_event[ctr]->type == 0x80)
+			if(eof_midi_event[ctr]->off)
 			{	//If this is a note off event
 				phrasealtered = 0;
 				for(ctr2 = 0; (ctr2 < sizeof(HOPO_notes)) && !phrasealtered; ctr2++)
