@@ -14,6 +14,7 @@
 #include "SRT_parse.h"
 #include "XML_parse.h"
 #include "JB_parse.h"
+#include "RS_parse.h"
 
 #ifdef USEMEMWATCH
 #ifdef EOF_BUILD	//In the EOF code base, memwatch.h is at the root
@@ -342,6 +343,12 @@ int main(int argc, char *argv[])
 				Lyrics.out_format=SRT_FORMAT;
 				Lyrics.outfilename=argv[ctr+2];
 				correct_extension=DuplicateString(".srt");	//.srt is the correct extension for this file format
+			}
+			else if(strcasecmp(argv[ctr+1],"rs") == 0)	//-out rs output
+			{
+				Lyrics.out_format=RS_FORMAT;
+				Lyrics.outfilename=argv[ctr+2];
+				correct_extension=DuplicateString(".xml");	//.xml is the correct extension for this file format
 			}
 			else	//Any other specified output format is invalid
 				Input_failed(ctr+1,NULL);
@@ -1108,6 +1115,11 @@ int main(int argc, char *argv[])
 			Export_SRT(outf);
 		break;
 
+		case RS_FORMAT:	//Export as Rocksmith XML
+			outf=fopen_err(Lyrics.outfilename,"wt");	//XML is a text format
+			Export_RS(outf);
+		break;
+
 		default:
 			puts("Unexpected error in export switch\nAborting");
 			exit_wrapper(4);
@@ -1227,7 +1239,7 @@ void DisplayHelp(void)
 //Describe general syntax and required parameters
 	DisplaySyntax();
 	puts("-The use of detect will halt a conversion specified by the other parameters");
-	puts("-Valid FORMATs: script,vl,midi,ustar,lrc,elrc,vrhythm,kar,skar,id3,srt,xml,jb");
+	puts("-FORMATs: script,vl,midi,ustar,lrc,elrc,vrhythm,kar,skar,id3,srt,xml,jb,rs");
 	puts("-infile is the name of the input file, whose FORMAT is optional");
 	puts("-outfile is the name of the file to create in the FORMAT preceding it");
 	puts("-If the input format is vrhythm, a source rhythm MIDI file (infile)");

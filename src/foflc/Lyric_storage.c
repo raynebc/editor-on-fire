@@ -28,7 +28,7 @@ jmp_buf jumpbuffer;			//Used in the conditional compiling code to allow this pro
 							//in the event of an exception that would normally terminate the program
 jmp_buf FLjumpbuffer;		//This is used by FLC's internal logic to provide for exception handling (ie. in validating MIDI files with DetectLyricFormat())
 char useFLjumpbuffer=0;		//Boolean:  If nonzero, FLC's logic intercepts in exit_wrapper() regardless of whether EOF_BUILD is defined
-const char *LYRICFORMATNAMES[NUMBEROFLYRICFORMATS+1]={"UNKNOWN LYRIC TYPE","SCRIPT","VL","RB MIDI","UltraStar","LRC","Vocal Rhythm","ELRC","KAR","Pitched Lyrics","Soft Karaoke","ID3 Lyrics","SRT Subtitle","XML","JamBand"};
+const char *LYRICFORMATNAMES[NUMBEROFLYRICFORMATS+1]={"UNKNOWN LYRIC TYPE","SCRIPT","VL","RB MIDI","UltraStar","LRC","Vocal Rhythm","ELRC","KAR","Pitched Lyrics","Soft Karaoke","ID3 Lyrics","SRT Subtitle","XML","JamBand","Rocksmith XML"};
 
 
 
@@ -1859,9 +1859,11 @@ int FindNextNumber(char *buffer,unsigned long *startindex)
 struct Lyric_Format *DetectLyricFormat(char *file)
 {
 	unsigned long maxlinelength=0,index=0,ctr=0;
+///	unsigned long convertednum2=0;	//Unused
 	char *temp=NULL,*temp2=NULL,temp3=0;
 	char *buffer=NULL;			//Used for text file testing
 	int errorcode=0,jumpcode=0;
+///	long int convertednum=0;	//Unused
 	unsigned long processedctr=0;	//The current line number being processed in the text file
 	char timestampchar[]="[<";		//Accept any of these characters as valid characters to begin an LRC timestamp
 	char quicktemp=0;				//Used to store the original user setting of the quick processing flag (Lyrics.quick)

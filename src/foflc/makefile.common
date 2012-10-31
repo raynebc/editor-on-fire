@@ -1,1 +1,1 @@
-OFILES = LRC_parse.o Lyric_storage.o Midi_parse.o Script_parse.o UStar_parse.o VL_parse.o ID3_parse.o FoFLyricConvert.o SRT_parse.o XML_parse.o
+OFILES = LRC_parse.o Lyric_storage.o Midi_parse.o Script_parse.o UStar_parse.o VL_parse.o ID3_parse.o FoFLyricConvert.o SRT_parse.o XML_parse.o RS_parse.o

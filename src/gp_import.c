@@ -2945,12 +2945,13 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							if(strings[ctr2] > 6)
 							{	//If this is a 7 string track
 								np[ctr2]->note = usedstrings >> 1;	//Shift out string 7 to leave the first 6 strings
+								np[ctr2]->ghost = ghost >> 1;		//Likewise translate the ghost bit mask
 							}
 							else
 							{
 								np[ctr2]->note = usedstrings >> (7 - strings[ctr2]);	//Guitar pro's note bitmask reflects string 7 being the LSB
+								np[ctr2]->ghost = ghost >> (7 - strings[ctr2]);			//Likewise translate the ghost bit mask
 							}
-							np[ctr2]->ghost = ghost >> (7 - strings[ctr2]);	//Likewise translate the ghost bit mask
 							np[ctr2]->type = EOF_NOTE_AMAZING;
 
 	//Determine the correct timestamp position and duration
