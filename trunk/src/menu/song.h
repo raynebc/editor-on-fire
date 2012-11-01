@@ -29,6 +29,7 @@ int eof_menu_catalog_add(void);
 int eof_menu_catalog_delete(void);
 int eof_menu_catalog_previous(void);
 int eof_menu_catalog_next(void);
+int eof_menu_song_catalog_edit(void);
 
 int eof_menu_song_seek_start(void);
 int eof_menu_song_seek_end(void);	//Seeks to the end of the audio
