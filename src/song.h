@@ -703,6 +703,6 @@ unsigned long eof_determine_chart_length(EOF_SONG *sp);
 void eof_truncate_chart(EOF_SONG *sp);
 	//Uses eof_determine_chart() to set eof_chart_length to the larger of the last chart content and the loaded chart audio
 	//Any beats that are more than one beat after this position are deleted from the project, and eof_chart_length is updated to the position
-	//This should be called after Guitar Pro import (which adds beats even if no tracks are selected for import), after loading a project/file/undo/redo state and after loading an audio file
+	//This should be called after Guitar Pro import (which adds beats even if no tracks are selected for import), after loading a project/file/undo/redo state (before calling cleanup logic) and after loading an audio file
 
 #endif

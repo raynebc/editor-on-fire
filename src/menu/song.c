@@ -97,6 +97,7 @@ MENU eof_catalog_menu[] =
     {"&Show\tQ", eof_menu_catalog_show, NULL, 0, NULL},
     {"Double &Width\tSHIFT+Q", eof_menu_catalog_toggle_full_width, NULL, 0, NULL},
     {"&Edit Name", eof_menu_catalog_edit_name, NULL, 0, NULL},
+    {"Edit &Timing", eof_menu_song_catalog_edit, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"&Add", eof_menu_catalog_add, NULL, 0, NULL},
     {"&Delete", eof_menu_catalog_delete, NULL, 0, NULL},
@@ -467,11 +468,11 @@ void eof_prepare_song_menu(void)
 		/* add catalog entry */
 		if(eof_count_selected_notes(NULL,0))	//If there are notes selected
 		{
-			eof_catalog_menu[4].flags = 0;
+			eof_catalog_menu[5].flags = 0;
 		}
 		else
 		{
-			eof_catalog_menu[4].flags = D_DISABLED;
+			eof_catalog_menu[5].flags = D_DISABLED;
 		}
 
 		/* remove catalog entry */
@@ -479,31 +480,31 @@ void eof_prepare_song_menu(void)
 		/* find next */
 		if(eof_selected_catalog_entry < eof_song->catalog->entries)
 		{
-			eof_catalog_menu[5].flags = 0;
-			eof_catalog_menu[10].flags = 0;
+			eof_catalog_menu[6].flags = 0;
 			eof_catalog_menu[11].flags = 0;
+			eof_catalog_menu[12].flags = 0;
 		}
 		else
 		{
-			eof_catalog_menu[5].flags = D_DISABLED;
-			eof_catalog_menu[10].flags = D_DISABLED;
+			eof_catalog_menu[6].flags = D_DISABLED;
 			eof_catalog_menu[11].flags = D_DISABLED;
+			eof_catalog_menu[12].flags = D_DISABLED;
 		}
 
 		/* previous/next catalog entry */
 		if(eof_song->catalog->entries > 1)
 		{
-			eof_catalog_menu[7].flags = 0;
 			eof_catalog_menu[8].flags = 0;
+			eof_catalog_menu[9].flags = 0;
 		}
 		else
 		{
-			eof_catalog_menu[7].flags = D_DISABLED;
 			eof_catalog_menu[8].flags = D_DISABLED;
+			eof_catalog_menu[9].flags = D_DISABLED;
 		}
 
 		/* catalog */
-		if(!eof_song->catalog->entries && (eof_catalog_menu[4].flags == D_DISABLED))
+		if(!eof_song->catalog->entries && (eof_catalog_menu[5].flags == D_DISABLED))
 		{	//If there are no catalog entries and no notes selected (in which case Song>Catalog>Add would have been disabled earlier)
 			eof_song_menu[8].flags = D_DISABLED;	//Song>Catalog> submenu
 		}
@@ -1958,11 +1959,11 @@ int eof_menu_song_open_bass(void)
 DIALOG eof_catalog_entry_name_dialog[] =
 {
    /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc,    0,  48,  204 + 110, 106, 2,   23,  0,    0,      0,   0,   "Edit catalog entry name",               NULL, NULL },
-   { d_agup_text_proc,   12,  84,  64,  8,  2,   23,  0,    0,      0,   0,   "Text:",         NULL, NULL },
-   { d_agup_edit_proc,   48, 80,  144 + 110,  20,  2,   23,  0,    0,      EOF_NAME_LENGTH,   0,   eof_etext,           NULL, NULL },
-   { d_agup_button_proc, 12 + 55,  112, 84,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "OK",               NULL, NULL },
-   { d_agup_button_proc, 108 + 55, 112, 78,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+   { d_agup_window_proc,  0,   48,  314, 106, 2,   23,   0,      0,      0,   0,   "Edit catalog entry name",               NULL, NULL },
+   { d_agup_text_proc,    12,  84,  64,  8,   2,   23,   0,      0,      0,   0,   "Text:",         NULL, NULL },
+   { d_agup_edit_proc,    48,  80,  254, 20,  2,   23,   0,      0,      EOF_NAME_LENGTH,   0,   eof_etext,           NULL, NULL },
+   { d_agup_button_proc,  67,  112, 84,  28,  2,   23,   '\r',   D_EXIT, 0,   0,   "OK",               NULL, NULL },
+   { d_agup_button_proc,  163, 112, 78,  28,  2,   23,   0,      D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -3526,5 +3527,54 @@ int eof_menu_catalog_toggle_full_width(void)
 	{
 		eof_catalog_menu[1].flags = D_SELECTED;
 	}
+	return 1;
+}
+
+DIALOG eof_song_catalog_edit_dialog[] =
+{
+   /* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
+   { d_agup_window_proc,    0,   0,   200, 180, 0,   0,   0,    0,      0,   0,   "Edit catalog entry",      NULL, NULL },
+   { d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "Start position (ms)",                NULL, NULL },
+   { eof_verified_edit_proc,12,  56,  50,  20,  0,   0,   0,    0,      7,   0,   eof_etext,     "0123456789", NULL },
+   { d_agup_text_proc,      12,  88,  60,  12,  0,   0,   0,    0,      0,   0,   "End position (ms)",                NULL, NULL },
+   { eof_verified_edit_proc,12,  104, 50,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789", NULL },
+   { d_agup_button_proc,    12,  140, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",               NULL, NULL },
+   { d_agup_button_proc,    110, 140, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+   { NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,               NULL, NULL }
+};
+
+int eof_menu_song_catalog_edit(void)
+{
+	unsigned long newstart, newend;
+
+	if(!eof_song_loaded || !eof_song || (eof_selected_catalog_entry >= eof_song->catalog->entries))
+		return 1;	//Do not allow this function to run if a chart is not loaded or if an invalid catalog entry is selected
+
+	eof_render();
+	eof_color_dialog(eof_song_catalog_edit_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_song_catalog_edit_dialog);
+	sprintf(eof_etext, "%ld", eof_song->catalog->entry[eof_selected_catalog_entry].start_pos);
+	sprintf(eof_etext2, "%ld", eof_song->catalog->entry[eof_selected_catalog_entry].end_pos);
+
+	if(eof_popup_dialog(eof_song_catalog_edit_dialog, 2) == 5)
+	{	//User clicked OK
+		newstart = atol(eof_etext);
+		newend = atol(eof_etext2);
+
+		if(newstart >= newend)
+		{	//If the given timing is not valid
+			allegro_message("The entry must end after it begins");
+		}
+		else if((eof_song->catalog->entry[eof_selected_catalog_entry].start_pos != newstart) || (eof_song->catalog->entry[eof_selected_catalog_entry].end_pos != newend))
+		{	//If the timing was changed
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			eof_song->catalog->entry[eof_selected_catalog_entry].start_pos = newstart;
+			eof_song->catalog->entry[eof_selected_catalog_entry].end_pos = newend;
+		}
+	}
+
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(NULL);
 	return 1;
 }

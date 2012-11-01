@@ -1222,6 +1222,7 @@ EOF_SONG * eof_import_gh(const char * fn)
 			return NULL;
 		}
 		eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
+		eof_truncate_chart(sp);	//Update the chart length before performing lyric cleanup
 		eof_vocal_track_fixup_lyrics(sp, EOF_TRACK_VOCALS, 0);	//Clean up the lyrics
 		eof_log("\tGH import completed", 1);
 	}

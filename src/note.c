@@ -653,6 +653,15 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 				np2=eof_song->vocal_track[0]->lyric[notenum+1];
 				sliderect[0]=npos + np->length / eof_zoom;	//X1 (X coordinate of the end of this lyric's rectangle)
 				sliderect[1]=note_y;						//Y1 (Y coordinate of the bottom of this lyric's rectangle)
+				long leftcoord2;
+				if(window == eof_window_note)
+				{	//If rendering to the fret catalog
+					leftcoord2 = 140;
+				}
+				else
+				{	//Otherwise assume it's being rendered to the editor window
+					leftcoord2 = 300;
+				}
 
 				if(pos < 300)
 				{
@@ -660,7 +669,7 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 				}
 				else
 				{
-					npos2 = 20 - ((pos - 300)) + np2->pos / eof_zoom;
+					npos2 = 20 - ((pos - leftcoord2)) + np2->pos / eof_zoom;
 				}
 				sliderect[2]=npos2;	//X2 (X coordinate of next lyric's rectangle)
 

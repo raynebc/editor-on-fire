@@ -2120,6 +2120,20 @@ void eof_render_note_window(void)
 				}
 			}
 			vline(eof_window_note->screen, lpos + (eof_chart_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
+			/* render information about the entry */
+			char emptystring[2] = "", *difficulty_name = emptystring;	//The empty string will be 2 characters, so that the first can (used to define populated status of each track) be skipped
+			if(eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->track_format != EOF_VOCAL_TRACK_FORMAT)
+			{	//If the catalog entry is not from a vocal track, determine the name of the active difficulty
+				if(eof_song->catalog->entry[eof_selected_catalog_entry].track == EOF_TRACK_DANCE)
+				{	//The dance track has different difficulty names
+					difficulty_name = eof_dance_tab_name[(int)eof_song->catalog->entry[eof_selected_catalog_entry].type];
+				}
+				else
+				{	//All other tracks use the same difficulty names
+					difficulty_name = eof_note_type_name[(int)eof_song->catalog->entry[eof_selected_catalog_entry].type];
+				}
+			}
+			textprintf_ex(eof_window_note->screen, font, 2, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h, eof_color_white, -1, "%s , %s , %lums - %lums", eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->name, difficulty_name + 1, eof_song->catalog->entry[eof_selected_catalog_entry].start_pos, eof_song->catalog->entry[eof_selected_catalog_entry].end_pos);
 			/* draw beat lines */
 			if(pos < 140)
 			{
