@@ -129,7 +129,7 @@ EOF_SONG * eof_create_song(void)
 {
  	eof_log("eof_create_song() entered", 1);
 
-	EOF_SONG * sp = NULL;
+	EOF_SONG * sp;
 	unsigned long i;
 
 	sp = malloc(sizeof(EOF_SONG));
@@ -2696,7 +2696,7 @@ EOF_SONG * eof_create_song_populated(void)
 {
  	eof_log("eof_create_song_populated() entered", 1);
 
-	EOF_SONG * sp = NULL;
+	EOF_SONG * sp;
 	unsigned long ctr;
 
 	/* create empty song */

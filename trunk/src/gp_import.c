@@ -1188,7 +1188,7 @@ EOF_SONG *parse_gp(const char * fn)
 					}
 					if(bytemask & 8)
 					{	//Beat has effects
-						unsigned char byte1 = 0, byte2 = 0;
+						unsigned char byte1, byte2 = 0;
 
 						eof_gp_debug_log(inf, "\tBeat effects bitmask:  ");
 						byte1 = pack_getc(inf);	//Read beat effects 1 bitmask
@@ -1255,6 +1255,8 @@ EOF_SONG *parse_gp(const char * fn)
 							if(eof_gp_parse_bend(inf))
 							{	//If there was an error parsing the bend
 								puts("Error parsing bend");
+								pack_fclose(inf);
+								free(strings);
 								return NULL;
 							}
 						}
@@ -1514,7 +1516,7 @@ EOF_SONG *parse_gp(const char * fn)
 							}
 							if(bytemask & 8)
 							{	//Note effects
-								char byte1 = 0, byte2 = 0;
+								char byte1, byte2 = 0;
 								eof_gp_debug_log(inf, "\t\tNote effect bitmask:  ");
 								byte1 = pack_getc(inf);
 								printf("%u\n", (byte1 & 0xFF));
@@ -1529,6 +1531,8 @@ EOF_SONG *parse_gp(const char * fn)
 									if(eof_gp_parse_bend(inf))
 									{	//If there was an error parsing the bend
 										puts("Error parsing bend");
+										pack_fclose(inf);
+										free(strings);
 										return NULL;
 									}
 								}
@@ -2562,6 +2566,22 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							if(eof_gp_parse_bend(inf))
 							{	//If there was an error parsing the bend
 								allegro_message("Error parsing bend, file is corrupt");
+								pack_fclose(inf);
+								while(ctr > 0)
+								{	//Free the previous track name strings
+									free(gp->names[ctr - 1]);
+									ctr--;
+								}
+								free(gp->names);
+								for(ctr = 0; ctr < tracks; ctr++)
+								{	//Free all previously allocated track structures
+									free(gp->track[ctr]);
+								}
+								free(np);
+								free(hopo);
+								free(gp);
+								free(tsarray);
+								free(strings);
 								return NULL;
 							}
 						}
@@ -2804,6 +2824,22 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									if(eof_gp_parse_bend(inf))
 									{	//If there was an error parsing the bend
 										allegro_message("Error parsing bend, file is corrupt");
+										pack_fclose(inf);
+										while(ctr > 0)
+										{	//Free the previous track name strings
+											free(gp->names[ctr - 1]);
+											ctr--;
+										}
+										free(gp->names);
+										for(ctr = 0; ctr < tracks; ctr++)
+										{	//Free all previously allocated track structures
+											free(gp->track[ctr]);
+										}
+										free(np);
+										free(hopo);
+										free(gp);
+										free(tsarray);
+										free(strings);
 										return NULL;
 									}
 									flags |= EOF_PRO_GUITAR_NOTE_FLAG_BEND;
