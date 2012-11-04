@@ -3650,12 +3650,12 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 				fretvalue = tp->note[i-1]->frets[ctr];
 				if(fretvalue != 0xFF)
 				{	//Track whether the all used strings in this note/chord are muted
-					if(tp->note[i-1]->note & bitmask)
-					{	//If this string is used in the note
+					if((tp->note[i-1]->note & bitmask) && !(fretvalue & 0x80))
+					{	//If this string is used in the note, and the note isn't marked as muted
 						allmuted = 0;
 					}
 					if((fretvalue & 0x7F) > tp->numfrets)
-					{	//If this fret value (all bits except the MSB) is invalid
+					{	//If this fret value is invalid (all bits set except the MSB) is invalid
 						tp->note[i-1]->frets[ctr] = 0;	//Revert to default fret value of 0
 					}
 				}

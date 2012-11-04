@@ -227,6 +227,8 @@ TRACK CHUNK, for each track:
 *		4 bytes:	Note length (in milliseconds or delta ticks)
 *		4 bytes:	Note flags (allow 32 flags for an unforsee-able number of techniques such as tapping, bending, etc)
 		[varies:]	Extended note flags (if the MSB of the note flags field is set, another 4 byte flag field follows, and if its MSB is set, another 4 byte flag field, etc)
+		[1 byte]	Slide ending fret (if the Rocksmith notation flag, value 33554432, is set and this note is flagged as having an up/down slide, value 4096 or 8192)
+		[1 byte]	Bend strength in half steps (if the Rocksmith notation flag, value 33554432, is set and this note is flagged as a bend, value 2097152)
 *	}
 !	It has been said that 21 pre-defined chord numbers (0-20, ie. note 9 for A5) are used in the Rock Band 3 MIDIs, this is currently unverified
 

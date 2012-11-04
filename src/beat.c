@@ -560,7 +560,7 @@ unsigned long eof_get_measure(unsigned long measure, unsigned char count_only)
 	return 0;	//The measure was not found
 }
 
-void eof_process_beat_statistics(void)
+void eof_process_beat_statistics(EOF_SONG * sp)
 {
 	eof_log("eof_process_beat_statistics() entered", 1);
 
@@ -571,20 +571,20 @@ void eof_process_beat_statistics(void)
 	char first_measure = 0;	//Set to nonzero when the first measure marker is reached
 	unsigned long i;
 
-	if(!eof_song)
+	if(!sp)
 		return;
 
-	for(i = 0; i < eof_song->beats; i++)
+	for(i = 0; i < sp->beats; i++)
 	{	//For each beat
-		if(eof_get_ts(eof_song,&beats_per_measure,NULL,i) == 1)
+		if(eof_get_ts(sp,&beats_per_measure,NULL,i) == 1)
 		{	//If this beat has a time signature change
 			first_measure = 1;	//Note that a time signature change has been found
 			beat_counter = 0;
-			eof_song->beat[i]->contains_ts_change = 1;
+			sp->beat[i]->contains_ts_change = 1;
 		}
 		else
 		{
-			eof_song->beat[i]->contains_ts_change = 0;
+			sp->beat[i]->contains_ts_change = 0;
 		}
 		if(first_measure && (beat_counter == 0))
 		{	//If there was a TS change or the beat markers incremented enough to reach the next measure
@@ -592,36 +592,36 @@ void eof_process_beat_statistics(void)
 		}
 
 	//Cache beat statistics
-		eof_song->beat[i]->measurenum = measure_counter;
-		eof_song->beat[i]->beat_within_measure = beat_counter;
-		eof_song->beat[i]->num_beats_in_measure = beats_per_measure;
-		if(eof_song->beat[i]->ppqn != current_ppqn)
+		sp->beat[i]->measurenum = measure_counter;
+		sp->beat[i]->beat_within_measure = beat_counter;
+		sp->beat[i]->num_beats_in_measure = beats_per_measure;
+		if(sp->beat[i]->ppqn != current_ppqn)
 		{	//If this beat contains a tempo change
-			current_ppqn = eof_song->beat[i]->ppqn;
-			eof_song->beat[i]->contains_tempo_change = 1;
+			current_ppqn = sp->beat[i]->ppqn;
+			sp->beat[i]->contains_tempo_change = 1;
 		}
 		else
 		{
-			eof_song->beat[i]->contains_tempo_change = 0;
+			sp->beat[i]->contains_tempo_change = 0;
 		}
-		eof_song->beat[i]->contained_section_event = -1;	//Reset this until the beat is found to contain a section event
-		eof_song->beat[i]->contains_end_event = 0;			//Reset this boolean status
-		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_EVENTS)
+		sp->beat[i]->contained_section_event = -1;	//Reset this until the beat is found to contain a section event
+		sp->beat[i]->contains_end_event = 0;			//Reset this boolean status
+		if(sp->beat[i]->flags & EOF_BEAT_FLAG_EVENTS)
 		{	//If this beat has one or more text events
 			unsigned long ctr;
 
-			for(ctr = 0; ctr < eof_song->text_events; ctr++)
+			for(ctr = 0; ctr < sp->text_events; ctr++)
 			{	//For each text event
-				if(eof_song->text_event[ctr]->beat == i)
+				if(sp->text_event[ctr]->beat == i)
 				{	//If the event is assigned to this beat
-					if(eof_is_section_marker(eof_song->text_event[ctr]->text))
+					if(eof_is_section_marker(sp->text_event[ctr]->text))
 					{	//If this event is a section marker
-						eof_song->beat[i]->contained_section_event = ctr;
+						sp->beat[i]->contained_section_event = ctr;
 						break;	//And break from the loop
 					}
-					else if(!ustrcmp(eof_song->text_event[ctr]->text, "[end]"))
+					else if(!ustrcmp(sp->text_event[ctr]->text, "[end]"))
 					{	//If this is the [end] event
-						eof_song->beat[i]->contains_end_event = 1;
+						sp->beat[i]->contains_end_event = 1;
 						break;
 					}
 				}
