@@ -609,7 +609,7 @@ void eof_mix_start(unsigned long start, int speed)
 
 	for(i = 1; i < eof_song->tracks; i++)
 	{	//Pre-process all tracks so that switching tracks during playback doesn't cause the playback to lag
-		eof_determine_phrase_status(i);
+		eof_determine_phrase_status(eof_song, i);
 	}
 }
 

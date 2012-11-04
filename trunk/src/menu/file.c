@@ -20,6 +20,7 @@
 #include "../dialog/proc.h"
 #include "../mix.h"
 #include "../tuning.h"
+#include "../rs.h"
 #include "file.h"
 #include "song.h"
 #include "edit.h"	//For eof_menu_edit_undo()
@@ -90,7 +91,7 @@ DIALOG eof_preferences_dialog[] =
    { d_agup_check_proc, 16,  195, 165, 16,  2,   23,  0,    0,      1,   0,   "Disable 2D rendering",NULL, NULL },
    { d_agup_check_proc, 16,  210, 165, 16,  2,   23,  0,    0,      1,   0,   "Disable info panel",NULL, NULL },
    { d_agup_check_proc, 16,  225, 220, 16,  2,   23,  0,    0,      1,   0,   "Erase overlapped pasted notes",NULL, NULL },
-   { d_agup_check_proc, 16,  240, 220, 16,  2,   23,  0,    0,      1,   0,   "Save separate RBN MIDI files",NULL, NULL },
+   { d_agup_check_proc, 16,  240, 220, 16,  2,   23,  0,    0,      1,   0,   "Save separate RBN/RS files",NULL, NULL },
    { d_agup_check_proc, 16,  255, 220, 16,  2,   23,  0,    0,      1,   0,   "Treat inverted chords as slash",NULL, NULL },
    { d_agup_check_proc, 16,  270, 220, 16,  2,   23,  0,    0,      1,   0,   "Enable logging on launch",NULL, NULL },
    { d_agup_check_proc, 16,  285, 220, 16,  2,   23,  0,    0,      1,   0,   "Add new notes to selection",NULL, NULL },
@@ -911,7 +912,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[9].flags = eof_disable_2d_rendering ? D_SELECTED : 0;		//Disable 2D rendering
 	eof_preferences_dialog[10].flags = eof_disable_info_panel ? D_SELECTED : 0;			//Disable info panel
 	eof_preferences_dialog[11].flags = eof_paste_erase_overlap ? D_SELECTED : 0;		//Erase overlapped pasted notes
-	eof_preferences_dialog[12].flags = eof_write_rbn_midis ? D_SELECTED : 0;			//Save separate RBN MIDI files
+	eof_preferences_dialog[12].flags = eof_write_rbn_rs_files ? D_SELECTED : 0;			//Save separate RBN/RS files
 	eof_preferences_dialog[13].flags = eof_inverted_chords_slash ? D_SELECTED : 0;		//Treat inverted chords as slash
 	eof_preferences_dialog[14].flags = enable_logging ? D_SELECTED : 0;					//Enable logging on launch
 	eof_preferences_dialog[15].flags = eof_add_new_notes_to_selection ? D_SELECTED : 0;	//Add new notes to selection
@@ -946,7 +947,7 @@ int eof_menu_file_preferences(void)
 			eof_disable_2d_rendering = (eof_preferences_dialog[9].flags == D_SELECTED ? 1 : 0);
 			eof_disable_info_panel = (eof_preferences_dialog[10].flags == D_SELECTED ? 1 : 0);
 			eof_paste_erase_overlap = (eof_preferences_dialog[11].flags == D_SELECTED ? 1 : 0);
-			eof_write_rbn_midis = (eof_preferences_dialog[12].flags == D_SELECTED ? 1 : 0);
+			eof_write_rbn_rs_files = (eof_preferences_dialog[12].flags == D_SELECTED ? 1 : 0);
 			eof_inverted_chords_slash = (eof_preferences_dialog[13].flags == D_SELECTED ? 1 : 0);
 			enable_logging = (eof_preferences_dialog[14].flags == D_SELECTED ? 1 : 0);
 			eof_add_new_notes_to_selection = (eof_preferences_dialog[15].flags == D_SELECTED ? 1 : 0);
@@ -2088,8 +2089,8 @@ int eof_save_helper(char *destfilename)
 
 //	eof_log_level &= ~2;	//Disable verbose logging
 
-	if(destfilename == NULL)	//Perform save instead of save as
-	{
+	if(destfilename == NULL)
+	{	//Perform save
 		function = 1;
 		if((eof_song_path == NULL) || (eof_loaded_song_name == NULL))
 			return 1;	//Return failure
@@ -2097,7 +2098,7 @@ int eof_save_helper(char *destfilename)
 		replace_filename(newfolderpath, eof_song_path, "", 1024);	//Obtain the destination path
 	}
 	else
-	{
+	{	//Perform save as
 		function = 2;
 		replace_extension(destfilename, destfilename, "eof", 1024);	//Ensure the chart is saved with a .eof extension
 		ustrncpy(eof_temp_filename, destfilename, 1024);
@@ -2179,8 +2180,8 @@ int eof_save_helper(char *destfilename)
 	append_filename(eof_temp_filename, newfolderpath, "notes.mid", 1024);
 	if(eof_export_midi(eof_song, eof_temp_filename, 0, fixvoxpitches, fixvoxphrases))
 	{	//If saving the normal MIDI succeeded, proceed with saving song.ini and additional MIDIs if applicable
-		if(eof_write_rbn_midis)
-		{	//If the user opted to also save RBN2 and RB3 pro guitar upgrade compliant MIDIs
+		if(eof_write_rbn_rs_files)
+		{	//If the user opted to also save RBN2 and RB3 pro guitar upgrade compliant MIDIs and Rocksmith XML files
 			append_filename(eof_temp_filename, newfolderpath, "notes_rbn.mid", 1024);
 			eof_export_midi(eof_song, eof_temp_filename, 1, fixvoxpitches, fixvoxphrases);	//Write a RBN2 compliant MIDI
 			if(eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS) || eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS_22) || eof_get_track_size(eof_song, EOF_TRACK_PRO_GUITAR) || eof_get_track_size(eof_song, EOF_TRACK_PRO_GUITAR_22))
@@ -2201,6 +2202,13 @@ int eof_save_helper(char *destfilename)
 				put_backslash(eof_temp_filename);
 				replace_filename(eof_temp_filename, eof_temp_filename, "upgrades.dta", 1024);
 				eof_save_upgrades_dta(eof_song, eof_temp_filename);		//Create the upgrades.dta file in the songs_upgrades folder if it does not already exist
+
+				//Write Rocksmith XML files
+				append_filename(eof_temp_filename, newfolderpath, "xmlpath.xml", 1024);	//Re-acquire the project's target folder
+				eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS);
+				eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS_22);
+				eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR);
+				eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_22);
 			}
 		}
 		append_filename(eof_temp_filename, newfolderpath, "song.ini", 1024);
@@ -2251,6 +2259,7 @@ int eof_save_helper(char *destfilename)
 	eof_undo_last_type = 0;
 	eof_change_count = 0;
 	eof_fix_window_title();
+	eof_process_beat_statistics(eof_song);	//Re-cache beat information, since temporary MIDI events may have been added/removed and can cause cached section event numbers to be invalid
 
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;

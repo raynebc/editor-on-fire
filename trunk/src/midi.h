@@ -103,6 +103,7 @@ int eof_get_ts(EOF_SONG *sp,unsigned *num,unsigned *den,int beatnum);
 	//Returns 1 if a time signature was returned
 	//Returns 0 if the specified beat was not a time signature
 	//Returns -1 on error
+	//If 1 is not returned, the values referenced by numerator and denominator are not altered
 int eof_apply_ts(unsigned num,unsigned den,int beatnum,EOF_SONG *sp,char undo);
 	//Validates and applies the specified time signature to the specified beat
 	//If undo is nonzero, then an undo state is made before any changes are made

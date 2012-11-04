@@ -287,7 +287,7 @@ extern int         eof_disable_3d_rendering;
 extern int         eof_disable_2d_rendering;
 extern int         eof_disable_info_panel;
 extern int         eof_paste_erase_overlap;
-extern int         eof_write_rbn_midis;
+extern int         eof_write_rbn_rs_files;
 extern int         eof_add_new_notes_to_selection;
 extern int         eof_drum_modifiers_affect_all_difficulties;
 extern int         eof_fb_seek_controls;
@@ -461,7 +461,7 @@ int eof_figure_part(void);	//Returns the active track number in terms of FoF's c
 int d_hackish_edit_proc (int msg, DIALOG *d, int c);
 int eof_set_display_mode(int mode);
 void eof_debug_message(char * text);
-void eof_determine_phrase_status(unsigned long track);
+void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track);
 	//Re-applies the HOPO, SP, trill and tremolo status of each note in the specified track, as well as deleting empty SP, Solo, trill, tremolo and arpeggio phrases
 void eof_fix_window_title(void);
 int eof_load_ogg_quick(char * filename);
