@@ -984,7 +984,6 @@ int eof_menu_song_properties(void)
 		if(!undo_made && (difficulty != eof_song->tags->difficulty))
 		{	//If the band difficulty field was edited, make an undo state if one hasn't been made already
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			undo_made = 1;
 		}
 		eof_song->tags->difficulty = difficulty;	//Save the value reflected by the band difficulty field
 		eof_calculate_beats(eof_song);
@@ -3146,13 +3145,11 @@ int eof_raw_midi_track_import(DIALOG * d)
 
 int eof_raw_midi_dialog_add(DIALOG * d)
 {
-	char * returnedfn = NULL;
+	char * returnedfn;
 	char tempfilename[1024] = {0};
 	MIDI * eof_work_midi = NULL;
 	struct eof_MIDI_data_track *tail = NULL, *ptr, *next;
-//	struct eof_MIDI_data_track *head = NULL, *selected = NULL, *prev = NULL,  *prevenumeration = eof_MIDI_track_list_to_enumerate;
 	unsigned long ctr;
-//	char undo_made = 0, canceled = 0, updateenumlist = 0;
 	int junk;
 
 	eof_cursor_visible = 0;
@@ -3184,7 +3181,7 @@ int eof_raw_midi_dialog_add(DIALOG * d)
 		}
 
 //Parse the MIDI delay from song.ini if it exists in the same folder as the MIDI
-		int delay = 0;
+		int delay;
 		replace_filename(tempfilename, returnedfn, "song.ini", 1024);
 		set_config_file(tempfilename);
 		delay = get_config_int("song", "delay", 0);
@@ -3253,7 +3250,6 @@ int eof_raw_midi_dialog_add(DIALOG * d)
 			free(ptr);
 		}
 	}//If the user selected a file
-//	eof_MIDI_track_list_to_enumerate = prevenumeration;
 	eof_MIDI_track_list_to_enumerate = eof_song->midi_data_head;	//This is the list that the dialog should enumerate
 	dialog_message(eof_raw_midi_tracks_dialog, MSG_DRAW, 0, &junk);	//Redraw the Manage raw MIDI tracks dialog
 	return 0;

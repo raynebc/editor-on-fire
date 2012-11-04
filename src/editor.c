@@ -3189,8 +3189,7 @@ void eof_editor_logic(void)
 								}
 								else if(note & bitmask)
 								{	//If toggling this lane on, create a new note
-									void *new_note = NULL;
-									new_note = eof_track_add_create_note(eof_song, eof_selected_track, bitmask, eof_get_note_pos(eof_song, eof_selected_track, eof_hover_note), eof_get_note_length(eof_song, eof_selected_track, eof_hover_note), eof_note_type, NULL);
+									void *new_note = eof_track_add_create_note(eof_song, eof_selected_track, bitmask, eof_get_note_pos(eof_song, eof_selected_track, eof_hover_note), eof_get_note_length(eof_song, eof_selected_track, eof_hover_note), eof_note_type, NULL);
 										//Create a new note at the hover note's position, with the same length and type as the hover note
 									if(new_note)
 									{	//If the new note was created successfully
@@ -3498,7 +3497,7 @@ void eof_vocal_editor_logic(void)
 			int x_tolerance = 6 * eof_zoom;	//This is how far left or right of a lyric the mouse is allowed to be to still be considered to hover over that lyric
 			int pos = eof_music_pos / eof_zoom;
 			int lpos = pos < 300 ? (mouse_x - 20) * eof_zoom : ((pos - 300) + mouse_x - 20) * eof_zoom;
-			int rpos = 0; // place to store pen_lyric.pos in case we are hovering over a note and need the original position before it was changed to the note location
+			int rpos; // place to store pen_lyric.pos in case we are hovering over a note and need the original position before it was changed to the note location
 			eof_snap_logic(&eof_snap, lpos);
 			eof_snap_length_logic(&eof_snap);
 			eof_pen_lyric.pos = eof_snap.pos;
@@ -4982,7 +4981,7 @@ unsigned char eof_find_pen_note_mask(void)
 
 	unsigned long laneborder;
 	unsigned long i;
-	unsigned long lanecount = 0;
+	unsigned long lanecount;
 
 	//Determine which lane the mouse is in
 	eof_hover_piece = -1;

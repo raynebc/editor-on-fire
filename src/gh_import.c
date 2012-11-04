@@ -2991,7 +2991,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 					}
 					eof_clear_input();
 
-					char * sectionfn = NULL;
+					char * sectionfn;
 					eof_cursor_visible = 0;
 					eof_pen_visible = 0;
 					eof_render();

@@ -634,8 +634,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 2, vel, 0);
 					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL))
 					{	//If pro drum notation is in effect and no more yellow drum notes at this note's position are marked as cymbals
-						if((type != EOF_NOTE_SPECIAL) && (type == EOF_NOTE_AMAZING))
-						{	//Write a pro yellow tom marker only if this isn't a BRE note, and is an Expert difficulty note
+						if(type == EOF_NOTE_AMAZING)
+						{	//Write a pro yellow tom marker only if this is an Expert difficulty note (ie. not a BRE note)
 							eof_add_midi_event(deltapos, 0x90, RB3_DRUM_YELLOW_FORCE, vel, 0);
 							eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_YELLOW_FORCE, vel, 0);
 						}
@@ -682,8 +682,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{
 					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_B_CYMBAL))
 					{	//If pro drum notation is in effect and no more blue drum notes at this note's position are marked as cymbals
-						if((type != EOF_NOTE_SPECIAL) && (type == EOF_NOTE_AMAZING))
-						{	//Write a pro blue tom marker only if this isn't a BRE note, and is an Expert difficulty note
+						if(type == EOF_NOTE_AMAZING)
+						{	//Write a pro blue tom marker only if this is an Expert difficulty note (ie. not a BRE note)
 							eof_add_midi_event(deltapos, 0x90, RB3_DRUM_BLUE_FORCE, vel, 0);
 							eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_BLUE_FORCE, vel, 0);
 						}
@@ -697,8 +697,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{	//Note: EOF/FoF refer to this note color as purple/orange whereas Rock Band displays it as green
 					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_G_CYMBAL))
 					{	//If pro drum notation is in effect and no more green drum notes at this note's position are marked as cymbals
-						if((type != EOF_NOTE_SPECIAL) && (type == EOF_NOTE_AMAZING))
-						{	//Write a pro green tom marker only if this isn't a BRE note, and is an Expert difficulty note
+						if(type == EOF_NOTE_AMAZING)
+						{	//Write a pro green tom marker only if this is an Expert difficulty note (ie. not a BRE note)
 							eof_add_midi_event(deltapos, 0x90, RB3_DRUM_GREEN_FORCE, vel, 0);
 							eof_add_midi_event(deltapos + deltalength, 0x80, RB3_DRUM_GREEN_FORCE, vel, 0);
 						}
@@ -2044,7 +2044,7 @@ struct Tempo_change *eof_add_to_tempo_list(unsigned long delta,double realtime,d
 {
 	eof_log("eof_add_to_tempo_list() entered", 2);	//Only log this if verbose logging is on
 
-	struct Tempo_change *temp=NULL;
+	struct Tempo_change *temp;
 	struct Tempo_change *cond=NULL;	//A conductor for the linked list
 
 //Allocate and initialize new link

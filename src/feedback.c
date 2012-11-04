@@ -59,6 +59,8 @@ int eof_feedback_any_note(void)
 }
 
 /* read keys only available to editor (use after song is loaded */
+///This function is unused
+/*
 void eof_editor_logic_feedback(void)
 {
 	eof_log("eof_editor_logic_feedback() entered", 1);
@@ -113,7 +115,7 @@ void eof_editor_logic_feedback(void)
 		key[KEY_V] = 0;
 	}
 
-	/* play/pause music */
+	// play/pause music /
 	if(key[KEY_SPACE] && eof_song_loaded)
 	{
 		if(KEY_EITHER_SHIFT)
@@ -163,7 +165,7 @@ void eof_editor_logic_feedback(void)
 		return;
 	}
 
-	/* change quantization */
+	// change quantization /
 	if(key[KEY_LEFT])
 	{
 		if(KEY_EITHER_CTRL)
@@ -201,7 +203,7 @@ void eof_editor_logic_feedback(void)
 		key[KEY_RIGHT] = 0;
 	}
 
-	/* change BPM */
+	// change BPM /
 	if(key[KEY_MINUS])
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -222,7 +224,7 @@ void eof_editor_logic_feedback(void)
 				eof_song->beat[i]->ppqn = (double)60000000.0 / bpm;
 			}
 
-			/* break when we reach the end of the portion to change */
+			// break when we reach the end of the portion to change /
 			else
 			{
 				break;
@@ -254,7 +256,7 @@ void eof_editor_logic_feedback(void)
 				eof_song->beat[i]->ppqn = (double)60000000.0 / bpm;
 			}
 
-			/* break when we reach the end of the portion to change */
+			// break when we reach the end of the portion to change /
 			else
 			{
 				break;
@@ -276,10 +278,10 @@ void eof_editor_logic_feedback(void)
 		eof_music_pos = eof_song->beat[0]->pos + eof_av_delay;
 	}
 
-	/* measure the length of the beat */
+	// measure the length of the beat /
 	eof_snap.length = eof_song->beat[fbeat + 1]->pos - eof_song->beat[fbeat]->pos;
 
-	/* find snap positions */
+	// find snap positions /
 	for(i = 0; i < fsnap_divider[eof_snap_mode - 1]; i++)
 	{
 		fcpos[i] = eof_song->beat[fbeat]->pos + ((float)eof_snap.length / (float)fsnap_divider[eof_snap_mode - 1]) * ((float)(i)) + eof_av_delay;
@@ -571,7 +573,7 @@ void eof_editor_logic_feedback(void)
 		eof_feedback_note[4] = 0;
 	}
 
-	/* not placing notes */
+	// not placing notes /
 	if(!key[KEY_1] && !key[KEY_2] && !key[KEY_3] && !key[KEY_4] && !key[KEY_5])
 	{
 		eof_feedback_new_note = NULL;
@@ -587,3 +589,4 @@ void eof_editor_logic_feedback(void)
 		eof_selection.multi[eof_hover_note] = 0;
 	}
 }
+*/
