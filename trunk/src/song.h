@@ -47,7 +47,7 @@
 #define EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC		4194304		//This flag will represent a note that is played as a harmonic
 #define EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE  8388608		//This flag will represent a note whose slide will be written as reversed (channel 11)
 #define EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO        16777216	//This flag will represent a note that is played with vibrato
-#define EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION    33554432	//This flag will indicate whether a note with a slide or bend flag defines
+#define EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION    33554432	//This flag will indicate whether a note with a slide or bend flag defines the slide's ending fret or the bend's strength (used in Rocksmith)
 
 //The following flags pertain to drum notes
 #define EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN	512		//This flag means the yellow cymbal will be displayed in Phase Shift as an open hi hat (lane 3)
@@ -118,6 +118,8 @@ typedef struct
 	unsigned long pos;
 	long length;				//Keep as signed, since the npos logic uses signed math
 	unsigned long flags;		//Stores various note statuses
+	unsigned char bendstrength;	//The number of half steps this note bends (0 if undefined or not applicable)
+	unsigned char slideend;		//The fret at which this slide ends (0 if undefined or not applicable)
 
 } EOF_PRO_GUITAR_NOTE;
 

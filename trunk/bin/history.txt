@@ -3,6 +3,20 @@ EOF Version History
 
 1.8:
 
+Updated the fret catalog to display the
+position of the active entry.
+
+Added the ability to edit the start and end
+positions of the active fret catalog entry
+(Song>Catalog>Edit Timing).
+
+Implemented running status encoding logic for
+exported MIDIs, making them smaller (about
+20% smaller is typical).
+
+Added the ability to export pro guitar/bass
+and vocal tracks in Rocksmith XML format.
+
 Improved INI import so that for boolean tags
 (ie. "lyrics ="), having a value of the word
 "true" (case insensitive) or "1" are both

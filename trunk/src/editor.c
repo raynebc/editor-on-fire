@@ -595,6 +595,7 @@ if(key[KEY_PAUSE])
 		{
 			if(KEY_EITHER_SHIFT)
 			{	//If both SHIFT and CTRL are being held
+				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_menu_song_seek_chart_end();
 			}
 			else
@@ -634,6 +635,7 @@ if(key[KEY_PAUSE])
 			}
 			else
 			{	//SHIFT is being held, CTRL is not
+				eof_shift_used = 1;	//Track that the SHIFT key was used
 				eof_vanish_y += 10;
 				if(eof_vanish_y > 260)
 				{	//Do not allow it to go higher than this, otherwise the view-able portion of the chart goes partly off-screen
@@ -710,7 +712,8 @@ if(key[KEY_PAUSE])
 			eof_menu_catalog_show();
 		}
 		else
-		{
+		{	//SHIFT is held
+			eof_shift_used = 1;	//Track that the SHIFT key was used
 			eof_menu_catalog_toggle_full_width();
 		}
 		key[KEY_Q] = 0;
@@ -792,17 +795,28 @@ if(key[KEY_PAUSE])
 
 	/* toggle blue cymbal (CTRL+B in the drum track) */
 	/* toggle bend (CTRL+B in a pro guitar track) */
-	if(key[KEY_B] && KEY_EITHER_CTRL)
+	/* set bend strength (SHIFT+B in a pro guitar track) */
+	if(key[KEY_B])
 	{	//CTRL+B will toggle Pro blue cymbal notation
-		if(eof_selected_track == EOF_TRACK_DRUM)
-		{	//If the drum track is active
-			eof_menu_note_toggle_rb3_cymbal_blue();
-		}
-		else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		if(KEY_EITHER_CTRL)
 		{
-			eof_menu_note_toggle_bend();
+			if(eof_selected_track == EOF_TRACK_DRUM)
+			{	//If the drum track is active
+				eof_menu_note_toggle_rb3_cymbal_blue();
+				key[KEY_B] = 0;
+			}
+			else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{
+				eof_menu_note_toggle_bend();
+				key[KEY_B] = 0;
+			}
 		}
-		key[KEY_B] = 0;
+		else if(KEY_EITHER_SHIFT)
+		{
+			eof_shift_used = 1;	//Track that the SHIFT key was used
+			eof_pro_guitar_note_bend_strength_save();
+			key[KEY_B] = 0;
+		}
 	}
 
 	/* cycle track backward (CTRL+SHIFT+Tab) */
@@ -1336,7 +1350,8 @@ if(key[KEY_PAUSE])
 			eof_menu_edit_vocal_tones();
 		}
 		else
-		{
+		{	//SHIFT is held
+			eof_shift_used = 1;	//Track that the SHIFT key was used
 			eof_menu_note_toggle_vibrato();
 		}
 		key[KEY_V] = 0;
@@ -1939,11 +1954,21 @@ if(key[KEY_PAUSE])
 		}
 
 	/* mark/remark slider (SHIFT+S, in a five lane guitar/bass track) */
-		if(key[KEY_S] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT && (eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
+	/* set slide end fret (SHIFT+S, in a pro guitar track) */
+		if(key[KEY_S] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{
-			eof_shift_used = 1;	//Track that the SHIFT key was used
-			eof_menu_slider_mark();
-			key[KEY_S] = 0;
+			if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
+			{	//If this is a 5 lane guitar/bass track
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				eof_menu_slider_mark();
+				key[KEY_S] = 0;
+			}
+			else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If this is a pro guitar track
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				eof_pro_guitar_note_slide_end_fret_save();
+				key[KEY_S] = 0;
+			}
 		}
 
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -2157,6 +2182,7 @@ if(key[KEY_PAUSE])
 				}
 				else if(key[KEY_F8])
 				{
+					eof_shift_used = 1;	//Track that the SHIFT key was used
 					eof_pro_guitar_fret_bitmask = 63;	//Enable all strings
 					key[KEY_F8] = 0;
 				}
@@ -2961,7 +2987,7 @@ void eof_editor_logic(void)
 				else
 				{
 					if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
-					{
+					{	//Neither SHIFT nor CTRL are held
 						eof_menu_edit_deselect_all();
 					}
 				}
@@ -2984,7 +3010,7 @@ void eof_editor_logic(void)
 							{
 							}
 							else
-							{
+							{	//SHIFT is not held
 								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 								if(eof_selection.multi[eof_selection.current])
 								{
@@ -3695,7 +3721,7 @@ void eof_vocal_editor_logic(void)
 				else
 				{
 					if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
-					{
+					{	//Neither SHIFT nor CTRL are held
 						eof_menu_edit_deselect_all();
 					}
 				}
@@ -3718,7 +3744,7 @@ void eof_vocal_editor_logic(void)
 							{
 							}
 							else
-							{
+							{	//SHIFT is not held
 								memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 								if(eof_selection.multi[eof_selection.current])
 								{

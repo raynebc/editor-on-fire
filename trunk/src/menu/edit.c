@@ -2517,6 +2517,7 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;		//Erase the pro harmonic flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;	//Erase the pro guitar slide reverse flag
 			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;		//Erase the pro guitar vibrato flag
+			*flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Erase the pro guitar Rocksmith status flag
 		}
 		else
 		{	//If it is pasting into a pro guitar track

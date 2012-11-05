@@ -121,7 +121,9 @@ MENU eof_pro_guitar_slide_menu[] =
 {
     {"Toggle slide &Up\t" CTRL_NAME "+Up", eof_menu_note_toggle_slide_up, NULL, 0, NULL},
     {"Toggle slide &Down\t" CTRL_NAME "+Down", eof_menu_note_toggle_slide_down, NULL, 0, NULL},
-    {"&Remove slide", eof_menu_note_remove_slide, NULL, 0, NULL}
+    {"&Remove slide", eof_menu_note_remove_slide, NULL, 0, NULL},
+    {"Set &End fret\tShift+S", eof_pro_guitar_note_slide_end_fret_save, NULL, 0, NULL},
+    {NULL, NULL, NULL, 0, NULL}
 };
 
 MENU eof_pro_guitar_strum_menu[] =
@@ -129,7 +131,8 @@ MENU eof_pro_guitar_strum_menu[] =
     {"Toggle strum &Up\tShift+Up", eof_pro_guitar_toggle_strum_up, NULL, 0, NULL},
     {"Toggle strum &Mid\tShift+M", eof_pro_guitar_toggle_strum_mid, NULL, 0, NULL},
     {"Toggle strum &Down\tShift+Down", eof_pro_guitar_toggle_strum_down, NULL, 0, NULL},
-    {"&Remove strum direction", eof_menu_note_remove_strum_direction, NULL, 0, NULL}
+    {"&Remove strum direction", eof_menu_note_remove_strum_direction, NULL, 0, NULL},
+    {NULL, NULL, NULL, 0, NULL}
 };
 
 char eof_menu_trill_copy_menu_text[EOF_TRACKS_MAX][EOF_TRACK_NAME_SIZE] = {{0}};
@@ -300,6 +303,7 @@ MENU eof_note_proguitar_menu[] =
     {"Remove &Tapping", eof_menu_note_remove_tapping, NULL, 0, NULL},
     {"Toggle bend\t" CTRL_NAME "+B", eof_menu_note_toggle_bend, NULL, 0, NULL},
     {"Remove &Bend", eof_menu_note_remove_bend, NULL, 0, NULL},
+    {"Set bend strength\tShift+B", eof_pro_guitar_note_bend_strength_save, NULL, 0, NULL},
     {"Toggle palm muting\t" CTRL_NAME "+M", eof_menu_note_toggle_palm_muting, NULL, 0, NULL},
     {"Remove palm &Muting", eof_menu_note_remove_palm_muting, NULL, 0, NULL},
     {"Toggle harmonic\t" CTRL_NAME "+H", eof_menu_note_toggle_harmonic, NULL, 0, NULL},
@@ -4405,6 +4409,7 @@ int eof_menu_note_toggle_bend(void)
 	unsigned long i;
 	long u = 0;
 	unsigned long flags;
+	char bends_present = 0;		//Will be set to nonzero if any selected notes become bend notes
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
@@ -4426,6 +4431,11 @@ int eof_menu_note_toggle_bend(void)
 				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;			//Clear the tap flag
 				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;	//Clear the harmonic flag
 				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;		//Clear the vibrato flag
+				bends_present = 1;
+			}
+			else
+			{
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Clear this flag
 			}
 			if(!u)
 			{	//Make a back up before changing the first note
@@ -4433,7 +4443,15 @@ int eof_menu_note_toggle_bend(void)
 				u = 1;
 			}
 			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+			if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND))
+			{	//If this is not a bend anymore
+				eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->bendstrength = 0;	//Reset the strength of the bend
+			}
 		}
+	}
+	if(eof_write_rbn_rs_files && bends_present)
+	{	//If the user wants to save Rocksmith capable files, prompt to set the strength of bend notes
+		eof_pro_guitar_note_bend_strength_no_save();	//Don't make another undo state
 	}
 	if(note_selection_updated)
 	{	//If the only note modified was the seek hover note
@@ -4563,6 +4581,7 @@ int eof_menu_note_toggle_slide_up(void)
 	unsigned long i;
 	long u = 0;
 	unsigned long flags;
+	char slides_present = 0;	//Will be set to nonzero if any selected notes become slide notes
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
@@ -4576,13 +4595,29 @@ int eof_menu_note_toggle_slide_up(void)
 			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 			flags ^= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;			//Toggle the slide up flag
 			flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Clear the slide down flag
+			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+			{	//If the note now slides up
+				slides_present = 1;	//Track that at least one selected note is an up slide
+			}
+			else
+			{	//If the note doesn't slide, clear the slide end fret status
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Clear this flag
+			}
 			if(!u)
 			{	//Make a back up before changing the first note
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				u = 1;
 			}
 			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+			if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP))
+			{	//If this is not a slide note anymore
+				eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->slideend = 0;	//Reset the ending fret number of the slide
+			}
 		}
+	}
+	if(eof_write_rbn_rs_files && slides_present)
+	{	//If the user wants to save Rocksmith capable files, prompt to set the ending fret for the slide notes
+		eof_pro_guitar_note_slide_end_fret_no_save();	//Don't make another undo state
 	}
 	eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes to adjust the slide note's length as appropriate
 	if(note_selection_updated)
@@ -4598,6 +4633,7 @@ int eof_menu_note_toggle_slide_down(void)
 	unsigned long i;
 	long u = 0;
 	unsigned long flags;
+	char slides_present = 0;	//Will be set to nonzero if any selected notes become slide notes
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
@@ -4611,13 +4647,29 @@ int eof_menu_note_toggle_slide_down(void)
 			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 			flags ^= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;		//Toggle the slide down flag
 			flags &= ~(EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);		//Clear the slide down flag
+			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+			{	//If the note now slides down
+				slides_present = 1;	//Track that at least one selected note is a down slide
+			}
+			else
+			{	//If the note doesn't slide, clear the slide end fret status
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Clear this flag
+			}
 			if(!u)
 			{	//Make a back up before changing the first note
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				u = 1;
 			}
 			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+			if(!(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+			{	//If this is not a slide note anymore
+				eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->slideend = 0;	//Reset the ending fret number of the slide
+			}
 		}
+	}
+	if(eof_write_rbn_rs_files && slides_present)
+	{	//If the user wants to save Rocksmith capable files, prompt to set the ending fret for the slide notes
+		eof_pro_guitar_note_slide_end_fret_no_save();	//Don't make another undo state
 	}
 	eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes to adjust the slide note's length as appropriate
 	if(note_selection_updated)
@@ -4647,12 +4699,14 @@ int eof_menu_note_remove_slide(void)
 			oldflags = flags;							//Save an extra copy of the original flags
 			flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP);		//Clear the slide up flag
 			flags &= (~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN);	//Clear the slide down flag
+			flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;		//Clear this flag
 			if(!u && (oldflags != flags))
 			{	//Make a back up before changing the first note
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				u = 1;
 			}
 			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+			eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->slideend = 0;	//Reset the ending fret number of the slide
 		}
 	}
 	if(note_selection_updated)
@@ -6660,4 +6714,259 @@ int eof_feedback_mode_update_note_selection(void)
 	eof_selection.current = eof_seek_hover_note;
 	eof_selection.track = eof_selected_track;
 	return 1;
+}
+
+DIALOG eof_pro_guitar_note_slide_end_fret_dialog[] =
+{
+   /* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
+   { d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Edit slide end fret",      NULL, NULL },
+   { d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "End slide at fret #",                NULL, NULL },
+   { eof_verified_edit_proc,12,  56,  50,  20,  0,   0,   0,    0,      7,   0,   eof_etext,     "0123456789", NULL },
+   { d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",               NULL, NULL },
+   { d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+   { NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,               NULL, NULL }
+};
+
+int eof_pro_guitar_note_slide_end_fret(char undo)
+{
+	if(!eof_song_loaded || !eof_song)
+		return 1;	//Do not allow this function to run if a chart is not loaded
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	unsigned long newend, i, flags, bitmask, ctr;
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	EOF_PRO_GUITAR_NOTE *np;
+	char undo_made = 0;
+
+	if(eof_selection.current >= eof_song->pro_guitar_track[tracknum]->notes)
+		return 1;	//Invalid selected note number
+	np = eof_song->pro_guitar_track[tracknum]->note[eof_selection.current];
+
+	eof_render();
+	eof_color_dialog(eof_pro_guitar_note_slide_end_fret_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_pro_guitar_note_slide_end_fret_dialog);
+	if(np->slideend == 0)
+	{	//If the selected note has no ending fret defined
+		eof_etext[0] = '\0';	//Empty this string
+	}
+	else
+	{	//Otherwise write the ending fret into the string
+		sprintf(eof_etext, "%d", np->slideend);
+	}
+
+	if(eof_popup_dialog(eof_pro_guitar_note_slide_end_fret_dialog, 2) == 3)
+	{	//User clicked OK
+		if(eof_etext[0] == '\0')
+		{	//If the user did not define the ending fret number
+			newend = 0;
+		}
+		else
+		{
+			newend = atol(eof_etext);
+			if(newend > eof_song->pro_guitar_track[tracknum]->numfrets)
+			{	//If this fret value is higher than the track supports
+				eof_cursor_visible = 1;
+				eof_pen_visible = 1;
+				eof_show_mouse(NULL);
+				allegro_message("Error:  The fret number specified is higher than the max fret for this track");
+				return 1;	//Return error
+			}
+		}
+
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+		{	//For each note in the active track
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+			{	//If this note is in the currently active track and is selected
+				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+				if((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+				{	//If this note is a slide
+					//Determine the lowest fret used in the note
+					unsigned char lowestfret = 0, thisfret;
+					for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+					{	//For each of the 6 usable strings, from lowest to highest gauge
+						if(eof_get_note_note(eof_song, eof_selected_track, i) & bitmask)
+						{	//If this string is used
+							thisfret = eof_song->pro_guitar_track[tracknum]->note[i]->frets[ctr] & 0x7F;	//Store the fret (mask out the MSB, used for mute status)
+							if(thisfret)
+							{	//If a fret is used on this string (note played open)
+								if(!lowestfret)
+								{	//If no fret number has been recorded so far
+									lowestfret = thisfret;
+								}
+								else if(thisfret < lowestfret)
+								{	//Otherwise store this gem's fret number if it is lower than the others checked for this note
+									lowestfret = thisfret;
+								}
+							}
+						}
+					}
+					if(lowestfret && newend)
+					{	//If a fret value was used, and an ending fret was defined, validate the slide ending fret
+						if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+						{	//If this note is an upward slide, the ending fret must be higher than the note's lowest fret
+							if(newend <= lowestfret)
+							{
+								eof_cursor_visible = 1;
+								eof_pen_visible = 1;
+								eof_show_mouse(NULL);
+								allegro_message("Error:  The fret number specified must be higher than the lowest fret on upward slide notes");
+								return 1;	//Return error
+							}
+						}
+						else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+						{	//If this note is a downward slide, the ending fret must be lower than the note's lowest fret
+							if(newend >= lowestfret)
+							{
+								eof_cursor_visible = 1;
+								eof_pen_visible = 1;
+								eof_show_mouse(NULL);
+								allegro_message("Error:  The fret number specified must be lower than the lowest fret on downward slide notes");
+								return 1;	//Return error
+							}
+						}
+					}
+					if(newend != eof_song->pro_guitar_track[tracknum]->note[i]->slideend)
+					{	//If the slide ending is different than what the note already has
+						if(undo && !undo_made)
+						{	//Make a back up before changing the first note (but only if the calling function specified to create an undo state)
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+							undo_made = 1;
+						}
+						eof_song->pro_guitar_track[tracknum]->note[i]->slideend = newend;
+						if(newend)
+						{	//If the ending fret is nonzero, it is now defined
+							eof_song->pro_guitar_track[tracknum]->note[i]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Set this flag to indicate that the slide's ending fret is defined
+						}
+						else
+						{	//Otherwise it is now undefined
+							eof_song->pro_guitar_track[tracknum]->note[i]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Clear this flag to indicate that the slide's ending fret is undefined
+						}
+					}
+				}//If this note is a slide
+			}//If this note is in the currently active track and is selected
+		}//For each note in the active track
+	}//User clicked OK
+
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(NULL);
+	return 1;
+}
+
+int eof_pro_guitar_note_slide_end_fret_save(void)
+{
+	return eof_pro_guitar_note_slide_end_fret(1);	//Call the function and allow it to save before making changes
+}
+
+int eof_pro_guitar_note_slide_end_fret_no_save(void)
+{
+	return eof_pro_guitar_note_slide_end_fret(0);	//Call the function and do NOT allow it to save before making changes
+}
+
+DIALOG eof_pro_guitar_note_bend_strength_dialog[] =
+{
+   /* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                          (dp2) (dp3) */
+   { d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Edit bend strength",         NULL, NULL },
+   { d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "Bends this # of half steps:",NULL, NULL },
+   { eof_verified_edit_proc,12,  56,  50,  20,  0,   0,   0,    0,      7,   0,   eof_etext,     "0123456789",  NULL },
+   { d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                         NULL, NULL },
+   { d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                     NULL, NULL },
+   { NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                         NULL, NULL }
+};
+
+int eof_pro_guitar_note_bend_strength(char undo)
+{
+	if(!eof_song_loaded || !eof_song)
+		return 1;	//Do not allow this function to run if a chart is not loaded
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	unsigned long newstrength, i, flags;
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+	EOF_PRO_GUITAR_NOTE *np;
+	char undo_made = 0;
+
+	if(eof_selection.current >= eof_song->pro_guitar_track[tracknum]->notes)
+		return 1;	//Invalid selected note number
+	np = eof_song->pro_guitar_track[tracknum]->note[eof_selection.current];
+
+	eof_render();
+	eof_color_dialog(eof_pro_guitar_note_bend_strength_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_pro_guitar_note_bend_strength_dialog);
+	if(np->bendstrength == 0)
+	{	//If the selected note has no ending fret defined
+		eof_etext[0] = '\0';	//Empty this string
+	}
+	else
+	{	//Otherwise write the ending fret into the string
+		sprintf(eof_etext, "%d", np->bendstrength);
+	}
+
+	if(eof_popup_dialog(eof_pro_guitar_note_bend_strength_dialog, 2) == 3)
+	{	//User clicked OK
+		if(eof_etext[0] == '\0')
+		{	//If the user did not define the bend strength
+			newstrength = 0;
+		}
+		else
+		{
+			newstrength = atol(eof_etext);
+		}
+
+		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+		{	//For each note in the active track
+			if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+			{	//If this note is in the currently active track and is selected
+				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+				if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+				{	//If this note is a bend
+					if(newstrength != eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength)
+					{	//If the bend strength is different than what the note already has
+						if(undo && !undo_made)
+						{	//Make a back up before changing the first note (but only if the calling function specified to create an undo state)
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+							undo_made = 1;
+						}
+						eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength = newstrength;
+						if(newstrength)
+						{	//If the bend strength is nonzero, it is now defined
+							eof_song->pro_guitar_track[tracknum]->note[i]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Set this flag to indicate that the bend's strength is defined
+						}
+						else
+						{	//Otherwise it is now undefined
+							eof_song->pro_guitar_track[tracknum]->note[i]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Clear this flag to indicate that the bend's strength is undefined
+						}
+					}
+				}//If this note is a bend
+			}//If this note is in the currently active track and is selected
+		}//For each note in the active track
+	}//User clicked OK
+
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(NULL);
+	return 1;
+}
+
+int eof_pro_guitar_note_bend_strength_save(void)
+{
+	return eof_pro_guitar_note_bend_strength(1);
+}
+
+int eof_pro_guitar_note_bend_strength_no_save(void)
+{
+	return eof_pro_guitar_note_bend_strength(0);
 }
