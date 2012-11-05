@@ -245,6 +245,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 					}//If this string is used in this note
 				}//For each string used in this track
 			}//For each note in the track
+			pack_fputs("      </notes>\n", fp);
 			pack_fputs("      <chords count=\"0\"/>\n", fp);
 			pack_fputs("      <fretHandMutes count=\"0\"/>\n", fp);
 			pack_fputs("      <anchors count=\"0\"/>\n", fp);
