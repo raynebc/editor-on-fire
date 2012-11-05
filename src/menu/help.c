@@ -14,6 +14,7 @@ MENU eof_help_menu[] =
     {"&Manual", eof_menu_help_manual, NULL, 0, NULL},
     {"&Tutorial", eof_menu_help_tutorial, NULL, 0, NULL},
     {"&Vocals Tutorial", eof_menu_help_vocals_tutorial, NULL, 0, NULL},
+    {"&Pro Guitar Tutorial", eof_menu_help_pro_guitar_tutorial, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"&Keys\tF1", eof_menu_help_keys, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
@@ -94,6 +95,20 @@ int eof_menu_help_vocals_tutorial(void)
 			eof_system("open vocaltutorial/index.htm");
 		#else
 			eof_system("xdg-open vocaltutorial/index.htm");
+		#endif
+	#endif
+	return 1;
+}
+
+int eof_menu_help_pro_guitar_tutorial(void)
+{
+	#ifdef ALLEGRO_WINDOWS
+		eof_system("start proguitartutorial\\index.htm");
+	#else
+		#ifdef ALLEGRO_MACOSX
+			eof_system("open proguitartutorial/index.htm");
+		#else
+			eof_system("xdg-open proguitartutorial/index.htm");
 		#endif
 	#endif
 	return 1;
