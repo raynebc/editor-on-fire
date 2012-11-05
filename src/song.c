@@ -1788,7 +1788,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					pack_getc(fp);																		//Read the chord's number (not supported yet)
 					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->type = pack_getc(fp);		//Read the note's difficulty
 					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->note = pack_getc(fp);		//Read note bitflags
-					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->ghost =  pack_getc(fp);	//Read ghost bitflags
+					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->ghost = pack_getc(fp);	//Read ghost bitflags
 					for(ctr2=0, bitmask=1; ctr2 < 16; ctr2++, bitmask <<= 1)
 					{	//For each of the 16 bits in the note bitflag
 						if(sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->note & bitmask)
@@ -1804,6 +1804,17 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->pos = pack_igetl(fp);			//Read note position
 					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->length = pack_igetl(fp);		//Read note length
 					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->flags = pack_igetl(fp);		//Read note flags
+					if(sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
+					{	//If this note has bend string or slide ending fret definitions
+						if((sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+						{	//If this is a slide note
+							sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->slideend = pack_getc(fp);	//Read the slide's ending fret
+						}
+						if(sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+						{	//If this is a bend note
+							sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->bendstrength = pack_getc(fp);	//Read the bend's strength
+						}
+					}
 				}
 			break;
 			case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:	//Variable Lane Legacy
@@ -2584,6 +2595,17 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 						pack_iputl(sp->pro_guitar_track[tracknum]->note[ctr]->pos, fp);			//Write the note's position
 						pack_iputl(sp->pro_guitar_track[tracknum]->note[ctr]->length, fp);		//Write the note's length
 						pack_iputl(sp->pro_guitar_track[tracknum]->note[ctr]->flags, fp);		//Write the note's flags
+						if(sp->pro_guitar_track[tracknum]->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
+						{	//If this note has bend string or slide ending fret definitions
+							if((sp->pro_guitar_track[tracknum]->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (sp->pro_guitar_track[tracknum]->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+							{	//If this is a slide note
+								pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->slideend, fp);	//Write the slide's ending fret
+							}
+							if(sp->pro_guitar_track[tracknum]->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+							{	//If this is a bend note
+								pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->bendstrength, fp);	//Write the bend's strength
+							}
+						}
 					}
 					//Write the section type chunk
 					if(sp->pro_guitar_track[tracknum]->solos)
@@ -3189,12 +3211,15 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long
 				}
 				ptr3->type = type;
 				ptr3->note = note;
+				ptr3->ghost = 0;
 				memset(ptr3->frets, 0, 16);	//Initialize all frets to open
 				ptr3->midi_pos = 0;	//Not implemented yet
 				ptr3->midi_length = 0;	//Not implemented yet
 				ptr3->pos = pos;
 				ptr3->length = length;
 				ptr3->flags = 0;
+				ptr3->bendstrength = 0;
+				ptr3->slideend = 0;
 				if(eof_legacy_view)
 				{	//If legacy view is in effect, initialize the legacy bitmask to whichever lanes (1-5) created the note
 					ptr3->legacymask = note & 31;
@@ -3675,6 +3700,16 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 			if(((tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) || (tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)) && tp->note[i-1]->ghost)
 			{	//If this note is string muted and any strings are ghosted
 				tp->note[i-1]->ghost = 0;	//Remove ghost status from all strings
+			}
+
+			/* cleanup Rocksmith related slide/bend statuses */
+			if(!tp->note[i-1]->slideend && !tp->note[i-1]->bendstrength)
+			{	//If this note has no slide end fret number or bend strength defined
+				tp->note[i-1]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Clear this flag
+			}
+			if(!(tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN) && !(tp->note[i-1]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND))
+			{	//If the note is not a slide or bend
+				tp->note[i-1]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Clear this flag
 			}
 		}//If the note is valid, perform other cleanup
 	}//For each note in the track

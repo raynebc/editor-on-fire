@@ -2209,6 +2209,20 @@ int eof_save_helper(char *destfilename)
 				eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS_22);
 				eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR);
 				eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_22);
+				if(eof_song->vocal_track[0]->lyrics)
+				{	//If there are lyrics, export them in Rocksmith format as well
+					append_filename(eof_temp_filename, newfolderpath, "PART VOCALS.xml", 1024);
+					jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
+					if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
+					{	//Lyric export failed
+						puts("Assert() handled sucessfully!");
+						allegro_message("Rocksmith lyric export failed");
+					}
+					else
+					{
+						EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,RS_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
+					}
+				}
 			}
 		}
 		append_filename(eof_temp_filename, newfolderpath, "song.ini", 1024);

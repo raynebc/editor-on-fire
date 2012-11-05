@@ -1272,11 +1272,21 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		}
 		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
 		{
-			buffer[index++] = '0';	//In the symbols font, 0 is the bend character
+			buffer[index++] = 'a';	//In the symbols font, a is the bend character
+			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION)
+			{	//If the note defines the strength of its bend
+				char buffer2[5];
+				unsigned long tracknum = eof_song->track[track]->tracknum, index2;
+				snprintf(buffer2, sizeof(buffer2), "%d", eof_song->pro_guitar_track[tracknum]->note[note]->bendstrength);	//Build a string out of the bend strength
+				for(index2 = 0; buffer2[index2] != '\0'; index2++)
+				{	//For each character in the string
+					buffer[index++] = buffer2[index2];	//Append it to the notation string
+				}
+			}
 		}
 		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC)
 		{
-			buffer[index++] = '1';	//In the symbols font, 1 is the harmonic character
+			buffer[index++] = 'b';	//In the symbols font, b is the harmonic character
 		}
 		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
 		{
@@ -1293,6 +1303,16 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 			buffer[index++] = '\\';
 			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE)	//If the slide is reversed
 				buffer[index++] = '\\';							//Double the slide indicator
+		}
+		if(((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)) && (flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION))
+		{	//If the note slides up or down and defines the ending fret for the slide
+			char buffer2[5];
+			unsigned long tracknum = eof_song->track[track]->tracknum, index2;
+			snprintf(buffer2, sizeof(buffer2), "%d", eof_song->pro_guitar_track[tracknum]->note[note]->slideend);	//Build a string out of the ending fret value
+			for(index2 = 0; buffer2[index2] != '\0'; index2++)
+			{	//For each character in the string
+				buffer[index++] = buffer2[index2];	//Append it to the notation string
+			}
 		}
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
 		{
@@ -1312,11 +1332,11 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		}
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM)
 		{
-			buffer[index++] = '2';	//In the symbols font, 2 is the down strum character
+			buffer[index++] = 'c';	//In the symbols font, c is the down strum character
 		}
 		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
 		{
-			buffer[index++] = '3';	//In the symbols font, 3 is the up strum character
+			buffer[index++] = 'd';	//In the symbols font, d is the up strum character
 		}
 		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM)
 		{
@@ -1359,8 +1379,8 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 			}
 			else
 			{	//Otherwise assume a guitar track, write the notation for a trill
-				buffer[index++] = 't';
-				buffer[index++] = 'r';
+				buffer[index++] = 'T';
+				buffer[index++] = 'R';
 			}
 		}
 	}
@@ -1380,7 +1400,7 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 			}
 			else
 			{	//Otherwise assume a guitar track, write the notation for a tremolo
-				buffer[index++] = '4';	//In the symbols font, 4 is the tremolo character
+				buffer[index++] = 'e';	//In the symbols font, e is the tremolo character
 			}
 		}
 	}

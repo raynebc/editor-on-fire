@@ -35,8 +35,11 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 		notetype = eof_get_note_type(sp, track, ctr);
 		if(notetype < 4)
 		{	//As long as this is Easy, Medium, Hard or Expert difficulty
-			diffnotes[notetype]++;	//Increment this difficulty's note counter
-			populated[notetype] = 1;	//Track that this difficulty is populated
+			if((eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) == 0)
+			{	//And it's not a string muted note
+				diffnotes[notetype]++;		//Increment this difficulty's note counter
+				populated[notetype] = 1;	//Track that this difficulty is populated
+			}
 		}
 	}
 	numdifficulties = populated[0] + populated[1] + populated[2] + populated[3];
@@ -216,6 +219,17 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 								slideto = fret - 1;	//Assume a 1 fret slide until logic is added for the author to add this information
 							}
 						}
+						else
+						{	//This note defines the bend strength and ending fret for slides
+							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+							{	//If this note bends
+								bend = tp->note[ctr3]->bendstrength;	//Obtain the defined bend strength
+							}
+							if((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+							{	//If this note slides
+								slideto = tp->note[ctr3]->slideend;
+							}
+						}
 						hammeron = flags | EOF_PRO_GUITAR_NOTE_FLAG_HO;
 						pulloff = flags | EOF_PRO_GUITAR_NOTE_FLAG_PO;
 						harmonic = flags | EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
@@ -223,7 +237,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 						palmmute = flags | EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
 						tremolo = flags | EOF_NOTE_FLAG_IS_TREMOLO;
 
-						if(((flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) == 0) && fret)
+						if((flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) == 0)
 						{	//At this point, it doesn't seem Rocksmith supports string muted notes
 							snprintf(buffer, sizeof(buffer), "        <note time=\"%.3f\" bend=\"%lu\" fret=\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"0\" palmMute=\"%d\" pullOff=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\"/>\n", (double)notepos / 1000.0, bend, fret, hammeron, harmonic, hopo, palmmute, pulloff, slideto, stringnum, (double)length / 1000.0, tremolo);
 							pack_fputs(buffer, fp);

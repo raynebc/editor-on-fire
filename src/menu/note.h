@@ -106,6 +106,21 @@ int eof_menu_pro_guitar_toggle_pull_off(void);	//Toggles the pull off status of 
 int eof_menu_pro_guitar_remove_pull_off(void);	//Removes the pull off status of all selected notes
 int eof_menu_note_toggle_ghost(void);			//Toggles the ghost flag for each populated string (that has keyboard shortcuts enabled) on each selected note
 int eof_menu_note_remove_ghost(void);			//Clears the ghost flag for each populated string (that has keyboard shortcuts enabled) on each selected note
+int eof_pro_guitar_note_slide_end_fret(char undo);
+	//Prompts the user for an ending fret number to apply to all selected slide notes.  The number is validated against each selected note's slide direction before it is applied
+	//If save is nonzero, a save state is created before any notes are altered
+int eof_pro_guitar_note_slide_end_fret_save(void);
+	//Calls eof_pro_guitar_note_slide_end_fret() specifying to make an undo before making changes (for when setting slide endings directly from the note menu)
+int eof_pro_guitar_note_slide_end_fret_no_save(void);
+	//Calls eof_pro_guitar_note_slide_end_fret() specifying not to make an undo before making changes
+	//(for when using the keyboard shortcut to toggle slides, since an undo would already have been created)
+int eof_pro_guitar_note_bend_strength(char undo);
+	//Prompts the user for a bend strength in half steps to apply to all bend notes.  If  save is nonzero, a save state is created before any notes are altered
+int eof_pro_guitar_note_bend_strength_save(void);
+	//Calls eof_pro_guitar_note_bend_strength() specifying to make an undo before making changes (for when setting bend strengths directly from the note menu)
+int eof_pro_guitar_note_bend_strength_no_save(void);
+	//Calls eof_pro_guitar_note_bend_strength() specifying not to make an undo before making changes
+	//(for when using the keyboard shortcut to toggle bends, since an undo would already have been created)
 
 int eof_menu_note_toggle_green(void);	//Toggles the gem on lane 1 (originally colored green)
 int eof_menu_note_toggle_red(void);		//Toggles the gem on lane 2 (originally colored red)

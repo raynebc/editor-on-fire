@@ -10,6 +10,7 @@
 #include "foflc/SRT_parse.h"
 #include "foflc/XML_parse.h"
 #include "foflc/JB_parse.h"
+#include "foflc/RS_parse.h"
 #include "song.h"
 #include "main.h"
 #include "lc_import.h"
@@ -305,6 +306,12 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 		Lyrics.noplus=1;	//Disable plus output
 		Lyrics.filter=DuplicateString("^=%#/");	//Use default filter list
 	}
+	else if(format == RS_FORMAT)
+	{
+		Lyrics.nohyphens=3;	//Disable hyphen output
+		Lyrics.noplus=1;	//Disable plus output
+		Lyrics.filter=DuplicateString("^=%#/");	//Use default filter list
+	}
 
 //Import lyrics from EOF structure
 	lyrctr=0;		//Begin indexing into lyrics from the very first
@@ -435,6 +442,11 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 				Lyrics.outputtrack=DuplicateString("Melody");
 			}
 			Export_MIDI(outf);
+		break;
+
+		case RS_FORMAT:	//Export as Rocksmith XML
+			outf=fopen_err(Lyrics.outfilename,"wt");	//XML is a text format
+			Export_RS(outf);
 		break;
 
 		default:
