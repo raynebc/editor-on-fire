@@ -754,6 +754,10 @@ EOF_SONG *parse_gp(const char * fn)
 			byte4 = pack_getc(inf);
 			printf("%d + %d + %d + %d = %d\n", byte1, byte2, byte3, byte4, byte1 + byte2 + byte3 + byte4);
 		}
+		if(bytemask & 4)
+		{	//Start of repeat
+			eof_gp_debug_log(inf, "\tStart of repeat\n");
+		}
 		if(bytemask & 8)
 		{	//End of repeat
 			eof_gp_debug_log(inf, "\tEnd of repeat:  ");
@@ -1740,6 +1744,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	char *hopo;	//Will store the fret value of the previous note marked as HO/PO (in GP, if note #N is marked for this, note #N+1 is the one that is a HO or PO), otherwise -1, for each track
 	char user_warned = 0;	//Used to track user warnings about the file being corrupt
 	char string_warning = 0;	//Used to track a user warning about the string count for a track being higher than what EOF supports
+	char nonshiftslide[7] = {0};	//Used to track whether the previous note on each string was a non shift slide (suppress the note after the slide)
 
 	eof_log("\tImporting Guitar Pro file", 1);
 	eof_log("eof_import_gp() entered", 1);
@@ -2100,6 +2105,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			pack_getc(inf);
 			pack_getc(inf);
 			pack_getc(inf);
+		}
+		if(bytemask & 4)
+		{	//Start of repeat
 		}
 		if(bytemask & 8)
 		{	//End of repeat
@@ -2851,6 +2859,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								if(byte1 & 4)
 								{	//Slide from current note (GP3 format indicator)
 									flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
+									nonshiftslide[ctr4] = 1;	//Track that the next note on this string is to be removed (after slide directions are determined) because it only defines the end of the slide
 								}
 								if(byte1 & 8)
 								{	//Let ring
@@ -2898,6 +2907,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									}
 									else
 									{
+										if(byte & 2)
+										{	//If this is a legato slide
+											nonshiftslide[ctr4] = 1;	//Track that the next note on this string is to be removed (after slide directions are determined) because it only defines the end of the slide
+										}
 										flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP | EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//The slide direction is unknown and will be corrected later
 									}
 								}
@@ -3002,6 +3015,19 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							beat_position += curbeat;	//Add the number of beats into the track the current measure is
 							beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
 							np[ctr2]->length = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position) - np[ctr2]->pos + 0.5;	//Define the length of this note
+
+							for(ctr4 = 0; ctr4 < strings[ctr2]; ctr4++)
+							{	//For each of this track's natively supported strings
+								if(nonshiftslide[ctr4] == 1)
+								{	//If the next note is to be removed (after slide directions are determined)
+									nonshiftslide[ctr4] = 2;	//Indicate that the slide note is being added, the next note on this string will see 2 as the signal to mark itself for removal (set its length as 0)
+								}
+								else if(nonshiftslide[ctr4] == 2)
+								{	//If this is the note that will need to be removed
+									np[ctr2]->length = 0;
+									nonshiftslide[ctr4] = 0;	//Mark that the slide has been handled
+								}
+							}
 						}//If a new note is to be created
 						else if(np[ctr2] && tie_note)
 						{	//Otherwise if this was a tie note
@@ -3117,6 +3143,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						{	//This is an upward slide
 							gp->track[ctr]->note[ctr2]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;	//Clear the slide down flag
 						}
+						if(gp->track[ctr]->note[ctr2]->slideend == 0)
+						{	//If the slide ending hasn't been defined yet
+							gp->track[ctr]->note[ctr2]->slideend = endfret;
+							gp->track[ctr]->note[ctr2]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION;	//Indicate that the note has the slide ending defined
+						}
 						break;
 					}
 				}
@@ -3124,6 +3155,17 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 	}
 
+//Delete notes that were marked to be removed (have a length of 0) because they were only present to define the end fret number for a slide
+	for(ctr = 0; ctr < gp->numtracks; ctr++)
+	{	//For each imported track
+		for(ctr2 = gp->track[ctr]->notes; ctr2 > 0; ctr2--)
+		{	//For each note in the track (in reverse order)
+			if(gp->track[ctr]->note[ctr2 - 1]->length == 0)
+			{	//If this note has been given a length of 0
+				eof_pro_guitar_track_delete_note(gp->track[ctr], ctr2 - 1);	//Remove it
+			}
+		}
+	}
 
 //Clean up
 	pack_fclose(inf);

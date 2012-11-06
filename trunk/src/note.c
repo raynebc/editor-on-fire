@@ -1408,24 +1408,24 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 	buffer[index] = '\0';
 }
 
-int eof_note_compare(unsigned long track1, unsigned long note1, unsigned long track2, unsigned long note2)
+int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, unsigned long track2, unsigned long note2)
 {
 	unsigned long tracknum, tracknum2, ctr, bitmask;
 	unsigned long note1note, note2note;
 
 	//Validate parameters
-	if(!track1 || !track2 || (track1 >= eof_song->tracks) || (track2 >= eof_song->tracks) || (note1 >= eof_get_track_size(eof_song, track1)) || (note2 >= eof_get_track_size(eof_song, track2)))
+	if(!track1 || !track2 || !sp || (track1 >= sp->tracks) || (track2 >= sp->tracks) || (note1 >= eof_get_track_size(sp, track1)) || (note2 >= eof_get_track_size(sp, track2)))
 	{	//If an invalid track or note number was passed
 		return -1;	//Return error
 	}
 
-	if(eof_song->track[track1]->track_format != eof_song->track[track2]->track_format)	//If the two tracks are not the same format
+	if(sp->track[track1]->track_format != sp->track[track2]->track_format)	//If the two tracks are not the same format
 		return 1;	//Return not equal
 
-	note1note = eof_get_note_note(eof_song, track1, note1);
-	note2note = eof_get_note_note(eof_song, track2, note2);
+	note1note = eof_get_note_note(sp, track1, note1);
+	note2note = eof_get_note_note(sp, track2, note2);
 
-	switch(eof_song->track[track1]->track_format)
+	switch(sp->track[track1]->track_format)
 	{
 		case EOF_LEGACY_TRACK_FORMAT:
 			if(note1note == note2note)
@@ -1444,13 +1444,13 @@ int eof_note_compare(unsigned long track1, unsigned long note1, unsigned long tr
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
 			if(note1note == note2note)
 			{	//If both note's bitmasks match
-				tracknum = eof_song->track[track1]->tracknum;
-				tracknum2 = eof_song->track[track2]->tracknum;
+				tracknum = sp->track[track1]->tracknum;
+				tracknum2 = sp->track[track2]->tracknum;
 				for(ctr = 0, bitmask = 1; ctr < 16; ctr ++, bitmask <<= 1)
 				{	//For each of the 16 bits in the note bitmask
 					if(note1note & bitmask)
 					{	//If this bit is set
-						if(eof_song->pro_guitar_track[tracknum]->note[note1]->frets[ctr] != eof_song->pro_guitar_track[tracknum2]->note[note2]->frets[ctr])
+						if(sp->pro_guitar_track[tracknum]->note[note1]->frets[ctr] != sp->pro_guitar_track[tracknum2]->note[note2]->frets[ctr])
 						{	//If this string's fret value isn't the same for both notes
 							return 1;	//Return not equal
 						}
@@ -1464,9 +1464,9 @@ int eof_note_compare(unsigned long track1, unsigned long note1, unsigned long tr
 	return 1;	//Return not equal
 }
 
-int eof_note_compare_simple(unsigned long track, unsigned long note1, unsigned long note2)
+int eof_note_compare_simple(EOF_SONG *sp, unsigned long track, unsigned long note1, unsigned long note2)
 {
-	return eof_note_compare(track, note1, track, note2);
+	return eof_note_compare(sp, track, note1, track, note2);
 }
 
 char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, char *buffer)

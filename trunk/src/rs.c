@@ -8,6 +8,117 @@
 #include "memwatch.h"
 #endif
 
+int eof_is_string_muted(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long ctr, bitmask;
+	EOF_PRO_GUITAR_TRACK *tp;
+	int allmuted = 1;	//Will be set to nonzero if any used strings aren't fret hand muted
+
+	if(!sp || (track >= sp->tracks) || (note >= eof_get_track_size(sp, track)) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return 0;	//Return error
+
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+	{	//For each of the 6 supported strings
+		if(ctr < tp->numstrings)
+		{	//If this is a string used in the track
+			if(tp->note[note]->note & bitmask)
+			{	//If this is a string used in the note
+				if((tp->note[note]->frets[ctr] & 0x80) == 0)
+				{	//If this string is not fret hand muted
+					allmuted = 0;
+					break;
+				}
+			}
+		}
+	}
+
+	return allmuted;	//Return nonzero if all of the used strings were fret hand muted
+}
+
+unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned long **results)
+{
+	eof_log("eof_rs_build_chord_list() entered", 1);
+
+	unsigned long ctr, ctr2, unique_count = 0;
+	EOF_PRO_GUITAR_NOTE **notelist;	//An array large enough to hold a pointer to every note in the track
+	EOF_PRO_GUITAR_TRACK *tp;
+	char match;
+
+	if(!results)
+		return 0;	//Return error
+
+	if(!sp || (track >= sp->tracks))
+	{
+		*results = NULL;
+		return 0;	//Return error
+	}
+
+	//Duplicate the track's note array
+	notelist = malloc(sizeof(EOF_PRO_GUITAR_NOTE *) * EOF_MAX_NOTES);	//Allocate memory to duplicate the note[] array
+	if(!notelist)
+	{
+		*results = NULL;
+		return 0;	//Return error
+	}
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
+	memcpy(notelist, tp->note, sizeof(EOF_PRO_GUITAR_NOTE *) * EOF_MAX_NOTES);	//Copy the note array
+
+	//Overwrite each pointer in the duplicate note array that isn't a unique chord with NULL
+	for(ctr = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the track
+		if((eof_note_count_colors(sp, track, ctr) > 1) && !eof_is_string_muted(sp, track, ctr))
+		{	//If this note is a chord (has a gem on at least two lanes) and is not a fully string muted chord
+			match = 0;
+			for(ctr2 = ctr + 1; ctr2 < tp->notes; ctr2++)
+			{	//For each note in the track that follows this note
+				if(!eof_note_compare_simple(sp, track, ctr, ctr2))
+				{	//If this note matches one that follows it
+					notelist[ctr] = NULL;	//Eliminate this note from the list
+					match = 1;	//Note that this chord matched one of the others
+					break;
+				}
+			}
+			if(!match)
+			{	//If this chord didn't match any of the other notes
+				unique_count++;	//Increment unique chord counter
+			}
+		}
+		else
+		{	//This not is not a chord
+			notelist[ctr] = NULL;	//Eliminate this note from the list since it's not a chord
+		}
+	}
+
+	if(!unique_count)
+	{	//If there were no chords
+		*results = NULL;	//Return empty result set
+		return 0;
+	}
+
+	//Allocate and build an array with the note numbers representing the unique chords
+	*results = malloc(sizeof(unsigned long) * unique_count);	//Allocate enough memory to store the note number of each unique chord
+	if(*results == NULL)
+	{
+		free(notelist);
+		return 0;
+	}
+	for(ctr = 0, ctr2 = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the track
+		if(notelist[ctr] != NULL)
+		{	//If this was a unique chord
+			if(ctr2 < unique_count)
+			{	//Bounds check
+				(*results)[ctr2++] = ctr;	//Append the note number
+			}
+		}
+	}
+
+	//Cleanup and return results
+	free(notelist);
+	return unique_count;
+}
+
 int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 {
 	eof_log("eof_export_rocksmith() entered", 1);
@@ -16,7 +127,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 	char buffer[256] = {0};
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
-	unsigned long ctr, ctr2, ctr3, numsections = 0, stringnum, bitmask;
+	unsigned long ctr, ctr2, ctr3, ctr4, numsections = 0, stringnum, bitmask, numsinglenotes, numchords, *chordlist, chordlistsize;
 	EOF_PRO_GUITAR_TRACK *tp;
 
 	if(!sp || !fn || !sp->beats || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !sp->track[track]->name)
@@ -26,18 +137,17 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 	}
 
 	//Count the number of populated difficulties in the track
-	unsigned long diffnotes[4] = {0};	//Will track the number of notes in each difficulty
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 	char populated[4] = {0};	//Will track which difficulties are populated
 	unsigned notetype;
 	unsigned numdifficulties;
-	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
+	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the track
 		notetype = eof_get_note_type(sp, track, ctr);
 		if(notetype < 4)
 		{	//As long as this is Easy, Medium, Hard or Expert difficulty
 			if((eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) == 0)
 			{	//And it's not a string muted note
-				diffnotes[notetype]++;		//Increment this difficulty's note counter
 				populated[notetype] = 1;	//Track that this difficulty is populated
 			}
 		}
@@ -119,14 +229,60 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 		pack_fputs("  </phraseIterations>\n", fp);
 	}
 	else
-	{	//There are no sections, write an emtpy tag
-		pack_fputs("  <phrases count=\"0\"/>\n", fp);
+	{	//There are no sections, write a single default phrase
+		pack_fputs("  <phrases count=\"1\">\n", fp);
+		snprintf(buffer, sizeof(buffer), "    <phrase disparity=\"0\" ignore=\"1\" maxDifficulty=\"0\" name=\"COUNT\" solo=\"0\"/>\n");
+		pack_fputs(buffer, fp);
+		pack_fputs("  </phrases>\n", fp);
+		pack_fputs("  <phraseIterations count=\"1\">\n", fp);
+		snprintf(buffer, sizeof(buffer), "    <phraseIteration time=\"%.3f\" phraseId=\"0\"/>\n", sp->beat[0]->fpos / 1000.0);	//Place this phrase at the first beat marker's position
+		pack_fputs(buffer, fp);
+		pack_fputs("  </phraseIterations>\n", fp);
 	}
 
 	//Write some unknown information
 	pack_fputs("  <linkedDiffs count=\"0\"/>\n", fp);
 	pack_fputs("  <phraseProperties count=\"0\"/>\n", fp);
-	pack_fputs("  <chordTemplates count=\"0\"/>\n", fp);
+
+	//Write chord templates
+	chordlistsize = eof_build_chord_list(sp, track, &chordlist);	//Build a list of all unique chords in the track
+	if(!chordlistsize)
+	{	//If there were no chords, write an empty chord template tag
+		pack_fputs("  <chordTemplates count=\"0\"/>\n", fp);
+	}
+	else
+	{
+		char notename[EOF_NAME_LENGTH+1];	//String large enough to hold any chord name supported by EOF
+		long fret0, fret1, fret2, fret3, fret4, fret5;	//Will store the fret number played on each string (-1 means the string is not played)
+		long *fret[6] = {&fret0, &fret1, &fret2, &fret3, &fret4, &fret5};	//Allow the fret numbers to be accessed via array
+		unsigned long bitmask;
+
+		snprintf(buffer, sizeof(buffer), "  <chordTemplates count=\"%lu\">\n", chordlistsize);
+		pack_fputs(buffer, fp);
+		for(ctr = 0; ctr < chordlistsize; ctr++)
+		{	//For each of the entries in the unique chord list
+			notename[0] = '\0';	//Empty the note name string
+			eof_build_note_name(sp, track, chordlist[ctr], notename);	//Build the note name (if it exists) into notename[]
+
+			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
+			{	//For each of the 6 supported strings
+				if((eof_get_note_note(sp, track, chordlist[ctr]) & bitmask) && (ctr2 < tp->numstrings) && ((tp->note[chordlist[ctr]]->frets[ctr2] & 0x80) == 0))
+				{	//If the chord entry uses this string (verifying that the string number is supported by the track) and the string is not fret hand muted
+					*(fret[ctr2]) = tp->note[chordlist[ctr]]->frets[ctr2] & 0x7F;	//Retrieve the fret played on this string (masking out the muting bit)
+				}
+				else
+				{	//The chord entry does not use this string
+					*(fret[ctr2]) = -1;
+				}
+			}
+
+			snprintf(buffer, sizeof(buffer), "    <chordTemplate chordName=\"%s\" finger0=\"#\" finger1=\"#\" finger2=\"#\" finger3=\"#\" finger4=\"#\" finger5=\"#\" fret0=\"%ld\" fret1=\"%ld\" fret2=\"%ld\" fret3=\"%ld\" fret4=\"%ld\" fret5=\"%ld\"/>\n", notename, fret0, fret1, fret2, fret3, fret4, fret5);
+			pack_fputs(buffer, fp);
+		}//For each of the entries in the unique chord list
+		pack_fputs("  </chordTemplates>\n", fp);
+	}
+
+	//Write some unknown information
 	pack_fputs("  <fretHandMuteTemplates count=\"0\"/>\n", fp);
 
 	//Write the beat timings
@@ -167,86 +323,173 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 	pack_fputs("  <sections count=\"0\"/>\n", fp);
 	pack_fputs("  <events count=\"0\"/>\n", fp);
 
-	//Write note information
+	//Write difficulty
 	snprintf(buffer, sizeof(buffer), "  <levels count=\"%u\">\n", numdifficulties);
 	pack_fputs(buffer, fp);
 	eof_determine_phrase_status(sp, track);	//Update the tremolo status of each note
-	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 	for(ctr = 0, ctr2 = 0; ctr < 4; ctr++)
 	{	//For each of the available difficulties
 		if(populated[ctr])
 		{	//If this difficulty is populated
+			//Count the number of single notes and chords in this difficulty
+			for(ctr3 = 0, numsinglenotes = 0, numchords = 0; ctr3 < tp->notes; ctr3++)
+			{	//For each note in the track
+				if(eof_get_note_type(sp, track, ctr3) == ctr)
+				{	//If the note is in this difficulty
+					unsigned long lanecount = eof_note_count_colors(sp, track, ctr3);	//Count the number of used lanes in this note
+					if(lanecount == 1)
+					{	//If the note has only one gem
+						numsinglenotes++;	//Increment counter
+					}
+					else if(lanecount > 1)
+					{	//If the note has multiple gems
+						if(!eof_is_string_muted(sp, track, ctr3))
+						{	//If the chord is not fully string muted
+							numchords++;	//Increment counter
+						}
+					}
+					else
+					{	//Note had no gems, throw error
+						allegro_message("Error:  A note with no gems was encountered.  Aborting Rocksmith export");
+						eof_log("Error:  A note with no gems was encountered.  Aborting Rocksmith export", 1);
+						free(chordlist);
+						pack_fclose(fp);
+						return 0;	//Return failure
+					}
+				}
+			}
+
+			//Write single notes
 			snprintf(buffer, sizeof(buffer), "    <level difficulty=\"%lu\">\n", ctr2);
 			pack_fputs(buffer, fp);
-			ctr2++;	//Increment the difficulty level number
-			snprintf(buffer, sizeof(buffer), "      <notes count=\"%lu\">\n", diffnotes[ctr]);
-			pack_fputs(buffer, fp);
-			for(ctr3 = 0; ctr3 < eof_get_track_size(sp, track); ctr3++)
-			{	//For each note in the track
-				for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
-				{	//For each string used in this track
-					if(eof_get_note_note(sp, track, ctr3) & bitmask)
-					{	//If this string is used in this note
-						unsigned long flags;
-						unsigned long notepos;
-						unsigned long bend = 0;		//The number of half steps this note bends
-						long slideto = -1;			//If not negative, is the fret position the slide ends at
-						unsigned long fret;			//The fret number used for this string
-						char hammeron;				//Nonzero if this note is a hammer on
-						char pulloff;				//Nonzero if this note is a pull off
-						char harmonic;				//Nonzero if this note is a harmonic
-						char hopo;					//Nonzero if this note is either a hammer on or a pull off
-						char palmmute;				//Nonzero if this note is a palm mute
-						unsigned long length;
-						char tremolo;				//Nonzero if this note is a tremolo
+			ctr2++;	//Increment the populated difficulty level number
+			if(numsinglenotes)
+			{	//If there's at least one single note in this difficulty
+				snprintf(buffer, sizeof(buffer), "      <notes count=\"%lu\">\n", numsinglenotes);
+				pack_fputs(buffer, fp);
+				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
+				{	//For each note in the track
+					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_colors(sp, track, ctr3) == 1))
+					{	//If this note is in this difficulty and is a single note (and not a chord)
+						for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
+						{	//For each string used in this track
+							if(eof_get_note_note(sp, track, ctr3) & bitmask)
+							{	//If this string is used in this note
+								unsigned long flags;
+								unsigned long notepos;
+								unsigned long bend = 0;		//The number of half steps this note bends
+								long slideto = -1;			//If not negative, is the fret position the slide ends at
+								unsigned long fret;			//The fret number used for this string
+								char hammeron;				//Nonzero if this note is a hammer on
+								char pulloff;				//Nonzero if this note is a pull off
+								char harmonic;				//Nonzero if this note is a harmonic
+								char hopo;					//Nonzero if this note is either a hammer on or a pull off
+								char palmmute;				//Nonzero if this note is a palm mute
+								unsigned long length;
+								char tremolo;				//Nonzero if this note is a tremolo
 
-						flags = eof_get_note_flags(sp, track, ctr3);
-						notepos = eof_get_note_pos(sp, track, ctr3);
-						length = eof_get_note_length(sp, track, ctr3);
-						fret = tp->note[ctr3]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
-						if((flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) == 0)
-						{	//If this note doesn't have definitions for bend strength or the ending fret for slides
-							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
-							{	//If this note bends
-								bend = 1;	//Assume a 1 half step bend
+								flags = eof_get_note_flags(sp, track, ctr3);
+								notepos = eof_get_note_pos(sp, track, ctr3);
+								length = eof_get_note_length(sp, track, ctr3);
+								fret = tp->note[ctr3]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
+								if((flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) == 0)
+								{	//If this note doesn't have definitions for bend strength or the ending fret for slides
+									if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+									{	//If this note bends
+										bend = 1;	//Assume a 1 half step bend
+									}
+									if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+									{	//If this note slides up and the user hasn't defined the ending fret of the slide
+										slideto = fret + 1;	//Assume a 1 fret slide until logic is added for the author to add this information
+									}
+									else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+									{	//If this note slides down and the user hasn't defined the ending fret of the slide
+										slideto = fret - 1;	//Assume a 1 fret slide until logic is added for the author to add this information
+									}
+								}
+								else
+								{	//This note defines the bend strength and ending fret for slides
+									if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+									{	//If this note bends
+										bend = tp->note[ctr3]->bendstrength;	//Obtain the defined bend strength
+									}
+									if((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+									{	//If this note slides
+										slideto = tp->note[ctr3]->slideend;
+									}
+								}
+								//Determine boolean note statuses
+								hammeron = (flags & EOF_PRO_GUITAR_NOTE_FLAG_HO) ? 1 : 0;
+								pulloff = (flags & EOF_PRO_GUITAR_NOTE_FLAG_PO) ? 1 : 0;
+								harmonic = (flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC) ? 1 : 0;
+								hopo = (hammeron & pulloff) ? 1 : 0;
+								palmmute = (flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE) ? 1 : 0;
+								tremolo = (flags & EOF_NOTE_FLAG_IS_TREMOLO) ? 1 : 0;
+
+								if((flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) == 0)
+								{	//At this point, it doesn't seem Rocksmith supports string muted notes
+									snprintf(buffer, sizeof(buffer), "        <note time=\"%.3f\" bend=\"%lu\" fret=\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"0\" palmMute=\"%d\" pullOff=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\"/>\n", (double)notepos / 1000.0, bend, fret, hammeron, harmonic, hopo, palmmute, pulloff, slideto, stringnum, (double)length / 1000.0, tremolo);
+									pack_fputs(buffer, fp);
+								}
+							}//If this string is used in this note
+						}//For each string used in this track
+					}//If this note is in this difficulty and is a single note (and not a chord)
+				}//For each note in the track
+				pack_fputs("      </notes>\n", fp);
+			}//If there's at least one single note in this difficulty
+			else
+			{	//There are no single notes in this difficulty, write an empty notes tag
+				pack_fputs("      <notes count=\"0\"/>\n", fp);
+			}
+
+			//Write chords
+			if(numchords)
+			{	//If there's at least one chord in this difficulty
+				unsigned long chordid;
+				char *upstrum = "up";
+				char *downstrum = "down";
+				char *direction;	//Will point to either upstrum or downstrum as appropriate
+				double notepos;
+				snprintf(buffer, sizeof(buffer), "      <chords count=\"%lu\">\n", numchords);
+				pack_fputs(buffer, fp);
+				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
+				{	//For each note in the track
+					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_colors(sp, track, ctr3) > 1) && !eof_is_string_muted(sp, track, ctr3))
+					{	//If this note is in this difficulty and is a chord that isn't fully string muted
+						for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
+						{	//For each of the entries in the unique chord list
+							if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
+							{	//If this note matches a chord entry
+								chordid = ctr4;	//Store the chord entry number
+								break;
 							}
-							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
-							{	//If this note slides up and the user hasn't defined the ending fret of the slide
-								slideto = fret + 1;	//Assume a 1 fret slide until logic is added for the author to add this information
-							}
-							else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
-							{	//If this note slides down and the user hasn't defined the ending fret of the slide
-								slideto = fret - 1;	//Assume a 1 fret slide until logic is added for the author to add this information
-							}
+						}
+						if(ctr4 >= chordlistsize)
+						{	//If the chord couldn't be found
+							allegro_message("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.");
+							eof_log("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.", 1);
+							free(chordlist);
+							return 0;	//Return error
+						}
+						if(tp->note[ctr3]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
+						{	//If this note explicitly strums up
+							direction = upstrum;	//Set the direction string to match
 						}
 						else
-						{	//This note defines the bend strength and ending fret for slides
-							if(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
-							{	//If this note bends
-								bend = tp->note[ctr3]->bendstrength;	//Obtain the defined bend strength
-							}
-							if((flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
-							{	//If this note slides
-								slideto = tp->note[ctr3]->slideend;
-							}
+						{	//Otherwise the direction defaults to down
+							direction = downstrum;
 						}
-						hammeron = flags | EOF_PRO_GUITAR_NOTE_FLAG_HO;
-						pulloff = flags | EOF_PRO_GUITAR_NOTE_FLAG_PO;
-						harmonic = flags | EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;
-						hopo = hammeron | pulloff;
-						palmmute = flags | EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;
-						tremolo = flags | EOF_NOTE_FLAG_IS_TREMOLO;
-
-						if((flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) == 0)
-						{	//At this point, it doesn't seem Rocksmith supports string muted notes
-							snprintf(buffer, sizeof(buffer), "        <note time=\"%.3f\" bend=\"%lu\" fret=\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"0\" palmMute=\"%d\" pullOff=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\"/>\n", (double)notepos / 1000.0, bend, fret, hammeron, harmonic, hopo, palmmute, pulloff, slideto, stringnum, (double)length / 1000.0, tremolo);
-							pack_fputs(buffer, fp);
-						}
-					}//If this string is used in this note
-				}//For each string used in this track
-			}//For each note in the track
-			pack_fputs("      </notes>\n", fp);
-			pack_fputs("      <chords count=\"0\"/>\n", fp);
+						notepos = (double)tp->note[ctr3]->pos / 1000.0;
+						snprintf(buffer, sizeof(buffer), "        <chord time=\"%.3f\" chordId=\"%lu\" highDensity=\"0\" ignore=\"0\" strum=\"%s\"/>\n", notepos, chordid, direction);
+						pack_fputs(buffer, fp);
+					}//If this note is in this difficulty and is a chord
+				}//For each note in the track
+				pack_fputs("      </chords>\n", fp);
+			}
+			else
+			{	//There are no chords in this difficulty, write an empty chords tag
+				pack_fputs("      <chords count=\"0\"/>\n", fp);
+			}
 			pack_fputs("      <fretHandMutes count=\"0\"/>\n", fp);
 			pack_fputs("      <anchors count=\"0\"/>\n", fp);
 			pack_fputs("      <handShapes count=\"0\"/>\n", fp);

@@ -3410,7 +3410,7 @@ int eof_find_note_sequence(EOF_SONG *sp, unsigned long target_track, unsigned lo
 	while(start_found && (input_note < eof_get_track_size(sp, input_track)))
 	{
 		match = 0;
-		if(!eof_note_compare(input_track, input_note, target_track, next_target_note))
+		if(!eof_note_compare(sp, input_track, input_note, target_track, next_target_note))
 		{	//If the next note of the target has been found, next pass of the loop will look for the next note in the target
 			match = 1;
 			if(!match_count)
