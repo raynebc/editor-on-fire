@@ -2042,7 +2042,7 @@ int eof_menu_edit_select_like(void)
 		{	//If the note is selected and is in the active difficulty
 			for(j = 0; j < ntypes; j++)
 			{	//For each unique note number in the ntype array
-				if(eof_note_compare_simple(eof_selected_track, ntype[j], i) == 0)
+				if(eof_note_compare_simple(eof_song, eof_selected_track, ntype[j], i) == 0)
 				{	//If the stored unique note is the same as this note
 					break;	//Break loop
 				}
@@ -2062,7 +2062,7 @@ int eof_menu_edit_select_like(void)
 	{	//For each note in the active track
 		for(j = 0; j < ntypes; j++)
 		{	//For each note bitmask in the ntype array
-			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_note_compare_simple(eof_selected_track, ntype[j], i) == 0))
+			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_note_compare_simple(eof_song, eof_selected_track, ntype[j], i) == 0))
 			{	//If the note is in the active difficulty and matches one of the unique notes that are selected
 				eof_selection.track = eof_selected_track;	//Change the selection's track to the active track
 				eof_selection.multi[i] = 1;					//Mark the note as selected
