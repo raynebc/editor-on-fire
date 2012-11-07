@@ -1,4 +1,5 @@
 #include "beat.h"
+#include "event.h"
 #include "main.h"
 #include "midi.h"
 #include "rs.h"
@@ -93,6 +94,7 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 	if(!unique_count)
 	{	//If there were no chords
 		*results = NULL;	//Return empty result set
+		free(notelist);
 		return 0;
 	}
 
@@ -119,6 +121,88 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 	return unique_count;
 }
 
+unsigned long eof_build_section_list(EOF_SONG *sp, unsigned long **results)
+{
+	eof_log("eof_build_section_list() entered", 1);
+
+	unsigned long ctr, ctr2, unique_count = 0;
+	EOF_TEXT_EVENT **eventlist;	//An array large enough to hold a pointer to every text event in the chart
+	char match;
+
+	if(!results)
+		return 0;	//Return error
+
+	if(!sp)
+	{
+		*results = NULL;
+		return 0;	//Return error
+	}
+
+	//Duplicate the chart's tet events array
+	eventlist = malloc(sizeof(EOF_TEXT_EVENT *) * EOF_MAX_TEXT_EVENTS);
+	if(!eventlist)
+	{
+		*results = NULL;
+		return 0;	//Return error
+	}
+	memcpy(eventlist, sp->text_event, sizeof(EOF_TEXT_EVENT *) * EOF_MAX_TEXT_EVENTS);	//Copy the event array
+
+	//Overwrite each pointer in the duplicate event array that isn't a unique section marker with NULL
+	for(ctr = 0; ctr < sp->text_events; ctr++)
+	{	//For each text event in the chart
+		if(eof_is_section_marker(sp->text_event[ctr]->text))
+		{	//If this event is a section marker
+			match = 0;
+			for(ctr2 = ctr + 1; ctr2 < sp->text_events; ctr2++)
+			{	//For each event in the chart that follows this event
+				if(!ustricmp(sp->text_event[ctr]->text, sp->text_event[ctr2]->text))
+				{	//If this event matches one that follows it
+					eventlist[ctr] = NULL;	//Eliminate this event from the list
+					match = 1;	//Note that this chord matched one of the others
+					break;
+				}
+			}
+			if(!match)
+			{	//If this section marker didn't match any of the other events
+				unique_count++;	//Increment unique section counter
+			}
+		}
+		else
+		{	//This event is not a section marker
+			eventlist[ctr] = NULL;	//Eliminate this note from the list since it's not a chord
+		}
+	}
+
+	if(!unique_count)
+	{	//If there were no section markers
+		*results = NULL;	//Return empty result set
+		free(eventlist);
+		return 0;
+	}
+
+	//Allocate and build an array with the event numbers representing the unique section markers
+	*results = malloc(sizeof(unsigned long) * unique_count);	//Allocate enough memory to store the event number of each unique section marker
+	if(*results == NULL)
+	{
+		free(eventlist);
+		return 0;
+	}
+	for(ctr = 0, ctr2 = 0; ctr < sp->text_events; ctr++)
+	{	//For each event in the chart
+		if(eventlist[ctr] != NULL)
+		{	//If this was a unique section marker
+			if(ctr2 < unique_count)
+			{	//Bounds check
+				(*results)[ctr2++] = ctr;	//Append the event number
+			}
+		}
+	}
+
+	//Cleanup and return results
+	free(eventlist);
+	return unique_count;
+}
+
 int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 {
 	eof_log("eof_export_rocksmith() entered", 1);
@@ -127,7 +211,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 	char buffer[256] = {0};
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
-	unsigned long ctr, ctr2, ctr3, ctr4, numsections = 0, stringnum, bitmask, numsinglenotes, numchords, *chordlist, chordlistsize;
+	unsigned long ctr, ctr2, ctr3, ctr4, numsections = 0, stringnum, bitmask, numsinglenotes, numchords, *chordlist, chordlistsize, *sectionlist, sectionlistsize;
 	EOF_PRO_GUITAR_TRACK *tp;
 
 	if(!sp || !fn || !sp->beats || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !sp->track[track]->name)
@@ -199,37 +283,51 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 	{	//For each beat in the chart
 		if(sp->beat[ctr]->contained_section_event >= 0)
 		{	//If this beat has a section event
-			numsections++;	//Update counter
+			numsections++;	//Update section marker instance counter
 		}
 	}
-	if(numsections)
-	{	//If there is at least one section event
-		snprintf(buffer, sizeof(buffer), "  <phrases count=\"%lu\">\n", numsections);
+	sectionlistsize = eof_build_section_list(sp, &sectionlist);	//Build a list of all unique section markers in the chart
+	if(sectionlistsize)
+	{	//If there is at least one section marker
+		unsigned long phraseid;
+		snprintf(buffer, sizeof(buffer), "  <phrases count=\"%lu\">\n", sectionlistsize);	//Write the number of unique sections
+		pack_fputs(buffer, fp);
+		for(ctr = 0; ctr < sectionlistsize; ctr++)
+		{	//For each of the entries in the unique section list
+			snprintf(buffer, sizeof(buffer), "    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"0\" name=\"%s\" solo=\"0\"/>\n", sp->text_event[sectionlist[ctr]]->text);
+			pack_fputs(buffer, fp);
+		}
+		pack_fputs("  </phrases>\n", fp);
+		snprintf(buffer, sizeof(buffer), "  <phraseIterations count=\"%lu\">\n", numsections);
 		pack_fputs(buffer, fp);
 		for(ctr = 0; ctr < sp->beats; ctr++)
 		{	//For each beat in the chart
 			if(sp->beat[ctr]->contained_section_event >= 0)
 			{	//If this beat has a section event
-				snprintf(buffer, sizeof(buffer), "    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"0\" name=\"%s\" solo=\"0\"/>\n", sp->text_event[sp->beat[ctr]->contained_section_event]->text);
+				for(ctr2 = 0; ctr2 < sectionlistsize; ctr2++)
+				{	//For each of the entries in the unique section list
+					if(!ustricmp(sp->text_event[sp->beat[ctr]->contained_section_event]->text, sp->text_event[sectionlist[ctr2]]->text))
+					{	//If this event matches a section marker entry
+						phraseid = ctr2;
+						break;
+					}
+				}
+				if(ctr2 >= sectionlistsize)
+				{	//If the section couldn't be found
+					allegro_message("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.");
+					eof_log("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.", 1);
+					free(sectionlist);
+					return 0;	//Return error
+				}
+				snprintf(buffer, sizeof(buffer), "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\"/>\n", sp->beat[ctr]->fpos / 1000.0, phraseid);
 				pack_fputs(buffer, fp);
-			}
-		}
-		pack_fputs("  </phrases>\n", fp);
-		snprintf(buffer, sizeof(buffer), "  <phraseIterations count=\"%lu\">\n", numsections);
-		pack_fputs(buffer, fp);
-		for(ctr = 0, ctr2 = 0; ctr < sp->beats; ctr++)
-		{	//For each beat in the chart
-			if(sp->beat[ctr]->contained_section_event >= 0)
-			{	//If this beat has a section event
-				snprintf(buffer, sizeof(buffer), "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\"/>\n", sp->beat[ctr]->fpos, ctr2);
-				pack_fputs(buffer, fp);
-				ctr2++;
 			}
 		}
 		pack_fputs("  </phraseIterations>\n", fp);
+		free(sectionlist);
 	}
 	else
-	{	//There are no sections, write a single default phrase
+	{	//There are no section markers, write a single default phrase
 		pack_fputs("  <phrases count=\"1\">\n", fp);
 		snprintf(buffer, sizeof(buffer), "    <phrase disparity=\"0\" ignore=\"1\" maxDifficulty=\"0\" name=\"COUNT\" solo=\"0\"/>\n");
 		pack_fputs(buffer, fp);
@@ -255,6 +353,10 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 		char notename[EOF_NAME_LENGTH+1];	//String large enough to hold any chord name supported by EOF
 		long fret0, fret1, fret2, fret3, fret4, fret5;	//Will store the fret number played on each string (-1 means the string is not played)
 		long *fret[6] = {&fret0, &fret1, &fret2, &fret3, &fret4, &fret5};	//Allow the fret numbers to be accessed via array
+		char *fingerunknown = "#";
+		char *fingerunused = "-1";
+		char *finger0, *finger1, *finger2, *finger3, *finger4, *finger5;	//Each will be set to either fingerunknown or fingerunused
+		char **finger[6] = {&finger0, &finger1, &finger2, &finger3, &finger4, &finger5};	//Allow the finger strings to be accessed via array
 		unsigned long bitmask;
 
 		snprintf(buffer, sizeof(buffer), "  <chordTemplates count=\"%lu\">\n", chordlistsize);
@@ -269,14 +371,16 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 				if((eof_get_note_note(sp, track, chordlist[ctr]) & bitmask) && (ctr2 < tp->numstrings) && ((tp->note[chordlist[ctr]]->frets[ctr2] & 0x80) == 0))
 				{	//If the chord entry uses this string (verifying that the string number is supported by the track) and the string is not fret hand muted
 					*(fret[ctr2]) = tp->note[chordlist[ctr]]->frets[ctr2] & 0x7F;	//Retrieve the fret played on this string (masking out the muting bit)
+					*(finger[ctr2]) = fingerunknown;
 				}
 				else
 				{	//The chord entry does not use this string
 					*(fret[ctr2]) = -1;
+					*(finger[ctr2]) = fingerunused;
 				}
 			}
 
-			snprintf(buffer, sizeof(buffer), "    <chordTemplate chordName=\"%s\" finger0=\"#\" finger1=\"#\" finger2=\"#\" finger3=\"#\" finger4=\"#\" finger5=\"#\" fret0=\"%ld\" fret1=\"%ld\" fret2=\"%ld\" fret3=\"%ld\" fret4=\"%ld\" fret5=\"%ld\"/>\n", notename, fret0, fret1, fret2, fret3, fret4, fret5);
+			snprintf(buffer, sizeof(buffer), "    <chordTemplate chordName=\"%s\" finger0=\"%s\" finger1=\"%s\" finger2=\"%s\" finger3=\"%s\" finger4=\"%s\" finger5=\"%s\" fret0=\"%ld\" fret1=\"%ld\" fret2=\"%ld\" fret3=\"%ld\" fret4=\"%ld\" fret5=\"%ld\"/>\n", notename, finger0, finger1, finger2, finger3, finger4, finger5, fret0, fret1, fret2, fret3, fret4, fret5);
 			pack_fputs(buffer, fp);
 		}//For each of the entries in the unique chord list
 		pack_fputs("  </chordTemplates>\n", fp);
@@ -373,8 +477,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 					{	//If this note is in this difficulty and is a single note (and not a chord)
 						for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
 						{	//For each string used in this track
-							if(eof_get_note_note(sp, track, ctr3) & bitmask)
-							{	//If this string is used in this note
+							if((eof_get_note_note(sp, track, ctr3) & bitmask) && ((tp->note[ctr3]->frets[stringnum] & 0x80) == 0))
+							{	//If this string is used in this note and it is not fret hand muted
 								unsigned long flags;
 								unsigned long notepos;
 								unsigned long bend = 0;		//The number of half steps this note bends
@@ -391,6 +495,10 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 								flags = eof_get_note_flags(sp, track, ctr3);
 								notepos = eof_get_note_pos(sp, track, ctr3);
 								length = eof_get_note_length(sp, track, ctr3);
+								if(length == 1)
+								{	//In Rocksmith, even a 1ms note is displayed as a sustained note
+									length = 0;	//A sustain of 0 prevents that
+								}
 								fret = tp->note[ctr3]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
 								if((flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) == 0)
 								{	//If this note doesn't have definitions for bend strength or the ending fret for slides
@@ -485,6 +593,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 					}//If this note is in this difficulty and is a chord
 				}//For each note in the track
 				pack_fputs("      </chords>\n", fp);
+				free(chordlist);
 			}
 			else
 			{	//There are no chords in this difficulty, write an empty chords tag
