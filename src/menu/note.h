@@ -62,7 +62,20 @@ int eof_menu_set_freestyle_off(void);		//Removes freestyle for all selected lyri
 int eof_menu_toggle_freestyle(void);		//Toggles the freestyle status of all selected lyrics
 
 int eof_menu_note_edit_pro_guitar_note(void);		//Allows a pro guitar note's properties to be defined
-int eof_menu_note_edit_pro_guitar_note_frets(void);	//Allows a pro guitar note's fret values only to be defined
+int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_made);
+	//Allows a pro guitar note's fret and fingering values to be defined.
+	//If function is zero, either the fret values or the fingerings can be edited, and if the latter is changed,
+	//	this function will offer to update the finger arrays for matching non-selected matching notes in the active track
+	//If function is nonzero, the fret value input boxes are disabled, the finger input boxes for unused strings are disabled,
+	//	and changes to the fingerings are automatically applied to all matching non-selected notes in the active track
+	//Returns zero if user canceled making edits
+	//If *undo_made is zero, this function will create an undo state before modifying the chart and will set the referenced variable to nonzero
+int eof_menu_note_edit_pro_guitar_note_frets_fingers_menu(void);
+	//Calls eof_menu_note_edit_pro_guitar_note_frets_fingers() specifying function 0
+int eof_correct_chord_fingerings(void);
+	//Checks each pro guitar track in the active chart for chords that have incorrect fingering (defined when it shouldn't be or vice versa)
+	//For each that is found, the "Edit pro guitar fret/finger values" dialog is launched with the fret fields locked so that the fingerings can be defined
+	//The given fingering is then applied to all matching notes in the track
 
 int eof_menu_note_toggle_slide_up(void);		//Toggles the slide up status of all selected notes
 int eof_menu_note_toggle_slide_down(void);		//Toggles the slide down status of all selected notes
@@ -121,6 +134,7 @@ int eof_pro_guitar_note_bend_strength_save(void);
 int eof_pro_guitar_note_bend_strength_no_save(void);
 	//Calls eof_pro_guitar_note_bend_strength() specifying not to make an undo before making changes
 	//(for when using the keyboard shortcut to toggle bends, since an undo would already have been created)
+int eof_menu_pro_guitar_remove_fingering(void);	//Clears the finger array for all selected notes
 
 int eof_menu_note_toggle_green(void);	//Toggles the gem on lane 1 (originally colored green)
 int eof_menu_note_toggle_red(void);		//Toggles the gem on lane 2 (originally colored red)

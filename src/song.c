@@ -1439,7 +1439,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	unsigned long inputl,count,ctr,ctr2,bitmask;
 	unsigned long track_count,track_ctr;
 	unsigned long section_type_count,section_type_ctr,section_type,section_count,section_ctr,section_start,section_end;
-	unsigned long custom_data_count,custom_data_ctr,custom_data_size;
+	unsigned long custom_data_count,custom_data_ctr,custom_data_size,custom_data_id;
 	EOF_TRACK_ENTRY temp={0, 0, 0, 0, "", 0, 0};
 	char name[EOF_NAME_LENGTH+1];	//Used to load note/section names
 
@@ -1789,8 +1789,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->type = pack_getc(fp);		//Read the note's difficulty
 					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->note = pack_getc(fp);		//Read note bitflags
 					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->ghost = pack_getc(fp);	//Read ghost bitflags
-					for(ctr2=0, bitmask=1; ctr2 < 16; ctr2++, bitmask <<= 1)
-					{	//For each of the 16 bits in the note bitflag
+					for(ctr2=0, bitmask=1; ctr2 < 8; ctr2++, bitmask <<= 1)
+					{	//For each of the 8 bits in the note bitflag
 						if(sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->note & bitmask)
 						{	//If this bit is set
 							sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->frets[ctr2] = pack_getc(fp);	//Read this string's fret value
@@ -1864,9 +1864,49 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		for(custom_data_ctr=0; custom_data_ctr<custom_data_count; custom_data_ctr++)
 		{	//For each custom data block in the project
 			custom_data_size = pack_igetl(fp);	//Read the size of the custom data block
-			for(ctr=0; ctr<custom_data_size; ctr++)
-			{	//For each byte in the custom data block
-				pack_getc(fp);	//Read the data (not supported yet)
+			custom_data_id = pack_igetl(fp);	//Read the ID of the custom data block
+			switch(custom_data_id)
+			{
+				case 2:		//Pro guitar finger array custom data block ID
+					if(custom_data_size < 4)
+					{	//This is invalid, the size needed to have included the 4 byte ID
+						allegro_message("Error:  Invalid custom data block size.  Aborting");
+						return 0;
+					}
+					custom_data_size -= 4;	//Subtract the size of the block ID, which was already read
+					if(sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+					{	//Ensure this logic only runs for a pro guitar track
+						EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[sp->track[track_ctr]->tracknum];	//Get pointer to this pro guitar track
+						for(ctr = 0; ctr < eof_get_track_size(sp, track_ctr); ctr++)
+						{	//For each note in this track
+							for(ctr2 = 0, bitmask = 1; ctr2 < tp->numstrings; ctr2++, bitmask <<= 1)
+							{	//For each supported string in the track
+								if(tp->note[ctr]->note & bitmask)
+								{	//If this string is used
+									tp->note[ctr]->finger[ctr2] = pack_getc(fp);	//Read the finger value for this note
+								}
+							}
+						}
+					}
+					else
+					{	//Corrupt file
+						allegro_message("Error: Invalid pro guitar finger array data block.  Aborting");
+						return 0;
+					}
+				break;
+
+				default:	//Unknown custom data block ID
+					if(custom_data_size < 4)
+					{	//This is invalid, the size needed to have included the 4 byte ID
+						allegro_message("Error:  Invalid custom data block size.  Aborting");
+						return 0;
+					}
+					custom_data_size -= 4;	//Subtract the size of the block ID, which was already read
+					for(ctr=0; ctr<custom_data_size; ctr++)
+					{	//For each byte in the custom data block
+						pack_getc(fp);	//Read the data (ignoring it)
+					}
+				break;
 			}
 		}
 	}//For each track in the project
@@ -2127,7 +2167,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	PACKFILE * fp = NULL;
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};
 	unsigned long count,ctr,ctr2,tracknum;
-	unsigned long track_count,track_ctr,bookmark_count,bitmask;
+	unsigned long track_count,track_ctr,bookmark_count,bitmask,fingerdefinitions;
 	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders;
 
 	if((sp == NULL) || (fn == NULL))
@@ -2271,7 +2311,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		PACKFILE *tfp;	//Used to create a temp file containing the MIDI data block, so its size can easily be determined before dumping into the output project file
 		struct eof_MIDI_data_track *trackptr = sp->midi_data_head;	//Point to the beginning of the track linked list
 		struct eof_MIDI_data_event *eventptr;
-		unsigned long ctr, filesize;
+		unsigned long filesize;
 
 	//Parse the linked list to write the MIDI data to a temp file
 		tfp = pack_fopen("rawmididata.tmp", "w");
@@ -2379,9 +2419,8 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 		{
 			eof_save_song_string_pf(NULL, fp);	//Write empty string
 		}
-		//Write global track
 		if(track_ctr == 0)
-		{
+		{	//Write global track
 			pack_putc(0, fp);	//Write track format (global)
 			pack_putc(0, fp);	//Write track behavior (not used)
 			pack_putc(0, fp);	//Write track type (not used)
@@ -2420,9 +2459,8 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				}
 			}
 		}
-		//Write other tracks
 		else
-		{
+		{	//Write other tracks
 			pack_putc(sp->track[track_ctr]->track_format, fp);		//Write track format
 			pack_putc(sp->track[track_ctr]->track_behavior, fp);	//Write track behavior
 			pack_putc(sp->track[track_ctr]->track_type, fp);		//Write track type
@@ -2584,8 +2622,8 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 						pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->type, fp);		//Write the note's difficulty
 						pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->note, fp);		//Write the note's bitflags
 						pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->ghost, fp);	//Write the note's ghost bitflags
-						for(ctr2=0, bitmask=1; ctr2 < 16; ctr2++, bitmask <<= 1)
-						{	//For each of the 16 bits in the note bitflag
+						for(ctr2=0, bitmask=1; ctr2 < 8; ctr2++, bitmask <<= 1)
+						{	//For each of the 8 bits in the note bitflag
 							if(sp->pro_guitar_track[tracknum]->note[ctr]->note & bitmask)
 							{	//If this bit is set
 								pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2], fp);	//Write this string's fret value
@@ -2701,12 +2739,44 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				default://Unknown track type
 					allegro_message("Error: Unsupported track type.  Aborting");
 				return 0;
+			}//Perform the appropriate logic to write this format of track
+		}//Write other tracks
+		fingerdefinitions = 0;
+		if(track_ctr && (sp->track[track_ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{	//If this is a pro guitar track, count the number of notes with finger definitions
+			for(ctr = 0; ctr < sp->pro_guitar_track[tracknum]->notes; ctr++)
+			{	//For each note in the track
+				for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
+				{	//For each supported string in the track
+					if(sp->pro_guitar_track[tracknum]->note[ctr]->note & bitmask)
+					{	//If this string is used
+						fingerdefinitions++;	//Increment the counter representing the number of finger usage bytes to write in this block
+					}
+				}
 			}
 		}
-//		pack_iputl(0, fp);	//Write an empty custom data block
-		pack_iputl(1, fp);			//Write a debug custom data block
-		pack_iputl(4, fp);
-		pack_iputl(0xFFFFFFFF, fp);
+		if(fingerdefinitions)
+		{	//If at least one finger definition was found
+			pack_iputl(1, fp);		//Write one custom data block
+			pack_iputl(fingerdefinitions + 4, fp);	//Write the number of bytes this block will contain (finger data and a 4 byte block ID)
+			pack_iputl(2, fp);		//Write the pro guitar finger array custom data block ID
+			for(ctr = 0; ctr < sp->pro_guitar_track[tracknum]->notes; ctr++)
+			{	//For each note in the track
+				for(ctr2 = 0, bitmask = 1; ctr2 < sp->pro_guitar_track[tracknum]->numstrings; ctr2++, bitmask <<= 1)
+				{	//For each supported string in the track
+					if(sp->pro_guitar_track[tracknum]->note[ctr]->note & bitmask)
+					{	//If this string is used
+						pack_putc(sp->pro_guitar_track[tracknum]->note[ctr]->finger[ctr2], fp);	//Write this string's finger value
+					}
+				}
+			}
+		}
+		else
+		{	//Otherwise write a debug custom data block
+			pack_iputl(1, fp);			//Write one custom data block
+			pack_iputl(4, fp);
+			pack_iputl(0xFFFFFFFF, fp);	//Write the debug custom data block ID
+		}
 	}//For each track in the project
 
 	pack_fclose(fp);
@@ -3212,9 +3282,10 @@ void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long
 				ptr3->type = type;
 				ptr3->note = note;
 				ptr3->ghost = 0;
-				memset(ptr3->frets, 0, 16);	//Initialize all frets to open
-				ptr3->midi_pos = 0;	//Not implemented yet
-				ptr3->midi_length = 0;	//Not implemented yet
+				memset(ptr3->frets, 0, 8);	//Initialize all frets to open
+				memset(ptr3->finger, 0, 8);	//Initialize all fingers to undefined
+				ptr3->midi_pos = 0;			//Not implemented yet
+				ptr3->midi_length = 0;		//Not implemented yet
 				ptr3->pos = pos;
 				ptr3->length = length;
 				ptr3->flags = 0;
@@ -3415,6 +3486,7 @@ void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, un
 			if(note < sp->pro_guitar_track[tracknum]->notes)
 			{
 				sp->pro_guitar_track[tracknum]->note[note]->note = value;
+				memset(sp->pro_guitar_track[tracknum]->note[note]->finger, 0, 8);	//Initialize all fingers to undefined
 			}
 		break;
 	}
@@ -3669,17 +3741,28 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 				}
 			}
 
-			/* make sure that there aren't any invalid fret values, and inspect the mute flag status */
+			/* make sure that there aren't any invalid fret/finger values, and inspect the mute flag status */
 			for(ctr = 0, allmuted = 1, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
 			{	//For each of the 6 usable strings
 				fretvalue = tp->note[i-1]->frets[ctr];
 				if(fretvalue != 0xFF)
 				{	//Track whether the all used strings in this note/chord are muted
-					if((tp->note[i-1]->note & bitmask) && !(fretvalue & 0x80))
-					{	//If this string is used in the note, and the note isn't marked as muted
-						allmuted = 0;
+					if(tp->note[i-1]->note & bitmask)
+					{	//If this string is used in the note
+						if(!(fretvalue & 0x80))
+						{	//If the note isn't marked as muted
+							allmuted = 0;
+						}
+					}
+					else
+					{	//If this string is not used in the note
+						if(tp->note[i-1]->finger[ctr])
+						{	//But the fingering is defined
+							memset(tp->note[i-1]->finger, 0, 8);	//Initialize all fingers to undefined
+						}
 					}
 					if((fretvalue & 0x7F) > tp->numfrets)
+
 					{	//If this fret value is invalid (all bits set except the MSB) is invalid
 						tp->note[i-1]->frets[ctr] = 0;	//Revert to default fret value of 0
 					}
@@ -4522,6 +4605,7 @@ void eof_set_pro_guitar_fret_number(char function, unsigned long fretvalue)
 							undo_made = 1;
 						}
 						eof_song->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2] = newfretvalue;	//Update the string's fret value
+						memset(eof_song->pro_guitar_track[tracknum]->note[ctr]->finger, 0, 8);			//Initialize all fingers to undefined
 					}
 				}
 			}

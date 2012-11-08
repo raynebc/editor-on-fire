@@ -24,6 +24,7 @@
 #include "file.h"
 #include "song.h"
 #include "edit.h"	//For eof_menu_edit_undo()
+#include "note.h"	//For eof_correct_chord_fingerings()
 
 #ifdef USEMEMWATCH
 #include "../memwatch.h"
@@ -2160,6 +2161,12 @@ int eof_save_helper(char *destfilename)
 				}
 			}
 		}
+	}
+
+	/* check if any chords have undefined fingering */
+	if(eof_write_rbn_rs_files)
+	{	//If the user opted to also save RBN2 and RB3 pro guitar upgrade compliant MIDIs and Rocksmith XML files
+		eof_correct_chord_fingerings();	//Ensure all chords in each pro guitar track have valid finger arrays
 	}
 
 	/* save the chart */

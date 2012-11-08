@@ -357,6 +357,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 		char *fingerunused = "-1";
 		char *finger0, *finger1, *finger2, *finger3, *finger4, *finger5;	//Each will be set to either fingerunknown or fingerunused
 		char **finger[6] = {&finger0, &finger1, &finger2, &finger3, &finger4, &finger5};	//Allow the finger strings to be accessed via array
+		char finger0def[2] = "0", finger1def[2] = "1", finger2def[2] = "2", finger3def[2] = "3", finger4def[2] = "4", finger5def[2] = "5";	//Static strings for building manually-defined finger information
+		char *fingerdef[6] = {finger0def, finger1def, finger2def, finger3def, finger4def, finger5def};	//Allow the fingerdef strings to be accessed via array
 		unsigned long bitmask;
 
 		snprintf(buffer, sizeof(buffer), "  <chordTemplates count=\"%lu\">\n", chordlistsize);
@@ -371,7 +373,17 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 				if((eof_get_note_note(sp, track, chordlist[ctr]) & bitmask) && (ctr2 < tp->numstrings) && ((tp->note[chordlist[ctr]]->frets[ctr2] & 0x80) == 0))
 				{	//If the chord entry uses this string (verifying that the string number is supported by the track) and the string is not fret hand muted
 					*(fret[ctr2]) = tp->note[chordlist[ctr]]->frets[ctr2] & 0x7F;	//Retrieve the fret played on this string (masking out the muting bit)
-					*(finger[ctr2]) = fingerunknown;
+					if(tp->note[chordlist[ctr]]->finger[ctr2])
+					{	//If the fingering for this string is defined
+						char *temp = fingerdef[ctr2];	//Simplify logic below
+						temp[0] = '0' + tp->note[chordlist[ctr]]->finger[ctr2];	//Convert decimal to ASCII
+						temp[1] = '\0';	//Truncate string
+						*(finger[ctr2]) = temp;
+					}
+					else
+					{
+						*(finger[ctr2]) = fingerunknown;
+					}
 				}
 				else
 				{	//The chord entry does not use this string
