@@ -1981,9 +1981,9 @@ if(key[KEY_PAUSE])
 			}
 
 	/* edit pro guitar fret values (F in a pro guitar track) */
-			if((key[KEY_F] && !KEY_EITHER_CTRL))
+			if(key[KEY_F] && !KEY_EITHER_CTRL)
 			{
-				eof_menu_note_edit_pro_guitar_note_frets();
+				eof_menu_note_edit_pro_guitar_note_frets_fingers_menu();
 				key[KEY_F] = 0;
 			}
 

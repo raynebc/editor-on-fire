@@ -1446,8 +1446,8 @@ int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, un
 			{	//If both note's bitmasks match
 				tracknum = sp->track[track1]->tracknum;
 				tracknum2 = sp->track[track2]->tracknum;
-				for(ctr = 0, bitmask = 1; ctr < 16; ctr ++, bitmask <<= 1)
-				{	//For each of the 16 bits in the note bitmask
+				for(ctr = 0, bitmask = 1; ctr < 8; ctr ++, bitmask <<= 1)
+				{	//For each of the 8 bits in the note bitmask
 					if(note1note & bitmask)
 					{	//If this bit is set
 						if(sp->pro_guitar_track[tracknum]->note[note1]->frets[ctr] != sp->pro_guitar_track[tracknum2]->note[note2]->frets[ctr])

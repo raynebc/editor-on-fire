@@ -152,13 +152,21 @@ TRACK CHUNK, for each track:
 *	TRACK CUSTOM DATA BLOCK CHUNK, for each custom data block
 *	{
 *		4 bytes:	The number of bytes this custom data block consumes  (including the block ID and the custom data itself)
-*		4 bytes:	Custom data block ID (1 = Extra note data, 0xFFFFFFFF = Empty debugging block)
-*		[varies:]	(Custom data, can store anything)
+*		4 bytes:	Custom data block ID (1 = Extra note data, 2= pro guitar finger arrays, 0xFFFFFFFF = Empty debugging block)
+*		[varies:]	(Custom data block, can store anything)
 *	}
+=========================================
+Custom track data block definitions
 =========================================
 	Custom data block ID 1:  Extra note data:
 		1 byte:		Number of additional data bytes per note
 		[varies]:	Number of data bytes * number of notes (defined above in the track data) bytes
+	Custom data block ID 2:  Pro guitar finger arrays, for each note in the pro guitar track:
+		FINGER CHUNK, for each set bit in the note's bitflag (defined in the prior track data)
+		{
+			1 byte:	Finger number used for this string (0 = unused/undefined, 1 = index, 2 = middle, 3= ring, 4 = pinky, 5 = thumb)
+		}
+=========================================		
 }
 (End of file)
 
@@ -215,7 +223,7 @@ TRACK CHUNK, for each track:
 *		1 byte:		Chord number
 *		1 byte:		Note type (difficulty)
 *		1 byte:		Note bitflag (string use statuses: set=played, reset=not played)
-!				Bit 0 refers to string 6 (low E), bit 5 refers to string 1 (high E), consistent with guitar terminology
+!				Bit 0 refers to lane 1 (ie. string 6, low E), bit 5 refers to lane 6 (ie. string 1, high E), consistent with guitar terminology
 !		1 byte:		Ghost bitflag (specifies which lanes in the note are treated as "ghost" notes, ie. for Arpeggio phrases)
 *		FRET CHUNK, for each set bit in the guitar note bitflag
 *		{

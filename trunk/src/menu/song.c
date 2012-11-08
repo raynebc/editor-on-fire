@@ -140,6 +140,7 @@ MENU eof_song_proguitar_menu[] =
     {"Enable &Legacy view\tShift+L", eof_menu_song_legacy_view, NULL, 0, NULL},
     {"&Previous chord name\tShift+W", eof_menu_previous_chord_result, NULL, 0, NULL},
     {"&Next chord name\tShift+E", eof_menu_next_chord_result, NULL, 0, NULL},
+    {"Correct chord finger information", eof_correct_chord_fingerings, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
