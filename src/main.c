@@ -103,7 +103,8 @@ int         eof_disable_3d_rendering = 0;
 int         eof_disable_2d_rendering = 0;
 int         eof_disable_info_panel = 0;
 int         eof_paste_erase_overlap = 0;
-int         eof_write_rbn_rs_files = 0;
+int         eof_write_rb_files = 0;				//If nonzero, extra files are written during save that are used for authoring Rock Band customs
+int         eof_write_rs_files = 0;				//If nonzero, extra files are written during save that are used for authoring Rocksmith customs
 int         eof_add_new_notes_to_selection = 0;	//If nonzero, newly added gems cause notes to be added to the selection instead of the selection being cleared first
 int         eof_drum_modifiers_affect_all_difficulties = 1;	//If nonzero, a drum modifier (ie. open/pedal hi hat or rim shot apply to any notes at the same position in non active difficulties)
 int         eof_fb_seek_controls = 0;			//If nonzero, the page up/dn keys have their seek directions reversed, and up/down seek forward/backward
@@ -202,9 +203,9 @@ int         eof_mouse_z;
 int         eof_mickey_z;
 int         eof_mickeys_x;
 int         eof_mickeys_y;
-int         eof_lclick_released = 1;
-int         eof_blclick_released = 1;
-int         eof_rclick_released = 1;
+int         eof_lclick_released = 1;	//Tracks the handling of the left mouse button in general
+int         eof_blclick_released = 1;	//Tracks the handling of the left mouse button when used on beat markers
+int         eof_rclick_released = 1;	//Tracks the handling of the right mouse button in general
 int         eof_click_x;
 int         eof_click_y;
 int         eof_peg_x;

@@ -47,6 +47,7 @@ int eof_menu_edit_select_like(void);			//For each unique selected note, selects 
 int eof_menu_edit_deselect_all(void);
 int eof_menu_edit_select_rest(void);
 int eof_menu_edit_select_previous(void);		//Selects all notes before the last selected note
+int eof_menu_edit_select_all_shorter_than(void);	//Selects all notes in the active track difficulty that are shorter than a user specified length
 
 int eof_menu_edit_snap_quarter(void);
 int eof_menu_edit_snap_eighth(void);

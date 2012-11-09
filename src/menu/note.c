@@ -4636,7 +4636,7 @@ int eof_menu_note_toggle_bend(void)
 			}
 		}
 	}
-	if(eof_write_rbn_rs_files && bends_present)
+	if(eof_write_rs_files && bends_present)
 	{	//If the user wants to save Rocksmith capable files, prompt to set the strength of bend notes
 		eof_pro_guitar_note_bend_strength_no_save();	//Don't make another undo state
 	}
@@ -4802,7 +4802,7 @@ int eof_menu_note_toggle_slide_up(void)
 			}
 		}
 	}
-	if(eof_write_rbn_rs_files && slides_present)
+	if(eof_write_rs_files && slides_present)
 	{	//If the user wants to save Rocksmith capable files, prompt to set the ending fret for the slide notes
 		eof_pro_guitar_note_slide_end_fret_no_save();	//Don't make another undo state
 	}
@@ -4854,7 +4854,7 @@ int eof_menu_note_toggle_slide_down(void)
 			}
 		}
 	}
-	if(eof_write_rbn_rs_files && slides_present)
+	if(eof_write_rs_files && slides_present)
 	{	//If the user wants to save Rocksmith capable files, prompt to set the ending fret for the slide notes
 		eof_pro_guitar_note_slide_end_fret_no_save();	//Don't make another undo state
 	}
@@ -7062,7 +7062,7 @@ DIALOG eof_pro_guitar_note_bend_strength_dialog[] =
    /* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                          (dp2) (dp3) */
    { d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Edit bend strength",         NULL, NULL },
    { d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "Bends this # of half steps:",NULL, NULL },
-   { eof_verified_edit_proc,12,  56,  50,  20,  0,   0,   0,    0,      7,   0,   eof_etext,     "0123456789",  NULL },
+   { eof_verified_edit_proc,12,  56,  20,  20,  0,   0,   0,    0,      1,   0,   eof_etext,     "0123456789",  NULL },
    { d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                         NULL, NULL },
    { d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                     NULL, NULL },
    { NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                         NULL, NULL }

@@ -125,11 +125,12 @@ MENU eof_edit_bookmark_menu[] =
 
 MENU eof_edit_selection_menu[] =
 {
-    {"&Select All\t" CTRL_NAME "+A", eof_menu_edit_select_all, NULL, 0, NULL},
+    {"Select &All\t" CTRL_NAME "+A", eof_menu_edit_select_all, NULL, 0, NULL},
     {"Select &Like\t" CTRL_NAME "+L", eof_menu_edit_select_like, NULL, 0, NULL},
     {"Select &Rest\tShift+End", eof_menu_edit_select_rest, NULL, 0, NULL},
     {"&Deselect All\t" CTRL_NAME "+D", eof_menu_edit_deselect_all, NULL, 0, NULL},
     {"Select &Previous\tShift+Home", eof_menu_edit_select_previous, NULL, 0, NULL},
+    {"Select all &Shorter than", eof_menu_edit_select_all_shorter_than, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -2106,6 +2107,47 @@ int eof_menu_edit_select_rest(void)
 		}
 	}
 
+	return 1;
+}
+
+DIALOG eof_menu_edit_select_all_shorter_than_dialog[] =
+{
+   /* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                          (dp2) (dp3) */
+   { d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Select all notes shorter than", NULL, NULL },
+   { d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "This # of ms:",NULL, NULL },
+   { eof_verified_edit_proc,12,  56,  90,  20,  0,   0,   0,    0,      7,   0,   eof_etext,     "0123456789",  NULL },
+   { d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                         NULL, NULL },
+   { d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                     NULL, NULL },
+   { NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                         NULL, NULL }
+};
+
+int eof_menu_edit_select_all_shorter_than(void)
+{
+	unsigned long i, threshold;
+
+	eof_etext[0] = '\0';	//Empty the string
+	eof_color_dialog(eof_menu_edit_select_all_shorter_than_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_menu_edit_select_all_shorter_than_dialog);
+
+	if(eof_popup_dialog(eof_menu_edit_select_all_shorter_than_dialog, 2) == 3)
+	{	//User clicked OK
+		if(eof_etext[0] != '\0')
+		{	//If the user entered a threshold
+			threshold = atol(eof_etext);
+			for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+			{	//For each note in the active track
+				if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_get_note_length(eof_song, eof_selected_track, i) < threshold))
+				{	//If the note is in the active difficulty and is shorter than the user specified threshold length
+					eof_selection.track = eof_selected_track;
+					eof_selection.multi[i] = 1;
+				}
+				else
+				{	//Otherwise deselect the note from the selection array
+					eof_selection.multi[i] = 0;
+				}
+			}
+		}
+	}
 	return 1;
 }
 
