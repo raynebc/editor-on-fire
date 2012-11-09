@@ -5172,17 +5172,20 @@ void eof_editor_logic_common(void)
 				if(!eof_blclick_released)
 				{	//If the release of the left mouse button has not been processed
 					eof_blclick_released = 1;
-					if(eof_mouse_drug && (eof_song->tags->ogg[eof_selected_ogg].midi_offset != eof_last_midi_offset))
-					{
-						if((eof_note_auto_adjust && !KEY_EITHER_SHIFT) || (!eof_note_auto_adjust && KEY_EITHER_SHIFT))
+					if(!eof_song->tags->tempo_map_locked || (eof_selected_beat == 0))
+					{	//If the tempo map is not locked, or the first beat marker was manipulated, allow the marker to be moved
+						if(eof_mouse_drug && (eof_song->tags->ogg[eof_selected_ogg].midi_offset != eof_last_midi_offset))
 						{
-							if(KEY_EITHER_SHIFT)
+							if((eof_note_auto_adjust && !KEY_EITHER_SHIFT) || (!eof_note_auto_adjust && KEY_EITHER_SHIFT))
 							{
-								eof_shift_used = 1;	//Track that the SHIFT key was used
+								if(KEY_EITHER_SHIFT)
+								{
+									eof_shift_used = 1;	//Track that the SHIFT key was used
+								}
+								eof_adjust_notes(eof_song->tags->ogg[eof_selected_ogg].midi_offset - eof_last_midi_offset);
 							}
-							eof_adjust_notes(eof_song->tags->ogg[eof_selected_ogg].midi_offset - eof_last_midi_offset);
+							eof_fixup_notes(eof_song);
 						}
-						eof_fixup_notes(eof_song);
 					}
 				}
 				if(eof_adjusted_anchor)
