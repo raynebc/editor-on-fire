@@ -511,7 +511,7 @@ int eof_menu_file_save_as(void)
 
 int eof_menu_file_load_ogg(void)
 {
-	char * returnedfn = NULL;
+	char * returnedfn;
 	char checkfn[1024] = {0};
 	char checkfn2[1024] = {0};
 	unsigned long new_length;
@@ -1111,7 +1111,7 @@ int eof_menu_file_controllers(void)
 
 int eof_menu_file_song_folder(void)
 {
-	char * returnfolder = NULL;
+	char * returnfolder;
 
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;

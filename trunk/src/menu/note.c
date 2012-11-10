@@ -4281,7 +4281,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 				{	//For each of the supported strings
 					if(((eof_fret_strings[i][0] != '\0') && (eof_finger_strings[i][0] == '\0')) || ((eof_fret_strings[i][0] == '\0') && (eof_finger_strings[i][0] != '\0')))
 					{	//If this string has a fret value but no finger value, or vice versa
-						allegro_message("If any fingering is specified, it must be done so for every used string");
+						allegro_message("If any fingering is specified, it must be done for all used strings, and only the used strings.");
 						retry = 1;	//Flag that the user must enter valid finger information
 					}
 				}

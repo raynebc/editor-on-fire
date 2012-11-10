@@ -1583,7 +1583,7 @@ unsigned long FindLongestLineLength_ALLEGRO(char *filename,char exit_on_empty)
 	unsigned long maxlinelength=0;
 	unsigned long ctr=0;
 	int inputchar=0;
-	PACKFILE *inf=NULL;
+	PACKFILE *inf;
 
 	assert_wrapper(filename != NULL);	//This must not be NULL
 	inf = pack_fopen(filename, "rt");
