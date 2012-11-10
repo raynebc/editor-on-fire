@@ -54,6 +54,10 @@ int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, un
 	//-1 is returned on error
 int eof_note_compare_simple(EOF_SONG *sp, unsigned long track, unsigned long note1, unsigned long note2);
 	//Compares two notes in the same track by invoking eof_note_compare
+int eof_pro_guitar_note_compare(EOF_PRO_GUITAR_TRACK *tp1, unsigned long note1, EOF_PRO_GUITAR_TRACK *tp2, unsigned long note2);
+	//Compares two pro guitar notes and returns 0 if both notes have the same bitmask (legacy bitmasks are not compared) and active frets have matching values
+	//If the notes do not match, or are from differently formatted tracks, 1 is returned
+	//-1 is returned on error
 char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, char *buffer);
 	//Copies the note name into the buffer, which is assumed to be large enough to store the name
 	//If the note is named manually, that name is used, otherwise chord detection is used to build the name

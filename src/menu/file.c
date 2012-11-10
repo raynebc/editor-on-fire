@@ -2170,7 +2170,8 @@ int eof_save_helper(char *destfilename)
 	/* check if any chords have undefined fingering */
 	if(eof_write_rs_files)
 	{	//If the user wants to save Rocksmith capable files
-		eof_correct_chord_fingerings();	//Ensure all chords in each pro guitar track have valid finger arrays
+		eof_song_fix_fingerings(eof_song);	//Erase partial note fingerings, replicate valid finger definitions to matching notes without finger definitions
+		eof_correct_chord_fingerings();			//Ensure all chords in each pro guitar track have valid finger arrays, prompt user to provide any that are missing
 	}
 
 	/* save the chart */

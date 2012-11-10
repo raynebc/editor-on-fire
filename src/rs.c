@@ -643,3 +643,90 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 
 	return 1;	//Return success
 }
+
+void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp)
+{
+	unsigned long ctr2, ctr3;
+	unsigned char *array;	//Points to the finger array being replicated to matching notes
+
+	if(!tp)
+		return;	//Invalid parameter
+
+	for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
+	{	//For each note in the track (outer loop)
+		if(eof_pro_guitar_note_fingering_valid(tp, ctr2) == 1)
+		{	//If the note's fingering was complete
+			array = tp->note[ctr2]->finger;
+			for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
+			{	//For each note in the track (inner loop)
+				if((ctr2 != ctr3) && (eof_pro_guitar_note_compare(tp, ctr2, tp, ctr3) == 0))
+				{	//If this note matches the note being examined in the outer loop, and we're not comparing the note to itself
+					if(eof_pro_guitar_note_fingering_valid(tp, ctr3) != 1)
+					{	//If the fingering of the inner loop's note is invalid/undefined
+						memcpy(tp->note[ctr3]->finger, array, 8);	//Overwrite it with the current finger array
+					}
+					else
+					{	//The inner loop's note has a valid fingering array defined
+						array = tp->note[ctr3]->finger;	//Use this finger array for remaining matching notes in the track
+					}
+				}
+			}//For each note in the track (inner loop)
+		}
+		else
+		{	//If the note's fingering was undefined or incomplete
+			memset(tp->note[ctr2], 0, 8);	//Clear it
+		}
+	}
+}
+
+int eof_pro_guitar_note_fingering_valid(EOF_PRO_GUITAR_TRACK *tp, unsigned long note)
+{
+	unsigned long ctr, bitmask;
+	char string_finger_defined = 0, string_finger_undefined = 0;
+
+	if(!tp || (note >= tp->notes))
+		return 0;	//Invalid parameters
+
+	for(ctr = 0, bitmask = 1; ctr < tp->numstrings; ctr++, bitmask <<= 1)
+	{	//For each string supported by this track
+		if(tp->note[note]->note & bitmask)
+		{	//If this string is used
+			if(tp->note[note]->finger[ctr] != 0)
+			{	//If this string has a finger definition
+				string_finger_defined = 1;	//Track that a string was defined
+			}
+			else
+			{	//This string does not have a finger definition
+				string_finger_undefined = 1;	//Track that a string was undefined
+			}
+		}
+	}
+
+	if(string_finger_defined && string_finger_undefined)
+	{	//If a note only had partial finger definition
+		return 0;	//Return fingering invalid
+	}
+
+	if(string_finger_defined)
+	{	//If the finger definition was complete
+		return 1;	//Return fingering valid
+	}
+
+	return 2;	//Return fingering undefined
+}
+
+void eof_song_fix_fingerings(EOF_SONG *sp)
+{
+	unsigned long ctr;
+
+	if(!sp)
+		return;	//Invalid parameter
+
+	for(ctr = 1; ctr < sp->tracks; ctr++)
+	{	//For each track (skipping the NULL global track 0)
+		if(sp->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If this is a pro guitar track
+			eof_pro_guitar_track_fix_fingerings(sp->pro_guitar_track[sp->track[ctr]->tracknum]);	//Correct and complete note fingering where possible
+		}
+	}
+}

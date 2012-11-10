@@ -4,6 +4,7 @@
 #include "beat.h"
 #include "main.h"
 #include "midi.h"
+#include "rs.h"
 #include "song.h"
 #include "tuning.h"
 #include "undo.h"
@@ -2345,6 +2346,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	unsigned long flags;			//Tracks the flags for the current note
 	char new_note;					//Tracks whether a new note is to be created
 	char tie_note;					//Tracks whether a note is a tie note
+	unsigned char finger[7];		//Store left (fretting hand) finger values for each string
 	for(ctr = 0; ctr < measures; ctr++)
 	{	//For each measure
 		curnum = tsarray[ctr].num;	//Obtain the time signature for this measure
@@ -2365,6 +2367,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					new_note = 0;	//Assume no new note is to be added unless a normal/muted note is parsed
 					tie_note = 0;	//Assume a note isn't a tie note unless found otherwise
 					flags = 0;
+					memset(finger, 0, sizeof(finger));	//Clear the finger array
 					bytemask = pack_getc(inf);	//Read beat bitmask
 					if(bytemask & 64)
 					{	//Beat is a rest
@@ -2502,7 +2505,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							{	//For each of the 7 possible usable strings
 								if(ctr4 < strings[ctr2])
 								{	//If this string is used in the track
-									pack_getc(inf);	//Finger # used to play string
+									byte = pack_getc(inf);	//Finger # used to play string
+									if(byte == 0)
+									{	//Thumb, remap to EOF's definition of thumb = 5
+										byte = 5;
+									}
+									if(byte > 0)
+									{	//If the finger number is defined
+										finger[ctr4] = byte;	//Store into the finger array
+									}
 								}
 								else
 								{
@@ -2799,7 +2810,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							hopo[ctr2] = -1;	//Reset this status before it is checked if this note is marked (to signal the next note being HO/PO)
 							if(bytemask & 128)
 							{	//Right/left hand fingering
-								pack_getc(inf);	//Left hand fingering
+								byte = pack_getc(inf);	//Left hand fingering
+								if(byte == 0)
+								{	//Thumb, remap to EOF's definition of thumb = 5
+									byte = 5;
+								}
+								if(byte > 0)
+								{	//If the finger number is defined
+									finger[ctr4] = byte;	//Store into the finger array
+								}
 								pack_getc(inf);	//Right hand fingering
 							}
 							if((bytemask & 1) && (fileversion >= 500))
@@ -2976,7 +2995,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{	//If this is a 7 string Guitar Pro track
 									convertednum--;	//Remap so that string 7 is ignored and the other 6 are read
 								}
-								np[ctr2]->frets[ctr4] = frets[convertednum];
+								np[ctr2]->frets[ctr4] = frets[convertednum];	//Copy the fret number for this string
+								np[ctr2]->finger[ctr4] = finger[convertednum];	//Copy the finger number used to fret the string (is nonzero if defined)
 							}
 							np[ctr2]->legacymask = 0;
 							np[ctr2]->midi_length = 0;
@@ -3156,6 +3176,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				eof_pro_guitar_track_delete_note(gp->track[ctr], ctr2 - 1);	//Remove it
 			}
 		}
+	}
+
+//Validate any imported note/chord fingerings and duplicate defined fingerings to matching notes
+	for(ctr = 0; ctr < gp->numtracks; ctr++)
+	{	//For each imported track
+		eof_pro_guitar_track_fix_fingerings(gp->track[ctr]);	//Erase partial note fingerings, replicate valid finger definitions to matching notes without finger definitions
 	}
 
 //Clean up
