@@ -3659,7 +3659,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 
 			if(eof_count_selected_notes(NULL, 0) > 1)
 			{	//If multiple notes are selected, warn the user
-				if(alert(NULL, "Warning:  This information will be applied to all selected notes.", NULL, "&OK", "&Cancel", 0, 0) == 2)
+				if(alert(NULL, "Warning:  This information will be applied to all selected notes.", NULL, "&OK", "&Cancel", 'y', 'n') == 2)
 				{	//If user opts to cancel the operation
 					if(note_selection_updated)
 					{	//If the only note modified was the seek hover note
@@ -4262,14 +4262,14 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 	bitmask = 0;
 	while(1)
 	{	//Until user explicitly cancels, or provides proper input and clicks OK
-		char retry = 0, fingeringdefined = 0, fingeringchanged = 0, offerupdatefingering = 0;
+		char retry = 0, fingeringdefined = 0, offerupdatefingering = 0;
 		retval = eof_popup_dialog(eof_pro_guitar_note_frets_dialog, 0);
 		if(retval == 21)
 		{	//If user clicked OK
 			//Validate the finger strings
 			for(i = 0; i < 6; i++)
 			{	//For each of the supported strings
-				if(eof_finger_strings[i][0] == '\0')
+				if(eof_finger_strings[i][0] != '\0')
 				{	//If this string has a finger value defined
 					fingeringdefined = 1;	//The finger fields will need to be validated
 					break;
@@ -4281,8 +4281,9 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 				{	//For each of the supported strings
 					if(((eof_fret_strings[i][0] != '\0') && (eof_finger_strings[i][0] == '\0')) || ((eof_fret_strings[i][0] == '\0') && (eof_finger_strings[i][0] != '\0')))
 					{	//If this string has a fret value but no finger value, or vice versa
-						allegro_message("If any fingering is specified, it must be done for all used strings, and only the used strings.");
+						allegro_message("If any fingering is specified, it must be done for all used strings, and only the used strings.\nCorrect or erase the finger numbers before clicking OK.");
 						retry = 1;	//Flag that the user must enter valid finger information
+						break;
 					}
 				}
 			}
@@ -4312,8 +4313,11 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 						{	//For each of the 6 supported strings
 							if(eof_fret_strings[ctr][0] != '\0')
 							{	//If this string isn't empty
-								fretvalue = 0;
-								fingervalue = eof_finger_strings[ctr][0] - '0';	//Convert the ASCII numerical character to decimal
+								fretvalue = fingervalue = 0;
+								if(eof_finger_strings[ctr][0] != '\0')
+								{	//If there is a finger value specified for this string
+									fingervalue = eof_finger_strings[ctr][0] - '0';	//Convert the ASCII numerical character to decimal
+								}
 								bitmask |= (1 << ctr);	//Set the appropriate bit for this lane
 								for(ctr2 = 0;eof_fret_strings[ctr][ctr2] != '\0';ctr2++)
 								{	//For each character in the fret string
@@ -4348,7 +4352,6 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 										*undo_made = 1;
 									}
 									eof_song->pro_guitar_track[tracknum]->note[i]->finger[ctr] = fingervalue;
-									fingeringchanged = 1;	//Track that the fingering of at least one note changed
 								}
 								if(fretvalue != 0xFF)
 								{	//Track whether the all used strings in this note/chord are muted
@@ -4366,6 +4369,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 										*undo_made = 1;
 									}
 									eof_song->pro_guitar_track[tracknum]->note[i]->frets[ctr] = 0;
+									eof_song->pro_guitar_track[tracknum]->note[i]->finger[ctr] = 0;
 								}
 							}
 						}//For each of the 6 supported strings
@@ -4403,15 +4407,15 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 					}//If the note is in the active instrument difficulty and is selected
 				}//For each note in the track
 
-				//Offer to update the fingering for all notes in the track matching the selected note (which all selected notes now match because they were altered)
-				if(fingeringchanged)
-				{	//If the fingering was edited
+				//Offer to update the fingering for all notes in the track matching the selected note (which all selected notes now match because they were altered if they didn't)
+				if(fingeringdefined)
+				{	//If the fingering is defined
 					for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->notes; ctr++)
 					{	//For each note in the track
 						if((ctr != eof_selection.current) && !eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr))
 						{	//If this note isn't the one that was just edited, but it matches
-							if(memcmp(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->finger, eof_song->pro_guitar_track[tracknum]->note[ctr]->finger, 8))
-							{	//If the fingering array of the note doesn't match that of this note
+							if(eof_pro_guitar_note_fingering_valid(eof_song->pro_guitar_track[tracknum], ctr) != 1)
+							{	//If the fingering for the note is not fully defined
 								offerupdatefingering = 1;	//Note that the user should be prompted whether to update the fingering array of all matching notes
 								break;
 							}
@@ -4423,8 +4427,8 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 						{	//For each note in the track
 							if((ctr != eof_selection.current) && !eof_note_compare_simple(eof_song, eof_selected_track, eof_selection.current, ctr))
 							{	//If this note isn't the one that was just edited, but it matches
-								if(memcmp(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->finger, eof_song->pro_guitar_track[tracknum]->note[ctr]->finger, 8))
-								{	//If the fingering array of the note doesn't match that of this note
+								if(eof_pro_guitar_note_fingering_valid(eof_song->pro_guitar_track[tracknum], ctr) != 1)
+								{	//If the fingering for the note is not fully defined
 									if(!*undo_made)
 									{	//If an undo state hasn't been made yet
 										eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -4435,9 +4439,9 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 							}
 						}
 					}
-				}
+				}//If the fingering is defined
+				break;
 			}//If the finger entries weren't invalid
-			break;
 		}//If user clicked OK
 		else
 		{
@@ -4483,7 +4487,7 @@ int eof_correct_chord_fingerings(void)
 					{	//For each string supported by this track
 						if(((tp->note[ctr2]->note & bitmask) && !tp->note[ctr2]->finger[ctr3]) || (!(tp->note[ctr2]->note & bitmask) && tp->note[ctr2]->finger[ctr3]))
 						{	//If the fret value is undefined but the finger value isn't, or vice versa
-							if(!user_prompted && (alert(NULL, "Some chords don't have correct finger information.", "Update them now?", "&Yes", "&No", 0, 0) == 2))
+							if(!user_prompted && (alert(NULL, "Some chords don't have correct finger information.", "Update them now?", "&Yes", "&No", 'y', 'n') == 2))
 							{	//If the user does not opt to update the fingering
 								return 0;
 							}

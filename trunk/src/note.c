@@ -1410,7 +1410,7 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 
 int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, unsigned long track2, unsigned long note2)
 {
-	unsigned long tracknum, tracknum2, ctr, bitmask;
+	unsigned long tracknum, tracknum2;
 	unsigned long note1note, note2note;
 
 	//Validate parameters
@@ -1442,23 +1442,9 @@ int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, un
 		break;
 
 		case EOF_PRO_GUITAR_TRACK_FORMAT:
-			if(note1note == note2note)
-			{	//If both note's bitmasks match
-				tracknum = sp->track[track1]->tracknum;
-				tracknum2 = sp->track[track2]->tracknum;
-				for(ctr = 0, bitmask = 1; ctr < 8; ctr ++, bitmask <<= 1)
-				{	//For each of the 8 bits in the note bitmask
-					if(note1note & bitmask)
-					{	//If this bit is set
-						if(sp->pro_guitar_track[tracknum]->note[note1]->frets[ctr] != sp->pro_guitar_track[tracknum2]->note[note2]->frets[ctr])
-						{	//If this string's fret value isn't the same for both notes
-							return 1;	//Return not equal
-						}
-					}
-				}
-				return 0;	//Return equal
-			}
-		break;
+			tracknum = sp->track[track1]->tracknum;
+			tracknum2 = sp->track[track2]->tracknum;
+		return eof_pro_guitar_note_compare(sp->pro_guitar_track[tracknum], note1, sp->pro_guitar_track[tracknum2], note2);
 	}
 
 	return 1;	//Return not equal
@@ -1467,6 +1453,32 @@ int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, un
 int eof_note_compare_simple(EOF_SONG *sp, unsigned long track, unsigned long note1, unsigned long note2)
 {
 	return eof_note_compare(sp, track, note1, track, note2);
+}
+
+int eof_pro_guitar_note_compare(EOF_PRO_GUITAR_TRACK *tp1, unsigned long note1, EOF_PRO_GUITAR_TRACK *tp2, unsigned long note2)
+{
+	unsigned long ctr, bitmask, note;
+
+	if(!tp1 || !tp2 || (note1 >= tp1->notes) || (note2 >= tp2->notes))
+		return -1;	//Invalid parameters
+
+	note = tp1->note[note1]->note;	//Cache this for easier access
+	if(note == tp2->note[note2]->note)
+	{	//If both note's bitmasks match
+		for(ctr = 0, bitmask = 1; ctr < 6; ctr ++, bitmask <<= 1)
+		{	//For each of the six strings supported by EOF
+			if(note & bitmask)
+			{	//If this string is used
+				if(tp1->note[note1]->frets[ctr] != tp2->note[note2]->frets[ctr])
+				{	//If this string's fret value isn't the same for both notes
+					return 1;	//Return not equal
+				}
+			}
+		}
+		return 0;	//Return equal
+	}
+
+	return 1;	//Return not equal
 }
 
 char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, char *buffer)
