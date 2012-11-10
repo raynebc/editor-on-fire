@@ -1855,7 +1855,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	}
 	if(fileversion < 500)
 	{	//The shuffle rhythm feel field only exists here in version 4.x or older of the format
-		byte = pack_getc(inf);
+		pack_getc(inf);
 	}
 	if(fileversion >= 400)
 	{	//The lyrics fields only exist in version 4.x or newer of the format
@@ -1881,17 +1881,17 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	{	//The volume/equalization settings only exist in versions newer than 5.0 of the format
 		pack_ReadDWORDLE(inf, &dword);	//Read the master volume
 		pack_fseek(inf, 4);			//Unknown data
-		byte = pack_getc(inf);		//32Hz band lowered
-		byte = pack_getc(inf);		//60Hz band lowered
-		byte = pack_getc(inf);		//125Hz band lowered
-		byte = pack_getc(inf);		//250Hz band lowered
-		byte = pack_getc(inf);		//500Hz band lowered
-		byte = pack_getc(inf);		//1KHz band lowered
-		byte = pack_getc(inf);		//2KHz band lowered
-		byte = pack_getc(inf);		//4KHz band lowered
-		byte = pack_getc(inf);		//8KHz band lowered
-		byte = pack_getc(inf);		//16KHz band lowered
-		byte = pack_getc(inf);		//Gain lowered
+		pack_getc(inf);		//32Hz band lowered
+		pack_getc(inf);		//60Hz band lowered
+		pack_getc(inf);		//125Hz band lowered
+		pack_getc(inf);		//250Hz band lowered
+		pack_getc(inf);		//500Hz band lowered
+		pack_getc(inf);		//1KHz band lowered
+		pack_getc(inf);		//2KHz band lowered
+		pack_getc(inf);		//4KHz band lowered
+		pack_getc(inf);		//8KHz band lowered
+		pack_getc(inf);		//16KHz band lowered
+		pack_getc(inf);		//Gain lowered
 	}
 	if(fileversion >= 500)
 	{	//The page setup settings only exist in version 5.x or newer of the format
@@ -1925,9 +1925,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	}
 	if(fileversion >= 400)
 	{	//Versions 4.0 and newer of the format store key and octave information here
-		byte = pack_getc(inf);	//Read the key
+		pack_getc(inf);			//Read the key
 		pack_fseek(inf, 3);		//Unknown data
-		word = pack_getc(inf);
+		pack_getc(inf);
 	}
 	else
 	{	//Older versions stored only key information here
@@ -2089,15 +2089,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		if(bytemask & 32)
 		{	//New section
 			eof_read_gp_string(inf, NULL, buffer, 1);	//Read section string
-			word = pack_getc(inf);						//Read section string color (Red intensity)
-			word = pack_getc(inf);						//Read section string color (Green intensity)
-			word = pack_getc(inf);						//Read section string color (Blue intensity)
+			pack_getc(inf);						//Read section string color (Red intensity)
+			pack_getc(inf);						//Read section string color (Green intensity)
+			pack_getc(inf);						//Read section string color (Blue intensity)
 			pack_getc(inf);								//Read unused value
 		}
 		if(bytemask & 64)
 		{	//Key signature change
-			byte = pack_getc(inf);	//Read the key
-			byte = pack_getc(inf);	//Read the major/minor byte
+			pack_getc(inf);	//Read the key
+			pack_getc(inf);	//Read the major/minor byte
 		}
 		if((fileversion >= 500) && ((bytemask & 1) || (bytemask & 2)))
 		{	//If either a new TS numerator or denominator was set, read the beam by eight notes values (only for version 5.x and higher of the format.  3.x/4.x are known to not have this info)
@@ -2111,7 +2111,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 		if(bytemask & 8)
 		{	//End of repeat
-			word = pack_getc(inf);	//Read number of repeats
+			pack_getc(inf);	//Read number of repeats
 		}
 		if(bytemask & 128)
 		{	//Double bar
@@ -2120,13 +2120,13 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		{	//Versions 5.0 and newer of the format store unknown data/padding here
 			if(bytemask & 16)
 			{	//Number of alternate ending
-				word = pack_getc(inf);	//Read alternate ending number
+				pack_getc(inf);	//Read alternate ending number
 			}
 			else
 			{
 				pack_getc(inf);		//Unknown data
 			}
-			byte = pack_getc(inf);	//Read triplet feel value
+			pack_getc(inf);			//Read triplet feel value
 			pack_getc(inf);			//Unknown data
 		}
 		tsarray[ctr].num = curnum;	//Store this measure's time signature for future reference
@@ -2300,25 +2300,25 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 #endif
 		gp->track[ctr]->numfrets = dword;
 		pack_ReadDWORDLE(inf, &dword);	//Read the capo position for this track
-		word = pack_getc(inf);			//Track color (Red intensity)
-		word = pack_getc(inf);			//Track color (Green intensity)
-		word = pack_getc(inf);			//Track color (Blue intensity)
+		pack_getc(inf);					//Track color (Red intensity)
+		pack_getc(inf);					//Track color (Green intensity)
+		pack_getc(inf);					//Track color (Blue intensity)
 		pack_getc(inf);					//Read unused value
 		if(fileversion > 500)
 		{
 			bytemask = pack_getc(inf);	//Track properties 1 bitmask
 			pack_getc(inf);				//Track properties 2 bitmask
 			pack_getc(inf);				//Unknown data
-			word = pack_getc(inf);		//MIDI bank
-			word = pack_getc(inf);		//Human playing
-			word = pack_getc(inf);		//Auto accentuation on the beat
+			pack_getc(inf);				//MIDI bank
+			pack_getc(inf);				//Human playing
+			pack_getc(inf);				//Auto accentuation on the beat
 			pack_fseek(inf, 31);		//Unknown data
-			word = pack_getc(inf);		//Selected sound bank option
+			pack_getc(inf);				//Selected sound bank option
 			pack_fseek(inf, 7);			//Unknown data
-			byte = pack_getc(inf);		//Low frequency band lowered
-			byte = pack_getc(inf);		//Mid frequency band lowered
-			byte = pack_getc(inf);		//High frequency band lowered
-			byte = pack_getc(inf);		//Gain lowered
+			pack_getc(inf);				//Low frequency band lowered
+			pack_getc(inf);				//Mid frequency band lowered
+			pack_getc(inf);				//High frequency band lowered
+			pack_getc(inf);				//Gain lowered
 			eof_read_gp_string(inf, NULL, buffer, 1);	//Read track instrument effect 1
 			eof_read_gp_string(inf, NULL, buffer, 1);	//Read track instrument effect 2
 		}
@@ -2368,7 +2368,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					bytemask = pack_getc(inf);	//Read beat bitmask
 					if(bytemask & 64)
 					{	//Beat is a rest
-						word = pack_getc(inf);	//Rest beat type (empty/rest)
+						pack_getc(inf);	//Rest beat type (empty/rest)
 						new_note = 0;
 					}
 					byte = pack_getc(inf);		//Read beat duration
@@ -2405,41 +2405,41 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						}//Chord diagram format 0, ie. GP3
 						else if(word == 1)
 						{	//Chord diagram format 1, ie. GP4
-							word = pack_getc(inf);		//Read sharp/flat indicator
+							pack_getc(inf);		//Read sharp/flat indicator
 							pack_fseek(inf, 3);			//Unknown data
-							word = pack_getc(inf);		//Read chord root
+							pack_getc(inf);		//Read chord root
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
 								pack_fseek(inf, 3);		//Unknown data
 							}
-							word = pack_getc(inf);		//Read chord type
+							pack_getc(inf);		//Read chord type
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
 								pack_fseek(inf, 3);		//Unknown data
 							}
-							word = pack_getc(inf);		//9th/11th/13th option
+							pack_getc(inf);		//9th/11th/13th option
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
 								pack_fseek(inf, 3);		//Unknown data
 							}
 							pack_ReadDWORDLE(inf, &dword);	//Read bass note (lowest note played in string)
-							word = pack_getc(inf);			//+/- option
+							pack_getc(inf);					//+/- option
 							pack_fseek(inf, 4);				//Unknown data
 							word = pack_getc(inf);			//Read chord name string length
 							pack_fread(buffer, 20, inf);	//Read chord name (which is padded to 20 bytes)
 							buffer[word] = '\0';			//Ensure string is terminated to be the right length
 							pack_fseek(inf, 2);				//Unknown data
-							byte = pack_getc(inf);			//Tonality of the fifth
+							pack_getc(inf);					//Tonality of the fifth
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
 								pack_fseek(inf, 3);			//Unknown data
 							}
-							byte = pack_getc(inf);			//Tonality of the ninth
+							pack_getc(inf);					//Tonality of the ninth
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
 								pack_fseek(inf, 3);			//Unknown data
 							}
-							byte = pack_getc(inf);			//Tonality of the eleventh
+							pack_getc(inf);					//Tonality of the eleventh
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
 								pack_fseek(inf, 3);			//Unknown data
@@ -2461,7 +2461,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							{	//For each of the 5 possible barres
 								if(ctr4 < barres)
 								{	//If this barre is defined
-									word = pack_getc(inf);	//Read the barre position
+									pack_getc(inf);	//Read the barre position
 								}
 								else
 								{
@@ -2472,7 +2472,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							{	//For each of the 5 possible barres
 								if(ctr4 < barres)
 								{		//If this barre is defined
-									word = pack_getc(inf);	//Read the barre start string
+									pack_getc(inf);	//Read the barre start string
 								}
 								else
 								{
@@ -2483,33 +2483,33 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							{	//For each of the 5 possible barres
 								if(ctr4 < barres)
 								{	//If this barre is defined
-									word = pack_getc(inf);	//Read the barre stop string
+									pack_getc(inf);	//Read the barre stop string
 								}
 								else
 								{
 									pack_getc(inf);
 								}
 							}
-							byte = pack_getc(inf);	//Chord includes first interval?
-							byte = pack_getc(inf);	//Chord includes third interval?
-							byte = pack_getc(inf);	//Chord includes fifth interval?
-							byte = pack_getc(inf);	//Chord includes seventh interval?
-							byte = pack_getc(inf);	//Chord includes ninth interval?
-							byte = pack_getc(inf);	//Chord includes eleventh interval?
-							byte = pack_getc(inf);	//Chord includes thirteenth interval?
-							pack_getc(inf);			//Unknown data
+							pack_getc(inf);		//Chord includes first interval?
+							pack_getc(inf);		//Chord includes third interval?
+							pack_getc(inf);		//Chord includes fifth interval?
+							pack_getc(inf);		//Chord includes seventh interval?
+							pack_getc(inf);		//Chord includes ninth interval?
+							pack_getc(inf);		//Chord includes eleventh interval?
+							pack_getc(inf);		//Chord includes thirteenth interval?
+							pack_getc(inf);		//Unknown data
 							for(ctr4 = 0; ctr4 < 7; ctr4++)
 							{	//For each of the 7 possible usable strings
 								if(ctr4 < strings[ctr2])
 								{	//If this string is used in the track
-									byte = pack_getc(inf);	//Finger # used to play string
+									pack_getc(inf);	//Finger # used to play string
 								}
 								else
 								{
 									pack_getc(inf);		//Skip this padding
 								}
 							}
-							byte = pack_getc(inf);	//Chord fingering displayed?
+							pack_getc(inf);	//Chord fingering displayed?
 						}//Chord diagram format 1, ie. GP4
 					}//Beat has a chord diagram
 					if(bytemask & 4)
@@ -2554,15 +2554,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							else if(byte == 1)
 							{	//Tapping
 								flags |= EOF_PRO_GUITAR_NOTE_FLAG_TAP;
-							}
-							else if(byte == 2)
-							{	//Slapping
-							}
-							else if(byte == 3)
-							{	//Popping
-							}
-							else
-							{	//Unknown
 							}
 							if(fileversion < 400)
 							{
@@ -2624,7 +2615,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					{	//Beat has mix table change
 						char volume_change = 0, pan_change = 0, chorus_change = 0, reverb_change = 0, phaser_change = 0, tremolo_change = 0, tempo_change = 0;
 
-						byte = pack_getc(inf);	//New instrument number
+						pack_getc(inf);	//New instrument number
 						if(fileversion >= 500)
 						{	//These fields are only in version 5.x files
 							pack_ReadDWORDLE(inf, &dword);	//RSE related number
@@ -2694,39 +2685,39 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						}
 						if(volume_change)
 						{	//This field only exists if a new volume was defined
-							byte = pack_getc(inf);	//New volume change transition
+							pack_getc(inf);	//New volume change transition
 						}
 						if(pan_change)
 						{	//This field only exists if a new pan value was defined
-							byte = pack_getc(inf);	//New pan change transition
+							pack_getc(inf);	//New pan change transition
 						}
 						if(chorus_change)
 						{	//This field only exists if a new  chorus value was defined
-							byte = pack_getc(inf);	//New chorus change transition
+							pack_getc(inf);	//New chorus change transition
 						}
 						if(reverb_change)
 						{	//This field only exists if a new reverb value was defined
-							byte = pack_getc(inf);	//New reverb change transition
+							pack_getc(inf);	//New reverb change transition
 						}
 						if(phaser_change)
 						{	//This field only exists if a new phaser value was defined
-							byte = pack_getc(inf);	//New phaser change transition
+							pack_getc(inf);	//New phaser change transition
 						}
 						if(tremolo_change)
 						{	//This field only exists if a new tremolo value was defined
-							byte = pack_getc(inf);	//New tremolo change transition
+							pack_getc(inf);	//New tremolo change transition
 						}
 						if(tempo_change)
 						{	//These fields only exists if a new tempo was defined
-							byte = pack_getc(inf);	//New tempo change transition
+							pack_getc(inf);	//New tempo change transition
 							if(fileversion > 500)
 							{	//This field only exists in versions newer than 5.0 of the format
-								byte = pack_getc(inf);	//Tempo text string hidden
+								pack_getc(inf);	//Tempo text string hidden
 							}
 						}
 						if(fileversion >= 400)
 						{	//This field is not in version 3.0 files, assume 4.x or higher
-							byte = pack_getc(inf);	//Mix table change applied tracks bitmask
+							pack_getc(inf);	//Mix table change applied tracks bitmask
 						}
 						if(fileversion >= 500)
 						{	//This unknown byte is only in version 5.x files
@@ -2782,12 +2773,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							}
 							if((bytemask & 1) && (fileversion < 500))
 							{	//Time independent duration (for versions of the format older than 5.x)
-								byte = pack_getc(inf);	//Time independent duration value
-								byte = pack_getc(inf);	//Time independent duration values
+								pack_getc(inf);	//Time independent duration value
+								pack_getc(inf);	//Time independent duration values
 							}
 							if(bytemask & 16)
 							{	//Note dynamic
-								word = pack_getc(inf) - 1;	//Get the dynamic value and remap its values from 0 to 7
+								pack_getc(inf);	//Get the dynamic value
 							}
 							if(bytemask & 32)
 							{	//Note type is defined
@@ -2808,8 +2799,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							hopo[ctr2] = -1;	//Reset this status before it is checked if this note is marked (to signal the next note being HO/PO)
 							if(bytemask & 128)
 							{	//Right/left hand fingering
-								byte = pack_getc(inf);	//Left hand fingering
-								byte = pack_getc(inf);	//Right hand fingering
+								pack_getc(inf);	//Left hand fingering
+								pack_getc(inf);	//Right hand fingering
 							}
 							if((bytemask & 1) && (fileversion >= 500))
 							{	//Time independent duration (for versions of the format 5.x or newer)
@@ -2866,20 +2857,20 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								}
 								if(byte1 & 16)
 								{	//Grace note
-									byte = pack_getc(inf);	//Grace note fret number
-									word = (pack_getc(inf) - 1) % 8;	//Get the grace note dynamic value and remap its values from 0 to 7
+									pack_getc(inf);	//Grace note fret number
+									pack_getc(inf);	//Grace note dynamic value
 									if(fileversion >= 500)
 									{	//If the file version is 5.x or higher (this byte verified not to be in 3.0 and 4.06 files)
-										byte = pack_getc(inf);	//Grace note transition type
+										pack_getc(inf);	//Grace note transition type
 									}
 									else
 									{	//The purpose of this field in 4.x or older files is unknown
 										pack_fseek(inf, 1);		//Unknown data
 									}
-									byte = pack_getc(inf);	//Grace note duration
+									pack_getc(inf);	//Grace note duration
 									if(fileversion >= 500)
 									{	//If the file version is 5.x or higher (this byte verified not to be in 3.0 and 4.06 files)
-										byte = pack_getc(inf);	//Grace note position
+										pack_getc(inf);	//Grace note position
 									}
 								}
 								if(byte2 & 1)
@@ -2891,7 +2882,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								}
 								if(byte2 & 4)
 								{	//Tremolo picking
-									byte = pack_getc(inf);	//Tremolo picking speed
+									pack_getc(inf);	//Tremolo picking speed
 									flags |= EOF_NOTE_FLAG_IS_TREMOLO;
 								}
 								if(byte2 & 8)
@@ -2920,19 +2911,19 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									byte = pack_getc(inf);	//Harmonic type
 									if(byte == 2)
 									{	//Artificial harmonic
-										byte = pack_getc(inf);	//Read harmonic note
-										byte = pack_getc(inf);	//Read sharp/flat status
-										byte = pack_getc(inf);	//Read octave status
+										pack_getc(inf);	//Read harmonic note
+										pack_getc(inf);	//Read sharp/flat status
+										pack_getc(inf);	//Read octave status
 									}
 									else if(byte == 3)
 									{	//Tapped harmonic
-										byte = pack_getc(inf);	//Right hand fret
+										pack_getc(inf);	//Right hand fret
 									}
 								}
 								if(byte2 & 32)
 								{	//Trill
-									byte = pack_getc(inf);	//Trill with fret
-									byte = pack_getc(inf);	//Trill duration
+									pack_getc(inf);	//Trill with fret
+									pack_getc(inf);	//Trill duration
 									flags |= EOF_NOTE_FLAG_IS_TRILL;
 ///It might be necessary to insert notes here for the trill phrase
 								}

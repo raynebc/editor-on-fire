@@ -326,7 +326,7 @@ float eof_get_porpos(unsigned long pos)
 	eof_log("eof_get_porpos() entered", 2);
 
 	float porpos = 0.0;
-	long beat = 0;
+	long beat;
 	int blength;
 	unsigned long rpos;
 
@@ -2459,7 +2459,7 @@ void eof_render_note_window(void)
 					}
 					else
 					{
-						unsigned long matchcount = 0;
+						unsigned long matchcount;
 						char chord_match_string[30] = {0};
 
 						matchcount = eof_count_chord_lookup_matches(eof_song->pro_guitar_track[tracknum], eof_selected_track, eof_selection.current);
@@ -4295,16 +4295,14 @@ int main(int argc, char * argv[])
 				/* rest to save CPU */
 				if(eof_has_focus)
 				{
-					if(eof_disable_vsync)
-					{
+					#ifndef ALLEGRO_WINDOWS
 						Idle(eof_cpu_saver);
-					}
-					else
-					{
-						#ifndef ALLEGRO_WINDOWS
+					#else
+						if(eof_disable_vsync)
+						{
 							Idle(eof_cpu_saver);
-						#endif
-					}
+						}
+					#endif
 				}
 
 				/* make program "sleep" until it is back in focus */
