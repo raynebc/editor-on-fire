@@ -72,10 +72,17 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 	//If *undo_made is zero, this function will create an undo state before modifying the chart and will set the referenced variable to nonzero
 int eof_menu_note_edit_pro_guitar_note_frets_fingers_menu(void);
 	//Calls eof_menu_note_edit_pro_guitar_note_frets_fingers() specifying function 0
-int eof_correct_chord_fingerings(void);
+int eof_correct_chord_fingerings_option(char report, char *undo_made);
 	//Checks each pro guitar track in the active chart for chords that have incorrect fingering (defined when it shouldn't be or vice versa)
 	//For each that is found, the "Edit pro guitar fret/finger values" dialog is launched with the fret fields locked so that the fingerings can be defined
 	//The given fingering is then applied to all matching notes in the track
+	//If report is nonzero, a dialog message is displayed if no corrections were made, alerting the user that it was already correct
+	//If report is zero, a dialog message is displayed BEFORE prompting the user to make corrections, since the user didn't manually invoke the function
+	//If *undo_made is zero, this function will create an undo state before modifying the chart and will set the referenced variable to nonzero
+int eof_correct_chord_fingerings(void);
+	//Calls eof_correct_chord_fingerings_option specifying not to report if there were no corrections made (to be called during save logic)
+int eof_correct_chord_fingerings_menu(void);
+	//Calls eof_correct_chord_fingerings_option specifying to report if there were no corrections made (to be called from menu)
 
 int eof_menu_note_toggle_slide_up(void);		//Toggles the slide up status of all selected notes
 int eof_menu_note_toggle_slide_down(void);		//Toggles the slide down status of all selected notes

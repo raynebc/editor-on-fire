@@ -1358,7 +1358,7 @@ if(key[KEY_PAUSE])
 	}
 
 	/* toggle full screen 3D view (CTRL+F)*/
-	if(key[KEY_F] && KEY_EITHER_CTRL)
+	if(key[KEY_F] && KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 	{
 		eof_full_screen_3d ^= 1;	//Toggle this setting on/off
 		key[KEY_F] = 0;
@@ -1981,9 +1981,17 @@ if(key[KEY_PAUSE])
 			}
 
 	/* edit pro guitar fret values (F in a pro guitar track) */
-			if(key[KEY_F] && !KEY_EITHER_CTRL)
+			if(key[KEY_F] && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 			{
 				eof_menu_note_edit_pro_guitar_note_frets_fingers_menu();
+				key[KEY_F] = 0;
+			}
+
+	/* set fret hand position (SHIFT+F in a pro guitar track) */
+			if(key[KEY_F] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+			{
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				eof_pro_guitar_set_fret_hand_position();
 				key[KEY_F] = 0;
 			}
 

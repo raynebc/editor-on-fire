@@ -21,6 +21,7 @@ extern DIALOG eof_catalog_entry_name_dialog[];
 extern DIALOG eof_pro_guitar_tuning_dialog[];
 extern DIALOG eof_note_set_num_frets_strings_dialog[];
 extern DIALOG eof_raw_midi_tracks_dialog[];
+extern DIALOG eof_fret_hand_position_list_dialog[];
 
 void eof_prepare_song_menu(void);
 
@@ -143,5 +144,9 @@ int eof_menu_song_seek_bookmark_help(int b);
 	//Seeks to the specified bookmark.  Returns nonzero on success
 int eof_is_number(char * buffer);
 	//Returns nonzero if all characters in the specified string are numerical.
+int eof_pro_guitar_set_fret_hand_position(void);
+	//Allows the user to define a fret hand position for the active difficulty
+int eof_menu_song_fret_hand_positions(void);
+	//Displays the fret hand positions defined for the active track difficulty, allowing them to be deleted
 
 #endif

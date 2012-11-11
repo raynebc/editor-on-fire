@@ -3,6 +3,7 @@
 #include "main.h"
 #include "midi.h"
 #include "rs.h"
+#include "undo.h"
 #include <time.h>
 
 #ifdef USEMEMWATCH
@@ -630,8 +631,39 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 			{	//There are no chords in this difficulty, write an empty chords tag
 				pack_fputs("      <chords count=\"0\"/>\n", fp);
 			}
+
+			//Write other stuff
 			pack_fputs("      <fretHandMutes count=\"0\"/>\n", fp);
-			pack_fputs("      <anchors count=\"0\"/>\n", fp);
+
+			//Write anchors (fret hand positions)
+			unsigned long anchorcount;
+			for(ctr3 = 0, anchorcount = 0; ctr3 < tp->handpositions; ctr3++)
+			{	//For each hand position defined in the track
+				if(tp->handposition[ctr3].difficulty == ctr)
+				{	//If the hand position is in this difficulty
+					anchorcount++;
+				}
+			}
+			if(anchorcount)
+			{	//If there's at least one anchor in this difficulty
+				snprintf(buffer, sizeof(buffer), "      <anchors count=\"%lu\">\n", anchorcount);
+				pack_fputs(buffer, fp);
+				for(ctr3 = 0, anchorcount = 0; ctr3 < tp->handpositions; ctr3++)
+				{	//For each hand position defined in the track
+					if(tp->handposition[ctr3].difficulty == ctr)
+					{	//If the hand position is in this difficulty
+						snprintf(buffer, sizeof(buffer), "        <anchor time=\"%.3f\" fret=\"%lu\"/>\n", (double)tp->handposition[ctr3].start_pos / 1000.0, tp->handposition[ctr3].end_pos);
+						pack_fputs(buffer, fp);
+					}
+				}
+				pack_fputs("      </anchors>\n", fp);
+			}
+			else
+			{	//There are no anchors in this difficulty, write an empty anchors tag
+				pack_fputs("      <anchors count=\"0\"/>\n", fp);
+			}
+
+			//Write other stuff
 			pack_fputs("      <handShapes count=\"0\"/>\n", fp);
 			pack_fputs("    </level>\n", fp);
 		}//If this difficulty is populated
@@ -644,17 +676,19 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 	return 1;	//Return success
 }
 
-void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp)
+void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_made)
 {
 	unsigned long ctr2, ctr3;
 	unsigned char *array;	//Points to the finger array being replicated to matching notes
+	int retval;
 
 	if(!tp)
 		return;	//Invalid parameter
 
 	for(ctr2 = 0; ctr2 < tp->notes; ctr2++)
 	{	//For each note in the track (outer loop)
-		if(eof_pro_guitar_note_fingering_valid(tp, ctr2) == 1)
+		retval = eof_pro_guitar_note_fingering_valid(tp, ctr2);
+		if(retval == 1)
 		{	//If the note's fingering was complete
 			array = tp->note[ctr2]->finger;
 			for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
@@ -663,6 +697,11 @@ void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp)
 				{	//If this note matches the note being examined in the outer loop, and we're not comparing the note to itself
 					if(eof_pro_guitar_note_fingering_valid(tp, ctr3) != 1)
 					{	//If the fingering of the inner loop's note is invalid/undefined
+						if(undo_made && !(*undo_made))
+						{	//If an undo hasn't been made yet
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+							*undo_made = 1;
+						}
 						memcpy(tp->note[ctr3]->finger, array, 8);	//Overwrite it with the current finger array
 					}
 					else
@@ -672,8 +711,13 @@ void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp)
 				}
 			}//For each note in the track (inner loop)
 		}
-		else
-		{	//If the note's fingering was undefined or incomplete
+		else if(retval == 0)
+		{	//If the note's fingering was defined, but invalid
+			if(undo_made && !(*undo_made))
+			{	//If an undo hasn't been made yet
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				*undo_made = 1;
+			}
 			memset(tp->note[ctr2], 0, 8);	//Clear it
 		}
 	}
@@ -691,13 +735,28 @@ int eof_pro_guitar_note_fingering_valid(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 	{	//For each string supported by this track
 		if(tp->note[note]->note & bitmask)
 		{	//If this string is used
-			if(tp->note[note]->finger[ctr] != 0)
-			{	//If this string has a finger definition
-				string_finger_defined = 1;	//Track that a string was defined
+			if(tp->note[note]->frets[ctr] != 0)
+			{	//If the string isn't being played open
+				if(tp->note[note]->finger[ctr] != 0)
+				{	//If this string has a finger definition
+					string_finger_defined = 1;	//Track that a string was defined
+				}
+				else
+				{	//This string does not have a finger definition
+					string_finger_undefined = 1;	//Track that a string was undefined
+				}
 			}
 			else
-			{	//This string does not have a finger definition
-				string_finger_undefined = 1;	//Track that a string was undefined
+			{	//If the string is being played open, it must not have a finger defined
+				if(tp->note[note]->finger[ctr] != 0)
+				{	//If this string has a finger definition
+					string_finger_defined = string_finger_undefined = 1;	//Set an error condition
+					break;
+				}
+				else
+				{	//This string does not have a finger definition, which is correct
+					string_finger_defined = 1;	//Track it as if it was a string with valid fingering
+				}
 			}
 		}
 	}
@@ -715,7 +774,7 @@ int eof_pro_guitar_note_fingering_valid(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 	return 2;	//Return fingering undefined
 }
 
-void eof_song_fix_fingerings(EOF_SONG *sp)
+void eof_song_fix_fingerings(EOF_SONG *sp, char *undo_made)
 {
 	unsigned long ctr;
 
@@ -726,7 +785,7 @@ void eof_song_fix_fingerings(EOF_SONG *sp)
 	{	//For each track (skipping the NULL global track 0)
 		if(sp->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If this is a pro guitar track
-			eof_pro_guitar_track_fix_fingerings(sp->pro_guitar_track[sp->track[ctr]->tracknum]);	//Correct and complete note fingering where possible
+			eof_pro_guitar_track_fix_fingerings(sp->pro_guitar_track[sp->track[ctr]->tracknum], undo_made);	//Correct and complete note fingering where possible, performing an undo state before making changes
 		}
 	}
 }
