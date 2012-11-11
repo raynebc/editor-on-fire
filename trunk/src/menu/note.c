@@ -4279,9 +4279,11 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 			{	//If any fingering fields are defined, they have to be valid
 				for(i = 0; i < 6; i++)
 				{	//For each of the supported strings
-					if(((eof_fret_strings[i][0] != '\0') && (eof_finger_strings[i][0] == '\0')) || ((eof_fret_strings[i][0] == '\0') && (eof_finger_strings[i][0] != '\0')))
-					{	//If this string has a fret value but no finger value, or vice versa
-						allegro_message("If any fingering is specified, it must be done for all used strings, and only the used strings.\nCorrect or erase the finger numbers before clicking OK.");
+					if(	((eof_fret_strings[i][0] != '\0') && (eof_finger_strings[i][0] == '\0') && (atol(eof_fret_strings[i]) != 0)) ||
+						((eof_fret_strings[i][0] == '\0') && (eof_finger_strings[i][0] != '\0')) ||
+						((eof_fret_strings[i][0] != '\0') && ((eof_finger_strings[i][0] != '\0') && (atol(eof_fret_strings[i]) == 0))))
+					{	//If this string has a fret value but no finger value for a string that isn't played open, a finger value for a string that isn't played or a finger is specified for a string that is played open
+						allegro_message("If any fingering is specified, it must be done for all fretted strings, and only the fretted strings.\nCorrect or erase the finger numbers before clicking OK.");
 						retry = 1;	//Flag that the user must enter valid finger information
 						break;
 					}
@@ -4465,13 +4467,30 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 
 int eof_correct_chord_fingerings(void)
 {
-	unsigned long ctr, ctr2, ctr3, tracknum, bitmask;
+	char undo_made = 0;
+	return eof_correct_chord_fingerings_option(0, &undo_made);	//Correct fingerings, don't report to user if no corrections were needed
+}
+
+int eof_correct_chord_fingerings_menu(void)
+{
+	char undo_made = 0;
+	return eof_correct_chord_fingerings_option(1, &undo_made);	//Correct fingerings, report to user if no corrections were needed
+}
+
+int eof_correct_chord_fingerings_option(char report, char *undo_made)
+{
+	unsigned long ctr, ctr2, tracknum;
 	EOF_PRO_GUITAR_TRACK *tp;
-	char undo_made = 0, cancelled, user_prompted = 0;
+	char cancelled, user_prompted = 0;
 
 	if(!eof_song)
 		return 0;	//Error
 
+	if(report)
+	{	//If the user invoked this function from the Song menu
+		user_prompted = 1;	//Suppress asking to make changes since the user already gave intention to make any needed corrections
+	}
+	eof_song_fix_fingerings(eof_song, undo_made);		//Erase partial note fingerings, replicate valid finger definitions to matching notes without finger definitions
 	memset(&eof_selection, 0, sizeof(EOF_SELECTION_DATA));	//Clear the note selection
 	for(ctr = 1; ctr < eof_song->tracks; ctr++)
 	{	//For each track (skipping the global track, 0)
@@ -4483,33 +4502,34 @@ int eof_correct_chord_fingerings(void)
 			{	//For each note in this track
 				if((eof_note_count_colors(eof_song, ctr, ctr2) > 1) && !eof_is_string_muted(eof_song, ctr, ctr2))
 				{	//If this note is a chord that isn't completely string muted
-					for(ctr3 = 0, bitmask = 1; ctr3 < tp->numstrings; ctr3++, bitmask <<= 1)
-					{	//For each string supported by this track
-						if(((tp->note[ctr2]->note & bitmask) && !tp->note[ctr2]->finger[ctr3]) || (!(tp->note[ctr2]->note & bitmask) && tp->note[ctr2]->finger[ctr3]))
-						{	//If the fret value is undefined but the finger value isn't, or vice versa
-							if(!user_prompted && (alert(NULL, "Some chords don't have correct finger information.", "Update them now?", "&Yes", "&No", 'y', 'n') == 2))
-							{	//If the user does not opt to update the fingering
-								return 0;
-							}
-							user_prompted = 1;
-							eof_selection.current = ctr2;	//Select this note
-							eof_selection.track = ctr;		//Select this track
-							eof_selection.multi[ctr2] = 1;	//Select this note in the selection array
-							eof_menu_track_selected_track_number(ctr);	//Change the active track
-							eof_render();					//Render the track being checked so the user knows which track a note is being edited from
-							cancelled = !eof_menu_note_edit_pro_guitar_note_frets_fingers(1, &undo_made);	//Open the edit fret/finger dialog where only the necessary finger fields can be altered
-							eof_selection.multi[ctr2] = 0;	//Unselect this note
-							eof_selection.current = EOF_MAX_NOTES - 1;
-							if(cancelled)
-							{	//If the user cancelled updating the chord fingering
-								return 0;
-							}
+					if(eof_pro_guitar_note_fingering_valid(tp, ctr2) != 1)
+					{	//If the fingering for this chord isn't valid or is undefined
+						if(!user_prompted && (alert(NULL, "Some chords don't have correct finger information.", "Update them now?", "&Yes", "&No", 'y', 'n') != 1))
+						{	//If the user does not opt to update the fingering
+							return 0;
 						}
-					}//For each string supported by this track
+						user_prompted = 1;
+						eof_selection.current = ctr2;	//Select this note
+						eof_selection.track = ctr;		//Select this track
+						eof_selection.multi[ctr2] = 1;	//Select this note in the selection array
+						eof_menu_track_selected_track_number(ctr);	//Change the active track
+						eof_render();					//Render the track being checked so the user knows which track a note is being edited from
+						cancelled = !eof_menu_note_edit_pro_guitar_note_frets_fingers(1, undo_made);	//Open the edit fret/finger dialog where only the necessary finger fields can be altered
+						eof_selection.multi[ctr2] = 0;	//Unselect this note
+						eof_selection.current = EOF_MAX_NOTES - 1;
+						if(cancelled)
+						{	//If the user cancelled updating the chord fingering
+							return 0;
+						}
+					}
 				}//If this note is a chord that isn't completely string muted
 			}//For each note in this track
 		}//If this is a pro guitar track
 	}//For each track (skipping the global track, 0)
+	if(report && !(*undo_made))
+	{	//If no alterations were necessary and the calling function wanted this reported
+		allegro_message("All fingerings are already defined");
+	}
 	return 1;
 }
 
@@ -6809,17 +6829,18 @@ int eof_menu_note_remove_vibrato(void)
 {
 	unsigned long i;
 	long u = 0;
-	unsigned long flags;
+	unsigned long flags, tracknum;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
-		{	//If this note is in the currently active track and is selected
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->pro_guitar_track[tracknum]->note[i]->type == eof_note_type))
+		{	//If this note is selected and is in the active difficulty
 			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
 			{	//If this note has vibrato status
@@ -6845,17 +6866,18 @@ int eof_menu_note_toggle_vibrato(void)
 {
 	unsigned long i;
 	long u = 0;
-	unsigned long flags;
+	unsigned long flags, tracknum;
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
-		{	//If this note is in the currently active track and is selected
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->pro_guitar_track[tracknum]->note[i]->type == eof_note_type))
+		{	//If this note is selected and is in the active difficulty
 			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 			flags ^= EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;	//Toggle the vibrato flag
 			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC)

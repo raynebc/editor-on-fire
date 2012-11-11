@@ -1340,11 +1340,12 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 				ptr4->arpeggios = 0;
 				ptr4->trills = 0;
 				ptr4->tremolos = 0;
+				ptr4->handpositions = 0;
 				ptr4->parent = ptr3;
 				sp->pro_guitar_track[sp->pro_guitar_tracks] = ptr4;
 				sp->pro_guitar_tracks++;
 			break;
-			case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:
+			case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:	//Variable Lane Legacy (not implemented yet)
 			break;
 			default:
 			return 0;	//Return error
@@ -1413,7 +1414,7 @@ int eof_song_delete_track(EOF_SONG * sp, unsigned long track)
 			}
 			sp->pro_guitar_tracks--;
 		break;
-		case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:
+		case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:	//Variable Lane Legacy (not implemented yet)
 		break;
 	}
 
@@ -1817,7 +1818,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					}
 				}
 			break;
-			case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:	//Variable Lane Legacy
+			case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:	//Variable Lane Legacy (not implemented yet)
 				allegro_message("Error: Variable lane not supported yet.  Aborting");
 			return 0;
 			default://Unknown track type
@@ -2131,6 +2132,29 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				return 1;
 			}
 		break;
+		case EOF_FRET_HAND_POS_SECTION:	//Fret hand position
+			if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{
+				count = sp->pro_guitar_track[tracknum]->handpositions;
+				if(count < EOF_MAX_PHRASES)
+				{	//If EOF can store the fret hand position
+					sp->pro_guitar_track[tracknum]->handposition[count].start_pos = start;
+					sp->pro_guitar_track[tracknum]->handposition[count].end_pos = end;	//This will store the fret number the fretting hand is at
+					sp->pro_guitar_track[tracknum]->handposition[count].flags = 0;
+					sp->pro_guitar_track[tracknum]->handposition[count].difficulty = difficulty;
+					if(name == NULL)
+					{
+						sp->pro_guitar_track[tracknum]->handposition[count].name[0] = '\0';
+					}
+					else
+					{
+						ustrcpy(sp->pro_guitar_track[tracknum]->handposition[count].name, name);
+					}
+					sp->pro_guitar_track[tracknum]->handpositions++;
+				}
+				return 1;
+			}
+		break;
 	}
 	return 0;	//Return error
 }
@@ -2168,7 +2192,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};
 	unsigned long count,ctr,ctr2,tracknum;
 	unsigned long track_count,track_ctr,bookmark_count,bitmask,fingerdefinitions;
-	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders;
+	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions;
 
 	if((sp == NULL) || (fn == NULL))
 	{
@@ -2469,7 +2493,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			pack_iputw(0, fp);	//Write track compliance flags (not supported yet)
 
 			tracknum = sp->track[track_ctr]->tracknum;
-			has_solos = has_star_power = has_lyric_phrases = has_arpeggios = has_trills = has_tremolos = has_sliders = 0;
+			has_solos = has_star_power = has_lyric_phrases = has_arpeggios = has_trills = has_tremolos = has_sliders = has_handpositions = 0;
 			switch(sp->track[track_ctr]->track_format)
 			{	//Perform the appropriate logic to write this format of track
 				case EOF_LEGACY_TRACK_FORMAT:	//Legacy (non pro guitar, non pro bass, non pro keys, pro or non pro drums)
@@ -2645,7 +2669,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 							}
 						}
 					}
-					//Write the section type chunk
+					//Write the section type chunk, first count the number of section types to write
 					if(sp->pro_guitar_track[tracknum]->solos)
 					{
 						has_solos = 1;
@@ -2666,7 +2690,11 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					{
 						has_tremolos = 1;
 					}
-					pack_iputw(has_solos + has_star_power + has_arpeggios + has_trills + has_tremolos, fp);		//Write the number of section types
+					if(sp->pro_guitar_track[tracknum]->handpositions)
+					{
+						has_handpositions = 1;
+					}
+					pack_iputw(has_solos + has_star_power + has_arpeggios + has_trills + has_tremolos + has_handpositions, fp);		//Write the number of section types
 					if(has_solos)
 					{	//Write solo sections
 						pack_iputw(EOF_SOLO_SECTION, fp);			//Write solo section type
@@ -2732,8 +2760,21 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 							pack_iputl(0, fp);						//Write section flags (not used)
 						}
 					}
+					if(has_handpositions)
+					{	//Write fret hand positions
+						pack_iputw(EOF_FRET_HAND_POS_SECTION, fp);		//Write fret hand position section type
+						pack_iputl(sp->pro_guitar_track[tracknum]->handpositions, fp);	//Write number of fret hand positions for this track
+						for(ctr=0; ctr < sp->pro_guitar_track[tracknum]->handpositions; ctr++)
+						{	//For each fret hand position in the track
+							eof_save_song_string_pf(NULL, fp);		//Write an empty section name string (not supported yet)
+							pack_putc(sp->pro_guitar_track[tracknum]->handposition[ctr].difficulty, fp);	//Write the fret hand position's associated difficulty
+							pack_iputl(sp->pro_guitar_track[tracknum]->handposition[ctr].start_pos, fp);	//Write the fret hand position's timestamp
+							pack_iputl(sp->pro_guitar_track[tracknum]->handposition[ctr].end_pos, fp);		//Write the fret hand position's fret number
+							pack_iputl(0, fp);						//Write section flags (not used)
+						}
+					}
 				break;//Pro Guitar/Bass
-				case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:	//Variable Lane Legacy
+				case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:	//Variable Lane Legacy (not implemented yet)
 					allegro_message("Error: Variable lane not supported yet.  Aborting");
 				return 0;
 				default://Unknown track type

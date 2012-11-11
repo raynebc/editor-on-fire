@@ -140,7 +140,9 @@ MENU eof_song_proguitar_menu[] =
     {"Enable &Legacy view\tShift+L", eof_menu_song_legacy_view, NULL, 0, NULL},
     {"&Previous chord name\tShift+W", eof_menu_previous_chord_result, NULL, 0, NULL},
     {"&Next chord name\tShift+E", eof_menu_next_chord_result, NULL, 0, NULL},
-    {"Correct chord finger information", eof_correct_chord_fingerings, NULL, 0, NULL},
+    {"Correct chord finger information", eof_correct_chord_fingerings_menu, NULL, 0, NULL},
+    {"Set fret hand position\tShift+F", eof_pro_guitar_set_fret_hand_position, NULL, 0, NULL},
+    {"This difficulty's fret &Hand positions", eof_menu_song_fret_hand_positions, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -3569,6 +3571,243 @@ int eof_menu_song_catalog_edit(void)
 			eof_song->catalog->entry[eof_selected_catalog_entry].end_pos = newend;
 		}
 	}
+
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(NULL);
+	return 1;
+}
+
+int eof_song_qsort_fret_hand_positions(const void * e1, const void * e2)
+{
+	EOF_PHRASE_SECTION * thing1 = (EOF_PHRASE_SECTION *)e1;
+	EOF_PHRASE_SECTION * thing2 = (EOF_PHRASE_SECTION *)e2;
+
+	//Sort by difficulty first
+	if(thing1->difficulty < thing2->difficulty)
+	{
+		return -1;
+	}
+	else if(thing1->difficulty > thing2->difficulty)
+	{
+		return 1;
+	}
+
+	//Sort by timestamp second
+	if(thing1->start_pos < thing2->start_pos)
+	{
+		return -1;
+	}
+	else if(thing1->start_pos > thing2->start_pos)
+	{
+		return 1;
+	}
+
+	//They are equal
+	return 0;
+}
+
+void eof_sort_fret_hand_positions(EOF_PRO_GUITAR_TRACK* tp)
+{
+ 	eof_log("eof_sort_fret_hand_positions() entered", 1);
+
+	if(tp)
+	{
+		qsort(tp->handposition, tp->handpositions, sizeof(EOF_PHRASE_SECTION), eof_song_qsort_fret_hand_positions);
+	}
+}
+
+DIALOG eof_pro_guitar_set_fret_hand_position_dialog[] =
+{
+   /* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
+   { d_agup_window_proc,    0,   0,   200, 132, 0,   0,   0,    0,      0,   0,   "Set fret hand position",      NULL, NULL },
+   { d_agup_text_proc,      12,  40,  60,  12,  0,   0,   0,    0,      0,   0,   "At fret #",                NULL, NULL },
+   { eof_verified_edit_proc,12,  56,  50,  20,  0,   0,   0,    0,      2,   0,   eof_etext,     "0123456789", NULL },
+   { d_agup_button_proc,    12,  92,  84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",               NULL, NULL },
+   { d_agup_button_proc,    110, 92,  78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+   { NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,               NULL, NULL }
+};
+
+int eof_pro_guitar_set_fret_hand_position(void)
+{
+	unsigned long position, tracknum, ctr;
+
+	if(!eof_song_loaded || !eof_song)
+		return 1;	//Do not allow this function to run if a chart is not loaded
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	eof_render();
+	eof_color_dialog(eof_pro_guitar_set_fret_hand_position_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_pro_guitar_set_fret_hand_position_dialog);
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	eof_etext[0] = '\0';	//Empty this string
+	if(eof_popup_dialog(eof_pro_guitar_set_fret_hand_position_dialog, 2) == 3)
+	{	//User clicked OK
+		if(eof_etext[0] != '\0')
+		{	//If the user provided a number
+			position = atol(eof_etext);
+			if(position > eof_song->pro_guitar_track[tracknum]->numfrets)
+			{	//If the given fret position is higher than this track's supported number of frets
+				allegro_message("You cannot specify a fret hand position that is higher than this track's number of frets (%u)", eof_song->pro_guitar_track[tracknum]->numfrets);
+				return 1;
+			}
+			else if(!position)
+			{	//If the user gave a fret position of 0
+				allegro_message("You cannot specify a fret hand position of 0");
+				return 1;
+			}
+			else
+			{	//If the user gave a valid position
+				for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->handpositions; ctr++)
+				{	//For each existing fret hand position in the track
+					if(eof_song->pro_guitar_track[tracknum]->handposition[ctr].start_pos == eof_music_pos - eof_av_delay)
+					{	//If a fret hand position already exists at the current seek position
+						if(eof_song->pro_guitar_track[tracknum]->handposition[ctr].end_pos != position)
+						{	//And it defines a different fret hand position than the user just gave
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+							eof_song->pro_guitar_track[tracknum]->handposition[ctr].end_pos = position;	//Update the existing fret hand position entry
+						}
+						return 0;
+					}
+				}
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				eof_track_add_section(eof_song, eof_selected_track, EOF_FRET_HAND_POS_SECTION, eof_note_type, eof_music_pos - eof_av_delay, position, 0, NULL);
+				eof_sort_fret_hand_positions(eof_song->pro_guitar_track[tracknum]);	//Sort the positions, since they must be in order for displaying to the user
+			}
+		}
+	}
+	return 0;
+}
+
+void eof_song_delete_hand_position(EOF_PRO_GUITAR_TRACK *tp, unsigned long index)
+{
+ 	eof_log("eof_song_delete_hand_position() entered", 1);
+
+	unsigned long ctr;
+	if(tp && (index < tp->handpositions))
+	{
+		tp->handposition[index].name[0] = '\0';	//Empty the name string
+		for(ctr = index; ctr < tp->handpositions; ctr++)
+		{
+			memcpy(&tp->handposition[ctr], &tp->handposition[ctr + 1], sizeof(EOF_PHRASE_SECTION));
+		}
+		tp->handpositions--;
+	}
+}
+
+int eof_fret_hand_position_delete(DIALOG * d)
+{
+	unsigned long tracknum, ecount = 0;
+	int i;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return D_O_K;
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	if(eof_song->pro_guitar_track[tracknum]->handpositions <= 0)
+	{
+		return D_O_K;
+	}
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	for(i = 0; i < eof_song->pro_guitar_track[tracknum]->handpositions; i++)
+	{	//For each fret hand position
+		if(eof_song->pro_guitar_track[tracknum]->handposition[i].difficulty == eof_note_type)
+		{	//If the fret hand position is in the active difficulty
+			/* if we've reached the item that is selected, delete it */
+			if(eof_fret_hand_position_list_dialog[1].d1 == ecount)
+			{
+				/* remove the hand position and exit */
+				eof_song_delete_hand_position(eof_song->pro_guitar_track[tracknum], i);
+				eof_sort_fret_hand_positions(eof_song->pro_guitar_track[tracknum]);	//Re-sort the remaining hand positions
+				dialog_message(eof_fret_hand_position_list_dialog, MSG_DRAW, 0, &i);	//Redraw dialog
+				return D_O_K;
+			}
+
+			/* go to next event */
+			else
+			{
+				ecount++;
+			}
+		}
+	}
+	return D_O_K;
+}
+
+char eof_fret_hand_position_list_text[EOF_MAX_PHRASES][25] = {{0}};
+
+char * eof_fret_hand_position_list(int index, int * size)
+{
+	int i;
+	int ecount = 0;
+	unsigned long tracknum;
+	int ism, iss, isms;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return NULL;
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	for(i = 0; i < eof_song->pro_guitar_track[tracknum]->handpositions; i++)
+	{	//For each fret hand position
+		if(eof_song->pro_guitar_track[tracknum]->handposition[i].difficulty == eof_note_type)
+		{	//If the fret hand position is in the active difficulty
+			if(ecount < EOF_MAX_TEXT_EVENTS)
+			{
+				ism = (eof_song->pro_guitar_track[tracknum]->handposition[i].start_pos / 1000) / 60;
+				iss = (eof_song->pro_guitar_track[tracknum]->handposition[i].start_pos / 1000) % 60;
+				isms = (eof_song->pro_guitar_track[tracknum]->handposition[i].start_pos % 1000);
+				snprintf(eof_fret_hand_position_list_text[ecount], 25, "%02d:%02d:%03d: Fret %lu", ism, iss, isms, eof_song->pro_guitar_track[tracknum]->handposition[i].end_pos);
+				ecount++;
+			}
+		}
+	}
+	switch(index)
+	{
+		case -1:
+		{
+			*size = ecount;
+			if(ecount > 0)
+			{	//If there is at least one fret hand position in the active difficulty
+				eof_fret_hand_position_list_dialog[2].flags = 0;	//Enable the Delete button
+			}
+			else
+			{
+				eof_fret_hand_position_list_dialog[2].flags = D_DISABLED;
+			}
+			break;
+		}
+		default:
+		{
+			return eof_fret_hand_position_list_text[index];
+		}
+	}
+	return NULL;
+}
+
+DIALOG eof_fret_hand_position_list_dialog[] =
+{
+   /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
+   { d_agup_window_proc,0,   48,  250, 237, 2,   23,  0,    0,      0,   0,   "Fret hand positions",       NULL, NULL },
+   { d_agup_list_proc,  12,  84,  150, 138, 2,   23,  0,    0,      0,   0,   eof_fret_hand_position_list,NULL, NULL },
+   { d_agup_push_proc,  170, 84,  68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, eof_fret_hand_position_delete },
+   { d_agup_button_proc,12,  245, 90,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_menu_song_fret_hand_positions(void)
+{
+	if(!eof_song_loaded || !eof_song)
+		return 1;	//Do not allow this function to run if a chart is not loaded
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	eof_cursor_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_fret_hand_position_list_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_fret_hand_position_list_dialog);
+
+	eof_popup_dialog(eof_fret_hand_position_list_dialog, 0);	//Launch the dialog
 
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;

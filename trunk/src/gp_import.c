@@ -3181,7 +3181,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 //Validate any imported note/chord fingerings and duplicate defined fingerings to matching notes
 	for(ctr = 0; ctr < gp->numtracks; ctr++)
 	{	//For each imported track
-		eof_pro_guitar_track_fix_fingerings(gp->track[ctr]);	//Erase partial note fingerings, replicate valid finger definitions to matching notes without finger definitions
+		eof_pro_guitar_track_fix_fingerings(gp->track[ctr], NULL);	//Erase partial note fingerings, replicate valid finger definitions to matching notes without finger definitions, don't make any additional undo states for corrections to the imported track
 	}
 
 //Clean up

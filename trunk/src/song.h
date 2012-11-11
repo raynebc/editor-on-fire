@@ -180,8 +180,8 @@ typedef struct
 	unsigned long start_pos;
 	unsigned long end_pos;
 	unsigned long flags;
-    char name[EOF_NAME_LENGTH+1];
-    char difficulty;	//The difficulty this phrase applies to (ie. arpeggios)
+	char name[EOF_NAME_LENGTH+1];
+	char difficulty;	//The difficulty this phrase applies to (ie. arpeggios)
 
 } EOF_PHRASE_SECTION;
 
@@ -229,6 +229,7 @@ typedef struct
 #define EOF_PREVIEW_SECTION				13
 #define EOF_TREMOLO_SECTION				14
 #define EOF_SLIDER_SECTION				15
+#define EOF_FRET_HAND_POS_SECTION       16
 
 #define EOF_TRACK_FLAG_SIX_LANES		1
 	//Specifies if the track has open strumming enabled (PART BASS) or a fifth drum lane enabled (PART DRUMS)
@@ -325,10 +326,9 @@ typedef struct
 	EOF_PHRASE_SECTION tremolo[EOF_MAX_PHRASES];
 	unsigned long tremolos;
 
-	/* chord array variables */
-//	EOF_CHORD_VARIATION_ARRAY eof_chord_variations;			//This will track each detected match for chord variations for the track based on its tuning
-//	EOF_CHORD_NUM_VARIATION_ARRAY eof_chord_num_variations;	//This will track the number of chord variations for each chord in the above 3D array
-//	char eof_chord_variations_array_ready;	//This will track if the chord variation array is ready to use
+	/* fret hand positions */
+	EOF_PHRASE_SECTION handposition[EOF_MAX_PHRASES];
+	unsigned long handpositions;
 
 } EOF_PRO_GUITAR_TRACK;
 
