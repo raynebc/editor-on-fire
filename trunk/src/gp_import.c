@@ -2035,6 +2035,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			free(tsarray);
 			return NULL;
 		}
+		memset(gp->track[ctr], 0, sizeof(EOF_PRO_GUITAR_TRACK));	//Initialize memory block to 0 to avoid crashes when not explicitly setting counters that were newly added to the pro guitar structure
 		gp->track[ctr]->arpeggios = 0;
 		gp->track[ctr]->notes = 0;
 		gp->track[ctr]->numfrets = 22;
@@ -2042,6 +2043,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		gp->track[ctr]->star_power_paths = 0;
 		gp->track[ctr]->trills = 0;
 		gp->track[ctr]->tremolos = 0;
+		gp->track[ctr]->handpositions = 0;
 		gp->track[ctr]->parent = NULL;
 	}
 
