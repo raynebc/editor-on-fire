@@ -4513,6 +4513,8 @@ int eof_correct_chord_fingerings_option(char report, char *undo_made)
 						eof_selection.track = ctr;		//Select this track
 						eof_selection.multi[ctr2] = 1;	//Select this note in the selection array
 						eof_menu_track_selected_track_number(ctr);	//Change the active track
+						eof_note_type = tp->note[ctr2]->type;	//Set the note's difficulty as the active difficulty
+						eof_set_seek_position(tp->note[ctr2]->pos + eof_av_delay);
 						eof_render();					//Render the track being checked so the user knows which track a note is being edited from
 						cancelled = !eof_menu_note_edit_pro_guitar_note_frets_fingers(1, undo_made);	//Open the edit fret/finger dialog where only the necessary finger fields can be altered
 						eof_selection.multi[ctr2] = 0;	//Unselect this note

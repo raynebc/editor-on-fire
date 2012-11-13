@@ -4,6 +4,7 @@
 #include "midi.h"
 #include "rs.h"
 #include "undo.h"
+#include "menu/song.h"	//For eof_song_delete_hand_position()
 #include <time.h>
 
 #ifdef USEMEMWATCH
@@ -139,7 +140,7 @@ unsigned long eof_build_section_list(EOF_SONG *sp, unsigned long **results)
 		return 0;	//Return error
 	}
 
-	//Duplicate the chart's tet events array
+	//Duplicate the chart's text events array
 	eventlist = malloc(sizeof(EOF_TEXT_EVENT *) * EOF_MAX_TEXT_EVENTS);
 	if(!eventlist)
 	{
@@ -288,56 +289,47 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 		}
 	}
 	sectionlistsize = eof_build_section_list(sp, &sectionlist);	//Build a list of all unique section markers in the chart
-	if(sectionlistsize)
-	{	//If there is at least one section marker
-		unsigned long phraseid;
-		snprintf(buffer, sizeof(buffer), "  <phrases count=\"%lu\">\n", sectionlistsize);	//Write the number of unique sections
+	unsigned long phraseid;
+	snprintf(buffer, sizeof(buffer), "  <phrases count=\"%lu\">\n", sectionlistsize + 2);	//Write the number of unique sections (plus a default COUNT and END section)
+	pack_fputs(buffer, fp);
+	pack_fputs("    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"0\" name=\"COUNT\" solo=\"0\"/>\n", fp);
+	for(ctr = 0; ctr < sectionlistsize; ctr++)
+	{	//For each of the entries in the unique section list
+		snprintf(buffer, sizeof(buffer), "    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"0\" name=\"%s\" solo=\"0\"/>\n", sp->text_event[sectionlist[ctr]]->text);
 		pack_fputs(buffer, fp);
-		for(ctr = 0; ctr < sectionlistsize; ctr++)
-		{	//For each of the entries in the unique section list
-			snprintf(buffer, sizeof(buffer), "    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"0\" name=\"%s\" solo=\"0\"/>\n", sp->text_event[sectionlist[ctr]]->text);
+	}
+	pack_fputs("    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"0\" name=\"END\" solo=\"0\"/>\n", fp);
+	pack_fputs("  </phrases>\n", fp);
+	snprintf(buffer, sizeof(buffer), "  <phraseIterations count=\"%lu\">\n", numsections);
+	pack_fputs(buffer, fp);
+	pack_fputs("    <phraseIteration time=\"0.000\" phraseId=\"0\"/>\n", fp);	//Write the default COUNT phrase iteration
+	for(ctr = 0; ctr < sp->beats; ctr++)
+	{	//For each beat in the chart
+		if(sp->beat[ctr]->contained_section_event >= 0)
+		{	//If this beat has a section event
+			for(ctr2 = 0; ctr2 < sectionlistsize; ctr2++)
+			{	//For each of the entries in the unique section list
+				if(!ustricmp(sp->text_event[sp->beat[ctr]->contained_section_event]->text, sp->text_event[sectionlist[ctr2]]->text))
+				{	//If this event matches a section marker entry
+					phraseid = ctr2 + 1;	//Add 1 to compensate for the COUNT phraseIteration that was inserted above
+					break;
+				}
+			}
+			if(ctr2 >= sectionlistsize)
+			{	//If the section couldn't be found
+				allegro_message("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.");
+				eof_log("Error:  Couldn't find section in unique section list.  Aborting Rocksmith export.", 1);
+				free(sectionlist);
+				return 0;	//Return error
+			}
+			snprintf(buffer, sizeof(buffer), "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\"/>\n", sp->beat[ctr]->fpos / 1000.0, phraseid);
 			pack_fputs(buffer, fp);
 		}
-		pack_fputs("  </phrases>\n", fp);
-		snprintf(buffer, sizeof(buffer), "  <phraseIterations count=\"%lu\">\n", numsections);
-		pack_fputs(buffer, fp);
-		for(ctr = 0; ctr < sp->beats; ctr++)
-		{	//For each beat in the chart
-			if(sp->beat[ctr]->contained_section_event >= 0)
-			{	//If this beat has a section event
-				for(ctr2 = 0; ctr2 < sectionlistsize; ctr2++)
-				{	//For each of the entries in the unique section list
-					if(!ustricmp(sp->text_event[sp->beat[ctr]->contained_section_event]->text, sp->text_event[sectionlist[ctr2]]->text))
-					{	//If this event matches a section marker entry
-						phraseid = ctr2;
-						break;
-					}
-				}
-				if(ctr2 >= sectionlistsize)
-				{	//If the section couldn't be found
-					allegro_message("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.");
-					eof_log("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.", 1);
-					free(sectionlist);
-					return 0;	//Return error
-				}
-				snprintf(buffer, sizeof(buffer), "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\"/>\n", sp->beat[ctr]->fpos / 1000.0, phraseid);
-				pack_fputs(buffer, fp);
-			}
-		}
-		pack_fputs("  </phraseIterations>\n", fp);
-		free(sectionlist);
 	}
-	else
-	{	//There are no section markers, write a single default phrase
-		pack_fputs("  <phrases count=\"1\">\n", fp);
-		snprintf(buffer, sizeof(buffer), "    <phrase disparity=\"0\" ignore=\"1\" maxDifficulty=\"0\" name=\"COUNT\" solo=\"0\"/>\n");
-		pack_fputs(buffer, fp);
-		pack_fputs("  </phrases>\n", fp);
-		pack_fputs("  <phraseIterations count=\"1\">\n", fp);
-		snprintf(buffer, sizeof(buffer), "    <phraseIteration time=\"%.3f\" phraseId=\"0\"/>\n", sp->beat[0]->fpos / 1000.0);	//Place this phrase at the first beat marker's position
-		pack_fputs(buffer, fp);
-		pack_fputs("  </phraseIterations>\n", fp);
-	}
+	snprintf(buffer, sizeof(buffer), "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\"/>\n", (double)eof_chart_length / 1000.0, sectionlistsize + 1);	//Write the default END phrase iteration
+	pack_fputs(buffer, fp);
+	pack_fputs("  </phraseIterations>\n", fp);
+	free(sectionlist);
 
 	//Write some unknown information
 	pack_fputs("  <linkedDiffs count=\"0\"/>\n", fp);
@@ -396,8 +388,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 					}
 					else
 					{
-						if(!fingeringpresent)
-						{	//If no fingering information is present for the chord
+						if(!fingeringpresent || (*(fret[ctr2]) == 0))
+						{	//If no fingering information is present for the chord, or this string is played open
 							*(finger[ctr2]) = fingerunused;		//Write a -1, this will allow the XML to compile even if the user defines no fingering for any chords
 						}
 						else
@@ -591,6 +583,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 				char *downstrum = "down";
 				char *direction;	//Will point to either upstrum or downstrum as appropriate
 				double notepos;
+				char highdensity;		//Any chord <= 500ms after another chord has the highDensity boolean property set to true
+				unsigned long lastchordpos = 0;
 				snprintf(buffer, sizeof(buffer), "      <chords count=\"%lu\">\n", numchords);
 				pack_fputs(buffer, fp);
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
@@ -620,9 +614,18 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 						{	//Otherwise the direction defaults to down
 							direction = downstrum;
 						}
+						if(lastchordpos && (tp->note[ctr3]->pos <= lastchordpos + 500))
+						{	//If this isn't the first chord and it is within 500ms of the previous chord instance
+							highdensity = 1;
+						}
+						else
+						{	//Otherwise the chord is "low" density
+							highdensity = 0;
+						}
 						notepos = (double)tp->note[ctr3]->pos / 1000.0;
-						snprintf(buffer, sizeof(buffer), "        <chord time=\"%.3f\" chordId=\"%lu\" highDensity=\"0\" ignore=\"0\" strum=\"%s\"/>\n", notepos, chordid, direction);
+						snprintf(buffer, sizeof(buffer), "        <chord time=\"%.3f\" chordId=\"%lu\" highDensity=\"%d\" ignore=\"0\" strum=\"%s\"/>\n", notepos, chordid, highdensity, direction);
 						pack_fputs(buffer, fp);
+						lastchordpos = tp->note[ctr3]->pos;	//Cache the position of the last chord written
 					}//If this note is in this difficulty and is a chord
 				}//For each note in the track
 				pack_fputs("      </chords>\n", fp);
@@ -726,7 +729,7 @@ void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_ma
 int eof_pro_guitar_note_fingering_valid(EOF_PRO_GUITAR_TRACK *tp, unsigned long note)
 {
 	unsigned long ctr, bitmask;
-	char string_finger_defined = 0, string_finger_undefined = 0;
+	char string_finger_defined = 0, string_finger_undefined = 0, all_strings_open = 1;
 
 	if(!tp || (note >= tp->notes))
 		return 0;	//Invalid parameters
@@ -737,6 +740,7 @@ int eof_pro_guitar_note_fingering_valid(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 		{	//If this string is used
 			if(tp->note[note]->frets[ctr] != 0)
 			{	//If the string isn't being played open
+				all_strings_open = 0;	//Track that the note used at least one fretted string
 				if(tp->note[note]->finger[ctr] != 0)
 				{	//If this string has a finger definition
 					string_finger_defined = 1;	//Track that a string was defined
@@ -753,24 +757,22 @@ int eof_pro_guitar_note_fingering_valid(EOF_PRO_GUITAR_TRACK *tp, unsigned long 
 					string_finger_defined = string_finger_undefined = 1;	//Set an error condition
 					break;
 				}
-				else
-				{	//This string does not have a finger definition, which is correct
-					string_finger_defined = 1;	//Track it as if it was a string with valid fingering
-				}
 			}
 		}
 	}
 
+	if(all_strings_open && !string_finger_defined)
+	{	//If the note only had open strings played, and no fingering was defined, this is valid
+		return 1;	//Return fingering valid
+	}
 	if(string_finger_defined && string_finger_undefined)
 	{	//If a note only had partial finger definition
 		return 0;	//Return fingering invalid
 	}
-
 	if(string_finger_defined)
 	{	//If the finger definition was complete
 		return 1;	//Return fingering valid
 	}
-
 	return 2;	//Return fingering undefined
 }
 
@@ -788,4 +790,133 @@ void eof_song_fix_fingerings(EOF_SONG *sp, char *undo_made)
 			eof_pro_guitar_track_fix_fingerings(sp->pro_guitar_track[sp->track[ctr]->tracknum], undo_made);	//Correct and complete note fingering where possible, performing an undo state before making changes
 		}
 	}
+}
+
+unsigned char *eof_lowest_frets_array;			//Dynamically allocated array used during the generation of fret hand positions
+unsigned char *eof_highest_frets_array;			//Dynamically allocated array used during the generation of fret hand positions
+unsigned long eof_lowest_frets_array_size;		//Used during the generation of fret hand positions
+
+void eof_generate_hand_positions(EOF_SONG *sp, unsigned long track, char difficulty)
+{
+	unsigned long ctr, ctr2, tracknum;
+	EOF_PRO_GUITAR_TRACK *tp;
+	char user_warned = 0;
+	unsigned char undo_made = 0;
+
+	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return;	//Invalid parameters
+
+	//Remove any existing fret hand positions defined for this track difficulty
+	tracknum = sp->track[track]->tracknum;
+	tp = sp->pro_guitar_track[tracknum];
+	if(tp->notes == 0)
+		return;	//Invalid parameters (track must have at least 1 note)
+	for(ctr = tp->handpositions; ctr > 0; ctr--)
+	{	//For each existing hand positions in this track (in reverse order)
+		if(tp->handposition[ctr - 1].difficulty == difficulty)
+		{	//If this hand position is defined for the specified difficulty
+			if(!user_warned)
+			{
+				if(alert(NULL, "Existing fret hand positions for the active track difficulty will be removed.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+				{	//If the user does not opt to remove the existing hand positions
+					return;
+				}
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				user_warned = 1;
+				undo_made = 1;
+			}
+			eof_song_delete_hand_position(tp, ctr - 1);	//Delete the hand position
+		}
+	}
+
+	//Count the number of notes in the specified track difficulty and allocate arrays large enough to store the lowest and highest fret number used in each
+	for(ctr = 0, eof_lowest_frets_array_size = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the track
+		if(tp->note[ctr]->type == difficulty)
+		{	//If it is in the specified difficulty
+			eof_lowest_frets_array_size++;	//Increment this counter
+		}
+	}
+	eof_lowest_frets_array = malloc(sizeof(unsigned char) * eof_lowest_frets_array_size);	//Allocate array
+	if(!eof_lowest_frets_array)
+	{	//Couldn't allocate memory
+		return;
+	}
+	eof_highest_frets_array = malloc(sizeof(unsigned char) * eof_lowest_frets_array_size);	//Allocate array
+	if(!eof_highest_frets_array)
+	{	//Couldn't allocate memory
+		free(eof_lowest_frets_array);
+		return;
+	}
+
+	//Store the lowest and highest fret numbers used for each note (0 for all used strings played open) in the array
+	unsigned char lowest, highest;
+	for(ctr = 0, ctr2 = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the track
+		if(tp->note[ctr]->type == difficulty)
+		{	//If it is in the specified difficulty
+			lowest = eof_pro_guitar_note_lowest_fret(tp, ctr);		//Get the lowest fret number used in the note
+			highest = eof_pro_guitar_note_highest_fret(tp, ctr);	//Get the highest fret number used in the note
+			eof_lowest_frets_array[ctr2] = lowest;		//Append this value to the lowest fret number array
+			eof_highest_frets_array[ctr2] = highest;	//Append this value to the highest fret number array
+			ctr2++;
+		}
+	}
+
+	//Find the initial lowest used fret (will result in 1 if all played notes on this track only use open strings)
+	for(ctr = 0, lowest = 1; ctr < eof_lowest_frets_array_size; ctr++)
+	{	//For each note in this track difficulty
+		if(eof_lowest_frets_array[ctr])
+		{	//If this note uses any frets
+			lowest = eof_lowest_frets_array[ctr];	//Use it as the initial low fret value
+			break;
+		}
+	}
+	eof_lowest_frets_array[0] = lowest;	//Ensure that the first fret number stored here isn't 0
+
+	//Find the initial highest used fret (will result in 1 if all played notes on this track only use open strings)
+	for(ctr = 0, highest = 1; ctr < eof_lowest_frets_array_size; ctr++)
+	{	//For each note in this track difficulty
+		if(eof_highest_frets_array[ctr])
+		{	//If this note uses any frets
+			highest = eof_highest_frets_array[ctr];	//Use it as the initial high fret value
+			break;
+		}
+	}
+	eof_highest_frets_array[0] = highest;	//Ensure that the first fret number stored here isn't 0
+
+///Write logic to create a simplified/efficient hand position change list
+
+	//Place the hand positions, identifying the original notes in the same way the lowest fret numbers array was built earlier
+	unsigned char lastsetposition = 0;
+	for(ctr = 0, ctr2 = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the track
+		if(tp->note[ctr]->type == difficulty)
+		{	//If it is in the specified difficulty
+			if(!lastsetposition || (eof_lowest_frets_array[ctr2] && (lastsetposition != eof_lowest_frets_array[ctr2])))
+			{	//If this is the first note, or this note uses a different position than the last position that was set and it isn't 0
+				if(!undo_made)
+				{	//If an undo hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, tp->note[ctr]->pos, eof_lowest_frets_array[ctr2], 0, NULL);
+				lastsetposition = eof_lowest_frets_array[ctr2];
+			}
+			ctr2++;
+		}
+	}
+
+	free(eof_lowest_frets_array);
+	free(eof_highest_frets_array);
+}
+
+int eof_generate_hand_positions_current_track_difficulty(void)
+{
+	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return 0;	//Invalid parameters
+
+	eof_generate_hand_positions(eof_song, eof_selected_track, eof_note_type);
+
+	return 1;
 }

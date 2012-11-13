@@ -327,7 +327,7 @@ typedef struct
 	unsigned long tremolos;
 
 	/* fret hand positions */
-	EOF_PHRASE_SECTION handposition[EOF_MAX_PHRASES];
+	EOF_PHRASE_SECTION handposition[EOF_MAX_NOTES];	//There has to be the ability to store as many fret hand position changes as there are notes
 	unsigned long handpositions;
 
 } EOF_PRO_GUITAR_TRACK;

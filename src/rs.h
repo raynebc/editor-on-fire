@@ -34,4 +34,11 @@ void eof_song_fix_fingerings(EOF_SONG *sp, char *undo_made);
 	//Runs eof_pro_guitar_track_fix_fingerings() on all pro guitar tracks in the specified chart
 	//If *undo_made is zero, this function will create an undo state before modifying the chart and will set the referenced variable to nonzero
 
+void eof_generate_hand_positions(EOF_SONG *sp, unsigned long track, char difficulty);
+	//If there are any hand positions defined for the specified track difficulty, the user is prompted before clearing them and building new ones
+	//The most efficient set of hand position changes calculated using a recursive algorithm (eof_remaining_hand_changes_needed) and added to the track
+int eof_generate_hand_positions_current_track_difficulty(void);
+	//Calls eof_generate_hand_positions() specifying the current track difficulty
+	//Returns 0 on error
+
 #endif
