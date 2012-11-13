@@ -1481,6 +1481,52 @@ int eof_pro_guitar_note_compare(EOF_PRO_GUITAR_TRACK *tp1, unsigned long note1, 
 	return 1;	//Return not equal
 }
 
+unsigned char eof_pro_guitar_note_lowest_fret(EOF_PRO_GUITAR_TRACK *tp, unsigned long note)
+{
+	unsigned long ctr, bitmask;
+	unsigned char fret = 0xFF;
+
+	if(!tp || (note >= tp->notes))
+		return 0;
+
+	for(ctr = 0, bitmask = 1; ctr < tp->numstrings; ctr++, bitmask <<= 1)
+	{	//For each string this track supports
+		if((tp->note[note]->note & bitmask) && (tp->note[note]->frets[ctr] & 0x7F) && (tp->note[note]->frets[ctr] != 0xFF))
+		{	//If this string is used, isn't played open (masking out the mute bit) and isn't played muted with no fret specified
+			if((tp->note[note]->frets[ctr] & 0x7F) < fret)
+			{	//If this string has a lower fret value than the one being stored
+				fret = tp->note[note]->frets[ctr] & 0x7F;
+			}
+		}
+	}
+	if(fret == 0xFF)
+	{	//If all strings had a fret of 0
+		return 0;
+	}
+	return fret;
+}
+
+unsigned char eof_pro_guitar_note_highest_fret(EOF_PRO_GUITAR_TRACK *tp, unsigned long note)
+{
+	unsigned long ctr, bitmask;
+	unsigned char fret = 0;
+
+	if(!tp || (note >= tp->notes))
+		return 0;
+
+	for(ctr = 0, bitmask = 1; ctr < tp->numstrings; ctr++, bitmask <<= 1)
+	{	//For each string this track supports
+		if((tp->note[note]->note & bitmask) && (tp->note[note]->frets[ctr] & 0x7F) && (tp->note[note]->frets[ctr] != 0xFF))
+		{	//If this string is used, isn't played open (masking out the mute bit) and isn't played muted with no fret specified
+			if((tp->note[note]->frets[ctr] & 0x7F) > fret)
+			{	//If this string has a higher fret value than the one being stored
+				fret = tp->note[note]->frets[ctr] & 0x7F;
+			}
+		}
+	}
+	return fret;
+}
+
 char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, char *buffer)
 {
 	char *name;
