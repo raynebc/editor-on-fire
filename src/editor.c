@@ -1929,8 +1929,8 @@ if(key[KEY_PAUSE])
 			key[KEY_O] = 0;
 		}
 
-	/* toggle pedal controlled hi hat (SHIFT+P) */
-		if(key[KEY_P] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+	/* toggle pedal controlled hi hat (SHIFT+P in the drum track) */
+		if(key[KEY_P] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT && (eof_selected_track == EOF_TRACK_DRUM))
 		{
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			eof_menu_note_toggle_hi_hat_pedal();
@@ -2619,7 +2619,7 @@ if(key[KEY_PAUSE])
 
 	/* old paste (CTRL+P, in non Feedback input modes) */
 	/* old paste (CTRL+V, in Feedback input mode */
-		if(KEY_EITHER_CTRL && key[KEY_P])
+		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && key[KEY_P])
 		{	//CTRL+P is "Old Paste"
 			if(eof_input_mode == EOF_INPUT_FEEDBACK)
 			{
@@ -4077,7 +4077,7 @@ void eof_vocal_editor_logic(void)
 			{
 				eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 			}
-			if(key[KEY_P] && !KEY_EITHER_CTRL)
+			if(key[KEY_P] && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 			{
 				if(eof_pen_lyric.note != eof_last_tone)
 				{

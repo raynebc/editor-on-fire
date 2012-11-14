@@ -131,7 +131,7 @@ int eof_build_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistp
 	//Nonzero is returned upon success
 void eof_check_vocals(EOF_SONG* sp, char *fixvoxpitches, char *fixvoxphrases);
 	//Scans the vocal tracks contained in the chart for missing pitches or vocal phrases
-	//If either are found, the user is prompted about whether to correct those problems
+	//If either are found, the user is prompted about whether to correct those problems during MIDI export
 	//Nonzero is stored into either variable if the user opts for the correction
 	//Zero is stored into either if the problem is not detected or the user declines
 	//These user decisions will be passed to eof_export_midi()

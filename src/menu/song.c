@@ -3739,7 +3739,7 @@ int eof_fret_hand_position_delete(DIALOG * d)
 					eof_fret_hand_position_list_dialog[1].d1--;	//Select the one before the one that was deleted, or the last event, whichever one remains
 				}
 				dialog_message(eof_fret_hand_position_list_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
-				return D_O_K;
+				return D_REDRAW;
 			}
 
 			/* go to next event */
@@ -3780,7 +3780,7 @@ int eof_fret_hand_position_delete_all(DIALOG * d)
 
 	eof_sort_fret_hand_positions(eof_song->pro_guitar_track[tracknum]);	//Re-sort the remaining hand positions
 	dialog_message(eof_fret_hand_position_list_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
-	return D_O_K;
+	return D_REDRAW;
 }
 
 int eof_fret_hand_position_seek(DIALOG * d)
@@ -3819,7 +3819,7 @@ int eof_fret_hand_position_seek(DIALOG * d)
 	return D_O_K;
 }
 
-char eof_fret_hand_position_list_text[EOF_MAX_PHRASES][25] = {{0}};
+char eof_fret_hand_position_list_text[EOF_MAX_NOTES][25] = {{0}};
 
 char * eof_fret_hand_position_list(int index, int * size)
 {

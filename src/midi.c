@@ -2601,7 +2601,7 @@ void eof_check_vocals(EOF_SONG* sp, char *fixvoxpitches, char *fixvoxphrases)
 					eof_cursor_visible = 0;
 					eof_pen_visible = 0;
 					eof_show_mouse(screen);
-					if(alert(NULL, "Add phrases for lyrics/percussions not in lyric phrases?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+					if(alert(NULL, "Add MIDI phrases for lyrics/percussions not in lyric phrases?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 					{	//If user opts to have missing lyric phrases inserted
 						*fixvoxphrases = 1;
 					}

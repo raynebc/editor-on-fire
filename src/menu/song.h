@@ -24,7 +24,6 @@ extern DIALOG eof_raw_midi_tracks_dialog[];
 extern DIALOG eof_fret_hand_position_list_dialog[];
 
 extern char eof_fret_hand_position_list_dialog_undo_made;	//Used to track an undo state having been made in the fret hand positions dialog
-extern char eof_fret_hand_position_list_dialog_undo_made;	//Used to track whether an undo state was made in this dialog
 extern char eof_fret_hand_position_list_dialog_title_string[30];	//This will be rebuilt by the list box count function to display the number of positions present
 
 void eof_prepare_song_menu(void);
