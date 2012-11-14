@@ -290,13 +290,18 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 	FILE *outf=NULL;			//Used to open output file
 	FILE *pitchedlyrics=NULL;	//Used to open output pitched lyric fle
 	char *vrhythmid=NULL;
+	EOF_PHRASE_SECTION temp;	//Used to store the first lyric line in the project, which gets overridden with one covering all lyrics during RS export
+	unsigned long original_lines;
 
-	if((tp == NULL) || (outputfilename == NULL))
+	if((tp == NULL) || (outputfilename == NULL) || (tp->lyrics == 0))
 		return -1;	//Return failure
 
 //Initialize variables
 	InitLyrics();	//Initialize all variables in the Lyrics structure
 	InitMIDI();		//Initialize all variables in the MIDI structure
+
+	temp = tp->line[0];			//Preserve the original lyric line information
+	original_lines = tp->lines;
 
 //Set export-specific settigns
 	if(format == SCRIPT_FORMAT)
@@ -305,12 +310,16 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 		Lyrics.nohyphens=3;	//Disable hyphen output
 		Lyrics.noplus=1;	//Disable plus output
 		Lyrics.filter=DuplicateString("^=%#/");	//Use default filter list
+		Lyrics.defaultfilter = 1;	//Track that the above string will need to be freed
 	}
 	else if(format == RS_FORMAT)
 	{
 		Lyrics.nohyphens=3;	//Disable hyphen output
 		Lyrics.noplus=1;	//Disable plus output
 		Lyrics.filter=DuplicateString("^=%#/");	//Use default filter list
+		Lyrics.defaultfilter = 1;	//Track that the above string will need to be freed
+		tp->lines = 0;		//Temporarily disregard any existing lyric lines
+		eof_vocal_track_add_line(tp, 0, tp->lyric[tp->lyrics - 1]->pos + 1);	//Create a single line encompassing all lyrics
 	}
 
 //Import lyrics from EOF structure
@@ -319,7 +328,10 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 	for(linectr=0;linectr<(unsigned long)tp->lines;linectr++)
 	{	//For each line of lyrics in the EOF structure
 		if(linestart > lineend)	//If the line starts after it ends
+		{
+			ReleaseMemory(1);
 			return -1;			//Return failure
+		}
 
 		if(lyrctr < tp->lyrics)	//If there are lyrics remaining
 			CreateLyricLine();	//Initialize new line of lyrics
@@ -335,11 +347,20 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 		while(lyrctr < tp->lyrics)
 		{	//For each lyric
 			if((tp->lyric[lyrctr])->pos < lastlyrtime)	//If this lyric precedes the previous lyric
+			{
+				ReleaseMemory(1);
 				return -1;				//Return failure
+			}
 			if((tp->lyric[lyrctr])->pos < linestart)		//If this lyric precedes the beginning of the line
+			{
+				ReleaseMemory(1);
 				return -1;				//Return failure
+			}
 			if((tp->lyric[lyrctr])->pos > lineend)		//If this lyric is placed beyond the end of this line
+			{
+				ReleaseMemory(1);
 				break;					//Break from this while loop to have another line created
+			}
 
 			pitch=(tp->lyric[lyrctr])->note;			//Store the lyric's pitch
 			if((tp->lyric[lyrctr])->note == 0)			//Remap EOF's pitchless value to FLC's pitchless value
@@ -464,6 +485,11 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 
 //Cleanup
 	fclose_err(outf);
+	if(format == RS_FORMAT)
+	{	//Restore the original lyric lines
+		tp->line[0] = temp;
+		tp->lines = original_lines;
+	}
 
 	ReleaseMemory(1);
 	return 1;	//Return success

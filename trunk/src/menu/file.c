@@ -2131,7 +2131,7 @@ int eof_save_helper(char *destfilename)
 				eof_cursor_visible = 0;
 				eof_pen_visible = 0;
 				eof_show_mouse(screen);
-				if(alert(NULL, "Warning: One or more lyrics aren't within lyric phrases.  Continue?", NULL, "&Yes", "&No", 'y', 'n') == 2)
+				if(alert("Warning: One or more lyrics aren't within lyric phrases.", "These lyrics won't export to FoF script format.", "Continue?", "&Yes", "&No", 'y', 'n') == 2)
 				{	//If user opts cancel the save
 					eof_show_mouse(NULL);
 					eof_cursor_visible = 1;

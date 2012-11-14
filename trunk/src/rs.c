@@ -265,7 +265,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 	pack_fputs("  <part>1</part>\n", fp);
 	pack_fputs("  <offset>0.000</offset>\n", fp);
 	eof_truncate_chart(sp);	//Update the chart length
-	snprintf(buffer, sizeof(buffer), "  <songLength>%.3f</songLength>\n", (double)eof_chart_length / 1000.0);
+	snprintf(buffer, sizeof(buffer), "  <songLength>%.3f</songLength>\n", (double)(eof_music_length - 1) / 1000.0);	//Make sure the song length is not longer than the actual audio, or the chart won't reach an end in-game
 	pack_fputs(buffer, fp);
 	seconds = time(NULL);
 	caltime = localtime(&seconds);
@@ -295,7 +295,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 	pack_fputs("    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"0\" name=\"COUNT\" solo=\"0\"/>\n", fp);
 	for(ctr = 0; ctr < sectionlistsize; ctr++)
 	{	//For each of the entries in the unique section list
-		snprintf(buffer, sizeof(buffer), "    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"0\" name=\"%s\" solo=\"0\"/>\n", sp->text_event[sectionlist[ctr]]->text);
+		snprintf(buffer, sizeof(buffer), "    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"%u\" name=\"%s\" solo=\"0\"/>\n", numdifficulties - 1, sp->text_event[sectionlist[ctr]]->text);
 		pack_fputs(buffer, fp);
 	}
 	pack_fputs("    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"0\" name=\"END\" solo=\"0\"/>\n", fp);
@@ -329,7 +329,10 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 	snprintf(buffer, sizeof(buffer), "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\"/>\n", (double)eof_chart_length / 1000.0, sectionlistsize + 1);	//Write the default END phrase iteration
 	pack_fputs(buffer, fp);
 	pack_fputs("  </phraseIterations>\n", fp);
-	free(sectionlist);
+	if(sectionlistsize)
+	{	//If there were any entries in the unique section list
+		free(sectionlist);	//Free the list now
+	}
 
 	//Write some unknown information
 	pack_fputs("  <linkedDiffs count=\"0\"/>\n", fp);
@@ -801,7 +804,6 @@ void eof_generate_hand_positions(EOF_SONG *sp, unsigned long track, char difficu
 	unsigned long ctr, ctr2, tracknum;
 	EOF_PRO_GUITAR_TRACK *tp;
 	char user_warned = 0;
-	unsigned char undo_made = 0;
 
 	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return;	//Invalid parameters
@@ -821,9 +823,12 @@ void eof_generate_hand_positions(EOF_SONG *sp, unsigned long track, char difficu
 				{	//If the user does not opt to remove the existing hand positions
 					return;
 				}
-				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				if(!eof_fret_hand_position_list_dialog_undo_made)
+				{	//If an undo state hasn't been made yet since launching this dialog
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					eof_fret_hand_position_list_dialog_undo_made = 1;
+				}
 				user_warned = 1;
-				undo_made = 1;
 			}
 			eof_song_delete_hand_position(tp, ctr - 1);	//Delete the hand position
 		}
@@ -895,10 +900,10 @@ void eof_generate_hand_positions(EOF_SONG *sp, unsigned long track, char difficu
 		{	//If it is in the specified difficulty
 			if(!lastsetposition || (eof_lowest_frets_array[ctr2] && (lastsetposition != eof_lowest_frets_array[ctr2])))
 			{	//If this is the first note, or this note uses a different position than the last position that was set and it isn't 0
-				if(!undo_made)
+				if(!eof_fret_hand_position_list_dialog_undo_made)
 				{	//If an undo hasn't been made yet
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					undo_made = 1;
+					eof_fret_hand_position_list_dialog_undo_made = 1;
 				}
 				eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, tp->note[ctr]->pos, eof_lowest_frets_array[ctr2], 0, NULL);
 				lastsetposition = eof_lowest_frets_array[ctr2];
@@ -913,10 +918,95 @@ void eof_generate_hand_positions(EOF_SONG *sp, unsigned long track, char difficu
 
 int eof_generate_hand_positions_current_track_difficulty(void)
 {
+	int junk;
+
 	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return 0;	//Invalid parameters
 
 	eof_generate_hand_positions(eof_song, eof_selected_track, eof_note_type);
 
-	return 1;
+	dialog_message(eof_fret_hand_position_list_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
+	return D_REDRAW;
+}
+
+unsigned char *eof_fret_range_tolerances = NULL;	//A dynamically allocated array that defines the fretting hand's range for each fret on the guitar neck, numbered where fret 1's range is defined at eof_fret_range_tolerances[1]
+
+int eof_note_can_be_played_within_fret_tolerance(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned char *current_low, unsigned char *current_high)
+{
+	unsigned char this_lowest, this_highest;		//Stores the highest and lowest used frets of the specified note
+	unsigned char effective_lowest, effective_highest;	//Stores the cumulative highest and lowest fret values with the input range and the next note for tolerance testing
+
+	if(!tp || !current_low || !current_high || (note >= tp->notes) || (*current_low > *current_high) || (*current_high > tp->numfrets) || !eof_fret_range_tolerances)
+		return 0;	//Invalid parameters
+
+	effective_lowest = this_lowest = eof_pro_guitar_note_lowest_fret(tp, note);
+	effective_highest = this_highest = eof_pro_guitar_note_highest_fret(tp, note);
+
+	if(*current_low < effective_lowest)
+	{	//Obtain the lower of these two values
+		effective_lowest = *current_low;
+	}
+	if(*current_high > effective_highest)
+	{	//Obtain the higher of these two values
+		effective_highest = *current_high;
+	}
+
+	if(effective_highest - effective_lowest + 1 > eof_fret_range_tolerances[effective_lowest])
+	{	//If this note can't be played at the same hand position as the one already in effect
+		return 0;	//Return note cannot be played without an additional hand position
+	}
+
+	*current_low = effective_lowest;	//Update the effective highest and lowest used frets
+	*current_high = effective_highest;
+	return 1;	//Return note can be played without an additional hand position
+}
+
+void eof_build_fret_range_tolerances(EOF_PRO_GUITAR_TRACK *tp, unsigned char difficulty)
+{
+	unsigned long ctr;
+	unsigned char lowest, highest, range;
+
+	if(!tp)
+	{	//Invalid parameters
+		eof_fret_range_tolerances = NULL;
+		return;
+	}
+
+	if(eof_fret_range_tolerances)
+	{	//If this array was previously built
+		free(eof_fret_range_tolerances);	//Release its memory as it will be rebuilt to suit this track difficulty
+	}
+	eof_fret_range_tolerances = malloc(tp->numfrets + 1);	//Allocate memory for an array large enough to specify the fret hand's range for each fret starting the numbering with 1 instead of 0
+	if(!eof_fret_range_tolerances)
+	{	//Couldn't allocate memory
+		return;
+	}
+
+	//Find the range of each fret as per the notes in the track
+	memset(eof_fret_range_tolerances, 4, tp->numfrets + 1);	//Set a default range of 4 frets for the entire guitar neck
+	for(ctr = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the specified track
+		if(tp->note[ctr]->type == difficulty)
+		{	//If it is in the specified difficulty
+			lowest = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Get the lowest and highest fret used by this note
+			highest = eof_pro_guitar_note_highest_fret(tp, ctr);
+
+			range = highest - lowest + 1;	//Determine the range used by this note, and assume it's range of frets is playable since that's how the chord is defined for play
+			if(eof_fret_range_tolerances[lowest] < range)
+			{	//If the current fret range for this fret position is lower than this chord uses
+				eof_fret_range_tolerances[lowest] = range;	//Update the range to reflect that this chord is playable
+			}
+		}
+	}
+
+	//Update the array so that any range that is valid for a lower fret number is valid for a higher fret number
+	range = eof_fret_range_tolerances[1];	//Start with the range of fret 1
+	for(ctr = 2; ctr < tp->numfrets + 1; ctr++)
+	{	//For each of the frets in the array, starting with the second
+		if(eof_fret_range_tolerances[ctr] < range)
+		{	//If this fret's defined range is lower than a lower (longer fret)
+			eof_fret_range_tolerances[ctr] = range;	//Update it
+		}
+		range = eof_fret_range_tolerances[ctr];	//Track the current fret's range
+	}
 }
