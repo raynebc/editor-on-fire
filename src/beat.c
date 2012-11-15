@@ -560,7 +560,7 @@ unsigned long eof_get_measure(unsigned long measure, unsigned char count_only)
 	return 0;	//The measure was not found
 }
 
-void eof_process_beat_statistics(EOF_SONG * sp)
+void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track)
 {
 	eof_log("eof_process_beat_statistics() entered", 1);
 
@@ -604,7 +604,7 @@ void eof_process_beat_statistics(EOF_SONG * sp)
 		{
 			sp->beat[i]->contains_tempo_change = 0;
 		}
-		sp->beat[i]->contained_section_event = -1;	//Reset this until the beat is found to contain a section event
+		sp->beat[i]->contained_section_event = -1;		//Reset this until the beat is found to contain a section event
 		sp->beat[i]->contains_end_event = 0;			//Reset this boolean status
 		if(sp->beat[i]->flags & EOF_BEAT_FLAG_EVENTS)
 		{	//If this beat has one or more text events
@@ -614,8 +614,8 @@ void eof_process_beat_statistics(EOF_SONG * sp)
 			{	//For each text event
 				if(sp->text_event[ctr]->beat == i)
 				{	//If the event is assigned to this beat
-					if(eof_is_section_marker(sp->text_event[ctr]->text))
-					{	//If this event is a section marker
+					if(eof_is_section_marker(sp->text_event[ctr], track))
+					{	//If the text event's string or flags indicate a section marker (from the perspective of the specified track)
 						sp->beat[i]->contained_section_event = ctr;
 						break;	//And break from the loop
 					}

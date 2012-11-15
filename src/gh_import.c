@@ -2768,7 +2768,7 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 		#endif
 							char buffer2[256];
 							snprintf(buffer2, sizeof(buffer2), "[section %s]", linkptr->text);	//Alter the section name formatting
-							eof_song_add_text_event(sp, beatnum, buffer2, 0, 0);	//Add the text event
+							eof_song_add_text_event(sp, beatnum, buffer2, 0, 0, 0);	//Add the text event
 						}
 						break;
 					}
@@ -2907,7 +2907,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 #endif
 											char buffer2[256];
 											snprintf(buffer2, sizeof(buffer2), "[section %s]", linkptr->text);	//Alter the section name formatting
-											eof_song_add_text_event(sp, beatnum, buffer2, 0, 0);	//Add the text event
+											eof_song_add_text_event(sp, beatnum, buffer2, 0, 0, 0);	//Add the text event
 										}
 										found = 1;
 										break;	//Break from practice section search loop

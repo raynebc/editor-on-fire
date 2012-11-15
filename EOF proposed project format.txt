@@ -69,7 +69,8 @@ TEXT EVENT CHUNK, for each text event:
 *	2 bytes:	Text event string length
 *	[varies:]	Text event string
 	4 bytes:	Associated beat number
-*	4 bytes:	Associated track number (0 if it applies to the entire chart, such as generic section markers)
+*	2 bytes:	Associated track number (0 if it applies to the entire chart, such as generic section markers)
+	2 bytes:	Text event flags (1 = Rocksmith phrase)
 }
 
 *4 bytes:	Number of custom data blocks

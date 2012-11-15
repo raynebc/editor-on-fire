@@ -1564,7 +1564,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	{	//For each text event in the project
 		eof_load_song_string_pf(sp->text_event[ctr]->text,fp,256);	//Read the text event string
 		sp->text_event[ctr]->beat = pack_igetl(fp);		//Read the text event's beat number
-		sp->text_event[ctr]->track = pack_igetl(fp);	//Read the text event's associated track number
+		sp->text_event[ctr]->track = pack_igetw(fp);	//Read the text event's associated track number
+		sp->text_event[ctr]->flags = pack_igetw(fp);	//Read the text event's flags
 	}
 
 	unsigned long data_block_type, num_midi_tracks, numevents;
@@ -2325,7 +2326,8 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	{	//For each text event in the project
 		eof_save_song_string_pf(sp->text_event[ctr]->text, fp);	//Write the text event string
 		pack_iputl(sp->text_event[ctr]->beat, fp);	//Write the text event's associated beat number
-		pack_iputl(sp->text_event[ctr]->track, fp);	//Write the text event's associated track number
+		pack_iputw(sp->text_event[ctr]->track, fp);	//Write the text event's associated track number
+		pack_iputw(sp->text_event[ctr]->flags, fp);	//Write the text event's flags
 	}
 
 	/* write custom data blocks */

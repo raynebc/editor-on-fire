@@ -457,7 +457,7 @@ EOF_SONG * eof_import_chart(const char * fn)
 				eof_track_add_solo(sp, EOF_TRACK_GUITAR, solo_on + 0.5, solo_off + 0.5);	//Add the solo to the guitar track
 				eof_track_add_solo(sp, EOF_TRACK_GUITAR_COOP, solo_on + 0.5, solo_off + 0.5);	//Add the solo to the lead guitar track
 			}
-			else if(eof_is_section_marker(current_event->text))
+			else if(eof_text_is_section_marker(current_event->text))
 			{	//If this is a section event, rebuild the string to ensure it's in the proper format
 				char buffer[256];
 				int index = 0, index2 = 0;	//index1 will index into the rebuilt buffer[] string, index2 will index into the original current_event->text[] string
@@ -473,11 +473,11 @@ EOF_SONG * eof_import_chart(const char * fn)
 				}
 				buffer[index++] = ']';	//End with a closing bracket
 				buffer[index++] = '\0';	//Terminate the string
-				eof_song_add_text_event(sp, b, buffer, 0, 0);
+				eof_song_add_text_event(sp, b, buffer, 0, 0, 0);
 			}
 			else
 			{	//Otherwise copy the string as-is
-				eof_song_add_text_event(sp, b, current_event->text, 0, 0);
+				eof_song_add_text_event(sp, b, current_event->text, 0, 0, 0);
 			}
 			current_event = current_event->next;	//Iterate to the next text event
 		}

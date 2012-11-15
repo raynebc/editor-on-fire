@@ -78,5 +78,9 @@ int eof_events_dialog_delete_events_count(void);
 	//Counts the number of text events defined at the currently selected beat
 void eof_rebuild_trainer_strings(void);
 	//Recreates the trainer section strings appropriate for the currently pro guitar/bass track into eof_etext2, eof_etext3 and eof_etext4
+int eof_events_dialog_add_function(char function);
+	//Launches the add new text event dialog.  If function is nonzero, the "Rocksmith phrase marker" option is automatically checked
+int eof_rocksmith_phrase_dialog_add(void);
+	//Calls eof_events_dialog_add_function with a function value of 1
 
 #endif

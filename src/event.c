@@ -9,7 +9,7 @@
 
 char eof_event_list_text[EOF_MAX_TEXT_EVENTS][256] = {{0}};
 
-EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, unsigned long beat, char * text, unsigned long track, char is_temporary)
+EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, unsigned long beat, char * text, unsigned long track, unsigned long flags, char is_temporary)
 {
 // 	eof_log("eof_song_add_text_event() entered");
 
@@ -25,6 +25,7 @@ EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, unsigned long beat, char
 				track = 0;	//Make this a global text event
 			}
 			sp->text_event[sp->text_events]->track = track;
+			sp->text_event[sp->text_events]->flags = flags;
 			sp->text_event[sp->text_events]->is_temporary = is_temporary;
 			sp->beat[beat]->flags |= EOF_BEAT_FLAG_EVENTS;	//Set the events flag for the beat
 			sp->text_events++;
@@ -99,7 +100,7 @@ int eof_song_resize_text_events(EOF_SONG * sp, unsigned long events)
 	{
 		for(i = oldevents; i < events; i++)
 		{
-			if(!eof_song_add_text_event(sp, 0, "", 0, 0))
+			if(!eof_song_add_text_event(sp, 0, "", 0, 0, 0))
 			{
 				return 0;	//Return failure
 			}
@@ -187,7 +188,7 @@ char eof_song_contains_event_beginning_with(EOF_SONG *sp, const char *text, unsi
 	return 0;	//Return no match found
 }
 
-int eof_is_section_marker(const char *text)
+int eof_text_is_section_marker(const char *text)
 {
 	if(text)
 	{
@@ -198,3 +199,23 @@ int eof_is_section_marker(const char *text)
 	}
 	return 0;
 }
+
+int eof_is_section_marker(EOF_TEXT_EVENT *ep, unsigned long track)
+{
+	if(ep && ep->text)
+	{
+		if((ep->flags & EOF_EVENT_FLAG_RS_PHRASE) || eof_text_is_section_marker(ep->text))
+		{	//If this event's flags denote it as a Rocksmith phrase, or its text indicates a section
+			if((track == 0) || (ep->track == 0))
+			{	//If the calling function wanted to ignore the text event's associated track, or the event has no associated track
+				return 1;
+			}
+			else if(ep->track == track)
+			{	//The text event must also be in the event's associated track to count as a section marker
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+

@@ -1205,7 +1205,7 @@ set_window_title(debugtext);
 							break;	//Stop parsing beats
 						}
 					}	//k now refers to the appropriate beat this event is assigned to
-					eof_song_add_text_event(sp, k, eof_import_events[i]->event[j]->text, picked_track, 0);	//Store this as a text event specific to the track being parsed
+					eof_song_add_text_event(sp, k, eof_import_events[i]->event[j]->text, picked_track, 0, 0);	//Store this as a text event specific to the track being parsed
 				}
 
 				if(eof_midi_tracks[picked_track].track_format == EOF_VOCAL_TRACK_FORMAT)
@@ -2660,7 +2660,7 @@ eof_log("\tThird pass complete", 1);
 			if(b >= 0)
 			{
 //				allegro_message("%s", eof_import_text_events->event[i]->text);	//Debug
-				eof_song_add_text_event(sp, b, eof_import_text_events->event[i]->text, 0, 0);
+				eof_song_add_text_event(sp, b, eof_import_text_events->event[i]->text, 0, 0, 0);
 			}
 		}
 	}

@@ -1737,7 +1737,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 {
 	char buffer[256], byte, *buffer2, bytemask, usedstrings;
 	unsigned word, fileversion;
-	unsigned long dword, ctr, ctr2, ctr3, ctr4, tracks, measures, *strings, beats, barres;
+	unsigned long dword, ctr, ctr2, ctr3, ctr4, tracks, measures, *strings, beats;
 	PACKFILE *inf;
 	struct eof_guitar_pro_struct *gp;
 	struct eof_gp_time_signature *tsarray;	//Stores all time signatures defined in the file
@@ -2121,16 +2121,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 		if(fileversion >= 500)
 		{	//Versions 5.0 and newer of the format store unknown data/padding here
-			if(bytemask & 16)
-			{	//Number of alternate ending
-				pack_getc(inf);	//Read alternate ending number
-			}
-			else
-			{
-				pack_getc(inf);		//Unknown data
-			}
-			pack_getc(inf);			//Read triplet feel value
-			pack_getc(inf);			//Unknown data
+			pack_getc(inf);		//Read alternate ending number/padding
+			pack_getc(inf);		//Read triplet feel value
+			pack_getc(inf);		//Unknown data
 		}
 		tsarray[ctr].num = curnum;	//Store this measure's time signature for future reference
 		tsarray[ctr].den = curden;
@@ -2461,39 +2454,18 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									pack_ReadDWORDLE(inf, NULL);	//Skip this padding
 								}
 							}
-							barres = pack_getc(inf);	//Read the number of barres in this chord
+							pack_getc(inf);	//Read the number of barres in this chord
 							for(ctr4 = 0; ctr4 < 5; ctr4++)
 							{	//For each of the 5 possible barres
-								if(ctr4 < barres)
-								{	//If this barre is defined
-									pack_getc(inf);	//Read the barre position
-								}
-								else
-								{
-									pack_getc(inf);
-								}
+								pack_getc(inf);	//Read the barre position/padding
 							}
 							for(ctr4 = 0; ctr4 < 5; ctr4++)
 							{	//For each of the 5 possible barres
-								if(ctr4 < barres)
-								{		//If this barre is defined
-									pack_getc(inf);	//Read the barre start string
-								}
-								else
-								{
-									pack_getc(inf);
-								}
+								pack_getc(inf);	//Read the barre start string/padding
 							}
 							for(ctr4 = 0; ctr4 < 5; ctr4++)
 							{	//For each of the 5 possible barres
-								if(ctr4 < barres)
-								{	//If this barre is defined
-									pack_getc(inf);	//Read the barre stop string
-								}
-								else
-								{
-									pack_getc(inf);
-								}
+								pack_getc(inf);	//Read the barre stop string/padding
 							}
 							pack_getc(inf);		//Chord includes first interval?
 							pack_getc(inf);		//Chord includes third interval?
@@ -2531,7 +2503,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					}
 					if(bytemask & 8)
 					{	//Beat has effects
-						unsigned char byte1 = 0, byte2 = 0;
+						unsigned char byte1, byte2 = 0;
 
 						byte1 = pack_getc(inf);	//Read beat effects 1 bitmask
 						if(fileversion >= 400)
@@ -2833,7 +2805,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							}
 							if(bytemask & 8)
 							{	//Note effects
-								char byte1 = 0, byte2 = 0;
+								char byte1, byte2 = 0;
 								byte1 = pack_getc(inf);	//Note effect bitmask
 								if(fileversion >= 400)
 								{	//Version 4.0 and higher of the file format has a second note effect bitmask
