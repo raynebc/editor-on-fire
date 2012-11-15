@@ -66,7 +66,7 @@ void eof_select_beat(unsigned long beat)
 	eof_selected_beat = beat;
 	if(!eof_beat_stats_cached)
 	{	//If the cached beat statistics are not current
-		eof_process_beat_statistics(eof_song);	//Rebuild them
+		eof_process_beat_statistics(eof_song, eof_selected_track);	//Rebuild them (from the perspective of the specified track)
 	}
 	eof_selected_measure = eof_song->beat[beat]->measurenum;
 	eof_beat_in_measure = eof_song->beat[beat]->beat_within_measure;
@@ -1915,9 +1915,16 @@ if(key[KEY_PAUSE])
 		}
 
 	/* toggle pull off status (P in a pro guitar track) */
-		if(key[KEY_P] && !KEY_EITHER_CTRL && !KEY_EITHER_ALT && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		if(key[KEY_P] && !KEY_EITHER_CTRL && !KEY_EITHER_ALT && !KEY_EITHER_SHIFT && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 		{
 			eof_menu_pro_guitar_toggle_pull_off();
+			key[KEY_P] = 0;
+		}
+
+	/* place Rocksmith phrase (SHIFT+P in a pro guitar track) */
+		if(key[KEY_P] && !KEY_EITHER_CTRL && !KEY_EITHER_ALT && KEY_EITHER_SHIFT && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+		{
+			eof_rocksmith_phrase_dialog_add();
 			key[KEY_P] = 0;
 		}
 
@@ -4078,7 +4085,7 @@ void eof_vocal_editor_logic(void)
 				eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 			}
 			if(key[KEY_P] && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
-			{
+			{	//P is held, but neither CTRL nor SHIFT are
 				if(eof_pen_lyric.note != eof_last_tone)
 				{
 					eof_last_tone = eof_pen_lyric.note;

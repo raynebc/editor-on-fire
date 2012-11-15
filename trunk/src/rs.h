@@ -10,8 +10,9 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 	//The function returns the number of unique chords contained in the list
 	//If there are no chords in the pro guitar track, or upon error, *results is set to NULL and 0 is returned
 
-unsigned long eof_build_section_list(EOF_SONG *sp, unsigned long **results);
-	//Parses the given chart, building a list of all unique section markers (case insensitive)
+unsigned long eof_build_section_list(EOF_SONG *sp, unsigned long **results, unsigned long track);
+	//Parses the given chart, building a list of all unique section markers (case insensitive),
+	//from the perspective of the specified track (ie. a bass-specific section is not found when a guitar track is specified)
 	//Memory is allocated to *results to return the list, referring to each text event by number
 	//The function returns the number of unique sections contained in the list
 	//If there are no sections in the pro guitar track, or upon error, *results is set to NULL and 0 is returned

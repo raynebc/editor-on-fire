@@ -63,7 +63,6 @@ MENU eof_beat_menu[] =
     {"Push Offset Back", eof_menu_beat_push_offset_back, NULL, 0, NULL},
     {"Push Offset Up", eof_menu_beat_push_offset_up, NULL, 0, NULL},
     {"Reset Offset to Zero", eof_menu_beat_reset_offset, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
     {"&Anchor Beat\tShift+A", eof_menu_beat_anchor, NULL, 0, NULL},
     {"Toggle Anchor\tA", eof_menu_beat_toggle_anchor, NULL, 0, NULL},
     {"&Delete Anchor", eof_menu_beat_delete_anchor, NULL, 0, NULL},
@@ -78,6 +77,7 @@ MENU eof_beat_menu[] =
     {"&Events", eof_menu_beat_events, NULL, 0, NULL},
     {"Clear Events", eof_menu_beat_clear_events, NULL, 0, NULL},
     {"Place &Trainer Event", eof_menu_beat_trainer_event, NULL, 0, NULL},
+    {"Place RS &Phrase\tShift+P", eof_rocksmith_phrase_dialog_add, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -101,11 +101,12 @@ DIALOG eof_all_events_dialog[] =
    /* (proc)                    (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
    { d_agup_window_proc,         0,   48,  500, 250, 2,   23,  0,    0,      0,   0,   "All Events",         NULL, NULL },
    { d_agup_list_proc,           12,  84,  475, 140, 2,   23,  0,    0,      0,   0,   eof_events_list_all,  NULL, NULL },
-   { d_agup_button_proc,         12,  257, 154, 28,  2,   23,  'f',  D_EXIT, 0,   0,   "&Find",              NULL, NULL },
-   { d_agup_button_proc,         178, 257, 154, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",               NULL, NULL },
-   { eof_all_events_radio_proc,	 344, 243, 100, 15,  2,   23,  0, D_SELECTED,0,   0,   "All Events",         (void *)4,    NULL },
-   { eof_all_events_radio_proc,	 344, 259, 150, 15,  2,   23,  0,    0,      0,   0,   "This Track's Events",(void *)5,    NULL },
-   { eof_all_events_radio_proc,	 344, 275, 140, 15,  2,   23,  0,    0,      0,   0,   "Section Events",     (void *)6,    NULL },
+   { d_agup_button_proc,         12,  257, 75,  28,  2,   23,  'f',  D_EXIT, 0,   0,   "&Find",              NULL, NULL },
+   { d_agup_button_proc,         100, 257, 75,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",               NULL, NULL },
+   { d_agup_button_proc,         187, 257, 150, 28,  2,   23,  0,    D_EXIT, 0,   0,   "Copy to selected beat", NULL, NULL },
+   { eof_all_events_radio_proc,	 349, 243, 85,  15,  2,   23,  0, D_SELECTED,0,   0,   "All Events",         (void *)4,    NULL },
+   { eof_all_events_radio_proc,	 349, 259, 142, 15,  2,   23,  0,    0,      0,   0,   "This Track's Events",(void *)5,    NULL },
+   { eof_all_events_radio_proc,	 349, 275, 112, 15,  2,   23,  0,    0,      0,   0,   "Section Events",     (void *)6,    NULL },
    { d_agup_text_proc,           12,  228, 64,  8,   2,   23,  0,    0,      0,   0,   ""      ,             NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
@@ -114,12 +115,13 @@ char eof_events_add_dialog_string[100] = {0};
 DIALOG eof_events_add_dialog[] =
 {
    /* (proc)            (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc,0,  48,  314, 126, 2,   23,  0,    0,      0,   0,   "Event Name",  NULL, NULL },
+   { d_agup_window_proc,0,  48,  314, 146, 2,   23,  0,    0,      0,   0,   "Event Name",  NULL, NULL },
    { d_agup_text_proc,  12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",       NULL, NULL },
    { d_agup_edit_proc,  48, 80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,     NULL, NULL },
-   { d_agup_check_proc, 12, 108, 225, 16,  0,   0,   0,    0,      1,   0,   eof_events_add_dialog_string, NULL, NULL },
-   { d_agup_button_proc,67, 132, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",          NULL, NULL },
-   { d_agup_button_proc,163,132, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",      NULL, NULL },
+   { d_agup_check_proc, 12, 110, 250, 16,  0,   0,   0,    0,      1,   0,   eof_events_add_dialog_string, NULL, NULL },
+   { d_agup_check_proc, 12, 130, 174, 16,  0,   0,   0,    0,      1,   0,   "Rocksmith phrase marker", NULL, NULL },
+   { d_agup_button_proc,67, 154, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",          NULL, NULL },
+   { d_agup_button_proc,163,154, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",      NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -172,20 +174,20 @@ void eof_prepare_beat_menu(void)
 	if(eof_song && eof_song_loaded)
 	{	//If a song is loaded
 		//Several beat menu items are disabled below if the tempo map is locked.  Clear those items' flags in case the lock was removed
-		eof_beat_menu[0].flags = 0;	//BPM change
-		eof_beat_menu[4].flags = 0;	//Add
-		eof_beat_menu[5].flags = 0;	//Delete
-		eof_beat_menu[6].flags = 0;	//Push offset back
-		eof_beat_menu[7].flags = 0;	//Push offset up
-		eof_beat_menu[8].flags = 0;	//Reset offset to zero
-		eof_beat_menu[10].flags = 0;	//Anchor
-		eof_beat_menu[11].flags = 0;	//Toggle anchor
-		eof_beat_menu[12].flags = 0;	//Delete anchor
-		eof_beat_menu[14].flags = 0;	//Reset BPM
-		eof_beat_menu[15].flags = 0;	//Calculate BPM
-		eof_beat_menu[16].flags = 0;	//Double BPM
-		eof_beat_menu[17].flags = 0;	//Halve BPM
-		eof_beat_menu[18].flags = 0;	//Adjust tempo for RBN
+		eof_beat_menu[0].flags = 0;		//BPM change
+		eof_beat_menu[4].flags = 0;		//Add
+		eof_beat_menu[5].flags = 0;		//Delete
+		eof_beat_menu[6].flags = 0;		//Push offset back
+		eof_beat_menu[7].flags = 0;		//Push offset up
+		eof_beat_menu[8].flags = 0;		//Reset offset to zero
+		eof_beat_menu[9].flags = 0;		//Anchor
+		eof_beat_menu[10].flags = 0;	//Toggle anchor
+		eof_beat_menu[11].flags = 0;	//Delete anchor
+		eof_beat_menu[13].flags = 0;	//Reset BPM
+		eof_beat_menu[14].flags = 0;	//Calculate BPM
+		eof_beat_menu[15].flags = 0;	//Double BPM
+		eof_beat_menu[16].flags = 0;	//Halve BPM
+		eof_beat_menu[17].flags = 0;	//Adjust tempo for RBN
 
 //Beat>Add and Delete validation
 		if(eof_find_next_anchor(eof_song, eof_selected_beat) < 0)
@@ -231,22 +233,22 @@ void eof_prepare_beat_menu(void)
 //Beat>Anchor Beat and Toggle Anchor validation
 		if(eof_selected_beat != 0)
 		{	//If the first beat marker is not selected, enable Beat>Anchor Beat and Toggle Anchor
+			eof_beat_menu[9].flags = 0;
 			eof_beat_menu[10].flags = 0;
-			eof_beat_menu[11].flags = 0;
 		}
 		else
 		{
+			eof_beat_menu[9].flags = D_DISABLED;
 			eof_beat_menu[10].flags = D_DISABLED;
-			eof_beat_menu[11].flags = D_DISABLED;
 		}
 //Beat>Delete Anchor validation
 		if((eof_song->beat[eof_selected_beat]->flags & EOF_BEAT_FLAG_ANCHOR) && (eof_selected_beat != 0))
 		{	//If the selected beat is an anchor, and the first beat marker is not selected, enable Beat>Delete Anchor
-			eof_beat_menu[12].flags = 0;
+			eof_beat_menu[11].flags = 0;
 		}
 		else
 		{
-			eof_beat_menu[12].flags = D_DISABLED;
+			eof_beat_menu[11].flags = D_DISABLED;
 		}
 //Beat>Reset BPM validation
 		for(i = 1; i < eof_song->beats; i++)
@@ -258,31 +260,33 @@ void eof_prepare_beat_menu(void)
 		}
 		if(i == eof_song->beats)
 		{	//If there are no tempo changes throughout the entire chart, disable Beat>Reset BPM, as it would have no effect
-			eof_beat_menu[14].flags = D_DISABLED;
+			eof_beat_menu[13].flags = D_DISABLED;
 		}
 		else
 		{
-			eof_beat_menu[14].flags = 0;
+			eof_beat_menu[13].flags = 0;
 		}
 //Beat>All Events and Clear Events validation
 		if(eof_song->text_events > 0)
 		{	//If there is at least one defined text event, enable Beat>All Events and Clear Events
-			eof_beat_menu[20].flags = 0;
-			eof_beat_menu[22].flags = 0;
+			eof_beat_menu[19].flags = 0;
+			eof_beat_menu[21].flags = 0;
 		}
 		else
 		{
-			eof_beat_menu[20].flags = D_DISABLED;
-			eof_beat_menu[22].flags = D_DISABLED;
+			eof_beat_menu[19].flags = D_DISABLED;
+			eof_beat_menu[21].flags = D_DISABLED;
 		}
-//Beat>Place Trainer Event
+
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar/bass track is active
-			eof_beat_menu[23].flags = 0;
+			eof_beat_menu[22].flags = 0;	//Place Trainer Event
+			eof_beat_menu[23].flags = 0;	//Place RS phrase
 		}
 		else
 		{
-			eof_beat_menu[23].flags = D_DISABLED;
+			eof_beat_menu[22].flags = D_DISABLED;
+			eof_beat_menu[23].flags = 0;
 		}
 //Re-flag the active Time Signature for the selected beat
 		for(i = 0; i < 6; i++)
@@ -362,11 +366,11 @@ void eof_prepare_beat_menu(void)
 
 		if((eof_selected_beat + 1 < eof_song->beats) && (eof_song->beat[eof_selected_beat + 1]->ppqn != eof_song->beat[eof_selected_beat]->ppqn))
 		{	//If there is a beat after the current beat, and it has a different tempo
-			eof_beat_menu[17].flags = D_DISABLED;	//Disable Beat>Halve BPM
+			eof_beat_menu[16].flags = D_DISABLED;	//Disable Beat>Halve BPM
 		}
 		else
 		{
-			eof_beat_menu[17].flags = 0;
+			eof_beat_menu[16].flags = 0;
 		}
 
 		if(eof_song->tags->tempo_map_locked)
@@ -377,14 +381,14 @@ void eof_prepare_beat_menu(void)
 			eof_beat_menu[6].flags = D_DISABLED;	//Push offset back
 			eof_beat_menu[7].flags = D_DISABLED;	//Push offset up
 			eof_beat_menu[8].flags = D_DISABLED;	//Reset offset to zero
-			eof_beat_menu[10].flags = D_DISABLED;	//Anchor
-			eof_beat_menu[11].flags = D_DISABLED;	//Toggle anchor
-			eof_beat_menu[12].flags = D_DISABLED;	//Delete anchor
-			eof_beat_menu[14].flags = D_DISABLED;	//Reset BPM
-			eof_beat_menu[15].flags = D_DISABLED;	//Calculate BPM
-			eof_beat_menu[16].flags = D_DISABLED;	//Double BPM
-			eof_beat_menu[17].flags = D_DISABLED;	//Halve BPM
-			eof_beat_menu[18].flags = D_DISABLED;	//Adjust tempo for RBN
+			eof_beat_menu[9].flags = D_DISABLED;	//Anchor
+			eof_beat_menu[10].flags = D_DISABLED;	//Toggle anchor
+			eof_beat_menu[11].flags = D_DISABLED;	//Delete anchor
+			eof_beat_menu[13].flags = D_DISABLED;	//Reset BPM
+			eof_beat_menu[14].flags = D_DISABLED;	//Calculate BPM
+			eof_beat_menu[15].flags = D_DISABLED;	//Double BPM
+			eof_beat_menu[16].flags = D_DISABLED;	//Halve BPM
+			eof_beat_menu[17].flags = D_DISABLED;	//Adjust tempo for RBN
 		}
 	}//If a song is loaded
 }
@@ -920,7 +924,9 @@ int eof_menu_beat_calculate_bpm(void)
 
 int eof_menu_beat_all_events(void)
 {
-	unsigned long track, realindex;
+	unsigned long track, realindex, flags;
+	int retval;
+	char undo_made = 0;
 
 	eof_cursor_visible = 0;
 	eof_render();
@@ -929,24 +935,54 @@ int eof_menu_beat_all_events(void)
 	eof_all_events_dialog[1].d1 = 0;
 	if(eof_events_overridden_by_stored_MIDI_track(eof_song))
 	{	//If there is a stored events track
-		eof_all_events_dialog[7].dp = stored_event_track_notice;	//Add a warning to the dialog
+		eof_all_events_dialog[8].dp = stored_event_track_notice;	//Add a warning to the dialog
 	}
 	else
 	{
-		eof_all_events_dialog[7].dp = no_notice;	//Otherwise remove the warning
+		eof_all_events_dialog[8].dp = no_notice;	//Otherwise remove the warning
 	}
-	if(eof_popup_dialog(eof_all_events_dialog, 0) == 2)
-	{	//User clicked Find
-		realindex = eof_retrieve_text_event(eof_all_events_dialog[1].d1);	//Find the actual event, taking the display filter into account
-		if(realindex < eof_song->text_events)
-		{
-			eof_set_seek_position(eof_song->beat[eof_song->text_event[realindex]->beat]->pos + eof_av_delay);
-			eof_selected_beat = eof_song->text_event[realindex]->beat;
-			track = eof_song->text_event[realindex]->track;
-			if((track != 0) && (track < eof_song->tracks))
-			{	//If this is a track-specific event
-				eof_menu_track_selected_track_number(track);	//Change to that track
+	while(1)
+	{	//Until the user closes the dialog
+		retval = eof_popup_dialog(eof_all_events_dialog, 0);
+		if(retval == 2)
+		{	//User clicked Find
+			realindex = eof_retrieve_text_event(eof_all_events_dialog[1].d1);	//Find the actual event, taking the display filter into account
+			if(realindex < eof_song->text_events)
+			{
+				eof_set_seek_position(eof_song->beat[eof_song->text_event[realindex]->beat]->pos + eof_av_delay);
+				eof_selected_beat = eof_song->text_event[realindex]->beat;
+				track = eof_song->text_event[realindex]->track;
+				if((track != 0) && (track < eof_song->tracks))
+				{	//If this is a track-specific event
+					eof_menu_track_selected_track_number(track);	//Change to that track
+				}
 			}
+			break;	//Break from loop
+		}
+		else if(retval == 4)
+		{	//User clicked Copy to selected beat
+			realindex = eof_retrieve_text_event(eof_all_events_dialog[1].d1);	//Find the actual event, taking the display filter into account
+			if(realindex < eof_song->text_events)
+			{
+				flags = eof_song->text_event[realindex]->flags;
+				track = eof_song->text_event[realindex]->track;
+				if((track != 0) && (track < eof_song->tracks))
+				{	//If the event being copied is a track-specific event
+					track = eof_selected_track;	//Have the newly created event assigned to the active track
+				}
+				if(!undo_made)
+				{	//If an undo state hasn't been made yet
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					undo_made = 1;
+				}
+				eof_song_add_text_event(eof_song, eof_selected_beat, eof_song->text_event[realindex]->text, track, flags, 0);
+				eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+				eof_render();
+			}
+		}
+		else
+		{	//User clicked Done or hit escape to cancel
+			break;
 		}
 	}
 	eof_cursor_visible = 1;
@@ -1057,11 +1093,11 @@ char * eof_events_list_all(int index, int * size)
 
 	if(index < 0)
 	{	//Signal to return the list count
-		if(eof_all_events_dialog[4].flags && D_SELECTED)
+		if(eof_all_events_dialog[5].flags && D_SELECTED)
 		{	//Display all events
 			count = eof_song->text_events;
 		}
-		else if(eof_all_events_dialog[5].flags && D_SELECTED)
+		else if(eof_all_events_dialog[6].flags && D_SELECTED)
 		{	//Display this track's events
 			for(x = 0; x < eof_song->text_events; x++)
 			{	//For each event
@@ -1075,8 +1111,8 @@ char * eof_events_list_all(int index, int * size)
 		{	//Display section events
 			for(x = 0; x < eof_song->text_events; x++)
 			{	//For each event
-				if(eof_is_section_marker(eof_song->text_event[x]->text))
-				{	//If the string begins with "[section", "section" or "[prc_"
+				if(eof_is_section_marker(eof_song->text_event[x], 0))
+				{	//If the text event's string or flags indicate a section marker (regardless of the event's associated track
 					count++;
 				}
 			}
@@ -1106,8 +1142,18 @@ char * eof_events_list_all(int index, int * size)
 
 int eof_events_dialog_add(DIALOG * d)
 {
+	return eof_events_dialog_add_function(0);	//Call the add text event dialog, don't automatically check the RS phrase marker option unless the user left it checked from before
+}
+
+int eof_rocksmith_phrase_dialog_add(void)
+{
+	return eof_events_dialog_add_function(1);	//Call the add text event dialog, automatically checking the RS phrase marker option
+}
+
+int eof_events_dialog_add_function(char function)
+{
 	int i;
-	unsigned long track = 0;
+	unsigned long track = 0, flags = 0;
 
 	eof_cursor_visible = 0;
 	eof_render();
@@ -1116,7 +1162,11 @@ int eof_events_dialog_add(DIALOG * d)
 	ustrcpy(eof_etext, "");
 	snprintf(eof_events_add_dialog_string, sizeof(eof_events_add_dialog_string), "Specific to %s", eof_song->track[eof_selected_track]->name);
 	eof_events_add_dialog[3].flags = 0;	//By default, this is not a track specific event
-	if(eof_popup_dialog(eof_events_add_dialog, 2) == 4)
+	if(function)
+	{	//If the calling function wanted to automatically enable the "Rocksmith phrase marker" checkbox
+		eof_events_add_dialog[4].flags = D_SELECTED;
+	}
+	if(eof_popup_dialog(eof_events_add_dialog, 2) == 5)
 	{	//User clicked OK
 		if((ustrlen(eof_etext) > 0) && eof_check_string(eof_etext))
 		{	//User entered text that isn't all space characters
@@ -1124,12 +1174,17 @@ int eof_events_dialog_add(DIALOG * d)
 			{	//User opted to make this a track specific event
 				track = eof_selected_track;
 			}
+			if(eof_events_add_dialog[4].flags & D_SELECTED)
+			{	//User opted to make this a Rocksmith phrase marker
+				flags |= EOF_EVENT_FLAG_RS_PHRASE;
+			}
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			eof_song_add_text_event(eof_song, eof_selected_beat, eof_etext, track, 0);
+			eof_song_add_text_event(eof_song, eof_selected_beat, eof_etext, track, flags, 0);
 			eof_sort_events(eof_song);
 			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 		}
 	}
+	eof_render();
 	dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
@@ -1142,7 +1197,7 @@ int eof_events_dialog_edit(DIALOG * d)
 	int i, trackflag;
 	short ecount = 0;
 	short event = -1;
-	unsigned long track = 0;
+	unsigned long track = 0, flags = 0;
 
 	eof_cursor_visible = 0;
 	eof_render();
@@ -1186,10 +1241,25 @@ int eof_events_dialog_edit(DIALOG * d)
 	{	//Otherwise clear the checkbox
 		eof_events_add_dialog[3].flags = 0;
 	}
+	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If this is a pro guitar track, update the Rocksmith phrase marker checkbox
+		if(eof_song->text_event[event]->flags & EOF_EVENT_FLAG_RS_PHRASE)
+		{	//If this event is flagged as a Rocksmith phrase marker
+			eof_events_add_dialog[4].flags = D_SELECTED;	//Set the checkbox specifying the event is a Rocksmith phrase marker
+		}
+		else
+		{
+			eof_events_add_dialog[4].flags = 0;
+		}
+	}
+	else
+	{	//This is not a pro guitar track
+		eof_events_add_dialog[4].flags = D_DISABLED;	//Disable this checkbox
+	}
 
 	ustrcpy(eof_etext, eof_song->text_event[event]->text);	//Save the original event text
 	trackflag = eof_events_add_dialog[3].flags;				//Save the track specifier flag
-	if(eof_popup_dialog(eof_events_add_dialog, 2) == 4)
+	if(eof_popup_dialog(eof_events_add_dialog, 2) == 5)
 	{	//User clicked OK
 		if((ustrlen(eof_etext) > 0) && eof_check_string(eof_etext) && (ustrcmp(eof_song->text_event[event]->text, eof_etext) || (eof_events_add_dialog[3].flags != trackflag)))
 		{	//User entered text that isn't all space characters, and either the event's text was changed or it's track specifier was
@@ -1199,10 +1269,16 @@ int eof_events_dialog_edit(DIALOG * d)
 			{	//User opted to make this a track specific event
 				track = eof_selected_track;
 			}
+			if(eof_events_add_dialog[4].flags & D_SELECTED)
+			{	//User opted to make this a Rocksmith phrase marker
+				flags |= EOF_EVENT_FLAG_RS_PHRASE;
+			}
 			eof_song->text_event[event]->track = track;
+			eof_song->text_event[event]->flags = flags;
 			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 		}
 	}
+	eof_render();
 	dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
@@ -1397,7 +1473,7 @@ int eof_menu_beat_trainer_event(void)
 			}
 		}
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		eof_song_add_text_event(eof_song, eof_selected_beat, selected_string, relevant_track, 0);	//Add the chosen text event to the selected beat
+		eof_song_add_text_event(eof_song, eof_selected_beat, selected_string, relevant_track, 0, 0);	//Add the chosen text event to the selected beat
 		eof_sort_events(eof_song);
 	}
 	return 1;
@@ -1476,7 +1552,7 @@ int eof_edit_trainer_proc(int msg, DIALOG *d, int c)
 
 int eof_all_events_radio_proc(int msg, DIALOG *d, int c)
 {
-	static int previous_option = 4;	//By default, eof_all_events_dialog[4] (all events) is selected
+	static int previous_option = 5;	//By default, eof_all_events_dialog[4] (all events) is selected
 	int selected_option;
 
 	if(msg == MSG_CLICK)
@@ -1485,12 +1561,12 @@ int eof_all_events_radio_proc(int msg, DIALOG *d, int c)
 
 		if(selected_option != previous_option)
 		{	//If the event display filter changed, have the event list redrawn
-			eof_all_events_dialog[4].flags = eof_all_events_dialog[5].flags = eof_all_events_dialog[6].flags = 0;	//Clear all radio buttons
+			eof_all_events_dialog[5].flags = eof_all_events_dialog[6].flags = eof_all_events_dialog[7].flags = 0;	//Clear all radio buttons
 			eof_all_events_dialog[selected_option].flags = D_SELECTED;	//Reselect the radio button that was just clicked on
 			object_message(&eof_all_events_dialog[1], MSG_DRAW, 0);		//Have Allegro redraw the list of events
-			object_message(&eof_all_events_dialog[4], MSG_DRAW, 0);		//Have Allegro redraw the radio buttons
-			object_message(&eof_all_events_dialog[5], MSG_DRAW, 0);
+			object_message(&eof_all_events_dialog[5], MSG_DRAW, 0);		//Have Allegro redraw the radio buttons
 			object_message(&eof_all_events_dialog[6], MSG_DRAW, 0);
+			object_message(&eof_all_events_dialog[7], MSG_DRAW, 0);
 			previous_option = selected_option;
 		}
 	}
@@ -1501,11 +1577,11 @@ int eof_all_events_radio_proc(int msg, DIALOG *d, int c)
 unsigned long eof_retrieve_text_event(unsigned long index)
 {
 	unsigned long x, count = 0;
-	if(eof_all_events_dialog[4].flags && D_SELECTED)
+	if(eof_all_events_dialog[5].flags && D_SELECTED)
 	{	//Display all events
 		return index;
 	}
-	else if(eof_all_events_dialog[5].flags && D_SELECTED)
+	else if(eof_all_events_dialog[6].flags && D_SELECTED)
 	{	//Display this track's events
 		for(x = 0; x < eof_song->text_events; x++)
 		{	//For each event
@@ -1523,8 +1599,8 @@ unsigned long eof_retrieve_text_event(unsigned long index)
 	{	//Display section events
 		for(x = 0; x < eof_song->text_events; x++)
 		{	//For each event
-			if(eof_is_section_marker(eof_song->text_event[x]->text))
-			{	//If the string begins with "[section", "section" or "[prc_"
+			if(eof_is_section_marker(eof_song->text_event[x], 0))
+			{	//If the text event's string or flags indicate a section marker (regardless of the event's associated track)
 				if(count == index)
 				{	//If the requested event was found
 					return x;

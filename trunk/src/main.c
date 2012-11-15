@@ -3023,7 +3023,7 @@ void eof_render(void)
 		}
 		if(!eof_beat_stats_cached)
 		{	//If the cached beat statistics are not current
-			eof_process_beat_statistics(eof_song);	//Rebuild them
+			eof_process_beat_statistics(eof_song, eof_selected_track);	//Rebuild them (from the perspective of the specified track)
 		}
 		if(!eof_full_screen_3d)
 		{	//In full screen 3D view, don't render the note window yet, it will just be overwritten by the 3D window

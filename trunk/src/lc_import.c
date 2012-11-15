@@ -327,6 +327,9 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 	lastlyrtime=0;	//First lyric is expected to be greater than or equal to this timestamp
 	for(linectr=0;linectr<(unsigned long)tp->lines;linectr++)
 	{	//For each line of lyrics in the EOF structure
+		linestart=(tp->line[linectr]).start_pos;
+		lineend=(tp->line[linectr]).end_pos;
+
 		if(linestart > lineend)	//If the line starts after it ends
 		{
 			ReleaseMemory(1);
@@ -335,9 +338,6 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 
 		if(lyrctr < tp->lyrics)	//If there are lyrics remaining
 			CreateLyricLine();	//Initialize new line of lyrics
-
-		linestart=(tp->line[linectr]).start_pos;
-		lineend=(tp->line[linectr]).end_pos;
 
 		if((tp->line[linectr]).flags & EOF_LYRIC_LINE_FLAG_OVERDRIVE)	//If this line is overdrive
 			Lyrics.overdrive_on=1;
@@ -358,7 +358,6 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 			}
 			if((tp->lyric[lyrctr])->pos > lineend)		//If this lyric is placed beyond the end of this line
 			{
-				ReleaseMemory(1);
 				break;					//Break from this while loop to have another line created
 			}
 

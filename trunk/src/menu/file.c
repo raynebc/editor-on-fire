@@ -2286,7 +2286,7 @@ int eof_save_helper(char *destfilename)
 	eof_undo_last_type = 0;
 	eof_change_count = 0;
 	eof_fix_window_title();
-	eof_process_beat_statistics(eof_song);	//Re-cache beat information, since temporary MIDI events may have been added/removed and can cause cached section event numbers to be invalid
+	eof_process_beat_statistics(eof_song, eof_selected_track);	//Re-cache beat information (from the perspective of the active track), since temporary MIDI events may have been added/removed and can cause cached section event numbers to be invalid
 
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;

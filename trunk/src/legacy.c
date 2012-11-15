@@ -285,7 +285,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				pack_fread(buffer, 256, fp);
 				b = pack_igetl(fp);
-				eof_song_add_text_event(sp, b, buffer, 0, 0);
+				eof_song_add_text_event(sp, b, buffer, 0, 0, 0);
 			}
 
 			/* read tracks */
@@ -340,7 +340,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				pack_fread(buffer, 256, fp);
 				b = pack_igetl(fp);
-				eof_song_add_text_event(sp, b, buffer, 0, 0);
+				eof_song_add_text_event(sp, b, buffer, 0, 0, 0);
 			}
 
 			/* read tracks */
@@ -416,7 +416,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				pack_fread(buffer, 256, fp);
 				b = pack_igetl(fp);
-				eof_song_add_text_event(sp, b, buffer, 0, 0);
+				eof_song_add_text_event(sp, b, buffer, 0, 0, 0);
 			}
 
 			/* read tracks */
@@ -492,7 +492,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				pack_fread(buffer, 256, fp);
 				b = pack_igetl(fp);
-				eof_song_add_text_event(sp, b, buffer, 0, 0);
+				eof_song_add_text_event(sp, b, buffer, 0, 0, 0);
 			}
 
 			/* read tracks */

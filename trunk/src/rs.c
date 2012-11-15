@@ -123,7 +123,7 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 	return unique_count;
 }
 
-unsigned long eof_build_section_list(EOF_SONG *sp, unsigned long **results)
+unsigned long eof_build_section_list(EOF_SONG *sp, unsigned long **results, unsigned long track)
 {
 	eof_log("eof_build_section_list() entered", 1);
 
@@ -152,13 +152,13 @@ unsigned long eof_build_section_list(EOF_SONG *sp, unsigned long **results)
 	//Overwrite each pointer in the duplicate event array that isn't a unique section marker with NULL
 	for(ctr = 0; ctr < sp->text_events; ctr++)
 	{	//For each text event in the chart
-		if(eof_is_section_marker(sp->text_event[ctr]->text))
-		{	//If this event is a section marker
+		if(eof_is_section_marker(sp->text_event[ctr], track))
+		{	//If the text event's string or flags indicate a section marker (from the perspective of the specified track)
 			match = 0;
 			for(ctr2 = ctr + 1; ctr2 < sp->text_events; ctr2++)
 			{	//For each event in the chart that follows this event
-				if(!ustricmp(sp->text_event[ctr]->text, sp->text_event[ctr2]->text))
-				{	//If this event matches one that follows it
+				if(eof_is_section_marker(sp->text_event[ctr2], track) &&!ustricmp(sp->text_event[ctr]->text, sp->text_event[ctr2]->text))
+				{	//If this event is also a section event from the perspective of the track being examined, and its text matches
 					eventlist[ctr] = NULL;	//Eliminate this event from the list
 					match = 1;	//Note that this chord matched one of the others
 					break;
@@ -280,7 +280,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 	pack_fputs(buffer, fp);
 
 	//Write the section information
-	eof_process_beat_statistics(sp);	//Cache section name information into the beat structures
+	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
 	for(ctr = 0; ctr < sp->beats; ctr++)
 	{	//For each beat in the chart
 		if(sp->beat[ctr]->contained_section_event >= 0)
@@ -288,7 +288,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 			numsections++;	//Update section marker instance counter
 		}
 	}
-	sectionlistsize = eof_build_section_list(sp, &sectionlist);	//Build a list of all unique section markers in the chart
+	sectionlistsize = eof_build_section_list(sp, &sectionlist, track);	//Build a list of all unique section markers in the chart (from the perspective of the track being exported)
 	unsigned long phraseid;
 	snprintf(buffer, sizeof(buffer), "  <phrases count=\"%lu\">\n", sectionlistsize + 2);	//Write the number of unique sections (plus a default COUNT and END section)
 	pack_fputs(buffer, fp);
