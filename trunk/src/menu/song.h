@@ -151,7 +151,7 @@ int eof_pro_guitar_set_fret_hand_position(void);
 	//Allows the user to define a fret hand position for the active difficulty
 int eof_menu_song_fret_hand_positions(void);
 	//Displays the fret hand positions defined for the active track difficulty, allowing them to be deleted
-void eof_song_delete_hand_position(EOF_PRO_GUITAR_TRACK *tp, unsigned long index);
-	//Deletes the specified hand position from the track
+int eof_song_proguitar_rename_track(void);
+	//Allows the user to define an alternate name for the active track
 
 #endif

@@ -2001,13 +2001,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		free(tsarray);
 		return NULL;
 	}
-	memset(np, 0, sizeof(EOF_PRO_GUITAR_NOTE *) * tracks);	//Set all last created note pointers to NULL
-	memset(hopo, -1, sizeof(char) * tracks);	//Set all tracks to have no HOPO status
-	gp->track = malloc(sizeof(EOF_PRO_GUITAR_TRACK *) * tracks);	//Allocate memory for pro guitar track pointers
-	if(!gp->track)
+	memset(np, 0, sizeof(EOF_PRO_GUITAR_NOTE *) * tracks);				//Set all last created note pointers to NULL
+	memset(hopo, -1, sizeof(char) * tracks);							//Set all tracks to have no HOPO status
+	gp->track = malloc(sizeof(EOF_PRO_GUITAR_TRACK *) * tracks);		//Allocate memory for pro guitar track pointers
+	gp->text_events = 0;
+	if(!gp->track )
 	{
 		eof_log("Error allocating memory (5)", 1);
 		pack_fclose(inf);
+		free(gp->track);
 		free(gp->names);
 		free(np);
 		free(hopo);
@@ -2023,6 +2025,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			eof_log("Error allocating memory (6)", 1);
 			pack_fclose(inf);
 			free(gp->names);
+			free(gp->track[ctr]);
 			while(ctr > 0)
 			{	//Free all previously allocated track structures
 				free(gp->track[ctr - 1]);
@@ -2062,6 +2065,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		{	//Free all previously allocated track structures
 			free(gp->track[ctr]);
 		}
+		free(gp->track);
 		free(np);
 		free(hopo);
 		free(gp);
@@ -2092,9 +2096,43 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		if(bytemask & 32)
 		{	//New section
 			eof_read_gp_string(inf, NULL, buffer, 1);	//Read section string
-			pack_getc(inf);						//Read section string color (Red intensity)
-			pack_getc(inf);						//Read section string color (Green intensity)
-			pack_getc(inf);						//Read section string color (Blue intensity)
+			if(gp->text_events < EOF_MAX_TEXT_EVENTS)
+			{	//If the maximum number of text events hasn't already been defined
+#ifdef GP_IMPORT_DEBUG
+				snprintf(eof_log_string, sizeof(eof_log_string), "\t\tSection marker found at measure #%lu:  \"%s\"", ctr + 1, buffer);
+				eof_log(eof_log_string, 1);
+#endif
+				gp->text_event[gp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
+				if(!gp->text_event[gp->text_events])
+				{
+					eof_log("Error allocating memory (8)", 1);
+					pack_fclose(inf);
+					free(gp->names);
+					for(ctr = 0; ctr < tracks; ctr++)
+					{	//Free all previously allocated track structures
+						free(gp->track[ctr]);
+					}
+					for(ctr = 0; ctr < gp->text_events; ctr++)
+					{	//Free all allocated text events
+						free(gp->text_event[ctr]);
+					}
+					free(gp->track);
+					free(np);
+					free(hopo);
+					free(gp);
+					free(tsarray);
+					return NULL;
+				}
+				ustrncpy(gp->text_event[gp->text_events]->text, buffer, 255);
+				gp->text_event[gp->text_events]->beat = ctr;	//For now, store the measure number, it will need to be converted to the beat number later
+				gp->text_event[gp->text_events]->track = 0;
+				gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;	//Ensure this will be detected as a section
+				gp->text_event[gp->text_events]->is_temporary = 0;	//This will be used to track whether the measure number was converted to the proper beat number below
+				gp->text_events++;
+			}
+			pack_getc(inf);								//Read section string color (Red intensity)
+			pack_getc(inf);								//Read section string color (Green intensity)
+			pack_getc(inf);								//Read section string color (Blue intensity)
 			pack_getc(inf);								//Read unused value
 		}
 		if(bytemask & 64)
@@ -2139,13 +2177,18 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		{	//Until the loaded project has enough beats to contain the Guitar Pro transcriptions, and two extra to allow room for processing beat lengths later
 			if(!eof_song_add_beat(eof_song))
 			{
-				eof_log("Error allocating memory (8)", 1);
+				eof_log("Error allocating memory (9)", 1);
 				pack_fclose(inf);
 				free(gp->names);
 				for(ctr = 0; ctr < tracks; ctr++)
 				{	//Free all previously allocated track structures
 					free(gp->track[ctr]);
 				}
+				for(ctr = 0; ctr < gp->text_events; ctr++)
+				{	//Free all allocated text events
+					free(gp->text_event[ctr]);
+				}
+				free(gp->track);
 				free(np);
 				free(hopo);
 				free(gp);
@@ -2174,6 +2217,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			unsigned long beatctr = 0;
 			for(ctr = 0; ctr < measures; ctr++)
 			{	//For each measure in the GP file
+				for(ctr2 = 0; ctr2 < gp->text_events; ctr2++)
+				{	//For each section marker that was imported
+					if((gp->text_event[ctr2]->beat == ctr) && (!gp->text_event[ctr2]->is_temporary))
+					{	//If the section marker was defined on this measure (and it hasn't been converted to use beat numbering yet
+						gp->text_event[ctr2]->beat = beatctr;
+						gp->text_event[ctr2]->is_temporary = 1;	//Track that this event has been converted to beat numbering
+					}
+				}
 				for(ctr2 = 0; ctr2 < tsarray[ctr].num; ctr2++, beatctr++)
 				{	//For each beat in this measure
 					if(!ctr2 && ((tsarray[ctr].num != curnum) || (tsarray[ctr].den != curden)))
@@ -2227,7 +2278,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		gp->names[ctr] = malloc(sizeof(buffer) + 1);	//Allocate memory to store track name string into guitar pro structure
 		if(!gp->names[ctr])
 		{
-			eof_log("Error allocating memory (9)", 1);
+			eof_log("Error allocating memory (10)", 1);
 			pack_fclose(inf);
 			while(ctr > 0)
 			{	//Free the previous track name strings
@@ -2239,6 +2290,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			{	//Free all previously allocated track structures
 				free(gp->track[ctr]);
 			}
+			for(ctr = 0; ctr < gp->text_events; ctr++)
+			{	//Free all allocated text events
+				free(gp->text_event[ctr]);
+			}
+			free(gp->track);
 			free(np);
 			free(hopo);
 			free(gp);
@@ -2561,6 +2617,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{	//Free all previously allocated track structures
 									free(gp->track[ctr]);
 								}
+								for(ctr = 0; ctr < gp->text_events; ctr++)
+								{	//Free all allocated text events
+									free(gp->text_event[ctr]);
+								}
+								free(gp->track);
 								free(np);
 								free(hopo);
 								free(gp);
@@ -2827,6 +2888,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 										{	//Free all previously allocated track structures
 											free(gp->track[ctr]);
 										}
+										for(ctr = 0; ctr < gp->text_events; ctr++)
+										{	//Free all allocated text events
+											free(gp->text_event[ctr]);
+										}
+										free(gp->track);
 										free(np);
 										free(hopo);
 										free(gp);
@@ -2942,7 +3008,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							np[ctr2] = eof_pro_guitar_track_add_note(gp->track[ctr2]);	//Add a new note to the current track
 							if(!np[ctr2])
 							{
-								eof_log("Error allocating memory (10)", 1);
+								eof_log("Error allocating memory (11)", 1);
 								pack_fclose(inf);
 								while(ctr > 0)
 								{	//Free the previous track name strings
@@ -2954,6 +3020,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{	//Free all previously allocated track structures
 									free(gp->track[ctr]);
 								}
+								for(ctr = 0; ctr < gp->text_events; ctr++)
+								{	//Free all allocated text events
+									free(gp->text_event[ctr]);
+								}
+								free(gp->track);
 								free(np);
 								free(hopo);
 								free(gp);

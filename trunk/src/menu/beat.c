@@ -96,6 +96,7 @@ DIALOG eof_events_dialog[] =
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
+///The dp2 values below must be edited appropriately whenever the radio buttons' object numbers in the dialog are changed
 DIALOG eof_all_events_dialog[] =
 {
    /* (proc)                    (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
@@ -104,9 +105,9 @@ DIALOG eof_all_events_dialog[] =
    { d_agup_button_proc,         12,  257, 75,  28,  2,   23,  'f',  D_EXIT, 0,   0,   "&Find",              NULL, NULL },
    { d_agup_button_proc,         100, 257, 75,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",               NULL, NULL },
    { d_agup_button_proc,         187, 257, 150, 28,  2,   23,  0,    D_EXIT, 0,   0,   "Copy to selected beat", NULL, NULL },
-   { eof_all_events_radio_proc,	 349, 243, 85,  15,  2,   23,  0, D_SELECTED,0,   0,   "All Events",         (void *)4,    NULL },
-   { eof_all_events_radio_proc,	 349, 259, 142, 15,  2,   23,  0,    0,      0,   0,   "This Track's Events",(void *)5,    NULL },
-   { eof_all_events_radio_proc,	 349, 275, 112, 15,  2,   23,  0,    0,      0,   0,   "Section Events",     (void *)6,    NULL },
+   { eof_all_events_radio_proc,	 349, 243, 85,  15,  2,   23,  0, D_SELECTED,0,   0,   "All Events",         (void *)5,    NULL },	//Use dp2 to store the object number, for use in eof_all_events_radio_proc()
+   { eof_all_events_radio_proc,	 349, 259, 142, 15,  2,   23,  0,    0,      0,   0,   "This Track's Events",(void *)6,    NULL },
+   { eof_all_events_radio_proc,	 349, 275, 112, 15,  2,   23,  0,    0,      0,   0,   "Section Events",     (void *)7,    NULL },
    { d_agup_text_proc,           12,  228, 64,  8,   2,   23,  0,    0,      0,   0,   ""      ,             NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
@@ -629,6 +630,7 @@ int eof_menu_beat_push_offset_back(void)
 			eof_song->beat[1]->flags = 0;
 			eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
 			eof_move_text_events(eof_song, 0, 1, 1);
+			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 		}
 		else
 			return 0;	//Return failure
@@ -651,6 +653,7 @@ int eof_menu_beat_push_offset_up(void)
 	eof_song_delete_beat(eof_song, eof_song->beats - 1);
 	eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
 	eof_move_text_events(eof_song, 0, 1, -1);
+	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	eof_fixup_notes(eof_song);
 	return 1;
 }
@@ -714,7 +717,7 @@ int eof_menu_beat_anchor(void)
 	oldmm = (eof_song->beat[eof_selected_beat]->pos / 1000) / 60;
 	oldss = (eof_song->beat[eof_selected_beat]->pos / 1000) % 60;
 	oldhs = (eof_song->beat[eof_selected_beat]->pos / 10) % 100;
-	sprintf(eof_etext2, "%02d:%02d:%02d", oldmm, oldss, oldhs);
+	sprintf(eof_etext2, "%02d:%02d.%02d", oldmm, oldss, oldhs);
 	if(eof_popup_dialog(eof_anchor_dialog, 2) == 3)
 	{
 		ttext[0] = eof_etext2[0];
@@ -1093,11 +1096,11 @@ char * eof_events_list_all(int index, int * size)
 
 	if(index < 0)
 	{	//Signal to return the list count
-		if(eof_all_events_dialog[5].flags && D_SELECTED)
+		if(eof_all_events_dialog[5].flags & D_SELECTED)
 		{	//Display all events
 			count = eof_song->text_events;
 		}
-		else if(eof_all_events_dialog[6].flags && D_SELECTED)
+		else if(eof_all_events_dialog[6].flags & D_SELECTED)
 		{	//Display this track's events
 			for(x = 0; x < eof_song->text_events; x++)
 			{	//For each event
@@ -1552,7 +1555,7 @@ int eof_edit_trainer_proc(int msg, DIALOG *d, int c)
 
 int eof_all_events_radio_proc(int msg, DIALOG *d, int c)
 {
-	static int previous_option = 5;	//By default, eof_all_events_dialog[4] (all events) is selected
+	static int previous_option = 5;	//By default, eof_all_events_dialog[5] (all events) is selected
 	int selected_option;
 
 	if(msg == MSG_CLICK)
@@ -1567,6 +1570,7 @@ int eof_all_events_radio_proc(int msg, DIALOG *d, int c)
 			object_message(&eof_all_events_dialog[5], MSG_DRAW, 0);		//Have Allegro redraw the radio buttons
 			object_message(&eof_all_events_dialog[6], MSG_DRAW, 0);
 			object_message(&eof_all_events_dialog[7], MSG_DRAW, 0);
+			object_message(&eof_all_events_dialog[8], MSG_DRAW, 0);
 			previous_option = selected_option;
 		}
 	}
@@ -1577,11 +1581,11 @@ int eof_all_events_radio_proc(int msg, DIALOG *d, int c)
 unsigned long eof_retrieve_text_event(unsigned long index)
 {
 	unsigned long x, count = 0;
-	if(eof_all_events_dialog[5].flags && D_SELECTED)
+	if(eof_all_events_dialog[5].flags & D_SELECTED)
 	{	//Display all events
 		return index;
 	}
-	else if(eof_all_events_dialog[6].flags && D_SELECTED)
+	else if(eof_all_events_dialog[6].flags & D_SELECTED)
 	{	//Display this track's events
 		for(x = 0; x < eof_song->text_events; x++)
 		{	//For each event

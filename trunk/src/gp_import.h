@@ -16,9 +16,11 @@
 #else
 	struct eof_guitar_pro_struct
 	{
-		unsigned long numtracks;		//The number of tracks loaded from the guitar pro file
-		char **names;					//An array of strings, representing the native name of each loaded track
-		EOF_PRO_GUITAR_TRACK **track;	//An array of pro guitar track pointers, representing the imported note data of each loaded track
+		unsigned long numtracks;			//The number of tracks loaded from the guitar pro file
+		char **names;						//An array of strings, representing the native name of each loaded track
+		EOF_PRO_GUITAR_TRACK **track;		//An array of pro guitar track pointers, representing the imported note data of each loaded track
+		EOF_TEXT_EVENT * text_event[EOF_MAX_TEXT_EVENTS];	//An array of pro guitar text event structures, representing the section markers imported for each loaded track
+		unsigned long text_events;			//The size of the text_event[] array
 	};
 
 	struct eof_gp_time_signature

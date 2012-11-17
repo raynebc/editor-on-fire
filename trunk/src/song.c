@@ -23,52 +23,52 @@
 
 EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 1] =
 {
-	{0, 0, 0, 0, "", 0xFF, 0},
-	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_GUITAR, 0, "PART GUITAR", 0xFF, 0},
-	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_BASS, 0, "PART BASS", 0xFF, 0},
-	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_GUITAR_COOP, 0, "PART GUITAR COOP", 0xFF, 0},
-	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_RHYTHM, 0, "PART RHYTHM", 0xFF, 0},
-	{EOF_LEGACY_TRACK_FORMAT, EOF_DRUM_TRACK_BEHAVIOR, EOF_TRACK_DRUM, 0, "PART DRUMS", 0xFF, 0xFF000000},
-	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "PART VOCALS", 0xFF, 0xFF000000},
-	{EOF_LEGACY_TRACK_FORMAT, EOF_KEYS_TRACK_BEHAVIOR, EOF_TRACK_KEYS, 0, "PART KEYS", 0xFF, 0},
-	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_BASS, 0, "PART REAL_BASS", 0xFF, 0},
-	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR, 0, "PART REAL_GUITAR", 0xFF, 0},
-	{EOF_LEGACY_TRACK_FORMAT, EOF_DANCE_TRACK_BEHAVIOR, EOF_TRACK_DANCE, 0, "PART DANCE", 0xFF, 0},
-	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_BASS_22, 0, "PART REAL_BASS_22", 0xFF, 0},
-	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR_22, 0, "PART REAL_GUITAR_22", 0xFF, 0},
+	{0, 0, 0, 0, "", "", 0xFF, 0},
+	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_GUITAR, 0, "PART GUITAR", "", 0xFF, 0},
+	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_BASS, 0, "PART BASS", "", 0xFF, 0},
+	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_GUITAR_COOP, 0, "PART GUITAR COOP", "", 0xFF, 0},
+	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_RHYTHM, 0, "PART RHYTHM", "", 0xFF, 0},
+	{EOF_LEGACY_TRACK_FORMAT, EOF_DRUM_TRACK_BEHAVIOR, EOF_TRACK_DRUM, 0, "PART DRUMS", "", 0xFF, 0xFF000000},
+	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "PART VOCALS", "", 0xFF, 0xFF000000},
+	{EOF_LEGACY_TRACK_FORMAT, EOF_KEYS_TRACK_BEHAVIOR, EOF_TRACK_KEYS, 0, "PART KEYS", "", 0xFF, 0},
+	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_BASS, 0, "PART REAL_BASS", "", 0xFF, 0},
+	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR, 0, "PART REAL_GUITAR", "", 0xFF, 0},
+	{EOF_LEGACY_TRACK_FORMAT, EOF_DANCE_TRACK_BEHAVIOR, EOF_TRACK_DANCE, 0, "PART DANCE", "", 0xFF, 0},
+	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_BASS_22, 0, "PART REAL_BASS_22", "", 0xFF, 0},
+	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR_22, 0, "PART REAL_GUITAR_22", "", 0xFF, 0},
 
 	//This pro format is not supported yet, but the entry describes the track's details
-	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS", 0xFF, 0}
+	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS", "", 0xFF, 0}
 };	//These entries describe the tracks that EOF should present by default
 	//These entries are indexed the same as the track type in the new EOF project format
 
 EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 12] =
 {
-	{0, 0, 0, 0, "", 0, 0},
-	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_GUITAR, 0, "PART GUITAR", 0, 0},
-	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_BASS, 0, "PART BASS", 0, 0},
-	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_GUITAR_COOP, 0, "PART GUITAR COOP", 0, 0},
-	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_RHYTHM, 0, "PART RHYTHM", 0, 0},
-	{EOF_LEGACY_TRACK_FORMAT, EOF_DRUM_TRACK_BEHAVIOR, EOF_TRACK_DRUM, 0, "PART DRUMS", 0, 0},
-	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "PART VOCALS", 0, 0},
-	{EOF_LEGACY_TRACK_FORMAT, EOF_KEYS_TRACK_BEHAVIOR, EOF_TRACK_KEYS, 0, "PART KEYS", 0, 0},
-	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_BASS, 0, "PART REAL_BASS", 0, 0},
-	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR, 0, "PART REAL_GUITAR", 0, 0},
-	{EOF_LEGACY_TRACK_FORMAT, EOF_DANCE_TRACK_BEHAVIOR, EOF_TRACK_DANCE, 0, "PART DANCE", 0, 0},
-	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_BASS_22, 0, "PART REAL_BASS_22", 0, 0},
-	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR_22, 0, "PART REAL_GUITAR_22", 0, 0},
+	{0, 0, 0, 0, "", "", 0, 0},
+	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_GUITAR, 0, "PART GUITAR", "", 0, 0},
+	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_BASS, 0, "PART BASS", "", 0, 0},
+	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_GUITAR_COOP, 0, "PART GUITAR COOP", "", 0, 0},
+	{EOF_LEGACY_TRACK_FORMAT, EOF_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_RHYTHM, 0, "PART RHYTHM", "", 0, 0},
+	{EOF_LEGACY_TRACK_FORMAT, EOF_DRUM_TRACK_BEHAVIOR, EOF_TRACK_DRUM, 0, "PART DRUMS", "", 0, 0},
+	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "PART VOCALS", "", 0, 0},
+	{EOF_LEGACY_TRACK_FORMAT, EOF_KEYS_TRACK_BEHAVIOR, EOF_TRACK_KEYS, 0, "PART KEYS", "", 0, 0},
+	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_BASS, 0, "PART REAL_BASS", "", 0, 0},
+	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR, 0, "PART REAL_GUITAR", "", 0, 0},
+	{EOF_LEGACY_TRACK_FORMAT, EOF_DANCE_TRACK_BEHAVIOR, EOF_TRACK_DANCE, 0, "PART DANCE", "", 0, 0},
+	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_BASS_22, 0, "PART REAL_BASS_22", "", 0, 0},
+	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR_22, 0, "PART REAL_GUITAR_22", "", 0, 0},
 
 	//These tracks are not supported for import yet, but these entries describe the tracks' details
-	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS_X", 0, 0},
-	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS_H", 0, 0},
-	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS_M", 0, 0},
-	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS_E", 0, 0},
-	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "HARM1", 0, 0},
-	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "HARM2", 0, 0},
-	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "HARM3", 0, 0},
-	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "PART HARM1", 0, 0},
-	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "PART HARM2", 0, 0},
-	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "PART HARM3", 0, 0}
+	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS_X", "", 0, 0},
+	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS_H", "", 0, 0},
+	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS_M", "", 0, 0},
+	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS_E", "", 0, 0},
+	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "HARM1", "", 0, 0},
+	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "HARM2", "", 0, 0},
+	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "HARM3", "", 0, 0},
+	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "PART HARM1", "", 0, 0},
+	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "PART HARM2", "", 0, 0},
+	{EOF_VOCAL_TRACK_FORMAT, EOF_VOCAL_TRACK_BEHAVIOR, EOF_TRACK_VOCALS, 0, "PART HARM3", "", 0, 0}
 };	//These entries describe tracks in the RB3 MIDI file format and their associated EOF track type macros, for use during import/export
 	//One complication here is that the pro keys charting gets one MIDI track for each difficulty
 	//Another is that the pro guitar could have a separate track for use with the Squier guitar (22 frets instead of 17)
@@ -1259,7 +1259,7 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 		return 0;	//Return error
 
 	if(sp->tracks <= EOF_TRACKS_MAX)
-	{
+	{	//For each native track
 		ptr3 = malloc(sizeof(EOF_TRACK_ENTRY));
 		if(ptr3 == NULL)
 			return 0;	//Return error
@@ -1356,7 +1356,8 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 		ptr3->track_format = trackdetails->track_format;
 		ptr3->track_behavior = trackdetails->track_behavior;
 		ptr3->track_type = trackdetails->track_type;
-		ustrcpy(ptr3->name,trackdetails->name);
+		ustrcpy(ptr3->name, trackdetails->name);
+		ustrcpy(ptr3->altname, trackdetails->altname);
 		ptr3->difficulty = trackdetails->difficulty;
 		ptr3->flags = trackdetails->flags;
 		if(sp->tracks == 0)
@@ -1366,7 +1367,7 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 		}
 		sp->track[sp->tracks] = ptr3;
 		sp->tracks++;
-	}
+	}//For each native track
 	return 1;	//Return success
 }
 
@@ -1441,7 +1442,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	unsigned long track_count,track_ctr;
 	unsigned long section_type_count,section_type_ctr,section_type,section_count,section_ctr,section_start,section_end;
 	unsigned long custom_data_count,custom_data_ctr,custom_data_size,custom_data_id;
-	EOF_TRACK_ENTRY temp={0, 0, 0, 0, "", 0, 0};
+	EOF_TRACK_ENTRY temp={0, 0, 0, 0, "", "", 0, 0};
 	char name[EOF_NAME_LENGTH+1];	//Used to load note/section names
 
 	if((sp == NULL) || (fp == NULL))
@@ -1706,8 +1707,12 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		temp.track_type = pack_getc(fp);		//Read the track type
 		temp.difficulty = pack_getc(fp);		//Read the track difficulty level
 		temp.flags = pack_igetl(fp);			//Read the track flags
-		pack_igetw(fp);					//Read the track compliance flags (not supported yet)
-		temp.tracknum=0;	//Ignored
+		pack_igetw(fp);							//Read the track compliance flags (not supported yet)
+		temp.tracknum=0;						//Ignored, it will be set in eof_song_add_track()
+		if(temp.flags & EOF_TRACK_FLAG_ALT_NAME)
+		{	//If this track has an alternate name
+			eof_load_song_string_pf(temp.altname,fp,sizeof(temp.altname));	//Read the alternate track name
+		}
 
 		if(track_ctr != 0)
 		{	//Add track to project
@@ -2493,6 +2498,11 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			pack_putc(sp->track[track_ctr]->difficulty, fp);		//Write track difficulty
 			pack_iputl(sp->track[track_ctr]->flags, fp);			//Write track flags
 			pack_iputw(0, fp);	//Write track compliance flags (not supported yet)
+
+			if(sp->track[track_ctr]->flags & EOF_TRACK_FLAG_ALT_NAME)
+			{	//If this track has an alternate name
+				eof_save_song_string_pf(sp->track[track_ctr]->altname, fp);	//Write alternate track name string
+			}
 
 			tracknum = sp->track[track_ctr]->tracknum;
 			has_solos = has_star_power = has_lyric_phrases = has_arpeggios = has_trills = has_tremolos = has_sliders = has_handpositions = 0;
@@ -3592,6 +3602,61 @@ void eof_pro_guitar_track_sort_notes(EOF_PRO_GUITAR_TRACK * tp)
 	}
 }
 
+int eof_song_qsort_fret_hand_positions(const void * e1, const void * e2)
+{
+	EOF_PHRASE_SECTION * thing1 = (EOF_PHRASE_SECTION *)e1;
+	EOF_PHRASE_SECTION * thing2 = (EOF_PHRASE_SECTION *)e2;
+
+	//Sort by difficulty first
+	if(thing1->difficulty < thing2->difficulty)
+	{
+		return -1;
+	}
+	else if(thing1->difficulty > thing2->difficulty)
+	{
+		return 1;
+	}
+
+	//Sort by timestamp second
+	if(thing1->start_pos < thing2->start_pos)
+	{
+		return -1;
+	}
+	else if(thing1->start_pos > thing2->start_pos)
+	{
+		return 1;
+	}
+
+	//They are equal
+	return 0;
+}
+
+void eof_pro_guitar_track_sort_fret_hand_positions(EOF_PRO_GUITAR_TRACK* tp)
+{
+ 	eof_log("eof_pro_guitar_track_sort_fret_hand_positions() entered", 1);
+
+	if(tp)
+	{
+		qsort(tp->handposition, tp->handpositions, sizeof(EOF_PHRASE_SECTION), eof_song_qsort_fret_hand_positions);
+	}
+}
+
+void eof_pro_guitar_track_delete_hand_position(EOF_PRO_GUITAR_TRACK *tp, unsigned long index)
+{
+ 	eof_log("eof_pro_guitar_track_delete_hand_position() entered", 1);
+
+	unsigned long ctr;
+	if(tp && (index < tp->handpositions))
+	{
+		tp->handposition[index].name[0] = '\0';	//Empty the name string
+		for(ctr = index; ctr < tp->handpositions; ctr++)
+		{
+			memcpy(&tp->handposition[ctr], &tp->handposition[ctr + 1], sizeof(EOF_PHRASE_SECTION));
+		}
+		tp->handpositions--;
+	}
+}
+
 /* sort all notes according to position */
 int eof_song_qsort_pro_guitar_notes(const void * e1, const void * e2)
 {
@@ -3710,12 +3775,12 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
 	for(i = tp->notes; i > 0; i--)
-	{	//For each note in the track
+	{	//For each note in the track, in reverse order
 		/* ensure notes within an arpeggio phrase are marked as "crazy" */
 		for(ctr = 0; ctr < tp->arpeggios; ctr++)
 		{	//For each arpeggio section in this track
-			if((tp->note[i-1]->pos >= tp->arpeggio[ctr].start_pos) && (tp->note[i-1]->pos <= tp->arpeggio[ctr].end_pos))
-			{	//If this note is in an arpeggio phrase
+			if((tp->note[i-1]->pos >= tp->arpeggio[ctr].start_pos) && (tp->note[i-1]->pos <= tp->arpeggio[ctr].end_pos) && (tp->note[i-1]->type == tp->arpeggio[ctr].difficulty))
+			{	//If this note is in an arpeggio phrase and in the phrase's associated difficulty
 				tp->note[i-1]->flags |= EOF_NOTE_FLAG_CRAZY;	//Set the crazy flag bit
 				break;
 			}
@@ -5516,6 +5581,7 @@ void eof_truncate_chart(EOF_SONG *sp)
 			sp->beat[sp->beats - 1]->fpos = sp->beat[sp->beats - 2]->fpos + beat_length;	//Set this beat's position to one beat length after the previous beat
 			sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos + 0.5;	//Round up
 		}
+		eof_chart_length = targetpos;	//Resize the chart length accordingly
 	}
 	else
 	{	//Find the beat that precedes the target position

@@ -3,8 +3,9 @@
 #include "main.h"
 #include "midi.h"
 #include "rs.h"
+#include "song.h"	//For eof_pro_guitar_track_delete_hand_position()
 #include "undo.h"
-#include "menu/song.h"	//For eof_song_delete_hand_position()
+#include "menu/song.h"	//For eof_fret_hand_position_list_dialog_undo_made and eof_fret_hand_position_list_dialog[]
 #include <time.h>
 
 #ifdef USEMEMWATCH
@@ -213,8 +214,9 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 	char buffer[256] = {0};
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
-	unsigned long ctr, ctr2, ctr3, ctr4, numsections = 0, stringnum, bitmask, numsinglenotes, numchords, *chordlist, chordlistsize, *sectionlist, sectionlistsize;
+	unsigned long ctr, ctr2, ctr3, ctr4, numsections = 0, stringnum, bitmask, numsinglenotes, numchords, *chordlist, chordlistsize, *sectionlist, sectionlistsize, xml_end;
 	EOF_PRO_GUITAR_TRACK *tp;
+	char *arrangement_name;	//This will point to the track's native name unless it has an alternate name defined
 
 	if(!sp || !fn || !sp->beats || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !sp->track[track]->name)
 	{
@@ -246,7 +248,15 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 	}
 
 	//Update target file name and open it for writing
-	replace_filename(fn, fn, sp->track[track]->name, 1024);
+	if((sp->track[track]->flags & EOF_TRACK_FLAG_ALT_NAME) && (sp->track[track]->altname[0] != '\0'))
+	{	//If the track has an alternate name
+		arrangement_name = sp->track[track]->altname;
+	}
+	else
+	{	//Otherwise use the track's native name
+		arrangement_name = sp->track[track]->name;
+	}
+	replace_filename(fn, fn, arrangement_name, 1024);
 	replace_extension(fn, fn, "xml", 1024);
 	fp = pack_fopen(fn, "w");
 	if(!fp)
@@ -255,17 +265,24 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 		return 0;	//Return failure
 	}
 
+	//Get the smaller of the chart length and the music length, this will be used to write the songlength tag and END phrase iteration
+	xml_end = eof_music_length;
+	if(eof_chart_length < eof_music_length)
+	{	//If the chart length is shorter than the music length
+		xml_end = eof_chart_length;
+	}
+
 	//Write the beginning of the XML file
 	pack_fputs("<?xml version='1.0' encoding='UTF-8'?>\n", fp);
 	pack_fputs("<song>\n", fp);
 	snprintf(buffer, sizeof(buffer), "  <title>%s</title>\n", sp->tags->title);
 	pack_fputs(buffer, fp);
-	snprintf(buffer, sizeof(buffer), "  <arrangement>%s</arrangement>\n", sp->track[track]->name);
+	snprintf(buffer, sizeof(buffer), "  <arrangement>%s</arrangement>\n", arrangement_name);
 	pack_fputs(buffer, fp);
 	pack_fputs("  <part>1</part>\n", fp);
 	pack_fputs("  <offset>0.000</offset>\n", fp);
 	eof_truncate_chart(sp);	//Update the chart length
-	snprintf(buffer, sizeof(buffer), "  <songLength>%.3f</songLength>\n", (double)(eof_music_length - 1) / 1000.0);	//Make sure the song length is not longer than the actual audio, or the chart won't reach an end in-game
+	snprintf(buffer, sizeof(buffer), "  <songLength>%.3f</songLength>\n", (double)(xml_end - 1) / 1000.0);	//Make sure the song length is not longer than the actual audio, or the chart won't reach an end in-game
 	pack_fputs(buffer, fp);
 	seconds = time(NULL);
 	caltime = localtime(&seconds);
@@ -326,7 +343,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track)
 			pack_fputs(buffer, fp);
 		}
 	}
-	snprintf(buffer, sizeof(buffer), "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\"/>\n", (double)eof_chart_length / 1000.0, sectionlistsize + 1);	//Write the default END phrase iteration
+	snprintf(buffer, sizeof(buffer), "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\"/>\n", (double)(xml_end - 1) / 1000.0, sectionlistsize + 1);	//Write the default END phrase iteration
 	pack_fputs(buffer, fp);
 	pack_fputs("  </phraseIterations>\n", fp);
 	if(sectionlistsize)
@@ -830,7 +847,7 @@ void eof_generate_hand_positions(EOF_SONG *sp, unsigned long track, char difficu
 				}
 				user_warned = 1;
 			}
-			eof_song_delete_hand_position(tp, ctr - 1);	//Delete the hand position
+			eof_pro_guitar_track_delete_hand_position(tp, ctr - 1);	//Delete the hand position
 		}
 	}
 

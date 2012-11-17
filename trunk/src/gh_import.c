@@ -17,6 +17,7 @@ unsigned long crc32_lookup[256] = {0};	//A lookup table to improve checksum calc
 char crc32_lookup_initialized = 0;	//Is set to nonzero when the lookup table is created
 char eof_gh_skip_size_def = 0;	//Is set to nonzero if it's determined that the size field in GH headers is omitted
 char magicnumber[] = {0x1C,0x08,0x02,0x04,0x10,0x04,0x08,0x0C,0x0C,0x08,0x02,0x04,0x14,0x02,0x04,0x0C,0x10,0x10,0x0C,0x00};	//The magic number is expected 8 bytes into the QB header
+unsigned char eof_gh_unicode_encoding_detected;	//Is set to nonzero if determined that the lyric/section text is in Unicode format
 
 #define GH_IMPORT_DEBUG
 
@@ -813,7 +814,6 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 	char *lyricbuffer = NULL, matched;
 	unsigned int voxlength;
 	unsigned char voxpitch;
-	unsigned char unicode_encoding = 0;	//Is set to nonzero if determined that the lyric text is in Unicode format
 	EOF_LYRIC *ptr = NULL;
 	EOF_VOCAL_TRACK * tp = NULL;
 
@@ -956,9 +956,14 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 			eof_log("\t\tError:  Could not read lyric size", 1);
 			return -1;
 		}
-		if(lyricsize != 36)
-		{	//Each lyric entry is expected to be 36 bytes long
-			eof_log("\t\tError:  Lyric size is not 36", 1);
+		if(lyricsize == 68)
+		{	//The Unicode version of GH string entries are 68 bytes each (32 Unicode characters plus one 4 byte timestamp)
+			eof_gh_unicode_encoding_detected = 1;
+			eof_log("\t\tUnicode text detected", 1);
+		}
+		else if(lyricsize != 36)
+		{	//Each lyric entry is expected to be 36 bytes (for ASCII) or 68 bytes (for Unicode) long
+			eof_log("\t\tError:  Lyric size is neither 36 nor 68", 1);
 			return -1;
 		}
 	}
@@ -971,8 +976,8 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 		}
 		if((fb->buffer[fb->index + 4] == 0) && (fb->buffer[fb->index + 5] != 0))
 		{	//Looking beyond the first timestamp, if the first two bytes of lyric text appear to be Unicode
-			unicode_encoding = 1;
-			lyricsize = 68;	//The Unicode version of GH strings entriesare 68 bytes each (32 Unicode characters plus one 4 byte timestamp)
+			eof_gh_unicode_encoding_detected = 1;
+			lyricsize = 68;	//The Unicode version of GH string entries are 68 bytes each (32 Unicode characters plus one 4 byte timestamp)
 			eof_log("\t\tUnicode text detected", 1);
 		}
 		else
@@ -994,7 +999,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 			eof_log("\t\tError:  Could not read lyric position", 1);
 			return -1;
 		}
-		if(!unicode_encoding)
+		if(!eof_gh_unicode_encoding_detected)
 		{	//If these are not Unicode strings, just do a normal memory copy
 			if(eof_filebuffer_memcpy(fb, lyricbuffer, lyricsize - 4))	//Read 4 bytes less to account for the entry's position
 			{	//If there was an error reading the lyric entry
@@ -1162,6 +1167,7 @@ EOF_SONG * eof_import_gh(const char * fn)
 	replace_filename(oggfn, fn, "guitar.ogg", 1024);
 	replace_filename(inifn, fn, "song.ini", 1024);
 	eof_allocate_ucode_table();
+	eof_gh_unicode_encoding_detected = 0;	//Reset this condition
 	sp = eof_import_gh_note(fn);	//Attempt to load as a "NOTE" format GH file
 	if(!sp)
 	{	//If that failed
@@ -2532,9 +2538,12 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 
 struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 {
-	unsigned long checksum, index2, nameindex;
-	unsigned char sectionid[] = {0x22, 0x0D, 0x0A};	//This hex sequence is between each section name entry
-	char *buffer, checksumbuff[9], *name;
+	unsigned long checksum, index2, nameindex, ctr;
+	unsigned char sectionid_ASCII[] = {0x22, 0x0D, 0x0A};		//This hex sequence is between each section name entry for ASCII text encoded GH files
+	unsigned char sectionid_UNI[] = {0x00, 0x22, 0x00, 0x0A};	//This hex sequence is between each section name entry for ASCII text encoded GH files
+	unsigned char section_id_size, *sectionid, char_size;
+	unsigned char quote_rewind;	//The number of bytes before a section name's opening quote mark its checknum exists
+	char *buffer, checksumbuff[9], checksumbuffuni[18], *name;
 	struct QBlyric *head = NULL, *tail = NULL, *linkptr = NULL;	//Used to maintain the linked list matching section names with checksums
 	char abnormal_markers = 0;	//Normally, section names don't begin with "\L", but some files have them with this prefix
 
@@ -2543,31 +2552,61 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 	if(!fb)
 		return NULL;
 
+	if(eof_gh_unicode_encoding_detected)
+	{	//If Unicode encoding was found when importing lyrics, the section names will also be in Unicode
+		section_id_size = sizeof(sectionid_UNI);
+		sectionid = sectionid_UNI;
+		quote_rewind = 18;
+		char_size = 2;	//A Unicode character is two bytes
+	}
+	else
+	{	//ASCII encoding is assumed
+		section_id_size = sizeof(sectionid_ASCII);
+		sectionid = sectionid_ASCII;
+		quote_rewind = 9;
+		char_size = 1;
+	}
+
 //Find the section names and checksums
-	while(eof_filebuffer_find_bytes(fb, sectionid, sizeof(sectionid), 1) > 0)
+	while(eof_filebuffer_find_bytes(fb, sectionid, section_id_size, 1) > 0)
 	{	//While there are section name entries
-		for(index2 = 1; (index2 <= fb->index) && (fb->buffer[fb->index - index2] != '\"'); index2++);	//Find the opening quotation mark for this string
+		for(index2 = char_size; (index2 <= fb->index) && (fb->buffer[fb->index - index2 + char_size - 1] != '\"'); index2 += char_size);	//Find the opening quotation mark for this string
 		if(index2 > fb->index)
 		{	//If the opening quotation mark wasn't found
 			return NULL;
 		}
-		if(fb->index - index2 >= 9)
+		if(fb->index - index2 >= quote_rewind)
 		{	//If there is enough buffered data before this position to allow for an 8 character checksum and a space character
 			//Find and parse the checksum for this section name
-			fb->index = fb->index - index2 - 9;	//Seek to the position of the section name checksum
-			if(eof_filebuffer_memcpy(fb, checksumbuff, 8) == EOF)	//Read the checksum into a buffer
+			fb->index = fb->index - index2 - quote_rewind;	//Seek to the position of the section name checksum
+			if(eof_gh_unicode_encoding_detected)
+			{	//If this GH file is in Unicode, convert the letters to ASCII by skipping the leading 0 byte of each
+				if(eof_filebuffer_memcpy(fb, checksumbuffuni, 16) == EOF)	//Read the Unicode checksum into a buffer
+				{
+					eof_log("\t\tError:  Could not read Unicode section name checksum", 1);
+					return NULL;
+				}
+				for(ctr = 0; ctr < 8; ctr++)
+				{	//For each of the 8 Unicode characters
+					checksumbuff[ctr] = checksumbuffuni[(2 * ctr) + 1];	//Keep the second byte of each Unicode character
+				}
+			}
+			else
 			{
-				eof_log("\t\tError:  Could not read section name checksum", 1);
-				return NULL;
+				if(eof_filebuffer_memcpy(fb, checksumbuff, 8) == EOF)	//Read the checksum into a buffer
+				{
+					eof_log("\t\tError:  Could not read section name checksum", 1);
+					return NULL;
+				}
 			}
 			checksumbuff[8] = '\0';	//Null terminate the buffer
 			sscanf(checksumbuff, "%8lX", &checksum);	//Convert the hex string to unsigned decimal format
-			if(fb->buffer[fb->index] != ' ')
+			if(fb->buffer[fb->index + eof_gh_unicode_encoding_detected] != ' ')
 			{	//If the expected space character is not found at this position
 				eof_log("\t\tError:  Malformed section name checksum", 1);
 				return NULL;
 			}
-			fb->index += 2;	//Seek past the space character and opening quotation mark
+			fb->index += (2 * char_size);	//Seek past the space character and opening quotation mark
 
 			//Parse the section name string
 			buffer = malloc(index2);		//This buffer will be large enough to contain the string
@@ -2581,7 +2620,18 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 				eof_log("\t\tError:  Could not read section name text", 1);
 				return NULL;
 			}
-			buffer[index2 - 1] = '\0';	//Terminate the string
+			if(eof_gh_unicode_encoding_detected)
+			{	//If this GH file is in Unicode, convert the letters to ASCII by skipping the leading 0 byte of each
+				for(ctr = 0; ctr < index2 / char_size; ctr++)
+				{	//For each of the Unicode characters
+					buffer[ctr] = buffer[(ctr * char_size) + 1];	//Keep the second byte of each Unicode character
+				}
+				buffer[ctr - 1] = '\0';	//Terminate the string
+			}
+			else
+			{
+				buffer[index2 - 1] = '\0';	//Terminate the string
+			}
 			nameindex = 0;	//This is the index into the buffer that will point ahead of any leading gibberish the section name string may contain
 			if(strlen(buffer) >= 2)
 			{	//If this string is at least two characters long

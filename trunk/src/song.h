@@ -178,7 +178,7 @@ typedef struct
 	unsigned long midi_start_pos;
 	unsigned long midi_end_pos;
 	unsigned long start_pos;
-	unsigned long end_pos;
+	unsigned long end_pos;	//Will store other data in items that don't use an end position (such as fret hand positions)
 	unsigned long flags;
 	char name[EOF_NAME_LENGTH+1];
 	char difficulty;	//The difficulty this phrase applies to (ie. arpeggios)
@@ -233,6 +233,8 @@ typedef struct
 
 #define EOF_TRACK_FLAG_SIX_LANES		1
 	//Specifies if the track has open strumming enabled (PART BASS) or a fifth drum lane enabled (PART DRUMS)
+#define EOF_TRACK_FLAG_ALT_NAME			2
+	//Specifies if the track has an alternate display name (for RS export.  MIDI export will still use the native name)
 
 #define EOF_TRACK_NAME_SIZE		31
 typedef struct
@@ -242,6 +244,7 @@ typedef struct
 	char track_type;				//Specifies which type of track this is (ie default PART GUITAR, custom track, etc)
 	unsigned long tracknum;			//Specifies which number of that type this track is, used as an index into the type-specific track arrays
 	char name[EOF_NAME_LENGTH+1];	//Specifies the name of the track
+	char altname[EOF_NAME_LENGTH+1];//Specifies the alternate name of the track (for RS export)
 	unsigned char difficulty;		//Specifies the difficulty level from 0-5 (standard 0-5 scale), or 6 for devil heads (extreme difficulty)
 	unsigned long flags;
 } EOF_TRACK_ENTRY;
@@ -606,6 +609,8 @@ int eof_detect_string_gem_conflicts(EOF_PRO_GUITAR_TRACK *tp, unsigned long newn
 	//0 is returned if there are no conflicts
 	//-1 is returned on error
 unsigned long eof_get_pro_guitar_note_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);		//Returns the note bitflag of the specified pro guitar note, or 0 on error
+void eof_pro_guitar_track_sort_fret_hand_positions(EOF_PRO_GUITAR_TRACK* tp);	//Sorts the specified tracks fret hand positions
+void eof_pro_guitar_track_delete_hand_position(EOF_PRO_GUITAR_TRACK *tp, unsigned long index);	//Deletes the specified fret hand position
 
 void eof_sort_notes(EOF_SONG *sp);	//Sorts the notes in all tracks
 void eof_fixup_notes(EOF_SONG *sp);	//Performs cleanup of the note selection, beats and all tracks
