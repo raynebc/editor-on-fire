@@ -111,7 +111,7 @@ Custom data block ID 1:  Raw MIDI data:
 TRACK CHUNK, for each track:
 {
 *	2 bytes:	Track name string length
-*	[varies:]	Track name string
+*	[varies]:	Track name string
 *	1 byte:		Track format (0=Global,1=Legacy,2=Vocal,3=Pro Keys,4=Pro Guitar/Bass,5=Variable Lane Legacy,...)
 *	1 byte:		Track behavior (1=Guitar/Bass,2=Drum/Pro Drum,3=Vocal,4=Keys,5=Pro Guitar/Bass,6=Pro Keys,7=Dance...)
 *	1 byte:		Track type (1=Guitar,2=Bass,3=Lead Guitar,4=Rhythm Guitar,5=Drum/Pro Drum,6=Vocal,7=Keys,8=17 Fret Pro Bass,9=17 Fret Pro Guitar,10=Pro Keys,11=22 Fret Pro Guitar,12=22 Fret Pro Bass,13=Custom,...)
@@ -122,8 +122,10 @@ TRACK CHUNK, for each track:
 !	Until track number comparison is completely removed for this purpose, the track type can serve as a replacement
 *	1 byte:		Track difficulty level (0-6), 0xFF represents an undefined track difficulty
 *	4 bytes:	Track flags (ie. which difficulties are locked for editing)
-	[varies:]	Extended note flags (if the MSB of the note flags field is set, another 4 byte flag field follows, and if its MSB is set, another 4 byte flag field, etc)
-*	2 bytes:	Track compliance flags (ie. if it is valid as per constraints of Rock Band, etc)
+	[varies]:	Extended note flags (if the MSB of the note flags field is set, another 4 byte flag field follows, and if its MSB is set, another 4 byte flag field, etc)
+*	2 bytes:	Track compliance flags (ie. if it is valid as per constraints of Rock Band, etc.  Currently unused)
+	[2 bytes]:	//If the track flags (flags | 2) indicated an alternate name is given for the track, the alternate track name string length
+	[varies]:	//If the track flags (flags | 2) indicated an alternate name is given for the track, the alternate track name string
 
 *	[varies:]	Track data (depending on the format type as defined below)
 

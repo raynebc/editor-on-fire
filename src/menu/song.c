@@ -141,9 +141,11 @@ MENU eof_song_proguitar_menu[] =
     {"Enable &Legacy view\tShift+L", eof_menu_song_legacy_view, NULL, 0, NULL},
     {"&Previous chord name\tShift+W", eof_menu_previous_chord_result, NULL, 0, NULL},
     {"&Next chord name\tShift+E", eof_menu_next_chord_result, NULL, 0, NULL},
+    {"", NULL, NULL, 0, NULL},
     {"Correct chord finger information", eof_correct_chord_fingerings_menu, NULL, 0, NULL},
     {"Set fret hand position\tShift+F", eof_pro_guitar_set_fret_hand_position, NULL, 0, NULL},
     {"This difficulty's fret &Hand positions", eof_menu_song_fret_hand_positions, NULL, 0, NULL},
+    {"Rename track", eof_song_proguitar_rename_track, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -3268,7 +3270,7 @@ DIALOG eof_seek_beat_measure_dialog[] =
    { d_agup_radio_proc,		16,	100,110,15,	2,   23,  0,    0,      0,	0,	eof_etext,				NULL, NULL },
    { d_agup_radio_proc,		16,	120,160,15,	2,   23,  0,    0,      0,	0,	eof_etext2,				NULL, NULL },
    { d_agup_text_proc,		16,	140,80,16,	2,   23,  0,    0,		1,	0,	"Number:",				NULL, NULL },
-   { eof_verified_edit_proc,70, 140,66,20,  2,   23,  0,    0,      4,  0,  eof_etext3,           	"1234567890", NULL },
+   { eof_verified_edit_proc,70, 140,66,20,  2,   23,  0, D_GOTFOCUS,4,  0,  eof_etext3,           	"1234567890", NULL },
    { d_agup_button_proc,	16,	164,68,	28,	2,   23,  '\r',	D_EXIT, 0,	0,	"OK",             		NULL, NULL },
    { d_agup_button_proc,	96, 164,68,	28,	2,   23,  0,	D_EXIT, 0,	0,	"Cancel",         		NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
@@ -3580,45 +3582,6 @@ int eof_menu_song_catalog_edit(void)
 	return 1;
 }
 
-int eof_song_qsort_fret_hand_positions(const void * e1, const void * e2)
-{
-	EOF_PHRASE_SECTION * thing1 = (EOF_PHRASE_SECTION *)e1;
-	EOF_PHRASE_SECTION * thing2 = (EOF_PHRASE_SECTION *)e2;
-
-	//Sort by difficulty first
-	if(thing1->difficulty < thing2->difficulty)
-	{
-		return -1;
-	}
-	else if(thing1->difficulty > thing2->difficulty)
-	{
-		return 1;
-	}
-
-	//Sort by timestamp second
-	if(thing1->start_pos < thing2->start_pos)
-	{
-		return -1;
-	}
-	else if(thing1->start_pos > thing2->start_pos)
-	{
-		return 1;
-	}
-
-	//They are equal
-	return 0;
-}
-
-void eof_sort_fret_hand_positions(EOF_PRO_GUITAR_TRACK* tp)
-{
- 	eof_log("eof_sort_fret_hand_positions() entered", 1);
-
-	if(tp)
-	{
-		qsort(tp->handposition, tp->handpositions, sizeof(EOF_PHRASE_SECTION), eof_song_qsort_fret_hand_positions);
-	}
-}
-
 DIALOG eof_pro_guitar_set_fret_hand_position_dialog[] =
 {
    /* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
@@ -3664,39 +3627,26 @@ int eof_pro_guitar_set_fret_hand_position(void)
 			{	//If the user gave a valid position
 				for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->handpositions; ctr++)
 				{	//For each existing fret hand position in the track
-					if(eof_song->pro_guitar_track[tracknum]->handposition[ctr].start_pos == eof_music_pos - eof_av_delay)
-					{	//If a fret hand position already exists at the current seek position
-						if(eof_song->pro_guitar_track[tracknum]->handposition[ctr].end_pos != position)
-						{	//And it defines a different fret hand position than the user just gave
-							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-							eof_song->pro_guitar_track[tracknum]->handposition[ctr].end_pos = position;	//Update the existing fret hand position entry
+					if(eof_song->pro_guitar_track[tracknum]->handposition[ctr].difficulty == eof_note_type)
+					{	//If the fret hand position is in the active difficulty
+						if(eof_song->pro_guitar_track[tracknum]->handposition[ctr].start_pos == eof_music_pos - eof_av_delay)
+						{	//If the fret hand position already exists at the current seek position
+							if(eof_song->pro_guitar_track[tracknum]->handposition[ctr].end_pos != position)
+							{	//And it defines a different fret hand position than the user just gave
+								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+								eof_song->pro_guitar_track[tracknum]->handposition[ctr].end_pos = position;	//Update the existing fret hand position entry
+							}
+							return 0;
 						}
-						return 0;
 					}
 				}
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				eof_track_add_section(eof_song, eof_selected_track, EOF_FRET_HAND_POS_SECTION, eof_note_type, eof_music_pos - eof_av_delay, position, 0, NULL);
-				eof_sort_fret_hand_positions(eof_song->pro_guitar_track[tracknum]);	//Sort the positions, since they must be in order for displaying to the user
+				eof_pro_guitar_track_sort_fret_hand_positions(eof_song->pro_guitar_track[tracknum]);	//Sort the positions, since they must be in order for displaying to the user
 			}
 		}
 	}
 	return 0;
-}
-
-void eof_song_delete_hand_position(EOF_PRO_GUITAR_TRACK *tp, unsigned long index)
-{
- 	eof_log("eof_song_delete_hand_position() entered", 1);
-
-	unsigned long ctr;
-	if(tp && (index < tp->handpositions))
-	{
-		tp->handposition[index].name[0] = '\0';	//Empty the name string
-		for(ctr = index; ctr < tp->handpositions; ctr++)
-		{
-			memcpy(&tp->handposition[ctr], &tp->handposition[ctr + 1], sizeof(EOF_PHRASE_SECTION));
-		}
-		tp->handpositions--;
-	}
 }
 
 int eof_fret_hand_position_delete(DIALOG * d)
@@ -3726,8 +3676,8 @@ int eof_fret_hand_position_delete(DIALOG * d)
 				}
 
 				/* remove the hand position, update the selection in the list box and exit */
-				eof_song_delete_hand_position(eof_song->pro_guitar_track[tracknum], i);
-				eof_sort_fret_hand_positions(eof_song->pro_guitar_track[tracknum]);	//Re-sort the remaining hand positions
+				eof_pro_guitar_track_delete_hand_position(eof_song->pro_guitar_track[tracknum], i);
+				eof_pro_guitar_track_sort_fret_hand_positions(eof_song->pro_guitar_track[tracknum]);	//Re-sort the remaining hand positions
 				for(i = 0, ecount = 0; i < eof_song->pro_guitar_track[tracknum]->handpositions; i++)
 				{	//For each remaining fret hand position
 					if(eof_song->pro_guitar_track[tracknum]->handposition[i].difficulty == eof_note_type)
@@ -3775,11 +3725,11 @@ int eof_fret_hand_position_delete_all(DIALOG * d)
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				eof_fret_hand_position_list_dialog_undo_made = 1;
 			}
-			eof_song_delete_hand_position(eof_song->pro_guitar_track[tracknum], i - 1);
+			eof_pro_guitar_track_delete_hand_position(eof_song->pro_guitar_track[tracknum], i - 1);
 		}
 	}
 
-	eof_sort_fret_hand_positions(eof_song->pro_guitar_track[tracknum]);	//Re-sort the remaining hand positions
+	eof_pro_guitar_track_sort_fret_hand_positions(eof_song->pro_guitar_track[tracknum]);	//Re-sort the remaining hand positions
 	dialog_message(eof_fret_hand_position_list_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
 	return D_REDRAW;
 }
@@ -3842,7 +3792,7 @@ char * eof_fret_hand_position_list(int index, int * size)
 				ism = (eof_song->pro_guitar_track[tracknum]->handposition[i].start_pos / 1000) / 60;
 				iss = (eof_song->pro_guitar_track[tracknum]->handposition[i].start_pos / 1000) % 60;
 				isms = (eof_song->pro_guitar_track[tracknum]->handposition[i].start_pos % 1000);
-				snprintf(eof_fret_hand_position_list_text[ecount], 25, "%02d:%02d:%03d: Fret %lu", ism, iss, isms, eof_song->pro_guitar_track[tracknum]->handposition[i].end_pos);
+				snprintf(eof_fret_hand_position_list_text[ecount], 25, "%02d:%02d.%03d: Fret %lu", ism, iss, isms, eof_song->pro_guitar_track[tracknum]->handposition[i].end_pos);
 				ecount++;
 			}
 		}
@@ -3904,6 +3854,54 @@ int eof_menu_song_fret_hand_positions(void)
 	eof_fret_hand_position_list_dialog_undo_made = 0;			//Reset this condition
 	eof_popup_dialog(eof_fret_hand_position_list_dialog, 0);	//Launch the dialog
 
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(NULL);
+	return 1;
+}
+
+DIALOG eof_song_proguitar_rename_track_dialog[] =
+{
+   /* (proc)            (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
+   { d_agup_window_proc,0,  48,  314, 112, 2,   23,  0,    0,      0,   0,   "Rename track",NULL, NULL },
+   { d_agup_text_proc,  12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "New name:",   NULL, NULL },
+   { d_agup_edit_proc,  90, 80,  212, 20,  2,   23,  0, 0,EOF_NAME_LENGTH,0, eof_etext,     NULL, NULL },
+   { d_agup_button_proc,67, 120, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",          NULL, NULL },
+   { d_agup_button_proc,163,120, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",      NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_song_proguitar_rename_track(void)
+{
+	if(!eof_song_loaded || !eof_song)
+		return 1;	//Do not allow this function to run if a chart is not loaded
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	eof_cursor_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_song_proguitar_rename_track_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_song_proguitar_rename_track_dialog);
+
+	ustrncpy(eof_etext, eof_song->track[eof_selected_track]->altname, EOF_NAME_LENGTH);	//Update the input field
+	if(eof_popup_dialog(eof_song_proguitar_rename_track_dialog, 0) == 3)
+	{	//If user clicked OK
+		if(ustrncmp(eof_etext, eof_song->track[eof_selected_track]->altname, EOF_NAME_LENGTH))
+		{	//If the user provided a different alternate track name
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			ustrncpy(eof_song->track[eof_selected_track]->altname, eof_etext, EOF_NAME_LENGTH);	//Update the track entry
+			if(eof_etext[0] != '\0')
+			{	//If the alternate name string is not empty
+				eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_ALT_NAME;	//Set this flag
+			}
+			else
+			{	//Otherwise clear the alternate track name flag
+				eof_song->track[eof_selected_track]->flags &= ~EOF_TRACK_FLAG_ALT_NAME;	//Clear this flag
+			}
+		}
+	}
+
+	eof_fix_window_title();	//Update EOF's window title
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(NULL);

@@ -738,7 +738,14 @@ void eof_fix_window_title(void)
 		}
 		else
 		{
-			ustrcat(eof_window_title, eof_song->track[eof_selected_track]->name);
+			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_ALT_NAME)
+			{	//If this track has an alternate name, append the track's alternate name
+				ustrcat(eof_window_title, eof_song->track[eof_selected_track]->altname);
+			}
+			else
+			{	//Otherwise append the track's native name
+				ustrcat(eof_window_title, eof_song->track[eof_selected_track]->name);
+			}
 			ustrcat(eof_window_title, "  ");
 			char *ptr;
 			if(eof_selected_track == EOF_TRACK_DANCE)
@@ -754,6 +761,12 @@ void eof_fix_window_title(void)
 		}
 		ustrcat(eof_window_title, ")");
 
+		if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_ALT_NAME)
+		{	//If this track has an alternate name, append the track's native name
+			ustrcat(eof_window_title, " (");
+			ustrcat(eof_window_title, eof_song->track[eof_selected_track]->name);
+			ustrcat(eof_window_title, ")");
+		}
 		if((eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && eof_legacy_view)
 		{	//If this is a pro guitar track being displayed with the legacy view enabled
 			ustrcat(eof_window_title, "(Legacy view)");
@@ -2382,7 +2395,7 @@ void eof_render_note_window(void)
 		unsigned long itn = 0;
 		int isn = eof_count_selected_notes(&itn, 0);
 		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Seek Position = %02d:%02d:%03d", ism, iss, isms >= 0 ? isms : 0);
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Seek Position = %02d:%02d.%03d", ism, iss, isms >= 0 ? isms : 0);
 		ypos += 12;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s Selected = %d/%lu", eof_vocals_selected ? "Lyrics" : "Notes", isn, itn);
 

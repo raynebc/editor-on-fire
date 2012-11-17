@@ -473,7 +473,7 @@ void eof_prepare_note_menu(void)
 			{	//If a pro guitar track is active
 				for(j = 0; j < eof_song->pro_guitar_track[tracknum]->arpeggios; j++)
 				{	//For each arpeggio phrase in the active track
-					if((sel_end >= eof_song->pro_guitar_track[tracknum]->arpeggio[j].start_pos) && (sel_start <= eof_song->pro_guitar_track[tracknum]->arpeggio[j].end_pos))
+					if((sel_end >= eof_song->pro_guitar_track[tracknum]->arpeggio[j].start_pos) && (sel_start <= eof_song->pro_guitar_track[tracknum]->arpeggio[j].end_pos) && (eof_song->pro_guitar_track[tracknum]->arpeggio[j].difficulty == eof_note_type))
 					{
 						inarpeggio = 1;
 					}
@@ -5041,8 +5041,8 @@ int eof_menu_arpeggio_mark(void)
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(j = 0; j < eof_song->pro_guitar_track[tracknum]->arpeggios; j++)
 	{	//For each arpeggio section in the track
-		if((sel_end >= eof_song->pro_guitar_track[tracknum]->arpeggio[j].start_pos) && (sel_start <= eof_song->pro_guitar_track[tracknum]->arpeggio[j].end_pos))
-		{	//If the selection of notes is within this arpeggio's start and end position
+		if((sel_end >= eof_song->pro_guitar_track[tracknum]->arpeggio[j].start_pos) && (sel_start <= eof_song->pro_guitar_track[tracknum]->arpeggio[j].end_pos) && (eof_song->pro_guitar_track[tracknum]->arpeggio[j].difficulty == eof_note_type))
+		{	//If the selection of notes is within this arpeggio's start and end position, and the arpeggio is also in the active difficulty
 			existingphrase = 1;	//Note it
 			existingphrasenum = j;
 		}
