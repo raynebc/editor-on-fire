@@ -153,12 +153,11 @@ DIALOG eof_drum_settings_dialog[] =
 
 DIALOG eof_controller_settings_dialog[] =
 {
-   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc,    4,  236 + 24 - 32 - 20 - 8, 190 + 32, 144, 2,   23,  0,    0,      0,   0,   "Controller Settings",               NULL, NULL },
-
-   { d_agup_push_proc, 13,  176 + 6 + 24 + 24 + 36 - 30, 170 + 32,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Guitar",               NULL, eof_controller_settings_guitar },
-   { d_agup_push_proc, 13,  176 + 6 + 24 + 24 + 36, 170 + 32,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Drums",               NULL, eof_controller_settings_drums },
-   { d_agup_button_proc, 13, 176 + 88 + 32 + 8, 170 + 32,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Done",               NULL, NULL },
+   /* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
+   { d_agup_window_proc, 0,   200, 222, 144, 2,   23,  0,    0,      0,   0,   "Controller Settings", NULL, NULL },
+   { d_agup_push_proc,   12,  236, 198, 28,  2,   23,  'g',  D_EXIT, 0,   0,   "&Guitar",             NULL, eof_controller_settings_guitar },
+   { d_agup_push_proc,   12,  266, 198, 28,  2,   23,  'd',  D_EXIT, 0,   0,   "&Drums",              NULL, eof_controller_settings_drums },
+   { d_agup_button_proc, 12,  304, 198, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",                NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1565,7 +1564,7 @@ void eof_lyric_import_prompt(int *selectedformat, char **selectedtrack)
 	centre_dialog(eof_lyric_detections_dialog);				//Center it
 	eof_lyric_detections_dialog[1].d1 = 0;				//Init the list procedure's selection variable to 0
 
-	if(eof_popup_dialog(eof_lyric_detections_dialog, 0) == 2)	//If a user selection was made?
+	if(eof_popup_dialog(eof_lyric_detections_dialog, 0) == 2)	//If a user selection was made
 	{	//Seek to the selected link
 		ptr=GetDetectionNumber(lyricdetectionlist,eof_lyric_detections_dialog[1].d1);
 		*selectedformat=ptr->format;
@@ -2453,7 +2452,7 @@ DIALOG eof_gp_import_dialog[] =
    /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
    { d_agup_window_proc,0,   48,  500, 232, 2,   23,  0,    0,      0,   0,   "Import which GP track into the project's active track?",       NULL, NULL },
    { d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   eof_gp_tracks_list, NULL, NULL },
-   { d_agup_push_proc,  425, 84,  68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Import",       NULL, eof_gp_import_track },
+   { d_agup_push_proc,  425, 84,  68,  28,  2,   23,  'i',  D_EXIT, 0,   0,   "&Import",      NULL, eof_gp_import_track },
    { d_agup_button_proc,12,  235, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };

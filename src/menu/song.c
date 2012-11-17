@@ -145,7 +145,7 @@ MENU eof_song_proguitar_menu[] =
     {"Correct chord finger information", eof_correct_chord_fingerings_menu, NULL, 0, NULL},
     {"Set fret hand position\tShift+F", eof_pro_guitar_set_fret_hand_position, NULL, 0, NULL},
     {"This difficulty's fret &Hand positions", eof_menu_song_fret_hand_positions, NULL, 0, NULL},
-    {"Rename track", eof_song_proguitar_rename_track, NULL, 0, NULL},
+    {"&Rename track", eof_song_proguitar_rename_track, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -178,23 +178,23 @@ MENU eof_song_menu[] =
 
 DIALOG eof_ini_dialog[] =
 {
-   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc,    0,  48,  216 + 110 + 20, 160 + 72, 2,   23,  0,    0,      0,   0,   "INI Settings",               NULL, NULL },
-   { d_agup_list_proc,   12, 84,  110 * 2 + 20,  69 * 2,  2,   23,  0,    0,      0,   0,   eof_ini_list, NULL, NULL },
-   { d_agup_push_proc, 134 + 130,  84, 68,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Add",               NULL, eof_ini_dialog_add },
-   { d_agup_push_proc, 134 + 130,  124, 68,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Delete",               NULL, eof_ini_dialog_delete },
-   { d_agup_button_proc, 12,  166 + 69, 190 + 30 + 20,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Done",               NULL, NULL },
+   /* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
+   { d_agup_window_proc, 0,   48,  346, 232, 2,   23,  0,    0,      0,   0,   "INI Settings", NULL, NULL },
+   { d_agup_list_proc,   12,  84,  240, 138, 2,   23,  0,    0,      0,   0,   eof_ini_list,   NULL, NULL },
+   { d_agup_push_proc,   264, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",         NULL, eof_ini_dialog_add },
+   { d_agup_push_proc,   264, 124, 68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, eof_ini_dialog_delete },
+   { d_agup_button_proc, 12,  235, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 DIALOG eof_ini_add_dialog[] =
 {
-   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc,    0,  48,  204 + 110, 106, 2,   23,  0,    0,      0,   0,   "Add INI Setting",               NULL, NULL },
-   { d_agup_text_proc,   12,  84,  64,  8,  2,   23,  0,    0,      0,   0,   "Text:",         NULL, NULL },
-   { d_agup_edit_proc,   48, 80,  144 + 110,  20,  2,   23,  0,    0,      255,   0,   eof_etext,           NULL, NULL },
-   { d_agup_button_proc, 12 + 55,  112, 84,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "OK",               NULL, NULL },
-   { d_agup_button_proc, 108 + 55, 112, 78,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+   /* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)              (dp2) (dp3) */
+   { d_agup_window_proc, 0,   48,  314, 106, 2,   23,  0,    0,      0,   0,   "Add INI Setting",NULL, NULL },
+   { d_agup_text_proc,   12,  84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",          NULL, NULL },
+   { d_agup_edit_proc,   48,  80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,        NULL, NULL },
+   { d_agup_button_proc, 67,  112, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",             NULL, NULL },
+   { d_agup_button_proc, 163, 112, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",         NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1597,7 +1597,7 @@ int eof_menu_song_add_silence(void)
 	eof_leading_silence_dialog[6].flags = 0;
 	sprintf(eof_etext, "0");
 
-	if(eof_popup_dialog(eof_leading_silence_dialog, 0) == 11)			//User clicked OK
+	if(eof_popup_dialog(eof_leading_silence_dialog, 7) == 11)			//User clicked OK
 	{
 		sprintf(fn, "%s.backup", eof_loaded_ogg_name);
 		current_length = get_ogg_length(eof_loaded_ogg_name);
@@ -3009,7 +3009,7 @@ DIALOG eof_raw_midi_add_track_dialog[] =
    /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
    { d_agup_window_proc, 0,  48,  500, 232, 2,   23,  0,    0,      0,   0,   "Select MIDI track to import",    NULL, NULL },
    { d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   eof_raw_midi_tracks_list,NULL, NULL },
-   { d_agup_push_proc,  12,  235, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Import",       NULL, eof_raw_midi_track_import },
+   { d_agup_push_proc,  12,  235, 68,  28,  2,   23,  'i',  D_EXIT, 0,   0,   "&Import",      NULL, eof_raw_midi_track_import },
    { d_agup_button_proc,120, 235, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
@@ -3317,7 +3317,7 @@ int eof_menu_song_seek_beat_measure(void)
 
 	while(!done)
 	{
-		retval = eof_popup_dialog(eof_seek_beat_measure_dialog, 0);
+		retval = eof_popup_dialog(eof_seek_beat_measure_dialog, 5);
 		if(retval == 6)
 		{	//User clicked OK
 			unsigned long input = atol(eof_etext3);
@@ -3884,7 +3884,7 @@ int eof_song_proguitar_rename_track(void)
 	centre_dialog(eof_song_proguitar_rename_track_dialog);
 
 	ustrncpy(eof_etext, eof_song->track[eof_selected_track]->altname, EOF_NAME_LENGTH);	//Update the input field
-	if(eof_popup_dialog(eof_song_proguitar_rename_track_dialog, 0) == 3)
+	if(eof_popup_dialog(eof_song_proguitar_rename_track_dialog, 2) == 3)
 	{	//If user clicked OK
 		if(ustrncmp(eof_etext, eof_song->track[eof_selected_track]->altname, EOF_NAME_LENGTH))
 		{	//If the user provided a different alternate track name
