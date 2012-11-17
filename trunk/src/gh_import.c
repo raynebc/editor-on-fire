@@ -2544,8 +2544,11 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 	unsigned char section_id_size, *sectionid, char_size;
 	unsigned char quote_rewind;	//The number of bytes before a section name's opening quote mark its checknum exists
 	char *buffer, checksumbuff[9], checksumbuffuni[18], *name;
-	struct QBlyric *head = NULL, *tail = NULL, *linkptr = NULL;	//Used to maintain the linked list matching section names with checksums
+	struct QBlyric *head = NULL, *tail = NULL, *linkptr = NULL, *temp;	//Used to maintain the linked list matching section names with checksums
 	char abnormal_markers = 0;	//Normally, section names don't begin with "\L", but some files have them with this prefix
+	unsigned long lastseekstartpos;
+		//Some GH files put all languages together instead of in separate parts, this is used to store the position before a seek so if a duplicate checksum (same
+		//section as a previous one in another language) is found, the seek position is restored and function returns, so next call can parse the next language
 
 	eof_log("eof_gh_read_section_names() entered", 1);
 
@@ -2568,6 +2571,7 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 	}
 
 //Find the section names and checksums
+	lastseekstartpos = fb->index;	//Back up the buffer position before each seek
 	while(eof_filebuffer_find_bytes(fb, sectionid, section_id_size, 1) > 0)
 	{	//While there are section name entries
 		for(index2 = char_size; (index2 <= fb->index) && (fb->buffer[fb->index - index2 + char_size - 1] != '\"'); index2 += char_size);	//Find the opening quotation mark for this string
@@ -2604,9 +2608,19 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 			if(fb->buffer[fb->index + eof_gh_unicode_encoding_detected] != ' ')
 			{	//If the expected space character is not found at this position
 				eof_log("\t\tError:  Malformed section name checksum", 1);
-				return NULL;
+				return head;	//Stop reading sections
 			}
 			fb->index += (2 * char_size);	//Seek past the space character and opening quotation mark
+
+			//Check if this checksum was already read (one language of sections has been parsed), and if so, revert the buffer position to before the last seek operation, return section list
+			for(temp = head; temp != NULL; temp = temp->next)
+			{	//For each section name parsed in this function call
+				if(temp->checksum == checksum)
+				{	//If the checksum just read already exists in the linked list
+					fb->index = lastseekstartpos;	//Revert to position before the most recent seek
+					return head;	//Stop reading sections
+				}
+			}
 
 			//Parse the section name string
 			buffer = malloc(index2);		//This buffer will be large enough to contain the string
@@ -2715,6 +2729,7 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 				}
 			}
 		}//If there is enough buffered data before this position to allow for an 8 character checksum and a space character
+		lastseekstartpos = fb->index;	//Back up the buffer position before each seek
 	}//While there are section name entries
 
 	return head;
