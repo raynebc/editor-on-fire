@@ -73,7 +73,7 @@ int eof_undo_add(int type)
 {
  	eof_log("eof_undo_add() entered", 1);
 
-	char fn[1024] = {0};
+	char fn[1024] = {0}, temp[1024] = {0};
 	unsigned long ctr;
 
 	if(eof_undo_states_initialized == -1)
@@ -127,10 +127,10 @@ int eof_undo_add(int type)
 		PACKFILE *fp = pack_fopen("eof.recover", "w");	//Open the recovery definition file for writing
 		if(fp)
 		{	//If the file opened
-			append_filename(eof_temp_filename, eof_song_path, eof_loaded_song_name, 1024);	//Construct the full path to the project file
-			pack_fputs(eof_undo_filename[eof_undo_current_index], fp);						//Write the undo file path
-			pack_fputs("\n", fp);															//Write a newline character
-			pack_fputs(eof_temp_filename, fp);												//Write the project path
+			append_filename(temp, eof_song_path, eof_loaded_song_name, 1024);	//Construct the full path to the project file
+			pack_fputs(eof_undo_filename[eof_undo_current_index], fp);			//Write the undo file path
+			pack_fputs("\n", fp);												//Write a newline character
+			pack_fputs(temp, fp);												//Write the project path
 			pack_fclose(fp);
 		}
 	}
