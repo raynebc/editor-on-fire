@@ -7,6 +7,7 @@
 #include "midi_data_import.h"
 #include "midi_import.h"	//For eof_parse_var_len()
 #include "mix.h"	//For eof_set_seek_position()
+#include "rs.h"		//For automated fret hand position generation functions
 #include "undo.h"
 #include "utility.h"
 #include "tuning.h"
@@ -336,8 +337,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	EOF_PHRASE_SECTION *sectionptr;
 	char *currentname = NULL, chordname[100]="";
 	char phase_shift_sysex_phrase[8] = {'P','S','\0',0,0,0,0,0xF7};	//This is used to write Sysex messages for features supported in Phase Shift (ie. open strum bass)
-	char fret_hand_pos_written;				//This is used to track whether the single fret hand position was written (if the "Fret hand pos is 0" option is enabled)
-	struct eof_MIDI_data_track *trackptr;	//Used to count the number of raw MIDI tracks to export
+	char fret_hand_pos_written;					//This is used to track whether the track's fret hand positions were completely written yet
+	char fret_hand_positions_generated;			//This is used to track whether fret hand positions were automatically generated for an exported pro guitar/bass track's expert difficulty
+	char fret_hand_positions_present;			//This is used to track whether fret hand positions are defined for an exported pro guitar/bass track's expert difficulty
+	struct eof_MIDI_data_track *trackptr;		//Used to count the number of raw MIDI tracks to export
 	EOF_MIDI_KS_LIST *kslist;
 
 //	eof_log_level &= ~2;	//Disable verbose logging
@@ -465,7 +468,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		eof_clear_midi_events();
 		tracknum = sp->track[j]->tracknum;
 		memset(eof_midi_note_status,0,sizeof(eof_midi_note_status));	//Clear note status array
-		fret_hand_pos_written = 0;	//Reset this status
 
 		//Write track specific text events
 		for(i = 0; i < sp->text_events; i++)
@@ -1148,6 +1150,45 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 		else if(sp->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If this is a pro guitar track
+			/* prepare fret hand positions */
+			unsigned long count;
+			unsigned char last_written_hand_pos = 0;	//Tracks the last written hand position, so duplicate positions needn't be written to MIDI
+			EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[tracknum];
+			fret_hand_pos_written = 0;			//Reset these statuses
+			fret_hand_positions_generated = 0;
+			fret_hand_positions_present = 0;
+
+			for(ctr = 0, count = 0; ctr < tp->handpositions; ctr++)
+			{	//For each hand position in this track
+				if(tp->handposition[ctr].difficulty == EOF_NOTE_AMAZING)
+				{	//If this hand position exists in the Expert difficulty
+					count++;
+					fret_hand_positions_present = 1;	//Track that there is at least one fret hand position defined
+				}
+			}
+			if(!count)
+			{	//If there are no user-defined hand positions in Expert difficulty
+				eof_generate_efficient_hand_positions(sp, j, EOF_NOTE_AMAZING);	//Generate the fret hand positions for the track difficulty being currently written
+				for(ctr = 0, count = 0; ctr < tp->handpositions; ctr++)	//Re-count the hand positions
+				{	//For each hand position in this track
+					if(tp->handposition[ctr].difficulty == EOF_NOTE_AMAZING)
+					{	//If this hand position exists in the Expert difficulty
+						count++;
+						fret_hand_positions_present = 1;	//Track that there is at least one fret hand position defined
+					}
+				}
+				if(count)
+				{	//If fret hand positions are present, write them to MIDI
+					fret_hand_positions_generated = 1;	//Track that fret hand positions were generated so they can be removed after writing to MIDI
+				}
+				else
+				{	//Fret hand positions couldn't be generated
+					snprintf(eof_log_string, sizeof(eof_log_string), "Error:  Failed to automatically generate fret hand positions for \"%s\" during MIDI export", sp->track[j]->name);
+					eof_log(eof_log_string, 1);
+					allegro_message(eof_log_string);
+				}
+			}
+
 			/* fill in notes */
 			/* write the MTrk MIDI data to a temp file
 			use size of the file as the MTrk header length */
@@ -1345,41 +1386,59 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 9, velocity, 13);
 				}
 
-				if	((sp->tags->eof_fret_hand_pos_1_pg && ((sp->track[j]->track_type == EOF_TRACK_PRO_GUITAR) || (sp->track[j]->track_type == EOF_TRACK_PRO_GUITAR_22))) ||
-					 (sp->tags->eof_fret_hand_pos_1_pb && ((sp->track[j]->track_type == EOF_TRACK_PRO_BASS) || (sp->track[j]->track_type == EOF_TRACK_PRO_BASS_22))))
-				{	//If the user opted to write a single fret hand position of 0 for this pro guitar/bass track
-					if(!fret_hand_pos_written)
-					{	//and that position hasn't been written yet
+				/* write fret hand positions */
+				if(!fret_hand_pos_written)
+				{	//If not all of the fret hand positions have been written yet
+					if	((sp->tags->eof_fret_hand_pos_1_pg && ((sp->track[j]->track_type == EOF_TRACK_PRO_GUITAR) || (sp->track[j]->track_type == EOF_TRACK_PRO_GUITAR_22))) ||
+						 (sp->tags->eof_fret_hand_pos_1_pb && ((sp->track[j]->track_type == EOF_TRACK_PRO_BASS) || (sp->track[j]->track_type == EOF_TRACK_PRO_BASS_22))))
+					{	//If the user opted to write a single fret hand position of 1 for this pro guitar/bass track
 						rootvel = 101;	//Velocity 101 represents the fretting hand positioned at fret 1
 						eof_add_midi_event(deltapos, 0x90, 108, rootvel, 0);			//Note 108 denotes left hand position
 						eof_add_midi_event(deltapos + deltalength, 0x80, 108, 64, 0);	//Write the note off event (using the same velocity that RB3 MIDIs use)
-						fret_hand_pos_written = 1;
+						fret_hand_pos_written = 1;	//Track that all necessary fret hand positions have been written
 					}
-				}
-				else
-				{	//Otherwise write the left hand positions based on notes in the expert difficulty
-					if(eof_get_note_type(sp, j, i) == EOF_NOTE_AMAZING)
-					{	//For the Expert difficulty, write left hand position notes
-					/* write left hand position note, which is a note 108 with the same velocity of the lowest fret used in the pro guitar note */
-						rootvel = 0xFF;
-						for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
-						{	//For each of the 6 usable strings, from lowest to highest gauge
-							if(note & bitmask)
-							{	//If this string is used
-								if(rootvel == 0xFF)
-								{	//If no velocity has been recorded so far
-									rootvel = (sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] & 0x7F) + 100;	//Store the velocity used for this gem (mask out the MSB, used for mute status)
-								}
-								else if(sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] + 100 < rootvel)
-								{	//Otherwise store this gem's velocity if it is lower than the others checked for this note
-									rootvel = (sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] & 0x7F) + 100;
-								}
+					else if(fret_hand_positions_present)
+					{	//If fret hand positions are already defined
+						if(eof_get_note_type(sp, j, i) == EOF_NOTE_AMAZING)
+						{	//If the note being written to MIDI is in Expert difficulty
+							unsigned char position = eof_pro_guitar_track_find_effective_fret_hand_position(tp, EOF_NOTE_AMAZING, notepos);	//Get the effective fret hand position for this note
+							if(!last_written_hand_pos || (last_written_hand_pos != position))
+							{	//If this is the first hand position being written or the hand position has changed since the last one
+								eof_add_midi_event(deltapos, 0x90, 108, position + 100, 0);		//Note 108 denotes left hand position (velocity = hand's fret position + 100)
+								eof_add_midi_event(deltapos + deltalength, 0x80, 108, 64, 0);	//Write the note off event (using the same velocity that RB3 MIDIs use)
+								last_written_hand_pos = position;	//Track the last written hand position
 							}
 						}
-						eof_add_midi_event(deltapos, 0x90, 108, rootvel, 0);			//Note 108 denotes left hand position
-						eof_add_midi_event(deltapos + deltalength, 0x80, 108, 64, 0);	//Write the note off event (using the same velocity that RB3 MIDIs use)
 					}
-				}
+					else
+					{	//Fret hand positions are not defined, write "inefficient" fret hand positions on a per note basis
+						if(eof_get_note_type(sp, j, i) == EOF_NOTE_AMAZING)
+						{	//For the Expert difficulty, write left hand position notes
+						/* write left hand position note, which is a note 108 with the same velocity of the lowest fret used in the pro guitar note */
+							rootvel = 0xFF;
+							for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+							{	//For each of the 6 usable strings, from lowest to highest gauge
+								if(note & bitmask)
+								{	//If this string is used
+									if(rootvel == 0xFF)
+									{	//If no velocity has been recorded so far
+										rootvel = (sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] & 0x7F) + 100;	//Store the velocity used for this gem (mask out the MSB, used for mute status)
+									}
+									else if(sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] + 100 < rootvel)
+									{	//Otherwise store this gem's velocity if it is lower than the others checked for this note
+										rootvel = (sp->pro_guitar_track[tracknum]->note[i]->frets[ctr] & 0x7F) + 100;
+									}
+								}
+							}
+							if(!last_written_hand_pos || (last_written_hand_pos != rootvel))
+							{	//If this is the first hand position being written or the hand position has changed since the last one
+								eof_add_midi_event(deltapos, 0x90, 108, rootvel, 0);			//Note 108 denotes left hand position
+								eof_add_midi_event(deltapos + deltalength, 0x80, 108, 64, 0);	//Write the note off event (using the same velocity that RB3 MIDIs use)
+								last_written_hand_pos = rootvel;	//Track the last written hand position
+							}
+						}
+					}//Otherwise write the left hand positions based on notes in the expert difficulty
+				}//If not all of the fret hand positions have been written yet
 
 				/* write root note, which is a note from 4 to 15, to represent the chord's major scale (where any E scale chord is 4, F is 5, Gb is 6, ..., Eb is 15) */
 				if(eof_get_note_type(sp, j, i) == EOF_NOTE_AMAZING)
@@ -1576,6 +1635,18 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						eof_midi_event[i]->allocation = 0;
 					}
 					lastdelta = delta;					//Store this event's absolute delta time
+				}
+			}
+
+			/* clean up fret hand positions */
+			if(fret_hand_positions_generated)
+			{	//If fret hand positions were automatically generated, remove them now
+				for(ctr = tp->handpositions; ctr > 0 ; ctr--)
+				{	//For each hand position in this track, in reverse order
+					if(tp->handposition[ctr - 1].difficulty == EOF_NOTE_AMAZING)
+					{	//If this hand position exists in the Expert difficulty
+						eof_pro_guitar_track_delete_hand_position(tp, ctr - 1);	//Delete the hand position
+					}
 				}
 			}
 

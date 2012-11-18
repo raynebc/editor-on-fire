@@ -1173,6 +1173,11 @@ int eof_events_dialog_add_function(char function)
 	{	//User clicked OK
 		if((ustrlen(eof_etext) > 0) && eof_check_string(eof_etext))
 		{	//User entered text that isn't all space characters
+			if((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_events_add_dialog[3].flags & D_SELECTED) && (eof_events_add_dialog[4].flags & D_SELECTED))
+			{	//If the user is tried to add a track specific phrase marker in a non pro guitar/bass track
+				allegro_message("You cannot add a track-specific Rocksmith phrase marker in a non pro guitar/bass track");
+				return D_REDRAW;
+			}
 			if(eof_events_add_dialog[3].flags & D_SELECTED)
 			{	//User opted to make this a track specific event
 				track = eof_selected_track;
@@ -1197,7 +1202,7 @@ int eof_events_dialog_add_function(char function)
 
 int eof_events_dialog_edit(DIALOG * d)
 {
-	int i, trackflag;
+	int i, trackflag, phraseflag;
 	short ecount = 0;
 	short event = -1;
 	unsigned long track = 0, flags = 0;
@@ -1244,28 +1249,27 @@ int eof_events_dialog_edit(DIALOG * d)
 	{	//Otherwise clear the checkbox
 		eof_events_add_dialog[3].flags = 0;
 	}
-	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-	{	//If this is a pro guitar track, update the Rocksmith phrase marker checkbox
-		if(eof_song->text_event[event]->flags & EOF_EVENT_FLAG_RS_PHRASE)
-		{	//If this event is flagged as a Rocksmith phrase marker
-			eof_events_add_dialog[4].flags = D_SELECTED;	//Set the checkbox specifying the event is a Rocksmith phrase marker
-		}
-		else
-		{
-			eof_events_add_dialog[4].flags = 0;
-		}
+	if(eof_song->text_event[event]->flags & EOF_EVENT_FLAG_RS_PHRASE)
+	{	//If this event is flagged as a Rocksmith phrase marker
+		eof_events_add_dialog[4].flags = D_SELECTED;	//Set the checkbox specifying the event is a Rocksmith phrase marker
 	}
 	else
-	{	//This is not a pro guitar track
-		eof_events_add_dialog[4].flags = D_DISABLED;	//Disable this checkbox
+	{
+		eof_events_add_dialog[4].flags = 0;
 	}
 
 	ustrcpy(eof_etext, eof_song->text_event[event]->text);	//Save the original event text
 	trackflag = eof_events_add_dialog[3].flags;				//Save the track specifier flag
+	phraseflag = eof_events_add_dialog[4].flags;			//Save the RS phrase flag
 	if(eof_popup_dialog(eof_events_add_dialog, 2) == 5)
 	{	//User clicked OK
-		if((ustrlen(eof_etext) > 0) && eof_check_string(eof_etext) && (ustrcmp(eof_song->text_event[event]->text, eof_etext) || (eof_events_add_dialog[3].flags != trackflag)))
+		if((ustrlen(eof_etext) > 0) && eof_check_string(eof_etext) && (ustrcmp(eof_song->text_event[event]->text, eof_etext) || (eof_events_add_dialog[3].flags != trackflag) || (eof_events_add_dialog[4].flags != phraseflag)))
 		{	//User entered text that isn't all space characters, and either the event's text was changed or it's track specifier was
+			if((eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_events_add_dialog[3].flags & D_SELECTED) && (eof_events_add_dialog[4].flags & D_SELECTED))
+			{	//If the user is tried to add a track specific phrase marker in a non pro guitar/bass track
+				allegro_message("You cannot add a track-specific Rocksmith phrase marker in a non pro guitar/bass track");
+				return D_REDRAW;
+			}
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			ustrcpy(eof_song->text_event[event]->text, eof_etext);
 			if(eof_events_add_dialog[3].flags & D_SELECTED)

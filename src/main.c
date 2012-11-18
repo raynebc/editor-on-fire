@@ -44,6 +44,7 @@
 #include "tuning.h"
 #include "ini_import.h"
 #include "midi_data_import.h"	//For eof_track_overridden_by_stored_MIDI_track()
+#include "rs.h"	//for eof_pro_guitar_track_find_effective_fret_hand_position()
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -133,6 +134,7 @@ char        eof_mark_drums_as_double_bass = 0;	//Allows the user to specify whet
 unsigned long eof_mark_drums_as_hi_hat = 0;		//Allows the user to specify whether Y drum notes will be placed with one of the hi hat statuses by default (this variable holds the note flag of the desired status)
 unsigned long eof_pro_guitar_fret_bitmask = 63;	//Defines which lanes are affected by CTRL+Fn fret setting shortcuts
 char		eof_legacy_view = 0;				//Specifies whether pro guitar notes will render as legacy notes
+unsigned char eof_2d_render_top_option = 30;	//Specifies what item displays at the top of the 2D panel (defaults to note names)
 
 int         eof_undo_toggle = 0;
 int         eof_redo_toggle = 0;
@@ -2276,7 +2278,7 @@ void eof_render_note_window(void)
 			difficulty2[0] = '\0';
 			difficulty3[0] = '\0';
 		}
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Difficulty: %s %s %s", difficulty1, difficulty2, difficulty3);
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Track difficulty: %s %s %s", difficulty1, difficulty2, difficulty3);
 		ypos += 12;
 
 		if(!eof_disable_sound_processing)
@@ -2349,23 +2351,22 @@ void eof_render_note_window(void)
 			if(eof_selection.current < eof_get_track_size(eof_song, eof_selected_track))
 			{	//If a note is selected
 				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Note = %ld : Pos = %lu : Length = %lu", eof_selection.current, eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current), eof_get_note_length(eof_song, eof_selected_track, eof_selection.current));
-#ifdef EOF_DEBUG
-				ypos += 12;
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "#Mask = %ld : Flags = %lu", eof_get_note_note(eof_song, eof_selected_track, eof_selection.current), eof_get_note_flags(eof_song, eof_selected_track, eof_selection.current));
-#endif
+///Keep for debugging
+//#ifdef EOF_DEBUG
+//				ypos += 12;
+//				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "#Mask = %ld : Flags = %lu", eof_get_note_note(eof_song, eof_selected_track, eof_selection.current), eof_get_note_flags(eof_song, eof_selected_track, eof_selection.current));
+//#endif
 			}
 			else
 			{
 				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Note = None");
 			}
 			ypos += 12;
-#ifdef EOF_DEBUG
 			if(eof_seek_selection_start != eof_seek_selection_end)
 			{	//If there is a seek selection
-				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "#Seek selection start = %lu : stop = %lu", eof_seek_selection_start, eof_seek_selection_end);
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Seek selection start = %lu : stop = %lu", eof_seek_selection_start, eof_seek_selection_end);
 				ypos += 12;
 			}
-#endif
 			if(eof_hover_note >= 0)
 			{
 				if(eof_seek_hover_note >= 0)
@@ -2398,8 +2399,7 @@ void eof_render_note_window(void)
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Seek Position = %02d:%02d.%03d", ism, iss, isms >= 0 ? isms : 0);
 		ypos += 12;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "%s Selected = %d/%lu", eof_vocals_selected ? "Lyrics" : "Notes", isn, itn);
-
-		ypos += 20;
+		ypos += 12;
 		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Input Mode: %s", eof_input_name[eof_input_mode]);
 		ypos += 12;
 
@@ -2429,7 +2429,7 @@ void eof_render_note_window(void)
 
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//Display information specific to pro guitar tracks
-			ypos += 20;
+			ypos += 12;
 			if(!eof_pro_guitar_fret_bitmask || (eof_pro_guitar_fret_bitmask == 63))
 			{	//If the fret shortcut bitmask is set to no strings or all 6 strings
 				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Fret value shortcuts apply to %s strings", (eof_pro_guitar_fret_bitmask == 0) ? "no" : "all");
@@ -2462,7 +2462,7 @@ void eof_render_note_window(void)
 			tracknum = eof_song->track[eof_selected_track]->tracknum;
 			if((eof_selection.current < eof_song->pro_guitar_track[tracknum]->notes) && (eof_selection.track == eof_selected_track))
 			{	//If a note in the active track is selected, display a line with its fretting information
-				ypos += 10;
+				ypos += 12;
 				if(eof_get_pro_guitar_note_fret_string(eof_song->pro_guitar_track[tracknum], eof_selection.current, pro_guitar_string))
 				{	//If the note's frets can be represented in string format
 					if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->name[0] != '\0')
@@ -2503,7 +2503,20 @@ void eof_render_note_window(void)
 						}
 					}
 				}
+				ypos += 2;	//Lower the virtual "cursor" because underscores for the fretting string are rendered low enough to touch text 12 pixels below the y position of the glyph
 			}//If a note in the active track is selected, display a line with its information
+
+			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+			unsigned char position = eof_pro_guitar_track_find_effective_fret_hand_position(tp, eof_note_type, eof_music_pos - eof_av_delay);	//Find if there's a fret hand position in effect
+			ypos += 12;
+			if(position)
+			{	//If a fret hand position is in effect
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Effective fret hand position:  %u", position);
+			}
+			else
+			{
+				textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Effective fret hand position:  None");
+			}
 		}//Display information specific to pro guitar tracks
 	}//If show catalog is disabled
 

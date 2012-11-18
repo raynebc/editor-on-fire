@@ -101,14 +101,18 @@ DIALOG eof_preferences_dialog[] =
    { d_agup_check_proc, 16,  185, 184, 16,  2,   23,  0,    0,      1,   0,   "Use dB style seek controls",NULL, NULL },
    { d_agup_text_proc,  248, 185, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note length (ms):",NULL,NULL },
    { eof_verified_edit_proc,392,185,30,20,  0,   0,   0,    0,      3,   0,   eof_etext,     "0123456789", NULL },
-   { d_agup_check_proc, 16,  200, 220, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
-   { d_agup_text_proc,  24,  220, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
+   { d_agup_check_proc, 248, 222, 220, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
+   { d_agup_text_proc,  24,  222, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
    { d_agup_list_proc,  16,  240, 100, 110, 2,   23,  0,    0,      0,   0,   eof_input_list,        NULL, NULL },
    { d_agup_text_proc,  150, 240, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
    { d_agup_list_proc,  129, 255, 100, 95,  2,   23,  0,    0,      0,   0,   eof_colors_list,        NULL, NULL },
    { d_agup_button_proc,12,  355, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
    { d_agup_button_proc,86,  355, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
    { d_agup_button_proc,160, 355, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+   { d_agup_text_proc,  16,  205, 144, 12,  0,   0,   0,    0,      0,   0,   "Top of 2D pane displays:",NULL,NULL },
+   { d_agup_radio_proc, 175, 205, 60,  16,  2,   23,  0,    0,      1,   0,   "Names",               NULL, NULL },
+   { d_agup_radio_proc, 240, 205, 72,  16,  2,   23,  0,    0,      1,   0,   "Sections",            NULL, NULL },
+   { d_agup_radio_proc, 317, 205, 78,  16,  2,   23,  0,    0,      1,   0,   "Hand pos",            NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -920,6 +924,8 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[16].flags = eof_add_new_notes_to_selection ? D_SELECTED : 0;	//Add new notes to selection
 	eof_preferences_dialog[17].flags = eof_drum_modifiers_affect_all_difficulties ? D_SELECTED : 0;	//Drum modifiers affect all diff's
 	eof_preferences_dialog[18].flags = eof_fb_seek_controls ? D_SELECTED : 0;			//Use dB style seek controls
+	eof_preferences_dialog[30].flags = eof_preferences_dialog[31].flags = eof_preferences_dialog[32].flags = 0;	//Options for what to display at top of 2D panel
+	eof_preferences_dialog[eof_2d_render_top_option].flags = D_SELECTED;
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		sprintf(eof_etext, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -953,6 +959,18 @@ int eof_menu_file_preferences(void)
 			eof_write_rs_files = (eof_preferences_dialog[13].flags == D_SELECTED ? 1 : 0);
 			eof_inverted_chords_slash = (eof_preferences_dialog[14].flags == D_SELECTED ? 1 : 0);
 			enable_logging = (eof_preferences_dialog[15].flags == D_SELECTED ? 1 : 0);
+			if(eof_preferences_dialog[30].flags == D_SELECTED)
+			{	//User opted to display note names at top of 2D panel
+				eof_2d_render_top_option = 30;
+			}
+			else if(eof_preferences_dialog[31].flags == D_SELECTED)
+			{	//User opted to display section names at top of 2D panel
+				eof_2d_render_top_option = 31;
+			}
+			else if(eof_preferences_dialog[32].flags == D_SELECTED)
+			{	//User opted to display fret hand positions at top of 2D panel
+				eof_2d_render_top_option = 32;
+			}
 			eof_add_new_notes_to_selection = (eof_preferences_dialog[16].flags == D_SELECTED ? 1 : 0);
 			eof_drum_modifiers_affect_all_difficulties = (eof_preferences_dialog[17].flags == D_SELECTED ? 1 : 0);
 			eof_fb_seek_controls = (eof_preferences_dialog[18].flags == D_SELECTED ? 1 : 0);
@@ -994,6 +1012,8 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[21].flags = 0;					//3D render bass drum in a lane
 			eof_preferences_dialog[23].d1 = EOF_INPUT_PIANO_ROLL;	//Input method
 			eof_preferences_dialog[25].d1 = EOF_COLORS_DEFAULT;		//Color set
+			eof_preferences_dialog[30].flags = D_SELECTED;			//Display note names at top of 2D panel
+			eof_preferences_dialog[31].flags = eof_preferences_dialog[32].flags = 0;	//Display sections/fret hand positions at top of 2D panel
 		}
 	}while(retval == 27);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -2217,11 +2237,12 @@ int eof_save_helper(char *destfilename)
 
 		if(eof_write_rs_files)
 		{	//If the user wants to save Rocksmith capable files
+			char user_warned = 0;	//Tracks whether the user was warned about hand positions being undefined and auto-generated during export
 			append_filename(eof_temp_filename, newfolderpath, "xmlpath.xml", 1024);	//Re-acquire the project's target folder
-			eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS);
-			eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS_22);
-			eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR);
-			eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_22);
+			eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS, &user_warned);
+			eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS_22, &user_warned);
+			eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR, &user_warned);
+			eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_22, &user_warned);
 			if(eof_song->vocal_track[0]->lyrics)
 			{	//If there are lyrics, export them in Rocksmith format as well
 				append_filename(eof_temp_filename, newfolderpath, "PART VOCALS.xml", 1024);
