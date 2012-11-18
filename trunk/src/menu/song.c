@@ -17,7 +17,7 @@
 #include "../silence.h"
 #include "../song.h"
 #include "../tuning.h"
-#include "../rs.h"	//For eof_generate_hand_positions_current_track_difficulty()
+#include "../rs.h"	//For hand position generation logic
 #include "note.h"	//For eof_feedback_mode_update_note_selection()
 #include "song.h"
 #include "file.h"	//For eof_menu_prompt_save_changes()
@@ -3840,6 +3840,8 @@ DIALOG eof_fret_hand_position_list_dialog[] =
 
 int eof_menu_song_fret_hand_positions(void)
 {
+	unsigned long tracknum;
+
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -3849,10 +3851,12 @@ int eof_menu_song_fret_hand_positions(void)
 	eof_render();
 	eof_color_dialog(eof_fret_hand_position_list_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_fret_hand_position_list_dialog);
-	eof_fret_hand_position_list_dialog[0].dp = eof_fret_hand_position_list_dialog_title_string;	//Replace the string used for the title bar with a dynamic one
 
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	eof_fret_hand_position_list_dialog[1].d1 = eof_pro_guitar_track_find_effective_fret_hand_position_definition(eof_song->pro_guitar_track[tracknum], eof_note_type, eof_music_pos - eof_av_delay);	//Pre-select the hand position in effect (if one exists) at the current seek position
+	eof_fret_hand_position_list_dialog[0].dp = eof_fret_hand_position_list_dialog_title_string;	//Replace the string used for the title bar with a dynamic one
 	eof_fret_hand_position_list_dialog_undo_made = 0;			//Reset this condition
-	eof_popup_dialog(eof_fret_hand_position_list_dialog, 0);	//Launch the dialog
+	eof_popup_dialog(eof_fret_hand_position_list_dialog, 1);	//Launch the dialog
 
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;

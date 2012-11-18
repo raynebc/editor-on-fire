@@ -462,41 +462,44 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		//Render note names
 		if(!eof_hide_note_names)
 		{	//If the user hasn't opted to hide note names
-			notename[0] = prevnotename[0] = '\0';	//Empty these strings
-			namefound = eof_build_note_name(eof_song, track, notenum, notename);
-			if(namefound)
-			{	//If this note has a name, prepare it for rendering
-				eof_build_note_name(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum), prevnotename);	//Get the previous note's name
-				if(!ustricmp(notename, prevnotename))
-				{	//If this note and the previous one have the same name
-					if(namefound == 1)
-					{	//If the name for this note was manually assigned
-						nameptr = samename;	//Display this note's name as "/" to indicate a repeat of the last note
+			if((window == eof_window_note) || (eof_2d_render_top_option == 30))
+			{	//If rendering to the fret catalog, or to the 2D window and the user opted to display note names at the top of the window
+				notename[0] = prevnotename[0] = '\0';	//Empty these strings
+				namefound = eof_build_note_name(eof_song, track, notenum, notename);
+				if(namefound)
+				{	//If this note has a name, prepare it for rendering
+					eof_build_note_name(eof_song, track, eof_get_prev_note_type_num(eof_song, track, notenum), prevnotename);	//Get the previous note's name
+					if(!ustricmp(notename, prevnotename))
+					{	//If this note and the previous one have the same name
+						if(namefound == 1)
+						{	//If the name for this note was manually assigned
+							nameptr = samename;	//Display this note's name as "/" to indicate a repeat of the last note
+						}
+						else
+						{	//The name for this note was detected
+							nameptr = samenameauto;	//Display this note's name as "[/]" to indicate a repeat of the last note
+						}
 					}
 					else
-					{	//The name for this note was detected
-						nameptr = samenameauto;	//Display this note's name as "[/]" to indicate a repeat of the last note
+					{	//This note doesn't have the same name as the previous note
+						if(namefound == 1)
+						{	//If the name for this note was manually assigned
+							nameptr = notename;	//Display the note name as-is
+						}
+						else
+						{	//The name for this note was detected
+							snprintf(prevnotename, sizeof(notename), "[%s]", notename);	//Rebuild the note name to be enclosed in brackets
+							nameptr = prevnotename;
+						}
 					}
-				}
-				else
-				{	//This note doesn't have the same name as the previous note
-					if(namefound == 1)
-					{	//If the name for this note was manually assigned
-						nameptr = notename;	//Display the note name as-is
+					if(window == eof_window_editor)
+					{	//If rendering to the editor window
+						textout_centre_ex(window->screen, font, nameptr, x, 25 + 5, eof_color_white, -1);
 					}
 					else
-					{	//The name for this note was detected
-						snprintf(prevnotename, sizeof(notename), "[%s]", notename);	//Rebuild the note name to be enclosed in brackets
-						nameptr = prevnotename;
+					{	//If rendering to the note window
+						textout_centre_ex(window->screen, font, nameptr, x, EOF_EDITOR_RENDER_OFFSET + 10, eof_color_white, -1);
 					}
-				}
-				if(window == eof_window_editor)
-				{	//If rendering to the editor window
-					textout_centre_ex(window->screen, font, nameptr, x, 25 + 5, eof_color_white, -1);
-				}
-				else
-				{	//If rendering to the note window
-					textout_centre_ex(window->screen, font, nameptr, x, EOF_EDITOR_RENDER_OFFSET + 10, eof_color_white, -1);
 				}
 			}
 		}//If the user hasn't opted to hide note names
@@ -1525,6 +1528,57 @@ unsigned char eof_pro_guitar_note_highest_fret(EOF_PRO_GUITAR_TRACK *tp, unsigne
 		}
 	}
 	return fret;
+}
+
+unsigned char eof_pro_guitar_note_is_barre_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long note)
+{
+	unsigned long ctr, bitmask, frettedstringcount = 0;
+	unsigned char lowest;
+
+	if(!tp || (note >= tp->notes))
+		return 0;	//Invalid parameters
+
+	for(ctr = 0, bitmask = 1; ctr < tp->numstrings; ctr++, bitmask <<= 1)
+	{	//For each string this track supports
+		if((tp->note[note]->note & bitmask) && (tp->note[note]->frets[ctr] != 0))
+		{	//If this string is used and not played open (muted string is OK)
+			frettedstringcount++;
+		}
+	}
+	if(frettedstringcount < 2)
+	{	//If less than two strings are played non-open
+		return 0;	//This is not a barre chord
+	}
+	lowest = eof_pro_guitar_note_lowest_fret(tp, note);	//Get the lowest used fret in this chord
+
+	//Determine if the lowest used fret is used on multiple, non-contiguous strings
+	for(ctr = 0, bitmask = 1; ctr < tp->numstrings; ctr++, bitmask <<= 1)
+	{	//For each string this track supports
+		if((tp->note[note]->note & bitmask) && (tp->note[note]->frets[ctr] == lowest))
+		{	//If this string plays the chord's lowest fret number
+			break;
+		}
+	}
+	for(; ctr < tp->numstrings; ctr++, bitmask <<= 1)
+	{	//For each remaining string this track supports
+		if((tp->note[note]->note & bitmask) && (tp->note[note]->frets[ctr] == 0))
+		{	//If this string is played open
+			return 0;	//This is not a barre chord
+		}
+		if((tp->note[note]->note & bitmask) && (tp->note[note]->frets[ctr] != lowest))
+		{	//If this string is used and does not play the chord's lowest fret
+			break;
+		}
+	}
+	for(; ctr < tp->numstrings; ctr++, bitmask <<= 1)
+	{	//For each remaining string this track supports
+		if((tp->note[note]->note & bitmask) && (tp->note[note]->frets[ctr] == lowest))
+		{	//If this string plays the chord's lowest fret number
+			return 1;	//This is a barre chord
+		}
+	}
+
+	return 0;	//This is not a barre chord
 }
 
 char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, char *buffer)

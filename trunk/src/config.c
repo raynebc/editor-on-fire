@@ -130,6 +130,7 @@ void eof_load_config(char * fn)
 	eof_write_rs_files = get_config_int("preferences", "eof_write_rs_files", 0);
 	eof_inverted_chords_slash = get_config_int("preferences", "eof_inverted_chords_slash", 0);
 	enable_logging = get_config_int("preferences", "enable_logging", 1);
+	eof_2d_render_top_option = get_config_int("preferences", "eof_2d_render_top_option", 30);
 	eof_color_set = get_config_int("preferences", "eof_color_set", 0);
 	eof_add_new_notes_to_selection = get_config_int("preferences", "eof_add_new_notes_to_selection", 0);
 	eof_drum_modifiers_affect_all_difficulties = get_config_int("preferences", "eof_drum_modifiers_affect_all_difficulties", 1);
@@ -250,6 +251,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_inverted_chords_slash", eof_inverted_chords_slash);
 	set_config_int("preferences", "enable_logging", enable_logging);
 	set_config_int("preferences", "eof_color_set", eof_color_set);
+	set_config_int("preferences", "eof_2d_render_top_option", eof_2d_render_top_option);
 	set_config_int("preferences", "eof_add_new_notes_to_selection", eof_add_new_notes_to_selection);
 	set_config_int("preferences", "eof_drum_modifiers_affect_all_difficulties", eof_drum_modifiers_affect_all_difficulties);
 	set_config_int("preferences", "eof_fb_seek_controls", eof_fb_seek_controls);
