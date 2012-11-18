@@ -48,9 +48,10 @@ void eof_build_fret_range_tolerances(EOF_PRO_GUITAR_TRACK *tp, unsigned char dif
 	//Re-allocate and build the array referenced by eof_fret_range_tolerances by examining the specified track difficulty
 	//For each note examined, the range of frets used is considered to be playable and the range for the note's lowest used fret position is updated accordingly
 	//If any particular fret is not used as the lowest fret for any chords, the fret range is defaulted to 4
-void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, char difficulty);
+void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, char difficulty, char warnuser);
 	//Uses eof_note_can_be_played_within_fret_tolerance() and eof_build_fret_range_tolerances() to build an efficient set of fret hand positions for the specified track
 	//If eof_fret_hand_position_list_dialog_undo_made is nonzero, an undo state is made before changing the existing hand positions
+	//If warnuser is nonzero, the user is prompted to confirm deletion of existing fret hand positions
 unsigned char eof_pro_guitar_track_find_effective_fret_hand_position(EOF_PRO_GUITAR_TRACK *tp, unsigned char difficulty, unsigned long position);
 	//Returns the fret hand position in effect (at or before) at the specified timestamp in the specified track difficulty
 	//Returns nonzero if a fret hand position is in effect

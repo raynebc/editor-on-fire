@@ -677,7 +677,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 					allegro_message("Warning:  At least one track difficulty has no fret hand positions defined.  They will be created automatically.");
 					*user_warned = 1;
 				}
-				eof_generate_efficient_hand_positions(sp, track, ctr);	//Generate the fret hand positions for the track difficulty being currently written
+				eof_fret_hand_position_list_dialog_undo_made = 1;	//Ensure no undo state is written during export
+				eof_generate_efficient_hand_positions(sp, track, ctr, 0);	//Generate the fret hand positions for the track difficulty being currently written
 				anchorsgenerated = 1;
 			}
 			for(ctr3 = 0, anchorcount = 0; ctr3 < tp->handpositions; ctr3++)	//Re-count the hand positions
@@ -843,133 +844,10 @@ void eof_song_fix_fingerings(EOF_SONG *sp, char *undo_made)
 	}
 }
 
-///Replaced with eof_generate_efficient_hand_positions()
-/*
-unsigned char *eof_lowest_frets_array;			//Dynamically allocated array used during the generation of fret hand positions
-unsigned char *eof_highest_frets_array;			//Dynamically allocated array used during the generation of fret hand positions
-unsigned long eof_lowest_frets_array_size;		//Used during the generation of fret hand positions
-
-void eof_generate_hand_positions(EOF_SONG *sp, unsigned long track, char difficulty)
-{
-	unsigned long ctr, ctr2, tracknum;
-	EOF_PRO_GUITAR_TRACK *tp;
-	char user_warned = 0;
-
-	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
-		return;	//Invalid parameters
-
-	//Remove any existing fret hand positions defined for this track difficulty
-	tracknum = sp->track[track]->tracknum;
-	tp = sp->pro_guitar_track[tracknum];
-	if(tp->notes == 0)
-		return;	//Invalid parameters (track must have at least 1 note)
-	for(ctr = tp->handpositions; ctr > 0; ctr--)
-	{	//For each existing hand positions in this track (in reverse order)
-		if(tp->handposition[ctr - 1].difficulty == difficulty)
-		{	//If this hand position is defined for the specified difficulty
-			if(!user_warned)
-			{
-				if(alert(NULL, "Existing fret hand positions for the active track difficulty will be removed.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
-				{	//If the user does not opt to remove the existing hand positions
-					return;
-				}
-				if(!eof_fret_hand_position_list_dialog_undo_made)
-				{	//If an undo state hasn't been made yet since launching this dialog
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					eof_fret_hand_position_list_dialog_undo_made = 1;
-				}
-				user_warned = 1;
-			}
-			eof_pro_guitar_track_delete_hand_position(tp, ctr - 1);	//Delete the hand position
-		}
-	}
-
-	//Count the number of notes in the specified track difficulty and allocate arrays large enough to store the lowest and highest fret number used in each
-	for(ctr = 0, eof_lowest_frets_array_size = 0; ctr < tp->notes; ctr++)
-	{	//For each note in the track
-		if(tp->note[ctr]->type == difficulty)
-		{	//If it is in the specified difficulty
-			eof_lowest_frets_array_size++;	//Increment this counter
-		}
-	}
-	eof_lowest_frets_array = malloc(sizeof(unsigned char) * eof_lowest_frets_array_size);	//Allocate array
-	if(!eof_lowest_frets_array)
-	{	//Couldn't allocate memory
-		return;
-	}
-	eof_highest_frets_array = malloc(sizeof(unsigned char) * eof_lowest_frets_array_size);	//Allocate array
-	if(!eof_highest_frets_array)
-	{	//Couldn't allocate memory
-		free(eof_lowest_frets_array);
-		return;
-	}
-
-	//Store the lowest and highest fret numbers used for each note (0 for all used strings played open) in the array
-	unsigned char lowest, highest;
-	for(ctr = 0, ctr2 = 0; ctr < tp->notes; ctr++)
-	{	//For each note in the track
-		if(tp->note[ctr]->type == difficulty)
-		{	//If it is in the specified difficulty
-			lowest = eof_pro_guitar_note_lowest_fret(tp, ctr);		//Get the lowest fret number used in the note
-			highest = eof_pro_guitar_note_highest_fret(tp, ctr);	//Get the highest fret number used in the note
-			eof_lowest_frets_array[ctr2] = lowest;		//Append this value to the lowest fret number array
-			eof_highest_frets_array[ctr2] = highest;	//Append this value to the highest fret number array
-			ctr2++;
-		}
-	}
-
-	//Find the initial lowest used fret (will result in 1 if all played notes on this track only use open strings)
-	for(ctr = 0, lowest = 1; ctr < eof_lowest_frets_array_size; ctr++)
-	{	//For each note in this track difficulty
-		if(eof_lowest_frets_array[ctr])
-		{	//If this note uses any frets
-			lowest = eof_lowest_frets_array[ctr];	//Use it as the initial low fret value
-			break;
-		}
-	}
-	eof_lowest_frets_array[0] = lowest;	//Ensure that the first fret number stored here isn't 0
-
-	//Find the initial highest used fret (will result in 1 if all played notes on this track only use open strings)
-	for(ctr = 0, highest = 1; ctr < eof_lowest_frets_array_size; ctr++)
-	{	//For each note in this track difficulty
-		if(eof_highest_frets_array[ctr])
-		{	//If this note uses any frets
-			highest = eof_highest_frets_array[ctr];	//Use it as the initial high fret value
-			break;
-		}
-	}
-	eof_highest_frets_array[0] = highest;	//Ensure that the first fret number stored here isn't 0
-
-	//Place the hand positions, identifying the original notes in the same way the lowest fret numbers array was built earlier
-	unsigned char lastsetposition = 0;
-	for(ctr = 0, ctr2 = 0; ctr < tp->notes; ctr++)
-	{	//For each note in the track
-		if(tp->note[ctr]->type == difficulty)
-		{	//If it is in the specified difficulty
-			if(!lastsetposition || (eof_lowest_frets_array[ctr2] && (lastsetposition != eof_lowest_frets_array[ctr2])))
-			{	//If this is the first note, or this note uses a different position than the last position that was set and it isn't 0
-				if(!eof_fret_hand_position_list_dialog_undo_made)
-				{	//If an undo hasn't been made yet
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					eof_fret_hand_position_list_dialog_undo_made = 1;
-				}
-				eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, tp->note[ctr]->pos, eof_lowest_frets_array[ctr2], 0, NULL);
-				lastsetposition = eof_lowest_frets_array[ctr2];
-			}
-			ctr2++;
-		}
-	}
-
-	free(eof_lowest_frets_array);
-	free(eof_highest_frets_array);
-}
-*/
-
-void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, char difficulty)
+void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, char difficulty, char warnuser)
 {
 	unsigned long ctr, tracknum, count;
 	EOF_PRO_GUITAR_TRACK *tp;
-	char undo_made = 0;
 	unsigned char current_low, current_high;
 	EOF_PRO_GUITAR_NOTE *current_note = NULL;	//Tracks the first note in the set of notes having its hand position found
 
@@ -985,18 +863,18 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 	{	//For each existing hand positions in this track (in reverse order)
 		if(tp->handposition[ctr - 1].difficulty == difficulty)
 		{	//If this hand position is defined for the specified difficulty
-			if(!undo_made)
+			if(warnuser)
 			{
 				if(alert(NULL, "Existing fret hand positions for the active track difficulty will be removed.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 				{	//If the user does not opt to remove the existing hand positions
 					return;
 				}
-				if(!eof_fret_hand_position_list_dialog_undo_made)
-				{	//If an undo state hasn't been made yet since launching this dialog
-					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-					eof_fret_hand_position_list_dialog_undo_made = 1;
-				}
-				undo_made = 1;
+			}
+			warnuser = 0;
+			if(!eof_fret_hand_position_list_dialog_undo_made)
+			{	//If an undo state hasn't been made yet since launching this dialog
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				eof_fret_hand_position_list_dialog_undo_made = 1;
 			}
 			eof_pro_guitar_track_delete_hand_position(tp, ctr - 1);	//Delete the hand position
 		}
@@ -1013,10 +891,10 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 
 	eof_build_fret_range_tolerances(tp, difficulty);	//Allocate and build eof_fret_range_tolerances[]
 	if(!eof_fret_range_tolerances)
-	{	//eof_fret_range_tolerances[] wasn't build
+	{	//eof_fret_range_tolerances[] wasn't built
 		return;
 	}
-	if(!undo_made)
+	if(!eof_fret_hand_position_list_dialog_undo_made)
 	{	//If an undo hasn't been made yet, do it now as there will be at least one fret hand position added
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	}
@@ -1035,7 +913,6 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 			{	//If this note can't be included in the set of notes played with a single fret hand position
 				eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, current_note->pos, current_low, 0, NULL);	//Add the best determined fret hand position
 				current_note = tp->note[ctr];
-				current_low = current_high = 0;	//Reset these at the start of tracking a new hand position
 				current_low = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Initialize the low and high fret used for this note
 				current_high = eof_pro_guitar_note_highest_fret(tp, ctr);
 			}
@@ -1061,7 +938,7 @@ int eof_generate_hand_positions_current_track_difficulty(void)
 	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return 0;	//Invalid parameters
 
-	eof_generate_efficient_hand_positions(eof_song, eof_selected_track, eof_note_type);
+	eof_generate_efficient_hand_positions(eof_song, eof_selected_track, eof_note_type, 1);	//Warn the user if existing hand positions will be deleted
 
 	dialog_message(eof_fret_hand_position_list_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
 	return D_REDRAW;

@@ -12,6 +12,7 @@
 #include "utility.h"
 #include "tuning.h"
 #include "menu/note.h"	//For pitch macros
+#include "menu/song.h"	//For eof_fret_hand_position_list_dialog_undo_made
 #include "foflc/Lyric_storage.h"	//For RBA extraction
 #include "foflc/Midi_parse.h"
 
@@ -1168,7 +1169,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			}
 			if(!count)
 			{	//If there are no user-defined hand positions in Expert difficulty
-				eof_generate_efficient_hand_positions(sp, j, EOF_NOTE_AMAZING);	//Generate the fret hand positions for the track difficulty being currently written
+				eof_fret_hand_position_list_dialog_undo_made = 1;	//Ensure no undo state is written during export
+				eof_generate_efficient_hand_positions(sp, j, EOF_NOTE_AMAZING, 0);	//Generate the fret hand positions for the track difficulty being currently written
 				for(ctr = 0, count = 0; ctr < tp->handpositions; ctr++)	//Re-count the hand positions
 				{	//For each hand position in this track
 					if(tp->handposition[ctr].difficulty == EOF_NOTE_AMAZING)
