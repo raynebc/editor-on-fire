@@ -1745,6 +1745,7 @@ void ReleaseMemory(char release_all)
 		free(linestemp);			//De-allocate this link
 		linestemp=linesnext;		//Point to next link
 	}
+	Lyrics.lines = NULL;	//This list is now empty
 
 	if(Lyrics.verbose>=2)	puts("\t\t\tReleasing strings");
 
