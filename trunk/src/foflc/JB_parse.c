@@ -16,9 +16,9 @@
 
 void JB_Load(FILE *inf)
 {
-	unsigned long maxlinelength=0;	//I will count the length of the longest line (including NULL char/newline) in the
+	unsigned long maxlinelength;	//I will count the length of the longest line (including NULL char/newline) in the
 									//input file so I can create a buffer large enough to read any line into
-	char *buffer=NULL;				//Will be an array large enough to hold the largest line of text from input file
+	char *buffer;					//Will be an array large enough to hold the largest line of text from input file
 	unsigned long index=0;			//Used to index within a line of input text
 	unsigned long index2=0;			//Used to index within an output buffer
 	char textbuffer[101]={0};	//Allow for a 100 character lyric text

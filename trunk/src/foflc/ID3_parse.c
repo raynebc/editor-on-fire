@@ -389,7 +389,7 @@ void SYLT_Parse(struct ID3Tag *tag)
 	char *string2=NULL;					//Used to build a display version of the string for debug output (minus newline)
 	unsigned char timestamparray[4]={0};//Used to store the timestamp for a lyric string
 	unsigned long timestamp=0;			//The timestamp converted to milliseconds
-	unsigned long breakpos=0;			//Will be set to the first byte beyond the SYLT frame
+	unsigned long breakpos;				//Will be set to the first byte beyond the SYLT frame
 	unsigned long framesize=0;
 	char groupswithnext=0;				//Used for grouping logic
 	char linebreaks=0;					//Tracks whether the imported lyrics defined linebreaks (if not, each ID3 lyric should be treated as one line)
@@ -1063,7 +1063,7 @@ char *GrabID3TextFrame(struct ID3Tag *tag,const char *frameid,char *buffer,unsig
 
 struct OmitID3frame *AddOmitID3framelist(struct OmitID3frame *ptr,const char *frameid)
 {
-	struct OmitID3frame *temp=NULL;
+	struct OmitID3frame *temp;
 
 	assert_wrapper(frameid != NULL);
 

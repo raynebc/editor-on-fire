@@ -17,9 +17,9 @@
 
 void Script_Load(FILE *inf)
 {
-	unsigned long maxlinelength=0;	//I will count the length of the longest line (including NULL char/newline) in the
+	unsigned long maxlinelength;	//I will count the length of the longest line (including NULL char/newline) in the
 									//input file so I can create a buffer large enough to read any line into
-	char *buffer=NULL;				//Will be an array large enough to hold the largest line of text from input file
+	char *buffer;					//Will be an array large enough to hold the largest line of text from input file
 	char *substring=NULL;			//Used with strstr() to find tag strings in the input file
 	unsigned long index=0;			//Used to index within a line of text
 	unsigned long starttime=0;		//Converted long int value of numerical string representing a lyric's start time

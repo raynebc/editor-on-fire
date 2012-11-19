@@ -122,7 +122,7 @@ void ReadMIDIHeader(FILE *inf,char suppress_errors)
 
 int ReadTrackHeader(FILE *inf,struct Track_chunk *tchunk)
 {
-	int c=0;	//Used for testing end of MIDI
+	int c;	//Used for testing end of MIDI
 	char header[5]={0};
 
 	assert_wrapper((inf != NULL) && (tchunk != NULL));	//These must not be NULL
@@ -1071,7 +1071,7 @@ void CopyTrack(FILE *inf,unsigned short tracknum,FILE *outf)	//Copies the specif
 unsigned long ConvertToDeltaTime(unsigned long starttime)
 {	//Uses the Tempo Changes list to calculate the absolute delta time of the specified realtime
 	struct Tempo_change *temp=MIDIstruct.hchunk.tempomap;	//Begin with first tempo change
-	unsigned long deltacounter=0;		//Begin with delta of first tempo change
+	unsigned long deltacounter;		//Begin with delta of first tempo change
 	double temptime=0.0;
 
 	assert_wrapper(temp != NULL);	//Ensure the tempomap is populated
@@ -1704,14 +1704,14 @@ void VRhythm_Load(char *srclyrname,char *srcmidiname,FILE *inf)
 
 void PitchedLyric_Load(FILE *inf)
 {
-	unsigned long maxlinelength=0;	//I will count the length of the longest line (including NULL char/newline) in the
+	unsigned long maxlinelength;	//I will count the length of the longest line (including NULL char/newline) in the
 									//input file so I can create a buffer large enough to read any line into
-	char *buffer=NULL;				//Will be an array large enough to hold the largest line of text from input file
+	char *buffer;					//Will be an array large enough to hold the largest line of text from input file
 	unsigned long index=0;			//Used to index within a line of text
 	long int pitch=0;				//Converted unsigned long value of numerical string representing a lyric's pitch
 	unsigned long processedctr=0;	//The current line number being processed in the text file
 	unsigned long splitctr=0;		//The number of lyrics processed since the last line split
-	struct Lyric_Piece *lyrptr=NULL;//Conductor for Lyric piece linked lists
+	struct Lyric_Piece *lyrptr;		//Conductor for Lyric piece linked lists
 	unsigned long lyricctr=0;
 
 	char notename=0;					//Used for parsing note names instead of pitch numbers
@@ -1809,7 +1809,7 @@ void PitchedLyric_Load(FILE *inf)
 			}
 			else
 			{	//If the line starts with a letter, parse it as a note number (ie. A#, B5, C#2, etc)
-				notename=noteissharp=noteisflat=negativeoctave=invalidnote=0;	//Init note name variables
+				noteissharp=noteisflat=negativeoctave=invalidnote=0;	//Init note name variables
 				octavenum=4;		//The middle octave is assumed unless the octave is defined
 
 				notename=toupper(buffer[index++]);
@@ -2577,7 +2577,7 @@ struct MIDI_Lyric_Piece *EndMIDILyric(unsigned char pitch,unsigned long end)
 {	//Searches for the first incomplete (missing end timestamp) MIDI Lyric list entry with a matching pitch and writes the ending timestamp
 	//The address of the matching Lyric is returned by reference, otherwise NULL is returned
 	//This allows an indefinite number of Lyrics to be appended and when they are ended, they will be returned in the proper order (First In, First Out)
-	struct MIDI_Lyric_Piece *temp=NULL;
+	struct MIDI_Lyric_Piece *temp;
 
 //Search the list for the FIRST instance of the Note number
 	temp=MIDI_Lyrics.head;
@@ -2737,7 +2737,7 @@ char *AnalyzeVrhythmID(const char *buffer)
 
 long int Write_MIDI_Track_Header(FILE *outf)
 {
-	long int fp=0;
+	long int fp;
 	char buffer[4]={0};		//Null Data to write as the chunk size
 
 	assert_wrapper(outf != NULL);
@@ -3122,7 +3122,7 @@ void Export_SKAR(FILE *outf)
 
 int MIDI_Stats(struct TEPstruct *data)
 {
-	unsigned char eventtype=0;
+	unsigned char eventtype;
 	unsigned long ctr=0;
 	char whitespace=0;
 

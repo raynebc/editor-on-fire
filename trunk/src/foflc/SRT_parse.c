@@ -428,10 +428,10 @@ unsigned long ConvertSRTTimestamp(char **ptr,int *errorstatus)
 
 void SRT_Load(FILE *inf)
 {
-	char *buffer=NULL;	//Buffer used to read from input file
+	char *buffer;		//Buffer used to read from input file
 	char *temp=NULL;	//Used for string processing
 	unsigned long processedctr=0;	//The current line number being processed in the text file
-	unsigned long maxlinelength=0;	//I will count the length of the longest line (including NULL char/newline) in the
+	unsigned long maxlinelength;	//I will count the length of the longest line (including NULL char/newline) in the
 									//input file so I can create a buffer large enough to read any line into
 	unsigned long startstamp=0,endstamp=0;
 	unsigned long ctr=0;

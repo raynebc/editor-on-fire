@@ -374,6 +374,8 @@ EOF_SONG * eof_import_midi(const char * fn)
 	unsigned char slidevelocity[4];		//Used for parsing slide markers
 	unsigned long openstrumpos[4] = {0}, slideuppos[4] = {0}, slidedownpos[4] = {0}, openhihatpos[4] = {0}, pedalhihatpos[4] = {0}, rimshotpos[4] = {0}, sliderpos[4] = {0}, palmmutepos[4] = {0}, vibratopos[4] = {0};	//Used for parsing Sysex phrase markers
 	int lc;
+	long b = -1;
+	unsigned long tp;
 
 	eof_log("eof_import_midi() entered", 1);
 
@@ -1518,8 +1520,9 @@ set_window_title(debugtext);
 
 						if(diff != -1)
 						{	//If a note difficulty was identified above
-							k = 0;
 							char match = 0;	//Is set to nonzero if this note on is matched with a previously added note
+
+							k = 0;
 							if(note_count[picked_track] > 0)
 							{	//If at least one note has been added already
 								for(k = note_count[picked_track] - 1; k >= first_note; k--)
@@ -1941,6 +1944,9 @@ set_window_title(debugtext);
 					/* note on */
 					if(eof_import_events[i]->event[j]->type == 0x90)
 					{	//Note on event
+						unsigned long *slideptr;	//This will point to either the up or down slide position array as appropriate, so the velocity can be checked just once
+						char strum = 0;	//Will store the strum type, to reduce duplicated logic below
+
 #ifdef EOF_DEBUG
 						snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\tNote on:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
 						eof_log(eof_log_string, 1);
@@ -1970,7 +1976,6 @@ set_window_title(debugtext);
 
 						/* store slide marker, when the note off for this marker occurs, search for notes within the phrase and apply the status to them */
 						//Slide phrases are marked as lane (1 + 7)
-						unsigned long *slideptr;	//This will point to either the up or down slide position array as appropriate, so the velocity can be checked just once
 						if(eof_import_events[i]->event[j]->d2 >= 108)
 						{	//For slide markers, velocity 108 or higher represents a down slide
 							slideptr = slidedownpos;	//The slide marker (if present) would be a down slide
@@ -2021,7 +2026,6 @@ set_window_title(debugtext);
 
 						/* store strum direction marker, when the note off for this marker occurs, search for notes with same position and apply it to them */
 						//Lane (1 + 9), channel 13 is used in up strum markers
-						char strum = 0;	//Will store the strum type, to reduce duplicated logic below
 						if(eof_import_events[i]->event[j]->channel == 13)
 						{	//Channel 13 is used in up strum markers
 							strum = 0;
@@ -2085,8 +2089,9 @@ set_window_title(debugtext);
 
 						if(diff != -1)
 						{	//If a note difficulty was identified above
-							k = 0;
 							char match = 0;	//Is set to nonzero if this note on is matched with a previously added note
+
+							k = 0;
 							if(note_count[picked_track] > 0)
 							{	//If at least one note has been added already
 								for(k = note_count[picked_track] - 1; k >= first_note; k--)
@@ -2646,8 +2651,6 @@ eof_log("\tThird pass complete", 1);
 	eof_chart_length = alogg_get_length_msecs_ogg(eof_music_track);
 
 	/* create text events */
-	long b = -1;
-	unsigned long tp;
 	for(i = 0; i < eof_import_text_events->events; i++)
 	{
 		if(eof_import_text_events->event[i]->type == 0x01)

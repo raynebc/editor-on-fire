@@ -486,11 +486,11 @@ double BruteForceTempo(double start,double end)
 
 double CalculateTimeDiff(double tempo)
 {
-	struct Lyric_Piece *lyrptr=NULL;	//Conductor for lyric piece list
-	struct Lyric_Line *lineptr=NULL;	//Conductor for lyric line list
+	struct Lyric_Piece *lyrptr;		//Conductor for lyric piece list
+	struct Lyric_Line *lineptr;		//Conductor for lyric line list
 	unsigned long ctr=0,num=0;
-	long double sum=0;					//Stores the sum of the time differences
-	double stepping=0.0;				//The precision of the tempo
+	long double sum=0;				//Stores the sum of the time differences
+	double stepping;				//The precision of the tempo
 
 //error checking: Linked lists must be populated
 	assert_wrapper(Lyrics.lines != NULL);
@@ -529,9 +529,9 @@ double CalculateTimeDiff(double tempo)
 void UStar_Load(FILE *inf)
 {
 	unsigned long ctr=0;		//Equal to length of string (+1 for null terminator)
-	unsigned long maxlinelength=0;	//I will count the length of the longest line (including NULL char/newline) in the
+	unsigned long maxlinelength;	//I will count the length of the longest line (including NULL char/newline) in the
 							//input file so I can create a buffer large enough to read any line into
-	char *buffer=NULL;		//Will be an array large enough to hold the largest line of text from input file
+	char *buffer;			//Will be an array large enough to hold the largest line of text from input file
 	char *substring=NULL;	//Used with strstr() to find tag strings in the input file
 	unsigned long index=0;	//Used to index within a line of text
 	long int starttime=0;		//Converted unsigned long value of numerical string representing a lyric's timestamp in quarterbeats
@@ -785,7 +785,7 @@ void UStar_Load(FILE *inf)
 
 char *ReadUStarTag(char *str)
 {
-	char *temp=NULL;
+	char *temp;
 	unsigned long length=0;	//strlen(temp) is used several times
 
 	assert_wrapper(str != NULL);	//This must not be NULL

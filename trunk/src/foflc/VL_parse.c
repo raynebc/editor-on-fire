@@ -30,8 +30,8 @@ int VL_PreLoad(FILE *inf,char validate)
 	struct VL_Sync_entry se={0,0,0,0,0,NULL};		//Used to store sync entries from file during parsing
 	struct VL_Text_entry *ptr1=NULL;	//Used for allocating links for the text chunk list
 	struct VL_Sync_entry *ptr2=NULL;	//Used for allocation links for the sync chunk list
-	struct VL_Text_entry *curtext=NULL;	//Conductor for text chunk linked list
-	struct VL_Sync_entry *cursync=NULL;	//Conductor for sync chunk linked list
+	struct VL_Text_entry *curtext;		//Conductor for text chunk linked list
+	struct VL_Sync_entry *cursync;		//Conductor for sync chunk linked list
 
 	assert_wrapper(inf != NULL);
 
@@ -322,7 +322,7 @@ int VL_PreLoad(FILE *inf,char validate)
 int ReadSyncEntry(struct VL_Sync_entry *ptr,FILE *inf)
 {	//Portable function to read 16 bytes from the file. Returns nonzero upon error
 	unsigned long buffer=0;
-	unsigned long ftell_result=0;
+	unsigned long ftell_result;
 
 	assert_wrapper((ptr != NULL) && (inf != NULL));	//These must not be NULL
 
