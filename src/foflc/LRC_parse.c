@@ -25,11 +25,11 @@ static char timestampdel[]=":.";	//Accept any of these characters as valid chara
 
 void LRC_Load(FILE *inf)
 {
-	char *buffer=NULL,*buffer2=NULL;	//Buffers used to read from input file
-	char *temp=NULL,*temp2=NULL;		//Used for string processing
+	char *buffer,*buffer2;			//Buffers used to read from input file
+	char *temp=NULL,*temp2=NULL;	//Used for string processing
 	unsigned long ctr=0;
 	unsigned long processedctr=0;	//The current line number being processed in the text file
-	unsigned long maxlinelength=0;	//I will count the length of the longest line (including NULL char/newline) in the
+	unsigned long maxlinelength;	//I will count the length of the longest line (including NULL char/newline) in the
 									//input file so I can create a buffer large enough to read any line into
 	unsigned long startstamp=0,endstamp=0,timestamp=0;
 	char lyricinprogress=0;
@@ -482,7 +482,7 @@ unsigned long ConvertLRCTimestamp(char **ptr,int *errorstatus)
 void WriteLRCTimestamp(FILE *outf,char openchar,char closechar,unsigned long time)
 {	//Accepts the time given in milliseconds and writes a timestamp to specified FILE stream, using the specified characters at
 	//the beginning and end of the timestamp: ie. <##:##.##> or [##:##.##]
-	unsigned long minutes=0,seconds=0,millis=0;	//Values to store the converted timestamp
+	unsigned long minutes, seconds, millis;	//Values to store the converted timestamp
 
 	assert_wrapper(outf != NULL);			//This must not be NULL
 	assert_wrapper(!isdigit(openchar));		//This must not be a number

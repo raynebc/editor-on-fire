@@ -540,8 +540,8 @@ struct Lyric_Piece *FindLyricNumber(unsigned long number)
 
 char *ResizedAppend(char *src1,const char *src2,char dealloc)
 {	//Allocates enough memory to concatenate both strings and returns the concatenated string
-	char *temp=NULL;
-	size_t size1=0,size2=0;
+	char *temp;
+	size_t size1,size2;
 
 	assert_wrapper((src1 != NULL) && (src2 != NULL));
 	size1=strlen(src1);
@@ -557,8 +557,8 @@ char *ResizedAppend(char *src1,const char *src2,char dealloc)
 
 char *Append(const char *src1,const char *src2)
 {	//Allocates enough memory to concatenate both strings and returns the concatenated string
-	char *temp=NULL;
-	size_t size1=0,size2=0;
+	char *temp;
+	size_t size1, size2;
 
 	assert_wrapper((src1 != NULL) && (src2 != NULL));
 
@@ -692,9 +692,9 @@ unsigned long ParseUnicodeString(FILE *inf)
 
 char *ReadUnicodeString(FILE *inf)
 {
-	long position=0;
-	unsigned long length=0;
-	char *string=NULL;
+	long position;
+	unsigned long length;
+	char *string;
 	unsigned long ctr=0;
 	unsigned char input[2]={0};
 
@@ -739,7 +739,7 @@ char *ReadUnicodeString(FILE *inf)
 
 long int ParseLongInt(char *buffer,unsigned long *startindex,unsigned long linenum,int *errorstatus)
 {
-	unsigned long index=0;
+	unsigned long index;
 	char buffer2[11]={0};		//An array large enough to hold a 10 digit numerical string
 	unsigned long index2=0;		//index within buffer2
 	long value=0;				//The converted long int value of the numerical string
@@ -1084,7 +1084,7 @@ void PostProcessLyrics(void)
 
 void SetTag(char *string,char tagID,char negatizeoffset)
 {
-	char *string2=NULL;	//This will be created as a copy of the input string, having any leading/trailing whitespace removed
+	char *string2;	//This will be created as a copy of the input string, having any leading/trailing whitespace removed
 
 	assert_wrapper(string != NULL);	//This must not be NULL
 
@@ -1266,7 +1266,7 @@ unsigned long FindLongestLineLength(FILE *inf,char exit_on_empty)
 
 long ftell_err(FILE *fp)
 {
-	long result=0;
+	long result;
 
 	assert_wrapper(fp != NULL);
 	result=ftell(fp);
@@ -1321,7 +1321,7 @@ void fwrite_err(const void *ptr,size_t size,size_t count,FILE *stream)
 
 FILE *fopen_err(const char *filename,const char *mode)
 {
-	FILE *fp=NULL;
+	FILE *fp;
 
 	assert_wrapper((filename != NULL) && (mode != NULL));
 	fp=fopen(filename,mode);
@@ -1368,7 +1368,7 @@ void fputc_err(int character,FILE *stream)
 
 int fgetc_err(FILE *stream)
 {
-	int result=0;
+	int result;
 
 	assert_wrapper(stream != NULL);
 	result=fgetc(stream);
@@ -1383,7 +1383,7 @@ int fgetc_err(FILE *stream)
 
 char *fgets_err(char *str,int num,FILE *stream)
 {
-	char *result=NULL;
+	char *result;
 
 	assert_wrapper((str != NULL) && (stream != NULL));
 	result=fgets(str,num,stream);
@@ -1452,7 +1452,7 @@ char *strcasestr_spec(char *str1,const char *str2)
 
 int ParseTag(char startchar,char endchar,char *inputstring,char negatizeoffset)
 {
-	char *str=NULL;	//A copy of the input string, modified, to be passed to SetTag
+	char *str;		//A copy of the input string, modified, to be passed to SetTag
 	char *temp=NULL,*temp2=NULL,*temp3=NULL;
 	size_t length=0;
 	char tagID=0;	//The tag identified in the input string
@@ -1619,7 +1619,7 @@ struct Lyric_Line *InsertLyricLineBreak(struct Lyric_Line *lineptr,struct Lyric_
 void RecountLineVars(struct Lyric_Line *start)
 {	//Rebuild piececount and duration for each line of lyrics, starting with the given line
 	unsigned long piecectr=0;
-	struct Lyric_Line *curline=NULL;	//Conductor of the lyric line linked list
+	struct Lyric_Line *curline;			//Conductor of the lyric line linked list
 	struct Lyric_Piece *curpiece=NULL;	//Condudctor of the lyric linked list
 
 	curline=start;			//Point line conductor to given line
@@ -1834,7 +1834,7 @@ void ReleaseMemory(char release_all)
 
 int FindNextNumber(char *buffer,unsigned long *startindex)
 {	//If there is a numerical character at or after buffer[startindex], nonzero is returned and startindex will contain the index of the character
-	unsigned long index=0;
+	unsigned long index;
 
 	assert_wrapper((buffer != NULL) && (startindex != NULL));
 	index=*startindex;	//Dereference starting index for ease of use
@@ -2259,7 +2259,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 
 void DEBUG_QUERY_LAST_PIECE(void)
 {	//Debugging to query the info for the last lyric piece
-	struct Lyric_Piece *debugpiece=NULL;
+	struct Lyric_Piece *debugpiece;
 
 	debugpiece=FindLyricNumber(Lyrics.piececount);
 	assert_wrapper(debugpiece != NULL);
@@ -2429,7 +2429,7 @@ char *ReadString(FILE *inf,unsigned long *bytesread,unsigned long maxread)
 
 unsigned long GetFileEndPos(FILE *fp)
 {
-	unsigned long originalpos=0,endpos=0;
+	unsigned long originalpos, endpos;
 
 	assert_wrapper(fp != NULL);
 	originalpos=ftell_err(fp);		//Record original file position

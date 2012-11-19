@@ -6861,17 +6861,18 @@ DIALOG eof_pro_guitar_note_slide_end_fret_dialog[] =
 
 int eof_pro_guitar_note_slide_end_fret(char undo)
 {
+	unsigned long newend, i, flags, bitmask, ctr;
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	unsigned long tracknum;
+	EOF_PRO_GUITAR_NOTE *np;
+	char undo_made = 0;
+
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
-	unsigned long newend, i, flags, bitmask, ctr;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	EOF_PRO_GUITAR_NOTE *np;
-	char undo_made = 0;
-
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if(eof_selection.current >= eof_song->pro_guitar_track[tracknum]->notes)
 		return 1;	//Invalid selected note number
 	np = eof_song->pro_guitar_track[tracknum]->note[eof_selection.current];
@@ -7015,17 +7016,18 @@ DIALOG eof_pro_guitar_note_bend_strength_dialog[] =
 
 int eof_pro_guitar_note_bend_strength(char undo)
 {
+	unsigned long newstrength, i, flags;
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	unsigned long tracknum;
+	EOF_PRO_GUITAR_NOTE *np;
+	char undo_made = 0;
+
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
-	unsigned long newstrength, i, flags;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
-	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-	EOF_PRO_GUITAR_NOTE *np;
-	char undo_made = 0;
-
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if(eof_selection.current >= eof_song->pro_guitar_track[tracknum]->notes)
 		return 1;	//Invalid selected note number
 	np = eof_song->pro_guitar_track[tracknum]->note[eof_selection.current];
@@ -7149,7 +7151,7 @@ int eof_note_menu_read_gp_lyric_texts(void)
 	int character;
 	char buffer[101];
 	unsigned long index;
-	char undo_made = 0;
+	char undo_made = 0, last_text_entry_was_linebreak = 0;
 
 	if(eof_song == NULL)	//Do not import lyric text if no chart is open
 		return 0;
@@ -7177,17 +7179,12 @@ int eof_note_menu_read_gp_lyric_texts(void)
 	{	//For each lyric in the vocal track
 		index = 0;	//Point index to start of lyric text buffer
 
-		//Read next lyric text
+		//Read next lyric text entry
 		while(1)
 		{
 			character = pack_getc(fp);	//Read next character
 			if(character == EOF)
 			{	//End of file was reached
-				break;
-			}
-
-			if(character == ' ')
-			{	//This character ends the current lyric text
 				break;
 			}
 
@@ -7199,7 +7196,20 @@ int eof_note_menu_read_gp_lyric_texts(void)
 					pack_fclose(fp);
 					return 0;
 				}
-				break;	//A newline ends the current lyric text
+				if(!last_text_entry_was_linebreak)
+				{	//If the last text was a linebreak, this one doesn't count as a new lyric text entry
+					last_text_entry_was_linebreak = 1;
+					break;	//A newline ends the current lyric text
+				}
+			}
+			else
+			{	//This lyric text entry is not a line break
+				last_text_entry_was_linebreak = 0;	//Reset this status
+			}
+
+			if(character == ' ')
+			{	//This character ends the current lyric text
+				break;
 			}
 
 			if(character == '-')

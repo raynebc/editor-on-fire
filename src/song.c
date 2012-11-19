@@ -5580,6 +5580,8 @@ void eof_truncate_chart(EOF_SONG *sp)
 	}
 	else
 	{	//Find the beat that precedes the target position
+		double beat_length;
+
 		for(targetbeat = 0; targetbeat < sp->beats; targetbeat++)
 		{	//For each beat
 			if((targetbeat + 1 >= sp->beats) || (sp->beat[targetbeat + 1]->pos > targetpos))
@@ -5587,7 +5589,7 @@ void eof_truncate_chart(EOF_SONG *sp)
 				break;
 			}
 		}
-		double beat_length = (double)60000.0 / ((double)60000000.0 / (double)sp->beat[targetbeat]->ppqn);	//Get the length of the beat
+		beat_length = (double)60000.0 / ((double)60000000.0 / (double)sp->beat[targetbeat]->ppqn);	//Get the length of the beat
 		targetpos = sp->beat[targetbeat]->pos + beat_length + beat_length + 0.5;	//The chart length will be resized to last to the end of the last beat that has contents/audio, and another beat further for padding
 		eof_chart_length = targetpos;	//Resize the chart length accordingly
 

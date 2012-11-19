@@ -14,17 +14,17 @@
 
 void XML_Load(FILE *inf)
 {
-	unsigned long maxlinelength=0;	//I will count the length of the longest line (including NULL char/newline) in the
+	unsigned long maxlinelength;	//I will count the length of the longest line (including NULL char/newline) in the
 									//input file so I can create a buffer large enough to read any line into
-	char *buffer=NULL;				//Will be an array large enough to hold the largest line of text from input file
+	char *buffer;					//Will be an array large enough to hold the largest line of text from input file
 	char *substring=NULL;			//Used with strstr() to find tag strings in the input file
-	char start=0;				//This will be set to nonzero once the <lyric> tag is read
+	char start=0;					//This will be set to nonzero once the <lyric> tag is read
 	unsigned long index=0;			//Used to index within a line of input text
 	unsigned long index2=0;			//Used to index within an output buffer
 	unsigned long starttime=0;		//Converted long int value of numerical string representing a lyric's start time
 	unsigned long stoptime=0;		//Converted long int value of numerical string representing a lyric's stop time
 	unsigned long processedctr=0;	//The current line number being processed in the text file
-	char textbuffer[101]={0};	//Allow for a 100 character lyric text
+	char textbuffer[101]={0};		//Allow for a 100 character lyric text
 	char showread=0, textread=0, removeread=0;	//Tracks whether each of these tags have been read since the last lyric phrase was stored
 
 	assert_wrapper(inf != NULL);	//This must not be NULL

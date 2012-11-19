@@ -3545,6 +3545,12 @@ void eof_vocal_editor_logic(void)
 			int pos = eof_music_pos / eof_zoom;
 			int lpos = pos < 300 ? (mouse_x - 20) * eof_zoom : ((pos - 300) + mouse_x - 20) * eof_zoom;
 			int rpos; // place to store pen_lyric.pos in case we are hovering over a note and need the original position before it was changed to the note location
+			unsigned long move_offset = 0;
+			char move_direction = 1;	//Assume right mouse movement by default
+			int revert = 0;
+			int revert_amount = 0;
+			char undo_made = 0;
+
 			eof_snap_logic(&eof_snap, lpos);
 			eof_snap_length_logic(&eof_snap);
 			eof_pen_lyric.pos = eof_snap.pos;
@@ -3591,6 +3597,7 @@ void eof_vocal_editor_logic(void)
 			if(!eof_full_screen_3d && (mouse_b & 1) && eof_lclick_released)
 			{
 				int ignore_range = 0;
+
 				eof_click_x = mouse_x;
 				eof_click_y = mouse_y;
 				eof_lclick_released = 0;
@@ -3808,11 +3815,6 @@ void eof_vocal_editor_logic(void)
 					}
 				}
 			}
-			unsigned long move_offset = 0;
-			char move_direction = 1;	//Assume right mouse movement by default
-			int revert = 0;
-			int revert_amount = 0;
-			char undo_made = 0;
 			if(!eof_full_screen_3d && (mouse_b & 1) && !eof_lclick_released && (lpos >= eof_peg_x))
 			{	//If full screen 3D view is not in effect, the left mouse button is being held and the mouse is right of the left edge of the piano roll
 				if(eof_mouse_drug)
@@ -4143,6 +4145,7 @@ void eof_vocal_editor_logic(void)
 			{
 				int pos = eof_music_pos / eof_zoom;
 				int lpos = pos < 300 ? (eof_song->beat[eof_selected_beat]->pos / eof_zoom + 20) : 300;
+
 				eof_prepare_menus();
 				do_menu(eof_beat_menu, lpos, mouse_y);
 				eof_clear_input();
@@ -4201,13 +4204,12 @@ void eof_vocal_editor_logic(void)
 int eof_get_ts_text(int beat, char * buffer)
 {
 //	eof_log("eof_get_ts_text() entered");
+	int ret = 0;
 
 	if(!buffer)
 	{
 		return 0;
 	}
-
-	int ret = 0;
 	if(eof_song->beat[beat]->flags & EOF_BEAT_FLAG_START_4_4)
 	{
 		ustrcpy(buffer, "4/4");
@@ -4319,6 +4321,10 @@ void eof_render_vocal_editor_window(void)
 	int pos = eof_music_pos / eof_zoom;	//Current seek position
 	int lpos;							//The position of the first beat marker
 	unsigned long start;	//Will store the timestamp of the left visible edge of the piano roll
+	int kcol, kcol2;
+	int n;
+	int ny;
+	int red = 0;
 
 	if(!eof_song_loaded || !eof_vocals_selected)
 		return;
@@ -4379,10 +4385,6 @@ void eof_render_vocal_editor_window(void)
 	}
 
 	/* draw mini keyboard */
-	int kcol, kcol2;
-	int n;
-	int ny;
-	int red = 0;
 	for(i = 0; i < eof_screen_layout.vocal_view_size; i++)
 	{
 		n = (eof_vocals_offset + i) % 12;
@@ -4470,6 +4472,11 @@ void eof_render_editor_window_common(void)
 	EOF_PHRASE_SECTION *sectionptr = NULL;	//Used to abstract sections
 	unsigned long bitmask, usedlanes;
 	long notelength;
+	unsigned long msec, roundedstart;
+	double current_bpm;
+	int bcol, bscol, bhcol;
+	char buffer[16] = {0};
+	char *ksname;
 
 	if(!eof_song_loaded)
 		return;
@@ -4665,6 +4672,7 @@ void eof_render_editor_window_common(void)
 								int y1 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] - half_string_space;
 								int x2 = lpos + sectionptr->end_pos / eof_zoom;
 								int y2 = EOF_EDITOR_RENDER_OFFSET + 15 + ychart[ctr] + half_string_space;
+
 								if(y1 < EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0])
 									y1 = EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[0];	//Ensure that the phrase cannot render above the top most lane
 								if(y2 > EOF_EDITOR_RENDER_OFFSET + 15 + eof_screen_layout.note_y[numlanes-1])
@@ -4696,7 +4704,6 @@ void eof_render_editor_window_common(void)
 	vline(eof_window_editor->screen, lpos + (eof_chart_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
 
 	/* draw second markers */
-	unsigned long msec,roundedstart;
 	roundedstart = start / 1000;
 	roundedstart *= 1000;		//Roundedstart is start is rounded down to nearest second
 	for(msec = roundedstart; msec < stop + 1000; msec += 1000)
@@ -4729,11 +4736,6 @@ void eof_render_editor_window_common(void)
 	vline(eof_window_editor->screen, lpos, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10, eof_color_white);
 
 	/* draw beat lines */
-	double current_bpm;
-	int bcol, bscol, bhcol;
-	char buffer[16] = {0};
-	char *ksname;
-
 	bcol = makecol(128, 128, 128);
 	bscol = eof_color_white;
 	bhcol = eof_color_green;
@@ -4854,6 +4856,8 @@ void eof_render_editor_window_common2(void)
 	int zoom = eof_av_delay / eof_zoom;	//AV delay compensated for zoom level
 	unsigned long i;
 	int lpos;							//The position of the first beatmarker
+	char *tab_name;
+	int scroll_pos;
 
 	if(!eof_song_loaded)
 		return;
@@ -4885,7 +4889,6 @@ void eof_render_editor_window_common2(void)
 	else
 		draw_sprite(eof_window_editor->screen, eof_image[EOF_IMAGE_TAB0 + eof_note_type], 0, 8);
 
-	char *tab_name;
 	for(i = 0; i < 5; i++)
 	{	//Draw tab difficulty names
 		if(eof_selected_track == EOF_TRACK_VOCALS)
@@ -4915,7 +4918,7 @@ void eof_render_editor_window_common2(void)
 	}
 
 	/* render the scroll bar */
-	int scroll_pos = ((float)(eof_screen->w - 8) / (float)eof_chart_length) * (float)eof_music_pos;
+	scroll_pos = ((float)(eof_screen->w - 8) / (float)eof_chart_length) * (float)eof_music_pos;
 	draw_sprite(eof_window_editor->screen, eof_image[EOF_IMAGE_SCROLL_BAR], 0, eof_screen_layout.scrollbar_y);
 	draw_sprite(eof_window_editor->screen, eof_image[EOF_IMAGE_SCROLL_HANDLE], scroll_pos + 2, eof_screen_layout.scrollbar_y);
 
@@ -5139,13 +5142,14 @@ void eof_editor_logic_common(void)
 
 				if((eof_mouse_drug > 10) && !eof_blclick_released && (eof_selected_beat == 0) && (eof_mickeys_x != 0) && (eof_hover_beat == eof_selected_beat) && !((eof_mickeys_x * eof_zoom < 0) && (eof_song->beat[0]->pos == 0)))
 				{	//If moving the first beat marker
+					int rdiff = eof_mickeys_x * eof_zoom;
+
 					if(!eof_undo_toggle)
 					{
 						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 						eof_moving_anchor = 1;
 						eof_last_midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
 					}
-					int rdiff = eof_mickeys_x * eof_zoom;
 					if((int)eof_song->beat[0]->pos + rdiff < 0)
 					{
 						rdiff = -eof_song->beat[0]->pos;
@@ -5304,6 +5308,7 @@ void eof_editor_logic_common(void)
 		int examined_music_pos = eof_music_pos;		//By default, assume the chart position is to be used to find hover notes/etc.
 		int examined_track = eof_selected_track;	//By default, assume the active track is to be used to find hover notes/etc.
 		int examined_type = eof_note_type;			//By default, assume the active difficulty is to be used to find hover notes/etc.
+		int examined_pos, zoom;
 
 		if(eof_music_catalog_playback)
 		{	//If the fret catalog is playing
@@ -5313,8 +5318,8 @@ void eof_editor_logic_common(void)
 		}
 
 		//Find the hover note
-		int examined_pos = examined_music_pos / eof_zoom;
-		int zoom = eof_av_delay / eof_zoom;	//Cache this value
+		examined_pos = examined_music_pos / eof_zoom;
+		zoom = eof_av_delay / eof_zoom;	//Cache this value
 		for(i = 0; i < eof_get_track_size(eof_song, examined_track); i++)
 		{
 			if(eof_get_note_type(eof_song, examined_track, i) == examined_type)
