@@ -237,6 +237,8 @@ void eof_prepare_song_menu(void)
 
 	if(eof_song && eof_song_loaded)
 	{//If a chart is loaded
+		char bmcount = 0;
+
 		tracknum = eof_song->track[eof_selected_track]->tracknum;
 		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 		{
@@ -431,7 +433,6 @@ void eof_prepare_song_menu(void)
 		}
 
 		/* seek bookmark # */
-		char bmcount = 0;
 		for(i = 0; i < EOF_MAX_BOOKMARK_ENTRIES; i++)
 		{
 			if(eof_song->bookmark_pos[i] != 0)
@@ -1222,10 +1223,10 @@ int eof_menu_track_selected_12(void)
 
 int eof_menu_track_selected_track_number(int tracknum)
 {
+	unsigned long i;
+
 	eof_log("\tChanging active track", 1);
 	eof_log("eof_menu_track_selected_track_number() entered", 1);
-
-	unsigned long i;
 
 	if((tracknum > 0) && (tracknum < eof_song->tracks))
 	{
@@ -2680,10 +2681,10 @@ int eof_menu_song_seek_next_grid_snap(void)
 
 int eof_menu_song_seek_previous_anchor(void)
 {
+	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+
 	if(!eof_song)
 		return 1;
-
-	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 
 	if(eof_song->beat[b]->pos == eof_music_pos - eof_av_delay)
 	{	//If the seek position was on the beat marker
@@ -2704,38 +2705,38 @@ int eof_menu_song_seek_previous_anchor(void)
 
 int eof_menu_song_seek_next_anchor(void)
 {
+	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+	long b2 = b;
+
 	if(!eof_song)
 		return 1;
 
-      	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
-      	long b2 = b;
-
-      	if(eof_song->beat[b]->pos == eof_music_pos - eof_av_delay)
-      	{	//If the seek position was on the beat marker
-      		b++;	//Go to the next beat
-      	}
-      	while((b > 0) && (b < eof_song->beats) && ((eof_song->beat[b]->flags & EOF_BEAT_FLAG_ANCHOR) == 0))
-      	{	//Starting at/before the beat at the current seek position, until an anchor is found,
-      		b++;	//Go forward one beat
-      	}
-      	if((b < eof_song->beats) && (b != b2))
-      	{	//Don't perform a seek if there was no anchor ahead of the current seek position
-      		if(b < 0)
-      		{	//If no other suitable anchor was found
-      			b = 0;	//Seek to the first beat marker
-      		}
-      		eof_set_seek_position(eof_song->beat[b]->pos + eof_av_delay);	//Seek to the anchor
-      	}
+	if(eof_song->beat[b]->pos == eof_music_pos - eof_av_delay)
+	{	//If the seek position was on the beat marker
+		b++;	//Go to the next beat
+	}
+	while((b > 0) && (b < eof_song->beats) && ((eof_song->beat[b]->flags & EOF_BEAT_FLAG_ANCHOR) == 0))
+	{	//Starting at/before the beat at the current seek position, until an anchor is found,
+		b++;	//Go forward one beat
+	}
+	if((b < eof_song->beats) && (b != b2))
+	{	//Don't perform a seek if there was no anchor ahead of the current seek position
+		if(b < 0)
+		{	//If no other suitable anchor was found
+			b = 0;	//Seek to the first beat marker
+		}
+		eof_set_seek_position(eof_song->beat[b]->pos + eof_av_delay);	//Seek to the anchor
+	}
 
 	return 1;
 }
 
 int eof_menu_song_seek_previous_beat(void)
 {
+	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+
 	if(!eof_song)
 		return 1;
-
-	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 
 	if(b > 0)
 	{
@@ -2758,10 +2759,11 @@ int eof_menu_song_seek_previous_beat(void)
 
 int eof_menu_song_seek_next_beat(void)
 {
+	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
+
 	if(!eof_song)
 		return 1;
 
-	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 	if(eof_music_pos - eof_av_delay < 0)
 	{
 		b = -1;
@@ -2777,12 +2779,13 @@ int eof_menu_song_seek_next_beat(void)
 
 int eof_menu_song_seek_previous_measure(void)
 {
-	if(!eof_song)
-		return 1;
-
 	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 	unsigned num, ctr;
 	unsigned long originalpos = eof_music_pos - eof_av_delay;
+
+	if(!eof_song)
+		return 1;
+
 	while(b >= 0)
 	{	//For each beat at or before the current seek position
 		if(eof_get_ts(eof_song, &num, NULL, b) == 1)
@@ -2820,12 +2823,13 @@ int eof_menu_song_seek_previous_measure(void)
 
 int eof_menu_song_seek_next_measure(void)
 {
-	if(!eof_song)
-		return 1;
-
 	long b = eof_get_beat(eof_song, eof_music_pos - eof_av_delay);
 	unsigned num = 0, ctr;
 	unsigned long originalpos = eof_music_pos - eof_av_delay;
+
+	if(!eof_song)
+		return 1;
+
 	while(b >= 0)
 	{	//For each beat at or before the current seek position
 		if(eof_get_ts(eof_song, &num, NULL, b) == 1)
@@ -3147,7 +3151,7 @@ int eof_raw_midi_track_import(DIALOG * d)
 		dialog_message(eof_raw_midi_add_track_dialog, MSG_DRAW, 0, &junk);	//Redraw the dialog since the list's contents have changed
 	}
 
-	return D_O_K;;
+	return D_O_K;
 }
 
 int eof_raw_midi_dialog_add(DIALOG * d)
@@ -3166,6 +3170,8 @@ int eof_raw_midi_dialog_add(DIALOG * d)
 	eof_clear_input();
 	if(returnedfn)
 	{	//If the user selected a file
+		int delay;
+
 		eof_log("\tImporting raw MIDI track", 1);
 
 //Have user browse for a MIDI/RBA file
@@ -3188,7 +3194,6 @@ int eof_raw_midi_dialog_add(DIALOG * d)
 		}
 
 //Parse the MIDI delay from song.ini if it exists in the same folder as the MIDI
-		int delay;
 		replace_filename(tempfilename, returnedfn, "song.ini", 1024);
 		set_config_file(tempfilename);
 		delay = get_config_int("song", "delay", 0);

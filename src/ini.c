@@ -15,13 +15,17 @@ char *eof_difficulty_ini_tags[EOF_TRACKS_MAX + 1] = {"", "diff_guitar", "diff_ba
 
 int eof_save_ini(EOF_SONG * sp, char * fn)
 {
-	eof_log("eof_save_ini() entered", 1);
-
 	PACKFILE * fp;
 	char buffer[256] = {0};
 	char ini_string[4096] = {0};
 	unsigned long i, j, tracknum;
 	char *tuning_name = NULL;
+	char slidesfound = 0;
+	char hihatmarkersfound = 0;
+	char rimshotmarkersfound = 0;
+	int populated_track = 0;
+
+	eof_log("eof_save_ini() entered", 1);
 
 	if(!sp || !fn)
 	{
@@ -178,7 +182,6 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	}
 
 	/* check for use of pro guitar slides and write a tag if necessary */
-	char slidesfound = 0;
 	for(i = 1; i < sp->tracks; i++)
 	{	//For each track in the chart (skipping track 0)
 		if(sp->track[i]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -200,8 +203,6 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	}
 
 	/* check for use of open or pedal controlled hi hat or rim shot and write tags if necessary */
-	char hihatmarkersfound = 0;
-	char rimshotmarkersfound = 0;
 	tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
 	for(i = 0; i < sp->legacy_track[tracknum]->notes; i++)
 	{	//For each note in the drum track
@@ -248,7 +249,6 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	}
 
 	/* write tuning tags */
-	int populated_track = 0;
 	if(eof_get_track_size(sp, EOF_TRACK_PRO_GUITAR))
 	{	//If the 17 fret pro guitar track is populated
 		populated_track = EOF_TRACK_PRO_GUITAR;
@@ -319,14 +319,14 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 
 int eof_save_upgrades_dta(EOF_SONG * sp, char * fn)
 {
-	eof_log("eof_save_upgrades_dta() entered", 1);
-
 	char buffer[256] = {0};
 	char buffer2[256] = {0};
 	char buffer3[5] = {0};
 	unsigned long i, tracknum;
-
 	PACKFILE * fp;
+
+	eof_log("eof_save_upgrades_dta() entered", 1);
+
 	if(!sp || !fn)
 	{
 		return 0;

@@ -37,9 +37,9 @@ EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, unsigned long beat, char
 
 void eof_move_text_events(EOF_SONG * sp, unsigned long beat, unsigned long offset, int dir)
 {
-	eof_log("eof_move_text_events() entered", 1);
-
 	unsigned long i;
+
+	eof_log("eof_move_text_events() entered", 1);
 
 	if(!sp)
 	{
@@ -71,9 +71,10 @@ void eof_move_text_events(EOF_SONG * sp, unsigned long beat, unsigned long offse
 
 void eof_song_delete_text_event(EOF_SONG * sp, unsigned long event)
 {
+	unsigned long i;
+
  	eof_log("eof_song_delete_text_event() entered", 1);
 
-	unsigned long i;
 	if(sp)
 	{
 		free(sp->text_event[event]);

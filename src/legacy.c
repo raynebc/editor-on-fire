@@ -11,8 +11,6 @@
 
 EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 {
-	eof_log("eof_load_notes_legacy() entered", 1);
-
 	EOF_SONG * sp = NULL;
 	EOF_NOTE * new_note = NULL;
 	int i, j;
@@ -26,6 +24,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 	unsigned eof_beat_flag_anchor=0;
 	unsigned eof_tracks_max=0;
 	unsigned eof_note_amazing=0;
+
+	eof_log("eof_load_notes_legacy() entered", 1);
 
 	if(!fp)
 	{

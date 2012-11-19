@@ -127,10 +127,10 @@ int eof_song_qsort_lyrics(const void * e1, const void * e2)
 
 EOF_SONG * eof_create_song(void)
 {
- 	eof_log("eof_create_song() entered", 1);
-
 	EOF_SONG * sp;
 	unsigned long i;
+
+ 	eof_log("eof_create_song() entered", 1);
 
 	sp = malloc(sizeof(EOF_SONG));
 	if(!sp)
@@ -186,10 +186,10 @@ EOF_SONG * eof_create_song(void)
 
 void eof_destroy_song(EOF_SONG * sp)
 {
+	unsigned long ctr;
+
  	eof_log("\tClosing project", 1);
  	eof_log("eof_destroy_song() entered", 1);
-
-	unsigned long ctr;
 
 	if(sp == NULL)
 		return;
@@ -227,14 +227,14 @@ void eof_destroy_song(EOF_SONG * sp)
 
 EOF_SONG * eof_load_song(const char * fn)
 {
- 	eof_log("\tLoading project", 1);
- 	eof_log("eof_load_song() entered", 1);
-
 	PACKFILE * fp = NULL;
 	EOF_SONG * sp = NULL;
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};	//This header represents the current project format
 	char rheader[16] = {0};
 	short i;
+
+ 	eof_log("\tLoading project", 1);
+ 	eof_log("eof_load_song() entered", 1);
 
 	if(!fn)
 	{
@@ -876,9 +876,9 @@ void eof_vocal_track_delete_line(EOF_VOCAL_TRACK * tp, unsigned long index)
 /* make sure notes don't overlap */
 void eof_fixup_notes(EOF_SONG *sp)
 {
- 	eof_log("eof_fixup_notes() entered", 1);
-
 	unsigned long i, j;
+
+ 	eof_log("eof_fixup_notes() entered", 1);
 
 	if(sp)
 	{
@@ -906,9 +906,9 @@ void eof_fixup_notes(EOF_SONG *sp)
 
 void eof_sort_notes(EOF_SONG *sp)
 {
- 	eof_log("eof_sort_notes() entered", 1);
-
 	unsigned long j;
+
+ 	eof_log("eof_sort_notes() entered", 1);
 
 	if(sp)
 	{
@@ -921,10 +921,10 @@ void eof_sort_notes(EOF_SONG *sp)
 
 void eof_detect_difficulties(EOF_SONG * sp)
 {
- 	eof_log("eof_detect_difficulties() entered", 1);
-
 	unsigned long i;
 	int note_type;
+
+ 	eof_log("eof_detect_difficulties() entered", 1);
 
 	if(sp)
 	{
@@ -1247,13 +1247,13 @@ int eof_load_song_string_pf(char *const buffer, PACKFILE *fp, const unsigned lon
 
 int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 {
- 	eof_log("eof_song_add_track() entered", 1);
-
 	EOF_LEGACY_TRACK *ptr = NULL;
 	EOF_VOCAL_TRACK *ptr2 = NULL;
 	EOF_TRACK_ENTRY *ptr3 = NULL;
 	EOF_PRO_GUITAR_TRACK *ptr4 = NULL;
 	unsigned long count=0;
+
+ 	eof_log("eof_song_add_track() entered", 1);
 
 	if((sp == NULL) || (trackdetails == NULL))
 		return 0;	//Return error
@@ -1373,9 +1373,9 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 
 int eof_song_delete_track(EOF_SONG * sp, unsigned long track)
 {
- 	eof_log("eof_song_delete_track() entered", 1);
-
 	unsigned long ctr;
+
+ 	eof_log("eof_song_delete_track() entered", 1);
 
 	if((sp == NULL) || (track >= sp->tracks) || (sp->track[track] == NULL))
 		return 0;	//Return error
@@ -1435,8 +1435,6 @@ int eof_song_delete_track(EOF_SONG * sp, unsigned long track)
 
 int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 {
- 	eof_log("eof_load_song_pf() entered", 1);
-
 	unsigned char inputc;
 	unsigned long inputl,count,ctr,ctr2,bitmask;
 	unsigned long track_count,track_ctr;
@@ -1445,22 +1443,27 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	EOF_TRACK_ENTRY temp={0, 0, 0, 0, "", "", 0, 0};
 	char name[EOF_NAME_LENGTH+1];	//Used to load note/section names
 
-	if((sp == NULL) || (fp == NULL))
-		return 0;	//Return failure
-
 	#define EOFNUMINISTRINGTYPES 12
 	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
 	unsigned long const inistringbuffersize[12]={0,0,256,256,256,0,32,512,0,0,0,0};
 		//Store the buffer information of each of the 12 INI strings to simplify the loading code
 		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
-
 	#define EOFNUMINIBOOLEANTYPES 7
 	char *inibooleanbuffer[EOFNUMINIBOOLEANTYPES] = {NULL};
 		//Store the pointers to each of the 5 boolean type INI settings (number 0 is reserved) to simplify the loading code
-
 	#define EOFNUMININUMBERTYPES 5
 	unsigned long *ininumberbuffer[EOFNUMININUMBERTYPES] = {NULL};
 		//Store the pointers to each of the 5 number type INI settings (number 0 is reserved) to simplify the loading code
+
+	unsigned long data_block_type, num_midi_tracks, numevents;
+	char buffer[100];
+	struct eof_MIDI_data_track *trackptr;
+	struct eof_MIDI_data_event *eventptr, *eventhead, *eventtail;
+
+ 	eof_log("eof_load_song_pf() entered", 1);
+
+	if((sp == NULL) || (fp == NULL))
+		return 0;	//Return failure
 
 	//Populate the arrays with addresses for variables here instead of during declaration to avoid compiler warnings
 	inistringbuffer[2] = sp->tags->artist;
@@ -1569,10 +1572,6 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		sp->text_event[ctr]->flags = pack_igetw(fp);	//Read the text event's flags
 	}
 
-	unsigned long data_block_type, num_midi_tracks, numevents;
-	char buffer[100];
-	struct eof_MIDI_data_track *trackptr;
-	struct eof_MIDI_data_event *eventptr, *eventhead, *eventtail;
 	custom_data_count = pack_igetl(fp);		//Read the number of custom data blocks
 	for(custom_data_ctr=0; custom_data_ctr<custom_data_count; custom_data_ctr++)
 	{	//For each custom data block in the project
@@ -1582,6 +1581,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 		{	//If this is a linked list of raw MIDI track data
 			unsigned char mididataflags, deltatimings = 0;
 			unsigned long timedivision = 0;
+
 			num_midi_tracks = pack_igetw(fp);	//Read the number of tracks to read
 			mididataflags = pack_getc(fp);		//Read the raw MIDI data block flags
 			pack_getc(fp);	//Read the reserved byte (not used)
@@ -1922,9 +1922,9 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 
 int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sectiontype, char difficulty, unsigned long start, unsigned long end, unsigned long flags, char *name)
 {
- 	eof_log("eof_track_add_section() entered", 2);
-
 	unsigned long count,tracknum;	//Used to de-obfuscate the track handling
+
+ 	eof_log("eof_track_add_section() entered", 2);
 
 	if((sp == NULL) || ((track != 0) && (track >= sp->tracks)))
 		return 0;	//Return error
@@ -2191,33 +2191,31 @@ int eof_save_song_string_pf(char *buffer, PACKFILE *fp)
 
 int eof_save_song(EOF_SONG * sp, const char * fn)
 {
- 	eof_log("\tSaving project", 1);
- 	eof_log("eof_save_song() entered", 1);
-
 	PACKFILE * fp = NULL;
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};
 	unsigned long count,ctr,ctr2,tracknum;
 	unsigned long track_count,track_ctr,bookmark_count,bitmask,fingerdefinitions;
 	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions;
 
+	#define EOFNUMINISTRINGTYPES 12
+	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
+		//Store the buffer information of each of the 12 INI strings to simplify the loading code
+		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
+	#define EOFNUMINIBOOLEANTYPES 7
+	char *inibooleanbuffer[EOFNUMINIBOOLEANTYPES] = {NULL};
+		//Store the pointers to each of the 5 boolean type INI settings (number 0 is reserved) to simplify the loading code
+	#define EOFNUMININUMBERTYPES 5
+	unsigned long *ininumberbuffer[EOFNUMININUMBERTYPES] = {NULL};
+		//Store the pointers to each of the 5 number type INI settings (number 0 is reserved) to simplify the loading code
+
+ 	eof_log("\tSaving project", 1);
+ 	eof_log("eof_save_song() entered", 1);
+
 	if((sp == NULL) || (fn == NULL))
 	{
 		eof_log("\tError saving:  Invalid parameters", 1);
 		return 0;	//Return error
 	}
-
-	#define EOFNUMINISTRINGTYPES 12
-	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
-		//Store the buffer information of each of the 12 INI strings to simplify the loading code
-		//This buffer can be updated without redesigning the entire load function, just add logic for loading the new string type
-
-	#define EOFNUMINIBOOLEANTYPES 7
-	char *inibooleanbuffer[EOFNUMINIBOOLEANTYPES] = {NULL};
-		//Store the pointers to each of the 5 boolean type INI settings (number 0 is reserved) to simplify the loading code
-
-	#define EOFNUMININUMBERTYPES 5
-	unsigned long *ininumberbuffer[EOFNUMININUMBERTYPES] = {NULL};
-		//Store the pointers to each of the 5 number type INI settings (number 0 is reserved) to simplify the loading code
 
 	//Populate the arrays with addresses for variables here instead of during declaration to avoid compiler warnings
 	inistringbuffer[2] = sp->tags->artist;
@@ -2839,10 +2837,10 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 
 EOF_SONG * eof_create_song_populated(void)
 {
- 	eof_log("eof_create_song_populated() entered", 1);
-
 	EOF_SONG * sp;
 	unsigned long ctr;
+
+ 	eof_log("eof_create_song_populated() entered", 1);
 
 	/* create empty song */
 	sp = eof_create_song();
@@ -2946,9 +2944,9 @@ unsigned long eof_get_chart_size(EOF_SONG *sp)
 
 void *eof_track_add_note(EOF_SONG *sp, unsigned long track)
 {
- 	eof_log("eof_track_add_note() entered", 2);	//Only log this if verbose logging is on
-
 	unsigned long tracknum;
+
+ 	eof_log("eof_track_add_note() entered", 2);	//Only log this if verbose logging is on
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return NULL;
@@ -2971,9 +2969,9 @@ void *eof_track_add_note(EOF_SONG *sp, unsigned long track)
 
 void eof_track_delete_note(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
- 	eof_log("eof_track_delete_note() entered", 2);	//Only log this if verbose logging is on
-
 	unsigned long tracknum;
+
+ 	eof_log("eof_track_delete_note() entered", 2);	//Only log this if verbose logging is on
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
@@ -3255,12 +3253,12 @@ unsigned long eof_get_pro_guitar_note_note(EOF_PRO_GUITAR_TRACK *tp, unsigned lo
 
 void *eof_track_add_create_note(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos, long length, char type, char *text)
 {
- 	eof_log("eof_track_add_create_note() entered", 2);
-
 	void *new_note = NULL;
 	EOF_NOTE *ptr = NULL;
 	EOF_LYRIC *ptr2 = NULL;
 	EOF_PRO_GUITAR_NOTE *ptr3 = NULL;
+
+ 	eof_log("eof_track_add_create_note() entered", 2);
 
 	if(!sp)
 	{
@@ -3547,9 +3545,9 @@ void eof_set_note_note(EOF_SONG *sp, unsigned long track, unsigned long note, un
 
 void eof_track_sort_notes(EOF_SONG *sp, unsigned long track)
 {
- 	eof_log("eof_track_sort_notes() entered", 2);
-
 	unsigned long tracknum;
+
+ 	eof_log("eof_track_sort_notes() entered", 2);
 
 	if((sp == NULL) || (track >= sp->tracks) || (track == 0))
 		return;
@@ -3643,9 +3641,9 @@ void eof_pro_guitar_track_sort_fret_hand_positions(EOF_PRO_GUITAR_TRACK* tp)
 
 void eof_pro_guitar_track_delete_hand_position(EOF_PRO_GUITAR_TRACK *tp, unsigned long index)
 {
+	unsigned long ctr;
  	eof_log("eof_pro_guitar_track_delete_hand_position() entered", 1);
 
-	unsigned long ctr;
 	if(tp && (index < tp->handpositions))
 	{
 		tp->handposition[index].name[0] = '\0';	//Empty the name string
@@ -4003,9 +4001,9 @@ EOF_PHRASE_SECTION *eof_get_star_power_path(EOF_SONG *sp, unsigned long track, u
 
 void eof_set_num_solos(EOF_SONG *sp, unsigned long track, unsigned long number)
 {
- 	eof_log("eof_set_num_solos() entered", 1);
-
 	unsigned long tracknum;
+
+ 	eof_log("eof_set_num_solos() entered", 1);
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
@@ -4093,10 +4091,10 @@ long eof_track_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long 
 
 void eof_track_find_crazy_notes(EOF_SONG *sp, unsigned long track)
 {
- 	eof_log("eof_track_find_crazy_notes() entered", 1);
-
 	unsigned long i;
 	long next;
+
+ 	eof_log("eof_track_find_crazy_notes() entered", 1);
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
@@ -4189,9 +4187,9 @@ void eof_set_note_type(EOF_SONG *sp, unsigned long track, unsigned long note, ch
 
 void eof_track_delete_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long pathnum)
 {
- 	eof_log("eof_track_delete_star_power_path() entered", 1);
-
 	unsigned long tracknum;
+
+ 	eof_log("eof_track_delete_star_power_path() entered", 1);
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
@@ -4232,9 +4230,9 @@ void eof_pro_guitar_track_delete_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned 
 
 int eof_track_add_star_power_path(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos)
 {
- 	eof_log("eof_track_add_star_power_path() entered", 1);
-
 	unsigned long tracknum;
+
+ 	eof_log("eof_track_add_star_power_path() entered", 1);
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return 0;	//Return error
@@ -4270,9 +4268,9 @@ int eof_pro_guitar_track_add_star_power(EOF_PRO_GUITAR_TRACK * tp, unsigned long
 
 void eof_track_delete_solo(EOF_SONG *sp, unsigned long track, unsigned long pathnum)
 {
- 	eof_log("eof_track_delete_solo() entered", 1);
-
 	unsigned long tracknum;
+
+ 	eof_log("eof_track_delete_solo() entered", 1);
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
@@ -4307,9 +4305,9 @@ void eof_pro_guitar_track_delete_solo(EOF_PRO_GUITAR_TRACK * tp, unsigned long i
 
 int eof_track_add_solo(EOF_SONG *sp, unsigned long track, unsigned long start_pos, unsigned long end_pos)
 {
- 	eof_log("eof_track_add_solo() entered", 1);
-
 	unsigned long tracknum;
+
+ 	eof_log("eof_track_add_solo() entered", 1);
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return 0;	//Return error
@@ -4500,10 +4498,10 @@ EOF_PHRASE_SECTION *eof_get_slider(EOF_SONG *sp, unsigned long track, unsigned l
 
 void eof_track_delete_trill(EOF_SONG *sp, unsigned long track, unsigned long index)
 {
- 	eof_log("eof_track_delete_trill() entered", 1);
-
 	unsigned long ctr;
 	unsigned long tracknum;
+
+ 	eof_log("eof_track_delete_trill() entered", 1);
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
@@ -4539,10 +4537,10 @@ void eof_track_delete_trill(EOF_SONG *sp, unsigned long track, unsigned long ind
 
 void eof_track_delete_tremolo(EOF_SONG *sp, unsigned long track, unsigned long index)
 {
- 	eof_log("eof_track_delete_tremolo() entered", 1);
-
 	unsigned long ctr;
 	unsigned long tracknum;
+
+ 	eof_log("eof_track_delete_tremolo() entered", 1);
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
@@ -4578,10 +4576,10 @@ void eof_track_delete_tremolo(EOF_SONG *sp, unsigned long track, unsigned long i
 
 void eof_track_delete_slider(EOF_SONG *sp, unsigned long track, unsigned long index)
 {
- 	eof_log("eof_track_delete_slider() entered", 1);
-
 	unsigned long ctr;
 	unsigned long tracknum;
+
+ 	eof_log("eof_track_delete_slider() entered", 1);
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
@@ -4605,9 +4603,9 @@ void eof_track_delete_slider(EOF_SONG *sp, unsigned long track, unsigned long in
 
 void eof_set_num_trills(EOF_SONG *sp, unsigned long track, unsigned long number)
 {
- 	eof_log("eof_set_num_trills() entered", 1);
-
 	unsigned long tracknum;
+
+ 	eof_log("eof_set_num_trills() entered", 1);
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
@@ -4627,9 +4625,9 @@ void eof_set_num_trills(EOF_SONG *sp, unsigned long track, unsigned long number)
 
 void eof_set_num_tremolos(EOF_SONG *sp, unsigned long track, unsigned long number)
 {
- 	eof_log("eof_set_num_tremolos() entered", 1);
-
 	unsigned long tracknum;
+
+ 	eof_log("eof_set_num_tremolos() entered", 1);
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
@@ -4649,9 +4647,9 @@ void eof_set_num_tremolos(EOF_SONG *sp, unsigned long track, unsigned long numbe
 
 void eof_set_num_sliders(EOF_SONG *sp, unsigned long track, unsigned long number)
 {
- 	eof_log("eof_set_num_sliders() entered", 1);
-
 	unsigned long tracknum;
+
+ 	eof_log("eof_set_num_sliders() entered", 1);
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
@@ -4667,16 +4665,15 @@ void eof_set_num_sliders(EOF_SONG *sp, unsigned long track, unsigned long number
 
 void eof_set_pro_guitar_fret_number(char function, unsigned long fretvalue)
 {
- 	eof_log("eof_set_pro_guitar_fret_number() entered", 1);
-
 	unsigned long ctr, ctr2, bitmask, tracknum;
 	char undo_made = 0;
 	unsigned char oldfretvalue = 0, newfretvalue = 0;
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
+ 	eof_log("eof_set_pro_guitar_fret_number() entered", 1);
 
 	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return;	//Do not allow this function to run unless a pro guitar/bass track is active
-
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->notes; ctr++)
@@ -4767,12 +4764,12 @@ char *eof_get_note_name(EOF_SONG *sp, unsigned long track, unsigned long note)
 
 void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourcenote, unsigned long desttrack, unsigned long pos, long length, char type)
 {
- 	eof_log("eof_copy_note() entered", 1);
-
 	unsigned long sourcetracknum, desttracknum, newnotenum;
 	unsigned long note, flags;
 	char *text;
 	void *result = NULL;
+
+ 	eof_log("eof_copy_note() entered", 1);
 
 	//Validate parameters
 	if((sp == NULL) || (sourcetrack >= sp->tracks) || (desttrack >= sp->tracks) || (sourcenote >= eof_get_track_size(sp, sourcetrack)))
@@ -4861,9 +4858,6 @@ EOF_PHRASE_SECTION *eof_get_arpeggio(EOF_SONG *sp, unsigned long track, unsigned
 //#define EOF_CREATE_IMAGE_SEQUENCE_SHOW_FPS_ONLY
 int eof_create_image_sequence(void)
 {
- 	eof_log("\tCreating image sequence", 1);
- 	eof_log("eof_create_image_sequence() entered", 1);
-
 	unsigned long framectr = 0, refreshctr = 0, lastpollctr = 0;
 	unsigned long remainder = 0;
 	char windowtitle[101] = {0};
@@ -4874,6 +4868,9 @@ int eof_create_image_sequence(void)
 	#ifndef EOF_CREATE_IMAGE_SEQUENCE_SHOW_FPS_ONLY
 	int err;
 	char filename[20] = {0};
+
+ 	eof_log("\tCreating image sequence", 1);
+ 	eof_log("eof_create_image_sequence() entered", 1);
 
 	/* check to make sure \sequence folder exists */
 	ustrcpy(eof_temp_filename, eof_song_path);
@@ -5017,15 +5014,14 @@ EOF_PHRASE_SECTION *eof_get_lyric_section(EOF_SONG *sp, unsigned long track, uns
 
 void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long amount, int dir)
 {
- 	eof_log("eof_adjust_note_length() entered", 1);
-
 	unsigned long i, undo_made = 0, adjustment, notepos, notelength, newnotelength, newnotelength2;
 	long next_note;
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
+ 	eof_log("eof_adjust_note_length() entered", 1);
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
-
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
 	adjustment = amount;	//This would be the amount to adjust the note by
 	for(i = 0; i < eof_get_track_size(sp, eof_selected_track); i++)
@@ -5116,9 +5112,9 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 
 void eof_set_num_arpeggios(EOF_SONG *sp, unsigned long track, unsigned long number)
 {
- 	eof_log("eof_set_num_arpeggios() entered", 1);
-
 	unsigned long tracknum;
+
+ 	eof_log("eof_set_num_arpeggios() entered", 1);
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
@@ -5134,10 +5130,10 @@ void eof_set_num_arpeggios(EOF_SONG *sp, unsigned long track, unsigned long numb
 
 void eof_track_delete_arpeggio(EOF_SONG *sp, unsigned long track, unsigned long index)
 {
- 	eof_log("eof_track_delete_arpeggio() entered", 1);
-
 	unsigned long ctr;
 	unsigned long tracknum;
+
+ 	eof_log("eof_track_delete_arpeggio() entered", 1);
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
@@ -5359,13 +5355,12 @@ int eof_thin_notes_to_match__target_difficulty(EOF_SONG *sp, unsigned long sourc
 unsigned long eof_get_highest_fret(unsigned long track, char scope)
 {
 	unsigned long highestfret = 0, currentfret, ctr, ctr2, tracknum, bitmask;
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
 	if(!eof_song || (track >= eof_song->tracks))
 		return 0;	//Invalid parameters
 	if(eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 0;	//Only run this when a pro guitar/bass track is active
-
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
 	tracknum = eof_song->track[track]->tracknum;
 	for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->notes; ctr++)

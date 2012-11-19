@@ -70,7 +70,7 @@ void eof_lyric_import_prompt(int *selectedformat, char **selectedtrack);
 	//Requires storage for the selected format, track name to be passed back
 	//The detection list created by DetectLyricFormat() is expected to be stored in the global lyricdetectionlist variable
 	//This function displays the dialog for selecting one of of multiple lyric imports for a file
-	//*selectedformat is set to 0 if a selection is not made
+	// *selectedformat is set to 0 if a selection is not made
 
 struct Lyric_Format *GetDetectionNumber(struct Lyric_Format *detectionlist, unsigned long number);
 	//Returns detection #number from the detection linked list

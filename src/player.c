@@ -11,10 +11,10 @@
 
 void eof_music_play(void)
 {
-	eof_log("eof_music_play() entered", 1);
-
 	int speed = eof_playback_speed;
 	unsigned long i;
+
+	eof_log("eof_music_play() entered", 1);
 
 	if(eof_music_catalog_playback || eof_silence_loaded)
 	{
@@ -48,6 +48,9 @@ void eof_music_play(void)
 	}
 	else if(eof_music_pos - eof_av_delay < eof_music_length)
 	{	//Otherwise if the seek position is before the end of the audio, begin playback
+		unsigned long x;
+		int held;	//Tracks whether the user is holding down one of the defined controller buttons
+
 		eof_log("\tStarting playback", 1);
 		if(key[KEY_S] && (eof_count_selected_notes(NULL, 0) > 0))
 		{
@@ -82,8 +85,6 @@ void eof_music_play(void)
 		eof_mix_find_claps();
 
 	//Prevent playback as long as the user is holding down guitar/drum buttons
-		unsigned long x;
-		int held;	//Tracks whether the user is holding down one of the defined controller buttons
 		do{
 			held = 0;	//Reset this status
 			eof_read_controller(&eof_drums);
@@ -167,9 +168,9 @@ void eof_music_seek(unsigned long pos)
 
 void eof_music_rewind(void)
 {
+	int amount = 0;
 	eof_log("eof_music_rewind() entered", 1);
 
-	int amount = 0;
 	eof_stop_midi();
 	if(!eof_music_catalog_playback)
 	{
@@ -206,8 +207,8 @@ void eof_music_rewind(void)
 
 void eof_music_forward(void)
 {
-	eof_log("eof_music_forward() entered", 2);
 	int amount = 0, target;
+	eof_log("eof_music_forward() entered", 2);
 
 	eof_stop_midi();
 	if(!eof_music_catalog_playback)

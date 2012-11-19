@@ -64,7 +64,7 @@ void eof_load_config(char * fn)
 	eof_disable_windows = get_config_int("config", "disable_windows_fs", 0);
 	ncdfs_use_allegro = eof_disable_windows;
 	eof_disable_vsync = get_config_int("config", "disable_vsync", 1);
-	eof_cpu_saver = get_config_int("config", "cpu_saver", 0);;
+	eof_cpu_saver = get_config_int("config", "cpu_saver", 0);
 	if((eof_cpu_saver < 0) || (eof_cpu_saver > 10))
 	{
 		eof_cpu_saver = 0;
@@ -218,7 +218,7 @@ void eof_save_config(char * fn)
 	set_config_int("config", "smooth_playback", eof_smooth_pos);
 	set_config_int("config", "disable_windows_fs", eof_disable_windows);
 	set_config_int("config", "disable_vsync", eof_disable_vsync);
-	set_config_int("config", "cpu_saver", eof_cpu_saver);;
+	set_config_int("config", "cpu_saver", eof_cpu_saver);
 	set_config_int("config", "mp3_support", eof_supports_mp3);
 	set_config_int("config", "oggcat_support", eof_supports_oggcat);
 	set_config_int("config", "fine_tune", eof_audio_fine_tune);

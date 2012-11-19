@@ -44,12 +44,12 @@ int eof_is_string_muted(EOF_SONG *sp, unsigned long track, unsigned long note)
 
 unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned long **results)
 {
-	eof_log("eof_rs_build_chord_list() entered", 1);
-
 	unsigned long ctr, ctr2, unique_count = 0;
 	EOF_PRO_GUITAR_NOTE **notelist;	//An array large enough to hold a pointer to every note in the track
 	EOF_PRO_GUITAR_TRACK *tp;
 	char match;
+
+	eof_log("eof_rs_build_chord_list() entered", 1);
 
 	if(!results)
 		return 0;	//Return error
@@ -128,11 +128,11 @@ unsigned long eof_build_chord_list(EOF_SONG *sp, unsigned long track, unsigned l
 
 unsigned long eof_build_section_list(EOF_SONG *sp, unsigned long **results, unsigned long track)
 {
-	eof_log("eof_build_section_list() entered", 1);
-
 	unsigned long ctr, ctr2, unique_count = 0;
 	EOF_TEXT_EVENT **eventlist;	//An array large enough to hold a pointer to every text event in the chart
 	char match;
+
+	eof_log("eof_build_section_list() entered", 1);
 
 	if(!results)
 		return 0;	//Return error
@@ -210,8 +210,6 @@ unsigned long eof_build_section_list(EOF_SONG *sp, unsigned long **results, unsi
 
 int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, char *user_warned)
 {
-	eof_log("eof_export_rocksmith() entered", 1);
-
 	PACKFILE * fp;
 	char buffer[256] = {0};
 	time_t seconds;		//Will store the current time in seconds
@@ -219,6 +217,14 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	unsigned long ctr, ctr2, ctr3, ctr4, numsections = 0, stringnum, bitmask, numsinglenotes, numchords, *chordlist, chordlistsize, *sectionlist, sectionlistsize, xml_end;
 	EOF_PRO_GUITAR_TRACK *tp;
 	char *arrangement_name;	//This will point to the track's native name unless it has an alternate name defined
+	char populated[4] = {0};	//Will track which difficulties are populated
+	unsigned notetype;
+	unsigned numdifficulties;
+	unsigned long phraseid;
+	unsigned beatspermeasure = 4, beatcounter = 0;
+	long displayedmeasure, measurenum = 0;
+
+	eof_log("eof_export_rocksmith() entered", 1);
 
 	if(!sp || !fn || !sp->beats || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !sp->track[track]->name)
 	{
@@ -228,9 +234,6 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 
 	//Count the number of populated difficulties in the track
 	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
-	char populated[4] = {0};	//Will track which difficulties are populated
-	unsigned notetype;
-	unsigned numdifficulties;
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the track
 		notetype = eof_get_note_type(sp, track, ctr);
@@ -308,7 +311,6 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		}
 	}
 	sectionlistsize = eof_build_section_list(sp, &sectionlist, track);	//Build a list of all unique section markers in the chart (from the perspective of the track being exported)
-	unsigned long phraseid;
 	snprintf(buffer, sizeof(buffer), "  <phrases count=\"%lu\">\n", sectionlistsize + 2);	//Write the number of unique sections (plus a default COUNT and END section)
 	pack_fputs(buffer, fp);
 	pack_fputs("    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"0\" name=\"COUNT\" solo=\"0\"/>\n", fp);
@@ -439,8 +441,6 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	//Write the beat timings
 	snprintf(buffer, sizeof(buffer), "  <ebeats count=\"%lu\">\n", sp->beats);
 	pack_fputs(buffer, fp);
-	unsigned beatspermeasure = 4, beatcounter = 0;
-	long displayedmeasure, measurenum = 0;
 	for(ctr = 0; ctr < sp->beats; ctr++)
 	{	//For each beat in the chart
 		if(eof_get_ts(sp,&beatspermeasure,NULL,ctr) == 1)
@@ -482,6 +482,9 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	{	//For each of the available difficulties
 		if(populated[ctr])
 		{	//If this difficulty is populated
+			unsigned long anchorcount;
+			char anchorsgenerated = 0;	//Tracks whether anchors were automatically generated and will need to be deleted after export
+
 			//Count the number of single notes and chords in this difficulty
 			for(ctr3 = 0, numsinglenotes = 0, numchords = 0; ctr3 < tp->notes; ctr3++)
 			{	//For each note in the track
@@ -607,6 +610,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 				double notepos;
 				char highdensity;		//Any chord <= 500ms after another chord has the highDensity boolean property set to true
 				unsigned long lastchordpos = 0;
+
 				snprintf(buffer, sizeof(buffer), "      <chords count=\"%lu\">\n", numchords);
 				pack_fputs(buffer, fp);
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
@@ -661,8 +665,6 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 			pack_fputs("      <fretHandMutes count=\"0\"/>\n", fp);
 
 			//Write anchors (fret hand positions)
-			unsigned long anchorcount;
-			char anchorsgenerated = 0;	//Tracks whether anchors were automatically generated and will need to be deleted after export
 			for(ctr3 = 0, anchorcount = 0; ctr3 < tp->handpositions; ctr3++)
 			{	//For each hand position defined in the track
 				if(tp->handposition[ctr3].difficulty == ctr)

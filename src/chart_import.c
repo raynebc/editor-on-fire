@@ -103,9 +103,6 @@ static double chartpos_to_msec(struct FeedbackChart * chart, unsigned long chart
 
 EOF_SONG * eof_import_chart(const char * fn)
 {
-	eof_log("\tImporting Feedback chart", 1);
-	eof_log("eof_import_chart() entered", 1);
-
 	struct FeedbackChart * chart = NULL;
 	EOF_SONG * sp = NULL;
 	int err=0;
@@ -115,6 +112,9 @@ EOF_SONG * eof_import_chart(const char * fn)
 	char oldoggpath[1024] = {0};
 	struct al_ffblk info; // for file search
 	int ret=0;
+
+	eof_log("\tImporting Feedback chart", 1);
+	eof_log("eof_import_chart() entered", 1);
 
 	if(!fn)
 	{
@@ -525,8 +525,6 @@ EOF_SONG * eof_import_chart(const char * fn)
 
 struct FeedbackChart *ImportFeedback(char *filename, int *error)
 {
-	eof_log("ImportFeedback() entered", 1);
-
 	PACKFILE *inf=NULL;
 	char songparsed=0,syncparsed=0,eventsparsed=0;
 		//Flags to indicate whether each of the mentioned sections had already been parsed
@@ -552,6 +550,8 @@ struct FeedbackChart *ImportFeedback(char *filename, int *error)
 	static struct dBAnchor emptyanchor;
 	static struct dbText emptytext;
 	static struct dbNote emptynote;
+
+	eof_log("ImportFeedback() entered", 1);
 
 //Open file in text mode
 	if(!filename)
@@ -1297,8 +1297,6 @@ struct dbTrack *Validate_dB_instrument(char *buffer)
 	//The track structure is returned, otherwise NULL is returned if the string did not contain a valid
 	//track name.  buffer[] is modified to remove any whitespace after the closing bracket
 
-	eof_log("Validate_dB_instrument() entered", 1);
-
 	unsigned long index=0;	//Used to index into buffer
 	char *endbracket=NULL;	//The pointer to the end bracket
 	char *diffstring=NULL;	//Used to find the difficulty substring
@@ -1308,6 +1306,8 @@ struct dbTrack *Validate_dB_instrument(char *buffer)
 	static struct dbTrack emptychart;	//Static structures have all members auto initialize to 0/NULL
 	char tracktype=0,difftype=0;	//Used to track the instrument type and difficulty of the track, based on the name
 	char isguitar=0,isdrums=0;		//Used to track secondary/tertiary guitar/drum tracks
+
+	eof_log("Validate_dB_instrument() entered", 1);
 
 	if(buffer == NULL)
 		return NULL;	//Return error
@@ -1502,12 +1502,12 @@ struct dbTrack *Validate_dB_instrument(char *buffer)
 
 void DestroyFeedbackChart(struct FeedbackChart *ptr, char freestruct)
 {
-	eof_log("DestroyFeedbackChart() entered", 1);
-
 	struct dBAnchor *anchorptr;	//Conductor for the anchors linked list
 	struct dbText *eventptr;	//Conductor for the events linked list
 	struct dbTrack *trackptr;	//Conductor for the tracks linked list
 	struct dbNote *noteptr;	//Conductor for the notes linked lists
+
+	eof_log("DestroyFeedbackChart() entered", 1);
 
 	if(!ptr)
 	{

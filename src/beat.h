@@ -7,7 +7,7 @@ extern int eof_beat_stats_cached;
 
 long eof_get_beat(EOF_SONG * sp, unsigned long pos);
 	//Returns the beat number at or immediately before the specified position, or -1 if the timestamp does not occur within the chart
-unsigned long eof_get_beat_length(EOF_SONG * sp, int beat);
+unsigned long eof_get_beat_length(EOF_SONG * sp, unsigned long beat);
 	//Returns the difference in position between the specified beat marker and the next, or the difference between the last two beat markers if the beat marker specified is invalid
 unsigned long eof_find_previous_anchor(EOF_SONG * sp, unsigned long cbeat);
 	//Returns the beat number of the last anchor that occurs before the specified beat

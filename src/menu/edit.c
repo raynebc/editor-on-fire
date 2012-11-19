@@ -495,11 +495,10 @@ int eof_menu_edit_copy_vocal(void)
 	int copy_notes = 0;
 	float tfloat;
 	PACKFILE * fp;
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
 	if(!eof_vocals_selected)
 		return 1;	//Return error
-
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
 	/* first, scan for selected notes */
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
@@ -1092,10 +1091,6 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 
 int eof_menu_edit_copy(void)
 {
-	if(eof_vocals_selected)
-	{
-		return eof_menu_edit_copy_vocal();
-	}
 	unsigned long i;
 	unsigned long first_pos = 0, note_pos;
 	long note_len;
@@ -1108,8 +1103,12 @@ int eof_menu_edit_copy(void)
 	PACKFILE * fp;
 	unsigned char frets[16] = {0};	//Used to store NULL fret data to support copying legacy notes to a pro guitar track
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
+	if(eof_vocals_selected)
+	{
+		return eof_menu_edit_copy_vocal();
+	}
 
 	/* first, scan for selected notes */
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
@@ -1204,10 +1203,6 @@ int eof_menu_edit_copy(void)
 
 int eof_menu_edit_paste_logic(int oldpaste)
 {
-	if(eof_vocals_selected)
-	{	//The vocal track uses its own clipboard logic
-		return eof_menu_edit_paste_vocal_logic(oldpaste);	//Call the old or new vocal paste logic accordingly
-	}
 	unsigned long i, j;
 	unsigned long paste_pos[EOF_MAX_NOTES] = {0};
 	unsigned long paste_count = 0;
@@ -1222,6 +1217,11 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	unsigned long highestfret, highestlane;
 	unsigned long numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	unsigned long maxbitmask = (1 << numlanes) - 1;	//A bitmask representing the highest valid note bitmask (a gem on all used lanes in the destination track)
+
+	if(eof_vocals_selected)
+	{	//The vocal track uses its own clipboard logic
+		return eof_menu_edit_paste_vocal_logic(oldpaste);	//Call the old or new vocal paste logic accordingly
+	}
 
 	/* open the file */
 	fp = pack_fopen("eof.clipboard", "r");
@@ -2025,7 +2025,6 @@ int eof_menu_edit_select_like(void)
 {
 	unsigned long i, j, ntypes = 0;
 	unsigned long ntype[100];	//This tracks each unique selected note to allow multiple dislike notes to be selected during a "select like" operation
-
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
 	if(eof_selection.track != eof_selected_track)

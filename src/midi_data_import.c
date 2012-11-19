@@ -55,9 +55,9 @@ void eof_MIDI_empty_event_list(struct eof_MIDI_data_event *ptr)
 
 void eof_MIDI_empty_track_list(struct eof_MIDI_data_track *ptr)
 {
-	eof_log("eof_MIDI_empty_track_list() entered", 1);
-
 	struct eof_MIDI_data_track *temp;
+
+	eof_log("eof_MIDI_empty_track_list() entered", 1);
 
 	while(ptr != NULL)
 	{

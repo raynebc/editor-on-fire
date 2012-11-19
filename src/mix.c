@@ -309,12 +309,12 @@ unsigned long eof_mix_msec_to_sample(unsigned long msec, int freq)
 
 void eof_mix_find_claps(void)
 {
-	eof_log("eof_mix_find_claps() entered", 1);
-
 	unsigned long i;
 	eof_mix_claps = 0;
 	eof_mix_current_clap = 0;
 	unsigned long tracknum;
+
+	eof_log("eof_mix_find_claps() entered", 1);
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if(eof_vocals_selected)
@@ -368,10 +368,10 @@ void eof_mix_find_claps(void)
 
 void eof_mix_init(void)
 {
-	eof_log("eof_mix_init() entered", 1);
-
 	int i;
 	char fbuffer[1024] = {0};
+
+	eof_log("eof_mix_init() entered", 1);
 
 	eof_sound_clap = load_wav("eof.dat#clap.wav");
 	if(!eof_sound_clap)
@@ -447,9 +447,9 @@ SAMPLE *eof_mix_load_ogg_sample(char *fn)
 
 void eof_mix_exit(void)
 {
-	eof_log("eof_mix_exit() entered", 1);
-
 	int i;
+
+	eof_log("eof_mix_exit() entered", 1);
 
 	destroy_sample(eof_sound_clap);
 	eof_sound_clap=NULL;
@@ -510,9 +510,9 @@ void eof_mix_exit(void)
 
 void eof_mix_start_helper(void)
 {
-	eof_log("eof_mix_start_helper() entered", 1);
-
 	int i;
+
+	eof_log("eof_mix_start_helper() entered", 1);
 
 	eof_mix_current_clap = -1;
 	eof_mix_next_clap = -1;
@@ -575,9 +575,9 @@ void eof_mix_start_helper(void)
 
 void eof_mix_start(unsigned long start, int speed)
 {
-	eof_log("eof_mix_start() entered", 1);
-
 	unsigned long i;
+
+	eof_log("eof_mix_start() entered", 1);
 
 	eof_mix_next_clap = -1;
 	eof_mix_next_metronome = -1;
@@ -615,9 +615,9 @@ void eof_mix_start(unsigned long start, int speed)
 
 void eof_mix_seek(int pos)
 {
-	eof_log("eof_mix_seek() entered", 2);
-
 	int i;
+
+	eof_log("eof_mix_seek() entered", 2);
 
 	eof_mix_next_clap = -1;
 	eof_mix_next_metronome = -1;

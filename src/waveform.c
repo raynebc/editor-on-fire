@@ -102,6 +102,10 @@ int eof_render_waveform(struct wavestruct *waveform)
 	unsigned long top,bottom;	//Stores the top and bottom coordinates for the area the graph will render to
 	char numgraphs;		//Stores the number of channels to render
 	unsigned long pos = eof_music_pos / eof_zoom;
+	int render_right_channel = 0;	//This caches the condition of the user having enabled the right channel to render AND the audio is stereo
+	unsigned int zeroamp;
+	struct waveformchanneldata *leftchannel;
+	struct waveformchanneldata *rightchannel = NULL;
 
 //validate input
 	if(!eof_song_loaded || !waveform)
@@ -194,10 +198,8 @@ int eof_render_waveform(struct wavestruct *waveform)
 	}
 
 //render graph from left to right, one pixel at a time (each pixel represents eof_zoom number of milliseconds of audio)
-	int render_right_channel = 0;	//This caches the condition of the user having enabled the right channel to render AND the audio is stereo
-	unsigned int zeroamp = waveform->zeroamp;			//Cache this for each channel so it doesn't have to be dereferenced more often than necessary
-	struct waveformchanneldata *leftchannel = &waveform->left;	//Cache this so waveform doesn't have to be dereferenced more often than necessary
-	struct waveformchanneldata *rightchannel = NULL;
+	zeroamp = waveform->zeroamp;			//Cache this for each channel so it doesn't have to be dereferenced more often than necessary
+	leftchannel = &waveform->left;	//Cache this so waveform doesn't have to be dereferenced more often than necessary
 	if(eof_waveform_renderrightchannel && waveform->is_stereo)
 	{
 		render_right_channel = 1;
@@ -268,9 +270,6 @@ void eof_render_waveform_line(unsigned int zeroamp,struct waveformchanneldata *c
 
 struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long slicelength)
 {
- 	eof_log("\tGenerating waveform", 1);
- 	eof_log("eof_create_waveform() entered", 1);
-
 	ALOGG_OGG *oggstruct=NULL;
 	SAMPLE *audio=NULL;
 	void * oggbuffer = NULL;
@@ -278,6 +277,9 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 	static struct wavestruct emptywaveform;	//all variables in this auto initialize to value 0
 	char done=0;	//-1 on unsuccessful completion, 1 on successful completion
 	unsigned long slicenum=0;
+
+ 	eof_log("\tGenerating waveform", 1);
+ 	eof_log("eof_create_waveform() entered", 1);
 
 	set_window_title("Generating Waveform Graph...");
 

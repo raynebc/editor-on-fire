@@ -156,6 +156,9 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 
 	if(eof_snap_mode != EOF_SNAP_OFF)
 	{	//If grid snap is enabled
+		float least_amount = sp->beat_length;
+		int least = -1;
+
 		/* find the snap beat */
 		sp->beat = -1;
 		if(sp->pos < eof_song->beat[eof_song->beats - 1]->pos)
@@ -243,8 +246,6 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 		}
 
 		/* do the actual snapping */
-		float least_amount = sp->beat_length;
-		int least = -1;
 		if(eof_snap_mode != EOF_SNAP_CUSTOM)
 		{
 			if(note < sp->denominator)
@@ -279,6 +280,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 		if(measure_snap)
 		{	//If performing snap by measure logic
 			int ts = 1;
+			int bl; // current beat length
 
 			/* find the measure we are currently in */
 			sp->measure_beat = 0;
@@ -327,7 +329,6 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			}
 
 			/* add up beat times to find measure length */
-			int bl; // current beat length
 			if(sp->measure_beat + ts < eof_song->beats)
 			{
 				bl = eof_song->beat[sp->measure_beat + 1]->pos - eof_song->beat[sp->measure_beat]->pos;
@@ -547,6 +548,7 @@ void eof_read_editor_keys(void)
 	EOF_LYRIC * new_lyric = NULL;
 	unsigned long numlanes = eof_count_track_lanes(eof_song, eof_selected_track);
 	unsigned long note;
+	unsigned char do_pg_up = 0, do_pg_dn = 0;
 
 	if(!eof_song_loaded)
 		return;	//Don't handle these keyboard shortcuts unless a chart is loaded
@@ -978,7 +980,6 @@ if(key[KEY_PAUSE])
 	}
 
 	/* The "Use dB style seek controls" user preference will control which direction the page up/down keys will seek */
-	unsigned char do_pg_up = 0, do_pg_dn = 0;
 	if(key[KEY_PGUP])
 	{
 		if(eof_fb_seek_controls || (eof_input_mode == EOF_INPUT_FEEDBACK))
@@ -1747,6 +1748,8 @@ if(key[KEY_PAUSE])
 
 	if(eof_music_paused && !eof_music_catalog_playback)
 	{	//If the chart is paused and no catalog entries are playing
+		unsigned char do_new_paste = 0, do_old_paste = 0;
+
 	/* lower playback speed (;) */
 		if(key[KEY_SEMICOLON])
 		{
@@ -2345,10 +2348,11 @@ if(key[KEY_PAUSE])
 
 					if(bitmask)
 					{	//If user has pressed any key from 1 through 6
+						int effective_hover_note = eof_hover_note;	//By default, the effective hover note is based on the mouse position
+
 						eof_selection.range_pos_1 = 0;
 						eof_selection.range_pos_2 = 0;
 						eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-						int effective_hover_note = eof_hover_note;	//By default, the effective hover note is based on the mouse position
 						if(eof_input_mode == EOF_INPUT_FEEDBACK)
 						{	//If Feedback input mode is in effect, it is based on the seek position instead
 							effective_hover_note = eof_seek_hover_note;
@@ -2607,8 +2611,6 @@ if(key[KEY_PAUSE])
 		}
 
 	/* Normally, CTRL+V and CTRL+P do paste and new paste, but these are swapped in Feedback input mode */
-		unsigned char do_new_paste = 0, do_old_paste = 0;
-
 	/* paste (CTRL+V, in non Feedback input modes) */
 	/* paste (CTRL+P, in Feedback input mode) */
 		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && key[KEY_V])
@@ -2652,10 +2654,10 @@ if(key[KEY_PAUSE])
 
 void eof_editor_drum_logic(void)
 {
-	eof_log("eof_editor_drum_logic() entered", 2);
-
 	int bitmask;	//Used for simplifying note placement logic
 	EOF_NOTE * new_note = NULL;
+
+	eof_log("eof_editor_drum_logic() entered", 2);
 
 	if(eof_drums.button[0].held)
 	{
@@ -2780,6 +2782,8 @@ void eof_editor_logic(void)
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	if(eof_music_paused)
 	{	//If the chart is paused
+		char infretboard = 0;
+
 		if(!(mouse_b & 1) && !(mouse_b & 2) && !key[KEY_INSERT])
 		{	//If the left and right mouse buttons and insert key are NOT pressed
 			eof_undo_toggle = 0;
@@ -2793,7 +2797,6 @@ void eof_editor_logic(void)
 		}
 
 		/* mouse is in the fretboard area (or Feedback input method is in use) */
-		char infretboard = 0;
 		if((mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
 		{	//If the mouse is in the fretboard area
 			infretboard = 1;
@@ -2801,6 +2804,12 @@ void eof_editor_logic(void)
 		if((eof_input_mode == EOF_INPUT_FEEDBACK) || infretboard)
 		{
 			int x_tolerance = 6 * eof_zoom;	//This is how far left or right of a note the mouse is allowed to be to still be considered to hover over that note
+			unsigned long move_offset = 0;
+			char move_direction = 1;	//Assume right mouse movement by default
+			int revert = 0;
+			int revert_amount = 0;
+			char undo_made = 0;
+
 			lpos = pos < 300 ? (mouse_x - 20) * eof_zoom : ((pos - 300) + mouse_x - 20) * eof_zoom;	//Translate mouse position to a time position
 			if(infretboard)
 			{	//Only search for the mouse hover note if the mouse is actually in the fretboard area
@@ -2858,6 +2867,7 @@ void eof_editor_logic(void)
 			if(!eof_full_screen_3d && (mouse_b & 1) && eof_lclick_released)
 			{
 				int ignore_range = 0;
+
 				eof_click_x = mouse_x;
 				eof_click_y = mouse_y;
 				eof_lclick_released = 0;
@@ -3068,11 +3078,6 @@ void eof_editor_logic(void)
 					}
 				}
 			}//If the left mouse button is NOT pressed
-			unsigned long move_offset = 0;
-			char move_direction = 1;	//Assume right mouse movement by default
-			int revert = 0;
-			int revert_amount = 0;
-			char undo_made = 0;
 			if(!eof_full_screen_3d && (mouse_b & 1) && !eof_lclick_released && (lpos >= 0))
 			{	//If full screen 3D view is not in effect, the left mouse button is being held and the mouse is right of the left edge of the piano roll
 				if(eof_mouse_drug && !KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
@@ -3326,6 +3331,7 @@ void eof_editor_logic(void)
 				else
 				{	//increase/decrease note length
 					unsigned long adjust = abs(eof_mickey_z) * 100;	//Default adjustment length when grid snap is disabled
+
 					if(eof_snap_mode == EOF_SNAP_OFF)
 					{
 						if(KEY_EITHER_SHIFT)
@@ -4927,9 +4933,9 @@ void eof_mark_new_note_as_cymbal(EOF_SONG *sp, unsigned long track, unsigned lon
 
 void eof_mark_edited_note_as_cymbal(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long bitmask)
 {
-	eof_log("eof_mark_edited_note_as_cymbal() entered", 1);
-
 	unsigned long tracknum;
+
+	eof_log("eof_mark_edited_note_as_cymbal() entered", 1);
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
@@ -4963,9 +4969,9 @@ void eof_mark_new_note_as_double_bass(EOF_SONG *sp, unsigned long track, unsigne
 
 void eof_mark_edited_note_as_double_bass(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long bitmask)
 {
-	eof_log("eof_mark_edited_note_as_double_bass() entered", 1);
-
 	unsigned long tracknum;
+
+	eof_log("eof_mark_edited_note_as_double_bass() entered", 1);
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;
@@ -4992,9 +4998,9 @@ void eof_mark_new_note_as_special_hi_hat(EOF_SONG *sp, unsigned long track, unsi
 
 void eof_mark_edited_note_as_special_hi_hat(EOF_SONG *sp, unsigned long track, unsigned long notenum, unsigned long bitmask)
 {
-	eof_log("eof_mark_edited_note_as_special_hi_hat() entered", 1);
-
 	unsigned long tracknum, flags;
+
+	eof_log("eof_mark_edited_note_as_special_hi_hat() entered", 1);
 
 	if((sp == NULL) || (track >= sp->tracks))
 		return;

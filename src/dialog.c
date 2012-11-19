@@ -72,9 +72,9 @@ void eof_prepare_menus(void)
 
 void eof_color_dialog(DIALOG * dp, int fg, int bg)
 {
-	eof_log("eof_color_dialog() entered", 2);
-
 	int i;
+
+	eof_log("eof_color_dialog() entered", 2);
 
 	if(dp == NULL)
 		return;	//Invalid DIALOG pointer
@@ -88,13 +88,15 @@ void eof_color_dialog(DIALOG * dp, int fg, int bg)
 
 int eof_popup_dialog(DIALOG * dp, int n)
 {
-	eof_log("eof_popup_dialog() entered", 2);
-
 	int ret;
 	int oldlen = 0;
 	int dflag = 0;
+	DIALOG_PLAYER * player;
+
+	eof_log("eof_popup_dialog() entered", 2);
+
 	eof_prepare_menus();
-	DIALOG_PLAYER * player = init_dialog(dp, n);
+	player = init_dialog(dp, n);
 	eof_show_mouse(screen);
 	clear_keybuf();
 	while(1)

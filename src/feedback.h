@@ -7,7 +7,5 @@
 #endif
 
 int eof_feedback_any_note(void);
-///Unused function
-///void eof_editor_logic_feedback(void);
 
 #endif

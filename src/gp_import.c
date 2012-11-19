@@ -956,6 +956,8 @@ EOF_SONG *parse_gp(const char * fn)
 				printf("%lu\n", beats);
 				for(ctr3 = 0; ctr3 < beats; ctr3++)
 				{	//For each beat
+					unsigned bitmask;
+
 					printf("\t-> M#%lu -> T#%lu -> Beat # %lu\n", ctr + 1, ctr2 + 1, ctr3 + 1);
 					eof_gp_debug_log(inf, "\tBeat bitmask:  ");
 					bytemask = pack_getc(inf);	//Read beat bitmask
@@ -1465,7 +1467,6 @@ EOF_SONG *parse_gp(const char * fn)
 					eof_gp_debug_log(inf, "\tUsed strings bitmask:  ");
 					usedstrings = pack_getc(inf);
 					printf("%u\n", (usedstrings & 0xFF));
-					unsigned bitmask;
 					for(ctr4 = 0, bitmask = 64; ctr4 < 7; ctr4++, bitmask>>=1)
 					{	//For each of the 7 possible usable strings
 						if(bitmask & usedstrings)
@@ -1732,6 +1733,7 @@ int main(int argc, char *argv[])
 #else
 
 #define GP_IMPORT_DEBUG
+#define TARGET_VOICE 0
 
 struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 {
@@ -1746,6 +1748,21 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	char user_warned = 0;	//Used to track user warnings about the file being corrupt
 	char string_warning = 0;	//Used to track a user warning about the string count for a track being higher than what EOF supports
 	char nonshiftslide[7] = {0};	//Used to track whether the previous note on each string was a non shift slide (suppress the note after the slide)
+	unsigned long curbeat = 0;		//Tracks the current beat number for the current measure
+	double gp_durations[] = {1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625};	//The duration of each note type in terms of one whole note (whole note, half, 4th, 8th, 12th, 32nd, 64th)
+	double note_duration;			//Tracks the note's duration as a percentage of the current measure
+	double measure_position;		//Tracks the current position as a percentage within the current measure
+	unsigned long flags;			//Tracks the flags for the current note
+	char new_note;					//Tracks whether a new note is to be created
+	char tie_note;					//Tracks whether a note is a tie note
+	unsigned char finger[7];		//Store left (fretting hand) finger values for each string
+	unsigned long count;
+	unsigned long startpos, endpos;
+	unsigned char curnum = 4, curden = 4;	//Stores the current time signature (4/4 assumed until one is explicitly defined)
+	unsigned long totalbeats = 0;			//Count the total number of beats in the Guitar Pro file's transcription
+	char import_ts = 0;	//Will be set to nonzero if the user allows the changes to be imported
+	unsigned long beatctr = 0;
+	unsigned char startfret, endfret, bitmask ;
 
 	eof_log("\tImporting Guitar Pro file", 1);
 	eof_log("eof_import_gp() entered", 1);
@@ -2052,8 +2069,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 
 //Read measure data
-	unsigned char curnum = 4, curden = 4;	//Stores the current time signature (4/4 assumed until one is explicitly defined)
-	unsigned long totalbeats = 0;			//Count the total number of beats in the Guitar Pro file's transcription
 	//Allocate memory for an array to track the number of strings for each track
 	strings = malloc(sizeof(unsigned long) * tracks);
 	if(!strings)
@@ -2175,6 +2190,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 #endif
 		while(eof_song->beats < totalbeats + 2)
 		{	//Until the loaded project has enough beats to contain the Guitar Pro transcriptions, and two extra to allow room for processing beat lengths later
+			double beat_length;
+
 			if(!eof_song_add_beat(eof_song))
 			{
 				eof_log("Error allocating memory (9)", 1);
@@ -2197,7 +2214,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				return NULL;
 			}
 			eof_song->beat[eof_song->beats - 1]->ppqn = eof_song->beat[eof_song->beats - 2]->ppqn;	//Match the tempo of the previously last beat
-			double beat_length = (double)60000.0 / ((double)60000000.0 / (double)eof_song->beat[eof_song->beats - 2]->ppqn);	//Get the length of the previously last beat
+			beat_length = (double)60000.0 / ((double)60000000.0 / (double)eof_song->beat[eof_song->beats - 2]->ppqn);	//Get the length of the previously last beat
 			eof_song->beat[eof_song->beats - 1]->fpos = eof_song->beat[eof_song->beats - 2]->fpos + beat_length;
 			eof_song->beat[eof_song->beats - 1]->pos = eof_song->beat[eof_song->beats - 1]->fpos + 0.5;	//Round up
 		}
@@ -2205,7 +2222,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	}
 
 	eof_clear_input();
-	char import_ts = 0;	//Will be set to nonzero if the user allows the changes to be imported
 	if(eof_use_ts && !eof_song->tags->tempo_map_locked)
 	{	//If user has enabled the preference to import time signatures, and the project's tempo map isn't locked
 		if(alert(NULL, "Import Guitar Pro file's time signatures?", NULL, "&Yes", "&No", 'y', 'n') == 1)
@@ -2223,7 +2239,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		allegro_message("To allow time signatures to be imported, ensure the \"Import/Export TS\" preference is enabled and the tempo map isn't locked");
 	}
 	curnum = curden = 0;
-	unsigned long beatctr = 0;
 	for(ctr = 0; ctr < measures; ctr++)
 	{	//For each measure in the GP file
 		for(ctr2 = 0; ctr2 < gp->text_events; ctr2++)
@@ -2398,15 +2413,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 #ifdef GP_IMPORT_DEBUG
 	eof_log("\tParsing note data", 1);
 #endif
-#define TARGET_VOICE 0
-	unsigned long curbeat = 0;		//Tracks the current beat number for the current measure
-	double gp_durations[] = {1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625};	//The duration of each note type in terms of one whole note (whole note, half, 4th, 8th, 12th, 32nd, 64th)
-	double note_duration;			//Tracks the note's duration as a percentage of the current measure
-	double measure_position;		//Tracks the current position as a percentage within the current measure
-	unsigned long flags;			//Tracks the flags for the current note
-	char new_note;					//Tracks whether a new note is to be created
-	char tie_note;					//Tracks whether a note is a tie note
-	unsigned char finger[7];		//Store left (fretting hand) finger values for each string
+
 	for(ctr = 0; ctr < measures; ctr++)
 	{	//For each measure
 		curnum = tsarray[ctr].num;	//Obtain the time signature for this measure
@@ -2424,6 +2431,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 				pack_ReadDWORDLE(inf, &beats);	//Read number of "beats" (which are more accurately considered notes)
 				for(ctr3 = 0; ctr3 < beats; ctr3++)
 				{	//For each "beat"
+					char ghost = 0;	//Track the ghost status for notes
+					unsigned bitmask;
+					unsigned char frets[7];		//Store fret values for each string
+
 					new_note = 0;	//Assume no new note is to be added unless a normal/muted note is parsed
 					tie_note = 0;	//Assume a note isn't a tie note unless found otherwise
 					flags = 0;
@@ -2785,9 +2796,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						}
 					}//Beat has mix table change
 					usedstrings = pack_getc(inf);	//Used strings bitmask
-					char ghost = 0;	//Track the ghost status for notes
-					unsigned bitmask;
-					unsigned char frets[7];		//Store fret values for each string
 					for(ctr4 = 0, bitmask = 64; ctr4 < 7; ctr4++, bitmask>>=1)
 					{	//For each of the 7 possible usable strings
 						if(bitmask & usedstrings)
@@ -2807,11 +2815,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									{	//If this is the voice that is being imported
 										if(np[ctr2])
 										{	//If there is a previously created note, alter its length
+											unsigned long beat_position;
+											double partial_beat_position, beat_length;
+
 											tie_note = 1;
-											unsigned long beat_position = (measure_position + note_duration) * curnum;
-											double partial_beat_position = (measure_position + note_duration) * curnum - beat_position;	//How far into this beat the note ends
+											beat_position = (measure_position + note_duration) * curnum;
+											partial_beat_position = (measure_position + note_duration) * curnum - beat_position;	//How far into this beat the note ends
 											beat_position += curbeat;	//Add the number of beats into the track the current measure is
-											double beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
+											beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
 											np[ctr2]->length = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position) - np[ctr2]->pos + 0.5;	//Define the length of this note
 										}
 									}
@@ -3014,6 +3025,9 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					{	//If this is the voice that is being imported
 						if(new_note)
 						{	//If a new note is to be created
+							unsigned long beat_position;
+							double partial_beat_position, beat_length;
+
 							np[ctr2] = eof_pro_guitar_track_add_note(gp->track[ctr2]);	//Add a new note to the current track
 							if(!np[ctr2])
 							{
@@ -3069,10 +3083,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							np[ctr2]->type = EOF_NOTE_AMAZING;
 
 	//Determine the correct timestamp position and duration
-							unsigned long beat_position = measure_position * curnum + 0.5;				//How many whole beats into the current measure the position is
-							double partial_beat_position = measure_position * curnum - beat_position;	//How far into this beat the note begins
+							beat_position = measure_position * curnum + 0.5;				//How many whole beats into the current measure the position is
+							partial_beat_position = measure_position * curnum - beat_position;	//How far into this beat the note begins
 							beat_position += curbeat;	//Add the number of beats into the track the current measure is
-							double beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
+							beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
 							np[ctr2]->pos = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position);	//Define the position of this note
 
 							beat_position = (measure_position + note_duration) * curnum;
@@ -3112,8 +3126,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 
 //Create trill phrases
-	unsigned long count;
-	unsigned long startpos, endpos;
 	for(ctr = 0; ctr < gp->numtracks; ctr++)
 	{	//For each imported track
 		for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)
@@ -3182,7 +3194,6 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 
 
 //Correct slide directions
-	unsigned char startfret, endfret, bitmask ;
 	for(ctr = 0; ctr < gp->numtracks; ctr++)
 	{	//For each imported track
 		for(ctr2 = 0; ctr2 < gp->track[ctr]->notes; ctr2++)

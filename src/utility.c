@@ -11,39 +11,48 @@ unsigned short * eof_ucode_table = NULL;
 
 int eof_chdir(const char * dir)
 {
-	if(dir == NULL)
-		return -1;
 	#ifdef ALLEGRO_WINDOWS
 		wchar_t wdir[1024] = {0};
+
+		if(dir == NULL)
+			return -1;
 		uconvert(dir, U_UTF8, (char *)(&wdir[0]), U_UNICODE, 2048);
 		return _wchdir(wdir);
 	#else
+		if(dir == NULL)
+			return -1;
 		return chdir(dir);
 	#endif
 }
 
 int eof_mkdir(const char * dir)
 {
-	if(dir == NULL)
-		return -1;
 	#ifdef ALLEGRO_WINDOWS
 		wchar_t wdir[1024] = {0};
+
+		if(dir == NULL)
+			return -1;
 		uconvert(dir, U_UTF8, (char *)(&wdir[0]), U_UNICODE, 2048);
 		return _wmkdir(wdir);
 	#else
+		if(dir == NULL)
+			return -1;
 		return mkdir(dir, 0777);
 	#endif
 }
 
 int eof_system(const char * command)
 {
-	if(command == NULL)
-		return -1;
 	#ifdef ALLEGRO_WINDOWS
 		wchar_t wcommand[1024] = {0};
+
+		if(command == NULL)
+			return -1;
 		uconvert(command, U_UTF8, (char *)(&wcommand[0]), U_UNICODE, 2048);
 		return _wsystem(wcommand);
 	#else
+		if(command == NULL)
+			return -1;
 		return system(command);
 	#endif
 }
@@ -83,13 +92,13 @@ void * eof_buffer_file(const char * fn, char appendnull)
 
 int eof_copy_file(char * src, char * dest)
 {
- 	eof_log("eof_copy_file() entered", 1);
-
 	PACKFILE * src_fp = NULL;
 	PACKFILE * dest_fp = NULL;
 	void *ptr = NULL;	//Used to buffer memory
 	unsigned long src_size = 0;
 	int i;
+
+ 	eof_log("eof_copy_file() entered", 1);
 
 	if((src == NULL) || (dest == NULL))
 		return 0;
@@ -150,12 +159,12 @@ int eof_check_string(char * tp)
 
 int eof_file_compare(char *file1, char *file2)
 {
- 	eof_log("eof_file_compare() entered", 1);
-
 	uint64_t filesize,ctr;
 	int data1,data2;
 	PACKFILE *fp1 = NULL,*fp2 = NULL;
 	char result = 0;	//The result is assumed to "files identical" until found otherwise
+
+ 	eof_log("eof_file_compare() entered", 1);
 
 	if((file1 == NULL) || (file2 == NULL))
 	{
@@ -204,7 +213,7 @@ int eof_file_compare(char *file1, char *file2)
 void eof_allocate_ucode_table(void)
 {
 	int i;
-	
+
 	if(!eof_ucode_table)
 	{
 		eof_ucode_table = malloc(sizeof(short) * 256);
@@ -232,7 +241,7 @@ void eof_free_ucode_table(void)
 int eof_convert_extended_ascii(char * buffer, int size)
 {
 	char * workbuffer = NULL;
-	
+
 	if(!eof_ucode_table)
 	{
 		return 0;
