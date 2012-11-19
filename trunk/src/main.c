@@ -65,6 +65,7 @@ NCDFS_FILTER_LIST * eof_filter_lyrics_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_dB_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_gh_files = NULL;
 NCDFS_FILTER_LIST * eof_filter_gp_files = NULL;
+NCDFS_FILTER_LIST * eof_filter_text_files = NULL;
 
 PALETTE     eof_palette;
 BITMAP *    eof_image[EOF_MAX_IMAGES] = {NULL};
@@ -146,7 +147,7 @@ ALOGG_OGG * eof_music_track = NULL;
 void      * eof_music_data = NULL;
 int         eof_silence_loaded = 0;
 int         eof_music_data_size = 0;
-int         eof_chart_length = 0;
+unsigned long eof_chart_length = 0;
 int         eof_music_length = 0;
 int         eof_music_pos;
 int         eof_music_actual_pos;
@@ -3438,6 +3439,14 @@ int eof_initialize(int argc, char * argv[])
 	}
 	ncdfs_filter_list_add(eof_filter_gp_files, "gpx;gp5;gp4;gp3", "Guitar Pro files (*.gp?)", 1);
 
+	eof_filter_text_files = ncdfs_filter_list_create();
+	if(!eof_filter_text_files)
+	{
+		allegro_message("Could not create file list filter (*.txt)!");
+		return 0;
+	}
+	ncdfs_filter_list_add(eof_filter_text_files, "txt", "Guitar Pro lyric text files (*.txt)", 1);
+
 	/* check availability of MP3 conversion tools */
 	if(!eof_supports_mp3)
 	{
@@ -3823,6 +3832,8 @@ void eof_exit(void)
 	eof_filter_gh_files = NULL;
 	free(eof_filter_gp_files);
 	eof_filter_gp_files = NULL;
+	free(eof_filter_text_files);
+	eof_filter_text_files = NULL;
 	//Free command line storage variables (for Windows build)
 	#ifdef ALLEGRO_WINDOWS
 	for(i = 0; i < eof_windows_argc; i++)
@@ -4204,7 +4215,7 @@ void eof_stop_logging(void)
 }
 
 char eof_log_string[1024];
-void eof_log(const char *text, char level)
+void eof_log(const char *text, int level)
 {
 	if(eof_log_fp && (eof_log_level & 1) && (eof_log_level >= level))
 	{	//If the log file is open, logging is enabled and the current logging level is high enough

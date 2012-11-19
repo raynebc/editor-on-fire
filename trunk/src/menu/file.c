@@ -993,7 +993,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[1].flags = 0;					//Inverted notes
 			eof_preferences_dialog[2].flags = 0;					//Lefty mode
 			eof_preferences_dialog[3].flags = D_SELECTED;			//Note auto adjust
-			eof_preferences_dialog[4].flags = 0;					//Import/Export TS
+			eof_preferences_dialog[4].flags = D_SELECTED;			//Import/Export TS
 			eof_preferences_dialog[5].flags = 0;					//Hide drum note tails
 			eof_preferences_dialog[6].flags = 0;					//Hide note names
 			eof_preferences_dialog[7].flags = 0;					//Disable sound effects
@@ -2563,6 +2563,11 @@ int eof_menu_file_gp_import(void)
 			{	//If there were text events imported
 				if(alert(NULL, "Import Guitar Pro file's section markers as Rocksmith phrases?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 				{	//If the user opted to import the section markers
+					if(!gp_import_undo_made)
+					{	//If an undo state hasn't been made yet
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+						gp_import_undo_made = 1;
+					}
 					for(ctr = 0; ctr < eof_parsed_gp_file->text_events; ctr++)
 					{	//For each of the text events
 						eof_song_add_text_event(eof_song, eof_parsed_gp_file->text_event[ctr]->beat, eof_parsed_gp_file->text_event[ctr]->text, 0, eof_parsed_gp_file->text_event[ctr]->flags, 0);	//Add the event to the active project

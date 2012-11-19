@@ -324,6 +324,7 @@ MENU eof_note_lyrics_menu[] =
     {"&Split Lyric\tShift+L", eof_menu_split_lyric, NULL, 0, NULL},
     {"&Lyric Lines", NULL, eof_lyric_line_menu, 0, NULL},
     {"&Freestyle", NULL, eof_note_freestyle_menu, 0, NULL},
+    {"Import GP style lyric text from file", eof_note_menu_read_gp_lyric_texts, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -7221,5 +7222,99 @@ int eof_menu_pro_guitar_remove_fingering(void)
 		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
+	return 1;
+}
+
+int eof_note_menu_read_gp_lyric_texts(void)
+{
+	unsigned long ctr, tracknum;
+	char * returnedfn = NULL;
+	PACKFILE *fp;
+	EOF_VOCAL_TRACK *tp;
+	int character;
+	char buffer[101];
+	unsigned long index;
+	char undo_made = 0;
+
+	if(eof_song == NULL)	//Do not import lyric text if no chart is open
+		return 0;
+
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	returnedfn = ncd_file_select(0, eof_filename, "Import GP format lyric text file", eof_filter_text_files);
+	eof_clear_input();
+	if(!returnedfn)
+		return 0;	//User didn't select a file
+
+	fp = pack_fopen(returnedfn, "rt");
+	if(!fp)
+	{
+		allegro_message("Couldn't open file:  \"%s\"", strerror(errno));
+		snprintf(eof_log_string, sizeof(eof_log_string), "\tError loading:  Cannot open input .eof file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		eof_log(eof_log_string, 1);
+		return 0;
+	}
+
+	tracknum = eof_song->track[EOF_TRACK_VOCALS]->tracknum;
+	tp = eof_song->vocal_track[tracknum];
+	for(ctr = 0; ctr < tp->lyrics; ctr++)
+	{	//For each lyric in the vocal track
+		index = 0;	//Point index to start of lyric text buffer
+
+		//Read next lyric text
+		while(1)
+		{
+			character = pack_getc(fp);	//Read next character
+			if(character == EOF)
+			{	//End of file was reached
+				break;
+			}
+
+			if(character == ' ')
+			{	//This character ends the current lyric text
+				break;
+			}
+
+			if(character == '\r')	//If this is the first character in a newline sequence (carriage return)
+			{
+				if(pack_getc(fp) != '\n')
+				{	//If it was followed by the rest of the sequence (newline)
+					allegro_message("Error:  Malformed text file?");
+					pack_fclose(fp);
+					return 0;
+				}
+				break;	//A newline ends the current lyric text
+			}
+
+			if(character == '-')
+			{	//If this is a hyphen
+				if(index == 0)
+				{	//If this was the first character read for this lyric, it is interpreted as a pitch shift for the previous lyric text
+					buffer[index++] = '+';
+				}
+				else
+				{	//Otherwise it is included in the text read for this lyric so far and ends the current lyric text
+					buffer[index++] = '-';
+				}
+				break;
+			}
+
+			if(index < 100)
+			{	//If this character will fit in the buffer
+				buffer[index++] = character;	//Append it to the buffer
+			}
+		}
+		buffer[index] = '\0';	//Terminate buffer
+
+		if(!undo_made)
+		{	//If an undo state hasn't been made yet
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			undo_made = 1;
+		}
+		eof_set_note_name(eof_song, EOF_TRACK_VOCALS, ctr, buffer);	//Update the text of the lyric in the chart
+	}
+
+	pack_fclose(fp);
 	return 1;
 }

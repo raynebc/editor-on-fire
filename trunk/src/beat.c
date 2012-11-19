@@ -7,7 +7,7 @@
 #include "memwatch.h"
 #endif
 
-char eof_beat_stats_cached = 0;	//Tracks whether the cached statistics for the projects beats is current (should be reset after each load, import, undo, redo or beat operation)
+int eof_beat_stats_cached = 0;	//Tracks whether the cached statistics for the projects beats is current (should be reset after each load, import, undo, redo or beat operation)
 
 long eof_get_beat(EOF_SONG * sp, unsigned long pos)
 {
@@ -37,7 +37,7 @@ long eof_get_beat(EOF_SONG * sp, unsigned long pos)
 	return 0;
 }
 
-long eof_get_beat_length(EOF_SONG * sp, int beat)
+unsigned long eof_get_beat_length(EOF_SONG * sp, int beat)
 {
 	eof_log("eof_get_beat_length() entered", 1);
 
@@ -76,16 +76,18 @@ void eof_calculate_beats(EOF_SONG * sp)
 	}
 
 	/* correct BPM if it hasn't been set at all */
-	if(sp->beats <= 0)
+	if(sp->beats == 0)
 	{
 		beat_length = (double)60000.0 / ((double)60000000.0 / (double)500000.0);	//Default beat length is 500ms, which reflects a tempo of 120BPM
 		while(curpos < target_length + beat_length)
 		{	//While there aren't enough beats to cover the length of the chart, add beats
-			eof_song_add_beat(sp);
-			sp->beat[sp->beats - 1]->ppqn = 500000;
-			sp->beat[sp->beats - 1]->fpos = (double)sp->tags->ogg[eof_selected_ogg].midi_offset + curpos;
-			sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos +0.5;	//Round up
-			curpos += beat_length;
+			if(eof_song_add_beat(sp))
+			{	//If the beat was successfully added
+				sp->beat[sp->beats - 1]->ppqn = 500000;
+				sp->beat[sp->beats - 1]->fpos = (double)sp->tags->ogg[eof_selected_ogg].midi_offset + curpos;
+				sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos +0.5;	//Round up
+				curpos += beat_length;
+			}
 		}
 		return;
 	}
