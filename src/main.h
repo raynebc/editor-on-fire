@@ -227,6 +227,7 @@ extern NCDFS_FILTER_LIST * eof_filter_lyrics_files;
 extern NCDFS_FILTER_LIST * eof_filter_dB_files;
 extern NCDFS_FILTER_LIST * eof_filter_gh_files;
 extern NCDFS_FILTER_LIST * eof_filter_gp_files;
+extern NCDFS_FILTER_LIST * eof_filter_text_files;
 
 extern int         eof_global_volume;
 
@@ -244,7 +245,7 @@ extern ALOGG_OGG * eof_music_track;
 extern void      * eof_music_data;
 extern int         eof_silence_loaded;	//Tracks whether "second_of_silence.ogg" was loaded from EOF's program folder instead of user-specified chart audio
 extern int         eof_music_data_size;
-extern int         eof_chart_length;
+extern unsigned long eof_chart_length;
 extern int         eof_music_length;
 extern int         eof_music_pos;
 extern int         eof_music_actual_pos;
@@ -507,7 +508,7 @@ void eof_set_2D_lane_positions(unsigned long track);
 
 void eof_start_logging(void);	//Opens the log file for writing if it isn't already open
 void eof_stop_logging(void);	//Closes the log file if it is open
-void eof_log(const char *text, char level);
+void eof_log(const char *text, int level);
 	//If the log is open, writes the string to the log file, followed by a newline character, and flushes the I/O stream
 	//Level indicates the minimum level of logging that must be in effect to log the message (ie. 1 = on, 2 = verbose)
 	//Verbose logging should be disabled during chart creation/deletion due to the large amount of note creations/deletions

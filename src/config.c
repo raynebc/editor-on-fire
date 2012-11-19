@@ -83,7 +83,7 @@ void eof_load_config(char * fn)
 	eof_lefty_mode = get_config_int("preferences", "lefty", 0);
 	eof_input_mode = get_config_int("preferences", "input_mode", EOF_INPUT_PIANO_ROLL);
 	eof_ogg_setting = get_config_int("preferences", "ogg_quality", 1);
-	eof_use_ts = get_config_int("preferences", "use_ts", 0);
+	eof_use_ts = get_config_int("preferences", "use_ts", 1);
 	if(!eof_use_ts)
 	{
 		eof_log("\t! TS import/export is currently disabled", 1);

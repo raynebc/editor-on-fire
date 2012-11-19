@@ -2203,47 +2203,56 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 		eof_chart_length = eof_song->beat[eof_song->beats - 1]->pos;	//Alter the chart length so that the full transcription will display
 	}
-	if(!eof_song->tags->tempo_map_locked)
-	{	//If the active project's tempo map isn't locked
-		eof_clear_input();
-		if(eof_use_ts && (alert(NULL, "Import Guitar Pro file's time signatures?", NULL, "&Yes", "&No", 'y', 'n') == 1))
-		{	//If user has enabled the preference to import time signatures, and opts to import those from this Guitar Pro file into the active project
-			if(undo_made)
+
+	eof_clear_input();
+	char import_ts = 0;	//Will be set to nonzero if the user allows the changes to be imported
+	if(eof_use_ts && !eof_song->tags->tempo_map_locked)
+	{	//If user has enabled the preference to import time signatures, and the project's tempo map isn't locked
+		if(alert(NULL, "Import Guitar Pro file's time signatures?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+		{	//If the user opts to import those from this Guitar Pro file into the active project
+			import_ts = 1;
+			if(undo_made && (*undo_made == 0))
 			{	//If calling function wants to track an undo state being made if time signatures are imported into the project
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 				*undo_made = 1;
 			}
-			curnum = curden = 0;
-			unsigned long beatctr = 0;
-			for(ctr = 0; ctr < measures; ctr++)
-			{	//For each measure in the GP file
-				for(ctr2 = 0; ctr2 < gp->text_events; ctr2++)
-				{	//For each section marker that was imported
-					if((gp->text_event[ctr2]->beat == ctr) && (!gp->text_event[ctr2]->is_temporary))
-					{	//If the section marker was defined on this measure (and it hasn't been converted to use beat numbering yet
-						gp->text_event[ctr2]->beat = beatctr;
-						gp->text_event[ctr2]->is_temporary = 1;	//Track that this event has been converted to beat numbering
-					}
-				}
-				for(ctr2 = 0; ctr2 < tsarray[ctr].num; ctr2++, beatctr++)
-				{	//For each beat in this measure
-					if(!ctr2 && ((tsarray[ctr].num != curnum) || (tsarray[ctr].den != curden)))
-					{	//If this is a time signature change on the first beat of the measure
-						eof_apply_ts(tsarray[ctr].num, tsarray[ctr].den, beatctr, eof_song, 0);	//Apply the change to the active project
-					}
-					else
-					{	//Otherwise clear all beat flags except those that aren't TS related
-						unsigned long flags = eof_song->beat[beatctr]->flags & EOF_BEAT_FLAG_ANCHOR;
-						flags |= eof_song->beat[beatctr]->flags & EOF_BEAT_FLAG_EVENTS;
-						eof_song->beat[beatctr]->flags = flags;
-					}
-				}
-				curnum = tsarray[ctr].num;
-				curden = tsarray[ctr].den;
-			}
 		}
 	}
-
+	else
+	{	//TS change importing is being skipped
+		allegro_message("To allow time signatures to be imported, ensure the \"Import/Export TS\" preference is enabled and the tempo map isn't locked");
+	}
+	curnum = curden = 0;
+	unsigned long beatctr = 0;
+	for(ctr = 0; ctr < measures; ctr++)
+	{	//For each measure in the GP file
+		for(ctr2 = 0; ctr2 < gp->text_events; ctr2++)
+		{	//For each section marker that was imported
+			if((gp->text_event[ctr2]->beat == ctr) && (!gp->text_event[ctr2]->is_temporary))
+			{	//If the section marker was defined on this measure (and it hasn't been converted to use beat numbering yet
+				gp->text_event[ctr2]->beat = beatctr;
+				gp->text_event[ctr2]->is_temporary = 1;	//Track that this event has been converted to beat numbering
+			}
+		}
+		for(ctr2 = 0; ctr2 < tsarray[ctr].num; ctr2++, beatctr++)
+		{	//For each beat in this measure
+			if(import_ts)
+			{	//If the user opted to replace the active project's TS changes
+				if(!ctr2 && ((tsarray[ctr].num != curnum) || (tsarray[ctr].den != curden)))
+				{	//If this is a time signature change on the first beat of the measure
+					eof_apply_ts(tsarray[ctr].num, tsarray[ctr].den, beatctr, eof_song, 0);	//Apply the change to the active project
+				}
+				else
+				{	//Otherwise clear all beat flags except those that aren't TS related
+					unsigned long flags = eof_song->beat[beatctr]->flags & EOF_BEAT_FLAG_ANCHOR;
+					flags |= eof_song->beat[beatctr]->flags & EOF_BEAT_FLAG_EVENTS;
+					eof_song->beat[beatctr]->flags = flags;
+				}
+			}
+		}
+		curnum = tsarray[ctr].num;
+		curden = tsarray[ctr].den;
+	}
 
 //Read track data
 #ifdef GP_IMPORT_DEBUG

@@ -257,4 +257,8 @@ int eof_feedback_mode_update_note_selection(void);
 	//This allows the selection array to reflect the note at the seek position if no notes are explicitly selected, and after note manipulation, the seek hover note can be unselected
 	//Otherwise zero is returned and the array is not altered
 
+int eof_note_menu_read_gp_lyric_texts(void);
+	//Prompts user to browse for a text file containing lyric texts formatted in the style of Guitar Pro
+	//The text for lyrics in the active chart are replaced by text found in the file, starting with the first lyric
+
 #endif
