@@ -1,3 +1,7 @@
+Changelog: 2.38 to 2.39 (in progress)
+	Some code cleanup.
+	Added support for exporting Rocksmith format lyrics.
+
 Changelog: 2.37 to 2.38
 	Added support for detecting and importing JamBand format lyrics.
 	Improved memory handling, including correcting a crash in the ID3v2 tag parsing that could occur during a parsing failure.
