@@ -577,10 +577,11 @@ int eof_menu_beat_ts_off(void)
 
 int eof_menu_beat_delete(void)
 {
+	int flags = eof_song->beat[eof_selected_beat]->flags;
+
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
 
-	int flags = eof_song->beat[eof_selected_beat]->flags;
 	if((eof_selected_beat > 0) && (eof_find_next_anchor(eof_song, eof_selected_beat) >= 0))
 	{	//Only process this function if a beat other than beat 0 is selected, and there is at least one anchor after the selected beat
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
@@ -610,11 +611,11 @@ int eof_menu_beat_delete(void)
 
 int eof_menu_beat_push_offset_back(void)
 {
-	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
-		return 1;							//Return without making changes
-
 	unsigned long i;
 	unsigned long backamount = eof_song->beat[1]->pos - eof_song->beat[0]->pos;
+
+	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
+		return 1;							//Return without making changes
 
 	if(eof_song->beat[0]->pos >= backamount)
 	{
@@ -1641,15 +1642,14 @@ int eof_menu_beat_halve_tempo(void)
 
 int eof_menu_beat_set_RBN_tempos(void)
 {
-	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
-		return 1;							//Return without making changes
-
 	char undo_made = 0, changed;
 	unsigned long loop_ctr = 0;
-	eof_log("eof_move_text_events() entered", 1);
-
 	unsigned long i;
 
+	eof_log("eof_move_text_events() entered", 1);
+
+	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
+		return 1;							//Return without making changes
 	if(!eof_song)
 	{
 		return 1;

@@ -10,15 +10,15 @@
 
 unsigned long eof_note_count_colors(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
+	unsigned long count = 0;
+	unsigned long notemask = eof_get_note_note(sp, track, note);
+
 	eof_log("eof_note_count_colors() entered", 2);
 
 	if(!sp)
 	{
 		return 0;
 	}
-
-	unsigned long count = 0;
-	unsigned long notemask = eof_get_note_note(sp, track, note);
 
 	if(notemask & 1)
 	{
@@ -86,10 +86,10 @@ void eof_legacy_track_note_create(EOF_NOTE * np, char g, char y, char r, char b,
 
 int eof_adjust_notes(int offset)
 {
-	eof_log("eof_adjust_notes() entered", 1);
-
 	unsigned long i, j;
 	EOF_PHRASE_SECTION *phraseptr = NULL;
+
+	eof_log("eof_adjust_notes() entered", 1);
 
 	for(i = 1; i < eof_song->tracks; i++)
 	{	//For each track
@@ -642,8 +642,6 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 		ncol = native ? eof_color_red : eof_color_green;
 		if(np->note != EOF_LYRIC_PERCUSSION)
 		{
-			rectfill(window->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, ncol);
-
 			int sliderect[8] = {0};	//An array of 4 vertices, used to draw a diagonal rectangle
 			EOF_LYRIC *np2=NULL;	//Stores a pointer to the next lyric
 			long nplace2 = 0;
@@ -651,12 +649,15 @@ int eof_lyric_draw(EOF_LYRIC * np, int p, EOF_WINDOW *window)
 			long note_y2 = 0;	//Used to store the y coordinate of the next lyric
 			long npos2 = 0;		//Stores the X coordinate of the next lyric
 
+			rectfill(window->screen, npos, note_y, npos + np->length / eof_zoom, note_y + eof_screen_layout.vocal_tail_size - 1, ncol);
+
 			if(notpen && (notenum + 1 < eof_song->vocal_track[0]->lyrics) && (eof_song->vocal_track[0]->lyric[notenum + 1]->text[0] == '+'))
 			{	//If there's another lyric, and it begins with a plus sign, it's a pitch shift, draw a vocal slide polygon
+				long leftcoord2;
+
 				np2=eof_song->vocal_track[0]->lyric[notenum+1];
 				sliderect[0]=npos + np->length / eof_zoom;	//X1 (X coordinate of the end of this lyric's rectangle)
 				sliderect[1]=note_y;						//Y1 (Y coordinate of the bottom of this lyric's rectangle)
-				long leftcoord2;
 				if(window == eof_window_note)
 				{	//If rendering to the fret catalog
 					leftcoord2 = 140;
@@ -760,6 +761,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 	unsigned long ctr;
 	unsigned long mask;	//Used to mask out colors in the for loop
 	unsigned long numlanes, tracknum;
+	long halflanewidth;
 
 	//These variables are used for the name rendering logic
 	long x3d, y3d, z3d;			//The coordinate at which to draw the name string (right aligned)
@@ -813,7 +815,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 		numlanes = 5;
 	}
 
-	long halflanewidth = (56.0 * (4.0 / (numlanes-1))) / 2;
+	halflanewidth = (56.0 * (4.0 / (numlanes-1))) / 2;
 	#define EOF_HALF_3D_IMAGE_WIDTH 24
 	#define EOF_3D_IMAGE_HEIGHT 48
 

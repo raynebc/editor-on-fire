@@ -29,13 +29,14 @@ unsigned long enddelta = 0, endbeatnum = 0;		//If these becomes nonzero, they de
 
 void eof_add_midi_event(unsigned long pos, int type, int note, int velocity, int channel)
 {	//To avoid rounding issues during timing conversion, this should be called with the MIDI tick position of the event being stored
+	char note_off = 0;	//Will be set to non zero if this is a note off event
+	char note_on = 0;	//Will be set to non zero if this is a note on event
+
 	eof_log("eof_add_midi_event() entered", 2);	//Only log this if verbose logging is on
 
 	if(enddelta && (pos > enddelta))
 		return;	//If attempting to write an event that exceeds a user-defined end event, don't do it
 
-	char note_off = 0;	//Will be set to non zero if this is a note off event
-	char note_on = 0;	//Will be set to non zero if this is a note on event
 	if((type & 0xF0) == 0x80)
 	{	//If this is a note off event, convert it to a note on event with a velocity of 0 (equivalent to note off) to make use of running status
 		type = 0x90 | (type & 0x0F);	//Change the event status byte, keep the channel number
@@ -122,9 +123,10 @@ void eof_add_midi_text_event(unsigned long pos, char * text, char allocation)
 
 void eof_clear_midi_events(void)
 {
+	unsigned long i;
+
 	eof_log("eof_clear_midi_events() entered", 1);
 
-	unsigned long i;
 	for(i = 0; i < eof_midi_events; i++)
 	{
 		if(eof_midi_event[i]->allocation && eof_midi_event[i]->dp)
@@ -271,9 +273,9 @@ int qsort_helper3(const void * e1, const void * e2)
 
 long eof_figure_beat(double pos)
 {
-	eof_log("eof_figure_beat() entered", 1);
-
 	long i;
+
+	eof_log("eof_figure_beat() entered", 1);
 
 	for(i = 0; i < eof_song->beats - 1; i++)
 	{
@@ -296,8 +298,6 @@ long eof_figure_beat(double pos)
    voila, correctly formatted MIDI file */
 int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixvoxpitches, char fixvoxphrases)
 {
-	eof_log("eof_export_midi() entered", 1);
-
 	char header[14] = {'M', 'T', 'h', 'd', 0, 0, 0, 6, 0, 1, 0, 1, (EOF_DEFAULT_TIME_DIVISION >> 8), (EOF_DEFAULT_TIME_DIVISION & 0xFF)}; //The last two bytes are the time division
 	unsigned long timedivision = EOF_DEFAULT_TIME_DIVISION;	//Unless the project is storing a tempo track, EOF's default time division will be used
 	char notetempname[EOF_TRACKS_MAX+1][15];
@@ -343,6 +343,13 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	char fret_hand_positions_present;			//This is used to track whether fret hand positions are defined for an exported pro guitar/bass track's expert difficulty
 	struct eof_MIDI_data_track *trackptr;		//Used to count the number of raw MIDI tracks to export
 	EOF_MIDI_KS_LIST *kslist;
+	unsigned long current_ts = 0;
+	unsigned long current_ks = 0;
+	unsigned long nexteventpos = 0;
+	char whattowrite;	//Bitflag: bit 0=write tempo change, bit 1=write TS change
+	char stored_beat_track = 0;	//Will be set to nonzero if there is found to be a stored BEAT track in the project
+
+	eof_log("eof_export_midi() entered", 1);
 
 //	eof_log_level &= ~2;	//Disable verbose logging
 	if(!sp || !fn)
@@ -865,6 +872,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 			for(trackctr=0;trackctr<=expertplus;trackctr++)
 			{	//This loop makes a second pass to write the expert+ drum MIDI if applicable
+				int lastevent = 0;	//Track the last event written so running status can be utilized
+
 				/* open the file */
 				if(trackctr == 0)	//Writing the normal temp file
 					fp = pack_fopen(notetempname[j], "w");
@@ -895,7 +904,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 				/* add MIDI events */
 				lastdelta = 0;
-				int lastevent = 0;	//Track the last event written so running status can be utilized
 				for(i = 0; i < eof_midi_events; i++)
 				{
 					if((trackctr == 1) && (eof_midi_event[i]->note < 96))
@@ -953,6 +961,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 		else if(sp->track[j]->track_format == EOF_VOCAL_TRACK_FORMAT)
 		{	//If this is a vocal track
+			#define EOF_LYRIC_PHRASE_PADDING 5
+			unsigned long last_phrase = 0;	//Stores the absolute delta time of the last Note 105 On
+			int lastevent = 0;	//Track the last event written so running status can be utilized
+
 			/* make vocals track */
 			/* insert the missing lyric phrases if the user opted to do so */
 			if(fixvoxphrases)
@@ -1045,9 +1057,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			}
 
 			/* insert padding as necessary between a lyric phrase on marker and the following lyric */
-			#define EOF_LYRIC_PHRASE_PADDING 5
-			unsigned long last_phrase = 0;	//Stores the absolute delta time of the last Note 105 On
-
 			qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);	//Lyric events must be sorted for padding logic to work
 			for(i = 0; i < eof_midi_events; i++)
 			{
@@ -1102,7 +1111,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 			/* add MIDI events */
 			lastdelta=0;
-			int lastevent = 0;	//Track the last event written so running status can be utilized
 			for(i = 0; i < eof_midi_events; i++)
 			{
 				if(!eof_midi_event[i]->filtered)
@@ -1155,6 +1163,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			unsigned long count;
 			unsigned char last_written_hand_pos = 0;	//Tracks the last written hand position, so duplicate positions needn't be written to MIDI
 			EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[tracknum];
+			int lastevent = 0;	//Track the last event written so running status can be utilized
+
 			fret_hand_pos_written = 0;			//Reset these statuses
 			fret_hand_positions_generated = 0;
 			fret_hand_positions_present = 0;
@@ -1306,6 +1316,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				if((noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
 				{	//If this note slides up or down
 //	The correct method to mark slides in RB3 has been found, the sysex method is deprecated and will remain exported for the time being
+					int slidechannel = 0;	//By default, slides are written over channel 0
+
 					if(featurerestriction == 0)
 					{	//Only write the slide Sysex notation if not writing a Rock Band compliant MIDI
 						phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
@@ -1324,7 +1336,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						eof_add_sysex_event(deltapos + deltalength, 8, phase_shift_sysex_phrase);	//Write the custom pro guitar slide stop marker
 					}
 
-					int slidechannel = 0;	//By default, slides are written over channel 0
 					if(noteflags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE)
 					{	//If this slide is to be written to indicate it is reversed
 						slidechannel = 11;	//It must be written over channel 11
@@ -1602,7 +1613,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 			/* add MIDI events */
 			lastdelta = 0;
-			int lastevent = 0;	//Track the last event written so running status can be utilized
 			for(i = 0; i < eof_midi_events; i++)
 			{
 				if(!eof_midi_event[i]->filtered)
@@ -1692,10 +1702,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	}
 
 	lastdelta=0;
-	unsigned long current_ts = 0;
-	unsigned long current_ks = 0;
-	unsigned long nexteventpos = 0;
-	char whattowrite;	//Bitflag: bit 0=write tempo change, bit 1=write TS change
 	ptr = anchorlist;
 	while((ptr != NULL) || (eof_use_ts && (current_ts < tslist->changes)) || (current_ks < kslist->changes))
 	{	//While there are tempo changes, TS changes (if the user specified to write TS changes) or KS changes to write
@@ -1865,7 +1871,6 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	eof_sort_events(sp);	//Re-sort
 
 /* make beat track */
-	char stored_beat_track = 0;	//Will be set to nonzero if there is found to be a stored BEAT track in the project
 	for(trackptr = sp->midi_data_head; trackptr != NULL; trackptr = trackptr->next)	//Add the number of raw MIDI tracks to export to the track counter
 	{	//For each stored MIDI track
 		if(trackptr->trackname && !ustricmp(trackptr->trackname, "(BEAT)"))
@@ -1877,6 +1882,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	}
 	if((featurerestriction == 1) && !stored_beat_track)
 	{	//If writing a RBN2 compliant MIDI, make the beat track, which is required (unless a BEAT track was already stored into the project)
+		unsigned long beat_counter = 0;
+		unsigned beats_per_measure = 4;		//By default, a 4/4 time signature is assumed until a TS event is reached
+		unsigned note_to_write = 0;
+		unsigned length_to_write = 0;
+		int lastevent = 0;	//Track the last event written so running status can be utilized
+
 		/* open the file */
 		fp = pack_fopen(beattempname, "w");
 		if(!fp)
@@ -1895,13 +1906,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		pack_fwrite("BEAT", ustrlen("BEAT"), fp);
 
 		/* parse the beat array, writing a note #12 at the first beat of every measure, and a note #13 at every other beat */
-		unsigned long beat_counter = 0;
-		unsigned beats_per_measure = 4;		//By default, a 4/4 time signature is assumed until a TS event is reached
-		unsigned note_to_write = 0;
-		unsigned length_to_write = 0;
-
 		lastdelta = 0;
-		int lastevent = 0;	//Track the last event written so running status can be utilized
 		for(i = 0; i < sp->beats; i++)
 		{
 			//Determine if this is the first beat in a measure and which note number to write
@@ -2080,13 +2085,13 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp)
 {
-	eof_log("eof_build_tempo_list() entered", 1);
-
 	unsigned long ctr;
 	struct Tempo_change *list=NULL;	//The linked list
 	struct Tempo_change *temp=NULL;
 	unsigned long lastppqn=0;	//Tracks the last anchor's PPQN value
 	unsigned long deltactr=0;	//Counts the number of deltas between anchors
+
+	eof_log("eof_build_tempo_list() entered", 1);
 
 	if((sp == NULL) || (sp->beats < 1))
 	{
@@ -2115,10 +2120,10 @@ struct Tempo_change *eof_build_tempo_list(EOF_SONG *sp)
 
 struct Tempo_change *eof_add_to_tempo_list(unsigned long delta,double realtime,double BPM,struct Tempo_change *ptr)
 {
-	eof_log("eof_add_to_tempo_list() entered", 2);	//Only log this if verbose logging is on
-
 	struct Tempo_change *temp;
 	struct Tempo_change *cond=NULL;	//A conductor for the linked list
+
+	eof_log("eof_add_to_tempo_list() entered", 2);	//Only log this if verbose logging is on
 
 //Allocate and initialize new link
 	temp=(struct Tempo_change *)malloc(sizeof(struct Tempo_change));
@@ -2144,9 +2149,9 @@ struct Tempo_change *eof_add_to_tempo_list(unsigned long delta,double realtime,d
 
 void eof_destroy_tempo_list(struct Tempo_change *ptr)
 {
-	eof_log("eof_destroy_tempo_list() entered", 1);
-
 	struct Tempo_change *temp=NULL;
+
+	eof_log("eof_destroy_tempo_list() entered", 1);
 
 	while(ptr != NULL)
 	{
@@ -2221,13 +2226,13 @@ unsigned long eof_ConvertToDeltaTime(double realtime,struct Tempo_change *anchor
 
 int eof_extract_rba_midi(const char * source, const char * dest)
 {
-	eof_log("eof_extract_rba_midi() entered", 1);
-
 	FILE *fp=NULL;
 	FILE *tempfile=NULL;
 	unsigned long ctr=0;
 	int jumpcode = 0;
 	char buffer[15]={0};
+
+	eof_log("eof_extract_rba_midi() entered", 1);
 
 //Open specified file
 	if((source == NULL) || (dest == NULL))
@@ -2300,11 +2305,11 @@ int eof_extract_rba_midi(const char * source, const char * dest)
 
 EOF_MIDI_TS_LIST * eof_create_ts_list(void)
 {
+	unsigned long ctr;
+	EOF_MIDI_TS_LIST * lp;
+
 	eof_log("eof_create_ts_list() entered", 1);
 
-	unsigned long ctr;
-
-	EOF_MIDI_TS_LIST * lp;
 	lp = malloc(sizeof(EOF_MIDI_TS_LIST));
 	if(!lp)
 	{
@@ -2361,9 +2366,9 @@ void eof_midi_add_ts_realtime(EOF_MIDI_TS_LIST * changes, double pos, unsigned l
 
 void eof_destroy_ts_list(EOF_MIDI_TS_LIST *ptr)
 {
-	eof_log("eof_destroy_ts_list() entered", 1);
-
 	unsigned long i;
+
+	eof_log("eof_destroy_ts_list() entered", 1);
 
 	if(ptr != NULL)
 	{
@@ -2377,14 +2382,14 @@ void eof_destroy_ts_list(EOF_MIDI_TS_LIST *ptr)
 
 EOF_MIDI_TS_LIST *eof_build_ts_list(EOF_SONG *sp)
 {
-	eof_log("eof_build_ts_list() entered", 1);
-
 	unsigned long ctr;
 	unsigned num=4,den=4;			//Stores the current time signature
 	EOF_MIDI_TS_LIST * tslist=NULL;
 	unsigned long deltapos = 0;		//Stores the ongoing delta time
 	double deltafpos = 0.0;			//Stores the ongoing delta time (with double floating precision)
 	double beatlength = 0.0;		//Stores the current beat's length in deltas
+
+	eof_log("eof_build_ts_list() entered", 1);
 
 	if((sp == NULL) || (sp->beats <= 0))
 		return NULL;
@@ -2510,12 +2515,12 @@ int eof_apply_ts(unsigned num,unsigned den,int beatnum,EOF_SONG *sp,char undo)
 
 int eof_dump_midi_track(const char *inputfile,PACKFILE *outf)
 {
-	eof_log("eof_dump_midi_track() entered", 1);
-
 	unsigned long track_length;
 	PACKFILE *inf = NULL;
 	char trackheader[8] = {'M', 'T', 'r', 'k', 0, 0, 0, 0};
 	unsigned long i;
+
+	eof_log("eof_dump_midi_track() entered", 1);
 
 	if((inputfile == NULL) || (outf == NULL))
 	{
@@ -2558,8 +2563,9 @@ void eof_write_text_event(unsigned long deltas, const char *str, PACKFILE *fp)
 
 void eof_add_sysex_event(unsigned long pos, int size, void *data)
 {	//To avoid rounding issues during timing conversion, this should be called with the MIDI tick position of the event being stored
-	eof_log("eof_add_sysex_event() entered", 2);	//Only log this if verbose logging is on
 	void *datacopy = NULL;
+
+	eof_log("eof_add_sysex_event() entered", 2);	//Only log this if verbose logging is on
 
 	if((size > 0) && data)
 	{
@@ -2776,6 +2782,8 @@ int eof_build_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistp
 						eventindex += bytes_used;	//Advance by the size of the variable length value parsed above
 						if(meventtype == 0x51)
 						{	//Tempo change
+							unsigned long ppqn;
+
 							if(!lastppqn && eventptr->deltatime)
 							{	//If this is the first tempo change and it isn't at delta time 0
 								temp = eof_add_to_tempo_list(0, sp->beat[0]->fpos, 120.0, anchorlist);	//Insert a tempo of 120BPM at delta position 0 (the position of the first beat marker)
@@ -2787,7 +2795,7 @@ int eof_build_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistp
 								}
 								anchorlist = temp;	//Update list pointer
 							}
-							unsigned long ppqn = (dataptr[eventindex]<<16) | (dataptr[eventindex+1]<<8) | dataptr[eventindex+2];	//Read the 3 byte big endian value
+							ppqn = (dataptr[eventindex]<<16) | (dataptr[eventindex+1]<<8) | dataptr[eventindex+2];	//Read the 3 byte big endian value
 							eventindex += 3;
 							lastppqn = ppqn;	//Remember this value
 							temp = eof_add_to_tempo_list(eventptr->deltatime, eventptr->realtime + sp->beat[0]->fpos, (double)60000000.0/lastppqn,anchorlist);	//Store the tempo change, taking the MIDI delay into account
@@ -2912,11 +2920,11 @@ void eof_check_for_hopo_phrase_overlap(void)
 
 EOF_MIDI_KS_LIST * eof_create_ks_list(void)
 {
+	unsigned long ctr;
+	EOF_MIDI_KS_LIST * lp;
+
 	eof_log("eof_create_ks_list() entered", 1);
 
-	unsigned long ctr;
-
-	EOF_MIDI_KS_LIST * lp;
 	lp = malloc(sizeof(EOF_MIDI_KS_LIST));
 	if(!lp)
 	{
@@ -2933,10 +2941,10 @@ EOF_MIDI_KS_LIST * eof_create_ks_list(void)
 
 EOF_MIDI_KS_LIST *eof_build_ks_list(EOF_SONG *sp)
 {
-	eof_log("eof_build_ks_list() entered", 1);
-
 	unsigned long ctr;
 	EOF_MIDI_KS_LIST * kslist=NULL;
+
+	eof_log("eof_build_ks_list() entered", 1);
 
 	if((sp == NULL) || (sp->beats <= 0))
 		return NULL;
@@ -2964,9 +2972,9 @@ EOF_MIDI_KS_LIST *eof_build_ks_list(EOF_SONG *sp)
 
 void eof_destroy_ks_list(EOF_MIDI_KS_LIST *ptr)
 {
-	eof_log("eof_destroy_ks_list() entered", 1);
-
 	unsigned long i;
+
+	eof_log("eof_destroy_ks_list() entered", 1);
 
 	if(ptr != NULL)
 	{

@@ -34,8 +34,6 @@ char eof_ini_sysex_open_bass_present;	//Is set to nonzero if eof_import_ini() fi
  * the ini files since it looks like they are formatted correctly */
 int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 {
-	eof_log("eof_import_ini() entered", 1);
-
 	char * textbuffer = NULL;
 	char * line_token = NULL;
 	char * token;
@@ -46,6 +44,8 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 	char setting_stored;
 	char *value_index;
 	char status;
+
+	eof_log("eof_import_ini() entered", 1);
 
 	eof_ini_pro_drum_tag_present = 0;	//Reset this condition to false
 	eof_ini_star_power_tag_present = 0;	//Reset this condition to false

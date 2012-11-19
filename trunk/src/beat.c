@@ -37,7 +37,7 @@ long eof_get_beat(EOF_SONG * sp, unsigned long pos)
 	return 0;
 }
 
-unsigned long eof_get_beat_length(EOF_SONG * sp, int beat)
+unsigned long eof_get_beat_length(EOF_SONG * sp, unsigned long beat)
 {
 	eof_log("eof_get_beat_length() entered", 1);
 
@@ -61,7 +61,7 @@ void eof_calculate_beats(EOF_SONG * sp)
 	double curpos = 0.0;
 	double beat_length;
 	unsigned long cbeat = 0;
-	int target_length = eof_music_length;
+	unsigned long target_length = eof_music_length;
 
 	eof_log("eof_calculate_beats() entered", 1);
 
@@ -79,13 +79,13 @@ void eof_calculate_beats(EOF_SONG * sp)
 	if(sp->beats == 0)
 	{
 		beat_length = (double)60000.0 / ((double)60000000.0 / (double)500000.0);	//Default beat length is 500ms, which reflects a tempo of 120BPM
-		while(curpos < target_length + beat_length)
+		while(curpos < (double)target_length + beat_length)
 		{	//While there aren't enough beats to cover the length of the chart, add beats
 			if(eof_song_add_beat(sp))
 			{	//If the beat was successfully added
 				sp->beat[sp->beats - 1]->ppqn = 500000;
 				sp->beat[sp->beats - 1]->fpos = (double)sp->tags->ogg[eof_selected_ogg].midi_offset + curpos;
-				sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos +0.5;	//Round up
+				sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos + 0.5;	//Round up
 				curpos += beat_length;
 			}
 		}
@@ -93,7 +93,7 @@ void eof_calculate_beats(EOF_SONG * sp)
 	}
 
 	sp->beat[0]->fpos = (double)sp->tags->ogg[eof_selected_ogg].midi_offset;
-	sp->beat[0]->pos = sp->beat[0]->fpos +0.5;	//Round up
+	sp->beat[0]->pos = sp->beat[0]->fpos + 0.5;	//Round up
 
 	/* calculate the beat length */
 	beat_length = (double)60000 / ((double)60000000.0 / (double)sp->beat[0]->ppqn);
@@ -102,7 +102,7 @@ void eof_calculate_beats(EOF_SONG * sp)
 	{
 		curpos += beat_length;
 		sp->beat[i]->fpos = (double)sp->tags->ogg[eof_selected_ogg].midi_offset + curpos;
-		sp->beat[i]->pos = sp->beat[i]->fpos +0.5;	//Round up
+		sp->beat[i]->pos = sp->beat[i]->fpos + 0.5;	//Round up
 
 		/* bpm changed */
 		if(sp->beat[i]->ppqn != sp->beat[i - 1]->ppqn)
@@ -115,11 +115,13 @@ void eof_calculate_beats(EOF_SONG * sp)
 	curpos += beat_length;
 	while(sp->tags->ogg[eof_selected_ogg].midi_offset + curpos < target_length + beat_length)
 	{	//While there aren't enough beats to cover the length of the chart, add beats
-		eof_song_add_beat(sp);
-		sp->beat[sp->beats - 1]->ppqn = sp->beat[cbeat]->ppqn;
-		sp->beat[sp->beats - 1]->fpos = (double)sp->tags->ogg[eof_selected_ogg].midi_offset + curpos;
-		sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos +0.5;	//Round up
-		curpos += beat_length;
+		if(eof_song_add_beat(sp))
+		{	//If the beat was successfully added
+			sp->beat[sp->beats - 1]->ppqn = sp->beat[cbeat]->ppqn;
+			sp->beat[sp->beats - 1]->fpos = (double)sp->tags->ogg[eof_selected_ogg].midi_offset + curpos;
+			sp->beat[sp->beats - 1]->pos = sp->beat[sp->beats - 1]->fpos +0.5;	//Round up
+			curpos += beat_length;
+		}
 	}
 }
 
@@ -221,8 +223,6 @@ long eof_find_next_anchor(EOF_SONG * sp, unsigned long cbeat)
 
 void eof_realign_beats(EOF_SONG * sp, int cbeat)
 {
-	eof_log("eof_realign_beats() entered", 1);
-
 	int i;
 	int last_anchor = eof_find_previous_anchor(sp, cbeat);
 	long next_anchor = eof_find_next_anchor(sp, cbeat);
@@ -232,6 +232,7 @@ void eof_realign_beats(EOF_SONG * sp, int cbeat)
 	double newbpm;
 	double newppqn;
 
+	eof_log("eof_realign_beats() entered", 1);
 	if(!sp)
 	{
 		return;
@@ -263,8 +264,6 @@ void eof_realign_beats(EOF_SONG * sp, int cbeat)
 
 void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 {
-	eof_log("eof_recalculate_beats() entered", 2);	//Only log this if verbose logging is on
-
 	int i;
 	int last_anchor = eof_find_previous_anchor(sp, cbeat);
 	long next_anchor = eof_find_next_anchor(sp, cbeat);
@@ -273,6 +272,8 @@ void eof_recalculate_beats(EOF_SONG * sp, int cbeat)
 	double beats_length;
 	double newbpm;
 	double newppqn;
+
+	eof_log("eof_recalculate_beats() entered", 2);	//Only log this if verbose logging is on
 
 	if(cbeat >= EOF_MAX_BEATS)	//Bounds check
 	{
@@ -369,9 +370,9 @@ EOF_BEAT_MARKER * eof_song_add_beat(EOF_SONG * sp)
 
 void eof_song_delete_beat(EOF_SONG * sp, unsigned long beat)
 {
- 	eof_log("eof_song_delete_beat() entered", 1);
-
 	unsigned long i;
+
+ 	eof_log("eof_song_delete_beat() entered", 1);
 
 	if(sp)
 	{
@@ -564,14 +565,14 @@ unsigned long eof_get_measure(unsigned long measure, unsigned char count_only)
 
 void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track)
 {
-	eof_log("eof_process_beat_statistics() entered", 1);
-
 	unsigned long current_ppqn = 0;
 	int beat_counter = -1;
 	unsigned beats_per_measure = 0;
 	unsigned long measure_counter = 0;
 	char first_measure = 0;	//Set to nonzero when the first measure marker is reached
 	unsigned long i;
+
+	eof_log("eof_process_beat_statistics() entered", 1);
 
 	if(!sp)
 		return;

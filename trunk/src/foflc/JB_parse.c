@@ -165,9 +165,10 @@ void JB_Load(FILE *inf)
 //Adjust previous lyric's end position
 		if(Lyrics.lastpiece)
 		{	//If there was a previous lyric
-			assert_wrapper(Lyrics.lastpiece->lyric != NULL);
+			unsigned long length;
 
-			unsigned long length = strlen(Lyrics.lastpiece->lyric);
+			assert_wrapper(Lyrics.lastpiece->lyric != NULL);
+			length = strlen(Lyrics.lastpiece->lyric);
 			Lyrics.lastpiece->duration = timestamp + 0.5 - Lyrics.realoffset - Lyrics.lastpiece->start;	//Remember to offset start by realoffset, otherwise Lyrics.lastpiece->start could be the larger operand, causing an overflow
 			if(Lyrics.lastpiece->lyric[length - 1] == '-')
 			{	//If the previous lyric ended in a hyphen, the previous lyric lasts all the way up to the start of this one

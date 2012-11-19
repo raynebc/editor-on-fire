@@ -148,7 +148,7 @@ void      * eof_music_data = NULL;
 int         eof_silence_loaded = 0;
 int         eof_music_data_size = 0;
 unsigned long eof_chart_length = 0;
-int         eof_music_length = 0;
+unsigned long eof_music_length = 0;
 int         eof_music_pos;
 int         eof_music_actual_pos;
 int         eof_music_rewind_pos;
@@ -326,12 +326,12 @@ void eof_show_mouse(BITMAP * bp)
 
 float eof_get_porpos(unsigned long pos)
 {
-	eof_log("eof_get_porpos() entered", 2);
-
 	float porpos = 0.0;
 	long beat;
 	int blength;
 	unsigned long rpos;
+
+	eof_log("eof_get_porpos() entered", 2);
 
 	beat = eof_get_beat(eof_song, pos);
 	if(beat < eof_song->beats - 1)
@@ -353,10 +353,11 @@ float eof_get_porpos(unsigned long pos)
 
 long eof_put_porpos(unsigned long beat, float porpos, float offset)
 {
-	eof_log("eof_put_porpos() entered", 1);
-
 	float fporpos = porpos + offset;
 	unsigned long cbeat = beat;
+
+	eof_log("eof_put_porpos() entered", 1);
+
 	if(fporpos <= -1.0)
 	{
 //		allegro_message("a - %f", fporpos);	//Debug
@@ -564,9 +565,9 @@ void eof_fix_catalog_selection(void)
 
 int eof_set_display_mode(int mode)
 {
-	eof_log("eof_set_display_mode() entered", 1);
-
 	unsigned long default_zoom_level;
+
+	eof_log("eof_set_display_mode() entered", 1);
 
 	/* destroy windows first */
 	if(eof_window_editor)
@@ -797,9 +798,9 @@ void eof_fix_window_title(void)
 
 void eof_clear_input(void)
 {
-	eof_log("eof_clear_input() entered", 2);
-
 	int i;
+
+	eof_log("eof_clear_input() entered", 2);
 
 	clear_keybuf();
 	for(i = 0; i < KEY_MAX; i++)
@@ -837,9 +838,9 @@ void eof_prepare_undo(int type)
 
 long eof_get_previous_note(long cnote)
 {
-	eof_log("eof_get_previous_note() entered", 2);
-
 	long i;
+
+	eof_log("eof_get_previous_note() entered", 2);
 
 	for(i = cnote - 1; i >= 0; i--)
 	{
@@ -853,8 +854,6 @@ long eof_get_previous_note(long cnote)
 
 int eof_note_is_hopo(unsigned long cnote)
 {
-	eof_log("eof_note_is_hopo() entered", 2);
-
 	double delta;
 	float hopo_delta = eof_song->tags->eighth_note_hopo ? 250.0 : 170.0;	//The proximity threshold to determine HOPO eligibility, when the tempo is 120BPM (within 1/3 beat, or 1/2 beat if 8th note HOPO option is enabled)
 	unsigned long i, cnotepos;
@@ -862,6 +861,8 @@ int eof_note_is_hopo(unsigned long cnote)
 	long beat = -1;
 	double bpm;
 	double scale;	//Scales the proximity threshold for the given beat's tempo
+
+	eof_log("eof_note_is_hopo() entered", 2);
 
 	if((eof_song->track[eof_selected_track]->track_behavior != EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_behavior != EOF_PRO_GUITAR_TRACK_BEHAVIOR))
 		return 0;	//Only guitar/bass tracks can have HOPO notes
@@ -919,8 +920,6 @@ int eof_note_is_hopo(unsigned long cnote)
 
 void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 {
-	eof_log("eof_determine_phrase_status() entered", 2);
-
 	unsigned long i, j, tracknum;
 	char st[EOF_MAX_PHRASES] = {0};
 	char so[EOF_MAX_PHRASES] = {0};
@@ -931,9 +930,10 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 	unsigned long notepos, flags, numphrases, numnotes;
 	EOF_PHRASE_SECTION *sectionptr = NULL;
 
+	eof_log("eof_determine_phrase_status() entered", 2);
+
 	if(!sp || (track >= sp->tracks))
 		return;	//Invalid parameters
-
 	if(!eof_music_paused)
 		return;	//Do not allow this to run during playback because it causes too much lag when switching to a track with a large number of notes
 
@@ -1101,13 +1101,13 @@ void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track)
 
 int eof_figure_difficulty(void)
 {
-	eof_log("eof_figure_difficulty() entered", 1);
-
 	unsigned long i;
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int nt[5] = {0};
 	int dt[5] = {-1, -1, -1, -1};
 	int count = 0;
+
+	eof_log("eof_figure_difficulty() entered", 1);
 
 	if(eof_selected_track > EOF_TRACK_VOCALS)
 		return -1;	//FoFiX does not support any custom, keys or pro tracks
@@ -1250,9 +1250,9 @@ unsigned long eof_count_selected_notes(unsigned long * total, char v)
 
 int eof_figure_part(void)
 {
-	eof_log("eof_figure_part() entered", 1);
-
 	int part[EOF_TRACKS_MAX] = {0};
+
+	eof_log("eof_figure_part() entered", 1);
 
 	if(eof_get_track_size(eof_song,eof_selected_track) == 0)
 		return -1;
@@ -1269,9 +1269,9 @@ int eof_figure_part(void)
 
 int eof_load_ogg_quick(char * filename)
 {
-	eof_log("eof_load_ogg_quick() entered", 1);
-
 	int loaded = 0;
+
+	eof_log("eof_load_ogg_quick() entered", 1);
 
 	if(!filename)
 	{
@@ -1315,14 +1315,14 @@ int eof_load_ogg_quick(char * filename)
 
 int eof_load_ogg(char * filename, char silence_failover)
 {
-	eof_log("eof_load_ogg() entered", 1);
-
 	char * returnedfn = NULL;
 	char * ptr = filename;	//Used to refer to the OGG file that was processed from memory buffer
 	char directory[1024] = {0};
 	int loaded = 0;
 	char load_silence = 0;
 	char * emptystring = "";
+
+	eof_log("eof_load_ogg() entered", 1);
 
 	if(!filename)
 	{
@@ -1401,9 +1401,9 @@ int eof_load_ogg(char * filename, char silence_failover)
 
 int eof_destroy_ogg(void)
 {
-	eof_log("eof_destroy_ogg() entered", 1);
-
 	int failed = 1;
+
+	eof_log("eof_destroy_ogg() entered", 1);
 
 	if(eof_music_track)
 	{
@@ -1418,9 +1418,10 @@ int eof_destroy_ogg(void)
 
 int eof_save_ogg(char * fn)
 {
+	PACKFILE * fp;
+
 	eof_log("eof_save_ogg() entered", 1);
 
-	PACKFILE * fp;
 	if(fn && eof_music_data)
 	{
 		fp = pack_fopen(fn, "w");
@@ -1438,10 +1439,10 @@ int eof_save_ogg(char * fn)
 /* used for debugging */
 int eof_notes_selected(void)
 {
-	eof_log("eof_notes_selected() entered", 1);
-
 	int count = 0;
 	int i;
+
+	eof_log("eof_notes_selected() entered", 1);
 
 	for(i = 0; i < EOF_MAX_NOTES; i++)
 	{
@@ -3131,9 +3132,9 @@ int d_hackish_edit_proc (int msg, DIALOG *d, int c)
 
 int eof_load_data(void)
 {
-	eof_log("eof_load_data() entered", 1);
-
 	int i;
+
+	eof_log("eof_load_data() entered", 1);
 
 	eof_image[EOF_IMAGE_TAB0] = load_pcx("eof.dat#tab0.pcx", eof_palette);
 	eof_image[EOF_IMAGE_TAB1] = load_pcx("eof.dat#tab1.pcx", NULL);
@@ -3265,9 +3266,9 @@ int eof_load_data(void)
 
 void eof_destroy_data(void)
 {
-	eof_log("eof_destroy_data() entered", 1);
-
 	int i;
+
+	eof_log("eof_destroy_data() entered", 1);
 
 	agup_shutdown();
 	for(i = 0; i < EOF_MAX_IMAGES; i++)
@@ -3288,10 +3289,10 @@ void eof_destroy_data(void)
 
 int eof_initialize(int argc, char * argv[])
 {
-	eof_log("eof_initialize() entered", 1);
-
 	int i, eof_zoom_backup;
 	char temp_filename[1024] = {0}, recovered = 0;
+
+	eof_log("eof_initialize() entered", 1);
 
 	if(!argv)
 	{
@@ -3872,13 +3873,13 @@ void eof_exit(void)
 
 void eof_process_midi_queue(int pos)
 {	//Process the MIDI queue based on the current chart timestamp (eof_music_pos)
-	eof_log("eof_process_midi_queue() entered", 1);
-
 	unsigned char NOTE_ON_DATA[3]={0x91,0x0,127};	//Data sequence for a Note On, channel 1, Note 0
 	unsigned char NOTE_OFF_DATA[3]={0x81,0x0,127};	//Data sequence for a Note Off, channel 1, Note 0
 
 	struct MIDIentry *ptr=MIDIqueue;	//Points to the head of the list
 	struct MIDIentry *temp=NULL;
+
+	eof_log("eof_process_midi_queue() entered", 1);
 
 	if(midi_driver == NULL)
 		return;
@@ -3928,9 +3929,9 @@ void eof_process_midi_queue(int pos)
 
 int eof_midi_queue_add(unsigned char note,int startpos,int endpos)
 {
-	eof_log("eof_midi_queue_add() entered", 1);
-
 	struct MIDIentry *ptr=NULL;	//Stores the newly allocated link
+
+	eof_log("eof_midi_queue_add() entered", 1);
 
 //Validate input
 	if(note > 127)
@@ -3966,9 +3967,9 @@ int eof_midi_queue_add(unsigned char note,int startpos,int endpos)
 
 void eof_midi_queue_destroy(void)
 {
-	eof_log("eof_midi_queue_destroy() entered", 2);
-
 	struct MIDIentry *ptr=MIDIqueue,*temp=NULL;
+
+	eof_log("eof_midi_queue_destroy() entered", 2);
 
 	while(ptr != NULL)	//For all links in the list
 	{
@@ -4057,10 +4058,10 @@ void eof_init_after_load(char initaftersavestate)
 
 void eof_scale_fretboard(unsigned long numlanes)
 {
-	eof_log("eof_scale_fretboard() entered", 1);
-
 	unsigned long ctr;
 	float lanewidth;
+
+	eof_log("eof_scale_fretboard() entered", 1);
 
 	eof_screen_layout.string_space = eof_screen_layout.string_space_unscaled;
 
@@ -4521,9 +4522,9 @@ void eof_init_colors(void)
 
 void eof_set_color_set(void)
 {
-	eof_log("eof_set_color_set() entered", 1);
-
 	int x;
+
+	eof_log("eof_set_color_set() entered", 1);
 
 	if(!eof_song)
 		return;

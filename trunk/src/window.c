@@ -8,11 +8,11 @@
 
 EOF_WINDOW * eof_window_create(int x, int y, int w, int h, BITMAP * bp)
 {
- 	eof_log("eof_window_create() entered", 1);
-
 	EOF_WINDOW * wp = NULL;
 	if(bp == NULL)
 		return NULL;
+
+ 	eof_log("eof_window_create() entered", 1);
 
 	wp = malloc(sizeof(EOF_WINDOW));
 	if(wp)

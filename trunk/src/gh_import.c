@@ -816,6 +816,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 	unsigned char voxpitch;
 	EOF_LYRIC *ptr = NULL;
 	EOF_VOCAL_TRACK * tp = NULL;
+	char vocalsectionfound = 0;
 
 	if(!fb || !sp)
 		return -1;
@@ -825,7 +826,6 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 	eof_log("\tGH:  Searching for vocals", 1);
 #endif
 	fb->index = 0;	//Seek to the beginning of the file buffer
-	char vocalsectionfound = 0;
 	while(!vocalsectionfound)
 	{	//For some files, there are multiple instances of the vocals section checksum, find the appropriate one
 		if(eof_filebuffer_find_checksum(fb, eof_gh_checksum("vocals")))	//Seek one byte past the target header
@@ -1184,6 +1184,9 @@ EOF_SONG * eof_import_gh(const char * fn)
 
 	if(sp)
 	{	//If a GH file was loaded
+		unsigned long tracknum;
+		unsigned long ctr;
+
 		/* backup "song.ini" if it exists in the folder with the imported file
 		as it will be overwritten upon save */
 		if(exists(inifn))
@@ -1200,7 +1203,6 @@ EOF_SONG * eof_import_gh(const char * fn)
 		/* read INI file */
 		eof_import_ini(sp, inifn, 0);
 
-		unsigned long tracknum;
 		if(eof_get_track_size(sp, EOF_TRACK_DRUM))
 		{	//If there were any drum gems imported, ensure the fifth drum lane is enabled, as all GH drum charts are this style of track
 			tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
@@ -1208,7 +1210,6 @@ EOF_SONG * eof_import_gh(const char * fn)
 			sp->legacy_track[tracknum]->numlanes = 6;						//Set the lane count
 		}
 
-		unsigned long ctr;
 		for(ctr = 0; ctr < eof_get_track_size(sp, EOF_TRACK_BASS); ctr++)
 		{	//For each bass guitar note
 			if(eof_get_note_note(sp, EOF_TRACK_BASS, ctr) & 32)
@@ -1896,6 +1897,10 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 	EOF_LYRIC *ptr = NULL;
 	EOF_VOCAL_TRACK * tp = NULL;
 	char buffer[201], matched;
+	struct QBlyric *head = NULL, *tail = NULL, *linkptr = NULL;	//Used to maintain the linked list matching lyric text with checksums
+	unsigned char lyricid[] = {0x20, 0x22, 0x5C, 0x4C};	//This hex sequence is within each lyric entry between the lyric text and its checksum
+	char *newtext = NULL;
+	unsigned long checksum, length;
 
 	if(!fb || !sp || !songname)
 		return -1;
@@ -1995,11 +2000,6 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 	eof_track_sort_notes(sp, EOF_TRACK_VOCALS);
 
 //Read lyric text
-	struct QBlyric *head = NULL, *tail = NULL, *linkptr = NULL;	//Used to maintain the linked list matching lyric text with checksums
-	unsigned char lyricid[] = {0x20, 0x22, 0x5C, 0x4C};	//This hex sequence is within each lyric entry between the lyric text and its checksum
-	char *newtext = NULL;
-	unsigned long checksum, length;
-
 #ifdef GH_IMPORT_DEBUG
 	eof_log("\tGH:  Looking for lyrics", 1);
 #endif
@@ -2823,15 +2823,18 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 				{	//For each link in the sections checksum list (until a match has been made)
 					if(linkptr->checksum == checksum)
 					{	//If this checksum matches the one in the list
+						long beatnum;
+
 						eof_chart_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
-						long beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
+						beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
 						if(beatnum >= 0)
 						{	//If there is such a beat
+							char buffer2[256];
+
 		#ifdef GH_IMPORT_DEBUG
 							snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\tSection:  Position = %lums, checksum = 0x%08lX: %s", dword, checksum, linkptr->text);
 							eof_log(eof_log_string, 1);
 		#endif
-							char buffer2[256];
 							snprintf(buffer2, sizeof(buffer2), "[section %s]", linkptr->text);	//Alter the section name formatting
 							eof_song_add_text_event(sp, beatnum, buffer2, 0, 0, 0);	//Add the text event
 						}
@@ -2962,15 +2965,18 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 								{
 									if(!eof_filebuffer_get_dword(fb, &dword))	//Read the timestamp
 									{	//If the timestamp was successfully read
+										long beatnum;
+
 										eof_chart_length = dword;	//Satisfy eof_get_beat() by ensuring this variable isn't smaller than the looked up timestamp
-										long beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
+										beatnum = eof_get_beat(sp, dword);	//Get the beat immediately at or before this section
 										if(beatnum >= 0)
 										{	//If there is such a beat
+											char buffer2[256];
+
 #ifdef GH_IMPORT_DEBUG
 											snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\tSection:  Position = %lums, checksum = 0x%08lX: %s", dword, checksum, linkptr->text);
 											eof_log(eof_log_string, 1);
 #endif
-											char buffer2[256];
 											snprintf(buffer2, sizeof(buffer2), "[section %s]", linkptr->text);	//Alter the section name formatting
 											eof_song_add_text_event(sp, beatnum, buffer2, 0, 0, 0);	//Add the text event
 										}
@@ -3046,6 +3052,8 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 				}
 				while(1)
 				{	//Prompt user about browsing for an external file with section names until explicitly declined
+					char * sectionfn;
+
 					eof_clear_input();
 					if(alert("No section names were found.", "Specify another file PAK or TXT file to try?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 					{	//If user opts not to try looking for section names in another file
@@ -3056,7 +3064,6 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 					}
 					eof_clear_input();
 
-					char * sectionfn;
 					eof_cursor_visible = 0;
 					eof_pen_visible = 0;
 					eof_render();

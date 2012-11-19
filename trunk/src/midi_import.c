@@ -48,9 +48,9 @@ int eof_import_bpm_count = 0;
 
 static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_create_events_list(void)
 {
+	EOF_IMPORT_MIDI_EVENT_LIST * lp;
 	eof_log("eof_import_create_events_list() entered", 1);
 
-	EOF_IMPORT_MIDI_EVENT_LIST * lp;
 	lp = malloc(sizeof(EOF_IMPORT_MIDI_EVENT_LIST));
 	if(!lp)
 	{
@@ -63,9 +63,9 @@ static EOF_IMPORT_MIDI_EVENT_LIST * eof_import_create_events_list(void)
 
 static void eof_import_destroy_events_list(EOF_IMPORT_MIDI_EVENT_LIST * lp)
 {
-	eof_log("eof_import_destroy_events_list() entered", 1);
-
 	int i;
+
+	eof_log("eof_import_destroy_events_list() entered", 1);
 
 	if(lp)
 	{
@@ -88,13 +88,13 @@ unsigned long eof_parse_var_len(unsigned char * data, unsigned long pos, unsigne
 {	//bytes_used is set to the number of bytes long the variable length value is, the value itself is returned
 //	eof_log("eof_parse_var_len() entered");
 
+	int cpos = pos;
+	unsigned long val = *(&data[cpos]) & 0x7F;
+
 	if(!data || !bytes_used)
 	{
 		return 0;
 	}
-
-	int cpos = pos;
-	unsigned long val = *(&data[cpos]) & 0x7F;
 
 	while(data[cpos] & 0x80)
 	{
@@ -309,9 +309,7 @@ inline unsigned long eof_ConvertToRealTimeInt(unsigned long absolutedelta,struct
 
 EOF_SONG * eof_import_midi(const char * fn)
 {
-	eof_log("eof_import_midi() entered", 1);
-
-	EOF_SONG * sp = NULL;;
+	EOF_SONG * sp = NULL;
 	int pticker = 0;
 	int ptotal_events = 0;
 	int percent;
@@ -340,6 +338,44 @@ EOF_SONG * eof_import_midi(const char * fn)
 	char debugstring[100];
 	char is_event_track;	//This will be set to nonzero if the current track's name is EVENTS (for sorting text events into global event list instead of track specific list)
 	unsigned long beat_track = 0;	//Will identify the "BEAT" track if it is found during import
+	struct Tempo_change *anchorlist=NULL;	//Anchor linked list
+	unsigned long deltapos = 0;		//Stores the ongoing delta time
+	double deltafpos = 0.0;			//Stores the ongoing delta time (with double floating precision)
+	double realtimepos = 0.0;		//Stores the ongoing real time (start at 0s, displace by the MIDI delay where appropriate)
+	unsigned lastnum=4,lastden=4;	//Stores the last applied time signature details (default is 4/4)
+	unsigned curnum=4,curden=4;		//Stores the current time signature details (default is 4/4)
+	unsigned long lastppqn=0;		//Stores the last applied tempo information
+	unsigned long curppqn=500000;	//Stores the current tempo in PPQN (default is 120BPM)
+	unsigned long ctr,ctr2,nextanchor;
+	char midbeatchange, midbeatchangefound = 0;
+	double beatlength, beatreallength;
+	double BPM=120.0;	//Assume a default tempo of 120BPM and TS of 4/4 at 0 deltas
+	unsigned long event_realtime;		//Store the delta time converted to realtime to avoid having to convert multiple times per note
+	long beat;
+	int picked_track;
+	char used_track[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};	//for Rock Band songs, we need to ignore certain tracks
+	unsigned char lane = 0;				//Used to track the lane referenced by a MIDI on/off note
+	char diff = -1;						//Used to track the difficulty referenced by a MIDI on/off note (-1 means difficulty undetermined)
+	unsigned char lane_chart[EOF_MAX_FRETS] = {1, 2, 4, 8, 16, 32};	//Maps each lane to a note bitmask value
+	long note_count[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};
+	long first_note;
+	unsigned long hopopos[4];			//Used for forced HOPO On/Off parsing
+	char hopotype[4];					//Used for forced HOPO On/Off parsing
+	int hopodiff;						//Used for forced HOPO On/Off parsing
+	unsigned long strumpos[4];			//Used for pro guitar strum direction parsing
+	char strumtype[4];					//Used for pro guitar strum direction parsing
+	int strumdiff;						//Used for pro guitar strum direction parsing
+	unsigned long arpegpos[4];			//Used for pro guitar arpeggio parsing
+	int arpegdiff;						//Used for pro guitar arpeggio parsing
+	char prodrums = 0;					//Tracks whether the drum track being written includes Pro drum notation
+	unsigned long tracknum;				//Used to de-obfuscate the legacy track number
+	int phrasediff;						//Used for parsing Sysex phrase markers
+	int slidediff;						//Used for parsing slide markers
+	unsigned char slidevelocity[4];		//Used for parsing slide markers
+	unsigned long openstrumpos[4] = {0}, slideuppos[4] = {0}, slidedownpos[4] = {0}, openhihatpos[4] = {0}, pedalhihatpos[4] = {0}, rimshotpos[4] = {0}, sliderpos[4] = {0}, palmmutepos[4] = {0}, vibratopos[4] = {0};	//Used for parsing Sysex phrase markers
+	int lc;
+
+	eof_log("eof_import_midi() entered", 1);
 
 	/* load MIDI */
 	if(!fn)
@@ -804,21 +840,8 @@ EOF_SONG * eof_import_midi(const char * fn)
 		}//While the byte index of this MIDI track hasn't reached the end of the track data
 	}//For each imported track
 
-struct Tempo_change *anchorlist=NULL;	//Anchor linked list
 
 	/* second pass, create tempo map */
-	unsigned long deltapos = 0;		//Stores the ongoing delta time
-	double deltafpos = 0.0;			//Stores the ongoing delta time (with double floating precision)
-	double realtimepos = 0.0;		//Stores the ongoing real time (start at 0s, displace by the MIDI delay where appropriate)
-	unsigned lastnum=4,lastden=4;	//Stores the last applied time signature details (default is 4/4)
-	unsigned curnum=4,curden=4;		//Stores the current time signature details (default is 4/4)
-	unsigned long lastppqn=0;		//Stores the last applied tempo information
-	unsigned long curppqn=500000;	//Stores the current tempo in PPQN (default is 120BPM)
-
-	unsigned long ctr,ctr2,nextanchor;
-	char midbeatchange, midbeatchangefound = 0;
-	double beatlength, beatreallength;;
-
 //#ifdef EOF_DEBUG_MIDI_IMPORT
 //char debugtext[400];
 //allegro_message("Pass two, adding beats.  last_delta_time = %lu",last_delta_time);
@@ -1044,11 +1067,10 @@ set_window_title(debugtext);
 	}
 
 	eof_log("\tPass two, configuring beat timings", 1);
-
-	double BPM=120.0;	//Assume a default tempo of 120BPM and TS of 4/4 at 0 deltas
 	realtimepos=0.0;
 	deltapos=0;
 	curden=lastden=4;
+
 	for(ctr = 0; ctr < eof_import_ts_changes[0]->changes; ctr++)
 	{	//For each TS change parsed from track 0
 		//Find the relevant tempo and nearest preceding beat's time stamp
@@ -1071,8 +1093,6 @@ set_window_title(debugtext);
 	}
 
 	/* apply any key signatures parsed in the MIDI */
-	unsigned long event_realtime;		//Store the delta time converted to realtime to avoid having to convert multiple times per note
-	long beat;
 	for(ctr = 0; ctr < eof_import_ks_events->events; ctr++)
 	{	//For each key signature parsed
 		event_realtime = eof_ConvertToRealTimeInt(eof_import_ks_events->event[ctr]->pos,anchorlist,eof_import_ts_changes[0],eof_work_midi->divisions,sp->tags->ogg[0].midi_offset);
@@ -1084,33 +1104,8 @@ set_window_title(debugtext);
 		}
 	}
 
-	eof_log("\tPass three, creating notes", 1);
-
 	/* third pass, create EOF notes */
-	int picked_track;
-
-	/* for Rock Band songs, we need to ignore certain tracks */
-	char used_track[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};
-
-	unsigned char lane = 0;				//Used to track the lane referenced by a MIDI on/off note
-	char diff = -1;						//Used to track the difficulty referenced by a MIDI on/off note (-1 means difficulty undetermined)
-	unsigned char lane_chart[EOF_MAX_FRETS] = {1, 2, 4, 8, 16, 32};	//Maps each lane to a note bitmask value
-	long note_count[EOF_MAX_IMPORT_MIDI_TRACKS] = {0};
-	long first_note;
-	unsigned long hopopos[4];			//Used for forced HOPO On/Off parsing
-	char hopotype[4];					//Used for forced HOPO On/Off parsing
-	int hopodiff;						//Used for forced HOPO On/Off parsing
-	unsigned long strumpos[4];			//Used for pro guitar strum direction parsing
-	char strumtype[4];					//Used for pro guitar strum direction parsing
-	int strumdiff;						//Used for pro guitar strum direction parsing
-	unsigned long arpegpos[4];			//Used for pro guitar arpeggio parsing
-	int arpegdiff;						//Used for pro guitar arpeggio parsing
-	char prodrums = 0;					//Tracks whether the drum track being written includes Pro drum notation
-	unsigned long tracknum;				//Used to de-obfuscate the legacy track number
-	int phrasediff;						//Used for parsing Sysex phrase markers
-	int slidediff;						//Used for parsing slide markers
-	unsigned char slidevelocity[4];		//Used for parsing slide markers
-	unsigned long openstrumpos[4] = {0}, slideuppos[4] = {0}, slidedownpos[4] = {0}, openhihatpos[4] = {0}, pedalhihatpos[4] = {0}, rimshotpos[4] = {0}, sliderpos[4] = {0}, palmmutepos[4] = {0}, vibratopos[4] = {0};	//Used for parsing Sysex phrase markers
+	eof_log("\tPass three, creating notes", 1);
 
 	//Special case:  Very old charts created in Freetar Editor may only contain one track that includes all the tempo and note events
 	if((tracks == 1) && (eof_import_events[0]->type < 0))
@@ -1137,6 +1132,7 @@ set_window_title(debugtext);
 			char rb_pro_green = 0;					//Tracks the status of forced yellow pro drum notation
 			unsigned long rb_pro_green_pos = 0;		//Tracks the last start time of a forced green pro drum phrase
 			unsigned long notenum = 0;
+
 			first_note = note_count[picked_track];
 			tracknum = sp->track[picked_track]->tracknum;
 
@@ -2220,6 +2216,7 @@ set_window_title(debugtext);
 						{	//If a slide marker was found
 							unsigned long *slideptr;	//This will point to either the up or down slide position array as appropriate, so the velocity can be checked just once
 							unsigned long slideflag;	//Cache the slide flag to avoid having to do redundant checks
+
 							if(slidevelocity[slidediff] >= 108)
 							{	//For slide markers, velocity 108 or higher represents a down slide.  Read the slide velocity that was cached at the start of the slide
 								slideptr = slidedownpos;	//The slide marker is a down slide
@@ -2369,6 +2366,7 @@ set_window_title(debugtext);
 						char *ptr = NULL;	//This will point to the destination name array
 						char *ptr2 = NULL;	//This will be used to index into the text event
 						unsigned long index = 0;
+
 						if(eof_import_events[i]->event[j]->text[5] != '\0')
 						{	//If the string is long enough to have a difficulty ID
 							switch(eof_import_events[i]->event[j]->text[5])
@@ -2521,7 +2519,6 @@ eof_log("\tThird pass complete", 1);
 //#endif
 
 	/* delete empty lyric lines */
-	int lc;
 	for(i = sp->vocal_track[0]->lines; i > 0; i--)
 	{
 		lc = 0;

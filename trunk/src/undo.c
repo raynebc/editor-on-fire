@@ -21,11 +21,11 @@ int eof_undo_states_initialized = 0;
 
 int eof_undo_load_state(const char * fn)
 {
- 	eof_log("eof_undo_load_state() entered", 1);
-
 	EOF_SONG * sp = NULL;
 	PACKFILE * fp = NULL;
 	char rheader[16] = {0};
+
+ 	eof_log("eof_undo_load_state() entered", 1);
 
 	if(fn == NULL)
 	{
@@ -71,10 +71,10 @@ void eof_undo_reset(void)
 
 int eof_undo_add(int type)
 {
- 	eof_log("eof_undo_add() entered", 1);
-
 	char fn[1024] = {0}, temp[1024] = {0};
 	unsigned long ctr;
+
+ 	eof_log("eof_undo_add() entered", 1);
 
 	if(eof_undo_states_initialized == -1)
 	{	//The undo filename array couldn't be initialized previously
@@ -150,9 +150,9 @@ int eof_undo_add(int type)
 
 int eof_undo_apply(void)
 {
- 	eof_log("eof_undo_apply() entered", 1);
-
 	char fn[1024] = {0};
+
+ 	eof_log("eof_undo_apply() entered", 1);
 
 	if(eof_undo_count > 0)
 	{
@@ -205,9 +205,9 @@ int eof_undo_apply(void)
 
 void eof_redo_apply(void)
 {
- 	eof_log("eof_redo_apply() entered", 1);
-
 	char fn[1024] = {0};
+
+ 	eof_log("eof_redo_apply() entered", 1);
 
 	if(eof_redo_count > 0)
 	{

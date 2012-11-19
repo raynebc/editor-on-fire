@@ -22,13 +22,13 @@
 
 int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format, char *inputfilename, char *string2)
 {
-	eof_log("EOF_IMPORT_VIA_LC() entered", 1);
-
 	char * returnedfn = NULL;	//Return string from dialog window
 	FILE *inf;	  //Used to open the input file
 	struct Lyric_Format *detectionlist;
 	unsigned long i;
 	int jumpcode = 0;
+
+	eof_log("EOF_IMPORT_VIA_LC() entered", 1);
 
 //Validate parameters
 	if((tp == NULL) || (inputfilename == NULL))
@@ -213,15 +213,15 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 
 int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 {
-	eof_log("\tImporting lyrics", 1);
-	eof_log("EOF_TRANSFER_FROM_LC() entered", 1);
-
 	struct Lyric_Line *curline;	//Conductor of the lyric line linked list
 	struct Lyric_Piece *curpiece;	//Conductor of the lyric piece linked list
 	EOF_LYRIC *temp;		//Pointer returned by eof_vocal_track_add_lyric()
 	unsigned long start=0;	//Used to track the start position of each line
 	char startfound=0;		//Used to help skip adding vocal percussion notes to lyric lines
 	char overdrive=0;		//Used to track the overdrive status of a lyric line
+
+	eof_log("\tImporting lyrics", 1);
+	eof_log("EOF_TRANSFER_FROM_LC() entered", 1);
 
 	if((tp == NULL) || (lp == NULL))
 		return -1;	//Return error (invalid structure pointers)
@@ -283,8 +283,6 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 
 int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int format)
 {
-	eof_log("EOF_EXPORT_TO_LC() entered", 1);
-
 	unsigned long linectr=0,lyrctr=0,lastlyrtime=0,linestart=0,lineend=0;
 	unsigned char pitch=0;
 	FILE *outf=NULL;			//Used to open output file
@@ -292,6 +290,8 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 	char *vrhythmid=NULL;
 	EOF_PHRASE_SECTION temp;	//Used to store the first lyric line in the project, which gets overridden with one covering all lyrics during RS export
 	unsigned long original_lines;
+
+	eof_log("EOF_EXPORT_TO_LC() entered", 1);
 
 	if((tp == NULL) || (outputfilename == NULL) || (tp->lyrics == 0))
 		return -1;	//Return failure
