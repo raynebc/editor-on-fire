@@ -443,7 +443,7 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 			}
 		}
 
-		if(eof_min_note_length && (tp->parent->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (tp->parent->track_format == EOF_LEGACY_TRACK_FORMAT))
+		if(eof_min_note_length && (tp->parent->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR))
 		{	//If the user has specified a minimum length for 5 lane guitar notes, and this is a 5 lane guitar track
 			if(tp->note[i-1]->length < eof_min_note_length)
 			{	//If this note's length is shorter than the minimum length
@@ -483,11 +483,18 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 					tp->note[i-1]->flags = flags | tp->note[next]->flags;	//Merge the flags
 					eof_legacy_track_delete_note(tp, next);			//Delete the next note, as it has been merged with this note
 				}
-				else if(tp->note[i-1]->pos + tp->note[i-1]->length >= tp->note[next]->pos - 1)
-				{	//Otherwise if it does not end at least 1ms before the next note starts
+				else if(tp->note[i-1]->pos + tp->note[i-1]->length > tp->note[next]->pos - eof_min_note_distance)
+				{	//Otherwise if it does not end at least the configured minimum distance before the next note starts
 					if(!(tp->note[i-1]->flags & EOF_NOTE_FLAG_CRAZY) || (tp->note[i-1]->note & tp->note[next]->note))
-					{	//Truncate the tail if the note is not marked as "crazy" and the note doesn't try to overlap a gem in the same lane
-						tp->note[i-1]->length = tp->note[next]->pos - tp->note[i-1]->pos - 1;
+					{	//Truncate the tail if the note is not marked as "crazy" or if the note overlaps a gem in the same lane
+						if(tp->note[next]->pos - tp->note[i-1]->pos > eof_min_note_distance)
+						{	//If there is enough distance between the notes to accommodate the minimum distance
+							tp->note[i-1]->length = tp->note[next]->pos - tp->note[i-1]->pos - eof_min_note_distance;	//Apply it
+						}
+						else
+						{	//Otherwise settle for 1ms
+							tp->note[i-1]->length = 1;
+						}
 					}
 				}
 			}
@@ -770,16 +777,21 @@ void eof_vocal_track_fixup_lyrics(EOF_SONG *sp, unsigned long track, int sel)
 			   to make sure they don't overlap */
 			next = eof_fixup_next_lyric(tp, i-1);
 			if(next >= 0)
-			{
+			{	//If there is a lyric after this lyric
 				if(tp->lyric[i-1]->pos == tp->lyric[next]->pos)
-				{
+				{	//And it is at the same position as this lyric, delete it
 					eof_vocal_track_delete_lyric(tp, next);
 				}
-				else if(tp->lyric[i-1]->pos + tp->lyric[i-1]->length >= tp->lyric[next]->pos - 1)
-				{	//If this lyric does not end at least 1ms before the next lyric starts
-					tp->lyric[i-1]->length = tp->lyric[next]->pos - tp->lyric[i-1]->pos - 1;	//Alter the length to extend to 1ms before the next note
-					if(tp->lyric[i-1]->length <= 0)
-						tp->lyric[i-1]->length = 1;	//Ensure that this doesn't cause the length to be invalid
+				else if(tp->lyric[i-1]->pos + tp->lyric[i-1]->length > tp->lyric[next]->pos - eof_min_note_distance)
+				{	//Otherwise if it does not end at least the configured minimum distance before the next lyric starts
+					if(tp->lyric[next]->pos - tp->lyric[i-1]->pos > eof_min_note_distance)
+					{	//If there is enough distance between the lyrics to accommodate the minimum distance
+						tp->lyric[i-1]->length = tp->lyric[next]->pos - tp->lyric[i-1]->pos - eof_min_note_distance;	//Apply it
+					}
+					else
+					{	//Otherwise settle for 1ms
+						tp->lyric[i-1]->length = 1;
+					}
 				}
 			}
 		}
@@ -3733,6 +3745,29 @@ long eof_fixup_next_pro_guitar_note(EOF_PRO_GUITAR_TRACK * tp, unsigned long not
 	return -1;
 }
 
+long eof_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long tracknum;
+
+	if((sp == NULL) || (track >= sp->tracks))
+		return -1;	//Return error
+	tracknum = sp->track[track]->tracknum;
+
+	switch(sp->track[track]->track_format)
+	{
+		case EOF_LEGACY_TRACK_FORMAT:
+		return eof_fixup_next_legacy_note(sp->legacy_track[tracknum], note);
+
+		case EOF_VOCAL_TRACK_FORMAT:
+		return eof_fixup_next_lyric(sp->vocal_track[tracknum], note);
+
+		case EOF_PRO_GUITAR_TRACK_FORMAT:
+		return eof_fixup_next_pro_guitar_note(sp->pro_guitar_track[tracknum], note);
+	}
+
+	return -1;	//Return not found
+}
+
 long eof_get_prev_note_type_num(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	long i;
@@ -3838,11 +3873,18 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 					}
 					eof_pro_guitar_track_delete_note(tp, next);
 				}
-				else if(tp->note[i-1]->pos + tp->note[i-1]->length >= tp->note[next]->pos - 1)
-				{	//If this note does not end at least 1ms before the next note starts
+				else if(tp->note[i-1]->pos + tp->note[i-1]->length > tp->note[next]->pos - eof_min_note_distance)
+				{	//Otherwise if it does not end at least the configured minimum distance before the next note starts
 					if(!(tp->note[i-1]->flags & EOF_NOTE_FLAG_CRAZY) || (tp->note[i-1]->note & tp->note[next]->note))
-					{	//If this note isn't a "crazy" note or is overlapping the next note on the same lanes it uses
-						tp->note[i-1]->length = tp->note[next]->pos - tp->note[i-1]->pos - 1;	//Alter the length to extend to 1ms before the next note
+					{	//Truncate the tail if the note is not marked as "crazy" or if the note overlaps a gem in the same lane
+						if(tp->note[next]->pos - tp->note[i-1]->pos > eof_min_note_distance)
+						{	//If there is enough distance between the notes to accommodate the minimum distance
+							tp->note[i-1]->length = tp->note[next]->pos - tp->note[i-1]->pos - eof_min_note_distance;	//Apply it
+						}
+						else
+						{	//Otherwise settle for 1ms
+							tp->note[i-1]->length = 1;
+						}
 					}
 				}
 			}

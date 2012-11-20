@@ -98,10 +98,12 @@ DIALOG eof_preferences_dialog[] =
    { d_agup_check_proc, 248, 152, 182, 16,  2,   23,  0,    0,      1,   0,   "Enable logging on launch",NULL, NULL },
    { d_agup_check_proc, 16,  168, 190, 16,  2,   23,  0,    0,      1,   0,   "Add new notes to selection",NULL, NULL },
    { d_agup_check_proc, 248, 168, 216, 16,  2,   23,  0,    0,      1,   0,   "Drum modifiers affect all diff's",NULL, NULL },
-   { d_agup_check_proc, 16,  185, 184, 16,  2,   23,  0,    0,      1,   0,   "Use dB style seek controls",NULL, NULL },
+   { d_agup_text_proc,  16,  185, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note distance (ms):",NULL,NULL },
+   { eof_verified_edit_proc,170,185,30,20,  0,   0,   0,    0,      3,   0,   eof_etext2,     "0123456789", NULL },
    { d_agup_text_proc,  248, 185, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note length (ms):",NULL,NULL },
    { eof_verified_edit_proc,392,185,30,20,  0,   0,   0,    0,      3,   0,   eof_etext,     "0123456789", NULL },
    { d_agup_check_proc, 248, 222, 220, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
+   { d_agup_check_proc, 248, 238, 184, 16,  2,   23,  0,    0,      1,   0,   "Use dB style seek controls",NULL, NULL },
    { d_agup_text_proc,  24,  222, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
    { d_agup_list_proc,  16,  240, 100, 110, 2,   23,  0,    0,      0,   0,   eof_input_list,        NULL, NULL },
    { d_agup_text_proc,  150, 240, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
@@ -923,8 +925,8 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[15].flags = enable_logging ? D_SELECTED : 0;					//Enable logging on launch
 	eof_preferences_dialog[16].flags = eof_add_new_notes_to_selection ? D_SELECTED : 0;	//Add new notes to selection
 	eof_preferences_dialog[17].flags = eof_drum_modifiers_affect_all_difficulties ? D_SELECTED : 0;	//Drum modifiers affect all diff's
-	eof_preferences_dialog[18].flags = eof_fb_seek_controls ? D_SELECTED : 0;			//Use dB style seek controls
-	eof_preferences_dialog[30].flags = eof_preferences_dialog[31].flags = eof_preferences_dialog[32].flags = 0;	//Options for what to display at top of 2D panel
+	eof_preferences_dialog[23].flags = eof_fb_seek_controls ? D_SELECTED : 0;			//Use dB style seek controls
+	eof_preferences_dialog[32].flags = eof_preferences_dialog[33].flags = eof_preferences_dialog[34].flags = 0;	//Options for what to display at top of 2D panel
 	eof_preferences_dialog[eof_2d_render_top_option].flags = D_SELECTED;
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
@@ -934,15 +936,16 @@ int eof_menu_file_preferences(void)
 	{
 		eof_etext[0] = '\0';	//Otherwise empty the string
 	}
-	eof_preferences_dialog[21].flags = eof_render_bass_drum_in_lane ? D_SELECTED : 0;	//3D render bass drum in a lane
-	eof_preferences_dialog[23].d1 = eof_input_mode;										//Input method
+	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%d", eof_min_note_distance);	//Populate the min. note distance field's string
+	eof_preferences_dialog[22].flags = eof_render_bass_drum_in_lane ? D_SELECTED : 0;	//3D render bass drum in a lane
+	eof_preferences_dialog[25].d1 = eof_input_mode;										//Input method
 	original_input_mode = eof_input_mode;												//Store this value
-	eof_preferences_dialog[25].d1 = eof_color_set;										//Color set
+	eof_preferences_dialog[27].d1 = eof_color_set;										//Color set
 
 	do
 	{	//Run the dialog
 		retval = eof_popup_dialog(eof_preferences_dialog, 0);	//Run the dialog
-		if(retval == 26)
+		if(retval == 28)
 		{	//If the user clicked OK, update EOF's configured settings from the dialog selections
 			eof_inverted_notes = (eof_preferences_dialog[1].flags == D_SELECTED ? 1 : 0);
 			eof_lefty_mode = (eof_preferences_dialog[2].flags == D_SELECTED ? 1 : 0);
@@ -959,21 +962,8 @@ int eof_menu_file_preferences(void)
 			eof_write_rs_files = (eof_preferences_dialog[13].flags == D_SELECTED ? 1 : 0);
 			eof_inverted_chords_slash = (eof_preferences_dialog[14].flags == D_SELECTED ? 1 : 0);
 			enable_logging = (eof_preferences_dialog[15].flags == D_SELECTED ? 1 : 0);
-			if(eof_preferences_dialog[30].flags == D_SELECTED)
-			{	//User opted to display note names at top of 2D panel
-				eof_2d_render_top_option = 30;
-			}
-			else if(eof_preferences_dialog[31].flags == D_SELECTED)
-			{	//User opted to display section names at top of 2D panel
-				eof_2d_render_top_option = 31;
-			}
-			else if(eof_preferences_dialog[32].flags == D_SELECTED)
-			{	//User opted to display fret hand positions at top of 2D panel
-				eof_2d_render_top_option = 32;
-			}
 			eof_add_new_notes_to_selection = (eof_preferences_dialog[16].flags == D_SELECTED ? 1 : 0);
 			eof_drum_modifiers_affect_all_difficulties = (eof_preferences_dialog[17].flags == D_SELECTED ? 1 : 0);
-			eof_fb_seek_controls = (eof_preferences_dialog[18].flags == D_SELECTED ? 1 : 0);
 			if(eof_etext[0] != '\0')
 			{	//If the minimum note length field is populated
 				eof_min_note_length = atol(eof_etext);
@@ -982,13 +972,38 @@ int eof_menu_file_preferences(void)
 			{
 				eof_min_note_length = 0;
 			}
-			eof_render_bass_drum_in_lane = (eof_preferences_dialog[21].flags == D_SELECTED ? 1 : 0);
-			eof_input_mode = eof_preferences_dialog[23].d1;
+			if(eof_etext2[0] != '\0')
+			{	//If the minimum note distance field is populated
+				eof_min_note_distance = atol(eof_etext2);
+				if(eof_min_note_distance < 1)
+				{	//Validate this value
+					eof_min_note_distance = 3;
+				}
+			}
+			else
+			{
+				eof_min_note_distance = 3;
+			}
+			eof_render_bass_drum_in_lane = (eof_preferences_dialog[22].flags == D_SELECTED ? 1 : 0);
+			eof_fb_seek_controls = (eof_preferences_dialog[23].flags == D_SELECTED ? 1 : 0);
+			eof_input_mode = eof_preferences_dialog[25].d1;
 			eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case eof_inverted_notes was changed
 			eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case eof_lefty_mode was changed
-			eof_color_set = eof_preferences_dialog[25].d1;
-		}
-		else if(retval == 27)
+			eof_color_set = eof_preferences_dialog[27].d1;
+			if(eof_preferences_dialog[32].flags == D_SELECTED)
+			{	//User opted to display note names at top of 2D panel
+				eof_2d_render_top_option = 32;
+			}
+			else if(eof_preferences_dialog[33].flags == D_SELECTED)
+			{	//User opted to display section names at top of 2D panel
+				eof_2d_render_top_option = 33;
+			}
+			else if(eof_preferences_dialog[34].flags == D_SELECTED)
+			{	//User opted to display fret hand positions at top of 2D panel
+				eof_2d_render_top_option = 34;
+			}
+		}//If the user clicked OK
+		else if(retval == 29)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
 			eof_preferences_dialog[1].flags = 0;					//Inverted notes
 			eof_preferences_dialog[2].flags = 0;					//Lefty mode
@@ -1007,15 +1022,17 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[15].flags = D_SELECTED;			//Enable logging on launch
 			eof_preferences_dialog[16].flags = 0;					//Add new notes to selection
 			eof_preferences_dialog[17].flags = D_SELECTED;			//Drum modifiers affect all diff's
-			eof_preferences_dialog[18].flags = 0;					//Use dB style seek controls
+			eof_etext2[0] = '3';									//Min. note distance
+			eof_etext2[1] = '\0';
 			eof_etext[0] = '\0';									//Min. note length
-			eof_preferences_dialog[21].flags = 0;					//3D render bass drum in a lane
-			eof_preferences_dialog[23].d1 = EOF_INPUT_PIANO_ROLL;	//Input method
-			eof_preferences_dialog[25].d1 = EOF_COLORS_DEFAULT;		//Color set
-			eof_preferences_dialog[30].flags = D_SELECTED;			//Display note names at top of 2D panel
-			eof_preferences_dialog[31].flags = eof_preferences_dialog[32].flags = 0;	//Display sections/fret hand positions at top of 2D panel
-		}
-	}while(retval == 27);	//Keep re-running the dialog until the user closes it with anything besides "Default"
+			eof_preferences_dialog[22].flags = 0;					//3D render bass drum in a lane
+			eof_preferences_dialog[23].flags = 0;					//Use dB style seek controls
+			eof_preferences_dialog[25].d1 = EOF_INPUT_PIANO_ROLL;	//Input method
+			eof_preferences_dialog[27].d1 = EOF_COLORS_DEFAULT;		//Color set
+			eof_preferences_dialog[32].flags = D_SELECTED;			//Display note names at top of 2D panel
+			eof_preferences_dialog[33].flags = eof_preferences_dialog[34].flags = 0;	//Display sections/fret hand positions at top of 2D panel
+		}//If the user clicked "Default
+	}while(retval == 29);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
@@ -2107,6 +2124,7 @@ int eof_save_helper(char *destfilename)
 	char function;		//Will be set to 1 for "Save" or 2 for "Save as"
 	int jumpcode = 0;
 	char fixvoxpitches, fixvoxphrases;
+	char note_length_warned = 0, note_distance_warned = 0;
 
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Return failure
@@ -2163,7 +2181,6 @@ int eof_save_helper(char *destfilename)
 	}
 
 	/* check 5 lane guitar note lengths */
-	char note_length_warned = 0;
 	for(ctr = 1; !note_length_warned && eof_min_note_length && (ctr < eof_song->tracks); ctr++)
 	{	//For each track (only check if the user defined a minimum length, and only if the user didn't already decline to cancel when an offending note was found)
 		if((eof_song->track[ctr]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[ctr]->track_format == EOF_LEGACY_TRACK_FORMAT))
@@ -2181,6 +2198,33 @@ int eof_save_helper(char *destfilename)
 					}
 					note_length_warned = 1;
 					break;	//Stop checking after the first offending note is found
+				}
+			}
+		}
+	}
+
+	/* check note distances */
+	for(ctr = 1; !note_distance_warned && (ctr < eof_song->tracks); ctr++)
+	{	//For each track (and only if the user didn't already decline to cancel when an offending note was found)
+		for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, ctr); ctr2++)
+		{	//For each note in the track
+			long next = eof_fixup_next_note(eof_song, ctr, ctr2);	//Get the next note, if it exists
+			if(next > 0)
+			{	//If there was a next note
+				if(eof_get_note_pos(eof_song, ctr, ctr2) + eof_get_note_length(eof_song, ctr, ctr2) > eof_get_note_pos(eof_song, ctr, next) - eof_min_note_distance)
+				{	//And it does not end at least the configured minimum distance before the next note starts
+					if(!(eof_get_note_flags(eof_song, ctr, ctr2) & EOF_NOTE_FLAG_CRAZY) || (eof_get_note_note(eof_song, ctr, ctr2) & eof_get_note_note(eof_song, ctr, next)))
+					{	//If the note is not marked as "crazy" or if it overlaps a gem in the same lane
+						if(alert("Warning:  At least one note is too close to another", "to enforce the minimum note distance.", "Cancel save and seek to the first such note?", "&Yes", "&No", 'y', 'n') == 1)
+						{	//If the user opted to seek to the first offending note (only prompt once per call)
+							(void) eof_menu_track_selected_track_number(ctr);										//Set the active instrument track
+							eof_note_type = eof_get_note_type(eof_song, ctr, ctr2);							//Set the active difficulty to match that of the note
+							eof_set_seek_position(eof_get_note_pos(eof_song, ctr, ctr2) + eof_av_delay);	//Seek to the note's position
+							return 2;	//Return cancellation
+						}
+						note_distance_warned = 1;
+						break;	//Stop checking after the first offending note is found
+					}
 				}
 			}
 		}

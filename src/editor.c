@@ -4785,7 +4785,7 @@ void eof_render_editor_window_common(void)
 		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_EVENTS)
 		{	//If this beat has any text events
 			line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
-			if(eof_2d_render_top_option == 31)
+			if(eof_2d_render_top_option == 32)
 			{	//If the user has opted to render section names at the top of the 2D window
 				if(eof_song->beat[i]->contained_section_event >= 0)
 				{	//If this beat has a section event
@@ -4824,7 +4824,7 @@ void eof_render_editor_window_common(void)
 	}
 
 	/* draw fret hand positions */
-	if((eof_2d_render_top_option == 32) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+	if((eof_2d_render_top_option == 33) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 	{	//If the user opted to render fret hand positions at the top of the 2D panel, and this is a pro guitar track
 		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 		EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];

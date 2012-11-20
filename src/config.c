@@ -130,12 +130,17 @@ void eof_load_config(char * fn)
 	eof_write_rs_files = get_config_int("preferences", "eof_write_rs_files", 0);
 	eof_inverted_chords_slash = get_config_int("preferences", "eof_inverted_chords_slash", 0);
 	enable_logging = get_config_int("preferences", "enable_logging", 1);
-	eof_2d_render_top_option = get_config_int("preferences", "eof_2d_render_top_option", 30);
+	eof_2d_render_top_option = get_config_int("preferences", "eof_2d_render_top_option", 32);
 	eof_color_set = get_config_int("preferences", "eof_color_set", 0);
 	eof_add_new_notes_to_selection = get_config_int("preferences", "eof_add_new_notes_to_selection", 0);
 	eof_drum_modifiers_affect_all_difficulties = get_config_int("preferences", "eof_drum_modifiers_affect_all_difficulties", 1);
 	eof_fb_seek_controls = get_config_int("preferences", "eof_fb_seek_controls", 0);
 	eof_min_note_length = get_config_int("preferences", "eof_min_note_length", 0);
+	eof_min_note_distance = get_config_int("preferences", "eof_min_note_distance", 3);
+	if(eof_min_note_distance < 1)
+	{	//If the minimum note distance is invalid
+		eof_min_note_length = 3;	//Reset it to default
+	}
 	eof_render_bass_drum_in_lane = get_config_int("preferences", "eof_render_bass_drum_in_lane", 0);
 	eof_vanish_y = get_config_int("preferences", "eof_vanish_y", 0);
 	if((eof_vanish_y < -500) || (eof_vanish_y > 260))
@@ -256,6 +261,7 @@ void eof_save_config(char * fn)
 	set_config_int("preferences", "eof_drum_modifiers_affect_all_difficulties", eof_drum_modifiers_affect_all_difficulties);
 	set_config_int("preferences", "eof_fb_seek_controls", eof_fb_seek_controls);
 	set_config_int("preferences", "eof_min_note_length", eof_min_note_length);
+	set_config_int("preferences", "eof_min_note_distance", eof_min_note_distance);
 	set_config_int("preferences", "eof_render_bass_drum_in_lane", eof_render_bass_drum_in_lane);
 	set_config_int("preferences", "eof_vanish_y", eof_vanish_y);
 
