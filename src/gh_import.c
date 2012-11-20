@@ -2550,6 +2550,7 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 	unsigned long lastseekstartpos;
 		//Some GH files put all languages together instead of in separate parts, this is used to store the position before a seek so if a duplicate checksum (same
 		//section as a previous one in another language) is found, the seek position is restored and function returns, so next call can parse the next language
+	unsigned long lastfoundpos;	//Stores the last found instance of the section ID, in case it turns out not to be a section and should be skipped
 
 	eof_log("eof_gh_read_section_names() entered", 1);
 
@@ -2575,6 +2576,7 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 	lastseekstartpos = fb->index;	//Back up the buffer position before each seek
 	while(eof_filebuffer_find_bytes(fb, sectionid, section_id_size, 1) > 0)
 	{	//While there are section name entries
+		lastfoundpos = fb->index;
 		for(index2 = char_size; (index2 <= fb->index) && (fb->buffer[fb->index - index2 + char_size - 1] != '\"'); index2 += char_size);	//Find the opening quotation mark for this string
 		if(index2 > fb->index)
 		{	//If the opening quotation mark wasn't found
@@ -2608,8 +2610,9 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 			(void) sscanf(checksumbuff, "%8lX", &checksum);	//Convert the hex string to unsigned decimal format (sscanf is width limited to prevent buffer overflow)
 			if(fb->buffer[fb->index + eof_gh_unicode_encoding_detected] != ' ')
 			{	//If the expected space character is not found at this position
-				eof_log("\t\tError:  Malformed section name checksum", 1);
-				return head;	//Stop reading sections
+				eof_log("\t\tError:  Malformed section name checksum, skipping.", 1);
+				fb->index = lastfoundpos + 1;	//Seek just beyond the last search hit so the next one can be found
+				continue;	//Look for next section
 			}
 			fb->index += (2 * char_size);	//Seek past the space character and opening quotation mark
 
