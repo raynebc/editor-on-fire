@@ -323,13 +323,13 @@ void eof_prepare_beat_menu(void)
 		{
 			if((eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_4_4) || (eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_3_4) || (eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_5_4) || (eof_song->beat[i]->flags & EOF_BEAT_FLAG_START_6_4) || (eof_song->beat[i]->flags & EOF_BEAT_FLAG_CUSTOM_TS))
 			{
-				ustrcpy(eof_ts_menu_off_text, "No Change");
+				(void) ustrcpy(eof_ts_menu_off_text, "No Change");
 				break;
 			}
 		}
 		if(i == eof_selected_beat)
 		{
-			ustrcpy(eof_ts_menu_off_text, "&Off");
+			(void) ustrcpy(eof_ts_menu_off_text, "&Off");
 		}
 //Re-flag the active Key Signature for the selected beat
 		for(i = 0; i < 16; i++)
@@ -356,13 +356,13 @@ void eof_prepare_beat_menu(void)
 		{
 			if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_KEY_SIG)
 			{
-				ustrcpy(eof_ks_menu_off_text, "No Change");
+				(void) ustrcpy(eof_ks_menu_off_text, "No Change");
 				break;
 			}
 		}
 		if(i == eof_selected_beat)
 		{
-			ustrcpy(eof_ks_menu_off_text, "&Off");
+			(void) ustrcpy(eof_ks_menu_off_text, "&Off");
 		}
 
 		if((eof_selected_beat + 1 < eof_song->beats) && (eof_song->beat[eof_selected_beat + 1]->ppqn != eof_song->beat[eof_selected_beat]->ppqn))
@@ -411,13 +411,13 @@ int eof_menu_beat_bpm_change(void)
 	eof_color_dialog(eof_bpm_change_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_bpm_change_dialog);
 	oldbpm = 60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn;
-	sprintf(eof_etext, "%3.2f", oldbpm);
+	snprintf(eof_etext, sizeof(eof_etext) - 1, "%3.2f", oldbpm);
 	eof_bpm_change_dialog[3].flags = 0;
 	eof_bpm_change_dialog[4].flags = 0;
 	if(eof_popup_dialog(eof_bpm_change_dialog, 2) == 5)
 	{	//If the user activated the "OK" button
 		double bpm = atof(eof_etext);
-		sprintf(eof_etext2, "%3.2f", oldbpm);
+		snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%3.2f", oldbpm);
 		if(!ustricmp(eof_etext, eof_etext2))
 		{
 			eof_cursor_visible = 1;
@@ -527,8 +527,8 @@ int eof_menu_beat_ts_custom(void)
 	eof_render();
 	eof_color_dialog(eof_custom_ts_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_custom_ts_dialog);
-	sprintf(eof_etext, "%lu", ((eof_song->beat[eof_selected_beat]->flags & 0xFF000000)>>24) + 1);
-	sprintf(eof_etext2, "%lu", ((eof_song->beat[eof_selected_beat]->flags & 0x00FF0000)>>16) + 1);
+	snprintf(eof_etext, sizeof(eof_etext) - 1, "%lu", ((eof_song->beat[eof_selected_beat]->flags & 0xFF000000)>>24) + 1);
+	snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", ((eof_song->beat[eof_selected_beat]->flags & 0x00FF0000)>>16) + 1);
 	if(eof_popup_dialog(eof_custom_ts_dialog, 2) == 5)
 	{	//User clicked OK
 		num = atoi(eof_etext);
@@ -718,7 +718,7 @@ int eof_menu_beat_anchor(void)
 	oldmm = (eof_song->beat[eof_selected_beat]->pos / 1000) / 60;
 	oldss = (eof_song->beat[eof_selected_beat]->pos / 1000) % 60;
 	oldhs = (eof_song->beat[eof_selected_beat]->pos / 10) % 100;
-	sprintf(eof_etext2, "%02d:%02d.%02d", oldmm, oldss, oldhs);
+	snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%02d:%02d.%02d", oldmm, oldss, oldhs);
 	if(eof_popup_dialog(eof_anchor_dialog, 2) == 3)
 	{
 		ttext[0] = eof_etext2[0];
@@ -751,7 +751,7 @@ int eof_menu_beat_anchor(void)
 				eof_recalculate_beats(eof_song, eof_selected_beat);
 				if(eof_song->beat[eof_selected_beat]->pos > eof_song->beat[eof_selected_beat + 1]->pos - 100)
 				{
-					eof_undo_apply();
+					(void) eof_undo_apply();
 					revert = 1;
 					break;
 				}
@@ -767,7 +767,7 @@ int eof_menu_beat_anchor(void)
 				eof_recalculate_beats(eof_song, eof_selected_beat);
 				if(eof_song->beat[eof_selected_beat]->pos < eof_song->beat[eof_selected_beat - 1]->pos + 100)
 				{
-					eof_undo_apply();
+					(void) eof_undo_apply();
 					revert = 1;
 					break;
 				}
@@ -1054,13 +1054,13 @@ char * eof_events_list(int index, int * size)
 			{
 				if((eof_song->text_event[i]->track != 0) && (eof_song->text_event[i]->track < eof_song->tracks))
 				{	//If this is a track specific event
-					snprintf(trackname, sizeof(trackname), "(%s) ", eof_song->track[eof_song->text_event[i]->track]->name);
+					snprintf(trackname, sizeof(trackname) - 1, "(%s) ", eof_song->track[eof_song->text_event[i]->track]->name);
 				}
 				else
 				{
 					trackname[0] = '\0';	//Empty the string
 				}
-				snprintf(eof_event_list_text[ecount], 256, "%s%s", trackname, eof_song->text_event[i]->text);
+				snprintf(eof_event_list_text[ecount], sizeof(eof_event_list_text[ecount]) - 1, "%s%s", trackname, eof_song->text_event[i]->text);
 				ecount++;
 			}
 		}
@@ -1132,13 +1132,13 @@ char * eof_events_list_all(int index, int * size)
 		}
 		if((eof_song->text_event[realindex]->track != 0) && (eof_song->text_event[realindex]->track < eof_song->tracks))
 		{	//If this is a track specific event
-			snprintf(trackname, sizeof(trackname), " %s", eof_song->track[eof_song->text_event[realindex]->track]->name);
+			snprintf(trackname, sizeof(trackname) - 1, " %s", eof_song->track[eof_song->text_event[realindex]->track]->name);
 		}
 		else
 		{
 			trackname[0] = '\0';	//Empty the string
 		}
-		snprintf(eof_event_list_text[index], 256, "(%02lu:%02lu.%03lu%s) %s", eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 60000, (eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 1000) % 60, eof_song->beat[eof_song->text_event[realindex]->beat]->pos % 1000, trackname, eof_song->text_event[realindex]->text);
+		snprintf(eof_event_list_text[index], sizeof(eof_event_list_text[index]) - 1, "(%02lu:%02lu.%03lu%s) %s", eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 60000, (eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 1000) % 60, eof_song->beat[eof_song->text_event[realindex]->beat]->pos % 1000, trackname, eof_song->text_event[realindex]->text);
 		return eof_event_list_text[index];
 	}
 	return NULL;
@@ -1163,8 +1163,8 @@ int eof_events_dialog_add_function(char function)
 	eof_render();
 	eof_color_dialog(eof_events_add_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_events_add_dialog);
-	ustrcpy(eof_etext, "");
-	snprintf(eof_events_add_dialog_string, sizeof(eof_events_add_dialog_string), "Specific to %s", eof_song->track[eof_selected_track]->name);
+	(void) ustrcpy(eof_etext, "");
+	snprintf(eof_events_add_dialog_string, sizeof(eof_events_add_dialog_string) - 1, "Specific to %s", eof_song->track[eof_selected_track]->name);
 	eof_events_add_dialog[3].flags = 0;	//By default, this is not a track specific event
 	if(function)
 	{	//If the calling function wanted to automatically enable the "Rocksmith phrase marker" checkbox
@@ -1241,7 +1241,7 @@ int eof_events_dialog_edit(DIALOG * d)
 		eof_show_mouse(screen);
 		return D_O_K;	//Don't allow it to be edited here
 	}
-	snprintf(eof_events_add_dialog_string, sizeof(eof_events_add_dialog_string), "Specific to %s", eof_song->track[eof_selected_track]->name);
+	snprintf(eof_events_add_dialog_string, sizeof(eof_events_add_dialog_string) - 1, "Specific to %s", eof_song->track[eof_selected_track]->name);
 	if(eof_song->text_event[event]->track == eof_selected_track)
 	{	//If this event is specific to this track
 		eof_events_add_dialog[3].flags = D_SELECTED;	//Set the checkbox specifying the event is track specific
@@ -1259,7 +1259,7 @@ int eof_events_dialog_edit(DIALOG * d)
 		eof_events_add_dialog[4].flags = 0;
 	}
 
-	ustrcpy(eof_etext, eof_song->text_event[event]->text);	//Save the original event text
+	(void) ustrcpy(eof_etext, eof_song->text_event[event]->text);	//Save the original event text
 	trackflag = eof_events_add_dialog[3].flags;				//Save the track specifier flag
 	phraseflag = eof_events_add_dialog[4].flags;			//Save the RS phrase flag
 	if(eof_popup_dialog(eof_events_add_dialog, 2) == 5)
@@ -1272,7 +1272,7 @@ int eof_events_dialog_edit(DIALOG * d)
 				return D_REDRAW;
 			}
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			ustrcpy(eof_song->text_event[event]->text, eof_etext);
+			(void) ustrcpy(eof_song->text_event[event]->text, eof_etext);
 			if(eof_events_add_dialog[3].flags & D_SELECTED)
 			{	//User opted to make this a track specific event
 				track = eof_selected_track;
@@ -1393,15 +1393,15 @@ void eof_rebuild_trainer_strings(void)
 	//Build the trainer strings
 	if((eof_selected_track == EOF_TRACK_PRO_GUITAR) || (eof_selected_track == EOF_TRACK_PRO_GUITAR_22))
 	{	//A pro guitar track is active
-		sprintf(eof_etext2, "[begin_pg song_trainer_pg_%s]", eof_trainer_string);
-		sprintf(eof_etext3, "[pg_norm song_trainer_pg_%s]", eof_trainer_string);
-		sprintf(eof_etext4, "[end_pg song_trainer_pg_%s]", eof_trainer_string);
+		snprintf(eof_etext2, sizeof(eof_etext2) - 1, "[begin_pg song_trainer_pg_%s]", eof_trainer_string);
+		snprintf(eof_etext3, sizeof(eof_etext3) - 1, "[pg_norm song_trainer_pg_%s]", eof_trainer_string);
+		snprintf(eof_etext4, sizeof(eof_etext4) - 1, "[end_pg song_trainer_pg_%s]", eof_trainer_string);
 	}
 	else if((eof_selected_track == EOF_TRACK_PRO_BASS) || (eof_selected_track == EOF_TRACK_PRO_BASS_22))
 	{	//A pro bass track is active
-		sprintf(eof_etext2, "[begin_pb song_trainer_pb_%s]", eof_trainer_string);
-		sprintf(eof_etext3, "[pb_norm song_trainer_pb_%s]", eof_trainer_string);
-		sprintf(eof_etext4, "[end_pb song_trainer_pb_%s]", eof_trainer_string);
+		snprintf(eof_etext2, sizeof(eof_etext2) - 1, "[begin_pb song_trainer_pb_%s]", eof_trainer_string);
+		snprintf(eof_etext3, sizeof(eof_etext3) - 1, "[pb_norm song_trainer_pb_%s]", eof_trainer_string);
+		snprintf(eof_etext4, sizeof(eof_etext4) - 1, "[end_pb song_trainer_pb_%s]", eof_trainer_string);
 	}
 
 	//Update the checkboxes to indicate which trainer strings are already defined

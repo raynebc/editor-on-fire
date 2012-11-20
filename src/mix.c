@@ -390,7 +390,7 @@ void eof_mix_init(void)
 	}
 	for(i = 0; i < EOF_MAX_VOCAL_TONES; i++)
 	{	//Load piano tones
-		sprintf(fbuffer, "eof.dat#piano.esp/NOTE_%02d_OGG", i);
+		snprintf(fbuffer, sizeof(fbuffer) - 1, "eof.dat#piano.esp/NOTE_%02d_OGG", i);
 		eof_sound_note[i] = eof_mix_load_ogg_sample(fbuffer);
 	}
 	eof_sound_cowbell = eof_mix_load_ogg_sample("percussion.dat#cowbell.ogg");

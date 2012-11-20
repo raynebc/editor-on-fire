@@ -101,7 +101,7 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 	eof_log("eof_get_raw_MIDI_data() entered", 1);
 
 #ifdef MIDI_DATA_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string), "\tEvents will be offset by %d ms", offset);
+	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tEvents will be offset by %d ms", offset);
 	eof_log(eof_log_string, 1);
 #endif
 
@@ -305,7 +305,7 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 				}
 				linkptr->deltatime = absdelta;				//Store the event's original delta time
 				linkptr->realtime = preoffseted + offset;	//Apply the offset and use the result for this event's timestamp
-				snprintf(buffer, sizeof(buffer), "%f", linkptr->realtime);	//Create a string representation of this timestamp
+				snprintf(buffer, sizeof(buffer) - 1, "%f", linkptr->realtime);	//Create a string representation of this timestamp
 				linkptr->stringtime = malloc(strlen(buffer) + 1);	//Allocate enough memory to store the timestamp string
 				if(!linkptr->stringtime)
 				{	//Error allocating memory
@@ -318,11 +318,11 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 #ifdef MIDI_DATA_IMPORT_DEBUG
 				if((eventtype & 0xF) == 0xF)
 				{	//If this was a meta event
-					snprintf(eof_log_string, sizeof(eof_log_string), "\tStoring event:  Delta = %lu  Time = %fms  (Offseted = %fms) Event = 0x%X  Meta event = 0x%X",absdelta, preoffseted, linkptr->realtime, (eventtype >> 4), meventtype);
+					snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tStoring event:  Delta = %lu  Time = %fms  (Offseted = %fms) Event = 0x%X  Meta event = 0x%X",absdelta, preoffseted, linkptr->realtime, (eventtype >> 4), meventtype);
 				}
 				else
 				{	//This was a normal MIDI event
-					snprintf(eof_log_string, sizeof(eof_log_string), "\tStoring event:  Delta = %lu  Time = %fms  (Offseted = %fms) Event = 0x%X",absdelta, preoffseted, linkptr->realtime, (eventtype >> 4));
+					snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tStoring event:  Delta = %lu  Time = %fms  (Offseted = %fms) Event = 0x%X",absdelta, preoffseted, linkptr->realtime, (eventtype >> 4));
 				}
 				eof_log(eof_log_string, 1);
 #endif

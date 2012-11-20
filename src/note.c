@@ -488,7 +488,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 						}
 						else
 						{	//The name for this note was detected
-							snprintf(prevnotename, sizeof(notename), "[%s]", notename);	//Rebuild the note name to be enclosed in brackets
+							snprintf(prevnotename, sizeof(notename) - 1, "[%s]", notename);	//Rebuild the note name to be enclosed in brackets
 							nameptr = prevnotename;
 						}
 					}
@@ -972,7 +972,7 @@ int eof_note_draw_3d(unsigned long track, unsigned long notenum, int p)
 				}
 				else
 				{	//The name for this note was detected
-					snprintf(prevnotename, sizeof(notename), "[%s]", notename);	//Rebuild the note name to be enclosed in brackets
+					snprintf(prevnotename, sizeof(prevnotename) - 1, "[%s]", notename);	//Rebuild the note name to be enclosed in brackets
 					nameptr = prevnotename;
 				}
 			}
@@ -1212,17 +1212,17 @@ BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, unsigned char s
 	{
 		if(note->frets[stringnum] & 0x80)
 		{	//This is a muted fret
-			snprintf(fretstring,sizeof(fretstring),"X");
+			snprintf(fretstring, sizeof(fretstring) - 1, "X");
 		}
 		else
 		{	//This is a non muted fret
 			if(note->ghost & (1 << stringnum))
 			{	//This is a ghosted note
-				snprintf(fretstring,sizeof(fretstring),"(%d)",note->frets[stringnum]);
+				snprintf(fretstring, sizeof(fretstring) - 1,"(%d)", note->frets[stringnum]);
 			}
 			else
 			{	//This is a normal note
-				snprintf(fretstring,sizeof(fretstring),"%d",note->frets[stringnum]);
+				snprintf(fretstring, sizeof(fretstring) - 1,"%d", note->frets[stringnum]);
 			}
 		}
 
@@ -1282,7 +1282,7 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 			{	//If the note defines the strength of its bend
 				char buffer2[5];
 				unsigned long tracknum = eof_song->track[track]->tracknum, index2;
-				snprintf(buffer2, sizeof(buffer2), "%d", eof_song->pro_guitar_track[tracknum]->note[note]->bendstrength);	//Build a string out of the bend strength
+				snprintf(buffer2, sizeof(buffer2) - 1, "%d", eof_song->pro_guitar_track[tracknum]->note[note]->bendstrength);	//Build a string out of the bend strength
 				for(index2 = 0; buffer2[index2] != '\0'; index2++)
 				{	//For each character in the string
 					buffer[index++] = buffer2[index2];	//Append it to the notation string
@@ -1313,7 +1313,7 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		{	//If the note slides up or down and defines the ending fret for the slide
 			char buffer2[5];
 			unsigned long tracknum = eof_song->track[track]->tracknum, index2;
-			snprintf(buffer2, sizeof(buffer2), "%d", eof_song->pro_guitar_track[tracknum]->note[note]->slideend);	//Build a string out of the ending fret value
+			snprintf(buffer2, sizeof(buffer2) - 1, "%d", eof_song->pro_guitar_track[tracknum]->note[note]->slideend);	//Build a string out of the ending fret value
 			for(index2 = 0; buffer2[index2] != '\0'; index2++)
 			{	//For each character in the string
 				buffer[index++] = buffer2[index2];	//Append it to the notation string
@@ -1595,7 +1595,7 @@ char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, 
 	name = eof_get_note_name(sp, track, note);	//Check if the note was manually assigned a name
 	if(name && (name[0] != '\0'))
 	{	//If it has a name
-		ustrcpy(buffer, name);	//Copy the name
+		(void) ustrcpy(buffer, name);	//Copy the name
 		return 1;
 	}
 
@@ -1606,11 +1606,11 @@ char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, 
 		{	//If the chord lookup found a match
 			if(!isslash)
 			{	//If it's a normal chord
-				sprintf(buffer, "%s%s", eof_note_names[scale], eof_chord_names[chord].chordname);
+				snprintf(buffer, sizeof(buffer) - 1, "%s%s", eof_note_names[scale], eof_chord_names[chord].chordname);
 			}
 			else
 			{	//If it's a slash chord
-				sprintf(buffer, "%s%s%s", eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote]);
+				snprintf(buffer, sizeof(buffer) - 1, "%s%s%s", eof_note_names[scale], eof_chord_names[chord].chordname, eof_slash_note_names[bassnote]);
 			}
 			return 2;
 		}

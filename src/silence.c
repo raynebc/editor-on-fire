@@ -191,7 +191,7 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	set_window_title("Adjusting Silence...");
 
 	/* back up original file */
-	sprintf(backupfn, "%s.backup", oggfn);
+	snprintf(backupfn, sizeof(backupfn) - 1, "%s.backup", oggfn);
 	if(!exists(backupfn))
 	{
 		eof_copy_file((char *)oggfn, backupfn);
@@ -209,9 +209,9 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	destroy_sample(silence_sample);
 	replace_filename(soggfn, eof_song_path, "silence.ogg", 1024);
 	#ifdef ALLEGRO_WINDOWS
-		sprintf(sys_command, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
+		snprintf(sys_command, sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
 	#else
-		sprintf(sys_command, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
+		snprintf(sys_command, sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
 	#endif
 	if(system(sys_command))
 	{
@@ -220,7 +220,7 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	}
 
 	/* stitch the original file to the silence file */
-	sprintf(sys_command, "oggCat \"%s\" \"%s\" \"%s\"", oggfn, soggfn, backupfn);
+	snprintf(sys_command, sizeof(sys_command) - 1, "oggCat \"%s\" \"%s\" \"%s\"", oggfn, soggfn, backupfn);
 	if(system(sys_command))
 	{
 		eof_copy_file(backupfn, (char *)oggfn);
@@ -267,7 +267,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	set_window_title("Adjusting Silence...");
 
 	/* back up original file */
-	sprintf(backupfn, "%s.backup", oggfn);
+	snprintf(backupfn, sizeof(backupfn) - 1, "%s.backup", oggfn);
 	if(!exists(backupfn))
 	{
 		eof_copy_file((char *)oggfn, backupfn);
@@ -348,9 +348,9 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	destroy_sample(combined);	//This is no longer needed
 	replace_filename(soggfn, eof_song_path, "encode.ogg", 1024);
 	#ifdef ALLEGRO_WINDOWS
-		sprintf(sys_command, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
+		snprintf(sys_command, sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
 	#else
-		sprintf(sys_command, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
+		snprintf(sys_command, sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
 	#endif
 	if(system(sys_command))
 	{
@@ -400,7 +400,7 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	set_window_title("Adjusting Silence...");
 
 	/* back up original file */
-	sprintf(backupfn, "%s.backup", oggfn);
+	snprintf(backupfn, sizeof(backupfn) - 1, "%s.backup", oggfn);
 	if(!exists(backupfn))
 	{
 		eof_copy_file((char *)oggfn, backupfn);
@@ -409,7 +409,7 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	/* decode MP3 */
 	replace_filename(wavfn, eof_song_path, "decode.wav", 1024);
 	replace_filename(mp3fn, eof_song_path, "original.mp3", 1024);
-	sprintf(sys_command, "lame --decode \"%s\" \"%s\"", mp3fn, wavfn);
+	snprintf(sys_command, sizeof(sys_command) - 1, "lame --decode \"%s\" \"%s\"", mp3fn, wavfn);
 	system(sys_command);
 
 	/* insert silence */
@@ -473,9 +473,9 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	printf("%s\n%s\n", eof_song_path, wavfn);
 	replace_filename(soggfn, eof_song_path, "encode.ogg", 1024);
 	#ifdef ALLEGRO_WINDOWS
-		sprintf(sys_command, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
+		snprintf(sys_command, sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
 	#else
-		sprintf(sys_command, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
+		snprintf(sys_command, sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
 	#endif
 
 	if(system(sys_command))

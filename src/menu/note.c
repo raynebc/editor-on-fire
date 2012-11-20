@@ -568,12 +568,12 @@ void eof_prepare_note_menu(void)
 		if(insp)
 		{
 			eof_star_power_menu[1].flags = 0;
-			ustrcpy(eof_star_power_menu_mark_text, "Re-&Mark");
+			(void) ustrcpy(eof_star_power_menu_mark_text, "Re-&Mark");
 		}
 		else
 		{
 			eof_star_power_menu[1].flags = D_DISABLED;
-			ustrcpy(eof_star_power_menu_mark_text, "&Mark");
+			(void) ustrcpy(eof_star_power_menu_mark_text, "&Mark");
 		}
 
 		/* star power copy from */
@@ -587,7 +587,7 @@ void eof_prepare_note_menu(void)
 			}
 			else
 			{	//Write a blank string for the track name
-				ustrcpy(eof_menu_sp_copy_menu_text[i],"");
+				(void) ustrcpy(eof_menu_sp_copy_menu_text[i],"");
 			}
 			if(!eof_get_num_star_power_paths(eof_song, i + 1) || (i + 1 == eof_selected_track))
 			{	//If the track has no star power phrases or is the active track
@@ -599,12 +599,12 @@ void eof_prepare_note_menu(void)
 		if(insolo)
 		{
 			eof_solo_menu[1].flags = 0;
-			ustrcpy(eof_solo_menu_mark_text, "Re-&Mark");
+			(void) ustrcpy(eof_solo_menu_mark_text, "Re-&Mark");
 		}
 		else
 		{
 			eof_solo_menu[1].flags = D_DISABLED;
-			ustrcpy(eof_solo_menu_mark_text, "&Mark");
+			(void) ustrcpy(eof_solo_menu_mark_text, "&Mark");
 		}
 
 		/* solo copy from */
@@ -618,7 +618,7 @@ void eof_prepare_note_menu(void)
 			}
 			else
 			{	//Write a blank string for the track name
-				ustrcpy(eof_menu_solo_copy_menu_text[i],"");
+				(void) ustrcpy(eof_menu_solo_copy_menu_text[i],"");
 			}
 			if(!eof_get_num_solos(eof_song, i + 1) || (i + 1 == eof_selected_track))
 			{	//If the track has no solos or is the active track
@@ -631,25 +631,25 @@ void eof_prepare_note_menu(void)
 		{
 			eof_lyric_line_menu[1].flags = 0;	//Note>Lyrics>Lyric Lines>Remove
 			eof_lyric_line_menu[4].flags = 0; 	//Note>Lyrics>Lyric Lines>Toggle Overdrive
-			ustrcpy(eof_lyric_line_menu_mark_text, "Re-&Mark\t" CTRL_NAME "+M");
+			(void) ustrcpy(eof_lyric_line_menu_mark_text, "Re-&Mark\t" CTRL_NAME "+M");
 		}
 		else
 		{
 			eof_lyric_line_menu[1].flags = D_DISABLED;
 			eof_lyric_line_menu[4].flags = D_DISABLED;
-			ustrcpy(eof_lyric_line_menu_mark_text, "&Mark\t" CTRL_NAME "+M");
+			(void) ustrcpy(eof_lyric_line_menu_mark_text, "&Mark\t" CTRL_NAME "+M");
 		}
 
 		/* arpeggio mark/remark */
 		if(inarpeggio)
 		{
 			eof_arpeggio_menu[1].flags = 0;				//Note>Pro Guitar>Arpeggio>Remove
-			ustrcpy(eof_arpeggio_menu_mark_text, "Re-&Mark");
+			(void) ustrcpy(eof_arpeggio_menu_mark_text, "Re-&Mark");
 		}
 		else
 		{
 			eof_arpeggio_menu[1].flags = D_DISABLED;
-			ustrcpy(eof_arpeggio_menu_mark_text, "&Mark");
+			(void) ustrcpy(eof_arpeggio_menu_mark_text, "&Mark");
 		}
 
 		/* arpeggio copy from */
@@ -663,7 +663,7 @@ void eof_prepare_note_menu(void)
 			}
 			else
 			{	//Write a blank string for the track name
-				ustrcpy(eof_menu_arpeggio_copy_menu_text[i],"");
+				(void) ustrcpy(eof_menu_arpeggio_copy_menu_text[i],"");
 			}
 			if(!eof_get_num_arpeggios(eof_song, i + 1) || (i + 1 == eof_selected_track) || (eof_song->track[i + 1]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If the track has no arpeggios, is the active track or is not a pro guitar/bass track
@@ -888,7 +888,7 @@ void eof_prepare_note_menu(void)
 					}
 					else
 					{	//Write a blank string for the track name
-						ustrcpy(eof_menu_thin_notes_menu_text[i],"");
+						(void) ustrcpy(eof_menu_thin_notes_menu_text[i],"");
 					}
 					for(j = 0; j < eof_get_track_size(eof_song, i + 1); j++)
 					{	//For each note in the track
@@ -909,12 +909,12 @@ void eof_prepare_note_menu(void)
 			if(intrill)
 			{
 				eof_trill_menu[1].flags = 0;	//Note>Trill>Remove
-				ustrcpy(eof_trill_menu_mark_text, "Re-&Mark");
+				(void) ustrcpy(eof_trill_menu_mark_text, "Re-&Mark");
 			}
 			else
 			{
 				eof_trill_menu[1].flags = D_DISABLED;
-				ustrcpy(eof_trill_menu_mark_text, "&Mark");
+				(void) ustrcpy(eof_trill_menu_mark_text, "&Mark");
 			}
 
 			/* Trill copy from */
@@ -928,7 +928,7 @@ void eof_prepare_note_menu(void)
 				}
 				else
 				{	//Otherwise write a blank string for the track name
-					ustrcpy(eof_menu_trill_copy_menu_text[i],"");
+					(void) ustrcpy(eof_menu_trill_copy_menu_text[i],"");
 				}
 				if(!eof_get_num_trills(eof_song, i + 1) || (i + 1 == eof_selected_track))
 				{	//If the track has no trill phrases or is the active track
@@ -940,12 +940,12 @@ void eof_prepare_note_menu(void)
 			if(intremolo)
 			{
 				eof_tremolo_menu[1].flags = 0;	//Note>Tremolo>Remove
-				ustrcpy(eof_tremolo_menu_mark_text, "Re-&Mark");
+				(void) ustrcpy(eof_tremolo_menu_mark_text, "Re-&Mark");
 			}
 			else
 			{
 				eof_tremolo_menu[1].flags = D_DISABLED;
-				ustrcpy(eof_tremolo_menu_mark_text, "&Mark");
+				(void) ustrcpy(eof_tremolo_menu_mark_text, "&Mark");
 			}
 
 			/* Tremolo copy from */
@@ -959,7 +959,7 @@ void eof_prepare_note_menu(void)
 				}
 				else
 				{	//Otherwise write a blank string for the track name
-					ustrcpy(eof_menu_tremolo_copy_menu_text[i],"");
+					(void) ustrcpy(eof_menu_tremolo_copy_menu_text[i],"");
 				}
 				if(!eof_get_num_tremolos(eof_song, i + 1) || (i + 1 == eof_selected_track))
 				{	//If the track has no tremolo phrases or is the active track
@@ -970,13 +970,13 @@ void eof_prepare_note_menu(void)
 			/* Rename Trill and Tremolo menus as necessary for the drum track */
 			if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR) || (eof_song->track[eof_selected_track]->track_behavior == EOF_PRO_KEYS_TRACK_BEHAVIOR))
 			{	//If a legacy/pro guitar/bass/keys track is active, set the guitar terminology for trill and tremolo sections
-				ustrcpy(eof_trill_menu_text, "Trill");
-				ustrcpy(eof_tremolo_menu_text, "Tremolo");
+				(void) ustrcpy(eof_trill_menu_text, "Trill");
+				(void) ustrcpy(eof_tremolo_menu_text, "Tremolo");
 			}
 			else if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 			{	//If a legacy drum track is active, set the drum terminology for trill and tremolo sections
-				ustrcpy(eof_trill_menu_text, "Special Drum Roll");
-				ustrcpy(eof_tremolo_menu_text, "Drum Roll");
+				(void) ustrcpy(eof_trill_menu_text, "Special Drum Roll");
+				(void) ustrcpy(eof_tremolo_menu_text, "Drum Roll");
 			}
 			else
 			{	//Disable these submenus unless a track that can use them is active
@@ -992,12 +992,12 @@ void eof_prepare_note_menu(void)
 			if(inslider)
 			{
 				eof_slider_menu[1].flags = 0;	//Note>Slider>Remove
-				ustrcpy(eof_slider_menu_mark_text, "Re-&Mark\tShift+S");
+				(void) ustrcpy(eof_slider_menu_mark_text, "Re-&Mark\tShift+S");
 			}
 			else
 			{
 				eof_slider_menu[1].flags = D_DISABLED;
-				ustrcpy(eof_slider_menu_mark_text, "&Mark\tShift+S");
+				(void) ustrcpy(eof_slider_menu_mark_text, "&Mark\tShift+S");
 			}
 
 			/* Toggle>Purple */
@@ -2443,13 +2443,13 @@ int eof_menu_split_lyric(void)
 	eof_render();
 	eof_color_dialog(eof_split_lyric_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_split_lyric_dialog);
-	ustrcpy(eof_etext, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text);
+	(void) ustrcpy(eof_etext, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text);
 	if(eof_popup_dialog(eof_split_lyric_dialog, 2) == 3)
 	{
 		if(ustricmp(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text, eof_etext))
 		{
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			ustrcpy(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text, eof_etext);
+			(void) ustrcpy(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text, eof_etext);
 			eof_split_lyric(eof_selection.current);
 		}
 	}
@@ -3157,7 +3157,7 @@ int eof_new_lyric_dialog(void)
 	eof_render();
 	eof_color_dialog(eof_lyric_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_lyric_dialog);
-	ustrcpy(eof_etext, "");
+	(void) ustrcpy(eof_etext, "");
 
 	if(eof_pen_lyric.note != EOF_LYRIC_PERCUSSION)		//If not entering a percussion note
 	{
@@ -3170,7 +3170,7 @@ int eof_new_lyric_dialog(void)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		new_lyric = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_lyric.note, eof_pen_lyric.pos, eof_pen_lyric.length, 0, NULL);
-		ustrcpy(new_lyric->text, eof_etext);
+		(void) ustrcpy(new_lyric->text, eof_etext);
 		eof_selection.track = EOF_TRACK_VOCALS;
 		eof_selection.current_pos = new_lyric->pos;
 		eof_selection.range_pos_1 = eof_selection.current_pos;
@@ -3203,7 +3203,7 @@ int eof_edit_lyric_dialog(void)
 	eof_render();
 	eof_color_dialog(eof_lyric_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_lyric_dialog);
-	ustrcpy(eof_etext, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text);
+	(void) ustrcpy(eof_etext, eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text);
 	if(eof_popup_dialog(eof_lyric_dialog, 2) == 3)	//User hit OK on "Edit Lyric" dialog instead of canceling
 	{
 		if(eof_is_freestyle(eof_etext))		//If the text entered had one or more freestyle characters
@@ -3218,7 +3218,7 @@ int eof_edit_lyric_dialog(void)
 			}
 			else
 			{
-				ustrcpy(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text, eof_etext);
+				(void) ustrcpy(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->text, eof_etext);
 				eof_fix_lyric(eof_song->vocal_track[tracknum],eof_selection.current);	//Correct the freestyle character if necessary
 			}
 		}
@@ -3483,11 +3483,11 @@ int eof_menu_note_edit_pro_guitar_note(void)
 					}
 					if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] == 0xFF)
 					{	//If this string is muted with no fret value specified
-						snprintf(eof_fret_strings[ctr], 3, "X");
+						snprintf(eof_fret_strings[ctr], sizeof(eof_fret_strings[ctr]) - 1, "X");
 					}
 					else
 					{
-						snprintf(eof_fret_strings[ctr], 3, "%d", eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] & 0x7F);	//Mask out the MSB to obtain the fret value
+						snprintf(eof_fret_strings[ctr], sizeof(eof_fret_strings[ctr]) - 1, "%d", eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] & 0x7F);	//Mask out the MSB to obtain the fret value
 					}
 				}
 				else
@@ -3906,11 +3906,11 @@ int eof_menu_note_edit_pro_guitar_note(void)
 							{	//If this name isn't one the user already refused
 								if(eof_get_pro_guitar_note_fret_string(eof_song->pro_guitar_track[tracknum], eof_selection.current, pro_guitar_string))
 								{	//If the note's frets can be represented in string format, specify it in the prompt
-									snprintf(autoprompt, sizeof(autoprompt), "Set the name of selected notes (%s) to \"%s\"?",pro_guitar_string, newname);
+									snprintf(autoprompt, sizeof(autoprompt) - 1, "Set the name of selected notes (%s) to \"%s\"?",pro_guitar_string, newname);
 								}
 								else
 								{	//Otherwise use a generic prompt
-									snprintf(autoprompt, sizeof(autoprompt), "Set selected notes' name to \"%s\"?",newname);
+									snprintf(autoprompt, sizeof(autoprompt) - 1, "Set selected notes' name to \"%s\"?",newname);
 								}
 								if(alert(NULL, autoprompt, NULL, "&Yes", "&No", 'y', 'n') == 1)
 								{	//If the user opts to assign this note's name to the selected notes
@@ -4005,11 +4005,11 @@ int eof_menu_note_edit_pro_guitar_note(void)
 								}
 								if(eof_get_pro_guitar_note_fret_string(eof_song->pro_guitar_track[tracknum], eof_selection.current, pro_guitar_string))
 								{	//If the note's frets can be represented in string format, specify it in the prompt
-									snprintf(autoprompt, sizeof(autoprompt), "Set the legacy bitmask of selected notes (%s) to \"%s\"?",pro_guitar_string, autobitmask);
+									snprintf(autoprompt, sizeof(autoprompt) - 1, "Set the legacy bitmask of selected notes (%s) to \"%s\"?",pro_guitar_string, autobitmask);
 								}
 								else
 								{	//Otherwise use a generic prompt
-									snprintf(autoprompt, sizeof(autoprompt), "Set selected notes' legacy bitmask to \"%s\"?",autobitmask);
+									snprintf(autoprompt, sizeof(autoprompt) - 1, "Set selected notes' legacy bitmask to \"%s\"?",autobitmask);
 								}
 								if(alert(NULL, autoprompt, NULL, "&Yes", "&No", 'y', 'n') == 1)
 								{	//If the user opts to assign this note's legacy bitmask to the edited note
@@ -4167,15 +4167,15 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 			{	//If this string is already defined as being in use, copy its fret value to the string
 				if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] == 0xFF)
 				{	//If this string is muted with no fret value specified
-					snprintf(eof_fret_strings[ctr], 3, "X");
+					snprintf(eof_fret_strings[ctr], sizeof(eof_fret_strings[ctr]) - 1, "X");
 				}
 				else
 				{
-					snprintf(eof_fret_strings[ctr], 3, "%d", eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] & 0x7F);	//Mask out the MSB to obtain the fret value
+					snprintf(eof_fret_strings[ctr], sizeof(eof_fret_strings[ctr]) - 1, "%d", eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] & 0x7F);	//Mask out the MSB to obtain the fret value
 				}
 				if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->finger[ctr] != 0)
 				{	//If the finger used to fret this string is defined
-					snprintf(eof_finger_strings[ctr], 3, "%d", eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->finger[ctr]);	//Create the finger string
+					snprintf(eof_finger_strings[ctr], sizeof(eof_finger_strings[ctr]) - 1, "%d", eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->finger[ctr]);	//Create the finger string
 				}
 				else
 				{
@@ -5495,7 +5495,7 @@ int eof_menu_note_edit_name(void)
 		}
 		else
 		{	//Otherwise copy the note name into the edit field
-			ustrcpy(eof_etext, notename);
+			(void) ustrcpy(eof_etext, notename);
 		}
 
 		if(eof_popup_dialog(eof_note_name_dialog, 2) == 3)	//User hit OK
@@ -6886,7 +6886,7 @@ int eof_pro_guitar_note_slide_end_fret(char undo)
 	}
 	else
 	{	//Otherwise write the ending fret into the string
-		sprintf(eof_etext, "%d", np->slideend);
+		snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", np->slideend);
 	}
 
 	if(eof_popup_dialog(eof_pro_guitar_note_slide_end_fret_dialog, 2) == 3)
@@ -7041,7 +7041,7 @@ int eof_pro_guitar_note_bend_strength(char undo)
 	}
 	else
 	{	//Otherwise write the ending fret into the string
-		sprintf(eof_etext, "%d", np->bendstrength);
+		snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", np->bendstrength);
 	}
 
 	if(eof_popup_dialog(eof_pro_guitar_note_bend_strength_dialog, 2) == 3)
@@ -7168,7 +7168,7 @@ int eof_note_menu_read_gp_lyric_texts(void)
 	if(!fp)
 	{
 		allegro_message("Couldn't open file:  \"%s\"", strerror(errno));
-		snprintf(eof_log_string, sizeof(eof_log_string), "\tError loading:  Cannot open input .eof file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError loading:  Cannot open input .eof file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
 		eof_log(eof_log_string, 1);
 		return 0;
 	}

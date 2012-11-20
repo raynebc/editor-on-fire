@@ -4212,22 +4212,22 @@ int eof_get_ts_text(int beat, char * buffer)
 	}
 	if(eof_song->beat[beat]->flags & EOF_BEAT_FLAG_START_4_4)
 	{
-		ustrcpy(buffer, "4/4");
+		(void) ustrcpy(buffer, "4/4");
 		ret = 1;
 	}
 	else if(eof_song->beat[beat]->flags & EOF_BEAT_FLAG_START_3_4)
 	{
-		ustrcpy(buffer, "3/4");
+		(void) ustrcpy(buffer, "3/4");
 		ret = 1;
 	}
 	else if(eof_song->beat[beat]->flags & EOF_BEAT_FLAG_START_5_4)
 	{
-		ustrcpy(buffer, "5/4");
+		(void) ustrcpy(buffer, "5/4");
 		ret = 1;
 	}
 	else if(eof_song->beat[beat]->flags & EOF_BEAT_FLAG_START_6_4)
 	{
-		ustrcpy(buffer, "6/4");
+		(void) ustrcpy(buffer, "6/4");
 		ret = 1;
 	}
 	else if(eof_song->beat[beat]->flags & EOF_BEAT_FLAG_CUSTOM_TS)
@@ -4237,7 +4237,7 @@ int eof_get_ts_text(int beat, char * buffer)
 	}
 	else
 	{
-		ustrcpy(buffer, "");
+		(void) ustrcpy(buffer, "");
 	}
 	return ret;
 }

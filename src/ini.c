@@ -40,12 +40,12 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	/* write artist name */
 	if(ustrlen(sp->tags->artist) > 0)
 	{
-		ustrcpy(ini_string, "[song]\r\nartist = ");
+		(void) ustrcpy(ini_string, "[song]\r\nartist = ");
 		ustrcat(ini_string, sp->tags->artist);
 	}
 	else
 	{
-		ustrcpy(ini_string, "[song]\r\nartist = ");
+		(void) ustrcpy(ini_string, "[song]\r\nartist = ");
 		ustrcat(ini_string, "Unknown Artist");
 	}
 
@@ -70,7 +70,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 
 	/* write midi offset */
 	ustrcat(ini_string, "\r\ndelay = ");
-	sprintf(buffer, "%ld", sp->tags->ogg[eof_selected_ogg].midi_offset);
+	snprintf(buffer, sizeof(buffer) - 1, "%ld", sp->tags->ogg[eof_selected_ogg].midi_offset);
 	ustrcat(ini_string, buffer);
 
 	/* write year */
@@ -97,14 +97,14 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 		{	//If this track has a supported difficulty tag
 			if(!eof_get_track_size(sp, i))
 			{	//If this track is empty
-				sprintf(buffer, "\r\n%s = -1", eof_difficulty_ini_tags[i]);	//Write an "empty track" difficulty tag
+				snprintf(buffer, sizeof(buffer) - 1, "\r\n%s = -1", eof_difficulty_ini_tags[i]);	//Write an "empty track" difficulty tag
 				ustrcat(ini_string, buffer);
 			}
 			else
 			{
 				if(sp->track[i]->difficulty != 0xFF)
 				{	//If the track's difficulty is defined
-					sprintf(buffer, "\r\n%s = %d", eof_difficulty_ini_tags[i], sp->track[i]->difficulty);
+					snprintf(buffer, sizeof(buffer) - 1, "\r\n%s = %d", eof_difficulty_ini_tags[i], sp->track[i]->difficulty);
 					ustrcat(ini_string, buffer);
 				}
 			}
@@ -112,7 +112,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	}
 	if(((sp->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24) != 0x0F)
 	{	//If there is a defined pro drum difficulty
-		sprintf(buffer, "\r\ndiff_drums_real = %lu", (sp->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24);
+		snprintf(buffer, sizeof(buffer) - 1, "\r\ndiff_drums_real = %lu", (sp->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24);
 		ustrcat(ini_string, buffer);
 	}
 	else if(!eof_track_has_cymbals(sp, EOF_TRACK_DRUM))
@@ -121,7 +121,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	}
 	if(((sp->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 24) != 0xF0)
 	{	//If there is a defined PS real drum difficulty
-		sprintf(buffer, "\r\ndiff_drums_real_ps = %lu", (sp->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 28);
+		snprintf(buffer, sizeof(buffer) - 1, "\r\ndiff_drums_real_ps = %lu", (sp->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 28);
 		ustrcat(ini_string, buffer);
 	}
 	else if(!eof_track_has_cymbals(sp, EOF_TRACK_DRUM))
@@ -130,7 +130,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	}
 	if(((sp->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24) != 0x0F)
 	{	//If there is a defined harmony difficulty
-		sprintf(buffer, "\r\ndiff_vocals_harm = %lu", (sp->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24);
+		snprintf(buffer, sizeof(buffer) - 1, "\r\ndiff_vocals_harm = %lu", (sp->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24);
 		ustrcat(ini_string, buffer);
 	}
 	else
@@ -153,7 +153,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	}
 	if(sp->tags->difficulty != 0xFF)
 	{	//If there is a defined band difficulty
-		sprintf(buffer, "\r\ndiff_band = %lu", sp->tags->difficulty);
+		snprintf(buffer, sizeof(buffer) - 1, "\r\ndiff_band = %lu", sp->tags->difficulty);
 		ustrcat(ini_string, buffer);
 	}
 
@@ -264,13 +264,13 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 		ustrcat(ini_string, "real_guitar_tuning =");	//Write the pro guitar tuning tag
 		for(i = 0; i < sp->pro_guitar_track[tracknum]->numstrings; i++)
 		{	//For each string used in the track
-			sprintf(buffer, " %d", sp->pro_guitar_track[tracknum]->tuning[i]);	//Write the string's tuning value (signed integer)
+			snprintf(buffer, sizeof(buffer) - 1, " %d", sp->pro_guitar_track[tracknum]->tuning[i]);	//Write the string's tuning value (signed integer)
 			ustrcat(ini_string, buffer);	//Append the string's tuning value to the ongoing INI string
 		}
 		tuning_name = eof_lookup_tuning_name(sp, populated_track, sp->pro_guitar_track[tracknum]->tuning);	//Check to see if this track's tuning has a defined name
 		if(tuning_name != eof_tuning_unknown)
 		{	//If the lookup found a name
-			sprintf(buffer, " \"%s\"", tuning_name);
+			snprintf(buffer, sizeof(buffer) - 1, " \"%s\"", tuning_name);
 			ustrcat(ini_string, buffer);
 		}
 	}
@@ -290,13 +290,13 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 		ustrcat(ini_string, "real_bass_tuning =");	//Write the pro bass tuning tag
 		for(i = 0; i < sp->pro_guitar_track[tracknum]->numstrings; i++)
 		{	//For each string used in the track
-			sprintf(buffer, " %d", sp->pro_guitar_track[tracknum]->tuning[i]);	//Write the string's tuning value (signed integer)
+			snprintf(buffer, sizeof(buffer) - 1, " %d", sp->pro_guitar_track[tracknum]->tuning[i]);	//Write the string's tuning value (signed integer)
 			ustrcat(ini_string, buffer);	//Append the string's tuning value to the ongoing INI string
 		}
 		tuning_name = eof_lookup_tuning_name(sp, populated_track, sp->pro_guitar_track[tracknum]->tuning);	//Check to see if this track's tuning has a defined name
 		if(tuning_name != eof_tuning_unknown)
 		{	//If the lookup found a name
-			sprintf(buffer, " \"%s\"", tuning_name);
+			snprintf(buffer, sizeof(buffer) - 1, " \"%s\"", tuning_name);
 			ustrcat(ini_string, buffer);
 		}
 	}
@@ -345,7 +345,7 @@ int eof_save_upgrades_dta(EOF_SONG * sp, char * fn)
 
 	if(ustrlen(sp->tags->title) > 0)
 	{	//If there is a defined song title
-		snprintf(buffer, sizeof(buffer), "(%s\n", sp->tags->title);
+		snprintf(buffer, sizeof(buffer) - 1, "(%s\n", sp->tags->title);
 		pack_fputs(buffer, fp);
 	}
 	else
@@ -356,7 +356,7 @@ int eof_save_upgrades_dta(EOF_SONG * sp, char * fn)
 
 	if(ustrlen(sp->tags->title) > 0)
 	{	//If there is a defined song title
-		snprintf(buffer, sizeof(buffer), "   (midi_file \"songs_upgrades/%s_plus.mid\")\n", sp->tags->title);
+		snprintf(buffer, sizeof(buffer) - 1, "   (midi_file \"songs_upgrades/%s_plus.mid\")\n", sp->tags->title);
 		pack_fputs(buffer, fp);
 	}
 	else
@@ -393,10 +393,10 @@ int eof_save_upgrades_dta(EOF_SONG * sp, char * fn)
 		{	//If this isn't the first past, append a space after the last tuning that was written
 			ustrcat(buffer2, " ");
 		}
-		snprintf(buffer3, sizeof(buffer3), "%d", sp->pro_guitar_track[tracknum]->tuning[i]);	//Write the string's tuning value (signed integer)
+		snprintf(buffer3, sizeof(buffer3) - 1, "%d", sp->pro_guitar_track[tracknum]->tuning[i]);	//Write the string's tuning value (signed integer)
 		ustrcat(buffer2, buffer3);	//Append the string's tuning value to the ongoing tuning string
 	}
-	snprintf(buffer, sizeof(buffer), "   (real_guitar_tuning (%s))\n", buffer2);	//Build the complete pro guitar tuning string line
+	snprintf(buffer, sizeof(buffer) - 1, "   (real_guitar_tuning (%s))\n", buffer2);	//Build the complete pro guitar tuning string line
 	pack_fputs(buffer, fp);
 
 	tracknum = sp->track[EOF_TRACK_PRO_BASS]->tracknum;
@@ -407,10 +407,10 @@ int eof_save_upgrades_dta(EOF_SONG * sp, char * fn)
 		{	//If this isn't the first past, append a space after the last tuning that was written
 			ustrcat(buffer2, " ");
 		}
-		snprintf(buffer3, sizeof(buffer3), "%d", sp->pro_guitar_track[tracknum]->tuning[i]);	//Write the string's tuning value (signed integer)
+		snprintf(buffer3, sizeof(buffer3) - 1, "%d", sp->pro_guitar_track[tracknum]->tuning[i]);	//Write the string's tuning value (signed integer)
 		ustrcat(buffer2, buffer3);	//Append the string's tuning value to the ongoing tuning string
 	}
-	snprintf(buffer, sizeof(buffer), "   (real_bass_tuning (%s))\n", buffer2);	//Build the complete pro bass tuning string line
+	snprintf(buffer, sizeof(buffer) - 1, "   (real_bass_tuning (%s))\n", buffer2);	//Build the complete pro bass tuning string line
 	pack_fputs(buffer, fp);
 
 	pack_fputs(")", fp);

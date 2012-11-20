@@ -465,7 +465,7 @@ void eof_prepare_edit_menu(void)
 
 int eof_menu_edit_undo(void)
 {
-	eof_undo_apply();
+	(void) eof_undo_apply();
 	eof_redo_toggle = 1;
 	if((eof_catalog_menu[0].flags & D_SELECTED) && (eof_song->catalog->entries > 0))
 	{
@@ -1247,7 +1247,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		if(highestfret > eof_song->pro_guitar_track[tracknum]->numfrets)
 		{	//If any notes on the clipboard would exceed the active track's fret limit
 			char message[120];
-			snprintf(message, sizeof(message), "Warning:  This track's fret limit is exceeded by a pasted note's fret value of %lu.  Continue?", highestfret);
+			snprintf(message, sizeof(message) - 1, "Warning:  This track's fret limit is exceeded by a pasted note's fret value of %lu.  Continue?", highestfret);
 			if(alert(NULL, message, NULL, "&Yes", "&No", 'y', 'n') != 1)
 			{	//If user does not opt to continue after being alerted of this fret limit issue
 				pack_fclose(fp);
@@ -1259,7 +1259,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	if(highestlane > numlanes)
 	{	//If any notes on the clipboard exceed the active track's lane limit
 		char message[120];
-		snprintf(message, sizeof(message), "Warning:  This track's highest lane number is exceeded by a pasted note with a gem on lane %lu.", highestlane);
+		snprintf(message, sizeof(message) - 1, "Warning:  This track's highest lane number is exceeded by a pasted note with a gem on lane %lu.", highestlane);
 		if(alert(NULL, message, "Gems will either be dropped, or added to form all-lane chords for such notes.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If user does not opt to continue after being alerted of this lane limit issue
 			pack_fclose(fp);
@@ -1468,7 +1468,7 @@ int eof_menu_edit_snap_custom(void)
 	eof_render();
 	eof_color_dialog(eof_custom_snap_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_custom_snap_dialog);
-	sprintf(eof_etext2, "%d", eof_snap_interval);
+	snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%d", eof_snap_interval);
 	if(eof_custom_snap_measure == 0)
 	{	//If the custom grid snap is per beats
 		eof_custom_snap_dialog[3].flags = D_SELECTED;	//Activate "per beat" radio button by default
@@ -1731,7 +1731,7 @@ int eof_menu_edit_playback_custom(void)
 	eof_render();
 	eof_color_dialog(eof_custom_snap_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_custom_speed_dialog);
-	sprintf(eof_etext2, "%d", eof_playback_speed/10);		//Load the current playback speed into a string
+	snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%d", eof_playback_speed/10);		//Load the current playback speed into a string
 	if(eof_popup_dialog(eof_custom_speed_dialog, 2) == 3)		//If user activated "OK" from the custom speed dialog
 	{
 		userinput = atoi(eof_etext2);
@@ -2402,7 +2402,7 @@ int eof_menu_edit_paste_from_catalog(void)
 			if(highestfret > eof_song->pro_guitar_track[tracknum]->numfrets)
 			{	//If any notes in the catalog entry would exceed the active track's fret limit
 				char message[120];
-				snprintf(message, sizeof(message), "Warning:  This track's fret limit is exceeded by a pasted note's fret value of %lu.  Continue?", highestfret);
+				snprintf(message, sizeof(message) - 1, "Warning:  This track's fret limit is exceeded by a pasted note's fret value of %lu.  Continue?", highestfret);
 				if(alert(NULL, message, NULL, "&Yes", "&No", 'y', 'n') != 1)
 				{	//If user does not opt to continue after being alerted of this fret limit issue
 					return 0;
@@ -2412,7 +2412,7 @@ int eof_menu_edit_paste_from_catalog(void)
 		if(highestlane > numlanes)
 		{	//Warn if pasted notes go above the current track's lane limit
 			char message[120];
-			snprintf(message, sizeof(message), "Warning:  This track's highest lane number is exceeded by a pasted note with a gem on lane %lu.", highestlane);
+			snprintf(message, sizeof(message) - 1, "Warning:  This track's highest lane number is exceeded by a pasted note with a gem on lane %lu.", highestlane);
 			if(alert(NULL, message, "Such notes will be omitted.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
 			{	//If user does not opt to continue after being alerted of this lane limit issue
 				return 0;

@@ -154,18 +154,18 @@ void eof_load_config(char * fn)
 	eof_desktop = get_config_int("display", "true_color", 1);
 
 	/* read paths */
-	ustrcpy(eof_fof_executable_path, get_config_string("paths", "fof_path", ""));
-	ustrcpy(eof_fof_executable_name, get_filename(eof_fof_executable_path));
-	ustrcpy(eof_fof_songs_path, get_config_string("paths", "fof_songs_path", ""));
-	ustrcpy(eof_ps_executable_path, get_config_string("paths", "ps_path", ""));
-	ustrcpy(eof_ps_executable_name, get_filename(eof_ps_executable_path));
-	ustrcpy(eof_ps_songs_path, get_config_string("paths", "ps_songs_path", ""));
-	ustrcpy(eof_songs_path, get_config_string("paths", "songs_path", ""));
-	ustrcpy(eof_last_eof_path, get_config_string("paths", "eof_path", ""));
-	ustrcpy(eof_last_ogg_path, get_config_string("paths", "ogg_path", ""));
+	(void) ustrcpy(eof_fof_executable_path, get_config_string("paths", "fof_path", ""));
+	(void) ustrcpy(eof_fof_executable_name, get_filename(eof_fof_executable_path));
+	(void) ustrcpy(eof_fof_songs_path, get_config_string("paths", "fof_songs_path", ""));
+	(void) ustrcpy(eof_ps_executable_path, get_config_string("paths", "ps_path", ""));
+	(void) ustrcpy(eof_ps_executable_name, get_filename(eof_ps_executable_path));
+	(void) ustrcpy(eof_ps_songs_path, get_config_string("paths", "ps_songs_path", ""));
+	(void) ustrcpy(eof_songs_path, get_config_string("paths", "songs_path", ""));
+	(void) ustrcpy(eof_last_eof_path, get_config_string("paths", "eof_path", ""));
+	(void) ustrcpy(eof_last_ogg_path, get_config_string("paths", "ogg_path", ""));
 
 	/* read editor settings */
-	ustrcpy(eof_last_frettist, get_config_string("editor", "frettist", ""));
+	(void) ustrcpy(eof_last_frettist, get_config_string("editor", "frettist", ""));
 	eof_snap_mode = get_config_int("editor", "snap_mode", 0);
 	if((eof_snap_mode < 0) || (eof_snap_mode > EOF_SNAP_CUSTOM))
 	{

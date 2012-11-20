@@ -447,7 +447,7 @@ int eof_compare_set_ini_string_field(char *dest, char *src, unsigned long maxcha
 	{	//If the strings don't match
 		if(*function)
 		{	//If the calling function wanted to check for differences and prompt the user to overwrite
-			snprintf(eof_log_string, sizeof(eof_log_string), "Song property \"%s\" altered in INI file", tag);
+			snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Song property \"%s\" altered in INI file", tag);
 			eof_log(eof_log_string, 1);
 			if(alert("Warning:  The INI file has been externally edited.", "Merge its changes with the active project?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 			{	//If the user did not opt to merge the changes into the project
@@ -478,7 +478,7 @@ int eof_compare_set_ini_boolean(char *status, char original, char *string, int *
 
 	if(*function && (*status != original))
 	{	//If the determined boolean status does not match the supplied original value, and the calling function wanted to prompt the user in such a case
-		snprintf(eof_log_string, sizeof(eof_log_string), "Song boolean \"%s\" altered in INI file", tag);
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Song boolean \"%s\" altered in INI file", tag);
 		eof_log(eof_log_string, 1);
 		if(alert("Warning:  The INI file has been externally edited.", "Merge its changes with the active project?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user did not opt to merge the changes into the project
@@ -520,11 +520,11 @@ int eof_compare_set_ini_string_setting(EOF_SONG *sp, char *tag, char *value, int
 		{	//If any INI setting is being altered or added
 			if(alter)
 			{
-				snprintf(eof_log_string, sizeof(eof_log_string), "Song INI setting \"%s\" altered in INI file", logtag);
+				snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Song INI setting \"%s\" altered in INI file", logtag);
 			}
 			else
 			{
-				snprintf(eof_log_string, sizeof(eof_log_string), "Song INI setting \"%s\" added in INI file", logtag);
+				snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Song INI setting \"%s\" added in INI file", logtag);
 			}
 			eof_log(eof_log_string, 1);
 			if(alert("Warning:  The INI file has been externally edited.", "Merge its changes with the active project?", NULL, "&Yes", "&No", 'y', 'n') != 1)
@@ -539,7 +539,7 @@ int eof_compare_set_ini_string_setting(EOF_SONG *sp, char *tag, char *value, int
 	//Replace the existing INI setting or append it to the list of INI settings as appropriate
 	if(index < EOF_MAX_INI_SETTINGS)
 	{	//If the maximum number of INI settings isn't already defined
-		snprintf(sp->tags->ini_setting[index], 512, "%s = %s", tag, value);
+		snprintf(sp->tags->ini_setting[index], sizeof(sp->tags->ini_setting[index]) - 1, "%s = %s", tag, value);
 		if(index >= sp->tags->ini_settings)
 		{	//If this was a newly-added setting
 			sp->tags->ini_settings++;	//Increment the counter
@@ -612,7 +612,7 @@ int eof_compare_set_ini_integer(long *value, long original, char *string, int *f
 
 	if(*function && (*value != original))
 	{	//If the converted number does not match the supplied original value, and the calling function wanted to prompt the user in such a case
-		snprintf(eof_log_string, sizeof(eof_log_string), "Song property \"%s\" altered in INI file", tag);
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Song property \"%s\" altered in INI file", tag);
 		eof_log(eof_log_string, 1);
 		if(alert("Warning:  The INI file has been externally edited.", "Merge its changes with the active project?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user did not opt to merge the changes into the project
@@ -633,7 +633,7 @@ char *eof_find_ini_setting_tag(EOF_SONG *sp, unsigned long *index, char *tag)
 	if(!sp || !index || !tag)
 		return NULL;	//Return error
 
-	snprintf(buffer, 512, "%s =", tag);	//Build the left half of the string that results from this INI setting
+	snprintf(buffer, sizeof(buffer) - 1, "%s =", tag);	//Build the left half of the string that results from this INI setting
 	for(ctr = 0; ctr < sp->tags->ini_settings; ctr++)
 	{	//For each INI setting in the project
 		ptr = strcasestr_spec(sp->tags->ini_setting[ctr], buffer);	//If this INI setting matches the specified tag, get the address of the first character after the equal sign

@@ -292,7 +292,7 @@ unsigned long eof_gh_checksum(const char *string)
 	{
 		checksum = eof_crc32(string) ^ 0xFFFFFFFF;
 #ifdef GH_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Checksum of \"%s\" is 0x%08lX", string, checksum);
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  Checksum of \"%s\" is 0x%08lX", string, checksum);
 		eof_log(eof_log_string, 1);
 #endif
 	}
@@ -377,7 +377,7 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 		return -1;
 
 #ifdef GH_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Looking for section \"%s\"", target->name);
+	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  Looking for section \"%s\"", target->name);
 	eof_log(eof_log_string, 1);
 #endif
 	if(eof_filebuffer_find_checksum(fb, eof_gh_checksum(target->name)))	//Seek one byte past the target header
@@ -391,7 +391,7 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 		return -1;
 	}
 #ifdef GH_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string), "\t\tNumber of notes = %lu", numnotes);
+	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tNumber of notes = %lu", numnotes);
 	eof_log(eof_log_string, 1);
 #endif
 	fb->index += 4;	//Seek past the next 4 bytes, which is a checksum for the game-specific note section subheader
@@ -436,7 +436,7 @@ int eof_gh_read_instrument_section_note(filebuffer *fb, EOF_SONG *sp, gh_section
 			return -1;
 		}
 #ifdef GH_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \t\tNote %lu position = %lu  length = %u  bitmask = %u (%08lu %08lu) accent = %08lu", ctr, dword, length, notemask, eof_char_to_binary(notemask >> 8), eof_char_to_binary(notemask & 0xFF), eof_char_to_binary(accentmask));
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\tNote %lu position = %lu  length = %u  bitmask = %u (%08lu %08lu) accent = %08lu", ctr, dword, length, notemask, eof_char_to_binary(notemask >> 8), eof_char_to_binary(notemask & 0xFF), eof_char_to_binary(accentmask));
 		eof_log(eof_log_string, 1);
 #endif
 		isexpertplus = 0;	//Reset this condition
@@ -523,7 +523,7 @@ int eof_gh_read_sp_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *target
 		return -1;
 
 #ifdef GH_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Looking for section \"%s\"", target->name);
+	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  Looking for section \"%s\"", target->name);
 	eof_log(eof_log_string, 1);
 #endif
 	if(eof_filebuffer_find_checksum(fb, eof_gh_checksum(target->name)))	//Seek one byte past the target header
@@ -537,7 +537,7 @@ int eof_gh_read_sp_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *target
 		return -1;
 	}
 #ifdef GH_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string), "\t\tNumber of phrases = %lu", numphrases);
+	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tNumber of phrases = %lu", numphrases);
 	eof_log(eof_log_string, 1);
 #endif
 	fb->index += 4;	//Seek past the next 4 bytes, which is a checksum for the game-specific sp section subheader
@@ -587,7 +587,7 @@ int eof_gh_read_tap_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *targe
 		return -1;
 
 #ifdef GH_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Looking for section \"%s\"", target->name);
+	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  Looking for section \"%s\"", target->name);
 	eof_log(eof_log_string, 1);
 #endif
 	if(eof_filebuffer_find_checksum(fb, eof_gh_checksum(target->name)))	//Seek one byte past the target header
@@ -601,7 +601,7 @@ int eof_gh_read_tap_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *targe
 		return -1;
 	}
 #ifdef GH_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string), "\t\tNumber of phrases = %lu", numphrases);
+	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tNumber of phrases = %lu", numphrases);
 	eof_log(eof_log_string, 1);
 #endif
 	fb->index += 4;	//Seek past the next 4 bytes, which is a checksum for the game-specific sp section subheader
@@ -799,7 +799,7 @@ void eof_process_gh_lyric_phrases(EOF_SONG *sp)
 		if(phrasestart || phraseend)
 		{	//If any lyrics fell within the phrase, adjust the phrase's timing
 #ifdef GH_IMPORT_DEBUG
-			snprintf(eof_log_string, sizeof(eof_log_string), "\t\tAltering lyric phrase at %lu ms to be %lu ms - %lu ms", tp->line[ctr].start_pos, phrasestart, phraseend);
+			snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tAltering lyric phrase at %lu ms to be %lu ms - %lu ms", tp->line[ctr].start_pos, phrasestart, phraseend);
 			eof_log(eof_log_string, 1);
 #endif
 			tp->line[ctr].start_pos = phrasestart;	//Update the starting position of the lyric phrase
@@ -834,7 +834,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 			return 0;
 		}
 	#ifdef GH_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string), "\t\tChecking next vocal section at file position 0x%lX", fb->index - 4);
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tChecking next vocal section at file position 0x%lX", fb->index - 4);
 		eof_log(eof_log_string, 1);
 	#endif
 		if(eof_filebuffer_get_dword(fb, &numvox))	//Read the number of vox notes in the section
@@ -843,7 +843,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 			return -1;
 		}
 	#ifdef GH_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string), "\t\tNumber of vox notes = %lu", numvox);
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tNumber of vox notes = %lu", numvox);
 		eof_log(eof_log_string, 1);
 	#endif
 		fb->index += 4;	//Seek past the next 4 bytes, which is a checksum for the game-specific vox note section subheader
@@ -856,7 +856,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 			}
 			if(voxsize != 7)
 			{	//Each vox note entry is expected to be 7 bytes long
-				snprintf(eof_log_string, sizeof(eof_log_string), "\t\tError:  Vox note size is given as %lu, not 7", voxsize);
+				snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tError:  Vox note size is given as %lu, not 7", voxsize);
 				eof_log(eof_log_string, 1);
 				if(eof_filebuffer_get_dword(fb, &voxsize) || (voxsize != 7))	//Read the next dword, as at least on GH file put the value of 7 one dword later than expected
 				{	//If there was an error reading the next 4 byte value, or it wasn't 7
@@ -889,7 +889,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 			return -1;
 		}
 #ifdef GH_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\tVocal note:  Position = %lu, Length = %u, Pitch = %u", voxstart, voxlength, voxpitch);
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tVocal note:  Position = %lu, Length = %u, Pitch = %u", voxstart, voxlength, voxpitch);
 		eof_log(eof_log_string, 1);
 #endif
 		if(voxpitch == 2)
@@ -945,7 +945,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 		return -1;
 	}
 #ifdef GH_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string), "\t\tNumber of lyrics = %lu", numlyrics);
+	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tNumber of lyrics = %lu", numlyrics);
 	eof_log(eof_log_string, 1);
 #endif
 	fb->index += 4;	//Seek past the next 4 bytes, which is a checksum for the game-specific lyric section subheader
@@ -1023,7 +1023,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 		lyricbuffer[lyricsize] = '\0';
 		lyricbuffer[lyricsize + 1] = '\0';	//Ensure the last two bytes are NULL characters, in case this string is treated as Unicode
 #ifdef GH_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\tAdding lyric text:  Position = %lu, Lyric = \"%s\"",lyricstart, lyricbuffer);
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tAdding lyric text:  Position = %lu, Lyric = \"%s\"",lyricstart, lyricbuffer);
 		eof_log(eof_log_string, 1);
 #endif
 
@@ -1090,7 +1090,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 #ifdef GH_IMPORT_DEBUG
 			if(matched)
 			{	//If a match was determined
-				snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\tDecided match:  Text = \"%s\"\tPosition = %lu", lyricbuffer, thispos);
+				snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tDecided match:  Text = \"%s\"\tPosition = %lu", lyricbuffer, thispos);
 				eof_log(eof_log_string, 1);
 			}
 #endif
@@ -1114,7 +1114,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 		return -1;
 	}
 #ifdef GH_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string), "\t\tNumber of lyric phrases = %lu", numphrases);
+	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tNumber of lyric phrases = %lu", numphrases);
 	eof_log(eof_log_string, 1);
 #endif
 	fb->index += 4;	//Seek past the next 4 bytes, which is a checksum for the game-specific lyric phrase section subheader
@@ -1144,7 +1144,7 @@ int eof_gh_read_vocals_note(filebuffer *fb, EOF_SONG *sp)
 			return -1;
 		}
 #ifdef GH_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string), "\t\tLyric phrase at %lu ms", phrasestart);
+	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLyric phrase at %lu ms", phrasestart);
 	eof_log(eof_log_string, 1);
 #endif
 		eof_vocal_track_add_line(tp, phrasestart, phrasestart);	//Add the phrase with a temporary end position
@@ -1268,7 +1268,7 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 		return NULL;
 	}
 #ifdef GH_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Number of fretbars = %lu", numbeats);
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  Number of fretbars = %lu", numbeats);
 		eof_log(eof_log_string, 1);
 #endif
 	if(numbeats < 3)
@@ -1320,7 +1320,7 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 			return NULL;
 		}
 #ifdef GH_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Fretbar at %lums", dword);
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  Fretbar at %lums", dword);
 		eof_log(eof_log_string, 1);
 #endif
 		if(ctr && (dword <= lastfretbar))
@@ -1361,7 +1361,7 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 			return NULL;
 		}
 #ifdef GH_IMPORT_DEBUG
-			snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Number of time signatures = %lu", numsigs);
+			snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  Number of time signatures = %lu", numsigs);
 			eof_log(eof_log_string, 1);
 #endif
 		fb->index += 4;	//Seek past the next 4 bytes, which is a checksum for the game-specific timesig subheader
@@ -1416,7 +1416,7 @@ EOF_SONG * eof_import_gh_note(const char * fn)
 				return NULL;
 			}
 #ifdef GH_IMPORT_DEBUG
-			snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Time signature at %lums (%d/%d)", dword, tsnum, tsden);
+			snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  Time signature at %lums (%d/%d)", dword, tsnum, tsden);
 			eof_log(eof_log_string, 1);
 #endif
 			for(ctr2 = 0; ctr2 < sp->beats; ctr2++)
@@ -1482,7 +1482,7 @@ unsigned long eof_gh_process_section_header(filebuffer *fb, const char *sectionn
 
 	if(eof_filebuffer_find_checksum(fb, eof_gh_checksum(sectionname)))	//Seek one byte past the requested section header
 	{	//If the section couldn't be found
-		snprintf(eof_log_string, sizeof(eof_log_string), "Error:  Failed to locate \"%s\" header.", sectionname);
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Failed to locate \"%s\" header.", sectionname);
 		eof_log(eof_log_string, 1);
 		return 0;
 	}
@@ -1495,7 +1495,7 @@ unsigned long eof_gh_process_section_header(filebuffer *fb, const char *sectionn
 	fb->index += 4;	//Seek past the next 4 bytes, which is padding
 	if(fb->index - qbindex != dword)
 	{	//If the data doesn't begin after the padding
-		snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Data is offset to position 0x%08lX within the QB file", dword);
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  Data is offset to position 0x%08lX within the QB file", dword);
 		eof_log(eof_log_string, 1);
 		fb->index = qbindex + dword;	//Seek to the appropriate buffer position
 	}
@@ -1505,7 +1505,7 @@ unsigned long eof_gh_process_section_header(filebuffer *fb, const char *sectionn
 		return 0;
 	}
 #ifdef GH_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \tSection storage chunk type is 0x%08lX", dword);
+	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \tSection storage chunk type is 0x%08lX", dword);
 	eof_log(eof_log_string, 1);
 	if(dword == 0x00010000)
 	{	//Empty section
@@ -1544,7 +1544,7 @@ unsigned long eof_gh_process_section_header(filebuffer *fb, const char *sectionn
 		{	//A 1D array
 			(*arrayptr)[0] = fb->index - qbindex - 8;	//Store the QB position of this 1D array's header
 #ifdef GH_IMPORT_DEBUG
-			snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \t1D array at QB index 0x%08lX (file position 0x%lX)", fb->index - qbindex - 12, fb->index - 12);
+			snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t1D array at QB index 0x%08lX (file position 0x%lX)", fb->index - qbindex - 12, fb->index - 12);
 			eof_log(eof_log_string, 1);
 #endif
 		}
@@ -1560,7 +1560,7 @@ unsigned long eof_gh_process_section_header(filebuffer *fb, const char *sectionn
 				}
 				if(fb->index - qbindex != dword)
 				{	//If the data doesn't begin after the padding
-					snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  2D array data is offset to position 0x%08lX within the QB file", dword);
+					snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  2D array data is offset to position 0x%08lX within the QB file", dword);
 					eof_log(eof_log_string, 1);
 					fb->index = qbindex + dword;	//Seek to the appropriate buffer position
 				}
@@ -1577,11 +1577,11 @@ unsigned long eof_gh_process_section_header(filebuffer *fb, const char *sectionn
 #ifdef GH_IMPORT_DEBUG
 				if(dword == 0x00010c00)
 				{	//2D array
-					snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \t\t2D array at QB index 0x%08lX (file position 0x%lX)", (*arrayptr)[ctr], (*arrayptr)[ctr] + qbindex);
+					snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\t2D array at QB index 0x%08lX (file position 0x%lX)", (*arrayptr)[ctr], (*arrayptr)[ctr] + qbindex);
 				}
 				else
 				{	//Alternate 2D array
-					snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \t\tData at QB index 0x%08lX (file position 0x%lX)", (*arrayptr)[ctr], (*arrayptr)[ctr] + qbindex);
+					snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\tData at QB index 0x%08lX (file position 0x%lX)", (*arrayptr)[ctr], (*arrayptr)[ctr] + qbindex);
 				}
 				eof_log(eof_log_string, 1);
 #endif
@@ -1648,9 +1648,9 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 	if(!fb || !sp || !target || !songname)
 		return -1;
 
-	snprintf(buffer, sizeof(buffer), "%s%s", songname, target->name);
+	snprintf(buffer, sizeof(buffer) - 1, "%s%s", songname, target->name);
 #ifdef GH_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Looking for section \"%s\"", buffer);
+	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  Looking for section \"%s\"", buffer);
 	eof_log(eof_log_string, 1);
 #endif
 	arraysize = eof_gh_process_section_header(fb, buffer, &arrayptr, qbindex);	//Parse the location of the 1D arrays of section data
@@ -1659,13 +1659,13 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 		numnotes = eof_gh_read_array_header(fb, arrayptr[ctr], qbindex);	//Process the array header (get size and seek to first data value)
 		if(numnotes % 2)
 		{	//The value in numnotes is the number of dwords used to define this note array (each note should be 2 dwords in size)
-			snprintf(eof_log_string, sizeof(eof_log_string), "Error:  Invalid note array size (%lu)", numnotes);
+			snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Invalid note array size (%lu)", numnotes);
 			eof_log(eof_log_string, 1);
 			return -1;
 		}
 		numnotes /= 2;	//Determine the number of notes that are defined
 #ifdef GH_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \tNumber of notes = %lu", numnotes);
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \tNumber of notes = %lu", numnotes);
 		eof_log(eof_log_string, 1);
 #endif
 
@@ -1690,7 +1690,7 @@ int eof_gh_read_instrument_section_qb(filebuffer *fb, EOF_SONG *sp, const char *
 				return -1;
 			}
 #ifdef GH_IMPORT_DEBUG
-			snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \t\tNote %lu position = %lu  length = %u  bitmask = %u (%08lu %08lu)", ctr2+1, dword, length, notemask, eof_char_to_binary(notemask >> 8), eof_char_to_binary(notemask & 0xFF));
+			snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\tNote %lu position = %lu  length = %u  bitmask = %u (%08lu %08lu)", ctr2+1, dword, length, notemask, eof_char_to_binary(notemask >> 8), eof_char_to_binary(notemask & 0xFF));
 			eof_log(eof_log_string, 1);
 #endif
 			isexpertplus = 0;	//Reset this condition
@@ -1773,9 +1773,9 @@ int eof_gh_read_sp_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname
 	if(!fb || !sp || !target || !songname)
 		return -1;
 
-	snprintf(buffer, sizeof(buffer), "%s%s", songname, target->name);
+	snprintf(buffer, sizeof(buffer) - 1, "%s%s", songname, target->name);
 #ifdef GH_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Looking for section \"%s\"", buffer);
+	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  Looking for section \"%s\"", buffer);
 	eof_log(eof_log_string, 1);
 #endif
 	arraysize = eof_gh_process_section_header(fb, buffer, &arrayptr, qbindex);	//Parse the location of the 1D arrays of section data
@@ -1784,14 +1784,14 @@ int eof_gh_read_sp_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname
 		numphrases = eof_gh_read_array_header(fb, arrayptr[ctr], qbindex);	//Process the array header (get size and seek to first data value)
 		if(numphrases % 3)
 		{	//The value in numphrases is the number of dwords used to define this star power array (each phrase should be 3 dwords in size)
-			snprintf(eof_log_string, sizeof(eof_log_string), "Error:  Invalid star power array size (%lu)", numphrases);
+			snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Invalid star power array size (%lu)", numphrases);
 			eof_log(eof_log_string, 1);
 			free(arrayptr);
 			return -1;
 		}
 		numphrases /= 3;	//Determine the number of phrases that are defined
 #ifdef GH_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \tNumber of phrases = %lu", numphrases);
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \tNumber of phrases = %lu", numphrases);
 		eof_log(eof_log_string, 1);
 #endif
 		for(ctr2 = 0; ctr2 < numphrases; ctr2++)
@@ -1810,7 +1810,7 @@ int eof_gh_read_sp_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname
 			}
 			fb->index += 4;	//Skip the field indicating the number of notes contained within the star power section
 #ifdef GH_IMPORT_DEBUG
-			snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \t\tPhrase %lu position = %lu  length = %lu", ctr2+1, dword, length);
+			snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\tPhrase %lu position = %lu  length = %lu", ctr2+1, dword, length);
 			eof_log(eof_log_string, 1);
 #endif
 			if(!eof_track_add_section(sp, target->tracknum, EOF_SP_SECTION, 0, dword, dword + length, 0, NULL))
@@ -1836,9 +1836,9 @@ int eof_gh_read_tap_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songnam
 	if(!fb || !sp || !target || !songname)
 		return -1;
 
-	snprintf(buffer, sizeof(buffer), "%s%s", songname, target->name);
+	snprintf(buffer, sizeof(buffer) - 1, "%s%s", songname, target->name);
 #ifdef GH_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Looking for section \"%s\"", buffer);
+	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  Looking for section \"%s\"", buffer);
 	eof_log(eof_log_string, 1);
 #endif
 	arraysize = eof_gh_process_section_header(fb, buffer, &arrayptr, qbindex);	//Parse the location of the 1D arrays of section data
@@ -1847,14 +1847,14 @@ int eof_gh_read_tap_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songnam
 		numphrases = eof_gh_read_array_header(fb, arrayptr[ctr], qbindex);	//Process the array header (get size and seek to first data value)
 		if(numphrases % 3)
 		{	//The value in numphrases is the number of dwords used to define this tap array (each phrase should be 3 dwords in size)
-			snprintf(eof_log_string, sizeof(eof_log_string), "Error:  Invalid tap array size (%lu)", numphrases);
+			snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Invalid tap array size (%lu)", numphrases);
 			eof_log(eof_log_string, 1);
 			free(arrayptr);
 			return -1;
 		}
 		numphrases /= 3;	//Determine the number of phrases that are defined
 #ifdef GH_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \tNumber of phrases = %lu", numphrases);
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \tNumber of phrases = %lu", numphrases);
 		eof_log(eof_log_string, 1);
 #endif
 		for(ctr2 = 0; ctr2 < numphrases; ctr2++)
@@ -1873,7 +1873,7 @@ int eof_gh_read_tap_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songnam
 			}
 			fb->index += 4;	//Skip the unknown data
 #ifdef GH_IMPORT_DEBUG
-			snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \t\tPhrase %lu position = %lu  length = %lu", ctr2+1, dword, length);
+			snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\tPhrase %lu position = %lu  length = %lu", ctr2+1, dword, length);
 			eof_log(eof_log_string, 1);
 #endif
 			if(!eof_track_add_section(sp, target->tracknum, EOF_SLIDER_SECTION, 0, dword, dword + length, 0, NULL))
@@ -1906,9 +1906,9 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 		return -1;
 
 //Read vocal note positions and pitches
-	snprintf(buffer, sizeof(buffer), "%s_song_vocals", songname);
+	snprintf(buffer, sizeof(buffer) - 1, "%s_song_vocals", songname);
 #ifdef GH_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Looking for section \"%s\"", buffer);
+	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  Looking for section \"%s\"", buffer);
 	eof_log(eof_log_string, 1);
 #endif
 	fb->index = 0;	//Seek to the beginning of the file buffer
@@ -1918,14 +1918,14 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 		numvox = eof_gh_read_array_header(fb, arrayptr[ctr], qbindex);	//Process the array header (get size and seek to first data value)
 		if(numvox % 3)
 		{	//The value in numvox is the number of dwords used to define this vox array (each vox note should be 3 dwords in size)
-			snprintf(eof_log_string, sizeof(eof_log_string), "Error:  Invalid vox note array size (%lu)", numvox);
+			snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Invalid vox note array size (%lu)", numvox);
 			eof_log(eof_log_string, 1);
 			free(arrayptr);
 			return -1;
 		}
 		numvox /= 3;	//Determine the number of vox notes that are defined
 #ifdef GH_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \tNumber of vox notes = %lu", numvox);
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \tNumber of vox notes = %lu", numvox);
 		eof_log(eof_log_string, 1);
 #endif
 		for(ctr2 = 0; ctr2 < numvox; ctr2++)
@@ -1949,7 +1949,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 				return -1;
 			}
 #ifdef GH_IMPORT_DEBUG
-			snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\tVocal note %lu:  Position = %lu, Length = %lu, Pitch = %lu", ctr2+1, voxstart, voxlength, voxpitch);
+			snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tVocal note %lu:  Position = %lu, Length = %lu, Pitch = %lu", ctr2+1, voxstart, voxlength, voxpitch);
 			eof_log(eof_log_string, 1);
 #endif
 			if(voxpitch == 2)
@@ -2039,7 +2039,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 		}
 		buffer[length] = '\0';	//Null terminate the buffer
 #ifdef GH_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Found lyric:  Checksum = 0x%08lX\tText = \"%s\"", checksum, buffer);
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  Found lyric:  Checksum = 0x%08lX\tText = \"%s\"", checksum, buffer);
 		eof_log(eof_log_string, 1);
 #endif
 		linkptr = malloc(sizeof(struct QBlyric));	//Allocate a new link, initialize it and insert it into the linked list
@@ -2066,9 +2066,9 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 
 //Read lyric text positions
 	fb->index = 0;	//Seek to the beginning of the file buffer
-	snprintf(buffer, sizeof(buffer), "%s_lyrics", songname);
+	snprintf(buffer, sizeof(buffer) - 1, "%s_lyrics", songname);
 #ifdef GH_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Looking for section \"%s\"", buffer);
+	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  Looking for section \"%s\"", buffer);
 	eof_log(eof_log_string, 1);
 #endif
 	arraysize = eof_gh_process_section_header(fb, buffer, &arrayptr, qbindex);	//Parse the location of the 1D arrays of section data
@@ -2098,7 +2098,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 			return -1;
 		}
 #ifdef GH_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Found lyric checksum position:  Checksum = 0x%08lX\tPosition = %lu", checksum, voxstart);
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  Found lyric checksum position:  Checksum = 0x%08lX\tPosition = %lu", checksum, voxstart);
 		eof_log(eof_log_string, 1);
 #endif
 		matched = 0;
@@ -2111,7 +2111,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 					if(eof_get_note_pos(sp, EOF_TRACK_VOCALS, ctr2) == voxstart)
 					{	//If this lyric has a matching timestamp
 #ifdef GH_IMPORT_DEBUG
-						snprintf(eof_log_string, sizeof(eof_log_string), "\t\tMatched lyric position:  Text = \"%s\"\tPosition = %lu", linkptr->text, voxstart);
+						snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tMatched lyric position:  Text = \"%s\"\tPosition = %lu", linkptr->text, voxstart);
 						eof_log(eof_log_string, 1);
 #endif
 						eof_set_note_name(sp, EOF_TRACK_VOCALS, ctr2, linkptr->text);	//Update the text on this lyric
@@ -2168,7 +2168,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 #ifdef GH_IMPORT_DEBUG
 					if(thispos)
 					{	//If a match was determined
-						snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\tDecided match:  Text = \"%s\"\tPosition = %lu", linkptr->text, thispos);
+						snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tDecided match:  Text = \"%s\"\tPosition = %lu", linkptr->text, thispos);
 						eof_log(eof_log_string, 1);
 					}
 #endif
@@ -2192,9 +2192,9 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 	fb->index = 0;	//Seek to the beginning of the file buffer
 	tracknum = sp->track[EOF_TRACK_VOCALS]->tracknum;
 	tp = sp->vocal_track[tracknum];		//Store the pointer to the vocal track to simplify things
-	snprintf(buffer, sizeof(buffer), "%s_vocals_phrases", songname);
+	snprintf(buffer, sizeof(buffer) - 1, "%s_vocals_phrases", songname);
 #ifdef GH_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Looking for section \"%s\"", buffer);
+	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  Looking for section \"%s\"", buffer);
 	eof_log(eof_log_string, 1);
 #endif
 	arraysize = eof_gh_process_section_header(fb, buffer, &arrayptr, qbindex);	//Parse the location of the 1D arrays of section data
@@ -2203,14 +2203,14 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 		numphrases = eof_gh_read_array_header(fb, arrayptr[ctr], qbindex);	//Process the array header (get size and seek to first data value)
 		if(numphrases % 2)
 		{	//The value in numphrases is the number of dwords used to define this vocal phrases array (each phrase should be 2 dwords in size)
-			snprintf(eof_log_string, sizeof(eof_log_string), "Error:  Invalid vocal phrase note array size (%lu)", numphrases);
+			snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Invalid vocal phrase note array size (%lu)", numphrases);
 			eof_log(eof_log_string, 1);
 			free(arrayptr);
 			return -1;
 		}
 		numphrases /= 2;	//Determine the number of vocal phrases that are defined
 #ifdef GH_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \tNumber of vocal phrases = %lu", numphrases);
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \tNumber of vocal phrases = %lu", numphrases);
 		eof_log(eof_log_string, 1);
 #endif
 		for(ctr2 = 0; ctr2 < numphrases; ctr2++)
@@ -2223,7 +2223,7 @@ int eof_gh_read_vocals_qb(filebuffer *fb, EOF_SONG *sp, const char *songname, un
 			}
 			fb->index += 4;	//Skip 4 bytes of uninteresting data
 #ifdef GH_IMPORT_DEBUG
-			snprintf(eof_log_string, sizeof(eof_log_string), "\t\tLyric phrase at %lu ms", phrasestart);
+			snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tLyric phrase at %lu ms", phrasestart);
 			eof_log(eof_log_string, 1);
 #endif
 			eof_vocal_track_add_line(tp, phrasestart, phrasestart);	//Add the phrase with a temporary end position
@@ -2317,7 +2317,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 		if(strstr(filename, ".mid."))
 		{	//If this appears to be the correct file name
 #ifdef GH_IMPORT_DEBUG
-			snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Internal file name is \"%s\"", filename);
+			snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  Internal file name is \"%s\"", filename);
 			eof_log(eof_log_string, 1);
 #endif
 			break;
@@ -2336,7 +2336,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 	}
 	songname[index] = '\0';	//Terminate the string
 #ifdef GH_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  Internal song name is \"%s\"", songname);
+	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  Internal song name is \"%s\"", songname);
 	eof_log(eof_log_string, 1);
 #endif
 
@@ -2350,12 +2350,12 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 	}
 	qbindex = fb->index - 8;	//The encapsulated QB file begins 8 bytes before the magic number
 #ifdef GH_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  QB header located at file position 0x%lX", qbindex);
+	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  QB header located at file position 0x%lX", qbindex);
 	eof_log(eof_log_string, 1);
 #endif
 
 //Process the fretbar section to create the tempo map
-	snprintf(buffer, sizeof(buffer), "%s_fretbars", songname);	//Build the section name
+	snprintf(buffer, sizeof(buffer) - 1, "%s_fretbars", songname);	//Build the section name
 	arraysize = eof_gh_process_section_header(fb, buffer, &arrayptr, qbindex);	//Parse the location of the 1D arrays of section data
 	sp = eof_create_song_populated();
 	if(sp == NULL)
@@ -2369,7 +2369,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 	{	//For each 1D array of fretbar data
 		numbeats = eof_gh_read_array_header(fb, arrayptr[ctr], qbindex);	//Process the array header (get size and seek to first data value)
 #ifdef GH_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \tNumber of fretbars = %lu", numbeats);
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \tNumber of fretbars = %lu", numbeats);
 		eof_log(eof_log_string, 1);
 #endif
 		if(numbeats < 3)
@@ -2414,7 +2414,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 				sp->beat[ctr2]->pos = sp->beat[ctr2]->fpos = dword;	//Set the timestamp position of this beat
 				lastfretbar = dword;
 #ifdef GH_IMPORT_DEBUG
-				snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \t\tFretbar %lu position = %lu", ctr2+1, dword);
+				snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\tFretbar %lu position = %lu", ctr2+1, dword);
 				eof_log(eof_log_string, 1);
 #endif
 			}
@@ -2429,7 +2429,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 	{	//If the user opted to import TS changes
 //Process the timesig section to load time signatures
 		fb->index = 0;	//Seek to the beginning of the file buffer
-		snprintf(buffer, sizeof(buffer), "%s_timesig", songname);	//Build the section name
+		snprintf(buffer, sizeof(buffer) - 1, "%s_timesig", songname);	//Build the section name
 		arraysize = eof_gh_process_section_header(fb, buffer, &arrayptr, qbindex);	//Parse the location of the 1D arrays of section data
 		for(ctr = 0; ctr < arraysize; ctr++)
 		{	//For each 1D array of timesig data
@@ -2444,7 +2444,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 			}
 			numsigs /= 3;	//Determine the number of time signatures that are defined
 #ifdef GH_IMPORT_DEBUG
-			snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \tNumber of timesigs = %lu", numsigs);
+			snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \tNumber of timesigs = %lu", numsigs);
 			eof_log(eof_log_string, 1);
 #endif
 			for(ctr2 = 0; ctr2 < numsigs; ctr2++)
@@ -2474,7 +2474,7 @@ EOF_SONG * eof_import_gh_qb(const char *fn)
 					return NULL;
 				}
 #ifdef GH_IMPORT_DEBUG
-				snprintf(eof_log_string, sizeof(eof_log_string), "\tGH:  \t\tTime signature %lu position = %lu (%lu/%lu)", ctr2, dword, tsnum, tsden);
+				snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\tTime signature %lu position = %lu (%lu/%lu)", ctr2, dword, tsnum, tsden);
 				eof_log(eof_log_string, 1);
 #endif
 				for(ctr3 = 0; ctr3 < sp->beats; ctr3++)
@@ -2691,7 +2691,7 @@ struct QBlyric *eof_gh_read_section_names(filebuffer *fb)
 				strcpy(name, &buffer[nameindex]);	//Copy the clean section name into the new buffer
 
 #ifdef GH_IMPORT_DEBUG
-				snprintf(eof_log_string, sizeof(eof_log_string), "\t\tPotential section name = \"%s\"\tchecksum = 0x%08lX", name, checksum);
+				snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tPotential section name = \"%s\"\tchecksum = 0x%08lX", name, checksum);
 				eof_log(eof_log_string, 1);
 #endif
 
@@ -2790,7 +2790,7 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 				return -1;
 			}
 		#ifdef GH_IMPORT_DEBUG
-				snprintf(eof_log_string, sizeof(eof_log_string), "\t\tNumber of sections = %lu", numsections);
+				snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tNumber of sections = %lu", numsections);
 				eof_log(eof_log_string, 1);
 		#endif
 			fb->index += 4;	//Seek past the next 4 bytes, which is a checksum for the game-specific guitarmarkers subheader
@@ -2832,10 +2832,10 @@ int eof_gh_read_sections_note(filebuffer *fb, EOF_SONG *sp)
 							char buffer2[256];
 
 		#ifdef GH_IMPORT_DEBUG
-							snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\tSection:  Position = %lums, checksum = 0x%08lX: %s", dword, checksum, linkptr->text);
+							snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSection:  Position = %lums, checksum = 0x%08lX: %s", dword, checksum, linkptr->text);
 							eof_log(eof_log_string, 1);
 		#endif
-							snprintf(buffer2, sizeof(buffer2), "[section %s]", linkptr->text);	//Alter the section name formatting
+							snprintf(buffer2, sizeof(buffer2) - 1, "[section %s]", linkptr->text);	//Alter the section name formatting
 							eof_song_add_text_event(sp, beatnum, buffer2, 0, 0, 0);	//Add the text event
 						}
 						break;
@@ -2917,7 +2917,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 		//Find the section timestamps
 			for(linkptr = head; linkptr != NULL; linkptr = linkptr->next)
 			{	//For each link in the sections checksum list
-				snprintf(eof_log_string, sizeof(eof_log_string), "\tGH: \tSearching for position of section \"%s\" (checksum 0x%08lX)", linkptr->text, linkptr->checksum);
+				snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH: \tSearching for position of section \"%s\" (checksum 0x%08lX)", linkptr->text, linkptr->checksum);
 				eof_log(eof_log_string, 1);
 				sections_file->index = 0;	//Rewind to beginning of chart file buffer
 				found = 0;	//Reset this boolean condition
@@ -2925,7 +2925,7 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 				{	//Search for each instance of the section string checksum
 					if(eof_filebuffer_find_checksum(sections_file, linkptr->checksum))	//Find the section string checksum in the buffer
 					{	//If the checksum wasn't found
-						snprintf(eof_log_string, sizeof(eof_log_string), "\t\tCouldn't find position data for section \"%s\", it is probably a lyric", linkptr->text);
+						snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tCouldn't find position data for section \"%s\", it is probably a lyric", linkptr->text);
 						eof_log(eof_log_string, 1);
 						break;	//Skip looking for this section's timestamp
 					}
@@ -2974,10 +2974,10 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 											char buffer2[256];
 
 #ifdef GH_IMPORT_DEBUG
-											snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\tSection:  Position = %lums, checksum = 0x%08lX: %s", dword, checksum, linkptr->text);
+											snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSection:  Position = %lums, checksum = 0x%08lX: %s", dword, checksum, linkptr->text);
 											eof_log(eof_log_string, 1);
 #endif
-											snprintf(buffer2, sizeof(buffer2), "[section %s]", linkptr->text);	//Alter the section name formatting
+											snprintf(buffer2, sizeof(buffer2) - 1, "[section %s]", linkptr->text);	//Alter the section name formatting
 											eof_song_add_text_event(sp, beatnum, buffer2, 0, 0, 0);	//Add the text event
 										}
 										found = 1;

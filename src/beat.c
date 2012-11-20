@@ -440,7 +440,7 @@ void eof_double_tempo(EOF_SONG * sp, unsigned long beat, char *undo_made)
 		sp->beat[beat]->ppqn /= 2;	//Double the tempo on this beat
 		if(eof_song_add_beat(sp) == NULL)
 		{	//If a new beat couldn't be created
-			eof_undo_apply();	//Undo this failed operation
+			(void) eof_undo_apply();	//Undo this failed operation
 			allegro_message("Failed to double tempo.  Operation canceled.");
 			return;
 		}

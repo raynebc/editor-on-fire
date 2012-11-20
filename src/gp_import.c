@@ -1847,7 +1847,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		return NULL;
 	}
 #ifdef GP_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string), "\tParsing version %u guitar pro file", fileversion);
+	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tParsing version %u guitar pro file", fileversion);
 	eof_log(eof_log_string, 1);
 #endif
 
@@ -1990,7 +1990,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 //Read track data
 	pack_ReadDWORDLE(inf, &measures);	//Read the number of measures
 #ifdef GP_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string), "\tNumber of measures: %lu", measures);
+	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tNumber of measures: %lu", measures);
 	eof_log(eof_log_string, 1);
 #endif
 	tsarray = malloc(sizeof(struct eof_gp_time_signature) * measures);	//Allocate memory to store the time signature effective for each measure
@@ -2003,7 +2003,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	}
 	pack_ReadDWORDLE(inf, &tracks);	//Read the number of tracks
 #ifdef GP_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string), "\tNumber of tracks: %lu", tracks);
+	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tNumber of tracks: %lu", tracks);
 	eof_log(eof_log_string, 1);
 #endif
 	gp->numtracks = tracks;
@@ -2104,7 +2104,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 #ifdef GP_IMPORT_DEBUG
 		if(bytemask & 3)
 		{	//If the TS numerator or denominator were changed
-			snprintf(eof_log_string, sizeof(eof_log_string), "\t\tTS change at measure %lu:  %u/%u", ctr + 1, curnum, curden);
+			snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tTS change at measure %lu:  %u/%u", ctr + 1, curnum, curden);
 			eof_log(eof_log_string, 1);
 		}
 #endif
@@ -2114,7 +2114,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			if(gp->text_events < EOF_MAX_TEXT_EVENTS)
 			{	//If the maximum number of text events hasn't already been defined
 #ifdef GP_IMPORT_DEBUG
-				snprintf(eof_log_string, sizeof(eof_log_string), "\t\tSection marker found at measure #%lu:  \"%s\"", ctr + 1, buffer);
+				snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSection marker found at measure #%lu:  \"%s\"", ctr + 1, buffer);
 				eof_log(eof_log_string, 1);
 #endif
 				gp->text_event[gp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
@@ -2185,7 +2185,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	if(eof_song->beats < totalbeats + 2)
 	{	//If there will be beats appended to the project to encompass the guitar pro file's tracks
 #ifdef GP_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string), "\tAppending %lu beats to project so that guitar pro transcriptions will fit", totalbeats + 2 - eof_song->beats);
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAppending %lu beats to project so that guitar pro transcriptions will fit", totalbeats + 2 - eof_song->beats);
 		eof_log(eof_log_string, 1);
 #endif
 		while(eof_song->beats < totalbeats + 2)
@@ -2328,7 +2328,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 		strcpy(gp->names[ctr], buffer);
 #ifdef GP_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string), "\t\tTrack #%lu: %s", ctr + 1, buffer);
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tTrack #%lu: %s", ctr + 1, buffer);
 		eof_log(eof_log_string, 1);
 #endif
 		pack_fseek(inf, 40 - word);					//Skip the padding that follows the track name string
@@ -2344,7 +2344,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			}
 		}
 #ifdef GP_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\t%lu strings", strings[ctr]);
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu strings", strings[ctr]);
 		eof_log(eof_log_string, 1);
 #endif
 		for(ctr2 = 0; ctr2 < 7; ctr2++)
@@ -2353,7 +2353,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			{	//If this string is used
 				pack_ReadDWORDLE(inf, &dword);	//Read the tuning for this string
 #ifdef GP_IMPORT_DEBUG
-				snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\tTuning for string #%lu: MIDI note %lu (%s)", ctr2 + 1, dword, eof_note_names[(dword + 3) % 12]);
+				snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tTuning for string #%lu: MIDI note %lu (%s)", ctr2 + 1, dword, eof_note_names[(dword + 3) % 12]);
 				eof_log(eof_log_string, 1);
 #endif
 				if(ctr2 < 6)
@@ -2371,7 +2371,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		pack_ReadDWORDLE(inf, &dword);	//Read the MIDI channel used for this track's effects
 		pack_ReadDWORDLE(inf, &dword);	//Read the number of frets used for this track
 #ifdef GP_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string), "\t\t\tNumber of frets: %lu", dword);
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNumber of frets: %lu", dword);
 		eof_log(eof_log_string, 1);
 #endif
 		gp->track[ctr]->numfrets = dword;

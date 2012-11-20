@@ -18,7 +18,7 @@ EOF_TEXT_EVENT * eof_song_add_text_event(EOF_SONG * sp, unsigned long beat, char
 		sp->text_event[sp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
 		if(sp->text_event[sp->text_events])
 		{
-			ustrcpy(sp->text_event[sp->text_events]->text, text);
+			(void) ustrcpy(sp->text_event[sp->text_events]->text, text);
 			sp->text_event[sp->text_events]->beat = beat;
 			if(track >= sp->tracks)
 			{	//If this is an invalid track
