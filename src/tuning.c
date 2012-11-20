@@ -18,6 +18,7 @@ char eof_tuning_unknown[] = {"Unknown"};
 char *eof_key_names_major[15] = {"B", "Gb", "Db", "Ab", "Eb", "Bb", "F", "C", "G", "D", "A", "E", "B", "Gb", "Db"};	//In MIDI, -7 represents 7 flats, 7 represents 7 sharps.  This array is that system transposed up by 7 to avoid using negative indexes
 char *eof_key_names_minor[15] = {"g#", "eb", "bb", "f", "c", "g", "d", "a", "e", "b", "f#", "c#", "g#", "eb", "bb"};
 char **eof_key_names = eof_key_names_major;
+char *eof_none_string = "None";
 
 char eof_tuning_name[EOF_NAME_LENGTH+1] = {"Unknown"};
 char string_1_name[5] = {0};
@@ -538,7 +539,7 @@ char *eof_get_key_signature(EOF_SONG *sp, unsigned long beatnum, char failureopt
 	}
 
 	if(failureoption)
-		return "None";
+		return eof_none_string;
 	else
 		return NULL;
 }

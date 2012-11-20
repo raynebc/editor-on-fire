@@ -375,7 +375,7 @@ long int ParseLongInt(char *buffer,unsigned long *startindex,unsigned long linen
 	//If errorstatus is NOT NULL, a nonzero number is instead stored into it and 0 is returned upon parse error
 	//and the error is not printed to stdout
 	//Note:  This function will return a negative value if a negative number is read from the input string
-unsigned long FindLongestLineLength(FILE *inf,char exit_on_empty);
+size_t FindLongestLineLength(FILE *inf,char exit_on_empty);
 	//Returns the length of the longest line in the input text file.  If 0 is returned, the file should be
 	//considered empty.  If exit_on_empty is nonzero., exit(1) is called if the parsed file is empty
 	//The returned count adds one byte to account for the required null terminator
@@ -423,7 +423,7 @@ char *ReadString(FILE *inf,unsigned long *bytesread,unsigned long maxread);
 unsigned long GetFileEndPos(FILE *fp);
 	//Accepts a binary mode stream pointer, seeks to the last byte, obtains the file position,
 	//seeks to the original file position and returns the file position of the last byte
-void BlockCopy(FILE *inf,FILE *outf,unsigned long num);
+void BlockCopy(FILE *inf, FILE *outf, size_t num);
 	//Accepts an input file and output file, copying the specified number of bytes from the former to the latter
 int SearchPhrase(FILE *inf,unsigned long breakpos,unsigned long *pos,const char *phrase,unsigned long phraselen,unsigned char autoseek);
 	//Searches from the current file position of inf for the first match of the specified array of characters

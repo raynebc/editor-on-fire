@@ -411,13 +411,13 @@ int eof_menu_beat_bpm_change(void)
 	eof_color_dialog(eof_bpm_change_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_bpm_change_dialog);
 	oldbpm = 60000000.0 / (double)eof_song->beat[eof_selected_beat]->ppqn;
-	snprintf(eof_etext, sizeof(eof_etext) - 1, "%3.2f", oldbpm);
+	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%3.2f", oldbpm);
 	eof_bpm_change_dialog[3].flags = 0;
 	eof_bpm_change_dialog[4].flags = 0;
 	if(eof_popup_dialog(eof_bpm_change_dialog, 2) == 5)
 	{	//If the user activated the "OK" button
 		double bpm = atof(eof_etext);
-		snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%3.2f", oldbpm);
+		(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%3.2f", oldbpm);
 		if(!ustricmp(eof_etext, eof_etext2))
 		{
 			eof_cursor_visible = 1;
@@ -438,7 +438,7 @@ int eof_menu_beat_bpm_change(void)
 		if(eof_bpm_change_dialog[4].flags == D_SELECTED)
 		{	//If the "Adjust Notes" option was selected
 			eof_song->beat[eof_selected_beat]->flags |= EOF_BEAT_FLAG_ANCHOR;	//Ensure the selected beat is anchored before calling the auto-adjust logic
-			eof_menu_edit_cut(eof_selected_beat + 1, 1);
+			(void) eof_menu_edit_cut(eof_selected_beat + 1, 1);
 			eof_song->beat[eof_selected_beat]->flags = old_flags;
 		}
 		newppqn = 60000000.0 / bpm;
@@ -467,7 +467,7 @@ int eof_menu_beat_bpm_change(void)
 		eof_calculate_beats(eof_song);
 		if(eof_bpm_change_dialog[4].flags == D_SELECTED)
 		{	//If the "Adjust Notes" option was selected
-			eof_menu_edit_cut_paste(eof_selected_beat + 1, 1);
+			(void) eof_menu_edit_cut_paste(eof_selected_beat + 1, 1);
 		}
 		eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	}
@@ -479,28 +479,28 @@ int eof_menu_beat_bpm_change(void)
 
 int eof_menu_beat_ts_4_4(void)
 {
-	eof_apply_ts(4,4,eof_selected_beat,eof_song,1);
+	(void) eof_apply_ts(4,4,eof_selected_beat,eof_song,1);
 	eof_select_beat(eof_selected_beat);
 	return 1;
 }
 
 int eof_menu_beat_ts_3_4(void)
 {
-	eof_apply_ts(3,4,eof_selected_beat,eof_song,1);
+	(void) eof_apply_ts(3,4,eof_selected_beat,eof_song,1);
 	eof_select_beat(eof_selected_beat);
 	return 1;
 }
 
 int eof_menu_beat_ts_5_4(void)
 {
-	eof_apply_ts(5,4,eof_selected_beat,eof_song,1);
+	(void) eof_apply_ts(5,4,eof_selected_beat,eof_song,1);
 	eof_select_beat(eof_selected_beat);
 	return 1;
 }
 
 int eof_menu_beat_ts_6_4(void)
 {
-	eof_apply_ts(6,4,eof_selected_beat,eof_song,1);
+	(void) eof_apply_ts(6,4,eof_selected_beat,eof_song,1);
 	eof_select_beat(eof_selected_beat);
 	return 1;
 }
@@ -527,8 +527,8 @@ int eof_menu_beat_ts_custom(void)
 	eof_render();
 	eof_color_dialog(eof_custom_ts_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_custom_ts_dialog);
-	snprintf(eof_etext, sizeof(eof_etext) - 1, "%lu", ((eof_song->beat[eof_selected_beat]->flags & 0xFF000000)>>24) + 1);
-	snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", ((eof_song->beat[eof_selected_beat]->flags & 0x00FF0000)>>16) + 1);
+	(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%lu", ((eof_song->beat[eof_selected_beat]->flags & 0xFF000000)>>24) + 1);
+	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%lu", ((eof_song->beat[eof_selected_beat]->flags & 0x00FF0000)>>16) + 1);
 	if(eof_popup_dialog(eof_custom_ts_dialog, 2) == 5)
 	{	//User clicked OK
 		num = atoi(eof_etext);
@@ -548,7 +548,7 @@ int eof_menu_beat_ts_custom(void)
 			}
 			else
 			{	//User provided a valid time signature
-				eof_apply_ts(num,den,eof_selected_beat,eof_song,1);
+				(void) eof_apply_ts(num,den,eof_selected_beat,eof_song,1);
 				eof_select_beat(eof_selected_beat);
 			}
 		}
@@ -718,7 +718,7 @@ int eof_menu_beat_anchor(void)
 	oldmm = (eof_song->beat[eof_selected_beat]->pos / 1000) / 60;
 	oldss = (eof_song->beat[eof_selected_beat]->pos / 1000) % 60;
 	oldhs = (eof_song->beat[eof_selected_beat]->pos / 10) % 100;
-	snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%02d:%02d.%02d", oldmm, oldss, oldhs);
+	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%02d:%02d.%02d", oldmm, oldss, oldhs);
 	if(eof_popup_dialog(eof_anchor_dialog, 2) == 3)
 	{
 		ttext[0] = eof_etext2[0];
@@ -824,7 +824,7 @@ int eof_menu_beat_delete_anchor(void)
 		eof_song->beat[eof_selected_beat]->flags = 0;
 		if(eof_find_next_anchor(eof_song, eof_selected_beat) < 0)
 		{
-			eof_song_resize_beats(eof_song, eof_selected_beat);
+			(void) eof_song_resize_beats(eof_song, eof_selected_beat);
 			eof_calculate_beats(eof_song);
 		}
 		else
@@ -958,7 +958,7 @@ int eof_menu_beat_all_events(void)
 				track = eof_song->text_event[realindex]->track;
 				if((track != 0) && (track < eof_song->tracks))
 				{	//If this is a track-specific event
-					eof_menu_track_selected_track_number(track);	//Change to that track
+					(void) eof_menu_track_selected_track_number(track);	//Change to that track
 				}
 			}
 			break;	//Break from loop
@@ -979,7 +979,7 @@ int eof_menu_beat_all_events(void)
 					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 					undo_made = 1;
 				}
-				eof_song_add_text_event(eof_song, eof_selected_beat, eof_song->text_event[realindex]->text, track, flags, 0);
+				(void) eof_song_add_text_event(eof_song, eof_selected_beat, eof_song->text_event[realindex]->text, track, flags, 0);
 				eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 				eof_render();
 			}
@@ -1021,7 +1021,7 @@ int eof_menu_beat_events(void)
 int eof_menu_beat_clear_events(void)
 {
 	int i;
-	if(eof_song->text_events <= 0)
+	if(eof_song->text_events == 0)
 	{
 		allegro_message("No events to clear!");
 		return 1;
@@ -1029,7 +1029,7 @@ int eof_menu_beat_clear_events(void)
 	if(alert(NULL, "Erase all events?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		eof_song_resize_text_events(eof_song, 0);
+		(void) eof_song_resize_text_events(eof_song, 0);
 		for(i = 0; i < eof_song->beats; i++)
 		{	//For each beat
 			eof_song->beat[i]->flags &= (~EOF_BEAT_FLAG_EVENTS);	//Clear the event flag
@@ -1044,7 +1044,7 @@ char * eof_events_list(int index, int * size)
 {
 	int i;
 	int ecount = 0;
-	char trackname[22];
+	char trackname[22] = {0};
 
 	for(i = 0; i < eof_song->text_events; i++)
 	{
@@ -1054,13 +1054,13 @@ char * eof_events_list(int index, int * size)
 			{
 				if((eof_song->text_event[i]->track != 0) && (eof_song->text_event[i]->track < eof_song->tracks))
 				{	//If this is a track specific event
-					snprintf(trackname, sizeof(trackname) - 1, "(%s) ", eof_song->track[eof_song->text_event[i]->track]->name);
+					(void) snprintf(trackname, sizeof(trackname) - 1, "(%s) ", eof_song->track[eof_song->text_event[i]->track]->name);
 				}
 				else
 				{
 					trackname[0] = '\0';	//Empty the string
 				}
-				snprintf(eof_event_list_text[ecount], sizeof(eof_event_list_text[ecount]) - 1, "%s%s", trackname, eof_song->text_event[i]->text);
+				(void) snprintf(eof_event_list_text[ecount], sizeof(eof_event_list_text[ecount]) - 1, "%s%s", trackname, eof_song->text_event[i]->text);
 				ecount++;
 			}
 		}
@@ -1092,7 +1092,7 @@ char * eof_events_list(int index, int * size)
 
 char * eof_events_list_all(int index, int * size)
 {
-	char trackname[22];
+	char trackname[22] = {0};
 	unsigned long x, count = 0, realindex;
 
 	if(index < 0)
@@ -1132,13 +1132,13 @@ char * eof_events_list_all(int index, int * size)
 		}
 		if((eof_song->text_event[realindex]->track != 0) && (eof_song->text_event[realindex]->track < eof_song->tracks))
 		{	//If this is a track specific event
-			snprintf(trackname, sizeof(trackname) - 1, " %s", eof_song->track[eof_song->text_event[realindex]->track]->name);
+			(void) snprintf(trackname, sizeof(trackname) - 1, " %s", eof_song->track[eof_song->text_event[realindex]->track]->name);
 		}
 		else
 		{
 			trackname[0] = '\0';	//Empty the string
 		}
-		snprintf(eof_event_list_text[index], sizeof(eof_event_list_text[index]) - 1, "(%02lu:%02lu.%03lu%s) %s", eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 60000, (eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 1000) % 60, eof_song->beat[eof_song->text_event[realindex]->beat]->pos % 1000, trackname, eof_song->text_event[realindex]->text);
+		(void) snprintf(eof_event_list_text[index], sizeof(eof_event_list_text[index]) - 1, "(%02lu:%02lu.%03lu%s) %s", eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 60000, (eof_song->beat[eof_song->text_event[realindex]->beat]->pos / 1000) % 60, eof_song->beat[eof_song->text_event[realindex]->beat]->pos % 1000, trackname, eof_song->text_event[realindex]->text);
 		return eof_event_list_text[index];
 	}
 	return NULL;
@@ -1164,7 +1164,7 @@ int eof_events_dialog_add_function(char function)
 	eof_color_dialog(eof_events_add_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_events_add_dialog);
 	(void) ustrcpy(eof_etext, "");
-	snprintf(eof_events_add_dialog_string, sizeof(eof_events_add_dialog_string) - 1, "Specific to %s", eof_song->track[eof_selected_track]->name);
+	(void) snprintf(eof_events_add_dialog_string, sizeof(eof_events_add_dialog_string) - 1, "Specific to %s", eof_song->track[eof_selected_track]->name);
 	eof_events_add_dialog[3].flags = 0;	//By default, this is not a track specific event
 	if(function)
 	{	//If the calling function wanted to automatically enable the "Rocksmith phrase marker" checkbox
@@ -1188,13 +1188,13 @@ int eof_events_dialog_add_function(char function)
 				flags |= EOF_EVENT_FLAG_RS_PHRASE;
 			}
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			eof_song_add_text_event(eof_song, eof_selected_beat, eof_etext, track, flags, 0);
+			(void) eof_song_add_text_event(eof_song, eof_selected_beat, eof_etext, track, flags, 0);
 			eof_sort_events(eof_song);
 			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 		}
 	}
 	eof_render();
-	dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
+	(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(screen);
@@ -1235,13 +1235,13 @@ int eof_events_dialog_edit(DIALOG * d)
 
 	if((eof_song->text_event[event]->track != 0) && (eof_song->text_event[event]->track != eof_selected_track))
 	{	//If this is a track specific event, and it doesn't belong to the active track
-		dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
+		(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
 		eof_cursor_visible = 1;
 		eof_pen_visible = 1;
 		eof_show_mouse(screen);
 		return D_O_K;	//Don't allow it to be edited here
 	}
-	snprintf(eof_events_add_dialog_string, sizeof(eof_events_add_dialog_string) - 1, "Specific to %s", eof_song->track[eof_selected_track]->name);
+	(void) snprintf(eof_events_add_dialog_string, sizeof(eof_events_add_dialog_string) - 1, "Specific to %s", eof_song->track[eof_selected_track]->name);
 	if(eof_song->text_event[event]->track == eof_selected_track)
 	{	//If this event is specific to this track
 		eof_events_add_dialog[3].flags = D_SELECTED;	//Set the checkbox specifying the event is track specific
@@ -1287,7 +1287,7 @@ int eof_events_dialog_edit(DIALOG * d)
 		}
 	}
 	eof_render();
-	dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
+	(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(screen);
@@ -1314,7 +1314,7 @@ int eof_events_dialog_delete(DIALOG * d)
 	int i, c;
 	int ecount = 0;
 
-	if(eof_song->text_events <= 0)
+	if(eof_song->text_events == 0)
 	{
 		return D_O_K;
 	}
@@ -1336,7 +1336,7 @@ int eof_events_dialog_delete(DIALOG * d)
 				{
 					eof_events_dialog[1].d1--;
 				}
-				dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
+				(void) dialog_message(eof_events_dialog, MSG_DRAW, 0, &i);
 				eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 				return D_O_K;
 			}
@@ -1393,15 +1393,15 @@ void eof_rebuild_trainer_strings(void)
 	//Build the trainer strings
 	if((eof_selected_track == EOF_TRACK_PRO_GUITAR) || (eof_selected_track == EOF_TRACK_PRO_GUITAR_22))
 	{	//A pro guitar track is active
-		snprintf(eof_etext2, sizeof(eof_etext2) - 1, "[begin_pg song_trainer_pg_%s]", eof_trainer_string);
-		snprintf(eof_etext3, sizeof(eof_etext3) - 1, "[pg_norm song_trainer_pg_%s]", eof_trainer_string);
-		snprintf(eof_etext4, sizeof(eof_etext4) - 1, "[end_pg song_trainer_pg_%s]", eof_trainer_string);
+		(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "[begin_pg song_trainer_pg_%s]", eof_trainer_string);
+		(void) snprintf(eof_etext3, sizeof(eof_etext3) - 1, "[pg_norm song_trainer_pg_%s]", eof_trainer_string);
+		(void) snprintf(eof_etext4, sizeof(eof_etext4) - 1, "[end_pg song_trainer_pg_%s]", eof_trainer_string);
 	}
 	else if((eof_selected_track == EOF_TRACK_PRO_BASS) || (eof_selected_track == EOF_TRACK_PRO_BASS_22))
 	{	//A pro bass track is active
-		snprintf(eof_etext2, sizeof(eof_etext2) - 1, "[begin_pb song_trainer_pb_%s]", eof_trainer_string);
-		snprintf(eof_etext3, sizeof(eof_etext3) - 1, "[pb_norm song_trainer_pb_%s]", eof_trainer_string);
-		snprintf(eof_etext4, sizeof(eof_etext4) - 1, "[end_pb song_trainer_pb_%s]", eof_trainer_string);
+		(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "[begin_pb song_trainer_pb_%s]", eof_trainer_string);
+		(void) snprintf(eof_etext3, sizeof(eof_etext3) - 1, "[pb_norm song_trainer_pb_%s]", eof_trainer_string);
+		(void) snprintf(eof_etext4, sizeof(eof_etext4) - 1, "[end_pb song_trainer_pb_%s]", eof_trainer_string);
 	}
 
 	//Update the checkboxes to indicate which trainer strings are already defined
@@ -1481,7 +1481,7 @@ int eof_menu_beat_trainer_event(void)
 			}
 		}
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		eof_song_add_text_event(eof_song, eof_selected_beat, selected_string, relevant_track, 0, 0);	//Add the chosen text event to the selected beat
+		(void) eof_song_add_text_event(eof_song, eof_selected_beat, selected_string, relevant_track, 0, 0);	//Add the chosen text event to the selected beat
 		eof_sort_events(eof_song);
 	}
 	return 1;
@@ -1571,11 +1571,11 @@ int eof_all_events_radio_proc(int msg, DIALOG *d, int c)
 		{	//If the event display filter changed, have the event list redrawn
 			eof_all_events_dialog[5].flags = eof_all_events_dialog[6].flags = eof_all_events_dialog[7].flags = 0;	//Clear all radio buttons
 			eof_all_events_dialog[selected_option].flags = D_SELECTED;	//Reselect the radio button that was just clicked on
-			object_message(&eof_all_events_dialog[1], MSG_DRAW, 0);		//Have Allegro redraw the list of events
-			object_message(&eof_all_events_dialog[5], MSG_DRAW, 0);		//Have Allegro redraw the radio buttons
-			object_message(&eof_all_events_dialog[6], MSG_DRAW, 0);
-			object_message(&eof_all_events_dialog[7], MSG_DRAW, 0);
-			object_message(&eof_all_events_dialog[8], MSG_DRAW, 0);
+			(void) object_message(&eof_all_events_dialog[1], MSG_DRAW, 0);		//Have Allegro redraw the list of events
+			(void) object_message(&eof_all_events_dialog[5], MSG_DRAW, 0);		//Have Allegro redraw the radio buttons
+			(void) object_message(&eof_all_events_dialog[6], MSG_DRAW, 0);
+			(void) object_message(&eof_all_events_dialog[7], MSG_DRAW, 0);
+			(void) object_message(&eof_all_events_dialog[8], MSG_DRAW, 0);
 			previous_option = selected_option;
 		}
 	}
@@ -1636,7 +1636,7 @@ int eof_menu_beat_halve_tempo(void)
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
 
-	eof_halve_tempo(eof_song, eof_selected_beat, NULL);
+	(void) eof_halve_tempo(eof_song, eof_selected_beat, NULL);
 	return 1;
 }
 
@@ -1661,7 +1661,7 @@ int eof_menu_beat_set_RBN_tempos(void)
 		{	//For each beat
 			if(eof_song->beat[i]->ppqn < 200000)
 			{	//If this beat is > 300BPM
-				eof_halve_tempo(eof_song, i, &undo_made);
+				(void) eof_halve_tempo(eof_song, i, &undo_made);
 				changed = 1;		//Track that a change was made during this loop
 			}
 			else if(eof_song->beat[i]->ppqn > 1500000)
@@ -1731,7 +1731,7 @@ int eof_menu_beat_adjust_bpm(double amount)
 	eof_song->beat[targetbeat]->flags |= EOF_BEAT_FLAG_ANCHOR;
 	if(eof_note_auto_adjust)
 	{	//If the user has enabled the Note Auto-Adjust preference
-		eof_menu_edit_cut(targetbeat + 1, 1);	//Save auto-adjust data
+		(void) eof_menu_edit_cut(targetbeat + 1, 1);	//Save auto-adjust data
 	}
 	for(ctr = targetbeat; ctr < eof_song->beats; ctr++)
 	{	//For each beat from the target beat onward
@@ -1749,7 +1749,7 @@ int eof_menu_beat_adjust_bpm(double amount)
 	eof_calculate_beats(eof_song);
 	if(eof_note_auto_adjust)
 	{	//If the user has enabled the Note Auto-Adjust preference
-		eof_menu_edit_cut_paste(targetbeat + 1, 1);
+		(void) eof_menu_edit_cut_paste(targetbeat + 1, 1);
 	}
 	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 	return 1;

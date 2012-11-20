@@ -88,40 +88,40 @@ static int save_wav_fp(SAMPLE * sp, PACKFILE * fp)
 	{
 		return 0;
 	}
-	channels = sp->stereo ? 2 : 1;
-	bits = sp->bits;
+	channels = sp->stereo ? (size_t)2 : (size_t)1;
+	bits = (size_t)sp->bits;
 
 	if((channels < 1) || (channels > 2))
 	{
 		return 0;
 	}
 
-	samples = sp->len;
+	samples = (size_t)sp->len;
 	data_size = samples * channels * (bits / 8);
 	n = samples * channels;
 
-	freq = sp->freq;
+	freq = (size_t)sp->freq;
 
-	pack_fputs("RIFF", fp);
-	pack_iputl(36 + data_size, fp);
-	pack_fputs("WAVE", fp);
+	(void) pack_fputs("RIFF", fp);
+	(void) pack_iputl(36 + (long)data_size, fp);
+	(void) pack_fputs("WAVE", fp);
 
-	pack_fputs("fmt ", fp);
-	pack_iputl(16, fp);
-	pack_iputw(1, fp);
-	pack_iputw(channels, fp);
-	pack_iputl(freq, fp);
-	pack_iputl(freq * channels * (bits / 8), fp);	//ByteRate = SampleRate * NumChannels * BitsPerSample/8
-	pack_iputw(channels * (bits / 8), fp);
-	pack_iputw(bits, fp);
+	(void) pack_fputs("fmt ", fp);
+	(void) pack_iputl(16, fp);
+	(void) pack_iputw(1, fp);
+	(void) pack_iputw((int)channels, fp);
+	(void) pack_iputl((long)freq, fp);
+	(void) pack_iputl((long)(freq * channels * (bits / 8)), fp);	//ByteRate = SampleRate * NumChannels * BitsPerSample/8
+	(void) pack_iputw((int)(channels * (bits / 8)), fp);
+	(void) pack_iputw((int)bits, fp);
 
-	pack_fputs("data", fp);
-	pack_iputl(data_size, fp);
+	(void) pack_fputs("data", fp);
+	(void) pack_iputl((long)data_size, fp);
 
 	if (bits == 8)
 	{
 		pval = sp->data;
-		pack_fwrite(pval, samples * channels, fp);
+		(void) pack_fwrite(pval, (long)(samples * channels), fp);
 	}
 	else if (bits == 16)
 	{
@@ -130,7 +130,7 @@ static int save_wav_fp(SAMPLE * sp, PACKFILE * fp)
 		pval = sp->data;
 		for (i = 0; i < n; i++)
 		{
-			pack_iputw((short)(data[i] - 0x8000), fp);
+			(void) pack_iputw((short)(data[i] - 0x8000), fp);
 		}
 	}
 	else
@@ -156,19 +156,19 @@ int save_wav(const char * fn, SAMPLE * sp)
     file = pack_fopen(fn, "w");
     if(file == NULL)
     {
-		pack_fclose(file);
+		(void) pack_fclose(file);
         return 0;
     }
 
     /* save WAV to the file */
     if(!save_wav_fp(sp, file))
     {
-		pack_fclose(file);
+		(void) pack_fclose(file);
         return 0;
     }
 
     /* close the file */
-    pack_fclose(file);
+	(void) pack_fclose(file);
 
     return 1;
 }
@@ -191,12 +191,12 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	set_window_title("Adjusting Silence...");
 
 	/* back up original file */
-	snprintf(backupfn, sizeof(backupfn) - 1, "%s.backup", oggfn);
+	(void) snprintf(backupfn, sizeof(backupfn) - 1, "%s.backup", oggfn);
 	if(!exists(backupfn))
 	{
-		eof_copy_file((char *)oggfn, backupfn);
+		(void) eof_copy_file((char *)oggfn, backupfn);
 	}
-	delete_file(oggfn);
+	(void) delete_file(oggfn);
 
 	silence_sample = create_silence_sample(ms);
 	if(!silence_sample)
@@ -204,14 +204,14 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 		eof_fix_window_title();
 		return 0;
 	}
-	replace_filename(wavfn, eof_song_path, "silence.wav", 1024);
-	save_wav(wavfn, silence_sample);
+	(void) replace_filename(wavfn, eof_song_path, "silence.wav", 1024);
+	(void) save_wav(wavfn, silence_sample);
 	destroy_sample(silence_sample);
-	replace_filename(soggfn, eof_song_path, "silence.ogg", 1024);
+	(void) replace_filename(soggfn, eof_song_path, "silence.ogg", 1024);
 	#ifdef ALLEGRO_WINDOWS
-		snprintf(sys_command, sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
+		(void) snprintf(sys_command, sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
 	#else
-		snprintf(sys_command, sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
+		(void) snprintf(sys_command, sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
 	#endif
 	if(system(sys_command))
 	{
@@ -220,17 +220,17 @@ int eof_add_silence(const char * oggfn, unsigned long ms)
 	}
 
 	/* stitch the original file to the silence file */
-	snprintf(sys_command, sizeof(sys_command) - 1, "oggCat \"%s\" \"%s\" \"%s\"", oggfn, soggfn, backupfn);
+	(void) snprintf(sys_command, sizeof(sys_command) - 1, "oggCat \"%s\" \"%s\" \"%s\"", oggfn, soggfn, backupfn);
 	if(system(sys_command))
 	{
-		eof_copy_file(backupfn, (char *)oggfn);
+		(void) eof_copy_file(backupfn, (char *)oggfn);
 		eof_fix_window_title();
 		return 0;
 	}
 
 	/* clean up */
-	delete_file(wavfn);	//Delete silence.wav
-	delete_file(soggfn);	//Delete silence.ogg
+	(void) delete_file(wavfn);	//Delete silence.wav
+	(void) delete_file(soggfn);	//Delete silence.ogg
 	if(eof_load_ogg((char *)oggfn, 0))
 	{
 		eof_fix_waveform_graph();
@@ -267,10 +267,10 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	set_window_title("Adjusting Silence...");
 
 	/* back up original file */
-	snprintf(backupfn, sizeof(backupfn) - 1, "%s.backup", oggfn);
+	(void) snprintf(backupfn, sizeof(backupfn) - 1, "%s.backup", oggfn);
 	if(!exists(backupfn))
 	{
-		eof_copy_file((char *)oggfn, backupfn);
+		(void) eof_copy_file((char *)oggfn, backupfn);
 	}
 
 	/* Decode the OGG file into memory */
@@ -281,7 +281,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	oggfile=alogg_create_ogg_from_file(fp);
 	if(oggfile == NULL)
 	{
-		fclose(fp);
+		(void) fclose(fp);
 		return 0;	//Return failure
 	}
 	//Decode OGG into memory
@@ -289,7 +289,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	if(decoded == NULL)
 	{
 		alogg_destroy_ogg(oggfile);
-		fclose(fp);
+		(void) fclose(fp);
 		return 0;	//Return failure
 	}
 
@@ -305,7 +305,7 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	if(combined == NULL)
 	{
 		destroy_sample(decoded);
-		fclose(fp);
+		(void) fclose(fp);
 		return 0;	//Return failure
 	}
 
@@ -343,14 +343,14 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 
 	/* encode the audio */
 	destroy_sample(decoded);	//This is no longer needed
-	replace_filename(wavfn, eof_song_path, "encode.wav", 1024);
-	save_wav(wavfn, combined);
+	(void) replace_filename(wavfn, eof_song_path, "encode.wav", 1024);
+	(void) save_wav(wavfn, combined);
 	destroy_sample(combined);	//This is no longer needed
-	replace_filename(soggfn, eof_song_path, "encode.ogg", 1024);
+	(void) replace_filename(soggfn, eof_song_path, "encode.ogg", 1024);
 	#ifdef ALLEGRO_WINDOWS
-		snprintf(sys_command, sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
+		(void) snprintf(sys_command, sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
 	#else
-		snprintf(sys_command, sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
+		(void) snprintf(sys_command, sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
 	#endif
 	if(system(sys_command))
 	{
@@ -359,11 +359,11 @@ int eof_add_silence_recode(const char * oggfn, unsigned long ms)
 	}
 
 	/* replace the current OGG file with the new file */
-	eof_copy_file(soggfn, (char *)oggfn);	//Copy encode.ogg to the filename of the original OGG
+	(void) eof_copy_file(soggfn, (char *)oggfn);	//Copy encode.ogg to the filename of the original OGG
 
 	/* clean up */
-	delete_file(soggfn);	//Delete encode.ogg
-	delete_file(wavfn);		//Delete encode.wav
+	(void) delete_file(soggfn);	//Delete encode.ogg
+	(void) delete_file(wavfn);		//Delete encode.wav
 	if(eof_load_ogg((char *)oggfn, 0))
 	{
 		eof_fix_waveform_graph();
@@ -400,17 +400,17 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	set_window_title("Adjusting Silence...");
 
 	/* back up original file */
-	snprintf(backupfn, sizeof(backupfn) - 1, "%s.backup", oggfn);
+	(void) snprintf(backupfn, sizeof(backupfn) - 1, "%s.backup", oggfn);
 	if(!exists(backupfn))
 	{
-		eof_copy_file((char *)oggfn, backupfn);
+		(void) eof_copy_file((char *)oggfn, backupfn);
 	}
 
 	/* decode MP3 */
-	replace_filename(wavfn, eof_song_path, "decode.wav", 1024);
-	replace_filename(mp3fn, eof_song_path, "original.mp3", 1024);
-	snprintf(sys_command, sizeof(sys_command) - 1, "lame --decode \"%s\" \"%s\"", mp3fn, wavfn);
-	system(sys_command);
+	(void) replace_filename(wavfn, eof_song_path, "decode.wav", 1024);
+	(void) replace_filename(mp3fn, eof_song_path, "original.mp3", 1024);
+	(void) snprintf(sys_command, sizeof(sys_command) - 1, "lame --decode \"%s\" \"%s\"", mp3fn, wavfn);
+	(void) system(sys_command);
 
 	/* insert silence */
 	decoded = load_sample(wavfn);
@@ -457,7 +457,7 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	}
 
 	/* save combined WAV */
-	replace_filename(wavfn, eof_song_path, "encode.wav", 1024);
+	(void) replace_filename(wavfn, eof_song_path, "encode.wav", 1024);
 	if(!save_wav(wavfn, combined))
 	{
 		destroy_sample(decoded);	//This is no longer needed
@@ -471,11 +471,11 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 
 	/* encode the audio */
 	printf("%s\n%s\n", eof_song_path, wavfn);
-	replace_filename(soggfn, eof_song_path, "encode.ogg", 1024);
+	(void) replace_filename(soggfn, eof_song_path, "encode.ogg", 1024);
 	#ifdef ALLEGRO_WINDOWS
-		snprintf(sys_command, sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
+		(void) snprintf(sys_command, sizeof(sys_command) - 1, "oggenc2 -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
 	#else
-		snprintf(sys_command, sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
+		(void) snprintf(sys_command, sizeof(sys_command) - 1, "oggenc -o \"%s\" -b %d \"%s\"", soggfn, alogg_get_bitrate_ogg(eof_music_track) / 1000, wavfn);
 	#endif
 
 	if(system(sys_command))
@@ -485,14 +485,14 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	}
 
 	/* replace the current OGG file with the new file */
-	eof_copy_file(soggfn, (char *)oggfn);	//Copy encode.ogg to the filename of the original OGG
+	(void) eof_copy_file(soggfn, (char *)oggfn);	//Copy encode.ogg to the filename of the original OGG
 
 	/* clean up */
-	replace_filename(wavfn, eof_song_path, "decode.wav", 1024);
-	delete_file(wavfn);		//Delete decode.wav
-	replace_filename(wavfn, eof_song_path, "encode.wav", 1024);
-	delete_file(wavfn);		//Delete encode.wav
-	delete_file(soggfn);	//Delete encode.ogg
+	(void) replace_filename(wavfn, eof_song_path, "decode.wav", 1024);
+	(void) delete_file(wavfn);		//Delete decode.wav
+	(void) replace_filename(wavfn, eof_song_path, "encode.wav", 1024);
+	(void) delete_file(wavfn);		//Delete encode.wav
+	(void) delete_file(soggfn);	//Delete encode.ogg
 	if(eof_load_ogg((char *)oggfn, 0))
 	{
 		eof_fix_waveform_graph();

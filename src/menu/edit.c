@@ -528,8 +528,8 @@ int eof_menu_edit_copy_vocal(void)
 		allegro_message("Clipboard error!");
 		return 1;
 	}
-	pack_iputl(copy_notes, fp);
-	pack_iputl(first_beat, fp);
+	(void) pack_iputl(copy_notes, fp);
+	(void) pack_iputl(first_beat, fp);
 
 	for(i = 0; i < eof_song->vocal_track[tracknum]->lyrics; i++)
 	{
@@ -551,20 +551,20 @@ int eof_menu_edit_copy_vocal(void)
 			}
 
 			/* write note data to disk */
-			pack_putc(eof_song->vocal_track[tracknum]->lyric[i]->note, fp);
-			pack_iputl(eof_song->vocal_track[tracknum]->lyric[i]->pos - first_pos, fp);
-			pack_iputl(eof_get_beat(eof_song, eof_song->vocal_track[tracknum]->lyric[i]->pos), fp);
-			pack_iputl(eof_get_beat(eof_song, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length), fp);
-			pack_iputl(eof_song->vocal_track[tracknum]->lyric[i]->length, fp);
+			(void) pack_putc(eof_song->vocal_track[tracknum]->lyric[i]->note, fp);
+			(void) pack_iputl(eof_song->vocal_track[tracknum]->lyric[i]->pos - first_pos, fp);
+			(void) pack_iputl(eof_get_beat(eof_song, eof_song->vocal_track[tracknum]->lyric[i]->pos), fp);
+			(void) pack_iputl(eof_get_beat(eof_song, eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length), fp);
+			(void) pack_iputl(eof_song->vocal_track[tracknum]->lyric[i]->length, fp);
 			tfloat = eof_get_porpos(eof_song->vocal_track[tracknum]->lyric[i]->pos);
-			pack_fwrite(&tfloat, sizeof(float), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
 			tfloat = eof_get_porpos(eof_song->vocal_track[tracknum]->lyric[i]->pos + eof_song->vocal_track[tracknum]->lyric[i]->length);
-			pack_fwrite(&tfloat, sizeof(float), fp);
-			pack_iputw(ustrlen(eof_song->vocal_track[tracknum]->lyric[i]->text), fp);
-			pack_fwrite(eof_song->vocal_track[tracknum]->lyric[i]->text, ustrlen(eof_song->vocal_track[tracknum]->lyric[i]->text), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
+			(void) pack_iputw(ustrlen(eof_song->vocal_track[tracknum]->lyric[i]->text), fp);
+			(void) pack_fwrite(eof_song->vocal_track[tracknum]->lyric[i]->text, ustrlen(eof_song->vocal_track[tracknum]->lyric[i]->text), fp);
 		}
 	}
-	pack_fclose(fp);
+	(void) pack_fclose(fp);
 	if(note_selection_updated)
 	{	//If the only note modified was the seek hover note
 		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
@@ -622,10 +622,10 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 		}
 		temp_lyric.endbeat = pack_igetl(fp);
 		temp_lyric.length = pack_igetl(fp);
-		pack_fread(&temp_lyric.porpos, sizeof(float), fp);
-		pack_fread(&temp_lyric.porendpos, sizeof(float), fp);
+		(void) pack_fread(&temp_lyric.porpos, (long)sizeof(float), fp);
+		(void) pack_fread(&temp_lyric.porendpos, (long)sizeof(float), fp);
 		t = pack_igetw(fp);
-		pack_fread(temp_lyric.text, t, fp);
+		(void) pack_fread(temp_lyric.text, (long)t, fp);
 		temp_lyric.text[t] = '\0';
 
 		if(eof_music_pos + temp_lyric.pos - eof_av_delay < eof_chart_length)
@@ -665,7 +665,7 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste)
 			}
 		}
 	}
-	pack_fclose(fp);
+	(void) pack_fclose(fp);
 	eof_track_sort_notes(eof_song, eof_selected_track);
 	eof_track_fixup_notes(eof_song, eof_selected_track, 0);
 	if((paste_count > 0) && (eof_selection.track != EOF_TRACK_VOCALS))
@@ -772,8 +772,8 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 	for(j = 1; j < eof_song->tracks; j++)
 	{	//For each track
 		/* notes */
-		pack_iputl(copy_notes[j], fp);
-		pack_iputl(first_beat[j], fp);
+		(void) pack_iputl(copy_notes[j], fp);
+		(void) pack_iputl(first_beat[j], fp);
 
 		for(i = 0; i < eof_get_track_size(eof_song, j); i++)
 		{	//For each note in this track
@@ -781,25 +781,25 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 			notelength = eof_get_note_length(eof_song, j, i);
 			if((notepos + notelength >= start_pos) && (notepos < end_pos))
 			{	//If this note falls within the start->end time range
-				pack_iputl(eof_get_note_type(eof_song, j, i), fp);
-				pack_iputl(eof_get_note_note(eof_song, j, i), fp);
-				pack_iputl(notepos - first_pos[j], fp);
+				(void) pack_iputl(eof_get_note_type(eof_song, j, i), fp);
+				(void) pack_iputl(eof_get_note_note(eof_song, j, i), fp);
+				(void) pack_iputl(notepos - first_pos[j], fp);
 				noterelativestart = eof_get_porpos(notepos);
-				pack_fwrite(&noterelativestart, sizeof(float), fp);
+				(void) pack_fwrite(&noterelativestart, (long)sizeof(float), fp);
 				noterelativeend = eof_get_porpos(notepos + notelength);
-				pack_fwrite(&noterelativeend, sizeof(float), fp);
-				pack_iputl(eof_get_beat(eof_song, notepos), fp);
-				pack_iputl(eof_get_beat(eof_song, notepos + notelength), fp);
-				pack_iputl(notelength, fp);
-				pack_iputl(eof_get_note_flags(eof_song, j, i), fp);
+				(void) pack_fwrite(&noterelativeend, (long)sizeof(float), fp);
+				(void) pack_iputl(eof_get_beat(eof_song, notepos), fp);
+				(void) pack_iputl(eof_get_beat(eof_song, notepos + notelength), fp);
+				(void) pack_iputl(notelength, fp);
+				(void) pack_iputl(eof_get_note_flags(eof_song, j, i), fp);
 
-				eof_save_song_string_pf(eof_get_note_name(eof_song, j, i), fp);	//Write the note/lyric name/text
+				(void) eof_save_song_string_pf(eof_get_note_name(eof_song, j, i), fp);	//Write the note/lyric name/text
 
 				if(eof_song->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 				{	//If this is a pro guitar track
 					tracknum = eof_song->track[j]->tracknum;
-					pack_fwrite(eof_song->pro_guitar_track[tracknum]->note[i]->frets, 6, fp);	//Write the fret values for the six usable strings
-					pack_putc(eof_song->pro_guitar_track[tracknum]->note[i]->legacymask, fp);	//Write the legacy bitmask
+					(void) pack_fwrite(eof_song->pro_guitar_track[tracknum]->note[i]->frets, 6, fp);	//Write the fret values for the six usable strings
+					(void) pack_putc(eof_song->pro_guitar_track[tracknum]->note[i]->legacymask, fp);	//Write the legacy bitmask
 				}
 			}
 		}
@@ -808,12 +808,12 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 		{	//For each star power path in the track
 			/* which beat */
 			sectionptr = eof_get_star_power_path(eof_song, j, i);
-			pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
+			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->start_pos);
-			pack_fwrite(&tfloat, sizeof(float), fp);
-			pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
+			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->end_pos);
-			pack_fwrite(&tfloat, sizeof(float), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
 		}
 
 		/* solos */
@@ -821,12 +821,12 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 		{	//For each solo section in the track
 			/* which beat */
 			sectionptr = eof_get_solo(eof_song, j, i);
-			pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
+			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->start_pos);
-			pack_fwrite(&tfloat, sizeof(float), fp);
-			pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
+			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->end_pos);
-			pack_fwrite(&tfloat, sizeof(float), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
 		}
 
 		/* lyric lines */
@@ -834,12 +834,12 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 		{	//For each lyric section in the track
 			/* which beat */
 			sectionptr = eof_get_lyric_section(eof_song, j, i);
-			pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
+			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->start_pos);
-			pack_fwrite(&tfloat, sizeof(float), fp);
-			pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
+			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->end_pos);
-			pack_fwrite(&tfloat, sizeof(float), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
 		}
 
 		/* trills */
@@ -847,12 +847,12 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 		{	//For each trill section in the track
 			/* which beat */
 			sectionptr = eof_get_trill(eof_song, j, i);
-			pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
+			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->start_pos);
-			pack_fwrite(&tfloat, sizeof(float), fp);
-			pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
+			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->end_pos);
-			pack_fwrite(&tfloat, sizeof(float), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
 		}
 
 		/* tremolos */
@@ -860,12 +860,12 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 		{	//For each tremolo section in the track
 			/* which beat */
 			sectionptr = eof_get_tremolo(eof_song, j, i);
-			pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
+			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->start_pos);
-			pack_fwrite(&tfloat, sizeof(float), fp);
-			pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
+			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->end_pos);
-			pack_fwrite(&tfloat, sizeof(float), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
 		}
 
 		/* arpeggios */
@@ -873,12 +873,12 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 		{	//For each tremolo section in the track
 			/* which beat */
 			sectionptr = eof_get_arpeggio(eof_song, j, i);
-			pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
+			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->start_pos);
-			pack_fwrite(&tfloat, sizeof(float), fp);
-			pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
+			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->end_pos);
-			pack_fwrite(&tfloat, sizeof(float), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
 		}
 
 		/* sliders */
@@ -886,15 +886,15 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 		{	//For each slider section in the track
 			/* which beat */
 			sectionptr = eof_get_slider(eof_song, j, i);
-			pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
+			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->start_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->start_pos);
-			pack_fwrite(&tfloat, sizeof(float), fp);
-			pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
+			(void) pack_iputl(eof_get_beat(eof_song, sectionptr->end_pos), fp);
 			tfloat = eof_get_porpos(sectionptr->end_pos);
-			pack_fwrite(&tfloat, sizeof(float), fp);
+			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);
 		}
 	}//For each track
-	pack_fclose(fp);
+	(void) pack_fclose(fp);
 	return 1;
 }
 
@@ -962,13 +962,13 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 			temp_note.type = pack_igetl(fp);
 			temp_note.note = pack_igetl(fp);
 			temp_note.pos = pack_igetl(fp);
-			pack_fread(&temp_note.porpos, sizeof(float), fp);
-			pack_fread(&temp_note.porendpos, sizeof(float), fp);
+			(void) pack_fread(&temp_note.porpos, (long)sizeof(float), fp);
+			(void) pack_fread(&temp_note.porendpos, (long)sizeof(float), fp);
 			temp_note.beat = pack_igetl(fp);
 			temp_note.endbeat = pack_igetl(fp);
 			temp_note.length = pack_igetl(fp);
 			temp_note.flags = pack_igetl(fp);	//Store the note flags
-			eof_load_song_string_pf(text, fp, sizeof(text));	//Store the note/lyric name/text
+			(void) eof_load_song_string_pf(text, fp, sizeof(text));	//Store the note/lyric name/text
 
 			if(temp_note.pos + temp_note.length < eof_chart_length)
 			{
@@ -984,7 +984,7 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 					if(eof_song->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 					{	//If this is a pro guitar track
 						tracknum = eof_song->track[j]->tracknum;
-						pack_fread(eof_song->pro_guitar_track[tracknum]->note[notenum]->frets, 6, fp);		//Set the fret values for the six usable strings
+						(void) pack_fread(eof_song->pro_guitar_track[tracknum]->note[notenum]->frets, 6, fp);		//Set the fret values for the six usable strings
 						eof_song->pro_guitar_track[tracknum]->note[notenum]->legacymask = pack_getc(fp);	//Set the legacy bitmask
 					}
 				}
@@ -997,11 +997,11 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		{	//For each star power path in the active track
 			/* which beat */
 			b = pack_igetl(fp);
-			pack_fread(&tfloat, sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
 			sectionptr = eof_get_star_power_path(eof_song, j, i);
 			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
 			b = pack_igetl(fp);
-			pack_fread(&tfloat, sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
 			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
 		}
 
@@ -1010,11 +1010,11 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		{	//For each solo section in the active track
 			/* which beat */
 			b = pack_igetl(fp);
-			pack_fread(&tfloat, sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
 			sectionptr = eof_get_solo(eof_song, j, i);
 			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
 			b = pack_igetl(fp);
-			pack_fread(&tfloat, sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
 			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
 		}
 
@@ -1023,11 +1023,11 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		{	//For each lyric section in the active track
 			/* which beat */
 			b = pack_igetl(fp);
-			pack_fread(&tfloat, sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
 			sectionptr = eof_get_lyric_section(eof_song, j, i);
 			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
 			b = pack_igetl(fp);
-			pack_fread(&tfloat, sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
 			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
 		}
 
@@ -1036,11 +1036,11 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		{	//For each trill section in the active track
 			/* which beat */
 			b = pack_igetl(fp);
-			pack_fread(&tfloat, sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
 			sectionptr = eof_get_trill(eof_song, j, i);
 			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
 			b = pack_igetl(fp);
-			pack_fread(&tfloat, sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
 			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
 		}
 
@@ -1049,11 +1049,11 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		{	//For each tremolo section in the active track
 			/* which beat */
 			b = pack_igetl(fp);
-			pack_fread(&tfloat, sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
 			sectionptr = eof_get_tremolo(eof_song, j, i);
 			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
 			b = pack_igetl(fp);
-			pack_fread(&tfloat, sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
 			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
 		}
 
@@ -1062,11 +1062,11 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		{	//For each arpeggio section in the active track
 			/* which beat */
 			b = pack_igetl(fp);
-			pack_fread(&tfloat, sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
 			sectionptr = eof_get_arpeggio(eof_song, j, i);
 			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
 			b = pack_igetl(fp);
-			pack_fread(&tfloat, sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
 			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
 		}
 
@@ -1075,15 +1075,15 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 		{	//For each slider section in the active track
 			/* which beat */
 			b = pack_igetl(fp);
-			pack_fread(&tfloat, sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
 			sectionptr = eof_get_slider(eof_song, j, i);
 			sectionptr->start_pos = eof_put_porpos(b, tfloat, 0.0);
 			b = pack_igetl(fp);
-			pack_fread(&tfloat, sizeof(float), fp);
+			(void) pack_fread(&tfloat, (long)sizeof(float), fp);
 			sectionptr->end_pos = eof_put_porpos(b, tfloat, 0.0);
 		}
 	}//For each track
-	pack_fclose(fp);
+	(void) pack_fclose(fp);
 	eof_fixup_notes(eof_song);
 	eof_determine_phrase_status(eof_song, eof_selected_track);
 	return 1;
@@ -1141,9 +1141,9 @@ int eof_menu_edit_copy(void)
 		allegro_message("Clipboard error!");
 		return 1;
 	}
-	pack_iputl(eof_selected_track, fp);	//Store the source track number
-	pack_iputl(copy_notes, fp);			//Store the number of notes that will be stored to clipboard
-	pack_iputl(first_beat, fp);			//Store the beat number of the first note that will be stored to clipboard
+	(void) pack_iputl(eof_selected_track, fp);	//Store the source track number
+	(void) pack_iputl(copy_notes, fp);			//Store the number of notes that will be stored to clipboard
+	(void) pack_iputl(first_beat, fp);			//Store the beat number of the first note that will be stored to clipboard
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -1164,35 +1164,35 @@ int eof_menu_edit_copy(void)
 			}
 
 			/* write note data to disk */
-			eof_save_song_string_pf(eof_get_note_name(eof_song, eof_selected_track, i), fp);	//Write the note's name
-			pack_iputl(eof_get_note_note(eof_song, eof_selected_track, i), fp);					//Write the note bitmask value
-			pack_iputl(eof_get_note_pos(eof_song, eof_selected_track, i) - first_pos, fp);		//Write the note's position relative to within the selection
+			(void) eof_save_song_string_pf(eof_get_note_name(eof_song, eof_selected_track, i), fp);	//Write the note's name
+			(void) pack_iputl(eof_get_note_note(eof_song, eof_selected_track, i), fp);					//Write the note bitmask value
+			(void) pack_iputl(eof_get_note_pos(eof_song, eof_selected_track, i) - first_pos, fp);		//Write the note's position relative to within the selection
 			tfloat = eof_get_porpos(eof_get_note_pos(eof_song, eof_selected_track, i));
-			pack_fwrite(&tfloat, sizeof(float), fp);	//Write the percent representing the note's start position within a beat
+			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);	//Write the percent representing the note's start position within a beat
 			note_len = eof_get_note_length(eof_song, eof_selected_track, i);
 			tfloat = eof_get_porpos(eof_get_note_pos(eof_song, eof_selected_track, i) + note_len);
-			pack_fwrite(&tfloat, sizeof(float), fp);	//Write the percent representing the note's end position within a beat
-			pack_iputl(eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i)), fp);	//Write the beat the note starts in
-			pack_iputl(eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i) + note_len), fp);	//Write the beat the note ends in
-			pack_iputl(note_len, fp);	//Write the note's length
-			pack_iputl(eof_get_note_flags(eof_song, eof_selected_track, i), fp);	//Write the note's flags
+			(void) pack_fwrite(&tfloat, (long)sizeof(float), fp);	//Write the percent representing the note's end position within a beat
+			(void) pack_iputl(eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i)), fp);	//Write the beat the note starts in
+			(void) pack_iputl(eof_get_beat(eof_song, eof_get_note_pos(eof_song, eof_selected_track, i) + note_len), fp);	//Write the beat the note ends in
+			(void) pack_iputl(note_len, fp);	//Write the note's length
+			(void) pack_iputl(eof_get_note_flags(eof_song, eof_selected_track, i), fp);	//Write the note's flags
 
 			/* Write pro guitar specific data to disk, or zeroed data */
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If this is a pro guitar note
-				pack_iputl(eof_song->pro_guitar_track[tracknum]->note[i]->legacymask, fp);				//Write the pro guitar note's legacy bitmask
-				pack_fwrite(eof_song->pro_guitar_track[tracknum]->note[i]->frets, sizeof(frets), fp);	//Write the note's fret array
-				pack_iputl(eof_song->pro_guitar_track[tracknum]->note[i]->ghost, fp);					//Write the note's ghost bitmask
+				(void) pack_iputl(eof_song->pro_guitar_track[tracknum]->note[i]->legacymask, fp);				//Write the pro guitar note's legacy bitmask
+				(void) pack_fwrite(eof_song->pro_guitar_track[tracknum]->note[i]->frets, (long)sizeof(frets), fp);	//Write the note's fret array
+				(void) pack_iputl(eof_song->pro_guitar_track[tracknum]->note[i]->ghost, fp);					//Write the note's ghost bitmask
 			}
 			else
 			{
-				pack_iputl(0, fp);	//Write a legacy bitmask indicating that the original note bitmask is to be used
-				pack_fwrite(frets, sizeof(frets), fp);	//Write 0 data for the note's fret array (legacy notes pasted into a pro guitar track will be played open by default)
-				pack_iputl(0, fp);	//Write a blank ghost bitmask (no strings are ghosted by default)
+				(void) pack_iputl(0, fp);	//Write a legacy bitmask indicating that the original note bitmask is to be used
+				(void) pack_fwrite(frets, (long)sizeof(frets), fp);	//Write 0 data for the note's fret array (legacy notes pasted into a pro guitar track will be played open by default)
+				(void) pack_iputl(0, fp);	//Write a blank ghost bitmask (no strings are ghosted by default)
 			}
 		}
 	}
-	pack_fclose(fp);
+	(void) pack_fclose(fp);
 	if(note_selection_updated)
 	{	//If the only note modified was the seek hover note
 		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
@@ -1246,11 +1246,11 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		highestfret = eof_get_highest_clipboard_fret("eof.clipboard");
 		if(highestfret > eof_song->pro_guitar_track[tracknum]->numfrets)
 		{	//If any notes on the clipboard would exceed the active track's fret limit
-			char message[120];
-			snprintf(message, sizeof(message) - 1, "Warning:  This track's fret limit is exceeded by a pasted note's fret value of %lu.  Continue?", highestfret);
+			char message[120] = {0};
+			(void) snprintf(message, sizeof(message) - 1, "Warning:  This track's fret limit is exceeded by a pasted note's fret value of %lu.  Continue?", highestfret);
 			if(alert(NULL, message, NULL, "&Yes", "&No", 'y', 'n') != 1)
 			{	//If user does not opt to continue after being alerted of this fret limit issue
-				pack_fclose(fp);
+				(void) pack_fclose(fp);
 				return 0;
 			}
 		}
@@ -1258,11 +1258,11 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	highestlane = eof_get_highest_clipboard_lane("eof.clipboard");
 	if(highestlane > numlanes)
 	{	//If any notes on the clipboard exceed the active track's lane limit
-		char message[120];
-		snprintf(message, sizeof(message) - 1, "Warning:  This track's highest lane number is exceeded by a pasted note with a gem on lane %lu.", highestlane);
+		char message[120] = {0};
+		(void) snprintf(message, sizeof(message) - 1, "Warning:  This track's highest lane number is exceeded by a pasted note with a gem on lane %lu.", highestlane);
 		if(alert(NULL, message, "Gems will either be dropped, or added to form all-lane chords for such notes.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If user does not opt to continue after being alerted of this lane limit issue
-			pack_fclose(fp);
+			(void) pack_fclose(fp);
 			return 0;
 		}
 	}
@@ -1294,7 +1294,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 		}
 		eof_menu_edit_paste_clear_range(eof_selected_track, eof_note_type, clear_start, clear_end);
 		//The packfile functions have no seek routine, so the file has to be closed, re-opened and repositioned to the first clipboard note for the actual paste logic
-		pack_fclose(fp);
+		(void) pack_fclose(fp);
 		fp = pack_fopen("eof.clipboard", "r");
 		if(!fp)
 		{
@@ -1385,7 +1385,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 			}
 		}
 	}//For each note in the clipboard file
-	pack_fclose(fp);
+	(void) pack_fclose(fp);
 	eof_track_sort_notes(eof_song, eof_selected_track);
 	eof_fixup_notes(eof_song);
 	eof_determine_phrase_status(eof_song, eof_selected_track);
@@ -1468,7 +1468,7 @@ int eof_menu_edit_snap_custom(void)
 	eof_render();
 	eof_color_dialog(eof_custom_snap_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_custom_snap_dialog);
-	snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%d", eof_snap_interval);
+	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%d", eof_snap_interval);
 	if(eof_custom_snap_measure == 0)
 	{	//If the custom grid snap is per beats
 		eof_custom_snap_dialog[3].flags = D_SELECTED;	//Activate "per beat" radio button by default
@@ -1731,7 +1731,7 @@ int eof_menu_edit_playback_custom(void)
 	eof_render();
 	eof_color_dialog(eof_custom_snap_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_custom_speed_dialog);
-	snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%d", eof_playback_speed/10);		//Load the current playback speed into a string
+	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%d", eof_playback_speed/10);		//Load the current playback speed into a string
 	if(eof_popup_dialog(eof_custom_speed_dialog, 2) == 3)		//If user activated "OK" from the custom speed dialog
 	{
 		userinput = atoi(eof_etext2);
@@ -2091,7 +2091,7 @@ int eof_menu_edit_select_rest(void)
 {
 	unsigned long i;
 
-	if(eof_count_selected_notes(NULL, 0) <= 0)
+	if(eof_count_selected_notes(NULL, 0) == 0)
 	{
 		return 1;
 	}
@@ -2207,7 +2207,7 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty)
 			{	//If this note is in the source difficulty
 				pos = eof_get_note_pos(eof_song, eof_selected_track, i);
 				length = eof_get_note_length(eof_song, eof_selected_track, i);
-				eof_copy_note(eof_song, eof_selected_track, i, eof_selected_track, pos, length, eof_note_type);
+				(void) eof_copy_note(eof_song, eof_selected_track, i, eof_selected_track, pos, length, eof_note_type);
 			}
 		}
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -2242,7 +2242,7 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty)
 					{	//If this phrase could be found
 						if(ptr->difficulty == source_difficulty)
 						{	//If this is an arpeggio section defined in the source difficulty
-							eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the active difficulty
+							(void) eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the active difficulty
 						}
 					}
 				}
@@ -2265,7 +2265,7 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty)
 				{	//For each hand position in the track
 					if(tp->handposition[i].difficulty == source_difficulty)
 					{	//If this is a hand position in the source difficulty
-						eof_track_add_section(eof_song, eof_selected_track, EOF_FRET_HAND_POS_SECTION, eof_note_type, tp->handposition[i].start_pos, tp->handposition[i].end_pos, 0, NULL);	//Create a duplicate of this hand position in the target difficulty
+						(void) eof_track_add_section(eof_song, eof_selected_track, EOF_FRET_HAND_POS_SECTION, eof_note_type, tp->handposition[i].start_pos, tp->handposition[i].end_pos, 0, NULL);	//Create a duplicate of this hand position in the target difficulty
 					}
 				}
 			}
@@ -2401,8 +2401,8 @@ int eof_menu_edit_paste_from_catalog(void)
 			unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 			if(highestfret > eof_song->pro_guitar_track[tracknum]->numfrets)
 			{	//If any notes in the catalog entry would exceed the active track's fret limit
-				char message[120];
-				snprintf(message, sizeof(message) - 1, "Warning:  This track's fret limit is exceeded by a pasted note's fret value of %lu.  Continue?", highestfret);
+				char message[120] = {0};
+				(void) snprintf(message, sizeof(message) - 1, "Warning:  This track's fret limit is exceeded by a pasted note's fret value of %lu.  Continue?", highestfret);
 				if(alert(NULL, message, NULL, "&Yes", "&No", 'y', 'n') != 1)
 				{	//If user does not opt to continue after being alerted of this fret limit issue
 					return 0;
@@ -2411,8 +2411,8 @@ int eof_menu_edit_paste_from_catalog(void)
 		}
 		if(highestlane > numlanes)
 		{	//Warn if pasted notes go above the current track's lane limit
-			char message[120];
-			snprintf(message, sizeof(message) - 1, "Warning:  This track's highest lane number is exceeded by a pasted note with a gem on lane %lu.", highestlane);
+			char message[120] = {0};
+			(void) snprintf(message, sizeof(message) - 1, "Warning:  This track's highest lane number is exceeded by a pasted note with a gem on lane %lu.", highestlane);
 			if(alert(NULL, message, "Such notes will be omitted.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
 			{	//If user does not opt to continue after being alerted of this lane limit issue
 				return 0;
@@ -2528,7 +2528,7 @@ int eof_menu_edit_paste_from_catalog(void)
 		eof_determine_phrase_status(eof_song, eof_selected_track);
 		eof_detect_difficulties(eof_song);
 		eof_selection.current_pos = 0;
-		eof_menu_edit_deselect_all();	//Clear the seek selection and notes array
+		(void) eof_menu_edit_deselect_all();	//Clear the seek selection and notes array
 		for(i = 0; i < paste_count; i++)
 		{	//For each of the pasted notes
 			for(j = 0; j < eof_get_track_size(eof_song, eof_selected_track); j++)
@@ -2549,7 +2549,7 @@ int eof_menu_edit_select_previous(void)
 {
 	unsigned long i;
 
-	if(eof_count_selected_notes(NULL, 0) <= 0)	//If no notes are selected
+	if(eof_count_selected_notes(NULL, 0) == 0)	//If no notes are selected
 	{
 		return 1;
 	}
@@ -2759,17 +2759,17 @@ void eof_menu_paste_read_clipboard_note(PACKFILE * fp, EOF_EXTENDED_NOTE *temp_n
 		return;
 
 	/* read the note */
-	eof_load_song_string_pf(temp_note->name, fp, sizeof(temp_note->name));	//Read the note's name
+	(void) eof_load_song_string_pf(temp_note->name, fp, sizeof(temp_note->name));	//Read the note's name
 	temp_note->note = pack_igetl(fp);	//Read the note fret values
 	temp_note->pos = pack_igetl(fp);		//Read the note's position relative to within the selection
-	pack_fread(&temp_note->porpos, sizeof(float), fp);	//Read the percent representing the note's start position within a beat
-	pack_fread(&temp_note->porendpos, sizeof(float), fp);	//Read the percent representing the note's end position within a beat
+	(void) pack_fread(&temp_note->porpos, (long)sizeof(float), fp);	//Read the percent representing the note's start position within a beat
+	(void) pack_fread(&temp_note->porendpos, (long)sizeof(float), fp);	//Read the percent representing the note's end position within a beat
 	temp_note->beat = pack_igetl(fp);	//Read the beat the note starts in
 	temp_note->endbeat = pack_igetl(fp);	//Read the beat the note ends in
 	temp_note->length = pack_igetl(fp);	//Read the note's length
 	temp_note->flags = pack_igetl(fp);	//Read the note's flags
 	temp_note->legacymask = pack_igetl(fp);		//Read the note's legacy bitmask
-	pack_fread(temp_note->frets, sizeof(temp_note->frets), fp);	//Read the note's fret array
+	(void) pack_fread(temp_note->frets, (long)sizeof(temp_note->frets), fp);	//Read the note's fret array
 	temp_note->ghostmask = pack_igetl(fp);				//Read the note's ghost bitmask
 }
 

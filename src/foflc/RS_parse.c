@@ -31,7 +31,7 @@ void Export_RS(FILE *outf)
 	}
 
 //Export the lyric pieces
-	if(Lyrics.verbose)	puts("Writing lyrics");
+	if(Lyrics.verbose)	(void) puts("Writing lyrics");
 	curline=Lyrics.lines;	//Point lyric line conductor to first line of lyrics
 	while(curline != NULL)	//For each line of lyrics
 	{
@@ -53,7 +53,7 @@ void Export_RS(FILE *outf)
 		}//end while(temp != NULL)
 
 		curline=curline->next;	//Advance to next line of lyrics
-		if(Lyrics.verbose)	putchar('\n');
+		if(Lyrics.verbose)	(void) putchar('\n');
 	}
 
 //Close the <vocals> XML tag

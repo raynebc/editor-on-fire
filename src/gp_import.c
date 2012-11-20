@@ -67,7 +67,7 @@ int eof_read_gp_string(PACKFILE *inf, unsigned *length, char *buffer, char readf
 	{	//If the calling function passed a non NULL pointer
 		*length = len;	//Return the string length through it
 	}
-	pack_fread(buffer, len, inf);	//Read the string
+	(void) pack_fread(buffer, (size_t)len, inf);	//Read the string
 	buffer[len] = '\0';	//Terminate the string
 
 	return 1;	//Return success
@@ -104,47 +104,47 @@ int eof_gp_parse_bend(PACKFILE *inf)
 	word = pack_getc(inf);	//Read bend type
 	if(word == 1)
 	{
-		puts("Bend");
+		(void) puts("Bend");
 	}
 	else if(word == 2)
 	{
-		puts("Bend and release");
+		(void) puts("Bend and release");
 	}
 	else if(word == 3)
 	{
-		puts("Bend, release and bend");
+		(void) puts("Bend, release and bend");
 	}
 	else if(word == 4)
 	{
-		puts("Pre bend");
+		(void) puts("Pre bend");
 	}
 	else if(word == 5)
 	{
-		puts("Pre bend and release");
+		(void) puts("Pre bend and release");
 	}
 	else if(word == 6)
 	{
-		puts("Tremolo dip");
+		(void) puts("Tremolo dip");
 	}
 	else if(word == 7)
 	{
-		puts("Tremolo dive");
+		(void) puts("Tremolo dive");
 	}
 	else if(word == 8)
 	{
-		puts("Tremolo release up");
+		(void) puts("Tremolo release up");
 	}
 	else if(word == 9)
 	{
-		puts("Tremolo inverted dip");
+		(void) puts("Tremolo inverted dip");
 	}
 	else if(word == 10)
 	{
-		puts("Tremolo return");
+		(void) puts("Tremolo return");
 	}
 	else if(word == 11)
 	{
-		puts("Tremolo release down");
+		(void) puts("Tremolo release down");
 	}
 	eof_gp_debug_log(inf, "\t\tHeight:  ");
 	pack_ReadDWORDLE(inf, &height);	//Read bend height
@@ -156,7 +156,7 @@ int eof_gp_parse_bend(PACKFILE *inf)
 	{	//For each point in the bend
 		if(pack_feof(inf))
 		{	//If the end of file was reached unexpectedly
-			puts("\aEnd of file reached unexpectedly");
+			(void) puts("\aEnd of file reached unexpectedly");
 			return 1;	//Return error
 		}
 		eof_gp_debug_log(inf, "\t\t\tTime relative to previous point:  ");
@@ -169,19 +169,19 @@ int eof_gp_parse_bend(PACKFILE *inf)
 		word = pack_getc(inf);
 		if(!word)
 		{
-			puts("none");
+			(void) puts("none");
 		}
 		else if(word == 1)
 		{
-			puts("fast");
+			(void) puts("fast");
 		}
 		else if(word == 2)
 		{
-			puts("average");
+			(void) puts("average");
 		}
 		else if(word == 3)
 		{
-			puts("slow");
+			(void) puts("slow");
 		}
 	}
 	return 0;	//Return success
@@ -209,11 +209,11 @@ EOF_SONG *parse_gp(const char * fn)
 	}
 
 	eof_gp_debug_log(inf, "File version string:  ");
-	eof_read_gp_string(inf, &word, buffer, 0);	//Read file version string
-	puts(buffer);
+	(void) eof_read_gp_string(inf, &word, buffer, 0);	//Read file version string
+	(void) puts(buffer);
 	eof_gp_debug_log(inf, "(skipping ");
 	printf("%d bytes of padding)\n", 30 - word);
-	pack_fseek(inf, 30 - word);	//Skip the padding that follows the version string
+	(void) pack_fseek(inf, 30 - word);	//Skip the padding that follows the version string
 	if(!strcmp(buffer, "FICHIER GUITARE PRO v1.01"))
 	{
 		fileversion = 101;
@@ -264,51 +264,51 @@ EOF_SONG *parse_gp(const char * fn)
 	}
 	else
 	{
-		puts("File format version not supported");
-		pack_fclose(inf);
+		(void) puts("File format version not supported");
+		(void) pack_fclose(inf);
 		return NULL;
 	}
 
 	eof_gp_debug_log(inf, "Title:  ");
-	eof_read_gp_string(inf, NULL, buffer, 1);	//Read title string
-	puts(buffer);
+	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read title string
+	(void) puts(buffer);
 	eof_gp_debug_log(inf, "Subtitle:  ");
-	eof_read_gp_string(inf, NULL, buffer, 1);	//Read subtitle string
-	puts(buffer);
+	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read subtitle string
+	(void) puts(buffer);
 	eof_gp_debug_log(inf, "Artist:  ");
-	eof_read_gp_string(inf, NULL, buffer, 1);	//Read artist string
-	puts(buffer);
+	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read artist string
+	(void) puts(buffer);
 	eof_gp_debug_log(inf, "Album:  ");
-	eof_read_gp_string(inf, NULL, buffer, 1);	//Read album string
-	puts(buffer);
+	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read album string
+	(void) puts(buffer);
 
 	if(fileversion >= 500)
 	{	//The words field only exists in version 5.x or higher versions of the format
 		eof_gp_debug_log(inf, "Lyricist:  ");
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read words string
-		puts(buffer);
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read words string
+		(void) puts(buffer);
 	}
 
 	eof_gp_debug_log(inf, "Composer:  ");
-	eof_read_gp_string(inf, NULL, buffer, 1);	//Read music string
-	puts(buffer);
+	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read music string
+	(void) puts(buffer);
 	eof_gp_debug_log(inf, "Copyright:  ");
-	eof_read_gp_string(inf, NULL, buffer, 1);	//Read copyright string
-	puts(buffer);
+	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read copyright string
+	(void) puts(buffer);
 	eof_gp_debug_log(inf, "Transcriber:  ");
-	eof_read_gp_string(inf, NULL, buffer, 1);	//Read tab string
-	puts(buffer);
+	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read tab string
+	(void) puts(buffer);
 	eof_gp_debug_log(inf, "Instructions:  ");
-	eof_read_gp_string(inf, NULL, buffer, 1);	//Read instructions string
-	puts(buffer);
+	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read instructions string
+	(void) puts(buffer);
 	eof_gp_debug_log(inf, "Number of notice entries:  ");
 	pack_ReadDWORDLE(inf, &dword);	//Read the number of notice entries
 	printf("%lu\n", dword);
 	while(dword > 0)
 	{	//Read each notice entry
 		eof_gp_debug_log(inf, "Notice:  ");
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read notice string
-		puts(buffer);
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read notice string
+		(void) puts(buffer);
 		dword--;
 	}
 
@@ -328,28 +328,28 @@ EOF_SONG *parse_gp(const char * fn)
 			pack_ReadDWORDLE(inf, &dword);	//Read the start from bar #
 			printf(" (start from bar #%ld):  ", dword);
 			pack_ReadDWORDLE(inf, &dword);	//Read the lyric string length
-			buffer2 = malloc(dword + 1);	//Allocate a buffer large enough for the lyric string (plus a NULL terminator)
+			buffer2 = malloc((size_t)dword + 1);	//Allocate a buffer large enough for the lyric string (plus a NULL terminator)
 			if(!buffer2)
 			{
-				puts("Error allocating memory (9)");
-				pack_fclose(inf);
+				(void) puts("Error allocating memory (9)");
+				(void) pack_fclose(inf);
 				return 0;
 			}
-			pack_fread(buffer2, dword, inf);	//Read the lyric string
+			(void) pack_fread(buffer2, (size_t)dword, inf);	//Read the lyric string
 			buffer2[dword] = '\0';		//Terminate the string
-			puts(buffer2);
+			(void) puts(buffer2);
 			free(buffer2);	//Free the buffer
 		}
 	}
 
 	if(fileversion > 500)
 	{	//The volume/equalization settings only exist in versions newer than 5.0 of the format
-		puts("\tVolume/equalization settings:");
+		(void) puts("\tVolume/equalization settings:");
 		eof_gp_debug_log(inf, "Master volume:  ");
 		pack_ReadDWORDLE(inf, &dword);	//Read the master volume
 		printf("%lu\n", dword);
 		eof_gp_debug_log(inf, "(skipping 4 bytes of unknown data)\n");
-		pack_fseek(inf, 4);		//Unknown data
+		(void) pack_fseek(inf, 4);		//Unknown data
 		eof_gp_debug_log(inf, "32Hz band lowered ");
 		byte = pack_getc(inf);
 		printf("%d increments of .1dB\n", byte);
@@ -387,7 +387,7 @@ EOF_SONG *parse_gp(const char * fn)
 
 	if(fileversion >= 500)
 	{	//The page setup settings only exist in version 5.x or newer of the format
-		puts("\tPage setup settings:");
+		(void) puts("\tPage setup settings:");
 		eof_gp_debug_log(inf, "Page format:  ");
 		pack_ReadDWORDLE(inf, &dword);	//Read the page format length
 		printf("%lumm", dword);
@@ -408,43 +408,43 @@ EOF_SONG *parse_gp(const char * fn)
 		eof_gp_debug_log(inf, "Header/footer fields bitmask:   ");
 		pack_ReadWORDLE(inf, &word);	//Read the enabled header/footer fields bitmask
 		printf("%u\n", word);
-		puts("\tHeader/footer strings:");
+		(void) puts("\tHeader/footer strings:");
 		eof_gp_debug_log(inf, "\tTitle ");
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read the title header/footer string
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the title header/footer string
 		printf("(%s):  %s\n", (word & 1) ? "enabled" : "disabled", buffer);
 		eof_gp_debug_log(inf, "\tSubtitle ");
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read the subtitle header/footer string
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the subtitle header/footer string
 		printf("(%s):  %s\n", (word & 2) ? "enabled" : "disabled", buffer);
 		eof_gp_debug_log(inf, "\tArtist ");
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read the artist header/footer string
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the artist header/footer string
 		printf("(%s):  %s\n", (word & 4) ? "enabled" : "disabled", buffer);
 		eof_gp_debug_log(inf, "\tAlbum ");
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read the album header/footer string
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the album header/footer string
 		printf("(%s):  %s\n", (word & 8) ? "enabled" : "disabled", buffer);
 		eof_gp_debug_log(inf, "\tLyricist ");
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read the words (lyricist) header/footer string
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the words (lyricist) header/footer string
 		printf("(%s):  %s\n", (word & 16) ? "enabled" : "disabled", buffer);
 		eof_gp_debug_log(inf, "\tComposer ");
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read the music (composer) header/footer string
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the music (composer) header/footer string
 		printf("(%s):  %s\n", (word & 32) ? "enabled" : "disabled", buffer);
 		eof_gp_debug_log(inf, "\tLyricist and Composer ");
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read the words & music header/footer string
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the words & music header/footer string
 		printf("(%s):  %s\n", (word & 64) ? "enabled" : "disabled", buffer);
 		eof_gp_debug_log(inf, "\tCopyright 1 ");
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Copyright line 1 header/footer string
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Copyright line 1 header/footer string
 		printf("(%s):  %s\n", (word & 128) ? "enabled" : "disabled", buffer);
 		eof_gp_debug_log(inf, "\tCopyright 2 ");
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Copyright line 2 header/footer string
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Copyright line 2 header/footer string
 		printf("(%s):  %s\n", (word & 128) ? "enabled" : "disabled", buffer);
 		eof_gp_debug_log(inf, "\tPage number ");
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read the page number header/footer string
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the page number header/footer string
 		printf("(%s):  %s\n", (word & 256) ? "enabled" : "disabled", buffer);
 	}
 
 	eof_gp_debug_log(inf, "Tempo:  ");
 	if(fileversion >= 500)
 	{	//The tempo string only exists in version 5.x or newer of the format
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read the tempo string
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the tempo string
 	}
 	pack_ReadDWORDLE(inf, &dword);	//Read the tempo
 	printf("%luBPM", dword);
@@ -452,12 +452,12 @@ EOF_SONG *parse_gp(const char * fn)
 	{	//The tempo string only exists in version 5.x or newer of the format
 		printf(" (%s)", buffer);
 	}
-	putchar('\n');
+	(void) putchar('\n');
 
 	if(fileversion > 500)
 	{	//There is a byte of unknown data/padding here in versions newer than 5.0 of the format
 		eof_gp_debug_log(inf, "(skipping 1 byte of unknown data)\n");
-		pack_fseek(inf, 1);		//Unknown data
+		(void) pack_fseek(inf, 1);		//Unknown data
 	}
 
 	if(fileversion >= 400)
@@ -466,7 +466,7 @@ EOF_SONG *parse_gp(const char * fn)
 		byte = pack_getc(inf);	//Read the key
 		printf("%d (%u %s)\n", byte, abs(byte), (byte < 0) ? "flats" : "sharps");
 		eof_gp_debug_log(inf, "(skipping 3 bytes of unknown data)\n");
-		pack_fseek(inf, 3);		//Unknown data
+		(void) pack_fseek(inf, 3);		//Unknown data
 		eof_gp_debug_log(inf, "Transpose:  ");
 		word = pack_getc(inf);
 //		pack_ReadDWORDLE(inf, &dword);	//Read the transpose field
@@ -483,23 +483,23 @@ EOF_SONG *parse_gp(const char * fn)
 	for(ctr = 0; ctr < 64; ctr++)
 	{
 		pack_ReadDWORDLE(inf, NULL);	//Read the instrument patch number
-		pack_getc(inf);					//Read the volume
-		pack_getc(inf);					//Read the pan value
-		pack_getc(inf);					//Read the chorus value
-		pack_getc(inf);					//Read the reverb value
-		pack_getc(inf);					//Read the phaser value
-		pack_getc(inf);					//Read the tremolo value
+		(void) pack_getc(inf);					//Read the volume
+		(void) pack_getc(inf);					//Read the pan value
+		(void) pack_getc(inf);					//Read the chorus value
+		(void) pack_getc(inf);					//Read the reverb value
+		(void) pack_getc(inf);					//Read the phaser value
+		(void) pack_getc(inf);					//Read the tremolo value
 		pack_ReadWORDLE(inf, NULL);		//Read two bytes of unknown data/padding
 	}
 
 	if(fileversion >= 500)
 	{	//Versions 5.0 and newer of the format store musical directional symbols and a master reverb setting here
-		puts("\tMusical symbols:");
+		(void) puts("\tMusical symbols:");
 		eof_gp_debug_log(inf, "\"Coda\" symbol is ");
 		pack_ReadWORDLE(inf, &word);
 		if(word == 0xFFFF)
 		{
-			puts("unused");
+			(void) puts("unused");
 		}
 		else
 		{
@@ -509,7 +509,7 @@ EOF_SONG *parse_gp(const char * fn)
 		pack_ReadWORDLE(inf, &word);
 		if(word == 0xFFFF)
 		{
-			puts("unused");
+			(void) puts("unused");
 		}
 		else
 		{
@@ -519,7 +519,7 @@ EOF_SONG *parse_gp(const char * fn)
 		pack_ReadWORDLE(inf, &word);
 		if(word == 0xFFFF)
 		{
-			puts("unused");
+			(void) puts("unused");
 		}
 		else
 		{
@@ -529,7 +529,7 @@ EOF_SONG *parse_gp(const char * fn)
 		pack_ReadWORDLE(inf, &word);
 		if(word == 0xFFFF)
 		{
-			puts("unused");
+			(void) puts("unused");
 		}
 		else
 		{
@@ -539,7 +539,7 @@ EOF_SONG *parse_gp(const char * fn)
 		pack_ReadWORDLE(inf, &word);
 		if(word == 0xFFFF)
 		{
-			puts("unused");
+			(void) puts("unused");
 		}
 		else
 		{
@@ -549,7 +549,7 @@ EOF_SONG *parse_gp(const char * fn)
 		pack_ReadWORDLE(inf, &word);
 		if(word == 0xFFFF)
 		{
-			puts("unused");
+			(void) puts("unused");
 		}
 		else
 		{
@@ -559,7 +559,7 @@ EOF_SONG *parse_gp(const char * fn)
 		pack_ReadWORDLE(inf, &word);
 		if(word == 0xFFFF)
 		{
-			puts("unused");
+			(void) puts("unused");
 		}
 		else
 		{
@@ -569,7 +569,7 @@ EOF_SONG *parse_gp(const char * fn)
 		pack_ReadWORDLE(inf, &word);
 		if(word == 0xFFFF)
 		{
-			puts("unused");
+			(void) puts("unused");
 		}
 		else
 		{
@@ -579,7 +579,7 @@ EOF_SONG *parse_gp(const char * fn)
 		pack_ReadWORDLE(inf, &word);
 		if(word == 0xFFFF)
 		{
-			puts("unused");
+			(void) puts("unused");
 		}
 		else
 		{
@@ -589,7 +589,7 @@ EOF_SONG *parse_gp(const char * fn)
 		pack_ReadWORDLE(inf, &word);
 		if(word == 0xFFFF)
 		{
-			puts("unused");
+			(void) puts("unused");
 		}
 		else
 		{
@@ -599,7 +599,7 @@ EOF_SONG *parse_gp(const char * fn)
 		pack_ReadWORDLE(inf, &word);
 		if(word == 0xFFFF)
 		{
-			puts("unused");
+			(void) puts("unused");
 		}
 		else
 		{
@@ -609,7 +609,7 @@ EOF_SONG *parse_gp(const char * fn)
 		pack_ReadWORDLE(inf, &word);
 		if(word == 0xFFFF)
 		{
-			puts("unused");
+			(void) puts("unused");
 		}
 		else
 		{
@@ -619,7 +619,7 @@ EOF_SONG *parse_gp(const char * fn)
 		pack_ReadWORDLE(inf, &word);
 		if(word == 0xFFFF)
 		{
-			puts("unused");
+			(void) puts("unused");
 		}
 		else
 		{
@@ -629,7 +629,7 @@ EOF_SONG *parse_gp(const char * fn)
 		pack_ReadWORDLE(inf, &word);
 		if(word == 0xFFFF)
 		{
-			puts("unused");
+			(void) puts("unused");
 		}
 		else
 		{
@@ -639,7 +639,7 @@ EOF_SONG *parse_gp(const char * fn)
 		pack_ReadWORDLE(inf, &word);
 		if(word == 0xFFFF)
 		{
-			puts("unused");
+			(void) puts("unused");
 		}
 		else
 		{
@@ -649,7 +649,7 @@ EOF_SONG *parse_gp(const char * fn)
 		pack_ReadWORDLE(inf, &word);
 		if(word == 0xFFFF)
 		{
-			puts("unused");
+			(void) puts("unused");
 		}
 		else
 		{
@@ -659,7 +659,7 @@ EOF_SONG *parse_gp(const char * fn)
 		pack_ReadWORDLE(inf, &word);
 		if(word == 0xFFFF)
 		{
-			puts("unused");
+			(void) puts("unused");
 		}
 		else
 		{
@@ -669,7 +669,7 @@ EOF_SONG *parse_gp(const char * fn)
 		pack_ReadWORDLE(inf, &word);
 		if(word == 0xFFFF)
 		{
-			puts("unused");
+			(void) puts("unused");
 		}
 		else
 		{
@@ -679,7 +679,7 @@ EOF_SONG *parse_gp(const char * fn)
 		pack_ReadWORDLE(inf, &word);
 		if(word == 0xFFFF)
 		{
-			puts("unused");
+			(void) puts("unused");
 		}
 		else
 		{
@@ -701,8 +701,8 @@ EOF_SONG *parse_gp(const char * fn)
 	strings = malloc(sizeof(unsigned long) * tracks);
 	if(!strings)
 	{
-		puts("Error allocating memory (10)");
-		pack_fclose(inf);
+		(void) puts("Error allocating memory (10)");
+		(void) pack_fclose(inf);
 		return NULL;
 	}
 
@@ -727,7 +727,7 @@ EOF_SONG *parse_gp(const char * fn)
 		if(bytemask & 32)
 		{	//New section
 			eof_gp_debug_log(inf, "\tNew section:  ");
-			eof_read_gp_string(inf, NULL, buffer, 1);	//Read section string
+			(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read section string
 			printf("%s (coloring:  ", buffer);
 			word = pack_getc(inf);
 			printf("R = %u, ", word);
@@ -735,7 +735,7 @@ EOF_SONG *parse_gp(const char * fn)
 			printf("G = %u, ", word);
 			word = pack_getc(inf);
 			printf("B = %u)\n", word);
-			pack_getc(inf);	//Read unused value
+			(void) pack_getc(inf);	//Read unused value
 		}
 		if(bytemask & 64)
 		{	//Key signature change
@@ -767,7 +767,7 @@ EOF_SONG *parse_gp(const char * fn)
 		}
 		if(bytemask & 128)
 		{	//Double bar
-			puts("\t\t(Double bar)");
+			(void) puts("\t\t(Double bar)");
 		}
 
 		if(fileversion >= 500)
@@ -781,13 +781,13 @@ EOF_SONG *parse_gp(const char * fn)
 			else
 			{
 				eof_gp_debug_log(inf, "\t(skipping 1 byte of unused alternate ending data)\n");
-				pack_getc(inf);			//Unknown data
+				(void) pack_getc(inf);			//Unknown data
 			}
 			eof_gp_debug_log(inf, "\tTriplet feel:  ");
 			byte = pack_getc(inf);	//Read triplet feel value
 			printf("%s\n", !byte ? "none" : ((byte == 1) ? "Triplet 8th" : "Triplet 16th"));
 			eof_gp_debug_log(inf, "\t(skipping 1 byte of unknown data)\n");
-			pack_getc(inf);			//Unknown data
+			(void) pack_getc(inf);			//Unknown data
 		}
 	}//For each measure
 
@@ -799,38 +799,38 @@ EOF_SONG *parse_gp(const char * fn)
 		printf("%u\n", (bytemask & 0xFF));
 		if(bytemask & 1)
 		{
-			puts("\t\t\t(Is a drum track)");
+			(void) puts("\t\t\t(Is a drum track)");
 		}
 		if(bytemask & 2)
 		{
-			puts("\t\t\t(Is a 12 string guitar track)");
+			(void) puts("\t\t\t(Is a 12 string guitar track)");
 		}
 		if(bytemask & 4)
 		{
-			puts("\t\t\t(Is a banjo track)");
+			(void) puts("\t\t\t(Is a banjo track)");
 		}
 		if(bytemask & 16)
 		{
-			puts("\t\t\t(Is marked for solo playback)");
+			(void) puts("\t\t\t(Is marked for solo playback)");
 		}
 		if(bytemask & 32)
 		{
-			puts("\t\t\t(Is marked for muted playback)");
+			(void) puts("\t\t\t(Is marked for muted playback)");
 		}
 		if(bytemask & 64)
 		{
-			puts("\t\t\t(Is marked for RSE playback)");
+			(void) puts("\t\t\t(Is marked for RSE playback)");
 		}
 		if(bytemask & 128)
 		{
-			puts("\t\t\t(Is set to have the tuning displayed)");
+			(void) puts("\t\t\t(Is set to have the tuning displayed)");
 		}
 		eof_gp_debug_log(inf, "\tTrack name string:  ");
-		eof_read_gp_string(inf, &word, buffer, 0);	//Read track name string
-		puts(buffer);
+		(void) eof_read_gp_string(inf, &word, buffer, 0);	//Read track name string
+		(void) puts(buffer);
 		eof_gp_debug_log(inf, "\t(skipping ");
 		printf("%d bytes of padding)\n", 40 - word);
-		pack_fseek(inf, 40 - word);			//Skip the padding that follows the track name string
+		(void) pack_fseek(inf, 40 - word);			//Skip the padding that follows the track name string
 		eof_gp_debug_log(inf, "\tNumber of strings:  ");
 		pack_ReadDWORDLE(inf, &strings[ctr]);	//Read the number of strings in this track
 		printf("%lu\n", strings[ctr]);
@@ -868,7 +868,7 @@ EOF_SONG *parse_gp(const char * fn)
 		}
 		else
 		{	//There is no capo
-			puts("(none)");
+			(void) puts("(none)");
 		}
 		eof_gp_debug_log(inf, "\tTrack color:  ");
 		word = pack_getc(inf);
@@ -877,7 +877,7 @@ EOF_SONG *parse_gp(const char * fn)
 		printf("G = %u, ", word);
 		word = pack_getc(inf);
 		printf("B = %u\n", word);
-		pack_getc(inf);	//Read unused value
+		(void) pack_getc(inf);	//Read unused value
 
 		if(fileversion > 500)
 		{
@@ -888,7 +888,7 @@ EOF_SONG *parse_gp(const char * fn)
 			bytemask2 = pack_getc(inf);
 			printf("%u\n", (bytemask2 & 0xFF));
 			eof_gp_debug_log(inf, "\t(skipping 1 byte of unknown data)\n");
-			pack_getc(inf);			//Unknown data
+			(void) pack_getc(inf);			//Unknown data
 			eof_gp_debug_log(inf, "\tMIDI bank:  ");
 			word = pack_getc(inf);
 			printf("%u\n", word);
@@ -899,12 +899,12 @@ EOF_SONG *parse_gp(const char * fn)
 			word = pack_getc(inf);
 			printf("%u\n", word);
 			eof_gp_debug_log(inf, "\t(skipping 31 bytes of unknown data)\n");
-			pack_fseek(inf, 31);		//Unknown data
+			(void) pack_fseek(inf, 31);		//Unknown data
 			eof_gp_debug_log(inf, "\tSelected sound bank option:  ");
 			word = pack_getc(inf);
 			printf("%u\n", word);
 			eof_gp_debug_log(inf, "\t(skipping 7 bytes of unknown data)\n");
-			pack_fseek(inf, 7);		//Unknown data
+			(void) pack_fseek(inf, 7);		//Unknown data
 			eof_gp_debug_log(inf, "\tLow frequency band lowered ");
 			byte = pack_getc(inf);
 			printf("%d increments of .1dB\n", byte);
@@ -918,26 +918,26 @@ EOF_SONG *parse_gp(const char * fn)
 			byte = pack_getc(inf);
 			printf("%d increments of .1dB\n", byte);
 			eof_gp_debug_log(inf, "\tTrack instrument effect 1:  ");
-			eof_read_gp_string(inf, NULL, buffer, 1);	//Read track instrument effect 1
-			puts(buffer);
+			(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read track instrument effect 1
+			(void) puts(buffer);
 			eof_gp_debug_log(inf, "\tTrack instrument effect 2:  ");
-			eof_read_gp_string(inf, NULL, buffer, 1);	//Read track instrument effect 2
-			puts(buffer);
+			(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read track instrument effect 2
+			(void) puts(buffer);
 		}
 		else if(fileversion == 500)
 		{
 			eof_gp_debug_log(inf, "\t(skipping 45 bytes of unknown data)\n");
-			pack_fseek(inf, 45);		//Unknown data
+			(void) pack_fseek(inf, 45);		//Unknown data
 		}
 	}//For each track
 
 	if(fileversion >= 500)
 	{
 		eof_gp_debug_log(inf, "\t(skipping 1 byte of unknown data)\n");
-		pack_getc(inf);
+		(void) pack_getc(inf);
 	}
 
-	puts("\tStart of beat definitions:");
+	(void) puts("\tStart of beat definitions:");
 	for(ctr = 0; ctr < measures; ctr++)
 	{	//For each measure
 		printf("\t-> Measure # %lu\n", ctr + 1);
@@ -973,7 +973,7 @@ EOF_SONG *parse_gp(const char * fn)
 					printf("%d\n", byte);
 					if(bytemask & 1)
 					{	//Dotted note
-						puts("\t\t(Dotted note)");
+						(void) puts("\t\t(Dotted note)");
 					}
 					if(bytemask & 32)
 					{	//Beat is an N-tuplet
@@ -989,8 +989,8 @@ EOF_SONG *parse_gp(const char * fn)
 						if(word == 0)
 						{	//Chord diagram format 0, ie. GP3
 							eof_gp_debug_log(inf, "\t\tChord name:  ");
-							eof_read_gp_string(inf, NULL, buffer, 1);	//Read chord name
-							puts(buffer);
+							(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read chord name
+							(void) puts(buffer);
 							eof_gp_debug_log(inf, "\t\tDiagram begins at fret #");
 							pack_ReadDWORDLE(inf, &dword);	//Read the diagram fret position
 							printf("%lu\n", dword);
@@ -1014,14 +1014,14 @@ EOF_SONG *parse_gp(const char * fn)
 							word = pack_getc(inf);	//Read sharp/flat indicator
 							printf("%s\n", !word ? "flat" : "sharp");
 							eof_gp_debug_log(inf, "\t\t(skipping 3 bytes of unknown data)\n");
-							pack_fseek(inf, 3);		//Unknown data
+							(void) pack_fseek(inf, 3);		//Unknown data
 							eof_gp_debug_log(inf, "\t\tChord root:  ");
 							word = pack_getc(inf);	//Read chord root
 							printf("%u\n", word);
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
 								eof_gp_debug_log(inf, "\t\t(skipping 3 bytes of unknown data)\n");
-								pack_fseek(inf, 3);		//Unknown data
+								(void) pack_fseek(inf, 3);		//Unknown data
 							}
 							eof_gp_debug_log(inf, "\t\tChord type:  ");
 							word = pack_getc(inf);	//Read chord type
@@ -1029,7 +1029,7 @@ EOF_SONG *parse_gp(const char * fn)
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
 								eof_gp_debug_log(inf, "\t\t(skipping 3 bytes of unknown data)\n");
-								pack_fseek(inf, 3);		//Unknown data
+								(void) pack_fseek(inf, 3);		//Unknown data
 							}
 							eof_gp_debug_log(inf, "\t\t9th/11th/13th option:  ");
 							word = pack_getc(inf);
@@ -1037,7 +1037,7 @@ EOF_SONG *parse_gp(const char * fn)
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
 								eof_gp_debug_log(inf, "\t\t(skipping 3 bytes of unknown data)\n");
-								pack_fseek(inf, 3);		//Unknown data
+								(void) pack_fseek(inf, 3);		//Unknown data
 							}
 							eof_gp_debug_log(inf, "\t\tBass note:  ");
 							pack_ReadDWORDLE(inf, &dword);	//Read lowest note played in string
@@ -1046,21 +1046,21 @@ EOF_SONG *parse_gp(const char * fn)
 							word = pack_getc(inf);
 							printf("%u\n", word);
 							eof_gp_debug_log(inf, "\t\t(skipping 4 bytes of unknown data)\n");
-							pack_fseek(inf, 4);		//Unknown data
+							(void) pack_fseek(inf, 4);		//Unknown data
 							eof_gp_debug_log(inf, "\t\tChord name:  ");
 							word = pack_getc(inf);	//Read chord name string length
-							pack_fread(buffer, 20, inf);	//Read chord name (which is padded to 20 bytes)
+							(void) pack_fread(buffer, 20, inf);	//Read chord name (which is padded to 20 bytes)
 							buffer[word] = '\0';	//Ensure string is terminated to be the right length
-							puts(buffer);
+							(void) puts(buffer);
 							eof_gp_debug_log(inf, "\t\t(skipping 2 bytes of unknown data)\n");
-							pack_fseek(inf, 2);		//Unknown data
+							(void) pack_fseek(inf, 2);		//Unknown data
 							eof_gp_debug_log(inf, "\t\tTonality of the fifth:  ");
 							byte = pack_getc(inf);
 							printf("%s\n", !byte ? "perfect" : ((byte == 1) ? "augmented" : "diminished"));
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
 								eof_gp_debug_log(inf, "\t\t(skipping 3 bytes of unknown data)\n");
-								pack_fseek(inf, 3);		//Unknown data
+								(void) pack_fseek(inf, 3);		//Unknown data
 							}
 							eof_gp_debug_log(inf, "\t\tTonality of the ninth:  ");
 							byte = pack_getc(inf);
@@ -1068,7 +1068,7 @@ EOF_SONG *parse_gp(const char * fn)
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
 								eof_gp_debug_log(inf, "\t\t(skipping 3 bytes of unknown data)\n");
-								pack_fseek(inf, 3);		//Unknown data
+								(void) pack_fseek(inf, 3);		//Unknown data
 							}
 							eof_gp_debug_log(inf, "\t\tTonality of the eleventh:  ");
 							byte = pack_getc(inf);
@@ -1076,7 +1076,7 @@ EOF_SONG *parse_gp(const char * fn)
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
 								eof_gp_debug_log(inf, "\t\t(skipping 3 bytes of unknown data)\n");
-								pack_fseek(inf, 3);		//Unknown data
+								(void) pack_fseek(inf, 3);		//Unknown data
 							}
 							eof_gp_debug_log(inf, "\t\tBase fret for diagram:  ");
 							pack_ReadDWORDLE(inf, &dword);
@@ -1114,7 +1114,7 @@ EOF_SONG *parse_gp(const char * fn)
 								else
 								{
 									eof_gp_debug_log(inf, "\t\t(skipping fret definition for undefined barre)\n");
-									pack_getc(inf);
+									(void) pack_getc(inf);
 								}
 							}
 							for(ctr4 = 0; ctr4 < 5; ctr4++)
@@ -1128,7 +1128,7 @@ EOF_SONG *parse_gp(const char * fn)
 								else
 								{
 									eof_gp_debug_log(inf, "\t\t(skipping start definition for undefined barre)\n");
-									pack_getc(inf);
+									(void) pack_getc(inf);
 								}
 							}
 							for(ctr4 = 0; ctr4 < 5; ctr4++)
@@ -1142,7 +1142,7 @@ EOF_SONG *parse_gp(const char * fn)
 								else
 								{
 									eof_gp_debug_log(inf, "\t\t(skipping stop definition for undefined barre)\n");
-									pack_getc(inf);
+									(void) pack_getc(inf);
 								}
 							}
 							eof_gp_debug_log(inf, "\t\tChord includes first interval:  ");
@@ -1167,7 +1167,7 @@ EOF_SONG *parse_gp(const char * fn)
 							byte = pack_getc(inf);
 							printf("%s\n", byte ? "no" : "yes");
 							eof_gp_debug_log(inf, "\t\t(skipping 1 byte of unknown data)\n");
-							pack_getc(inf);	//Unknown data
+							(void) pack_getc(inf);	//Unknown data
 							for(ctr4 = 0; ctr4 < 7; ctr4++)
 							{	//For each of the 7 possible usable strings
 								if(ctr4 < strings[ctr2])
@@ -1179,7 +1179,7 @@ EOF_SONG *parse_gp(const char * fn)
 								else
 								{
 									eof_gp_debug_log(inf, "\t\t(skipping definition for unused string)\n");
-									pack_getc(inf);		//Skip this padding
+									(void) pack_getc(inf);		//Skip this padding
 								}
 							}
 							eof_gp_debug_log(inf, "\t\tChord fingering displayed:  ");
@@ -1190,8 +1190,8 @@ EOF_SONG *parse_gp(const char * fn)
 					if(bytemask & 4)
 					{	//Beat has text
 						eof_gp_debug_log(inf, "\tBeat text:  ");
-						eof_read_gp_string(inf, NULL, buffer, 1);	//Read beat text string
-						puts(buffer);
+						(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read beat text string
+						(void) puts(buffer);
 					}
 					if(bytemask & 8)
 					{	//Beat has effects
@@ -1207,24 +1207,24 @@ EOF_SONG *parse_gp(const char * fn)
 							printf("%u\n", (byte2 & 0xFF));
 							if(byte2 & 1)
 							{
-								puts("\t\tRasguedo");
+								(void) puts("\t\tRasguedo");
 							}
 						}
 						if(byte1 & 1)
 						{	//Vibrato
-							puts("\t\t(Vibrato)");
+							(void) puts("\t\t(Vibrato)");
 						}
 						if(byte1 & 2)
 						{
-							puts("\t\t(Wide vibrato)");
+							(void) puts("\t\t(Wide vibrato)");
 						}
 						if(byte1 & 4)
 						{
-							puts("\t\t(Natural harmonic)");
+							(void) puts("\t\t(Natural harmonic)");
 						}
 						if(byte1 & 8)
 						{
-							puts("\t\t(Artificial harmonic)");
+							(void) puts("\t\t(Artificial harmonic)");
 						}
 						if(byte1 & 32)
 						{	//Tapping/popping/slapping
@@ -1232,23 +1232,23 @@ EOF_SONG *parse_gp(const char * fn)
 							byte = pack_getc(inf);	//Read tapping/popping/slapping indicator
 							if(byte == 0)
 							{
-								puts("Tremolo");
+								(void) puts("Tremolo");
 							}
 							else if(byte == 1)
 							{
-								puts("Tapping");
+								(void) puts("Tapping");
 							}
 							else if(byte == 2)
 							{
-								puts("Slapping");
+								(void) puts("Slapping");
 							}
 							else if(byte == 3)
 							{
-								puts("Popping");
+								(void) puts("Popping");
 							}
 							else
 							{
-								puts("Unknown");
+								(void) puts("Unknown");
 							}
 							if(fileversion < 400)
 							{
@@ -1261,8 +1261,8 @@ EOF_SONG *parse_gp(const char * fn)
 						{	//Tremolo bar
 							if(eof_gp_parse_bend(inf))
 							{	//If there was an error parsing the bend
-								puts("Error parsing bend");
-								pack_fclose(inf);
+								(void) puts("Error parsing bend");
+								(void) pack_fclose(inf);
 								free(strings);
 								return NULL;
 							}
@@ -1287,12 +1287,12 @@ EOF_SONG *parse_gp(const char * fn)
 					{	//Beat has mix table change
 						char volume_change = 0, pan_change = 0, chorus_change = 0, reverb_change = 0, phaser_change = 0, tremolo_change = 0, tempo_change = 0;
 
-						puts("\t\tBeat mix table change:");
+						(void) puts("\t\tBeat mix table change:");
 						eof_gp_debug_log(inf, "\t\tNew instrument number:  ");
 							byte = pack_getc(inf);
 						if(byte == -1)
 						{
-							puts("(no change)");
+							(void) puts("(no change)");
 						}
 						else
 						{
@@ -1310,13 +1310,13 @@ EOF_SONG *parse_gp(const char * fn)
 							pack_ReadDWORDLE(inf, &dword);
 							printf("%lu\n", dword);
 							eof_gp_debug_log(inf, "\t\t(skipping 4 bytes of unknown data)\n");
-							pack_fseek(inf, 4);		//Unknown data
+							(void) pack_fseek(inf, 4);		//Unknown data
 						}
 						eof_gp_debug_log(inf, "\t\tNew volume:  ");
 						byte = pack_getc(inf);
 						if(byte == -1)
 						{
-							puts("(no change)");
+							(void) puts("(no change)");
 						}
 						else
 						{
@@ -1327,7 +1327,7 @@ EOF_SONG *parse_gp(const char * fn)
 						byte = pack_getc(inf);
 						if(byte == -1)
 						{
-							puts("(no change)");
+							(void) puts("(no change)");
 						}
 						else
 						{
@@ -1338,7 +1338,7 @@ EOF_SONG *parse_gp(const char * fn)
 						byte = pack_getc(inf);
 						if(byte == -1)
 						{
-							puts("(no change)");
+							(void) puts("(no change)");
 						}
 						else
 						{
@@ -1349,7 +1349,7 @@ EOF_SONG *parse_gp(const char * fn)
 						byte = pack_getc(inf);
 						if(byte == -1)
 						{
-							puts("(no change)");
+							(void) puts("(no change)");
 						}
 						else
 						{
@@ -1360,7 +1360,7 @@ EOF_SONG *parse_gp(const char * fn)
 						byte = pack_getc(inf);
 						if(byte == -1)
 						{
-							puts("(no change)");
+							(void) puts("(no change)");
 						}
 						else
 						{
@@ -1371,7 +1371,7 @@ EOF_SONG *parse_gp(const char * fn)
 						byte = pack_getc(inf);
 						if(byte == -1)
 						{
-							puts("(no change)");
+							(void) puts("(no change)");
 						}
 						else
 						{
@@ -1381,14 +1381,14 @@ EOF_SONG *parse_gp(const char * fn)
 						if(fileversion >= 500)
 						{	//These fields are only in version 5.x files
 							eof_gp_debug_log(inf, "\t\tTempo text string:  ");
-							eof_read_gp_string(inf, NULL, buffer, 1);	//Read the tempo text string
-							puts(buffer);
+							(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the tempo text string
+							(void) puts(buffer);
 						}
 						eof_gp_debug_log(inf, "\t\tNew tempo:  ");
 						pack_ReadDWORDLE(inf, &dword);
 						if((long)dword == -1)
 						{
-							puts("(no change)");
+							(void) puts("(no change)");
 						}
 						else
 						{
@@ -1452,16 +1452,16 @@ EOF_SONG *parse_gp(const char * fn)
 						if(fileversion >= 500)
 						{	//This unknown byte is only in version 5.x files
 							eof_gp_debug_log(inf, "\t\t(skipping 1 byte of unknown data)\n");
-							pack_fseek(inf, 1);		//Unknown data
+							(void) pack_fseek(inf, 1);		//Unknown data
 						}
 						if(fileversion > 500)
 						{	//These strings are only in versions newer than 5.0 of the format
 							eof_gp_debug_log(inf, "\t\tEffect 2 string:  ");
-							eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Effect 2 string
-							puts(buffer);
+							(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Effect 2 string
+							(void) puts(buffer);
 							eof_gp_debug_log(inf, "\t\tEffect 1 string:  ");
-							eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Effect 1 string
-							puts(buffer);
+							(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Effect 1 string
+							(void) puts(buffer);
 						}
 					}//Beat has mix table change
 					eof_gp_debug_log(inf, "\tUsed strings bitmask:  ");
@@ -1513,12 +1513,12 @@ EOF_SONG *parse_gp(const char * fn)
 							if((bytemask & 1) && (fileversion >= 500))
 							{	//Time independent duration (for versions of the format 5.x or newer)
 								eof_gp_debug_log(inf, "\t\t(skipping 8 bytes of unknown time independent duration data)\n");
-								pack_fseek(inf, 8);		//Unknown data
+								(void) pack_fseek(inf, 8);		//Unknown data
 							}
 							if(fileversion >= 500)
 							{	//This padding isn't in version 3.x and 4.x files
 								eof_gp_debug_log(inf, "\t\t(skipping 1 byte of unknown data)\n");
-								pack_fseek(inf, 1);		//Unknown data
+								(void) pack_fseek(inf, 1);		//Unknown data
 							}
 							if(bytemask & 8)
 							{	//Note effects
@@ -1536,27 +1536,27 @@ EOF_SONG *parse_gp(const char * fn)
 								{	//Bend
 									if(eof_gp_parse_bend(inf))
 									{	//If there was an error parsing the bend
-										puts("Error parsing bend");
-										pack_fclose(inf);
+										(void) puts("Error parsing bend");
+										(void) pack_fclose(inf);
 										free(strings);
 										return NULL;
 									}
 								}
 								if(byte1 & 2)
 								{
-									puts("\t\t\t\t(Hammer on/pull off from current note)");
+									(void) puts("\t\t\t\t(Hammer on/pull off from current note)");
 								}
 								if(byte1 & 4)
 								{
-									puts("\t\t\t\t(Slide from current note)");
+									(void) puts("\t\t\t\t(Slide from current note)");
 								}
 								if(byte1 & 8)
 								{
-									puts("\t\t\t\t(Let ring)");
+									(void) puts("\t\t\t\t(Let ring)");
 								}
 								if(byte1 & 16)
 								{	//Grace note
-									puts("\t\t\t\t(Grace note)");
+									(void) puts("\t\t\t\t(Grace note)");
 									eof_gp_debug_log(inf, "\t\t\tGrace note fret number:  ");
 									byte = pack_getc(inf);
 									printf("%u\n", (byte & 0xFF));
@@ -1569,25 +1569,25 @@ EOF_SONG *parse_gp(const char * fn)
 										byte = pack_getc(inf);
 										if(!byte)
 										{
-											puts("none");
+											(void) puts("none");
 										}
 										else if(byte == 1)
 										{
-											puts("slide");
+											(void) puts("slide");
 										}
 										else if(byte == 2)
 										{
-											puts("bend");
+											(void) puts("bend");
 										}
 										else if(byte == 3)
 										{
-											puts("hammer");
+											(void) puts("hammer");
 										}
 									}
 									else
 									{	//The purpose of this field in 4.x or older files is unknown
 										eof_gp_debug_log(inf, "\t\t(skipping 1 byte of unknown data)\n");
-										pack_fseek(inf, 1);		//Unknown data
+										(void) pack_fseek(inf, 1);		//Unknown data
 									}
 									eof_gp_debug_log(inf, "\t\t\tGrace note duration:  ");
 									byte = pack_getc(inf);
@@ -1599,18 +1599,18 @@ EOF_SONG *parse_gp(const char * fn)
 										printf("%u\n", (byte & 0xFF));
 										if(byte & 1)
 										{
-											puts("\t\t\t\t\t(dead note)");
+											(void) puts("\t\t\t\t\t(dead note)");
 										}
 										printf("\t\t\t\t\t%s\n", (byte & 2) ? "(on the beat)" : "(before the beat)");
 									}
 								}
 								if(byte2 & 1)
 								{
-									puts("\t\t\t\t(Note played staccato");
+									(void) puts("\t\t\t\t(Note played staccato");
 								}
 								if(byte2 & 2)
 								{
-									puts("\t\t\t\t(Palm mute");
+									(void) puts("\t\t\t\t(Palm mute");
 								}
 								if(byte2 & 4)
 								{	//Tremolo picking
@@ -1631,18 +1631,18 @@ EOF_SONG *parse_gp(const char * fn)
 									printf("%u\n", (byte & 0xFF));
 									if(byte == 2)
 									{	//Artificial harmonic
-										puts("\t\t\t\t\t(Artificial harmonic)");
+										(void) puts("\t\t\t\t\t(Artificial harmonic)");
 										eof_gp_debug_log(inf, "\t\t\t\tHarmonic note:  ");
 										byte = pack_getc(inf);	//Read harmonic note
 										printf("%s", eof_note_names[(byte + 3) % 12]);
 										byte = pack_getc(inf);	//Read sharp/flat status
 										if(byte == -1)
 										{
-											putchar('b');
+											(void) putchar('b');
 										}
 										else if(byte == 1)
 										{
-											putchar('#');
+											(void) putchar('#');
 										}
 										byte = pack_getc(inf);	//Read octave status
 										if(byte == 0)
@@ -1657,11 +1657,11 @@ EOF_SONG *parse_gp(const char * fn)
 										{
 											printf(" 15ma");
 										}
-										putchar('\n');
+										(void) putchar('\n');
 									}
 									else if(byte == 3)
 									{	//Tapped harmonic
-										puts("\t\t\t\t\t(Tapped harmonic)");
+										(void) puts("\t\t\t\t\t(Tapped harmonic)");
 										eof_gp_debug_log(inf, "\t\t\t\tRight hand fret:  ");
 										byte = pack_getc(inf);
 										printf("%u\n", (byte & 0xFF));
@@ -1678,7 +1678,7 @@ EOF_SONG *parse_gp(const char * fn)
 								}
 								if(byte2 & 64)
 								{
-									puts("\t\t\t\t(Vibrato)");
+									(void) puts("\t\t\t\t(Vibrato)");
 								}
 							}//Note effects
 						}//If this string is used
@@ -1691,7 +1691,7 @@ EOF_SONG *parse_gp(const char * fn)
 						if(word & 0x800)
 						{	//If bit 11 of the transpose bitmask was set, there is an additional byte of unknown data
 							eof_gp_debug_log(inf, "\t\t(skipping 1 byte of unknown transpose data)\n");
-							pack_fseek(inf, 1);	//Unknown data
+							(void) pack_fseek(inf, 1);	//Unknown data
 						}
 					}
 				}//For each beat
@@ -1699,15 +1699,15 @@ EOF_SONG *parse_gp(const char * fn)
 			if(fileversion >= 500)
 			{
 				eof_gp_debug_log(inf, "\t(skipping 1 byte of unknown data)\n");
-				pack_fseek(inf, 1);		//Unknown data
+				(void) pack_fseek(inf, 1);		//Unknown data
 			}
 		}//For each track
 	}//For each measure
 
 
-	pack_fclose(inf);
+	(void) pack_fclose(inf);
 	free(strings);
-	puts("\nSuccess");
+	(void) puts("\nSuccess");
 	return (EOF_SONG *)1;
 }
 
@@ -1717,7 +1717,7 @@ int main(int argc, char *argv[])
 
 	if(argc < 2)
 	{
-		puts("Must pass the GP file as a parameter");
+		(void) puts("Must pass the GP file as a parameter");
 		return 1;
 	}
 
@@ -1782,14 +1782,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	if(!gp)
 	{
 		eof_log("Error allocating memory (1)", 1);
-		pack_fclose(inf);
+		(void) pack_fclose(inf);
 		return NULL;
 	}
 
 
 //Read file version string
-	eof_read_gp_string(inf, &word, buffer, 0);	//Read file version string
-	pack_fseek(inf, 30 - word);			//Skip the padding that follows the version string
+	(void) eof_read_gp_string(inf, &word, buffer, 0);	//Read file version string
+	(void) pack_fseek(inf, 30 - word);			//Skip the padding that follows the version string
 	if(!strcmp(buffer, "FICHIER GUITARE PRO v1.01"))
 	{
 		fileversion = 101;
@@ -1842,38 +1842,38 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	{
 		allegro_message("File format version not supported");
 		eof_log("File format version not supported", 1);
-		pack_fclose(inf);
+		(void) pack_fclose(inf);
 		free(gp);
 		return NULL;
 	}
 #ifdef GP_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tParsing version %u guitar pro file", fileversion);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tParsing version %u guitar pro file", fileversion);
 	eof_log(eof_log_string, 1);
 #endif
 
 
 //Read past various ignored information
-	eof_read_gp_string(inf, NULL, buffer, 1);	//Read title string
-	eof_read_gp_string(inf, NULL, buffer, 1);	//Read subtitle string
-	eof_read_gp_string(inf, NULL, buffer, 1);	//Read artist string
-	eof_read_gp_string(inf, NULL, buffer, 1);	//Read album string
+	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read title string
+	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read subtitle string
+	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read artist string
+	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read album string
 	if(fileversion >= 500)
 	{	//The words field only exists in version 5.x or higher versions of the format
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read words string
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read words string
 	}
-	eof_read_gp_string(inf, NULL, buffer, 1);	//Read music string
-	eof_read_gp_string(inf, NULL, buffer, 1);	//Read copyright string
-	eof_read_gp_string(inf, NULL, buffer, 1);	//Read tab string
-	eof_read_gp_string(inf, NULL, buffer, 1);	//Read instructions string
+	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read music string
+	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read copyright string
+	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read tab string
+	(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read instructions string
 	pack_ReadDWORDLE(inf, &dword);				//Read the number of notice entries
 	while(dword > 0)
 	{	//Read each notice entry
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read notice string
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read notice string
 		dword--;
 	}
 	if(fileversion < 500)
 	{	//The shuffle rhythm feel field only exists here in version 4.x or older of the format
-		pack_getc(inf);
+		(void) pack_getc(inf);
 	}
 	if(fileversion >= 400)
 	{	//The lyrics fields only exist in version 4.x or newer of the format
@@ -1882,15 +1882,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		{
 			pack_ReadDWORDLE(inf, &dword);	//Read the start from bar #
 			pack_ReadDWORDLE(inf, &dword);	//Read the lyric string length
-			buffer2 = malloc(dword + 1);	//Allocate a buffer large enough for the lyric string (plus a NULL terminator)
+			buffer2 = malloc((size_t)dword + 1);	//Allocate a buffer large enough for the lyric string (plus a NULL terminator)
 			if(!buffer2)
 			{
 				eof_log("Error allocating memory (2)", 1);
-				pack_fclose(inf);
+				(void) pack_fclose(inf);
 				free(gp);
 				return NULL;
 			}
-			pack_fread(buffer2, dword, inf);	//Read the lyric string
+			(void) pack_fread(buffer2, dword, inf);	//Read the lyric string
 			buffer2[dword] = '\0';				//Terminate the string
 			free(buffer2);						//Free the buffer
 		}
@@ -1898,18 +1898,18 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	if(fileversion > 500)
 	{	//The volume/equalization settings only exist in versions newer than 5.0 of the format
 		pack_ReadDWORDLE(inf, &dword);	//Read the master volume
-		pack_fseek(inf, 4);			//Unknown data
-		pack_getc(inf);		//32Hz band lowered
-		pack_getc(inf);		//60Hz band lowered
-		pack_getc(inf);		//125Hz band lowered
-		pack_getc(inf);		//250Hz band lowered
-		pack_getc(inf);		//500Hz band lowered
-		pack_getc(inf);		//1KHz band lowered
-		pack_getc(inf);		//2KHz band lowered
-		pack_getc(inf);		//4KHz band lowered
-		pack_getc(inf);		//8KHz band lowered
-		pack_getc(inf);		//16KHz band lowered
-		pack_getc(inf);		//Gain lowered
+		(void) pack_fseek(inf, 4);			//Unknown data
+		(void) pack_getc(inf);		//32Hz band lowered
+		(void) pack_getc(inf);		//60Hz band lowered
+		(void) pack_getc(inf);		//125Hz band lowered
+		(void) pack_getc(inf);		//250Hz band lowered
+		(void) pack_getc(inf);		//500Hz band lowered
+		(void) pack_getc(inf);		//1KHz band lowered
+		(void) pack_getc(inf);		//2KHz band lowered
+		(void) pack_getc(inf);		//4KHz band lowered
+		(void) pack_getc(inf);		//8KHz band lowered
+		(void) pack_getc(inf);		//16KHz band lowered
+		(void) pack_getc(inf);		//Gain lowered
 	}
 	if(fileversion >= 500)
 	{	//The page setup settings only exist in version 5.x or newer of the format
@@ -1921,31 +1921,31 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		pack_ReadDWORDLE(inf, &dword);	//Read the bottom margin
 		pack_ReadDWORDLE(inf, &dword);	//Read the score size
 		pack_ReadWORDLE(inf, &word);	//Read the enabled header/footer fields bitmask
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read the title header/footer string
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read the subtitle header/footer string
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read the artist header/footer string
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read the album header/footer string
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read the words (lyricist) header/footer string
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read the music (composer) header/footer string
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read the words & music header/footer string
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Copyright line 1 header/footer string
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Copyright line 2 header/footer string
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read the page number header/footer string
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the title header/footer string
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the subtitle header/footer string
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the artist header/footer string
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the album header/footer string
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the words (lyricist) header/footer string
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the music (composer) header/footer string
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the words & music header/footer string
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Copyright line 1 header/footer string
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Copyright line 2 header/footer string
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the page number header/footer string
 	}
 	if(fileversion >= 500)
 	{	//The tempo string only exists in version 5.x or newer of the format
-		eof_read_gp_string(inf, NULL, buffer, 1);	//Read the tempo string
+		(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the tempo string
 	}
 	pack_ReadDWORDLE(inf, &dword);	//Read the tempo
 	if(fileversion > 500)
 	{	//There is a byte of unknown data/padding here in versions newer than 5.0 of the format
-		pack_fseek(inf, 1);		//Unknown data
+		(void) pack_fseek(inf, 1);		//Unknown data
 	}
 	if(fileversion >= 400)
 	{	//Versions 4.0 and newer of the format store key and octave information here
-		pack_getc(inf);			//Read the key
-		pack_fseek(inf, 3);		//Unknown data
-		pack_getc(inf);
+		(void) pack_getc(inf);			//Read the key
+		(void) pack_fseek(inf, 3);		//Unknown data
+		(void) pack_getc(inf);
 	}
 	else
 	{	//Older versions stored only key information here
@@ -1954,12 +1954,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	for(ctr = 0; ctr < 64; ctr++)
 	{
 		pack_ReadDWORDLE(inf, NULL);	//Read the instrument patch number
-		pack_getc(inf);					//Read the volume
-		pack_getc(inf);					//Read the pan value
-		pack_getc(inf);					//Read the chorus value
-		pack_getc(inf);					//Read the reverb value
-		pack_getc(inf);					//Read the phaser value
-		pack_getc(inf);					//Read the tremolo value
+		(void) pack_getc(inf);					//Read the volume
+		(void) pack_getc(inf);					//Read the pan value
+		(void) pack_getc(inf);					//Read the chorus value
+		(void) pack_getc(inf);					//Read the reverb value
+		(void) pack_getc(inf);					//Read the phaser value
+		(void) pack_getc(inf);					//Read the tremolo value
 		pack_ReadWORDLE(inf, NULL);		//Read two bytes of unknown data/padding
 	}
 	if(fileversion >= 500)
@@ -1990,20 +1990,20 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 //Read track data
 	pack_ReadDWORDLE(inf, &measures);	//Read the number of measures
 #ifdef GP_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tNumber of measures: %lu", measures);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tNumber of measures: %lu", measures);
 	eof_log(eof_log_string, 1);
 #endif
 	tsarray = malloc(sizeof(struct eof_gp_time_signature) * measures);	//Allocate memory to store the time signature effective for each measure
 	if(!tsarray)
 	{
 		eof_log("Error allocating memory (3)", 1);
-		pack_fclose(inf);
+		(void) pack_fclose(inf);
 		free(gp);
 		return NULL;
 	}
 	pack_ReadDWORDLE(inf, &tracks);	//Read the number of tracks
 #ifdef GP_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tNumber of tracks: %lu", tracks);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tNumber of tracks: %lu", tracks);
 	eof_log(eof_log_string, 1);
 #endif
 	gp->numtracks = tracks;
@@ -2013,7 +2013,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	if(!gp->names || !np || !hopo)
 	{
 		eof_log("Error allocating memory (4)", 1);
-		pack_fclose(inf);
+		(void) pack_fclose(inf);
 		free(gp);
 		free(tsarray);
 		return NULL;
@@ -2025,7 +2025,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	if(!gp->track )
 	{
 		eof_log("Error allocating memory (5)", 1);
-		pack_fclose(inf);
+		(void) pack_fclose(inf);
 		free(gp->track);
 		free(gp->names);
 		free(np);
@@ -2040,7 +2040,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		if(!gp->track[ctr])
 		{
 			eof_log("Error allocating memory (6)", 1);
-			pack_fclose(inf);
+			(void) pack_fclose(inf);
 			free(gp->names);
 			free(gp->track[ctr]);
 			while(ctr > 0)
@@ -2074,7 +2074,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	if(!strings)
 	{
 		eof_log("Error allocating memory (7)", 1);
-		pack_fclose(inf);
+		(void) pack_fclose(inf);
 		free(gp->names);
 		for(ctr = 0; ctr < tracks; ctr++)
 		{	//Free all previously allocated track structures
@@ -2104,24 +2104,24 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 #ifdef GP_IMPORT_DEBUG
 		if(bytemask & 3)
 		{	//If the TS numerator or denominator were changed
-			snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tTS change at measure %lu:  %u/%u", ctr + 1, curnum, curden);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tTS change at measure %lu:  %u/%u", ctr + 1, curnum, curden);
 			eof_log(eof_log_string, 1);
 		}
 #endif
 		if(bytemask & 32)
 		{	//New section
-			eof_read_gp_string(inf, NULL, buffer, 1);	//Read section string
+			(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read section string
 			if(gp->text_events < EOF_MAX_TEXT_EVENTS)
 			{	//If the maximum number of text events hasn't already been defined
 #ifdef GP_IMPORT_DEBUG
-				snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSection marker found at measure #%lu:  \"%s\"", ctr + 1, buffer);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSection marker found at measure #%lu:  \"%s\"", ctr + 1, buffer);
 				eof_log(eof_log_string, 1);
 #endif
 				gp->text_event[gp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
 				if(!gp->text_event[gp->text_events])
 				{
 					eof_log("Error allocating memory (8)", 1);
-					pack_fclose(inf);
+					(void) pack_fclose(inf);
 					free(gp->names);
 					for(ctr = 0; ctr < tracks; ctr++)
 					{	//Free all previously allocated track structures
@@ -2138,45 +2138,45 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					free(tsarray);
 					return NULL;
 				}
-				ustrncpy(gp->text_event[gp->text_events]->text, buffer, 255);
+				(void) ustrncpy(gp->text_event[gp->text_events]->text, buffer, 255);
 				gp->text_event[gp->text_events]->beat = ctr;	//For now, store the measure number, it will need to be converted to the beat number later
 				gp->text_event[gp->text_events]->track = 0;
 				gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;	//Ensure this will be detected as a section
 				gp->text_event[gp->text_events]->is_temporary = 0;	//This will be used to track whether the measure number was converted to the proper beat number below
 				gp->text_events++;
 			}
-			pack_getc(inf);								//Read section string color (Red intensity)
-			pack_getc(inf);								//Read section string color (Green intensity)
-			pack_getc(inf);								//Read section string color (Blue intensity)
-			pack_getc(inf);								//Read unused value
+			(void) pack_getc(inf);								//Read section string color (Red intensity)
+			(void) pack_getc(inf);								//Read section string color (Green intensity)
+			(void) pack_getc(inf);								//Read section string color (Blue intensity)
+			(void) pack_getc(inf);								//Read unused value
 		}
 		if(bytemask & 64)
 		{	//Key signature change
-			pack_getc(inf);	//Read the key
-			pack_getc(inf);	//Read the major/minor byte
+			(void) pack_getc(inf);	//Read the key
+			(void) pack_getc(inf);	//Read the major/minor byte
 		}
 		if((fileversion >= 500) && ((bytemask & 1) || (bytemask & 2)))
 		{	//If either a new TS numerator or denominator was set, read the beam by eight notes values (only for version 5.x and higher of the format.  3.x/4.x are known to not have this info)
-			pack_getc(inf);
-			pack_getc(inf);
-			pack_getc(inf);
-			pack_getc(inf);
+			(void) pack_getc(inf);
+			(void) pack_getc(inf);
+			(void) pack_getc(inf);
+			(void) pack_getc(inf);
 		}
 		if(bytemask & 4)
 		{	//Start of repeat
 		}
 		if(bytemask & 8)
 		{	//End of repeat
-			pack_getc(inf);	//Read number of repeats
+			(void) pack_getc(inf);	//Read number of repeats
 		}
 		if(bytemask & 128)
 		{	//Double bar
 		}
 		if(fileversion >= 500)
 		{	//Versions 5.0 and newer of the format store unknown data/padding here
-			pack_getc(inf);		//Read alternate ending number/padding
-			pack_getc(inf);		//Read triplet feel value
-			pack_getc(inf);		//Unknown data
+			(void) pack_getc(inf);		//Read alternate ending number/padding
+			(void) pack_getc(inf);		//Read triplet feel value
+			(void) pack_getc(inf);		//Unknown data
 		}
 		tsarray[ctr].num = curnum;	//Store this measure's time signature for future reference
 		tsarray[ctr].den = curden;
@@ -2185,7 +2185,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	if(eof_song->beats < totalbeats + 2)
 	{	//If there will be beats appended to the project to encompass the guitar pro file's tracks
 #ifdef GP_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAppending %lu beats to project so that guitar pro transcriptions will fit", totalbeats + 2 - eof_song->beats);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tAppending %lu beats to project so that guitar pro transcriptions will fit", totalbeats + 2 - eof_song->beats);
 		eof_log(eof_log_string, 1);
 #endif
 		while(eof_song->beats < totalbeats + 2)
@@ -2195,7 +2195,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			if(!eof_song_add_beat(eof_song))
 			{
 				eof_log("Error allocating memory (9)", 1);
-				pack_fclose(inf);
+				(void) pack_fclose(inf);
 				free(gp->names);
 				for(ctr = 0; ctr < tracks; ctr++)
 				{	//Free all previously allocated track structures
@@ -2255,7 +2255,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			{	//If the user opted to replace the active project's TS changes
 				if(!ctr2 && ((tsarray[ctr].num != curnum) || (tsarray[ctr].den != curden)))
 				{	//If this is a time signature change on the first beat of the measure
-					eof_apply_ts(tsarray[ctr].num, tsarray[ctr].den, beatctr, eof_song, 0);	//Apply the change to the active project
+					(void) eof_apply_ts(tsarray[ctr].num, tsarray[ctr].den, beatctr, eof_song, 0);	//Apply the change to the active project
 				}
 				else
 				{	//Otherwise clear all beat flags except those that aren't TS related
@@ -2298,12 +2298,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		{	//Is set to have the tuning displayed
 		}
 
-		eof_read_gp_string(inf, &word, buffer, 0);		//Read track name string
+		(void) eof_read_gp_string(inf, &word, buffer, 0);		//Read track name string
 		gp->names[ctr] = malloc(sizeof(buffer) + 1);	//Allocate memory to store track name string into guitar pro structure
 		if(!gp->names[ctr])
 		{
 			eof_log("Error allocating memory (10)", 1);
-			pack_fclose(inf);
+			(void) pack_fclose(inf);
 			while(ctr > 0)
 			{	//Free the previous track name strings
 				free(gp->names[ctr - 1]);
@@ -2328,10 +2328,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		}
 		strcpy(gp->names[ctr], buffer);
 #ifdef GP_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tTrack #%lu: %s", ctr + 1, buffer);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tTrack #%lu: %s", ctr + 1, buffer);
 		eof_log(eof_log_string, 1);
 #endif
-		pack_fseek(inf, 40 - word);					//Skip the padding that follows the track name string
+		(void) pack_fseek(inf, 40 - word);					//Skip the padding that follows the track name string
 		pack_ReadDWORDLE(inf, &strings[ctr]);		//Read the number of strings in this track
 		gp->track[ctr]->numstrings = strings[ctr];
 		if(strings[ctr] > 6)
@@ -2344,7 +2344,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			}
 		}
 #ifdef GP_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu strings", strings[ctr]);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t%lu strings", strings[ctr]);
 		eof_log(eof_log_string, 1);
 #endif
 		for(ctr2 = 0; ctr2 < 7; ctr2++)
@@ -2353,7 +2353,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			{	//If this string is used
 				pack_ReadDWORDLE(inf, &dword);	//Read the tuning for this string
 #ifdef GP_IMPORT_DEBUG
-				snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tTuning for string #%lu: MIDI note %lu (%s)", ctr2 + 1, dword, eof_note_names[(dword + 3) % 12]);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tTuning for string #%lu: MIDI note %lu (%s)", ctr2 + 1, dword, eof_note_names[(dword + 3) % 12]);
 				eof_log(eof_log_string, 1);
 #endif
 				if(ctr2 < 6)
@@ -2371,41 +2371,41 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		pack_ReadDWORDLE(inf, &dword);	//Read the MIDI channel used for this track's effects
 		pack_ReadDWORDLE(inf, &dword);	//Read the number of frets used for this track
 #ifdef GP_IMPORT_DEBUG
-		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNumber of frets: %lu", dword);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNumber of frets: %lu", dword);
 		eof_log(eof_log_string, 1);
 #endif
 		gp->track[ctr]->numfrets = dword;
 		pack_ReadDWORDLE(inf, &dword);	//Read the capo position for this track
-		pack_getc(inf);					//Track color (Red intensity)
-		pack_getc(inf);					//Track color (Green intensity)
-		pack_getc(inf);					//Track color (Blue intensity)
-		pack_getc(inf);					//Read unused value
+		(void) pack_getc(inf);					//Track color (Red intensity)
+		(void) pack_getc(inf);					//Track color (Green intensity)
+		(void) pack_getc(inf);					//Track color (Blue intensity)
+		(void) pack_getc(inf);					//Read unused value
 		if(fileversion > 500)
 		{
 			bytemask = pack_getc(inf);	//Track properties 1 bitmask
-			pack_getc(inf);				//Track properties 2 bitmask
-			pack_getc(inf);				//Unknown data
-			pack_getc(inf);				//MIDI bank
-			pack_getc(inf);				//Human playing
-			pack_getc(inf);				//Auto accentuation on the beat
-			pack_fseek(inf, 31);		//Unknown data
-			pack_getc(inf);				//Selected sound bank option
-			pack_fseek(inf, 7);			//Unknown data
-			pack_getc(inf);				//Low frequency band lowered
-			pack_getc(inf);				//Mid frequency band lowered
-			pack_getc(inf);				//High frequency band lowered
-			pack_getc(inf);				//Gain lowered
-			eof_read_gp_string(inf, NULL, buffer, 1);	//Read track instrument effect 1
-			eof_read_gp_string(inf, NULL, buffer, 1);	//Read track instrument effect 2
+			(void) pack_getc(inf);				//Track properties 2 bitmask
+			(void) pack_getc(inf);				//Unknown data
+			(void) pack_getc(inf);				//MIDI bank
+			(void) pack_getc(inf);				//Human playing
+			(void) pack_getc(inf);				//Auto accentuation on the beat
+			(void) pack_fseek(inf, 31);		//Unknown data
+			(void) pack_getc(inf);				//Selected sound bank option
+			(void) pack_fseek(inf, 7);			//Unknown data
+			(void) pack_getc(inf);				//Low frequency band lowered
+			(void) pack_getc(inf);				//Mid frequency band lowered
+			(void) pack_getc(inf);				//High frequency band lowered
+			(void) pack_getc(inf);				//Gain lowered
+			(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read track instrument effect 1
+			(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read track instrument effect 2
 		}
 		else if(fileversion == 500)
 		{
-			pack_fseek(inf, 45);		//Unknown data
+			(void) pack_fseek(inf, 45);		//Unknown data
 		}
 	}//For each track
 	if(fileversion >= 500)
 	{
-		pack_getc(inf);	//Unknown data
+		(void) pack_getc(inf);	//Unknown data
 	}
 
 
@@ -2442,7 +2442,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					bytemask = pack_getc(inf);	//Read beat bitmask
 					if(bytemask & 64)
 					{	//Beat is a rest
-						pack_getc(inf);	//Rest beat type (empty/rest)
+						(void) pack_getc(inf);	//Rest beat type (empty/rest)
 						new_note = 0;
 					}
 					byte = pack_getc(inf);		//Read beat duration
@@ -2470,7 +2470,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						word = pack_getc(inf);	//Read chord diagram format
 						if(word == 0)
 						{	//Chord diagram format 0, ie. GP3
-							eof_read_gp_string(inf, NULL, buffer, 1);	//Read chord name
+							(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read chord name
 							pack_ReadDWORDLE(inf, &dword);				//Read the diagram fret position
 							for(ctr4 = 0; ctr4 < strings[ctr2]; ctr4++)
 							{	//For each string defined in the track
@@ -2479,44 +2479,44 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						}//Chord diagram format 0, ie. GP3
 						else if(word == 1)
 						{	//Chord diagram format 1, ie. GP4
-							pack_getc(inf);		//Read sharp/flat indicator
-							pack_fseek(inf, 3);			//Unknown data
-							pack_getc(inf);		//Read chord root
+							(void) pack_getc(inf);		//Read sharp/flat indicator
+							(void) pack_fseek(inf, 3);			//Unknown data
+							(void) pack_getc(inf);		//Read chord root
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
-								pack_fseek(inf, 3);		//Unknown data
+								(void) pack_fseek(inf, 3);		//Unknown data
 							}
-							pack_getc(inf);		//Read chord type
+							(void) pack_getc(inf);		//Read chord type
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
-								pack_fseek(inf, 3);		//Unknown data
+								(void) pack_fseek(inf, 3);		//Unknown data
 							}
-							pack_getc(inf);		//9th/11th/13th option
+							(void) pack_getc(inf);		//9th/11th/13th option
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
-								pack_fseek(inf, 3);		//Unknown data
+								(void) pack_fseek(inf, 3);		//Unknown data
 							}
 							pack_ReadDWORDLE(inf, &dword);	//Read bass note (lowest note played in string)
-							pack_getc(inf);					//+/- option
-							pack_fseek(inf, 4);				//Unknown data
+							(void) pack_getc(inf);					//+/- option
+							(void) pack_fseek(inf, 4);				//Unknown data
 							word = pack_getc(inf);			//Read chord name string length
-							pack_fread(buffer, 20, inf);	//Read chord name (which is padded to 20 bytes)
+							(void) pack_fread(buffer, 20, inf);	//Read chord name (which is padded to 20 bytes)
 							buffer[word] = '\0';			//Ensure string is terminated to be the right length
-							pack_fseek(inf, 2);				//Unknown data
-							pack_getc(inf);					//Tonality of the fifth
+							(void) pack_fseek(inf, 2);				//Unknown data
+							(void) pack_getc(inf);					//Tonality of the fifth
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
-								pack_fseek(inf, 3);			//Unknown data
+								(void) pack_fseek(inf, 3);			//Unknown data
 							}
-							pack_getc(inf);					//Tonality of the ninth
+							(void) pack_getc(inf);					//Tonality of the ninth
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
-								pack_fseek(inf, 3);			//Unknown data
+								(void) pack_fseek(inf, 3);			//Unknown data
 							}
-							pack_getc(inf);					//Tonality of the eleventh
+							(void) pack_getc(inf);					//Tonality of the eleventh
 							if(fileversion / 100 == 3)
 							{	//If it is a GP 3.x file
-								pack_fseek(inf, 3);			//Unknown data
+								(void) pack_fseek(inf, 3);			//Unknown data
 							}
 							pack_ReadDWORDLE(inf, &dword);	//Base fret for diagram
 							for(ctr4 = 0; ctr4 < 7; ctr4++)
@@ -2530,27 +2530,27 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									pack_ReadDWORDLE(inf, NULL);	//Skip this padding
 								}
 							}
-							pack_getc(inf);	//Read the number of barres in this chord
+							(void) pack_getc(inf);	//Read the number of barres in this chord
 							for(ctr4 = 0; ctr4 < 5; ctr4++)
 							{	//For each of the 5 possible barres
-								pack_getc(inf);	//Read the barre position/padding
+								(void) pack_getc(inf);	//Read the barre position/padding
 							}
 							for(ctr4 = 0; ctr4 < 5; ctr4++)
 							{	//For each of the 5 possible barres
-								pack_getc(inf);	//Read the barre start string/padding
+								(void) pack_getc(inf);	//Read the barre start string/padding
 							}
 							for(ctr4 = 0; ctr4 < 5; ctr4++)
 							{	//For each of the 5 possible barres
-								pack_getc(inf);	//Read the barre stop string/padding
+								(void) pack_getc(inf);	//Read the barre stop string/padding
 							}
-							pack_getc(inf);		//Chord includes first interval?
-							pack_getc(inf);		//Chord includes third interval?
-							pack_getc(inf);		//Chord includes fifth interval?
-							pack_getc(inf);		//Chord includes seventh interval?
-							pack_getc(inf);		//Chord includes ninth interval?
-							pack_getc(inf);		//Chord includes eleventh interval?
-							pack_getc(inf);		//Chord includes thirteenth interval?
-							pack_getc(inf);		//Unknown data
+							(void) pack_getc(inf);		//Chord includes first interval?
+							(void) pack_getc(inf);		//Chord includes third interval?
+							(void) pack_getc(inf);		//Chord includes fifth interval?
+							(void) pack_getc(inf);		//Chord includes seventh interval?
+							(void) pack_getc(inf);		//Chord includes ninth interval?
+							(void) pack_getc(inf);		//Chord includes eleventh interval?
+							(void) pack_getc(inf);		//Chord includes thirteenth interval?
+							(void) pack_getc(inf);		//Unknown data
 							for(ctr4 = 0; ctr4 < 7; ctr4++)
 							{	//For each of the 7 possible usable strings
 								if(ctr4 < strings[ctr2])
@@ -2567,15 +2567,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								}
 								else
 								{
-									pack_getc(inf);		//Skip this padding
+									(void) pack_getc(inf);		//Skip this padding
 								}
 							}
-							pack_getc(inf);	//Chord fingering displayed?
+							(void) pack_getc(inf);	//Chord fingering displayed?
 						}//Chord diagram format 1, ie. GP4
 					}//Beat has a chord diagram
 					if(bytemask & 4)
 					{	//Beat has text
-						eof_read_gp_string(inf, NULL, buffer, 1);	//Read beat text string
+						(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read beat text string
 					}
 					if(bytemask & 8)
 					{	//Beat has effects
@@ -2626,7 +2626,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							if(eof_gp_parse_bend(inf))
 							{	//If there was an error parsing the bend
 								allegro_message("Error parsing bend, file is corrupt");
-								pack_fclose(inf);
+								(void) pack_fclose(inf);
 								while(ctr > 0)
 								{	//Free the previous track name strings
 									free(gp->names[ctr - 1]);
@@ -2654,7 +2654,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						{	//Stroke (strum) effect
 							unsigned char upspeed;
 							upspeed = pack_getc(inf);	//Up strum speed
-							pack_getc(inf);				//Down strum speed
+							(void) pack_getc(inf);				//Down strum speed
 							if(!upspeed)
 							{	//Strum down
 								flags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;
@@ -2681,13 +2681,13 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					{	//Beat has mix table change
 						char volume_change = 0, pan_change = 0, chorus_change = 0, reverb_change = 0, phaser_change = 0, tremolo_change = 0, tempo_change = 0;
 
-						pack_getc(inf);	//New instrument number
+						(void) pack_getc(inf);	//New instrument number
 						if(fileversion >= 500)
 						{	//These fields are only in version 5.x files
 							pack_ReadDWORDLE(inf, &dword);	//RSE related number
 							pack_ReadDWORDLE(inf, &dword);	//RSE related number
 							pack_ReadDWORDLE(inf, &dword);	//RSE related number
-							pack_fseek(inf, 4);				//Unknown data
+							(void) pack_fseek(inf, 4);				//Unknown data
 						}
 						byte = pack_getc(inf);	//New volume
 						if(byte == -1)
@@ -2739,7 +2739,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						}
 						if(fileversion >= 500)
 						{	//These fields are only in version 5.x files
-							eof_read_gp_string(inf, NULL, buffer, 1);	//Read the tempo text string
+							(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the tempo text string
 						}
 						pack_ReadDWORDLE(inf, &dword);	//New tempo
 						if((long)dword == -1)
@@ -2751,48 +2751,48 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						}
 						if(volume_change)
 						{	//This field only exists if a new volume was defined
-							pack_getc(inf);	//New volume change transition
+							(void) pack_getc(inf);	//New volume change transition
 						}
 						if(pan_change)
 						{	//This field only exists if a new pan value was defined
-							pack_getc(inf);	//New pan change transition
+							(void) pack_getc(inf);	//New pan change transition
 						}
 						if(chorus_change)
 						{	//This field only exists if a new  chorus value was defined
-							pack_getc(inf);	//New chorus change transition
+							(void) pack_getc(inf);	//New chorus change transition
 						}
 						if(reverb_change)
 						{	//This field only exists if a new reverb value was defined
-							pack_getc(inf);	//New reverb change transition
+							(void) pack_getc(inf);	//New reverb change transition
 						}
 						if(phaser_change)
 						{	//This field only exists if a new phaser value was defined
-							pack_getc(inf);	//New phaser change transition
+							(void) pack_getc(inf);	//New phaser change transition
 						}
 						if(tremolo_change)
 						{	//This field only exists if a new tremolo value was defined
-							pack_getc(inf);	//New tremolo change transition
+							(void) pack_getc(inf);	//New tremolo change transition
 						}
 						if(tempo_change)
 						{	//These fields only exists if a new tempo was defined
-							pack_getc(inf);	//New tempo change transition
+							(void) pack_getc(inf);	//New tempo change transition
 							if(fileversion > 500)
 							{	//This field only exists in versions newer than 5.0 of the format
-								pack_getc(inf);	//Tempo text string hidden
+								(void) pack_getc(inf);	//Tempo text string hidden
 							}
 						}
 						if(fileversion >= 400)
 						{	//This field is not in version 3.0 files, assume 4.x or higher
-							pack_getc(inf);	//Mix table change applied tracks bitmask
+							(void) pack_getc(inf);	//Mix table change applied tracks bitmask
 						}
 						if(fileversion >= 500)
 						{	//This unknown byte is only in version 5.x files
-							pack_fseek(inf, 1);		//Unknown data
+							(void) pack_fseek(inf, 1);		//Unknown data
 						}
 						if(fileversion > 500)
 						{	//These strings are only in versions newer than 5.0 of the format
-							eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Effect 2 string
-							eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Effect 1 string
+							(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Effect 2 string
+							(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read the Effect 1 string
 						}
 					}//Beat has mix table change
 					usedstrings = pack_getc(inf);	//Used strings bitmask
@@ -2839,12 +2839,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							}
 							if((bytemask & 1) && (fileversion < 500))
 							{	//Time independent duration (for versions of the format older than 5.x)
-								pack_getc(inf);	//Time independent duration value
-								pack_getc(inf);	//Time independent duration values
+								(void) pack_getc(inf);	//Time independent duration value
+								(void) pack_getc(inf);	//Time independent duration values
 							}
 							if(bytemask & 16)
 							{	//Note dynamic
-								pack_getc(inf);	//Get the dynamic value
+								(void) pack_getc(inf);	//Get the dynamic value
 							}
 							if(bytemask & 32)
 							{	//Note type is defined
@@ -2874,15 +2874,15 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								{	//If the finger number is defined
 									finger[ctr4] = byte;	//Store into the finger array
 								}
-								pack_getc(inf);	//Right hand fingering
+								(void) pack_getc(inf);	//Right hand fingering
 							}
 							if((bytemask & 1) && (fileversion >= 500))
 							{	//Time independent duration (for versions of the format 5.x or newer)
-								pack_fseek(inf, 8);		//Unknown data
+								(void) pack_fseek(inf, 8);		//Unknown data
 							}
 							if(fileversion >= 500)
 							{	//This padding isn't in version 3.x and 4.x files
-								pack_fseek(inf, 1);		//Unknown data
+								(void) pack_fseek(inf, 1);		//Unknown data
 							}
 							if(bytemask & 8)
 							{	//Note effects
@@ -2897,7 +2897,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									if(eof_gp_parse_bend(inf))
 									{	//If there was an error parsing the bend
 										allegro_message("Error parsing bend, file is corrupt");
-										pack_fclose(inf);
+										(void) pack_fclose(inf);
 										while(ctr > 0)
 										{	//Free the previous track name strings
 											free(gp->names[ctr - 1]);
@@ -2936,20 +2936,20 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								}
 								if(byte1 & 16)
 								{	//Grace note
-									pack_getc(inf);	//Grace note fret number
-									pack_getc(inf);	//Grace note dynamic value
+									(void) pack_getc(inf);	//Grace note fret number
+									(void) pack_getc(inf);	//Grace note dynamic value
 									if(fileversion >= 500)
 									{	//If the file version is 5.x or higher (this byte verified not to be in 3.0 and 4.06 files)
-										pack_getc(inf);	//Grace note transition type
+										(void) pack_getc(inf);	//Grace note transition type
 									}
 									else
 									{	//The purpose of this field in 4.x or older files is unknown
-										pack_fseek(inf, 1);		//Unknown data
+										(void) pack_fseek(inf, 1);		//Unknown data
 									}
-									pack_getc(inf);	//Grace note duration
+									(void) pack_getc(inf);	//Grace note duration
 									if(fileversion >= 500)
 									{	//If the file version is 5.x or higher (this byte verified not to be in 3.0 and 4.06 files)
-										pack_getc(inf);	//Grace note position
+										(void) pack_getc(inf);	//Grace note position
 									}
 								}
 								if(byte2 & 1)
@@ -2961,7 +2961,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								}
 								if(byte2 & 4)
 								{	//Tremolo picking
-									pack_getc(inf);	//Tremolo picking speed
+									(void) pack_getc(inf);	//Tremolo picking speed
 									flags |= EOF_NOTE_FLAG_IS_TREMOLO;
 								}
 								if(byte2 & 8)
@@ -2990,19 +2990,19 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									byte = pack_getc(inf);	//Harmonic type
 									if(byte == 2)
 									{	//Artificial harmonic
-										pack_getc(inf);	//Read harmonic note
-										pack_getc(inf);	//Read sharp/flat status
-										pack_getc(inf);	//Read octave status
+										(void) pack_getc(inf);	//Read harmonic note
+										(void) pack_getc(inf);	//Read sharp/flat status
+										(void) pack_getc(inf);	//Read octave status
 									}
 									else if(byte == 3)
 									{	//Tapped harmonic
-										pack_getc(inf);	//Right hand fret
+										(void) pack_getc(inf);	//Right hand fret
 									}
 								}
 								if(byte2 & 32)
 								{	//Trill
-									pack_getc(inf);	//Trill with fret
-									pack_getc(inf);	//Trill duration
+									(void) pack_getc(inf);	//Trill with fret
+									(void) pack_getc(inf);	//Trill duration
 									flags |= EOF_NOTE_FLAG_IS_TRILL;
 ///It might be necessary to insert notes here for the trill phrase
 								}
@@ -3018,7 +3018,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						pack_ReadWORDLE(inf, &word);	//Transpose bitmask
 						if(word & 0x800)
 						{	//If bit 11 of the transpose bitmask was set, there is an additional byte of unknown data
-							pack_fseek(inf, 1);	//Unknown data
+							(void) pack_fseek(inf, 1);	//Unknown data
 						}
 					}
 					if(voice == TARGET_VOICE)
@@ -3032,7 +3032,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							if(!np[ctr2])
 							{
 								eof_log("Error allocating memory (11)", 1);
-								pack_fclose(inf);
+								(void) pack_fclose(inf);
 								while(ctr > 0)
 								{	//Free the previous track name strings
 									free(gp->names[ctr - 1]);
@@ -3118,7 +3118,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 			}//For each voice
 			if(fileversion >= 500)
 			{
-				pack_fseek(inf, 1);		//Unknown data
+				(void) pack_fseek(inf, 1);		//Unknown data
 			}
 		}//For each track
 		curbeat += curnum;	//Add this measure's number of beats to the beat counter
@@ -3250,12 +3250,12 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	}
 
 //Clean up
-	pack_fclose(inf);
+	(void) pack_fclose(inf);
 	free(strings);
 	free(tsarray);
 	free(np);
 	free(hopo);
-	puts("\nSuccess");
+	(void) puts("\nSuccess");
 	return gp;
 }
 

@@ -14,7 +14,7 @@
 
 void XML_Load(FILE *inf)
 {
-	unsigned long maxlinelength;	//I will count the length of the longest line (including NULL char/newline) in the
+	size_t maxlinelength;			//I will count the length of the longest line (including NULL char/newline) in the
 									//input file so I can create a buffer large enough to read any line into
 	char *buffer;					//Will be an array large enough to hold the largest line of text from input file
 	char *substring=NULL;			//Used with strstr() to find tag strings in the input file
@@ -37,7 +37,7 @@ void XML_Load(FILE *inf)
 //Allocate memory buffer large enough to hold any line in this file
 	buffer=(char *)malloc_err(maxlinelength);
 
-	fgets_err(buffer,maxlinelength,inf);	//Read first line of text, capping it to prevent buffer overflow
+	(void) fgets_err(buffer, (int)maxlinelength,inf);	//Read first line of text, capping it to prevent buffer overflow
 
 	if(Lyrics.verbose)	printf("\nImporting XML lyrics from file \"%s\"\n\n",Lyrics.infilename);
 
@@ -54,7 +54,7 @@ void XML_Load(FILE *inf)
 			substring=strcasestr_spec(buffer,"<lyrics>");	//Find the character after a match for "<lyrics>", if it exists
 			if(substring != NULL)
 			{	//This tag indicates the start of lyrics
-				puts("\t\t<lyrics> tag encountered");
+				(void) puts("\t\t<lyrics> tag encountered");
 				start=1;
 			}
 		}
@@ -66,7 +66,7 @@ void XML_Load(FILE *inf)
 			if(substring != NULL)
 			{	//This tag indicates the end of lyrics
 				start=0;
-				puts("\t\t</lyrics> tag encountered");
+				(void) puts("\t\t</lyrics> tag encountered");
 				break;
 			}
 
@@ -117,7 +117,7 @@ void XML_Load(FILE *inf)
 			}
 		}
 
-		fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+		(void) fgets(buffer, (int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 	}//end while(!feof())
 
 	free(buffer);	//No longer needed, release the memory before exiting function

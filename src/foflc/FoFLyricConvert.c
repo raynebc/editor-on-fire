@@ -501,7 +501,7 @@ int main(int argc, char *argv[])
 			}
 			else	//Assume the default filter list
 			{
-				if(Lyrics.verbose)	puts("No filter string provided.  Default filter \"^%#/\" is assumed");
+				if(Lyrics.verbose)	(void) puts("No filter string provided.  Default filter \"^%#/\" is assumed");
 				Lyrics.filter=DuplicateString("^%#/");
 				Lyrics.defaultfilter=1;	//Remember to deallocate this at end of program
 			}
@@ -726,21 +726,21 @@ int main(int argc, char *argv[])
 //Output command line
 	if(Lyrics.verbose)
 	{
-		puts(PROGVERSION);	//Output program version
+		(void) puts(PROGVERSION);	//Output program version
 		printf("Invoked with the following command line:\n");
 		for(ctr=0;ctr<argc;ctr++)
 		{	//For each parameter (including the program name)
 			assert_wrapper(argv[ctr] != NULL);	//If this condition is true, then the command line interpreter has failed,
 
 			if(strchr(argv[ctr],' '))		//If the parameter contains whitespace
-				putchar('"');				//Begin the parameter with a quotation mark
+				(void) putchar('"');				//Begin the parameter with a quotation mark
 			printf("%s",argv[ctr]);			//Display the parameter
 			if(strchr(argv[ctr],' '))		//If the parameter contains whitespace
-				putchar('"');				//End the parameter with a quotation mark
-			if(ctr+1<argc)	putchar(' ');	//Display a space if there's another parameter
+				(void) putchar('"');				//End the parameter with a quotation mark
+			if(ctr+1<argc)	(void) putchar(' ');	//Display a space if there's another parameter
 		}
-		putchar('\n');
-		putchar('\n');
+		(void) putchar('\n');
+		(void) putchar('\n');
 	}
 
 //Perform lyric detection if user opted to detect a file's lyric format instead of performing a conversion
@@ -766,7 +766,7 @@ int main(int argc, char *argv[])
 
 		if(detectionlist == NULL)
 		{
-			puts("No valid lyrics were detected\nExiting");
+			(void) puts("No valid lyrics were detected\nExiting");
 //			DestroyLyricFormatList(detectionlist);
 			exit_wrapper(1);
 		}
@@ -774,16 +774,16 @@ int main(int argc, char *argv[])
 		{
 			if(detectionlist->next != NULL)
 			{
-				puts("Multiple detected lyric format(s):");
+				(void) puts("Multiple detected lyric format(s):");
 				EnumerateFormatDetectionList(detectionlist);
 				DestroyLyricFormatList(detectionlist);
-				puts("\nCall the program again, specifying the desired format to import\nExiting");
+				(void) puts("\nCall the program again, specifying the desired format to import\nExiting");
 				exit_wrapper(1);
 			}
 
 			if(detectionlist->format == PITCHED_LYRIC_FORMAT)
 			{
-				puts("Pitched lyric file detected.  Call the program again, specifying parameters vrhythm import\nExiting");
+				(void) puts("Pitched lyric file detected.  Call the program again, specifying parameters vrhythm import\nExiting");
 				DestroyLyricFormatList(detectionlist);
 				exit_wrapper(1);
 			}
@@ -831,11 +831,11 @@ int main(int argc, char *argv[])
 //Display informational messages regarding parameters/formats
 	if((Lyrics.grouping == 2) && Lyrics.marklines)	//User specified both marklines and line grouping
 	{
-		puts("Marklines is disabled when line grouping is specified");
+		(void) puts("Marklines is disabled when line grouping is specified");
 		Lyrics.marklines=0;
 	}
 	if(Lyrics.grouping && ((Lyrics.out_format == MIDI_FORMAT) || (Lyrics.out_format == USTAR_FORMAT)))
-		puts("Warning: Grouped lyrics will lose some timing and pitch information");
+		(void) puts("Warning: Grouped lyrics will lose some timing and pitch information");
 
 //If output file is MIDI based, validate the source midi file name if given
 	if(midi_based_export)
@@ -906,14 +906,14 @@ int main(int argc, char *argv[])
 				if(Lyrics.inputtrack != NULL)
 					free(Lyrics.inputtrack);
 				Lyrics.inputtrack=DuplicateString("Words");
-				if(Lyrics.verbose)	puts("Using Soft Karaoke import logic");
+				if(Lyrics.verbose)	(void) puts("Using Soft Karaoke import logic");
 				Lyrics.in_format=SKAR_FORMAT;
 				MIDI_Load(inf,SKAR_handler,0);	//Call MIDI_Load, specifying the Simple Karaoke Event handler
 			}
 			else
 			{	//Perform KAR logic to load lyrics based off of Note On/Off events
 				assert_wrapper(Lyrics.inputtrack != NULL);
-				if(Lyrics.verbose)	puts("Using RB/KAR import logic");
+				if(Lyrics.verbose)	(void) puts("Using RB/KAR import logic");
 				MIDI_Load(inf,Lyric_handler,0);	//Call MIDI_Load, specifying the new KAR-compatible Lyric Event handler
 			}
 		break;
@@ -939,7 +939,7 @@ int main(int argc, char *argv[])
 		break;
 
 		default:
-			puts("Unexpected error in import switch\nAborting");
+			(void) puts("Unexpected error in import switch\nAborting");
 			exit_wrapper(2);
 		break;
 	}
@@ -959,7 +959,7 @@ int main(int argc, char *argv[])
 		printf("Requested import did not load any lyrics\nDetected lyric format(s) of file \"%s\":\n",Lyrics.infilename);
 		EnumerateFormatDetectionList(detectionlist);
 		DestroyLyricFormatList(detectionlist);
-		puts("Exiting");
+		(void) puts("Exiting");
 		free(backuplyric);
 		backuplyric=NULL;
 		ReleaseMemory(1);
@@ -978,7 +978,7 @@ int main(int argc, char *argv[])
 
 	if(Lyrics.pitch_tracking && (Lyrics.out_format == MIDI_FORMAT) && CheckPitches(NULL,NULL))
 	{	//Only perform input pitch validation and remapping if the import lyrics had pitch and being exported to MIDI
-		puts("\aWarning: Input vocal pitches are outside Harmonix's defined range of [36,84]\nCorrecting");
+		(void) puts("\aWarning: Input vocal pitches are outside Harmonix's defined range of [36,84]\nCorrecting");
 		RemapPitches();		//Verify vocal pitches are correct, remap them if necessary
 	}
 
@@ -1021,7 +1021,7 @@ int main(int argc, char *argv[])
 
 			if(!Lyrics.srcoffsetoverride)				//If the offset for the source file is not being manually specified
 			{
-				if(Lyrics.verbose)	puts("Loading source MIDI's song.ini to obtain offset, all other tags will be ignored");
+				if(Lyrics.verbose)	(void) puts("Loading source MIDI's song.ini to obtain offset, all other tags will be ignored");
 				Parse_Song_Ini(Lyrics.srcfilename,1,0);	//Load ONLY the offset tag from the song.ini file, it will be stored negative from the contents of song.ini, so add to timestamps instead of subtract
 			}
 			else
@@ -1045,7 +1045,7 @@ int main(int argc, char *argv[])
 				}
 			}
 
-			if(Lyrics.verbose>=2)	putchar('\n');
+			if(Lyrics.verbose>=2)	(void) putchar('\n');
 			Copy_Source_MIDI(srcfile,outf);	//Copy all tracks besides destination vocal track to output file
 			fclose_err(srcfile);
 			srcfile=NULL;
@@ -1098,7 +1098,7 @@ int main(int argc, char *argv[])
 		case KAR_FORMAT:	//Export as unofficial KAR.  Default export track is "Melody"
 			if(Lyrics.outputtrack == NULL)
 			{
-				puts("\aNo ouput track name for KAR file was given.  A track named \"Melody\" will be used by default");
+				(void) puts("\aNo ouput track name for KAR file was given.  A track named \"Melody\" will be used by default");
 				Lyrics.outputtrack=DuplicateString("Melody");
 			}
 			Export_MIDI(outf);
@@ -1121,7 +1121,7 @@ int main(int argc, char *argv[])
 		break;
 
 		default:
-			puts("Unexpected error in export switch\nAborting");
+			(void) puts("Unexpected error in export switch\nAborting");
 			exit_wrapper(4);
 		break;
 	}
@@ -1134,8 +1134,8 @@ int main(int argc, char *argv[])
 	}
 
 //Commit any pending writes to file and close input and output files
-	if(Lyrics.verbose)	puts("\nCleaning up");
-	if(Lyrics.verbose>=2)	puts("\tClosing files");
+	if(Lyrics.verbose)	(void) puts("\nCleaning up");
+	if(Lyrics.verbose>=2)	(void) puts("\tClosing files");
 	if(srcfile != NULL)
 	{
 		fclose_err(srcfile);
@@ -1149,87 +1149,87 @@ int main(int argc, char *argv[])
 	free(backuplyric);
 	backuplyric=NULL;
 	ReleaseMemory(1);
-	if(Lyrics.verbose)	puts("Success!");
+	if(Lyrics.verbose)	(void) puts("Success!");
 	return 0;	//return success
 }
 
 void DisplaySyntax(void)
 {
 	printf("\n%s syntax:\nfoflc [-offset #][-nohyphens [1|2|3]][-noplus][-marklines][-nolyrics]\n",PROGVERSION);
-	puts(" [-grouping {word|line}][-verbose|debug][-filter [...]][-quick][-startstamp #]");
-	puts(" [-bpm #][-brute][-help][-srcoffset #][-intrack TRACKNAME][-outtrack TRACKNAME]");
-	puts(" [-notenames][-relative][-nopitch][-nosrctag [...]][-nofstyle]");
-	puts(" { {-detect infile} | {-id3tag infile} |");
-	puts("   {{-in [FORMAT] infile (lyr|ID)} {-out FORMAT (srcfile) outfile (lyr)(ID)}} }");
-	puts("\nItems in {} are required, [] are optional, () are required depending on FORMAT");
+	(void) puts(" [-grouping {word|line}][-verbose|debug][-filter [...]][-quick][-startstamp #]");
+	(void) puts(" [-bpm #][-brute][-help][-srcoffset #][-intrack TRACKNAME][-outtrack TRACKNAME]");
+	(void) puts(" [-notenames][-relative][-nopitch][-nosrctag [...]][-nofstyle]");
+	(void) puts(" { {-detect infile} | {-id3tag infile} |");
+	(void) puts("   {{-in [FORMAT] infile (lyr|ID)} {-out FORMAT (srcfile) outfile (lyr)(ID)}} }");
+	(void) puts("\nItems in {} are required, [] are optional, () are required depending on FORMAT");
 }
 
 void Input_failed(int errnum,char *argument)
 {
-	puts("\n");	//Add leading newlines
+	(void) puts("\n");	//Add leading newlines
 	if(errnum == 0xFF)
-		puts("Error: Incorrect number of parameters");
+		(void) puts("Error: Incorrect number of parameters");
 	else if(errnum == 0xFE)
-		puts("Error: Cannot import and export the same file");
+		(void) puts("Error: Cannot import and export the same file");
 	else if(errnum == 0xFD)
-		puts("Error: Invalid numerical value");
+		(void) puts("Error: Invalid numerical value");
 	else if(errnum == 0xFC)
-		puts("Error: The optional nohyphens flag must be 1, 2 or 3");
+		(void) puts("Error: The optional nohyphens flag must be 1, 2 or 3");
 	else if(errnum == 0xFB)
-		puts("Error: The \"nosrctag\" parameter can't be used for both wildcard and single ID3 frame omission");
+		(void) puts("Error: The \"nosrctag\" parameter can't be used for both wildcard and single ID3 frame omission");
 	else if(errnum == 0xFA)
-		puts("Error: The \"nosrctag\" parameter can't be used as a wildcard multiple times");
+		(void) puts("Error: The \"nosrctag\" parameter can't be used as a wildcard multiple times");
 	else if(errnum == 0xF9)
-		puts("Error: Track name expected");
+		(void) puts("Error: Track name expected");
 	else if(errnum == 0xF8)
-		puts("Error: The \"nofstyle\" parameter can only be used for MIDI export");
+		(void) puts("Error: The \"nofstyle\" parameter can only be used for MIDI export");
 	else if(errnum == 0xF1)
-		puts("Error: Subparameters were expected instead of a hyphen");
+		(void) puts("Error: Subparameters were expected instead of a hyphen");
 	else if(errnum == 0xF0)
-		puts("Error: File name expected");
+		(void) puts("Error: File name expected");
 	else if(errnum == 0xEF)
-		puts("Error: Each parameter can only be defined once");
+		(void) puts("Error: Each parameter can only be defined once");
 	else if(errnum == 0xEE)
-		puts("Error: Invalid character in filter string");
+		(void) puts("Error: Invalid character in filter string");
 	else if(errnum == 0xED)
-		puts("Error: The \"startstamp\" and \"offset\" parameters cannot be used simultaneously");
+		(void) puts("Error: The \"startstamp\" and \"offset\" parameters cannot be used simultaneously");
 	else if(errnum == 0xEC)
-		puts("Error: The \"quick\" parameter can only be used for MIDI import");
+		(void) puts("Error: The \"quick\" parameter can only be used for MIDI import");
 	else if(errnum == 0xEB)
-		puts("Error: The \"bpm\" parameter can only be used for UltraStar or MIDI based export");
+		(void) puts("Error: The \"bpm\" parameter can only be used for UltraStar or MIDI based export");
 	else if(errnum == 0xEA)
-		puts("Error: The \"brute\" parameter can only be used for UltraStar export");
+		(void) puts("Error: The \"brute\" parameter can only be used for UltraStar export");
 	else if(errnum == 0xE0)
-		puts("Error: The \"marklines\" parameter can only be used for Script export");
+		(void) puts("Error: The \"marklines\" parameter can only be used for Script export");
 	else if(errnum == 0xE9)
-		puts("Error: Vocal rhythm instrument+difficulty identifier is expected");
+		(void) puts("Error: Vocal rhythm instrument+difficulty identifier is expected");
 	else if(errnum == 0xE8)
-		puts("Error: The \"nolyrics\" parameter can only be specified explicitly for MIDI/KAR import");
+		(void) puts("Error: The \"nolyrics\" parameter can only be specified explicitly for MIDI/KAR import");
 	else if(errnum == 0xE7)
-		puts("Error: The \"verbose\" and \"debug\" parameters may not be used simultaneously");
+		(void) puts("Error: The \"verbose\" and \"debug\" parameters may not be used simultaneously");
 	else if(errnum == 0xE6)
-		puts("Error: The \"quick\" parameter is only valid for MIDI, KAR or Vrhythm import/export");
+		(void) puts("Error: The \"quick\" parameter is only valid for MIDI, KAR or Vrhythm import/export");
 	else if(errnum == 0xE5)
-		puts("Error: The \"srcoffset\" parameter is only valid when a source MIDI is provided");
+		(void) puts("Error: The \"srcoffset\" parameter is only valid when a source MIDI is provided");
 	else if(errnum == 0xE4)
-		puts("Error: The \"intrack\" parameter is only valid for MIDI or KAR import");
+		(void) puts("Error: The \"intrack\" parameter is only valid for MIDI or KAR import");
 	else if(errnum == 0xE3)
-		puts("Error: The \"outtrack\" parameter is only valid for MIDI or KAR export");
+		(void) puts("Error: The \"outtrack\" parameter is only valid for MIDI or KAR export");
 	else if(errnum == 0xE2)
-		puts("Error: The \"notenames\" parameter is only valid for Vrhythm export");
+		(void) puts("Error: The \"notenames\" parameter is only valid for Vrhythm export");
 	else if(errnum == 0xE1)
-		puts("Error: The \"relative\" parameter is only valid for UltraStar export");
+		(void) puts("Error: The \"relative\" parameter is only valid for UltraStar export");
 	else if(errnum == 0xD0)
-		puts("Error: The \"outtrack\" parameter may not be used for Soft Karaoke export");
+		(void) puts("Error: The \"outtrack\" parameter may not be used for Soft Karaoke export");
 	else
 	{
 		printf("Parameter %d is incorrect\n",errnum);
 		if(argument != NULL)	printf("(%s)\n",argument);
-		puts("");
+		(void) puts("");
 	}
 
 	DisplaySyntax();
-	puts("\nUse foflc -help for detailed help");
+	(void) puts("\nUse foflc -help for detailed help");
 
 	exit_wrapper(1);
 }
@@ -1238,68 +1238,68 @@ void DisplayHelp(void)
 {
 //Describe general syntax and required parameters
 	DisplaySyntax();
-	puts("-The use of detect will halt a conversion specified by the other parameters");
-	puts("-FORMATs: script,vl,midi,ustar,lrc,elrc,vrhythm,kar,skar,id3,srt,xml,jb,rs");
-	puts("-infile is the name of the input file, whose FORMAT is optional");
-	puts("-outfile is the name of the file to create in the FORMAT preceding it");
-	puts("-If the input format is vrhythm, a source rhythm MIDI file (infile)");
-	puts(" containing the vocal timings must be specified, followed by the input pitched");
-	puts(" lyrics file or vrhythm track ID.  Both files are unique to this format, ie:");
-	puts("\tfoflc -in vrhythm timing.mid lyrics.txt -out ustar vox.txt");
-	puts("-(srcfile) may be used for MIDI based export formats for merging the lryics");
-	puts(" with an existing file, keeping its timing intact.  For example:");
-	puts("\tfoflc -in vl myfile.vl -out midi notes.mid withlyrics.mid");
-	puts("-If the output format is vrhythm, an output vocal rhythm file, pitched lyric");
-	puts(" file and instrument/difficulty identifier must be specified, for example:");
-	puts("\tfoflc -in vl song.vl -out vrhythm rhythm.mid pitches.txt G4");
+	(void) puts("-The use of detect will halt a conversion specified by the other parameters");
+	(void) puts("-FORMATs: script,vl,midi,ustar,lrc,elrc,vrhythm,kar,skar,id3,srt,xml,jb,rs");
+	(void) puts("-infile is the name of the input file, whose FORMAT is optional");
+	(void) puts("-outfile is the name of the file to create in the FORMAT preceding it");
+	(void) puts("-If the input format is vrhythm, a source rhythm MIDI file (infile)");
+	(void) puts(" containing the vocal timings must be specified, followed by the input pitched");
+	(void) puts(" lyrics file or vrhythm track ID.  Both files are unique to this format, ie:");
+	(void) puts("\tfoflc -in vrhythm timing.mid lyrics.txt -out ustar vox.txt");
+	(void) puts("-(srcfile) may be used for MIDI based export formats for merging the lryics");
+	(void) puts(" with an existing file, keeping its timing intact.  For example:");
+	(void) puts("\tfoflc -in vl myfile.vl -out midi notes.mid withlyrics.mid");
+	(void) puts("-If the output format is vrhythm, an output vocal rhythm file, pitched lyric");
+	(void) puts(" file and instrument/difficulty identifier must be specified, for example:");
+	(void) puts("\tfoflc -in vl song.vl -out vrhythm rhythm.mid pitches.txt G4");
 	printf("\nPress Enter for next screen");
 	fflush_err(stdin);
-	fgetc_err(stdin);	//wait for keypress
+	(void) fgetc_err(stdin);	//wait for keypress
 
 //Describe optional parameters
-	puts("\n\n\tOPTIONAL PARAMETERS:");
-	puts("-The offset parameter will subtract # milliseconds from the");
-	puts(" beginning of all lyric timestamps.  Provide your song's delay value with this");
-	puts("-The nohyphens flag will control how trailing hyphens are handled:");
-	puts(" If 1 or 3, hyphens are not inserted.  If 2 or 3, hyphens in input are ignored");
-	puts("-The noplus parameter will remove + lyric events from source");
-	puts("-The marklines parameter retains line markings for script export");
-	puts("-The nolyrics parameter loads lyrics from a MIDI or KAR input file, ignoring");
-	puts(" the presence or absence of lyric text, just loading pitches and durations");
-	puts("-The grouping parameter will control output lyric separation");
-	puts("-Specify verbose or debug to log information to the screen");
-	puts("-The filter parameter allows a defined set of characters to be");
-	puts(" removed from end of lyric pieces.  If a character set isn't defined, ^=%#/ is");
-	puts(" assumed.  The filter CAN'T contain space, alphanumerical, + or - characters");
-	puts("-The quick parameter speeds up MIDI import");
-	puts("-The startstamp parameter can be a substitute for offset by");
-	puts(" overriding the starting timestamp, offsetting all following lyric timestamps");
-	puts("-The bpm allows a custom tempo for exported ustar or MIDI based files");
-	puts("-The brute parameter finds the best tempo for Ultrastar export");
-	puts("-The srcoffset parameter allows the lyric timing for the source");
-	puts(" file to be offset manually, such as to override what is read from song.ini");
+	(void) puts("\n\n\tOPTIONAL PARAMETERS:");
+	(void) puts("-The offset parameter will subtract # milliseconds from the");
+	(void) puts(" beginning of all lyric timestamps.  Provide your song's delay value with this");
+	(void) puts("-The nohyphens flag will control how trailing hyphens are handled:");
+	(void) puts(" If 1 or 3, hyphens are not inserted.  If 2 or 3, hyphens in input are ignored");
+	(void) puts("-The noplus parameter will remove + lyric events from source");
+	(void) puts("-The marklines parameter retains line markings for script export");
+	(void) puts("-The nolyrics parameter loads lyrics from a MIDI or KAR input file, ignoring");
+	(void) puts(" the presence or absence of lyric text, just loading pitches and durations");
+	(void) puts("-The grouping parameter will control output lyric separation");
+	(void) puts("-Specify verbose or debug to log information to the screen");
+	(void) puts("-The filter parameter allows a defined set of characters to be");
+	(void) puts(" removed from end of lyric pieces.  If a character set isn't defined, ^=%#/ is");
+	(void) puts(" assumed.  The filter CAN'T contain space, alphanumerical, + or - characters");
+	(void) puts("-The quick parameter speeds up MIDI import");
+	(void) puts("-The startstamp parameter can be a substitute for offset by");
+	(void) puts(" overriding the starting timestamp, offsetting all following lyric timestamps");
+	(void) puts("-The bpm allows a custom tempo for exported ustar or MIDI based files");
+	(void) puts("-The brute parameter finds the best tempo for Ultrastar export");
+	(void) puts("-The srcoffset parameter allows the lyric timing for the source");
+	(void) puts(" file to be offset manually, such as to override what is read from song.ini");
 	printf("\nPress Enter for next screen");
 	fflush_err(stdin);
-	fgetc_err(stdin);	//wait for keypress
+	(void) fgetc_err(stdin);	//wait for keypress
 
 //Describe notes
-	puts("\n\n\tOPTIONAL PARAMETERS (cont'd):");
-	puts("-The intrack and outtrack parameters allow the import or export MIDI track to");
-	puts(" be manually defined (ie. \"PART HARM1\" for RB:Beatles MIDIs).");
-	puts("-The notenames parameter causes note names to be written instead of note");
-	puts(" numbers during Vrhythm export");
-	puts("-The nosrctag parameter allows one or more ID3 frames from the source MP3 file");
-	puts(" to be omitted from the output MP3 file.  For example: \"-nosrctag APIC TDAT\"");
-	puts(" omits the Attached Picture and Date ID3 frames, if they exist in the source");
-	puts(" MP3.  The artist, title and/or album frames are omitted from the source MP3 if");
-	puts(" defined in the input file.  The SYLT frame is always omitted for ID3 export.");
-	puts("-The nofstyle parameter prevents the addition of the pound character (#)");
-	puts(" freestyle indicator when exporting freestyle/pitchless lyrics to MIDI format.");
-	puts("\n\tNOTES:");
-	puts("* Input (including the source midi) and output files may not be the same");
-	puts("* Filenames may not begin with a hyphen (ie. \"-notes.mid\" is not accepted)");
-	puts("* Parameters containing whitespace (ie. filenames) must be enclosed in");
-	puts("  quotation marks");
+	(void) puts("\n\n\tOPTIONAL PARAMETERS (cont'd):");
+	(void) puts("-The intrack and outtrack parameters allow the import or export MIDI track to");
+	(void) puts(" be manually defined (ie. \"PART HARM1\" for RB:Beatles MIDIs).");
+	(void) puts("-The notenames parameter causes note names to be written instead of note");
+	(void) puts(" numbers during Vrhythm export");
+	(void) puts("-The nosrctag parameter allows one or more ID3 frames from the source MP3 file");
+	(void) puts(" to be omitted from the output MP3 file.  For example: \"-nosrctag APIC TDAT\"");
+	(void) puts(" omits the Attached Picture and Date ID3 frames, if they exist in the source");
+	(void) puts(" MP3.  The artist, title and/or album frames are omitted from the source MP3 if");
+	(void) puts(" defined in the input file.  The SYLT frame is always omitted for ID3 export.");
+	(void) puts("-The nofstyle parameter prevents the addition of the pound character (#)");
+	(void) puts(" freestyle indicator when exporting freestyle/pitchless lyrics to MIDI format.");
+	(void) puts("\n\tNOTES:");
+	(void) puts("* Input (including the source midi) and output files may not be the same");
+	(void) puts("* Filenames may not begin with a hyphen (ie. \"-notes.mid\" is not accepted)");
+	(void) puts("* Parameters containing whitespace (ie. filenames) must be enclosed in");
+	(void) puts("  quotation marks");
 
 	exit_wrapper(1);
 }

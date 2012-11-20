@@ -103,7 +103,7 @@ void eof_music_play(void)
 			eof_entering_note_lyric = NULL;
 			eof_entering_note = 0;
 			eof_snote = 0;
-			alogg_poll_ogg(eof_music_track);
+			(void) alogg_poll_ogg(eof_music_track);
 			eof_music_actual_pos = alogg_get_pos_msecs_ogg(eof_music_track);
 		}
 		else
@@ -196,7 +196,7 @@ void eof_music_rewind(void)
 		}
 		if(eof_music_pos - eof_av_delay < amount)
 		{
-			eof_menu_song_seek_start();
+			(void) eof_menu_song_seek_start();
 		}
 		else
 		{

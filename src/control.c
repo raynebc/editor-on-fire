@@ -196,7 +196,7 @@ int eof_controller_set_button(EOF_CONTROLLER_BUTTON * bp)
 						bp->type = EOF_CONTROLLER_BUTTON_TYPE_JOYBUTTON;
 						bp->joy = i;
 						bp->key = j;
-						snprintf(bp->name, sizeof(bp->name) - 1, "Joy %d %s", i, joy[i].button[j].name);
+						(void) snprintf(bp->name, sizeof(bp->name) - 1, "Joy %d %s", i, joy[i].button[j].name);
 						return 1;
 					}
 				}
@@ -224,7 +224,7 @@ int eof_controller_set_button(EOF_CONTROLLER_BUTTON * bp)
 							bp->index = j;
 							bp->key = k;
 							bp->d = 0;
-							snprintf(bp->name, sizeof(bp->name) - 1, "Joy %d %s Axis (-)", i, joy[i].stick[j].axis[k].name);
+							(void) snprintf(bp->name, sizeof(bp->name) - 1, "Joy %d %s Axis (-)", i, joy[i].stick[j].axis[k].name);
 							return 1;
 						}
 					}
@@ -241,7 +241,7 @@ int eof_controller_set_button(EOF_CONTROLLER_BUTTON * bp)
 							bp->index = j;
 							bp->key = k;
 							bp->d = 1;
-							snprintf(bp->name, sizeof(bp->name) - 1, "Joy %d %s Axis (+)", i, joy[i].stick[j].axis[k].name);
+							(void) snprintf(bp->name, sizeof(bp->name) - 1, "Joy %d %s Axis (+)", i, joy[i].stick[j].axis[k].name);
 							return 1;
 						}
 					}
@@ -280,12 +280,12 @@ void eof_controller_read_button_names(EOF_CONTROLLER * cp)
 			}
 			case EOF_CONTROLLER_BUTTON_TYPE_JOYBUTTON:
 			{
-				snprintf(cp->button[i].name, sizeof(cp->button[i].name) - 1, "Joy %d %s", cp->button[i].joy, joy[cp->button[i].joy].button[cp->button[i].key].name);
+				(void) snprintf(cp->button[i].name, sizeof(cp->button[i].name) - 1, "Joy %d %s", cp->button[i].joy, joy[cp->button[i].joy].button[cp->button[i].key].name);
 				break;
 			}
 			case EOF_CONTROLLER_BUTTON_TYPE_JOYAXIS:
 			{
-				snprintf(cp->button[i].name, sizeof(cp->button[i].name) - 1, "Joy %d %s Axis (%s)", cp->button[i].joy, joy[cp->button[i].joy].stick[cp->button[i].index].axis[cp->button[i].key].name, cp->button[i].d == 0 ? "-" : "+");
+				(void) snprintf(cp->button[i].name, sizeof(cp->button[i].name) - 1, "Joy %d %s Axis (%s)", cp->button[i].joy, joy[cp->button[i].joy].stick[cp->button[i].index].axis[cp->button[i].key].name, cp->button[i].d == 0 ? "-" : "+");
 				break;
 			}
 		}
@@ -305,33 +305,33 @@ void eof_controller_save_config(EOF_CONTROLLER * cp, char * name)
 	}
 	for(i = 0; i < EOF_CONTROLLER_MAX_BUTTONS; i++)
 	{
-		snprintf(string, sizeof(string) - 1, "button_%d_type", i);
+		(void) snprintf(string, sizeof(string) - 1, "button_%d_type", i);
 		set_config_int(name, string, cp->button[i].type);
 		switch(cp->button[i].type)
 		{
 			case EOF_CONTROLLER_BUTTON_TYPE_KEY:
 			{
-				snprintf(string, sizeof(string) - 1, "button_%d_key", i);
+				(void) snprintf(string, sizeof(string) - 1, "button_%d_key", i);
 				set_config_int(name, string, cp->button[i].key);
 				break;
 			}
 			case EOF_CONTROLLER_BUTTON_TYPE_JOYBUTTON:
 			{
-				snprintf(string, sizeof(string) - 1, "button_%d_controller", i);
+				(void) snprintf(string, sizeof(string) - 1, "button_%d_controller", i);
 				set_config_int(name, string, cp->button[i].joy);
-				snprintf(string, sizeof(string) - 1, "button_%d_key", i);
+				(void) snprintf(string, sizeof(string) - 1, "button_%d_key", i);
 				set_config_int(name, string, cp->button[i].key);
 				break;
 			}
 			case EOF_CONTROLLER_BUTTON_TYPE_JOYAXIS:
 			{
-				snprintf(string, sizeof(string) - 1, "button_%d_controller", i);
+				(void) snprintf(string, sizeof(string) - 1, "button_%d_controller", i);
 				set_config_int(name, string, cp->button[i].joy);
-				snprintf(string, sizeof(string) - 1, "button_%d_axis", i);
+				(void) snprintf(string, sizeof(string) - 1, "button_%d_axis", i);
 				set_config_int(name, string, cp->button[i].index);
-				snprintf(string, sizeof(string) - 1, "button_%d_direction", i);
+				(void) snprintf(string, sizeof(string) - 1, "button_%d_direction", i);
 				set_config_int(name, string, cp->button[i].d);
-				snprintf(string, sizeof(string) - 1, "button_%d_key", i);
+				(void) snprintf(string, sizeof(string) - 1, "button_%d_key", i);
 				set_config_int(name, string, cp->button[i].key);
 				break;
 			}
@@ -353,33 +353,33 @@ void eof_controller_load_config(EOF_CONTROLLER * cp, char * name)
 	}
 	for(i = 0; i < EOF_CONTROLLER_MAX_BUTTONS; i++)
 	{
-		snprintf(string, sizeof(string) - 1, "button_%d_type", i);
+		(void) snprintf(string, sizeof(string) - 1, "button_%d_type", i);
 		cp->button[i].type = get_config_int(name, string, 0);
 		switch(cp->button[i].type)
 		{
 			case EOF_CONTROLLER_BUTTON_TYPE_KEY:
 			{
-				snprintf(string, sizeof(string) - 1, "button_%d_key", i);
+				(void) snprintf(string, sizeof(string) - 1, "button_%d_key", i);
 				cp->button[i].key = get_config_int(name, string, 0);
 				break;
 			}
 			case EOF_CONTROLLER_BUTTON_TYPE_JOYBUTTON:
 			{
-				snprintf(string, sizeof(string) - 1, "button_%d_controller", i);
+				(void) snprintf(string, sizeof(string) - 1, "button_%d_controller", i);
 				cp->button[i].joy = get_config_int(name, string, 0);
-				snprintf(string, sizeof(string) - 1, "button_%d_key", i);
+				(void) snprintf(string, sizeof(string) - 1, "button_%d_key", i);
 				cp->button[i].key = get_config_int(name, string, 0);
 				break;
 			}
 			case EOF_CONTROLLER_BUTTON_TYPE_JOYAXIS:
 			{
-				snprintf(string, sizeof(string) - 1, "button_%d_controller", i);
+				(void) snprintf(string, sizeof(string) - 1, "button_%d_controller", i);
 				cp->button[i].joy = get_config_int(name, string, 0);
-				snprintf(string, sizeof(string) - 1, "button_%d_axis", i);
+				(void) snprintf(string, sizeof(string) - 1, "button_%d_axis", i);
 				cp->button[i].index = get_config_int(name, string, 0);
-				snprintf(string, sizeof(string) - 1, "button_%d_direction", i);
+				(void) snprintf(string, sizeof(string) - 1, "button_%d_direction", i);
 				cp->button[i].d = get_config_int(name, string, 0);
-				snprintf(string, sizeof(string) - 1, "button_%d_key", i);
+				(void) snprintf(string, sizeof(string) - 1, "button_%d_key", i);
 				cp->button[i].key = get_config_int(name, string, 0);
 				break;
 			}

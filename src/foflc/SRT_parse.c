@@ -80,7 +80,7 @@ void Export_SRT(FILE *outf)
 
 		curline=curline->next;	//Advance to next line of lyrics
 
-		if(Lyrics.verbose)	putchar('\n');
+		if(Lyrics.verbose)	(void) putchar('\n');
 	}
 
 	if(Lyrics.verbose)	printf("\nSRT export complete.  %lu subtitles written",Lyrics.piececount);
@@ -335,7 +335,7 @@ unsigned long ConvertSRTTimestamp(char **ptr,int *errorstatus)
 		}
 		else
 		{
-			puts("Aborting");
+			(void) puts("Aborting");
 			exit_wrapper(1);
 		}
 	}
@@ -351,7 +351,7 @@ unsigned long ConvertSRTTimestamp(char **ptr,int *errorstatus)
 		conversion=atol(temp);	//get integer conversion
 		if(conversion<1)	//Values of 0 are errors from atol(), negative values are not allowed for timestamps
 		{
-			puts("Error converting string to integer\nAborting");
+			(void) puts("Error converting string to integer\nAborting");
 		if(errorstatus != NULL)
 		{
 			*errorstatus=2;
@@ -371,7 +371,7 @@ unsigned long ConvertSRTTimestamp(char **ptr,int *errorstatus)
 		conversion=atol(temp);	//get integer conversion
 		if(conversion<1)	//Values of 0 are errors from atol(), negative values are not allowed for timestamps
 		{
-			puts("Error converting string to integer\nAborting");
+			(void) puts("Error converting string to integer\nAborting");
 		if(errorstatus != NULL)
 		{
 			*errorstatus=2;
@@ -391,7 +391,7 @@ unsigned long ConvertSRTTimestamp(char **ptr,int *errorstatus)
 		conversion=atol(temp);	//get integer conversion
 		if(conversion<1)	//Values of 0 are errors from atol(), negative values are not allowed for timestamps
 		{
-			puts("Error converting string to integer\nAborting");
+			(void) puts("Error converting string to integer\nAborting");
 			if(errorstatus != NULL)
 			{
 				*errorstatus=3;
@@ -411,7 +411,7 @@ unsigned long ConvertSRTTimestamp(char **ptr,int *errorstatus)
 		conversion=atol(temp);	//get integer conversion
 		if(conversion<1)	//Values of 0 are errors from atol(), negative values are not allowed for timestamps
 		{
-			puts("Error converting string to integer\nAborting");
+			(void) puts("Error converting string to integer\nAborting");
 			if(errorstatus != NULL)
 			{
 				*errorstatus=4;
@@ -431,7 +431,7 @@ void SRT_Load(FILE *inf)
 	char *buffer;		//Buffer used to read from input file
 	char *temp=NULL;	//Used for string processing
 	unsigned long processedctr=0;	//The current line number being processed in the text file
-	unsigned long maxlinelength;	//I will count the length of the longest line (including NULL char/newline) in the
+	size_t maxlinelength;	//I will count the length of the longest line (including NULL char/newline) in the
 									//input file so I can create a buffer large enough to read any line into
 	unsigned long startstamp=0,endstamp=0;
 	unsigned long ctr=0;
@@ -449,7 +449,7 @@ void SRT_Load(FILE *inf)
 		printf("\nImporting SRT subtitles from file \"%s\"\n\n",Lyrics.infilename);
 
 	processedctr=0;			//This will be set to 1 at the beginning of the main while loop
-	while(fgets(buffer,maxlinelength,inf) != NULL)		//Read lines until end of file is reached, don't exit on EOF
+	while(fgets(buffer,(int)maxlinelength,inf) != NULL)		//Read lines until end of file is reached, don't exit on EOF
 	{
 		processedctr++;
 
@@ -469,10 +469,10 @@ void SRT_Load(FILE *inf)
 		endstamp=ConvertSRTTimestamp(&temp,NULL);
 
 //Read next line, which is expected to be the subtitle entry
-		if(fgets(buffer,maxlinelength,inf) == NULL)
+		if(fgets(buffer,(int)maxlinelength,inf) == NULL)
 			break;	//If another line couldn't be read, exit loop
 
-		ctr=strlen(buffer);	//Find index of the string's NULL terminator
+		ctr = (unsigned long)strlen(buffer);	//Find index of the string's NULL terminator
 		while((ctr > 0) && ((buffer[ctr-1] == '\n') || (buffer[ctr-1] == '\r')))
 		{	//If the string isn't empty and the last character is a newline or carriage return
 			buffer[ctr-1] = '\0';	//Truncate it from the string

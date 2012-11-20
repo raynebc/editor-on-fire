@@ -207,7 +207,7 @@ static void eof_midi_import_add_text_event(EOF_IMPORT_MIDI_EVENT_LIST * events, 
 		{
 			events->event[events->events]->pos = pos;
 			events->event[events->events]->type = event;			//The meta event type
-			memcpy(events->event[events->events]->text, text, size);
+			memcpy(events->event[events->events]->text, text, (size_t)size);
 			events->event[events->events]->text[size] = '\0';
 			events->event[events->events]->track = track;	//Store the event's track number
 			events->event[events->events]->dp = NULL;
@@ -231,10 +231,10 @@ static void eof_midi_import_add_sysex_event(EOF_IMPORT_MIDI_EVENT_LIST * events,
 		events->event[events->events] = malloc(sizeof(EOF_IMPORT_MIDI_EVENT));
 		if(events->event[events->events])
 		{
-			datacopy = malloc(size);
+			datacopy = malloc((size_t)size);
 			if(datacopy)
 			{
-				memcpy(datacopy, data, size);			//Copy the input data into the new buffer
+				memcpy(datacopy, data, (size_t)size);			//Copy the input data into the new buffer
 				events->event[events->events]->pos = pos;
 				events->event[events->events]->type = 0xF0;	//The Sysex event type
 				events->event[events->events]->d1 = size;	//Store the size of the Sysex message
@@ -335,7 +335,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	EOF_PHRASE_SECTION *phraseptr = NULL, *phraseptr2 = NULL;
 	unsigned long bitmask;
 	char chord0name[100] = "", chord1name[100] = "", chord2name[100] = "", chord3name[100] = "", *chordname = NULL;	//Used for chord name import
-	char debugstring[100];
+	char debugstring[100] = {0};
 	char is_event_track;	//This will be set to nonzero if the current track's name is EVENTS (for sorting text events into global event list instead of track specific list)
 	unsigned long beat_track = 0;	//Will identify the "BEAT" track if it is found during import
 	struct Tempo_change *anchorlist=NULL;	//Anchor linked list
@@ -393,29 +393,29 @@ EOF_SONG * eof_import_midi(const char * fn)
 
 	/* backup "notes.mid" if it exists in the folder with the imported MIDI
 	   as it will be overwritten upon save */
-	replace_filename(eof_temp_filename, fn, "notes.mid", 1024);
+	(void) replace_filename(eof_temp_filename, fn, "notes.mid", 1024);
 	if(exists(eof_temp_filename))
 	{
 		/* do not overwrite an existing backup, this prevents the original backed up MIDI from
 		   being overwritten if the user imports the MIDI again */
-		replace_filename(backup_filename, fn, "notes.mid.backup", 1024);
+		(void) replace_filename(backup_filename, fn, "notes.mid.backup", 1024);
 		if(!exists(backup_filename))
 		{
-			eof_copy_file(eof_temp_filename, backup_filename);
+			(void) eof_copy_file(eof_temp_filename, backup_filename);
 		}
 	}
 
 	/* backup "song.ini" if it exists in the folder with the imported MIDI
 	   as it will be overwritten upon save */
-	replace_filename(eof_temp_filename, fn, "song.ini", 1024);
+	(void) replace_filename(eof_temp_filename, fn, "song.ini", 1024);
 	if(exists(eof_temp_filename))
 	{
 		/* do not overwrite an existing backup, this prevents the original backed up song.ini from
 		   being overwritten if the user imports the MIDI again */
-		replace_filename(backup_filename, fn, "song.ini.backup", 1024);
+		(void) replace_filename(backup_filename, fn, "song.ini.backup", 1024);
 		if(!exists(backup_filename))
 		{
-			eof_copy_file(eof_temp_filename, backup_filename);
+			(void) eof_copy_file(eof_temp_filename, backup_filename);
 		}
 	}
 
@@ -427,8 +427,8 @@ EOF_SONG * eof_import_midi(const char * fn)
 	}
 
 	/* read INI file */
-	replace_filename(backup_filename, fn, "song.ini", 1024);
-	eof_import_ini(sp, backup_filename, 0);
+	(void) replace_filename(backup_filename, fn, "song.ini", 1024);
+	(void) eof_import_ini(sp, backup_filename, 0);
 
 
 	/* parse MIDI data */
@@ -474,7 +474,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 	for(i = 0; i < tracks; i++)
 	{	//For each imported track
 //#ifdef EOF_DEBUG_MIDI_IMPORT
-		snprintf(debugstring, sizeof(debugstring) - 1, "\t\tParsing track #%lu of %d",i,tracks);
+		(void) snprintf(debugstring, sizeof(debugstring) - 1, "\t\tParsing track #%lu of %d",i,tracks);
 		eof_log(debugstring, 1);
 //#endif
 		last_event = 0;	//Running status resets at beginning of each track
@@ -497,7 +497,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 		{	//While the byte index of this MIDI track hasn't reached the end of the track data
 			/* read delta */
 #ifdef EOF_DEBUG_MIDI_IMPORT
-			snprintf(debugstring, sizeof(debugstring) - 1, "\t\t\tParsing byte #%d of %d",track_pos,eof_work_midi->track[track[i]].len);
+			(void) snprintf(debugstring, sizeof(debugstring) - 1, "\t\t\tParsing byte #%d of %d",track_pos,eof_work_midi->track[track[i]].len);
 			eof_log(debugstring, 1);
 #endif
 
@@ -775,7 +775,7 @@ EOF_SONG * eof_import_midi(const char * fn)
 								d3 = (eof_work_midi->track[track[i]].data[track_pos++]);	//MPQN byte 3
 								d4 = (d1 << 16) | (d2 << 8) | (d3);
 
-								if((eof_import_bpm_events->events <= 0) && (absolute_pos > sp->tags->ogg[0].midi_offset))
+								if((eof_import_bpm_events->events == 0) && (absolute_pos > sp->tags->ogg[0].midi_offset))
 								{	//If the first explicit Set Tempo event is not at the beginning of the track
 									eof_midi_import_add_event(eof_import_bpm_events, 0, 0x51, 500000, 0, i);	//Insert the default tempo of 120BPM at the beginning of the tempo list
 								}
@@ -922,7 +922,7 @@ assert(sp->tags != NULL);	//Prevent a NULL dereference below
 
 assert(sp->beats > 0);	//Prevent eof_apply_ts() below from failing
 
-			eof_apply_ts(curnum,curden,sp->beats - 1,sp,0);	//Set the TS flags for this beat
+			(void) eof_apply_ts(curnum,curden,sp->beats - 1,sp,0);	//Set the TS flags for this beat
 		}
 
 assert(curppqn != 0);	//Avoid a division by 0 below
@@ -960,7 +960,7 @@ set_window_title(debugtext);
 			{	//If this tempo change is ahead of the current delta position
 				if(eof_import_bpm_events->event[ctr]->pos < nextanchor)
 				{	//If this tempo change occurs before the next beat marker
-					snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tMid beat tempo change at delta position %lu", eof_import_bpm_events->event[ctr]->pos);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tMid beat tempo change at delta position %lu", eof_import_bpm_events->event[ctr]->pos);
 					eof_log(eof_log_string, 1);
 					nextanchor = eof_import_bpm_events->event[ctr]->pos;	//Store its delta time
 					midbeatchange = 1;
@@ -974,7 +974,7 @@ set_window_title(debugtext);
 			{	//If this TS change is ahead of the current delta position
 				if(eof_import_ts_changes[0]->change[ctr]->pos < nextanchor)
 				{	//If this TS change occurs before the next beat marker or mid-beat tempo change
-					snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tMid beat TS change at delta position %lu", eof_import_ts_changes[0]->change[ctr]->pos);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tMid beat TS change at delta position %lu", eof_import_ts_changes[0]->change[ctr]->pos);
 					eof_log(eof_log_string, 1);
 					nextanchor = eof_import_ts_changes[0]->change[ctr]->pos;	//store its delta time
 					midbeatchange = 1;
@@ -1082,9 +1082,9 @@ set_window_title(debugtext);
 			{	//If this beat is at or before the target TS change
 				BPM = 60000000.0 / sp->beat[ctr2]->ppqn;	//Store the tempo
 				realtimepos = sp->beat[ctr2]->fpos;			//Store the realtime position
-				realtimepos -= sp->tags->ogg[0].midi_offset;	//Subtract the MIDI delay, so that both the TS and BPM change list are native timings without the offset
+				realtimepos -= sp->tags->ogg[0].midi_offset;//Subtract the MIDI delay, so that both the TS and BPM change list are native timings without the offset
 				deltapos = sp->beat[ctr2]->midi_pos;		//Store the delta time position
-				eof_get_ts(sp,NULL,&curden,ctr2);			//Find the TS denominator of this beat
+				(void) eof_get_ts(sp,NULL,&curden,ctr2);	//Find the TS denominator of this beat
 			}
 		}
 
@@ -1102,7 +1102,7 @@ set_window_title(debugtext);
 		beat = eof_get_beat(sp, event_realtime);
 		if(beat >= 0)
 		{	//If the key signature is placed at a valid timestamp
-			eof_apply_key_signature(eof_import_ks_events->event[ctr]->d1, beat, sp);	//Apply it to the beat
+			(void) eof_apply_key_signature(eof_import_ks_events->event[ctr]->d1, beat, sp);	//Apply it to the beat
 		}
 	}
 
@@ -1163,7 +1163,7 @@ set_window_title(debugtext);
 			}
 
 #ifdef EOF_DEBUG
-			snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tParsing track %s", eof_midi_tracks[picked_track].name);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tParsing track %s", eof_midi_tracks[picked_track].name);
 			eof_log(eof_log_string, 1);
 #endif
 
@@ -1187,7 +1187,7 @@ set_window_title(debugtext);
 				if(pticker % 200 == 0)
 				{
 					percent = (pticker * 100) / ptotal_events;
-					snprintf(ttit, sizeof(ttit) - 1, "MIDI Import (%d%%)", percent <= 100 ? percent : 100);
+					(void) snprintf(ttit, sizeof(ttit) - 1, "MIDI Import (%d%%)", percent <= 100 ? percent : 100);
 					set_window_title(ttit);
 				}
 
@@ -1203,7 +1203,7 @@ set_window_title(debugtext);
 							break;	//Stop parsing beats
 						}
 					}	//k now refers to the appropriate beat this event is assigned to
-					eof_song_add_text_event(sp, k, eof_import_events[i]->event[j]->text, picked_track, 0, 0);	//Store this as a text event specific to the track being parsed
+					(void) eof_song_add_text_event(sp, k, eof_import_events[i]->event[j]->text, picked_track, 0, 0);	//Store this as a text event specific to the track being parsed
 				}
 
 				if(eof_midi_tracks[picked_track].track_format == EOF_VOCAL_TRACK_FORMAT)
@@ -1400,7 +1400,7 @@ set_window_title(debugtext);
 					if(eof_import_events[i]->event[j]->type == 0x90)
 					{
 #ifdef EOF_DEBUG
-						snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote on:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote on:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
 						eof_log(eof_log_string, 1);
 #endif
 						char doublebass = 0;
@@ -1544,7 +1544,7 @@ set_window_title(debugtext);
 								eof_set_note_type(sp, picked_track, notenum, diff);				//Apply the determined difficulty
 								note_count[picked_track]++;
 #ifdef EOF_DEBUG
-								snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tInitializing note #%lu (Diff=%d):  Mask=%u, Pos=%lu, Length=%d", notenum, eof_get_note_type(sp, picked_track, notenum), lane_chart[lane], event_realtime, 0);
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tInitializing note #%lu (Diff=%d):  Mask=%u, Pos=%lu, Length=%d", notenum, eof_get_note_type(sp, picked_track, notenum), lane_chart[lane], event_realtime, 0);
 								eof_log(eof_log_string, 1);
 #endif
 							}
@@ -1552,7 +1552,7 @@ set_window_title(debugtext);
 							{	//Otherwise just modify the existing note by adding a gem
 								notenum = k;
 #ifdef EOF_DEBUG
-								snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%d, Pos=%lu) from mask %lu to %lu", notenum, eof_get_note_type(sp, picked_track, notenum), event_realtime, eof_get_note_note(sp, picked_track, notenum), eof_get_note_note(sp, picked_track, notenum) | lane_chart[lane]);
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%d, Pos=%lu) from mask %lu to %lu", notenum, eof_get_note_type(sp, picked_track, notenum), event_realtime, eof_get_note_note(sp, picked_track, notenum), eof_get_note_note(sp, picked_track, notenum) | lane_chart[lane]);
 								eof_log(eof_log_string, 1);
 #endif
 								eof_set_note_note(sp, picked_track, notenum, eof_get_note_note(sp, picked_track, notenum) | lane_chart[lane]);
@@ -1586,7 +1586,7 @@ set_window_title(debugtext);
 					else if(eof_import_events[i]->event[j]->type == 0x80)
 					{
 #ifdef EOF_DEBUG
-						snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote off:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote off:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
 						eof_log(eof_log_string, 1);
 #endif
 						if(eof_midi_tracks[picked_track].track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
@@ -1725,7 +1725,7 @@ set_window_title(debugtext);
 								{	//If the note is in the same difficulty as this note off event and it contains one of the same gems
 //									allegro_message("break %d, %d, %d", k, sp->legacy_track[picked_track]->note[k]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);	//Debug
 #ifdef EOF_DEBUG
-									snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%d, Pos=%lu, Mask=%lu) from length %ld to %ld", k, eof_get_note_type(sp, picked_track, k), eof_get_note_pos(sp, picked_track, k), eof_get_note_note(sp, picked_track, k), eof_get_note_length(sp, picked_track, k), event_realtime - eof_get_note_pos(sp, picked_track, k));
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%d, Pos=%lu, Mask=%lu) from length %ld to %ld", k, eof_get_note_type(sp, picked_track, k), eof_get_note_pos(sp, picked_track, k), eof_get_note_note(sp, picked_track, k), eof_get_note_length(sp, picked_track, k), event_realtime - eof_get_note_pos(sp, picked_track, k));
 									eof_log(eof_log_string, 1);
 #endif
 									eof_set_note_length(sp, picked_track, k, event_realtime - eof_get_note_pos(sp, picked_track, k));
@@ -1754,7 +1754,7 @@ set_window_title(debugtext);
 											if(picked_track == EOF_TRACK_BASS)
 											{	//Only parse open strum bass phrases for the bass track
 #ifdef EOF_DEBUG
-												snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Open strum bass (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
+												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Open strum bass (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
 												eof_log(eof_log_string, 1);
 #endif
 												if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -1768,7 +1768,7 @@ set_window_title(debugtext);
 														if((eof_get_note_type(sp, picked_track, k) == phrasediff) && (eof_get_note_pos(sp, picked_track, k) >= openstrumpos[phrasediff]) && (eof_get_note_pos(sp, picked_track, k) <= event_realtime))
 														{	//If the note is in the same difficulty as the open strum bass phrase, and its timestamp falls between the phrase on and phrase off marker
 #ifdef EOF_DEBUG
-															snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%d, Pos=%lu, Mask=%lu, Length=%ld) to have a note mask of 33", k, eof_get_note_type(sp, picked_track, k), eof_get_note_pos(sp, picked_track, k), eof_get_note_note(sp, picked_track, k), eof_get_note_length(sp, picked_track, k));
+															(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%d, Pos=%lu, Mask=%lu, Length=%ld) to have a note mask of 33", k, eof_get_note_type(sp, picked_track, k), eof_get_note_pos(sp, picked_track, k), eof_get_note_note(sp, picked_track, k), eof_get_note_length(sp, picked_track, k));
 															eof_log(eof_log_string, 1);
 #endif
 															eof_set_note_note(sp, picked_track, k, 33);	//Change this note to a lane 1+6 chord (the cleanup logic should later correct this to just a lane 6 gem, EOF's in-editor notation for open strum bass).  This modification is necessary so that the note off event representing the end of the lane 1 gem for an open bass note can be processed properly.
@@ -1784,7 +1784,7 @@ set_window_title(debugtext);
 											if((sp->track[picked_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (sp->track[picked_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
 											{	//Only parse slider phrases for legacy guitar tracks
 #ifdef EOF_DEBUG
-												snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Slider (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
+												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Slider (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
 												eof_log(eof_log_string, 1);
 #endif
 												if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -1804,7 +1804,7 @@ set_window_title(debugtext);
 											if(picked_track == EOF_TRACK_DRUM)
 											{	//Only parse hi hat phrases for the drum track
 #ifdef EOF_DEBUG
-												snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Open hi hat (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
+												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Open hi hat (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
 												eof_log(eof_log_string, 1);
 #endif
 												if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -1827,7 +1827,7 @@ set_window_title(debugtext);
 											if(picked_track == EOF_TRACK_DRUM)
 											{	//Only parse hi hat phrases for the drum track
 #ifdef EOF_DEBUG
-												snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pedal hi hat (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
+												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pedal hi hat (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
 												eof_log(eof_log_string, 1);
 #endif
 												if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -1850,7 +1850,7 @@ set_window_title(debugtext);
 											if(picked_track == EOF_TRACK_DRUM)
 											{	//Only parse rim shot phrases for the drum track
 #ifdef EOF_DEBUG
-												snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Rim shot (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
+												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Rim shot (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
 												eof_log(eof_log_string, 1);
 #endif
 												if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -1873,7 +1873,7 @@ set_window_title(debugtext);
 											if(picked_track == EOF_TRACK_DRUM)
 											{	//Only parse hi hat phrases for the drum track
 #ifdef EOF_DEBUG
-												snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Sizzle hi hat (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
+												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Sizzle hi hat (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
 												eof_log(eof_log_string, 1);
 #endif
 												if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -1948,7 +1948,7 @@ set_window_title(debugtext);
 						char strum = 0;	//Will store the strum type, to reduce duplicated logic below
 
 #ifdef EOF_DEBUG
-						snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote on:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote on:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
 						eof_log(eof_log_string, 1);
 #endif
 						/* store forced Ho/Po markers, when the note off for this marker occurs, search for note with same position and apply it to that note */
@@ -2122,7 +2122,7 @@ set_window_title(debugtext);
 								}
 								note_count[picked_track]++;
 #ifdef EOF_DEBUG
-								snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tInitializing note #%lu (Diff=%d):  Mask=%u, Pos=%lu, Length=%d", notenum, eof_get_note_type(sp, picked_track, notenum), lane_chart[lane], event_realtime, 0);
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tInitializing note #%lu (Diff=%d):  Mask=%u, Pos=%lu, Length=%d", notenum, eof_get_note_type(sp, picked_track, notenum), lane_chart[lane], event_realtime, 0);
 								eof_log(eof_log_string, 1);
 #endif
 							}
@@ -2130,7 +2130,7 @@ set_window_title(debugtext);
 							{	//Otherwise just modify the existing note by adding a gem
 								notenum = k;
 #ifdef EOF_DEBUG
-								snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%d, Pos=%lu) from mask %lu to %lu", notenum, eof_get_note_type(sp, picked_track, notenum), event_realtime, eof_get_note_note(sp, picked_track, notenum), eof_get_note_note(sp, picked_track, notenum) | lane_chart[lane]);
+								(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%d, Pos=%lu) from mask %lu to %lu", notenum, eof_get_note_type(sp, picked_track, notenum), event_realtime, eof_get_note_note(sp, picked_track, notenum), eof_get_note_note(sp, picked_track, notenum) | lane_chart[lane]);
 								eof_log(eof_log_string, 1);
 #endif
 								eof_set_note_note(sp, picked_track, notenum, eof_get_note_note(sp, picked_track, notenum) | lane_chart[lane]);
@@ -2167,7 +2167,7 @@ set_window_title(debugtext);
 					else if(eof_import_events[i]->event[j]->type == 0x80)
 					{	//Note off event
 #ifdef EOF_DEBUG
-						snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote off:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote off:  %d (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->d1, eof_import_events[i]->event[j]->pos, event_realtime);
 						eof_log(eof_log_string, 1);
 #endif
 						/* detect forced HOPO */
@@ -2352,7 +2352,7 @@ set_window_title(debugtext);
 								{	//If the note is in the same difficulty as this note off event and it contains one of the same gems
 //									allegro_message("break %d, %d, %d", k, sp->legacy_track[picked_track]->note[k]->note, sp->legacy_track[picked_track]->note[note_count[picked_track]]->note);	//Debug
 #ifdef EOF_DEBUG
-									snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%d, Pos=%lu, Mask=%lu) from length %ld to %ld", k, eof_get_note_type(sp, picked_track, k), eof_get_note_pos(sp, picked_track, k), eof_get_note_note(sp, picked_track, k), eof_get_note_length(sp, picked_track, k), event_realtime - eof_get_note_pos(sp, picked_track, k));
+									(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\t\tModifying note #%lu (Diff=%d, Pos=%lu, Mask=%lu) from length %ld to %ld", k, eof_get_note_type(sp, picked_track, k), eof_get_note_pos(sp, picked_track, k), eof_get_note_note(sp, picked_track, k), eof_get_note_length(sp, picked_track, k), event_realtime - eof_get_note_pos(sp, picked_track, k));
 									eof_log(eof_log_string, 1);
 #endif
 									eof_set_note_length(sp, picked_track, k, event_realtime - eof_get_note_pos(sp, picked_track, k));
@@ -2421,7 +2421,7 @@ set_window_title(debugtext);
 									{	//Check the value of the phrase ID
 										case 2:	//Pro guitar slide up
 #ifdef EOF_DEBUG
-											snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar slide up (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar slide up (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
 											eof_log(eof_log_string, 1);
 #endif
 											if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -2441,7 +2441,7 @@ set_window_title(debugtext);
 										break;
 										case 3:	//Pro guitar slide down
 #ifdef EOF_DEBUG
-											snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar slide down (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar slide down (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
 											eof_log(eof_log_string, 1);
 #endif
 											if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -2461,7 +2461,7 @@ set_window_title(debugtext);
 										break;
 										case 9:	//Pro guitar palm mute
 #ifdef EOF_DEBUG
-											snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar palm mute (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar palm mute (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
 											eof_log(eof_log_string, 1);
 #endif
 											if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -2481,7 +2481,7 @@ set_window_title(debugtext);
 										break;
 										case 10:	//Pro guitar vibrato
 #ifdef EOF_DEBUG
-											snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar vibrato (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pro guitar vibrato (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
 											eof_log(eof_log_string, 1);
 #endif
 											if(eof_import_events[i]->event[j]->dp[6] == 1)
@@ -2631,8 +2631,8 @@ eof_log("\tThird pass complete", 1);
 	}
 
 //Load guitar.ogg automatically if it's present, otherwise prompt user to browse for audio
-	replace_filename(eof_song_path, fn, "", 1024);
-	append_filename(nfn, eof_song_path, "guitar.ogg", 1024);
+	(void) replace_filename(eof_song_path, fn, "", 1024);
+	(void) append_filename(nfn, eof_song_path, "guitar.ogg", 1024);
 	if(!eof_load_ogg(nfn, 1))	//If user does not provide audio, fail over to using silent audio
 	{
 		eof_destroy_song(sp);
@@ -2660,7 +2660,7 @@ eof_log("\tThird pass complete", 1);
 			if(b >= 0)
 			{
 //				allegro_message("%s", eof_import_text_events->event[i]->text);	//Debug
-				eof_song_add_text_event(sp, b, eof_import_text_events->event[i]->text, 0, 0, 0);
+				(void) eof_song_add_text_event(sp, b, eof_import_text_events->event[i]->text, 0, 0, 0);
 			}
 		}
 	}

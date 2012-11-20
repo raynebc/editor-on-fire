@@ -61,12 +61,12 @@ int eof_menu_help_keys(void)
 int eof_menu_help_manual(void)
 {
 	#ifdef ALLEGRO_WINDOWS
-		eof_system("start manual\\index.htm");
+		(void) eof_system("start manual\\index.htm");
 	#else
 		#ifdef ALLEGRO_MACOSX
-			eof_system("open manual/index.htm");
+			(void) eof_system("open manual/index.htm");
 		#else
-			eof_system("xdg-open manual/index.htm");
+			(void) eof_system("xdg-open manual/index.htm");
 		#endif
 	#endif
 	return 1;
@@ -75,12 +75,12 @@ int eof_menu_help_manual(void)
 int eof_menu_help_tutorial(void)
 {
 	#ifdef ALLEGRO_WINDOWS
-		eof_system("start tutorial\\index.htm");
+		(void) eof_system("start tutorial\\index.htm");
 	#else
 		#ifdef ALLEGRO_MACOSX
-			eof_system("open tutorial/index.htm");
+			(void) eof_system("open tutorial/index.htm");
 		#else
-			eof_system("xdg-open tutorial/index.htm");
+			(void) eof_system("xdg-open tutorial/index.htm");
 		#endif
 	#endif
 	return 1;
@@ -89,12 +89,12 @@ int eof_menu_help_tutorial(void)
 int eof_menu_help_vocals_tutorial(void)
 {
 	#ifdef ALLEGRO_WINDOWS
-		eof_system("start vocaltutorial\\index.htm");
+		(void) eof_system("start vocaltutorial\\index.htm");
 	#else
 		#ifdef ALLEGRO_MACOSX
-			eof_system("open vocaltutorial/index.htm");
+			(void) eof_system("open vocaltutorial/index.htm");
 		#else
-			eof_system("xdg-open vocaltutorial/index.htm");
+			(void) eof_system("xdg-open vocaltutorial/index.htm");
 		#endif
 	#endif
 	return 1;
@@ -103,12 +103,12 @@ int eof_menu_help_vocals_tutorial(void)
 int eof_menu_help_pro_guitar_tutorial(void)
 {
 	#ifdef ALLEGRO_WINDOWS
-		eof_system("start proguitartutorial\\index.htm");
+		(void) eof_system("start proguitartutorial\\index.htm");
 	#else
 		#ifdef ALLEGRO_MACOSX
-			eof_system("open proguitartutorial/index.htm");
+			(void) eof_system("open proguitartutorial/index.htm");
 		#else
-			eof_system("xdg-open proguitartutorial/index.htm");
+			(void) eof_system("xdg-open proguitartutorial/index.htm");
 		#endif
 	#endif
 	return 1;
@@ -119,7 +119,7 @@ int eof_menu_help_about(void)
 	eof_cursor_visible = 0;
 	eof_pen_visible = 0;
 	eof_render();
-	alert(EOF_VERSION_STRING, NULL, EOF_COPYRIGHT_STRING, "Okay", NULL, KEY_ENTER, 0);
+	(void) alert(EOF_VERSION_STRING, NULL, EOF_COPYRIGHT_STRING, "Okay", NULL, KEY_ENTER, 0);
 	eof_clear_input();
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;

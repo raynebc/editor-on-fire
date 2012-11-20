@@ -16,7 +16,7 @@ int eof_chdir(const char * dir)
 
 		if(dir == NULL)
 			return -1;
-		uconvert(dir, U_UTF8, (char *)(&wdir[0]), U_UNICODE, 2048);
+		(void) uconvert(dir, U_UTF8, (char *)(&wdir[0]), U_UNICODE, 2048);
 		return _wchdir(wdir);
 	#else
 		if(dir == NULL)
@@ -32,7 +32,7 @@ int eof_mkdir(const char * dir)
 
 		if(dir == NULL)
 			return -1;
-		uconvert(dir, U_UTF8, (char *)(&wdir[0]), U_UNICODE, 2048);
+		(void) uconvert(dir, U_UTF8, (char *)(&wdir[0]), U_UNICODE, 2048);
 		return _wmkdir(wdir);
 	#else
 		if(dir == NULL)
@@ -48,7 +48,7 @@ int eof_system(const char * command)
 
 		if(command == NULL)
 			return -1;
-		uconvert(command, U_UTF8, (char *)(&wcommand[0]), U_UNICODE, 2048);
+		(void) uconvert(command, U_UTF8, (char *)(&wcommand[0]), U_UNICODE, 2048);
 		return _wsystem(wcommand);
 	#else
 		if(command == NULL)
@@ -81,12 +81,12 @@ void * eof_buffer_file(const char * fn, char appendnull)
 	if(data == NULL)
 		return NULL;
 
-	pack_fread(data, filesize, fp);
+	(void) pack_fread(data, (long)filesize, fp);
 	if(appendnull)
 	{	//If adding an extra NULL byte of padding to the end of the buffer
 		((char *)data)[buffersize - 1] = 0;	//Write a 0 byte at the end of the buffer
 	}
-	pack_fclose(fp);
+	(void) pack_fclose(fp);
 	return data;
 }
 
@@ -105,7 +105,7 @@ int eof_copy_file(char * src, char * dest)
 	if(!ustricmp(src,dest))		//Special case:  The input and output file are the same
 		return 0;				//Return success without copying any files
 
-	src_size = file_size_ex(src);
+	src_size = (unsigned long)file_size_ex(src);
 	src_fp = pack_fopen(src, "r");
 	if(!src_fp)
 	{
@@ -114,14 +114,14 @@ int eof_copy_file(char * src, char * dest)
 	dest_fp = pack_fopen(dest, "w");
 	if(!dest_fp)
 	{
-		pack_fclose(src_fp);
+		(void) pack_fclose(src_fp);
 		return 0;
 	}
 //Attempt to buffer the input file into memory for faster read and write
-	ptr=malloc(src_size);
+	ptr=malloc((size_t)src_size);
 	if(ptr != NULL)
 	{	//If a buffer large enough to store the input file was created
-		if((pack_fread(ptr, src_size, src_fp) != src_size) || (pack_fwrite(ptr, src_size, dest_fp) != src_size))
+		if((pack_fread(ptr, (long)src_size, src_fp) != src_size) || (pack_fwrite(ptr, src_size, dest_fp) != src_size))
 		{	//If there was an error reading from file or writing from memory
 			free(ptr);	//Release buffer
 			return 0;	//Return error
@@ -132,11 +132,11 @@ int eof_copy_file(char * src, char * dest)
 	{	//Otherwise copy the slow way (one byte at a time)
 		for(i = 0; i < src_size; i++)
 		{
-			pack_putc(pack_getc(src_fp), dest_fp);
+			(void) pack_putc(pack_getc(src_fp), dest_fp);
 		}
 	}
-	pack_fclose(src_fp);
-	pack_fclose(dest_fp);
+	(void) pack_fclose(src_fp);
+	(void) pack_fclose(dest_fp);
 	return 1;
 }
 
@@ -185,7 +185,7 @@ int eof_file_compare(char *file1, char *file2)
 	fp2 = pack_fopen(file2, "r");
 	if(fp2 == NULL)
 	{
-		pack_fclose(fp1);
+		(void) pack_fclose(fp1);
 		return 2;	//Return error
 	}
 
@@ -203,8 +203,8 @@ int eof_file_compare(char *file1, char *file2)
 			break;		//Exit loop
 		}
 	}
-	pack_fclose(fp1);
-	pack_fclose(fp2);
+	(void) pack_fclose(fp1);
+	(void) pack_fclose(fp2);
 
 	return result;
 }
@@ -246,12 +246,12 @@ int eof_convert_extended_ascii(char * buffer, int size)
 	{
 		return 0;
 	}
-	workbuffer = malloc(size);
+	workbuffer = malloc((size_t)size);
 	if(!workbuffer)
 	{
 		return 0;
 	}
-	memcpy(workbuffer, buffer, size);
+	memcpy(workbuffer, buffer, (size_t)size);
 	do_uconvert(workbuffer, U_ASCII_CP, buffer, U_CURRENT, size);
 	free(workbuffer);
 	return 1;

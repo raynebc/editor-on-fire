@@ -124,14 +124,14 @@ void Export_UStar(FILE *outf)
 
 	if(Lyrics.lines == NULL)
 	{
-			puts("Error: Empty list of lyrics during export\nAborting");
+			(void) puts("Error: Empty list of lyrics during export\nAborting");
 			exit_wrapper(1);
 	}
 
 	if(Lyrics.verbose)	printf("\nExporting UltraStar lyrics to file \"%s\"\n\n",Lyrics.outfilename);
 
 	if(Lyrics.pitch_tracking == 0)
-		puts("\a! NOTE: No pitch variation found in input lyrics.  Exporting as Freestyle");
+		(void) puts("\a! NOTE: No pitch variation found in input lyrics.  Exporting as Freestyle");
 
 	assert_wrapper((Lyrics.lines != NULL) && (Lyrics.lines->pieces != NULL));
 	gap=Lyrics.lines->pieces->start;	//Load the #GAP value (timestamp of first lyric)
@@ -210,7 +210,7 @@ void Export_UStar(FILE *outf)
 	tempostring=ConvertTempoToString(tempo);
 	if(tempostring==NULL)
 	{
-		puts("Error parsing tempo during UltraStar export\nAborting");
+		(void) puts("Error parsing tempo during UltraStar export\nAborting");
 		exit_wrapper(2);
 	}
 	else
@@ -229,7 +229,7 @@ void Export_UStar(FILE *outf)
 		exit_wrapper(3);
 	}
 
-	if(Lyrics.verbose) puts("Writing Lyrics");
+	if(Lyrics.verbose)	(void) puts("Writing Lyrics");
 
 //Process lyric pieces
 	for(ctr=1;ctr<=Lyrics.piececount;ctr++)	//For each lyric entry
@@ -239,7 +239,7 @@ void Export_UStar(FILE *outf)
 
 		if(current == NULL)
 		{
-			puts("Error: Unexpected end of lyrics during export\nAborting.");
+			(void) puts("Error: Unexpected end of lyrics during export\nAborting.");
 			exit_wrapper(4);
 			return;	//Redundant return statement to satisfy cppcheck about checking current for NULL
 		}
@@ -256,7 +256,7 @@ void Export_UStar(FILE *outf)
 		}
 
 	//If the current lyric piece is nothing but a + and whitespace, replace the + with ~
-		length=strlen(current->lyric);	//Save this value, which will be used several times
+		length = (unsigned long)strlen(current->lyric);	//Save this value, which will be used several times
 		assert_wrapper(current->lyric != NULL);
 		for(ctr2=0,replace=1;ctr2<length;ctr2++)
 			if((current->lyric[ctr2] != '+') && !isspace((unsigned char)current->lyric[ctr2]))
@@ -344,7 +344,7 @@ void Export_UStar(FILE *outf)
 
 				if(start + (int)z > (int)y)	//remember to round y up for comparison
 				{	//This condition should have been caught with the syllable combining logic earlier
-					puts("Error: Lyrics out of order\nAborting");
+					(void) puts("Error: Lyrics out of order\nAborting");
 					exit_wrapper(6);
 				}
 
@@ -402,7 +402,7 @@ void Export_UStar(FILE *outf)
 	fputs_err("E\n",outf);
 
 	if(incomplete)
-		puts("\a! Needed information needs to be manually entered into the exported file");
+		(void) puts("\a! Needed information needs to be manually entered into the exported file");
 
 	if(Lyrics.verbose)	printf("\nUltraStar export complete.  %lu lyrics written",Lyrics.piececount);
 }
@@ -454,7 +454,7 @@ double ConvertStringToTempo(char *tempo)
 
 	if(x < 1.0)
 	{
-		puts("Error processing source UltraStar file's tempo\nAborting");
+		(void) puts("Error processing source UltraStar file's tempo\nAborting");
 		exit_wrapper(1);
 	}
 
@@ -528,8 +528,8 @@ double CalculateTimeDiff(double tempo)
 
 void UStar_Load(FILE *inf)
 {
-	unsigned long ctr=0;		//Equal to length of string (+1 for null terminator)
-	unsigned long maxlinelength;	//I will count the length of the longest line (including NULL char/newline) in the
+	unsigned long ctr=0;	//Equal to length of string (+1 for null terminator)
+	size_t maxlinelength;	//I will count the length of the longest line (including NULL char/newline) in the
 							//input file so I can create a buffer large enough to read any line into
 	char *buffer;			//Will be an array large enough to hold the largest line of text from input file
 	char *substring=NULL;	//Used with strstr() to find tag strings in the input file
@@ -560,7 +560,7 @@ void UStar_Load(FILE *inf)
 	buffer=(char *)malloc_err(maxlinelength);
 
 //Load each line and parse it
-	fgets_err(buffer,maxlinelength,inf);	//Read first line of text, capping it to prevent buffer overflow
+	(void) fgets_err(buffer, (int)maxlinelength,inf);	//Read first line of text, capping it to prevent buffer overflow
 
 	if(Lyrics.verbose)	printf("\nImporting UltraStar lyrics from file \"%s\"\n\n",Lyrics.infilename);
 
@@ -584,7 +584,7 @@ void UStar_Load(FILE *inf)
 		if((buffer[index] == '\r') || (buffer[index] == '\n'))	//If it was a blank line
 		{
 			if(Lyrics.verbose)	printf("Ignoring blank line (line #%lu) in input file\n",processedctr);
-			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			(void) fgets(buffer, (int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 			continue;	//Skip processing for a blank line
 		}
 
@@ -625,14 +625,14 @@ void UStar_Load(FILE *inf)
 						if(strcasestr_spec(buffer,"yes"))	//And the string "yes" occurs in the same line
 							relative_timing=1;				//Activate relative timing
 			}
-			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			(void) fgets(buffer, (int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 			continue;	//Restart at next iteration of loop
 		}//end if(buffer[index]=='#')
 		else	//This line does not contain a tag
 			if(tagsprocessed == 0)	//Time to validate that all tags have been read
 			{
 				if((Lyrics.Title == NULL) || (Lyrics.Artist == NULL) || (BPM < 1.0) || (!Lyrics.offsetoverride && (Lyrics.Offset == NULL)))	//Ignore the unprocessed offset tag if it is being overridden via command line
-					puts("\aWarning: One of the required tags (Title, Artist, BPM, GAP) is missing");
+					(void) puts("\aWarning: One of the required tags (Title, Artist, BPM, GAP) is missing");
 
 				stepping=60000.0/(BPM*4);	//The stepping is the realtime length of one quarter beat
 				tagsprocessed=1;	//Tags were verified
@@ -672,7 +672,7 @@ void UStar_Load(FILE *inf)
 						linetime+=starttime;	//Otherwise add the number that was already read to find the line break's absolute timestamp
 				}
 
-				fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+				(void) fgets(buffer, (int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 			continue;
 
 			default:
@@ -754,7 +754,7 @@ void UStar_Load(FILE *inf)
 
 //Replace UltraStar's pitch shift indicator (~) with that of Rock Band (+)
 	//If the current lyric piece is nothing but a ~ and whitespace, replace the ~ with +
-		length=strlen(&buffer[index]);
+		length = (unsigned long)strlen(&buffer[index]);
 		for(ctr=0,replace=1;ctr<length;ctr++)
 			if((buffer[index+ctr] != '~') && !isspace((unsigned char)buffer[index+ctr]))
 				replace=0;
@@ -770,11 +770,11 @@ void UStar_Load(FILE *inf)
 //the pitch, AddLyricPiece() will receive a string of 0 characters, and it will ignore it
 		AddLyricPiece(&(buffer[index]),starttime,starttime+duration,pitch,0);	//Add lyric (remapped to Rock Band's pitch system)
 
-		fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+		(void) fgets(buffer, (int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 	}//end while(!feof(inf))
 
 	if(feof(inf))	//If end of file was reached before a line beginning with E
-		puts("Warning: UltraStar file did not properly end with a line beginning with 'E'");
+		(void) puts("Warning: UltraStar file did not properly end with a line beginning with 'E'");
 
 	ForceEndLyricLine();
 
@@ -794,11 +794,11 @@ char *ReadUStarTag(char *str)
 
 	while(1)
 	{
-		length=strlen(temp);
+		length = (unsigned long)strlen(temp);
 
 		if(length == 0)	//string is empty
 		{
-			puts("Error processing UltraStar tag\nAborting");
+			(void) puts("Error processing UltraStar tag\nAborting");
 			exit_wrapper(1);
 		}
 
@@ -874,7 +874,7 @@ void RemapPitches(void)
 
 	if(CheckPitches(&pitchmin,&pitchmax) != 0)	//If the pitches still don't fall into the appropriate range
 	{
-		puts("Error: Failed to remap pitches\nAborting");
+		(void) puts("Error: Failed to remap pitches\nAborting");
 		exit_wrapper(1);
 	}
 }

@@ -390,7 +390,7 @@ void eof_mix_init(void)
 	}
 	for(i = 0; i < EOF_MAX_VOCAL_TONES; i++)
 	{	//Load piano tones
-		snprintf(fbuffer, sizeof(fbuffer) - 1, "eof.dat#piano.esp/NOTE_%02d_OGG", i);
+		(void) snprintf(fbuffer, sizeof(fbuffer) - 1, "eof.dat#piano.esp/NOTE_%02d_OGG", i);
 		eof_sound_note[i] = eof_mix_load_ogg_sample(fbuffer);
 	}
 	eof_sound_cowbell = eof_mix_load_ogg_sample("percussion.dat#cowbell.ogg");
@@ -670,7 +670,7 @@ void eof_mix_play_note(int note)
 		if(eof_mix_midi_tones_enabled)
 			eof_midi_play_note(note);
 		else
-			play_sample(eof_sound_note[note], 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play the tone at the user specified cue volume
+			(void) play_sample(eof_sound_note[note], 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play the tone at the user specified cue volume
 	}
 }
 

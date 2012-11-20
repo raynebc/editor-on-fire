@@ -573,16 +573,16 @@ if(key[KEY_PAUSE])
 	{
 		if(KEY_EITHER_CTRL)
 		{
-			eof_menu_song_seek_first_note();
+			(void) eof_menu_song_seek_first_note();
 		}
 		else if(KEY_EITHER_SHIFT)
 		{
 			eof_shift_used = 1;	//Track that the SHIFT key was used
-			eof_menu_edit_select_previous();
+			(void) eof_menu_edit_select_previous();
 		}
 		else
 		{
-			eof_menu_song_seek_start();
+			(void) eof_menu_song_seek_start();
 		}
 		key[KEY_HOME] = 0;
 	}
@@ -598,21 +598,21 @@ if(key[KEY_PAUSE])
 			if(KEY_EITHER_SHIFT)
 			{	//If both SHIFT and CTRL are being held
 				eof_shift_used = 1;	//Track that the SHIFT key was used
-				eof_menu_song_seek_chart_end();
+				(void) eof_menu_song_seek_chart_end();
 			}
 			else
 			{	//If only CTRL is being held
-				eof_menu_song_seek_last_note();
+				(void) eof_menu_song_seek_last_note();
 			}
 		}
 		else if(KEY_EITHER_SHIFT)
 		{	//If only SHIFT is being held
 			eof_shift_used = 1;	//Track that the SHIFT key was used
-			eof_menu_edit_select_rest();
+			(void) eof_menu_edit_select_rest();
 		}
 		else
 		{	//If neither SHIFT nor CTRL are being held
-			eof_menu_song_seek_end();
+			(void) eof_menu_song_seek_end();
 		}
 		key[KEY_END] = 0;
 	}
@@ -620,7 +620,7 @@ if(key[KEY_PAUSE])
 	/* rewind (R) */
 	if(key[KEY_R] && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 	{
-		eof_menu_song_seek_rewind();
+		(void) eof_menu_song_seek_rewind();
 		key[KEY_R] = 0;
 	}
 
@@ -633,7 +633,7 @@ if(key[KEY_PAUSE])
 		{	//If CTRL is not being held
 			if(!KEY_EITHER_SHIFT && !key[KEY_BACKSLASH])
 			{	//If neither SHIFT nor backslash are being held either
-				eof_menu_edit_zoom_helper_in();
+				(void) eof_menu_edit_zoom_helper_in();
 			}
 			else
 			{	//SHIFT is being held, CTRL is not
@@ -665,7 +665,7 @@ if(key[KEY_PAUSE])
 		{	//If CTRL is not being held
 			if(!KEY_EITHER_SHIFT)
 			{	//If SHIFT is not being held either
-				eof_menu_edit_zoom_helper_out();
+				(void) eof_menu_edit_zoom_helper_out();
 			}
 			else
 			{	//SHIFT is being held, CTRL is not
@@ -711,12 +711,12 @@ if(key[KEY_PAUSE])
 	{
 		if(!KEY_EITHER_SHIFT)
 		{
-			eof_menu_catalog_show();
+			(void) eof_menu_catalog_show();
 		}
 		else
 		{	//SHIFT is held
 			eof_shift_used = 1;	//Track that the SHIFT key was used
-			eof_menu_catalog_toggle_full_width();
+			(void) eof_menu_catalog_toggle_full_width();
 		}
 		key[KEY_Q] = 0;
 	}
@@ -728,11 +728,11 @@ if(key[KEY_PAUSE])
 		if(KEY_EITHER_SHIFT)
 		{	//SHIFT+W will cycle to the previous chord name match
 			eof_shift_used = 1;	//Track that the SHIFT key was used
-			eof_menu_previous_chord_result();
+			(void) eof_menu_previous_chord_result();
 		}
 		else
 		{	//Otherwise W will cycle to the previous catalog entry
-			eof_menu_catalog_previous();
+			(void) eof_menu_catalog_previous();
 		}
 		key[KEY_W] = 0;
 	}
@@ -744,18 +744,18 @@ if(key[KEY_PAUSE])
 	{
 		if(KEY_EITHER_CTRL)
 		{	//CTRL+E will toggle Expert+ double bass drum notation
-			eof_menu_note_toggle_double_bass();
+			(void) eof_menu_note_toggle_double_bass();
 		}
 		else
 		{
 			if(KEY_EITHER_SHIFT)
 			{	//SHIFT+E will cycle to the next chord name match
 				eof_shift_used = 1;	//Track that the SHIFT key was used
-				eof_menu_next_chord_result();
+				(void) eof_menu_next_chord_result();
 			}
 			else
 			{	//Otherwise E will cycle to the next catalog entry
-				eof_menu_catalog_next();
+				(void) eof_menu_catalog_next();
 			}
 		}
 		key[KEY_E] = 0;
@@ -769,7 +769,7 @@ if(key[KEY_PAUSE])
 		{	//CTRL+G in the drum track will toggle Pro green cymbal notation
 			if(eof_selected_track == EOF_TRACK_DRUM)
 			{
-				eof_menu_note_toggle_rb3_cymbal_green();
+				(void) eof_menu_note_toggle_rb3_cymbal_green();
 				key[KEY_G] = 0;
 			}
 		}
@@ -791,7 +791,7 @@ if(key[KEY_PAUSE])
 	/* toggle yellow cymbal (CTRL+Y) */
 	if(key[KEY_Y] && KEY_EITHER_CTRL)
 	{	//CTRL+Y will toggle Pro yellow cymbal notation
-		eof_menu_note_toggle_rb3_cymbal_yellow();
+		(void) eof_menu_note_toggle_rb3_cymbal_yellow();
 		key[KEY_Y] = 0;
 	}
 
@@ -804,19 +804,19 @@ if(key[KEY_PAUSE])
 		{
 			if(eof_selected_track == EOF_TRACK_DRUM)
 			{	//If the drum track is active
-				eof_menu_note_toggle_rb3_cymbal_blue();
+				(void) eof_menu_note_toggle_rb3_cymbal_blue();
 				key[KEY_B] = 0;
 			}
 			else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{
-				eof_menu_note_toggle_bend();
+				(void) eof_menu_note_toggle_bend();
 				key[KEY_B] = 0;
 			}
 		}
 		else if(KEY_EITHER_SHIFT)
 		{
 			eof_shift_used = 1;	//Track that the SHIFT key was used
-			eof_pro_guitar_note_bend_strength_save();
+			(void) eof_pro_guitar_note_bend_strength_save();
 			key[KEY_B] = 0;
 		}
 	}
@@ -833,16 +833,16 @@ if(key[KEY_PAUSE])
 			{
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				if(eof_selected_track > EOF_TRACKS_MIN)
-					eof_menu_track_selected_track_number(eof_selected_track-1);
+					(void) eof_menu_track_selected_track_number(eof_selected_track-1);
 				else
-					eof_menu_track_selected_track_number(EOF_TRACKS_MAX - 1);	//Wrap around
+					(void) eof_menu_track_selected_track_number(EOF_TRACKS_MAX - 1);	//Wrap around
 			}
 			else					//Shift instrument forward 1 number
 			{
 				if(eof_selected_track < EOF_TRACKS_MAX - 1)
-					eof_menu_track_selected_track_number(eof_selected_track+1);
+					(void) eof_menu_track_selected_track_number(eof_selected_track+1);
 				else
-					eof_menu_track_selected_track_number(EOF_TRACKS_MIN);	//Wrap around
+					(void) eof_menu_track_selected_track_number(EOF_TRACKS_MIN);	//Wrap around
 			}
 		}
 		else
@@ -934,7 +934,7 @@ if(key[KEY_PAUSE])
 		if(eof_input_mode == EOF_INPUT_FEEDBACK)
 		{
 			stop_sample(eof_sound_grid_snap);
-			play_sample(eof_sound_grid_snap, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip
+			(void) play_sample(eof_sound_grid_snap, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip
 			eof_snap_mode--;
 			if(eof_snap_mode < 0)
 			{
@@ -960,7 +960,7 @@ if(key[KEY_PAUSE])
 		if(eof_input_mode == EOF_INPUT_FEEDBACK)
 		{
 			stop_sample(eof_sound_grid_snap);
-			play_sample(eof_sound_grid_snap, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip
+			(void) play_sample(eof_sound_grid_snap, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip
 			eof_snap_mode++;
 			if(eof_snap_mode > EOF_SNAP_FORTY_EIGHTH)
 			{
@@ -1014,16 +1014,16 @@ if(key[KEY_PAUSE])
 					eof_shift_used = 1;	//Track that the SHIFT key was used
 					if(eof_snap_mode != EOF_SNAP_OFF)
 					{	//If grid snap is enabled
-						eof_menu_song_seek_previous_grid_snap();
+						(void) eof_menu_song_seek_previous_grid_snap();
 					}
 					else
 					{
-						eof_menu_song_seek_previous_anchor();
+						(void) eof_menu_song_seek_previous_anchor();
 					}
 				}
 				else
 				{	//If only CTRL is being held
-					eof_menu_song_seek_previous_screen();
+					(void) eof_menu_song_seek_previous_screen();
 				}
 			}
 			else if(KEY_EITHER_SHIFT)
@@ -1031,22 +1031,22 @@ if(key[KEY_PAUSE])
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				if(eof_input_mode == EOF_INPUT_FEEDBACK)
 				{	//In Feedback input method, this changes the note selection
-					eof_menu_song_seek_previous_measure();
+					(void) eof_menu_song_seek_previous_measure();
 				}
 				else
 				{	//Otherwise seek to previous note
-					eof_menu_song_seek_previous_note();
+					(void) eof_menu_song_seek_previous_note();
 				}
 			}
 			else
 			{	//If neither SHIFT nor CTRL are being held
 				if(eof_input_mode == EOF_INPUT_FEEDBACK)
 				{
-					eof_menu_song_seek_previous_measure();
+					(void) eof_menu_song_seek_previous_measure();
 				}
 				else
 				{
-					eof_menu_song_seek_previous_beat();
+					(void) eof_menu_song_seek_previous_beat();
 				}
 			}
 		}
@@ -1069,16 +1069,16 @@ if(key[KEY_PAUSE])
 					eof_shift_used = 1;	//Track that the SHIFT key was used
 					if(eof_snap_mode != EOF_SNAP_OFF)
 					{	//If grid snap is enabled
-						eof_menu_song_seek_next_grid_snap();
+						(void) eof_menu_song_seek_next_grid_snap();
 					}
 					else
 					{
-						eof_menu_song_seek_next_anchor();
+						(void) eof_menu_song_seek_next_anchor();
 					}
 				}
 				else
 				{	//If only CTRL is being held
-					eof_menu_song_seek_next_screen();
+					(void) eof_menu_song_seek_next_screen();
 				}
 			}
 			else if(KEY_EITHER_SHIFT)
@@ -1086,22 +1086,22 @@ if(key[KEY_PAUSE])
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				if(eof_input_mode == EOF_INPUT_FEEDBACK)
 				{	//In Feedback input method, this changes the note selection
-					eof_menu_song_seek_next_measure();
+					(void) eof_menu_song_seek_next_measure();
 				}
 				else
 				{	//Otherwise seek to next note
-					eof_menu_song_seek_next_note();
+					(void) eof_menu_song_seek_next_note();
 				}
 			}
 			else
 			{	//If neither SHIFT nor CTRL are being held
 				if(eof_input_mode == EOF_INPUT_FEEDBACK)
 				{
-					eof_menu_song_seek_next_measure();
+					(void) eof_menu_song_seek_next_measure();
 				}
 				else
 				{
-					eof_menu_song_seek_next_beat();
+					(void) eof_menu_song_seek_next_beat();
 				}
 			}
 		}
@@ -1138,7 +1138,7 @@ if(key[KEY_PAUSE])
 			}
 			else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{
-				eof_pro_guitar_toggle_strum_up();
+				(void) eof_pro_guitar_toggle_strum_up();
 			}
 		}
 		else if(eof_music_paused && !eof_music_catalog_playback)
@@ -1147,18 +1147,18 @@ if(key[KEY_PAUSE])
 			{
 				if(eof_vocals_selected)
 				{	/* tranpose up octave */
-					eof_menu_note_transpose_up_octave();	//Move up 12 pitches at once, performing a single undo beforehand
+					(void) eof_menu_note_transpose_up_octave();	//Move up 12 pitches at once, performing a single undo beforehand
 				}
 				else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 				{	/* toggle slide up */
-					eof_menu_note_toggle_slide_up();
+					(void) eof_menu_note_toggle_slide_up();
 				}
 			}
 			else
 			{	//Neither SHIFT nor CTRL is held
 				if(eof_input_mode == EOF_INPUT_FEEDBACK)
 				{
-					eof_menu_song_seek_next_grid_snap();
+					(void) eof_menu_song_seek_next_grid_snap();
 				}
 				else
 				{
@@ -1169,7 +1169,7 @@ if(key[KEY_PAUSE])
 					}
 					else
 					{
-						eof_menu_note_transpose_up();
+						(void) eof_menu_note_transpose_up();
 					}
 				}
 			}
@@ -1215,7 +1215,7 @@ if(key[KEY_PAUSE])
 			}
 			else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{
-				eof_pro_guitar_toggle_strum_down();
+				(void) eof_pro_guitar_toggle_strum_down();
 			}
 		}
 		else if(eof_music_paused && !eof_music_catalog_playback)
@@ -1224,18 +1224,18 @@ if(key[KEY_PAUSE])
 			{
 				if(eof_vocals_selected)
 				{	/* transpose down octave */
-					eof_menu_note_transpose_down_octave();	//Move down 12 pitches at once, performing a single undo beforehand
+					(void) eof_menu_note_transpose_down_octave();	//Move down 12 pitches at once, performing a single undo beforehand
 				}
 				else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 				{	/* toggle slide down */
-					eof_menu_note_toggle_slide_down();
+					(void) eof_menu_note_toggle_slide_down();
 				}
 			}
 			else
 			{	//Neither SHIFT nor CTRL is held
 				if(eof_input_mode == EOF_INPUT_FEEDBACK)
 				{
-					eof_menu_song_seek_previous_grid_snap();
+					(void) eof_menu_song_seek_previous_grid_snap();
 				}
 				else
 				{
@@ -1246,7 +1246,7 @@ if(key[KEY_PAUSE])
 					}
 					else
 					{
-						eof_menu_note_transpose_down();
+						(void) eof_menu_note_transpose_down();
 					}
 				}
 			}
@@ -1267,7 +1267,7 @@ if(key[KEY_PAUSE])
 		if(eof_input_mode == EOF_INPUT_FEEDBACK)
 		{	//If Feedback input method is in effect
 			stop_sample(eof_sound_grid_snap);
-			play_sample(eof_sound_grid_snap, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip
+			(void) play_sample(eof_sound_grid_snap, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip
 		}
 		eof_snap_mode--;
 		if(eof_snap_mode < 0)
@@ -1283,7 +1283,7 @@ if(key[KEY_PAUSE])
 		if(eof_input_mode == EOF_INPUT_FEEDBACK)
 		{	//If Feedback input method is in effect
 			stop_sample(eof_sound_grid_snap);
-			play_sample(eof_sound_grid_snap, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip
+			(void) play_sample(eof_sound_grid_snap, 255.0 * (eof_tone_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);	//Play this sound clip
 		}
 		eof_snap_mode++;
 		if(eof_snap_mode > EOF_SNAP_FORTY_EIGHTH)
@@ -1303,11 +1303,11 @@ if(key[KEY_PAUSE])
 		{
 			if(eof_vocals_selected)
 			{
-				eof_menu_lyric_line_mark();
+				(void) eof_menu_lyric_line_mark();
 			}
 			else
 			{
-				eof_menu_note_toggle_palm_muting();
+				(void) eof_menu_note_toggle_palm_muting();
 			}
 		}
 		else
@@ -1315,11 +1315,11 @@ if(key[KEY_PAUSE])
 			if(KEY_EITHER_SHIFT)
 			{	//SHIFT+M toggles mid strum direction
 				eof_shift_used = 1;	//Track that the SHIFT key was used
-				eof_pro_guitar_toggle_strum_mid();
+				(void) eof_pro_guitar_toggle_strum_mid();
 			}
 			else
 			{	//M without SHIFT or CTRL toggles metronome
-				eof_menu_edit_metronome();
+				(void) eof_menu_edit_metronome();
 			}
 		}
 		key[KEY_M] = 0;
@@ -1331,13 +1331,13 @@ if(key[KEY_PAUSE])
 	{
 		if(!KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 		{	//Neither CTRL nor SHIFT held
-			eof_menu_edit_claps();
+			(void) eof_menu_edit_claps();
 			key[KEY_C] = 0;
 		}
 		else if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{	//Both CTRL and SHIFT held
 			eof_shift_used = 1;	//Track that the SHIFT key was used
-			eof_menu_edit_paste_from_catalog();
+			(void) eof_menu_edit_paste_from_catalog();
 			key[KEY_C] = 0;
 		}
 	}
@@ -1348,12 +1348,12 @@ if(key[KEY_PAUSE])
 	{
 		if(!KEY_EITHER_SHIFT)
 		{
-			eof_menu_edit_vocal_tones();
+			(void) eof_menu_edit_vocal_tones();
 		}
 		else
 		{	//SHIFT is held
 			eof_shift_used = 1;	//Track that the SHIFT key was used
-			eof_menu_note_toggle_vibrato();
+			(void) eof_menu_note_toggle_vibrato();
 		}
 		key[KEY_V] = 0;
 	}
@@ -1753,14 +1753,14 @@ if(key[KEY_PAUSE])
 	/* lower playback speed (;) */
 		if(key[KEY_SEMICOLON])
 		{
-			eof_menu_edit_playback_speed_helper_slower();
+			(void) eof_menu_edit_playback_speed_helper_slower();
 			key[KEY_SEMICOLON] = 0;
 		}
 
 	/* increase playback speed (') */
 		if(key[KEY_QUOTE])
 		{
-			eof_menu_edit_playback_speed_helper_faster();
+			(void) eof_menu_edit_playback_speed_helper_faster();
 			key[KEY_QUOTE] = 0;
 		}
 
@@ -1774,16 +1774,16 @@ if(key[KEY_PAUSE])
 				if(KEY_EITHER_SHIFT)
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
-					eof_menu_beat_anchor();
+					(void) eof_menu_beat_anchor();
 				}
 				else
 				{
-					eof_menu_beat_toggle_anchor();
+					(void) eof_menu_beat_toggle_anchor();
 				}
 			}
 			else
 			{
-				eof_menu_edit_select_all();
+				(void) eof_menu_edit_select_all();
 			}
 			key[KEY_A] = 0;
 		}
@@ -1834,12 +1834,12 @@ if(key[KEY_PAUSE])
 			{
 				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 				{	/* toggle tapping */
-					eof_menu_note_toggle_tapping();
+					(void) eof_menu_note_toggle_tapping();
 				}
 			}
 			else
 			{	/* toggle crazy */
-				eof_menu_note_toggle_crazy();
+				(void) eof_menu_note_toggle_crazy();
 			}
 			key[KEY_T] = 0;
 		}
@@ -1852,18 +1852,18 @@ if(key[KEY_PAUSE])
 		{
 			if(KEY_EITHER_CTRL)
 			{	/* select like */
-				eof_menu_edit_select_like();
+				(void) eof_menu_edit_select_like();
 			}
 			else if(eof_vocals_selected && (eof_selection.track == EOF_TRACK_VOCALS) && (eof_selection.current < eof_song->vocal_track[tracknum]->lyrics))
 			{	//If PART VOCALS is active, and one of its lyrics is the current selected lyric
 				if(KEY_EITHER_SHIFT)
 				{	//Split lyric
 					eof_shift_used = 1;	//Track that the SHIFT key was used
-					eof_menu_split_lyric();
+					(void) eof_menu_split_lyric();
 				}
 				else
 				{	//Edit lyric
-					eof_edit_lyric_dialog();
+					(void) eof_edit_lyric_dialog();
 				}
 			}
 			else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -1871,7 +1871,7 @@ if(key[KEY_PAUSE])
 				if(KEY_EITHER_SHIFT)
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
-					eof_menu_song_legacy_view();
+					(void) eof_menu_song_legacy_view();
 				}
 			}
 			key[KEY_L] = 0;
@@ -1880,14 +1880,14 @@ if(key[KEY_PAUSE])
 	/* toggle freestyle (F in a vocal track) */
 		if(key[KEY_F] && !KEY_EITHER_CTRL && eof_vocals_selected)
 		{
-			eof_menu_toggle_freestyle();
+			(void) eof_menu_toggle_freestyle();
 			key[KEY_F] = 0;
 		}
 
 	/* deselect all (CTRL+D) */
 		if(KEY_EITHER_CTRL && key[KEY_D])
 		{
-			eof_menu_edit_deselect_all();
+			(void) eof_menu_edit_deselect_all();
 			key[KEY_D] = 0;
 		}
 
@@ -1900,18 +1900,18 @@ if(key[KEY_PAUSE])
 			{
 				if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 				{	//Toggle harmonic
-					eof_menu_note_toggle_harmonic();
+					(void) eof_menu_note_toggle_harmonic();
 				}
 			}
 			else
 			{
 				if(eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT)
 				{	//Cycle HO/PO
-					eof_menu_hopo_cycle();
+					(void) eof_menu_hopo_cycle();
 				}
 				else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 				{	//Toggle HO
-					eof_menu_pro_guitar_toggle_hammer_on();
+					(void) eof_menu_pro_guitar_toggle_hammer_on();
 				}
 			}
 			key[KEY_H] = 0;
@@ -1920,14 +1920,14 @@ if(key[KEY_PAUSE])
 	/* toggle pull off status (P in a pro guitar track) */
 		if(key[KEY_P] && !KEY_EITHER_CTRL && !KEY_EITHER_ALT && !KEY_EITHER_SHIFT && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 		{
-			eof_menu_pro_guitar_toggle_pull_off();
+			(void) eof_menu_pro_guitar_toggle_pull_off();
 			key[KEY_P] = 0;
 		}
 
 	/* place Rocksmith phrase (SHIFT+P in a pro guitar track) */
 		if(key[KEY_P] && !KEY_EITHER_CTRL && !KEY_EITHER_ALT && KEY_EITHER_SHIFT && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 		{
-			eof_rocksmith_phrase_dialog_add();
+			(void) eof_rocksmith_phrase_dialog_add();
 			key[KEY_P] = 0;
 		}
 
@@ -1935,7 +1935,7 @@ if(key[KEY_PAUSE])
 		if(key[KEY_O] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{
 			eof_shift_used = 1;	//Track that the SHIFT key was used
-			eof_menu_note_toggle_hi_hat_open();
+			(void) eof_menu_note_toggle_hi_hat_open();
 			key[KEY_O] = 0;
 		}
 
@@ -1943,7 +1943,7 @@ if(key[KEY_PAUSE])
 		if(key[KEY_P] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT && (eof_selected_track == EOF_TRACK_DRUM))
 		{
 			eof_shift_used = 1;	//Track that the SHIFT key was used
-			eof_menu_note_toggle_hi_hat_pedal();
+			(void) eof_menu_note_toggle_hi_hat_pedal();
 			key[KEY_P] = 0;
 		}
 
@@ -1951,7 +1951,7 @@ if(key[KEY_PAUSE])
 		if(key[KEY_S] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT && (eof_selected_track == EOF_TRACK_DRUM))
 		{
 			eof_shift_used = 1;	//Track that the SHIFT key was used
-			eof_menu_note_toggle_hi_hat_sizzle();
+			(void) eof_menu_note_toggle_hi_hat_sizzle();
 			key[KEY_S] = 0;
 		}
 
@@ -1959,7 +1959,7 @@ if(key[KEY_PAUSE])
 		if(key[KEY_R] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{
 			eof_shift_used = 1;	//Track that the SHIFT key was used
-			eof_menu_note_toggle_rimshot();
+			(void) eof_menu_note_toggle_rimshot();
 			key[KEY_R] = 0;
 		}
 
@@ -1970,13 +1970,13 @@ if(key[KEY_PAUSE])
 			if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
 			{	//If this is a 5 lane guitar/bass track
 				eof_shift_used = 1;	//Track that the SHIFT key was used
-				eof_menu_slider_mark();
+				(void) eof_menu_slider_mark();
 				key[KEY_S] = 0;
 			}
 			else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If this is a pro guitar track
 				eof_shift_used = 1;	//Track that the SHIFT key was used
-				eof_pro_guitar_note_slide_end_fret_save();
+				(void) eof_pro_guitar_note_slide_end_fret_save();
 				key[KEY_S] = 0;
 			}
 		}
@@ -1986,14 +1986,14 @@ if(key[KEY_PAUSE])
 	/* edit pro guitar note (N in a pro guitar track) */
 			if((key[KEY_N] && !KEY_EITHER_CTRL))
 			{
-				eof_menu_note_edit_pro_guitar_note();
+				(void) eof_menu_note_edit_pro_guitar_note();
 				key[KEY_N] = 0;
 			}
 
 	/* edit pro guitar fret values (F in a pro guitar track) */
 			if(key[KEY_F] && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 			{
-				eof_menu_note_edit_pro_guitar_note_frets_fingers_menu();
+				(void) eof_menu_note_edit_pro_guitar_note_frets_fingers_menu();
 				key[KEY_F] = 0;
 			}
 
@@ -2001,7 +2001,7 @@ if(key[KEY_PAUSE])
 			if(key[KEY_F] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 			{
 				eof_shift_used = 1;	//Track that the SHIFT key was used
-				eof_pro_guitar_set_fret_hand_position();
+				(void) eof_pro_guitar_set_fret_hand_position();
 				key[KEY_F] = 0;
 			}
 
@@ -2143,7 +2143,7 @@ if(key[KEY_PAUSE])
 				}
 				else if(key[KEY_G])
 				{
-					eof_menu_note_toggle_ghost();
+					(void) eof_menu_note_toggle_ghost();
 					key[KEY_G] = 0;
 				}
 			}//If CTRL is held but SHIFT is not
@@ -2267,37 +2267,37 @@ if(key[KEY_PAUSE])
 				if(key[KEY_1])
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
-					eof_menu_note_toggle_green();
+					(void) eof_menu_note_toggle_green();
 					key[KEY_1] = 0;
 				}
 				else if(key[KEY_2])
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
-					eof_menu_note_toggle_red();
+					(void) eof_menu_note_toggle_red();
 					key[KEY_2] = 0;
 					}
 				else if(key[KEY_3])
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
-					eof_menu_note_toggle_yellow();
+					(void) eof_menu_note_toggle_yellow();
 					key[KEY_3] = 0;
 				}
 				else if(key[KEY_4])
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
-					eof_menu_note_toggle_blue();
+					(void) eof_menu_note_toggle_blue();
 					key[KEY_4] = 0;
 				}
 				else if(key[KEY_5] && (numlanes >= 5))
 				{
 					eof_shift_used = 1;	//Track that the SHIFT key was used
-					eof_menu_note_toggle_purple();
+					(void) eof_menu_note_toggle_purple();
 					key[KEY_5] = 0;
 				}
 				else if(key[KEY_6] && (numlanes >= 6))
 				{	//Only allow use of the 6 key if lane 6 is available
 					eof_shift_used = 1;	//Track that the SHIFT key was used
-					eof_menu_note_toggle_orange();
+					(void) eof_menu_note_toggle_orange();
 					key[KEY_6] = 0;
 				}
 			}
@@ -2468,11 +2468,11 @@ if(key[KEY_PAUSE])
 		{
 			if(KEY_EITHER_CTRL)
 			{
-				eof_menu_beat_delete();
+				(void) eof_menu_beat_delete();
 			}
 			else
 			{
-				eof_menu_note_delete();
+				(void) eof_menu_note_delete();
 			}
 			key[KEY_DEL] = 0;
 		}
@@ -2485,11 +2485,11 @@ if(key[KEY_PAUSE])
 			{
 				if(KEY_EITHER_CTRL)
 				{
-					eof_menu_edit_bookmark_0();
+					(void) eof_menu_edit_bookmark_0();
 				}
 				else
 				{
-					eof_menu_song_seek_bookmark_0();
+					(void) eof_menu_song_seek_bookmark_0();
 				}
 				key[KEY_0_PAD] = 0;
 			}
@@ -2497,11 +2497,11 @@ if(key[KEY_PAUSE])
 			{
 				if(KEY_EITHER_CTRL)
 				{
-					eof_menu_edit_bookmark_1();
+					(void) eof_menu_edit_bookmark_1();
 				}
 				else
 				{
-					eof_menu_song_seek_bookmark_1();
+					(void) eof_menu_song_seek_bookmark_1();
 				}
 				key[KEY_1_PAD] = 0;
 			}
@@ -2509,11 +2509,11 @@ if(key[KEY_PAUSE])
 			{
 				if(KEY_EITHER_CTRL)
 				{
-					eof_menu_edit_bookmark_2();
+					(void) eof_menu_edit_bookmark_2();
 				}
 				else
 				{
-					eof_menu_song_seek_bookmark_2();
+					(void) eof_menu_song_seek_bookmark_2();
 				}
 				key[KEY_2_PAD] = 0;
 			}
@@ -2521,11 +2521,11 @@ if(key[KEY_PAUSE])
 			{
 				if(KEY_EITHER_CTRL)
 				{
-					eof_menu_edit_bookmark_3();
+					(void) eof_menu_edit_bookmark_3();
 				}
 				else
 				{
-					eof_menu_song_seek_bookmark_3();
+					(void) eof_menu_song_seek_bookmark_3();
 				}
 				key[KEY_3_PAD] = 0;
 			}
@@ -2533,11 +2533,11 @@ if(key[KEY_PAUSE])
 			{
 				if(KEY_EITHER_CTRL)
 				{
-					eof_menu_edit_bookmark_4();
+					(void) eof_menu_edit_bookmark_4();
 				}
 				else
 				{
-					eof_menu_song_seek_bookmark_4();
+					(void) eof_menu_song_seek_bookmark_4();
 				}
 				key[KEY_4_PAD] = 0;
 			}
@@ -2545,11 +2545,11 @@ if(key[KEY_PAUSE])
 			{
 				if(KEY_EITHER_CTRL)
 				{
-					eof_menu_edit_bookmark_5();
+					(void) eof_menu_edit_bookmark_5();
 				}
 				else
 				{
-					eof_menu_song_seek_bookmark_5();
+					(void) eof_menu_song_seek_bookmark_5();
 				}
 				key[KEY_5_PAD] = 0;
 			}
@@ -2557,11 +2557,11 @@ if(key[KEY_PAUSE])
 			{
 				if(KEY_EITHER_CTRL)
 				{
-					eof_menu_edit_bookmark_6();
+					(void) eof_menu_edit_bookmark_6();
 				}
 				else
 				{
-					eof_menu_song_seek_bookmark_6();
+					(void) eof_menu_song_seek_bookmark_6();
 				}
 				key[KEY_6_PAD] = 0;
 			}
@@ -2569,11 +2569,11 @@ if(key[KEY_PAUSE])
 			{
 				if(KEY_EITHER_CTRL)
 				{
-					eof_menu_edit_bookmark_7();
+					(void) eof_menu_edit_bookmark_7();
 				}
 				else
 				{
-					eof_menu_song_seek_bookmark_7();
+					(void) eof_menu_song_seek_bookmark_7();
 				}
 				key[KEY_7_PAD] = 0;
 			}
@@ -2581,11 +2581,11 @@ if(key[KEY_PAUSE])
 			{
 				if(KEY_EITHER_CTRL)
 				{
-					eof_menu_edit_bookmark_8();
+					(void) eof_menu_edit_bookmark_8();
 				}
 				else
 				{
-					eof_menu_song_seek_bookmark_8();
+					(void) eof_menu_song_seek_bookmark_8();
 				}
 				key[KEY_8_PAD] = 0;
 			}
@@ -2593,11 +2593,11 @@ if(key[KEY_PAUSE])
 			{
 				if(KEY_EITHER_CTRL)
 				{
-					eof_menu_edit_bookmark_9();
+					(void) eof_menu_edit_bookmark_9();
 				}
 				else
 				{
-					eof_menu_song_seek_bookmark_9();
+					(void) eof_menu_song_seek_bookmark_9();
 				}
 				key[KEY_9_PAD] = 0;
 			}
@@ -2606,7 +2606,7 @@ if(key[KEY_PAUSE])
 	/* copy (CTRL+C) */
 		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT && key[KEY_C])
 		{
-			eof_menu_edit_copy();
+			(void) eof_menu_edit_copy();
 			key[KEY_C] = 0;
 		}
 
@@ -2643,11 +2643,11 @@ if(key[KEY_PAUSE])
 
 		if(do_old_paste)
 		{
-			eof_menu_edit_old_paste();
+			(void) eof_menu_edit_old_paste();
 		}
 		else if(do_new_paste)
 		{
-			eof_menu_edit_paste();
+			(void) eof_menu_edit_paste();
 		}
 	}//If the chart is paused and no catalog entries are playing
 }
@@ -3013,7 +3013,7 @@ void eof_editor_logic(void)
 				{
 					if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 					{	//Neither SHIFT nor CTRL are held
-						eof_menu_edit_deselect_all();
+						(void) eof_menu_edit_deselect_all();
 					}
 				}
 			}// handle initial left click
@@ -3234,10 +3234,8 @@ void eof_editor_logic(void)
 									eof_detect_difficulties(eof_song);
 								}
 								else if(note & bitmask)
-								{	//If toggling this lane on, create a new note
-									void *new_note = eof_track_add_create_note(eof_song, eof_selected_track, bitmask, eof_get_note_pos(eof_song, eof_selected_track, eof_hover_note), eof_get_note_length(eof_song, eof_selected_track, eof_hover_note), eof_note_type, NULL);
-										//Create a new note at the hover note's position, with the same length and type as the hover note
-									if(new_note)
+								{	//If toggling this lane on, create a new note at the hover note's position, with the same length and type as the hover note
+									if(eof_track_add_create_note(eof_song, eof_selected_track, bitmask, eof_get_note_pos(eof_song, eof_selected_track, eof_hover_note), eof_get_note_length(eof_song, eof_selected_track, eof_hover_note), eof_note_type, NULL))
 									{	//If the new note was created successfully
 										if(eof_mark_drums_as_cymbal)
 										{	//If the user opted to make all new drum notes cymbals automatically
@@ -3422,7 +3420,7 @@ void eof_editor_logic(void)
 		eof_show_mouse(screen);
 		if(eof_full_screen_3d)
 		{	//If full screen 3D view is in effect
-			do_menu(eof_right_click_menu_full_screen_3d_view, mouse_x, mouse_y);
+			(void) do_menu(eof_right_click_menu_full_screen_3d_view, mouse_x, mouse_y);
 			eof_clear_input();
 		}
 		else
@@ -3431,15 +3429,15 @@ void eof_editor_logic(void)
 			{
 				lpos = pos < 300 ? (eof_song->beat[eof_selected_beat]->pos / eof_zoom + 20) : 300;
 				eof_prepare_menus();
-				do_menu(eof_beat_menu, lpos, mouse_y);
+				(void) do_menu(eof_beat_menu, lpos, mouse_y);
 				eof_clear_input();
 			}
 			else if((mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
 			{	//mouse is in the fretboard area
 				if(eof_hover_note >= 0)
 				{
-					if(eof_count_selected_notes(NULL, 0) <= 0)
-					{
+					if(eof_count_selected_notes(NULL, 0) == 0)
+					{	//No notes are selected
 						eof_selection.current = eof_hover_note;
 						eof_selection.current_pos = eof_get_note_pos(eof_song, eof_selected_track, eof_selection.current);
 						if(eof_selection.track != eof_selected_track)
@@ -3465,18 +3463,18 @@ void eof_editor_logic(void)
 				eof_prepare_menus();
 				if(eof_count_selected_notes(NULL, 0) > 0)
 				{
-					do_menu(eof_right_click_menu_note, mouse_x, mouse_y);
+					(void) do_menu(eof_right_click_menu_note, mouse_x, mouse_y);
 				}
 				else
 				{
-					do_menu(eof_right_click_menu_normal, mouse_x, mouse_y);
+					(void) do_menu(eof_right_click_menu_normal, mouse_x, mouse_y);
 				}
 				eof_clear_input();
 			}
 			else if(mouse_y < eof_window_3d->y)
 			{
 				eof_prepare_menus();
-				do_menu(eof_right_click_menu_normal, mouse_x, mouse_y);
+				(void) do_menu(eof_right_click_menu_normal, mouse_x, mouse_y);
 				eof_clear_input();
 			}
 		}//Full screen 3D view is not in effect
@@ -3619,7 +3617,7 @@ void eof_vocal_editor_logic(void)
 						if(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note != EOF_LYRIC_PERCUSSION)
 							eof_mix_play_note(eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->note);
 						else
-							play_sample(eof_sound_chosen_percussion, 255.0 * (eof_percussion_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);
+							(void) play_sample(eof_sound_chosen_percussion, 255.0 * (eof_percussion_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);
 					}
 					eof_selection.current_pos = eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->pos;
 					if(KEY_EITHER_SHIFT)
@@ -3750,7 +3748,7 @@ void eof_vocal_editor_logic(void)
 				{
 					if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 					{	//Neither SHIFT nor CTRL are held
-						eof_menu_edit_deselect_all();
+						(void) eof_menu_edit_deselect_all();
 					}
 				}
 			}//handle initial left click
@@ -3986,14 +3984,14 @@ void eof_vocal_editor_logic(void)
 					{
 						if(eof_pen_lyric.note == EOF_LYRIC_PERCUSSION)
 						{	//Play the percussion at the user-specified cue volume
-							play_sample(eof_sound_chosen_percussion, 255.0 * (eof_percussion_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);
+							(void) play_sample(eof_sound_chosen_percussion, 255.0 * (eof_percussion_volume / 100.0), 127, 1000 + eof_audio_fine_tune, 0);
 						}
 						else
 						{
 							eof_mix_play_note(eof_pen_lyric.note);
 						}
 					}
-					eof_new_lyric_dialog();
+					(void) eof_new_lyric_dialog();
 				}
 			}
 			if(eof_input_mode == EOF_INPUT_REX)
@@ -4136,7 +4134,7 @@ void eof_vocal_editor_logic(void)
 		eof_show_mouse(screen);
 		if(eof_full_screen_3d)
 		{	//If full screen 3D view is in effect
-			do_menu(eof_right_click_menu_full_screen_3d_view, mouse_x, mouse_y);
+			(void) do_menu(eof_right_click_menu_full_screen_3d_view, mouse_x, mouse_y);
 			eof_clear_input();
 		}
 		else
@@ -4147,15 +4145,15 @@ void eof_vocal_editor_logic(void)
 				int lpos = pos < 300 ? (eof_song->beat[eof_selected_beat]->pos / eof_zoom + 20) : 300;
 
 				eof_prepare_menus();
-				do_menu(eof_beat_menu, lpos, mouse_y);
+				(void) do_menu(eof_beat_menu, lpos, mouse_y);
 				eof_clear_input();
 			}
 			else if((mouse_y >= eof_window_editor->y + 25 + EOF_EDITOR_RENDER_OFFSET) && (mouse_y < eof_window_editor->y + eof_screen_layout.fretboard_h + EOF_EDITOR_RENDER_OFFSET))
 			{	//mouse is in the fretboard area
 				if(eof_hover_note >= 0)
 				{
-					if(eof_count_selected_notes(NULL, 0) <= 0)
-					{
+					if(eof_count_selected_notes(NULL, 0) == 0)
+					{	//If no notes are selected
 						eof_selection.current = eof_hover_note;
 						eof_selection.current_pos = eof_song->vocal_track[tracknum]->lyric[eof_selection.current]->pos;
 						if(eof_selection.track != EOF_TRACK_VOCALS)
@@ -4181,19 +4179,19 @@ void eof_vocal_editor_logic(void)
 				eof_prepare_menus();
 				if(eof_count_selected_notes(NULL, 0) > 0)
 				{
-					do_menu(eof_right_click_menu_note, mouse_x, mouse_y);
+					(void) do_menu(eof_right_click_menu_note, mouse_x, mouse_y);
 					eof_clear_input();
 				}
 				else
 				{
-					do_menu(eof_right_click_menu_normal, mouse_x, mouse_y);
+					(void) do_menu(eof_right_click_menu_normal, mouse_x, mouse_y);
 					eof_clear_input();
 				}
 			}
 			else if(mouse_y < eof_window_3d->y)
 			{
 				eof_prepare_menus();
-				do_menu(eof_right_click_menu_normal, mouse_x, mouse_y);
+				(void) do_menu(eof_right_click_menu_normal, mouse_x, mouse_y);
 				eof_clear_input();
 			}
 		}//Full screen 3D view is not in effect
@@ -4232,7 +4230,7 @@ int eof_get_ts_text(int beat, char * buffer)
 	}
 	else if(eof_song->beat[beat]->flags & EOF_BEAT_FLAG_CUSTOM_TS)
 	{
-		uszprintf(buffer, 16, "%lu/%lu", ((eof_song->beat[beat]->flags & 0xFF000000)>>24)+1, ((eof_song->beat[beat]->flags & 0x00FF0000)>>16)+1);
+		(void) uszprintf(buffer, 16, "%lu/%lu", ((eof_song->beat[beat]->flags & 0xFF000000)>>24)+1, ((eof_song->beat[beat]->flags & 0x00FF0000)>>16)+1);
 		ret = 1;
 	}
 	else
@@ -4252,7 +4250,7 @@ int eof_get_tempo_text(int beat, char * buffer)
 	}
 
 	current_bpm = (double)60000000.0 / (double)eof_song->beat[beat]->ppqn;
-	uszprintf(buffer, 16, "%03.2f ", current_bpm);
+	(void) uszprintf(buffer, 16, "%03.2f ", current_bpm);
 
 	return 1;
 }
@@ -4285,7 +4283,7 @@ void eof_render_editor_window(void)
 		{	//If this note is in the selected instrument difficulty and would render at or after the left edge of the piano roll
 			if(drawhighlight && (eof_hover_note == i))
 			{	//If the input mode is piano roll, rex mundi or Feedback and the chart is paused, and the note is being moused over
-				eof_note_draw(eof_selected_track, i, ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 3, eof_window_editor);
+				(void) eof_note_draw(eof_selected_track, i, ((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 3, eof_window_editor);
 			}
 			else
 			{	//Render the note normally
@@ -4300,11 +4298,11 @@ void eof_render_editor_window(void)
 		{
 			if((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX) || (eof_input_mode == EOF_INPUT_FEEDBACK))
 			{
-				eof_note_draw(0, 0, 3, eof_window_editor);	//Render the pen note
+				(void) eof_note_draw(0, 0, 3, eof_window_editor);	//Render the pen note
 			}
 			else
 			{
-				eof_note_draw(0, 0, 0, eof_window_editor);	//Render the pen note
+				(void) eof_note_draw(0, 0, 0, eof_window_editor);	//Render the pen note
 			}
 		}
 	}
@@ -4360,7 +4358,7 @@ void eof_render_vocal_editor_window(void)
 		{	//If the lyric would render at or after the left edge of the piano roll
 			if(((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX)) && eof_music_paused && (eof_hover_note == i))
 			{	//If the chart is paused and the lyric is moused over
-				eof_lyric_draw(eof_song->vocal_track[tracknum]->lyric[i], ((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 3, eof_window_editor);
+				(void) eof_lyric_draw(eof_song->vocal_track[tracknum]->lyric[i], ((eof_selection.track == EOF_TRACK_VOCALS) && eof_selection.multi[i] && eof_music_paused) ? 1 : i == eof_hover_note ? 2 : 3, eof_window_editor);
 			}
 			else
 			{
@@ -4375,11 +4373,11 @@ void eof_render_vocal_editor_window(void)
 		{
 			if((eof_input_mode == EOF_INPUT_PIANO_ROLL) || (eof_input_mode == EOF_INPUT_REX))
 			{
-				eof_lyric_draw(&eof_pen_lyric, 3, eof_window_editor);
+				(void) eof_lyric_draw(&eof_pen_lyric, 3, eof_window_editor);
 			}
 			else
 			{
-				eof_lyric_draw(&eof_pen_lyric, 0, eof_window_editor);
+				(void) eof_lyric_draw(&eof_pen_lyric, 0, eof_window_editor);
 			}
 		}
 	}
@@ -4687,7 +4685,7 @@ void eof_render_editor_window_common(void)
 	}//If this track has any trill or tremolo sections
 
 	if(eof_display_waveform)
-		eof_render_waveform(eof_waveform);
+		(void) eof_render_waveform(eof_waveform);
 
 	/* draw fretboard area */
 	for(i = 0; i < numlanes; i++)
@@ -5058,13 +5056,16 @@ unsigned char eof_find_pen_note_mask(void)
 		}
 	}
 
+	if(eof_hover_piece < 0)	//If no hover piece was found
+		return 0;			//Return 0
+
 	/* see if we are inverting the lanes */
 	if(eof_inverted_notes || (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 	{	//If the user opted to invert the notes in the piano roll, or if the current track is a pro guitar/bass track, return the appropriate inverted pen mask
-		return ((1 << (lanecount - 1)) >> eof_hover_piece);	//This finds the appropriate invert mask, where mousing over the bottom most lane activates lane 1 for the pen mask
+		return ((1 << (lanecount - 1)) >> (unsigned)eof_hover_piece);	//This finds the appropriate invert mask, where mousing over the bottom most lane activates lane 1 for the pen mask (cast to unsigned because splint is too stupid to take into account that it was already checked for negativity)
 	}
 
-	return (1 << eof_hover_piece);	//Return the normal pen mask, where mousing over the top most lane activates lane 1 for the pen mask
+	return (1 << (unsigned)eof_hover_piece);	//Return the normal pen mask, where mousing over the top most lane activates lane 1 for the pen mask
 }
 
 void eof_editor_logic_common(void)
@@ -5186,7 +5187,7 @@ void eof_editor_logic_common(void)
 								{
 									eof_shift_used = 1;	//Track that the SHIFT key was used
 								}
-								eof_menu_edit_cut(eof_selected_beat, 0);
+								(void) eof_menu_edit_cut(eof_selected_beat, 0);
 							}
 						}
 						eof_song->beat[eof_selected_beat]->fpos += eof_mickeys_x * eof_zoom;
@@ -5220,7 +5221,7 @@ void eof_editor_logic_common(void)
 								{
 									eof_shift_used = 1;	//Track that the SHIFT key was used
 								}
-								eof_adjust_notes(eof_song->tags->ogg[eof_selected_ogg].midi_offset - eof_last_midi_offset);
+								(void) eof_adjust_notes(eof_song->tags->ogg[eof_selected_ogg].midi_offset - eof_last_midi_offset);
 							}
 							eof_fixup_notes(eof_song);
 						}
@@ -5234,7 +5235,7 @@ void eof_editor_logic_common(void)
 						{
 							eof_shift_used = 1;	//Track that the SHIFT key was used
 						}
-						eof_menu_edit_cut_paste(eof_selected_beat, 0);
+						(void) eof_menu_edit_cut_paste(eof_selected_beat, 0);
 						eof_calculate_beats(eof_song);
 						eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
 					}
@@ -5274,7 +5275,7 @@ void eof_editor_logic_common(void)
 				eof_music_pos = eof_music_actual_pos;
 				if(eof_music_pos - eof_av_delay < 0)
 				{
-					eof_menu_song_seek_start();
+					(void) eof_menu_song_seek_start();
 				}
 				eof_mix_seek(eof_music_actual_pos);
 			}
@@ -5386,7 +5387,7 @@ void eof_editor_logic_common(void)
 				eof_blclick_released = 1;
 				if(eof_selected_control == 0)
 				{
-					eof_menu_song_seek_start();
+					(void) eof_menu_song_seek_start();
 				}
 				else if(eof_selected_control == 2)
 				{
@@ -5394,7 +5395,7 @@ void eof_editor_logic_common(void)
 				}
 				else if(eof_selected_control == 4)
 				{
-					eof_menu_song_seek_end();
+					(void) eof_menu_song_seek_end();
 				}
 				eof_selected_control = -1;
 			}

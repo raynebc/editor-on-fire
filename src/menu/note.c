@@ -582,7 +582,7 @@ void eof_prepare_note_menu(void)
 			eof_menu_sp_copy_menu[i].flags = 0;
 			if((i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 			{	//If the track exists, copy its name into the string used by the track menu
-				ustrncpy(eof_menu_sp_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE);
+				(void) ustrncpy(eof_menu_sp_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE);
 					//Copy the track name to the menu string
 			}
 			else
@@ -613,7 +613,7 @@ void eof_prepare_note_menu(void)
 			eof_menu_solo_copy_menu[i].flags = 0;
 			if((i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 			{	//If the track exists, copy its name into the string used by the track menu
-				ustrncpy(eof_menu_solo_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE);
+				(void) ustrncpy(eof_menu_solo_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE);
 					//Copy the track name to the menu string
 			}
 			else
@@ -658,7 +658,7 @@ void eof_prepare_note_menu(void)
 			eof_menu_arpeggio_copy_menu[i].flags = 0;
 			if((i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 			{	//If the track exists, copy its name into the string used by the track menu
-				ustrncpy(eof_menu_arpeggio_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE);
+				(void) ustrncpy(eof_menu_arpeggio_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE);
 					//Copy the track name to the menu string
 			}
 			else
@@ -883,7 +883,7 @@ void eof_prepare_note_menu(void)
 					eof_menu_thin_notes_menu[i].flags = D_DISABLED;
 					if((i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 					{	//If the track exists, copy its name into the string used by the track menu
-						ustrncpy(eof_menu_thin_notes_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE);
+						(void) ustrncpy(eof_menu_thin_notes_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE);
 							//Copy the track name to the menu string
 					}
 					else
@@ -923,7 +923,7 @@ void eof_prepare_note_menu(void)
 				eof_menu_trill_copy_menu[i].flags = 0;
 				if((i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 				{	//If the track exists, copy its name into the string used by the track menu
-					ustrncpy(eof_menu_trill_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE);
+					(void) ustrncpy(eof_menu_trill_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE);
 						//Copy the track name to the menu string
 				}
 				else
@@ -954,7 +954,7 @@ void eof_prepare_note_menu(void)
 				eof_menu_tremolo_copy_menu[i].flags = 0;
 				if((i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 				{	//If the track exists, copy its name into the string used by the track menu
-					ustrncpy(eof_menu_tremolo_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE);
+					(void) ustrncpy(eof_menu_tremolo_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE);
 						//Copy the track name to the menu string
 				}
 				else
@@ -1284,7 +1284,7 @@ int eof_menu_note_delete(void)
 {
 	unsigned long i, d = 0;
 
-	eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+	(void) eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{
@@ -1319,7 +1319,7 @@ int eof_menu_note_toggle_green(void)
 	unsigned long flags, note, tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_count_selected_notes(NULL, 0) <= 0)
+	if(eof_count_selected_notes(NULL, 0) == 0)
 	{
 		return 1;
 	}
@@ -1365,7 +1365,7 @@ int eof_menu_note_toggle_red(void)
 	unsigned long note, tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_count_selected_notes(NULL, 0) <= 0)
+	if(eof_count_selected_notes(NULL, 0) == 0)
 	{
 		return 1;
 	}
@@ -1401,7 +1401,7 @@ int eof_menu_note_toggle_yellow(void)
 	unsigned long flags, note;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_count_selected_notes(NULL, 0) <= 0)
+	if(eof_count_selected_notes(NULL, 0) == 0)
 	{
 		return 1;
 	}
@@ -1447,7 +1447,7 @@ int eof_menu_note_toggle_blue(void)
 	unsigned long flags, note;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_count_selected_notes(NULL, 0) <= 0)
+	if(eof_count_selected_notes(NULL, 0) == 0)
 	{
 		return 1;
 	}
@@ -1493,7 +1493,7 @@ int eof_menu_note_toggle_purple(void)
 	unsigned long flags, note;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_count_selected_notes(NULL, 0) <= 0)
+	if(eof_count_selected_notes(NULL, 0) == 0)
 	{
 		return 1;
 	}
@@ -1542,7 +1542,7 @@ int eof_menu_note_toggle_orange(void)
 	{
 		return 1;	//Don't do anything if there is less than 6 tracks available
 	}
-	if(eof_count_selected_notes(NULL, 0) <= 0)
+	if(eof_count_selected_notes(NULL, 0) == 0)
 	{
 		return 1;
 	}
@@ -1589,7 +1589,7 @@ int eof_menu_note_clear_green(void)
 	unsigned long note, tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_count_selected_notes(NULL, 0) <= 0)
+	if(eof_count_selected_notes(NULL, 0) == 0)
 	{
 		return 1;
 	}
@@ -1642,7 +1642,7 @@ int eof_menu_note_clear_red(void)
 	unsigned long note, tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_count_selected_notes(NULL, 0) <= 0)
+	if(eof_count_selected_notes(NULL, 0) == 0)
 	{
 		return 1;
 	}
@@ -1695,7 +1695,7 @@ int eof_menu_note_clear_yellow(void)
 	unsigned long note, tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_count_selected_notes(NULL, 0) <= 0)
+	if(eof_count_selected_notes(NULL, 0) == 0)
 	{
 		return 1;
 	}
@@ -1748,7 +1748,7 @@ int eof_menu_note_clear_blue(void)
 	unsigned long note, tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_count_selected_notes(NULL, 0) <= 0)
+	if(eof_count_selected_notes(NULL, 0) == 0)
 	{
 		return 1;
 	}
@@ -1801,7 +1801,7 @@ int eof_menu_note_clear_purple(void)
 	unsigned long note, tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_count_selected_notes(NULL, 0) <= 0)
+	if(eof_count_selected_notes(NULL, 0) == 0)
 	{
 		return 1;
 	}
@@ -1858,7 +1858,7 @@ int eof_menu_note_clear_orange(void)
 	{
 		return 1;	//Don't do anything if there is less than 6 tracks available
 	}
-	if(eof_count_selected_notes(NULL, 0) <= 0)
+	if(eof_count_selected_notes(NULL, 0) == 0)
 	{
 		return 1;
 	}
@@ -2365,7 +2365,7 @@ int eof_menu_note_create_bre(void)
 	/* create the BRE marking note */
 	if((first_pos != 0) && (last_pos != eof_chart_length))
 	{
-		eof_track_add_create_note(eof_song, eof_selected_track, 31, first_pos, last_pos - first_pos, EOF_NOTE_SPECIAL, NULL);
+		(void) eof_track_add_create_note(eof_song, eof_selected_track, 31, first_pos, last_pos - first_pos, EOF_NOTE_SPECIAL, NULL);
 	}
 	if(note_selection_updated)
 	{	//If the only note modified was the seek hover note
@@ -2387,13 +2387,13 @@ static void eof_split_lyric(int lyric)
 		return;
 
 	/* see how many pieces there are */
-	for(i = 0; i < strlen(eof_song->vocal_track[tracknum]->lyric[lyric]->text); i++)
+	for(i = 0; i < (unsigned long)strlen(eof_song->vocal_track[tracknum]->lyric[lyric]->text); i++)
 	{
 		lastc = c;
 		c = eof_song->vocal_track[tracknum]->lyric[lyric]->text[i];
 		if((c == ' ') && (lastc != ' '))
 		{
-			if((i + 1 < strlen(eof_song->vocal_track[tracknum]->lyric[lyric]->text)) && (eof_song->vocal_track[tracknum]->lyric[lyric]->text[i+1] != ' '))
+			if((i + 1 < (unsigned long)strlen(eof_song->vocal_track[tracknum]->lyric[lyric]->text)) && (eof_song->vocal_track[tracknum]->lyric[lyric]->text[i+1] != ' '))
 			{	//Only count this as a piece if there is a non space character after this space
 				pieces++;
 			}
@@ -2413,13 +2413,13 @@ static void eof_split_lyric(int lyric)
 	}
 
 	/* split at spaces */
-	strtok(eof_song->vocal_track[tracknum]->lyric[lyric]->text, " ");
+	(void) strtok(eof_song->vocal_track[tracknum]->lyric[lyric]->text, " ");
 	do
 	{
 		token = strtok(NULL, " ");
 		if(token)
 		{
-			eof_track_add_create_note(eof_song, eof_selected_track, eof_song->vocal_track[tracknum]->lyric[lyric]->note, eof_song->vocal_track[tracknum]->lyric[lyric]->pos + ((double)l / pieces) * piece, (double)l / pieces - 20.0, 0, token);
+			(void) eof_track_add_create_note(eof_song, eof_selected_track, eof_song->vocal_track[tracknum]->lyric[lyric]->note, eof_song->vocal_track[tracknum]->lyric[lyric]->pos + ((double)l / pieces) * piece, (double)l / pieces - 20.0, 0, token);
 			piece++;
 		}
 	} while(token != NULL);
@@ -2498,7 +2498,7 @@ int eof_menu_solo_mark(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(insp < 0)
 	{
-		eof_track_add_solo(eof_song, eof_selected_track, sel_start, sel_end);
+		(void) eof_track_add_solo(eof_song, eof_selected_track, sel_start, sel_end);
 	}
 	else
 	{
@@ -2546,20 +2546,9 @@ int eof_menu_solo_unmark(void)
 
 int eof_menu_solo_erase_all(void)
 {
-	unsigned long ctr;
-	EOF_PHRASE_SECTION *sectionptr;
-
-	if(alert(NULL, "Erase all solos from this track?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-	{
+	if(eof_get_num_solos(eof_song, eof_selected_track) && (alert(NULL, "Erase all solos from this track?", NULL, "&Yes", "&No", 'y', 'n') == 1))
+	{	//If the active track has solos and the user opts to delete them
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		for(ctr = 0; ctr < eof_get_num_solos(eof_song, eof_selected_track); ctr++)
-		{	//For each existing solo section
-			sectionptr = eof_get_solo(eof_song, eof_selected_track, ctr);
-			if(sectionptr->name)
-			{	//If this phrase has a name
-				free(sectionptr->name);	//Free it
-			}
-		}
 		eof_set_num_solos(eof_song, eof_selected_track, 0);
 	}
 	return 1;
@@ -2599,7 +2588,7 @@ int eof_menu_star_power_mark(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(insp < 0)
 	{
-		eof_track_add_star_power_path(eof_song, eof_selected_track, sel_start, sel_end);
+		(void) eof_track_add_star_power_path(eof_song, eof_selected_track, sel_start, sel_end);
 	}
 	else
 	{
@@ -2652,20 +2641,9 @@ int eof_menu_star_power_unmark(void)
 
 int eof_menu_star_power_erase_all(void)
 {
-	unsigned long ctr;
-	EOF_PHRASE_SECTION *sectionptr;
-
-	if(alert(NULL, "Erase all star power from this track?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-	{
+	if(eof_get_num_star_power_paths(eof_song, eof_selected_track) && (alert(NULL, "Erase all star power from this track?", NULL, "&Yes", "&No", 'y', 'n') == 1))
+	{	//If the active track has star power sections and the user opts to delete them
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		for(ctr = 0; ctr < eof_get_num_star_power_paths(eof_song, eof_selected_track); ctr++)
-		{	//For each existing star power section
-			sectionptr = eof_get_star_power_path(eof_song, eof_selected_track, ctr);
-			if(sectionptr->name)
-			{	//If this phrase has a name
-				free(sectionptr->name);	//Free it
-			}
-		}
 		eof_set_num_star_power_paths(eof_song, eof_selected_track, 0);
 	}
 	eof_determine_phrase_status(eof_song, eof_selected_track);
@@ -2716,7 +2694,7 @@ int eof_menu_lyric_line_mark(void)
 			eof_vocal_track_delete_line(eof_song->vocal_track[tracknum], j-1);
 		}
 	}
-	eof_vocal_track_add_line(eof_song->vocal_track[tracknum], sel_start, sel_end);
+	(void) eof_vocal_track_add_line(eof_song->vocal_track[tracknum], sel_start, sel_end);
 
 	if(eof_song->vocal_track[tracknum]->lines >0)
 		eof_song->vocal_track[tracknum]->line[eof_song->vocal_track[tracknum]->lines-1].flags = originalflags;	//Restore the line's flags
@@ -3054,11 +3032,11 @@ int eof_transpose_possible(int dir)
 	/* no notes, no transpose */
 	if(eof_vocals_selected)
 	{
-		if(eof_get_track_size(eof_song, eof_selected_track) <= 0)
+		if(eof_get_track_size(eof_song, eof_selected_track) == 0)
 		{
 			retval = 0;
 		}
-		else if(eof_count_selected_notes(NULL, 1) <= 0)
+		else if(eof_count_selected_notes(NULL, 1) == 0)
 		{
 			retval = 0;
 		}
@@ -3098,11 +3076,11 @@ int eof_transpose_possible(int dir)
 		{	//If the active track has 4 lanes (ie. PART DANCE), make lane 3 the highest that can transpose up
 			max = 8;
 		}
-		if(eof_get_track_size(eof_song, eof_selected_track) <= 0)
+		if(eof_get_track_size(eof_song, eof_selected_track) == 0)
 		{
 			retval = 0;
 		}
-		else if(eof_count_selected_notes(NULL, 1) <= 0)
+		else if(eof_count_selected_notes(NULL, 1) == 0)
 		{
 			retval = 0;
 		}
@@ -3483,11 +3461,11 @@ int eof_menu_note_edit_pro_guitar_note(void)
 					}
 					if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] == 0xFF)
 					{	//If this string is muted with no fret value specified
-						snprintf(eof_fret_strings[ctr], sizeof(eof_fret_strings[ctr]) - 1, "X");
+						(void) snprintf(eof_fret_strings[ctr], sizeof(eof_fret_strings[ctr]) - 1, "X");
 					}
 					else
 					{
-						snprintf(eof_fret_strings[ctr], sizeof(eof_fret_strings[ctr]) - 1, "%d", eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] & 0x7F);	//Mask out the MSB to obtain the fret value
+						(void) snprintf(eof_fret_strings[ctr], sizeof(eof_fret_strings[ctr]) - 1, "%d", eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] & 0x7F);	//Mask out the MSB to obtain the fret value
 					}
 				}
 				else
@@ -3709,7 +3687,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 					}//For each of the 6 supported strings
 					if(bitmask == 0)
 					{	//If edits results in selected notes having no played strings
-						eof_menu_note_delete();		//All selected notes must be deleted
+						(void) eof_menu_note_delete();		//All selected notes must be deleted
 						eof_show_mouse(NULL);
 						eof_cursor_visible = 1;
 						eof_pen_visible = 1;
@@ -3872,7 +3850,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 										eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 										undo_made = 1;
 									}
-									ustrncpy(eof_get_note_name(eof_song, eof_selected_track, ctr), eof_note_edit_name, sizeof(junknote.name));
+									(void) ustrncpy(eof_get_note_name(eof_song, eof_selected_track, ctr), eof_note_edit_name, (int)sizeof(junknote.name));
 								}
 							}
 						}
@@ -3906,11 +3884,11 @@ int eof_menu_note_edit_pro_guitar_note(void)
 							{	//If this name isn't one the user already refused
 								if(eof_get_pro_guitar_note_fret_string(eof_song->pro_guitar_track[tracknum], eof_selection.current, pro_guitar_string))
 								{	//If the note's frets can be represented in string format, specify it in the prompt
-									snprintf(autoprompt, sizeof(autoprompt) - 1, "Set the name of selected notes (%s) to \"%s\"?",pro_guitar_string, newname);
+									(void) snprintf(autoprompt, sizeof(autoprompt) - 1, "Set the name of selected notes (%s) to \"%s\"?",pro_guitar_string, newname);
 								}
 								else
 								{	//Otherwise use a generic prompt
-									snprintf(autoprompt, sizeof(autoprompt) - 1, "Set selected notes' name to \"%s\"?",newname);
+									(void) snprintf(autoprompt, sizeof(autoprompt) - 1, "Set selected notes' name to \"%s\"?",newname);
 								}
 								if(alert(NULL, autoprompt, NULL, "&Yes", "&No", 'y', 'n') == 1)
 								{	//If the user opts to assign this note's name to the selected notes
@@ -3926,7 +3904,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 													eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 													undo_made = 1;
 												}
-												ustrncpy(tempptr, newname, sizeof(junknote.name));	//Update the note's name to the user selection
+												(void) ustrncpy(tempptr, newname, (int)sizeof(junknote.name));	//Update the note's name to the user selection
 											}
 										}
 									}
@@ -4005,11 +3983,11 @@ int eof_menu_note_edit_pro_guitar_note(void)
 								}
 								if(eof_get_pro_guitar_note_fret_string(eof_song->pro_guitar_track[tracknum], eof_selection.current, pro_guitar_string))
 								{	//If the note's frets can be represented in string format, specify it in the prompt
-									snprintf(autoprompt, sizeof(autoprompt) - 1, "Set the legacy bitmask of selected notes (%s) to \"%s\"?",pro_guitar_string, autobitmask);
+									(void) snprintf(autoprompt, sizeof(autoprompt) - 1, "Set the legacy bitmask of selected notes (%s) to \"%s\"?",pro_guitar_string, autobitmask);
 								}
 								else
 								{	//Otherwise use a generic prompt
-									snprintf(autoprompt, sizeof(autoprompt) - 1, "Set selected notes' legacy bitmask to \"%s\"?",autobitmask);
+									(void) snprintf(autoprompt, sizeof(autoprompt) - 1, "Set selected notes' legacy bitmask to \"%s\"?",autobitmask);
 								}
 								if(alert(NULL, autoprompt, NULL, "&Yes", "&No", 'y', 'n') == 1)
 								{	//If the user opts to assign this note's legacy bitmask to the edited note
@@ -4167,15 +4145,15 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 			{	//If this string is already defined as being in use, copy its fret value to the string
 				if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] == 0xFF)
 				{	//If this string is muted with no fret value specified
-					snprintf(eof_fret_strings[ctr], sizeof(eof_fret_strings[ctr]) - 1, "X");
+					(void) snprintf(eof_fret_strings[ctr], sizeof(eof_fret_strings[ctr]) - 1, "X");
 				}
 				else
 				{
-					snprintf(eof_fret_strings[ctr], sizeof(eof_fret_strings[ctr]) - 1, "%d", eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] & 0x7F);	//Mask out the MSB to obtain the fret value
+					(void) snprintf(eof_fret_strings[ctr], sizeof(eof_fret_strings[ctr]) - 1, "%d", eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->frets[ctr] & 0x7F);	//Mask out the MSB to obtain the fret value
 				}
 				if(eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->finger[ctr] != 0)
 				{	//If the finger used to fret this string is defined
-					snprintf(eof_finger_strings[ctr], sizeof(eof_finger_strings[ctr]) - 1, "%d", eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->finger[ctr]);	//Create the finger string
+					(void) snprintf(eof_finger_strings[ctr], sizeof(eof_finger_strings[ctr]) - 1, "%d", eof_song->pro_guitar_track[tracknum]->note[eof_selection.current]->finger[ctr]);	//Create the finger string
 				}
 				else
 				{
@@ -4331,7 +4309,7 @@ int eof_menu_note_edit_pro_guitar_note_frets_fingers(char function, char *undo_m
 						}//For each of the 6 supported strings
 						if(bitmask == 0)
 						{	//If edits results in selected notes having no played strings
-							eof_menu_note_delete();		//All selected notes must be deleted
+							(void) eof_menu_note_delete();		//All selected notes must be deleted
 							eof_show_mouse(NULL);
 							eof_cursor_visible = 1;
 							eof_pen_visible = 1;
@@ -4466,7 +4444,7 @@ int eof_correct_chord_fingerings_option(char report, char *undo_made)
 						eof_selection.current = ctr2;	//Select this note
 						eof_selection.track = ctr;		//Select this track
 						eof_selection.multi[ctr2] = 1;	//Select this note in the selection array
-						eof_menu_track_selected_track_number(ctr);	//Change the active track
+						(void) eof_menu_track_selected_track_number(ctr);	//Change the active track
 						eof_note_type = tp->note[ctr2]->type;	//Set the note's difficulty as the active difficulty
 						eof_set_seek_position(tp->note[ctr2]->pos + eof_av_delay);
 						eof_render();					//Render the track being checked so the user knows which track a note is being edited from
@@ -4615,7 +4593,7 @@ int eof_menu_note_toggle_bend(void)
 	}
 	if(eof_write_rs_files && bends_present)
 	{	//If the user wants to save Rocksmith capable files, prompt to set the strength of bend notes
-		eof_pro_guitar_note_bend_strength_no_save();	//Don't make another undo state
+		(void) eof_pro_guitar_note_bend_strength_no_save();	//Don't make another undo state
 	}
 	if(note_selection_updated)
 	{	//If the only note modified was the seek hover note
@@ -4777,7 +4755,7 @@ int eof_menu_note_toggle_slide_up(void)
 	}
 	if(eof_write_rs_files && slides_present)
 	{	//If the user wants to save Rocksmith capable files, prompt to set the ending fret for the slide notes
-		eof_pro_guitar_note_slide_end_fret_no_save();	//Don't make another undo state
+		(void) eof_pro_guitar_note_slide_end_fret_no_save();	//Don't make another undo state
 	}
 	eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes to adjust the slide note's length as appropriate
 	if(note_selection_updated)
@@ -4828,7 +4806,7 @@ int eof_menu_note_toggle_slide_down(void)
 	}
 	if(eof_write_rs_files && slides_present)
 	{	//If the user wants to save Rocksmith capable files, prompt to set the ending fret for the slide notes
-		eof_pro_guitar_note_slide_end_fret_no_save();	//Don't make another undo state
+		(void) eof_pro_guitar_note_slide_end_fret_no_save();	//Don't make another undo state
 	}
 	eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes to adjust the slide note's length as appropriate
 	if(note_selection_updated)
@@ -4992,7 +4970,7 @@ int eof_menu_arpeggio_mark(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(!existingphrase)
 	{	//If the selected notes are not within an existing arpeggio phrase, create one applying to the active difficulty
-		eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, sel_start, sel_end, 0, NULL);
+		(void) eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, sel_start, sel_end, 0, NULL);
 	}
 	else
 	{	//Otherwise edit the existing phrase
@@ -5134,7 +5112,7 @@ int eof_menu_trill_mark(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(!existingphrase)
 	{	//If the selected notes are not within an existing trill phrase, create one
-		eof_track_add_section(eof_song, eof_selected_track, EOF_TRILL_SECTION, 0, sel_start, sel_end, 0, NULL);
+		(void) eof_track_add_section(eof_song, eof_selected_track, EOF_TRILL_SECTION, 0, sel_start, sel_end, 0, NULL);
 	}
 	else
 	{	//Otherwise edit the existing phrase
@@ -5201,7 +5179,7 @@ int eof_menu_tremolo_mark(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(!existingphrase)
 	{	//If the selected notes are not within an existing tremolo phrase, create one
-		eof_track_add_section(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, 0, sel_start, sel_end, 0, NULL);
+		(void) eof_track_add_section(eof_song, eof_selected_track, EOF_TREMOLO_SECTION, 0, sel_start, sel_end, 0, NULL);
 	}
 	else
 	{	//Otherwise edit the existing phrase
@@ -5268,7 +5246,7 @@ int eof_menu_slider_mark(void)
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 	if(!existingphrase)
 	{	//If the selected notes are not within an existing slider phrase, create one
-		eof_track_add_section(eof_song, eof_selected_track, EOF_SLIDER_SECTION, 0, sel_start, sel_end, 0, NULL);
+		(void) eof_track_add_section(eof_song, eof_selected_track, EOF_SLIDER_SECTION, 0, sel_start, sel_end, 0, NULL);
 	}
 	else
 	{	//Otherwise edit the existing phrase
@@ -5531,7 +5509,7 @@ int eof_menu_note_edit_name(void)
 						if(auto_apply)
 						{	//If applying automatically detected names, get the name of this note
 							eof_etext[0] = '\0';	//Empty the string, so that it won't assign a name unless it is detected
-							eof_build_note_name(eof_song, eof_selected_track, i, eof_etext);	//Detect the name of this chord
+							(void) eof_build_note_name(eof_song, eof_selected_track, i, eof_etext);	//Detect the name of this chord
 						}
 						if(ustricmp(notename, eof_etext))
 						{	//If the updated string (eof_etext) is different from the note's existing name
@@ -5804,7 +5782,7 @@ int eof_menu_copy_solos_track_number(EOF_SONG *sp, int sourcetrack, int desttrac
 		ptr = eof_get_solo(sp, sourcetrack, ctr);
 		if(ptr)
 		{	//If this phrase could be found
-			eof_track_add_solo(sp, desttrack, ptr->start_pos, ptr->end_pos);	//Copy it to the destination track
+			(void) eof_track_add_solo(sp, desttrack, ptr->start_pos, ptr->end_pos);	//Copy it to the destination track
 		}
 	}
 	eof_determine_phrase_status(eof_song, eof_selected_track);
@@ -5899,7 +5877,7 @@ int eof_menu_copy_sp_track_number(EOF_SONG *sp, int sourcetrack, int desttrack)
 		ptr = eof_get_star_power_path(sp, sourcetrack, ctr);
 		if(ptr)
 		{	//If this phrase could be found
-			eof_track_add_star_power_path(sp, desttrack, ptr->start_pos, ptr->end_pos);	//Copy it to the destination track
+			(void) eof_track_add_star_power_path(sp, desttrack, ptr->start_pos, ptr->end_pos);	//Copy it to the destination track
 		}
 	}
 	eof_determine_phrase_status(eof_song, eof_selected_track);
@@ -5994,7 +5972,7 @@ int eof_menu_copy_arpeggio_track_number(EOF_SONG *sp, int sourcetrack, int destt
 		ptr = eof_get_arpeggio(sp, sourcetrack, ctr);
 		if(ptr)
 		{	//If this phrase could be found
-			eof_track_add_section(sp, desttrack, EOF_ARPEGGIO_SECTION, ptr->difficulty, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the destination track
+			(void) eof_track_add_section(sp, desttrack, EOF_ARPEGGIO_SECTION, ptr->difficulty, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the destination track
 		}
 	}
 	eof_determine_phrase_status(eof_song, eof_selected_track);
@@ -6089,7 +6067,7 @@ int eof_menu_copy_trill_track_number(EOF_SONG *sp, int sourcetrack, int desttrac
 		ptr = eof_get_trill(sp, sourcetrack, ctr);
 		if(ptr)
 		{	//If this phrase could be found
-			eof_track_add_section(sp, desttrack, EOF_TRILL_SECTION, ptr->difficulty, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the destination track
+			(void) eof_track_add_section(sp, desttrack, EOF_TRILL_SECTION, ptr->difficulty, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the destination track
 		}
 	}
 	eof_determine_phrase_status(eof_song, eof_selected_track);
@@ -6184,7 +6162,7 @@ int eof_menu_copy_tremolo_track_number(EOF_SONG *sp, int sourcetrack, int desttr
 		ptr = eof_get_tremolo(sp, sourcetrack, ctr);
 		if(ptr)
 		{	//If this phrase could be found
-			eof_track_add_section(sp, desttrack, EOF_TREMOLO_SECTION, ptr->difficulty, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the destination track
+			(void) eof_track_add_section(sp, desttrack, EOF_TREMOLO_SECTION, ptr->difficulty, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the destination track
 		}
 	}
 	eof_determine_phrase_status(eof_song, eof_selected_track);
@@ -6886,7 +6864,7 @@ int eof_pro_guitar_note_slide_end_fret(char undo)
 	}
 	else
 	{	//Otherwise write the ending fret into the string
-		snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", np->slideend);
+		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", np->slideend);
 	}
 
 	if(eof_popup_dialog(eof_pro_guitar_note_slide_end_fret_dialog, 2) == 3)
@@ -7041,7 +7019,7 @@ int eof_pro_guitar_note_bend_strength(char undo)
 	}
 	else
 	{	//Otherwise write the ending fret into the string
-		snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", np->bendstrength);
+		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", np->bendstrength);
 	}
 
 	if(eof_popup_dialog(eof_pro_guitar_note_bend_strength_dialog, 2) == 3)
@@ -7168,7 +7146,7 @@ int eof_note_menu_read_gp_lyric_texts(void)
 	if(!fp)
 	{
 		allegro_message("Couldn't open file:  \"%s\"", strerror(errno));
-		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError loading:  Cannot open input .eof file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError loading:  Cannot open input .eof file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
 		eof_log(eof_log_string, 1);
 		return 0;
 	}
@@ -7193,7 +7171,7 @@ int eof_note_menu_read_gp_lyric_texts(void)
 				if(pack_getc(fp) != '\n')
 				{	//If it was followed by the rest of the sequence (newline)
 					allegro_message("Error:  Malformed text file?");
-					pack_fclose(fp);
+					(void) pack_fclose(fp);
 					return 0;
 				}
 				if(!last_text_entry_was_linebreak)
@@ -7240,6 +7218,6 @@ int eof_note_menu_read_gp_lyric_texts(void)
 		eof_set_note_name(eof_song, EOF_TRACK_VOCALS, ctr, buffer);	//Update the text of the lyric in the chart
 	}
 
-	pack_fclose(fp);
+	(void) pack_fclose(fp);
 	return 1;
 }

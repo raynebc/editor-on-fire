@@ -29,7 +29,7 @@ void LRC_Load(FILE *inf)
 	char *temp=NULL,*temp2=NULL;	//Used for string processing
 	unsigned long ctr=0;
 	unsigned long processedctr=0;	//The current line number being processed in the text file
-	unsigned long maxlinelength;	//I will count the length of the longest line (including NULL char/newline) in the
+	size_t maxlinelength;	//I will count the length of the longest line (including NULL char/newline) in the
 									//input file so I can create a buffer large enough to read any line into
 	unsigned long startstamp=0,endstamp=0,timestamp=0;
 	char lyricinprogress=0;
@@ -71,7 +71,7 @@ void LRC_Load(FILE *inf)
 	Lyrics.OffsetStringID=DuplicateString("[offset");
 
 	processedctr=0;			//This will be set to 1 at the beginning of the main while loop
-	while(fgets(buffer,maxlinelength,inf) != NULL)		//Read lines until end of file is reached, don't exit on EOF
+	while(fgets(buffer,(int)maxlinelength,inf) != NULL)		//Read lines until end of file is reached, don't exit on EOF
 	{
 		processedctr++;
 
@@ -139,7 +139,7 @@ void LRC_Load(FILE *inf)
 			{
 				if((temp[0] == '\0') || (temp[0] == '\r') || (temp[0] == '\n'))
 				{
-					puts("Error: Unexpected end of buffer encountered\nAborting");
+					(void) puts("Error: Unexpected end of buffer encountered\nAborting");
 					exit_wrapper(1);
 				}
 
@@ -185,7 +185,7 @@ void LRC_Load(FILE *inf)
 	{	//If a line of lyrics doesn't end in a timestamp, and there are no other lines,
 		//calculate the mean duration of all lyrics and use that as the duration for this last piece
 		mean=0;
-		if(Lyrics.verbose)	puts("Warning: There is no ending timestamp for the last lyric.  One will be created.");
+		if(Lyrics.verbose)	(void) puts("Warning: There is no ending timestamp for the last lyric.  One will be created.");
 
 		for(templine=Lyrics.lines;templine!=NULL;templine=templine->next)	//For each line of lyrics
 		{
@@ -194,7 +194,7 @@ void LRC_Load(FILE *inf)
 		}
 		mean+=0.5;	//Add 0.5 so it will round to nearest integer when added to startstamp below
 		AddLyricPiece(buffer2,startstamp,startstamp+mean,PITCHLESS,groupswithnext);	//Write lyric with no defined pitch
-		if(Lyrics.verbose)	putchar('\n');
+		if(Lyrics.verbose)	(void) putchar('\n');
 	}
 
 	ForceEndLyricLine();
@@ -424,7 +424,7 @@ unsigned long ConvertLRCTimestamp(char **ptr,int *errorstatus)
 		conversion=atol(temp);	//get integer conversion
 		if(conversion<1)	//Values of 0 are errors from atol(), negative values are not allowed for timestamps
 		{
-			puts("Error converting string to integer\nAborting");
+			(void) puts("Error converting string to integer\nAborting");
 		if(errorstatus != NULL)
 		{
 			*errorstatus=2;
@@ -444,7 +444,7 @@ unsigned long ConvertLRCTimestamp(char **ptr,int *errorstatus)
 		conversion=atol(temp);	//get integer conversion
 		if(conversion<1)	//Values of 0 are errors from atol(), negative values are not allowed for timestamps
 		{
-			puts("Error converting string to integer\nAborting");
+			(void) puts("Error converting string to integer\nAborting");
 			if(errorstatus != NULL)
 			{
 				*errorstatus=3;
@@ -464,7 +464,7 @@ unsigned long ConvertLRCTimestamp(char **ptr,int *errorstatus)
 		conversion=atol(temp);	//get integer conversion
 		if(conversion<1)	//Values of 0 are errors from atol(), negative values are not allowed for timestamps
 		{
-			puts("Error converting string to integer\nAborting");
+			(void) puts("Error converting string to integer\nAborting");
 			if(errorstatus != NULL)
 			{
 				*errorstatus=4;
@@ -548,7 +548,7 @@ void Export_LRC(FILE *outf)
 	}
 
 //Write lyrics
-	if(Lyrics.verbose)	puts("Writing lyrics");
+	if(Lyrics.verbose)	(void) puts("Writing lyrics");
 
 	curline=Lyrics.lines;	//Point lyric line conductor to first line of lyrics
 
@@ -591,7 +591,7 @@ void Export_LRC(FILE *outf)
 
 		curline=curline->next;	//Advance to next line of lyrics
 
-		if(Lyrics.verbose)	putchar('\n');
+		if(Lyrics.verbose)	(void) putchar('\n');
 	}//end while(curline != NULL)
 
 	if(Lyrics.verbose)	printf("\nLRC export complete.  %lu lyrics written\n",Lyrics.piececount);

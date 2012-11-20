@@ -52,14 +52,14 @@ int eof_filebuffer_memcpy(filebuffer *fb, void *ptr, size_t num);
 int eof_filebuffer_read_unicode_chars(filebuffer *fb, char *ptr, unsigned long num);
 	//Reads the specified number of Unicode characters from the buffered file, storing as ASCII characters into ptr
 	//Returns EOF on error, otherwise returns 0
-unsigned long eof_crc32_reflect(unsigned long value, int numbits);
+unsigned long eof_crc32_reflect(unsigned long value, unsigned numbits);
 	//Returns the passed value with the (numbits) number of low order bits reflected (swapped)
 unsigned long eof_crc32(const char *string);
 	//Returns the CRC-32 checksum of the specified string, or 0 on error
 unsigned long eof_gh_checksum(const char *string);
 	//Returns the GH checksum for the string (CRC32 XOR'd by 0xFFFFFFFF)
 	//If string is NULL, then a value of 0 is returned
-int eof_filebuffer_find_bytes(filebuffer *fb, const void *bytes, unsigned long searchlen, unsigned char seektype);
+int eof_filebuffer_find_bytes(filebuffer *fb, const void *bytes, size_t searchlen, unsigned char seektype);
 	//Searches from the current buffer position for the first match of the sequence of byte values
 	//bytes is an array of byte values to find, and searchlen is the number of bytes defined in the array
 	//If no match is found, the buffer position is returned to what it was when the function was called

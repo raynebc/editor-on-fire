@@ -180,7 +180,7 @@ int eof_popup_dialog(DIALOG * dp, int n)
 		{
 			if(ustrlen(dp[14].dp) != oldlen)
 			{
-				object_message(&dp[14], MSG_DRAW, 0);
+				(void) object_message(&dp[14], MSG_DRAW, 0);
 				oldlen = ustrlen(dp[14].dp);
 			}
 		}
@@ -191,7 +191,7 @@ int eof_popup_dialog(DIALOG * dp, int n)
 			if((dp[3].flags & D_SELECTED) && (ustrlen(eof_etext4) <= 0))
 			{
 				dp[5].flags = D_DISABLED;
-				object_message(&dp[5], MSG_DRAW, 0);
+				(void) object_message(&dp[5], MSG_DRAW, 0);
 				dflag = 1;
 			}
 			else
@@ -199,7 +199,7 @@ int eof_popup_dialog(DIALOG * dp, int n)
 				dp[5].flags = D_EXIT;
 				if(dflag)
 				{
-					object_message(&dp[5], MSG_DRAW, 0);
+					(void) object_message(&dp[5], MSG_DRAW, 0);
 					dflag = 0;
 				}
 			}
