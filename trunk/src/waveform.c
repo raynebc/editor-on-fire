@@ -293,7 +293,7 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 	oggbuffer = eof_buffer_file(oggfilename, 0);
 	if(!oggbuffer)
 	{
-		snprintf(eof_log_string, sizeof(eof_log_string), "Waveform: Failed to open input audio file: %s",strerror(errno));
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Waveform: Failed to open input audio file: %s",strerror(errno));
 		eof_log(eof_log_string, 1);
 		return NULL;
 	}

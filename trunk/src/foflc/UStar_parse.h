@@ -12,7 +12,7 @@ double Mean_Timediff_Tempo(void);
 	//Calculates the mean of the difference between all starting lyric timestamps
 	//and returns an estimated tempo
 char *ConvertTempoToString(double tempo);
-	//Takes input tempo and returns a string representation as "###,##" using sprintf
+	//Takes input tempo and returns a string representation as "###,##" using snprintf
 	//There are no leading zeros for the integer part, and the decimal part is rounded at the hundredths place
 	//NULL is returned on error
 double ConvertStringToTempo(char *tempo);

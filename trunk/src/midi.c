@@ -376,7 +376,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	//Initialize the temporary filename array
 	for(i = 0; i < EOF_TRACKS_MAX+1; i++)
 	{
-		snprintf(notetempname[i],15,"eof%lu.tmp",i);
+		snprintf(notetempname[i], sizeof(notetempname[i]) - 1, "eof%lu.tmp", i);
 	}
 
 	eof_sort_notes(sp);	//Writing efficient on-the-fly HOPO phrasing relies on all notes being sorted
@@ -387,7 +387,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	{
 		if(!ustrcmp(sp->text_event[i]->text, "[end]"))
 		{	//If there is an end event defined here
-			snprintf(eof_log_string, sizeof(eof_log_string), "End position located at %lums", sp->beat[sp->text_event[i]->beat]->pos);
+			snprintf(eof_log_string, sizeof(eof_log_string) - 1, "End position located at %lums", sp->beat[sp->text_event[i]->beat]->pos);
 			eof_log(eof_log_string, 1);
 			endbeatnum = sp->text_event[i]->beat;
 			enddelta = eof_ConvertToDeltaTime(sp->beat[endbeatnum]->pos,anchorlist,tslist,timedivision,0);	//Get the delta time of this event
@@ -1195,7 +1195,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				}
 				else
 				{	//Fret hand positions couldn't be generated
-					snprintf(eof_log_string, sizeof(eof_log_string), "Error:  Failed to automatically generate fret hand positions for \"%s\" during MIDI export", sp->track[j]->name);
+					snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Failed to automatically generate fret hand positions for \"%s\" during MIDI export", sp->track[j]->name);
 					eof_log(eof_log_string, 1);
 					allegro_message(eof_log_string);
 				}
@@ -1252,7 +1252,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{	//If this note has a name
 					if((type >= EOF_NOTE_SUPAEASY) && (type <= EOF_NOTE_AMAZING))
 					{	//only write names for the 4 difficulties, don't for BRE notes
-						snprintf(chordname, sizeof(chordname), "[chrd%d %s]", type, currentname);	//Build the chord name text event as per RB3's convention
+						snprintf(chordname, sizeof(chordname) - 1, "[chrd%d %s]", type, currentname);	//Build the chord name text event as per RB3's convention
 						tempstring = malloc(ustrsizez(chordname));
 						if(tempstring != NULL)
 						{	//If allocation was successful
@@ -1690,11 +1690,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		pack_putc(0x03, fp);
 		if(sp->tags->title[0] != '\0')
 		{	//If a song title has been defined
-			snprintf(chordname, sizeof(chordname), "%s", sp->tags->title);	//Borrow this array to store the chart title
+			snprintf(chordname, sizeof(chordname) - 1, "%s", sp->tags->title);	//Borrow this array to store the chart title
 		}
 		else
 		{	//Make up a track name so it will build in Magma
-			snprintf(chordname, sizeof(chordname), "Tempo map");
+			snprintf(chordname, sizeof(chordname) - 1, "Tempo map");
 			eof_log("\t! Song title is not defined, a fake song title was used as the name for track 0 so the song will build in Magma", 1);
 		}
 		WriteVarLen(ustrlen(chordname), fp);
@@ -1976,7 +1976,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	{
 		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 		eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
-		snprintf(eof_log_string, sizeof(eof_log_string), "\tError saving:  Cannot open ouput MIDI file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open ouput MIDI file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
 		eof_log(eof_log_string, 1);
 		return 0;	//Return failure
 	}

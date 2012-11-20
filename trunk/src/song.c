@@ -143,11 +143,11 @@ EOF_SONG * eof_create_song(void)
 		free(sp);
 		return NULL;
 	}
-	ustrcpy(sp->tags->artist, "");
-	ustrcpy(sp->tags->title, "");
-	ustrcpy(sp->tags->frettist, "");
-	ustrcpy(sp->tags->year, "");
-	ustrcpy(sp->tags->loading_text, "");
+	(void) ustrcpy(sp->tags->artist, "");
+	(void) ustrcpy(sp->tags->title, "");
+	(void) ustrcpy(sp->tags->frettist, "");
+	(void) ustrcpy(sp->tags->year, "");
+	(void) ustrcpy(sp->tags->loading_text, "");
 	sp->tags->lyrics = 0;
 	sp->tags->eighth_note_hopo = 0;
 	sp->tags->eof_fret_hand_pos_1_pg = 0;
@@ -157,7 +157,7 @@ EOF_SONG * eof_create_song(void)
 	sp->tags->ini_settings = 0;
 	sp->tags->ogg[0].midi_offset = 0;
 	sp->tags->ogg[0].modified = 0;
-	ustrcpy(sp->tags->ogg[0].filename, "guitar.ogg");
+	(void) ustrcpy(sp->tags->ogg[0].filename, "guitar.ogg");
 	sp->tags->oggs = 1;
 	sp->tags->revision = 0;
 	sp->tags->difficulty = 0xFF;
@@ -243,7 +243,7 @@ EOF_SONG * eof_load_song(const char * fn)
 	fp = pack_fopen(fn, "r");
 	if(!fp)
 	{
-		snprintf(eof_log_string, sizeof(eof_log_string), "\tError loading:  Cannot open input .eof file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError loading:  Cannot open input .eof file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
 		eof_log(eof_log_string, 1);
 		return 0;
 	}
@@ -1356,8 +1356,8 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 		ptr3->track_format = trackdetails->track_format;
 		ptr3->track_behavior = trackdetails->track_behavior;
 		ptr3->track_type = trackdetails->track_type;
-		ustrcpy(ptr3->name, trackdetails->name);
-		ustrcpy(ptr3->altname, trackdetails->altname);
+		(void) ustrcpy(ptr3->name, trackdetails->name);
+		(void) ustrcpy(ptr3->altname, trackdetails->altname);
 		ptr3->difficulty = trackdetails->difficulty;
 		ptr3->flags = trackdetails->flags;
 		if(sp->tracks == 0)
@@ -1952,7 +1952,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 					}
 					else
 					{
-						ustrcpy(sp->catalog->entry[sp->catalog->entries].name, name);
+						(void) ustrcpy(sp->catalog->entry[sp->catalog->entries].name, name);
 					}
 					sp->catalog->entries++;
 				}
@@ -2011,7 +2011,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 							}
 							else
 							{
-								ustrcpy(sp->legacy_track[tracknum]->trill[count].name, name);
+								(void) ustrcpy(sp->legacy_track[tracknum]->trill[count].name, name);
 							}
 							sp->legacy_track[tracknum]->trills++;
 						}
@@ -2030,7 +2030,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 							}
 							else
 							{
-								ustrcpy(sp->pro_guitar_track[tracknum]->trill[count].name, name);
+								(void) ustrcpy(sp->pro_guitar_track[tracknum]->trill[count].name, name);
 							}
 							sp->pro_guitar_track[tracknum]->trills++;
 						}
@@ -2053,7 +2053,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 					}
 					else
 					{
-						ustrcpy(sp->pro_guitar_track[tracknum]->arpeggio[count].name, name);
+						(void) ustrcpy(sp->pro_guitar_track[tracknum]->arpeggio[count].name, name);
 					}
 					if((unsigned char)difficulty == 0xFF)
 					{	//Beta versions of EOF 1.8 (up to beta 15) stored arpeggios without a specified difficulty, re-assign them to Expert
@@ -2089,7 +2089,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 							}
 							else
 							{
-								ustrcpy(sp->legacy_track[tracknum]->tremolo[count].name, name);
+								(void) ustrcpy(sp->legacy_track[tracknum]->tremolo[count].name, name);
 							}
 							sp->legacy_track[tracknum]->tremolos++;
 						}
@@ -2108,7 +2108,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 							}
 							else
 							{
-								ustrcpy(sp->pro_guitar_track[tracknum]->tremolo[count].name, name);
+								(void) ustrcpy(sp->pro_guitar_track[tracknum]->tremolo[count].name, name);
 							}
 							sp->pro_guitar_track[tracknum]->tremolos++;
 						}
@@ -2131,7 +2131,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 					}
 					else
 					{
-						ustrcpy(sp->legacy_track[tracknum]->slider[count].name, name);
+						(void) ustrcpy(sp->legacy_track[tracknum]->slider[count].name, name);
 					}
 					sp->legacy_track[tracknum]->sliders++;
 				}
@@ -2154,7 +2154,7 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 					}
 					else
 					{
-						ustrcpy(sp->pro_guitar_track[tracknum]->handposition[count].name, name);
+						(void) ustrcpy(sp->pro_guitar_track[tracknum]->handposition[count].name, name);
 					}
 					sp->pro_guitar_track[tracknum]->handpositions++;
 				}
@@ -2235,7 +2235,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	fp = pack_fopen(fn, "w");
 	if(!fp)
 	{
-		snprintf(eof_log_string, sizeof(eof_log_string), "\tError saving:  Cannot open output .eof file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open output .eof file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
 		eof_log(eof_log_string, 1);
 		return 0;	//Return error
 	}
@@ -4873,7 +4873,7 @@ int eof_create_image_sequence(void)
  	eof_log("eof_create_image_sequence() entered", 1);
 
 	/* check to make sure \sequence folder exists */
-	ustrcpy(eof_temp_filename, eof_song_path);
+	(void) ustrcpy(eof_temp_filename, eof_song_path);
 	replace_filename(eof_temp_filename, eof_temp_filename, "", sizeof(eof_temp_filename));
 	put_backslash(eof_temp_filename);
 	ustrcat(eof_temp_filename, "sequence");
@@ -4915,7 +4915,7 @@ int eof_create_image_sequence(void)
 		//Update EOF's window title to provide a status
 			curtime = clock();	//Get the current time
 			fps = (float)(framectr - lastpollctr) / ((float)(curtime - lastpolltime) / (float)CLOCKS_PER_SEC);	//Find the number of FPS rendered since the last poll
-			snprintf(windowtitle, sizeof(windowtitle)-1, "Exporting image sequence: %.2f%% (%.2fFPS) - Press Esc to cancel",(float)eof_music_pos/(float)eof_music_length * 100.0, fps);
+			snprintf(windowtitle, sizeof(windowtitle) - 1, "Exporting image sequence: %.2f%% (%.2fFPS) - Press Esc to cancel",(float)eof_music_pos/(float)eof_music_length * 100.0, fps);
 			set_window_title(windowtitle);
 			refreshctr -= 10;
 			lastpolltime = curtime;
@@ -4938,7 +4938,7 @@ int eof_create_image_sequence(void)
 
 		#ifndef EOF_CREATE_IMAGE_SEQUENCE_SHOW_FPS_ONLY
 	//Export the image for this frame
-		snprintf(filename, sizeof(filename), "%08lu.pcx",framectr);
+		snprintf(filename, sizeof(filename) - 1, "%08lu.pcx",framectr);
 		replace_filename(eof_temp_filename, eof_temp_filename, filename, sizeof(eof_temp_filename));
 		save_pcx(eof_temp_filename, eof_screen, NULL);	//Pass a NULL palette
 		#endif
@@ -4959,7 +4959,7 @@ int eof_create_image_sequence(void)
 	#ifdef EOF_CREATE_IMAGE_SEQUENCE_SHOW_FPS_ONLY
 	endtime = clock();	//Get the start time of the image sequence export
 	fps = (float)framectr / ((float)(endtime - starttime) / (float)CLOCKS_PER_SEC);	//Find the average FPS
-	snprintf(windowtitle, sizeof(windowtitle)-1, "Average render rate was %.2fFPS",fps);
+	snprintf(windowtitle, sizeof(windowtitle) - 1, "Average render rate was %.2fFPS",fps);
 	allegro_message("%s", windowtitle);
 	#endif
 

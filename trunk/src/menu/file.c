@@ -250,7 +250,7 @@ int eof_menu_file_new_supplement(char *directory, char check)
 	char syscommand[1024] = {0};
 	int err;
 
-	ustrcpy(syscommand, directory);
+	(void) ustrcpy(syscommand, directory);
 
 	/* remove slash from folder name so we can check if it exists */
 	if((syscommand[uoffset(syscommand, ustrlen(syscommand) - 1)] == '\\') || (syscommand[uoffset(syscommand, ustrlen(syscommand) - 1)] == '/'))
@@ -371,9 +371,9 @@ int eof_menu_file_load(void)
 	eof_clear_input();
 	if(returnedfn)
 	{	//If the user selected a file
-		ustrcpy(eof_filename, returnedfn);
+		(void) ustrcpy(eof_filename, returnedfn);
 		replace_filename(eof_last_eof_path, eof_filename, "", 1024);
-		ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+		(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 
 		/* free the current project */
 		if(eof_song)
@@ -490,7 +490,7 @@ int eof_menu_file_save_as(void)
 						memcpy(&temp_ogg[i], &eof_song->tags->ogg[i], sizeof(EOF_OGG_INFO));
 					}
 					memcpy(&eof_song->tags->ogg[0], &eof_song->tags->ogg[eof_selected_ogg], sizeof(EOF_OGG_INFO));
-					ustrcpy(eof_song->tags->ogg[0].filename, "guitar.ogg");
+					(void) ustrcpy(eof_song->tags->ogg[0].filename, "guitar.ogg");
 					eof_song->tags->oggs = 1;
 					eof_selected_ogg = 0;
 				}
@@ -500,8 +500,8 @@ int eof_menu_file_save_as(void)
 		i=eof_save_helper(returnedfn);	//Perform "Save As" operation to the selected path
 		if(i == 0)
 		{	//If the "Save as" operation succeeded, update folder path strings
-			ustrcpy(eof_song_path,new_foldername);
-			ustrcpy(eof_last_eof_path,new_foldername);
+			(void) ustrcpy(eof_song_path,new_foldername);
+			(void) ustrcpy(eof_last_eof_path,new_foldername);
 		}
 		return i;
 	}
@@ -586,7 +586,7 @@ int eof_menu_file_load_ogg(void)
 		{
 			if(eof_song->tags->oggs < 8)
 			{	//Create a new OGG profile
-				ustrcpy(eof_song->tags->ogg[eof_song->tags->oggs].filename, fn);
+				(void) ustrcpy(eof_song->tags->ogg[eof_song->tags->oggs].filename, fn);
 				eof_song->tags->ogg[eof_song->tags->oggs].description[0] = '\0';
 				eof_song->tags->ogg[eof_song->tags->oggs].midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
 				eof_song->tags->ogg[eof_song->tags->oggs].modified = 0;
@@ -595,7 +595,7 @@ int eof_menu_file_load_ogg(void)
 			}
 			else
 			{	//Replace the last OGG profile
-				ustrcpy(eof_song->tags->ogg[eof_song->tags->oggs - 1].filename, fn);
+				(void) ustrcpy(eof_song->tags->ogg[eof_song->tags->oggs - 1].filename, fn);
 				eof_song->tags->ogg[eof_song->tags->oggs - 1].description[0] = '\0';
 				eof_song->tags->ogg[eof_song->tags->oggs - 1].midi_offset = eof_song->tags->ogg[eof_selected_ogg].midi_offset;
 				eof_song->tags->ogg[eof_song->tags->oggs - 1].modified = 0;
@@ -648,7 +648,7 @@ int eof_menu_file_save(void)
 	}
 
 	/* check to see if song folder still exists */
-	ustrcpy(eof_temp_filename, eof_song_path);
+	(void) ustrcpy(eof_temp_filename, eof_song_path);
 	if((eof_temp_filename[uoffset(eof_temp_filename, ustrlen(eof_temp_filename) - 1)] == '\\') || (eof_temp_filename[uoffset(eof_temp_filename, ustrlen(eof_temp_filename) - 1)] == '/'))
 	{	//If the path ends in a separator
 		eof_temp_filename[uoffset(eof_temp_filename, ustrlen(eof_temp_filename) - 1)] = '\0';	//Remove it
@@ -722,7 +722,7 @@ int eof_menu_file_lyrics_import(void)
 	eof_clear_input();
 	if(returnedfn)
 	{
-		ustrcpy(eof_filename, returnedfn);
+		(void) ustrcpy(eof_filename, returnedfn);
 		jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
 		if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
 		{
@@ -800,8 +800,8 @@ int eof_menu_file_midi_import(void)
 			eof_song_loaded = 0;
 		}
 		eof_destroy_ogg();
-		ustrcpy(eof_filename, returnedfn);
-		ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+		(void) ustrcpy(eof_filename, returnedfn);
+		(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 		replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 		replace_filename(eof_last_eof_path, eof_filename, "", 1024);
 		if(!ustricmp(get_extension(eof_filename), "rba"))
@@ -857,8 +857,8 @@ int eof_menu_file_settings(void)
 	eof_render();
 	eof_color_dialog(eof_settings_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_settings_dialog);
-	sprintf(eof_etext, "%d", eof_av_delay);
-	sprintf(eof_etext2, "%d", eof_buffer_size);
+	snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_av_delay);
+	snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%d", eof_buffer_size);
 	eof_settings_dialog[6].d2 = eof_cpu_saver;
 	eof_settings_dialog[7].flags = eof_smooth_pos ? D_SELECTED : 0;
 	eof_settings_dialog[8].flags = eof_disable_windows ? D_SELECTED : 0;
@@ -928,7 +928,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[eof_2d_render_top_option].flags = D_SELECTED;
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
-		sprintf(eof_etext, "%d", eof_min_note_length);	//Populate the field's string with it
+		snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
 	}
 	else
 	{
@@ -1138,7 +1138,7 @@ int eof_menu_file_song_folder(void)
 	returnfolder = ncd_folder_select("Set EOF Song Folder");
 	if(returnfolder)
 	{
-		ustrcpy(eof_songs_path, returnfolder);
+		(void) ustrcpy(eof_songs_path, returnfolder);
 	}
 	eof_show_mouse(NULL);
 	eof_cursor_visible = 1;
@@ -1173,26 +1173,26 @@ int eof_menu_file_link(char application)
 	{	//User is linking to Phase Shift
 		appdisplayname = psdisplayname;
 	}
-	snprintf(titlebartext, sizeof(titlebartext), "Locate %s Executable", appdisplayname);
+	snprintf(titlebartext, sizeof(titlebartext) - 1, "Locate %s Executable", appdisplayname);
 	returnedfn = ncd_file_select(0, NULL, titlebartext, eof_filter_exe_files);
 	eof_clear_input();
 	if(returnedfn)
 	{
-		snprintf(titlebartext, sizeof(titlebartext), "Locate %s Songs Folder", appdisplayname);
+		snprintf(titlebartext, sizeof(titlebartext) - 1, "Locate %s Songs Folder", appdisplayname);
 		returnfolder = ncd_folder_select(titlebartext);
 		if(returnfolder)
 		{
 			if(application == 1)
 			{	//User is linking to FoF
-				ustrcpy(eof_fof_executable_name, get_filename(returnedfn));
-				ustrcpy(eof_fof_executable_path, returnedfn);
-				ustrcpy(eof_fof_songs_path, returnfolder);
+				(void) ustrcpy(eof_fof_executable_name, get_filename(returnedfn));
+				(void) ustrcpy(eof_fof_executable_path, returnedfn);
+				(void) ustrcpy(eof_fof_songs_path, returnfolder);
 			}
 			else
 			{	//User is linking to Phase Shift
-				ustrcpy(eof_ps_executable_name, get_filename(returnedfn));
-				ustrcpy(eof_ps_executable_path, returnedfn);
-				ustrcpy(eof_ps_songs_path, returnfolder);
+				(void) ustrcpy(eof_ps_executable_name, get_filename(returnedfn));
+				(void) ustrcpy(eof_ps_executable_path, returnedfn);
+				(void) ustrcpy(eof_ps_songs_path, returnfolder);
 			}
 		}
 	}
@@ -1345,13 +1345,13 @@ char * eof_ogg_list(int index, int * size)
 
 char * eof_guitar_list(int index, int * size)
 {
-	sprintf(eof_ctext[0], "Strum 1 (%s)", redefine_index == 0 ? "Press new key" : eof_guitar.button[0].name);
-	sprintf(eof_ctext[1], "Strum 2 (%s)", redefine_index == 1 ? "Press new key" : eof_guitar.button[1].name);
-	sprintf(eof_ctext[2], "Fret 1 (%s)", redefine_index == 2 ? "Press new key" : eof_guitar.button[2].name);
-	sprintf(eof_ctext[3], "Fret 2 (%s)", redefine_index == 3 ? "Press new key" : eof_guitar.button[3].name);
-	sprintf(eof_ctext[4], "Fret 3 (%s)", redefine_index == 4 ? "Press new key" : eof_guitar.button[4].name);
-	sprintf(eof_ctext[5], "Fret 4 (%s)", redefine_index == 5 ? "Press new key" : eof_guitar.button[5].name);
-	sprintf(eof_ctext[6], "Fret 5 (%s)", redefine_index == 6 ? "Press new key" : eof_guitar.button[6].name);
+	snprintf(eof_ctext[0], sizeof(eof_ctext[0]) - 1, "Strum 1 (%s)", redefine_index == 0 ? "Press new key" : eof_guitar.button[0].name);
+	snprintf(eof_ctext[1], sizeof(eof_ctext[1]) - 1, "Strum 2 (%s)", redefine_index == 1 ? "Press new key" : eof_guitar.button[1].name);
+	snprintf(eof_ctext[2], sizeof(eof_ctext[2]) - 1, "Fret 1 (%s)", redefine_index == 2 ? "Press new key" : eof_guitar.button[2].name);
+	snprintf(eof_ctext[3], sizeof(eof_ctext[3]) - 1, "Fret 2 (%s)", redefine_index == 3 ? "Press new key" : eof_guitar.button[3].name);
+	snprintf(eof_ctext[4], sizeof(eof_ctext[4]) - 1, "Fret 3 (%s)", redefine_index == 4 ? "Press new key" : eof_guitar.button[4].name);
+	snprintf(eof_ctext[5], sizeof(eof_ctext[5]) - 1, "Fret 4 (%s)", redefine_index == 5 ? "Press new key" : eof_guitar.button[5].name);
+	snprintf(eof_ctext[6], sizeof(eof_ctext[6]) - 1, "Fret 5 (%s)", redefine_index == 6 ? "Press new key" : eof_guitar.button[6].name);
 	switch(index)
 	{
 		case -1:
@@ -1393,11 +1393,11 @@ char * eof_guitar_list(int index, int * size)
 
 char * eof_drum_list(int index, int * size)
 {
-	sprintf(eof_ctext[0], "Lane 1 (%s)", redefine_index == 0 ? "Press new key" : eof_drums.button[0].name);
-	sprintf(eof_ctext[1], "Lane 2 (%s)", redefine_index == 1 ? "Press new key" : eof_drums.button[1].name);
-	sprintf(eof_ctext[2], "Lane 3 (%s)", redefine_index == 2 ? "Press new key" : eof_drums.button[2].name);
-	sprintf(eof_ctext[3], "Lane 4 (%s)", redefine_index == 3 ? "Press new key" : eof_drums.button[3].name);
-	sprintf(eof_ctext[4], "Lane 5 (%s)", redefine_index == 4 ? "Press new key" : eof_drums.button[4].name);
+	snprintf(eof_ctext[0], sizeof(eof_ctext[0]) - 1, "Lane 1 (%s)", redefine_index == 0 ? "Press new key" : eof_drums.button[0].name);
+	snprintf(eof_ctext[1], sizeof(eof_ctext[1]) - 1, "Lane 2 (%s)", redefine_index == 1 ? "Press new key" : eof_drums.button[1].name);
+	snprintf(eof_ctext[2], sizeof(eof_ctext[2]) - 1, "Lane 3 (%s)", redefine_index == 2 ? "Press new key" : eof_drums.button[2].name);
+	snprintf(eof_ctext[3], sizeof(eof_ctext[3]) - 1, "Lane 4 (%s)", redefine_index == 3 ? "Press new key" : eof_drums.button[3].name);
+	snprintf(eof_ctext[4], sizeof(eof_ctext[4]) - 1, "Lane 5 (%s)", redefine_index == 4 ? "Press new key" : eof_drums.button[4].name);
 	switch(index)
 	{
 		case -1:
@@ -1459,7 +1459,7 @@ int eof_controller_settings_guitar(DIALOG * d)
 	eof_color_dialog(eof_guitar_settings_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_guitar_settings_dialog);
 	eof_guitar_settings_dialog[1].d1 = 0;
-	sprintf(eof_etext, "%d", eof_guitar.delay);
+	snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_guitar.delay);
 	if(eof_popup_dialog(eof_guitar_settings_dialog, 0) == 5)
 	{
 		eof_guitar.delay = atoi(eof_etext);
@@ -1474,7 +1474,7 @@ int eof_controller_settings_drums(DIALOG * d)
 	eof_color_dialog(eof_drum_settings_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_drum_settings_dialog);
 	eof_drum_settings_dialog[1].d1 = 0;
-	sprintf(eof_etext, "%d", eof_drums.delay);
+	snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_drums.delay);
 	if(eof_popup_dialog(eof_drum_settings_dialog, 0) == 5)
 	{
 		eof_drums.delay = atoi(eof_etext);
@@ -1544,7 +1544,7 @@ char *eof_lyric_detections_list_all(int index, int * size)
 		if(printf("%s\t->\t%lu Lyrics",ptr->track,ptr->count) + 1 > 1024)	//If for some abnormal reason, the lyric info is too long to display in 1024 characters,
 			return ptr->track;												//return just the track name instead of allowing an overflow
 
-		sprintf(lyricdetectionstring,"%s -> %lu Lyrics",ptr->track,ptr->count);	//Write a bounds-checked formatted string to the global lyricdetectionstring array
+		snprintf(lyricdetectionstring, sizeof(lyricdetectionstring) - 1, "%s -> %lu Lyrics",ptr->track,ptr->count);	//Write a bounds-checked formatted string to the global lyricdetectionstring array
 		return lyricdetectionstring;	//and return it to be displayed in the list box
 	}
 
@@ -1665,7 +1665,7 @@ int eof_menu_file_feedback_import(void)
 	eof_clear_input();
 	if(returnedfn)
 	{
-		ustrcpy(eof_filename, returnedfn);
+		(void) ustrcpy(eof_filename, returnedfn);
 		jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
 		if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
 		{	//Import failed
@@ -1686,10 +1686,10 @@ int eof_menu_file_feedback_import(void)
 				eof_song_loaded = 0;
 			}
 			eof_destroy_ogg();
-			ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+			(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 			replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 			replace_filename(eof_last_eof_path, eof_filename, "", 1024);
-			ustrcpy(eof_song_path, eof_last_eof_path);
+			(void) ustrcpy(eof_song_path, eof_last_eof_path);
 
 			/* import chart */
 			eof_song = eof_import_chart(returnedfn);
@@ -1742,27 +1742,27 @@ void EnumeratedBChartInfo(struct FeedbackChart *chart)
 		chartinfo=ResizedAppend(chartinfo,"\nMusicStream: ",1);
 		chartinfo=ResizedAppend(chartinfo,chart->audiofile,1);
 	}
-	printflen=snprintf(NULL,0,"\nOffset: %.3f",chart->offset)+1;	//Find the number of characters needed to sprintf this string
+	printflen=snprintf(NULL,0,"\nOffset: %.3f",chart->offset)+1;	//Find the number of characters needed to snprintf this string
 	if(printflen > 0)
 	{
 		tempstr=malloc_err(printflen);
-		sprintf(tempstr,"\nOffset: %.3f",chart->offset);
+		snprintf(tempstr, sizeof(tempstr) - 1, "\nOffset: %.3f",chart->offset);
 		chartinfo=ResizedAppend(chartinfo,tempstr,1);
 		free(tempstr);
 	}
-	printflen=snprintf(NULL,0,"\nResolution: %lu",chart->resolution)+1;	//Find the number of characters needed to sprintf this string
+	printflen=snprintf(NULL,0,"\nResolution: %lu",chart->resolution)+1;	//Find the number of characters needed to snprintf this string
 	if(printflen > 0)
 	{
 		tempstr=malloc_err(printflen);
-		sprintf(tempstr,"\nResolution: %lu",chart->resolution);
+		snprintf(tempstr, sizeof(tempstr) - 1,"\nResolution: %lu",chart->resolution);
 		chartinfo=ResizedAppend(chartinfo,tempstr,1);
 		free(tempstr);
 	}
-	printflen=snprintf(NULL,0,"\n%lu Instrument tracks loaded",chart->tracksloaded)+1;	//Find the number of characters needed to sprintf this string
+	printflen=snprintf(NULL,0,"\n%lu Instrument tracks loaded",chart->tracksloaded)+1;	//Find the number of characters needed to snprintf this string
 	if(printflen > 0)
 	{
 		tempstr=malloc_err(printflen);
-		sprintf(tempstr,"\n%lu Instrument tracks loaded",chart->tracksloaded);
+		snprintf(tempstr, sizeof(tempstr) - 1,"\n%lu Instrument tracks loaded",chart->tracksloaded);
 		chartinfo=ResizedAppend(chartinfo,tempstr,1);
 		free(tempstr);
 	}
@@ -1787,7 +1787,7 @@ int eof_mp3_to_ogg(char *file, char *directory)
 
 	if(!ustricmp(get_extension(file), "mp3"))
 	{
-		sprintf(cfn, "%soriginal.mp3", directory);		//Get the destination path of the original.mp3 to be created
+		snprintf(cfn, sizeof(cfn) - 1, "%soriginal.mp3", directory);		//Get the destination path of the original.mp3 to be created
 
 		//If an MP3 is to be encoded to OGG, store a copy of the MP3 as "original.mp3"
 		if(ustricmp(syscommand,directory))
@@ -1814,11 +1814,11 @@ int eof_mp3_to_ogg(char *file, char *directory)
 			put_backslash(directory);
 			#ifdef ALLEGRO_WINDOWS
 				eof_copy_file(file, "eoftemp.mp3");
-				usprintf(syscommand, "mp3toogg \"eoftemp.mp3\" %s \"%sguitar.ogg\" \"%s\"", eof_ogg_quality[(int)eof_ogg_setting], directory, file);
+				uszprintf(syscommand, sizeof(syscommand), "mp3toogg \"eoftemp.mp3\" %s \"%sguitar.ogg\" \"%s\"", eof_ogg_quality[(int)eof_ogg_setting], directory, file);
 			#elif defined(ALLEGRO_MACOSX)
-				usprintf(syscommand, "./lame --decode \"%s\" - | ./oggenc --quiet -q %s --resample 44100 -s 0 - -o \"%sguitar.ogg\"", file, eof_ogg_quality[(int)eof_ogg_setting], directory);
+				uszprintf(syscommand, sizeof(syscommand), "./lame --decode \"%s\" - | ./oggenc --quiet -q %s --resample 44100 -s 0 - -o \"%sguitar.ogg\"", file, eof_ogg_quality[(int)eof_ogg_setting], directory);
 			#else
-				usprintf(syscommand, "lame --decode \"%s\" - | oggenc --quiet -q %s --resample 44100 -s 0 - -o \"%sguitar.ogg\"", file, eof_ogg_quality[(int)eof_ogg_setting], directory);
+				uszprintf(syscommand, sizeof(syscommand), "lame --decode \"%s\" - | oggenc --quiet -q %s --resample 44100 -s 0 - -o \"%sguitar.ogg\"", file, eof_ogg_quality[(int)eof_ogg_setting], directory);
 			#endif
 			eof_system(syscommand);
 			#ifdef ALLEGRO_WINDOWS
@@ -1846,7 +1846,7 @@ int eof_mp3_to_ogg(char *file, char *directory)
 			eof_show_mouse(NULL);
 			return 1;	//Return user declined to overwrite existing files
 		}
-		ustrcpy(syscommand, directory);
+		(void) ustrcpy(syscommand, directory);
 		put_backslash(syscommand);
 		ustrcat(syscommand, "guitar.ogg");
 		if(ustricmp(file, syscommand))
@@ -1883,15 +1883,15 @@ int eof_new_chart(char * filename)
 		}
 	}
 
-	ustrcpy(oggfilename, filename);
-	ustrcpy(eof_last_ogg_path, filename);
+	(void) ustrcpy(oggfilename, filename);
+	(void) ustrcpy(eof_last_ogg_path, filename);
 
 	eof_color_dialog(eof_file_new_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_file_new_dialog);
-	ustrcpy(eof_etext, "");		//Used to store the Artist tag
-	ustrcpy(eof_etext2, "");	//Used to store the Title tag
-	ustrcpy(eof_etext3, "");
-	ustrcpy(eof_etext4, "");	//Used to store the filename created with %Artist% - %Title%
+	(void) ustrcpy(eof_etext, "");		//Used to store the Artist tag
+	(void) ustrcpy(eof_etext2, "");	//Used to store the Title tag
+	(void) ustrcpy(eof_etext3, "");
+	(void) ustrcpy(eof_etext4, "");	//Used to store the filename created with %Artist% - %Title%
 	eof_render();
 	if(!ustricmp("ogg", get_extension(oggfilename)))
 	{
@@ -1963,15 +1963,15 @@ int eof_new_chart(char * filename)
 
 	if((ustrlen(eof_etext) > 0) && (ustrlen(eof_etext2) > 0))
 	{	//If both the artist and song name are provided, use both in the suggested folder name
-		sprintf(eof_etext4, "%s - %s", eof_etext, eof_etext2);
+		snprintf(eof_etext4, sizeof(eof_etext4) - 1, "%s - %s", eof_etext, eof_etext2);
 	}
 	else if(ustrlen(eof_etext) > 0)
 	{
-		sprintf(eof_etext4, "%s", eof_etext);
+		snprintf(eof_etext4, sizeof(eof_etext4) - 1, "%s", eof_etext);
 	}
 	else if(ustrlen(eof_etext2) > 0)
 	{
-		sprintf(eof_etext4, "%s", eof_etext2);
+		snprintf(eof_etext4, sizeof(eof_etext4) - 1, "%s", eof_etext2);
 	}
 
 	/* user selects location for new song */
@@ -1993,7 +1993,7 @@ int eof_new_chart(char * filename)
 				eof_show_mouse(NULL);
 				return 1;	//Return failure
 			}
-			ustrcpy(eof_etext3, returnedfolder);
+			(void) ustrcpy(eof_etext3, returnedfolder);
 		}
 		else if(eof_file_new_windows_dialog[2].flags & D_SELECTED)
 		{	//Use Source Audio's Folder
@@ -2002,7 +2002,7 @@ int eof_new_chart(char * filename)
 		}
 		else
 		{	//Create New Folder
-			ustrcpy(eof_etext3, eof_songs_path);
+			(void) ustrcpy(eof_etext3, eof_songs_path);
 			ustrcat(eof_etext3, eof_etext4);
 		}
 	}
@@ -2040,39 +2040,39 @@ int eof_new_chart(char * filename)
 	}
 
 	/* fill in information */
-	ustrcpy(eof_song->tags->artist, eof_etext);
-	ustrcpy(eof_song->tags->title, eof_etext2);
-	ustrcpy(eof_song->tags->frettist, eof_last_frettist);
-	ustrcpy(eof_song->tags->year, year);	//The year tag that was read from an MP3 (if applicable)
+	(void) ustrcpy(eof_song->tags->artist, eof_etext);
+	(void) ustrcpy(eof_song->tags->title, eof_etext2);
+	(void) ustrcpy(eof_song->tags->frettist, eof_last_frettist);
+	(void) ustrcpy(eof_song->tags->year, year);	//The year tag that was read from an MP3 (if applicable)
 	if(tempalbum[0] != '\0')
 	{	//If an album ID3/OGG tag was read
 		if(eof_song->tags->ini_settings < EOF_MAX_INI_SETTINGS)	//If the maximum number of INI settings isn't already defined
 		{	//Add the album tag as an INI setting
-			snprintf(album,sizeof(album)/sizeof(char),"album = %s",tempalbum);	//Create the appropriate INI setting entry
+			snprintf(album, sizeof(album) - 1, "album = %s", tempalbum);	//Create the appropriate INI setting entry
 			album[1023] = '\0';	//Guarantee it is NULL terminated
-			ustrcpy(eof_song->tags->ini_setting[eof_song->tags->ini_settings], album);
+			(void) ustrcpy(eof_song->tags->ini_setting[eof_song->tags->ini_settings], album);
 			eof_song->tags->ini_settings++;
 		}
 	}
-	ustrcpy(oggfilename, filename);
+	(void) ustrcpy(oggfilename, filename);
 	replace_filename(eof_last_ogg_path, oggfilename, "", 1024);
 
 	/* load OGG */
-	ustrcpy(eof_song_path, eof_etext3);
+	(void) ustrcpy(eof_song_path, eof_etext3);
 	put_backslash(eof_song_path);
-	ustrcpy(eof_last_eof_path, eof_song_path);
+	(void) ustrcpy(eof_last_eof_path, eof_song_path);
 	if(temp_ogg)
 	{
 		eof_music_track = temp_ogg;
 		eof_music_data = temp_buffer;
 		eof_music_data_size = temp_buffer_size;
-		ustrcpy(eof_loaded_ogg_name, eof_etext3);
+		(void) ustrcpy(eof_loaded_ogg_name, eof_etext3);
 		put_backslash(eof_loaded_ogg_name);
 		ustrcat(eof_loaded_ogg_name, "guitar.ogg");
 	}
 	else
 	{
-		ustrcpy(oggfilename, eof_etext3);
+		(void) ustrcpy(oggfilename, eof_etext3);
 		put_backslash(oggfilename);
 		ustrcat(oggfilename, "guitar.ogg");
 		if(!eof_load_ogg(oggfilename, 0))
@@ -2084,7 +2084,7 @@ int eof_new_chart(char * filename)
 		}
 	}
 	eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
-	ustrcpy(eof_loaded_song_name, "notes.eof");
+	(void) ustrcpy(eof_loaded_song_name, "notes.eof");
 
 	eof_song_loaded = 1;
 
@@ -2203,7 +2203,7 @@ int eof_save_helper(char *destfilename)
 		eof_pen_visible = 1;
 		return 1;	//Return failure
 	}
-	ustrcpy(eof_loaded_song_name, get_filename(eof_temp_filename));
+	(void) ustrcpy(eof_loaded_song_name, get_filename(eof_temp_filename));
 
 	/* save the MIDI, INI and other files*/
 	eof_check_vocals(eof_song, &fixvoxpitches, &fixvoxphrases);
@@ -2218,7 +2218,7 @@ int eof_save_helper(char *destfilename)
 			{	//If any of the pro guitar tracks are populated
 				append_filename(eof_temp_filename, newfolderpath, "notes_pro.mid", 1024);
 				eof_export_midi(eof_song, eof_temp_filename, 2, fixvoxpitches, fixvoxphrases);	//Write a RB3 pro guitar upgrade compliant MIDI
-				ustrcpy(eof_temp_filename, newfolderpath);
+				(void) ustrcpy(eof_temp_filename, newfolderpath);
 				put_backslash(eof_temp_filename);
 				ustrcat(eof_temp_filename, "songs_upgrades");
 				if(!file_exists(eof_temp_filename, FA_DIREC | FA_HIDDEN, NULL))
@@ -2298,7 +2298,7 @@ int eof_save_helper(char *destfilename)
 		if(eof_song->tags->ogg[ctr].modified)
 		{
 			replace_filename(eof_temp_filename, eof_temp_filename, eof_song->tags->ogg[ctr].filename, 1024);
-			sprintf(oggfn, "%s.lastsaved", eof_temp_filename);
+			snprintf(oggfn, sizeof(oggfn) - 1, "%s.lastsaved", eof_temp_filename);
 			eof_copy_file(eof_temp_filename, oggfn);
 			eof_song->tags->ogg[ctr].modified = 0;
 		}
@@ -2334,8 +2334,8 @@ void eof_restore_oggs_helper(void)
 		{
 			if(eof_song->tags->ogg[i].modified)
 			{
-				sprintf(coggfn, "%s%s", eof_song_path, eof_song->tags->ogg[i].filename);
-				sprintf(oggfn, "%s.lastsaved", coggfn);
+				snprintf(coggfn, sizeof(coggfn) - 1, "%s%s", eof_song_path, eof_song->tags->ogg[i].filename);
+				snprintf(oggfn, sizeof(oggfn) - 1, "%s.lastsaved", coggfn);
 				if(exists(oggfn))
 				{
 					printf("restoring from .lastsaved\n");
@@ -2344,7 +2344,7 @@ void eof_restore_oggs_helper(void)
 				}
 				else
 				{
-					sprintf(oggfn, "%s.backup", coggfn);
+					snprintf(oggfn, sizeof(oggfn) - 1, "%s.backup", coggfn);
 					if(exists(oggfn))
 					{
 						printf("restoring from .backup\n");
@@ -2354,7 +2354,7 @@ void eof_restore_oggs_helper(void)
 			}
 
 			/* clean up copies */
-			sprintf(oggfn, "%s.lastsaved", coggfn);
+			snprintf(oggfn, sizeof(oggfn) - 1, "%s.lastsaved", coggfn);
 			if(exists(oggfn))
 			{
 				delete_file(oggfn);
@@ -2405,7 +2405,7 @@ int eof_menu_file_gh_import(void)
 	eof_clear_input();
 	if(returnedfn)
 	{
-		ustrcpy(eof_filename, returnedfn);
+		(void) ustrcpy(eof_filename, returnedfn);
 		/* destroy loaded song */
 		if(eof_song)
 		{
@@ -2414,10 +2414,10 @@ int eof_menu_file_gh_import(void)
 			eof_song_loaded = 0;
 		}
 		eof_destroy_ogg();
-		ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+		(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 		replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 		replace_filename(eof_last_eof_path, eof_filename, "", 1024);
-		ustrcpy(eof_song_path, eof_last_eof_path);
+		(void) ustrcpy(eof_song_path, eof_last_eof_path);
 
 		/* import chart */
 		eof_song = eof_import_gh(returnedfn);

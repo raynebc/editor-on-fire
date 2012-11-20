@@ -277,7 +277,7 @@ void eof_prepare_song_menu(void)
 			}
 			else
 			{	//Write a blank string for the track name
-				ustrcpy(eof_track_selected_menu_text[i],"");
+				(void) ustrcpy(eof_track_selected_menu_text[i],"");
 			}
 		}
 		eof_track_selected_menu[eof_selected_track-1].flags = D_SELECTED;	//Track numbering begins at 1 instead of 0
@@ -885,19 +885,19 @@ int eof_menu_song_properties(void)
 	eof_render();
 	eof_color_dialog(eof_song_properties_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_song_properties_dialog);
-	ustrcpy(eof_etext, eof_song->tags->title);
-	ustrcpy(eof_etext2, eof_song->tags->artist);
-	ustrcpy(eof_etext3, eof_song->tags->frettist);
-	sprintf(eof_etext4, "%ld", eof_song->tags->ogg[eof_selected_ogg].midi_offset);
-	ustrcpy(eof_etext5, eof_song->tags->year);
-	ustrcpy(eof_etext6, eof_song->tags->loading_text);
+	(void) ustrcpy(eof_etext, eof_song->tags->title);
+	(void) ustrcpy(eof_etext2, eof_song->tags->artist);
+	(void) ustrcpy(eof_etext3, eof_song->tags->frettist);
+	snprintf(eof_etext4, sizeof(eof_etext4) - 1, "%ld", eof_song->tags->ogg[eof_selected_ogg].midi_offset);
+	(void) ustrcpy(eof_etext5, eof_song->tags->year);
+	(void) ustrcpy(eof_etext6, eof_song->tags->loading_text);
 	eof_song_properties_dialog[17].flags = eof_song->tags->lyrics ? D_SELECTED : 0;
 	eof_song_properties_dialog[18].flags = eof_song->tags->eighth_note_hopo ? D_SELECTED : 0;
 	eof_song_properties_dialog[19].flags = eof_song->tags->eof_fret_hand_pos_1_pg ? D_SELECTED : 0;
 	eof_song_properties_dialog[20].flags = eof_song->tags->eof_fret_hand_pos_1_pb ? D_SELECTED : 0;
 	if(eof_song->tags->difficulty != 0xFF)
 	{	//If there is a band difficulty defined, populate the band difficulty field
-		sprintf(eof_etext7, "%lu", eof_song->tags->difficulty);
+		snprintf(eof_etext7, sizeof(eof_etext7) - 1, "%lu", eof_song->tags->difficulty);
 	}
 	else
 	{	//Othewise leave the field blank
@@ -938,16 +938,16 @@ int eof_menu_song_properties(void)
 			allegro_message("Text too large for allocated buffer!");
 			return 1;
 		}
-		ustrcpy(eof_song->tags->title, eof_etext);
-		ustrcpy(eof_song->tags->artist, eof_etext2);
-		ustrcpy(eof_song->tags->frettist, eof_etext3);
-		ustrcpy(eof_song->tags->year, eof_etext5);
-		ustrcpy(eof_song->tags->loading_text, eof_etext6);
+		(void) ustrcpy(eof_song->tags->title, eof_etext);
+		(void) ustrcpy(eof_song->tags->artist, eof_etext2);
+		(void) ustrcpy(eof_song->tags->frettist, eof_etext3);
+		(void) ustrcpy(eof_song->tags->year, eof_etext5);
+		(void) ustrcpy(eof_song->tags->loading_text, eof_etext6);
 		eof_song->tags->lyrics = newlyrics;
 		eof_song->tags->eighth_note_hopo = neweighth_note_hopo;
 		eof_song->tags->eof_fret_hand_pos_1_pg = neweof_fret_hand_pos_1_pg;
 		eof_song->tags->eof_fret_hand_pos_1_pb = neweof_fret_hand_pos_1_pb;
-		ustrcpy(eof_last_frettist, eof_etext3);
+		(void) ustrcpy(eof_last_frettist, eof_etext3);
 		if(!eof_is_number(eof_etext4))
 		{
 			invalid = 1;
@@ -1065,7 +1065,7 @@ int eof_menu_song_test(char application)
 	eof_mkdir("EOFTemp");
 
 	/* save temporary song */
-	ustrcpy(temppath, songs_path);
+	(void) ustrcpy(temppath, songs_path);
 	ustrcat(temppath, "EOFTemp\\");
 	append_filename(temppath2, temppath, "notes.eof", 1024);
 	eof_sort_notes(eof_song);
@@ -1085,8 +1085,8 @@ int eof_menu_song_test(char application)
 	eof_export_midi(eof_song, temppath2, 0, 1, 1);	//Export the temporary MIDI, make pitchless/phraseless lyric corrections automatically
 	append_filename(temppath2, temppath, "song.ini", 1024);
 	eof_save_ini(eof_song, temppath2);
-	sprintf(syscommand, "%sguitar.ogg", eof_song_path);
-	sprintf(temppath2, "%sEOFTemp\\guitar.ogg", songs_path);
+	snprintf(syscommand, sizeof(syscommand) - 1, "%sguitar.ogg", eof_song_path);
+	snprintf(temppath2, sizeof(temppath2) - 1, "%sEOFTemp\\guitar.ogg", songs_path);
 	eof_copy_file(syscommand, temppath2);
 
 	/* switch to application folder */
@@ -1100,12 +1100,12 @@ int eof_menu_song_test(char application)
 	/* execute appropriate application to launch chart */
 	if(application == 1)
 	{	//If the user wants to test the chart in FoF
-		ustrcpy(syscommand, executablename);
+		(void) ustrcpy(syscommand, executablename);
 		ustrcat(syscommand, " -p \"EOFTemp\" -D ");
-		sprintf(temppath, "%d", difficulty);
+		snprintf(temppath, sizeof(temppath) - 1, "%d", difficulty);
 		ustrcat(syscommand, temppath);
 		ustrcat(syscommand, " -P ");
-		sprintf(temppath, "%d", part);
+		snprintf(temppath, sizeof(temppath) - 1, "%d", part);
 		ustrcat(syscommand, temppath);
 		eof_system(syscommand);
 	}
@@ -1121,7 +1121,7 @@ int eof_menu_song_test(char application)
 			{	//Remove the trailing backslash because Phase Shift doesn't handle it correctly
 				temppath[strlen(temppath)-1] = '\0';
 			}
-			sprintf(syscommand, "\"%s\" \"%s\" /p", executablepath, temppath);
+			snprintf(syscommand, sizeof(syscommand) - 1, "\"%s\" \"%s\" /p", executablepath, temppath);
 			fprintf(phaseshiftfp, "%s", syscommand);
 			fclose(phaseshiftfp);
 			eof_system("launch_ps.bat");
@@ -1442,14 +1442,14 @@ int eof_ini_dialog_add(DIALOG * d)
 	eof_render();
 	eof_color_dialog(eof_ini_add_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_ini_add_dialog);
-	ustrcpy(eof_etext, "");
+	(void) ustrcpy(eof_etext, "");
 
 	if(eof_popup_dialog(eof_ini_add_dialog, 2) == 3)
 	{
 		if((ustrlen(eof_etext) > 0) && eof_check_string(eof_etext))
 		{
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-			ustrcpy(eof_song->tags->ini_setting[eof_song->tags->ini_settings], eof_etext);
+			(void) ustrcpy(eof_song->tags->ini_setting[eof_song->tags->ini_settings], eof_etext);
 			eof_song->tags->ini_settings++;
 		}
 	}
@@ -1596,11 +1596,11 @@ int eof_menu_song_add_silence(void)
 	eof_leading_silence_dialog[3].flags = 0;
 	eof_leading_silence_dialog[5].flags = 0;
 	eof_leading_silence_dialog[6].flags = 0;
-	sprintf(eof_etext, "0");
+	snprintf(eof_etext, sizeof(eof_etext) - 1, "0");
 
 	if(eof_popup_dialog(eof_leading_silence_dialog, 7) == 11)			//User clicked OK
 	{
-		sprintf(fn, "%s.backup", eof_loaded_ogg_name);
+		snprintf(fn, sizeof(fn) - 1, "%s.backup", eof_loaded_ogg_name);
 		current_length = get_ogg_length(eof_loaded_ogg_name);
 		/* revert to original file */
 		if(atoi(eof_etext) <= 0)
@@ -1714,11 +1714,12 @@ int eof_menu_song_add_silence(void)
 	return 1;
 }
 
-char eof_chart_volume_string[10] = "100%";
-char eof_clap_volume_string[10] = "100%";
-char eof_metronome_volume_string[10] = "100%";
-char eof_tone_volume_string[10] = "100%";
-char eof_percussion_volume_string[10] = "100%";
+#define EOF_CUE_VOLUME_STRING_LEN 10
+char eof_chart_volume_string[EOF_CUE_VOLUME_STRING_LEN] = "100%";
+char eof_clap_volume_string[EOF_CUE_VOLUME_STRING_LEN] = "100%";
+char eof_metronome_volume_string[EOF_CUE_VOLUME_STRING_LEN] = "100%";
+char eof_tone_volume_string[EOF_CUE_VOLUME_STRING_LEN] = "100%";
+char eof_percussion_volume_string[EOF_CUE_VOLUME_STRING_LEN] = "100%";
 DIALOG eof_audio_cues_dialog[] =
 {
 /*	(proc)					(x)	(y)				(w)	(h)		(fg)	(bg)	(key)	(flags)	(d1)	(d2)	(dp)							(dp2)	(dp3) */
@@ -1772,8 +1773,8 @@ int eof_set_cue_volume(void *dp3, int d2)
 	if((d2 < 0) || (d2 > 100))
 		return 1;
 
-	sprintf((char *)dp3,"%3d%%",d2);	//Rewrite the specified volume slider string
-	object_message(&eof_audio_cues_dialog[3], MSG_DRAW, 0);	//Have Allegro redraw the volume slider strings
+	snprintf((char *)dp3, EOF_CUE_VOLUME_STRING_LEN - 1, "%3d%%", d2);	//Rewrite the specified volume slider string
+	object_message(&eof_audio_cues_dialog[3], MSG_DRAW, 0);			//Have Allegro redraw the volume slider strings
 	object_message(&eof_audio_cues_dialog[6], MSG_DRAW, 0);
 	object_message(&eof_audio_cues_dialog[9], MSG_DRAW, 0);
 	object_message(&eof_audio_cues_dialog[12], MSG_DRAW, 0);
@@ -1982,13 +1983,13 @@ int eof_menu_catalog_edit_name(void)
 		eof_render();
 		eof_color_dialog(eof_catalog_entry_name_dialog, gui_fg_color, gui_bg_color);
 		centre_dialog(eof_catalog_entry_name_dialog);
-		ustrcpy(eof_etext, eof_song->catalog->entry[eof_selected_catalog_entry].name);
+		(void) ustrcpy(eof_etext, eof_song->catalog->entry[eof_selected_catalog_entry].name);
 		if(eof_popup_dialog(eof_catalog_entry_name_dialog, 2) == 3)	//User hit OK
 		{
 			if(ustrcmp(eof_song->catalog->entry[eof_selected_catalog_entry].name, eof_etext))	//If the updated string (eof_etext) is different
 			{
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				ustrcpy(eof_song->catalog->entry[eof_selected_catalog_entry].name, eof_etext);
+				(void) ustrcpy(eof_song->catalog->entry[eof_selected_catalog_entry].name, eof_etext);
 			}
 		}
 	}
@@ -2090,7 +2091,7 @@ int eof_song_track_difficulty_dialog(void)
 	}
 	if(difficulty2 != 0x0F)
 	{	//If the secondary difficulty (pro drum or vocal harmony) is to be displayed
-		sprintf(eof_etext2, "%d", difficulty2);
+		snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%d", difficulty2);
 	}
 	else
 	{
@@ -2098,7 +2099,7 @@ int eof_song_track_difficulty_dialog(void)
 	}
 	if(difficulty3 != 0xF0)
 	{	//If the tertiary difficulty (PS Real Drums) is to be displayed
-		sprintf(eof_etext3, "%d", difficulty3 >> 4);	//Shift down from the high nibble
+		snprintf(eof_etext3, sizeof(eof_etext3) - 1, "%d", difficulty3 >> 4);	//Shift down from the high nibble
 	}
 	else
 	{
@@ -2117,7 +2118,7 @@ int eof_song_track_difficulty_dialog(void)
 
 	if(eof_song->track[eof_selected_track]->difficulty != 0xFF)
 	{	//If the track difficulty is defined, write it in text format
-		sprintf(eof_etext, "%d", eof_song->track[eof_selected_track]->difficulty);
+		snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_song->track[eof_selected_track]->difficulty);
 	}
 	else
 	{	//Otherwise prepare an empty string
@@ -2363,7 +2364,7 @@ int eof_menu_song_track_tuning(void)
 	{	//For each of the 6 supported strings
 		if(ctr < stringcount)
 		{	//If this track uses this string, convert the tuning to its string representation
-			snprintf(eof_fret_strings[ctr], sizeof(eof_string_lane_1), "%d", eof_song->pro_guitar_track[tracknum]->tuning[ctr]);
+			snprintf(eof_fret_strings[ctr], sizeof(eof_string_lane_1) - 1, "%d", eof_song->pro_guitar_track[tracknum]->tuning[ctr]);
 			eof_pro_guitar_tuning_dialog[19 - (3 * ctr)].flags = 0;		//Enable the input field's label
 			eof_pro_guitar_tuning_dialog[20 - (3 * ctr)].flags = 0;		//Enable the input field for the string
 			eof_fret_string_numbers[ctr][7] = '0' + (stringcount - ctr);	//Correct the string number for this label
@@ -2426,7 +2427,7 @@ int eof_menu_set_num_frets_strings(void)
 		return 1;	//Do not allow this function to run if a pro guitar track isn't active
 
 	//Update dialog fields
-	snprintf(eof_etext2, sizeof(eof_etext2), "%d", eof_song->pro_guitar_track[tracknum]->numfrets);
+	snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%d", eof_song->pro_guitar_track[tracknum]->numfrets);
 	eof_note_set_num_frets_strings_dialog[4].flags = eof_note_set_num_frets_strings_dialog[5].flags = eof_note_set_num_frets_strings_dialog[6].flags = 0;
 	switch(eof_song->pro_guitar_track[tracknum]->numstrings)
 	{
@@ -2455,7 +2456,7 @@ int eof_menu_set_num_frets_strings(void)
 			if(highestfret > newnumfrets)
 			{	//If any notes in this track use fret values that would exceed the new fret limit
 				char message[120];
-				snprintf(message, sizeof(message), "Warning:  This track uses frets as high as %lu, exceeding the proposed limit.  Continue?", highestfret);
+				snprintf(message, sizeof(message) - 1, "Warning:  This track uses frets as high as %lu, exceeding the proposed limit.  Continue?", highestfret);
 				if(alert(NULL, message, NULL, "&Yes", "&No", 'y', 'n') != 1)
 				{	//If user does not opt to continue after being alerted of this fret limit issue
 					return 1;
@@ -3199,7 +3200,7 @@ int eof_raw_midi_dialog_add(DIALOG * d)
 		delay = get_config_int("song", "delay", 0);
 		if(delay)
 		{	//If a nonzero delay was read from song.ini
-			snprintf(tempfilename, sizeof(tempfilename), "%d", delay);
+			snprintf(tempfilename, sizeof(tempfilename) - 1, "%d", delay);
 			if(alert("Import this MIDI delay from song.ini?", tempfilename, NULL, "&Yes", "&No", 'y', 'n') != 1)
 			{	//If the user declined using the MIDI delay from the MIDI's song.ini file
 				delay = 0;	//Set the delay back to 0
@@ -3299,15 +3300,15 @@ int eof_menu_song_seek_beat_measure(void)
 	eof_seek_beat_measure_dialog[2].flags = 0;	//Clear these so they can be selected/disabled below as applicable
 	eof_seek_beat_measure_dialog[3].flags = 0;
 	measurecount = eof_get_measure(0, 1);	//Count the number of measures
-	snprintf(eof_etext, sizeof(eof_etext), "Beat [0 - %lu]", eof_song->beats - 1);
+	snprintf(eof_etext, sizeof(eof_etext) - 1, "Beat [0 - %lu]", eof_song->beats - 1);
 	if(measurecount)
 	{	//If there is at least one measure
-		snprintf(eof_etext2, sizeof(eof_etext2), "Measure [1 - %lu]", measurecount);
+		snprintf(eof_etext2, sizeof(eof_etext2) - 1, "Measure [1 - %lu]", measurecount);
 		eof_seek_beat_measure_dialog[3].flags = 0;	//Enable the measure radio button
 	}
 	else
 	{
-		snprintf(eof_etext2, sizeof(eof_etext2), "Measure (no TS)");
+		snprintf(eof_etext2, sizeof(eof_etext2) - 1, "Measure (no TS)");
 		lastselected = 2;	//Have the beat option selected instead
 		eof_seek_beat_measure_dialog[3].flags = D_DISABLED;	//Disable the measure radio button
 	}
@@ -3561,8 +3562,8 @@ int eof_menu_song_catalog_edit(void)
 	eof_render();
 	eof_color_dialog(eof_song_catalog_edit_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_song_catalog_edit_dialog);
-	sprintf(eof_etext, "%ld", eof_song->catalog->entry[eof_selected_catalog_entry].start_pos);
-	sprintf(eof_etext2, "%ld", eof_song->catalog->entry[eof_selected_catalog_entry].end_pos);
+	snprintf(eof_etext, sizeof(eof_etext) - 1, "%ld", eof_song->catalog->entry[eof_selected_catalog_entry].start_pos);
+	snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%ld", eof_song->catalog->entry[eof_selected_catalog_entry].end_pos);
 
 	if(eof_popup_dialog(eof_song_catalog_edit_dialog, 2) == 5)
 	{	//User clicked OK
@@ -3797,7 +3798,7 @@ char * eof_fret_hand_position_list(int index, int * size)
 				ism = (eof_song->pro_guitar_track[tracknum]->handposition[i].start_pos / 1000) / 60;
 				iss = (eof_song->pro_guitar_track[tracknum]->handposition[i].start_pos / 1000) % 60;
 				isms = (eof_song->pro_guitar_track[tracknum]->handposition[i].start_pos % 1000);
-				snprintf(eof_fret_hand_position_list_text[ecount], 25, "%02d:%02d.%03d: Fret %lu", ism, iss, isms, eof_song->pro_guitar_track[tracknum]->handposition[i].end_pos);
+				snprintf(eof_fret_hand_position_list_text[ecount], sizeof(eof_fret_hand_position_list_text[ecount]) - 1, "%02d:%02d.%03d: Fret %lu", ism, iss, isms, eof_song->pro_guitar_track[tracknum]->handposition[i].end_pos);
 				ecount++;
 			}
 		}
@@ -3817,7 +3818,7 @@ char * eof_fret_hand_position_list(int index, int * size)
 				eof_fret_hand_position_list_dialog[2].flags = D_DISABLED;
 				eof_fret_hand_position_list_dialog[3].flags = D_DISABLED;
 			}
-			snprintf(eof_fret_hand_position_list_dialog_title_string, sizeof(eof_fret_hand_position_list_dialog_title_string), "Fret hand positions (%d)", ecount);	//Redraw the dialog's title bar to reflect the number of hand positions
+			snprintf(eof_fret_hand_position_list_dialog_title_string, sizeof(eof_fret_hand_position_list_dialog_title_string) - 1, "Fret hand positions (%d)", ecount);	//Redraw the dialog's title bar to reflect the number of hand positions
 			break;
 		}
 		default:

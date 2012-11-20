@@ -417,7 +417,7 @@ char *ConvertTempoToString(double tempo)
 	if(!(tempo > 0.0) || !(tempo < 1000.0))
 		return NULL;	//return error
 
-	if(snprintf(string,15,"%.6f",tempo) < 0)	//Use snprintf so that rounding errors don't occur, and to prevent a buffer overflow
+	if(snprintf(string, sizeof(string) - 1,"%.6f",tempo) < 0)	//Use snprintf so that rounding errors don't occur, and to prevent a buffer overflow
 		return NULL;	//return error
 
 	for(ctr=0;string[ctr]!='\0';ctr++)	//parse string to convert decimal character to comma

@@ -726,11 +726,11 @@ void eof_fix_window_title(void)
 
 	if(eof_changes)
 	{
-		ustrcpy(eof_window_title, "*EOF - ");
+		(void) ustrcpy(eof_window_title, "*EOF - ");
 	}
 	else
 	{
-		ustrcpy(eof_window_title, "EOF - ");
+		(void) ustrcpy(eof_window_title, "EOF - ");
 	}
 	if(eof_song && eof_song_loaded)
 	{
@@ -2048,7 +2048,7 @@ char * eof_get_tone_name(int tone)
 	if(eof_display_flats)				//If user enabled the feature to display flat notes
 		array_to_use=note_name_flats;	//Use the other array
 
-	sprintf(eof_tone_name_buffer, "%s%d", array_to_use[tone % 12], tone / 12 - 1);
+	snprintf(eof_tone_name_buffer, sizeof(eof_tone_name_buffer) - 1, "%s%d", array_to_use[tone % 12], tone / 12 - 1);
 	return eof_tone_name_buffer;
 }
 
@@ -2101,7 +2101,7 @@ void eof_render_note_window(void)
 		}
 		if((eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		{	//If the catalog entry is a pro guitar note and the active track is a legacy track
-			snprintf(temp, 1023, "Would paste from \"%s\" as:",eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->name);
+			snprintf(temp, sizeof(temp) - 1, "Would paste from \"%s\" as:",eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->name);
 			textout_ex(eof_window_note->screen, font, temp, 2, 53, eof_color_white, -1);
 		}
 
@@ -2236,11 +2236,11 @@ void eof_render_note_window(void)
 		//Display the difficulties associated with the active track
 		if(eof_song->track[eof_selected_track]->difficulty != 0xFF)
 		{	//If the active track has a defined difficulty
-			sprintf(difficulty1, "%d", eof_song->track[eof_selected_track]->difficulty);
+			snprintf(difficulty1, sizeof(difficulty1) - 1, "%d", eof_song->track[eof_selected_track]->difficulty);
 		}
 		else
 		{
-			sprintf(difficulty1, "(Undefined)");
+			snprintf(difficulty1, sizeof(difficulty1) - 1, "(Undefined)");
 		}
 		difficulty2[0] = '\0';
 		difficulty3[0] = '\0';
@@ -2248,30 +2248,30 @@ void eof_render_note_window(void)
 		{	//Write the difficulty string to display for pro drums
 			if(((eof_song->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24) != 0x0F)
 			{	//If the pro drum difficulty is defined
-				sprintf(difficulty2, "(Pro: %lu)", (eof_song->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24);	//Mask out the low nibble of the high order byte of the drum track's flags (pro drum difficulty)
+				snprintf(difficulty2, sizeof(difficulty2) - 1, "(Pro: %lu)", (eof_song->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24);	//Mask out the low nibble of the high order byte of the drum track's flags (pro drum difficulty)
 			}
 			else
 			{
-				sprintf(difficulty2, "(Pro: Undefined)");
+				snprintf(difficulty2, sizeof(difficulty2) - 1, "(Pro: Undefined)");
 			}
 			if(((eof_song->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 24) != 0xF0)
 			{	//If the PS deal drums difficulty is defined
-				sprintf(difficulty3, "(PS: %lu)", (eof_song->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 28);	//Mask out the high nibble of the high order byte of the drum track's flags (pro drum difficulty)
+				snprintf(difficulty3, sizeof(difficulty3) - 1, "(PS: %lu)", (eof_song->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 28);	//Mask out the high nibble of the high order byte of the drum track's flags (pro drum difficulty)
 			}
 			else
 			{
-				sprintf(difficulty3, "(PS: Undefined)");
+				snprintf(difficulty3, sizeof(difficulty3) - 1, "(PS: Undefined)");
 			}
 		}
 		else if(eof_selected_track == EOF_TRACK_VOCALS)
 		{	//Write the difficulty string to display for vocal harmony
 			if(((eof_song->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24) != 0x0F)
 			{	//If the harmony difficulty is defined
-				sprintf(difficulty2, "(Harmony: %lu)", (eof_song->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24);	//Mask out the high order byte of the vocal track's flags (harmony difficulty)
+				snprintf(difficulty2, sizeof(difficulty2) - 1, "(Harmony: %lu)", (eof_song->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24);	//Mask out the high order byte of the vocal track's flags (harmony difficulty)
 			}
 			else
 			{
-				sprintf(difficulty2, "(Harmony: Undefined)");
+				snprintf(difficulty2, sizeof(difficulty2) - 1, "(Harmony: Undefined)");
 			}
 			difficulty3[0] = '\0';	//Unused for vocals
 		}
@@ -2485,7 +2485,7 @@ void eof_render_note_window(void)
 							bassnote %= 12;
 							if(matchcount > 1)
 							{	//If there's more than one match
-								snprintf(chord_match_string, sizeof(chord_match_string), " (match %lu/%lu)", eof_selected_chord_lookup + 1, matchcount);
+								snprintf(chord_match_string, sizeof(chord_match_string) - 1, " (match %lu/%lu)", eof_selected_chord_lookup + 1, matchcount);
 							}
 							if(!isslash)
 							{	//If it's a normal chord
@@ -2634,7 +2634,7 @@ void eof_render_lyric_preview(BITMAP * bp)
 			tempstring=malloc(ustrlen(eof_song->vocal_track[0]->lyric[eof_hover_lyric]->text)+1);
 			if(tempstring==NULL)	//If there wasn't enough memory to copy this string...
 				return;
-			ustrcpy(tempstring,eof_song->vocal_track[0]->lyric[eof_hover_lyric]->text);
+			(void) ustrcpy(tempstring,eof_song->vocal_track[0]->lyric[eof_hover_lyric]->text);
 			tempstring[ustrlen(tempstring)-1]='\0';
 			textout_ex(bp, font, tempstring, bp->w / 2 - text_length(font, lline[0]) / 2 + offset, 20, eof_color_green, -1);
 			free(tempstring);
@@ -3620,9 +3620,9 @@ int eof_initialize(int argc, char * argv[])
 								allegro_message("Unable to load last undo state. File could be corrupt!");
 								return 0;
 							}
-							ustrcpy(eof_filename, ptr);		//Set the full project path
+							(void) ustrcpy(eof_filename, ptr);		//Set the full project path
 							replace_filename(eof_last_eof_path, eof_filename, "", 1024);	//Set the last loaded song path
-							ustrcpy(eof_loaded_song_name, get_filename(eof_filename));	//Set the project filename
+							(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));	//Set the project filename
 							replace_filename(eof_song_path, eof_filename, "", 1024);	//Set the project folder path
 							append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);	//Construct the full OGG path
 							if(!eof_load_ogg(temp_filename, 1))	//If user does not provide audio, fail over to using silent audio
@@ -3664,10 +3664,10 @@ int eof_initialize(int argc, char * argv[])
 			if(!ustricmp(get_extension(argv[i]), "eof"))
 			{
 				/* load the specified project */
-				ustrcpy(eof_song_path, argv[i]);
-				ustrcpy(eof_filename, argv[i]);
+				(void) ustrcpy(eof_song_path, argv[i]);
+				(void) ustrcpy(eof_filename, argv[i]);
 				replace_filename(eof_last_eof_path, eof_filename, "", 1024);
-				ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+				(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 				eof_song = eof_load_song(eof_filename);
 				if(!eof_song)
 				{
@@ -3692,10 +3692,10 @@ int eof_initialize(int argc, char * argv[])
 			}
 			else if(!ustricmp(get_extension(argv[i]), "mid"))
 			{
-				ustrcpy(eof_song_path, argv[i]);
-				ustrcpy(eof_filename, argv[i]);
+				(void) ustrcpy(eof_song_path, argv[i]);
+				(void) ustrcpy(eof_filename, argv[i]);
 				replace_filename(eof_last_eof_path, eof_filename, "", 1024);
-				ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+				(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 				replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 				eof_song = eof_import_midi(eof_filename);
 				if(!eof_song)
@@ -3710,10 +3710,10 @@ int eof_initialize(int argc, char * argv[])
 			}
 			else if(!ustricmp(get_extension(argv[i]), "rba"))
 			{
-				ustrcpy(eof_song_path, argv[i]);
-				ustrcpy(eof_filename, argv[i]);
+				(void) ustrcpy(eof_song_path, argv[i]);
+				(void) ustrcpy(eof_filename, argv[i]);
 				replace_filename(eof_last_eof_path, eof_filename, "", 1024);
-				ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+				(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 				replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 				replace_filename(temp_filename, eof_filename, "eof_rba_import.tmp", 1024);
 
@@ -3734,10 +3734,10 @@ int eof_initialize(int argc, char * argv[])
 			}
 			else if(!ustricmp(get_extension(argv[i]), "chart"))
 			{	//Import a Feedback chart via command line
-				ustrcpy(eof_song_path, argv[i]);
-				ustrcpy(eof_filename, argv[i]);
+				(void) ustrcpy(eof_song_path, argv[i]);
+				(void) ustrcpy(eof_filename, argv[i]);
 				replace_filename(eof_last_eof_path, eof_filename, "", 1024);
-				ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+				(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 				replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 				eof_song = eof_import_chart(eof_filename);
 				if(!eof_song)
@@ -3753,10 +3753,10 @@ int eof_initialize(int argc, char * argv[])
 			}
 			else if(strcasestr_spec(argv[i], ".pak."))
 			{	//Import a Guitar Hero file via command line
-				ustrcpy(eof_song_path, argv[i]);
-				ustrcpy(eof_filename, argv[i]);
+				(void) ustrcpy(eof_song_path, argv[i]);
+				(void) ustrcpy(eof_filename, argv[i]);
 				replace_filename(eof_last_eof_path, eof_filename, "", 1024);
-				ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
+				(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 				replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 				eof_song = eof_import_gh(eof_filename);
 				if(!eof_song)
@@ -3795,9 +3795,9 @@ void eof_exit(void)
 
 	//Delete the undo/redo related files
 	eof_save_config("eof.cfg");
-	snprintf(fn, sizeof(fn), "eof%03u.redo", eof_log_id);	//Get the name of this EOF instance's redo file
+	snprintf(fn, sizeof(fn) - 1, "eof%03u.redo", eof_log_id);	//Get the name of this EOF instance's redo file
 	delete_file(fn);	//And delete it if it exists
-	snprintf(fn, sizeof(fn), "eof%03u.redo.ogg", eof_log_id);	//Get the name of this EOF instance's redo OGG
+	snprintf(fn, sizeof(fn) - 1, "eof%03u.redo.ogg", eof_log_id);	//Get the name of this EOF instance's redo OGG
 	delete_file(fn);	//And delete it if it exists
 	if(eof_undo_states_initialized > 0)
 	{
@@ -3806,7 +3806,7 @@ void eof_exit(void)
 			if(eof_undo_filename[i])
 			{
 				delete_file(eof_undo_filename[i]);	//Delete the undo file
-				snprintf(fn, sizeof(fn), "%s.ogg", eof_undo_filename[i]);	//Get the filename of any associated undo OGG
+				snprintf(fn, sizeof(fn) - 1, "%s.ogg", eof_undo_filename[i]);	//Get the filename of any associated undo OGG
 				delete_file(fn);	//And delete it if it exists
 			}
 		}
@@ -4592,7 +4592,7 @@ void eof_set_color_set(void)
 	//Update the strings for the Note>Toggle and Note>Clear menus
 	for(x = 0; x < 6; x++)
 	{
-		 snprintf(eof_note_toggle_menu_strings[x], sizeof(eof_note_toggle_menu_string_1), "%s\tShift+%d", eof_colors[x].colorname, x+1);
+		 snprintf(eof_note_toggle_menu_strings[x], sizeof(eof_note_toggle_menu_string_1) - 1, "%s\tShift+%d", eof_colors[x].colorname, x+1);
 		 strncpy(eof_note_clear_menu_strings[x], eof_colors[x].colorname, sizeof(eof_note_clear_menu_string_1));
 	}
 
