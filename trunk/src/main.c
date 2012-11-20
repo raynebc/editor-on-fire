@@ -734,64 +734,64 @@ void eof_fix_window_title(void)
 	}
 	if(eof_song && eof_song_loaded)
 	{
-		ustrcat(eof_window_title, eof_song->tags->title);
-		ustrcat(eof_window_title, " (");
+		(void) ustrcat(eof_window_title, eof_song->tags->title);
+		(void) ustrcat(eof_window_title, " (");
 		if(eof_vocals_selected)
 		{
-			ustrcat(eof_window_title, "PART VOCALS");
+			(void) ustrcat(eof_window_title, "PART VOCALS");
 		}
 		else
 		{
 			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_ALT_NAME)
 			{	//If this track has an alternate name, append the track's alternate name
-				ustrcat(eof_window_title, eof_song->track[eof_selected_track]->altname);
+				(void) ustrcat(eof_window_title, eof_song->track[eof_selected_track]->altname);
 			}
 			else
 			{	//Otherwise append the track's native name
-				ustrcat(eof_window_title, eof_song->track[eof_selected_track]->name);
+				(void) ustrcat(eof_window_title, eof_song->track[eof_selected_track]->name);
 			}
-			ustrcat(eof_window_title, "  ");
+			(void) ustrcat(eof_window_title, "  ");
 			char *ptr;
 			if(eof_selected_track == EOF_TRACK_DANCE)
 			{	//If the dance track is active
 				ptr = eof_dance_tab_name[eof_note_type];
-				ustrcat(eof_window_title, ptr);					//Append the active dance difficulty name
+				(void) ustrcat(eof_window_title, ptr);					//Append the active dance difficulty name
 			}
 			else
 			{
 				ptr = eof_note_type_name[eof_note_type];
-				ustrcat(eof_window_title, ptr);					//Append the active instrument difficulty name
+				(void) ustrcat(eof_window_title, ptr);					//Append the active instrument difficulty name
 			}
 		}
-		ustrcat(eof_window_title, ")");
+		(void) ustrcat(eof_window_title, ")");
 
 		if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_ALT_NAME)
 		{	//If this track has an alternate name, append the track's native name
-			ustrcat(eof_window_title, " (");
-			ustrcat(eof_window_title, eof_song->track[eof_selected_track]->name);
-			ustrcat(eof_window_title, ")");
+			(void) ustrcat(eof_window_title, " (");
+			(void) ustrcat(eof_window_title, eof_song->track[eof_selected_track]->name);
+			(void) ustrcat(eof_window_title, ")");
 		}
 		if((eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && eof_legacy_view)
 		{	//If this is a pro guitar track being displayed with the legacy view enabled
-			ustrcat(eof_window_title, "(Legacy view)");
+			(void) ustrcat(eof_window_title, "(Legacy view)");
 		}
 
 		if(eof_song->tags->tempo_map_locked)
 		{	//If the tempo map is locked
-			ustrcat(eof_window_title, "(Tempo map locked)");
+			(void) ustrcat(eof_window_title, "(Tempo map locked)");
 		}
 		if(eof_song->tags->double_bass_drum_disabled)
 		{	//If expert+ bass drum is disabled
-			ustrcat(eof_window_title, "(Expert+ drums off)");
+			(void) ustrcat(eof_window_title, "(Expert+ drums off)");
 		}
 		if(eof_silence_loaded)
 		{	//If no chart audio is actually loaded
-			ustrcat(eof_window_title, "(No audio loaded)");
+			(void) ustrcat(eof_window_title, "(No audio loaded)");
 		}
 	}
 	else
 	{
-		ustrcat(eof_window_title, "No Song");
+		(void) ustrcat(eof_window_title, "No Song");
 	}
 	set_window_title(eof_window_title);
 }
@@ -827,7 +827,7 @@ void eof_prepare_undo(int type)
 	eof_fix_window_title();
 	if(eof_change_count % 10 == 0)
 	{
-		replace_extension(eof_temp_filename, eof_filename, "backup.eof", 1024);
+		(void) replace_extension(eof_temp_filename, eof_filename, "backup.eof", 1024);
 		if(!eof_save_song(eof_song, eof_temp_filename))
 		{
 			allegro_message("Undo state error!");
@@ -1308,7 +1308,7 @@ int eof_load_ogg_quick(char * filename)
 			free(eof_music_data);
 		}
 	}
-	ustrncpy(eof_loaded_ogg_name,filename,1024);	//Store the loaded OGG filename
+	(void) ustrncpy(eof_loaded_ogg_name,filename,1024);	//Store the loaded OGG filename
 	eof_loaded_ogg_name[1023] = '\0';
 	return loaded;
 }
@@ -1333,16 +1333,16 @@ int eof_load_ogg(char * filename, char silence_failover)
 	eof_music_data_size = file_size_ex(filename);
 	if(!eof_music_data)
 	{	//If the referenced file couldn't be buffered to memory, have the user browse for another file
-		replace_filename(directory, filename, "", 1024);	//Get the path of the target file's parent directory
+		(void) replace_filename(directory, filename, "", 1024);	//Get the path of the target file's parent directory
 		returnedfn = ncd_file_select(0, directory, "Select Music File", eof_filter_music_files);
 		eof_clear_input();
 		if(returnedfn)
 		{	//User selected an OGG or MP3 file, write guitar.ogg into the chart's destination folder accordingly
 			ptr = returnedfn;
-			replace_filename(directory, filename, "", 1024);	//Store the path of the file's parent folder
+			(void) replace_filename(directory, filename, "", 1024);	//Store the path of the file's parent folder
 			if(!eof_mp3_to_ogg(returnedfn, directory))			//Create guitar.ogg in the folder
 			{	//If the copy or conversion to create guitar.ogg succeeded
-				replace_filename(returnedfn, filename, "guitar.ogg", 1024);	//guitar.ogg is the expected file
+				(void) replace_filename(returnedfn, filename, "guitar.ogg", 1024);	//guitar.ogg is the expected file
 				eof_music_data = (void *)eof_buffer_file(returnedfn, 0);
 				eof_music_data_size = file_size_ex(returnedfn);
 			}
@@ -1352,7 +1352,7 @@ int eof_load_ogg(char * filename, char silence_failover)
 			load_silence = 1;
 			ptr = emptystring;
 			get_executable_name(directory, 1024);	//Get EOF's executable path
-			replace_filename(directory, directory, "second_of_silence.ogg", 1024);
+			(void) replace_filename(directory, directory, "second_of_silence.ogg", 1024);
 			eof_music_data = (void *)eof_buffer_file(directory, 0);
 			eof_music_data_size = file_size_ex(directory);
 		}
@@ -1381,7 +1381,7 @@ int eof_load_ogg(char * filename, char silence_failover)
 			}
 			eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
 			eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
-			ustrncpy(eof_loaded_ogg_name,filename,1024);	//Store the loaded OGG filename
+			(void) ustrncpy(eof_loaded_ogg_name,filename,1024);	//Store the loaded OGG filename
 			eof_loaded_ogg_name[1023] = '\0';
 		}
 	}
@@ -1429,8 +1429,8 @@ int eof_save_ogg(char * fn)
 		{
 			return 0;
 		}
-		pack_fwrite(eof_music_data, eof_music_data_size, fp);
-		pack_fclose(fp);
+		(void) pack_fwrite(eof_music_data, eof_music_data_size, fp);
+		(void) pack_fclose(fp);
 		return 1;
 	}
 	return 0;
@@ -1499,7 +1499,7 @@ void eof_read_global_keys(void)
 		eof_cursor_visible = 0;
 		eof_emergency_stop_music();
 		eof_render();
-		eof_popup_dialog(eof_main_dialog, 0);
+		(void) eof_popup_dialog(eof_main_dialog, 0);
 		eof_cursor_visible = 1;
 		eof_pen_visible = 1;
 		eof_show_mouse(NULL);
@@ -1857,7 +1857,7 @@ void eof_note_logic(void)
 				eof_blclick_released = 1;
 				if(eof_cselected_control == 0)
 				{
-					eof_menu_catalog_previous();
+					(void) eof_menu_catalog_previous();
 				}
 				else if(eof_cselected_control == 1)
 				{
@@ -1865,7 +1865,7 @@ void eof_note_logic(void)
 				}
 				else if(eof_cselected_control == 2)
 				{
-					eof_menu_catalog_next();
+					(void) eof_menu_catalog_next();
 				}
 			}
 		}
@@ -1885,7 +1885,7 @@ void eof_note_logic(void)
 			if(!eof_blclick_released)
 			{
 				eof_blclick_released = 1;
-				eof_menu_catalog_show();
+				(void) eof_menu_catalog_show();
 			}
 		}
 		eof_info_color = eof_color_green;
@@ -1909,7 +1909,7 @@ void eof_logic(void)
 		eof_emergency_stop_music();
 		eof_render();
 		clear_keybuf();
-		eof_popup_dialog(eof_main_dialog, 0);
+		(void) eof_popup_dialog(eof_main_dialog, 0);
 		eof_cursor_visible = 1;
 		eof_pen_visible = 1;
 		eof_show_mouse(NULL);
@@ -2048,7 +2048,7 @@ char * eof_get_tone_name(int tone)
 	if(eof_display_flats)				//If user enabled the feature to display flat notes
 		array_to_use=note_name_flats;	//Use the other array
 
-	snprintf(eof_tone_name_buffer, sizeof(eof_tone_name_buffer) - 1, "%s%d", array_to_use[tone % 12], tone / 12 - 1);
+	(void) snprintf(eof_tone_name_buffer, sizeof(eof_tone_name_buffer) - 1, "%s%d", array_to_use[tone % 12], tone / 12 - 1);
 	return eof_tone_name_buffer;
 }
 
@@ -2065,7 +2065,7 @@ void eof_render_note_window(void)
 	char temp[1024] = {0};
 	unsigned long notepos;
 	char pro_guitar_string[30] = {0};
-	char difficulty1[20], difficulty2[50], difficulty3[50];
+	char difficulty1[20] = {0}, difficulty2[50] = {0}, difficulty3[50] = {0};
 	int scale, chord, isslash, bassnote;	//Used when looking up the chord name (if the last selected note is not already named)
 
 	if(eof_disable_info_panel)	//If the user disabled the info panel's rendering
@@ -2101,7 +2101,7 @@ void eof_render_note_window(void)
 		}
 		if((eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		{	//If the catalog entry is a pro guitar note and the active track is a legacy track
-			snprintf(temp, sizeof(temp) - 1, "Would paste from \"%s\" as:",eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->name);
+			(void) snprintf(temp, sizeof(temp) - 1, "Would paste from \"%s\" as:",eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->name);
 			textout_ex(eof_window_note->screen, font, temp, 2, 53, eof_color_white, -1);
 		}
 
@@ -2207,7 +2207,7 @@ void eof_render_note_window(void)
 					if((eof_song->catalog->entry[eof_selected_catalog_entry].type == eof_get_note_type(eof_song, eof_song->catalog->entry[eof_selected_catalog_entry].track, i)) &&
 					  (notepos >= eof_song->catalog->entry[eof_selected_catalog_entry].start_pos))
 					{	//If this note is the same difficulty as that from where the catalog entry was taken, and is in the catalog entry
-						eof_note_draw(eof_song->catalog->entry[eof_selected_catalog_entry].track, i, i == eof_hover_note_2 ? 2 : 0, eof_window_note);
+						(void) eof_note_draw(eof_song->catalog->entry[eof_selected_catalog_entry].track, i, i == eof_hover_note_2 ? 2 : 0, eof_window_note);
 					}
 				}
 			}//If drawing a non vocal catalog entry
@@ -2236,11 +2236,11 @@ void eof_render_note_window(void)
 		//Display the difficulties associated with the active track
 		if(eof_song->track[eof_selected_track]->difficulty != 0xFF)
 		{	//If the active track has a defined difficulty
-			snprintf(difficulty1, sizeof(difficulty1) - 1, "%d", eof_song->track[eof_selected_track]->difficulty);
+			(void) snprintf(difficulty1, sizeof(difficulty1) - 1, "%d", eof_song->track[eof_selected_track]->difficulty);
 		}
 		else
 		{
-			snprintf(difficulty1, sizeof(difficulty1) - 1, "(Undefined)");
+			(void) snprintf(difficulty1, sizeof(difficulty1) - 1, "(Undefined)");
 		}
 		difficulty2[0] = '\0';
 		difficulty3[0] = '\0';
@@ -2248,30 +2248,30 @@ void eof_render_note_window(void)
 		{	//Write the difficulty string to display for pro drums
 			if(((eof_song->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24) != 0x0F)
 			{	//If the pro drum difficulty is defined
-				snprintf(difficulty2, sizeof(difficulty2) - 1, "(Pro: %lu)", (eof_song->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24);	//Mask out the low nibble of the high order byte of the drum track's flags (pro drum difficulty)
+				(void) snprintf(difficulty2, sizeof(difficulty2) - 1, "(Pro: %lu)", (eof_song->track[EOF_TRACK_DRUM]->flags & 0x0F000000) >> 24);	//Mask out the low nibble of the high order byte of the drum track's flags (pro drum difficulty)
 			}
 			else
 			{
-				snprintf(difficulty2, sizeof(difficulty2) - 1, "(Pro: Undefined)");
+				(void) snprintf(difficulty2, sizeof(difficulty2) - 1, "(Pro: Undefined)");
 			}
 			if(((eof_song->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 24) != 0xF0)
 			{	//If the PS deal drums difficulty is defined
-				snprintf(difficulty3, sizeof(difficulty3) - 1, "(PS: %lu)", (eof_song->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 28);	//Mask out the high nibble of the high order byte of the drum track's flags (pro drum difficulty)
+				(void) snprintf(difficulty3, sizeof(difficulty3) - 1, "(PS: %lu)", (eof_song->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 28);	//Mask out the high nibble of the high order byte of the drum track's flags (pro drum difficulty)
 			}
 			else
 			{
-				snprintf(difficulty3, sizeof(difficulty3) - 1, "(PS: Undefined)");
+				(void) snprintf(difficulty3, sizeof(difficulty3) - 1, "(PS: Undefined)");
 			}
 		}
 		else if(eof_selected_track == EOF_TRACK_VOCALS)
 		{	//Write the difficulty string to display for vocal harmony
 			if(((eof_song->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24) != 0x0F)
 			{	//If the harmony difficulty is defined
-				snprintf(difficulty2, sizeof(difficulty2) - 1, "(Harmony: %lu)", (eof_song->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24);	//Mask out the high order byte of the vocal track's flags (harmony difficulty)
+				(void) snprintf(difficulty2, sizeof(difficulty2) - 1, "(Harmony: %lu)", (eof_song->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24);	//Mask out the high order byte of the vocal track's flags (harmony difficulty)
 			}
 			else
 			{
-				snprintf(difficulty2, sizeof(difficulty2) - 1, "(Harmony: Undefined)");
+				(void) snprintf(difficulty2, sizeof(difficulty2) - 1, "(Harmony: Undefined)");
 			}
 			difficulty3[0] = '\0';	//Unused for vocals
 		}
@@ -2485,7 +2485,7 @@ void eof_render_note_window(void)
 							bassnote %= 12;
 							if(matchcount > 1)
 							{	//If there's more than one match
-								snprintf(chord_match_string, sizeof(chord_match_string) - 1, " (match %lu/%lu)", eof_selected_chord_lookup + 1, matchcount);
+								(void) snprintf(chord_match_string, sizeof(chord_match_string) - 1, " (match %lu/%lu)", eof_selected_chord_lookup + 1, matchcount);
 							}
 							if(!isslash)
 							{	//If it's a normal chord
@@ -2586,7 +2586,7 @@ void eof_render_lyric_preview(BITMAP * bp)
 				{	//If space is nonzero, append a space if possible
 					if(currentlength+1 <= MAX_LYRIC_PREVIEW_LENGTH)
 					{	//If appending a space would NOT cause an overflow
-						ustrcat(lline[x], " ");
+						(void) ustrcat(lline[x], " ");
 						currentlength++;	//Track the length of this preview line
 					}
 					else
@@ -2616,7 +2616,7 @@ void eof_render_lyric_preview(BITMAP * bp)
 				break;													//Stop building this line's preview
 
 		//Append string
-			ustrcat(lline[x], eof_song->vocal_track[0]->lyric[i]->text);
+			(void) ustrcat(lline[x], eof_song->vocal_track[0]->lyric[i]->text);
 			currentlength+=lyriclength;									//Track the length of this preview line
 
 		//Truncate a '/' character off the end of the lyric line if it exists (TB:RB notation for a forced line break)
@@ -2993,7 +2993,7 @@ void eof_render_3d_window(void)
 		if(eof_note_type == eof_get_note_type(eof_song, eof_selected_track, i-1))
 		{
 			tr = eof_note_tail_draw_3d(eof_selected_track, i-1, (eof_selection.multi[i-1] && eof_music_paused) ? 1 : (i-1) == eof_hover_note ? 2 : 0);
-			eof_note_draw_3d(eof_selected_track, i-1, (eof_selection.track == eof_selected_track && eof_selection.multi[i-1] && eof_music_paused) ? 1 : (i-1) == eof_hover_note ? 2 : 0);
+			(void) eof_note_draw_3d(eof_selected_track, i-1, (eof_selection.track == eof_selected_track && eof_selection.multi[i-1] && eof_music_paused) ? 1 : (i-1) == eof_hover_note ? 2 : 0);
 
 			if(tr < 0)	//if eof_note_tail_draw_3d skipped rendering the tail because it renders before the visible area
 				break;	//Stop rendering 3d notes
@@ -3333,7 +3333,7 @@ int eof_initialize(int argc, char * argv[])
 	/* make sure we are in the proper directory before loading external data (don't do this on OS X) */
 	#ifndef ALLEGRO_MACOSX
 		get_executable_name(temp_filename, 1024);
-		replace_filename(temp_filename, temp_filename, "", 1024);
+		(void) replace_filename(temp_filename, temp_filename, "", 1024);
 		if(eof_chdir(temp_filename))
 		{
 			allegro_message("Could not change directory to EOF's program folder!\n%s", temp_filename);
@@ -3346,7 +3346,7 @@ int eof_initialize(int argc, char * argv[])
 		if(!file_exists("eof.dat", 0, NULL))
 		{
 			get_executable_name(temp_filename, 1024);
-			replace_filename(temp_filename, temp_filename, "", 1024);
+			(void) replace_filename(temp_filename, temp_filename, "", 1024);
 			if(eof_chdir(temp_filename))
 			{
 				allegro_message("Could not load program data!\n%s", temp_filename);
@@ -3368,7 +3368,7 @@ int eof_initialize(int argc, char * argv[])
 	if(eof_songs_path[0] == '\0')
 	{	//If the user-specified song folder couldn't be loaded from the config file above
 		get_executable_name(eof_songs_path, 1024);	//Set it to EOF's program file folder
-		replace_filename(eof_songs_path, eof_songs_path, "", 1024);
+		(void) replace_filename(eof_songs_path, eof_songs_path, "", 1024);
 	}
 
 	eof_zoom_backup = eof_zoom;	//Save this because it will be over-written in eof_set_display_mode()
@@ -3455,39 +3455,39 @@ int eof_initialize(int argc, char * argv[])
 		if((eof_system("lame -S check.wav >foo") == 0) && (eof_system("oggenc2 -h >foo") == 0))
 		{
 			eof_supports_mp3 = 1;
-			delete_file("check.wav.mp3");
-			delete_file("foo");
+			(void) delete_file("check.wav.mp3");
+			(void) delete_file("foo");
 		}
 		else
 		{
 			eof_supports_mp3 = 0;
-			delete_file("foo");
+			(void) delete_file("foo");
 			allegro_message("MP3 support disabled.\n\nPlease install LAME and Vorbis Tools if you want MP3 support.");
 		}
 	#elif defined(ALLEGRO_MACOSX)
 		if((eof_system("./lame -S check.wav >foo") == 0) && (eof_system("./oggenc -h >foo") == 0))
 		{
 			eof_supports_mp3 = 1;
-			delete_file("check.wav.mp3");
-			delete_file("foo");
+			(void) delete_file("check.wav.mp3");
+			(void) delete_file("foo");
 		}
 		else
 		{
 			eof_supports_mp3 = 0;
-			delete_file("foo");
+			(void) delete_file("foo");
 			allegro_message("MP3 support disabled.\n\nPlease install LAME and Vorbis Tools if you want MP3 support.");
 		}
 	#else
 		if((eof_system("lame -S check.wav >foo") == 0) && (eof_system("oggenc -h >foo") == 0))
 		{
 			eof_supports_mp3 = 1;
-			delete_file("check.wav.mp3");
-			delete_file("foo");
+			(void) delete_file("check.wav.mp3");
+			(void) delete_file("foo");
 		}
 		else
 		{
 			eof_supports_mp3 = 0;
-			delete_file("foo");
+			(void) delete_file("foo");
 			allegro_message("MP3 support disabled.\n\nPlease install LAME and Vorbis Tools if you want MP3 support.");
 		}
 	#endif
@@ -3499,10 +3499,10 @@ int eof_initialize(int argc, char * argv[])
 		SAMPLE *silentaudio = create_silence_sample(1);	//Create 1ms worth of silence
 		if(silentaudio != NULL)
 		{	//If the silence was successfully created
-			delete_file("silence.wav");	//Delete these temp files if they exist
-			delete_file("silence.ogg");
-			delete_file("silence2.ogg");
-			delete_file("silence3.ogg");
+			(void) delete_file("silence.wav");	//Delete these temp files if they exist
+			(void) delete_file("silence.ogg");
+			(void) delete_file("silence2.ogg");
+			(void) delete_file("silence3.ogg");
 			if(save_wav("silence.wav", silentaudio) && exists("silence.wav"))
 			{	//If the wave file was successfully created
 				#ifdef ALLEGRO_WINDOWS
@@ -3517,13 +3517,13 @@ int eof_initialize(int argc, char * argv[])
 						if(!system("oggCat silence3.ogg silence.ogg silence2.ogg") && exists("silence3.ogg"))
 						{	//If oggCat successfully concatenated the two files
 							eof_supports_oggcat = 1;
-							delete_file("silence3.ogg");
+							(void) delete_file("silence3.ogg");
 						}
-						delete_file("silence2.ogg");
+						(void) delete_file("silence2.ogg");
 					}
-					delete_file("silence.ogg");
+					(void) delete_file("silence.ogg");
 				}
-				delete_file("silence.wav");
+				(void) delete_file("silence.wav");
 			}
 		}
 	}
@@ -3598,7 +3598,7 @@ int eof_initialize(int argc, char * argv[])
 	eof_log("\tChecking for crash recovery files", 1);
 	if(exists("eof.recover.on"))
 	{	//If the recovery status file is present
-		delete_file("eof.recover.on");	//Try to delete the file
+		(void) delete_file("eof.recover.on");	//Try to delete the file
 		if(!exists("eof.recover.on"))
 		{	//If the file no longer exists, it is not open by another EOF instance
 			if(exists("eof.recover"))
@@ -3607,7 +3607,7 @@ int eof_initialize(int argc, char * argv[])
 				char *ptr = NULL;
 				if(buffer)
 				{	//If the file could buffer
-					ustrtok(buffer, "\r\n");	//Split each line into NULL separated strings
+					(void) ustrtok(buffer, "\r\n");	//Split each line into NULL separated strings
 					ptr = ustrtok(NULL, "\r\n[]");	//Get the second line (the project file path)
 					if(exists(buffer) && ptr && exists(ptr))
 					{	//If the recovery file contained the names of an undo file and a project file that each exist
@@ -3621,10 +3621,10 @@ int eof_initialize(int argc, char * argv[])
 								return 0;
 							}
 							(void) ustrcpy(eof_filename, ptr);		//Set the full project path
-							replace_filename(eof_last_eof_path, eof_filename, "", 1024);	//Set the last loaded song path
+							(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);	//Set the last loaded song path
 							(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));	//Set the project filename
-							replace_filename(eof_song_path, eof_filename, "", 1024);	//Set the project folder path
-							append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);	//Construct the full OGG path
+							(void) replace_filename(eof_song_path, eof_filename, "", 1024);	//Set the project folder path
+							(void) append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);	//Construct the full OGG path
 							if(!eof_load_ogg(temp_filename, 1))	//If user does not provide audio, fail over to using silent audio
 							{
 								allegro_message("Failed to load OGG!");
@@ -3635,7 +3635,7 @@ int eof_initialize(int argc, char * argv[])
 							recovered = 1;	//Remember that a file was recovered so an undo state can be made after the call to eof_init_after_load()
 						}
 
-						delete_file("eof.recover");
+						(void) delete_file("eof.recover");
 					}
 					free(buffer);
 				}
@@ -3666,7 +3666,7 @@ int eof_initialize(int argc, char * argv[])
 				/* load the specified project */
 				(void) ustrcpy(eof_song_path, argv[i]);
 				(void) ustrcpy(eof_filename, argv[i]);
-				replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+				(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
 				(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
 				eof_song = eof_load_song(eof_filename);
 				if(!eof_song)
@@ -3674,14 +3674,14 @@ int eof_initialize(int argc, char * argv[])
 					allegro_message("Unable to load project. File could be corrupt!");
 					return 0;
 				}
-				replace_filename(eof_song_path, eof_filename, "", 1024);
+				(void) replace_filename(eof_song_path, eof_filename, "", 1024);
 
 				/* check song.ini and prompt user to load any external edits */
-				replace_filename(temp_filename, eof_song_path, "song.ini", 1024);
-				eof_import_ini(eof_song, temp_filename, 1);	//Read song.ini and prompt to replace values of existing settings in the project if they are different
+				(void) replace_filename(temp_filename, eof_song_path, "song.ini", 1024);
+				(void) eof_import_ini(eof_song, temp_filename, 1);	//Read song.ini and prompt to replace values of existing settings in the project if they are different
 
 				/* attempt to load the OGG profile OGG */
-				append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);
+				(void) append_filename(temp_filename, eof_song_path, eof_song->tags->ogg[eof_selected_ogg].filename, 1024);
 				if(!eof_load_ogg(temp_filename, 1))	//If user does not provide audio, fail over to using silent audio
 				{
 					allegro_message("Failed to load OGG!");
@@ -3694,9 +3694,9 @@ int eof_initialize(int argc, char * argv[])
 			{
 				(void) ustrcpy(eof_song_path, argv[i]);
 				(void) ustrcpy(eof_filename, argv[i]);
-				replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+				(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
 				(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
-				replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
+				(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 				eof_song = eof_import_midi(eof_filename);
 				if(!eof_song)
 				{
@@ -3712,15 +3712,15 @@ int eof_initialize(int argc, char * argv[])
 			{
 				(void) ustrcpy(eof_song_path, argv[i]);
 				(void) ustrcpy(eof_filename, argv[i]);
-				replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+				(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
 				(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
-				replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
-				replace_filename(temp_filename, eof_filename, "eof_rba_import.tmp", 1024);
+				(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
+				(void) replace_filename(temp_filename, eof_filename, "eof_rba_import.tmp", 1024);
 
 				if(eof_extract_rba_midi(eof_filename,temp_filename) == 0)
 				{	//If this was an RBA file and the MIDI was extracted successfully
 					eof_song = eof_import_midi(temp_filename);
-					delete_file(temp_filename);	//Delete temporary file
+					(void) delete_file(temp_filename);	//Delete temporary file
 				}
 				if(!eof_song)
 				{
@@ -3736,9 +3736,9 @@ int eof_initialize(int argc, char * argv[])
 			{	//Import a Feedback chart via command line
 				(void) ustrcpy(eof_song_path, argv[i]);
 				(void) ustrcpy(eof_filename, argv[i]);
-				replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+				(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
 				(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
-				replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
+				(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 				eof_song = eof_import_chart(eof_filename);
 				if(!eof_song)
 				{
@@ -3755,9 +3755,9 @@ int eof_initialize(int argc, char * argv[])
 			{	//Import a Guitar Hero file via command line
 				(void) ustrcpy(eof_song_path, argv[i]);
 				(void) ustrcpy(eof_filename, argv[i]);
-				replace_filename(eof_last_eof_path, eof_filename, "", 1024);
+				(void) replace_filename(eof_last_eof_path, eof_filename, "", 1024);
 				(void) ustrcpy(eof_loaded_song_name, get_filename(eof_filename));
-				replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
+				(void) replace_extension(eof_loaded_song_name, eof_loaded_song_name, "eof", 1024);
 				eof_song = eof_import_gh(eof_filename);
 				if(!eof_song)
 				{
@@ -3795,23 +3795,23 @@ void eof_exit(void)
 
 	//Delete the undo/redo related files
 	eof_save_config("eof.cfg");
-	snprintf(fn, sizeof(fn) - 1, "eof%03u.redo", eof_log_id);	//Get the name of this EOF instance's redo file
-	delete_file(fn);	//And delete it if it exists
-	snprintf(fn, sizeof(fn) - 1, "eof%03u.redo.ogg", eof_log_id);	//Get the name of this EOF instance's redo OGG
-	delete_file(fn);	//And delete it if it exists
+	(void) snprintf(fn, sizeof(fn) - 1, "eof%03u.redo", eof_log_id);	//Get the name of this EOF instance's redo file
+	(void) delete_file(fn);	//And delete it if it exists
+	(void) snprintf(fn, sizeof(fn) - 1, "eof%03u.redo.ogg", eof_log_id);	//Get the name of this EOF instance's redo OGG
+	(void) delete_file(fn);	//And delete it if it exists
 	if(eof_undo_states_initialized > 0)
 	{
 		for(i = 0; i < EOF_MAX_UNDO; i++)
 		{	//For each undo slot
 			if(eof_undo_filename[i])
 			{
-				delete_file(eof_undo_filename[i]);	//Delete the undo file
-				snprintf(fn, sizeof(fn) - 1, "%s.ogg", eof_undo_filename[i]);	//Get the filename of any associated undo OGG
-				delete_file(fn);	//And delete it if it exists
+				(void) delete_file(eof_undo_filename[i]);	//Delete the undo file
+				(void) snprintf(fn, sizeof(fn) - 1, "%s.ogg", eof_undo_filename[i]);	//Get the filename of any associated undo OGG
+				(void) delete_file(fn);	//And delete it if it exists
 			}
 		}
 	}
-	delete_file("eof.autoadjust");
+	(void) delete_file("eof.autoadjust");
 	eof_destroy_undo();
 
 	//Free the file filters
@@ -3865,9 +3865,9 @@ void eof_exit(void)
 	//Close the autorecover file if it is open, and delete the auto-recovery status file
 	if(eof_recovery)
 	{	//If this EOF instance is maintaining auto-recovery files
-		pack_fclose(eof_recovery);
+		(void) pack_fclose(eof_recovery);
 		eof_recovery = NULL;
-		delete_file("eof.recover.on");
+		(void) delete_file("eof.recover.on");
 	}
 }
 
@@ -4016,7 +4016,7 @@ void eof_init_after_load(char initaftersavestate)
 	{	//Validate eof_selected_track, to ensure a valid track was loaded from the config file
 		eof_selected_track = EOF_TRACK_GUITAR;
 	}
-	eof_menu_track_selected_track_number(eof_selected_track);
+	(void) eof_menu_track_selected_track_number(eof_selected_track);
 	if((eof_zoom <= 0) || (eof_zoom > EOF_NUM_ZOOM_LEVELS))
 	{	//Validate eof_zoom, to ensure a valid zoom level was loaded from the config file
 		eof_zoom = 10;
@@ -4194,7 +4194,7 @@ void eof_start_logging(void)
 		srand(time(NULL));	//Seed the random number generator with the current time
 		eof_log_id = ((unsigned int) rand()) % 1000;	//Create a 3 digit random number to represent this EOF instance
 		get_executable_name(log_filename, 1024);	//Get the path of the EOF binary that is running
-		replace_filename(log_filename, log_filename, "eof_log.txt", 1024);
+		(void) replace_filename(log_filename, log_filename, "eof_log.txt", 1024);
 		eof_log_fp = fopen(log_filename, "w");
 		eof_log_level |= 1;	//Set the logging enabled bit
 
@@ -4209,13 +4209,13 @@ void eof_stop_logging(void)
 {
 	if(eof_log_fp)
 	{
-		fclose(eof_log_fp);
+		(void) fclose(eof_log_fp);
 		eof_log_fp = NULL;
 		eof_log_level &= ~1;	//Disable the logging enabled bit
 	}
 }
 
-char eof_log_string[1024];
+char eof_log_string[1024] = {0};
 void eof_log(const char *text, int level)
 {
 	if(eof_log_fp && (eof_log_level & 1) && (eof_log_level >= level))
@@ -4237,7 +4237,7 @@ void eof_log(const char *text, int level)
 		{
 			eof_windows_argv[i] = malloc(1024 * sizeof(char));
 			memset(eof_windows_argv[i], 0, 1024);
-			uconvert((char *)eof_windows_internal_argv[i], U_UNICODE, eof_windows_argv[i], U_UTF8, 4096);
+			(void) uconvert((char *)eof_windows_internal_argv[i], U_UNICODE, eof_windows_argv[i], U_UTF8, 4096);
 		}
 		return eof_initialize(eof_windows_argc, eof_windows_argv);
 	}

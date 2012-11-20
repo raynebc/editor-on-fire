@@ -96,12 +96,12 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 	double currentbpm = 120.0;	//As per the MIDI specification, until a tempo change is reached, 120BPM is assumed
 	double realtime = 0.0, preoffseted;
 	char *trackname = NULL;
-	char buffer[100];	//Will be used to store an ASCII representation of the event timestamps
+	char buffer[100] = {0};	//Will be used to store an ASCII representation of the event timestamps
 
 	eof_log("eof_get_raw_MIDI_data() entered", 1);
 
 #ifdef MIDI_DATA_IMPORT_DEBUG
-	snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tEvents will be offset by %d ms", offset);
+	(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tEvents will be offset by %d ms", offset);
 	eof_log(eof_log_string, 1);
 #endif
 
@@ -198,7 +198,7 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 						}
 						else if((meventtype == 0x3) && (ctr > 0))
 						{	//On the second pass, parse the track name
-							trackname = malloc(length + 1);	//Allocate a buffer large enough to store the track name
+							trackname = malloc((size_t)length + 1);	//Allocate a buffer large enough to store the track name
 							if(!trackname)
 							{	//Error allocating memory
 								eof_MIDI_empty_event_list(head);
@@ -206,7 +206,7 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 								free(trackptr);
 								return NULL;
 							}
-							memcpy(trackname, &midiptr->track[curtrack].data[track_pos], length);	//Read the track name into the buffer
+							memcpy(trackname, &midiptr->track[curtrack].data[track_pos], (size_t)length);	//Read the track name into the buffer
 							trackname[length] = '\0';	//Terminate the string
 						}
 						else if((meventtype == 0x51) && (ctr == 0))
@@ -271,7 +271,7 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 			if(ctr != 0)
 			{	//Don't store MIDI events on the first pass
 				linkptr = malloc(sizeof(struct eof_MIDI_data_event));	//Allocate a new link, initialize it and insert it into the linked list
-				dataptr = malloc(1 + size);	//Allocate enough memory to store the MIDI event type and the MIDI event data
+				dataptr = malloc(1 + (size_t)size);	//Allocate enough memory to store the MIDI event type and the MIDI event data
 				if(!linkptr || !dataptr)
 				{	//Error allocating memory
 					eof_MIDI_empty_event_list(head);
@@ -291,7 +291,7 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 					tail->next = linkptr;	//Point it forward to the new link
 				}
 				tail = linkptr;	//The new link is the new tail of the list
-				memcpy(dataptr, &midiptr->track[curtrack].data[event_pos], 1 + size);	//Copy the MIDI event type and data
+				memcpy(dataptr, &midiptr->track[curtrack].data[event_pos], 1 + (size_t)size);	//Copy the MIDI event type and data
 				preoffseted = eof_MIDI_delta_to_realtime(tempohead, absdelta, midiptr->divisions);	//Get the timestamp as it is before applying the offset
 				if(offset < 0)
 				{	//If the offset is negative
@@ -305,7 +305,7 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 				}
 				linkptr->deltatime = absdelta;				//Store the event's original delta time
 				linkptr->realtime = preoffseted + offset;	//Apply the offset and use the result for this event's timestamp
-				snprintf(buffer, sizeof(buffer) - 1, "%f", linkptr->realtime);	//Create a string representation of this timestamp
+				(void) snprintf(buffer, sizeof(buffer) - 1, "%f", linkptr->realtime);	//Create a string representation of this timestamp
 				linkptr->stringtime = malloc(strlen(buffer) + 1);	//Allocate enough memory to store the timestamp string
 				if(!linkptr->stringtime)
 				{	//Error allocating memory
@@ -318,11 +318,11 @@ struct eof_MIDI_data_track *eof_get_raw_MIDI_data(MIDI *midiptr, unsigned trackn
 #ifdef MIDI_DATA_IMPORT_DEBUG
 				if((eventtype & 0xF) == 0xF)
 				{	//If this was a meta event
-					snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tStoring event:  Delta = %lu  Time = %fms  (Offseted = %fms) Event = 0x%X  Meta event = 0x%X",absdelta, preoffseted, linkptr->realtime, (eventtype >> 4), meventtype);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tStoring event:  Delta = %lu  Time = %fms  (Offseted = %fms) Event = 0x%X  Meta event = 0x%X",absdelta, preoffseted, linkptr->realtime, (eventtype >> 4), meventtype);
 				}
 				else
 				{	//This was a normal MIDI event
-					snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tStoring event:  Delta = %lu  Time = %fms  (Offseted = %fms) Event = 0x%X",absdelta, preoffseted, linkptr->realtime, (eventtype >> 4));
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tStoring event:  Delta = %lu  Time = %fms  (Offseted = %fms) Event = 0x%X",absdelta, preoffseted, linkptr->realtime, (eventtype >> 4));
 				}
 				eof_log(eof_log_string, 1);
 #endif

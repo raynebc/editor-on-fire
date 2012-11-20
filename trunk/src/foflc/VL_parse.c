@@ -47,7 +47,7 @@ int VL_PreLoad(FILE *inf,char validate)
 	cursync=NULL;	//list starts out empty
 	se.next=NULL;	//In terms of linked lists, this always represents the last link
 
-	if(Lyrics.verbose)	puts("Reading VL file header");
+	if(Lyrics.verbose)	(void) puts("Reading VL file header");
 
 //Read file header
 	fread_err(buffer,4,1,inf);			//Read 4 bytes, which should be 'V','L','2',0
@@ -59,7 +59,7 @@ int VL_PreLoad(FILE *inf,char validate)
 			return 1;
 		else
 		{
-			puts("Error: Invalid file header string\nAborting");
+			(void) puts("Error: Invalid file header string\nAborting");
 			exit_wrapper(1);
 		}
 	}
@@ -71,24 +71,24 @@ int VL_PreLoad(FILE *inf,char validate)
 
 	if(VL.textsize % 4 != 0)
 	{
-		puts("Error: VL spec. violation: Sync chunk is not padded to a double-word alignment");
+		(void) puts("Error: VL spec. violation: Sync chunk is not padded to a double-word alignment");
 		if(validate)
 			return 2;
 		else
 		{
-			puts("Aborting");
+			(void) puts("Aborting");
 			exit_wrapper(2);
 		}
 	}
 
 	if(strncmp(buffer,"TEXT",5) != 0)
 	{
-		puts("Error: Invalid text header string");
+		(void) puts("Error: Invalid text header string");
 		if(validate)
 			return 3;
 		else
 		{
-			puts("Aborting");
+			(void) puts("Aborting");
 			exit_wrapper(3);
 		}
 	}
@@ -101,12 +101,12 @@ int VL_PreLoad(FILE *inf,char validate)
 
 	if(strncmp(buffer,"SYNC",5) != 0)
 	{
-		puts("Error: Invalid sync header string");
+		(void) puts("Error: Invalid sync header string");
 		if(validate)
 			return 4;
 		else
 		{
-			puts("Aborting");
+			(void) puts("Aborting");
 			exit_wrapper(4);
 		}
 	}
@@ -121,35 +121,35 @@ int VL_PreLoad(FILE *inf,char validate)
 			return 5;
 		else
 		{
-			puts("Aborting");
+			(void) puts("Aborting");
 			exit_wrapper(5);
 		}
 	}
 	if((unsigned long)ftell_result != VL.filesize+8)	//Validate filesize
 	{
-		puts("Error: Filesize does not match size given in file header");
+		(void) puts("Error: Filesize does not match size given in file header");
 		if(validate)
 			return 6;
 		else
 		{
-			puts("Aborting");
+			(void) puts("Aborting");
 			exit_wrapper(6);
 		}
 	}
 	if(VL.filesize != VL.textsize + VL.syncsize + 16)	//Validate syncsize
 	{
-		puts("Error: Incorrect size given in sync chunk");
+		(void) puts("Error: Incorrect size given in sync chunk");
 		if(validate)
 			return 7;
 		else
 		{
-			puts("Aborting");
+			(void) puts("Aborting");
 			exit_wrapper(7);
 		}
 	}
 
 //Load tags
-	if(Lyrics.verbose)	puts("Loading VL tag strings");
+	if(Lyrics.verbose)	(void) puts("Loading VL tag strings");
 	fseek_err(inf,16,SEEK_SET);		//Seek to the Title tag
 
 	for(ctr=0;ctr<5;ctr++)	//Expecting 5 null terminated unicode strings
@@ -180,12 +180,12 @@ int VL_PreLoad(FILE *inf,char validate)
 				break;
 
 				default:
-					puts("Unexpected error");
+					(void) puts("Unexpected error");
 					if(validate)
 						return 8;
 					else
 					{
-						puts("Aborting");
+						(void) puts("Aborting");
 						exit_wrapper(8);
 					}
 				break;
@@ -198,18 +198,18 @@ int VL_PreLoad(FILE *inf,char validate)
 	for(ctr=0;ctr<3;ctr++)	//Expecting 3 empty, null terminated unicode strings
 		if(ParseUnicodeString(inf) != 0)
 		{
-			puts("Error: Reserved string is not empty during load");
+			(void) puts("Error: Reserved string is not empty during load");
 			if(validate)
 				return 9;
 			else
 			{
-				puts("Aborting");
+				(void) puts("Aborting");
 				exit_wrapper(9);
 			}
 		}
 
 //Load the lyric strings
-	if(Lyrics.verbose)	puts("Loading text chunk entries");
+	if(Lyrics.verbose)	(void) puts("Loading text chunk entries");
 
 	while(1)	//Read lyric lines
 	{
@@ -235,19 +235,19 @@ int VL_PreLoad(FILE *inf,char validate)
 					return 10;
 				else
 				{
-					puts("Aborting");
+					(void) puts("Aborting");
 					exit_wrapper(10);
 				}
 			}
 		}
 		if((unsigned long)ftell_result > VL.textsize + 16)	//If reading this string caused the file position to cross into Sync chunk
 		{
-			puts("Error: Lyric string overlapped into Sync chunk");
+			(void) puts("Error: Lyric string overlapped into Sync chunk");
 			if(validate)
 				return 11;
 			else
 			{
-				puts("Aborting");
+				(void) puts("Aborting");
 				exit_wrapper(11);
 			}
 		}
@@ -277,7 +277,7 @@ int VL_PreLoad(FILE *inf,char validate)
 	if(Lyrics.verbose)	printf("%lu text chunk entries loaded\n",VL.numlines);
 
 //Load the Sync points
-	if(Lyrics.verbose)	puts("Loading sync chunk entries");
+	if(Lyrics.verbose)	(void) puts("Loading sync chunk entries");
 
 	fseek_err(inf,VL.textsize+16+8,SEEK_SET);	//Seek to first sync entry (8 bytes past start of sync header)
 
@@ -285,12 +285,12 @@ int VL_PreLoad(FILE *inf,char validate)
 	{
 		if(se.start_char > se.end_char)
 		{
-			puts("Error: Invalid sync point offset is specified to start after end offset");
+			(void) puts("Error: Invalid sync point offset is specified to start after end offset");
 			if(validate)
 				return 12;
 			else
 			{
-				puts("Aborting");
+				(void) puts("Aborting");
 				exit_wrapper(12);
 			}
 		}
@@ -315,7 +315,7 @@ int VL_PreLoad(FILE *inf,char validate)
 		}
 	}
 
-	if(Lyrics.verbose)	puts("VL_PreLoad completed");
+	if(Lyrics.verbose)	(void) puts("VL_PreLoad completed");
 	return 0;
 }
 
@@ -371,14 +371,14 @@ void VL_Load(FILE *inf)
 	if(Lyrics.verbose)	printf("Importing VL lyrics from file \"%s\"\n\n",Lyrics.infilename);
 
 //Build the VL storage structure
-	VL_PreLoad(inf,0);
+	(void) VL_PreLoad(inf,0);
 
 //Process offset
 	if(Lyrics.offsetoverride == 0)
 	{
 		if(Lyrics.Offset == NULL)
 		{
-			if(Lyrics.verbose)	puts("No offset defined in VL file, applying offset of 0");
+			if(Lyrics.verbose)	(void) puts("No offset defined in VL file, applying offset of 0");
 
 			Lyrics.realoffset=0;
 		}
@@ -397,7 +397,7 @@ void VL_Load(FILE *inf)
 		}	//if the VL file's offset is defined as 0, that's what Lyrics.realoffset is initialized to already
 	}
 
-	if(Lyrics.verbose)	puts("Processing lyrics and sync entries");
+	if(Lyrics.verbose)	(void) puts("Processing lyrics and sync entries");
 
 //Process sync points, adding lyrics to Lyrics structure
 	cursync=VL.Syncs;	//Begin with first sync entry
@@ -410,7 +410,7 @@ void VL_Load(FILE *inf)
 	//Validate the lyric line number
 		if(cursync->lyric_number >= VL.numlines)	//lyric_number count starts w/ 0 instead of 1 and should never meet/exceed numlines
 		{
-			puts("Error: Invalid line number detected during VL load\nAborting");
+			(void) puts("Error: Invalid line number detected during VL load\nAborting");
 			exit_wrapper(2);
 		}
 
@@ -419,7 +419,7 @@ void VL_Load(FILE *inf)
 		end_char=cursync->end_char;
 		if(start_char == 0xFFFF)
 		{
-			puts("Error: Sync entry has no valid lyric during VL load\nAborting");
+			(void) puts("Error: Sync entry has no valid lyric during VL load\nAborting");
 			exit_wrapper(3);
 		}
 
@@ -428,7 +428,7 @@ void VL_Load(FILE *inf)
 		for(ctr=0;ctr<cursync->lyric_number;ctr++)
 			if(curtext->next == NULL)
 			{
-				puts("Error: Unexpected end of text piece linked list\nAborting");
+				(void) puts("Error: Unexpected end of text piece linked list\nAborting");
 				exit_wrapper(4);
 			}
 			else
@@ -437,12 +437,12 @@ void VL_Load(FILE *inf)
 		cur_line_len = (unsigned short) strlen(curtext->text);	//This value will be used several times in the rest of the loop
 		if(start_char >= cur_line_len)				//The starting offset cannot be past the end of the line of lyrics
 		{
-			puts("Error: Sync entry has invalid starting offset during VL load\nAborting");
+			(void) puts("Error: Sync entry has invalid starting offset during VL load\nAborting");
 			exit_wrapper(5);
 		}
 		if((end_char!=0xFFFF) && (end_char >= cur_line_len))
 		{	//The ending offset cannot be past the end of the line of lyrics
-			puts("Error: Sync entry has invalid ending offset during VL load\nAborting");
+			(void) puts("Error: Sync entry has invalid ending offset during VL load\nAborting");
 			exit_wrapper(6);
 		}
 
@@ -468,11 +468,11 @@ void VL_Load(FILE *inf)
 		//Ensure a line of lyrics isn't already in progress
 			if(Lyrics.line_on == 1)
 			{
-				puts("Error: Lyric lines overlap during VL load\nAborting");
+				(void) puts("Error: Lyric lines overlap during VL load\nAborting");
 				exit_wrapper(7);
 			}
 
-			if(Lyrics.verbose>=2)	puts("New line of lyrics:");
+			if(Lyrics.verbose>=2)	(void) puts("New line of lyrics:");
 
 			CreateLyricLine();	//Initialize the line
 		}
@@ -486,11 +486,11 @@ void VL_Load(FILE *inf)
 		//Ensure a line of lyrics is in progress
 			if(Lyrics.line_on == 0)
 			{
-				puts("Error: End of lyric line detected when none is started during VL load\nAborting");
+				(void) puts("Error: End of lyric line detected when none is started during VL load\nAborting");
 				exit_wrapper(8);
 			}
 
-			if(Lyrics.verbose>=2)	puts("End line of lyrics");
+			if(Lyrics.verbose>=2)	(void) puts("End line of lyrics");
 
 			EndLyricLine();		//End the line
 		}
@@ -529,7 +529,7 @@ void Export_VL(FILE *outf)
 //Pad the next four bytes, which are supposed to hold the size of the file, minus the size of the VL header (8 bytes)
 	WriteDWORDLE(outf,0);
 
-	if(Lyrics.verbose>=2)	puts("Writing text chunk");
+	if(Lyrics.verbose>=2)	(void) puts("Writing text chunk");
 
 //Write Text chunk header: 'T','E','X','T'
 	fputc_err('T',outf);
@@ -568,7 +568,7 @@ void Export_VL(FILE *outf)
 //Write lyric strings
 	curtext=OutVL->Lyrics;
 
-	if(Lyrics.verbose)	puts("Writing VL file");
+	if(Lyrics.verbose)	(void) puts("Writing VL file");
 
 	while(curtext != NULL)	//For each text chunk
 	{
@@ -592,7 +592,7 @@ void Export_VL(FILE *outf)
 	WriteDWORDLE(outf,OutVL->textsize);	//Write text chunk size to file
 	fseek_err(outf,filepos,SEEK_SET);		//Seek back to the end of the text chunk (where the Sync chunk will begin)
 
-	if(Lyrics.verbose>=2)	puts("Writing Sync chunk");
+	if(Lyrics.verbose>=2)	(void) puts("Writing Sync chunk");
 
 //Write Sync chunk header: 'S','Y','N','C'
 	fputc_err('S',outf);
@@ -628,7 +628,7 @@ void Export_VL(FILE *outf)
 	WriteDWORDLE(outf,filepos);			//Write the VL file size - header value
 
 //Destroy the OutVL structure
-	if(Lyrics.verbose>=2)	puts("\tReleasing memory from export VL structure");
+	if(Lyrics.verbose>=2)	(void) puts("\tReleasing memory from export VL structure");
 	curtext=OutVL->Lyrics;	//Point conductor at first text chunk entry
 	while(curtext != NULL)	//For each text chunk entry
 	{
@@ -669,7 +669,7 @@ struct _VLSTRUCT_ *VL_PreWrite(void)
 	unsigned long lastendtime=0;		//The end time for the last lyric piece.  The next lyric's timestamp must be at least 1 more than this
 	static const struct _VLSTRUCT_ empty_VLSTRUCT_;	//Auto-initialize all members to 0/NULL
 
-	if(Lyrics.verbose)	puts("Building VL structure");
+	if(Lyrics.verbose)	(void) puts("Building VL structure");
 
 //Allocate the Export_VL structure
 	OutVL=malloc_err(sizeof(struct _VLSTRUCT_));
@@ -701,7 +701,7 @@ struct _VLSTRUCT_ *VL_PreWrite(void)
 	}
 
 //Initialize lyrline
-	lyrline=malloc_err(maxlength+1+Lyrics.piececount);	//Add piececount to allow for spacing between each word
+	lyrline=malloc_err((size_t)(maxlength+1+Lyrics.piececount));	//Add piececount to allow for spacing between each word
 
 //Process lyric pieces
 	curline=Lyrics.lines;	//Conductor points to first line of lyrics
@@ -798,7 +798,7 @@ void ReleaseVL(void)
 	struct VL_Sync_entry *synctemp=NULL;
 	struct VL_Sync_entry *syncnext=NULL;
 
-	if(Lyrics.verbose >= 2)	puts("Cleaning up VL structure");
+	if(Lyrics.verbose >= 2)	(void) puts("Cleaning up VL structure");
 
 //Release VL structure's memory
 	texttemp=VL.Lyrics;		//Point conductor at first text chunk entry

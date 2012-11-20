@@ -42,8 +42,8 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 		case 'G':
 		{
 			eof_old_max_notes = 65536;	//This was the value of EOF_OLD_MAX_NOTES
-			pack_fread(sp->tags->artist, 256, fp);
-			pack_fread(sp->tags->title, 256, fp);
+			(void) pack_fread(sp->tags->artist, 256, fp);
+			(void) pack_fread(sp->tags->title, 256, fp);
 			sp->beat[0]->ppqn = 500000;
 			sp->beats = 1;
 			for(i = 0; i < 4; i++)
@@ -51,7 +51,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				a = pack_getc(fp);
 				if(a)
 				{
-					pack_fread(buffer, 256, fp);
+					(void) pack_fread(buffer, 256, fp);
 					for(j = 0; j < eof_old_max_notes; j++)
 					{
 						a = pack_getc(fp);
@@ -72,12 +72,12 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 		case '1':
 		{
 			eof_old_max_notes = 65536;	//This was the value of EOF_OLD_MAX_NOTES
-			pack_fread(sp->tags->artist, 256, fp);
-			pack_fread(sp->tags->title, 256, fp);
-			pack_fread(sp->tags->frettist, 256, fp);
+			(void) pack_fread(sp->tags->artist, 256, fp);
+			(void) pack_fread(sp->tags->title, 256, fp);
+			(void) pack_fread(sp->tags->frettist, 256, fp);
 			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
 			sp->tags->ogg[0].description[0] = '\0';
-			eof_song_add_beat(sp);
+			(void) eof_song_add_beat(sp);
 			sp->beat[0]->ppqn = pack_igetl(fp);
 			sp->beats = 1;
 			for(i = 0; i < 4; i++)
@@ -85,7 +85,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				a = pack_getc(fp);
 				if(a)
 				{
-					pack_fread(buffer, 256, fp);
+					(void) pack_fread(buffer, 256, fp);
 					for(j = 0; j < eof_old_max_notes; j++)
 					{
 						a = pack_getc(fp);
@@ -109,15 +109,15 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			eof_beat_flag_anchor = 1;	//This was the value of EOF_BEAT_FLAG_ANCHOR
 			eof_tracks_max = 5;			//This was the value of EOF_TRACKS_MAX
 			eof_max_notes = 32768;		//This was the value of EOF_MAX_NOTES
-			pack_fread(sp->tags->artist, 256, fp);
-			pack_fread(sp->tags->title, 256, fp);
-			pack_fread(sp->tags->frettist, 256, fp);
+			(void) pack_fread(sp->tags->artist, 256, fp);
+			(void) pack_fread(sp->tags->title, 256, fp);
+			(void) pack_fread(sp->tags->frettist, 256, fp);
 			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
 			sp->tags->ogg[0].description[0] = '\0';
 
 			/* read beat info */
 			b = pack_igetl(fp);
-			eof_song_resize_beats(sp, b);
+			(void) eof_song_resize_beats(sp, b);
 			for(i = 0; i < b; i++)
 			{
 				sp->beat[i]->ppqn = pack_igetl(fp);
@@ -139,7 +139,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				a = pack_getc(fp);
 				if(a)
 				{
-					pack_fread(buffer, 256, fp);
+					(void) pack_fread(buffer, 256, fp);
 					for(j = 0; j < eof_old_max_notes; j++)
 					{
 						a = pack_getc(fp);
@@ -159,11 +159,11 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 						{
 							if(a)
 							{
-								pack_getc(fp);
-								pack_getc(fp);
-								pack_igetl(fp);
-								pack_igetw(fp);
-								pack_getc(fp);
+								(void) pack_getc(fp);
+								(void) pack_getc(fp);
+								(void) pack_igetl(fp);
+								(void) pack_igetw(fp);
+								(void) pack_getc(fp);
 							}
 						}
 					}
@@ -175,15 +175,15 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 		{
 			eof_tracks_max = 5;			//This was the value of EOF_TRACKS_MAX
 			eof_old_max_notes = 65536;	//This was the value of EOF_OLD_MAX_NOTES
-			pack_fread(sp->tags->artist, 256, fp);
-			pack_fread(sp->tags->title, 256, fp);
-			pack_fread(sp->tags->frettist, 256, fp);
+			(void) pack_fread(sp->tags->artist, 256, fp);
+			(void) pack_fread(sp->tags->title, 256, fp);
+			(void) pack_fread(sp->tags->frettist, 256, fp);
 			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
 			sp->tags->ogg[0].description[0] = '\0';
 
 			/* read beat info */
 			b = pack_igetl(fp);
-			eof_song_resize_beats(sp, b);
+			(void) eof_song_resize_beats(sp, b);
 			for(i = 0; i < b; i++)
 			{
 				sp->beat[i]->ppqn = pack_igetl(fp);
@@ -197,7 +197,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				a = pack_getc(fp);
 				if(a)
 				{
-					pack_fread(buffer, 256, fp);
+					(void) pack_fread(buffer, 256, fp);
 					for(j = 0; j < eof_old_max_notes; j++)
 					{
 						a = pack_getc(fp);
@@ -219,15 +219,15 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 		{
 			eof_tracks_max = 5;			//This was the value of EOF_TRACKS_MAX
 			eof_max_notes = 32768;		//This was the value of EOF_MAX_NOTES
-			pack_fread(sp->tags->artist, 256, fp);
-			pack_fread(sp->tags->title, 256, fp);
-			pack_fread(sp->tags->frettist, 256, fp);
+			(void) pack_fread(sp->tags->artist, 256, fp);
+			(void) pack_fread(sp->tags->title, 256, fp);
+			(void) pack_fread(sp->tags->frettist, 256, fp);
 			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
 			sp->tags->ogg[0].description[0] = '\0';
 
 			/* read beat info */
 			b = pack_igetl(fp);
-			eof_song_resize_beats(sp, b);
+			(void) eof_song_resize_beats(sp, b);
 			for(i = 0; i < b; i++)
 			{
 				sp->beat[i]->ppqn = pack_igetl(fp);
@@ -241,7 +241,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				a = pack_getc(fp);
 				if(a)
 				{
-					pack_fread(buffer, 256, fp);
+					(void) pack_fread(buffer, 256, fp);
 					for(j = 0; j < eof_max_notes; j++)
 					{
 						a = pack_getc(fp);
@@ -263,15 +263,15 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 		{
 			eof_tracks_max = 5;			//This was the value of EOF_TRACKS_MAX
 			eof_max_notes = 32768;		//This was the value of EOF_MAX_NOTES
-			pack_fread(sp->tags->artist, 256, fp);
-			pack_fread(sp->tags->title, 256, fp);
-			pack_fread(sp->tags->frettist, 256, fp);
+			(void) pack_fread(sp->tags->artist, 256, fp);
+			(void) pack_fread(sp->tags->title, 256, fp);
+			(void) pack_fread(sp->tags->frettist, 256, fp);
 			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
 			sp->tags->ogg[0].description[0] = '\0';
 
 			/* read beat info */
 			b = pack_igetl(fp);
-			eof_song_resize_beats(sp, b);
+			(void) eof_song_resize_beats(sp, b);
 			for(i = 0; i < b; i++)
 			{
 				sp->beat[i]->ppqn = pack_igetl(fp);
@@ -283,9 +283,9 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			t = pack_igetl(fp);
 			for(i = 0; i < t; i++)
 			{
-				pack_fread(buffer, 256, fp);
+				(void) pack_fread(buffer, 256, fp);
 				b = pack_igetl(fp);
-				eof_song_add_text_event(sp, b, buffer, 0, 0, 0);
+				(void) eof_song_add_text_event(sp, b, buffer, 0, 0, 0);
 			}
 
 			/* read tracks */
@@ -294,7 +294,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				a = pack_getc(fp);
 				if(a)
 				{
-					pack_fread(buffer, 256, fp);
+					(void) pack_fread(buffer, 256, fp);
 					for(j = 0; j < eof_max_notes; j++)
 					{
 						a = pack_getc(fp);
@@ -317,15 +317,15 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			eof_tracks_max = 5;			//This was the value of EOF_TRACKS_MAX
 			eof_max_notes = 32768;		//This was the value of EOF_MAX_NOTES
 			eof_note_amazing = 3;		//This was the value of EOF_NOTE_AMAZING
-			pack_fread(sp->tags->artist, 256, fp);
-			pack_fread(sp->tags->title, 256, fp);
-			pack_fread(sp->tags->frettist, 256, fp);
+			(void) pack_fread(sp->tags->artist, 256, fp);
+			(void) pack_fread(sp->tags->title, 256, fp);
+			(void) pack_fread(sp->tags->frettist, 256, fp);
 			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
 			sp->tags->ogg[0].description[0] = '\0';
 
 			/* read beat info */
 			b = pack_igetl(fp);
-			eof_song_resize_beats(sp, b);
+			(void) eof_song_resize_beats(sp, b);
 			for(i = 0; i < b; i++)
 			{
 				sp->beat[i]->ppqn = pack_igetl(fp);
@@ -338,9 +338,9 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			t = pack_igetl(fp);
 			for(i = 0; i < t; i++)
 			{
-				pack_fread(buffer, 256, fp);
+				(void) pack_fread(buffer, 256, fp);
 				b = pack_igetl(fp);
-				eof_song_add_text_event(sp, b, buffer, 0, 0, 0);
+				(void) eof_song_add_text_event(sp, b, buffer, 0, 0, 0);
 			}
 
 			/* read tracks */
@@ -349,7 +349,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				a = pack_getc(fp);
 				if(a)
 				{
-					pack_fread(buffer, 256, fp);
+					(void) pack_fread(buffer, 256, fp);
 					for(j = 0; j < eof_max_notes; j++)
 					{
 						a = pack_getc(fp);
@@ -389,20 +389,20 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			eof_tracks_max = 5;			//This was the value of EOF_TRACKS_MAX
 			eof_max_notes = 32768;		//This was the value of EOF_MAX_NOTES
 			eof_note_amazing = 3;		//This was the value of EOF_NOTE_AMAZING
-			pack_fread(sp->tags->artist, 256, fp);
-			pack_fread(sp->tags->title, 256, fp);
-			pack_fread(sp->tags->frettist, 256, fp);
+			(void) pack_fread(sp->tags->artist, 256, fp);
+			(void) pack_fread(sp->tags->title, 256, fp);
+			(void) pack_fread(sp->tags->frettist, 256, fp);
 			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
 			sp->tags->ogg[0].description[0] = '\0';
 			sp->tags->ini_settings = pack_igetw(fp);
 			for(i = 0; i < sp->tags->ini_settings; i++)
 			{
-				pack_fread(sp->tags->ini_setting[i], 512, fp);
+				(void) pack_fread(sp->tags->ini_setting[i], 512, fp);
 			}
 
 			/* read beat info */
 			b = pack_igetl(fp);
-			eof_song_resize_beats(sp, b);
+			(void) eof_song_resize_beats(sp, b);
 			for(i = 0; i < b; i++)
 			{
 				sp->beat[i]->ppqn = pack_igetl(fp);
@@ -414,9 +414,9 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			t = pack_igetl(fp);
 			for(i = 0; i < t; i++)
 			{
-				pack_fread(buffer, 256, fp);
+				(void) pack_fread(buffer, 256, fp);
 				b = pack_igetl(fp);
-				eof_song_add_text_event(sp, b, buffer, 0, 0, 0);
+				(void) eof_song_add_text_event(sp, b, buffer, 0, 0, 0);
 			}
 
 			/* read tracks */
@@ -425,7 +425,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				a = pack_getc(fp);
 				if(a)
 				{
-					pack_fread(buffer, 256, fp);
+					(void) pack_fread(buffer, 256, fp);
 					for(j = 0; j < eof_max_notes; j++)
 					{
 						a = pack_getc(fp);
@@ -465,20 +465,20 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			eof_tracks_max = 5;			//This was the value of EOF_TRACKS_MAX
 			eof_max_notes = 32768;		//This was the value of EOF_MAX_NOTES
 			eof_note_amazing = 3;		//This was the value of EOF_NOTE_AMAZING
-			pack_fread(sp->tags->artist, 256, fp);
-			pack_fread(sp->tags->title, 256, fp);
-			pack_fread(sp->tags->frettist, 256, fp);
+			(void) pack_fread(sp->tags->artist, 256, fp);
+			(void) pack_fread(sp->tags->title, 256, fp);
+			(void) pack_fread(sp->tags->frettist, 256, fp);
 			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
 			sp->tags->ogg[0].description[0] = '\0';
 			sp->tags->ini_settings = pack_igetw(fp);
 			for(i = 0; i < sp->tags->ini_settings; i++)
 			{
-				pack_fread(sp->tags->ini_setting[i], 512, fp);
+				(void) pack_fread(sp->tags->ini_setting[i], 512, fp);
 			}
 
 			/* read beat info */
 			b = pack_igetl(fp);
-			eof_song_resize_beats(sp, b);
+			(void) eof_song_resize_beats(sp, b);
 			for(i = 0; i < b; i++)
 			{
 				sp->beat[i]->ppqn = pack_igetl(fp);
@@ -490,9 +490,9 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			t = pack_igetl(fp);
 			for(i = 0; i < t; i++)
 			{
-				pack_fread(buffer, 256, fp);
+				(void) pack_fread(buffer, 256, fp);
 				b = pack_igetl(fp);
-				eof_song_add_text_event(sp, b, buffer, 0, 0, 0);
+				(void) eof_song_add_text_event(sp, b, buffer, 0, 0, 0);
 			}
 
 			/* read tracks */
@@ -501,7 +501,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				a = pack_getc(fp);
 				if(a)
 				{
-					pack_fread(buffer, 256, fp);
+					(void) pack_fread(buffer, 256, fp);
 					for(j = 0; j < eof_max_notes; j++)
 					{
 						a = pack_getc(fp);
@@ -540,15 +540,15 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 		{
 			eof_tracks_max = 5;			//This was the value of EOF_TRACKS_MAX
 			eof_note_amazing = 3;		//This was the value of EOF_NOTE_AMAZING
-			pack_fread(sp->tags->artist, 256, fp);
-			pack_fread(sp->tags->title, 256, fp);
-			pack_fread(sp->tags->frettist, 256, fp);
+			(void) pack_fread(sp->tags->artist, 256, fp);
+			(void) pack_fread(sp->tags->title, 256, fp);
+			(void) pack_fread(sp->tags->frettist, 256, fp);
 			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
 			sp->tags->ogg[0].description[0] = '\0';
 			sp->tags->ini_settings = pack_igetw(fp);
 			for(i = 0; i < sp->tags->ini_settings; i++)
 			{
-				pack_fread(sp->tags->ini_setting[i], 512, fp);
+				(void) pack_fread(sp->tags->ini_setting[i], 512, fp);
 			}
 
 			/* read beat info */
@@ -566,10 +566,10 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 
 			/* read events info */
 			b = pack_igetl(fp);
-			eof_song_resize_text_events(sp, b);
+			(void) eof_song_resize_text_events(sp, b);
 			for(i = 0; i < b; i++)
 			{
-				pack_fread(sp->text_event[i]->text, 256, fp);
+				(void) pack_fread(sp->text_event[i]->text, 256, fp);
 				sp->text_event[i]->beat = pack_igetl(fp);
 			}
 
@@ -609,15 +609,15 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 		case 'A':
 		{
 			eof_tracks_max = 5;			//This was the value of EOF_TRACKS_MAX
-			pack_fread(sp->tags->artist, 256, fp);
-			pack_fread(sp->tags->title, 256, fp);
-			pack_fread(sp->tags->frettist, 256, fp);
+			(void) pack_fread(sp->tags->artist, 256, fp);
+			(void) pack_fread(sp->tags->title, 256, fp);
+			(void) pack_fread(sp->tags->frettist, 256, fp);
 			sp->tags->ogg[0].midi_offset = pack_igetl(fp);
 			sp->tags->ogg[0].description[0] = '\0';
 			sp->tags->ini_settings = pack_igetw(fp);
 			for(i = 0; i < sp->tags->ini_settings; i++)
 			{
-				pack_fread(sp->tags->ini_setting[i], 512, fp);
+				(void) pack_fread(sp->tags->ini_setting[i], 512, fp);
 			}
 
 			/* read beat info */
@@ -635,10 +635,10 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 
 			/* read events info */
 			b = pack_igetl(fp);
-			eof_song_resize_text_events(sp, b);
+			(void) eof_song_resize_text_events(sp, b);
 			for(i = 0; i < b; i++)
 			{
-				pack_fread(sp->text_event[i]->text, 256, fp);
+				(void) pack_fread(sp->text_event[i]->text, 256, fp);
 				sp->text_event[i]->beat = pack_igetl(fp);
 			}
 
@@ -680,15 +680,15 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			eof_tracks_max = 5;			//This was the value of EOF_TRACKS_MAX
 
 			/* read song info */
-			pack_fread(sp->tags->artist, 256, fp);
-			pack_fread(sp->tags->title, 256, fp);
-			pack_fread(sp->tags->frettist, 256, fp);
+			(void) pack_fread(sp->tags->artist, 256, fp);
+			(void) pack_fread(sp->tags->title, 256, fp);
+			(void) pack_fread(sp->tags->frettist, 256, fp);
 
 			/* read OGG data */
 			sp->tags->oggs = pack_igetw(fp);
 			for(i = 0; i < sp->tags->oggs; i++)
 			{
-				pack_fread(sp->tags->ogg[i].filename, 256, fp);
+				(void) pack_fread(sp->tags->ogg[i].filename, 256, fp);
 				sp->tags->ogg[i].midi_offset = pack_igetl(fp);
 				sp->tags->ogg[i].description[0] = '\0';
 			}
@@ -700,7 +700,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			sp->tags->ini_settings = pack_igetw(fp);
 			for(i = 0; i < sp->tags->ini_settings; i++)
 			{
-				pack_fread(sp->tags->ini_setting[i], 512, fp);
+				(void) pack_fread(sp->tags->ini_setting[i], 512, fp);
 			}
 
 			/* read beat info */
@@ -718,10 +718,10 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 
 			/* read events info */
 			b = pack_igetl(fp);
-			eof_song_resize_text_events(sp, b);
+			(void) eof_song_resize_text_events(sp, b);
 			for(i = 0; i < b; i++)
 			{
-				pack_fread(sp->text_event[i]->text, 256, fp);
+				(void) pack_fread(sp->text_event[i]->text, 256, fp);
 				sp->text_event[i]->beat = pack_igetl(fp);
 			}
 
@@ -785,19 +785,19 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 
 			/* read song info */
 			tl = pack_igetw(fp);
-			pack_fread(sp->tags->artist, tl, fp);
+			(void) pack_fread(sp->tags->artist, tl, fp);
 			sp->tags->artist[tl] = 0;
 			tl = pack_igetw(fp);
-			pack_fread(sp->tags->title, tl, fp);
+			(void) pack_fread(sp->tags->title, tl, fp);
 			sp->tags->title[tl] = 0;
 			tl = pack_igetw(fp);
-			pack_fread(sp->tags->frettist, tl, fp);
+			(void) pack_fread(sp->tags->frettist, tl, fp);
 			sp->tags->frettist[tl] = 0;
 			tl = pack_igetw(fp);
-			pack_fread(sp->tags->year, tl, fp);
+			(void) pack_fread(sp->tags->year, tl, fp);
 			sp->tags->year[tl] = 0;
 			tl = pack_igetw(fp);
-			pack_fread(sp->tags->loading_text, tl, fp);
+			(void) pack_fread(sp->tags->loading_text, tl, fp);
 			sp->tags->loading_text[tl] = 0;
 			sp->tags->lyrics = pack_getc(fp);
 			sp->tags->eighth_note_hopo = pack_getc(fp);
@@ -806,7 +806,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			sp->tags->oggs = pack_igetw(fp);
 			for(i = 0; i < sp->tags->oggs; i++)
 			{
-				pack_fread(sp->tags->ogg[i].filename, 256, fp);
+				(void) pack_fread(sp->tags->ogg[i].filename, 256, fp);
 				sp->tags->ogg[i].midi_offset = pack_igetl(fp);
 				sp->tags->ogg[i].description[0] = '\0';
 			}
@@ -815,7 +815,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			sp->tags->ini_settings = pack_igetw(fp);
 			for(i = 0; i < sp->tags->ini_settings; i++)
 			{
-				pack_fread(sp->tags->ini_setting[i], 512, fp);
+				(void) pack_fread(sp->tags->ini_setting[i], 512, fp);
 			}
 
 			/* read beat info */
@@ -833,10 +833,10 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 
 			/* read events info */
 			b = pack_igetl(fp);
-			eof_song_resize_text_events(sp, b);
+			(void) eof_song_resize_text_events(sp, b);
 			for(i = 0; i < b; i++)
 			{
-				pack_fread(sp->text_event[i]->text, 256, fp);
+				(void) pack_fread(sp->text_event[i]->text, 256, fp);
 				sp->text_event[i]->beat = pack_igetl(fp);
 			}
 
@@ -899,19 +899,19 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 
 			/* read song info */
 			tl = pack_igetw(fp);
-			pack_fread(sp->tags->artist, tl, fp);
+			(void) pack_fread(sp->tags->artist, tl, fp);
 			sp->tags->artist[tl] = 0;
 			tl = pack_igetw(fp);
-			pack_fread(sp->tags->title, tl, fp);
+			(void) pack_fread(sp->tags->title, tl, fp);
 			sp->tags->title[tl] = 0;
 			tl = pack_igetw(fp);
-			pack_fread(sp->tags->frettist, tl, fp);
+			(void) pack_fread(sp->tags->frettist, tl, fp);
 			sp->tags->frettist[tl] = 0;
 			tl = pack_igetw(fp);
-			pack_fread(sp->tags->year, tl, fp);
+			(void) pack_fread(sp->tags->year, tl, fp);
 			sp->tags->year[tl] = 0;
 			tl = pack_igetw(fp);
-			pack_fread(sp->tags->loading_text, tl, fp);
+			(void) pack_fread(sp->tags->loading_text, tl, fp);
 			sp->tags->loading_text[tl] = 0;
 			sp->tags->lyrics = pack_getc(fp);
 			sp->tags->eighth_note_hopo = pack_getc(fp);
@@ -920,7 +920,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			sp->tags->oggs = pack_igetw(fp);
 			for(i = 0; i < sp->tags->oggs; i++)
 			{
-				pack_fread(sp->tags->ogg[i].filename, 256, fp);
+				(void) pack_fread(sp->tags->ogg[i].filename, 256, fp);
 				sp->tags->ogg[i].midi_offset = pack_igetl(fp);
 				sp->tags->ogg[i].description[0] = '\0';
 			}
@@ -929,7 +929,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			sp->tags->ini_settings = pack_igetw(fp);
 			for(i = 0; i < sp->tags->ini_settings; i++)
 			{
-				pack_fread(sp->tags->ini_setting[i], 512, fp);
+				(void) pack_fread(sp->tags->ini_setting[i], 512, fp);
 			}
 
 			/* read beat info */
@@ -947,10 +947,10 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 
 			/* read events info */
 			b = pack_igetl(fp);
-			eof_song_resize_text_events(sp, b);
+			(void) eof_song_resize_text_events(sp, b);
 			for(i = 0; i < b; i++)
 			{
-				pack_fread(sp->text_event[i]->text, 256, fp);
+				(void) pack_fread(sp->text_event[i]->text, 256, fp);
 				sp->text_event[i]->beat = pack_igetl(fp);
 			}
 
@@ -993,7 +993,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			{
 				sp->vocal_track[0]->lyric[j]->pos = pack_igetl(fp);
 				c = pack_igetw(fp);
-				pack_fread(sp->vocal_track[0]->lyric[j]->text, c, fp);
+				(void) pack_fread(sp->vocal_track[0]->lyric[j]->text, c, fp);
 				sp->vocal_track[0]->lyric[j]->text[c] = '\0';
 			}
 			sp->vocal_track[0]->lines = pack_igetl(fp);
@@ -1031,19 +1031,19 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 
 			/* read song info */
 			tl = pack_igetw(fp);
-			pack_fread(sp->tags->artist, tl, fp);
+			(void) pack_fread(sp->tags->artist, tl, fp);
 			sp->tags->artist[tl] = 0;
 			tl = pack_igetw(fp);
-			pack_fread(sp->tags->title, tl, fp);
+			(void) pack_fread(sp->tags->title, tl, fp);
 			sp->tags->title[tl] = 0;
 			tl = pack_igetw(fp);
-			pack_fread(sp->tags->frettist, tl, fp);
+			(void) pack_fread(sp->tags->frettist, tl, fp);
 			sp->tags->frettist[tl] = 0;
 			tl = pack_igetw(fp);
-			pack_fread(sp->tags->year, tl, fp);
+			(void) pack_fread(sp->tags->year, tl, fp);
 			sp->tags->year[tl] = 0;
 			tl = pack_igetw(fp);
-			pack_fread(sp->tags->loading_text, tl, fp);
+			(void) pack_fread(sp->tags->loading_text, tl, fp);
 			sp->tags->loading_text[tl] = 0;
 			sp->tags->lyrics = pack_getc(fp);
 			sp->tags->eighth_note_hopo = pack_getc(fp);
@@ -1052,7 +1052,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			sp->tags->oggs = pack_igetw(fp);
 			for(i = 0; i < sp->tags->oggs; i++)
 			{
-				pack_fread(sp->tags->ogg[i].filename, 256, fp);
+				(void) pack_fread(sp->tags->ogg[i].filename, 256, fp);
 				sp->tags->ogg[i].midi_offset = pack_igetl(fp);
 				sp->tags->ogg[i].description[0] = '\0';
 			}
@@ -1061,7 +1061,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			sp->tags->ini_settings = pack_igetw(fp);
 			for(i = 0; i < sp->tags->ini_settings; i++)
 			{
-				pack_fread(sp->tags->ini_setting[i], 512, fp);
+				(void) pack_fread(sp->tags->ini_setting[i], 512, fp);
 			}
 
 			/* read beat info */
@@ -1079,10 +1079,10 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 
 			/* read events info */
 			b = pack_igetl(fp);
-			eof_song_resize_text_events(sp, b);
+			(void) eof_song_resize_text_events(sp, b);
 			for(i = 0; i < b; i++)
 			{
-				pack_fread(sp->text_event[i]->text, 256, fp);
+				(void) pack_fread(sp->text_event[i]->text, 256, fp);
 				sp->text_event[i]->beat = pack_igetl(fp);
 			}
 
@@ -1127,7 +1127,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				sp->vocal_track[0]->lyric[j]->pos = pack_igetl(fp);
 				sp->vocal_track[0]->lyric[j]->length = pack_igetl(fp);
 				c = pack_igetw(fp);
-				pack_fread(sp->vocal_track[0]->lyric[j]->text, c, fp);
+				(void) pack_fread(sp->vocal_track[0]->lyric[j]->text, c, fp);
 				sp->vocal_track[0]->lyric[j]->text[c] = '\0';
 			}
 			sp->vocal_track[0]->lines = pack_igetl(fp);
@@ -1165,19 +1165,19 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 
 			/* read song info */
 			tl = pack_igetw(fp);
-			pack_fread(sp->tags->artist, tl, fp);
+			(void) pack_fread(sp->tags->artist, tl, fp);
 			sp->tags->artist[tl] = 0;
 			tl = pack_igetw(fp);
-			pack_fread(sp->tags->title, tl, fp);
+			(void) pack_fread(sp->tags->title, tl, fp);
 			sp->tags->title[tl] = 0;
 			tl = pack_igetw(fp);
-			pack_fread(sp->tags->frettist, tl, fp);
+			(void) pack_fread(sp->tags->frettist, tl, fp);
 			sp->tags->frettist[tl] = 0;
 			tl = pack_igetw(fp);
-			pack_fread(sp->tags->year, tl, fp);
+			(void) pack_fread(sp->tags->year, tl, fp);
 			sp->tags->year[tl] = 0;
 			tl = pack_igetw(fp);
-			pack_fread(sp->tags->loading_text, tl, fp);
+			(void) pack_fread(sp->tags->loading_text, tl, fp);
 			sp->tags->loading_text[tl] = 0;
 			sp->tags->lyrics = pack_getc(fp);
 			sp->tags->eighth_note_hopo = pack_getc(fp);
@@ -1186,7 +1186,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			sp->tags->oggs = pack_igetw(fp);
 			for(i = 0; i < sp->tags->oggs; i++)
 			{
-				pack_fread(sp->tags->ogg[i].filename, 256, fp);
+				(void) pack_fread(sp->tags->ogg[i].filename, 256, fp);
 				sp->tags->ogg[i].midi_offset = pack_igetl(fp);
 				sp->tags->ogg[i].description[0] = '\0';
 			}
@@ -1195,7 +1195,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 			sp->tags->ini_settings = pack_igetw(fp);
 			for(i = 0; i < sp->tags->ini_settings; i++)
 			{
-				pack_fread(sp->tags->ini_setting[i], 512, fp);
+				(void) pack_fread(sp->tags->ini_setting[i], 512, fp);
 			}
 
 			/* read beat info */
@@ -1214,10 +1214,10 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 
 			/* read events info */
 			b = pack_igetl(fp);
-			eof_song_resize_text_events(sp, b);
+			(void) eof_song_resize_text_events(sp, b);
 			for(i = 0; i < b; i++)
 			{
-				pack_fread(sp->text_event[i]->text, 256, fp);
+				(void) pack_fread(sp->text_event[i]->text, 256, fp);
 				sp->text_event[i]->beat = pack_igetl(fp);
 			}
 
@@ -1267,7 +1267,7 @@ EOF_SONG * eof_load_notes_legacy(PACKFILE * fp, char version)
 				sp->vocal_track[0]->lyric[j]->pos = pack_igetl(fp);
 				sp->vocal_track[0]->lyric[j]->length = pack_igetl(fp);
 				c = pack_igetw(fp);
-				pack_fread(sp->vocal_track[0]->lyric[j]->text, c, fp);
+				(void) pack_fread(sp->vocal_track[0]->lyric[j]->text, c, fp);
 				sp->vocal_track[0]->lyric[j]->text[c] = '\0';
 			}
 			sp->vocal_track[0]->lines = pack_igetl(fp);

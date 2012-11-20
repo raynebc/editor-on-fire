@@ -158,7 +158,7 @@ void WriteVarLen(unsigned long value, PACKFILE * fp)
 
 	while(1)
 	{
-		pack_putc(buffer, fp);
+		(void) pack_putc(buffer, fp);
 		if(buffer & 0x80)
 		{
 			buffer >>= 8;
@@ -334,7 +334,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	unsigned char rootvel;					//Used to write root notes for pro guitar tracks
 	unsigned long note, noteflags, notepos, deltapos;
 	char type;
-	int channel, velocity, bitmask, scale, chord, isslash, bassnote;	//Used for pro guitar export
+	int channel, velocity, scale, chord, isslash, bassnote;	//Used for pro guitar export
+	unsigned long bitmask;
 	EOF_PHRASE_SECTION *sectionptr;
 	char *currentname = NULL, chordname[100]="";
 	char phase_shift_sysex_phrase[8] = {'P','S','\0',0,0,0,0,0xF7};	//This is used to write Sysex messages for features supported in Phase Shift (ie. open strum bass)
@@ -349,6 +350,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	char whattowrite;	//Bitflag: bit 0=write tempo change, bit 1=write TS change
 	char stored_beat_track = 0;	//Will be set to nonzero if there is found to be a stored BEAT track in the project
 
+	memset(notetempname, 0, sizeof(notetempname));	//Init this memory to 0
 	eof_log("eof_export_midi() entered", 1);
 
 //	eof_log_level &= ~2;	//Disable verbose logging
@@ -376,7 +378,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	//Initialize the temporary filename array
 	for(i = 0; i < EOF_TRACKS_MAX+1; i++)
 	{
-		snprintf(notetempname[i], sizeof(notetempname[i]) - 1, "eof%lu.tmp", i);
+		(void) snprintf(notetempname[i], sizeof(notetempname[i]) - 1, "eof%lu.tmp", i);
 	}
 
 	eof_sort_notes(sp);	//Writing efficient on-the-fly HOPO phrasing relies on all notes being sorted
@@ -387,7 +389,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	{
 		if(!ustrcmp(sp->text_event[i]->text, "[end]"))
 		{	//If there is an end event defined here
-			snprintf(eof_log_string, sizeof(eof_log_string) - 1, "End position located at %lums", sp->beat[sp->text_event[i]->beat]->pos);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "End position located at %lums", sp->beat[sp->text_event[i]->beat]->pos);
 			eof_log(eof_log_string, 1);
 			endbeatnum = sp->text_event[i]->beat;
 			enddelta = eof_ConvertToDeltaTime(sp->beat[endbeatnum]->pos,anchorlist,tslist,timedivision,0);	//Get the delta time of this event
@@ -407,32 +409,32 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			if(!eof_song_contains_event(sp, "[music_start]", 0))
 			{	//If the user did not define the music_start event
 				eof_log("\t! Adding missing [music_start] event", 1);
-				eof_song_add_text_event(sp, 2, "[music_start]", 0, 0, 1);	//Add it as a temporary event two beats into the song (at the third beat)
+				(void) eof_song_add_text_event(sp, 2, "[music_start]", 0, 0, 1);	//Add it as a temporary event two beats into the song (at the third beat)
 			}
 			if(!eof_song_contains_event(sp, "[music_end]", 0))
 			{	//If the user did not define the music_end event
 				eof_log("\t! Adding missing [music_end] event", 1);
-				eof_song_add_text_event(sp, sp->beats-1, "[music_end]", 0, 0, 1);	//Add it as a temporary event on the last beat
+				(void) eof_song_add_text_event(sp, sp->beats-1, "[music_end]", 0, 0, 1);	//Add it as a temporary event on the last beat
 			}
 			if(!eof_song_contains_event_beginning_with(sp, "[mix 0", EOF_TRACK_DRUM))
 			{	//If the user did not define an easy difficulty drum mix event
 				eof_log("\t! Adding missing easy drum mix event", 1);
-				eof_song_add_text_event(sp, 0, "[mix 0 drums0]", EOF_TRACK_DRUM, 0, 1);	//Add one as a temporary event on the first beat of the drum track
+				(void) eof_song_add_text_event(sp, 0, "[mix 0 drums0]", EOF_TRACK_DRUM, 0, 1);	//Add one as a temporary event on the first beat of the drum track
 			}
 			if(!eof_song_contains_event_beginning_with(sp, "[mix 1", EOF_TRACK_DRUM))
 			{	//If the user did not define a medium difficulty drum mix event
 				eof_log("\t! Adding missing medium drum mix event", 1);
-				eof_song_add_text_event(sp, 0, "[mix 1 drums0]", EOF_TRACK_DRUM, 0, 1);	//Add one as a temporary event on the first beat of the drum track
+				(void) eof_song_add_text_event(sp, 0, "[mix 1 drums0]", EOF_TRACK_DRUM, 0, 1);	//Add one as a temporary event on the first beat of the drum track
 			}
 			if(!eof_song_contains_event_beginning_with(sp, "[mix 2", EOF_TRACK_DRUM))
 			{	//If the user did not define a hard difficulty drum mix event
 				eof_log("\t! Adding missing hard drum mix event", 1);
-				eof_song_add_text_event(sp, 0, "[mix 2 drums0]", EOF_TRACK_DRUM, 0, 1);	//Add one as a temporary event on the first beat of the drum track
+				(void) eof_song_add_text_event(sp, 0, "[mix 2 drums0]", EOF_TRACK_DRUM, 0, 1);	//Add one as a temporary event on the first beat of the drum track
 			}
 			if(!eof_song_contains_event_beginning_with(sp, "[mix 3", EOF_TRACK_DRUM))
 			{	//If the user did not define an expert difficulty drum mix event
 				eof_log("\t! Adding missing expert drum mix event", 1);
-				eof_song_add_text_event(sp, 0, "[mix 3 drums0]", EOF_TRACK_DRUM, 0, 1);	//Add one as a temporary event on the first beat of the drum track
+				(void) eof_song_add_text_event(sp, 0, "[mix 3 drums0]", EOF_TRACK_DRUM, 0, 1);	//Add one as a temporary event on the first beat of the drum track
 			}
 		}
 	}//If writing a Rock Band compliant MIDI
@@ -864,10 +866,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					return 0;	//Return failure
 				}
 			}
-			qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
+			qsort(eof_midi_event, (size_t)eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
 			eof_check_for_note_overlap();	//Filter out any improperly overlapping note on/off events
 			eof_check_for_hopo_phrase_overlap();	//Ensure that no HOPO on/off phrases start/end at the same delta position as each other
-			qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);	//Re-sort, since the previous function may have changed the events' order
+			qsort(eof_midi_event, (size_t)eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);	//Re-sort, since the previous function may have changed the events' order
 //			allegro_message("break1");
 
 			for(trackctr=0;trackctr<=expertplus;trackctr++)
@@ -897,10 +899,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 				/* write the track name */
 				WriteVarLen(0, fp);
-				pack_putc(0xFF, fp);
-				pack_putc(0x03, fp);
+				(void) pack_putc(0xFF, fp);
+				(void) pack_putc(0x03, fp);
 				WriteVarLen(ustrlen(sp->track[j]->name), fp);
-				pack_fwrite(sp->track[j]->name, ustrlen(sp->track[j]->name), fp);
+				(void) pack_fwrite(sp->track[j]->name, ustrlen(sp->track[j]->name), fp);
 
 				/* add MIDI events */
 				lastdelta = 0;
@@ -919,19 +921,19 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 						else if(eof_midi_event[i]->type == 0xF0)
 						{	//Sysex message
 							WriteVarLen(delta - lastdelta, fp);	//Write this event's relative delta time
-							pack_putc(0xF0, fp);						//Sysex event
+							(void) pack_putc(0xF0, fp);						//Sysex event
 							WriteVarLen(eof_midi_event[i]->note, fp);	//Write the Sysex message's size
-							pack_fwrite(eof_midi_event[i]->dp, eof_midi_event[i]->note, fp);	//Write the Sysex data
+							(void) pack_fwrite(eof_midi_event[i]->dp, eof_midi_event[i]->note, fp);	//Write the Sysex data
 						}
 						else
 						{	//Note on/off
 							WriteVarLen(delta - lastdelta, fp);	//Write this event's relative delta time
 							if(eof_midi_event[i]->type != lastevent)
 							{	//With running status, the MIDI event type needn't be written if it's the same as the previous event
-								pack_putc(eof_midi_event[i]->type, fp);
+								(void) pack_putc(eof_midi_event[i]->type, fp);
 							}
-							pack_putc(eof_midi_event[i]->note, fp);
-							pack_putc(eof_midi_event[i]->velocity, fp);
+							(void) pack_putc(eof_midi_event[i]->note, fp);
+							(void) pack_putc(eof_midi_event[i]->velocity, fp);
 							lastevent = eof_midi_event[i]->type;
 						}
 						if(eof_midi_event[i]->allocation && eof_midi_event[i]->dp)
@@ -946,10 +948,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 				/* end of track */
 				WriteVarLen(0, fp);
-				pack_putc(0xFF, fp);
-				pack_putc(0x2F, fp);
-				pack_putc(0x00, fp);
-				pack_fclose(fp);
+				(void) pack_putc(0xFF, fp);
+				(void) pack_putc(0x2F, fp);
+				(void) pack_putc(0x00, fp);
+				(void) pack_fclose(fp);
 
 				if(trackctr == 1)
 				{	//If the Expert+ track data was written
@@ -1057,7 +1059,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			}
 
 			/* insert padding as necessary between a lyric phrase on marker and the following lyric */
-			qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);	//Lyric events must be sorted for padding logic to work
+			qsort(eof_midi_event, (size_t)eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);	//Lyric events must be sorted for padding logic to work
 			for(i = 0; i < eof_midi_events; i++)
 			{
 				if(!eof_midi_event[i]->filtered)
@@ -1090,7 +1092,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				}
 			}
 
-			qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
+			qsort(eof_midi_event, (size_t)eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
 			eof_check_for_note_overlap();	//Filter out any improperly overlapping note on/off events
 			/* open the file */
 			fp = pack_fopen(notetempname[j], "w");
@@ -1104,10 +1106,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 			/* write the track name */
 			WriteVarLen(0, fp);
-			pack_putc(0xFF, fp);
-			pack_putc(0x03, fp);
+			(void) pack_putc(0xFF, fp);
+			(void) pack_putc(0x03, fp);
 			WriteVarLen(ustrlen(sp->track[j]->name), fp);
-			pack_fwrite(sp->track[j]->name, ustrlen(sp->track[j]->name), fp);
+			(void) pack_fwrite(sp->track[j]->name, ustrlen(sp->track[j]->name), fp);
 
 			/* add MIDI events */
 			lastdelta=0;
@@ -1123,20 +1125,20 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					else if(eof_midi_event[i]->type == 0x05)
 					{	//Lyric event
 						WriteVarLen(delta - lastdelta, fp);	//Write this lyric's relative delta time
-						pack_putc(0xFF, fp);
-						pack_putc(0x05, fp);
-						pack_putc(ustrlen(eof_midi_event[i]->dp), fp);
-						pack_fwrite(eof_midi_event[i]->dp, ustrlen(eof_midi_event[i]->dp), fp);
+						(void) pack_putc(0xFF, fp);
+						(void) pack_putc(0x05, fp);
+						(void) pack_putc(ustrlen(eof_midi_event[i]->dp), fp);
+						(void) pack_fwrite(eof_midi_event[i]->dp, ustrlen(eof_midi_event[i]->dp), fp);
 					}
 					else
 					{
 						WriteVarLen(delta - lastdelta, fp);	//Write this lyric's relative delta time
 						if(eof_midi_event[i]->type != lastevent)
 						{	//With running status, the MIDI event type needn't be written if it's the same as the previous event
-							pack_putc(eof_midi_event[i]->type, fp);
+							(void) pack_putc(eof_midi_event[i]->type, fp);
 						}
-						pack_putc(eof_midi_event[i]->note, fp);
-						pack_putc(eof_midi_event[i]->velocity, fp);
+						(void) pack_putc(eof_midi_event[i]->note, fp);
+						(void) pack_putc(eof_midi_event[i]->velocity, fp);
 						lastevent = eof_midi_event[i]->type;
 					}
 					if(eof_midi_event[i]->allocation && eof_midi_event[i]->dp)
@@ -1151,10 +1153,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 			/* end of track */
 			WriteVarLen(0, fp);
-			pack_putc(0xFF, fp);
-			pack_putc(0x2F, fp);
-			pack_putc(0x00, fp);
-			pack_fclose(fp);
+			(void) pack_putc(0xFF, fp);
+			(void) pack_putc(0x2F, fp);
+			(void) pack_putc(0x00, fp);
+			(void) pack_fclose(fp);
 		}//If this is a vocal track
 
 		else if(sp->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -1195,7 +1197,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				}
 				else
 				{	//Fret hand positions couldn't be generated
-					snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Failed to automatically generate fret hand positions for \"%s\" during MIDI export", sp->track[j]->name);
+					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Failed to automatically generate fret hand positions for \"%s\" during MIDI export", sp->track[j]->name);
 					eof_log(eof_log_string, 1);
 					allegro_message(eof_log_string);
 				}
@@ -1252,11 +1254,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{	//If this note has a name
 					if((type >= EOF_NOTE_SUPAEASY) && (type <= EOF_NOTE_AMAZING))
 					{	//only write names for the 4 difficulties, don't for BRE notes
-						snprintf(chordname, sizeof(chordname) - 1, "[chrd%d %s]", type, currentname);	//Build the chord name text event as per RB3's convention
-						tempstring = malloc(ustrsizez(chordname));
+						(void) snprintf(chordname, sizeof(chordname) - 1, "[chrd%d %s]", type, currentname);	//Build the chord name text event as per RB3's convention
+						tempstring = malloc((size_t)ustrsizez(chordname));
 						if(tempstring != NULL)
 						{	//If allocation was successful
-							memcpy(tempstring, chordname, ustrsizez(chordname));	//Copy the string to the newly allocated memory
+							memcpy(tempstring, chordname, (size_t)ustrsizez(chordname));	//Copy the string to the newly allocated memory
 							eof_add_midi_text_event(deltapos, tempstring, 1);			//Store the new string in a text event, send 1 for the allocation flag, because the text string is being stored in dynamic memory
 						}
 					}
@@ -1590,7 +1592,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					return 0;	//Return failure
 				}
 			}
-			qsort(eof_midi_event, eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
+			qsort(eof_midi_event, (size_t)eof_midi_events, sizeof(EOF_MIDI_EVENT *), qsort_helper3);
 			eof_check_for_note_overlap();	//Filter out any improperly overlapping note on/off events
 //			allegro_message("break1");
 
@@ -1606,10 +1608,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 			/* write the track name */
 			WriteVarLen(0, fp);
-			pack_putc(0xFF, fp);
-			pack_putc(0x03, fp);
+			(void) pack_putc(0xFF, fp);
+			(void) pack_putc(0x03, fp);
 			WriteVarLen(ustrlen(sp->track[j]->name), fp);
-			pack_fwrite(sp->track[j]->name, ustrlen(sp->track[j]->name), fp);
+			(void) pack_fwrite(sp->track[j]->name, ustrlen(sp->track[j]->name), fp);
 
 			/* add MIDI events */
 			lastdelta = 0;
@@ -1625,19 +1627,19 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					else if(eof_midi_event[i]->type == 0xF0)
 					{	//If this is a Sysex message
 						WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
-						pack_putc(0xF0, fp);						//Sysex event
+						(void) pack_putc(0xF0, fp);						//Sysex event
 						WriteVarLen(eof_midi_event[i]->note, fp);	//Write the Sysex message's size
-						pack_fwrite(eof_midi_event[i]->dp, eof_midi_event[i]->note, fp);	//Write the Sysex data
+						(void) pack_fwrite(eof_midi_event[i]->dp, eof_midi_event[i]->note, fp);	//Write the Sysex data
 					}
 					else
 					{	//Write a non meta MIDI event
 						WriteVarLen(delta-lastdelta, fp);	//Write this event's relative delta time
 						if(eof_midi_event[i]->type + eof_midi_event[i]->channel != lastevent)
 						{	//With running status, the MIDI event type needn't be written if it's the same as the previous event
-							pack_putc(eof_midi_event[i]->type + eof_midi_event[i]->channel, fp);
+							(void) pack_putc(eof_midi_event[i]->type + eof_midi_event[i]->channel, fp);
 						}
-						pack_putc(eof_midi_event[i]->note, fp);
-						pack_putc(eof_midi_event[i]->velocity, fp);
+						(void) pack_putc(eof_midi_event[i]->note, fp);
+						(void) pack_putc(eof_midi_event[i]->velocity, fp);
 						lastevent = eof_midi_event[i]->type + eof_midi_event[i]->channel;
 					}
 					if(eof_midi_event[i]->allocation && eof_midi_event[i]->dp)
@@ -1664,10 +1666,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 			/* end of track */
 			WriteVarLen(0, fp);
-			pack_putc(0xFF, fp);
-			pack_putc(0x2F, fp);
-			pack_putc(0x00, fp);
-			pack_fclose(fp);
+			(void) pack_putc(0xFF, fp);
+			(void) pack_putc(0x2F, fp);
+			(void) pack_putc(0x00, fp);
+			(void) pack_fclose(fp);
 		}//If this is a pro guitar track
 	}//For each track in the project
 
@@ -1686,19 +1688,19 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		//I've found that Magma will not recognize tracks correctly unless track 0 has a name defined
 		/* write the track name */
 		WriteVarLen(0, fp);
-		pack_putc(0xFF, fp);
-		pack_putc(0x03, fp);
+		(void) pack_putc(0xFF, fp);
+		(void) pack_putc(0x03, fp);
 		if(sp->tags->title[0] != '\0')
 		{	//If a song title has been defined
-			snprintf(chordname, sizeof(chordname) - 1, "%s", sp->tags->title);	//Borrow this array to store the chart title
+			(void) snprintf(chordname, sizeof(chordname) - 1, "%s", sp->tags->title);	//Borrow this array to store the chart title
 		}
 		else
 		{	//Make up a track name so it will build in Magma
-			snprintf(chordname, sizeof(chordname) - 1, "Tempo map");
+			(void) snprintf(chordname, sizeof(chordname) - 1, "Tempo map");
 			eof_log("\t! Song title is not defined, a fake song title was used as the name for track 0 so the song will build in Magma", 1);
 		}
 		WriteVarLen(ustrlen(chordname), fp);
-		pack_fwrite(chordname, ustrlen(chordname), fp);
+		(void) pack_fwrite(chordname, ustrlen(chordname), fp);
 	}
 
 	lastdelta=0;
@@ -1736,12 +1738,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				lastdelta=ptr->delta;						//Store this anchor's absolute delta time
 
 				ppqn = ((double) 60000000.0 / ptr->BPM) + 0.5;	//Convert BPM to ppqn, rounding up
-				pack_putc(0xFF, fp);					//Write Meta Event 0x51 (Set Tempo)
-				pack_putc(0x51, fp);
-				pack_putc(0x03, fp);					//Write event length of 3
-				pack_putc((ppqn & 0xFF0000) >> 16, fp);	//Write high order byte of ppqn
-				pack_putc((ppqn & 0xFF00) >> 8, fp);	//Write middle byte of ppqn
-				pack_putc((ppqn & 0xFF), fp);			//Write low order byte of ppqn
+				(void) pack_putc(0xFF, fp);					//Write Meta Event 0x51 (Set Tempo)
+				(void) pack_putc(0x51, fp);
+				(void) pack_putc(0x03, fp);					//Write event length of 3
+				(void) pack_putc((ppqn & 0xFF0000) >> 16, fp);	//Write high order byte of ppqn
+				(void) pack_putc((ppqn & 0xFF00) >> 8, fp);	//Write middle byte of ppqn
+				(void) pack_putc((ppqn & 0xFF), fp);			//Write low order byte of ppqn
 			}
 			ptr=ptr->next;							//Iterate to next anchor
 		}
@@ -1762,13 +1764,13 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					i = 2;	//An unsupported time signature was somehow set, change the denominator to 4
 				}
 
-				pack_putc(0xFF, fp);							//Write Meta Event 0x58 (Time Signature)
-				pack_putc(0x58, fp);
-				pack_putc(0x04, fp);							//Write event length of 4
-				pack_putc(tslist->change[current_ts]->num, fp);	//Write the numerator
-				pack_putc(i, fp);								//Write the denominator
-				pack_putc(24, fp);								//Write the metronome interval (not used by EOF)
-				pack_putc(8, fp);								//Write the number of 32nd notes per 24 ticks (not used by EOF)
+				(void) pack_putc(0xFF, fp);							//Write Meta Event 0x58 (Time Signature)
+				(void) pack_putc(0x58, fp);
+				(void) pack_putc(0x04, fp);							//Write event length of 4
+				(void) pack_putc(tslist->change[current_ts]->num, fp);	//Write the numerator
+				(void) pack_putc(i, fp);								//Write the denominator
+				(void) pack_putc(24, fp);								//Write the metronome interval (not used by EOF)
+				(void) pack_putc(8, fp);								//Write the number of 32nd notes per 24 ticks (not used by EOF)
 			}
 			current_ts++;										//Iterate to next TS change
 		}
@@ -1779,20 +1781,20 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				WriteVarLen(kslist->change[current_ks]->pos - lastdelta, fp);	//Write this key signature's relative delta time
 				lastdelta=kslist->change[current_ks]->pos;						//Store this key signature's absolute delta time
 
-				pack_putc(0xFF, fp);							//Write Meta Event 0x59 (key signature)
-				pack_putc(0x59, fp);
-				pack_putc(0x02, fp);							//Write event length of 2
-				pack_putc(kslist->change[current_ks]->key, fp);	//Write the key (value from -7 to 7)
-				pack_putc(0, fp);								//For now, only major keys are handled (1 would pertain to minor keys)
+				(void) pack_putc(0xFF, fp);							//Write Meta Event 0x59 (key signature)
+				(void) pack_putc(0x59, fp);
+				(void) pack_putc(0x02, fp);							//Write event length of 2
+				(void) pack_putc(kslist->change[current_ks]->key, fp);	//Write the key (value from -7 to 7)
+				(void) pack_putc(0, fp);								//For now, only major keys are handled (1 would pertain to minor keys)
 			}
 			current_ks++;										//Iterate to next KS change
 		}
 	}//While there are tempo changes, TS changes (if the user specified to write TS changes) or KS changes to write
 	WriteVarLen(0, fp);		//Write delta time
-	pack_putc(0xFF, fp);	//Write Meta Event 0x2F (End Track)
-	pack_putc(0x2F, fp);
-	pack_putc(0x00, fp);	//Write padding
-	pack_fclose(fp);
+	(void) pack_putc(0xFF, fp);	//Write Meta Event 0x2F (End Track)
+	(void) pack_putc(0x2F, fp);
+	(void) pack_putc(0x00, fp);	//Write padding
+	(void) pack_fclose(fp);
 
 /* make events track */
 	if((featurerestriction != 2) && !eof_events_overridden_by_stored_MIDI_track(sp))
@@ -1811,10 +1813,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 			/* write the track name */
 			WriteVarLen(0, fp);
-			pack_putc(0xFF, fp);
-			pack_putc(0x03, fp);
+			(void) pack_putc(0xFF, fp);
+			(void) pack_putc(0x03, fp);
 			WriteVarLen(ustrlen("EVENTS"), fp);
-			pack_fwrite("EVENTS", ustrlen("EVENTS"), fp);
+			(void) pack_fwrite("EVENTS", ustrlen("EVENTS"), fp);
 
 			/* add MIDI events */
 			lastdelta = 0;
@@ -1852,11 +1854,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 			/* end of track */
 			WriteVarLen(0, fp);
-			pack_putc(0xFF, fp);
-			pack_putc(0x2F, fp);
-			pack_putc(0x00, fp);
+			(void) pack_putc(0xFF, fp);
+			(void) pack_putc(0x2F, fp);
+			(void) pack_putc(0x00, fp);
 
-			pack_fclose(fp);
+			(void) pack_fclose(fp);
 			eventstrackwritten = 1;
 		}//If there are manually defined text events, or if writing a RBN2 compliant MIDI (which requires certain events)
 	}//Do not write an events track in a pro guitar upgrade MIDI
@@ -1900,10 +1902,10 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 		/* write the track name */
 		WriteVarLen(0, fp);
-		pack_putc(0xFF, fp);
-		pack_putc(0x03, fp);
+		(void) pack_putc(0xFF, fp);
+		(void) pack_putc(0x03, fp);
 		WriteVarLen(ustrlen("BEAT"), fp);
-		pack_fwrite("BEAT", ustrlen("BEAT"), fp);
+		(void) pack_fwrite("BEAT", ustrlen("BEAT"), fp);
 
 		/* parse the beat array, writing a note #12 at the first beat of every measure, and a note #13 at every other beat */
 		lastdelta = 0;
@@ -1936,21 +1938,21 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				lastdelta = delta;					//Store this event's absolute delta time
 				if(lastevent != 0x90)
 				{	//If no MIDI notes have been written for the BEAT track yet
-					pack_putc(0x90, fp);				//MIDI event 0x9 (note on), channel 0
+					(void) pack_putc(0x90, fp);				//MIDI event 0x9 (note on), channel 0
 				}
 				lastevent = 0x90;					//Track that a status byte has been written, so that no others need to be for this track (running status)
-				pack_putc(note_to_write, fp);		//Note 12 or 13
-				pack_putc(100, fp);					//Pre-determined velocity
+				(void) pack_putc(note_to_write, fp);		//Note 12 or 13
+				(void) pack_putc(100, fp);					//Pre-determined velocity
 
 				//Write the note off event
 				WriteVarLen(delta2-lastdelta, fp);	//Write this event's relative delta time
 				lastdelta = delta2;					//Store this event's absolute delta time
 				if(lastevent != 0x90)
 				{	//If no MIDI notes have been written for the BEAT track yet
-					pack_putc(0x90, fp);				//MIDI event 0x9 (note on, but will be equivalent to a note on if the velocity is 0), channel 0
+					(void) pack_putc(0x90, fp);				//MIDI event 0x9 (note on, but will be equivalent to a note on if the velocity is 0), channel 0
 				}
-				pack_putc(note_to_write, fp);		//Note 12 or 13
-				pack_putc(0, fp);					//A note on with a velocity of 0 is treated as a note off
+				(void) pack_putc(note_to_write, fp);		//Note 12 or 13
+				(void) pack_putc(0, fp);					//A note on with a velocity of 0 is treated as a note off
 			}
 
 			//Increment to the next beat
@@ -1963,11 +1965,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 
 		/* end of track */
 		WriteVarLen(0, fp);
-		pack_putc(0xFF, fp);
-		pack_putc(0x2F, fp);
-		pack_putc(0x00, fp);
+		(void) pack_putc(0xFF, fp);
+		(void) pack_putc(0x2F, fp);
+		(void) pack_putc(0x00, fp);
 
-		pack_fclose(fp);
+		(void) pack_fclose(fp);
 		beattrackwritten = 1;
 	}	//If writing a RBN2 compliant MIDI, write the beat track, which is required
 
@@ -1976,7 +1978,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	{
 		eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 		eof_destroy_ts_list(tslist);	//Free memory used by the TS change list
-		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open ouput MIDI file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tError saving:  Cannot open ouput MIDI file:  \"%s\"", strerror(errno));	//Get the Operating System's reason for the failure
 		eof_log(eof_log_string, 1);
 		return 0;	//Return failure
 	}
@@ -1993,43 +1995,43 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		}
 	}
 	header[11] = trackcounter;	//Write the number of tracks present into the MIDI header
-	pack_fwrite(header, 14, fp);
+	(void) pack_fwrite(header, 14, fp);
 
 	if(expertpluswritten)
 	{
-		replace_filename(expertplusfilename, fn, expertplusshortname, 1024);	//Build the path for the output expert+ MIDI
+		(void) replace_filename(expertplusfilename, fn, expertplusshortname, 1024);	//Build the path for the output expert+ MIDI
 		fp3 = pack_fopen(expertplusfilename, "w");
 		if(!fp3)
 			expertpluswritten = 0;	//Cancel trying to write Expert+ and save the normal MIDI instead
 		else
-			pack_fwrite(header, 14, fp3);	//Write the Expert+ file's MIDI header
+			(void) pack_fwrite(header, 14, fp3);	//Write the Expert+ file's MIDI header
 	}
 
 
 /* write tempo track */
-	eof_dump_midi_track(tempotempname,fp);
+	(void) eof_dump_midi_track(tempotempname,fp);
 	if(expertpluswritten)
 	{	//If writing an expert+ MIDI as well
-		eof_dump_midi_track(tempotempname,fp3);
+		(void) eof_dump_midi_track(tempotempname,fp3);
 	}
 
 /* write text event track if there are any events */
 	//If RBN compatibility is in effect, the events track will be populated by force with at least the required events
 	if((sp->text_events) || (featurerestriction == 1))
 	{	//If there are manually defined text events, or if writing a RBN2 compliant MIDI (which requires certain events)
-		eof_dump_midi_track(eventtempname,fp);
+		(void) eof_dump_midi_track(eventtempname,fp);
 		if(expertpluswritten)
 		{
-			eof_dump_midi_track(eventtempname,fp3);
+			(void) eof_dump_midi_track(eventtempname,fp3);
 		}
 	}
 
 	if(featurerestriction == 1)
 	{	//If writing a RBN2 compliant MIDI, write the beat track, which is required
-		eof_dump_midi_track(beattempname,fp);
+		(void) eof_dump_midi_track(beattempname,fp);
 		if(expertpluswritten)
 		{	//If writing an expert+ MIDI as well
-			eof_dump_midi_track(tempotempname,fp3);
+			(void) eof_dump_midi_track(tempotempname,fp3);
 		}
 	}
 
@@ -2047,11 +2049,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 			{	//If this track had a temp file created
 				if((k > 0) && (j == EOF_TRACK_DRUM))
 				{	//If the expert+ drum track is being written
-					eof_dump_midi_track(expertplustempname,fp);
+					(void) eof_dump_midi_track(expertplustempname,fp);
 				}
 				else
 				{	//Otherwise write the regular track
-					eof_dump_midi_track(notetempname[j],fp);
+					(void) eof_dump_midi_track(notetempname[j],fp);
 				}
 			}
 		}
@@ -2059,7 +2061,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		{	//If writing a RB3 compliant pro guitar upgrade MIDI, do NOT include stored MIDI tracks
 			eof_MIDI_data_track_export(sp, fp, anchorlist, tslist, timedivision);	//Write any stored raw MIDI tracks to the output file
 		}
-		pack_fclose(fp);	//Close the output file
+		(void) pack_fclose(fp);	//Close the output file
 		fp = NULL;
 	}
 	eof_clear_midi_events();
@@ -2068,12 +2070,12 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 /* delete temporary files */
 	for(i = 0; i < EOF_TRACKS_MAX+1; i++)
 	{
-		delete_file(notetempname[i]);
+		(void) delete_file(notetempname[i]);
 	}
-	delete_file(expertplustempname);
-	delete_file(tempotempname);
-	delete_file(eventtempname);
-	delete_file(beattempname);
+	(void) delete_file(expertplustempname);
+	(void) delete_file(tempotempname);
+	(void) delete_file(eventtempname);
+	(void) delete_file(beattempname);
 
 	eof_destroy_tempo_list(anchorlist);	//Free memory used by the anchor list
 	eof_destroy_ts_list(tslist);		//Free memory used by the TS change list
@@ -2249,13 +2251,13 @@ int eof_extract_rba_midi(const char * source, const char * dest)
 	jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
 	if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
 	{
-		puts("Assert() handled sucessfully!");
+		(void) puts("Assert() handled sucessfully!");
 		eof_show_mouse(NULL);
 		eof_cursor_visible = 1;
 		eof_pen_visible = 1;
-		fclose(fp);
+		(void) fclose(fp);
 		if(tempfile)
-			fclose(tempfile);
+			(void) fclose(tempfile);
 		ReleaseMIDI();
 		ReleaseMemory(1);
 		return 1;	//Return failure
@@ -2277,8 +2279,8 @@ int eof_extract_rba_midi(const char * source, const char * dest)
 			rewind(fp);
 			if(SearchPhrase(fp,0,NULL,"MThd",4,1) != 1)	//Search for and seek to MIDI header
 			{
-				fclose(tempfile);
-				fclose(fp);
+				(void) fclose(tempfile);
+				(void) fclose(fp);
 				ReleaseMIDI();
 				ReleaseMemory(1);
 				return 1;	//Return error
@@ -2293,13 +2295,13 @@ int eof_extract_rba_midi(const char * source, const char * dest)
 			{
 				CopyTrack(fp,ctr,tempfile);
 			}
-			fclose(tempfile);
+			(void) fclose(tempfile);
 		}
 		ReleaseMIDI();
 		ReleaseMemory(1);
 	}
 
-	fclose(fp);
+	(void) fclose(fp);
 	return 0;	//Return success
 }
 
@@ -2391,7 +2393,7 @@ EOF_MIDI_TS_LIST *eof_build_ts_list(EOF_SONG *sp)
 
 	eof_log("eof_build_ts_list() entered", 1);
 
-	if((sp == NULL) || (sp->beats <= 0))
+	if((sp == NULL) || (sp->beats == 0))
 		return NULL;
 	tslist = eof_create_ts_list();
 	if(tslist == NULL)
@@ -2526,20 +2528,20 @@ int eof_dump_midi_track(const char *inputfile,PACKFILE *outf)
 	{
 		return 0;	//Return failure
 	}
-	track_length = file_size_ex(inputfile);
+	track_length = (unsigned long)file_size_ex(inputfile);
 	inf = pack_fopen(inputfile, "r");	//Open input file for reading
 	if(!inf)
 	{
 		return 0;	//Return failure
 	}
 
-	pack_fwrite(trackheader, 4, outf);	//Write the output track header
-	pack_mputl(track_length, outf);		//Write the output track length
+	(void) pack_fwrite(trackheader, 4, outf);	//Write the output track header
+	(void) pack_mputl(track_length, outf);		//Write the output track length
 	for(i = 0; i < track_length; i++)
 	{	//For each byte in the input file
-		pack_putc(pack_getc(inf), outf);	//Copy the byte to the output file
+		(void) pack_putc(pack_getc(inf), outf);	//Copy the byte to the output file
 	}
-	pack_fclose(inf);
+	(void) pack_fclose(inf);
 
 	return 1;	//Return success
 }
@@ -2553,10 +2555,10 @@ void eof_write_text_event(unsigned long deltas, const char *str, PACKFILE *fp)
 		if(length < 128)
 		{	//EOF's implementation is a bit lax and only accounts for 1 byte variable length values (7 bits)
 			WriteVarLen(deltas, fp);
-			pack_putc(0xFF, fp);	//Text event
-			pack_putc(0x01, fp);
-			pack_putc(length, fp);
-			pack_fwrite(str, length, fp);
+			(void) pack_putc(0xFF, fp);	//Text event
+			(void) pack_putc(0x01, fp);
+			(void) pack_putc(length, fp);
+			(void) pack_fwrite(str, length, fp);
 		}
 	}
 }
@@ -2572,10 +2574,10 @@ void eof_add_sysex_event(unsigned long pos, int size, void *data)
 		eof_midi_event[eof_midi_events] = malloc(sizeof(EOF_MIDI_EVENT));
 		if(eof_midi_event[eof_midi_events])
 		{
-			datacopy = malloc(size);
+			datacopy = malloc((size_t)size);
 			if(datacopy)
 			{
-				memcpy(datacopy, data, size);	//Copy the input data into the new buffer
+				memcpy(datacopy, data, (size_t)size);	//Copy the input data into the new buffer
 				eof_midi_event[eof_midi_events]->pos = pos;
 				eof_midi_event[eof_midi_events]->type = 0xF0;
 				eof_midi_event[eof_midi_events]->note = size;	//Store the size of the Sysex message in the note variable
@@ -2616,26 +2618,26 @@ void eof_MIDI_data_track_export(EOF_SONG *sp, PACKFILE *outf, struct Tempo_chang
 			{	//For each event in the track
 				deltapos = eof_ConvertToDeltaTime(eventptr->realtime + anchorlist->realtime,anchorlist,tslist,timedivision,0);	//Store the tick position of the event (accounting for the MIDI delay of the active beat map)
 				WriteVarLen(deltapos - lastdelta, tempf);		//Write this event's relative delta time
-				pack_fwrite(eventptr->data, eventptr->size, tempf);	//Write this event's data
+				(void) pack_fwrite(eventptr->data, eventptr->size, tempf);	//Write this event's data
 				lastdelta = deltapos;
 			}
-			pack_fclose(tempf);					//Close the temporary file
+			(void) pack_fclose(tempf);					//Close the temporary file
 
 	//Get the track's size and write it to the output MIDI file
-			track_length = file_size_ex("mididatatemp.tmp");	//Get the temporary file's size
+			track_length = (unsigned long)file_size_ex("mididatatemp.tmp");	//Get the temporary file's size
 			tempf = pack_fopen("mididatatemp.tmp", "r");		//Open temporary file for reading
 			if(!tempf)
 				return;
-			pack_fwrite(trackheader, 4, outf);	//Write the output track header
-			pack_mputl(track_length, outf);		//Write the output track length
+			(void) pack_fwrite(trackheader, 4, outf);	//Write the output track header
+			(void) pack_mputl(track_length, outf);		//Write the output track length
 			for(ctr = 0; ctr < track_length; ctr++)
 			{	//For each byte of the temporary file
-				pack_putc(pack_getc(tempf), outf);	//Copy the byte to the output MIDI file
+				(void) pack_putc(pack_getc(tempf), outf);	//Copy the byte to the output MIDI file
 			}
-			pack_fclose(tempf);	//Close the temporary file
+			(void) pack_fclose(tempf);	//Close the temporary file
 		}
 	}
-	delete_file("mididatatemp.tmp");
+	(void) delete_file("mididatatemp.tmp");
 }
 
 void eof_check_vocals(EOF_SONG* sp, char *fixvoxpitches, char *fixvoxphrases)
@@ -2778,7 +2780,7 @@ int eof_build_tempo_and_ts_lists(EOF_SONG *sp, struct Tempo_change **anchorlistp
 						meventtype = dataptr[eventindex];	//Read the meta event type
 						eventindex++;
 						bytes_used = 0;
-						eof_parse_var_len(dataptr, eventindex, &bytes_used);	//Read the meta event length
+						(void) eof_parse_var_len(dataptr, eventindex, &bytes_used);	//Read the meta event length
 						eventindex += bytes_used;	//Advance by the size of the variable length value parsed above
 						if(meventtype == 0x51)
 						{	//Tempo change
@@ -2895,7 +2897,7 @@ void eof_check_for_hopo_phrase_overlap(void)
 			if(eof_midi_event[ctr]->off)
 			{	//If this is a note off event
 				phrasealtered = 0;
-				for(ctr2 = 0; (ctr2 < sizeof(HOPO_notes)) && !phrasealtered; ctr2++)
+				for(ctr2 = 0; ((size_t)ctr2 < sizeof(HOPO_notes)) && !phrasealtered; ctr2++)
 				{	//For each of the note numbers in the HOPO marker list (or until the HOPO phrase's end position has been altered)
 					if(eof_midi_event[ctr]->note == HOPO_notes[ctr2])
 					{	//If the event is a HOPO phrase end marker
@@ -2946,7 +2948,7 @@ EOF_MIDI_KS_LIST *eof_build_ks_list(EOF_SONG *sp)
 
 	eof_log("eof_build_ks_list() entered", 1);
 
-	if((sp == NULL) || (sp->beats <= 0))
+	if((sp == NULL) || (sp->beats == 0))
 		return NULL;
 	kslist = eof_create_ks_list();
 	if(kslist == NULL)

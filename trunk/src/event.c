@@ -124,7 +124,7 @@ void eof_sort_events(EOF_SONG * sp)
 
 	if(sp)
 	{
-		qsort(sp->text_event, sp->text_events, sizeof(EOF_TEXT_EVENT *), eof_song_qsort_events);
+		qsort(sp->text_event, (size_t)sp->text_events, sizeof(EOF_TEXT_EVENT *), eof_song_qsort_events);
 	}
 }
 

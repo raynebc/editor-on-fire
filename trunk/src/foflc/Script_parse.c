@@ -17,7 +17,7 @@
 
 void Script_Load(FILE *inf)
 {
-	unsigned long maxlinelength;	//I will count the length of the longest line (including NULL char/newline) in the
+	size_t maxlinelength;			//I will count the length of the longest line (including NULL char/newline) in the
 									//input file so I can create a buffer large enough to read any line into
 	char *buffer;					//Will be an array large enough to hold the largest line of text from input file
 	char *substring=NULL;			//Used with strstr() to find tag strings in the input file
@@ -48,7 +48,7 @@ void Script_Load(FILE *inf)
 	Lyrics.EditorStringID=DuplicateString("[by");
 	Lyrics.OffsetStringID=DuplicateString("[offset");
 
-	fgets_err(buffer,maxlinelength,inf);	//Read first line of text, capping it to prevent buffer overflow
+	(void) fgets_err(buffer,(int)maxlinelength,inf);	//Read first line of text, capping it to prevent buffer overflow
 
 	if(Lyrics.verbose)	printf("\nImporting script lyrics from file \"%s\"\n\n",Lyrics.infilename);
 
@@ -79,14 +79,14 @@ void Script_Load(FILE *inf)
 						if(endlines)		//newline logic was detected
 							EndLyricLine();	//End lyric line when this is read
 						else if(Lyrics.verbose)
-							puts("Marklines tag not present, ignoring newline");
+							(void) puts("Marklines tag not present, ignoring newline");
 					}
 					else
 						if(Lyrics.verbose)	printf("Ignoring unrecognized tag in line %lu: \"%s\"\n",processedctr,buffer);
 				}
 			}
 
-			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			(void) fgets(buffer,(int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 			continue;
 		}//end if(buffer[index]=='#')
 
@@ -130,7 +130,7 @@ void Script_Load(FILE *inf)
 			if(endlines == 0)		//If newline recognition is not enabled
 				EndLyricLine();		//End line of lyrics after each line entry in input file
 
-			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			(void) fgets(buffer,(int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 		}
 	}//end while(!feof())
 
@@ -140,7 +140,7 @@ void Script_Load(FILE *inf)
 
 	if(!endlines && (Lyrics.out_format!=SCRIPT_FORMAT))
 		//If the input lyrics (possibly) weren't syllable synced, and the export format supports syllable sync
-		puts("\aWarning: Imported Script format lyrics may not have sufficient accuracy for the specified export");
+		(void) puts("\aWarning: Imported Script format lyrics may not have sufficient accuracy for the specified export");
 
 	if(Lyrics.verbose)	printf("Script import complete.  %lu lyrics loaded\n\n",Lyrics.piececount);
 }
@@ -185,7 +185,7 @@ void Export_Script(FILE *outf)
 	//The delay tag is not written because the timestamps have already been modified to reflect it.  This will
 	//prevent them from being misinterpreted and having the timestamps delayed a second time
 
-	if(Lyrics.verbose)	puts("Writing lyrics");
+	if(Lyrics.verbose)	(void) puts("Writing lyrics");
 
 //Export the lyric pieces
 	curline=Lyrics.lines;	//Point lyric line conductor to first line of lyrics
@@ -214,7 +214,7 @@ void Export_Script(FILE *outf)
 			if(Lyrics.grouping != 2)	//Only print #newline tags if line grouping isn't being used
 				fputs_err("#newline\n",outf);
 
-		if(Lyrics.verbose)	putchar('\n');
+		if(Lyrics.verbose)	(void) putchar('\n');
 	}
 
 	if(Lyrics.verbose)	printf("\nScript export complete.  %lu lyrics written",Lyrics.piececount);

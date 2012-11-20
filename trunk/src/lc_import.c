@@ -89,7 +89,7 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 	jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
 	if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
 	{
-		puts("Assert() handled sucessfully!");
+		(void) puts("Assert() handled sucessfully!");
 		free(Lyrics.infilename);
 		Lyrics.infilename = NULL;
 		ReleaseMemory(1);	//Release memory allocated during lyric import
@@ -264,7 +264,7 @@ int EOF_TRANSFER_FROM_LC(EOF_VOCAL_TRACK * tp, struct _LYRICSSTRUCT_ * lp)
 
 			if((curpiece->next == NULL) && startfound)
 			{	//If this was the last lyric for this line, and at least one non vocal percussion note was found
-				eof_vocal_track_add_line(tp,start,curpiece->start + curpiece->duration);	//Add the lyric line definition to the EOF structure
+				(void) eof_vocal_track_add_line(tp,start,curpiece->start + curpiece->duration);	//Add the lyric line definition to the EOF structure
 
 				if(overdrive && (tp->lines > 0))	//If this line had any overdriven lyrics
 					tp->line[tp->lines-1].flags |= EOF_LYRIC_LINE_FLAG_OVERDRIVE;	//Mark the line for overdrive
@@ -319,7 +319,7 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 		Lyrics.filter=DuplicateString("^=%#/");	//Use default filter list
 		Lyrics.defaultfilter = 1;	//Track that the above string will need to be freed
 		tp->lines = 0;		//Temporarily disregard any existing lyric lines
-		eof_vocal_track_add_line(tp, 0, tp->lyric[tp->lyrics - 1]->pos + 1);	//Create a single line encompassing all lyrics
+		(void) eof_vocal_track_add_line(tp, 0, tp->lyric[tp->lyrics - 1]->pos + 1);	//Create a single line encompassing all lyrics
 	}
 
 //Import lyrics from EOF structure
@@ -458,7 +458,7 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 		case KAR_FORMAT:	//Export as unofficial KAR.  Default export track is "Melody"
 			if(Lyrics.outputtrack == NULL)
 			{
-				puts("\aNo ouput track name for KAR file was given.  A track named \"Melody\" will be used by default");
+				(void) puts("\aNo ouput track name for KAR file was given.  A track named \"Melody\" will be used by default");
 				Lyrics.outputtrack=DuplicateString("Melody");
 			}
 			Export_MIDI(outf);
@@ -470,7 +470,7 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 		break;
 
 		default:
-			puts("Unexpected error in export switch\nAborting");
+			(void) puts("Unexpected error in export switch\nAborting");
 			exit_wrapper(4);
 		break;
 	}

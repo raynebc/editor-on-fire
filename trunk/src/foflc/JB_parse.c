@@ -16,7 +16,7 @@
 
 void JB_Load(FILE *inf)
 {
-	unsigned long maxlinelength;	//I will count the length of the longest line (including NULL char/newline) in the
+	size_t maxlinelength;	//I will count the length of the longest line (including NULL char/newline) in the
 									//input file so I can create a buffer large enough to read any line into
 	char *buffer;					//Will be an array large enough to hold the largest line of text from input file
 	unsigned long index=0;			//Used to index within a line of input text
@@ -37,7 +37,7 @@ void JB_Load(FILE *inf)
 //Allocate memory buffer large enough to hold any line in this file
 	buffer=(char *)malloc_err(maxlinelength);
 
-	fgets_err(buffer,maxlinelength,inf);	//Read first line of text, capping it to prevent buffer overflow
+	(void) fgets_err(buffer,(int)maxlinelength,inf);	//Read first line of text, capping it to prevent buffer overflow
 
 	if(Lyrics.verbose)	printf("\nImporting C9C lyrics from file \"%s\"\n\n",Lyrics.infilename);
 
@@ -168,7 +168,7 @@ void JB_Load(FILE *inf)
 			unsigned long length;
 
 			assert_wrapper(Lyrics.lastpiece->lyric != NULL);
-			length = strlen(Lyrics.lastpiece->lyric);
+			length = (unsigned long)strlen(Lyrics.lastpiece->lyric);
 			Lyrics.lastpiece->duration = timestamp + 0.5 - Lyrics.realoffset - Lyrics.lastpiece->start;	//Remember to offset start by realoffset, otherwise Lyrics.lastpiece->start could be the larger operand, causing an overflow
 			if(Lyrics.lastpiece->lyric[length - 1] == '-')
 			{	//If the previous lyric ended in a hyphen, the previous lyric lasts all the way up to the start of this one
@@ -206,7 +206,7 @@ void JB_Load(FILE *inf)
 		else
 			break;
 
-		fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+		(void) fgets(buffer,(int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 	}//Until end of file is reached
 
 	free(buffer);	//No longer needed, release the memory before exiting function

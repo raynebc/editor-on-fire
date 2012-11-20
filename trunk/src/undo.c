@@ -56,7 +56,7 @@ int eof_undo_load_state(const char * fn)
 	}
 	eof_song = sp;	//Replacing it with the loaded undo state
 
-	pack_fclose(fp);
+	(void) pack_fclose(fp);
 	return 1;
 }
 
@@ -85,7 +85,7 @@ int eof_undo_add(int type)
 	{	//Initialize the undo filename array
 		for(ctr = 0; ctr < EOF_MAX_UNDO; ctr++)
 		{	//For each undo slot
-			snprintf(fn, sizeof(fn) - 1, "eof%03u-%03lu.undo", eof_log_id, ctr);	//Build the undo filename in the format of "eof#-#.undo", where the first number is the EOF ID
+			(void) snprintf(fn, sizeof(fn) - 1, "eof%03u-%03lu.undo", eof_log_id, ctr);	//Build the undo filename in the format of "eof#-#.undo", where the first number is the EOF ID
 			eof_undo_filename[ctr] = malloc(sizeof(fn)+1);
 			if(eof_undo_filename[ctr] == NULL)
 			{
@@ -116,22 +116,22 @@ int eof_undo_add(int type)
 	}
 	if(type == EOF_UNDO_TYPE_SILENCE)
 	{
-		snprintf(fn, sizeof(fn) - 1, "%s.ogg", eof_undo_filename[eof_undo_current_index]);
-		eof_copy_file(eof_loaded_ogg_name, fn);
+		(void) snprintf(fn, sizeof(fn) - 1, "%s.ogg", eof_undo_filename[eof_undo_current_index]);
+		(void) eof_copy_file(eof_loaded_ogg_name, fn);
 	}
 	eof_undo_last_type = type;
-	eof_save_song(eof_song, eof_undo_filename[eof_undo_current_index]);
+	(void) eof_save_song(eof_song, eof_undo_filename[eof_undo_current_index]);
 	eof_undo_type[eof_undo_current_index] = type;
 	if(eof_recovery)
 	{	//If this EOF instance is maintaining auto-recovery files
 		PACKFILE *fp = pack_fopen("eof.recover", "w");	//Open the recovery definition file for writing
 		if(fp)
 		{	//If the file opened
-			append_filename(temp, eof_song_path, eof_loaded_song_name, 1024);	//Construct the full path to the project file
-			pack_fputs(eof_undo_filename[eof_undo_current_index], fp);			//Write the undo file path
-			pack_fputs("\n", fp);												//Write a newline character
-			pack_fputs(temp, fp);												//Write the project path
-			pack_fclose(fp);
+			(void) append_filename(temp, eof_song_path, eof_loaded_song_name, 1024);	//Construct the full path to the project file
+			(void) pack_fputs(eof_undo_filename[eof_undo_current_index], fp);			//Write the undo file path
+			(void) pack_fputs("\n", fp);												//Write a newline character
+			(void) pack_fputs(temp, fp);												//Write the project path
+			(void) pack_fclose(fp);
 		}
 	}
 	eof_undo_current_index++;
@@ -156,26 +156,26 @@ int eof_undo_apply(void)
 
 	if(eof_undo_count > 0)
 	{
-		snprintf(fn, sizeof(fn) - 1, "eof%03u.redo", eof_log_id);	//Include EOF's log ID in the redo name to almost guarantee it is uniquely named
-		eof_save_song(eof_song, fn);
+		(void) snprintf(fn, sizeof(fn) - 1, "eof%03u.redo", eof_log_id);	//Include EOF's log ID in the redo name to almost guarantee it is uniquely named
+		(void) eof_save_song(eof_song, fn);
 		eof_redo_type = 0;
 		eof_undo_current_index--;
 		if(eof_undo_current_index < 0)
 		{
 			eof_undo_current_index = EOF_MAX_UNDO - 1;
 		}
-		eof_undo_load_state(eof_undo_filename[eof_undo_current_index]);
+		(void) eof_undo_load_state(eof_undo_filename[eof_undo_current_index]);
 		if(eof_undo_type[eof_undo_current_index] == EOF_UNDO_TYPE_NOTE_SEL)
 		{
-			eof_menu_edit_deselect_all();
+			(void) eof_menu_edit_deselect_all();
 		}
 		if(eof_undo_type[eof_undo_current_index] == EOF_UNDO_TYPE_SILENCE)
 		{
-			snprintf(fn, sizeof(fn) - 1, "eof%03u.redo.ogg", eof_log_id);	//Include EOF's log ID in the redo name to almost guarantee it is uniquely named
-			eof_copy_file(eof_loaded_ogg_name, fn);
-			snprintf(fn, sizeof(fn) - 1, "%s.ogg", eof_undo_filename[eof_undo_current_index]);
-			eof_copy_file(fn, eof_loaded_ogg_name);
-			eof_load_ogg(eof_loaded_ogg_name, 0);
+			(void) snprintf(fn, sizeof(fn) - 1, "eof%03u.redo.ogg", eof_log_id);	//Include EOF's log ID in the redo name to almost guarantee it is uniquely named
+			(void) eof_copy_file(eof_loaded_ogg_name, fn);
+			(void) snprintf(fn, sizeof(fn) - 1, "%s.ogg", eof_undo_filename[eof_undo_current_index]);
+			(void) eof_copy_file(fn, eof_loaded_ogg_name);
+			(void) eof_load_ogg(eof_loaded_ogg_name, 0);
 			eof_fix_waveform_graph();
 			eof_redo_type = EOF_UNDO_TYPE_SILENCE;
 		}
@@ -211,19 +211,19 @@ void eof_redo_apply(void)
 
 	if(eof_redo_count > 0)
 	{
-		eof_save_song(eof_song, eof_undo_filename[eof_undo_current_index]);
+		(void) eof_save_song(eof_song, eof_undo_filename[eof_undo_current_index]);
 		eof_undo_current_index++;
 		if(eof_undo_current_index >= EOF_MAX_UNDO)
 		{
 			eof_undo_current_index = 0;
 		}
-		snprintf(fn, sizeof(fn) - 1, "eof%03u.redo", eof_log_id);	//Get the name of this EOF instance's redo file
-		eof_undo_load_state(fn);	//And load it
+		(void) snprintf(fn, sizeof(fn) - 1, "eof%03u.redo", eof_log_id);	//Get the name of this EOF instance's redo file
+		(void) eof_undo_load_state(fn);	//And load it
 		if(eof_redo_type == EOF_UNDO_TYPE_SILENCE)
 		{
-			snprintf(fn, sizeof(fn) - 1, "eof%03u.redo.ogg", eof_log_id);	//Get the name of this EOF instance's redo OGG
-			eof_copy_file(fn, eof_loaded_ogg_name);	//And save the current audio to that filename
-			eof_load_ogg(eof_loaded_ogg_name, 0);
+			(void) snprintf(fn, sizeof(fn) - 1, "eof%03u.redo.ogg", eof_log_id);	//Get the name of this EOF instance's redo OGG
+			(void) eof_copy_file(fn, eof_loaded_ogg_name);	//And save the current audio to that filename
+			(void) eof_load_ogg(eof_loaded_ogg_name, 0);
 			eof_fix_waveform_graph();
 		}
 		eof_undo_count++;

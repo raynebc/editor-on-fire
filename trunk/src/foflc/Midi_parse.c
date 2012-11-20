@@ -27,7 +27,7 @@ struct Tempo_change DEFAULTTEMPO={0,0.0,120.0,0,0,NULL};
 
 void InitMIDI(void)
 {
-	if(Lyrics.verbose)	puts("Initializing MIDI variables");
+	if(Lyrics.verbose)	(void) puts("Initializing MIDI variables");
 
 //Initialize global variables
 	MIDIstruct.BPM=(double)120.0;								//Default tempo of 120 BPM is assumed until MPQN is defined
@@ -59,7 +59,7 @@ void ReadMIDIHeader(FILE *inf,char suppress_errors)
 	{
 		if(strcmp(header,"RIFF") == 0)	//If this is a RIFF-MIDI (RMIDI) header
 		{
-			if(Lyrics.verbose)	puts("Parsing RIFF-MIDI header");
+			if(Lyrics.verbose)	(void) puts("Parsing RIFF-MIDI header");
 			MIDIstruct.miditype=1;		//Track that this MIDI file is within a RIFF header
 			fseek_err(inf,20,SEEK_SET);	//Seek to byte 20, which is the beginning of the MIDI header in an RMIDI file
 			fread_err(header,4,1,inf);	//Read 4 bytes, which are expected to be the MIDI header
@@ -68,7 +68,7 @@ void ReadMIDIHeader(FILE *inf,char suppress_errors)
 		}
 		else if(strcmp(header,"RBSF") == 0)	//If this is a Rock Band Audition (RBA) header
 		{
-			if(Lyrics.verbose)	puts("Parsing RBA header");
+			if(Lyrics.verbose)	(void) puts("Parsing RBA header");
 			if(SearchPhrase(inf,0,NULL,"MThd",4,1) == 1)	//Search for and seek to MIDI header
 			{
 				MIDIstruct.miditype=2;	//Track that this MIDI is within a RBA file
@@ -84,7 +84,7 @@ void ReadMIDIHeader(FILE *inf,char suppress_errors)
 	if(failure)
 	{
 		if(!suppress_errors)
-			puts("Error: Incorrect or missing MIDI header\nAborting");
+			(void) puts("Error: Incorrect or missing MIDI header\nAborting");
 		exit_wrapper(1);
 	}
 
@@ -92,14 +92,14 @@ void ReadMIDIHeader(FILE *inf,char suppress_errors)
 	if((unsigned long)MIDIstruct.hchunk.chunksize != (unsigned long)6)
 	{
 		if(!suppress_errors)
-			puts("Error: Incorrect chunk size in MIDI header\nAborting");
+			(void) puts("Error: Incorrect chunk size in MIDI header\nAborting");
 		exit_wrapper(2);
 	}
 	ReadWORDBE(inf,&MIDIstruct.hchunk.formattype);
 	if(MIDIstruct.hchunk.formattype > 2)
 	{
 		if(!suppress_errors)
-			puts("Error: Incorrect MIDI type in MIDI header\nAborting");
+			(void) puts("Error: Incorrect MIDI type in MIDI header\nAborting");
 		exit_wrapper(3);
 	}
 	ReadWORDBE(inf,&MIDIstruct.hchunk.numtracks);
@@ -107,7 +107,7 @@ void ReadMIDIHeader(FILE *inf,char suppress_errors)
 	if((MIDIstruct.hchunk.division & 0x8000) != 0)
 	{
 		if(!suppress_errors)
-			puts("Error: frames per second time division is not supported\nAborting.");
+			(void) puts("Error: frames per second time division is not supported\nAborting.");
 		exit_wrapper(4);
 	}
 	MIDIstruct.hchunk.tracks=(struct Track_chunk *)malloc_err(sizeof(struct Track_chunk)*MIDIstruct.hchunk.numtracks);
@@ -220,7 +220,7 @@ char *ReadMetaEventString(FILE *inf,long int length)
 
 	if(length == 0)
 	{
-		if(Lyrics.verbose)	puts("Ignoring empty Meta Event string");
+		if(Lyrics.verbose)	(void) puts("Ignoring empty Meta Event string");
 		return NULL;	//If the MIDI describes a string with 0 characters, ignore it
 	}
 
@@ -286,7 +286,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 		if(deltalength == 0)
 		{
 			if(!suppress_errors)
-				puts("Error: Invalid variable length value encountered\nAborting");
+				(void) puts("Error: Invalid variable length value encountered\nAborting");
 			exit_wrapper(1);
 		}
 
@@ -307,13 +307,13 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 			if((vars.lasteventtype>>4) == 0)
 			{
 				if(!suppress_errors)
-					puts("Error: Running status encountered with no preceeding event\nAborting");
+					(void) puts("Error: Running status encountered with no preceeding event\nAborting");
 				exit_wrapper(2);
 			}
 			if((vars.lasteventtype>>4) >= 0xF)
 			{	//running status is illegal for meta and sysex events
 				if(!suppress_errors)
-					puts("MIDI violation: Running status encountered for a Meta or Sysex event\nAborting");
+					(void) puts("MIDI violation: Running status encountered for a Meta or Sysex event\nAborting");
 				exit_wrapper(3);
 			}
 			else
@@ -334,7 +334,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 
 //If we specified to call a handler routine before parsing, do so now
 		if((event_handler != NULL) && (callbefore != 0))
-			(*event_handler)(&vars);
+			(void) (*event_handler)(&vars);
 
 //Read in the MIDI event parameters
 		if(vars.eventtype < 0xF0)
@@ -362,9 +362,9 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 				{
 					printf("Event: Note on (Channel=%d): Note #=%d, Velocity=%d",vars.eventtype&0xF,vars.parameters[0],vars.parameters[1]);
 					if(vars.parameters[1] == 0)	//Note on with Velocity of 0 is equivalent to a Note off
-						puts("\t(NOTE OFF)");
+						(void) puts("\t(NOTE OFF)");
 					else
-						putchar('\n');
+						(void) putchar('\n');
 				}
 			break;
 
@@ -535,17 +535,17 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 										printf("(%lu viable lyric/text events found)",tchunk->textcount);
 									if(tchunk->notecount)
 										printf("\t(%lu Note On events found)",tchunk->textcount);
-									putchar('\n');
+									(void) putchar('\n');
 								}
 							}
 
 							vars.endindex=ftell_err(inf);	//Points to either end of file or start of next track header
 							if((event_handler != NULL) && (callbefore == 0))
-								(*event_handler)(&vars);	//Call event handler if one is designated
+								(void) (*event_handler)(&vars);	//Call event handler if one is designated
 
 							if(MIDIstruct.hchunk.tempomap == NULL)	//If a tempo was never set
 							{
-								if(Lyrics.verbose)	puts("No tempo defined.  120BPM is assumed");
+								if(Lyrics.verbose)	(void) puts("No tempo defined.  120BPM is assumed");
 								MIDIstruct.hchunk.tempomap=&DEFAULTTEMPO;	//Define tempo linked list to be a single link with a tempo of 120BPM
 							}
 
@@ -611,7 +611,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 							}
 							fseek_err(inf,5,SEEK_CUR);		//Skip this event
 
-							if(Lyrics.verbose>=2)	puts("Meta Event: SMPTE Offset\t(Ignoring)");
+							if(Lyrics.verbose>=2)	(void) puts("Meta Event: SMPTE Offset\t(Ignoring)");
 						break;
 
 						case 0x58:	//Time Signature
@@ -725,7 +725,7 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 
 //Before finishing out this iteration of the loop, call the event handler if specified
 		if((event_handler != NULL) && (callbefore == 0))
-			(*event_handler)(&vars);
+			(void) (*event_handler)(&vars);
 
 		if(vars.buffer != NULL)		//If we allocated memory to hold data
 		{
@@ -824,7 +824,7 @@ void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppr
 {
 	struct Track_chunk temp={0,0,NULL,0,0,0,0,0};	//Used to count the track headers
 	unsigned long ctr=0;		//The currently parsed MIDI track number
-	size_t temp2=0;
+	unsigned long temp2=0;
 	int error=0;				//error returned from ReadTrackHeader
 	struct Track_chunk *newtrack=NULL;	//Used to reallocate tracks[] array in the event of a damaged MIDI
 	unsigned long ctr2=0;				//Used to rebuild tracks[] array in the event of a damaged MIDI
@@ -845,7 +845,7 @@ void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppr
 
 	if(Lyrics.verbose>=2)	printf("MIDI header indicates %u tracks\n",MIDIstruct.hchunk.numtracks);
 
-	temp2=ftell_err(inf);
+	temp2=(unsigned long)ftell_err(inf);
 
 //Do a manual count of the tracks headers in the file and store each track's location
 	while(1)
@@ -856,7 +856,7 @@ void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppr
 
 		if(ctr+1 > MIDIstruct.hchunk.numtracks)
 		{	//If this is one more track than was defined in the MIDI header
-			puts("\aWarning: Input MIDI file is damaged (too many tracks are defined).  Correcting...");
+			(void) puts("\aWarning: Input MIDI file is damaged (too many tracks are defined).  Correcting...");
 
 			//Reallocate tracks array
 			newtrack=(struct Track_chunk *)malloc_err(sizeof(struct Track_chunk)*(ctr+1));
@@ -872,16 +872,16 @@ void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppr
 			MIDIstruct.hchunk.numtracks++;	//Increment track count
 		}
 
-		if(Lyrics.verbose>=2)	printf("MIDI track %lu begins at byte 0x%lX\n",ctr,(unsigned long)temp2);
-		(MIDIstruct.hchunk.tracks[ctr]).fileposition=temp2;	//Store file position for this track
+		if(Lyrics.verbose>=2)	printf("MIDI track %lu begins at byte 0x%lX\n", ctr, temp2);
+		(MIDIstruct.hchunk.tracks[ctr]).fileposition = temp2;	//Store file position for this track
 		ctr++;		//Increment track counter
 		fseek_err(inf,temp.chunksize,SEEK_CUR);		//Fast forward to next track header
-		temp2=ftell_err(inf);
+		temp2 = (unsigned long)ftell_err(inf);
 	}
 
 	if(ctr == 0)	//If there were no tracks in the input MIDI
 	{
-		puts("Error: No tracks detected in the specified MIDI file\nAborting");
+		(void) puts("Error: No tracks detected in the specified MIDI file\nAborting");
 		exit_wrapper(1);
 	}
 
@@ -893,11 +893,11 @@ void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppr
 			exit_wrapper(1);	//Abort
 		}
 		else
-			puts("\aWarning: Input MIDI file is damaged (too few tracks are defined)");
+			(void) puts("\aWarning: Input MIDI file is damaged (too few tracks are defined)");
 	}
 	else if(ctr > MIDIstruct.hchunk.numtracks)
 	{	//This shouldn't happen, as the logic above would resize the tracks array and increment MIDIstruct.hchunk.numtracks
-		puts("Logic error: Corrected track count failed.\nAborting");
+		(void) puts("Logic error: Corrected track count failed.\nAborting");
 		exit_wrapper(2);
 	}
 
@@ -910,7 +910,7 @@ void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppr
 //We are expecting the track header
 	while((ctr < MIDIstruct.hchunk.numtracks) && (ReadTrackHeader(inf,&(MIDIstruct.hchunk.tracks[ctr])) == 0))
 	{	//For each track, starting at zero
-		TrackEventProcessor(inf,NULL,0x1,0,event_handler,0,&(MIDIstruct.hchunk.tracks[ctr]),suppress_errors);
+		(void) TrackEventProcessor(inf,NULL,0x1,0,event_handler,0,&(MIDIstruct.hchunk.tracks[ctr]),suppress_errors);
 		ctr++;
 
 		if(Lyrics.quick && (ctr<MIDIstruct.hchunk.numtracks))	//If track processing is allowed to stop early
@@ -926,8 +926,8 @@ void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppr
 		if(Lyrics.verbose)	printf("Forcefully closing lyric \"%s\"\n",MIDIstruct.unfinalizedlyric);
 		AddMIDILyric(MIDIstruct.unfinalizedlyric,MIDIstruct.unfinalizedlyrictime,PITCHLESS,MIDIstruct.unfinalizedoverdrive_on,MIDIstruct.unfinalizedgroupswithnext);
 			//Recover lyric with timestamp, overdrive status and grouping status.  Add it to the MIDI lyric list and finalize it
-		EndMIDILyric(PITCHLESS,MIDIstruct.unfinalizedlyrictime+1);	//Formally end it
-		GetLyricPiece();	//Remove the now completed lyric from the MIDI lyric list and store in the Lyrics list
+		(void) EndMIDILyric(PITCHLESS,MIDIstruct.unfinalizedlyrictime+1);	//Formally end it
+		(void) GetLyricPiece();	//Remove the now completed lyric from the MIDI lyric list and store in the Lyrics list
 		EndLyricLine();		//End the lyric line gracefully
 	}
 
@@ -937,7 +937,7 @@ void MIDI_Load(FILE *inf,int (*event_handler)(struct TEPstruct *data),char suppr
 		if(event_handler != NULL)
 			printf("MIDI import complete.  %lu lyrics loaded\n\n",Lyrics.piececount);
 		else
-			puts("MIDI parse complete\n");
+			(void) puts("MIDI parse complete\n");
 	}
 }
 
@@ -947,7 +947,7 @@ void ReleaseMIDI(void)
 	unsigned long ctr=0;					//Used for deallocation at end of import
 	struct Tempo_change *tempotemp=NULL,*tempotemp2=NULL;	//Used for deallocation at end of import
 
-	if(Lyrics.verbose >= 2)	puts("Cleaning up MIDI structure");
+	if(Lyrics.verbose >= 2)	(void) puts("Cleaning up MIDI structure");
 
 //Release memory outside of Lyrics structure that was used for import
 	//De-allocate MIDI track array and track name strings
@@ -1048,7 +1048,7 @@ void CopyTrack(FILE *inf,unsigned short tracknum,FILE *outf)	//Copies the specif
 
 	if(strcmp(header,"MTrk") != 0)
 	{
-		puts("Error: Incorrect track header during copy\nAborting");
+		(void) puts("Error: Incorrect track header during copy\nAborting");
 		exit_wrapper(2);
 	}
 
@@ -1057,15 +1057,15 @@ void CopyTrack(FILE *inf,unsigned short tracknum,FILE *outf)	//Copies the specif
 
 	if(chunksize != (MIDIstruct.hchunk.tracks[tracknum]).chunksize)	//Compare to the size for this track number listed in the MIDI structure
 	{
-		puts("Error: Non-matching track size encountered during copy\nAborting");
+		(void) puts("Error: Non-matching track size encountered during copy\nAborting");
 		exit_wrapper(3);
 	}
 
 //At this point, the input FILE stream has been shown to begin on a track header and be the expected length, so copy it to memory
 	//The MIDI header has been read, so write it back to the output file
 	fputs_err(header,outf);			//Write "MTrk"
-	WriteDWORDBE(outf,chunksize);	//Write the track chunk size
-	BlockCopy(inf,outf,chunksize);
+	WriteDWORDBE(outf, chunksize);	//Write the track chunk size
+	BlockCopy(inf, outf, (size_t)chunksize);
 }
 
 unsigned long ConvertToDeltaTime(unsigned long starttime)
@@ -1108,7 +1108,7 @@ void Copy_Source_MIDI(FILE *inf,FILE *outf)
 
 	assert_wrapper((inf != NULL) && (outf != NULL) && (Lyrics.outputtrack != NULL));	//These must not be NULL
 
-	if(Lyrics.verbose)	puts("Copying tracks from source MIDI");
+	if(Lyrics.verbose)	(void) puts("Copying tracks from source MIDI");
 
 //Read+write the file header
 	rewind_err(inf);					//Rewind to beginning of file
@@ -1130,7 +1130,7 @@ void Copy_Source_MIDI(FILE *inf,FILE *outf)
 		if((MIDIstruct.hchunk.tracks[ctr]).trackname != NULL)	//If this track has a name
 			if(!strcasecmp((MIDIstruct.hchunk.tracks[ctr]).trackname,Lyrics.outputtrack) || ((Lyrics.out_format != VRHYTHM_FORMAT) && ((Lyrics.inputtrack != NULL) && !strcasecmp((MIDIstruct.hchunk.tracks[ctr]).trackname,Lyrics.inputtrack))))
 			{	//If this track has the same name as the track to which output vocals will be written, or if it has the same name as the input vocal track (vrhythm import excluded)
-				if(Lyrics.verbose)	puts("Omitting existing input/output track");
+				if(Lyrics.verbose)	(void) puts("Omitting existing input/output track");
 				continue;
 			}
 
@@ -1142,7 +1142,7 @@ void Copy_Source_MIDI(FILE *inf,FILE *outf)
 				continue;
 			}
 
-			if(Lyrics.verbose)	puts("Copying...");
+			if(Lyrics.verbose)	(void) puts("Copying...");
 			CopyTrack(inf,ctr,outf);	//Copy to output file
 			MIDIstruct.trackswritten++;		//Remember how many tracks were copied
 		}
@@ -1152,7 +1152,7 @@ void Copy_Source_MIDI(FILE *inf,FILE *outf)
 
 			if(strcasecmp((MIDIstruct.hchunk.tracks[ctr]).trackname,Lyrics.inputtrack) != 0)
 			{	//If this MIDI track is different from the track that contains the imported vocal rhythm
-				if(Lyrics.verbose)	puts("Copying...");
+				if(Lyrics.verbose)	(void) puts("Copying...");
 				CopyTrack(inf,ctr,outf);	//Copy the entire track to output file
 				MIDIstruct.trackswritten++;
 			}
@@ -1160,18 +1160,18 @@ void Copy_Source_MIDI(FILE *inf,FILE *outf)
 			{	//This MIDI track contains vocal rhythm notes
 				if(MIDIstruct.mixedtrack == 0)	//If this track contained no normal instrument notes
 				{
-					if(Lyrics.verbose)	puts("Contains only vocal rhythm.  Omitting...");
+					if(Lyrics.verbose)	(void) puts("Contains only vocal rhythm.  Omitting...");
 					continue;
 				}
 
 				//This track will have to be rebuilt to not contain vocal rhythm notes
-				if(Lyrics.verbose)	puts("Contains instrument and vocal rhythm notes.  Rebuilding...");
+				if(Lyrics.verbose)	(void) puts("Contains instrument and vocal rhythm notes.  Rebuilding...");
 				fseek_err(inf,(MIDIstruct.hchunk.tracks[ctr]).fileposition+8,SEEK_SET);	//Seek just beyond the track header (8 bytes)
 			//Write the track header
 				chunkfileposition=Write_MIDI_Track_Header(outf);
 
 			//Write track events (which should include the track name and end of track events)
-				TrackEventProcessor(inf,outf,(unsigned char)0x1,(char)0,MIDI_Build_handler,(char)0,&(MIDIstruct.hchunk.tracks[ctr]),0);	//Rebuild the MIDI track to exclude vocal rhythm notes
+				(void) TrackEventProcessor(inf,outf,(unsigned char)0x1,(char)0,MIDI_Build_handler,(char)0,&(MIDIstruct.hchunk.tracks[ctr]),0);	//Rebuild the MIDI track to exclude vocal rhythm notes
 				MIDIstruct.trackswritten++;
 				endchunkfileposition=ftell_err(outf);	//Save this to allow us to rewind to finish writing the track
 
@@ -1220,7 +1220,7 @@ void Export_MIDI(FILE *outf)
 	if(Lyrics.verbose)	printf("\nExporting MIDI lyrics to file \"%s\"\n",Lyrics.outfilename);
 
 	if(!Lyrics.pitch_tracking)
-		puts("\a! NOTE: No pitch variation found in input lyrics.  Exporting as Freestyle");
+		(void) puts("\a! NOTE: No pitch variation found in input lyrics.  Exporting as Freestyle");
 
 	if(Lyrics.verbose)	printf("\tTrack %u (\"%s\"): Building...\n",MIDIstruct.trackswritten,Lyrics.outputtrack);
 
@@ -1290,7 +1290,7 @@ void Export_MIDI(FILE *outf)
 				//Write delta value of this start of line (equal to the delta of the first lyric in a line)
 					WriteVarLength(outf,reldelta+extradelta);
 					extradelta=0;	//Ensure this is reset since the appropriate delta time was written
-					if(Lyrics.verbose >= 2)	putchar('\n');
+					if(Lyrics.verbose >= 2)	(void) putchar('\n');
 					Write_MIDI_Note(105,channelnum,MIDI_NOTE_ON,outf,runningstatus);
 					runningstatus=1;	//Any note written after the first can be running status
 					line_marked=1;	//This will remain 1 until the start of the next line
@@ -1418,7 +1418,7 @@ void WriteMIDIString(FILE *outf,unsigned long delta,int stringtype, const char *
 	{
 		printf("\tWriting MIDI string type %d: ",stringtype);
 		if(!strcmp(str,"\n"))	//If the string is just a newline character (used for line breaks in KAR export)
-			puts("(Newline character)");
+			(void) puts("(Newline character)");
 		else
 			printf("\"%s\"\n",str);
 	}
@@ -1427,7 +1427,7 @@ void WriteMIDIString(FILE *outf,unsigned long delta,int stringtype, const char *
 	WriteVarLength(outf,delta);
 	fputc_err(0xFF,outf);
 	fputc_err(stringtype,outf);
-	WriteVarLength(outf,strlen(str));
+	WriteVarLength(outf,(unsigned long)strlen(str));
 	fputs_err(str,outf);
 }
 
@@ -1437,16 +1437,16 @@ void Parse_Song_Ini(char *midipath,char loadoffset,char loadothertags)
 	char *tempstr=NULL;		//Temporary string
 	char *fullpath=NULL;	//The final path to song.ini
 	char *buffer=NULL;		//Will be an array large enough to hold the largest line of text from input file
-	unsigned long maxlinelength=0;	//I will count the length of the longest line (including NULL char/newline) in the
-					//input file so I can create a buffer large enough to read any line into
+	size_t maxlinelength=0;	//I will count the length of the longest line (including NULL char/newline) in the
+							//input file so I can create a buffer large enough to read any line into
 
 	if(midipath == NULL)
 	{
-		puts("Error: Invalid string passed to Parse_Song_Ini()\nAborting");
+		(void) puts("Error: Invalid string passed to Parse_Song_Ini()\nAborting");
 		exit_wrapper(1);
 	}
 
-	if(Lyrics.verbose>=2)	puts("Creating song.ini path string");
+	if(Lyrics.verbose>=2)	(void) puts("Creating song.ini path string");
 
 //Make a working copy of the MIDI path string
 	tempstr=DuplicateString(midipath);
@@ -1454,7 +1454,7 @@ void Parse_Song_Ini(char *midipath,char loadoffset,char loadothertags)
 	if(Lyrics.verbose>=2)
 	{
 		printf("MIDI path string is \"%s\"\n",tempstr);
-		puts("Truncating song.ini path string");
+		(void) puts("Truncating song.ini path string");
 	}
 
 //Truncate the MIDI's filename to leave the path to its parent folder
@@ -1491,7 +1491,7 @@ void Parse_Song_Ini(char *midipath,char loadoffset,char loadothertags)
 	maxlinelength=FindLongestLineLength(inf,0);
 	if(!maxlinelength)
 	{
-		puts("\aWarning: Song.ini is empty");
+		(void) puts("\aWarning: Song.ini is empty");
 		fclose_err(inf);
 		return;		//Do not process song.ini if it is empty
 	}
@@ -1520,7 +1520,7 @@ void Parse_Song_Ini(char *midipath,char loadoffset,char loadothertags)
 	Lyrics.OffsetStringID=NULL;
 	Lyrics.YearStringID=NULL;
 
-	if(Lyrics.verbose)	puts("Beginning song.ini parse");
+	if(Lyrics.verbose)	(void) puts("Beginning song.ini parse");
 
 	if(loadothertags)	//Load tags that aren't the offset tag
 	{
@@ -1534,8 +1534,8 @@ void Parse_Song_Ini(char *midipath,char loadoffset,char loadothertags)
 	if(loadoffset)	//Load the offset tag
 		Lyrics.OffsetStringID=DuplicateString("delay");
 
-	while(fgets(buffer,maxlinelength,inf) != NULL)		//Read lines until end of file is reached, don't exit on EOF
-		ParseTag('=','\0',buffer,1);	//Look for tags, content starts after '=' char and extends to end of line.  Negatize the offset
+	while(fgets(buffer,(int)maxlinelength,inf) != NULL)		//Read lines until end of file is reached, don't exit on EOF
+		(void) ParseTag('=','\0',buffer,1);	//Look for tags, content starts after '=' char and extends to end of line.  Negatize the offset
 
 	free(buffer);	//No longer needed, release the memory before exiting function
 	fclose_err(inf);
@@ -1555,7 +1555,7 @@ void VRhythm_Load(char *srclyrname,char *srcmidiname,FILE *inf)
 //Validate parameters
 	if(((!Lyrics.nolyrics && (srclyrname == NULL))) || (inf == NULL) || (srcmidiname == NULL))
 	{	//Allow srclyrname to be NULL if nolyrics is in effect
-		puts("Error: Null parameter passed to VRhythm_Load\nAborting");
+		(void) puts("Error: Null parameter passed to VRhythm_Load\nAborting");
 		exit_wrapper(1);
 	}
 
@@ -1566,7 +1566,7 @@ void VRhythm_Load(char *srclyrname,char *srcmidiname,FILE *inf)
 		inputlyrics=fopen_err(srclyrname,"rt");
 
 	//Read first line, which should indicate the target track and difficulty in a format such as "midi = D4" (Drums>Expert)
-		fgets_err(buffer,11,inputlyrics);	//Read first line (or first 10 bytes) of file into buffer
+		(void) fgets_err(buffer,11,inputlyrics);	//Read first line (or first 10 bytes) of file into buffer
 		buffer[10]='\0';					//Ensure the string is terminated
 
 	//Validate and process first line
@@ -1604,7 +1604,7 @@ void VRhythm_Load(char *srclyrname,char *srcmidiname,FILE *inf)
 
 //Load MIDI information
 	Lyrics.quick=1;			//We can skip processing tracks besides track 0 and "PART VOCALS" (which will be ignored anyway)
-	if(Lyrics.verbose>=2)	puts("Importing source MIDI (quick processing)");
+	if(Lyrics.verbose>=2)	(void) puts("Importing source MIDI (quick processing)");
 	MIDI_Load(inf,NULL,0);	//Call MIDI_Load with no handler (just load MIDI info such as track names)
 
 	if(Lyrics.verbose)	printf("\nSearching for MIDI track \"%s\", difficulty %c\n",Lyrics.inputtrack,diffID);
@@ -1658,7 +1658,7 @@ void VRhythm_Load(char *srclyrname,char *srcmidiname,FILE *inf)
 	}
 	else
 	{
-		if(Lyrics.verbose)	puts("Vrhythm ID supplied instead of a pitched lyric file, skipping pitched lyric import\nPerforming lyric line splitting logic");
+		if(Lyrics.verbose)	(void) puts("Vrhythm ID supplied instead of a pitched lyric file, skipping pitched lyric import\nPerforming lyric line splitting logic");
 
 //Perform logic for line splitting based on fret number changes in notes
 		Lyrics.curline=Lyrics.lines;	//Point conductor to first (only) line of lyrics
@@ -1704,7 +1704,7 @@ void VRhythm_Load(char *srclyrname,char *srcmidiname,FILE *inf)
 
 void PitchedLyric_Load(FILE *inf)
 {
-	unsigned long maxlinelength;	//I will count the length of the longest line (including NULL char/newline) in the
+	size_t maxlinelength;			//I will count the length of the longest line (including NULL char/newline) in the
 									//input file so I can create a buffer large enough to read any line into
 	char *buffer;					//Will be an array large enough to hold the largest line of text from input file
 	unsigned long index=0;			//Used to index within a line of text
@@ -1738,7 +1738,7 @@ void PitchedLyric_Load(FILE *inf)
 	buffer=(char *)malloc_err(maxlinelength);
 
 //Load each line and parse it
-	fgets_err(buffer,maxlinelength,inf);	//Read and ignore first line of text, as it is the vrhythm track identifier
+	(void) fgets_err(buffer,(int)maxlinelength,inf);	//Read and ignore first line of text, as it is the vrhythm track identifier
 
 	if(Lyrics.verbose)
 	{
@@ -1749,7 +1749,7 @@ void PitchedLyric_Load(FILE *inf)
 	processedctr=1;			//This will be set to 2 at the beginning of the main loop, denoting starting at line 2
 	while(!feof(inf))		//Until end of file is reached
 	{
-		if(fgets(buffer,maxlinelength,inf) == NULL)	//Read next line of text, capping it to prevent buffer overflow, don't exit on EOF
+		if(fgets(buffer,(int)maxlinelength,inf) == NULL)	//Read next line of text, capping it to prevent buffer overflow, don't exit on EOF
 			break;	//If NULL is returned, EOF was reached and no bytes were read from file
 
 		processedctr++;
@@ -1766,7 +1766,7 @@ void PitchedLyric_Load(FILE *inf)
 		if((buffer[index] == '\r') || (buffer[index] == '\n'))	//If it was a blank line
 		{
 			if(Lyrics.verbose)	printf("Ignoring blank line (line #%lu) in input file\n",processedctr);
-			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			(void) fgets(buffer,(int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 			continue;	//Skip processing for a blank line
 		}
 
@@ -1923,7 +1923,7 @@ void PitchedLyric_Load(FILE *inf)
 			if(lyrptr == NULL)
 			{
 				printf("\aWarning: Not enough notes in imported vocal rhythm file to insert lyric \"%s\" with pitch %u.\n",&(buffer[index]),(unsigned char)pitch);
-				puts("Pitched lyric import incomplete.  Examine the output file to determine the necessary corrections to input files");
+				(void) puts("Pitched lyric import incomplete.  Examine the output file to determine the necessary corrections to input files");
 				break;	//Break from while loop to stop reading input file
 			}
 
@@ -1932,7 +1932,7 @@ void PitchedLyric_Load(FILE *inf)
 			{
 				printf("Processing pitched lyric #%lu:\t\"%s\"\tStart=%lums\t",lyricctr,buffer,lyrptr->start);
 				if(pitch == PITCHLESS)
-					puts("No pitch");
+					(void) puts("No pitch");
 				else
 					printf("Pitch=%ld\n",pitch);
 			}
@@ -1965,17 +1965,17 @@ void PitchedLyric_Load(FILE *inf)
 			//Verify that there are enough lyric entries created during vocal rhythm import to load this lyric
 			if(lyrptr == NULL)
 			{
-				puts("\aUnexpected end of vocal rhythm notes.\n\tDo not end the pitched lyric file with a line beginning with a hyphen.");
+				(void) puts("\aUnexpected end of vocal rhythm notes.\n\tDo not end the pitched lyric file with a line beginning with a hyphen.");
 				break;	//Break from while loop to stop reading input file
 			}
 
 			if(splitctr != 0)	//Split the linked list into two different lines, but only if lyrics have been processed since beginning of file or last line split
 			{
-				if(Lyrics.verbose>=2)	puts("\tInserting line break");
+				if(Lyrics.verbose>=2)	(void) puts("\tInserting line break");
 				Lyrics.curline=InsertLyricLineBreak(Lyrics.curline,lyrptr);	//Insert a line break in front of current lyric
 			}
 			else if(Lyrics.verbose)
-				puts("Empty line phrase encountered.  Ignoring");
+				(void) puts("Empty line phrase encountered.  Ignoring");
 		}
 		else
 		{
@@ -1986,7 +1986,7 @@ void PitchedLyric_Load(FILE *inf)
 
 	free(buffer);	//No longer needed, release the memory before exiting function
 
-	if(Lyrics.verbose>=2)	puts("Rebuilding Lyric line structures");
+	if(Lyrics.verbose>=2)	(void) puts("Rebuilding Lyric line structures");
 	RecountLineVars(Lyrics.lines);	//Repair the piececount and duration variables that would have been made incorrect by inserting line breaks
 
 	if(Lyrics.verbose)	printf("Pitched lyric import complete.  %lu lyric pieces loaded\n\n",lyricctr);
@@ -2031,7 +2031,7 @@ int MIDI_Build_handler(struct TEPstruct *data)
 
 	if( (((data->eventtype>>4)==MIDI_NOTE_ON)||((data->eventtype>>4)==MIDI_NOTE_OFF)) && data->runningstatus && skippedpreviousevent)
 	{	//If this is a Note on or off event using running status that depended on the previous event that was ommitted
-		if(Lyrics.verbose)	puts("Rebuilding Note On/Off event");
+		if(Lyrics.verbose)	(void) puts("Rebuilding Note On/Off event");
 		if(data->lastwritteneventtype != MIDI_NOTE_ON)	//If the last written MIDI event wasn't a Note On
 			Write_MIDI_Note(data->parameters[0],data->eventtype&0xF,data->eventtype>>4,data->outf,0);	//Write the note normally as a Note On event
 		else
@@ -2049,10 +2049,10 @@ int MIDI_Build_handler(struct TEPstruct *data)
 		{	//If this event is not a Meta/SysEx event as is the same as the last such event that was written
 			//and this event isn't already running status, convert to running status by omitting event status byte
 			if(Lyrics.verbose >= 2)	printf("\tEvent type 0x%X at file position 0x%lX converted to running status\n",data->eventtype>>4,data->eventindex);
-			fwrite_err(&(buffer[1]),eventlength-1,1,data->outf);	//Write buffered event (except for the first byte)
+			fwrite_err(&(buffer[1]),(size_t)eventlength-1,1,data->outf);	//Write buffered event (except for the first byte)
 		}
 		else	//Otherwise write the buffered event normally
-			fwrite_err(buffer,eventlength,1,data->outf);
+			fwrite_err(buffer,(size_t)eventlength,1,data->outf);
 
 		free(buffer);	//De-allocate memory buffer
 
@@ -2313,7 +2313,7 @@ int Lyric_handler(struct TEPstruct *data)
 		{	//A new lyric event was encountered without the last lyric piece having been ended with Note Off
 			//Special case is that a preceeding Note On was just accepted for this lyric event above, allow it
 			AddMIDILyric(lastlyric,lastlyrictime,PITCHLESS,overdrive_on,groupswithnext);	//Add lyric of style "pitchless" to the MIDI lyric list
-			EndMIDILyric(PITCHLESS,lastlyrictime+1);										//End the pitchless lyric with a duration of 1ms
+			(void) EndMIDILyric(PITCHLESS,lastlyrictime+1);										//End the pitchless lyric with a duration of 1ms
 			while(GetLyricPiece());	//Remove and store all completed MIDI lyrics from the front of the list
 			lastlyric=DuplicateString(data->buffer);	//Forget lastlyric string, allocate a new one
 			MIDIstruct.unfinalizedlyric=lastlyric;		//Store this to handle the special case of the last lyric being pitchless
@@ -2382,7 +2382,7 @@ int Lyric_handler(struct TEPstruct *data)
 		if(lyric_note_num != 0xFF)	//If a Note on was already encountered before reaching a Lyric event
 		{
 			if(Lyrics.verbose)
-				puts("Warning: Note nested improperly in source MIDI.  Ignoring..");
+				(void) puts("Warning: Note nested improperly in source MIDI.  Ignoring..");
 
 			return 0;
 		}
@@ -2390,7 +2390,7 @@ int Lyric_handler(struct TEPstruct *data)
 		if(Lyrics.nolyrics)	//If lyricless logic is in effect, enforce the disabling of chords
 			if(MIDI_Lyrics.head != NULL)	//If a note is already populated in the MIDI lyric list
 			{
-				puts("!\tWarning: Chords encountered in imported vocal track, omitting all notes except the first in the chord");
+				(void) puts("!\tWarning: Chords encountered in imported vocal track, omitting all notes except the first in the chord");
 				return 0;	//Ignore this note, it isn't valid
 			}
 
@@ -2458,7 +2458,7 @@ int Lyric_handler(struct TEPstruct *data)
 
 		if(Lyric_Piece->lyric == NULL)
 		{
-			puts("Error: Unexpected NULL string\nAborting");
+			(void) puts("Error: Unexpected NULL string\nAborting");
 			exit_wrapper(3);
 		}
 
@@ -2551,7 +2551,7 @@ void AddMIDILyric(char *str,unsigned long start,unsigned char pitch,char isoverd
 	if(Lyrics.verbose>=2)
 	{
 		if(str == NULL)
-			puts("\tAppending line break to Notes list");
+			(void) puts("\tAppending line break to Notes list");
 		else
 		{
 			printf("\tAppending lyric \"%s\" with ",str);
@@ -2568,7 +2568,7 @@ void AddMIDILyric(char *str,unsigned long start,unsigned char pitch,char isoverd
 				else
 					printf("NO");
 			}
-			putchar('\n');
+			(void) putchar('\n');
 		}
 	}
 }
@@ -2598,7 +2598,7 @@ struct MIDI_Lyric_Piece *EndMIDILyric(unsigned char pitch,unsigned long end)
 	{
 		printf("\tEnding lyric \"%s\" with ",temp->lyric);
 		if(temp->pitch == PITCHLESS)
-			puts("NO pitch");
+			(void) puts("NO pitch");
 		else
 			printf("pitch %u\n",temp->pitch);
 	}
@@ -2918,7 +2918,7 @@ void Write_Default_Track_Zero(FILE *outmidi)
 
 	assert_wrapper(outmidi != NULL);
 
-	if(Lyrics.verbose)	puts("No source MIDI was provided.  Creating MIDI track 0");
+	if(Lyrics.verbose)	(void) puts("No source MIDI was provided.  Creating MIDI track 0");
 
 	//Write MIDI header
 	fputc_err('M',outmidi);

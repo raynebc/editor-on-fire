@@ -39,7 +39,7 @@ char *ReadTextInfoFrame(FILE *inf)
 
 	if(!IsTextInfoID3FrameID(buffer) || ((buffer2[5] & 192) != 0) || (buffer2[6] != 0))	//Verify that it is a valid text information frame
 	{
-		fseek(inf,originalpos,SEEK_SET);	//Return to original file position
+		(void) fseek(inf,originalpos,SEEK_SET);	//Return to original file position
 		return NULL;						//Return error
 	}
 
@@ -48,21 +48,21 @@ char *ReadTextInfoFrame(FILE *inf)
 
 	if(framesize < 2)	//The smallest valid frame size is 2, one for the encoding type and one for a null terminator (empty string)
 	{
-		fseek(inf,originalpos,SEEK_SET);	//Return to original file position
+		(void) fseek(inf,originalpos,SEEK_SET);	//Return to original file position
 		return NULL;
 	}
 
-	string=malloc(framesize);	//Allocate enough space to store the data (one byte less than the framesize, yet one more for NULL terminator)
+	string=malloc((size_t)framesize);	//Allocate enough space to store the data (one byte less than the framesize, yet one more for NULL terminator)
 	if(!string)			//Memory allocation failure
 	{
-		fseek(inf,originalpos,SEEK_SET);	//Return to original file position
+		(void) fseek(inf,originalpos,SEEK_SET);	//Return to original file position
 		return NULL;
 	}
 
 //Read the data and NULL terminate the string
-	if(fread(string,framesize-1,1,inf) != 1)	//If the data failed to be read
+	if(fread(string,(size_t)framesize-1,1,inf) != 1)	//If the data failed to be read
 	{
-		fseek(inf,originalpos,SEEK_SET);	//Return to original file position
+		(void) fseek(inf,originalpos,SEEK_SET);	//Return to original file position
 		free(string);
 		return NULL;
 	}
@@ -85,10 +85,10 @@ void DisplayID3Tag(char *filename)
 	if(tag.fp == NULL)
 		return;
 
-	ID3FrameProcessor(&tag);
+	(void) ID3FrameProcessor(&tag);
 	if(tag.id3v1present > 1)	//If the ID3v1 tag exists and is populated
 	{
-		puts("ID3v1 tag:");
+		(void) puts("ID3v1 tag:");
 		if(tag.id3v1title != NULL)
 			printf("\tTitle = \"%s\"\n",tag.id3v1title);
 		if(tag.id3v1artist != NULL)
@@ -102,7 +102,7 @@ void DisplayID3Tag(char *filename)
 //Display ID3v2 frames
 	if(tag.frames != NULL)
 	{
-		puts("ID3v2 tag:");
+		(void) puts("ID3v2 tag:");
 		for(temp=tag.frames;temp != NULL;temp=temp->next)
 		{	//For each frame that was parsed, check the tags[] array to see if it is a text info frame
 			assert_wrapper(temp->frameid != NULL);
@@ -122,10 +122,10 @@ void DisplayID3Tag(char *filename)
 		}//For each frame that was parsed
 	}
 	else if(!tag.id3v1present)
-		puts("No ID3 Tag detected");
+		(void) puts("No ID3 Tag detected");
 
 	DestroyID3(&tag);	//Release the ID3 structure's memory
-	fclose(tag.fp);
+	(void) fclose(tag.fp);
 }
 
 int FindID3Tag(struct ID3Tag *ptr)
@@ -199,7 +199,7 @@ unsigned long GetMP3FrameDuration(struct ID3Tag *ptr)
 	{
 		case 0:	//0,0	Nonstandard MPEG version 2.5
 			if(Lyrics.verbose >= 2)
-				puts("MP3 info:\n\tNonstandard MPEG version 2.5");
+				(void) puts("MP3 info:\n\tNonstandard MPEG version 2.5");
 			switch(buffer[2] & 12)	//Mask out all bits except 5 and 6
 			{
 				case 0:	//0,0
@@ -225,7 +225,7 @@ unsigned long GetMP3FrameDuration(struct ID3Tag *ptr)
 
 		case 16://1,0	MPEG version 2
 			if(Lyrics.verbose >= 2)
-				puts("MP3 info:\n\tMPEG version 2");
+				(void) puts("MP3 info:\n\tMPEG version 2");
 			switch(buffer[2] & 12)	//Mask out all bits except 5 and 6
 			{
 				case 0:	//0,0
@@ -248,7 +248,7 @@ unsigned long GetMP3FrameDuration(struct ID3Tag *ptr)
 
 		case 24://1,1	MPEG version 1
 			if(Lyrics.verbose >= 2)
-				puts("MP3 info:\n\tMPEG version 1");
+				(void) puts("MP3 info:\n\tMPEG version 1");
 			switch(buffer[2] & 12)	//Mask out all bits except 5 and 6
 			{
 				case 0:	//0,0
@@ -284,19 +284,19 @@ unsigned long GetMP3FrameDuration(struct ID3Tag *ptr)
 
 		case 2:	//0,1	Layer 3
 			if(Lyrics.verbose >= 2)
-				puts("\tLayer 3");
+				(void) puts("\tLayer 3");
 			samplesperframe=1152;
 		break;
 
 		case 4: //1,0	Layer 2
 			if(Lyrics.verbose >= 2)
-				puts("\tLayer 2");
+				(void) puts("\tLayer 2");
 			samplesperframe=1152;
 		break;
 
 		case 6: //1,1	Layer 1
 			if(Lyrics.verbose >= 2)
-				puts("\tLayer 1");
+				(void) puts("\tLayer 1");
 			samplesperframe=384;
 		break;
 
@@ -349,7 +349,7 @@ void ID3_Load(FILE *inf)
 	}
 	else if(frameptr2 != NULL)
 	{	//Perform Unsynchronized ID3 Lyric import
-		puts("\aUnsynchronized ID3 lyric import currently not supported");
+		(void) puts("\aUnsynchronized ID3 lyric import currently not supported");
 		exit_wrapper(1);
 	}
 	else
@@ -407,12 +407,12 @@ void SYLT_Parse(struct ID3Tag *tag)
 	fread_err(syltheader,6,1,tag->fp);				//Load SYLT frame header
 	if((frameheader[9] & 192) != 0)
 	{
-		puts("ID3 Compression and Encryption are not supported\nAborting");
+		(void) puts("ID3 Compression and Encryption are not supported\nAborting");
 		exit_wrapper(3);
 	}
 	if(syltheader[0] != 0)
 	{
-		puts("Unicode ID3 lyrics are not supported\nAborting");
+		(void) puts("Unicode ID3 lyrics are not supported\nAborting");
 		exit_wrapper(4);
 	}
 
@@ -420,7 +420,7 @@ void SYLT_Parse(struct ID3Tag *tag)
 	contentdescriptor=ReadString(tag->fp,NULL,0);	//Load content descriptor string
 	if(contentdescriptor == NULL)	//If the content descriptor string couldn't be read
 	{
-		puts("Damaged Content Descriptor String\nAborting");
+		(void) puts("Damaged Content Descriptor String\nAborting");
 		exit_wrapper(1);
 	}
 
@@ -439,7 +439,7 @@ void SYLT_Parse(struct ID3Tag *tag)
 	if(Lyrics.verbose>=2)
 		printf("SYLT frame info:\n\tFrame size is %lu bytes\n\tEnds after byte 0x%lX\n\tTimestamp format: %s\n\tLanguage: %c%c%c\n\tContent Type %d\n\tContent Descriptor: \"%s\"\n\n",framesize,breakpos-1,timestampformat == 1 ? "MPEG frames" : "Milliseconds",syltheader[1],syltheader[2],syltheader[3],syltheader[5],contentdescriptor != NULL ? contentdescriptor : "(none)");
 
-	if(Lyrics.verbose)	puts("Parsing SYLT frame:");
+	if(Lyrics.verbose)	(void) puts("Parsing SYLT frame:");
 
 	free(contentdescriptor);	//Release this, it's not going to be used
 	contentdescriptor=NULL;
@@ -452,14 +452,14 @@ void SYLT_Parse(struct ID3Tag *tag)
 		string=ReadString(tag->fp,&length,0);	//Load SYLT lyric string, save the string length
 		if(string == NULL)
 		{
-			puts("Invalid SYLT lyric string\nAborting");
+			(void) puts("Invalid SYLT lyric string\nAborting");
 			exit_wrapper(6);
 		}
 
 	//Load the timestamp
 		if(fread(timestamparray,4,1,tag->fp) != 1)	//Read timestamp
 		{
-			puts("Error reading SYLT timestamp\nAborting");
+			(void) puts("Error reading SYLT timestamp\nAborting");
 			exit_wrapper(7);
 		}
 
@@ -512,7 +512,7 @@ void SYLT_Parse(struct ID3Tag *tag)
 //If the imported lyrics did not contain line breaks, they must be inserted manually
 	if(!linebreaks && Lyrics.piececount)
 	{
-		if(Lyrics.verbose)	puts("\nImported ID3 lyrics did not contain line breaks, adding...");
+		if(Lyrics.verbose)	(void) puts("\nImported ID3 lyrics did not contain line breaks, adding...");
 		ptr=Lyrics.lines->pieces;
 		lineptr=Lyrics.lines;	//Point to first line of lyrics (should be the only line)
 
@@ -553,28 +553,28 @@ unsigned long ID3FrameProcessor(struct ID3Tag *ptr)
 	fread_err(buffer,3,1,ptr->fp);		//Read 3 bytes for the "TAG" header
 	if(strcasecmp(buffer,"TAG") == 0)	//If this is an ID3v1 header
 	{
-		if(Lyrics.verbose)	puts("Loading ID3v1 tag");
+		if(Lyrics.verbose)	(void) puts("Loading ID3v1 tag");
 		ptr->id3v1present=1;	//Track that this tag exists
 		fread_err(buffer,30,1,ptr->fp);		//Read the first field in the tag (song title)
 		if(buffer[0] != '\0')	//If the string isn't empty
 		{
 			ptr->id3v1present=2;	//Track that this tag is populated
 			ptr->id3v1title=DuplicateString(buffer);
-			if(Lyrics.verbose)	puts("\tTitle loaded");
+			if(Lyrics.verbose)	(void) puts("\tTitle loaded");
 		}
 		fread_err(buffer,30,1,ptr->fp);		//Read the second field in the tag (artist)
 		if(buffer[0] != '\0')	//If the string isn't empty
 		{
 			ptr->id3v1present=2;	//Track that this tag is populated
 			ptr->id3v1artist=DuplicateString(buffer);
-			if(Lyrics.verbose)	puts("\tArtist loaded");
+			if(Lyrics.verbose)	(void) puts("\tArtist loaded");
 		}
 		fread_err(buffer,30,1,ptr->fp);		//Read the third field in the tag (album)
 		if(buffer[0] != '\0')	//If the string isn't empty
 		{
 			ptr->id3v1present=2;	//Track that this tag is populated
 			ptr->id3v1album=DuplicateString(buffer);
-			if(Lyrics.verbose)	puts("\tAlbum loaded");
+			if(Lyrics.verbose)	(void) puts("\tAlbum loaded");
 		}
 		fread_err(buffer,4,1,ptr->fp);		//Read the fourth field in the tag (year)
 		buffer[4]='\0';	//Terminate the buffer to make it a string
@@ -582,7 +582,7 @@ unsigned long ID3FrameProcessor(struct ID3Tag *ptr)
 		{
 			ptr->id3v1present=2;	//Track that this tag is populated
 			ptr->id3v1year=DuplicateString(buffer);
-			if(Lyrics.verbose)	puts("\tYear loaded");
+			if(Lyrics.verbose)	(void) puts("\tYear loaded");
 		}
 	}
 
@@ -592,7 +592,7 @@ unsigned long ID3FrameProcessor(struct ID3Tag *ptr)
 	if(FindID3Tag(ptr) == 0)	//Locate the ID3 tag
 		return 0;				//Return if there was none
 
-	if(Lyrics.verbose)	puts("Loading ID3v2 tag");
+	if(Lyrics.verbose)	(void) puts("Loading ID3v2 tag");
 	fseek_err(ptr->fp,ptr->framestart,SEEK_SET);	//Seek to first ID3 frame
 	filepos=ftell_err(ptr->fp);						//Record file position of first expected ID3 frame
 	while((filepos >= ptr->framestart) && (filepos < ptr->tagend))
@@ -643,7 +643,7 @@ unsigned long ID3FrameProcessor(struct ID3Tag *ptr)
 		if(Lyrics.verbose >= 2)	printf("\tFrame ID %s loaded\n",temp->frameid);
 		ctr++;	//Iterate counter
 
-		fseek(ptr->fp,framesize,SEEK_CUR);	//Seek ahead to the beginning of the next ID3 frame
+		(void) fseek(ptr->fp,framesize,SEEK_CUR);	//Seek ahead to the beginning of the next ID3 frame
 		filepos+=framesize + 10;	//Update file position
 	}//While file position is at or after the end of the ID3 header, before or at end of the ID3 tag
 
@@ -711,7 +711,7 @@ void DestroyID3(struct ID3Tag *ptr)
 	if(ptr==NULL)
 		return;
 
-	if(Lyrics.verbose)	puts("Destroying ID3 tags");
+	if(Lyrics.verbose)	(void) puts("Destroying ID3 tags");
 
 //Release ID3v1 strings
 	if(ptr->id3v1title)
@@ -775,7 +775,7 @@ unsigned long BuildID3Tag(struct ID3Tag *ptr,FILE *outf)
 //Conditionally copy the existing ID3v2 tag from the source file, or create one from scratch
 	if(ptr->frames == NULL)
 	{	//If there was no ID3 tag in the input file
-		if(Lyrics.verbose)	puts("Writing new ID3v2 tag");
+		if(Lyrics.verbose)	(void) puts("Writing new ID3v2 tag");
 		tagpos=ftell_err(outf);	//Record this file position so the tag size can be rewritten later
 		fwrite_err(defaultID3tag,10,1,outf);	//Write a pre-made ID3 tag
 	//Write tag information obtained from input file
@@ -791,12 +791,12 @@ unsigned long BuildID3Tag(struct ID3Tag *ptr,FILE *outf)
 		rewind_err(ptr->fp);
 
 //If the ID3v2 header isn't at the start of the source file, copy all data that precedes it to the output file
-		BlockCopy(ptr->fp,outf,ptr->tagstart - ftell_err(ptr->fp));
+		BlockCopy(ptr->fp,outf,(size_t)(ptr->tagstart - ftell_err(ptr->fp)));
 
 //Copy the original ID3v2 header from source file to output file (record the file position)
-		if(Lyrics.verbose)	puts("Copying ID3v2 tag header");
+		if(Lyrics.verbose)	(void) puts("Copying ID3v2 tag header");
 		tagpos=ftell_err(outf);	//Record this file position so the tag size can be rewritten later
-		BlockCopy(ptr->fp,outf,ptr->framestart - ftell_err(ptr->fp));
+		BlockCopy(ptr->fp,outf,(size_t)(ptr->framestart - ftell_err(ptr->fp)));
 
 //Write tag information from input file if applicable, and ensure that equivalent ID3v2 frames from the source file are omitted
 		if(Lyrics.Title != NULL)
@@ -832,14 +832,14 @@ unsigned long BuildID3Tag(struct ID3Tag *ptr,FILE *outf)
 
 				if((unsigned long)ftell_err(ptr->fp) != temp->pos)	//If the input file isn't already positioned at the frame
 					fseek_err(ptr->fp,temp->pos,SEEK_SET);			//Seek to it now
-				BlockCopy(ptr->fp,outf,temp->length + 10);	//Copy frame body size + header size number of bytes
+				BlockCopy(ptr->fp,outf,(size_t)temp->length + 10);	//Copy frame body size + header size number of bytes
 				ctr++;	//Increment counter
 			}
 			else if(Lyrics.verbose >= 2)	printf("\tOmitting \"%s\" frame from source file\n",temp->frameid);
 		}
 	}//If there was an ID3 tag in the input file
 
-	if(Lyrics.verbose)	puts("Writing SYLT frame header");
+	if(Lyrics.verbose)	(void) puts("Writing SYLT frame header");
 
 //Write SYLT frame header
 	framepos=ftell_err(outf);	//Record this file position so the frame size can be rewritten later
@@ -853,7 +853,7 @@ unsigned long BuildID3Tag(struct ID3Tag *ptr,FILE *outf)
 //Write SYLT frame using the Lyrics structure
 	curline=Lyrics.lines;	//Point lyric line conductor to first line of lyrics
 
-	if(Lyrics.verbose)	puts("Writing SYLT lyrics");
+	if(Lyrics.verbose)	(void) puts("Writing SYLT lyrics");
 
 	while(curline != NULL)	//For each line of lyrics
 	{
@@ -879,7 +879,7 @@ unsigned long BuildID3Tag(struct ID3Tag *ptr,FILE *outf)
 				fputc_err(' ',outf);			//Append a space
 				if(Lyrics.verbose >= 2)	printf("(whitespace)");
 			}
-			if(Lyrics.verbose >= 2)	putchar('\n');
+			if(Lyrics.verbose >= 2)	(void) putchar('\n');
 
 			fputc_err(0,outf);					//Write a NULL terminator
 			WriteDWORDBE(outf,curpiece->start);	//Write the lyric's timestamp as a big endian value
@@ -896,26 +896,26 @@ unsigned long BuildID3Tag(struct ID3Tag *ptr,FILE *outf)
 //Copy any unidentified data (ie. padding) that occurs between the end of the last ID3 frame in the list and the defined end of the ID3 tag
 		for(temp=ptr->frames;temp->next!=NULL;temp=temp->next);		//Seek to last frame link
 		fseek_err(ptr->fp,temp->pos + temp->length + 10,SEEK_SET);	//Seek to one byte past the end of the frame
-		BlockCopy(ptr->fp,outf,ptr->tagend - ftell_err(ptr->fp));
+		BlockCopy(ptr->fp,outf,(size_t)(ptr->tagend - ftell_err(ptr->fp)));
 	}
 
 	tagsize=ftell_err(outf)-tagpos-10;	//Find the length of the ID3 tag that has been written (minus tag header size)
 
-	if(Lyrics.verbose)	puts("Copying audio data");
+	if(Lyrics.verbose)	(void) puts("Copying audio data");
 	fileendpos=GetFileEndPos(ptr->fp);	//Find the position of the last byte in the input MP3 file (the filesize)
 
 	if(ptr->id3v1present && SearchOmitID3framelist(Lyrics.nosrctag,"*"))	//If the user specified to leave off the ID3v1 tag, and the source MP3 has an ID3 tag
 	{
-		BlockCopy(ptr->fp,outf,fileendpos-ftell_err(ptr->fp)-128);			//Copy rest of source file to output file (minus 128 bytes, the size of the ID3v1 tag)
+		BlockCopy(ptr->fp,outf,(size_t)(fileendpos - ftell_err(ptr->fp) - 128));			//Copy rest of source file to output file (minus 128 bytes, the size of the ID3v1 tag)
 		ptr->id3v1present=0;												//Consider the tag as being removed, so a new ID3v1 tag is written below
 	}
 	else
-		BlockCopy(ptr->fp,outf,fileendpos-ftell_err(ptr->fp));				//Copy rest of source file to output file
+		BlockCopy(ptr->fp,outf,(size_t)(fileendpos - ftell_err(ptr->fp)));				//Copy rest of source file to output file
 
 //Write/Overwrite ID3v1 tag
 	if(ptr->id3v1present)			//If an ID3v1 tag existed in the source MP3
 	{	//Overwrite it with tags from the input file
-		if(Lyrics.verbose)	puts("Editing ID3v1 tag");
+		if(Lyrics.verbose)	(void) puts("Editing ID3v1 tag");
 		fseek_err(outf,-125,SEEK_CUR);		//Seek 125 bytes back, where the first field of this tag should exist
 		if(Lyrics.Title != NULL)						//If the input file defined a Title
 			WritePaddedString(outf,Lyrics.Title,30,0);	//Overwrite the Title field (30 bytes)
@@ -937,7 +937,7 @@ unsigned long BuildID3Tag(struct ID3Tag *ptr,FILE *outf)
 	}
 	else
 	{	//Write a new ID3v1 tag
-		if(Lyrics.verbose)	puts("Writing new ID3v1 tag");
+		if(Lyrics.verbose)	(void) puts("Writing new ID3v1 tag");
 		fseek_err(outf,0,SEEK_END);	//Seek to end of file
 		fputs_err("TAG",outf);		//Write ID3v1 header
 		WritePaddedString(outf,Lyrics.Title,30,0);	//Write the Title field (30 bytes)
@@ -948,7 +948,7 @@ unsigned long BuildID3Tag(struct ID3Tag *ptr,FILE *outf)
 		fputc_err(255,outf);						//Write unknown genre (1 byte)
 	}
 
-	if(Lyrics.verbose)	puts("Correcting ID3 headers");
+	if(Lyrics.verbose)	(void) puts("Correcting ID3 headers");
 
 //Rewind to the SYLT header in the output file and write the correct frame length
 	fseek_err(outf,framepos+4,SEEK_SET);	//Seek to where the SYLT frame size is to be written
@@ -958,7 +958,7 @@ unsigned long BuildID3Tag(struct ID3Tag *ptr,FILE *outf)
 	fseek_err(outf,ptr->tagstart+6,SEEK_SET);	//Seek to where the ID3 tag size is to be written
 	if(tagsize > 0x0FFFFFFF)
 	{
-		puts("\aError:  Tag size is larger than the ID3 specification allows");
+		(void) puts("\aError:  Tag size is larger than the ID3 specification allows");
 		exit_wrapper(2);
 	}
 	array[3]=tagsize & 127;			//Mask out everything except the lowest 7 bits
@@ -983,7 +983,7 @@ void Export_ID3(FILE *inf, FILE *outf)
 	tag.fp=inf;	//Store the input file pointer into the ID3 tag structure
 
 //Seek to first MPEG frame in input file (after ID3 tag, otherwise presume it's at the beginning of the file)
-	if(Lyrics.verbose)	puts("Parsing input MPEG audio file");
+	if(Lyrics.verbose)	(void) puts("Parsing input MPEG audio file");
 	if(FindID3Tag(&tag))		//Find start and end of ID3 tag
 		fseek_err(tag.fp,tag.tagend,SEEK_SET);	//Seek to the first MP3 frame (immediately after the ID3 tag)
 	else
@@ -997,10 +997,10 @@ void Export_ID3(FILE *inf, FILE *outf)
 	}
 
 //Load any existing ID3 frames
-	ID3FrameProcessor(&tag);
+	(void) ID3FrameProcessor(&tag);
 
 //Build output file
-	BuildID3Tag(&tag,outf);
+	(void) BuildID3Tag(&tag,outf);
 
 //Release memory
 	DestroyID3(&tag);	//Release the ID3 structure's memory
@@ -1049,7 +1049,7 @@ char *GrabID3TextFrame(struct ID3Tag *tag,const char *frameid,char *buffer,unsig
 //If performing the logic to buffer the string
 	if(buffer != NULL)
 	{	//Verify string will fit in buffer
-		if(strlen(string) + 1 > buffersize)	//If the string (including NULL terminator) is larger than the buffer
+		if(strlen(string) + 1 > (size_t)buffersize)	//If the string (including NULL terminator) is larger than the buffer
 			string[buffersize-1]='\0';		//truncate the string to fit
 
 		strcpy(buffer,string);	//Copy string to buffer
@@ -1111,7 +1111,7 @@ void DestroyOmitID3framelist(struct OmitID3frame *ptr)
 
 void WriteTextInfoFrame(FILE *outf,const char *frameid,const char *string)
 {
-	unsigned long size=0;
+	size_t size=0;
 
 //Validate input parameters
 	assert_wrapper((outf != NULL) && (frameid != NULL) && (string != NULL));
@@ -1126,14 +1126,14 @@ void WriteTextInfoFrame(FILE *outf,const char *frameid,const char *string)
 	size=strlen(string)+1;		//The frame payload size is the string and the encoding byte
 
 //Write ID3 frame header
-	fwrite_err(frameid,4,1,outf);	//Write frame ID
-	WriteDWORDBE(outf,size);		//Write frame size (total frame size-header size) in Big Endian format
-	fputc_err(0xC0,outf);			//Write first flag byte (preserve frame for both tag and file alteration)
-	fputc_err(0,outf);				//Write second flag byte (no compression, encryption or grouping identity)
+	fwrite_err(frameid,4,1,outf);			//Write frame ID
+	WriteDWORDBE(outf,(unsigned long)size);	//Write frame size (total frame size-header size) in Big Endian format
+	fputc_err(0xC0,outf);					//Write first flag byte (preserve frame for both tag and file alteration)
+	fputc_err(0,outf);						//Write second flag byte (no compression, encryption or grouping identity)
 
 //Write frame data
 	fputc_err(0,outf);					//Write ASCII encoding
-	fwrite_err(string,size-1,1,outf);	//Write the string
+	fwrite_err(string,(size_t)size-1,1,outf);	//Write the string
 }
 
 char IsTextInfoID3FrameID(char *frameid)
@@ -1146,7 +1146,7 @@ char IsTextInfoID3FrameID(char *frameid)
 	if(frameid == NULL)
 		return 0;
 
-	for(ctr=0;ctr<sizeof(tags)/sizeof(const char *);ctr++)
+	for(ctr=0;(size_t)ctr<sizeof(tags);ctr++)
 	{	//For each defined text info frame id
 		if(strcasecmp(tags[ctr],frameid) == 0)
 		{	//If the specified text info frame id matches this ID3 frame

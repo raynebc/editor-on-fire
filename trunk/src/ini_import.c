@@ -64,7 +64,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 		return 0;
 	}
 	eof_log("\tTokenizing INI file buffer", 1);
-	ustrtok(textbuffer, "\r\n[]");
+	(void) ustrtok(textbuffer, "\r\n[]");
 	eof_log("\tParsing INI file buffer", 1);
 	while(1)
 	{
@@ -95,8 +95,8 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 
 					equals[0] = '\0';
 					token = equals + 1;
-					ustrncpy(eof_import_ini_setting[eof_import_ini_settings].type, line_token, 256-1);
-					ustrncpy(eof_import_ini_setting[eof_import_ini_settings].value, token, 1024-1);
+					(void) ustrncpy(eof_import_ini_setting[eof_import_ini_settings].type, line_token, 256-1);
+					(void) ustrncpy(eof_import_ini_setting[eof_import_ini_settings].value, token, 1024-1);
 					while(1)
 					{	//Drop all trailing space characters from the tag type string
 						stringlen = ustrlen(eof_import_ini_setting[eof_import_ini_settings].type);
@@ -120,7 +120,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 	eof_log("\tProcessing INI file contents", 1);
 	for(i = 0; i < eof_import_ini_settings; i++)
 	{	//For each imported INI setting
-		if(eof_import_ini_setting[i].type == '\0')
+		if(eof_import_ini_setting[i].type[0] == '\0')
 			continue;	//Skip this INI type if its string is empty
 
 		value_index = eof_import_ini_setting[i].value;	//Prepare to skip leading whitespace
@@ -282,7 +282,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			else if(!ustricmp(eof_import_ini_setting[i].type, "pro_drums"))
 			{
 				int func = 0;
-				eof_compare_set_ini_boolean(&status, 0, value_index, &func, eof_import_ini_setting[i].type);	//Check if this tag's value is "True" or "1"
+				(void) eof_compare_set_ini_boolean(&status, 0, value_index, &func, eof_import_ini_setting[i].type);	//Check if this tag's value is "True" or "1"
 				if(status)
 				{
 					eof_ini_pro_drum_tag_present = 1;
@@ -291,7 +291,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			else if(!ustricmp(eof_import_ini_setting[i].type, "five_lane_drums"))
 			{
 				int func = 0;
-				eof_compare_set_ini_boolean(&status, 0, value_index, &func, eof_import_ini_setting[i].type);	//Check if this tag's value is "True" or "1"
+				(void) eof_compare_set_ini_boolean(&status, 0, value_index, &func, eof_import_ini_setting[i].type);	//Check if this tag's value is "True" or "1"
 				if(status)
 				{
 					tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
@@ -302,7 +302,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			else if(!ustricmp(eof_import_ini_setting[i].type, "multiplier_note"))
 			{
 				int func = 0;
-				eof_compare_set_ini_boolean(&status, 0, value_index, &func, eof_import_ini_setting[i].type);	//Check if this tag's value is "True" or "1"
+				(void) eof_compare_set_ini_boolean(&status, 0, value_index, &func, eof_import_ini_setting[i].type);	//Check if this tag's value is "True" or "1"
 				if(status)
 				{
 					eof_ini_star_power_tag_present = 1;	//MIDI import won't have to convert solos phrases to star power, EOF's notation for star power style phrases was found
@@ -311,7 +311,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 			else if(!ustricmp(eof_import_ini_setting[i].type, "sysex_open_bass"))
 			{
 				int func = 0;
-				eof_compare_set_ini_boolean(&status, 0, value_index, &func, eof_import_ini_setting[i].type);	//Check if this tag's value is "True" or "1"
+				(void) eof_compare_set_ini_boolean(&status, 0, value_index, &func, eof_import_ini_setting[i].type);	//Check if this tag's value is "True" or "1"
 				if(status)
 				{
 					eof_ini_sysex_open_bass_present = 1;	//MIDI import will interpret forced HOPO lane 1 bass to be a HOPO bass gem and not an open strum
@@ -371,7 +371,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 						if((value < 0) || (value > 6))		//If the difficulty is invalid
 							value = 0xF;					//Reset to undefined
 						sp->track[EOF_TRACK_DRUM]->flags &= ~(0x0F << 24);	//Clear the lower nibble of the drum track's flag's most significant byte
-						sp->track[EOF_TRACK_DRUM]->flags |= (value << 24);	//Store the pro drum difficulty in the drum track's flag's most significant byte
+						sp->track[EOF_TRACK_DRUM]->flags |= ((unsigned long)value << 24);	//Store the pro drum difficulty in the drum track's flag's most significant byte
 					}
 					else if(!ustricmp(eof_import_ini_setting[i].type, "diff_drums_real_ps"))
 					{	//If this is a PS real drum difficulty tag
@@ -389,7 +389,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 						if((value < 0) || (value > 6))		//If the difficulty is invalid
 							value = 0xF0;					//Reset to undefined
 						sp->track[EOF_TRACK_DRUM]->flags &= ~(0xF0 << 24);	//Clear the high nibble of the drum track's flag's most significant byte
-						sp->track[EOF_TRACK_DRUM]->flags |= (value << 24);	//Store the pro drum difficulty in the drum track's flag's most significant byte
+						sp->track[EOF_TRACK_DRUM]->flags |= ((unsigned long)value << 24);	//Store the pro drum difficulty in the drum track's flag's most significant byte
 					}
 					else if(!ustricmp(eof_import_ini_setting[i].type, "diff_vocals_harm"))
 					{	//If this is a harmony difficulty tag
@@ -407,7 +407,7 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 						if((value < 0) || (value > 6))		//If the difficulty is invalid
 							value = 0xF;					//Reset to undefined
 						sp->track[EOF_TRACK_VOCALS]->flags &= ~(0x0F << 24);	//Clear the low nibble of the vocal track's flag's most significant byte
-						sp->track[EOF_TRACK_VOCALS]->flags |= (value << 24);	//Store the pro drum difficulty in the drum track's flag's most significant byte
+						sp->track[EOF_TRACK_VOCALS]->flags |= ((unsigned long)value << 24);	//Store the pro drum difficulty in the drum track's flag's most significant byte
 					}
 					else if(!ustricmp(eof_import_ini_setting[i].type, "diff_band"))
 					{	//If this is a band difficulty tag
@@ -447,7 +447,7 @@ int eof_compare_set_ini_string_field(char *dest, char *src, unsigned long maxcha
 	{	//If the strings don't match
 		if(*function)
 		{	//If the calling function wanted to check for differences and prompt the user to overwrite
-			snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Song property \"%s\" altered in INI file", tag);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Song property \"%s\" altered in INI file", tag);
 			eof_log(eof_log_string, 1);
 			if(alert("Warning:  The INI file has been externally edited.", "Merge its changes with the active project?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 			{	//If the user did not opt to merge the changes into the project
@@ -457,7 +457,7 @@ int eof_compare_set_ini_string_field(char *dest, char *src, unsigned long maxcha
 			*function = 0;	//Disable any further user prompting regarding this INI file
 		}
 
-		ustrncpy(dest, src, maxchars);	//Copy the string
+		(void) ustrncpy(dest, src, (int)maxchars);	//Copy the string
 	}
 	return 0;
 }
@@ -478,7 +478,7 @@ int eof_compare_set_ini_boolean(char *status, char original, char *string, int *
 
 	if(*function && (*status != original))
 	{	//If the determined boolean status does not match the supplied original value, and the calling function wanted to prompt the user in such a case
-		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Song boolean \"%s\" altered in INI file", tag);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Song boolean \"%s\" altered in INI file", tag);
 		eof_log(eof_log_string, 1);
 		if(alert("Warning:  The INI file has been externally edited.", "Merge its changes with the active project?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user did not opt to merge the changes into the project
@@ -520,11 +520,11 @@ int eof_compare_set_ini_string_setting(EOF_SONG *sp, char *tag, char *value, int
 		{	//If any INI setting is being altered or added
 			if(alter)
 			{
-				snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Song INI setting \"%s\" altered in INI file", logtag);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Song INI setting \"%s\" altered in INI file", logtag);
 			}
 			else
 			{
-				snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Song INI setting \"%s\" added in INI file", logtag);
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Song INI setting \"%s\" added in INI file", logtag);
 			}
 			eof_log(eof_log_string, 1);
 			if(alert("Warning:  The INI file has been externally edited.", "Merge its changes with the active project?", NULL, "&Yes", "&No", 'y', 'n') != 1)
@@ -539,7 +539,7 @@ int eof_compare_set_ini_string_setting(EOF_SONG *sp, char *tag, char *value, int
 	//Replace the existing INI setting or append it to the list of INI settings as appropriate
 	if(index < EOF_MAX_INI_SETTINGS)
 	{	//If the maximum number of INI settings isn't already defined
-		snprintf(sp->tags->ini_setting[index], sizeof(sp->tags->ini_setting[index]) - 1, "%s = %s", tag, value);
+		(void) snprintf(sp->tags->ini_setting[index], sizeof(sp->tags->ini_setting[index]) - 1, "%s = %s", tag, value);
 		if(index >= sp->tags->ini_settings)
 		{	//If this was a newly-added setting
 			sp->tags->ini_settings++;	//Increment the counter
@@ -612,7 +612,7 @@ int eof_compare_set_ini_integer(long *value, long original, char *string, int *f
 
 	if(*function && (*value != original))
 	{	//If the converted number does not match the supplied original value, and the calling function wanted to prompt the user in such a case
-		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Song property \"%s\" altered in INI file", tag);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Song property \"%s\" altered in INI file", tag);
 		eof_log(eof_log_string, 1);
 		if(alert("Warning:  The INI file has been externally edited.", "Merge its changes with the active project?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user did not opt to merge the changes into the project
@@ -627,13 +627,13 @@ int eof_compare_set_ini_integer(long *value, long original, char *string, int *f
 char *eof_find_ini_setting_tag(EOF_SONG *sp, unsigned long *index, char *tag)
 {
 	unsigned long ctr;
-	char buffer[512];
+	char buffer[512] = {0};
 	char *ptr;
 
 	if(!sp || !index || !tag)
 		return NULL;	//Return error
 
-	snprintf(buffer, sizeof(buffer) - 1, "%s =", tag);	//Build the left half of the string that results from this INI setting
+	(void) snprintf(buffer, sizeof(buffer) - 1, "%s =", tag);	//Build the left half of the string that results from this INI setting
 	for(ctr = 0; ctr < sp->tags->ini_settings; ctr++)
 	{	//For each INI setting in the project
 		ptr = strcasestr_spec(sp->tags->ini_setting[ctr], buffer);	//If this INI setting matches the specified tag, get the address of the first character after the equal sign

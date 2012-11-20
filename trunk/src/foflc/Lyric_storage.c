@@ -131,11 +131,11 @@ void CreateLyricLine(void)
 	struct Lyric_Line *temp=NULL;				//Stores newly-allocated lyric line structure
 	static struct Lyric_Line emptyLyric_Line;	//Auto-initialize all members to 0/NULL
 
-	if(Lyrics.verbose>=2)	puts("Initializing storage for new line of lyrics");
+	if(Lyrics.verbose>=2)	(void) puts("Initializing storage for new line of lyrics");
 
 	if(Lyrics.line_on != 0)
 	{
-		puts("Line of lyrics already open");
+		(void) puts("Line of lyrics already open");
 		return;
 	}
 
@@ -176,7 +176,7 @@ void EndLyricLine(void)
 //If the current line of lyrics is empty, return without closing the line
 	if(Lyrics.curline->piececount == 0)
 	{
-		if(Lyrics.verbose)	puts("(Empty line of lyrics ignored)\n");
+		if(Lyrics.verbose)	(void) puts("(Empty line of lyrics ignored)\n");
 		return;
 	}
 
@@ -305,7 +305,7 @@ void EndLyricLine(void)
 	}//For each piece in the line
 
 	RecountLineVars(Lyrics.curline);
-	if(Lyrics.verbose>=2)	putchar('\n');
+	if(Lyrics.verbose>=2)	(void) putchar('\n');
 }
 
 void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char pitch,char groupswithnext)
@@ -320,7 +320,7 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 	{
 		if(pitch > 127)	//Pitches higher than 127 are not allowed, however do allow the pitch to be set to the defined PITCHLESS value
 		{
-			puts("MIDI Violation: Valid pitch range is from 0 to 127\nAborting");
+			(void) puts("MIDI Violation: Valid pitch range is from 0 to 127\nAborting");
 			exit_wrapper(1);
 		}
 	}
@@ -338,14 +338,14 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 
 	if(str[0] == '\0')			//If the string is empty
 	{
-		if(Lyrics.verbose>=2)	puts("Empty lyric ignored");
+		if(Lyrics.verbose>=2)	(void) puts("Empty lyric ignored");
 		return;
 	}
 
 //EndLyricLine() now handles pieces that have a duration of 0, but negative durations still need to cause an abort
 	if(start > end)
 	{
-		puts("Error: Cannot add piece with a negative duration\nAborting");
+		(void) puts("Error: Cannot add piece with a negative duration\nAborting");
 		exit_wrapper(2);
 	}
 
@@ -396,7 +396,7 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 		Lyrics.lyric_defined=0;					//Expecting a new lyric event
 		Lyrics.lyric_on=0;						//Expecting a new Note On event as well
 		free(str);								//de-allocate newly-created string
-		if(Lyrics.verbose>=2)	puts("(empty lyric dropped)");
+		if(Lyrics.verbose>=2)	(void) puts("(empty lyric dropped)");
 		return;			//return without adding the empty string
 	}
 
@@ -454,14 +454,14 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 //Validate the offset by ensuring that it is not larger than the timestamp of the lyric piece, as timestamps must be >0
 	if((Lyrics.realoffset > 0) && ((unsigned long)Lyrics.realoffset > start))
 	{
-		puts("Error: Offset cannot be larger than the timestamp of any lyric event\nAborting");
+		(void) puts("Error: Offset cannot be larger than the timestamp of any lyric event\nAborting");
 		exit_wrapper(3);
 	}
 
 //Error check to ensure a line is in progress
 	if(Lyrics.line_on == 0)
 	{
-		puts("Error: Line has not been initiated, unable to add lyric\nAborting");
+		(void) puts("Error: Line has not been initiated, unable to add lyric\nAborting");
 		exit_wrapper(4);
 	}
 
@@ -490,12 +490,12 @@ void AddLyricPiece(char *str,unsigned long start,unsigned long end,unsigned char
 		printf("start=%lu\tAdj. start=%lu",start,start-Lyrics.realoffset);
 		if(groupswithnext)	printf("\tGroupswithnext=TRUE");
 		if(trailspace)	printf("\n\t\tLyric \"%s\" detected as having trailing whitespace, this will defeat grouping with the next lyric if applicable",str);
-		putchar('\n');
+		(void) putchar('\n');
 	}
 
 	if(linebreak)	//If the lyric triggers a line break in the middle of the line of lyrics
 	{
-		if(Lyrics.verbose)	puts("(Lyric defines a line break)");
+		if(Lyrics.verbose)	(void) puts("(Lyric defines a line break)");
 		EndLyricLine();
 		CreateLyricLine();
 	}
@@ -518,7 +518,7 @@ struct Lyric_Piece *FindLyricNumber(unsigned long number)
 	{
 		if((curpiece == NULL) || (curline == NULL))
 		{
-			puts("Error: Invalid lyric entry\nAborting");
+			(void) puts("Error: Invalid lyric entry\nAborting");
 			exit_wrapper(1);
 		}
 
@@ -679,7 +679,7 @@ unsigned long ParseUnicodeString(FILE *inf)
 
 		if(input[1] != 0)
 		{
-			puts("Error: Unicode character detected in tag string\nAborting");
+			(void) puts("Error: Unicode character detected in tag string\nAborting");
 			exit_wrapper(2);
 		}
 
@@ -693,7 +693,7 @@ unsigned long ParseUnicodeString(FILE *inf)
 char *ReadUnicodeString(FILE *inf)
 {
 	long position;
-	unsigned long length;
+	size_t length;
 	char *string;
 	unsigned long ctr=0;
 	unsigned char input[2]={0};
@@ -702,13 +702,13 @@ char *ReadUnicodeString(FILE *inf)
 
 //Prepare to read string
 	position=ftell_err(inf);		//Store file position before parsing string
-	length=ParseUnicodeString(inf);	//Find length of string converted to ANSI encoding
+	length=(size_t)ParseUnicodeString(inf);	//Find length of string converted to ANSI encoding
 	string=malloc_err(length+1);	//Allocate storage for string, plus one byte for NULL terminator
 
 //Read string into memory buffer
 	fseek_err(inf,position,SEEK_SET);		//Return to original position in the file
 
-	for(ctr=0;ctr<length;ctr++)	//Read a WORD from file for each character we counted
+	for(ctr=0;ctr<(unsigned long)length;ctr++)	//Read a WORD from file for each character we counted
 	{
 		if(fread(input,2,1,inf) != 1)
 		{
@@ -718,7 +718,7 @@ char *ReadUnicodeString(FILE *inf)
 
 		if(input[1] != 0)
 		{
-			puts("Error: Unicode character detected while reading string\nAborting");
+			(void) puts("Error: Unicode character detected while reading string\nAborting");
 			exit_wrapper(2);
 		}
 
@@ -728,7 +728,7 @@ char *ReadUnicodeString(FILE *inf)
 //A null Unicode byte is now expected
 	if((fgetc_err(inf) != '\0') || (fgetc_err(inf) != '\0'))
 	{
-		puts("Error: Unicode NULL character was expected but not read\nAborting");
+		(void) puts("Error: Unicode NULL character was expected but not read\nAborting");
 		exit_wrapper(3);
 	}
 
@@ -917,7 +917,7 @@ void PostProcessLyrics(void)
 	char hyphenadded=0;				//Used to track whether a hyphen was inserted, so it isn't immediatly removed by the hyphen truncation logic
 	unsigned long start=0,stop=0;	//The recorded beginning and ending timestamps of lyric lines (for duration validation)
 
-	if(Lyrics.verbose)	puts("Performing import post-processing\n");
+	if(Lyrics.verbose)	(void) puts("Performing import post-processing\n");
 
 	assert_wrapper(Lyrics.line_on == 0);	//It's expected that there are no unclosed lyric lines
 	assert_wrapper(Lyrics.piececount != 0);	//It's expected that there are lyrics
@@ -931,7 +931,7 @@ void PostProcessLyrics(void)
 		if(lineptr->next != NULL)					//If there's another line of lyrics
 			if((lineptr->next)->prev != lineptr)	//If next line doesn't properly point backward to this line
 			{
-				puts("Error: Lyrics lines list damaged\nAborting");
+				(void) puts("Error: Lyrics lines list damaged\nAborting");
 				exit_wrapper(1);
 			}
 
@@ -944,7 +944,7 @@ void PostProcessLyrics(void)
 			{
 				if((pieceptr->next)->prev != pieceptr)	//If the next lyric doesn't properly point backward to this lyric
 				{
-					puts("Error: Lyric list damaged\nAborting");
+					(void) puts("Error: Lyric list damaged\nAborting");
 					exit_wrapper(2);
 				}
 			}
@@ -993,7 +993,7 @@ void PostProcessLyrics(void)
 
 		if(ctr != lineptr->piececount)
 		{
-			puts("Error: The lyric piece count in the current line is incorrect\nAborting");
+			(void) puts("Error: The lyric piece count in the current line is incorrect\nAborting");
 			exit_wrapper(3);
 		}
 
@@ -1001,7 +1001,7 @@ void PostProcessLyrics(void)
 		assert_wrapper(stop >= start);	//The line of lyrics cannot end before it begins
 		if(lineptr->duration != stop-start)
 		{
-			puts("Error: The lyric piece duration sum in the current line is incorrect\nAborting");
+			(void) puts("Error: The lyric piece duration sum in the current line is incorrect\nAborting");
 			exit_wrapper(4);
 		}
 		totalpiecectr+=ctr;
@@ -1015,14 +1015,14 @@ void PostProcessLyrics(void)
 				(lineptr->prev)->next=NULL;		//Previous line points forward to nothing
 			free(lineptr);
 			lineptr=NULL;
-			puts("(Discarded empty unfinalized line of lyrics)\n");
+			(void) puts("(Discarded empty unfinalized line of lyrics)\n");
 			break;	//Break from for loop
 		}
 	}//For each line of lyrics
 
 	if(totalpiecectr != Lyrics.piececount)
 	{
-		puts("Error: The total lyric count in the Lyrics structure is incorrect\nAborting");
+		(void) puts("Error: The total lyric count in the Lyrics structure is incorrect\nAborting");
 		exit_wrapper(5);
 	}
 
@@ -1147,7 +1147,7 @@ void SetTag(char *string,char tagID,char negatizeoffset)
 			if((Lyrics.Offset != NULL) || (Lyrics.offsetoverride != 0))
 			{	//Only store this tag if it wasn't already defined (ie. given via command line)
 				if(Lyrics.offsetoverride != 0)
-					puts("Offset controlled via command line.  Ignoring Offset tag");
+					(void) puts("Offset controlled via command line.  Ignoring Offset tag");
 				else
 					printf("Warning: Extra Offset tag: \"%s\".  Ignoring\n",string2);
 
@@ -1184,7 +1184,7 @@ void SetTag(char *string,char tagID,char negatizeoffset)
 					{
 						printf("Loaded tag: \"delay = %s\"\n",string2);
 						if(Lyrics.verbose>=2)	printf("\tConverted delay is %ldms\n",Lyrics.realoffset);
-						if(negatizeoffset)	puts("The offset was made negative because it will be used subtractively");
+						if(negatizeoffset)	(void) puts("The offset was made negative because it will be used subtractively");
 					}
 
 					if(negatizeoffset)
@@ -1194,7 +1194,7 @@ void SetTag(char *string,char tagID,char negatizeoffset)
 				{		//as, this is required in order for UltraStar texts with an explicit gap
 						//of 0 to work
 					Lyrics.Offset=string2;
-					if(Lyrics.verbose)	puts("Loaded tag: \"delay = 0\"");
+					if(Lyrics.verbose)	(void) puts("Loaded tag: \"delay = 0\"");
 				}
 			}
 		break;
@@ -1213,22 +1213,21 @@ void SetTag(char *string,char tagID,char negatizeoffset)
 		break;
 
 		default:
-			puts("Unexpected error during tag handling\nAborting");
+			(void) puts("Unexpected error during tag handling\nAborting");
 			exit_wrapper(3);
 		break;
 	}
 }
 
-unsigned long FindLongestLineLength(FILE *inf,char exit_on_empty)
+size_t FindLongestLineLength(FILE *inf,char exit_on_empty)
 {
-	unsigned long maxlinelength=0;
-	unsigned long ctr=0;
+	size_t maxlinelength = 0, ctr = 0;
 	int inputchar=0;
 
 	assert_wrapper(inf != NULL);	//This must not be NULL
 
 //Find the length of the longest line
-	if(Lyrics.verbose>=2)	puts("Parsing file to find the length of the longest line");
+	if(Lyrics.verbose>=2)	(void) puts("Parsing file to find the length of the longest line");
 
 	rewind_err(inf);		//rewind file
 	do{
@@ -1239,7 +1238,7 @@ unsigned long FindLongestLineLength(FILE *inf,char exit_on_empty)
 		}while((inputchar != EOF) && (inputchar != '\n'));//Repeat until end of file or newline character is read
 
 		if(ctr > maxlinelength)		//If this line was the longest yet,
-			maxlinelength=ctr;	//Store its length
+			maxlinelength = ctr;	//Store its length
 	}while(inputchar != EOF);	//Repeat until end of file is reached
 
 	if(maxlinelength < 2)		//If the input file contained nothing but empty lines or no text at all
@@ -1251,14 +1250,14 @@ unsigned long FindLongestLineLength(FILE *inf,char exit_on_empty)
 		}
 		else
 		{
-			puts("Error: File is empty\nAborting");
+			(void) puts("Error: File is empty\nAborting");
 			exit_wrapper(1);
 		}
 	}
 	maxlinelength++;		//Must increment this to account for newline character
 
 	if(Lyrics.verbose>=2)
-		printf("Longest line detected is %lu characters\n",maxlinelength);
+		printf("Longest line detected is %lu characters\n", (unsigned long)maxlinelength);
 
 	rewind_err(inf);		//rewind file
 	return maxlinelength;
@@ -1594,7 +1593,7 @@ struct Lyric_Line *InsertLyricLineBreak(struct Lyric_Line *lineptr,struct Lyric_
 
 	if(lyrptr->prev == NULL)	//If there is no lyric before this lyric
 	{
-		if(Lyrics.verbose>=2)	puts("\tLine break ignored");
+		if(Lyrics.verbose>=2)	(void) puts("\tLine break ignored");
 		return lineptr;			//Ignore this request to split the line, return original line ptr
 	}
 
@@ -1688,7 +1687,7 @@ char *ConvertNoteNum(unsigned char notenum)
 			buffer[0]='B';
 			break;
 		default:
-			puts("Logic error: x%12 cannot equal 12\nAborting\n");
+			(void) puts("Logic error: x%12 cannot equal 12\nAborting\n");
 			exit_wrapper(1);
 			break;
 	}
@@ -1719,11 +1718,11 @@ void ReleaseMemory(char release_all)
 	struct Lyric_Line *linestemp=NULL;
 	struct Lyric_Line *linesnext=NULL;
 
-	if(Lyrics.verbose>=2)	puts("\tReleasing memory");
+	if(Lyrics.verbose>=2)	(void) puts("\tReleasing memory");
 
 	ReleaseMIDI();				//Release its memory
 
-	if(Lyrics.verbose>=2)	puts("\t\tLyric storage structures");
+	if(Lyrics.verbose>=2)	(void) puts("\t\tLyric storage structures");
 
 //Release Lyric structure's memory
 	linestemp=Lyrics.lines;
@@ -1747,7 +1746,7 @@ void ReleaseMemory(char release_all)
 	}
 	Lyrics.lines = NULL;	//This list is now empty
 
-	if(Lyrics.verbose>=2)	puts("\t\t\tReleasing strings");
+	if(Lyrics.verbose>=2)	(void) puts("\t\t\tReleasing strings");
 
 //Release tag related strings
 	if(Lyrics.Title != NULL)
@@ -1859,12 +1858,11 @@ int FindNextNumber(char *buffer,unsigned long *startindex)
 
 struct Lyric_Format *DetectLyricFormat(char *file)
 {
-	unsigned long maxlinelength=0,index=0,ctr=0;
-///	unsigned long convertednum2=0;	//Unused
+	size_t maxlinelength=0;
+	unsigned long index=0,ctr=0;
 	char *temp=NULL,*temp2=NULL,temp3=0;
 	char *buffer=NULL;			//Used for text file testing
 	int errorcode=0,jumpcode=0;
-///	long int convertednum=0;	//Unused
 	unsigned long processedctr=0;	//The current line number being processed in the text file
 	char timestampchar[]="[<";		//Accept any of these characters as valid characters to begin an LRC timestamp
 	char quicktemp=0;				//Used to store the original user setting of the quick processing flag (Lyrics.quick)
@@ -1898,7 +1896,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 	buffer=(char *)malloc_err(maxlinelength);
 
 //Read first line, test for presence of "midi" followed by an equal sign (pitched lyric file)
-	if(fgets(buffer,maxlinelength,inf) == NULL)	//Read next line of text, capping it to prevent buffer overflow, don't exit on EOF
+	if(fgets(buffer, (int)maxlinelength,inf) == NULL)	//Read next line of text, capping it to prevent buffer overflow, don't exit on EOF
 	{
 		free(buffer);
 		DestroyLyricFormatList(detectionlist);
@@ -1936,13 +1934,13 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 
 		if(buffer[index] == '\0')		//If this line was just whitespace
 		{
-			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			(void) fgets(buffer, (int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 			continue;							//Process next line
 		}
 
 		if(buffer[index]=='#')	//If this line is a Script or UltraStar tag
 		{
-			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			(void) fgets(buffer, (int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 			continue;			//Skip this line
 		}
 		temp3=buffer[index];	//Store this character
@@ -1952,7 +1950,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 		if((temp3=='*') || (temp3==':') || (temp3=='-') || (toupper(temp3)=='F'))
 		{	//A character that implies UltraStar format, validate
 			index++;	//Seek past line style
-			ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected timestamp, return error in errorcode upon failure
+			(void) ParseLongInt(buffer,(unsigned long *)&index,processedctr,&errorcode);	//Parse the expected timestamp, return error in errorcode upon failure
 			if(!errorcode && (temp3=='-'))	//If this is a line break followed by a timestamp (valid UltraStar syntax)
 			{
 				free(buffer);
@@ -1963,13 +1961,13 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 
 			//Otherwise, for all other UltraStar line styles, 2 more valid numbers are expected
 			if(!errorcode)
-				ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected duration, return error in errorcode upon failure
+				(void) ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected duration, return error in errorcode upon failure
 			if(!errorcode)
-				ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected pitch, return error in errorcode upon failure
+				(void) ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected pitch, return error in errorcode upon failure
 
 			if(errorcode)	//If the timestamp, duration or the pitch failed to parse
 			{
-				fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+				(void) fgets(buffer, (int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 				continue;
 			}
 			else			//Otherwise, this was a standard lyric definition (valid UltraStar syntax)
@@ -1984,9 +1982,9 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 //Test for Script
 		if(isdigit(temp3))
 		{	//A numerical character implies Script format, validate
-			ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected timestamp, return error in errorcode upon failure
+			(void) ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected timestamp, return error in errorcode upon failure
 			if(!errorcode)
-				ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected duration, return error in errorcode upon failure
+				(void) ParseLongInt(buffer,&index,processedctr,&errorcode);	//Parse the expected duration, return error in errorcode upon failure
 
 			if(!errorcode && (strstr(&(buffer[index]),"text") != NULL))	//If the timestamp and duration parsed, and the string "text" was found after the two numbers (valid Script format)
 			{
@@ -2003,13 +2001,13 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 			temp=SeekNextLRCTimestamp(&(buffer[index]));	//Find first timestamp if one exists on this line
 			if(temp != NULL)	//If a timestamp is found
 			{
-				ConvertLRCTimestamp(&temp,&errorcode);
+				(void) ConvertLRCTimestamp(&temp,&errorcode);
 				if(!errorcode)	//If the timestamp parsed correctly (valid LRC format)
 				{
 					temp2=SeekNextLRCTimestamp(temp);	//Look for a second timestamp on the same line (Extended LRC)
 					if(temp2 != NULL)	//If a second timestamp is found
 					{
-						ConvertLRCTimestamp(&temp2,&errorcode);
+						(void) ConvertLRCTimestamp(&temp2,&errorcode);
 						if(!errorcode)	//If the timestamp parsed correctly (valid ELRC format)
 						{
 							free(buffer);
@@ -2023,7 +2021,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 				}
 			}
 
-			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			(void) fgets(buffer, (int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 			continue;
 		}
 
@@ -2034,13 +2032,13 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 			temp=SeekNextSRTTimestamp(&(buffer[index]));	//Find first timestamp if one exists on this line
 			if(temp != NULL)	//If a timestamp is found
 			{
-				ConvertSRTTimestamp(&temp,&errorcode);
+				(void) ConvertSRTTimestamp(&temp,&errorcode);
 				if(!errorcode)	//If the timestamp parsed correctly (valid SRT format)
 				{
 					temp2=SeekNextSRTTimestamp(temp);	//Look for a second timestamp on the same line
 					if(temp2 != NULL)	//If a second timestamp is found
 					{
-						ConvertSRTTimestamp(&temp2,&errorcode);
+						(void) ConvertSRTTimestamp(&temp2,&errorcode);
 						if(!errorcode)	//If the timestamp parsed correctly (valid ELRC format)
 						{
 							free(buffer);
@@ -2053,7 +2051,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 				}
 			}
 
-			fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+			(void) fgets(buffer,(int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 			continue;
 		}
 
@@ -2067,7 +2065,7 @@ struct Lyric_Format *DetectLyricFormat(char *file)
 		}
 
 	//At this point, the line wasn't identified to be any particular format, process next line
-		fgets(buffer,maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
+		(void) fgets(buffer,(int)maxlinelength,inf);	//Read next line of text, so the EOF condition can be checked, don't exit on EOF
 	}//while(!feof(inf))
 
 	if(detectionlist->format == LRC_FORMAT)
@@ -2280,7 +2278,7 @@ void DEBUG_DUMP_LYRICS(void)
 			assert_wrapper(curpiece->lyric != NULL);
 			printf("'%s' ",curpiece->lyric);
 		}
-		puts("\"");
+		(void) puts("\"");
 	}
 }
 
@@ -2291,7 +2289,7 @@ void EnumerateFormatDetectionList(struct Lyric_Format *detectionlist)
 
 	if(detectionlist == NULL)
 	{
-		puts("\tNot a valid lyric file");
+		(void) puts("\tNot a valid lyric file");
 		return;
 	}
 
@@ -2305,7 +2303,7 @@ void EnumerateFormatDetectionList(struct Lyric_Format *detectionlist)
 			case SKAR_FORMAT:
 				if(lasttype == 2)
 				{
-					puts("Logic error:  A file cannot be both a MIDI format and a non MIDI format");
+					(void) puts("Logic error:  A file cannot be both a MIDI format and a non MIDI format");
 					return;
 				}
 				printf("\tTrack \"%s\": Format is %s\t (%lu lyrics)\n",ptr->track,LYRICFORMATNAMES[ptr->format],ptr->count);
@@ -2324,7 +2322,7 @@ void EnumerateFormatDetectionList(struct Lyric_Format *detectionlist)
 			case C9C_FORMAT:
 				if(lasttype == 1)
 				{
-					puts("Logic error:  A file cannot be both a MIDI format and a non MIDI format");
+					(void) puts("Logic error:  A file cannot be both a MIDI format and a non MIDI format");
 					return;
 				}
 				printf("Format is %s\n",LYRICFORMATNAMES[ptr->format]);
@@ -2332,7 +2330,7 @@ void EnumerateFormatDetectionList(struct Lyric_Format *detectionlist)
 			break;
 
 			default:
-				puts("ERROR:  Malformed lyric detection list");
+				(void) puts("ERROR:  Malformed lyric detection list");
 			return;
 		}
 	}//For each entry
@@ -2405,7 +2403,7 @@ char *ReadString(FILE *inf,unsigned long *bytesread,unsigned long maxread)
 		length=maxread;	//Limit the number of characters to read to the number specified by the calling function
 
 //Allocate string and prepare for second pass
-	string=malloc_err(length);		//Length already takes the null terminator into account
+	string=malloc_err((size_t)length);		//Length already takes the null terminator into account
 	fseek_err(inf,position,SEEK_SET);	//Return to the original file position
 
 //Second pass, read the string into the allocated memory, performings bounds checking
@@ -2433,40 +2431,40 @@ unsigned long GetFileEndPos(FILE *fp)
 
 	assert_wrapper(fp != NULL);
 	originalpos=ftell_err(fp);		//Record original file position
-	fseek(fp,0,SEEK_END);			//Seek to end of file
+	(void) fseek(fp,0,SEEK_END);			//Seek to end of file
 	endpos=ftell_err(fp);			//Record end file position
 	fseek_err(fp,originalpos,SEEK_SET);	//Seek to original file position
 
 	return endpos;				//Return end of file position
 }
 
-void BlockCopy(FILE *inf,FILE *outf,unsigned long num)
+void BlockCopy(FILE *inf, FILE *outf, size_t num)
 {
 	unsigned char *buffer=NULL;
 	int c=0;
-	unsigned long ctr=0;
+	size_t ctr = 0;
 
-	if(Lyrics.verbose >= 2)	printf("\t\tBlock copying %lu bytes (File position 0x%lX to 0x%lX)\n",num,ftell(inf),ftell(inf)+num-1);
+	if(Lyrics.verbose >= 2)	printf("\t\tBlock copying %lu bytes (File position 0x%lX to 0x%lX)\n", (unsigned long)num, ftell(inf), ftell(inf) + (unsigned long)num - 1);
 
 	assert_wrapper((inf != NULL) && (outf != NULL));
 
 	if(num == 0)	//If not copying any data
 		return;		//return without doing anything
 
-	buffer=(unsigned char *)malloc(num);
+	buffer=(unsigned char *)malloc((size_t)num);
 	if(buffer != NULL)
 	{	//Perform block read and copy
 		fread_err(buffer,num,1,inf);	//If reading failed
-		fwrite_err(buffer,num,1,outf);	//If writing failed
+		fwrite_err(buffer,(size_t)num,1,outf);	//If writing failed
 		free(buffer);
 	}
 	else
 	{	//Perform slow copy
-		puts("Block copy failed, performing slow copy");
-		for(ctr=0;ctr<num;ctr++)
+		(void) puts("Block copy failed, performing slow copy");
+		for(ctr = 0; ctr < num; ctr++)
 		{
-			c=fgetc_err(inf);	//Read one byte from input file
-			fputc_err(c,outf);		//Write it to the output file
+			c = fgetc_err(inf);		//Read one byte from input file
+			fputc_err(c, outf);		//Write it to the output file
 		}
 	}
 }
@@ -2498,7 +2496,7 @@ int SearchPhrase(FILE *inf,unsigned long breakpos,unsigned long *pos,const char 
 	currentpos++;		//Track that one more byte has been read
 	if(ferror(inf))		//If there was an I/O error
 	{
-		fseek(inf,originalpos,SEEK_SET);
+		(void) fseek(inf,originalpos,SEEK_SET);
 		return -1;
 	}
 
@@ -2509,7 +2507,7 @@ int SearchPhrase(FILE *inf,unsigned long breakpos,unsigned long *pos,const char 
 		{
 			if(currentpos >= breakpos)	//If the exit position was reached
 			{
-				fseek(inf,originalpos,SEEK_SET);
+				(void) fseek(inf,originalpos,SEEK_SET);
 				return 0;				//Return no match
 			}
 		}
@@ -2537,9 +2535,9 @@ int SearchPhrase(FILE *inf,unsigned long breakpos,unsigned long *pos,const char 
 
 //Seek to the appropriate file position
 	if(success && autoseek)		//If we should seek to the successful match
-		fseek(inf,matchpos,SEEK_SET);
+		(void) fseek(inf,matchpos,SEEK_SET);
 	else				//If we should return to the original file position
-		fseek(inf,originalpos,SEEK_SET);
+		(void) fseek(inf,originalpos,SEEK_SET);
 
 	if(ferror(inf))		//If there was an I/O error
 		return -1;

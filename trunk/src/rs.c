@@ -261,8 +261,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	{	//Otherwise use the track's native name
 		arrangement_name = sp->track[track]->name;
 	}
-	replace_filename(fn, fn, arrangement_name, 1024);
-	replace_extension(fn, fn, "xml", 1024);
+	(void) replace_filename(fn, fn, arrangement_name, 1024);
+	(void) replace_extension(fn, fn, "xml", 1024);
 	fp = pack_fopen(fn, "w");
 	if(!fp)
 	{
@@ -278,28 +278,28 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	}
 
 	//Write the beginning of the XML file
-	pack_fputs("<?xml version='1.0' encoding='UTF-8'?>\n", fp);
-	pack_fputs("<song>\n", fp);
-	snprintf(buffer, sizeof(buffer) - 1, "  <title>%s</title>\n", sp->tags->title);
-	pack_fputs(buffer, fp);
-	snprintf(buffer, sizeof(buffer) - 1, "  <arrangement>%s</arrangement>\n", arrangement_name);
-	pack_fputs(buffer, fp);
-	pack_fputs("  <part>1</part>\n", fp);
-	pack_fputs("  <offset>0.000</offset>\n", fp);
+	(void) pack_fputs("<?xml version='1.0' encoding='UTF-8'?>\n", fp);
+	(void) pack_fputs("<song>\n", fp);
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <title>%s</title>\n", sp->tags->title);
+	(void) pack_fputs(buffer, fp);
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <arrangement>%s</arrangement>\n", arrangement_name);
+	(void) pack_fputs(buffer, fp);
+	(void) pack_fputs("  <part>1</part>\n", fp);
+	(void) pack_fputs("  <offset>0.000</offset>\n", fp);
 	eof_truncate_chart(sp);	//Update the chart length
-	snprintf(buffer, sizeof(buffer) - 1, "  <songLength>%.3f</songLength>\n", (double)(xml_end - 1) / 1000.0);	//Make sure the song length is not longer than the actual audio, or the chart won't reach an end in-game
-	pack_fputs(buffer, fp);
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <songLength>%.3f</songLength>\n", (double)(xml_end - 1) / 1000.0);	//Make sure the song length is not longer than the actual audio, or the chart won't reach an end in-game
+	(void) pack_fputs(buffer, fp);
 	seconds = time(NULL);
 	caltime = localtime(&seconds);
 	if(caltime)
 	{	//If the calendar time could be determined
-		snprintf(buffer, sizeof(buffer) - 1, "  <lastConversionDateTime>%u-%u-%u %u:%u</lastConversionDateTime>\n", caltime->tm_mon + 1, caltime->tm_mday, caltime->tm_year % 100, caltime->tm_hour % 12, caltime->tm_min);
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <lastConversionDateTime>%u-%u-%u %u:%u</lastConversionDateTime>\n", caltime->tm_mon + 1, caltime->tm_mday, caltime->tm_year % 100, caltime->tm_hour % 12, caltime->tm_min);
 	}
 	else
 	{
-		snprintf(buffer, sizeof(buffer) - 1, "  <lastConversionDateTime>UNKNOWN</lastConversionDateTime>\n");
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <lastConversionDateTime>UNKNOWN</lastConversionDateTime>\n");
 	}
-	pack_fputs(buffer, fp);
+	(void) pack_fputs(buffer, fp);
 
 	//Write the section information
 	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
@@ -311,19 +311,19 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		}
 	}
 	sectionlistsize = eof_build_section_list(sp, &sectionlist, track);	//Build a list of all unique section markers in the chart (from the perspective of the track being exported)
-	snprintf(buffer, sizeof(buffer) - 1, "  <phrases count=\"%lu\">\n", sectionlistsize + 2);	//Write the number of unique sections (plus a default COUNT and END section)
-	pack_fputs(buffer, fp);
-	pack_fputs("    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"0\" name=\"COUNT\" solo=\"0\"/>\n", fp);
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <phrases count=\"%lu\">\n", sectionlistsize + 2);	//Write the number of unique sections (plus a default COUNT and END section)
+	(void) pack_fputs(buffer, fp);
+	(void) pack_fputs("    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"0\" name=\"COUNT\" solo=\"0\"/>\n", fp);
 	for(ctr = 0; ctr < sectionlistsize; ctr++)
 	{	//For each of the entries in the unique section list
-		snprintf(buffer, sizeof(buffer) - 1, "    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"%u\" name=\"%s\" solo=\"0\"/>\n", numdifficulties - 1, sp->text_event[sectionlist[ctr]]->text);
-		pack_fputs(buffer, fp);
+		(void) snprintf(buffer, sizeof(buffer) - 1, "    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"%u\" name=\"%s\" solo=\"0\"/>\n", numdifficulties - 1, sp->text_event[sectionlist[ctr]]->text);
+		(void) pack_fputs(buffer, fp);
 	}
-	pack_fputs("    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"0\" name=\"END\" solo=\"0\"/>\n", fp);
-	pack_fputs("  </phrases>\n", fp);
-	snprintf(buffer, sizeof(buffer) - 1, "  <phraseIterations count=\"%lu\">\n", numsections);
-	pack_fputs(buffer, fp);
-	pack_fputs("    <phraseIteration time=\"0.000\" phraseId=\"0\"/>\n", fp);	//Write the default COUNT phrase iteration
+	(void) pack_fputs("    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"0\" name=\"END\" solo=\"0\"/>\n", fp);
+	(void) pack_fputs("  </phrases>\n", fp);
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <phraseIterations count=\"%lu\">\n", numsections);
+	(void) pack_fputs(buffer, fp);
+	(void) pack_fputs("    <phraseIteration time=\"0.000\" phraseId=\"0\"/>\n", fp);	//Write the default COUNT phrase iteration
 	for(ctr = 0; ctr < sp->beats; ctr++)
 	{	//For each beat in the chart
 		if(sp->beat[ctr]->contained_section_event >= 0)
@@ -343,27 +343,27 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 				free(sectionlist);
 				return 0;	//Return error
 			}
-			snprintf(buffer, sizeof(buffer) - 1, "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\"/>\n", sp->beat[ctr]->fpos / 1000.0, phraseid);
-			pack_fputs(buffer, fp);
+			(void) snprintf(buffer, sizeof(buffer) - 1, "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\"/>\n", sp->beat[ctr]->fpos / 1000.0, phraseid);
+			(void) pack_fputs(buffer, fp);
 		}
 	}
-	snprintf(buffer, sizeof(buffer) - 1, "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\"/>\n", (double)(xml_end - 1) / 1000.0, sectionlistsize + 1);	//Write the default END phrase iteration
-	pack_fputs(buffer, fp);
-	pack_fputs("  </phraseIterations>\n", fp);
+	(void) snprintf(buffer, sizeof(buffer) - 1, "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\"/>\n", (double)(xml_end - 1) / 1000.0, sectionlistsize + 1);	//Write the default END phrase iteration
+	(void) pack_fputs(buffer, fp);
+	(void) pack_fputs("  </phraseIterations>\n", fp);
 	if(sectionlistsize)
 	{	//If there were any entries in the unique section list
 		free(sectionlist);	//Free the list now
 	}
 
 	//Write some unknown information
-	pack_fputs("  <linkedDiffs count=\"0\"/>\n", fp);
-	pack_fputs("  <phraseProperties count=\"0\"/>\n", fp);
+	(void) pack_fputs("  <linkedDiffs count=\"0\"/>\n", fp);
+	(void) pack_fputs("  <phraseProperties count=\"0\"/>\n", fp);
 
 	//Write chord templates
 	chordlistsize = eof_build_chord_list(sp, track, &chordlist);	//Build a list of all unique chords in the track
 	if(!chordlistsize)
 	{	//If there were no chords, write an empty chord template tag
-		pack_fputs("  <chordTemplates count=\"0\"/>\n", fp);
+		(void) pack_fputs("  <chordTemplates count=\"0\"/>\n", fp);
 	}
 	else
 	{
@@ -379,13 +379,13 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		unsigned long bitmask;
 		char fingeringpresent;	//Is set to nonzero if fingering is defined for ANY of this note's used strings
 
-		snprintf(buffer, sizeof(buffer) - 1, "  <chordTemplates count=\"%lu\">\n", chordlistsize);
-		pack_fputs(buffer, fp);
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <chordTemplates count=\"%lu\">\n", chordlistsize);
+		(void) pack_fputs(buffer, fp);
 		for(ctr = 0; ctr < chordlistsize; ctr++)
 		{	//For each of the entries in the unique chord list
 			fingeringpresent = 0;	//Reset this status
 			notename[0] = '\0';	//Empty the note name string
-			eof_build_note_name(sp, track, chordlist[ctr], notename);	//Build the note name (if it exists) into notename[]
+			(void) eof_build_note_name(sp, track, chordlist[ctr], notename);	//Build the note name (if it exists) into notename[]
 
 			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
 			{	//For each of the 6 supported strings
@@ -429,18 +429,18 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 				}
 			}
 
-			snprintf(buffer, sizeof(buffer) - 1, "    <chordTemplate chordName=\"%s\" finger0=\"%s\" finger1=\"%s\" finger2=\"%s\" finger3=\"%s\" finger4=\"%s\" finger5=\"%s\" fret0=\"%ld\" fret1=\"%ld\" fret2=\"%ld\" fret3=\"%ld\" fret4=\"%ld\" fret5=\"%ld\"/>\n", notename, finger0, finger1, finger2, finger3, finger4, finger5, fret0, fret1, fret2, fret3, fret4, fret5);
-			pack_fputs(buffer, fp);
+			(void) snprintf(buffer, sizeof(buffer) - 1, "    <chordTemplate chordName=\"%s\" finger0=\"%s\" finger1=\"%s\" finger2=\"%s\" finger3=\"%s\" finger4=\"%s\" finger5=\"%s\" fret0=\"%ld\" fret1=\"%ld\" fret2=\"%ld\" fret3=\"%ld\" fret4=\"%ld\" fret5=\"%ld\"/>\n", notename, finger0, finger1, finger2, finger3, finger4, finger5, fret0, fret1, fret2, fret3, fret4, fret5);
+			(void) pack_fputs(buffer, fp);
 		}//For each of the entries in the unique chord list
-		pack_fputs("  </chordTemplates>\n", fp);
+		(void) pack_fputs("  </chordTemplates>\n", fp);
 	}
 
 	//Write some unknown information
-	pack_fputs("  <fretHandMuteTemplates count=\"0\"/>\n", fp);
+	(void) pack_fputs("  <fretHandMuteTemplates count=\"0\"/>\n", fp);
 
 	//Write the beat timings
-	snprintf(buffer, sizeof(buffer) - 1, "  <ebeats count=\"%lu\">\n", sp->beats);
-	pack_fputs(buffer, fp);
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <ebeats count=\"%lu\">\n", sp->beats);
+	(void) pack_fputs(buffer, fp);
 	for(ctr = 0; ctr < sp->beats; ctr++)
 	{	//For each beat in the chart
 		if(eof_get_ts(sp,&beatspermeasure,NULL,ctr) == 1)
@@ -456,27 +456,27 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		{	//Otherwise the measure is displayed as -1 to indicate no change from the previous beat's measure number
 			displayedmeasure = -1;
 		}
-		snprintf(buffer, sizeof(buffer) - 1, "    <ebeat time=\"%.3f\" measure=\"%ld\"/>\n", sp->beat[ctr]->fpos / 1000.0, displayedmeasure);
-		pack_fputs(buffer, fp);
+		(void) snprintf(buffer, sizeof(buffer) - 1, "    <ebeat time=\"%.3f\" measure=\"%ld\"/>\n", sp->beat[ctr]->fpos / 1000.0, displayedmeasure);
+		(void) pack_fputs(buffer, fp);
 		beatcounter++;
 		if(beatcounter >= beatspermeasure)
 		{
 			beatcounter = 0;
 		}
 	}
-	pack_fputs("  </ebeats>\n", fp);
+	(void) pack_fputs("  </ebeats>\n", fp);
 
 	//Write some unknown information
-	pack_fputs("  <controls count =\"2\">\n", fp);
-	pack_fputs("    <control time=\"5.100\" code=\"ShowMessageBox(hint1, Rocksmith Custom Song Project Demo)\"/>\n", fp);
-	pack_fputs("    <control time=\"30.100\" code=\"ClearAllMessageBoxes()\"/>\n", fp);
-	pack_fputs("  </controls>\n", fp);
-	pack_fputs("  <sections count=\"0\"/>\n", fp);
-	pack_fputs("  <events count=\"0\"/>\n", fp);
+	(void) pack_fputs("  <controls count =\"2\">\n", fp);
+	(void) pack_fputs("    <control time=\"5.100\" code=\"ShowMessageBox(hint1, Rocksmith Custom Song Project Demo)\"/>\n", fp);
+	(void) pack_fputs("    <control time=\"30.100\" code=\"ClearAllMessageBoxes()\"/>\n", fp);
+	(void) pack_fputs("  </controls>\n", fp);
+	(void) pack_fputs("  <sections count=\"0\"/>\n", fp);
+	(void) pack_fputs("  <events count=\"0\"/>\n", fp);
 
 	//Write difficulty
-	snprintf(buffer, sizeof(buffer) - 1, "  <levels count=\"%u\">\n", numdifficulties);
-	pack_fputs(buffer, fp);
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <levels count=\"%u\">\n", numdifficulties);
+	(void) pack_fputs(buffer, fp);
 	eof_determine_phrase_status(sp, track);	//Update the tremolo status of each note
 	for(ctr = 0, ctr2 = 0; ctr < 4; ctr++)
 	{	//For each of the available difficulties
@@ -507,20 +507,20 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 						allegro_message("Error:  A note with no gems was encountered.  Aborting Rocksmith export");
 						eof_log("Error:  A note with no gems was encountered.  Aborting Rocksmith export", 1);
 						free(chordlist);
-						pack_fclose(fp);
+						(void) pack_fclose(fp);
 						return 0;	//Return failure
 					}
 				}
 			}
 
 			//Write single notes
-			snprintf(buffer, sizeof(buffer) - 1, "    <level difficulty=\"%lu\">\n", ctr2);
-			pack_fputs(buffer, fp);
+			(void) snprintf(buffer, sizeof(buffer) - 1, "    <level difficulty=\"%lu\">\n", ctr2);
+			(void) pack_fputs(buffer, fp);
 			ctr2++;	//Increment the populated difficulty level number
 			if(numsinglenotes)
 			{	//If there's at least one single note in this difficulty
-				snprintf(buffer, sizeof(buffer) - 1, "      <notes count=\"%lu\">\n", numsinglenotes);
-				pack_fputs(buffer, fp);
+				(void) snprintf(buffer, sizeof(buffer) - 1, "      <notes count=\"%lu\">\n", numsinglenotes);
+				(void) pack_fputs(buffer, fp);
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
 					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_colors(sp, track, ctr3) == 1))
@@ -586,18 +586,18 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 
 								if((flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) == 0)
 								{	//At this point, it doesn't seem Rocksmith supports string muted notes
-									snprintf(buffer, sizeof(buffer) - 1, "        <note time=\"%.3f\" bend=\"%lu\" fret=\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"0\" palmMute=\"%d\" pullOff=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\"/>\n", (double)notepos / 1000.0, bend, fret, hammeron, harmonic, hopo, palmmute, pulloff, slideto, stringnum, (double)length / 1000.0, tremolo);
-									pack_fputs(buffer, fp);
+									(void) snprintf(buffer, sizeof(buffer) - 1, "        <note time=\"%.3f\" bend=\"%lu\" fret=\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"0\" palmMute=\"%d\" pullOff=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\"/>\n", (double)notepos / 1000.0, bend, fret, hammeron, harmonic, hopo, palmmute, pulloff, slideto, stringnum, (double)length / 1000.0, tremolo);
+									(void) pack_fputs(buffer, fp);
 								}
 							}//If this string is used in this note
 						}//For each string used in this track
 					}//If this note is in this difficulty and is a single note (and not a chord)
 				}//For each note in the track
-				pack_fputs("      </notes>\n", fp);
+				(void) pack_fputs("      </notes>\n", fp);
 			}//If there's at least one single note in this difficulty
 			else
 			{	//There are no single notes in this difficulty, write an empty notes tag
-				pack_fputs("      <notes count=\"0\"/>\n", fp);
+				(void) pack_fputs("      <notes count=\"0\"/>\n", fp);
 			}
 
 			//Write chords
@@ -611,8 +611,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 				char highdensity;		//Any chord <= 500ms after another chord has the highDensity boolean property set to true
 				unsigned long lastchordpos = 0;
 
-				snprintf(buffer, sizeof(buffer) - 1, "      <chords count=\"%lu\">\n", numchords);
-				pack_fputs(buffer, fp);
+				(void) snprintf(buffer, sizeof(buffer) - 1, "      <chords count=\"%lu\">\n", numchords);
+				(void) pack_fputs(buffer, fp);
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
 					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_colors(sp, track, ctr3) > 1) && !eof_is_string_muted(sp, track, ctr3))
@@ -649,20 +649,20 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 							highdensity = 0;
 						}
 						notepos = (double)tp->note[ctr3]->pos / 1000.0;
-						snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" chordId=\"%lu\" highDensity=\"%d\" ignore=\"0\" strum=\"%s\"/>\n", notepos, chordid, highdensity, direction);
-						pack_fputs(buffer, fp);
+						(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" chordId=\"%lu\" highDensity=\"%d\" ignore=\"0\" strum=\"%s\"/>\n", notepos, chordid, highdensity, direction);
+						(void) pack_fputs(buffer, fp);
 						lastchordpos = tp->note[ctr3]->pos;	//Cache the position of the last chord written
 					}//If this note is in this difficulty and is a chord
 				}//For each note in the track
-				pack_fputs("      </chords>\n", fp);
+				(void) pack_fputs("      </chords>\n", fp);
 			}
 			else
 			{	//There are no chords in this difficulty, write an empty chords tag
-				pack_fputs("      <chords count=\"0\"/>\n", fp);
+				(void) pack_fputs("      <chords count=\"0\"/>\n", fp);
 			}
 
 			//Write other stuff
-			pack_fputs("      <fretHandMutes count=\"0\"/>\n", fp);
+			(void) pack_fputs("      <fretHandMutes count=\"0\"/>\n", fp);
 
 			//Write anchors (fret hand positions)
 			for(ctr3 = 0, anchorcount = 0; ctr3 < tp->handpositions; ctr3++)
@@ -692,22 +692,22 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 			}
 			if(anchorcount)
 			{	//If there's at least one anchor in this difficulty
-				snprintf(buffer, sizeof(buffer) - 1, "      <anchors count=\"%lu\">\n", anchorcount);
-				pack_fputs(buffer, fp);
+				(void) snprintf(buffer, sizeof(buffer) - 1, "      <anchors count=\"%lu\">\n", anchorcount);
+				(void) pack_fputs(buffer, fp);
 				for(ctr3 = 0, anchorcount = 0; ctr3 < tp->handpositions; ctr3++)
 				{	//For each hand position defined in the track
 					if(tp->handposition[ctr3].difficulty == ctr)
 					{	//If the hand position is in this difficulty
-						snprintf(buffer, sizeof(buffer) - 1, "        <anchor time=\"%.3f\" fret=\"%lu\"/>\n", (double)tp->handposition[ctr3].start_pos / 1000.0, tp->handposition[ctr3].end_pos);
-						pack_fputs(buffer, fp);
+						(void) snprintf(buffer, sizeof(buffer) - 1, "        <anchor time=\"%.3f\" fret=\"%lu\"/>\n", (double)tp->handposition[ctr3].start_pos / 1000.0, tp->handposition[ctr3].end_pos);
+						(void) pack_fputs(buffer, fp);
 					}
 				}
-				pack_fputs("      </anchors>\n", fp);
+				(void) pack_fputs("      </anchors>\n", fp);
 			}
 			else
 			{	//There are no anchors in this difficulty, write an empty anchors tag
 				allegro_message("Error:  Failed to automatically generate fret hand positions");
-				pack_fputs("      <anchors count=\"0\"/>\n", fp);
+				(void) pack_fputs("      <anchors count=\"0\"/>\n", fp);
 			}
 			if(anchorsgenerated)
 			{	//If anchors were automatically generated for this track difficulty, remove them now
@@ -721,13 +721,13 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 			}
 
 			//Write other stuff
-			pack_fputs("      <handShapes count=\"0\"/>\n", fp);
-			pack_fputs("    </level>\n", fp);
+			(void) pack_fputs("      <handShapes count=\"0\"/>\n", fp);
+			(void) pack_fputs("    </level>\n", fp);
 		}//If this difficulty is populated
 	}//For each of the available difficulties
-	pack_fputs("  </levels>\n", fp);
-	pack_fputs("</song>\n", fp);
-	pack_fclose(fp);
+	(void) pack_fputs("  </levels>\n", fp);
+	(void) pack_fputs("</song>\n", fp);
+	(void) pack_fclose(fp);
 	free(chordlist);
 
 	return 1;	//Return success
@@ -913,7 +913,7 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 			}
 			if(!eof_note_can_be_played_within_fret_tolerance(tp, ctr, &current_low, &current_high))
 			{	//If this note can't be included in the set of notes played with a single fret hand position
-				eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, current_note->pos, current_low, 0, NULL);	//Add the best determined fret hand position
+				(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, current_note->pos, current_low, 0, NULL);	//Add the best determined fret hand position
 				current_note = tp->note[ctr];
 				current_low = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Initialize the low and high fret used for this note
 				current_high = eof_pro_guitar_note_highest_fret(tp, ctr);
@@ -926,7 +926,7 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 	{	//If only open notes were played in this track difficulty
 		current_low = 1;	//Place the fret hand position at fret 1
 	}
-	eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, current_note->pos, current_low, 0, NULL);	//Add the best determined fret hand position
+	(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, current_note->pos, current_low, 0, NULL);	//Add the best determined fret hand position
 
 	//Clean up
 	free(eof_fret_range_tolerances);
@@ -942,7 +942,7 @@ int eof_generate_hand_positions_current_track_difficulty(void)
 
 	eof_generate_efficient_hand_positions(eof_song, eof_selected_track, eof_note_type, 1);	//Warn the user if existing hand positions will be deleted
 
-	dialog_message(eof_fret_hand_position_list_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
+	(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
 	return D_REDRAW;
 }
 
@@ -1001,14 +1001,14 @@ void eof_build_fret_range_tolerances(EOF_PRO_GUITAR_TRACK *tp, unsigned char dif
 	{	//If this array was previously built
 		free(eof_fret_range_tolerances);	//Release its memory as it will be rebuilt to suit this track difficulty
 	}
-	eof_fret_range_tolerances = malloc(tp->numfrets + 1);	//Allocate memory for an array large enough to specify the fret hand's range for each fret starting the numbering with 1 instead of 0
+	eof_fret_range_tolerances = malloc((size_t)tp->numfrets + 1);	//Allocate memory for an array large enough to specify the fret hand's range for each fret starting the numbering with 1 instead of 0
 	if(!eof_fret_range_tolerances)
 	{	//Couldn't allocate memory
 		return;
 	}
 
 	//Find the range of each fret as per the notes in the track
-	memset(eof_fret_range_tolerances, 4, tp->numfrets + 1);	//Set a default range of 4 frets for the entire guitar neck
+	memset(eof_fret_range_tolerances, 4, (size_t)tp->numfrets + 1);	//Set a default range of 4 frets for the entire guitar neck
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the specified track
 		if(tp->note[ctr]->type == difficulty)

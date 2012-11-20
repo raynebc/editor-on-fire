@@ -293,11 +293,11 @@ struct wavestruct *eof_create_waveform(char *oggfilename,unsigned long sliceleng
 	oggbuffer = eof_buffer_file(oggfilename, 0);
 	if(!oggbuffer)
 	{
-		snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Waveform: Failed to open input audio file: %s",strerror(errno));
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Waveform: Failed to open input audio file: %s",strerror(errno));
 		eof_log(eof_log_string, 1);
 		return NULL;
 	}
-	oggstruct=alogg_create_ogg_from_buffer(oggbuffer, file_size_ex(oggfilename));
+	oggstruct=alogg_create_ogg_from_buffer(oggbuffer, (int)file_size_ex(oggfilename));
 	if(oggstruct == NULL)
 	{
 		eof_log("Waveform: ALOGG failed to open input audio file", 1);

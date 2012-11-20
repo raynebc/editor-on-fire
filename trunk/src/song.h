@@ -657,7 +657,7 @@ void eof_set_flags_at_legacy_note_pos(EOF_LEGACY_TRACK *tp,unsigned notenum,unsi
 	//If operation is 2, the specified flag is toggled on applicable notes
 	//The track's notes array is expected to be sorted
 
-int eof_load_song_string_pf(char *const buffer, PACKFILE *fp, const unsigned long buffersize);
+int eof_load_song_string_pf(char *const buffer, PACKFILE *fp, const size_t buffersize);
 	//Reads the next two bytes of the PACKFILE to determine how many characters long the string is
 	//That number of bytes is read, the first (buffersize-1) of which are copied to the buffer
 	//If buffersize is 0, the string is parsed in the file but not stored, otherwise the buffer is NULL terminated
