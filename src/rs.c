@@ -12,6 +12,40 @@
 #include "memwatch.h"
 #endif
 
+EOF_RS_PREDEFINED_SECTION eof_rs_predefined_sections[EOF_NUM_RS_PREDEFINED_SECTIONS] =
+{
+	{"intro", "Intro"},
+	{"outro", "Outro"},
+	{"verse", "Verse"},
+	{"chorus", "Chorus"},
+	{"bridge", "Bridge"},
+	{"solo", "Solo"},
+	{"ambient", "Ambient"},
+	{"breakdown", "Breakdown"},
+	{"interlude", "Interlude"},
+	{"prechorus", "Pre Chorus"},
+	{"transition", "Transition"},
+	{"postchorus", "Post Chorus"},
+	{"hook", "Hook"},
+	{"riff", "Riff"},
+	{"fadein", "Fade In"},
+	{"fadeout", "Fade Out"},
+	{"buildup", "Buildup"},
+	{"preverse", "Pre Verse"},
+	{"modverse", "Modulated Verse"},
+	{"postvs", "Post Verse"},
+	{"variation", "Variation"},
+	{"modchorus", "Modulated Chorus"},
+	{"head", "Head"},
+	{"modbridge", "Modulated Bridge"},
+	{"melody", "Melody"},
+	{"postbrdg", "Post Bridge"},
+	{"prebrdg", "Pre Bridge"},
+	{"vamp", "Vamp"},
+	{"noguitar", "No Guitar"},
+	{"silence", "Silence"}
+};
+
 unsigned char *eof_fret_range_tolerances = NULL;	//A dynamically allocated array that defines the fretting hand's range for each fret on the guitar neck, numbered where fret 1's range is defined at eof_fret_range_tolerances[1]
 
 int eof_is_string_muted(EOF_SONG *sp, unsigned long track, unsigned long note)
@@ -293,7 +327,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	caltime = localtime(&seconds);
 	if(caltime)
 	{	//If the calendar time could be determined
-		(void) snprintf(buffer, sizeof(buffer) - 1, "  <lastConversionDateTime>%u-%u-%u %u:%u</lastConversionDateTime>\n", caltime->tm_mon + 1, caltime->tm_mday, caltime->tm_year % 100, caltime->tm_hour % 12, caltime->tm_min);
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <lastConversionDateTime>%u-%u-%u %u:%02u</lastConversionDateTime>\n", caltime->tm_mon + 1, caltime->tm_mday, caltime->tm_year % 100, caltime->tm_hour % 12, caltime->tm_min);
 	}
 	else
 	{
@@ -310,7 +344,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 			numsections++;	//Update section marker instance counter
 		}
 	}
-	sectionlistsize = eof_build_section_list(sp, &sectionlist, track);	//Build a list of all unique section markers in the chart (from the perspective of the track being exported)
+	sectionlistsize = eof_build_section_list(sp, &sectionlist, track);	//Build a list of all unique section markers (Rocksmith phrases) in the chart (from the perspective of the track being exported)
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <phrases count=\"%lu\">\n", sectionlistsize + 2);	//Write the number of unique sections (plus a default COUNT and END section)
 	(void) pack_fputs(buffer, fp);
 	(void) pack_fputs("    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"0\" name=\"COUNT\" solo=\"0\"/>\n", fp);
@@ -471,7 +505,35 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	(void) pack_fputs("    <control time=\"5.100\" code=\"ShowMessageBox(hint1, Rocksmith Custom Song Project Demo)\"/>\n", fp);
 	(void) pack_fputs("    <control time=\"30.100\" code=\"ClearAllMessageBoxes()\"/>\n", fp);
 	(void) pack_fputs("  </controls>\n", fp);
-	(void) pack_fputs("  <sections count=\"0\"/>\n", fp);
+
+	//Write sections
+	for(ctr = 0, numsections = 0; ctr < sp->beats; ctr++)
+	{	//For each beat in the chart
+		if(sp->beat[ctr]->contained_rs_section_event >= 0)
+		{	//If this beat has a Rocksmith section
+			numsections++;	//Update Rocksmith section instance counter
+		}
+	}
+	if(numsections)
+	{	//If there is at least one Rocksmith section defined in the chart
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <sections count=\"%lu\"/>\n", numsections);
+		(void) pack_fputs(buffer, fp);
+		for(ctr = 0; ctr < sp->beats; ctr++)
+		{	//For each beat in the chart
+			if(sp->beat[ctr]->contained_rs_section_event >= 0)
+			{	//If this beat has a Rocksmith section
+				(void) snprintf(buffer, sizeof(buffer) - 1, "    <section name=\"%s\" number=\"%d\" startTime=\"%.3f\"/>\n", sp->text_event[sp->beat[ctr]->contained_rs_section_event]->text, sp->beat[ctr]->contained_rs_section_event_instance_number, sp->beat[ctr]->fpos / 1000.0);
+				(void) pack_fputs(buffer, fp);
+			}
+		}
+		(void) pack_fputs("  </sections>\n", fp);
+	}
+	else
+	{	//Otherwise write an empty sections tag
+		(void) pack_fputs("  <sections count=\"0\"/>\n", fp);
+	}
+
+	//Write empty events tag
 	(void) pack_fputs("  <events count=\"0\"/>\n", fp);
 
 	//Write difficulty
@@ -891,6 +953,11 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 		}
 	}
 
+	if(!count)
+	{	//If this track difficulty has no fret hand positions
+		return;	//Exit function
+	}
+
 	eof_build_fret_range_tolerances(tp, difficulty);	//Allocate and build eof_fret_range_tolerances[]
 	if(!eof_fret_range_tolerances)
 	{	//eof_fret_range_tolerances[] wasn't built
@@ -1085,4 +1152,42 @@ unsigned long eof_pro_guitar_track_find_effective_fret_hand_position_definition(
 	}
 
 	return effective;	//Return the last hand position definition that was found (if any) in this track difficulty
+}
+
+int eof_rs_section_text_valid(char *string)
+{
+	unsigned long ctr;
+
+	if(!string)
+		return 0;	//Return error
+
+	for(ctr = 0; ctr < EOF_NUM_RS_PREDEFINED_SECTIONS; ctr++)
+	{	//For each pre-defined Rocksmith section
+		if(!ustrcmp(eof_rs_predefined_sections[ctr].string, string))
+		{	//If the string matches this Rocksmith section entry
+			return 1;	//Return match
+		}
+	}
+	return 0;	//Return no match
+}
+
+unsigned long eof_get_rs_section_instance_number(EOF_SONG *sp, unsigned long event)
+{
+	unsigned long ctr, count = 1;
+
+	if(!sp || (event >= sp->text_events) || !(sp->text_event[event]->flags & EOF_EVENT_FLAG_RS_SECTION))
+		return 0;	//If the parameters are invalid, or the specified text event is not a Rocksmith section
+
+	for(ctr = 0; ctr < event; ctr++)
+	{	//For each text event in the chart that is before the specified event
+		if(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_SECTION)
+		{	//If the text event is marked as a Rocksmith section
+			if(!ustrcmp(sp->text_event[ctr]->text, sp->text_event[event]->text))
+			{	//If the text event's text matches
+				count++;	//Increment the instance counter
+			}
+		}
+	}
+
+	return count;
 }

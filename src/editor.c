@@ -1964,7 +1964,7 @@ if(key[KEY_PAUSE])
 		}
 
 	/* mark/remark slider (SHIFT+S, in a five lane guitar/bass track) */
-	/* set slide end fret (SHIFT+S, in a pro guitar track) */
+	/* place Rocksmith section (SHIFT+S, in a pro guitar track) */
 		if(key[KEY_S] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
 		{
 			if((eof_song->track[eof_selected_track]->track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) && (eof_song->track[eof_selected_track]->track_format == EOF_LEGACY_TRACK_FORMAT))
@@ -1976,6 +1976,16 @@ if(key[KEY_PAUSE])
 			else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If this is a pro guitar track
 				eof_shift_used = 1;	//Track that the SHIFT key was used
+				(void) eof_rocksmith_section_dialog_add();
+				key[KEY_S] = 0;
+			}
+		}
+
+	/* set slide end fret (CTRL+S, in a pro guitar track) */
+		if(key[KEY_S] && KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
+		{
+			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If this is a pro guitar track
 				(void) eof_pro_guitar_note_slide_end_fret_save();
 				key[KEY_S] = 0;
 			}
@@ -4785,7 +4795,7 @@ void eof_render_editor_window_common(void)
 		if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_EVENTS)
 		{	//If this beat has any text events
 			line(eof_window_editor->screen, xcoord - 3, EOF_EDITOR_RENDER_OFFSET + 24, xcoord + 3, EOF_EDITOR_RENDER_OFFSET + 24, eof_color_yellow);
-			if(eof_2d_render_top_option == 32)
+			if(eof_2d_render_top_option == 33)
 			{	//If the user has opted to render section names at the top of the 2D window
 				if(eof_song->beat[i]->contained_section_event >= 0)
 				{	//If this beat has a section event
@@ -4794,6 +4804,13 @@ void eof_render_editor_window_common(void)
 				else if(eof_song->beat[i]->contains_end_event)
 				{	//Or if this beat contains an end event
 					textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 25 + 5, eof_color_red, eof_color_black, "[end]");	//Display it
+				}
+			}
+			else if(eof_2d_render_top_option == 35)
+			{	//If the user has opted to render Rocksmith sections at the top of the 2D window
+				if(eof_song->beat[i]->contained_rs_section_event >= 0)
+				{	//If this beat has a Rocksmith section, display the section name and instance number
+					textprintf_ex(eof_window_editor->screen, eof_font, xcoord - 6, 25 + 5, eof_color_white, eof_color_black, "%s %d", eof_song->text_event[eof_song->beat[i]->contained_rs_section_event]->text, eof_song->beat[i]->contained_rs_section_event_instance_number);
 				}
 			}
 		}
@@ -4824,7 +4841,7 @@ void eof_render_editor_window_common(void)
 	}
 
 	/* draw fret hand positions */
-	if((eof_2d_render_top_option == 33) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
+	if((eof_2d_render_top_option == 34) && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 	{	//If the user opted to render fret hand positions at the top of the 2D panel, and this is a pro guitar track
 		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 		EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];

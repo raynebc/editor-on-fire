@@ -1,6 +1,7 @@
 #include "beat.h"
 #include "main.h"
 #include "midi.h"
+#include "rs.h"
 #include "undo.h"
 
 #ifdef USEMEMWATCH
@@ -609,9 +610,11 @@ void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track)
 		}
 		sp->beat[i]->contained_section_event = -1;		//Reset this until the beat is found to contain a section event
 		sp->beat[i]->contains_end_event = 0;			//Reset this boolean status
+		sp->beat[i]->contained_rs_section_event = sp->beat[i]->contained_rs_section_event_instance_number = -1;	//Reset these until the beat is found to contain a Rocksmith section
+
 		if(sp->beat[i]->flags & EOF_BEAT_FLAG_EVENTS)
 		{	//If this beat has one or more text events
-			unsigned long ctr;
+			unsigned long ctr, count;
 
 			for(ctr = 0; ctr < sp->text_events; ctr++)
 			{	//For each text event
@@ -625,6 +628,20 @@ void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track)
 					else if(!ustrcmp(sp->text_event[ctr]->text, "[end]"))
 					{	//If this is the [end] event
 						sp->beat[i]->contains_end_event = 1;
+						break;
+					}
+				}
+			}
+
+			for(ctr = 0; ctr < sp->text_events; ctr++)
+			{	//For each text event
+				if(sp->text_event[ctr]->beat == i)
+				{	//If the event is assigned to this beat
+					count = eof_get_rs_section_instance_number(sp, ctr);	//Determine if this event is a Rocksmith section, and if so, which instance number it is
+					if(count)
+					{	//If the event is assigned to this beat
+						sp->beat[i]->contained_rs_section_event = ctr;
+						sp->beat[i]->contained_rs_section_event_instance_number = count;
 						break;
 					}
 				}

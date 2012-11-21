@@ -10,6 +10,7 @@
 #include "../midi.h"
 #include "../dialog/proc.h"
 #include "../midi_data_import.h"	//For eof_events_overridden_by_stored_MIDI_track()
+#include "../rs.h"
 #include "beat.h"
 #include "song.h"
 
@@ -78,6 +79,7 @@ MENU eof_beat_menu[] =
     {"Clear Events", eof_menu_beat_clear_events, NULL, 0, NULL},
     {"Place &Trainer Event", eof_menu_beat_trainer_event, NULL, 0, NULL},
     {"Place RS &Phrase\tShift+P", eof_rocksmith_phrase_dialog_add, NULL, 0, NULL},
+    {"Place RS Section\tShift+S", eof_rocksmith_section_dialog_add, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -116,13 +118,14 @@ char eof_events_add_dialog_string[100] = {0};
 DIALOG eof_events_add_dialog[] =
 {
    /* (proc)            (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc,0,  48,  314, 146, 2,   23,  0,    0,      0,   0,   "Event Name",  NULL, NULL },
+   { d_agup_window_proc,0,  48,  314, 166, 2,   23,  0,    0,      0,   0,   "Event Name",  NULL, NULL },
    { d_agup_text_proc,  12, 84,  64,  8,   2,   23,  0,    0,      0,   0,   "Text:",       NULL, NULL },
    { d_agup_edit_proc,  48, 80,  254, 20,  2,   23,  0,    0,      255, 0,   eof_etext,     NULL, NULL },
    { d_agup_check_proc, 12, 110, 250, 16,  0,   0,   0,    0,      1,   0,   eof_events_add_dialog_string, NULL, NULL },
    { d_agup_check_proc, 12, 130, 174, 16,  0,   0,   0,    0,      1,   0,   "Rocksmith phrase marker", NULL, NULL },
-   { d_agup_button_proc,67, 154, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",          NULL, NULL },
-   { d_agup_button_proc,163,154, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",      NULL, NULL },
+   { d_agup_check_proc, 12, 150, 182, 16,  0,   0,   0,    0,      1,   0,   "Rocksmith section marker", NULL, NULL },
+   { d_agup_button_proc,67, 174, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",          NULL, NULL },
+   { d_agup_button_proc,163,174, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",      NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -165,6 +168,16 @@ DIALOG eof_place_trainer_dialog[] =
    { d_agup_radio_proc,     34, 118,220, 16,   2,   23,  0,    0,         1,   0,   eof_etext4,           NULL, NULL },
    { d_agup_button_proc,    10, 144, 68, 28,   2,   23,  '\r', D_EXIT,    0,   0,   "OK",                 NULL, NULL },
    { d_agup_button_proc,    88, 144, 68, 28,   2,   23,  0,    D_EXIT,    0,   0,   "Cancel",             NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+DIALOG eof_rocksmith_section_dialog[] =
+{
+   /* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                     (dp2) (dp3) */
+   { d_agup_window_proc, 0,   0,   200, 440, 2,   23,  0,    0,      0,   0,   "Add Rocksmith section", NULL, NULL },
+   { d_agup_list_proc,   12,  35,  175, 350, 2,   23,  0,    0,      0,   0,   eof_rs_section_add_list, NULL, NULL },
+   { d_agup_button_proc, 12,  400, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                    NULL, NULL },
+   { d_agup_button_proc, 120, 400, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -1151,7 +1164,7 @@ int eof_events_dialog_add(DIALOG * d)
 
 int eof_rocksmith_phrase_dialog_add(void)
 {
-	return eof_events_dialog_add_function(1);	//Call the add text event dialog, automatically checking the RS phrase marker option
+	return eof_events_dialog_add_function(EOF_EVENT_FLAG_RS_PHRASE);	//Call the add text event dialog, automatically checking the RS phrase marker option
 }
 
 int eof_events_dialog_add_function(char function)
@@ -1166,11 +1179,15 @@ int eof_events_dialog_add_function(char function)
 	(void) ustrcpy(eof_etext, "");
 	(void) snprintf(eof_events_add_dialog_string, sizeof(eof_events_add_dialog_string) - 1, "Specific to %s", eof_song->track[eof_selected_track]->name);
 	eof_events_add_dialog[3].flags = 0;	//By default, this is not a track specific event
-	if(function)
+	if(function & EOF_EVENT_FLAG_RS_PHRASE)
 	{	//If the calling function wanted to automatically enable the "Rocksmith phrase marker" checkbox
 		eof_events_add_dialog[4].flags = D_SELECTED;
 	}
-	if(eof_popup_dialog(eof_events_add_dialog, 2) == 5)
+	if(function & EOF_EVENT_FLAG_RS_SECTION)
+	{	//If the calling function wanted to automatically enable the "Rocksmith section marker" checkbox
+		eof_events_add_dialog[5].flags = D_SELECTED;
+	}
+	if(eof_popup_dialog(eof_events_add_dialog, 2) == 6)
 	{	//User clicked OK
 		if((ustrlen(eof_etext) > 0) && eof_check_string(eof_etext))
 		{	//User entered text that isn't all space characters
@@ -1186,6 +1203,14 @@ int eof_events_dialog_add_function(char function)
 			if(eof_events_add_dialog[4].flags & D_SELECTED)
 			{	//User opted to make this a Rocksmith phrase marker
 				flags |= EOF_EVENT_FLAG_RS_PHRASE;
+			}
+			if(eof_events_add_dialog[5].flags & D_SELECTED)
+			{	//User opted to make this a Rocksmith section marker
+				if(!eof_rs_section_text_valid(eof_etext))
+				{	//If this isn't a valid Rocksmith section name
+					allegro_message("Warning:  This is not a valid Rocksmith section.  Please edit it appropriately or remove it and re-add it using Beat>Place Rocksmith Section");
+				}
+				flags |= EOF_EVENT_FLAG_RS_SECTION;
 			}
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			(void) eof_song_add_text_event(eof_song, eof_selected_beat, eof_etext, track, flags, 0);
@@ -1258,11 +1283,19 @@ int eof_events_dialog_edit(DIALOG * d)
 	{
 		eof_events_add_dialog[4].flags = 0;
 	}
+	if(eof_song->text_event[event]->flags & EOF_EVENT_FLAG_RS_SECTION)
+	{	//If this event is flagged as a Rocksmith section marker
+		eof_events_add_dialog[5].flags = D_SELECTED;	//Set the checkbox specifying the event is a Rocksmith section marker
+	}
+	else
+	{
+		eof_events_add_dialog[5].flags = 0;
+	}
 
 	(void) ustrcpy(eof_etext, eof_song->text_event[event]->text);	//Save the original event text
 	trackflag = eof_events_add_dialog[3].flags;				//Save the track specifier flag
 	phraseflag = eof_events_add_dialog[4].flags;			//Save the RS phrase flag
-	if(eof_popup_dialog(eof_events_add_dialog, 2) == 5)
+	if(eof_popup_dialog(eof_events_add_dialog, 2) == 6)
 	{	//User clicked OK
 		if((ustrlen(eof_etext) > 0) && eof_check_string(eof_etext) && (ustrcmp(eof_song->text_event[event]->text, eof_etext) || (eof_events_add_dialog[3].flags != trackflag) || (eof_events_add_dialog[4].flags != phraseflag)))
 		{	//User entered text that isn't all space characters, and either the event's text was changed or it's track specifier was
@@ -1281,9 +1314,20 @@ int eof_events_dialog_edit(DIALOG * d)
 			{	//User opted to make this a Rocksmith phrase marker
 				flags |= EOF_EVENT_FLAG_RS_PHRASE;
 			}
+			if(eof_events_add_dialog[5].flags & D_SELECTED)
+			{	//User opted to make this a Rocksmith section marker
+				flags |= EOF_EVENT_FLAG_RS_SECTION;
+			}
 			eof_song->text_event[event]->track = track;
 			eof_song->text_event[event]->flags = flags;
 			eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+		}
+	}
+	if(eof_events_add_dialog[5].flags & D_SELECTED)
+	{	//User opted to make this a Rocksmith section marker
+		if(!eof_rs_section_text_valid(eof_etext))
+		{	//If this isn't a valid Rocksmith section name
+			allegro_message("Warning:  This is not a valid Rocksmith section.  Please edit it appropriately or remove it and re-add it using Beat>Place Rocksmith Section");
 		}
 	}
 	eof_render();
@@ -1856,4 +1900,40 @@ int eof_menu_beat_ks_off(void)
 		}
 	}
 	return 1;
+}
+
+char * eof_rs_section_add_list(int index, int * size)
+{
+	if(index < 0)
+	{	//Signal to return the list count
+		*size = EOF_NUM_RS_PREDEFINED_SECTIONS;
+		return NULL;
+	}
+	else if(index < EOF_NUM_RS_PREDEFINED_SECTIONS)
+	{	//Return the specified list item
+		return eof_rs_predefined_sections[index].displayname;	//Return the display name
+	}
+	return NULL;
+}
+
+int eof_rocksmith_section_dialog_add(void)
+{
+	eof_cursor_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_rocksmith_section_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_rocksmith_section_dialog);
+
+	if(eof_popup_dialog(eof_rocksmith_section_dialog, 0) == 2)
+	{	//User clicked OK
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
+		(void) eof_song_add_text_event(eof_song, eof_selected_beat, eof_rs_predefined_sections[eof_rocksmith_section_dialog[1].d1].string, 0, EOF_EVENT_FLAG_RS_SECTION, 0);
+	}
+
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(screen);
+	eof_render();
+	eof_beat_stats_cached = 0;	//Mark the cached beat stats as not current
+
+	return D_O_K;
 }

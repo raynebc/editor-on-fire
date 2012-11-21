@@ -1,6 +1,15 @@
 #ifndef EOF_RS_H
 #define EOF_RS_H
 
+typedef struct
+{
+	char *string;
+	char *displayname;
+} EOF_RS_PREDEFINED_SECTION;
+
+#define EOF_NUM_RS_PREDEFINED_SECTIONS 30
+extern EOF_RS_PREDEFINED_SECTION eof_rs_predefined_sections[EOF_NUM_RS_PREDEFINED_SECTIONS];
+
 int eof_is_string_muted(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//Returns nonzero if all used strings in the note are fret hand muted
 
@@ -58,5 +67,12 @@ unsigned char eof_pro_guitar_track_find_effective_fret_hand_position(EOF_PRO_GUI
 unsigned long eof_pro_guitar_track_find_effective_fret_hand_position_definition(EOF_PRO_GUITAR_TRACK *tp, unsigned char difficulty, unsigned long position);
 	//Similar to eof_pro_guitar_track_find_effective_fret_hand_position(), but returns the hand position definition number in effect, or 0 if none are in effect
 	//This is for use in eof_menu_song_fret_hand_positions() to pre-select the hand position in effect at the current seek position when the dialog is launched
+
+int eof_rs_section_text_valid(char *string);
+	//Compares the given string agains the string entries in eof_rs_predefined_sections[] and returns nonzero if it matches one of them
+unsigned long eof_get_rs_section_instance_number(EOF_SONG *sp, unsigned long event);
+	//If the specified event's flags indicate a Rocksmith section, counts the number of matching (case sensitive) text events preceding it
+	//The instance number of the specified Rocksmith section (numbered starting with 1) is returned
+	//Upon error, or if the given event is not a Rocksmith section, 0 is returned
 
 #endif
