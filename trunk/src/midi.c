@@ -1197,9 +1197,19 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				}
 				else
 				{	//Fret hand positions couldn't be generated
-					(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Failed to automatically generate fret hand positions for \"%s\" during MIDI export", sp->track[j]->name);
-					eof_log(eof_log_string, 1);
-					allegro_message(eof_log_string);
+					for(ctr = 0, count = 0; ctr < tp->notes; ctr++)
+					{	//For each note in this track
+						if(tp->note[ctr]->type == EOF_NOTE_AMAZING)
+						{	//If this note exists in the Expert difficulty
+							count++;
+						}
+					}
+					if(count)
+					{	//If there was at least one note in the Expert difficulty, and fret hand positions couldn't be generated automatically, alert the user
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Failed to automatically generate fret hand positions for \"%s\" during MIDI export", sp->track[j]->name);
+						eof_log(eof_log_string, 1);
+						allegro_message(eof_log_string);
+					}
 				}
 			}
 

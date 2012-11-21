@@ -1615,12 +1615,11 @@ void eof_read_global_keys(void)
 		}
 	}//If a song is loaded
 
-	/* save (F2 or CTRL+S) */
-	if((key[KEY_F2] && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT) || (KEY_EITHER_CTRL && key[KEY_S] && !KEY_EITHER_SHIFT))
+	/* save (F2) */
+	if(key[KEY_F2] && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 	{
 		eof_menu_file_save();
 		key[KEY_F2] = 0;
-		key[KEY_S] = 0;
 	}
 
 	/* find next (F3) */

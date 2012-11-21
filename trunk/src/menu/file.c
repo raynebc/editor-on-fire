@@ -34,7 +34,7 @@ MENU eof_file_menu[] =
 {
     {"&New\t" CTRL_NAME "+N / F4", eof_menu_file_new_wizard, NULL, 0, NULL},
     {"&Load\t" CTRL_NAME "+O", eof_menu_file_load, NULL, 0, NULL},
-    {"&Save\t" CTRL_NAME "+S / F2", eof_menu_file_save, NULL, D_DISABLED, NULL},
+    {"&Save\tF2", eof_menu_file_save, NULL, D_DISABLED, NULL},
     {"Save &As", eof_menu_file_save_as, NULL, D_DISABLED, NULL},
     {"", NULL, NULL, 0, NULL},
     {"Load &OGG", eof_menu_file_load_ogg, NULL, D_DISABLED, NULL},
@@ -107,14 +107,15 @@ DIALOG eof_preferences_dialog[] =
    { d_agup_text_proc,  24,  222, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
    { d_agup_list_proc,  16,  240, 100, 110, 2,   23,  0,    0,      0,   0,   eof_input_list,        NULL, NULL },
    { d_agup_text_proc,  150, 240, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
-   { d_agup_list_proc,  129, 255, 100, 95,  2,   23,  0,    0,      0,   0,   eof_colors_list,        NULL, NULL },
+   { d_agup_list_proc,  129, 255, 100, 95,  2,   23,  0,    0,      0,   0,   eof_colors_list,       NULL, NULL },
    { d_agup_button_proc,12,  355, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
    { d_agup_button_proc,86,  355, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
    { d_agup_button_proc,160, 355, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
-   { d_agup_text_proc,  16,  205, 144, 12,  0,   0,   0,    0,      0,   0,   "Top of 2D pane displays:",NULL,NULL },
-   { d_agup_radio_proc, 175, 205, 60,  16,  2,   23,  0,    0,      1,   0,   "Names",               NULL, NULL },
-   { d_agup_radio_proc, 240, 205, 72,  16,  2,   23,  0,    0,      1,   0,   "Sections",            NULL, NULL },
-   { d_agup_radio_proc, 317, 205, 78,  16,  2,   23,  0,    0,      1,   0,   "Hand pos",            NULL, NULL },
+   { d_agup_text_proc,  16,  206, 120, 12,  0,   0,   0,    0,      0,   0,   "Top of 2D pane shows:",NULL,NULL },
+   { d_agup_radio_proc, 161, 206, 60,  16,  2,   23,  0,    0,      1,   0,   "Names",               NULL, NULL },
+   { d_agup_radio_proc, 224, 206, 72,  16,  2,   23,  0,    0,      1,   0,   "Sections",            NULL, NULL },
+   { d_agup_radio_proc, 301, 206, 78,  16,  2,   23,  0,    0,      1,   0,   "Hand pos",            NULL, NULL },
+   { d_agup_radio_proc, 384, 206, 92,  16,  2,   23,  0,    0,      1,   0,   "RS sections",         NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -926,7 +927,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[16].flags = eof_add_new_notes_to_selection ? D_SELECTED : 0;	//Add new notes to selection
 	eof_preferences_dialog[17].flags = eof_drum_modifiers_affect_all_difficulties ? D_SELECTED : 0;	//Drum modifiers affect all diff's
 	eof_preferences_dialog[23].flags = eof_fb_seek_controls ? D_SELECTED : 0;			//Use dB style seek controls
-	eof_preferences_dialog[32].flags = eof_preferences_dialog[33].flags = eof_preferences_dialog[34].flags = 0;	//Options for what to display at top of 2D panel
+	eof_preferences_dialog[32].flags = eof_preferences_dialog[33].flags = eof_preferences_dialog[34].flags = eof_preferences_dialog[35].flags = 0;	//Options for what to display at top of 2D panel
 	eof_preferences_dialog[eof_2d_render_top_option].flags = D_SELECTED;
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
@@ -1002,6 +1003,10 @@ int eof_menu_file_preferences(void)
 			{	//User opted to display fret hand positions at top of 2D panel
 				eof_2d_render_top_option = 34;
 			}
+			else if(eof_preferences_dialog[35].flags == D_SELECTED)
+			{	//User opted to display Rocksmith sections at top of 2D panel
+				eof_2d_render_top_option = 35;
+			}
 		}//If the user clicked OK
 		else if(retval == 29)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1030,7 +1035,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[25].d1 = EOF_INPUT_PIANO_ROLL;	//Input method
 			eof_preferences_dialog[27].d1 = EOF_COLORS_DEFAULT;		//Color set
 			eof_preferences_dialog[32].flags = D_SELECTED;			//Display note names at top of 2D panel
-			eof_preferences_dialog[33].flags = eof_preferences_dialog[34].flags = 0;	//Display sections/fret hand positions at top of 2D panel
+			eof_preferences_dialog[33].flags = eof_preferences_dialog[34].flags = eof_preferences_dialog[35].flags = 0;	//Display sections/fret hand positions at top of 2D panel
 		}//If the user clicked "Default
 	}while(retval == 29);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);

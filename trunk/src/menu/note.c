@@ -124,7 +124,7 @@ MENU eof_pro_guitar_slide_menu[] =
     {"Toggle slide &Up\t" CTRL_NAME "+Up", eof_menu_note_toggle_slide_up, NULL, 0, NULL},
     {"Toggle slide &Down\t" CTRL_NAME "+Down", eof_menu_note_toggle_slide_down, NULL, 0, NULL},
     {"&Remove slide", eof_menu_note_remove_slide, NULL, 0, NULL},
-    {"Set &End fret\tShift+S", eof_pro_guitar_note_slide_end_fret_save, NULL, 0, NULL},
+    {"Set &End fret\t" CTRL_NAME "+S", eof_pro_guitar_note_slide_end_fret_save, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
