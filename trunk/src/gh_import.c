@@ -575,6 +575,13 @@ int eof_gh_read_sp_section_note(filebuffer *fb, EOF_SONG *sp, gh_section *target
 			eof_log("\t\tError:  Could not add sp section", 1);
 			return -1;
 		}
+#ifdef GH_IMPORT_DEBUG
+		else
+		{	//The section was added
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  Star power section added:  %lums to %lums", dword, dword + length);
+			eof_log(eof_log_string, 1);
+		}
+#endif
 	}
 	return 1;
 }
@@ -1819,6 +1826,13 @@ int eof_gh_read_sp_section_qb(filebuffer *fb, EOF_SONG *sp, const char *songname
 				free(arrayptr);
 				return -1;
 			}
+#ifdef GH_IMPORT_DEBUG
+			else
+			{	//The section was added
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tGH:  \t\tStar power section added:  %lums to %lums", dword, dword + length);
+				eof_log(eof_log_string, 1);
+			}
+#endif
 		}
 	}
 	if(arraysize)
