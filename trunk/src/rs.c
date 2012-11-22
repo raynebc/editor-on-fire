@@ -803,11 +803,11 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		if(rstoolkitfp)
 		{
 			//Build the path to xml2sng.exe
-			(void) ustrncpy(syscommand, eof_rs_toolkit_path, sizeof(syscommand));
-			snprintf(syscommand, sizeof(syscommand), "\"%s", eof_rs_toolkit_path);
+			(void) ustrncpy(syscommand, eof_rs_toolkit_path, (int)sizeof(syscommand) - 1);
+			(void) snprintf(syscommand, sizeof(syscommand), "\"%s", eof_rs_toolkit_path);
 			put_backslash(syscommand);	//Use the OS' appropriate file separator character
-			(void) append_filename(syscommand, syscommand, "xml2sng.exe", sizeof(syscommand) - 1);	//Build the path to the xml2sng utility
-			ustrncat(syscommand, "\"", sizeof(syscommand) - 1);	//Place the closing quote mark
+			(void) append_filename(syscommand, syscommand, "xml2sng.exe", (int)sizeof(syscommand) - 1);	//Build the path to the xml2sng utility
+			(void) ustrncat(syscommand, "\"", (int)sizeof(syscommand) - 1);	//Place the closing quote mark
 
 ///This logic to check if the executable file exists doesn't work, even though the logged path is ultimately verified to be correct
 /*
@@ -821,20 +821,20 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 			}
 */
 			//Build the path to the output file
-			(void) replace_extension(sngfilename, fn, "sng", sizeof(sngfilename) - 1);	//Just use the output XML file's path, chaning the extension to SNG
+			(void) replace_extension(sngfilename, fn, "sng", (int)sizeof(sngfilename) - 1);	//Just use the output XML file's path, chaning the extension to SNG
 
 			//Build the command to pass to xml2sng
-			snprintf(temp, sizeof(temp) - 1, " -i \"%s\" -o \"%s\" --tuning=%d,%d,%d,%d,%d,%d", fn, sngfilename, tp->tuning[0], tp->tuning[1], tp->tuning[2], tp->tuning[3], tp->tuning[4], tp->tuning[5]);
+			(void) snprintf(temp, sizeof(temp) - 1, " -i \"%s\" -o \"%s\" --tuning=%d,%d,%d,%d,%d,%d", fn, sngfilename, tp->tuning[0], tp->tuning[1], tp->tuning[2], tp->tuning[3], tp->tuning[4], tp->tuning[5]);
 
 			//Build and run the full command line
-			ustrncat(syscommand, temp, sizeof(syscommand) - 1);
+			(void) ustrncat(syscommand, temp, (int)sizeof(syscommand) - 1);
 			syscommand[sizeof(syscommand) - 1] = '\0';	//Ensure the command string is terminated
 			eof_log("\tRS:  Calling Rocksmith toolkit with the following command:", 1);
 			eof_log(syscommand, 1);
 
 			//Build and launch the batch file
 			(void) eof_system(syscommand);
-			fprintf(rstoolkitfp, "%s\n", syscommand);
+			fprintf(rstoolkitfp, "%s\npause", syscommand);
 			(void) fclose(rstoolkitfp);
 			(void) eof_system("launch_rstoolkit.bat");
 			(void) delete_file("launch_rstoolkit.bat");

@@ -5670,7 +5670,8 @@ unsigned long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigne
 		}
 		else
 		{
-			return (nextpos - thispos - eof_min_note_distance);
+			break;
 		}
 	}
+	return (nextpos - thispos - eof_min_note_distance);
 }
