@@ -81,6 +81,7 @@ static int save_wav_fp(SAMPLE * sp, PACKFILE * fp)
 	size_t i, n;
 	int val;
 	void * pval = NULL;
+	unsigned short *data;
 
 	eof_log("save_wav_fp() entered", 1);
 
@@ -125,9 +126,7 @@ static int save_wav_fp(SAMPLE * sp, PACKFILE * fp)
 	}
 	else if (bits == 16)
 	{
-		unsigned short *data = pval;
-
-		pval = sp->data;
+		data = (unsigned short *)sp->data;
 		for (i = 0; i < n; i++)
 		{
 			(void) pack_iputw((short)(data[i] - 0x8000), fp);
