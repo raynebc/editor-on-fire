@@ -156,7 +156,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 
 	if(eof_snap_mode != EOF_SNAP_OFF)
 	{	//If grid snap is enabled
-		float least_amount = sp->beat_length;
+		float least_amount;
 		int least = -1;
 
 		/* find the snap beat */
@@ -246,6 +246,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 		}
 
 		/* do the actual snapping */
+		least_amount = sp->beat_length;
 		if(eof_snap_mode != EOF_SNAP_CUSTOM)
 		{
 			if(note < sp->denominator)
@@ -1848,33 +1849,43 @@ if(key[KEY_PAUSE])
 	/* split lyric (SHIFT+L in PART VOCALS) */
 	/* edit lyric (L in PART VOCALS */
 	/* enable legacy view (SHIFT+L in pro guitar track) */
+	/* set slide end fret (CTRL+SHIFT+L in a pro guitar track) */
 		if(key[KEY_L])
 		{
-			if(KEY_EITHER_CTRL)
-			{	/* select like */
+			if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
+			{	//CTRL is held but SHIFT is not
 				(void) eof_menu_edit_select_like();
+				key[KEY_L] = 0;
 			}
 			else if(eof_vocals_selected && (eof_selection.track == EOF_TRACK_VOCALS) && (eof_selection.current < eof_song->vocal_track[tracknum]->lyrics))
 			{	//If PART VOCALS is active, and one of its lyrics is the current selected lyric
-				if(KEY_EITHER_SHIFT)
-				{	//Split lyric
+				if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
+				{	//SHIFT is held but CTRL is not
 					eof_shift_used = 1;	//Track that the SHIFT key was used
 					(void) eof_menu_split_lyric();
+					key[KEY_L] = 0;
 				}
-				else
-				{	//Edit lyric
+				else if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
+				{	//Neither SHIFT nor CTRL are held
 					(void) eof_edit_lyric_dialog();
+					key[KEY_L] = 0;
 				}
 			}
 			else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-			{
-				if(KEY_EITHER_SHIFT)
-				{
+			{	//If a pro guitar track is active
+				if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
+				{	//SHIFT is held but CTRL is not
 					eof_shift_used = 1;	//Track that the SHIFT key was used
 					(void) eof_menu_song_legacy_view();
+					key[KEY_L] = 0;
+				}
+				else if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
+				{	//Both SHIFT and CTRL are held
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+					(void) eof_pro_guitar_note_slide_end_fret_save();
+					key[KEY_L] = 0;
 				}
 			}
-			key[KEY_L] = 0;
 		}
 
 	/* toggle freestyle (F in a vocal track) */
@@ -1977,16 +1988,6 @@ if(key[KEY_PAUSE])
 			{	//If this is a pro guitar track
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				(void) eof_rocksmith_section_dialog_add();
-				key[KEY_S] = 0;
-			}
-		}
-
-	/* set slide end fret (CTRL+S, in a pro guitar track) */
-		if(key[KEY_S] && KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
-		{
-			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-			{	//If this is a pro guitar track
-				(void) eof_pro_guitar_note_slide_end_fret_save();
 				key[KEY_S] = 0;
 			}
 		}

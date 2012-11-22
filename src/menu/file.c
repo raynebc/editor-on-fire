@@ -34,7 +34,7 @@ MENU eof_file_menu[] =
 {
     {"&New\t" CTRL_NAME "+N / F4", eof_menu_file_new_wizard, NULL, 0, NULL},
     {"&Load\t" CTRL_NAME "+O", eof_menu_file_load, NULL, 0, NULL},
-    {"&Save\tF2", eof_menu_file_save, NULL, D_DISABLED, NULL},
+    {"&Save\tF2 / "CTRL_NAME "+S", eof_menu_file_save, NULL, D_DISABLED, NULL},
     {"Save &As", eof_menu_file_save_as, NULL, D_DISABLED, NULL},
     {"", NULL, NULL, 0, NULL},
     {"Load &OGG", eof_menu_file_load_ogg, NULL, D_DISABLED, NULL},

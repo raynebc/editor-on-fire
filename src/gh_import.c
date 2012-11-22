@@ -3110,9 +3110,11 @@ int eof_gh_read_sections_qb(filebuffer *fb, EOF_SONG *sp)
 		}//There were no sections loaded during this loop iteration
 	}//Until the user accepts a language of section names
 
-	if(sections_file != fb)
+///This code will never run because no statement breaks from the outer while loop
+/*	if(sections_file != fb)
 	{	//If an external section names file was buffered
 		eof_filebuffer_close(sections_file);	//Close that file buffer
 	}
 	return -2;	//Return cancellation
+*/
 }
