@@ -2444,7 +2444,11 @@ void BlockCopy(FILE *inf, FILE *outf, size_t num)
 	int c=0;
 	size_t ctr = 0;
 
-	if(Lyrics.verbose >= 2)	printf("\t\tBlock copying %lu bytes (File position 0x%lX to 0x%lX)\n", (unsigned long)num, ftell(inf), ftell(inf) + (unsigned long)num - 1);
+	if(Lyrics.verbose >= 2)
+	{
+		unsigned long pos = (unsigned long)ftell(inf);
+		printf("\t\tBlock copying %lu bytes (File position 0x%lX to 0x%lX)\n", (unsigned long)num, pos, pos + (unsigned long)num - 1);
+	}
 
 	assert_wrapper((inf != NULL) && (outf != NULL));
 

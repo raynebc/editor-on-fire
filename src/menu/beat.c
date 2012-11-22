@@ -89,10 +89,10 @@ DIALOG eof_events_dialog[] =
 {
    /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
    { d_agup_window_proc,0,   48,  500, 237, 2,   23,  0,    0,      0,   0,   "Events",       NULL, NULL },
-   { d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   eof_events_list,NULL, NULL },
-   { d_agup_push_proc,  425, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",         NULL, eof_events_dialog_add },
-   { d_agup_push_proc,  425, 124, 68,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",        NULL, eof_events_dialog_edit },
-   { d_agup_push_proc,  425, 164, 68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, eof_events_dialog_delete },
+   { d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_events_list,NULL, NULL },
+   { d_agup_push_proc,  425, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",         NULL, (void *)eof_events_dialog_add },
+   { d_agup_push_proc,  425, 124, 68,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",        NULL, (void *)eof_events_dialog_edit },
+   { d_agup_push_proc,  425, 164, 68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, (void *)eof_events_dialog_delete },
    { d_agup_text_proc,  12,  225, 64,  8,   2,   23,  0,    0,      0,   0,   ""      ,       NULL, NULL },
    { d_agup_button_proc,12,  245, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
@@ -103,7 +103,7 @@ DIALOG eof_all_events_dialog[] =
 {
    /* (proc)                    (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
    { d_agup_window_proc,         0,   48,  500, 250, 2,   23,  0,    0,      0,   0,   "All Events",         NULL, NULL },
-   { d_agup_list_proc,           12,  84,  475, 140, 2,   23,  0,    0,      0,   0,   eof_events_list_all,  NULL, NULL },
+   { d_agup_list_proc,           12,  84,  475, 140, 2,   23,  0,    0,      0,   0,   (void *)eof_events_list_all,  NULL, NULL },
    { d_agup_button_proc,         12,  257, 75,  28,  2,   23,  'f',  D_EXIT, 0,   0,   "&Find",              NULL, NULL },
    { d_agup_button_proc,         100, 257, 75,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",               NULL, NULL },
    { d_agup_button_proc,         187, 257, 150, 28,  2,   23,  0,    D_EXIT, 0,   0,   "Copy to selected beat", NULL, NULL },
@@ -175,7 +175,7 @@ DIALOG eof_rocksmith_section_dialog[] =
 {
    /* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                     (dp2) (dp3) */
    { d_agup_window_proc, 0,   0,   200, 440, 2,   23,  0,    0,      0,   0,   "Add Rocksmith section", NULL, NULL },
-   { d_agup_list_proc,   12,  35,  175, 350, 2,   23,  0,    0,      0,   0,   eof_rs_section_add_list, NULL, NULL },
+   { d_agup_list_proc,   12,  35,  175, 350, 2,   23,  0,    0,      0,   0,   (void *)eof_rs_section_add_list, NULL, NULL },
    { d_agup_button_proc, 12,  400, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                    NULL, NULL },
    { d_agup_button_proc, 120, 400, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
@@ -1159,6 +1159,10 @@ char * eof_events_list_all(int index, int * size)
 
 int eof_events_dialog_add(DIALOG * d)
 {
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
 	return eof_events_dialog_add_function(0);	//Call the add text event dialog, don't automatically check the RS phrase marker option unless the user left it checked from before
 }
 
@@ -1232,6 +1236,11 @@ int eof_events_dialog_edit(DIALOG * d)
 	short ecount = 0;
 	short event = -1;
 	unsigned long track = 0, flags = 0;
+
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
 
 	eof_cursor_visible = 0;
 	eof_render();
@@ -1358,6 +1367,10 @@ int eof_events_dialog_delete(DIALOG * d)
 	int i, c;
 	int ecount = 0;
 
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
 	if(eof_song->text_events == 0)
 	{
 		return D_O_K;

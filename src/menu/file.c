@@ -53,6 +53,7 @@ MENU eof_file_menu[] =
     {"Song Folder", eof_menu_file_song_folder, NULL, 0, NULL},
     {"Link to FOF", eof_menu_file_link_fof, NULL, EOF_LINUX_DISABLE, NULL},
     {"Link to Phase Shift", eof_menu_file_link_ps, NULL, EOF_LINUX_DISABLE, NULL},
+    {"Link to Rocksmith Toolkit", eof_menu_file_link_rs_toolkit, NULL, EOF_LINUX_DISABLE, NULL},
     {"", NULL, NULL, 0, NULL},
     {"E&xit\tEsc", eof_menu_file_exit, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
@@ -1234,6 +1235,24 @@ int eof_menu_file_link_ps(void)
 	return eof_menu_file_link(2);	//Link to Phase Shift
 }
 
+int eof_menu_file_link_rs_toolkit(void)
+{
+	char * returnfolder;
+
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	returnfolder = ncd_folder_select("Link Rocksmith Toolkit Folder");
+	if(returnfolder)
+	{
+		(void) ustrcpy(eof_rs_toolkit_path, returnfolder);
+	}
+	eof_show_mouse(NULL);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	return 1;
+}
+
 int eof_menu_file_exit(void)
 {
 	int ret = 0;
@@ -2214,12 +2233,13 @@ int eof_save_helper(char *destfilename)
 		for(ctr2 = 0; ctr2 < eof_get_track_size(eof_song, ctr); ctr2++)
 		{	//For each note in the track
 			long next = eof_fixup_next_note(eof_song, ctr, ctr2);	//Get the next note, if it exists
+			unsigned long maxlength = eof_get_note_max_length(eof_song, ctr, ctr2);	//Get the maximum length of this note
 			if(next > 0)
 			{	//If there was a next note
-				if(eof_get_note_pos(eof_song, ctr, ctr2) + eof_get_note_length(eof_song, ctr, ctr2) > eof_get_note_pos(eof_song, ctr, next) - eof_min_note_distance)
-				{	//And it does not end at least the configured minimum distance before the next note starts
-					if(!(eof_get_note_flags(eof_song, ctr, ctr2) & EOF_NOTE_FLAG_CRAZY) || (eof_get_note_note(eof_song, ctr, ctr2) & eof_get_note_note(eof_song, ctr, next)))
-					{	//If the note is not marked as "crazy" or if it overlaps a gem in the same lane
+				if(eof_get_note_length(eof_song, ctr, ctr2) > maxlength)
+				{	//And this note is longer than its maximum length
+					if(eof_get_note_pos(eof_song, ctr, next) - eof_get_note_pos(eof_song, ctr, ctr2) < eof_min_note_distance)
+					{	//If the notes are too close to enforce the minimum note distance
 						if(alert("Warning:  At least one note is too close to another", "to enforce the minimum note distance.", "Cancel save and seek to the first such note?", "&Yes", "&No", 'y', 'n') == 1)
 						{	//If the user opted to seek to the first offending note (only prompt once per call)
 							(void) eof_menu_track_selected_track_number(ctr);										//Set the active instrument track

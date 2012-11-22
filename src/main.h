@@ -262,6 +262,7 @@ extern EOF_LYRIC   eof_pen_lyric;
 extern char        eof_filename[1024];
 extern char        eof_song_path[1024];
 extern char        eof_songs_path[1024];
+extern char        eof_rs_toolkit_path[1024];
 extern char        eof_window_title[4096];
 extern char        eof_last_ogg_path[1024];
 extern char        eof_last_eof_path[1024];

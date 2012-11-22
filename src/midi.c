@@ -342,6 +342,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	char fret_hand_pos_written;					//This is used to track whether the track's fret hand positions were completely written yet
 	char fret_hand_positions_generated;			//This is used to track whether fret hand positions were automatically generated for an exported pro guitar/bass track's expert difficulty
 	char fret_hand_positions_present;			//This is used to track whether fret hand positions are defined for an exported pro guitar/bass track's expert difficulty
+	char fret_hand_pos_override_warning = 0;	//This is used to track whether the user has been warned that a track's fret hand positions will be overridden by the song property to only export a single fret hand position of 1
 	struct eof_MIDI_data_track *trackptr;		//Used to count the number of raw MIDI tracks to export
 	EOF_MIDI_KS_LIST *kslist;
 	unsigned long current_ts = 0;
@@ -1417,6 +1418,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					if	((sp->tags->eof_fret_hand_pos_1_pg && ((sp->track[j]->track_type == EOF_TRACK_PRO_GUITAR) || (sp->track[j]->track_type == EOF_TRACK_PRO_GUITAR_22))) ||
 						 (sp->tags->eof_fret_hand_pos_1_pb && ((sp->track[j]->track_type == EOF_TRACK_PRO_BASS) || (sp->track[j]->track_type == EOF_TRACK_PRO_BASS_22))))
 					{	//If the user opted to write a single fret hand position of 1 for this pro guitar/bass track
+						if(fret_hand_positions_present && !fret_hand_positions_generated && !fret_hand_pos_override_warning)
+						{	//If this track had manually defined fret hand positions, and they are being overridden by the song property to define a single fret hand position at fret 1
+							allegro_message("Warning:  This track has fret hand positions, but the song property to write a single fret hand position is overriding them");
+							fret_hand_pos_override_warning = 1;
+						}
 						rootvel = 101;	//Velocity 101 represents the fretting hand positioned at fret 1
 						eof_add_midi_event(deltapos, 0x90, 108, rootvel, 0);			//Note 108 denotes left hand position
 						eof_add_midi_event(deltapos + deltalength, 0x80, 108, 64, 0);	//Write the note off event (using the same velocity that RB3 MIDIs use)

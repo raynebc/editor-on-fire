@@ -5,6 +5,7 @@
 #include "rs.h"
 #include "song.h"	//For eof_pro_guitar_track_delete_hand_position()
 #include "undo.h"
+#include "utility.h"	//For eof_system()
 #include "menu/song.h"	//For eof_fret_hand_position_list_dialog_undo_made and eof_fret_hand_position_list_dialog[]
 #include <time.h>
 
@@ -791,6 +792,55 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	(void) pack_fputs("</song>\n", fp);
 	(void) pack_fclose(fp);
 	free(chordlist);
+
+	//At this point, the XML file has been created, if the user has defined the path to the Rocksmith toolkit, attempt to compile the XML file with it
+#ifdef ALLEGRO_WINDOWS
+	if(eof_rs_toolkit_path[0] != '\0')
+	{	//If the path to the Rocksmith toolkit was defined
+		char syscommand[1024] = {0}, temp[1024] = {0}, sngfilename[1024] = {0};
+		FILE *rstoolkitfp = fopen("launch_rstoolkit.bat", "wt");	//Write a batch file to launch the Rocksmith toolkit
+
+		if(rstoolkitfp)
+		{
+			//Build the path to xml2sng.exe
+			(void) ustrncpy(syscommand, eof_rs_toolkit_path, sizeof(syscommand));
+			snprintf(syscommand, sizeof(syscommand), "\"%s", eof_rs_toolkit_path);
+			put_backslash(syscommand);	//Use the OS' appropriate file separator character
+			(void) append_filename(syscommand, syscommand, "xml2sng.exe", sizeof(syscommand) - 1);	//Build the path to the xml2sng utility
+			ustrncat(syscommand, "\"", sizeof(syscommand) - 1);	//Place the closing quote mark
+
+///This logic to check if the executable file exists doesn't work, even though the logged path is ultimately verified to be correct
+/*
+			if(!exists(syscommand))
+			{	//If xml2sng.exe was not found at the expected path
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  xml2sng.exe is not present at the linked path (%s).  Please re-link the Rocksmith toolkit to the correct folder", syscommand);
+				eof_log(eof_log_string, 1);
+				allegro_message("Error:  xml2sng.exe is not present at the linked path.  Please re-link the Rocksmith toolkit to the correct folder");
+				eof_rs_toolkit_path[0] = '\0';	//Clear this path since it is not correct
+				return 1;
+			}
+*/
+			//Build the path to the output file
+			(void) replace_extension(sngfilename, fn, "sng", sizeof(sngfilename) - 1);	//Just use the output XML file's path, chaning the extension to SNG
+
+			//Build the command to pass to xml2sng
+			snprintf(temp, sizeof(temp) - 1, " -i \"%s\" -o \"%s\" --tuning=%d,%d,%d,%d,%d,%d", fn, sngfilename, tp->tuning[0], tp->tuning[1], tp->tuning[2], tp->tuning[3], tp->tuning[4], tp->tuning[5]);
+
+			//Build and run the full command line
+			ustrncat(syscommand, temp, sizeof(syscommand) - 1);
+			syscommand[sizeof(syscommand) - 1] = '\0';	//Ensure the command string is terminated
+			eof_log("\tRS:  Calling Rocksmith toolkit with the following command:", 1);
+			eof_log(syscommand, 1);
+
+			//Build and launch the batch file
+			(void) eof_system(syscommand);
+			fprintf(rstoolkitfp, "%s\n", syscommand);
+			(void) fclose(rstoolkitfp);
+			(void) eof_system("launch_rstoolkit.bat");
+			(void) delete_file("launch_rstoolkit.bat");
+		}
+	}
+#endif
 
 	return 1;	//Return success
 }

@@ -566,6 +566,12 @@ void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long am
 	//If amount is 0, then the notes are adjusted by the current grid snap value
 	//An undo state is only created if at least one note's length is altered
 long eof_fixup_next_note(EOF_SONG *sp, unsigned long track, unsigned long note);	//Returns the note one after the specified note number that is in the same difficulty, or -1 if there is none
+unsigned long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigned long note);
+	//Determines the maximum valid length for the specified note by comparing its position to the next note that marks the threshold,
+	//minus the configured minimum distance between notes.  If the specified note is a crazy note, the threshold is based on the
+	//position of the next note in the same track difficulty that uses any gems on the same lane, otherwise it's based on that of the
+	//next note in the track difficulty.
+	//0 is returned on error, ULONG_MAX is returned if there is no note that follows (indicating the note's length is only limited by its variable capacity)
 
 EOF_NOTE * eof_legacy_track_add_note(EOF_LEGACY_TRACK * tp);	//Allocates, initializes and stores a new EOF_NOTE structure into the notes array.  Returns the newly allocated structure or NULL upon error
 void eof_legacy_track_delete_note(EOF_LEGACY_TRACK * tp, unsigned long note);	//Removes and frees the specified note from the notes array.  All notes after the deleted note are moved back in the array one position

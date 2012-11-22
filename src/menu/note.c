@@ -7122,14 +7122,14 @@ int eof_menu_pro_guitar_remove_fingering(void)
 
 int eof_note_menu_read_gp_lyric_texts(void)
 {
-	unsigned long ctr, tracknum;
+	unsigned long ctr, tracknum, linestart, lastlyricend;
 	char * returnedfn = NULL;
 	PACKFILE *fp;
 	EOF_VOCAL_TRACK *tp;
 	int character;
 	char buffer[101];
 	unsigned long index;
-	char undo_made = 0, last_text_entry_was_linebreak = 0;
+	char undo_made = 0, last_text_entry_was_linebreak = 0, firstlinephrasecreated = 0, last_text_entry_was_hyphen = 0;
 
 	if(eof_song == NULL)	//Do not import lyric text if no chart is open
 		return 0;
@@ -7153,10 +7153,14 @@ int eof_note_menu_read_gp_lyric_texts(void)
 
 	tracknum = eof_song->track[EOF_TRACK_VOCALS]->tracknum;
 	tp = eof_song->vocal_track[tracknum];
+	if(tp->lyrics == 0)
+		return 0;	//No vocal notes defined
+	linestart = tp->lyric[0]->pos;	//Track the position of the first lyric (for adding line phrases)
 	for(ctr = 0; ctr < tp->lyrics; ctr++)
 	{	//For each lyric in the vocal track
 		index = 0;	//Point index to start of lyric text buffer
 
+		lastlyricend = tp->lyric[ctr]->pos + tp->lyric[ctr]->length;	//Track the end position of this lyric (for adding line phrases)
 		//Read next lyric text entry
 		while(1)
 		{
@@ -7175,7 +7179,24 @@ int eof_note_menu_read_gp_lyric_texts(void)
 					return 0;
 				}
 				if(!last_text_entry_was_linebreak)
-				{	//If the last text was a linebreak, this one doesn't count as a new lyric text entry
+				{	//If the last text was not a linebreak, this one counts as a new lyric text entry
+					if(index == 0)
+					{	//If this was the first character read for this lyric, it is interpreted as a pitch shift for the previous lyric text
+						buffer[index++] = '+';
+					}
+
+					if(!firstlinephrasecreated)
+					{	//If this if the first lyric line being added by this function
+						tp->lines = 0;	//Erase any existing lyric lines in the track
+						firstlinephrasecreated = 1;
+					}
+					(void) eof_vocal_track_add_line(tp, linestart, lastlyricend);	//Add a line phrase
+					if(ctr + 1 < tp->lyrics)
+					{	//If there's at least one more lyric
+						linestart = tp->lyric[ctr + 1]->pos;	//Track its start position
+					}
+					lastlyricend = 0;	//Reset this variable to track that the line has ended
+
 					last_text_entry_was_linebreak = 1;
 					break;	//A newline ends the current lyric text
 				}
@@ -7187,7 +7208,10 @@ int eof_note_menu_read_gp_lyric_texts(void)
 
 			if(character == ' ')
 			{	//This character ends the current lyric text
-				break;
+				if(!last_text_entry_was_hyphen)
+				{	//Ignore the space isn't immediately after a hyphen
+					break;	//It ends the current lyric text
+				}
 			}
 
 			if(character == '-')
@@ -7200,7 +7224,13 @@ int eof_note_menu_read_gp_lyric_texts(void)
 				{	//Otherwise it is included in the text read for this lyric so far and ends the current lyric text
 					buffer[index++] = '-';
 				}
+
+				last_text_entry_was_hyphen = 1;
 				break;
+			}
+			else
+			{	//This text entry was not a hyphen
+				last_text_entry_was_hyphen = 0;	//Reset this status
 			}
 
 			if(index < 100)
@@ -7216,6 +7246,11 @@ int eof_note_menu_read_gp_lyric_texts(void)
 			undo_made = 1;
 		}
 		eof_set_note_name(eof_song, EOF_TRACK_VOCALS, ctr, buffer);	//Update the text of the lyric in the chart
+	}
+
+	if(lastlyricend)
+	{	//If there was a lyric line in progress
+		(void) eof_vocal_track_add_line(tp, linestart, lastlyricend);	//Add a line phrase
 	}
 
 	(void) pack_fclose(fp);
