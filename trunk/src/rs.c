@@ -517,7 +517,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	}
 	if(numsections)
 	{	//If there is at least one Rocksmith section defined in the chart
-		(void) snprintf(buffer, sizeof(buffer) - 1, "  <sections count=\"%lu\"/>\n", numsections);
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <sections count=\"%lu\">\n", numsections);
 		(void) pack_fputs(buffer, fp);
 		for(ctr = 0; ctr < sp->beats; ctr++)
 		{	//For each beat in the chart
