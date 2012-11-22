@@ -139,8 +139,11 @@ typedef struct
 	float         porendpos;
 	unsigned long flags;
 	unsigned long legacymask;
-	unsigned char frets[16];
+	unsigned char frets[8];
+	unsigned char finger[8];
 	unsigned long ghostmask;
+	unsigned char bendstrength;
+	unsigned char slideend;
 
 } EOF_EXTENDED_NOTE;
 

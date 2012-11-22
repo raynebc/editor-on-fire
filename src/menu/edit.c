@@ -1101,7 +1101,8 @@ int eof_menu_edit_copy(void)
 	unsigned long copy_notes = 0;
 	float tfloat;
 	PACKFILE * fp;
-	unsigned char frets[16] = {0};	//Used to store NULL fret data to support copying legacy notes to a pro guitar track
+	unsigned char frets[8] = {0};	//Used to store NULL fret data to support copying legacy notes to a pro guitar track
+	unsigned char finger[8] = {0};	//Used to store NULL finger data to support copying legacy notes to a pro guitar track
 	unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
@@ -1164,7 +1165,7 @@ int eof_menu_edit_copy(void)
 			}
 
 			/* write note data to disk */
-			(void) eof_save_song_string_pf(eof_get_note_name(eof_song, eof_selected_track, i), fp);	//Write the note's name
+			(void) eof_save_song_string_pf(eof_get_note_name(eof_song, eof_selected_track, i), fp);		//Write the note's name
 			(void) pack_iputl(eof_get_note_note(eof_song, eof_selected_track, i), fp);					//Write the note bitmask value
 			(void) pack_iputl(eof_get_note_pos(eof_song, eof_selected_track, i) - first_pos, fp);		//Write the note's position relative to within the selection
 			tfloat = eof_get_porpos(eof_get_note_pos(eof_song, eof_selected_track, i));
@@ -1180,15 +1181,21 @@ int eof_menu_edit_copy(void)
 			/* Write pro guitar specific data to disk, or zeroed data */
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If this is a pro guitar note
-				(void) pack_iputl(eof_song->pro_guitar_track[tracknum]->note[i]->legacymask, fp);				//Write the pro guitar note's legacy bitmask
+				(void) pack_iputl(eof_song->pro_guitar_track[tracknum]->note[i]->legacymask, fp);					//Write the pro guitar note's legacy bitmask
 				(void) pack_fwrite(eof_song->pro_guitar_track[tracknum]->note[i]->frets, (long)sizeof(frets), fp);	//Write the note's fret array
-				(void) pack_iputl(eof_song->pro_guitar_track[tracknum]->note[i]->ghost, fp);					//Write the note's ghost bitmask
+				(void) pack_fwrite(eof_song->pro_guitar_track[tracknum]->note[i]->finger, (long)sizeof(finger), fp);//Write the note's finger array
+				(void) pack_iputl(eof_song->pro_guitar_track[tracknum]->note[i]->ghost, fp);						//Write the note's ghost bitmask
+				(void) pack_putc(eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength, fp);					//Write the note's bend strength
+				(void) pack_putc(eof_song->pro_guitar_track[tracknum]->note[i]->slideend, fp);						//Write the note's slide end position
 			}
 			else
 			{
 				(void) pack_iputl(0, fp);	//Write a legacy bitmask indicating that the original note bitmask is to be used
 				(void) pack_fwrite(frets, (long)sizeof(frets), fp);	//Write 0 data for the note's fret array (legacy notes pasted into a pro guitar track will be played open by default)
+				(void) pack_fwrite(finger, (long)sizeof(finger), fp);	//Write 0 data for the note's finger array (legacy notes pasted into a pro guitar track will have no fingering by default)
 				(void) pack_iputl(0, fp);	//Write a blank ghost bitmask (no strings are ghosted by default)
+				(void) pack_putc(0, fp);	//Write a blank bend strength
+				(void) pack_putc(0, fp);	//Write a blank slide end position
 			}
 		}
 	}
@@ -1368,12 +1375,15 @@ int eof_menu_edit_paste_logic(int oldpaste)
 			}
 		}//If the note fits within the chart
 
-		/* process fret values */
+		/* process pro guitar data */
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If the track being pasted into is a pro guitar track
 			eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->legacymask = temp_note.legacymask;							//Copy the legacy bitmask to the last created pro guitar note
 			memcpy(eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->frets, temp_note.frets, sizeof(temp_note.frets));	//Copy the fret array to the last created pro guitar note
+			memcpy(eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->finger, temp_note.finger, sizeof(temp_note.finger));	//Copy the finger array to the last created pro guitar note
 			eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->ghost = temp_note.ghostmask;								//Copy the ghost bitmask to the last created pro guitar note
+			eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->bendstrength = temp_note.bendstrength;						//Copy the bend height to the last created pro guitar note
+			eof_song->pro_guitar_track[tracknum]->note[eof_song->pro_guitar_track[tracknum]->notes - 1]->slideend = temp_note.slideend;								//Copy the slide end position to the last created pro guitar note
 			if(eof_song->track[sourcetrack]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If a non pro guitar note is being pasted into a pro guitar track
 				unsigned char legacymask = temp_note.note & 31;	//Determine the appropriate legacy mask to apply (drop lane 6)
@@ -2593,9 +2603,9 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 		}
 		else
 		{	//If it is pasting into a pro guitar track
-			if(*flags & EOF_NOTE_FLAG_F_HOPO)
-			{	//If the forced HOPO flag is set (ie. note is from a legacy track)
-				*flags &= ~EOF_NOTE_FLAG_F_HOPO;	//Clear that flag
+			if((*flags & EOF_NOTE_FLAG_F_HOPO) && (eof_song->track[sourcetrack]->track_format == EOF_LEGACY_TRACK_FORMAT))
+			{	//If the forced HOPO flag is set (the note is from a legacy track)
+				*flags &= ~EOF_NOTE_FLAG_F_HOPO;		//Clear that flag
 				*flags |= EOF_PRO_GUITAR_NOTE_FLAG_HO;	//Set the pro guitar hammer on flag
 			}
 			if((*flags & EOF_PRO_GUITAR_NOTE_FLAG_HO) && (*flags & EOF_PRO_GUITAR_NOTE_FLAG_PO))
@@ -2760,7 +2770,7 @@ void eof_menu_paste_read_clipboard_note(PACKFILE * fp, EOF_EXTENDED_NOTE *temp_n
 
 	/* read the note */
 	(void) eof_load_song_string_pf(temp_note->name, fp, sizeof(temp_note->name));	//Read the note's name
-	temp_note->note = pack_igetl(fp);	//Read the note fret values
+	temp_note->note = pack_igetl(fp);	//Read the note bitmask value
 	temp_note->pos = pack_igetl(fp);		//Read the note's position relative to within the selection
 	(void) pack_fread(&temp_note->porpos, (long)sizeof(float), fp);	//Read the percent representing the note's start position within a beat
 	(void) pack_fread(&temp_note->porendpos, (long)sizeof(float), fp);	//Read the percent representing the note's end position within a beat
@@ -2770,7 +2780,10 @@ void eof_menu_paste_read_clipboard_note(PACKFILE * fp, EOF_EXTENDED_NOTE *temp_n
 	temp_note->flags = pack_igetl(fp);	//Read the note's flags
 	temp_note->legacymask = pack_igetl(fp);		//Read the note's legacy bitmask
 	(void) pack_fread(temp_note->frets, (long)sizeof(temp_note->frets), fp);	//Read the note's fret array
-	temp_note->ghostmask = pack_igetl(fp);				//Read the note's ghost bitmask
+	(void) pack_fread(temp_note->finger, (long)sizeof(temp_note->finger), fp);	//Read the note's finger array
+	temp_note->ghostmask = pack_igetl(fp);		//Read the note's ghost bitmask
+	temp_note->bendstrength = pack_getc(fp);	//Read the note's bend strength
+	temp_note->slideend = pack_getc(fp);		//Read the note's slide end position
 }
 
 unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long track_behavior, unsigned long notemask)
