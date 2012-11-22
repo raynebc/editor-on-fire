@@ -115,7 +115,7 @@ DIALOG eof_all_sections_dialog[] =
 {
    /* (proc)                    (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                            (dp2) (dp3) */
    { d_agup_window_proc,         0,   48,  500, 234, 2,   23,  0,    0,      0,   0,   "Is this the right language?", NULL, NULL },
-   { d_agup_list_proc,           12,  84,  475, 140, 2,   23,  0,    0,      0,   0,   eof_sections_list_all,         NULL, NULL },
+   { d_agup_list_proc,           12,  84,  475, 140, 2,   23,  0,    0,      0,   0,   (void *)eof_sections_list_all, NULL, NULL },
    { d_agup_button_proc,         12,  237, 50, 28,  2,   23,  'Y',  D_EXIT, 0,   0,    "&Yes",                        NULL, NULL },
    { d_agup_button_proc,         95,  237, 50, 28,  2,   23,  'N',  D_EXIT, 0,   0,    "&No",                         NULL, NULL },
    { d_agup_button_proc,         178, 237, 50, 28,  2,   23,  'S',  D_EXIT, 0,   0,    "&Skip",                       NULL, NULL },

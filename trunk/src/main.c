@@ -165,6 +165,7 @@ EOF_LYRIC   eof_pen_lyric;
 char        eof_filename[1024] = {0};	//The full path of the EOF file that is loaded
 char        eof_song_path[1024] = {0};
 char        eof_songs_path[1024] = {0};
+char        eof_rs_toolkit_path[1024] = {0};
 char        eof_last_ogg_path[1024] = {0};
 char        eof_last_eof_path[1024] = {0};
 char        eof_loaded_song_name[1024] = {0};

@@ -48,8 +48,9 @@ int eof_menu_file_display(void);
 int eof_menu_file_controllers(void);
 int eof_menu_file_song_folder(void);
 int eof_menu_file_link(char application);	//Prompts the user for an executable and song path, if application is 1, they are stored as a link to FoF, otherwise as a link to Phase Shift
-int eof_menu_file_link_fof(void);	//Calls eof_menu_file_link() to link to FoF
-int eof_menu_file_link_ps(void);	//Calls eof_menu_file_link() to link to Phase Shift
+int eof_menu_file_link_fof(void);			//Calls eof_menu_file_link() to link to FoF
+int eof_menu_file_link_ps(void);			//Calls eof_menu_file_link() to link to Phase Shift
+int eof_menu_file_link_rs_toolkit(void);	//Prompts the user to browse to a folder containing the Rocksmith toolkit command line tools
 int eof_menu_file_exit(void);
 int eof_menu_file_gh_import(void);	//Prompt for a Guitar Hero chart file and import it
 

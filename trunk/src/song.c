@@ -483,18 +483,12 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 					tp->note[i-1]->flags = flags | tp->note[next]->flags;	//Merge the flags
 					eof_legacy_track_delete_note(tp, next);			//Delete the next note, as it has been merged with this note
 				}
-				else if(tp->note[i-1]->pos + tp->note[i-1]->length > tp->note[next]->pos - eof_min_note_distance)
-				{	//Otherwise if it does not end at least the configured minimum distance before the next note starts
-					if(!(tp->note[i-1]->flags & EOF_NOTE_FLAG_CRAZY) || (tp->note[i-1]->note & tp->note[next]->note))
-					{	//Truncate the tail if the note is not marked as "crazy" or if the note overlaps a gem in the same lane
-						if(tp->note[next]->pos - tp->note[i-1]->pos > eof_min_note_distance)
-						{	//If there is enough distance between the notes to accommodate the minimum distance
-							tp->note[i-1]->length = tp->note[next]->pos - tp->note[i-1]->pos - eof_min_note_distance;	//Apply it
-						}
-						else
-						{	//Otherwise settle for 1ms
-							tp->note[i-1]->length = 1;
-						}
+				else
+				{	//Otherwise ensure on doesn't overlap the other improperly
+					unsigned long maxlength = eof_get_note_max_length(sp, track, i - 1);	//Determine the maximum length for this note, taking its crazy status into account
+					if(maxlength && (eof_get_note_length(sp, track, i - 1) > maxlength))
+					{	//If the note is longer than its maximum length
+						eof_set_note_length(sp, track, i - 1, maxlength);	//Truncate it to its valid maximum length
 					}
 				}
 			}
@@ -3787,7 +3781,7 @@ long eof_get_prev_note_type_num(EOF_SONG *sp, unsigned long track, unsigned long
 
 void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 {
-	unsigned long i, ctr, bitmask, tracknum;
+	unsigned long i, ctr, bitmask, tracknum, maxlength;
 	unsigned char fretvalue;
 	long next;
 	char allmuted;	//Used to track whether all used strings are string muted
@@ -3862,7 +3856,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 			if(next >= 0)
 			{	//If there is another note in this track
 				if(tp->note[i-1]->pos == tp->note[next]->pos)
-				{	//If this note and the next are at the same position
+				{	//If this note and the next are at the same position, merge them
 					tp->note[i-1]->note |= tp->note[next]->note;	//Merge the two notes' bitmasks
 					for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask<<=1)
 					{	//For each of the next note's 6 usable strings
@@ -3873,18 +3867,12 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 					}
 					eof_pro_guitar_track_delete_note(tp, next);
 				}
-				else if(tp->note[i-1]->pos + tp->note[i-1]->length > tp->note[next]->pos - eof_min_note_distance)
-				{	//Otherwise if it does not end at least the configured minimum distance before the next note starts
-					if(!(tp->note[i-1]->flags & EOF_NOTE_FLAG_CRAZY) || (tp->note[i-1]->note & tp->note[next]->note))
-					{	//Truncate the tail if the note is not marked as "crazy" or if the note overlaps a gem in the same lane
-						if(tp->note[next]->pos - tp->note[i-1]->pos > eof_min_note_distance)
-						{	//If there is enough distance between the notes to accommodate the minimum distance
-							tp->note[i-1]->length = tp->note[next]->pos - tp->note[i-1]->pos - eof_min_note_distance;	//Apply it
-						}
-						else
-						{	//Otherwise settle for 1ms
-							tp->note[i-1]->length = 1;
-						}
+				else
+				{	//Otherwise ensure on doesn't overlap the other improperly
+					maxlength = eof_get_note_max_length(sp, track, i - 1);	//Determine the maximum length for this note, taking its crazy status into account
+					if(maxlength && (eof_get_note_length(sp, track, i - 1) > maxlength))
+					{	//If the note is longer than its maximum length
+						eof_set_note_length(sp, track, i - 1, maxlength);	//Truncate it to its valid maximum length
 					}
 				}
 			}
@@ -5642,6 +5630,47 @@ void eof_truncate_chart(EOF_SONG *sp)
 			{	//If this beat is beyond the end of the populated chart and the audio
 				eof_song_delete_beat(sp, ctr - 1);	//Remove it from the end of the chart
 			}
+		}
+	}
+}
+
+unsigned long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	long next = note;
+	unsigned long thisflags, thispos, nextpos;
+	unsigned char thisnote, nextnote;
+
+	if(!sp || (track >= sp->tracks))
+		return 0;	//Return error
+
+	thisflags = eof_get_note_flags(sp, track, note);	//Get the note's flags so it can be checked for "crazy" status
+	thisnote = eof_get_note_note(sp, track, note);		//Also get its note bitflag
+	while(1)
+	{
+		next = eof_fixup_next_note(sp, track, next);	//Find the next note that follows the specified note
+		if(next < 0)
+		{	//If there was no next note
+			return ULONG_MAX;	//This note has no length limit
+		}
+
+		nextnote = eof_get_note_note(sp, track, next);	//Get the next note's note bitflag
+		if(thisflags & EOF_NOTE_FLAG_CRAZY)
+		{	//If this is a crazy note, it is not limited by the next note unless the next note has any lanes in common
+			if((thisnote & nextnote) == 0)
+			{	//If this note and the next have no lanes in common
+				continue;	//Compare with the next note in another loop iteration instead
+			}
+		}
+
+		thispos = eof_get_note_pos(sp, track, note);	//Get the note's position
+		nextpos = eof_get_note_pos(sp, track, next);	//And the next note's
+		if(nextpos - thispos <= eof_min_note_distance)
+		{	//If the notes aren't far enough apart to enforce the minimum note distance
+			return 1;
+		}
+		else
+		{
+			return (nextpos - thispos - eof_min_note_distance);
 		}
 	}
 }
