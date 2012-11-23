@@ -45,8 +45,8 @@ SAMPLE * create_silence_sample(unsigned long ms)
 	{
 		bits = 16;
 		stereo = 1;
-		freq = 41000;
-		samples = ms * freq / 1000;
+		freq = 44100;
+		samples = (double)(ms * freq) / 1000.0;
 		channels = 2;
 	}
 
@@ -501,4 +501,78 @@ int eof_add_silence_recode_mp3(const char * oggfn, unsigned long ms)
 	}
 	eof_fix_window_title();
 	return 1;
+}
+
+int save_wav_with_silence_appended(const char * fn, SAMPLE * sp, unsigned long ms)
+{
+	unsigned long i, samples, channels, index = 0;
+	SAMPLE * silence, * combined;
+	int retval;
+
+ 	eof_log("save_wav_with_silence_appended() entered", 1);
+
+	if(!fn || !sp)
+		return 0;	//Invalid parameters
+
+	if(!ms)
+	{	//If the calling function specified writing the WAV with no silence appended
+		return save_wav(fn, sp);	//Write the audio normally
+	}
+
+	//Generate the silent audio to conform to the input sample's specifications
+	samples = (double)ms * (double)sp->freq / 1000.0;
+	channels = sp->stereo ? 2 : 1;
+	silence = create_sample(sp->bits, sp->stereo, sp->freq, samples);
+	if(!silence)
+		return 0;	//Return failure
+	if(sp->bits == 8)
+	{
+		for(i = 0; i < samples * channels; i++)
+		{
+			((unsigned char *)(silence->data))[i] = 0x80;
+		}
+	}
+	else
+	{
+		for(i = 0; i < samples * channels; i++)
+		{
+			((unsigned short *)(silence->data))[i] = 0x8000;
+		}
+	}
+
+	//Combine the input audio and silence
+	combined = create_sample(sp->bits, sp->stereo, sp->freq, sp->len + samples);
+	if(!combined)
+	{
+		free(silence);
+		return 0;	//Return failure
+	}
+	if(sp->bits == 8)
+	{
+		for(i = 0; i < sp->len * channels; i++)
+		{	//For each sample in the input audio
+			((unsigned char *)(combined->data))[index++] = ((unsigned char *)(sp->data))[i];	//Copy it into the combined audio sample
+		}
+		for(i = 0; i < silence->len * channels; i++)
+		{	//For each sample in the silent audio
+			((unsigned char *)(combined->data))[index++] = ((unsigned char *)(silence->data))[i];	//Copy it into the combined audio sample
+		}
+	}
+	else
+	{
+		for(i = 0; i < sp->len * channels; i++)
+		{	//For each sample in the input audio
+			((unsigned short *)(combined->data))[index++] = ((unsigned short *)(sp->data))[i];	//Copy it into the combined audio sample
+		}
+		for(i = 0; i < silence->len * channels; i++)
+		{	//For each sample in the silent audio
+			((unsigned short *)(combined->data))[index++] = ((unsigned short *)(silence->data))[i];	//Copy it into the combined audio sample
+		}
+	}
+
+	//Write the combined audio to file and return
+	retval = save_wav(fn, combined);	//Write the combined audio
+	free(combined);
+	free(silence);
+	return retval;
 }

@@ -102,15 +102,16 @@ DIALOG eof_events_dialog[] =
 DIALOG eof_all_events_dialog[] =
 {
    /* (proc)                    (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-   { d_agup_window_proc,         0,   48,  500, 250, 2,   23,  0,    0,      0,   0,   "All Events",         NULL, NULL },
+   { d_agup_window_proc,         0,   48,  500, 266, 2,   23,  0,    0,      0,   0,   "All Events",           NULL, NULL },
    { d_agup_list_proc,           12,  84,  475, 140, 2,   23,  0,    0,      0,   0,   (void *)eof_events_list_all,  NULL, NULL },
-   { d_agup_button_proc,         12,  257, 75,  28,  2,   23,  'f',  D_EXIT, 0,   0,   "&Find",              NULL, NULL },
-   { d_agup_button_proc,         100, 257, 75,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",               NULL, NULL },
-   { d_agup_button_proc,         187, 257, 150, 28,  2,   23,  0,    D_EXIT, 0,   0,   "Copy to selected beat", NULL, NULL },
-   { eof_all_events_radio_proc,	 349, 243, 85,  15,  2,   23,  0, D_SELECTED,0,   0,   "All Events",         (void *)5,    NULL },	//Use dp2 to store the object number, for use in eof_all_events_radio_proc()
-   { eof_all_events_radio_proc,	 349, 259, 142, 15,  2,   23,  0,    0,      0,   0,   "This Track's Events",(void *)6,    NULL },
-   { eof_all_events_radio_proc,	 349, 275, 112, 15,  2,   23,  0,    0,      0,   0,   "Section Events",     (void *)7,    NULL },
-   { d_agup_text_proc,           12,  228, 64,  8,   2,   23,  0,    0,      0,   0,   ""      ,             NULL, NULL },
+   { d_agup_button_proc,         12,  273, 70,  28,  2,   23,  'f',  D_EXIT, 0,   0,   "&Find",                NULL, NULL },
+   { d_agup_button_proc,         95,  273, 70,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",                 NULL, NULL },
+   { d_agup_button_proc,         182, 273, 150, 28,  2,   23,  0,    D_EXIT, 0,   0,   "Copy to selected beat",NULL, NULL },
+   { eof_all_events_radio_proc,	 340, 243, 85,  15,  2,   23,  0, D_SELECTED,0,   0,   "All Events",           (void *)5,    NULL },	//Use dp2 to store the object number, for use in eof_all_events_radio_proc()
+   { eof_all_events_radio_proc,	 340, 259, 142, 15,  2,   23,  0,    0,      0,   0,   "This Track's Events",  (void *)6,    NULL },
+   { eof_all_events_radio_proc,	 340, 275, 152, 15,  2,   23,  0,    0,      0,   0,   "Sections (RS phrases)",(void *)7,    NULL },
+   { eof_all_events_radio_proc,	 340, 291, 152, 15,  2,   23,  0,    0,      0,   0,   "RS sections",          (void *)8,    NULL },
+   { d_agup_text_proc,           12,  228, 64,  8,   2,   23,  0,    0,      0,   0,   ""      ,                NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -952,11 +953,11 @@ int eof_menu_beat_all_events(void)
 	eof_all_events_dialog[1].d1 = 0;
 	if(eof_events_overridden_by_stored_MIDI_track(eof_song))
 	{	//If there is a stored events track
-		eof_all_events_dialog[8].dp = stored_event_track_notice;	//Add a warning to the dialog
+		eof_all_events_dialog[9].dp = stored_event_track_notice;	//Add a warning to the dialog
 	}
 	else
 	{
-		eof_all_events_dialog[8].dp = no_notice;	//Otherwise remove the warning
+		eof_all_events_dialog[9].dp = no_notice;	//Otherwise remove the warning
 	}
 	while(1)
 	{	//Until the user closes the dialog
@@ -1124,12 +1125,22 @@ char * eof_events_list_all(int index, int * size)
 				}
 			}
 		}
-		else
+		else if(eof_all_events_dialog[7].flags & D_SELECTED)
 		{	//Display section events
 			for(x = 0; x < eof_song->text_events; x++)
 			{	//For each event
 				if(eof_is_section_marker(eof_song->text_event[x], 0))
 				{	//If the text event's string or flags indicate a section marker (regardless of the event's associated track
+					count++;
+				}
+			}
+		}
+		else
+		{	//Display Rocksmith sections
+			for(x = 0; x < eof_song->text_events; x++)
+			{	//For each event
+				if(eof_song->text_event[x]->flags & EOF_EVENT_FLAG_RS_SECTION)
+				{	//If the event is marked as a Rocksmith section
 					count++;
 				}
 			}
@@ -1626,13 +1637,14 @@ int eof_all_events_radio_proc(int msg, DIALOG *d, int c)
 
 		if(selected_option != previous_option)
 		{	//If the event display filter changed, have the event list redrawn
-			eof_all_events_dialog[5].flags = eof_all_events_dialog[6].flags = eof_all_events_dialog[7].flags = 0;	//Clear all radio buttons
-			eof_all_events_dialog[selected_option].flags = D_SELECTED;	//Reselect the radio button that was just clicked on
+			eof_all_events_dialog[5].flags = eof_all_events_dialog[6].flags = eof_all_events_dialog[7].flags = eof_all_events_dialog[8].flags = 0;	//Clear all radio buttons
+			eof_all_events_dialog[selected_option].flags = D_SELECTED;			//Re-select the radio button that was just clicked on
 			(void) object_message(&eof_all_events_dialog[1], MSG_DRAW, 0);		//Have Allegro redraw the list of events
 			(void) object_message(&eof_all_events_dialog[5], MSG_DRAW, 0);		//Have Allegro redraw the radio buttons
 			(void) object_message(&eof_all_events_dialog[6], MSG_DRAW, 0);
 			(void) object_message(&eof_all_events_dialog[7], MSG_DRAW, 0);
 			(void) object_message(&eof_all_events_dialog[8], MSG_DRAW, 0);
+			(void) object_message(&eof_all_events_dialog[9], MSG_DRAW, 0);		//Have Allegro redraw the event override string
 			previous_option = selected_option;
 		}
 	}
@@ -1661,12 +1673,26 @@ unsigned long eof_retrieve_text_event(unsigned long index)
 			}
 		}
 	}
-	else
+	else if(eof_all_events_dialog[7].flags & D_SELECTED)
 	{	//Display section events
 		for(x = 0; x < eof_song->text_events; x++)
 		{	//For each event
 			if(eof_is_section_marker(eof_song->text_event[x], 0))
 			{	//If the text event's string or flags indicate a section marker (regardless of the event's associated track)
+				if(count == index)
+				{	//If the requested event was found
+					return x;
+				}
+				count++;
+			}
+		}
+	}
+	else
+	{	//Display Rocksmith sections
+		for(x = 0; x < eof_song->text_events; x++)
+		{	//For each event
+			if(eof_song->text_event[x]->flags & EOF_EVENT_FLAG_RS_SECTION)
+			{	//If the event is marked as a Rocksmith section
 				if(count == index)
 				{	//If the requested event was found
 					return x;

@@ -50,9 +50,11 @@
 #define EOF_INPUT_GUITAR_STRUM 5
 #define EOF_INPUT_FEEDBACK     6
 
+#define EOF_NUM_COLOR_SETS     4
 #define EOF_COLORS_DEFAULT     0
 #define EOF_COLORS_RB          1
 #define EOF_COLORS_GH          2
+#define EOF_COLORS_RS          3
 
 #define EOF_MAX_IMAGES 80
 
@@ -294,6 +296,7 @@ extern int         eof_write_rs_files;
 extern int         eof_add_new_notes_to_selection;
 extern int         eof_drum_modifiers_affect_all_difficulties;
 extern int         eof_fb_seek_controls;
+extern int         eof_new_note_length_1ms;
 extern int         eof_min_note_length;
 extern int         eof_min_note_distance;
 extern int         eof_render_bass_drum_in_lane;
