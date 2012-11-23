@@ -80,7 +80,11 @@ Note and Beat Editing:
 
     Right-Click/Insert (notes):
 
-        Add a new note to the song
+        Add a new note to the song, if Classic, Piano Roll
+        or Hold input methods are used.  If SHIFT is held
+        while clicking, a newly created note is given a
+        a length of 1 millisecond, otherwise the length is
+        determined by the current grid snap setting.
     
 
     Left-Click (notes):

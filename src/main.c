@@ -110,6 +110,7 @@ int         eof_write_rs_files = 0;				//If nonzero, extra files are written dur
 int         eof_add_new_notes_to_selection = 0;	//If nonzero, newly added gems cause notes to be added to the selection instead of the selection being cleared first
 int         eof_drum_modifiers_affect_all_difficulties = 1;	//If nonzero, a drum modifier (ie. open/pedal hi hat or rim shot apply to any notes at the same position in non active difficulties)
 int         eof_fb_seek_controls = 0;			//If nonzero, the page up/dn keys have their seek directions reversed, and up/down seek forward/backward
+int         eof_new_note_length_1ms;			//If nonzero, newly created notes are initialized to a length of 1ms instead of the regular grid snap based logic
 int         eof_min_note_length = 0;			//Specifies the user-configured minimum length for all non-drum notes (for making Guitar Hero customs, is set to 0 if undefined)
 int         eof_min_note_distance = 3;			//Specifies the user-configured minimum distance between notes (to avoid problems with timing conversion leading to precision loss that can cause notes to combine/drop)
 int         eof_render_bass_drum_in_lane = 0;	//If nonzero, the 3D rendering will draw bass drum gems in a lane instead of as a bar spanning all lanes
@@ -1288,13 +1289,23 @@ int eof_load_ogg_quick(char * filename)
 		if(eof_music_track)
 		{
 			loaded = 1;
-			if(alogg_get_wave_freq_ogg(eof_music_track) != 44100)
-			{
-				allegro_message("OGG sampling rate is not 44.1khz.\nSong may not play back at the\ncorrect speed in FOF.");
+			if(!eof_write_rb_files)
+			{	//If not authoring for Rocksmith
+				if(alogg_get_wave_freq_ogg(eof_music_track) != 44100)
+				{
+					allegro_message("OGG sampling rate is not 44.1khz.\nSong may not play back at the\ncorrect speed in FOF.");
+				}
+				if(!alogg_get_wave_is_stereo_ogg(eof_music_track))
+				{
+					allegro_message("OGG is not stereo.\nSong may not play back\ncorrectly in FOF.");
+				}
 			}
-			if(!alogg_get_wave_is_stereo_ogg(eof_music_track))
-			{
-				allegro_message("OGG is not stereo.\nSong may not play back\ncorrectly in FOF.");
+			else
+			{	//If authoring for Rocksmith
+				if(alogg_get_wave_freq_ogg(eof_music_track) != 48000)
+				{
+					allegro_message("OGG sampling rate is not 48khz.\nThe audio will need to be re-sampled before or during the process of preparing it for use in Rocksmith with Wwise");
+				}
 			}
 		}
 	}
@@ -1373,13 +1384,23 @@ int eof_load_ogg(char * filename, char silence_failover)
 		if(eof_music_track)
 		{
 			loaded = 1;
-			if(alogg_get_wave_freq_ogg(eof_music_track) != 44100)
-			{
-				allegro_message("OGG sampling rate is not 44.1khz.\nSong may not play back at the\ncorrect speed in FOF.");
+			if(!eof_write_rb_files)
+			{	//If not authoring for Rocksmith
+				if(alogg_get_wave_freq_ogg(eof_music_track) != 44100)
+				{
+					allegro_message("OGG sampling rate is not 44.1khz.\nSong may not play back at the\ncorrect speed in FOF.");
+				}
+				if(!alogg_get_wave_is_stereo_ogg(eof_music_track))
+				{
+					allegro_message("OGG is not stereo.\nSong may not play back\ncorrectly in FOF.");
+				}
 			}
-			if(!alogg_get_wave_is_stereo_ogg(eof_music_track))
-			{
-				allegro_message("OGG is not stereo.\nSong may not play back\ncorrectly in FOF.");
+			else
+			{	//If authoring for Rocksmith
+				if(alogg_get_wave_freq_ogg(eof_music_track) != 48000)
+				{
+					allegro_message("OGG sampling rate is not 48khz.\nThe audio will need to be re-sampled before or during the process of preparing it for use in Rocksmith with Wwise");
+				}
 			}
 			eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
 			eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
@@ -4540,8 +4561,8 @@ void eof_set_color_set(void)
 		eof_colors[4] = eof_color_purple_struct;
 		eof_colors[5] = eof_color_orange_struct;
 	}
-	else if(eof_color_set == EOF_COLORS_RB)
-	{	//If user is using the Rock Band color set
+	else if((eof_color_set == EOF_COLORS_RB) || (eof_color_set == EOF_COLORS_RS))
+	{	//If user is using the Rock Band or Rocksmith color set
 		if(eof_selected_track == EOF_TRACK_DRUM)
 		{	//If the drum track is active
 			eof_colors[0] = eof_color_orange_struct;
@@ -4553,12 +4574,24 @@ void eof_set_color_set(void)
 		}
 		else if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar/bass track is active
-			eof_colors[0] = eof_color_red_struct;
-			eof_colors[1] = eof_color_green_struct;
-			eof_colors[2] = eof_color_orange_struct;
-			eof_colors[3] = eof_color_blue_struct;
-			eof_colors[4] = eof_color_yellow_struct;
-			eof_colors[5] = eof_color_purple_struct;
+			if(eof_color_set == EOF_COLORS_RB)
+			{	//If the user is using the Rock Band color set
+				eof_colors[0] = eof_color_red_struct;
+				eof_colors[1] = eof_color_green_struct;
+				eof_colors[2] = eof_color_orange_struct;
+				eof_colors[3] = eof_color_blue_struct;
+				eof_colors[4] = eof_color_yellow_struct;
+				eof_colors[5] = eof_color_purple_struct;
+			}
+			else
+			{	//The user is using the Rocksmith color set
+				eof_colors[0] = eof_color_red_struct;
+				eof_colors[1] = eof_color_yellow_struct;
+				eof_colors[2] = eof_color_blue_struct;
+				eof_colors[3] = eof_color_orange_struct;
+				eof_colors[4] = eof_color_green_struct;
+				eof_colors[5] = eof_color_purple_struct;
+			}
 		}
 		else
 		{	//All other tracks use the generic Rock Band color set

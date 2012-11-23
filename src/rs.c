@@ -283,7 +283,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	numdifficulties = populated[0] + populated[1] + populated[2] + populated[3];
 	if(!numdifficulties)
 	{
-		eof_log("Cannot export this track in Rocksmith format, it has no populated difficulties", 1);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Cannot export track \"%s\"in Rocksmith format, it has no populated difficulties", sp->track[track]->name);
+		eof_log(eof_log_string, 1);
 		return 0;	//Return failure
 	}
 
@@ -803,15 +804,10 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		if(rstoolkitfp)
 		{
 			//Build the path to xml2sng.exe
-			(void) ustrncpy(syscommand, eof_rs_toolkit_path, (int)sizeof(syscommand) - 1);
-			(void) snprintf(syscommand, sizeof(syscommand), "\"%s", eof_rs_toolkit_path);
-			put_backslash(syscommand);	//Use the OS' appropriate file separator character
-			(void) append_filename(syscommand, syscommand, "xml2sng.exe", (int)sizeof(syscommand) - 1);	//Build the path to the xml2sng utility
-			(void) ustrncat(syscommand, "\"", (int)sizeof(syscommand) - 1);	//Place the closing quote mark
-
-///This logic to check if the executable file exists doesn't work, even though the logged path is ultimately verified to be correct
-/*
-			if(!exists(syscommand))
+			(void) ustrncpy(temp, eof_rs_toolkit_path, (int)sizeof(temp) - 1);
+			put_backslash(temp);	//Use the OS' appropriate file separator character
+			(void) append_filename(temp, temp, "xml2sng.exe", (int)sizeof(temp) - 1);	//Build the path to the xml2sng utility
+			if(!exists(temp))
 			{	//If xml2sng.exe was not found at the expected path
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  xml2sng.exe is not present at the linked path (%s).  Please re-link the Rocksmith toolkit to the correct folder", syscommand);
 				eof_log(eof_log_string, 1);
@@ -819,15 +815,14 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 				eof_rs_toolkit_path[0] = '\0';	//Clear this path since it is not correct
 				return 1;
 			}
-*/
+
 			//Build the path to the output file
 			(void) replace_extension(sngfilename, fn, "sng", (int)sizeof(sngfilename) - 1);	//Just use the output XML file's path, chaning the extension to SNG
 
 			//Build the command to pass to xml2sng
-			(void) snprintf(temp, sizeof(temp) - 1, " -i \"%s\" -o \"%s\" --tuning=%d,%d,%d,%d,%d,%d", fn, sngfilename, tp->tuning[0], tp->tuning[1], tp->tuning[2], tp->tuning[3], tp->tuning[4], tp->tuning[5]);
+			(void) snprintf(syscommand, sizeof(syscommand) - 1, "\"%s\" -i \"%s\" -o \"%s\" --tuning=%d,%d,%d,%d,%d,%d", temp, fn, sngfilename, tp->tuning[0], tp->tuning[1], tp->tuning[2], tp->tuning[3], tp->tuning[4], tp->tuning[5]);
 
-			//Build and run the full command line
-			(void) ustrncat(syscommand, temp, (int)sizeof(syscommand) - 1);
+			//Build the full command line
 			syscommand[sizeof(syscommand) - 1] = '\0';	//Ensure the command string is terminated
 			eof_log("\tRS:  Calling Rocksmith toolkit with the following command:", 1);
 			eof_log(syscommand, 1);

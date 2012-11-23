@@ -21,6 +21,7 @@
 #include "../mix.h"
 #include "../tuning.h"
 #include "../rs.h"
+#include "../silence.h"	//For save_wav_with_silence_appended
 #include "file.h"
 #include "song.h"
 #include "edit.h"	//For eof_menu_edit_undo()
@@ -103,7 +104,7 @@ DIALOG eof_preferences_dialog[] =
    { eof_verified_edit_proc,170,185,30,20,  0,   0,   0,    0,      3,   0,   eof_etext2,     "0123456789", NULL },
    { d_agup_text_proc,  248, 185, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note length (ms):",NULL,NULL },
    { eof_verified_edit_proc,392,185,30,20,  0,   0,   0,    0,      3,   0,   eof_etext,     "0123456789", NULL },
-   { d_agup_check_proc, 248, 222, 220, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
+   { d_agup_check_proc, 248, 222, 214, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
    { d_agup_check_proc, 248, 238, 184, 16,  2,   23,  0,    0,      1,   0,   "Use dB style seek controls",NULL, NULL },
    { d_agup_text_proc,  24,  222, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
    { d_agup_list_proc,  16,  240, 100, 110, 2,   23,  0,    0,      0,   0,   eof_input_list,        NULL, NULL },
@@ -117,6 +118,7 @@ DIALOG eof_preferences_dialog[] =
    { d_agup_radio_proc, 224, 206, 72,  16,  2,   23,  0,    0,      1,   0,   "Sections",            NULL, NULL },
    { d_agup_radio_proc, 301, 206, 78,  16,  2,   23,  0,    0,      1,   0,   "Hand pos",            NULL, NULL },
    { d_agup_radio_proc, 384, 206, 92,  16,  2,   23,  0,    0,      1,   0,   "RS sections",         NULL, NULL },
+   { d_agup_check_proc, 248, 254, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are made 1ms long",NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -930,6 +932,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[23].flags = eof_fb_seek_controls ? D_SELECTED : 0;			//Use dB style seek controls
 	eof_preferences_dialog[32].flags = eof_preferences_dialog[33].flags = eof_preferences_dialog[34].flags = eof_preferences_dialog[35].flags = 0;	//Options for what to display at top of 2D panel
 	eof_preferences_dialog[eof_2d_render_top_option].flags = D_SELECTED;
+	eof_preferences_dialog[36].flags = eof_new_note_length_1ms ? D_SELECTED : 0;		//New notes are made 1ms long
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1008,6 +1011,7 @@ int eof_menu_file_preferences(void)
 			{	//User opted to display Rocksmith sections at top of 2D panel
 				eof_2d_render_top_option = 35;
 			}
+			eof_new_note_length_1ms = (eof_preferences_dialog[36].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 29)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1037,6 +1041,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[27].d1 = EOF_COLORS_DEFAULT;		//Color set
 			eof_preferences_dialog[32].flags = D_SELECTED;			//Display note names at top of 2D panel
 			eof_preferences_dialog[33].flags = eof_preferences_dialog[34].flags = eof_preferences_dialog[35].flags = 0;	//Display sections/fret hand positions at top of 2D panel
+			eof_preferences_dialog[36].flags = 0;					//New notes are made 1ms long
 		}//If the user clicked "Default
 	}while(retval == 29);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -2326,7 +2331,31 @@ int eof_save_helper(char *destfilename)
 					EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,RS_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
 				}
 			}
+
+			//Determine if "[song name].wav" exists, if not, export the chart audio in WAV format
+			//Build target WAV file name
+			ustrncpy(eof_temp_filename, newfolderpath, sizeof(eof_temp_filename) - 1);	//Re-acquire the project's target folder
+			put_backslash(eof_temp_filename);
+			if(eof_song->tags->title[0] != '\0')
+			{	//If the chart has a defined song title
+				ustrncat(eof_temp_filename, eof_song->tags->title, sizeof(eof_temp_filename) - 1);
+			}
+			else
+			{	//Otherwise default to "guitar"
+				ustrncat(eof_temp_filename, "guitar", sizeof(eof_temp_filename) - 1);
+			}
+			ustrncat(eof_temp_filename, ".wav", sizeof(eof_temp_filename) - 1);
+			//Determine if it needs to be written, and if so, write it
+			if(!exists(eof_temp_filename))
+			{	//If the WAV file does not exist
+				SAMPLE *decoded = alogg_create_sample_from_ogg(eof_music_track);	//Create PCM data from the loaded chart audio
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Writing RS WAV file (%s)", eof_temp_filename);
+				eof_log(eof_log_string, 1);
+				save_wav_with_silence_appended(eof_temp_filename, decoded, 8000);	//Write a WAV file with it, appending 8 seconds of silence to it
+			}
 		}
+
+		/* Save INI file */
 		(void) append_filename(eof_temp_filename, newfolderpath, "song.ini", 1024);
 		(void) eof_save_ini(eof_song, eof_temp_filename);
 
@@ -2515,7 +2544,7 @@ char * eof_colors_list(int index, int * size)
 	{
 		case -1:
 		{
-			*size = 3;
+			*size = EOF_NUM_COLOR_SETS;
 			break;
 		}
 		case 0:
@@ -2530,7 +2559,10 @@ char * eof_colors_list(int index, int * size)
 		{
 			return "Guitar Hero";
 		}
-
+		case 3:
+		{
+			return "Rocksmith";
+		}
 	}
 	return NULL;
 }

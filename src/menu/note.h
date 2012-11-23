@@ -39,7 +39,8 @@ int eof_menu_note_transpose_down(void);
 int eof_menu_note_transpose_down_octave(void);	//Moves selected lyrics down one octave if possible
 int eof_menu_note_transpose_up_octave(void);	//Moves selected lyrics up one octave if possible
 int eof_menu_note_resnap(void);
-int eof_menu_note_create_bre(void);
+///Unused function
+//int eof_menu_note_create_bre(void);
 int eof_menu_note_toggle_crazy(void);
 int eof_menu_note_toggle_double_bass(void);			//Toggles the Expert+ double bass flag on selected expert bass drum notes
 int eof_menu_note_remove_double_bass(void);			//Removes the Expert+ double bass flag on selected expert bass drum notes

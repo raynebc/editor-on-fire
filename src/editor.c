@@ -1469,8 +1469,13 @@ if(key[KEY_PAUSE])
 			/* place note with default length if song is paused */
 			if(eof_music_paused)
 			{
+				long notelen = eof_snap.length;	//The default length of the new note
+				if(eof_new_note_length_1ms)
+				{	//If the new note's length is being overridden as 1ms
+					notelen = 1;
+				}
 				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-				new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, eof_music_pos - eof_av_delay, eof_snap.length, eof_note_type, NULL);
+				new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, eof_music_pos - eof_av_delay, notelen, eof_note_type, NULL);
 				if(new_note)
 				{
 					if(eof_mark_drums_as_cymbal)
@@ -2428,6 +2433,11 @@ if(key[KEY_PAUSE])
 						else
 						{	//If the user created a new note
 							unsigned long targetpos;
+							long notelen = eof_snap.length;	//The default length of the new note
+							if(eof_new_note_length_1ms)
+							{	//If the new note's length is being overridden as 1ms
+								notelen = 1;
+							}
 							if(eof_input_mode == EOF_INPUT_FEEDBACK)
 							{	//If Feedback input mode is in use, insert a single gem at the seek position
 								targetpos = eof_music_pos - eof_av_delay;
@@ -2438,7 +2448,7 @@ if(key[KEY_PAUSE])
 								targetpos = eof_pen_note.pos;
 								eof_pen_note.note ^= bitmask;
 							}
-							new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, targetpos, eof_snap.length, eof_note_type, NULL);
+							new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, targetpos, notelen, eof_note_type, NULL);
 							if(new_note)
 							{
 								if(eof_mark_drums_as_cymbal)
@@ -2740,11 +2750,11 @@ void eof_editor_drum_logic(void)
 	{
 		eof_prepare_undo(EOF_UNDO_TYPE_RECORD);
 		if(eof_entering_note_note && (eof_music_pos - eof_av_delay - eof_drums.delay < eof_entering_note_note->pos + 50))
-		{
+		{	//If altering an existing note
 			eof_entering_note_note->note |= bitmask;
 		}
 		else
-		{
+		{	//If creating a new note
 			new_note = eof_track_add_create_note(eof_song, eof_selected_track, bitmask, eof_music_pos - eof_av_delay - eof_drums.delay, 1, eof_note_type, NULL);
 			if(new_note)
 			{
@@ -3246,7 +3256,12 @@ void eof_editor_logic(void)
 								}
 								else if(note & bitmask)
 								{	//If toggling this lane on, create a new note at the hover note's position, with the same length and type as the hover note
-									if(eof_track_add_create_note(eof_song, eof_selected_track, bitmask, eof_get_note_pos(eof_song, eof_selected_track, eof_hover_note), eof_get_note_length(eof_song, eof_selected_track, eof_hover_note), eof_note_type, NULL))
+									long notelen = eof_get_note_length(eof_song, eof_selected_track, eof_hover_note);	//The default length of the new note
+									if(eof_new_note_length_1ms)
+									{	//If the new note's length is being overridden as 1ms
+										notelen = 1;
+									}
+									if(eof_track_add_create_note(eof_song, eof_selected_track, bitmask, eof_get_note_pos(eof_song, eof_selected_track, eof_hover_note), notelen, eof_note_type, NULL))
 									{	//If the new note was created successfully
 										if(eof_mark_drums_as_cymbal)
 										{	//If the user opted to make all new drum notes cymbals automatically
@@ -3281,7 +3296,12 @@ void eof_editor_logic(void)
 					}//If altering an existing note
 					else
 					{	//If creating a new note
-						new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, eof_pen_note.pos, (KEY_EITHER_SHIFT ? 1 : eof_snap.length), eof_note_type, NULL);
+						long notelen = eof_snap.length;	//The default length of the new note
+						if(KEY_EITHER_SHIFT || eof_new_note_length_1ms)
+						{	//If the new note's length is being overridden as 1ms
+							notelen = 1;
+						}
+						new_note = eof_track_add_create_note(eof_song, eof_selected_track, eof_pen_note.note, eof_pen_note.pos, notelen, eof_note_type, NULL);
 						if(KEY_EITHER_SHIFT)
 						{
 							eof_shift_used = 1;	//Track that the SHIFT key was used

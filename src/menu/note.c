@@ -2340,6 +2340,8 @@ int eof_menu_note_push_up(void)
 	return 1;
 }
 
+///Unused function
+/*
 int eof_menu_note_create_bre(void)
 {
 	unsigned long i;
@@ -2362,7 +2364,7 @@ int eof_menu_note_create_bre(void)
 		}
 	}
 
-	/* create the BRE marking note */
+	// create the BRE marking note
 	if((first_pos != 0) && (last_pos != eof_chart_length))
 	{
 		(void) eof_track_add_create_note(eof_song, eof_selected_track, 31, first_pos, last_pos - first_pos, EOF_NOTE_SPECIAL, NULL);
@@ -2374,6 +2376,7 @@ int eof_menu_note_create_bre(void)
 	}
 	return 1;
 }
+*/
 
 /* split a lyric into multiple pieces (look for ' ' characters) */
 static void eof_split_lyric(int lyric)
