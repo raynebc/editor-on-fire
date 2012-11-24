@@ -42,7 +42,7 @@ typedef struct
 	char tuning[EOF_TUNING_LENGTH];
 } EOF_TUNING_DEFINITION;
 
-#define EOF_NUM_TUNING_DEFINITIONS 16
+#define EOF_NUM_TUNING_DEFINITIONS 17
 extern EOF_TUNING_DEFINITION eof_tuning_definitions[EOF_NUM_TUNING_DEFINITIONS];
 extern char eof_tuning_unknown[];
 

@@ -47,7 +47,7 @@ EOF_TUNING_DEFINITION eof_tuning_definitions[EOF_NUM_TUNING_DEFINITIONS] =
  {"Standard tuning", 1, 5, {0,0,0,0,0}},
  {"Standard tuning", 1, 6, {0,0,0,0,0,0}},
  {"Standard tuning", 0, 6, {0,0,0,0,0,0}},
- {"D# tuning", 0, 6, {-1,-1,-1,-1,-1,-1}},
+ {"Eb tuning", 0, 6, {-1,-1,-1,-1,-1,-1}},
  {"D tuning", 0, 6, {-2,-2,-2,-2,-2,-2}},
  {"C# tuning", 0, 6, {-3,-3,-3,-3,-3,-3}},
  {"C tuning", 0, 6, {-4,-4,-4,-4,-4,-4}},
@@ -58,7 +58,8 @@ EOF_TUNING_DEFINITION eof_tuning_definitions[EOF_NUM_TUNING_DEFINITIONS] =
  {"G tuning", 0, 6, {-9,-9,-9,-9,-9,-8}},
  {"F# tuning", 0, 6, {-10,-10,-10,-10,-10,-10}},
  {"F tuning", 0, 6, {-11,-11,-11,-11,-11,-11}},
- {"Drop D tuning", 0, 6, {-2,0,0,0,0,0}}
+ {"Drop D tuning", 0, 6, {-2,0,0,0,0,0}},
+ {"Open G tuning", 0, 6, {-2,-2,0,0,0,-2}}
 };
 
 EOF_CHORD_DEFINITION eof_chord_names[EOF_NUM_DEFINED_CHORDS] =

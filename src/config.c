@@ -135,12 +135,12 @@ void eof_load_config(char * fn)
 	eof_add_new_notes_to_selection = get_config_int("preferences", "eof_add_new_notes_to_selection", 0);
 	eof_drum_modifiers_affect_all_difficulties = get_config_int("preferences", "eof_drum_modifiers_affect_all_difficulties", 1);
 	eof_fb_seek_controls = get_config_int("preferences", "eof_fb_seek_controls", 0);
-	eof_fb_seek_controls = get_config_int("preferences", "eof_fb_seek_controls", 0);
+	eof_min_note_length = get_config_int("preferences", "eof_min_note_length", 0);
 	eof_min_note_length = get_config_int("preferences", "eof_new_note_length_1ms", 0);
 	eof_min_note_distance = get_config_int("preferences", "eof_min_note_distance", 3);
 	if(eof_min_note_distance < 1)
 	{	//If the minimum note distance is invalid
-		eof_min_note_length = 3;	//Reset it to default
+		eof_min_note_distance = 3;	//Reset it to default
 	}
 	eof_render_bass_drum_in_lane = get_config_int("preferences", "eof_render_bass_drum_in_lane", 0);
 	eof_vanish_y = get_config_int("preferences", "eof_vanish_y", 0);

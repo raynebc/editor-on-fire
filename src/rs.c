@@ -798,42 +798,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 #ifdef ALLEGRO_WINDOWS
 	if(eof_rs_toolkit_path[0] != '\0')
 	{	//If the path to the Rocksmith toolkit was defined
-		char syscommand[1024] = {0}, temp[1024] = {0}, sngfilename[1024] = {0};
-		FILE *rstoolkitfp = fopen("launch_rstoolkit.bat", "wt");	//Write a batch file to launch the Rocksmith toolkit
-
-		if(rstoolkitfp)
-		{
-			//Build the path to xml2sng.exe
-			(void) ustrncpy(temp, eof_rs_toolkit_path, (int)sizeof(temp) - 1);
-			put_backslash(temp);	//Use the OS' appropriate file separator character
-			(void) append_filename(temp, temp, "xml2sng.exe", (int)sizeof(temp) - 1);	//Build the path to the xml2sng utility
-			if(!exists(temp))
-			{	//If xml2sng.exe was not found at the expected path
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  xml2sng.exe is not present at the linked path (%s).  Please re-link the Rocksmith toolkit to the correct folder", syscommand);
-				eof_log(eof_log_string, 1);
-				allegro_message("Error:  xml2sng.exe is not present at the linked path.  Please re-link the Rocksmith toolkit to the correct folder");
-				eof_rs_toolkit_path[0] = '\0';	//Clear this path since it is not correct
-				return 1;
-			}
-
-			//Build the path to the output file
-			(void) replace_extension(sngfilename, fn, "sng", (int)sizeof(sngfilename) - 1);	//Just use the output XML file's path, chaning the extension to SNG
-
-			//Build the command to pass to xml2sng
-			(void) snprintf(syscommand, sizeof(syscommand) - 1, "\"%s\" -i \"%s\" -o \"%s\" --tuning=%d,%d,%d,%d,%d,%d", temp, fn, sngfilename, tp->tuning[0], tp->tuning[1], tp->tuning[2], tp->tuning[3], tp->tuning[4], tp->tuning[5]);
-
-			//Build the full command line
-			syscommand[sizeof(syscommand) - 1] = '\0';	//Ensure the command string is terminated
-			eof_log("\tRS:  Calling Rocksmith toolkit with the following command:", 1);
-			eof_log(syscommand, 1);
-
-			//Build and launch the batch file
-			(void) eof_system(syscommand);
-			fprintf(rstoolkitfp, "%s\npause", syscommand);
-			(void) fclose(rstoolkitfp);
-			(void) eof_system("launch_rstoolkit.bat");
-			(void) delete_file("launch_rstoolkit.bat");
-		}
+		eof_rs_compile_xml(sp, fn, track);	//Compile the specified pro guitar/bass or vocal track
 	}
 #endif
 
@@ -1235,4 +1200,91 @@ unsigned long eof_get_rs_section_instance_number(EOF_SONG *sp, unsigned long eve
 	}
 
 	return count;
+}
+
+void eof_rs_compile_xml(EOF_SONG *sp, char *fn, unsigned long track)
+{
+	char syscommand[1024] = {0}, temp[1024] = {0}, sngfilename[1024] = {0};
+	FILE *rstoolkitfp;
+	unsigned long ctr;
+
+	eof_log("eof_rs_compile_xml() entered", 1);
+
+	if(!sp || !fn || !exists(fn) || (track >= sp->tracks))
+		return;	//Invalid parameters
+
+	rstoolkitfp = fopen("launch_rstoolkit.bat", "wt");	//Write a batch file to launch the Rocksmith toolkit
+	if(!rstoolkitfp)
+	{	//If the file couldn't be opened for writing
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Couldn't open XML compile batch file for writing:  \"%s\"", strerror(errno));
+		eof_log(eof_log_string, 1);
+		allegro_message("Error:  COuldn't create XML compile batch file for writing.");
+		return;
+	}
+
+	//Build the path to xml2sng.exe
+	(void) ustrncpy(temp, eof_rs_toolkit_path, (int)sizeof(temp) - 1);
+	put_backslash(temp);	//Use the OS' appropriate file separator character
+	(void) append_filename(temp, temp, "xml2sng.exe", (int)sizeof(temp) - 1);	//Build the path to the xml2sng utility
+	if(!exists(temp))
+	{	//If xml2sng.exe was not found at the expected path
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  xml2sng.exe is not present at the linked path (%s).  Please re-link the Rocksmith toolkit to the correct folder", syscommand);
+		eof_log(eof_log_string, 1);
+		allegro_message("Error:  xml2sng.exe is not present at the linked path.  Please re-link the Rocksmith toolkit to the correct folder");
+		eof_rs_toolkit_path[0] = '\0';	//Clear this path since it is not correct
+		fclose(rstoolkitfp);
+		return;
+	}
+
+	//Build the path to the output file
+	(void) replace_extension(sngfilename, fn, "sng", (int)sizeof(sngfilename) - 1);	//Just use the output XML file's path, chaning the extension to SNG
+
+	//Build the command to pass to xml2sng
+	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If the track being compiled is a pro guitar/bass track, including the tuning as a command line parameter
+		unsigned long tracknum = sp->track[track]->tracknum;
+		EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[tracknum];
+		char standard[] = {0,0,0,0,0,0};
+		char standardbass[] = {0,0,0,0};
+		char eb[] = {-1,-1,-1,-1,-1,-1};
+		char dropd[] = {-2,0,0,0,0,0};
+		char openg[] = {-2,-2,0,0,0,-2};
+
+		for(ctr = 0; ctr < 6; ctr++)
+		{	//For each string EOF supports
+			if(ctr >= tp->numstrings)
+			{	//If the track doesn't use this string
+				tp->tuning[ctr] = 0;	//Ensure the tuning is cleared accordingly
+			}
+		}
+		if(memcmp(tp->tuning, standard, 6) && memcmp(tp->tuning, standardbass, 4) && memcmp(tp->tuning, eb, 6) && memcmp(tp->tuning, dropd, 6) && memcmp(tp->tuning, openg, 6))
+		{	//If the track's tuning doesn't match any supported by Rocksmith
+			allegro_message("Warning:  This track (%s) uses a tuning that isn't one known to be supported in Rocksmith.\nTuning and note recognition may not work as expected in-game", sp->track[track]->name);
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  This track (%s) uses a tuning that isn't known to be supported in Rocksmith.  Tuning and note recognition may not work as expected in-game", sp->track[track]->name);
+			eof_log(eof_log_string, 1);
+		}
+
+		(void) snprintf(syscommand, sizeof(syscommand) - 1, "\"%s\" -i \"%s\" -o \"%s\" --tuning=%d,%d,%d,%d,%d,%d", temp, fn, sngfilename, tp->tuning[0], tp->tuning[1], tp->tuning[2], tp->tuning[3], tp->tuning[4], tp->tuning[5]);
+	}
+	else if(track == EOF_TRACK_VOCALS)
+	{	//If the track being compiled is the vocal track
+		(void) snprintf(syscommand, sizeof(syscommand) - 1, "\"%s\" -i \"%s\" -o \"%s\" --vocal", temp, fn, sngfilename);
+	}
+	else
+	{	//Other tracks are not valid for this operation
+		(void) fclose(rstoolkitfp);
+		return;
+	}
+
+	//Build the full command line
+	syscommand[sizeof(syscommand) - 1] = '\0';	//Ensure the command string is terminated
+	eof_log("\tRS:  Calling Rocksmith toolkit with the following command:", 1);
+	eof_log(syscommand, 1);
+
+	//Build and launch the batch file
+	(void) eof_system(syscommand);
+	fprintf(rstoolkitfp, "%s\npause", syscommand);
+	(void) fclose(rstoolkitfp);
+	(void) eof_system("launch_rstoolkit.bat");
+	(void) delete_file("launch_rstoolkit.bat");
 }

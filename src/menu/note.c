@@ -2340,44 +2340,6 @@ int eof_menu_note_push_up(void)
 	return 1;
 }
 
-///Unused function
-/*
-int eof_menu_note_create_bre(void)
-{
-	unsigned long i;
-	long first_pos = 0;
-	long last_pos = eof_chart_length;
-	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
-
-	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-	{	//For each note in the active track
-		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type))
-		{
-			if(eof_get_note_pos(eof_song, eof_selected_track, i) > first_pos)
-			{
-				first_pos = eof_get_note_pos(eof_song, eof_selected_track, i);
-			}
-			if(eof_get_note_pos(eof_song, eof_selected_track, i) < last_pos)
-			{
-				last_pos = eof_get_note_pos(eof_song, eof_selected_track, i);
-			}
-		}
-	}
-
-	// create the BRE marking note
-	if((first_pos != 0) && (last_pos != eof_chart_length))
-	{
-		(void) eof_track_add_create_note(eof_song, eof_selected_track, 31, first_pos, last_pos - first_pos, EOF_NOTE_SPECIAL, NULL);
-	}
-	if(note_selection_updated)
-	{	//If the only note modified was the seek hover note
-		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
-		eof_selection.current = EOF_MAX_NOTES - 1;
-	}
-	return 1;
-}
-*/
-
 /* split a lyric into multiple pieces (look for ' ' characters) */
 static void eof_split_lyric(int lyric)
 {
