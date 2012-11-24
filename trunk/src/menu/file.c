@@ -2329,6 +2329,7 @@ int eof_save_helper(char *destfilename)
 				else
 				{
 					EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,RS_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
+					eof_rs_compile_xml(eof_song, eof_temp_filename, EOF_TRACK_VOCALS);	//Compile the XML file
 				}
 			}
 

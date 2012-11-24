@@ -2396,6 +2396,7 @@ int eof_menu_song_track_tuning(void)
 				return 1;
 			}
 		}
+		memset(eof_song->pro_guitar_track[tracknum]->tuning, 0, sizeof(eof_song->pro_guitar_track[tracknum]->tuning));	//Clear the tuning array to ensure that 4 string bass tracks have the 2 unused strings cleared
 		for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->numstrings; ctr++)
 		{	//For each string in the track, store the numerical value into the track's tuning array
 			if(!undo_made && (eof_song->pro_guitar_track[tracknum]->tuning[ctr] != atol(eof_fret_strings[ctr]) % 12))

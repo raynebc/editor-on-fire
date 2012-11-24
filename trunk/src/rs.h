@@ -30,6 +30,9 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	//Writes the specified pro guitar track in Rocksmith's XML format, if the track is populated
 	//fn is expected to point to an array at least 1024 bytes in size.  It's filename is altered to reflect the track's name (ie /PART REAL_GUITAR.xml)
 	//If *user_warned is zero, the user is alerted that a track difficulty has no defined fret hand positions and they will be automatically generated, then *user_warned is set to nonzero
+void eof_rs_compile_xml(EOF_SONG *sp, char *fn, unsigned long track);
+	//Compiles the specified XML file for the specified track using the Rocksmith toolkit
+	//The ouput SNG file will be written to the input file's folder
 
 void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_made);
 	//Checks all notes in the track and duplicates finger arrays of notes with complete finger definitions to matching notes without complete finger definitions
