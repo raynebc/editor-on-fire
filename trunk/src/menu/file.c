@@ -530,7 +530,10 @@ int eof_menu_file_load_ogg(void)
 	returnedfn = ncd_file_select(0, eof_last_ogg_path, "Select OGG File", eof_filter_ogg_files);
 	eof_clear_input();
 	if(returnedfn)
-	{
+	{	//If the user selected an OGG file
+		eof_get_rocksmith_wav_path(checkfn, eof_song_path, sizeof(checkfn));	//Build the path to the WAV file written for Rocksmith during save
+		(void) delete_file(checkfn);	//Delete it, if it exists, since changing the chart's OGG will necessitate rewriting the WAV file during save
+
 		/* make sure selected file is in the same path as the current chart */
 		(void) replace_filename(checkfn, returnedfn, "", 1024);
 		(void) replace_filename(checkfn2, eof_song_path, "", 1024);
@@ -2312,7 +2315,7 @@ int eof_save_helper(char *destfilename)
 		if(eof_write_rs_files)
 		{	//If the user wants to save Rocksmith capable files
 			char user_warned = 0;	//Tracks whether the user was warned about hand positions being undefined and auto-generated during export
-			(void) append_filename(eof_temp_filename, newfolderpath, "xmlpath.xml", 1024);	//Re-acquire the project's target folder
+			(void) append_filename(eof_temp_filename, newfolderpath, "xmlpath.xml", 1024);	//Re-acquire the save's target folder
 			eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS, &user_warned);
 			eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS_22, &user_warned);
 			eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR, &user_warned);
@@ -2334,19 +2337,7 @@ int eof_save_helper(char *destfilename)
 			}
 
 			//Determine if "[song name].wav" exists, if not, export the chart audio in WAV format
-			//Build target WAV file name
-			ustrncpy(eof_temp_filename, newfolderpath, sizeof(eof_temp_filename) - 1);	//Re-acquire the project's target folder
-			put_backslash(eof_temp_filename);
-			if(eof_song->tags->title[0] != '\0')
-			{	//If the chart has a defined song title
-				ustrncat(eof_temp_filename, eof_song->tags->title, sizeof(eof_temp_filename) - 1);
-			}
-			else
-			{	//Otherwise default to "guitar"
-				ustrncat(eof_temp_filename, "guitar", sizeof(eof_temp_filename) - 1);
-			}
-			ustrncat(eof_temp_filename, ".wav", sizeof(eof_temp_filename) - 1);
-			//Determine if it needs to be written, and if so, write it
+			eof_get_rocksmith_wav_path(eof_temp_filename, newfolderpath, sizeof(eof_temp_filename));	//Build the path to the target WAV file
 			if(!exists(eof_temp_filename))
 			{	//If the WAV file does not exist
 				SAMPLE *decoded = alogg_create_sample_from_ogg(eof_music_track);	//Create PCM data from the loaded chart audio

@@ -1685,6 +1685,7 @@ void eof_read_global_keys(void)
 			clear_keybuf();
 			eof_menu_help_keys();
 			key[KEY_ESC] = 0;
+			key[KEY_F1] = 0;
 		}
 
 	/* show waveform graph (F5) */

@@ -4653,6 +4653,38 @@ void eof_render_editor_window_common(void)
 		}//If a non pro guitar/bass track is active
 	}//If the vocal track is not active
 
+	/* draw highlight markers */
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in this track
+		int markerpos;
+		notepos = eof_get_note_pos(eof_song, eof_selected_track, i);
+		notelength = eof_get_note_length(eof_song, eof_selected_track, i);
+		if((eof_note_type == eof_get_note_type(eof_song, eof_selected_track, i)) && (notepos + notelength >= start) && (notepos <= stop))
+		{	//If this note is in the selected instrument difficulty and would render between the left and right edges of the piano roll
+			if(eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_NOTE_FLAG_HIGHLIGHT)
+			{	//If this note is flagged to be highlighted, render a yellow colored background
+				markerlength = notelength / eof_zoom;
+				if(markerlength < eof_screen_layout.note_size)
+				{	//If this marker isn't at least as wide as a note gem
+					markerlength = eof_screen_layout.note_size;	//Make it longer
+				}
+				markerpos = lpos + (notepos / eof_zoom);
+				if(notepos + notelength >= start)
+				{	//If the notes ends at or right of the left edge of the screen
+					if(markerpos <= eof_window_editor->screen->w)
+					{	//If the marker starts at or left of the right edge of the screen (is visible)
+						rectfill(eof_window_editor->screen, markerpos, EOF_EDITOR_RENDER_OFFSET + 25, markerpos + markerlength, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 1, eof_color_yellow);
+					}
+					else
+					{	//Otherwise this and all remaining undefined legacy mask markers are not visible
+						break;	//Stop rendering them
+					}
+				}
+			}
+		}
+	}
+
+
 	/* draw seek selection */
 	if(eof_seek_selection_start != eof_seek_selection_end)
 	{	//If there is a seek selection

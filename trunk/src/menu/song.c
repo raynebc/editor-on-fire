@@ -748,8 +748,8 @@ int eof_menu_song_seek_next_screen(void)
 	if(!eof_music_catalog_playback)
 	{
 		if(eof_music_pos + SCREEN_W * eof_zoom > eof_chart_length)
-		{
-			(void) eof_menu_song_seek_end();
+		{	//If the seek position is closer to the end of the chart than one more screen
+			eof_set_seek_position(eof_chart_length + eof_av_delay);	//Seek to the end of the chart
 		}
 		else
 		{

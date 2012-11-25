@@ -2160,6 +2160,16 @@ set_window_title(debugtext);
 							{	//If this note was sent over channel 5, it is a harmonic
 								sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;	//Set the harmonic flag
 							}
+							else if(eof_import_events[i]->event[j]->channel == 6)
+							{	//If this note was sent over channel 6, it is a pinch harmonic
+								sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC;	//Set the harmonic flag
+							}
+///KEEP FOR DEBUGGING
+/*							else if(eof_import_events[i]->event[j]->channel == 13)
+							{
+								sp->pro_guitar_track[tracknum]->note[notenum]->flags |= EOF_NOTE_FLAG_HIGHLIGHT;	//Set the highlight flag
+							}
+*/
 						}//If a note difficulty was identified above
 					}//Note on event
 
