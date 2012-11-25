@@ -33,6 +33,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 void eof_rs_compile_xml(EOF_SONG *sp, char *fn, unsigned long track);
 	//Compiles the specified XML file for the specified track using the Rocksmith toolkit
 	//The ouput SNG file will be written to the input file's folder
+void eof_xml_compile_failure_log(char *logfilename);
+	//Displays the specified log file, to be called if the call to xml2sng results in no SNG file having been created
 
 void eof_pro_guitar_track_fix_fingerings(EOF_PRO_GUITAR_TRACK *tp, char *undo_made);
 	//Checks all notes in the track and duplicates finger arrays of notes with complete finger definitions to matching notes without complete finger definitions
@@ -77,5 +79,10 @@ unsigned long eof_get_rs_section_instance_number(EOF_SONG *sp, unsigned long eve
 	//If the specified event's flags indicate a Rocksmith section, counts the number of matching (case sensitive) text events preceding it
 	//The instance number of the specified Rocksmith section (numbered starting with 1) is returned
 	//Upon error, or if the given event is not a Rocksmith section, 0 is returned
+
+void eof_get_rocksmith_wav_path(char *buffer, const char *parent_folder, size_t num);
+	//Builds the path to the WAV file (used for Rocksmith) that is written to specified parent folder path during save
+	//num defines the buffer's maximum size
+	//This is (song name).wav if the song title song property is defined, otherwise guitar.wav
 
 #endif

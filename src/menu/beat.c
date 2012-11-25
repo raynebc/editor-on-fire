@@ -1639,6 +1639,7 @@ int eof_all_events_radio_proc(int msg, DIALOG *d, int c)
 		{	//If the event display filter changed, have the event list redrawn
 			eof_all_events_dialog[5].flags = eof_all_events_dialog[6].flags = eof_all_events_dialog[7].flags = eof_all_events_dialog[8].flags = 0;	//Clear all radio buttons
 			eof_all_events_dialog[selected_option].flags = D_SELECTED;			//Re-select the radio button that was just clicked on
+			eof_all_events_dialog[1].d2 = 0;									//Select first list item, since if it's too high, it will prevent the newly-selected filtered list from displaying
 			(void) object_message(&eof_all_events_dialog[1], MSG_DRAW, 0);		//Have Allegro redraw the list of events
 			(void) object_message(&eof_all_events_dialog[5], MSG_DRAW, 0);		//Have Allegro redraw the radio buttons
 			(void) object_message(&eof_all_events_dialog[6], MSG_DRAW, 0);

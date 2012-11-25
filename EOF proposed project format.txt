@@ -241,7 +241,6 @@ Custom track data block definitions
 		[1 byte]	Slide ending fret (if the Rocksmith notation flag, value 33554432, is set and this note is flagged as having an up/down slide, value 4096 or 8192)
 		[1 byte]	Bend strength in half steps (if the Rocksmith notation flag, value 33554432, is set and this note is flagged as a bend, value 2097152)
 *	}
-!	It has been said that 21 pre-defined chord numbers (0-20, ie. note 9 for A5) are used in the Rock Band 3 MIDIs, this is currently unverified
 
 [PRO KEYS TRACK FORMAT]
 *	1 byte:		Tone set number assigned to this track (ie. 0=Grand Piano, 1=MIDI device, ...)
@@ -289,6 +288,7 @@ Custom track data block definitions
 *		4 bytes:	Note length (in milliseconds or delta ticks)
 *		2 bytes:	Note flags (among other specialized flags, DTXMania supposedly tracks whether hi-hat is open/closed)
 *	}
+!For the next variation of the format, have a 4 byte common flags variable that all track formats use, and then a 4 byte flags variable with statuses that are specific to each format
 
 
 !NOTES:

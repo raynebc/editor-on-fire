@@ -1,4 +1,8 @@
+#include <allegro.h>
+#include <time.h>
+#include "agup/agup.h"
 #include "beat.h"
+#include "dialog.h"
 #include "event.h"
 #include "main.h"
 #include "midi.h"
@@ -7,7 +11,6 @@
 #include "undo.h"
 #include "utility.h"	//For eof_system()
 #include "menu/song.h"	//For eof_fret_hand_position_list_dialog_undo_made and eof_fret_hand_position_list_dialog[]
-#include <time.h>
 
 #ifdef USEMEMWATCH
 #include "memwatch.h"
@@ -1207,6 +1210,7 @@ void eof_rs_compile_xml(EOF_SONG *sp, char *fn, unsigned long track)
 	char syscommand[1024] = {0}, temp[1024] = {0}, sngfilename[1024] = {0};
 	FILE *rstoolkitfp;
 	unsigned long ctr;
+	char *logfilebuffer;
 
 	eof_log("eof_rs_compile_xml() entered", 1);
 
@@ -1232,12 +1236,13 @@ void eof_rs_compile_xml(EOF_SONG *sp, char *fn, unsigned long track)
 		eof_log(eof_log_string, 1);
 		allegro_message("Error:  xml2sng.exe is not present at the linked path.  Please re-link the Rocksmith toolkit to the correct folder");
 		eof_rs_toolkit_path[0] = '\0';	//Clear this path since it is not correct
-		fclose(rstoolkitfp);
+		(void) fclose(rstoolkitfp);
 		return;
 	}
 
 	//Build the path to the output file
 	(void) replace_extension(sngfilename, fn, "sng", (int)sizeof(sngfilename) - 1);	//Just use the output XML file's path, chaning the extension to SNG
+	(void) delete_file(sngfilename);	//Delete the file if it already exists, so EOF can check if it fails to be compiled
 
 	//Build the command to pass to xml2sng
 	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
@@ -1299,8 +1304,72 @@ void eof_rs_compile_xml(EOF_SONG *sp, char *fn, unsigned long track)
 
 	//Build and launch the batch file
 	(void) eof_system(syscommand);
-	fprintf(rstoolkitfp, "%s\npause", syscommand);
+	fprintf(rstoolkitfp, "%s >> xml2sng.log  2<&1", syscommand);
 	(void) fclose(rstoolkitfp);
 	(void) eof_system("launch_rstoolkit.bat");
 	(void) delete_file("launch_rstoolkit.bat");
+
+	//Check if the SNG file was successfully built
+	logfilebuffer = eof_buffer_file("xml2sng.log", 1);	//Buffer the log file into memory, appending a NULL terminator
+	if(!strstr(logfilebuffer, "Successfully converted XML file to SNG file"))
+	{	//If the log doesn't include xml2sng's success output
+		eof_xml_compile_failure_log("xml2sng.log");	//Display the log output to the user
+	}
+	free(logfilebuffer);
+	(void) delete_file("xml2sng.log");	//Delete the log file
+}
+
+DIALOG eof_xml_compile_failure_log_dialog[] =
+{
+   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
+   { d_agup_window_proc,    0,  0,  640, 480, 2,   23,  0,    0,      0,   0,   "Failed to build SNG file",               NULL, NULL },
+   { d_agup_text_proc,   288,  8,  128, 8,  2,   23,  0,    0,      0,   0,   "", NULL, NULL },
+   { d_agup_textbox_proc,   8,  32,  624, 412 - 8,  2,   23,  0,    0,      0,   0,   "", NULL, NULL },
+   { d_agup_button_proc, 8,  444, 624,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "Okay",               NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+void eof_xml_compile_failure_log(char *logfilename)
+{
+	char *logfilebuffer;
+
+	logfilebuffer = eof_buffer_file(logfilename, 1);	//Buffer the log file into memory, appending a NULL terminator
+	if(logfilebuffer == NULL)
+	{	//Could not buffer file
+		allegro_message("Error reading xml2sng log file");
+		return;
+	}
+
+	eof_xml_compile_failure_log_dialog[2].dp = logfilebuffer;	//Use the buffered file for the text box
+	eof_cursor_visible = 0;
+	eof_pen_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_xml_compile_failure_log_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_xml_compile_failure_log_dialog);
+
+	(void) eof_popup_dialog(eof_xml_compile_failure_log_dialog, 0);
+
+	eof_show_mouse(NULL);
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_render();
+	free(logfilebuffer);
+}
+
+void eof_get_rocksmith_wav_path(char *buffer, const char *parent_folder, size_t num)
+{
+	(void) replace_filename(buffer, parent_folder, "", (int)num - 1);	//Obtain the destination path
+
+	//Build target WAV file name
+	put_backslash(buffer);
+	if(eof_song->tags->title[0] != '\0')
+	{	//If the chart has a defined song title
+		(void) ustrncat(buffer, eof_song->tags->title, (int)num - 1);
+	}
+	else
+	{	//Otherwise default to "guitar"
+		(void) ustrncat(buffer, "guitar", (int)num - 1);
+	}
+	(void) ustrncat(buffer, ".wav", (int)num - 1);
+	buffer[num - 1] = '\0';	//Ensure the finalized string is terminated
 }
