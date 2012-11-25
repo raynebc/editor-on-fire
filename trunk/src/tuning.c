@@ -48,6 +48,9 @@ EOF_TUNING_DEFINITION eof_tuning_definitions[EOF_NUM_TUNING_DEFINITIONS] =
  {"Standard tuning", 1, 6, {0,0,0,0,0,0}},
  {"Standard tuning", 0, 6, {0,0,0,0,0,0}},
  {"Eb tuning", 0, 6, {-1,-1,-1,-1,-1,-1}},
+ {"Eb tuning", 0, 5, {-1,-1,-1,-1,-1}},
+ {"Eb tuning", 0, 4, {-1,-1,-1,-1}},
+ {"Eb tuning", 1, 4, {-1,-1,-1,-1}},
  {"D tuning", 0, 6, {-2,-2,-2,-2,-2,-2}},
  {"C# tuning", 0, 6, {-3,-3,-3,-3,-3,-3}},
  {"C tuning", 0, 6, {-4,-4,-4,-4,-4,-4}},
@@ -59,6 +62,9 @@ EOF_TUNING_DEFINITION eof_tuning_definitions[EOF_NUM_TUNING_DEFINITIONS] =
  {"F# tuning", 0, 6, {-10,-10,-10,-10,-10,-10}},
  {"F tuning", 0, 6, {-11,-11,-11,-11,-11,-11}},
  {"Drop D tuning", 0, 6, {-2,0,0,0,0,0}},
+ {"Drop D tuning", 0, 5, {-2,0,0,0,0}},
+ {"Drop D tuning", 0, 4, {-2,0,0,0}},
+ {"Drop D tuning", 1, 4, {-2,0,0,0}},
  {"Open G tuning", 0, 6, {-2,-2,0,0,0,-2}}
 };
 

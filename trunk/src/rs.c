@@ -1249,6 +1249,8 @@ void eof_rs_compile_xml(EOF_SONG *sp, char *fn, unsigned long track)
 		char eb[] = {-1,-1,-1,-1,-1,-1};
 		char dropd[] = {-2,0,0,0,0,0};
 		char openg[] = {-2,-2,0,0,0,-2};
+		char *tuning = tp->tuning;	//By default, use the track's original tuning array
+		char isebtuning = 1;	//Will track whether all strings are tuned to -1
 
 		for(ctr = 0; ctr < 6; ctr++)
 		{	//For each string EOF supports
@@ -1257,14 +1259,28 @@ void eof_rs_compile_xml(EOF_SONG *sp, char *fn, unsigned long track)
 				tp->tuning[ctr] = 0;	//Ensure the tuning is cleared accordingly
 			}
 		}
-		if(memcmp(tp->tuning, standard, 6) && memcmp(tp->tuning, standardbass, 4) && memcmp(tp->tuning, eb, 6) && memcmp(tp->tuning, dropd, 6) && memcmp(tp->tuning, openg, 6))
+
+		//xml2sng requires 6 tuning values, need special handling to check for <6 string Eb tuning and convert to the 6 string version of that tuning
+		for(ctr = 0; ctr < tp->numstrings; ctr++)
+		{	//For each string in this track
+			if(tp->tuning[ctr] != -1)
+			{	//If this string isn't tuned a half step down
+				isebtuning = 0;
+				break;
+			}
+		}
+		if(isebtuning && !((track == EOF_TRACK_PRO_BASS) && (tp->numstrings > 4)))
+		{	//If all strings were tuned down a half step (except for bass tracks with more than 4 strings, since in those cases, the lowest string is not tuned to E)
+			tuning = eb;	//Allow a 4 or 5 string track's tuning to be passed to xml2sng as {-1,-1,-1,-1,-1,-1}
+		}
+		if(memcmp(tuning, standard, 6) && memcmp(tuning, standardbass, 4) && memcmp(tuning, eb, 6) && memcmp(tuning, dropd, 6) && memcmp(tuning, openg, 6))
 		{	//If the track's tuning doesn't match any supported by Rocksmith
 			allegro_message("Warning:  This track (%s) uses a tuning that isn't one known to be supported in Rocksmith.\nTuning and note recognition may not work as expected in-game", sp->track[track]->name);
 			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  This track (%s) uses a tuning that isn't known to be supported in Rocksmith.  Tuning and note recognition may not work as expected in-game", sp->track[track]->name);
 			eof_log(eof_log_string, 1);
 		}
 
-		(void) snprintf(syscommand, sizeof(syscommand) - 1, "\"%s\" -i \"%s\" -o \"%s\" --tuning=%d,%d,%d,%d,%d,%d", temp, fn, sngfilename, tp->tuning[0], tp->tuning[1], tp->tuning[2], tp->tuning[3], tp->tuning[4], tp->tuning[5]);
+		(void) snprintf(syscommand, sizeof(syscommand) - 1, "\"%s\" -i \"%s\" -o \"%s\" --tuning=%d,%d,%d,%d,%d,%d", temp, fn, sngfilename, tuning[0], tuning[1], tuning[2], tuning[3], tuning[4], tuning[5]);
 	}
 	else if(track == EOF_TRACK_VOCALS)
 	{	//If the track being compiled is the vocal track
