@@ -3,446 +3,409 @@ EOF Version History
 
 1.8:
 
-Updated the fret catalog to display the
-position of the active entry.
+Corrected the Note menu so that the transpose up/down functions
+aren't disabled in the vocal track.
 
-Added the ability to edit the start and end
-positions of the active fret catalog entry
-(Song>Catalog>Edit Timing).
+Added a user preference to make newly created notes 1ms in length.
+This doesn't affect some methods of adding notes, such as using a
+controller while the chart is playing.
 
-Implemented running status encoding logic for
-exported MIDIs, making them smaller (about
-20% smaller is typical).
+Added a user preference for a minimum distance between two notes
+(defaulting to 3ms), since notes whose tails are too close to other
+notes can cause issues during timing conversion.
 
-Added the ability to export pro guitar/bass
-and vocal tracks in Rocksmith XML format.
+Lots of code cleanup, fixing many crashes, memory leaks, etc.
 
-Improved INI import so that for boolean tags
-(ie. "lyrics ="), having a value of the word
-"true" (case insensitive) or "1" are both
-accepted as true, and any other value is
-interpreted as false.
+Added a "Note>Lyrics>Import GP style lyric text from file" function
+that replace the text of lyrics in the vocal track with ones from a
+text file where lyric texts are defined in the style of Guitar Pro.
 
-Made improvements to project load so that
-song.ini is rechecked.  If it contains tags
-that are different from the existing song
-properties or INI settings in the project, it
-will prompt whether or not to load those
-changes.  If it does load them, an undo state
+Changed the "Import/Export TS" preference to be enabled by default.
+
+Added the ability to copy the selected event in the "Beat>All Events"
+dialog function to the currently selected beat.
+
+Fixed memory leaks that could occur during a failed lyric export.
+
+Organized the preferences dialog menu, making space for many new
+preferences.
+
+Added a function (Edit>Selection>Select all shorter than) to select
+all notes in the active track difficulty that are shorter than a
+specified length.
+
+Updated the fret catalog to display the position of the active entry.
+
+Added the ability to edit the start and end positions of the active
+fret catalog entry (Song>Catalog>Edit Timing).
+
+Implemented running status encoding logic for exported MIDIs, making
+them smaller (about 20% smaller is typical).
+
+Added the ability to export pro guitar/bass and vocal tracks in
+Rocksmith XML format, including many new chart features such as
+Rocksmith phrases, Rocksmith sections, fret hand positions (the
+Expert difficulty of which is also used during MIDI export for
+allowing unusual situations such as authoring dislike guitar parts
+for each difficulty in a Rock Band 3 pro guitar custom), chord
+fingering, bend strength, slide end position, pop and slap bass
+guitar technique.  New functions to import and auto-generate several
+of these has also been added.
+
+Improved INI import so that for boolean tags (ie. "lyrics ="),
+having a value of the word "true" (case insensitive) or "1" are both
+accepted as true, and any other value is interpreted as false.
+
+Made improvements to project load so that song.ini is rechecked.  If
+it contains tags that are different from the existing song
+properties or INI settings in the project, it will prompt whether
+or not to load those changes.  If it does load them, an undo state
 is made and the chart is marked as modified.
 
-Added handling to INI import so that if a
-"year =" tag has non numerical characters, it
-will import as a custom INI setting since the
-normal year tag should be a 4 digit number.
+Added handling to INI import so that if a "year =" tag has non
+numerical characters, it will import as a custom INI setting since
+the normal year tag should be a 4 digit number.
 
-Changed paste logic so that if a pasted note
-uses only higher lanes than the destination
-track supports, the offending note is converted
-to a chord that uses all-lanes (instead of
-allowing the higher lane gems to be removed,
-causing the note to be deleted), allowing such
+Changed paste logic so that if a pasted note uses only higher lanes
+than the destination track supports, the offending note is converted
+to a chord that uses all-lanes (instead of allowing the higher lane
+gems to be removed, causing the note to be deleted), allowing such
 notes to remain and be adjusted.
 
 Added a seek to end of chart function.
 
-Added the ability to import files or load EOF
-projects with audio that is shorter than the
-chart's content, or even with no audio at all.
+Added the ability to import files or load EOF projects with audio
+that is shorter than the chart's content, or even with no audio at
+all.  If notes exist beyond the chart's audio during save, EOF will
+display a warning, indicating the first track discovered to have this
+issue.
 
 Added Guitar Pro file import capability.
 
-Updated 3D rendering to display tempo and
-time signature changes.
+Updated 3D rendering to display tempo and time signature changes.
 
-Increased the number of entries that can be
-read and stored during song.ini import.
+Increased the number of entries that can be read and stored during
+song.ini import.
 
-Added a "Full screen 3D view" feature that
-zooms the 3D preview to fill the entire program
-window.  This can be toggled on/off through the
-right click context menu (Feedback or RexMundi
-input mode) or by using CTRL+F.  In this mode,
-generally all of the mouse controls are disabled
-since you cannot see the editor window.  Feedback
-input mode can be used while this feature is
-active.  CTRL+I will toggle the display of the
-Info panel on/off (this shortcut previously
+Added a "Full screen 3D view" feature that zooms the 3D preview to
+fill the entire program window.  This can be toggled on/off through
+the right click context menu (Feedback or RexMundi input mode) or
+by using CTRL+F.  In this mode, generally all of the mouse controls
+are disabled since you cannot see the editor window.  Feedback
+input mode can be used while this feature is active.  CTRL+I will
+toggle the display of the Info panel on/off (this shortcut previously
 toggled the inverted notes preference).
 
-Fixed an issue where if the mouse was left of
-the first beat marker, notes could be entered
-and would be placed at the end of the chart.
+Fixed an issue where if the mouse was left of the first beat marker,
+notes could be entered and would be placed at the end of the chart.
 
-Added the ability to lower/raise/reset the 3D
-preview's camera angle with SHIFT+(plus/minus/
-enter) on the Numpad (or alternatively,
-backslash/SHIFT+backslash/CTRL+backslash).
-The controls for increment/decrement AV delay
-have been changed to CTRL+SHIFT+(plus/minus) on
-the Numpad.
+Added the ability to lower/raise/reset the 3D preview's camera angle
+with SHIFT+(plus/minus/enter) on the Numpad (or alternatively,
+backslash/SHIFT+backslash/CTRL+backslash).  The controls for
+increment/decrement AV delay have been changed to
+CTRL+SHIFT+(plus/minus) on the Numpad.
 
-Added a preference for rendering 3D bass drum
-gems in a lane instead of as a bar spanning all
-the lanes in the chart.
+Added a preference for rendering 3D bass drum gems in a lane instead
+of as a bar spanning all the lanes in the chart.
 
-Added the ability to import/export key
-signatures, from MIDI files, which can be defined
-on the selected beat marker via the Beat>Key
-Signature menu.  The current key of the song will
-be used by Phase Shift to select appropriately
-pitched notes for freestyle.
+Added the ability to import/export key signatures, from MIDI files,
+which can be defined on the selected beat marker via the Beat>Key
+Signature menu.  The current key of the song will be used by Phase
+Shift to select appropriately pitched notes for freestyle.
 
-Added a keyboard shortcut for paste from catalog
-(CTRL+SHIFT+C).
+Added a keyboard shortcut for paste from catalog (CTRL+SHIFT+C).
 
-Added an option (Song>Catalog>Double width) to
-display the fret catalog with the full width of
-EOF's window, to better display long fret catalog
-entries.
+Added an option (Song>Catalog>Double width) to display the fret
+catalog with the full width of EOF's window, to better display long
+fret catalog entries.
 
-Added functions to seek to the next (F3) or
-previous (CTRL+SHIFT+F3) instance of the current
-fret catalog entry.  It will be considered a match
-as long as the gem/fret pattern matches, the notes
-don't have to have the same length or spacing.
+Added functions to seek to the next (F3) or previous (CTRL+SHIFT+F3)
+instance of the current fret catalog entry.  It will be considered a
+match as long as the gem/fret pattern matches, the notes don't have
+to have the same length or spacing.
 
-Added a user preference for a minimum length to
-apply to all 5 lane guitar gems, since custom songs
-will not play correctly in Guitar Hero if they are
-too short (such as 1ms).
+Added a user preference for a minimum length to apply to all 5 lane
+guitar gems, since custom songs will not play correctly in Guitar
+Hero if they are too short (such as 1ms).
 
-Updated the render logic so that the [end] event
-is displayed above the beat marker that contains
-it.
+Updated the render logic so that the [end] event is displayed above
+the beat marker that contains it.
 
-Added a check during save so that if an [end]
-event is placed on a note's tail (causing an
-error), it will alert the user and offer to seek
-to the beat containing the offending event.
+Added a check during save so that if an [end] event is placed on a
+note's tail (causing an error), it will alert the user and offer to
+seek to the beat containing the offending event.
 
-Improved the cleanup and save logic to be more
-thorough about checking for note overlapping,
-especially for "crazy" notes.
+Improved the cleanup and save logic to be more thorough about
+checking for note overlapping, especially for "crazy" notes.
 
-Fixed a bug where if a chart had too many of
-certain phrases, EOF could crash.
+Implemented a Feedback input method. Up/Down seeks by the current
+grid snap, Pg Up/Dn seeks one measure foward/back, keys 1 through 6
+place/toggle gems at the current seek position (not the mouse
+position). Left/Right increases/descreases the grid snap interval's
+size. The 'A' key toggles anchor for the beat at the current
+position.  The 'del' key deletes the note at the current position if
+no notes are formally selected. In this input method, the +/- tempo
+controls alter the tempo of the beat (instead of the anchor)
+at/before the seek position.  Note operations apply to the note at
+the current position if no notes are selected.  Allows notes to be
+selected with the keyboard by holding SHIFT when seeking by grid
+snap/measure.  Pressing and releasing SHIFT without performing any
+operations clears this keyboard selection.  CTRL+V and CTRL+P are
+reversed to perform old paste and paste, respectively.  The chart
+seeks to the nearest grid snap when playback stops, and the selected
+beat updates during playback and after seeking by grid snap/measure.
 
-Implemented a Feedback input method. Up/Down
-seeks by the current grid snap, Pg Up/Dn seeks one
-measure foward/back, keys 1 through 6 place/toggle
-gems at the current seek position (not the mouse
-position). Left/Right increases/descreases the grid
-snap interval's size. The 'A' key toggles anchor for
-the beat at the current position.  The 'del' key
-deletes the note at the current position if no notes
-are formally selected. In this input method, the
-+/- tempo controls alter the tempo of the beat
-(instead of the anchor) at/before the seek position.
-Note operations apply to the note at the current
-position if no notes are selected.  Allows notes to
-be selected with the keyboard by holding SHIFT when
-seeking by grid snap/measure.  Pressing and releasing
-SHIFT without performing any operations clears this
-keyboard selection.  CTRL+V and CTRL+P are reversed
-to perform old paste and paste, respectively.  The
-chart seeks to the nearest grid snap when playback
-stops, and the selected beat updates during playback
-and after seeking by grid snap/measure.
+Implemented new keyboard shortcuts for altering tempos, based on the
+Feedback chart editor. +/- increases/decreases the tempo of the
+anchor at/before current seek position by 1BPM (or .1BPM if SHIFT is
+held, or .01BPM if CTRL+SHIFT is held).  The shorcuts for
+increment/decrement AV delay have been changed to use CTRL++ and
+CTRL+- on the numpad.
 
-Implemented new keyboard shortcuts for altering
-tempos, based on the Feedback chart editor. +/-
-increases/decreases the tempo of the anchor
-at/before current seek position by 1BPM (or .1BPM
-if SHIFT is held, or .01BPM if CTRL+SHIFT is held).
-The shorcuts for increment/decrement AV delay have
-been changed to use CTRL++ and CTRL+- on the numpad.
+Fixed a bug where the 6th lane was dropped from pro guitar BRE notes
+during MIDI import.
 
-Fixed a bug where the 6th lane was dropped from pro
-guitar BRE notes during MIDI import.
+Fixed a minor bug where an undo state wasn't made if Enter was used
+to place gems at the current seek position (Classic and Hold input
+methods).
 
-Fixed a minor bug where an undo state wasn't made if
-Enter was used to place gems at the current seek
-position (Classic and Hold input methods).
+Added a function to seek to the current fret catalog entry
+(Song>Seek>Catalog entry).
 
-Added a function to seek to the current fret catalog
-entry (Song>Seek>Catalog entry).
+Created a "Song>Disable expert+ bass drum" chart option that will
+omit any drum gems marked as double bass from the MIDIs during save.
+For RBN authors, this will make it easy to author the drum track once
+and create both a single and a double bass chart from it.
 
-Created a "Song>Disable expert+ bass drum" chart
-option that will omit any drum gems marked as double
-bass from the MIDIs during save.  For RBN authors,
-this will make it easy to author the drum track once
-and create both a single and a double bass chart
-from it.
+Added a user preference (Use dB style seek controls) that reverses
+the roles of the page up and down keys (ie. allowing the Pg Up
+keyboard shortcuts to seek forward) and makes the up and down keys
+seek foward or backward instead of transposing notes.
 
-Added a user preference (Use dB style seek controls)
-that reverses the roles of the page up and down keys
-(ie. allowing the Pg Up keyboard shortcuts to seek
-forward) and makes the up and down keys seek foward
-or backward instead of transposing notes.
+Added the ability to lock the tempo map to avoid accidental changes
+to the beat markers (Song>Lock tempo map).
 
-Added the ability to lock the tempo map to avoid
-accidental changes to the beat markers
-(Song>Lock tempo map).
+Added the ability to seek to a beat or measure by its number.
 
-Added the ability to seek to a beat or measure by
-its number.
+Added the ability to seek forward or backward one anchor by holding
+both CTRL and SHIFT when using the Pg Up or Pg Dn key (when grid snap
+is disabled).
 
-Added the ability to seek forward or backward one
-anchor by holding both CTRL and SHIFT when using the
-Pg Up or Pg Dn key (when grid snap is disabled).
+Added logic so that EOF will write a "five_lane_drums = True" INI tag
+if the fifth drum lane is enabled during save.  This tag forces the
+chart to be treated as a 5 lane drum track (ie. Guitar Hero) even if
+there are no gems on the fifth lane, for use in future versions of
+Phase Shift.
 
-Added logic so that EOF will write a
-"five_lane_drums = True" INI tag if the fifth drum
-lane is enabled during save.  This tag forces the
-chart to be treated as a 5 lane drum track (ie.
-Guitar Hero) even if there are no gems on the fifth
-lane, for use in future versions of Phase Shift.
+Added logic so that EOF will write a "drum_fallback_blue = True" INI
+tag if drum gems are imported from a QB format (ie. pre-GH5) Guitar
+Hero file.  This tag will be used in future versions of Phase Shift
+to decide how to down-chart a 5 lane drum chart to play on a 4 lane
+drum kit.
 
-Added logic so that EOF will write a
-"drum_fallback_blue = True" INI tag if drum gems are
-imported from a QB format (ie. pre-GH5) Guitar Hero
-file.  This tag will be used in future versions of
-Phase Shift to decide how to down-chart a 5 lane drum
-chart to play on a 4 lane drum kit.
+Added logic to store unsupported MIDI tracks (ie. for pro keys,
+harmonies) during MIDI import by prompting for each that is
+encountered.  Each event in the stored MIDI tracks is stored in high
+precision millisecond timing, and is saved to the output MIDI during
+project save conforming to the chart's tempo map.  During MIDI
+import, EOF will offer to store the MIDI's tempo map and beat track
+if mid beat tempo or time signature changes are found.  This works
+around EOF's designed behavior of adding beats so mid beat changes
+can exist on beat markers, since for Rock Band upgrades, the
+upgrade's tempo map has to match that of the original chart to work
+correctly.  Stored tracks can be added and deleted from the
+"Song>Manage raw MIDI tracks" dialog menu.
 
-Added logic to store unsupported MIDI tracks (ie.
-for pro keys, harmonies) during MIDI import by
-prompting for each that is encountered.  Each event in
-the stored MIDI tracks is stored in high precision
-millisecond timing, and is saved to the output MIDI
-during project save conforming to the chart's tempo
-map.  During MIDI import, EOF will offer to store the
-MIDI's tempo map and beat track if mid beat tempo or
-time signature changes are found.  This works around
-EOF's designed behavior of adding beats so mid beat
-changes can exist on beat markers, since for Rock Band
-upgrades, the upgrade's tempo map has to match that of
-the original chart to work correctly.Stored tracks can
-be added and deleted from the "Song>Manage raw MIDI
-tracks" dialog menu.
+Added logic to the MIDI export code to prevent writing overlapping
+forced HOPO markers, which violates the MIDI standard.  These
+generally occurred when saving a GH imported chart that contained
+extended sustain chords.
 
-Added logic to the MIDI export code to prevent writing
-overlapping forced HOPO markers, which violates the
-MIDI standard.  These generally occurred when saving a
-GH imported chart that contained extended sustain
-chords.
+Updated setting defaults based on my findings on multiple
+computers:  Buffer size is 6KB, "disable vsync" is in effect and
+AV delay is 300ms.
 
-Fixed a bug where EOF would crash when trying to
-draw the waveform graph for an OGG that is not stereo.
+Updated Feedback import to ignore unrecognized entries in the events
+section.
 
-Fixed a bug where EOF would crash when trying to play
-back an OGG that is not stereo.
+Moved note/phrase processing to the start of playback to reduce lag
+that can occur when switching between tracks during playback.
 
-Updated setting defaults based on my findings on
-multiple computers:  Buffer size is 6KB,
-"disable vsync" is in effect and AV delay is 300ms.
+Changed EOF to default to using the "Manual" HOPO preview setting.
 
-Updated Feedback import to ignore unrecognized
-entries in the events section.
+The Mac release now uses the Cmd+key shortcuts instead of CTRL+key
+shortcuts, to avoid a crash that is either a bug in Allegro or a
+behavior of Mac OS.
 
-Moved note/phrase processing to the start of playback
-to reduce lag that can occur when switching between
-tracks during playback.
-
-Changed EOF to default to using the "Manual" HOPO
-preview setting.
-
-The Mac release now uses the Cmd+key shortcuts instead
-of CTRL+key shortcuts, to avoid a crash that is either
-a bug in Allegro or a behavior of Mac OS.
-
-Fixed some crashes that could occur if a file
-import/load fails when a chart is already open.
-
-Minor corrections to the lyric preview regarding how
-lyrics are grouped together by equal signs and hyphens.
+Minor corrections to the lyric preview regarding how lyrics are
+grouped together by equal signs and hyphens.
 
 Added Guitar Hero import functionality.
 
-Fixed a bug where newly created notes wouldn't be
-selected automatically in Piano Roll, Classic and
-Hold input methods.
+Fixed a bug where newly created notes wouldn't be selected
+automatically in Piano Roll, Classic and Hold input methods.
 
-Dance, lead guitar and rhythm tracks now have difficulty
-tags written to song.ini, for use in Phase Shift.  Empty
-tracks will have a difficulty value of -1 written.
+Dance, lead guitar and rhythm tracks now have difficulty tags written
+to song.ini, for use in Phase Shift.  Empty tracks will have a
+difficulty value of -1 written.
 
-Fixed a bug with the note merge logic that could cause
-statuses such as expert+ bass to be lost unexpectedly.
+Fixed a bug with the note merge logic that could cause statuses such
+as expert+ bass to be lost unexpectedly.
 
-Added functions to the Beat menu to double or halve the
-tempo at the selected beat, allowing for the tempo to be
-manipulated in a way that does not destroy a chart's
-sync.  These are utilized by the "Adjust tempo for RBN"
-feature that will automatically halve or double tempos
-where possible in order to comply with Magma's
-requirements that all tempos are between 40 and 300 BPM.
+Added functions to the Beat menu to double or halve the tempo at the
+selected beat, allowing for the tempo to be manipulated in a way that
+does not destroy a chart's sync.  These are utilized by the "Adjust
+tempo for RBN" feature that will automatically halve or double tempos
+where possible in order to comply with Magma's requirements that all
+tempos are between 40 and 300 BPM.
 
-Fixed a bug where anchors were automatically removed
-if they were the same tempo as the previous anchor.
+Fixed a bug where anchors were automatically removed if they were the
+same tempo as the previous anchor.
 
-Made improvements to Feedback import:  Section names
-are altered to conform to the "[section SECTION_NAME]"
-format, [solo_on] and [solo_off] events into guitar and
-lead guitar solos, fixed memory leaks that could occur if
-the import fails, improved error reporting/logging that
-occurs when import fails and updated the import to allow
-the keyboard tracks to be loaded if present, song.ini is
-now imported with the Feedback chart.
+Made improvements to Feedback import:  Section names are altered to
+conform to the "[section SECTION_NAME]" format, [solo_on] and
+[solo_off] events into guitar and lead guitar solos, fixed memory
+leaks that could occur if the import fails, improved error
+reporting/logging that occurs when import fails and updated the
+import to allow the keyboard tracks to be loaded if present, song.ini
+is now imported with the Feedback chart.
 
-Added the display of section markers to the editor
-window.
+Added the display of section markers to the editor window.
 
-Fixed a crash that would occur when "Load OGG" was used
-to try to open a file that wasn't recognized as an OGG
-file.
+Added the option to mark new yellow drum gems as open, pedal or sizzle
+hi hat notes, for use in Phase Shift.  Red drum gems can also be
+marked with these notations, but this should only be done when
+authoring hi hat notes during a disco flip (snare and hi hat lanes are
+swapped for playability reasons).
 
-Added the option to mark new yellow drum gems as open,
-pedal or sizzle hi hat notes, for use in Phase Shift.
-Red drum gems can also be marked with these notations,
-but this should only be done when authoring hi hat notes
-during a disco flip (snare and hi hat lanes are swapped
-for playability reasons).
+Made improvements to the waveform graph by improving its rendering
+performance and allowing the 3 colors used to be altered in song.ini.
 
-Made improvements to the waveform graph by improving its
-rendering performance and allowing the 3 colors used to
-be altered in song.ini.
+Added a check during paste that will provide a warning if pasted notes
+have a gem on a lane higher than the active track supports.
 
-Added a check during paste that will provide a warning
-if pasted notes have a gem on a lane higher than the
-active track supports.
+Fixed a minor bug where using Note>Toggle to remove the last gem for a
+note wouldn't cause it to be deleted immediately.
 
-Fixed a minor bug where using Note>Toggle to remove the
-last gem for a note wouldn't cause it to be deleted
-immediately.
+Added a Note>Clear menu allowing gems for specific lanes to be removed.
 
-Added a Note>Clear menu allowing gems for specific lanes
-to be removed.
+Improved Feedback import by having it back up song.ini before it is
+overwritten, recognizing more instrument track names and tolerating
+more player section types.
 
-Improved Feedback import by having it back up song.ini
-before it is overwritten, recognizing more instrument
-track names and tolerating more player section types.
+Fixed a bug where user settings weren't read if EOF was launched from
+outside its program directory (when loading a file via command line).
 
-Fixed a bug where user settings weren't read if EOF was
-launched from outside its program directory (ie. when
-loading a file via command line).
+Added an "Add new notes to selection" preference where adding gems
+causes notes to be added to the currently selected notes instead of
+the selection being cleared and only the newly created/edited note
+remaining selected.
 
-Added an "Add new notes to selection" preference where
-adding gems causes notes to be added to the currently
-selected notes instead of the selection being cleared and
-only the newly created/edited note remaining selected.
+Added support for "sizzle" (half open) hi hat (yellow cymbal)
+notation, for use in Phase Shift.
 
-Added support for "sizzle" (half open) hi hat (yellow
-cymbal) notation, for use in Phase Shift.
-
-Added a super fine tuning function (CTRL+SHIFT+Scroll wheel)
-when grid snap is disabled that changes note lengths in 1ms
-increments.
+Added a super fine tuning function (CTRL+SHIFT+Scroll wheel) when grid
+snap is disabled that changes note lengths in 1ms increments.
 
 Fixed some bugs regarding the placement of cymbal notes.
 
-Fixed various bugs that were specific to the Classic, Piano
-Roll and Hold input methods.
+Fixed various bugs that were specific to the Classic, Piano Roll and
+Hold input methods.
 
-Changed the note hit/highlight color for green and yellow
-notes in the editor window to be red instead of white, which
-should contrast much better and make it easier to see the
-notes when selected, moused over or reached during playback.
+Changed the note hit/highlight color for green and yellow notes in the
+editor window to be red instead of white, which should contrast much
+better and make it easier to see the notes when selected, moused over
+or reached during playback.
 
-Added the ability to change the color set in the Preferences
-menu to that used by Rock Band or Guitar Hero, and changed
-the default color set to Rock Band.
+Added the ability to change the color set in the Preferences menu to
+that used by Rock Band, Guitar Hero or Rocksmith, and changed the
+default color set to Rock Band.
 
-Added some special handling in the MIDI import logic so that
-old, single-track MIDI files that were created by converting
-a Freetar Editor chart can be imported and resaved to make
-them compatible with various rhythm games such as Phase Shift.
+Added some special handling in the MIDI import logic so that old,
+single-track MIDI files that were created by converting a Freetar
+Editor chart can be imported and resaved to make them compatible with
+various rhythm games such as Phase Shift.
 
-Added a button in the Preferences dialog to automatically
-configure the options back to their defaults by then pressing
-OK.
+Added a button in the Preferences dialog to automatically configure
+the options back to their defaults by then pressing OK.
 
-Resolves a bug regarding beat marker positions after adding a
-beat or deleting a beat/anchor.
+Resolves a bug regarding beat marker positions after adding a beat or
+deleting a beat/anchor.
 
-Added filters to the "All Events" dialog, providing the option
-to only show events specific to the current track or events
-that are section markers.
+Added filters to the "All Events" dialog, providing the option to only
+show events specific to the current track or events that are section
+markers.
 
-Improved the text event edit dialog so that it won't mark the
-chart as modified when you click OK unless the event's text or
-track specific status was changed.
+Improved the text event edit dialog so that it won't mark the chart as
+modified when you click OK unless the event's text or track specific
+status was changed.
 
 Made some optimizations to the audio playback code.
 
-Updated Feedback import to support filenames with special
-characters (ie. umlauts).
+Updated Feedback import to support filenames with special characters
+(ie. umlauts).
 
-Made improvements to the split lyric function, which will now
-split pitchless lyrics with the correct lengths for each piece.
+Made improvements to the split lyric function, which will now split
+pitchless lyrics with the correct lengths for each piece.
 
 Updated FoFLC to the latest version (2.38), adding support for
-importing Guitar Praise format XML lyrics and importing
-JamBand format lyrics.
+importing Guitar Praise format XML lyrics and importing JamBand format
+lyrics.
 
-Fixed a bug with the click and drag note logic that would
-allow notes/lyrics to be drug off the left end of the piano
-roll.
+Fixed a bug with the click and drag note logic that would allow
+notes/lyrics to be drug off the left end of the piano roll.
 
-Added paste logic so that if the "Erase overlapped pasted
-notes" preference isn't in effect, a pasted note is allowed
-to merge with a note that is overlapped (is within 2ms of the
-pasted note), properly merging note statuses.
+Added paste logic so that if the "Erase overlapped pasted notes"
+preference isn't in effect, a pasted note is allowed to merge with a
+note that is overlapped (is within 2ms of the pasted note), properly
+merging note statuses.
 
 Fixed a bug that would cause open hi hat status to be lost.
 
 Added a menu function to automate the thinning of notes in a
 difficulty based on the notes in another track
-(Note>Thin difficulty to match).  When the function is used,
-EOF checks each note in the active track difficulty against
-the notes in the active difficulty of the specified track. If
-a note in the active track is not close enough to a note in
-the specified track (within 2 ms), it is removed.  This will
-make it extremely easy to thin the number of notes in the lower
-difficulties of a pro guitar track to be similar to the note
-thinning that was done for lower difficulties of a five lane
-instrument track or vice versa.
+(Note>Thin difficulty to match).  When the function is used, EOF
+checks each note in the active track difficulty against the notes in
+the active difficulty of the specified track. If a note in the active
+track is not close enough to a note in the specified track (within 2
+ms), it is removed.  This will make it extremely easy to thin the
+number of notes in the lower difficulties of a pro guitar track to be
+similar to the note thinning that was done for lower difficulties of a
+five lane instrument track or vice versa.
 
-Added a "Mark as non Expert+ bass drum" function to the
-Note>Drum menu.
+Added a "Mark as non Expert+ bass drum" function to the Note>Drum menu.
 
-Updated MIDI import to check for the "pro_drums = True" tag to
-make it possible for chart MIDIs where all yellow, blue and
-green drum gems are cymbals to be imported correctly.  For this
-to work, the chart must have been created in 1.8b14 or newer.
+Updated MIDI import to check for the "pro_drums = True" tag to make it
+possible for chart MIDIs where all yellow, blue and green drum gems
+are cymbals to be imported correctly.  For this to work, the chart
+must have been created in 1.8b14 or newer.
 
 Added a new preference (Save separate RBN MIDI files) that
-automatically will save a RBN specific and a pro guitar specific
-MIDI file during save, each of which omitting any necessary
-unsupported notation.  For example, when creating a pro guitar
-upgrade, you no longer have to remove the legacy notes and
-existing text events, the "notes_pro.mid" file will provide the
-MIDI with the correct contents for building the pro guitar
-upgrade package.  "notes_rbn.mid" will have the correct contents
-for building a package in Magma, even removing unsupported
-tracks such as the dance and pro guitar/bass tracks.
+automatically will save a RBN specific and a pro guitar specific MIDI
+file during save, each of which omitting any necessary unsupported
+notation.  For example, when creating a pro guitar upgrade, you no
+longer have to remove the legacy notes and existing text events, the
+"notes_pro.mid" file will provide the MIDI with the correct contents
+for building the pro guitar upgrade package.  "notes_rbn.mid" will
+have the correct contents for building a package in Magma, even
+removing unsupported tracks such as the dance and pro guitar/bass
+tracks.
 
 Added support for slider sections, for use in Phase Shift.
 
-Fixed a bug that wouldn't reliably allow various phrases to be
-deleted by selecting the last note in the phrase and using the
-Note menu function to remove the phrase.
+Fixed a bug that wouldn't reliably allow various phrases to be deleted
+by selecting the last note in the phrase and using the Note menu
+function to remove the phrase.
 
-Added support for open hi hat and foot pedal controlled hi hat
-marking for yellow cymbal notes and rim shot marking for red
-drum notes (in the Note>Drum> menu), for use in Phase Shift.
+Added support for open hi hat and foot pedal controlled hi hat marking
+for yellow cymbal notes and rim shot marking for red drum notes (in
+the Note>Drum> menu), for use in Phase Shift.
 
 Fixed a bug where pitchless/freestyle vocals didn't render with a
 white border when they were selected or moused over.
 
-Added logic to ensure that the [end] text event is written after
-both the end of audio position and the last beat marker notes.
+Added logic to ensure that the [end] text event is written after both
+the end of audio position and the last beat marker notes.
 
 Fixed a bug where using the right mouse button to change a lyric's
 pitch would cause the lyric to rapidly toggle between pitched and
@@ -453,18 +416,16 @@ Added a keyboard shortcut (CTRL+M) for mark/remark lyric line.
 Added the ability to copy the solo, star power, arpeggio, trill or
 tremolo phrases into the active track from another track.
 
-Added the ability to seek forward or backward 1ms at a time by
-holding both CTRL and SHIFT when using the left or right arrow key.
+Added the ability to seek forward or backward 1ms at a time by holding
+both CTRL and SHIFT when using the left or right arrow key.
 
-Added the ability to seek forward or backward one grid snap
-interval by holding both CTRL and SHIFT when using the Pg Up or
-Pg Dn key (when grid snap is enabled).
+Added the ability to seek forward or backward one grid snap interval
+by holding both CTRL and SHIFT when using the Pg Up or Pg Dn key
+(when grid snap is enabled).
 
-Added the option (Preferences>Erase overlapped pasted notes) to
-delete notes that would be overlapped during a paste operation,
-similar to the behavior of the Feedback editor.
-
-Fixed a crash that could occur during a failed Feedback import.
+Added the option (Preferences>Erase overlapped pasted notes) to delete
+notes that would be overlapped during a paste operation, similar to
+the behavior of the Feedback editor.
 
 Improved the undo/redo system by adding a random 3 digit number
 (created during launch of EOF) to the filenames, making it extremely
@@ -474,8 +435,8 @@ The number of undo states has been increased from 8 to 100.
 Added a playback performance option to disable sound processing (ie.
 volumes and sound cues are not handled).
 
-Added playback performance options to not render the editor window,
-3d preview or info panel.
+Added playback performance options to not render the editor window, 3d
+preview or info panel.
 
 Fixed an issue where the Mac version of EOF wouldn't behave properly
 when EOF leaves and re-enters the foreground in newer versions of
@@ -516,6 +477,8 @@ for use as Rock Band customs.
 
 Made Various MIDI import improvements, including handling for mid-beat
 tempo and time signature changes and fixing an INI import related crash.
+Various techniques that are authored but not displayed in Rock Band 3
+pro guitar tracks (ie. bends, harmonics) are now imported.
 
 Made various MIDI export improvements, including better Rock Band Network
 compliance, resolving many errors that would occur when trying to build
@@ -523,8 +486,6 @@ EOF's MIDI files in Harmonix's Magma utility, corrected tom phrasing.
 EOF will add drum mix events required by Magma to the output MIDI if you
 haven't already manually added them ([mix 0...], [mix 1...], [mix 2...]
 or [mix 3...]).
-
-Fixed a crash that could occur when using Beat>Push Offset Back or Up.
 
 Added support for building in Mac OS X.
 
@@ -537,10 +498,6 @@ Fixed some grid snap related bugs.
 
 Added a "Mark new notes as expert+" toggle-able option to make it
 more convenient to create double bass drum charts.
-
-Fixed a bug in the Feedback import logic that would cause a crash
-or hang if the chart had a time signature change after the last
-tempo change.
 
 Fixed the handling of time signatures in the MIDI import and export
 logic that would cause incorrect timings when #/8 time signatures
@@ -557,9 +514,6 @@ Phase Shift.
 
 Updated the EOF project file format to support new features including pro
 guitar/bass, keys, dance, open bass strumming, etc.
-
-Fixed a crash that could occur with copy functions after importing a MIDI
-that is longer than the loaded audio.
 
 Removed duplicated rendering code, allowing HOPO on/off notes, percussion
 notes, vocal slides and cymbals to be shown correctly in the fret catalog.

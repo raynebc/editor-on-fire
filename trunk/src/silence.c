@@ -572,7 +572,7 @@ int save_wav_with_silence_appended(const char * fn, SAMPLE * sp, unsigned long m
 
 	//Write the combined audio to file and return
 	retval = save_wav(fn, combined);	//Write the combined audio
-	free(combined);
-	free(silence);
+	destroy_sample(combined);
+	destroy_sample(silence);
 	return retval;
 }

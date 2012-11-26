@@ -49,6 +49,8 @@
 #define EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE  8388608		//This flag will represent a note whose slide will be written as reversed (channel 11)
 #define EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO        16777216	//This flag will represent a note that is played with vibrato
 #define EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION    33554432	//This flag will indicate whether a note with a slide or bend flag defines the slide's ending fret or the bend's strength (used in Rocksmith)
+#define EOF_PRO_GUITAR_NOTE_FLAG_POP            67108864	//This flag will represent a note that is played with pop technique (ie. bass)
+#define EOF_PRO_GUITAR_NOTE_FLAG_SLAP           134217728	//This flag will represent a note that is played with slap technique (ie. bass)
 
 //The following flags pertain to drum notes
 #define EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN	512		//This flag means the yellow cymbal will be displayed in Phase Shift as an open hi hat (lane 3)
@@ -728,5 +730,9 @@ void eof_truncate_chart(EOF_SONG *sp);
 	//Uses eof_determine_chart() to set eof_chart_length to the larger of the last chart content and the loaded chart audio
 	//Any beats that are more than one beat after this position are deleted from the project, and eof_chart_length is updated to the position
 	//This should be called after Guitar Pro import (which adds beats even if no tracks are selected for import), after loading a project/file/undo/redo state (before calling cleanup logic) and after loading an audio file
+
+int eof_check_if_notes_exist_beyond_audio_end(EOF_SONG *sp);
+	//Checks whether any notes/lyrics in the chart extend beyond the end of the chart audio
+	//If so, the first offending track number is returned.  Otherwise, or if no audio is loaded, zero is returned.
 
 #endif

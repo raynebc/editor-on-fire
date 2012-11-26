@@ -296,8 +296,8 @@ MENU eof_menu_thin_notes_menu[EOF_TRACKS_MAX] =
 MENU eof_note_proguitar_menu[] =
 {
     {"Edit pro guitar &Note\tN", eof_menu_note_edit_pro_guitar_note, NULL, 0, NULL},
-    {"Edit pro guitar &Frets/Fingers\tF", eof_menu_note_edit_pro_guitar_note_frets_fingers_menu, NULL, 0, NULL},
-    {"Clear finger information", eof_menu_pro_guitar_remove_fingering, NULL, 0, NULL},
+    {"Edit &Frets/Fingering\tF", eof_menu_note_edit_pro_guitar_note_frets_fingers_menu, NULL, 0, NULL},
+    {"Clear fingering", eof_menu_pro_guitar_remove_fingering, NULL, 0, NULL},
     {"&Arpeggio", NULL, eof_arpeggio_menu, 0, NULL},
     {"s&Lide", NULL, eof_pro_guitar_slide_menu, 0, NULL},
     {"&Strum", NULL, eof_pro_guitar_strum_menu, 0, NULL},
@@ -315,6 +315,10 @@ MENU eof_note_proguitar_menu[] =
     {"Remove &Vibrato", eof_menu_note_remove_vibrato, NULL, 0, NULL},
     {"Toggle ghost\t"  CTRL_NAME "+G", eof_menu_note_toggle_ghost, NULL, 0, NULL},
     {"Remove &Ghost", eof_menu_note_remove_ghost, NULL, 0, NULL},
+    {"Toggle pop\t"  CTRL_NAME "+Shift+P", eof_menu_note_toggle_pop, NULL, 0, NULL},
+    {"Remove &Pop", eof_menu_note_remove_pop, NULL, 0, NULL},
+    {"Toggle slap\t"  CTRL_NAME "+Shift+S", eof_menu_note_toggle_slap, NULL, 0, NULL},
+    {"Remove slap", eof_menu_note_remove_slap, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -735,8 +739,6 @@ void eof_prepare_note_menu(void)
 		{	//PART VOCALS SELECTED
 			eof_note_menu[0].flags = D_DISABLED;	//Note>Toggle
 			eof_note_menu[1].flags = D_DISABLED;	//Note>Clear
-			eof_note_menu[2].flags = D_DISABLED;	//Note>Transpose Up
-			eof_note_menu[3].flags = D_DISABLED;	//Note>Transpose Down
 			eof_note_menu[5].flags = D_DISABLED;	//Note>Solos
 			eof_note_menu[6].flags = D_DISABLED;	//Note>Star power
 			eof_note_menu[8].flags = D_DISABLED;	//Note>Edit Name
@@ -796,26 +798,6 @@ void eof_prepare_note_menu(void)
 			eof_note_menu[12].flags = 0;			//Note>Trill> submenu
 			eof_note_menu[13].flags = 0;			//Note>Tremolo> submenu
 			eof_note_menu[19].flags = D_DISABLED;	//Note>Lyrics> submenu
-
-			/* transpose up */
-			if(eof_transpose_possible(-1))
-			{
-				eof_note_menu[2].flags = 0;			//Note>Transpose Up
-			}
-			else
-			{
-				eof_note_menu[2].flags = D_DISABLED;
-			}
-
-			/* transpose down */
-			if(eof_transpose_possible(1))
-			{
-				eof_note_menu[3].flags = 0;			//Note>Transpose Down
-			}
-			else
-			{
-				eof_note_menu[3].flags = D_DISABLED;
-			}
 
 			/* toggle crazy */
 			if((track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR))
@@ -1024,6 +1006,26 @@ void eof_prepare_note_menu(void)
 				eof_note_clear_menu[5].flags = D_DISABLED;
 			}
 		}//PART VOCALS NOT SELECTED
+
+		/* transpose up */
+		if(eof_transpose_possible(-1))
+		{
+			eof_note_menu[2].flags = 0;			//Note>Transpose Up
+		}
+		else
+		{
+			eof_note_menu[2].flags = D_DISABLED;
+		}
+
+		/* transpose down */
+		if(eof_transpose_possible(1))
+		{
+			eof_note_menu[3].flags = 0;			//Note>Transpose Down
+		}
+		else
+		{
+			eof_note_menu[3].flags = D_DISABLED;
+		}
 		if(note_selection_updated)
 		{	//If the only note modified was the seek hover note
 			eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
@@ -3265,7 +3267,7 @@ char eof_note_edit_name[EOF_NAME_LENGTH+1] = {0};
 DIALOG eof_pro_guitar_note_dialog[] =
 {
 /*	(proc)					(x)  (y)  (w)  (h) (fg) (bg) (key) (flags) (d1)       (d2) (dp)          (dp2)          (dp3) */
-	{d_agup_window_proc,    0,   48,  230, 392,2,   23,  0,    0,      0,         0,   "Edit pro guitar note",NULL, NULL },
+	{d_agup_window_proc,    0,   48,  230, 412,2,   23,  0,    0,      0,         0,   "Edit pro guitar note",NULL, NULL },
 	{d_agup_text_proc,      16,  80,  64,  8,  2,   23,  0,    0,      0,         0,   "Name:",      NULL,          NULL },
 	{d_agup_edit_proc,		74,  76,  134, 20, 2,   23,  0,    0, EOF_NAME_LENGTH,0,eof_note_edit_name,       NULL, NULL },
 
@@ -3329,11 +3331,16 @@ DIALOG eof_pro_guitar_note_dialog[] =
 	{d_agup_radio_proc,		128, 372, 54,  16, 2,   23,  0,    0,      4,         0,   "Down",       NULL,          NULL },
 	{d_agup_radio_proc,		180, 372, 46,  16, 2,   23,  0,    0,      4,         0,   "Any",        NULL,          NULL },
 
-	{d_agup_button_proc,    10,  400, 20,  28, 2,   23,  0,    D_EXIT, 0,         0,   "<-",         NULL,          NULL },
-	{d_agup_button_proc,    35,  400, 50,  28, 2,   23,  '\r', D_EXIT, 0,         0,   "OK",         NULL,          NULL },
-	{d_agup_button_proc,    90,  400, 50,  28, 2,   23,  0,    D_EXIT, 0,         0,   "Apply",      NULL,          NULL },
-	{d_agup_button_proc,    145, 400, 50,  28, 2,   23,  0,    D_EXIT, 0,         0,   "Cancel",     NULL,          NULL },
-	{d_agup_button_proc,    200, 400, 20,  28, 2,   23,  0,    D_EXIT, 0,         0,   "->",         NULL,          NULL },
+	{d_agup_button_proc,    10,  420, 20,  28, 2,   23,  0,    D_EXIT, 0,         0,   "<-",         NULL,          NULL },
+	{d_agup_button_proc,    35,  420, 50,  28, 2,   23,  '\r', D_EXIT, 0,         0,   "OK",         NULL,          NULL },
+	{d_agup_button_proc,    90,  420, 50,  28, 2,   23,  0,    D_EXIT, 0,         0,   "Apply",      NULL,          NULL },
+	{d_agup_button_proc,    145, 420, 50,  28, 2,   23,  0,    D_EXIT, 0,         0,   "Cancel",     NULL,          NULL },
+	{d_agup_button_proc,    200, 420, 20,  28, 2,   23,  0,    D_EXIT, 0,         0,   "->",         NULL,          NULL },
+
+	{d_agup_text_proc,      10,  392, 64,  8,  2,   23,  0,    0,      0,         0,   "Bass:",     NULL,          NULL },
+	{d_agup_radio_proc,		46,  392, 58,  16, 2,   23,  0,    0,      5,         0,   "Pop",     NULL,          NULL },
+	{d_agup_radio_proc,		102, 392, 52,  16, 2,   23,  0,    0,      5,         0,   "Slap",       NULL,          NULL },
+	{d_agup_radio_proc,		154, 392, 64,  16, 2,   23,  0,    0,      5,         0,   "Neither",    NULL,          NULL },
 	{NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -3535,6 +3542,19 @@ int eof_menu_note_edit_pro_guitar_note(void)
 		else
 		{	//Select Strum "Any"
 			eof_pro_guitar_note_dialog[56].flags = D_SELECTED;
+		}
+		eof_pro_guitar_note_dialog[63].flags = eof_pro_guitar_note_dialog[64].flags = eof_pro_guitar_note_dialog[65].flags = 0;	//Deselect these radio buttons
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_POP)
+		{	//Select "Pop"
+			eof_pro_guitar_note_dialog[63].flags = D_SELECTED;
+		}
+		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLAP)
+		{	//Select "Slap"
+			eof_pro_guitar_note_dialog[64].flags = D_SELECTED;
+		}
+		else
+		{	//Select "Neither"
+			eof_pro_guitar_note_dialog[65].flags = D_SELECTED;
 		}
 
 		bitmask = 0;
@@ -3775,6 +3795,14 @@ int eof_menu_note_edit_pro_guitar_note(void)
 					else if(eof_pro_guitar_note_dialog[55].flags == D_SELECTED)
 					{	//Strum Down is selected
 						flags |= EOF_PRO_GUITAR_NOTE_FLAG_DOWN_STRUM;
+					}
+					if(eof_pro_guitar_note_dialog[63].flags == D_SELECTED)
+					{	//Pop is selected
+						flags |= EOF_PRO_GUITAR_NOTE_FLAG_POP;
+					}
+					else if(eof_pro_guitar_note_dialog[64].flags == D_SELECTED)
+					{	//Slap is selected
+						flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLAP;
 					}
 					if(!allmuted)
 					{	//If any used strings in this note/chord weren't string muted
@@ -6751,6 +6779,152 @@ int eof_menu_note_toggle_vibrato(void)
 				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_TAP;		//Clear the tap flag
 				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_BEND;	//Clear the bend flag
 				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO;	//Clear the vibrato flag
+			}
+			if(!u)
+			{	//Make a back up before changing the first note
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				u = 1;
+			}
+			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		}
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_menu_note_remove_pop(void)
+{
+	unsigned long i;
+	long u = 0;
+	unsigned long flags, tracknum;
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->pro_guitar_track[tracknum]->note[i]->type == eof_note_type))
+		{	//If this note is selected and is in the active difficulty
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_POP)
+			{	//If this note has pop status
+				if(!u)
+				{	//Make a back up before changing the first note
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					u = 1;
+				}
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_POP;	//Clear the pop flag
+				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+			}
+		}
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_menu_note_toggle_pop(void)
+{
+	unsigned long i;
+	long u = 0;
+	unsigned long flags, tracknum;
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->pro_guitar_track[tracknum]->note[i]->type == eof_note_type))
+		{	//If this note is selected and is in the active difficulty
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			flags ^= EOF_PRO_GUITAR_NOTE_FLAG_POP;	//Toggle the pop flag
+			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_POP)
+			{	//If pop status was just enabled
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLAP;				//Clear the slap flag
+			}
+			if(!u)
+			{	//Make a back up before changing the first note
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				u = 1;
+			}
+			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		}
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_menu_note_remove_slap(void)
+{
+	unsigned long i;
+	long u = 0;
+	unsigned long flags, tracknum;
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->pro_guitar_track[tracknum]->note[i]->type == eof_note_type))
+		{	//If this note is selected and is in the active difficulty
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLAP)
+			{	//If this note has slap status
+				if(!u)
+				{	//Make a back up before changing the first note
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					u = 1;
+				}
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLAP;	//Clear the slap flag
+				eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+			}
+		}
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_menu_note_toggle_slap(void)
+{
+	unsigned long i;
+	long u = 0;
+	unsigned long flags, tracknum;
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i] && (eof_song->pro_guitar_track[tracknum]->note[i]->type == eof_note_type))
+		{	//If this note is selected and is in the active difficulty
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			flags ^= EOF_PRO_GUITAR_NOTE_FLAG_SLAP;	//Toggle the slap flag
+			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLAP)
+			{	//If slap status was just enabled
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_POP;				//Clear the pop flag
 			}
 			if(!u)
 			{	//Make a back up before changing the first note

@@ -119,6 +119,10 @@ int eof_menu_note_toggle_harmonic(void);		//Toggles the harmonic status of all s
 int eof_menu_note_remove_harmonic(void);		//Removes the harmonic status of all selected notes
 int eof_menu_note_toggle_vibrato(void);			//Toggles the vibrato status of all selected notes
 int eof_menu_note_remove_vibrato(void);			//Removes the vibrato status of all selected notes
+int eof_menu_note_toggle_pop(void);				//Toggles the pop status of all selected notes
+int eof_menu_note_remove_pop(void);				//Removes the pop status of all selected notes
+int eof_menu_note_toggle_slap(void);			//Toggles the slap status of all selected notes
+int eof_menu_note_remove_slap(void);			//Removes the slap status of all selected notes
 int eof_menu_pro_guitar_toggle_hammer_on(void);	//Toggles the hammer on status of all selected notes
 int eof_menu_pro_guitar_remove_hammer_on(void);	//Removes the hammer on status of all selected notes
 int eof_menu_pro_guitar_toggle_pull_off(void);	//Toggles the pull off status of all selected notes

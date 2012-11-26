@@ -1934,17 +1934,30 @@ if(key[KEY_PAUSE])
 		}
 
 	/* toggle pull off status (P in a pro guitar track) */
-		if(key[KEY_P] && !KEY_EITHER_CTRL && !KEY_EITHER_ALT && !KEY_EITHER_SHIFT && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-		{
-			(void) eof_menu_pro_guitar_toggle_pull_off();
-			key[KEY_P] = 0;
-		}
-
 	/* place Rocksmith phrase (SHIFT+P in a pro guitar track) */
-		if(key[KEY_P] && !KEY_EITHER_CTRL && !KEY_EITHER_ALT && KEY_EITHER_SHIFT && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
-		{
-			(void) eof_rocksmith_phrase_dialog_add();
-			key[KEY_P] = 0;
+	/* toggle pop status (CTRL+SHIFT+P in a pro guitar track) */
+		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+		{	//If a pro guitar track is active
+			if(key[KEY_P])
+			{
+				if(!KEY_EITHER_CTRL && !KEY_EITHER_ALT && !KEY_EITHER_SHIFT)
+				{	//If none of CTRL, ALT or SHIFT are held
+					(void) eof_menu_pro_guitar_toggle_pull_off();
+					key[KEY_P] = 0;
+				}
+				else if(!KEY_EITHER_CTRL && !KEY_EITHER_ALT && KEY_EITHER_SHIFT)
+				{	//If SHIFT is held, but neither CTRL nor ALT are
+					(void) eof_rocksmith_phrase_dialog_add();
+					key[KEY_P] = 0;
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+				}
+				else if(KEY_EITHER_CTRL && !KEY_EITHER_ALT && KEY_EITHER_SHIFT)
+				{	//If both CTRL and SHIFT are held, but ALT is not
+					(void) eof_menu_note_toggle_pop();
+					key[KEY_P] = 0;
+					eof_shift_used = 1;	//Track that the SHIFT key was used
+				}
+			}
 		}
 
 	/* toggle open hi hat (SHIFT+O) */
@@ -2019,6 +2032,14 @@ if(key[KEY_PAUSE])
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				(void) eof_pro_guitar_set_fret_hand_position();
 				key[KEY_F] = 0;
+			}
+
+	/* toggle slap status (CTRL+SHIFTS in a pro guitar track) */
+			if(key[KEY_S] && KEY_EITHER_CTRL && !KEY_EITHER_ALT && KEY_EITHER_SHIFT)
+			{	//If both CTRL and SHIFT are held, but ALT is not
+				(void) eof_menu_note_toggle_slap();
+				key[KEY_S] = 0;
+				eof_shift_used = 1;	//Track that the SHIFT key was used
 			}
 
 	/* set pro guitar fret values (CTRL+#, CTRL+Fn #, CTRL+X, CTRL+~, CTRL++, CTRL+-) */

@@ -22,6 +22,7 @@
 #include "../tuning.h"
 #include "../rs.h"
 #include "../silence.h"	//For save_wav_with_silence_appended
+#include "beat.h"	//For eof_menu_beat_reset_offset()
 #include "file.h"
 #include "song.h"
 #include "edit.h"	//For eof_menu_edit_undo()
@@ -2150,7 +2151,7 @@ int eof_new_chart(char * filename)
 
 int eof_save_helper(char *destfilename)
 {
-	unsigned long ctr, ctr2;
+	unsigned long ctr, ctr2, notes_after_chart_audio;
 	char newfolderpath[1024] = {0};
 	char oggfn[1024] = {0};
 	char function;		//Will be set to 1 for "Save" or 2 for "Save as"
@@ -2184,6 +2185,17 @@ int eof_save_helper(char *destfilename)
 	/* sort notes so they are in order of position */
 	eof_sort_notes(eof_song);
 	eof_fixup_notes(eof_song);
+
+	/* check if there are any notes beyond the chart audio */
+	notes_after_chart_audio = eof_check_if_notes_exist_beyond_audio_end(eof_song);
+	if(notes_after_chart_audio)
+	{
+		snprintf(oggfn, sizeof(oggfn) - 1, "Warning:  Track \"%s\" contains notes/lyrics extending beyond the chart's audio.", eof_song->track[notes_after_chart_audio]->name);
+		if(alert(oggfn, NULL, "This chart may not work properly.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
+		{	//If the user doesn't opt to continue due to this error condition
+			return 2;	//Return cancellation
+		}
+	}
 
 	/* prepare lyrics if applicable */
 	if(eof_song->vocal_track[0]->lyrics > 0)
@@ -2269,6 +2281,18 @@ int eof_save_helper(char *destfilename)
 		eof_correct_chord_fingerings();			//Ensure all chords in each pro guitar track have valid finger arrays, prompt user to provide any that are missing
 	}
 
+	/* check if there is a MIDI delay, offer to use Reset offset to zero */
+	if(eof_write_rs_files)
+	{	//If the user wants to save Rocksmith capable files
+		if(eof_song->beat[0]->pos > 0)
+		{	//If there is a MIDI delay
+			if(alert("Warning:  The first beat marker (the MIDI delay) is not positioned at 0 seconds.", "This might prevent the song from playing from the beginning in Rocksmith.", "Correct this condition with \"Reset offset to zero\"?", "&Yes", "&No", 'y', 'n') == 1)
+			{	//If the user opts to correct the issue
+				eof_menu_beat_reset_offset();	//Run the "Reset offset to zero" function.  If the tempo map is locked, the function will offer to unlock it before proceeding
+			}
+		}
+	}
+
 	/* save the chart */
 	(void) replace_extension(eof_temp_filename, eof_temp_filename, "eof", 1024);	//Ensure the chart is saved with a .eof extension
 	eof_song->tags->revision++;
@@ -2340,10 +2364,12 @@ int eof_save_helper(char *destfilename)
 			eof_get_rocksmith_wav_path(eof_temp_filename, newfolderpath, sizeof(eof_temp_filename));	//Build the path to the target WAV file
 			if(!exists(eof_temp_filename))
 			{	//If the WAV file does not exist
+				set_window_title("Saving WAV file for use with Wwise.  Please wait.");
 				SAMPLE *decoded = alogg_create_sample_from_ogg(eof_music_track);	//Create PCM data from the loaded chart audio
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Writing RS WAV file (%s)", eof_temp_filename);
 				eof_log(eof_log_string, 1);
 				save_wav_with_silence_appended(eof_temp_filename, decoded, 8000);	//Write a WAV file with it, appending 8 seconds of silence to it
+				eof_fix_window_title();
 			}
 		}
 

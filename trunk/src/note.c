@@ -310,6 +310,13 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 		dcol = eof_color_white;
 	}
 
+	if(track != 0)
+	{	//If rendering an existing note instead of the pen note
+		//Render tab notations before the note, so that the former doesn't render a solid background over the latter
+		eof_get_note_notation(notation, track, notenum);	//Get the tab playing notation for this note
+		textout_centre_ex(window->screen, eof_symbol_font, notation, x, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 6, eof_color_red, eof_color_black);
+	}
+
 	for(ctr=0,mask=1;ctr<numlanes;ctr++,mask=mask<<1)
 	{	//Render for each of the available fret lanes
 		iscymbal = 0;
@@ -455,10 +462,6 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 
 	if(track != 0)
 	{	//If rendering an existing note instead of the pen note
-		//Render tab notations
-		eof_get_note_notation(notation, track, notenum);	//Get the tab playing notation for this note
-		textout_centre_ex(window->screen, eof_symbol_font, notation, x, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 3, eof_color_red, -1);
-
 		//Render note names
 		if(!eof_hide_note_names)
 		{	//If the user hasn't opted to hide note names
@@ -1265,11 +1268,11 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 	{	//Check pro guitar statuses
 		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_HO)
 		{
-			buffer[index++] = 'H';
+			buffer[index++] = 'h';
 		}
 		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_PO)
 		{
-			buffer[index++] = 'P';
+			buffer[index++] = 'p';
 		}
 		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
 		{
@@ -1346,6 +1349,14 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_MID_STRUM)
 		{
 			buffer[index++] = 'M';
+		}
+		if(flags & EOF_PRO_GUITAR_NOTE_FLAG_POP)
+		{
+			buffer[index++] = 'P';
+		}
+		else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLAP)
+		{
+			buffer[index++] = 'S';
 		}
 	}//Check pro guitar statuses
 	else if(track == EOF_TRACK_DRUM)

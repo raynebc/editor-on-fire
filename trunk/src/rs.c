@@ -573,7 +573,10 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 					{	//Note had no gems, throw error
 						allegro_message("Error:  A note with no gems was encountered.  Aborting Rocksmith export");
 						eof_log("Error:  A note with no gems was encountered.  Aborting Rocksmith export", 1);
-						free(chordlist);
+						if(chordlist)
+						{	//If the chord list was built
+							free(chordlist);
+						}
 						(void) pack_fclose(fp);
 						return 0;	//Return failure
 					}
@@ -608,6 +611,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 								char palmmute;				//Nonzero if this note is a palm mute
 								unsigned long length;
 								char tremolo;				//Nonzero if this note is a tremolo
+								char pop;					//1 if this note is played with pop technique, else -1
+								char slap;					//1 if this note is played with slap technique, else -1
 
 								flags = eof_get_note_flags(sp, track, ctr3);
 								notepos = eof_get_note_pos(sp, track, ctr3);
@@ -650,10 +655,12 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 								hopo = (hammeron & pulloff) ? 1 : 0;
 								palmmute = (flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE) ? 1 : 0;
 								tremolo = (flags & EOF_NOTE_FLAG_IS_TREMOLO) ? 1 : 0;
+								pop = (flags & EOF_PRO_GUITAR_NOTE_FLAG_POP) ? 1 : -1;
+								slap = (flags & EOF_PRO_GUITAR_NOTE_FLAG_SLAP) ? 1 : -1;
 
 								if((flags & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) == 0)
 								{	//At this point, it doesn't seem Rocksmith supports string muted notes
-									(void) snprintf(buffer, sizeof(buffer) - 1, "        <note time=\"%.3f\" bend=\"%lu\" fret=\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"0\" palmMute=\"%d\" pullOff=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\"/>\n", (double)notepos / 1000.0, bend, fret, hammeron, harmonic, hopo, palmmute, pulloff, slideto, stringnum, (double)length / 1000.0, tremolo);
+									(void) snprintf(buffer, sizeof(buffer) - 1, "        <note time=\"%.3f\" bend=\"%lu\" fret=\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"0\" palmMute=\"%d\" pluck=\"%d\" pullOff=\"%d\" slap=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\"/>\n", (double)notepos / 1000.0, bend, fret, hammeron, harmonic, hopo, palmmute, pop, pulloff, slap, slideto, stringnum, (double)length / 1000.0, tremolo);
 									(void) pack_fputs(buffer, fp);
 								}
 							}//If this string is used in this note
@@ -696,7 +703,10 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 						{	//If the chord couldn't be found
 							allegro_message("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.");
 							eof_log("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.", 1);
-							free(chordlist);
+							if(chordlist)
+							{	//If the chord list was built
+								free(chordlist);
+							}
 							return 0;	//Return error
 						}
 						if(tp->note[ctr3]->flags & EOF_PRO_GUITAR_NOTE_FLAG_UP_STRUM)
@@ -795,7 +805,10 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	(void) pack_fputs("  </levels>\n", fp);
 	(void) pack_fputs("</song>\n", fp);
 	(void) pack_fclose(fp);
-	free(chordlist);
+	if(chordlist)
+	{	//If the chord list was built
+		free(chordlist);
+	}
 
 	//At this point, the XML file has been created, if the user has defined the path to the Rocksmith toolkit, attempt to compile the XML file with it
 #ifdef ALLEGRO_WINDOWS

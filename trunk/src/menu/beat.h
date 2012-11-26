@@ -50,7 +50,10 @@ int eof_menu_beat_ks_off(void);
 
 int eof_menu_beat_delete(void);
 int eof_menu_beat_anchor(void);
-int eof_menu_beat_push_offset_back(void);	//Appends a new beat structure and moves all beats one forward, with their timestamps adjusted to compensate for the duration of the first beat.  Returns nonzero on success.
+int eof_menu_beat_push_offset_back(char *undo_made);
+	//Appends a new beat structure and moves all beats one forward, with their timestamps adjusted to compensate for the duration of the first beat.  Returns nonzero on success.
+	//If *undo_made is zero, an undo state is made before altering the chart and *undo_made is set to nonzero
+int eof_menu_beat_push_offset_back_menu(void);	//Calls eof_menu_beat_push_offset_back() with the option of making an undo state
 int eof_menu_beat_push_offset_up(void);
 int eof_menu_beat_toggle_anchor(void);
 int eof_menu_beat_delete_anchor(void);
@@ -81,7 +84,7 @@ void eof_rebuild_trainer_strings(void);
 	//Recreates the trainer section strings appropriate for the currently pro guitar/bass track into eof_etext2, eof_etext3 and eof_etext4
 int eof_events_dialog_add_function(char function);
 	//Launches the add new text event dialog.
-	//If (function & EOF_EVENT_FLAG_RS_PHRASE) is true, the "Rocksmith phrase marker" option is automatically checked (having it false doesn't clear the checkbox)
+	//If (function & EOF_EVENT_FLAG_RS_PHRASE) is true, the "Rocksmith phrase marker" option is automatically checked, otherwise that checkbox is initialized to clear
 	//Similarly, if (function & EOF_EVENT_FLAG_RS_SECTION) is true, the "Rocksmith section marker option is automatically checked
 int eof_rocksmith_phrase_dialog_add(void);
 	//Calls eof_events_dialog_add_function with a function value of EOF_EVENT_FLAG_RS_PHRASE
