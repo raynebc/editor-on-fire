@@ -5675,3 +5675,26 @@ unsigned long eof_get_note_max_length(EOF_SONG *sp, unsigned long track, unsigne
 	}
 	return (nextpos - thispos - eof_min_note_distance);
 }
+
+int eof_check_if_notes_exist_beyond_audio_end(EOF_SONG *sp)
+{
+	unsigned long ctr, ctr2;
+
+	if(!sp || eof_silence_loaded)
+	{	//If the specified chart is not valid or there is no chart audio loaded
+		return 0;
+	}
+
+	for(ctr = 1; ctr < sp->tracks; ctr++)
+	{	//For each track in the chart
+		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, ctr); ctr2++)
+		{	//For each note in the chart
+			if(eof_get_note_pos(sp, ctr, ctr2) + eof_get_note_length(sp, ctr, ctr2) > eof_music_length)
+			{	//If the note ends beyond the chart audio
+				return ctr;
+			}
+		}
+	}
+
+	return 0;
+}

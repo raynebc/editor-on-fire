@@ -2616,6 +2616,14 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							{	//Tapping
 								flags |= EOF_PRO_GUITAR_NOTE_FLAG_TAP;
 							}
+							else if(byte == 2)
+							{	//Slapping
+								flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLAP;
+							}
+							else if(byte == 3)
+							{	//Popping
+								flags |= EOF_PRO_GUITAR_NOTE_FLAG_POP;
+							}
 							if(fileversion < 400)
 							{
 								pack_ReadDWORDLE(inf, &dword);	//String effect value

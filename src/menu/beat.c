@@ -61,7 +61,7 @@ MENU eof_beat_menu[] =
     {"", NULL, NULL, 0, NULL},
     {"Add", eof_menu_beat_add, NULL, 0, NULL},
     {"Delete\t" CTRL_NAME "+Del", eof_menu_beat_delete, NULL, 0, NULL},
-    {"Push Offset Back", eof_menu_beat_push_offset_back, NULL, 0, NULL},
+    {"Push Offset Back", eof_menu_beat_push_offset_back_menu, NULL, 0, NULL},
     {"Push Offset Up", eof_menu_beat_push_offset_up, NULL, 0, NULL},
     {"Reset Offset to Zero", eof_menu_beat_reset_offset, NULL, 0, NULL},
     {"&Anchor Beat\tShift+A", eof_menu_beat_anchor, NULL, 0, NULL},
@@ -297,11 +297,13 @@ void eof_prepare_beat_menu(void)
 		{	//If a pro guitar/bass track is active
 			eof_beat_menu[22].flags = 0;	//Place Trainer Event
 			eof_beat_menu[23].flags = 0;	//Place RS phrase
+			eof_beat_menu[24].flags = 0;	//Place RS section
 		}
 		else
 		{
 			eof_beat_menu[22].flags = D_DISABLED;
-			eof_beat_menu[23].flags = 0;
+			eof_beat_menu[23].flags = D_DISABLED;
+			eof_beat_menu[24].flags = D_DISABLED;
 		}
 //Re-flag the active Time Signature for the selected beat
 		for(i = 0; i < 6; i++)
@@ -623,17 +625,23 @@ int eof_menu_beat_delete(void)
 	return 1;
 }
 
-int eof_menu_beat_push_offset_back(void)
+int eof_menu_beat_push_offset_back(char *undo_made)
 {
 	unsigned long i;
 	unsigned long backamount = eof_song->beat[1]->pos - eof_song->beat[0]->pos;
 
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
-		return 1;							//Return without making changes
+		return 0;							//Return without making changes
+	if(!undo_made)
+		return 0;	//Invalid parameter
 
 	if(eof_song->beat[0]->pos >= backamount)
 	{
-		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		if(*undo_made == 0)
+		{	//If an undo state needs to be made
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			*undo_made = 1;
+		}
 		if(eof_song_resize_beats(eof_song, eof_song->beats + 1))
 		{	//If the beats array was successfully resized
 			for(i = eof_song->beats - 1; i > 0; i--)
@@ -651,6 +659,13 @@ int eof_menu_beat_push_offset_back(void)
 			return 0;	//Return failure
 	}
 	return 1;	//Return success
+}
+
+int eof_menu_beat_push_offset_back_menu(void)
+{
+	char undo_made = 0;
+
+	return eof_menu_beat_push_offset_back(&undo_made);
 }
 
 int eof_menu_beat_push_offset_up(void)
@@ -677,13 +692,40 @@ int eof_menu_beat_reset_offset(void)
 {
 	int i;
 	double newbpm;
+	char undo_made = 0;
 
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
-		return 1;							//Return without making changes
+	{
+		if(alert("Cannot perform this operation while the tempo map is locked.", NULL, "Would you like to unlock the tempo map?", "&Yes", "&No", 'y', 'n') != 1)
+		{	//If user does not opt to unlock the tempo map to carry out the operation
+			return 1;	//Return without making changes
+		}
+		eof_song->tags->tempo_map_locked = 0;	//Unlock the tempo map
+	}
+
+	if(eof_song->beats < 2)
+		return 1;	//Chart must be at least 2 beats
+
+	if(eof_song->beat[0]->pos >= eof_song->beat[1]->pos - eof_song->beat[0]->pos)
+	{	//If the MIDI delay is at least one beat length long, offer to insert as many evenly spaced beats as possible
+		if(alert(NULL, "Insert evenly spaced beats at the beginning of the chart?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+		{	//If user opts to insert evenly spaced beats
+			while(eof_song->beat[0]->pos >= eof_song->beat[1]->pos - eof_song->beat[0]->pos)
+			{	//While the MIDI delay is still large enough to be moved back one beat
+				if(!eof_menu_beat_push_offset_back(&undo_made))
+				{	//If pushing back the chart by one beat failed
+					break;	//Break from this loop and attempt to finish the normal reset offset logic
+				}
+			}
+		}
+	}
 
 	if(eof_song->beat[0]->pos > 0)
 	{	//Only allow this function to run if the current MIDI delay is above zero
-		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		if(!undo_made)
+		{	//If an undo state hasn't been made yet
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		}
 		if(eof_song_resize_beats(eof_song, eof_song->beats + 1))
 		{	//If the beats array was successfully resized
 			for(i = eof_song->beats - 1; i > 0; i--)
@@ -1198,9 +1240,17 @@ int eof_events_dialog_add_function(char function)
 	{	//If the calling function wanted to automatically enable the "Rocksmith phrase marker" checkbox
 		eof_events_add_dialog[4].flags = D_SELECTED;
 	}
+	else
+	{	//Otherwise clear it
+		eof_events_add_dialog[4].flags = 0;
+	}
 	if(function & EOF_EVENT_FLAG_RS_SECTION)
 	{	//If the calling function wanted to automatically enable the "Rocksmith section marker" checkbox
 		eof_events_add_dialog[5].flags = D_SELECTED;
+	}
+	else
+	{	//Otherwise clear it
+		eof_events_add_dialog[5].flags = 0;
 	}
 	if(eof_popup_dialog(eof_events_add_dialog, 2) == 6)
 	{	//User clicked OK
