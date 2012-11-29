@@ -905,6 +905,8 @@ int main(int argc, char *argv[])
 			{	//Perform official "Soft Karaoke" KAR logic (load lyrics based on Text events in a track called "Words")
 				if(Lyrics.inputtrack != NULL)
 					free(Lyrics.inputtrack);
+				else
+					(void) puts("No input track specified, defaulting to \"Words\"");
 				Lyrics.inputtrack=DuplicateString("Words");
 				if(Lyrics.verbose)	(void) puts("Using Soft Karaoke import logic");
 				Lyrics.in_format=SKAR_FORMAT;

@@ -50,6 +50,14 @@ EOF_RS_PREDEFINED_SECTION eof_rs_predefined_sections[EOF_NUM_RS_PREDEFINED_SECTI
 	{"silence", "Silence"}
 };
 
+EOF_RS_PREDEFINED_SECTION eof_rs_predefined_events[EOF_NUM_RS_PREDEFINED_EVENTS] =
+{
+	{"B0", "High pitch tick"},
+	{"B1", "Low pitch tick"},
+	{"E1", "Crowd happy"},
+	{"E3", "Crowd wild"}
+};
+
 unsigned char *eof_fret_range_tolerances = NULL;	//A dynamically allocated array that defines the fretting hand's range for each fret on the guitar neck, numbered where fret 1's range is defined at eof_fret_range_tolerances[1]
 
 int eof_is_string_muted(EOF_SONG *sp, unsigned long track, unsigned long note)
@@ -252,7 +260,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	char buffer[256] = {0};
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
-	unsigned long ctr, ctr2, ctr3, ctr4, numsections = 0, stringnum, bitmask, numsinglenotes, numchords, *chordlist, chordlistsize, *sectionlist, sectionlistsize, xml_end;
+	unsigned long ctr, ctr2, ctr3, ctr4, numsections = 0, stringnum, bitmask, numsinglenotes, numchords, *chordlist, chordlistsize, *sectionlist, sectionlistsize, xml_end, numevents = 0;
 	EOF_PRO_GUITAR_TRACK *tp;
 	char *arrangement_name;	//This will point to the track's native name unless it has an alternate name defined
 	char populated[4] = {0};	//Will track which difficulties are populated
@@ -309,7 +317,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		return 0;	//Return failure
 	}
 
-	//Get the smaller of the chart length and the music length, this will be used to write the songlength tag and END phrase iteration
+	//Get the smaller of the chart length and the music length, this will be used to write the songlength tag, END phrase iteration and noguitar section instance
 	xml_end = eof_music_length;
 	if(eof_chart_length < eof_music_length)
 	{	//If the chart length is shorter than the music length
@@ -534,12 +542,40 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		(void) pack_fputs("  </sections>\n", fp);
 	}
 	else
-	{	//Otherwise write an empty sections tag
-		(void) pack_fputs("  <sections count=\"0\"/>\n", fp);
+	{	//Otherwise write a couple default sections
+		(void) pack_fputs("  <sections count=\"2\">\n", fp);
+		(void) pack_fputs("    <section name=\"intro\" number=\"1\" startTime=\"0.000\"/>\n", fp);
+		(void) snprintf(buffer, sizeof(buffer) - 1, "    <section name=\"noguitar\" number=\"1\" startTime=\"%.3f\"/>\n", (double)(xml_end - 1) / 1000.0);
+		(void) pack_fputs(buffer, fp);
+		(void) pack_fputs("  </sections>\n", fp);
 	}
 
-	//Write empty events tag
-	(void) pack_fputs("  <events count=\"0\"/>\n", fp);
+	//Write events
+	for(ctr = 0, numevents = 0; ctr < sp->text_events; ctr++)
+	{	//For each event in the chart
+		if(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_EVENT)
+		{	//If the event is marked as a Rocksmith event
+			numevents++;
+		}
+	}
+	if(numevents)
+	{	//If there is at least one Rocksmith event defined in the chart
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <events count=\"%lu\">\n", numevents);
+		(void) pack_fputs(buffer, fp);
+		for(ctr = 0, numevents = 0; ctr < sp->text_events; ctr++)
+		{	//For each event in the chart
+			if(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_EVENT)
+			{	//If the event is marked as a Rocksmith event
+				(void) snprintf(buffer, sizeof(buffer) - 1, "    <event time=\"%.3f\" code=\"%s\"/>\n", sp->beat[sp->text_event[ctr]->beat]->fpos / 1000.0, sp->text_event[ctr]->text);
+				(void) pack_fputs(buffer, fp);
+			}
+		}
+		(void) pack_fputs("  </events>\n", fp);
+	}
+	else
+	{	//Otherwise write an empty events tag
+		(void) pack_fputs("  <events count=\"0\"/>\n", fp);
+	}
 
 	//Write difficulty
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <levels count=\"%u\">\n", numdifficulties);
@@ -797,8 +833,130 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 				}
 			}
 
-			//Write other stuff
-			(void) pack_fputs("      <handShapes count=\"0\"/>\n", fp);
+			//Write hand shapes
+			if(numchords)
+			{	//If there's at least one chord in this difficulty
+				unsigned long chordid, handshapectr = 0;
+				double handshapestart, handshapeend;
+				long nextnote;
+
+				//Count the number of hand shapes to write
+				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
+				{	//For each note in the track
+					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_colors(sp, track, ctr3) > 1) && !eof_is_string_muted(sp, track, ctr3))
+					{	//If this note is in this difficulty and is a chord that isn't fully string muted
+						//Find this chord's ID
+						for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
+						{	//For each of the entries in the unique chord list
+							if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
+							{	//If this note matches a chord entry
+								chordid = ctr4;	//Store the chord entry number
+								break;
+							}
+						}
+						if(ctr4 >= chordlistsize)
+						{	//If the chord couldn't be found
+							allegro_message("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.");
+							eof_log("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.", 1);
+							if(chordlist)
+							{	//If the chord list was built
+								free(chordlist);
+							}
+							return 0;	//Return error
+						}
+						handshapestart = (double)eof_get_note_pos(sp, track, ctr3) / 1000.0;	//Store this chord's start position (in seconds)
+
+						//Examine subsequent notes to see if they match this chord
+						while(1)
+						{
+							nextnote = eof_fixup_next_note(sp, track, ctr3);
+							if(nextnote >= 0)
+							{	//If there is another note
+								if(eof_note_compare_simple(sp, track, ctr3, nextnote))
+								{	//And it matches this chord
+									ctr3++;	//Iterate to next note to check if it matches
+								}
+								else
+								{	//It doesn't match this chord
+									handshapeend = ((double)eof_get_note_pos(sp, track, nextnote) - 1.0) / 1000.0;	//Store 1ms before the next note's start position (in seconds)
+									break;	//Break from while loop
+								}
+							}
+							else
+							{	//There are no more notes in this track difficulty
+								handshapeend = ((double)eof_get_note_pos(sp, track, ctr3) + (double)eof_get_note_length(sp, track, ctr3)) / 1000.0;	//Store the end position of this note (in seconds)
+								break;
+							}
+						}
+
+						handshapectr++;	//One more hand shape has been counted
+					}
+				}
+
+				//Write the hand shapes
+				(void) snprintf(buffer, sizeof(buffer) - 1, "      <handShapes count=\"%lu\">\n", handshapectr);
+				(void) pack_fputs(buffer, fp);
+				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
+				{	//For each note in the track
+					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_colors(sp, track, ctr3) > 1) && !eof_is_string_muted(sp, track, ctr3))
+					{	//If this note is in this difficulty and is a chord that isn't fully string muted
+						//Find this chord's ID
+						for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
+						{	//For each of the entries in the unique chord list
+							if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
+							{	//If this note matches a chord entry
+								chordid = ctr4;	//Store the chord entry number
+								break;
+							}
+						}
+						if(ctr4 >= chordlistsize)
+						{	//If the chord couldn't be found
+							allegro_message("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.");
+							eof_log("Error:  Couldn't match chord with chord template.  Aborting Rocksmith export.", 1);
+							if(chordlist)
+							{	//If the chord list was built
+								free(chordlist);
+							}
+							return 0;	//Return error
+						}
+						handshapestart = (double)eof_get_note_pos(sp, track, ctr3) / 1000.0;	//Store this chord's start position (in seconds)
+
+						//Examine subsequent notes to see if they match this chord
+						while(1)
+						{
+							nextnote = eof_fixup_next_note(sp, track, ctr3);
+							if(nextnote >= 0)
+							{	//If there is another note
+								if(!eof_note_compare_simple(sp, track, ctr3, nextnote))
+								{	//And it matches this chord
+									ctr3++;	//Iterate to next note to check if it matches
+								}
+								else
+								{	//It doesn't match this chord
+									handshapeend = ((double)eof_get_note_pos(sp, track, nextnote) - 1.0) / 1000.0;	//Store 1ms before the next note's start position (in seconds)
+									break;	//Break from while loop
+								}
+							}
+							else
+							{	//There are no more notes in this track difficulty
+								handshapeend = ((double)eof_get_note_pos(sp, track, ctr3) + (double)eof_get_note_length(sp, track, ctr3)) / 1000.0;	//Store the end position of this note (in seconds)
+								break;
+							}
+						}
+
+						//Write this hand shape
+						(void) snprintf(buffer, sizeof(buffer) - 1, "        <handShape chordId=\"%lu\" endTime=\"%.3f\" startTime=\"%.3f\"/>\n", chordid, handshapeend, handshapestart);
+						(void) pack_fputs(buffer, fp);
+					}
+				}
+				(void) pack_fputs("      </handShapes>\n", fp);
+			}
+			else
+			{	//There are no chords in this difficulty, write an empty hand shape tag
+				(void) pack_fputs("      <handShapes count=\"0\"/>\n", fp);
+			}
+
+			//Write closing level tag
 			(void) pack_fputs("    </level>\n", fp);
 		}//If this difficulty is populated
 	}//For each of the available difficulties
@@ -1191,6 +1349,23 @@ int eof_rs_section_text_valid(char *string)
 	{	//For each pre-defined Rocksmith section
 		if(!ustrcmp(eof_rs_predefined_sections[ctr].string, string))
 		{	//If the string matches this Rocksmith section entry
+			return 1;	//Return match
+		}
+	}
+	return 0;	//Return no match
+}
+
+int eof_rs_event_text_valid(char *string)
+{
+	unsigned long ctr;
+
+	if(!string)
+		return 0;	//Return error
+
+	for(ctr = 0; ctr < EOF_NUM_RS_PREDEFINED_EVENTS; ctr++)
+	{	//For each pre-defined Rocksmith event
+		if(!ustrcmp(eof_rs_predefined_events[ctr].string, string))
+		{	//If the string matches this Rocksmith event entry
 			return 1;	//Return match
 		}
 	}

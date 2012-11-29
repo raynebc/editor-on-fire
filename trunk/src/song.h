@@ -413,6 +413,7 @@ typedef struct
 
 #define EOF_EVENT_FLAG_RS_PHRASE	1
 #define EOF_EVENT_FLAG_RS_SECTION	2
+#define EOF_EVENT_FLAG_RS_EVENT		4
 
 typedef struct
 {
