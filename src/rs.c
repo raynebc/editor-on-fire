@@ -872,7 +872,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 							nextnote = eof_fixup_next_note(sp, track, ctr3);
 							if(nextnote >= 0)
 							{	//If there is another note
-								if(eof_note_compare_simple(sp, track, ctr3, nextnote))
+								if(!eof_note_compare_simple(sp, track, ctr3, nextnote))
 								{	//And it matches this chord
 									ctr3++;	//Iterate to next note to check if it matches
 								}
