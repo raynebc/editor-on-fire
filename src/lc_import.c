@@ -189,7 +189,10 @@ int EOF_IMPORT_VIA_LC(EOF_VOCAL_TRACK *tp, struct Lyric_Format **lp, int format,
 
 	PostProcessLyrics();	//Perform validation of pointers, counters, etc.
 
-	RemapPitches();		//Ensure pitches are within the correct range (except for pitchless lyrics)
+	if(Lyrics.pitch_tracking)
+	{	//Only perform input pitch validation and remapping if the import lyrics had pitch information
+		RemapPitches();		//Ensure pitches are within the correct range (except for pitchless lyrics)
+	}
 
 	//Delete any existing lyrics and lines
 	for(i = 0; i < tp->lyrics; i++)

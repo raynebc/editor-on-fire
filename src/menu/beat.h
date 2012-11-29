@@ -19,6 +19,7 @@ extern DIALOG eof_bpm_change_dialog[];
 extern DIALOG eof_anchor_dialog[];
 extern DIALOG eof_place_trainer_dialog[];
 extern DIALOG eof_rocksmith_section_dialog[];
+extern DIALOG eof_rocksmith_event_dialog[];
 
 void eof_prepare_beat_menu(void);			//Enable/disable Beat menu items prior to drawing the menu
 int eof_menu_beat_add(void);
@@ -85,12 +86,17 @@ void eof_rebuild_trainer_strings(void);
 int eof_events_dialog_add_function(char function);
 	//Launches the add new text event dialog.
 	//If (function & EOF_EVENT_FLAG_RS_PHRASE) is true, the "Rocksmith phrase marker" option is automatically checked, otherwise that checkbox is initialized to clear
-	//Similarly, if (function & EOF_EVENT_FLAG_RS_SECTION) is true, the "Rocksmith section marker option is automatically checked
+	//Similarly, if (function & EOF_EVENT_FLAG_RS_SECTION) is true, the "Rocksmith section marker" option is automatically checked
+	//Similarly, if (function & EOF_EVENT_FLAG_RS_EVENT) is true, the "Rocksmith event marker" option is automatically checked
 int eof_rocksmith_phrase_dialog_add(void);
 	//Calls eof_events_dialog_add_function with a function value of EOF_EVENT_FLAG_RS_PHRASE
 int eof_rocksmith_section_dialog_add(void);
 	//Launches a dialog to allow the user to add a Rocksmith section to the selected beat from a pre-defined list of valid section names
+int eof_rocksmith_event_dialog_add(void);
+	//Launches a dialog to allow the user to add a Rocksmith event to the selected beat from a pre-defined list of valid event names
 char * eof_rs_section_add_list(int index, int * size);
 	//List box function for eof_rocksmith_section_dialog_add()
+char * eof_rs_event_add_list(int index, int * size);
+	//List box function for eof_rocksmith_event_dialog_add()
 
 #endif

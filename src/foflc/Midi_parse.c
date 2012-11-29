@@ -666,8 +666,8 @@ unsigned long TrackEventProcessor(FILE *inf,FILE *outf,unsigned char break_on,ch
 						case 0x7F:	//Sequencer-specific
 							vars.buffer=(char *)malloc_err((size_t)vars.length+1);
 							fread_err(vars.buffer,(size_t)vars.length,1,inf);
-
 							vars.buffer[vars.length]='\0';	//Null terminate the string
+							if(Lyrics.verbose>=2)	printf("Meta Event: Sequencer specific (%lu bytes)\n", vars.length);
 						break;
 
 						default:

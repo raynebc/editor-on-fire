@@ -722,44 +722,54 @@ if(key[KEY_PAUSE])
 		key[KEY_Q] = 0;
 	}
 
-	/* previous chord name match (SHIFT+W)  */
+	/* previous chord name match (CTRL+SHIFT+W)  */
 	/* previous catalog entry (W) */
 	if(key[KEY_W])
 	{
-		if(KEY_EITHER_SHIFT)
-		{	//SHIFT+W will cycle to the previous chord name match
+		if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
+		{	//CTRL+SHIFT+W will cycle to the previous chord name match
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			(void) eof_menu_previous_chord_result();
+			key[KEY_W] = 0;
 		}
-		else
+		else if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
 		{	//Otherwise W will cycle to the previous catalog entry
 			(void) eof_menu_catalog_previous();
+			key[KEY_W] = 0;
 		}
-		key[KEY_W] = 0;
 	}
 
 	/* toggle expert+ bass drum (CTRL+E) */
-	/* next chord name match (SHIFT+E) */
+	/* next chord name match (CTRL+SHIFT+E) */
+	/* place Rocksmith event (SHIFT+E) */
 	/* next catalog entry (E) */
 	if(key[KEY_E])
 	{
-		if(KEY_EITHER_CTRL)
+		if(KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
 		{	//CTRL+E will toggle Expert+ double bass drum notation
 			(void) eof_menu_note_toggle_double_bass();
+			key[KEY_E] = 0;
 		}
 		else
 		{
-			if(KEY_EITHER_SHIFT)
-			{	//SHIFT+E will cycle to the next chord name match
+			if(KEY_EITHER_SHIFT && KEY_EITHER_CTRL)
+			{	//CTRL+SHIFT+E will cycle to the next chord name match
 				eof_shift_used = 1;	//Track that the SHIFT key was used
 				(void) eof_menu_next_chord_result();
+				key[KEY_E] = 0;
 			}
-			else
-			{	//Otherwise E will cycle to the next catalog entry
+			else if(!KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
+			{	//E will cycle to the next catalog entry
 				(void) eof_menu_catalog_next();
+				key[KEY_E] = 0;
+			}
+			else if(KEY_EITHER_SHIFT && !KEY_EITHER_CTRL)
+			{	//SHIFT+E will place a Rocksmith event
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				(void) eof_rocksmith_event_dialog_add();
+				key[KEY_E] = 0;
 			}
 		}
-		key[KEY_E] = 0;
 	}
 
 	/* toggle green cymbal (CTRL+G in the drum track) */

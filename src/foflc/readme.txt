@@ -1,4 +1,4 @@
-foflc 2.38 Notes:
+foflc 2.39b Notes:
 
 PURPOSE:
 --------
