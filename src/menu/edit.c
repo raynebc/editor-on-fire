@@ -2817,7 +2817,7 @@ unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long tra
 			flags &= ~EOF_DANCE_FLAG_LANE_2_MINE;
 		}
 	}
-	if(notemask & 6)
+	if(notemask & 4)
 	{	//If the note being pasted uses lane 3, erase lane 3 flags from the overlapped note (remove yellow hi hat statuses if a red gem is present)
 		if(track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//Erase drum specific flags
