@@ -2936,6 +2936,16 @@ void Write_Default_Track_Zero(FILE *outmidi)
 
 	chunkfileposition=Write_MIDI_Track_Header(outmidi);	//Write header for track 0
 
+	//Write a track name, as some applications won't work correctly without it
+	if(Lyrics.Title != NULL)
+	{	//If the lyric structure contains a title string for the song
+		WriteMIDIString(outmidi,0,TRACK_NAME_MIDI_STRING,Lyrics.Title);	//Use that as the name for track 0
+	}
+	else
+	{
+		WriteMIDIString(outmidi,0,TRACK_NAME_MIDI_STRING,"Tempo map");		//Otherwise use a default name
+	}
+
 	//Write initial time signature
 	fputc_err(0,outmidi);			//Write a delta time of 0
 	WriteWORDBE(outmidi,0xFF58);	//Write meta event type 0x58
