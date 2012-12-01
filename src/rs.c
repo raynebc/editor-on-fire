@@ -348,7 +348,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	}
 	(void) pack_fputs(buffer, fp);
 
-	//Write the section information
+	//Write the phrases
 	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
 	for(ctr = 0; ctr < sp->beats; ctr++)
 	{	//For each beat in the chart
@@ -713,7 +713,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 			//Write chords
 			if(numchords)
 			{	//If there's at least one chord in this difficulty
-				unsigned long chordid;
+				unsigned long chordid, lastchordid = 0;
 				char *upstrum = "up";
 				char *downstrum = "down";
 				char *direction;	//Will point to either upstrum or downstrum as appropriate
@@ -753,8 +753,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 						{	//Otherwise the direction defaults to down
 							direction = downstrum;
 						}
-						if(lastchordpos && (tp->note[ctr3]->pos <= lastchordpos + 500))
-						{	//If this isn't the first chord and it is within 500ms of the previous chord instance
+						if(lastchordpos && (tp->note[ctr3]->pos <= lastchordpos + 500) && (chordid == lastchordid))
+						{	//If this isn't the first chord, it is within 500ms of the previous chord instance and it is the same as the previously written chord (not a chord change)
 							highdensity = 1;
 						}
 						else
@@ -765,6 +765,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 						(void) snprintf(buffer, sizeof(buffer) - 1, "        <chord time=\"%.3f\" chordId=\"%lu\" highDensity=\"%d\" ignore=\"0\" strum=\"%s\"/>\n", notepos, chordid, highdensity, direction);
 						(void) pack_fputs(buffer, fp);
 						lastchordpos = tp->note[ctr3]->pos;	//Cache the position of the last chord written
+						lastchordid = chordid;	//Cache the ID of the last chord written
 					}//If this note is in this difficulty and is a chord
 				}//For each note in the track
 				(void) pack_fputs("      </chords>\n", fp);
