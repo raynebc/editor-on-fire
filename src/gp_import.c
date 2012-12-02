@@ -2358,7 +2358,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 #endif
 				if(ctr2 < 6)
 				{	//Don't store the tuning for more than six strings, as EOF doesn't support 7
-					gp->track[ctr]->tuning[gp->track[ctr]->numstrings - 1 - ctr2] = (dword + 3) % 12;	//Store the raw note value in number of half steps above A, this will have to be converted to the track and string count specific relative value once mapped to an EOF instrument track (Guitar Pro stores the tuning in string order starting from #1, reversed from EOF)
+					gp->track[ctr]->tuning[gp->track[ctr]->numstrings - 1 - ctr2] = dword;	//Store the absolute MIDI note, this will have to be converted to the track and string count specific relative value once mapped to an EOF instrument track (Guitar Pro stores the tuning in string order starting from #1, reversed from EOF)
 				}
 			}
 			else

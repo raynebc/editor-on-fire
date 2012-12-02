@@ -2638,10 +2638,11 @@ int eof_gp_import_track(DIALOG * d)
 		//Correct the track's tuning array from absolute to relative
 		for(ctr = 0; ctr < 6; ctr++)
 		{	//For each of the 6 supported strings
-			int default_tuning = eof_lookup_default_string_tuning(eof_song->pro_guitar_track[tracknum], eof_selected_track, ctr);	//Get the default tuning for this string
+			int default_tuning = eof_lookup_default_string_tuning_absolute(eof_song->pro_guitar_track[tracknum], eof_selected_track, ctr);	//Get the default absolute tuning for this string
 			if(default_tuning >= 0)
 			{	//If the default tuning was found
 				eof_song->pro_guitar_track[tracknum]->tuning[ctr] -= default_tuning;	//Convert the tuning to relative
+				eof_song->pro_guitar_track[tracknum]->tuning[ctr] %= 12;	//Ensure the stored value is bounded to [-11,11]
 			}
 		}
 	}
