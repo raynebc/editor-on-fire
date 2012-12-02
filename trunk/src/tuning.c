@@ -174,6 +174,40 @@ int eof_lookup_default_string_tuning(EOF_PRO_GUITAR_TRACK *tp, unsigned long tra
 	return -1;	//Unsupported pro guitar track
 }
 
+int eof_lookup_default_string_tuning_absolute(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long stringnum)
+{
+	int default_tuning_6_string[] = {40,45,50,55,59,64};		//MIDI note values, representing "EADGBE"
+	int default_tuning_4_string_bass[] = {28,33,38,43};	//MIDI note values, representing "EADG";
+	int default_tuning_5_string_bass[] = {23,28,33,38,43};	//MIDI note values, representing "BEADG";
+	int default_tuning_6_string_bass[] = {23,28,33,38,43,48};//MIDI note values, representing "BEADGC";
+
+	if(tp == NULL)
+		return -1;	//Invalid track pointer
+	if(stringnum >= tp->numstrings)
+		return -1;	//Invalid string number
+	if((track == EOF_TRACK_PRO_GUITAR) || (track == EOF_TRACK_PRO_GUITAR_22))
+	{	//Standard tuning is EADGBe
+		return default_tuning_6_string[stringnum];	//Return this string's default tuning
+	}
+	else if((track == EOF_TRACK_PRO_BASS) || (track == EOF_TRACK_PRO_BASS_22))
+	{
+		if(tp->numstrings == 4)
+		{	//Standard tuning for 4 string bass is EADG
+			return default_tuning_4_string_bass[stringnum];	//Return this string's default tuning
+		}
+		else if(tp->numstrings == 5)
+		{	//Standard tuning for 5 string bass is BEADG
+			return default_tuning_5_string_bass[stringnum];	//Return this string's default tuning
+		}
+		else if(tp->numstrings == 6)
+		{	//Standard tuning for 6 string bass is BEADGC
+			return default_tuning_6_string_bass[stringnum];	//Return this string's default tuning
+		}
+	}
+
+	return -1;	//Unsupported pro guitar track
+}
+
 int eof_lookup_tuned_note(EOF_PRO_GUITAR_TRACK *tp, unsigned long track, unsigned long stringnum, int halfsteps)
 {
 	int notenum;
