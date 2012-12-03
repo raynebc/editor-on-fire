@@ -110,7 +110,7 @@ typedef struct
 
 typedef struct
 {
-    char name[EOF_NAME_LENGTH+1];
+	char name[EOF_NAME_LENGTH+1];
 	char          type;			//Stores the note's difficulty
 	unsigned char note;			//Stores the note's string statuses (set=played, reset=not played).  Bit 0 refers to string 6 (low E), bit 5 refers to string 1 (high e), etc.
 	unsigned char ghost;		//Stores the note's ghost statuses.  Bit 0 indicates whether string 1 is ghosted, etc.
@@ -564,7 +564,7 @@ void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourc
 	//Copies the specified note to the specified track, returning a pointer to the newly created note structure, or NULL on error
 	//The specified position, length and type are applied to the new note.  Other note variables such as the bitmask/pitch and name/lyric text are copied as-is
 	//If the source is a pro guitar track and the destination is not, the source note's legacy bitmask is used if defined
-	//If the source and destination are both pro guitar tracks, the source note's fret values are copied
+	//If the source and destination are both pro guitar tracks, the source note's fret array, finger array, ghost bitmask, legacy bitmask, bend strength and slide end position are copied
 long eof_get_prev_note_type_num(EOF_SONG *sp, unsigned long track, unsigned long note);
 	//Returns the note immediately before the specified that is in the same difficulty, provided that the notes are sorted chronologically, or -1 if no such note exists
 void eof_adjust_note_length(EOF_SONG * sp, unsigned long track, unsigned long amount, int dir);
@@ -714,7 +714,7 @@ int eof_thin_notes_to_match__target_difficulty(EOF_SONG *sp, unsigned long sourc
 	//Checks all notes in the target track difficulty
 	//For each note, if it isn't within [delta] number of milliseconds of a note in the source track difficulty, it is deleted
 	//Returns zero on error
-unsigned long eof_get_highest_fret(unsigned long track, char scope);
+unsigned long eof_get_highest_fret(EOF_SONG *sp, unsigned long track, char scope);
 	//Examines notes in the specified track based on the scope value (0 = all notes, nonzero = selected notes)
 	//Returns the highest used fret value of notes in scope, or 0 if all such notes are muted with no fret specified
 unsigned long eof_get_highest_clipboard_fret(char *clipboardfile);

@@ -4837,9 +4837,12 @@ void *eof_copy_note(EOF_SONG *sp, unsigned long sourcetrack, unsigned long sourc
 			eof_set_note_flags(sp, desttrack, newnotenum, flags);	//Copy the souce note's flags to the newly created note
 			if((sp->track[sourcetrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (sp->track[desttrack]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 			{	//If the note was copied from a pro guitar track and pasted to a pro guitar track
-				memcpy(sp->pro_guitar_track[desttracknum]->note[newnotenum]->frets, sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->frets, 6);	//Copy the six usable string fret values from the source note to the newly created note
-				sp->pro_guitar_track[desttracknum]->note[newnotenum]->ghost = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->ghost;			//Copy the ghost bitmask
-				sp->pro_guitar_track[desttracknum]->note[newnotenum]->legacymask = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask;	//Copy the legacy bitmask
+				memcpy(sp->pro_guitar_track[desttracknum]->note[newnotenum]->frets, sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->frets, 6);		//Copy the six usable string fret values from the source note to the newly created note
+				memcpy(sp->pro_guitar_track[desttracknum]->note[newnotenum]->finger, sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->finger, 6);	//Copy the six usable finger values from the source note to the newly created note
+				sp->pro_guitar_track[desttracknum]->note[newnotenum]->ghost = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->ghost;				//Copy the ghost bitmask
+				sp->pro_guitar_track[desttracknum]->note[newnotenum]->legacymask = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->legacymask;		//Copy the legacy bitmask
+				sp->pro_guitar_track[desttracknum]->note[newnotenum]->bendstrength = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->bendstrength;	//Copy the bend strength
+				sp->pro_guitar_track[desttracknum]->note[newnotenum]->slideend = sp->pro_guitar_track[sourcetracknum]->note[sourcenote]->slideend;			//Copy the slide end position
 			}
 		}
 	}//If copying from a non vocal track
@@ -5382,26 +5385,26 @@ int eof_thin_notes_to_match__target_difficulty(EOF_SONG *sp, unsigned long sourc
 	return 1;
 }
 
-unsigned long eof_get_highest_fret(unsigned long track, char scope)
+unsigned long eof_get_highest_fret(EOF_SONG *sp, unsigned long track, char scope)
 {
 	unsigned long highestfret = 0, currentfret, ctr, ctr2, tracknum, bitmask;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(!eof_song || (track >= eof_song->tracks))
+	if(!sp || (track >= sp->tracks))
 		return 0;	//Invalid parameters
-	if(eof_song->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 0;	//Only run this when a pro guitar/bass track is active
 
-	tracknum = eof_song->track[track]->tracknum;
-	for(ctr = 0; ctr < eof_song->pro_guitar_track[tracknum]->notes; ctr++)
+	tracknum = sp->track[track]->tracknum;
+	for(ctr = 0; ctr < sp->pro_guitar_track[tracknum]->notes; ctr++)
 	{	//For each note in the active pro guitar track
 		if(!scope || ((eof_selection.track == track) && eof_selection.multi[ctr]))
 		{	//If this note is within the scope of this search (in the track or selected)
 			for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask<<=1)
 			{	//For each of the 6 usable strings
-				if(eof_song->pro_guitar_track[tracknum]->note[ctr]->note & bitmask)
+				if(sp->pro_guitar_track[tracknum]->note[ctr]->note & bitmask)
 				{	//If this string is in use
-					currentfret = eof_song->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2];
+					currentfret = sp->pro_guitar_track[tracknum]->note[ctr]->frets[ctr2];
 					if((currentfret != 0xFF) && ((currentfret & 0x7F) > highestfret))
 					{	//If this fret value (masking out the MSB, which is used for muting status) is higher than the previous
 						highestfret = currentfret & 0x7F;

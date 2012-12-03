@@ -2451,7 +2451,7 @@ int eof_menu_set_num_frets_strings(void)
 		newnumfrets = atol(eof_etext2);
 		if(newnumfrets && (newnumfrets != eof_song->pro_guitar_track[tracknum]->numfrets))
 		{	//If the specified number of frets was changed
-			highestfret = eof_get_highest_fret(eof_selected_track, 0);	//Get the highest used fret value in this track
+			highestfret = eof_get_highest_fret(eof_song, eof_selected_track, 0);	//Get the highest used fret value in this track
 			if(highestfret > newnumfrets)
 			{	//If any notes in this track use fret values that would exceed the new fret limit
 				char message[120] = {0};
