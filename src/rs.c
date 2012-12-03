@@ -272,10 +272,19 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 
 	eof_log("eof_export_rocksmith() entered", 1);
 
-	if(!sp || !fn || !sp->beats || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !sp->track[track]->name)
+	if(!sp || !fn || !sp->beats || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !sp->track[track]->name || !user_warned)
 	{
 		eof_log("\tError saving:  Invalid parameters", 1);
 		return 0;	//Return failure
+	}
+
+	if(eof_get_highest_fret(sp, track, 0) > 22)
+	{	//If the track being exported uses any frets higher than 22
+		if((*user_warned & 2) == 0)
+		{	//If the user wasn't alerted about this issue yet
+			allegro_message("Warning:  At least one track (\"%s\") uses a fret higher than 22.  This may cause Rocksmith to crash.", sp->track[track]->name);
+			*user_warned |= 2;
+		}
 	}
 
 	//Count the number of populated difficulties in the track
@@ -788,10 +797,10 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 			}
 			if(!anchorcount)
 			{	//If there are no anchors in this track difficulty, automatically generate them
-				if(*user_warned == 0)
+				if((*user_warned & 1) == 0)
 				{	//If the user wasn't alerted that one or more track difficulties have no fret hand positions defined
 					allegro_message("Warning:  At least one track difficulty has no fret hand positions defined.  They will be created automatically.");
-					*user_warned = 1;
+					*user_warned |= 1;
 				}
 				eof_fret_hand_position_list_dialog_undo_made = 1;	//Ensure no undo state is written during export
 				eof_generate_efficient_hand_positions(sp, track, ctr, 0);	//Generate the fret hand positions for the track difficulty being currently written
@@ -1128,6 +1137,7 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 			eof_pro_guitar_track_delete_hand_position(tp, ctr - 1);	//Delete the hand position
 		}
 	}
+	eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions
 
 	//Count the number of notes in the specified track difficulty and allocate arrays large enough to store the lowest and highest fret number used in each
 	for(ctr = 0, count = 0; ctr < tp->notes; ctr++)
@@ -1139,7 +1149,7 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 	}
 
 	if(!count)
-	{	//If this track difficulty has no fret hand positions
+	{	//If this track difficulty has no notes
 		return;	//Exit function
 	}
 
@@ -1183,6 +1193,7 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 	//Clean up
 	free(eof_fret_range_tolerances);
 	eof_fret_range_tolerances = NULL;	//Clear this array so that the next call to eof_build_fret_range_tolerances() rebuilds it accordingly
+	eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions
 }
 
 int eof_generate_hand_positions_current_track_difficulty(void)
@@ -1298,16 +1309,16 @@ unsigned char eof_pro_guitar_track_find_effective_fret_hand_position(EOF_PRO_GUI
 
 	for(ctr = 0; ctr < tp->handpositions; ctr++)
 	{	//For each hand position in the track
-		if(tp->handposition[ctr].start_pos <= position)
-		{	//If the hand position is at or before the specified timestamp
-			if(tp->handposition[ctr].difficulty == difficulty)
-			{	//If the hand position is in the specified difficulty
+		if(tp->handposition[ctr].difficulty == difficulty)
+		{	//If the hand position is in the specified difficulty
+			if(tp->handposition[ctr].start_pos <= position)
+			{	//If the hand position is at or before the specified timestamp
 				effective = tp->handposition[ctr].end_pos;	//Track its fret number
 			}
-		}
-		else
-		{	//This hand position is beyond the specified timestamp
-			return effective;	//Return the last hand position that was found (if any) in this track difficulty
+			else
+			{	//This hand position is beyond the specified timestamp
+				return effective;	//Return the last hand position that was found (if any) in this track difficulty
+			}
 		}
 	}
 
