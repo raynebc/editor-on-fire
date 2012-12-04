@@ -1350,21 +1350,21 @@ unsigned long eof_pro_guitar_track_find_effective_fret_hand_position_definition(
 	return effective;	//Return the last hand position definition that was found (if any) in this track difficulty
 }
 
-int eof_rs_section_text_valid(char *string)
+char *eof_rs_section_text_valid(char *string)
 {
 	unsigned long ctr;
 
 	if(!string)
-		return 0;	//Return error
+		return NULL;	//Return error
 
 	for(ctr = 0; ctr < EOF_NUM_RS_PREDEFINED_SECTIONS; ctr++)
 	{	//For each pre-defined Rocksmith section
-		if(!ustrcmp(eof_rs_predefined_sections[ctr].string, string))
-		{	//If the string matches this Rocksmith section entry
-			return 1;	//Return match
+		if(!ustricmp(eof_rs_predefined_sections[ctr].string, string) || !ustricmp(eof_rs_predefined_sections[ctr].displayname, string))
+		{	//If the string matches this Rocksmith section entry's native or display name
+			return eof_rs_predefined_sections[ctr].string;	//Return match
 		}
 	}
-	return 0;	//Return no match
+	return NULL;	//Return no match
 }
 
 int eof_rs_event_text_valid(char *string)
@@ -1422,7 +1422,7 @@ void eof_rs_compile_xml(EOF_SONG *sp, char *fn, unsigned long track)
 	{	//If the file couldn't be opened for writing
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Couldn't open XML compile batch file for writing:  \"%s\"", strerror(errno));
 		eof_log(eof_log_string, 1);
-		allegro_message("Error:  COuldn't create XML compile batch file for writing.");
+		allegro_message("Error:  Couldn't create XML compile batch file for writing.");
 		return;
 	}
 

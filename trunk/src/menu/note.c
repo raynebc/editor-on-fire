@@ -328,7 +328,7 @@ MENU eof_note_lyrics_menu[] =
     {"&Split Lyric\tShift+L", eof_menu_split_lyric, NULL, 0, NULL},
     {"&Lyric Lines", NULL, eof_lyric_line_menu, 0, NULL},
     {"&Freestyle", NULL, eof_note_freestyle_menu, 0, NULL},
-    {"Import GP style lyric text from file", eof_note_menu_read_gp_lyric_texts, NULL, 0, NULL},
+    {"Import GP style lyric text", eof_note_menu_read_gp_lyric_texts, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 

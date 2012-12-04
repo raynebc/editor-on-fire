@@ -121,7 +121,6 @@ MENU eof_waveform_menu[] =
 DIALOG eof_note_set_num_frets_strings_dialog[] =
 {
    /* (proc)                  (x)  (y) (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)  (            dp2) (dp3) */
-//   { d_agup_shadow_box_proc,  32,  68, 170, 120, 2,   23,   0,    0,     0,   0,   NULL,              NULL, NULL },
    { d_agup_window_proc,      32,  68, 170, 136, 0,   0,    0,    0,     0,   0,   "Edit fret/string count", NULL, NULL },
    { d_agup_text_proc,        44,  100,110, 8,   2,   23,   0,    0,     0,   0,   "Max fret value:", NULL, NULL },
    { eof_verified_edit_proc,  158, 96, 26,  20,  2,   23,   0,    0,     2,   0,   eof_etext2,        "0123456789", NULL },
@@ -134,6 +133,13 @@ DIALOG eof_note_set_num_frets_strings_dialog[] =
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
+MENU eof_song_proguitar_fret_hand_menu[] =
+{
+    {"&Set\tShift+F", eof_pro_guitar_set_fret_hand_position, NULL, 0, NULL},
+    {"&List", eof_menu_song_fret_hand_positions, NULL, 0, NULL},
+    {NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_song_proguitar_menu[] =
 {
     {"Set track &Tuning", eof_menu_song_track_tuning, NULL, 0, NULL},
@@ -142,9 +148,8 @@ MENU eof_song_proguitar_menu[] =
     {"&Previous chord name\t" CTRL_NAME "+Shift+W", eof_menu_previous_chord_result, NULL, 0, NULL},
     {"&Next chord name\t" CTRL_NAME "+Shift+E", eof_menu_next_chord_result, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
+    {"Fret &Hand positions", NULL, eof_song_proguitar_fret_hand_menu, 0, NULL},
     {"Correct chord fingerings", eof_correct_chord_fingerings_menu, NULL, 0, NULL},
-    {"Set fret hand position\tShift+F", eof_pro_guitar_set_fret_hand_position, NULL, 0, NULL},
-    {"This diff's fret &Hand positions", eof_menu_song_fret_hand_positions, NULL, 0, NULL},
     {"&Rename track", eof_song_proguitar_rename_track, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
