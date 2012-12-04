@@ -76,8 +76,9 @@ unsigned long eof_pro_guitar_track_find_effective_fret_hand_position_definition(
 	//Similar to eof_pro_guitar_track_find_effective_fret_hand_position(), but returns the hand position definition number in effect, or 0 if none are in effect
 	//This is for use in eof_menu_song_fret_hand_positions() to pre-select the hand position in effect at the current seek position when the dialog is launched
 
-int eof_rs_section_text_valid(char *string);
-	//Compares the given string against the string entries in eof_rs_predefined_sections[] and returns nonzero if it matches one of them
+char *eof_rs_section_text_valid(char *string);
+	//Compares the given string against the string entries in eof_rs_predefined_sections[]
+	//If the string matches the native or display name of an entry, a pointer to the native name is returned (to be stored as a text event), otherwise NULL is returned
 int eof_rs_event_text_valid(char *string);
 	//Compares the given string against the string entries in eof_rs_predefined_events[] and returns nonzero if it matches one of them
 unsigned long eof_get_rs_section_instance_number(EOF_SONG *sp, unsigned long event);
