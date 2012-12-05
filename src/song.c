@@ -3039,7 +3039,7 @@ void eof_track_resize(EOF_SONG *sp, unsigned long track, unsigned long size)
 	}
 }
 
-char eof_get_note_type(EOF_SONG *sp, unsigned long track, unsigned long note)
+unsigned char eof_get_note_type(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
 	unsigned long tracknum;
 
@@ -5701,3 +5701,4 @@ int eof_check_if_notes_exist_beyond_audio_end(EOF_SONG *sp)
 
 	return 0;
 }
+

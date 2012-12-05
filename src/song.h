@@ -500,7 +500,7 @@ void *eof_track_add_note(EOF_SONG *sp, unsigned long track);								//Calls the 
 void eof_track_delete_note(EOF_SONG *sp, unsigned long track, unsigned long note);			//Performs the appropriate logic to remove the specified note/lyric from the specified track
 void eof_song_empty_track(EOF_SONG * sp, unsigned long track);								//Deletes all notes from the track
 void eof_track_resize(EOF_SONG *sp, unsigned long track, unsigned long size);				//Performs the appropriate logic to resize the specified track
-char eof_get_note_type(EOF_SONG *sp, unsigned long track, unsigned long note);				//Returns the type (difficulty/lyric set) of the specified track's note/lyric, or 0xFF on error
+unsigned char eof_get_note_type(EOF_SONG *sp, unsigned long track, unsigned long note);				//Returns the type (difficulty/lyric set) of the specified track's note/lyric, or 0xFF on error
 void eof_set_note_type(EOF_SONG *sp, unsigned long track, unsigned long note, char type);	//Sets the type (difficulty/lyric set) of the specified track's note/lyric
 unsigned long eof_get_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the position of the specified track's note/lyric, or 0 on error
 void eof_set_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos);	//Sets the position of the specified track's note/lyric

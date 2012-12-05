@@ -183,7 +183,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	long notelength = 0;
 	unsigned long noteflags = 0;
 	unsigned long notenote = 0;
-	char notetype = 0;
+	unsigned char notetype = 0;
 	long length;
 
 //Validate parameters

@@ -371,8 +371,46 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	(void) pack_fputs(buffer, fp);
 	(void) pack_fputs("    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"0\" name=\"COUNT\" solo=\"0\"/>\n", fp);
 	for(ctr = 0; ctr < sectionlistsize; ctr++)
-	{	//For each of the entries in the unique section list
-		(void) snprintf(buffer, sizeof(buffer) - 1, "    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"%u\" name=\"%s\" solo=\"0\"/>\n", numdifficulties - 1, sp->text_event[sectionlist[ctr]]->text);
+	{	//For each of the entries in the unique section (RS phrase) list
+		char * currentphrase = NULL;
+		unsigned long startpos = 0, endpos = 0;		//Track the start and end position of the each instance of the section
+		unsigned char maxdiff, ongoingmaxdiff = 0;	//Track the highest note difficulty present among each and all section instances
+
+		//Determine the highest difficulty present among all instances of this section
+		for(ctr2 = 0; ctr2 < sp->beats; ctr2++)
+		{	//For each beat
+			if(sp->beat[ctr2]->contained_section_event >= 0)
+			{	//If this beat contains a section event
+				if(currentphrase)
+				{	//If the first section marker was already encountered
+					endpos = sp->beat[ctr2]->pos - 1;	//Track this as the end position of the previous section marker
+					if(startpos && !ustricmp(currentphrase, sp->text_event[sectionlist[ctr]]->text))
+					{	//If the section that just ended is an instance of the section being written
+						maxdiff = eof_find_highest_rs_difficulty_in_time_range(sp, track, startpos, endpos);	//Find the highest note difficulty used in that section instance
+						if(maxdiff > ongoingmaxdiff)
+						{	//If that section instance had a higher difficulty than the other instances checked so far
+							ongoingmaxdiff = maxdiff;	//Track it
+						}
+					}
+				}
+				else if(!ustricmp(sp->text_event[sp->beat[ctr2]->contained_section_event]->text, sp->text_event[sectionlist[ctr]]->text))
+				{	//If this is the start of an instance of the section being written
+					startpos = sp->beat[ctr2]->pos;	//Track the starting position
+					currentphrase = sp->text_event[sectionlist[ctr]]->text;	//Track which section is being examined
+				}
+			}
+		}
+		if(startpos > endpos)
+		{	//If the end of the section instance wasn't reached, it's because it was the last section in the chart
+			maxdiff = eof_find_highest_rs_difficulty_in_time_range(sp, track, startpos, xml_end - 1);	//Find the highest note difficulty used between the start of the section and the end of the chart
+			if(maxdiff > ongoingmaxdiff)
+			{	//If that section instance had a higher difficulty than the other instances checked so far
+				ongoingmaxdiff = maxdiff;	//Track it
+			}
+		}
+
+		//Write the phrase definition using the highest difficulty found among all instances of the phrase
+		(void) snprintf(buffer, sizeof(buffer) - 1, "    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"%u\" name=\"%s\" solo=\"0\"/>\n", ongoingmaxdiff, sp->text_event[sectionlist[ctr]]->text);
 		(void) pack_fputs(buffer, fp);
 	}
 	(void) pack_fputs("    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"0\" name=\"END\" solo=\"0\"/>\n", fp);
@@ -538,6 +576,14 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	}
 	if(numsections)
 	{	//If there is at least one Rocksmith section defined in the chart
+		if(numsections > 20)
+		{	//At this point, it seems Rocksmith only acknowledges the first 20 sections in a chart
+			if((*user_warned & 4) == 0)
+			{	//If the user hasn't been warned about this issue yet
+				allegro_message("Warning:  There are more than 20 Rocksmith sections defined.  Those after the first 20 may be ignored in-game");
+				*user_warned |= 4;
+			}
+		}
 		(void) snprintf(buffer, sizeof(buffer) - 1, "  <sections count=\"%lu\">\n", numsections);
 		(void) pack_fputs(buffer, fp);
 		for(ctr = 0; ctr < sp->beats; ctr++)
@@ -1572,4 +1618,49 @@ void eof_get_rocksmith_wav_path(char *buffer, const char *parent_folder, size_t 
 	}
 	(void) ustrncat(buffer, ".wav", (int)num - 1);
 	buffer[num - 1] = '\0';	//Ensure the finalized string is terminated
+}
+
+unsigned char eof_find_highest_rs_difficulty_in_time_range(EOF_SONG *sp, unsigned long track, unsigned long start, unsigned long stop)
+{
+	unsigned char highestdiff = 0, thisdiff, reldiff;
+	unsigned long ctr, ctr2, thispos;
+
+	if(!sp || (track >= sp->tracks) || (start > stop))
+		return 0;	//Invalid parameters
+
+	//Determine the native EOF difficulty
+	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
+	{	//For each note in the track
+		thispos = eof_get_note_pos(sp, track, ctr);	//Get this note's position
+		if(thispos > stop)
+		{	//If this note (and all remaining notes, since they are expected to remain sorted) is beyond the specified range, break from loop
+			break;
+		}
+		if(thispos >= start)
+		{	//If this note is at or after the start of the specified range, check its difficulty
+			thisdiff = eof_get_note_type(sp, track, ctr);	//Get this note's difficulty
+			if(thisdiff > highestdiff)
+			{	//If this note's difficulty is higher than any difficulties seen so far in this loop
+				highestdiff = thisdiff;
+			}
+		}
+	}
+
+	//Remap to the relative difficulty
+	for(ctr = 0, reldiff = 0; ctr < 4; ctr++)
+	{	//For each of the difficulties EOF supports
+		if(highestdiff == ctr)
+		{	//If the corresponding relative difficulty has been found
+			return reldiff;	//Return it
+		}
+		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, track); ctr2++)
+		{	//For each note in the track
+			if(eof_get_note_type(sp, track, ctr2) == ctr)
+			{	//If the note exists in the difficulty being examined
+				reldiff++;	//Another difficulty was found
+				break;
+			}
+		}
+	}
+	return highestdiff;
 }
