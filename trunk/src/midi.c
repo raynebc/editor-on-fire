@@ -333,7 +333,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 	EOF_MIDI_TS_LIST *tslist=NULL;			//List containing TS changes
 	unsigned char rootvel;					//Used to write root notes for pro guitar tracks
 	unsigned long note, noteflags, notepos, deltapos;
-	char type;
+	unsigned char type;
 	int channel, velocity, scale, chord, isslash, bassnote;	//Used for pro guitar export
 	unsigned long bitmask;
 	EOF_PHRASE_SECTION *sectionptr;
