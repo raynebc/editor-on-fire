@@ -269,6 +269,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	unsigned long phraseid;
 	unsigned beatspermeasure = 4, beatcounter = 0;
 	long displayedmeasure, measurenum = 0;
+	char bass_arrangement_name[] = "Bass";
 
 	eof_log("eof_export_rocksmith() entered", 1);
 
@@ -309,7 +310,11 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	}
 
 	//Update target file name and open it for writing
-	if((sp->track[track]->flags & EOF_TRACK_FLAG_ALT_NAME) && (sp->track[track]->altname[0] != '\0'))
+	if((track == EOF_TRACK_PRO_BASS) || (track == EOF_TRACK_PRO_BASS_22))
+	{	//A pro bass track's arrangement must be named "Bass" in order to work in Rocksmith
+		arrangement_name = bass_arrangement_name;
+	}
+	else if((sp->track[track]->flags & EOF_TRACK_FLAG_ALT_NAME) && (sp->track[track]->altname[0] != '\0'))
 	{	//If the track has an alternate name
 		arrangement_name = sp->track[track]->altname;
 	}
@@ -415,7 +420,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	}
 	(void) pack_fputs("    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"0\" name=\"END\" solo=\"0\"/>\n", fp);
 	(void) pack_fputs("  </phrases>\n", fp);
-	(void) snprintf(buffer, sizeof(buffer) - 1, "  <phraseIterations count=\"%lu\">\n", numsections);
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <phraseIterations count=\"%lu\">\n", numsections + 2);	//Write the number of phrase instances (plus a default COUNT and END phrase)
 	(void) pack_fputs(buffer, fp);
 	(void) pack_fputs("    <phraseIteration time=\"0.000\" phraseId=\"0\"/>\n", fp);	//Write the default COUNT phrase iteration
 	for(ctr = 0; ctr < sp->beats; ctr++)

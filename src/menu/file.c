@@ -2340,7 +2340,17 @@ int eof_save_helper(char *destfilename)
 		{	//If the user wants to save Rocksmith capable files
 			char user_warned = 0;	//Tracks whether the user was warned about hand positions being undefined and auto-generated during export
 			(void) append_filename(eof_temp_filename, newfolderpath, "xmlpath.xml", 1024);	//Re-acquire the save's target folder
-			eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS, &user_warned);
+			if(eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS))
+			{	//If the 17 fret pro bass track is populated
+				if(eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS_22))
+				{	//If the 22 fret pro bass track is also populated, don't export the 17 fret track
+					allegro_message("Warning:  Rocksmith doesn't support multiple bass transcriptions.  Only the 22 fret pro bass track will be exported");
+				}
+				else
+				{	//Otherwise export it
+					eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS, &user_warned);
+				}
+			}
 			eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS_22, &user_warned);
 			eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR, &user_warned);
 			eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_22, &user_warned);
