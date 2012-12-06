@@ -151,6 +151,7 @@ MENU eof_song_proguitar_menu[] =
     {"Fret &Hand positions", NULL, eof_song_proguitar_fret_hand_menu, 0, NULL},
     {"Correct chord fingerings", eof_correct_chord_fingerings_menu, NULL, 0, NULL},
     {"&Rename track", eof_song_proguitar_rename_track, NULL, 0, NULL},
+    {"Remove difficulty limit", eof_song_proguitar_toggle_difficulty_limit, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -255,7 +256,7 @@ void eof_prepare_song_menu(void)
 				}
 				lastnote = i;
 			}
-			if((eof_get_note_type(eof_song, eof_selected_track, i) >= 0) && (eof_get_note_type(eof_song, eof_selected_track, i) < 4))
+			if(eof_get_note_type(eof_song, eof_selected_track, i) < 4)
 			{
 				noted[(int)eof_get_note_type(eof_song, eof_selected_track, i)] = 1;	//Type cast to avoid a nag warning about indexing with a char type
 			}
@@ -461,6 +462,16 @@ void eof_prepare_song_menu(void)
 			eof_song_seek_menu[21].flags = 0;
 		}
 
+		/* display semitones as flat */
+		if(eof_display_flats)
+		{
+			eof_song_menu[4].flags = D_SELECTED;	//Song>Display semitones as flat
+		}
+		else
+		{
+			eof_song_menu[4].flags = 0;
+		}
+
 		/* show catalog */
 		/* edit name */
 		/* seek catalog entry */
@@ -592,6 +603,15 @@ void eof_prepare_song_menu(void)
 			{
 				eof_song_proguitar_menu[3].flags = D_DISABLED;
 				eof_song_proguitar_menu[4].flags = D_DISABLED;
+			}
+
+			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+			{	//If the active track has already had the difficulty limit removed
+				eof_song_proguitar_menu[9].flags = D_SELECTED;	//Song>Pro Guitar>Remove difficulty limit
+			}
+			else
+			{
+				eof_song_proguitar_menu[9].flags = 0;
 			}
 		}
 		else
@@ -1241,7 +1261,7 @@ int eof_menu_track_selected_track_number(int tracknum)
 		//Track numbering begins at one instead of zero
 		eof_track_selected_menu[tracknum-1].flags = D_SELECTED;
 		eof_selected_track = tracknum;
-		eof_detect_difficulties(eof_song);
+		eof_detect_difficulties(eof_song, eof_selected_track);
 		eof_fix_window_title();
 		eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
 		eof_set_3D_lane_positions(0);
@@ -3939,5 +3959,43 @@ int eof_song_proguitar_rename_track(void)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(NULL);
+	return 1;
+}
+
+int eof_song_proguitar_toggle_difficulty_limit(void)
+{
+	unsigned long ctr;
+
+	if(!eof_song || (eof_selected_track >= eof_song->tracks))
+		return 1;	//Invalid parameters
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	eof_detect_difficulties(eof_song, eof_selected_track);	//Determine which difficulties are populated for the active track
+	if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+	{	//If the active track already had the difficulty limit removed, toggle this flag off
+		for(ctr = 4; ctr < 256; ctr++)
+		{	//For each possible difficulty, starting after the first 4
+			if(eof_track_diff_populated_status[ctr])
+			{	//If this difficulty is populated
+				allegro_message("Warning:  There is at least one populated difficulty beyond the first 4 difficulties.  Only the first four will export to MIDI.");
+				break;
+			}
+		}
+		if(eof_track_diff_populated_status[EOF_NOTE_SPECIAL])
+		{	//If there are any notes in the BRE difficulty
+			allegro_message("Warning:  There are notes in the BRE difficulty.  Ensure this difficulty's contents are valid by Rock Band standards if you plan to use the exported MIDI.");
+		}
+	}
+	else
+	{	//The track currently has the difficulty limit in effect, toggle this flag on
+		if(eof_track_diff_populated_status[EOF_NOTE_SPECIAL])
+		{	//If there are any notes in the BRE difficulty
+			allegro_message("Warning:  There are notes in the BRE difficulty.  BRE notes from Rock Band charts are not compatible with Rocksmith and will need to be removed.");
+		}
+	}
+
+	eof_song->track[eof_selected_track]->flags ^= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//Toggle this flag
+	eof_fix_window_title();
 	return 1;
 }

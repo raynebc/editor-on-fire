@@ -153,5 +153,7 @@ int eof_menu_song_fret_hand_positions(void);
 	//Displays the fret hand positions defined for the active track difficulty, allowing them to be deleted
 int eof_song_proguitar_rename_track(void);
 	//Allows the user to define an alternate name for the active track
+int eof_song_proguitar_toggle_difficulty_limit(void);
+	//Toggles the 5 difficulty limit on/off.  If difficulties >= 4 are populated, appropriate warnings are given to the user regarding Rock Band vs. Rocksmith standards compatibility
 
 #endif

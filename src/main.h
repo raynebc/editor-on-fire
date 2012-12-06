@@ -311,7 +311,6 @@ extern char        eof_ogg_setting;
 extern char      * eof_ogg_quality[6];
 extern char        eof_cpu_saver;
 extern int         eof_note_type;
-extern int         eof_note_difficulties[5];
 extern int         eof_selected_track;
 extern int         eof_vocals_selected;
 extern int         eof_vocals_offset;
@@ -430,6 +429,7 @@ extern FONT *      eof_symbol_font;	//A font where the 0, 1, 2, 3 and 4 glyphs h
 extern char        eof_note_type_name[5][32];
 extern char        eof_vocal_tab_name[5][32];
 extern char        eof_dance_tab_name[5][32];
+extern char        eof_track_diff_populated_status[256];	//For each of the 255 possible difficulties, the element is set to nonzero if populated
 
 extern char        eof_supports_mp3;
 extern char        eof_supports_oggcat;

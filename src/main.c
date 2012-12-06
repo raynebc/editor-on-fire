@@ -53,6 +53,7 @@
 char        eof_note_type_name[5][32] = {" Supaeasy", " Easy", " Medium", " Amazing", " BRE"};
 char        eof_vocal_tab_name[5][32] = {" Lyrics", " ", " ", " ", " "};
 char        eof_dance_tab_name[5][32] = {" Beginner", " Easy", " Medium", " Hard", " Challenge"};
+char        eof_track_diff_populated_status[256] = {0};
 char      * eof_snap_name[9] = {"Off", "1/4", "1/8", "1/12", "1/16", "1/24", "1/32", "1/48", "Custom"};
 char      * eof_input_name[EOF_INPUT_NAME_NUM + 1] = {"Classic", "Piano Roll", "Hold", "RexMundi", "Guitar Tap", "Guitar Strum", "Feedback"};
 
@@ -174,7 +175,6 @@ char        eof_loaded_ogg_name[1024] = {0};
 char        eof_window_title[4096] = {0};
 int         eof_quit = 0;
 int         eof_note_type = EOF_NOTE_AMAZING;	//The active difficulty
-int         eof_note_difficulties[5] = {0};
 int         eof_selected_track = EOF_TRACK_GUITAR;
 int         eof_vocals_selected = 0;	//Is set to nonzero if the active track is a vocal track
 int         eof_vocals_tab = 0;
@@ -755,7 +755,17 @@ void eof_fix_window_title(void)
 			}
 			(void) ustrcat(eof_window_title, "  ");
 			char *ptr;
-			if(eof_selected_track == EOF_TRACK_DANCE)
+			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+			{	//If this track is not limited to 5 difficulties
+				char diff_string[15] = {0};			//Used to generate the string for a numbered difficulty
+				(void) snprintf(diff_string, sizeof(diff_string) - 1, " Diff: %d", eof_note_type);
+				if(eof_track_diff_populated_status[eof_note_type])
+				{	//If this difficulty is populated
+					diff_string[0] = '*';
+				}
+				(void) ustrcat(eof_window_title, diff_string);
+			}
+			else if(eof_selected_track == EOF_TRACK_DANCE)
 			{	//If the dance track is active
 				ptr = eof_dance_tab_name[eof_note_type];
 				(void) ustrcat(eof_window_title, ptr);					//Append the active dance difficulty name
@@ -2171,11 +2181,19 @@ void eof_render_note_window(void)
 				}
 			}
 			vline(eof_window_note->screen, lpos + (eof_chart_length) / eof_zoom, EOF_EDITOR_RENDER_OFFSET + 35, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 11, eof_color_white);
+
 			/* render information about the entry */
 			char emptystring[2] = "", *difficulty_name = emptystring;	//The empty string will be 2 characters, so that the first can (used to define populated status of each track) be skipped
+			char diff_string[12] = {0};				//Used to generate the string for a numbered difficulty (prefix with an extra space, since the string rendering skips the populated status character used for normal tracks
+
 			if(eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->track_format != EOF_VOCAL_TRACK_FORMAT)
 			{	//If the catalog entry is not from a vocal track, determine the name of the active difficulty
-				if(eof_song->catalog->entry[eof_selected_catalog_entry].track == EOF_TRACK_DANCE)
+				if(eof_song->track[eof_song->catalog->entry[eof_selected_catalog_entry].track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+				{	//If this track is not limited to 5 difficulties
+					snprintf(diff_string, sizeof(diff_string) - 1, " Diff: %d", eof_song->catalog->entry[eof_selected_catalog_entry].type);
+					difficulty_name = diff_string;
+				}
+				else if(eof_song->catalog->entry[eof_selected_catalog_entry].track == EOF_TRACK_DANCE)
 				{	//The dance track has different difficulty names
 					difficulty_name = eof_dance_tab_name[(int)eof_song->catalog->entry[eof_selected_catalog_entry].type];
 				}
@@ -4073,7 +4091,7 @@ void eof_init_after_load(char initaftersavestate)
 			eof_set_seek_position(eof_song->beat[0]->pos + eof_av_delay);	//Seek to the first beat marker
 		eof_seek_selection_start = eof_seek_selection_end = 0;	//Clear the seek selection
 	}
-	eof_detect_difficulties(eof_song);
+	eof_detect_difficulties(eof_song, eof_selected_track);
 	eof_reset_lyric_preview_lines();
 	eof_prepare_menus();
 	eof_sort_notes(eof_song);

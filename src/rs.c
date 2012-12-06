@@ -263,8 +263,6 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	unsigned long ctr, ctr2, ctr3, ctr4, numsections = 0, stringnum, bitmask, numsinglenotes, numchords, *chordlist, chordlistsize, *sectionlist, sectionlistsize, xml_end, numevents = 0;
 	EOF_PRO_GUITAR_TRACK *tp;
 	char *arrangement_name;	//This will point to the track's native name unless it has an alternate name defined
-	char populated[4] = {0};	//Will track which difficulties are populated
-	unsigned notetype;
 	unsigned numdifficulties;
 	unsigned long phraseid;
 	unsigned beatspermeasure = 4, beatcounter = 0;
@@ -279,6 +277,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		return 0;	//Return failure
 	}
 
+	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
 	if(eof_get_highest_fret(sp, track, 0) > 22)
 	{	//If the track being exported uses any frets higher than 22
 		if((*user_warned & 2) == 0)
@@ -289,19 +288,18 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	}
 
 	//Count the number of populated difficulties in the track
-	tp = sp->pro_guitar_track[sp->track[track]->tracknum];
-	for(ctr = 0; ctr < tp->notes; ctr++)
-	{	//For each note in the track
-		notetype = eof_get_note_type(sp, track, ctr);
-		if(notetype < 4)
-		{	//As long as this is Easy, Medium, Hard or Expert difficulty
-			if((eof_get_note_flags(sp, track, ctr) & EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE) == 0)
-			{	//And it's not a string muted note
-				populated[notetype] = 1;	//Track that this difficulty is populated
-			}
+	eof_detect_difficulties(sp, track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for this track
+	if((sp->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) == 0)
+	{	//If the track is using the traditional 5 difficulty system
+		eof_track_diff_populated_status[4] = 0;	//Ensure that the BRE difficulty is not exported
+	}
+	for(ctr = 0, numdifficulties = 0; ctr < 256; ctr++)
+	{	//For each possible difficulty
+		if(eof_track_diff_populated_status[ctr])
+		{	//If this difficulty is populated
+			numdifficulties++;	//Increment this counter
 		}
 	}
-	numdifficulties = populated[0] + populated[1] + populated[2] + populated[3];
 	if(!numdifficulties)
 	{
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Cannot export track \"%s\"in Rocksmith format, it has no populated difficulties", sp->track[track]->name);
@@ -637,13 +635,13 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		(void) pack_fputs("  <events count=\"0\"/>\n", fp);
 	}
 
-	//Write difficulty
+	//Write note difficulties
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <levels count=\"%u\">\n", numdifficulties);
 	(void) pack_fputs(buffer, fp);
 	eof_determine_phrase_status(sp, track);	//Update the tremolo status of each note
-	for(ctr = 0, ctr2 = 0; ctr < 4; ctr++)
-	{	//For each of the available difficulties
-		if(populated[ctr])
+	for(ctr = 0, ctr2 = 0; ctr < 256; ctr++)
+	{	//For each of the possible difficulties
+		if(eof_track_diff_populated_status[ctr])
 		{	//If this difficulty is populated
 			unsigned long anchorcount;
 			char anchorsgenerated = 0;	//Tracks whether anchors were automatically generated and will need to be deleted after export
@@ -880,7 +878,9 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 			}
 			else
 			{	//There are no anchors in this difficulty, write an empty anchors tag
-				allegro_message("Error:  Failed to automatically generate fret hand positions");
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Failed to automatically generate fret hand positions for level %lu of\n\"%s\" during MIDI export.", ctr2, fn);
+				eof_log(eof_log_string, 1);
+				allegro_message(eof_log_string);
 				(void) pack_fputs("      <anchors count=\"0\"/>\n", fp);
 			}
 			if(anchorsgenerated)

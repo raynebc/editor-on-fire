@@ -1399,7 +1399,7 @@ int eof_menu_edit_paste_logic(int oldpaste)
 	eof_track_sort_notes(eof_song, eof_selected_track);
 	eof_fixup_notes(eof_song);
 	eof_determine_phrase_status(eof_song, eof_selected_track);
-	eof_detect_difficulties(eof_song);
+	eof_detect_difficulties(eof_song, eof_selected_track);
 	if((paste_count > 0) && (eof_selection.track != eof_selected_track))
 	{
 		eof_selection.track = eof_selected_track;
@@ -2281,7 +2281,7 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty)
 			}
 			eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions, since they must be in order for displaying to the user
 		}
-		eof_detect_difficulties(eof_song);
+		eof_detect_difficulties(eof_song, eof_selected_track);
 	}
 	return 1;
 }
@@ -2536,7 +2536,7 @@ int eof_menu_edit_paste_from_catalog(void)
 		eof_track_sort_notes(eof_song, eof_selected_track);
 		eof_track_fixup_notes(eof_song, eof_selected_track, 0);
 		eof_determine_phrase_status(eof_song, eof_selected_track);
-		eof_detect_difficulties(eof_song);
+		eof_detect_difficulties(eof_song, eof_selected_track);
 		eof_selection.current_pos = 0;
 		(void) eof_menu_edit_deselect_all();	//Clear the seek selection and notes array
 		for(i = 0; i < paste_count; i++)
