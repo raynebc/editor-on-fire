@@ -1207,7 +1207,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					}
 					if(count)
 					{	//If there was at least one note in the Expert difficulty, and fret hand positions couldn't be generated automatically, alert the user
-						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Failed to automatically generate fret hand positions for \"%s\" during MIDI export", sp->track[j]->name);
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Failed to automatically generate fret hand positions for \"%s\" during MIDI export.", sp->track[j]->name);
 						eof_log(eof_log_string, 1);
 						allegro_message(eof_log_string);
 					}
@@ -1263,7 +1263,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				}
 				if(currentname && (currentname[0] != '\0'))
 				{	//If this note has a name
-					if((type >= EOF_NOTE_SUPAEASY) && (type <= EOF_NOTE_AMAZING))
+					if(type <= EOF_NOTE_AMAZING)
 					{	//only write names for the 4 difficulties, don't for BRE notes
 						(void) snprintf(chordname, sizeof(chordname) - 1, "[chrd%d %s]", type, currentname);	//Build the chord name text event as per RB3's convention
 						tempstring = malloc((size_t)ustrsizez(chordname));

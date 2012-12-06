@@ -241,6 +241,8 @@ typedef struct
 	//Specifies if the track has open strumming enabled (PART BASS) or a fifth drum lane enabled (PART DRUMS)
 #define EOF_TRACK_FLAG_ALT_NAME			2
 	//Specifies if the track has an alternate display name (for RS export.  MIDI export will still use the native name)
+#define EOF_TRACK_FLAG_UNLIMITED_DIFFS	4
+	//Specifies if the track is not limited to 4 difficulties and one more for the BRE difficulty.  Higher numbered difficulties will be exported to Rocksmith format
 
 #define EOF_TRACK_NAME_SIZE		31
 typedef struct
@@ -252,6 +254,7 @@ typedef struct
 	char name[EOF_NAME_LENGTH+1];	//Specifies the name of the track
 	char altname[EOF_NAME_LENGTH+1];//Specifies the alternate name of the track (for RS export)
 	unsigned char difficulty;		//Specifies the difficulty level from 0-5 (standard 0-5 scale), or 6 for devil heads (extreme difficulty)
+	unsigned char numdiffs;			//Specifies the number of difficulties usable in this track, including BRE (is set to 5 unless the track's EOF_TRACK_FLAG_UNLIMITED_DIFFS flag is set)
 	unsigned long flags;
 } EOF_TRACK_ENTRY;
 
@@ -629,8 +632,9 @@ void eof_pro_guitar_track_delete_hand_position(EOF_PRO_GUITAR_TRACK *tp, unsigne
 
 void eof_sort_notes(EOF_SONG *sp);	//Sorts the notes in all tracks
 void eof_fixup_notes(EOF_SONG *sp);	//Performs cleanup of the note selection, beats and all tracks
-void eof_detect_difficulties(EOF_SONG * sp);
-	//Sets the populated status by prefixing each populated difficulty name in the current track (stored in eof_note_type_name[], eof_vocal_tab_name[] and eof_dance_tab_name[]) with an asterisk
+void eof_detect_difficulties(EOF_SONG * sp, unsigned long track);
+	//Sets the populated status indicator for the specified track's difficulty names by prefixing each populated difficulty name in the current track (stored in eof_note_type_name[], eof_vocal_tab_name[] and eof_dance_tab_name[]) with an asterisk
+	//eof_track_diff_populated_status[] is also updated so that each populated difficulty results in the corresponding element number being nonzero
 int eof_check_track_difficulty_populated_status(unsigned long difficulty);
 	//Checks the appropriate difficulty tab string array for the active track's specified difficulty and returns nonzero if it begins with an asterisk
 

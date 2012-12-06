@@ -859,7 +859,11 @@ if(key[KEY_PAUSE])
 		else
 		{
 			int eof_note_type_max = EOF_NOTE_AMAZING;	//By default, assume this track has 4 usable difficulties
-			if(eof_selected_track == EOF_TRACK_DANCE)
+			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+			{	//If this track is not limited to 5 difficulties
+				eof_note_type_max = eof_song->track[eof_selected_track]->numdiffs - 1;	//All the track's usable difficulties (numbered starting from 0) can be tabbed to
+			}
+			else if(eof_selected_track == EOF_TRACK_DANCE)
 			{
 				eof_note_type_max = EOF_NOTE_CHALLENGE;	//However, the dance track has 5 usable difficulties
 			}
@@ -886,7 +890,7 @@ if(key[KEY_PAUSE])
 				}
 			}
 			eof_fix_window_title();
-			eof_detect_difficulties(eof_song);
+			eof_detect_difficulties(eof_song, eof_selected_track);
 		}
 		eof_mix_find_claps();
 		eof_mix_start_helper();
@@ -1500,7 +1504,7 @@ if(key[KEY_PAUSE])
 					{	//If the user opted to make all new yellow drum notes as one of the specialized hi hat types automatically
 						eof_mark_new_note_as_special_hi_hat(eof_song,eof_selected_track,eof_get_track_size(eof_song, eof_selected_track) - 1);
 					}
-					eof_detect_difficulties(eof_song);
+					eof_detect_difficulties(eof_song, eof_selected_track);
 					eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 				}
 				key[KEY_ENTER] = 0;
@@ -1528,7 +1532,7 @@ if(key[KEY_PAUSE])
 						}
 						eof_entering_note_note = new_note;
 						eof_entering_note = 1;
-						eof_detect_difficulties(eof_song);
+						eof_detect_difficulties(eof_song, eof_selected_track);
 					}
 				}
 				else
@@ -1637,7 +1641,7 @@ if(key[KEY_PAUSE])
 				}
 				if(new_note)
 				{
-					eof_detect_difficulties(eof_song);
+					eof_detect_difficulties(eof_song, eof_selected_track);
 					eof_track_sort_notes(eof_song, eof_selected_track);
 				}
 			}
@@ -1665,7 +1669,7 @@ if(key[KEY_PAUSE])
 					{
 						eof_entering_note_lyric = new_lyric;
 						eof_entering_note = 1;
-						eof_detect_difficulties(eof_song);
+						eof_detect_difficulties(eof_song, eof_selected_track);
 						eof_track_sort_notes(eof_song, eof_selected_track);
 					}
 				}
@@ -1738,7 +1742,7 @@ if(key[KEY_PAUSE])
 							}
 							eof_entering_note_note = new_note;
 							eof_entering_note = 1;
-							eof_detect_difficulties(eof_song);
+							eof_detect_difficulties(eof_song, eof_selected_track);
 							eof_track_sort_notes(eof_song, eof_selected_track);
 						}
 					}
@@ -2444,7 +2448,7 @@ if(key[KEY_PAUSE])
 									eof_track_sort_notes(eof_song, eof_selected_track);
 									eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 									eof_determine_phrase_status(eof_song, eof_selected_track);
-									eof_detect_difficulties(eof_song);
+									eof_detect_difficulties(eof_song, eof_selected_track);
 								}
 							}
 
@@ -2506,7 +2510,7 @@ if(key[KEY_PAUSE])
 								eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes and retain note selection
 								eof_determine_phrase_status(eof_song, eof_selected_track);
 								eof_selection.multi[eof_selection.current] = 1;	//Add new note to the selection
-								eof_detect_difficulties(eof_song);
+								eof_detect_difficulties(eof_song, eof_selected_track);
 							}
 						}
 					}//If user has pressed any key from 1 through 6
@@ -2805,7 +2809,7 @@ void eof_editor_drum_logic(void)
 				eof_set_note_pos(eof_song, eof_selected_track, eof_get_track_size(eof_song, eof_selected_track) - 1, eof_snap.pos);
 				eof_entering_note_note = new_note;
 				eof_entering_note = 1;
-				eof_detect_difficulties(eof_song);
+				eof_detect_difficulties(eof_song, eof_selected_track);
 				eof_track_sort_notes(eof_song, eof_selected_track);
 			}
 		}
@@ -3283,7 +3287,7 @@ void eof_editor_logic(void)
 									eof_track_sort_notes(eof_song, eof_selected_track);
 									eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes and retain note selection
 									eof_determine_phrase_status(eof_song, eof_selected_track);
-									eof_detect_difficulties(eof_song);
+									eof_detect_difficulties(eof_song, eof_selected_track);
 								}
 								else if(note & bitmask)
 								{	//If toggling this lane on, create a new note at the hover note's position, with the same length and type as the hover note
@@ -3363,7 +3367,7 @@ void eof_editor_logic(void)
 							eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes and retain note selection
 							eof_determine_phrase_status(eof_song, eof_selected_track);
 							eof_selection.multi[eof_selection.current] = 1;	//Add new note to the selection
-							eof_detect_difficulties(eof_song);
+							eof_detect_difficulties(eof_song, eof_selected_track);
 						}
 					}
 				}
@@ -3466,7 +3470,7 @@ void eof_editor_logic(void)
 				eof_mix_find_claps();
 				eof_mix_start_helper();
 				eof_fix_window_title();
-				eof_detect_difficulties(eof_song);
+				eof_detect_difficulties(eof_song, eof_selected_track);
 			}
 		}
 	}
@@ -4954,8 +4958,10 @@ void eof_render_editor_window_common2(void)
 	int pos = eof_music_pos / eof_zoom;	//Current seek position compensated for zoom level
 	int zoom = eof_av_delay / eof_zoom;	//AV delay compensated for zoom level
 	unsigned long i;
+	unsigned long selected_tab = eof_note_type;	//Unless the track's difficulty limit is released, the active tab is the same as the active difficulty number
 	int lpos;							//The position of the first beatmarker
 	char *tab_name;
+	char diff_number[5] = {0};			//Used to generate the string for a numbered difficulty
 	int scroll_pos;
 
 	if(!eof_song_loaded)
@@ -4983,14 +4989,68 @@ void eof_render_editor_window_common2(void)
 	}
 
 	/* draw the difficulty tabs (after the section names, which otherwise render a couple pixels over the tabs) */
+	if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+	{	//If this track is not limited to 5 difficulties
+		if(eof_note_type < 2)
+		{	//If the tabs represent the 3 lowest difficulties
+			selected_tab = 1 + eof_note_type;
+		}
+		else if(eof_note_type >= eof_song->track[eof_selected_track]->numdiffs - 1)
+		{	//If the tabs represent the 3 highest difficulties
+			selected_tab = 4 - (eof_song->track[eof_selected_track]->numdiffs - eof_note_type);
+		}
+		else
+		{	//If the center tab represents the active difficulty
+			selected_tab = 2;
+		}
+	}
 	if(eof_selected_track == EOF_TRACK_VOCALS)
 		draw_sprite(eof_window_editor->screen, eof_image[EOF_IMAGE_VTAB0 + eof_vocals_tab], 0, 8);
 	else
-		draw_sprite(eof_window_editor->screen, eof_image[EOF_IMAGE_TAB0 + eof_note_type], 0, 8);
+		draw_sprite(eof_window_editor->screen, eof_image[EOF_IMAGE_TAB0 + selected_tab], 0, 8);
 
 	for(i = 0; i < 5; i++)
-	{	//Draw tab difficulty names
-		if(eof_selected_track == EOF_TRACK_VOCALS)
+	{	//Draw difficulty tab text
+		if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+		{	//If this track is not limited to 5 difficulties
+			if(i == 0)
+			{	//The first tab will be "<<"
+				(void) snprintf(diff_number, sizeof(diff_number) - 1, "<<");
+			}
+			else if(i == 4)
+			{	//The last tab will be ">>"
+				(void) snprintf(diff_number, sizeof(diff_number) - 1, ">>");
+			}
+			else
+			{	//The other tabs will be 3 of the difficulties, written as numbers
+				if(eof_note_type < 2)
+				{	//If the tabs represent the 3 lowest difficulties
+					(void) snprintf(diff_number, sizeof(diff_number) - 1, " %lu", i - 1);
+					if(eof_track_diff_populated_status[i - 1])
+					{	//If this difficulty is populated
+						diff_number[0] = '*';
+					}
+				}
+				else if(eof_note_type >= eof_song->track[eof_selected_track]->numdiffs - 1)
+				{	//If the tabs represent the 3 highest difficulties
+					(void) snprintf(diff_number, sizeof(diff_number) - 1, " %lu", eof_song->track[eof_selected_track]->numdiffs - 4 + i);
+					if(eof_track_diff_populated_status[eof_song->track[eof_selected_track]->numdiffs - 4 + i])
+					{	//If this difficulty is populated
+						diff_number[0] = '*';
+					}
+				}
+				else
+				{	//If the center tab represents the active difficulty
+					(void) snprintf(diff_number, sizeof(diff_number) - 1, " %lu", i + eof_note_type - 2);
+					if(eof_track_diff_populated_status[i + eof_note_type - 2])
+					{	//If this difficulty is populated
+						diff_number[0] = '*';
+					}
+				}
+			}
+			tab_name = diff_number;
+		}
+		else if(eof_selected_track == EOF_TRACK_VOCALS)
 		{
 			tab_name = eof_vocal_tab_name[i];
 		}
@@ -5002,7 +5062,7 @@ void eof_render_editor_window_common2(void)
 		{
 			tab_name = eof_note_type_name[i];
 		}
-		if(i == eof_note_type)
+		if(i == selected_tab)
 		{
 			textprintf_centre_ex(eof_window_editor->screen, font, 50 + i * 80, 2 + 8, eof_color_black, -1, "%s", tab_name);
 		}

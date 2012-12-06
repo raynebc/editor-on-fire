@@ -1309,7 +1309,7 @@ int eof_menu_note_delete(void)
 		eof_selection.current = EOF_MAX_NOTES - 1;
 		eof_track_fixup_notes(eof_song, eof_selected_track, 0);
 		eof_reset_lyric_preview_lines();
-		eof_detect_difficulties(eof_song);
+		eof_detect_difficulties(eof_song, eof_selected_track);
 		eof_determine_phrase_status(eof_song, eof_selected_track);
 	}
 	return 1;
@@ -3123,7 +3123,7 @@ int eof_new_lyric_dialog(void)
 		memset(eof_selection.multi, 0, sizeof(eof_selection.multi));	//Clear the selected notes array
 		eof_track_sort_notes(eof_song, eof_selected_track);
 		eof_track_fixup_notes(eof_song, eof_selected_track, 0);
-		eof_detect_difficulties(eof_song);
+		eof_detect_difficulties(eof_song, eof_selected_track);
 		eof_reset_lyric_preview_lines();
 	}
 	eof_cursor_visible = 1;
