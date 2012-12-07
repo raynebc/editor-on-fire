@@ -1239,6 +1239,7 @@ int eof_menu_track_selected_12(void)
 int eof_menu_track_selected_track_number(int tracknum)
 {
 	unsigned long i;
+	unsigned char maxdiff = 4;	//By default, each track supports 5 difficulties
 
 	eof_log("\tChanging active track", 1);
 	eof_log("eof_menu_track_selected_track_number() entered", 1);
@@ -1253,10 +1254,22 @@ int eof_menu_track_selected_track_number(int tracknum)
 		if(eof_song->track[tracknum]->track_format == EOF_VOCAL_TRACK_FORMAT)
 		{
 			eof_vocals_selected = 1;
-			eof_note_type = 0;	//For now, the default lyric set (PART VOCALS) will be selected when changing to PART VOCALS
+			maxdiff = 0;			//For now, the default lyric set (PART VOCALS) will be selected when changing to PART VOCALS
 		}
 		else
+		{
 			eof_vocals_selected = 0;
+			if(eof_song->track[tracknum]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+			{	//If the track being changed to has its difficulty limit removed
+				maxdiff = eof_song->track[tracknum]->numdiffs - 1;
+			}
+		}
+
+		//Ensure the active difficulty is valid for the selected track
+		if(eof_note_type > maxdiff)
+		{
+			eof_note_type = maxdiff;
+		}
 
 		//Track numbering begins at one instead of zero
 		eof_track_selected_menu[tracknum-1].flags = D_SELECTED;
@@ -3974,11 +3987,11 @@ int eof_song_proguitar_toggle_difficulty_limit(void)
 	eof_detect_difficulties(eof_song, eof_selected_track);	//Determine which difficulties are populated for the active track
 	if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 	{	//If the active track already had the difficulty limit removed, toggle this flag off
-		for(ctr = 4; ctr < 256; ctr++)
-		{	//For each possible difficulty, starting after the first 4
+		for(ctr = 5; ctr < 256; ctr++)
+		{	//For each possible difficulty, starting after the first 5
 			if(eof_track_diff_populated_status[ctr])
 			{	//If this difficulty is populated
-				allegro_message("Warning:  There is at least one populated difficulty beyond the first 4 difficulties.  Only the first four will export to MIDI.");
+				allegro_message("Warning:  There is at least one populated difficulty beyond the first 5 difficulties.  Only the first 5 will export to MIDI.");
 				break;
 			}
 		}

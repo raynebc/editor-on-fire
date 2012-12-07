@@ -2293,6 +2293,21 @@ int eof_save_helper(char *destfilename)
 		}
 	}
 
+	/* check if any Rocksmith sections don't have a Rocksmith phrase at the same position */
+	if(eof_write_rs_files)
+	{
+		for(ctr = 1; ctr < eof_song->tracks; ctr++)
+		{	//For each track
+			if(eof_song->track[ctr]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{	//If this is a pro guitar/bass track
+				if(eof_check_rs_sections_have_phrases(eof_song, ctr))
+				{	//If the user canceled adding missing phrases
+					break;	//Stop fixing them and break from loop
+				}
+			}
+		}
+	}
+
 	/* save the chart */
 	(void) replace_extension(eof_temp_filename, eof_temp_filename, "eof", 1024);	//Ensure the chart is saved with a .eof extension
 	eof_song->tags->revision++;

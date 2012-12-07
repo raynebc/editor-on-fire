@@ -96,4 +96,11 @@ unsigned char eof_find_highest_rs_difficulty_in_time_range(EOF_SONG *sp, unsigne
 	//The relative difficulty is the same numbering system to define difficulty levels, based only on populated difficulties
 	//If no notes are in the range, 0 (EOF's lowest difficulty number) is returned
 
+int eof_check_rs_sections_have_phrases(EOF_SONG *sp, unsigned long track);
+	//Checks the specified track to ensure that each beat that has a Rocksmith section also has a Rocksmith phrase (from the perspective of the specified track).
+	//If not, the user is prompted whether to cancel save and seek to the offending beat.  If user accepts, the top of the piano roll is changed to display RS sections and the
+	// chart seeks to the offending beat in the specified track, automatically launching "Place RS Phrase" and then checking the remaining beats.
+	//If user refuses on any of the prompts or cancels any "Place RS Phrase" dialogs, or upon error, nonzero is returned.
+	//If the track is not populated, the function returns zero without checking the RS sections.
+
 #endif

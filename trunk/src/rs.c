@@ -6,10 +6,12 @@
 #include "event.h"
 #include "main.h"
 #include "midi.h"
+#include "mix.h"	//For eof_set_seek_position()
 #include "rs.h"
 #include "song.h"	//For eof_pro_guitar_track_delete_hand_position()
 #include "undo.h"
 #include "utility.h"	//For eof_system()
+#include "menu/beat.h"	//For eof_rocksmith_phrase_dialog_add()
 #include "menu/song.h"	//For eof_fret_hand_position_list_dialog_undo_made and eof_fret_hand_position_list_dialog[]
 
 #ifdef USEMEMWATCH
@@ -579,14 +581,6 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	}
 	if(numsections)
 	{	//If there is at least one Rocksmith section defined in the chart
-		if(numsections > 20)
-		{	//At this point, it seems Rocksmith only acknowledges the first 20 sections in a chart
-			if((*user_warned & 4) == 0)
-			{	//If the user hasn't been warned about this issue yet
-				allegro_message("Warning:  There are more than 20 Rocksmith sections defined.  Those after the first 20 may be ignored in-game");
-				*user_warned |= 4;
-			}
-		}
 		(void) snprintf(buffer, sizeof(buffer) - 1, "  <sections count=\"%lu\">\n", numsections);
 		(void) pack_fputs(buffer, fp);
 		for(ctr = 0; ctr < sp->beats; ctr++)
@@ -1668,4 +1662,60 @@ unsigned char eof_find_highest_rs_difficulty_in_time_range(EOF_SONG *sp, unsigne
 		}
 	}
 	return highestdiff;
+}
+
+int eof_check_rs_sections_have_phrases(EOF_SONG *sp, unsigned long track)
+{
+	unsigned long ctr, old_text_events;
+	char user_prompted = 0;
+
+	if(!sp || (track >= sp->tracks))
+		return 1;	//Invalid parameters
+	if(!eof_get_track_size(sp, track))
+		return 0;	//Empty track
+
+	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
+	for(ctr = 0; ctr < sp->beats; ctr++)
+	{	//For each beat
+		if(sp->beat[ctr]->contained_rs_section_event >= 0)
+		{	//If this beat contains a RS section
+			if(sp->beat[ctr]->contained_section_event < 0)
+			{	//But it doesn't contain a RS phrase
+				if(!user_prompted && alert("At least one Rocksmith section doesn't have a Rocksmith phrase at the same position.", "This can cause the chart's sections to work incorrectly", "Would you like to place Rocksmith phrases to correct this?", "&Yes", "&No", 'y', 'n') != 1)
+				{	//If the user hasn't already answered this prompt, and doesn't opt to correct the issue
+					return 2;	//Return user cancellation
+				}
+				user_prompted = 1;
+				(void) eof_menu_track_selected_track_number(track);		//Change the active track
+				eof_selected_beat = ctr;					//Change the selected beat
+				eof_set_seek_position(sp->beat[ctr]->pos + eof_av_delay);	//Seek to the beat
+				eof_2d_render_top_option = 35;					//Change the user preference to render RS sections at the top of the piano roll
+				eof_render();							//Render the track so the user can see where the correction needs to be made, along with the RS section in question
+
+				while(1)
+				{
+					old_text_events = sp->text_events;				//Remember how many text events there were before launching dialog
+					(void) eof_rocksmith_phrase_dialog_add();			//Launch dialog for user to add a Rocksmith phrase
+					if(old_text_events == sp->text_events)
+					{	//If the number of text events defined in the chart didn't change, the user canceled
+						return 2;	//Return user cancellation
+					}
+					eof_process_beat_statistics(sp, track);	//Rebuild beat statistics to check if user added a Rocksmith phrase
+					if(sp->beat[ctr]->contained_section_event < 0)
+					{	//If user added a text event, but it wasn't a Rocksmith phrase
+						if(alert("You didn't add a Rocksmith phrase.", NULL, "Do you want to continue adding RS phrases for RS sections that are missing them?", "&Yes", "&No", 'y', 'n') != 1)
+						{	//If the user doesn't opt to finish correcting the issue
+							return 2;	//Return user cancellation
+						}
+					}
+					else
+					{	//User added the missing RS phrase
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	return 0;	//Return completion
 }

@@ -1456,6 +1456,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	char buffer[100];
 	struct eof_MIDI_data_track *trackptr;
 	struct eof_MIDI_data_event *eventptr, *eventhead, *eventtail;
+	unsigned char numdiffs;
 
  	eof_log("eof_load_song_pf() entered", 1);
 
@@ -1762,6 +1763,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 				allegro_message("Error: Pro Keys not supported yet.  Aborting");
 			return 0;
 			case EOF_PRO_GUITAR_TRACK_FORMAT:	//Pro Guitar/Bass
+				numdiffs = 5;		//By default, assume there are 5 difficulties used in the track
 				sp->pro_guitar_track[sp->pro_guitar_tracks-1]->numfrets = pack_getc(fp);	//Read the number of frets used in this track
 				count = pack_getc(fp);	//Read the number of strings used in this track
 				if(count > 8)
@@ -1791,6 +1793,10 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					(void) eof_load_song_string_pf(sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->name,fp,EOF_NAME_LENGTH);	//Read the note's name
 					(void) pack_getc(fp);																		//Read the chord's number (not supported yet)
 					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->type = pack_getc(fp);		//Read the note's difficulty
+					if(sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->type >= numdiffs)
+					{	//If this note's difficulty is the highest encountered in the track so far
+						numdiffs = sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->type + 1;	//Track it
+					}
 					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->note = pack_getc(fp);		//Read note bitflags
 					sp->pro_guitar_track[sp->pro_guitar_tracks-1]->note[ctr]->ghost = pack_getc(fp);	//Read ghost bitflags
 					for(ctr2=0, bitmask=1; ctr2 < 8; ctr2++, bitmask <<= 1)
@@ -1820,6 +1826,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 						}
 					}
 				}
+				sp->pro_guitar_track[sp->pro_guitar_tracks-1]->parent->numdiffs = numdiffs;	//Update the track's difficulty count
 			break;
 			case EOF_PRO_VARIABLE_LEGACY_TRACK_FORMAT:	//Variable Lane Legacy (not implemented yet)
 				allegro_message("Error: Variable lane not supported yet.  Aborting");
