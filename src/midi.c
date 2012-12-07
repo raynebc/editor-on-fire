@@ -1249,6 +1249,11 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 					}
 				}
 
+				if((sp->track[j]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) && (type == EOF_NOTE_SPECIAL))
+				{	//If this note is a BRE note and the track's difficulty limit was removed
+					continue;	//Skip writing this note
+				}
+
 				noteflags = eof_get_note_flags(sp, j, i);	//Store the note flags for easier use
 				note = eof_get_note_note(sp, j, i);			//Store the note bitflag for easier use
 				notepos = eof_get_note_pos(sp, j, i);		//Store the note position for easier use
