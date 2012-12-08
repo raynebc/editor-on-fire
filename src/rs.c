@@ -362,7 +362,43 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	}
 	(void) pack_fputs(buffer, fp);
 
+	//Check if any RS phrases or sections need to be added
+	if(!eof_song_contains_event(sp, "COUNT", 0, EOF_EVENT_FLAG_RS_PHRASE))
+	{	//If the user did not define a COUNT phrase
+		eof_log("\t! Adding missing COUNT phrase", 1);
+		(void) eof_song_add_text_event(sp, 0, "COUNT", 0, EOF_EVENT_FLAG_RS_PHRASE, 1);	//Add it as a temporary event at the first beat
+	}
+	if(!eof_song_contains_event(sp, "END", 0, EOF_EVENT_FLAG_RS_PHRASE))
+	{	//If the user did not define a END phrase
+		eof_log("\t! Adding missing END phrase", 1);
+		(void) eof_song_add_text_event(sp, sp->beats - 1, "END", 0, EOF_EVENT_FLAG_RS_PHRASE, 1);	//Add it as a temporary event at the last beat
+	}
+	eof_sort_events(sp);	//Re-sort events
+	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
+	for(ctr = 0, numsections = 0; ctr < sp->beats; ctr++)
+	{	//For each beat in the chart
+		if(sp->beat[ctr]->contained_rs_section_event >= 0)
+		{	//If this beat has a Rocksmith section
+			numsections++;	//Update Rocksmith section instance counter
+		}
+	}
+	if(!numsections)
+	{	//If the user did not define any RS sections
+		eof_log("\t! Adding some default RS sections", 1);
+		(void) eof_song_add_text_event(sp, 0, "intro", 0, EOF_EVENT_FLAG_RS_SECTION, 1);	//Add a temporary "intro" RS section at the first beat
+		if(sp->beat[0]->contained_section_event < 0)
+		{	//If the first beat doesn't have a RS phrase
+			(void) eof_song_add_text_event(sp, 0, "intro", 0, EOF_EVENT_FLAG_RS_PHRASE, 1);	//Add it a temporary one
+		}
+		(void) eof_song_add_text_event(sp, sp->beats - 1, "noguitar", 0, EOF_EVENT_FLAG_RS_SECTION, 1);	//Add a temporary "noguitar" RS section at the last beat
+		if(sp->beat[sp->beats - 1]->contained_section_event < 0)
+		{	//If the last beat doesn't have a RS phrase
+			(void) eof_song_add_text_event(sp, sp->beats - 1, "noguitar", 0, EOF_EVENT_FLAG_RS_PHRASE, 1);	//Add it a temporary one
+		}
+	}
+
 	//Write the phrases
+	eof_sort_events(sp);	//Re-sort events
 	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
 	for(ctr = 0; ctr < sp->beats; ctr++)
 	{	//For each beat in the chart
@@ -372,9 +408,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		}
 	}
 	sectionlistsize = eof_build_section_list(sp, &sectionlist, track);	//Build a list of all unique section markers (Rocksmith phrases) in the chart (from the perspective of the track being exported)
-	(void) snprintf(buffer, sizeof(buffer) - 1, "  <phrases count=\"%lu\">\n", sectionlistsize + 2);	//Write the number of unique sections (plus a default COUNT and END section)
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <phrases count=\"%lu\">\n", sectionlistsize);	//Write the number of unique sections
 	(void) pack_fputs(buffer, fp);
-	(void) pack_fputs("    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"0\" name=\"COUNT\" solo=\"0\"/>\n", fp);
 	for(ctr = 0; ctr < sectionlistsize; ctr++)
 	{	//For each of the entries in the unique section (RS phrase) list
 		char * currentphrase = NULL;
@@ -417,12 +452,10 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		//Write the phrase definition using the highest difficulty found among all instances of the phrase
 		(void) snprintf(buffer, sizeof(buffer) - 1, "    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"%u\" name=\"%s\" solo=\"0\"/>\n", ongoingmaxdiff, sp->text_event[sectionlist[ctr]]->text);
 		(void) pack_fputs(buffer, fp);
-	}
-	(void) pack_fputs("    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"0\" name=\"END\" solo=\"0\"/>\n", fp);
+	}//For each of the entries in the unique section (RS phrase) list
 	(void) pack_fputs("  </phrases>\n", fp);
-	(void) snprintf(buffer, sizeof(buffer) - 1, "  <phraseIterations count=\"%lu\">\n", numsections + 2);	//Write the number of phrase instances (plus a default COUNT and END phrase)
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <phraseIterations count=\"%lu\">\n", numsections);	//Write the number of phrase instances
 	(void) pack_fputs(buffer, fp);
-	(void) pack_fputs("    <phraseIteration time=\"0.000\" phraseId=\"0\"/>\n", fp);	//Write the default COUNT phrase iteration
 	for(ctr = 0; ctr < sp->beats; ctr++)
 	{	//For each beat in the chart
 		if(sp->beat[ctr]->contained_section_event >= 0)
@@ -446,8 +479,6 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 			(void) pack_fputs(buffer, fp);
 		}
 	}
-	(void) snprintf(buffer, sizeof(buffer) - 1, "    <phraseIteration time=\"%.3f\" phraseId=\"%lu\"/>\n", (double)(xml_end - 1) / 1000.0, sectionlistsize + 1);	//Write the default END phrase iteration
-	(void) pack_fputs(buffer, fp);
 	(void) pack_fputs("  </phraseIterations>\n", fp);
 	if(sectionlistsize)
 	{	//If there were any entries in the unique section list
@@ -580,7 +611,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		}
 	}
 	if(numsections)
-	{	//If there is at least one Rocksmith section defined in the chart
+	{	//If there is at least one Rocksmith section defined in the chart (which should be the case since default ones were inserted earlier if there weren't any)
 		(void) snprintf(buffer, sizeof(buffer) - 1, "  <sections count=\"%lu\">\n", numsections);
 		(void) pack_fputs(buffer, fp);
 		for(ctr = 0; ctr < sp->beats; ctr++)
@@ -594,12 +625,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		(void) pack_fputs("  </sections>\n", fp);
 	}
 	else
-	{	//Otherwise write a couple default sections
-		(void) pack_fputs("  <sections count=\"2\">\n", fp);
-		(void) pack_fputs("    <section name=\"intro\" number=\"1\" startTime=\"0.000\"/>\n", fp);
-		(void) snprintf(buffer, sizeof(buffer) - 1, "    <section name=\"noguitar\" number=\"1\" startTime=\"%.3f\"/>\n", (double)(xml_end - 1) / 1000.0);
-		(void) pack_fputs(buffer, fp);
-		(void) pack_fputs("  </sections>\n", fp);
+	{
+		allegro_message("Error:  Default RS sections that were added are missing.  Skipping writing the <sections> tag.");
 	}
 
 	//Write events
@@ -1018,10 +1045,22 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	(void) pack_fputs("  </levels>\n", fp);
 	(void) pack_fputs("</song>\n", fp);
 	(void) pack_fclose(fp);
+
+	//Cleanup
 	if(chordlist)
 	{	//If the chord list was built
 		free(chordlist);
 	}
+	//Remove all temporary text events that were added
+	for(ctr = sp->text_events; ctr > 0; ctr--)
+	{	//For each text event (in reverse order)
+		if(sp->text_event[ctr - 1]->is_temporary)
+		{	//If this text event has been marked as temporary
+			eof_song_delete_text_event(sp, ctr - 1);	//Delete it
+		}
+	}
+	eof_sort_events(sp);	//Re-sort events
+	eof_process_beat_statistics(sp, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
 
 	//At this point, the XML file has been created, if the user has defined the path to the Rocksmith toolkit, attempt to compile the XML file with it
 #ifdef ALLEGRO_WINDOWS
