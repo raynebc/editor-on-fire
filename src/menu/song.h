@@ -155,5 +155,10 @@ int eof_song_proguitar_rename_track(void);
 	//Allows the user to define an alternate name for the active track
 int eof_song_proguitar_toggle_difficulty_limit(void);
 	//Toggles the 5 difficulty limit on/off.  If difficulties >= 4 are populated, appropriate warnings are given to the user regarding Rock Band vs. Rocksmith standards compatibility
+int eof_song_proguitar_insert_difficulty(void);
+	//If the active pro guitar/bass track has fewer than 255 difficulties, prompts user to insert a new difficulty above or below the active difficulty
+	//If the new difficulty has a populated difficulty above or below it, the user is prompted whether to import either (calling paste from logic)
+int eof_song_proguitar_delete_difficulty(void);
+	//Deletes the active difficulty's content, decrementing all higher difficulty's content accordingly
 
 #endif

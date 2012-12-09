@@ -83,7 +83,7 @@ DIALOG eof_settings_dialog[] =
 DIALOG eof_preferences_dialog[] =
 {
    /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                   (dp2) (dp3) */
-   { d_agup_window_proc,0,   48,  480, 350, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
+   { d_agup_window_proc,0,   48,  480, 365, 2,   23,  0,    0,      0,   0,   "Preferences",         NULL, NULL },
    { d_agup_check_proc, 16,  75,  110, 16,  2,   23,  0,    0,      1,   0,   "Inverted Notes",      NULL, NULL },
    { d_agup_check_proc, 150, 75,  92 , 16,  2,   23,  0,    0,      1,   0,   "Lefty Mode",          NULL, NULL },
    { d_agup_check_proc, 306, 75,  128, 16,  2,   23,  0,    0,      1,   0,   "Note Auto-Adjust",    NULL, NULL },
@@ -105,21 +105,22 @@ DIALOG eof_preferences_dialog[] =
    { eof_verified_edit_proc,170,185,30,20,  0,   0,   0,    0,      3,   0,   eof_etext2,     "0123456789", NULL },
    { d_agup_text_proc,  248, 185, 144, 12,  0,   0,   0,    0,      0,   0,   "Min. note length (ms):",NULL,NULL },
    { eof_verified_edit_proc,392,185,30,20,  0,   0,   0,    0,      3,   0,   eof_etext,     "0123456789", NULL },
-   { d_agup_check_proc, 248, 222, 214, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
-   { d_agup_check_proc, 248, 238, 184, 16,  2,   23,  0,    0,      1,   0,   "Use dB style seek controls",NULL, NULL },
-   { d_agup_text_proc,  24,  222, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
-   { d_agup_list_proc,  16,  240, 100, 110, 2,   23,  0,    0,      0,   0,   eof_input_list,        NULL, NULL },
-   { d_agup_text_proc,  150, 240, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
-   { d_agup_list_proc,  129, 255, 100, 95,  2,   23,  0,    0,      0,   0,   eof_colors_list,       NULL, NULL },
-   { d_agup_button_proc,12,  355, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
-   { d_agup_button_proc,86,  355, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
-   { d_agup_button_proc,160, 355, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
+   { d_agup_check_proc, 248, 237, 214, 16,  2,   23,  0,    0,      1,   0,   "3D render bass drum in a lane",NULL, NULL },
+   { d_agup_check_proc, 248, 253, 184, 16,  2,   23,  0,    0,      1,   0,   "Use dB style seek controls",NULL, NULL },
+   { d_agup_text_proc,  24,  237, 48,  8,   2,   23,  0,    0,      0,   0,   "Input Method",        NULL, NULL },
+   { d_agup_list_proc,  16,  255, 100, 110, 2,   23,  0,    0,      0,   0,   eof_input_list,        NULL, NULL },
+   { d_agup_text_proc,  150, 255, 48,  8,   2,   23,  0,    0,      0,   0,   "Color set",           NULL, NULL },
+   { d_agup_list_proc,  129, 270, 100, 95,  2,   23,  0,    0,      0,   0,   eof_colors_list,       NULL, NULL },
+   { d_agup_button_proc,12,  370, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                  NULL, NULL },
+   { d_agup_button_proc,86,  370, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Default",             NULL, NULL },
+   { d_agup_button_proc,160, 370, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",              NULL, NULL },
    { d_agup_text_proc,  16,  206, 120, 12,  0,   0,   0,    0,      0,   0,   "Top of 2D pane shows:",NULL,NULL },
    { d_agup_radio_proc, 161, 206, 60,  16,  2,   23,  0,    0,      1,   0,   "Names",               NULL, NULL },
    { d_agup_radio_proc, 224, 206, 72,  16,  2,   23,  0,    0,      1,   0,   "Sections",            NULL, NULL },
    { d_agup_radio_proc, 301, 206, 78,  16,  2,   23,  0,    0,      1,   0,   "Hand pos",            NULL, NULL },
    { d_agup_radio_proc, 384, 206, 92,  16,  2,   23,  0,    0,      1,   0,   "RS sections",         NULL, NULL },
-   { d_agup_check_proc, 248, 254, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are made 1ms long",NULL, NULL },
+   { d_agup_check_proc, 248, 269, 206, 16,  2,   23,  0,    0,      1,   0,   "New notes are made 1ms long",NULL, NULL },
+   { d_agup_check_proc, 16,  221, 295, 16,  2,   23,  0,    0,      1,   0,   "GP import beat text->sections, other->phrases",NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -937,6 +938,7 @@ int eof_menu_file_preferences(void)
 	eof_preferences_dialog[32].flags = eof_preferences_dialog[33].flags = eof_preferences_dialog[34].flags = eof_preferences_dialog[35].flags = 0;	//Options for what to display at top of 2D panel
 	eof_preferences_dialog[eof_2d_render_top_option].flags = D_SELECTED;
 	eof_preferences_dialog[36].flags = eof_new_note_length_1ms ? D_SELECTED : 0;		//New notes are made 1ms long
+	eof_preferences_dialog[37].flags = eof_gp_import_preference_1 ? D_SELECTED : 0;		//GP import beat text->sections, other->phrases
 	if(eof_min_note_length)
 	{	//If the user has defined a minimum note length
 		(void) snprintf(eof_etext, sizeof(eof_etext) - 1, "%d", eof_min_note_length);	//Populate the field's string with it
@@ -1016,6 +1018,7 @@ int eof_menu_file_preferences(void)
 				eof_2d_render_top_option = 35;
 			}
 			eof_new_note_length_1ms = (eof_preferences_dialog[36].flags == D_SELECTED ? 1 : 0);
+			eof_gp_import_preference_1 = (eof_preferences_dialog[37].flags == D_SELECTED ? 1 : 0);
 		}//If the user clicked OK
 		else if(retval == 29)
 		{	//If the user clicked "Default, change all selections to EOF's default settings
@@ -1046,6 +1049,7 @@ int eof_menu_file_preferences(void)
 			eof_preferences_dialog[32].flags = D_SELECTED;			//Display note names at top of 2D panel
 			eof_preferences_dialog[33].flags = eof_preferences_dialog[34].flags = eof_preferences_dialog[35].flags = 0;	//Display sections/fret hand positions at top of 2D panel
 			eof_preferences_dialog[36].flags = 0;					//New notes are made 1ms long
+			eof_preferences_dialog[37].flags = 0;					//GP import beat text->sections, other->phrases
 		}//If the user clicked "Default
 	}while(retval == 29);	//Keep re-running the dialog until the user closes it with anything besides "Default"
 	eof_show_mouse(NULL);
@@ -2711,8 +2715,8 @@ int eof_menu_file_gp_import(void)
 //If the GP file contained section markers, offer to import them now
 			if(eof_parsed_gp_file->text_events)
 			{	//If there were text events imported
-				if(alert(NULL, "Import Guitar Pro file's section markers/beat text as Rocksmith phrases/sections?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-				{	//If the user opted to import the section/phrase markers
+				if(eof_gp_import_preference_1 || alert(NULL, "Import Guitar Pro file's section markers/beat text as Rocksmith phrases/sections?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+				{	//If the user set the preference to automatically import RS phrases and sections from GP files, or opted to do so when prompted
 					if(!gp_import_undo_made)
 					{	//If an undo state hasn't been made yet
 						eof_prepare_undo(EOF_UNDO_TYPE_NONE);

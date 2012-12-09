@@ -98,7 +98,7 @@
 typedef struct
 {
     char name[EOF_NAME_LENGTH+1];
-	char          type;			//Stores the note's difficulty
+	unsigned char type;			//Stores the note's difficulty
 	unsigned char note;			//Stores the note's fret values
 	unsigned long midi_pos;
 	unsigned long midi_length;
@@ -111,7 +111,7 @@ typedef struct
 typedef struct
 {
 	char name[EOF_NAME_LENGTH+1];
-	char          type;			//Stores the note's difficulty
+	unsigned char type;			//Stores the note's difficulty
 	unsigned char note;			//Stores the note's string statuses (set=played, reset=not played).  Bit 0 refers to string 6 (low E), bit 5 refers to string 1 (high e), etc.
 	unsigned char ghost;		//Stores the note's ghost statuses.  Bit 0 indicates whether string 1 is ghosted, etc.
 	unsigned char frets[8];		//Stores the fret number for each string, where frets[0] refers to string 6 (low E).  Possible values:0=Open strum, #=Fret # pressed, 0xFF=Muted (no fret specified).  MSB is the muted status (set = muted)
@@ -130,7 +130,7 @@ typedef struct
 typedef struct
 {
 	char name[EOF_NAME_LENGTH+1];
-	char          type;
+	unsigned char type;
 	unsigned char note;
 	unsigned long endbeat;
 	unsigned long beat;       // which beat this note was copied from
@@ -165,7 +165,7 @@ typedef struct
 
 typedef struct
 {
-	char          note;
+	unsigned char note;
 	char          text[EOF_MAX_LYRIC_LENGTH+1];
 	unsigned long midi_pos;
 	long          midi_length;	//Keep as signed, since the npos logic uses signed math
@@ -187,7 +187,7 @@ typedef struct
 	unsigned long end_pos;	//Will store other data in items that don't use an end position (such as the fret number for fret hand positions)
 	unsigned long flags;
 	char name[EOF_NAME_LENGTH+1];
-	char difficulty;	//The difficulty this phrase applies to (ie. arpeggios)
+	char difficulty;	//The difficulty this phrase applies to (ie. arpeggios, hand positions)
 
 } EOF_PHRASE_SECTION;
 
@@ -504,7 +504,7 @@ void eof_track_delete_note(EOF_SONG *sp, unsigned long track, unsigned long note
 void eof_song_empty_track(EOF_SONG * sp, unsigned long track);								//Deletes all notes from the track
 void eof_track_resize(EOF_SONG *sp, unsigned long track, unsigned long size);				//Performs the appropriate logic to resize the specified track
 unsigned char eof_get_note_type(EOF_SONG *sp, unsigned long track, unsigned long note);				//Returns the type (difficulty/lyric set) of the specified track's note/lyric, or 0xFF on error
-void eof_set_note_type(EOF_SONG *sp, unsigned long track, unsigned long note, char type);	//Sets the type (difficulty/lyric set) of the specified track's note/lyric
+void eof_set_note_type(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char type);	//Sets the type (difficulty/lyric set) of the specified track's note/lyric
 unsigned long eof_get_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note);		//Returns the position of the specified track's note/lyric, or 0 on error
 void eof_set_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long pos);	//Sets the position of the specified track's note/lyric
 void eof_move_note_pos(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned long amount, char dir);

@@ -152,6 +152,8 @@ MENU eof_song_proguitar_menu[] =
     {"Correct chord fingerings", eof_correct_chord_fingerings_menu, NULL, 0, NULL},
     {"&Rename track", eof_song_proguitar_rename_track, NULL, 0, NULL},
     {"Remove difficulty limit", eof_song_proguitar_toggle_difficulty_limit, NULL, 0, NULL},
+    {"Insert new difficulty", eof_song_proguitar_insert_difficulty, NULL, 0, NULL},
+    {"Delete active difficulty", eof_song_proguitar_delete_difficulty, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -4009,6 +4011,149 @@ int eof_song_proguitar_toggle_difficulty_limit(void)
 	}
 
 	eof_song->track[eof_selected_track]->flags ^= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//Toggle this flag
+	if((eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) == 0)
+	{	//If the difficulty limit is in place
+		if(eof_note_type > 4)
+		{	//Ensure one of the first 5 difficulties is active
+			eof_note_type = 4;
+		}
+	}
 	eof_fix_window_title();
+	return 1;
+}
+
+int eof_song_proguitar_insert_difficulty(void)
+{
+	unsigned long ctr, tracknum;
+	unsigned char thistype, newdiff;
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	if(!eof_song || eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	if(eof_song->track[eof_selected_track]->numdiffs == 255)
+	{
+		allegro_message("No more difficulties can be added.");
+		return 1;
+	}
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+
+	if(alert(NULL, "Insert the new difficulty above or below the active difficulty?", NULL, "&Above", "&Below", 'a', 'b') == 1)
+	{	//If the user chooses to insert the difficulty above the active difficulty
+		newdiff = eof_note_type + 1;	//The difficulty number of all content at/above the difficulty immediately above the active difficulty will be incremented
+	}
+	else
+	{	//The user chose to insert the difficulty below the active difficulty
+		newdiff = eof_note_type;
+		eof_note_type++;	//Update the active difficulty to display the same content for after the operation
+	}
+
+	//Update note difficulties
+	for(ctr = 0; ctr < eof_get_track_size(eof_song, eof_selected_track); ctr++)
+	{	//For each note in the track
+		thistype = eof_get_note_type(eof_song, eof_selected_track, ctr);	//Get this note's difficulty
+		if(thistype >= newdiff)
+		{	//If this note's difficulty needs to be updated
+			eof_set_note_type(eof_song, eof_selected_track, ctr, thistype + 1);
+		}
+	}
+
+	//Update arpeggio difficulties
+	for(ctr = 0; ctr < tp->arpeggios; ctr++)
+	{	//For each arpeggio phrase in the track
+		if(tp->arpeggio[ctr].difficulty >= newdiff)
+		{	//If this arpeggio phrase's difficulty needs to be updated
+			tp->arpeggio[ctr].difficulty++;
+		}
+	}
+
+	//Update fret hand positions
+	for(ctr = 0; ctr < tp->handpositions; ctr++)
+	{	//For each fret hand position
+		if(tp->handposition[ctr].difficulty >= newdiff)
+		{	//If this fret hand position's difficulty needs to be updated
+			tp->handposition[ctr].difficulty++;
+		}
+	}
+
+	eof_pro_guitar_track_sort_fret_hand_positions(tp);
+	eof_song->track[eof_selected_track]->numdiffs++;	//Increment the track's difficulty counter
+	eof_detect_difficulties(eof_song, eof_selected_track);
+	eof_fix_window_title();	//Redraw the window title in case the active difficulty was incremented to compensate for inserting a difficulty below the active difficulty
+	return 1;
+}
+
+int eof_song_proguitar_delete_difficulty(void)
+{
+	unsigned long ctr, tracknum;
+	unsigned char thistype;
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	if(!eof_song || eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	if(eof_note_type < 5)
+	{	//Don't allow any of the first five default difficulties to be deleted
+		allegro_message("The first five difficulties cannot be deleted.");
+		return 1;
+	}
+	if(eof_track_diff_populated_status[eof_note_type])
+	{	//If the active track has any notes
+		if(alert(NULL, "Warning:  This difficulty contains at least one note.  Delete the difficulty anyway?", NULL, "&Yes", "&No", 'y', 'n') != 1)
+		{	//If the user doesn't opt to delete the populated track difficulty
+			return 1;
+		}
+	}
+	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+
+	//Update note difficulties
+	for(ctr = eof_get_track_size(eof_song, eof_selected_track); ctr > 0; ctr--)
+	{	//For each note in the track (in reverse order)
+		thistype = eof_get_note_type(eof_song, eof_selected_track, ctr - 1);	//Get this note's difficulty
+		if(thistype == eof_note_type)
+		{	//If this note needs to be deleted
+			eof_track_delete_note(eof_song, eof_selected_track, ctr - 1);
+		}
+		else if(thistype >= eof_note_type)
+		{	//If this note's difficulty needs to be updated
+			eof_set_note_type(eof_song, eof_selected_track, ctr - 1, thistype - 1);
+		}
+	}
+
+	//Update arpeggio difficulties
+	for(ctr = tp->arpeggios; ctr > 0; ctr--)
+	{	//For each arpeggio phrase in the track (in reverse order)
+		if(tp->arpeggio[ctr - 1].difficulty == eof_note_type)
+		{	//If this arpeggio phrase needs to be deleted
+			eof_track_delete_arpeggio(eof_song, eof_selected_track, ctr - 1);
+		}
+		else if(tp->arpeggio[ctr - 1].difficulty >= eof_note_type)
+		{	//If this arpeggio phrase's difficulty needs to be updated
+			tp->arpeggio[ctr - 1].difficulty--;
+		}
+	}
+
+	//Update fret hand positions
+	for(ctr = 0; ctr < tp->handpositions; ctr++)
+	{	//For each fret hand position
+		if(tp->handposition[ctr - 1].difficulty == eof_note_type)
+		{	//If this fret hand position needs to be deleted
+			eof_pro_guitar_track_delete_hand_position(tp, ctr - 1);
+		}
+		else if(tp->handposition[ctr - 1].difficulty >= eof_note_type)
+		{	//If this fret hand position's difficulty needs to be updated
+			tp->handposition[ctr - 1].difficulty--;
+		}
+	}
+
+	eof_note_type--;	//Decrement the active difficulty
+	eof_pro_guitar_track_sort_fret_hand_positions(tp);
+	eof_song->track[eof_selected_track]->numdiffs--;	//Decrement the track's difficulty counter
+	eof_detect_difficulties(eof_song, eof_selected_track);
+	eof_fix_window_title();	//Redraw the window title in case the active difficulty was incremented to compensate for inserting a difficulty below the active difficulty
 	return 1;
 }

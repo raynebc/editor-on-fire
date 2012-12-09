@@ -596,11 +596,17 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	}
 	(void) pack_fputs("  </ebeats>\n", fp);
 
-	//Write some unknown information
-	(void) pack_fputs("  <controls count =\"2\">\n", fp);
-	(void) pack_fputs("    <control time=\"5.100\" code=\"ShowMessageBox(hint1, Rocksmith Custom Song Project Demo)\"/>\n", fp);
-	(void) pack_fputs("    <control time=\"30.100\" code=\"ClearAllMessageBoxes()\"/>\n", fp);
-	(void) pack_fputs("  </controls>\n", fp);
+	//Write a message box if the loading text song property string is defined
+	if(sp->tags->loading_text[0] != '\0')
+	{	//If the loading text is defined
+		char expanded_loading_text[512];	//A string to expand the user defined loading text into
+		(void) strftime(expanded_loading_text, sizeof(expanded_loading_text), sp->tags->loading_text, caltime);	//Expand any user defined calendar date/time tokens
+		(void) pack_fputs("  <controls count =\"2\">\n", fp);
+		(void) snprintf(buffer, sizeof(buffer) - 1, "    <control time=\"5.100\" code=\"ShowMessageBox(hint1, %s)\"/>\n", expanded_loading_text);	//Insert expanded loading text into control string
+		(void) pack_fputs(buffer, fp);
+		(void) pack_fputs("    <control time=\"10.100\" code=\"ClearAllMessageBoxes()\"/>\n", fp);
+		(void) pack_fputs("  </controls>\n", fp);
+	}
 
 	//Write sections
 	for(ctr = 0, numsections = 0; ctr < sp->beats; ctr++)
