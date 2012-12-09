@@ -3451,9 +3451,9 @@ void eof_editor_logic(void)
 	}//If the chart is not paused
 
 	/* select difficulty */
-	if((mouse_y >= eof_window_editor->y + 7) && (mouse_y < eof_window_editor->y + 20 + 8) && (mouse_x > 12) && (mouse_x < 12 + 5 * 80 + 12 - 1))
-	{
-		eof_hover_type = (mouse_x - 12) / 80;
+	if((mouse_y >= eof_window_editor->y + 7) && (mouse_y < eof_window_editor->y + 20 + 8) && (mouse_x > 12) && (mouse_x < 12 + 5 * 80 + 12 - 1) && (mouse_b & 1) && !eof_full_screen_3d)
+	{	//If the left mouse button is held down and the mouse is over one of the difficulty tabs, and full screen 3d mode isn't in effect
+		eof_hover_type = (mouse_x - 12) / 80;	//Determine which tab number was clicked
 		if(eof_hover_type < 0)
 		{
 			eof_hover_type = 0;
@@ -3462,16 +3462,36 @@ void eof_editor_logic(void)
 		{
 			eof_hover_type = 4;
 		}
-		if(!eof_full_screen_3d && (mouse_b & 1))
-		{
-			if(eof_note_type != eof_hover_type)
-			{
-				eof_note_type = eof_hover_type;
-				eof_mix_find_claps();
-				eof_mix_start_helper();
-				eof_fix_window_title();
-				eof_detect_difficulties(eof_song, eof_selected_track);
+		if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
+		{	//If this track is not limited to 5 difficulties
+			if(eof_hover_type == 4)
+			{	//If the fifth tab was clicked
+				eof_hover_type = eof_song->track[eof_selected_track]->numdiffs - 1;	//Change to the highest difficulty in the track
 			}
+			else if(eof_hover_type > 0)
+			{	//If the first tab (which will already change to the track's lowest difficulty) wasn't clicked
+				if(eof_note_type < 2)
+				{	//If the tabs represent the 3 lowest difficulties
+					eof_hover_type = eof_hover_type - 1;
+				}
+				else if(eof_note_type >= eof_song->track[eof_selected_track]->numdiffs - 1)
+				{	//If the tabs represent the 3 highest difficulties
+					eof_hover_type = eof_hover_type +  eof_song->track[eof_selected_track]->numdiffs - 4;
+				}
+				else
+				{	//If the center tab represents the active difficulty
+					eof_hover_type = eof_note_type - 2 + eof_hover_type;
+				}
+			}
+			mouse_b &= ~1;	//Clear the left mouse button status or else the tab logic will run during next loop and cause the highest difficulty to be accepted
+		}
+		if(eof_note_type != eof_hover_type)
+		{
+			eof_note_type = eof_hover_type;
+			eof_mix_find_claps();
+			eof_mix_start_helper();
+			eof_fix_window_title();
+			eof_detect_difficulties(eof_song, eof_selected_track);
 		}
 	}
 	else

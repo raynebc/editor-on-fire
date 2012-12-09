@@ -297,6 +297,7 @@ extern int         eof_add_new_notes_to_selection;
 extern int         eof_drum_modifiers_affect_all_difficulties;
 extern int         eof_fb_seek_controls;
 extern int         eof_new_note_length_1ms;
+extern int         eof_gp_import_preference_1;
 extern int         eof_min_note_length;
 extern int         eof_min_note_distance;
 extern int         eof_render_bass_drum_in_lane;

@@ -452,7 +452,7 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 		}
 
 		/* delete certain notes */
-		if((tp->note[i-1]->note == 0) || ((tp->note[i-1]->type < 0) || (tp->note[i-1]->type > 4)) || (tp->note[i-1]->pos < sp->tags->ogg[eof_selected_ogg].midi_offset) || (tp->note[i-1]->pos >= eof_chart_length))
+		if((tp->note[i-1]->note == 0) || (tp->note[i-1]->type > 4) || (tp->note[i-1]->pos < sp->tags->ogg[eof_selected_ogg].midi_offset) || (tp->note[i-1]->pos >= eof_chart_length))
 		{	//Delete the note if all lanes are clear, if it is an invalid type, if the position is before the first beat marker or if it is after the last beat marker
 			eof_legacy_track_delete_note(tp, i-1);
 		}
@@ -3830,7 +3830,7 @@ void eof_pro_guitar_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel
 		}
 
 		/* delete certain notes */
-		if((tp->note[i-1]->note == 0) || ((tp->note[i-1]->type < 0) || (tp->note[i-1]->type > 4)) || (tp->note[i-1]->pos < sp->tags->ogg[eof_selected_ogg].midi_offset) || (tp->note[i-1]->pos >= eof_chart_length))
+		if((tp->note[i-1]->note == 0) || (tp->note[i-1]->type >= sp->track[track]->numdiffs) || (tp->note[i-1]->pos < sp->tags->ogg[eof_selected_ogg].midi_offset) || (tp->note[i-1]->pos >= eof_chart_length))
 		{	//If the note is not valid
 			eof_pro_guitar_track_delete_note(tp, i-1);
 		}
@@ -4178,7 +4178,7 @@ void eof_set_note_flags(EOF_SONG *sp, unsigned long track, unsigned long note, u
 	}
 }
 
-void eof_set_note_type(EOF_SONG *sp, unsigned long track, unsigned long note, char type)
+void eof_set_note_type(EOF_SONG *sp, unsigned long track, unsigned long note, unsigned char type)
 {
 // 	eof_log("eof_set_note_type() entered");
 
