@@ -2623,8 +2623,8 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_SECTION;	//Ensure this will be detected as a RS section
 								gp->text_events++;
 							}
-							else if(eof_gp_import_preference_1)
-							{	//If the user preference is to import beat text that doesn't match a RS section as a phrase
+							else if(!eof_gp_import_preference_1)
+							{	//If the user preference to discard beat text that doesn't match a RS section isn't enabled, import it as a RS phrase
 								(void) ustrncpy(gp->text_event[gp->text_events]->text, buffer, 255);	//Copy the beat text as-is
 								gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;	//Ensure this will be detected as a RS phrase
 								gp->text_events++;
