@@ -464,7 +464,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 			{	//For each of the entries in the unique section list
 				if(!ustricmp(sp->text_event[sp->beat[ctr]->contained_section_event]->text, sp->text_event[sectionlist[ctr2]]->text))
 				{	//If this event matches a section marker entry
-					phraseid = ctr2 + 1;	//Add 1 to compensate for the COUNT phraseIteration that was inserted above
+					phraseid = ctr2;
 					break;
 				}
 			}

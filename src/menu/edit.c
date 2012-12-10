@@ -361,7 +361,7 @@ void eof_prepare_edit_menu(void)
 
 		/* paste from difficulty */
 		eof_edit_menu[6].flags = D_DISABLED;
-		for(i = 0; i < EOF_MAX_DIFFICULTIES; i++)	//For each of the difficulties
+		for(i = 0; i < EOF_MAX_DIFFICULTIES; i++)	//For each of the natively supported difficulties
 		{
 			if((i == EOF_NOTE_CHALLENGE) && (eof_selected_track != EOF_TRACK_DANCE))
 				break;	//Don't check the BRE difficulty of non dance tracks
@@ -2194,7 +2194,7 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty)
 	char has_arpeggios = 0, has_handpositions = 0;
 
 	if((eof_note_type != source_difficulty) && (source_difficulty < EOF_MAX_DIFFICULTIES))
-	{	//If the current difficulty is different than the source difficulty
+	{	//If the current difficulty is different than the source difficulty and the source difficulty is one of the 5 natively supported difficulties
 		if(eof_check_track_difficulty_populated_status(eof_note_type))
 		{	//If the current difficulty is populated
 			if(alert(NULL, "This operation will replace this difficulty's contents.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)

@@ -4078,6 +4078,7 @@ int eof_song_proguitar_insert_difficulty(void)
 		}
 	}
 
+	eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//Remove the difficulty limit for this track
 	eof_pro_guitar_track_sort_fret_hand_positions(tp);
 	eof_song->track[eof_selected_track]->numdiffs++;	//Increment the track's difficulty counter
 	eof_detect_difficulties(eof_song, eof_selected_track);
