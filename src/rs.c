@@ -262,7 +262,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	char buffer[256] = {0};
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
-	unsigned long ctr, ctr2, ctr3, ctr4, numsections = 0, stringnum, bitmask, numsinglenotes, numchords, *chordlist, chordlistsize, *sectionlist, sectionlistsize, xml_end, numevents = 0;
+	unsigned long ctr, ctr2, ctr3, ctr4, numsections, stringnum, bitmask, numsinglenotes, numchords, *chordlist, chordlistsize, *sectionlist, sectionlistsize, xml_end, numevents = 0;
 	EOF_PRO_GUITAR_TRACK *tp;
 	char *arrangement_name;	//This will point to the track's native name unless it has an alternate name defined
 	unsigned numdifficulties;
@@ -400,10 +400,10 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	//Write the phrases
 	eof_sort_events(sp);	//Re-sort events
 	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
-	for(ctr = 0; ctr < sp->beats; ctr++)
+	for(ctr = 0, numsections = 0; ctr < sp->beats; ctr++)
 	{	//For each beat in the chart
 		if(sp->beat[ctr]->contained_section_event >= 0)
-		{	//If this beat has a section event
+		{	//If this beat has a section event (RS phrase)
 			numsections++;	//Update section marker instance counter
 		}
 	}
