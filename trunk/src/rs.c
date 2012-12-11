@@ -11,6 +11,7 @@
 #include "song.h"	//For eof_pro_guitar_track_delete_hand_position()
 #include "undo.h"
 #include "utility.h"	//For eof_system()
+#include "foflc/RS_parse.h"	//For expand_xml_text()
 #include "menu/beat.h"	//For eof_rocksmith_phrase_dialog_add()
 #include "menu/song.h"	//For eof_fret_hand_position_list_dialog_undo_made and eof_fret_hand_position_list_dialog[]
 
@@ -200,29 +201,51 @@ unsigned long eof_build_section_list(EOF_SONG *sp, unsigned long **results, unsi
 	}
 	memcpy(eventlist, sp->text_event, sizeof(EOF_TEXT_EVENT *) * EOF_MAX_TEXT_EVENTS);	//Copy the event array
 
-	//Overwrite each pointer in the duplicate event array that isn't a unique section marker with NULL
+	//In the case of beats that contain multiple sections, only keep ones that are cached in the beat statistics
+	eof_process_beat_statistics(sp, track);	//Rebuild beat stats from the perspective of the track being examined
 	for(ctr = 0; ctr < sp->text_events; ctr++)
 	{	//For each text event in the chart
-		if(eof_is_section_marker(sp->text_event[ctr], track))
-		{	//If the text event's string or flags indicate a section marker (from the perspective of the specified track)
-			match = 0;
-			for(ctr2 = ctr + 1; ctr2 < sp->text_events; ctr2++)
-			{	//For each event in the chart that follows this event
-				if(eof_is_section_marker(sp->text_event[ctr2], track) &&!ustricmp(sp->text_event[ctr]->text, sp->text_event[ctr2]->text))
-				{	//If this event is also a section event from the perspective of the track being examined, and its text matches
-					eventlist[ctr] = NULL;	//Eliminate this event from the list
-					match = 1;	//Note that this chord matched one of the others
-					break;
-				}
-			}
-			if(!match)
-			{	//If this section marker didn't match any of the other events
-				unique_count++;	//Increment unique section counter
+		match = 0;
+		for(ctr2 = 0; ctr2 < sp->beats; ctr2++)
+		{	//For each beat in the chart
+			if(sp->beat[ctr2]->contained_section_event == ctr)
+			{	//If the beat's statistics indicate this section is used
+				match = 1;	//Note that this section is to be kept
+				break;
 			}
 		}
-		else
-		{	//This event is not a section marker
-			eventlist[ctr] = NULL;	//Eliminate this note from the list since it's not a chord
+		if(!match)
+		{	//If none of the beat stats used this section
+			eventlist[ctr] = NULL;	//Eliminate this section from the list since only 1 section per beat will be exported
+		}
+	}
+
+	//Overwrite each pointer in the duplicate event array that isn't a unique section marker with NULL and count the unique events
+	for(ctr = 0; ctr < sp->text_events; ctr++)
+	{	//For each text event in the chart
+		if(eventlist[ctr] != NULL)
+		{	//If this section hasn't been eliminated yet
+			if(eof_is_section_marker(sp->text_event[ctr], track))
+			{	//If the text event's string or flags indicate a section marker (from the perspective of the specified track)
+				match = 0;
+				for(ctr2 = ctr + 1; ctr2 < sp->text_events; ctr2++)
+				{	//For each event in the chart that follows this event
+					if(eof_is_section_marker(sp->text_event[ctr2], track) &&!ustricmp(sp->text_event[ctr]->text, sp->text_event[ctr2]->text))
+					{	//If this event is also a section event from the perspective of the track being examined, and its text matches
+						eventlist[ctr] = NULL;	//Eliminate this event from the list
+						match = 1;	//Note that this section matched one of the others
+						break;
+					}
+				}
+				if(!match)
+				{	//If this section marker didn't match any of the other events
+					unique_count++;	//Increment unique section counter
+				}
+			}
+			else
+			{	//This event is not a section marker
+				eventlist[ctr] = NULL;	//Eliminate this note from the list since it's not a chord
+			}
 		}
 	}
 
@@ -259,7 +282,7 @@ unsigned long eof_build_section_list(EOF_SONG *sp, unsigned long **results, unsi
 int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, char *user_warned)
 {
 	PACKFILE * fp;
-	char buffer[256] = {0};
+	char buffer[256] = {0}, buffer2[260] = {0};
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
 	unsigned long ctr, ctr2, ctr3, ctr4, numsections, stringnum, bitmask, numsinglenotes, numchords, *chordlist, chordlistsize, *sectionlist, sectionlistsize, xml_end, numevents = 0;
@@ -341,9 +364,11 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	//Write the beginning of the XML file
 	(void) pack_fputs("<?xml version='1.0' encoding='UTF-8'?>\n", fp);
 	(void) pack_fputs("<song>\n", fp);
-	(void) snprintf(buffer, sizeof(buffer) - 1, "  <title>%s</title>\n", sp->tags->title);
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->title, 64);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <title>%s</title>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
-	(void) snprintf(buffer, sizeof(buffer) - 1, "  <arrangement>%s</arrangement>\n", arrangement_name);
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, arrangement_name, 32);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <arrangement>%s</arrangement>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
 	(void) pack_fputs("  <part>1</part>\n", fp);
 	(void) pack_fputs("  <offset>0.000</offset>\n", fp);
@@ -363,13 +388,22 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	(void) pack_fputs(buffer, fp);
 
 	//Check if any RS phrases or sections need to be added
+	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
 	if(!eof_song_contains_event(sp, "COUNT", 0, EOF_EVENT_FLAG_RS_PHRASE))
 	{	//If the user did not define a COUNT phrase
+		if(sp->beat[0]->contained_section_event >= 0)
+		{	//If there is already a phrase defined on the first beat
+			allegro_message("Warning:  There is no COUNT phrase, but the first beat marker already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.");
+		}
 		eof_log("\t! Adding missing COUNT phrase", 1);
 		(void) eof_song_add_text_event(sp, 0, "COUNT", 0, EOF_EVENT_FLAG_RS_PHRASE, 1);	//Add it as a temporary event at the first beat
 	}
 	if(!eof_song_contains_event(sp, "END", 0, EOF_EVENT_FLAG_RS_PHRASE))
 	{	//If the user did not define a END phrase
+		if(sp->beat[sp->beats - 1]->contained_section_event >= 0)
+		{	//If there is already a phrase defined on the last beat
+			allegro_message("Warning:  There is no END phrase, but the last beat marker already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.");
+		}
 		eof_log("\t! Adding missing END phrase", 1);
 		(void) eof_song_add_text_event(sp, sp->beats - 1, "END", 0, EOF_EVENT_FLAG_RS_PHRASE, 1);	//Add it as a temporary event at the last beat
 	}
@@ -450,7 +484,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		}
 
 		//Write the phrase definition using the highest difficulty found among all instances of the phrase
-		(void) snprintf(buffer, sizeof(buffer) - 1, "    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"%u\" name=\"%s\" solo=\"0\"/>\n", ongoingmaxdiff, sp->text_event[sectionlist[ctr]]->text);
+		expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[sectionlist[ctr]]->text, 32);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+		(void) snprintf(buffer, sizeof(buffer) - 1, "    <phrase disparity=\"0\" ignore=\"0\" maxDifficulty=\"%u\" name=\"%s\" solo=\"0\"/>\n", ongoingmaxdiff, buffer2);
 		(void) pack_fputs(buffer, fp);
 	}//For each of the entries in the unique section (RS phrase) list
 	(void) pack_fputs("  </phrases>\n", fp);
@@ -559,7 +594,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 				}
 			}
 
-			(void) snprintf(buffer, sizeof(buffer) - 1, "    <chordTemplate chordName=\"%s\" finger0=\"%s\" finger1=\"%s\" finger2=\"%s\" finger3=\"%s\" finger4=\"%s\" finger5=\"%s\" fret0=\"%ld\" fret1=\"%ld\" fret2=\"%ld\" fret3=\"%ld\" fret4=\"%ld\" fret5=\"%ld\"/>\n", notename, finger0, finger1, finger2, finger3, finger4, finger5, fret0, fret1, fret2, fret3, fret4, fret5);
+			expand_xml_text(buffer2, sizeof(buffer2) - 1, notename, 32);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+			(void) snprintf(buffer, sizeof(buffer) - 1, "    <chordTemplate chordName=\"%s\" finger0=\"%s\" finger1=\"%s\" finger2=\"%s\" finger3=\"%s\" finger4=\"%s\" finger5=\"%s\" fret0=\"%ld\" fret1=\"%ld\" fret2=\"%ld\" fret3=\"%ld\" fret4=\"%ld\" fret5=\"%ld\"/>\n", buffer2, finger0, finger1, finger2, finger3, finger4, finger5, fret0, fret1, fret2, fret3, fret4, fret5);
 			(void) pack_fputs(buffer, fp);
 		}//For each of the entries in the unique chord list
 		(void) pack_fputs("  </chordTemplates>\n", fp);
@@ -602,7 +638,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		char expanded_loading_text[512];	//A string to expand the user defined loading text into
 		(void) strftime(expanded_loading_text, sizeof(expanded_loading_text), sp->tags->loading_text, caltime);	//Expand any user defined calendar date/time tokens
 		(void) pack_fputs("  <controls count =\"2\">\n", fp);
-		(void) snprintf(buffer, sizeof(buffer) - 1, "    <control time=\"5.100\" code=\"ShowMessageBox(hint1, %s)\"/>\n", expanded_loading_text);	//Insert expanded loading text into control string
+		expand_xml_text(buffer2, sizeof(buffer2) - 1, expanded_loading_text, 256);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+		(void) snprintf(buffer, sizeof(buffer) - 1, "    <control time=\"5.100\" code=\"ShowMessageBox(hint1, %s)\"/>\n", buffer2);	//Insert expanded loading text into control string
 		(void) pack_fputs(buffer, fp);
 		(void) pack_fputs("    <control time=\"10.100\" code=\"ClearAllMessageBoxes()\"/>\n", fp);
 		(void) pack_fputs("  </controls>\n", fp);
@@ -624,7 +661,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		{	//For each beat in the chart
 			if(sp->beat[ctr]->contained_rs_section_event >= 0)
 			{	//If this beat has a Rocksmith section
-				(void) snprintf(buffer, sizeof(buffer) - 1, "    <section name=\"%s\" number=\"%d\" startTime=\"%.3f\"/>\n", sp->text_event[sp->beat[ctr]->contained_rs_section_event]->text, sp->beat[ctr]->contained_rs_section_event_instance_number, sp->beat[ctr]->fpos / 1000.0);
+				expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[sp->beat[ctr]->contained_rs_section_event]->text, 32);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+				(void) snprintf(buffer, sizeof(buffer) - 1, "    <section name=\"%s\" number=\"%d\" startTime=\"%.3f\"/>\n", buffer2, sp->beat[ctr]->contained_rs_section_event_instance_number, sp->beat[ctr]->fpos / 1000.0);
 				(void) pack_fputs(buffer, fp);
 			}
 		}
@@ -651,7 +689,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		{	//For each event in the chart
 			if(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_EVENT)
 			{	//If the event is marked as a Rocksmith event
-				(void) snprintf(buffer, sizeof(buffer) - 1, "    <event time=\"%.3f\" code=\"%s\"/>\n", sp->beat[sp->text_event[ctr]->beat]->fpos / 1000.0, sp->text_event[ctr]->text);
+				expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[ctr]->text, 256);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+				(void) snprintf(buffer, sizeof(buffer) - 1, "    <event time=\"%.3f\" code=\"%s\"/>\n", sp->beat[sp->text_event[ctr]->beat]->fpos / 1000.0, buffer2);
 				(void) pack_fputs(buffer, fp);
 			}
 		}
@@ -879,7 +918,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 					*user_warned |= 1;
 				}
 				eof_fret_hand_position_list_dialog_undo_made = 1;	//Ensure no undo state is written during export
-				eof_generate_efficient_hand_positions(sp, track, ctr, 0);	//Generate the fret hand positions for the track difficulty being currently written
+				eof_generate_efficient_hand_positions(sp, track, ctr, 0, 0);	//Generate the fret hand positions for the track difficulty being currently written (use a static fret range tolerance of 4 for all frets)
 				anchorsgenerated = 1;
 			}
 			for(ctr3 = 0, anchorcount = 0; ctr3 < tp->handpositions; ctr3++)	//Re-count the hand positions
@@ -1192,7 +1231,7 @@ void eof_song_fix_fingerings(EOF_SONG *sp, char *undo_made)
 	}
 }
 
-void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, char difficulty, char warnuser)
+void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, char difficulty, char warnuser, char dynamic)
 {
 	unsigned long ctr, tracknum, count;
 	EOF_PRO_GUITAR_TRACK *tp;
@@ -1243,7 +1282,7 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 		return;	//Exit function
 	}
 
-	eof_build_fret_range_tolerances(tp, difficulty);	//Allocate and build eof_fret_range_tolerances[]
+	eof_build_fret_range_tolerances(tp, difficulty, dynamic);	//Allocate and build eof_fret_range_tolerances[], using the calling function's chosen option regarding tolerances
 	if(!eof_fret_range_tolerances)
 	{	//eof_fret_range_tolerances[] wasn't built
 		return;
@@ -1265,6 +1304,11 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 			}
 			if(!eof_note_can_be_played_within_fret_tolerance(tp, ctr, &current_low, &current_high))
 			{	//If this note can't be included in the set of notes played with a single fret hand position
+				if(!current_low)
+				{	//If a fret hand position hasn't been placed yet
+					current_low = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Track this note's high and low frets
+					current_high = eof_pro_guitar_note_highest_fret(tp, ctr);
+				}
 				(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, current_note->pos, current_low, 0, NULL);	//Add the best determined fret hand position
 				current_note = tp->note[ctr];
 				current_low = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Initialize the low and high fret used for this note
@@ -1293,7 +1337,7 @@ int eof_generate_hand_positions_current_track_difficulty(void)
 	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
 		return 0;	//Invalid parameters
 
-	eof_generate_efficient_hand_positions(eof_song, eof_selected_track, eof_note_type, 1);	//Warn the user if existing hand positions will be deleted
+	eof_generate_efficient_hand_positions(eof_song, eof_selected_track, eof_note_type, 1, 0);	//Warn the user if existing hand positions will be deleted (use a static fret range tolerance of 4 for all frets, since it's assumed the author is charting for Rocksmith if they use this function)
 
 	(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
 	return D_REDRAW;
@@ -1308,6 +1352,18 @@ int eof_note_can_be_played_within_fret_tolerance(EOF_PRO_GUITAR_TRACK *tp, unsig
 
 	effective_lowest = eof_pro_guitar_note_lowest_fret(tp, note);
 	effective_highest = eof_pro_guitar_note_highest_fret(tp, note);
+
+	if(eof_note_count_colors_bitmask(tp->note[note]->note) == 1)
+	{	//If this is a single note instead of a chord, it's used fret only needs to be within range of the current fret hand position
+		if((*current_low + eof_fret_range_tolerances[*current_low] >= effective_lowest) && (*current_low <= effective_lowest))
+		{	//If the single note is within range and isn't left of the current fret hand position
+			return 1;	//Return note can be played without an additional hand position
+		}
+		else
+		{
+			return 0;	//Return note cannot be played without an additional hand position
+		}
+	}
 
 	if(eof_pro_guitar_note_is_barre_chord(tp, note))
 	{	//If this note is a barre chord
@@ -1339,7 +1395,7 @@ int eof_note_can_be_played_within_fret_tolerance(EOF_PRO_GUITAR_TRACK *tp, unsig
 	return 1;	//Return note can be played without an additional hand position
 }
 
-void eof_build_fret_range_tolerances(EOF_PRO_GUITAR_TRACK *tp, unsigned char difficulty)
+void eof_build_fret_range_tolerances(EOF_PRO_GUITAR_TRACK *tp, unsigned char difficulty, char dynamic)
 {
 	unsigned long ctr;
 	unsigned char lowest, highest, range;
@@ -1360,8 +1416,15 @@ void eof_build_fret_range_tolerances(EOF_PRO_GUITAR_TRACK *tp, unsigned char dif
 		return;
 	}
 
-	//Find the range of each fret as per the notes in the track
+	//Initialize the tolerance of each fret to 4
 	memset(eof_fret_range_tolerances, 4, (size_t)tp->numfrets + 1);	//Set a default range of 4 frets for the entire guitar neck
+
+	if(!dynamic)
+	{	//If the tolerances aren't being built from the specified track, return with all tolerances initialized to 4
+		return;
+	}
+
+	//Find the range of each fret as per the notes in the track
 	for(ctr = 0; ctr < tp->notes; ctr++)
 	{	//For each note in the specified track
 		if(tp->note[ctr]->type == difficulty)

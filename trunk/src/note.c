@@ -10,15 +10,19 @@
 
 unsigned long eof_note_count_colors(EOF_SONG *sp, unsigned long track, unsigned long note)
 {
-	unsigned long count = 0;
-	unsigned long notemask = eof_get_note_note(sp, track, note);
-
 	eof_log("eof_note_count_colors() entered", 2);
 
 	if(!sp)
 	{
 		return 0;
 	}
+
+	return eof_note_count_colors_bitmask(eof_get_note_note(sp, track, note));
+}
+
+unsigned long eof_note_count_colors_bitmask(unsigned long notemask)
+{
+	unsigned long count = 0;
 
 	if(notemask & 1)
 	{
