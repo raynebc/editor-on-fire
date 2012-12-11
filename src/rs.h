@@ -61,14 +61,17 @@ int eof_note_can_be_played_within_fret_tolerance(EOF_PRO_GUITAR_TRACK *tp, unsig
 	//If the note is considered playable without requiring an addition fret hand position change, current_high and current_low are updated by reference and nonzero is returned
 	//if the new difference between the high and low fret are out of the tolerance range, zero is returned and the calling function should place a fret hand position for the previously checked notes
 	//The tolerance for each given fret hand position is stored in eof_fret_range_tolerances[], which must have enough definitions as there are frets for the specified pro guitar track, plus 1 to account that entry 0 is unused
-void eof_build_fret_range_tolerances(EOF_PRO_GUITAR_TRACK *tp, unsigned char difficulty);
-	//Re-allocate and build the array referenced by eof_fret_range_tolerances by examining the specified track difficulty
+void eof_build_fret_range_tolerances(EOF_PRO_GUITAR_TRACK *tp, unsigned char difficulty, char dynamic);
+	//Re-allocate and build the array referenced by eof_fret_range_tolerances, optionally examining the specified track difficulty's notes to determine range for each fret
+	//If dynamic is zero (should be used when generating hand positions for Rocksmith), the range tolerance for all frets is set to 4, otherwise they are defined as follows:
 	//For each note examined, the range of frets used is considered to be playable and the range for the note's lowest used fret position is updated accordingly
 	//If any particular fret is not used as the lowest fret for any chords, the fret range is defaulted to 4
-void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, char difficulty, char warnuser);
+void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, char difficulty, char warnuser, char dynamic);
 	//Uses eof_note_can_be_played_within_fret_tolerance() and eof_build_fret_range_tolerances() to build an efficient set of fret hand positions for the specified track
 	//If eof_fret_hand_position_list_dialog_undo_made is nonzero, an undo state is made before changing the existing hand positions
 	//If warnuser is nonzero, the user is prompted to confirm deletion of existing fret hand positions
+	//The dynamic parameter is passed to eof_build_fret_range_tolerances(), indicating whether to base the fret range tolerances from the chart or leave them all at 4
+	//Dynamic should be left at 0 for generating positions for Rocksmith (limitation with the game only allows for range of 4).  It will produce higher quality positions for Rock Band 3 when dynamic is nonzero.
 unsigned char eof_pro_guitar_track_find_effective_fret_hand_position(EOF_PRO_GUITAR_TRACK *tp, unsigned char difficulty, unsigned long position);
 	//Returns the fret hand position in effect (at or before) at the specified timestamp in the specified track difficulty
 	//Returns nonzero if a fret hand position is in effect
