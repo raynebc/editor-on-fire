@@ -97,7 +97,9 @@ int eof_menu_edit_paste_from_easy(void);
 int eof_menu_edit_paste_from_medium(void);
 int eof_menu_edit_paste_from_amazing(void);
 int eof_menu_edit_paste_from_challenge(void);
-int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty);	//Copies instrument notes from the specified difficulty into the currently selected difficulty
+int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *undo_made);
+	//Copies instrument notes from the specified difficulty into the currently selected difficulty
+	//If *undo_made is zero, an undo state is made and the referenced value is set to nonzero
 int eof_menu_edit_paste_from_catalog(void);
 
 void eof_sanitize_note_flags(unsigned long *flags, unsigned long sourcetrack, unsigned long desttrack);

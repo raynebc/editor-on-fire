@@ -2162,30 +2162,35 @@ int eof_menu_edit_select_all_shorter_than(void)
 
 int eof_menu_edit_paste_from_supaeasy(void)
 {
-	return eof_menu_edit_paste_from_difficulty(EOF_NOTE_SUPAEASY);
+	char undo_made = 0;
+	return eof_menu_edit_paste_from_difficulty(EOF_NOTE_SUPAEASY, &undo_made);
 }
 
 int eof_menu_edit_paste_from_easy(void)
 {
-	return eof_menu_edit_paste_from_difficulty(EOF_NOTE_EASY);
+	char undo_made = 0;
+	return eof_menu_edit_paste_from_difficulty(EOF_NOTE_EASY, &undo_made);
 }
 
 int eof_menu_edit_paste_from_medium(void)
 {
-	return eof_menu_edit_paste_from_difficulty(EOF_NOTE_MEDIUM);
+	char undo_made = 0;
+	return eof_menu_edit_paste_from_difficulty(EOF_NOTE_MEDIUM, &undo_made);
 }
 
 int eof_menu_edit_paste_from_amazing(void)
 {
-	return eof_menu_edit_paste_from_difficulty(EOF_NOTE_AMAZING);
+	char undo_made = 0;
+	return eof_menu_edit_paste_from_difficulty(EOF_NOTE_AMAZING, &undo_made);
 }
 
 int eof_menu_edit_paste_from_challenge(void)
 {
-	return eof_menu_edit_paste_from_difficulty(EOF_NOTE_CHALLENGE);
+	char undo_made = 0;
+	return eof_menu_edit_paste_from_difficulty(EOF_NOTE_CHALLENGE, &undo_made);
 }
 
-int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty)
+int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *undo_made)
 {
 	unsigned long i;
 	unsigned long pos;
@@ -2193,96 +2198,106 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty)
 	EOF_PHRASE_SECTION *ptr;
 	char has_arpeggios = 0, has_handpositions = 0;
 
-	if((eof_note_type != source_difficulty) && (source_difficulty < EOF_MAX_DIFFICULTIES))
-	{	//If the current difficulty is different than the source difficulty and the source difficulty is one of the 5 natively supported difficulties
-		if(eof_check_track_difficulty_populated_status(eof_note_type))
-		{	//If the current difficulty is populated
-			if(alert(NULL, "This operation will replace this difficulty's contents.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
-			{	//If user does not opt to overwrite this difficulty
-				return 1;
-			}
-		}
-		eof_clear_input();
-		eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
-		for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
-		{	//For each note/lyric in this track, from last to first
-			if(eof_get_note_type(eof_song, eof_selected_track, i-1) == eof_note_type)
-			{	//If this note is in the current difficulty/lyric set
-				eof_track_delete_note(eof_song, eof_selected_track, i - 1);	//Delete it
-			}
-		}
-		for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
-		{	//For each note in this instrument track
-			if(eof_get_note_type(eof_song, eof_selected_track, i) == source_difficulty)
-			{	//If this note is in the source difficulty
-				pos = eof_get_note_pos(eof_song, eof_selected_track, i);
-				length = eof_get_note_length(eof_song, eof_selected_track, i);
-				(void) eof_copy_note(eof_song, eof_selected_track, i, eof_selected_track, pos, length, eof_note_type);
-			}
-		}
-		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-		{	//If this is a pro guitar track
-			unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
-			EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+	if(!undo_made || (eof_note_type == source_difficulty))
+		return 1;	//Invalid parameters
 
-			if(eof_get_num_arpeggios(eof_song, eof_selected_track))
-			{	//If this track has at least one arpeggio section, delete them and offer to copy the arpeggio sections from the source difficulty
-				for(i = eof_get_num_arpeggios(eof_song, eof_selected_track); i > 0; i--)
-				{	//For each arpeggio phrase in the source track, in reverse order
-					ptr = eof_get_arpeggio(eof_song, eof_selected_track, i - 1);
-					if(ptr)
-					{	//If this phrase could be found
-						if(ptr->difficulty == source_difficulty)
-						{	//If this is an arpeggio section defined in the source difficulty
-							has_arpeggios = 1;
-						}
-						else if(ptr->difficulty == eof_note_type)
-						{	//If this is an arpeggio section defined in the destination difficulty
-							eof_track_delete_arpeggio(eof_song, eof_selected_track, i - 1);	//Delete it
-						}
-					}
-				}
-			}
-			if(has_arpeggios && (alert(NULL, "Would you like to also copy the arpeggio sections?", NULL, "&Yes", "&No", 'y', 'n') == 1))
-			{	//If there are any arpeggio sections in the difficulty being copied, and the user opts to copy them to the active difficulty
-				for(i = 0; i < eof_get_num_arpeggios(eof_song, eof_selected_track); i++)
-				{	//For each arpeggio phrase in the source track
-					ptr = eof_get_arpeggio(eof_song, eof_selected_track, i);
-					if(ptr)
-					{	//If this phrase could be found
-						if(ptr->difficulty == source_difficulty)
-						{	//If this is an arpeggio section defined in the source difficulty
-							(void) eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the active difficulty
-						}
-					}
-				}
-			}
-
-			for(i = tp->handpositions; i > 0; i--)
-			{	//For each of the track's fret hand positions, in reverse order
-				if(tp->handposition[i - 1].difficulty == source_difficulty)
-				{	//If this is a hand position in the source difficulty
-					has_handpositions = 1;
-				}
-				else if(tp->handposition[i - 1].difficulty == eof_note_type)
-				{	//If this is a hand position in the destination difficulty
-					eof_pro_guitar_track_delete_hand_position(tp, i - 1);	//Delete it
-				}
-			}
-			if(has_handpositions && (alert(NULL, "Would you like to also copy the fret hand positions?", NULL, "&Yes", "&No", 'y', 'n') == 1))
-			{	//If there are any hand positions in the difficulty being copied, and the user opts to copy them to the active difficulty
-				for(i = 0; i < tp->handpositions; i++)
-				{	//For each hand position in the track
-					if(tp->handposition[i].difficulty == source_difficulty)
-					{	//If this is a hand position in the source difficulty
-						(void) eof_track_add_section(eof_song, eof_selected_track, EOF_FRET_HAND_POS_SECTION, eof_note_type, tp->handposition[i].start_pos, tp->handposition[i].end_pos, 0, NULL);	//Create a duplicate of this hand position in the target difficulty
-					}
-				}
-			}
-			eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions, since they must be in order for displaying to the user
+	if(eof_check_track_difficulty_populated_status(eof_note_type))
+	{	//If the current difficulty is populated
+		if(alert(NULL, "This operation will replace this difficulty's contents.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+		{	//If user does not opt to overwrite this difficulty
+			return 1;
 		}
-		eof_detect_difficulties(eof_song, eof_selected_track);
 	}
+	eof_clear_input();
+	if(*undo_made == 0)
+	{	//If an undo state hasn't been made
+		eof_prepare_undo(EOF_UNDO_TYPE_NOTE_SEL);
+		*undo_made = 1;
+	}
+
+	//Delete existing notes in the destination difficulty
+	for(i = eof_get_track_size(eof_song, eof_selected_track); i > 0; i--)
+	{	//For each note/lyric in this track, from last to first
+		if(eof_get_note_type(eof_song, eof_selected_track, i-1) == eof_note_type)
+		{	//If this note is in the current difficulty/lyric set
+			eof_track_delete_note(eof_song, eof_selected_track, i - 1);	//Delete it
+		}
+	}
+
+	//Copy notes from the source difficulty
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in this instrument track
+		if(eof_get_note_type(eof_song, eof_selected_track, i) == source_difficulty)
+		{	//If this note is in the source difficulty
+			pos = eof_get_note_pos(eof_song, eof_selected_track, i);
+			length = eof_get_note_length(eof_song, eof_selected_track, i);
+			(void) eof_copy_note(eof_song, eof_selected_track, i, eof_selected_track, pos, length, eof_note_type);
+		}
+	}
+
+	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If this is a pro guitar track
+		unsigned long tracknum = eof_song->track[eof_selected_track]->tracknum;
+		EOF_PRO_GUITAR_TRACK *tp = eof_song->pro_guitar_track[tracknum];
+
+		if(eof_get_num_arpeggios(eof_song, eof_selected_track))
+		{	//If this track has at least one arpeggio section, delete them and offer to copy the arpeggio sections from the source difficulty
+			for(i = eof_get_num_arpeggios(eof_song, eof_selected_track); i > 0; i--)
+			{	//For each arpeggio phrase in the source track, in reverse order
+				ptr = eof_get_arpeggio(eof_song, eof_selected_track, i - 1);
+				if(ptr)
+				{	//If this phrase could be found
+					if(ptr->difficulty == source_difficulty)
+					{	//If this is an arpeggio section defined in the source difficulty
+						has_arpeggios = 1;
+					}
+					else if(ptr->difficulty == eof_note_type)
+					{	//If this is an arpeggio section defined in the destination difficulty
+						eof_track_delete_arpeggio(eof_song, eof_selected_track, i - 1);	//Delete it
+					}
+				}
+			}
+		}
+		if(has_arpeggios && (alert(NULL, "Would you like to also copy the arpeggio sections?", NULL, "&Yes", "&No", 'y', 'n') == 1))
+		{	//If there are any arpeggio sections in the difficulty being copied, and the user opts to copy them to the active difficulty
+			for(i = 0; i < eof_get_num_arpeggios(eof_song, eof_selected_track); i++)
+			{	//For each arpeggio phrase in the source track
+				ptr = eof_get_arpeggio(eof_song, eof_selected_track, i);
+				if(ptr)
+				{	//If this phrase could be found
+					if(ptr->difficulty == source_difficulty)
+					{	//If this is an arpeggio section defined in the source difficulty
+						(void) eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type, ptr->start_pos, ptr->end_pos, 0, NULL);	//Copy it to the active difficulty
+					}
+				}
+			}
+		}
+
+		for(i = tp->handpositions; i > 0; i--)
+		{	//For each of the track's fret hand positions, in reverse order
+			if(tp->handposition[i - 1].difficulty == source_difficulty)
+			{	//If this is a hand position in the source difficulty
+				has_handpositions = 1;
+			}
+			else if(tp->handposition[i - 1].difficulty == eof_note_type)
+			{	//If this is a hand position in the destination difficulty
+				eof_pro_guitar_track_delete_hand_position(tp, i - 1);	//Delete it
+			}
+		}
+		if(has_handpositions && (alert(NULL, "Would you like to also copy the fret hand positions?", NULL, "&Yes", "&No", 'y', 'n') == 1))
+		{	//If there are any hand positions in the difficulty being copied, and the user opts to copy them to the active difficulty
+			for(i = 0; i < tp->handpositions; i++)
+			{	//For each hand position in the track
+				if(tp->handposition[i].difficulty == source_difficulty)
+				{	//If this is a hand position in the source difficulty
+					(void) eof_track_add_section(eof_song, eof_selected_track, EOF_FRET_HAND_POS_SECTION, eof_note_type, tp->handposition[i].start_pos, tp->handposition[i].end_pos, 0, NULL);	//Create a duplicate of this hand position in the target difficulty
+				}
+			}
+		}
+		eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions, since they must be in order for displaying to the user
+	}//If this is a pro guitar track
+
+	eof_detect_difficulties(eof_song, eof_selected_track);
 	return 1;
 }
 
