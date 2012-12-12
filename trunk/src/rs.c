@@ -997,22 +997,14 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 						while(1)
 						{
 							nextnote = eof_fixup_next_note(sp, track, ctr3);
-							if(nextnote >= 0)
-							{	//If there is another note
-								if(!eof_note_compare_simple(sp, track, ctr3, nextnote))
-								{	//And it matches this chord
-									ctr3++;	//Iterate to next note to check if it matches
-								}
-								else
-								{	//It doesn't match this chord
-									handshapeend = ((double)eof_get_note_pos(sp, track, nextnote) - 1.0) / 1000.0;	//Store 1ms before the next note's start position (in seconds)
-									break;	//Break from while loop
-								}
+							if((nextnote >= 0) && !eof_note_compare_simple(sp, track, ctr3, nextnote))
+							{	//If there is another note and it matches this chord
+								ctr3++;	//Iterate to next note to check if it matches
 							}
 							else
-							{	//There are no more notes in this track difficulty
-								handshapeend = ((double)eof_get_note_pos(sp, track, ctr3) + (double)eof_get_note_length(sp, track, ctr3)) / 1000.0;	//Store the end position of this note (in seconds)
-								break;
+							{	//The next note (if any) is not a repeat of this note
+								handshapeend = ((double)eof_get_note_pos(sp, track, ctr3) + (double)eof_get_note_length(sp, track, ctr3)) / 1000.0;	//End the hand shape at the end of this chord
+								break;	//Break from while loop
 							}
 						}
 
@@ -1052,22 +1044,14 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 						while(1)
 						{
 							nextnote = eof_fixup_next_note(sp, track, ctr3);
-							if(nextnote >= 0)
-							{	//If there is another note
-								if(!eof_note_compare_simple(sp, track, ctr3, nextnote))
-								{	//And it matches this chord
-									ctr3++;	//Iterate to next note to check if it matches
-								}
-								else
-								{	//It doesn't match this chord
-									handshapeend = ((double)eof_get_note_pos(sp, track, nextnote) - 1.0) / 1000.0;	//Store 1ms before the next note's start position (in seconds)
-									break;	//Break from while loop
-								}
+							if((nextnote >= 0) && !eof_note_compare_simple(sp, track, ctr3, nextnote))
+							{	//If there is another note and it matches this chord
+								ctr3++;	//Iterate to next note to check if it matches
 							}
 							else
-							{	//There are no more notes in this track difficulty
-								handshapeend = ((double)eof_get_note_pos(sp, track, ctr3) + (double)eof_get_note_length(sp, track, ctr3)) / 1000.0;	//Store the end position of this note (in seconds)
-								break;
+							{	//The next note (if any) is not a repeat of this note
+								handshapeend = ((double)eof_get_note_pos(sp, track, ctr3) + (double)eof_get_note_length(sp, track, ctr3)) / 1000.0;	//End the hand shape at the end of this chord
+								break;	//Break from while loop
 							}
 						}
 
@@ -1346,12 +1330,33 @@ int eof_generate_hand_positions_current_track_difficulty(void)
 int eof_note_can_be_played_within_fret_tolerance(EOF_PRO_GUITAR_TRACK *tp, unsigned long note, unsigned char *current_low, unsigned char *current_high)
 {
 	unsigned char effective_lowest, effective_highest;	//Stores the cumulative highest and lowest fret values with the input range and the next note for tolerance testing
+	long next;
 
 	if(!tp || !current_low || !current_high || (note >= tp->notes) || (*current_low > *current_high) || (*current_high > tp->numfrets) || !eof_fret_range_tolerances)
 		return 0;	//Invalid parameters
 
-	effective_lowest = eof_pro_guitar_note_lowest_fret(tp, note);
-	effective_highest = eof_pro_guitar_note_highest_fret(tp, note);
+	while(1)
+	{
+		effective_lowest = eof_pro_guitar_note_lowest_fret(tp, note);	//Find the highest and lowest fret used in the note
+		effective_highest = eof_pro_guitar_note_highest_fret(tp, note);
+		if(!effective_lowest && (note + 1 < tp->notes))
+		{	//If only open strings are played in the note
+			next = eof_fixup_next_pro_guitar_note(tp, note);	//Determine if there's another note in this track difficulty
+			if(next >= 0)
+			{	//If there was another note
+				note = next;	//Examine it and recheck its highest and lowest frets (so that position changes can be made for further ahead notes)
+				continue;
+			}
+		}
+		break;
+	}
+
+	if(!(*current_low))
+	{	//If there's no hand position in effect yet, init the currently tracked high and low frets with this note's
+		*current_low = effective_lowest;
+		*current_high = effective_highest;
+		return 1;	//Return note can be played without an additional hand position
+	}
 
 	if(eof_note_count_colors_bitmask(tp->note[note]->note) == 1)
 	{	//If this is a single note instead of a chord, it's used fret only needs to be within range of the current fret hand position

@@ -9,7 +9,7 @@
 #define EOF_MAX_UNDO 100
 #define EOF_UNDO_TYPE_NONE         0
 #define EOF_UNDO_TYPE_NOTE_LENGTH  1
-#define EOF_UNDO_TYPE_NOTE_SEL     2
+#define EOF_UNDO_TYPE_NOTE_SEL     2	//Perform a generic undo state and deselect all notes
 #define EOF_UNDO_TYPE_LYRIC_NOTE   3
 #define EOF_UNDO_TYPE_RECORD       4
 #define EOF_UNDO_TYPE_SILENCE      5

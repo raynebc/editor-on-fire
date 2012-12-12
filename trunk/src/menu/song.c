@@ -18,6 +18,7 @@
 #include "../song.h"
 #include "../tuning.h"
 #include "../rs.h"	//For hand position generation logic
+#include "edit.h"	//For eof_menu_edit_paste_from_difficulty()
 #include "note.h"	//For eof_feedback_mode_update_note_selection()
 #include "song.h"
 #include "file.h"	//For eof_menu_prompt_save_changes()
@@ -4025,8 +4026,9 @@ int eof_song_proguitar_toggle_difficulty_limit(void)
 int eof_song_proguitar_insert_difficulty(void)
 {
 	unsigned long ctr, tracknum;
-	unsigned char thistype, newdiff;
+	unsigned char thistype, newdiff, upper = 0, lower = 0;
 	EOF_PRO_GUITAR_TRACK *tp;
+	char undo_made = 0;
 
 	if(!eof_song || eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
 		return 1;	//Do not allow this function to run when a pro guitar format track is not active
@@ -4037,6 +4039,7 @@ int eof_song_proguitar_insert_difficulty(void)
 		return 1;
 	}
 	eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+	undo_made = 1;
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 	tp = eof_song->pro_guitar_track[tracknum];
 
@@ -4047,7 +4050,6 @@ int eof_song_proguitar_insert_difficulty(void)
 	else
 	{	//The user chose to insert the difficulty below the active difficulty
 		newdiff = eof_note_type;
-		eof_note_type++;	//Update the active difficulty to display the same content for after the operation
 	}
 
 	//Update note difficulties
@@ -4075,6 +4077,46 @@ int eof_song_proguitar_insert_difficulty(void)
 		if(tp->handposition[ctr].difficulty >= newdiff)
 		{	//If this fret hand position's difficulty needs to be updated
 			tp->handposition[ctr].difficulty++;
+		}
+	}
+
+	//Prompt whether to clone an adjacent difficulty if applicable
+	eof_detect_difficulties(eof_song, eof_selected_track);	//Find which difficulties are populated
+	if((newdiff > 0) && (eof_track_diff_populated_status[newdiff - 1]))
+	{	//If there's a populated difficulty below the newly inserted difficulty
+		lower = 1;
+	}
+	if((newdiff < 255) && (eof_track_diff_populated_status[newdiff + 1]))
+	{	//If there's a populated difficulty above the newly inserted difficulty
+		upper = 1;
+	}
+	eof_note_type = newdiff;
+	if(lower && !upper)
+	{	//If only the lower difficulty is populated, offer to copy it into the new difficulty
+		if(alert(NULL, "Would you like to seek copy the lower difficulty's contents?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+		{	//If user opted to copy the lower difficulty
+			eof_menu_edit_paste_from_difficulty(newdiff - 1, &undo_made);
+		}
+	}
+	else if(!lower && upper)
+	{	//If only the upper difficulty is populated, offer to copy it into the new difficulty
+		if(alert(NULL, "Would you like to seek copy the upper difficulty's contents?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+		{	//If user opted to copy the upper difficulty
+			eof_menu_edit_paste_from_difficulty(newdiff + 1, &undo_made);
+		}
+	}
+	else if(lower && upper)
+	{	//If both the upper and lower difficulties are populated, prompt whether to copy either into the new difficulty
+		if(alert(NULL, "Would you like to seek copy an adjacent difficulty's contents?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+		{	//If user opted to copy either the upper or lower difficulty
+			if(alert(NULL, "Copy the upper difficulty or the lower difficulty?", NULL, "&Upper", "&Lower", 'u', 'l') == 1)
+			{	//If user opted to copy the upper difficulty
+				eof_menu_edit_paste_from_difficulty(newdiff + 1, &undo_made);
+			}
+			else
+			{	//The user opted to copy the lower difficulty
+				eof_menu_edit_paste_from_difficulty(newdiff - 1, &undo_made);
+			}
 		}
 	}
 
