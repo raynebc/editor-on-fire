@@ -150,7 +150,7 @@ DIALOG eof_anchor_dialog[] =
    /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
    { d_agup_shadow_box_proc,    32,  68,  170, 72 + 8, 2,   23,  0,    0,      0,   0,   NULL,               NULL, NULL },
    { d_agup_text_proc,   56,  84,  64,  8,  2,   23,  0,    0,      0,   0,   "Position:",         NULL, NULL },
-   { eof_verified_edit_proc,   112, 80,  66,  20,  2,   23,  0,    0,      8,   0,   eof_etext2,           "0123456789:", NULL },
+   { eof_verified_edit_proc,   112, 80,  66,  20,  2,   23,  0,    0,      9,   0,   eof_etext2,           "0123456789:", NULL },
    { d_agup_button_proc, 42,  108, 68,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "OK",               NULL, NULL },
    { d_agup_button_proc, 120, 108, 68,  28, 2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
@@ -767,12 +767,12 @@ int eof_menu_beat_reset_offset(void)
 
 int eof_menu_beat_anchor(void)
 {
-	int mm, ss, hs;
-	int oldmm, oldss, oldhs;
+	int mm, ss, ms;
+	int oldmm, oldss, oldms;
 	int oldpos = eof_song->beat[eof_selected_beat]->pos;
 	int newpos = 0;
 	int revert = 0;
-	char ttext[3] = {0};
+	char ttext[4] = {0};
 
 	if(eof_song->tags->tempo_map_locked)	//If the chart's tempo map is locked
 		return 1;							//Return without making changes
@@ -787,8 +787,8 @@ int eof_menu_beat_anchor(void)
 	centre_dialog(eof_anchor_dialog);
 	oldmm = (eof_song->beat[eof_selected_beat]->pos / 1000) / 60;
 	oldss = (eof_song->beat[eof_selected_beat]->pos / 1000) % 60;
-	oldhs = (eof_song->beat[eof_selected_beat]->pos / 10) % 100;
-	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%02d:%02d.%02d", oldmm, oldss, oldhs);
+	oldms = (eof_song->beat[eof_selected_beat]->pos) % 1000;
+	(void) snprintf(eof_etext2, sizeof(eof_etext2) - 1, "%02d:%02d.%03d", oldmm, oldss, oldms);
 	if(eof_popup_dialog(eof_anchor_dialog, 2) == 3)
 	{
 		ttext[0] = eof_etext2[0];
@@ -799,10 +799,11 @@ int eof_menu_beat_anchor(void)
 		ss = atoi(ttext);
 		ttext[0] = eof_etext2[6];
 		ttext[1] = eof_etext2[7];
-		hs = atoi(ttext);
+		ttext[2] = eof_etext2[8];
+		ms = atoi(ttext);
 
 		/* time wasn't modified so get out without changing anything */
-		if((mm == oldmm) && (ss == oldss) && (hs == oldhs))
+		if((mm == oldmm) && (ss == oldss) && (ms == oldms))
 		{
 			eof_cursor_visible = 1;
 			eof_pen_visible = 1;
@@ -810,7 +811,7 @@ int eof_menu_beat_anchor(void)
 			return 1;
 		}
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
-		newpos = (double)mm * 60.0 * 1000.0 + (double)ss * 1000.0 + (double)hs * 10.0;
+		newpos = (double)mm * 60.0 * 1000.0 + (double)ss * 1000.0 + (double)ms;
 		if(newpos > oldpos)
 		{
 			while(eof_song->beat[eof_selected_beat]->pos < newpos)
