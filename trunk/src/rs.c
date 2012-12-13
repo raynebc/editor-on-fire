@@ -314,7 +314,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 
 	//Count the number of populated difficulties in the track
 	eof_detect_difficulties(sp, track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for this track
-	if((sp->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) == 0)
+	if((sp->track[track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) == 0)
 	{	//If the track is using the traditional 5 difficulty system
 		eof_track_diff_populated_status[4] = 0;	//Ensure that the BRE difficulty is not exported
 	}
@@ -777,9 +777,9 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 								flags = eof_get_note_flags(sp, track, ctr3);
 								notepos = eof_get_note_pos(sp, track, ctr3);
 								length = eof_get_note_length(sp, track, ctr3);
-								if(length == 1)
-								{	//In Rocksmith, even a 1ms note is displayed as a sustained note
-									length = 0;	//A sustain of 0 prevents that
+								if((length == 1) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) && !(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+								{	//If the note is has the absolute minimum length and isn't a bend or a slide note
+									length = 0;	//Convert to a length of 0 so that it doesn't display as a sustain note in-game
 								}
 								fret = tp->note[ctr3]->frets[stringnum] & 0x7F;	//Get the fret value for this string (mask out the muting bit)
 								if((flags & EOF_PRO_GUITAR_NOTE_FLAG_RS_NOTATION) == 0)
@@ -1089,7 +1089,6 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		}
 	}
 	eof_sort_events(sp);	//Re-sort events
-	eof_process_beat_statistics(sp, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
 
 	//At this point, the XML file has been created, if the user has defined the path to the Rocksmith toolkit, attempt to compile the XML file with it
 #ifdef ALLEGRO_WINDOWS
@@ -1219,7 +1218,7 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 {
 	unsigned long ctr, tracknum, count;
 	EOF_PRO_GUITAR_TRACK *tp;
-	unsigned char current_low, current_high;
+	unsigned char current_low, current_high, last_anchor = 0;
 	EOF_PRO_GUITAR_NOTE *current_note = NULL;	//Tracks the first note in the set of notes having its hand position found
 
 	if(!sp || (track >= sp->tracks) || (sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
@@ -1293,7 +1292,15 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 					current_low = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Track this note's high and low frets
 					current_high = eof_pro_guitar_note_highest_fret(tp, ctr);
 				}
-				(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, current_note->pos, current_low, 0, NULL);	//Add the best determined fret hand position
+				if(current_low > 19)
+				{	//Ensure the fret hand position is capped at 19, since 22 is the highest fret supported in either Rock Band or Rocksmith
+					current_low = 19;
+				}
+				if(current_low != last_anchor)
+				{	//As long as the hand position being written is different from the previous one
+					(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, current_note->pos, current_low, 0, NULL);	//Add the best determined fret hand position
+					last_anchor = current_low;
+				}
 				current_note = tp->note[ctr];
 				current_low = eof_pro_guitar_note_lowest_fret(tp, ctr);	//Initialize the low and high fret used for this note
 				current_high = eof_pro_guitar_note_highest_fret(tp, ctr);
@@ -1306,7 +1313,14 @@ void eof_generate_efficient_hand_positions(EOF_SONG *sp, unsigned long track, ch
 	{	//If only open notes were played in this track difficulty
 		current_low = 1;	//Place the fret hand position at fret 1
 	}
-	(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, current_note->pos, current_low, 0, NULL);	//Add the best determined fret hand position
+	else if(current_low > 19)
+	{	//Ensure the fret hand position is capped at 19, since 22 is the highest fret supported in either Rock Band or Rocksmith
+		current_low = 19;
+	}
+	if(current_low != last_anchor)
+	{	//As long as the hand position being written is different from the previous one
+		(void) eof_track_add_section(sp, track, EOF_FRET_HAND_POS_SECTION, difficulty, current_note->pos, current_low, 0, NULL);	//Add the best determined fret hand position
+	}
 
 	//Clean up
 	free(eof_fret_range_tolerances);

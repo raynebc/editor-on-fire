@@ -2393,6 +2393,8 @@ int eof_save_helper(char *destfilename)
 #endif
 				}
 			}
+			eof_detect_difficulties(eof_song, eof_selected_track);		//Update eof_track_diff_populated_status[] to reflect the currently selected difficulty
+			eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
 
 			//Determine if "[song name].wav" exists, if not, export the chart audio in WAV format
 			eof_get_rocksmith_wav_path(eof_temp_filename, newfolderpath, sizeof(eof_temp_filename));	//Build the path to the target WAV file
