@@ -138,6 +138,7 @@ MENU eof_song_proguitar_fret_hand_menu[] =
 {
     {"&Set\tShift+F", eof_pro_guitar_set_fret_hand_position, NULL, 0, NULL},
     {"&List", eof_menu_song_fret_hand_positions, NULL, 0, NULL},
+    {"&Copy from", eof_menu_song_fret_hand_positions_copy_from, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -3736,6 +3737,7 @@ int eof_fret_hand_position_delete(DIALOG * d)
 				/* remove the hand position, update the selection in the list box and exit */
 				eof_pro_guitar_track_delete_hand_position(eof_song->pro_guitar_track[tracknum], i);
 				eof_pro_guitar_track_sort_fret_hand_positions(eof_song->pro_guitar_track[tracknum]);	//Re-sort the remaining hand positions
+				eof_beat_stats_cached = 0;	//Have the beat statistics rebuilt
 				for(i = 0, ecount = 0; i < eof_song->pro_guitar_track[tracknum]->handpositions; i++)
 				{	//For each remaining fret hand position
 					if(eof_song->pro_guitar_track[tracknum]->handposition[i].difficulty == eof_note_type)
@@ -3791,6 +3793,7 @@ int eof_fret_hand_position_delete_all(DIALOG * d)
 		}
 	}
 
+	eof_beat_stats_cached = 0;	//Have the beat statistics rebuilt
 	eof_pro_guitar_track_sort_fret_hand_positions(eof_song->pro_guitar_track[tracknum]);	//Re-sort the remaining hand positions
 	(void) dialog_message(eof_fret_hand_position_list_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
 	return D_REDRAW;
@@ -4095,14 +4098,14 @@ int eof_song_proguitar_insert_difficulty(void)
 	{	//If only the lower difficulty is populated, offer to copy it into the new difficulty
 		if(alert(NULL, "Would you like to seek copy the lower difficulty's contents?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 		{	//If user opted to copy the lower difficulty
-			eof_menu_edit_paste_from_difficulty(newdiff - 1, &undo_made);
+			(void) eof_menu_edit_paste_from_difficulty(newdiff - 1, &undo_made);
 		}
 	}
 	else if(!lower && upper)
 	{	//If only the upper difficulty is populated, offer to copy it into the new difficulty
 		if(alert(NULL, "Would you like to seek copy the upper difficulty's contents?", NULL, "&Yes", "&No", 'y', 'n') == 1)
 		{	//If user opted to copy the upper difficulty
-			eof_menu_edit_paste_from_difficulty(newdiff + 1, &undo_made);
+			(void) eof_menu_edit_paste_from_difficulty(newdiff + 1, &undo_made);
 		}
 	}
 	else if(lower && upper)
@@ -4111,11 +4114,11 @@ int eof_song_proguitar_insert_difficulty(void)
 		{	//If user opted to copy either the upper or lower difficulty
 			if(alert(NULL, "Copy the upper difficulty or the lower difficulty?", NULL, "&Upper", "&Lower", 'u', 'l') == 1)
 			{	//If user opted to copy the upper difficulty
-				eof_menu_edit_paste_from_difficulty(newdiff + 1, &undo_made);
+				(void) eof_menu_edit_paste_from_difficulty(newdiff + 1, &undo_made);
 			}
 			else
 			{	//The user opted to copy the lower difficulty
-				eof_menu_edit_paste_from_difficulty(newdiff - 1, &undo_made);
+				(void) eof_menu_edit_paste_from_difficulty(newdiff - 1, &undo_made);
 			}
 		}
 	}
@@ -4193,10 +4196,140 @@ int eof_song_proguitar_delete_difficulty(void)
 		}
 	}
 
-	eof_note_type--;	//Decrement the active difficulty
 	eof_pro_guitar_track_sort_fret_hand_positions(tp);
 	eof_song->track[eof_selected_track]->numdiffs--;	//Decrement the track's difficulty counter
 	eof_detect_difficulties(eof_song, eof_selected_track);
-	eof_fix_window_title();	//Redraw the window title in case the active difficulty was incremented to compensate for inserting a difficulty below the active difficulty
+	(void) eof_menu_track_selected_track_number(eof_note_type - 1);
+	return 1;
+}
+
+DIALOG eof_menu_song_fret_hand_positions_copy_from_dialog[] =
+{
+   /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
+   { d_agup_window_proc,0,   48,  250, 237, 2,   23,  0,    0,      0,   0,   "Copy fret hand positions from diff #", NULL, NULL },
+   { d_agup_list_proc,  12,  84,  226, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_menu_song_fret_hand_positions_copy_from_list,NULL, NULL },
+   { d_agup_button_proc,12,  245, 90,  28,  2,   23,  'c', D_EXIT,  0,   0,   "&Copy",         NULL, NULL },
+   { d_agup_button_proc,148, 245, 90,  28,  2,   23,  0,   D_EXIT,  0,   0,   "Cancel",        NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+char eof_menu_song_difficulty_list_strings[256][4];
+
+char * eof_menu_song_fret_hand_positions_copy_from_list(int index, int * size)
+{
+	unsigned long ctr2, ctr3, diffcount = 0;
+	unsigned long tracknum;
+	EOF_PRO_GUITAR_TRACK *tp;
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return NULL;
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+	if(tp->handpositions)
+	{	//If the active difficulty has at least one fret hand position
+		for(ctr2 = 0; ctr2 < 256; ctr2++)
+		{	//For each possible difficulty
+			for(ctr3 = 0; ctr3 < tp->handpositions; ctr3++)
+			{	//For each hand position in the track
+				if((tp->handposition[ctr3].difficulty == ctr2) && (eof_note_type != ctr2))
+				{	//If this hand position is in the difficulty being checked, and it isn't in the active difficulty, increment counter
+					diffcount++;	//Track the number of difficulties that contain any fret hand positions
+					break;	//Break so that the remaining difficulties can be checked
+				}
+			}
+		}
+	}
+
+	switch(index)
+	{
+		case -1:
+		{
+			*size = diffcount;
+			break;
+		}
+		default:
+		{
+			return eof_menu_song_difficulty_list_strings[index];
+		}
+	}
+	return NULL;
+}
+
+int eof_menu_song_fret_hand_positions_copy_from(void)
+{
+	unsigned long tracknum, ctr, ctr2, ctr3, target, diffcount = 0;
+	EOF_PRO_GUITAR_TRACK *tp;
+	char user_warned = 0;
+
+	if(!eof_song_loaded || !eof_song)
+		return 1;	//Do not allow this function to run if a chart is not loaded
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+	if(tp->handpositions)
+	{	//If the active difficulty has at least one fret hand position
+		for(ctr2 = 0; ctr2 < 256; ctr2++)
+		{	//For each possible difficulty
+			for(ctr3 = 0; ctr3 < tp->handpositions; ctr3++)
+			{	//For each hand position in the track
+				if((tp->handposition[ctr3].difficulty == ctr2) && (eof_note_type != ctr2))
+				{	//If this hand position is in the difficulty being checked, and it isn't in the active difficulty, build its list box display string and increment counter
+					(void) snprintf(eof_menu_song_difficulty_list_strings[diffcount], sizeof(eof_menu_song_difficulty_list_strings[0] - 1), "%lu", ctr2);
+					diffcount++;	//Track the number of difficulties that contain any fret hand positions
+					break;	//Break so that the remaining difficulties can be checked
+				}
+			}
+		}
+	}
+	if(diffcount == 0)
+	{
+		allegro_message("No other difficulties in this track contain fret hand positions.");
+		return 1;
+	}
+
+	eof_cursor_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_menu_song_fret_hand_positions_copy_from_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_menu_song_fret_hand_positions_copy_from_dialog);
+	if(eof_popup_dialog(eof_menu_song_fret_hand_positions_copy_from_dialog, 1) == 2)
+	{	//User clicked Copy
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		target = atol(eof_menu_song_difficulty_list_strings[eof_menu_song_fret_hand_positions_copy_from_dialog[1].d1]);
+
+		//Delete the active track difficulty's fret hand positions (if there are any)
+		for(ctr = tp->handpositions; ctr > 0; ctr--)
+		{	//For each hand position in the track (in reverse)
+			if(tp->handposition[ctr - 1].difficulty == eof_note_type)
+			{	//If this hand position is in the active track difficulty
+				if(!user_warned && alert("Warning:  This track difficulty's existing fret hand positions will be replaced.", NULL, "Continue?", "&Yes", "&No", 'y', 'n') != 1)
+				{	//If the user doesn't opt to replace the existing fret hand positions
+					eof_cursor_visible = 1;
+					eof_pen_visible = 1;
+					eof_show_mouse(NULL);
+					return 1;	//Return user cancellation
+				}
+				user_warned = 1;
+				eof_pro_guitar_track_delete_hand_position(tp, ctr - 1);	//Delete it
+			}
+		}
+
+		//Copy the target difficulty's fret hand positions
+		for(ctr = 0; ctr < tp->handpositions; ctr++)
+		{	//For each hand position in the track
+			if(tp->handposition[ctr].difficulty == target)
+			{	//If this hand position is in the difficulty selected by the user
+				(void) eof_track_add_section(eof_song, eof_selected_track, EOF_FRET_HAND_POS_SECTION, eof_note_type, tp->handposition[ctr].start_pos, tp->handposition[ctr].end_pos, 0, NULL);	//Create a duplicate of this hand position in the active difficulty
+			}
+		}
+	}
+
+	eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions, since they must be in order for displaying to the user
+	eof_beat_stats_cached = 0;	//Have the beat statistics rebuilt
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(NULL);
 	return 1;
 }
