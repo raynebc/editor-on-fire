@@ -1754,7 +1754,7 @@ unsigned char eof_find_highest_rs_difficulty_in_time_range(EOF_SONG *sp, unsigne
 	if(!sp || (track >= sp->tracks) || (start > stop))
 		return 0;	//Invalid parameters
 
-	//Determine the native EOF difficulty
+	//Determine the highest used native EOF difficulty number
 	for(ctr = 0; ctr < eof_get_track_size(sp, track); ctr++)
 	{	//For each note in the track
 		thispos = eof_get_note_pos(sp, track, ctr);	//Get this note's position
@@ -1773,8 +1773,8 @@ unsigned char eof_find_highest_rs_difficulty_in_time_range(EOF_SONG *sp, unsigne
 	}
 
 	//Remap to the relative difficulty
-	for(ctr = 0, reldiff = 0; ctr < 4; ctr++)
-	{	//For each of the difficulties EOF supports
+	for(ctr = 0, reldiff = 0; ctr < 256; ctr++)
+	{	//For each of the possible difficulties
 		if(highestdiff == ctr)
 		{	//If the corresponding relative difficulty has been found
 			return reldiff;	//Return it
@@ -1788,7 +1788,7 @@ unsigned char eof_find_highest_rs_difficulty_in_time_range(EOF_SONG *sp, unsigne
 			}
 		}
 	}
-	return highestdiff;
+	return 0;	//Error
 }
 
 int eof_check_rs_sections_have_phrases(EOF_SONG *sp, unsigned long track)

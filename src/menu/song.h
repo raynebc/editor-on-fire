@@ -160,5 +160,9 @@ int eof_song_proguitar_insert_difficulty(void);
 	//If the new difficulty has a populated difficulty above or below it, the user is prompted whether to import either (calling paste from logic)
 int eof_song_proguitar_delete_difficulty(void);
 	//Deletes the active difficulty's content, decrementing all higher difficulty's content accordingly
+char * eof_menu_song_fret_hand_positions_copy_from_list(int index, int * size);
+	//The list dialog function for eof_menu_song_fret_hand_positions_copy_from()
+int eof_menu_song_fret_hand_positions_copy_from(void);
+	//Allows the user to copy fret hand positions defined in another difficulty into the current track difficulty
 
 #endif
