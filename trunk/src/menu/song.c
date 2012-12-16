@@ -1640,6 +1640,9 @@ int eof_menu_song_add_silence(void)
 
 	if(eof_popup_dialog(eof_leading_silence_dialog, 7) == 11)			//User clicked OK
 	{
+		eof_get_rocksmith_wav_path(fn, eof_song_path, sizeof(fn));	//Build the path to the WAV file written for Rocksmith during save
+		(void) delete_file(fn);	//Delete it, if it exists, since changing the chart's OGG will necessitate rewriting the WAV file during save
+
 		(void) snprintf(fn, sizeof(fn) - 1, "%s.backup", eof_loaded_ogg_name);
 		current_length = get_ogg_length(eof_loaded_ogg_name);
 		/* revert to original file */
