@@ -979,14 +979,6 @@ void eof_detect_difficulties(EOF_SONG * sp, unsigned long track)
 	}
 }
 
-int eof_check_track_difficulty_populated_status(unsigned long difficulty)
-{
-	if(!eof_song || (difficulty >= 256))
-		return 0;	//Return error
-
-	return eof_track_diff_populated_status[difficulty];
-}
-
 int eof_lyric_is_freestyle(EOF_VOCAL_TRACK * tp, unsigned long lyricnumber)
 {
 	if((tp == NULL) || (lyricnumber >= tp->lyrics))
@@ -5588,6 +5580,8 @@ void eof_truncate_chart(EOF_SONG *sp)
 
 	if(!sp || !sp->beats)
 		return;
+
+ 	eof_log("eof_truncate_chart() entered", 1);
 
 	targetpos = eof_determine_chart_length(sp);	//Find the chart native length
 

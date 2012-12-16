@@ -635,8 +635,6 @@ void eof_fixup_notes(EOF_SONG *sp);	//Performs cleanup of the note selection, be
 void eof_detect_difficulties(EOF_SONG * sp, unsigned long track);
 	//Sets the populated status indicator for the specified track's difficulty names by prefixing each populated difficulty name in the current track (stored in eof_note_type_name[], eof_vocal_tab_name[] and eof_dance_tab_name[]) with an asterisk
 	//eof_track_diff_populated_status[] is also updated so that each populated difficulty results in the corresponding element number being nonzero
-int eof_check_track_difficulty_populated_status(unsigned long difficulty);
-	//Checks the appropriate difficulty tab string array for the active track's specified difficulty and returns nonzero if it begins with an asterisk
 
 int eof_is_freestyle(char *ptr);
 	//Returns 1 if the specified lyric contains a freestyle character (# or ^)

@@ -99,6 +99,7 @@ int eof_menu_edit_paste_from_amazing(void);
 int eof_menu_edit_paste_from_challenge(void);
 int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *undo_made);
 	//Copies instrument notes from the specified difficulty into the currently selected difficulty
+	//Also prompts to copy any existing fret hand positions and arpeggios if the track is a pro guitar track
 	//If *undo_made is zero, an undo state is made and the referenced value is set to nonzero
 int eof_menu_edit_paste_from_catalog(void);
 
@@ -122,5 +123,9 @@ int eof_menu_edit_paste_vocal_logic(int oldpaste);
 int eof_menu_edit_paste_vocal(void);	//Uses eof_menu_edit_paste_vocal_logic() to perform a "new" style paste
 int eof_menu_edit_old_paste_vocal(void);	//Uses eof_menu_edit_paste_vocal_logic() to perform an "old" style paste
 int eof_menu_edit_bookmark_helper(int b);	//Sets the specified bookmark number to the current seek position
+char * eof_menu_song_paste_from_difficulty_list(int index, int * size);
+	//The list dialog function for eof_menu_song_paste_from_difficulty();
+int eof_menu_song_paste_from_difficulty(void);
+	//Allows the user to copy one difficulty's contents into the active track difficulty
 
 #endif

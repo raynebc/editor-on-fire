@@ -21,6 +21,7 @@ MENU eof_edit_paste_from_menu[] =
     {"&Amazing", eof_menu_edit_paste_from_amazing, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"&Catalog\t" CTRL_NAME "+SHIFT+C", eof_menu_edit_paste_from_catalog, NULL, 0, NULL},
+    {"&Difficulty", eof_menu_song_paste_from_difficulty, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -188,7 +189,7 @@ DIALOG eof_custom_speed_dialog[] =
 
 void eof_prepare_edit_menu(void)
 {
-	int i;
+	unsigned long i, diffcount = 0;
 	unsigned long tracknum;
 	int vselected = 0;
 
@@ -298,8 +299,8 @@ void eof_prepare_edit_menu(void)
 		}
 		else
 		{
-			if(eof_check_track_difficulty_populated_status(eof_note_type))
-			{
+			if(eof_track_diff_populated_status[eof_note_type])
+			{	//If the active track has one or more notes
 				eof_edit_selection_menu[0].flags = 0;
 				eof_edit_menu[22].flags = 0;
 			}
@@ -360,16 +361,30 @@ void eof_prepare_edit_menu(void)
 		}
 
 		/* paste from difficulty */
-		eof_edit_menu[6].flags = D_DISABLED;
+		eof_detect_difficulties(eof_song, eof_selected_track);	//Determine which track difficulties are populated
+		for(i = 0; i < 256; i++)
+		{	//For each possible difficulty
+			if(eof_track_diff_populated_status[i] && (i != eof_note_type))
+			{	//If this difficulty is populated and isn't the active difficulty
+				diffcount++;	//Increment counter
+			}
+		}
+		if(diffcount == 0)
+		{	//No other difficulties are populated
+			eof_edit_menu[6].flags = D_DISABLED;	//Disable the paste from submenu
+		}
+		else
+		{
+			eof_edit_menu[6].flags = 0;				//Enable the Paste from submenu
+		}
 		for(i = 0; i < EOF_MAX_DIFFICULTIES; i++)	//For each of the natively supported difficulties
 		{
 			if((i == EOF_NOTE_CHALLENGE) && (eof_selected_track != EOF_TRACK_DANCE))
 				break;	//Don't check the BRE difficulty of non dance tracks
 
-			if((i != eof_note_type) && eof_check_track_difficulty_populated_status(i) && !eof_vocals_selected)
+			if((i != eof_note_type) && eof_track_diff_populated_status[i] && !eof_vocals_selected)
 			{		//If the difficulty is populated, isn't the active difficulty and PART VOCALS isn't active
 				eof_active_edit_paste_from_menu[i].flags = 0;	//Enable paste from the difficulty
-				eof_edit_menu[6].flags = 0;						//Enable the Paste from menu
 			}
 			else
 			{
@@ -2201,7 +2216,7 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *u
 	if(!undo_made || (eof_note_type == source_difficulty))
 		return 1;	//Invalid parameters
 
-	if(eof_check_track_difficulty_populated_status(eof_note_type))
+	if(eof_track_diff_populated_status[eof_note_type])
 	{	//If the current difficulty is populated
 		if(alert(NULL, "This operation will replace this difficulty's contents.", "Continue?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If user does not opt to overwrite this difficulty
@@ -2865,4 +2880,84 @@ unsigned long eof_prepare_note_flag_merge(unsigned long flags, unsigned long tra
 		}
 	}
 	return flags;
+}
+
+DIALOG eof_menu_song_paste_from_difficulty_dialog[] =
+{
+   /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
+   { d_agup_window_proc,0,   48,  250, 237, 2,   23,  0,    0,      0,   0,   "Copy content from diff #", NULL, NULL },
+   { d_agup_list_proc,  12,  84,  226, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_menu_song_paste_from_difficulty_list,NULL, NULL },
+   { d_agup_button_proc,12,  245, 90,  28,  2,   23,  'c', D_EXIT,  0,   0,   "&Copy",         NULL, NULL },
+   { d_agup_button_proc,148, 245, 90,  28,  2,   23,  0,   D_EXIT,  0,   0,   "Cancel",        NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+char * eof_menu_song_paste_from_difficulty_list(int index, int * size)
+{
+	unsigned long ctr, diffcount = 0;
+
+	eof_detect_difficulties(eof_song, eof_selected_track);
+	for(ctr = 0; ctr < 256; ctr++)
+	{	//For each possible difficulty
+		if(eof_track_diff_populated_status[ctr] && (ctr != eof_note_type))
+		{	//If this difficulty is populated and isn't the active difficulty
+			diffcount++;	//Increment counter
+		}
+	}
+
+	switch(index)
+	{
+		case -1:
+		{
+			*size = diffcount;
+			break;
+		}
+		default:
+		{
+			return eof_menu_song_difficulty_list_strings[index];
+		}
+	}
+	return NULL;
+}
+
+int eof_menu_song_paste_from_difficulty(void)
+{
+	unsigned long ctr, target, diffcount = 0;
+	char undo_made = 0;
+
+	if(!eof_song_loaded || !eof_song)
+		return 1;	//Do not allow this function to run if a chart is not loaded
+
+	eof_detect_difficulties(eof_song, eof_selected_track);
+	for(ctr = 0; ctr < 256; ctr++)
+	{	//For each possible difficulty
+		if(eof_track_diff_populated_status[ctr] && (ctr != eof_note_type))
+		{	//If this difficulty is populated and isn't the active difficulty, build its list box display string
+			(void) snprintf(eof_menu_song_difficulty_list_strings[diffcount], sizeof(eof_menu_song_difficulty_list_strings[0] - 1), "%lu", ctr);
+			diffcount++;	//Increment counter
+		}
+	}
+	if(diffcount == 0)
+	{
+		allegro_message("No other difficulties in this track contain notes.");
+		return 1;
+	}
+
+	eof_cursor_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_menu_song_paste_from_difficulty_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_menu_song_paste_from_difficulty_dialog);
+	if(eof_popup_dialog(eof_menu_song_paste_from_difficulty_dialog, 1) == 2)
+	{	//User clicked Copy
+		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+		target = atol(eof_menu_song_difficulty_list_strings[eof_menu_song_paste_from_difficulty_dialog[1].d1]);
+
+		(void) eof_menu_edit_paste_from_difficulty(target, &undo_made);
+	}
+
+	eof_beat_stats_cached = 0;	//Have the beat statistics rebuilt
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(NULL);
+	return 1;
 }
