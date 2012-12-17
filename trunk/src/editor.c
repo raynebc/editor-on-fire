@@ -181,7 +181,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 				sp->beat_length = eof_song->beat[sp->beat - 1]->pos - eof_song->beat[sp->beat - 2]->pos;
 			}
 			else if(sp->beat + 1 < eof_song->beats)
-			{	//Don't read out of bounds
+			{	//As long as the next beat is in bounds
 				sp->beat_length = eof_song->beat[sp->beat + 1]->pos - eof_song->beat[sp->beat]->pos;
 			}
 			eof_get_snap_ts(sp, sp->beat);
@@ -352,7 +352,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			snaplength = (float)sp->measure_length / (float)eof_snap_interval;
 			for(i = 0; i < eof_snap_interval; i++)
 			{
-				sp->grid_pos[i] = eof_song->beat[sp->measure_beat]->pos + (snaplength * (float)i);
+				sp->grid_pos[i] = eof_song->beat[sp->measure_beat]->fpos + (snaplength * (float)i);
 			}
 			sp->grid_pos[eof_snap_interval] = eof_song->beat[sp->measure_beat]->fpos + sp->measure_length;
 
@@ -397,7 +397,7 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 			snaplength = (float)sp->beat_length / (float)interval;
 			for(i = 0; i < interval; i++)
 			{
-				sp->grid_pos[i] = eof_song->beat[sp->beat]->pos + (snaplength * (float)i);
+				sp->grid_pos[i] = eof_song->beat[sp->beat]->fpos + (snaplength * (float)i);
 			}
 			sp->grid_pos[interval] = eof_song->beat[sp->beat + 1]->fpos;	//Record the position of the last grid snap, which is the next beat
 
@@ -5342,12 +5342,14 @@ void eof_editor_logic_common(void)
 						{
 							for(i = 0; i < eof_song->beats; i++)
 							{
-								eof_song->beat[i]->pos += rdiff;
+								eof_song->beat[i]->fpos += rdiff;
+								eof_song->beat[i]->pos = eof_song->beat[i]->fpos + 0.5;	//Round up to nearest ms
 							}
 						}
 						else
 						{
-							eof_song->beat[0]->pos += rdiff;
+							eof_song->beat[0]->fpos += rdiff;
+							eof_song->beat[0]->pos = eof_song->beat[0]->fpos + 0.5;	//Round up to nearest ms
 						}
 					}
 					eof_song->tags->ogg[eof_selected_ogg].midi_offset = eof_song->beat[0]->pos;
