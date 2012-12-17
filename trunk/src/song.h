@@ -72,7 +72,7 @@
 #define EOF_NOTE_FLAG_IS_TREMOLO		        131072	//This flag will be set by eof_determine_phrase_status() if the note is in a tremolo section
 
 #define EOF_MAX_BEATS   32768
-#define EOF_MAX_PHRASES   100
+#define EOF_MAX_PHRASES   200
 #define EOF_MAX_OGGS        8
 
 #define EOF_BEAT_FLAG_ANCHOR       1
