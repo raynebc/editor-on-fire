@@ -461,7 +461,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 		{	//If writing a RB3 compliant pro guitar upgrade MIDI
 			if((j != EOF_TRACK_PRO_BASS) && (j != EOF_TRACK_PRO_GUITAR) && (j != EOF_TRACK_PRO_BASS_22) && (j != EOF_TRACK_PRO_GUITAR_22))
 			{	//If this track is not valid for a RB3 pro guitar upgrade
-				continue;	//SKip the track
+				continue;	//Skip the track
 			}
 		}
 		trackcounter++;	//Count this track towards the number of tracks to write to the completed MIDI
@@ -585,7 +585,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{	//If some kind of rounding error or other issue caused the delta length to be less than 1, force it to the minimum length of 1
 					deltalength = 1;
 				}
-				if((j == EOF_TRACK_DRUM) && (type != EOF_NOTE_SPECIAL))
+				if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (type != EOF_NOTE_SPECIAL))
 				{	//Ensure that drum notes are not written with sustain (Unless they are BRE notes)
 					deltalength = 1;
 				}
@@ -603,8 +603,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{
 					if(!((noteflags & EOF_NOTE_FLAG_DBASS) && sp->tags->double_bass_drum_disabled))
 					{	//If this is not an expert+ bass drum note that would be skipped due to such notes being disabled
-						if((j == EOF_TRACK_DRUM) && (noteflags & EOF_NOTE_FLAG_DBASS) && !featurerestriction)
-						{	//If the track being written is PART DRUMS, this note is marked for Expert+ double bass, and not writing a RB3 compliant MIDI
+						if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (noteflags & EOF_NOTE_FLAG_DBASS) && !featurerestriction)
+						{	//If the track being written is a drum track, this note is marked for Expert+ double bass, and not writing a RB3 compliant MIDI
 							eof_add_midi_event(deltapos, 0x90, 95, vel, 0);		//Note 95 is used for Expert+ bass notes
 							eof_add_midi_event(deltapos + deltalength, 0x80, 95, vel, 0);
 							expertplus = 1;
@@ -622,8 +622,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{
 					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 1, vel, 0);
 					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 1, vel, 0);
-					if(j == EOF_TRACK_DRUM)
-					{	//If this is the drum track, prepare to write drum specific Sysex phrases if necessary
+					if(sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+					{	//If this is a drum track, prepare to write drum specific Sysex phrases if necessary
 						if(noteflags & EOF_DRUM_NOTE_FLAG_R_RIMSHOT)
 						{	//If this note is marked as a rim shot
 							if(featurerestriction == 0)
@@ -645,7 +645,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{
 					eof_add_midi_event(deltapos, 0x90, midi_note_offset + 2, vel, 0);
 					eof_add_midi_event(deltapos + deltalength, 0x80, midi_note_offset + 2, vel, 0);
-					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL))
+					if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_Y_CYMBAL))
 					{	//If pro drum notation is in effect and no more yellow drum notes at this note's position are marked as cymbals
 						if(type == EOF_NOTE_AMAZING)
 						{	//Write a pro yellow tom marker only if this is an Expert difficulty note (ie. not a BRE note)
@@ -658,8 +658,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				/* write hi hat notation for either red or yellow gems (to allow for notation during disco flips) */
 				if(note & 6)
 				{
-					if(j == EOF_TRACK_DRUM)
-					{	//If this is the drum track, prepare to write drum specific Sysex phrases if necessary
+					if(sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+					{	//If this is a drum track, prepare to write drum specific Sysex phrases if necessary
 						if(featurerestriction == 0)
 						{	//Only write these notations if not writing a Rock Band compliant MIDI
 							phase_shift_sysex_phrase[3] = 0;	//Store the Sysex message ID (0 = phrase marker)
@@ -693,7 +693,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				/* write blue note */
 				if(note & 8)
 				{
-					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_B_CYMBAL))
+					if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_B_CYMBAL))
 					{	//If pro drum notation is in effect and no more blue drum notes at this note's position are marked as cymbals
 						if(type == EOF_NOTE_AMAZING)
 						{	//Write a pro blue tom marker only if this is an Expert difficulty note (ie. not a BRE note)
@@ -708,7 +708,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				/* write purple note */
 				if(note & 16)
 				{	//Note: EOF/FoF refer to this note color as purple/orange whereas Rock Band displays it as green
-					if((j == EOF_TRACK_DRUM) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_G_CYMBAL))
+					if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && prodrums && !eof_check_flags_at_legacy_note_pos(sp->legacy_track[tracknum],i,EOF_NOTE_FLAG_G_CYMBAL))
 					{	//If pro drum notation is in effect and no more green drum notes at this note's position are marked as cymbals
 						if(type == EOF_NOTE_AMAZING)
 						{	//Write a pro green tom marker only if this is an Expert difficulty note (ie. not a BRE note)
@@ -738,7 +738,7 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				}
 
 				/* write fifth lane drum note, if the feature was enabled during save */
-				if(eof_five_lane_drums_enabled() && (j == EOF_TRACK_DRUM) && (note & 32))
+				if(eof_five_lane_drums_enabled() && (sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (note & 32))
 				{	//If this is a lane 6 gem (referred to as lane 5 for drums, seeing as bass drum doesn't use a lane)
 					if(featurerestriction == 0)
 					{	//Only write this notation if not writing a Rock Band compliant MIDI

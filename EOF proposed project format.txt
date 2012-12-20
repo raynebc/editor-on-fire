@@ -190,7 +190,8 @@ Custom track data block definitions
 		[varies:]	Extended note flags (if the MSB of the note flags field is set, another 4 byte flag field follows, and if its MSB is set, another 4 byte flag field, etc)
 	}
 !This track format could be referred to as "legacy" format, because it is Harmonix's old format used prior to RB3
-!The most significant byte of PART DRUMS' flags variable stores additional drum difficulties (the high nibble stores the "PS Real Drums" difficulty, the low nibble stores the Pro Drums difficulty)
+!The MSB of the PART DRUMS' flags variable stores the additional "pro drums" difficulty (the high nibble stored the "PS Real Drums" difficulty in late beta versions of EOF 1.8, the low nibble stores the Pro Drums difficulty)
+!The high nibble of the PART DRUMS flag is set to 0xF for backwards compatibility with the beta versions
 !The low nibble of the most significant byte of PART VOCALS' flags variable stores the harmony difficulty
 !For the next variation of the format, store additional difficulties outside the track flags (ie. as INI numbers)
 

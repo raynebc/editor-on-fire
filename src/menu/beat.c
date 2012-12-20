@@ -746,8 +746,7 @@ int eof_menu_beat_reset_offset(void)
 			{
 				memcpy(eof_song->beat[i], eof_song->beat[i - 1], sizeof(EOF_BEAT_MARKER));
 			}
-			eof_song->beat[0]->pos = 0;
-			eof_song->beat[0]->fpos = 0;
+			eof_song->beat[0]->pos = eof_song->beat[0]->fpos = 0;
 			eof_song->beat[0]->flags = eof_song->beat[1]->flags;	//Copy the flags (ie. Time Signature) of the original first beat marker
 			eof_song->tags->ogg[eof_selected_ogg].midi_offset = 0;
 			newbpm = 60000.0 / eof_song->beat[1]->pos;	//60000ms / length of new beat (the MIDI delay) = Tempo

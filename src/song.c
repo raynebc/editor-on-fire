@@ -36,6 +36,7 @@ EOF_TRACK_ENTRY eof_default_tracks[EOF_TRACKS_MAX + 1] =
 	{EOF_LEGACY_TRACK_FORMAT, EOF_DANCE_TRACK_BEHAVIOR, EOF_TRACK_DANCE, 0, "PART DANCE", "", 0xFF, 5, 0},
 	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_BASS_22, 0, "PART REAL_BASS_22", "", 0xFF, 5, 0},
 	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR_22, 0, "PART REAL_GUITAR_22", "", 0xFF, 5, 0},
+	{EOF_LEGACY_TRACK_FORMAT, EOF_DRUM_TRACK_BEHAVIOR, EOF_TRACK_DRUM_PS, 0, "PART REAL_DRUMS_PS", "", 0xFF, 5, 0},
 
 	//This pro format is not supported yet, but the entry describes the track's details
 	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS", "", 0xFF, 5, 0}
@@ -57,6 +58,7 @@ EOF_TRACK_ENTRY eof_midi_tracks[EOF_TRACKS_MAX + 12] =
 	{EOF_LEGACY_TRACK_FORMAT, EOF_DANCE_TRACK_BEHAVIOR, EOF_TRACK_DANCE, 0, "PART DANCE", "", 0, 5, 0},
 	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_BASS_22, 0, "PART REAL_BASS_22", "", 0, 5, 0},
 	{EOF_PRO_GUITAR_TRACK_FORMAT, EOF_PRO_GUITAR_TRACK_BEHAVIOR, EOF_TRACK_PRO_GUITAR_22, 0, "PART REAL_GUITAR_22", "", 0, 5, 0},
+	{EOF_LEGACY_TRACK_FORMAT, EOF_DRUM_TRACK_BEHAVIOR, EOF_TRACK_DRUM_PS, 0, "PART REAL_DRUMS_PS", "", 0, 5, 0},
 
 	//These tracks are not supported for import yet, but these entries describe the tracks' details
 	{EOF_PRO_KEYS_TRACK_FORMAT, EOF_PRO_KEYS_TRACK_BEHAVIOR, EOF_TRACK_PRO_KEYS, 0, "PART REAL_KEYS_X", "", 0, 5, 0},
@@ -284,6 +286,14 @@ EOF_SONG * eof_load_song(const char * fn)
 				return NULL;
 			}
 		}
+		if(EOF_TRACK_DRUM_PS >= sp->tracks)
+		{	//If the chart loaded does not contain a Phase Shift drum track (a 1.8beta revision chart)
+			if(eof_song_add_track(sp,&eof_default_tracks[EOF_TRACK_DRUM_PS]) == 0)	//Add a blank Phase Shift drum track
+			{	//If the track failed to be added
+				eof_destroy_song(sp);	//Destroy the song and return on error
+				return NULL;
+			}
+		}
 	}
 	else
 	{
@@ -404,8 +414,8 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
 	maxlane = tp->numlanes;
-	if((maxlane < 6) && ((tp->parent->track_type == EOF_TRACK_DRUM) || (tp->parent->track_type == EOF_TRACK_BASS)))
-	{	//If this is the drum or bass track, ensure that at least 6 lanes are allowed to be kept
+	if((maxlane < 6) && ((tp->parent->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) || (tp->parent->track_type == EOF_TRACK_BASS)))
+	{	//If this is a drum track or the bass track, ensure that at least 6 lanes are allowed to be kept
 		maxlane = 6;
 	}
 	maxbitmask = (1 << maxlane) - 1;

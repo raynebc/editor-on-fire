@@ -2772,8 +2772,16 @@ void eof_sanitize_note_flags(unsigned long *flags,unsigned long sourcetrack, uns
 		*flags &= (~EOF_NOTE_FLAG_DBASS);					//Erase the double bass flag
 	}
 	else
-	{	//If it pasting into a drum track, erase flags that are invalid for drum notes
+	{	//If it is pasting into a drum track, erase flags that are invalid for drum notes
 		*flags &= (~EOF_NOTE_FLAG_CRAZY);	//Erase the "crazy" note flag
+	}
+
+	if((eof_song->track[sourcetrack]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (desttrack != EOF_TRACK_DRUM_PS))
+	{	//If notes are being copied from a drum track and not being pasted into the PS drum track, erase the hi hat and rim shot flags
+		*flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN;	//Erase the open hi hat flag
+		*flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;	//Erase the pedal controlled hi hat flag
+		*flags &= ~EOF_DRUM_NOTE_FLAG_R_RIMSHOT;		//Erase the rim shot flag
+		*flags &= ~EOF_DRUM_NOTE_FLAG_Y_SIZZLE;			//Erase the sizzle hi hat flag
 	}
 
 	if(eof_song->track[desttrack]->track_behavior == EOF_KEYS_TRACK_BEHAVIOR)

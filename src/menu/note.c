@@ -43,6 +43,7 @@ MENU eof_menu_solo_copy_menu[EOF_TRACKS_MAX] =
     {eof_menu_solo_copy_menu_text[9], eof_menu_copy_solos_track_10, NULL, 0, NULL},
     {eof_menu_solo_copy_menu_text[10], eof_menu_copy_solos_track_11, NULL, 0, NULL},
     {eof_menu_solo_copy_menu_text[11], eof_menu_copy_solos_track_12, NULL, 0, NULL},
+    {eof_menu_solo_copy_menu_text[12], eof_menu_copy_solos_track_13, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -70,6 +71,7 @@ MENU eof_menu_sp_copy_menu[EOF_TRACKS_MAX] =
     {eof_menu_sp_copy_menu_text[9], eof_menu_copy_sp_track_10, NULL, 0, NULL},
     {eof_menu_sp_copy_menu_text[10], eof_menu_copy_sp_track_11, NULL, 0, NULL},
     {eof_menu_sp_copy_menu_text[11], eof_menu_copy_sp_track_12, NULL, 0, NULL},
+    {eof_menu_sp_copy_menu_text[12], eof_menu_copy_sp_track_13, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -107,6 +109,7 @@ MENU eof_menu_arpeggio_copy_menu[EOF_TRACKS_MAX] =
     {eof_menu_arpeggio_copy_menu_text[9], eof_menu_copy_arpeggio_track_10, NULL, 0, NULL},
     {eof_menu_arpeggio_copy_menu_text[10], eof_menu_copy_arpeggio_track_11, NULL, 0, NULL},
     {eof_menu_arpeggio_copy_menu_text[11], eof_menu_copy_arpeggio_track_12, NULL, 0, NULL},
+    {eof_menu_arpeggio_copy_menu_text[12], eof_menu_copy_arpeggio_track_13, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -152,6 +155,7 @@ MENU eof_menu_trill_copy_menu[EOF_TRACKS_MAX] =
     {eof_menu_trill_copy_menu_text[9], eof_menu_copy_trill_track_10, NULL, 0, NULL},
     {eof_menu_trill_copy_menu_text[10], eof_menu_copy_trill_track_11, NULL, 0, NULL},
     {eof_menu_trill_copy_menu_text[11], eof_menu_copy_trill_track_12, NULL, 0, NULL},
+    {eof_menu_trill_copy_menu_text[12], eof_menu_copy_trill_track_13, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -179,6 +183,7 @@ MENU eof_menu_tremolo_copy_menu[EOF_TRACKS_MAX] =
     {eof_menu_tremolo_copy_menu_text[9], eof_menu_copy_tremolo_track_10, NULL, 0, NULL},
     {eof_menu_tremolo_copy_menu_text[10], eof_menu_copy_tremolo_track_11, NULL, 0, NULL},
     {eof_menu_tremolo_copy_menu_text[11], eof_menu_copy_tremolo_track_12, NULL, 0, NULL},
+    {eof_menu_tremolo_copy_menu_text[12], eof_menu_copy_tremolo_track_13, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -271,7 +276,8 @@ MENU eof_note_drum_menu[] =
     {"Toggle Y note as &Sizzle hi hat\tShift+S", eof_menu_note_toggle_hi_hat_sizzle, NULL, 0, NULL},
     {"Remove &Hi hat status", eof_menu_note_remove_hi_hat_status, NULL, 0, NULL},
     {"Mark new &Y notes as", NULL, eof_note_drum_hi_hat_menu, 0, NULL},
-    {"Toggle R note as &Rim shot\tShift+R",eof_menu_note_toggle_rimshot, NULL, 0, NULL},
+    {"Toggle R note as rim shot\tShift+R",eof_menu_note_toggle_rimshot, NULL, 0, NULL},
+    {"Remove &Rim shot status", eof_menu_note_remove_rimshot, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -290,6 +296,7 @@ MENU eof_menu_thin_notes_menu[EOF_TRACKS_MAX] =
     {eof_menu_thin_notes_menu_text[9], eof_menu_thin_notes_track_10, NULL, 0, NULL},
     {eof_menu_thin_notes_menu_text[10], eof_menu_thin_notes_track_11, NULL, 0, NULL},
     {eof_menu_thin_notes_menu_text[11], eof_menu_thin_notes_track_12, NULL, 0, NULL},
+    {eof_menu_thin_notes_menu_text[12], eof_menu_thin_notes_track_13, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -809,18 +816,35 @@ void eof_prepare_note_menu(void)
 				eof_note_menu[10].flags = D_DISABLED;
 			}
 
-			if(eof_selected_track != EOF_TRACK_DRUM)
-			{	//When PART DRUMS is not active
+			if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+			{	//When a drum track is not active
 				eof_note_menu[17].flags = D_DISABLED;	//Note>Drum> submenu
 			}
 			else
-			{	//When PART DRUMS is active
+			{
 				eof_note_menu[17].flags = 0;
+
+				if(eof_selected_track == EOF_TRACK_DRUM_PS)
+				{	//If the PS drum track is active
+					eof_note_drum_menu[8].flags = 0;	//Enable toggle Y note as open hi hat
+					eof_note_drum_menu[9].flags = 0;	//Enable toggle Y note as pedal hi hat
+					eof_note_drum_menu[10].flags = 0;	//Enable toggle Y note as sizzle hi hat
+					eof_note_drum_menu[12].flags = 0;	//Enable mark new Y notes as submenu
+					eof_note_drum_menu[13].flags = 0;	//Enable toggle R note as rim shot
+				}
+				else
+				{
+					eof_note_drum_menu[8].flags = D_DISABLED;
+					eof_note_drum_menu[9].flags = D_DISABLED;
+					eof_note_drum_menu[10].flags = D_DISABLED;
+					eof_note_drum_menu[12].flags = D_DISABLED;
+					eof_note_drum_menu[13].flags = D_DISABLED;
+				}
 			}
 
 			/* toggle Expert+ bass drum */
-			if((eof_selected_track == EOF_TRACK_DRUM) && (eof_note_type == EOF_NOTE_AMAZING))
-			{	//If the Amazing difficulty of PART DRUMS is active
+			if((eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (eof_note_type == EOF_NOTE_AMAZING))
+			{	//If the Amazing difficulty of a drum track is active
 				eof_note_drum_menu[5].flags = 0;			//Note>Drum>Toggle Expert+ Bass Drum
 			}
 			else
@@ -1339,7 +1363,7 @@ int eof_menu_note_toggle_green(void)
 			{	//Otherwise alter the note's normal bitmask
 				eof_set_note_note(eof_song, eof_selected_track, i, note ^ 1);
 			}
-			if(eof_selected_track == EOF_TRACK_DRUM)
+			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 			{	//If green drum is being toggled on/off
 				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 				flags &= (~EOF_NOTE_FLAG_DBASS);		//Clear the Expert+ status if it is set
@@ -1421,7 +1445,7 @@ int eof_menu_note_toggle_yellow(void)
 			{	//Otherwise alter the note's normal bitmask
 				eof_set_note_note(eof_song, eof_selected_track, i, note ^ 4);
 			}
-			if(eof_selected_track == EOF_TRACK_DRUM)
+			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 			{	//If yellow drum is being toggled on/off
 				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 				flags &= (~EOF_NOTE_FLAG_Y_CYMBAL);	//Clear the Pro yellow cymbal status if it is set
@@ -1467,7 +1491,7 @@ int eof_menu_note_toggle_blue(void)
 			{	//Otherwise alter the note's normal bitmask
 				eof_set_note_note(eof_song, eof_selected_track, i, note ^ 8);
 			}
-			if(eof_selected_track == EOF_TRACK_DRUM)
+			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 			{	//If blue drum is being toggled on/off
 				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 				flags &= (~EOF_NOTE_FLAG_B_CYMBAL);	//Clear the Pro blue cymbal status if it is set
@@ -1513,7 +1537,7 @@ int eof_menu_note_toggle_purple(void)
 			{	//Otherwise alter the note's normal bitmask
 				eof_set_note_note(eof_song, eof_selected_track, i, note ^ 16);
 			}
-			if(eof_selected_track == EOF_TRACK_DRUM)
+			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 			{	//If green drum is being toggled on/off
 				flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 				flags &= (~EOF_NOTE_FLAG_G_CYMBAL);	//Clear the Pro green cymbal status if it is set
@@ -1951,8 +1975,8 @@ int eof_menu_note_toggle_double_bass(void)
 	unsigned long flags;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_selected_track != EOF_TRACK_DRUM)
-		return 1;	//Do not allow this function to run when PART DRUMS is not active
+	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+		return 1;	//Do not allow this function to run when a drum track is not active
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -1983,8 +2007,8 @@ int eof_menu_note_remove_double_bass(void)
 	unsigned long flags;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_selected_track != EOF_TRACK_DRUM)
-		return 1;	//Do not allow this function to run when PART DRUMS is not active
+	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+		return 1;	//Do not allow this function to run when a drum track is not active
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -2018,8 +2042,8 @@ int eof_menu_note_toggle_rb3_cymbal_green(void)
 	long u = 0;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_selected_track != EOF_TRACK_DRUM)
-		return 1;	//Do not allow this function to run when PART DRUMS is not active
+	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+		return 1;	//Do not allow this function to run when a drum track is not active
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -2051,8 +2075,8 @@ int eof_menu_note_toggle_rb3_cymbal_yellow(void)
 	long u = 0;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_selected_track != EOF_TRACK_DRUM)
-		return 1;	//Do not allow this function to run when PART DRUMS is not active
+	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+		return 1;	//Do not allow this function to run when a drum track is not active
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -2084,8 +2108,8 @@ int eof_menu_note_toggle_rb3_cymbal_blue(void)
 	long u = 0;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_selected_track != EOF_TRACK_DRUM)
-		return 1;	//Do not allow this function to run when PART DRUMS is not active
+	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+		return 1;	//Do not allow this function to run when a drum track is not active
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -2118,8 +2142,8 @@ int eof_menu_note_remove_cymbal(void)
 	unsigned long flags, oldflags, note;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_selected_track != EOF_TRACK_DRUM)
-		return 1;	//Do not allow this function to run when PART DRUMS is not active
+	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+		return 1;	//Do not allow this function to run when a drum track is not active
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -2775,8 +2799,8 @@ int eof_menu_hopo_auto(void)
 	unsigned long flags, oldflags;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if((eof_selected_track == EOF_TRACK_DRUM) || eof_vocals_selected)
-		return 1;	//Do not allow this function to run when PART DRUMS or PART VOCALS is active
+	if((eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) || eof_vocals_selected)
+		return 1;	//Do not allow this function to run when a drum track or the vocal track is active
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -2902,8 +2926,8 @@ int eof_menu_hopo_force_on(void)
 	unsigned long flags, oldflags;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if((eof_selected_track == EOF_TRACK_DRUM) || eof_vocals_selected)
-		return 1;	//Do not allow this function to run when PART DRUMS or PART VOCALS is active
+	if((eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) || eof_vocals_selected)
+		return 1;	//Do not allow this function to run when a drum track or the vocal track is active
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -2949,8 +2973,8 @@ int eof_menu_hopo_force_off(void)
 	unsigned long flags, oldflags;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if((eof_selected_track == EOF_TRACK_DRUM) || eof_vocals_selected)
-		return 1;	//Do not allow this function to run when PART DRUMS or PART VOCALS is active
+	if((eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) || eof_vocals_selected)
+		return 1;	//Do not allow this function to run when a drum track or the vocal track is active
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -5747,6 +5771,11 @@ int eof_menu_copy_solos_track_12(void)
 	return eof_menu_copy_solos_track_number(eof_song, 12, eof_selected_track);
 }
 
+int eof_menu_copy_solos_track_13(void)
+{
+	return eof_menu_copy_solos_track_number(eof_song, 13, eof_selected_track);
+}
+
 int eof_menu_copy_solos_track_number(EOF_SONG *sp, int sourcetrack, int desttrack)
 {
 	unsigned long ctr;
@@ -5840,6 +5869,11 @@ int eof_menu_copy_sp_track_11(void)
 int eof_menu_copy_sp_track_12(void)
 {
 	return eof_menu_copy_sp_track_number(eof_song, 12, eof_selected_track);
+}
+
+int eof_menu_copy_sp_track_13(void)
+{
+	return eof_menu_copy_sp_track_number(eof_song, 13, eof_selected_track);
 }
 
 int eof_menu_copy_sp_track_number(EOF_SONG *sp, int sourcetrack, int desttrack)
@@ -5937,6 +5971,11 @@ int eof_menu_copy_arpeggio_track_12(void)
 	return eof_menu_copy_arpeggio_track_number(eof_song, 12, eof_selected_track);
 }
 
+int eof_menu_copy_arpeggio_track_13(void)
+{
+	return eof_menu_copy_arpeggio_track_number(eof_song, 13, eof_selected_track);
+}
+
 int eof_menu_copy_arpeggio_track_number(EOF_SONG *sp, int sourcetrack, int desttrack)
 {
 	unsigned long ctr;
@@ -6030,6 +6069,11 @@ int eof_menu_copy_trill_track_11(void)
 int eof_menu_copy_trill_track_12(void)
 {
 	return eof_menu_copy_trill_track_number(eof_song, 12, eof_selected_track);
+}
+
+int eof_menu_copy_trill_track_13(void)
+{
+	return eof_menu_copy_trill_track_number(eof_song, 13, eof_selected_track);
 }
 
 int eof_menu_copy_trill_track_number(EOF_SONG *sp, int sourcetrack, int desttrack)
@@ -6127,6 +6171,11 @@ int eof_menu_copy_tremolo_track_12(void)
 	return eof_menu_copy_tremolo_track_number(eof_song, 12, eof_selected_track);
 }
 
+int eof_menu_copy_tremolo_track_13(void)
+{
+	return eof_menu_copy_tremolo_track_number(eof_song, 13, eof_selected_track);
+}
+
 int eof_menu_copy_tremolo_track_number(EOF_SONG *sp, int sourcetrack, int desttrack)
 {
 	unsigned long ctr;
@@ -6168,8 +6217,8 @@ int eof_menu_note_toggle_hi_hat_open(void)
 	long u = 0;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_selected_track != EOF_TRACK_DRUM)
-		return 1;	//Do not allow this function to run when PART DRUMS is not active
+	if(eof_selected_track != EOF_TRACK_DRUM_PS)
+		return 1;	//Do not allow this function to run when the PS drum track is not active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 
@@ -6219,8 +6268,8 @@ int eof_menu_note_toggle_hi_hat_pedal(void)
 	long u = 0;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_selected_track != EOF_TRACK_DRUM)
-		return 1;	//Do not allow this function to run when PART DRUMS is not active
+	if(eof_selected_track != EOF_TRACK_DRUM_PS)
+		return 1;	//Do not allow this function to run when the PS drum track is not active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 
@@ -6270,8 +6319,8 @@ int eof_menu_note_toggle_hi_hat_sizzle(void)
 	long u = 0;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_selected_track != EOF_TRACK_DRUM)
-		return 1;	//Do not allow this function to run when PART DRUMS is not active
+	if(eof_selected_track != EOF_TRACK_DRUM_PS)
+		return 1;	//Do not allow this function to run when the PS drum track is not active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 
@@ -6321,8 +6370,8 @@ int eof_menu_note_remove_hi_hat_status(void)
 	long u = 0;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_selected_track != EOF_TRACK_DRUM)
-		return 1;	//Do not allow this function to run when PART DRUMS is not active
+	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+		return 1;	//Do not allow this function to run when a drum track is not active
 
 	tracknum = eof_song->track[eof_selected_track]->tracknum;
 
@@ -6368,8 +6417,8 @@ int eof_menu_note_toggle_rimshot(void)
 	long u = 0;
 	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
 
-	if(eof_selected_track != EOF_TRACK_DRUM)
-		return 1;	//Do not allow this function to run when PART DRUMS is not active
+	if(eof_selected_track != EOF_TRACK_DRUM_PS)
+		return 1;	//Do not allow this function to run when the PS drum track is not active
 
 	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
 	{	//For each note in the active track
@@ -6391,6 +6440,49 @@ int eof_menu_note_toggle_rimshot(void)
 				{
 					flags = eof_get_note_flags(eof_song, eof_selected_track, i);
 					flags ^= EOF_DRUM_NOTE_FLAG_R_RIMSHOT;	//Toggle the rim shot status
+					eof_set_note_flags(eof_song, eof_selected_track, i, flags);	//Apply the flag changes
+				}
+			}
+		}
+	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_menu_note_remove_rimshot(void)
+{
+	unsigned long i, flags, tracknum;
+	long u = 0;
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
+	if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+		return 1;	//Do not allow this function to run when a drum track is not active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			if((eof_get_note_note(eof_song, eof_selected_track, i) & 2) && (eof_get_note_flags(eof_song, eof_selected_track, i) & EOF_DRUM_NOTE_FLAG_R_RIMSHOT))
+			{	//If this drum note contains a red gem and has rimshot status
+				if(!u)
+				{	//Make a back up before changing the first note
+					eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+					u = 1;
+				}
+				if(eof_drum_modifiers_affect_all_difficulties)
+				{	//If the user wants to apply this change to notes at this position among all difficulties
+					eof_set_flags_at_legacy_note_pos(eof_song->legacy_track[tracknum],i,EOF_DRUM_NOTE_FLAG_R_RIMSHOT,0,0);		//Clear the rimshot status
+				}
+				else
+				{	//Otherwise just apply it to this difficulty's notes
+					flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+					flags &= ~EOF_DRUM_NOTE_FLAG_R_RIMSHOT;			//Clear the rimshot status
 					eof_set_note_flags(eof_song, eof_selected_track, i, flags);	//Apply the flag changes
 				}
 			}
@@ -6639,6 +6731,11 @@ int eof_menu_thin_notes_track_11(void)
 int eof_menu_thin_notes_track_12(void)
 {
 	return eof_thin_notes_to_match__target_difficulty(eof_song, 12, eof_selected_track, 2, eof_note_type);
+}
+
+int eof_menu_thin_notes_track_13(void)
+{
+	return eof_thin_notes_to_match__target_difficulty(eof_song, 13, eof_selected_track, 2, eof_note_type);
 }
 
 int eof_menu_note_toggle_ghost(void)

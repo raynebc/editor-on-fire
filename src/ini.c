@@ -11,7 +11,7 @@
 #include "memwatch.h"
 #endif
 
-char *eof_difficulty_ini_tags[EOF_TRACKS_MAX + 1] = {"", "diff_guitar", "diff_bass", "diff_guitar_coop", "diff_rhythm", "diff_drums", "diff_vocals", "diff_keys", "diff_bass_real", "diff_guitar_real", "diff_dance", "diff_bass_real_22", "diff_guitar_real_22", "diff_keys_real"};
+char *eof_difficulty_ini_tags[EOF_TRACKS_MAX + 1] = {"", "diff_guitar", "diff_bass", "diff_guitar_coop", "diff_rhythm", "diff_drums", "diff_vocals", "diff_keys", "diff_bass_real", "diff_guitar_real", "diff_dance", "diff_bass_real_22", "diff_guitar_real_22", "diff_drums_real_ps", "diff_keys_real"};
 
 int eof_save_ini(EOF_SONG * sp, char * fn)
 {
@@ -119,15 +119,6 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	{	//Otherwise if there are also no cymbals defined
 		(void) ustrcat(ini_string, "\r\ndiff_drums_real = -1");	//Write a pro drum not present tag
 	}
-	if(((sp->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 24) != 0xF0)
-	{	//If there is a defined PS real drum difficulty
-		(void) snprintf(buffer, sizeof(buffer) - 1, "\r\ndiff_drums_real_ps = %lu", (sp->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 28);
-		(void) ustrcat(ini_string, buffer);
-	}
-	else if(!eof_track_has_cymbals(sp, EOF_TRACK_DRUM))
-	{	//Otherwise if there are also no cymbals defined
-		(void) ustrcat(ini_string, "\r\ndiff_drums_real_ps = -1");	//Write a PS real drum not present tag
-	}
 	if(((sp->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24) != 0x0F)
 	{	//If there is a defined harmony difficulty
 		(void) snprintf(buffer, sizeof(buffer) - 1, "\r\ndiff_vocals_harm = %lu", (sp->track[EOF_TRACK_VOCALS]->flags & 0x0F000000) >> 24);
@@ -203,7 +194,7 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	}
 
 	/* check for use of open or pedal controlled hi hat or rim shot and write tags if necessary */
-	tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
+	tracknum = sp->track[EOF_TRACK_DRUM_PS]->tracknum;
 	for(i = 0; i < sp->legacy_track[tracknum]->notes; i++)
 	{	//For each note in the drum track
 		if((sp->legacy_track[tracknum]->note[i]->flags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN) || (sp->legacy_track[tracknum]->note[i]->flags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL) || (sp->legacy_track[tracknum]->note[i]->flags & EOF_DRUM_NOTE_FLAG_Y_SIZZLE))
@@ -237,8 +228,8 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 	(void) ustrcat(ini_string, "\r\nmultiplier_note = 116");	//Write this tag to indicate to Phase Shift that EOF is using Rock Band's notation for star power
 
 	/* check for use of cymbal notation */
-	if(eof_track_has_cymbals(sp, EOF_TRACK_DRUM))
-	{	//If the drum track has any notes marked as cymbals
+	if(eof_track_has_cymbals(sp, EOF_TRACK_DRUM) || eof_track_has_cymbals(sp, EOF_TRACK_DRUM_PS))
+	{	//If either drum track has any notes marked as cymbals
 		(void) ustrcat(ini_string, "\r\npro_drums = True");	//Write the pro drum tag, which indicates notes default as cymbals unless marked as toms (used in Phase Shift)
 	}
 
