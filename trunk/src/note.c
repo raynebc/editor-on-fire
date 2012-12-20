@@ -276,7 +276,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 	}
 
 //Since Expert+ double bass notation uses the same flag as crazy status, override the dot color for PART DRUMS
-	if(eof_selected_track == EOF_TRACK_DRUM)
+	if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		dcol = eof_color_white;
 
 	if(track != 0)
@@ -337,7 +337,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 				pcol = eof_colors[ctr].border;
 			}
 
-			if((eof_selected_track == EOF_TRACK_DRUM))
+			if((eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR))
 			{	//Drum track specific dot color logic
 				if((notetype == EOF_NOTE_AMAZING) && (noteflags & EOF_NOTE_FLAG_DBASS) && (mask == 1))
 				{	//If this is an Expert+ bass drum note
@@ -356,7 +356,7 @@ int eof_note_draw(unsigned long track, unsigned long notenum, int p, EOF_WINDOW 
 			else
 				dcol2 = dcol;			//Otherwise render with the expected dot color
 
-			if((notetype == EOF_NOTE_SPECIAL) || !((eof_selected_track == EOF_TRACK_DRUM) && eof_hide_drum_tails))
+			if((notetype == EOF_NOTE_SPECIAL) || !((eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && eof_hide_drum_tails))
 			{	//If this is not a BRE note or it is otherwise not drum note that will have tails hidden due to the "Hide drum note tails" user option,
 				rectfill(window->screen, x, y - eof_screen_layout.note_tail_size, x + length, y + eof_screen_layout.note_tail_size, ncol);	//Draw the note tail
 				if(p)
@@ -1017,7 +1017,7 @@ int eof_note_tail_draw_3d(unsigned long track, unsigned long notenum, int p)
 	noteflags = eof_get_note_flags(eof_song, track, notenum);
 	notenote = eof_get_note_note(eof_song, track, notenum);
 
-	if(eof_selected_track == EOF_TRACK_DRUM)
+	if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		return 0;	//Don't render tails for drum notes
 
 	tracknum = eof_song->track[track]->tracknum;
@@ -1363,7 +1363,7 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 			buffer[index++] = 'S';
 		}
 	}//Check pro guitar statuses
-	else if(track == EOF_TRACK_DRUM)
+	else if((track == EOF_TRACK_DRUM) || (track == EOF_TRACK_DRUM_PS))
 	{	//Check drum statuses
 		if(flags & EOF_DRUM_NOTE_FLAG_Y_HI_HAT_OPEN)
 		{

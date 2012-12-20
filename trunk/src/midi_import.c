@@ -1350,8 +1350,8 @@ set_window_title(debugtext);
 								lane = eof_import_events[i]->event[j]->d1 - 120;
 								diff = EOF_NOTE_SPECIAL;
 							}
-							else if((picked_track == EOF_TRACK_DRUM) && (eof_import_events[i]->event[j]->d1 == 95))
-							{	//If the track being read is PART DRUMS, and this note is marked for Expert+ double bass
+							else if(((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS)) && (eof_import_events[i]->event[j]->d1 == 95))
+							{	//If the track being read is a drum track, and this note is marked for Expert+ double bass
 								lane = eof_import_events[i]->event[j]->d1 - 96 + 1;	//Treat as gem 1 (bass drum)
 								diff = EOF_NOTE_AMAZING;
 							}
@@ -1404,8 +1404,8 @@ set_window_title(debugtext);
 						eof_log(eof_log_string, 1);
 #endif
 						char doublebass = 0;
-						if((picked_track == EOF_TRACK_DRUM) && (eof_import_events[i]->event[j]->d1 == 95))
-						{	//If the track being read is PART DRUMS, and this note is marked for Expert+ double bass
+						if(((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS)) && (eof_import_events[i]->event[j]->d1 == 95))
+						{	//If the track being read is a drum track, and this note is marked for Expert+ double bass
 							doublebass = 1;	//Track that double bass was found for this note, and apply it after the note flag for a newly created note is initialized to zero
 						}
 						if(eof_midi_tracks[picked_track].track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
@@ -1557,7 +1557,7 @@ set_window_title(debugtext);
 #endif
 								eof_set_note_note(sp, picked_track, notenum, eof_get_note_note(sp, picked_track, notenum) | lane_chart[lane]);
 							}
-							if(picked_track == EOF_TRACK_DRUM)
+							if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
 							{
 								if(doublebass)
 								{	//If the note was found to be double bass
@@ -1801,8 +1801,8 @@ set_window_title(debugtext);
 											}
 										break;
 										case 5:	//Open hi hat
-											if(picked_track == EOF_TRACK_DRUM)
-											{	//Only parse hi hat phrases for the drum track
+											if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
+											{	//Only parse hi hat phrases for the drum tracks
 #ifdef EOF_DEBUG
 												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Open hi hat (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
 												eof_log(eof_log_string, 1);
@@ -1824,8 +1824,8 @@ set_window_title(debugtext);
 											}
 										break;
 										case 6:	//Pedal controlled hi hat
-											if(picked_track == EOF_TRACK_DRUM)
-											{	//Only parse hi hat phrases for the drum track
+											if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
+											{	//Only parse hi hat phrases for the drum tracks
 #ifdef EOF_DEBUG
 												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Pedal hi hat (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
 												eof_log(eof_log_string, 1);
@@ -1847,8 +1847,8 @@ set_window_title(debugtext);
 											}
 										break;
 										case 7:	//Snare rim shot
-											if(picked_track == EOF_TRACK_DRUM)
-											{	//Only parse rim shot phrases for the drum track
+											if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
+											{	//Only parse rim shot phrases for the drum tracks
 #ifdef EOF_DEBUG
 												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Rim shot (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
 												eof_log(eof_log_string, 1);
@@ -1870,8 +1870,8 @@ set_window_title(debugtext);
 											}
 										break;
 										case 8:	//Sizzle hi hat
-											if(picked_track == EOF_TRACK_DRUM)
-											{	//Only parse hi hat phrases for the drum track
+											if((picked_track == EOF_TRACK_DRUM) || (picked_track == EOF_TRACK_DRUM_PS))
+											{	//Only parse hi hat phrases for the drum tracks
 #ifdef EOF_DEBUG
 												(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tSysex marker:  Sizzle hi hat (deltapos=%lu, pos=%lu)", eof_import_events[i]->event[j]->pos, event_realtime);
 												eof_log(eof_log_string, 1);

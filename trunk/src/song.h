@@ -218,7 +218,8 @@ typedef struct
 #define EOF_TRACK_DANCE         10
 #define EOF_TRACK_PRO_BASS_22	11
 #define EOF_TRACK_PRO_GUITAR_22	12
-#define EOF_TRACK_PRO_KEYS		13
+#define EOF_TRACK_DRUM_PS		13
+#define EOF_TRACK_PRO_KEYS		14
 
 #define EOF_SOLO_SECTION				1
 #define EOF_SP_SECTION					2
@@ -258,7 +259,7 @@ typedef struct
 	unsigned long flags;
 } EOF_TRACK_ENTRY;
 
-#define EOF_LEGACY_TRACKS_MAX		7
+#define EOF_LEGACY_TRACKS_MAX		8
 typedef struct
 {
 	unsigned char numlanes;		//The number of lanes, keys, etc. in this track

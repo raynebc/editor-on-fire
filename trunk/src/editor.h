@@ -83,7 +83,7 @@ void eof_mark_edited_note_as_double_bass(EOF_SONG *sp, unsigned long track, unsi
 	//to the frets based on the specified bitmask, ie. only applying the status to a bass drum note
 	//that was added to an existing drum note
 void eof_mark_new_note_as_special_hi_hat(EOF_SONG *sp, unsigned long track, unsigned long notenum);
-	//Checks if the newly-created note is in PART DRUMS, if so, and the new note contains
+	//Checks if the newly-created note is in the PS drum track, if so, and the new note contains
 	//yellow, the status stored in eof_mark_drums_as_hi_hat is applied to this note
 	//if eof_drum_modifiers_affect_all_difficulties is true, existing yellow gems at identical positions
 	//in lower difficulties are likewise turned into the specified hi hat type

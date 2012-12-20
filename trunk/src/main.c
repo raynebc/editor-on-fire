@@ -136,7 +136,7 @@ int         eof_new_idle_system = 0;
 char        eof_just_played = 0;
 char        eof_mark_drums_as_cymbal = 0;		//Allows the user to specify whether Y/B/G drum notes will be placed with cymbal notation by default
 char        eof_mark_drums_as_double_bass = 0;	//Allows the user to specify whether expert bass drum notes will be placed with expert+ notation by default
-unsigned long eof_mark_drums_as_hi_hat = 0;		//Allows the user to specify whether Y drum notes will be placed with one of the hi hat statuses by default (this variable holds the note flag of the desired status)
+unsigned long eof_mark_drums_as_hi_hat = 0;		//Allows the user to specify whether Y drum notes in the PS drum track will be placed with one of the hi hat statuses by default (this variable holds the note flag of the desired status)
 unsigned long eof_pro_guitar_fret_bitmask = 63;	//Defines which lanes are affected by CTRL+Fn fret setting shortcuts
 char		eof_legacy_view = 0;				//Specifies whether pro guitar notes will render as legacy notes
 unsigned char eof_2d_render_top_option = 32;	//Specifies what item displays at the top of the 2D panel (defaults to note names)
@@ -2303,14 +2303,6 @@ void eof_render_note_window(void)
 			{
 				(void) snprintf(difficulty2, sizeof(difficulty2) - 1, "(Pro: Undefined)");
 			}
-			if(((eof_song->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 24) != 0xF0)
-			{	//If the PS deal drums difficulty is defined
-				(void) snprintf(difficulty3, sizeof(difficulty3) - 1, "(PS: %lu)", (eof_song->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 28);	//Mask out the high nibble of the high order byte of the drum track's flags (pro drum difficulty)
-			}
-			else
-			{
-				(void) snprintf(difficulty3, sizeof(difficulty3) - 1, "(PS: Undefined)");
-			}
 		}
 		else if(eof_selected_track == EOF_TRACK_VOCALS)
 		{	//Write the difficulty string to display for vocal harmony
@@ -2826,8 +2818,8 @@ void eof_render_3d_window(void)
 		numlanes = 5;
 		lastlane = 4;	//Don't render trill/tremolo markers for the 6th lane (render for lanes 0 through 4)
 	}
-	if((eof_selected_track == EOF_TRACK_DRUM) & !eof_render_bass_drum_in_lane)
-	{
+	if((eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) & !eof_render_bass_drum_in_lane)
+	{	//If a drum track is active and the user hasn't enabled the preference to render the bass drum in its own lane
 		firstlane = 1;		//Don't render drum roll/special drum roll markers for the first lane, 0 (unless user enabled the preference to render bass drum in its own lane)
 	}
 
@@ -2927,8 +2919,8 @@ void eof_render_3d_window(void)
 	if(eof_get_num_trills(eof_song, eof_selected_track) || eof_get_num_tremolos(eof_song, eof_selected_track))
 	{	//If this track has any trill or tremolo sections
 		long xoffset = 0;	//This will be used to offset the trill/tremolo lane fill as necessary to center the fill over that lane's gem
-		if(eof_selected_track == EOF_TRACK_DRUM)
-		{
+		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//If a drum track is active
 			xoffset = halflanewidth;	//Drum gems render half a lane width further right (in between fret lines instead of centered over the lines)
 		}
 
@@ -4057,6 +4049,8 @@ void eof_stop_midi(void)
 
 void eof_init_after_load(char initaftersavestate)
 {
+	unsigned long tracknum, tracknum2;
+
 	eof_log("\tInitializing after load", 1);
 	eof_log("eof_init_after_load() entered", 1);
 
@@ -4091,6 +4085,19 @@ void eof_init_after_load(char initaftersavestate)
 		if(eof_song->beats > 0)
 			eof_set_seek_position(eof_song->beat[0]->pos + eof_av_delay);	//Seek to the first beat marker
 		eof_seek_selection_start = eof_seek_selection_end = 0;	//Clear the seek selection
+	}
+	tracknum = eof_song->track[EOF_TRACK_DRUM]->tracknum;
+	if((eof_song->track[EOF_TRACK_DRUM]->flags & EOF_TRACK_FLAG_SIX_LANES) || (eof_song->legacy_track[tracknum]->numlanes == 6))
+	{	//If the normal drum track uses 6 lanes, update the PS drum track's settings to match
+		tracknum2 = eof_song->track[EOF_TRACK_DRUM_PS]->tracknum;
+		eof_song->track[EOF_TRACK_DRUM_PS]->flags |= eof_song->track[EOF_TRACK_DRUM]->flags;
+		eof_song->legacy_track[tracknum2]->numlanes = eof_song->legacy_track[tracknum]->numlanes;
+	}
+	if(((eof_song->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 24) != 0xF0)
+	{	//If the PS deal drums difficulty is defined in the high nibble of the normal drum track's flags (deprecated)
+		eof_song->track[EOF_TRACK_DRUM_PS]->difficulty = (eof_song->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 28;	//Use it to set the PS drum track's difficulty
+		eof_song->track[EOF_TRACK_DRUM]->flags &= ~0xF0000000;	//Clear the high nibble of the normal drum track's flags
+		eof_song->track[EOF_TRACK_DRUM]->flags |= 0xF0000000;	//Set the high nibble of the normal drum track's flags of 0xF
 	}
 	eof_detect_difficulties(eof_song, eof_selected_track);
 	eof_reset_lyric_preview_lines();
@@ -4589,8 +4596,8 @@ void eof_set_color_set(void)
 	}
 	else if((eof_color_set == EOF_COLORS_RB) || (eof_color_set == EOF_COLORS_RS))
 	{	//If user is using the Rock Band or Rocksmith color set
-		if(eof_selected_track == EOF_TRACK_DRUM)
-		{	//If the drum track is active
+		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//If a drum track is active
 			eof_colors[0] = eof_color_orange_struct;
 			eof_colors[1] = eof_color_red_struct;
 			eof_colors[2] = eof_color_yellow_struct;
@@ -4631,8 +4638,8 @@ void eof_set_color_set(void)
 	}
 	else if(eof_color_set == EOF_COLORS_GH)
 	{	//If user is using the Guitar Hero color set
-		if(eof_selected_track == EOF_TRACK_DRUM)
-		{	//If the drum track is active
+		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+		{	//If a drum track is active
 			eof_colors[0] = eof_color_purple_struct;
 			eof_colors[1] = eof_color_red_struct;
 			eof_colors[2] = eof_color_yellow_struct;

@@ -778,8 +778,8 @@ if(key[KEY_PAUSE])
 	{
 		if(KEY_EITHER_CTRL)
 		{	//CTRL+G in the drum track will toggle Pro green cymbal notation
-			if(eof_selected_track == EOF_TRACK_DRUM)
-			{
+			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+			{	//If a drum track is active
 				(void) eof_menu_note_toggle_rb3_cymbal_green();
 				key[KEY_G] = 0;
 			}
@@ -813,8 +813,8 @@ if(key[KEY_PAUSE])
 	{	//CTRL+B will toggle Pro blue cymbal notation
 		if(KEY_EITHER_CTRL)
 		{
-			if(eof_selected_track == EOF_TRACK_DRUM)
-			{	//If the drum track is active
+			if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
+			{	//If a drum track is active
 				(void) eof_menu_note_toggle_rb3_cymbal_blue();
 				key[KEY_B] = 0;
 			}
@@ -1545,8 +1545,8 @@ if(key[KEY_PAUSE])
 
 /* keyboard shortcuts that only apply when the chart is playing (non drum record type input methods) */
 
-	if(!eof_music_paused && (eof_selected_track != EOF_TRACK_DRUM))
-	{	//If the chart is playing and PART DRUMS is not active
+	if(!eof_music_paused && (eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR))
+	{	//If the chart is playing and a drum track is not active
 		if(eof_input_mode == EOF_INPUT_GUITAR_TAP)
 		{	//If the input method is guitar tap
 			if(eof_guitar.button[2].held)
@@ -1982,16 +1982,16 @@ if(key[KEY_PAUSE])
 			key[KEY_O] = 0;
 		}
 
-	/* toggle pedal controlled hi hat (SHIFT+P in the drum track) */
-		if(key[KEY_P] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT && (eof_selected_track == EOF_TRACK_DRUM))
+	/* toggle pedal controlled hi hat (SHIFT+P in the PS drum track) */
+		if(key[KEY_P] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT && (eof_selected_track == EOF_TRACK_DRUM_PS))
 		{
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			(void) eof_menu_note_toggle_hi_hat_pedal();
 			key[KEY_P] = 0;
 		}
 
-	/* toggle sizzle hi hat (SHIFT+S, in the drum track) */
-		if(key[KEY_S] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT && (eof_selected_track == EOF_TRACK_DRUM))
+	/* toggle sizzle hi hat (SHIFT+S, in the PS drum track) */
+		if(key[KEY_S] && !KEY_EITHER_CTRL && KEY_EITHER_SHIFT && (eof_selected_track == EOF_TRACK_DRUM_PS))
 		{
 			eof_shift_used = 1;	//Track that the SHIFT key was used
 			(void) eof_menu_note_toggle_hi_hat_sizzle();
@@ -3444,7 +3444,7 @@ void eof_editor_logic(void)
 				break;
 			}
 		}
-		if(eof_selected_track == EOF_TRACK_DRUM)
+		if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
 		{
 			eof_editor_drum_logic();
 		}
@@ -5188,12 +5188,12 @@ void eof_mark_edited_note_as_special_hi_hat(EOF_SONG *sp, unsigned long track, u
 		return;
 	tracknum = sp->track[track]->tracknum;
 
-	if(sp->track[track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
-	{	//For now, it's assumed that any drum behavior track will be a legacy format track
+	if(sp->track[track]->track_type == EOF_TRACK_DRUM_PS)
+	{	//If the PS drum track is active
 		if((notenum >= sp->legacy_track[tracknum]->notes) || (sp->legacy_track[tracknum]->note[notenum] == NULL))
 			return;
 
-		if((sp->legacy_track[tracknum]->note[notenum]->note & 4) && (bitmask  & 4))
+		if((sp->legacy_track[tracknum]->note[notenum]->note & 4) && (bitmask & 4))
 		{	//If the note has lane 3 populated
 			eof_set_flags_at_legacy_note_pos(sp->legacy_track[tracknum],notenum,EOF_NOTE_FLAG_Y_CYMBAL,1,0);	//Set the yellow cymbal flag on all drum notes at this position
 

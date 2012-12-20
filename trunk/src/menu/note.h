@@ -111,6 +111,7 @@ int eof_menu_note_toggle_hi_hat_pedal(void);	//Toggles the pedal controlled hi h
 int eof_menu_note_toggle_hi_hat_sizzle(void);	//Toggles the sizzle hi hat status for selected yellow (or red during a disco flip) drum notes
 int eof_menu_note_remove_hi_hat_status(void);	//Removes the open, pedal controlled and sizzle hi hat statuses for selected yellow (or red during a disco flip) drum notes
 int eof_menu_note_toggle_rimshot(void);			//Toggles the rimshot status for selected red notes
+int eof_menu_note_remove_rimshot(void);			//Removes the rimshot status for selected red notes
 int eof_menu_note_toggle_tapping(void);			//Toggles the tapping status of all selected notes
 int eof_menu_note_remove_tapping(void);			//Removes the tapping status of all selected notes
 int eof_menu_note_toggle_bend(void);			//Toggles the bend status of all selected notes
@@ -175,6 +176,7 @@ int eof_menu_copy_solos_track_9(void);
 int eof_menu_copy_solos_track_10(void);
 int eof_menu_copy_solos_track_11(void);
 int eof_menu_copy_solos_track_12(void);
+int eof_menu_copy_solos_track_13(void);
 int eof_menu_copy_solos_track_number(EOF_SONG *sp, int sourcetrack, int desttrack);
 	//Copies the solo phrases from the specified source track to the destination track
 
@@ -190,6 +192,7 @@ int eof_menu_copy_sp_track_9(void);
 int eof_menu_copy_sp_track_10(void);
 int eof_menu_copy_sp_track_11(void);
 int eof_menu_copy_sp_track_12(void);
+int eof_menu_copy_sp_track_13(void);
 int eof_menu_copy_sp_track_number(EOF_SONG *sp, int sourcetrack, int desttrack);
 	//Copies the star power phrases from the specified source track to the destination track
 
@@ -205,6 +208,7 @@ int eof_menu_copy_arpeggio_track_9(void);
 int eof_menu_copy_arpeggio_track_10(void);
 int eof_menu_copy_arpeggio_track_11(void);
 int eof_menu_copy_arpeggio_track_12(void);
+int eof_menu_copy_arpeggio_track_13(void);
 int eof_menu_copy_arpeggio_track_number(EOF_SONG *sp, int sourcetrack, int desttrack);
 	//Copies the arpeggio phrases from the specified source track to the destination track
 
@@ -220,6 +224,7 @@ int eof_menu_copy_trill_track_9(void);
 int eof_menu_copy_trill_track_10(void);
 int eof_menu_copy_trill_track_11(void);
 int eof_menu_copy_trill_track_12(void);
+int eof_menu_copy_trill_track_13(void);
 int eof_menu_copy_trill_track_number(EOF_SONG *sp, int sourcetrack, int desttrack);
 	//Copies the trill phrases from the specified source track to the destination track
 
@@ -235,6 +240,7 @@ int eof_menu_copy_tremolo_track_9(void);
 int eof_menu_copy_tremolo_track_10(void);
 int eof_menu_copy_tremolo_track_11(void);
 int eof_menu_copy_tremolo_track_12(void);
+int eof_menu_copy_tremolo_track_13(void);
 int eof_menu_copy_tremolo_track_number(EOF_SONG *sp, int sourcetrack, int desttrack);
 	//Copies the tremolo phrases from the specified source track to the destination track
 
@@ -250,6 +256,7 @@ int eof_menu_thin_notes_track_9(void);
 int eof_menu_thin_notes_track_10(void);
 int eof_menu_thin_notes_track_11(void);
 int eof_menu_thin_notes_track_12(void);
+int eof_menu_thin_notes_track_13(void);
 	//Thins out the notes in the active track difficulty to match those in the active difficulty in the specified track
 	//If a note in the active track isn't within a threshold distance of any note in the specified track, it is deleted
 

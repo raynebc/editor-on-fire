@@ -297,6 +297,9 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 					tracknum = sp->track[EOF_TRACK_DRUM]->tracknum;
 					sp->track[EOF_TRACK_DRUM]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the five lane drum flag
 					sp->legacy_track[tracknum]->numlanes = 6;						//Set the lane count
+					tracknum = sp->track[EOF_TRACK_DRUM_PS]->tracknum;
+					sp->track[EOF_TRACK_DRUM_PS]->flags |= EOF_TRACK_FLAG_SIX_LANES;	//Set the five lane drum flag for the PS drum track
+					sp->legacy_track[tracknum]->numlanes = 6;							//Set the lane count
 				}
 			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "multiplier_note"))
@@ -371,24 +374,6 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 						if((value < 0) || (value > 6))		//If the difficulty is invalid
 							value = 0xF;					//Reset to undefined
 						sp->track[EOF_TRACK_DRUM]->flags &= ~(0x0F << 24);	//Clear the lower nibble of the drum track's flag's most significant byte
-						sp->track[EOF_TRACK_DRUM]->flags |= ((unsigned long)value << 24);	//Store the pro drum difficulty in the drum track's flag's most significant byte
-					}
-					else if(!ustricmp(eof_import_ini_setting[i].type, "diff_drums_real_ps"))
-					{	//If this is a PS real drum difficulty tag
-						long value;
-						long original = (sp->track[EOF_TRACK_DRUM]->flags & 0xF0000000) >> 24;
-						if(original == 0xF0)
-						{	//If the project does not have this difficulty defined
-							original = -1;	//Convert it to -1 so it can be accurately compared to the value in the INI file
-						}
-						if(eof_compare_set_ini_integer(&value, original, value_index, &function, eof_import_ini_setting[i].type))
-						{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
-							free(textbuffer);	//Free buffered INI file from memory
-							return 0;
-						}
-						if((value < 0) || (value > 6))		//If the difficulty is invalid
-							value = 0xF0;					//Reset to undefined
-						sp->track[EOF_TRACK_DRUM]->flags &= ~(0xF0 << 24);	//Clear the high nibble of the drum track's flag's most significant byte
 						sp->track[EOF_TRACK_DRUM]->flags |= ((unsigned long)value << 24);	//Store the pro drum difficulty in the drum track's flag's most significant byte
 					}
 					else if(!ustricmp(eof_import_ini_setting[i].type, "diff_vocals_harm"))
@@ -593,8 +578,8 @@ int eof_compare_set_ini_pro_guitar_tuning(EOF_PRO_GUITAR_TRACK *tp, char *string
 			{	//If the user did not opt to merge the changes into the project
 				return 1;	//Return user cancellation
 			}
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		}
-		eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 		*function = 0;	//Disable any further user prompting regarding this INI file
 	}
 
