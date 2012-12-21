@@ -712,82 +712,132 @@ EOF_SONG *parse_gp(const char * fn)
 		eof_gp_debug_log(inf, "\tMeasure bitmask:  ");
 		bytemask = pack_getc(inf);	//Read the measure bitmask
 		printf("%u\n", (bytemask & 0xFF));
-		if(bytemask & 1)
-		{	//Time signature change (numerator)
-			eof_gp_debug_log(inf, "\tTS numerator:  ");
-			word = pack_getc(inf);
-			printf("%u\n", word);
-		}
-		if(bytemask & 2)
-		{	//Time signature change (denominator)
-			eof_gp_debug_log(inf, "\tTS denominator:  ");
-			word = pack_getc(inf);
-			printf("%u\n", word);
-		}
-		if(bytemask & 32)
-		{	//New section
-			eof_gp_debug_log(inf, "\tNew section:  ");
-			(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read section string
-			printf("%s (coloring:  ", buffer);
-			word = pack_getc(inf);
-			printf("R = %u, ", word);
-			word = pack_getc(inf);
-			printf("G = %u, ", word);
-			word = pack_getc(inf);
-			printf("B = %u)\n", word);
-			(void) pack_getc(inf);	//Read unused value
-		}
-		if(bytemask & 64)
-		{	//Key signature change
-			eof_gp_debug_log(inf, "\tNew key signature:  ");
-			byte = pack_getc(inf);	//Read the key
-			printf("%d (%u %s, ", byte, abs(byte), (byte < 0) ? "flats" : "sharps");
-			byte = pack_getc(inf);	//Read the major/minor byte
-			printf("%s)\n", !byte ? "major" : "minor");
-		}
-		if((fileversion >= 500) && ((bytemask & 1) || (bytemask & 2)))
-		{	//If either a new TS numerator or denominator was set, read the beam by eight notes values (only for version 5.x and higher of the format.  3.x/4.x are known to not have this info)
-			char byte1, byte2, byte3, byte4;
-			eof_gp_debug_log(inf, "\tBeam eight notes by:  ");
-			byte1 = pack_getc(inf);
-			byte2 = pack_getc(inf);
-			byte3 = pack_getc(inf);
-			byte4 = pack_getc(inf);
-			printf("%d + %d + %d + %d = %d\n", byte1, byte2, byte3, byte4, byte1 + byte2 + byte3 + byte4);
-		}
-		if(bytemask & 4)
-		{	//Start of repeat
-			eof_gp_debug_log(inf, "\tStart of repeat\n");
-		}
-		if(bytemask & 8)
-		{	//End of repeat
-			eof_gp_debug_log(inf, "\tEnd of repeat:  ");
-			word = pack_getc(inf);	//Read number of repeats
-			printf("%u repeats\n", word);
-		}
-		if(bytemask & 128)
-		{	//Double bar
-			(void) puts("\t\t(Double bar)");
-		}
-
-		if(fileversion >= 500)
-		{	//Versions 5.0 and newer of the format store unknown data/padding here
-			if(bytemask & 16)
+		if(fileversion < 300)
+		{	//Versions of the format older than 3.0
+			if(bytemask & 1)
+			{	//Start of repeat
+				eof_gp_debug_log(inf, "\tStart of repeat\n");
+			}
+			if(bytemask & 2)
+			{	//End of repeat
+				eof_gp_debug_log(inf, "\tEnd of repeat:  ");
+				word = pack_getc(inf);	//Read number of repeats
+				printf("%u repeats\n", word);
+			}
+			if(bytemask & 4)
 			{	//Number of alternate ending
 				eof_gp_debug_log(inf, "\tNumber of alternate ending:  ");
 				word = pack_getc(inf);	//Read alternate ending number
 				printf("%u\n", word);
 			}
-			else
-			{
-				eof_gp_debug_log(inf, "\t(skipping 1 byte of unused alternate ending data)\n");
-				(void) pack_getc(inf);			//Unknown data
+		}
+		else
+		{	//Versions of the format 3.0 and newer
+			if(bytemask & 1)
+			{	//Time signature change (numerator)
+				eof_gp_debug_log(inf, "\tTS numerator:  ");
+				word = pack_getc(inf);
+				printf("%u\n", word);
 			}
-			eof_gp_debug_log(inf, "\tTriplet feel:  ");
-			byte = pack_getc(inf);	//Read triplet feel value
-			printf("%s\n", !byte ? "none" : ((byte == 1) ? "Triplet 8th" : "Triplet 16th"));
-			eof_gp_debug_log(inf, "\t(skipping 1 byte of unknown data)\n");
-			(void) pack_getc(inf);			//Unknown data
+			if(bytemask & 2)
+			{	//Time signature change (denominator)
+				eof_gp_debug_log(inf, "\tTS denominator:  ");
+				word = pack_getc(inf);
+				printf("%u\n", word);
+			}
+			if(bytemask & 4)
+			{	//Start of repeat
+				eof_gp_debug_log(inf, "\tStart of repeat\n");
+			}
+			if(bytemask & 8)
+			{	//End of repeat
+				eof_gp_debug_log(inf, "\tEnd of repeat:  ");
+				word = pack_getc(inf);	//Read number of repeats
+				if(fileversion >= 500)
+				{	//Version 5 of the format has slightly different counting for repeats
+					word--;
+				}
+				printf("%u repeats\n", word);
+			}
+			if(fileversion < 500)
+			{	//Versions 3 and 4 define the alternate ending next, followed by the section definition
+				if(bytemask & 16)
+				{	//Number of alternate ending
+					eof_gp_debug_log(inf, "\tNumber of alternate ending:  ");
+					word = pack_getc(inf);	//Read alternate ending number
+					printf("%u\n", word);
+				}
+				if(bytemask & 32)
+				{	//New section
+					eof_gp_debug_log(inf, "\tNew section:  ");
+					(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read section string
+					printf("%s (coloring:  ", buffer);
+					word = pack_getc(inf);
+					printf("R = %u, ", word);
+					word = pack_getc(inf);
+					printf("G = %u, ", word);
+					word = pack_getc(inf);
+					printf("B = %u)\n", word);
+					(void) pack_getc(inf);	//Read unused value
+				}
+			}
+			else
+			{	//Version 5 defines these two items in the opposite order
+				if(bytemask & 32)
+				{	//New section
+					eof_gp_debug_log(inf, "\tNew section:  ");
+					(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read section string
+					printf("%s (coloring:  ", buffer);
+					word = pack_getc(inf);
+					printf("R = %u, ", word);
+					word = pack_getc(inf);
+					printf("G = %u, ", word);
+					word = pack_getc(inf);
+					printf("B = %u)\n", word);
+					(void) pack_getc(inf);	//Read unused value
+				}
+				if(bytemask & 16)
+				{	//Number of alternate ending
+					eof_gp_debug_log(inf, "\tNumber of alternate ending:  ");
+					word = pack_getc(inf);	//Read alternate ending number
+					printf("%u\n", word);
+				}
+			}
+			if(bytemask & 64)
+			{	//Key signature change
+				eof_gp_debug_log(inf, "\tNew key signature:  ");
+				byte = pack_getc(inf);	//Read the key
+				printf("%d (%u %s, ", byte, abs(byte), (byte < 0) ? "flats" : "sharps");
+				byte = pack_getc(inf);	//Read the major/minor byte
+				printf("%s)\n", !byte ? "major" : "minor");
+			}
+			if(fileversion >= 500)
+			{	//Version 5 of the format defines additional things here
+				if((bytemask & 1) || (bytemask & 2))
+				{	//If either a new TS numerator or denominator was set, read the beam by eight notes values
+					char byte1, byte2, byte3, byte4;
+					eof_gp_debug_log(inf, "\tBeam eight notes by:  ");
+					byte1 = pack_getc(inf);
+					byte2 = pack_getc(inf);
+					byte3 = pack_getc(inf);
+					byte4 = pack_getc(inf);
+					printf("%d + %d + %d + %d = %d\n", byte1, byte2, byte3, byte4, byte1 + byte2 + byte3 + byte4);
+				}
+				if(!(bytemask & 16))
+				{	//If a GP5 file doesn't define an alternate ending here, ignore a byte of padding
+					eof_gp_debug_log(inf, "\t(skipping 1 byte of unused alternate ending data)\n");
+					(void) pack_getc(inf);			//Unknown data
+				}
+				eof_gp_debug_log(inf, "\tTriplet feel:  ");
+				byte = pack_getc(inf);	//Read triplet feel value
+				printf("%s\n", !byte ? "none" : ((byte == 1) ? "Triplet 8th" : "Triplet 16th"));
+				eof_gp_debug_log(inf, "\t(skipping 1 byte of unknown data)\n");
+				(void) pack_getc(inf);	//Unknown data/padding
+			}
+		}//Versions of the format 3.0 and newer
+		if(bytemask & 128)
+		{	//Double bar
+			(void) puts("\t\t(Double bar)");
 		}
 	}//For each measure
 
@@ -2094,97 +2144,178 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	for(ctr = 0; ctr < measures; ctr++)
 	{	//For each measure
 		bytemask = pack_getc(inf);	//Read the measure bitmask
-		if(bytemask & 1)
-		{	//Time signature change (numerator)
-			curnum = pack_getc(inf);
-		}
-		if(bytemask & 2)
-		{	//Time signature change (denominator)
-			curden = pack_getc(inf);
-		}
-#ifdef GP_IMPORT_DEBUG
-		if(bytemask & 3)
-		{	//If the TS numerator or denominator were changed
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tTS change at measure %lu:  %u/%u", ctr + 1, curnum, curden);
-			eof_log(eof_log_string, 1);
-		}
-#endif
-		if(bytemask & 32)
-		{	//New section
-			(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read section string
-			if(gp->text_events < EOF_MAX_TEXT_EVENTS)
-			{	//If the maximum number of text events hasn't already been defined
-#ifdef GP_IMPORT_DEBUG
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSection marker found at measure #%lu:  \"%s\"", ctr + 1, buffer);
-				eof_log(eof_log_string, 1);
-#endif
-				gp->text_event[gp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
-				if(!gp->text_event[gp->text_events])
-				{
-					eof_log("Error allocating memory (8)", 1);
-					(void) pack_fclose(inf);
-					free(gp->names);
-					for(ctr = 0; ctr < tracks; ctr++)
-					{	//Free all previously allocated track structures
-						free(gp->track[ctr]);
-					}
-					for(ctr = 0; ctr < gp->text_events; ctr++)
-					{	//Free all allocated text events
-						free(gp->text_event[ctr]);
-					}
-					free(gp->track);
-					free(np);
-					free(hopo);
-					free(gp);
-					free(tsarray);
-					return NULL;
-				}
-				gp->text_event[gp->text_events]->beat = ctr;	//For now, store the measure number, it will need to be converted to the beat number later
-				gp->text_event[gp->text_events]->track = 0;
-				rssectionname = eof_rs_section_text_valid(buffer);	//Determine whether this is a valid Rocksmith section name
-				if(eof_gp_import_preference_1 || !rssectionname)
-				{	//If the user preference is to import all section markers as RS phrases, or this section marker isn't validly named for a RS section anyway
-					(void) ustrncpy(gp->text_event[gp->text_events]->text, buffer, 255);
-					gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;	//Ensure this will be detected as a RS phrase
-				}
-				else
-				{	//Otherwise this section marker is valid as a RS section, then import it with the section's native name
-					(void) ustrncpy(gp->text_event[gp->text_events]->text, rssectionname, 255);
-					gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_SECTION;	//Ensure this will be detected as a RS section
-				}
-				gp->text_event[gp->text_events]->is_temporary = 0;	//This will be used to track whether the measure number was converted to the proper beat number below
-				gp->text_events++;
+		if(fileversion < 300)
+		{	//Versions of the format older than 3.0
+			if(bytemask & 1)
+			{	//Start of repeat
 			}
-			(void) pack_getc(inf);								//Read section string color (Red intensity)
-			(void) pack_getc(inf);								//Read section string color (Green intensity)
-			(void) pack_getc(inf);								//Read section string color (Blue intensity)
-			(void) pack_getc(inf);								//Read unused value
+			if(bytemask & 2)
+			{	//End of repeat
+				(void) pack_getc(inf);	//Read number of repeats
+			}
+			if(bytemask & 4)
+			{	//Number of alternate ending
+				(void) pack_getc(inf);	//Read alternate ending number
+			}
 		}
-		if(bytemask & 64)
-		{	//Key signature change
-			(void) pack_getc(inf);	//Read the key
-			(void) pack_getc(inf);	//Read the major/minor byte
-		}
-		if((fileversion >= 500) && ((bytemask & 1) || (bytemask & 2)))
-		{	//If either a new TS numerator or denominator was set, read the beam by eight notes values (only for version 5.x and higher of the format.  3.x/4.x are known to not have this info)
-			(void) pack_getc(inf);
-			(void) pack_getc(inf);
-			(void) pack_getc(inf);
-			(void) pack_getc(inf);
-		}
-		if(bytemask & 4)
-		{	//Start of repeat
-		}
-		if(bytemask & 8)
-		{	//End of repeat
-			(void) pack_getc(inf);	//Read number of repeats
-		}
+		else
+		{	//Versions of the format 3.0 and newer
+			if(bytemask & 1)
+			{	//Time signature change (numerator)
+				curnum = pack_getc(inf);
+			}
+			if(bytemask & 2)
+			{	//Time signature change (denominator)
+				curden = pack_getc(inf);
+			}
+#ifdef GP_IMPORT_DEBUG
+			if(bytemask & 3)
+			{	//If the TS numerator or denominator were changed
+				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tTS change at measure %lu:  %u/%u", ctr + 1, curnum, curden);
+				eof_log(eof_log_string, 1);
+			}
+#endif
+			if(bytemask & 4)
+			{	//Start of repeat
+			}
+			if(bytemask & 8)
+			{	//End of repeat
+				(void) pack_getc(inf);	//Read number of repeats
+			}
+			if(fileversion < 500)
+			{	//Versions 3 and 4 define the alternate ending next, followed by the section definition
+				if(bytemask & 16)
+				{	//Number of alternate ending
+					(void) pack_getc(inf);	//Read alternate ending number
+				}
+				if(bytemask & 32)
+				{	//New section
+					(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read section string
+					if(gp->text_events < EOF_MAX_TEXT_EVENTS)
+					{	//If the maximum number of text events hasn't already been defined
+#ifdef GP_IMPORT_DEBUG
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSection marker found at measure #%lu:  \"%s\"", ctr + 1, buffer);
+						eof_log(eof_log_string, 1);
+#endif
+						gp->text_event[gp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
+						if(!gp->text_event[gp->text_events])
+						{
+							eof_log("Error allocating memory (8)", 1);
+							(void) pack_fclose(inf);
+							free(gp->names);
+							for(ctr = 0; ctr < tracks; ctr++)
+							{	//Free all previously allocated track structures
+								free(gp->track[ctr]);
+							}
+							for(ctr = 0; ctr < gp->text_events; ctr++)
+							{	//Free all allocated text events
+								free(gp->text_event[ctr]);
+							}
+							free(gp->track);
+							free(np);
+							free(hopo);
+							free(gp);
+							free(tsarray);
+							return NULL;
+						}
+						gp->text_event[gp->text_events]->beat = ctr;	//For now, store the measure number, it will need to be converted to the beat number later
+						gp->text_event[gp->text_events]->track = 0;
+						rssectionname = eof_rs_section_text_valid(buffer);	//Determine whether this is a valid Rocksmith section name
+						if(eof_gp_import_preference_1 || !rssectionname)
+						{	//If the user preference is to import all section markers as RS phrases, or this section marker isn't validly named for a RS section anyway
+							(void) ustrncpy(gp->text_event[gp->text_events]->text, buffer, 255);
+							gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;	//Ensure this will be detected as a RS phrase
+						}
+						else
+						{	//Otherwise this section marker is valid as a RS section, then import it with the section's native name
+							(void) ustrncpy(gp->text_event[gp->text_events]->text, rssectionname, 255);
+							gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_SECTION;	//Ensure this will be detected as a RS section
+						}
+						gp->text_event[gp->text_events]->is_temporary = 0;	//This will be used to track whether the measure number was converted to the proper beat number below
+						gp->text_events++;
+					}
+					(void) pack_getc(inf);								//Read section string color (Red intensity)
+					(void) pack_getc(inf);								//Read section string color (Green intensity)
+					(void) pack_getc(inf);								//Read section string color (Blue intensity)
+					(void) pack_getc(inf);								//Read unused value
+				}//New section
+			}
+			else
+			{	//Version 5 defines the section definition next, followed by the alternate ending
+				if(bytemask & 32)
+				{	//New section
+					(void) eof_read_gp_string(inf, NULL, buffer, 1);	//Read section string
+					if(gp->text_events < EOF_MAX_TEXT_EVENTS)
+					{	//If the maximum number of text events hasn't already been defined
+#ifdef GP_IMPORT_DEBUG
+						(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tSection marker found at measure #%lu:  \"%s\"", ctr + 1, buffer);
+						eof_log(eof_log_string, 1);
+#endif
+						gp->text_event[gp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
+						if(!gp->text_event[gp->text_events])
+						{
+							eof_log("Error allocating memory (8)", 1);
+							(void) pack_fclose(inf);
+							free(gp->names);
+							for(ctr = 0; ctr < tracks; ctr++)
+							{	//Free all previously allocated track structures
+								free(gp->track[ctr]);
+							}
+							for(ctr = 0; ctr < gp->text_events; ctr++)
+							{	//Free all allocated text events
+								free(gp->text_event[ctr]);
+							}
+							free(gp->track);
+							free(np);
+							free(hopo);
+							free(gp);
+							free(tsarray);
+							return NULL;
+						}
+						gp->text_event[gp->text_events]->beat = ctr;	//For now, store the measure number, it will need to be converted to the beat number later
+						gp->text_event[gp->text_events]->track = 0;
+						rssectionname = eof_rs_section_text_valid(buffer);	//Determine whether this is a valid Rocksmith section name
+						if(eof_gp_import_preference_1 || !rssectionname)
+						{	//If the user preference is to import all section markers as RS phrases, or this section marker isn't validly named for a RS section anyway
+							(void) ustrncpy(gp->text_event[gp->text_events]->text, buffer, 255);
+							gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_PHRASE;	//Ensure this will be detected as a RS phrase
+						}
+						else
+						{	//Otherwise this section marker is valid as a RS section, then import it with the section's native name
+							(void) ustrncpy(gp->text_event[gp->text_events]->text, rssectionname, 255);
+							gp->text_event[gp->text_events]->flags = EOF_EVENT_FLAG_RS_SECTION;	//Ensure this will be detected as a RS section
+						}
+						gp->text_event[gp->text_events]->is_temporary = 0;	//This will be used to track whether the measure number was converted to the proper beat number below
+						gp->text_events++;
+					}
+					(void) pack_getc(inf);								//Read section string color (Red intensity)
+					(void) pack_getc(inf);								//Read section string color (Green intensity)
+					(void) pack_getc(inf);								//Read section string color (Blue intensity)
+					(void) pack_getc(inf);								//Read unused value
+				}
+			}
+			if(bytemask & 64)
+			{	//Key signature change
+				(void) pack_getc(inf);	//Read the key
+				(void) pack_getc(inf);	//Read the major/minor byte
+			}
+		}//Versions of the format 3.0 and newer
 		if(bytemask & 128)
 		{	//Double bar
 		}
 		if(fileversion >= 500)
-		{	//Versions 5.0 and newer of the format store unknown data/padding here
-			(void) pack_getc(inf);		//Read alternate ending number/padding
+		{	//Version 5 of the format defines additional things here
+			if((bytemask & 1) || (bytemask & 2))
+			{	//If either a new TS numerator or denominator was set, read the beam by eight notes values
+				(void) pack_getc(inf);
+				(void) pack_getc(inf);
+				(void) pack_getc(inf);
+				(void) pack_getc(inf);
+			}
+			if(!(bytemask & 16))
+			{	//If a GP5 file doesn't define an alternate ending here, ignore a byte of padding
+				(void) pack_getc(inf);		//Unknown data
+			}
 			(void) pack_getc(inf);		//Read triplet feel value
 			(void) pack_getc(inf);		//Unknown data
 		}
@@ -2428,9 +2559,19 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 	{	//For each measure
 		curnum = tsarray[ctr].num;	//Obtain the time signature for this measure
 		curden = tsarray[ctr].den;
+
+#ifdef GP_IMPORT_DEBUG
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\tMeasure #%lu", ctr);
+		eof_log(eof_log_string, 1);
+#endif
+
 		for(ctr2 = 0; ctr2 < tracks; ctr2++)
 		{	//For each track
 			unsigned voice, maxvoices = 1;
+#ifdef GP_IMPORT_DEBUG
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tTrack #%lu", ctr2);
+			eof_log(eof_log_string, 1);
+#endif
 			if(fileversion >= 500)
 			{	//Version 5.0 and higher of the format stores two "voices" (lead and bass) for each track
 				maxvoices = 2;
@@ -2590,7 +2731,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						if(gp->text_events < EOF_MAX_TEXT_EVENTS)
 						{	//If the maximum number of text events hasn't already been defined
 #ifdef GP_IMPORT_DEBUG
-							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\tBeat text found at beat #%lu:  \"%s\"", curbeat, buffer);
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tBeat text found at beat #%lu:  \"%s\"", curbeat, buffer);
 							eof_log(eof_log_string, 1);
 #endif
 							gp->text_event[gp->text_events] = malloc(sizeof(EOF_TEXT_EVENT));
@@ -2881,7 +3022,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 									{	//If this is the voice that is being imported
 										if(np[ctr2] && (np[ctr2]->note && bitmask))
 										{	//If there is a previously created note, and it used this string, alter its length
-											unsigned long beat_position;
+											unsigned long beat_position, oldlength;
 											double partial_beat_position, beat_length;
 
 											tie_note = 1;
@@ -2889,7 +3030,13 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 											partial_beat_position = (measure_position + note_duration) * curnum - beat_position;	//How far into this beat the note ends
 											beat_position += curbeat;	//Add the number of beats into the track the current measure is
 											beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
+											oldlength = np[ctr2]->length;
 											np[ctr2]->length = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position) - np[ctr2]->pos + 0.5;	//Define the length of this note
+
+#ifdef GP_IMPORT_DEBUG
+											(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tTie note:  Note starting at %lums lengthened from %lums to %lums", np[ctr2]->pos, oldlength, np[ctr2]->length);
+											eof_log(eof_log_string, 1);
+#endif
 
 											usedstrings &= ~bitmask;	//Clear the bit used to indicate the tie note's string as being played, since overlapping guitar notes isn't supported in Rock Band or Rocksmith
 										}
@@ -3162,6 +3309,11 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 							beat_position += curbeat;	//Add the number of beats into the track the current measure is
 							beat_length = eof_song->beat[beat_position + 1]->fpos - eof_song->beat[beat_position]->fpos;
 							np[ctr2]->length = eof_song->beat[beat_position]->fpos + (beat_length * partial_beat_position) - np[ctr2]->pos + 0.5;	//Define the length of this note
+
+#ifdef GP_IMPORT_DEBUG
+							(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "\t\t\tNote #%lu:  Start: %lums\tLength: %lums", gp->track[ctr2]->notes - 1, np[ctr2]->pos, np[ctr2]->length);
+							eof_log(eof_log_string, 1);
+#endif
 
 							for(ctr4 = 0; ctr4 < strings[ctr2]; ctr4++)
 							{	//For each of this track's natively supported strings

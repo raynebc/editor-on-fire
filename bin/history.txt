@@ -3,6 +3,22 @@ EOF Version History
 
 1.8:
 
+Added an additional drum track (PART REAL_DRUMS_PS) for use in Phase
+Shift.  This drum track will behave similarly to the original
+"PART DRUMS" track, but "PART DRUMS" will now no longer allow
+addition of hi hat or rim shot notations, as requested by the Phase
+Shift developers.  This is necessary in various cases where a single
+drum track cannot behave appropriately in the multiple different
+drum modes Phase Shift allows.
+
+Improved Beat>Anchor by allowing the position for the selected beat
+to be given to the millisecond.
+
+Fixed a bug where yellow gem drum/dance statuses could be
+improperly removed when merging the note with a red gem (ie. after
+a paste operation or using classic/piano roll/hold input methods to
+toggle a gem on).
+
 Corrected the Note menu so that the transpose up/down functions
 aren't disabled in the vocal track.
 
@@ -49,8 +65,10 @@ Expert difficulty of which is also used during MIDI export for
 allowing unusual situations such as authoring dislike guitar parts
 for each difficulty in a Rock Band 3 pro guitar custom), chord
 fingering, bend strength, slide end position, pop and slap bass
-guitar technique.  New functions to import and auto-generate several
-of these has also been added.
+guitar technique and Rocksmith events.  New functions to define
+and auto-generate several of these has also been added.  The new
+"Song>Pro Guitar>Remove difficulty limit" function enables up to
+255 difficulties to be authored for a pro guitar/bass track.
 
 Improved INI import so that for boolean tags (ie. "lyrics ="),
 having a value of the word "true" (case insensitive) or "1" are both
