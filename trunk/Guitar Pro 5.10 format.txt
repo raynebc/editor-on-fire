@@ -178,32 +178,63 @@ TRACK DATA
 BAR CHUNK, for each bar (measure):
 {
 	1 byte:		Bar (measure) bitmask (defined in notes section)
-	!TS NUMERATOR (if the bitmask declares this)
-		[1 byte]:	TS numerator
-	!TS DENOMINATOR (if the bitmask declares this)
-		[1 byte]:	TS denominator
-	!NEW SECTION (if the bitmask declares this)
+	If the major file version is < 3:
 	{
-		[4 bytes]:	Section name field length (including string length byte that follows this value)
-		[1 byte]:	Length of section name string
-		[varies]:	Section name string
-		[4 bytes]:	Color to render the section name with (RGB intensities, with the most significant byte set padded with a value of 0)
-	}
-	!KEY SIGNATURE CHANGE (if the bitmask declares this)
-	{
-		[1 byte]:	Key (see notes section)
-		[1 byte]:	Major/Minor (value is 0 if it is major, or 1 if it is minor)
-	}
-?	!BEAM EIGHT NOTES BY VALUES (if the bitmask declares either a new TS num/den and the major file version is >= 4?): (note:  These 4 bytes are verified to not be in 3.0/4.0 version GP files)
-		[4 bytes]:	Beam eight notes by values
-	!END OF REPEAT (if the bitmask declares this)
+		!END OF REPEAT (if the bitmask declares this)
 		[1 byte]:	Number of repeats?
-	!NUMBER OF ALTERNATE ENDING (if the major file version is >= 5):
+		!NUMBER OF ALTERNATE ENDING (if the bitmask declares this)
 		[1 byte]:	The number of the alternate ending (ignored if the bitmask didn't declare this)
-	!TRIPLET FEEL (if the major file version is >= 5):
-		[1 byte]:	(0 = no triplet feel, 1 = Triplet 8th, 2 = Triplet 16th)
-	!PADDING (if the major file version is >= 5):
-		[1 byte]:	Unknown data/padding (set to 0x0)
+	}
+	If the major file version is >= 3:
+	{
+		!TS NUMERATOR (if the bitmask declares this)
+			[1 byte]:	TS numerator
+		!TS DENOMINATOR (if the bitmask declares this)
+			[1 byte]:	TS denominator
+		!END OF REPEAT (if the bitmask declares this)
+			[1 byte]:	Number of repeats?
+
+		If the major file version is < 5:
+		{
+			!NUMBER OF ALTERNATE ENDING (if the bitmask declares this)
+			[1 byte]:	The number of the alternate ending (ignored if the bitmask didn't declare this)
+			!NEW SECTION (if the bitmask declares this)
+			{
+				[4 bytes]:	Section name field length (including string length byte that follows this value)
+				[1 byte]:	Length of section name string
+				[varies]:	Section name string
+				[4 bytes]:	Color to render the section name with (RGB intensities, with the most significant byte set padded with a value of 0)
+			}
+		}
+		If the major file version is >= 5:
+		{
+			!NEW SECTION (if the bitmask declares this)
+			{
+				[4 bytes]:	Section name field length (including string length byte that follows this value)
+				[1 byte]:	Length of section name string
+				[varies]:	Section name string
+				[4 bytes]:	Color to render the section name with (RGB intensities, with the most significant byte set padded with a value of 0)
+			}
+			!NUMBER OF ALTERNATE ENDING (if the bitmask declares this)
+			[1 byte]:	The number of the alternate ending (ignored if the bitmask didn't declare this)
+		}
+
+		!KEY SIGNATURE CHANGE (if the bitmask declares this)
+		{
+			[1 byte]:	Key (see notes section)
+			[1 byte]:	Major/Minor (value is 0 if it is major, or 1 if it is minor)
+		}
+
+		If the major file version is >= 5:
+		{
+			!BEAM EIGHT NOTES BY VALUES (if the bitmask declares either a new TS num/den and the major file version is >= 5)
+				[4 bytes]:	Beam eight notes by values
+			!TRIPLET FEEL (if the major file version is >= 5):
+				[1 byte]:	(0 = no triplet feel, 1 = Triplet 8th, 2 = Triplet 16th)
+			!PADDING (if the major file version is >= 5):
+				[1 byte]:	Unknown data/padding (set to 0x0)
+		}
+	}
 }
 ...(variably repeated data)...
 TRACK CHUNK, for each track:
@@ -553,11 +584,11 @@ Bit 8:		Page Number (field)
 Bits 9 - 15:	Unused (set to 0)
 
 The bar (measure) bitmask declares which parameters are defined for the measure:
-Bit 0 (LSB):	Time signature change (numerator)
-Bit 1:		Time signature change (denominator)
-Bit 2:		Beginning of repeat
-Bit 3:		End of repeat
-Bit 4:		Number of alternate ending
+Bit 0 (LSB):	Time signature change numerator (GP version >= 3), or start of repeat (GP version < 3)
+Bit 1:		Time signature change denominaator (GP version >= 3), or end of repeat (GP version < 3)
+Bit 2:		Start of repeat (GP version >= 3), number of alternative ending (GP version < 3)
+Bit 3:		End of repeat (GP version >= 3)
+Bit 4:		Number of alternate ending (GP version >= 3)
 Bit 5:		New section
 Bit 6:		Key signature change
 Bit 7 (MSB):	Double bar

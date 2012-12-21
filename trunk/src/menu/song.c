@@ -942,6 +942,11 @@ int eof_menu_song_properties(void)
 		{	//If any of the text fields were changed
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			undo_made = 1;
+			if(ustricmp(eof_song->tags->title, eof_etext))
+			{	//If the song title field was changed
+				eof_get_rocksmith_wav_path(eof_temp_filename, eof_song_path, sizeof(eof_temp_filename));	//Build the path to the WAV file written for Rocksmith during save
+				(void) delete_file(eof_temp_filename);	//Delete it, if it exists, since changing the title will cause a new WAV file to be written
+			}
 		}
 		else if(eof_is_number(eof_etext4) && (eof_song->tags->ogg[eof_selected_ogg].midi_offset != atol(eof_etext4)))
 		{	//If the delay was changed
