@@ -603,8 +603,8 @@ int eof_export_midi(EOF_SONG * sp, char * fn, char featurerestriction, char fixv
 				{
 					if(!((noteflags & EOF_NOTE_FLAG_DBASS) && sp->tags->double_bass_drum_disabled))
 					{	//If this is not an expert+ bass drum note that would be skipped due to such notes being disabled
-						if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (noteflags & EOF_NOTE_FLAG_DBASS) && !featurerestriction)
-						{	//If the track being written is a drum track, this note is marked for Expert+ double bass, and not writing a RB3 compliant MIDI
+						if((sp->track[j]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR) && (type == 3) && (noteflags & EOF_NOTE_FLAG_DBASS) && !featurerestriction)
+						{	//If the track being written is a drum track, this note is in expert difficulty and marked for Expert+ double bass, and not writing a RB3 compliant MIDI
 							eof_add_midi_event(deltapos, 0x90, 95, vel, 0);		//Note 95 is used for Expert+ bass notes
 							eof_add_midi_event(deltapos + deltalength, 0x80, 95, vel, 0);
 							expertplus = 1;

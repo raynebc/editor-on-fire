@@ -438,6 +438,14 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 
 		if(tp->parent->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{	//If this is a drum track
+			if(((tp->note[i-1]->note & 1) == 0) || (tp->note[i-1]->type != 3))
+			{	//If this note does not have a bass drum note or isn't in expert difficulty
+				tp->note[i-1]->flags &= ~EOF_NOTE_FLAG_DBASS;	//Clear the double bass flag
+			}
+			if((tp->note[i-1]->note & 2) == 0)
+			{	//If this note does not have a red tom, clear flags that are specific to that lane
+				tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_R_RIMSHOT;
+			}
 			if(((tp->note[i-1]->note & 4) == 0) || ((tp->note[i-1]->flags & EOF_NOTE_FLAG_Y_CYMBAL) == 0))
 			{	//If this note does not have a yellow cymbal, clear flags that are specific to yellow cymbals
 				if((tp->note[i-1]->note & 2) == 0)
@@ -446,10 +454,6 @@ void eof_legacy_track_fixup_notes(EOF_SONG *sp, unsigned long track, int sel)
 					tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_HI_HAT_PEDAL;
 					tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_Y_SIZZLE;
 				}
-			}
-			if((tp->note[i-1]->note & 2) == 0)
-			{	//If this note does not have a red tom, clear flags that are specific to that lane
-				tp->note[i-1]->flags &= ~EOF_DRUM_NOTE_FLAG_R_RIMSHOT;
 			}
 		}
 
