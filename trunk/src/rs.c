@@ -1765,6 +1765,10 @@ unsigned char eof_find_highest_rs_difficulty_in_time_range(EOF_SONG *sp, unsigne
 		if(thispos >= start)
 		{	//If this note is at or after the start of the specified range, check its difficulty
 			thisdiff = eof_get_note_type(sp, track, ctr);	//Get this note's difficulty
+			if(((sp->track[track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) == 0) && (thisdiff == 4))
+			{	//If the track is using the traditional 5 difficulty system and the note being examined is in the BRE difficulty
+				continue;	//Skip it, it will not be exported
+			}
 			if(thisdiff > highestdiff)
 			{	//If this note's difficulty is higher than any difficulties seen so far in this loop
 				highestdiff = thisdiff;
