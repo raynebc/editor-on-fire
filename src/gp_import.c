@@ -2607,14 +2607,40 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 						byte = 4;
 					}
 					note_duration = gp_durations[byte + 2] * (double)curden / (double)curnum;	//Get this note's duration in measures (accounting for the time signature)
-					if(bytemask & 1)
-					{	//Dotted note
-						note_duration *= 1.5;	//A dotted note is one and a half times as long as normal
-					}
 					if(bytemask & 32)
 					{	//Beat is an N-tuplet
 						pack_ReadDWORDLE(inf, &dword);	//Number of notes played within the "tuplet" (ie. 3 = triplet)
-						note_duration = 1.0 / (double)curnum / (double)dword;	//A tuplet is one beat divided into equally-long parts (ie. a triplet is 1/3 of one beat)
+						switch(dword)
+						{	//The length of each note in an N-tuplet depends on N
+							case 6:
+								note_duration /= 6.0 / 4.0;	//A sextuplet is 6 notes in the span of 4 of that note
+							break;
+							case 7:
+								note_duration /= 7.0 / 4.0;	//A septuplet is 7 notes in the span of 4 of that note
+							break;
+							case 9:
+								note_duration /= 9.0 / 8.0;	//A nontuplet is 9 notes in the span of 8 of that note
+							break;
+							case 10:
+								note_duration /= 10.0 / 8.0;	//A decuplet is 10 notes in the span of 8 of that note
+							break;
+							case 11:
+								note_duration /= 11.0 / 8.0;	//An undectuplet is 11 notes in the span of 8 of that note
+							break;
+							case 12:
+								note_duration /= 12.0 / 8.0;	//A 12-tuplet is 12 notes in the span of 8 of that note
+							break;
+							case 13:
+								note_duration /= 13.0 / 8.0;	//A triskaidekatuplet(?) is 13 notes in the span of 8 of that note
+							break;
+							default:	//Otherwise assume the tuplet is n notes in the span of (n-1) of that note
+								note_duration /= (double)dword / ((double)dword - 1.0);
+							break;
+						}
+					}//(a triplet of quarter notes is 3 notes in the span of two quarter notes) (a quintuplet of eighth notes is 5 notes in the span of 4 eighth notes)
+					if(bytemask & 1)
+					{	//Dotted note
+						note_duration *= 1.5;	//A dotted note is one and a half times as long as normal
 					}
 					if(bytemask & 2)
 					{	//Beat has a chord diagram
