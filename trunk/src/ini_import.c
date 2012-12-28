@@ -485,33 +485,33 @@ int eof_compare_set_ini_string_setting(EOF_SONG *sp, char *tag, char *value, int
 		return 1;	//Return error
 
 	index = sp->tags->ini_settings;	//If no match is found, the setting will be appended to the list
-	if(*function)
-	{	//If the calling function wanted to prompt the user before changing/adding an INI setting
-		ptr = eof_find_ini_setting_tag(sp, &index, tag);	//Find the specified INI tag in the project if it exists
-		if(ptr)
-		{	//If the target INI setting was found in the project
-			for(;(*ptr != '\0') && isspace(*ptr);ptr++);	//Skip whitespace following the equal sign
-			if(ustricmp(ptr, value))
-			{	//If the INI setting's tag value doesn't match the value specified
-				alter = 1;	//Note that an existing INI setting will be altered
-			}
+	ptr = eof_find_ini_setting_tag(sp, &index, tag);	//Find the specified INI tag in the project if it exists
+	if(ptr)
+	{	//If the target INI setting was found in the project
+		for(;(*ptr != '\0') && isspace(*ptr);ptr++);	//Skip whitespace following the equal sign
+		if(ustricmp(ptr, value))
+		{	//If the INI setting's tag value doesn't match the value specified
+			alter = 1;	//Note that an existing INI setting will be altered
+		}
+	}
+	else
+	{	//If the INI setting was not in the project
+		add = 1;	//Note that a new INI setting will be added
+	}
+
+	if(alter || add)
+	{	//If any INI setting is being altered or added
+		if(alter)
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Song INI setting \"%s\" altered in INI file", logtag);
 		}
 		else
-		{	//If the INI setting was not in the project
-			add = 1;	//Note that a new INI setting will be added
+		{
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Song INI setting \"%s\" added in INI file", logtag);
 		}
-
-		if(alter || add)
-		{	//If any INI setting is being altered or added
-			if(alter)
-			{
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Song INI setting \"%s\" altered in INI file", logtag);
-			}
-			else
-			{
-				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Song INI setting \"%s\" added in INI file", logtag);
-			}
-			eof_log(eof_log_string, 1);
+		eof_log(eof_log_string, 1);
+		if(*function)
+		{	//If the calling function wanted to prompt the user before changing/adding an INI setting
 			if(alert("Warning:  The INI file has been externally edited.", "Merge its changes with the active project?", NULL, "&Yes", "&No", 'y', 'n') != 1)
 			{	//If the user did not opt to merge the changes into the project
 				return 1;	//Return user cancellation
@@ -519,17 +519,18 @@ int eof_compare_set_ini_string_setting(EOF_SONG *sp, char *tag, char *value, int
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			*function = 0;	//Disable any further user prompting regarding this INI file
 		}
-	}
 
-	//Replace the existing INI setting or append it to the list of INI settings as appropriate
-	if(index < EOF_MAX_INI_SETTINGS)
-	{	//If the maximum number of INI settings isn't already defined
-		(void) snprintf(sp->tags->ini_setting[index], sizeof(sp->tags->ini_setting[index]) - 1, "%s = %s", tag, value);
-		if(index >= sp->tags->ini_settings)
-		{	//If this was a newly-added setting
-			sp->tags->ini_settings++;	//Increment the counter
+		//Replace the existing INI setting or append it to the list of INI settings as appropriate
+		if(index < EOF_MAX_INI_SETTINGS)
+		{	//If the maximum number of INI settings isn't already defined
+			(void) snprintf(sp->tags->ini_setting[index], sizeof(sp->tags->ini_setting[index]) - 1, "%s = %s", tag, value);
+			if(index >= sp->tags->ini_settings)
+			{	//If this was a newly-added setting
+				sp->tags->ini_settings++;	//Increment the counter
+			}
 		}
 	}
+
 	return 0;
 }
 
