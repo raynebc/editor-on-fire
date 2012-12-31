@@ -2619,16 +2619,16 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								note_duration /= 7.0 / 4.0;	//A septuplet is 7 notes in the span of 4 of that note
 							break;
 							case 9:
-								note_duration /= 9.0 / 8.0;	//A nontuplet is 9 notes in the span of 8 of that note
+								note_duration /= 9.0 / 8.0;	//A nonuplet is 9 notes in the span of 8 of that note
 							break;
 							case 10:
 								note_duration /= 10.0 / 8.0;	//A decuplet is 10 notes in the span of 8 of that note
 							break;
 							case 11:
-								note_duration /= 11.0 / 8.0;	//An undectuplet is 11 notes in the span of 8 of that note
+								note_duration /= 11.0 / 8.0;	//An undecuplet is 11 notes in the span of 8 of that note
 							break;
 							case 12:
-								note_duration /= 12.0 / 8.0;	//A 12-tuplet is 12 notes in the span of 8 of that note
+								note_duration /= 12.0 / 8.0;	//A dodecuplet is 12 notes in the span of 8 of that note
 							break;
 							case 13:
 								note_duration /= 13.0 / 8.0;	//A triskaidekatuplet(?) is 13 notes in the span of 8 of that note
