@@ -95,8 +95,9 @@ void eof_get_rocksmith_wav_path(char *buffer, const char *parent_folder, size_t 
 	//num defines the buffer's maximum size
 	//This is (song name).wav if the song title song property is defined, otherwise guitar.wav
 
-unsigned char eof_find_highest_rs_difficulty_in_time_range(EOF_SONG *sp, unsigned long track, unsigned long start, unsigned long stop);
-	//Examines all notes in the specified track starting within the given start and stop range, returning the highest relative difficulty present among them
+unsigned char eof_find_fully_leveled_rs_difficulty_in_time_range(EOF_SONG *sp, unsigned long track, unsigned long start, unsigned long stop);
+	//Examines the notes in all difficulties of the specified track and returns the lowest relative difficulty that represents the fully leveled
+	//version of the specified time range, such as for finding appropriate maxdifficulty values for each Rocksmith phrase
 	//The relative difficulty is the same numbering system to define difficulty levels, based only on populated difficulties
 	//If no notes are in the range, 0 (EOF's lowest difficulty number) is returned
 
