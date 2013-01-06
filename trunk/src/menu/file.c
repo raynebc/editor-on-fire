@@ -2398,8 +2398,8 @@ int eof_save_helper(char *destfilename)
 
 			//Determine if "[song name].wav" exists, if not, export the chart audio in WAV format
 			eof_get_rocksmith_wav_path(eof_temp_filename, newfolderpath, sizeof(eof_temp_filename));	//Build the path to the target WAV file
-			if(!exists(eof_temp_filename))
-			{	//If the WAV file does not exist
+			if(!exists(eof_temp_filename) && !eof_silence_loaded)
+			{	//If the WAV file does not exist, and chart audio is loaded
 				set_window_title("Saving WAV file for use with Wwise.  Please wait.");
 				SAMPLE *decoded = alogg_create_sample_from_ogg(eof_music_track);	//Create PCM data from the loaded chart audio
 				(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Writing RS WAV file (%s)", eof_temp_filename);

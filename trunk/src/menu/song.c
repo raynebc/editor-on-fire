@@ -139,7 +139,7 @@ MENU eof_song_proguitar_fret_hand_menu[] =
 {
     {"&Set\tShift+F", eof_pro_guitar_set_fret_hand_position, NULL, 0, NULL},
     {"&List", eof_menu_song_fret_hand_positions, NULL, 0, NULL},
-    {"&Copy from", eof_menu_song_fret_hand_positions_copy_from, NULL, 0, NULL},
+    {"&Copy", eof_menu_song_fret_hand_positions_copy_from, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -150,13 +150,18 @@ MENU eof_song_proguitar_menu[] =
     {"Enable &Legacy view\tShift+L", eof_menu_song_legacy_view, NULL, 0, NULL},
     {"&Previous chord name\t" CTRL_NAME "+Shift+W", eof_menu_previous_chord_result, NULL, 0, NULL},
     {"&Next chord name\t" CTRL_NAME "+Shift+E", eof_menu_next_chord_result, NULL, 0, NULL},
-    {"", NULL, NULL, 0, NULL},
+    {NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_song_rocksmith_menu[] =
+{
     {"Fret &Hand positions", NULL, eof_song_proguitar_fret_hand_menu, 0, NULL},
-    {"Correct chord fingerings", eof_correct_chord_fingerings_menu, NULL, 0, NULL},
+    {"&Correct chord fingerings", eof_correct_chord_fingerings_menu, NULL, 0, NULL},
     {"&Rename track", eof_song_proguitar_rename_track, NULL, 0, NULL},
     {"Remove difficulty limit", eof_song_proguitar_toggle_difficulty_limit, NULL, 0, NULL},
     {"Insert new difficulty", eof_song_proguitar_insert_difficulty, NULL, 0, NULL},
     {"Delete active difficulty", eof_song_proguitar_delete_difficulty, NULL, 0, NULL},
+    {"&Manage RS phrases", eof_manage_rs_phrases, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -180,9 +185,10 @@ MENU eof_song_menu[] =
     {"Lock tempo map", eof_menu_song_lock_tempo_map, NULL, 0, NULL},
     {"Disable expert+ bass drum", eof_menu_song_disable_double_bass_drums, NULL, 0, NULL},
     {"Pro &Guitar", NULL, eof_song_proguitar_menu, 0, NULL},
+    {"&Rocksmith", NULL, eof_song_rocksmith_menu, 0, NULL},
     {"Manage raw MIDI tracks", eof_menu_song_raw_MIDI_tracks, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
-    {"T&est In FOF\tF12", eof_menu_song_test_fof, NULL, EOF_LINUX_DISABLE, NULL},
+    {"T&est in FOF\tF12", eof_menu_song_test_fof, NULL, EOF_LINUX_DISABLE, NULL},
     {"Test I&n Phase Shift", eof_menu_song_test_ps, NULL, EOF_LINUX_DISABLE, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
@@ -594,10 +600,11 @@ void eof_prepare_song_menu(void)
 			eof_song_menu[16].flags = 0;
 		}
 
-		/* enable pro guitar submenu */
+		/* enable pro guitar and rocksmith submenus */
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//If a pro guitar track is active
 			eof_song_menu[17].flags = 0;			//Song>Pro Guitar> submenu
+			eof_song_menu[18].flags = 0;			//Song>Rocksmith> submenu
 
 			if(eof_enable_chord_cache && (eof_chord_lookup_count > 1))
 			{	//If an un-named note is selected and it has at least two chord matches
@@ -612,16 +619,17 @@ void eof_prepare_song_menu(void)
 
 			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 			{	//If the active track has already had the difficulty limit removed
-				eof_song_proguitar_menu[9].flags = D_SELECTED;	//Song>Pro Guitar>Remove difficulty limit
+				eof_song_rocksmith_menu[3].flags = D_SELECTED;	//Song>Pro Guitar>Remove difficulty limit
 			}
 			else
 			{
-				eof_song_proguitar_menu[9].flags = 0;
+				eof_song_rocksmith_menu[3].flags = 0;
 			}
 		}
 		else
-		{	//Otherwise disable this menu item
+		{	//Otherwise disable these menu items
 			eof_song_menu[17].flags = D_DISABLED;
+			eof_song_menu[18].flags = D_DISABLED;
 		}
 	}//If a chart is loaded
 }
@@ -4316,5 +4324,117 @@ int eof_menu_song_fret_hand_positions_copy_from(void)
 	eof_cursor_visible = 1;
 	eof_pen_visible = 1;
 	eof_show_mouse(NULL);
+	return 1;
+}
+
+char **eof_manage_rs_phrases_strings = NULL;	//Stores allocated strings for eof_manage_rs_phrases()
+
+char * eof_magage_rs_phrases_list(int index, int * size)
+{
+	int ctr, numphrases;
+
+	switch(index)
+	{
+		case -1:
+		{
+			for(ctr = 0, numphrases = 0; ctr < eof_song->beats; ctr++)
+			{	//For each beat in the chart
+				if(eof_song->beat[ctr]->contained_section_event >= 0)
+				{	//If this beat has a section event (RS phrase)
+					numphrases++;	//Update counter
+				}
+			}
+			*size = numphrases;
+			break;
+		}
+		default:
+		{
+			return eof_manage_rs_phrases_strings[index];
+		}
+	}
+	return NULL;
+}
+
+DIALOG eof_manage_rs_phrases_dialog[] =
+{
+   /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
+   { d_agup_window_proc,0,   48,  500, 237, 2,   23,  0,    0,      0,   0,   "Manage RS phrases",       NULL, NULL },
+   { d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_magage_rs_phrases_list,NULL, NULL },
+//   { d_agup_push_proc,  425, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",         NULL, (void *)eof_events_dialog_add },
+//   { d_agup_push_proc,  425, 124, 68,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",        NULL, (void *)eof_events_dialog_edit },
+//   { d_agup_push_proc,  425, 164, 68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, (void *)eof_events_dialog_delete },
+   { d_agup_button_proc,12,  245, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_manage_rs_phrases(void)
+{
+	unsigned long ctr, index, numphrases;
+	size_t stringlen;
+	unsigned long startpos = 0, endpos = 0;		//Track the start and end position of the each instance of the phrase
+	unsigned char maxdiff;
+	char * currentphrase = NULL;
+
+	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return 1;	//Do not allow this function to run if a pro guitar track isn't active
+
+	//Count the number of phrases in the active track
+	eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
+	for(ctr = 0, numphrases = 0; ctr < eof_song->beats; ctr++)
+	{	//For each beat in the chart
+		if(eof_song->beat[ctr]->contained_section_event >= 0)
+		{	//If this beat has a section event (RS phrase)
+			numphrases++;	//Update counter
+		}
+	}
+
+	//Allocate and build the strings for the phrases
+	eof_manage_rs_phrases_strings = malloc(sizeof(char *) * numphrases);	//Allocate enough pointers to have one for each phrase
+	if(!eof_manage_rs_phrases_strings)
+	{
+		allegro_message("Error allocating memory");
+		return 1;
+	}
+	for(ctr = 0, index = 0; ctr < eof_song->beats; ctr++)
+	{	//For each beat in the chart
+		if((eof_song->beat[ctr]->contained_section_event >= 0) || ((ctr + 1 >= eof_song->beats) && (startpos > endpos)))
+		{	//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
+			if(currentphrase)
+			{	//If another phrase has been read
+				endpos = eof_song->beat[ctr]->pos - 1;	//Track this as the end position of the previous phrase marker
+				maxdiff = eof_find_fully_leveled_rs_difficulty_in_time_range(eof_song, eof_selected_track, startpos, endpos);	//Find the maxdifficulty value for this phrase instance
+				stringlen = snprintf(NULL, 0, "%s : maxDifficulty = %u", currentphrase, maxdiff) + 1;	//Find the number of characters needed to snprintf this string
+				eof_manage_rs_phrases_strings[index] = malloc(stringlen + 1);	//Allocate memory to build the string
+				if(!eof_manage_rs_phrases_strings[index])
+				{
+					allegro_message("Error allocating memory");
+					for(ctr = 0; ctr < index; ctr++)
+					{	//Free previously allocated strings
+						free(eof_manage_rs_phrases_strings[ctr]);
+					}
+					free(eof_manage_rs_phrases_strings);
+					return 1;
+				}
+				(void) snprintf(eof_manage_rs_phrases_strings[index], stringlen, "%s : maxDifficulty = %u", currentphrase, maxdiff);
+				index++;
+			}
+			startpos = eof_song->beat[ctr]->pos;	//Track the starting position of the phrase
+			currentphrase = eof_song->text_event[eof_song->beat[ctr]->contained_section_event]->text;	//Track which phrase is being examined
+		}
+	}
+
+	//Call the dialog
+	eof_color_dialog(eof_manage_rs_phrases_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_manage_rs_phrases_dialog);
+	(void) eof_popup_dialog(eof_manage_rs_phrases_dialog, 0);
+
+	//Cleanup
+	for(ctr = 0; ctr < index; ctr++)
+	{	//Free previously allocated strings
+		free(eof_manage_rs_phrases_strings[ctr]);
+	}
+	free(eof_manage_rs_phrases_strings);
+	eof_manage_rs_phrases_strings = NULL;
+
 	return 1;
 }

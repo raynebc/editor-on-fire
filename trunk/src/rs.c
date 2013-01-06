@@ -356,9 +356,9 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 
 	//Get the smaller of the chart length and the music length, this will be used to write the songlength tag, END phrase iteration and noguitar section instance
 	xml_end = eof_music_length;
-	if(eof_chart_length < eof_music_length)
-	{	//If the chart length is shorter than the music length
-		xml_end = eof_chart_length;
+	if(eof_silence_loaded || (eof_chart_length < eof_music_length))
+	{	//If the chart length is shorter than the music length, or there is no chart audio loaded
+		xml_end = eof_chart_length;	//Use the chart's length instead
 	}
 
 	//Write the beginning of the XML file
@@ -442,7 +442,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		}
 	}
 	sectionlistsize = eof_build_section_list(sp, &sectionlist, track);	//Build a list of all unique section markers (Rocksmith phrases) in the chart (from the perspective of the track being exported)
-	(void) snprintf(buffer, sizeof(buffer) - 1, "  <phrases count=\"%lu\">\n", sectionlistsize);	//Write the number of unique sections
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <phrases count=\"%lu\">\n", sectionlistsize);	//Write the number of unique phrases
 	(void) pack_fputs(buffer, fp);
 	for(ctr = 0; ctr < sectionlistsize; ctr++)
 	{	//For each of the entries in the unique section (RS phrase) list
@@ -453,11 +453,11 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		//Determine the highest maxdifficulty present among all instances of this phrase
 		for(ctr2 = 0; ctr2 < sp->beats; ctr2++)
 		{	//For each beat
-			if(sp->beat[ctr2]->contained_section_event >= 0)
-			{	//If this beat contains a section event (Rocksmith phrase)
+			if((sp->beat[ctr2]->contained_section_event >= 0) || ((ctr + 1 >= eof_song->beats) && (startpos > endpos)))
+			{	//If this beat contains a section event (Rocksmith phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
 				if(currentphrase)
 				{	//If the first instance of the phrase was already encountered
-					endpos = sp->beat[ctr2]->pos - 1;	//Track this as the end position of the previous section marker
+					endpos = sp->beat[ctr2]->pos - 1;	//Track this as the end position of the previous phrase marker
 					if(startpos && !ustricmp(currentphrase, sp->text_event[sectionlist[ctr]]->text))
 					{	//If the phrase that just ended is an instance of the phrase being written
 						maxdiff = eof_find_fully_leveled_rs_difficulty_in_time_range(sp, track, startpos, endpos);	//Find the maxdifficulty value for this phrase instance
@@ -470,16 +470,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 				else if(!ustricmp(sp->text_event[sp->beat[ctr2]->contained_section_event]->text, sp->text_event[sectionlist[ctr]]->text))
 				{	//If this is the start of an instance of the phrase being written
 					startpos = sp->beat[ctr2]->pos;	//Track the starting position
-					currentphrase = sp->text_event[sectionlist[ctr]]->text;	//Track which section is being examined
+					currentphrase = sp->text_event[sectionlist[ctr]]->text;	//Track which phrase is being examined
 				}
-			}
-		}
-		if(startpos > endpos)
-		{	//If the end of the phrase instance wasn't reached, it's because it was the last phrase in the chart
-			maxdiff = eof_find_fully_leveled_rs_difficulty_in_time_range(sp, track, startpos, xml_end - 1);	//Find the maxdifficulty value for between the start of the section and the end of the chart
-			if(maxdiff > ongoingmaxdiff)
-			{	//If that phrase instance had a higher maxdifficulty than the other instances checked so far
-				ongoingmaxdiff = maxdiff;	//Track it
 			}
 		}
 
