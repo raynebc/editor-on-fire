@@ -167,5 +167,7 @@ char * eof_menu_song_fret_hand_positions_copy_from_list(int index, int * size);
 	//The list dialog function for eof_menu_song_fret_hand_positions_copy_from()
 int eof_menu_song_fret_hand_positions_copy_from(void);
 	//Allows the user to copy fret hand positions defined in another difficulty into the current track difficulty
+int eof_manage_rs_phrases(void);
+	//Displays the phrases defined for the current pro guitar/bass track, along with the maxdifficulty of each
 
 #endif
