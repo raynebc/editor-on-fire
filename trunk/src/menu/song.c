@@ -4328,6 +4328,7 @@ int eof_menu_song_fret_hand_positions_copy_from(void)
 }
 
 char **eof_manage_rs_phrases_strings = NULL;	//Stores allocated strings for eof_manage_rs_phrases()
+unsigned long eof_manage_rs_phrases_strings_size = 0;	//The number of strings stored in the above array
 
 char * eof_magage_rs_phrases_list(int index, int * size)
 {
@@ -4357,26 +4358,23 @@ char * eof_magage_rs_phrases_list(int index, int * size)
 
 DIALOG eof_manage_rs_phrases_dialog[] =
 {
-   /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
-   { d_agup_window_proc,0,   48,  500, 237, 2,   23,  0,    0,      0,   0,   "Manage RS phrases",       NULL, NULL },
-   { d_agup_list_proc,  12,  84,  400, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_magage_rs_phrases_list,NULL, NULL },
-//   { d_agup_push_proc,  425, 84,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "&Add",         NULL, (void *)eof_events_dialog_add },
-//   { d_agup_push_proc,  425, 124, 68,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "&Edit",        NULL, (void *)eof_events_dialog_edit },
-//   { d_agup_push_proc,  425, 164, 68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, (void *)eof_events_dialog_delete },
+   /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                 (dp2) (dp3) */
+   { d_agup_window_proc,0,   48,  400, 237, 2,   23,  0,    0,      0,   0,   "Manage RS phrases", NULL, NULL },
+   { d_agup_list_proc,  12,  84,  300, 144, 2,   23,  0,    0,      0,   0,   (void *)eof_magage_rs_phrases_list,NULL, NULL },
+   { d_agup_push_proc,  325, 84, 68,  28,  2,   23,  'e',  D_EXIT, 0,   0,   "Add level",        NULL, (void *)eof_manage_rs_phrases_add_level },
+//   { d_agup_push_proc,  425, 124,  68,  28,  2,   23,  'a',  D_EXIT, 0,   0,   "Del level",         NULL, (void *)eof_events_dialog_add },
+   { d_agup_push_proc,  325, 164, 68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "&Seek to",      NULL, (void *)eof_manage_rs_phrases_seek },
    { d_agup_button_proc,12,  245, 240, 28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
-int eof_manage_rs_phrases(void)
+void eof_rebuild_manage_rs_phrases_strings(void)
 {
 	unsigned long ctr, index, numphrases;
 	size_t stringlen;
 	unsigned long startpos = 0, endpos = 0;		//Track the start and end position of the each instance of the phrase
 	unsigned char maxdiff;
-	char * currentphrase = NULL;
-
-	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
-		return 1;	//Do not allow this function to run if a pro guitar track isn't active
+	char *currentphrase = NULL;
 
 	//Count the number of phrases in the active track
 	eof_process_beat_statistics(eof_song, eof_selected_track);	//Cache section name information into the beat structures (from the perspective of the active track)
@@ -4388,12 +4386,11 @@ int eof_manage_rs_phrases(void)
 		}
 	}
 
-	//Allocate and build the strings for the phrases
 	eof_manage_rs_phrases_strings = malloc(sizeof(char *) * numphrases);	//Allocate enough pointers to have one for each phrase
 	if(!eof_manage_rs_phrases_strings)
 	{
 		allegro_message("Error allocating memory");
-		return 1;
+		return;
 	}
 	for(ctr = 0, index = 0; ctr < eof_song->beats; ctr++)
 	{	//For each beat in the chart
@@ -4413,7 +4410,8 @@ int eof_manage_rs_phrases(void)
 						free(eof_manage_rs_phrases_strings[ctr]);
 					}
 					free(eof_manage_rs_phrases_strings);
-					return 1;
+					eof_manage_rs_phrases_strings = NULL;
+					return;
 				}
 				(void) snprintf(eof_manage_rs_phrases_strings[index], stringlen, "%s : maxDifficulty = %u", currentphrase, maxdiff);
 				index++;
@@ -4422,6 +4420,17 @@ int eof_manage_rs_phrases(void)
 			currentphrase = eof_song->text_event[eof_song->beat[ctr]->contained_section_event]->text;	//Track which phrase is being examined
 		}
 	}
+	eof_manage_rs_phrases_strings_size = index;
+}
+
+int eof_manage_rs_phrases(void)
+{
+	unsigned long ctr;
+	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return 1;	//Do not allow this function to run if a pro guitar track isn't active
+
+	//Allocate and build the strings for the phrases
+	eof_rebuild_manage_rs_phrases_strings();
 
 	//Call the dialog
 	eof_color_dialog(eof_manage_rs_phrases_dialog, gui_fg_color, gui_bg_color);
@@ -4429,7 +4438,7 @@ int eof_manage_rs_phrases(void)
 	(void) eof_popup_dialog(eof_manage_rs_phrases_dialog, 0);
 
 	//Cleanup
-	for(ctr = 0; ctr < index; ctr++)
+	for(ctr = 0; ctr < eof_manage_rs_phrases_strings_size; ctr++)
 	{	//Free previously allocated strings
 		free(eof_manage_rs_phrases_strings[ctr]);
 	}
@@ -4437,4 +4446,203 @@ int eof_manage_rs_phrases(void)
 	eof_manage_rs_phrases_strings = NULL;
 
 	return 1;
+}
+
+int eof_manage_rs_phrases_seek(DIALOG * d)
+{
+	unsigned long ctr, numphrases;
+	int junk;
+
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return D_O_K;
+
+	for(ctr = 0, numphrases = 0; ctr < eof_song->beats; ctr++)
+	{	//For each beat in the chart
+		if(eof_song->beat[ctr]->contained_section_event >= 0)
+		{	//If this beat has a section event (RS phrase)
+			if(eof_manage_rs_phrases_dialog[1].d1 == numphrases)
+			{	//If we've reached the item that is selected, seek to it
+				eof_set_seek_position(eof_song->beat[ctr]->pos + eof_av_delay);	//Seek to the beat containing the phrase
+				eof_render();	//Redraw screen
+				(void) dialog_message(eof_manage_rs_phrases_dialog, MSG_DRAW, 0, &junk);	//Redraw dialog
+				return D_O_K;
+			}
+			else
+			{
+				numphrases++;	//Update counter
+			}
+		}
+	}
+	return D_O_K;
+}
+
+int eof_manage_rs_phrases_add_level(DIALOG * d)
+{
+	unsigned long ctr, ctr2, numphrases, targetbeat = 0, instancectr, tracknum;
+	unsigned long startpos, endpos;		//Track the start and end position of the each instance of the phrase
+	char *phrasename = NULL, undo_made = 0;
+	EOF_PRO_GUITAR_TRACK *tp;
+	EOF_PHRASE_SECTION *ptr;
+
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return D_O_K;
+
+	//Identify the phrase that was selected
+	for(ctr = 0, numphrases = 0; ctr < eof_song->beats; ctr++)
+	{	//For each beat in the chart
+		if(eof_song->beat[ctr]->contained_section_event >= 0)
+		{	//If this beat has a section event (RS phrase)
+			if(eof_manage_rs_phrases_dialog[1].d1 == numphrases)
+			{	//If we've reached the selected phrase
+				targetbeat = ctr;			//Track the beat containing the selected phrase
+				phrasename = eof_song->text_event[eof_song->beat[ctr]->contained_section_event]->text;	//Track the name of the phrase
+				break;
+			}
+			else
+			{
+				numphrases++;	//Update counter
+			}
+		}
+	}
+
+	//Recheck to see if there are multiple instances of the selected phrase, and if so, prompt the user whether to alter all of them
+	for(ctr = 0, instancectr = 0; ctr < eof_song->beats; ctr++)
+	{	//For each beat in the chart
+		if(eof_song->beat[ctr]->contained_section_event >= 0)
+		{	//If this beat has a section event (RS phrase)
+			if(!ustrcmp(eof_song->text_event[eof_song->beat[ctr]->contained_section_event]->text, phrasename))
+			{	//If the section event matched the one that was selected
+				instancectr++;	//Increment counter
+			}
+		}
+	}
+	ctr = targetbeat;	//Parse the beat starting from the one that had the selected phrase
+	if(instancectr > 1)
+	{
+		if(alert(NULL, "Modify all instances of the selected phrase?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+		{	//If the user opts to increase the level of all instances of the selected phrase
+			ctr = 0;	//Parse the beats below starting from the first
+		}
+		else
+		{	//only modify the selected instance
+			instancectr = 0;	//Reset this variable
+		}
+	}
+
+	//Modify the selected phrase instance(s)
+	startpos = endpos = 0;	//Reset these to indicate that a phrase is being looked for
+	for(; ctr < eof_song->beats; ctr++)
+	{	//For each beat in the chart (starting from the one ctr is referring to)
+		if((eof_song->beat[ctr]->contained_section_event >= 0) || ((ctr + 1 >= eof_song->beats) && (startpos > endpos)))
+		{	//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
+			if(startpos != endpos)
+			{	//If this beat marks the end of a phrase instance that needs to be modified
+				endpos = eof_song->beat[ctr]->pos - 1;	//Track this as the end position of the previous phrase marker
+
+				//Increment the difficulty level of all notes and phrases that fall within the phrase that are in the active difficulty or higher
+				//Parse in reverse order so that new notes can be appended to the track in the same loop
+				for(ctr2 = eof_get_track_size(eof_song, eof_selected_track); ctr2 > 0; ctr2--)
+				{	//For each note in the track (in reverse order)
+					unsigned long notepos = eof_get_note_pos(eof_song, eof_selected_track, ctr2 - 1);
+					unsigned char notetype = eof_get_note_type(eof_song, eof_selected_track, ctr2 - 1);
+					if((notetype >= eof_note_type) && (notepos >= startpos) && (notepos <= endpos))
+					{	//If the note meets the criteria to be altered
+						if(!undo_made)
+						{	//If an undo state hasn't been made yet
+							eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+							undo_made = 1;
+						}
+						if(notetype + 1 >= eof_song->track[eof_selected_track]->numdiffs)
+						{	//If this operation needs to increase the track's difficulty count
+							eof_song->track[eof_selected_track]->numdiffs++;
+						}
+						if(notetype == eof_note_type)
+						{	//If this note is in the active difficulty, it will be duplicated into the next higher difficulty instead of just having its difficulty incremented
+							long length = eof_get_note_length(eof_song, eof_selected_track, ctr2 - 1);
+							(void) eof_copy_note(eof_song, eof_selected_track, ctr2 - 1, eof_selected_track, notepos, length, eof_note_type + 1);
+						}
+						else
+						{
+							eof_set_note_type(eof_song, eof_selected_track, ctr2 - 1, notetype + 1);	//Increment the note's difficulty
+						}
+					}
+				}
+				tracknum = eof_song->track[eof_selected_track]->tracknum;
+				tp = eof_song->pro_guitar_track[tracknum];
+				for(ctr2 = eof_get_num_arpeggios(eof_song, eof_selected_track); ctr2 > 0; ctr2--)
+				{	//For each arpeggio section in the track (in reverse order)
+					ptr = &eof_song->pro_guitar_track[tracknum]->arpeggio[ctr2 - 1];	//Simplify
+					if((ptr->difficulty >= eof_note_type) && (ptr->start_pos <= endpos) && (ptr->end_pos >= startpos))
+					{	//If this arpeggio overlaps at all with the phrase being manipulated
+						if(ptr->difficulty >= eof_note_type)
+						{	//If this arpeggio is in the active difficulty, it will be duplicated into the next higher difficulty instead of just having its difficulty incremented
+							(void) eof_track_add_section(eof_song, eof_selected_track, EOF_ARPEGGIO_SECTION, eof_note_type + 1, ptr->start_pos, ptr->end_pos, 0, NULL);
+						}
+						else
+						{
+							ptr->difficulty++;	//Increment the arpeggio's difficulty
+						}
+					}
+				}
+				for(ctr2 = tp->handpositions; ctr2 > 0; ctr2--)
+				{	//For each fret hand position in the track (in reverse order)
+					ptr = &tp->handposition[ctr2 - 1];	//Simplify
+					if((ptr->difficulty >= eof_note_type) && (ptr->start_pos >= startpos) && (ptr->start_pos <= endpos))
+					{	//If this fret hand position is within the phrase being manipulated
+						if(ptr->difficulty >= eof_note_type)
+						{	//If this fret hand position is in the active difficulty, it will be duplicated into the next higher difficulty instead of just having its difficulty incremented
+							(void) eof_track_add_section(eof_song, eof_selected_track, EOF_FRET_HAND_POS_SECTION, eof_note_type + 1, ptr->start_pos, ptr->end_pos, 0, NULL);
+						}
+						else
+						{
+							ptr->difficulty++;	//Increment the fret hand position's difficulty
+						}
+					}
+				}
+
+				if(!instancectr)
+				{	//If only the selected phrase instance was to be modified
+					break;	//Exit loop
+				}
+				startpos = endpos = 0;	//Reset these to indicate that a phrase is being looked for
+			}
+
+			if(eof_song->beat[ctr]->contained_section_event >= 0)
+			{	//If this beat has a phrase assigned to it
+				if(!ustrcmp(eof_song->text_event[eof_song->beat[ctr]->contained_section_event]->text, phrasename))
+				{	//If the section event matched the one that was selected
+					startpos = eof_song->beat[ctr]->pos;	//Track the starting position of the phrase
+				}
+			}
+		}
+	}
+
+	if(!undo_made)
+	{	//If no notes were within the selected phrase instance(s)
+		allegro_message("The selected phrase instance(s) had no notes so a new level was not created.");
+	}
+
+	//Re-render EOF
+	eof_track_sort_notes(eof_song, eof_selected_track);
+	eof_detect_difficulties(eof_song, eof_selected_track);
+	eof_render();
+
+	//Release and rebuild the strings for the dialog menu
+	for(ctr = 0; ctr < eof_manage_rs_phrases_strings_size; ctr++)
+	{	//Free previously allocated strings
+		free(eof_manage_rs_phrases_strings[ctr]);
+	}
+	free(eof_manage_rs_phrases_strings);
+	eof_manage_rs_phrases_strings = NULL;
+	eof_rebuild_manage_rs_phrases_strings();
+
+	return D_REDRAW;	//Have Allegro redraw the dialog
 }
