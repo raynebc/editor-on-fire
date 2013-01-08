@@ -169,5 +169,10 @@ int eof_menu_song_fret_hand_positions_copy_from(void);
 	//Allows the user to copy fret hand positions defined in another difficulty into the current track difficulty
 int eof_manage_rs_phrases(void);
 	//Displays the phrases defined for the current pro guitar/bass track, along with the maxdifficulty of each
+int eof_manage_rs_phrases_seek(DIALOG * d);
+	//Seeks to the beat containing the selected phrase
+int eof_manage_rs_phrases_add_level(DIALOG * d);
+	//Increments the notes within the selected phrase (either the selected instance or within all instances, depending on user selection)
+	//and copies the affected notes back into the current difficulty, making it convenient to author a new difficulty level for the notes in question.
 
 #endif
