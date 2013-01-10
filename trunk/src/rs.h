@@ -79,6 +79,9 @@ unsigned char eof_pro_guitar_track_find_effective_fret_hand_position(EOF_PRO_GUI
 unsigned long eof_pro_guitar_track_find_effective_fret_hand_position_definition(EOF_PRO_GUITAR_TRACK *tp, unsigned char difficulty, unsigned long position);
 	//Similar to eof_pro_guitar_track_find_effective_fret_hand_position(), but returns the hand position definition number in effect, or 0 if none are in effect
 	//This is for use in eof_menu_song_fret_hand_positions() to pre-select the hand position in effect at the current seek position when the dialog is launched
+unsigned long eof_find_effective_rs_phrase(unsigned long position);
+	//Returns the phrase number in effect (at or before) at the specified timestamp, or 0 if no phrase was in effect at that position
+	//This function assumes that the beat statistics are properly cached for the active track
 
 char *eof_rs_section_text_valid(char *string);
 	//Compares the given string against the string entries in eof_rs_predefined_sections[]
@@ -95,10 +98,14 @@ void eof_get_rocksmith_wav_path(char *buffer, const char *parent_folder, size_t 
 	//num defines the buffer's maximum size
 	//This is (song name).wav if the song title song property is defined, otherwise guitar.wav
 
-unsigned char eof_find_fully_leveled_rs_difficulty_in_time_range(EOF_SONG *sp, unsigned long track, unsigned long start, unsigned long stop);
-	//Examines the notes in all difficulties of the specified track and returns the lowest relative difficulty that represents the fully leveled
+unsigned char eof_compare_time_range_with_previous_difficulty(EOF_SONG *sp, unsigned long track, unsigned long start, unsigned long stop, unsigned char diff);
+	//Returns nonzero if the notes in the specified track and time range don't match with those in the previous difficulty
+	//Returns 0 if there is no previous difficulty, or upon error
+
+unsigned char eof_find_fully_leveled_rs_difficulty_in_time_range(EOF_SONG *sp, unsigned long track, unsigned long start, unsigned long stop, unsigned char relative);
+	//Examines the notes in all difficulties of the specified track and returns the lowest difficulty number that represents the fully leveled
 	//version of the specified time range, such as for finding appropriate maxdifficulty values for each Rocksmith phrase
-	//The relative difficulty is the same numbering system to define difficulty levels, based only on populated difficulties
+	//If relative is nonzero, the difficulty level returned is converted to the relative numbering system to define difficulty levels, based only on populated difficulties
 	//If no notes are in the range, 0 (EOF's lowest difficulty number) is returned
 
 int eof_check_rs_sections_have_phrases(EOF_SONG *sp, unsigned long track);

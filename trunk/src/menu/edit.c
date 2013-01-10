@@ -2312,6 +2312,7 @@ int eof_menu_edit_paste_from_difficulty(unsigned long source_difficulty, char *u
 		eof_pro_guitar_track_sort_fret_hand_positions(tp);	//Sort the positions, since they must be in order for displaying to the user
 	}//If this is a pro guitar track
 
+	eof_track_sort_notes(eof_song, eof_selected_track);
 	eof_detect_difficulties(eof_song, eof_selected_track);
 	return 1;
 }

@@ -161,7 +161,7 @@ MENU eof_song_rocksmith_menu[] =
     {"Remove difficulty limit", eof_song_proguitar_toggle_difficulty_limit, NULL, 0, NULL},
     {"Insert new difficulty", eof_song_proguitar_insert_difficulty, NULL, 0, NULL},
     {"Delete active difficulty", eof_song_proguitar_delete_difficulty, NULL, 0, NULL},
-    {"&Manage RS phrases", eof_manage_rs_phrases, NULL, 0, NULL},
+    {"&Manage RS phrases\t" CTRL_NAME "+SHIFT+M", eof_manage_rs_phrases, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -4399,7 +4399,7 @@ void eof_rebuild_manage_rs_phrases_strings(void)
 			if(currentphrase)
 			{	//If another phrase has been read
 				endpos = eof_song->beat[ctr]->pos - 1;	//Track this as the end position of the previous phrase marker
-				maxdiff = eof_find_fully_leveled_rs_difficulty_in_time_range(eof_song, eof_selected_track, startpos, endpos);	//Find the maxdifficulty value for this phrase instance
+				maxdiff = eof_find_fully_leveled_rs_difficulty_in_time_range(eof_song, eof_selected_track, startpos, endpos, 1);	//Find the maxdifficulty value for this phrase instance, converted to relative numbering
 				stringlen = snprintf(NULL, 0, "%s : maxDifficulty = %u", currentphrase, maxdiff) + 1;	//Find the number of characters needed to snprintf this string
 				eof_manage_rs_phrases_strings[index] = malloc(stringlen + 1);	//Allocate memory to build the string
 				if(!eof_manage_rs_phrases_strings[index])
@@ -4431,6 +4431,7 @@ int eof_manage_rs_phrases(void)
 
 	//Allocate and build the strings for the phrases
 	eof_rebuild_manage_rs_phrases_strings();
+	eof_manage_rs_phrases_dialog[1].d1 = eof_find_effective_rs_phrase(eof_music_pos - eof_av_delay);	//Pre-select the phrase in effect at the current position
 
 	//Call the dialog
 	eof_color_dialog(eof_manage_rs_phrases_dialog, gui_fg_color, gui_bg_color);
@@ -4487,6 +4488,7 @@ int eof_manage_rs_phrases_add_level(DIALOG * d)
 	char *phrasename = NULL, undo_made = 0;
 	EOF_PRO_GUITAR_TRACK *tp;
 	EOF_PHRASE_SECTION *ptr;
+	char prompt = 0, prompt2 = 0;
 
 	if(!d)
 	{	//Satisfy Splint by checking value of d
@@ -4553,6 +4555,54 @@ int eof_manage_rs_phrases_add_level(DIALOG * d)
 				{	//For each note in the track (in reverse order)
 					unsigned long notepos = eof_get_note_pos(eof_song, eof_selected_track, ctr2 - 1);
 					unsigned char notetype = eof_get_note_type(eof_song, eof_selected_track, ctr2 - 1);
+					if((notetype >= eof_note_type) && (notepos < startpos) && (notepos + 10 >= startpos))
+					{	//If this note is 1 to 10 milliseconds before the beginning of the phrase
+						if(!prompt)
+						{	//If the user wasn't prompted about how to handle this condition yet
+							if(alert("At least one note is between 1 and 10 ms before the phrase.", NULL, "Move such notes to the start of the phrase?", "&Yes", "&No", 'y', 'n') == 1)
+							{	//If the user opts to correct the note positions
+								prompt = 1;	//Store a "yes" response
+							}
+							else
+							{
+								prompt = 2;	//Store a "no" response
+							}
+						}
+						if(prompt == 1)
+						{	//If the user opted to correct the note positions
+							if(!undo_made)
+							{	//If an undo state hasn't been made yet
+								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+								undo_made = 1;
+							}
+							eof_set_note_pos(eof_song, eof_selected_track, ctr2 - 1, startpos);	//Re-position the note to the start of the phrase
+							notepos = startpos;
+						}
+					}
+					if((notetype >= eof_note_type) && (notepos > endpos) && (notepos - 10 <= endpos))
+					{	//If this note is 1 to 10 milliseconds after the end of the phrase
+						if(!prompt)
+						{	//If the user wasn't prompted about how to handle this condition yet
+							if(alert("At least one note is between 1 and 10 ms after the phrase.", NULL, "Move such notes to the end the phrase?", "&Yes", "&No", 'y', 'n') == 1)
+							{	//If the user opts to correct the note positions
+								prompt2 = 1;	//Store a "yes" response
+							}
+							else
+							{
+								prompt2 = 2;	//Store a "no" response
+							}
+						}
+						if(prompt2 == 1)
+						{	//If the user opted to correct the note positions
+							if(!undo_made)
+							{	//If an undo state hasn't been made yet
+								eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+								undo_made = 1;
+							}
+							eof_set_note_pos(eof_song, eof_selected_track, ctr2 - 1, endpos);	//Re-position the note to the end of the phrase
+							notepos = endpos;
+						}
+					}
 					if((notetype >= eof_note_type) && (notepos >= startpos) && (notepos <= endpos))
 					{	//If the note meets the criteria to be altered
 						if(!undo_made)
@@ -4628,6 +4678,10 @@ int eof_manage_rs_phrases_add_level(DIALOG * d)
 	if(!undo_made)
 	{	//If no notes were within the selected phrase instance(s)
 		allegro_message("The selected phrase instance(s) had no notes so a new level was not created.");
+	}
+	else
+	{	//Otherwise remove the difficulty limit since this operation has modified the chart
+		eof_song->track[eof_selected_track]->flags |= EOF_TRACK_FLAG_UNLIMITED_DIFFS;	//Remove the difficulty limit for this track
 	}
 
 	//Re-render EOF

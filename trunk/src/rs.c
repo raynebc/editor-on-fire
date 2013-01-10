@@ -460,7 +460,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 					endpos = sp->beat[ctr2]->pos - 1;	//Track this as the end position of the previous phrase marker
 					if(startpos && !ustricmp(currentphrase, sp->text_event[sectionlist[ctr]]->text))
 					{	//If the phrase that just ended is an instance of the phrase being written
-						maxdiff = eof_find_fully_leveled_rs_difficulty_in_time_range(sp, track, startpos, endpos);	//Find the maxdifficulty value for this phrase instance
+						maxdiff = eof_find_fully_leveled_rs_difficulty_in_time_range(sp, track, startpos, endpos, 1);	//Find the maxdifficulty value for this phrase instance, converted to relative numbering
 						if(maxdiff > ongoingmaxdiff)
 						{	//If that phrase instance had a higher maxdifficulty than the other instances checked so far
 							ongoingmaxdiff = maxdiff;	//Track it
@@ -520,7 +520,11 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	chordlistsize = eof_build_chord_list(sp, track, &chordlist);	//Build a list of all unique chords in the track
 	if(!chordlistsize)
 	{	//If there were no chords, write an empty chord template tag
-		(void) pack_fputs("  <chordTemplates count=\"0\"/>\n", fp);
+///The Rocksmith toolkit (v1.01) has a bug where a song package cannot be created if any arrangements have no chord templates, so write at least one
+//		(void) pack_fputs("  <chordTemplates count=\"0\"/>\n", fp);
+		(void) pack_fputs("  <chordTemplates count=\"1\">\n", fp);
+		(void) pack_fputs("   <chordTemplate chordName=\"\" finger0=\"1\" finger1=\"-1\" finger2=\"-1\" finger3=\"1\" finger4=\"-1\" finger5=\"-1\" fret0=\"14\" fret1=\"-1\" fret2=\"-1\" fret3=\"14\" fret4=\"-1\" fret5=\"-1\"/>\n", fp);
+		(void) pack_fputs("  </chordTemplates>\n", fp);
 	}
 	else
 	{
@@ -1738,10 +1742,70 @@ void eof_get_rocksmith_wav_path(char *buffer, const char *parent_folder, size_t 
 	buffer[num - 1] = '\0';	//Ensure the finalized string is terminated
 }
 
-unsigned char eof_find_fully_leveled_rs_difficulty_in_time_range(EOF_SONG *sp, unsigned long track, unsigned long start, unsigned long stop)
+unsigned char eof_compare_time_range_with_previous_difficulty(EOF_SONG *sp, unsigned long track, unsigned long start, unsigned long stop, unsigned char diff)
 {
-	unsigned char thisdiff, reldiff, fullyleveleddiff = 0, prevdiff, difference_found;
-	unsigned long ctr, ctr2, ctr3, thispos, thispos2;
+	unsigned long ctr2, ctr3, thispos, thispos2;
+	unsigned char note_found;
+	unsigned char prevdiff, thisdiff;
+
+	if(!sp || (track >= sp->tracks) || (start > stop))
+		return 0;	//Invalid parameters
+	if(!diff)
+		return 0;	//There is no difficulty before the first difficulty
+
+	prevdiff = diff - 1;
+	if(((sp->track[track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) == 0) && (prevdiff == 4))
+	{	//If the track is using the traditional 5 difficulty system and the difficulty previous to the being examined is the BRE difficulty
+		prevdiff--;	//Compare to the previous difficulty
+	}
+
+	for(ctr2 = 0; ctr2 < eof_get_track_size(sp, track); ctr2++)
+	{	//For each note in the track
+		thispos = eof_get_note_pos(sp, track, ctr2);	//Get this note's position
+		if(thispos > stop)
+		{	//If this note (and all remaining notes, since they are expected to remain sorted) is beyond the specified range, break from loop
+			break;
+		}
+
+		if(thispos >= start)
+		{	//If this note is at or after the start of the specified range, check its difficulty
+			thisdiff = eof_get_note_type(sp, track, ctr2);	//Get this note's difficulty
+			if(thisdiff == diff)
+			{	//If this note is in the difficulty being examined
+				//Compare this note to the one at the same position in the previous difficulty, if there is one
+				note_found = 0;	//This condition will be set if this note is found in the previous difficulty
+				for(ctr3 = ctr2 + 1; ctr3 > 0; ctr3--)
+				{	//For each note in the track, for performance reasons going backward from the one being examined in the outer loop (which has a higher note number when sorted)
+					thispos2 = eof_get_note_pos(sp, track, ctr3 - 1);	//Get this note's position
+					thisdiff = eof_get_note_type(sp, track, ctr3 - 1);	//Get this note's difficulty
+					if(thispos2 < thispos)
+					{	//If this note and all previous ones are before the one being examined in the outer loop
+						break;
+					}
+					if((thispos == thispos2) && (thisdiff == prevdiff))
+					{	//If this note is at the same position and one difficulty lower than the one being examined in the outer loop
+						note_found = 1;	//Track that a note at the same position was found in the previous difficulty
+						if(eof_note_compare_simple(sp, track, ctr2, ctr3 - 1))
+						{	//If the two notes don't match
+							return 1;	//Return difference found
+						}
+					}
+				}
+				if(!note_found)
+				{	//If this note has no note at the same position in the previous difficulty
+					return 1;	//Return difference found
+				}
+			}
+		}
+	}//For each note in the track
+
+	return 0;	//Return no difference found
+}
+
+unsigned char eof_find_fully_leveled_rs_difficulty_in_time_range(EOF_SONG *sp, unsigned long track, unsigned long start, unsigned long stop, unsigned char relative)
+{
+	unsigned char reldiff, fullyleveleddiff = 0;
+	unsigned long ctr;
 
 	if(!sp || (track >= sp->tracks) || (start > stop))
 		return 0;	//Invalid parameters
@@ -1753,60 +1817,19 @@ unsigned char eof_find_fully_leveled_rs_difficulty_in_time_range(EOF_SONG *sp, u
 	}
 	for(ctr = 0; ctr < 256; ctr++)
 	{	//For each of the possible difficulties
-		if(!eof_track_diff_populated_status[ctr])
-		{	//If this difficulty is empty
-			continue;	//Skip it
-		}
-		difference_found = 0;	//Reset this condition, it will remain 0 if this difficulty has no notes within the specified time range
-		for(ctr2 = 0; ctr2 < eof_get_track_size(sp, track); ctr2++)
-		{	//For each note in the track
-			thispos = eof_get_note_pos(sp, track, ctr2);	//Get this note's position
-			if(thispos > stop)
-			{	//If this note (and all remaining notes, since they are expected to remain sorted) is beyond the specified range, break from loop
-				break;
+		if(eof_track_diff_populated_status[ctr])
+		{	//If this difficulty isn't empty
+			if(eof_compare_time_range_with_previous_difficulty(sp, track, start, stop, ctr))
+			{	//If this difficulty had more notes than the previous or any of the notes within the phrase were different than those in the previous difficulty
+				fullyleveleddiff = ctr;			//Track the lowest difficulty number that represents the fully leveled time range of notes
 			}
-
-			if(thispos >= start)
-			{	//If this note is at or after the start of the specified range, check its difficulty
-				thisdiff = eof_get_note_type(sp, track, ctr2);	//Get this note's difficulty
-				if(thisdiff == ctr)
-				{	//If this note is in the difficulty being examined
-					//Compare this note to the one at the same position in the previous difficulty, if there is one
-					difference_found = 1;	//Set this condition, it will ultimately end up as zero if all notes in the phrase are identical to those in the previous difficulty
-					if(ctr > 0)
-					{	//If there is a previous difficulty
-						prevdiff = ctr - 1;
-						if(((sp->track[track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) == 0) && (prevdiff == 4))
-						{	//If the track is using the traditional 5 difficulty system and the difficulty previous to the being examined is the BRE difficulty
-							prevdiff--;	//Compare to the previous difficulty
-						}
-						for(ctr3 = ctr2 + 1; ctr3 > 0; ctr3--)
-						{	//For each note in the track, for performance reasons going backward from the one being examined in the outer loop (which has a higher note number when sorted)
-							thispos2 = eof_get_note_pos(sp, track, ctr3 - 1);	//Get this note's position
-							thisdiff = eof_get_note_type(sp, track, ctr3 - 1);	//Get this note's difficulty
-							if(thispos2 < thispos)
-							{	//If this note and all previous ones are before the one being examined in the outer loop
-								break;
-							}
-							if((thispos == thispos2) && (thisdiff == prevdiff))
-							{	//If this note is at the same position and one difficulty lower than the one being examined in the outer loop
-								difference_found = 0;	//Clear this condition unless the notes are found not to match
-								if(eof_note_compare_simple(sp, track, ctr2, ctr3 - 1))
-								{	//If the two notes don't match
-									difference_found = 1;
-									break;
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-		if(difference_found)
-		{	//If this difficulty had more notes than the previous or any of the notes within the phrase were different than those in the previous difficulty
-			fullyleveleddiff = ctr;			//Track the lowest difficulty number that represents the fully leveled time range of notes
 		}
 	}//For each of the possible difficulties
+
+	if(!relative)
+	{	//If the resulting difficulty number is not to be converted to Rocksmith's relative difficulty number system
+		return fullyleveleddiff;
+	}
 
 	//Remap fullyleveleddiff to the relative difficulty
 	for(ctr = 0, reldiff = 0; ctr < 256; ctr++)
@@ -1881,4 +1904,31 @@ int eof_check_rs_sections_have_phrases(EOF_SONG *sp, unsigned long track)
 	}
 
 	return 0;	//Return completion
+}
+
+unsigned long eof_find_effective_rs_phrase(unsigned long position)
+{
+	unsigned long ctr, effective = 0;
+
+	for(ctr = 0; ctr < eof_song->beats; ctr++)
+	{	//For each beat in the chart
+		if(eof_song->beat[ctr]->contained_section_event >= 0)
+		{	//If this beat has a section event (RS phrase)
+			if(eof_song->beat[ctr]->pos <= position)
+			{	//If this phrase is at or before the position being checked
+				effective++;
+			}
+			else
+			{	//If this phrase is after the position being checked
+				break;
+			}
+		}
+	}
+
+	if(effective)
+	{	//If the specified phrase was found
+		return effective - 1;	//Return its number
+	}
+
+	return 0;	//Return no phrase found
 }
