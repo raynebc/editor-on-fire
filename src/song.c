@@ -224,6 +224,7 @@ void eof_destroy_song(EOF_SONG * sp)
 		(void) delete_file("eof.recover");	//Delete it when the active project is cleanly closed
 	}
 	free(sp);
+	eof_silence_loaded = 0;	//When the chart is destroyed, reset this condition so that if another project is being loaded, its playback will be allowed to work if audio is present
 //	eof_log_level |= 2;	//Enable verbose logging
 }
 

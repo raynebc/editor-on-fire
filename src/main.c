@@ -2468,7 +2468,7 @@ void eof_render_note_window(void)
 			textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "Catalog: %lu of %lu", eof_song->catalog->entries ? eof_selected_catalog_entry + 1 : 0, eof_song->catalog->entries);
 		}
 		ypos += 12;
-		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "OGG File: \"%s\"", eof_song->tags->ogg[eof_selected_ogg].filename);
+		textprintf_ex(eof_window_note->screen, font, 2, ypos, eof_color_white, -1, "OGG File: %s", eof_silence_loaded ? "(None)" : eof_song->tags->ogg[eof_selected_ogg].filename);
 
 		if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 		{	//Display information specific to pro guitar tracks
