@@ -1114,7 +1114,7 @@ char * eof_events_list(int index, int * size)
 {
 	int i;
 	int ecount = 0;
-	char trackname[22] = {0};
+	char trackname[25] = {0};
 
 	for(i = 0; i < eof_song->text_events; i++)
 	{
