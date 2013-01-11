@@ -17,6 +17,11 @@ void eof_prepare_edit_menu(void);		//Enable/disable Edit menu items prior to dra
 int eof_menu_edit_undo(void);
 int eof_menu_edit_redo(void);
 int eof_menu_edit_copy(void);
+int eof_menu_edit_cut(unsigned long anchor, int option);
+	//Stores "Auto adjust" data to "eof.autoadjust"
+	//If option is 1, the function stores data for all notes up until 1ms before the last beat marker, otherwise data for notes up until the next anchor are stored
+int eof_menu_edit_cut_paste(unsigned long anchor, int option);
+	//Performs "Auto adjust" logic (ie. when anchors are manipulated) to write the notes that were stored in "eof.autoadjust"
 int eof_menu_edit_paste_logic(int oldpaste);	//If oldpaste is nonzero, uses old paste logic (notes paste to positions relative to each other), otherwise uses new paste logic (notes paste into positions relative to the copied notes positions within their beats)
 int eof_menu_edit_paste(void);					//Calls eof_menu_edit_paste_logic() to use new paste logic
 int eof_menu_edit_old_paste(void);				//Calls eof_menu_edit_paste_logic() to use old paste logic

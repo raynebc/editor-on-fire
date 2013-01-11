@@ -28,10 +28,6 @@ char * eof_events_list(int index, int * size);		//Dialog logic to display the ch
 char * eof_events_list_all(int index, int * size);	//Dialog logic to display the chart's text events in the "All Events" list box
 char * eof_colors_list(int index, int * size);		//Dialog logic to display the usable color sets in the Preferences dialog
 int eof_ogg_settings(void);		//Launches the MP3->OGG conversion dialog window
-int eof_menu_edit_cut(unsigned long anchor, int option);
-	//Stores "Auto adjust" data to "eof.autoadjust"
-	//If option is 1, the function stores data for all notes up until 1ms before the last beat marker, otherwise data for notes up until the next anchor are stored
-int eof_menu_edit_cut_paste(unsigned long anchor, int option);	//Performs "Auto adjust" logic (ie. when anchors are manipulated)
 int eof_ini_dialog_add(DIALOG * d);		//Performs the INI setting add action presented in the INI settings dialog
 int eof_ini_dialog_delete(DIALOG * d);	//Performs the INI setting delete action presented in the INI settings dialog
 int eof_events_dialog_add(DIALOG * d);	//Performs the Text event add action presented in the Events dialog
