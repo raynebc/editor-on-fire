@@ -815,6 +815,10 @@ int eof_menu_edit_cut(unsigned long anchor, int option)
 					tracknum = eof_song->track[j]->tracknum;
 					(void) pack_fwrite(eof_song->pro_guitar_track[tracknum]->note[i]->frets, 6, fp);	//Write the fret values for the six usable strings
 					(void) pack_putc(eof_song->pro_guitar_track[tracknum]->note[i]->legacymask, fp);	//Write the legacy bitmask
+					(void) pack_fwrite(eof_song->pro_guitar_track[tracknum]->note[i]->finger, 8, fp);	//Write the note's finger array
+					(void) pack_iputl(eof_song->pro_guitar_track[tracknum]->note[i]->ghost, fp);		//Write the note's ghost bitmask
+					(void) pack_putc(eof_song->pro_guitar_track[tracknum]->note[i]->bendstrength, fp);	//Write the note's bend strength
+					(void) pack_putc(eof_song->pro_guitar_track[tracknum]->note[i]->slideend, fp);		//Write the note's slide end position
 				}
 			}
 		}
@@ -999,8 +1003,12 @@ int eof_menu_edit_cut_paste(unsigned long anchor, int option)
 					if(eof_song->track[j]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 					{	//If this is a pro guitar track
 						tracknum = eof_song->track[j]->tracknum;
-						(void) pack_fread(eof_song->pro_guitar_track[tracknum]->note[notenum]->frets, 6, fp);		//Set the fret values for the six usable strings
-						eof_song->pro_guitar_track[tracknum]->note[notenum]->legacymask = pack_getc(fp);	//Set the legacy bitmask
+						(void) pack_fread(eof_song->pro_guitar_track[tracknum]->note[notenum]->frets, 6, fp);	//Set the fret values for the six usable strings
+						eof_song->pro_guitar_track[tracknum]->note[notenum]->legacymask = pack_getc(fp);		//Set the legacy bitmask
+						(void) pack_fread(eof_song->pro_guitar_track[tracknum]->note[notenum]->finger, 8, fp);	//Set the note's finger array
+						eof_song->pro_guitar_track[tracknum]->note[notenum]->ghost = pack_igetl(fp);			//Set the note's ghost bitmask
+						eof_song->pro_guitar_track[tracknum]->note[notenum]->bendstrength = pack_getc(fp);		//Set the note's bend strength
+						eof_song->pro_guitar_track[tracknum]->note[notenum]->slideend = pack_getc(fp);			//Set the note's slide end position
 					}
 				}
 			}

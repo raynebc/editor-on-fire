@@ -12,6 +12,7 @@
 #include "../midi_data_import.h"	//For eof_events_overridden_by_stored_MIDI_track()
 #include "../rs.h"
 #include "beat.h"
+#include "edit.h"
 #include "song.h"
 
 #ifdef USEMEMWATCH
