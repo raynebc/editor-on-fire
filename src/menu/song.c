@@ -4581,7 +4581,7 @@ int eof_manage_rs_phrases_add_level(DIALOG * d)
 					}
 					if((notetype >= eof_note_type) && (notepos > endpos) && (notepos - 10 <= endpos))
 					{	//If this note is 1 to 10 milliseconds after the end of the phrase
-						if(!prompt)
+						if(!prompt2)
 						{	//If the user wasn't prompted about how to handle this condition yet
 							if(alert("At least one note is between 1 and 10 ms after the phrase.", NULL, "Move such notes to the end the phrase?", "&Yes", "&No", 'y', 'n') == 1)
 							{	//If the user opts to correct the note positions

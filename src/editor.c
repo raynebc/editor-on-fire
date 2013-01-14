@@ -4922,14 +4922,20 @@ void eof_render_editor_window_common(void)
 					if(eof_write_rs_files && (eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT))
 					{	//If the user wants to save Rocksmith capable files, and a pro guitar/bass track is active, determine if the section (Rocksmith phrase) is identical in both this and the previous difficulty or if the phrase is fully leveled in the active difficulty
 						unsigned long i2, startpos, endpos;
+						char retval;
 						for(i2 = i + 1; i2 < eof_song->beats; i2++)
 						{	//For each remaining beat
 							if((eof_song->beat[i2]->contained_section_event >= 0) || (i2 + 1 >= eof_song->beats))
 							{	//If this beat has a section event (RS phrase) or a phrase is in progress and this is the last beat, it marks the end of any current phrase and the potential start of another
 								startpos = eof_song->beat[i]->pos;		//The outer loop is tracking the phrase being processed
 								endpos = eof_song->beat[i2]->pos - 1;	//Track this as the end position of the previous phrase marker
-								if(eof_note_type && !eof_compare_time_range_with_previous_difficulty(eof_song, eof_selected_track, startpos, endpos, eof_note_type))
-								{	//If this phrase is identical among this difficulty and the previous (if the lowest difficulty isn't active), render the section name with a red background
+								retval = eof_compare_time_range_with_previous_or_next_difficulty(eof_song, eof_selected_track, startpos, endpos, eof_note_type, 1);	//Compare the phrase's content between this difficulty and the next
+								if(retval < 0)
+								{	//If the phrase was empty in this difficulty, render the section name with a blue background
+									bg_color = eof_color_blue;
+								}
+								else if(!retval)
+								{	//If this phrase is identical among this difficulty and the next, render the section name with a red background
 									bg_color = eof_color_red;
 								}
 								else if(eof_find_fully_leveled_rs_difficulty_in_time_range(eof_song, eof_selected_track, startpos, endpos, 0) == eof_note_type)
