@@ -4270,7 +4270,7 @@ int eof_menu_song_fret_hand_positions_copy_from(void)
 			{	//For each hand position in the track
 				if((tp->handposition[ctr3].difficulty == ctr2) && (eof_note_type != ctr2))
 				{	//If this hand position is in the difficulty being checked, and it isn't in the active difficulty, build its list box display string and increment counter
-					(void) snprintf(eof_menu_song_difficulty_list_strings[diffcount], sizeof(eof_menu_song_difficulty_list_strings[0] - 1), "%lu", ctr2);
+					(void) snprintf(eof_menu_song_difficulty_list_strings[diffcount], sizeof(eof_menu_song_difficulty_list_strings[0]) - 1, "%lu", ctr2);
 					diffcount++;	//Track the number of difficulties that contain any fret hand positions
 					break;	//Break so that the remaining difficulties can be checked
 				}

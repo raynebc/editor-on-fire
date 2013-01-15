@@ -1819,20 +1819,43 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 				populated = 1;	//Track that there was at least 1 note in the active difficulty of the phrase
 				//Compare this note to the one at the same position in the comparing difficulty, if there is one
 				note_found = 0;	//This condition will be set if this note is found in the previous difficulty
-				for(ctr3 = ctr2 + 1; ctr3 > 0; ctr3--)
-				{	//For each note in the track, for performance reasons going backward from the one being examined in the outer loop (which has a higher note number when sorted)
-					thispos2 = eof_get_note_pos(sp, track, ctr3 - 1);	//Get this note's position
-					thisdiff = eof_get_note_type(sp, track, ctr3 - 1);	//Get this note's difficulty
-					if(thispos2 < thispos)
-					{	//If this note and all previous ones are before the one being examined in the outer loop
-						break;
+				if(compareto < 0)
+				{	//If comparing to the previous difficulty, parse notes backwards
+					for(ctr3 = ctr2; ctr3 > 0; ctr3--)
+					{	//For each previous note in the track, for performance reasons going backward from the one being examined in the outer loop (which has a higher note number when sorted)
+						thispos2 = eof_get_note_pos(sp, track, ctr3 - 1);	//Get this note's position
+						thisdiff = eof_get_note_type(sp, track, ctr3 - 1);	//Get this note's difficulty
+						if(thispos2 < thispos)
+						{	//If this note and all previous ones are before the one being examined in the outer loop
+							break;
+						}
+						if((thispos == thispos2) && (thisdiff == comparediff))
+						{	//If this note is at the same position and one difficulty lower than the one being examined in the outer loop
+							note_found = 1;	//Track that a note at the same position was found in the previous difficulty
+							if(eof_note_compare_simple(sp, track, ctr2, ctr3 - 1))
+							{	//If the two notes don't match
+								return 1;	//Return difference found
+							}
+						}
 					}
-					if((thispos == thispos2) && (thisdiff == comparediff))
-					{	//If this note is at the same position and one difficulty lower than the one being examined in the outer loop
-						note_found = 1;	//Track that a note at the same position was found in the previous difficulty
-						if(eof_note_compare_simple(sp, track, ctr2, ctr3 - 1))
-						{	//If the two notes don't match
-							return 1;	//Return difference found
+				}
+				else
+				{	//Comparing to the next difficulty, parse notes forwards
+					for(ctr3 = ctr2 + 1; ctr3 < eof_get_track_size(sp, track); ctr3++)
+					{	//For each remaining note in the track
+						thispos2 = eof_get_note_pos(sp, track, ctr3);	//Get this note's position
+						thisdiff = eof_get_note_type(sp, track, ctr3);	//Get this note's difficulty
+						if(thispos2 < thispos)
+						{	//If this note and all previous ones are before the one being examined in the outer loop
+							break;
+						}
+						if((thispos == thispos2) && (thisdiff == comparediff))
+						{	//If this note is at the same position and one difficulty lower than the one being examined in the outer loop
+							note_found = 1;	//Track that a note at the same position was found in the previous difficulty
+							if(eof_note_compare_simple(sp, track, ctr2, ctr3))
+							{	//If the two notes don't match
+								return 1;	//Return difference found
+							}
 						}
 					}
 				}

@@ -1621,8 +1621,8 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					trackptr->description = malloc(strlen(buffer) + 1);	//Allocate enough memory to duplicate this string
 					if(!trackptr->description)
 					{
-						free(trackptr);
 						free(trackptr->trackname);
+						free(trackptr);
 						return 0;	//Memory allocation error
 					}
 					strcpy(trackptr->description, buffer);
@@ -1643,9 +1643,9 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					eventptr = malloc(sizeof(struct eof_MIDI_data_event));
 					if(!eventptr)
 					{
-						free(trackptr);
 						free(trackptr->trackname);
 						free(trackptr->description);
+						free(trackptr);
 						return 0;	//Memory allocation error
 					}
 					(void) eof_load_song_string_pf(buffer, fp, sizeof(buffer));	//Read the timestamp string
@@ -1653,9 +1653,9 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					eventptr->stringtime = malloc(strlen(buffer) + 1);		//Allocate enough memory to store the timestamp string
 					if(!eventptr->stringtime)
 					{
-						free(trackptr);
 						free(trackptr->trackname);
 						free(trackptr->description);
+						free(trackptr);
 						free(eventptr);
 						return 0;	//Memory allocation error
 					}
@@ -1669,9 +1669,9 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 					eventptr->data = malloc((size_t)eventptr->size);	//Allocate enough memory to store the event data
 					if(!eventptr->data)
 					{
-						free(trackptr);
 						free(trackptr->trackname);
 						free(trackptr->description);
+						free(trackptr);
 						free(eventptr->stringtime);
 						free(eventptr);
 						return 0;	//Memory allocation error

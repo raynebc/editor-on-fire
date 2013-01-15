@@ -2950,7 +2950,7 @@ int eof_menu_song_paste_from_difficulty(void)
 	{	//For each possible difficulty
 		if(eof_track_diff_populated_status[ctr] && (ctr != eof_note_type))
 		{	//If this difficulty is populated and isn't the active difficulty, build its list box display string
-			(void) snprintf(eof_menu_song_difficulty_list_strings[diffcount], sizeof(eof_menu_song_difficulty_list_strings[0] - 1), "%lu", ctr);
+			(void) snprintf(eof_menu_song_difficulty_list_strings[diffcount], sizeof(eof_menu_song_difficulty_list_strings[0]) - 1, "%lu", ctr);
 			diffcount++;	//Increment counter
 		}
 	}
