@@ -344,10 +344,11 @@ void eof_snap_logic(EOF_SNAP_DATA * sp, unsigned long p)
 					sp->measure_length += bl;
 				}
 			}
-			else
-			{
-				bl = sp->beat_length * ts;
-			}
+///bl is not used outside the above if condition
+//			else
+//			{
+//				bl = sp->beat_length * ts;
+//			}
 
 			/* find the snap positions */
 			snaplength = (float)sp->measure_length / (float)eof_snap_interval;
