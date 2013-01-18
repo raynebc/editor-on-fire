@@ -285,7 +285,7 @@ unsigned long eof_build_section_list(EOF_SONG *sp, unsigned long **results, unsi
 int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, char *user_warned)
 {
 	PACKFILE * fp;
-	char buffer[256] = {0}, buffer2[260] = {0};
+	char buffer[600] = {0}, buffer2[512] = {0};
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
 	unsigned long ctr, ctr2, ctr3, ctr4, numsections, stringnum, bitmask, numsinglenotes, numchords, *chordlist, chordlistsize, *sectionlist, sectionlistsize, xml_end, numevents = 0;
@@ -648,7 +648,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		char expanded_loading_text[512];	//A string to expand the user defined loading text into
 		(void) strftime(expanded_loading_text, sizeof(expanded_loading_text), sp->tags->loading_text, caltime);	//Expand any user defined calendar date/time tokens
 		(void) pack_fputs("  <controls count =\"2\">\n", fp);
-		expand_xml_text(buffer2, sizeof(buffer2) - 1, expanded_loading_text, 256);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+		expand_xml_text(buffer2, sizeof(buffer2) - 1, expanded_loading_text, 512);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
 		(void) snprintf(buffer, sizeof(buffer) - 1, "    <control time=\"5.100\" code=\"ShowMessageBox(hint1, %s)\"/>\n", buffer2);	//Insert expanded loading text into control string
 		(void) pack_fputs(buffer, fp);
 		(void) pack_fputs("    <control time=\"10.100\" code=\"ClearAllMessageBoxes()\"/>\n", fp);
