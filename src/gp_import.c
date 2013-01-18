@@ -2293,6 +2293,10 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 					(void) pack_getc(inf);								//Read section string color (Blue intensity)
 					(void) pack_getc(inf);								//Read unused value
 				}
+				if(bytemask & 16)
+				{	//Number of alternate ending
+					word = pack_getc(inf);	//Read alternate ending number
+				}
 			}
 			if(bytemask & 64)
 			{	//Key signature change
