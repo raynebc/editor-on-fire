@@ -2074,3 +2074,31 @@ unsigned long eof_find_effective_rs_phrase(unsigned long position)
 
 	return 0;	//Return no phrase found
 }
+
+int eof_time_range_is_populated(EOF_SONG *sp, unsigned long track, unsigned long start, unsigned long stop, unsigned char diff)
+{
+	unsigned long ctr2, thispos;
+	unsigned char thisdiff;
+
+	if(!sp || (track >= sp->tracks) || (start > stop))
+		return 0;	//Invalid parameters
+
+	for(ctr2 = 0; ctr2 < eof_get_track_size(sp, track); ctr2++)
+	{	//For each note in the track
+		thispos = eof_get_note_pos(sp, track, ctr2);	//Get this note's position
+		if(thispos > stop)
+		{	//If this note (and all remaining notes, since they are expected to remain sorted) is beyond the specified range, break from loop
+			break;
+		}
+		if(thispos >= start)
+		{	//If this note is at or after the start of the specified range, check its difficulty
+			thisdiff = eof_get_note_type(sp, track, ctr2);	//Get this note's difficulty
+			if(thisdiff == diff)
+			{	//If this note is in the difficulty being examined
+				return 1;	//Return specified range at the specified difficulty is populated
+			}
+		}
+	}
+
+	return 0;	//Return not populated
+}
