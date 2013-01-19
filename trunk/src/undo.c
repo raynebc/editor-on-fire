@@ -2,8 +2,9 @@
 #include "main.h"
 #include "menu/edit.h"
 #include "dialog.h"
-#include "undo.h"
 #include "editor.h"
+#include "rs.h"
+#include "undo.h"
 #include "utility.h"
 
 #ifdef USEMEMWATCH
@@ -151,11 +152,14 @@ int eof_undo_add(int type)
 int eof_undo_apply(void)
 {
 	char fn[1024] = {0};
+	char title[256];
 
  	eof_log("eof_undo_apply() entered", 1);
 
 	if(eof_undo_count > 0)
 	{
+		strncpy(title, eof_song->tags->title, sizeof(title));	//Backup the song title field, since if it changes as part of the undo, the Rocksmith WAV file should be deleted
+
 		(void) snprintf(fn, sizeof(fn) - 1, "eof%03u.redo", eof_log_id);	//Include EOF's log ID in the redo name to almost guarantee it is uniquely named
 		(void) eof_save_song(eof_song, fn);
 		eof_redo_type = 0;
@@ -176,8 +180,15 @@ int eof_undo_apply(void)
 			(void) snprintf(fn, sizeof(fn) - 1, "%s.ogg", eof_undo_filename[eof_undo_current_index]);
 			(void) eof_copy_file(fn, eof_loaded_ogg_name);
 			(void) eof_load_ogg(eof_loaded_ogg_name, 0);
+			eof_get_rocksmith_wav_path(fn, eof_song_path, sizeof(fn));	//Build the path to the WAV file written for Rocksmith during save
+			(void) delete_file(fn);			//Delete it, if it exists, since changing the title will cause a new WAV file to be written
 			eof_fix_waveform_graph();
 			eof_redo_type = EOF_UNDO_TYPE_SILENCE;
+		}
+		if(strcmp(title, eof_song->tags->title))
+		{	//If the song title changed as part of the undo, delete the Rocksmith WAV file
+			eof_get_rocksmith_wav_path(fn, eof_song_path, sizeof(fn));	//Build the path to the WAV file written for Rocksmith during save
+			(void) delete_file(fn);			//Delete it, if it exists, since changing the title will cause a new WAV file to be written
 		}
 		eof_undo_count--;
 		eof_redo_count = 1;
@@ -206,11 +217,14 @@ int eof_undo_apply(void)
 void eof_redo_apply(void)
 {
 	char fn[1024] = {0};
+	char title[256];
 
  	eof_log("eof_redo_apply() entered", 1);
 
 	if(eof_redo_count > 0)
 	{
+		strncpy(title, eof_song->tags->title, sizeof(title));	//Backup the song title field, since if it changes as part of the redo, the Rocksmith WAV file should be deleted
+
 		(void) eof_save_song(eof_song, eof_undo_filename[eof_undo_current_index]);
 		eof_undo_current_index++;
 		if(eof_undo_current_index >= EOF_MAX_UNDO)
@@ -224,7 +238,14 @@ void eof_redo_apply(void)
 			(void) snprintf(fn, sizeof(fn) - 1, "eof%03u.redo.ogg", eof_log_id);	//Get the name of this EOF instance's redo OGG
 			(void) eof_copy_file(fn, eof_loaded_ogg_name);	//And save the current audio to that filename
 			(void) eof_load_ogg(eof_loaded_ogg_name, 0);
+			eof_get_rocksmith_wav_path(fn, eof_song_path, sizeof(fn));	//Build the path to the WAV file written for Rocksmith during save
+			(void) delete_file(fn);			//Delete it, if it exists, since changing the title will cause a new WAV file to be written
 			eof_fix_waveform_graph();
+		}
+		if(strcmp(title, eof_song->tags->title))
+		{	//If the song title changed as part of the redo, delete the Rocksmith WAV file
+			eof_get_rocksmith_wav_path(fn, eof_song_path, sizeof(fn));	//Build the path to the WAV file written for Rocksmith during save
+			(void) delete_file(fn);			//Delete it, if it exists, since changing the title will cause a new WAV file to be written
 		}
 		eof_undo_count++;
 		if(eof_undo_count >= EOF_MAX_UNDO)

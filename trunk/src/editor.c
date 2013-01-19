@@ -4930,13 +4930,16 @@ void eof_render_editor_window_common(void)
 								{	//If the phrase was empty in this difficulty, render the section name with a blue background
 									bg_color = eof_color_blue;
 								}
-								else if(!retval)
-								{	//If this phrase is identical among this difficulty and the next, render the section name with a red background
-									bg_color = eof_color_red;
-								}
-								else if(eof_find_fully_leveled_rs_difficulty_in_time_range(eof_song, eof_selected_track, startpos, endpos, 0) == eof_note_type)
-								{	//If the active difficulty is the lowest difficulty at which this phrase is fully leveled up, render the section name with a green background
-									bg_color = eof_color_green;
+								else if(eof_note_type < 255)
+								{	//If there's a higher difficulty than the active difficulty
+									if(!eof_time_range_is_populated(eof_song, eof_selected_track, startpos, endpos, eof_note_type + 1))
+									{	//If the next difficulty is empty, render the section name with a green background
+										bg_color = eof_color_green;
+									}
+									else if(!retval)
+									{	//If this phrase is identical among this difficulty and the next, render the section name with a red background
+										bg_color = eof_color_red;
+									}
 								}
 								break;
 							}

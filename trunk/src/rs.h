@@ -82,6 +82,9 @@ unsigned long eof_pro_guitar_track_find_effective_fret_hand_position_definition(
 unsigned long eof_find_effective_rs_phrase(unsigned long position);
 	//Returns the phrase number in effect (at or before) at the specified timestamp, or 0 if no phrase was in effect at that position
 	//This function assumes that the beat statistics are properly cached for the active track
+int eof_time_range_is_populated(EOF_SONG *sp, unsigned long track, unsigned long start, unsigned long stop, unsigned char diff);
+	//Returns nonzero if there are any notes in the specified track difficulty within the specified time range
+	//Returnz zero if that range contains no notes or upon error
 
 char *eof_rs_section_text_valid(char *string);
 	//Compares the given string against the string entries in eof_rs_predefined_sections[]

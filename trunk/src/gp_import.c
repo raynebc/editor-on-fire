@@ -2520,20 +2520,20 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		eof_log(eof_log_string, 1);
 #endif
 		gp->track[ctr]->numfrets = dword;
-		pack_ReadDWORDLE(inf, &dword);	//Read the capo position for this track
+		pack_ReadDWORDLE(inf, &dword);			//Read the capo position for this track
 		(void) pack_getc(inf);					//Track color (Red intensity)
 		(void) pack_getc(inf);					//Track color (Green intensity)
 		(void) pack_getc(inf);					//Track color (Blue intensity)
 		(void) pack_getc(inf);					//Read unused value
 		if(fileversion > 500)
 		{
-			bytemask = pack_getc(inf);	//Track properties 1 bitmask
+			bytemask = pack_getc(inf);			//Track properties 1 bitmask
 			(void) pack_getc(inf);				//Track properties 2 bitmask
 			(void) pack_getc(inf);				//Unknown data
 			(void) pack_getc(inf);				//MIDI bank
 			(void) pack_getc(inf);				//Human playing
 			(void) pack_getc(inf);				//Auto accentuation on the beat
-			(void) pack_fseek(inf, 31);		//Unknown data
+			(void) pack_fseek(inf, 31);			//Unknown data
 			(void) pack_getc(inf);				//Selected sound bank option
 			(void) pack_fseek(inf, 7);			//Unknown data
 			(void) pack_getc(inf);				//Low frequency band lowered
@@ -3325,7 +3325,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 								np[ctr2]->note = usedstrings >> (7 - strings[ctr2]);	//Guitar pro's note bitmask reflects string 7 being the LSB
 								np[ctr2]->ghost = ghost >> (7 - strings[ctr2]);			//Likewise translate the ghost bit mask
 							}
-							np[ctr2]->type = EOF_NOTE_AMAZING;
+							np[ctr2]->type = eof_note_type;
 
 	//Determine the correct timestamp position and duration
 							beat_position = measure_position * curnum + 0.5;				//How many whole beats into the current measure the position is
