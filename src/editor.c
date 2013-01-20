@@ -1755,14 +1755,10 @@ if(key[KEY_PAUSE])
 				}//If the user strummed
 				if(eof_entering_note)
 				{
+					eof_entering_note_note->length = (eof_music_pos - eof_av_delay - eof_guitar.delay) - eof_entering_note_note->pos - 10;
 					if(eof_snote != eof_last_snote)
 					{
 						eof_entering_note = 0;
-						eof_entering_note_note->length = (eof_music_pos - eof_av_delay - eof_guitar.delay) - eof_entering_note_note->pos - 10;
-					}
-					else
-					{
-						eof_entering_note_note->length = (eof_music_pos - eof_av_delay - eof_guitar.delay) - eof_entering_note_note->pos - 10;
 					}
 					eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 				}
@@ -2054,7 +2050,7 @@ if(key[KEY_PAUSE])
 				key[KEY_F] = 0;
 			}
 
-	/* toggle slap status (CTRL+SHIFTS in a pro guitar track) */
+	/* toggle slap status (CTRL+SHIFT+S in a pro guitar track) */
 			if(key[KEY_S] && KEY_EITHER_CTRL && !KEY_EITHER_ALT && KEY_EITHER_SHIFT)
 			{	//If both CTRL and SHIFT are held, but ALT is not
 				(void) eof_menu_note_toggle_slap();
@@ -3450,7 +3446,7 @@ void eof_editor_logic(void)
 				break;
 			}
 		}
-		if(eof_song->track[eof_selected_track]->track_behavior != EOF_DRUM_TRACK_BEHAVIOR)
+		if(eof_song->track[eof_selected_track]->track_behavior == EOF_DRUM_TRACK_BEHAVIOR)
 		{
 			eof_editor_drum_logic();
 		}
