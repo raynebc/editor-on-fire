@@ -76,6 +76,8 @@ MENU eof_edit_hopo_menu[] =
     {NULL, NULL, NULL, 0, NULL}
 };
 
+char eof_edit_zoom_menu_string[20] = "&Custom";
+int eof_custom_zoom_level = 0;
 MENU eof_edit_zoom_menu[] =
 {
     {"1/1&0", eof_menu_edit_zoom_10, NULL, D_SELECTED, NULL},
@@ -88,6 +90,7 @@ MENU eof_edit_zoom_menu[] =
     {"1/&3", eof_menu_edit_zoom_3, NULL, 0, NULL},
     {"1/&2", eof_menu_edit_zoom_2, NULL, 0, NULL},
     {"1/&1", eof_menu_edit_zoom_1, NULL, 0, NULL},
+    {eof_edit_zoom_menu_string, eof_menu_edit_zoom_custom, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -178,10 +181,21 @@ DIALOG eof_custom_snap_dialog[] =
 
 DIALOG eof_custom_speed_dialog[] =
 {
+   /* (proc)				(x)	(y)	(w)		(h) (fg)	(bg) (key) (flags)	(d1) (d2) (dp)			(dp2) 			(dp3) */
+   { d_agup_shadow_box_proc,32,	68,	170, 	95,	2,		23,  0,    0,		0,   0,   NULL,			NULL, 			NULL },
+   { d_agup_text_proc,		56,	84,	64,		8,	2,		23,  0,    0,		0,   0,   "Percent:",	NULL, 			NULL },
+   { eof_verified_edit_proc,112,80,	66,		20,	2,		23,  0,    0,		8,   0,   eof_etext2,	"0123456789",	NULL },
+   { d_agup_button_proc,	42,	125,68,		28,	2,		23,  '\r', D_EXIT,	0,   0,   "OK",			NULL, 			NULL },
+   { d_agup_button_proc,	120,125,68,		28,	2,		23,  0,    D_EXIT,	0,   0,   "Cancel",		NULL, 			NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+DIALOG eof_custom_zoom_dialog[] =
+{
    /* (proc)			(x)	(y)	(w)		(h)  	(fg)	(bg) (key) (flags)	(d1) (d2) (dp)		(dp2) 		(dp3) */
-   { d_agup_shadow_box_proc,	32,	68,	170, 	72 + 8 +15,	2,	23,  0,    0,		0,   0,   NULL,		NULL, 		NULL },
-   { d_agup_text_proc,		56,	84,	64,		8,	2,	23,  0,    0,		0,   0,   "Percent:",	NULL, 		NULL },
-   { eof_verified_edit_proc,	112,	80,	66,		20,	2,	23,  0,    0,		8,   0,   eof_etext2,	"0123456789",	NULL },
+   { d_agup_shadow_box_proc,	32,	68,	170, 		95,	2,	23,  0,    0,		0,   0,   NULL,		NULL, 		NULL },
+   { d_agup_text_proc,		56,	84,	64,		8,	2,	23,  0,    0,		0,   0,   "1 / ",	NULL, 		NULL },
+   { eof_verified_edit_proc,	112,	80,	66,		20,	2,	23,  0,    0,		2,   0,   eof_etext2,	"0123456789",	NULL },
    { d_agup_button_proc,	42,	125,	68,		28,	2,	23,  '\r', D_EXIT,	0,   0,   "OK",		NULL, 		NULL },
    { d_agup_button_proc,	120,	125,	68,		28,	2,	23,  0,    D_EXIT,	0,   0,   "Cancel",	NULL, 		NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
@@ -312,11 +326,27 @@ void eof_prepare_edit_menu(void)
 		}
 
 		/* zoom */
-		for(i = 0; i < 9; i++)
+		for(i = 0; i < EOF_NUM_ZOOM_LEVELS; i++)
 		{
 			eof_edit_zoom_menu[i].flags = 0;
 		}
-		eof_edit_zoom_menu[10 - eof_zoom].flags = D_SELECTED;
+		eof_edit_zoom_menu[EOF_NUM_ZOOM_LEVELS].flags = 0;	//Clear the flags from the Edit>Zoom>Custom menu item
+		if((eof_zoom > 0) && (eof_zoom <= EOF_NUM_ZOOM_LEVELS))
+		{	//If a preset zoom level is in use
+			eof_edit_zoom_menu[EOF_NUM_ZOOM_LEVELS - eof_zoom].flags = D_SELECTED;
+		}
+		else
+		{	//If a custom zoom level is in use
+			eof_edit_zoom_menu[EOF_NUM_ZOOM_LEVELS].flags = D_SELECTED;
+		}
+		if(eof_custom_zoom_level)
+		{	//If the user defined a custom zoom level
+			(void) snprintf(eof_edit_zoom_menu_string, sizeof(eof_edit_zoom_menu_string), "&Custom (1/%d)", eof_custom_zoom_level);	//Build the menu string
+		}
+		else
+		{
+			(void) snprintf(eof_edit_zoom_menu_string, sizeof(eof_edit_zoom_menu_string), "&Custom");
+		}
 
 		/* hopo */
 		for(i = 0; i < 3; i++)
@@ -1545,7 +1575,14 @@ int eof_menu_edit_snap_custom(void)
 
 int eof_menu_edit_zoom_helper_in(void)
 {
-	return eof_menu_edit_zoom_level(eof_zoom - 1);
+	if(eof_zoom > EOF_NUM_ZOOM_LEVELS)
+	{	//If the current zoom level is user defined
+		return eof_menu_edit_zoom_level(EOF_NUM_ZOOM_LEVELS);	//Zoom in to the highest preset zoom level
+	}
+	else
+	{	//Otherwise zoom in normally
+		return eof_menu_edit_zoom_level(eof_zoom - 1);
+	}
 }
 
 int eof_menu_edit_zoom_helper_out(void)
@@ -1605,16 +1642,43 @@ int eof_menu_edit_zoom_1(void)
 
 int eof_menu_edit_zoom_level(int zoom)
 {
-	int i;
-	if((zoom > 0) && (zoom <= EOF_NUM_ZOOM_LEVELS))
-	{
-		eof_zoom = zoom;
-		for(i = 0; i < EOF_NUM_ZOOM_LEVELS; i++)
-		{
-			eof_edit_zoom_menu[i].flags = 0;
+	if(zoom > 0)
+	{	//If the zoom level is valid
+		if(zoom <= EOF_NUM_ZOOM_LEVELS)
+		{	//If the zoom level is one of the presets
+			eof_zoom = zoom;
 		}
-		eof_edit_zoom_menu[EOF_NUM_ZOOM_LEVELS - zoom].flags = D_SELECTED;
+		else if(eof_custom_zoom_level)
+		{	//If the user had defined a custom zoom level, allow zoom out to change to this zoom level
+			eof_zoom = eof_custom_zoom_level;
+		}
 	}
+
+	return 1;
+}
+
+int eof_menu_edit_zoom_custom(void)
+{
+	int userinput;
+
+	eof_cursor_visible = 0;
+	eof_render();
+	eof_color_dialog(eof_custom_zoom_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_custom_zoom_dialog);
+	(void) ustrcpy(eof_etext2, "");
+	if(eof_popup_dialog(eof_custom_zoom_dialog, 2) == 3)
+	{	//User clicked OK
+		userinput = atoi(eof_etext2);
+
+		if(userinput > 0)
+		{	//If it's a valid number
+			eof_custom_zoom_level = userinput;	//Store this so user can cycle through the presets and the user-defined zoom levels
+			eof_zoom = userinput;
+		}
+	}
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(NULL);
 
 	return 1;
 }

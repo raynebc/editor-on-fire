@@ -91,10 +91,12 @@ char *eof_rs_section_text_valid(char *string);
 	//If the string matches the native or display name of an entry, a pointer to the native name is returned (to be stored as a text event), otherwise NULL is returned
 int eof_rs_event_text_valid(char *string);
 	//Compares the given string against the string entries in eof_rs_predefined_events[] and returns nonzero if it matches one of them
-unsigned long eof_get_rs_section_instance_number(EOF_SONG *sp, unsigned long event);
+unsigned long eof_get_rs_section_instance_number(EOF_SONG *sp, unsigned long track, unsigned long event);
 	//If the specified event's flags indicate a Rocksmith section, counts the number of matching (case sensitive) text events preceding it
 	//The instance number of the specified Rocksmith section (numbered starting with 1) is returned
-	//Upon error, or if the given event is not a Rocksmith section, 0 is returned
+	//Rocksmith sections are allowed to be track specific, so the instance number takes this into account from the perspective of the specified track
+	//If a Rocksmith section's associated track is 0, then it is not track specific
+	//Upon error, or if the given event is not a Rocksmith section in the specified track, 0 is returned
 
 void eof_get_rocksmith_wav_path(char *buffer, const char *parent_folder, size_t num);
 	//Builds the path to the WAV file (used for Rocksmith) that is written to specified parent folder path during save

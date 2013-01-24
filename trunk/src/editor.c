@@ -4869,6 +4869,8 @@ void eof_render_editor_window_common(void)
 		}
 		else if(xcoord >= 0)
 		{	//The beat would render visibly
+			int beatlinecol;
+
 			if(i == eof_selected_beat)
 			{	//Draw selected beat's tempo
 				current_bpm = (double)60000000.0 / (double)eof_song->beat[i]->ppqn;
@@ -4889,7 +4891,15 @@ void eof_render_editor_window_common(void)
 			}
 
 			//Only render vertical lines if the x position is visible on-screen, otherwise the entire line will not be visible anyway
-			vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35 + 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10 - 1, (eof_song->beat[i]->beat_within_measure == 0) ? eof_color_white : col);
+			if((eof_song->beat[i]->contained_rs_section_event > 0) || (eof_song->beat[i]->contained_section_event > 0))
+			{	//If this beat contains a RS section or RS phrase
+				beatlinecol = eof_color_red;	//Render the beat line in red
+			}
+			else
+			{	//Otherwise render it in gray (if it's not the start of a measure) or in white
+				beatlinecol = (eof_song->beat[i]->beat_within_measure == 0) ? eof_color_white : col;
+			}
+			vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 35 + 1, EOF_EDITOR_RENDER_OFFSET + eof_screen_layout.fretboard_h - 10 - 1, beatlinecol);
 			vline(eof_window_editor->screen, xcoord, EOF_EDITOR_RENDER_OFFSET + 25, EOF_EDITOR_RENDER_OFFSET + 34, eof_color_gray);
 			if(eof_song->beat[i]->flags & EOF_BEAT_FLAG_ANCHOR)
 			{
