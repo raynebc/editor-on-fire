@@ -688,7 +688,10 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	{	//For each event in the chart
 		if(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_EVENT)
 		{	//If the event is marked as a Rocksmith event
-			numevents++;
+			if(!sp->text_event[ctr]->track || (sp->text_event[ctr]->track  == track))
+			{	//If the event applies to the specified track
+				numevents++;
+			}
 		}
 	}
 	if(numevents)
@@ -699,9 +702,12 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		{	//For each event in the chart
 			if(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_EVENT)
 			{	//If the event is marked as a Rocksmith event
-				expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[ctr]->text, 256);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
-				(void) snprintf(buffer, sizeof(buffer) - 1, "    <event time=\"%.3f\" code=\"%s\"/>\n", sp->beat[sp->text_event[ctr]->beat]->fpos / 1000.0, buffer2);
-				(void) pack_fputs(buffer, fp);
+				if(!sp->text_event[ctr]->track || (sp->text_event[ctr]->track  == track))
+				{	//If the event applies to the specified track
+					expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->text_event[ctr]->text, 256);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+					(void) snprintf(buffer, sizeof(buffer) - 1, "    <event time=\"%.3f\" code=\"%s\"/>\n", sp->beat[sp->text_event[ctr]->beat]->fpos / 1000.0, buffer2);
+					(void) pack_fputs(buffer, fp);
+				}
 			}
 		}
 		(void) pack_fputs("  </events>\n", fp);
@@ -1579,20 +1585,25 @@ int eof_rs_event_text_valid(char *string)
 	return 0;	//Return no match
 }
 
-unsigned long eof_get_rs_section_instance_number(EOF_SONG *sp, unsigned long event)
+unsigned long eof_get_rs_section_instance_number(EOF_SONG *sp, unsigned long track, unsigned long event)
 {
 	unsigned long ctr, count = 1;
 
 	if(!sp || (event >= sp->text_events) || !(sp->text_event[event]->flags & EOF_EVENT_FLAG_RS_SECTION))
 		return 0;	//If the parameters are invalid, or the specified text event is not a Rocksmith section
+	if(sp->text_event[event]->track && (sp->text_event[event]->track != track))
+		return 0;	//If the specified event is assigned to a track other than the one specified
 
 	for(ctr = 0; ctr < event; ctr++)
 	{	//For each text event in the chart that is before the specified event
 		if(sp->text_event[ctr]->flags & EOF_EVENT_FLAG_RS_SECTION)
 		{	//If the text event is marked as a Rocksmith section
-			if(!ustrcmp(sp->text_event[ctr]->text, sp->text_event[event]->text))
-			{	//If the text event's text matches
-				count++;	//Increment the instance counter
+			if(!sp->text_event[ctr]->track || (sp->text_event[ctr]->track == track))
+			{	//If the text event is not track specific or is assigned to the specified track
+				if(!ustrcmp(sp->text_event[ctr]->text, sp->text_event[event]->text))
+				{	//If the text event's text matches
+					count++;	//Increment the instance counter
+				}
 			}
 		}
 	}
@@ -1632,6 +1643,7 @@ void eof_rs_compile_xml(EOF_SONG *sp, char *fn, unsigned long track)
 		allegro_message("Error:  xml2sng.exe is not present at the linked path.  Please re-link the Rocksmith toolkit to the correct folder");
 		eof_rs_toolkit_path[0] = '\0';	//Clear this path since it is not correct
 		(void) fclose(rstoolkitfp);
+		(void) delete_file("launch_rstoolkit.bat");
 		return;
 	}
 
@@ -1689,6 +1701,7 @@ void eof_rs_compile_xml(EOF_SONG *sp, char *fn, unsigned long track)
 	else
 	{	//Other tracks are not valid for this operation
 		(void) fclose(rstoolkitfp);
+		(void) delete_file("launch_rstoolkit.bat");
 		return;
 	}
 

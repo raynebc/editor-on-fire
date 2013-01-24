@@ -637,7 +637,7 @@ void eof_process_beat_statistics(EOF_SONG * sp, unsigned long track)
 			{	//For each text event
 				if(sp->text_event[ctr]->beat == i)
 				{	//If the event is assigned to this beat
-					count = eof_get_rs_section_instance_number(sp, ctr);	//Determine if this event is a Rocksmith section, and if so, which instance number it is
+					count = eof_get_rs_section_instance_number(sp, track, ctr);	//Determine if this event is a Rocksmith section, and if so, which instance number it is
 					if(count)
 					{	//If the event is assigned to this beat
 						sp->beat[i]->contained_rs_section_event = ctr;

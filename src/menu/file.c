@@ -2192,8 +2192,8 @@ int eof_save_helper(char *destfilename)
 
 	/* check if there are any notes beyond the chart audio */
 	notes_after_chart_audio = eof_check_if_notes_exist_beyond_audio_end(eof_song);
-	if(notes_after_chart_audio)
-	{
+	if(notes_after_chart_audio && !eof_silence_loaded)
+	{	//Only display this warning if there is chart audio loaded
 		snprintf(oggfn, sizeof(oggfn) - 1, "Warning:  Track \"%s\" contains notes/lyrics extending beyond the chart's audio.", eof_song->track[notes_after_chart_audio]->name);
 		if(alert(oggfn, NULL, "This chart may not work properly.  Continue?", "&Yes", "&No", 'y', 'n') != 1)
 		{	//If the user doesn't opt to continue due to this error condition

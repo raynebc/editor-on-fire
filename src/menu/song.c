@@ -4400,7 +4400,7 @@ void eof_rebuild_manage_rs_phrases_strings(void)
 			{	//If another phrase has been read
 				endpos = eof_song->beat[ctr]->pos - 1;	//Track this as the end position of the previous phrase marker
 				maxdiff = eof_find_fully_leveled_rs_difficulty_in_time_range(eof_song, eof_selected_track, startpos, endpos, 1);	//Find the maxdifficulty value for this phrase instance, converted to relative numbering
-				stringlen = snprintf(NULL, (size_t)0, "%s : maxDifficulty = %u", currentphrase, maxdiff) + 1;	//Find the number of characters needed to snprintf this string
+				stringlen = (size_t)snprintf(NULL, 0, "%s : maxDifficulty = %u", currentphrase, maxdiff) + 1;	//Find the number of characters needed to snprintf this string
 				eof_manage_rs_phrases_strings[index] = malloc(stringlen + 1);	//Allocate memory to build the string
 				if(!eof_manage_rs_phrases_strings[index])
 				{

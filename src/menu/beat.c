@@ -178,21 +178,23 @@ DIALOG eof_place_trainer_dialog[] =
 DIALOG eof_rocksmith_section_dialog[] =
 {
    /* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                     (dp2) (dp3) */
-   { d_agup_window_proc, 0,   0,   200, 450, 2,   23,  0,    0,      0,   0,   "Add Rocksmith section", NULL, NULL },
-   { d_agup_list_proc,   12,  35,  175, 350, 2,   23,  0,    0,      0,   0,   (void *)eof_rs_section_add_list, NULL, NULL },
-   { d_agup_check_proc,  12,  390, 164, 16,  0,   0,   0,    0,      1,   0,   "Also add as RS phrase",  NULL, NULL },
+   { d_agup_window_proc, 0,   0,   290, 450, 2,   23,  0,    0,      0,   0,   "Add Rocksmith section", NULL, NULL },
+   { d_agup_list_proc,   12,  35,  260, 320, 2,   23,  0,    0,      0,   0,   (void *)eof_rs_section_add_list, NULL, NULL },
+   { d_agup_check_proc,  12,  364, 164, 16,  0,   0,   0,    0,      1,   0,   "Also add as RS phrase",  NULL, NULL },
+   { d_agup_check_proc,  12,  384, 250, 16,  0,   0,   0,    0,      1,   0,   eof_events_add_dialog_string,  NULL, NULL },
    { d_agup_button_proc, 12,  410, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                    NULL, NULL },
-   { d_agup_button_proc, 120, 410, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                NULL, NULL },
+   { d_agup_button_proc, 206, 410, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
 DIALOG eof_rocksmith_event_dialog[] =
 {
    /* (proc)             (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                     (dp2) (dp3) */
-   { d_agup_window_proc, 0,   0,   200, 180, 2,   23,  0,    0,      0,   0,   "Add Rocksmith event", NULL, NULL },
-   { d_agup_list_proc,   12,  35,  175, 90,  2,   23,  0,    0,      0,   0,   (void *)eof_rs_event_add_list, NULL, NULL },
+   { d_agup_window_proc, 0,   0,   286, 180, 2,   23,  0,    0,      0,   0,   "Add Rocksmith event", NULL, NULL },
+   { d_agup_list_proc,   12,  35,  260, 70,  2,   23,  0,    0,      0,   0,   (void *)eof_rs_event_add_list, NULL, NULL },
+   { d_agup_check_proc,  12,  112, 250, 16,  0,   0,   0,    0,      1,   0,   eof_events_add_dialog_string,  NULL, NULL },
    { d_agup_button_proc, 12,  140, 68,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",                    NULL, NULL },
-   { d_agup_button_proc, 120, 140, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                NULL, NULL },
+   { d_agup_button_proc, 206, 140, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",                NULL, NULL },
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
@@ -2110,13 +2112,16 @@ char * eof_rs_event_add_list(int index, int * size)
 int eof_rocksmith_section_dialog_add(void)
 {
 	unsigned long flags;
+	unsigned char track = 0;	//By default, new sections won't be track specific
 
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_rocksmith_section_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_rocksmith_section_dialog);
 
-	if(eof_popup_dialog(eof_rocksmith_section_dialog, 0) == 3)
+	(void) snprintf(eof_events_add_dialog_string, sizeof(eof_events_add_dialog_string) - 1, "Specific to %s", eof_song->track[eof_selected_track]->name);
+
+	if(eof_popup_dialog(eof_rocksmith_section_dialog, 0) == 4)
 	{	//User clicked OK
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
 		flags = EOF_EVENT_FLAG_RS_SECTION;	//By default, the event will only be a RS section
@@ -2124,7 +2129,11 @@ int eof_rocksmith_section_dialog_add(void)
 		{	//If the user also opted to add it as a RS phrase
 			flags |= EOF_EVENT_FLAG_RS_PHRASE;	//The event will be both a RS phrase and a RS section
 		}
-		(void) eof_song_add_text_event(eof_song, eof_selected_beat, eof_rs_predefined_sections[eof_rocksmith_section_dialog[1].d1].string, 0, flags, 0);
+		if(eof_rocksmith_section_dialog[3].flags == D_SELECTED)
+		{	//If the user also opted to make it specific to the active track
+			track = eof_selected_track;
+		}
+		(void) eof_song_add_text_event(eof_song, eof_selected_beat, eof_rs_predefined_sections[eof_rocksmith_section_dialog[1].d1].string, track, flags, 0);
 		eof_sort_events(eof_song);
 	}
 
@@ -2139,15 +2148,23 @@ int eof_rocksmith_section_dialog_add(void)
 
 int eof_rocksmith_event_dialog_add(void)
 {
+	unsigned char track = 0;	//By default, new events won't be track specific
+
 	eof_cursor_visible = 0;
 	eof_render();
 	eof_color_dialog(eof_rocksmith_event_dialog, gui_fg_color, gui_bg_color);
 	centre_dialog(eof_rocksmith_event_dialog);
 
-	if(eof_popup_dialog(eof_rocksmith_event_dialog, 0) == 2)
+	(void) snprintf(eof_events_add_dialog_string, sizeof(eof_events_add_dialog_string) - 1, "Specific to %s", eof_song->track[eof_selected_track]->name);
+
+	if(eof_popup_dialog(eof_rocksmith_event_dialog, 0) == 3)
 	{	//User clicked OK
 		eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make an undo state
-		(void) eof_song_add_text_event(eof_song, eof_selected_beat, eof_rs_predefined_events[eof_rocksmith_event_dialog[1].d1].string, 0, EOF_EVENT_FLAG_RS_EVENT, 0);
+		if(eof_rocksmith_event_dialog[2].flags == D_SELECTED)
+		{	//If the user also opted to make it specific to the active track
+			track = eof_selected_track;
+		}
+		(void) eof_song_add_text_event(eof_song, eof_selected_beat, eof_rs_predefined_events[eof_rocksmith_event_dialog[1].d1].string, track, EOF_EVENT_FLAG_RS_EVENT, 0);
 		eof_sort_events(eof_song);
 	}
 

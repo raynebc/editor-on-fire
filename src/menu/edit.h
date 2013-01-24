@@ -84,6 +84,7 @@ int eof_menu_edit_zoom_3(void);
 int eof_menu_edit_zoom_2(void);
 int eof_menu_edit_zoom_1(void);
 int eof_menu_edit_zoom_level(int zoom);	//Sets the zoom to the specified level
+int eof_menu_edit_zoom_custom(void);	//Sets the zoom to a user defined level
 
 int eof_menu_edit_playback_speed_helper_faster(void);
 int eof_menu_edit_playback_speed_helper_slower(void);
