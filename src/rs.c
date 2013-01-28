@@ -1028,7 +1028,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 							nextnote = eof_fixup_next_note(sp, track, ctr3);
 							if((nextnote >= 0) && !eof_note_compare_simple(sp, track, ctr3, nextnote))
 							{	//If there is another note and it matches this chord
-								ctr3++;	//Iterate to next note to check if it matches
+								ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
 							}
 							else
 							{	//The next note (if any) is not a repeat of this note
@@ -1075,7 +1075,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 							nextnote = eof_fixup_next_note(sp, track, ctr3);
 							if((nextnote >= 0) && !eof_note_compare_simple(sp, track, ctr3, nextnote))
 							{	//If there is another note and it matches this chord
-								ctr3++;	//Iterate to next note to check if it matches
+								ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
 							}
 							else
 							{	//The next note (if any) is not a repeat of this note

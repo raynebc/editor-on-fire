@@ -77,7 +77,6 @@ MENU eof_edit_hopo_menu[] =
 };
 
 char eof_edit_zoom_menu_string[20] = "&Custom";
-int eof_custom_zoom_level = 0;
 MENU eof_edit_zoom_menu[] =
 {
     {"1/1&0", eof_menu_edit_zoom_10, NULL, D_SELECTED, NULL},

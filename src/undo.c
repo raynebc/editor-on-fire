@@ -152,13 +152,13 @@ int eof_undo_add(int type)
 int eof_undo_apply(void)
 {
 	char fn[1024] = {0};
-	char title[256];
+	char title[256] = {0};
 
  	eof_log("eof_undo_apply() entered", 1);
 
 	if(eof_undo_count > 0)
 	{
-		strncpy(title, eof_song->tags->title, sizeof(title));	//Backup the song title field, since if it changes as part of the undo, the Rocksmith WAV file should be deleted
+		strncpy(title, eof_song->tags->title, sizeof(title) - 1);	//Backup the song title field, since if it changes as part of the undo, the Rocksmith WAV file should be deleted
 
 		(void) snprintf(fn, sizeof(fn) - 1, "eof%03u.redo", eof_log_id);	//Include EOF's log ID in the redo name to almost guarantee it is uniquely named
 		(void) eof_save_song(eof_song, fn);
@@ -217,13 +217,13 @@ int eof_undo_apply(void)
 void eof_redo_apply(void)
 {
 	char fn[1024] = {0};
-	char title[256];
+	char title[256] = {0};
 
  	eof_log("eof_redo_apply() entered", 1);
 
 	if(eof_redo_count > 0)
 	{
-		strncpy(title, eof_song->tags->title, sizeof(title));	//Backup the song title field, since if it changes as part of the redo, the Rocksmith WAV file should be deleted
+		strncpy(title, eof_song->tags->title, sizeof(title) - 1);	//Backup the song title field, since if it changes as part of the redo, the Rocksmith WAV file should be deleted
 
 		(void) eof_save_song(eof_song, eof_undo_filename[eof_undo_current_index]);
 		eof_undo_current_index++;

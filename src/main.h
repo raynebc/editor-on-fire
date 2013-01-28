@@ -449,6 +449,8 @@ extern FILE *eof_log_fp;
 extern char eof_log_level;
 extern char enable_logging;
 
+extern int eof_custom_zoom_level;
+
 extern long xchart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D rendering, updated by eof_set_3D_lane_positions()
 extern long ychart[EOF_MAX_FRETS];	//Stores coordinate values used for 3D rendering, updated by eof_set_2D_lane_positions()
 

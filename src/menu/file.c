@@ -1982,13 +1982,13 @@ int eof_new_chart(char * filename)
 			if(tag.id3v1present > 1)	//If there were fields defined in an ID3v1 tag
 			{
 				if((eof_etext[0]=='\0') && (tag.id3v1artist != NULL))
-					strncpy(eof_etext,tag.id3v1artist,sizeof(eof_etext)/sizeof(char));
+					strncpy(eof_etext,tag.id3v1artist,sizeof(eof_etext)/sizeof(char) - 1);
 				if((eof_etext2[0]=='\0') && (tag.id3v1title != NULL))
-					strncpy(eof_etext2,tag.id3v1title,sizeof(eof_etext2)/sizeof(char));
+					strncpy(eof_etext2,tag.id3v1title,sizeof(eof_etext2)/sizeof(char) - 1);
 				if((year[0]=='\0') && (tag.id3v1year != NULL))
-					strncpy(year,tag.id3v1year,sizeof(year)/sizeof(char));
+					strncpy(year,tag.id3v1year,sizeof(year)/sizeof(char) - 1);
 				if((album[0]=='\0') && (tag.id3v1album != NULL))
-					strncpy(tempalbum,tag.id3v1album,sizeof(tempalbum)/sizeof(char));
+					strncpy(tempalbum,tag.id3v1album,sizeof(tempalbum)/sizeof(char) - 1);
 			}
 
 			//Validate year string
@@ -2180,8 +2180,8 @@ int eof_save_helper(char *destfilename)
 	{	//Perform save as
 		function = 2;
 		(void) replace_extension(destfilename, destfilename, "eof", 1024);	//Ensure the chart is saved with a .eof extension
-		(void) ustrncpy(eof_temp_filename, destfilename, 1024);
-		if(eof_temp_filename[1023] != '\0')	//If the source filename was too long to store in the array
+		(void) ustrncpy(eof_temp_filename, destfilename, 1024 - 1);
+		if(eof_temp_filename[1022] != '\0')	//If the source filename was too long to store in the array
 			return 1;			//Return failure
 		(void) replace_filename(newfolderpath, destfilename, "", 1024);	//Obtain the destination path
 	}
