@@ -307,6 +307,8 @@ FILE *eof_log_fp = NULL;	//Is set to NULL if logging is disabled
 char eof_log_level = 0;		//Is set to 0 if logging is disabled
 char enable_logging = 1;	//Is set to 0 if logging is disabled
 
+int eof_custom_zoom_level = 0;	//Tracks any user-defined custom zoom level
+
 void eof_debug_message(char * text)
 {
 	eof_log("eof_debug_message() entered", 1);
@@ -1335,8 +1337,8 @@ int eof_load_ogg_quick(char * filename)
 			free(eof_music_data);
 		}
 	}
-	(void) ustrncpy(eof_loaded_ogg_name,filename,1024);	//Store the loaded OGG filename
-	eof_loaded_ogg_name[1023] = '\0';
+	(void) ustrncpy(eof_loaded_ogg_name,filename,1024 - 1);	//Store the loaded OGG filename
+	eof_loaded_ogg_name[1023] = '\0';	//Guarantee NULL termination
 	return loaded;
 }
 
@@ -1421,8 +1423,8 @@ int eof_load_ogg(char * filename, char silence_failover)
 			}
 			eof_music_length = alogg_get_length_msecs_ogg(eof_music_track);
 			eof_truncate_chart(eof_song);	//Remove excess beat markers and update the eof_chart_length variable
-			(void) ustrncpy(eof_loaded_ogg_name,filename,1024);	//Store the loaded OGG filename
-			eof_loaded_ogg_name[1023] = '\0';
+			(void) ustrncpy(eof_loaded_ogg_name,filename,1024 - 1);	//Store the loaded OGG filename
+			eof_loaded_ogg_name[1023] = '\0';	//Guarantee NULL termination
 		}
 	}
 	if(!loaded)
@@ -3413,9 +3415,13 @@ int eof_initialize(int argc, char * argv[])
 	}
 
 	eof_zoom_backup = eof_zoom;	//Save this because it will be over-written in eof_set_display_mode()
-	if((eof_zoom_backup <= 0) || (eof_zoom_backup > EOF_NUM_ZOOM_LEVELS))
+	if(eof_zoom_backup <= 0)
 	{	//Validate eof_zoom_backup, to ensure a valid zoom level was loaded from the config file
 		eof_zoom_backup = 10;
+	}
+	if(eof_zoom > EOF_NUM_ZOOM_LEVELS)
+	{	//If the zoom level is higher than the highest preset, track this as the custom zoom level
+		eof_custom_zoom_level = eof_zoom;
 	}
 	if(eof_desktop)
 	{
@@ -4060,7 +4066,7 @@ void eof_init_after_load(char initaftersavestate)
 		eof_selected_track = EOF_TRACK_GUITAR;
 	}
 	(void) eof_menu_track_selected_track_number(eof_selected_track);
-	if((eof_zoom <= 0) || (eof_zoom > EOF_NUM_ZOOM_LEVELS))
+	if(eof_zoom <= 0)
 	{	//Validate eof_zoom, to ensure a valid zoom level was loaded from the config file
 		eof_zoom = 10;
 	}
@@ -4661,7 +4667,7 @@ void eof_set_color_set(void)
 	for(x = 0; x < 6; x++)
 	{
 		 snprintf(eof_note_toggle_menu_strings[x], sizeof(eof_note_toggle_menu_string_1) - 1, "%s\tShift+%d", eof_colors[x].colorname, x+1);
-		 strncpy(eof_note_clear_menu_strings[x], eof_colors[x].colorname, sizeof(eof_note_clear_menu_string_1));
+		 strncpy(eof_note_clear_menu_strings[x], eof_colors[x].colorname, sizeof(eof_note_clear_menu_string_1) - 1);
 	}
 
 	//Update the strings for the Edit>Clap Notes menu

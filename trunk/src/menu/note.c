@@ -593,7 +593,7 @@ void eof_prepare_note_menu(void)
 			eof_menu_sp_copy_menu[i].flags = 0;
 			if((i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 			{	//If the track exists, copy its name into the string used by the track menu
-				(void) ustrncpy(eof_menu_sp_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE);
+				(void) ustrncpy(eof_menu_sp_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE - 1);
 					//Copy the track name to the menu string
 			}
 			else
@@ -624,7 +624,7 @@ void eof_prepare_note_menu(void)
 			eof_menu_solo_copy_menu[i].flags = 0;
 			if((i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 			{	//If the track exists, copy its name into the string used by the track menu
-				(void) ustrncpy(eof_menu_solo_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE);
+				(void) ustrncpy(eof_menu_solo_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE - 1);
 					//Copy the track name to the menu string
 			}
 			else
@@ -669,7 +669,7 @@ void eof_prepare_note_menu(void)
 			eof_menu_arpeggio_copy_menu[i].flags = 0;
 			if((i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 			{	//If the track exists, copy its name into the string used by the track menu
-				(void) ustrncpy(eof_menu_arpeggio_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE);
+				(void) ustrncpy(eof_menu_arpeggio_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE - 1);
 					//Copy the track name to the menu string
 			}
 			else
@@ -889,7 +889,7 @@ void eof_prepare_note_menu(void)
 					eof_menu_thin_notes_menu[i].flags = D_DISABLED;
 					if((i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 					{	//If the track exists, copy its name into the string used by the track menu
-						(void) ustrncpy(eof_menu_thin_notes_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE);
+						(void) ustrncpy(eof_menu_thin_notes_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE - 1);
 							//Copy the track name to the menu string
 					}
 					else
@@ -929,7 +929,7 @@ void eof_prepare_note_menu(void)
 				eof_menu_trill_copy_menu[i].flags = 0;
 				if((i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 				{	//If the track exists, copy its name into the string used by the track menu
-					(void) ustrncpy(eof_menu_trill_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE);
+					(void) ustrncpy(eof_menu_trill_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE - 1);
 						//Copy the track name to the menu string
 				}
 				else
@@ -960,7 +960,7 @@ void eof_prepare_note_menu(void)
 				eof_menu_tremolo_copy_menu[i].flags = 0;
 				if((i + 1 < eof_song->tracks) && (eof_song->track[i + 1] != NULL))
 				{	//If the track exists, copy its name into the string used by the track menu
-					(void) ustrncpy(eof_menu_tremolo_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE);
+					(void) ustrncpy(eof_menu_tremolo_copy_menu_text[i], eof_song->track[i + 1]->name, EOF_TRACK_NAME_SIZE - 1);
 						//Copy the track name to the menu string
 				}
 				else
@@ -3867,7 +3867,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 										eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 										undo_made = 1;
 									}
-									(void) ustrncpy(eof_get_note_name(eof_song, eof_selected_track, ctr), eof_note_edit_name, (int)sizeof(junknote.name));
+									(void) ustrncpy(eof_get_note_name(eof_song, eof_selected_track, ctr), eof_note_edit_name, (int)sizeof(junknote.name) - 1);
 								}
 							}
 						}
@@ -3921,7 +3921,7 @@ int eof_menu_note_edit_pro_guitar_note(void)
 													eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 													undo_made = 1;
 												}
-												(void) ustrncpy(tempptr, newname, (int)sizeof(junknote.name));	//Update the note's name to the user selection
+												(void) ustrncpy(tempptr, newname, (int)sizeof(junknote.name) - 1);	//Update the note's name to the user selection
 											}
 										}
 									}
