@@ -153,9 +153,17 @@ MENU eof_song_proguitar_menu[] =
     {NULL, NULL, NULL, 0, NULL}
 };
 
+MENU eof_song_proguitar_popup_menu[] =
+{
+    {"&Add", eof_menu_song_rs_popup_add, NULL, 0, NULL},
+    {"&List", eof_menu_song_rs_popup_messages, NULL, 0, NULL},
+    {NULL, NULL, NULL, 0, NULL}
+};
+
 MENU eof_song_rocksmith_menu[] =
 {
     {"Fret &Hand positions", NULL, eof_song_proguitar_fret_hand_menu, 0, NULL},
+    {"&Popup messages", NULL, eof_song_proguitar_popup_menu, 0, NULL},
     {"&Correct chord fingerings", eof_correct_chord_fingerings_menu, NULL, 0, NULL},
     {"&Rename track", eof_song_proguitar_rename_track, NULL, 0, NULL},
     {"Remove difficulty limit", eof_song_proguitar_toggle_difficulty_limit, NULL, 0, NULL},
@@ -487,15 +495,17 @@ void eof_prepare_song_menu(void)
 		/* edit name */
 		/* seek catalog entry */
 		if(eof_song->catalog->entries > 0)
-		{
+		{	//If there are any fret catalog entries
 			eof_catalog_menu[0].flags = eof_catalog_menu[0].flags & D_SELECTED;	//Enable "Show Catalog" and check it if it's already checked
 			eof_catalog_menu[2].flags = 0;		//Enable "Edit name"
+			eof_catalog_menu[3].flags = 0;		//Enable "Edit timing"
 			eof_song_seek_menu[22].flags = 0;	//Enable Seek>Catalog entry
 		}
 		else
 		{
 			eof_catalog_menu[0].flags = D_DISABLED;	//Disable "Show catalog"
 			eof_catalog_menu[2].flags = D_DISABLED;	//Disable "Edit name"
+			eof_catalog_menu[3].flags = D_DISABLED;	//Disable "Edit timing"
 			eof_song_seek_menu[22].flags = D_DISABLED;	//Disable Seek>Catalog entry
 		}
 
@@ -619,11 +629,11 @@ void eof_prepare_song_menu(void)
 
 			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 			{	//If the active track has already had the difficulty limit removed
-				eof_song_rocksmith_menu[3].flags = D_SELECTED;	//Song>Pro Guitar>Remove difficulty limit
+				eof_song_rocksmith_menu[4].flags = D_SELECTED;	//Song>Pro Guitar>Remove difficulty limit
 			}
 			else
 			{
-				eof_song_rocksmith_menu[3].flags = 0;
+				eof_song_rocksmith_menu[4].flags = 0;
 			}
 		}
 		else
@@ -4697,6 +4707,275 @@ int eof_manage_rs_phrases_add_level(DIALOG * d)
 	free(eof_manage_rs_phrases_strings);
 	eof_manage_rs_phrases_strings = NULL;
 	eof_rebuild_manage_rs_phrases_strings();
+
+	return D_REDRAW;	//Have Allegro redraw the dialog
+}
+
+DIALOG eof_song_rs_popup_add_dialog[] =
+{
+   /* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
+   { d_agup_window_proc,    0,   0,   200, 190, 0,   0,   0,    0,      0,   0,   "Rocksmith popup message",      NULL, NULL },
+   { d_agup_edit_proc,      12,  30,  176, 20,  2,   23,  0,    0,      EOF_SECTION_NAME_LENGTH,   0,   eof_etext,           NULL, NULL },
+   { d_agup_text_proc,      12,  56,  60,  12,  0,   0,   0,    0,      0,   0,   "Start position (ms)",                NULL, NULL },
+   { eof_verified_edit_proc,12,  72,  50,  20,  0,   0,   0,    0,      7,   0,   eof_etext2,     "0123456789", NULL },
+   { d_agup_text_proc,      12,  100, 60,  12,  0,   0,   0,    0,      0,   0,   "End position (ms)",                NULL, NULL },
+   { eof_verified_edit_proc,12,  120, 50,  20,  0,   0,   0,    0,      7,   0,   eof_etext3,     "0123456789", NULL },
+   { d_agup_button_proc,    12,  150, 84,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "OK",               NULL, NULL },
+   { d_agup_button_proc,    110, 150, 78,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+   { NULL,                  0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,               NULL, NULL }
+};
+
+int eof_menu_song_rs_popup_add(void)
+{
+	unsigned long start, end;
+
+	if(!eof_song_loaded || !eof_song)
+		return 1;	//Do not allow this function to run if a chart is not loaded or if an invalid catalog entry is selected
+
+	eof_render();
+	eof_color_dialog(eof_song_rs_popup_add_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_song_rs_popup_add_dialog);
+
+	(void) ustrcpy(eof_etext, "");
+	(void) ustrcpy(eof_etext2, "");
+	(void) ustrcpy(eof_etext3, "");
+	if(eof_popup_dialog(eof_song_rs_popup_add_dialog, 1) == 6)
+	{	//User clicked OK
+		start = atol(eof_etext2);
+		end = atol(eof_etext3);
+
+		if(start >= end)
+		{	//If the given timing is not valid
+			allegro_message("The entry must end after it begins");
+		}
+		else
+		{
+			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+			(void) eof_track_add_section(eof_song, eof_selected_track, EOF_RS_POPUP_MESSAGE, 0, start, end, 0, eof_etext);
+		}
+	}
+
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(NULL);
+	return 1;
+}
+
+char **eof_rs_popup_messages_list_strings = NULL;		//Stores allocated strings for eof_menu_song_rs_popup_messages()
+char eof_rs_popup_messages_dialog_undo_made = 0;		//Used to track whether an undo state was made in this dialog
+
+DIALOG eof_rs_popup_messages_dialog[] =
+{
+   /* (proc)            (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)            (dp2) (dp3) */
+   { d_agup_window_proc,0,   48,  400, 237, 2,   23,  0,    0,      0,   0,   "RS popup messages",       NULL, NULL },
+   { d_agup_list_proc,  12,  84,  300, 138, 2,   23,  0,    0,      0,   0,   (void *)eof_rs_popup_messages_list,NULL, NULL },
+   { d_agup_push_proc,  320, 84,  68,  28,  2,   23,  'l',  D_EXIT, 0,   0,   "De&lete",      NULL, (void *)eof_rs_popup_messages_delete },
+//   { d_agup_push_proc,  170, 124, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "Delete all",   NULL, (void *)eof_rs_popup_messages_delete_all },
+//   { d_agup_push_proc,  170, 164, 68,  28,  2,   23,  's',  D_EXIT, 0,   0,   "&Seek to",     NULL, (void *)eof_rs_popup_messages_seek },
+//   { d_agup_push_proc,  170, 204, 68,  28,  2,   23,  0,    D_EXIT, 0,   0,   "&Edit",        NULL, (void *)eof_rs_popup_messages_edit },
+   { d_agup_button_proc,12,  245, 90,  28,  2,   23,  '\r', D_EXIT, 0,   0,   "Done",         NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+void eof_rebuild_rs_popup_messages_list_strings(void)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned long tracknum, ctr;
+	size_t stringlen;
+
+	if(!eof_song_loaded || !eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return;	//Do not allow this function to run if a chart is not loaded, an invalid catalog entry is selected or a pro guitar/bass track is not active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+	eof_rs_popup_messages_list_strings = malloc(sizeof(char *) * tp->popupmessages);	//Allocate enough pointers to have one for each popup message
+
+	for(ctr = 0; ctr < tp->popupmessages; ctr++)
+	{	//For each popup message
+		stringlen = (size_t)snprintf(NULL, 0, "%lu-%lums : %s", tp->popupmessage[ctr].start_pos, tp->popupmessage[ctr].end_pos, tp->popupmessage[ctr].name) + 1;	//Find the number of characters needed to snprintf this string
+		eof_rs_popup_messages_list_strings[ctr] = malloc(stringlen + 1);	//Allocate memory to build the string
+		if(!eof_rs_popup_messages_list_strings[ctr])
+		{
+			allegro_message("Error allocating memory");
+			while(ctr > 0)
+			{	//Free previously allocated strings
+				free(eof_rs_popup_messages_list_strings[ctr - 1]);
+				ctr--;
+			}
+			free(eof_rs_popup_messages_list_strings);
+			eof_rs_popup_messages_list_strings = NULL;
+			return;
+		}
+		(void) snprintf(eof_rs_popup_messages_list_strings[ctr], stringlen, "%lu-%lums : %s", tp->popupmessage[ctr].start_pos, tp->popupmessage[ctr].end_pos, tp->popupmessage[ctr].name);
+	}
+}
+
+int eof_find_effective_rs_popup_message(unsigned long pos, unsigned long *popupnum)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned long tracknum, ctr;
+
+	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT) || !popupnum)
+		return 0;	//Return false if a pro guitar track isn't active or parameters are invalid
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+
+	for(ctr = 0; ctr < tp->popupmessages; ctr++)
+	{	//For each popup message
+		if((pos >= tp->popupmessage[ctr].start_pos) && (pos <= tp->popupmessage[ctr].end_pos))
+		{	//If the specified position is within this popup message's time range
+			*popupnum = ctr;	//Store the result
+			return 1;	//Return found
+		}
+	}
+
+	return 0;	//Return not found
+}
+
+int eof_menu_song_rs_popup_messages(void)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned long tracknum, ctr, popupmessage;
+
+	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return 1;	//Do not allow this function to run if a pro guitar track isn't active
+
+	//Allocate and build the strings for the phrases
+	eof_rebuild_rs_popup_messages_list_strings();
+	if(eof_find_effective_rs_popup_message(eof_music_pos - eof_av_delay, &popupmessage))
+	{	//If a popup message is in effect at the current seek position
+		eof_rs_popup_messages_dialog[1].d1 = popupmessage;	//Pre-select the popup message from the list
+	}
+
+	//Call the dialog
+	eof_rs_popup_messages_dialog_undo_made = 0;	//Reset this condition
+	eof_color_dialog(eof_rs_popup_messages_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_rs_popup_messages_dialog);
+	(void) eof_popup_dialog(eof_rs_popup_messages_dialog, 0);
+
+	//Cleanup
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+	for(ctr = 0; ctr < tp->popupmessages; ctr++)
+	{	//Free previously allocated strings
+		free(eof_rs_popup_messages_list_strings[ctr]);
+	}
+	free(eof_rs_popup_messages_list_strings);
+	eof_rs_popup_messages_list_strings = NULL;
+
+	return 1;
+}
+
+char * eof_rs_popup_messages_list(int index, int * size)
+{
+	switch(index)
+	{
+		case -1:
+		{
+			*size = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum]->popupmessages;
+			break;
+		}
+		default:
+		{
+			return eof_rs_popup_messages_list_strings[index];
+		}
+	}
+	return NULL;
+}
+
+int eof_song_qsort_popup_messages(const void * e1, const void * e2)
+{
+	EOF_PHRASE_SECTION * thing1 = (EOF_PHRASE_SECTION *)e1;
+	EOF_PHRASE_SECTION * thing2 = (EOF_PHRASE_SECTION *)e2;
+
+	//Sort by timestamp
+	if(thing1->start_pos < thing2->start_pos)
+	{
+		return -1;
+	}
+	else if(thing1->start_pos > thing2->start_pos)
+	{
+		return 1;
+	}
+
+	//They are equal
+	return 0;
+}
+
+void eof_pro_guitar_track_sort_popup_messages(EOF_PRO_GUITAR_TRACK* tp)
+{
+ 	eof_log("eof_pro_guitar_track_sort_fret_hand_positions() entered", 1);
+
+	if(tp)
+	{
+		qsort(tp->popupmessage, (size_t)tp->popupmessages, sizeof(EOF_PHRASE_SECTION), eof_song_qsort_popup_messages);
+	}
+}
+
+void eof_pro_guitar_track_delete_popup_message(EOF_PRO_GUITAR_TRACK *tp, unsigned long index)
+{
+	unsigned long ctr;
+ 	eof_log("eof_pro_guitar_track_delete_hand_position() entered", 1);
+
+	if(tp && (index < tp->popupmessages))
+	{
+		tp->popupmessage[index].name[0] = '\0';	//Empty the name string
+		for(ctr = index; ctr < tp->popupmessages; ctr++)
+		{
+			memcpy(&tp->popupmessage[ctr], &tp->popupmessage[ctr + 1], sizeof(EOF_PHRASE_SECTION));
+		}
+		tp->popupmessages--;
+	}
+}
+
+int eof_rs_popup_messages_delete(DIALOG * d)
+{
+	EOF_PRO_GUITAR_TRACK *tp;
+	unsigned long tracknum, ctr, ctr2;
+
+	if(!d)
+	{	//Satisfy Splint by checking value of d
+		return D_O_K;
+	}
+	if(!eof_song || (eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT))
+		return D_O_K;	//Do not allow this function to run if a pro guitar track isn't active
+
+	tracknum = eof_song->track[eof_selected_track]->tracknum;
+	tp = eof_song->pro_guitar_track[tracknum];
+	if(tp->popupmessages == 0)
+		return D_O_K;
+
+	for(ctr = 0; ctr < tp->popupmessages; ctr++)
+	{	//For each popup message
+		if(ctr == eof_rs_popup_messages_dialog[1].d1)
+		{	//If this is the popup message selected from the list
+			if(!eof_rs_popup_messages_dialog_undo_made)
+			{	//If an undo state hasn't been made yet since launching this dialog
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				eof_rs_popup_messages_dialog_undo_made = 1;
+			}
+
+			//Release strings
+			for(ctr2 = 0; ctr2 < tp->popupmessages; ctr2++)
+			{	//Free previously allocated strings
+				free(eof_rs_popup_messages_list_strings[ctr2]);
+			}
+			free(eof_rs_popup_messages_list_strings);
+			eof_rs_popup_messages_list_strings = NULL;
+
+			/* remove the hand position, update the selection in the list box and exit */
+			eof_pro_guitar_track_delete_popup_message(eof_song->pro_guitar_track[tracknum], ctr);
+			eof_pro_guitar_track_sort_popup_messages(eof_song->pro_guitar_track[tracknum]);	//Re-sort the remaining popup messages
+			if((eof_fret_hand_position_list_dialog[1].d1 >= tp->popupmessages) && (tp->popupmessages > 0))
+			{	//If the last list item was deleted and others remain
+				eof_rs_popup_messages_dialog[1].d1--;	//Select the one before the one that was deleted, or the last event, whichever one remains
+			}
+		}
+	}
+
+	//Rebuild the strings for the dialog menu
+	eof_rebuild_rs_popup_messages_list_strings();
 
 	return D_REDRAW;	//Have Allegro redraw the dialog
 }

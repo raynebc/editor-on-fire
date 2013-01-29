@@ -1344,6 +1344,7 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 				ptr4->trills = 0;
 				ptr4->tremolos = 0;
 				ptr4->handpositions = 0;
+				ptr4->popupmessages = 0;
 				ptr4->parent = ptr3;
 				sp->pro_guitar_track[sp->pro_guitar_tracks] = ptr4;
 				sp->pro_guitar_tracks++;
@@ -1445,7 +1446,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 	unsigned long section_type_count,section_type_ctr,section_type,section_count,section_ctr,section_start,section_end;
 	unsigned long custom_data_count,custom_data_ctr,custom_data_size,custom_data_id;
 	EOF_TRACK_ENTRY temp={0, 0, 0, 0, "", "", 0, 5, 0};
-	char name[EOF_NAME_LENGTH+1];	//Used to load note/section names
+	char name[EOF_SECTION_NAME_LENGTH+1];	//Used to load note/section names (section names are currently longer)
 
 	#define EOFNUMINISTRINGTYPES 12
 	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
@@ -1850,7 +1851,7 @@ int eof_load_song_pf(EOF_SONG * sp, PACKFILE * fp)
 			section_count = pack_igetl(fp);		//Read the number of instances of this type of section there is
 			for(section_ctr=0; section_ctr<section_count; section_ctr++)
 			{	//For each instance of the specified section
-				(void) eof_load_song_string_pf(name,fp,EOF_NAME_LENGTH+1);	//Parse past the section name
+				(void) eof_load_song_string_pf(name,fp,EOF_SECTION_NAME_LENGTH+1);	//Parse past the section name
 				inputc = pack_getc(fp);								//Read the section's associated difficulty
 				section_start = pack_igetl(fp);						//Read the start timestamp of the section
 				section_end = pack_igetl(fp);						//Read the end timestamp of the section
@@ -2172,6 +2173,29 @@ int eof_track_add_section(EOF_SONG * sp, unsigned long track, unsigned long sect
 				return 1;
 			}
 		break;
+		case EOF_RS_POPUP_MESSAGE:	//Popup message
+			if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+			{
+				count = sp->pro_guitar_track[tracknum]->popupmessages;
+				if(count < EOF_MAX_PHRASES)
+				{	//If EOF can store the popup message
+					sp->pro_guitar_track[tracknum]->popupmessage[count].start_pos = start;
+					sp->pro_guitar_track[tracknum]->popupmessage[count].end_pos = end;	//This will store the fret number the fretting hand is at
+					sp->pro_guitar_track[tracknum]->popupmessage[count].flags = flags;
+					sp->pro_guitar_track[tracknum]->popupmessage[count].difficulty = 0;
+					if(name == NULL)
+					{
+						sp->pro_guitar_track[tracknum]->popupmessage[count].name[0] = '\0';
+					}
+					else
+					{
+						(void) ustrcpy(sp->pro_guitar_track[tracknum]->popupmessage[count].name, name);
+					}
+					sp->pro_guitar_track[tracknum]->popupmessages++;
+				}
+				return 1;
+			}
+		break;
 	}
 	return 0;	//Return error
 }
@@ -2206,7 +2230,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 	char header[16] = {'E', 'O', 'F', 'S', 'O', 'N', 'H', 0};
 	unsigned long count,ctr,ctr2,tracknum;
 	unsigned long track_count,track_ctr,bookmark_count,bitmask,fingerdefinitions;
-	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions;
+	char has_solos,has_star_power,has_bookmarks,has_catalog,has_lyric_phrases,has_arpeggios,has_trills,has_tremolos,has_sliders,has_handpositions,has_popupmesages;
 
 	#define EOFNUMINISTRINGTYPES 12
 	char *inistringbuffer[EOFNUMINISTRINGTYPES] = {NULL};
@@ -2514,7 +2538,7 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 			}
 
 			tracknum = sp->track[track_ctr]->tracknum;
-			has_solos = has_star_power = has_lyric_phrases = has_arpeggios = has_trills = has_tremolos = has_sliders = has_handpositions = 0;
+			has_solos = has_star_power = has_lyric_phrases = has_arpeggios = has_trills = has_tremolos = has_sliders = has_handpositions = has_popupmesages = 0;
 			switch(sp->track[track_ctr]->track_format)
 			{	//Perform the appropriate logic to write this format of track
 				case EOF_LEGACY_TRACK_FORMAT:	//Legacy (non pro guitar, non pro bass, non pro keys, pro or non pro drums)
@@ -2715,7 +2739,11 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 					{
 						has_handpositions = 1;
 					}
-					(void) pack_iputw(has_solos + has_star_power + has_arpeggios + has_trills + has_tremolos + has_handpositions, fp);		//Write the number of section types
+					if(sp->pro_guitar_track[tracknum]->popupmessages)
+					{
+						has_popupmesages = 1;
+					}
+					(void) pack_iputw(has_solos + has_star_power + has_arpeggios + has_trills + has_tremolos + has_handpositions + has_popupmesages, fp);		//Write the number of section types
 					if(has_solos)
 					{	//Write solo sections
 						(void) pack_iputw(EOF_SOLO_SECTION, fp);			//Write solo section type
@@ -2791,6 +2819,19 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 							(void) pack_putc(sp->pro_guitar_track[tracknum]->handposition[ctr].difficulty, fp);	//Write the fret hand position's associated difficulty
 							(void) pack_iputl(sp->pro_guitar_track[tracknum]->handposition[ctr].start_pos, fp);	//Write the fret hand position's timestamp
 							(void) pack_iputl(sp->pro_guitar_track[tracknum]->handposition[ctr].end_pos, fp);		//Write the fret hand position's fret number
+							(void) pack_iputl(0, fp);						//Write section flags (not used)
+						}
+					}
+					if(has_popupmesages)
+					{	//Write popup messages
+						(void) pack_iputw(EOF_RS_POPUP_MESSAGE, fp);		//Write popup message section type
+						(void) pack_iputl(sp->pro_guitar_track[tracknum]->popupmessages, fp);	//Write number of popup messages for this track
+						for(ctr=0; ctr < sp->pro_guitar_track[tracknum]->popupmessages; ctr++)
+						{	//For each popup message in the track
+							(void) eof_save_song_string_pf(sp->pro_guitar_track[tracknum]->popupmessage[ctr].name, fp);		//Write message text
+							(void) pack_putc(0xFF, fp);					//Write an associated difficulty of "all difficulties"
+							(void) pack_iputl(sp->pro_guitar_track[tracknum]->popupmessage[ctr].start_pos, fp);		//Write the message's start timestamp
+							(void) pack_iputl(sp->pro_guitar_track[tracknum]->popupmessage[ctr].end_pos, fp);		//Write the message's end timestamp
 							(void) pack_iputl(0, fp);						//Write section flags (not used)
 						}
 					}

@@ -94,6 +94,7 @@
 #define EOF_MAX_GRID_SNAP_INTERVALS 64
 
 #define EOF_NAME_LENGTH 30
+#define EOF_SECTION_NAME_LENGTH 50
 
 typedef struct
 {
@@ -186,7 +187,7 @@ typedef struct
 	unsigned long start_pos;
 	unsigned long end_pos;	//Will store other data in items that don't use an end position (such as the fret number for fret hand positions)
 	unsigned long flags;
-	char name[EOF_NAME_LENGTH+1];
+	char name[EOF_SECTION_NAME_LENGTH+1];
 	char difficulty;	//The difficulty this phrase applies to (ie. arpeggios, hand positions)
 
 } EOF_PHRASE_SECTION;
@@ -237,6 +238,7 @@ typedef struct
 #define EOF_TREMOLO_SECTION				14
 #define EOF_SLIDER_SECTION				15
 #define EOF_FRET_HAND_POS_SECTION       16
+#define EOF_RS_POPUP_MESSAGE            17
 
 #define EOF_TRACK_FLAG_SIX_LANES		1
 	//Specifies if the track has open strumming enabled (PART BASS) or a fifth drum lane enabled (PART DRUMS)
@@ -342,6 +344,10 @@ typedef struct
 	/* fret hand positions */
 	EOF_PHRASE_SECTION handposition[EOF_MAX_NOTES];	//There has to be the ability to store as many fret hand position changes as there are notes
 	unsigned long handpositions;
+
+	/* popup messages */
+	EOF_PHRASE_SECTION popupmessage[EOF_MAX_NOTES];
+	unsigned long popupmessages;
 
 } EOF_PRO_GUITAR_TRACK;
 
