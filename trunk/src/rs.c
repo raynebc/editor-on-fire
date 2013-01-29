@@ -642,17 +642,39 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	}
 	(void) pack_fputs("  </ebeats>\n", fp);
 
-	//Write a message box if the loading text song property string is defined
+	//Write message boxes for the loading text song property (if defined) and each user defined popup message
 	if(sp->tags->loading_text[0] != '\0')
 	{	//If the loading text is defined
-		char expanded_loading_text[512];	//A string to expand the user defined loading text into
-		(void) strftime(expanded_loading_text, sizeof(expanded_loading_text), sp->tags->loading_text, caltime);	//Expand any user defined calendar date/time tokens
-		(void) pack_fputs("  <controls count =\"2\">\n", fp);
-		expand_xml_text(buffer2, sizeof(buffer2) - 1, expanded_loading_text, 512);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
-		(void) snprintf(buffer, sizeof(buffer) - 1, "    <control time=\"5.100\" code=\"ShowMessageBox(hint1, %s)\"/>\n", buffer2);	//Insert expanded loading text into control string
+		char expanded_text[512];	//A string to expand the user defined text into
+		(void) strftime(expanded_text, sizeof(expanded_text), sp->tags->loading_text, caltime);	//Expand any user defined calendar date/time tokens
+		expand_xml_text(buffer2, sizeof(buffer2) - 1, expanded_text, 512);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+
+		(void) eof_track_add_section(eof_song, track, EOF_RS_POPUP_MESSAGE, 0, 5100, 10100, 1, sp->tags->loading_text);	//Insert this as a popup message, setting the flag to nonzero to mark is as temporary
+		eof_pro_guitar_track_sort_popup_messages(tp);	//Sort the popup messages
+	}
+	if(tp->popupmessages)
+	{	//If at least one popup message is to be written
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <controls count =\"%lu\">\n", tp->popupmessages * 2);	//Each will need one control to display and one control to clear
 		(void) pack_fputs(buffer, fp);
-		(void) pack_fputs("    <control time=\"10.100\" code=\"ClearAllMessageBoxes()\"/>\n", fp);
+		for(ctr = 0; ctr < tp->popupmessages; ctr++)
+		{	//For each popup message
+			expand_xml_text(buffer2, sizeof(buffer2) - 1, tp->popupmessage[ctr].name, EOF_SECTION_NAME_LENGTH);	//Expand XML special characters into escaped sequences if necessary, and check against the maximum supported length of this field
+			(void) snprintf(buffer, sizeof(buffer) - 1, "    <control time=\"%.3f\" code=\"ShowMessageBox(hint%lu, %s)\"/>\n", tp->popupmessage[ctr].start_pos / 1000.0, ctr + 1, buffer2);	//Insert expanded loading text into control string
+			(void) pack_fputs(buffer, fp);
+			(void) snprintf(buffer, sizeof(buffer) - 1, "    <control time=\"%.3f\" code=\"ClearAllMessageBoxes()\"/>\n", tp->popupmessage[ctr].end_pos / 1000.0);
+			(void) pack_fputs(buffer, fp);
+		}
 		(void) pack_fputs("  </controls>\n", fp);
+
+		//Remove any loading text popup that was inserted into the track
+		for(ctr = 0; ctr < tp->popupmessages; ctr++)
+		{	//For each popup message
+			if(tp->popupmessage[ctr].flags)
+			{	//If the flags field was made nonzero
+				eof_pro_guitar_track_delete_popup_message(tp, ctr);	//Delete this temporary popup message
+				break;
+			}
+		}
 	}
 
 	//Write sections

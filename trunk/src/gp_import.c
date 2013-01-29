@@ -2115,6 +2115,7 @@ struct eof_guitar_pro_struct *eof_load_gp(const char * fn, char *undo_made)
 		gp->track[ctr]->trills = 0;
 		gp->track[ctr]->tremolos = 0;
 		gp->track[ctr]->handpositions = 0;
+		gp->track[ctr]->popupmessages = 0;
 		gp->track[ctr]->parent = NULL;
 	}
 
