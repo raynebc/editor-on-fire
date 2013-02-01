@@ -14,6 +14,11 @@ p {text-indent: 1cm}
 <h1><a name="tutorial">Common Problems</a></h1>
 
 <b>Problem:</b><br>
+The mouse doesn't appear very responsive, especially to small movements.  Changing the "Use Software Cursor" in File>Display doesn't lead to any improvement.<br>
+<b>Solution:</b></b>
+Some higher end mice (one example being the Logitech G500) may have problems working well with Allegro depending on their settings.  For example, it's been reported that with the Logitech G500, using the mouse's management utility to lower the polling rate helped.  If making setting changes to the mouse doesn't resolve the problem, it may ultimately be easiest to just try connecting and using an additional cheap mouse.<br><br>
+
+<b>Problem:</b><br>
 EOF doesn't play any sound, and it doesn't give any errors about this when starting up.<br>
 <b>Solution:</b><br>
 There are some sound driver settings that might not work with Allegro (the game design library EOF uses).  One known issue is if your sound card uses a feature to emulate EAX hardware (ie. this is called "GX Mode" in Xonar branded sound cards), the sound may not work in EOF.  The fix for this is to disable the sound driver's EAX emulation feature.  Kudos to fatdog for this fix.<br><br>
@@ -22,7 +27,6 @@ There are some sound driver settings that might not work with Allegro (the game 
 I placed some notes in my song and when I try to play the song in FOF the notes are out of sync.<br>
 <b>Solution:</b><br>
 Make sure you have set up the AV delay properly. To do so, open the “AV Delay” song and start the song (press Space). If the on-screen notes light up before the sound plays you need to adjust the AV delay down (press minus [-]). If the on-screen notes light up after the sound plays you need to adjust the AV delay up (press plus/equal [+/=]). You can adjust while the song is playing also.  Also ensure that you have configured your AV delay in "Frets On Fire" properly. To test your AV delay, try playing a song which is reported/accepted as perfectly synced and see if the notes are synced to the audio. If they are not, adjust the AV delay setting and test the song again. Repeat until you find the correct AV delay setting.<br><br>
-
 
 <b>Problem:</b><br>
 I get stuttering or cracking during music playback.<br>
