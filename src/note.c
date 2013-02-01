@@ -1428,10 +1428,12 @@ void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note
 	buffer[index] = '\0';
 }
 
-int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, unsigned long track2, unsigned long note2)
+int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, unsigned long track2, unsigned long note2, char thorough)
 {
 	unsigned long tracknum, tracknum2;
 	unsigned long note1note, note2note;
+	unsigned long flags, flags2;
+	long length, length2;
 
 	//Validate parameters
 	if(!track1 || !track2 || !sp || (track1 >= sp->tracks) || (track2 >= sp->tracks) || (note1 >= eof_get_track_size(sp, track1)) || (note2 >= eof_get_track_size(sp, track2)))
@@ -1444,6 +1446,32 @@ int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, un
 
 	note1note = eof_get_note_note(sp, track1, note1);
 	note2note = eof_get_note_note(sp, track2, note2);
+
+	if(thorough)
+	{	//If the note lengths and flags are also to be compared
+		flags = eof_get_note_flags(sp, track1, note1);
+		flags2 = eof_get_note_flags(sp, track2, note2);
+		if(flags != flags2)
+		{	//If the flags don't match
+			return 1;	//Return not equal
+		}
+		length = eof_get_note_length(sp, track1, note1);
+		length2 = eof_get_note_length(sp, track2, note2);
+		if(length > length2)
+		{	//If the first note is longer
+			if(length2 + 3 < length)
+			{	//And it's by more than 3ms
+				return 1;	//Return not equal
+			}
+		}
+		else
+		{	//If the second note is longer
+			if(length + 3 < length2)
+			{	//And it's by more than 3ms
+				return 1;	//Return not equal
+			}
+		}
+	}
 
 	switch(sp->track[track1]->track_format)
 	{
@@ -1472,7 +1500,7 @@ int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, un
 
 int eof_note_compare_simple(EOF_SONG *sp, unsigned long track, unsigned long note1, unsigned long note2)
 {
-	return eof_note_compare(sp, track, note1, track, note2);
+	return eof_note_compare(sp, track, note1, track, note2, 0);
 }
 
 int eof_pro_guitar_note_compare(EOF_PRO_GUITAR_TRACK *tp1, unsigned long note1, EOF_PRO_GUITAR_TRACK *tp2, unsigned long note2)

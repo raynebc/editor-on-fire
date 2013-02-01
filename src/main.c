@@ -112,7 +112,7 @@ int         eof_add_new_notes_to_selection = 0;	//If nonzero, newly added gems c
 int         eof_drum_modifiers_affect_all_difficulties = 1;	//If nonzero, a drum modifier (ie. open/pedal hi hat or rim shot apply to any notes at the same position in non active difficulties)
 int         eof_fb_seek_controls = 0;			//If nonzero, the page up/dn keys have their seek directions reversed, and up/down seek forward/backward
 int         eof_new_note_length_1ms;			//If nonzero, newly created notes are initialized to a length of 1ms instead of the regular grid snap based logic
-int         eof_gp_import_preference_1 = 0;		//If nonzero, GP import automatically imports text events without prompting.  Beat texts with qualifying strings are imported as RS sections, section markers as RS phrases.
+int         eof_gp_import_preference_1 = 0;		//If nonzero during GP import, beat texts with qualifying strings are imported as RS sections, section markers as RS phrases.
 int         eof_min_note_length = 0;			//Specifies the user-configured minimum length for all non-drum notes (for making Guitar Hero customs, is set to 0 if undefined)
 int         eof_min_note_distance = 3;			//Specifies the user-configured minimum distance between notes (to avoid problems with timing conversion leading to precision loss that can cause notes to combine/drop)
 int         eof_render_bass_drum_in_lane = 0;	//If nonzero, the 3D rendering will draw bass drum gems in a lane instead of as a bar spanning all lanes

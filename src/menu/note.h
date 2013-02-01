@@ -146,6 +146,7 @@ int eof_pro_guitar_note_bend_strength_no_save(void);
 	//Calls eof_pro_guitar_note_bend_strength() specifying not to make an undo before making changes
 	//(for when using the keyboard shortcut to toggle bends, since an undo would already have been created)
 int eof_menu_pro_guitar_remove_fingering(void);	//Clears the finger array for all selected notes
+int eof_menu_remove_statuses(void);		//Clears all flags for selected notes, except notes that only have string mute status (since pro guitar fixup will re-apply it automatically)
 
 int eof_menu_note_toggle_green(void);	//Toggles the gem on lane 1 (originally colored green)
 int eof_menu_note_toggle_red(void);		//Toggles the gem on lane 2 (originally colored red)

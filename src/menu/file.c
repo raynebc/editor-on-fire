@@ -2717,8 +2717,8 @@ int eof_menu_file_gp_import(void)
 //If the GP file contained section markers, offer to import them now
 			if(eof_parsed_gp_file->text_events)
 			{	//If there were text events imported
-				if(eof_gp_import_preference_1 || alert(NULL, "Import Guitar Pro file's section markers/beat text as Rocksmith phrases/sections?", NULL, "&Yes", "&No", 'y', 'n') == 1)
-				{	//If the user set the preference to automatically import RS phrases and sections from GP files, or opted to do so when prompted
+				if(alert(NULL, "Import Guitar Pro file's section markers/beat text as Rocksmith phrases/sections?", NULL, "&Yes", "&No", 'y', 'n') == 1)
+				{	//If the user opts to import RS phrases and sections from GP files
 					if(!gp_import_undo_made)
 					{	//If an undo state hasn't been made yet
 						eof_prepare_undo(EOF_UNDO_TYPE_NONE);

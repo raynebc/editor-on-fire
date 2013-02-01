@@ -48,15 +48,16 @@ BITMAP *eof_create_fret_number_bitmap(EOF_PRO_GUITAR_NOTE *note, unsigned char s
 	//Used to create a bordered rectangle bitmap with the specified string number, for use in the editor or 3D window, returns NULL on error
 void eof_get_note_notation(char *buffer, unsigned long track, unsigned long note);
 	//Used to store notations (ie. "PM" for palm mute) for the specified note into the buffer, which should be able to hold at least 30 characters
-int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, unsigned long track2, unsigned long note2);
+int eof_note_compare(EOF_SONG *sp, unsigned long track1, unsigned long note1, unsigned long track2, unsigned long note2, char thorough);
 	//Compares the two notes and returns 0 under the following conditions:
 	//1. The track is a legacy format track and both notes have the same bitmask
 	//2. The track is a vocal format track and both lyrics have the same pitch
 	//3. The track is a pro guitar format track and both notes have the same bitmask (legacy bitmasks are not compared) and active frets have matching values
+	//If the thorough parameter is nonzero, the notes' flags must also be identical, and their lengths must be within 3ms of each other for them to match
 	//If the notes do not match, or are from differently formatted tracks, 1 is returned
 	//-1 is returned on error
 int eof_note_compare_simple(EOF_SONG *sp, unsigned long track, unsigned long note1, unsigned long note2);
-	//Compares two notes in the same track by invoking eof_note_compare
+	//Compares two notes in the same track by invoking eof_note_compare, with the option of not comparing note lengths and flags
 int eof_pro_guitar_note_compare(EOF_PRO_GUITAR_TRACK *tp1, unsigned long note1, EOF_PRO_GUITAR_TRACK *tp2, unsigned long note2);
 	//Compares two pro guitar notes and returns 0 if both notes have the same bitmask (legacy bitmasks are not compared) and active frets have matching values
 	//If the notes do not match, or are from differently formatted tracks, 1 is returned

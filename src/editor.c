@@ -3513,8 +3513,8 @@ void eof_editor_logic(void)
 		}
 		else
 		{	//Full screen 3D view is not in effect
-			if((mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4) && (mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18))
-			{
+			if((mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4 - 19) && (mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18 + 8))
+			{	//mouse is in beat marker area
 				lpos = pos < 300 ? (eof_song->beat[eof_selected_beat]->pos / eof_zoom + 20) : 300;
 				eof_prepare_menus();
 				(void) do_menu(eof_beat_menu, lpos, mouse_y);
@@ -4227,8 +4227,8 @@ void eof_vocal_editor_logic(void)
 		}
 		else
 		{	//Full screen 3D view is not in effect
-			if((mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4) && (mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18))
-			{
+			if((mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4 - 19) && (mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18 + 8))
+			{	//mouse is in beat marker area
 				int pos = eof_music_pos / eof_zoom;
 				int lpos = pos < 300 ? (eof_song->beat[eof_selected_beat]->pos / eof_zoom + 20) : 300;
 
@@ -5315,7 +5315,7 @@ void eof_editor_logic_common(void)
 	if(eof_music_paused)
 	{	//If the chart is paused
 		/* mouse is in beat marker area */
-		if((mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4) && (mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18))
+		if((mouse_y >= eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET - 4 - 19) && (mouse_y < eof_window_editor->y + EOF_EDITOR_RENDER_OFFSET + 18 + 8))
 		{
 			if(eof_blclick_released)
 			{	//If the left mouse button is released

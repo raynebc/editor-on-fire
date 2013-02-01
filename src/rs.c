@@ -1868,8 +1868,8 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 						if((thispos == thispos2) && (thisdiff == comparediff))
 						{	//If this note is at the same position and one difficulty lower than the one being examined in the outer loop
 							note_found = 1;	//Track that a note at the same position was found in the previous difficulty
-							if(eof_note_compare_simple(sp, track, ctr2, ctr3 - 1))
-							{	//If the two notes don't match
+							if(eof_note_compare(sp, track, ctr2, track, ctr3 - 1, 1))
+							{	//If the two notes don't match (including lengths and flags)
 								return 1;	//Return difference found
 							}
 							break;
@@ -1889,8 +1889,8 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 						if((thispos == thispos2) && (thisdiff == comparediff))
 						{	//If this note is at the same position and one difficulty lower than the one being examined in the outer loop
 							note_found = 1;	//Track that a note at the same position was found in the previous difficulty
-							if(eof_note_compare_simple(sp, track, ctr2, ctr3))
-							{	//If the two notes don't match
+							if(eof_note_compare(sp, track, ctr2, track, ctr3 - 1, 1))
+							{	//If the two notes don't match (including lengths and flags)
 								return 1;	//Return difference found
 							}
 							break;
@@ -1939,8 +1939,8 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 						if((thispos == thispos2) && (thisdiff == diff))
 						{	//If this note is in the specified difficulty and at the same position as the one being examined in the outer loop
 							note_found = 1;	//Track that a note at the same position was found in the previous difficulty
-							if(eof_note_compare_simple(sp, track, ctr2, ctr3))
-							{	//If the two notes don't match
+							if(eof_note_compare(sp, track, ctr2, track, ctr3 - 1, 1))
+							{	//If the two notes don't match (including lengths and flags)
 								return 1;	//Return difference found
 							}
 							break;
@@ -1960,8 +1960,8 @@ char eof_compare_time_range_with_previous_or_next_difficulty(EOF_SONG *sp, unsig
 						if((thispos == thispos2) && (thisdiff == diff))
 						{	//If this note is in the specified difficulty and at the same position as the one being examined in the outer loop
 							note_found = 1;	//Track that a note at the same position was found in the previous difficulty
-							if(eof_note_compare_simple(sp, track, ctr2, ctr3 - 1))
-							{	//If the two notes don't match
+							if(eof_note_compare(sp, track, ctr2, track, ctr3 - 1, 1))
+							{	//If the two notes don't match (including lengths and flags)
 								return 1;	//Return difference found
 							}
 							break;

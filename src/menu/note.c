@@ -361,6 +361,7 @@ MENU eof_note_menu[] =
     {"&Drum", NULL, eof_note_drum_menu, 0, NULL},
     {"Pro &Guitar", NULL, eof_note_proguitar_menu, 0, NULL},
     {"&Lyrics", NULL, eof_note_lyrics_menu, 0, NULL},
+    {"Remove all statuses", eof_menu_remove_statuses, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -7490,5 +7491,41 @@ int eof_note_menu_read_gp_lyric_texts(void)
 	}
 
 	(void) pack_fclose(fp);
+	return 1;
+}
+
+int eof_menu_remove_statuses(void)
+{
+	unsigned long i;
+	char undo_made = 0;	//Set to nonzero if an undo state was saved
+	unsigned long flags;
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if(eof_selection.multi[i])
+		{
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			if(flags)
+			{	//If this note has any statuses
+				if(!((eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT) && (flags == EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE)))
+				{	//Don't bother clearing the note status if the only status it has is string mute, since the fixup routine will just re-apply it automatically
+					if(!undo_made)
+					{	//If an undo state hasn't been made yet
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+						undo_made = 1;
+					}
+					eof_set_note_flags(eof_song, eof_selected_track, i, 0);	//Erase all flags for this note
+				}
+			}
+		}
+	}
+	eof_track_fixup_notes(eof_song, eof_selected_track, 1);
+	eof_determine_phrase_status(eof_song, eof_selected_track);
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
 	return 1;
 }
