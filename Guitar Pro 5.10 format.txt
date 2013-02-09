@@ -310,7 +310,7 @@ TRACK CHUNK, for each track:
 						[1 byte]:	Chord name string length
 						[varies]:	Chord name string
 						[4 bytes]:	Fret number at which the diagram begins
-						FRET CHUNK, definitions for each of the track's defined strings (not padded to 7 strings), starting with the lowest numbered string, ie. high e (-1 = not played, 0 = played open):
+						FRET CHUNK (ONLY if the above fret number is nonzero, includes definitions for each of the track's defined strings (not padded to 7 strings), starting with the lowest numbered string, ie. high e (-1 = not played, 0 = played open):
 						{	For each of the track's strings
 							[4 bytes]:	The fret number at which this string is being pressed
 						}

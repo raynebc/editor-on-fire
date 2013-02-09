@@ -81,7 +81,7 @@
 #define EOF_BEAT_FLAG_START_3_4    8
 #define EOF_BEAT_FLAG_START_5_4   16
 #define EOF_BEAT_FLAG_START_6_4   32
-#define EOF_BEAT_FLAG_CUSTOM_TS   64
+#define EOF_BEAT_FLAG_CUSTOM_TS   64	//If this is nonzero, indicates that the first and second most significant bytes of the beat's flags store the TS numerator and denominator, respectively
 #define EOF_BEAT_FLAG_KEY_SIG    128
 #define EOF_BEAT_FLAG_EXTENDED 32768	//Reserve the highest unused bit to allow for another beat flag to be conditionally present
 

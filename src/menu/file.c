@@ -2706,7 +2706,7 @@ int eof_menu_file_gp_import(void)
 	eof_clear_input();
 	if(returnedfn)
 	{
-		eof_parsed_gp_file = eof_load_gp(returnedfn, &gp_import_undo_made);	//Make an undo state if time signatures are imported
+		eof_parsed_gp_file = eof_load_gp(returnedfn, &gp_import_undo_made);	//Parse the GP file, make an undo state if time signatures are imported
 
 		if(eof_parsed_gp_file)
 		{	//The file was successfully parsed, allow the user to import a track into the active project
@@ -2738,7 +2738,7 @@ int eof_menu_file_gp_import(void)
 
 			eof_color_dialog(eof_gp_import_dialog, gui_fg_color, gui_bg_color);
 			centre_dialog(eof_gp_import_dialog);
-			(void) eof_popup_dialog(eof_gp_import_dialog, 0);
+			(void) eof_popup_dialog(eof_gp_import_dialog, 0);	//Launch the dialog to allow the user to import a track
 			eof_cursor_visible = 1;
 			eof_pen_visible = 1;
 			eof_show_mouse(NULL);

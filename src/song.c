@@ -1315,6 +1315,7 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 				ptr4 = malloc(sizeof(EOF_PRO_GUITAR_TRACK));
 				if(ptr4 == NULL)
 					return 0;	//Return error
+				memset(ptr4, 0, sizeof(EOF_PRO_GUITAR_TRACK));	//Initialize memory block to 0 to avoid crashes when not explicitly setting counters that were newly added to the pro guitar structure
 				if((trackdetails->track_type == EOF_TRACK_PRO_BASS_22) || (trackdetails->track_type == EOF_TRACK_PRO_GUITAR_22))
 				{	//If this is a 22 fret track
 					ptr4->numfrets = 22;	//Set 22 as the default max fret (ie. Squier guitar)
@@ -1336,15 +1337,6 @@ int eof_song_add_track(EOF_SONG * sp, EOF_TRACK_ENTRY * trackdetails)
 					free(ptr4);
 					return 0;	//Return error
 				}
-				memset(ptr4->tuning, 0, EOF_TUNING_LENGTH);	//Initialize the tuning for all strings to "standard" (zero)
-				ptr4->notes = 0;
-				ptr4->solos = 0;
-				ptr4->star_power_paths = 0;
-				ptr4->arpeggios = 0;
-				ptr4->trills = 0;
-				ptr4->tremolos = 0;
-				ptr4->handpositions = 0;
-				ptr4->popupmessages = 0;
 				ptr4->parent = ptr3;
 				sp->pro_guitar_track[sp->pro_guitar_tracks] = ptr4;
 				sp->pro_guitar_tracks++;

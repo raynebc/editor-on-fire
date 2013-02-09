@@ -357,7 +357,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 		return 0;	//Return failure
 	}
 
-	//Get the smaller of the chart length and the music length, this will be used to write the songlength tag, END phrase iteration and noguitar section instance
+	//Get the smaller of the chart length and the music length, this will be used to write the songlength tag
 	xml_end = eof_music_length;
 	if(eof_silence_loaded || (eof_chart_length < eof_music_length))
 	{	//If the chart length is shorter than the music length, or there is no chart audio loaded

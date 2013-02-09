@@ -5,4 +5,6 @@
 @echo Output: %3
 @echo.
 @echo This may take a minute or two. Please be patient.
-@lame --quiet --decode %1 - | oggenc2 --quiet -q %2 --resample 44100 -s 0 - -o %3
+@lame --quiet --decode %1 temp.wav
+@oggenc2 --quiet -q %2 --resample 44100 -s 0 temp.wav -o %3
+@del temp.wav
