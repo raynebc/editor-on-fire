@@ -362,7 +362,7 @@ long eof_put_porpos(unsigned long beat, float porpos, float offset)
 	float fporpos = porpos + offset;
 	unsigned long cbeat = beat;
 
-	eof_log("eof_put_porpos() entered", 1);
+	eof_log("eof_put_porpos() entered", 2);
 
 	if(fporpos <= -1.0)
 	{

@@ -14,18 +14,22 @@
 	void eof_gp_debug_log(FILE *inf, char *text);		//Prints the current file position and the specified string to the console
 	extern char *eof_note_names[12];
 #else
+	struct eof_gp_measure
+	{
+		unsigned char num, den;			//The 8 bit numerator and denominator defined in guitar pro time signatures
+		unsigned char start_of_repeat;	//If nonzero, indicates that this measure is the start of a repeat (measure 0 is this by default)
+		unsigned char num_of_repeats;	//If nonzero, indicates the end of a repeat as well as how many repeats
+	};
+
 	struct eof_guitar_pro_struct
 	{
 		unsigned long numtracks;			//The number of tracks loaded from the guitar pro file
 		char **names;						//An array of strings, representing the native name of each loaded track
 		EOF_PRO_GUITAR_TRACK **track;		//An array of pro guitar track pointers, representing the imported note data of each loaded track
 		EOF_TEXT_EVENT * text_event[EOF_MAX_TEXT_EVENTS];	//An array of pro guitar text event structures, representing the section markers imported for each loaded track
+		struct eof_gp_measure *measure;		//An array of measure data from the Guitar Pro file
+		unsigned long measures;				//The number of elements in the above array
 		unsigned long text_events;			//The size of the text_event[] array
-	};
-
-	struct eof_gp_time_signature
-	{
-		unsigned char num, den;		//The 8 bit numerator and denominator defined in guitar pro time signatures
 	};
 
 	void eof_gp_debug_log(PACKFILE *inf, char *text);
@@ -37,6 +41,13 @@
 		//Returns NULL on error
 		//NOTE:  Beats are added to the current project if there aren't as many as defined in the GP file.
 		//If the user opts to import the GP file's time signatures, an undo state will be made if undo_made is not NULL and *undo_made is zero.  The referenced memory will then be set to nonzero
+	void eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, char import_ts);
+		//Unwrap the specified track in the guitar pro structure into a new pro guitar track
+		//If the track being unwrapped is 0, text events will be unwrapped and gp's text events array will be replaced if there are any text events
+		//If import_ts is nonzero, the active project's time signatures are updated to reflect those of the unwrapped transcription
+	char eof_copy_notes_in_beat_range(EOF_PRO_GUITAR_TRACK *source, unsigned long startbeat, unsigned long numbeats, EOF_PRO_GUITAR_TRACK *dest, unsigned long destbeat);
+		//Copies the notes within the specified range of beats in the source track to the same number of beats starting at the specified beat in the destination track
+		//Returns zero on error
 #endif
 
 void pack_ReadWORDLE(PACKFILE *inf, unsigned *data);

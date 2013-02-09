@@ -1868,7 +1868,7 @@ if(key[KEY_PAUSE])
 
 	/* select like (CTRL+L) */
 	/* split lyric (SHIFT+L in PART VOCALS) */
-	/* edit lyric (L in PART VOCALS */
+	/* edit lyric (L in PART VOCALS) */
 	/* enable legacy view (SHIFT+L in pro guitar track) */
 	/* set slide end fret (CTRL+SHIFT+L in a pro guitar track) */
 		if(key[KEY_L])
