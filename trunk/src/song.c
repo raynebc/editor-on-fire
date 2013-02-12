@@ -2508,16 +2508,16 @@ int eof_save_song(EOF_SONG * sp, const char * fn)
 				for(ctr=0; ctr < sp->catalog->entries; ctr++)
 				{	//For each fret catalog entry in the project
 					(void) eof_save_song_string_pf(sp->catalog->entry[ctr].name, fp);	//Write the section name string
-					(void) pack_putc(sp->catalog->entry[ctr].type, fp);				//Write the associated difficulty
+					(void) pack_putc(sp->catalog->entry[ctr].type, fp);					//Write the associated difficulty
 					(void) pack_iputl(sp->catalog->entry[ctr].start_pos, fp);			//Write the catalog entry's position
-					(void) pack_iputl(sp->catalog->entry[ctr].end_pos, fp);			//Write the catalog entry's end position
+					(void) pack_iputl(sp->catalog->entry[ctr].end_pos, fp);				//Write the catalog entry's end position
 					(void) pack_iputl(sp->catalog->entry[ctr].track, fp);				//Write the flags (associated track number)
 				}
 			}
 		}
 		else
 		{	//Write other tracks
-			(void) pack_putc(sp->track[track_ctr]->track_format, fp);		//Write track format
+			(void) pack_putc(sp->track[track_ctr]->track_format, fp);	//Write track format
 			(void) pack_putc(sp->track[track_ctr]->track_behavior, fp);	//Write track behavior
 			(void) pack_putc(sp->track[track_ctr]->track_type, fp);		//Write track type
 			(void) pack_putc(sp->track[track_ctr]->difficulty, fp);		//Write track difficulty

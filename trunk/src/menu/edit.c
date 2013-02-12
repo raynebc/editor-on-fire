@@ -129,7 +129,8 @@ MENU eof_edit_bookmark_menu[] =
 MENU eof_edit_selection_menu[] =
 {
     {"Select &All\t" CTRL_NAME "+A", eof_menu_edit_select_all, NULL, 0, NULL},
-    {"Select &Like\t" CTRL_NAME "+L", eof_menu_edit_select_like, NULL, 0, NULL},
+    {"Select like\t" CTRL_NAME "+L", eof_menu_edit_select_like, NULL, 0, NULL},
+    {"Precise select &Like", eof_menu_edit_precise_select_like, NULL, 0, NULL},
     {"Select &Rest\tShift+End", eof_menu_edit_select_rest, NULL, 0, NULL},
     {"&Deselect All\t" CTRL_NAME "+D", eof_menu_edit_deselect_all, NULL, 0, NULL},
     {"Select &Previous\tShift+Home", eof_menu_edit_select_previous, NULL, 0, NULL},
@@ -236,36 +237,38 @@ void eof_prepare_edit_menu(void)
 		{
 			eof_edit_menu[3].flags = 0;		//copy
 			eof_edit_selection_menu[1].flags = 0;	//select like
+			eof_edit_selection_menu[2].flags = 0;	//precise select like
 
 			/* select rest */
 			if(eof_selection.current != (eof_get_track_size(eof_song, eof_selected_track) - 1))
 			{	//If the selected note isn't the last in the track
-				eof_edit_selection_menu[2].flags = 0;
+				eof_edit_selection_menu[3].flags = 0;
 			}
 			else
 			{
-				eof_edit_selection_menu[2].flags = D_DISABLED;
+				eof_edit_selection_menu[3].flags = D_DISABLED;
 			}
 
 			/* deselect all */
-			eof_edit_selection_menu[3].flags = 0;
+			eof_edit_selection_menu[4].flags = 0;
 
 			if(eof_selection.current != 0)
 			{
-				eof_edit_selection_menu[4].flags = 0;	//select previous
+				eof_edit_selection_menu[5].flags = 0;	//select previous
 			}
 			else
 			{
-				eof_edit_selection_menu[4].flags = D_DISABLED;	//Select previous cannot be used when the first note/lyric was just selected
+				eof_edit_selection_menu[5].flags = D_DISABLED;	//Select previous cannot be used when the first note/lyric was just selected
 			}
 		}
 		else
 		{
 			eof_edit_menu[3].flags = D_DISABLED;		//copy
 			eof_edit_selection_menu[1].flags = D_DISABLED;	//select like
-			eof_edit_selection_menu[2].flags = D_DISABLED;	//select rest
-			eof_edit_selection_menu[3].flags = D_DISABLED;	//deselect all
-			eof_edit_selection_menu[4].flags = D_DISABLED;	//select previous
+			eof_edit_selection_menu[2].flags = D_DISABLED;	//precise select like
+			eof_edit_selection_menu[3].flags = D_DISABLED;	//select rest
+			eof_edit_selection_menu[4].flags = D_DISABLED;	//deselect all
+			eof_edit_selection_menu[5].flags = D_DISABLED;	//select previous
 		}
 
 		/* paste, paste old */
@@ -2117,7 +2120,7 @@ int eof_menu_edit_select_all(void)
 	return 1;
 }
 
-int eof_menu_edit_select_like(void)
+int eof_menu_edit_select_like_function(char thorough)
 {
 	unsigned long i, j, ntypes = 0;
 	unsigned long ntype[100];	//This tracks each unique selected note to allow multiple dislike notes to be selected during a "select like" operation
@@ -2160,8 +2163,11 @@ int eof_menu_edit_select_like(void)
 		{	//For each note bitmask in the ntype array
 			if((eof_get_note_type(eof_song, eof_selected_track, i) == eof_note_type) && (eof_note_compare_simple(eof_song, eof_selected_track, ntype[j], i) == 0))
 			{	//If the note is in the active difficulty and matches one of the unique notes that are selected
-				eof_selection.track = eof_selected_track;	//Change the selection's track to the active track
-				eof_selection.multi[i] = 1;					//Mark the note as selected
+				if(!thorough || (eof_get_note_flags(eof_song, eof_selected_track, ntype[j]) == eof_get_note_flags(eof_song, eof_selected_track, i)))
+				{	//If the option to compare note flags was not chosen, or if the flags do match
+					eof_selection.track = eof_selected_track;	//Change the selection's track to the active track
+					eof_selection.multi[i] = 1;					//Mark the note as selected
+				}
 			}
 		}
 	}
@@ -2171,6 +2177,16 @@ int eof_menu_edit_select_like(void)
 		eof_selection.current = EOF_MAX_NOTES - 1;
 	}
 	return 1;
+}
+
+int eof_menu_edit_select_like(void)
+{
+	return eof_menu_edit_select_like_function(0);	//Perform select like logic, without comparing note flags
+}
+
+int eof_menu_edit_precise_select_like(void)
+{
+	return eof_menu_edit_select_like_function(1);	//Perform select like logic, comparing note flags
 }
 
 int eof_menu_edit_deselect_all(void)

@@ -288,7 +288,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	char buffer[600] = {0}, buffer2[512] = {0};
 	time_t seconds;		//Will store the current time in seconds
 	struct tm *caltime;	//Will store the current time in calendar format
-	unsigned long ctr, ctr2, ctr3, ctr4, numsections, stringnum, bitmask, numsinglenotes, numchords, *chordlist, chordlistsize, *sectionlist, sectionlistsize, xml_end, numevents = 0;
+	unsigned long ctr, ctr2, ctr3, ctr4, ctr5, numsections, stringnum, bitmask, numsinglenotes, numchords, *chordlist, chordlistsize, *sectionlist, sectionlistsize, xml_end, numevents = 0;
 	EOF_PRO_GUITAR_TRACK *tp;
 	char *arrangement_name;	//This will point to the track's native name unless it has an alternate name defined
 	unsigned numdifficulties;
@@ -296,6 +296,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	unsigned beatspermeasure = 4, beatcounter = 0;
 	long displayedmeasure, measurenum = 0;
 	char bass_arrangement_name[] = "Bass";
+	long startbeat;	//This will indicate the first beat containing a note in the track
+	long endbeat;	//This will indicate the first beat after the exported track's last note
 
 	eof_log("eof_export_rocksmith() entered", 1);
 
@@ -391,6 +393,20 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	(void) pack_fputs(buffer, fp);
 
 	//Check if any RS phrases or sections need to be added
+	startbeat = eof_get_beat(sp, tp->note[0]->pos);	//Find the beat containing the track's first note
+	if(startbeat < 0)
+	{	//If the beat couldn't be found
+		startbeat = 0;	//Set this to the first beat
+	}
+	endbeat = eof_get_beat(sp, tp->note[tp->notes - 1]->pos + tp->note[tp->notes - 1]->length);	//Find the beat containing the end of the track's last note
+	if((endbeat < 0) || (endbeat + 1 >= sp->beats))
+	{	//If the beat couldn't be found, or the extreme last beat in the track has the last note
+		endbeat = sp->beats - 1;	//Set this to the last beat
+	}
+	else
+	{
+		endbeat++;	//Otherwise set it to the first beat that follows the end of the last note
+	}
 	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
 	if(!eof_song_contains_event(sp, "COUNT", 0, EOF_EVENT_FLAG_RS_PHRASE))
 	{	//If the user did not define a COUNT phrase
@@ -403,35 +419,32 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	}
 	if(!eof_song_contains_event(sp, "END", 0, EOF_EVENT_FLAG_RS_PHRASE))
 	{	//If the user did not define a END phrase
-		if(sp->beat[sp->beats - 1]->contained_section_event >= 0)
-		{	//If there is already a phrase defined on the last beat
-			allegro_message("Warning:  There is no END phrase, but the last beat marker already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.");
+		if(sp->beat[endbeat]->contained_section_event >= 0)
+		{	//If there is already a phrase defined on the beat following the last note
+			allegro_message("Warning:  There is no END phrase, but the beat marker after the last note already has a phrase.\nYou should move that phrase because only one phrase per beat is exported.");
 		}
 		eof_log("\t! Adding missing END phrase", 1);
-		(void) eof_song_add_text_event(sp, sp->beats - 1, "END", 0, EOF_EVENT_FLAG_RS_PHRASE, 1);	//Add it as a temporary event at the last beat
+		(void) eof_song_add_text_event(sp, endbeat, "END", 0, EOF_EVENT_FLAG_RS_PHRASE, 1);	//Add it as a temporary event at the last beat
 	}
 	eof_sort_events(sp);	//Re-sort events
 	eof_process_beat_statistics(sp, track);	//Cache section name information into the beat structures (from the perspective of the specified track)
-	for(ctr = 0, numsections = 0; ctr < sp->beats; ctr++)
-	{	//For each beat in the chart
-		if(sp->beat[ctr]->contained_rs_section_event >= 0)
-		{	//If this beat has a Rocksmith section
-			numsections++;	//Update Rocksmith section instance counter
+	if(!eof_song_contains_event(sp, "intro", 0, EOF_EVENT_FLAG_RS_SECTION))
+	{	//If the user did not define an intro RS section
+		if(sp->beat[startbeat]->contained_rs_section_event >= 0)
+		{	//If there is already a RS section defined on the first beat containing a note
+			allegro_message("Warning:  There is no intro RS section, but the beat marker before the first note already has a section.\nYou should move that section because only one section per beat is exported.");
 		}
+		eof_log("\t! Adding missing intro RS section", 1);
+		(void) eof_song_add_text_event(sp, startbeat, "intro", 0, EOF_EVENT_FLAG_RS_SECTION, 1);	//Add a temporary one
 	}
-	if(!numsections)
-	{	//If the user did not define any RS sections
-		eof_log("\t! Adding some default RS sections", 1);
-		(void) eof_song_add_text_event(sp, 0, "intro", 0, EOF_EVENT_FLAG_RS_SECTION, 1);	//Add a temporary "intro" RS section at the first beat
-		if(sp->beat[0]->contained_section_event < 0)
-		{	//If the first beat doesn't have a RS phrase
-			(void) eof_song_add_text_event(sp, 0, "intro", 0, EOF_EVENT_FLAG_RS_PHRASE, 1);	//Add it a temporary one
+	if(!eof_song_contains_event(sp, "noguitar", 0, EOF_EVENT_FLAG_RS_SECTION))
+	{	//If the user did not define a noguitar RS section
+		if(sp->beat[endbeat]->contained_rs_section_event >= 0)
+		{	//If there is already a RS section defined on the first beat after the last note
+			allegro_message("Warning:  There is no noguitar RS section, but the beat marker after the last note already has a section.\nYou should move that section because only one section per beat is exported.");
 		}
-		(void) eof_song_add_text_event(sp, sp->beats - 1, "noguitar", 0, EOF_EVENT_FLAG_RS_SECTION, 1);	//Add a temporary "noguitar" RS section at the last beat
-		if(sp->beat[sp->beats - 1]->contained_section_event < 0)
-		{	//If the last beat doesn't have a RS phrase
-			(void) eof_song_add_text_event(sp, sp->beats - 1, "noguitar", 0, EOF_EVENT_FLAG_RS_PHRASE, 1);	//Add it a temporary one
-		}
+		eof_log("\t! Adding missing noguitar RS section", 1);
+		(void) eof_song_add_text_event(sp, endbeat, "noguitar", 0, EOF_EVENT_FLAG_RS_SECTION, 1);	//Add a temporary one
 	}
 
 	//Write the phrases
@@ -755,7 +768,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 			{	//For each note in the track
 				if(eof_get_note_type(sp, track, ctr3) == ctr)
 				{	//If the note is in this difficulty
-					unsigned long lanecount = eof_note_count_colors(sp, track, ctr3);	//Count the number of used lanes in this note
+					unsigned long lanecount = eof_note_count_non_ghosted_lanes(sp, track, ctr3);	//Count the number of non ghosted gems for this note
 					if(lanecount == 1)
 					{	//If the note has only one gem
 						numsinglenotes++;	//Increment counter
@@ -766,17 +779,6 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 						{	//If the chord is not fully string muted
 							numchords++;	//Increment counter
 						}
-					}
-					else
-					{	//Note had no gems, throw error
-						allegro_message("Error:  A note with no gems was encountered.  Aborting Rocksmith export");
-						eof_log("Error:  A note with no gems was encountered.  Aborting Rocksmith export", 1);
-						if(chordlist)
-						{	//If the chord list was built
-							free(chordlist);
-						}
-						(void) pack_fclose(fp);
-						return 0;	//Return failure
 					}
 				}
 			}
@@ -791,12 +793,12 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 				(void) pack_fputs(buffer, fp);
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
-					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_colors(sp, track, ctr3) == 1))
-					{	//If this note is in this difficulty and is a single note (and not a chord)
+					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_non_ghosted_lanes(sp, track, ctr3) == 1))
+					{	//If this note is in this difficulty and is a single note (only one gem has non ghosted status)
 						for(stringnum = 0, bitmask = 1; stringnum < tp->numstrings; stringnum++, bitmask <<= 1)
 						{	//For each string used in this track
-							if((eof_get_note_note(sp, track, ctr3) & bitmask) && ((tp->note[ctr3]->frets[stringnum] & 0x80) == 0))
-							{	//If this string is used in this note and it is not fret hand muted
+							if((eof_get_note_note(sp, track, ctr3) & bitmask) && ((tp->note[ctr3]->frets[stringnum] & 0x80) == 0) && !(tp->note[ctr3]->ghost & bitmask))
+							{	//If this string is used in this note, it is not fret hand muted and it is not ghosted
 								unsigned long flags;
 								unsigned long notepos;
 								unsigned long bend = 0;		//The number of half steps this note bends
@@ -873,6 +875,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 
 									(void) snprintf(buffer, sizeof(buffer) - 1, "        <note time=\"%.3f\" bend=\"%lu\" fret=\"%lu\" hammerOn=\"%d\" harmonic=\"%d\" hopo=\"%d\" ignore=\"0\" palmMute=\"%d\" pluck=\"%d\" pullOff=\"%d\" slap=\"%d\" slideTo=\"%ld\" string=\"%lu\" sustain=\"%.3f\" tremolo=\"%d\"/>\n", (double)notepos / 1000.0, bend, fret, hammeron, harmonic, hopo, palmmute, pop, pulloff, slap, slideto, stringnum, (double)length / 1000.0, tremolo);
 									(void) pack_fputs(buffer, fp);
+									break;	//Only one note entry is valid for each single note, so break from loop
 								}//If the note isn't string muted
 							}//If this string is used in this note
 						}//For each string used in this track
@@ -900,8 +903,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 				(void) pack_fputs(buffer, fp);
 				for(ctr3 = 0; ctr3 < tp->notes; ctr3++)
 				{	//For each note in the track
-					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_colors(sp, track, ctr3) > 1) && !eof_is_string_muted(sp, track, ctr3))
-					{	//If this note is in this difficulty and is a chord that isn't fully string muted
+					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_non_ghosted_lanes(sp, track, ctr3) > 1) && !eof_is_string_muted(sp, track, ctr3))
+					{	//If this note is in this difficulty and is a chord (at least two non ghosted gems) that isn't fully string muted
 						for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
 						{	//For each of the entries in the unique chord list
 							if(!eof_note_compare_simple(sp, track, ctr3, chordlist[ctr4]))
@@ -1023,6 +1026,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 				{	//For each note in the track
 					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_colors(sp, track, ctr3) > 1) && !eof_is_string_muted(sp, track, ctr3))
 					{	//If this note is in this difficulty and is a chord that isn't fully string muted
+						unsigned long chord = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
+
 						//Find this chord's ID
 						for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
 						{	//For each of the entries in the unique chord list
@@ -1044,11 +1049,32 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 						}
 						handshapestart = (double)eof_get_note_pos(sp, track, ctr3) / 1000.0;	//Store this chord's start position (in seconds)
 
+						//If this chord is at the beginning of an arpeggio phrase, skip the rest of the notes in that phrase
+						for(ctr5 = 0; ctr5 < tp->arpeggios; ctr5++)
+						{	//For each arpeggio phrase in the track
+							if((tp->note[ctr3]->pos == tp->arpeggio[ctr5].start_pos) && (tp->note[ctr3]->type == tp->arpeggio[ctr5].difficulty))
+							{	//If this chord's start position matches that of an arpeggio phrase in this track difficulty
+								while(1)
+								{
+									nextnote = eof_fixup_next_note(sp, track, ctr3);
+									if((nextnote >= 0) && (tp->note[nextnote]->pos <= tp->arpeggio[ctr5].end_pos))
+									{	//If there is another note and it is in the same arpeggio phrase
+										ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they are also in the phrase
+									}
+									else
+									{	//The next note (if any) is not in the arpeggio phrase
+										break;	//Break from while loop
+									}
+								}
+								break;	//Break from for loop
+							}
+						}
+
 						//Examine subsequent notes to see if they match this chord
 						while(1)
 						{
 							nextnote = eof_fixup_next_note(sp, track, ctr3);
-							if((nextnote >= 0) && !eof_note_compare_simple(sp, track, ctr3, nextnote))
+							if((nextnote >= 0) && !eof_note_compare_simple(sp, track, chord, nextnote))
 							{	//If there is another note and it matches this chord
 								ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
 							}
@@ -1070,6 +1096,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 				{	//For each note in the track
 					if((eof_get_note_type(sp, track, ctr3) == ctr) && (eof_note_count_colors(sp, track, ctr3) > 1) && !eof_is_string_muted(sp, track, ctr3))
 					{	//If this note is in this difficulty and is a chord that isn't fully string muted
+						unsigned long chord = ctr3;	//Store a copy of this note number because ctr3 will be manipulated below
+
 						//Find this chord's ID
 						for(ctr4 = 0; ctr4 < chordlistsize; ctr4++)
 						{	//For each of the entries in the unique chord list
@@ -1091,11 +1119,32 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 						}
 						handshapestart = (double)eof_get_note_pos(sp, track, ctr3) / 1000.0;	//Store this chord's start position (in seconds)
 
+						//If this chord is at the beginning of an arpeggio phrase, skip the rest of the notes in that phrase
+						for(ctr5 = 0; ctr5 < tp->arpeggios; ctr5++)
+						{	//For each arpeggio phrase in the track
+							if((tp->note[ctr3]->pos == tp->arpeggio[ctr5].start_pos) && (tp->note[ctr3]->type == tp->arpeggio[ctr5].difficulty))
+							{	//If this chord's start position matches that of an arpeggio phrase in this track difficulty
+								while(1)
+								{
+									nextnote = eof_fixup_next_note(sp, track, ctr3);
+									if((nextnote >= 0) && (tp->note[nextnote]->pos <= tp->arpeggio[ctr5].end_pos))
+									{	//If there is another note and it is in the same arpeggio phrase
+										ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they are also in the phrase
+									}
+									else
+									{	//The next note (if any) is not in the arpeggio phrase
+										break;	//Break from while loop
+									}
+								}
+								break;	//Break from for loop
+							}
+						}
+
 						//Examine subsequent notes to see if they match this chord
 						while(1)
 						{
 							nextnote = eof_fixup_next_note(sp, track, ctr3);
-							if((nextnote >= 0) && !eof_note_compare_simple(sp, track, ctr3, nextnote))
+							if((nextnote >= 0) && !eof_note_compare_simple(sp, track, chord, nextnote))
 							{	//If there is another note and it matches this chord
 								ctr3 = nextnote;	//Iterate to that note, and check subsequent notes to see if they match
 							}
