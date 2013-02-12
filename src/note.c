@@ -51,6 +51,35 @@ unsigned long eof_note_count_colors_bitmask(unsigned long notemask)
 	return count;
 }
 
+unsigned long eof_note_count_non_ghosted_lanes(EOF_SONG *sp, unsigned long track, unsigned long note)
+{
+	unsigned long ctr, bitmask, tracknum, count = 0, notenote;
+
+	if(!sp || (track >= sp->tracks))
+		return 0;	//Invalid parameters
+
+	notenote = eof_get_note_note(sp, track, note);
+	if(sp->track[track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If the specified track is not a pro guitar track
+		return notenote;
+	}
+
+	tracknum = sp->track[track]->tracknum;
+	if(note >= sp->pro_guitar_track[tracknum]->notes)
+	{	//If the specified note is higher than the number of notes in the track
+		return 0;	//Invalid parameters
+	}
+	for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+	{	//For each of the 6 supported strings
+		if((sp->pro_guitar_track[tracknum]->note[note]->note & bitmask) && !(sp->pro_guitar_track[tracknum]->note[note]->ghost & bitmask))
+		{	//If this string is used and it is not ghosted
+			count++;	//Increment counter
+		}
+	}
+
+	return count;
+}
+
 void eof_legacy_track_note_create(EOF_NOTE * np, char g, char y, char r, char b, char p, char o, unsigned long pos, long length)
 {
 	eof_log("eof_legacy_track_note_create() entered", 1);

@@ -742,20 +742,16 @@ void eof_fix_window_title(void)
 	{
 		(void) ustrcat(eof_window_title, eof_song->tags->title);
 		(void) ustrcat(eof_window_title, " (");
-		if(eof_vocals_selected)
-		{
-			(void) ustrcat(eof_window_title, "PART VOCALS");
+		if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_ALT_NAME)
+		{	//If this track has an alternate name, append the track's alternate name
+			(void) ustrcat(eof_window_title, eof_song->track[eof_selected_track]->altname);
 		}
 		else
-		{
-			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_ALT_NAME)
-			{	//If this track has an alternate name, append the track's alternate name
-				(void) ustrcat(eof_window_title, eof_song->track[eof_selected_track]->altname);
-			}
-			else
-			{	//Otherwise append the track's native name
-				(void) ustrcat(eof_window_title, eof_song->track[eof_selected_track]->name);
-			}
+		{	//Otherwise append the track's native name
+			(void) ustrcat(eof_window_title, eof_song->track[eof_selected_track]->name);
+		}
+		if(!eof_vocals_selected)
+		{	//If the vocal track isn't active, append other information such as the current difficulty
 			(void) ustrcat(eof_window_title, "  ");
 			char *ptr;
 			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)

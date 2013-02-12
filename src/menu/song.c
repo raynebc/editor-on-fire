@@ -165,7 +165,6 @@ MENU eof_song_rocksmith_menu[] =
     {"Fret &Hand positions", NULL, eof_song_proguitar_fret_hand_menu, 0, NULL},
     {"&Popup messages", NULL, eof_song_proguitar_popup_menu, 0, NULL},
     {"&Correct chord fingerings", eof_correct_chord_fingerings_menu, NULL, 0, NULL},
-    {"&Rename track", eof_song_proguitar_rename_track, NULL, 0, NULL},
     {"Remove difficulty limit", eof_song_proguitar_toggle_difficulty_limit, NULL, 0, NULL},
     {"Insert new difficulty", eof_song_proguitar_insert_difficulty, NULL, 0, NULL},
     {"Delete active difficulty", eof_song_proguitar_delete_difficulty, NULL, 0, NULL},
@@ -195,6 +194,7 @@ MENU eof_song_menu[] =
     {"Pro &Guitar", NULL, eof_song_proguitar_menu, 0, NULL},
     {"&Rocksmith", NULL, eof_song_rocksmith_menu, 0, NULL},
     {"Manage raw MIDI tracks", eof_menu_song_raw_MIDI_tracks, NULL, 0, NULL},
+    {"Rename track", eof_song_rename_track, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"T&est in FOF\tF12", eof_menu_song_test_fof, NULL, EOF_LINUX_DISABLE, NULL},
     {"Test I&n Phase Shift", eof_menu_song_test_ps, NULL, EOF_LINUX_DISABLE, NULL},
@@ -629,11 +629,11 @@ void eof_prepare_song_menu(void)
 
 			if(eof_song->track[eof_selected_track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS)
 			{	//If the active track has already had the difficulty limit removed
-				eof_song_rocksmith_menu[4].flags = D_SELECTED;	//Song>Pro Guitar>Remove difficulty limit
+				eof_song_rocksmith_menu[3].flags = D_SELECTED;	//Song>Pro Guitar>Remove difficulty limit
 			}
 			else
 			{
-				eof_song_rocksmith_menu[4].flags = 0;
+				eof_song_rocksmith_menu[3].flags = 0;
 			}
 		}
 		else
@@ -3936,7 +3936,7 @@ int eof_menu_song_fret_hand_positions(void)
 	return 1;
 }
 
-DIALOG eof_song_proguitar_rename_track_dialog[] =
+DIALOG eof_song_rename_track_dialog[] =
 {
    /* (proc)            (x) (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
    { d_agup_window_proc,0,  48,  314, 112, 2,   23,  0,    0,      0,   0,   "Rename track",NULL, NULL },
@@ -3947,20 +3947,18 @@ DIALOG eof_song_proguitar_rename_track_dialog[] =
    { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
 };
 
-int eof_song_proguitar_rename_track(void)
+int eof_song_rename_track(void)
 {
 	if(!eof_song_loaded || !eof_song)
 		return 1;	//Do not allow this function to run if a chart is not loaded
-	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
-		return 1;	//Do not allow this function to run when a pro guitar format track is not active
 
 	eof_cursor_visible = 0;
 	eof_render();
-	eof_color_dialog(eof_song_proguitar_rename_track_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_song_proguitar_rename_track_dialog);
+	eof_color_dialog(eof_song_rename_track_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_song_rename_track_dialog);
 
 	(void) ustrncpy(eof_etext, eof_song->track[eof_selected_track]->altname, EOF_NAME_LENGTH);	//Update the input field
-	if(eof_popup_dialog(eof_song_proguitar_rename_track_dialog, 2) == 3)
+	if(eof_popup_dialog(eof_song_rename_track_dialog, 2) == 3)
 	{	//If user clicked OK
 		if(ustrncmp(eof_etext, eof_song->track[eof_selected_track]->altname, EOF_NAME_LENGTH))
 		{	//If the user provided a different alternate track name

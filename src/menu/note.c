@@ -303,7 +303,6 @@ MENU eof_menu_thin_notes_menu[EOF_TRACKS_MAX] =
 MENU eof_note_proguitar_menu[] =
 {
     {"Edit pro guitar &Note\tN", eof_menu_note_edit_pro_guitar_note, NULL, 0, NULL},
-    {"Edit &Frets/Fingering\tF", eof_menu_note_edit_pro_guitar_note_frets_fingers_menu, NULL, 0, NULL},
     {"Clear fingering", eof_menu_pro_guitar_remove_fingering, NULL, 0, NULL},
     {"&Arpeggio", NULL, eof_arpeggio_menu, 0, NULL},
     {"s&Lide", NULL, eof_pro_guitar_slide_menu, 0, NULL},
@@ -322,10 +321,17 @@ MENU eof_note_proguitar_menu[] =
     {"Remove &Vibrato", eof_menu_note_remove_vibrato, NULL, 0, NULL},
     {"Toggle ghost\t"  CTRL_NAME "+G", eof_menu_note_toggle_ghost, NULL, 0, NULL},
     {"Remove &Ghost", eof_menu_note_remove_ghost, NULL, 0, NULL},
+    {NULL, NULL, NULL, 0, NULL}
+};
+
+MENU eof_note_rocksmith_menu[] =
+{
+    {"Edit &Frets/Fingering\tF", eof_menu_note_edit_pro_guitar_note_frets_fingers_menu, NULL, 0, NULL},
     {"Toggle pop\t"  CTRL_NAME "+Shift+P", eof_menu_note_toggle_pop, NULL, 0, NULL},
     {"Remove &Pop", eof_menu_note_remove_pop, NULL, 0, NULL},
     {"Toggle slap\t"  CTRL_NAME "+Shift+S", eof_menu_note_toggle_slap, NULL, 0, NULL},
     {"Remove slap", eof_menu_note_remove_slap, NULL, 0, NULL},
+    {"Convert string mutes to palm", eof_rocksmith_convert_string_mute_to_palm_mute, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -345,7 +351,7 @@ MENU eof_note_menu[] =
     {"&Clear", NULL, eof_note_clear_menu, 0, NULL},
     {"Transpose Up\tUp", eof_menu_note_transpose_up, NULL, 0, NULL},
     {"Transpose Down\tDown", eof_menu_note_transpose_down, NULL, 0, NULL},
-    {"&Resnap", eof_menu_note_resnap, NULL, 0, NULL},
+    {"Resnap", eof_menu_note_resnap, NULL, 0, NULL},
     {"&Solos", NULL, eof_solo_menu, 0, NULL},
     {"Star &Power", NULL, eof_star_power_menu, 0, NULL},
     {"Delete\tDel", eof_menu_note_delete, NULL, 0, NULL},
@@ -360,6 +366,7 @@ MENU eof_note_menu[] =
     {"", NULL, NULL, 0, NULL},
     {"&Drum", NULL, eof_note_drum_menu, 0, NULL},
     {"Pro &Guitar", NULL, eof_note_proguitar_menu, 0, NULL},
+    {"&Rocksmith", NULL, eof_note_rocksmith_menu, 0, NULL},
     {"&Lyrics", NULL, eof_note_lyrics_menu, 0, NULL},
     {"Remove all statuses", eof_menu_remove_statuses, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
@@ -756,8 +763,9 @@ void eof_prepare_note_menu(void)
 			eof_note_menu[13].flags = D_DISABLED;	//Note>Tremolo> submenu
 			eof_note_menu[17].flags = D_DISABLED;	//Note>Drum> submenu
 			eof_note_menu[18].flags = D_DISABLED;	//Note>Pro Guitar> submenu
+			eof_note_menu[19].flags = D_DISABLED;	//Note>Rocksmith> submenu
 
-			eof_note_menu[19].flags = 0;	//Note>Lyrics> submenu
+			eof_note_menu[20].flags = 0;	//Note>Lyrics> submenu
 			if((eof_selection.current < eof_song->vocal_track[tracknum]->lyrics) && (vselected == 1))
 			{	//Only enable edit and split lyric if only one lyric is selected
 				eof_note_lyrics_menu[0].flags = 0;	//Note>Lyrics>Edit Lyric
@@ -805,7 +813,7 @@ void eof_prepare_note_menu(void)
 			eof_note_menu[8].flags = 0;				//Note>Edit Name
 			eof_note_menu[12].flags = 0;			//Note>Trill> submenu
 			eof_note_menu[13].flags = 0;			//Note>Tremolo> submenu
-			eof_note_menu[19].flags = D_DISABLED;	//Note>Lyrics> submenu
+			eof_note_menu[20].flags = D_DISABLED;	//Note>Lyrics> submenu
 
 			/* toggle crazy */
 			if((track_behavior == EOF_GUITAR_TRACK_BEHAVIOR) || (track_behavior == EOF_PRO_GUITAR_TRACK_BEHAVIOR))
@@ -873,6 +881,7 @@ void eof_prepare_note_menu(void)
 			if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
 			{	//If the active track is a pro guitar track
 				eof_note_menu[18].flags = 0;			//Note>Pro Guitar> submenu
+				eof_note_menu[19].flags = 0;			//Note>Rocksmith> submenu
 
 				/* Arpeggio>Erase all */
 				if(eof_song->pro_guitar_track[tracknum]->arpeggios)
@@ -910,6 +919,7 @@ void eof_prepare_note_menu(void)
 			else
 			{
 				eof_note_menu[18].flags = D_DISABLED;
+				eof_note_menu[19].flags = D_DISABLED;
 			}
 
 			/* Trill mark/remark*/
@@ -7522,6 +7532,44 @@ int eof_menu_remove_statuses(void)
 	}
 	eof_track_fixup_notes(eof_song, eof_selected_track, 1);
 	eof_determine_phrase_status(eof_song, eof_selected_track);
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_rocksmith_convert_string_mute_to_palm_mute(void)
+{
+	unsigned long i, ctr, bitmask;
+	EOF_PRO_GUITAR_TRACK *tp;
+	char undo_made = 0;	//Set to nonzero if an undo state was saved
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	tp = eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum];
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			for(ctr = 0, bitmask = 1; ctr < 6; ctr++, bitmask <<= 1)
+			{	//For each of the 6 supported strings
+				if((tp->note[i]->note & bitmask) && (tp->note[i]->frets[ctr] & 0x80))
+				{	//If this string is used and is marked as string muted
+					if(!undo_made)
+					{	//If an undo state hasn't been made yet
+						eof_prepare_undo(EOF_UNDO_TYPE_NONE);	//Make one
+						undo_made = 1;
+					}
+					tp->note[i]->frets[ctr] &= ~0x80;	//Clear the MSB to remove the string mute status
+					tp->note[i]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;	//Set the palm mute status
+				}
+			}
+		}
+	}
 	if(note_selection_updated)
 	{	//If the only note modified was the seek hover note
 		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition

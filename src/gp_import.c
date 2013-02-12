@@ -483,12 +483,12 @@ EOF_SONG *parse_gp(const char * fn)
 	for(ctr = 0; ctr < 64; ctr++)
 	{
 		pack_ReadDWORDLE(inf, NULL);	//Read the instrument patch number
-		(void) pack_getc(inf);					//Read the volume
-		(void) pack_getc(inf);					//Read the pan value
-		(void) pack_getc(inf);					//Read the chorus value
-		(void) pack_getc(inf);					//Read the reverb value
-		(void) pack_getc(inf);					//Read the phaser value
-		(void) pack_getc(inf);					//Read the tremolo value
+		(void) pack_getc(inf);			//Read the volume
+		(void) pack_getc(inf);			//Read the pan value
+		(void) pack_getc(inf);			//Read the chorus value
+		(void) pack_getc(inf);			//Read the reverb value
+		(void) pack_getc(inf);			//Read the phaser value
+		(void) pack_getc(inf);			//Read the tremolo value
 		pack_ReadWORDLE(inf, NULL);		//Read two bytes of unknown data/padding
 	}
 
