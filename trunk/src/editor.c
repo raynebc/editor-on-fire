@@ -616,10 +616,20 @@ if(key[KEY_PAUSE])
 	}
 
 	/* rewind (R) */
-	if(key[KEY_R] && !KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
+	/* resnap notes (CTRL+SHIFT+R) */
+	if(key[KEY_R])
 	{
-		(void) eof_menu_song_seek_rewind();
-		key[KEY_R] = 0;
+		if(!KEY_EITHER_CTRL && !KEY_EITHER_SHIFT)
+		{	//If neither CTRL nor SHIFT are held
+			(void) eof_menu_song_seek_rewind();
+			key[KEY_R] = 0;
+		}
+		else if(KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+		{	//If both CTRL and SHIFT are held
+			(void) eof_menu_note_resnap();
+			eof_shift_used = 1;	//Track that the SHIFT key was used
+			key[KEY_R] = 0;
+		}
 	}
 
 	/* zoom in (+ on numpad) */
@@ -4891,7 +4901,7 @@ void eof_render_editor_window_common(void)
 			}
 
 			//Only render vertical lines if the x position is visible on-screen, otherwise the entire line will not be visible anyway
-			if((eof_song->beat[i]->contained_rs_section_event > 0) || (eof_song->beat[i]->contained_section_event > 0))
+			if((eof_song->beat[i]->contained_rs_section_event >= 0) || (eof_song->beat[i]->contained_section_event >= 0))
 			{	//If this beat contains a RS section or RS phrase
 				beatlinecol = eof_color_red;	//Render the beat line in red
 			}

@@ -295,7 +295,6 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	unsigned long phraseid;
 	unsigned beatspermeasure = 4, beatcounter = 0;
 	long displayedmeasure, measurenum = 0;
-	char bass_arrangement_name[] = "Bass";
 	long startbeat;	//This will indicate the first beat containing a note in the track
 	long endbeat;	//This will indicate the first beat after the exported track's last note
 
@@ -338,11 +337,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	}
 
 	//Update target file name and open it for writing
-	if((track == EOF_TRACK_PRO_BASS) || (track == EOF_TRACK_PRO_BASS_22))
-	{	//A pro bass track's arrangement must be named "Bass" in order to work in Rocksmith
-		arrangement_name = bass_arrangement_name;
-	}
-	else if((sp->track[track]->flags & EOF_TRACK_FLAG_ALT_NAME) && (sp->track[track]->altname[0] != '\0'))
+	if((sp->track[track]->flags & EOF_TRACK_FLAG_ALT_NAME) && (sp->track[track]->altname[0] != '\0'))
 	{	//If the track has an alternate name
 		arrangement_name = sp->track[track]->altname;
 	}

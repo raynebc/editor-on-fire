@@ -180,11 +180,21 @@ int eof_menu_song_rs_popup_messages(void);
 	//Displays the popup messages defined for the current pro guitar/bass track
 char * eof_rs_popup_messages_list(int index, int * size);
 	//List dialog function for eof_menu_song_rs_popup_messages()
+int eof_rs_popup_messages_edit(DIALOG * d);
+	//Allows the user to edit a popup message from the list
 void eof_pro_guitar_track_sort_popup_messages(EOF_PRO_GUITAR_TRACK* tp);
 	//Sorts the popup messages for the specified track
 int eof_rs_popup_messages_delete(DIALOG * d);
 	//Deletes the selected popup message from eof_menu_song_rs_popup_messages()
+int eof_rs_popup_messages_delete_all(DIALOG * d);
+	//Deletes all popup messages from eof_menu_song_rs_popup_messages()
+int eof_rs_popup_messages_seek(DIALOG * d);
+	//Seeks to the selected popup message from eof_menu_song_rs_popup_messages()
 void eof_pro_guitar_track_delete_popup_message(EOF_PRO_GUITAR_TRACK *tp, unsigned long index);
 	//Deletes the specified popup message
+int eof_find_effective_rs_popup_message(unsigned long pos, unsigned long *popupnum);
+	//Returns nonzero if there is a popup message in effect for the current pro guitar/bass track at the specified position
+	//The corresponding popup message number for the track is returned through popupnum
+	//Zero is returned if no popup message is in effect or upon error
 
 #endif

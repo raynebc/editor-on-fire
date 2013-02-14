@@ -2359,23 +2359,24 @@ int eof_save_helper(char *destfilename)
 		{	//If the user wants to save Rocksmith capable files
 			char user_warned = 0;	//Tracks whether the user was warned about hand positions being undefined and auto-generated during export
 			(void) append_filename(eof_temp_filename, newfolderpath, "xmlpath.xml", 1024);	//Re-acquire the save's target folder
-			if(eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS))
-			{	//If the 17 fret pro bass track is populated
-				if(eof_get_track_size(eof_song, EOF_TRACK_PRO_BASS_22))
-				{	//If the 22 fret pro bass track is also populated, don't export the 17 fret track
-					allegro_message("Warning:  Rocksmith doesn't support multiple bass transcriptions.  Only the 22 fret pro bass track will be exported");
-				}
-				else
-				{	//Otherwise export it
-					eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS, &user_warned);
-				}
-			}
+
+			eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS, &user_warned);
 			eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_BASS_22, &user_warned);
 			eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR, &user_warned);
 			eof_export_rocksmith_track(eof_song, eof_temp_filename, EOF_TRACK_PRO_GUITAR_22, &user_warned);
 			if(eof_song->vocal_track[0]->lyrics)
 			{	//If there are lyrics, export them in Rocksmith format as well
-				(void) append_filename(eof_temp_filename, newfolderpath, "PART VOCALS.xml", 1024);
+				char *arrangement_name;	//This will point to the track's native name unless it has an alternate name defined
+				if((eof_song->track[EOF_TRACK_VOCALS]->flags & EOF_TRACK_FLAG_ALT_NAME) && (eof_song->track[EOF_TRACK_VOCALS]->altname[0] != '\0'))
+				{	//If the vocal track has an alternate name
+					arrangement_name = eof_song->track[EOF_TRACK_VOCALS]->altname;
+				}
+				else
+				{	//Otherwise use the track's native name
+					arrangement_name = eof_song->track[EOF_TRACK_VOCALS]->name;
+				}
+				(void) append_filename(eof_temp_filename, newfolderpath, arrangement_name, 1024);
+				(void) replace_extension(eof_temp_filename, eof_temp_filename, "xml", 1024);
 				jumpcode=setjmp(jumpbuffer); //Store environment/stack/etc. info in the jmp_buf array
 				if(jumpcode!=0) //if program control returned to the setjmp() call above returning any nonzero value
 				{	//Lyric export failed

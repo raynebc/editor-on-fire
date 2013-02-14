@@ -3059,6 +3059,15 @@ void eof_render_3d_window(void)
 
 	eof_render_lyric_preview(eof_window_3d->screen);
 
+	if(eof_song->track[eof_selected_track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
+	{	//If a pro guitar/bass track is active
+		unsigned long popupmessage;
+		if(eof_find_effective_rs_popup_message(eof_music_pos - eof_av_delay, &popupmessage))
+		{	//If there is a popup message in effect at the current position
+			textout_centre_ex(eof_window_3d->screen, font, eof_song->pro_guitar_track[tracknum]->popupmessage[popupmessage].name, eof_window_3d->screen->w / 2, 4, eof_color_white, eof_color_black);
+		}
+	}
+
 	rect(eof_window_3d->screen, 0, 0, eof_window_3d->w - 1, eof_window_3d->h - 1, eof_color_dark_silver);
 	rect(eof_window_3d->screen, 1, 1, eof_window_3d->w - 2, eof_window_3d->h - 2, eof_color_black);
 	hline(eof_window_3d->screen, 1, eof_window_3d->h - 2, eof_window_3d->w - 2, eof_color_white);
