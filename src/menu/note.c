@@ -303,7 +303,6 @@ MENU eof_menu_thin_notes_menu[EOF_TRACKS_MAX] =
 MENU eof_note_proguitar_menu[] =
 {
     {"Edit pro guitar &Note\tN", eof_menu_note_edit_pro_guitar_note, NULL, 0, NULL},
-    {"Clear fingering", eof_menu_pro_guitar_remove_fingering, NULL, 0, NULL},
     {"&Arpeggio", NULL, eof_arpeggio_menu, 0, NULL},
     {"s&Lide", NULL, eof_pro_guitar_slide_menu, 0, NULL},
     {"&Strum", NULL, eof_pro_guitar_strum_menu, 0, NULL},
@@ -327,11 +326,12 @@ MENU eof_note_proguitar_menu[] =
 MENU eof_note_rocksmith_menu[] =
 {
     {"Edit &Frets/Fingering\tF", eof_menu_note_edit_pro_guitar_note_frets_fingers_menu, NULL, 0, NULL},
-    {"Toggle pop\t"  CTRL_NAME "+Shift+P", eof_menu_note_toggle_pop, NULL, 0, NULL},
+    {"Clear fingering", eof_menu_pro_guitar_remove_fingering, NULL, 0, NULL},
+    {"Toggle pop\t" CTRL_NAME "+Shift+P", eof_menu_note_toggle_pop, NULL, 0, NULL},
     {"Remove &Pop", eof_menu_note_remove_pop, NULL, 0, NULL},
-    {"Toggle slap\t"  CTRL_NAME "+Shift+S", eof_menu_note_toggle_slap, NULL, 0, NULL},
+    {"Toggle slap\t" CTRL_NAME "+Shift+S", eof_menu_note_toggle_slap, NULL, 0, NULL},
     {"Remove slap", eof_menu_note_remove_slap, NULL, 0, NULL},
-    {"Convert string mutes to palm", eof_rocksmith_convert_string_mute_to_palm_mute, NULL, 0, NULL},
+    {"String->palm mutes", eof_rocksmith_convert_string_mute_to_palm_mute, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -351,7 +351,7 @@ MENU eof_note_menu[] =
     {"&Clear", NULL, eof_note_clear_menu, 0, NULL},
     {"Transpose Up\tUp", eof_menu_note_transpose_up, NULL, 0, NULL},
     {"Transpose Down\tDown", eof_menu_note_transpose_down, NULL, 0, NULL},
-    {"Resnap", eof_menu_note_resnap, NULL, 0, NULL},
+    {"Resnap\t" CTRL_NAME "+Shift+R", eof_menu_note_resnap, NULL, 0, NULL},
     {"&Solos", NULL, eof_solo_menu, 0, NULL},
     {"Star &Power", NULL, eof_star_power_menu, 0, NULL},
     {"Delete\tDel", eof_menu_note_delete, NULL, 0, NULL},
@@ -7565,6 +7565,7 @@ int eof_rocksmith_convert_string_mute_to_palm_mute(void)
 						undo_made = 1;
 					}
 					tp->note[i]->frets[ctr] &= ~0x80;	//Clear the MSB to remove the string mute status
+					tp->note[i]->flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_STRING_MUTE;	//Clear the string mute status
 					tp->note[i]->flags |= EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE;	//Set the palm mute status
 				}
 			}
