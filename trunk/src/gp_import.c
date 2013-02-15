@@ -3566,7 +3566,7 @@ void eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, 
 	working_num_of_repeats = malloc(sizeof(unsigned char) * gp->measures);
 	if(!working_num_of_repeats)
 	{	//Error allocating memory
-		eof_log("\tError allocating memory to unwrap GP track", 1);
+		eof_log("\tError allocating memory to unwrap GP track (1)", 1);
 		return;
 	}
 	for(ctr = 0; ctr < gp->measures; ctr++)
@@ -3578,7 +3578,7 @@ void eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, 
 	tp = malloc(sizeof(EOF_PRO_GUITAR_TRACK));
 	if(!tp)
 	{
-		eof_log("\tError allocating memory to unwrap GP track", 1);
+		eof_log("\tError allocating memory to unwrap GP track (2)", 1);
 		free(working_num_of_repeats);
 		return;
 	}
@@ -3591,7 +3591,7 @@ void eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, 
 	measuremap = malloc(sizeof(unsigned long) * gp->measures);	//Allocate enough memory to store this information for each measure imported from the gp file
 	if(!measuremap)
 	{
-		eof_log("\tError allocating memory to unwrap GP track", 1);
+		eof_log("\tError allocating memory to unwrap GP track (3)", 1);
 		free(tp);
 		free(working_num_of_repeats);
 		return;
@@ -3640,7 +3640,7 @@ void eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, 
 
 			if(!eof_song_add_beat(eof_song))
 			{
-				eof_log("\tError allocating memory to unwrap GP track", 1);
+				eof_log("\tError allocating memory to unwrap GP track (4)", 1);
 				free(measuremap);
 				free(tp);
 				free(working_num_of_repeats);
@@ -3689,23 +3689,27 @@ void eof_unwrap_gp_track(struct eof_guitar_pro_struct *gp, unsigned long track, 
 		{	//If text events are being unwrapped
 			for(ctr = 0; ctr < gp->text_events; ctr++)
 			{	//For each text event that was imported from the gp file
-				if(gp->text_event[ctr]->beat == beatctr)
+				if(gp->text_event[ctr]->beat == measuremap[currentmeasure])
 				{	//If the text event is positioned at this measure
 					if(newevents < EOF_MAX_TEXT_EVENTS)
 					{	//If the maximum number of text events hasn't already been defined
 						newevent[newevents] = malloc(sizeof(EOF_TEXT_EVENT));	//Allocate space for the text event
-						eof_log("\tError allocating memory to unwrap GP track", 1);
-						free(measuremap);
-						free(tp);
-						free(working_num_of_repeats);
-						for(ctr = 0; ctr < newevents; ctr++)
-						{	//For each unwrapped text event
-							free(newevent[ctr]);	//Free it
+						if(!newevent[newevents])
+						{
+							eof_log("\tError allocating memory to unwrap GP track (5)", 1);
+							free(measuremap);
+							free(tp);
+							free(working_num_of_repeats);
+							for(ctr = 0; ctr < newevents; ctr++)
+							{	//For each unwrapped text event
+								free(newevent[ctr]);	//Free it
+							}
+							return;
 						}
-						return;
+						memcpy(newevent[newevents], gp->text_event[ctr], sizeof(EOF_TEXT_EVENT));	//Copy the text event
+						newevent[newevents]->beat = beatctr;	//Correct the beat number
+						newevents++;
 					}
-					memcpy(newevent[newevents], gp->text_event[ctr], sizeof(EOF_TEXT_EVENT));	//Copy the text event
-					newevent[newevents]->beat = beatctr;	//Correct the beat number
 					break;
 				}
 			}

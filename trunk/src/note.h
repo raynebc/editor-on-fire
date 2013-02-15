@@ -79,5 +79,7 @@ unsigned char eof_pro_guitar_note_highest_fret(EOF_PRO_GUITAR_TRACK *tp, unsigne
 	//If all strings are played open or are string muted with no fret specified, 0 is returned
 unsigned char eof_pro_guitar_note_is_barre_chord(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);
 	//Returns nonzero if the specified note is a barre chord (the lowest used fret is played on multiple non-contiguous strings, with no strings played open between the lowest fret instances)
+unsigned char eof_pro_guitar_note_is_double_stop(EOF_PRO_GUITAR_TRACK *tp, unsigned long note);
+	//Returns nonzero if the specified note is a double stop (only two contiguous strings played)
 
 #endif

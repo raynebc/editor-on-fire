@@ -9,6 +9,7 @@
 #include "mix.h"	//For eof_set_seek_position()
 #include "rs.h"
 #include "song.h"	//For eof_pro_guitar_track_delete_hand_position()
+#include "tuning.h"	//For eof_lookup_tuned_note()
 #include "undo.h"
 #include "utility.h"	//For eof_system()
 #include "foflc/RS_parse.h"	//For expand_xml_text()
@@ -297,6 +298,16 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	long displayedmeasure, measurenum = 0;
 	long startbeat;	//This will indicate the first beat containing a note in the track
 	long endbeat;	//This will indicate the first beat after the exported track's last note
+	char standard[] = {0,0,0,0,0,0};
+	char standardbass[] = {0,0,0,0};
+	char eb[] = {-1,-1,-1,-1,-1,-1};
+	char dropd[] = {-2,0,0,0,0,0};
+	char openg[] = {-2,-2,0,0,0,-2};
+	char *tuning;
+	char isebtuning = 1;	//Will track whether all strings are tuned to -1
+	char notename[EOF_NAME_LENGTH+1];	//String large enough to hold any chord name supported by EOF
+	int scale, chord, isslash, bassnote;	//Used for power chord detection
+	int standard_tuning = 0, non_standard_chords = 0, barre_chords = 0, power_chords = 0, notenum, dropd_tuning = 1, dropd_power_chords = 0, open_chords = 0, double_stops = 0, palm_mutes = 0, harmonics = 0, hopo = 0, tremolo = 0, slides = 0, bends = 0, tapping = 0, vibrato = 0, slappop = 0, octaves = 0, fifths_and_octaves = 0;	//Used for technique detection
 
 	eof_log("eof_export_rocksmith() entered", 1);
 
@@ -385,6 +396,185 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	{
 		(void) snprintf(buffer, sizeof(buffer) - 1, "  <lastConversionDateTime>UNKNOWN</lastConversionDateTime>\n");
 	}
+	(void) pack_fputs(buffer, fp);
+
+	//Write additional tags to pass song information to the Rocksmith toolkit
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <startBeat>%.3f</startBeat>\n", sp->beat[0]->fpos / 1000.0);	//The position of the first beat
+	(void) pack_fputs(buffer, fp);
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <averageTempo>%.3f</averageTempo>\n", 60000.0 / ((sp->beat[sp->beats - 1]->fpos - sp->beat[0]->fpos) / sp->beats));	//The average tempo (60000ms / the average beat length in ms)
+	(void) pack_fputs(buffer, fp);
+	tuning = tp->tuning;	//By default, use the track's original tuning array
+	for(ctr = 0; ctr < 6; ctr++)
+	{	//For each string EOF supports
+		if(ctr >= tp->numstrings)
+		{	//If the track doesn't use this string
+			tp->tuning[ctr] = 0;	//Ensure the tuning is cleared accordingly
+		}
+	}
+	for(ctr = 0; ctr < tp->numstrings; ctr++)
+	{	//For each string in this track
+		if(tp->tuning[ctr] != -1)
+		{	//If this string isn't tuned a half step down
+			isebtuning = 0;
+			break;
+		}
+	}
+	if(isebtuning && !((track == EOF_TRACK_PRO_BASS) && (tp->numstrings > 4)))
+	{	//If all strings were tuned down a half step (except for bass tracks with more than 4 strings, since in those cases, the lowest string is not tuned to E)
+		tuning = eb;	//Allow a 4 or 5 string track's tuning to be passed to xml2sng as {-1,-1,-1,-1,-1,-1}
+	}
+	if(memcmp(tuning, standard, 6) && memcmp(tuning, standardbass, 4) && memcmp(tuning, eb, 6) && memcmp(tuning, dropd, 6) && memcmp(tuning, openg, 6))
+	{	//If the track's tuning doesn't match any supported by Rocksmith
+		allegro_message("Warning:  This track (%s) uses a tuning that isn't one known to be supported in Rocksmith.\nTuning and note recognition may not work as expected in-game", sp->track[track]->name);
+		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  This track (%s) uses a tuning that isn't known to be supported in Rocksmith.  Tuning and note recognition may not work as expected in-game", sp->track[track]->name);
+		eof_log(eof_log_string, 1);
+	}
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <tuning string0=\"%d\" string1=\"%d\" string2=\"%d\" string3=\"%d\" string4=\"%d\" string5=\"%d\" />\n", tuning[0], tuning[1], tuning[2], tuning[3], tuning[4], tuning[5]);
+	(void) pack_fputs(buffer, fp);
+	if(sp->tags->artist[0] != '\0')
+	{	//If the artist's name is specified in song properties
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <artistName>%s</artistName>\n", sp->tags->artist);
+	}
+	else
+	{
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <artistName>Unknown</artistName>\n");
+	}
+	(void) pack_fputs(buffer, fp);
+	if(sp->tags->year[0] != '\0')
+	{	//If the album year is specified in song properties
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <albumYear>%s</albumYear>\n", sp->tags->year);
+	}
+	else
+	{
+		(void) snprintf(buffer, sizeof(buffer) - 1, "  <albumYear>Unknown</albumYear>\n");
+	}
+	(void) pack_fputs(buffer, fp);
+	if(!memcmp(tuning, standard, 6))
+	{	//All unused strings had their tuning set to 0, so if all bytes of this array are 0, the track is in standard tuning
+		standard_tuning = 1;
+	}
+	notenum = eof_lookup_tuned_note(tp, track, 0, tp->tuning[0]);	//Look up the open note the lowest string plays
+	notenum %= 12;	//Ensure the value is in the range of [0,11]
+	if(notenum == 5)
+	{	//If the lowest string is tuned to D
+		for(ctr = 1; ctr < 6; ctr++)
+		{	//For the other 5 strings
+			if(tp->tuning[ctr] != 0)
+			{	//If the string is not in standard tuning
+				dropd_tuning = 0;
+			}
+		}
+	}
+	else
+	{	//The lowest string is not tuned to D
+		dropd_tuning = 0;
+	}
+	eof_determine_phrase_status(sp, track);	//Update the tremolo status of each note
+	for(ctr = 0; ctr < tp->notes; ctr++)
+	{	//For each note in the track
+		if(eof_note_count_non_ghosted_lanes(sp, track, ctr) > 1)
+		{	//If the note is a chord (more than one non ghosted gem)
+			if(!non_standard_chords && !eof_build_note_name(sp, track, ctr, notename))
+			{	//If the chord has no defined or detected name (only if this condition hasn't been found already)
+				non_standard_chords = 1;
+			}
+			if(!barre_chords && eof_pro_guitar_note_is_barre_chord(tp, ctr))
+			{	//If the chord is a barre chord (only if this condition hasn't been found already)
+				barre_chords = 1;
+			}
+			if(!power_chords && eof_lookup_chord(tp, track, ctr, &scale, &chord, &isslash, &bassnote, 0, 0))
+			{	//If the chord lookup found a match (only if this condition hasn't been found already)
+				if(chord == 27)
+				{	//27 is the index of the power chord formula in eof_chord_names[]
+					power_chords = 1;
+					if(dropd_tuning)
+					{	//If this track is in drop d tuning
+						dropd_power_chords = 1;
+					}
+				}
+			}
+			if(!open_chords)
+			{	//Only if no open chords have been found already
+				for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
+				{	//For each of the 6 supported strings
+					if((tp->note[ctr]->note & bitmask) && (tp->note[ctr]->frets[ctr2] == 0))
+					{	//If this string is used and played open
+						open_chords = 1;
+					}
+				}
+			}
+			if(!double_stops && eof_pro_guitar_note_is_double_stop(tp, ctr))
+			{	//If the chord is a double stop (only if this condition hasn't been found already)
+				double_stops = 1;
+			}
+			if((track == EOF_TRACK_PRO_BASS) || (EOF_TRACK_PRO_BASS_22))
+			{	//If the track being exported is a pro bass track
+				int thisnote, lastnote = -1, failed = 0;
+				for(ctr2 = 0, bitmask = 1; ctr2 < 6; ctr2++, bitmask <<= 1)
+				{	//For each of the 6 supported strings
+					if((tp->note[ctr]->note & bitmask) && !(tp->note[ctr]->frets[ctr2] & 0x80))
+					{	//If this string is played and not string muted
+						thisnote = eof_lookup_played_note(tp, track, ctr2, tp->note[ctr]->frets[ctr2]);	//Determine what note is being played
+						if((lastnote >= 0) && (lastnote != thisnote))
+						{	//If this string's played note doesn't match the note played by previous strings
+							failed = 1;
+							break;
+						}
+						lastnote = thisnote;
+					}
+				}
+				if(!failed)
+				{	//If non muted strings in the chord played the same note
+					octaves = 1;
+				}
+			}
+		}//If the note is a chord (more than one non ghosted gem)
+		if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_PALM_MUTE)
+		{	//If the note is palm muted
+			palm_mutes = 1;
+		}
+		if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_HARMONIC)
+		{	//If the note is a harmonic
+			harmonics = 1;
+		}
+		if((tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_HO) || (tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_PO))
+		{	//If the note is a hammer on or pull off
+			hopo = 1;
+		}
+		if(tp->note[ctr]->flags & EOF_NOTE_FLAG_IS_TREMOLO)
+		{	//If the note is played with tremolo
+			tremolo = 1;
+		}
+		if((tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP) || (tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN))
+		{	//If the note slides up or down
+			slides = 1;
+		}
+		if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_BEND)
+		{	//If the note is bent
+			bends = 1;
+		}
+		if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_TAP)
+		{	//If the note is tapped
+			tapping = 1;
+		}
+		if(tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_VIBRATO)
+		{	//If the note is played with vibrato
+			vibrato = 1;
+		}
+		if((tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_SLAP) || (tp->note[ctr]->flags & EOF_PRO_GUITAR_NOTE_FLAG_POP))
+		{	//If the note is played by slapping or popping
+			slappop = 1;
+		}
+	}//For each note in the track
+	if((track == EOF_TRACK_PRO_BASS) || (track == EOF_TRACK_PRO_BASS_22))
+	{	//If the track being exported is a pro bass track
+		if(double_stops || octaves)
+		{	//If either of these techniques were detected
+			fifths_and_octaves = 1;
+		}
+		double_stops = 0;
+	}
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <arrangementProperties represent=\"1\" standardTuning=\"%d\" nonStandardChords=\"%d\" barreChords=\"%d\" powerChords=\"%d\" dropDPower=\"%d\" openChords=\"%d\" fingerPicking=\"0\" pickDirection=\"0\" doubleStops=\"%d\" palmMutes=\"%d\" harmonics=\"%d\" pinchHarmonics=\"0\" hopo=\"%d\" tremolo=\"%d\" slides=\"%d\" unpitchedSlides=\"0\" bends=\"%d\" tapping=\"%d\" vibrato=\"%d\" fretHandMutes=\"0\" slapPop=\"%d\" twoFingerPicking=\"0\" fifthsAndOctaves=\"%d\" syncopation=\"0\" bassPick=\"0\" />\n", standard_tuning, non_standard_chords, barre_chords, power_chords, dropd_power_chords, open_chords, double_stops, palm_mutes, harmonics, hopo, tremolo, slides, bends, tapping, vibrato, slappop, fifths_and_octaves);
 	(void) pack_fputs(buffer, fp);
 
 	//Check if any RS phrases or sections need to be added
@@ -550,7 +740,6 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	}
 	else
 	{
-		char notename[EOF_NAME_LENGTH+1];	//String large enough to hold any chord name supported by EOF
 		long fret0, fret1, fret2, fret3, fret4, fret5;	//Will store the fret number played on each string (-1 means the string is not played)
 		long *fret[6] = {&fret0, &fret1, &fret2, &fret3, &fret4, &fret5};	//Allow the fret numbers to be accessed via array
 		char *fingerunknown = "#";

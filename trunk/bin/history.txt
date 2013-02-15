@@ -3,6 +3,33 @@ EOF Version History
 
 1.8:
 
+Added a keyboard shortcut for Note>Resnap (CTRL+SHIFT+R).
+
+Added a "Precise select like" function to the Edit>Selection menu
+that is similar to "Select like", but also requires notes to have
+the same statuses in order to match.
+
+Added a function to remove all statuses from selected notes
+(Note>Remove all statuses).
+
+Increased the mouse's vertical tolerance for clicking and dragging
+beat markers.  Now the entire vertical space between the piano roll
+and the difficulty tabs can be used without a beat marker being let
+go when dragging that beat.
+
+Added the ability to set a custom zoom level (Edit>Zoom>Custom).
+You can use the zoom in/out shortcuts (+ and - on the numberpad) to
+zoom in and out of a custom zoom level.  If a custom zoom is in
+effect when EOF closes, it is restored when re-opening EOF.
+
+Fixed a bug where ghost pro guitar status was lost on notes that
+are auto-adjusted (ie. when moving beat markers).
+
+Increased the limit of each type of phrase to 300.
+
+Added cleanup logic that would ensure expert+ bass notes are only
+defined and written for the Expert drum track.
+
 Added an additional drum track (PART REAL_DRUMS_PS) for use in Phase
 Shift.  This drum track will behave similarly to the original
 "PART DRUMS" track, but "PART DRUMS" will now no longer allow
