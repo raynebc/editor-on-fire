@@ -1655,6 +1655,34 @@ unsigned char eof_pro_guitar_note_is_barre_chord(EOF_PRO_GUITAR_TRACK *tp, unsig
 	return 0;	//This is not a barre chord
 }
 
+unsigned char eof_pro_guitar_note_is_double_stop(EOF_PRO_GUITAR_TRACK *tp, unsigned long note)
+{
+	unsigned long ctr, bitmask, frettedstringcount = 0;
+	char contiguous = 0;
+
+	if(!tp || (note >= tp->notes))
+		return 0;	//Invalid parameters
+
+	for(ctr = 0, bitmask = 1; ctr < tp->numstrings; ctr++, bitmask <<= 1)
+	{	//For each string this track supports
+		if(tp->note[note]->note & bitmask)
+		{	//If this string is used
+			contiguous = 0;	//Reset this status
+			frettedstringcount++;
+			if(tp->note[note]->note & (bitmask >> 1))
+			{	//If the previous string was used
+				contiguous = 1;
+			}
+		}
+	}
+	if((frettedstringcount != 2) || !contiguous)
+	{	//If less than two strings are played non-open, or they were not contiguous strings
+		return 0;	//This is not a double stop
+	}
+
+	return 1;	//This is a double stop
+}
+
 char eof_build_note_name(EOF_SONG *sp, unsigned long track, unsigned long note, char *buffer)
 {
 	char *name;
