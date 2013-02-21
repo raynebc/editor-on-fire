@@ -2060,6 +2060,14 @@ if(key[KEY_PAUSE])
 				key[KEY_F] = 0;
 			}
 
+	/* list fret hand positions (CTRL+SHIFT+F in a pro guitar track) */
+			if(key[KEY_F] && KEY_EITHER_CTRL && KEY_EITHER_SHIFT)
+			{
+				eof_shift_used = 1;	//Track that the SHIFT key was used
+				(void) eof_menu_song_fret_hand_positions();
+				key[KEY_F] = 0;
+			}
+
 	/* toggle slap status (CTRL+SHIFT+S in a pro guitar track) */
 			if(key[KEY_S] && KEY_EITHER_CTRL && !KEY_EITHER_ALT && KEY_EITHER_SHIFT)
 			{	//If both CTRL and SHIFT are held, but ALT is not

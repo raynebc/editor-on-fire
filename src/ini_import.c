@@ -169,6 +169,14 @@ int eof_import_ini(EOF_SONG * sp, char * fn, int function)
 					return 0;
 				}
 			}
+			else if(!ustricmp(eof_import_ini_setting[i].type, "album"))
+			{
+				if(eof_compare_set_ini_string_field(sp->tags->album, value_index, 256-1, &function, eof_import_ini_setting[i].type))
+				{	//If the INI file is being merged with the project and the user did not want the project's setting replaced
+					free(textbuffer);	//Free buffered INI file from memory
+					return 0;
+				}
+			}
 			else if(!ustricmp(eof_import_ini_setting[i].type, "year"))
 			{
 				unsigned long index;

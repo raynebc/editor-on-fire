@@ -126,7 +126,8 @@ MENU eof_pro_guitar_slide_menu[] =
 {
     {"Toggle slide &Up\t" CTRL_NAME "+Up", eof_menu_note_toggle_slide_up, NULL, 0, NULL},
     {"Toggle slide &Down\t" CTRL_NAME "+Down", eof_menu_note_toggle_slide_down, NULL, 0, NULL},
-    {"&Remove slide", eof_menu_note_remove_slide, NULL, 0, NULL},
+    {"Remove &Slide", eof_menu_note_remove_slide, NULL, 0, NULL},
+    {"&Reverse slide", eof_menu_note_reverse_slide, NULL, 0, NULL},
     {"Set &End fret\t" CTRL_NAME "+Shift+L", eof_pro_guitar_note_slide_end_fret_save, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
@@ -331,7 +332,7 @@ MENU eof_note_rocksmith_menu[] =
     {"Remove &Pop", eof_menu_note_remove_pop, NULL, 0, NULL},
     {"Toggle slap\t" CTRL_NAME "+Shift+S", eof_menu_note_toggle_slap, NULL, 0, NULL},
     {"Remove slap", eof_menu_note_remove_slap, NULL, 0, NULL},
-    {"String->palm mutes", eof_rocksmith_convert_string_mute_to_palm_mute, NULL, 0, NULL},
+    {"&String->palm mutes", eof_rocksmith_convert_string_mute_to_palm_mute, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -4873,6 +4874,51 @@ int eof_menu_note_remove_slide(void)
 			eof_song->pro_guitar_track[eof_song->track[eof_selected_track]->tracknum]->note[i]->slideend = 0;	//Reset the ending fret number of the slide
 		}
 	}
+	if(note_selection_updated)
+	{	//If the only note modified was the seek hover note
+		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition
+		eof_selection.current = EOF_MAX_NOTES - 1;
+	}
+	return 1;
+}
+
+int eof_menu_note_reverse_slide(void)
+{
+	unsigned long i;
+	long u = 0;
+	unsigned long flags, oldflags;
+	int note_selection_updated = eof_feedback_mode_update_note_selection();	//If no notes are selected, select the seek hover note if Feedback input mode is in effect
+
+	if(eof_song->track[eof_selected_track]->track_format != EOF_PRO_GUITAR_TRACK_FORMAT)
+		return 1;	//Do not allow this function to run when a pro guitar format track is not active
+
+	for(i = 0; i < eof_get_track_size(eof_song, eof_selected_track); i++)
+	{	//For each note in the active track
+		if((eof_selection.track == eof_selected_track) && eof_selection.multi[i])
+		{	//If this note is in the currently active track and is selected
+			flags = eof_get_note_flags(eof_song, eof_selected_track, i);
+			oldflags = flags;
+			if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP)
+			{	//If the note currently slides up
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;		//Clear the slide up flag
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;		//Set the slide down flag
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;	//Ensure the reverse slide flag is clear
+			}
+			else if(flags & EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN)
+			{	//If the note currently slides down
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_DOWN;		//Clear the slide down flag
+				flags |= EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_UP;		//Set the slide up flag
+				flags &= ~EOF_PRO_GUITAR_NOTE_FLAG_SLIDE_REVERSE;	//Ensure the reverse slide flag is clear
+			}
+			if(!u && (oldflags != flags))
+			{	//Make a back up before changing the first note
+				eof_prepare_undo(EOF_UNDO_TYPE_NONE);
+				u = 1;
+			}
+			eof_set_note_flags(eof_song, eof_selected_track, i, flags);
+		}
+	}
+	eof_track_fixup_notes(eof_song, eof_selected_track, 1);	//Fixup notes to adjust the slide note's length as appropriate
 	if(note_selection_updated)
 	{	//If the only note modified was the seek hover note
 		eof_selection.multi[eof_seek_hover_note] = 0;	//Deselect it to restore the note selection's original condition

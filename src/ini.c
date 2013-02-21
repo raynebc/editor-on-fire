@@ -68,6 +68,13 @@ int eof_save_ini(EOF_SONG * sp, char * fn)
 		(void) ustrcat(ini_string, sp->tags->frettist);
 	}
 
+	/* write album name */
+	if(ustrlen(sp->tags->album) > 0)
+	{
+		(void) ustrcat(ini_string, "\r\nalbum = ");
+		(void) ustrcat(ini_string, sp->tags->album);
+	}
+
 	/* write midi offset */
 	(void) ustrcat(ini_string, "\r\ndelay = ");
 	(void) snprintf(buffer, sizeof(buffer) - 1, "%ld", sp->tags->ogg[eof_selected_ogg].midi_offset);
