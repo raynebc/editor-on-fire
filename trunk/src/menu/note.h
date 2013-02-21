@@ -86,6 +86,7 @@ int eof_correct_chord_fingerings_menu(void);
 int eof_menu_note_toggle_slide_up(void);		//Toggles the slide up status of all selected notes
 int eof_menu_note_toggle_slide_down(void);		//Toggles the slide down status of all selected notes
 int eof_menu_note_remove_slide(void);			//Removes the slide status of all selected notes
+int eof_menu_note_reverse_slide(void);			//Reverses the slide direction of all selected notes that already slide (also removes the reverse slide status if it is applied)
 int eof_menu_note_toggle_palm_muting(void);		//Toggles the palm muting status of all selected notes
 int eof_menu_note_remove_palm_muting(void);		//Removes the palm muting status of all selected notes
 int eof_menu_arpeggio_mark(void);				//Marks/remarks an arpeggio phrase encompassing the selected notes

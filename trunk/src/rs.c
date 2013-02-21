@@ -293,6 +293,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	EOF_PRO_GUITAR_TRACK *tp;
 	char *arrangement_name;	//This will point to the track's native name unless it has an alternate name defined
 	unsigned numdifficulties;
+	unsigned char bre_populated = 0;
 	unsigned long phraseid;
 	unsigned beatspermeasure = 4, beatcounter = 0;
 	long displayedmeasure, measurenum = 0;
@@ -331,6 +332,10 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	eof_detect_difficulties(sp, track);	//Update eof_track_diff_populated_status[] to reflect all populated difficulties for this track
 	if((sp->track[track]->flags & EOF_TRACK_FLAG_UNLIMITED_DIFFS) == 0)
 	{	//If the track is using the traditional 5 difficulty system
+		if(eof_track_diff_populated_status[4])
+		{	//If the BRE difficulty is populated
+			bre_populated = 1;	//Track that it was
+		}
 		eof_track_diff_populated_status[4] = 0;	//Ensure that the BRE difficulty is not exported
 	}
 	for(ctr = 0, numdifficulties = 0; ctr < 256; ctr++)
@@ -344,6 +349,12 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	{
 		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Cannot export track \"%s\"in Rocksmith format, it has no populated difficulties", sp->track[track]->name);
 		eof_log(eof_log_string, 1);
+		if(bre_populated)
+		{	//If the BRE difficulty was the only one populated, warn that it is being omitted
+			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  Track \"%s\" only has notes in the BRE difficulty.\nThese are not exported in Rocksmith format unless you remove the difficulty limit (Song>Rocksmith>Remove difficulty limit).", sp->track[track]->name);
+			allegro_message(eof_log_string);
+			eof_log(eof_log_string, 1);
+		}
 		return 0;	//Return failure
 	}
 
@@ -431,23 +442,14 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	}
 	(void) snprintf(buffer, sizeof(buffer) - 1, "  <tuning string0=\"%d\" string1=\"%d\" string2=\"%d\" string3=\"%d\" string4=\"%d\" string5=\"%d\" />\n", tuning[0], tuning[1], tuning[2], tuning[3], tuning[4], tuning[5]);
 	(void) pack_fputs(buffer, fp);
-	if(sp->tags->artist[0] != '\0')
-	{	//If the artist's name is specified in song properties
-		(void) snprintf(buffer, sizeof(buffer) - 1, "  <artistName>%s</artistName>\n", sp->tags->artist);
-	}
-	else
-	{
-		(void) snprintf(buffer, sizeof(buffer) - 1, "  <artistName>Unknown</artistName>\n");
-	}
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->artist, 256);	//Replace any special characters in the artist song property with escape sequences if necessary
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <artistName>%s</artistName>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
-	if(sp->tags->year[0] != '\0')
-	{	//If the album year is specified in song properties
-		(void) snprintf(buffer, sizeof(buffer) - 1, "  <albumYear>%s</albumYear>\n", sp->tags->year);
-	}
-	else
-	{
-		(void) snprintf(buffer, sizeof(buffer) - 1, "  <albumYear>Unknown</albumYear>\n");
-	}
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->album, 256);	//Replace any special characters in the album song property with escape sequences if necessary
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <albumName>%s</albumName>\n", buffer2);
+	(void) pack_fputs(buffer, fp);
+	expand_xml_text(buffer2, sizeof(buffer2) - 1, sp->tags->year, 32);	//Replace any special characters in the year song property with escape sequences if necessary
+	(void) snprintf(buffer, sizeof(buffer) - 1, "  <albumYear>%s</albumYear>\n", buffer2);
 	(void) pack_fputs(buffer, fp);
 	if(!memcmp(tuning, standard, 6))
 	{	//All unused strings had their tuning set to 0, so if all bytes of this array are 0, the track is in standard tuning
@@ -1080,7 +1082,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 				char *downstrum = "down";
 				char *direction;	//Will point to either upstrum or downstrum as appropriate
 				double notepos;
-				char highdensity;		//Any chord <= 500ms after another chord has the highDensity boolean property set to true
+				char highdensity;		//Any chord within the threshold proximity of an identical chord has the highDensity boolean property set to true
 				unsigned long lastchordpos = 0;
 
 				(void) snprintf(buffer, sizeof(buffer) - 1, "      <chords count=\"%lu\">\n", numchords);
@@ -1115,8 +1117,8 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 						{	//Otherwise the direction defaults to down
 							direction = downstrum;
 						}
-						if(lastchordpos && (tp->note[ctr3]->pos <= lastchordpos + 500) && (chordid == lastchordid))
-						{	//If this isn't the first chord, it is within 500ms of the previous chord instance and it is the same as the previously written chord (not a chord change)
+						if(lastchordpos && (tp->note[ctr3]->pos <= lastchordpos + 10000) && (chordid == lastchordid) && !(tp->note[ctr3]->flags & EOF_NOTE_FLAG_CRAZY))
+						{	//If this isn't the first chord, it is within the threshold distance of the previous chord instance and it is the same as the previously written chord (not a chord change), and it is NOT marked as crazy
 							highdensity = 1;
 						}
 						else

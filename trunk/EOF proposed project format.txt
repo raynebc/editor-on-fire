@@ -13,7 +13,7 @@ EOF proposed file format (revision 'H'):
 2 bytes:	Number of INI strings
 INI STRING CHUNK, for each INI string:
 {
-*	1 byte:		INI string type (0=Custom,1=Album,2=Artist,3=Title,4=Frettist,5=Genre,6=Year,7=Loading Text,8=Icon ID,9=Unlock ID,10=Unlock ID required,11=Unlock text string,...)
+*	1 byte:		INI string type (0=Custom,1=Album,2=Artist,3=Title,4=Frettist,5=Genre,6=Year,7=Loading Text,8=Album,#=Icon ID,#=Unlock ID,#=Unlock ID required,#=Unlock text string,...)
 !	The following Icon IDs are supportedly natively in FoFiX: rb1,rb2,rbdlc,rbtpk,gh1,gh2,gh2dlc,gh3,gh3dlc,gh80s,gha,ghm,ph1,ph2,ph3,ph4,phm.  Custom icon strings can be used in FoFiX.
 !	Unlock text string is the text that FoFiX will display if this chart is not unlocked
 *	2 bytes:	INI string length

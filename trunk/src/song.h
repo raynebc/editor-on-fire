@@ -23,7 +23,7 @@
 
 #define EOF_NOTE_FLAG_HOPO       1	//This flag will be set by eof_determine_phrase_status() if the note displays as a HOPO
 #define EOF_NOTE_FLAG_SP         2	//This flag will be set by eof_determine_phrase_status() if the note is in a star power section
-#define EOF_NOTE_FLAG_CRAZY      4	//This flag will represent overlap allowed for guitar/dance/keys tracks
+#define EOF_NOTE_FLAG_CRAZY      4	//This flag will represent overlap allowed for guitar/dance/keys tracks, and will force pro guitar/bass chords to display with a chord box
 #define EOF_NOTE_FLAG_F_HOPO     8
 #define EOF_NOTE_FLAG_NO_HOPO   16
 #define EOF_NOTE_FLAG_Y_CYMBAL  32	//This flag represents a yellow note charted as a RB3 Pro style cymbal (lane 3)
@@ -381,6 +381,7 @@ typedef struct
 	char artist[256];
 	char title[256];
 	char frettist[256];
+	char album[256];
 	char year[32];
 	char loading_text[512];
 	char lyrics;

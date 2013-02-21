@@ -53,7 +53,7 @@ MENU eof_song_seek_menu[] =
 {
     {"Start\tHome", eof_menu_song_seek_start, NULL, 0, NULL},
     {"End of audio\tEnd", eof_menu_song_seek_end, NULL, 0, NULL},
-    {"End of chart\t" CTRL_NAME "Shift+End", eof_menu_song_seek_chart_end, NULL, 0, NULL},
+    {"End of chart\t" CTRL_NAME "+Shift+End", eof_menu_song_seek_chart_end, NULL, 0, NULL},
     {"Rewind\tR", eof_menu_song_seek_rewind, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"First Note\t" CTRL_NAME "+Home", eof_menu_song_seek_first_note, NULL, 0, NULL},
@@ -138,7 +138,7 @@ DIALOG eof_note_set_num_frets_strings_dialog[] =
 MENU eof_song_proguitar_fret_hand_menu[] =
 {
     {"&Set\tShift+F", eof_pro_guitar_set_fret_hand_position, NULL, 0, NULL},
-    {"&List", eof_menu_song_fret_hand_positions, NULL, 0, NULL},
+    {"&List\t" CTRL_NAME "+Shift+F", eof_menu_song_fret_hand_positions, NULL, 0, NULL},
     {"&Copy", eof_menu_song_fret_hand_positions_copy_from, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
@@ -168,7 +168,7 @@ MENU eof_song_rocksmith_menu[] =
     {"Remove difficulty limit", eof_song_proguitar_toggle_difficulty_limit, NULL, 0, NULL},
     {"Insert new difficulty", eof_song_proguitar_insert_difficulty, NULL, 0, NULL},
     {"Delete active difficulty", eof_song_proguitar_delete_difficulty, NULL, 0, NULL},
-    {"&Manage RS phrases\t" CTRL_NAME "+SHIFT+M", eof_manage_rs_phrases, NULL, 0, NULL},
+    {"&Manage RS phrases\t" CTRL_NAME "+Shift+M", eof_manage_rs_phrases, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
 };
 
@@ -226,28 +226,30 @@ DIALOG eof_ini_add_dialog[] =
 DIALOG eof_song_properties_dialog[] =
 {
    /* (proc)              (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)                    (dp2) (dp3) */
-   { d_agup_window_proc,  0,   0,   480, 244, 0,   0,   0,    0,      0,   0,   "Song Properties",      NULL, NULL },
+   { d_agup_window_proc,  0,   0,   480, 292, 0,   0,   0,    0,      0,   0,   "Song Properties",      NULL, NULL },
    { d_agup_text_proc,    12,  40,  80,  12,  0,   0,   0,    0,      0,   0,   "Song Title",           NULL, NULL },
    { d_agup_edit_proc,    12,  56,  184, 20,  0,   0,   0,    0,      255, 0,   eof_etext,              NULL, NULL },
    { d_agup_text_proc,    12,  88,  96,  12,  0,   0,   0,    0,      0,   0,   "Artist",               NULL, NULL },
    { d_agup_edit_proc,    12,  104, 184, 20,  0,   0,   0,    0,      255, 0,   eof_etext2,             NULL, NULL },
    { d_agup_text_proc,    12,  136, 108, 12,  0,   0,   0,    0,      0,   0,   "Frettist",             NULL, NULL },
    { d_agup_edit_proc,    12,  152, 184, 20,  0,   0,   0,    0,      255, 0,   eof_etext3,             NULL, NULL },
-   { d_agup_text_proc,    12,  188, 60,  12,  0,   0,   0,    0,      0,   0,   "Delay",                NULL, NULL },
-   { eof_verified_edit_proc,12,204, 50,  20,  0,   0,   0,    0,      6,   0,   eof_etext4,     "0123456789", NULL },
-   { d_agup_text_proc,    74,  188, 48,  12,  0,   0,   0,    0,      0,   0,   "Year",                 NULL, NULL },
-   { eof_verified_edit_proc,74,204, 38,  20,  0,   0,   0,    0,      4,   0,   eof_etext5,     "0123456789", NULL },
-   { d_agup_text_proc,    124, 188, 60,  12,  0,   0,   0,    0,      0,   0,   "Diff.",                NULL, NULL },
-   { eof_verified_edit_proc,124,204,26,  20,  0,   0,   0,    0,      1,   0,   eof_etext7,        "0123456", NULL },
+   { d_agup_text_proc,    12,  184, 108, 12,  0,   0,   0,    0,      0,   0,   "Album",                NULL, NULL },
+   { d_agup_edit_proc,    12,  200, 184, 20,  0,   0,   0,    0,      255, 0,   eof_etext8,             NULL, NULL },
+   { d_agup_text_proc,    12,  232, 60,  12,  0,   0,   0,    0,      0,   0,   "Delay",                NULL, NULL },
+   { eof_verified_edit_proc,12,248, 50,  20,  0,   0,   0,    0,      6,   0,   eof_etext4,     "0123456789", NULL },
+   { d_agup_text_proc,    74,  232, 48,  12,  0,   0,   0,    0,      0,   0,   "Year",                 NULL, NULL },
+   { eof_verified_edit_proc,74,248, 38,  20,  0,   0,   0,    0,      4,   0,   eof_etext5,     "0123456789", NULL },
+   { d_agup_text_proc,    124, 232, 60,  12,  0,   0,   0,    0,      0,   0,   "Diff.",                NULL, NULL },
+   { eof_verified_edit_proc,124,248,26,  20,  0,   0,   0,    0,      1,   0,   eof_etext7,        "0123456", NULL },
    { d_agup_text_proc,    208, 40,  96,  12,  0,   0,   0,    0,      0,   0,   "Loading Text",         NULL, NULL },
    { d_agup_edit_proc,    208, 56,  256, 20,  0,   0,   0,    0,      255, 0,   eof_etext6,             NULL, NULL },
    { d_agup_text_proc,    208, 88,  96,  12,  0,   0,   0,    0,      0,   0,   "Loading Text Preview", NULL, NULL },
-   { d_agup_textbox_proc, 208, 104, 256, 68,  0,   0,   0,    0,      0,   0,   eof_etext6,             NULL, NULL },
-   { d_agup_check_proc,   160, 175, 136, 16,  0,   0,   0,    0,      1,   0,   "Lyrics",               NULL, NULL },
-   { d_agup_check_proc,   160, 190, 136, 16,  0,   0,   0,    0,      1,   0,   "8th Note HO/PO",       NULL, NULL },
-   { d_agup_check_proc,   160, 205, 215, 16,  0,   0,   0,    0,      1,   0,   "Use fret hand pos of 1 (pro g)", NULL, NULL },
-   { d_agup_check_proc,   160, 220, 215, 16,  0,   0,   0,    0,      1,   0,   "Use fret hand pos of 1 (pro b)", NULL, NULL },
-   { d_agup_button_proc,  380, 204, 84,  24,  0,   0,   '\r', D_EXIT, 0,   0,   "OK",                   NULL, NULL },
+   { d_agup_textbox_proc, 208, 104, 256,116,  0,   0,   0,    0,      0,   0,   eof_etext6,             NULL, NULL },
+   { d_agup_check_proc,   160, 223, 136, 16,  0,   0,   0,    0,      1,   0,   "Lyrics",               NULL, NULL },
+   { d_agup_check_proc,   160, 238, 136, 16,  0,   0,   0,    0,      1,   0,   "8th Note HO/PO",       NULL, NULL },
+   { d_agup_check_proc,   160, 253, 215, 16,  0,   0,   0,    0,      1,   0,   "Use fret hand pos of 1 (pro g)", NULL, NULL },
+   { d_agup_check_proc,   160, 268, 215, 16,  0,   0,   0,    0,      1,   0,   "Use fret hand pos of 1 (pro b)", NULL, NULL },
+   { d_agup_button_proc,  380, 252, 84,  24,  0,   0,   '\r', D_EXIT, 0,   0,   "OK",                   NULL, NULL },
    { NULL,                0,   0,   0,   0,   0,   0,   0,    0,      0,   0,   NULL,                   NULL, NULL }
 };
 
@@ -929,10 +931,11 @@ int eof_menu_song_properties(void)
 	(void) snprintf(eof_etext4, sizeof(eof_etext4) - 1, "%ld", eof_song->tags->ogg[eof_selected_ogg].midi_offset);
 	(void) ustrcpy(eof_etext5, eof_song->tags->year);
 	(void) ustrcpy(eof_etext6, eof_song->tags->loading_text);
-	eof_song_properties_dialog[17].flags = eof_song->tags->lyrics ? D_SELECTED : 0;
-	eof_song_properties_dialog[18].flags = eof_song->tags->eighth_note_hopo ? D_SELECTED : 0;
-	eof_song_properties_dialog[19].flags = eof_song->tags->eof_fret_hand_pos_1_pg ? D_SELECTED : 0;
-	eof_song_properties_dialog[20].flags = eof_song->tags->eof_fret_hand_pos_1_pb ? D_SELECTED : 0;
+	(void) ustrcpy(eof_etext8, eof_song->tags->album);
+	eof_song_properties_dialog[19].flags = eof_song->tags->lyrics ? D_SELECTED : 0;
+	eof_song_properties_dialog[20].flags = eof_song->tags->eighth_note_hopo ? D_SELECTED : 0;
+	eof_song_properties_dialog[21].flags = eof_song->tags->eof_fret_hand_pos_1_pg ? D_SELECTED : 0;
+	eof_song_properties_dialog[22].flags = eof_song->tags->eof_fret_hand_pos_1_pb ? D_SELECTED : 0;
 	if(eof_song->tags->difficulty != 0xFF)
 	{	//If there is a band difficulty defined, populate the band difficulty field
 		(void) snprintf(eof_etext7, sizeof(eof_etext7) - 1, "%lu", eof_song->tags->difficulty);
@@ -941,12 +944,12 @@ int eof_menu_song_properties(void)
 	{	//Othewise leave the field blank
 		eof_etext7[0] = '\0';
 	}
-	if(eof_popup_dialog(eof_song_properties_dialog, 2) == 21)
+	if(eof_popup_dialog(eof_song_properties_dialog, 2) == 23)
 	{	//User clicked OK
-		newlyrics = (eof_song_properties_dialog[17].flags & D_SELECTED) ? 1 : 0;
-		neweighth_note_hopo = (eof_song_properties_dialog[18].flags & D_SELECTED) ? 1 : 0;
-		neweof_fret_hand_pos_1_pg = (eof_song_properties_dialog[19].flags & D_SELECTED) ? 1 : 0;
-		neweof_fret_hand_pos_1_pb = (eof_song_properties_dialog[20].flags & D_SELECTED) ? 1 : 0;
+		newlyrics = (eof_song_properties_dialog[19].flags & D_SELECTED) ? 1 : 0;
+		neweighth_note_hopo = (eof_song_properties_dialog[20].flags & D_SELECTED) ? 1 : 0;
+		neweof_fret_hand_pos_1_pg = (eof_song_properties_dialog[21].flags & D_SELECTED) ? 1 : 0;
+		neweof_fret_hand_pos_1_pb = (eof_song_properties_dialog[22].flags & D_SELECTED) ? 1 : 0;
 		//Ensure the boolean values use 1 to indicate true to simplify comparison below
 		if(eof_song->tags->lyrics)
 			eof_song->tags->lyrics = 1;
@@ -956,7 +959,7 @@ int eof_menu_song_properties(void)
 			eof_song->tags->eof_fret_hand_pos_1_pg = 1;
 		if(eof_song->tags->eof_fret_hand_pos_1_pb)
 			eof_song->tags->eof_fret_hand_pos_1_pb = 1;
-		if(ustricmp(eof_song->tags->title, eof_etext) || ustricmp(eof_song->tags->artist, eof_etext2) || ustricmp(eof_song->tags->frettist, eof_etext3) || ustricmp(eof_song->tags->year, eof_etext5) || ustricmp(eof_song->tags->loading_text, eof_etext6))
+		if(ustricmp(eof_song->tags->title, eof_etext) || ustricmp(eof_song->tags->artist, eof_etext2) || ustricmp(eof_song->tags->frettist, eof_etext3) || ustricmp(eof_song->tags->year, eof_etext5) || ustricmp(eof_song->tags->loading_text, eof_etext6) || ustricmp(eof_song->tags->album, eof_etext8))
 		{	//If any of the text fields were changed
 			eof_prepare_undo(EOF_UNDO_TYPE_NONE);
 			undo_made = 1;
@@ -986,6 +989,7 @@ int eof_menu_song_properties(void)
 		(void) ustrcpy(eof_song->tags->frettist, eof_etext3);
 		(void) ustrcpy(eof_song->tags->year, eof_etext5);
 		(void) ustrcpy(eof_song->tags->loading_text, eof_etext6);
+		(void) ustrcpy(eof_song->tags->album, eof_etext8);
 		eof_song->tags->lyrics = newlyrics;
 		eof_song->tags->eighth_note_hopo = neweighth_note_hopo;
 		eof_song->tags->eof_fret_hand_pos_1_pg = neweof_fret_hand_pos_1_pg;

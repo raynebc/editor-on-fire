@@ -395,6 +395,8 @@ int EOF_EXPORT_TO_LC(EOF_VOCAL_TRACK * tp,char *outputfilename,char *string2,int
 		Lyrics.Title=DuplicateString(eof_song->tags->title);
 	if(eof_song->tags->frettist[0] != '\0')
 		Lyrics.Editor=DuplicateString(eof_song->tags->frettist);
+	if(eof_song->tags->album[0] != '\0')
+		Lyrics.Album=DuplicateString(eof_song->tags->album);
 
 	PostProcessLyrics();	//Perform hyphen and grouping validation/handling
 

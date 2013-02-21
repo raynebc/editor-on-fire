@@ -1916,7 +1916,6 @@ int eof_new_chart(char * filename)
 {
 	char year[256] = {0};
 	char album[1024] = {0};
-	char tempalbum[1024] = {0};
 	char oggfilename[1024] = {0};
 	char * returnedfolder = NULL;
 	int ret = 0;
@@ -1974,7 +1973,7 @@ int eof_new_chart(char * filename)
 				GrabID3TextFrame(&tag,"TPE1",eof_etext,sizeof(eof_etext)/sizeof(char));		//Store the Artist info in eof_etext[]
 				GrabID3TextFrame(&tag,"TIT2",eof_etext2,sizeof(eof_etext2)/sizeof(char));	//Store the Title info in eof_etext2[]
 				GrabID3TextFrame(&tag,"TYER",year,sizeof(year)/sizeof(char));				//Store the Year info in year[]
-				GrabID3TextFrame(&tag,"TALB",tempalbum,sizeof(tempalbum)/sizeof(char));				//Store the Album info in tempalbum[]
+				GrabID3TextFrame(&tag,"TALB",album,sizeof(album)/sizeof(char));			//Store the Album info in album[]
 			}
 
 			//If any of the information was not found in the ID3v2 tag, check for it from an ID3v1 tag
@@ -1988,7 +1987,7 @@ int eof_new_chart(char * filename)
 				if((year[0]=='\0') && (tag.id3v1year != NULL))
 					strncpy(year,tag.id3v1year,sizeof(year)/sizeof(char) - 1);
 				if((album[0]=='\0') && (tag.id3v1album != NULL))
-					strncpy(tempalbum,tag.id3v1album,sizeof(tempalbum)/sizeof(char) - 1);
+					strncpy(album,tag.id3v1album,sizeof(album)/sizeof(char) - 1);
 			}
 
 			//Validate year string
@@ -2094,20 +2093,11 @@ int eof_new_chart(char * filename)
 	}
 
 	/* fill in information */
-	(void) ustrcpy(eof_song->tags->artist, eof_etext);
-	(void) ustrcpy(eof_song->tags->title, eof_etext2);
-	(void) ustrcpy(eof_song->tags->frettist, eof_last_frettist);
-	(void) ustrcpy(eof_song->tags->year, year);	//The year tag that was read from an MP3 (if applicable)
-	if(tempalbum[0] != '\0')
-	{	//If an album ID3/OGG tag was read
-		if(eof_song->tags->ini_settings < EOF_MAX_INI_SETTINGS)	//If the maximum number of INI settings isn't already defined
-		{	//Add the album tag as an INI setting
-			(void) snprintf(album, sizeof(album) - 1, "album = %s", tempalbum);	//Create the appropriate INI setting entry
-			album[1023] = '\0';	//Guarantee it is NULL terminated
-			(void) ustrcpy(eof_song->tags->ini_setting[eof_song->tags->ini_settings], album);
-			eof_song->tags->ini_settings++;
-		}
-	}
+	(void) ustrncpy(eof_song->tags->artist, eof_etext, sizeof(eof_song->tags->artist) - 1);	//Prevent buffer overflow
+	(void) ustrncpy(eof_song->tags->title, eof_etext2, sizeof(eof_song->tags->title) - 1);
+	(void) ustrncpy(eof_song->tags->frettist, eof_last_frettist, sizeof(eof_song->tags->frettist) - 1);
+	(void) ustrncpy(eof_song->tags->year, year, sizeof(eof_song->tags->year) - 1);	//The year tag that was read from an MP3 (if applicable)
+	(void) ustrncpy(eof_song->tags->album, album, sizeof(eof_song->tags->album) - 1);
 	(void) ustrcpy(oggfilename, filename);
 	(void) replace_filename(eof_last_ogg_path, oggfilename, "", 1024);
 
