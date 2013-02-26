@@ -432,7 +432,7 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	}
 	if(isebtuning && !((track == EOF_TRACK_PRO_BASS) && (tp->numstrings > 4)))
 	{	//If all strings were tuned down a half step (except for bass tracks with more than 4 strings, since in those cases, the lowest string is not tuned to E)
-		tuning = eb;	//Allow a 4 or 5 string track's tuning to be passed to xml2sng as {-1,-1,-1,-1,-1,-1}
+		tuning = eb;	//Remap 4 or 5 string Eb tuning as {-1,-1,-1,-1,-1,-1}
 	}
 	if(memcmp(tuning, standard, 6) && memcmp(tuning, standardbass, 4) && memcmp(tuning, eb, 6) && memcmp(tuning, dropd, 6) && memcmp(tuning, openg, 6))
 	{	//If the track's tuning doesn't match any supported by Rocksmith
@@ -1376,14 +1376,6 @@ int eof_export_rocksmith_track(EOF_SONG * sp, char * fn, unsigned long track, ch
 	}
 	eof_sort_events(sp);	//Re-sort events
 
-	//At this point, the XML file has been created, if the user has defined the path to the Rocksmith toolkit, attempt to compile the XML file with it
-#ifdef ALLEGRO_WINDOWS
-	if(eof_rs_toolkit_path[0] != '\0')
-	{	//If the path to the Rocksmith toolkit was defined
-		eof_rs_compile_xml(sp, fn, track);	//Compile the specified pro guitar/bass or vocal track
-	}
-#endif
-
 	return 1;	//Return success
 }
 
@@ -1866,159 +1858,6 @@ unsigned long eof_get_rs_section_instance_number(EOF_SONG *sp, unsigned long tra
 	}
 
 	return count;
-}
-
-void eof_rs_compile_xml(EOF_SONG *sp, char *fn, unsigned long track)
-{
-	char syscommand[1024] = {0}, temp[1024] = {0}, sngfilename[1024] = {0};
-	FILE *rstoolkitfp;
-	unsigned long ctr;
-	char *logfilebuffer;
-
-	eof_log("eof_rs_compile_xml() entered", 1);
-
-	if(!sp || !fn || !exists(fn) || (track >= sp->tracks))
-		return;	//Invalid parameters
-
-	rstoolkitfp = fopen("launch_rstoolkit.bat", "wt");	//Write a batch file to launch the Rocksmith toolkit
-	if(!rstoolkitfp)
-	{	//If the file couldn't be opened for writing
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  Couldn't open XML compile batch file for writing:  \"%s\"", strerror(errno));
-		eof_log(eof_log_string, 1);
-		allegro_message("Error:  Couldn't create XML compile batch file for writing.");
-		return;
-	}
-
-	//Build the path to xml2sng.exe
-	(void) ustrncpy(temp, eof_rs_toolkit_path, (int)sizeof(temp) - 1);
-	put_backslash(temp);	//Use the OS' appropriate file separator character
-	(void) append_filename(temp, temp, "xml2sng.exe", (int)sizeof(temp) - 1);	//Build the path to the xml2sng utility
-	if(!exists(temp))
-	{	//If xml2sng.exe was not found at the expected path
-		(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Error:  xml2sng.exe is not present at the linked path (%s).  Please re-link the Rocksmith toolkit to the correct folder", syscommand);
-		eof_log(eof_log_string, 1);
-		allegro_message("Error:  xml2sng.exe is not present at the linked path.  Please re-link the Rocksmith toolkit to the correct folder");
-		eof_rs_toolkit_path[0] = '\0';	//Clear this path since it is not correct
-		(void) fclose(rstoolkitfp);
-		(void) delete_file("launch_rstoolkit.bat");
-		return;
-	}
-
-	//Build the path to the output file
-	(void) replace_extension(sngfilename, fn, "sng", (int)sizeof(sngfilename) - 1);	//Just use the output XML file's path, chaning the extension to SNG
-	(void) delete_file(sngfilename);	//Delete the file if it already exists, so EOF can check if it fails to be compiled
-
-	//Build the command to pass to xml2sng
-	if(sp->track[track]->track_format == EOF_PRO_GUITAR_TRACK_FORMAT)
-	{	//If the track being compiled is a pro guitar/bass track, including the tuning as a command line parameter
-		unsigned long tracknum = sp->track[track]->tracknum;
-		EOF_PRO_GUITAR_TRACK *tp = sp->pro_guitar_track[tracknum];
-		char standard[] = {0,0,0,0,0,0};
-		char standardbass[] = {0,0,0,0};
-		char eb[] = {-1,-1,-1,-1,-1,-1};
-		char dropd[] = {-2,0,0,0,0,0};
-		char openg[] = {-2,-2,0,0,0,-2};
-		char *tuning = tp->tuning;	//By default, use the track's original tuning array
-		char isebtuning = 1;	//Will track whether all strings are tuned to -1
-
-		for(ctr = 0; ctr < 6; ctr++)
-		{	//For each string EOF supports
-			if(ctr >= tp->numstrings)
-			{	//If the track doesn't use this string
-				tp->tuning[ctr] = 0;	//Ensure the tuning is cleared accordingly
-			}
-		}
-
-		//xml2sng requires 6 tuning values, need special handling to check for <6 string Eb tuning and convert to the 6 string version of that tuning
-		for(ctr = 0; ctr < tp->numstrings; ctr++)
-		{	//For each string in this track
-			if(tp->tuning[ctr] != -1)
-			{	//If this string isn't tuned a half step down
-				isebtuning = 0;
-				break;
-			}
-		}
-		if(isebtuning && !((track == EOF_TRACK_PRO_BASS) && (tp->numstrings > 4)))
-		{	//If all strings were tuned down a half step (except for bass tracks with more than 4 strings, since in those cases, the lowest string is not tuned to E)
-			tuning = eb;	//Allow a 4 or 5 string track's tuning to be passed to xml2sng as {-1,-1,-1,-1,-1,-1}
-		}
-		if(memcmp(tuning, standard, 6) && memcmp(tuning, standardbass, 4) && memcmp(tuning, eb, 6) && memcmp(tuning, dropd, 6) && memcmp(tuning, openg, 6))
-		{	//If the track's tuning doesn't match any supported by Rocksmith
-			allegro_message("Warning:  This track (%s) uses a tuning that isn't one known to be supported in Rocksmith.\nTuning and note recognition may not work as expected in-game", sp->track[track]->name);
-			(void) snprintf(eof_log_string, sizeof(eof_log_string) - 1, "Warning:  This track (%s) uses a tuning that isn't known to be supported in Rocksmith.  Tuning and note recognition may not work as expected in-game", sp->track[track]->name);
-			eof_log(eof_log_string, 1);
-		}
-
-		(void) snprintf(syscommand, sizeof(syscommand) - 1, "\"%s\" -i \"%s\" -o \"%s\" --tuning=%d,%d,%d,%d,%d,%d", temp, fn, sngfilename, tuning[0], tuning[1], tuning[2], tuning[3], tuning[4], tuning[5]);
-	}
-	else if(track == EOF_TRACK_VOCALS)
-	{	//If the track being compiled is the vocal track
-		(void) snprintf(syscommand, sizeof(syscommand) - 1, "\"%s\" -i \"%s\" -o \"%s\" --vocal", temp, fn, sngfilename);
-	}
-	else
-	{	//Other tracks are not valid for this operation
-		(void) fclose(rstoolkitfp);
-		(void) delete_file("launch_rstoolkit.bat");
-		return;
-	}
-
-	//Build the full command line
-	syscommand[sizeof(syscommand) - 1] = '\0';	//Ensure the command string is terminated
-	eof_log("\tRS:  Calling Rocksmith toolkit with the following command:", 1);
-	eof_log(syscommand, 1);
-
-	//Build and launch the batch file
-	(void) eof_system(syscommand);
-	fprintf(rstoolkitfp, "%s >> xml2sng.log  2<&1", syscommand);
-	(void) fclose(rstoolkitfp);
-	(void) eof_system("launch_rstoolkit.bat");
-	(void) delete_file("launch_rstoolkit.bat");
-
-	//Check if the SNG file was successfully built
-	logfilebuffer = eof_buffer_file("xml2sng.log", 1);	//Buffer the log file into memory, appending a NULL terminator
-	if(!strstr(logfilebuffer, "Successfully converted XML file to SNG file"))
-	{	//If the log doesn't include xml2sng's success output
-		eof_xml_compile_failure_log("xml2sng.log");	//Display the log output to the user
-	}
-	free(logfilebuffer);
-	(void) delete_file("xml2sng.log");	//Delete the log file
-}
-
-DIALOG eof_xml_compile_failure_log_dialog[] =
-{
-   /* (proc)         (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags) (d1) (d2) (dp)           (dp2) (dp3) */
-   { d_agup_window_proc,    0,  0,  640, 480, 2,   23,  0,    0,      0,   0,   "Failed to build SNG file",               NULL, NULL },
-   { d_agup_text_proc,   288,  8,  128, 8,  2,   23,  0,    0,      0,   0,   "", NULL, NULL },
-   { d_agup_textbox_proc,   8,  32,  624, 412 - 8,  2,   23,  0,    0,      0,   0,   "", NULL, NULL },
-   { d_agup_button_proc, 8,  444, 624,  28, 2,   23,  '\r',    D_EXIT, 0,   0,   "Okay",               NULL, NULL },
-   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
-};
-
-void eof_xml_compile_failure_log(char *logfilename)
-{
-	char *logfilebuffer;
-
-	logfilebuffer = eof_buffer_file(logfilename, 1);	//Buffer the log file into memory, appending a NULL terminator
-	if(logfilebuffer == NULL)
-	{	//Could not buffer file
-		allegro_message("Error reading xml2sng log file");
-		return;
-	}
-
-	eof_xml_compile_failure_log_dialog[2].dp = logfilebuffer;	//Use the buffered file for the text box
-	eof_cursor_visible = 0;
-	eof_pen_visible = 0;
-	eof_render();
-	eof_color_dialog(eof_xml_compile_failure_log_dialog, gui_fg_color, gui_bg_color);
-	centre_dialog(eof_xml_compile_failure_log_dialog);
-
-	(void) eof_popup_dialog(eof_xml_compile_failure_log_dialog, 0);
-
-	eof_show_mouse(NULL);
-	eof_cursor_visible = 1;
-	eof_pen_visible = 1;
-	eof_render();
-	free(logfilebuffer);
 }
 
 void eof_get_rocksmith_wav_path(char *buffer, const char *parent_folder, size_t num)

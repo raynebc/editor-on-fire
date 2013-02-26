@@ -50,12 +50,12 @@ MENU eof_file_menu[] =
     {"Settings\tF10", eof_menu_file_settings, NULL, 0, NULL},
     {"&Preferences\tF11", eof_menu_file_preferences, NULL, 0, NULL},
     {"&Display", eof_menu_file_display, NULL, 0, NULL},
+    {"Set display width", eof_set_display_width, NULL, EOF_LINUX_DISABLE, NULL},
     {"&Controllers", eof_menu_file_controllers, NULL, 0, NULL},
     {"", NULL, NULL, 0, NULL},
     {"Song Folder", eof_menu_file_song_folder, NULL, 0, NULL},
     {"Link to FOF", eof_menu_file_link_fof, NULL, EOF_LINUX_DISABLE, NULL},
     {"Link to Phase Shift", eof_menu_file_link_ps, NULL, EOF_LINUX_DISABLE, NULL},
-    {"Link to Rocksmith Toolkit", eof_menu_file_link_rs_toolkit, NULL, EOF_LINUX_DISABLE, NULL},
     {"", NULL, NULL, 0, NULL},
     {"E&xit\tEsc", eof_menu_file_exit, NULL, 0, NULL},
     {NULL, NULL, NULL, 0, NULL}
@@ -1102,7 +1102,7 @@ void eof_apply_display_settings(int mode)
 		allegro_message("Could not reload program data!");
 		exit(0);
 	}
-	eof_set_display_mode(mode);
+	eof_set_display_mode_preset(mode);
 	set_palette(eof_palette);
 	if(!eof_soft_cursor)
 	{
@@ -1246,24 +1246,6 @@ int eof_menu_file_link_fof(void)
 int eof_menu_file_link_ps(void)
 {
 	return eof_menu_file_link(2);	//Link to Phase Shift
-}
-
-int eof_menu_file_link_rs_toolkit(void)
-{
-	char * returnfolder;
-
-	eof_cursor_visible = 0;
-	eof_pen_visible = 0;
-	eof_render();
-	returnfolder = ncd_folder_select("Link Rocksmith Toolkit Folder");
-	if(returnfolder)
-	{
-		(void) ustrcpy(eof_rs_toolkit_path, returnfolder);
-	}
-	eof_show_mouse(NULL);
-	eof_cursor_visible = 1;
-	eof_pen_visible = 1;
-	return 1;
 }
 
 int eof_menu_file_exit(void)
@@ -2376,12 +2358,6 @@ int eof_save_helper(char *destfilename)
 				else
 				{
 					EOF_EXPORT_TO_LC(eof_song->vocal_track[0],eof_temp_filename,NULL,RS_FORMAT);	//Import lyrics into FLC lyrics structure and export to script format
-#ifdef ALLEGRO_WINDOWS
-					if(eof_rs_toolkit_path[0] != '\0')
-					{	//If the path to the Rocksmith toolkit was defined
-						eof_rs_compile_xml(eof_song, eof_temp_filename, EOF_TRACK_VOCALS);	//Compile the XML file
-					}
-#endif
 				}
 			}
 			eof_detect_difficulties(eof_song, eof_selected_track);		//Update eof_track_diff_populated_status[] to reflect the currently selected difficulty
@@ -2782,4 +2758,49 @@ char * eof_gp_tracks_list(int index, int * size)
 		}
 	}
 	return NULL;
+}
+
+DIALOG eof_set_display_width_dialog[] =
+{
+   /* (proc)                (x)  (y)  (w)  (h)  (fg) (bg) (key) (flags)   (d1) (d2) (dp)                 (dp2) (dp3) */
+   { d_agup_window_proc,    0,   48,  214, 106, 2,   23,   0,      0,      0,   0,   "Set display width",NULL, NULL },
+   { d_agup_text_proc,      12,  84,  64,  8,   2,   23,   0,      0,      0,   0,   "Width:",           NULL, NULL },
+   { eof_verified_edit_proc,60,  80,  100, 20,  2,   23,   0,      0,      4,   0,   eof_etext2,         "0123456789", NULL },
+   { d_agup_button_proc,    17,  112, 84,  28,  2,   23,   '\r',   D_EXIT, 0,   0,   "OK",               NULL, NULL },
+   { d_agup_button_proc,    113, 112, 78,  28,  2,   23,   0,      D_EXIT, 0,   0,   "Cancel",           NULL, NULL },
+   { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL }
+};
+
+int eof_set_display_width(void)
+{
+	int width;
+
+	snprintf(eof_etext, sizeof(eof_etext) - 1, "Set display width (>= %lu)", eof_screen_width_default);
+	eof_set_display_width_dialog[0].dp = eof_etext;	//Update the dialog window's title
+
+	eof_etext2[0] = '\0';
+	eof_color_dialog(eof_set_display_width_dialog, gui_fg_color, gui_bg_color);
+	centre_dialog(eof_set_display_width_dialog);
+	if(eof_popup_dialog(eof_set_display_width_dialog, 2) == 3)	//User hit OK
+	{
+		if(eof_etext2[0] != '\0')
+		{	//If a width was specified
+			width = atol(eof_etext2);
+
+			if(width >= eof_screen_width_default)
+			{	//If the specified width is valid
+				eof_set_display_mode(width, eof_screen_height);	//Resize the program window to the specified width and the current height
+			}
+		}
+	}
+	eof_cursor_visible = 1;
+	eof_pen_visible = 1;
+	eof_show_mouse(screen);
+
+	//Update coordinate related items
+	eof_scale_fretboard(0);			//Recalculate the 2D screen positioning based on the current track
+	eof_set_2D_lane_positions(0);	//Update ychart[] by force just in case the display window size was changed
+	eof_set_3D_lane_positions(0);	//Update xchart[] by force just in case the display window size was changed
+
+	return D_O_K;
 }

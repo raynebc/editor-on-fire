@@ -6,7 +6,6 @@ Clap and metronome:
 Note manipulation:
    -Using a modifier key+click to extend a tail to the mouse click
    -Note pattern search and replace (or catalog entry search and replace)
-   -Tail truncating option:  Ability to specify a minimum length for a tail (in ms) that will cause tails in the chart to be removed from notes that aren't at least as long as the specified duration.  And auto-trimming of tails that are long enough to extend to the beginning of other notes by a specified number of ms.
 
 Bookmarks:
    -Display each bookmark's number above/below/wherever the bookmark
@@ -29,7 +28,6 @@ Load Ogg and related functionality:
    -Ability to specify multiple audio files that play back (each with their own definable delay) synchronously, and ability to toggle each on/off.  This will make it easier to maintain an alternate audio recording (ie. karaoke version) of a chart's audio as well as make it more convenient to play decrypted Rock Band charts for review, editing, etc.
       OR
    -As more people may begin to use "Load OGG", I still believe it would be handy to have a way to display to the user which different OGG profiles they have created in their chart.  If they manipulate their files often, they might be easy to forget which specific filenames they had loaded with the "Load OGG" feature.  Such a list of profiles could be listed as something like a "Load OGG Profile" submenu item, below "Load OGG" in the File menu.  This submenu could be grayed out until "Load OGG" is used to load a new OGG file at least once for a chart, but would otherwise list the filenames for OGGs the user had previously loaded for the chart.  If the file for an OGG profile is missing/renamed, EOF could remove that entry from the displayed OGG profile list, or gray it out/bold it in red to point out that the file doesn't exist at the expected path.
-   -Since the last used OGG profile of a chart is now loaded, could the last selected instrument difficulty also be reloaded automatically?
    -Ability to remove one/all OGG profiles, in the case that they get out of control or corrupted
 
 Text events:
@@ -48,17 +46,13 @@ General features:
    -Have a MIDI edit (not import) mode that retains all original MIDI timings, allowing the user to add text events, instrumental notes, special notes, etc. with zero risk of affecting any note or beat positions.
    -A "practice" input mode that registers hits like guitar strum mode while showing the already-charted notes in the 3d panel.  This wouldn't edit the chart, but could show the user's mistakes rendered in red on the piano roll while hits that were close enough to the hit window could be rendered in blue.  This isn't really meant to be a replacement for testing in FoF itself, but it would allow the user to stop/start/restart parts of the chart to test playability, and the ability to see each playback mistake would allow somebody to practice a chart and review which riffs might require some more practice.  This is a pretty outlandish idea, but I thought it seems fun
    -Ability to export the click track as an EOF file with no notes, no text events, etc.  Only contains the anchors and tempo information.  This could be useful to recover from a chart with corrupted OGG profiles or something else that makes it desirable to have a clean chart to copy+paste the notes into.  Importing the saved MIDI is better than nothing, but converting between timings has some precision loss.
-   -Add ability to double/halve the tempo starting from an anchor.  If there are an even number of beat lines until the next anchor, then no notes should be affected and no anchors should move if the tempo is halved.  Doubling the tempo should not cause any anchors/notes to move.  Text events, bookmarks, etc. should keep their timestamp placement where possible.  If a text event becomes mid-beat (its beat marker was removed during tempo halving), it should move to the previous beat marker at the end of the operation
    -Option to play clap/tick at full speed even when the chart is played slowly.  At 25% speed, these sound effects are hard to hear compared to the rest of the audio, making it harder to check sync.
 
 Extra chart features:
    -Ability to browse for, render and save the label PNG file with the rest of the chart files upon saving the chart
-   -Add hotkeys to Add and Delete buttons in INI settings
-   -Add custom INI support for diff_guitar = 0 through 6, diff_drums = 0 through 6, diff_bass = 0 through 6, diff_band = 0 through 6 (I understand FoFiX uses these to display chart difficulties in stars.  There may now be similar tags used to represent vocal difficulty, but I don't know)
    -Preview OGG support:  It may require more thought, but I believe it could be as easy as having the user set a start and end bookmark or a phrase, and you could mux the audio into a file called preview.ogg.  Since EOF doesn't technically support master audio tracks (different audio for each instrument track), muxing from guitar.ogg may be sufficient, although perhaps if EOF finds other audio tracks in the chart folder (drums.ogg, song.ogg, etc), it could offer to mix those tracks in as well
 
 General UI:
-   -Ability to hit Enter to OK out of input dialog windows
    -Option to increment a number in the backup save filename so that multiple backups can be kept as a kind of automatic version control.  To keep the file sizes down, you can have EOF compress the backup file (compresses as well as < .5% or original size).  A huge ambition could be making it so that the backups are kept in a single file that keeps a running record of all edits made between saves, providing some kind of human-readable description of each change and a mechanism to produce the chart as it was at any given edit.  This would require the original chart and a functional transaction log (like that of a database).
    -When opening an existing EOF file or importing a MIDI and only one instrument and difficulty part has notes, default to displaying it instead of Guitar>Amazing
    -When the previous directory that a file was loaded from no longer exists, EOF defaults to starting file loading dialog menus back to EOF's own directory.  Consider having it reset to the user-configured Song Folder instead, as for those of us that store all our chart files in the Song Folder, it will save the effort of browsing to it in this scenario.  Defaulting all file browser windows to the song folder if the last selected file is renamed/deleted/mising may be a nice idea
@@ -70,11 +64,6 @@ General UI:
 
 Fret catalog:
    -In the fret catalog, display the number of beats that an entry occupies, so it is easy to determine if the entry will fit into a given section of the piano roll.  Possibly warn user during pasting from catalog if the paste will overlap existing notes in the chart.
-   -Allow the fret catalog to be extended into the space used for the 3d panel for added visibility of patterns.  Or otherwise an ability to seek left and right within a catalog entry so that it can be seen in its entirety without playing the entire entry.
-   -Ability to name entries in the fret catalog (ie. guitar riff 1)
-   -Enable the user to define a positive or negative padding (ie. # of milliseconds) for the start and end of note catalog entries for playback.
-   -In the information panel, in addition to showing which catalog entry is selected, display the originating difficulty in parentheses next to it (Guitar>Amazing)
-   -Ability to seek to the current Catalog entry's starting position in the piano roll
    -Ability to insert selected notes into current fret catalog position, or otherwise an ability to reorder catalog entries
 
 User customization:
@@ -84,7 +73,6 @@ User customization:
 
 Note phrases:
    -For edits that cause two like phrases to be adjacent and not separated by normal notes or a considerable amount of space (ie. two overdrive phrases), prompt the user about whether they should be combined automatically.  This would prevent some of the new users from marking 5 back to back one-note Star Power phrases instead of one phrase that is 5 notes long.  I've actually seen users do this several times.
-   -Rendering the location of SP phrases on the piano roll (ie with a silver colored strip)
    -Since MFH said solo section markers and MIDI solo phrases can coexist in a chart, I think it would be great if EOF made use of this to provide backwards compatibility for PART GUITAR and PART GUITAR COOP solos with older versions of FoF.  When a user marks a solo phrase in either of those two tracks, EOF could prompt if the user wants to create a name for the solo.  If they specify yes, EOF can provide a dialog window to get input from the user.  Upon save, EOF could insert a section marker event in the MIDI at the position of the first note in the solo, but it would need to look at the end of the solo.  If the solo ends more than one beat before a section marker, it would need to create a section marker to indicate the end of the solo and ensure that marker was similarly-named to the solo name specified by the user except that it cannot contain the string "solo".  For example if the user called a solo "Guitar Solo A", EOF could insert the "section Guitar Solo A" text event accordingly, and at the end of the solo, insert a "section Guitar Sol_ A End" text event.  This would require doing a case-insensitive string search for "solo" and replacing it with something like "sol_", which would prevent FoF from treating it as the start or continuation of a solo.  If the solo ends right before another section marker (without the string "solo" in it), the section marker ends the solo automatically.  This process can be done by the user, but it would be another way to make EOF easier to use overall.
    -If an EOF file has solo paths but no SP paths created, maybe it could warn during save that as such, the resulting MIDI will only have SP paths and no solos. MFH took an idea I proposed earlier about making FoF's phrase detection controllable in song.ini and posted it on the project's bug tracker, but it's a low priority issue. Someday it will be implemented, but until then we'll all have to work around it
    -Add support for a "Unison overdrive" phrase, which places an overdrive phrase over the same portion of the guitar, drum and bass tracks
@@ -93,14 +81,12 @@ Advanced chart functions:
    -Ability to start and end user-specified MIDI notes similarly to adding user-specified text events.  This may help future proof EOF if FoFiX decides to implement any unusual chart markings.
 
 Documentation:
-   -Update the documentation and tutorial to include new features like making Big Rock Endings:  http://www.fretsonfire.net/forums/viewtopic.php?f=32&t=38283#p407322
    -It may be a good feature to summarize Harmonix's charting guidelines in EOF's included documentation.  If you're interested, I could make a list of things that could possibly be programmed into EOF to enforce Harmonix's standards, ie. the minimum length of sustained notes, minimum distance between notes, which chords are valid for given difficulties, if very many notes are not grid snapped, etc.  I believe this would be an excellent feature, as the user could have EOF test the chart and offer to make corrections or seek to a problematic part of the chart
 
 Lyrics/Vocals:
    -Allow paste operations (especially "paste from") to be used for PART VOCALS for instrument tracks.  Some people that are charting "vocal rhythm" may prefer to have a button tap/strum capability at some point of vocal charting and may want to try, although once EOF's lyric import is working, they can just save the chart and use the import to load the vocal rhythm via MIDI if EOF can prompt the user for the appropriate track and difficulty identifier (ie. G1 for easy guitar)
       OR
    -Alternatively, to remove the need of charting vocal rhyhm as a vocal charting aid, allow guitar tap/guitar strum (or similar input method using mouse/keyboard/MIDI input) to be used in PART VOCALS.  VividLyric editor's mouse input is extremely easy to use:  During audio playback, left click starts a line phrase if none is already started, otherwise it inserts a break (ie. ends current phrase and immediately starts next lyric phrase).  Right click ends a line phrase.  This two button input method is much more effective than a single button input such as Rokudaime's lyric editor.
-   -Ability to change the mini piano to a grand staff, which will affect the display of the gems in the piano roll to reflect sheet music.  It would make it easier for beginners to enter sheet music into EOF.
    -Display scrolling lyrics in the full piano panel for each vocal note as it is played/hovered.  The scrolling speed would have to depend on how short the lyric duration is, requiring some small amount of math to calculate each lyric's scrolling velocity.  Below/above the scrolling lyric would be an excellent place to implement a vocal note tube similar to that in Rock Band.
    -Ability to make the full piano panel wider by cutting into some of the unused real estate in the info panel
    -Add option to toggle the piano panel into a lyric review/editor control, so users can see if they have their line markers placed correctly, etc.  Being able to edit lyrics, phrase markers, etc. here would be extremely convenient.  Right clicking on a lyric to seek the piano roll to the lyric would also be a plus.

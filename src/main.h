@@ -264,7 +264,6 @@ extern EOF_LYRIC   eof_pen_lyric;
 extern char        eof_filename[1024];
 extern char        eof_song_path[1024];
 extern char        eof_songs_path[1024];
-extern char        eof_rs_toolkit_path[1024];
 extern char        eof_window_title[4096];
 extern char        eof_last_ogg_path[1024];
 extern char        eof_last_eof_path[1024];
@@ -274,6 +273,7 @@ extern int         eof_quit;
 extern EOF_SCREEN_LAYOUT eof_screen_layout;
 extern BITMAP *    eof_screen;
 extern unsigned long eof_screen_width, eof_screen_height;
+extern unsigned long eof_screen_width_default;
 extern int         eof_vanish_x, eof_vanish_y;
 extern char        eof_full_screen_3d;
 extern char        eof_3d_fretboard_coordinates_cached;
@@ -467,10 +467,12 @@ unsigned long eof_count_selected_notes(unsigned long * total, char v);
 void eof_fix_waveform_graph(void);	//Rebuild the waveform graph data if it exists
 void eof_clear_input(void);
 void eof_prepare_undo(int type);
-int eof_figure_difficulty(void);
+int eof_figure_difficulty(void);	//Returns -1 if the active track difficulty has no notes or pitched lyrics.  If the vocal track is active and has at least one pitched lyric, 0 is returned, otherwise the number of notes is returned
 int eof_figure_part(void);	//Returns the active track number in terms of FoF's command line play functionality, or -1 on error
 int d_hackish_edit_proc (int msg, DIALOG *d, int c);
-int eof_set_display_mode(int mode);
+int eof_set_display_mode_preset(int mode);	//Sets one of the pre-set window sizes by calling eof_set_display_mode()
+int eof_set_display_mode(unsigned long width, unsigned long height);	//Sets the program window size, rebuilds sub-windows and sets related variables
+void eof_set_3d_projection(void);	//Sets the 3d projection by calling ocd3d_set_projection() with the screen dimensions and vanishing coordinate
 void eof_debug_message(char * text);
 void eof_determine_phrase_status(EOF_SONG *sp, unsigned long track);
 	//Re-applies the HOPO, SP, trill and tremolo status of each note in the specified track, as well as deleting empty SP, Solo, trill, tremolo and arpeggio phrases
